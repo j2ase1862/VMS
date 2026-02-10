@@ -1,8 +1,7 @@
 <Application x:Class="VMS.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:converters="clr-namespace:VMS.Converters"
-             StartupUri="Views/MainWindow.xaml">
+             xmlns:converters="clr-namespace:VMS.Converters">
     <Application.Resources>
         <!-- Converters -->
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>

@@ -12,4 +12,15 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
   </ItemGroup>
 
+  <!-- After build, write output path so VMS can find AppSetup -->
+  <Target Name="WriteOutputPath" AfterTargets="Build">
+    <PropertyGroup>
+      <VmsOutputDir>..\VMS\bin\$(Configuration)\net8.0-windows\</VmsOutputDir>
+    </PropertyGroup>
+    <MakeDir Directories="$(VmsOutputDir)" Condition="!Exists('$(VmsOutputDir)')" />
+    <WriteLinesToFile File="$(VmsOutputDir)AppSetup.path"
+                     Lines="$(TargetDir)VMS.AppSetup.exe"
+                     Overwrite="true" />
+  </Target>
+
 </Project>

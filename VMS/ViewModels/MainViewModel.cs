@@ -463,23 +463,36 @@ namespace VMS.ViewModels
             try
             {
                 var currentDir = AppDomain.CurrentDomain.BaseDirectory;
-                var solutionDir = Path.GetFullPath(Path.Combine(currentDir, "..", "..", ".."));
-
-                var setupPaths = new[]
-                {
-                    Path.Combine(solutionDir, "BODA.Setup", "bin", "Debug", "net8.0-windows", "BODA.Setup.exe"),
-                    Path.Combine(solutionDir, "BODA.Setup", "bin", "Release", "net8.0-windows", "BODA.Setup.exe"),
-                    Path.Combine(currentDir, "..", "BODA.Setup", "BODA.Setup.exe")
-                };
-
                 string? foundPath = null;
-                foreach (var path in setupPaths)
+
+                
+
+                // 1. Check path file written by VMS.VisionSetup build
+                var pathFile = Path.Combine(currentDir, "AppSetup.path");
+                if (File.Exists(pathFile))
                 {
-                    var fullPath = Path.GetFullPath(path);
-                    if (File.Exists(fullPath))
+                    var savedPath = File.ReadAllText(pathFile).Trim();
+                    if (File.Exists(savedPath))
+                        foundPath = savedPath;
+                }
+
+                if (foundPath == null)
+                {
+                    var solutionDir = Path.GetFullPath(Path.Combine(currentDir, "..", "..", ".."));
+                    var fallbackPaths = new[]
                     {
-                        foundPath = fullPath;
-                        break;
+                        Path.Combine(solutionDir, "VMS.AppSetup", "bin", "Debug", "net8.0-windows", "VMS.AppSetup.exe"),
+                        Path.Combine(solutionDir, "VMS.AppSetup", "bin", "Release", "net8.0-windows", "VMS.AppSetup.exe"),
+                    };
+
+                    foreach (var path in fallbackPaths)
+                    {
+                        var fullPath = Path.GetFullPath(path);
+                        if (File.Exists(fullPath))
+                        {
+                            foundPath = fullPath;
+                            break;
+                        }
                     }
                 }
 
