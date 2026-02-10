@@ -1,0 +1,281 @@
+<UserControl x:Class="VMS.VisionSetup.Views.ToolSettings.Tools.FeatureMatchToolSettings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls"
+             xmlns:conv="clr-namespace:VMS.VisionSetup.Converters"
+             xmlns:pm="clr-namespace:VMS.VisionSetup.VisionTools.PatternMatching">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <conv:MatToBitmapSourceConverter x:Key="MatToImageConverter"/>
+    </UserControl.Resources>
+
+    <StackPanel>
+        <!-- Models Expander -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Models" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <!-- Model ListBox -->
+                <ListBox Background="#2D2D30" BorderBrush="#555555" BorderThickness="1"
+                         MaxHeight="120" Margin="0,0,0,5"
+                         ItemsSource="{Binding Models}"
+                         SelectedItem="{Binding SelectedModel, Mode=TwoWay}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="{x:Type pm:FeatureMatchModel}">
+                            <StackPanel Orientation="Horizontal">
+                                <CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+                                          VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <TextBlock Text="{Binding Name}" Foreground="White"
+                                           VerticalAlignment="Center" FontSize="11" MinWidth="80"/>
+                                <Button Content="X" Style="{StaticResource DeleteButtonStyle}"
+                                        Margin="5,0,0,0"
+                                        Command="{Binding DataContext.RemoveModelCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <!-- Button row -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                    <Button Content="Add Model" Style="{StaticResource AccentButtonStyle}"
+                            Margin="0,0,5,0" Command="{Binding AddAndTrainModelCommand}"/>
+                    <Button Content="Train Selected" Style="{StaticResource SuccessButtonStyle}"
+                            Margin="0,0,5,0" Command="{Binding TrainSelectedModelCommand}"/>
+                    <Button Content="Delete Model" Style="{StaticResource DangerButtonStyle}"
+                            Command="{Binding DeleteSelectedModelCommand}"/>
+                </StackPanel>
+
+                <!-- Preview (data-bound via converter) -->
+                <Border Background="#1E1E1E" BorderBrush="#555555" BorderThickness="1"
+                        Margin="0,0,0,5" MinHeight="150">
+                    <Grid>
+                        <Image Source="{Binding PreviewImage, Converter={StaticResource MatToImageConverter}}"
+                               Stretch="Uniform" MaxHeight="150"
+                               Visibility="{Binding HasPreviewImage, Converter={StaticResource BoolToVis}}"/>
+                        <TextBlock Text="{Binding PreviewPlaceholderText}"
+                                   Foreground="Gray" FontSize="12"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasPreviewImage}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </Expander>
+
+        <!-- Basic Expander -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Basic" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:SliderParameter Label="Score Threshold"
+                    Value="{Binding ScoreThreshold}" Minimum="0.1" Maximum="1"
+                    TickFrequency="0.05" ValueFormat="F2"
+                    ToolType="FeatureMatchTool" ParameterName="ScoreThreshold"/>
+                <controls:CheckBoxParameter Label="Contrast Invariant"
+                    IsChecked="{Binding UseContrastInvariant}"
+                    ToolType="FeatureMatchTool" ParameterName="UseContrastInvariant"/>
+                <controls:CheckBoxParameter Label="Auto Apply Tune"
+                    IsChecked="{Binding IsAutoTuneEnabled}"
+                    ToolType="FeatureMatchTool" ParameterName="IsAutoTuneEnabled"/>
+
+                <!-- Training Region (ROI) -->
+                <CheckBox Content="Use Training Region" Foreground="White" Margin="0,8,0,2"
+                          IsChecked="{Binding UseROI, Mode=TwoWay}"/>
+                <StackPanel Visibility="{Binding UseROI, Converter={StaticResource BoolToVis}}">
+                    <Grid Margin="0,5,0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="X:" Foreground="LightGray" VerticalAlignment="Center" Margin="0,0,5,5" Grid.Row="0" Grid.Column="0"/>
+                        <TextBox Grid.Row="0" Grid.Column="1" Margin="0,0,10,5"
+                                 Style="{StaticResource SettingTextBoxStyle}"
+                                 Text="{Binding ROIX, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text="Y:" Foreground="LightGray" VerticalAlignment="Center" Margin="0,0,5,5" Grid.Row="0" Grid.Column="2"/>
+                        <TextBox Grid.Row="0" Grid.Column="3" Margin="0,0,0,5"
+                                 Style="{StaticResource SettingTextBoxStyle}"
+                                 Text="{Binding ROIY, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text="W:" Foreground="LightGray" VerticalAlignment="Center" Margin="0,0,5,5" Grid.Row="1" Grid.Column="0"/>
+                        <TextBox Grid.Row="1" Grid.Column="1" Margin="0,0,10,5"
+                                 Style="{StaticResource SettingTextBoxStyle}"
+                                 Text="{Binding ROIWidth, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text="H:" Foreground="LightGray" VerticalAlignment="Center" Margin="0,0,5,5" Grid.Row="1" Grid.Column="2"/>
+                        <TextBox Grid.Row="1" Grid.Column="3" Margin="0,0,0,5"
+                                 Style="{StaticResource SettingTextBoxStyle}"
+                                 Text="{Binding ROIHeight, UpdateSourceTrigger=PropertyChanged}"/>
+                    </Grid>
+                    <StackPanel Orientation="Horizontal" Margin="0,2,0,5">
+                        <Button Content="Draw ROI" Style="{StaticResource PrimaryButtonStyle}"
+                                Padding="8,4" Margin="0,0,5,0"
+                                Command="{Binding DrawROICommand}"/>
+                        <Button Content="Clear" Style="{StaticResource SecondaryButtonStyle}"
+                                Padding="8,4"
+                                Command="{Binding ClearROICommand}"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Auto Tune -->
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,5">
+                    <Button Content="Auto Tune" Style="{StaticResource SuccessButtonStyle}"
+                            Margin="0,0,5,0" Command="{Binding RequestAutoTuneCommand}"/>
+                </StackPanel>
+
+                <!-- Suggestions -->
+                <StackPanel Visibility="{Binding HasSuggestions, Converter={StaticResource BoolToVis}}"
+                            Margin="0,5,0,5">
+                    <TextBlock Text="Suggested values:" Style="{StaticResource SuggestionLabelStyle}"
+                               FontWeight="Bold"/>
+                    <StackPanel Orientation="Horizontal" Margin="5,1,0,0">
+                        <TextBlock Text="Canny Low: " Style="{StaticResource SuggestionLabelStyle}" FontSize="11"/>
+                        <TextBlock Text="{Binding SuggestedCannyLow, StringFormat=F1}"
+                                   Style="{StaticResource SuggestionValueStyle}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="5,1,0,0">
+                        <TextBlock Text="Canny High: " Style="{StaticResource SuggestionLabelStyle}" FontSize="11"/>
+                        <TextBlock Text="{Binding SuggestedCannyHigh, StringFormat=F1}"
+                                   Style="{StaticResource SuggestionValueStyle}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="5,1,0,0">
+                        <TextBlock Text="Num Levels: " Style="{StaticResource SuggestionLabelStyle}" FontSize="11"/>
+                        <TextBlock Text="{Binding SuggestedNumLevels, StringFormat=F1}"
+                                   Style="{StaticResource SuggestionValueStyle}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="5,1,0,0">
+                        <TextBlock Text="Max Points: " Style="{StaticResource SuggestionLabelStyle}" FontSize="11"/>
+                        <TextBlock Text="{Binding SuggestedMaxModelPoints, StringFormat=F1}"
+                                   Style="{StaticResource SuggestionValueStyle}"/>
+                    </StackPanel>
+                    <Button Content="Apply Suggestions" Style="{StaticResource WarningButtonStyle}"
+                            Margin="0,5,0,0" Command="{Binding ApplySuggestionsCommand}"/>
+                </StackPanel>
+            </StackPanel>
+        </Expander>
+
+        <!-- Search Range Expander -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Search Range" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:SliderParameter Label="Angle Start"
+                    Value="{Binding AngleStart}" Minimum="-180" Maximum="180"
+                    TickFrequency="1" ValueFormat="F0"
+                    ToolType="FeatureMatchTool" ParameterName="AngleStart"/>
+                <controls:SliderParameter Label="Angle Extent"
+                    Value="{Binding AngleExtent}" Minimum="0" Maximum="360"
+                    TickFrequency="1" ValueFormat="F0"
+                    ToolType="FeatureMatchTool" ParameterName="AngleExtent"/>
+                <controls:SliderParameter Label="Min Scale"
+                    Value="{Binding MinScale}" Minimum="0.5" Maximum="1"
+                    TickFrequency="0.01" ValueFormat="F2"
+                    ToolType="FeatureMatchTool" ParameterName="MinScale"/>
+                <controls:SliderParameter Label="Max Scale"
+                    Value="{Binding MaxScale}" Minimum="1" Maximum="2"
+                    TickFrequency="0.01" ValueFormat="F2"
+                    ToolType="FeatureMatchTool" ParameterName="MaxScale"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- Accuracy / Speed Expander -->
+        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Accuracy / Speed" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:SliderParameter Label="Angle Step"
+                    Value="{Binding AngleStep}" Minimum="0.1" Maximum="10"
+                    TickFrequency="0.1" ValueFormat="F2"
+                    ToolType="FeatureMatchTool" ParameterName="AngleStep"/>
+                <controls:SliderParameter Label="Scale Step"
+                    Value="{Binding ScaleStep}" Minimum="0.01" Maximum="0.5"
+                    TickFrequency="0.01" ValueFormat="F2"
+                    ToolType="FeatureMatchTool" ParameterName="ScaleStep"/>
+                <controls:SliderParameter Label="Greediness"
+                    Value="{Binding Greediness}" Minimum="0" Maximum="1"
+                    TickFrequency="0.05" ValueFormat="F2"
+                    ToolType="FeatureMatchTool" ParameterName="Greediness"/>
+                <controls:SliderParameter Label="Num Levels"
+                    Value="{Binding NumLevels}" Minimum="1" Maximum="6"
+                    TickFrequency="1" ValueFormat="F0"
+                    ToolType="FeatureMatchTool" ParameterName="NumLevels"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- Edge Config Expander -->
+        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Edge Config" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:SliderParameter Label="Canny Low"
+                    Value="{Binding CannyLow}" Minimum="10" Maximum="200"
+                    TickFrequency="5" ValueFormat="F0"
+                    ToolType="FeatureMatchTool" ParameterName="CannyLow"/>
+                <controls:SliderParameter Label="Canny High"
+                    Value="{Binding CannyHigh}" Minimum="50" Maximum="400"
+                    TickFrequency="5" ValueFormat="F0"
+                    ToolType="FeatureMatchTool" ParameterName="CannyHigh"/>
+                <controls:SliderParameter Label="Max Model Points"
+                    Value="{Binding MaxModelPoints}" Minimum="50" Maximum="1000"
+                    TickFrequency="50" ValueFormat="F0"
+                    ToolType="FeatureMatchTool" ParameterName="MaxModelPoints"/>
+                <controls:SliderParameter Label="Curvature Weight"
+                    Value="{Binding CurvatureWeight}" Minimum="0" Maximum="1"
+                    TickFrequency="0.05" ValueFormat="F2"
+                    ToolType="FeatureMatchTool" ParameterName="CurvatureWeight"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- Search Region Expander -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Search Region" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:CheckBoxParameter Label="Use Search Region"
+                    IsChecked="{Binding UseSearchRegion}"
+                    ToolType="FeatureMatchTool" ParameterName="UseSearchRegion"/>
+                <controls:TextBoxParameter Label="X"
+                    Value="{Binding SearchRegionX}"
+                    ToolType="FeatureMatchTool" ParameterName="SearchRegionX"/>
+                <controls:TextBoxParameter Label="Y"
+                    Value="{Binding SearchRegionY}"
+                    ToolType="FeatureMatchTool" ParameterName="SearchRegionY"/>
+                <controls:TextBoxParameter Label="Width"
+                    Value="{Binding SearchRegionWidth}"
+                    ToolType="FeatureMatchTool" ParameterName="SearchRegionWidth"/>
+                <controls:TextBoxParameter Label="Height"
+                    Value="{Binding SearchRegionHeight}"
+                    ToolType="FeatureMatchTool" ParameterName="SearchRegionHeight"/>
+
+                <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
+                    <Button Content="Draw Search Region" Style="{StaticResource PrimaryButtonStyle}"
+                            Padding="8,4" Margin="0,0,5,0"
+                            Command="{Binding DrawSearchRegionCommand}"/>
+                    <Button Content="Clear" Style="{StaticResource SecondaryButtonStyle}"
+                            Padding="8,4"
+                            Command="{Binding ClearSearchRegionCommand}"/>
+                </StackPanel>
+            </StackPanel>
+        </Expander>
+    </StackPanel>
+</UserControl>

@@ -1,0 +1,51 @@
+<UserControl x:Class="VMS.VisionSetup.Views.ToolSettings.Tools.CircleFitToolSettings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls"
+             xmlns:conv="clr-namespace:VMS.VisionSetup.Converters"
+             xmlns:meas="clr-namespace:VMS.VisionSetup.VisionTools.Measurement">
+    <StackPanel>
+        <controls:TextBoxParameter Label="Center X"
+            Value="{Binding CenterPoint.X}"
+            ToolType="CircleFitTool" ParameterName="CenterPoint.X"/>
+        <controls:TextBoxParameter Label="Center Y"
+            Value="{Binding CenterPoint.Y}"
+            ToolType="CircleFitTool" ParameterName="CenterPoint.Y"/>
+        <controls:SliderParameter Label="Expected Radius"
+            Value="{Binding ExpectedRadius}" Minimum="10" Maximum="500"
+            TickFrequency="5" ValueFormat="F0"
+            ToolType="CircleFitTool" ParameterName="ExpectedRadius"/>
+        <controls:SliderParameter Label="Num Calipers"
+            Value="{Binding NumCalipers}" Minimum="3" Maximum="64"
+            TickFrequency="1" ValueFormat="F0"
+            ToolType="CircleFitTool" ParameterName="NumCalipers"/>
+        <controls:SliderParameter Label="Search Length"
+            Value="{Binding SearchLength}" Minimum="10" Maximum="200"
+            TickFrequency="5" ValueFormat="F0"
+            ToolType="CircleFitTool" ParameterName="SearchLength"/>
+        <controls:SliderParameter Label="Search Width"
+            Value="{Binding SearchWidth}" Minimum="1" Maximum="50"
+            TickFrequency="1" ValueFormat="F0"
+            ToolType="CircleFitTool" ParameterName="SearchWidth"/>
+        <controls:SliderParameter Label="Start Angle"
+            Value="{Binding StartAngle}" Minimum="0" Maximum="360"
+            TickFrequency="5" ValueFormat="F0"
+            ToolType="CircleFitTool" ParameterName="StartAngle"/>
+        <controls:SliderParameter Label="End Angle"
+            Value="{Binding EndAngle}" Minimum="0" Maximum="360"
+            TickFrequency="5" ValueFormat="F0"
+            ToolType="CircleFitTool" ParameterName="EndAngle"/>
+        <controls:EnumComboBoxParameter Label="Polarity"
+            ItemsSource="{conv:EnumValues {x:Type meas:EdgePolarity}}"
+            SelectedValue="{Binding Polarity}"
+            ToolType="CircleFitTool" ParameterName="Polarity"/>
+        <controls:SliderParameter Label="Edge Threshold"
+            Value="{Binding EdgeThreshold}" Minimum="1" Maximum="100"
+            TickFrequency="1" ValueFormat="F0"
+            ToolType="CircleFitTool" ParameterName="EdgeThreshold"/>
+        <controls:EnumComboBoxParameter Label="Fit Method"
+            ItemsSource="{conv:EnumValues {x:Type meas:CircleFitMethod}}"
+            SelectedValue="{Binding FitMethod}"
+            ToolType="CircleFitTool" ParameterName="FitMethod"/>
+    </StackPanel>
+</UserControl>

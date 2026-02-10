@@ -1,0 +1,25 @@
+<UserControl x:Class="VMS.VisionSetup.Views.ToolSettings.Tools.MorphologyToolSettings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls"
+             xmlns:conv="clr-namespace:VMS.VisionSetup.Converters"
+             xmlns:ip="clr-namespace:VMS.VisionSetup.VisionTools.ImageProcessing">
+    <StackPanel>
+        <controls:EnumComboBoxParameter Label="Operation"
+            ItemsSource="{conv:EnumValues {x:Type ip:MorphologyOperation}}"
+            SelectedValue="{Binding Operation}"
+            ToolType="MorphologyTool" ParameterName="Operation"/>
+        <controls:SliderParameter Label="Kernel Width"
+            Value="{Binding KernelWidth}" Minimum="1" Maximum="21"
+            TickFrequency="1" ValueFormat="F0"
+            ToolType="MorphologyTool" ParameterName="KernelWidth"/>
+        <controls:SliderParameter Label="Kernel Height"
+            Value="{Binding KernelHeight}" Minimum="1" Maximum="21"
+            TickFrequency="1" ValueFormat="F0"
+            ToolType="MorphologyTool" ParameterName="KernelHeight"/>
+        <controls:SliderParameter Label="Iterations"
+            Value="{Binding Iterations}" Minimum="1" Maximum="10"
+            TickFrequency="1" ValueFormat="F0"
+            ToolType="MorphologyTool" ParameterName="Iterations"/>
+    </StackPanel>
+</UserControl>

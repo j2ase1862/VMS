@@ -1,0 +1,29 @@
+<UserControl x:Class="VMS.VisionSetup.Views.ToolSettings.Tools.ThresholdToolSettings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls">
+    <StackPanel>
+        <controls:SliderParameter Label="Threshold Value"
+            Value="{Binding ThresholdValue}" Minimum="0" Maximum="255"
+            TickFrequency="1" ValueFormat="F0"
+            ToolType="ThresholdTool" ParameterName="ThresholdValue"/>
+        <controls:SliderParameter Label="Max Value"
+            Value="{Binding MaxValue}" Minimum="0" Maximum="255"
+            TickFrequency="1" ValueFormat="F0"
+            ToolType="ThresholdTool" ParameterName="MaxValue"/>
+        <controls:CheckBoxParameter Label="Use Otsu"
+            IsChecked="{Binding UseOtsu}"
+            ToolType="ThresholdTool" ParameterName="UseOtsu"/>
+        <controls:CheckBoxParameter Label="Use Adaptive"
+            IsChecked="{Binding UseAdaptive}"
+            ToolType="ThresholdTool" ParameterName="UseAdaptive"/>
+        <controls:SliderParameter Label="Block Size"
+            Value="{Binding BlockSize}" Minimum="3" Maximum="51"
+            TickFrequency="2" SnapToTick="True" ValueFormat="F0"
+            ToolType="ThresholdTool" ParameterName="BlockSize"/>
+        <controls:SliderParameter Label="Constant C"
+            Value="{Binding CValue}" Minimum="-20" Maximum="20"
+            TickFrequency="1" ValueFormat="F0"
+            ToolType="ThresholdTool" ParameterName="CValue"/>
+    </StackPanel>
+</UserControl>

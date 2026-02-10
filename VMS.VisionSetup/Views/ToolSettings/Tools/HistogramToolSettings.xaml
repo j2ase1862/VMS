@@ -1,0 +1,25 @@
+<UserControl x:Class="VMS.VisionSetup.Views.ToolSettings.Tools.HistogramToolSettings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls"
+             xmlns:conv="clr-namespace:VMS.VisionSetup.Converters"
+             xmlns:ip="clr-namespace:VMS.VisionSetup.VisionTools.ImageProcessing">
+    <StackPanel>
+        <controls:EnumComboBoxParameter Label="Operation"
+            ItemsSource="{conv:EnumValues {x:Type ip:HistogramOperation}}"
+            SelectedValue="{Binding Operation}"
+            ToolType="HistogramTool" ParameterName="Operation"/>
+        <controls:SliderParameter Label="Clip Limit"
+            Value="{Binding ClipLimit}" Minimum="1" Maximum="10"
+            TickFrequency="0.5" ValueFormat="F2"
+            ToolType="HistogramTool" ParameterName="ClipLimit"/>
+        <controls:SliderParameter Label="Tile Grid Width"
+            Value="{Binding TileGridWidth}" Minimum="1" Maximum="16"
+            TickFrequency="1" ValueFormat="F0"
+            ToolType="HistogramTool" ParameterName="TileGridWidth"/>
+        <controls:SliderParameter Label="Tile Grid Height"
+            Value="{Binding TileGridHeight}" Minimum="1" Maximum="16"
+            TickFrequency="1" ValueFormat="F0"
+            ToolType="HistogramTool" ParameterName="TileGridHeight"/>
+    </StackPanel>
+</UserControl>

@@ -1,0 +1,56 @@
+<UserControl x:Class="VMS.VisionSetup.Views.ToolSettings.Tools.BlobToolSettings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls">
+    <StackPanel>
+        <controls:CheckBoxParameter Label="Use Internal Threshold"
+            IsChecked="{Binding UseInternalThreshold}"
+            ToolType="BlobTool" ParameterName="UseInternalThreshold"/>
+        <controls:SliderParameter Label="Threshold Value"
+            Value="{Binding ThresholdValue}" Minimum="0" Maximum="255"
+            TickFrequency="1" ValueFormat="F0"
+            ToolType="BlobTool" ParameterName="ThresholdValue"/>
+        <controls:CheckBoxParameter Label="Invert Polarity"
+            IsChecked="{Binding InvertPolarity}"
+            ToolType="BlobTool" ParameterName="InvertPolarity"/>
+
+        <!-- Area Filter -->
+        <TextBlock Text="Area Filter" Style="{StaticResource SectionHeaderStyle}"/>
+        <controls:TextBoxParameter Label="Min Area"
+            Value="{Binding MinArea}"
+            ToolType="BlobTool" ParameterName="MinArea"/>
+        <controls:TextBoxParameter Label="Max Area"
+            Value="{Binding MaxArea}"
+            ToolType="BlobTool" ParameterName="MaxArea"/>
+
+        <!-- Shape Filter -->
+        <TextBlock Text="Shape Filter" Style="{StaticResource SectionHeaderStyle}"/>
+        <controls:SliderParameter Label="Min Circularity"
+            Value="{Binding MinCircularity}" Minimum="0" Maximum="1"
+            TickFrequency="0.05" ValueFormat="F2"
+            ToolType="BlobTool" ParameterName="MinCircularity"/>
+        <controls:SliderParameter Label="Max Circularity"
+            Value="{Binding MaxCircularity}" Minimum="0" Maximum="1"
+            TickFrequency="0.05" ValueFormat="F2"
+            ToolType="BlobTool" ParameterName="MaxCircularity"/>
+        <controls:SliderParameter Label="Max Blob Count"
+            Value="{Binding MaxBlobCount}" Minimum="1" Maximum="100"
+            TickFrequency="1" ValueFormat="F0"
+            ToolType="BlobTool" ParameterName="MaxBlobCount"/>
+
+        <!-- Display -->
+        <TextBlock Text="Display" Style="{StaticResource SectionHeaderStyle}"/>
+        <controls:CheckBoxParameter Label="Draw Contours"
+            IsChecked="{Binding DrawContours}"
+            ToolType="BlobTool" ParameterName="DrawContours"/>
+        <controls:CheckBoxParameter Label="Draw Bounding Box"
+            IsChecked="{Binding DrawBoundingBox}"
+            ToolType="BlobTool" ParameterName="DrawBoundingBox"/>
+        <controls:CheckBoxParameter Label="Draw Center Point"
+            IsChecked="{Binding DrawCenterPoint}"
+            ToolType="BlobTool" ParameterName="DrawCenterPoint"/>
+        <controls:CheckBoxParameter Label="Draw Labels"
+            IsChecked="{Binding DrawLabels}"
+            ToolType="BlobTool" ParameterName="DrawLabels"/>
+    </StackPanel>
+</UserControl>

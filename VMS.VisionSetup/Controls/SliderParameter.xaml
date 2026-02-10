@@ -1,0 +1,32 @@
+<UserControl x:Class="VMS.VisionSetup.Controls.SliderParameter"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls"
+             x:Name="Root">
+    <UserControl.Resources>
+        <controls:ValueFormatConverter x:Key="ValueFmtConv"/>
+    </UserControl.Resources>
+    <StackPanel Margin="0,0,0,5">
+        <StackPanel Orientation="Horizontal">
+            <TextBlock Foreground="LightGray" FontSize="12" VerticalAlignment="Center">
+                <Run Text="{Binding Label, ElementName=Root}"/><Run Text=": "/>
+            </TextBlock>
+            <TextBlock Foreground="#00BFFF" FontWeight="Bold" FontSize="12" VerticalAlignment="Center">
+                <TextBlock.Text>
+                    <MultiBinding Converter="{StaticResource ValueFmtConv}">
+                        <Binding Path="Value" ElementName="Root"/>
+                        <Binding Path="ValueFormat" ElementName="Root"/>
+                    </MultiBinding>
+                </TextBlock.Text>
+            </TextBlock>
+            <controls:HelpIcon ToolType="{Binding ToolType, ElementName=Root}"
+                               ParameterName="{Binding ParameterName, ElementName=Root}"
+                               Margin="5,0,0,0" VerticalAlignment="Center"/>
+        </StackPanel>
+        <Slider Value="{Binding Value, ElementName=Root, Mode=TwoWay}"
+                Minimum="{Binding Minimum, ElementName=Root}"
+                Maximum="{Binding Maximum, ElementName=Root}"
+                TickFrequency="{Binding TickFrequency, ElementName=Root}"
+                IsSnapToTickEnabled="{Binding SnapToTick, ElementName=Root}"/>
+    </StackPanel>
+</UserControl>

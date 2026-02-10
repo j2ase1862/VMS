@@ -1,0 +1,28 @@
+<UserControl x:Class="VMS.VisionSetup.Views.ToolSettings.Tools.EdgeDetectionToolSettings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls"
+             xmlns:conv="clr-namespace:VMS.VisionSetup.Converters"
+             xmlns:ip="clr-namespace:VMS.VisionSetup.VisionTools.ImageProcessing">
+    <StackPanel>
+        <controls:EnumComboBoxParameter Label="Method"
+            ItemsSource="{conv:EnumValues {x:Type ip:EdgeDetectionMethod}}"
+            SelectedValue="{Binding Method}"
+            ToolType="EdgeDetectionTool" ParameterName="Method"/>
+        <controls:SliderParameter Label="Canny Threshold 1"
+            Value="{Binding CannyThreshold1}" Minimum="0" Maximum="255"
+            TickFrequency="1" ValueFormat="F0"
+            ToolType="EdgeDetectionTool" ParameterName="CannyThreshold1"/>
+        <controls:SliderParameter Label="Canny Threshold 2"
+            Value="{Binding CannyThreshold2}" Minimum="0" Maximum="255"
+            TickFrequency="1" ValueFormat="F0"
+            ToolType="EdgeDetectionTool" ParameterName="CannyThreshold2"/>
+        <controls:SliderParameter Label="Aperture Size"
+            Value="{Binding CannyApertureSize}" Minimum="3" Maximum="7"
+            TickFrequency="2" SnapToTick="True" ValueFormat="F0"
+            ToolType="EdgeDetectionTool" ParameterName="CannyApertureSize"/>
+        <controls:CheckBoxParameter Label="L2 Gradient"
+            IsChecked="{Binding L2Gradient}"
+            ToolType="EdgeDetectionTool" ParameterName="L2Gradient"/>
+    </StackPanel>
+</UserControl>

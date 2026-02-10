@@ -1,0 +1,28 @@
+<Window x:Class="VMS.VisionSetup.Views.Recipe.RecipeManagerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:VMS.VisionSetup.Views.Recipe"
+        mc:Ignorable="d"
+        Title="Recipe Manager"
+        Width="900" Height="650"
+        WindowStartupLocation="CenterOwner"
+        Background="#1E1E1E">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="350"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Recipe List Panel -->
+        <local:RecipeListControl x:Name="RecipeListPanel" Grid.Column="0"
+                                  RecipeLoaded="RecipeListPanel_RecipeLoaded"
+                                  RecipeSelected="RecipeListPanel_RecipeSelected"/>
+
+        <!-- Recipe Editor Panel -->
+        <local:RecipeEditorView x:Name="RecipeEditorPanel" Grid.Column="1"
+                                 RecipeSaved="RecipeEditorPanel_RecipeSaved"/>
+    </Grid>
+</Window>

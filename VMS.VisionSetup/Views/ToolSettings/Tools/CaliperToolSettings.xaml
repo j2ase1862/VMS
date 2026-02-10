@@ -1,0 +1,151 @@
+<UserControl x:Class="VMS.VisionSetup.Views.ToolSettings.Tools.CaliperToolSettings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls"
+             xmlns:conv="clr-namespace:VMS.VisionSetup.Converters"
+             xmlns:meas="clr-namespace:VMS.VisionSetup.VisionTools.Measurement">
+    <StackPanel>
+        <!-- Search Region -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Search Region" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:TextBoxParameter Label="Start X"
+                    Value="{Binding StartPoint.X}"
+                    ToolType="CaliperTool" ParameterName="StartPoint.X"/>
+                <controls:TextBoxParameter Label="Start Y"
+                    Value="{Binding StartPoint.Y}"
+                    ToolType="CaliperTool" ParameterName="StartPoint.Y"/>
+                <controls:TextBoxParameter Label="End X"
+                    Value="{Binding EndPoint.X}"
+                    ToolType="CaliperTool" ParameterName="EndPoint.X"/>
+                <controls:TextBoxParameter Label="End Y"
+                    Value="{Binding EndPoint.Y}"
+                    ToolType="CaliperTool" ParameterName="EndPoint.Y"/>
+                <controls:SliderParameter Label="Search Width"
+                    Value="{Binding SearchWidth}" Minimum="1" Maximum="100"
+                    TickFrequency="1" ValueFormat="F0"
+                    ToolType="CaliperTool" ParameterName="SearchWidth"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- Edge Detection -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Edge Detection" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:EnumComboBoxParameter Label="Polarity"
+                    ItemsSource="{conv:EnumValues {x:Type meas:EdgePolarity}}"
+                    SelectedValue="{Binding Polarity}"
+                    ToolType="CaliperTool" ParameterName="Polarity"/>
+                <controls:SliderParameter Label="Edge Threshold"
+                    Value="{Binding EdgeThreshold}" Minimum="1" Maximum="100"
+                    TickFrequency="1" ValueFormat="F0"
+                    ToolType="CaliperTool" ParameterName="EdgeThreshold"/>
+                <controls:SliderParameter Label="Filter Half Width"
+                    Value="{Binding FilterHalfWidth}" Minimum="1" Maximum="10"
+                    TickFrequency="1" SnapToTick="True" ValueFormat="F0"
+                    ToolType="CaliperTool" ParameterName="FilterHalfWidth"/>
+                <controls:EnumComboBoxParameter Label="Mode"
+                    ItemsSource="{conv:EnumValues {x:Type meas:CaliperMode}}"
+                    SelectedValue="{Binding Mode}"
+                    ToolType="CaliperTool" ParameterName="Mode"/>
+                <controls:SliderParameter Label="Max Edges"
+                    Value="{Binding MaxEdges}" Minimum="1" Maximum="50"
+                    TickFrequency="1" SnapToTick="True" ValueFormat="F0"
+                    ToolType="CaliperTool" ParameterName="MaxEdges"/>
+                <controls:EnumComboBoxParameter Label="Selection Mode"
+                    ItemsSource="{conv:EnumValues {x:Type meas:ScorerMode}}"
+                    SelectedValue="{Binding ScorerMode}"
+                    ToolType="CaliperTool" ParameterName="ScorerMode"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- Edge Pair -->
+        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Edge Pair" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:SliderParameter Label="Expected Width"
+                    Value="{Binding ExpectedWidth}" Minimum="1" Maximum="500"
+                    TickFrequency="1" ValueFormat="F0"
+                    ToolType="CaliperTool" ParameterName="ExpectedWidth"/>
+                <controls:SliderParameter Label="Width Tolerance"
+                    Value="{Binding WidthTolerance}" Minimum="0" Maximum="200"
+                    TickFrequency="1" ValueFormat="F0"
+                    ToolType="CaliperTool" ParameterName="WidthTolerance"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- Profile Graph -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Profile Graph" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <Border Background="#1A1A1A" BorderBrush="#555555" BorderThickness="1"
+                        Margin="0,5,0,5" Height="140">
+                    <Grid>
+                        <Canvas x:Name="ProfileCanvas" ClipToBounds="True"
+                                SizeChanged="ProfileCanvas_SizeChanged"/>
+                        <TextBlock x:Name="ProfilePlaceholder"
+                                   Text="Run tool to see profile"
+                                   Foreground="Gray" FontSize="11"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+                <!-- Legend -->
+                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,0">
+                        <Border Width="12" Height="3" Background="#C0C0C0" VerticalAlignment="Center" Margin="0,0,3,0"/>
+                        <TextBlock Text="Profile" Foreground="Gray" FontSize="10"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,0">
+                        <Border Width="12" Height="3" Background="#00BFFF" VerticalAlignment="Center" Margin="0,0,3,0"/>
+                        <TextBlock Text="Gradient" Foreground="Gray" FontSize="10"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,0">
+                        <Border Width="12" Height="3" Background="#FF5555" VerticalAlignment="Center" Margin="0,0,3,0"/>
+                        <TextBlock Text="Threshold" Foreground="Gray" FontSize="10"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,0">
+                        <Border Width="12" Height="3" Background="#00FF00" VerticalAlignment="Center" Margin="0,0,3,0"/>
+                        <TextBlock Text="Edge" Foreground="Gray" FontSize="10"/>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </Expander>
+
+        <!-- Advanced (Scorer) -->
+        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Advanced (Scorer)" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:SliderParameter Label="Expected Position"
+                    Value="{Binding ExpectedPosition}" Minimum="-1" Maximum="1000"
+                    TickFrequency="1" ValueFormat="F0"
+                    ToolType="CaliperTool" ParameterName="ExpectedPosition"/>
+                <controls:SliderParameter Label="Contrast Weight"
+                    Value="{Binding ContrastWeight}" Minimum="0" Maximum="5"
+                    TickFrequency="0.1" ValueFormat="F2"
+                    ToolType="CaliperTool" ParameterName="ContrastWeight"/>
+                <controls:SliderParameter Label="Position Weight"
+                    Value="{Binding PositionWeight}" Minimum="0" Maximum="5"
+                    TickFrequency="0.1" ValueFormat="F2"
+                    ToolType="CaliperTool" ParameterName="PositionWeight"/>
+                <controls:SliderParameter Label="Position Sigma"
+                    Value="{Binding PositionSigma}" Minimum="1" Maximum="500"
+                    TickFrequency="1" ValueFormat="F0"
+                    ToolType="CaliperTool" ParameterName="PositionSigma"/>
+                <controls:SliderParameter Label="Polarity Weight"
+                    Value="{Binding PolarityWeight}" Minimum="0" Maximum="5"
+                    TickFrequency="0.1" ValueFormat="F2"
+                    ToolType="CaliperTool" ParameterName="PolarityWeight"/>
+            </StackPanel>
+        </Expander>
+    </StackPanel>
+</UserControl>

@@ -1,0 +1,41 @@
+<UserControl x:Class="VMS.VisionSetup.Views.ToolSettings.Tools.LineFitToolSettings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls"
+             xmlns:conv="clr-namespace:VMS.VisionSetup.Converters"
+             xmlns:meas="clr-namespace:VMS.VisionSetup.VisionTools.Measurement">
+    <StackPanel>
+        <controls:SliderParameter Label="Num Calipers"
+            Value="{Binding NumCalipers}" Minimum="2" Maximum="50"
+            TickFrequency="1" ValueFormat="F0"
+            ToolType="LineFitTool" ParameterName="NumCalipers"/>
+        <controls:SliderParameter Label="Search Length"
+            Value="{Binding SearchLength}" Minimum="10" Maximum="200"
+            TickFrequency="5" ValueFormat="F0"
+            ToolType="LineFitTool" ParameterName="SearchLength"/>
+        <controls:SliderParameter Label="Search Width"
+            Value="{Binding SearchWidth}" Minimum="1" Maximum="50"
+            TickFrequency="1" ValueFormat="F0"
+            ToolType="LineFitTool" ParameterName="SearchWidth"/>
+        <controls:EnumComboBoxParameter Label="Polarity"
+            ItemsSource="{conv:EnumValues {x:Type meas:EdgePolarity}}"
+            SelectedValue="{Binding Polarity}"
+            ToolType="LineFitTool" ParameterName="Polarity"/>
+        <controls:SliderParameter Label="Edge Threshold"
+            Value="{Binding EdgeThreshold}" Minimum="1" Maximum="100"
+            TickFrequency="1" ValueFormat="F0"
+            ToolType="LineFitTool" ParameterName="EdgeThreshold"/>
+        <controls:EnumComboBoxParameter Label="Fit Method"
+            ItemsSource="{conv:EnumValues {x:Type meas:LineFitMethod}}"
+            SelectedValue="{Binding FitMethod}"
+            ToolType="LineFitTool" ParameterName="FitMethod"/>
+        <controls:SliderParameter Label="RANSAC Threshold"
+            Value="{Binding RansacThreshold}" Minimum="0.1" Maximum="20"
+            TickFrequency="0.5" ValueFormat="F2"
+            ToolType="LineFitTool" ParameterName="RansacThreshold"/>
+        <controls:SliderParameter Label="Min Found Calipers"
+            Value="{Binding MinFoundCalipers}" Minimum="2" Maximum="20"
+            TickFrequency="1" ValueFormat="F0"
+            ToolType="LineFitTool" ParameterName="MinFoundCalipers"/>
+    </StackPanel>
+</UserControl>
