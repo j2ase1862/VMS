@@ -26,50 +26,110 @@
         <converters:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisibility"/>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
 
-        <!-- 버튼 스타일 -->
+        <!-- Toolbar Button Style -->
         <Style x:Key="ToolbarButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="#0078D4"/>
             <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Padding" Value="15,8"/>
-            <Setter Property="Margin" Value="5,0"/>
+            <Setter Property="Padding" Value="14,7"/>
+            <Setter Property="Margin" Value="3,0"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Style.Triggers>
-                <Trigger Property="IsEnabled" Value="False">
-                    <Setter Property="Background" Value="#555555"/>
-                    <Setter Property="Foreground" Value="#999999"/>
-                </Trigger>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#1084D8"/>
-                </Trigger>
-            </Style.Triggers>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ButtonBorder" CornerRadius="6"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="Transparent" BorderThickness="1"
+                                SnapsToDevicePixels="True">
+                            <Border x:Name="HoverOverlay" CornerRadius="5" Background="Transparent"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                  TextBlock.Foreground="{TemplateBinding Foreground}"
+                                                  TextBlock.FontWeight="{TemplateBinding FontWeight}"
+                                                  TextBlock.FontSize="{TemplateBinding FontSize}"/>
+                            </Border>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="HoverOverlay" Property="Background" Value="#18FFFFFF"/>
+                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#30FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="HoverOverlay" Property="Background" Value="#15000000"/>
+                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="Transparent"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="ButtonBorder" Property="Background" Value="#3A3A3C"/>
+                                <Setter Property="Foreground" Value="#666666"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
+        <!-- Danger Button Style -->
         <Style x:Key="DangerButtonStyle" TargetType="Button" BasedOn="{StaticResource ToolbarButtonStyle}">
-            <Setter Property="Background" Value="#D32F2F"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#E53935"/>
-                </Trigger>
-            </Style.Triggers>
+            <Setter Property="Background" Value="#C42B1C"/>
         </Style>
 
-        <!-- 도구 아이템 스타일 -->
-        <Style x:Key="ToolItemBorderStyle" TargetType="Border">
-            <Setter Property="Background" Value="#3E3E42"/>
-            <Setter Property="BorderBrush" Value="#555555"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="10,8"/>
-            <Setter Property="CornerRadius" Value="4"/>
+        <!-- Step Control Button Style -->
+        <Style x:Key="StepControlButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Margin" Value="2"/>
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                    <Setter Property="BorderBrush" Value="#0078D4"/>
-                    <Setter Property="Background" Value="#0078D4"/>
-                </DataTrigger>
-            </Style.Triggers>
+            <Setter Property="Padding" Value="5,4"/>
+            <Setter Property="Margin" Value="1,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                CornerRadius="4" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#3E3E42"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#505054"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.35"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Tool Item Close Button Style -->
+        <Style x:Key="ToolCloseButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#999999"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="4,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                CornerRadius="3" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#44FFFFFF"/>
+                                <Setter Property="Foreground" Value="#FF5252"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </Window.Resources>
 
@@ -153,30 +213,75 @@
         </Menu>
 
         <!-- Toolbar -->
-        <Border Grid.Row="1" Background="#2D2D30" Padding="10,8">
+        <Border Grid.Row="1" Background="#2D2D30" Padding="10,5">
             <StackPanel Orientation="Horizontal">
-                <Button Content="Open Image"
-                        Command="{Binding OpenImageFileCommand}"
-                        Style="{StaticResource ToolbarButtonStyle}"/>
-                <Button Content="Run All"
-                        Command="{Binding RunAllCommand}"
-                        Style="{StaticResource ToolbarButtonStyle}"/>
-                <Button Content="Run Selected"
-                        Command="{Binding RunSelectedCommand}"
-                        Style="{StaticResource ToolbarButtonStyle}"/>
-                <Separator Margin="10,0" Background="#555555" Width="1"/>
-                <Button Content="Clear All"
-                        Command="{Binding ClearToolsCommand}"
-                        Style="{StaticResource DangerButtonStyle}"/>
-                <Separator Margin="10,0" Background="#555555" Width="1"/>
-                <Button Content="Recipe"
-                        Click="RecipeManager_Click"
-                        Style="{StaticResource ToolbarButtonStyle}"
-                        Background="#FF9800"/>
-                <Button Content="Camera"
-                        Click="CameraManager_Click"
-                        Style="{StaticResource ToolbarButtonStyle}"
-                        Background="#9C27B0"/>
+                <!-- File -->
+                <Button Command="{Binding OpenImageFileCommand}"
+                        Style="{StaticResource ToolbarButtonStyle}" ToolTip="Open Image (Ctrl+O)">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Data="M2,6 L2,16 L18,16 L18,8 L11,8 L9,6 Z"
+                              Stroke="White" StrokeThickness="1.4" Fill="Transparent"
+                              Width="15" Height="12" Stretch="Uniform" VerticalAlignment="Center"/>
+                        <TextBlock Text="Open Image" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <Border Width="1" Background="#4A4A4C" Margin="8,4" CornerRadius="1"/>
+
+                <!-- Execution -->
+                <Button Command="{Binding RunAllCommand}"
+                        Style="{StaticResource ToolbarButtonStyle}" ToolTip="Run All Tools (F5)">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Data="M4,2 L16,10 L4,18 Z" Fill="White"
+                              Width="11" Height="13" Stretch="Uniform" VerticalAlignment="Center"/>
+                        <TextBlock Text="Run All" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding RunSelectedCommand}"
+                        Style="{StaticResource ToolbarButtonStyle}" ToolTip="Run Selected Tool (F6)">
+                    <StackPanel Orientation="Horizontal">
+                        <Canvas Width="15" Height="13" VerticalAlignment="Center">
+                            <Path Data="M1,1 L10,6.5 L1,12 Z" Fill="White"/>
+                            <Path Data="M12.5,1 L12.5,12" Stroke="White" StrokeThickness="2"/>
+                        </Canvas>
+                        <TextBlock Text="Run Selected" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <Border Width="1" Background="#4A4A4C" Margin="8,4" CornerRadius="1"/>
+
+                <!-- Clear -->
+                <Button Command="{Binding ClearToolsCommand}"
+                        Style="{StaticResource DangerButtonStyle}" ToolTip="Clear All Tools">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Data="M6,6 L6,17 L14,17 L14,6 M4,4 L16,4 M8,2 L12,2 M9,8 L9,15 M11,8 L11,15"
+                              Stroke="White" StrokeThickness="1.3"
+                              Width="13" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
+                        <TextBlock Text="Clear All" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <Border Width="1" Background="#4A4A4C" Margin="8,4" CornerRadius="1"/>
+
+                <!-- Management -->
+                <Button Click="RecipeManager_Click"
+                        Style="{StaticResource ToolbarButtonStyle}" Background="#E67E22" ToolTip="Recipe Manager">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Data="M4,2 L4,18 L14,18 L14,6 L10,2 Z M10,2 L10,6 L14,6 M7,10 L12,10 M7,13 L11,13"
+                              Stroke="White" StrokeThickness="1.2" Fill="Transparent"
+                              Width="13" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
+                        <TextBlock Text="Recipe" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Click="CameraManager_Click"
+                        Style="{StaticResource ToolbarButtonStyle}" Background="#7B1FA2" ToolTip="Camera Manager">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Data="M2,6 L2,15 L18,15 L18,6 L15,6 L13,4 L7,4 L5,6 Z M10,7.5 A2.5,2.5 0 1 1 10,12.5 A2.5,2.5 0 1 1 10,7.5"
+                              Stroke="White" StrokeThickness="1.2" Fill="Transparent"
+                              Width="15" Height="12" Stretch="Uniform" VerticalAlignment="Center"/>
+                        <TextBlock Text="Camera" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             </StackPanel>
         </Border>
 
@@ -241,32 +346,28 @@
                         <StackPanel Grid.Column="1" Orientation="Horizontal">
                             <!-- Add Step -->
                             <Button Command="{Binding AddStepCommand}" ToolTip="Add Step"
-                                    Background="Transparent" BorderThickness="0" Cursor="Hand"
-                                    Padding="4,2" Margin="1,0">
+                                    Style="{StaticResource StepControlButtonStyle}">
                                 <Path Data="M12,2 L12,22 M2,12 L22,12" Stroke="#4CAF50" StrokeThickness="2"
-                                      Width="16" Height="16" Stretch="Uniform"/>
+                                      Width="14" Height="14" Stretch="Uniform"/>
                             </Button>
                             <!-- Delete Step -->
                             <Button Command="{Binding DeleteStepCommand}" ToolTip="Delete Step"
-                                    Background="Transparent" BorderThickness="0" Cursor="Hand"
-                                    Padding="4,2" Margin="1,0">
+                                    Style="{StaticResource StepControlButtonStyle}">
                                 <Path Data="M3,6 L21,6 M8,6 L8,2 L16,2 L16,6 M5,6 L5,22 L19,22 L19,6"
                                       Stroke="#F44336" StrokeThickness="1.5"
-                                      Width="16" Height="16" Stretch="Uniform"/>
+                                      Width="14" Height="14" Stretch="Uniform"/>
                             </Button>
                             <!-- Move Up -->
                             <Button Command="{Binding MoveStepUpCommand}" ToolTip="Move Up"
-                                    Background="Transparent" BorderThickness="0" Cursor="Hand"
-                                    Padding="4,2" Margin="1,0">
+                                    Style="{StaticResource StepControlButtonStyle}">
                                 <Path Data="M12,4 L4,14 L9,14 L9,20 L15,20 L15,14 L20,14 Z"
-                                      Fill="#2196F3" Width="16" Height="16" Stretch="Uniform"/>
+                                      Fill="#2196F3" Width="14" Height="14" Stretch="Uniform"/>
                             </Button>
                             <!-- Move Down -->
                             <Button Command="{Binding MoveStepDownCommand}" ToolTip="Move Down"
-                                    Background="Transparent" BorderThickness="0" Cursor="Hand"
-                                    Padding="4,2" Margin="1,0">
+                                    Style="{StaticResource StepControlButtonStyle}">
                                 <Path Data="M12,20 L4,10 L9,10 L9,4 L15,4 L15,10 L20,10 Z"
-                                      Fill="#FF9800" Width="16" Height="16" Stretch="Uniform"/>
+                                      Fill="#FF9800" Width="14" Height="14" Stretch="Uniform"/>
                             </Button>
                         </StackPanel>
                     </Grid>
@@ -419,11 +520,14 @@
                                 </ItemsControl.ItemContainerStyle>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Style="{StaticResource ToolItemBorderStyle}"
+                                        <Border x:Name="ToolOuterBorder"
+                                                BorderBrush="#555555" BorderThickness="1"
+                                                CornerRadius="4,4,0,0" Cursor="Hand" Margin="2"
                                                 MouseLeftButtonDown="Item_MouseLeftButtonDown"
                                                 MouseMove="Item_MouseMove"
                                                 MouseLeftButtonUp="Item_MouseLeftButtonUp"
-                                                MouseRightButtonDown="Item_MouseRightButtonDown">
+                                                MouseRightButtonDown="Item_MouseRightButtonDown"
+                                                MinWidth="150">
                                             <Border.ContextMenu>
                                                 <ContextMenu>
                                                     <ContextMenu.Style>
@@ -433,6 +537,9 @@
                                                             <Setter Property="BorderBrush" Value="#555555"/>
                                                         </Style>
                                                     </ContextMenu.Style>
+                                                    <MenuItem Header="Rename Tool"
+                                                              Click="RenameToolMenuItem_Click"/>
+                                                    <Separator Background="#555555"/>
                                                     <MenuItem Header="Connect Image"
                                                               Tag="Image"
                                                               Click="ConnectMenuItem_Click">
@@ -463,19 +570,52 @@
                                                               Foreground="#FF5252"/>
                                                 </ContextMenu>
                                             </Border.ContextMenu>
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="{Binding Name}"
-                                                           Foreground="White" FontWeight="SemiBold"
-                                                           VerticalAlignment="Center"/>
-                                                <Button Content="X"
-                                                        Command="{Binding DataContext.RemoveToolCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                        CommandParameter="{Binding}"
-                                                        Background="Transparent" Foreground="Red"
-                                                        BorderThickness="0" Padding="5,0"
-                                                        Margin="10,0,0,0" Cursor="Hand"
-                                                        FontWeight="Bold"/>
-                                            </StackPanel>
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+
+                                                <!-- Tab Header: ToolType + Close button -->
+                                                <Border x:Name="TabHeader" Grid.Row="0"
+                                                        Background="#1A3A5C"
+                                                        CornerRadius="3,3,0,0"
+                                                        Padding="8,4">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Grid.Column="0"
+                                                                   Text="{Binding ToolType}"
+                                                                   Foreground="#B0C4DE" FontSize="11"
+                                                                   FontWeight="SemiBold"
+                                                                   VerticalAlignment="Center"
+                                                                   TextTrimming="CharacterEllipsis"/>
+                                                        <Button Grid.Column="1" Content="X"
+                                                                Style="{StaticResource ToolCloseButtonStyle}"
+                                                                Command="{Binding DataContext.RemoveToolCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                CommandParameter="{Binding}"
+                                                                Margin="6,0,0,0"/>
+                                                    </Grid>
+                                                </Border>
+
+                                                <!-- Tab Body: Name -->
+                                                <Border Grid.Row="1" Background="#3E3E42"
+                                                        Padding="8,5">
+                                                    <TextBlock Text="{Binding Name}"
+                                                               Foreground="White" FontSize="12"
+                                                               FontWeight="Normal"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                </Border>
+                                            </Grid>
                                         </Border>
+                                        <DataTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                <Setter TargetName="ToolOuterBorder" Property="BorderBrush" Value="#0078D4"/>
+                                                <Setter TargetName="TabHeader" Property="Background" Value="#0078D4"/>
+                                            </DataTrigger>
+                                        </DataTemplate.Triggers>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>

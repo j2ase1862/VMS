@@ -2,6 +2,7 @@ using VMS.VisionSetup.Controls;
 using VMS.VisionSetup.Models;
 using VMS.VisionSetup.Services;
 using VMS.VisionSetup.ViewModels;
+using VMS.VisionSetup.Views;
 using VMS.VisionSetup.Views.Camera;
 using VMS.VisionSetup.Views.Recipe;
 using VMS.VisionSetup.VisionTools.PatternMatching;
@@ -160,9 +161,9 @@ namespace VMS.VisionSetup
             if (connection.SourceToolItem == null || connection.TargetToolItem == null)
                 return;
 
-            // 도구 Border의 예상 크기 (텍스트 + 패딩 + X 버튼 등)
-            const double toolWidth = 120;
-            const double toolHeight = 30;
+            // 도구 Border의 예상 크기 (탭 컨트롤: 헤더 + 바디)
+            const double toolWidth = 150;
+            const double toolHeight = 50;
 
             // Source 도구의 중심 좌표
             double sourceX = connection.SourceToolItem.X + toolWidth / 2;
@@ -346,6 +347,36 @@ namespace VMS.VisionSetup
         }
 
         /// <summary>
+        /// 도구 이름 변경 메뉴 클릭
+        /// </summary>
+        private void RenameToolMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuItem menuItem)
+            {
+                var contextMenu = menuItem.Parent as ContextMenu;
+                var border = contextMenu?.PlacementTarget as Border;
+                var tool = border?.DataContext as ToolItem;
+
+                if (tool == null) return;
+
+                var dialog = new RenameDialog
+                {
+                    Owner = this,
+                    ToolName = tool.Name
+                };
+
+                if (dialog.ShowDialog() == true)
+                {
+                    tool.Name = dialog.ToolName;
+                    if (tool.VisionTool != null)
+                    {
+                        tool.VisionTool.Name = dialog.ToolName;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// 연결 모드에서 마우스 이동 - 임시 연결선 그리기
         /// </summary>
         private void ConnectionMode_MouseMove(object sender, MouseEventArgs e)
@@ -354,8 +385,8 @@ namespace VMS.VisionSetup
 
             TempConnectionCanvas.Children.Clear();
 
-            const double toolWidth = 120;
-            const double toolHeight = 30;
+            const double toolWidth = 150;
+            const double toolHeight = 50;
 
             double sourceX = _connectionSourceTool.X + toolWidth / 2;
             double sourceY = _connectionSourceTool.Y + toolHeight / 2;

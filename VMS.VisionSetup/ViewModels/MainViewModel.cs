@@ -463,6 +463,7 @@ namespace VMS.VisionSetup.ViewModels
                 VisionTool = visionTool
             };
 
+            visionTool.Name = newTool.Name;
             DroppedTools.Add(newTool);
             VisionService.Instance.AddTool(visionTool);
 
