@@ -1,3 +1,4 @@
+using VMS.VisionSetup.Interfaces;
 using VMS.VisionSetup.Models;
 using VMS.VisionSetup.VisionTools.BlobAnalysis;
 using VMS.VisionSetup.VisionTools.ImageProcessing;
@@ -12,6 +13,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Numerics;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -21,7 +23,7 @@ namespace VMS.VisionSetup.Services
     /// 비전 처리 서비스
     /// Cognex VisionPro의 CogJobManager 역할을 대체
     /// </summary>
-    public class VisionService : ObservableObject
+    public class VisionService : ObservableObject, IVisionService
     {
         private static VisionService? _instance;
         public static VisionService Instance => _instance ??= new VisionService();
@@ -746,6 +748,7 @@ namespace VMS.VisionSetup.Services
                 "EdgeDetectionTool" => new EdgeDetectionTool(),
                 "MorphologyTool" => new MorphologyTool(),
                 "HistogramTool" => new HistogramTool(),
+                "HeightSlicerTool" => new HeightSlicerTool(),
 
                 // Pattern Matching
                 "FeatureMatchTool" => new FeatureMatchTool(),
@@ -777,6 +780,10 @@ namespace VMS.VisionSetup.Services
                     "EdgeDetectionTool",
                     "MorphologyTool",
                     "HistogramTool"
+                },
+                ["3D Analysis"] = new[]
+                {
+                    "HeightSlicerTool"
                 },
                 ["Pattern Matching"] = new[]
                 {
@@ -813,8 +820,61 @@ namespace VMS.VisionSetup.Services
                 "CaliperTool" => "Caliper",
                 "LineFitTool" => "Line Fit",
                 "CircleFitTool" => "Circle Fit",
+                "HeightSlicerTool" => "Height Slicer",
                 _ => toolType
             };
+        }
+
+        /// <summary>
+        /// 3D 포인트 클라우드를 높이 슬라이싱하여 2D 그레이스케일 Height Map 생성
+        /// Y축 = 높이, 정렬된(organized) 그리드 포인트 클라우드 필요
+        /// </summary>
+        public (Mat HeightMap, HeightMapMetadata Metadata) GenerateHeightMap(
+            PointCloudData pointCloud, float zRef, float zMin, float zMax)
+        {
+            if (!pointCloud.IsOrganized)
+                throw new InvalidOperationException("Height map requires an organized (grid) point cloud.");
+
+            int w = pointCloud.GridWidth;
+            int h = pointCloud.GridHeight;
+            float range = zMax - zMin;
+            if (range <= 0) range = 1f;
+
+            var heightMap = new Mat(h, w, MatType.CV_8UC1, Scalar.All(0));
+            var pixelTo3D = new Vector3?[w * h];
+
+            unsafe
+            {
+                byte* ptr = (byte*)heightMap.Data;
+                var positions = pointCloud.Positions;
+
+                for (int row = 0; row < h; row++)
+                {
+                    for (int col = 0; col < w; col++)
+                    {
+                        int idx = row * w + col;
+                        var pos = positions[idx];
+                        pixelTo3D[idx] = pos;
+
+                        float normalizedY = pos.Y - zRef;
+                        float t = (normalizedY - zMin) / range;
+                        t = Math.Clamp(t, 0f, 1f);
+                        ptr[idx] = (byte)(t * 255f);
+                    }
+                }
+            }
+
+            var metadata = new HeightMapMetadata
+            {
+                Width = w,
+                Height = h,
+                ZReference = zRef,
+                ZMin = zMin,
+                ZMax = zMax,
+                PixelTo3D = pixelTo3D
+            };
+
+            return (heightMap, metadata);
         }
 
         /// <summary>

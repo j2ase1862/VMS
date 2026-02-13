@@ -217,6 +217,11 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["MinFoundCalipers"] = circleFit.MinFoundCalipers;
                     break;
 
+                case HeightSlicerTool heightSlicer:
+                    config.Parameters["MinZ"] = heightSlicer.MinZ;
+                    config.Parameters["MaxZ"] = heightSlicer.MaxZ;
+                    break;
+
                 default:
                     // Unknown tool type - save what we can
                     break;
@@ -247,6 +252,7 @@ namespace VMS.VisionSetup.Services
                 "CaliperTool" => DeserializeCaliperTool(config),
                 "LineFitTool" => DeserializeLineFitTool(config),
                 "CircleFitTool" => DeserializeCircleFitTool(config),
+                "HeightSlicerTool" => DeserializeHeightSlicerTool(config),
                 _ => null
             };
 
@@ -631,6 +637,19 @@ namespace VMS.VisionSetup.Services
                 tool.RansacThreshold = GetDouble(rt);
             if (p.TryGetValue("MinFoundCalipers", out var mfc))
                 tool.MinFoundCalipers = GetInt(mfc);
+
+            return tool;
+        }
+
+        private static HeightSlicerTool DeserializeHeightSlicerTool(ToolConfig config)
+        {
+            var tool = new HeightSlicerTool();
+            var p = config.Parameters;
+
+            if (p.TryGetValue("MinZ", out var minZ))
+                tool.MinZ = (float)GetDouble(minZ);
+            if (p.TryGetValue("MaxZ", out var maxZ))
+                tool.MaxZ = (float)GetDouble(maxZ);
 
             return tool;
         }
