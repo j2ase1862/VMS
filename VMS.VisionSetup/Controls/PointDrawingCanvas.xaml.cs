@@ -5,6 +5,7 @@ using HelixToolkit.Wpf.SharpDX;
 using System.Numerics;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using VMS.VisionSetup.Models;
 
 namespace VMS.VisionSetup.Controls
@@ -12,6 +13,9 @@ namespace VMS.VisionSetup.Controls
     public partial class PointDrawingCanvas : UserControl
     {
         private DefaultEffectsManager? _effectsManager;
+        private float _dataYMin;
+        private float _dataYMax;
+        private bool _suppressSliderEvent;
 
         #region Dependency Properties
 
@@ -134,34 +138,47 @@ namespace VMS.VisionSetup.Controls
                 PointCloudModel.Geometry = null;
                 PointCountText.Text = "No points";
                 StatusText.Text = "3D View Ready";
+                ColorBarPanel.Visibility = Visibility.Collapsed;
                 return;
             }
 
             var positions = data.Positions;
-            var colors = data.Colors;
 
+            // Compute Y min/max from data
+            _dataYMin = float.MaxValue;
+            _dataYMax = float.MinValue;
+            foreach (var p in positions)
+            {
+                if (p.Y < _dataYMin) _dataYMin = p.Y;
+                if (p.Y > _dataYMax) _dataYMax = p.Y;
+            }
+
+            // Setup sliders
+            _suppressSliderEvent = true;
+            SliderMin.Minimum = _dataYMin;
+            SliderMin.Maximum = _dataYMax;
+            SliderMin.Value = _dataYMin;
+            SliderMax.Minimum = _dataYMin;
+            SliderMax.Maximum = _dataYMax;
+            SliderMax.Value = _dataYMax;
+            _suppressSliderEvent = false;
+
+            MinValueLabel.Text = _dataYMin.ToString("F1");
+            MaxValueLabel.Text = _dataYMax.ToString("F1");
+
+            // Build geometry with positions and indices
             var pointPositions = new Vector3Collection(positions.Length);
-            var pointColors = new Color4Collection(positions.Length);
-
             for (int i = 0; i < positions.Length; i++)
             {
                 var p = positions[i];
                 pointPositions.Add(new Vector3(p.X, p.Y, p.Z));
-
-                if (i < colors.Length)
-                {
-                    var c = colors[i];
-                    pointColors.Add(new Color4(c.R / 255f, c.G / 255f, c.B / 255f, 1f));
-                }
-                else
-                {
-                    pointColors.Add(new Color4(1, 1, 1, 1));
-                }
             }
 
             var indices = new IntCollection(positions.Length);
             for (int i = 0; i < positions.Length; i++)
                 indices.Add(i);
+
+            var pointColors = BuildJetColors(positions, _dataYMin, _dataYMax);
 
             var geometry = new PointGeometry3D
             {
@@ -172,10 +189,140 @@ namespace VMS.VisionSetup.Controls
 
             PointCloudModel.Geometry = geometry;
 
+            ColorBarPanel.Visibility = Visibility.Visible;
             PointCountText.Text = $"{positions.Length:N0} points";
             StatusText.Text = $"Loaded: {data.Name} ({positions.Length:N0} points)";
 
             AutoFitCamera(positions);
+        }
+
+        #endregion
+
+        #region Jet Colormap
+
+        private static Color4 JetColormap(float t)
+        {
+            // Clamp to [0,1]
+            t = Math.Clamp(t, 0f, 1f);
+
+            float r, g, b;
+
+            if (t < 0.25f)
+            {
+                // Blue → Cyan: R=0, G rises, B=1
+                float s = t / 0.25f;
+                r = 0f; g = s; b = 1f;
+            }
+            else if (t < 0.5f)
+            {
+                // Cyan → Green: R=0, G=1, B falls
+                float s = (t - 0.25f) / 0.25f;
+                r = 0f; g = 1f; b = 1f - s;
+            }
+            else if (t < 0.75f)
+            {
+                // Green → Yellow: R rises, G=1, B=0
+                float s = (t - 0.5f) / 0.25f;
+                r = s; g = 1f; b = 0f;
+            }
+            else
+            {
+                // Yellow → Red: R=1, G falls, B=0
+                float s = (t - 0.75f) / 0.25f;
+                r = 1f; g = 1f - s; b = 0f;
+            }
+
+            return new Color4(r, g, b, 1f);
+        }
+
+        private static Color4Collection BuildJetColors(Vector3[] positions, float yMin, float yMax)
+        {
+            var colors = new Color4Collection(positions.Length);
+            float range = yMax - yMin;
+
+            for (int i = 0; i < positions.Length; i++)
+            {
+                float t = range > 0.0001f ? (positions[i].Y - yMin) / range : 0.5f;
+                colors.Add(JetColormap(t));
+            }
+
+            return colors;
+        }
+
+        private void RecolorPoints()
+        {
+            if (PointCloud == null || PointCloud.Positions.Length == 0) return;
+            if (PointCloudModel.Geometry is not PointGeometry3D) return;
+
+            float sliderMin = (float)SliderMin.Value;
+            float sliderMax = (float)SliderMax.Value;
+
+            var positions = PointCloud.Positions;
+            var colors = BuildJetColors(positions, sliderMin, sliderMax);
+
+            // Fully rebuild geometry from source data to force GPU buffer update
+            var pointPositions = new Vector3Collection(positions.Length);
+            var indices = new IntCollection(positions.Length);
+            for (int i = 0; i < positions.Length; i++)
+            {
+                var p = positions[i];
+                pointPositions.Add(new Vector3(p.X, p.Y, p.Z));
+                indices.Add(i);
+            }
+
+            PointCloudModel.Geometry = null;
+            PointCloudModel.Geometry = new PointGeometry3D
+            {
+                Positions = pointPositions,
+                Indices = indices,
+                Colors = colors
+            };
+        }
+
+        private void SliderMin_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (_suppressSliderEvent || SliderMax == null || MinValueLabel == null) return;
+
+            // Clamp min to not exceed max
+            if (SliderMin.Value > SliderMax.Value)
+            {
+                _suppressSliderEvent = true;
+                SliderMin.Value = SliderMax.Value;
+                _suppressSliderEvent = false;
+            }
+
+            MinValueLabel.Text = SliderMin.Value.ToString("F1");
+            RecolorPoints();
+        }
+
+        private void SliderMax_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (_suppressSliderEvent || SliderMin == null || MaxValueLabel == null) return;
+
+            // Clamp max to not go below min
+            if (SliderMax.Value < SliderMin.Value)
+            {
+                _suppressSliderEvent = true;
+                SliderMax.Value = SliderMin.Value;
+                _suppressSliderEvent = false;
+            }
+
+            MaxValueLabel.Text = SliderMax.Value.ToString("F1");
+            RecolorPoints();
+        }
+
+        private void SliderMin_MouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            double step = (SliderMin.Maximum - SliderMin.Minimum) * 0.02;
+            SliderMin.Value += e.Delta > 0 ? step : -step;
+            e.Handled = true;
+        }
+
+        private void SliderMax_MouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            double step = (SliderMax.Maximum - SliderMax.Minimum) * 0.02;
+            SliderMax.Value += e.Delta > 0 ? step : -step;
+            e.Handled = true;
         }
 
         private void AutoFitCamera(Vector3[] positions)

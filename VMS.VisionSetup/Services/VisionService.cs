@@ -542,6 +542,7 @@ namespace VMS.VisionSetup.Services
                 try
                 {
                     var depResult = dep.Execute(depInput);
+                    dep.LastResult = depResult;
                     resultMap[dep.Id] = depResult;
                 }
                 finally
@@ -560,7 +561,9 @@ namespace VMS.VisionSetup.Services
 
             try
             {
-                return tool.Execute(toolInput);
+                var result = tool.Execute(toolInput);
+                tool.LastResult = result;
+                return result;
             }
             finally
             {
@@ -676,6 +679,7 @@ namespace VMS.VisionSetup.Services
                 try
                 {
                     var result = tool.Execute(inputImage);
+                    tool.LastResult = result;
                     results.Add(result);
                     Results.Add(result);
                     resultMap[tool.Id] = result;

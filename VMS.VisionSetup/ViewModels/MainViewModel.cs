@@ -1,5 +1,7 @@
+using VMS.VisionSetup.Interfaces;
 using VMS.VisionSetup.Models;
 using VMS.VisionSetup.Services;
+using VMS.VisionSetup.Services.Acquisition;
 using VMS.VisionSetup.ViewModels.ToolSettings;
 using VMS.VisionSetup.VisionTools.BlobAnalysis;
 using VMS.VisionSetup.VisionTools.ImageProcessing;
@@ -38,6 +40,7 @@ namespace VMS.VisionSetup.ViewModels
         private Mat? _currentImage;
         private VisionToolBase? _subscribedTool;
         private bool _isSyncingROI;
+        private ICameraAcquisition? _cameraAcquisition;
         #endregion
 
         #region ROI Sync Events
@@ -253,6 +256,34 @@ namespace VMS.VisionSetup.ViewModels
             set => SetProperty(ref _currentPointCloud, value);
         }
 
+        #region Camera Connection Properties
+
+        // 카메라 정보 팝업 열림 상태
+        private bool _isCameraInfoPopupOpen;
+        public bool IsCameraInfoPopupOpen
+        {
+            get => _isCameraInfoPopupOpen;
+            set => SetProperty(ref _isCameraInfoPopupOpen, value);
+        }
+
+        // 카메라 연결 상태
+        private bool _isCameraConnected;
+        public bool IsCameraConnected
+        {
+            get => _isCameraConnected;
+            set => SetProperty(ref _isCameraConnected, value);
+        }
+
+        // 이미지 획득 중 상태
+        private bool _isAcquiring;
+        public bool IsAcquiring
+        {
+            get => _isAcquiring;
+            set => SetProperty(ref _isAcquiring, value);
+        }
+
+        #endregion
+
         #region Recipe / Camera / Step Properties
 
         // 현재 레시피 이름 표시
@@ -273,10 +304,19 @@ namespace VMS.VisionSetup.ViewModels
             get => _selectedCamera;
             set
             {
+                var previousCamera = _selectedCamera;
                 if (SetProperty(ref _selectedCamera, value))
                 {
+                    // 카메라 변경 시 기존 연결 해제
+                    if (previousCamera != null && IsCameraConnected)
+                    {
+                        _ = DisconnectCamera();
+                    }
+
                     RefreshSteps();
                     AddStepCommand?.NotifyCanExecuteChanged();
+                    AcquireImageCommand?.NotifyCanExecuteChanged();
+                    ConnectCameraCommand?.NotifyCanExecuteChanged();
                 }
             }
         }
@@ -320,6 +360,10 @@ namespace VMS.VisionSetup.ViewModels
         public RelayCommand MoveStepUpCommand { get; }
         public RelayCommand MoveStepDownCommand { get; }
         public RelayCommand LoadSamplePointCloudCommand { get; }
+        public RelayCommand ShowCameraInfoCommand { get; }
+        public RelayCommand AcquireImageCommand { get; }
+        public RelayCommand ConnectCameraCommand { get; }
+        public RelayCommand DisconnectCameraCommand { get; }
         #endregion
 
         #region Constructor
@@ -343,6 +387,10 @@ namespace VMS.VisionSetup.ViewModels
             MoveStepUpCommand = new RelayCommand(MoveStepUp, () => SelectedStep != null);
             MoveStepDownCommand = new RelayCommand(MoveStepDown, () => SelectedStep != null);
             LoadSamplePointCloudCommand = new RelayCommand(LoadSamplePointCloud);
+            ShowCameraInfoCommand = new RelayCommand(ShowCameraInfo);
+            AcquireImageCommand = new RelayCommand(async () => await AcquireImage(), () => SelectedCamera != null && !IsAcquiring);
+            ConnectCameraCommand = new RelayCommand(async () => await ConnectCamera(), () => SelectedCamera != null && !IsCameraConnected);
+            DisconnectCameraCommand = new RelayCommand(async () => await DisconnectCamera(), () => IsCameraConnected);
 
             // 레시피 변경 이벤트 구독
             RecipeService.Instance.CurrentRecipeChanged += OnCurrentRecipeChanged;
@@ -1341,6 +1389,129 @@ namespace VMS.VisionSetup.ViewModels
 
         #endregion
 
+        #region Camera Connection & Acquisition
+
+        private void ShowCameraInfo()
+        {
+            IsCameraInfoPopupOpen = !IsCameraInfoPopupOpen;
+        }
+
+        private async System.Threading.Tasks.Task ConnectCamera()
+        {
+            if (SelectedCamera == null) return;
+
+            try
+            {
+                _cameraAcquisition?.Dispose();
+                _cameraAcquisition = CameraAcquisitionFactory.Create(SelectedCamera);
+
+                var success = await _cameraAcquisition.ConnectAsync(SelectedCamera);
+                IsCameraConnected = success;
+
+                StatusMessage = success
+                    ? $"카메라 연결됨: {SelectedCamera.Name}"
+                    : $"카메라 연결 실패: {SelectedCamera.Name}";
+
+                ConnectCameraCommand?.NotifyCanExecuteChanged();
+                DisconnectCameraCommand?.NotifyCanExecuteChanged();
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"카메라 연결 오류: {ex.Message}";
+                IsCameraConnected = false;
+            }
+        }
+
+        private async System.Threading.Tasks.Task DisconnectCamera()
+        {
+            try
+            {
+                if (_cameraAcquisition != null)
+                {
+                    await _cameraAcquisition.DisconnectAsync();
+                    _cameraAcquisition.Dispose();
+                    _cameraAcquisition = null;
+                }
+
+                IsCameraConnected = false;
+                StatusMessage = "카메라 연결 해제됨";
+
+                ConnectCameraCommand?.NotifyCanExecuteChanged();
+                DisconnectCameraCommand?.NotifyCanExecuteChanged();
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"카메라 연결 해제 오류: {ex.Message}";
+            }
+        }
+
+        private async System.Threading.Tasks.Task AcquireImage()
+        {
+            if (SelectedCamera == null) return;
+
+            IsAcquiring = true;
+            AcquireImageCommand?.NotifyCanExecuteChanged();
+
+            try
+            {
+                // Auto-connect if not connected
+                if (!IsCameraConnected)
+                {
+                    await ConnectCamera();
+                    if (!IsCameraConnected)
+                    {
+                        StatusMessage = "카메라 연결 실패로 획득 중단";
+                        return;
+                    }
+                }
+
+                var result = await _cameraAcquisition!.AcquireAsync();
+
+                if (result.Success && result.Image2D != null)
+                {
+                    CurrentImage = result.Image2D;
+
+                    // 3D 포인트 클라우드가 있으면 적용
+                    if (result.PointCloud != null)
+                    {
+                        CurrentPointCloud = result.PointCloud;
+                    }
+
+                    StatusMessage = result.Message;
+                }
+                else
+                {
+                    StatusMessage = $"이미지 획득 실패: {result.Message}";
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"이미지 획득 오류: {ex.Message}";
+            }
+            finally
+            {
+                IsAcquiring = false;
+                AcquireImageCommand?.NotifyCanExecuteChanged();
+            }
+        }
+
+        /// <summary>
+        /// 카메라 목록을 CameraService에서 다시 로드
+        /// </summary>
+        public void RefreshCamerasFromService()
+        {
+            var selectedId = SelectedCamera?.Id;
+            LoadCameras();
+
+            // 이전에 선택된 카메라 복원
+            if (selectedId != null)
+            {
+                SelectedCamera = Cameras.FirstOrDefault(c => c.Id == selectedId);
+            }
+        }
+
+        #endregion
+
         #region 3D Point Cloud
 
         /// <summary>
@@ -1348,43 +1519,43 @@ namespace VMS.VisionSetup.ViewModels
         /// </summary>
         private void LoadSamplePointCloud()
         {
-            const int count = 50000;
-            var rng = new Random(42);
+            // 격자 크기: 200x200 = 40,000 points 지형 데이터
+            const int gridSize = 200;
+            int count = gridSize * gridSize;
             var positions = new Vector3[count];
             var colors = new System.Windows.Media.Color[count];
-            float radius = 100f;
+            float spacing = 1.0f;
+            float offsetX = -gridSize * spacing * 0.5f;
+            float offsetZ = -gridSize * spacing * 0.5f;
 
-            for (int i = 0; i < count; i++)
+            int idx = 0;
+            for (int iz = 0; iz < gridSize; iz++)
             {
-                // 반구 표면의 균일 분포
-                float u = (float)rng.NextDouble();
-                float v = (float)rng.NextDouble();
-                float theta = 2f * MathF.PI * u;
-                float phi = MathF.Acos(v); // 0 ~ PI/2 (상반구)
+                for (int ix = 0; ix < gridSize; ix++)
+                {
+                    float x = offsetX + ix * spacing;
+                    float z = offsetZ + iz * spacing;
 
-                float r = radius * (0.8f + 0.2f * (float)rng.NextDouble());
-                float x = r * MathF.Sin(phi) * MathF.Cos(theta);
-                float y = r * MathF.Cos(phi); // Y-up
-                float z = r * MathF.Sin(phi) * MathF.Sin(theta);
+                    // 높이: 다중 사인파 지형 (Y range ~ -60 ~ +60)
+                    float y = 30f * MathF.Sin(x * 0.05f) * MathF.Cos(z * 0.05f)
+                            + 15f * MathF.Sin(x * 0.1f + 1f)
+                            + 10f * MathF.Cos(z * 0.08f + 2f)
+                            + 5f * MathF.Sin((x + z) * 0.15f);
 
-                positions[i] = new Vector3(x, y, z);
-
-                // 높이 기반 색상 (파랑→초록→빨강)
-                float t = y / radius;
-                byte red = (byte)(255 * Math.Clamp(t, 0, 1));
-                byte green = (byte)(255 * Math.Clamp(1 - Math.Abs(t - 0.5f) * 2, 0, 1));
-                byte blue = (byte)(255 * Math.Clamp(1 - t, 0, 1));
-                colors[i] = System.Windows.Media.Color.FromRgb(red, green, blue);
+                    positions[idx] = new Vector3(x, y, z);
+                    colors[idx] = System.Windows.Media.Color.FromRgb(200, 200, 200);
+                    idx++;
+                }
             }
 
             CurrentPointCloud = new PointCloudData
             {
-                Name = "Sample Hemisphere",
+                Name = "Sample Terrain",
                 Positions = positions,
                 Colors = colors
             };
 
-            StatusMessage = $"3D 샘플 데이터 로드 완료: {count:N0} points";
+            StatusMessage = $"3D 샘플 지형 데이터 로드 완료: {count:N0} points";
         }
 
         #endregion
