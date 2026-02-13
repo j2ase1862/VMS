@@ -629,50 +629,212 @@
                 <GridSplitter Grid.Column="1" Width="5" VerticalAlignment="Stretch"
                               HorizontalAlignment="Center" Background="#333333" Cursor="SizeWE"/>
 
-                <!-- Image Display Area (Single Canvas with ComboBox Switcher) -->
+                <!-- Image Display Area - TabControl with 2D/3D views -->
                 <Border Grid.Column="2" Background="#1E1E1E" Margin="5">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
+                    <TabControl Background="Transparent" BorderThickness="0" Padding="0">
+                        <TabControl.Resources>
+                            <Style TargetType="TabItem">
+                                <Setter Property="Background" Value="#2D2D30"/>
+                                <Setter Property="Foreground" Value="#999999"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="Padding" Value="16,6"/>
+                                <Setter Property="FontSize" Value="12"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="TabItem">
+                                            <Border x:Name="TabBorder"
+                                                    Background="{TemplateBinding Background}"
+                                                    Padding="{TemplateBinding Padding}"
+                                                    CornerRadius="4,4,0,0" Margin="0,0,2,0">
+                                                <ContentPresenter ContentSource="Header"
+                                                                  HorizontalAlignment="Center"
+                                                                  VerticalAlignment="Center"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="TabBorder" Property="Background" Value="#1E1E1E"/>
+                                                    <Setter Property="Foreground" Value="White"/>
+                                                </Trigger>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="TabBorder" Property="Background" Value="#3E3E42"/>
+                                                </Trigger>
+                                                <MultiTrigger>
+                                                    <MultiTrigger.Conditions>
+                                                        <Condition Property="IsSelected" Value="True"/>
+                                                        <Condition Property="IsMouseOver" Value="True"/>
+                                                    </MultiTrigger.Conditions>
+                                                    <Setter TargetName="TabBorder" Property="Background" Value="#1E1E1E"/>
+                                                </MultiTrigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </TabControl.Resources>
 
-                        <!-- Header: ComboBox Switcher + Clear Button -->
-                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,5">
-                            <ComboBox ItemsSource="{Binding DisplayModes}"
-                                      SelectedItem="{Binding SelectedDisplayMode}"
-                                      Background="#3C3C3C" Foreground="Black"
-                                      BorderBrush="#555555" BorderThickness="1"
-                                      FontSize="12" Padding="8,3" MinWidth="150">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding Converter={StaticResource DisplayModeToStringConverter}}"
-                                                   Foreground="Black"/>
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
+                        <!-- 2D View Tab -->
+                        <TabItem Header="2D View">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto" MaxHeight="250"/>
+                                </Grid.RowDefinitions>
 
-                            <Button Content="Clear Result"
-                                    Command="{Binding ClearResultImageCommand}"
-                                    Background="#3C3C3C" Foreground="White"
-                                    BorderBrush="#555555" BorderThickness="1"
-                                    Padding="8,2" Margin="10,0,0,0"
-                                    FontSize="11" Cursor="Hand"
-                                    Visibility="{Binding IsOriginalImageMode, Converter={StaticResource InverseBoolToVisibility}}"/>
-                        </StackPanel>
+                                <!-- Row 0: Header - ComboBox Switcher + Clear Button -->
+                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,5">
+                                    <ComboBox ItemsSource="{Binding DisplayModes}"
+                                              SelectedItem="{Binding SelectedDisplayMode}"
+                                              Background="#3C3C3C" Foreground="Black"
+                                              BorderBrush="#555555" BorderThickness="1"
+                                              FontSize="12" Padding="8,3" MinWidth="150">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Converter={StaticResource DisplayModeToStringConverter}}"
+                                                           Foreground="Black"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
 
-                        <!-- Single ImageCanvas -->
-                        <controls:ImageCanvas x:Name="ImageCanvasControl" Grid.Row="1"
-                                              SourceImage="{Binding DisplayMat, Mode=OneWay}"
-                                              ROICollection="{Binding ROIShapes, Mode=TwoWay}"
-                                              SelectedROI="{Binding SelectedROI, Mode=TwoWay}"
-                                              IsToolbarVisible="{Binding IsOriginalImageMode}"
-                                              IsROIEditingEnabled="{Binding IsOriginalImageMode}"
-                                              ROICreated="ImageCanvas_ROICreated"
-                                              ROIModified="ImageCanvas_ROIModified"
-                                              ROISelectionChanged="ImageCanvas_ROISelectionChanged"
-                                              Margin="5"/>
-                    </Grid>
+                                    <Button Content="Clear Result"
+                                            Command="{Binding ClearResultImageCommand}"
+                                            Background="#3C3C3C" Foreground="White"
+                                            BorderBrush="#555555" BorderThickness="1"
+                                            Padding="8,2" Margin="10,0,0,0"
+                                            FontSize="11" Cursor="Hand"
+                                            Visibility="{Binding IsOriginalImageMode, Converter={StaticResource InverseBoolToVisibility}}"/>
+                                </StackPanel>
+
+                                <!-- Row 1: ImageCanvas -->
+                                <controls:ImageCanvas x:Name="ImageCanvasControl" Grid.Row="1"
+                                                      SourceImage="{Binding DisplayMat, Mode=OneWay}"
+                                                      ROICollection="{Binding ROIShapes, Mode=TwoWay}"
+                                                      SelectedROI="{Binding SelectedROI, Mode=TwoWay}"
+                                                      IsToolbarVisible="{Binding IsOriginalImageMode}"
+                                                      IsROIEditingEnabled="{Binding IsOriginalImageMode}"
+                                                      ROICreated="ImageCanvas_ROICreated"
+                                                      ROIModified="ImageCanvas_ROIModified"
+                                                      ROISelectionChanged="ImageCanvas_ROISelectionChanged"
+                                                      Margin="5"/>
+
+                                <!-- Row 2: Tool Run Results DataGrid -->
+                                <Border Grid.Row="2" BorderBrush="#333333" BorderThickness="0,1,0,0"
+                                        Margin="5,0,5,5">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Grid.Row="0" Text="Run Results"
+                                                   Foreground="#FFD700" FontWeight="Bold" FontSize="12"
+                                                   Margin="5,5,5,3"/>
+
+                                        <DataGrid Grid.Row="1"
+                                                  ItemsSource="{Binding ToolRunResults}"
+                                                  AutoGenerateColumns="False"
+                                                  IsReadOnly="True"
+                                                  CanUserAddRows="False"
+                                                  CanUserDeleteRows="False"
+                                                  CanUserReorderColumns="False"
+                                                  HeadersVisibility="Column"
+                                                  GridLinesVisibility="Horizontal"
+                                                  HorizontalGridLinesBrush="#444444"
+                                                  Background="#1E1E1E"
+                                                  Foreground="White"
+                                                  BorderBrush="#555555"
+                                                  BorderThickness="1"
+                                                  RowBackground="#2D2D2D"
+                                                  AlternatingRowBackground="#252526"
+                                                  Height="150"
+                                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                                  ScrollViewer.CanContentScroll="True"
+                                                  FontSize="12">
+                                            <DataGrid.ColumnHeaderStyle>
+                                                <Style TargetType="DataGridColumnHeader">
+                                                    <Setter Property="Background" Value="#3C3C3C"/>
+                                                    <Setter Property="Foreground" Value="#CCCCCC"/>
+                                                    <Setter Property="FontWeight" Value="Bold"/>
+                                                    <Setter Property="Padding" Value="8,4"/>
+                                                    <Setter Property="BorderBrush" Value="#555555"/>
+                                                    <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                                                </Style>
+                                            </DataGrid.ColumnHeaderStyle>
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="Tool Name"
+                                                                    Binding="{Binding ToolName}"
+                                                                    Width="*"
+                                                                    MinWidth="120">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Padding" Value="6,3"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+                                                <DataGridTextColumn Header="Pass/Fail"
+                                                                    Binding="{Binding Result}"
+                                                                    Width="80">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Padding" Value="6,3"/>
+                                                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="FontWeight" Value="Bold"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Result}" Value="True">
+                                                                    <Setter Property="Foreground" Value="#4EC94E"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Result}" Value="False">
+                                                                    <Setter Property="Foreground" Value="#FF6B6B"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+                                                <DataGridTextColumn Header="Result Value"
+                                                                    Binding="{Binding ResultValue}"
+                                                                    Width="2*"
+                                                                    MinWidth="150">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Padding" Value="6,3"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </TabItem>
+
+                        <!-- 3D View Tab -->
+                        <TabItem Header="3D View">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Header with Load Sample button -->
+                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,5">
+                                    <Button Content="Load Sample"
+                                            Command="{Binding LoadSamplePointCloudCommand}"
+                                            Style="{StaticResource ToolbarButtonStyle}"
+                                            Background="#7B1FA2"/>
+                                </StackPanel>
+
+                                <!-- 3D Point Cloud Canvas -->
+                                <controls:PointDrawingCanvas x:Name="PointCanvasControl" Grid.Row="1"
+                                                             PointCloud="{Binding CurrentPointCloud}"
+                                                             Margin="5"/>
+                            </Grid>
+                        </TabItem>
+                    </TabControl>
                 </Border>
             </Grid>
 

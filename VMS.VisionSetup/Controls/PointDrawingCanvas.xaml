@@ -1,0 +1,111 @@
+<UserControl x:Class="VMS.VisionSetup.Controls.PointDrawingCanvas"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:hx="http://helix-toolkit.org/wpf/SharpDX"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="800"
+             Background="#1E1E1E">
+
+    <UserControl.Resources>
+        <Style x:Key="ViewerToolbarButton" TargetType="Button">
+            <Setter Property="Background" Value="#444444"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Margin" Value="0,0,5,0"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                CornerRadius="4" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#555555"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#666666"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <!-- 3D Viewport -->
+        <hx:Viewport3DX x:Name="Viewport"
+                         Background="Black"
+                         ShowCoordinateSystem="True"
+                         CoordinateSystemLabelForeground="White"
+                         ShowFrameRate="False"
+                         EnableDeferredRendering="False"
+                         IsShadowMappingEnabled="False"
+                         FXAALevel="Low">
+
+            <!-- Camera -->
+            <hx:Viewport3DX.Camera>
+                <hx:PerspectiveCamera x:Name="MainCamera"
+                                       Position="200,200,200"
+                                       LookDirection="-200,-200,-200"
+                                       UpDirection="0,1,0"
+                                       FarPlaneDistance="10000"
+                                       NearPlaneDistance="0.1"
+                                       FieldOfView="45"/>
+            </hx:Viewport3DX.Camera>
+
+            <hx:Viewport3DX.InputBindings>
+                <KeyBinding Key="R" Command="hx:ViewportCommands.Reset"/>
+            </hx:Viewport3DX.InputBindings>
+
+            <!-- Lights -->
+            <hx:AmbientLight3D Color="#404040"/>
+            <hx:DirectionalLight3D Direction="-1,-1,-1" Color="White"/>
+
+            <!-- Grid -->
+            <hx:LineGeometryModel3D x:Name="GridLines" Color="Gray" Thickness="0.5"/>
+
+            <!-- Axis Lines -->
+            <hx:LineGeometryModel3D x:Name="AxisLines" Thickness="2.0"/>
+
+            <!-- Point Cloud -->
+            <hx:PointGeometryModel3D x:Name="PointCloudModel" Size="3,3"/>
+
+        </hx:Viewport3DX>
+
+        <!-- Toolbar Overlay -->
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Left" VerticalAlignment="Top"
+                    Margin="10,10,0,0">
+            <Button x:Name="BtnResetView" Content="Reset View"
+                    Click="BtnResetView_Click"
+                    Style="{StaticResource ViewerToolbarButton}"/>
+            <Button x:Name="BtnTopView" Content="Top"
+                    Click="BtnTopView_Click"
+                    Style="{StaticResource ViewerToolbarButton}"/>
+            <Button x:Name="BtnFrontView" Content="Front"
+                    Click="BtnFrontView_Click"
+                    Style="{StaticResource ViewerToolbarButton}"/>
+            <Button x:Name="BtnSideView" Content="Side"
+                    Click="BtnSideView_Click"
+                    Style="{StaticResource ViewerToolbarButton}"/>
+
+            <TextBlock x:Name="PointCountText"
+                       Foreground="#AAAAAA" FontSize="11"
+                       VerticalAlignment="Center" Margin="15,0,0,0"/>
+        </StackPanel>
+
+        <!-- Status Bar Overlay -->
+        <Border HorizontalAlignment="Stretch" VerticalAlignment="Bottom"
+                Background="#88000000" Padding="10,4">
+            <TextBlock x:Name="StatusText" Text="3D View Ready"
+                       Foreground="#CCCCCC" FontSize="11"/>
+        </Border>
+    </Grid>
+</UserControl>
