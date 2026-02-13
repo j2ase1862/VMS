@@ -959,6 +959,7 @@
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
 
@@ -970,9 +971,71 @@
                                             Background="#7B1FA2"/>
                                 </StackPanel>
 
+                                <!-- Height Slicing Panel -->
+                                <Border Grid.Row="1" Background="#2D2D30" CornerRadius="4" Margin="10,2,10,5" Padding="10,6">
+                                    <StackPanel>
+                                        <TextBlock Text="Height Slicing" Foreground="#FFD700" FontWeight="Bold" FontSize="13" Margin="0,0,0,6"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="70"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="60"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <!-- Baseline -->
+                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Baseline" Foreground="#CCCCCC" VerticalAlignment="Center" FontSize="11"/>
+                                            <Slider Grid.Row="0" Grid.Column="1"
+                                                    Value="{Binding HeightBaseline}"
+                                                    Minimum="{Binding PointCloudYMin}" Maximum="{Binding PointCloudYMax}"
+                                                    VerticalAlignment="Center" Margin="4,2"/>
+                                            <TextBox Grid.Row="0" Grid.Column="2"
+                                                     Text="{Binding HeightBaseline, StringFormat=F1}"
+                                                     Background="#3C3C3C" Foreground="#CCCCCC" BorderBrush="#555555"
+                                                     FontSize="11" Padding="3,1" VerticalAlignment="Center"/>
+
+                                            <!-- Lower Limit -->
+                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Lower" Foreground="#CCCCCC" VerticalAlignment="Center" FontSize="11"/>
+                                            <Slider Grid.Row="1" Grid.Column="1"
+                                                    Value="{Binding HeightLowerLimit}"
+                                                    Minimum="{Binding PointCloudYMin}" Maximum="{Binding PointCloudYMax}"
+                                                    VerticalAlignment="Center" Margin="4,2"/>
+                                            <TextBox Grid.Row="1" Grid.Column="2"
+                                                     Text="{Binding HeightLowerLimit, StringFormat=F1}"
+                                                     Background="#3C3C3C" Foreground="#CCCCCC" BorderBrush="#555555"
+                                                     FontSize="11" Padding="3,1" VerticalAlignment="Center"/>
+
+                                            <!-- Upper Limit -->
+                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Upper" Foreground="#CCCCCC" VerticalAlignment="Center" FontSize="11"/>
+                                            <Slider Grid.Row="2" Grid.Column="1"
+                                                    Value="{Binding HeightUpperLimit}"
+                                                    Minimum="{Binding PointCloudYMin}" Maximum="{Binding PointCloudYMax}"
+                                                    VerticalAlignment="Center" Margin="4,2"/>
+                                            <TextBox Grid.Row="2" Grid.Column="2"
+                                                     Text="{Binding HeightUpperLimit, StringFormat=F1}"
+                                                     Background="#3C3C3C" Foreground="#CCCCCC" BorderBrush="#555555"
+                                                     FontSize="11" Padding="3,1" VerticalAlignment="Center"/>
+                                        </Grid>
+
+                                        <Button Content="Generate Height Map"
+                                                Command="{Binding GenerateHeightMapCommand}"
+                                                Background="#0E639C" Foreground="White"
+                                                Padding="12,4" Margin="0,6,0,0"
+                                                HorizontalAlignment="Left"
+                                                FontSize="12"/>
+                                    </StackPanel>
+                                </Border>
+
                                 <!-- 3D Point Cloud Canvas -->
-                                <controls:PointDrawingCanvas x:Name="PointCanvasControl" Grid.Row="1"
+                                <controls:PointDrawingCanvas x:Name="PointCanvasControl" Grid.Row="2"
                                                              PointCloud="{Binding CurrentPointCloud}"
+                                                             HeightSliceBaseline="{Binding HeightBaseline}"
+                                                             HeightSliceLower="{Binding HeightLowerLimit}"
+                                                             HeightSliceUpper="{Binding HeightUpperLimit}"
                                                              Margin="5"/>
                             </Grid>
                         </TabItem>
