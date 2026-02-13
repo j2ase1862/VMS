@@ -75,7 +75,7 @@
             <hx:LineGeometryModel3D x:Name="AxisLines" Thickness="2.0"/>
 
             <!-- Point Cloud -->
-            <hx:PointGeometryModel3D x:Name="PointCloudModel" Size="3,3"/>
+            <hx:PointGeometryModel3D x:Name="PointCloudModel" Size="5,5" Color="White"/>
 
         </hx:Viewport3DX>
 
@@ -100,6 +100,83 @@
                        Foreground="#AAAAAA" FontSize="11"
                        VerticalAlignment="Center" Margin="15,0,0,0"/>
         </StackPanel>
+
+        <!-- Height Color Bar (right side) -->
+        <Border HorizontalAlignment="Right" VerticalAlignment="Stretch"
+                Margin="0,50,10,30" Width="60"
+                Background="#88000000" CornerRadius="4" Padding="4"
+                x:Name="ColorBarPanel" Visibility="Collapsed">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Max label -->
+                <TextBlock Grid.Row="0" x:Name="MaxHeightLabel" Text="Max"
+                           Foreground="#CCCCCC" FontSize="10"
+                           HorizontalAlignment="Center" Margin="0,2"/>
+
+                <!-- Max slider value -->
+                <TextBlock Grid.Row="1" x:Name="MaxValueLabel" Text="0.0"
+                           Foreground="White" FontSize="10" FontWeight="Bold"
+                           HorizontalAlignment="Center"/>
+
+                <!-- Color gradient bar + sliders -->
+                <Grid Grid.Row="2" Margin="0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="20"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Gradient rectangle -->
+                    <Rectangle Grid.Column="0" Width="16" RadiusX="2" RadiusY="2">
+                        <Rectangle.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Color="#FFFF0000" Offset="0.0"/>
+                                <GradientStop Color="#FFFFFF00" Offset="0.25"/>
+                                <GradientStop Color="#FF00FF00" Offset="0.5"/>
+                                <GradientStop Color="#FF00FFFF" Offset="0.75"/>
+                                <GradientStop Color="#FF0000FF" Offset="1.0"/>
+                            </LinearGradientBrush>
+                        </Rectangle.Fill>
+                    </Rectangle>
+
+                    <!-- Vertical sliders -->
+                    <StackPanel Grid.Column="1" Orientation="Vertical">
+                        <Slider x:Name="SliderMax" Orientation="Vertical"
+                                IsDirectionReversed="True"
+                                Height="100" Margin="2,0"
+                                Minimum="0" Maximum="100" Value="100"
+                                VerticalAlignment="Top"
+                                ValueChanged="SliderMax_ValueChanged"
+                                MouseWheel="SliderMax_MouseWheel"
+                                TickFrequency="1" IsSnapToTickEnabled="False"/>
+                        <Slider x:Name="SliderMin" Orientation="Vertical"
+                                IsDirectionReversed="True"
+                                Height="100" Margin="2,0"
+                                Minimum="0" Maximum="100" Value="0"
+                                VerticalAlignment="Bottom"
+                                ValueChanged="SliderMin_ValueChanged"
+                                MouseWheel="SliderMin_MouseWheel"
+                                TickFrequency="1" IsSnapToTickEnabled="False"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Min slider value -->
+                <TextBlock Grid.Row="3" x:Name="MinValueLabel" Text="0.0"
+                           Foreground="White" FontSize="10" FontWeight="Bold"
+                           HorizontalAlignment="Center"/>
+
+                <!-- Min label -->
+                <TextBlock Grid.Row="4" x:Name="MinHeightLabel" Text="Min"
+                           Foreground="#CCCCCC" FontSize="10"
+                           HorizontalAlignment="Center" Margin="0,2"/>
+            </Grid>
+        </Border>
 
         <!-- Status Bar Overlay -->
         <Border HorizontalAlignment="Stretch" VerticalAlignment="Bottom"

@@ -698,6 +698,10 @@ namespace VMS.VisionSetup
             var window = new CameraManagerWindow();
             window.Owner = this;
             window.ShowDialog();
+
+            // 카메라 목록 갱신
+            var vm = DataContext as MainViewModel;
+            vm?.RefreshCamerasFromService();
         }
 
         /// <summary>

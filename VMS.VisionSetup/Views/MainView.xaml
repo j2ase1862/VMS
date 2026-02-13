@@ -24,6 +24,7 @@
     <Window.Resources>
         <converters:DisplayModeToStringConverter x:Key="DisplayModeToStringConverter"/>
         <converters:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisibility"/>
+        <converters:NullToCollapsedConverter x:Key="NullToCollapsedConverter"/>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
 
         <!-- Toolbar Button Style -->
@@ -282,8 +283,149 @@
                         <TextBlock Text="Camera" Margin="7,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
+
+                <Border Width="1" Background="#4A4A4C" Margin="8,4" CornerRadius="1"/>
+
+                <!-- Camera Info -->
+                <Button x:Name="CameraInfoButton"
+                        Command="{Binding ShowCameraInfoCommand}"
+                        Style="{StaticResource ToolbarButtonStyle}" Background="#00897B" ToolTip="Camera Info">
+                    <StackPanel Orientation="Horizontal">
+                        <Grid>
+                            <Path Data="M2,6 L2,15 L18,15 L18,6 L15,6 L13,4 L7,4 L5,6 Z"
+                                  Stroke="White" StrokeThickness="1.2" Fill="Transparent"
+                                  Width="15" Height="12" Stretch="Uniform" VerticalAlignment="Center"/>
+                            <!-- Connection status dot -->
+                            <Ellipse Width="7" Height="7" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                     Margin="0,-2,-2,0">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Fill" Value="#F44336"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsCameraConnected}" Value="True">
+                                                <Setter Property="Fill" Value="#4CAF50"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
+                        </Grid>
+                        <TextBlock Text="Camera Info" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <!-- Acquire Image -->
+                <Button Command="{Binding AcquireImageCommand}"
+                        Style="{StaticResource ToolbarButtonStyle}" Background="#1565C0" ToolTip="Acquire Image">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Data="M2,6 L2,15 L18,15 L18,6 L15,6 L13,4 L7,4 L5,6 Z M10,7.5 A2.5,2.5 0 1 1 10,12.5 A2.5,2.5 0 1 1 10,7.5 M3,17 L3,19 L17,19 L17,17"
+                              Stroke="White" StrokeThickness="1.2" Fill="Transparent"
+                              Width="15" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
+                        <TextBlock Text="Acquire" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             </StackPanel>
         </Border>
+
+        <!-- Camera Info Popup -->
+        <Popup x:Name="CameraInfoPopup"
+               PlacementTarget="{Binding ElementName=CameraInfoButton}"
+               Placement="Bottom"
+               StaysOpen="False"
+               AllowsTransparency="True"
+               IsOpen="{Binding IsCameraInfoPopupOpen, Mode=TwoWay}">
+            <Border Background="#2D2D30" BorderBrush="#555555" BorderThickness="1"
+                    CornerRadius="6" Padding="16" MinWidth="280">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="10" ShadowDepth="3" Opacity="0.5"/>
+                </Border.Effect>
+                <Grid>
+                    <!-- No camera selected -->
+                    <TextBlock Text="카메라를 선택하세요"
+                               Foreground="#999999" FontSize="13"
+                               HorizontalAlignment="Center" Margin="0,10"
+                               Visibility="{Binding SelectedCamera, Converter={StaticResource NullToCollapsedConverter}, ConverterParameter=Invert}"/>
+
+                    <!-- Camera info panel -->
+                    <StackPanel Visibility="{Binding SelectedCamera, Converter={StaticResource NullToCollapsedConverter}}">
+                        <!-- Header with icon and name -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <Path Data="M2,6 L2,15 L18,15 L18,6 L15,6 L13,4 L7,4 L5,6 Z M10,7.5 A2.5,2.5 0 1 1 10,12.5 A2.5,2.5 0 1 1 10,7.5"
+                                  Stroke="#00BCD4" StrokeThickness="1.5" Fill="Transparent"
+                                  Width="20" Height="16" Stretch="Uniform" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding SelectedCamera.Name}" Foreground="White"
+                                       FontSize="15" FontWeight="Bold" Margin="10,0,0,0"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <!-- Details grid -->
+                        <Grid Margin="0,0,0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="90"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Manufacturer" Foreground="#999999" FontSize="12" Margin="0,2"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedCamera.Manufacturer}" Foreground="White" FontSize="12" Margin="0,2"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Model" Foreground="#999999" FontSize="12" Margin="0,2"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedCamera.Model}" Foreground="White" FontSize="12" Margin="0,2"/>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="IP Address" Foreground="#999999" FontSize="12" Margin="0,2"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedCamera.ConnectionString}" Foreground="White" FontSize="12" Margin="0,2"/>
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Resolution" Foreground="#999999" FontSize="12" Margin="0,2"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedCamera.Resolution}" Foreground="White" FontSize="12" Margin="0,2"/>
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Status" Foreground="#999999" FontSize="12" Margin="0,2"/>
+                            <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Margin="0,2">
+                                <Ellipse Width="9" Height="9" VerticalAlignment="Center">
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
+                                            <Setter Property="Fill" Value="#F44336"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsCameraConnected}" Value="True">
+                                                    <Setter Property="Fill" Value="#4CAF50"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
+                                <TextBlock Foreground="White" FontSize="12" Margin="6,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="Disconnected"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsCameraConnected}" Value="True">
+                                                    <Setter Property="Text" Value="Connected"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Connect/Disconnect buttons -->
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0" HorizontalAlignment="Right">
+                            <Button Command="{Binding ConnectCameraCommand}"
+                                    Style="{StaticResource ToolbarButtonStyle}" Background="#4CAF50"
+                                    Padding="12,5" FontSize="12" Content="Connect"/>
+                            <Button Command="{Binding DisconnectCameraCommand}"
+                                    Style="{StaticResource ToolbarButtonStyle}" Background="#F44336"
+                                    Padding="12,5" FontSize="12" Margin="6,0,0,0" Content="Disconnect"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Popup>
 
         <!-- Main Content -->
         <Grid Grid.Row="2">
