@@ -17,6 +17,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Windows;
+using System.Numerics;
 using System.Windows.Input;
 using System.Windows.Media;
 using CvRect = OpenCvSharp.Rect;
@@ -69,6 +70,9 @@ namespace VMS.VisionSetup.ViewModels
 
         // 도구 간 연결선 목록
         public ObservableCollection<ToolConnection> Connections { get; } = new();
+
+        // 도구 실행 결과 목록 (DataGrid 바인딩용)
+        public ObservableCollection<ToolResultItem> ToolRunResults { get; } = new();
 
         // 현재 이미지
         public Mat? CurrentImage
@@ -241,6 +245,14 @@ namespace VMS.VisionSetup.ViewModels
             set => SetProperty(ref _executionTimeText, value);
         }
 
+        // 3D Point Cloud 데이터
+        private PointCloudData? _currentPointCloud;
+        public PointCloudData? CurrentPointCloud
+        {
+            get => _currentPointCloud;
+            set => SetProperty(ref _currentPointCloud, value);
+        }
+
         #region Recipe / Camera / Step Properties
 
         // 현재 레시피 이름 표시
@@ -307,6 +319,7 @@ namespace VMS.VisionSetup.ViewModels
         public RelayCommand DeleteStepCommand { get; }
         public RelayCommand MoveStepUpCommand { get; }
         public RelayCommand MoveStepDownCommand { get; }
+        public RelayCommand LoadSamplePointCloudCommand { get; }
         #endregion
 
         #region Constructor
@@ -329,6 +342,7 @@ namespace VMS.VisionSetup.ViewModels
             DeleteStepCommand = new RelayCommand(DeleteStep, () => SelectedStep != null);
             MoveStepUpCommand = new RelayCommand(MoveStepUp, () => SelectedStep != null);
             MoveStepDownCommand = new RelayCommand(MoveStepDown, () => SelectedStep != null);
+            LoadSamplePointCloudCommand = new RelayCommand(LoadSamplePointCloud);
 
             // 레시피 변경 이벤트 구독
             RecipeService.Instance.CurrentRecipeChanged += OnCurrentRecipeChanged;
@@ -508,6 +522,8 @@ namespace VMS.VisionSetup.ViewModels
 
                 int successCount = results.Count(r => r.Success);
                 StatusMessage = $"실행 완료: {successCount}/{results.Count} 성공";
+
+                UpdateToolRunResults();
             }
             catch (Exception ex)
             {
@@ -553,6 +569,8 @@ namespace VMS.VisionSetup.ViewModels
                 StatusMessage = result.Success
                     ? $"실행 완료: {result.Message}"
                     : $"실행 실패: {result.Message}";
+
+                UpdateToolRunResults();
             }
             catch (Exception ex)
             {
@@ -561,6 +579,54 @@ namespace VMS.VisionSetup.ViewModels
             finally
             {
                 IsRunning = false;
+            }
+        }
+
+        /// <summary>
+        /// 도구 실행 결과를 ToolRunResults 컬렉션에 반영
+        /// </summary>
+        private void UpdateToolRunResults()
+        {
+            ToolRunResults.Clear();
+
+            foreach (var toolItem in DroppedTools)
+            {
+                var visionTool = toolItem.VisionTool;
+                if (visionTool == null) continue;
+
+                var lastResult = visionTool.LastResult;
+                var resultValue = string.Empty;
+
+                if (lastResult != null)
+                {
+                    // Data 딕셔너리에서 주요 결과값을 문자열로 변환 (숫자는 소수점 3자리)
+                    if (lastResult.Data != null && lastResult.Data.Count > 0)
+                    {
+                        var entries = lastResult.Data.Select(kv =>
+                        {
+                            var formatted = kv.Value switch
+                            {
+                                double d => d.ToString("F3"),
+                                float f => f.ToString("F3"),
+                                decimal m => m.ToString("F3"),
+                                _ => kv.Value?.ToString() ?? ""
+                            };
+                            return $"{kv.Key}={formatted}";
+                        });
+                        resultValue = string.Join(", ", entries);
+                    }
+                    else
+                    {
+                        resultValue = lastResult.Message;
+                    }
+                }
+
+                ToolRunResults.Add(new ToolResultItem
+                {
+                    ToolName = toolItem.Name,
+                    Result = lastResult?.Success ?? false,
+                    ResultValue = resultValue
+                });
             }
         }
 
@@ -1271,6 +1337,54 @@ namespace VMS.VisionSetup.ViewModels
                         steps[i].Name = $"{camIdx}-{i + 1}";
                 }
             }
+        }
+
+        #endregion
+
+        #region 3D Point Cloud
+
+        /// <summary>
+        /// 샘플 포인트 클라우드 데이터 생성 (50K 반구)
+        /// </summary>
+        private void LoadSamplePointCloud()
+        {
+            const int count = 50000;
+            var rng = new Random(42);
+            var positions = new Vector3[count];
+            var colors = new System.Windows.Media.Color[count];
+            float radius = 100f;
+
+            for (int i = 0; i < count; i++)
+            {
+                // 반구 표면의 균일 분포
+                float u = (float)rng.NextDouble();
+                float v = (float)rng.NextDouble();
+                float theta = 2f * MathF.PI * u;
+                float phi = MathF.Acos(v); // 0 ~ PI/2 (상반구)
+
+                float r = radius * (0.8f + 0.2f * (float)rng.NextDouble());
+                float x = r * MathF.Sin(phi) * MathF.Cos(theta);
+                float y = r * MathF.Cos(phi); // Y-up
+                float z = r * MathF.Sin(phi) * MathF.Sin(theta);
+
+                positions[i] = new Vector3(x, y, z);
+
+                // 높이 기반 색상 (파랑→초록→빨강)
+                float t = y / radius;
+                byte red = (byte)(255 * Math.Clamp(t, 0, 1));
+                byte green = (byte)(255 * Math.Clamp(1 - Math.Abs(t - 0.5f) * 2, 0, 1));
+                byte blue = (byte)(255 * Math.Clamp(1 - t, 0, 1));
+                colors[i] = System.Windows.Media.Color.FromRgb(red, green, blue);
+            }
+
+            CurrentPointCloud = new PointCloudData
+            {
+                Name = "Sample Hemisphere",
+                Positions = positions,
+                Colors = colors
+            };
+
+            StatusMessage = $"3D 샘플 데이터 로드 완료: {count:N0} points";
         }
 
         #endregion
