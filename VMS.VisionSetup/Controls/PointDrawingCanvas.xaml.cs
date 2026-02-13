@@ -45,6 +45,45 @@ namespace VMS.VisionSetup.Controls
             set => SetValue(PointSizeProperty, value);
         }
 
+        public static readonly DependencyProperty HeightSliceBaselineProperty =
+            DependencyProperty.Register(
+                nameof(HeightSliceBaseline),
+                typeof(double),
+                typeof(PointDrawingCanvas),
+                new PropertyMetadata(double.NaN, OnHeightSlicePropertyChanged));
+
+        public double HeightSliceBaseline
+        {
+            get => (double)GetValue(HeightSliceBaselineProperty);
+            set => SetValue(HeightSliceBaselineProperty, value);
+        }
+
+        public static readonly DependencyProperty HeightSliceLowerProperty =
+            DependencyProperty.Register(
+                nameof(HeightSliceLower),
+                typeof(double),
+                typeof(PointDrawingCanvas),
+                new PropertyMetadata(double.NaN, OnHeightSlicePropertyChanged));
+
+        public double HeightSliceLower
+        {
+            get => (double)GetValue(HeightSliceLowerProperty);
+            set => SetValue(HeightSliceLowerProperty, value);
+        }
+
+        public static readonly DependencyProperty HeightSliceUpperProperty =
+            DependencyProperty.Register(
+                nameof(HeightSliceUpper),
+                typeof(double),
+                typeof(PointDrawingCanvas),
+                new PropertyMetadata(double.NaN, OnHeightSlicePropertyChanged));
+
+        public double HeightSliceUpper
+        {
+            get => (double)GetValue(HeightSliceUpperProperty);
+            set => SetValue(HeightSliceUpperProperty, value);
+        }
+
         #endregion
 
         public PointDrawingCanvas()
@@ -277,6 +316,68 @@ namespace VMS.VisionSetup.Controls
                 Indices = indices,
                 Colors = colors
             };
+        }
+
+        private static void OnHeightSlicePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is PointDrawingCanvas canvas)
+            {
+                canvas.ApplyHeightSlicePreview();
+            }
+        }
+
+        private void ApplyHeightSlicePreview()
+        {
+            if (double.IsNaN(HeightSliceBaseline) || double.IsNaN(HeightSliceLower) || double.IsNaN(HeightSliceUpper))
+                return;
+            if (PointCloud == null || PointCloud.Positions.Length == 0)
+                return;
+            if (PointCloudModel.Geometry is not PointGeometry3D)
+                return;
+
+            var positions = PointCloud.Positions;
+            float baseline = (float)HeightSliceBaseline;
+            float lower = (float)HeightSliceLower;
+            float upper = (float)HeightSliceUpper;
+            float range = upper - lower;
+
+            var colors = new Color4Collection(positions.Length);
+            var darkGray = new Color4(0.12f, 0.12f, 0.12f, 1.0f);
+            int inCount = 0;
+
+            for (int i = 0; i < positions.Length; i++)
+            {
+                float normalizedY = positions[i].Y - baseline;
+                if (normalizedY >= lower && normalizedY <= upper)
+                {
+                    float t = range > 0.0001f ? (normalizedY - lower) / range : 0.5f;
+                    colors.Add(JetColormap(t));
+                    inCount++;
+                }
+                else
+                {
+                    colors.Add(darkGray);
+                }
+            }
+
+            var pointPositions = new Vector3Collection(positions.Length);
+            var indices = new IntCollection(positions.Length);
+            for (int i = 0; i < positions.Length; i++)
+            {
+                var p = positions[i];
+                pointPositions.Add(new Vector3(p.X, p.Y, p.Z));
+                indices.Add(i);
+            }
+
+            PointCloudModel.Geometry = null;
+            PointCloudModel.Geometry = new PointGeometry3D
+            {
+                Positions = pointPositions,
+                Indices = indices,
+                Colors = colors
+            };
+
+            StatusText.Text = $"Height Slice: {inCount:N0} / {positions.Length:N0} points in range";
         }
 
         private void SliderMin_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
