@@ -48,6 +48,9 @@
         <DataTemplate x:Key="CircleFitTemplate" DataType="{x:Type vm:CircleFitToolSettingsViewModel}">
             <tools:CircleFitToolSettings/>
         </DataTemplate>
+        <DataTemplate x:Key="HeightSlicerTemplate" DataType="{x:Type vm:HeightSlicerToolSettingsViewModel}">
+            <tools:HeightSlicerToolSettings/>
+        </DataTemplate>
 
         <ts:ToolSettingsTemplateSelector x:Key="ToolTemplateSelector"
             GrayscaleTemplate="{StaticResource GrayscaleTemplate}"
@@ -60,7 +63,8 @@
             BlobTemplate="{StaticResource BlobTemplate}"
             CaliperTemplate="{StaticResource CaliperTemplate}"
             LineFitTemplate="{StaticResource LineFitTemplate}"
-            CircleFitTemplate="{StaticResource CircleFitTemplate}"/>
+            CircleFitTemplate="{StaticResource CircleFitTemplate}"
+            HeightSlicerTemplate="{StaticResource HeightSlicerTemplate}"/>
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">

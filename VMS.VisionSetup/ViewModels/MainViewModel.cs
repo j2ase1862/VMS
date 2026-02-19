@@ -10,7 +10,6 @@ using VMS.VisionSetup.VisionTools.PatternMatching;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using Microsoft.Win32;
 using OpenCvSharp;
 using OpenCvSharp.WpfExtensions;
 using System;
@@ -18,9 +17,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
-using System.Windows;
 using System.Numerics;
-using System.Windows.Input;
 using System.Windows.Media;
 using CvRect = OpenCvSharp.Rect;
 
@@ -32,27 +29,36 @@ namespace VMS.VisionSetup.ViewModels
         ResultImage
     }
 
-    public class MainViewModel : ObservableObject
+    #region Messenger Messages
+
+    public class RequestShowToolROIMessage
+    {
+        public ROIShape? ROIShape { get; }
+        public RequestShowToolROIMessage(ROIShape? roiShape) => ROIShape = roiShape;
+    }
+
+    public class RequestRefreshROIMessage
+    {
+        public ROIShape? ROIShape { get; }
+        public RequestRefreshROIMessage(ROIShape? roiShape) => ROIShape = roiShape;
+    }
+
+    #endregion
+
+    public partial class MainViewModel : ObservableObject
     {
         #region Fields
         private readonly string _appName = "BODA VISION AI";
         private readonly string _appVersion = "1.0.0";
+        private readonly IVisionService _visionService;
+        private readonly IRecipeService _recipeService;
+        private readonly ICameraService _cameraService;
+        private readonly IDialogService _dialogService;
+        private readonly Action _shutdownAction;
         private Mat? _currentImage;
         private VisionToolBase? _subscribedTool;
         private bool _isSyncingROI;
         private ICameraAcquisition? _cameraAcquisition;
-        #endregion
-
-        #region ROI Sync Events
-        /// <summary>
-        /// 도구 전환 시 해당 도구의 ROI를 캔버스에 표시 요청
-        /// </summary>
-        public event EventHandler<ROIShape?>? RequestShowToolROI;
-
-        /// <summary>
-        /// 텍스트 필드 편집 후 캔버스 ROI 갱신 요청
-        /// </summary>
-        public event EventHandler<ROIShape?>? RequestRefreshROI;
         #endregion
 
         #region Properties
@@ -66,10 +72,10 @@ namespace VMS.VisionSetup.ViewModels
         public ObservableCollection<ToolItem> DroppedTools { get; } = new();
 
         // 실행 큐 (순서대로 실행될 도구들)
-        public ObservableCollection<VisionToolBase> ExecutionQueue => VisionService.Instance.Tools;
+        public ObservableCollection<VisionToolBase> ExecutionQueue => _visionService.Tools;
 
         // 실행 결과
-        public ObservableCollection<VisionResult> Results => VisionService.Instance.Results;
+        public ObservableCollection<VisionResult> Results => _visionService.Results;
 
         // 도구 간 연결선 목록
         public ObservableCollection<ToolConnection> Connections { get; } = new();
@@ -86,35 +92,23 @@ namespace VMS.VisionSetup.ViewModels
                 _currentImage?.Dispose();
                 SetProperty(ref _currentImage, value);
                 if (value != null)
-                    VisionService.Instance.SetImage(value);
+                    _visionService.SetImage(value);
                 UpdateDisplayImage();
                 NotifyCommandsCanExecuteChanged();
             }
         }
 
         // 표시용 이미지
+        [ObservableProperty]
         private ImageSource? _displayImage;
-        public ImageSource? DisplayImage
-        {
-            get => _displayImage;
-            set => SetProperty(ref _displayImage, value);
-        }
 
         // 오버레이 이미지
+        [ObservableProperty]
         private ImageSource? _overlayImage;
-        public ImageSource? OverlayImage
-        {
-            get => _overlayImage;
-            set => SetProperty(ref _overlayImage, value);
-        }
 
         // 결과 이미지
+        [ObservableProperty]
         private ImageSource? _resultImage;
-        public ImageSource? ResultImage
-        {
-            get => _resultImage;
-            set => SetProperty(ref _resultImage, value);
-        }
 
         // 결과 Mat (ImageCanvas용)
         private Mat? _resultMat;
@@ -208,8 +202,7 @@ namespace VMS.VisionSetup.ViewModels
                 }
 
                 // 도구 전환 시 해당 도구의 ROI를 캔버스에 표시
-                // (RequestShowToolROI handler in MainView also shows SearchRegion for FeatureMatchTool)
-                RequestShowToolROI?.Invoke(this, value?.VisionTool?.AssociatedROIShape);
+                WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(value?.VisionTool?.AssociatedROIShape));
             }
         }
 
@@ -225,74 +218,60 @@ namespace VMS.VisionSetup.ViewModels
         }
 
         // 실행 중 여부
+        [ObservableProperty]
         private bool _isRunning;
-        public bool IsRunning
-        {
-            get => _isRunning;
-            set => SetProperty(ref _isRunning, value);
-        }
 
         // 상태 메시지
+        [ObservableProperty]
         private string _statusMessage = "Ready";
-        public string StatusMessage
-        {
-            get => _statusMessage;
-            set => SetProperty(ref _statusMessage, value);
-        }
 
         // 실행 시간
+        [ObservableProperty]
         private string _executionTimeText = "";
-        public string ExecutionTimeText
-        {
-            get => _executionTimeText;
-            set => SetProperty(ref _executionTimeText, value);
-        }
 
         // 3D Point Cloud 데이터
+        [ObservableProperty]
         private PointCloudData? _currentPointCloud;
-        public PointCloudData? CurrentPointCloud
-        {
-            get => _currentPointCloud;
-            set => SetProperty(ref _currentPointCloud, value);
-        }
+
+        // Height Slicing 파라미터
+        [ObservableProperty]
+        private float _heightBaseline;
+
+        [ObservableProperty]
+        private float _heightLowerLimit = -60f;
+
+        [ObservableProperty]
+        private float _heightUpperLimit = 60f;
+
+        [ObservableProperty]
+        private float _pointCloudYMin = -60f;
+
+        [ObservableProperty]
+        private float _pointCloudYMax = 60f;
+
+        public HeightMapMetadata? CurrentHeightMapMetadata { get; private set; }
 
         #region Camera Connection Properties
 
         // 카메라 정보 팝업 열림 상태
+        [ObservableProperty]
         private bool _isCameraInfoPopupOpen;
-        public bool IsCameraInfoPopupOpen
-        {
-            get => _isCameraInfoPopupOpen;
-            set => SetProperty(ref _isCameraInfoPopupOpen, value);
-        }
 
         // 카메라 연결 상태
+        [ObservableProperty]
         private bool _isCameraConnected;
-        public bool IsCameraConnected
-        {
-            get => _isCameraConnected;
-            set => SetProperty(ref _isCameraConnected, value);
-        }
 
         // 이미지 획득 중 상태
+        [ObservableProperty]
         private bool _isAcquiring;
-        public bool IsAcquiring
-        {
-            get => _isAcquiring;
-            set => SetProperty(ref _isAcquiring, value);
-        }
 
         #endregion
 
         #region Recipe / Camera / Step Properties
 
         // 현재 레시피 이름 표시
+        [ObservableProperty]
         private string _currentRecipeName = "No Recipe";
-        public string CurrentRecipeName
-        {
-            get => _currentRecipeName;
-            set => SetProperty(ref _currentRecipeName, value);
-        }
 
         // 카메라 목록
         public ObservableCollection<CameraInfo> Cameras { get; } = new();
@@ -314,9 +293,9 @@ namespace VMS.VisionSetup.ViewModels
                     }
 
                     RefreshSteps();
-                    AddStepCommand?.NotifyCanExecuteChanged();
-                    AcquireImageCommand?.NotifyCanExecuteChanged();
-                    ConnectCameraCommand?.NotifyCanExecuteChanged();
+                    AddStepCommand.NotifyCanExecuteChanged();
+                    AcquireImageCommand.NotifyCanExecuteChanged();
+                    ConnectCameraCommand.NotifyCanExecuteChanged();
                 }
             }
         }
@@ -364,11 +343,23 @@ namespace VMS.VisionSetup.ViewModels
         public RelayCommand AcquireImageCommand { get; }
         public RelayCommand ConnectCameraCommand { get; }
         public RelayCommand DisconnectCameraCommand { get; }
+        public RelayCommand GenerateHeightMapCommand { get; }
         #endregion
 
         #region Constructor
-        public MainViewModel()
+        public MainViewModel(
+            IVisionService visionService,
+            IRecipeService recipeService,
+            ICameraService cameraService,
+            IDialogService dialogService,
+            Action shutdownAction)
         {
+            _visionService = visionService;
+            _recipeService = recipeService;
+            _cameraService = cameraService;
+            _dialogService = dialogService;
+            _shutdownAction = shutdownAction;
+
             InitializeToolTree();
 
             CloseCommand = new RelayCommand(CloseApplication);
@@ -382,7 +373,7 @@ namespace VMS.VisionSetup.ViewModels
             TrainPatternCommand = new RelayCommand(TrainPattern, () => SelectedVisionTool is FeatureMatchTool);
             AutoTuneCommand = new RelayCommand(AutoTuneParameters, () => SelectedVisionTool is FeatureMatchTool);
             ClearResultImageCommand = new RelayCommand(ClearResultImage);
-            AddStepCommand = new RelayCommand(AddStep, () => RecipeService.Instance.CurrentRecipe != null && SelectedCamera != null);
+            AddStepCommand = new RelayCommand(AddStep, () => _recipeService.CurrentRecipe != null && SelectedCamera != null);
             DeleteStepCommand = new RelayCommand(DeleteStep, () => SelectedStep != null);
             MoveStepUpCommand = new RelayCommand(MoveStepUp, () => SelectedStep != null);
             MoveStepDownCommand = new RelayCommand(MoveStepDown, () => SelectedStep != null);
@@ -391,15 +382,16 @@ namespace VMS.VisionSetup.ViewModels
             AcquireImageCommand = new RelayCommand(async () => await AcquireImage(), () => SelectedCamera != null && !IsAcquiring);
             ConnectCameraCommand = new RelayCommand(async () => await ConnectCamera(), () => SelectedCamera != null && !IsCameraConnected);
             DisconnectCameraCommand = new RelayCommand(async () => await DisconnectCamera(), () => IsCameraConnected);
+            GenerateHeightMapCommand = new RelayCommand(GenerateHeightMap, CanGenerateHeightMap);
 
             // 레시피 변경 이벤트 구독
-            RecipeService.Instance.CurrentRecipeChanged += OnCurrentRecipeChanged;
+            _recipeService.CurrentRecipeChanged += OnCurrentRecipeChanged;
 
             // 카메라 목록 로드
             LoadCameras();
 
             // 현재 레시피가 이미 로드되어 있으면 반영
-            var currentRecipe = RecipeService.Instance.CurrentRecipe;
+            var currentRecipe = _recipeService.CurrentRecipe;
             if (currentRecipe != null)
             {
                 CurrentRecipeName = currentRecipe.Name;
@@ -453,30 +445,33 @@ namespace VMS.VisionSetup.ViewModels
             measurement.Tools.Add(new ToolItem { Name = "Line Fit", ToolType = "LineFitTool" });
             measurement.Tools.Add(new ToolItem { Name = "Circle Fit", ToolType = "CircleFitTool" });
             ToolTree.Add(measurement);
+
+            // 3D Analysis 카테고리
+            var threeD = new ToolCategory { CategoryName = "3D Analysis" };
+            threeD.Tools.Add(new ToolItem { Name = "Height Slicer", ToolType = "HeightSlicerTool" });
+            ToolTree.Add(threeD);
         }
 
         private void CloseApplication()
         {
-            Application.Current.Shutdown();
+            _shutdownAction();
         }
 
         private void OpenImageFile()
         {
-            var dlg = new OpenFileDialog
-            {
-                Title = "이미지 파일 열기",
-                Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp;*.tif;*.tiff|All Files|*.*"
-            };
+            var filePath = _dialogService.ShowOpenFileDialog(
+                "이미지 파일 열기",
+                "Image Files|*.jpg;*.jpeg;*.png;*.bmp;*.tif;*.tiff|All Files|*.*");
 
-            if (dlg.ShowDialog() == true)
+            if (filePath != null)
             {
                 try
                 {
-                    var mat = Cv2.ImRead(dlg.FileName);
+                    var mat = Cv2.ImRead(filePath);
                     if (!mat.Empty())
                     {
                         CurrentImage = mat;
-                        StatusMessage = $"이미지 로드 완료: {System.IO.Path.GetFileName(dlg.FileName)}";
+                        StatusMessage = $"이미지 로드 완료: {System.IO.Path.GetFileName(filePath)}";
                     }
                 }
                 catch (Exception ex)
@@ -527,7 +522,7 @@ namespace VMS.VisionSetup.ViewModels
 
             visionTool.Name = newTool.Name;
             DroppedTools.Add(newTool);
-            VisionService.Instance.AddTool(visionTool);
+            _visionService.AddTool(visionTool);
 
             return newTool;
         }
@@ -548,12 +543,12 @@ namespace VMS.VisionSetup.ViewModels
 
             try
             {
-                var results = await VisionService.Instance.ExecuteAllAsync();
+                var results = await _visionService.ExecuteAllAsync();
 
-                ExecutionTimeText = $"실행 시간: {VisionService.Instance.TotalExecutionTime:F2}ms";
+                ExecutionTimeText = $"실행 시간: {_visionService.TotalExecutionTime:F2}ms";
 
                 // VisionService에서 합성된 오버레이 사용
-                var compositeOverlay = VisionService.Instance.LastCompositeOverlay;
+                var compositeOverlay = _visionService.LastCompositeOverlay;
                 if (compositeOverlay != null && !compositeOverlay.Empty())
                 {
                     ResultImage = compositeOverlay.ToWriteableBitmap();
@@ -596,7 +591,7 @@ namespace VMS.VisionSetup.ViewModels
 
             try
             {
-                var result = VisionService.Instance.ExecuteTool(SelectedTool.VisionTool, CurrentImage);
+                var result = _visionService.ExecuteTool(SelectedTool.VisionTool, CurrentImage);
 
                 ExecutionTimeText = $"실행 시간: {SelectedTool.VisionTool.ExecutionTime:F2}ms";
 
@@ -685,7 +680,7 @@ namespace VMS.VisionSetup.ViewModels
         {
             ClearAllConnections();
             DroppedTools.Clear();
-            VisionService.Instance.ClearTools();
+            _visionService.ClearTools();
             SelectedTool = null;
             StatusMessage = "모든 도구가 제거되었습니다.";
         }
@@ -701,7 +696,7 @@ namespace VMS.VisionSetup.ViewModels
             RemoveConnectionsForTool(tool);
 
             if (tool.VisionTool != null)
-                VisionService.Instance.RemoveTool(tool.VisionTool);
+                _visionService.RemoveTool(tool.VisionTool);
 
             DroppedTools.Remove(tool);
 
@@ -740,7 +735,7 @@ namespace VMS.VisionSetup.ViewModels
             // VisionService에 연결 정보 등록
             if (source.VisionTool != null && target.VisionTool != null)
             {
-                VisionService.Instance.AddConnection(source.VisionTool, target.VisionTool, type);
+                _visionService.AddConnection(source.VisionTool, target.VisionTool, type);
             }
 
             StatusMessage = $"연결 생성됨: {source.Name} → {target.Name} ({type})";
@@ -760,7 +755,7 @@ namespace VMS.VisionSetup.ViewModels
                 // VisionService에서도 제거
                 if (conn.SourceToolItem?.VisionTool != null && conn.TargetToolItem?.VisionTool != null)
                 {
-                    VisionService.Instance.RemoveConnection(
+                    _visionService.RemoveConnection(
                         conn.SourceToolItem.VisionTool,
                         conn.TargetToolItem.VisionTool,
                         conn.Type);
@@ -778,7 +773,7 @@ namespace VMS.VisionSetup.ViewModels
         private void ClearAllConnections()
         {
             Connections.Clear();
-            VisionService.Instance.ClearConnections();
+            _visionService.ClearConnections();
         }
 
         #endregion
@@ -812,7 +807,7 @@ namespace VMS.VisionSetup.ViewModels
                 {
                     int toolIndex = ExecutionQueue.IndexOf(tool.VisionTool);
                     if (toolIndex > 0)
-                        VisionService.Instance.MoveTool(toolIndex, toolIndex - 1);
+                        _visionService.MoveTool(toolIndex, toolIndex - 1);
                 }
             }
         }
@@ -834,7 +829,7 @@ namespace VMS.VisionSetup.ViewModels
                 {
                     int toolIndex = ExecutionQueue.IndexOf(tool.VisionTool);
                     if (toolIndex < ExecutionQueue.Count - 1)
-                        VisionService.Instance.MoveTool(toolIndex, toolIndex + 1);
+                        _visionService.MoveTool(toolIndex, toolIndex + 1);
                 }
             }
         }
@@ -1036,7 +1031,7 @@ namespace VMS.VisionSetup.ViewModels
                 }
 
                 // Show both ROI and SearchRegion on canvas
-                RequestShowToolROI?.Invoke(this, ft.AssociatedROIShape);
+                WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(ft.AssociatedROIShape));
 
                 StatusMessage = $"Search Region 설정됨: ({ft.SearchRegion.X}, {ft.SearchRegion.Y}, {ft.SearchRegion.Width}, {ft.SearchRegion.Height})";
             }
@@ -1054,7 +1049,7 @@ namespace VMS.VisionSetup.ViewModels
                 ft.AssociatedSearchRegionShape = null;
 
                 // Refresh canvas to show only the ROI
-                RequestShowToolROI?.Invoke(this, ft.AssociatedROIShape);
+                WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(ft.AssociatedROIShape));
 
                 StatusMessage = "Search Region이 해제되었습니다.";
             }
@@ -1091,7 +1086,7 @@ namespace VMS.VisionSetup.ViewModels
                     rectROI.Y = tool.ROIY;
                     rectROI.Width = Math.Max(1, tool.ROIWidth);
                     rectROI.Height = Math.Max(1, tool.ROIHeight);
-                    RequestRefreshROI?.Invoke(this, rectROI);
+                    WeakReferenceMessenger.Default.Send(new RequestRefreshROIMessage(rectROI));
                 }
             }
 
@@ -1099,7 +1094,7 @@ namespace VMS.VisionSetup.ViewModels
             if (tool is FeatureMatchTool ft2 &&
                 e.PropertyName is nameof(FeatureMatchTool.UseSearchRegion))
             {
-                RequestShowToolROI?.Invoke(this, ft2.AssociatedROIShape);
+                WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(ft2.AssociatedROIShape));
             }
 
             // SearchRegion 프록시 속성 변경 시 AssociatedSearchRegionShape 좌표 동기화
@@ -1113,7 +1108,7 @@ namespace VMS.VisionSetup.ViewModels
                     searchRectROI.Y = ft.SearchRegionY;
                     searchRectROI.Width = Math.Max(1, ft.SearchRegionWidth);
                     searchRectROI.Height = Math.Max(1, ft.SearchRegionHeight);
-                    RequestRefreshROI?.Invoke(this, searchRectROI);
+                    WeakReferenceMessenger.Default.Send(new RequestRefreshROIMessage(searchRectROI));
                 }
             }
         }
@@ -1135,15 +1130,14 @@ namespace VMS.VisionSetup.ViewModels
             }
 
             RefreshSteps();
-            AddStepCommand?.NotifyCanExecuteChanged();
+            AddStepCommand.NotifyCanExecuteChanged();
         }
 
         private void LoadCameras()
         {
             Cameras.Clear();
-            var cameraService = CameraService.Instance;
-            cameraService.LoadCameraRegistry();
-            foreach (var cam in cameraService.GetAllCameras())
+            _cameraService.LoadCameraRegistry();
+            foreach (var cam in _cameraService.GetAllCameras())
             {
                 Cameras.Add(cam);
             }
@@ -1152,7 +1146,7 @@ namespace VMS.VisionSetup.ViewModels
         private void RefreshSteps()
         {
             Steps.Clear();
-            var recipe = RecipeService.Instance.CurrentRecipe;
+            var recipe = _recipeService.CurrentRecipe;
             if (recipe == null) return;
 
             foreach (var step in recipe.Steps.OrderBy(s => s.Sequence))
@@ -1167,10 +1161,10 @@ namespace VMS.VisionSetup.ViewModels
 
         private void AddStep()
         {
-            var recipe = RecipeService.Instance.CurrentRecipe;
+            var recipe = _recipeService.CurrentRecipe;
             if (recipe == null || SelectedCamera == null) return;
 
-            var step = RecipeService.Instance.AddStep(recipe, SelectedCamera.Id);
+            var step = _recipeService.AddStep(recipe, SelectedCamera.Id);
             if (step != null)
             {
                 int camIdx = GetCameraDisplayIndex(SelectedCamera.Id);
@@ -1185,19 +1179,15 @@ namespace VMS.VisionSetup.ViewModels
         {
             if (SelectedStep == null) return;
 
-            var recipe = RecipeService.Instance.CurrentRecipe;
+            var recipe = _recipeService.CurrentRecipe;
             if (recipe == null) return;
 
-            var result = MessageBox.Show(
+            if (_dialogService.ShowConfirmation(
                 $"'{SelectedStep.Name}'을(를) 삭제하시겠습니까?",
-                "Delete Step",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
-
-            if (result == MessageBoxResult.Yes)
+                "Delete Step"))
             {
                 var cameraId = SelectedStep.CameraId;
-                RecipeService.Instance.RemoveStep(recipe, SelectedStep.Id);
+                _recipeService.RemoveStep(recipe, SelectedStep.Id);
                 RenameStepsForCamera(recipe, cameraId);
                 SelectedStep = null;
                 ClearAllTools();
@@ -1210,13 +1200,13 @@ namespace VMS.VisionSetup.ViewModels
         {
             if (SelectedStep == null) return;
 
-            var recipe = RecipeService.Instance.CurrentRecipe;
+            var recipe = _recipeService.CurrentRecipe;
             if (recipe == null) return;
 
             if (SelectedStep.Sequence <= 1) return;
 
             var stepToMove = SelectedStep;
-            RecipeService.Instance.MoveStep(recipe, stepToMove.Id, stepToMove.Sequence - 1);
+            _recipeService.MoveStep(recipe, stepToMove.Id, stepToMove.Sequence - 1);
             RenameStepsForCamera(recipe, stepToMove.CameraId);
             RefreshSteps();
             SelectedStep = stepToMove;
@@ -1226,14 +1216,14 @@ namespace VMS.VisionSetup.ViewModels
         {
             if (SelectedStep == null) return;
 
-            var recipe = RecipeService.Instance.CurrentRecipe;
+            var recipe = _recipeService.CurrentRecipe;
             if (recipe == null) return;
 
             int cameraStepCount = recipe.Steps.Count(s => s.CameraId == SelectedStep.CameraId);
             if (SelectedStep.Sequence >= cameraStepCount) return;
 
             var stepToMove = SelectedStep;
-            RecipeService.Instance.MoveStep(recipe, stepToMove.Id, stepToMove.Sequence + 1);
+            _recipeService.MoveStep(recipe, stepToMove.Id, stepToMove.Sequence + 1);
             RenameStepsForCamera(recipe, stepToMove.CameraId);
             RefreshSteps();
             SelectedStep = stepToMove;
@@ -1247,7 +1237,7 @@ namespace VMS.VisionSetup.ViewModels
             // 기존 워크스페이스 정리
             ClearAllConnections();
             DroppedTools.Clear();
-            VisionService.Instance.ClearTools();
+            _visionService.ClearTools();
             SelectedTool = null;
 
             // ToolConfig → VisionToolBase 역직렬화
@@ -1271,7 +1261,7 @@ namespace VMS.VisionSetup.ViewModels
                 };
 
                 DroppedTools.Add(toolItem);
-                VisionService.Instance.AddTool(visionTool);
+                _visionService.AddTool(visionTool);
                 configToToolItem[config.Id] = toolItem;
             }
 
@@ -1412,8 +1402,8 @@ namespace VMS.VisionSetup.ViewModels
                     ? $"카메라 연결됨: {SelectedCamera.Name}"
                     : $"카메라 연결 실패: {SelectedCamera.Name}";
 
-                ConnectCameraCommand?.NotifyCanExecuteChanged();
-                DisconnectCameraCommand?.NotifyCanExecuteChanged();
+                ConnectCameraCommand.NotifyCanExecuteChanged();
+                DisconnectCameraCommand.NotifyCanExecuteChanged();
             }
             catch (Exception ex)
             {
@@ -1436,8 +1426,8 @@ namespace VMS.VisionSetup.ViewModels
                 IsCameraConnected = false;
                 StatusMessage = "카메라 연결 해제됨";
 
-                ConnectCameraCommand?.NotifyCanExecuteChanged();
-                DisconnectCameraCommand?.NotifyCanExecuteChanged();
+                ConnectCameraCommand.NotifyCanExecuteChanged();
+                DisconnectCameraCommand.NotifyCanExecuteChanged();
             }
             catch (Exception ex)
             {
@@ -1450,7 +1440,7 @@ namespace VMS.VisionSetup.ViewModels
             if (SelectedCamera == null) return;
 
             IsAcquiring = true;
-            AcquireImageCommand?.NotifyCanExecuteChanged();
+            AcquireImageCommand.NotifyCanExecuteChanged();
 
             try
             {
@@ -1491,7 +1481,7 @@ namespace VMS.VisionSetup.ViewModels
             finally
             {
                 IsAcquiring = false;
-                AcquireImageCommand?.NotifyCanExecuteChanged();
+                AcquireImageCommand.NotifyCanExecuteChanged();
             }
         }
 
@@ -1515,11 +1505,10 @@ namespace VMS.VisionSetup.ViewModels
         #region 3D Point Cloud
 
         /// <summary>
-        /// 샘플 포인트 클라우드 데이터 생성 (50K 반구)
+        /// 샘플 포인트 클라우드 데이터 생성 (200x200 격자 지형)
         /// </summary>
         private void LoadSamplePointCloud()
         {
-            // 격자 크기: 200x200 = 40,000 points 지형 데이터
             const int gridSize = 200;
             int count = gridSize * gridSize;
             var positions = new Vector3[count];
@@ -1536,7 +1525,6 @@ namespace VMS.VisionSetup.ViewModels
                     float x = offsetX + ix * spacing;
                     float z = offsetZ + iz * spacing;
 
-                    // 높이: 다중 사인파 지형 (Y range ~ -60 ~ +60)
                     float y = 30f * MathF.Sin(x * 0.05f) * MathF.Cos(z * 0.05f)
                             + 15f * MathF.Sin(x * 0.1f + 1f)
                             + 10f * MathF.Cos(z * 0.08f + 2f)
@@ -1552,10 +1540,58 @@ namespace VMS.VisionSetup.ViewModels
             {
                 Name = "Sample Terrain",
                 Positions = positions,
-                Colors = colors
+                Colors = colors,
+                GridWidth = gridSize,
+                GridHeight = gridSize
             };
 
             StatusMessage = $"3D 샘플 지형 데이터 로드 완료: {count:N0} points";
+        }
+
+        partial void OnCurrentPointCloudChanged(PointCloudData? value)
+        {
+            if (value != null && value.Positions.Length > 0)
+            {
+                float yMin = float.MaxValue;
+                float yMax = float.MinValue;
+                foreach (var pos in value.Positions)
+                {
+                    if (pos.Y < yMin) yMin = pos.Y;
+                    if (pos.Y > yMax) yMax = pos.Y;
+                }
+
+                PointCloudYMin = yMin;
+                PointCloudYMax = yMax;
+                HeightBaseline = 0f;
+                HeightLowerLimit = yMin;
+                HeightUpperLimit = yMax;
+            }
+
+            GenerateHeightMapCommand.NotifyCanExecuteChanged();
+        }
+
+        private bool CanGenerateHeightMap() => CurrentPointCloud?.IsOrganized == true;
+
+        private void GenerateHeightMap()
+        {
+            if (CurrentPointCloud == null || !CurrentPointCloud.IsOrganized)
+                return;
+
+            try
+            {
+                var (heightMap, metadata) = _visionService.GenerateHeightMap(
+                    CurrentPointCloud, HeightBaseline, HeightLowerLimit, HeightUpperLimit);
+
+                CurrentImage = heightMap;
+                CurrentHeightMapMetadata = metadata;
+
+                StatusMessage = $"Height Map 생성 완료: {metadata.Width}x{metadata.Height} " +
+                    $"(Baseline={HeightBaseline:F1}, Range=[{HeightLowerLimit:F1}, {HeightUpperLimit:F1}])";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Height Map 생성 실패: {ex.Message}";
+            }
         }
 
         #endregion
@@ -1565,14 +1601,14 @@ namespace VMS.VisionSetup.ViewModels
         /// </summary>
         private void NotifyCommandsCanExecuteChanged()
         {
-            RunAllCommand?.NotifyCanExecuteChanged();
-            RunSelectedCommand?.NotifyCanExecuteChanged();
-            TrainPatternCommand?.NotifyCanExecuteChanged();
-            AutoTuneCommand?.NotifyCanExecuteChanged();
-            AddStepCommand?.NotifyCanExecuteChanged();
-            DeleteStepCommand?.NotifyCanExecuteChanged();
-            MoveStepUpCommand?.NotifyCanExecuteChanged();
-            MoveStepDownCommand?.NotifyCanExecuteChanged();
+            RunAllCommand.NotifyCanExecuteChanged();
+            RunSelectedCommand.NotifyCanExecuteChanged();
+            TrainPatternCommand.NotifyCanExecuteChanged();
+            AutoTuneCommand.NotifyCanExecuteChanged();
+            AddStepCommand.NotifyCanExecuteChanged();
+            DeleteStepCommand.NotifyCanExecuteChanged();
+            MoveStepUpCommand.NotifyCanExecuteChanged();
+            MoveStepDownCommand.NotifyCanExecuteChanged();
         }
 
         /// <summary>
@@ -1593,8 +1629,64 @@ namespace VMS.VisionSetup.ViewModels
                 CaliperTool t => new CaliperToolSettingsViewModel(t),
                 LineFitTool t => new LineFitToolSettingsViewModel(t),
                 CircleFitTool t => new CircleFitToolSettingsViewModel(t),
+                HeightSlicerTool t => new HeightSlicerToolSettingsViewModel(t),
                 _ => null
             };
+        }
+
+        #endregion
+
+        #region Recipe & Camera Manager Commands
+
+        public Recipe? GetCurrentRecipe() => _recipeService.CurrentRecipe;
+
+        public void SaveCurrentRecipe()
+        {
+            var currentRecipe = _recipeService.CurrentRecipe;
+            if (currentRecipe != null)
+            {
+                SaveWorkspaceToStep();
+                currentRecipe.ModifiedAt = DateTime.Now;
+                _recipeService.SaveRecipe(currentRecipe);
+                StatusMessage = $"Recipe saved: {currentRecipe.Name}";
+            }
+            else
+            {
+                _dialogService.ShowInformation(
+                    "저장할 레시피가 없습니다. Recipe Manager에서 레시피를 로드하세요.",
+                    "No Recipe");
+            }
+        }
+
+        public void OpenRecipeManager()
+        {
+            var loadedRecipe = _dialogService.ShowRecipeManagerDialog();
+            if (loadedRecipe != null)
+            {
+                CurrentRecipeName = loadedRecipe.Name;
+                StatusMessage = $"Recipe loaded: {loadedRecipe.Name}";
+            }
+        }
+
+        public void OpenCameraManager()
+        {
+            _dialogService.ShowCameraManagerDialog();
+            RefreshCamerasFromService();
+        }
+
+        public void RenameTool(ToolItem tool)
+        {
+            if (tool == null) return;
+
+            var newName = _dialogService.ShowRenameDialog(tool.Name);
+            if (newName != null)
+            {
+                tool.Name = newName;
+                if (tool.VisionTool != null)
+                {
+                    tool.VisionTool.Name = newName;
+                }
+            }
         }
 
         #endregion
