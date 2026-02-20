@@ -1,17 +1,13 @@
 using VMS.VisionSetup.Controls;
+using VMS.VisionSetup.Helpers;
 using VMS.VisionSetup.Models;
-using VMS.VisionSetup.Services;
 using VMS.VisionSetup.ViewModels;
-using VMS.VisionSetup.Views;
-using VMS.VisionSetup.Views.Camera;
-using VMS.VisionSetup.Views.Recipe;
 using VMS.VisionSetup.VisionTools.PatternMatching;
 using CommunityToolkit.Mvvm.Messaging;
-using OpenCvSharp;
-using OpenCvSharp.WpfExtensions;
 using System;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -33,16 +29,21 @@ namespace VMS.VisionSetup
         private bool _isConnectionMode = false;
         private ConnectionType _pendingConnectionType;
         private ToolItem? _connectionSourceTool = null;
-        private Line? _tempConnectionLine = null;
 
         public MainView()
         {
             InitializeComponent();
-            var vm = new MainViewModel();
-            DataContext = vm;
+
+            // DataContext is set by App.xaml.cs via DI
+            DataContextChanged += OnDataContextChanged;
+        }
+
+        private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (e.NewValue is not MainViewModel vm) return;
 
             // If recipe was pre-loaded via command-line argument, update UI
-            var preloadedRecipe = RecipeService.Instance.CurrentRecipe;
+            var preloadedRecipe = vm.GetCurrentRecipe();
             if (preloadedRecipe != null)
             {
                 vm.CurrentRecipeName = preloadedRecipe.Name;
@@ -55,33 +56,36 @@ namespace VMS.VisionSetup
             // 도구 위치 변경 시 연결선 업데이트를 위한 이벤트 등록
             vm.DroppedTools.CollectionChanged += DroppedTools_CollectionChanged;
 
-            // ROI 동기화 이벤트 구독
-            vm.RequestShowToolROI += (s, roi) =>
+            // ROI 동기화 이벤트 구독 via WeakReferenceMessenger
+            WeakReferenceMessenger.Default.Register<RequestShowToolROIMessage>(this, (r, m) =>
             {
                 var ft = vm.SelectedVisionTool as FeatureMatchTool;
                 var searchRoi = (ft != null && ft.UseSearchRegion) ? ft.AssociatedSearchRegionShape : null;
-                ImageCanvasControl.ShowToolROIs(roi, searchRoi);
-            };
-            vm.RequestRefreshROI += (s, roi) => ImageCanvasControl.RefreshROIVisual(roi);
+                ImageCanvasControl.ShowToolROIs(m.ROIShape, searchRoi);
+            });
+            WeakReferenceMessenger.Default.Register<RequestRefreshROIMessage>(this, (r, m) =>
+            {
+                ImageCanvasControl.RefreshROIVisual(m.ROIShape);
+            });
 
             // View-level messages via WeakReferenceMessenger
-            WeakReferenceMessenger.Default.Register<RequestDrawROIMessage>(this, (r, m) =>
+            WeakReferenceMessenger.Default.Register<RequestDrawROIMessage>(this, (r, msg) =>
             {
                 _isDrawingSearchRegion = false;
                 ImageCanvasControl.ActivateDrawingMode(EditMode.DrawRectangle);
             });
-            WeakReferenceMessenger.Default.Register<RequestClearROIMessage>(this, (r, m) =>
+            WeakReferenceMessenger.Default.Register<RequestClearROIMessage>(this, (r, msg) =>
             {
                 _isDrawingSearchRegion = false;
                 var ft = vm.SelectedVisionTool as FeatureMatchTool;
                 ImageCanvasControl.ShowToolROIs(null, ft?.AssociatedSearchRegionShape);
             });
-            WeakReferenceMessenger.Default.Register<RequestDrawSearchRegionMessage>(this, (r, m) =>
+            WeakReferenceMessenger.Default.Register<RequestDrawSearchRegionMessage>(this, (r, msg) =>
             {
                 _isDrawingSearchRegion = true;
                 ImageCanvasControl.ActivateDrawingMode(EditMode.DrawRectangle);
             });
-            WeakReferenceMessenger.Default.Register<RequestClearSearchRegionMessage>(this, (r, m) =>
+            WeakReferenceMessenger.Default.Register<RequestClearSearchRegionMessage>(this, (r, msg) =>
             {
                 _isDrawingSearchRegion = false;
                 vm.ClearSearchRegion();
@@ -154,47 +158,40 @@ namespace VMS.VisionSetup
         }
 
         /// <summary>
-        /// 단일 연결선 그리기
+        /// 단일 연결선 그리기 (베지어 곡선 + 장애물 우회)
         /// </summary>
         private void DrawConnectionLine(ToolConnection connection)
         {
             if (connection.SourceToolItem == null || connection.TargetToolItem == null)
                 return;
 
-            // 도구 Border의 예상 크기 (탭 컨트롤: 헤더 + 바디)
-            const double toolWidth = 150;
-            const double toolHeight = 50;
-
-            // Source 도구의 중심 좌표
-            double sourceX = connection.SourceToolItem.X + toolWidth / 2;
-            double sourceY = connection.SourceToolItem.Y + toolHeight / 2;
-
-            // Target 도구의 중심 좌표
-            double targetX = connection.TargetToolItem.X + toolWidth / 2;
-            double targetY = connection.TargetToolItem.Y + toolHeight / 2;
+            var vm = DataContext as MainViewModel;
+            if (vm == null) return;
 
             var brush = GetConnectionBrush(connection.Type);
 
-            // 연결선 (메인 라인)
-            var line = new Line
+            // ConnectionLineRouter를 사용하여 베지어 경로 계산
+            var result = ConnectionLineRouter.ComputePath(
+                connection.SourceToolItem,
+                connection.TargetToolItem,
+                vm.DroppedTools);
+
+            // 베지어 경로 그리기
+            var path = new Path
             {
-                X1 = sourceX,
-                Y1 = sourceY,
-                X2 = targetX,
-                Y2 = targetY,
+                Data = result.PathGeometry,
                 Stroke = brush,
                 StrokeThickness = 2,
                 StrokeDashArray = GetDashArray(connection.Type),
+                Fill = Brushes.Transparent,
                 IsHitTestVisible = false
             };
-            ConnectionCanvas.Children.Add(line);
+            ConnectionCanvas.Children.Add(path);
 
-            // 화살표 머리 그리기
-            DrawArrowHead(targetX, targetY, sourceX, sourceY, brush);
+            // 화살표 머리 그리기 (곡선 접선 방향 기반)
+            DrawArrowHead(result.ArrowTipPoint, result.ArrowAngle, brush);
 
-            // 연결 타입 라벨
-            double midX = (sourceX + targetX) / 2;
-            double midY = (sourceY + targetY) / 2;
+            // 연결 타입 라벨 (곡선 중간점에 배치)
             var label = new TextBlock
             {
                 Text = connection.TypeDisplayName,
@@ -205,31 +202,30 @@ namespace VMS.VisionSetup
                 Background = new SolidColorBrush(Color.FromArgb(200, 30, 30, 30)),
                 Padding = new Thickness(3, 1, 3, 1)
             };
-            Canvas.SetLeft(label, midX - 20);
-            Canvas.SetTop(label, midY - 10);
+            Canvas.SetLeft(label, result.LabelPosition.X - 20);
+            Canvas.SetTop(label, result.LabelPosition.Y - 10);
             ConnectionCanvas.Children.Add(label);
         }
 
         /// <summary>
-        /// 화살표 머리 그리기
+        /// 화살표 머리 그리기 (곡선 접선 각도 기반)
         /// </summary>
-        private void DrawArrowHead(double tipX, double tipY, double tailX, double tailY, Brush brush)
+        private void DrawArrowHead(Point tipPoint, double angle, Brush brush)
         {
-            double angle = Math.Atan2(tipY - tailY, tipX - tailX);
             double arrowLength = 12;
             double arrowWidth = Math.PI / 6; // 30도
 
-            var point1 = new System.Windows.Point(
-                tipX - arrowLength * Math.Cos(angle - arrowWidth),
-                tipY - arrowLength * Math.Sin(angle - arrowWidth));
+            var point1 = new Point(
+                tipPoint.X - arrowLength * Math.Cos(angle - arrowWidth),
+                tipPoint.Y - arrowLength * Math.Sin(angle - arrowWidth));
 
-            var point2 = new System.Windows.Point(
-                tipX - arrowLength * Math.Cos(angle + arrowWidth),
-                tipY - arrowLength * Math.Sin(angle + arrowWidth));
+            var point2 = new Point(
+                tipPoint.X - arrowLength * Math.Cos(angle + arrowWidth),
+                tipPoint.Y - arrowLength * Math.Sin(angle + arrowWidth));
 
             var polygon = new Polygon
             {
-                Points = new PointCollection { new System.Windows.Point(tipX, tipY), point1, point2 },
+                Points = new PointCollection { tipPoint, point1, point2 },
                 Fill = brush,
                 IsHitTestVisible = false
             };
@@ -359,25 +355,13 @@ namespace VMS.VisionSetup
 
                 if (tool == null) return;
 
-                var dialog = new RenameDialog
-                {
-                    Owner = this,
-                    ToolName = tool.Name
-                };
-
-                if (dialog.ShowDialog() == true)
-                {
-                    tool.Name = dialog.ToolName;
-                    if (tool.VisionTool != null)
-                    {
-                        tool.VisionTool.Name = dialog.ToolName;
-                    }
-                }
+                var vm = DataContext as MainViewModel;
+                vm?.RenameTool(tool);
             }
         }
 
         /// <summary>
-        /// 연결 모드에서 마우스 이동 - 임시 연결선 그리기
+        /// 연결 모드에서 마우스 이동 - 임시 베지어 연결선 그리기
         /// </summary>
         private void ConnectionMode_MouseMove(object sender, MouseEventArgs e)
         {
@@ -390,28 +374,29 @@ namespace VMS.VisionSetup
 
             double sourceX = _connectionSourceTool.X + toolWidth / 2;
             double sourceY = _connectionSourceTool.Y + toolHeight / 2;
+            var sourceCenter = new Point(sourceX, sourceY);
 
             // WorkspaceArea가 Grid 안에 있으므로, Grid 기준 좌표로 변환
             var grid = WorkspaceArea.Parent as Grid;
             if (grid == null) return;
 
-            System.Windows.Point mousePos = e.GetPosition(grid);
+            Point mousePos = e.GetPosition(grid);
 
             var brush = GetConnectionBrush(_pendingConnectionType);
 
-            var tempLine = new Line
+            // 베지어 곡선 임시 경로
+            var tempGeometry = ConnectionLineRouter.ComputeTempPath(sourceCenter, mousePos);
+            var tempPath = new Path
             {
-                X1 = sourceX,
-                Y1 = sourceY,
-                X2 = mousePos.X,
-                Y2 = mousePos.Y,
+                Data = tempGeometry,
                 Stroke = brush,
                 StrokeThickness = 2,
                 StrokeDashArray = new DoubleCollection { 4, 4 },
                 Opacity = 0.7,
+                Fill = Brushes.Transparent,
                 IsHitTestVisible = false
             };
-            TempConnectionCanvas.Children.Add(tempLine);
+            TempConnectionCanvas.Children.Add(tempPath);
         }
 
         /// <summary>
@@ -432,7 +417,6 @@ namespace VMS.VisionSetup
         {
             _isConnectionMode = false;
             _connectionSourceTool = null;
-            _tempConnectionLine = null;
 
             TempConnectionCanvas.Children.Clear();
             ConnectionModeHint.Visibility = Visibility.Collapsed;
@@ -665,29 +649,8 @@ namespace VMS.VisionSetup
         /// </summary>
         private void RecipeManager_Click(object sender, RoutedEventArgs e)
         {
-            var window = new RecipeManagerWindow();
-            window.Owner = this;
-            window.RecipeLoaded += RecipeManagerWindow_RecipeLoaded;
-            window.ShowDialog();
-        }
-
-        /// <summary>
-        /// 레시피 로드 이벤트 처리
-        /// </summary>
-        private void RecipeManagerWindow_RecipeLoaded(object? sender, Models.Recipe recipe)
-        {
             var vm = DataContext as MainViewModel;
-            if (vm != null)
-            {
-                vm.CurrentRecipeName = recipe.Name;
-                vm.StatusMessage = $"Recipe loaded: {recipe.Name}";
-            }
-
-            // 창 닫기
-            if (sender is RecipeManagerWindow window)
-            {
-                window.DialogResult = true;
-            }
+            vm?.OpenRecipeManager();
         }
 
         /// <summary>
@@ -695,13 +658,8 @@ namespace VMS.VisionSetup
         /// </summary>
         private void CameraManager_Click(object sender, RoutedEventArgs e)
         {
-            var window = new CameraManagerWindow();
-            window.Owner = this;
-            window.ShowDialog();
-
-            // 카메라 목록 갱신
             var vm = DataContext as MainViewModel;
-            vm?.RefreshCamerasFromService();
+            vm?.OpenCameraManager();
         }
 
         /// <summary>
@@ -709,26 +667,8 @@ namespace VMS.VisionSetup
         /// </summary>
         private void SaveRecipe_Click(object sender, RoutedEventArgs e)
         {
-            var currentRecipe = RecipeService.Instance.CurrentRecipe;
-            if (currentRecipe != null)
-            {
-                // 선택된 스텝이 있으면 워크스페이스의 도구를 스텝에 먼저 저장
-                var vm = DataContext as MainViewModel;
-                vm?.SaveWorkspaceToStep();
-
-                currentRecipe.ModifiedAt = DateTime.Now;
-                RecipeService.Instance.SaveRecipe(currentRecipe);
-
-                if (vm != null)
-                {
-                    vm.StatusMessage = $"Recipe saved: {currentRecipe.Name}";
-                }
-            }
-            else
-            {
-                MessageBox.Show("저장할 레시피가 없습니다. Recipe Manager에서 레시피를 로드하세요.",
-                    "No Recipe", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
+            var vm = DataContext as MainViewModel;
+            vm?.SaveCurrentRecipe();
         }
 
         #endregion
