@@ -7,6 +7,8 @@
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         <converters:BoolToColorConverter x:Key="BoolToColorConverter"/>
+        <converters:StatusStateToColorConverter x:Key="StatusStateToColorConverter"/>
+        <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
         <!-- Common Colors -->
         <SolidColorBrush x:Key="PrimaryBrush" Color="#2196F3"/>
         <SolidColorBrush x:Key="PrimaryDarkBrush" Color="#1976D2"/>

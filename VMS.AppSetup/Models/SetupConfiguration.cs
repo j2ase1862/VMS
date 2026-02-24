@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
+using VMS.Camera.Models;
 
 namespace VMS.AppSetup.Models
 {
@@ -33,43 +34,22 @@ namespace VMS.AppSetup.Models
     /// <summary>
     /// 카메라 설정
     /// </summary>
-    public class CameraConfiguration : ObservableObject
+    public partial class CameraConfiguration : ObservableObject
     {
+        [ObservableProperty]
         private bool _isEnabled = true;
+
+        [ObservableProperty]
         private string _id = Guid.NewGuid().ToString();
+
+        [ObservableProperty]
         private string _name = string.Empty;
+
+        [ObservableProperty]
         private string _ipAddress = string.Empty;
+
+        [ObservableProperty]
         private CameraManufacturer _manufacturer = CameraManufacturer.Other;
-
-        public bool IsEnabled
-        {
-            get => _isEnabled;
-            set => SetProperty(ref _isEnabled, value);
-        }
-
-        public string Id
-        {
-            get => _id;
-            set => SetProperty(ref _id, value);
-        }
-
-        public string Name
-        {
-            get => _name;
-            set => SetProperty(ref _name, value);
-        }
-
-        public string IpAddress
-        {
-            get => _ipAddress;
-            set => SetProperty(ref _ipAddress, value);
-        }
-
-        public CameraManufacturer Manufacturer
-        {
-            get => _manufacturer;
-            set => SetProperty(ref _manufacturer, value);
-        }
 
         [JsonIgnore]
         public string DisplayInfo => $"{Manufacturer} - {IpAddress}";
@@ -82,24 +62,6 @@ namespace VMS.AppSetup.Models
     {
         Live,   // 실제 연결된 카메라 표시
         Virtual // 가상 카메라 설정
-    }
-
-    /// <summary>
-    /// 카메라 제조사
-    /// </summary>
-    public enum CameraManufacturer
-    {
-        HIK,
-        Basler,
-        IDS,
-        Cognex,
-        Keyence,
-        Dalsa,
-        Baumer,
-        Allied_Vision,
-        FLIR,
-        JAI,
-        Other
     }
 
     /// <summary>

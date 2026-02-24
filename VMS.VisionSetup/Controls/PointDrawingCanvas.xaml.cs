@@ -6,7 +6,7 @@ using System.Numerics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using VMS.VisionSetup.Models;
+using VMS.Camera.Models;
 
 namespace VMS.VisionSetup.Controls
 {

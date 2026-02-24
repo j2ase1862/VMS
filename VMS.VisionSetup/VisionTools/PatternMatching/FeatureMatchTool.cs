@@ -1336,7 +1336,7 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
 
         private Mat GetColorOverlayBase(Mat inputImage)
         {
-            var orig = VisionService.Instance.CurrentImage;
+            var orig = OverlayBaseImage ?? VisionService.Instance.CurrentImage;
             if (orig != null && !orig.Empty()
                 && orig.Width == inputImage.Width && orig.Height == inputImage.Height)
             {

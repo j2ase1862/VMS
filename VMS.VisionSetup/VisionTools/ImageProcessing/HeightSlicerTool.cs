@@ -1,3 +1,4 @@
+using VMS.Camera.Models;
 using VMS.VisionSetup.Models;
 using OpenCvSharp;
 using System;

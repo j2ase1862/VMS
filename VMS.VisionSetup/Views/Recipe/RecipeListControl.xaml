@@ -98,7 +98,7 @@
                      Background="#3E3E42" Foreground="White"
                      BorderBrush="#555555" BorderThickness="1"
                      Padding="8,6" FontSize="12"
-                     TextChanged="SearchBox_TextChanged">
+                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}">
                 <TextBox.Style>
                     <Style TargetType="TextBox">
                         <Style.Triggers>
@@ -117,16 +117,16 @@
             <Button Grid.Column="1" Content="X"
                     Width="30" Margin="5,0,0,0"
                     Style="{StaticResource SecondaryButtonStyle}"
-                    Click="ClearSearch_Click"
+                    Command="{Binding ClearSearchCommand}"
                     ToolTip="Clear search"/>
         </Grid>
 
         <!-- Recipe List -->
-        <ListBox x:Name="RecipeList"
-                 Grid.Row="2"
+        <ListBox Grid.Row="2"
                  Background="#2D2D30" BorderBrush="#555555" BorderThickness="1"
                  ItemContainerStyle="{StaticResource RecipeListItemStyle}"
-                 SelectionChanged="RecipeList_SelectionChanged">
+                 ItemsSource="{Binding Recipes}"
+                 SelectedItem="{Binding SelectedRecipe, Mode=TwoWay}">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Grid>
@@ -160,16 +160,16 @@
 
         <!-- Action Buttons -->
         <WrapPanel Grid.Row="3" Orientation="Horizontal" Margin="0,10,0,0">
-            <Button Content="New" Click="NewRecipe_Click" Style="{StaticResource RecipeButtonStyle}" Width="60"/>
-            <Button x:Name="LoadButton" Content="Load" Click="LoadRecipe_Click" Style="{StaticResource RecipeButtonStyle}" Width="60" IsEnabled="False"/>
-            <Button x:Name="DeleteButton" Content="Delete" Click="DeleteRecipe_Click" Style="{StaticResource DangerButtonStyle}" Width="60" IsEnabled="False"/>
+            <Button Content="New" Command="{Binding NewRecipeCommand}" Style="{StaticResource RecipeButtonStyle}" Width="60"/>
+            <Button Content="Load" Command="{Binding LoadRecipeCommand}" Style="{StaticResource RecipeButtonStyle}" Width="60" IsEnabled="{Binding HasSelection}"/>
+            <Button Content="Delete" Command="{Binding DeleteRecipeCommand}" Style="{StaticResource DangerButtonStyle}" Width="60" IsEnabled="{Binding HasSelection}"/>
         </WrapPanel>
 
         <!-- Import/Export Buttons -->
         <WrapPanel Grid.Row="4" Orientation="Horizontal" Margin="0,5,0,0">
-            <Button Content="Import" Click="ImportRecipe_Click" Style="{StaticResource SecondaryButtonStyle}" Width="60"/>
-            <Button x:Name="ExportButton" Content="Export" Click="ExportRecipe_Click" Style="{StaticResource SecondaryButtonStyle}" Width="60" IsEnabled="False"/>
-            <Button Content="Open Folder" Click="OpenFolder_Click" Style="{StaticResource SecondaryButtonStyle}" Width="80"/>
+            <Button Content="Import" Command="{Binding ImportRecipeCommand}" Style="{StaticResource SecondaryButtonStyle}" Width="60"/>
+            <Button Content="Export" Command="{Binding ExportRecipeCommand}" Style="{StaticResource SecondaryButtonStyle}" Width="60" IsEnabled="{Binding HasSelection}"/>
+            <Button Content="Open Folder" Command="{Binding OpenFolderCommand}" Style="{StaticResource SecondaryButtonStyle}" Width="80"/>
         </WrapPanel>
     </Grid>
 </UserControl>

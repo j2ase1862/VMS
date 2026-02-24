@@ -1,3 +1,4 @@
+using VMS.Camera.Models;
 using VMS.Models;
 using System;
 using System.Collections.Generic;

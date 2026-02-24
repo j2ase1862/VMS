@@ -138,6 +138,9 @@ namespace VMS.VisionSetup.Controls
             if (d is ImageCanvas canvas && e.NewValue is Mat mat)
             {
                 canvas.UpdateDisplayImage(mat);
+                // Auto-fit after layout updates with the new image size
+                canvas.Dispatcher.InvokeAsync(() => canvas.ZoomToFit(),
+                    System.Windows.Threading.DispatcherPriority.Loaded);
             }
         }
 
@@ -849,9 +852,12 @@ namespace VMS.VisionSetup.Controls
             SetZoom(_zoomLevel - 0.1);
         }
 
-        private void ZoomFit_Click(object sender, RoutedEventArgs e)
+        private void ZoomFit_Click(object sender, RoutedEventArgs e) => ZoomToFit();
+
+        private void ZoomToFit()
         {
-            if (SourceImage != null && SourceImage.Width > 0 && SourceImage.Height > 0)
+            if (SourceImage != null && SourceImage.Width > 0 && SourceImage.Height > 0
+                && ActualWidth > 0 && ActualHeight > 0)
             {
                 double scaleX = ActualWidth / SourceImage.Width;
                 double scaleY = ActualHeight / SourceImage.Height;

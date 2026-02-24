@@ -8,6 +8,8 @@
              d:DesignHeight="500" d:DesignWidth="500">
 
     <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+
         <Style x:Key="CameraButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="#0078D4"/>
             <Setter Property="Foreground" Value="White"/>
@@ -103,10 +105,11 @@
                        Foreground="#FFD700" FontWeight="Bold" FontSize="14"
                        Margin="0,0,0,10"/>
 
-            <ListBox x:Name="CameraList" Grid.Row="1"
+            <ListBox Grid.Row="1"
                      Background="#2D2D30" BorderBrush="#555555" BorderThickness="1"
                      ItemContainerStyle="{StaticResource CameraListItemStyle}"
-                     SelectionChanged="CameraList_SelectionChanged">
+                     ItemsSource="{Binding Cameras}"
+                     SelectedItem="{Binding SelectedCamera, Mode=TwoWay}">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <StackPanel>
@@ -118,15 +121,15 @@
             </ListBox>
 
             <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,10,0,0">
-                <Button Content="Add" Click="AddCamera_Click" Style="{StaticResource CameraButtonStyle}" Width="55"/>
-                <Button x:Name="RemoveButton" Content="Remove" Click="RemoveCamera_Click"
-                        Style="{StaticResource DangerButtonStyle}" Width="65" IsEnabled="False"/>
+                <Button Content="Add" Command="{Binding AddCameraCommand}" Style="{StaticResource CameraButtonStyle}" Width="55"/>
+                <Button Content="Remove" Command="{Binding RemoveCameraCommand}"
+                        Style="{StaticResource DangerButtonStyle}" Width="65" IsEnabled="{Binding HasSelection}"/>
             </StackPanel>
         </Grid>
 
         <!-- Camera Properties Panel -->
         <Border Grid.Column="1" Background="#2D2D30" BorderBrush="#555555" BorderThickness="1" Padding="15">
-            <Grid x:Name="PropertiesPanel" Visibility="Collapsed">
+            <Grid Visibility="{Binding IsPropertiesPanelVisible, Converter={StaticResource BoolToVisibility}}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
@@ -140,10 +143,10 @@
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                     <StackPanel>
                         <TextBlock Text="Name" Style="{StaticResource LabelStyle}"/>
-                        <TextBox x:Name="NameBox" Style="{StaticResource InputStyle}"/>
+                        <TextBox Text="{Binding CameraName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputStyle}"/>
 
                         <TextBlock Text="Manufacturer" Style="{StaticResource LabelStyle}"/>
-                        <ComboBox x:Name="ManufacturerBox" IsEditable="True"
+                        <ComboBox IsEditable="True" Text="{Binding Manufacturer, UpdateSourceTrigger=PropertyChanged}"
                                   Background="#3E3E42" Foreground="White"
                                   BorderBrush="#555555" Margin="0,0,0,10">
                             <ComboBoxItem Content="Basler"/>
@@ -156,10 +159,10 @@
                         </ComboBox>
 
                         <TextBlock Text="Model" Style="{StaticResource LabelStyle}"/>
-                        <TextBox x:Name="ModelBox" Style="{StaticResource InputStyle}"/>
+                        <TextBox Text="{Binding Model, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputStyle}"/>
 
                         <TextBlock Text="Serial Number" Style="{StaticResource LabelStyle}"/>
-                        <TextBox x:Name="SerialNumberBox" Style="{StaticResource InputStyle}"/>
+                        <TextBox Text="{Binding SerialNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputStyle}"/>
 
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -169,25 +172,25 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="Width" Style="{StaticResource LabelStyle}"/>
-                                <TextBox x:Name="WidthBox" Style="{StaticResource InputStyle}"/>
+                                <TextBox Text="{Binding WidthText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputStyle}"/>
                             </StackPanel>
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="Height" Style="{StaticResource LabelStyle}"/>
-                                <TextBox x:Name="HeightBox" Style="{StaticResource InputStyle}"/>
+                                <TextBox Text="{Binding HeightText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputStyle}"/>
                             </StackPanel>
                         </Grid>
 
                         <TextBlock Text="Connection String (IP or Device Path)" Style="{StaticResource LabelStyle}"/>
-                        <TextBox x:Name="ConnectionStringBox" Style="{StaticResource InputStyle}"/>
+                        <TextBox Text="{Binding ConnectionString, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputStyle}"/>
 
-                        <CheckBox x:Name="EnabledCheckBox" Content="Enabled"
+                        <CheckBox Content="Enabled" IsChecked="{Binding IsEnabled}"
                                   Foreground="White" Margin="0,5,0,0"/>
                     </StackPanel>
                 </ScrollViewer>
 
                 <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,15,0,0" HorizontalAlignment="Right">
-                    <Button Content="Save" Click="SaveCamera_Click" Style="{StaticResource CameraButtonStyle}" Width="70"/>
-                    <Button Content="Cancel" Click="CancelEdit_Click" Style="{StaticResource SecondaryButtonStyle}" Width="70"/>
+                    <Button Content="Save" Command="{Binding SaveCameraCommand}" Style="{StaticResource CameraButtonStyle}" Width="70"/>
+                    <Button Content="Cancel" Command="{Binding CancelEditCommand}" Style="{StaticResource SecondaryButtonStyle}" Width="70"/>
                 </StackPanel>
             </Grid>
         </Border>

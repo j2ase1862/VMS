@@ -1,7 +1,9 @@
+using VMS.Camera.Interfaces;
+using VMS.Camera.Models;
+using VMS.Camera.Services;
 using VMS.VisionSetup.Interfaces;
 using VMS.VisionSetup.Models;
 using VMS.VisionSetup.Services;
-using VMS.VisionSetup.Services.Acquisition;
 using VMS.VisionSetup.ViewModels.ToolSettings;
 using VMS.VisionSetup.VisionTools.BlobAnalysis;
 using VMS.VisionSetup.VisionTools.ImageProcessing;

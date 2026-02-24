@@ -29,6 +29,25 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
                 AssociatedROIShape = null;
                 WeakReferenceMessenger.Default.Send(new RequestClearROIMessage());
             });
+
+            ShowROICommand = new RelayCommand(() =>
+            {
+                if (!UseROI || ROIWidth <= 0 || ROIHeight <= 0) return;
+
+                if (AssociatedROIShape == null)
+                {
+                    AssociatedROIShape = new RectangleROI
+                    {
+                        X = ROIX,
+                        Y = ROIY,
+                        Width = ROIWidth,
+                        Height = ROIHeight,
+                        Name = $"{Name} ROI"
+                    };
+                }
+
+                WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(AssociatedROIShape));
+            });
         }
 
         private void OnModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -58,6 +77,7 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         public VisionResult? LastResult { get => Tool.LastResult; set => Tool.LastResult = value; }
 
         // Commands (owned by VM, send messages)
+        public IRelayCommand ShowROICommand { get; }
         public IRelayCommand DrawROICommand { get; }
         public IRelayCommand ClearROICommand { get; }
 

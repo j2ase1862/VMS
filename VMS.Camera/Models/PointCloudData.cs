@@ -1,7 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using System.Numerics;
 
-namespace VMS.VisionSetup.Models
+namespace VMS.Camera.Models
 {
     public class PointCloudData : ObservableObject
     {
@@ -26,9 +26,25 @@ namespace VMS.VisionSetup.Models
             set => SetProperty(ref _colors, value);
         }
 
+        private int _gridWidth;
+        public int GridWidth
+        {
+            get => _gridWidth;
+            set => SetProperty(ref _gridWidth, value);
+        }
+
+        private int _gridHeight;
+        public int GridHeight
+        {
+            get => _gridHeight;
+            set => SetProperty(ref _gridHeight, value);
+        }
+
         public int PointCount => Positions.Length;
 
-        public static PointCloudData FromArrays(float[] xyz, byte[]? rgb = null, string name = "PointCloud")
+        public bool IsOrganized => GridWidth > 0 && GridHeight > 0 && GridWidth * GridHeight == PointCount;
+
+        public static PointCloudData FromArrays(float[] xyz, byte[]? rgb = null, string name = "PointCloud", int width = 0, int height = 0)
         {
             int count = xyz.Length / 3;
             var positions = new Vector3[count];
@@ -52,7 +68,9 @@ namespace VMS.VisionSetup.Models
             {
                 Name = name,
                 Positions = positions,
-                Colors = colors
+                Colors = colors,
+                GridWidth = width,
+                GridHeight = height
             };
         }
     }

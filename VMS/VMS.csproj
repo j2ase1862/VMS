@@ -2,18 +2,39 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>icon\Vasim.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="icon\Vasim.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="HelixToolkit.Wpf.SharpDX" Version="3.1.2" />
+    <PackageReference Include="OpenCvSharp4" Version="4.11.0.20250507" />
+    <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.11.0.20250507" />
+    <PackageReference Include="OpenCvSharp4.Extensions" Version="4.11.0.20250507" />
   </ItemGroup>
 
   <ItemGroup>
     <Resource Include="Assets\ci.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VMS.Camera\VMS.Camera.csproj" />
+  </ItemGroup>
+
+  <!-- Build order: VMS.VisionSetup and VMS.AppSetup must build first (post-build copies to this output) -->
+  <ItemGroup>
+    <ProjectReference Include="..\VMS.VisionSetup\VMS.VisionSetup.csproj" />
+    <ProjectReference Include="..\VMS.AppSetup\VMS.AppSetup.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
   </ItemGroup>
 
 </Project>
