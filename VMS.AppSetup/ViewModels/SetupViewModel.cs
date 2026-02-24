@@ -1,17 +1,21 @@
+using VMS.AppSetup.Interfaces;
 using VMS.AppSetup.Models;
-using VMS.AppSetup.Services;
+using VMS.Camera.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Windows;
 
 namespace VMS.AppSetup.ViewModels
 {
     public partial class SetupViewModel : ObservableObject
     {
         private const int TotalPages = 4;
+
+        private readonly IConfigurationService _configService;
+        private readonly IDialogService _dialogService;
+        private readonly Action _shutdownAction;
 
         [ObservableProperty]
         private int _currentPage = 1;
@@ -71,15 +75,19 @@ namespace VMS.AppSetup.ViewModels
         public Array CommunicationTypes => Enum.GetValues(typeof(PlcCommunicationType));
         public Array CameraModes => Enum.GetValues(typeof(CameraMode));
 
-        public SetupViewModel()
+        public SetupViewModel(IConfigurationService configService, IDialogService dialogService, Action shutdownAction)
         {
+            _configService = configService;
+            _dialogService = dialogService;
+            _shutdownAction = shutdownAction;
+
             UpdatePageInfo();
             LoadExistingConfiguration();
         }
 
         private void LoadExistingConfiguration()
         {
-            var config = ConfigurationService.Instance.LoadConfiguration();
+            var config = _configService.LoadConfiguration();
             if (config != null)
             {
                 ApplicationName = config.ApplicationName;
@@ -204,12 +212,10 @@ namespace VMS.AppSetup.ViewModels
             Cameras.Clear();
 
             // Simulated camera discovery
-            MessageBox.Show(
+            _dialogService.ShowInformation(
                 "카메라 스캔 기능은 실제 카메라 SDK 연동 후 구현됩니다.\n\n" +
                 "현재는 가상 모드를 사용하여 카메라를 수동으로 설정하세요.",
-                "Camera Scan",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+                "Camera Scan");
 
             // Switch to virtual mode for now
             CameraMode = CameraMode.Virtual;
@@ -250,24 +256,20 @@ namespace VMS.AppSetup.ViewModels
                 PlcPort = PlcPort
             };
 
-            if (ConfigurationService.Instance.SaveConfiguration(config))
+            if (_configService.SaveConfiguration(config))
             {
-                MessageBox.Show(
-                    $"설정이 저장되었습니다.\n\n저장 위치: {ConfigurationService.Instance.ConfigFilePath}",
-                    "Setup Complete",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                _dialogService.ShowInformation(
+                    $"설정이 저장되었습니다.\n\n저장 위치: {_configService.ConfigFilePath}",
+                    "Setup Complete");
 
                 // Close the application
-                Application.Current.Shutdown();
+                _shutdownAction();
             }
             else
             {
-                MessageBox.Show(
+                _dialogService.ShowError(
                     "설정 저장에 실패했습니다.",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Error");
             }
         }
     }

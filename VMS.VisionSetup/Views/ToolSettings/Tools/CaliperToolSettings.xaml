@@ -5,31 +5,6 @@
              xmlns:conv="clr-namespace:VMS.VisionSetup.Converters"
              xmlns:meas="clr-namespace:VMS.VisionSetup.VisionTools.Measurement">
     <StackPanel>
-        <!-- Search Region -->
-        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
-            <Expander.Header>
-                <TextBlock Text="Search Region" Style="{StaticResource ExpanderHeaderStyle}"/>
-            </Expander.Header>
-            <StackPanel Margin="5,0,0,0">
-                <controls:TextBoxParameter Label="Start X"
-                    Value="{Binding StartPoint.X}"
-                    ToolType="CaliperTool" ParameterName="StartPoint.X"/>
-                <controls:TextBoxParameter Label="Start Y"
-                    Value="{Binding StartPoint.Y}"
-                    ToolType="CaliperTool" ParameterName="StartPoint.Y"/>
-                <controls:TextBoxParameter Label="End X"
-                    Value="{Binding EndPoint.X}"
-                    ToolType="CaliperTool" ParameterName="EndPoint.X"/>
-                <controls:TextBoxParameter Label="End Y"
-                    Value="{Binding EndPoint.Y}"
-                    ToolType="CaliperTool" ParameterName="EndPoint.Y"/>
-                <controls:SliderParameter Label="Search Width"
-                    Value="{Binding SearchWidth}" Minimum="1" Maximum="100"
-                    TickFrequency="1" ValueFormat="F0"
-                    ToolType="CaliperTool" ParameterName="SearchWidth"/>
-            </StackPanel>
-        </Expander>
-
         <!-- Edge Detection -->
         <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
             <Expander.Header>

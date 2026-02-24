@@ -20,6 +20,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\VMS.Camera\VMS.Camera.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="..\NativeVision\NativeVision.dll"
           Condition="Exists('..\NativeVision\NativeVision.dll')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -27,15 +31,18 @@
     </None>
   </ItemGroup>
 
-  <!-- After build, write output path so VMS can find VisionSetup -->
-  <Target Name="WriteOutputPath" AfterTargets="Build">
+  <!-- After build, copy output to VMS output directory -->
+  <Target Name="CopyToVmsOutput" AfterTargets="Build">
     <PropertyGroup>
       <VmsOutputDir>..\VMS\bin\$(Configuration)\net8.0-windows\</VmsOutputDir>
     </PropertyGroup>
+    <ItemGroup>
+      <VisionSetupOutputFiles Include="$(TargetDir)**\*.*" />
+    </ItemGroup>
     <MakeDir Directories="$(VmsOutputDir)" Condition="!Exists('$(VmsOutputDir)')" />
-    <WriteLinesToFile File="$(VmsOutputDir)VisionSetup.path"
-                     Lines="$(TargetDir)VMS.VisionSetup.exe"
-                     Overwrite="true" />
+    <Copy SourceFiles="@(VisionSetupOutputFiles)"
+          DestinationFolder="$(VmsOutputDir)%(RecursiveDir)"
+          SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

@@ -227,6 +227,18 @@ namespace VMS.VisionSetup.Services
                     break;
             }
 
+            // Fixture 기준 좌표 저장 (Coordinates 연결에 의한 ROI 오프셋 기준점)
+            if (tool.HasFixtureBaseROI)
+            {
+                config.Parameters["_FixtureRefX"] = tool.FixtureRefX;
+                config.Parameters["_FixtureRefY"] = tool.FixtureRefY;
+                config.Parameters["_FixtureRefAngle"] = tool.FixtureRefAngle;
+                config.Parameters["_FixtureBaseROIX"] = tool.FixtureBaseROI.X;
+                config.Parameters["_FixtureBaseROIY"] = tool.FixtureBaseROI.Y;
+                config.Parameters["_FixtureBaseROIW"] = tool.FixtureBaseROI.Width;
+                config.Parameters["_FixtureBaseROIH"] = tool.FixtureBaseROI.Height;
+            }
+
             return config;
         }
 
@@ -266,14 +278,36 @@ namespace VMS.VisionSetup.Services
 
         private static void ApplyBaseProperties(VisionToolBase tool, ToolConfig config)
         {
-            // Note: Id is read-only, generated at construction time
-            // For deserialization, we need to set it via reflection or constructor
+            tool.Id = config.Id;
             tool.Name = config.Name;
             tool.IsEnabled = config.IsEnabled;
             tool.X = config.X;
             tool.Y = config.Y;
             tool.UseROI = config.UseROI;
             tool.ROI = new Rect(config.ROIX, config.ROIY, config.ROIWidth, config.ROIHeight);
+
+            // Fixture 기준 좌표 복원 (레시피에 저장된 경우)
+            if (config.Parameters.TryGetValue("_FixtureRefX", out var frx))
+            {
+                tool.HasFixtureBaseROI = true;
+                tool.FixtureRefX = GetDouble(frx);
+                if (config.Parameters.TryGetValue("_FixtureRefY", out var fry))
+                    tool.FixtureRefY = GetDouble(fry);
+                if (config.Parameters.TryGetValue("_FixtureRefAngle", out var fra))
+                    tool.FixtureRefAngle = GetDouble(fra);
+                if (config.Parameters.TryGetValue("_FixtureBaseROIX", out var brx) &&
+                    config.Parameters.TryGetValue("_FixtureBaseROIY", out var bry) &&
+                    config.Parameters.TryGetValue("_FixtureBaseROIW", out var brw) &&
+                    config.Parameters.TryGetValue("_FixtureBaseROIH", out var brh))
+                {
+                    tool.FixtureBaseROI = new Rect(GetInt(brx), GetInt(bry), GetInt(brw), GetInt(brh));
+                }
+                else
+                {
+                    // fallback: 현재 ROI를 base로 사용
+                    tool.FixtureBaseROI = tool.ROI;
+                }
+            }
         }
 
         private static GrayscaleTool DeserializeGrayscaleTool(ToolConfig config)

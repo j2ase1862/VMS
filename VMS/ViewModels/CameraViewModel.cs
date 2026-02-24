@@ -1,8 +1,20 @@
+using VMS.Camera.Interfaces;
+using VMS.Camera.Models;
+using VMS.Camera.Services;
+using VMS.Interfaces;
 using VMS.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using System;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using OpenCvSharp;
+using PointCloudData = VMS.Camera.Models.PointCloudData;
 
 namespace VMS.ViewModels
 {
@@ -11,6 +23,13 @@ namespace VMS.ViewModels
     /// </summary>
     public partial class CameraViewModel : ObservableObject
     {
+        private readonly IDialogService? _dialogService;
+        private readonly IConfigurationService? _configService;
+        private readonly IInspectionService? _inspectionService;
+        private ICameraAcquisition? _acquisition;
+        private Models.Recipe? _currentRecipe;
+        private BitmapSource? _originalImage;  // 검사용 원본 이미지 (오버레이 전)
+
         [ObservableProperty]
         private string _id = string.Empty;
 
@@ -41,6 +60,12 @@ namespace VMS.ViewModels
         [ObservableProperty]
         private BitmapSource? _currentImage;
 
+        [ObservableProperty]
+        private PointCloudData? _currentPointCloud;
+
+        [ObservableProperty]
+        private int _selectedViewTab;  // 0=2D, 1=3D
+
         // Layout properties
         [ObservableProperty]
         private double _x;
@@ -63,6 +88,10 @@ namespace VMS.ViewModels
 
         [ObservableProperty]
         private int _currentStepIndex;
+
+        // Inline control box
+        [ObservableProperty]
+        private bool _isControlBoxOpen;
 
         // Current step's camera settings (bound to selected step)
         public double Exposure
@@ -110,21 +139,19 @@ namespace VMS.ViewModels
         [ObservableProperty]
         private int _failCount;
 
-        // Waiting color: #EB782A (orange)
-        private static readonly Brush WaitingBrush = new SolidColorBrush(Color.FromRgb(0xEB, 0x78, 0x2A));
-        private static readonly Brush OkBrush = Brushes.LimeGreen;
-        private static readonly Brush NgBrush = Brushes.Red;
+        [ObservableProperty]
+        private double _lastExecutionTimeMs;
+
+        public ObservableCollection<ToolResultItem> ToolRunResults { get; } = new();
 
         // Status logic:
-        // IsPassed checked   → always "OK" (green), bypass inspection
-        // IsPassed unchecked → "WAIT" (orange) until trigger received
-        //   after trigger    → "OK" (green) or "NG" (red) based on InspectionOk
+        // IsPassed checked   -> always "OK" (green), bypass inspection
+        // IsPassed unchecked -> "WAIT" (orange) until trigger received
+        //   after trigger    -> "OK" (green) or "NG" (red) based on InspectionOk
         public string StatusText => IsPassed ? "OK" : (!IsInspected ? "WAIT" : (InspectionOk ? "OK" : "NG"));
-        public Brush StatusColor => IsPassed ? OkBrush : (!IsInspected ? WaitingBrush : (InspectionOk ? OkBrush : NgBrush));
 
         partial void OnIsPassedChanged(bool value)
         {
-            // When bypass is toggled, reset inspection state
             if (value)
             {
                 IsInspected = false;
@@ -132,20 +159,28 @@ namespace VMS.ViewModels
             NotifyStatusChanged();
         }
 
-        partial void OnIsInspectedChanged(bool value)
+        partial void OnIsInspectedChanged(bool value) => NotifyStatusChanged();
+
+        partial void OnInspectionOkChanged(bool value) => NotifyStatusChanged();
+
+        private void NotifyStatusChanged() => OnPropertyChanged(nameof(StatusText));
+
+        public CameraViewModel()
         {
-            NotifyStatusChanged();
         }
 
-        partial void OnInspectionOkChanged(bool value)
+        public CameraViewModel(IDialogService dialogService, IConfigurationService configService,
+            IInspectionService? inspectionService = null)
         {
-            NotifyStatusChanged();
+            _dialogService = dialogService;
+            _configService = configService;
+            _inspectionService = inspectionService;
         }
 
-        private void NotifyStatusChanged()
+        public void SetRecipe(Models.Recipe? recipe)
         {
-            OnPropertyChanged(nameof(StatusText));
-            OnPropertyChanged(nameof(StatusColor));
+            _currentRecipe = recipe;
+            _inspectionService?.ClearCache();
         }
 
         /// <summary>
@@ -170,9 +205,298 @@ namespace VMS.ViewModels
             InspectionOk = true;
         }
 
-        public static CameraViewModel FromConfiguration(CameraConfiguration config)
+        [RelayCommand]
+        private void ToggleControlBox()
         {
-            var vm = new CameraViewModel
+            IsControlBoxOpen = !IsControlBoxOpen;
+        }
+
+        [RelayCommand]
+        private void CloseControlBox()
+        {
+            IsControlBoxOpen = false;
+        }
+
+        [RelayCommand]
+        private async Task GrabAsync()
+        {
+            try
+            {
+                _acquisition ??= CameraAcquisitionFactory.Create(ToCameraInfo());
+
+                if (!_acquisition.IsConnected)
+                {
+                    var connected = await _acquisition.ConnectAsync(ToCameraInfo());
+                    if (!connected)
+                    {
+                        ResultMessage = "Camera connection failed";
+                        return;
+                    }
+                    IsConnected = true;
+                }
+
+                var result = await _acquisition.AcquireAsync();
+                if (result.Success)
+                {
+                    if (result.Image2D != null)
+                    {
+                        var bmp = MatToBitmapSource(result.Image2D);
+                        _originalImage = bmp;
+                        CurrentImage = bmp;
+                        SelectedViewTab = 0;
+                    }
+
+                    if (result.PointCloud != null)
+                    {
+                        CurrentPointCloud = result.PointCloud;
+                        SelectedViewTab = 1;
+                    }
+
+                    ResultMessage = "Acquisition OK";
+                }
+                else
+                {
+                    ResultMessage = result.Message;
+                }
+            }
+            catch (Exception ex)
+            {
+                ResultMessage = $"Grab error: {ex.Message}";
+            }
+        }
+
+        [RelayCommand]
+        private void OpenImage()
+        {
+            if (_dialogService == null) return;
+
+            var filePath = _dialogService.ShowOpenFileDialog(
+                "Image Files (*.bmp;*.jpg;*.png;*.tif)|*.bmp;*.jpg;*.png;*.tif|All Files (*.*)|*.*",
+                ".bmp");
+
+            if (filePath != null)
+            {
+                try
+                {
+                    var bitmap = new BitmapImage();
+                    bitmap.BeginInit();
+                    bitmap.UriSource = new Uri(filePath);
+                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmap.EndInit();
+                    bitmap.Freeze();
+                    _originalImage = bitmap;
+                    CurrentImage = bitmap;
+                    SelectedViewTab = 0;
+                }
+                catch (Exception ex)
+                {
+                    _dialogService.ShowError($"Image load failed: {ex.Message}", "Error");
+                }
+            }
+        }
+
+        [RelayCommand]
+        private async Task ManualInspectAsync()
+        {
+            if (_inspectionService == null || (_originalImage ?? CurrentImage) == null)
+            {
+                SetInspectionResult(true);
+                return;
+            }
+
+            // Find matching inspection step for this camera + current step index
+            var step = FindCurrentStep();
+            if (step == null || step.Tools.Count == 0)
+            {
+                SetInspectionResult(true);
+                return;
+            }
+
+            // 항상 원본 이미지로 검사 (오버레이가 그려진 이미지 사용 방지)
+            var sourceImage = _originalImage ?? CurrentImage!;
+            var mat = BitmapSourceToMat(sourceImage);
+            if (mat == null)
+            {
+                SetInspectionResult(false);
+                ResultMessage = "Image conversion failed";
+                return;
+            }
+
+            try
+            {
+                var result = await _inspectionService.ExecuteStepAsync(step, mat);
+
+                // 원본 이미지로 복원 후 오버레이 표시
+                if (result.OverlayImage != null && !result.OverlayImage.Empty())
+                {
+                    CurrentImage = MatToBitmapSource(result.OverlayImage);
+                    result.OverlayImage.Dispose();
+                }
+                else
+                {
+                    // 오버레이 없으면 원본으로 복원
+                    CurrentImage = _originalImage;
+                }
+
+                SetInspectionResult(result.Success);
+                ResultMessage = result.Success ? "OK" : "NG";
+                LastExecutionTimeMs = result.ExecutionTimeMs;
+                UpdateToolRunResults(result);
+            }
+            catch (Exception ex)
+            {
+                SetInspectionResult(false);
+                ResultMessage = $"Inspection error: {ex.Message}";
+            }
+            finally
+            {
+                mat.Dispose();
+            }
+        }
+
+        private void UpdateToolRunResults(Interfaces.StepInspectionResult result)
+        {
+            ToolRunResults.Clear();
+
+            foreach (var toolResult in result.ToolResults)
+            {
+                var resultValue = string.Empty;
+
+                if (toolResult.Data != null && toolResult.Data.Count > 0)
+                {
+                    var entries = toolResult.Data.Select(kv =>
+                    {
+                        var formatted = kv.Value switch
+                        {
+                            double d => d.ToString("F3"),
+                            float f => f.ToString("F3"),
+                            decimal m => m.ToString("F3"),
+                            _ => kv.Value?.ToString() ?? ""
+                        };
+                        return $"{kv.Key}={formatted}";
+                    });
+                    resultValue = string.Join(", ", entries);
+                }
+                else
+                {
+                    resultValue = toolResult.Message;
+                }
+
+                ToolRunResults.Add(new Models.ToolResultItem
+                {
+                    ToolName = toolResult.ToolName,
+                    Result = toolResult.Success,
+                    ResultValue = resultValue
+                });
+            }
+        }
+
+        private Models.InspectionStep? FindCurrentStep()
+        {
+            if (_currentRecipe == null) return null;
+
+            // Find steps matching this camera
+            var cameraSteps = _currentRecipe.Steps
+                .Where(s => s.CameraId == Id)
+                .OrderBy(s => s.Sequence)
+                .ToList();
+
+            if (cameraSteps.Count == 0) return null;
+
+            // Return step matching current step index
+            if (CurrentStepIndex >= 0 && CurrentStepIndex < cameraSteps.Count)
+                return cameraSteps[CurrentStepIndex];
+
+            return cameraSteps[0];
+        }
+
+        private static Mat? BitmapSourceToMat(BitmapSource source)
+        {
+            try
+            {
+                // Convert to Bgr24 format
+                var converted = new FormatConvertedBitmap(source, PixelFormats.Bgr24, null, 0);
+
+                int width = converted.PixelWidth;
+                int height = converted.PixelHeight;
+                int stride = (width * 3 + 3) & ~3;
+                byte[] pixels = new byte[stride * height];
+                converted.CopyPixels(pixels, stride, 0);
+
+                var mat = new Mat(height, width, MatType.CV_8UC3);
+                Marshal.Copy(pixels, 0, mat.Data, Math.Min(pixels.Length, (int)(mat.Step() * height)));
+                return mat;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        [RelayCommand]
+        private void SaveSettings()
+        {
+            if (_configService == null) return;
+
+            var config = _configService.LoadSystemConfiguration();
+            var camConfig = config.Cameras.FirstOrDefault(c => c.Id == Id);
+            if (camConfig != null)
+            {
+                camConfig.Steps.Clear();
+                foreach (var step in Steps)
+                {
+                    camConfig.Steps.Add(new StepConfiguration
+                    {
+                        StepNumber = step.StepNumber,
+                        Name = step.Name,
+                        Exposure = step.Exposure,
+                        Gain = step.Gain
+                    });
+                }
+                _configService.SaveSystemConfiguration(config);
+            }
+        }
+
+        private CameraInfo ToCameraInfo()
+        {
+            return new CameraInfo
+            {
+                Id = Id,
+                Name = Name,
+                Manufacturer = Manufacturer.ToString().Replace("_", " "),
+                ConnectionString = IpAddress
+            };
+        }
+
+        private static BitmapSource? MatToBitmapSource(Mat mat)
+        {
+            if (mat.Empty()) return null;
+
+            var format = mat.Channels() switch
+            {
+                1 => PixelFormats.Gray8,
+                3 => PixelFormats.Bgr24,
+                4 => PixelFormats.Bgra32,
+                _ => PixelFormats.Bgr24
+            };
+
+            int stride = (int)mat.Step();
+            byte[] data = new byte[stride * mat.Height];
+            Marshal.Copy(mat.Data, data, 0, data.Length);
+
+            var bitmapSource = BitmapSource.Create(
+                mat.Width, mat.Height, 96, 96, format, null, data, stride);
+            bitmapSource.Freeze();
+            return bitmapSource;
+        }
+
+        public static CameraViewModel FromConfiguration(
+            CameraConfiguration config,
+            IDialogService dialogService,
+            IConfigurationService configService,
+            IInspectionService? inspectionService = null)
+        {
+            var vm = new CameraViewModel(dialogService, configService, inspectionService)
             {
                 Id = config.Id,
                 Name = config.Name,

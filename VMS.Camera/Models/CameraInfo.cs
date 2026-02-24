@@ -1,9 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using System;
-using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace VMS.VisionSetup.Models
+namespace VMS.Camera.Models
 {
     /// <summary>
     /// 카메라 정보 (글로벌 카메라 레지스트리용)

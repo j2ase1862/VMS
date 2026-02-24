@@ -1,14 +1,12 @@
+using VMS.Camera.Models;
+using VMS.Interfaces;
 using VMS.Models;
-using VMS.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Win32;
 using System;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Windows;
 
 namespace VMS.ViewModels
 {
@@ -72,14 +70,28 @@ namespace VMS.ViewModels
             ? Math.Round((double)TotalPass / TotalInspections * 100, 1)
             : 0;
 
-        private readonly ConfigurationService _configService;
-        private readonly RecipeService _recipeService;
+        private readonly IConfigurationService _configService;
+        private readonly IRecipeService _recipeService;
+        private readonly IDialogService _dialogService;
+        private readonly IProcessService _processService;
+        private readonly IInspectionService _inspectionService;
+        private readonly Action _shutdownAction;
         private SystemConfiguration _systemConfig;
 
-        public MainViewModel()
+        public MainViewModel(
+            IConfigurationService configService,
+            IRecipeService recipeService,
+            IDialogService dialogService,
+            IProcessService processService,
+            IInspectionService inspectionService,
+            Action shutdownAction)
         {
-            _configService = ConfigurationService.Instance;
-            _recipeService = RecipeService.Instance;
+            _configService = configService;
+            _recipeService = recipeService;
+            _dialogService = dialogService;
+            _processService = processService;
+            _inspectionService = inspectionService;
+            _shutdownAction = shutdownAction;
             _systemConfig = new SystemConfiguration();
             LoadConfiguration();
             RefreshRecipeList();
@@ -127,7 +139,7 @@ namespace VMS.ViewModels
 
             foreach (var camConfig in _systemConfig.Cameras)
             {
-                var camVm = CameraViewModel.FromConfiguration(camConfig);
+                var camVm = CameraViewModel.FromConfiguration(camConfig, _dialogService, _configService, _inspectionService);
                 camVm.X = xOffset;
                 camVm.Y = yOffset;
                 Cameras.Add(camVm);
@@ -162,7 +174,7 @@ namespace VMS.ViewModels
         {
             for (int i = 1; i <= 2; i++)
             {
-                Cameras.Add(new CameraViewModel
+                var vm = new CameraViewModel(_dialogService, _configService, _inspectionService)
                 {
                     Id = Guid.NewGuid().ToString(),
                     Name = $"Camera {i}",
@@ -172,7 +184,16 @@ namespace VMS.ViewModels
                     Y = 10,
                     Width = 400,
                     Height = 300
+                };
+                vm.Steps.Add(new StepViewModel
+                {
+                    StepNumber = 1,
+                    Name = "Step 1",
+                    Exposure = 5000,
+                    Gain = 1.0
                 });
+                vm.SelectedStep = vm.Steps[0];
+                Cameras.Add(vm);
             }
         }
 
@@ -192,19 +213,15 @@ namespace VMS.ViewModels
 
             if (_configService.SaveLayoutConfiguration(layoutConfig))
             {
-                MessageBox.Show(
+                _dialogService.ShowInformation(
                     "레이아웃이 저장되었습니다.",
-                    "Save Layout",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                    "Save Layout");
             }
             else
             {
-                MessageBox.Show(
+                _dialogService.ShowError(
                     "레이아웃 저장에 실패했습니다.",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Error");
             }
         }
 
@@ -231,14 +248,16 @@ namespace VMS.ViewModels
                 _currentRecipeFilePath = SelectedRecipeInfo.FilePath;
                 IsRecipePanelOpen = false;
                 SystemStatus = $"Recipe loaded: {recipe.Name}";
+
+                // Propagate recipe to all cameras
+                foreach (var cam in Cameras)
+                    cam.SetRecipe(recipe);
             }
             else
             {
-                MessageBox.Show(
+                _dialogService.ShowError(
                     "레시피를 불러올 수 없습니다.",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Error");
             }
         }
 
@@ -258,11 +277,9 @@ namespace VMS.ViewModels
         {
             if (CurrentRecipe == null)
             {
-                MessageBox.Show(
+                _dialogService.ShowWarning(
                     "저장할 레시피가 없습니다.",
-                    "Warning",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
+                    "Warning");
                 return;
             }
 
@@ -273,11 +290,9 @@ namespace VMS.ViewModels
             }
             else
             {
-                MessageBox.Show(
+                _dialogService.ShowError(
                     "레시피 저장에 실패했습니다.",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Error");
             }
         }
 
@@ -286,13 +301,9 @@ namespace VMS.ViewModels
         {
             if (SelectedRecipeInfo == null) return;
 
-            var result = MessageBox.Show(
+            if (_dialogService.ShowConfirmation(
                 $"레시피 '{SelectedRecipeInfo.Name}'을(를) 삭제하시겠습니까?",
-                "Delete Recipe",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
-
-            if (result == MessageBoxResult.Yes)
+                "Delete Recipe"))
             {
                 if (_recipeService.DeleteRecipe(SelectedRecipeInfo.Id))
                 {
@@ -312,34 +323,28 @@ namespace VMS.ViewModels
         {
             if (CurrentRecipe == null)
             {
-                MessageBox.Show(
+                _dialogService.ShowWarning(
                     "내보낼 레시피가 없습니다.",
-                    "Warning",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
+                    "Warning");
                 return;
             }
 
-            var dialog = new SaveFileDialog
-            {
-                Filter = "Recipe Files (*.json)|*.json",
-                FileName = $"{CurrentRecipe.Name}.json",
-                DefaultExt = ".json"
-            };
+            var filePath = _dialogService.ShowSaveFileDialog(
+                "Recipe Files (*.json)|*.json",
+                ".json",
+                $"{CurrentRecipe.Name}.json");
 
-            if (dialog.ShowDialog() == true)
+            if (filePath != null)
             {
-                if (_recipeService.ExportRecipe(CurrentRecipe, dialog.FileName))
+                if (_recipeService.ExportRecipe(CurrentRecipe, filePath))
                 {
-                    SystemStatus = $"Recipe exported: {dialog.FileName}";
+                    SystemStatus = $"Recipe exported: {filePath}";
                 }
                 else
                 {
-                    MessageBox.Show(
+                    _dialogService.ShowError(
                         "레시피 내보내기에 실패했습니다.",
-                        "Error",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
+                        "Error");
                 }
             }
         }
@@ -347,15 +352,13 @@ namespace VMS.ViewModels
         [RelayCommand]
         private void ImportRecipe()
         {
-            var dialog = new OpenFileDialog
-            {
-                Filter = "Recipe Files (*.json)|*.json",
-                DefaultExt = ".json"
-            };
+            var filePath = _dialogService.ShowOpenFileDialog(
+                "Recipe Files (*.json)|*.json",
+                ".json");
 
-            if (dialog.ShowDialog() == true)
+            if (filePath != null)
             {
-                var recipe = _recipeService.ImportRecipe(dialog.FileName);
+                var recipe = _recipeService.ImportRecipe(filePath);
                 if (recipe != null)
                 {
                     RefreshRecipeList();
@@ -365,11 +368,9 @@ namespace VMS.ViewModels
                 }
                 else
                 {
-                    MessageBox.Show(
+                    _dialogService.ShowError(
                         "레시피 가져오기에 실패했습니다.",
-                        "Error",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
+                        "Error");
                 }
             }
         }
@@ -389,71 +390,32 @@ namespace VMS.ViewModels
             try
             {
                 var currentDir = AppDomain.CurrentDomain.BaseDirectory;
-                string? foundPath = null;
+                var exePath = Path.Combine(currentDir, "VMS.VisionSetup.exe");
 
-                // 1. Check path file written by VMS.VisionSetup build
-                var pathFile = Path.Combine(currentDir, "VisionSetup.path");
-                if (File.Exists(pathFile))
+                if (File.Exists(exePath))
                 {
-                    var savedPath = File.ReadAllText(pathFile).Trim();
-                    if (File.Exists(savedPath))
-                        foundPath = savedPath;
-                }
-
-                // 2. Fallback: search known relative paths
-                if (foundPath == null)
-                {
-                    var solutionDir = Path.GetFullPath(Path.Combine(currentDir, "..", "..", ".."));
-                    var fallbackPaths = new[]
-                    {
-                        Path.Combine(solutionDir, "VMS.VisionSetup", "bin", "Debug", "net8.0-windows7.0", "VMS.VisionSetup.exe"),
-                        Path.Combine(solutionDir, "VMS.VisionSetup", "bin", "Release", "net8.0-windows7.0", "VMS.VisionSetup.exe"),
-                    };
-
-                    foreach (var path in fallbackPaths)
-                    {
-                        var fullPath = Path.GetFullPath(path);
-                        if (File.Exists(fullPath))
-                        {
-                            foundPath = fullPath;
-                            break;
-                        }
-                    }
-                }
-
-                if (foundPath != null)
-                {
-                    var startInfo = new ProcessStartInfo
-                    {
-                        FileName = foundPath,
-                        UseShellExecute = true
-                    };
-
                     // Pass current recipe file path as argument
+                    string? arguments = null;
                     if (!string.IsNullOrEmpty(_currentRecipeFilePath) && File.Exists(_currentRecipeFilePath))
                     {
-                        startInfo.Arguments = $"\"{_currentRecipeFilePath}\"";
+                        arguments = $"\"{_currentRecipeFilePath}\"";
                     }
 
-                    Process.Start(startInfo);
+                    _processService.LaunchProcess(exePath, arguments);
                 }
                 else
                 {
-                    MessageBox.Show(
+                    _dialogService.ShowWarning(
                         "VMS.VisionSetup 프로그램을 찾을 수 없습니다.\n" +
                         "프로젝트를 먼저 빌드해 주세요.",
-                        "Not Found",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                        "Not Found");
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                _dialogService.ShowError(
                     $"프로그램 실행 오류: {ex.Message}",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Error");
             }
         }
 
@@ -463,64 +425,25 @@ namespace VMS.ViewModels
             try
             {
                 var currentDir = AppDomain.CurrentDomain.BaseDirectory;
-                string? foundPath = null;
+                var exePath = Path.Combine(currentDir, "VMS.AppSetup.exe");
 
-                
-
-                // 1. Check path file written by VMS.VisionSetup build
-                var pathFile = Path.Combine(currentDir, "AppSetup.path");
-                if (File.Exists(pathFile))
+                if (File.Exists(exePath))
                 {
-                    var savedPath = File.ReadAllText(pathFile).Trim();
-                    if (File.Exists(savedPath))
-                        foundPath = savedPath;
-                }
-
-                if (foundPath == null)
-                {
-                    var solutionDir = Path.GetFullPath(Path.Combine(currentDir, "..", "..", ".."));
-                    var fallbackPaths = new[]
-                    {
-                        Path.Combine(solutionDir, "VMS.AppSetup", "bin", "Debug", "net8.0-windows", "VMS.AppSetup.exe"),
-                        Path.Combine(solutionDir, "VMS.AppSetup", "bin", "Release", "net8.0-windows", "VMS.AppSetup.exe"),
-                    };
-
-                    foreach (var path in fallbackPaths)
-                    {
-                        var fullPath = Path.GetFullPath(path);
-                        if (File.Exists(fullPath))
-                        {
-                            foundPath = fullPath;
-                            break;
-                        }
-                    }
-                }
-
-                if (foundPath != null)
-                {
-                    Process.Start(new ProcessStartInfo
-                    {
-                        FileName = foundPath,
-                        UseShellExecute = true
-                    });
+                    _processService.LaunchProcess(exePath);
                 }
                 else
                 {
-                    MessageBox.Show(
+                    _dialogService.ShowWarning(
                         "BODA.Setup 프로그램을 찾을 수 없습니다.\n" +
                         "프로젝트를 먼저 빌드해 주세요.",
-                        "Not Found",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                        "Not Found");
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                _dialogService.ShowError(
                     $"프로그램 실행 오류: {ex.Message}",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Error");
             }
         }
 
@@ -541,32 +464,11 @@ namespace VMS.ViewModels
         [RelayCommand]
         private void ExitApplication()
         {
-            var result = MessageBox.Show(
+            if (_dialogService.ShowConfirmation(
                 "프로그램을 종료하시겠습니까?",
-                "Exit",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
-
-            if (result == MessageBoxResult.Yes)
+                "Exit"))
             {
-                Application.Current.Shutdown();
-            }
-        }
-
-        [RelayCommand]
-        private void SelectCamera(CameraViewModel? camera)
-        {
-            if (camera != null && ReferenceEquals(camera, SelectedCamera) && IsSidePanelOpen)
-            {
-                // Same camera clicked again while panel is open → close panel
-                IsSidePanelOpen = false;
-                return;
-            }
-
-            SelectedCamera = camera;
-            if (camera != null)
-            {
-                IsSidePanelOpen = true;
+                _shutdownAction();
             }
         }
 

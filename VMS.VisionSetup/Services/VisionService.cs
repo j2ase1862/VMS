@@ -1,3 +1,4 @@
+using VMS.Camera.Models;
 using VMS.VisionSetup.Interfaces;
 using VMS.VisionSetup.Models;
 using VMS.VisionSetup.VisionTools.BlobAnalysis;
@@ -301,37 +302,40 @@ namespace VMS.VisionSetup.Services
                 if (!resultMap.TryGetValue(conn.SourceId, out var sourceResult) || sourceResult.Data == null)
                     continue;
 
-                // Save user-configured ROI on first fixture application
-                if (!tool.HasFixtureBaseROI)
-                {
-                    tool.FixtureBaseROI = tool.ROI;
-                    tool.HasFixtureBaseROI = true;
-                }
-
-                // Fixture transform: trained center available → apply delta
+                // Fixture transform: CenterX/CenterY available → apply delta
                 if (sourceResult.Data.TryGetValue("CenterX", out var cx) &&
-                    sourceResult.Data.TryGetValue("CenterY", out var cy) &&
-                    sourceResult.Data.TryGetValue("TrainedCenterX", out var tcx) &&
-                    sourceResult.Data.TryGetValue("TrainedCenterY", out var tcy))
+                    sourceResult.Data.TryGetValue("CenterY", out var cy))
                 {
+                    // Save user-configured ROI and initial FeatureMatch result on first fixture application
+                    if (!tool.HasFixtureBaseROI)
+                    {
+                        tool.FixtureBaseROI = tool.ROI;
+                        tool.HasFixtureBaseROI = true;
+                        tool.FixtureRefX = Convert.ToDouble(cx);
+                        tool.FixtureRefY = Convert.ToDouble(cy);
+                        tool.FixtureRefAngle = sourceResult.Data.TryGetValue("Angle", out var initAngle)
+                            ? Convert.ToDouble(initAngle) : 0;
+                    }
+
                     double foundX = Convert.ToDouble(cx);
                     double foundY = Convert.ToDouble(cy);
-                    double trainedX = Convert.ToDouble(tcx);
-                    double trainedY = Convert.ToDouble(tcy);
+                    double refX = tool.FixtureRefX;
+                    double refY = tool.FixtureRefY;
 
                     double baseCX = tool.FixtureBaseROI.X + tool.FixtureBaseROI.Width / 2.0;
                     double baseCY = tool.FixtureBaseROI.Y + tool.FixtureBaseROI.Height / 2.0;
 
-                    double deltaAngle = 0;
+                    double currentAngle = 0;
                     if (sourceResult.Data.TryGetValue("Angle", out var angleObj))
-                        deltaAngle = Convert.ToDouble(angleObj);
+                        currentAngle = Convert.ToDouble(angleObj);
+                    double deltaAngle = currentAngle - tool.FixtureRefAngle;
 
                     double newCX, newCY;
                     if (Math.Abs(deltaAngle) > 0.01)
                     {
-                        // Rotate ROI center around trained center, then translate to found center
-                        double relX = baseCX - trainedX;
-                        double relY = baseCY - trainedY;
+                        // Rotate ROI center around reference center, then translate by delta
+                        double relX = baseCX - refX;
+                        double relY = baseCY - refY;
                         double rad = deltaAngle * Math.PI / 180.0;
                         newCX = foundX + relX * Math.Cos(rad) - relY * Math.Sin(rad);
                         newCY = foundY + relX * Math.Sin(rad) + relY * Math.Cos(rad);
@@ -339,8 +343,8 @@ namespace VMS.VisionSetup.Services
                     else
                     {
                         // Translation only
-                        newCX = baseCX + (foundX - trainedX);
-                        newCY = baseCY + (foundY - trainedY);
+                        newCX = baseCX + (foundX - refX);
+                        newCY = baseCY + (foundY - refY);
                     }
 
                     int w = tool.FixtureBaseROI.Width > 0 ? tool.FixtureBaseROI.Width : 100;
@@ -534,6 +538,9 @@ namespace VMS.VisionSetup.Services
             {
                 if (!dep.IsEnabled) continue;
 
+                // Apply coordinates connection for upstream dependencies too
+                ApplyCoordinatesConnection(dep, resultMap);
+
                 Mat depInput;
                 var depConnected = GetConnectedInputImage(dep, resultMap);
                 if (depConnected != null)
@@ -552,6 +559,9 @@ namespace VMS.VisionSetup.Services
                     depInput.Dispose();
                 }
             }
+
+            // Apply coordinates connection: shift ROI based on source tool's result
+            ApplyCoordinatesConnection(tool, resultMap);
 
             // Resolve connected input for the target tool
             var connectedImage = GetConnectedInputImage(tool, resultMap);

@@ -24,4 +24,15 @@
     </Reference>
   </ItemGroup>
 
+  <!-- Basler Pylon SDK: define BASLER_AVAILABLE when pylon SDK is installed -->
+  <PropertyGroup Condition="Exists('C:\Program Files\Basler\pylon 7\Development\Assemblies\Basler.Pylon\net6.0\Basler.Pylon.dll')">
+    <DefineConstants>$(DefineConstants);BASLER_AVAILABLE</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup Condition="Exists('C:\Program Files\Basler\pylon 7\Development\Assemblies\Basler.Pylon\net6.0\Basler.Pylon.dll')">
+    <Reference Include="Basler.Pylon">
+      <HintPath>C:\Program Files\Basler\pylon 7\Development\Assemblies\Basler.Pylon\net6.0\Basler.Pylon.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

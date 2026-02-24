@@ -115,40 +115,10 @@
 
                 <TextBlock Text="ROI Settings" Style="{StaticResource SectionHeaderStyle}"/>
 
-                <Grid Margin="0,5,0,5">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Text="X:" Foreground="LightGray" VerticalAlignment="Center" Margin="0,0,5,5" Grid.Row="0" Grid.Column="0"/>
-                    <TextBox Grid.Row="0" Grid.Column="1" Margin="0,0,10,5"
-                             Style="{StaticResource SettingTextBoxStyle}"
-                             Text="{Binding ROIX, UpdateSourceTrigger=PropertyChanged, FallbackValue=0}"/>
-
-                    <TextBlock Text="Y:" Foreground="LightGray" VerticalAlignment="Center" Margin="0,0,5,5" Grid.Row="0" Grid.Column="2"/>
-                    <TextBox Grid.Row="0" Grid.Column="3" Margin="0,0,0,5"
-                             Style="{StaticResource SettingTextBoxStyle}"
-                             Text="{Binding ROIY, UpdateSourceTrigger=PropertyChanged, FallbackValue=0}"/>
-
-                    <TextBlock Text="W:" Foreground="LightGray" VerticalAlignment="Center" Margin="0,0,5,5" Grid.Row="1" Grid.Column="0"/>
-                    <TextBox Grid.Row="1" Grid.Column="1" Margin="0,0,10,5"
-                             Style="{StaticResource SettingTextBoxStyle}"
-                             Text="{Binding ROIWidth, UpdateSourceTrigger=PropertyChanged, FallbackValue=0}"/>
-
-                    <TextBlock Text="H:" Foreground="LightGray" VerticalAlignment="Center" Margin="0,0,5,5" Grid.Row="1" Grid.Column="2"/>
-                    <TextBox Grid.Row="1" Grid.Column="3" Margin="0,0,0,5"
-                             Style="{StaticResource SettingTextBoxStyle}"
-                             Text="{Binding ROIHeight, UpdateSourceTrigger=PropertyChanged, FallbackValue=0}"/>
-                </Grid>
-
                 <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
+                    <Button Content="Show ROI" Command="{Binding ShowROICommand}"
+                            Background="#2D7D46" Foreground="White" BorderBrush="#1E5C32"
+                            Padding="10,4" Margin="0,0,10,0" Cursor="Hand"/>
                     <Button Content="Draw ROI" Command="{Binding DrawROICommand}"
                             Background="#007ACC" Foreground="White" BorderBrush="#005A9E"
                             Padding="10,4" Margin="0,0,10,0" Cursor="Hand"/>

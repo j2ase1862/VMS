@@ -1,7 +1,8 @@
+using VMS.Camera.Models;
+using VMS.VisionSetup.Interfaces;
 using VMS.VisionSetup.Models;
-using VMS.VisionSetup.Services;
+using VMS.VisionSetup.ViewModels;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -10,6 +11,7 @@ namespace VMS.VisionSetup.Views.Recipe
 {
     /// <summary>
     /// RecipeEditorView.xaml 코드 비하인드
+    /// Property panels use named controls; service access via ViewModel.
     /// </summary>
     public partial class RecipeEditorView : UserControl
     {
@@ -17,7 +19,6 @@ namespace VMS.VisionSetup.Views.Recipe
         private bool _hasUnsavedChanges;
         private bool _isLoadingProperties;
 
-        // Tree node tags to identify item types
         private const string RecipeTag = "Recipe";
         private const string StepTag = "Step";
         private const string ToolTag = "Tool";
@@ -25,15 +26,16 @@ namespace VMS.VisionSetup.Views.Recipe
         public event EventHandler? RecipeSaved;
         public event EventHandler? RecipeDiscarded;
 
+        private IRecipeService? RecipeService => (DataContext as RecipeEditorViewModel)?.RecipeServiceAccessor;
+        private ICameraService? CameraService => (DataContext as RecipeEditorViewModel)?.CameraServiceAccessor;
+        private IDialogService? DialogService => (DataContext as RecipeEditorViewModel)?.DialogServiceAccessor;
+
         public RecipeEditorView()
         {
             InitializeComponent();
             UpdateUI();
         }
 
-        /// <summary>
-        /// 레시피 로드
-        /// </summary>
         public void LoadRecipe(Models.Recipe recipe)
         {
             _currentRecipe = recipe;
@@ -43,18 +45,14 @@ namespace VMS.VisionSetup.Views.Recipe
             UpdateStatus($"Loaded recipe: {recipe.Name}");
         }
 
-        /// <summary>
-        /// 현재 레시피 가져오기
-        /// </summary>
         public Models.Recipe? GetCurrentRecipe() => _currentRecipe;
+        public bool HasUnsavedChanges => _hasUnsavedChanges;
 
         private void RefreshTree()
         {
             RecipeTree.Items.Clear();
-
             if (_currentRecipe == null) return;
 
-            // Root node for recipe
             var recipeNode = new TreeViewItem
             {
                 Header = CreateTreeHeader(_currentRecipe.Name, "Recipe"),
@@ -62,7 +60,6 @@ namespace VMS.VisionSetup.Views.Recipe
                 IsExpanded = true
             };
 
-            // Add steps
             foreach (var step in _currentRecipe.Steps.OrderBy(s => s.Sequence))
             {
                 var stepNode = new TreeViewItem
@@ -72,15 +69,13 @@ namespace VMS.VisionSetup.Views.Recipe
                     IsExpanded = true
                 };
 
-                // Add tools for this step
                 foreach (var tool in step.Tools.OrderBy(t => t.Sequence))
                 {
-                    var toolNode = new TreeViewItem
+                    stepNode.Items.Add(new TreeViewItem
                     {
                         Header = CreateTreeHeader(tool.Name, tool.ToolType),
                         Tag = new TreeNodeData(ToolTag, tool.Id, step.Id)
-                    };
-                    stepNode.Items.Add(toolNode);
+                    });
                 }
 
                 recipeNode.Items.Add(stepNode);
@@ -129,10 +124,7 @@ namespace VMS.VisionSetup.Views.Recipe
             }
         }
 
-        private void UpdateStatus(string message)
-        {
-            StatusText.Text = message;
-        }
+        private void UpdateStatus(string message) => StatusText.Text = message;
 
         private void MarkUnsavedChanges()
         {
@@ -147,14 +139,9 @@ namespace VMS.VisionSetup.Views.Recipe
         {
             var selectedItem = RecipeTree.SelectedItem as TreeViewItem;
             if (selectedItem?.Tag is TreeNodeData nodeData)
-            {
                 ShowProperties(nodeData);
-            }
             else
-            {
                 HideAllProperties();
-            }
-
             UpdateButtonStates();
         }
 
@@ -162,7 +149,6 @@ namespace VMS.VisionSetup.Views.Recipe
         {
             var selectedItem = RecipeTree.SelectedItem as TreeViewItem;
             var nodeData = selectedItem?.Tag as TreeNodeData;
-
             AddToolButton.IsEnabled = nodeData?.Type == StepTag;
             RemoveButton.IsEnabled = nodeData?.Type == StepTag || nodeData?.Type == ToolTag;
         }
@@ -170,20 +156,13 @@ namespace VMS.VisionSetup.Views.Recipe
         private void ShowProperties(TreeNodeData nodeData)
         {
             _isLoadingProperties = true;
-
             HideAllProperties();
 
             switch (nodeData.Type)
             {
-                case RecipeTag:
-                    ShowRecipeProperties();
-                    break;
-                case StepTag:
-                    ShowStepProperties(nodeData.Id);
-                    break;
-                case ToolTag:
-                    ShowToolProperties(nodeData.Id, nodeData.ParentId);
-                    break;
+                case RecipeTag: ShowRecipeProperties(); break;
+                case StepTag: ShowStepProperties(nodeData.Id); break;
+                case ToolTag: ShowToolProperties(nodeData.Id, nodeData.ParentId); break;
             }
 
             _isLoadingProperties = false;
@@ -210,9 +189,8 @@ namespace VMS.VisionSetup.Views.Recipe
             RecipeVersionBox.Text = _currentRecipe.Version;
             RecipeAuthorBox.Text = _currentRecipe.Author;
 
-            // Load cameras
             UsedCamerasList.Items.Clear();
-            var allCameras = CameraService.Instance.GetAllCameras();
+            var allCameras = CameraService?.GetAllCameras() ?? new System.Collections.Generic.List<CameraInfo>();
             foreach (var camera in allCameras)
             {
                 var item = new CheckBox
@@ -231,7 +209,6 @@ namespace VMS.VisionSetup.Views.Recipe
         private void ShowStepProperties(string stepId)
         {
             if (_currentRecipe == null) return;
-
             var step = _currentRecipe.Steps.FirstOrDefault(s => s.Id == stepId);
             if (step == null) return;
 
@@ -245,19 +222,13 @@ namespace VMS.VisionSetup.Views.Recipe
             StepLightChannelBox.Text = step.LightingChannel.ToString();
             StepLightIntensityBox.Text = step.LightingIntensity.ToString();
 
-            // Load cameras into combo box
             StepCameraBox.Items.Clear();
-            var cameras = CameraService.Instance.GetAllCameras();
+            var cameras = CameraService?.GetAllCameras() ?? new System.Collections.Generic.List<CameraInfo>();
             foreach (var camera in cameras)
             {
-                StepCameraBox.Items.Add(new ComboBoxItem
-                {
-                    Content = camera.Name,
-                    Tag = camera.Id
-                });
+                StepCameraBox.Items.Add(new ComboBoxItem { Content = camera.Name, Tag = camera.Id });
             }
 
-            // Select current camera
             foreach (ComboBoxItem item in StepCameraBox.Items)
             {
                 if (item.Tag?.ToString() == step.CameraId)
@@ -271,7 +242,6 @@ namespace VMS.VisionSetup.Views.Recipe
         private void ShowToolProperties(string toolId, string? stepId)
         {
             if (_currentRecipe == null || stepId == null) return;
-
             var step = _currentRecipe.Steps.FirstOrDefault(s => s.Id == stepId);
             var tool = step?.Tools.FirstOrDefault(t => t.Id == toolId);
             if (tool == null) return;
@@ -284,35 +254,25 @@ namespace VMS.VisionSetup.Views.Recipe
             ToolTypeText.Text = tool.ToolType;
             ToolEnabledCheckBox.IsChecked = tool.IsEnabled;
             ToolUseROICheckBox.IsChecked = tool.UseROI;
-
             ToolROIXBox.Text = tool.ROIX.ToString();
             ToolROIYBox.Text = tool.ROIY.ToString();
             ToolROIWidthBox.Text = tool.ROIWidth.ToString();
             ToolROIHeightBox.Text = tool.ROIHeight.ToString();
 
-            // Show parameters summary
             if (tool.Parameters != null && tool.Parameters.Count > 0)
-            {
-                var paramList = tool.Parameters.Select(p => $"{p.Key}: {p.Value}");
-                ToolParametersInfo.Text = string.Join("\n", paramList);
-            }
+                ToolParametersInfo.Text = string.Join("\n", tool.Parameters.Select(p => $"{p.Key}: {p.Value}"));
             else
-            {
                 ToolParametersInfo.Text = "No parameters configured";
-            }
         }
 
         private void CameraCheckBox_Changed(object sender, RoutedEventArgs e)
         {
             if (_currentRecipe == null || _isLoadingProperties) return;
-
             _currentRecipe.UsedCameraIds.Clear();
             foreach (CheckBox item in UsedCamerasList.Items)
             {
                 if (item.IsChecked == true && item.Tag is string cameraId)
-                {
                     _currentRecipe.UsedCameraIds.Add(cameraId);
-                }
             }
             MarkUnsavedChanges();
         }
@@ -320,25 +280,20 @@ namespace VMS.VisionSetup.Views.Recipe
         private void RecipeProperty_Changed(object sender, RoutedEventArgs e)
         {
             if (_currentRecipe == null || _isLoadingProperties) return;
-
             _currentRecipe.Name = RecipeNameBox.Text;
             _currentRecipe.Description = RecipeDescriptionBox.Text;
             _currentRecipe.Version = RecipeVersionBox.Text;
             _currentRecipe.Author = RecipeAuthorBox.Text;
-
             MarkUnsavedChanges();
             RefreshTree();
         }
 
-        private void RecipeProperty_Changed(object sender, TextChangedEventArgs e)
-        {
+        private void RecipeProperty_Changed(object sender, TextChangedEventArgs e) =>
             RecipeProperty_Changed(sender, (RoutedEventArgs)e);
-        }
 
         private void StepProperty_Changed(object sender, RoutedEventArgs e)
         {
             if (_currentRecipe == null || _isLoadingProperties) return;
-
             var selectedItem = RecipeTree.SelectedItem as TreeViewItem;
             var nodeData = selectedItem?.Tag as TreeNodeData;
             if (nodeData?.Type != StepTag) return;
@@ -347,39 +302,26 @@ namespace VMS.VisionSetup.Views.Recipe
             if (step == null) return;
 
             step.Name = StepNameBox.Text;
-
-            if (double.TryParse(StepExposureBox.Text, out double exposure))
-                step.Exposure = exposure;
-            if (double.TryParse(StepGainBox.Text, out double gain))
-                step.Gain = gain;
-            if (int.TryParse(StepLightChannelBox.Text, out int channel))
-                step.LightingChannel = channel;
-            if (int.TryParse(StepLightIntensityBox.Text, out int intensity))
-                step.LightingIntensity = intensity;
+            if (double.TryParse(StepExposureBox.Text, out double exposure)) step.Exposure = exposure;
+            if (double.TryParse(StepGainBox.Text, out double gain)) step.Gain = gain;
+            if (int.TryParse(StepLightChannelBox.Text, out int channel)) step.LightingChannel = channel;
+            if (int.TryParse(StepLightIntensityBox.Text, out int intensity)) step.LightingIntensity = intensity;
 
             var selectedCamera = StepCameraBox.SelectedItem as ComboBoxItem;
-            if (selectedCamera?.Tag is string cameraId)
-            {
-                step.CameraId = cameraId;
-            }
+            if (selectedCamera?.Tag is string cameraId) step.CameraId = cameraId;
 
             MarkUnsavedChanges();
         }
 
-        private void StepProperty_Changed(object sender, TextChangedEventArgs e)
-        {
+        private void StepProperty_Changed(object sender, TextChangedEventArgs e) =>
             StepProperty_Changed(sender, (RoutedEventArgs)e);
-        }
 
-        private void StepProperty_Changed(object sender, SelectionChangedEventArgs e)
-        {
+        private void StepProperty_Changed(object sender, SelectionChangedEventArgs e) =>
             StepProperty_Changed(sender, (RoutedEventArgs)e);
-        }
 
         private void ToolProperty_Changed(object sender, RoutedEventArgs e)
         {
             if (_currentRecipe == null || _isLoadingProperties) return;
-
             var selectedItem = RecipeTree.SelectedItem as TreeViewItem;
             var nodeData = selectedItem?.Tag as TreeNodeData;
             if (nodeData?.Type != ToolTag || nodeData.ParentId == null) return;
@@ -391,34 +333,27 @@ namespace VMS.VisionSetup.Views.Recipe
             tool.Name = ToolNameBox.Text;
             tool.IsEnabled = ToolEnabledCheckBox.IsChecked ?? true;
             tool.UseROI = ToolUseROICheckBox.IsChecked ?? false;
-
-            if (int.TryParse(ToolROIXBox.Text, out int roiX))
-                tool.ROIX = roiX;
-            if (int.TryParse(ToolROIYBox.Text, out int roiY))
-                tool.ROIY = roiY;
-            if (int.TryParse(ToolROIWidthBox.Text, out int roiWidth))
-                tool.ROIWidth = roiWidth;
-            if (int.TryParse(ToolROIHeightBox.Text, out int roiHeight))
-                tool.ROIHeight = roiHeight;
+            if (int.TryParse(ToolROIXBox.Text, out int roiX)) tool.ROIX = roiX;
+            if (int.TryParse(ToolROIYBox.Text, out int roiY)) tool.ROIY = roiY;
+            if (int.TryParse(ToolROIWidthBox.Text, out int roiWidth)) tool.ROIWidth = roiWidth;
+            if (int.TryParse(ToolROIHeightBox.Text, out int roiHeight)) tool.ROIHeight = roiHeight;
 
             MarkUnsavedChanges();
         }
 
-        private void ToolProperty_Changed(object sender, TextChangedEventArgs e)
-        {
+        private void ToolProperty_Changed(object sender, TextChangedEventArgs e) =>
             ToolProperty_Changed(sender, (RoutedEventArgs)e);
-        }
 
         private void AddStep_Click(object sender, RoutedEventArgs e)
         {
-            if (_currentRecipe == null) return;
+            if (_currentRecipe == null || RecipeService == null) return;
 
             var step = new InspectionStep
             {
                 Name = $"Step {_currentRecipe.Steps.Count(s => string.IsNullOrEmpty(s.CameraId)) + 1}",
             };
 
-            RecipeService.Instance.AddStep(_currentRecipe, step);
+            RecipeService.AddStep(_currentRecipe, step);
             MarkUnsavedChanges();
             RefreshTree();
             UpdateStatus($"Added step: {step.Name}");
@@ -426,8 +361,7 @@ namespace VMS.VisionSetup.Views.Recipe
 
         private void AddTool_Click(object sender, RoutedEventArgs e)
         {
-            if (_currentRecipe == null) return;
-
+            if (_currentRecipe == null || RecipeService == null) return;
             var selectedItem = RecipeTree.SelectedItem as TreeViewItem;
             var nodeData = selectedItem?.Tag as TreeNodeData;
             if (nodeData?.Type != StepTag) return;
@@ -435,7 +369,6 @@ namespace VMS.VisionSetup.Views.Recipe
             var step = _currentRecipe.Steps.FirstOrDefault(s => s.Id == nodeData.Id);
             if (step == null) return;
 
-            // Show tool selection dialog
             var dialog = new AddToolDialog();
             dialog.Owner = Window.GetWindow(this);
             if (dialog.ShowDialog() == true)
@@ -448,7 +381,7 @@ namespace VMS.VisionSetup.Views.Recipe
                     IsEnabled = true
                 };
 
-                RecipeService.Instance.AddToolToStep(_currentRecipe, step.Id, toolConfig);
+                RecipeService.AddToolToStep(_currentRecipe, step.Id, toolConfig);
                 MarkUnsavedChanges();
                 RefreshTree();
                 UpdateStatus($"Added tool: {toolConfig.Name}");
@@ -457,8 +390,7 @@ namespace VMS.VisionSetup.Views.Recipe
 
         private void RemoveSelected_Click(object sender, RoutedEventArgs e)
         {
-            if (_currentRecipe == null) return;
-
+            if (_currentRecipe == null || RecipeService == null || DialogService == null) return;
             var selectedItem = RecipeTree.SelectedItem as TreeViewItem;
             var nodeData = selectedItem?.Tag as TreeNodeData;
             if (nodeData == null) return;
@@ -468,15 +400,10 @@ namespace VMS.VisionSetup.Views.Recipe
                 var step = _currentRecipe.Steps.FirstOrDefault(s => s.Id == nodeData.Id);
                 if (step == null) return;
 
-                var result = MessageBox.Show(
-                    $"'{step.Name}' 스텝과 포함된 모든 툴을 삭제하시겠습니까?",
-                    "Delete Step",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning);
-
-                if (result == MessageBoxResult.Yes)
+                if (DialogService.ShowConfirmation(
+                    $"'{step.Name}' 스텝과 포함된 모든 툴을 삭제하시겠습니까?", "Delete Step"))
                 {
-                    RecipeService.Instance.RemoveStep(_currentRecipe, nodeData.Id);
+                    RecipeService.RemoveStep(_currentRecipe, nodeData.Id);
                     MarkUnsavedChanges();
                     RefreshTree();
                     UpdateStatus($"Removed step: {step.Name}");
@@ -488,15 +415,10 @@ namespace VMS.VisionSetup.Views.Recipe
                 var tool = step?.Tools.FirstOrDefault(t => t.Id == nodeData.Id);
                 if (tool == null) return;
 
-                var result = MessageBox.Show(
-                    $"'{tool.Name}' 툴을 삭제하시겠습니까?",
-                    "Delete Tool",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning);
-
-                if (result == MessageBoxResult.Yes)
+                if (DialogService.ShowConfirmation(
+                    $"'{tool.Name}' 툴을 삭제하시겠습니까?", "Delete Tool"))
                 {
-                    RecipeService.Instance.RemoveToolFromStep(_currentRecipe, nodeData.ParentId, nodeData.Id);
+                    RecipeService.RemoveToolFromStep(_currentRecipe, nodeData.ParentId, nodeData.Id);
                     MarkUnsavedChanges();
                     RefreshTree();
                     UpdateStatus($"Removed tool: {tool.Name}");
@@ -506,8 +428,7 @@ namespace VMS.VisionSetup.Views.Recipe
 
         private void MoveStepUp_Click(object sender, RoutedEventArgs e)
         {
-            if (_currentRecipe == null) return;
-
+            if (_currentRecipe == null || RecipeService == null) return;
             var selectedItem = RecipeTree.SelectedItem as TreeViewItem;
             var nodeData = selectedItem?.Tag as TreeNodeData;
             if (nodeData?.Type != StepTag) return;
@@ -515,15 +436,14 @@ namespace VMS.VisionSetup.Views.Recipe
             var step = _currentRecipe.Steps.FirstOrDefault(s => s.Id == nodeData.Id);
             if (step == null || step.Sequence <= 1) return;
 
-            RecipeService.Instance.MoveStep(_currentRecipe, step.Id, step.Sequence - 1);
+            RecipeService.MoveStep(_currentRecipe, step.Id, step.Sequence - 1);
             MarkUnsavedChanges();
             RefreshTree();
         }
 
         private void MoveStepDown_Click(object sender, RoutedEventArgs e)
         {
-            if (_currentRecipe == null) return;
-
+            if (_currentRecipe == null || RecipeService == null) return;
             var selectedItem = RecipeTree.SelectedItem as TreeViewItem;
             var nodeData = selectedItem?.Tag as TreeNodeData;
             if (nodeData?.Type != StepTag) return;
@@ -533,17 +453,17 @@ namespace VMS.VisionSetup.Views.Recipe
             int cameraStepCount = _currentRecipe.Steps.Count(s => s.CameraId == step.CameraId);
             if (step.Sequence >= cameraStepCount) return;
 
-            RecipeService.Instance.MoveStep(_currentRecipe, step.Id, step.Sequence + 1);
+            RecipeService.MoveStep(_currentRecipe, step.Id, step.Sequence + 1);
             MarkUnsavedChanges();
             RefreshTree();
         }
 
         private void SaveRecipe_Click(object sender, RoutedEventArgs e)
         {
-            if (_currentRecipe == null) return;
+            if (_currentRecipe == null || RecipeService == null) return;
 
             _currentRecipe.ModifiedAt = DateTime.Now;
-            RecipeService.Instance.SaveRecipe(_currentRecipe);
+            RecipeService.SaveRecipe(_currentRecipe);
             _hasUnsavedChanges = false;
             UpdateUI();
             UpdateStatus($"Saved recipe: {_currentRecipe.Name}");
@@ -552,40 +472,23 @@ namespace VMS.VisionSetup.Views.Recipe
 
         private void DiscardChanges_Click(object sender, RoutedEventArgs e)
         {
-            if (_currentRecipe == null) return;
+            if (_currentRecipe == null || RecipeService == null || DialogService == null) return;
 
-            var result = MessageBox.Show(
-                "저장되지 않은 변경 사항을 모두 취소하시겠습니까?",
-                "Discard Changes",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
-
-            if (result == MessageBoxResult.Yes)
+            if (DialogService.ShowConfirmation(
+                "저장되지 않은 변경 사항을 모두 취소하시겠습니까?", "Discard Changes"))
             {
-                // Reload from file
-                var reloaded = RecipeService.Instance.LoadRecipe(
-                    System.IO.Path.Combine(RecipeService.Instance.RecipeFolderPath,
+                var reloaded = RecipeService.LoadRecipe(
+                    System.IO.Path.Combine(RecipeService.RecipeFolderPath,
                         $"recipe_{_currentRecipe.Name.ToLower().Replace(" ", "_")}.json"));
 
-                if (reloaded != null)
-                {
-                    LoadRecipe(reloaded);
-                }
+                if (reloaded != null) LoadRecipe(reloaded);
 
                 UpdateStatus("Discarded changes");
                 RecipeDiscarded?.Invoke(this, EventArgs.Empty);
             }
         }
-
-        /// <summary>
-        /// 저장되지 않은 변경 사항 확인
-        /// </summary>
-        public bool HasUnsavedChanges => _hasUnsavedChanges;
     }
 
-    /// <summary>
-    /// 트리 노드 데이터
-    /// </summary>
     internal class TreeNodeData
     {
         public string Type { get; }
@@ -613,17 +516,9 @@ namespace VMS.VisionSetup.Views.Recipe
 
         private static readonly string[] ToolTypes = new[]
         {
-            "GrayscaleTool",
-            "BlurTool",
-            "ThresholdTool",
-            "EdgeDetectionTool",
-            "MorphologyTool",
-            "HistogramTool",
-            "FeatureMatchTool",
-            "BlobTool",
-            "CaliperTool",
-            "LineFitTool",
-            "CircleFitTool"
+            "GrayscaleTool", "BlurTool", "ThresholdTool", "EdgeDetectionTool",
+            "MorphologyTool", "HistogramTool", "FeatureMatchTool", "BlobTool",
+            "CaliperTool", "LineFitTool", "CircleFitTool"
         };
 
         public AddToolDialog()
@@ -636,7 +531,6 @@ namespace VMS.VisionSetup.Views.Recipe
             Background = new System.Windows.Media.SolidColorBrush(
                 System.Windows.Media.Color.FromRgb(0x1E, 0x1E, 0x1E));
 
-            // Main border with styling
             var mainBorder = new Border
             {
                 Background = new System.Windows.Media.SolidColorBrush(
@@ -650,78 +544,50 @@ namespace VMS.VisionSetup.Views.Recipe
             };
 
             var grid = new Grid();
-            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Title
-            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Type label
-            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Type box
-            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Name label
-            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Name box
-            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) }); // Spacer
-            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Buttons
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
-            // Dialog Title
-            var titleText = new TextBlock
-            {
-                Text = "Add Vision Tool",
-                Foreground = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(0xFF, 0xD7, 0x00)),
-                FontSize = 16,
-                FontWeight = FontWeights.Bold,
-                Margin = new Thickness(0, 0, 0, 15)
-            };
+            var titleText = CreateLabel("Add Vision Tool", 16, 0xFF, 0xD7, 0x00, true);
+            titleText.Margin = new Thickness(0, 0, 0, 15);
             Grid.SetRow(titleText, 0);
             grid.Children.Add(titleText);
 
-            // Tool Type
-            var typeLabel = new TextBlock
-            {
-                Text = "Tool Type",
-                Foreground = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(0xCC, 0xCC, 0xCC)),
-                FontSize = 12,
-                Margin = new Thickness(0, 0, 0, 5)
-            };
+            var typeLabel = CreateLabel("Tool Type", 12, 0xCC, 0xCC, 0xCC);
             Grid.SetRow(typeLabel, 1);
             grid.Children.Add(typeLabel);
 
             _typeBox = new ComboBox
             {
-                Background = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(0x3E, 0x3E, 0x42)),
+                Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x3E, 0x3E, 0x42)),
                 Foreground = System.Windows.Media.Brushes.White,
-                BorderBrush = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(0x55, 0x55, 0x55)),
+                BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x55, 0x55, 0x55)),
                 Padding = new Thickness(8, 6, 8, 6),
                 Margin = new Thickness(0, 0, 0, 12),
                 FontSize = 13
             };
-            foreach (var type in ToolTypes)
-            {
-                _typeBox.Items.Add(type);
-            }
+            foreach (var type in ToolTypes) _typeBox.Items.Add(type);
             _typeBox.SelectedIndex = 0;
-            _typeBox.SelectionChanged += TypeBox_SelectionChanged;
+            _typeBox.SelectionChanged += (s, e) =>
+            {
+                if (_typeBox.SelectedItem is string toolType) _nameBox.Text = $"{toolType} 1";
+            };
             Grid.SetRow(_typeBox, 2);
             grid.Children.Add(_typeBox);
 
-            // Name
-            var nameLabel = new TextBlock
-            {
-                Text = "Tool Name",
-                Foreground = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(0xCC, 0xCC, 0xCC)),
-                FontSize = 12,
-                Margin = new Thickness(0, 0, 0, 5)
-            };
+            var nameLabel = CreateLabel("Tool Name", 12, 0xCC, 0xCC, 0xCC);
             Grid.SetRow(nameLabel, 3);
             grid.Children.Add(nameLabel);
 
             _nameBox = new TextBox
             {
-                Background = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(0x3E, 0x3E, 0x42)),
+                Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x3E, 0x3E, 0x42)),
                 Foreground = System.Windows.Media.Brushes.White,
-                BorderBrush = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(0x55, 0x55, 0x55)),
+                BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x55, 0x55, 0x55)),
                 BorderThickness = new Thickness(1),
                 Padding = new Thickness(10, 8, 10, 8),
                 Margin = new Thickness(0, 0, 0, 12),
@@ -732,7 +598,6 @@ namespace VMS.VisionSetup.Views.Recipe
             Grid.SetRow(_nameBox, 4);
             grid.Children.Add(_nameBox);
 
-            // Buttons
             var buttonPanel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
@@ -741,12 +606,23 @@ namespace VMS.VisionSetup.Views.Recipe
             };
             Grid.SetRow(buttonPanel, 6);
 
-            var cancelButton = CreateStyledButton("Cancel", false);
+            var cancelButton = new Button { Content = "Cancel", MinWidth = 100, Height = 36 };
             cancelButton.Click += (s, e) => DialogResult = false;
             buttonPanel.Children.Add(cancelButton);
 
-            var addButton = CreateStyledButton("Add Tool", true);
-            addButton.Click += AddButton_Click;
+            var addButton = new Button { Content = "Add Tool", MinWidth = 100, Height = 36, Margin = new Thickness(10, 0, 0, 0) };
+            addButton.Click += (s, e) =>
+            {
+                if (string.IsNullOrWhiteSpace(_nameBox.Text))
+                {
+                    MessageBox.Show("Please enter a tool name.", "Validation Error",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+                ToolName = _nameBox.Text.Trim();
+                SelectedToolType = _typeBox.SelectedItem?.ToString() ?? "GrayscaleTool";
+                DialogResult = true;
+            };
             buttonPanel.Children.Add(addButton);
 
             grid.Children.Add(buttonPanel);
@@ -754,102 +630,16 @@ namespace VMS.VisionSetup.Views.Recipe
             Content = mainBorder;
         }
 
-        private Button CreateStyledButton(string text, bool isPrimary)
+        private static TextBlock CreateLabel(string text, double fontSize, byte r, byte g, byte b, bool bold = false)
         {
-            var button = new Button
+            return new TextBlock
             {
-                Content = text,
-                MinWidth = 100,
-                Height = 36,
-                Margin = new Thickness(isPrimary ? 10 : 0, 0, 0, 0),
-                FontSize = 13,
-                FontWeight = FontWeights.SemiBold,
-                Cursor = System.Windows.Input.Cursors.Hand,
-                BorderThickness = new Thickness(0)
+                Text = text,
+                Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(r, g, b)),
+                FontSize = fontSize,
+                FontWeight = bold ? FontWeights.Bold : FontWeights.Normal,
+                Margin = new Thickness(0, 0, 0, 5)
             };
-
-            var style = new Style(typeof(Button));
-
-            if (isPrimary)
-            {
-                style.Setters.Add(new Setter(Button.BackgroundProperty,
-                    new System.Windows.Media.SolidColorBrush(
-                        System.Windows.Media.Color.FromRgb(0x00, 0x78, 0xD4))));
-                style.Setters.Add(new Setter(Button.ForegroundProperty,
-                    System.Windows.Media.Brushes.White));
-
-                var hoverTrigger = new Trigger { Property = Button.IsMouseOverProperty, Value = true };
-                hoverTrigger.Setters.Add(new Setter(Button.BackgroundProperty,
-                    new System.Windows.Media.SolidColorBrush(
-                        System.Windows.Media.Color.FromRgb(0x10, 0x84, 0xD8))));
-                style.Triggers.Add(hoverTrigger);
-
-                var pressedTrigger = new Trigger { Property = Button.IsPressedProperty, Value = true };
-                pressedTrigger.Setters.Add(new Setter(Button.BackgroundProperty,
-                    new System.Windows.Media.SolidColorBrush(
-                        System.Windows.Media.Color.FromRgb(0x00, 0x5A, 0x9E))));
-                style.Triggers.Add(pressedTrigger);
-            }
-            else
-            {
-                style.Setters.Add(new Setter(Button.BackgroundProperty,
-                    new System.Windows.Media.SolidColorBrush(
-                        System.Windows.Media.Color.FromRgb(0x3E, 0x3E, 0x42))));
-                style.Setters.Add(new Setter(Button.ForegroundProperty,
-                    System.Windows.Media.Brushes.White));
-
-                var hoverTrigger = new Trigger { Property = Button.IsMouseOverProperty, Value = true };
-                hoverTrigger.Setters.Add(new Setter(Button.BackgroundProperty,
-                    new System.Windows.Media.SolidColorBrush(
-                        System.Windows.Media.Color.FromRgb(0x50, 0x50, 0x54))));
-                style.Triggers.Add(hoverTrigger);
-
-                var pressedTrigger = new Trigger { Property = Button.IsPressedProperty, Value = true };
-                pressedTrigger.Setters.Add(new Setter(Button.BackgroundProperty,
-                    new System.Windows.Media.SolidColorBrush(
-                        System.Windows.Media.Color.FromRgb(0x2D, 0x2D, 0x30))));
-                style.Triggers.Add(pressedTrigger);
-            }
-
-            // Add template for rounded corners
-            var template = new ControlTemplate(typeof(Button));
-            var borderFactory = new FrameworkElementFactory(typeof(Border));
-            borderFactory.SetValue(Border.BackgroundProperty, new TemplateBindingExtension(Button.BackgroundProperty));
-            borderFactory.SetValue(Border.CornerRadiusProperty, new CornerRadius(6));
-            borderFactory.SetValue(Border.PaddingProperty, new Thickness(16, 8, 16, 8));
-
-            var contentPresenter = new FrameworkElementFactory(typeof(ContentPresenter));
-            contentPresenter.SetValue(ContentPresenter.HorizontalAlignmentProperty, HorizontalAlignment.Center);
-            contentPresenter.SetValue(ContentPresenter.VerticalAlignmentProperty, VerticalAlignment.Center);
-            borderFactory.AppendChild(contentPresenter);
-
-            template.VisualTree = borderFactory;
-            style.Setters.Add(new Setter(Button.TemplateProperty, template));
-
-            button.Style = style;
-            return button;
-        }
-
-        private void TypeBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (_typeBox.SelectedItem is string toolType)
-            {
-                _nameBox.Text = $"{toolType} 1";
-            }
-        }
-
-        private void AddButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(_nameBox.Text))
-            {
-                MessageBox.Show("Please enter a tool name.", "Validation Error",
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            ToolName = _nameBox.Text.Trim();
-            SelectedToolType = _typeBox.SelectedItem?.ToString() ?? "GrayscaleTool";
-            DialogResult = true;
         }
     }
 }

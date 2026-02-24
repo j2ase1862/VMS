@@ -1,3 +1,4 @@
+using VMS.Interfaces;
 using VMS.Models;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ namespace VMS.Services
     /// <summary>
     /// Service for managing recipes (load, save, list)
     /// </summary>
-    public class RecipeService
+    public class RecipeService : IRecipeService
     {
         private static RecipeService? _instance;
         public static RecipeService Instance => _instance ??= new RecipeService();

@@ -57,6 +57,24 @@ namespace VMS.Converters
     }
 
     /// <summary>
+    /// Converts integer count to Visibility (0 = Collapsed, > 0 = Visible)
+    /// </summary>
+    public class CountToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is int count)
+                return count > 0 ? Visibility.Visible : Visibility.Collapsed;
+            return Visibility.Collapsed;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return Binding.DoNothing;
+        }
+    }
+
+    /// <summary>
     /// Converts bool to color (running = green, stopped = gray)
     /// </summary>
     public class BoolToColorConverter : IValueConverter

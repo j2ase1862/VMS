@@ -1,9 +1,9 @@
 using OpenCvSharp;
 using System.Numerics;
-using VMS.VisionSetup.Interfaces;
-using VMS.VisionSetup.Models;
+using VMS.Camera.Interfaces;
+using VMS.Camera.Models;
 
-namespace VMS.VisionSetup.Services.Acquisition
+namespace VMS.Camera.Services
 {
     /// <summary>
     /// 시뮬레이션 카메라 - 개발/테스트용 테스트 패턴 이미지 및 샘플 포인트 클라우드 생성
@@ -116,47 +116,53 @@ namespace VMS.VisionSetup.Services.Acquisition
         }
 
         /// <summary>
-        /// 샘플 3D 포인트 클라우드 생성 (평면 + 돌출부)
+        /// 샘플 3D 포인트 클라우드 생성 (정렬 격자: 평면 + 돌출부)
         /// </summary>
         private static PointCloudData GenerateSamplePointCloud()
         {
-            const int count = 30000;
+            const int gridWidth = 200;
+            const int gridHeight = 150;
+            int count = gridWidth * gridHeight;
             var rng = new Random(DateTime.Now.Millisecond);
             var positions = new Vector3[count];
             var colors = new System.Windows.Media.Color[count];
 
-            for (int i = 0; i < count; i++)
+            for (int row = 0; row < gridHeight; row++)
             {
-                float x = (float)(rng.NextDouble() * 200 - 100);
-                float z = (float)(rng.NextDouble() * 200 - 100);
-                float y;
-
-                // 중앙에 돌출된 가우시안 형태
-                float dist = MathF.Sqrt(x * x + z * z);
-                if (dist < 40)
+                for (int col = 0; col < gridWidth; col++)
                 {
-                    y = 30f * MathF.Exp(-dist * dist / 800f);
-                }
-                else
-                {
-                    y = (float)(rng.NextDouble() * 2 - 1); // 평면 노이즈
-                }
+                    int i = row * gridWidth + col;
+                    float x = col - gridWidth * 0.5f;
+                    float z = row - gridHeight * 0.5f;
+                    float y;
 
-                positions[i] = new Vector3(x, y, z);
+                    float dist = MathF.Sqrt(x * x + z * z);
+                    if (dist < 40)
+                    {
+                        y = 30f * MathF.Exp(-dist * dist / 800f);
+                    }
+                    else
+                    {
+                        y = (float)(rng.NextDouble() * 2 - 1);
+                    }
 
-                // 높이 기반 색상
-                float t = Math.Clamp(y / 30f, 0f, 1f);
-                byte red = (byte)(255 * t);
-                byte green = (byte)(255 * (1 - Math.Abs(t - 0.5f) * 2));
-                byte blue = (byte)(255 * (1 - t));
-                colors[i] = System.Windows.Media.Color.FromRgb(red, green, blue);
+                    positions[i] = new Vector3(x, y, z);
+
+                    float t = Math.Clamp(y / 30f, 0f, 1f);
+                    byte red = (byte)(255 * t);
+                    byte green = (byte)(255 * (1 - Math.Abs(t - 0.5f) * 2));
+                    byte blue = (byte)(255 * (1 - t));
+                    colors[i] = System.Windows.Media.Color.FromRgb(red, green, blue);
+                }
             }
 
             return new PointCloudData
             {
                 Name = "Simulated 3D Scan",
                 Positions = positions,
-                Colors = colors
+                Colors = colors,
+                GridWidth = gridWidth,
+                GridHeight = gridHeight
             };
         }
 

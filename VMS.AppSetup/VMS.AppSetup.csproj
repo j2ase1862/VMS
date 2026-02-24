@@ -12,15 +12,22 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
   </ItemGroup>
 
-  <!-- After build, write output path so VMS can find AppSetup -->
-  <Target Name="WriteOutputPath" AfterTargets="Build">
+  <ItemGroup>
+    <ProjectReference Include="..\VMS.Camera\VMS.Camera.csproj" />
+  </ItemGroup>
+
+  <!-- After build, copy output to VMS output directory -->
+  <Target Name="CopyToVmsOutput" AfterTargets="Build">
     <PropertyGroup>
       <VmsOutputDir>..\VMS\bin\$(Configuration)\net8.0-windows\</VmsOutputDir>
     </PropertyGroup>
+    <ItemGroup>
+      <AppSetupOutputFiles Include="$(TargetDir)**\*.*" />
+    </ItemGroup>
     <MakeDir Directories="$(VmsOutputDir)" Condition="!Exists('$(VmsOutputDir)')" />
-    <WriteLinesToFile File="$(VmsOutputDir)AppSetup.path"
-                     Lines="$(TargetDir)VMS.AppSetup.exe"
-                     Overwrite="true" />
+    <Copy SourceFiles="@(AppSetupOutputFiles)"
+          DestinationFolder="$(VmsOutputDir)%(RecursiveDir)"
+          SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

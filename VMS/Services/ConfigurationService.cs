@@ -1,3 +1,4 @@
+using VMS.Interfaces;
 using VMS.Models;
 using System;
 using System.IO;
@@ -9,7 +10,7 @@ namespace VMS.Services
     /// <summary>
     /// Service for loading system configuration from BODA.Setup
     /// </summary>
-    public class ConfigurationService
+    public class ConfigurationService : IConfigurationService
     {
         private static ConfigurationService? _instance;
         public static ConfigurationService Instance => _instance ??= new ConfigurationService();
@@ -85,6 +86,24 @@ namespace VMS.Services
             }
 
             return new LayoutConfiguration();
+        }
+
+        /// <summary>
+        /// Save system configuration
+        /// </summary>
+        public bool SaveSystemConfiguration(SystemConfiguration config)
+        {
+            try
+            {
+                var json = JsonSerializer.Serialize(config, JsonOptions);
+                File.WriteAllText(_systemConfigPath, json);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error saving system config: {ex.Message}");
+                return false;
+            }
         }
 
         /// <summary>

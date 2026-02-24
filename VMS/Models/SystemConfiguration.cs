@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using VMS.Camera.Models;
 
 namespace VMS.Models
 {
@@ -48,12 +49,7 @@ namespace VMS.Models
         Virtual
     }
 
-    public enum CameraManufacturer
-    {
-        Virtual, HIK, Basler, IDS, Cognex, Keyence, Dalsa, Baumer, Allied_Vision, FLIR, JAI, Other
-    }
-
-    public enum PlcVendor
+public enum PlcVendor
     {
         None, Mitsubishi, Siemens, LS, Omron
     }

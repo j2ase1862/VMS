@@ -1,3 +1,4 @@
+using VMS.AppSetup.Interfaces;
 using VMS.AppSetup.Models;
 using System;
 using System.IO;
@@ -9,7 +10,7 @@ namespace VMS.AppSetup.Services
     /// <summary>
     /// 설정 파일 관리 서비스
     /// </summary>
-    public class ConfigurationService
+    public class ConfigurationService : IConfigurationService
     {
         private static readonly Lazy<ConfigurationService> _instance = new(() => new ConfigurationService());
         public static ConfigurationService Instance => _instance.Value;

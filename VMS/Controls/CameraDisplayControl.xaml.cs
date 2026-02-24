@@ -59,20 +59,6 @@ namespace VMS.Controls
             // Setup resize behavior
             ResizeGrip.DragDelta += OnResizeDelta;
             ResizeGrip.DragCompleted += OnResizeCompleted;
-
-            // Setup settings button click
-            SettingsButton.Click += OnSettingsClick;
-        }
-
-        private void OnSettingsClick(object sender, RoutedEventArgs e)
-        {
-            // Find MainWindow and open settings panel for this camera
-            var window = Window.GetWindow(this);
-            if (window?.DataContext is MainViewModel mainVm && DataContext is CameraViewModel camVm)
-            {
-                mainVm.SelectCameraCommand.Execute(camVm);
-            }
-            e.Handled = true;
         }
 
         private static Canvas? FindCameraCanvas(DependencyObject child)

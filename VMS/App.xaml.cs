@@ -1,4 +1,7 @@
 using System.Windows;
+using VMS.Interfaces;
+using VMS.Services;
+using VMS.ViewModels;
 using VMS.Views;
 
 namespace VMS
@@ -14,7 +17,22 @@ namespace VMS
 
             await splash.LoadAsync();
 
+            IConfigurationService configService = ConfigurationService.Instance;
+            IRecipeService recipeService = RecipeService.Instance;
+            IDialogService dialogService = new DialogService();
+            IProcessService processService = new ProcessService();
+            IInspectionService inspectionService = InspectionService.Instance;
+
+            var mainViewModel = new MainViewModel(
+                configService,
+                recipeService,
+                dialogService,
+                processService,
+                inspectionService,
+                () => Shutdown());
+
             var mainWindow = new MainWindow();
+            mainWindow.DataContext = mainViewModel;
             MainWindow = mainWindow;
             mainWindow.Show();
 

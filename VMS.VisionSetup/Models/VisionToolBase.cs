@@ -13,7 +13,12 @@ namespace VMS.VisionSetup.Models
         /// <summary>
         /// 도구 고유 ID (연결선 매칭용)
         /// </summary>
-        public string Id { get; } = Guid.NewGuid().ToString();
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+
+        /// <summary>
+        /// 외부 실행 엔진이 오버레이 렌더링용 원본 이미지를 주입하기 위한 속성
+        /// </summary>
+        public Mat? OverlayBaseImage { get; set; }
 
         private string _name = string.Empty;
         public string Name
@@ -107,8 +112,11 @@ namespace VMS.VisionSetup.Models
             set => SetProperty(ref _useROI, value);
         }
 
-        internal Rect FixtureBaseROI { get; set; }
-        internal bool HasFixtureBaseROI { get; set; }
+        public Rect FixtureBaseROI { get; set; }
+        public bool HasFixtureBaseROI { get; set; }
+        public double FixtureRefX { get; set; }      // 최초 실행 시 FeatureMatch foundX
+        public double FixtureRefY { get; set; }      // 최초 실행 시 FeatureMatch foundY
+        public double FixtureRefAngle { get; set; }  // 최초 실행 시 FeatureMatch angle
 
         // 마지막 실행 결과
         private VisionResult? _lastResult;

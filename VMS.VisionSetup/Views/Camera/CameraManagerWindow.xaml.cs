@@ -1,4 +1,6 @@
 using System.Windows;
+using VMS.VisionSetup.Interfaces;
+using VMS.VisionSetup.ViewModels;
 
 namespace VMS.VisionSetup.Views.Camera
 {
@@ -7,9 +9,10 @@ namespace VMS.VisionSetup.Views.Camera
     /// </summary>
     public partial class CameraManagerWindow : Window
     {
-        public CameraManagerWindow()
+        public CameraManagerWindow(ICameraService cameraService, IDialogService dialogService)
         {
             InitializeComponent();
+            DataContext = new CameraManagerViewModel(cameraService, dialogService);
         }
     }
 }

@@ -1,4 +1,5 @@
-using VMS.VisionSetup.Models;
+using VMS.Camera.Models;
+using VMS.VisionSetup.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,7 +12,7 @@ namespace VMS.VisionSetup.Services
     /// <summary>
     /// 카메라 레지스트리 관리 서비스
     /// </summary>
-    public class CameraService
+    public class CameraService : ICameraService
     {
         private static readonly Lazy<CameraService> _instance = new(() => new CameraService());
         public static CameraService Instance => _instance.Value;

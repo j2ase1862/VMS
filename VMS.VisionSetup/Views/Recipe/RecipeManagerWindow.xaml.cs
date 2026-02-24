@@ -1,5 +1,6 @@
+using VMS.VisionSetup.Interfaces;
 using VMS.VisionSetup.Models;
-using VMS.VisionSetup.Services;
+using VMS.VisionSetup.ViewModels;
 using System;
 using System.Windows;
 
@@ -10,43 +11,47 @@ namespace VMS.VisionSetup.Views.Recipe
     /// </summary>
     public partial class RecipeManagerWindow : Window
     {
+        private readonly IRecipeService _recipeService;
+        private readonly RecipeListViewModel _listViewModel;
+        private readonly RecipeEditorViewModel _editorViewModel;
+
         public event EventHandler<Models.Recipe>? RecipeLoaded;
 
-        public RecipeManagerWindow()
+        public RecipeManagerWindow(IRecipeService recipeService, ICameraService cameraService, IDialogService dialogService)
         {
             InitializeComponent();
+
+            _recipeService = recipeService;
+
+            // Create ViewModels with injected services
+            _listViewModel = new RecipeListViewModel(recipeService, dialogService);
+            _editorViewModel = new RecipeEditorViewModel(recipeService, cameraService, dialogService);
+
+            // Set DataContext on child controls
+            RecipeListPanel.DataContext = _listViewModel;
+            RecipeEditorPanel.DataContext = _editorViewModel;
+
+            // Wire up cross-communication
+            _listViewModel.RecipeLoaded += OnRecipeLoaded;
+            _editorViewModel.RecipeSaved += OnRecipeSaved;
         }
 
-        /// <summary>
-        /// 레시피 목록에서 레시피가 로드됨
-        /// </summary>
-        private void RecipeListPanel_RecipeLoaded(object? sender, Models.Recipe recipe)
+        private void OnRecipeLoaded(object? sender, Models.Recipe recipe)
         {
-            // 레시피 에디터에 로드
+            // Load into editor view
             RecipeEditorPanel.LoadRecipe(recipe);
 
-            // 서비스에 현재 레시피 설정
-            RecipeService.Instance.CurrentRecipe = recipe;
+            // Set as current recipe in service
+            _recipeService.SetCurrentRecipe(recipe);
 
-            // 부모 창에 이벤트 전달
+            // Notify parent
             RecipeLoaded?.Invoke(this, recipe);
         }
 
-        /// <summary>
-        /// 레시피 목록에서 레시피가 선택됨 (미리보기용)
-        /// </summary>
-        private void RecipeListPanel_RecipeSelected(object? sender, RecipeInfo recipeInfo)
+        private void OnRecipeSaved(object? sender, EventArgs e)
         {
-            // 선택된 레시피 정보 표시 (필요 시 구현)
-        }
-
-        /// <summary>
-        /// 레시피 에디터에서 레시피가 저장됨
-        /// </summary>
-        private void RecipeEditorPanel_RecipeSaved(object? sender, EventArgs e)
-        {
-            // 레시피 목록 새로고침
-            RecipeListPanel.RefreshRecipeList();
+            // Refresh recipe list after save
+            _listViewModel.RefreshRecipeList();
         }
     }
 }

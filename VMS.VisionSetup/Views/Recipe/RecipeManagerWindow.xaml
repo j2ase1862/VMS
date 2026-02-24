@@ -17,12 +17,9 @@
         </Grid.ColumnDefinitions>
 
         <!-- Recipe List Panel -->
-        <local:RecipeListControl x:Name="RecipeListPanel" Grid.Column="0"
-                                  RecipeLoaded="RecipeListPanel_RecipeLoaded"
-                                  RecipeSelected="RecipeListPanel_RecipeSelected"/>
+        <local:RecipeListControl x:Name="RecipeListPanel" Grid.Column="0"/>
 
         <!-- Recipe Editor Panel -->
-        <local:RecipeEditorView x:Name="RecipeEditorPanel" Grid.Column="1"
-                                 RecipeSaved="RecipeEditorPanel_RecipeSaved"/>
+        <local:RecipeEditorView x:Name="RecipeEditorPanel" Grid.Column="1"/>
     </Grid>
 </Window>

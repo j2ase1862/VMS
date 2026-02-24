@@ -3,7 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:vm="clr-namespace:VMS.AppSetup.ViewModels"
         xmlns:converters="clr-namespace:VMS.AppSetup.Converters"
         mc:Ignorable="d"
         Title="BODA Vision System Setup"
@@ -11,10 +10,6 @@
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         Background="#1E1E1E">
-
-    <Window.DataContext>
-        <vm:SetupViewModel/>
-    </Window.DataContext>
 
     <Window.Resources>
         <converters:PageToVisibilityConverter x:Key="PageConverter"/>

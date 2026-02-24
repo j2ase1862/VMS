@@ -1,3 +1,4 @@
+using VMS.VisionSetup.Interfaces;
 using VMS.VisionSetup.Models;
 using System;
 using System.Collections.Generic;
@@ -11,7 +12,7 @@ namespace VMS.VisionSetup.Services
     /// <summary>
     /// 레시피 관리 서비스
     /// </summary>
-    public class RecipeService
+    public class RecipeService : IRecipeService
     {
         private static readonly Lazy<RecipeService> _instance = new(() => new RecipeService());
         public static RecipeService Instance => _instance.Value;
