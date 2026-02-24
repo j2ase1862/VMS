@@ -1,6 +1,7 @@
 using VMS.AppSetup.Interfaces;
 using VMS.AppSetup.Models;
 using VMS.Camera.Models;
+using VMS.PLC.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;

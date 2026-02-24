@@ -35,6 +35,7 @@
     <ProjectReference Include="..\VMS.AppSetup\VMS.AppSetup.csproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
+    <ProjectReference Include="..\VMS.PLC\VMS.PLC.csproj" />
   </ItemGroup>
 
 </Project>

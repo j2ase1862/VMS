@@ -1,4 +1,5 @@
 using VMS.Models;
+using VMS.PLC.Models;
 
 namespace VMS.Interfaces
 {
@@ -9,5 +10,7 @@ namespace VMS.Interfaces
         LayoutConfiguration LoadLayoutConfiguration();
         bool SaveLayoutConfiguration(LayoutConfiguration config);
         bool SaveSystemConfiguration(SystemConfiguration config);
+        PlcSignalConfiguration LoadPlcSignalConfiguration();
+        bool SavePlcSignalConfiguration(PlcSignalConfiguration config);
     }
 }

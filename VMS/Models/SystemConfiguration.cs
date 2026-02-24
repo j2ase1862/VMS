@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using VMS.Camera.Models;
+using VMS.PLC.Models;
 
 namespace VMS.Models
 {
@@ -49,13 +50,4 @@ namespace VMS.Models
         Virtual
     }
 
-public enum PlcVendor
-    {
-        None, Mitsubishi, Siemens, LS, Omron
-    }
-
-    public enum PlcCommunicationType
-    {
-        Ethernet, Serial, EthernetIP, Profinet
-    }
 }

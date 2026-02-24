@@ -7,6 +7,8 @@ using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace VMS.ViewModels
 {
@@ -75,6 +77,7 @@ namespace VMS.ViewModels
         private readonly IDialogService _dialogService;
         private readonly IProcessService _processService;
         private readonly IInspectionService _inspectionService;
+        private readonly IAutoProcessService? _autoProcessService;
         private readonly Action _shutdownAction;
         private SystemConfiguration _systemConfig;
 
@@ -84,13 +87,15 @@ namespace VMS.ViewModels
             IDialogService dialogService,
             IProcessService processService,
             IInspectionService inspectionService,
-            Action shutdownAction)
+            Action shutdownAction,
+            IAutoProcessService? autoProcessService = null)
         {
             _configService = configService;
             _recipeService = recipeService;
             _dialogService = dialogService;
             _processService = processService;
             _inspectionService = inspectionService;
+            _autoProcessService = autoProcessService;
             _shutdownAction = shutdownAction;
             _systemConfig = new SystemConfiguration();
             LoadConfiguration();
@@ -448,15 +453,49 @@ namespace VMS.ViewModels
         }
 
         [RelayCommand]
-        private void StartInspection()
+        private async Task StartInspectionAsync()
         {
+            if (CurrentRecipe == null)
+            {
+                _dialogService.ShowWarning(
+                    "레시피를 먼저 로드해 주세요.",
+                    "Warning");
+                return;
+            }
+
             IsRunning = true;
             SystemStatus = "Running...";
+
+            if (_autoProcessService != null)
+            {
+                try
+                {
+                    await _autoProcessService.StartAsync();
+                    SystemStatus = "AutoProcess Running";
+                }
+                catch (Exception ex)
+                {
+                    SystemStatus = $"AutoProcess Error: {ex.Message}";
+                    IsRunning = false;
+                }
+            }
         }
 
         [RelayCommand]
-        private void StopInspection()
+        private async Task StopInspectionAsync()
         {
+            if (_autoProcessService != null && _autoProcessService.IsRunning)
+            {
+                try
+                {
+                    await _autoProcessService.StopAsync();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error stopping AutoProcess: {ex.Message}");
+                }
+            }
+
             IsRunning = false;
             SystemStatus = "Stopped";
         }
