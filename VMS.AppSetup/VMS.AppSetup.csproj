@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\VMS.Camera\VMS.Camera.csproj" />
+    <ProjectReference Include="..\VMS.PLC\VMS.PLC.csproj" />
   </ItemGroup>
 
   <!-- After build, copy output to VMS output directory -->
@@ -25,9 +26,7 @@
       <AppSetupOutputFiles Include="$(TargetDir)**\*.*" />
     </ItemGroup>
     <MakeDir Directories="$(VmsOutputDir)" Condition="!Exists('$(VmsOutputDir)')" />
-    <Copy SourceFiles="@(AppSetupOutputFiles)"
-          DestinationFolder="$(VmsOutputDir)%(RecursiveDir)"
-          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(AppSetupOutputFiles)" DestinationFolder="$(VmsOutputDir)%(RecursiveDir)" SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

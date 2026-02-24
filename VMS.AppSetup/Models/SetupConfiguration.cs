@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 using VMS.Camera.Models;
+using VMS.PLC.Models;
 
 namespace VMS.AppSetup.Models
 {
@@ -64,26 +65,4 @@ namespace VMS.AppSetup.Models
         Virtual // 가상 카메라 설정
     }
 
-    /// <summary>
-    /// PLC 제조사
-    /// </summary>
-    public enum PlcVendor
-    {
-        None,
-        Mitsubishi,
-        Siemens,
-        LS,
-        Omron
-    }
-
-    /// <summary>
-    /// PLC 통신 방식
-    /// </summary>
-    public enum PlcCommunicationType
-    {
-        Ethernet,
-        Serial,
-        EthernetIP,
-        Profinet
-    }
 }
