@@ -10,17 +10,25 @@ namespace VMS.PLC.Services
     {
         /// <summary>
         /// Create an IPlcConnection instance based on vendor configuration.
+        /// When resilient is true, wraps the connection with ResilientPlcConnection
+        /// for automatic reconnection, keep-alive, and structured logging.
         /// </summary>
-        public static IPlcConnection Create(PlcConnectionConfig config)
+        public static IPlcConnection Create(PlcConnectionConfig config, bool resilient = true)
         {
-            return config.Vendor switch
+            IPlcConnection inner = config.Vendor switch
             {
                 PlcVendor.Mitsubishi => new MitsubishiMcConnection(),
                 PlcVendor.Siemens => new SiemensS7Connection(),
                 PlcVendor.LS => new LsXgtConnection(),
                 PlcVendor.Omron => new OmronFinsConnection(),
+                // Modbus TCP: use SimulatedPlcConnection until ModbusTcpConnection is implemented
+                PlcVendor.Modbus => new SimulatedPlcConnection(),
                 _ => new SimulatedPlcConnection()
             };
+
+            if (!resilient) return inner;
+
+            return new ResilientPlcConnection(inner);
         }
 
         /// <summary>
@@ -32,6 +40,7 @@ namespace VMS.PLC.Services
             PlcVendor.Siemens => 102,
             PlcVendor.LS => 2004,
             PlcVendor.Omron => 9600,
+            PlcVendor.Modbus => 502,
             _ => 0
         };
     }

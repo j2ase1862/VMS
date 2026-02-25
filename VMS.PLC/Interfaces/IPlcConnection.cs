@@ -14,6 +14,9 @@ namespace VMS.PLC.Interfaces
         /// <summary>Current connection state</summary>
         PlcConnectionState ConnectionState { get; }
 
+        /// <summary>Fired when the connection state changes</summary>
+        event EventHandler<PlcConnectionStateChangedEventArgs>? ConnectionStateChanged;
+
         /// <summary>Connect to PLC with the given configuration</summary>
         Task<bool> ConnectAsync(PlcConnectionConfig config);
 

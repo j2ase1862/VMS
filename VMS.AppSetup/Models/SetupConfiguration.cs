@@ -21,11 +21,31 @@ namespace VMS.AppSetup.Models
         public CameraMode CameraMode { get; set; } = CameraMode.Virtual;
         public List<CameraConfiguration> Cameras { get; set; } = new();
 
-        // Page 4: PLC Settings
+        // Page 4: PLC Settings — Vendor & Communication
         public PlcVendor PlcVendor { get; set; } = PlcVendor.None;
         public PlcCommunicationType CommunicationType { get; set; } = PlcCommunicationType.Ethernet;
         public string PlcIpAddress { get; set; } = "192.168.0.100";
         public int PlcPort { get; set; } = 502;
+
+        // Page 4: Modbus
+        public byte ModbusUnitId { get; set; } = 255;
+
+        // Page 4: Serial
+        public string SerialPortName { get; set; } = "COM1";
+        public int BaudRate { get; set; } = 115200;
+        public int DataBits { get; set; } = 8;
+        public PlcSerialParity Parity { get; set; } = PlcSerialParity.None;
+        public PlcSerialStopBits StopBits { get; set; } = PlcSerialStopBits.One;
+
+        // Page 4: Performance & Stability
+        public int PollingIntervalMs { get; set; } = 20;
+        public bool UseHeartbeat { get; set; }
+        public string HeartbeatAddress { get; set; } = string.Empty;
+        public bool AutoReconnect { get; set; } = true;
+
+        // Page 4: Data Synchronization
+        public PlcWriteMode WriteMode { get; set; } = PlcWriteMode.Handshake;
+        public PlcEndianMode EndianMode { get; set; } = PlcEndianMode.LittleEndian;
 
         // Metadata
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using VMS.Interfaces;
@@ -32,12 +33,41 @@ namespace VMS
             var plcConfig = new PlcConnectionConfig
             {
                 Vendor = systemConfig.PlcVendor,
+                CommunicationType = systemConfig.CommunicationType,
                 IpAddress = systemConfig.PlcIpAddress,
                 Port = systemConfig.PlcPort > 0
                     ? systemConfig.PlcPort
-                    : PlcConnectionFactory.GetDefaultPort(systemConfig.PlcVendor)
+                    : PlcConnectionFactory.GetDefaultPort(systemConfig.PlcVendor),
+
+                // Modbus
+                UnitId = systemConfig.ModbusUnitId,
+
+                // Serial
+                SerialPortName = systemConfig.SerialPortName,
+                BaudRate = systemConfig.BaudRate,
+                DataBits = systemConfig.DataBits,
+                Parity = systemConfig.Parity,
+                StopBits = systemConfig.StopBits,
+
+                // Performance & Stability
+                PollingIntervalMs = systemConfig.PollingIntervalMs,
+                UseHeartbeat = systemConfig.UseHeartbeat,
+                HeartbeatAddress = systemConfig.HeartbeatAddress,
+                AutoReconnect = systemConfig.AutoReconnect,
+
+                // Data Synchronization
+                WriteMode = systemConfig.WriteMode,
+                EndianMode = systemConfig.EndianMode
             };
-            IPlcConnection plcConnection = PlcConnectionFactory.Create(plcConfig);
+            var plcConnection = PlcConnectionFactory.Create(plcConfig, resilient: systemConfig.AutoReconnect);
+
+            // Wire up PLC log callback if using ResilientPlcConnection
+            if (plcConnection is ResilientPlcConnection resilientPlc)
+            {
+                resilientPlc.LogCallback = entry =>
+                    Debug.WriteLine($"[PLC] {entry}");
+            }
+
             var signalConfig = configService.LoadPlcSignalConfiguration();
 
             var mainViewModel = new MainViewModel(
@@ -57,16 +87,14 @@ namespace VMS
                 {
                     var cam = mainViewModel.Cameras.FirstOrDefault(c => c.Id == cameraId);
                     if (cam == null) return false;
-                    cam.GrabCommand.Execute(null);
+                    await cam.GrabCommand.ExecuteAsync(null);
                     return true;
                 },
                 inspectFunc: async (cameraId) =>
                 {
                     var cam = mainViewModel.Cameras.FirstOrDefault(c => c.Id == cameraId);
                     if (cam == null) return false;
-                    cam.ManualInspectCommand.Execute(null);
-                    // Wait briefly for async command to complete
-                    await Task.Delay(100);
+                    await cam.ManualInspectCommand.ExecuteAsync(null);
                     return cam.InspectionOk;
                 },
                 setResultFunc: (cameraId, ok) =>

@@ -9,6 +9,7 @@ namespace VMS.PLC.Models
         Mitsubishi,
         Siemens,
         LS,
-        Omron
+        Omron,
+        Modbus
     }
 }

@@ -27,5 +27,25 @@ namespace VMS.PLC.Models
         // Omron FINS specific
         public byte SourceNode { get; set; } = 0x00;
         public byte DestNode { get; set; } = 0x00;
+
+        // Modbus specific
+        public byte UnitId { get; set; } = 255;
+
+        // Serial communication (active when CommunicationType == Serial)
+        public string SerialPortName { get; set; } = "COM1";
+        public int BaudRate { get; set; } = 115200;
+        public int DataBits { get; set; } = 8;
+        public PlcSerialParity Parity { get; set; } = PlcSerialParity.None;
+        public PlcSerialStopBits StopBits { get; set; } = PlcSerialStopBits.One;
+
+        // Performance & stability
+        public int PollingIntervalMs { get; set; } = 20;
+        public bool UseHeartbeat { get; set; }
+        public string HeartbeatAddress { get; set; } = string.Empty;
+        public bool AutoReconnect { get; set; } = true;
+
+        // Data synchronization
+        public PlcWriteMode WriteMode { get; set; } = PlcWriteMode.Handshake;
+        public PlcEndianMode EndianMode { get; set; } = PlcEndianMode.LittleEndian;
     }
 }

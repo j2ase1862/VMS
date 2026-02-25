@@ -28,11 +28,12 @@ namespace VMS.PLC.Services
         public bool IsConnected => _connectionState == PlcConnectionState.Connected;
         public PlcConnectionState ConnectionState => _connectionState;
         public event EventHandler<PlcBitChangedEventArgs>? BitChanged;
+        public event EventHandler<PlcConnectionStateChangedEventArgs>? ConnectionStateChanged;
 
         public async Task<bool> ConnectAsync(PlcConnectionConfig config)
         {
             _config = config;
-            _connectionState = PlcConnectionState.Connecting;
+            SetConnectionState(PlcConnectionState.Connecting);
 
             try
             {
@@ -46,7 +47,7 @@ namespace VMS.PLC.Services
                 // Step 1: COTP Connection Request
                 if (!await SendCotpConnectionRequest())
                 {
-                    _connectionState = PlcConnectionState.Error;
+                    SetConnectionState(PlcConnectionState.Error, "COTP connection request failed");
                     Cleanup();
                     return false;
                 }
@@ -54,17 +55,17 @@ namespace VMS.PLC.Services
                 // Step 2: S7 Setup Communication
                 if (!await SendS7SetupCommunication())
                 {
-                    _connectionState = PlcConnectionState.Error;
+                    SetConnectionState(PlcConnectionState.Error, "S7 setup communication failed");
                     Cleanup();
                     return false;
                 }
 
-                _connectionState = PlcConnectionState.Connected;
+                SetConnectionState(PlcConnectionState.Connected);
                 return true;
             }
             catch
             {
-                _connectionState = PlcConnectionState.Error;
+                SetConnectionState(PlcConnectionState.Error);
                 Cleanup();
                 return false;
             }
@@ -74,7 +75,7 @@ namespace VMS.PLC.Services
         {
             await StopAllMonitoringAsync();
             Cleanup();
-            _connectionState = PlcConnectionState.Disconnected;
+            SetConnectionState(PlcConnectionState.Disconnected);
         }
 
         // --- Bit operations ---
@@ -487,6 +488,14 @@ namespace VMS.PLC.Services
                 "DBX" or "DBW" or "DBB" or "DBD" => 0x84,
                 _ => 0x84 // Default to DB
             };
+        }
+
+        private void SetConnectionState(PlcConnectionState newState, string? reason = null)
+        {
+            var oldState = _connectionState;
+            if (oldState == newState) return;
+            _connectionState = newState;
+            ConnectionStateChanged?.Invoke(this, new PlcConnectionStateChangedEventArgs(oldState, newState, reason));
         }
 
         private void EnsureConnected()
