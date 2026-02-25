@@ -153,7 +153,13 @@ namespace VMS.Services
                             ToolType = tool.ToolType,
                             Success = false,
                             Message = skipResult.Message,
-                            ExecutionTimeMs = toolSw.Elapsed.TotalMilliseconds
+                            ExecutionTimeMs = toolSw.Elapsed.TotalMilliseconds,
+                            PlcMappings = tool.PlcMappings.Select(m => new VMS.Models.PlcResultMapping
+                            {
+                                ResultKey = m.ResultKey,
+                                PlcAddress = m.PlcAddress,
+                                DataType = m.DataType
+                            }).ToList()
                         });
                         continue;
                     }
@@ -205,7 +211,13 @@ namespace VMS.Services
                             Success = toolResult.Success,
                             Message = toolResult.Message,
                             ExecutionTimeMs = toolSw.Elapsed.TotalMilliseconds,
-                            Data = toolResult.Data ?? new Dictionary<string, object>()
+                            Data = toolResult.Data ?? new Dictionary<string, object>(),
+                            PlcMappings = tool.PlcMappings.Select(m => new VMS.Models.PlcResultMapping
+                            {
+                                ResultKey = m.ResultKey,
+                                PlcAddress = m.PlcAddress,
+                                DataType = m.DataType
+                            }).ToList()
                         });
                     }
                     finally
@@ -252,6 +264,16 @@ namespace VMS.Services
                     ROIWidth = src.ROIWidth,
                     ROIHeight = src.ROIHeight,
                     Parameters = src.Parameters ?? new Dictionary<string, object>(),
+                    PlcMappings = src.PlcMappings?.Select(m => new VMS.VisionSetup.Models.PlcResultMapping
+                    {
+                        ResultKey = m.ResultKey,
+                        PlcAddress = m.PlcAddress,
+                        DataType = m.DataType
+                    }).ToList() ?? new List<VMS.VisionSetup.Models.PlcResultMapping>(),
+                    // 레거시 호환 (ToolSerializer에서 마이그레이션 처리)
+                    ResultPlcAddress = src.ResultPlcAddress,
+                    ResultDataType = src.ResultDataType,
+                    ResultDataKey = src.ResultDataKey,
                     Connections = src.Connections?.Select(c => new VMS.VisionSetup.Models.ToolConnectionConfig
                     {
                         SourceToolId = c.SourceToolId,
@@ -351,62 +373,86 @@ namespace VMS.Services
                 .Where(c => c.TargetId == tool.Id && c.Type == VsConnectionType.Coordinates)
                 .ToList();
 
-            foreach (var conn in coordConnections)
+            tool.IsFixtureTransformActive = true;
+            try
             {
-                if (!resultMap.TryGetValue(conn.SourceId, out var sourceResult) || sourceResult.Data == null)
-                    continue;
-
-                if (sourceResult.Data.TryGetValue("CenterX", out var cx) &&
-                    sourceResult.Data.TryGetValue("CenterY", out var cy))
+                foreach (var conn in coordConnections)
                 {
-                    if (!tool.HasFixtureBaseROI)
+                    if (!resultMap.TryGetValue(conn.SourceId, out var sourceResult) || sourceResult.Data == null)
+                        continue;
+
+                    if (sourceResult.Data.TryGetValue("CenterX", out var cx) &&
+                        sourceResult.Data.TryGetValue("CenterY", out var cy))
                     {
-                        tool.FixtureBaseROI = tool.ROI;
-                        tool.HasFixtureBaseROI = true;
-                        tool.FixtureRefX = Convert.ToDouble(cx);
-                        tool.FixtureRefY = Convert.ToDouble(cy);
-                        tool.FixtureRefAngle = sourceResult.Data.TryGetValue("Angle", out var initAngle)
-                            ? Convert.ToDouble(initAngle) : 0;
+                        if (!tool.HasFixtureBaseROI)
+                        {
+                            double refCX = Convert.ToDouble(cx);
+                            double refCY = Convert.ToDouble(cy);
+
+                            if (tool.UseROI && tool.ROI.Width > 0 && tool.ROI.Height > 0)
+                            {
+                                tool.FixtureBaseROI = tool.ROI;
+                            }
+                            else
+                            {
+                                int defaultW = tool.ROI.Width > 0 ? tool.ROI.Width : 200;
+                                int defaultH = tool.ROI.Height > 0 ? tool.ROI.Height : 200;
+                                tool.FixtureBaseROI = new Rect(
+                                    (int)(refCX - defaultW / 2.0),
+                                    (int)(refCY - defaultH / 2.0),
+                                    defaultW, defaultH);
+                            }
+
+                            tool.HasFixtureBaseROI = true;
+                            tool.FixtureRefX = refCX;
+                            tool.FixtureRefY = refCY;
+                            tool.FixtureRefAngle = sourceResult.Data.TryGetValue("Angle", out var initAngle)
+                                ? Convert.ToDouble(initAngle) : 0;
+                        }
+
+                        double foundX = Convert.ToDouble(cx);
+                        double foundY = Convert.ToDouble(cy);
+                        double refX = tool.FixtureRefX;
+                        double refY = tool.FixtureRefY;
+
+                        double baseCX = tool.FixtureBaseROI.X + tool.FixtureBaseROI.Width / 2.0;
+                        double baseCY = tool.FixtureBaseROI.Y + tool.FixtureBaseROI.Height / 2.0;
+
+                        double currentAngle = 0;
+                        if (sourceResult.Data.TryGetValue("Angle", out var angleObj))
+                            currentAngle = Convert.ToDouble(angleObj);
+                        double deltaAngle = currentAngle - tool.FixtureRefAngle;
+
+                        double newCX, newCY;
+                        if (Math.Abs(deltaAngle) > 0.01)
+                        {
+                            double relX = baseCX - refX;
+                            double relY = baseCY - refY;
+                            double rad = deltaAngle * Math.PI / 180.0;
+                            newCX = foundX + relX * Math.Cos(rad) - relY * Math.Sin(rad);
+                            newCY = foundY + relX * Math.Sin(rad) + relY * Math.Cos(rad);
+                        }
+                        else
+                        {
+                            newCX = baseCX + (foundX - refX);
+                            newCY = baseCY + (foundY - refY);
+                        }
+
+                        int w = tool.FixtureBaseROI.Width > 0 ? tool.FixtureBaseROI.Width : 100;
+                        int h = tool.FixtureBaseROI.Height > 0 ? tool.FixtureBaseROI.Height : 100;
+                        tool.ROI = new Rect((int)(newCX - w / 2.0), (int)(newCY - h / 2.0), w, h);
+                        tool.UseROI = true;
                     }
-
-                    double foundX = Convert.ToDouble(cx);
-                    double foundY = Convert.ToDouble(cy);
-                    double refX = tool.FixtureRefX;
-                    double refY = tool.FixtureRefY;
-
-                    double baseCX = tool.FixtureBaseROI.X + tool.FixtureBaseROI.Width / 2.0;
-                    double baseCY = tool.FixtureBaseROI.Y + tool.FixtureBaseROI.Height / 2.0;
-
-                    double currentAngle = 0;
-                    if (sourceResult.Data.TryGetValue("Angle", out var angleObj))
-                        currentAngle = Convert.ToDouble(angleObj);
-                    double deltaAngle = currentAngle - tool.FixtureRefAngle;
-
-                    double newCX, newCY;
-                    if (Math.Abs(deltaAngle) > 0.01)
+                    else if (sourceResult.Data.TryGetValue("BoundingRect", out var rectObj) && rectObj is Rect boundingRect)
                     {
-                        double relX = baseCX - refX;
-                        double relY = baseCY - refY;
-                        double rad = deltaAngle * Math.PI / 180.0;
-                        newCX = foundX + relX * Math.Cos(rad) - relY * Math.Sin(rad);
-                        newCY = foundY + relX * Math.Sin(rad) + relY * Math.Cos(rad);
+                        tool.ROI = boundingRect;
+                        tool.UseROI = true;
                     }
-                    else
-                    {
-                        newCX = baseCX + (foundX - refX);
-                        newCY = baseCY + (foundY - refY);
-                    }
-
-                    int w = tool.FixtureBaseROI.Width > 0 ? tool.FixtureBaseROI.Width : 100;
-                    int h = tool.FixtureBaseROI.Height > 0 ? tool.FixtureBaseROI.Height : 100;
-                    tool.ROI = new Rect((int)(newCX - w / 2.0), (int)(newCY - h / 2.0), w, h);
-                    tool.UseROI = true;
                 }
-                else if (sourceResult.Data.TryGetValue("BoundingRect", out var rectObj) && rectObj is Rect boundingRect)
-                {
-                    tool.ROI = boundingRect;
-                    tool.UseROI = true;
-                }
+            }
+            finally
+            {
+                tool.IsFixtureTransformActive = false;
             }
         }
 

@@ -22,6 +22,9 @@ namespace VMS.Interfaces
         public string Message { get; set; } = string.Empty;
         public double ExecutionTimeMs { get; set; }
         public Dictionary<string, object> Data { get; set; } = new();
+
+        // PLC result output mappings (1:N)
+        public List<Models.PlcResultMapping> PlcMappings { get; set; } = new();
     }
 
     public interface IInspectionService

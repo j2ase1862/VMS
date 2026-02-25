@@ -1,9 +1,12 @@
 using VMS.VisionSetup.Models;
+using VMS.PLC.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using OpenCvSharp;
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 
 namespace VMS.VisionSetup.ViewModels.ToolSettings
@@ -75,6 +78,26 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
 
         public double ExecutionTime { get => Tool.ExecutionTime; set => Tool.ExecutionTime = value; }
         public VisionResult? LastResult { get => Tool.LastResult; set => Tool.LastResult = value; }
+
+        // PLC result mappings (1:N)
+        public ObservableCollection<PlcResultMapping> PlcMappings => Tool.PlcMappings;
+        public List<string> AvailableResultKeys => Tool.GetAvailableResultKeys();
+        public Array PlcDataTypes => Enum.GetValues(typeof(PlcDataType));
+
+        public IRelayCommand AddPlcMappingCommand => new RelayCommand(() =>
+        {
+            var keys = AvailableResultKeys;
+            PlcMappings.Add(new PlcResultMapping
+            {
+                ResultKey = keys.Count > 0 ? keys[0] : "Success"
+            });
+        });
+
+        public IRelayCommand<PlcResultMapping> RemovePlcMappingCommand => new RelayCommand<PlcResultMapping>(mapping =>
+        {
+            if (mapping != null)
+                PlcMappings.Remove(mapping);
+        });
 
         // Commands (owned by VM, send messages)
         public IRelayCommand ShowROICommand { get; }

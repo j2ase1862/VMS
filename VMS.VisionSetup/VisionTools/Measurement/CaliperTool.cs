@@ -603,9 +603,19 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 c, 3);
         }
 
+        public override List<string> GetAvailableResultKeys()
+        {
+            return new List<string>
+            {
+                "Success", "EdgeX", "EdgeY", "EdgeScore", "Width",
+                "Edge1X", "Edge1Y", "Edge2X", "Edge2Y",
+                "CenterX", "CenterY", "EdgeCount"
+            };
+        }
+
         public override VisionToolBase Clone()
         {
-            return new CaliperTool
+            var clone = new CaliperTool
             {
                 Name = this.Name,
                 ToolType = this.ToolType,
@@ -629,6 +639,8 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 PositionSigma = this.PositionSigma,
                 PolarityWeight = this.PolarityWeight
             };
+            CopyPlcMappingsTo(clone);
+            return clone;
         }
     }
 

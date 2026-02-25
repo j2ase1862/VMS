@@ -7,6 +7,7 @@
              xmlns:ts="clr-namespace:VMS.VisionSetup.Views.ToolSettings"
              xmlns:tools="clr-namespace:VMS.VisionSetup.Views.ToolSettings.Tools"
              xmlns:vm="clr-namespace:VMS.VisionSetup.ViewModels.ToolSettings"
+             xmlns:plc="clr-namespace:VMS.PLC.Models;assembly=VMS.PLC"
              mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="300"
              Background="#2D2D30">
@@ -127,6 +128,80 @@
                             Padding="10,4" Cursor="Hand"/>
                 </StackPanel>
             </StackPanel>
+
+            <!-- PLC Output Mappings -->
+            <TextBlock Text="PLC Output" Style="{StaticResource SectionHeaderStyle}"/>
+
+            <DataGrid ItemsSource="{Binding PlcMappings}"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      CanUserReorderColumns="False"
+                      CanUserSortColumns="False"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="None"
+                      RowHeaderWidth="0"
+                      Background="#2D2D30"
+                      Foreground="#CCCCCC"
+                      BorderBrush="#3F3F46"
+                      BorderThickness="1"
+                      RowBackground="#2D2D30"
+                      AlternatingRowBackground="#333337"
+                      Margin="0,3,0,3"
+                      MinHeight="28"
+                      MaxHeight="200">
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="Key" Width="*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <ComboBox ItemsSource="{Binding DataContext.AvailableResultKeys, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                          SelectedItem="{Binding ResultKey, UpdateSourceTrigger=PropertyChanged}"
+                                          Background="#3E3E42" Foreground="#CCCCCC" BorderThickness="0"
+                                          Padding="4,2"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="Address" Width="*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBox Text="{Binding PlcAddress, UpdateSourceTrigger=PropertyChanged}"
+                                         Background="#3E3E42" Foreground="#CCCCCC" BorderThickness="0"
+                                         Padding="4,2"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="Type" Width="80">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <ComboBox ItemsSource="{Binding DataContext.PlcDataTypes, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                          SelectedItem="{Binding DataType, UpdateSourceTrigger=PropertyChanged}"
+                                          Background="#3E3E42" Foreground="#CCCCCC" BorderThickness="0"
+                                          Padding="4,2"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="" Width="30">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="X"
+                                        Command="{Binding DataContext.RemovePlcMappingCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                        CommandParameter="{Binding}"
+                                        Background="Transparent" Foreground="#FF6B68"
+                                        BorderThickness="0" Cursor="Hand"
+                                        FontWeight="Bold" Padding="4,0"
+                                        ToolTip="Remove mapping"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <Button Content="+ Add PLC Mapping"
+                    Command="{Binding AddPlcMappingCommand}"
+                    Background="#3E3E42" Foreground="#CCCCCC"
+                    BorderBrush="#555555" Padding="8,4"
+                    HorizontalAlignment="Left" Margin="0,2,0,5"
+                    Cursor="Hand"/>
 
             <!-- Execution Info -->
             <TextBlock Text="Execution Info" Style="{StaticResource SectionHeaderStyle}"/>

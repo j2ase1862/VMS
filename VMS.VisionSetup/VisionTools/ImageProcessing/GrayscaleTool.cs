@@ -76,7 +76,7 @@ namespace VMS.VisionSetup.VisionTools.ImageProcessing
 
         public override VisionToolBase Clone()
         {
-            return new GrayscaleTool
+            var clone = new GrayscaleTool
             {
                 Name = this.Name,
                 ToolType = this.ToolType,
@@ -84,6 +84,8 @@ namespace VMS.VisionSetup.VisionTools.ImageProcessing
                 ROI = this.ROI,
                 UseROI = this.UseROI
             };
+            CopyPlcMappingsTo(clone);
+            return clone;
         }
     }
 }

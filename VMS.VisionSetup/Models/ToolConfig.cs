@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using VMS.PLC.Models;
 
 namespace VMS.VisionSetup.Models
 {
@@ -170,5 +171,13 @@ namespace VMS.VisionSetup.Models
         /// ROI Shape 추가 데이터 (회전 각도, 반지름 등)
         /// </summary>
         public Dictionary<string, object>? ROIShapeData { get; set; }
+
+        // PLC 결과 매핑 (1:N)
+        public List<PlcResultMapping> PlcMappings { get; set; } = new();
+
+        // 레거시 호환 (역직렬화 전용 — 기존 JSON 파일 마이그레이션)
+        public string? ResultPlcAddress { get; set; }
+        public PlcDataType ResultDataType { get; set; } = PlcDataType.Bit;
+        public string? ResultDataKey { get; set; }
     }
 }
