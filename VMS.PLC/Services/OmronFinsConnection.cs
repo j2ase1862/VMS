@@ -32,11 +32,12 @@ namespace VMS.PLC.Services
         public bool IsConnected => _connectionState == PlcConnectionState.Connected;
         public PlcConnectionState ConnectionState => _connectionState;
         public event EventHandler<PlcBitChangedEventArgs>? BitChanged;
+        public event EventHandler<PlcConnectionStateChangedEventArgs>? ConnectionStateChanged;
 
         public async Task<bool> ConnectAsync(PlcConnectionConfig config)
         {
             _config = config;
-            _connectionState = PlcConnectionState.Connecting;
+            SetConnectionState(PlcConnectionState.Connecting);
 
             try
             {
@@ -50,17 +51,17 @@ namespace VMS.PLC.Services
                 // FINS/TCP node address exchange
                 if (!await PerformFinsHandshake())
                 {
-                    _connectionState = PlcConnectionState.Error;
+                    SetConnectionState(PlcConnectionState.Error, "FINS handshake failed");
                     Cleanup();
                     return false;
                 }
 
-                _connectionState = PlcConnectionState.Connected;
+                SetConnectionState(PlcConnectionState.Connected);
                 return true;
             }
             catch
             {
-                _connectionState = PlcConnectionState.Error;
+                SetConnectionState(PlcConnectionState.Error);
                 Cleanup();
                 return false;
             }
@@ -70,7 +71,7 @@ namespace VMS.PLC.Services
         {
             await StopAllMonitoringAsync();
             Cleanup();
-            _connectionState = PlcConnectionState.Disconnected;
+            SetConnectionState(PlcConnectionState.Disconnected);
         }
 
         // --- Bit operations ---
@@ -413,6 +414,14 @@ namespace VMS.PLC.Services
                 offset += read;
             }
             return buffer;
+        }
+
+        private void SetConnectionState(PlcConnectionState newState, string? reason = null)
+        {
+            var oldState = _connectionState;
+            if (oldState == newState) return;
+            _connectionState = newState;
+            ConnectionStateChanged?.Invoke(this, new PlcConnectionStateChangedEventArgs(oldState, newState, reason));
         }
 
         private void EnsureConnected()

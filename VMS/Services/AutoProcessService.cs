@@ -9,6 +9,9 @@ namespace VMS.Services
     /// PLC trigger-based automatic inspection state machine.
     /// Each camera channel runs an independent state machine loop:
     /// WaitTrigger -> Grabbing -> Inspecting -> WritingResult -> WaitAck -> WaitTrigger
+    ///
+    /// Uses IPlcConnection.StartMonitoringAsync/BitChanged events for reactive triggers
+    /// instead of direct polling, improving response time and reducing CPU load.
     /// </summary>
     public class AutoProcessService : IAutoProcessService
     {
@@ -26,6 +29,10 @@ namespace VMS.Services
         private readonly List<Task> _channelTasks = new();
         private CancellationTokenSource? _cts;
         private Task? _heartbeatTask;
+
+        // Event-based trigger: per-address TaskCompletionSource for BitChanged events
+        private readonly Dictionary<string, TaskCompletionSource<bool>> _bitWaiters = new();
+        private readonly object _waiterLock = new();
 
         private const int ErrorRecoveryDelayMs = 5000;
         private const int AckTimeoutMs = 30000;
@@ -50,6 +57,8 @@ namespace VMS.Services
             _inspectFunc = inspectFunc;
             _setResultFunc = setResultFunc;
             _resetFunc = resetFunc;
+
+            _plc.BitChanged += OnPlcBitChanged;
         }
 
         public async Task StartAsync(CancellationToken cancellationToken = default)
@@ -64,6 +73,19 @@ namespace VMS.Services
             {
                 var config = new PlcConnectionConfig { Vendor = _vendor };
                 await _plc.ConnectAsync(config);
+            }
+
+            // Start monitoring all trigger and ack addresses via BitChanged events
+            foreach (var signalMap in _signalConfig.SignalMaps)
+            {
+                var triggerAddr = PlcAddress.Parse(signalMap.TriggerAddress, _vendor);
+                await _plc.StartMonitoringAsync(triggerAddr, _signalConfig.TriggerPollingIntervalMs);
+
+                if (!string.IsNullOrEmpty(signalMap.AckAddress))
+                {
+                    var ackAddr = PlcAddress.Parse(signalMap.AckAddress, _vendor);
+                    await _plc.StartMonitoringAsync(ackAddr, _signalConfig.TriggerPollingIntervalMs);
+                }
             }
 
             // Start per-camera channel tasks
@@ -87,6 +109,12 @@ namespace VMS.Services
             if (!IsRunning) return;
 
             _cts?.Cancel();
+
+            // Cancel all pending bit waiters
+            CancelAllWaiters();
+
+            // Stop all PLC monitoring
+            await _plc.StopAllMonitoringAsync();
 
             // Wait for all channel tasks to complete
             try
@@ -123,6 +151,100 @@ namespace VMS.Services
         public AutoProcessState GetCameraState(string cameraId)
         {
             return _cameraStates.GetValueOrDefault(cameraId, AutoProcessState.Idle);
+        }
+
+        // --- BitChanged event handler ---
+
+        private void OnPlcBitChanged(object? sender, PlcBitChangedEventArgs e)
+        {
+            var key = e.Address.RawAddress.ToUpperInvariant();
+
+            lock (_waiterLock)
+            {
+                if (_bitWaiters.TryGetValue(key, out var tcs))
+                {
+                    tcs.TrySetResult(e.NewValue);
+                    _bitWaiters.Remove(key);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Wait until a specific bit address changes to the expected value.
+        /// Uses BitChanged events instead of polling.
+        /// </summary>
+        private async Task<bool> WaitForBitValueAsync(PlcAddress address, bool expectedValue, CancellationToken ct, int timeoutMs = -1)
+        {
+            var key = address.RawAddress.ToUpperInvariant();
+
+            while (!ct.IsCancellationRequested)
+            {
+                // Check current value first
+                try
+                {
+                    var currentValue = await _plc.ReadBitAsync(address);
+                    if (currentValue == expectedValue)
+                        return true;
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[AutoProcess] ReadBit error during wait: {ex.Message}");
+                }
+
+                // Set up a waiter for the next BitChanged event
+                var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+                lock (_waiterLock)
+                {
+                    _bitWaiters[key] = tcs;
+                }
+
+                using var timeoutCts = timeoutMs > 0
+                    ? new CancellationTokenSource(timeoutMs)
+                    : new CancellationTokenSource();
+
+                using var linkedCts = timeoutMs > 0
+                    ? CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token)
+                    : CancellationTokenSource.CreateLinkedTokenSource(ct);
+
+                try
+                {
+                    using var reg = linkedCts.Token.Register(() => tcs.TrySetCanceled(linkedCts.Token));
+                    var newValue = await tcs.Task;
+
+                    if (newValue == expectedValue)
+                        return true;
+                    // Value changed but not to the expected value, loop and wait again
+                }
+                catch (OperationCanceledException) when (timeoutMs > 0 && timeoutCts.IsCancellationRequested && !ct.IsCancellationRequested)
+                {
+                    // Timeout reached
+                    return false;
+                }
+                finally
+                {
+                    lock (_waiterLock)
+                    {
+                        if (_bitWaiters.TryGetValue(key, out var existing) && existing == tcs)
+                            _bitWaiters.Remove(key);
+                    }
+                }
+            }
+
+            ct.ThrowIfCancellationRequested();
+            return false;
+        }
+
+        private void CancelAllWaiters()
+        {
+            lock (_waiterLock)
+            {
+                foreach (var tcs in _bitWaiters.Values)
+                {
+                    tcs.TrySetCanceled();
+                }
+                _bitWaiters.Clear();
+            }
         }
 
         /// <summary>
@@ -179,30 +301,24 @@ namespace VMS.Services
         }
 
         /// <summary>
-        /// Poll for PLC trigger bit at configured interval.
+        /// Wait for PLC trigger bit using event-based monitoring.
         /// </summary>
         private async Task WaitForTriggerAsync(PlcSignalMap signalMap, CancellationToken ct)
         {
             var triggerAddr = PlcAddress.Parse(signalMap.TriggerAddress, _vendor);
-            using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(_signalConfig.TriggerPollingIntervalMs));
 
-            while (await timer.WaitForNextTickAsync(ct))
+            var triggered = await WaitForBitValueAsync(triggerAddr, expectedValue: true, ct);
+            if (!triggered) return;
+
+            // Set Busy ON
+            if (!string.IsNullOrEmpty(signalMap.BusyAddress))
             {
-                var triggered = await _plc.ReadBitAsync(triggerAddr);
-                if (triggered)
-                {
-                    // Set Busy ON
-                    if (!string.IsNullOrEmpty(signalMap.BusyAddress))
-                    {
-                        var busyAddr = PlcAddress.Parse(signalMap.BusyAddress, _vendor);
-                        await _plc.WriteBitAsync(busyAddr, true);
-                    }
-
-                    _resetFunc(signalMap.CameraId);
-                    SetState(signalMap.CameraId, AutoProcessState.Grabbing);
-                    return;
-                }
+                var busyAddr = PlcAddress.Parse(signalMap.BusyAddress, _vendor);
+                await _plc.WriteBitAsync(busyAddr, true);
             }
+
+            _resetFunc(signalMap.CameraId);
+            SetState(signalMap.CameraId, AutoProcessState.Grabbing);
         }
 
         /// <summary>
@@ -262,8 +378,8 @@ namespace VMS.Services
         }
 
         /// <summary>
-        /// Wait for PLC to acknowledge result (Ack ON + Trigger OFF),
-        /// then clear all output signals for next cycle.
+        /// Wait for PLC to acknowledge result using event-based monitoring.
+        /// Ack condition: Ack ON (if configured) AND Trigger OFF.
         /// </summary>
         private async Task WaitForAckAsync(PlcSignalMap signalMap, CancellationToken ct)
         {
@@ -273,12 +389,12 @@ namespace VMS.Services
                 : null;
 
             var sw = Stopwatch.StartNew();
-            using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(_signalConfig.TriggerPollingIntervalMs));
 
-            while (await timer.WaitForNextTickAsync(ct))
+            while (!ct.IsCancellationRequested)
             {
                 // Check timeout
-                if (sw.ElapsedMilliseconds > AckTimeoutMs)
+                var remainingMs = AckTimeoutMs - (int)sw.ElapsedMilliseconds;
+                if (remainingMs <= 0)
                 {
                     Debug.WriteLine($"[AutoProcess] Ack timeout for {signalMap.CameraId}");
                     await WriteErrorSignal(signalMap, true);
@@ -290,18 +406,26 @@ namespace VMS.Services
                 bool ackOk = true;
                 if (ackAddr != null)
                 {
-                    ackOk = await _plc.ReadBitAsync(ackAddr);
+                    try { ackOk = await _plc.ReadBitAsync(ackAddr); }
+                    catch { ackOk = false; }
                 }
 
-                var triggerOff = !(await _plc.ReadBitAsync(triggerAddr));
+                bool triggerOff;
+                try { triggerOff = !(await _plc.ReadBitAsync(triggerAddr)); }
+                catch { triggerOff = false; }
 
                 if (ackOk && triggerOff)
                 {
-                    // Clear all output signals
                     await ClearOutputSignals(signalMap);
                     SetState(signalMap.CameraId, AutoProcessState.WaitTrigger);
                     return;
                 }
+
+                // Wait for any relevant bit change before re-checking
+                var waitAddr = !ackOk && ackAddr != null ? ackAddr : triggerAddr;
+                var expectedValue = !ackOk && ackAddr != null ? true : false;
+
+                await WaitForBitValueAsync(waitAddr, expectedValue, ct, timeoutMs: Math.Min(remainingMs, 1000));
             }
         }
 

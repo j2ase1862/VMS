@@ -23,6 +23,7 @@ namespace VMS.PLC.Services
         public PlcConnectionState ConnectionState => _connectionState;
 
         public event EventHandler<PlcBitChangedEventArgs>? BitChanged;
+        public event EventHandler<PlcConnectionStateChangedEventArgs>? ConnectionStateChanged;
 
         /// <summary>
         /// Optional simulated response delay in milliseconds.
@@ -36,16 +37,16 @@ namespace VMS.PLC.Services
 
         public async Task<bool> ConnectAsync(PlcConnectionConfig config)
         {
-            _connectionState = PlcConnectionState.Connecting;
+            SetConnectionState(PlcConnectionState.Connecting);
             await SimulateDelay();
-            _connectionState = PlcConnectionState.Connected;
+            SetConnectionState(PlcConnectionState.Connected);
             return true;
         }
 
         public async Task DisconnectAsync()
         {
             await StopAllMonitoringAsync();
-            _connectionState = PlcConnectionState.Disconnected;
+            SetConnectionState(PlcConnectionState.Disconnected);
         }
 
         // --- Bit operations ---
@@ -230,6 +231,14 @@ namespace VMS.PLC.Services
         private static string GetWordKey(PlcAddress address, int offsetDelta = 0)
         {
             return $"{address.DeviceCode}:{address.Offset + offsetDelta}";
+        }
+
+        private void SetConnectionState(PlcConnectionState newState, string? reason = null)
+        {
+            var oldState = _connectionState;
+            if (oldState == newState) return;
+            _connectionState = newState;
+            ConnectionStateChanged?.Invoke(this, new PlcConnectionStateChangedEventArgs(oldState, newState, reason));
         }
 
         private async Task SimulateDelay()

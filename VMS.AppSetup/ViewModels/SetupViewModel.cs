@@ -44,7 +44,7 @@ namespace VMS.AppSetup.ViewModels
         [ObservableProperty]
         private int _virtualCameraCount = 1;
 
-        // Page 4: PLC Settings
+        // Page 4: PLC Settings — Vendor & Communication
         [ObservableProperty]
         private PlcVendor _selectedPlcVendor = PlcVendor.None;
 
@@ -56,6 +56,51 @@ namespace VMS.AppSetup.ViewModels
 
         [ObservableProperty]
         private int _plcPort = 502;
+
+        // Page 4: Modbus
+        [ObservableProperty]
+        private byte _modbusUnitId = 255;
+
+        // Page 4: Serial
+        [ObservableProperty]
+        private string _serialPortName = "COM1";
+
+        [ObservableProperty]
+        private int _baudRate = 115200;
+
+        [ObservableProperty]
+        private int _dataBits = 8;
+
+        [ObservableProperty]
+        private PlcSerialParity _parity = PlcSerialParity.None;
+
+        [ObservableProperty]
+        private PlcSerialStopBits _stopBits = PlcSerialStopBits.One;
+
+        // Page 4: Performance & Stability
+        [ObservableProperty]
+        private int _pollingIntervalMs = 20;
+
+        [ObservableProperty]
+        private bool _useHeartbeat;
+
+        [ObservableProperty]
+        private string _heartbeatAddress = string.Empty;
+
+        [ObservableProperty]
+        private bool _autoReconnect = true;
+
+        // Page 4: Data Synchronization
+        [ObservableProperty]
+        private PlcWriteMode _writeMode = PlcWriteMode.Handshake;
+
+        [ObservableProperty]
+        private PlcEndianMode _endianMode = PlcEndianMode.LittleEndian;
+
+        // Dynamic visibility
+        public bool IsSerialMode => SelectedCommunicationType == PlcCommunicationType.Serial;
+        public bool IsEthernetMode => SelectedCommunicationType != PlcCommunicationType.Serial;
+        public bool IsModbusVendor => SelectedPlcVendor == PlcVendor.Modbus;
 
         // Navigation
         [ObservableProperty]
@@ -75,6 +120,12 @@ namespace VMS.AppSetup.ViewModels
         public Array PlcVendors => Enum.GetValues(typeof(PlcVendor));
         public Array CommunicationTypes => Enum.GetValues(typeof(PlcCommunicationType));
         public Array CameraModes => Enum.GetValues(typeof(CameraMode));
+        public Array SerialParities => Enum.GetValues(typeof(PlcSerialParity));
+        public Array SerialStopBitsValues => Enum.GetValues(typeof(PlcSerialStopBits));
+        public Array WriteModes => Enum.GetValues(typeof(PlcWriteMode));
+        public Array EndianModes => Enum.GetValues(typeof(PlcEndianMode));
+        public int[] BaudRateOptions => [9600, 19200, 38400, 57600, 115200];
+        public int[] DataBitsOptions => [7, 8];
 
         public SetupViewModel(IConfigurationService configService, IDialogService dialogService, Action shutdownAction)
         {
@@ -94,10 +145,32 @@ namespace VMS.AppSetup.ViewModels
                 ApplicationName = config.ApplicationName;
                 SystemIpAddress = config.SystemIpAddress;
                 CameraMode = config.CameraMode;
+
+                // PLC Vendor & Communication
                 SelectedPlcVendor = config.PlcVendor;
                 SelectedCommunicationType = config.CommunicationType;
                 PlcIpAddress = config.PlcIpAddress;
                 PlcPort = config.PlcPort;
+
+                // Modbus
+                ModbusUnitId = config.ModbusUnitId;
+
+                // Serial
+                SerialPortName = config.SerialPortName;
+                BaudRate = config.BaudRate;
+                DataBits = config.DataBits;
+                Parity = config.Parity;
+                StopBits = config.StopBits;
+
+                // Performance & Stability
+                PollingIntervalMs = config.PollingIntervalMs;
+                UseHeartbeat = config.UseHeartbeat;
+                HeartbeatAddress = config.HeartbeatAddress;
+                AutoReconnect = config.AutoReconnect;
+
+                // Data Synchronization
+                WriteMode = config.WriteMode;
+                EndianMode = config.EndianMode;
 
                 foreach (var cam in config.Cameras)
                 {
@@ -126,6 +199,17 @@ namespace VMS.AppSetup.ViewModels
             {
                 UpdateVirtualCameras();
             }
+        }
+
+        partial void OnSelectedCommunicationTypeChanged(PlcCommunicationType value)
+        {
+            OnPropertyChanged(nameof(IsSerialMode));
+            OnPropertyChanged(nameof(IsEthernetMode));
+        }
+
+        partial void OnSelectedPlcVendorChanged(PlcVendor value)
+        {
+            OnPropertyChanged(nameof(IsModbusVendor));
         }
 
         private void UpdatePageInfo()
@@ -251,10 +335,32 @@ namespace VMS.AppSetup.ViewModels
                 SystemIpAddress = SystemIpAddress,
                 CameraMode = CameraMode,
                 Cameras = Cameras.ToList(),
+
+                // PLC Vendor & Communication
                 PlcVendor = SelectedPlcVendor,
                 CommunicationType = SelectedCommunicationType,
                 PlcIpAddress = PlcIpAddress,
-                PlcPort = PlcPort
+                PlcPort = PlcPort,
+
+                // Modbus
+                ModbusUnitId = ModbusUnitId,
+
+                // Serial
+                SerialPortName = SerialPortName,
+                BaudRate = BaudRate,
+                DataBits = DataBits,
+                Parity = Parity,
+                StopBits = StopBits,
+
+                // Performance & Stability
+                PollingIntervalMs = PollingIntervalMs,
+                UseHeartbeat = UseHeartbeat,
+                HeartbeatAddress = HeartbeatAddress,
+                AutoReconnect = AutoReconnect,
+
+                // Data Synchronization
+                WriteMode = WriteMode,
+                EndianMode = EndianMode
             };
 
             if (_configService.SaveConfiguration(config))
