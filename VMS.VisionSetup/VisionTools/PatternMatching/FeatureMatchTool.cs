@@ -1397,6 +1397,11 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
 
         #region Clone
 
+        public override List<string> GetAvailableResultKeys()
+        {
+            return new List<string> { "Success", "Score", "CenterX", "CenterY", "Angle", "Scale" };
+        }
+
         public override VisionToolBase Clone()
         {
             var clone = new FeatureMatchTool
@@ -1445,6 +1450,7 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
             if (clone.Models.Count > 0)
                 clone.SelectedModel = clone.Models[0];
 
+            CopyPlcMappingsTo(clone);
             return clone;
         }
 

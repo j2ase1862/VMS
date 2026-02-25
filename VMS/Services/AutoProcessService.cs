@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Diagnostics;
 using VMS.Interfaces;
 using VMS.PLC.Interfaces;
@@ -24,6 +25,7 @@ namespace VMS.Services
         private readonly Func<string, Task<bool>> _inspectFunc;
         private readonly Action<string, bool> _setResultFunc;
         private readonly Action<string> _resetFunc;
+        private readonly Func<string, IReadOnlyList<ToolInspectionResult>?>? _getToolResultsFunc;
 
         private readonly Dictionary<string, AutoProcessState> _cameraStates = new();
         private readonly List<Task> _channelTasks = new();
@@ -48,7 +50,8 @@ namespace VMS.Services
             Func<string, Task<bool>> grabFunc,
             Func<string, Task<bool>> inspectFunc,
             Action<string, bool> setResultFunc,
-            Action<string> resetFunc)
+            Action<string> resetFunc,
+            Func<string, IReadOnlyList<ToolInspectionResult>?>? getToolResultsFunc = null)
         {
             _plc = plc;
             _signalConfig = signalConfig;
@@ -57,6 +60,7 @@ namespace VMS.Services
             _inspectFunc = inspectFunc;
             _setResultFunc = setResultFunc;
             _resetFunc = resetFunc;
+            _getToolResultsFunc = getToolResultsFunc;
 
             _plc.BitChanged += OnPlcBitChanged;
         }
@@ -367,6 +371,9 @@ namespace VMS.Services
                 await _plc.WriteBitAsync(ngAddr, !inspectOk);
             }
 
+            // Write individual tool results to PLC
+            await WriteToolResultsAsync(signalMap.CameraId);
+
             // Set Complete ON
             if (!string.IsNullOrEmpty(signalMap.CompleteAddress))
             {
@@ -503,6 +510,82 @@ namespace VMS.Services
                 }
             }
             catch (OperationCanceledException) { }
+        }
+
+        /// <summary>
+        /// Write individual tool results to mapped PLC addresses (1:N mappings).
+        /// </summary>
+        private async Task WriteToolResultsAsync(string cameraId)
+        {
+            var toolResults = _getToolResultsFunc?.Invoke(cameraId);
+            if (toolResults == null) return;
+
+            foreach (var tr in toolResults)
+            {
+                if (tr.PlcMappings == null || tr.PlcMappings.Count == 0) continue;
+
+                foreach (var mapping in tr.PlcMappings)
+                {
+                    if (string.IsNullOrEmpty(mapping.PlcAddress)) continue;
+
+                    try
+                    {
+                        var addr = PlcAddress.Parse(mapping.PlcAddress, _vendor);
+
+                        switch (mapping.DataType)
+                        {
+                            case PlcDataType.Bit:
+                                if (mapping.ResultKey == "Success")
+                                    await _plc.WriteBitAsync(addr, tr.Success);
+                                else if (TryGetNumericValue(tr, mapping.ResultKey, out var bitVal))
+                                    await _plc.WriteBitAsync(addr, bitVal != 0);
+                                break;
+                            case PlcDataType.Int16:
+                                if (TryGetNumericValue(tr, mapping.ResultKey, out var shortVal))
+                                    await _plc.WriteWordAsync(addr, (short)shortVal);
+                                break;
+                            case PlcDataType.Int32:
+                                if (TryGetNumericValue(tr, mapping.ResultKey, out var intVal))
+                                    await _plc.WriteDWordAsync(addr, (int)intVal);
+                                break;
+                            case PlcDataType.Float:
+                                if (TryGetNumericValue(tr, mapping.ResultKey, out var floatVal))
+                                    await _plc.WriteDWordAsync(addr, BitConverter.SingleToInt32Bits((float)floatVal));
+                                break;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"[AutoProcess] Error writing tool result '{tr.ToolName}' key '{mapping.ResultKey}' to {mapping.PlcAddress}: {ex.Message}");
+                    }
+                }
+            }
+        }
+
+        private static bool TryGetNumericValue(ToolInspectionResult tr, string resultKey, out double value)
+        {
+            value = 0;
+            if (string.IsNullOrEmpty(resultKey) || tr.Data == null)
+                return false;
+
+            if (resultKey == "Success")
+            {
+                value = tr.Success ? 1 : 0;
+                return true;
+            }
+
+            if (!tr.Data.TryGetValue(resultKey, out var obj) || obj == null)
+                return false;
+
+            try
+            {
+                value = Convert.ToDouble(obj);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         private void SetState(string cameraId, AutoProcessState newState)

@@ -90,7 +90,7 @@ namespace VMS.VisionSetup.VisionTools.ImageProcessing
 
         public override VisionToolBase Clone()
         {
-            return new HeightSlicerTool
+            var clone = new HeightSlicerTool
             {
                 Name = this.Name,
                 ToolType = this.ToolType,
@@ -100,6 +100,8 @@ namespace VMS.VisionSetup.VisionTools.ImageProcessing
                 UseROI = this.UseROI,
                 ROI = this.ROI
             };
+            CopyPlcMappingsTo(clone);
+            return clone;
         }
     }
 }

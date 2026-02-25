@@ -142,7 +142,7 @@ namespace VMS.VisionSetup.VisionTools.ImageProcessing
 
         public override VisionToolBase Clone()
         {
-            return new MorphologyTool
+            var clone = new MorphologyTool
             {
                 Name = this.Name,
                 ToolType = this.ToolType,
@@ -155,6 +155,8 @@ namespace VMS.VisionSetup.VisionTools.ImageProcessing
                 KernelHeight = this.KernelHeight,
                 Iterations = this.Iterations
             };
+            CopyPlcMappingsTo(clone);
+            return clone;
         }
     }
 

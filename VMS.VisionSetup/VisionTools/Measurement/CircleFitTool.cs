@@ -511,9 +511,18 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             return result;
         }
 
+        public override List<string> GetAvailableResultKeys()
+        {
+            return new List<string>
+            {
+                "Success", "FoundCount", "CenterX", "CenterY", "Radius",
+                "Diameter", "FitError", "InlierCount"
+            };
+        }
+
         public override VisionToolBase Clone()
         {
-            return new CircleFitTool
+            var clone = new CircleFitTool
             {
                 Name = this.Name,
                 ToolType = this.ToolType,
@@ -533,6 +542,8 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 RansacThreshold = this.RansacThreshold,
                 MinFoundCalipers = this.MinFoundCalipers
             };
+            CopyPlcMappingsTo(clone);
+            return clone;
         }
     }
 

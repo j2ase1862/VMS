@@ -3,9 +3,11 @@ using VMS.VisionSetup.VisionTools.BlobAnalysis;
 using VMS.VisionSetup.VisionTools.ImageProcessing;
 using VMS.VisionSetup.VisionTools.Measurement;
 using VMS.VisionSetup.VisionTools.PatternMatching;
+using VMS.PLC.Models;
 using OpenCvSharp;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 
 namespace VMS.VisionSetup.Services
@@ -41,7 +43,13 @@ namespace VMS.VisionSetup.Services
                 ROIY = tool.ROIY,
                 ROIWidth = tool.ROIWidth,
                 ROIHeight = tool.ROIHeight,
-                Parameters = new Dictionary<string, object>()
+                Parameters = new Dictionary<string, object>(),
+                PlcMappings = tool.PlcMappings.Select(m => new PlcResultMapping
+                {
+                    ResultKey = m.ResultKey,
+                    PlcAddress = m.PlcAddress,
+                    DataType = m.DataType
+                }).ToList()
             };
 
             // 도구 타입별 파라미터 직렬화
@@ -144,7 +152,7 @@ namespace VMS.VisionSetup.Services
                 case BlobTool blob:
                     config.Parameters["UseInternalThreshold"] = blob.UseInternalThreshold;
                     config.Parameters["ThresholdValue"] = blob.ThresholdValue;
-                    config.Parameters["InvertPolarity"] = blob.InvertPolarity;
+                    config.Parameters["SegmentationPolarity"] = blob.SegmentationPolarity.ToString();
                     config.Parameters["MinArea"] = blob.MinArea;
                     config.Parameters["MaxArea"] = blob.MaxArea;
                     config.Parameters["MinPerimeter"] = blob.MinPerimeter;
@@ -163,6 +171,15 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["DrawBoundingBox"] = blob.DrawBoundingBox;
                     config.Parameters["DrawCenterPoint"] = blob.DrawCenterPoint;
                     config.Parameters["DrawLabels"] = blob.DrawLabels;
+                    config.Parameters["EnableJudgment"] = blob.EnableJudgment;
+                    config.Parameters["UseAreaJudgment"] = blob.UseAreaJudgment;
+                    config.Parameters["ExpectedArea"] = blob.ExpectedArea;
+                    config.Parameters["AreaTolerancePlus"] = blob.AreaTolerancePlus;
+                    config.Parameters["AreaToleranceMinus"] = blob.AreaToleranceMinus;
+                    config.Parameters["UseCountJudgment"] = blob.UseCountJudgment;
+                    config.Parameters["CountMode"] = blob.CountMode.ToString();
+                    config.Parameters["ExpectedCount"] = blob.ExpectedCount;
+                    config.Parameters["ExpectedCountMax"] = blob.ExpectedCountMax;
                     break;
 
                 case CaliperTool caliper:
@@ -285,6 +302,30 @@ namespace VMS.VisionSetup.Services
             tool.Y = config.Y;
             tool.UseROI = config.UseROI;
             tool.ROI = new Rect(config.ROIX, config.ROIY, config.ROIWidth, config.ROIHeight);
+
+            // PLC 매핑 복원 (1:N)
+            if (config.PlcMappings != null && config.PlcMappings.Count > 0)
+            {
+                foreach (var m in config.PlcMappings)
+                {
+                    tool.PlcMappings.Add(new PlcResultMapping
+                    {
+                        ResultKey = m.ResultKey,
+                        PlcAddress = m.PlcAddress,
+                        DataType = m.DataType
+                    });
+                }
+            }
+            else if (!string.IsNullOrEmpty(config.ResultPlcAddress))
+            {
+                // 레거시 단일 매핑 → 1항목 마이그레이션
+                tool.PlcMappings.Add(new PlcResultMapping
+                {
+                    ResultKey = config.ResultDataKey ?? "Success",
+                    PlcAddress = config.ResultPlcAddress,
+                    DataType = config.ResultDataType
+                });
+            }
 
             // Fixture 기준 좌표 복원 (레시피에 저장된 경우)
             if (config.Parameters.TryGetValue("_FixtureRefX", out var frx))
@@ -519,8 +560,12 @@ namespace VMS.VisionSetup.Services
                 tool.UseInternalThreshold = GetBool(uit);
             if (p.TryGetValue("ThresholdValue", out var tv))
                 tool.ThresholdValue = GetDouble(tv);
-            if (p.TryGetValue("InvertPolarity", out var ip))
-                tool.InvertPolarity = GetBool(ip);
+            if (p.TryGetValue("SegmentationPolarity", out var sp))
+                tool.SegmentationPolarity = Enum.Parse<SegmentationPolarity>(GetString(sp));
+            else if (p.TryGetValue("InvertPolarity", out var ip))
+                tool.SegmentationPolarity = GetBool(ip)
+                    ? SegmentationPolarity.DarkOnLight
+                    : SegmentationPolarity.LightOnDark;
             if (p.TryGetValue("MinArea", out var minArea))
                 tool.MinArea = GetDouble(minArea);
             if (p.TryGetValue("MaxArea", out var maxArea))
@@ -557,6 +602,28 @@ namespace VMS.VisionSetup.Services
                 tool.DrawCenterPoint = GetBool(dcp);
             if (p.TryGetValue("DrawLabels", out var dl))
                 tool.DrawLabels = GetBool(dl);
+            if (p.TryGetValue("EnableJudgment", out var ej))
+                tool.EnableJudgment = GetBool(ej);
+            if (p.TryGetValue("UseAreaJudgment", out var uaj))
+                tool.UseAreaJudgment = GetBool(uaj);
+            if (p.TryGetValue("ExpectedArea", out var ea))
+                tool.ExpectedArea = GetDouble(ea);
+            if (p.TryGetValue("AreaTolerancePlus", out var atp))
+                tool.AreaTolerancePlus = GetDouble(atp);
+            else if (p.TryGetValue("AreaTolerance", out var at))
+                tool.AreaTolerancePlus = GetDouble(at);
+            if (p.TryGetValue("AreaToleranceMinus", out var atm))
+                tool.AreaToleranceMinus = GetDouble(atm);
+            else if (p.TryGetValue("AreaTolerance", out var at2))
+                tool.AreaToleranceMinus = GetDouble(at2);
+            if (p.TryGetValue("UseCountJudgment", out var ucj))
+                tool.UseCountJudgment = GetBool(ucj);
+            if (p.TryGetValue("CountMode", out var cm))
+                tool.CountMode = Enum.Parse<CountJudgmentMode>(GetString(cm));
+            if (p.TryGetValue("ExpectedCount", out var ec))
+                tool.ExpectedCount = GetInt(ec);
+            if (p.TryGetValue("ExpectedCountMax", out var ecm))
+                tool.ExpectedCountMax = GetInt(ecm);
 
             return tool;
         }
