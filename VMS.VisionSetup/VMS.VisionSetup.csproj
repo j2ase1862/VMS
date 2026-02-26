@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\VMS.Camera\VMS.Camera.csproj" />
+    <ProjectReference Include="..\VMS.PLC\VMS.PLC.csproj" />
   </ItemGroup>
 
   <ItemGroup>

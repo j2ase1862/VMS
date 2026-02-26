@@ -346,6 +346,7 @@ namespace VMS.VisionSetup.ViewModels
         public RelayCommand ConnectCameraCommand { get; }
         public RelayCommand DisconnectCameraCommand { get; }
         public RelayCommand GenerateHeightMapCommand { get; }
+        public RelayCommand SaveRecipeCommand { get; }
         #endregion
 
         #region Constructor
@@ -385,6 +386,7 @@ namespace VMS.VisionSetup.ViewModels
             ConnectCameraCommand = new RelayCommand(async () => await ConnectCamera(), () => SelectedCamera != null && !IsCameraConnected);
             DisconnectCameraCommand = new RelayCommand(async () => await DisconnectCamera(), () => IsCameraConnected);
             GenerateHeightMapCommand = new RelayCommand(GenerateHeightMap, CanGenerateHeightMap);
+            SaveRecipeCommand = new RelayCommand(SaveCurrentRecipe, () => _recipeService.CurrentRecipe != null);
 
             // 레시피 변경 이벤트 구독
             _recipeService.CurrentRecipeChanged += OnCurrentRecipeChanged;
@@ -410,6 +412,10 @@ namespace VMS.VisionSetup.ViewModels
             {
                 if (AutoTuneCommand.CanExecute(null))
                     AutoTuneCommand.Execute(null);
+            });
+            WeakReferenceMessenger.Default.Register<RequestShowToolROIMessage>(this, (r, m) =>
+            {
+                SelectedDisplayMode = ImageDisplayMode.OriginalImage;
             });
         }
         #endregion
@@ -473,6 +479,7 @@ namespace VMS.VisionSetup.ViewModels
                     if (!mat.Empty())
                     {
                         CurrentImage = mat;
+                        SelectedDisplayMode = ImageDisplayMode.OriginalImage;
                         StatusMessage = $"이미지 로드 완료: {System.IO.Path.GetFileName(filePath)}";
                     }
                 }
@@ -615,7 +622,7 @@ namespace VMS.VisionSetup.ViewModels
                     ? $"실행 완료: {result.Message}"
                     : $"실행 실패: {result.Message}";
 
-                UpdateToolRunResults();
+                UpdateToolRunResults(SelectedTool.VisionTool);
             }
             catch (Exception ex)
             {
@@ -630,7 +637,8 @@ namespace VMS.VisionSetup.ViewModels
         /// <summary>
         /// 도구 실행 결과를 ToolRunResults 컬렉션에 반영
         /// </summary>
-        private void UpdateToolRunResults()
+        /// <param name="targetTool">지정 시 해당 도구의 결과만 표시, null이면 전체 표시</param>
+        private void UpdateToolRunResults(VisionToolBase? targetTool = null)
         {
             ToolRunResults.Clear();
 
@@ -639,26 +647,46 @@ namespace VMS.VisionSetup.ViewModels
                 var visionTool = toolItem.VisionTool;
                 if (visionTool == null) continue;
 
+                // 특정 도구만 표시하는 경우 해당 도구가 아니면 건너뛰기
+                if (targetTool != null && visionTool != targetTool)
+                    continue;
+
                 var lastResult = visionTool.LastResult;
                 var resultValue = string.Empty;
 
                 if (lastResult != null)
                 {
-                    // Data 딕셔너리에서 주요 결과값을 문자열로 변환 (숫자는 소수점 3자리)
+                    // Data 딕셔너리에서 주요 결과값을 문자열로 변환
                     if (lastResult.Data != null && lastResult.Data.Count > 0)
                     {
-                        var entries = lastResult.Data.Select(kv =>
+                        if (visionTool is BlobTool)
                         {
-                            var formatted = kv.Value switch
+                            // BlobTool: Count와 TotalArea만 표시
+                            var parts = new List<string>();
+                            if (lastResult.Data.TryGetValue("BlobCount", out var count))
+                                parts.Add($"Count={count}");
+                            if (lastResult.Data.TryGetValue("TotalArea", out var area))
                             {
-                                double d => d.ToString("F3"),
-                                float f => f.ToString("F3"),
-                                decimal m => m.ToString("F3"),
-                                _ => kv.Value?.ToString() ?? ""
-                            };
-                            return $"{kv.Key}={formatted}";
-                        });
-                        resultValue = string.Join(", ", entries);
+                                var areaStr = area is double d ? d.ToString("F1") : area?.ToString() ?? "";
+                                parts.Add($"TotalArea={areaStr}");
+                            }
+                            resultValue = string.Join(", ", parts);
+                        }
+                        else
+                        {
+                            var entries = lastResult.Data.Select(kv =>
+                            {
+                                var formatted = kv.Value switch
+                                {
+                                    double d => d.ToString("F3"),
+                                    float f => f.ToString("F3"),
+                                    decimal m => m.ToString("F3"),
+                                    _ => kv.Value?.ToString() ?? ""
+                                };
+                                return $"{kv.Key}={formatted}";
+                            });
+                            resultValue = string.Join(", ", entries);
+                        }
                     }
                     else
                     {
@@ -1674,6 +1702,11 @@ namespace VMS.VisionSetup.ViewModels
         {
             _dialogService.ShowCameraManagerDialog();
             RefreshCamerasFromService();
+        }
+
+        public void OpenSequenceEditor()
+        {
+            _dialogService.ShowSequenceEditorDialog();
         }
 
         public void RenameTool(ToolItem tool)

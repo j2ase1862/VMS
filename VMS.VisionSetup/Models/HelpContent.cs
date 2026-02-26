@@ -136,18 +136,45 @@ namespace VMS.VisionSetup.Models
                 CognexEquivalent = "CogBlobTool",
                 Parameters = new Dictionary<string, string>
                 {
-                    ["UseInternalThreshold"] = "내부 이진화 사용 여부. 비활성화 시 입력 이미지가 이미 이진화되어 있어야 함.",
-                    ["ThresholdValue"] = "내부 이진화 임계값.",
-                    ["InvertPolarity"] = "극성 반전. 밝은 객체 대신 어두운 객체 검출.",
-                    ["MinArea"] = "최소 블롭 면적 (픽셀). 이보다 작은 블롭 제외.",
-                    ["MaxArea"] = "최대 블롭 면적 (픽셀). 이보다 큰 블롭 제외.",
-                    ["MinCircularity"] = "최소 원형도 (0-1). 1에 가까울수록 원형.",
-                    ["MaxCircularity"] = "최대 원형도 (0-1).",
-                    ["MaxBlobCount"] = "반환할 최대 블롭 수.",
-                    ["DrawContours"] = "블롭 외곽선 그리기.",
-                    ["DrawBoundingBox"] = "바운딩 박스 그리기.",
-                    ["DrawCenterPoint"] = "중심점 표시.",
-                    ["DrawLabels"] = "블롭 번호 라벨 표시."
+                    // Segmentation
+                    ["UseInternalThreshold"] = "내부 이진화 사용 여부. 활성화하면 ThresholdValue로 자체 이진화를 수행합니다. 비활성화 시 입력 이미지가 이미 이진화되어 있어야 합니다.",
+                    ["ThresholdValue"] = "내부 이진화 임계값 (0-255). 이 값을 기준으로 픽셀을 흑/백으로 분류합니다.\n• 낮은 값: 더 많은 영역이 흰색(객체)으로 분류\n• 높은 값: 밝은 영역만 흰색으로 분류",
+                    ["SegmentationPolarity"] = "검출 극성 선택:\n• LightOnDark: 어두운 배경 위의 밝은 객체 검출 (Binary)\n• DarkOnLight: 밝은 배경 위의 어두운 객체 검출 (BinaryInv)\n\nCognex VisionPro의 Polarity 설정과 동일한 개념입니다.",
+
+                    // Area Filter
+                    ["MinArea"] = "최소 블롭 면적 (픽셀²). 이 값보다 작은 블롭은 필터링됩니다.\n• 노이즈 제거에 유용 (예: 100 이상으로 설정)\n• 기본값: 100",
+                    ["MaxArea"] = "최대 블롭 면적 (픽셀²). 이 값보다 큰 블롭은 필터링됩니다.\n• 너무 큰 객체를 제외할 때 사용\n• 기본값: 무제한",
+
+                    // Shape Filter
+                    ["MinCircularity"] = "최소 원형도 (0~1). 4π × 면적 / 둘레²로 계산됩니다.\n• 1.0: 완전한 원\n• 0.78: 정사각형\n• 값이 낮을수록 불규칙한 형상 허용",
+                    ["MaxCircularity"] = "최대 원형도 (0~1). 원형에 가까운 블롭만 제외할 때 사용합니다.\n• 기본값: 1.0 (제한 없음)",
+                    ["MinPerimeter"] = "최소 블롭 둘레 (픽셀). 이 값보다 작은 둘레를 가진 블롭을 제외합니다.\n• 기본값: 0 (제한 없음)",
+                    ["MaxPerimeter"] = "최대 블롭 둘레 (픽셀). 이 값보다 큰 둘레를 가진 블롭을 제외합니다.\n• 기본값: 무제한",
+                    ["MinAspectRatio"] = "최소 종횡비 (너비/높이). 가로로 긴 블롭만 검출할 때 사용합니다.\n• 1.0: 정사각형\n• 2.0: 가로가 세로의 2배\n• 기본값: 0 (제한 없음)",
+                    ["MaxAspectRatio"] = "최대 종횡비 (너비/높이). 세로로 긴 블롭만 검출할 때 사용합니다.\n• 기본값: 무제한",
+                    ["MinConvexity"] = "최소 볼록도 (0~1). 블롭 면적 / 볼록 껍질 면적으로 계산됩니다.\n• 1.0: 완전히 볼록한 형상\n• 값이 낮으면 오목한 형상도 허용\n• 기본값: 0 (제한 없음)",
+
+                    // Sort & Limit
+                    ["SortBy"] = "블롭 정렬 기준:\n• Area: 면적 기준\n• Perimeter: 둘레 기준\n• CenterX: X좌표 기준 (왼쪽→오른쪽)\n• CenterY: Y좌표 기준 (위→아래)\n• Circularity: 원형도 기준\n• AspectRatio: 종횡비 기준",
+                    ["SortDescending"] = "내림차순 정렬 여부. 활성화하면 큰 값부터 정렬합니다.\n• 면적 기준 + 내림차순: 가장 큰 블롭이 첫 번째",
+                    ["MaxBlobCount"] = "반환할 최대 블롭 수. 정렬 후 상위 N개만 결과에 포함됩니다.\n• 기본값: 100",
+
+                    // Judgment
+                    ["EnableJudgment"] = "양/불 판정 활성화. 활성화하면 면적 판정, 개수 판정 결과에 따라 PASS/FAIL이 결정됩니다.\n비활성화 시 블롭이 1개 이상 검출되면 항상 Success입니다.",
+                    ["UseAreaJudgment"] = "면적 기반 판정 사용. 첫 번째 블롭(정렬 후 최상위)의 면적이 기준 면적 ± 허용 오차 범위 내에 있는지 판정합니다.",
+                    ["ExpectedArea"] = "기준 면적 (픽셀²). 전체 블롭의 총 면적이 ExpectedArea - Minus ~ ExpectedArea + Plus 범위에 있으면 PASS.\n• 예: 기준 5000, +500/-300 → 4700~5500이면 합격",
+                    ["AreaTolerancePlus"] = "면적 상한 허용 오차 (픽셀²). 기준 면적(ExpectedArea)에 이 값을 더한 것이 허용 상한입니다.\n• 기준 1000, +200 → 상한 1200",
+                    ["AreaToleranceMinus"] = "면적 하한 허용 오차 (픽셀²). 기준 면적(ExpectedArea)에서 이 값을 뺀 것이 허용 하한입니다.\n• 기준 1000, -200 → 하한 800",
+                    ["UseCountJudgment"] = "개수 기반 판정 사용. 검출된 블롭 개수가 설정 조건을 만족하는지 판정합니다.",
+                    ["CountMode"] = "개수 판정 모드:\n• Equal: 정확히 N개일 때 합격\n• GreaterOrEqual: N개 이상일 때 합격\n• LessOrEqual: N개 이하일 때 합격\n• Range: Min~Max 범위 내일 때 합격",
+                    ["ExpectedCount"] = "기준 블롭 개수.\n• Equal 모드: 정확히 이 수와 일치해야 합격\n• GreaterOrEqual 모드: 이 수 이상이면 합격\n• LessOrEqual 모드: 이 수 이하면 합격\n• Range 모드: 최소값으로 사용",
+                    ["ExpectedCountMax"] = "최대 블롭 개수 (Range 모드에서만 사용). 블롭 수가 ExpectedCount ~ ExpectedCountMax 범위 내에 있으면 합격.",
+
+                    // Display
+                    ["DrawContours"] = "블롭 외곽선(컨투어) 그리기. 각 블롭이 다른 색상으로 표시됩니다.",
+                    ["DrawBoundingBox"] = "바운딩 박스(외접 사각형) 그리기. 노란색 사각형으로 표시됩니다.",
+                    ["DrawCenterPoint"] = "블롭 중심점 표시. 빨간색 십자 마커로 표시됩니다.",
+                    ["DrawLabels"] = "블롭 번호 라벨 표시. 중심점 옆에 #0, #1, #2... 형태로 표시됩니다."
                 }
             },
 

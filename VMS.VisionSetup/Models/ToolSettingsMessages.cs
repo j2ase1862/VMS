@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.Messaging.Messages;
+using VMS.PLC.Models.Sequence;
 
 namespace VMS.VisionSetup.Models
 {
@@ -11,4 +12,15 @@ namespace VMS.VisionSetup.Models
     // ViewModel-level messages (handled by MainViewModel)
     public sealed class RequestTrainPatternMessage { }
     public sealed class RequestAutoTuneMessage { }
+
+    // Sequence editor messages
+    public sealed class SequenceConfigChangedMessage
+    {
+        public SequenceConfig Config { get; }
+
+        public SequenceConfigChangedMessage(SequenceConfig config)
+        {
+            Config = config;
+        }
+    }
 }

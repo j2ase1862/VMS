@@ -1,9 +1,13 @@
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Windows;
 using VMS.Interfaces;
 using VMS.PLC.Interfaces;
 using VMS.PLC.Models;
+using VMS.PLC.Models.Sequence;
 using VMS.PLC.Services;
 using VMS.Services;
 using VMS.ViewModels;
@@ -78,6 +82,9 @@ namespace VMS
                 inspectionService,
                 () => Shutdown());
 
+            // Load system-level process sequence (머신 단위 단일 시퀀스)
+            var processSequence = LoadSystemSequence();
+
             // Wire up AutoProcessService with camera delegates
             IAutoProcessService autoProcessService = new AutoProcessService(
                 plcConnection,
@@ -106,7 +113,13 @@ namespace VMS
                 {
                     var cam = mainViewModel.Cameras.FirstOrDefault(c => c.Id == cameraId);
                     cam?.ResetInspection();
-                });
+                },
+                getToolResultsFunc: (cameraId) =>
+                {
+                    var cam = mainViewModel.Cameras.FirstOrDefault(c => c.Id == cameraId);
+                    return cam?.LastToolResults;
+                },
+                processSequence: processSequence);
 
             // Re-create MainViewModel with AutoProcessService injected
             mainViewModel = new MainViewModel(
@@ -125,6 +138,36 @@ namespace VMS
 
             await splash.FadeOutAsync();
             splash.Close();
+        }
+
+        /// <summary>
+        /// 시스템 레벨 프로세스 시퀀스 로드 (AppData process_sequence.json).
+        /// VisionSetup 시퀀스 에디터와 동일 경로 공유.
+        /// </summary>
+        private static SequenceConfig? LoadSystemSequence()
+        {
+            try
+            {
+                var path = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "BODA VISION AI", "process_sequence.json");
+
+                if (!File.Exists(path)) return null;
+
+                var json = File.ReadAllText(path);
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    PropertyNameCaseInsensitive = true,
+                    Converters = { new JsonStringEnumConverter() }
+                };
+                return JsonSerializer.Deserialize<SequenceConfig>(json, options);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] System sequence load error: {ex.Message}");
+                return null;
+            }
         }
     }
 }

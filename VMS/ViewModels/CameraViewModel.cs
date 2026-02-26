@@ -144,6 +144,11 @@ namespace VMS.ViewModels
 
         public ObservableCollection<ToolResultItem> ToolRunResults { get; } = new();
 
+        /// <summary>
+        /// 마지막 검사의 개별 도구 결과 (AutoProcessService PLC 전송용)
+        /// </summary>
+        public IReadOnlyList<Interfaces.ToolInspectionResult>? LastToolResults { get; private set; }
+
         // Status logic:
         // IsPassed checked   -> always "OK" (green), bypass inspection
         // IsPassed unchecked -> "WAIT" (orange) until trigger received
@@ -356,6 +361,7 @@ namespace VMS.ViewModels
 
         private void UpdateToolRunResults(Interfaces.StepInspectionResult result)
         {
+            LastToolResults = result.ToolResults;
             ToolRunResults.Clear();
 
             foreach (var toolResult in result.ToolResults)

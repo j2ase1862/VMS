@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using VMS.PLC.Models.Sequence;
 
 namespace VMS.VisionSetup.Models
 {
@@ -99,6 +100,11 @@ namespace VMS.VisionSetup.Models
         /// 레시피 태그 (분류용)
         /// </summary>
         public List<string> Tags { get; set; } = new();
+
+        /// <summary>
+        /// 통합 프로세스 시퀀스 설정
+        /// </summary>
+        public SequenceConfig? ProcessSequence { get; set; }
 
         /// <summary>
         /// 표시용 정보 문자열

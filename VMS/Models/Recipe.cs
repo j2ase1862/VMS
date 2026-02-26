@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using VMS.PLC.Models.Sequence;
 
 namespace VMS.Models
 {
@@ -25,6 +26,9 @@ namespace VMS.Models
 
         // Pass/Fail criteria
         public PassFailCriteria Criteria { get; set; } = new();
+
+        // Unified process sequence configuration
+        public SequenceConfig? ProcessSequence { get; set; }
     }
 
     /// <summary>
