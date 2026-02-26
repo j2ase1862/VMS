@@ -6,6 +6,7 @@ using VMS.VisionSetup.Models;
 using VMS.VisionSetup.Views;
 using VMS.VisionSetup.Views.Camera;
 using VMS.VisionSetup.Views.Recipe;
+using VMS.VisionSetup.Views.Sequence;
 
 namespace VMS.VisionSetup.Services
 {
@@ -90,6 +91,13 @@ namespace VMS.VisionSetup.Services
             };
             window.ShowDialog();
             return loadedRecipe;
+        }
+
+        public void ShowSequenceEditorDialog()
+        {
+            var window = new SequenceEditorWindow(_recipeService, _cameraService, this);
+            window.Owner = Application.Current.MainWindow;
+            window.ShowDialog();
         }
     }
 }

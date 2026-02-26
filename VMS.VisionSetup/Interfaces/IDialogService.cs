@@ -14,5 +14,6 @@ namespace VMS.VisionSetup.Interfaces
         string? ShowRenameDialog(string currentName);
         void ShowCameraManagerDialog();
         Recipe? ShowRecipeManagerDialog();
+        void ShowSequenceEditorDialog();
     }
 }

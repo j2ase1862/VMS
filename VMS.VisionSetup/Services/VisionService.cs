@@ -297,67 +297,90 @@ namespace VMS.VisionSetup.Services
                 .Where(c => c.TargetId == tool.Id && c.Type == ConnectionType.Coordinates)
                 .ToList();
 
-            foreach (var conn in coordConnections)
+            // Fixture Transform 중 ROI/UseROI 변경이 HasFixtureBaseROI를 리셋하지 않도록 플래그 설정
+            tool.IsFixtureTransformActive = true;
+            try
             {
-                if (!resultMap.TryGetValue(conn.SourceId, out var sourceResult) || sourceResult.Data == null)
-                    continue;
-
-                // Fixture transform: CenterX/CenterY available → apply delta
-                if (sourceResult.Data.TryGetValue("CenterX", out var cx) &&
-                    sourceResult.Data.TryGetValue("CenterY", out var cy))
+                foreach (var conn in coordConnections)
                 {
-                    // Save user-configured ROI and initial FeatureMatch result on first fixture application
-                    if (!tool.HasFixtureBaseROI)
+                    if (!resultMap.TryGetValue(conn.SourceId, out var sourceResult) || sourceResult.Data == null)
+                        continue;
+
+                    // Fixture transform: CenterX/CenterY available → apply delta
+                    if (sourceResult.Data.TryGetValue("CenterX", out var cx) &&
+                        sourceResult.Data.TryGetValue("CenterY", out var cy))
                     {
-                        tool.FixtureBaseROI = tool.ROI;
-                        tool.HasFixtureBaseROI = true;
-                        tool.FixtureRefX = Convert.ToDouble(cx);
-                        tool.FixtureRefY = Convert.ToDouble(cy);
-                        tool.FixtureRefAngle = sourceResult.Data.TryGetValue("Angle", out var initAngle)
-                            ? Convert.ToDouble(initAngle) : 0;
+                        // Save user-configured ROI and initial FeatureMatch result on first fixture application
+                        if (!tool.HasFixtureBaseROI)
+                        {
+                            double refCX = Convert.ToDouble(cx);
+                            double refCY = Convert.ToDouble(cy);
+
+                            if (tool.UseROI && tool.ROI.Width > 0 && tool.ROI.Height > 0)
+                            {
+                                // User has drawn a ROI — use it as fixture base
+                                tool.FixtureBaseROI = tool.ROI;
+                            }
+                            else
+                            {
+                                // No user-defined ROI — create a default fixture base centered on
+                                // the reference pattern position so the ROI follows the pattern.
+                                int defaultW = tool.ROI.Width > 0 ? tool.ROI.Width : 200;
+                                int defaultH = tool.ROI.Height > 0 ? tool.ROI.Height : 200;
+                                tool.FixtureBaseROI = new Rect(
+                                    (int)(refCX - defaultW / 2.0),
+                                    (int)(refCY - defaultH / 2.0),
+                                    defaultW, defaultH);
+                            }
+
+                            tool.HasFixtureBaseROI = true;
+                            tool.FixtureRefX = refCX;
+                            tool.FixtureRefY = refCY;
+                            tool.FixtureRefAngle = sourceResult.Data.TryGetValue("Angle", out var initAngle)
+                                ? Convert.ToDouble(initAngle) : 0;
+                        }
+
+                        double foundX = Convert.ToDouble(cx);
+                        double foundY = Convert.ToDouble(cy);
+                        double refX = tool.FixtureRefX;
+                        double refY = tool.FixtureRefY;
+
+                        double baseCX = tool.FixtureBaseROI.X + tool.FixtureBaseROI.Width / 2.0;
+                        double baseCY = tool.FixtureBaseROI.Y + tool.FixtureBaseROI.Height / 2.0;
+
+                        double currentAngle = 0;
+                        if (sourceResult.Data.TryGetValue("Angle", out var angleObj))
+                            currentAngle = Convert.ToDouble(angleObj);
+                        double deltaAngle = currentAngle - tool.FixtureRefAngle;
+
+                        double newCX, newCY;
+                        if (Math.Abs(deltaAngle) > 0.01)
+                        {
+                            // Rotate ROI center around reference center, then translate by delta
+                            double relX = baseCX - refX;
+                            double relY = baseCY - refY;
+                            double rad = deltaAngle * Math.PI / 180.0;
+                            newCX = foundX + relX * Math.Cos(rad) - relY * Math.Sin(rad);
+                            newCY = foundY + relX * Math.Sin(rad) + relY * Math.Cos(rad);
+                        }
+                        else
+                        {
+                            // Translation only
+                            newCX = baseCX + (foundX - refX);
+                            newCY = baseCY + (foundY - refY);
+                        }
+
+                        int w = tool.FixtureBaseROI.Width > 0 ? tool.FixtureBaseROI.Width : 100;
+                        int h = tool.FixtureBaseROI.Height > 0 ? tool.FixtureBaseROI.Height : 100;
+                        tool.ROI = new Rect((int)(newCX - w / 2.0), (int)(newCY - h / 2.0), w, h);
+                        tool.UseROI = true;
                     }
-
-                    double foundX = Convert.ToDouble(cx);
-                    double foundY = Convert.ToDouble(cy);
-                    double refX = tool.FixtureRefX;
-                    double refY = tool.FixtureRefY;
-
-                    double baseCX = tool.FixtureBaseROI.X + tool.FixtureBaseROI.Width / 2.0;
-                    double baseCY = tool.FixtureBaseROI.Y + tool.FixtureBaseROI.Height / 2.0;
-
-                    double currentAngle = 0;
-                    if (sourceResult.Data.TryGetValue("Angle", out var angleObj))
-                        currentAngle = Convert.ToDouble(angleObj);
-                    double deltaAngle = currentAngle - tool.FixtureRefAngle;
-
-                    double newCX, newCY;
-                    if (Math.Abs(deltaAngle) > 0.01)
+                    // Fallback: BoundingRect
+                    else if (sourceResult.Data.TryGetValue("BoundingRect", out var rectObj) && rectObj is Rect boundingRect)
                     {
-                        // Rotate ROI center around reference center, then translate by delta
-                        double relX = baseCX - refX;
-                        double relY = baseCY - refY;
-                        double rad = deltaAngle * Math.PI / 180.0;
-                        newCX = foundX + relX * Math.Cos(rad) - relY * Math.Sin(rad);
-                        newCY = foundY + relX * Math.Sin(rad) + relY * Math.Cos(rad);
+                        tool.ROI = boundingRect;
+                        tool.UseROI = true;
                     }
-                    else
-                    {
-                        // Translation only
-                        newCX = baseCX + (foundX - refX);
-                        newCY = baseCY + (foundY - refY);
-                    }
-
-                    int w = tool.FixtureBaseROI.Width > 0 ? tool.FixtureBaseROI.Width : 100;
-                    int h = tool.FixtureBaseROI.Height > 0 ? tool.FixtureBaseROI.Height : 100;
-                    tool.ROI = new Rect((int)(newCX - w / 2.0), (int)(newCY - h / 2.0), w, h);
-                    tool.UseROI = true;
-                }
-                // Fallback: BoundingRect
-                else if (sourceResult.Data.TryGetValue("BoundingRect", out var rectObj) && rectObj is Rect boundingRect)
-                {
-                    tool.ROI = boundingRect;
-                    tool.UseROI = true;
-                }
                 // Fallback: center-based (non-fixture sources)
                 else if (sourceResult.Data.TryGetValue("CenterX", out var fcx) &&
                          sourceResult.Data.TryGetValue("CenterY", out var fcy))
@@ -369,6 +392,11 @@ namespace VMS.VisionSetup.Services
                     tool.ROI = new Rect((int)(centerX - roiW / 2), (int)(centerY - roiH / 2), roiW, roiH);
                     tool.UseROI = true;
                 }
+                }
+            }
+            finally
+            {
+                tool.IsFixtureTransformActive = false;
             }
         }
 
@@ -534,6 +562,8 @@ namespace VMS.VisionSetup.Services
             var upstream = GetUpstreamDependencies(tool);
             var resultMap = new Dictionary<string, VisionResult>();
 
+            var clonedInputs = new List<Mat>();
+
             foreach (var dep in upstream)
             {
                 if (!dep.IsEnabled) continue;
@@ -541,12 +571,19 @@ namespace VMS.VisionSetup.Services
                 // Apply coordinates connection for upstream dependencies too
                 ApplyCoordinatesConnection(dep, resultMap);
 
-                Mat depInput;
                 var depConnected = GetConnectedInputImage(dep, resultMap);
+                Mat depInput;
+                bool ownsInput;
                 if (depConnected != null)
+                {
                     depInput = depConnected;
+                    ownsInput = false;
+                }
                 else
+                {
                     depInput = image.Clone();
+                    ownsInput = true;
+                }
 
                 try
                 {
@@ -556,7 +593,10 @@ namespace VMS.VisionSetup.Services
                 }
                 finally
                 {
-                    depInput.Dispose();
+                    // Only dispose images we own (cloned base images).
+                    // Connected images are shared references — not ours to dispose.
+                    if (ownsInput)
+                        clonedInputs.Add(depInput);
                 }
             }
 
@@ -566,10 +606,17 @@ namespace VMS.VisionSetup.Services
             // Resolve connected input for the target tool
             var connectedImage = GetConnectedInputImage(tool, resultMap);
             Mat toolInput;
+            bool ownsToolInput;
             if (connectedImage != null)
+            {
                 toolInput = connectedImage;
+                ownsToolInput = false;
+            }
             else
+            {
                 toolInput = image.Clone();
+                ownsToolInput = true;
+            }
 
             try
             {
@@ -579,7 +626,10 @@ namespace VMS.VisionSetup.Services
             }
             finally
             {
-                toolInput.Dispose();
+                if (ownsToolInput)
+                    toolInput.Dispose();
+                foreach (var ci in clonedInputs)
+                    ci.Dispose();
             }
         }
 

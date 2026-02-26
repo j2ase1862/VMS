@@ -3,16 +3,17 @@ using System.Diagnostics;
 using VMS.Interfaces;
 using VMS.PLC.Interfaces;
 using VMS.PLC.Models;
+using VMS.PLC.Models.Sequence;
+using VMS.Services.Sequence;
 
 namespace VMS.Services
 {
     /// <summary>
-    /// PLC trigger-based automatic inspection state machine.
-    /// Each camera channel runs an independent state machine loop:
-    /// WaitTrigger -> Grabbing -> Inspecting -> WritingResult -> WaitAck -> WaitTrigger
-    ///
-    /// Uses IPlcConnection.StartMonitoringAsync/BitChanged events for reactive triggers
-    /// instead of direct polling, improving response time and reducing CPU load.
+    /// PLC trigger-based automatic inspection service.
+    /// Runs a single unified process sequence via SequenceEngine.
+    /// The sequence contains Inspection nodes targeting individual cameras.
+    /// If no custom sequence is provided, DefaultSequenceBuilder generates one
+    /// from PlcSignalConfiguration that reproduces the original behavior.
     /// </summary>
     public class AutoProcessService : IAutoProcessService
     {
@@ -27,17 +28,15 @@ namespace VMS.Services
         private readonly Action<string> _resetFunc;
         private readonly Func<string, IReadOnlyList<ToolInspectionResult>?>? _getToolResultsFunc;
 
+        // Single process sequence config (from Recipe or auto-generated)
+        private readonly SequenceConfig? _processSequence;
+
         private readonly Dictionary<string, AutoProcessState> _cameraStates = new();
-        private readonly List<Task> _channelTasks = new();
         private CancellationTokenSource? _cts;
+        private Task? _processTask;
         private Task? _heartbeatTask;
 
-        // Event-based trigger: per-address TaskCompletionSource for BitChanged events
-        private readonly Dictionary<string, TaskCompletionSource<bool>> _bitWaiters = new();
-        private readonly object _waiterLock = new();
-
         private const int ErrorRecoveryDelayMs = 5000;
-        private const int AckTimeoutMs = 30000;
 
         public bool IsRunning { get; private set; }
 
@@ -51,7 +50,8 @@ namespace VMS.Services
             Func<string, Task<bool>> inspectFunc,
             Action<string, bool> setResultFunc,
             Action<string> resetFunc,
-            Func<string, IReadOnlyList<ToolInspectionResult>?>? getToolResultsFunc = null)
+            Func<string, IReadOnlyList<ToolInspectionResult>?>? getToolResultsFunc = null,
+            SequenceConfig? processSequence = null)
         {
             _plc = plc;
             _signalConfig = signalConfig;
@@ -61,8 +61,7 @@ namespace VMS.Services
             _setResultFunc = setResultFunc;
             _resetFunc = resetFunc;
             _getToolResultsFunc = getToolResultsFunc;
-
-            _plc.BitChanged += OnPlcBitChanged;
+            _processSequence = processSequence;
         }
 
         public async Task StartAsync(CancellationToken cancellationToken = default)
@@ -92,13 +91,14 @@ namespace VMS.Services
                 }
             }
 
-            // Start per-camera channel tasks
+            // Initialize camera states
             foreach (var signalMap in _signalConfig.SignalMaps)
             {
                 _cameraStates[signalMap.CameraId] = AutoProcessState.WaitTrigger;
-                var task = RunChannelAsync(signalMap, _cts.Token);
-                _channelTasks.Add(task);
             }
+
+            // Start single unified process task
+            _processTask = RunProcessAsync(_cts.Token);
 
             // Start heartbeat task if any signal map has a heartbeat address
             var heartbeatMap = _signalConfig.SignalMaps.FirstOrDefault(m => !string.IsNullOrEmpty(m.HeartbeatAddress));
@@ -114,18 +114,15 @@ namespace VMS.Services
 
             _cts?.Cancel();
 
-            // Cancel all pending bit waiters
-            CancelAllWaiters();
-
             // Stop all PLC monitoring
             await _plc.StopAllMonitoringAsync();
 
-            // Wait for all channel tasks to complete
-            try
+            // Wait for process task to complete
+            if (_processTask != null)
             {
-                await Task.WhenAll(_channelTasks);
+                try { await _processTask; }
+                catch (OperationCanceledException) { }
             }
-            catch (OperationCanceledException) { }
 
             if (_heartbeatTask != null)
             {
@@ -145,7 +142,7 @@ namespace VMS.Services
                 await _plc.DisconnectAsync();
             }
 
-            _channelTasks.Clear();
+            _processTask = null;
             _cameraStates.Clear();
             _cts?.Dispose();
             _cts = null;
@@ -157,138 +154,32 @@ namespace VMS.Services
             return _cameraStates.GetValueOrDefault(cameraId, AutoProcessState.Idle);
         }
 
-        // --- BitChanged event handler ---
-
-        private void OnPlcBitChanged(object? sender, PlcBitChangedEventArgs e)
-        {
-            var key = e.Address.RawAddress.ToUpperInvariant();
-
-            lock (_waiterLock)
-            {
-                if (_bitWaiters.TryGetValue(key, out var tcs))
-                {
-                    tcs.TrySetResult(e.NewValue);
-                    _bitWaiters.Remove(key);
-                }
-            }
-        }
-
         /// <summary>
-        /// Wait until a specific bit address changes to the expected value.
-        /// Uses BitChanged events instead of polling.
+        /// Run the unified process sequence using a single SequenceEngine.
+        /// Uses custom SequenceConfig if available, otherwise generates default from PlcSignalConfiguration.
         /// </summary>
-        private async Task<bool> WaitForBitValueAsync(PlcAddress address, bool expectedValue, CancellationToken ct, int timeoutMs = -1)
+        private async Task RunProcessAsync(CancellationToken ct)
         {
-            var key = address.RawAddress.ToUpperInvariant();
+            var config = _processSequence
+                         ?? DefaultSequenceBuilder.BuildFromSignalConfiguration(_signalConfig);
 
-            while (!ct.IsCancellationRequested)
+            var engine = new SequenceEngine(
+                _plc, _vendor, _grabFunc, _inspectFunc,
+                _setResultFunc, _resetFunc, _getToolResultsFunc);
+
+            engine.NodeExecuting += (s, e) => MapNodeToState(e);
+            engine.SequenceError += (s, e) =>
             {
-                // Check current value first
-                try
-                {
-                    var currentValue = await _plc.ReadBitAsync(address);
-                    if (currentValue == expectedValue)
-                        return true;
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"[AutoProcess] ReadBit error during wait: {ex.Message}");
-                }
-
-                // Set up a waiter for the next BitChanged event
-                var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-
-                lock (_waiterLock)
-                {
-                    _bitWaiters[key] = tcs;
-                }
-
-                using var timeoutCts = timeoutMs > 0
-                    ? new CancellationTokenSource(timeoutMs)
-                    : new CancellationTokenSource();
-
-                using var linkedCts = timeoutMs > 0
-                    ? CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token)
-                    : CancellationTokenSource.CreateLinkedTokenSource(ct);
-
-                try
-                {
-                    using var reg = linkedCts.Token.Register(() => tcs.TrySetCanceled(linkedCts.Token));
-                    var newValue = await tcs.Task;
-
-                    if (newValue == expectedValue)
-                        return true;
-                    // Value changed but not to the expected value, loop and wait again
-                }
-                catch (OperationCanceledException) when (timeoutMs > 0 && timeoutCts.IsCancellationRequested && !ct.IsCancellationRequested)
-                {
-                    // Timeout reached
-                    return false;
-                }
-                finally
-                {
-                    lock (_waiterLock)
-                    {
-                        if (_bitWaiters.TryGetValue(key, out var existing) && existing == tcs)
-                            _bitWaiters.Remove(key);
-                    }
-                }
-            }
-
-            ct.ThrowIfCancellationRequested();
-            return false;
-        }
-
-        private void CancelAllWaiters()
-        {
-            lock (_waiterLock)
-            {
-                foreach (var tcs in _bitWaiters.Values)
-                {
-                    tcs.TrySetCanceled();
-                }
-                _bitWaiters.Clear();
-            }
-        }
-
-        /// <summary>
-        /// Main state machine loop for a single camera channel.
-        /// </summary>
-        private async Task RunChannelAsync(PlcSignalMap signalMap, CancellationToken ct)
-        {
-            var cameraId = signalMap.CameraId;
-            SetState(cameraId, AutoProcessState.WaitTrigger);
+                Debug.WriteLine($"[AutoProcess] Sequence error at '{e.NodeName}': {e.Error.Message}");
+                SetAllCameraStates(AutoProcessState.Error);
+            };
 
             while (!ct.IsCancellationRequested)
             {
                 try
                 {
-                    switch (_cameraStates[cameraId])
-                    {
-                        case AutoProcessState.WaitTrigger:
-                            await WaitForTriggerAsync(signalMap, ct);
-                            break;
-
-                        case AutoProcessState.Grabbing:
-                            await ExecuteGrabAsync(signalMap, ct);
-                            break;
-
-                        case AutoProcessState.Inspecting:
-                            await ExecuteInspectAsync(signalMap, ct);
-                            break;
-
-                        case AutoProcessState.WritingResult:
-                            // WritingResult is handled inline in ExecuteInspectAsync
-                            break;
-
-                        case AutoProcessState.WaitAck:
-                            await WaitForAckAsync(signalMap, ct);
-                            break;
-
-                        case AutoProcessState.Error:
-                            await HandleErrorAsync(signalMap, ct);
-                            break;
-                    }
+                    SetAllCameraStates(AutoProcessState.WaitTrigger);
+                    await engine.RunAsync(config, ct);
                 }
                 catch (OperationCanceledException)
                 {
@@ -296,155 +187,40 @@ namespace VMS.Services
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"[AutoProcess] Channel {cameraId} error: {ex.Message}");
-                    SetState(cameraId, AutoProcessState.Error);
+                    Debug.WriteLine($"[AutoProcess] Process error: {ex.Message}");
+                    SetAllCameraStates(AutoProcessState.Error);
+                    await Task.Delay(ErrorRecoveryDelayMs, ct);
+
+                    foreach (var signalMap in _signalConfig.SignalMaps)
+                        await ClearOutputSignals(signalMap);
                 }
             }
 
-            SetState(cameraId, AutoProcessState.Idle);
+            SetAllCameraStates(AutoProcessState.Idle);
         }
 
         /// <summary>
-        /// Wait for PLC trigger bit using event-based monitoring.
+        /// Map sequence node execution to per-camera AutoProcessState for UI display.
         /// </summary>
-        private async Task WaitForTriggerAsync(PlcSignalMap signalMap, CancellationToken ct)
+        private void MapNodeToState(SequenceNodeEventArgs e)
         {
-            var triggerAddr = PlcAddress.Parse(signalMap.TriggerAddress, _vendor);
-
-            var triggered = await WaitForBitValueAsync(triggerAddr, expectedValue: true, ct);
-            if (!triggered) return;
-
-            // Set Busy ON
-            if (!string.IsNullOrEmpty(signalMap.BusyAddress))
+            switch (e.NodeType)
             {
-                var busyAddr = PlcAddress.Parse(signalMap.BusyAddress, _vendor);
-                await _plc.WriteBitAsync(busyAddr, true);
+                case SequenceNodeType.InputCheck:
+                    SetAllCameraStates(AutoProcessState.WaitTrigger);
+                    break;
+
+                case SequenceNodeType.Inspection:
+                    // Inspection 노드는 특정 카메라를 대상으로 함
+                    if (!string.IsNullOrEmpty(e.CameraId))
+                        SetState(e.CameraId, AutoProcessState.Inspecting);
+                    break;
+
+                case SequenceNodeType.OutputAction:
+                case SequenceNodeType.Branch:
+                    SetAllCameraStates(AutoProcessState.WritingResult);
+                    break;
             }
-
-            _resetFunc(signalMap.CameraId);
-            SetState(signalMap.CameraId, AutoProcessState.Grabbing);
-        }
-
-        /// <summary>
-        /// Execute camera grab via injected delegate.
-        /// </summary>
-        private async Task ExecuteGrabAsync(PlcSignalMap signalMap, CancellationToken ct)
-        {
-            ct.ThrowIfCancellationRequested();
-
-            var grabOk = await _grabFunc(signalMap.CameraId);
-            if (!grabOk)
-            {
-                Debug.WriteLine($"[AutoProcess] Grab failed for {signalMap.CameraId}");
-                await WriteErrorSignal(signalMap, true);
-                SetState(signalMap.CameraId, AutoProcessState.Error);
-                return;
-            }
-
-            SetState(signalMap.CameraId, AutoProcessState.Inspecting);
-        }
-
-        /// <summary>
-        /// Execute inspection via injected delegate and write result to PLC.
-        /// </summary>
-        private async Task ExecuteInspectAsync(PlcSignalMap signalMap, CancellationToken ct)
-        {
-            ct.ThrowIfCancellationRequested();
-
-            var inspectOk = await _inspectFunc(signalMap.CameraId);
-
-            // Update ViewModel result
-            _setResultFunc(signalMap.CameraId, inspectOk);
-
-            SetState(signalMap.CameraId, AutoProcessState.WritingResult);
-
-            // Write result to PLC
-            if (!string.IsNullOrEmpty(signalMap.ResultOkAddress))
-            {
-                var resultAddr = PlcAddress.Parse(signalMap.ResultOkAddress, _vendor);
-                await _plc.WriteBitAsync(resultAddr, inspectOk);
-            }
-
-            if (!string.IsNullOrEmpty(signalMap.ResultNgAddress))
-            {
-                var ngAddr = PlcAddress.Parse(signalMap.ResultNgAddress, _vendor);
-                await _plc.WriteBitAsync(ngAddr, !inspectOk);
-            }
-
-            // Write individual tool results to PLC
-            await WriteToolResultsAsync(signalMap.CameraId);
-
-            // Set Complete ON
-            if (!string.IsNullOrEmpty(signalMap.CompleteAddress))
-            {
-                var completeAddr = PlcAddress.Parse(signalMap.CompleteAddress, _vendor);
-                await _plc.WriteBitAsync(completeAddr, true);
-            }
-
-            SetState(signalMap.CameraId, AutoProcessState.WaitAck);
-        }
-
-        /// <summary>
-        /// Wait for PLC to acknowledge result using event-based monitoring.
-        /// Ack condition: Ack ON (if configured) AND Trigger OFF.
-        /// </summary>
-        private async Task WaitForAckAsync(PlcSignalMap signalMap, CancellationToken ct)
-        {
-            var triggerAddr = PlcAddress.Parse(signalMap.TriggerAddress, _vendor);
-            var ackAddr = !string.IsNullOrEmpty(signalMap.AckAddress)
-                ? PlcAddress.Parse(signalMap.AckAddress, _vendor)
-                : null;
-
-            var sw = Stopwatch.StartNew();
-
-            while (!ct.IsCancellationRequested)
-            {
-                // Check timeout
-                var remainingMs = AckTimeoutMs - (int)sw.ElapsedMilliseconds;
-                if (remainingMs <= 0)
-                {
-                    Debug.WriteLine($"[AutoProcess] Ack timeout for {signalMap.CameraId}");
-                    await WriteErrorSignal(signalMap, true);
-                    SetState(signalMap.CameraId, AutoProcessState.Error);
-                    return;
-                }
-
-                // Check ack condition: Ack ON (if configured) AND Trigger OFF
-                bool ackOk = true;
-                if (ackAddr != null)
-                {
-                    try { ackOk = await _plc.ReadBitAsync(ackAddr); }
-                    catch { ackOk = false; }
-                }
-
-                bool triggerOff;
-                try { triggerOff = !(await _plc.ReadBitAsync(triggerAddr)); }
-                catch { triggerOff = false; }
-
-                if (ackOk && triggerOff)
-                {
-                    await ClearOutputSignals(signalMap);
-                    SetState(signalMap.CameraId, AutoProcessState.WaitTrigger);
-                    return;
-                }
-
-                // Wait for any relevant bit change before re-checking
-                var waitAddr = !ackOk && ackAddr != null ? ackAddr : triggerAddr;
-                var expectedValue = !ackOk && ackAddr != null ? true : false;
-
-                await WaitForBitValueAsync(waitAddr, expectedValue, ct, timeoutMs: Math.Min(remainingMs, 1000));
-            }
-        }
-
-        /// <summary>
-        /// Wait in error state then recover to WaitTrigger.
-        /// </summary>
-        private async Task HandleErrorAsync(PlcSignalMap signalMap, CancellationToken ct)
-        {
-            await Task.Delay(ErrorRecoveryDelayMs, ct);
-            await ClearOutputSignals(signalMap);
-            await WriteErrorSignal(signalMap, false);
-            SetState(signalMap.CameraId, AutoProcessState.WaitTrigger);
         }
 
         /// <summary>
@@ -466,22 +242,6 @@ namespace VMS.Services
             catch (Exception ex)
             {
                 Debug.WriteLine($"[AutoProcess] Error clearing signals: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Write or clear the error signal.
-        /// </summary>
-        private async Task WriteErrorSignal(PlcSignalMap signalMap, bool value)
-        {
-            try
-            {
-                if (!string.IsNullOrEmpty(signalMap.ErrorAddress))
-                    await _plc.WriteBitAsync(PlcAddress.Parse(signalMap.ErrorAddress, _vendor), value);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[AutoProcess] Error writing error signal: {ex.Message}");
             }
         }
 
@@ -512,82 +272,6 @@ namespace VMS.Services
             catch (OperationCanceledException) { }
         }
 
-        /// <summary>
-        /// Write individual tool results to mapped PLC addresses (1:N mappings).
-        /// </summary>
-        private async Task WriteToolResultsAsync(string cameraId)
-        {
-            var toolResults = _getToolResultsFunc?.Invoke(cameraId);
-            if (toolResults == null) return;
-
-            foreach (var tr in toolResults)
-            {
-                if (tr.PlcMappings == null || tr.PlcMappings.Count == 0) continue;
-
-                foreach (var mapping in tr.PlcMappings)
-                {
-                    if (string.IsNullOrEmpty(mapping.PlcAddress)) continue;
-
-                    try
-                    {
-                        var addr = PlcAddress.Parse(mapping.PlcAddress, _vendor);
-
-                        switch (mapping.DataType)
-                        {
-                            case PlcDataType.Bit:
-                                if (mapping.ResultKey == "Success")
-                                    await _plc.WriteBitAsync(addr, tr.Success);
-                                else if (TryGetNumericValue(tr, mapping.ResultKey, out var bitVal))
-                                    await _plc.WriteBitAsync(addr, bitVal != 0);
-                                break;
-                            case PlcDataType.Int16:
-                                if (TryGetNumericValue(tr, mapping.ResultKey, out var shortVal))
-                                    await _plc.WriteWordAsync(addr, (short)shortVal);
-                                break;
-                            case PlcDataType.Int32:
-                                if (TryGetNumericValue(tr, mapping.ResultKey, out var intVal))
-                                    await _plc.WriteDWordAsync(addr, (int)intVal);
-                                break;
-                            case PlcDataType.Float:
-                                if (TryGetNumericValue(tr, mapping.ResultKey, out var floatVal))
-                                    await _plc.WriteDWordAsync(addr, BitConverter.SingleToInt32Bits((float)floatVal));
-                                break;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine($"[AutoProcess] Error writing tool result '{tr.ToolName}' key '{mapping.ResultKey}' to {mapping.PlcAddress}: {ex.Message}");
-                    }
-                }
-            }
-        }
-
-        private static bool TryGetNumericValue(ToolInspectionResult tr, string resultKey, out double value)
-        {
-            value = 0;
-            if (string.IsNullOrEmpty(resultKey) || tr.Data == null)
-                return false;
-
-            if (resultKey == "Success")
-            {
-                value = tr.Success ? 1 : 0;
-                return true;
-            }
-
-            if (!tr.Data.TryGetValue(resultKey, out var obj) || obj == null)
-                return false;
-
-            try
-            {
-                value = Convert.ToDouble(obj);
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
         private void SetState(string cameraId, AutoProcessState newState)
         {
             if (_cameraStates.TryGetValue(cameraId, out var oldState) && oldState == newState)
@@ -595,6 +279,14 @@ namespace VMS.Services
 
             _cameraStates[cameraId] = newState;
             StateChanged?.Invoke(this, new AutoProcessStateChangedEventArgs(cameraId, oldState, newState));
+        }
+
+        private void SetAllCameraStates(AutoProcessState newState)
+        {
+            foreach (var cameraId in _cameraStates.Keys.ToList())
+            {
+                SetState(cameraId, newState);
+            }
         }
     }
 }
