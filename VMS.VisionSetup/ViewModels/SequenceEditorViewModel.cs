@@ -91,6 +91,16 @@ namespace VMS.VisionSetup.ViewModels
         [ObservableProperty]
         private string _plcConnectionStatus = "미연결";
 
+        // --- Sequence Test Run ---
+
+        private CancellationTokenSource? _testRunCts;
+
+        [ObservableProperty]
+        private bool _isTestRunning;
+
+        [ObservableProperty]
+        private string? _activeNodeName;
+
         public SequenceEditorViewModel(IRecipeService recipeService, ICameraService cameraService, IDialogService dialogService)
         {
             _recipeService = recipeService;
@@ -631,6 +641,29 @@ namespace VMS.VisionSetup.ViewModels
                 CollectMonitorAddresses();
         }
 
+        /// <summary>모니터링 시작/중지 토글 (수동)</summary>
+        [RelayCommand]
+        private void ToggleMonitoring()
+        {
+            if (!IsPlcConnected)
+            {
+                StatusMessage = "PLC가 연결되어 있지 않습니다.";
+                return;
+            }
+
+            if (IsPlcMonitoring)
+            {
+                StopMonitor();
+                StatusMessage = "PLC 모니터링 중지됨";
+            }
+            else
+            {
+                CollectMonitorAddresses();
+                StartMonitor();
+                StatusMessage = "PLC 모니터링 시작 (1초 주기)";
+            }
+        }
+
         [RelayCommand]
         private async Task ConnectPlcAsync()
         {
@@ -673,7 +706,7 @@ namespace VMS.VisionSetup.ViewModels
 
                 CollectMonitorAddresses();
                 IsMonitorPanelVisible = true;
-                StartMonitor();
+                // 모니터링은 자동 시작하지 않음 — 사용자가 명시적으로 시작해야 함
             }
             catch (Exception ex)
             {
@@ -724,6 +757,34 @@ namespace VMS.VisionSetup.ViewModels
                 item.ConditionMet = null;
                 item.ErrorMessage = null;
             }
+        }
+
+        /// <summary>노드 속성이 변경되었을 때 MonitorItems를 증분 갱신 (매 모니터 주기 호출)</summary>
+        private string _lastMonitorFingerprint = string.Empty;
+
+        private void RefreshMonitorAddresses()
+        {
+            if (_plcConfig == null) return;
+
+            // 주소 + DataType + CheckMode 조합으로 fingerprint 생성
+            var parts = new List<string>();
+            foreach (var node in Nodes)
+            {
+                var cfg = node.Config;
+                if (string.IsNullOrWhiteSpace(cfg.PlcAddress)) continue;
+
+                if (cfg.NodeType == SequenceNodeType.InputCheck)
+                    parts.Add($"{cfg.PlcAddress.Trim()}|I|{cfg.CheckMode}");
+                else if (cfg.NodeType == SequenceNodeType.OutputAction)
+                    parts.Add($"{cfg.PlcAddress.Trim()}|O|{cfg.OutputDataType}");
+            }
+            parts.Sort();
+            var fingerprint = string.Join(";", parts);
+
+            if (fingerprint == _lastMonitorFingerprint) return;
+
+            _lastMonitorFingerprint = fingerprint;
+            CollectMonitorAddresses();
         }
 
         /// <summary>Nodes에서 PlcAddress 있는 InputCheck/OutputAction을 스캔하여 MonitorItems 생성</summary>
@@ -807,15 +868,18 @@ namespace VMS.VisionSetup.ViewModels
             IsPlcMonitoring = false;
         }
 
-        /// <summary>PeriodicTimer로 PLC 주소를 주기적으로 읽어 UI 갱신</summary>
+        /// <summary>PeriodicTimer로 PLC 주소를 주기적으로 읽어 UI 갱신 (수동 토글)</summary>
         private async Task MonitorLoopAsync(CancellationToken ct)
         {
-            using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(200));
+            using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(1000));
             try
             {
                 while (await timer.WaitForNextTickAsync(ct))
                 {
                     if (_plcConnection == null || !_plcConnection.IsConnected) continue;
+
+                    // 노드 속성 변경을 반영하기 위해 매 주기 주소 재수집
+                    RefreshMonitorAddresses();
 
                     foreach (var item in MonitorItems)
                     {
@@ -857,7 +921,6 @@ namespace VMS.VisionSetup.ViewModels
                         }
                     }
 
-                    EvaluateNodeConditions();
                 }
             }
             catch (OperationCanceledException) { }
@@ -868,75 +931,369 @@ namespace VMS.VisionSetup.ViewModels
             }
         }
 
-        /// <summary>CheckMode/OutputDataType과 현재 모니터 값을 비교하여 노드 ConditionStatus 설정</summary>
-        private void EvaluateNodeConditions()
+        // ====================================================================
+        // Sequence Test Run — 시퀀스 순차 실행 테스트
+        // ====================================================================
+
+        /// <summary>시퀀스 테스트 실행 시작</summary>
+        [RelayCommand]
+        private async Task TestRunSequenceAsync()
         {
-            if (_plcConfig == null) return;
-
-            // 주소→현재값 맵 생성
-            var valueMap = MonitorItems.ToDictionary(m => m.Address, m => m.CurrentValue);
-
-            foreach (var node in Nodes)
+            if (_plcConnection == null || !IsPlcConnected)
             {
-                var cfg = node.Config;
-                if (string.IsNullOrWhiteSpace(cfg.PlcAddress))
-                {
-                    node.ConditionStatus = null;
-                    continue;
-                }
+                StatusMessage = "PLC가 연결되어 있지 않습니다.";
+                return;
+            }
 
-                var addrStr = cfg.PlcAddress.Trim();
-                if (!valueMap.TryGetValue(addrStr, out var currentVal) || currentVal == "---" || currentVal == "ERR")
-                {
-                    node.ConditionStatus = null;
-                    continue;
-                }
+            var startNode = Nodes.FirstOrDefault(n => n.NodeType == SequenceNodeType.Start);
+            if (startNode == null)
+            {
+                StatusMessage = "Start 노드가 없습니다.";
+                return;
+            }
 
-                if (cfg.NodeType == SequenceNodeType.InputCheck)
+            // 테스트 실행 중에는 수동 모니터링 중지 (요청 충돌 방지)
+            var wasMonitoring = IsPlcMonitoring;
+            if (wasMonitoring)
+                StopMonitor();
+
+            IsTestRunning = true;
+            _testRunCts = new CancellationTokenSource();
+            var ct = _testRunCts.Token;
+
+            // 모든 노드 상태 초기화
+            foreach (var n in Nodes) { n.IsActive = false; n.ConditionStatus = null; }
+
+            var nodeDict = Nodes.ToDictionary(n => n.Id);
+            var currentNode = startNode;
+            var repeatCounters = new Dictionary<string, int>();
+
+            try
+            {
+                while (currentNode != null && !ct.IsCancellationRequested)
                 {
-                    bool? met = cfg.CheckMode switch
+                    // 이전 노드 비활성, 현재 노드 활성
+                    foreach (var n in Nodes) n.IsActive = false;
+                    currentNode.IsActive = true;
+                    ActiveNodeName = currentNode.Name;
+
+                    string? nextNodeId = null;
+
+                    switch (currentNode.NodeType)
                     {
-                        InputCheckMode.BitOn => currentVal == "ON",
-                        InputCheckMode.BitOff => currentVal == "OFF",
-                        InputCheckMode.WordEquals when int.TryParse(currentVal, out var v) =>
-                            v == (cfg.CompareValue ?? 0),
-                        InputCheckMode.WordGreaterThan when int.TryParse(currentVal, out var v) =>
-                            v > (cfg.CompareValue ?? 0),
-                        InputCheckMode.WordLessThan when int.TryParse(currentVal, out var v) =>
-                            v < (cfg.CompareValue ?? 0),
-                        _ => null
-                    };
-                    node.ConditionStatus = met;
+                        case SequenceNodeType.Start:
+                            StatusMessage = $"[테스트] {currentNode.Name} — 시작";
+                            nextNodeId = currentNode.Config.NextNodeId;
+                            break;
 
-                    // MonitorItem 조건 상태도 동기화
-                    var monItem = MonitorItems.FirstOrDefault(m => m.Address == addrStr);
-                    if (monItem != null) monItem.ConditionMet = met;
+                        case SequenceNodeType.InputCheck:
+                            nextNodeId = await ExecuteTestInputCheck(currentNode, ct);
+                            break;
+
+                        case SequenceNodeType.OutputAction:
+                            await ExecuteTestOutputAction(currentNode);
+                            nextNodeId = currentNode.Config.NextNodeId;
+                            break;
+
+                        case SequenceNodeType.Inspection:
+                            StatusMessage = $"[테스트] {currentNode.Name} — Inspection 생략 (테스트 모드)";
+                            await Task.Delay(200, ct);
+                            nextNodeId = currentNode.Config.NextNodeId;
+                            break;
+
+                        case SequenceNodeType.Branch:
+                            StatusMessage = $"[테스트] {currentNode.Name} — Branch (테스트: True 경로)";
+                            await Task.Delay(200, ct);
+                            nextNodeId = currentNode.Config.TrueBranchNodeId;
+                            break;
+
+                        case SequenceNodeType.Delay:
+                            var delayMs = currentNode.Config.DelayMs;
+                            StatusMessage = $"[테스트] {currentNode.Name} — {delayMs}ms 대기";
+                            await Task.Delay(Math.Max(0, delayMs), ct);
+                            nextNodeId = currentNode.Config.NextNodeId;
+                            break;
+
+                        case SequenceNodeType.Repeat:
+                            var repeatId = currentNode.Id;
+                            if (!repeatCounters.ContainsKey(repeatId))
+                                repeatCounters[repeatId] = 0;
+                            repeatCounters[repeatId]++;
+
+                            var maxCount = currentNode.Config.RepeatCount;
+                            if (maxCount == -1 || repeatCounters[repeatId] <= maxCount)
+                            {
+                                StatusMessage = $"[테스트] {currentNode.Name} — 반복 {repeatCounters[repeatId]}회";
+                                nextNodeId = currentNode.Config.RepeatTargetNodeId;
+                            }
+                            else
+                            {
+                                StatusMessage = $"[테스트] {currentNode.Name} — 반복 완료 ({maxCount}회)";
+                                nextNodeId = currentNode.Config.NextNodeId;
+                            }
+                            break;
+
+                        case SequenceNodeType.End:
+                            StatusMessage = "[테스트] 시퀀스 완료";
+                            currentNode.IsActive = false;
+                            currentNode = null;
+                            continue;
+                    }
+
+                    // 노드 간 시각적 피드백 딜레이
+                    await Task.Delay(100, ct);
+
+                    // 다음 노드 이동
+                    if (nextNodeId != null && nodeDict.TryGetValue(nextNodeId, out var next))
+                        currentNode = next;
+                    else
+                        currentNode = null;
                 }
-                else if (cfg.NodeType == SequenceNodeType.OutputAction)
-                {
-                    bool? met = cfg.OutputDataType switch
-                    {
-                        PlcDataType.Bit =>
-                            (currentVal == "ON") == (cfg.BitValue ?? false),
-                        PlcDataType.Int16 when int.TryParse(currentVal, out var v) =>
-                            v == (cfg.WordValue ?? 0),
-                        PlcDataType.Int32 when int.TryParse(currentVal, out var v) =>
-                            v == (cfg.WordValue ?? 0),
-                        PlcDataType.Float when float.TryParse(currentVal, out var v) =>
-                            Math.Abs(v - (cfg.FloatValue ?? 0)) < 0.001f,
-                        _ => null
-                    };
-                    node.ConditionStatus = met;
 
-                    var monItem = MonitorItems.FirstOrDefault(m => m.Address == addrStr);
-                    if (monItem != null) monItem.ConditionMet = met;
+                if (ct.IsCancellationRequested)
+                    StatusMessage = "[테스트] 중지됨";
+            }
+            catch (OperationCanceledException)
+            {
+                StatusMessage = "[테스트] 중지됨";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"[테스트 오류] {ex.Message}";
+                System.Diagnostics.Debug.WriteLine($"[SequenceEditor] Test run error: {ex}");
+            }
+            finally
+            {
+                foreach (var n in Nodes) { n.IsActive = false; n.ConditionStatus = null; }
+                IsTestRunning = false;
+                ActiveNodeName = null;
+
+                // 테스트 전 모니터링이 활성이었으면 복원
+                if (wasMonitoring && IsPlcConnected)
+                    StartMonitor();
+            }
+        }
+
+        /// <summary>테스트 실행 중지</summary>
+        [RelayCommand]
+        private void StopTestRun()
+        {
+            _testRunCts?.Cancel();
+        }
+
+        /// <summary>InputCheck 노드 — 조건 충족까지 PLC 폴링</summary>
+        private async Task<string?> ExecuteTestInputCheck(SequenceNodeItem node, CancellationToken ct)
+        {
+            var cfg = node.Config;
+            if (string.IsNullOrWhiteSpace(cfg.PlcAddress) || _plcConfig == null || _plcConnection == null)
+            {
+                StatusMessage = $"[테스트] {node.Name} — PLC 주소 미설정, 건너뜀";
+                await Task.Delay(200, ct);
+                return cfg.NextNodeId;
+            }
+
+            var addr = PlcAddress.Parse(cfg.PlcAddress.Trim(), _plcConfig.Vendor);
+            var startTime = DateTime.UtcNow;
+
+            while (!ct.IsCancellationRequested)
+            {
+                // 타임아웃 체크
+                if (cfg.TimeoutMs > 0)
+                {
+                    var elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
+                    if (elapsed >= cfg.TimeoutMs)
+                    {
+                        node.ConditionStatus = false;
+                        StatusMessage = $"[테스트] {node.Name} — 타임아웃 ({cfg.TimeoutMs}ms)";
+                        return cfg.NextNodeId;
+                    }
+                }
+
+                // 현재값 읽기
+                string currentVal;
+                if (cfg.CheckMode is InputCheckMode.BitOn or InputCheckMode.BitOff)
+                {
+                    var bit = await _plcConnection.ReadBitAsync(addr);
+                    currentVal = bit ? "ON" : "OFF";
                 }
                 else
                 {
-                    node.ConditionStatus = null;
+                    var word = await _plcConnection.ReadWordAsync(addr);
+                    currentVal = word.ToString();
+                }
+
+                // 조건 평가
+                bool met = cfg.CheckMode switch
+                {
+                    InputCheckMode.BitOn => currentVal == "ON",
+                    InputCheckMode.BitOff => currentVal == "OFF",
+                    InputCheckMode.WordEquals when int.TryParse(currentVal, out var v) =>
+                        v == (cfg.CompareValue ?? 0),
+                    InputCheckMode.WordGreaterThan when int.TryParse(currentVal, out var v) =>
+                        v > (cfg.CompareValue ?? 0),
+                    InputCheckMode.WordLessThan when int.TryParse(currentVal, out var v) =>
+                        v < (cfg.CompareValue ?? 0),
+                    _ => false
+                };
+
+                node.ConditionStatus = met;
+                StatusMessage = $"[테스트] {node.Name} — 대기 중 (현재: {currentVal})";
+
+                if (met)
+                {
+                    StatusMessage = $"[테스트] {node.Name} — 조건 충족 ({currentVal})";
+                    return cfg.NextNodeId;
+                }
+
+                await Task.Delay(100, ct);
+            }
+
+            return null; // cancelled
+        }
+
+        /// <summary>OutputAction 노드 — PLC에 값 쓰기</summary>
+        private async Task ExecuteTestOutputAction(SequenceNodeItem node)
+        {
+            var cfg = node.Config;
+            if (string.IsNullOrWhiteSpace(cfg.PlcAddress) || _plcConfig == null || _plcConnection == null)
+            {
+                StatusMessage = $"[테스트] {node.Name} — PLC 주소 미설정, 건너뜀";
+                return;
+            }
+
+            var addr = PlcAddress.Parse(cfg.PlcAddress.Trim(), _plcConfig.Vendor);
+
+            switch (cfg.OutputDataType)
+            {
+                case PlcDataType.Bit:
+                    await _plcConnection.WriteBitAsync(addr, cfg.BitValue ?? false);
+                    StatusMessage = $"[테스트] {node.Name} — {cfg.PlcAddress} ← {(cfg.BitValue == true ? "ON" : "OFF")}";
+                    break;
+                case PlcDataType.Int16:
+                    await _plcConnection.WriteWordAsync(addr, (short)(cfg.WordValue ?? 0));
+                    StatusMessage = $"[테스트] {node.Name} — {cfg.PlcAddress} ← {cfg.WordValue ?? 0}";
+                    break;
+                case PlcDataType.Int32:
+                    await _plcConnection.WriteDWordAsync(addr, cfg.WordValue ?? 0);
+                    StatusMessage = $"[테스트] {node.Name} — {cfg.PlcAddress} ← {cfg.WordValue ?? 0}";
+                    break;
+                case PlcDataType.Float:
+                    var bits = BitConverter.SingleToInt32Bits(cfg.FloatValue ?? 0f);
+                    await _plcConnection.WriteDWordAsync(addr, bits);
+                    StatusMessage = $"[테스트] {node.Name} — {cfg.PlcAddress} ← {cfg.FloatValue ?? 0f:F3}";
+                    break;
+            }
+
+            node.ConditionStatus = true;
+        }
+
+        // ====================================================================
+        // Test Write / Test Read — 개별 노드 단건 테스트
+        // ====================================================================
+
+        /// <summary>선택된 OutputAction 노드의 설정값을 PLC에 1회 쓰기 (테스트용)</summary>
+        [RelayCommand]
+        private async Task TestWriteOutputAsync()
+        {
+            if (_plcConnection == null || !_plcConnection.IsConnected)
+            {
+                StatusMessage = "PLC가 연결되어 있지 않습니다.";
+                return;
+            }
+
+            var node = SelectedNode;
+            if (node == null || node.NodeType != SequenceNodeType.OutputAction)
+            {
+                StatusMessage = "OutputAction 노드를 선택해주세요.";
+                return;
+            }
+
+            var cfg = node.Config;
+            if (string.IsNullOrWhiteSpace(cfg.PlcAddress) || _plcConfig == null)
+            {
+                StatusMessage = "PLC 주소가 설정되지 않았습니다.";
+                return;
+            }
+
+            try
+            {
+                var addr = PlcAddress.Parse(cfg.PlcAddress.Trim(), _plcConfig.Vendor);
+
+                switch (cfg.OutputDataType)
+                {
+                    case PlcDataType.Bit:
+                        await _plcConnection.WriteBitAsync(addr, cfg.BitValue ?? false);
+                        StatusMessage = $"[테스트 출력] {cfg.PlcAddress} ← {(cfg.BitValue == true ? "ON" : "OFF")}";
+                        break;
+                    case PlcDataType.Int16:
+                        await _plcConnection.WriteWordAsync(addr, (short)(cfg.WordValue ?? 0));
+                        StatusMessage = $"[테스트 출력] {cfg.PlcAddress} ← {cfg.WordValue ?? 0}";
+                        break;
+                    case PlcDataType.Int32:
+                        await _plcConnection.WriteDWordAsync(addr, cfg.WordValue ?? 0);
+                        StatusMessage = $"[테스트 출력] {cfg.PlcAddress} ← {cfg.WordValue ?? 0}";
+                        break;
+                    case PlcDataType.Float:
+                        var bits = BitConverter.SingleToInt32Bits(cfg.FloatValue ?? 0f);
+                        await _plcConnection.WriteDWordAsync(addr, bits);
+                        StatusMessage = $"[테스트 출력] {cfg.PlcAddress} ← {cfg.FloatValue ?? 0f:F3}";
+                        break;
                 }
             }
+            catch (Exception ex)
+            {
+                StatusMessage = $"[테스트 출력 실패] {ex.Message}";
+            }
         }
+
+        /// <summary>선택된 InputCheck 노드의 PLC 주소에서 현재값 1회 읽기 (테스트용)</summary>
+        [RelayCommand]
+        private async Task TestReadInputAsync()
+        {
+            if (_plcConnection == null || !_plcConnection.IsConnected)
+            {
+                StatusMessage = "PLC가 연결되어 있지 않습니다.";
+                return;
+            }
+
+            var node = SelectedNode;
+            if (node == null || node.NodeType != SequenceNodeType.InputCheck)
+            {
+                StatusMessage = "InputCheck 노드를 선택해주세요.";
+                return;
+            }
+
+            var cfg = node.Config;
+            if (string.IsNullOrWhiteSpace(cfg.PlcAddress) || _plcConfig == null)
+            {
+                StatusMessage = "PLC 주소가 설정되지 않았습니다.";
+                return;
+            }
+
+            try
+            {
+                var addr = PlcAddress.Parse(cfg.PlcAddress.Trim(), _plcConfig.Vendor);
+                string value;
+
+                if (cfg.CheckMode is InputCheckMode.BitOn or InputCheckMode.BitOff)
+                {
+                    var bit = await _plcConnection.ReadBitAsync(addr);
+                    value = bit ? "ON" : "OFF";
+                }
+                else
+                {
+                    var word = await _plcConnection.ReadWordAsync(addr);
+                    value = word.ToString();
+                }
+
+                StatusMessage = $"[테스트 읽기] {cfg.PlcAddress} = {value}";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"[테스트 읽기 실패] {ex.Message}";
+            }
+        }
+
     }
 
     /// <summary>
