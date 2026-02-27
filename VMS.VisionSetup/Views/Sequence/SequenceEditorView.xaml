@@ -17,6 +17,7 @@
         <local:PlcStatusColorConverter x:Key="PlcStatusColorConverter"/>
         <local:ConditionStatusColorConverter x:Key="ConditionStatusColorConverter"/>
         <local:NullableBoolToVisibilityConverter x:Key="NullableBoolToVisibilityConverter"/>
+        <local:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility"/>
 
         <!-- ===== 다크테마 공통 스타일 ===== -->
 
@@ -296,6 +297,29 @@
                             <TextBlock Text="PLC Monitor" Foreground="White"/>
                         </StackPanel>
                     </Button>
+
+                    <!-- 구분선: 시퀀스 테스트 -->
+                    <Rectangle Width="1" Fill="#3F3F46" Margin="8,4"/>
+
+                    <!-- 시퀀스 테스트 실행 (미실행 시) -->
+                    <Button Command="{Binding TestRunSequenceCommand}"
+                            Background="#2E7D32" Style="{StaticResource ToolbarButton}"
+                            Visibility="{Binding IsTestRunning, Converter={StaticResource InverseBoolToVisibility}}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="▶" Foreground="White" Margin="0,0,4,0"/>
+                            <TextBlock Text="시퀀스 테스트" Foreground="White"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- 시퀀스 테스트 중지 (실행 중) -->
+                    <Button Command="{Binding StopTestRunCommand}"
+                            Background="#C62828" Style="{StaticResource ToolbarButton}"
+                            Visibility="{Binding IsTestRunning, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="■" Foreground="White" Margin="0,0,4,0"/>
+                            <TextBlock Text="테스트 중지" Foreground="White"/>
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </DockPanel>
         </Border>
@@ -547,6 +571,48 @@
                                             Content="{Binding IsPlcConnected, Converter={StaticResource ConnectButtonTextConverter}}"
                                             Background="#3E3E52" Padding="8,3" Margin="4,0"
                                             Style="{StaticResource MonitorSmallButton}"/>
+                                    <!-- 모니터링 시작/중지 토글 -->
+                                    <Button Command="{Binding ToggleMonitoringCommand}"
+                                            Padding="8,3" Margin="4,0">
+                                        <Button.Style>
+                                            <Style TargetType="Button" BasedOn="{StaticResource MonitorSmallButton}">
+                                                <Setter Property="Background" Value="#2E7D32"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsPlcMonitoring}" Value="True">
+                                                        <Setter Property="Background" Value="#C62828"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                        <Button.Content>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Ellipse Width="6" Height="6" Margin="0,0,4,0">
+                                                    <Ellipse.Style>
+                                                        <Style TargetType="Ellipse">
+                                                            <Setter Property="Fill" Value="#666666"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsPlcMonitoring}" Value="True">
+                                                                    <Setter Property="Fill" Value="#4CAF50"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Ellipse.Style>
+                                                </Ellipse>
+                                                <TextBlock Foreground="White" FontSize="11">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Text" Value="모니터링"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsPlcMonitoring}" Value="True">
+                                                                    <Setter Property="Text" Value="모니터링 중지"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </Button.Content>
+                                    </Button>
                                     <Button Content="X" Command="{Binding ToggleMonitorPanelCommand}"
                                             Background="Transparent" Foreground="#999999" Padding="6,3"
                                             Style="{StaticResource MonitorSmallButton}" FontWeight="Bold"/>
@@ -667,6 +733,12 @@
                     <!-- 연결 모드 표시 -->
                     <TextBlock Text="  [연결 모드: 대상 노드를 클릭하세요]" Foreground="#FFD700" FontSize="11"
                                Visibility="{Binding IsConnecting, Converter={StaticResource BoolToVisibility}}"/>
+                    <!-- 테스트 실행 표시 -->
+                    <TextBlock Foreground="#4CAF50" FontSize="11" FontWeight="SemiBold"
+                               Visibility="{Binding IsTestRunning, Converter={StaticResource BoolToVisibility}}">
+                        <Run Text="  ▶ 테스트 실행 중: "/>
+                        <Run Text="{Binding ActiveNodeName, Mode=OneWay}"/>
+                    </TextBlock>
                     <!-- 저장 위치 표시 -->
                     <TextBlock Foreground="#80FFFFFF" FontSize="11">
                         <Run Text="  |  "/>

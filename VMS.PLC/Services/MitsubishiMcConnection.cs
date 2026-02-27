@@ -209,22 +209,20 @@ namespace VMS.PLC.Services
                 var subcommand = isBit ? SubcommandBit : SubcommandWord;
                 // Data portion: command(2) + subcommand(2) + headDevice(3) + deviceCode(1) + numPoints(2) = 10
                 int dataLength = 10;
-                int requestLength = 9 + dataLength; // monitorTimer(2) + network(1) + station(1) + reqDestModule(2) + reqDataLen(2) + reservedStation(1) + data
 
-                var request = new byte[2 + 2 + requestLength]; // subheader(2) + reserved(2) + request body
+                // 3E frame: subheader(2) + network(1) + pc(1) + moduleIO(2) + station(1) + dataLen(2) + timer(2) + data(10) = 21
+                var request = new byte[2 + 7 + 2 + dataLength];
                 int pos = 0;
 
-                // Subheader (0x0050)
+                // Subheader (3E binary: 0x5000 → LE bytes 0x50, 0x00)
                 WriteUInt16LE(request, ref pos, Subheader);
-                // Reserved / Serial (can be 0)
-                WriteUInt16LE(request, ref pos, 0x0000);
-                // Request destination network number
+                // Network number
                 request[pos++] = _config.NetworkNumber;
-                // Request destination station number
+                // PC number
                 request[pos++] = _config.StationNumber;
                 // Request destination module I/O (0x03FF = own station)
                 WriteUInt16LE(request, ref pos, 0x03FF);
-                // Request destination multidrop station (0x00)
+                // Request destination module station (0x00)
                 request[pos++] = 0x00;
                 // Request data length (from monitoring timer onward)
                 WriteUInt16LE(request, ref pos, (ushort)(dataLength + 2));
@@ -246,9 +244,9 @@ namespace VMS.PLC.Services
                 await _stream!.WriteAsync(request.AsMemory(0, pos));
                 await _stream.FlushAsync();
 
-                // Read response
-                var header = await ReadExactAsync(11); // subheader(2) + serial(2) + network(1) + station(1) + module(2) + multidrop(1) + dataLen(2)
-                int respDataLen = (header[9] | (header[10] << 8));
+                // Read 3E response header: subheader(2) + network(1) + pc(1) + moduleIO(2) + station(1) + dataLen(2) = 9
+                var header = await ReadExactAsync(9);
+                int respDataLen = (header[7] | (header[8] << 8));
                 var respData = await ReadExactAsync(respDataLen);
 
                 // Check end code (first 2 bytes of respData)
@@ -274,11 +272,12 @@ namespace VMS.PLC.Services
 
                 var subcommand = isBit ? SubcommandBit : SubcommandWord;
                 int dataLength = 10 + data.Length;
-                var request = new byte[2 + 2 + 9 + dataLength];
+
+                // 3E frame: subheader(2) + network(1) + pc(1) + moduleIO(2) + station(1) + dataLen(2) + timer(2) + data
+                var request = new byte[2 + 7 + 2 + dataLength];
                 int pos = 0;
 
                 WriteUInt16LE(request, ref pos, Subheader);
-                WriteUInt16LE(request, ref pos, 0x0000);
                 request[pos++] = _config.NetworkNumber;
                 request[pos++] = _config.StationNumber;
                 WriteUInt16LE(request, ref pos, 0x03FF);
@@ -298,8 +297,9 @@ namespace VMS.PLC.Services
                 await _stream!.WriteAsync(request.AsMemory(0, pos));
                 await _stream.FlushAsync();
 
-                var header = await ReadExactAsync(11);
-                int respDataLen = header[9] | (header[10] << 8);
+                // Read 3E response header (9 bytes)
+                var header = await ReadExactAsync(9);
+                int respDataLen = header[7] | (header[8] << 8);
                 var respData = await ReadExactAsync(respDataLen);
 
                 int endCode = respData[0] | (respData[1] << 8);
