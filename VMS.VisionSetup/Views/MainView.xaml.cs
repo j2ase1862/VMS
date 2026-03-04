@@ -671,15 +671,6 @@ namespace VMS.VisionSetup
             vm?.OpenSequenceEditor();
         }
 
-        /// <summary>
-        /// 현재 레시피 저장
-        /// </summary>
-        private void SaveRecipe_Click(object sender, RoutedEventArgs e)
-        {
-            var vm = DataContext as MainViewModel;
-            vm?.SaveCurrentRecipe();
-        }
-
         #endregion
     }
 }

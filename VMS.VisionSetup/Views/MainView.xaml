@@ -142,212 +142,173 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Menu Bar -->
-        <Menu Grid.Row="0" Style="{StaticResource MenuBarStyle}">
-            <Menu.ItemContainerStyle>
-                <Style TargetType="MenuItem" BasedOn="{StaticResource TopMenuItemStyle}"/>
-            </Menu.ItemContainerStyle>
-
-            <MenuItem Header="_File">
-                <MenuItem.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Style="{StaticResource TransparentMenuPanelStyle}"/>
-                    </ItemsPanelTemplate>
-                </MenuItem.ItemsPanel>
-                <MenuItem Header="Open Image File"
-                          Style="{StaticResource SubMenuItemFullStyle}"
-                          Command="{Binding OpenImageFileCommand}"
-                          InputGestureText="Ctrl+O"/>
-                <Separator Foreground="#606060"/>
-                <MenuItem Header="Exit"
-                          Style="{StaticResource SubMenuItemFullStyle}"
-                          Command="{Binding CloseCommand}"/>
-            </MenuItem>
-
-            <MenuItem Header="_Tools">
-                <MenuItem.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Style="{StaticResource TransparentMenuPanelStyle}"/>
-                    </ItemsPanelTemplate>
-                </MenuItem.ItemsPanel>
-                <MenuItem Header="Run All Tools"
-                          Style="{StaticResource SubMenuItemFullStyle}"
-                          Command="{Binding RunAllCommand}"
-                          InputGestureText="F5"/>
-                <MenuItem Header="Run Selected Tool"
-                          Style="{StaticResource SubMenuItemFullStyle}"
-                          Command="{Binding RunSelectedCommand}"
-                          InputGestureText="F6"/>
-                <Separator Foreground="#606060"/>
-                <MenuItem Header="Clear All Tools"
-                          Style="{StaticResource SubMenuItemFullStyle}"
-                          Command="{Binding ClearToolsCommand}"/>
-            </MenuItem>
-
-            <MenuItem Header="_Recipe">
-                <MenuItem.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Style="{StaticResource TransparentMenuPanelStyle}"/>
-                    </ItemsPanelTemplate>
-                </MenuItem.ItemsPanel>
-                <MenuItem Header="Recipe Manager"
-                          Style="{StaticResource SubMenuItemFullStyle}"
-                          Click="RecipeManager_Click"/>
-                <MenuItem Header="Camera Manager"
-                          Style="{StaticResource SubMenuItemFullStyle}"
-                          Click="CameraManager_Click"/>
-                <Separator Foreground="#606060"/>
-                <MenuItem Header="Save Recipe"
-                          Style="{StaticResource SubMenuItemFullStyle}"
-                          Click="SaveRecipe_Click"
-                          InputGestureText="Ctrl+S"/>
-            </MenuItem>
-
-            <MenuItem Header="_Help">
-                <MenuItem.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Style="{StaticResource TransparentMenuPanelStyle}"/>
-                    </ItemsPanelTemplate>
-                </MenuItem.ItemsPanel>
-                <MenuItem Header="About" Style="{StaticResource SubMenuItemFullStyle}"/>
-            </MenuItem>
-        </Menu>
-
         <!-- Toolbar -->
-        <Border Grid.Row="1" Background="#2D2D30" Padding="10,5">
-            <StackPanel Orientation="Horizontal">
-                <!-- File -->
-                <Button Command="{Binding OpenImageFileCommand}"
-                        Style="{StaticResource ToolbarButtonStyle}" ToolTip="Open Image (Ctrl+O)">
-                    <StackPanel Orientation="Horizontal">
-                        <Path Data="M2,6 L2,16 L18,16 L18,8 L11,8 L9,6 Z"
-                              Stroke="White" StrokeThickness="1.4" Fill="Transparent"
-                              Width="15" Height="12" Stretch="Uniform" VerticalAlignment="Center"/>
-                        <TextBlock Text="Open Image" Margin="7,0,0,0" VerticalAlignment="Center"/>
-                    </StackPanel>
+        <Border Grid.Row="0" Background="#2D2D30" Padding="10,5">
+            <DockPanel>
+                <!-- Close Button (right-aligned) -->
+                <Button DockPanel.Dock="Right" Command="{Binding CloseCommand}"
+                        ToolTip="Close Application"
+                        Margin="8,0,0,0" Padding="10,7" Cursor="Hand" BorderThickness="0">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="CloseBorder" CornerRadius="6"
+                                    Background="Transparent" Padding="{TemplateBinding Padding}"
+                                    BorderBrush="#50FFFFFF" BorderThickness="1">
+                                <Path x:Name="CloseIcon"
+                                      Data="M4,4 L16,16 M16,4 L4,16"
+                                      Stroke="#AAAAAA" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                      Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="CloseBorder" Property="Background" Value="#C42B1C"/>
+                                    <Setter TargetName="CloseBorder" Property="BorderBrush" Value="#E04535"/>
+                                    <Setter TargetName="CloseIcon" Property="Stroke" Value="White"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="CloseBorder" Property="Background" Value="#A02018"/>
+                                    <Setter TargetName="CloseBorder" Property="BorderBrush" Value="#C42B1C"/>
+                                    <Setter TargetName="CloseIcon" Property="Stroke" Value="White"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
                 </Button>
 
-                <Border Width="1" Background="#4A4A4C" Margin="8,4" CornerRadius="1"/>
+                <!-- Toolbar Buttons (left-aligned) -->
+                <StackPanel Orientation="Horizontal">
+                    <!-- File -->
+                    <Button Command="{Binding OpenImageFileCommand}"
+                            Style="{StaticResource ToolbarButtonStyle}" ToolTip="Open Image (Ctrl+O)">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="M2,6 L2,16 L18,16 L18,8 L11,8 L9,6 Z"
+                                  Stroke="White" StrokeThickness="1.4" Fill="Transparent"
+                                  Width="15" Height="12" Stretch="Uniform" VerticalAlignment="Center"/>
+                            <TextBlock Text="Open Image" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
 
-                <!-- Execution -->
-                <Button Command="{Binding RunAllCommand}"
-                        Style="{StaticResource ToolbarButtonStyle}" ToolTip="Run All Tools (F5)">
-                    <StackPanel Orientation="Horizontal">
-                        <Path Data="M4,2 L16,10 L4,18 Z" Fill="White"
-                              Width="11" Height="13" Stretch="Uniform" VerticalAlignment="Center"/>
-                        <TextBlock Text="Run All" Margin="7,0,0,0" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-                <Button Command="{Binding RunSelectedCommand}"
-                        Style="{StaticResource ToolbarButtonStyle}" ToolTip="Run Selected Tool (F6)">
-                    <StackPanel Orientation="Horizontal">
-                        <Canvas Width="15" Height="13" VerticalAlignment="Center">
-                            <Path Data="M1,1 L10,6.5 L1,12 Z" Fill="White"/>
-                            <Path Data="M12.5,1 L12.5,12" Stroke="White" StrokeThickness="2"/>
-                        </Canvas>
-                        <TextBlock Text="Run Selected" Margin="7,0,0,0" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
+                    <Border Width="1" Background="#4A4A4C" Margin="8,4" CornerRadius="1"/>
 
-                <Border Width="1" Background="#4A4A4C" Margin="8,4" CornerRadius="1"/>
+                    <!-- Execution -->
+                    <Button Command="{Binding RunAllCommand}"
+                            Style="{StaticResource ToolbarButtonStyle}" ToolTip="Run All Tools (F5)">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="M4,2 L16,10 L4,18 Z" Fill="White"
+                                  Width="11" Height="13" Stretch="Uniform" VerticalAlignment="Center"/>
+                            <TextBlock Text="Run All" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding RunSelectedCommand}"
+                            Style="{StaticResource ToolbarButtonStyle}" ToolTip="Run Selected Tool (F6)">
+                        <StackPanel Orientation="Horizontal">
+                            <Canvas Width="15" Height="13" VerticalAlignment="Center">
+                                <Path Data="M1,1 L10,6.5 L1,12 Z" Fill="White"/>
+                                <Path Data="M12.5,1 L12.5,12" Stroke="White" StrokeThickness="2"/>
+                            </Canvas>
+                            <TextBlock Text="Run Selected" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
 
-                <!-- Clear -->
-                <Button Command="{Binding ClearToolsCommand}"
-                        Style="{StaticResource DangerButtonStyle}" ToolTip="Clear All Tools">
-                    <StackPanel Orientation="Horizontal">
-                        <Path Data="M6,6 L6,17 L14,17 L14,6 M4,4 L16,4 M8,2 L12,2 M9,8 L9,15 M11,8 L11,15"
-                              Stroke="White" StrokeThickness="1.3"
-                              Width="13" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
-                        <TextBlock Text="Clear All" Margin="7,0,0,0" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
+                    <Border Width="1" Background="#4A4A4C" Margin="8,4" CornerRadius="1"/>
 
-                <Border Width="1" Background="#4A4A4C" Margin="8,4" CornerRadius="1"/>
+                    <!-- Clear -->
+                    <Button Command="{Binding ClearToolsCommand}"
+                            Style="{StaticResource DangerButtonStyle}" ToolTip="Clear All Tools">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="M6,6 L6,17 L14,17 L14,6 M4,4 L16,4 M8,2 L12,2 M9,8 L9,15 M11,8 L11,15"
+                                  Stroke="White" StrokeThickness="1.3"
+                                  Width="13" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
+                            <TextBlock Text="Clear All" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
 
-                <!-- Management -->
-                <Button Click="RecipeManager_Click"
-                        Style="{StaticResource ToolbarButtonStyle}" Background="#E67E22" ToolTip="Recipe Manager">
-                    <StackPanel Orientation="Horizontal">
-                        <Path Data="M4,2 L4,18 L14,18 L14,6 L10,2 Z M10,2 L10,6 L14,6 M7,10 L12,10 M7,13 L11,13"
-                              Stroke="White" StrokeThickness="1.2" Fill="Transparent"
-                              Width="13" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
-                        <TextBlock Text="Recipe" Margin="7,0,0,0" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-                <Button Command="{Binding SaveRecipeCommand}"
-                        Style="{StaticResource ToolbarButtonStyle}" Background="#D4740E" ToolTip="Save Recipe (Ctrl+S)">
-                    <StackPanel Orientation="Horizontal">
-                        <Path Data="M3,2 L3,18 L17,18 L17,6 L13,2 Z M6,2 L6,7 L12,7 L12,2 M6,12 L14,12 M6,15 L14,15"
-                              Stroke="White" StrokeThickness="1.2" Fill="Transparent"
-                              Width="13" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
-                        <TextBlock Text="Save" Margin="7,0,0,0" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-                <Button Click="CameraManager_Click"
-                        Style="{StaticResource ToolbarButtonStyle}" Background="#7B1FA2" ToolTip="Camera Manager">
-                    <StackPanel Orientation="Horizontal">
-                        <Path Data="M2,6 L2,15 L18,15 L18,6 L15,6 L13,4 L7,4 L5,6 Z M10,7.5 A2.5,2.5 0 1 1 10,12.5 A2.5,2.5 0 1 1 10,7.5"
-                              Stroke="White" StrokeThickness="1.2" Fill="Transparent"
-                              Width="15" Height="12" Stretch="Uniform" VerticalAlignment="Center"/>
-                        <TextBlock Text="Camera" Margin="7,0,0,0" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-                <Button Click="SequenceEditor_Click"
-                        Style="{StaticResource ToolbarButtonStyle}" Background="#00838F" ToolTip="Sequence Editor">
-                    <StackPanel Orientation="Horizontal">
-                        <Path Data="M4,4 L4,8 L8,8 L8,4 Z M12,4 L12,8 L16,8 L16,4 Z M8,6 L12,6 M6,8 L6,12 M14,8 L14,12 M4,12 L4,16 L8,16 L8,12 Z M12,12 L12,16 L16,16 L16,12 Z"
-                              Stroke="White" StrokeThickness="1.2" Fill="Transparent"
-                              Width="15" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
-                        <TextBlock Text="Sequence" Margin="7,0,0,0" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
+                    <Border Width="1" Background="#4A4A4C" Margin="8,4" CornerRadius="1"/>
 
-                <Border Width="1" Background="#4A4A4C" Margin="8,4" CornerRadius="1"/>
-
-                <!-- Camera Info -->
-                <Button x:Name="CameraInfoButton"
-                        Command="{Binding ShowCameraInfoCommand}"
-                        Style="{StaticResource ToolbarButtonStyle}" Background="#00897B" ToolTip="Camera Info">
-                    <StackPanel Orientation="Horizontal">
-                        <Grid>
-                            <Path Data="M2,6 L2,15 L18,15 L18,6 L15,6 L13,4 L7,4 L5,6 Z"
+                    <!-- Management -->
+                    <Button Click="RecipeManager_Click"
+                            Style="{StaticResource ToolbarButtonStyle}" Background="#E67E22" ToolTip="Recipe Manager">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="M4,2 L4,18 L14,18 L14,6 L10,2 Z M10,2 L10,6 L14,6 M7,10 L12,10 M7,13 L11,13"
+                                  Stroke="White" StrokeThickness="1.2" Fill="Transparent"
+                                  Width="13" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
+                            <TextBlock Text="Recipe" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding SaveRecipeCommand}"
+                            Style="{StaticResource ToolbarButtonStyle}" Background="#D4740E" ToolTip="Save Recipe (Ctrl+S)">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="M3,2 L3,18 L17,18 L17,6 L13,2 Z M6,2 L6,7 L12,7 L12,2 M6,12 L14,12 M6,15 L14,15"
+                                  Stroke="White" StrokeThickness="1.2" Fill="Transparent"
+                                  Width="13" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
+                            <TextBlock Text="Save" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Click="CameraManager_Click"
+                            Style="{StaticResource ToolbarButtonStyle}" Background="#7B1FA2" ToolTip="Camera Manager">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="M2,6 L2,15 L18,15 L18,6 L15,6 L13,4 L7,4 L5,6 Z M10,7.5 A2.5,2.5 0 1 1 10,12.5 A2.5,2.5 0 1 1 10,7.5"
                                   Stroke="White" StrokeThickness="1.2" Fill="Transparent"
                                   Width="15" Height="12" Stretch="Uniform" VerticalAlignment="Center"/>
-                            <!-- Connection status dot -->
-                            <Ellipse Width="7" Height="7" HorizontalAlignment="Right" VerticalAlignment="Top"
-                                     Margin="0,-2,-2,0">
-                                <Ellipse.Style>
-                                    <Style TargetType="Ellipse">
-                                        <Setter Property="Fill" Value="#F44336"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsCameraConnected}" Value="True">
-                                                <Setter Property="Fill" Value="#4CAF50"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Ellipse.Style>
-                            </Ellipse>
-                        </Grid>
-                        <TextBlock Text="Camera Info" Margin="7,0,0,0" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
+                            <TextBlock Text="Camera" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Click="SequenceEditor_Click"
+                            Style="{StaticResource ToolbarButtonStyle}" Background="#00838F" ToolTip="Sequence Editor">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="M4,4 L4,8 L8,8 L8,4 Z M12,4 L12,8 L16,8 L16,4 Z M8,6 L12,6 M6,8 L6,12 M14,8 L14,12 M4,12 L4,16 L8,16 L8,12 Z M12,12 L12,16 L16,16 L16,12 Z"
+                                  Stroke="White" StrokeThickness="1.2" Fill="Transparent"
+                                  Width="15" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
+                            <TextBlock Text="Sequence" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
 
-                <!-- Acquire Image -->
-                <Button Command="{Binding AcquireImageCommand}"
-                        Style="{StaticResource ToolbarButtonStyle}" Background="#1565C0" ToolTip="Acquire Image">
-                    <StackPanel Orientation="Horizontal">
-                        <Path Data="M2,6 L2,15 L18,15 L18,6 L15,6 L13,4 L7,4 L5,6 Z M10,7.5 A2.5,2.5 0 1 1 10,12.5 A2.5,2.5 0 1 1 10,7.5 M3,17 L3,19 L17,19 L17,17"
-                              Stroke="White" StrokeThickness="1.2" Fill="Transparent"
-                              Width="15" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
-                        <TextBlock Text="Acquire" Margin="7,0,0,0" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-            </StackPanel>
+                    <Border Width="1" Background="#4A4A4C" Margin="8,4" CornerRadius="1"/>
+
+                    <!-- Camera Info -->
+                    <Button x:Name="CameraInfoButton"
+                            Command="{Binding ShowCameraInfoCommand}"
+                            Style="{StaticResource ToolbarButtonStyle}" Background="#00897B" ToolTip="Camera Info">
+                        <StackPanel Orientation="Horizontal">
+                            <Grid>
+                                <Path Data="M2,6 L2,15 L18,15 L18,6 L15,6 L13,4 L7,4 L5,6 Z"
+                                      Stroke="White" StrokeThickness="1.2" Fill="Transparent"
+                                      Width="15" Height="12" Stretch="Uniform" VerticalAlignment="Center"/>
+                                <!-- Connection status dot -->
+                                <Ellipse Width="7" Height="7" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                         Margin="0,-2,-2,0">
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
+                                            <Setter Property="Fill" Value="#F44336"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsCameraConnected}" Value="True">
+                                                    <Setter Property="Fill" Value="#4CAF50"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
+                            </Grid>
+                            <TextBlock Text="Camera Info" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Acquire Image -->
+                    <Button Command="{Binding AcquireImageCommand}"
+                            Style="{StaticResource ToolbarButtonStyle}" Background="#1565C0" ToolTip="Acquire Image">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="M2,6 L2,15 L18,15 L18,6 L15,6 L13,4 L7,4 L5,6 Z M10,7.5 A2.5,2.5 0 1 1 10,12.5 A2.5,2.5 0 1 1 10,7.5 M3,17 L3,19 L17,19 L17,17"
+                                  Stroke="White" StrokeThickness="1.2" Fill="Transparent"
+                                  Width="15" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
+                            <TextBlock Text="Acquire" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </DockPanel>
         </Border>
 
         <!-- Camera Info Popup -->
@@ -451,7 +412,7 @@
         </Popup>
 
         <!-- Main Content -->
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="200"/>
                 <ColumnDefinition Width="*"/>
@@ -1085,7 +1046,7 @@
         </Grid>
 
         <!-- Status Bar -->
-        <Border Grid.Row="3" Background="#007ACC" Padding="10,5">
+        <Border Grid.Row="2" Background="#007ACC" Padding="10,5">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>

@@ -8,5 +8,6 @@ namespace VMS.Interfaces
         bool ShowConfirmation(string message, string title);
         string? ShowSaveFileDialog(string filter, string defaultExt, string? fileName = null);
         string? ShowOpenFileDialog(string filter, string defaultExt);
+        bool ShowLoginDialog(IUserService userService);
     }
 }

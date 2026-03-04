@@ -262,12 +262,45 @@
         <!-- 상단 툴바 -->
         <Border Grid.Row="0" Background="#2D2D30" BorderBrush="#3F3F46" BorderThickness="0,0,0,1" Padding="8,6">
             <DockPanel>
-                <!-- 왼쪽: 시퀀스 이름 -->
+                <!-- 왼쪽: 시퀀스 이름 + Reset 신호 주소 -->
                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="프로세스 시퀀스:" Foreground="#CCCCCC" FontSize="12"
                                VerticalAlignment="Center" Margin="0,0,8,0"/>
                     <TextBox Text="{Binding SequenceName, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource DarkTextBox}" Width="200"/>
+
+                    <Rectangle Width="1" Fill="#3F3F46" Margin="12,4"/>
+
+                    <TextBlock Text="Reset 신호:" Foreground="#FF8A80" FontSize="12"
+                               FontWeight="SemiBold"
+                               VerticalAlignment="Center" Margin="0,0,6,0"
+                               ToolTip="이 PLC 주소의 조건이 충족되면 어느 노드에서든 즉시 Start로 복귀합니다"/>
+                    <Grid Width="120">
+                        <TextBox x:Name="ResetAddressBox"
+                                 Text="{Binding ResetSignalAddress, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource DarkTextBox}"
+                                 ToolTip="예: Y200, D100 (비워두면 비활성)"/>
+                        <TextBlock Text="예: Y200" Foreground="#666666" FontSize="11"
+                                   Padding="10,6" IsHitTestVisible="False">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Text, ElementName=ResetAddressBox}" Value="">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
+                    <ComboBox ItemsSource="{Binding ResetCheckModes}"
+                              SelectedItem="{Binding ResetSignalCheckMode}"
+                              Style="{StaticResource DarkComboBox}" Width="110" Margin="4,0,0,0"
+                              ToolTip="체크 모드 (BitOn, WordEquals 등)"/>
+                    <TextBox Text="{Binding ResetSignalCompareValue, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource DarkTextBox}" Width="60" Margin="4,0,0,0"
+                             ToolTip="비교값 (Word 모드용)"/>
                 </StackPanel>
 
                 <!-- 오른쪽: 버튼 -->
@@ -298,20 +331,20 @@
                         </StackPanel>
                     </Button>
 
-                    <!-- 구분선: 시퀀스 테스트 -->
+                    <!-- 구분선: 무부하 시퀀스 테스트 -->
                     <Rectangle Width="1" Fill="#3F3F46" Margin="8,4"/>
 
-                    <!-- 시퀀스 테스트 실행 (미실행 시) -->
+                    <!-- 무부하 테스트 실행 (미실행 시) -->
                     <Button Command="{Binding TestRunSequenceCommand}"
                             Background="#2E7D32" Style="{StaticResource ToolbarButton}"
                             Visibility="{Binding IsTestRunning, Converter={StaticResource InverseBoolToVisibility}}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="▶" Foreground="White" Margin="0,0,4,0"/>
-                            <TextBlock Text="시퀀스 테스트" Foreground="White"/>
+                            <TextBlock Text="무부하 테스트" Foreground="White"/>
                         </StackPanel>
                     </Button>
 
-                    <!-- 시퀀스 테스트 중지 (실행 중) -->
+                    <!-- 무부하 테스트 중지 (실행 중) -->
                     <Button Command="{Binding StopTestRunCommand}"
                             Background="#C62828" Style="{StaticResource ToolbarButton}"
                             Visibility="{Binding IsTestRunning, Converter={StaticResource BoolToVisibility}}">
@@ -320,6 +353,14 @@
                             <TextBlock Text="테스트 중지" Foreground="White"/>
                         </StackPanel>
                     </Button>
+
+                    <!-- 사이클 카운트 (실행 중) -->
+                    <TextBlock VerticalAlignment="Center" Margin="8,0,0,0" FontSize="12" FontWeight="SemiBold"
+                               Foreground="#4CAF50"
+                               Visibility="{Binding IsTestRunning, Converter={StaticResource BoolToVisibility}}">
+                        <Run Text="Cycle: "/>
+                        <Run Text="{Binding TestCycleCount, Mode=OneWay}"/>
+                    </TextBlock>
                 </StackPanel>
             </DockPanel>
         </Border>
@@ -733,11 +774,14 @@
                     <!-- 연결 모드 표시 -->
                     <TextBlock Text="  [연결 모드: 대상 노드를 클릭하세요]" Foreground="#FFD700" FontSize="11"
                                Visibility="{Binding IsConnecting, Converter={StaticResource BoolToVisibility}}"/>
-                    <!-- 테스트 실행 표시 -->
+                    <!-- 무부하 테스트 실행 표시 -->
                     <TextBlock Foreground="#4CAF50" FontSize="11" FontWeight="SemiBold"
                                Visibility="{Binding IsTestRunning, Converter={StaticResource BoolToVisibility}}">
-                        <Run Text="  ▶ 테스트 실행 중: "/>
+                        <Run Text="  ▶ 무부하 테스트: "/>
                         <Run Text="{Binding ActiveNodeName, Mode=OneWay}"/>
+                        <Run Text=" (Cycle: "/>
+                        <Run Text="{Binding TestCycleCount, Mode=OneWay}"/>
+                        <Run Text=")"/>
                     </TextBlock>
                     <!-- 저장 위치 표시 -->
                     <TextBlock Foreground="#80FFFFFF" FontSize="11">

@@ -37,6 +37,21 @@ namespace VMS.VisionSetup.ViewModels
         [ObservableProperty]
         private string _sequenceName = "Process Sequence";
 
+        /// <summary>Reset 신호 PLC 주소. 조건 충족 시 시퀀스를 Start로 즉시 복귀</summary>
+        [ObservableProperty]
+        private string _resetSignalAddress = string.Empty;
+
+        /// <summary>Reset 신호 체크 모드</summary>
+        [ObservableProperty]
+        private InputCheckMode _resetSignalCheckMode = InputCheckMode.BitOn;
+
+        /// <summary>Reset 신호 Word 비교값</summary>
+        [ObservableProperty]
+        private int? _resetSignalCompareValue;
+
+        /// <summary>InputCheckMode enum values for Reset ComboBox</summary>
+        public Array ResetCheckModes => Enum.GetValues(typeof(InputCheckMode));
+
         [ObservableProperty]
         private string _statusMessage = string.Empty;
 
@@ -101,6 +116,9 @@ namespace VMS.VisionSetup.ViewModels
         [ObservableProperty]
         private string? _activeNodeName;
 
+        [ObservableProperty]
+        private int _testCycleCount;
+
         public SequenceEditorViewModel(IRecipeService recipeService, ICameraService cameraService, IDialogService dialogService)
         {
             _recipeService = recipeService;
@@ -122,6 +140,8 @@ namespace VMS.VisionSetup.ViewModels
             PaletteItems.Add(new NodePaletteItem(SequenceNodeType.Branch, "Branch", "#FFEB3B"));
             PaletteItems.Add(new NodePaletteItem(SequenceNodeType.Delay, "Delay", "#9E9E9E"));
             PaletteItems.Add(new NodePaletteItem(SequenceNodeType.Repeat, "Repeat", "#00BCD4"));
+            PaletteItems.Add(new NodePaletteItem(SequenceNodeType.RecipeChange, "Recipe Change", "#E91E63"));
+            PaletteItems.Add(new NodePaletteItem(SequenceNodeType.StepChange, "Step Change", "#00897B"));
         }
 
         private void LoadAvailableCameras()
@@ -323,9 +343,15 @@ namespace VMS.VisionSetup.ViewModels
             // Start
             var startCfg = CreateNodeCfg(SequenceNodeType.Start, "Start");
 
+            // Recipe Change (신호 확인 → 인덱스 읽기 → 비교/변경)
+            var recipeChangeCfg = CreateNodeCfg(SequenceNodeType.RecipeChange, "Recipe Change");
+
             // Wait Trigger
             var waitTriggerCfg = CreateNodeCfg(SequenceNodeType.InputCheck, "Wait Trigger");
             waitTriggerCfg.CheckMode = InputCheckMode.BitOn;
+
+            // Step Change (신호 확인 → 스텝 인덱스 읽기 → 카메라 스텝 설정)
+            var stepChangeCfg = CreateNodeCfg(SequenceNodeType.StepChange, "Step Change");
 
             // Busy ON
             var busyOnCfg = CreateNodeCfg(SequenceNodeType.OutputAction, "Busy ON");
@@ -383,8 +409,10 @@ namespace VMS.VisionSetup.ViewModels
             var endCfg = CreateNodeCfg(SequenceNodeType.End, "End");
 
             // 흐름 연결
-            startCfg.NextNodeId = waitTriggerCfg.Id;
-            waitTriggerCfg.NextNodeId = busyOnCfg.Id;
+            startCfg.NextNodeId = recipeChangeCfg.Id;
+            recipeChangeCfg.NextNodeId = waitTriggerCfg.Id;
+            waitTriggerCfg.NextNodeId = stepChangeCfg.Id;
+            stepChangeCfg.NextNodeId = busyOnCfg.Id;
 
             // Busy ON → first Inspection
             busyOnCfg.NextNodeId = inspectionCfgs[0].Id;
@@ -409,13 +437,13 @@ namespace VMS.VisionSetup.ViewModels
             waitAckCfg.NextNodeId = busyOffCfg.Id;
             busyOffCfg.NextNodeId = completeOffCfg.Id;
             completeOffCfg.NextNodeId = repeatCfg.Id;
-            repeatCfg.RepeatTargetNodeId = waitTriggerCfg.Id;
+            repeatCfg.RepeatTargetNodeId = recipeChangeCfg.Id;
             repeatCfg.NextNodeId = endCfg.Id;
 
             // Build all configs list
             var allConfigs = new System.Collections.Generic.List<SequenceNodeConfig>
             {
-                startCfg, waitTriggerCfg, busyOnCfg
+                startCfg, recipeChangeCfg, waitTriggerCfg, stepChangeCfg, busyOnCfg
             };
             allConfigs.AddRange(inspectionCfgs);
             allConfigs.AddRange(new[]
@@ -439,8 +467,10 @@ namespace VMS.VisionSetup.ViewModels
                 }
             }
 
-            AddEdge(startCfg.Id, waitTriggerCfg.Id, "Next");
-            AddEdge(waitTriggerCfg.Id, busyOnCfg.Id, "Next");
+            AddEdge(startCfg.Id, recipeChangeCfg.Id, "Next");
+            AddEdge(recipeChangeCfg.Id, waitTriggerCfg.Id, "Next");
+            AddEdge(waitTriggerCfg.Id, stepChangeCfg.Id, "Next");
+            AddEdge(stepChangeCfg.Id, busyOnCfg.Id, "Next");
             AddEdge(busyOnCfg.Id, inspectionCfgs[0].Id, "Next");
 
             for (int i = 0; i < inspectionCfgs.Count - 1; i++)
@@ -455,10 +485,12 @@ namespace VMS.VisionSetup.ViewModels
             AddEdge(waitAckCfg.Id, busyOffCfg.Id, "Next");
             AddEdge(busyOffCfg.Id, completeOffCfg.Id, "Next");
             AddEdge(completeOffCfg.Id, repeatCfg.Id, "Next");
-            AddEdge(repeatCfg.Id, waitTriggerCfg.Id, "Repeat");
+            AddEdge(repeatCfg.Id, recipeChangeCfg.Id, "Repeat");
 
             SequenceName = "Process Sequence";
-            StatusMessage = $"디폴트 프로세스 시퀀스가 생성되었습니다. (카메라 {AvailableCameraIds.Count}대)";
+            StatusMessage = string.IsNullOrWhiteSpace(ResetSignalAddress)
+                ? $"디폴트 프로세스 시퀀스가 생성되었습니다. (카메라 {AvailableCameraIds.Count}대) — Reset 신호 주소를 상단 툴바에서 설정하세요."
+                : $"디폴트 프로세스 시퀀스가 생성되었습니다. (카메라 {AvailableCameraIds.Count}대, Reset: {ResetSignalAddress})";
         }
 
         // ====================================================================
@@ -592,6 +624,9 @@ namespace VMS.VisionSetup.ViewModels
             var config = new SequenceConfig
             {
                 Name = SequenceName,
+                ResetSignalAddress = string.IsNullOrWhiteSpace(ResetSignalAddress) ? null : ResetSignalAddress.Trim(),
+                ResetSignalCheckMode = ResetSignalCheckMode,
+                ResetSignalCompareValue = ResetSignalCompareValue,
                 Nodes = Nodes.Select(n => n.Config).ToList(),
                 Edges = Edges.Select(e => new SequenceEdgeConfig
                 {
@@ -612,6 +647,9 @@ namespace VMS.VisionSetup.ViewModels
             SelectedNode = null;
 
             SequenceName = config.Name;
+            ResetSignalAddress = config.ResetSignalAddress ?? string.Empty;
+            ResetSignalCheckMode = config.ResetSignalCheckMode;
+            ResetSignalCompareValue = config.ResetSignalCompareValue;
 
             var nodeDict = new System.Collections.Generic.Dictionary<string, SequenceNodeItem>();
             foreach (var nodeConfig in config.Nodes)
@@ -935,7 +973,7 @@ namespace VMS.VisionSetup.ViewModels
         // Sequence Test Run — 시퀀스 순차 실행 테스트
         // ====================================================================
 
-        /// <summary>시퀀스 테스트 실행 시작</summary>
+        /// <summary>무부하 시퀀스 테스트 실행 — 실제 PLC 신호 송수신, 카메라 검사는 OK 시뮬레이션</summary>
         [RelayCommand]
         private async Task TestRunSequenceAsync()
         {
@@ -958,6 +996,7 @@ namespace VMS.VisionSetup.ViewModels
                 StopMonitor();
 
             IsTestRunning = true;
+            TestCycleCount = 0;
             _testRunCts = new CancellationTokenSource();
             var ct = _testRunCts.Token;
 
@@ -967,6 +1006,10 @@ namespace VMS.VisionSetup.ViewModels
             var nodeDict = Nodes.ToDictionary(n => n.Id);
             var currentNode = startNode;
             var repeatCounters = new Dictionary<string, int>();
+
+            // Inspection 결과 추적 (SequenceEngine과 동일 로직)
+            bool lastInspectionOk = true;
+            var cameraResults = new Dictionary<string, bool>();
 
             try
             {
@@ -982,7 +1025,7 @@ namespace VMS.VisionSetup.ViewModels
                     switch (currentNode.NodeType)
                     {
                         case SequenceNodeType.Start:
-                            StatusMessage = $"[테스트] {currentNode.Name} — 시작";
+                            StatusMessage = $"[무부하] {currentNode.Name} — 시퀀스 시작";
                             nextNodeId = currentNode.Config.NextNodeId;
                             break;
 
@@ -996,25 +1039,47 @@ namespace VMS.VisionSetup.ViewModels
                             break;
 
                         case SequenceNodeType.Inspection:
-                            StatusMessage = $"[테스트] {currentNode.Name} — Inspection 생략 (테스트 모드)";
+                        {
+                            var cameraId = currentNode.Config.CameraId ?? "(none)";
+                            StatusMessage = $"[무부하] {currentNode.Name} — 검사 시뮬레이션 OK (Camera: {cameraId})";
+                            currentNode.ConditionStatus = true;
+
+                            // 무부하 모드: 검사 항상 OK
+                            lastInspectionOk = true;
+                            if (!string.IsNullOrEmpty(currentNode.Config.CameraId))
+                                cameraResults[currentNode.Config.CameraId] = true;
+
                             await Task.Delay(200, ct);
                             nextNodeId = currentNode.Config.NextNodeId;
                             break;
+                        }
 
                         case SequenceNodeType.Branch:
-                            StatusMessage = $"[테스트] {currentNode.Name} — Branch (테스트: True 경로)";
+                        {
+                            // SequenceEngine과 동일: BranchOnAllCameras 플래그에 따라 결과 결정
+                            var cfg = currentNode.Config;
+                            bool branchResult = cfg.BranchOnAllCameras
+                                ? (cameraResults.Count == 0 || cameraResults.Values.All(v => v))
+                                : lastInspectionOk;
+                            string branchPath = branchResult ? "OK → True 경로" : "NG → False 경로";
+
+                            StatusMessage = $"[무부하] {currentNode.Name} — 분기 판정: {branchPath}";
+                            currentNode.ConditionStatus = branchResult;
                             await Task.Delay(200, ct);
-                            nextNodeId = currentNode.Config.TrueBranchNodeId;
+
+                            nextNodeId = branchResult ? cfg.TrueBranchNodeId : cfg.FalseBranchNodeId;
                             break;
+                        }
 
                         case SequenceNodeType.Delay:
                             var delayMs = currentNode.Config.DelayMs;
-                            StatusMessage = $"[테스트] {currentNode.Name} — {delayMs}ms 대기";
+                            StatusMessage = $"[무부하] {currentNode.Name} — {delayMs}ms 대기";
                             await Task.Delay(Math.Max(0, delayMs), ct);
                             nextNodeId = currentNode.Config.NextNodeId;
                             break;
 
                         case SequenceNodeType.Repeat:
+                        {
                             var repeatId = currentNode.Id;
                             if (!repeatCounters.ContainsKey(repeatId))
                                 repeatCounters[repeatId] = 0;
@@ -1023,18 +1088,48 @@ namespace VMS.VisionSetup.ViewModels
                             var maxCount = currentNode.Config.RepeatCount;
                             if (maxCount == -1 || repeatCounters[repeatId] <= maxCount)
                             {
-                                StatusMessage = $"[테스트] {currentNode.Name} — 반복 {repeatCounters[repeatId]}회";
+                                // 무한 반복 시 사이클 카운트 업데이트
+                                if (maxCount == -1)
+                                    TestCycleCount = repeatCounters[repeatId];
+
+                                StatusMessage = $"[무부하] {currentNode.Name} — 반복 {repeatCounters[repeatId]}회"
+                                    + (maxCount == -1 ? " (무한)" : $" / {maxCount}");
                                 nextNodeId = currentNode.Config.RepeatTargetNodeId;
+
+                                // 반복 시 검사 결과 초기화 (새 사이클)
+                                lastInspectionOk = true;
+                                cameraResults.Clear();
                             }
                             else
                             {
-                                StatusMessage = $"[테스트] {currentNode.Name} — 반복 완료 ({maxCount}회)";
+                                StatusMessage = $"[무부하] {currentNode.Name} — 반복 완료 ({maxCount}회)";
                                 nextNodeId = currentNode.Config.NextNodeId;
                             }
                             break;
+                        }
+
+                        case SequenceNodeType.RecipeChange:
+                        {
+                            var sigAddr = currentNode.Config.RecipeSignalAddress ?? "(none)";
+                            var idxAddr = currentNode.Config.RecipeIndexAddress ?? "(none)";
+                            StatusMessage = $"[무부하] {currentNode.Name} — Signal({sigAddr}) 확인 → Index({idxAddr}) 읽기 시뮬레이션";
+                            await Task.Delay(200, ct);
+                            nextNodeId = currentNode.Config.NextNodeId;
+                            break;
+                        }
+
+                        case SequenceNodeType.StepChange:
+                        {
+                            var sigAddr = currentNode.Config.StepSignalAddress ?? "(none)";
+                            var idxAddr = currentNode.Config.StepIndexAddress ?? "(none)";
+                            StatusMessage = $"[무부하] {currentNode.Name} — Signal({sigAddr}) 확인 → Step Index({idxAddr}) → 스텝 0 사용";
+                            await Task.Delay(200, ct);
+                            nextNodeId = currentNode.Config.NextNodeId;
+                            break;
+                        }
 
                         case SequenceNodeType.End:
-                            StatusMessage = "[테스트] 시퀀스 완료";
+                            StatusMessage = "[무부하] 시퀀스 완료";
                             currentNode.IsActive = false;
                             currentNode = null;
                             continue;
@@ -1051,15 +1146,15 @@ namespace VMS.VisionSetup.ViewModels
                 }
 
                 if (ct.IsCancellationRequested)
-                    StatusMessage = "[테스트] 중지됨";
+                    StatusMessage = $"[무부하] 테스트 중지됨 (총 {TestCycleCount}회 수행)";
             }
             catch (OperationCanceledException)
             {
-                StatusMessage = "[테스트] 중지됨";
+                StatusMessage = $"[무부하] 테스트 중지됨 (총 {TestCycleCount}회 수행)";
             }
             catch (Exception ex)
             {
-                StatusMessage = $"[테스트 오류] {ex.Message}";
+                StatusMessage = $"[무부하 오류] {ex.Message}";
                 System.Diagnostics.Debug.WriteLine($"[SequenceEditor] Test run error: {ex}");
             }
             finally
@@ -1087,12 +1182,21 @@ namespace VMS.VisionSetup.ViewModels
             var cfg = node.Config;
             if (string.IsNullOrWhiteSpace(cfg.PlcAddress) || _plcConfig == null || _plcConnection == null)
             {
-                StatusMessage = $"[테스트] {node.Name} — PLC 주소 미설정, 건너뜀";
+                StatusMessage = $"[무부하] {node.Name} — PLC 주소 미설정, 건너뜀";
                 await Task.Delay(200, ct);
                 return cfg.NextNodeId;
             }
 
             var addr = PlcAddress.Parse(cfg.PlcAddress.Trim(), _plcConfig.Vendor);
+            var modeText = cfg.CheckMode switch
+            {
+                InputCheckMode.BitOn => $"{cfg.PlcAddress} = ON",
+                InputCheckMode.BitOff => $"{cfg.PlcAddress} = OFF",
+                InputCheckMode.WordEquals => $"{cfg.PlcAddress} == {cfg.CompareValue ?? 0}",
+                InputCheckMode.WordGreaterThan => $"{cfg.PlcAddress} > {cfg.CompareValue ?? 0}",
+                InputCheckMode.WordLessThan => $"{cfg.PlcAddress} < {cfg.CompareValue ?? 0}",
+                _ => cfg.PlcAddress
+            };
             var startTime = DateTime.UtcNow;
 
             while (!ct.IsCancellationRequested)
@@ -1104,7 +1208,7 @@ namespace VMS.VisionSetup.ViewModels
                     if (elapsed >= cfg.TimeoutMs)
                     {
                         node.ConditionStatus = false;
-                        StatusMessage = $"[테스트] {node.Name} — 타임아웃 ({cfg.TimeoutMs}ms)";
+                        StatusMessage = $"[무부하] {node.Name} — 타임아웃 ({cfg.TimeoutMs}ms)";
                         return cfg.NextNodeId;
                     }
                 }
@@ -1137,11 +1241,11 @@ namespace VMS.VisionSetup.ViewModels
                 };
 
                 node.ConditionStatus = met;
-                StatusMessage = $"[테스트] {node.Name} — 대기 중 (현재: {currentVal})";
+                StatusMessage = $"[무부하] {node.Name} — 신호 대기 ({modeText}, 현재: {currentVal})";
 
                 if (met)
                 {
-                    StatusMessage = $"[테스트] {node.Name} — 조건 충족 ({currentVal})";
+                    StatusMessage = $"[무부하] {node.Name} — 조건 충족 ({currentVal})";
                     return cfg.NextNodeId;
                 }
 
@@ -1157,7 +1261,7 @@ namespace VMS.VisionSetup.ViewModels
             var cfg = node.Config;
             if (string.IsNullOrWhiteSpace(cfg.PlcAddress) || _plcConfig == null || _plcConnection == null)
             {
-                StatusMessage = $"[테스트] {node.Name} — PLC 주소 미설정, 건너뜀";
+                StatusMessage = $"[무부하] {node.Name} — PLC 주소 미설정, 건너뜀";
                 return;
             }
 
@@ -1167,20 +1271,20 @@ namespace VMS.VisionSetup.ViewModels
             {
                 case PlcDataType.Bit:
                     await _plcConnection.WriteBitAsync(addr, cfg.BitValue ?? false);
-                    StatusMessage = $"[테스트] {node.Name} — {cfg.PlcAddress} ← {(cfg.BitValue == true ? "ON" : "OFF")}";
+                    StatusMessage = $"[무부하] {node.Name} — {cfg.PlcAddress} ← {(cfg.BitValue == true ? "ON" : "OFF")}";
                     break;
                 case PlcDataType.Int16:
                     await _plcConnection.WriteWordAsync(addr, (short)(cfg.WordValue ?? 0));
-                    StatusMessage = $"[테스트] {node.Name} — {cfg.PlcAddress} ← {cfg.WordValue ?? 0}";
+                    StatusMessage = $"[무부하] {node.Name} — {cfg.PlcAddress} ← {cfg.WordValue ?? 0}";
                     break;
                 case PlcDataType.Int32:
                     await _plcConnection.WriteDWordAsync(addr, cfg.WordValue ?? 0);
-                    StatusMessage = $"[테스트] {node.Name} — {cfg.PlcAddress} ← {cfg.WordValue ?? 0}";
+                    StatusMessage = $"[무부하] {node.Name} — {cfg.PlcAddress} ← {cfg.WordValue ?? 0}";
                     break;
                 case PlcDataType.Float:
                     var bits = BitConverter.SingleToInt32Bits(cfg.FloatValue ?? 0f);
                     await _plcConnection.WriteDWordAsync(addr, bits);
-                    StatusMessage = $"[테스트] {node.Name} — {cfg.PlcAddress} ← {cfg.FloatValue ?? 0f:F3}";
+                    StatusMessage = $"[무부하] {node.Name} — {cfg.PlcAddress} ← {cfg.FloatValue ?? 0f:F3}";
                     break;
             }
 

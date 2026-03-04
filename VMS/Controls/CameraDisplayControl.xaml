@@ -381,23 +381,48 @@
                 </Grid>
             </Border>
 
-            <!-- Resize grip (bottom-right corner) -->
-            <Thumb Grid.Row="1" Grid.RowSpan="3"
-                   Width="16" Height="16"
-                   HorizontalAlignment="Right"
-                   VerticalAlignment="Bottom"
-                   Cursor="SizeNWSE"
-                   x:Name="ResizeGrip">
-                <Thumb.Template>
-                    <ControlTemplate TargetType="Thumb">
-                        <Grid Background="Transparent">
-                            <Path Data="M 0,16 L 16,0 M 5,16 L 16,5 M 10,16 L 16,10"
-                                  Stroke="#606060"
-                                  StrokeThickness="1"/>
-                        </Grid>
-                    </ControlTemplate>
-                </Thumb.Template>
-            </Thumb>
+            <!-- 8-direction resize handles -->
+            <Grid Grid.Row="0" Grid.RowSpan="4" Panel.ZIndex="5">
+                <Grid.Resources>
+                    <Style x:Key="ResizeThumbStyle" TargetType="Thumb">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Thumb">
+                                    <Border Background="Transparent"/>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Grid.Resources>
+
+                <!-- Edge handles (6px thick) -->
+                <Thumb x:Name="ResizeTop" Height="6" VerticalAlignment="Top"
+                       Margin="8,0,8,0" Cursor="SizeNS"
+                       Style="{StaticResource ResizeThumbStyle}"/>
+                <Thumb x:Name="ResizeBottom" Height="6" VerticalAlignment="Bottom"
+                       Margin="8,0,8,0" Cursor="SizeNS"
+                       Style="{StaticResource ResizeThumbStyle}"/>
+                <Thumb x:Name="ResizeLeft" Width="6" HorizontalAlignment="Left"
+                       Margin="0,8,0,8" Cursor="SizeWE"
+                       Style="{StaticResource ResizeThumbStyle}"/>
+                <Thumb x:Name="ResizeRight" Width="6" HorizontalAlignment="Right"
+                       Margin="0,8,0,8" Cursor="SizeWE"
+                       Style="{StaticResource ResizeThumbStyle}"/>
+
+                <!-- Corner handles (8x8) -->
+                <Thumb x:Name="ResizeTopLeft" Width="8" Height="8"
+                       VerticalAlignment="Top" HorizontalAlignment="Left"
+                       Cursor="SizeNWSE" Style="{StaticResource ResizeThumbStyle}"/>
+                <Thumb x:Name="ResizeTopRight" Width="8" Height="8"
+                       VerticalAlignment="Top" HorizontalAlignment="Right"
+                       Cursor="SizeNESW" Style="{StaticResource ResizeThumbStyle}"/>
+                <Thumb x:Name="ResizeBottomLeft" Width="8" Height="8"
+                       VerticalAlignment="Bottom" HorizontalAlignment="Left"
+                       Cursor="SizeNESW" Style="{StaticResource ResizeThumbStyle}"/>
+                <Thumb x:Name="ResizeBottomRight" Width="8" Height="8"
+                       VerticalAlignment="Bottom" HorizontalAlignment="Right"
+                       Cursor="SizeNWSE" Style="{StaticResource ResizeThumbStyle}"/>
+            </Grid>
 
             <!-- Inline Control Box Overlay -->
             <Border Grid.Row="0" Grid.RowSpan="4"

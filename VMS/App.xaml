@@ -1,7 +1,8 @@
 <Application x:Class="VMS.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:converters="clr-namespace:VMS.Converters">
+             xmlns:converters="clr-namespace:VMS.Converters"
+             ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
         <!-- Converters -->
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
@@ -9,6 +10,8 @@
         <converters:BoolToColorConverter x:Key="BoolToColorConverter"/>
         <converters:StatusStateToColorConverter x:Key="StatusStateToColorConverter"/>
         <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
+        <converters:LogLevelToColorConverter x:Key="LogLevelToColorConverter"/>
+        <converters:UserGradeToColorConverter x:Key="UserGradeToColorConverter"/>
         <!-- Common Colors -->
         <SolidColorBrush x:Key="PrimaryBrush" Color="#2196F3"/>
         <SolidColorBrush x:Key="PrimaryDarkBrush" Color="#1976D2"/>
