@@ -9,6 +9,7 @@ using VMS.VisionSetup.VisionTools.BlobAnalysis;
 using VMS.VisionSetup.VisionTools.ImageProcessing;
 using VMS.VisionSetup.VisionTools.Measurement;
 using VMS.VisionSetup.VisionTools.PatternMatching;
+using VMS.VisionSetup.VisionTools.Result;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -458,6 +459,11 @@ namespace VMS.VisionSetup.ViewModels
             var threeD = new ToolCategory { CategoryName = "3D Analysis" };
             threeD.Tools.Add(new ToolItem { Name = "Height Slicer", ToolType = "HeightSlicerTool" });
             ToolTree.Add(threeD);
+
+            // Judgment 카테고리
+            var judgment = new ToolCategory { CategoryName = "Judgment" };
+            judgment.Tools.Add(new ToolItem { Name = "Result", ToolType = "ResultTool" });
+            ToolTree.Add(judgment);
         }
 
         private void CloseApplication()
@@ -1161,6 +1167,7 @@ namespace VMS.VisionSetup.ViewModels
 
             RefreshSteps();
             AddStepCommand.NotifyCanExecuteChanged();
+            SaveRecipeCommand.NotifyCanExecuteChanged();
         }
 
         private void LoadCameras()
@@ -1660,6 +1667,7 @@ namespace VMS.VisionSetup.ViewModels
                 LineFitTool t => new LineFitToolSettingsViewModel(t),
                 CircleFitTool t => new CircleFitToolSettingsViewModel(t),
                 HeightSlicerTool t => new HeightSlicerToolSettingsViewModel(t),
+                ResultTool t => new ResultToolSettingsViewModel(t),
                 _ => null
             };
         }

@@ -107,6 +107,9 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         // View-state: FeatureMatchTool overrides to true (has its own ROI section)
         public virtual bool HasCustomROISection => false;
 
+        // View-state: ResultTool overrides to true (최종 판정은 시퀀스 에디터가 담당)
+        public virtual bool HidePlcSection => false;
+
         public virtual void Dispose()
         {
             Tool.PropertyChanged -= OnModelPropertyChanged;
