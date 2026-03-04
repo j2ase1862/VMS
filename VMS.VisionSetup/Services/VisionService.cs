@@ -5,6 +5,7 @@ using VMS.VisionSetup.VisionTools.BlobAnalysis;
 using VMS.VisionSetup.VisionTools.ImageProcessing;
 using VMS.VisionSetup.VisionTools.Measurement;
 using VMS.VisionSetup.VisionTools.PatternMatching;
+using VMS.VisionSetup.VisionTools.Result;
 using CommunityToolkit.Mvvm.ComponentModel;
 using OpenCvSharp;
 using OpenCvSharp.WpfExtensions;
@@ -692,7 +693,8 @@ namespace VMS.VisionSetup.Services
                     continue;
 
                 // 1. Result 연결 확인: Source가 실패이면 건너뛰기
-                if (ShouldSkipByResultConnection(tool, resultMap))
+                //    ResultTool은 실패 정보를 수집해야 하므로 스킵 우회
+                if (tool is not ResultTool && ShouldSkipByResultConnection(tool, resultMap))
                 {
                     var skipResult = new VisionResult
                     {
@@ -740,6 +742,27 @@ namespace VMS.VisionSetup.Services
 
                 try
                 {
+                    // ResultTool: Execute 전에 연결된 소스 결과 주입
+                    if (tool is ResultTool rt)
+                    {
+                        rt.SourceResults.Clear();
+                        foreach (var conn in _connections
+                            .Where(c => c.TargetId == tool.Id && c.Type == ConnectionType.Result))
+                        {
+                            if (resultMap.TryGetValue(conn.SourceId, out var srcResult))
+                            {
+                                var srcTool = sortedTools.FirstOrDefault(t => t.Id == conn.SourceId);
+                                rt.SourceResults.Add(new SourceToolResult
+                                {
+                                    ToolId = conn.SourceId,
+                                    ToolName = srcTool?.Name ?? conn.SourceId,
+                                    Success = srcResult.Success,
+                                    Message = srcResult.Message
+                                });
+                            }
+                        }
+                    }
+
                     var result = tool.Execute(inputImage);
                     tool.LastResult = result;
                     results.Add(result);
@@ -788,7 +811,12 @@ namespace VMS.VisionSetup.Services
 
             sw.Stop();
             TotalExecutionTime = sw.Elapsed.TotalMilliseconds;
-            LastRunSuccess = allSuccess;
+
+            // ResultTool이 존재하면 최종 판정은 ResultTool의 Success로 결정
+            var resultToolInstance = sortedTools.OfType<ResultTool>().FirstOrDefault();
+            LastRunSuccess = resultToolInstance != null
+                ? resultMap.TryGetValue(resultToolInstance.Id, out var rtResult) && rtResult.Success
+                : allSuccess;
             IsRunning = false;
 
             return results;
@@ -820,6 +848,9 @@ namespace VMS.VisionSetup.Services
                 "CaliperTool" => new CaliperTool(),
                 "LineFitTool" => new LineFitTool(),
                 "CircleFitTool" => new CircleFitTool(),
+
+                // Judgment
+                "ResultTool" => new ResultTool(),
 
                 _ => null
             };
@@ -858,6 +889,10 @@ namespace VMS.VisionSetup.Services
                     "CaliperTool",
                     "LineFitTool",
                     "CircleFitTool"
+                },
+                ["Judgment"] = new[]
+                {
+                    "ResultTool"
                 }
             };
         }
@@ -881,6 +916,7 @@ namespace VMS.VisionSetup.Services
                 "LineFitTool" => "Line Fit",
                 "CircleFitTool" => "Circle Fit",
                 "HeightSlicerTool" => "Height Slicer",
+                "ResultTool" => "Result",
                 _ => toolType
             };
         }

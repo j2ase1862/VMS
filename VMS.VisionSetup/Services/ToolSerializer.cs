@@ -3,6 +3,7 @@ using VMS.VisionSetup.VisionTools.BlobAnalysis;
 using VMS.VisionSetup.VisionTools.ImageProcessing;
 using VMS.VisionSetup.VisionTools.Measurement;
 using VMS.VisionSetup.VisionTools.PatternMatching;
+using VMS.VisionSetup.VisionTools.Result;
 using VMS.PLC.Models;
 using OpenCvSharp;
 using System;
@@ -239,6 +240,10 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["MaxZ"] = heightSlicer.MaxZ;
                     break;
 
+                case ResultTool resultTool:
+                    config.Parameters["JudgmentMode"] = resultTool.JudgmentMode.ToString();
+                    break;
+
                 default:
                     // Unknown tool type - save what we can
                     break;
@@ -282,6 +287,7 @@ namespace VMS.VisionSetup.Services
                 "LineFitTool" => DeserializeLineFitTool(config),
                 "CircleFitTool" => DeserializeCircleFitTool(config),
                 "HeightSlicerTool" => DeserializeHeightSlicerTool(config),
+                "ResultTool" => DeserializeResultTool(config),
                 _ => null
             };
 
@@ -751,6 +757,17 @@ namespace VMS.VisionSetup.Services
                 tool.MinZ = (float)GetDouble(minZ);
             if (p.TryGetValue("MaxZ", out var maxZ))
                 tool.MaxZ = (float)GetDouble(maxZ);
+
+            return tool;
+        }
+
+        private static ResultTool DeserializeResultTool(ToolConfig config)
+        {
+            var tool = new ResultTool();
+            var p = config.Parameters;
+
+            if (p.TryGetValue("JudgmentMode", out var jm))
+                tool.JudgmentMode = Enum.Parse<ResultJudgmentMode>(GetString(jm));
 
             return tool;
         }
