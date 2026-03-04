@@ -13,6 +13,9 @@ namespace VMS.Services.Sequence
         /// <summary>현재 실행 중인 노드 ID</summary>
         string? CurrentNodeId { get; }
 
+        /// <summary>마지막 RunAsync가 Reset 신호에 의해 중단되었는지 여부</summary>
+        bool WasReset { get; }
+
         /// <summary>노드 실행 시작 이벤트</summary>
         event EventHandler<SequenceNodeEventArgs>? NodeExecuting;
 

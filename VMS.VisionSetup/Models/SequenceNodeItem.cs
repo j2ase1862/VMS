@@ -112,6 +112,8 @@ namespace VMS.VisionSetup.Models
             SequenceNodeType.Branch => "#FFEB3B",
             SequenceNodeType.Delay => "#9E9E9E",
             SequenceNodeType.Repeat => "#00BCD4",
+            SequenceNodeType.RecipeChange => "#E91E63",
+            SequenceNodeType.StepChange => "#00897B",
             _ => "#757575"
         };
 
@@ -134,6 +136,10 @@ namespace VMS.VisionSetup.Models
                 "M10,3 A7,7 0 1 0 10,17 A7,7 0 1 0 10,3 M10,6 L10,10 L13,10",
             SequenceNodeType.Repeat =>
                 "M14,4 A6,6 0 1 1 7,6 M14,4 L14,8 M14,4 L18,4",
+            SequenceNodeType.RecipeChange =>
+                "M4,4 L16,4 L16,16 L4,16 Z M7,7 L13,7 M7,10 L13,10 M7,13 L11,13",
+            SequenceNodeType.StepChange =>
+                "M4,14 L10,4 L16,14 Z M10,8 L10,11 M10,12.5 L10,13",
             _ => ""
         };
 

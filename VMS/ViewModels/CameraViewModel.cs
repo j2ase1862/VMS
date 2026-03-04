@@ -145,6 +145,12 @@ namespace VMS.ViewModels
         public ObservableCollection<ToolResultItem> ToolRunResults { get; } = new();
 
         /// <summary>
+        /// Raised after an inspection result is recorded (ok/ng).
+        /// Provides (cameraName, ok, currentImage) for dashboard tracking.
+        /// </summary>
+        public event Action<string, bool, BitmapSource?>? InspectionCompleted;
+
+        /// <summary>
         /// 마지막 검사의 개별 도구 결과 (AutoProcessService PLC 전송용)
         /// </summary>
         public IReadOnlyList<Interfaces.ToolInspectionResult>? LastToolResults { get; private set; }
@@ -199,6 +205,8 @@ namespace VMS.ViewModels
             InspectionCount++;
             if (ok) PassCount++;
             else FailCount++;
+
+            InspectionCompleted?.Invoke(Name, ok, CurrentImage);
         }
 
         /// <summary>

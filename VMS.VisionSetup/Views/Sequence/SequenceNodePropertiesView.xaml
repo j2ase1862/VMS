@@ -274,6 +274,46 @@
                           Style="{StaticResource ComboStyle}"/>
             </StackPanel>
 
+            <!-- RecipeChange 설정 -->
+            <StackPanel Visibility="{Binding SelectedNode.NodeType, Converter={StaticResource NodeTypeVisibilityConverter}, ConverterParameter=RecipeChange}">
+                <TextBlock Text="── Recipe Change ──" Foreground="#E91E63" FontWeight="SemiBold" Margin="0,10,0,4"/>
+                <TextBlock Text="Recipe 신호 주소" Style="{StaticResource LabelStyle}"/>
+                <TextBox Text="{Binding SelectedNode.Config.RecipeSignalAddress, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource InputStyle}"/>
+                <TextBlock Text="신호 체크 모드" Style="{StaticResource LabelStyle}"/>
+                <ComboBox ItemsSource="{Binding Source={x:Static local:SequenceNodePropertiesView.InputCheckModes}}"
+                          SelectedItem="{Binding SelectedNode.Config.RecipeSignalCheckMode}"
+                          Style="{StaticResource ComboStyle}"/>
+                <TextBlock Text="비교값 (Word 모드용)" Style="{StaticResource LabelStyle}"/>
+                <TextBox Text="{Binding SelectedNode.Config.RecipeSignalCompareValue, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource InputStyle}"/>
+                <TextBlock Text="Recipe Index 주소 (Word)" Style="{StaticResource LabelStyle}" Margin="0,6,0,0"/>
+                <TextBox Text="{Binding SelectedNode.Config.RecipeIndexAddress, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource InputStyle}"/>
+                <TextBlock Text="신호 조건 충족 → Index 읽기 → 현재 레시피와&#x0a;비교하여 다르면 변경, 같으면 스킵.&#x0a;신호 주소 미설정 시 매번 Index를 읽습니다."
+                           Foreground="#999999" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"/>
+            </StackPanel>
+
+            <!-- StepChange 설정 -->
+            <StackPanel Visibility="{Binding SelectedNode.NodeType, Converter={StaticResource NodeTypeVisibilityConverter}, ConverterParameter=StepChange}">
+                <TextBlock Text="── Step Change ──" Foreground="#00897B" FontWeight="SemiBold" Margin="0,10,0,4"/>
+                <TextBlock Text="Step 신호 주소" Style="{StaticResource LabelStyle}"/>
+                <TextBox Text="{Binding SelectedNode.Config.StepSignalAddress, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource InputStyle}"/>
+                <TextBlock Text="신호 체크 모드" Style="{StaticResource LabelStyle}"/>
+                <ComboBox ItemsSource="{Binding Source={x:Static local:SequenceNodePropertiesView.InputCheckModes}}"
+                          SelectedItem="{Binding SelectedNode.Config.StepSignalCheckMode}"
+                          Style="{StaticResource ComboStyle}"/>
+                <TextBlock Text="비교값 (Word 모드용)" Style="{StaticResource LabelStyle}"/>
+                <TextBox Text="{Binding SelectedNode.Config.StepSignalCompareValue, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource InputStyle}"/>
+                <TextBlock Text="Step Index 주소 (Word)" Style="{StaticResource LabelStyle}" Margin="0,6,0,0"/>
+                <TextBox Text="{Binding SelectedNode.Config.StepIndexAddress, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource InputStyle}"/>
+                <TextBlock Text="신호 조건 충족 → Step Index 읽기 → 해당 스텝의&#x0a;검사 툴로 Inspection 수행.&#x0a;신호 미설정 시 항상 스텝 1(index 0) 사용."
+                           Foreground="#999999" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"/>
+            </StackPanel>
+
             <!-- Delay 설정 -->
             <StackPanel Visibility="{Binding SelectedNode.NodeType, Converter={StaticResource NodeTypeVisibilityConverter}, ConverterParameter=Delay}">
                 <TextBlock Text="── Delay ──" Foreground="#9E9E9E" FontWeight="SemiBold" Margin="0,10,0,4"/>

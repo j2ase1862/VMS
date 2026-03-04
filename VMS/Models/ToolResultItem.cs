@@ -27,5 +27,26 @@ namespace VMS.Models
             get => _resultValue;
             set => SetProperty(ref _resultValue, value);
         }
+
+        private double _score;
+        public double Score
+        {
+            get => _score;
+            set => SetProperty(ref _score, value);
+        }
+
+        private double _threshold;
+        public double Threshold
+        {
+            get => _threshold;
+            set => SetProperty(ref _threshold, value);
+        }
+
+        private string _unit = string.Empty;
+        public string Unit
+        {
+            get => _unit;
+            set => SetProperty(ref _unit, value);
+        }
     }
 }

@@ -1,6 +1,7 @@
 using VMS.Camera.Models;
 using VMS.Interfaces;
 using VMS.Models;
+using VMS.Views;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
@@ -9,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Media.Imaging;
 
 namespace VMS.ViewModels
 {
@@ -17,8 +19,26 @@ namespace VMS.ViewModels
         [ObservableProperty]
         private string _applicationTitle = "BODA Vision System";
 
-        [ObservableProperty]
         private bool _isSidePanelOpen;
+        public bool IsSidePanelOpen
+        {
+            get => _isSidePanelOpen;
+            set
+            {
+                // 패널 열기 시 로그인 필요
+                if (value && !_isSidePanelOpen && _userService != null && !_userService.IsLoggedIn)
+                {
+                    if (!_dialogService.ShowLoginDialog(_userService))
+                    {
+                        OnPropertyChanged(); // ToggleButton 원복
+                        return;
+                    }
+                    UpdateUserDisplay();
+                    LogService?.Log($"User logged in: {_userService.CurrentUser?.DisplayName}", LogLevel.Success, "Auth");
+                }
+                SetProperty(ref _isSidePanelOpen, value);
+            }
+        }
 
         [ObservableProperty]
         private bool _isRecipePanelOpen;
@@ -72,12 +92,37 @@ namespace VMS.ViewModels
             ? Math.Round((double)TotalPass / TotalInspections * 100, 1)
             : 0;
 
+        // ── User management ──
+        [ObservableProperty]
+        private string _currentUserDisplay = string.Empty;
+
+        [ObservableProperty]
+        private UserGrade _currentUserGrade;
+
+        public bool CanEditRecipe => _userService?.HasPermission(UserPermission.EditRecipe) ?? true;
+        public bool CanDeleteRecipe => _userService?.HasPermission(UserPermission.DeleteRecipe) ?? true;
+        public bool CanManageUsers => _userService?.HasPermission(UserPermission.ManageUsers) ?? false;
+        public bool CanLaunchVisionSetup => _userService?.HasPermission(UserPermission.LaunchVisionSetup) ?? true;
+        public bool CanLaunchAppSetup => _userService?.HasPermission(UserPermission.LaunchAppSetup) ?? true;
+        public bool CanStartStop => _userService?.HasPermission(UserPermission.StartStop) ?? true;
+
+        // ── Dashboard ──
+        [ObservableProperty]
+        private DashboardViewModel _dashboard = new();
+
+        [ObservableProperty]
+        private NgImageItem? _selectedNgImage;
+
+        // ── System Log ──
+        public ISystemLogService? LogService { get; }
+
         private readonly IConfigurationService _configService;
         private readonly IRecipeService _recipeService;
         private readonly IDialogService _dialogService;
         private readonly IProcessService _processService;
         private readonly IInspectionService _inspectionService;
         private readonly IAutoProcessService? _autoProcessService;
+        private readonly IUserService? _userService;
         private readonly Action _shutdownAction;
         private SystemConfiguration _systemConfig;
 
@@ -88,7 +133,9 @@ namespace VMS.ViewModels
             IProcessService processService,
             IInspectionService inspectionService,
             Action shutdownAction,
-            IAutoProcessService? autoProcessService = null)
+            IAutoProcessService? autoProcessService = null,
+            IUserService? userService = null,
+            ISystemLogService? logService = null)
         {
             _configService = configService;
             _recipeService = recipeService;
@@ -96,10 +143,39 @@ namespace VMS.ViewModels
             _processService = processService;
             _inspectionService = inspectionService;
             _autoProcessService = autoProcessService;
+            _userService = userService;
+            LogService = logService;
             _shutdownAction = shutdownAction;
             _systemConfig = new SystemConfiguration();
+
+            // Initialize user display
+            UpdateUserDisplay();
+
             LoadConfiguration();
             RefreshRecipeList();
+
+            LogService?.Log("Application started", LogLevel.Success, "System");
+        }
+
+        private void UpdateUserDisplay()
+        {
+            if (_userService?.CurrentUser != null)
+            {
+                var user = _userService.CurrentUser;
+                CurrentUserDisplay = $"[{user.Grade}] {user.DisplayName}";
+                CurrentUserGrade = user.Grade;
+            }
+            else
+            {
+                CurrentUserDisplay = string.Empty;
+            }
+
+            OnPropertyChanged(nameof(CanEditRecipe));
+            OnPropertyChanged(nameof(CanDeleteRecipe));
+            OnPropertyChanged(nameof(CanManageUsers));
+            OnPropertyChanged(nameof(CanLaunchVisionSetup));
+            OnPropertyChanged(nameof(CanLaunchAppSetup));
+            OnPropertyChanged(nameof(CanStartStop));
         }
 
         /// <summary>
@@ -147,6 +223,7 @@ namespace VMS.ViewModels
                 var camVm = CameraViewModel.FromConfiguration(camConfig, _dialogService, _configService, _inspectionService);
                 camVm.X = xOffset;
                 camVm.Y = yOffset;
+                WireCameraEvents(camVm);
                 Cameras.Add(camVm);
 
                 xOffset += 420;
@@ -175,6 +252,22 @@ namespace VMS.ViewModels
             UpdateCanvasSize();
         }
 
+        private void WireCameraEvents(CameraViewModel cam)
+        {
+            cam.InspectionCompleted += (cameraName, ok, image) =>
+            {
+                TotalInspections++;
+                if (ok) TotalPass++;
+                else TotalFail++;
+
+                Dashboard.RecordInspectionResult(ok, cameraName, image);
+                LogService?.Log(
+                    $"Inspection {(ok ? "OK" : "NG")} - {cameraName}",
+                    ok ? LogLevel.Success : LogLevel.Warning,
+                    "Inspection");
+            };
+        }
+
         private void AddDefaultCameras()
         {
             for (int i = 1; i <= 2; i++)
@@ -198,6 +291,7 @@ namespace VMS.ViewModels
                     Gain = 1.0
                 });
                 vm.SelectedStep = vm.Steps[0];
+                WireCameraEvents(vm);
                 Cameras.Add(vm);
             }
         }
@@ -253,6 +347,7 @@ namespace VMS.ViewModels
                 _currentRecipeFilePath = SelectedRecipeInfo.FilePath;
                 IsRecipePanelOpen = false;
                 SystemStatus = $"Recipe loaded: {recipe.Name}";
+                LogService?.Log($"Recipe loaded: {recipe.Name}", LogLevel.Info, "Recipe");
 
                 // Propagate recipe to all cameras
                 foreach (var cam in Cameras)
@@ -407,6 +502,7 @@ namespace VMS.ViewModels
                     }
 
                     _processService.LaunchProcess(exePath, arguments);
+                    LogService?.Log("Vision Tool Setup launched", LogLevel.Info, "System");
                 }
                 else
                 {
@@ -435,6 +531,7 @@ namespace VMS.ViewModels
                 if (File.Exists(exePath))
                 {
                     _processService.LaunchProcess(exePath);
+                    LogService?.Log("System Setup launched", LogLevel.Info, "System");
                 }
                 else
                 {
@@ -455,27 +552,26 @@ namespace VMS.ViewModels
         [RelayCommand]
         private async Task StartInspectionAsync()
         {
-            if (CurrentRecipe == null)
-            {
-                _dialogService.ShowWarning(
-                    "레시피를 먼저 로드해 주세요.",
-                    "Warning");
-                return;
-            }
+            if (_autoProcessService != null && _autoProcessService.IsRunning)
+                return; // 이전 Stop이 아직 진행 중
 
             IsRunning = true;
-            SystemStatus = "Running...";
+            SystemStatus = "Starting...";
+            LogService?.Log("Inspection starting...", LogLevel.Info, "System");
 
             if (_autoProcessService != null)
             {
                 try
                 {
-                    await _autoProcessService.StartAsync();
+                    // PLC 연결/모니터링 등 I/O를 백그라운드 스레드에서 실행하여 UI 블로킹 방지
+                    await Task.Run(() => _autoProcessService.StartAsync());
                     SystemStatus = "AutoProcess Running";
+                    LogService?.Log("Inspection started", LogLevel.Success, "System");
                 }
                 catch (Exception ex)
                 {
                     SystemStatus = $"AutoProcess Error: {ex.Message}";
+                    LogService?.Log($"AutoProcess start error: {ex.Message}", LogLevel.Error, "System");
                     IsRunning = false;
                 }
             }
@@ -484,11 +580,17 @@ namespace VMS.ViewModels
         [RelayCommand]
         private async Task StopInspectionAsync()
         {
+            // 즉시 UI 반영 — Stop 버튼 숨김, Start 버튼 표시
+            IsRunning = false;
+            SystemStatus = "Stopping...";
+            LogService?.Log("Inspection stopping...", LogLevel.Info, "System");
+
             if (_autoProcessService != null && _autoProcessService.IsRunning)
             {
                 try
                 {
-                    await _autoProcessService.StopAsync();
+                    // PLC 신호 클리어/해제 등 I/O를 백그라운드 스레드에서 실행
+                    await Task.Run(() => _autoProcessService.StopAsync());
                 }
                 catch (Exception ex)
                 {
@@ -496,8 +598,55 @@ namespace VMS.ViewModels
                 }
             }
 
-            IsRunning = false;
             SystemStatus = "Stopped";
+            LogService?.Log("Inspection stopped", LogLevel.Info, "System");
+        }
+
+        [RelayCommand]
+        private void OpenUserManagement()
+        {
+            if (_userService == null) return;
+
+            var vm = new UserManagementViewModel(_userService, _dialogService);
+            var window = new UserManagementWindow
+            {
+                DataContext = vm,
+                Owner = System.Windows.Application.Current.MainWindow
+            };
+            window.ShowDialog();
+        }
+
+        [RelayCommand]
+        private void SwitchUser()
+        {
+            if (_userService == null) return;
+
+            _userService.Logout();
+            if (_dialogService.ShowLoginDialog(_userService))
+            {
+                UpdateUserDisplay();
+                LogService?.Log($"User switched to: {_userService.CurrentUser?.DisplayName}", LogLevel.Success, "Auth");
+            }
+            else
+            {
+                // Login cancelled — clear display
+                UpdateUserDisplay();
+            }
+        }
+
+        [RelayCommand]
+        private void ClearLog()
+        {
+            LogService?.Clear();
+        }
+
+        [RelayCommand]
+        private void ResetDashboard()
+        {
+            Dashboard.ResetStatisticsCommand.Execute(null);
+            TotalInspections = 0;
+            TotalPass = 0;
+            TotalFail = 0;
         }
 
         [RelayCommand]
@@ -508,6 +657,18 @@ namespace VMS.ViewModels
                 "Exit"))
             {
                 _shutdownAction();
+            }
+        }
+
+        partial void OnSelectedNgImageChanged(NgImageItem? value)
+        {
+            if (value?.Thumbnail != null)
+            {
+                // Show the NG image in the selected camera if one is available
+                if (SelectedCamera != null)
+                {
+                    SelectedCamera.CurrentImage = value.Thumbnail;
+                }
             }
         }
 
