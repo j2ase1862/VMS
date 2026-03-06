@@ -214,6 +214,7 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["SearchWidth"] = lineFit.SearchWidth;
                     config.Parameters["Polarity"] = lineFit.Polarity.ToString();
                     config.Parameters["EdgeThreshold"] = lineFit.EdgeThreshold;
+                    config.Parameters["FilterHalfWidth"] = lineFit.FilterHalfWidth;
                     config.Parameters["FitMethod"] = lineFit.FitMethod.ToString();
                     config.Parameters["RansacThreshold"] = lineFit.RansacThreshold;
                     config.Parameters["MinFoundCalipers"] = lineFit.MinFoundCalipers;
@@ -702,6 +703,8 @@ namespace VMS.VisionSetup.Services
                 tool.Polarity = Enum.Parse<EdgePolarity>(GetString(polarity));
             if (p.TryGetValue("EdgeThreshold", out var et))
                 tool.EdgeThreshold = GetDouble(et);
+            if (p.TryGetValue("FilterHalfWidth", out var fhw))
+                tool.FilterHalfWidth = GetInt(fhw);
             if (p.TryGetValue("FitMethod", out var fm))
                 tool.FitMethod = Enum.Parse<LineFitMethod>(GetString(fm));
             if (p.TryGetValue("RansacThreshold", out var rt))

@@ -1,4 +1,5 @@
 using VMS.VisionSetup.Models;
+using VMS.VisionSetup.VisionTools.Measurement;
 using VMS.PLC.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -45,7 +46,8 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
                         Y = ROIY,
                         Width = ROIWidth,
                         Height = ROIHeight,
-                        Name = $"{Name} ROI"
+                        Name = $"{Name} ROI",
+                        ShowSearchArrow = Tool is LineFitTool or CaliperTool or CircleFitTool
                     };
                 }
 

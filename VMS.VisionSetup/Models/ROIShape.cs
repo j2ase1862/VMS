@@ -60,6 +60,12 @@ namespace VMS.VisionSetup.Models
         [ObservableProperty]
         private double _strokeThickness = 2;
 
+        /// <summary>
+        /// 측정 도구의 검색 방향 화살표 표시 여부
+        /// </summary>
+        [ObservableProperty]
+        private bool _showSearchArrow;
+
         public abstract ROIShapeType ShapeType { get; }
 
         /// <summary>

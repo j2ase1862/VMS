@@ -717,6 +717,12 @@ namespace VMS.VisionSetup.Controls
                 DrawingCanvas.Children.Add(shape);
             }
 
+            // 측정 도구 검색 방향 화살표
+            if (roi.ShowSearchArrow && roi is RectangleROI arrowRect)
+            {
+                DrawSearchArrow(arrowRect, visuals);
+            }
+
             // 선택된 ROI면 핸들 그리기
             if (roi.IsSelected)
             {
@@ -724,6 +730,78 @@ namespace VMS.VisionSetup.Controls
             }
 
             _roiVisuals[roi] = visuals;
+        }
+
+        /// <summary>
+        /// 측정 도구의 검색 방향 화살표 그리기
+        /// ROI가 세로로 길면 → (왼→오) 화살표, 가로로 길면 ↓ (위→아래) 화살표
+        /// </summary>
+        private void DrawSearchArrow(RectangleROI rect, List<UIElement> visuals)
+        {
+            double cx = rect.X + rect.Width / 2;
+            double cy = rect.Y + rect.Height / 2;
+
+            // 검색 방향: 짧은 축 방향 (LineFitTool과 동일한 로직)
+            double arrowDx, arrowDy;
+            if (rect.Height > rect.Width)
+            {
+                // 세로 ROI → 가로 검색 (왼쪽→오른쪽)
+                arrowDx = 1; arrowDy = 0;
+            }
+            else
+            {
+                // 가로 ROI → 세로 검색 (위→아래)
+                arrowDx = 0; arrowDy = 1;
+            }
+
+            // 화살표 길이: 짧은 축의 40%
+            double arrowLen = Math.Min(rect.Width, rect.Height) * 0.4;
+            double headLen = Math.Max(6, arrowLen * 0.35);
+
+            // 화살표 시작/끝점
+            double startX = cx - arrowDx * arrowLen;
+            double startY = cy - arrowDy * arrowLen;
+            double endX = cx + arrowDx * arrowLen;
+            double endY = cy + arrowDy * arrowLen;
+
+            var arrowBrush = Brushes.Yellow;
+            double strokeWidth = 2;
+
+            // 화살표 몸통
+            var shaft = new Line
+            {
+                X1 = startX, Y1 = startY,
+                X2 = endX, Y2 = endY,
+                Stroke = arrowBrush,
+                StrokeThickness = strokeWidth
+            };
+            visuals.Add(shaft);
+            DrawingCanvas.Children.Add(shaft);
+
+            // 화살촉 (삼각형 두 날개)
+            double perpX = -arrowDy;
+            double perpY = arrowDx;
+
+            var head1 = new Line
+            {
+                X1 = endX, Y1 = endY,
+                X2 = endX - arrowDx * headLen + perpX * headLen * 0.5,
+                Y2 = endY - arrowDy * headLen + perpY * headLen * 0.5,
+                Stroke = arrowBrush,
+                StrokeThickness = strokeWidth
+            };
+            var head2 = new Line
+            {
+                X1 = endX, Y1 = endY,
+                X2 = endX - arrowDx * headLen - perpX * headLen * 0.5,
+                Y2 = endY - arrowDy * headLen - perpY * headLen * 0.5,
+                Stroke = arrowBrush,
+                StrokeThickness = strokeWidth
+            };
+            visuals.Add(head1);
+            visuals.Add(head2);
+            DrawingCanvas.Children.Add(head1);
+            DrawingCanvas.Children.Add(head2);
         }
 
         private void DrawHandles(ROIShape roi, List<UIElement> visuals)

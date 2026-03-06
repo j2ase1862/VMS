@@ -1036,6 +1036,9 @@ namespace VMS.VisionSetup.ViewModels
                 tool.UseROI = true;
                 tool.AssociatedROIShape = roi;
 
+                // 측정 도구에 검색 방향 화살표 표시
+                roi.ShowSearchArrow = tool is LineFitTool or CaliperTool or CircleFitTool;
+
                 StatusMessage = $"ROI 적용됨: {tool.Name} - ({rect.X}, {rect.Y}, {rect.Width}, {rect.Height})";
             }
             finally

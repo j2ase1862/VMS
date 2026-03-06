@@ -374,7 +374,7 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
                 bool judgmentPass = true;
                 var judgmentDetails = new List<string>();
 
-                if (EnableJudgment)
+                if (EnableJudgment || UseAreaJudgment || UseCountJudgment)
                 {
                     // 면적 판정
                     if (UseAreaJudgment && blobs.Count > 0)
