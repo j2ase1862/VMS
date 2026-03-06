@@ -64,6 +64,13 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             set => SetProperty(ref _edgeThreshold, Math.Max(1, value));
         }
 
+        private int _filterHalfWidth = 2;
+        public int FilterHalfWidth
+        {
+            get => _filterHalfWidth;
+            set => SetProperty(ref _filterHalfWidth, Math.Max(1, value));
+        }
+
         // 피팅 설정
         private LineFitMethod _fitMethod = LineFitMethod.LeastSquares;
         public LineFitMethod FitMethod
@@ -99,17 +106,49 @@ namespace VMS.VisionSetup.VisionTools.Measurement
 
             try
             {
-                Mat workImage = GetROIImage(inputImage);
+                // CaliperTool과 동일한 패턴: GetROIImage() 사용하지 않고 전체 이미지에서 작업
                 Mat grayImage = new Mat();
 
-                if (workImage.Channels() > 1)
-                    Cv2.CvtColor(workImage, grayImage, ColorConversionCodes.BGR2GRAY);
+                if (inputImage.Channels() > 1)
+                    Cv2.CvtColor(inputImage, grayImage, ColorConversionCodes.BGR2GRAY);
                 else
-                    grayImage = workImage.Clone();
+                    grayImage = inputImage.Clone();
+
+                // ROI 사용 시: ROI 사각형에서 기준선과 검색 파라미터를 직접 도출
+                // ROI 미사용 시: StartPoint/EndPoint/SearchLength 사용
+                Point2d baselineStart, baselineEnd;
+                double searchLength;
+
+                if (UseROI && ROI.Width > 0 && ROI.Height > 0)
+                {
+                    var roi = GetAdjustedROI(inputImage);
+                    if (roi.Width >= roi.Height)
+                    {
+                        // 가로 기준선: 캘리퍼를 좌→우로 배치, 각 캘리퍼는 수직 방향 검색
+                        double cy = roi.Y + roi.Height / 2.0;
+                        baselineStart = new Point2d(roi.X, cy);
+                        baselineEnd = new Point2d(roi.X + roi.Width, cy);
+                        searchLength = roi.Height;
+                    }
+                    else
+                    {
+                        // 세로 기준선: 캘리퍼를 상→하로 배치, 각 캘리퍼는 수평 방향 검색
+                        double cx = roi.X + roi.Width / 2.0;
+                        baselineStart = new Point2d(cx, roi.Y);
+                        baselineEnd = new Point2d(cx, roi.Y + roi.Height);
+                        searchLength = roi.Width;
+                    }
+                }
+                else
+                {
+                    baselineStart = StartPoint;
+                    baselineEnd = EndPoint;
+                    searchLength = SearchLength;
+                }
 
                 // 기준선 벡터 계산
-                double dx = EndPoint.X - StartPoint.X;
-                double dy = EndPoint.Y - StartPoint.Y;
+                double dx = baselineEnd.X - baselineStart.X;
+                double dy = baselineEnd.Y - baselineStart.Y;
                 double baseLength = Math.Sqrt(dx * dx + dy * dy);
 
                 if (baseLength < 1)
@@ -127,27 +166,35 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 double vx = -uy;
                 double vy = ux;
 
+                // 검색 방향을 직관적으로 정규화: 왼쪽→오른쪽, 위→아래
+                // (vx < 0이면 오른쪽→왼쪽으로 검색하게 되므로 반전)
+                if (vx < 0 || (Math.Abs(vx) < 1e-6 && vy < 0))
+                {
+                    vx = -vx;
+                    vy = -vy;
+                }
+
                 // 결과 이미지 생성
                 Mat overlayImage = inputImage.Clone();
                 if (overlayImage.Channels() == 1)
                     Cv2.CvtColor(overlayImage, overlayImage, ColorConversionCodes.GRAY2BGR);
 
-                // Caliper 위치에서 Edge 검출
-                var foundPoints = new List<Point2d>();
+                // Caliper 위치에서 Edge 검출 (모든 좌표는 절대 좌표)
+                var foundEdges = new List<(Point2d Point, double Score)>();
                 var caliperResults = new List<CaliperResult>();
 
                 for (int i = 0; i < NumCalipers; i++)
                 {
-                    // Caliper 중심 위치
+                    // Caliper 중심 위치 (절대 좌표)
                     double t = (double)i / (NumCalipers - 1);
-                    double cx = StartPoint.X + dx * t;
-                    double cy = StartPoint.Y + dy * t;
+                    double cx = baselineStart.X + dx * t;
+                    double cy = baselineStart.Y + dy * t;
 
-                    // Caliper 검색 영역 (수직 방향)
-                    var searchStart = new Point2d(cx - vx * SearchLength / 2, cy - vy * SearchLength / 2);
-                    var searchEnd = new Point2d(cx + vx * SearchLength / 2, cy + vy * SearchLength / 2);
+                    // Caliper 검색 영역 (수직 방향, 절대 좌표)
+                    var searchStart = new Point2d(cx - vx * searchLength / 2, cy - vy * searchLength / 2);
+                    var searchEnd = new Point2d(cx + vx * searchLength / 2, cy + vy * searchLength / 2);
 
-                    // Edge 검출
+                    // Edge 검출 (전체 이미지에서 절대 좌표로 검색)
                     var edge = FindEdgeAlongLine(grayImage, searchStart, searchEnd, SearchWidth);
 
                     var caliperResult = new CaliperResult
@@ -158,7 +205,7 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                         Found = edge.HasValue
                     };
 
-                    // Caliper 검색 영역 표시
+                    // Caliper 검색 영역 표시 (이미 절대 좌표)
                     Cv2.Line(overlayImage,
                         new Point((int)searchStart.X, (int)searchStart.Y),
                         new Point((int)searchEnd.X, (int)searchEnd.Y),
@@ -166,14 +213,9 @@ namespace VMS.VisionSetup.VisionTools.Measurement
 
                     if (edge.HasValue)
                     {
-                        foundPoints.Add(edge.Value.Point);
+                        foundEdges.Add((edge.Value.Point, edge.Value.Score));
                         caliperResult.EdgePoint = edge.Value.Point;
                         caliperResult.EdgeScore = edge.Value.Score;
-
-                        // 검출된 Edge 표시
-                        Cv2.Circle(overlayImage,
-                            new Point((int)edge.Value.Point.X, (int)edge.Value.Point.Y),
-                            3, new Scalar(0, 255, 0), -1);
                     }
                     else
                     {
@@ -186,11 +228,28 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                     caliperResults.Add(caliperResult);
                 }
 
+                // 저점수 에지 필터링: 최대 점수의 30% 미만인 에지를 제외
+                double maxEdgeScore = foundEdges.Count > 0 ? foundEdges.Max(e => e.Score) : 0;
+                double scoreThreshold = maxEdgeScore * 0.3;
+                var filteredEdges = foundEdges.Where(e => e.Score >= scoreThreshold).ToList();
+
+                // 오버레이 그리기: 필터된 에지(녹색) vs 제외된 에지(노란색)
+                foreach (var edge in foundEdges)
+                {
+                    bool accepted = edge.Score >= scoreThreshold;
+                    var color = accepted ? new Scalar(0, 255, 0) : new Scalar(0, 255, 255);
+                    Cv2.Circle(overlayImage,
+                        new Point((int)edge.Point.X, (int)edge.Point.Y),
+                        3, color, -1);
+                }
+
+                var foundPoints = filteredEdges.Select(e => e.Point).ToList();
+
                 result.Data["CaliperResults"] = caliperResults;
                 result.Data["FoundCount"] = foundPoints.Count;
                 result.Data["TotalCalipers"] = NumCalipers;
 
-                // 직선 피팅
+                // 직선 피팅 (모든 점이 이미 절대 좌표)
                 if (foundPoints.Count >= MinFoundCalipers)
                 {
                     LineFitResult lineResult;
@@ -206,6 +265,8 @@ namespace VMS.VisionSetup.VisionTools.Measurement
 
                     if (lineResult.Success)
                     {
+                        // 좌표 변환 불필요 — 이미 절대 좌표
+
                         // 피팅된 직선 그리기
                         var linePoints = GetLineEndPoints(lineResult, inputImage.Width, inputImage.Height);
                         Cv2.Line(overlayImage,
@@ -213,7 +274,7 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                             new Point((int)linePoints.Item2.X, (int)linePoints.Item2.Y),
                             new Scalar(0, 255, 255), 2);
 
-                        // 결과 데이터
+                        // 결과 데이터 (절대 좌표)
                         result.Data["LineAngle"] = lineResult.Angle;
                         result.Data["LinePointX"] = lineResult.PointOnLine.X;
                         result.Data["LinePointY"] = lineResult.PointOnLine.Y;
@@ -248,9 +309,6 @@ namespace VMS.VisionSetup.VisionTools.Measurement
 
                 result.OutputImage = grayImage;
                 result.OverlayImage = overlayImage;
-
-                if (workImage != inputImage)
-                    workImage.Dispose();
             }
             catch (Exception ex)
             {
@@ -264,6 +322,49 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             return result;
         }
 
+        /// <summary>
+        /// CaliperTool과 동일한 Affine Warp 기반 프로파일 추출
+        /// </summary>
+        private double[] ExtractProfile(Mat image, Point2d start, double ux, double uy, double vx, double vy, double length, double searchWidth)
+        {
+            int profileLength = (int)length;
+            int stripHeight = Math.Max(1, (int)searchWidth);
+
+            double halfW = searchWidth / 2.0;
+            var srcPts = new Point2f[]
+            {
+                new Point2f((float)(start.X - vx * halfW), (float)(start.Y - vy * halfW)),
+                new Point2f((float)(start.X + ux * length - vx * halfW), (float)(start.Y + uy * length - vy * halfW)),
+                new Point2f((float)(start.X - vx * halfW + vx * searchWidth), (float)(start.Y - vy * halfW + vy * searchWidth))
+            };
+            var dstPts = new Point2f[]
+            {
+                new Point2f(0, 0),
+                new Point2f(profileLength, 0),
+                new Point2f(0, stripHeight)
+            };
+
+            var affine = Cv2.GetAffineTransform(srcPts, dstPts);
+
+            using var strip = new Mat();
+            Cv2.WarpAffine(image, strip, affine, new Size(profileLength, stripHeight),
+                InterpolationFlags.Linear, BorderTypes.Reflect101);
+
+            using var reduced = new Mat();
+            Cv2.Reduce(strip, reduced, ReduceDimension.Row, ReduceTypes.Avg, MatType.CV_64F);
+
+            var profile = new double[profileLength];
+            for (int i = 0; i < profileLength; i++)
+                profile[i] = reduced.At<double>(0, i);
+
+            return profile;
+        }
+
+        /// <summary>
+        /// 엣지 검출: Affine Warp 프로파일 → 미분 커널 → 서브픽셀 보간
+        /// 전략: "충분히 강한 에지 중 검색선 중심에 가장 가까운 것" 선택
+        /// (Cognex CogCaliperTool의 Closest + Contrast 조합과 동일한 접근)
+        /// </summary>
         private (Point2d Point, double Score)? FindEdgeAlongLine(Mat image, Point2d start, Point2d end, double width)
         {
             double dx = end.X - start.X;
@@ -278,64 +379,148 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             double vx = -uy;
             double vy = ux;
 
-            int profileLength = (int)length;
-            var profile = new double[profileLength];
+            // 1단계: Affine Warp 프로파일 추출 (SearchWidth 방향 평균화로 1차 노이즈 제거)
+            var profile = ExtractProfile(image, start, ux, uy, vx, vy, length, width);
+            int profileLength = profile.Length;
 
-            // 프로파일 추출
-            for (int i = 0; i < profileLength; i++)
+            // 2단계: FilterHalfWidth 미분 커널 (스무딩 내장 — 별도 가우시안 불필요)
+            var gradient = new double[profileLength];
+            for (int i = FilterHalfWidth; i < profileLength - FilterHalfWidth; i++)
             {
                 double sum = 0;
-                int count = 0;
-
-                for (int j = -(int)(width / 2); j <= (int)(width / 2); j++)
+                for (int j = -FilterHalfWidth; j <= FilterHalfWidth; j++)
                 {
-                    double px = start.X + ux * i + vx * j;
-                    double py = start.Y + uy * i + vy * j;
+                    sum += profile[i + j] * j;
+                }
+                gradient[i] = sum / (FilterHalfWidth * 2 + 1);
+            }
 
-                    int ix = (int)px;
-                    int iy = (int)py;
+            // 절대 그래디언트 (서브픽셀 보간용)
+            var absGradient = new double[profileLength];
+            for (int i = 0; i < profileLength; i++)
+                absGradient[i] = Math.Abs(gradient[i]);
 
-                    if (ix >= 0 && ix < image.Width && iy >= 0 && iy < image.Height)
+            // 3단계: 에지 후보 수집 (Local Maxima + Polarity 필터링)
+            var candidates = new List<(int Index, double Contrast)>();
+
+            for (int i = FilterHalfWidth + 1; i < profileLength - FilterHalfWidth - 1; i++)
+            {
+                double g = gradient[i];
+                bool isLocalExtreme = false;
+                EdgePolarity polarity = EdgePolarity.DarkToLight;
+
+                if (g > 0 && g > EdgeThreshold)
+                {
+                    if (g > gradient[i - 1] && g > gradient[i + 1])
                     {
-                        sum += image.At<byte>(iy, ix);
-                        count++;
+                        isLocalExtreme = true;
+                        polarity = EdgePolarity.DarkToLight;
+                    }
+                }
+                else if (g < 0 && -g > EdgeThreshold)
+                {
+                    if (g < gradient[i - 1] && g < gradient[i + 1])
+                    {
+                        isLocalExtreme = true;
+                        polarity = EdgePolarity.LightToDark;
                     }
                 }
 
-                profile[i] = count > 0 ? sum / count : 0;
+                if (!isLocalExtreme)
+                    continue;
+
+                bool polarityMatch = Polarity == EdgePolarity.Any ||
+                    (Polarity == EdgePolarity.DarkToLight && polarity == EdgePolarity.DarkToLight) ||
+                    (Polarity == EdgePolarity.LightToDark && polarity == EdgePolarity.LightToDark);
+
+                if (!polarityMatch)
+                    continue;
+
+                candidates.Add((i, Math.Abs(g)));
             }
 
-            // 그래디언트 계산 및 Edge 검출
-            double maxScore = 0;
-            int maxPos = -1;
-            EdgePolarity foundPolarity = EdgePolarity.DarkToLight;
+            if (candidates.Count == 0)
+                return null;
 
-            for (int i = 2; i < profileLength - 2; i++)
+            // 4단계: 에지 선택 — "충분히 강한 에지 중 중심에 가장 가까운 것"
+            //   1) 최대 contrast의 50% 이상인 후보만 남김 (약한 노이즈 에지 제거)
+            //   2) 남은 후보 중 검색선 중심(= 기준선 위치)에 가장 가까운 것 선택
+            double maxContrast = candidates.Max(c => c.Contrast);
+            double contrastFloor = maxContrast * 0.5;
+            double centerPos = length / 2.0;
+
+            var qualified = candidates.Where(c => c.Contrast >= contrastFloor).ToList();
+            if (qualified.Count == 0)
+                qualified = candidates;
+
+            // 중심에 가장 가까운 후보 선택
+            var best = qualified.OrderBy(c => Math.Abs(c.Index - centerPos)).First();
+
+            double subPixelPos = ParabolicSubPixel(absGradient, best.Index);
+            var edgePoint = new Point2d(
+                start.X + ux * subPixelPos,
+                start.Y + uy * subPixelPos);
+            return (edgePoint, best.Contrast);
+        }
+
+        /// <summary>
+        /// 1D 가우시안 스무딩: FilterHalfWidth를 sigma로 사용하여 프로파일 노이즈 제거
+        /// </summary>
+        private static double[] GaussianSmooth1D(double[] profile, int halfWidth)
+        {
+            int kernelSize = halfWidth * 2 + 1;
+            double sigma = halfWidth;
+            var kernel = new double[kernelSize];
+            double kernelSum = 0;
+
+            for (int i = 0; i < kernelSize; i++)
             {
-                double g = (-profile[i - 2] - profile[i - 1] + profile[i + 1] + profile[i + 2]) / 4;
+                double x = i - halfWidth;
+                kernel[i] = Math.Exp(-(x * x) / (2.0 * sigma * sigma));
+                kernelSum += kernel[i];
+            }
+            for (int i = 0; i < kernelSize; i++)
+                kernel[i] /= kernelSum;
 
-                bool matchesPolarity = false;
-                if (Polarity == EdgePolarity.Any)
-                    matchesPolarity = Math.Abs(g) > EdgeThreshold;
-                else if (Polarity == EdgePolarity.DarkToLight)
-                    matchesPolarity = g > EdgeThreshold;
-                else if (Polarity == EdgePolarity.LightToDark)
-                    matchesPolarity = -g > EdgeThreshold;
-
-                if (matchesPolarity && Math.Abs(g) > maxScore)
+            var smoothed = new double[profile.Length];
+            for (int i = 0; i < profile.Length; i++)
+            {
+                double sum = 0;
+                double wSum = 0;
+                for (int j = -halfWidth; j <= halfWidth; j++)
                 {
-                    maxScore = Math.Abs(g);
-                    maxPos = i;
-                    foundPolarity = g > 0 ? EdgePolarity.DarkToLight : EdgePolarity.LightToDark;
+                    int idx = i + j;
+                    if (idx >= 0 && idx < profile.Length)
+                    {
+                        double w = kernel[j + halfWidth];
+                        sum += profile[idx] * w;
+                        wSum += w;
+                    }
                 }
+                smoothed[i] = sum / wSum;
             }
+            return smoothed;
+        }
 
-            if (maxPos >= 0)
-            {
-                return (new Point2d(start.X + ux * maxPos, start.Y + uy * maxPos), maxScore);
-            }
+        /// <summary>
+        /// CaliperTool과 동일한 포물선 서브픽셀 보간
+        /// </summary>
+        private static double ParabolicSubPixel(double[] data, int index)
+        {
+            if (index <= 0 || index >= data.Length - 1)
+                return index;
 
-            return null;
+            double fPrev = data[index - 1];
+            double fCurr = data[index];
+            double fNext = data[index + 1];
+
+            double denom = 2.0 * fPrev - 4.0 * fCurr + 2.0 * fNext;
+            if (Math.Abs(denom) < 1e-12)
+                return index;
+
+            double offset = (fPrev - fNext) / denom;
+            offset = Math.Clamp(offset, -0.5, 0.5);
+            return index + offset;
         }
 
         private LineFitResult FitLineLeastSquares(List<Point2d> points)
@@ -494,6 +679,7 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 SearchWidth = this.SearchWidth,
                 Polarity = this.Polarity,
                 EdgeThreshold = this.EdgeThreshold,
+                FilterHalfWidth = this.FilterHalfWidth,
                 FitMethod = this.FitMethod,
                 RansacThreshold = this.RansacThreshold,
                 MinFoundCalipers = this.MinFoundCalipers

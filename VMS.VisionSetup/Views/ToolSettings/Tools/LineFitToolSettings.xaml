@@ -25,6 +25,10 @@
             Value="{Binding EdgeThreshold}" Minimum="1" Maximum="100"
             TickFrequency="1" ValueFormat="F0"
             ToolType="LineFitTool" ParameterName="EdgeThreshold"/>
+        <controls:SliderParameter Label="Filter Half Width"
+            Value="{Binding FilterHalfWidth}" Minimum="1" Maximum="10"
+            TickFrequency="1" SnapToTick="True" ValueFormat="F0"
+            ToolType="LineFitTool" ParameterName="FilterHalfWidth"/>
         <controls:EnumComboBoxParameter Label="Fit Method"
             ItemsSource="{conv:EnumValues {x:Type meas:LineFitMethod}}"
             SelectedValue="{Binding FitMethod}"
