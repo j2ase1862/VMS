@@ -1,0 +1,344 @@
+<UserControl x:Class="VMS.VisionSetup.Views.Sequence.SequenceNodePropertiesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:VMS.VisionSetup.Views.Sequence"
+             xmlns:seq="clr-namespace:VMS.PLC.Models.Sequence;assembly=VMS.PLC"
+             mc:Ignorable="d"
+             d:DesignWidth="280" d:DesignHeight="500">
+
+    <UserControl.Resources>
+        <local:NodeTypeVisibilityConverter x:Key="NodeTypeVisibilityConverter"/>
+        <Style TargetType="TextBlock" x:Key="LabelStyle">
+            <Setter Property="Foreground" Value="#CCCCCC"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Margin" Value="0,8,0,4"/>
+        </Style>
+
+        <!-- 다크 TextBox -->
+        <Style TargetType="TextBox" x:Key="InputStyle">
+            <Setter Property="Background" Value="#2D2D30"/>
+            <Setter Property="Foreground" Value="#E0E0E0"/>
+            <Setter Property="BorderBrush" Value="#3F3F46"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="CaretBrush" Value="White"/>
+            <Setter Property="SelectionBrush" Value="#0078D4"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="Bd" CornerRadius="4"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                SnapsToDevicePixels="True">
+                            <ScrollViewer x:Name="PART_ContentHost" Padding="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#555555"/>
+                            </Trigger>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#0078D4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 다크 ComboBox 토글 버튼 -->
+        <ControlTemplate x:Key="PropComboBoxToggle" TargetType="ToggleButton">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="28"/>
+                </Grid.ColumnDefinitions>
+                <Border x:Name="Bd" Grid.ColumnSpan="2" CornerRadius="4"
+                        Background="#2D2D30" BorderBrush="#3F3F46" BorderThickness="1"/>
+                <Border Grid.Column="1" CornerRadius="0,4,4,0" Background="Transparent">
+                    <Path x:Name="Arrow" Data="M0,0 L4,4 L8,0" Stroke="#AAAAAA" StrokeThickness="1.5"
+                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+            </Grid>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="Bd" Property="BorderBrush" Value="#555555"/>
+                    <Setter TargetName="Arrow" Property="Stroke" Value="White"/>
+                </Trigger>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter TargetName="Bd" Property="BorderBrush" Value="#0078D4"/>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+        <!-- 다크 ComboBox -->
+        <Style TargetType="ComboBox" x:Key="ComboStyle">
+            <Setter Property="Foreground" Value="#E0E0E0"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton Template="{StaticResource PropComboBoxToggle}"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                          Focusable="False" ClickMode="Press"/>
+                            <ContentPresenter IsHitTestVisible="False"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              Margin="10,0,28,0" VerticalAlignment="Center"
+                                              HorizontalAlignment="Left"/>
+                            <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom"
+                                   AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
+                                <Border Background="#2D2D30" BorderBrush="#3F3F46" BorderThickness="1"
+                                        CornerRadius="4" Margin="0,2,0,0"
+                                        MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                                        MinWidth="{TemplateBinding ActualWidth}">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                        <StackPanel IsItemsHost="True"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 다크 ComboBoxItem -->
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Foreground" Value="#E0E0E0"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border x:Name="Bd" Background="Transparent" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#3E3E42"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#0078D4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 다크 CheckBox -->
+        <Style TargetType="CheckBox" x:Key="CheckStyle">
+            <Setter Property="Foreground" Value="#CCCCCC"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Margin" Value="0,4"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border x:Name="Box" Width="18" Height="18" CornerRadius="3"
+                                    Background="#2D2D30" BorderBrush="#555555" BorderThickness="1.5"
+                                    VerticalAlignment="Center">
+                                <Path x:Name="Check" Data="M3,7 L7,11 L13,3" Stroke="White" StrokeThickness="2"
+                                      Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                      Width="14" Height="14" Stretch="Uniform" Margin="2"/>
+                            </Border>
+                            <ContentPresenter Margin="8,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Box" Property="Background" Value="#0078D4"/>
+                                <Setter TargetName="Box" Property="BorderBrush" Value="#0078D4"/>
+                                <Setter TargetName="Check" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Box" Property="BorderBrush" Value="#0078D4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Background="Transparent">
+        <StackPanel Margin="10">
+            <!-- 노드 이름 (공통) -->
+            <TextBlock Text="노드 이름" Style="{StaticResource LabelStyle}"/>
+            <TextBox Text="{Binding SelectedNode.Name, UpdateSourceTrigger=PropertyChanged}"
+                     Style="{StaticResource InputStyle}"/>
+
+            <!-- 노드 타입 (읽기 전용) -->
+            <TextBlock Text="노드 타입" Style="{StaticResource LabelStyle}"/>
+            <TextBlock Text="{Binding SelectedNode.NodeType}" Foreground="#AAAAAA" FontSize="12" Margin="0,0,0,8"/>
+
+            <!-- InputCheck 설정 -->
+            <StackPanel Visibility="{Binding SelectedNode.NodeType, Converter={StaticResource NodeTypeVisibilityConverter}, ConverterParameter=InputCheck}">
+                <TextBlock Text="── Input Check ──" Foreground="#2196F3" FontWeight="SemiBold" Margin="0,10,0,4"/>
+                <TextBlock Text="PLC 주소" Style="{StaticResource LabelStyle}"/>
+                <TextBox Text="{Binding SelectedNode.Config.PlcAddress, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource InputStyle}"/>
+                <TextBlock Text="체크 모드" Style="{StaticResource LabelStyle}"/>
+                <ComboBox ItemsSource="{Binding Source={x:Static local:SequenceNodePropertiesView.InputCheckModes}}"
+                          SelectedItem="{Binding SelectedNode.Config.CheckMode}"
+                          Style="{StaticResource ComboStyle}"/>
+                <TextBlock Text="비교값" Style="{StaticResource LabelStyle}"/>
+                <TextBox Text="{Binding SelectedNode.Config.CompareValue, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource InputStyle}"/>
+                <TextBlock Text="타임아웃 (ms, -1=무제한)" Style="{StaticResource LabelStyle}"/>
+                <TextBox Text="{Binding SelectedNode.Config.TimeoutMs, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource InputStyle}"/>
+                <!-- 테스트 읽기 버튼 -->
+                <Button Content="▶ 테스트 읽기" Command="{Binding TestReadInputCommand}"
+                        Margin="0,10,0,0" Padding="10,6" Cursor="Hand"
+                        Foreground="White" FontSize="12" FontWeight="SemiBold"
+                        IsEnabled="{Binding IsPlcConnected}">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd" CornerRadius="4" Background="#1976D2"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Opacity" Value="0.85"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Bd" Property="Opacity" Value="0.7"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="Bd" Property="Opacity" Value="0.35"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </StackPanel>
+
+            <!-- OutputAction 설정 -->
+            <StackPanel Visibility="{Binding SelectedNode.NodeType, Converter={StaticResource NodeTypeVisibilityConverter}, ConverterParameter=OutputAction}">
+                <TextBlock Text="── Output Action ──" Foreground="#FF9800" FontWeight="SemiBold" Margin="0,10,0,4"/>
+                <TextBlock Text="PLC 주소" Style="{StaticResource LabelStyle}"/>
+                <TextBox Text="{Binding SelectedNode.Config.PlcAddress, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource InputStyle}"/>
+                <TextBlock Text="데이터 타입" Style="{StaticResource LabelStyle}"/>
+                <ComboBox ItemsSource="{Binding Source={x:Static local:SequenceNodePropertiesView.PlcDataTypes}}"
+                          SelectedItem="{Binding SelectedNode.Config.OutputDataType}"
+                          Style="{StaticResource ComboStyle}"/>
+                <TextBlock Text="Bit 값" Style="{StaticResource LabelStyle}"/>
+                <CheckBox IsChecked="{Binding SelectedNode.Config.BitValue}" Content="ON" Style="{StaticResource CheckStyle}"/>
+                <TextBlock Text="Word/Int 값" Style="{StaticResource LabelStyle}"/>
+                <TextBox Text="{Binding SelectedNode.Config.WordValue, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource InputStyle}"/>
+                <TextBlock Text="Float 값" Style="{StaticResource LabelStyle}"/>
+                <TextBox Text="{Binding SelectedNode.Config.FloatValue, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource InputStyle}"/>
+                <!-- 테스트 출력 버튼 -->
+                <Button Content="▶ 테스트 출력" Command="{Binding TestWriteOutputCommand}"
+                        Margin="0,10,0,0" Padding="10,6" Cursor="Hand"
+                        Foreground="White" FontSize="12" FontWeight="SemiBold"
+                        IsEnabled="{Binding IsPlcConnected}">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd" CornerRadius="4" Background="#E65100"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Opacity" Value="0.85"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Bd" Property="Opacity" Value="0.7"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="Bd" Property="Opacity" Value="0.35"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </StackPanel>
+
+            <!-- Inspection 설정 -->
+            <StackPanel Visibility="{Binding SelectedNode.NodeType, Converter={StaticResource NodeTypeVisibilityConverter}, ConverterParameter=Inspection}">
+                <TextBlock Text="── Inspection ──" Foreground="#9C27B0" FontWeight="SemiBold" Margin="0,10,0,4"/>
+                <TextBlock Text="카메라 ID" Style="{StaticResource LabelStyle}"/>
+                <ComboBox ItemsSource="{Binding AvailableCameraIds}"
+                          SelectedItem="{Binding SelectedNode.Config.CameraId}"
+                          Style="{StaticResource ComboStyle}"/>
+            </StackPanel>
+
+            <!-- RecipeChange 설정 -->
+            <StackPanel Visibility="{Binding SelectedNode.NodeType, Converter={StaticResource NodeTypeVisibilityConverter}, ConverterParameter=RecipeChange}">
+                <TextBlock Text="── Recipe Change ──" Foreground="#E91E63" FontWeight="SemiBold" Margin="0,10,0,4"/>
+                <TextBlock Text="Recipe 신호 주소" Style="{StaticResource LabelStyle}"/>
+                <TextBox Text="{Binding SelectedNode.Config.RecipeSignalAddress, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource InputStyle}"/>
+                <TextBlock Text="신호 체크 모드" Style="{StaticResource LabelStyle}"/>
+                <ComboBox ItemsSource="{Binding Source={x:Static local:SequenceNodePropertiesView.InputCheckModes}}"
+                          SelectedItem="{Binding SelectedNode.Config.RecipeSignalCheckMode}"
+                          Style="{StaticResource ComboStyle}"/>
+                <TextBlock Text="비교값 (Word 모드용)" Style="{StaticResource LabelStyle}"/>
+                <TextBox Text="{Binding SelectedNode.Config.RecipeSignalCompareValue, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource InputStyle}"/>
+                <TextBlock Text="Recipe Index 주소 (Word)" Style="{StaticResource LabelStyle}" Margin="0,6,0,0"/>
+                <TextBox Text="{Binding SelectedNode.Config.RecipeIndexAddress, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource InputStyle}"/>
+                <TextBlock Text="신호 조건 충족 → Index 읽기 → 현재 레시피와&#x0a;비교하여 다르면 변경, 같으면 스킵.&#x0a;신호 주소 미설정 시 매번 Index를 읽습니다."
+                           Foreground="#999999" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"/>
+            </StackPanel>
+
+            <!-- StepChange 설정 -->
+            <StackPanel Visibility="{Binding SelectedNode.NodeType, Converter={StaticResource NodeTypeVisibilityConverter}, ConverterParameter=StepChange}">
+                <TextBlock Text="── Step Change ──" Foreground="#00897B" FontWeight="SemiBold" Margin="0,10,0,4"/>
+                <TextBlock Text="Step 신호 주소" Style="{StaticResource LabelStyle}"/>
+                <TextBox Text="{Binding SelectedNode.Config.StepSignalAddress, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource InputStyle}"/>
+                <TextBlock Text="신호 체크 모드" Style="{StaticResource LabelStyle}"/>
+                <ComboBox ItemsSource="{Binding Source={x:Static local:SequenceNodePropertiesView.InputCheckModes}}"
+                          SelectedItem="{Binding SelectedNode.Config.StepSignalCheckMode}"
+                          Style="{StaticResource ComboStyle}"/>
+                <TextBlock Text="비교값 (Word 모드용)" Style="{StaticResource LabelStyle}"/>
+                <TextBox Text="{Binding SelectedNode.Config.StepSignalCompareValue, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource InputStyle}"/>
+                <TextBlock Text="Step Index 주소 (Word)" Style="{StaticResource LabelStyle}" Margin="0,6,0,0"/>
+                <TextBox Text="{Binding SelectedNode.Config.StepIndexAddress, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource InputStyle}"/>
+                <TextBlock Text="신호 조건 충족 → Step Index 읽기 → 해당 스텝의&#x0a;검사 툴로 Inspection 수행.&#x0a;신호 미설정 시 항상 스텝 1(index 0) 사용."
+                           Foreground="#999999" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"/>
+            </StackPanel>
+
+            <!-- Delay 설정 -->
+            <StackPanel Visibility="{Binding SelectedNode.NodeType, Converter={StaticResource NodeTypeVisibilityConverter}, ConverterParameter=Delay}">
+                <TextBlock Text="── Delay ──" Foreground="#9E9E9E" FontWeight="SemiBold" Margin="0,10,0,4"/>
+                <TextBlock Text="지연 시간 (ms)" Style="{StaticResource LabelStyle}"/>
+                <TextBox Text="{Binding SelectedNode.Config.DelayMs, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource InputStyle}"/>
+            </StackPanel>
+
+            <!-- Repeat 설정 -->
+            <StackPanel Visibility="{Binding SelectedNode.NodeType, Converter={StaticResource NodeTypeVisibilityConverter}, ConverterParameter=Repeat}">
+                <TextBlock Text="── Repeat ──" Foreground="#00BCD4" FontWeight="SemiBold" Margin="0,10,0,4"/>
+                <TextBlock Text="반복 횟수 (-1=무한)" Style="{StaticResource LabelStyle}"/>
+                <TextBox Text="{Binding SelectedNode.Config.RepeatCount, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource InputStyle}"/>
+            </StackPanel>
+
+            <!-- Branch 설정 -->
+            <StackPanel Visibility="{Binding SelectedNode.NodeType, Converter={StaticResource NodeTypeVisibilityConverter}, ConverterParameter=Branch}">
+                <TextBlock Text="── Branch ──" Foreground="#FFEB3B" FontWeight="SemiBold" Margin="0,10,0,4"/>
+                <CheckBox IsChecked="{Binding SelectedNode.Config.BranchOnAllCameras}"
+                          Content="전체 카메라 결과로 판정" Style="{StaticResource CheckStyle}"/>
+                <TextBlock Text="체크: 모든 카메라 OK일 때 True&#x0a;해제: 직전 Inspection 결과로 분기"
+                           Foreground="#999999" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"/>
+            </StackPanel>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

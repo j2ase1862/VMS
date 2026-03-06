@@ -168,14 +168,6 @@ namespace VMS.VisionSetup.Controls
             }
         }
 
-        private void HelpButton_Click(object sender, RoutedEventArgs e)
-        {
-            HelpPopup.IsOpen = !HelpPopup.IsOpen;
-        }
-
-        private void ClosePopup_Click(object sender, RoutedEventArgs e)
-        {
-            HelpPopup.IsOpen = false;
-        }
+        // Popup toggle is handled via ToggleButton.IsChecked ↔ Popup.IsOpen binding in XAML
     }
 }

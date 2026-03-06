@@ -1,4 +1,5 @@
 using VMS.VisionSetup.Models;
+using VMS.VisionSetup.Services;
 using OpenCvSharp;
 using System;
 using System.Collections.Generic;
@@ -28,11 +29,11 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
             set => SetProperty(ref _thresholdValue, Math.Clamp(value, 0, 255));
         }
 
-        private bool _invertPolarity = false;
-        public bool InvertPolarity
+        private SegmentationPolarity _segmentationPolarity = SegmentationPolarity.LightOnDark;
+        public SegmentationPolarity SegmentationPolarity
         {
-            get => _invertPolarity;
-            set => SetProperty(ref _invertPolarity, value);
+            get => _segmentationPolarity;
+            set => SetProperty(ref _segmentationPolarity, value);
         }
 
         // 면적 필터
@@ -169,6 +170,73 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
             set => SetProperty(ref _drawLabels, value);
         }
 
+        // ── 판정 (Judgment) ──
+
+        private bool _enableJudgment = false;
+        public bool EnableJudgment
+        {
+            get => _enableJudgment;
+            set => SetProperty(ref _enableJudgment, value);
+        }
+
+        // 면적 판정: 기준 면적 ± 허용 오차
+        private bool _useAreaJudgment = false;
+        public bool UseAreaJudgment
+        {
+            get => _useAreaJudgment;
+            set => SetProperty(ref _useAreaJudgment, value);
+        }
+
+        private double _expectedArea = 1000;
+        public double ExpectedArea
+        {
+            get => _expectedArea;
+            set => SetProperty(ref _expectedArea, Math.Max(0, value));
+        }
+
+        private double _areaTolerancePlus = 200;
+        public double AreaTolerancePlus
+        {
+            get => _areaTolerancePlus;
+            set => SetProperty(ref _areaTolerancePlus, Math.Max(0, value));
+        }
+
+        private double _areaToleranceMinus = 200;
+        public double AreaToleranceMinus
+        {
+            get => _areaToleranceMinus;
+            set => SetProperty(ref _areaToleranceMinus, Math.Max(0, value));
+        }
+
+        // 개수 판정
+        private bool _useCountJudgment = false;
+        public bool UseCountJudgment
+        {
+            get => _useCountJudgment;
+            set => SetProperty(ref _useCountJudgment, value);
+        }
+
+        private CountJudgmentMode _countMode = CountJudgmentMode.Equal;
+        public CountJudgmentMode CountMode
+        {
+            get => _countMode;
+            set => SetProperty(ref _countMode, value);
+        }
+
+        private int _expectedCount = 1;
+        public int ExpectedCount
+        {
+            get => _expectedCount;
+            set => SetProperty(ref _expectedCount, Math.Max(0, value));
+        }
+
+        private int _expectedCountMax = 10;
+        public int ExpectedCountMax
+        {
+            get => _expectedCountMax;
+            set => SetProperty(ref _expectedCountMax, Math.Max(ExpectedCount, value));
+        }
+
         public BlobTool()
         {
             Name = "Blob";
@@ -203,13 +271,15 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
                 // 이진화 처리
                 if (UseInternalThreshold)
                 {
-                    var threshType = InvertPolarity ? ThresholdTypes.BinaryInv : ThresholdTypes.Binary;
+                    var threshType = SegmentationPolarity == SegmentationPolarity.DarkOnLight
+                        ? ThresholdTypes.BinaryInv : ThresholdTypes.Binary;
                     Cv2.Threshold(grayImage, binaryImage, ThresholdValue, 255, threshType);
                 }
                 else
                 {
                     binaryImage = grayImage.Clone();
-                    if (InvertPolarity) Cv2.BitwiseNot(binaryImage, binaryImage);
+                    if (SegmentationPolarity == SegmentationPolarity.DarkOnLight)
+                        Cv2.BitwiseNot(binaryImage, binaryImage);
                 }
 
                 // Contour 검출 (잘라낸 이미지 기준 상대 좌표 반환, 0,0 기준)
@@ -241,16 +311,25 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
                 if (blobs.Count > MaxBlobCount)
                     blobs = blobs.Take(MaxBlobCount).ToList();
 
-                // 결과 오버레이 이미지 생성 (원본 이미지 전체 크기)
-                Mat overlayImage = inputImage.Clone();
-                if (overlayImage.Channels() == 1)
-                    Cv2.CvtColor(overlayImage, overlayImage, ColorConversionCodes.GRAY2BGR);
-
-                // ROI 영역 가이드 라인 표시
-                if (UseROI && adjustedROI.Width > 0 && adjustedROI.Height > 0)
+                // result.Data 채우기 — PLC 전송 및 Tool 간 데이터 전달용
+                double totalArea = blobs.Sum(b => b.Area);
+                result.Data["BlobCount"] = blobs.Count;
+                result.Data["TotalArea"] = totalArea;
+                if (blobs.Count > 0)
                 {
-                    Cv2.Rectangle(overlayImage, adjustedROI, new Scalar(0, 255, 255), 2);
+                    var first = blobs[0];
+                    result.Data["CenterX"] = first.CenterX;
+                    result.Data["CenterY"] = first.CenterY;
+                    result.Data["Area"] = first.Area;
+                    result.Data["Perimeter"] = first.Perimeter;
+                    result.Data["Circularity"] = first.Circularity;
+                    result.Data["Angle"] = first.Angle;
+                    result.Data["BoundingRect"] = first.BoundingRect;
                 }
+                result.Data["Blobs"] = blobs;
+
+                // 결과 오버레이 이미지 생성 (원본 컬러 이미지 기반)
+                Mat overlayImage = GetColorOverlayBase(inputImage);
 
                 // Blob 그래픽 그리기
                 // blob 데이터는 이미 절대 좌표이므로 오프셋을 다시 적용하지 않음
@@ -291,9 +370,74 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
                     });
                 }
 
-                // 최종 결과 구성
-                result.Success = blobs.Count > 0;
-                result.Message = $"Blob 검출 완료: {blobs.Count}개";
+                // 판정 (Judgment)
+                bool judgmentPass = true;
+                var judgmentDetails = new List<string>();
+
+                if (EnableJudgment || UseAreaJudgment || UseCountJudgment)
+                {
+                    // 면적 판정
+                    if (UseAreaJudgment && blobs.Count > 0)
+                    {
+                        double areaLow = ExpectedArea - AreaToleranceMinus;
+                        double areaHigh = ExpectedArea + AreaTolerancePlus;
+                        bool areaPass = totalArea >= areaLow && totalArea <= areaHigh;
+                        if (!areaPass)
+                        {
+                            judgmentPass = false;
+                            judgmentDetails.Add($"Area NG: {totalArea:F1} (기준 {areaLow:F1}~{areaHigh:F1})");
+                        }
+                        else
+                        {
+                            judgmentDetails.Add($"Area OK: {totalArea:F1}");
+                        }
+                        result.Data["AreaJudgment"] = areaPass;
+                    }
+
+                    // 개수 판정
+                    if (UseCountJudgment)
+                    {
+                        bool countPass = CountMode switch
+                        {
+                            CountJudgmentMode.Equal => blobs.Count == ExpectedCount,
+                            CountJudgmentMode.GreaterOrEqual => blobs.Count >= ExpectedCount,
+                            CountJudgmentMode.LessOrEqual => blobs.Count <= ExpectedCount,
+                            CountJudgmentMode.Range => blobs.Count >= ExpectedCount && blobs.Count <= ExpectedCountMax,
+                            _ => true
+                        };
+                        if (!countPass)
+                        {
+                            judgmentPass = false;
+                            string expected = CountMode switch
+                            {
+                                CountJudgmentMode.Equal => $"={ExpectedCount}",
+                                CountJudgmentMode.GreaterOrEqual => $">={ExpectedCount}",
+                                CountJudgmentMode.LessOrEqual => $"<={ExpectedCount}",
+                                CountJudgmentMode.Range => $"{ExpectedCount}~{ExpectedCountMax}",
+                                _ => ""
+                            };
+                            judgmentDetails.Add($"Count NG: {blobs.Count} (기준 {expected})");
+                        }
+                        else
+                        {
+                            judgmentDetails.Add($"Count OK: {blobs.Count}");
+                        }
+                        result.Data["CountJudgment"] = countPass;
+                    }
+
+                    result.Data["JudgmentPass"] = judgmentPass;
+                    result.Success = judgmentPass;
+                    string status = judgmentPass ? "PASS" : "FAIL";
+                    string detail = judgmentDetails.Count > 0 ? $" [{string.Join(", ", judgmentDetails)}]" : "";
+                    result.Message = $"Blob {status}: {blobs.Count}개 검출{detail}";
+                }
+                else
+                {
+                    result.Success = blobs.Count > 0;
+                    result.Message = $"Blob 검출 완료: {blobs.Count}개";
+                }
+
+                // 최종 결과 이미지 구성
                 result.OutputImage = UseROI ? ApplyROIResult(inputImage, binaryImage) : binaryImage.Clone();
                 result.OverlayImage = overlayImage;
                 if (workImage != inputImage)
@@ -412,6 +556,21 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
             return result;
         }
 
+        private Mat GetColorOverlayBase(Mat inputImage)
+        {
+            var orig = OverlayBaseImage ?? VisionService.Instance.CurrentImage;
+            if (orig != null && !orig.Empty()
+                && orig.Width == inputImage.Width && orig.Height == inputImage.Height)
+            {
+                return orig.Channels() >= 3
+                    ? orig.Clone()
+                    : orig.CvtColor(ColorConversionCodes.GRAY2BGR);
+            }
+            return inputImage.Channels() >= 3
+                ? inputImage.Clone()
+                : inputImage.CvtColor(ColorConversionCodes.GRAY2BGR);
+        }
+
         private Scalar GetBlobColor(int index)
         {
             // 다양한 색상으로 Blob 구분
@@ -430,9 +589,19 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
             return colors[index % colors.Length];
         }
 
+        public override List<string> GetAvailableResultKeys()
+        {
+            return new List<string>
+            {
+                "Success", "BlobCount", "TotalArea", "CenterX", "CenterY",
+                "Area", "Perimeter", "Circularity", "Angle",
+                "AreaJudgment", "CountJudgment", "JudgmentPass"
+            };
+        }
+
         public override VisionToolBase Clone()
         {
-            return new BlobTool
+            var clone = new BlobTool
             {
                 Name = this.Name,
                 ToolType = this.ToolType,
@@ -441,7 +610,7 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
                 UseROI = this.UseROI,
                 UseInternalThreshold = this.UseInternalThreshold,
                 ThresholdValue = this.ThresholdValue,
-                InvertPolarity = this.InvertPolarity,
+                SegmentationPolarity = this.SegmentationPolarity,
                 MinArea = this.MinArea,
                 MaxArea = this.MaxArea,
                 MinPerimeter = this.MinPerimeter,
@@ -459,8 +628,19 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
                 DrawContours = this.DrawContours,
                 DrawBoundingBox = this.DrawBoundingBox,
                 DrawCenterPoint = this.DrawCenterPoint,
-                DrawLabels = this.DrawLabels
+                DrawLabels = this.DrawLabels,
+                EnableJudgment = this.EnableJudgment,
+                UseAreaJudgment = this.UseAreaJudgment,
+                ExpectedArea = this.ExpectedArea,
+                AreaTolerancePlus = this.AreaTolerancePlus,
+                AreaToleranceMinus = this.AreaToleranceMinus,
+                UseCountJudgment = this.UseCountJudgment,
+                CountMode = this.CountMode,
+                ExpectedCount = this.ExpectedCount,
+                ExpectedCountMax = this.ExpectedCountMax
             };
+            CopyPlcMappingsTo(clone);
+            return clone;
         }
     }
 
@@ -503,5 +683,26 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
         CenterY,
         Circularity,
         AspectRatio
+    }
+
+    public enum SegmentationPolarity
+    {
+        LightOnDark,
+        DarkOnLight
+    }
+
+    /// <summary>
+    /// Blob 개수 판정 모드
+    /// </summary>
+    public enum CountJudgmentMode
+    {
+        /// <summary>정확히 N개</summary>
+        Equal,
+        /// <summary>N개 이상</summary>
+        GreaterOrEqual,
+        /// <summary>N개 이하</summary>
+        LessOrEqual,
+        /// <summary>Min ~ Max 범위</summary>
+        Range
     }
 }

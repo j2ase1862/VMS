@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using VMS.Camera.Models;
+using VMS.PLC.Models;
 
 namespace VMS.Models
 {
@@ -16,6 +18,27 @@ namespace VMS.Models
         public PlcCommunicationType CommunicationType { get; set; } = PlcCommunicationType.Ethernet;
         public string PlcIpAddress { get; set; } = "192.168.0.100";
         public int PlcPort { get; set; } = 502;
+
+        // Modbus
+        public byte ModbusUnitId { get; set; } = 255;
+
+        // Serial
+        public string SerialPortName { get; set; } = "COM1";
+        public int BaudRate { get; set; } = 115200;
+        public int DataBits { get; set; } = 8;
+        public PlcSerialParity Parity { get; set; } = PlcSerialParity.None;
+        public PlcSerialStopBits StopBits { get; set; } = PlcSerialStopBits.One;
+
+        // Performance & Stability
+        public int PollingIntervalMs { get; set; } = 20;
+        public bool UseHeartbeat { get; set; }
+        public string HeartbeatAddress { get; set; } = string.Empty;
+        public bool AutoReconnect { get; set; } = true;
+
+        // Data Synchronization
+        public PlcWriteMode WriteMode { get; set; } = PlcWriteMode.Handshake;
+        public PlcEndianMode EndianMode { get; set; } = PlcEndianMode.LittleEndian;
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string Version { get; set; } = "1.0.0";
     }
@@ -48,18 +71,4 @@ namespace VMS.Models
         Virtual
     }
 
-    public enum CameraManufacturer
-    {
-        Virtual, HIK, Basler, IDS, Cognex, Keyence, Dalsa, Baumer, Allied_Vision, FLIR, JAI, Other
-    }
-
-    public enum PlcVendor
-    {
-        None, Mitsubishi, Siemens, LS, Omron
-    }
-
-    public enum PlcCommunicationType
-    {
-        Ethernet, Serial, EthernetIP, Profinet
-    }
 }

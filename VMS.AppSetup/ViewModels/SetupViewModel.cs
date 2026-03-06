@@ -1,17 +1,22 @@
+using VMS.AppSetup.Interfaces;
 using VMS.AppSetup.Models;
-using VMS.AppSetup.Services;
+using VMS.Camera.Models;
+using VMS.PLC.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Windows;
 
 namespace VMS.AppSetup.ViewModels
 {
     public partial class SetupViewModel : ObservableObject
     {
         private const int TotalPages = 4;
+
+        private readonly IConfigurationService _configService;
+        private readonly IDialogService _dialogService;
+        private readonly Action _shutdownAction;
 
         [ObservableProperty]
         private int _currentPage = 1;
@@ -39,7 +44,7 @@ namespace VMS.AppSetup.ViewModels
         [ObservableProperty]
         private int _virtualCameraCount = 1;
 
-        // Page 4: PLC Settings
+        // Page 4: PLC Settings — Vendor & Communication
         [ObservableProperty]
         private PlcVendor _selectedPlcVendor = PlcVendor.None;
 
@@ -51,6 +56,51 @@ namespace VMS.AppSetup.ViewModels
 
         [ObservableProperty]
         private int _plcPort = 502;
+
+        // Page 4: Modbus
+        [ObservableProperty]
+        private byte _modbusUnitId = 255;
+
+        // Page 4: Serial
+        [ObservableProperty]
+        private string _serialPortName = "COM1";
+
+        [ObservableProperty]
+        private int _baudRate = 115200;
+
+        [ObservableProperty]
+        private int _dataBits = 8;
+
+        [ObservableProperty]
+        private PlcSerialParity _parity = PlcSerialParity.None;
+
+        [ObservableProperty]
+        private PlcSerialStopBits _stopBits = PlcSerialStopBits.One;
+
+        // Page 4: Performance & Stability
+        [ObservableProperty]
+        private int _pollingIntervalMs = 20;
+
+        [ObservableProperty]
+        private bool _useHeartbeat;
+
+        [ObservableProperty]
+        private string _heartbeatAddress = string.Empty;
+
+        [ObservableProperty]
+        private bool _autoReconnect = true;
+
+        // Page 4: Data Synchronization
+        [ObservableProperty]
+        private PlcWriteMode _writeMode = PlcWriteMode.Handshake;
+
+        [ObservableProperty]
+        private PlcEndianMode _endianMode = PlcEndianMode.LittleEndian;
+
+        // Dynamic visibility
+        public bool IsSerialMode => SelectedCommunicationType == PlcCommunicationType.Serial;
+        public bool IsEthernetMode => SelectedCommunicationType != PlcCommunicationType.Serial;
+        public bool IsModbusVendor => SelectedPlcVendor == PlcVendor.Modbus;
 
         // Navigation
         [ObservableProperty]
@@ -70,25 +120,57 @@ namespace VMS.AppSetup.ViewModels
         public Array PlcVendors => Enum.GetValues(typeof(PlcVendor));
         public Array CommunicationTypes => Enum.GetValues(typeof(PlcCommunicationType));
         public Array CameraModes => Enum.GetValues(typeof(CameraMode));
+        public Array SerialParities => Enum.GetValues(typeof(PlcSerialParity));
+        public Array SerialStopBitsValues => Enum.GetValues(typeof(PlcSerialStopBits));
+        public Array WriteModes => Enum.GetValues(typeof(PlcWriteMode));
+        public Array EndianModes => Enum.GetValues(typeof(PlcEndianMode));
+        public int[] BaudRateOptions => [9600, 19200, 38400, 57600, 115200];
+        public int[] DataBitsOptions => [7, 8];
 
-        public SetupViewModel()
+        public SetupViewModel(IConfigurationService configService, IDialogService dialogService, Action shutdownAction)
         {
+            _configService = configService;
+            _dialogService = dialogService;
+            _shutdownAction = shutdownAction;
+
             UpdatePageInfo();
             LoadExistingConfiguration();
         }
 
         private void LoadExistingConfiguration()
         {
-            var config = ConfigurationService.Instance.LoadConfiguration();
+            var config = _configService.LoadConfiguration();
             if (config != null)
             {
                 ApplicationName = config.ApplicationName;
                 SystemIpAddress = config.SystemIpAddress;
                 CameraMode = config.CameraMode;
+
+                // PLC Vendor & Communication
                 SelectedPlcVendor = config.PlcVendor;
                 SelectedCommunicationType = config.CommunicationType;
                 PlcIpAddress = config.PlcIpAddress;
                 PlcPort = config.PlcPort;
+
+                // Modbus
+                ModbusUnitId = config.ModbusUnitId;
+
+                // Serial
+                SerialPortName = config.SerialPortName;
+                BaudRate = config.BaudRate;
+                DataBits = config.DataBits;
+                Parity = config.Parity;
+                StopBits = config.StopBits;
+
+                // Performance & Stability
+                PollingIntervalMs = config.PollingIntervalMs;
+                UseHeartbeat = config.UseHeartbeat;
+                HeartbeatAddress = config.HeartbeatAddress;
+                AutoReconnect = config.AutoReconnect;
+
+                // Data Synchronization
+                WriteMode = config.WriteMode;
+                EndianMode = config.EndianMode;
 
                 foreach (var cam in config.Cameras)
                 {
@@ -117,6 +199,17 @@ namespace VMS.AppSetup.ViewModels
             {
                 UpdateVirtualCameras();
             }
+        }
+
+        partial void OnSelectedCommunicationTypeChanged(PlcCommunicationType value)
+        {
+            OnPropertyChanged(nameof(IsSerialMode));
+            OnPropertyChanged(nameof(IsEthernetMode));
+        }
+
+        partial void OnSelectedPlcVendorChanged(PlcVendor value)
+        {
+            OnPropertyChanged(nameof(IsModbusVendor));
         }
 
         private void UpdatePageInfo()
@@ -204,12 +297,10 @@ namespace VMS.AppSetup.ViewModels
             Cameras.Clear();
 
             // Simulated camera discovery
-            MessageBox.Show(
+            _dialogService.ShowInformation(
                 "카메라 스캔 기능은 실제 카메라 SDK 연동 후 구현됩니다.\n\n" +
                 "현재는 가상 모드를 사용하여 카메라를 수동으로 설정하세요.",
-                "Camera Scan",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+                "Camera Scan");
 
             // Switch to virtual mode for now
             CameraMode = CameraMode.Virtual;
@@ -244,30 +335,48 @@ namespace VMS.AppSetup.ViewModels
                 SystemIpAddress = SystemIpAddress,
                 CameraMode = CameraMode,
                 Cameras = Cameras.ToList(),
+
+                // PLC Vendor & Communication
                 PlcVendor = SelectedPlcVendor,
                 CommunicationType = SelectedCommunicationType,
                 PlcIpAddress = PlcIpAddress,
-                PlcPort = PlcPort
+                PlcPort = PlcPort,
+
+                // Modbus
+                ModbusUnitId = ModbusUnitId,
+
+                // Serial
+                SerialPortName = SerialPortName,
+                BaudRate = BaudRate,
+                DataBits = DataBits,
+                Parity = Parity,
+                StopBits = StopBits,
+
+                // Performance & Stability
+                PollingIntervalMs = PollingIntervalMs,
+                UseHeartbeat = UseHeartbeat,
+                HeartbeatAddress = HeartbeatAddress,
+                AutoReconnect = AutoReconnect,
+
+                // Data Synchronization
+                WriteMode = WriteMode,
+                EndianMode = EndianMode
             };
 
-            if (ConfigurationService.Instance.SaveConfiguration(config))
+            if (_configService.SaveConfiguration(config))
             {
-                MessageBox.Show(
-                    $"설정이 저장되었습니다.\n\n저장 위치: {ConfigurationService.Instance.ConfigFilePath}",
-                    "Setup Complete",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                _dialogService.ShowInformation(
+                    $"설정이 저장되었습니다.\n\n저장 위치: {_configService.ConfigFilePath}",
+                    "Setup Complete");
 
                 // Close the application
-                Application.Current.Shutdown();
+                _shutdownAction();
             }
             else
             {
-                MessageBox.Show(
+                _dialogService.ShowError(
                     "설정 저장에 실패했습니다.",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Error");
             }
         }
     }

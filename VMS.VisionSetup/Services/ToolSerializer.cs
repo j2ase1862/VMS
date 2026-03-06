@@ -3,9 +3,12 @@ using VMS.VisionSetup.VisionTools.BlobAnalysis;
 using VMS.VisionSetup.VisionTools.ImageProcessing;
 using VMS.VisionSetup.VisionTools.Measurement;
 using VMS.VisionSetup.VisionTools.PatternMatching;
+using VMS.VisionSetup.VisionTools.Result;
+using VMS.PLC.Models;
 using OpenCvSharp;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 
 namespace VMS.VisionSetup.Services
@@ -41,7 +44,13 @@ namespace VMS.VisionSetup.Services
                 ROIY = tool.ROIY,
                 ROIWidth = tool.ROIWidth,
                 ROIHeight = tool.ROIHeight,
-                Parameters = new Dictionary<string, object>()
+                Parameters = new Dictionary<string, object>(),
+                PlcMappings = tool.PlcMappings.Select(m => new PlcResultMapping
+                {
+                    ResultKey = m.ResultKey,
+                    PlcAddress = m.PlcAddress,
+                    DataType = m.DataType
+                }).ToList()
             };
 
             // 도구 타입별 파라미터 직렬화
@@ -144,7 +153,7 @@ namespace VMS.VisionSetup.Services
                 case BlobTool blob:
                     config.Parameters["UseInternalThreshold"] = blob.UseInternalThreshold;
                     config.Parameters["ThresholdValue"] = blob.ThresholdValue;
-                    config.Parameters["InvertPolarity"] = blob.InvertPolarity;
+                    config.Parameters["SegmentationPolarity"] = blob.SegmentationPolarity.ToString();
                     config.Parameters["MinArea"] = blob.MinArea;
                     config.Parameters["MaxArea"] = blob.MaxArea;
                     config.Parameters["MinPerimeter"] = blob.MinPerimeter;
@@ -163,6 +172,15 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["DrawBoundingBox"] = blob.DrawBoundingBox;
                     config.Parameters["DrawCenterPoint"] = blob.DrawCenterPoint;
                     config.Parameters["DrawLabels"] = blob.DrawLabels;
+                    config.Parameters["EnableJudgment"] = blob.EnableJudgment;
+                    config.Parameters["UseAreaJudgment"] = blob.UseAreaJudgment;
+                    config.Parameters["ExpectedArea"] = blob.ExpectedArea;
+                    config.Parameters["AreaTolerancePlus"] = blob.AreaTolerancePlus;
+                    config.Parameters["AreaToleranceMinus"] = blob.AreaToleranceMinus;
+                    config.Parameters["UseCountJudgment"] = blob.UseCountJudgment;
+                    config.Parameters["CountMode"] = blob.CountMode.ToString();
+                    config.Parameters["ExpectedCount"] = blob.ExpectedCount;
+                    config.Parameters["ExpectedCountMax"] = blob.ExpectedCountMax;
                     break;
 
                 case CaliperTool caliper:
@@ -196,6 +214,7 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["SearchWidth"] = lineFit.SearchWidth;
                     config.Parameters["Polarity"] = lineFit.Polarity.ToString();
                     config.Parameters["EdgeThreshold"] = lineFit.EdgeThreshold;
+                    config.Parameters["FilterHalfWidth"] = lineFit.FilterHalfWidth;
                     config.Parameters["FitMethod"] = lineFit.FitMethod.ToString();
                     config.Parameters["RansacThreshold"] = lineFit.RansacThreshold;
                     config.Parameters["MinFoundCalipers"] = lineFit.MinFoundCalipers;
@@ -217,9 +236,30 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["MinFoundCalipers"] = circleFit.MinFoundCalipers;
                     break;
 
+                case HeightSlicerTool heightSlicer:
+                    config.Parameters["MinZ"] = heightSlicer.MinZ;
+                    config.Parameters["MaxZ"] = heightSlicer.MaxZ;
+                    break;
+
+                case ResultTool resultTool:
+                    config.Parameters["JudgmentMode"] = resultTool.JudgmentMode.ToString();
+                    break;
+
                 default:
                     // Unknown tool type - save what we can
                     break;
+            }
+
+            // Fixture 기준 좌표 저장 (Coordinates 연결에 의한 ROI 오프셋 기준점)
+            if (tool.HasFixtureBaseROI)
+            {
+                config.Parameters["_FixtureRefX"] = tool.FixtureRefX;
+                config.Parameters["_FixtureRefY"] = tool.FixtureRefY;
+                config.Parameters["_FixtureRefAngle"] = tool.FixtureRefAngle;
+                config.Parameters["_FixtureBaseROIX"] = tool.FixtureBaseROI.X;
+                config.Parameters["_FixtureBaseROIY"] = tool.FixtureBaseROI.Y;
+                config.Parameters["_FixtureBaseROIW"] = tool.FixtureBaseROI.Width;
+                config.Parameters["_FixtureBaseROIH"] = tool.FixtureBaseROI.Height;
             }
 
             return config;
@@ -247,6 +287,8 @@ namespace VMS.VisionSetup.Services
                 "CaliperTool" => DeserializeCaliperTool(config),
                 "LineFitTool" => DeserializeLineFitTool(config),
                 "CircleFitTool" => DeserializeCircleFitTool(config),
+                "HeightSlicerTool" => DeserializeHeightSlicerTool(config),
+                "ResultTool" => DeserializeResultTool(config),
                 _ => null
             };
 
@@ -260,14 +302,60 @@ namespace VMS.VisionSetup.Services
 
         private static void ApplyBaseProperties(VisionToolBase tool, ToolConfig config)
         {
-            // Note: Id is read-only, generated at construction time
-            // For deserialization, we need to set it via reflection or constructor
+            tool.Id = config.Id;
             tool.Name = config.Name;
             tool.IsEnabled = config.IsEnabled;
             tool.X = config.X;
             tool.Y = config.Y;
             tool.UseROI = config.UseROI;
             tool.ROI = new Rect(config.ROIX, config.ROIY, config.ROIWidth, config.ROIHeight);
+
+            // PLC 매핑 복원 (1:N)
+            if (config.PlcMappings != null && config.PlcMappings.Count > 0)
+            {
+                foreach (var m in config.PlcMappings)
+                {
+                    tool.PlcMappings.Add(new PlcResultMapping
+                    {
+                        ResultKey = m.ResultKey,
+                        PlcAddress = m.PlcAddress,
+                        DataType = m.DataType
+                    });
+                }
+            }
+            else if (!string.IsNullOrEmpty(config.ResultPlcAddress))
+            {
+                // 레거시 단일 매핑 → 1항목 마이그레이션
+                tool.PlcMappings.Add(new PlcResultMapping
+                {
+                    ResultKey = config.ResultDataKey ?? "Success",
+                    PlcAddress = config.ResultPlcAddress,
+                    DataType = config.ResultDataType
+                });
+            }
+
+            // Fixture 기준 좌표 복원 (레시피에 저장된 경우)
+            if (config.Parameters.TryGetValue("_FixtureRefX", out var frx))
+            {
+                tool.HasFixtureBaseROI = true;
+                tool.FixtureRefX = GetDouble(frx);
+                if (config.Parameters.TryGetValue("_FixtureRefY", out var fry))
+                    tool.FixtureRefY = GetDouble(fry);
+                if (config.Parameters.TryGetValue("_FixtureRefAngle", out var fra))
+                    tool.FixtureRefAngle = GetDouble(fra);
+                if (config.Parameters.TryGetValue("_FixtureBaseROIX", out var brx) &&
+                    config.Parameters.TryGetValue("_FixtureBaseROIY", out var bry) &&
+                    config.Parameters.TryGetValue("_FixtureBaseROIW", out var brw) &&
+                    config.Parameters.TryGetValue("_FixtureBaseROIH", out var brh))
+                {
+                    tool.FixtureBaseROI = new Rect(GetInt(brx), GetInt(bry), GetInt(brw), GetInt(brh));
+                }
+                else
+                {
+                    // fallback: 현재 ROI를 base로 사용
+                    tool.FixtureBaseROI = tool.ROI;
+                }
+            }
         }
 
         private static GrayscaleTool DeserializeGrayscaleTool(ToolConfig config)
@@ -479,8 +567,12 @@ namespace VMS.VisionSetup.Services
                 tool.UseInternalThreshold = GetBool(uit);
             if (p.TryGetValue("ThresholdValue", out var tv))
                 tool.ThresholdValue = GetDouble(tv);
-            if (p.TryGetValue("InvertPolarity", out var ip))
-                tool.InvertPolarity = GetBool(ip);
+            if (p.TryGetValue("SegmentationPolarity", out var sp))
+                tool.SegmentationPolarity = Enum.Parse<SegmentationPolarity>(GetString(sp));
+            else if (p.TryGetValue("InvertPolarity", out var ip))
+                tool.SegmentationPolarity = GetBool(ip)
+                    ? SegmentationPolarity.DarkOnLight
+                    : SegmentationPolarity.LightOnDark;
             if (p.TryGetValue("MinArea", out var minArea))
                 tool.MinArea = GetDouble(minArea);
             if (p.TryGetValue("MaxArea", out var maxArea))
@@ -517,6 +609,28 @@ namespace VMS.VisionSetup.Services
                 tool.DrawCenterPoint = GetBool(dcp);
             if (p.TryGetValue("DrawLabels", out var dl))
                 tool.DrawLabels = GetBool(dl);
+            if (p.TryGetValue("EnableJudgment", out var ej))
+                tool.EnableJudgment = GetBool(ej);
+            if (p.TryGetValue("UseAreaJudgment", out var uaj))
+                tool.UseAreaJudgment = GetBool(uaj);
+            if (p.TryGetValue("ExpectedArea", out var ea))
+                tool.ExpectedArea = GetDouble(ea);
+            if (p.TryGetValue("AreaTolerancePlus", out var atp))
+                tool.AreaTolerancePlus = GetDouble(atp);
+            else if (p.TryGetValue("AreaTolerance", out var at))
+                tool.AreaTolerancePlus = GetDouble(at);
+            if (p.TryGetValue("AreaToleranceMinus", out var atm))
+                tool.AreaToleranceMinus = GetDouble(atm);
+            else if (p.TryGetValue("AreaTolerance", out var at2))
+                tool.AreaToleranceMinus = GetDouble(at2);
+            if (p.TryGetValue("UseCountJudgment", out var ucj))
+                tool.UseCountJudgment = GetBool(ucj);
+            if (p.TryGetValue("CountMode", out var cm))
+                tool.CountMode = Enum.Parse<CountJudgmentMode>(GetString(cm));
+            if (p.TryGetValue("ExpectedCount", out var ec))
+                tool.ExpectedCount = GetInt(ec);
+            if (p.TryGetValue("ExpectedCountMax", out var ecm))
+                tool.ExpectedCountMax = GetInt(ecm);
 
             return tool;
         }
@@ -589,6 +703,8 @@ namespace VMS.VisionSetup.Services
                 tool.Polarity = Enum.Parse<EdgePolarity>(GetString(polarity));
             if (p.TryGetValue("EdgeThreshold", out var et))
                 tool.EdgeThreshold = GetDouble(et);
+            if (p.TryGetValue("FilterHalfWidth", out var fhw))
+                tool.FilterHalfWidth = GetInt(fhw);
             if (p.TryGetValue("FitMethod", out var fm))
                 tool.FitMethod = Enum.Parse<LineFitMethod>(GetString(fm));
             if (p.TryGetValue("RansacThreshold", out var rt))
@@ -631,6 +747,30 @@ namespace VMS.VisionSetup.Services
                 tool.RansacThreshold = GetDouble(rt);
             if (p.TryGetValue("MinFoundCalipers", out var mfc))
                 tool.MinFoundCalipers = GetInt(mfc);
+
+            return tool;
+        }
+
+        private static HeightSlicerTool DeserializeHeightSlicerTool(ToolConfig config)
+        {
+            var tool = new HeightSlicerTool();
+            var p = config.Parameters;
+
+            if (p.TryGetValue("MinZ", out var minZ))
+                tool.MinZ = (float)GetDouble(minZ);
+            if (p.TryGetValue("MaxZ", out var maxZ))
+                tool.MaxZ = (float)GetDouble(maxZ);
+
+            return tool;
+        }
+
+        private static ResultTool DeserializeResultTool(ToolConfig config)
+        {
+            var tool = new ResultTool();
+            var p = config.Parameters;
+
+            if (p.TryGetValue("JudgmentMode", out var jm))
+                tool.JudgmentMode = Enum.Parse<ResultJudgmentMode>(GetString(jm));
 
             return tool;
         }

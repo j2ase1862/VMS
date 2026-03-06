@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="OpenCvSharp4" Version="4.11.0.20250507" />
+  </ItemGroup>
+
+  <!-- Mech-Mind SDK: define MECHMIND_AVAILABLE when MechEyeApiNet.dll is present -->
+  <PropertyGroup Condition="Exists('C:\Mech-Mind\Mech-Eye SDK-2.5.4\API\dll\net48\MechEyeApiNet.dll')">
+    <DefineConstants>$(DefineConstants);MECHMIND_AVAILABLE</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup Condition="Exists('C:\Mech-Mind\Mech-Eye SDK-2.5.4\API\dll\net48\MechEyeApiNet.dll')">
+    <Reference Include="MechEyeApiNet">
+      <HintPath>C:\Mech-Mind\Mech-Eye SDK-2.5.4\API\dll\net48\MechEyeApiNet.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Basler Pylon SDK: define BASLER_AVAILABLE when pylon SDK is installed -->
+  <PropertyGroup Condition="Exists('C:\Program Files\Basler\pylon 7\Development\Assemblies\Basler.Pylon\net6.0\Basler.Pylon.dll')">
+    <DefineConstants>$(DefineConstants);BASLER_AVAILABLE</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup Condition="Exists('C:\Program Files\Basler\pylon 7\Development\Assemblies\Basler.Pylon\net6.0\Basler.Pylon.dll')">
+    <Reference Include="Basler.Pylon">
+      <HintPath>C:\Program Files\Basler\pylon 7\Development\Assemblies\Basler.Pylon\net6.0\Basler.Pylon.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

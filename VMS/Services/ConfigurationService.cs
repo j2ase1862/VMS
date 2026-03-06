@@ -1,4 +1,6 @@
+using VMS.Interfaces;
 using VMS.Models;
+using VMS.PLC.Models;
 using System;
 using System.IO;
 using System.Text.Json;
@@ -9,7 +11,7 @@ namespace VMS.Services
     /// <summary>
     /// Service for loading system configuration from BODA.Setup
     /// </summary>
-    public class ConfigurationService
+    public class ConfigurationService : IConfigurationService
     {
         private static ConfigurationService? _instance;
         public static ConfigurationService Instance => _instance ??= new ConfigurationService();
@@ -17,6 +19,7 @@ namespace VMS.Services
         private readonly string _configDirectory;
         private readonly string _systemConfigPath;
         private readonly string _layoutConfigPath;
+        private readonly string _plcSignalConfigPath;
 
         // Must match BODA.Setup's JsonSerializerOptions for compatibility
         private static readonly JsonSerializerOptions JsonOptions = new()
@@ -36,6 +39,7 @@ namespace VMS.Services
                 "BODA VISION AI");
             _systemConfigPath = Path.Combine(_configDirectory, "system_config.json");
             _layoutConfigPath = Path.Combine(_configDirectory, "layout_config.json");
+            _plcSignalConfigPath = Path.Combine(_configDirectory, "plc_signals.json");
 
             if (!Directory.Exists(_configDirectory))
             {
@@ -88,6 +92,24 @@ namespace VMS.Services
         }
 
         /// <summary>
+        /// Save system configuration
+        /// </summary>
+        public bool SaveSystemConfiguration(SystemConfiguration config)
+        {
+            try
+            {
+                var json = JsonSerializer.Serialize(config, JsonOptions);
+                File.WriteAllText(_systemConfigPath, json);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error saving system config: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Save camera layout configuration
         /// </summary>
         public bool SaveLayoutConfiguration(LayoutConfiguration config)
@@ -102,6 +124,46 @@ namespace VMS.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error saving layout config: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Load PLC signal configuration for AutoProcess
+        /// </summary>
+        public PlcSignalConfiguration LoadPlcSignalConfiguration()
+        {
+            try
+            {
+                if (File.Exists(_plcSignalConfigPath))
+                {
+                    var json = File.ReadAllText(_plcSignalConfigPath);
+                    var config = JsonSerializer.Deserialize<PlcSignalConfiguration>(json, JsonOptions);
+                    return config ?? new PlcSignalConfiguration();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading PLC signal config: {ex.Message}");
+            }
+
+            return new PlcSignalConfiguration();
+        }
+
+        /// <summary>
+        /// Save PLC signal configuration for AutoProcess
+        /// </summary>
+        public bool SavePlcSignalConfiguration(PlcSignalConfiguration config)
+        {
+            try
+            {
+                var json = JsonSerializer.Serialize(config, JsonOptions);
+                File.WriteAllText(_plcSignalConfigPath, json);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error saving PLC signal config: {ex.Message}");
                 return false;
             }
         }

@@ -1,8 +1,11 @@
+using VMS.Camera.Models;
+using VMS.VisionSetup.Interfaces;
 using VMS.VisionSetup.Models;
 using VMS.VisionSetup.VisionTools.BlobAnalysis;
 using VMS.VisionSetup.VisionTools.ImageProcessing;
 using VMS.VisionSetup.VisionTools.Measurement;
 using VMS.VisionSetup.VisionTools.PatternMatching;
+using VMS.VisionSetup.VisionTools.Result;
 using CommunityToolkit.Mvvm.ComponentModel;
 using OpenCvSharp;
 using OpenCvSharp.WpfExtensions;
@@ -12,6 +15,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Numerics;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -21,7 +25,7 @@ namespace VMS.VisionSetup.Services
     /// 비전 처리 서비스
     /// Cognex VisionPro의 CogJobManager 역할을 대체
     /// </summary>
-    public class VisionService : ObservableObject
+    public class VisionService : ObservableObject, IVisionService
     {
         private static VisionService? _instance;
         public static VisionService Instance => _instance ??= new VisionService();
@@ -294,64 +298,90 @@ namespace VMS.VisionSetup.Services
                 .Where(c => c.TargetId == tool.Id && c.Type == ConnectionType.Coordinates)
                 .ToList();
 
-            foreach (var conn in coordConnections)
+            // Fixture Transform 중 ROI/UseROI 변경이 HasFixtureBaseROI를 리셋하지 않도록 플래그 설정
+            tool.IsFixtureTransformActive = true;
+            try
             {
-                if (!resultMap.TryGetValue(conn.SourceId, out var sourceResult) || sourceResult.Data == null)
-                    continue;
-
-                // Save user-configured ROI on first fixture application
-                if (!tool.HasFixtureBaseROI)
+                foreach (var conn in coordConnections)
                 {
-                    tool.FixtureBaseROI = tool.ROI;
-                    tool.HasFixtureBaseROI = true;
-                }
+                    if (!resultMap.TryGetValue(conn.SourceId, out var sourceResult) || sourceResult.Data == null)
+                        continue;
 
-                // Fixture transform: trained center available → apply delta
-                if (sourceResult.Data.TryGetValue("CenterX", out var cx) &&
-                    sourceResult.Data.TryGetValue("CenterY", out var cy) &&
-                    sourceResult.Data.TryGetValue("TrainedCenterX", out var tcx) &&
-                    sourceResult.Data.TryGetValue("TrainedCenterY", out var tcy))
-                {
-                    double foundX = Convert.ToDouble(cx);
-                    double foundY = Convert.ToDouble(cy);
-                    double trainedX = Convert.ToDouble(tcx);
-                    double trainedY = Convert.ToDouble(tcy);
-
-                    double baseCX = tool.FixtureBaseROI.X + tool.FixtureBaseROI.Width / 2.0;
-                    double baseCY = tool.FixtureBaseROI.Y + tool.FixtureBaseROI.Height / 2.0;
-
-                    double deltaAngle = 0;
-                    if (sourceResult.Data.TryGetValue("Angle", out var angleObj))
-                        deltaAngle = Convert.ToDouble(angleObj);
-
-                    double newCX, newCY;
-                    if (Math.Abs(deltaAngle) > 0.01)
+                    // Fixture transform: CenterX/CenterY available → apply delta
+                    if (sourceResult.Data.TryGetValue("CenterX", out var cx) &&
+                        sourceResult.Data.TryGetValue("CenterY", out var cy))
                     {
-                        // Rotate ROI center around trained center, then translate to found center
-                        double relX = baseCX - trainedX;
-                        double relY = baseCY - trainedY;
-                        double rad = deltaAngle * Math.PI / 180.0;
-                        newCX = foundX + relX * Math.Cos(rad) - relY * Math.Sin(rad);
-                        newCY = foundY + relX * Math.Sin(rad) + relY * Math.Cos(rad);
-                    }
-                    else
-                    {
-                        // Translation only
-                        newCX = baseCX + (foundX - trainedX);
-                        newCY = baseCY + (foundY - trainedY);
-                    }
+                        // Save user-configured ROI and initial FeatureMatch result on first fixture application
+                        if (!tool.HasFixtureBaseROI)
+                        {
+                            double refCX = Convert.ToDouble(cx);
+                            double refCY = Convert.ToDouble(cy);
 
-                    int w = tool.FixtureBaseROI.Width > 0 ? tool.FixtureBaseROI.Width : 100;
-                    int h = tool.FixtureBaseROI.Height > 0 ? tool.FixtureBaseROI.Height : 100;
-                    tool.ROI = new Rect((int)(newCX - w / 2.0), (int)(newCY - h / 2.0), w, h);
-                    tool.UseROI = true;
-                }
-                // Fallback: BoundingRect
-                else if (sourceResult.Data.TryGetValue("BoundingRect", out var rectObj) && rectObj is Rect boundingRect)
-                {
-                    tool.ROI = boundingRect;
-                    tool.UseROI = true;
-                }
+                            if (tool.UseROI && tool.ROI.Width > 0 && tool.ROI.Height > 0)
+                            {
+                                // User has drawn a ROI — use it as fixture base
+                                tool.FixtureBaseROI = tool.ROI;
+                            }
+                            else
+                            {
+                                // No user-defined ROI — create a default fixture base centered on
+                                // the reference pattern position so the ROI follows the pattern.
+                                int defaultW = tool.ROI.Width > 0 ? tool.ROI.Width : 200;
+                                int defaultH = tool.ROI.Height > 0 ? tool.ROI.Height : 200;
+                                tool.FixtureBaseROI = new Rect(
+                                    (int)(refCX - defaultW / 2.0),
+                                    (int)(refCY - defaultH / 2.0),
+                                    defaultW, defaultH);
+                            }
+
+                            tool.HasFixtureBaseROI = true;
+                            tool.FixtureRefX = refCX;
+                            tool.FixtureRefY = refCY;
+                            tool.FixtureRefAngle = sourceResult.Data.TryGetValue("Angle", out var initAngle)
+                                ? Convert.ToDouble(initAngle) : 0;
+                        }
+
+                        double foundX = Convert.ToDouble(cx);
+                        double foundY = Convert.ToDouble(cy);
+                        double refX = tool.FixtureRefX;
+                        double refY = tool.FixtureRefY;
+
+                        double baseCX = tool.FixtureBaseROI.X + tool.FixtureBaseROI.Width / 2.0;
+                        double baseCY = tool.FixtureBaseROI.Y + tool.FixtureBaseROI.Height / 2.0;
+
+                        double currentAngle = 0;
+                        if (sourceResult.Data.TryGetValue("Angle", out var angleObj))
+                            currentAngle = Convert.ToDouble(angleObj);
+                        double deltaAngle = currentAngle - tool.FixtureRefAngle;
+
+                        double newCX, newCY;
+                        if (Math.Abs(deltaAngle) > 0.01)
+                        {
+                            // Rotate ROI center around reference center, then translate by delta
+                            double relX = baseCX - refX;
+                            double relY = baseCY - refY;
+                            double rad = deltaAngle * Math.PI / 180.0;
+                            newCX = foundX + relX * Math.Cos(rad) - relY * Math.Sin(rad);
+                            newCY = foundY + relX * Math.Sin(rad) + relY * Math.Cos(rad);
+                        }
+                        else
+                        {
+                            // Translation only
+                            newCX = baseCX + (foundX - refX);
+                            newCY = baseCY + (foundY - refY);
+                        }
+
+                        int w = tool.FixtureBaseROI.Width > 0 ? tool.FixtureBaseROI.Width : 100;
+                        int h = tool.FixtureBaseROI.Height > 0 ? tool.FixtureBaseROI.Height : 100;
+                        tool.ROI = new Rect((int)(newCX - w / 2.0), (int)(newCY - h / 2.0), w, h);
+                        tool.UseROI = true;
+                    }
+                    // Fallback: BoundingRect
+                    else if (sourceResult.Data.TryGetValue("BoundingRect", out var rectObj) && rectObj is Rect boundingRect)
+                    {
+                        tool.ROI = boundingRect;
+                        tool.UseROI = true;
+                    }
                 // Fallback: center-based (non-fixture sources)
                 else if (sourceResult.Data.TryGetValue("CenterX", out var fcx) &&
                          sourceResult.Data.TryGetValue("CenterY", out var fcy))
@@ -363,6 +393,11 @@ namespace VMS.VisionSetup.Services
                     tool.ROI = new Rect((int)(centerX - roiW / 2), (int)(centerY - roiH / 2), roiW, roiH);
                     tool.UseROI = true;
                 }
+                }
+            }
+            finally
+            {
+                tool.IsFixtureTransformActive = false;
             }
         }
 
@@ -528,43 +563,74 @@ namespace VMS.VisionSetup.Services
             var upstream = GetUpstreamDependencies(tool);
             var resultMap = new Dictionary<string, VisionResult>();
 
+            var clonedInputs = new List<Mat>();
+
             foreach (var dep in upstream)
             {
                 if (!dep.IsEnabled) continue;
 
-                Mat depInput;
+                // Apply coordinates connection for upstream dependencies too
+                ApplyCoordinatesConnection(dep, resultMap);
+
                 var depConnected = GetConnectedInputImage(dep, resultMap);
+                Mat depInput;
+                bool ownsInput;
                 if (depConnected != null)
+                {
                     depInput = depConnected;
+                    ownsInput = false;
+                }
                 else
+                {
                     depInput = image.Clone();
+                    ownsInput = true;
+                }
 
                 try
                 {
                     var depResult = dep.Execute(depInput);
+                    dep.LastResult = depResult;
                     resultMap[dep.Id] = depResult;
                 }
                 finally
                 {
-                    depInput.Dispose();
+                    // Only dispose images we own (cloned base images).
+                    // Connected images are shared references — not ours to dispose.
+                    if (ownsInput)
+                        clonedInputs.Add(depInput);
                 }
             }
+
+            // Apply coordinates connection: shift ROI based on source tool's result
+            ApplyCoordinatesConnection(tool, resultMap);
 
             // Resolve connected input for the target tool
             var connectedImage = GetConnectedInputImage(tool, resultMap);
             Mat toolInput;
+            bool ownsToolInput;
             if (connectedImage != null)
+            {
                 toolInput = connectedImage;
+                ownsToolInput = false;
+            }
             else
+            {
                 toolInput = image.Clone();
+                ownsToolInput = true;
+            }
 
             try
             {
-                return tool.Execute(toolInput);
+                var result = tool.Execute(toolInput);
+                tool.LastResult = result;
+                return result;
             }
             finally
             {
-                toolInput.Dispose();
+                if (ownsToolInput)
+                    toolInput.Dispose();
+                foreach (var ci in clonedInputs)
+                    ci.Dispose();
             }
         }
 
@@ -627,7 +693,8 @@ namespace VMS.VisionSetup.Services
                     continue;
 
                 // 1. Result 연결 확인: Source가 실패이면 건너뛰기
-                if (ShouldSkipByResultConnection(tool, resultMap))
+                //    ResultTool은 실패 정보를 수집해야 하므로 스킵 우회
+                if (tool is not ResultTool && ShouldSkipByResultConnection(tool, resultMap))
                 {
                     var skipResult = new VisionResult
                     {
@@ -675,7 +742,29 @@ namespace VMS.VisionSetup.Services
 
                 try
                 {
+                    // ResultTool: Execute 전에 연결된 소스 결과 주입
+                    if (tool is ResultTool rt)
+                    {
+                        rt.SourceResults.Clear();
+                        foreach (var conn in _connections
+                            .Where(c => c.TargetId == tool.Id && c.Type == ConnectionType.Result))
+                        {
+                            if (resultMap.TryGetValue(conn.SourceId, out var srcResult))
+                            {
+                                var srcTool = sortedTools.FirstOrDefault(t => t.Id == conn.SourceId);
+                                rt.SourceResults.Add(new SourceToolResult
+                                {
+                                    ToolId = conn.SourceId,
+                                    ToolName = srcTool?.Name ?? conn.SourceId,
+                                    Success = srcResult.Success,
+                                    Message = srcResult.Message
+                                });
+                            }
+                        }
+                    }
+
                     var result = tool.Execute(inputImage);
+                    tool.LastResult = result;
                     results.Add(result);
                     Results.Add(result);
                     resultMap[tool.Id] = result;
@@ -722,7 +811,12 @@ namespace VMS.VisionSetup.Services
 
             sw.Stop();
             TotalExecutionTime = sw.Elapsed.TotalMilliseconds;
-            LastRunSuccess = allSuccess;
+
+            // ResultTool이 존재하면 최종 판정은 ResultTool의 Success로 결정
+            var resultToolInstance = sortedTools.OfType<ResultTool>().FirstOrDefault();
+            LastRunSuccess = resultToolInstance != null
+                ? resultMap.TryGetValue(resultToolInstance.Id, out var rtResult) && rtResult.Success
+                : allSuccess;
             IsRunning = false;
 
             return results;
@@ -742,6 +836,7 @@ namespace VMS.VisionSetup.Services
                 "EdgeDetectionTool" => new EdgeDetectionTool(),
                 "MorphologyTool" => new MorphologyTool(),
                 "HistogramTool" => new HistogramTool(),
+                "HeightSlicerTool" => new HeightSlicerTool(),
 
                 // Pattern Matching
                 "FeatureMatchTool" => new FeatureMatchTool(),
@@ -753,6 +848,9 @@ namespace VMS.VisionSetup.Services
                 "CaliperTool" => new CaliperTool(),
                 "LineFitTool" => new LineFitTool(),
                 "CircleFitTool" => new CircleFitTool(),
+
+                // Judgment
+                "ResultTool" => new ResultTool(),
 
                 _ => null
             };
@@ -774,6 +872,10 @@ namespace VMS.VisionSetup.Services
                     "MorphologyTool",
                     "HistogramTool"
                 },
+                ["3D Analysis"] = new[]
+                {
+                    "HeightSlicerTool"
+                },
                 ["Pattern Matching"] = new[]
                 {
                     "FeatureMatchTool"
@@ -787,6 +889,10 @@ namespace VMS.VisionSetup.Services
                     "CaliperTool",
                     "LineFitTool",
                     "CircleFitTool"
+                },
+                ["Judgment"] = new[]
+                {
+                    "ResultTool"
                 }
             };
         }
@@ -809,8 +915,62 @@ namespace VMS.VisionSetup.Services
                 "CaliperTool" => "Caliper",
                 "LineFitTool" => "Line Fit",
                 "CircleFitTool" => "Circle Fit",
+                "HeightSlicerTool" => "Height Slicer",
+                "ResultTool" => "Result",
                 _ => toolType
             };
+        }
+
+        /// <summary>
+        /// 3D 포인트 클라우드를 높이 슬라이싱하여 2D 그레이스케일 Height Map 생성
+        /// Y축 = 높이, 정렬된(organized) 그리드 포인트 클라우드 필요
+        /// </summary>
+        public (Mat HeightMap, HeightMapMetadata Metadata) GenerateHeightMap(
+            PointCloudData pointCloud, float zRef, float zMin, float zMax)
+        {
+            if (!pointCloud.IsOrganized)
+                throw new InvalidOperationException("Height map requires an organized (grid) point cloud.");
+
+            int w = pointCloud.GridWidth;
+            int h = pointCloud.GridHeight;
+            float range = zMax - zMin;
+            if (range <= 0) range = 1f;
+
+            var heightMap = new Mat(h, w, MatType.CV_8UC1, Scalar.All(0));
+            var pixelTo3D = new Vector3?[w * h];
+
+            unsafe
+            {
+                byte* ptr = (byte*)heightMap.Data;
+                var positions = pointCloud.Positions;
+
+                for (int row = 0; row < h; row++)
+                {
+                    for (int col = 0; col < w; col++)
+                    {
+                        int idx = row * w + col;
+                        var pos = positions[idx];
+                        pixelTo3D[idx] = pos;
+
+                        float normalizedY = pos.Y - zRef;
+                        float t = (normalizedY - zMin) / range;
+                        t = Math.Clamp(t, 0f, 1f);
+                        ptr[idx] = (byte)(t * 255f);
+                    }
+                }
+            }
+
+            var metadata = new HeightMapMetadata
+            {
+                Width = w,
+                Height = h,
+                ZReference = zRef,
+                ZMin = zMin,
+                ZMax = zMax,
+                PixelTo3D = pixelTo3D
+            };
+
+            return (heightMap, metadata);
         }
 
         /// <summary>

@@ -1,9 +1,13 @@
 using VMS.VisionSetup.Models;
+using VMS.VisionSetup.VisionTools.Measurement;
+using VMS.PLC.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using OpenCvSharp;
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 
 namespace VMS.VisionSetup.ViewModels.ToolSettings
@@ -28,6 +32,26 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
                 ROI = new Rect();
                 AssociatedROIShape = null;
                 WeakReferenceMessenger.Default.Send(new RequestClearROIMessage());
+            });
+
+            ShowROICommand = new RelayCommand(() =>
+            {
+                if (!UseROI || ROIWidth <= 0 || ROIHeight <= 0) return;
+
+                if (AssociatedROIShape == null)
+                {
+                    AssociatedROIShape = new RectangleROI
+                    {
+                        X = ROIX,
+                        Y = ROIY,
+                        Width = ROIWidth,
+                        Height = ROIHeight,
+                        Name = $"{Name} ROI",
+                        ShowSearchArrow = Tool is LineFitTool or CaliperTool or CircleFitTool
+                    };
+                }
+
+                WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(AssociatedROIShape));
             });
         }
 
@@ -57,12 +81,36 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         public double ExecutionTime { get => Tool.ExecutionTime; set => Tool.ExecutionTime = value; }
         public VisionResult? LastResult { get => Tool.LastResult; set => Tool.LastResult = value; }
 
+        // PLC result mappings (1:N)
+        public ObservableCollection<PlcResultMapping> PlcMappings => Tool.PlcMappings;
+        public List<string> AvailableResultKeys => Tool.GetAvailableResultKeys();
+        public Array PlcDataTypes => Enum.GetValues(typeof(PlcDataType));
+
+        public IRelayCommand AddPlcMappingCommand => new RelayCommand(() =>
+        {
+            var keys = AvailableResultKeys;
+            PlcMappings.Add(new PlcResultMapping
+            {
+                ResultKey = keys.Count > 0 ? keys[0] : "Success"
+            });
+        });
+
+        public IRelayCommand<PlcResultMapping> RemovePlcMappingCommand => new RelayCommand<PlcResultMapping>(mapping =>
+        {
+            if (mapping != null)
+                PlcMappings.Remove(mapping);
+        });
+
         // Commands (owned by VM, send messages)
+        public IRelayCommand ShowROICommand { get; }
         public IRelayCommand DrawROICommand { get; }
         public IRelayCommand ClearROICommand { get; }
 
         // View-state: FeatureMatchTool overrides to true (has its own ROI section)
         public virtual bool HasCustomROISection => false;
+
+        // View-state: ResultTool overrides to true (최종 판정은 시퀀스 에디터가 담당)
+        public virtual bool HidePlcSection => false;
 
         public virtual void Dispose()
         {

@@ -17,6 +17,8 @@ namespace VMS.VisionSetup.Views.ToolSettings
         public DataTemplate? CaliperTemplate { get; set; }
         public DataTemplate? LineFitTemplate { get; set; }
         public DataTemplate? CircleFitTemplate { get; set; }
+        public DataTemplate? HeightSlicerTemplate { get; set; }
+        public DataTemplate? ResultTemplate { get; set; }
 
         public override DataTemplate? SelectTemplate(object? item, DependencyObject container)
         {
@@ -33,6 +35,8 @@ namespace VMS.VisionSetup.Views.ToolSettings
                 CaliperToolSettingsViewModel => CaliperTemplate,
                 LineFitToolSettingsViewModel => LineFitTemplate,
                 CircleFitToolSettingsViewModel => CircleFitTemplate,
+                HeightSlicerToolSettingsViewModel => HeightSlicerTemplate,
+                ResultToolSettingsViewModel => ResultTemplate,
                 _ => base.SelectTemplate(item, container)
             };
         }

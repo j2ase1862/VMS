@@ -56,23 +56,15 @@ namespace VMS.Controls
             DragHandle.MouseMove += OnDragMove;
             DragHandle.MouseLeftButtonUp += OnDragEnd;
 
-            // Setup resize behavior
-            ResizeGrip.DragDelta += OnResizeDelta;
-            ResizeGrip.DragCompleted += OnResizeCompleted;
-
-            // Setup settings button click
-            SettingsButton.Click += OnSettingsClick;
-        }
-
-        private void OnSettingsClick(object sender, RoutedEventArgs e)
-        {
-            // Find MainWindow and open settings panel for this camera
-            var window = Window.GetWindow(this);
-            if (window?.DataContext is MainViewModel mainVm && DataContext is CameraViewModel camVm)
-            {
-                mainVm.SelectCameraCommand.Execute(camVm);
-            }
-            e.Handled = true;
+            // Setup 8-direction resize behavior
+            SetupResizeThumb(ResizeTop, ResizeEdge.Top);
+            SetupResizeThumb(ResizeBottom, ResizeEdge.Bottom);
+            SetupResizeThumb(ResizeLeft, ResizeEdge.Left);
+            SetupResizeThumb(ResizeRight, ResizeEdge.Right);
+            SetupResizeThumb(ResizeTopLeft, ResizeEdge.Top | ResizeEdge.Left);
+            SetupResizeThumb(ResizeTopRight, ResizeEdge.Top | ResizeEdge.Right);
+            SetupResizeThumb(ResizeBottomLeft, ResizeEdge.Bottom | ResizeEdge.Left);
+            SetupResizeThumb(ResizeBottomRight, ResizeEdge.Bottom | ResizeEdge.Right);
         }
 
         private static Canvas? FindCameraCanvas(DependencyObject child)
@@ -354,34 +346,104 @@ namespace VMS.Controls
             _alignmentGuideCanvas?.Children.Clear();
         }
 
-        private void OnResizeDelta(object sender, DragDeltaEventArgs e)
+        [Flags]
+        private enum ResizeEdge
         {
-            if (DataContext is CameraViewModel vm && _cameraCanvas != null)
-            {
-                var newWidth = Math.Max(200, vm.Width + e.HorizontalChange);
-                var newHeight = Math.Max(150, vm.Height + e.VerticalChange);
-
-                // Clamp size to not exceed canvas bounds
-                var maxWidth = _cameraCanvas.ActualWidth - vm.X;
-                var maxHeight = _cameraCanvas.ActualHeight - vm.Y;
-
-                newWidth = Math.Min(newWidth, maxWidth);
-                newHeight = Math.Min(newHeight, maxHeight);
-
-                // Apply resize snap alignment
-                ApplyResizeSnapAlignment(vm, ref newWidth, ref newHeight);
-
-                vm.Width = newWidth;
-                vm.Height = newHeight;
-
-                Width = vm.Width;
-                Height = vm.Height;
-            }
+            None = 0,
+            Top = 1,
+            Bottom = 2,
+            Left = 4,
+            Right = 8
         }
 
-        private void OnResizeCompleted(object sender, DragCompletedEventArgs e)
+        private void SetupResizeThumb(Thumb thumb, ResizeEdge edge)
         {
-            ClearGuideLines();
+            thumb.DragDelta += (s, e) => HandleResize(edge, e.HorizontalChange, e.VerticalChange);
+            thumb.DragCompleted += (s, e) => ClearGuideLines();
+        }
+
+        private void HandleResize(ResizeEdge edge, double deltaX, double deltaY)
+        {
+            if (DataContext is not CameraViewModel vm || _cameraCanvas == null)
+                return;
+
+            double newX = vm.X;
+            double newY = vm.Y;
+            double newWidth = vm.Width;
+            double newHeight = vm.Height;
+
+            // Calculate new dimensions based on which edges are being dragged
+            if (edge.HasFlag(ResizeEdge.Right))
+                newWidth += deltaX;
+            if (edge.HasFlag(ResizeEdge.Left))
+            {
+                newX += deltaX;
+                newWidth -= deltaX;
+            }
+            if (edge.HasFlag(ResizeEdge.Bottom))
+                newHeight += deltaY;
+            if (edge.HasFlag(ResizeEdge.Top))
+            {
+                newY += deltaY;
+                newHeight -= deltaY;
+            }
+
+            // Enforce minimum size (adjust position if resizing from top/left)
+            if (newWidth < 200)
+            {
+                if (edge.HasFlag(ResizeEdge.Left))
+                    newX = vm.X + vm.Width - 200;
+                newWidth = 200;
+            }
+            if (newHeight < 150)
+            {
+                if (edge.HasFlag(ResizeEdge.Top))
+                    newY = vm.Y + vm.Height - 150;
+                newHeight = 150;
+            }
+
+            // Clamp position to canvas bounds
+            double canvasW = _cameraCanvas.ActualWidth;
+            double canvasH = _cameraCanvas.ActualHeight;
+
+            if (newX < 0)
+            {
+                newWidth += newX;
+                newX = 0;
+            }
+            if (newY < 0)
+            {
+                newHeight += newY;
+                newY = 0;
+            }
+            if (newX + newWidth > canvasW)
+                newWidth = canvasW - newX;
+            if (newY + newHeight > canvasH)
+                newHeight = canvasH - newY;
+
+            // Re-enforce minimums after clamping
+            newWidth = Math.Max(200, newWidth);
+            newHeight = Math.Max(150, newHeight);
+
+            // Apply snap alignment for BottomRight resize only (preserve existing behavior)
+            if (edge == (ResizeEdge.Bottom | ResizeEdge.Right))
+                ApplyResizeSnapAlignment(vm, ref newWidth, ref newHeight);
+
+            vm.X = newX;
+            vm.Y = newY;
+            vm.Width = newWidth;
+            vm.Height = newHeight;
+
+            Width = vm.Width;
+            Height = vm.Height;
+
+            // Sync ContentPresenter position on Canvas
+            var contentPresenter = VisualTreeHelper.GetParent(this) as ContentPresenter;
+            if (contentPresenter != null)
+            {
+                Canvas.SetLeft(contentPresenter, vm.X);
+                Canvas.SetTop(contentPresenter, vm.Y);
+            }
         }
 
         private void ApplyResizeSnapAlignment(CameraViewModel resizingVm, ref double newWidth, ref double newHeight)

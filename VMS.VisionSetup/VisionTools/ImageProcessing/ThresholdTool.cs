@@ -174,9 +174,14 @@ namespace VMS.VisionSetup.VisionTools.ImageProcessing
             };
         }
 
+        public override List<string> GetAvailableResultKeys()
+        {
+            return new List<string> { "Success", "ThresholdValue", "WhitePixelCount", "WhitePixelRatio" };
+        }
+
         public override VisionToolBase Clone()
         {
-            return new ThresholdTool
+            var clone = new ThresholdTool
             {
                 Name = this.Name,
                 ToolType = this.ToolType,
@@ -192,6 +197,8 @@ namespace VMS.VisionSetup.VisionTools.ImageProcessing
                 BlockSize = this.BlockSize,
                 CValue = this.CValue
             };
+            CopyPlcMappingsTo(clone);
+            return clone;
         }
     }
 

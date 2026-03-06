@@ -24,7 +24,11 @@
     <Window.Resources>
         <converters:DisplayModeToStringConverter x:Key="DisplayModeToStringConverter"/>
         <converters:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisibility"/>
+        <converters:NullToCollapsedConverter x:Key="NullToCollapsedConverter"/>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+
+        <DropShadowEffect x:Key="ToolbarButtonShadow" ShadowDepth="1" BlurRadius="4"
+                          Opacity="0.4" Color="Black" Direction="270"/>
 
         <!-- Toolbar Button Style -->
         <Style x:Key="ToolbarButtonStyle" TargetType="Button">
@@ -41,8 +45,9 @@
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="ButtonBorder" CornerRadius="6"
                                 Background="{TemplateBinding Background}"
-                                BorderBrush="Transparent" BorderThickness="1"
-                                SnapsToDevicePixels="True">
+                                BorderBrush="#50FFFFFF" BorderThickness="1"
+                                SnapsToDevicePixels="True"
+                                Effect="{StaticResource ToolbarButtonShadow}">
                             <Border x:Name="HoverOverlay" CornerRadius="5" Background="Transparent"
                                     Padding="{TemplateBinding Padding}">
                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -54,14 +59,15 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="HoverOverlay" Property="Background" Value="#18FFFFFF"/>
-                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#30FFFFFF"/>
+                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#80FFFFFF"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="HoverOverlay" Property="Background" Value="#15000000"/>
-                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="Transparent"/>
+                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#40FFFFFF"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="ButtonBorder" Property="Background" Value="#3A3A3C"/>
+                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#25FFFFFF"/>
                                 <Setter Property="Foreground" Value="#666666"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -136,157 +142,277 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Menu Bar -->
-        <Menu Grid.Row="0" Style="{StaticResource MenuBarStyle}">
-            <Menu.ItemContainerStyle>
-                <Style TargetType="MenuItem" BasedOn="{StaticResource TopMenuItemStyle}"/>
-            </Menu.ItemContainerStyle>
-
-            <MenuItem Header="_File">
-                <MenuItem.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Style="{StaticResource TransparentMenuPanelStyle}"/>
-                    </ItemsPanelTemplate>
-                </MenuItem.ItemsPanel>
-                <MenuItem Header="Open Image File"
-                          Style="{StaticResource SubMenuItemFullStyle}"
-                          Command="{Binding OpenImageFileCommand}"
-                          InputGestureText="Ctrl+O"/>
-                <Separator Foreground="#606060"/>
-                <MenuItem Header="Exit"
-                          Style="{StaticResource SubMenuItemFullStyle}"
-                          Command="{Binding CloseCommand}"/>
-            </MenuItem>
-
-            <MenuItem Header="_Tools">
-                <MenuItem.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Style="{StaticResource TransparentMenuPanelStyle}"/>
-                    </ItemsPanelTemplate>
-                </MenuItem.ItemsPanel>
-                <MenuItem Header="Run All Tools"
-                          Style="{StaticResource SubMenuItemFullStyle}"
-                          Command="{Binding RunAllCommand}"
-                          InputGestureText="F5"/>
-                <MenuItem Header="Run Selected Tool"
-                          Style="{StaticResource SubMenuItemFullStyle}"
-                          Command="{Binding RunSelectedCommand}"
-                          InputGestureText="F6"/>
-                <Separator Foreground="#606060"/>
-                <MenuItem Header="Clear All Tools"
-                          Style="{StaticResource SubMenuItemFullStyle}"
-                          Command="{Binding ClearToolsCommand}"/>
-            </MenuItem>
-
-            <MenuItem Header="_Recipe">
-                <MenuItem.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Style="{StaticResource TransparentMenuPanelStyle}"/>
-                    </ItemsPanelTemplate>
-                </MenuItem.ItemsPanel>
-                <MenuItem Header="Recipe Manager"
-                          Style="{StaticResource SubMenuItemFullStyle}"
-                          Click="RecipeManager_Click"/>
-                <MenuItem Header="Camera Manager"
-                          Style="{StaticResource SubMenuItemFullStyle}"
-                          Click="CameraManager_Click"/>
-                <Separator Foreground="#606060"/>
-                <MenuItem Header="Save Recipe"
-                          Style="{StaticResource SubMenuItemFullStyle}"
-                          Click="SaveRecipe_Click"
-                          InputGestureText="Ctrl+S"/>
-            </MenuItem>
-
-            <MenuItem Header="_Help">
-                <MenuItem.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Style="{StaticResource TransparentMenuPanelStyle}"/>
-                    </ItemsPanelTemplate>
-                </MenuItem.ItemsPanel>
-                <MenuItem Header="About" Style="{StaticResource SubMenuItemFullStyle}"/>
-            </MenuItem>
-        </Menu>
-
         <!-- Toolbar -->
-        <Border Grid.Row="1" Background="#2D2D30" Padding="10,5">
-            <StackPanel Orientation="Horizontal">
-                <!-- File -->
-                <Button Command="{Binding OpenImageFileCommand}"
-                        Style="{StaticResource ToolbarButtonStyle}" ToolTip="Open Image (Ctrl+O)">
-                    <StackPanel Orientation="Horizontal">
-                        <Path Data="M2,6 L2,16 L18,16 L18,8 L11,8 L9,6 Z"
-                              Stroke="White" StrokeThickness="1.4" Fill="Transparent"
-                              Width="15" Height="12" Stretch="Uniform" VerticalAlignment="Center"/>
-                        <TextBlock Text="Open Image" Margin="7,0,0,0" VerticalAlignment="Center"/>
-                    </StackPanel>
+        <Border Grid.Row="0" Background="#2D2D30" Padding="10,5">
+            <DockPanel>
+                <!-- Close Button (right-aligned) -->
+                <Button DockPanel.Dock="Right" Command="{Binding CloseCommand}"
+                        ToolTip="Close Application"
+                        Margin="8,0,0,0" Padding="10,7" Cursor="Hand" BorderThickness="0">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="CloseBorder" CornerRadius="6"
+                                    Background="Transparent" Padding="{TemplateBinding Padding}"
+                                    BorderBrush="#50FFFFFF" BorderThickness="1">
+                                <Path x:Name="CloseIcon"
+                                      Data="M4,4 L16,16 M16,4 L4,16"
+                                      Stroke="#AAAAAA" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                      Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="CloseBorder" Property="Background" Value="#C42B1C"/>
+                                    <Setter TargetName="CloseBorder" Property="BorderBrush" Value="#E04535"/>
+                                    <Setter TargetName="CloseIcon" Property="Stroke" Value="White"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="CloseBorder" Property="Background" Value="#A02018"/>
+                                    <Setter TargetName="CloseBorder" Property="BorderBrush" Value="#C42B1C"/>
+                                    <Setter TargetName="CloseIcon" Property="Stroke" Value="White"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
                 </Button>
 
-                <Border Width="1" Background="#4A4A4C" Margin="8,4" CornerRadius="1"/>
+                <!-- Toolbar Buttons (left-aligned) -->
+                <StackPanel Orientation="Horizontal">
+                    <!-- File -->
+                    <Button Command="{Binding OpenImageFileCommand}"
+                            Style="{StaticResource ToolbarButtonStyle}" ToolTip="Open Image (Ctrl+O)">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="M2,6 L2,16 L18,16 L18,8 L11,8 L9,6 Z"
+                                  Stroke="White" StrokeThickness="1.4" Fill="Transparent"
+                                  Width="15" Height="12" Stretch="Uniform" VerticalAlignment="Center"/>
+                            <TextBlock Text="Open Image" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
 
-                <!-- Execution -->
-                <Button Command="{Binding RunAllCommand}"
-                        Style="{StaticResource ToolbarButtonStyle}" ToolTip="Run All Tools (F5)">
-                    <StackPanel Orientation="Horizontal">
-                        <Path Data="M4,2 L16,10 L4,18 Z" Fill="White"
-                              Width="11" Height="13" Stretch="Uniform" VerticalAlignment="Center"/>
-                        <TextBlock Text="Run All" Margin="7,0,0,0" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-                <Button Command="{Binding RunSelectedCommand}"
-                        Style="{StaticResource ToolbarButtonStyle}" ToolTip="Run Selected Tool (F6)">
-                    <StackPanel Orientation="Horizontal">
-                        <Canvas Width="15" Height="13" VerticalAlignment="Center">
-                            <Path Data="M1,1 L10,6.5 L1,12 Z" Fill="White"/>
-                            <Path Data="M12.5,1 L12.5,12" Stroke="White" StrokeThickness="2"/>
-                        </Canvas>
-                        <TextBlock Text="Run Selected" Margin="7,0,0,0" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
+                    <Border Width="1" Background="#4A4A4C" Margin="8,4" CornerRadius="1"/>
 
-                <Border Width="1" Background="#4A4A4C" Margin="8,4" CornerRadius="1"/>
+                    <!-- Execution -->
+                    <Button Command="{Binding RunAllCommand}"
+                            Style="{StaticResource ToolbarButtonStyle}" ToolTip="Run All Tools (F5)">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="M4,2 L16,10 L4,18 Z" Fill="White"
+                                  Width="11" Height="13" Stretch="Uniform" VerticalAlignment="Center"/>
+                            <TextBlock Text="Run All" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding RunSelectedCommand}"
+                            Style="{StaticResource ToolbarButtonStyle}" ToolTip="Run Selected Tool (F6)">
+                        <StackPanel Orientation="Horizontal">
+                            <Canvas Width="15" Height="13" VerticalAlignment="Center">
+                                <Path Data="M1,1 L10,6.5 L1,12 Z" Fill="White"/>
+                                <Path Data="M12.5,1 L12.5,12" Stroke="White" StrokeThickness="2"/>
+                            </Canvas>
+                            <TextBlock Text="Run Selected" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
 
-                <!-- Clear -->
-                <Button Command="{Binding ClearToolsCommand}"
-                        Style="{StaticResource DangerButtonStyle}" ToolTip="Clear All Tools">
-                    <StackPanel Orientation="Horizontal">
-                        <Path Data="M6,6 L6,17 L14,17 L14,6 M4,4 L16,4 M8,2 L12,2 M9,8 L9,15 M11,8 L11,15"
-                              Stroke="White" StrokeThickness="1.3"
-                              Width="13" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
-                        <TextBlock Text="Clear All" Margin="7,0,0,0" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
+                    <Border Width="1" Background="#4A4A4C" Margin="8,4" CornerRadius="1"/>
 
-                <Border Width="1" Background="#4A4A4C" Margin="8,4" CornerRadius="1"/>
+                    <!-- Clear -->
+                    <Button Command="{Binding ClearToolsCommand}"
+                            Style="{StaticResource DangerButtonStyle}" ToolTip="Clear All Tools">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="M6,6 L6,17 L14,17 L14,6 M4,4 L16,4 M8,2 L12,2 M9,8 L9,15 M11,8 L11,15"
+                                  Stroke="White" StrokeThickness="1.3"
+                                  Width="13" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
+                            <TextBlock Text="Clear All" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
 
-                <!-- Management -->
-                <Button Click="RecipeManager_Click"
-                        Style="{StaticResource ToolbarButtonStyle}" Background="#E67E22" ToolTip="Recipe Manager">
-                    <StackPanel Orientation="Horizontal">
-                        <Path Data="M4,2 L4,18 L14,18 L14,6 L10,2 Z M10,2 L10,6 L14,6 M7,10 L12,10 M7,13 L11,13"
-                              Stroke="White" StrokeThickness="1.2" Fill="Transparent"
-                              Width="13" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
-                        <TextBlock Text="Recipe" Margin="7,0,0,0" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-                <Button Click="CameraManager_Click"
-                        Style="{StaticResource ToolbarButtonStyle}" Background="#7B1FA2" ToolTip="Camera Manager">
-                    <StackPanel Orientation="Horizontal">
-                        <Path Data="M2,6 L2,15 L18,15 L18,6 L15,6 L13,4 L7,4 L5,6 Z M10,7.5 A2.5,2.5 0 1 1 10,12.5 A2.5,2.5 0 1 1 10,7.5"
-                              Stroke="White" StrokeThickness="1.2" Fill="Transparent"
-                              Width="15" Height="12" Stretch="Uniform" VerticalAlignment="Center"/>
-                        <TextBlock Text="Camera" Margin="7,0,0,0" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-            </StackPanel>
+                    <Border Width="1" Background="#4A4A4C" Margin="8,4" CornerRadius="1"/>
+
+                    <!-- Management -->
+                    <Button Click="RecipeManager_Click"
+                            Style="{StaticResource ToolbarButtonStyle}" Background="#E67E22" ToolTip="Recipe Manager">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="M4,2 L4,18 L14,18 L14,6 L10,2 Z M10,2 L10,6 L14,6 M7,10 L12,10 M7,13 L11,13"
+                                  Stroke="White" StrokeThickness="1.2" Fill="Transparent"
+                                  Width="13" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
+                            <TextBlock Text="Recipe" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding SaveRecipeCommand}"
+                            Style="{StaticResource ToolbarButtonStyle}" Background="#D4740E" ToolTip="Save Recipe (Ctrl+S)">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="M3,2 L3,18 L17,18 L17,6 L13,2 Z M6,2 L6,7 L12,7 L12,2 M6,12 L14,12 M6,15 L14,15"
+                                  Stroke="White" StrokeThickness="1.2" Fill="Transparent"
+                                  Width="13" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
+                            <TextBlock Text="Save" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Click="CameraManager_Click"
+                            Style="{StaticResource ToolbarButtonStyle}" Background="#7B1FA2" ToolTip="Camera Manager">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="M2,6 L2,15 L18,15 L18,6 L15,6 L13,4 L7,4 L5,6 Z M10,7.5 A2.5,2.5 0 1 1 10,12.5 A2.5,2.5 0 1 1 10,7.5"
+                                  Stroke="White" StrokeThickness="1.2" Fill="Transparent"
+                                  Width="15" Height="12" Stretch="Uniform" VerticalAlignment="Center"/>
+                            <TextBlock Text="Camera" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Click="SequenceEditor_Click"
+                            Style="{StaticResource ToolbarButtonStyle}" Background="#00838F" ToolTip="Sequence Editor">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="M4,4 L4,8 L8,8 L8,4 Z M12,4 L12,8 L16,8 L16,4 Z M8,6 L12,6 M6,8 L6,12 M14,8 L14,12 M4,12 L4,16 L8,16 L8,12 Z M12,12 L12,16 L16,16 L16,12 Z"
+                                  Stroke="White" StrokeThickness="1.2" Fill="Transparent"
+                                  Width="15" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
+                            <TextBlock Text="Sequence" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Border Width="1" Background="#4A4A4C" Margin="8,4" CornerRadius="1"/>
+
+                    <!-- Camera Info -->
+                    <Button x:Name="CameraInfoButton"
+                            Command="{Binding ShowCameraInfoCommand}"
+                            Style="{StaticResource ToolbarButtonStyle}" Background="#00897B" ToolTip="Camera Info">
+                        <StackPanel Orientation="Horizontal">
+                            <Grid>
+                                <Path Data="M2,6 L2,15 L18,15 L18,6 L15,6 L13,4 L7,4 L5,6 Z"
+                                      Stroke="White" StrokeThickness="1.2" Fill="Transparent"
+                                      Width="15" Height="12" Stretch="Uniform" VerticalAlignment="Center"/>
+                                <!-- Connection status dot -->
+                                <Ellipse Width="7" Height="7" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                         Margin="0,-2,-2,0">
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
+                                            <Setter Property="Fill" Value="#F44336"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsCameraConnected}" Value="True">
+                                                    <Setter Property="Fill" Value="#4CAF50"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
+                            </Grid>
+                            <TextBlock Text="Camera Info" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Acquire Image -->
+                    <Button Command="{Binding AcquireImageCommand}"
+                            Style="{StaticResource ToolbarButtonStyle}" Background="#1565C0" ToolTip="Acquire Image">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="M2,6 L2,15 L18,15 L18,6 L15,6 L13,4 L7,4 L5,6 Z M10,7.5 A2.5,2.5 0 1 1 10,12.5 A2.5,2.5 0 1 1 10,7.5 M3,17 L3,19 L17,19 L17,17"
+                                  Stroke="White" StrokeThickness="1.2" Fill="Transparent"
+                                  Width="15" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
+                            <TextBlock Text="Acquire" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </DockPanel>
         </Border>
 
+        <!-- Camera Info Popup -->
+        <Popup x:Name="CameraInfoPopup"
+               PlacementTarget="{Binding ElementName=CameraInfoButton}"
+               Placement="Bottom"
+               StaysOpen="False"
+               AllowsTransparency="True"
+               IsOpen="{Binding IsCameraInfoPopupOpen, Mode=TwoWay}">
+            <Border Background="#2D2D30" BorderBrush="#555555" BorderThickness="1"
+                    CornerRadius="6" Padding="16" MinWidth="280">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="10" ShadowDepth="3" Opacity="0.5"/>
+                </Border.Effect>
+                <Grid>
+                    <!-- No camera selected -->
+                    <TextBlock Text="카메라를 선택하세요"
+                               Foreground="#999999" FontSize="13"
+                               HorizontalAlignment="Center" Margin="0,10"
+                               Visibility="{Binding SelectedCamera, Converter={StaticResource NullToCollapsedConverter}, ConverterParameter=Invert}"/>
+
+                    <!-- Camera info panel -->
+                    <StackPanel Visibility="{Binding SelectedCamera, Converter={StaticResource NullToCollapsedConverter}}">
+                        <!-- Header with icon and name -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <Path Data="M2,6 L2,15 L18,15 L18,6 L15,6 L13,4 L7,4 L5,6 Z M10,7.5 A2.5,2.5 0 1 1 10,12.5 A2.5,2.5 0 1 1 10,7.5"
+                                  Stroke="#00BCD4" StrokeThickness="1.5" Fill="Transparent"
+                                  Width="20" Height="16" Stretch="Uniform" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding SelectedCamera.Name}" Foreground="White"
+                                       FontSize="15" FontWeight="Bold" Margin="10,0,0,0"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <!-- Details grid -->
+                        <Grid Margin="0,0,0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="90"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Manufacturer" Foreground="#999999" FontSize="12" Margin="0,2"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedCamera.Manufacturer}" Foreground="White" FontSize="12" Margin="0,2"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Model" Foreground="#999999" FontSize="12" Margin="0,2"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedCamera.Model}" Foreground="White" FontSize="12" Margin="0,2"/>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="IP Address" Foreground="#999999" FontSize="12" Margin="0,2"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedCamera.ConnectionString}" Foreground="White" FontSize="12" Margin="0,2"/>
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Resolution" Foreground="#999999" FontSize="12" Margin="0,2"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedCamera.Resolution}" Foreground="White" FontSize="12" Margin="0,2"/>
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Status" Foreground="#999999" FontSize="12" Margin="0,2"/>
+                            <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Margin="0,2">
+                                <Ellipse Width="9" Height="9" VerticalAlignment="Center">
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
+                                            <Setter Property="Fill" Value="#F44336"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsCameraConnected}" Value="True">
+                                                    <Setter Property="Fill" Value="#4CAF50"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
+                                <TextBlock Foreground="White" FontSize="12" Margin="6,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="Disconnected"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsCameraConnected}" Value="True">
+                                                    <Setter Property="Text" Value="Connected"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Connect/Disconnect buttons -->
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0" HorizontalAlignment="Right">
+                            <Button Command="{Binding ConnectCameraCommand}"
+                                    Style="{StaticResource ToolbarButtonStyle}" Background="#4CAF50"
+                                    Padding="12,5" FontSize="12" Content="Connect"/>
+                            <Button Command="{Binding DisconnectCameraCommand}"
+                                    Style="{StaticResource ToolbarButtonStyle}" Background="#F44336"
+                                    Padding="12,5" FontSize="12" Margin="6,0,0,0" Content="Disconnect"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Popup>
+
         <!-- Main Content -->
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="200"/>
                 <ColumnDefinition Width="*"/>
@@ -629,50 +755,275 @@
                 <GridSplitter Grid.Column="1" Width="5" VerticalAlignment="Stretch"
                               HorizontalAlignment="Center" Background="#333333" Cursor="SizeWE"/>
 
-                <!-- Image Display Area (Single Canvas with ComboBox Switcher) -->
+                <!-- Image Display Area - TabControl with 2D/3D views -->
                 <Border Grid.Column="2" Background="#1E1E1E" Margin="5">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
+                    <TabControl Background="Transparent" BorderThickness="0" Padding="0">
+                        <TabControl.Resources>
+                            <Style TargetType="TabItem">
+                                <Setter Property="Background" Value="#2D2D30"/>
+                                <Setter Property="Foreground" Value="#999999"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="Padding" Value="16,6"/>
+                                <Setter Property="FontSize" Value="12"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="TabItem">
+                                            <Border x:Name="TabBorder"
+                                                    Background="{TemplateBinding Background}"
+                                                    Padding="{TemplateBinding Padding}"
+                                                    CornerRadius="4,4,0,0" Margin="0,0,2,0">
+                                                <ContentPresenter ContentSource="Header"
+                                                                  HorizontalAlignment="Center"
+                                                                  VerticalAlignment="Center"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="TabBorder" Property="Background" Value="#1E1E1E"/>
+                                                    <Setter Property="Foreground" Value="White"/>
+                                                </Trigger>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="TabBorder" Property="Background" Value="#3E3E42"/>
+                                                </Trigger>
+                                                <MultiTrigger>
+                                                    <MultiTrigger.Conditions>
+                                                        <Condition Property="IsSelected" Value="True"/>
+                                                        <Condition Property="IsMouseOver" Value="True"/>
+                                                    </MultiTrigger.Conditions>
+                                                    <Setter TargetName="TabBorder" Property="Background" Value="#1E1E1E"/>
+                                                </MultiTrigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </TabControl.Resources>
 
-                        <!-- Header: ComboBox Switcher + Clear Button -->
-                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,5">
-                            <ComboBox ItemsSource="{Binding DisplayModes}"
-                                      SelectedItem="{Binding SelectedDisplayMode}"
-                                      Background="#3C3C3C" Foreground="Black"
-                                      BorderBrush="#555555" BorderThickness="1"
-                                      FontSize="12" Padding="8,3" MinWidth="150">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding Converter={StaticResource DisplayModeToStringConverter}}"
-                                                   Foreground="Black"/>
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
+                        <!-- 2D View Tab -->
+                        <TabItem Header="2D View">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto" MaxHeight="250"/>
+                                </Grid.RowDefinitions>
 
-                            <Button Content="Clear Result"
-                                    Command="{Binding ClearResultImageCommand}"
-                                    Background="#3C3C3C" Foreground="White"
-                                    BorderBrush="#555555" BorderThickness="1"
-                                    Padding="8,2" Margin="10,0,0,0"
-                                    FontSize="11" Cursor="Hand"
-                                    Visibility="{Binding IsOriginalImageMode, Converter={StaticResource InverseBoolToVisibility}}"/>
-                        </StackPanel>
+                                <!-- Row 0: Header - ComboBox Switcher + Clear Button -->
+                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,5">
+                                    <ComboBox ItemsSource="{Binding DisplayModes}"
+                                              SelectedItem="{Binding SelectedDisplayMode}"
+                                              Background="#3C3C3C" Foreground="Black"
+                                              BorderBrush="#555555" BorderThickness="1"
+                                              FontSize="12" Padding="8,3" MinWidth="150">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Converter={StaticResource DisplayModeToStringConverter}}"
+                                                           Foreground="Black"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
 
-                        <!-- Single ImageCanvas -->
-                        <controls:ImageCanvas x:Name="ImageCanvasControl" Grid.Row="1"
-                                              SourceImage="{Binding DisplayMat, Mode=OneWay}"
-                                              ROICollection="{Binding ROIShapes, Mode=TwoWay}"
-                                              SelectedROI="{Binding SelectedROI, Mode=TwoWay}"
-                                              IsToolbarVisible="{Binding IsOriginalImageMode}"
-                                              IsROIEditingEnabled="{Binding IsOriginalImageMode}"
-                                              ROICreated="ImageCanvas_ROICreated"
-                                              ROIModified="ImageCanvas_ROIModified"
-                                              ROISelectionChanged="ImageCanvas_ROISelectionChanged"
-                                              Margin="5"/>
-                    </Grid>
+                                    <Button Content="Clear Result"
+                                            Command="{Binding ClearResultImageCommand}"
+                                            Background="#3C3C3C" Foreground="White"
+                                            BorderBrush="#555555" BorderThickness="1"
+                                            Padding="8,2" Margin="10,0,0,0"
+                                            FontSize="11" Cursor="Hand"
+                                            Visibility="{Binding IsOriginalImageMode, Converter={StaticResource InverseBoolToVisibility}}"/>
+                                </StackPanel>
+
+                                <!-- Row 1: ImageCanvas -->
+                                <controls:ImageCanvas x:Name="ImageCanvasControl" Grid.Row="1"
+                                                      SourceImage="{Binding DisplayMat, Mode=OneWay}"
+                                                      ROICollection="{Binding ROIShapes, Mode=TwoWay}"
+                                                      SelectedROI="{Binding SelectedROI, Mode=TwoWay}"
+                                                      IsToolbarVisible="{Binding IsOriginalImageMode}"
+                                                      IsROIEditingEnabled="{Binding IsOriginalImageMode}"
+                                                      ROICreated="ImageCanvas_ROICreated"
+                                                      ROIModified="ImageCanvas_ROIModified"
+                                                      ROISelectionChanged="ImageCanvas_ROISelectionChanged"
+                                                      Margin="5"/>
+
+                                <!-- Row 2: Tool Run Results DataGrid -->
+                                <Border Grid.Row="2" BorderBrush="#333333" BorderThickness="0,1,0,0"
+                                        Margin="5,0,5,5">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Grid.Row="0" Text="Run Results"
+                                                   Foreground="#FFD700" FontWeight="Bold" FontSize="12"
+                                                   Margin="5,5,5,3"/>
+
+                                        <DataGrid Grid.Row="1"
+                                                  ItemsSource="{Binding ToolRunResults}"
+                                                  AutoGenerateColumns="False"
+                                                  IsReadOnly="True"
+                                                  CanUserAddRows="False"
+                                                  CanUserDeleteRows="False"
+                                                  CanUserReorderColumns="False"
+                                                  HeadersVisibility="Column"
+                                                  GridLinesVisibility="Horizontal"
+                                                  HorizontalGridLinesBrush="#444444"
+                                                  Background="#1E1E1E"
+                                                  Foreground="White"
+                                                  BorderBrush="#555555"
+                                                  BorderThickness="1"
+                                                  RowBackground="#2D2D2D"
+                                                  AlternatingRowBackground="#252526"
+                                                  Height="150"
+                                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                                  ScrollViewer.CanContentScroll="True"
+                                                  FontSize="12">
+                                            <DataGrid.ColumnHeaderStyle>
+                                                <Style TargetType="DataGridColumnHeader">
+                                                    <Setter Property="Background" Value="#3C3C3C"/>
+                                                    <Setter Property="Foreground" Value="#CCCCCC"/>
+                                                    <Setter Property="FontWeight" Value="Bold"/>
+                                                    <Setter Property="Padding" Value="8,4"/>
+                                                    <Setter Property="BorderBrush" Value="#555555"/>
+                                                    <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                                                </Style>
+                                            </DataGrid.ColumnHeaderStyle>
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="Tool Name"
+                                                                    Binding="{Binding ToolName}"
+                                                                    Width="*"
+                                                                    MinWidth="120">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Padding" Value="6,3"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+                                                <DataGridTextColumn Header="Pass/Fail"
+                                                                    Binding="{Binding Result}"
+                                                                    Width="80">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Padding" Value="6,3"/>
+                                                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="FontWeight" Value="Bold"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Result}" Value="True">
+                                                                    <Setter Property="Foreground" Value="#4EC94E"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Result}" Value="False">
+                                                                    <Setter Property="Foreground" Value="#FF6B6B"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+                                                <DataGridTextColumn Header="Result Value"
+                                                                    Binding="{Binding ResultValue}"
+                                                                    Width="2*"
+                                                                    MinWidth="150">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Padding" Value="6,3"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </TabItem>
+
+                        <!-- 3D View Tab -->
+                        <TabItem Header="3D View">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Header with Load Sample button -->
+                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,5">
+                                    <Button Content="Load Sample"
+                                            Command="{Binding LoadSamplePointCloudCommand}"
+                                            Style="{StaticResource ToolbarButtonStyle}"
+                                            Background="#7B1FA2"/>
+                                </StackPanel>
+
+                                <!-- Height Slicing Panel -->
+                                <Border Grid.Row="1" Background="#2D2D30" CornerRadius="4" Margin="10,2,10,5" Padding="10,6">
+                                    <StackPanel>
+                                        <TextBlock Text="Height Slicing" Foreground="#FFD700" FontWeight="Bold" FontSize="13" Margin="0,0,0,6"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="70"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="60"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <!-- Baseline -->
+                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Baseline" Foreground="#CCCCCC" VerticalAlignment="Center" FontSize="11"/>
+                                            <Slider Grid.Row="0" Grid.Column="1"
+                                                    Value="{Binding HeightBaseline}"
+                                                    Minimum="{Binding PointCloudYMin}" Maximum="{Binding PointCloudYMax}"
+                                                    VerticalAlignment="Center" Margin="4,2"/>
+                                            <TextBox Grid.Row="0" Grid.Column="2"
+                                                     Text="{Binding HeightBaseline, StringFormat=F1}"
+                                                     Background="#3C3C3C" Foreground="#CCCCCC" BorderBrush="#555555"
+                                                     FontSize="11" Padding="3,1" VerticalAlignment="Center"/>
+
+                                            <!-- Lower Limit -->
+                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Lower" Foreground="#CCCCCC" VerticalAlignment="Center" FontSize="11"/>
+                                            <Slider Grid.Row="1" Grid.Column="1"
+                                                    Value="{Binding HeightLowerLimit}"
+                                                    Minimum="{Binding PointCloudYMin}" Maximum="{Binding PointCloudYMax}"
+                                                    VerticalAlignment="Center" Margin="4,2"/>
+                                            <TextBox Grid.Row="1" Grid.Column="2"
+                                                     Text="{Binding HeightLowerLimit, StringFormat=F1}"
+                                                     Background="#3C3C3C" Foreground="#CCCCCC" BorderBrush="#555555"
+                                                     FontSize="11" Padding="3,1" VerticalAlignment="Center"/>
+
+                                            <!-- Upper Limit -->
+                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Upper" Foreground="#CCCCCC" VerticalAlignment="Center" FontSize="11"/>
+                                            <Slider Grid.Row="2" Grid.Column="1"
+                                                    Value="{Binding HeightUpperLimit}"
+                                                    Minimum="{Binding PointCloudYMin}" Maximum="{Binding PointCloudYMax}"
+                                                    VerticalAlignment="Center" Margin="4,2"/>
+                                            <TextBox Grid.Row="2" Grid.Column="2"
+                                                     Text="{Binding HeightUpperLimit, StringFormat=F1}"
+                                                     Background="#3C3C3C" Foreground="#CCCCCC" BorderBrush="#555555"
+                                                     FontSize="11" Padding="3,1" VerticalAlignment="Center"/>
+                                        </Grid>
+
+                                        <Button Content="Generate Height Map"
+                                                Command="{Binding GenerateHeightMapCommand}"
+                                                Background="#0E639C" Foreground="White"
+                                                Padding="12,4" Margin="0,6,0,0"
+                                                HorizontalAlignment="Left"
+                                                FontSize="12"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- 3D Point Cloud Canvas -->
+                                <controls:PointDrawingCanvas x:Name="PointCanvasControl" Grid.Row="2"
+                                                             PointCloud="{Binding CurrentPointCloud}"
+                                                             HeightSliceBaseline="{Binding HeightBaseline}"
+                                                             HeightSliceLower="{Binding HeightLowerLimit}"
+                                                             HeightSliceUpper="{Binding HeightUpperLimit}"
+                                                             Margin="5"/>
+                            </Grid>
+                        </TabItem>
+                    </TabControl>
                 </Border>
             </Grid>
 
@@ -695,7 +1046,7 @@
         </Grid>
 
         <!-- Status Bar -->
-        <Border Grid.Row="3" Background="#007ACC" Padding="10,5">
+        <Border Grid.Row="2" Background="#007ACC" Padding="10,5">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>

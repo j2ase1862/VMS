@@ -2,6 +2,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using OpenCvSharp;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using VMS.PLC.Models;
 
 namespace VMS.VisionSetup.Models
 {
@@ -13,7 +15,12 @@ namespace VMS.VisionSetup.Models
         /// <summary>
         /// 도구 고유 ID (연결선 매칭용)
         /// </summary>
-        public string Id { get; } = Guid.NewGuid().ToString();
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+
+        /// <summary>
+        /// 외부 실행 엔진이 오버레이 렌더링용 원본 이미지를 주입하기 위한 속성
+        /// </summary>
+        public Mat? OverlayBaseImage { get; set; }
 
         private string _name = string.Empty;
         public string Name
@@ -59,6 +66,11 @@ namespace VMS.VisionSetup.Models
             {
                 if (SetProperty(ref _roi, value))
                 {
+                    // 사용자가 ROI를 변경한 경우 Fixture 기준점 리셋
+                    // (Fixture Transform 적용 중에는 리셋하지 않음)
+                    if (!IsFixtureTransformActive)
+                        HasFixtureBaseROI = false;
+
                     OnPropertyChanged(nameof(ROIX));
                     OnPropertyChanged(nameof(ROIY));
                     OnPropertyChanged(nameof(ROIWidth));
@@ -104,11 +116,24 @@ namespace VMS.VisionSetup.Models
         public bool UseROI
         {
             get => _useROI;
-            set => SetProperty(ref _useROI, value);
+            set
+            {
+                if (SetProperty(ref _useROI, value) && !IsFixtureTransformActive)
+                    HasFixtureBaseROI = false;
+            }
         }
 
-        internal Rect FixtureBaseROI { get; set; }
-        internal bool HasFixtureBaseROI { get; set; }
+        /// <summary>
+        /// Fixture Transform 적용 중 플래그.
+        /// true일 때 ROI/UseROI 변경이 HasFixtureBaseROI를 리셋하지 않음.
+        /// </summary>
+        public bool IsFixtureTransformActive { get; set; }
+
+        public Rect FixtureBaseROI { get; set; }
+        public bool HasFixtureBaseROI { get; set; }
+        public double FixtureRefX { get; set; }      // 최초 실행 시 FeatureMatch foundX
+        public double FixtureRefY { get; set; }      // 최초 실행 시 FeatureMatch foundY
+        public double FixtureRefAngle { get; set; }  // 최초 실행 시 FeatureMatch angle
 
         // 마지막 실행 결과
         private VisionResult? _lastResult;
@@ -124,6 +149,38 @@ namespace VMS.VisionSetup.Models
         {
             get => _executionTime;
             set => SetProperty(ref _executionTime, value);
+        }
+
+        // PLC 결과 전송 설정 (1:N 매핑)
+        /// <summary>
+        /// PLC 결과 매핑 리스트. 하나의 도구에서 여러 결과를 서로 다른 PLC 주소로 전송 가능.
+        /// </summary>
+        public ObservableCollection<PlcResultMapping> PlcMappings { get; set; } = new();
+
+        /// <summary>
+        /// 도구가 제공하는 결과 키 목록 (UI 콤보 박스용).
+        /// 파생 클래스에서 오버라이드하여 도구별 키를 반환.
+        /// </summary>
+        public virtual List<string> GetAvailableResultKeys()
+        {
+            return new List<string> { "Success" };
+        }
+
+        /// <summary>
+        /// PlcMappings를 대상 도구에 깊은 복사.
+        /// Clone() 구현에서 호출.
+        /// </summary>
+        public void CopyPlcMappingsTo(VisionToolBase target)
+        {
+            foreach (var mapping in PlcMappings)
+            {
+                target.PlcMappings.Add(new PlcResultMapping
+                {
+                    ResultKey = mapping.ResultKey,
+                    PlcAddress = mapping.PlcAddress,
+                    DataType = mapping.DataType
+                });
+            }
         }
 
         private Mat? _cachedGrayscale;

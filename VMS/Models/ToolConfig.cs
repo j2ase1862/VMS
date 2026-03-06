@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using VMS.PLC.Models;
 
 namespace VMS.Models
 {
@@ -26,6 +27,14 @@ namespace VMS.Models
 
         // Connections to other tools
         public List<ToolConnectionConfig> Connections { get; set; } = new();
+
+        // PLC result mappings (1:N)
+        public List<PlcResultMapping> PlcMappings { get; set; } = new();
+
+        // Legacy (deserialization compatibility)
+        public string? ResultPlcAddress { get; set; }
+        public PlcDataType ResultDataType { get; set; } = PlcDataType.Bit;
+        public string? ResultDataKey { get; set; }
     }
 
     /// <summary>

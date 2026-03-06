@@ -7,7 +7,7 @@
              d:DesignHeight="20" d:DesignWidth="20">
 
     <UserControl.Resources>
-        <Style x:Key="HelpButtonStyle" TargetType="Button">
+        <Style x:Key="HelpToggleButtonStyle" TargetType="ToggleButton">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Help"/>
@@ -17,7 +17,7 @@
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="Template">
                 <Setter.Value>
-                    <ControlTemplate TargetType="Button">
+                    <ControlTemplate TargetType="ToggleButton">
                         <Grid>
                             <Ellipse x:Name="BackgroundCircle"
                                      Fill="#3399FF"
@@ -34,7 +34,7 @@
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="BackgroundCircle" Property="Fill" Value="#66B3FF"/>
                             </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
+                            <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="BackgroundCircle" Property="Fill" Value="#0066CC"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -45,19 +45,19 @@
     </UserControl.Resources>
 
     <Grid>
-        <Button x:Name="HelpButton"
-                Style="{StaticResource HelpButtonStyle}"
-                Click="HelpButton_Click"
-                ToolTipService.InitialShowDelay="0"
-                ToolTipService.ShowDuration="60000">
-            <Button.ToolTip>
+        <ToggleButton x:Name="HelpButton"
+                      Style="{StaticResource HelpToggleButtonStyle}"
+                      IsChecked="{Binding IsOpen, ElementName=HelpPopup, Mode=TwoWay}"
+                      ToolTipService.InitialShowDelay="0"
+                      ToolTipService.ShowDuration="60000">
+            <ToggleButton.ToolTip>
                 <ToolTip x:Name="QuickTooltip" MaxWidth="300">
                     <TextBlock x:Name="TooltipText"
                                TextWrapping="Wrap"
                                Text="도움말을 로드 중..."/>
                 </ToolTip>
-            </Button.ToolTip>
-        </Button>
+            </ToggleButton.ToolTip>
+        </ToggleButton>
 
         <!-- Help Popup -->
         <Popup x:Name="HelpPopup"
@@ -98,16 +98,16 @@
                                    FontWeight="Bold"
                                    FontSize="14"/>
 
-                        <Button Grid.Column="1"
-                                Content="X"
-                                Background="Transparent"
-                                Foreground="Gray"
-                                BorderThickness="0"
-                                FontWeight="Bold"
-                                Cursor="Hand"
-                                Click="ClosePopup_Click"
-                                Width="20" Height="20"
-                                VerticalAlignment="Top"/>
+                        <ToggleButton Grid.Column="1"
+                                      Content="X"
+                                      Background="Transparent"
+                                      Foreground="Gray"
+                                      BorderThickness="0"
+                                      FontWeight="Bold"
+                                      Cursor="Hand"
+                                      IsChecked="{Binding IsChecked, ElementName=HelpButton, Mode=TwoWay}"
+                                      Width="20" Height="20"
+                                      VerticalAlignment="Top"/>
                     </Grid>
 
                     <!-- Cognex Equivalent (if available) -->

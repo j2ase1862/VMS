@@ -166,9 +166,14 @@ namespace VMS.VisionSetup.VisionTools.ImageProcessing
             return histImage;
         }
 
+        public override List<string> GetAvailableResultKeys()
+        {
+            return new List<string> { "Success", "MinValue", "MaxValue", "MeanValue", "StdDev" };
+        }
+
         public override VisionToolBase Clone()
         {
-            return new HistogramTool
+            var clone = new HistogramTool
             {
                 Name = this.Name,
                 ToolType = this.ToolType,
@@ -180,6 +185,8 @@ namespace VMS.VisionSetup.VisionTools.ImageProcessing
                 TileGridWidth = this.TileGridWidth,
                 TileGridHeight = this.TileGridHeight
             };
+            CopyPlcMappingsTo(clone);
+            return clone;
         }
     }
 

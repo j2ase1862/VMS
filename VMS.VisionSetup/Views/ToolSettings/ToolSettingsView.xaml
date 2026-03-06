@@ -7,6 +7,7 @@
              xmlns:ts="clr-namespace:VMS.VisionSetup.Views.ToolSettings"
              xmlns:tools="clr-namespace:VMS.VisionSetup.Views.ToolSettings.Tools"
              xmlns:vm="clr-namespace:VMS.VisionSetup.ViewModels.ToolSettings"
+             xmlns:plc="clr-namespace:VMS.PLC.Models;assembly=VMS.PLC"
              mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="300"
              Background="#2D2D30">
@@ -48,6 +49,12 @@
         <DataTemplate x:Key="CircleFitTemplate" DataType="{x:Type vm:CircleFitToolSettingsViewModel}">
             <tools:CircleFitToolSettings/>
         </DataTemplate>
+        <DataTemplate x:Key="HeightSlicerTemplate" DataType="{x:Type vm:HeightSlicerToolSettingsViewModel}">
+            <tools:HeightSlicerToolSettings/>
+        </DataTemplate>
+        <DataTemplate x:Key="ResultTemplate" DataType="{x:Type vm:ResultToolSettingsViewModel}">
+            <tools:ResultToolSettings/>
+        </DataTemplate>
 
         <ts:ToolSettingsTemplateSelector x:Key="ToolTemplateSelector"
             GrayscaleTemplate="{StaticResource GrayscaleTemplate}"
@@ -60,7 +67,9 @@
             BlobTemplate="{StaticResource BlobTemplate}"
             CaliperTemplate="{StaticResource CaliperTemplate}"
             LineFitTemplate="{StaticResource LineFitTemplate}"
-            CircleFitTemplate="{StaticResource CircleFitTemplate}"/>
+            CircleFitTemplate="{StaticResource CircleFitTemplate}"
+            HeightSlicerTemplate="{StaticResource HeightSlicerTemplate}"
+            ResultTemplate="{StaticResource ResultTemplate}"/>
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -111,40 +120,10 @@
 
                 <TextBlock Text="ROI Settings" Style="{StaticResource SectionHeaderStyle}"/>
 
-                <Grid Margin="0,5,0,5">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Text="X:" Foreground="LightGray" VerticalAlignment="Center" Margin="0,0,5,5" Grid.Row="0" Grid.Column="0"/>
-                    <TextBox Grid.Row="0" Grid.Column="1" Margin="0,0,10,5"
-                             Style="{StaticResource SettingTextBoxStyle}"
-                             Text="{Binding ROIX, UpdateSourceTrigger=PropertyChanged, FallbackValue=0}"/>
-
-                    <TextBlock Text="Y:" Foreground="LightGray" VerticalAlignment="Center" Margin="0,0,5,5" Grid.Row="0" Grid.Column="2"/>
-                    <TextBox Grid.Row="0" Grid.Column="3" Margin="0,0,0,5"
-                             Style="{StaticResource SettingTextBoxStyle}"
-                             Text="{Binding ROIY, UpdateSourceTrigger=PropertyChanged, FallbackValue=0}"/>
-
-                    <TextBlock Text="W:" Foreground="LightGray" VerticalAlignment="Center" Margin="0,0,5,5" Grid.Row="1" Grid.Column="0"/>
-                    <TextBox Grid.Row="1" Grid.Column="1" Margin="0,0,10,5"
-                             Style="{StaticResource SettingTextBoxStyle}"
-                             Text="{Binding ROIWidth, UpdateSourceTrigger=PropertyChanged, FallbackValue=0}"/>
-
-                    <TextBlock Text="H:" Foreground="LightGray" VerticalAlignment="Center" Margin="0,0,5,5" Grid.Row="1" Grid.Column="2"/>
-                    <TextBox Grid.Row="1" Grid.Column="3" Margin="0,0,0,5"
-                             Style="{StaticResource SettingTextBoxStyle}"
-                             Text="{Binding ROIHeight, UpdateSourceTrigger=PropertyChanged, FallbackValue=0}"/>
-                </Grid>
-
                 <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
+                    <Button Content="Show ROI" Command="{Binding ShowROICommand}"
+                            Background="#2D7D46" Foreground="White" BorderBrush="#1E5C32"
+                            Padding="10,4" Margin="0,0,10,0" Cursor="Hand"/>
                     <Button Content="Draw ROI" Command="{Binding DrawROICommand}"
                             Background="#007ACC" Foreground="White" BorderBrush="#005A9E"
                             Padding="10,4" Margin="0,0,10,0" Cursor="Hand"/>
@@ -152,6 +131,102 @@
                             Background="#555555" Foreground="White" BorderBrush="#444444"
                             Padding="10,4" Cursor="Hand"/>
                 </StackPanel>
+            </StackPanel>
+
+            <!-- PLC Output Mappings (HidePlcSection=true이면 숨김) -->
+            <StackPanel>
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HidePlcSection}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+
+            <TextBlock Text="PLC Output" Style="{StaticResource SectionHeaderStyle}"/>
+
+            <DataGrid ItemsSource="{Binding PlcMappings}"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      CanUserReorderColumns="False"
+                      CanUserSortColumns="False"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="None"
+                      RowHeaderWidth="0"
+                      Background="White"
+                      Foreground="Black"
+                      BorderBrush="#AAAAAA"
+                      BorderThickness="1"
+                      RowBackground="White"
+                      AlternatingRowBackground="#F5F5F5"
+                      Margin="0,3,0,3"
+                      MinHeight="28"
+                      MaxHeight="200">
+                <DataGrid.ColumnHeaderStyle>
+                    <Style TargetType="DataGridColumnHeader">
+                        <Setter Property="Background" Value="#E8E8E8"/>
+                        <Setter Property="Foreground" Value="Black"/>
+                        <Setter Property="Padding" Value="4,2"/>
+                        <Setter Property="BorderBrush" Value="#CCCCCC"/>
+                        <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                    </Style>
+                </DataGrid.ColumnHeaderStyle>
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="Key" Width="*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <ComboBox ItemsSource="{Binding DataContext.AvailableResultKeys, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                          SelectedItem="{Binding ResultKey, UpdateSourceTrigger=PropertyChanged}"
+                                          Background="White" Foreground="Black" BorderThickness="0"
+                                          Padding="4,2"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="Address" Width="*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBox Text="{Binding PlcAddress, UpdateSourceTrigger=PropertyChanged}"
+                                         Background="White" Foreground="Black" BorderThickness="0"
+                                         Padding="4,2"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="Type" Width="80">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <ComboBox ItemsSource="{Binding DataContext.PlcDataTypes, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                          SelectedItem="{Binding DataType, UpdateSourceTrigger=PropertyChanged}"
+                                          Background="White" Foreground="Black" BorderThickness="0"
+                                          Padding="4,2"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="" Width="30">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="X"
+                                        Command="{Binding DataContext.RemovePlcMappingCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                        CommandParameter="{Binding}"
+                                        Background="Transparent" Foreground="#FF6B68"
+                                        BorderThickness="0" Cursor="Hand"
+                                        FontWeight="Bold" Padding="4,0"
+                                        ToolTip="Remove mapping"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <Button Content="+ Add PLC Mapping"
+                    Command="{Binding AddPlcMappingCommand}"
+                    Background="#3E3E42" Foreground="#CCCCCC"
+                    BorderBrush="#555555" Padding="8,4"
+                    HorizontalAlignment="Left" Margin="0,2,0,5"
+                    Cursor="Hand"/>
+
             </StackPanel>
 
             <!-- Execution Info -->

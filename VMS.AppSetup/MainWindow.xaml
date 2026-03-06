@@ -3,22 +3,18 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:vm="clr-namespace:VMS.AppSetup.ViewModels"
         xmlns:converters="clr-namespace:VMS.AppSetup.Converters"
         mc:Ignorable="d"
         Title="BODA Vision System Setup"
-        Width="800" Height="600"
+        Width="860" Height="720"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         Background="#1E1E1E">
 
-    <Window.DataContext>
-        <vm:SetupViewModel/>
-    </Window.DataContext>
-
     <Window.Resources>
         <converters:PageToVisibilityConverter x:Key="PageConverter"/>
         <converters:EnumToBoolConverter x:Key="EnumToBoolConverter"/>
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
 
         <!-- Button Styles -->
         <Style x:Key="PrimaryButtonStyle" TargetType="Button">
@@ -296,52 +292,155 @@
                 </Grid>
 
                 <!-- Page 4: PLC Configuration -->
-                <Grid Visibility="{Binding CurrentPage, Converter={StaticResource PageConverter}, ConverterParameter=4}">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              Visibility="{Binding CurrentPage, Converter={StaticResource PageConverter}, ConverterParameter=4}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
 
-                    <!-- PLC Vendor Selection -->
-                    <StackPanel Grid.Column="0" Margin="0,0,20,0">
-                        <TextBlock Text="PLC Vendor" Style="{StaticResource LabelStyle}"/>
-                        <Border Background="#252526" CornerRadius="6" Padding="10" Margin="0,0,0,20">
-                            <StackPanel>
-                                <RadioButton Content="Mitsubishi" GroupName="PlcVendor"
-                                             IsChecked="{Binding SelectedPlcVendor, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Mitsubishi}"
-                                             Foreground="White" FontSize="13" Margin="5"/>
-                                <RadioButton Content="Siemens" GroupName="PlcVendor"
-                                             IsChecked="{Binding SelectedPlcVendor, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Siemens}"
-                                             Foreground="White" FontSize="13" Margin="5"/>
-                                <RadioButton Content="LS Electric" GroupName="PlcVendor"
-                                             IsChecked="{Binding SelectedPlcVendor, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=LS}"
-                                             Foreground="White" FontSize="13" Margin="5"/>
-                                <RadioButton Content="Omron" GroupName="PlcVendor"
-                                             IsChecked="{Binding SelectedPlcVendor, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Omron}"
-                                             Foreground="White" FontSize="13" Margin="5"/>
-                                <RadioButton Content="None (No PLC)" GroupName="PlcVendor"
-                                             IsChecked="{Binding SelectedPlcVendor, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=None}"
-                                             Foreground="White" FontSize="13" Margin="5"/>
+                        <!-- Left Column: PLC Vendor + Performance & Stability -->
+                        <StackPanel Grid.Column="0" Grid.RowSpan="2" Margin="0,0,12,0">
+
+                            <!-- PLC Vendor Selection -->
+                            <TextBlock Text="PLC Vendor" Style="{StaticResource LabelStyle}"/>
+                            <Border Background="#252526" CornerRadius="6" Padding="10" Margin="0,0,0,15">
+                                <StackPanel>
+                                    <RadioButton Content="Mitsubishi" GroupName="PlcVendor"
+                                                 IsChecked="{Binding SelectedPlcVendor, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Mitsubishi}"
+                                                 Foreground="White" FontSize="13" Margin="5"/>
+                                    <RadioButton Content="Siemens" GroupName="PlcVendor"
+                                                 IsChecked="{Binding SelectedPlcVendor, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Siemens}"
+                                                 Foreground="White" FontSize="13" Margin="5"/>
+                                    <RadioButton Content="LS Electric" GroupName="PlcVendor"
+                                                 IsChecked="{Binding SelectedPlcVendor, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=LS}"
+                                                 Foreground="White" FontSize="13" Margin="5"/>
+                                    <RadioButton Content="Omron" GroupName="PlcVendor"
+                                                 IsChecked="{Binding SelectedPlcVendor, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Omron}"
+                                                 Foreground="White" FontSize="13" Margin="5"/>
+                                    <RadioButton Content="Modbus TCP" GroupName="PlcVendor"
+                                                 IsChecked="{Binding SelectedPlcVendor, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Modbus}"
+                                                 Foreground="White" FontSize="13" Margin="5"/>
+                                    <RadioButton Content="None (No PLC)" GroupName="PlcVendor"
+                                                 IsChecked="{Binding SelectedPlcVendor, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=None}"
+                                                 Foreground="White" FontSize="13" Margin="5"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Performance & Stability -->
+                            <TextBlock Text="Performance &amp; Stability" Style="{StaticResource LabelStyle}"/>
+                            <Border Background="#252526" CornerRadius="6" Padding="12" Margin="0,0,0,15">
+                                <StackPanel>
+                                    <TextBlock Text="Polling Interval (ms)" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox Text="{Binding PollingIntervalMs, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource InputStyle}" Margin="0,0,0,10"/>
+
+                                    <CheckBox Content="Use Heartbeat" IsChecked="{Binding UseHeartbeat}"
+                                              Foreground="White" FontSize="13" Margin="0,0,0,8"/>
+                                    <TextBox Text="{Binding HeartbeatAddress, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource InputStyle}" Margin="0,0,0,10"
+                                             IsEnabled="{Binding UseHeartbeat}">
+                                        <TextBox.Tag>
+                                            <TextBlock Text="Heartbeat Address (e.g. D100)" Foreground="#666666"/>
+                                        </TextBox.Tag>
+                                    </TextBox>
+
+                                    <CheckBox Content="Auto Reconnect" IsChecked="{Binding AutoReconnect}"
+                                              Foreground="White" FontSize="13"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Data Synchronization -->
+                            <TextBlock Text="Data Synchronization" Style="{StaticResource LabelStyle}"/>
+                            <Border Background="#252526" CornerRadius="6" Padding="12">
+                                <StackPanel>
+                                    <TextBlock Text="Write Mode" Style="{StaticResource LabelStyle}"/>
+                                    <ComboBox ItemsSource="{Binding WriteModes}"
+                                              SelectedItem="{Binding WriteMode}"
+                                              Style="{StaticResource ComboStyle}" Margin="0,0,0,10"/>
+
+                                    <TextBlock Text="Endian Mode" Style="{StaticResource LabelStyle}"/>
+                                    <ComboBox ItemsSource="{Binding EndianModes}"
+                                              SelectedItem="{Binding EndianMode}"
+                                              Style="{StaticResource ComboStyle}"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- Right Column: Communication Settings -->
+                        <StackPanel Grid.Column="1" Grid.Row="0" Margin="12,0,0,0">
+
+                            <!-- Communication Type -->
+                            <TextBlock Text="Communication Type" Style="{StaticResource LabelStyle}"/>
+                            <ComboBox ItemsSource="{Binding CommunicationTypes}"
+                                      SelectedItem="{Binding SelectedCommunicationType}"
+                                      Style="{StaticResource ComboStyle}" Margin="0,0,0,15"/>
+
+                            <!-- Modbus Unit ID (visible when Modbus selected) -->
+                            <StackPanel Visibility="{Binding IsModbusVendor, Converter={StaticResource BoolToVisConverter}}">
+                                <TextBlock Text="Modbus Unit ID (1-255)" Style="{StaticResource LabelStyle}"/>
+                                <TextBox Text="{Binding ModbusUnitId, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource InputStyle}" Margin="0,0,0,15"/>
                             </StackPanel>
-                        </Border>
-                    </StackPanel>
 
-                    <!-- Communication Settings -->
-                    <StackPanel Grid.Column="1">
-                        <TextBlock Text="Communication Type" Style="{StaticResource LabelStyle}"/>
-                        <ComboBox ItemsSource="{Binding CommunicationTypes}"
-                                  SelectedItem="{Binding SelectedCommunicationType}"
-                                  Style="{StaticResource ComboStyle}" Margin="0,0,0,20"/>
+                            <!-- Ethernet Settings (visible when NOT Serial) -->
+                            <StackPanel Visibility="{Binding IsEthernetMode, Converter={StaticResource BoolToVisConverter}}">
+                                <TextBlock Text="PLC IP Address" Style="{StaticResource LabelStyle}"/>
+                                <TextBox Text="{Binding PlcIpAddress, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource InputStyle}" Margin="0,0,0,15"/>
 
-                        <TextBlock Text="PLC IP Address" Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding PlcIpAddress, UpdateSourceTrigger=PropertyChanged}"
-                                 Style="{StaticResource InputStyle}" Margin="0,0,0,20"/>
+                                <TextBlock Text="PLC Port" Style="{StaticResource LabelStyle}"/>
+                                <TextBox Text="{Binding PlcPort, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource InputStyle}" Margin="0,0,0,15"/>
+                            </StackPanel>
 
-                        <TextBlock Text="PLC Port" Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding PlcPort, UpdateSourceTrigger=PropertyChanged}"
-                                 Style="{StaticResource InputStyle}"/>
-                    </StackPanel>
-                </Grid>
+                            <!-- Serial Settings (visible when Serial selected) -->
+                            <StackPanel Visibility="{Binding IsSerialMode, Converter={StaticResource BoolToVisConverter}}">
+                                <TextBlock Text="Serial Port" Foreground="#FFD700" FontSize="14" FontWeight="SemiBold"
+                                           Margin="0,0,0,10"/>
+
+                                <TextBlock Text="Port Name" Style="{StaticResource LabelStyle}"/>
+                                <TextBox Text="{Binding SerialPortName, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource InputStyle}" Margin="0,0,0,10"/>
+
+                                <TextBlock Text="Baud Rate" Style="{StaticResource LabelStyle}"/>
+                                <ComboBox ItemsSource="{Binding BaudRateOptions}"
+                                          SelectedItem="{Binding BaudRate}"
+                                          Style="{StaticResource ComboStyle}" Margin="0,0,0,10"/>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="8"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Data Bits" Style="{StaticResource LabelStyle}"/>
+                                        <ComboBox ItemsSource="{Binding DataBitsOptions}"
+                                                  SelectedItem="{Binding DataBits}"
+                                                  Style="{StaticResource ComboStyle}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Parity" Style="{StaticResource LabelStyle}"/>
+                                        <ComboBox ItemsSource="{Binding SerialParities}"
+                                                  SelectedItem="{Binding Parity}"
+                                                  Style="{StaticResource ComboStyle}"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <TextBlock Text="Stop Bits" Style="{StaticResource LabelStyle}" Margin="0,10,0,6"/>
+                                <ComboBox ItemsSource="{Binding SerialStopBitsValues}"
+                                          SelectedItem="{Binding StopBits}"
+                                          Style="{StaticResource ComboStyle}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+                </ScrollViewer>
             </Grid>
         </Border>
 

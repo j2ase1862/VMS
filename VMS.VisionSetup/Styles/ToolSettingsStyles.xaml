@@ -25,9 +25,9 @@
 
     <!-- ComboBox -->
     <Style x:Key="SettingComboBoxStyle" TargetType="ComboBox">
-        <Setter Property="Background" Value="#3E3E42"/>
+        <Setter Property="Background" Value="White"/>
         <Setter Property="Foreground" Value="Black"/>
-        <Setter Property="BorderBrush" Value="#555555"/>
+        <Setter Property="BorderBrush" Value="#AAAAAA"/>
         <Setter Property="Margin" Value="0,0,0,5"/>
     </Style>
 

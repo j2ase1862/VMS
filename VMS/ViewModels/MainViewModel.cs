@@ -1,14 +1,16 @@
+using VMS.Camera.Models;
+using VMS.Interfaces;
 using VMS.Models;
-using VMS.Services;
+using VMS.Views;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Win32;
 using System;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Windows;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Media.Imaging;
 
 namespace VMS.ViewModels
 {
@@ -17,8 +19,26 @@ namespace VMS.ViewModels
         [ObservableProperty]
         private string _applicationTitle = "BODA Vision System";
 
-        [ObservableProperty]
         private bool _isSidePanelOpen;
+        public bool IsSidePanelOpen
+        {
+            get => _isSidePanelOpen;
+            set
+            {
+                // 패널 열기 시 로그인 필요
+                if (value && !_isSidePanelOpen && _userService != null && !_userService.IsLoggedIn)
+                {
+                    if (!_dialogService.ShowLoginDialog(_userService))
+                    {
+                        OnPropertyChanged(); // ToggleButton 원복
+                        return;
+                    }
+                    UpdateUserDisplay();
+                    LogService?.Log($"User logged in: {_userService.CurrentUser?.DisplayName}", LogLevel.Success, "Auth");
+                }
+                SetProperty(ref _isSidePanelOpen, value);
+            }
+        }
 
         [ObservableProperty]
         private bool _isRecipePanelOpen;
@@ -72,17 +92,90 @@ namespace VMS.ViewModels
             ? Math.Round((double)TotalPass / TotalInspections * 100, 1)
             : 0;
 
-        private readonly ConfigurationService _configService;
-        private readonly RecipeService _recipeService;
+        // ── User management ──
+        [ObservableProperty]
+        private string _currentUserDisplay = string.Empty;
+
+        [ObservableProperty]
+        private UserGrade _currentUserGrade;
+
+        public bool CanEditRecipe => _userService?.HasPermission(UserPermission.EditRecipe) ?? true;
+        public bool CanDeleteRecipe => _userService?.HasPermission(UserPermission.DeleteRecipe) ?? true;
+        public bool CanManageUsers => _userService?.HasPermission(UserPermission.ManageUsers) ?? false;
+        public bool CanLaunchVisionSetup => _userService?.HasPermission(UserPermission.LaunchVisionSetup) ?? true;
+        public bool CanLaunchAppSetup => _userService?.HasPermission(UserPermission.LaunchAppSetup) ?? true;
+        public bool CanStartStop => _userService?.HasPermission(UserPermission.StartStop) ?? true;
+
+        // ── Dashboard ──
+        [ObservableProperty]
+        private DashboardViewModel _dashboard = new();
+
+        [ObservableProperty]
+        private NgImageItem? _selectedNgImage;
+
+        // ── System Log ──
+        public ISystemLogService? LogService { get; }
+
+        private readonly IConfigurationService _configService;
+        private readonly IRecipeService _recipeService;
+        private readonly IDialogService _dialogService;
+        private readonly IProcessService _processService;
+        private readonly IInspectionService _inspectionService;
+        private readonly IAutoProcessService? _autoProcessService;
+        private readonly IUserService? _userService;
+        private readonly Action _shutdownAction;
         private SystemConfiguration _systemConfig;
 
-        public MainViewModel()
+        public MainViewModel(
+            IConfigurationService configService,
+            IRecipeService recipeService,
+            IDialogService dialogService,
+            IProcessService processService,
+            IInspectionService inspectionService,
+            Action shutdownAction,
+            IAutoProcessService? autoProcessService = null,
+            IUserService? userService = null,
+            ISystemLogService? logService = null)
         {
-            _configService = ConfigurationService.Instance;
-            _recipeService = RecipeService.Instance;
+            _configService = configService;
+            _recipeService = recipeService;
+            _dialogService = dialogService;
+            _processService = processService;
+            _inspectionService = inspectionService;
+            _autoProcessService = autoProcessService;
+            _userService = userService;
+            LogService = logService;
+            _shutdownAction = shutdownAction;
             _systemConfig = new SystemConfiguration();
+
+            // Initialize user display
+            UpdateUserDisplay();
+
             LoadConfiguration();
             RefreshRecipeList();
+
+            LogService?.Log("Application started", LogLevel.Success, "System");
+        }
+
+        private void UpdateUserDisplay()
+        {
+            if (_userService?.CurrentUser != null)
+            {
+                var user = _userService.CurrentUser;
+                CurrentUserDisplay = $"[{user.Grade}] {user.DisplayName}";
+                CurrentUserGrade = user.Grade;
+            }
+            else
+            {
+                CurrentUserDisplay = string.Empty;
+            }
+
+            OnPropertyChanged(nameof(CanEditRecipe));
+            OnPropertyChanged(nameof(CanDeleteRecipe));
+            OnPropertyChanged(nameof(CanManageUsers));
+            OnPropertyChanged(nameof(CanLaunchVisionSetup));
+            OnPropertyChanged(nameof(CanLaunchAppSetup));
+            OnPropertyChanged(nameof(CanStartStop));
         }
 
         /// <summary>
@@ -127,9 +220,10 @@ namespace VMS.ViewModels
 
             foreach (var camConfig in _systemConfig.Cameras)
             {
-                var camVm = CameraViewModel.FromConfiguration(camConfig);
+                var camVm = CameraViewModel.FromConfiguration(camConfig, _dialogService, _configService, _inspectionService);
                 camVm.X = xOffset;
                 camVm.Y = yOffset;
+                WireCameraEvents(camVm);
                 Cameras.Add(camVm);
 
                 xOffset += 420;
@@ -158,11 +252,27 @@ namespace VMS.ViewModels
             UpdateCanvasSize();
         }
 
+        private void WireCameraEvents(CameraViewModel cam)
+        {
+            cam.InspectionCompleted += (cameraName, ok, image) =>
+            {
+                TotalInspections++;
+                if (ok) TotalPass++;
+                else TotalFail++;
+
+                Dashboard.RecordInspectionResult(ok, cameraName, image);
+                LogService?.Log(
+                    $"Inspection {(ok ? "OK" : "NG")} - {cameraName}",
+                    ok ? LogLevel.Success : LogLevel.Warning,
+                    "Inspection");
+            };
+        }
+
         private void AddDefaultCameras()
         {
             for (int i = 1; i <= 2; i++)
             {
-                Cameras.Add(new CameraViewModel
+                var vm = new CameraViewModel(_dialogService, _configService, _inspectionService)
                 {
                     Id = Guid.NewGuid().ToString(),
                     Name = $"Camera {i}",
@@ -172,7 +282,17 @@ namespace VMS.ViewModels
                     Y = 10,
                     Width = 400,
                     Height = 300
+                };
+                vm.Steps.Add(new StepViewModel
+                {
+                    StepNumber = 1,
+                    Name = "Step 1",
+                    Exposure = 5000,
+                    Gain = 1.0
                 });
+                vm.SelectedStep = vm.Steps[0];
+                WireCameraEvents(vm);
+                Cameras.Add(vm);
             }
         }
 
@@ -192,19 +312,15 @@ namespace VMS.ViewModels
 
             if (_configService.SaveLayoutConfiguration(layoutConfig))
             {
-                MessageBox.Show(
+                _dialogService.ShowInformation(
                     "레이아웃이 저장되었습니다.",
-                    "Save Layout",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                    "Save Layout");
             }
             else
             {
-                MessageBox.Show(
+                _dialogService.ShowError(
                     "레이아웃 저장에 실패했습니다.",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Error");
             }
         }
 
@@ -231,14 +347,17 @@ namespace VMS.ViewModels
                 _currentRecipeFilePath = SelectedRecipeInfo.FilePath;
                 IsRecipePanelOpen = false;
                 SystemStatus = $"Recipe loaded: {recipe.Name}";
+                LogService?.Log($"Recipe loaded: {recipe.Name}", LogLevel.Info, "Recipe");
+
+                // Propagate recipe to all cameras
+                foreach (var cam in Cameras)
+                    cam.SetRecipe(recipe);
             }
             else
             {
-                MessageBox.Show(
+                _dialogService.ShowError(
                     "레시피를 불러올 수 없습니다.",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Error");
             }
         }
 
@@ -258,11 +377,9 @@ namespace VMS.ViewModels
         {
             if (CurrentRecipe == null)
             {
-                MessageBox.Show(
+                _dialogService.ShowWarning(
                     "저장할 레시피가 없습니다.",
-                    "Warning",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
+                    "Warning");
                 return;
             }
 
@@ -273,11 +390,9 @@ namespace VMS.ViewModels
             }
             else
             {
-                MessageBox.Show(
+                _dialogService.ShowError(
                     "레시피 저장에 실패했습니다.",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Error");
             }
         }
 
@@ -286,13 +401,9 @@ namespace VMS.ViewModels
         {
             if (SelectedRecipeInfo == null) return;
 
-            var result = MessageBox.Show(
+            if (_dialogService.ShowConfirmation(
                 $"레시피 '{SelectedRecipeInfo.Name}'을(를) 삭제하시겠습니까?",
-                "Delete Recipe",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
-
-            if (result == MessageBoxResult.Yes)
+                "Delete Recipe"))
             {
                 if (_recipeService.DeleteRecipe(SelectedRecipeInfo.Id))
                 {
@@ -312,34 +423,28 @@ namespace VMS.ViewModels
         {
             if (CurrentRecipe == null)
             {
-                MessageBox.Show(
+                _dialogService.ShowWarning(
                     "내보낼 레시피가 없습니다.",
-                    "Warning",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
+                    "Warning");
                 return;
             }
 
-            var dialog = new SaveFileDialog
-            {
-                Filter = "Recipe Files (*.json)|*.json",
-                FileName = $"{CurrentRecipe.Name}.json",
-                DefaultExt = ".json"
-            };
+            var filePath = _dialogService.ShowSaveFileDialog(
+                "Recipe Files (*.json)|*.json",
+                ".json",
+                $"{CurrentRecipe.Name}.json");
 
-            if (dialog.ShowDialog() == true)
+            if (filePath != null)
             {
-                if (_recipeService.ExportRecipe(CurrentRecipe, dialog.FileName))
+                if (_recipeService.ExportRecipe(CurrentRecipe, filePath))
                 {
-                    SystemStatus = $"Recipe exported: {dialog.FileName}";
+                    SystemStatus = $"Recipe exported: {filePath}";
                 }
                 else
                 {
-                    MessageBox.Show(
+                    _dialogService.ShowError(
                         "레시피 내보내기에 실패했습니다.",
-                        "Error",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
+                        "Error");
                 }
             }
         }
@@ -347,15 +452,13 @@ namespace VMS.ViewModels
         [RelayCommand]
         private void ImportRecipe()
         {
-            var dialog = new OpenFileDialog
-            {
-                Filter = "Recipe Files (*.json)|*.json",
-                DefaultExt = ".json"
-            };
+            var filePath = _dialogService.ShowOpenFileDialog(
+                "Recipe Files (*.json)|*.json",
+                ".json");
 
-            if (dialog.ShowDialog() == true)
+            if (filePath != null)
             {
-                var recipe = _recipeService.ImportRecipe(dialog.FileName);
+                var recipe = _recipeService.ImportRecipe(filePath);
                 if (recipe != null)
                 {
                     RefreshRecipeList();
@@ -365,11 +468,9 @@ namespace VMS.ViewModels
                 }
                 else
                 {
-                    MessageBox.Show(
+                    _dialogService.ShowError(
                         "레시피 가져오기에 실패했습니다.",
-                        "Error",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
+                        "Error");
                 }
             }
         }
@@ -389,71 +490,33 @@ namespace VMS.ViewModels
             try
             {
                 var currentDir = AppDomain.CurrentDomain.BaseDirectory;
-                string? foundPath = null;
+                var exePath = Path.Combine(currentDir, "VMS.VisionSetup.exe");
 
-                // 1. Check path file written by VMS.VisionSetup build
-                var pathFile = Path.Combine(currentDir, "VisionSetup.path");
-                if (File.Exists(pathFile))
+                if (File.Exists(exePath))
                 {
-                    var savedPath = File.ReadAllText(pathFile).Trim();
-                    if (File.Exists(savedPath))
-                        foundPath = savedPath;
-                }
-
-                // 2. Fallback: search known relative paths
-                if (foundPath == null)
-                {
-                    var solutionDir = Path.GetFullPath(Path.Combine(currentDir, "..", "..", ".."));
-                    var fallbackPaths = new[]
-                    {
-                        Path.Combine(solutionDir, "VMS.VisionSetup", "bin", "Debug", "net8.0-windows7.0", "VMS.VisionSetup.exe"),
-                        Path.Combine(solutionDir, "VMS.VisionSetup", "bin", "Release", "net8.0-windows7.0", "VMS.VisionSetup.exe"),
-                    };
-
-                    foreach (var path in fallbackPaths)
-                    {
-                        var fullPath = Path.GetFullPath(path);
-                        if (File.Exists(fullPath))
-                        {
-                            foundPath = fullPath;
-                            break;
-                        }
-                    }
-                }
-
-                if (foundPath != null)
-                {
-                    var startInfo = new ProcessStartInfo
-                    {
-                        FileName = foundPath,
-                        UseShellExecute = true
-                    };
-
                     // Pass current recipe file path as argument
+                    string? arguments = null;
                     if (!string.IsNullOrEmpty(_currentRecipeFilePath) && File.Exists(_currentRecipeFilePath))
                     {
-                        startInfo.Arguments = $"\"{_currentRecipeFilePath}\"";
+                        arguments = $"\"{_currentRecipeFilePath}\"";
                     }
 
-                    Process.Start(startInfo);
+                    _processService.LaunchProcess(exePath, arguments);
+                    LogService?.Log("Vision Tool Setup launched", LogLevel.Info, "System");
                 }
                 else
                 {
-                    MessageBox.Show(
+                    _dialogService.ShowWarning(
                         "VMS.VisionSetup 프로그램을 찾을 수 없습니다.\n" +
                         "프로젝트를 먼저 빌드해 주세요.",
-                        "Not Found",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                        "Not Found");
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                _dialogService.ShowError(
                     $"프로그램 실행 오류: {ex.Message}",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Error");
             }
         }
 
@@ -463,110 +526,149 @@ namespace VMS.ViewModels
             try
             {
                 var currentDir = AppDomain.CurrentDomain.BaseDirectory;
-                string? foundPath = null;
+                var exePath = Path.Combine(currentDir, "VMS.AppSetup.exe");
 
-                
-
-                // 1. Check path file written by VMS.VisionSetup build
-                var pathFile = Path.Combine(currentDir, "AppSetup.path");
-                if (File.Exists(pathFile))
+                if (File.Exists(exePath))
                 {
-                    var savedPath = File.ReadAllText(pathFile).Trim();
-                    if (File.Exists(savedPath))
-                        foundPath = savedPath;
-                }
-
-                if (foundPath == null)
-                {
-                    var solutionDir = Path.GetFullPath(Path.Combine(currentDir, "..", "..", ".."));
-                    var fallbackPaths = new[]
-                    {
-                        Path.Combine(solutionDir, "VMS.AppSetup", "bin", "Debug", "net8.0-windows", "VMS.AppSetup.exe"),
-                        Path.Combine(solutionDir, "VMS.AppSetup", "bin", "Release", "net8.0-windows", "VMS.AppSetup.exe"),
-                    };
-
-                    foreach (var path in fallbackPaths)
-                    {
-                        var fullPath = Path.GetFullPath(path);
-                        if (File.Exists(fullPath))
-                        {
-                            foundPath = fullPath;
-                            break;
-                        }
-                    }
-                }
-
-                if (foundPath != null)
-                {
-                    Process.Start(new ProcessStartInfo
-                    {
-                        FileName = foundPath,
-                        UseShellExecute = true
-                    });
+                    _processService.LaunchProcess(exePath);
+                    LogService?.Log("System Setup launched", LogLevel.Info, "System");
                 }
                 else
                 {
-                    MessageBox.Show(
+                    _dialogService.ShowWarning(
                         "BODA.Setup 프로그램을 찾을 수 없습니다.\n" +
                         "프로젝트를 먼저 빌드해 주세요.",
-                        "Not Found",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                        "Not Found");
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                _dialogService.ShowError(
                     $"프로그램 실행 오류: {ex.Message}",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Error");
             }
         }
 
         [RelayCommand]
-        private void StartInspection()
+        private async Task StartInspectionAsync()
         {
+            if (_autoProcessService != null && _autoProcessService.IsRunning)
+                return; // 이전 Stop이 아직 진행 중
+
             IsRunning = true;
-            SystemStatus = "Running...";
+            SystemStatus = "Starting...";
+            LogService?.Log("Inspection starting...", LogLevel.Info, "System");
+
+            if (_autoProcessService != null)
+            {
+                try
+                {
+                    // PLC 연결/모니터링 등 I/O를 백그라운드 스레드에서 실행하여 UI 블로킹 방지
+                    await Task.Run(() => _autoProcessService.StartAsync());
+                    SystemStatus = "AutoProcess Running";
+                    LogService?.Log("Inspection started", LogLevel.Success, "System");
+                }
+                catch (Exception ex)
+                {
+                    SystemStatus = $"AutoProcess Error: {ex.Message}";
+                    LogService?.Log($"AutoProcess start error: {ex.Message}", LogLevel.Error, "System");
+                    IsRunning = false;
+                }
+            }
         }
 
         [RelayCommand]
-        private void StopInspection()
+        private async Task StopInspectionAsync()
         {
+            // 즉시 UI 반영 — Stop 버튼 숨김, Start 버튼 표시
             IsRunning = false;
+            SystemStatus = "Stopping...";
+            LogService?.Log("Inspection stopping...", LogLevel.Info, "System");
+
+            if (_autoProcessService != null && _autoProcessService.IsRunning)
+            {
+                try
+                {
+                    // PLC 신호 클리어/해제 등 I/O를 백그라운드 스레드에서 실행
+                    await Task.Run(() => _autoProcessService.StopAsync());
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error stopping AutoProcess: {ex.Message}");
+                }
+            }
+
             SystemStatus = "Stopped";
+            LogService?.Log("Inspection stopped", LogLevel.Info, "System");
+        }
+
+        [RelayCommand]
+        private void OpenUserManagement()
+        {
+            if (_userService == null) return;
+
+            var vm = new UserManagementViewModel(_userService, _dialogService);
+            var window = new UserManagementWindow
+            {
+                DataContext = vm,
+                Owner = System.Windows.Application.Current.MainWindow
+            };
+            window.ShowDialog();
+        }
+
+        [RelayCommand]
+        private void SwitchUser()
+        {
+            if (_userService == null) return;
+
+            _userService.Logout();
+            if (_dialogService.ShowLoginDialog(_userService))
+            {
+                UpdateUserDisplay();
+                LogService?.Log($"User switched to: {_userService.CurrentUser?.DisplayName}", LogLevel.Success, "Auth");
+            }
+            else
+            {
+                // Login cancelled — clear display
+                UpdateUserDisplay();
+            }
+        }
+
+        [RelayCommand]
+        private void ClearLog()
+        {
+            LogService?.Clear();
+        }
+
+        [RelayCommand]
+        private void ResetDashboard()
+        {
+            Dashboard.ResetStatisticsCommand.Execute(null);
+            TotalInspections = 0;
+            TotalPass = 0;
+            TotalFail = 0;
         }
 
         [RelayCommand]
         private void ExitApplication()
         {
-            var result = MessageBox.Show(
+            if (_dialogService.ShowConfirmation(
                 "프로그램을 종료하시겠습니까?",
-                "Exit",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
-
-            if (result == MessageBoxResult.Yes)
+                "Exit"))
             {
-                Application.Current.Shutdown();
+                _shutdownAction();
             }
         }
 
-        [RelayCommand]
-        private void SelectCamera(CameraViewModel? camera)
+        partial void OnSelectedNgImageChanged(NgImageItem? value)
         {
-            if (camera != null && ReferenceEquals(camera, SelectedCamera) && IsSidePanelOpen)
+            if (value?.Thumbnail != null)
             {
-                // Same camera clicked again while panel is open → close panel
-                IsSidePanelOpen = false;
-                return;
-            }
-
-            SelectedCamera = camera;
-            if (camera != null)
-            {
-                IsSidePanelOpen = true;
+                // Show the NG image in the selected camera if one is available
+                if (SelectedCamera != null)
+                {
+                    SelectedCamera.CurrentImage = value.Thumbnail;
+                }
             }
         }
 
