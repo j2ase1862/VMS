@@ -72,7 +72,14 @@ namespace VMS.VisionSetup
             WeakReferenceMessenger.Default.Register<RequestDrawROIMessage>(this, (r, msg) =>
             {
                 _isDrawingSearchRegion = false;
-                ImageCanvasControl.ActivateDrawingMode(EditMode.DrawRectangle);
+                EditMode mode;
+                if (msg.UseCircle)
+                    mode = EditMode.DrawCircle;
+                else if (msg.UseAffine)
+                    mode = EditMode.DrawRectangleAffine;
+                else
+                    mode = EditMode.DrawRectangle;
+                ImageCanvasControl.ActivateDrawingMode(mode);
             });
             WeakReferenceMessenger.Default.Register<RequestClearROIMessage>(this, (r, msg) =>
             {

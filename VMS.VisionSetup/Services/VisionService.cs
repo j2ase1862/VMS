@@ -621,12 +621,14 @@ namespace VMS.VisionSetup.Services
 
             try
             {
+                tool.OverlayBaseImage = toolInput;
                 var result = tool.Execute(toolInput);
                 tool.LastResult = result;
                 return result;
             }
             finally
             {
+                tool.OverlayBaseImage = null;
                 if (ownsToolInput)
                     toolInput.Dispose();
                 foreach (var ci in clonedInputs)

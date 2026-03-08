@@ -122,10 +122,8 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 else
                     grayImage = workImage.Clone();
 
-                // 결과 이미지 생성
-                Mat overlayImage = inputImage.Clone();
-                if (overlayImage.Channels() == 1)
-                    Cv2.CvtColor(overlayImage, overlayImage, ColorConversionCodes.GRAY2BGR);
+                // 결과 이미지 생성 (원본 컬러 이미지 기반)
+                Mat overlayImage = GetColorOverlayBase(inputImage);
 
                 // 예상 원 표시
                 Cv2.Circle(overlayImage,
@@ -529,6 +527,9 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 IsEnabled = this.IsEnabled,
                 ROI = this.ROI,
                 UseROI = this.UseROI,
+                ROIAngle = this.ROIAngle,
+                ROICenterX = this.ROICenterX,
+                ROICenterY = this.ROICenterY,
                 CenterPoint = this.CenterPoint,
                 ExpectedRadius = this.ExpectedRadius,
                 NumCalipers = this.NumCalipers,

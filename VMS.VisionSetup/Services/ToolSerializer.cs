@@ -44,6 +44,9 @@ namespace VMS.VisionSetup.Services
                 ROIY = tool.ROIY,
                 ROIWidth = tool.ROIWidth,
                 ROIHeight = tool.ROIHeight,
+                ROIAngle = tool.ROIAngle,
+                ROICenterX = tool.ROICenterX,
+                ROICenterY = tool.ROICenterY,
                 Parameters = new Dictionary<string, object>(),
                 PlcMappings = tool.PlcMappings.Select(m => new PlcResultMapping
                 {
@@ -309,6 +312,9 @@ namespace VMS.VisionSetup.Services
             tool.Y = config.Y;
             tool.UseROI = config.UseROI;
             tool.ROI = new Rect(config.ROIX, config.ROIY, config.ROIWidth, config.ROIHeight);
+            tool.ROIAngle = config.ROIAngle;
+            tool.ROICenterX = config.ROICenterX;
+            tool.ROICenterY = config.ROICenterY;
 
             // PLC 매핑 복원 (1:N)
             if (config.PlcMappings != null && config.PlcMappings.Count > 0)

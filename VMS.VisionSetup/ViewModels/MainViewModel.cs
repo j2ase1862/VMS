@@ -1031,15 +1031,41 @@ namespace VMS.VisionSetup.ViewModels
             _isSyncingROI = true;
             try
             {
-                var rect = roi.GetBoundingRect();
-                tool.ROI = rect;
+                // 측정 도구에 검색 방향 화살표 표시
+                roi.ShowSearchArrow = tool is LineFitTool or CaliperTool;
+
+                if (roi is CircleROI circleROI && tool is CircleFitTool cft)
+                {
+                    // CircleROI → CircleFitTool 좌표 동기화
+                    cft.CenterPoint = new OpenCvSharp.Point2d(circleROI.CenterX, circleROI.CenterY);
+                    cft.ExpectedRadius = circleROI.Radius;
+
+                    // ROI 바운딩 rect도 저장 (GetROIImage 등 기본 기능용)
+                    tool.ROI = circleROI.GetBoundingRect();
+                }
+                else if (roi is RectangleAffineROI affineROI)
+                {
+                    // Affine ROI: 실제 Width/Height와 회전 각도/중심 좌표 저장
+                    tool.ROI = new CvRect(
+                        (int)(affineROI.CenterX - affineROI.Width / 2),
+                        (int)(affineROI.CenterY - affineROI.Height / 2),
+                        (int)affineROI.Width,
+                        (int)affineROI.Height);
+                    tool.ROIAngle = affineROI.Angle;
+                    tool.ROICenterX = affineROI.CenterX;
+                    tool.ROICenterY = affineROI.CenterY;
+                }
+                else
+                {
+                    var rect = roi.GetBoundingRect();
+                    tool.ROI = rect;
+                }
+
                 tool.UseROI = true;
                 tool.AssociatedROIShape = roi;
 
-                // 측정 도구에 검색 방향 화살표 표시
-                roi.ShowSearchArrow = tool is LineFitTool or CaliperTool or CircleFitTool;
-
-                StatusMessage = $"ROI 적용됨: {tool.Name} - ({rect.X}, {rect.Y}, {rect.Width}, {rect.Height})";
+                var appliedRect = tool.ROI;
+                StatusMessage = $"ROI 적용됨: {tool.Name} - ({appliedRect.X}, {appliedRect.Y}, {appliedRect.Width}, {appliedRect.Height})";
             }
             finally
             {
@@ -1115,11 +1141,36 @@ namespace VMS.VisionSetup.ViewModels
             if (_isSyncingROI) return;
             if (sender is not VisionToolBase tool) return;
 
+            // CircleFitTool 속성 변경 → CircleROI 동기화
+            if (tool is CircleFitTool cft &&
+                e.PropertyName is nameof(CircleFitTool.CenterPoint) or nameof(CircleFitTool.ExpectedRadius))
+            {
+                if (tool.AssociatedROIShape is CircleROI circleROI)
+                {
+                    circleROI.CenterX = cft.CenterPoint.X;
+                    circleROI.CenterY = cft.CenterPoint.Y;
+                    circleROI.Radius = cft.ExpectedRadius;
+                    tool.ROI = circleROI.GetBoundingRect();
+                    WeakReferenceMessenger.Default.Send(new RequestRefreshROIMessage(circleROI));
+                }
+            }
+
             // ROI 프록시 속성 변경 시 AssociatedROIShape 좌표 동기화
             if (e.PropertyName is nameof(VisionToolBase.ROIX) or nameof(VisionToolBase.ROIY)
                 or nameof(VisionToolBase.ROIWidth) or nameof(VisionToolBase.ROIHeight))
             {
-                if (tool.AssociatedROIShape is RectangleROI rectROI)
+                if (tool.AssociatedROIShape is RectangleAffineROI affineROI)
+                {
+                    // Affine ROI: CenterX/Y와 Width/Height 업데이트 (Angle 유지)
+                    affineROI.CenterX = tool.ROIX + tool.ROIWidth / 2.0;
+                    affineROI.CenterY = tool.ROIY + tool.ROIHeight / 2.0;
+                    affineROI.Width = Math.Max(1, tool.ROIWidth);
+                    affineROI.Height = Math.Max(1, tool.ROIHeight);
+                    tool.ROICenterX = affineROI.CenterX;
+                    tool.ROICenterY = affineROI.CenterY;
+                    WeakReferenceMessenger.Default.Send(new RequestRefreshROIMessage(affineROI));
+                }
+                else if (tool.AssociatedROIShape is RectangleROI rectROI)
                 {
                     rectROI.X = tool.ROIX;
                     rectROI.Y = tool.ROIY;
