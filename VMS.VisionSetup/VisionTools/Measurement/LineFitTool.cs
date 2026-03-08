@@ -119,12 +119,44 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 Point2d baselineStart, baselineEnd;
                 double searchLength;
 
-                if (UseROI && ROI.Width > 0 && ROI.Height > 0)
+                // 회전 각도 결정: 라이브 ROI shape 또는 저장된 ROIAngle 사용
+                double effectiveAngle = AssociatedROIShape is RectangleAffineROI liveROI
+                    ? liveROI.Angle : ROIAngle;
+
+                if (UseROI && ROI.Width > 0 && ROI.Height > 0 &&
+                    Math.Abs(effectiveAngle) > 0.001)
                 {
+                    // 회전된 ROI: ROI rect 중심 + 회전 각도로 기준선 계산
+                    // ROI rect 중심을 사용해야 Fixture Transform 후에도 올바른 위치 반영
+                    double cx = ROI.X + ROI.Width / 2.0;
+                    double cy = ROI.Y + ROI.Height / 2.0;
+                    double w = ROI.Width;
+                    double h = ROI.Height;
+                    double rad = effectiveAngle * Math.PI / 180.0;
+                    double cosA = Math.Cos(rad);
+                    double sinA = Math.Sin(rad);
+
+                    if (w >= h)
+                    {
+                        // Width 축이 길면: 기준선 = Width 축 방향 (cosθ, sinθ), 검색 = Height
+                        baselineStart = new Point2d(cx - (w / 2) * cosA, cy - (w / 2) * sinA);
+                        baselineEnd = new Point2d(cx + (w / 2) * cosA, cy + (w / 2) * sinA);
+                        searchLength = h;
+                    }
+                    else
+                    {
+                        // Height 축이 길면: 기준선 = Height 축 방향 (-sinθ, cosθ), 검색 = Width
+                        baselineStart = new Point2d(cx - (h / 2) * (-sinA), cy - (h / 2) * cosA);
+                        baselineEnd = new Point2d(cx + (h / 2) * (-sinA), cy + (h / 2) * cosA);
+                        searchLength = w;
+                    }
+                }
+                else if (UseROI && ROI.Width > 0 && ROI.Height > 0)
+                {
+                    // Fallback: 기존 축 정렬 RectangleROI
                     var roi = GetAdjustedROI(inputImage);
                     if (roi.Width >= roi.Height)
                     {
-                        // 가로 기준선: 캘리퍼를 좌→우로 배치, 각 캘리퍼는 수직 방향 검색
                         double cy = roi.Y + roi.Height / 2.0;
                         baselineStart = new Point2d(roi.X, cy);
                         baselineEnd = new Point2d(roi.X + roi.Width, cy);
@@ -132,7 +164,6 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                     }
                     else
                     {
-                        // 세로 기준선: 캘리퍼를 상→하로 배치, 각 캘리퍼는 수평 방향 검색
                         double cx = roi.X + roi.Width / 2.0;
                         baselineStart = new Point2d(cx, roi.Y);
                         baselineEnd = new Point2d(cx, roi.Y + roi.Height);
@@ -174,10 +205,8 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                     vy = -vy;
                 }
 
-                // 결과 이미지 생성
-                Mat overlayImage = inputImage.Clone();
-                if (overlayImage.Channels() == 1)
-                    Cv2.CvtColor(overlayImage, overlayImage, ColorConversionCodes.GRAY2BGR);
+                // 결과 이미지 생성 (원본 컬러 이미지 기반)
+                Mat overlayImage = GetColorOverlayBase(inputImage);
 
                 // Caliper 위치에서 Edge 검출 (모든 좌표는 절대 좌표)
                 var foundEdges = new List<(Point2d Point, double Score)>();
@@ -672,6 +701,9 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 IsEnabled = this.IsEnabled,
                 ROI = this.ROI,
                 UseROI = this.UseROI,
+                ROIAngle = this.ROIAngle,
+                ROICenterX = this.ROICenterX,
+                ROICenterY = this.ROICenterY,
                 StartPoint = this.StartPoint,
                 EndPoint = this.EndPoint,
                 NumCalipers = this.NumCalipers,

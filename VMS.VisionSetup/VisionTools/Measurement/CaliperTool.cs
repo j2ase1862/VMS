@@ -198,12 +198,44 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 Point2d searchStart, searchEnd;
                 double searchWidth;
 
-                if (UseROI && ROI.Width > 0 && ROI.Height > 0)
+                // 회전 각도 결정: 라이브 ROI shape 또는 저장된 ROIAngle 사용
+                double effectiveAngle = AssociatedROIShape is RectangleAffineROI liveROI
+                    ? liveROI.Angle : ROIAngle;
+
+                if (UseROI && ROI.Width > 0 && ROI.Height > 0 &&
+                    Math.Abs(effectiveAngle) > 0.001)
                 {
+                    // 회전된 ROI: ROI rect 중심 + 회전 각도로 검색 방향 계산
+                    // ROI rect 중심을 사용해야 Fixture Transform 후에도 올바른 위치 반영
+                    double cx = ROI.X + ROI.Width / 2.0;
+                    double cy = ROI.Y + ROI.Height / 2.0;
+                    double w = ROI.Width;
+                    double h = ROI.Height;
+                    double rad = effectiveAngle * Math.PI / 180.0;
+                    double cosA = Math.Cos(rad);
+                    double sinA = Math.Sin(rad);
+
+                    if (w >= h)
+                    {
+                        // Width 축이 길면: 검색 방향 = Width 축 (cosθ, sinθ)
+                        searchStart = new Point2d(cx - (w / 2) * cosA, cy - (w / 2) * sinA);
+                        searchEnd = new Point2d(cx + (w / 2) * cosA, cy + (w / 2) * sinA);
+                        searchWidth = h;
+                    }
+                    else
+                    {
+                        // Height 축이 길면: 검색 방향 = Height 축 (-sinθ, cosθ)
+                        searchStart = new Point2d(cx - (h / 2) * (-sinA), cy - (h / 2) * cosA);
+                        searchEnd = new Point2d(cx + (h / 2) * (-sinA), cy + (h / 2) * cosA);
+                        searchWidth = w;
+                    }
+                }
+                else if (UseROI && ROI.Width > 0 && ROI.Height > 0)
+                {
+                    // Fallback: 기존 축 정렬 RectangleROI
                     var roi = GetAdjustedROI(inputImage);
                     if (roi.Width >= roi.Height)
                     {
-                        // Horizontal search through ROI center
                         double cy = roi.Y + roi.Height / 2.0;
                         searchStart = new Point2d(roi.X, cy);
                         searchEnd = new Point2d(roi.X + roi.Width, cy);
@@ -211,7 +243,6 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                     }
                     else
                     {
-                        // Vertical search through ROI center
                         double cx = roi.X + roi.Width / 2.0;
                         searchStart = new Point2d(cx, roi.Y);
                         searchEnd = new Point2d(cx, roi.Y + roi.Height);
@@ -357,21 +388,6 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             OnPropertyChanged(nameof(LastProfile));
             OnPropertyChanged(nameof(LastGradient));
             return result;
-        }
-
-        private Mat GetColorOverlayBase(Mat inputImage)
-        {
-            var orig = OverlayBaseImage ?? VisionService.Instance.CurrentImage;
-            if (orig != null && !orig.Empty()
-                && orig.Width == inputImage.Width && orig.Height == inputImage.Height)
-            {
-                return orig.Channels() >= 3
-                    ? orig.Clone()
-                    : orig.CvtColor(ColorConversionCodes.GRAY2BGR);
-            }
-            return inputImage.Channels() >= 3
-                ? inputImage.Clone()
-                : inputImage.CvtColor(ColorConversionCodes.GRAY2BGR);
         }
 
         private double[] ExtractProfile(Mat image, Point2d start, double ux, double uy, double vx, double vy, double length, double searchWidth)
@@ -622,6 +638,9 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 IsEnabled = this.IsEnabled,
                 ROI = this.ROI,
                 UseROI = this.UseROI,
+                ROIAngle = this.ROIAngle,
+                ROICenterX = this.ROICenterX,
+                ROICenterY = this.ROICenterY,
                 StartPoint = this.StartPoint,
                 EndPoint = this.EndPoint,
                 SearchWidth = this.SearchWidth,

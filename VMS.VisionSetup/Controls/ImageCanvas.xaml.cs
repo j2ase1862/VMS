@@ -114,6 +114,8 @@ namespace VMS.VisionSetup.Controls
         private System.Windows.Point _lastMousePos;
         private HandleType _activeHandle = HandleType.None;
         private double _zoomLevel = 1.0;
+        private int _lastImageWidth;
+        private int _lastImageHeight;
         private bool _suppressZoomSync;
 
         // 임시 그리기용
@@ -137,10 +139,19 @@ namespace VMS.VisionSetup.Controls
         {
             if (d is ImageCanvas canvas && e.NewValue is Mat mat)
             {
+                bool sameSize = canvas._lastImageWidth == mat.Width
+                    && canvas._lastImageHeight == mat.Height;
+
+                canvas._lastImageWidth = mat.Width;
+                canvas._lastImageHeight = mat.Height;
+
                 canvas.UpdateDisplayImage(mat);
-                // Auto-fit after layout updates with the new image size
-                canvas.Dispatcher.InvokeAsync(() => canvas.ZoomToFit(),
-                    System.Windows.Threading.DispatcherPriority.Loaded);
+
+                if (!sameSize)
+                {
+                    canvas.Dispatcher.InvokeAsync(() => canvas.ZoomToFit(),
+                        System.Windows.Threading.DispatcherPriority.Loaded);
+                }
             }
         }
 
@@ -718,9 +729,12 @@ namespace VMS.VisionSetup.Controls
             }
 
             // 측정 도구 검색 방향 화살표
-            if (roi.ShowSearchArrow && roi is RectangleROI arrowRect)
+            if (roi.ShowSearchArrow)
             {
-                DrawSearchArrow(arrowRect, visuals);
+                if (roi is RectangleAffineROI affineRect)
+                    DrawSearchArrowAffine(affineRect, visuals);
+                else if (roi is RectangleROI arrowRect)
+                    DrawSearchArrow(arrowRect, visuals);
             }
 
             // 선택된 ROI면 핸들 그리기
@@ -752,6 +766,83 @@ namespace VMS.VisionSetup.Controls
             {
                 // 가로 ROI → 세로 검색 (위→아래)
                 arrowDx = 0; arrowDy = 1;
+            }
+
+            // 화살표 길이: 짧은 축의 40%
+            double arrowLen = Math.Min(rect.Width, rect.Height) * 0.4;
+            double headLen = Math.Max(6, arrowLen * 0.35);
+
+            // 화살표 시작/끝점
+            double startX = cx - arrowDx * arrowLen;
+            double startY = cy - arrowDy * arrowLen;
+            double endX = cx + arrowDx * arrowLen;
+            double endY = cy + arrowDy * arrowLen;
+
+            var arrowBrush = Brushes.Yellow;
+            double strokeWidth = 2;
+
+            // 화살표 몸통
+            var shaft = new Line
+            {
+                X1 = startX, Y1 = startY,
+                X2 = endX, Y2 = endY,
+                Stroke = arrowBrush,
+                StrokeThickness = strokeWidth
+            };
+            visuals.Add(shaft);
+            DrawingCanvas.Children.Add(shaft);
+
+            // 화살촉 (삼각형 두 날개)
+            double perpX = -arrowDy;
+            double perpY = arrowDx;
+
+            var head1 = new Line
+            {
+                X1 = endX, Y1 = endY,
+                X2 = endX - arrowDx * headLen + perpX * headLen * 0.5,
+                Y2 = endY - arrowDy * headLen + perpY * headLen * 0.5,
+                Stroke = arrowBrush,
+                StrokeThickness = strokeWidth
+            };
+            var head2 = new Line
+            {
+                X1 = endX, Y1 = endY,
+                X2 = endX - arrowDx * headLen - perpX * headLen * 0.5,
+                Y2 = endY - arrowDy * headLen - perpY * headLen * 0.5,
+                Stroke = arrowBrush,
+                StrokeThickness = strokeWidth
+            };
+            visuals.Add(head1);
+            visuals.Add(head2);
+            DrawingCanvas.Children.Add(head1);
+            DrawingCanvas.Children.Add(head2);
+        }
+
+        /// <summary>
+        /// 회전된 RectangleAffineROI의 검색 방향 화살표 그리기
+        /// ROI의 Angle을 기반으로 회전된 방향으로 화살표를 표시
+        /// </summary>
+        private void DrawSearchArrowAffine(RectangleAffineROI rect, List<UIElement> visuals)
+        {
+            double cx = rect.CenterX;
+            double cy = rect.CenterY;
+            double rad = rect.Angle * Math.PI / 180.0;
+            double cosA = Math.Cos(rad);
+            double sinA = Math.Sin(rad);
+
+            // 검색 방향: 짧은 축 방향
+            double arrowDx, arrowDy;
+            if (rect.Width >= rect.Height)
+            {
+                // Width가 길면 Height 방향으로 검색: (-sinθ, cosθ)
+                arrowDx = -sinA;
+                arrowDy = cosA;
+            }
+            else
+            {
+                // Height가 길면 Width 방향으로 검색: (cosθ, sinθ)
+                arrowDx = cosA;
+                arrowDy = sinA;
             }
 
             // 화살표 길이: 짧은 축의 40%
@@ -1062,6 +1153,9 @@ namespace VMS.VisionSetup.Controls
             {
                 case EditMode.DrawRectangle:
                     RectangleToolBtn.IsChecked = true;
+                    break;
+                case EditMode.DrawRectangleAffine:
+                    RectAffineToolBtn.IsChecked = true;
                     break;
                 case EditMode.Select:
                     SelectToolBtn.IsChecked = true;

@@ -556,21 +556,6 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
             return result;
         }
 
-        private Mat GetColorOverlayBase(Mat inputImage)
-        {
-            var orig = OverlayBaseImage ?? VisionService.Instance.CurrentImage;
-            if (orig != null && !orig.Empty()
-                && orig.Width == inputImage.Width && orig.Height == inputImage.Height)
-            {
-                return orig.Channels() >= 3
-                    ? orig.Clone()
-                    : orig.CvtColor(ColorConversionCodes.GRAY2BGR);
-            }
-            return inputImage.Channels() >= 3
-                ? inputImage.Clone()
-                : inputImage.CvtColor(ColorConversionCodes.GRAY2BGR);
-        }
-
         private Scalar GetBlobColor(int index)
         {
             // 다양한 색상으로 Blob 구분
