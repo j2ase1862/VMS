@@ -5,6 +5,7 @@ using VMS.VisionSetup.VisionTools.BlobAnalysis;
 using VMS.VisionSetup.VisionTools.ImageProcessing;
 using VMS.VisionSetup.VisionTools.Measurement;
 using VMS.VisionSetup.VisionTools.PatternMatching;
+using VMS.VisionSetup.VisionTools.CodeReading;
 using VMS.VisionSetup.VisionTools.Result;
 using CommunityToolkit.Mvvm.ComponentModel;
 using OpenCvSharp;
@@ -851,6 +852,9 @@ namespace VMS.VisionSetup.Services
                 "LineFitTool" => new LineFitTool(),
                 "CircleFitTool" => new CircleFitTool(),
 
+                // Code Reading
+                "CodeReaderTool" => new CodeReaderTool(),
+
                 // Judgment
                 "ResultTool" => new ResultTool(),
 
@@ -892,6 +896,10 @@ namespace VMS.VisionSetup.Services
                     "LineFitTool",
                     "CircleFitTool"
                 },
+                ["Code Reading"] = new[]
+                {
+                    "CodeReaderTool"
+                },
                 ["Judgment"] = new[]
                 {
                     "ResultTool"
@@ -918,6 +926,7 @@ namespace VMS.VisionSetup.Services
                 "LineFitTool" => "Line Fit",
                 "CircleFitTool" => "Circle Fit",
                 "HeightSlicerTool" => "Height Slicer",
+                "CodeReaderTool" => "Code Reader",
                 "ResultTool" => "Result",
                 _ => toolType
             };

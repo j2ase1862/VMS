@@ -17,6 +17,7 @@
     <PackageReference Include="OpenCvSharp4" Version="4.11.0.20250507" />
     <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.11.0.20250507" />
     <PackageReference Include="OpenCvSharp4.WpfExtensions" Version="4.11.0.20250507" />
+    <PackageReference Include="ZXing.Net" Version="0.16.11" />
   </ItemGroup>
 
   <ItemGroup>
@@ -25,8 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\NativeVision\NativeVision.dll"
-          Condition="Exists('..\NativeVision\NativeVision.dll')">
+    <None Include="..\NativeVision\NativeVision.dll" Condition="Exists('..\NativeVision\NativeVision.dll')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>NativeVision.dll</Link>
     </None>
@@ -41,9 +41,7 @@
       <VisionSetupOutputFiles Include="$(TargetDir)**\*.*" />
     </ItemGroup>
     <MakeDir Directories="$(VmsOutputDir)" Condition="!Exists('$(VmsOutputDir)')" />
-    <Copy SourceFiles="@(VisionSetupOutputFiles)"
-          DestinationFolder="$(VmsOutputDir)%(RecursiveDir)"
-          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(VisionSetupOutputFiles)" DestinationFolder="$(VmsOutputDir)%(RecursiveDir)" SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

@@ -3,6 +3,7 @@ using VMS.VisionSetup.VisionTools.BlobAnalysis;
 using VMS.VisionSetup.VisionTools.ImageProcessing;
 using VMS.VisionSetup.VisionTools.Measurement;
 using VMS.VisionSetup.VisionTools.PatternMatching;
+using VMS.VisionSetup.VisionTools.CodeReading;
 using VMS.VisionSetup.VisionTools.Result;
 using VMS.PLC.Models;
 using OpenCvSharp;
@@ -244,6 +245,16 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["MaxZ"] = heightSlicer.MaxZ;
                     break;
 
+                case CodeReaderTool codeReader:
+                    config.Parameters["CodeReaderMode"] = codeReader.CodeReaderMode.ToString();
+                    config.Parameters["MaxCodeCount"] = codeReader.MaxCodeCount;
+                    config.Parameters["TryHarder"] = codeReader.TryHarder;
+                    config.Parameters["EnableVerification"] = codeReader.EnableVerification;
+                    config.Parameters["ExpectedText"] = codeReader.ExpectedText;
+                    config.Parameters["UseRegexMatch"] = codeReader.UseRegexMatch;
+                    config.Parameters["DrawOverlay"] = codeReader.DrawOverlay;
+                    break;
+
                 case ResultTool resultTool:
                     config.Parameters["JudgmentMode"] = resultTool.JudgmentMode.ToString();
                     break;
@@ -291,6 +302,7 @@ namespace VMS.VisionSetup.Services
                 "LineFitTool" => DeserializeLineFitTool(config),
                 "CircleFitTool" => DeserializeCircleFitTool(config),
                 "HeightSlicerTool" => DeserializeHeightSlicerTool(config),
+                "CodeReaderTool" => DeserializeCodeReaderTool(config),
                 "ResultTool" => DeserializeResultTool(config),
                 _ => null
             };
@@ -766,6 +778,29 @@ namespace VMS.VisionSetup.Services
                 tool.MinZ = (float)GetDouble(minZ);
             if (p.TryGetValue("MaxZ", out var maxZ))
                 tool.MaxZ = (float)GetDouble(maxZ);
+
+            return tool;
+        }
+
+        private static CodeReaderTool DeserializeCodeReaderTool(ToolConfig config)
+        {
+            var tool = new CodeReaderTool();
+            var p = config.Parameters;
+
+            if (p.TryGetValue("CodeReaderMode", out var crm))
+                tool.CodeReaderMode = Enum.Parse<CodeReaderMode>(GetString(crm));
+            if (p.TryGetValue("MaxCodeCount", out var mcc))
+                tool.MaxCodeCount = GetInt(mcc);
+            if (p.TryGetValue("TryHarder", out var th))
+                tool.TryHarder = GetBool(th);
+            if (p.TryGetValue("EnableVerification", out var ev))
+                tool.EnableVerification = GetBool(ev);
+            if (p.TryGetValue("ExpectedText", out var et))
+                tool.ExpectedText = GetString(et);
+            if (p.TryGetValue("UseRegexMatch", out var urm))
+                tool.UseRegexMatch = GetBool(urm);
+            if (p.TryGetValue("DrawOverlay", out var dov))
+                tool.DrawOverlay = GetBool(dov);
 
             return tool;
         }

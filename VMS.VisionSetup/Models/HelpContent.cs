@@ -235,6 +235,30 @@ namespace VMS.VisionSetup.Models
                     ["EdgeThreshold"] = "엣지 검출 임계값.",
                     ["FitMethod"] = "원 피팅 방법:\n• LeastSquares: 최소자승법\n• RANSAC: 이상치에 강건함"
                 }
+            },
+
+            // Code Reading
+            ["CodeReaderTool"] = new ToolHelp
+            {
+                Name = "Code Reader (코드 리더)",
+                Description = "이미지에서 QR 코드, 1D 바코드, DataMatrix, PDF417 등 다양한 코드를 인식하고 디코딩합니다.\nZXing.Net 엔진 기반이며, 저대비 코드(레이저 마킹 등)에 대해 CLAHE 자동 보정을 지원합니다.\n회전된 ROI(RectangleAffine) 사용 시 WarpAffine으로 이미지를 정규화하여 인식률을 극대화합니다.",
+                Usage = "PCB 마킹 검사, 부품 추적, 물류 바코드 인식, 레이저 마킹 판독에 사용됩니다.\n• ROI를 코드 영역에 맞게 설정하면 인식 속도와 정확도가 향상됩니다.\n• 코드가 기울어진 경우 RectangleAffine ROI를 사용하여 회전 각도에 맞추세요.",
+                CognexEquivalent = "CogIDTool (DataMatrix), CogBarcodeTool (1D Barcode)",
+                Parameters = new Dictionary<string, string>
+                {
+                    // Detection
+                    ["CodeReaderMode"] = "코드 인식 모드:\n• Auto: 모든 코드 타입 자동 인식 (느리지만 범용)\n• QRCode: QR 코드 전용 (빠름)\n• Barcode1D: 1D 바코드 전용 (CODE_128, CODE_39, EAN_13 등)\n• DataMatrix: DataMatrix 전용 (PCB 마킹에 주로 사용)\n• PDF417: PDF417 전용",
+                    ["MaxCodeCount"] = "최대 인식 코드 수 (1~50).\n하나의 이미지에서 여러 코드를 동시에 인식할 때 결과 수를 제한합니다.\n• 기본값: 10",
+                    ["TryHarder"] = "정밀 검출 모드. 활성화하면 더 많은 시간을 들여 코드를 찾습니다.\n• 활성화 (권장): 인식률 향상, 속도 약간 저하\n• 비활성화: 빠르지만 흐릿하거나 작은 코드를 놓칠 수 있음",
+
+                    // Verification
+                    ["EnableVerification"] = "텍스트 검증 활성화. 활성화하면 디코딩된 텍스트를 ExpectedText와 비교하여 PASS/FAIL을 판정합니다.\n비활성화 시 코드가 1개 이상 검출되면 항상 Success입니다.",
+                    ["ExpectedText"] = "기대 텍스트. 디코딩된 코드 중 이 텍스트와 일치하는 코드가 있으면 PASS.\n• UseRegexMatch 비활성화: 정확히 일치해야 합격\n• UseRegexMatch 활성화: 정규식 패턴으로 매칭\n\n예시: \"ABC-12345\", \"^LOT-\\d{6}$\"",
+                    ["UseRegexMatch"] = "정규식 매칭 사용 여부.\n• 비활성화: 디코딩 텍스트 == ExpectedText 정확히 일치\n• 활성화: Regex.IsMatch(디코딩 텍스트, ExpectedText)로 패턴 매칭\n\n정규식 예시:\n• ^SN\\d{8}$: \"SN\" + 숫자 8자리\n• ^(OK|PASS): \"OK\" 또는 \"PASS\"로 시작",
+
+                    // Display
+                    ["DrawOverlay"] = "검출 결과 오버레이 표시. 활성화하면 검출된 코드 위치에 폴리곤과 디코딩 텍스트를 그립니다.\n• 녹색: 인식 성공 (PASS)\n• 빨간색: 인식 실패 (FAIL)"
+                }
             }
         };
 
