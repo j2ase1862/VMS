@@ -69,8 +69,18 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
                     AssociatedROIShape = new CircleROI(
                         cft.CenterPoint.X, cft.CenterPoint.Y, cft.ExpectedRadius)
                     {
-                        Name = $"{Name} ROI"
+                        Name = $"{Name} ROI",
+                        ShowSearchArrow = true,
+                        SearchOutward = cft.SearchDirection == CircleSearchDirection.InwardToOutward
                     };
+                }
+
+                // CircleROI의 검색 방향 동기화
+                if (isCircleFitTool && AssociatedROIShape is CircleROI existingCircle)
+                {
+                    var cft = (CircleFitTool)Tool;
+                    existingCircle.ShowSearchArrow = true;
+                    existingCircle.SearchOutward = cft.SearchDirection == CircleSearchDirection.InwardToOutward;
                 }
 
                 if (AssociatedROIShape == null)
@@ -81,7 +91,9 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
                         AssociatedROIShape = new CircleROI(
                             cft.CenterPoint.X, cft.CenterPoint.Y, cft.ExpectedRadius)
                         {
-                            Name = $"{Name} ROI"
+                            Name = $"{Name} ROI",
+                            ShowSearchArrow = true,
+                            SearchOutward = cft.SearchDirection == CircleSearchDirection.InwardToOutward
                         };
                     }
                     else if (isMeasurementTool)

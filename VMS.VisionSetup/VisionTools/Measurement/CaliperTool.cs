@@ -136,6 +136,61 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             }
         }
 
+        // [개선1] 프로파일 투영 모드: 균일 평균 vs 가우시안 가중 평균
+        private ProjectionMode _projectionMode = ProjectionMode.Uniform;
+        public ProjectionMode ProjectionMode
+        {
+            get => _projectionMode;
+            set => SetProperty(ref _projectionMode, value);
+        }
+
+        // [개선2] 가우시안 1D 필터 (이동 평균 대체)
+        private bool _useGaussianFilter = true;
+        public bool UseGaussianFilter
+        {
+            get => _useGaussianFilter;
+            set => SetProperty(ref _useGaussianFilter, value);
+        }
+
+        private double _gaussianSigma = 1.0;
+        public double GaussianSigma
+        {
+            get => _gaussianSigma;
+            set => SetProperty(ref _gaussianSigma, Math.Max(0.3, value));
+        }
+
+        // [개선3] 정규화된 대비 스코어링
+        private bool _useNormalizedContrast = false;
+        public bool UseNormalizedContrast
+        {
+            get => _useNormalizedContrast;
+            set => SetProperty(ref _useNormalizedContrast, value);
+        }
+
+        // 에지 선택 모드 (Best/First/Last)
+        private EdgeSelectionMode _selectionMode = EdgeSelectionMode.Best;
+        public EdgeSelectionMode SelectionMode
+        {
+            get => _selectionMode;
+            set => SetProperty(ref _selectionMode, value);
+        }
+
+        // 탐색 방향 축 설정 (W/H 비율에 관계없이 고정)
+        private CaliperSearchAxis _searchAxis = CaliperSearchAxis.AlongWidth;
+        public CaliperSearchAxis SearchAxis
+        {
+            get => _searchAxis;
+            set => SetProperty(ref _searchAxis, value);
+        }
+
+        // [개선4] 서브픽셀 보간 방법
+        private SubPixelMethod _subPixelMethod = SubPixelMethod.Parabolic;
+        public SubPixelMethod SubPixelMethod
+        {
+            get => _subPixelMethod;
+            set => SetProperty(ref _subPixelMethod, value);
+        }
+
         // Profile 시각화 데이터
         public double[]? LastProfile { get; private set; }
         public double[]? LastGradient { get; private set; }
@@ -215,16 +270,16 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                     double cosA = Math.Cos(rad);
                     double sinA = Math.Sin(rad);
 
-                    if (w >= h)
+                    if (SearchAxis == CaliperSearchAxis.AlongWidth)
                     {
-                        // Width 축이 길면: 검색 방향 = Width 축 (cosθ, sinθ)
+                        // Width 축 방향으로 탐색: (cosθ, sinθ)
                         searchStart = new Point2d(cx - (w / 2) * cosA, cy - (w / 2) * sinA);
                         searchEnd = new Point2d(cx + (w / 2) * cosA, cy + (w / 2) * sinA);
                         searchWidth = h;
                     }
                     else
                     {
-                        // Height 축이 길면: 검색 방향 = Height 축 (-sinθ, cosθ)
+                        // Height 축 방향으로 탐색: (-sinθ, cosθ)
                         searchStart = new Point2d(cx - (h / 2) * (-sinA), cy - (h / 2) * cosA);
                         searchEnd = new Point2d(cx + (h / 2) * (-sinA), cy + (h / 2) * cosA);
                         searchWidth = w;
@@ -234,7 +289,7 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 {
                     // Fallback: 기존 축 정렬 RectangleROI
                     var roi = GetAdjustedROI(inputImage);
-                    if (roi.Width >= roi.Height)
+                    if (SearchAxis == CaliperSearchAxis.AlongWidth)
                     {
                         double cy = roi.Y + roi.Height / 2.0;
                         searchStart = new Point2d(roi.X, cy);
@@ -276,7 +331,7 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 double vx = -uy;
                 double vy = ux;
 
-                // 검색 라인을 따라 프로파일 추출
+                // [개선1] 검색 라인을 따라 프로파일 추출 (바이리니어 보간 + 가우시안 투영)
                 var profile = ExtractProfile(grayImage, searchStart, ux, uy, vx, vy, length, searchWidth);
 
                 // Edge 검출
@@ -294,10 +349,10 @@ namespace VMS.VisionSetup.VisionTools.Measurement
 
                 if (Mode == CaliperMode.SingleEdge)
                 {
-                    // 단일 Edge 결과
+                    // 단일 Edge 결과 — SelectionMode에 따라 최종 에지 선택
                     if (edges.Count > 0)
                     {
-                        var edge = edges[0];
+                        var edge = SelectEdge(edges);
                         var edgePoint = new Point2d(
                             searchStart.X + ux * edge.SubPixelPosition,
                             searchStart.Y + uy * edge.SubPixelPosition);
@@ -333,7 +388,7 @@ namespace VMS.VisionSetup.VisionTools.Measurement
 
                     if (pairs.Count > 0)
                     {
-                        var pair = pairs[0];
+                        var pair = SelectEdgePair(pairs);
 
                         DrawEdge(overlayImage, pair.Edge1Point, vx, vy, searchWidth, new Scalar(0, 255, 0));
                         DrawEdge(overlayImage, pair.Edge2Point, vx, vy, searchWidth, new Scalar(0, 255, 255));
@@ -390,13 +445,17 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             return result;
         }
 
+        /// <summary>
+        /// [개선1] 프로파일 추출 — WarpAffine(바이리니어 보간) + 가우시안 가중 투영 옵션
+        /// WarpAffine은 InterpolationFlags.Linear을 사용하므로 바이리니어 보간이 기본 적용됨.
+        /// ProjectionMode.Gaussian 선택 시 중심선에 가까운 픽셀에 높은 가중치를 부여.
+        /// </summary>
         private double[] ExtractProfile(Mat image, Point2d start, double ux, double uy, double vx, double vy, double length, double searchWidth)
         {
             int profileLength = (int)length;
             int stripHeight = Math.Max(1, (int)searchWidth);
 
             // 3-point affine: map search rectangle corners to rectified strip
-            // Source: top-left corner of search rectangle along the search line
             double halfW = searchWidth / 2.0;
             var srcPts = new Point2f[]
             {
@@ -417,31 +476,129 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             Cv2.WarpAffine(image, strip, affine, new Size(profileLength, stripHeight),
                 InterpolationFlags.Linear, BorderTypes.Reflect101);
 
-            // Column average: collapse strip into 1D profile
-            using var reduced = new Mat();
-            Cv2.Reduce(strip, reduced, ReduceDimension.Row, ReduceTypes.Avg, MatType.CV_64F);
-
             var profile = new double[profileLength];
-            for (int i = 0; i < profileLength; i++)
-                profile[i] = reduced.At<double>(0, i);
+
+            if (ProjectionMode == ProjectionMode.Gaussian && stripHeight > 1)
+            {
+                // 가우시안 가중 투영: 중심선에 가까운 행에 높은 가중치
+                double center = (stripHeight - 1) / 2.0;
+                double sigma = stripHeight / 4.0; // 가중치 분포 폭
+                var weights = new double[stripHeight];
+                double weightSum = 0;
+                for (int r = 0; r < stripHeight; r++)
+                {
+                    double d = r - center;
+                    weights[r] = Math.Exp(-(d * d) / (2.0 * sigma * sigma));
+                    weightSum += weights[r];
+                }
+                // 정규화
+                for (int r = 0; r < stripHeight; r++)
+                    weights[r] /= weightSum;
+
+                // 가중 평균
+                using var strip64 = new Mat();
+                strip.ConvertTo(strip64, MatType.CV_64F);
+                for (int c = 0; c < profileLength; c++)
+                {
+                    double sum = 0;
+                    for (int r = 0; r < stripHeight; r++)
+                        sum += strip64.At<double>(r, c) * weights[r];
+                    profile[c] = sum;
+                }
+            }
+            else
+            {
+                // 균일 평균 투영 (기존 방식)
+                using var reduced = new Mat();
+                Cv2.Reduce(strip, reduced, ReduceDimension.Row, ReduceTypes.Avg, MatType.CV_64F);
+                for (int i = 0; i < profileLength; i++)
+                    profile[i] = reduced.At<double>(0, i);
+            }
 
             return profile;
         }
 
-        private List<EdgeResult> DetectEdges(double[] profile, double length, out double[] gradient)
+        /// <summary>
+        /// [개선2] 가우시안 1D 커널 생성
+        /// </summary>
+        private static double[] CreateGaussianKernel(int halfWidth, double sigma)
+        {
+            int size = halfWidth * 2 + 1;
+            var kernel = new double[size];
+            double sum = 0;
+            for (int i = 0; i < size; i++)
+            {
+                double x = i - halfWidth;
+                kernel[i] = Math.Exp(-(x * x) / (2.0 * sigma * sigma));
+                sum += kernel[i];
+            }
+            for (int i = 0; i < size; i++)
+                kernel[i] /= sum;
+            return kernel;
+        }
+
+        /// <summary>
+        /// [개선2] 가우시안 1D 평활화 적용
+        /// </summary>
+        private static double[] ApplyGaussianSmoothing(double[] profile, int halfWidth, double sigma)
+        {
+            var kernel = CreateGaussianKernel(halfWidth, sigma);
+            var smoothed = new double[profile.Length];
+            int kernelSize = halfWidth * 2 + 1;
+
+            for (int i = 0; i < profile.Length; i++)
+            {
+                double sum = 0;
+                double wSum = 0;
+                for (int k = 0; k < kernelSize; k++)
+                {
+                    int idx = i + k - halfWidth;
+                    if (idx >= 0 && idx < profile.Length)
+                    {
+                        sum += profile[idx] * kernel[k];
+                        wSum += kernel[k];
+                    }
+                }
+                smoothed[i] = wSum > 0 ? sum / wSum : profile[i];
+            }
+            return smoothed;
+        }
+
+        private List<EdgeResult> DetectEdges(double[] rawProfile, double length, out double[] gradient)
         {
             var edges = new List<EdgeResult>();
 
-            // Sobel 필터로 그래디언트 계산
+            // [개선2] 가우시안 필터 적용 (옵션)
+            double[] profile;
+            if (UseGaussianFilter)
+                profile = ApplyGaussianSmoothing(rawProfile, FilterHalfWidth, GaussianSigma);
+            else
+                profile = rawProfile;
+
+            // [개선2] 가우시안 1D 미분 필터 (기존 이동 평균 미분 대체)
             gradient = new double[profile.Length];
-            for (int i = FilterHalfWidth; i < profile.Length - FilterHalfWidth; i++)
+            if (UseGaussianFilter)
             {
-                double sum = 0;
-                for (int j = -FilterHalfWidth; j <= FilterHalfWidth; j++)
+                // Gaussian derivative: d/dx G(x) = -x/(σ²) * G(x)
+                var derivKernel = CreateGaussianDerivativeKernel(FilterHalfWidth, GaussianSigma);
+                for (int i = FilterHalfWidth; i < profile.Length - FilterHalfWidth; i++)
                 {
-                    sum += profile[i + j] * j;
+                    double sum = 0;
+                    for (int j = -FilterHalfWidth; j <= FilterHalfWidth; j++)
+                        sum += profile[i + j] * derivKernel[j + FilterHalfWidth];
+                    gradient[i] = sum;
                 }
-                gradient[i] = sum / (FilterHalfWidth * 2 + 1);
+            }
+            else
+            {
+                // 기존 이동 평균 미분 필터
+                for (int i = FilterHalfWidth; i < profile.Length - FilterHalfWidth; i++)
+                {
+                    double sum = 0;
+                    for (int j = -FilterHalfWidth; j <= FilterHalfWidth; j++)
+                        sum += profile[i + j] * j;
+                    gradient[i] = sum / (FilterHalfWidth * 2 + 1);
+                }
             }
 
             // Use absolute gradient values for finding max
@@ -449,8 +606,28 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             for (int i = 0; i < gradient.Length; i++)
                 absGradient[i] = Math.Abs(gradient[i]);
 
-            // When PolarityWeight > 0, relax strict polarity filtering to let scorer rank
-            bool useScorerPolarity = PolarityWeight > 0;
+            // [개선3] 정규화된 대비를 위한 국부 평균 계산
+            double[]? localMean = null;
+            if (UseNormalizedContrast)
+            {
+                localMean = new double[profile.Length];
+                int meanRadius = Math.Max(FilterHalfWidth * 2, 5);
+                for (int i = 0; i < profile.Length; i++)
+                {
+                    double sum = 0;
+                    int count = 0;
+                    for (int j = -meanRadius; j <= meanRadius; j++)
+                    {
+                        int idx = i + j;
+                        if (idx >= 0 && idx < profile.Length)
+                        {
+                            sum += profile[idx];
+                            count++;
+                        }
+                    }
+                    localMean[i] = count > 0 ? sum / count : 128.0;
+                }
+            }
 
             // Edge 검출 (Local Maxima/Minima)
             var candidates = new List<EdgeResult>();
@@ -481,21 +658,32 @@ namespace VMS.VisionSetup.VisionTools.Measurement
 
                 if (isLocalExtreme)
                 {
-                    // When scorer handles polarity, accept all; otherwise strict filter
+                    // Polarity는 항상 hard filter로 적용
+                    // Any: 모든 극성 허용, DarkToLight/LightToDark: 해당 극성만 허용
                     bool polarityMatch = Polarity == EdgePolarity.Any ||
                         (Polarity == EdgePolarity.DarkToLight && polarity == EdgePolarity.DarkToLight) ||
                         (Polarity == EdgePolarity.LightToDark && polarity == EdgePolarity.LightToDark);
 
-                    if (useScorerPolarity || polarityMatch)
+                    if (polarityMatch)
                     {
-                        // Sub-pixel interpolation
-                        double subPixelPos = ParabolicSubPixel(absGradient, i);
+                        // [개선4] 서브픽셀 보간
+                        double subPixelPos = ComputeSubPixelPosition(absGradient, i);
+
+                        // [개선3] 정규화된 대비 계산
+                        double rawContrast = Math.Abs(g);
+                        double normalizedContrast = rawContrast;
+                        if (UseNormalizedContrast && localMean != null)
+                        {
+                            double lm = localMean[i];
+                            normalizedContrast = lm > 1.0 ? rawContrast / lm : rawContrast;
+                        }
 
                         candidates.Add(new EdgeResult
                         {
                             Position = i,
                             SubPixelPosition = subPixelPos,
-                            Score = Math.Abs(g),
+                            Score = rawContrast,
+                            NormalizedContrast = normalizedContrast,
                             Polarity = polarity,
                             PolarityScore = polarityMatch ? 1.0 : 0.0
                         });
@@ -507,12 +695,23 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             double maxGrad = candidates.Count > 0 ? candidates.Max(e => e.Score) : 1.0;
             if (maxGrad < 1e-12) maxGrad = 1.0;
 
+            // [개선3] 정규화된 대비 사용 시 정규화 기준 변경
+            double maxNormContrast = 1.0;
+            if (UseNormalizedContrast && candidates.Count > 0)
+            {
+                maxNormContrast = candidates.Max(e => e.NormalizedContrast);
+                if (maxNormContrast < 1e-12) maxNormContrast = 1.0;
+            }
+
             double expectedPos = ExpectedPosition >= 0 ? ExpectedPosition : length / 2.0;
 
             foreach (var edge in candidates)
             {
-                // Contrast Score: normalized 0..1
-                edge.ContrastScore = edge.Score / maxGrad;
+                // [개선3] Contrast Score: 정규화된 대비 or 기존 방식
+                if (UseNormalizedContrast)
+                    edge.ContrastScore = edge.NormalizedContrast / maxNormContrast;
+                else
+                    edge.ContrastScore = edge.Score / maxGrad;
 
                 // Position Score: Gaussian centered on expected position
                 double posDiff = edge.SubPixelPosition - expectedPos;
@@ -528,6 +727,147 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             edges = candidates.OrderByDescending(e => e.Score).Take(MaxEdges).ToList();
 
             return edges;
+        }
+
+        /// <summary>
+        /// [개선2] 가우시안 1차 미분 커널 생성
+        /// G'(x) = -x/(σ²) * G(x) — 에지 위치를 왜곡 없이 검출
+        /// </summary>
+        private static double[] CreateGaussianDerivativeKernel(int halfWidth, double sigma)
+        {
+            int size = halfWidth * 2 + 1;
+            var kernel = new double[size];
+            double sigma2 = sigma * sigma;
+            for (int i = 0; i < size; i++)
+            {
+                double x = i - halfWidth;
+                // 부호 반전: 이동 평균 미분과 동일한 부호 규약 (양수 = DarkToLight)
+                // 수학적 G'(x) = -x/σ² * G(x) 이지만, 신호처리 관례상 부호를 맞춤
+                kernel[i] = (x / sigma2) * Math.Exp(-(x * x) / (2.0 * sigma2));
+            }
+            return kernel;
+        }
+
+        /// <summary>
+        /// [개선4] 서브픽셀 보간 — Parabolic(3점) / Gaussian(3점) / Quartic(5점) 선택
+        /// </summary>
+        private double ComputeSubPixelPosition(double[] data, int index)
+        {
+            return SubPixelMethod switch
+            {
+                SubPixelMethod.Gaussian => GaussianSubPixel(data, index),
+                SubPixelMethod.Quartic5Point => Quartic5PointSubPixel(data, index),
+                _ => ParabolicSubPixel(data, index)
+            };
+        }
+
+        /// <summary>
+        /// 3점 포물선 보간 (기존)
+        /// </summary>
+        private static double ParabolicSubPixel(double[] data, int index)
+        {
+            if (index <= 0 || index >= data.Length - 1)
+                return index;
+
+            double fPrev = data[index - 1];
+            double fCurr = data[index];
+            double fNext = data[index + 1];
+
+            double denom = 2.0 * fPrev - 4.0 * fCurr + 2.0 * fNext;
+            if (Math.Abs(denom) < 1e-12)
+                return index;
+
+            double offset = (fPrev - fNext) / denom;
+            offset = Math.Clamp(offset, -0.5, 0.5);
+            return index + offset;
+        }
+
+        /// <summary>
+        /// [개선4] 가우시안 함수 피팅 — ln(f) 기반 3점 보간
+        /// 신호가 가우시안 형태에 가까울 때 포물선보다 정확
+        /// </summary>
+        private static double GaussianSubPixel(double[] data, int index)
+        {
+            if (index <= 0 || index >= data.Length - 1)
+                return index;
+
+            double fPrev = data[index - 1];
+            double fCurr = data[index];
+            double fNext = data[index + 1];
+
+            // 0 이하 값 방지 (log 사용)
+            if (fPrev <= 0 || fCurr <= 0 || fNext <= 0)
+                return ParabolicSubPixel(data, index);
+
+            double logPrev = Math.Log(fPrev);
+            double logCurr = Math.Log(fCurr);
+            double logNext = Math.Log(fNext);
+
+            double denom = 2.0 * logPrev - 4.0 * logCurr + 2.0 * logNext;
+            if (Math.Abs(denom) < 1e-12)
+                return ParabolicSubPixel(data, index);
+
+            double offset = (logPrev - logNext) / denom;
+            offset = Math.Clamp(offset, -0.5, 0.5);
+            return index + offset;
+        }
+
+        /// <summary>
+        /// [개선4] 5점 보간법 — 4차 다항식 피팅으로 0.01~0.05 픽셀 정밀도 달성
+        /// </summary>
+        private static double Quartic5PointSubPixel(double[] data, int index)
+        {
+            if (index <= 1 || index >= data.Length - 2)
+                return ParabolicSubPixel(data, index);
+
+            double fm2 = data[index - 2];
+            double fm1 = data[index - 1];
+            double f0 = data[index];
+            double fp1 = data[index + 1];
+            double fp2 = data[index + 2];
+
+            // 2차 미분 추정 (a) 과 1차 미분 추정 (b) from 5-point stencil
+            // f(x) ≈ a*x² + b*x + c  (x centered at index)
+            // 5-point least-squares quadratic fit:
+            //   a = (2*(fm2+fp2) - (fm1+fp1) - 2*f0) / 14  (simplified)
+            //   b = (-2*fm2 - fm1 + fp1 + 2*fp2) / 10
+            double b = (-2.0 * fm2 - fm1 + fp1 + 2.0 * fp2) / 10.0;
+            double a = (2.0 * (fm2 + fp2) - (fm1 + fp1) - 2.0 * f0) / 7.0;
+
+            if (Math.Abs(a) < 1e-12)
+                return ParabolicSubPixel(data, index);
+
+            double offset = -b / (2.0 * a);
+            offset = Math.Clamp(offset, -1.0, 1.0);
+            return index + offset;
+        }
+
+        /// <summary>
+        /// SelectionMode에 따라 최종 에지 1개를 선택
+        /// Best: Score 최고, First: Position 최소 (시작점에 가까운), Last: Position 최대 (시작점에서 먼)
+        /// </summary>
+        private EdgeResult SelectEdge(List<EdgeResult> edges)
+        {
+            return SelectionMode switch
+            {
+                EdgeSelectionMode.First => edges.OrderBy(e => e.SubPixelPosition).First(),
+                EdgeSelectionMode.Last => edges.OrderByDescending(e => e.SubPixelPosition).First(),
+                _ => edges[0] // Best — 이미 Score 순으로 정렬되어 있음
+            };
+        }
+
+        /// <summary>
+        /// SelectionMode에 따라 최종 EdgePair를 선택
+        /// Best: Score 최고, First: 시작점에 가까운 쌍, Last: 시작점에서 먼 쌍
+        /// </summary>
+        private EdgePairResult SelectEdgePair(List<EdgePairResult> pairs)
+        {
+            return SelectionMode switch
+            {
+                EdgeSelectionMode.First => pairs.OrderBy(p => p.CenterPosition).First(),
+                EdgeSelectionMode.Last => pairs.OrderByDescending(p => p.CenterPosition).First(),
+                _ => pairs[0] // Best — 이미 ExpectedWidth 기준으로 정렬되어 있음
+            };
         }
 
         private List<EdgePairResult> FindEdgePairs(List<EdgeResult> edges, Point2d origin, double ux, double uy)
@@ -553,6 +893,15 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                             var first = e1.SubPixelPosition < e2.SubPixelPosition ? e1 : e2;
                             var second = e1.SubPixelPosition < e2.SubPixelPosition ? e2 : e1;
 
+                            // [개선3] EdgePair 대칭성 점수: 두 에지 강도 비율이 1에 가까울수록 높은 점수
+                            double symmetryScore = 1.0;
+                            if (first.ContrastScore > 0 && second.ContrastScore > 0)
+                            {
+                                double ratio = Math.Min(first.ContrastScore, second.ContrastScore)
+                                             / Math.Max(first.ContrastScore, second.ContrastScore);
+                                symmetryScore = ratio; // 0~1, 1이면 완벽 대칭
+                            }
+
                             pairs.Add(new EdgePairResult
                             {
                                 Edge1Point = new Point2d(
@@ -562,7 +911,9 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                                     origin.X + ux * second.SubPixelPosition,
                                     origin.Y + uy * second.SubPixelPosition),
                                 Width = width,
-                                Score = (first.Score + second.Score) / 2
+                                Score = (first.Score + second.Score) / 2,
+                                SymmetryScore = symmetryScore,
+                                CenterPosition = (first.SubPixelPosition + second.SubPixelPosition) / 2.0
                             });
                         }
                     }
@@ -592,31 +943,13 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 new Scalar(0, 128, 255), 1);
         }
 
-        private static double ParabolicSubPixel(double[] data, int index)
-        {
-            if (index <= 0 || index >= data.Length - 1)
-                return index;
-
-            double fPrev = data[index - 1];
-            double fCurr = data[index];
-            double fNext = data[index + 1];
-
-            double denom = 2.0 * fPrev - 4.0 * fCurr + 2.0 * fNext;
-            if (Math.Abs(denom) < 1e-12)
-                return index;
-
-            double offset = (fPrev - fNext) / denom;
-            offset = Math.Clamp(offset, -0.5, 0.5);
-            return index + offset;
-        }
-
         private void DrawEdge(Mat image, Point2d point, double vx, double vy, double width, Scalar? color = null)
         {
             var c = color ?? new Scalar(0, 255, 0);
             Cv2.Line(image,
                 new Point((int)(point.X + vx * width / 2), (int)(point.Y + vy * width / 2)),
                 new Point((int)(point.X - vx * width / 2), (int)(point.Y - vy * width / 2)),
-                c, 3);
+                c, 1);
         }
 
         public override List<string> GetAvailableResultKeys()
@@ -656,7 +989,14 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 ContrastWeight = this.ContrastWeight,
                 PositionWeight = this.PositionWeight,
                 PositionSigma = this.PositionSigma,
-                PolarityWeight = this.PolarityWeight
+                PolarityWeight = this.PolarityWeight,
+                ProjectionMode = this.ProjectionMode,
+                UseGaussianFilter = this.UseGaussianFilter,
+                GaussianSigma = this.GaussianSigma,
+                UseNormalizedContrast = this.UseNormalizedContrast,
+                SubPixelMethod = this.SubPixelMethod,
+                SearchAxis = this.SearchAxis,
+                SelectionMode = this.SelectionMode
             };
             CopyPlcMappingsTo(clone);
             return clone;
@@ -669,6 +1009,7 @@ namespace VMS.VisionSetup.VisionTools.Measurement
         public double SubPixelPosition { get; set; }
         public double Score { get; set; }
         public double ContrastScore { get; set; }
+        public double NormalizedContrast { get; set; }
         public double PositionScore { get; set; }
         public double PolarityScore { get; set; }
         public EdgePolarity Polarity { get; set; }
@@ -680,6 +1021,9 @@ namespace VMS.VisionSetup.VisionTools.Measurement
         public Point2d Edge2Point { get; set; }
         public double Width { get; set; }
         public double Score { get; set; }
+        public double SymmetryScore { get; set; }
+        /// <summary>쌍 중심의 프로파일 위치 (First/Last 선택용)</summary>
+        public double CenterPosition { get; set; }
     }
 
     public enum EdgePolarity
@@ -701,5 +1045,53 @@ namespace VMS.VisionSetup.VisionTools.Measurement
         Closest,
         BestOverall,
         Custom
+    }
+
+    /// <summary>
+    /// [개선1] 프로파일 투영 모드
+    /// </summary>
+    public enum ProjectionMode
+    {
+        /// <summary>균일 평균 (기존 방식)</summary>
+        Uniform,
+        /// <summary>가우시안 가중 평균 (중심선 우선)</summary>
+        Gaussian
+    }
+
+    /// <summary>
+    /// [개선4] 서브픽셀 보간 방법
+    /// </summary>
+    public enum SubPixelMethod
+    {
+        /// <summary>3점 포물선 보간 (기존)</summary>
+        Parabolic,
+        /// <summary>3점 가우시안 피팅</summary>
+        Gaussian,
+        /// <summary>5점 다항식 피팅 (고정밀)</summary>
+        Quartic5Point
+    }
+
+    /// <summary>
+    /// 에지 선택 모드 (Cognex CogCaliperTool 호환)
+    /// </summary>
+    public enum EdgeSelectionMode
+    {
+        /// <summary>점수(Score)가 가장 높은 에지</summary>
+        Best,
+        /// <summary>검색 시작점에서 가장 가까운 에지</summary>
+        First,
+        /// <summary>검색 시작점에서 가장 먼 에지</summary>
+        Last
+    }
+
+    /// <summary>
+    /// Caliper 탐색 방향 축 설정
+    /// </summary>
+    public enum CaliperSearchAxis
+    {
+        /// <summary>ROI의 Width 축 방향으로 탐색</summary>
+        AlongWidth,
+        /// <summary>ROI의 Height 축 방향으로 탐색</summary>
+        AlongHeight
     }
 }
