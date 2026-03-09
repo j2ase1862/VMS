@@ -518,7 +518,8 @@ namespace VMS.VisionSetup.Views.Recipe
         {
             "GrayscaleTool", "BlurTool", "ThresholdTool", "EdgeDetectionTool",
             "MorphologyTool", "HistogramTool", "FeatureMatchTool", "BlobTool",
-            "CaliperTool", "LineFitTool", "CircleFitTool"
+            "CaliperTool", "LineFitTool", "CircleFitTool",
+            "CodeReaderTool"
         };
 
         public AddToolDialog()

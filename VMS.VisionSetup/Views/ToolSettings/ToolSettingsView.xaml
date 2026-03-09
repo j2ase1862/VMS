@@ -52,6 +52,9 @@
         <DataTemplate x:Key="HeightSlicerTemplate" DataType="{x:Type vm:HeightSlicerToolSettingsViewModel}">
             <tools:HeightSlicerToolSettings/>
         </DataTemplate>
+        <DataTemplate x:Key="CodeReaderTemplate" DataType="{x:Type vm:CodeReaderToolSettingsViewModel}">
+            <tools:CodeReaderToolSettings/>
+        </DataTemplate>
         <DataTemplate x:Key="ResultTemplate" DataType="{x:Type vm:ResultToolSettingsViewModel}">
             <tools:ResultToolSettings/>
         </DataTemplate>
@@ -69,6 +72,7 @@
             LineFitTemplate="{StaticResource LineFitTemplate}"
             CircleFitTemplate="{StaticResource CircleFitTemplate}"
             HeightSlicerTemplate="{StaticResource HeightSlicerTemplate}"
+            CodeReaderTemplate="{StaticResource CodeReaderTemplate}"
             ResultTemplate="{StaticResource ResultTemplate}"/>
     </UserControl.Resources>
 

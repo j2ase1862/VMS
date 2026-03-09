@@ -9,6 +9,7 @@ using VMS.VisionSetup.VisionTools.BlobAnalysis;
 using VMS.VisionSetup.VisionTools.ImageProcessing;
 using VMS.VisionSetup.VisionTools.Measurement;
 using VMS.VisionSetup.VisionTools.PatternMatching;
+using VMS.VisionSetup.VisionTools.CodeReading;
 using VMS.VisionSetup.VisionTools.Result;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -454,6 +455,11 @@ namespace VMS.VisionSetup.ViewModels
             measurement.Tools.Add(new ToolItem { Name = "Line Fit", ToolType = "LineFitTool" });
             measurement.Tools.Add(new ToolItem { Name = "Circle Fit", ToolType = "CircleFitTool" });
             ToolTree.Add(measurement);
+
+            // Code Reading 카테고리
+            var codeReading = new ToolCategory { CategoryName = "Code Reading" };
+            codeReading.Tools.Add(new ToolItem { Name = "Code Reader", ToolType = "CodeReaderTool" });
+            ToolTree.Add(codeReading);
 
             // 3D Analysis 카테고리
             var threeD = new ToolCategory { CategoryName = "3D Analysis" };
@@ -1743,6 +1749,7 @@ namespace VMS.VisionSetup.ViewModels
                 CircleFitTool t => new CircleFitToolSettingsViewModel(t),
                 HeightSlicerTool t => new HeightSlicerToolSettingsViewModel(t),
                 ResultTool t => new ResultToolSettingsViewModel(t),
+                CodeReaderTool t => new CodeReaderToolSettingsViewModel(t),
                 _ => null
             };
         }
