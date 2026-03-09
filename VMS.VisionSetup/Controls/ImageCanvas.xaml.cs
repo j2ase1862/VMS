@@ -731,7 +731,9 @@ namespace VMS.VisionSetup.Controls
             // 측정 도구 검색 방향 화살표
             if (roi.ShowSearchArrow)
             {
-                if (roi is RectangleAffineROI affineRect)
+                if (roi is CircleROI circleArrow)
+                    DrawSearchArrowCircle(circleArrow, visuals);
+                else if (roi is RectangleAffineROI affineRect)
                     DrawSearchArrowAffine(affineRect, visuals);
                 else if (roi is RectangleROI arrowRect)
                     DrawSearchArrow(arrowRect, visuals);
@@ -744,6 +746,99 @@ namespace VMS.VisionSetup.Controls
             }
 
             _roiVisuals[roi] = visuals;
+        }
+
+        /// <summary>
+        /// CircleROI의 검색 방향 화살표 그리기 (방사형 4방향 화살표)
+        /// InwardToOutward: 중심→바깥, OutwardToInward: 바깥→중심
+        /// </summary>
+        private void DrawSearchArrowCircle(CircleROI circle, List<UIElement> visuals)
+        {
+            double cx = circle.CenterX;
+            double cy = circle.CenterY;
+            double r = circle.Radius;
+
+            bool outward = circle.SearchOutward;
+
+            var arrowBrush = Brushes.Yellow;
+            double strokeWidth = 2;
+
+            // 4방향 (0°, 90°, 180°, 270°)에 화살표 표시
+            double[] angles = { 0, 90, 180, 270 };
+            double arrowLen = Math.Min(r * 0.35, 40);
+            double headLen = Math.Max(6, arrowLen * 0.35);
+
+            foreach (double angleDeg in angles)
+            {
+                double rad = angleDeg * Math.PI / 180.0;
+                double dirX = Math.Cos(rad);
+                double dirY = Math.Sin(rad);
+
+                // 화살표 위치: 원 둘레 근처 (반경의 80%~100% 구간)
+                double arrowCenterDist = r - arrowLen * 0.5;
+
+                double startX, startY, endX, endY;
+                if (outward)
+                {
+                    // 안쪽 → 바깥쪽
+                    startX = cx + dirX * (arrowCenterDist - arrowLen * 0.5);
+                    startY = cy + dirY * (arrowCenterDist - arrowLen * 0.5);
+                    endX = cx + dirX * (arrowCenterDist + arrowLen * 0.5);
+                    endY = cy + dirY * (arrowCenterDist + arrowLen * 0.5);
+                }
+                else
+                {
+                    // 바깥쪽 → 안쪽
+                    startX = cx + dirX * (arrowCenterDist + arrowLen * 0.5);
+                    startY = cy + dirY * (arrowCenterDist + arrowLen * 0.5);
+                    endX = cx + dirX * (arrowCenterDist - arrowLen * 0.5);
+                    endY = cy + dirY * (arrowCenterDist - arrowLen * 0.5);
+                }
+
+                // 화살표 방향 벡터
+                double aDx = endX - startX;
+                double aDy = endY - startY;
+                double aLen = Math.Sqrt(aDx * aDx + aDy * aDy);
+                if (aLen < 1) continue;
+                aDx /= aLen;
+                aDy /= aLen;
+
+                // 화살표 몸통
+                var shaft = new Line
+                {
+                    X1 = startX, Y1 = startY,
+                    X2 = endX, Y2 = endY,
+                    Stroke = arrowBrush,
+                    StrokeThickness = strokeWidth
+                };
+                visuals.Add(shaft);
+                DrawingCanvas.Children.Add(shaft);
+
+                // 화살촉
+                double perpX = -aDy;
+                double perpY = aDx;
+
+                var head1 = new Line
+                {
+                    X1 = endX, Y1 = endY,
+                    X2 = endX - aDx * headLen + perpX * headLen * 0.5,
+                    Y2 = endY - aDy * headLen + perpY * headLen * 0.5,
+                    Stroke = arrowBrush,
+                    StrokeThickness = strokeWidth
+                };
+                var head2 = new Line
+                {
+                    X1 = endX, Y1 = endY,
+                    X2 = endX - aDx * headLen - perpX * headLen * 0.5,
+                    Y2 = endY - aDy * headLen - perpY * headLen * 0.5,
+                    Stroke = arrowBrush,
+                    StrokeThickness = strokeWidth
+                };
+                visuals.Add(head1);
+                visuals.Add(head2);
+                DrawingCanvas.Children.Add(head1);
+                DrawingCanvas.Children.Add(head2);
+            }
         }
 
         /// <summary>
@@ -830,19 +925,19 @@ namespace VMS.VisionSetup.Controls
             double cosA = Math.Cos(rad);
             double sinA = Math.Sin(rad);
 
-            // 검색 방향: 짧은 축 방향
+            // 검색 방향: ROI의 SearchAlongWidth 설정에 따라 결정
             double arrowDx, arrowDy;
-            if (rect.Width >= rect.Height)
+            if (rect.SearchAlongWidth)
             {
-                // Width가 길면 Height 방향으로 검색: (-sinθ, cosθ)
-                arrowDx = -sinA;
-                arrowDy = cosA;
+                // Width 축 방향으로 탐색: (cosθ, sinθ)
+                arrowDx = cosA;
+                arrowDy = sinA;
             }
             else
             {
-                // Height가 길면 Width 방향으로 검색: (cosθ, sinθ)
-                arrowDx = cosA;
-                arrowDy = sinA;
+                // Height 축 방향으로 탐색: (-sinθ, cosθ)
+                arrowDx = -sinA;
+                arrowDy = cosA;
             }
 
             // 화살표 길이: 짧은 축의 40%

@@ -1032,13 +1032,16 @@ namespace VMS.VisionSetup.ViewModels
             try
             {
                 // 측정 도구에 검색 방향 화살표 표시
-                roi.ShowSearchArrow = tool is LineFitTool or CaliperTool;
+                roi.ShowSearchArrow = tool is LineFitTool or CaliperTool or CircleFitTool;
 
                 if (roi is CircleROI circleROI && tool is CircleFitTool cft)
                 {
                     // CircleROI → CircleFitTool 좌표 동기화
                     cft.CenterPoint = new OpenCvSharp.Point2d(circleROI.CenterX, circleROI.CenterY);
                     cft.ExpectedRadius = circleROI.Radius;
+
+                    // 검색 방향 동기화
+                    circleROI.SearchOutward = cft.SearchDirection == CircleSearchDirection.InwardToOutward;
 
                     // ROI 바운딩 rect도 저장 (GetROIImage 등 기본 기능용)
                     tool.ROI = circleROI.GetBoundingRect();
@@ -1054,6 +1057,12 @@ namespace VMS.VisionSetup.ViewModels
                     tool.ROIAngle = affineROI.Angle;
                     tool.ROICenterX = affineROI.CenterX;
                     tool.ROICenterY = affineROI.CenterY;
+
+                    // CaliperTool: 탐색 방향 동기화
+                    if (tool is CaliperTool caliper)
+                    {
+                        affineROI.SearchAlongWidth = caliper.SearchAxis == CaliperSearchAxis.AlongWidth;
+                    }
                 }
                 else
                 {
@@ -1143,15 +1152,27 @@ namespace VMS.VisionSetup.ViewModels
 
             // CircleFitTool 속성 변경 → CircleROI 동기화
             if (tool is CircleFitTool cft &&
-                e.PropertyName is nameof(CircleFitTool.CenterPoint) or nameof(CircleFitTool.ExpectedRadius))
+                e.PropertyName is nameof(CircleFitTool.CenterPoint) or nameof(CircleFitTool.ExpectedRadius)
+                    or nameof(CircleFitTool.SearchDirection))
             {
                 if (tool.AssociatedROIShape is CircleROI circleROI)
                 {
                     circleROI.CenterX = cft.CenterPoint.X;
                     circleROI.CenterY = cft.CenterPoint.Y;
                     circleROI.Radius = cft.ExpectedRadius;
+                    circleROI.SearchOutward = cft.SearchDirection == CircleSearchDirection.InwardToOutward;
                     tool.ROI = circleROI.GetBoundingRect();
                     WeakReferenceMessenger.Default.Send(new RequestRefreshROIMessage(circleROI));
+                }
+            }
+
+            // CaliperTool.SearchAxis 변경 → RectangleAffineROI 동기화
+            if (tool is CaliperTool caliper && e.PropertyName is nameof(CaliperTool.SearchAxis))
+            {
+                if (tool.AssociatedROIShape is RectangleAffineROI affineROI)
+                {
+                    affineROI.SearchAlongWidth = caliper.SearchAxis == CaliperSearchAxis.AlongWidth;
+                    WeakReferenceMessenger.Default.Send(new RequestRefreshROIMessage(affineROI));
                 }
             }
 

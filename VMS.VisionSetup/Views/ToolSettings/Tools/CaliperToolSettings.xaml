@@ -11,6 +11,14 @@
                 <TextBlock Text="Edge Detection" Style="{StaticResource ExpanderHeaderStyle}"/>
             </Expander.Header>
             <StackPanel Margin="5,0,0,0">
+                <controls:SliderParameter Label="Projection Width"
+                    Value="{Binding SearchWidth}" Minimum="1" Maximum="200"
+                    TickFrequency="1" ValueFormat="F0"
+                    ToolType="CaliperTool" ParameterName="SearchWidth"/>
+                <controls:EnumComboBoxParameter Label="Search Axis"
+                    ItemsSource="{conv:EnumValues {x:Type meas:CaliperSearchAxis}}"
+                    SelectedValue="{Binding SearchAxis}"
+                    ToolType="CaliperTool" ParameterName="SearchAxis"/>
                 <controls:EnumComboBoxParameter Label="Polarity"
                     ItemsSource="{conv:EnumValues {x:Type meas:EdgePolarity}}"
                     SelectedValue="{Binding Polarity}"
@@ -31,10 +39,41 @@
                     Value="{Binding MaxEdges}" Minimum="1" Maximum="50"
                     TickFrequency="1" SnapToTick="True" ValueFormat="F0"
                     ToolType="CaliperTool" ParameterName="MaxEdges"/>
-                <controls:EnumComboBoxParameter Label="Selection Mode"
+                <controls:EnumComboBoxParameter Label="Scorer Mode"
                     ItemsSource="{conv:EnumValues {x:Type meas:ScorerMode}}"
                     SelectedValue="{Binding ScorerMode}"
                     ToolType="CaliperTool" ParameterName="ScorerMode"/>
+                <controls:EnumComboBoxParameter Label="Edge Selection"
+                    ItemsSource="{conv:EnumValues {x:Type meas:EdgeSelectionMode}}"
+                    SelectedValue="{Binding SelectionMode}"
+                    ToolType="CaliperTool" ParameterName="SelectionMode"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- Signal Processing (개선 옵션) -->
+        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Signal Processing" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:EnumComboBoxParameter Label="Projection Mode"
+                    ItemsSource="{conv:EnumValues {x:Type meas:ProjectionMode}}"
+                    SelectedValue="{Binding ProjectionMode}"
+                    ToolType="CaliperTool" ParameterName="ProjectionMode"/>
+                <controls:BoolParameter Label="Gaussian Filter"
+                    Value="{Binding UseGaussianFilter}"
+                    ToolType="CaliperTool" ParameterName="UseGaussianFilter"/>
+                <controls:SliderParameter Label="Gaussian Sigma"
+                    Value="{Binding GaussianSigma}" Minimum="0.3" Maximum="5.0"
+                    TickFrequency="0.1" ValueFormat="F1"
+                    ToolType="CaliperTool" ParameterName="GaussianSigma"/>
+                <controls:BoolParameter Label="Normalized Contrast"
+                    Value="{Binding UseNormalizedContrast}"
+                    ToolType="CaliperTool" ParameterName="UseNormalizedContrast"/>
+                <controls:EnumComboBoxParameter Label="Sub-Pixel Method"
+                    ItemsSource="{conv:EnumValues {x:Type meas:SubPixelMethod}}"
+                    SelectedValue="{Binding SubPixelMethod}"
+                    ToolType="CaliperTool" ParameterName="SubPixelMethod"/>
             </StackPanel>
         </Expander>
 

@@ -21,5 +21,6 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         public CircleFitMethod FitMethod { get => TypedTool.FitMethod; set => TypedTool.FitMethod = value; }
         public double RansacThreshold { get => TypedTool.RansacThreshold; set => TypedTool.RansacThreshold = value; }
         public int MinFoundCalipers { get => TypedTool.MinFoundCalipers; set => TypedTool.MinFoundCalipers = value; }
+        public CircleSearchDirection SearchDirection { get => TypedTool.SearchDirection; set => TypedTool.SearchDirection = value; }
     }
 }

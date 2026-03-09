@@ -101,6 +101,14 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             set => SetProperty(ref _minFoundCalipers, Math.Max(3, value));
         }
 
+        // Caliper 검색 방향
+        private CircleSearchDirection _searchDirection = CircleSearchDirection.InwardToOutward;
+        public CircleSearchDirection SearchDirection
+        {
+            get => _searchDirection;
+            set => SetProperty(ref _searchDirection, value);
+        }
+
         public CircleFitTool()
         {
             Name = "Circle Fit";
@@ -114,21 +122,40 @@ namespace VMS.VisionSetup.VisionTools.Measurement
 
             try
             {
-                Mat workImage = GetROIImage(inputImage);
+                // CaliperTool/LineFitTool과 동일한 패턴: GetROIImage() 사용하지 않고 전체 이미지에서 작업
+                // CircleFitTool은 CenterPoint/ExpectedRadius가 원본 이미지 좌표계이므로
+                // ROI로 이미지를 잘라내면 좌표가 맞지 않아 Edge를 찾지 못함
                 Mat grayImage = new Mat();
 
-                if (workImage.Channels() > 1)
-                    Cv2.CvtColor(workImage, grayImage, ColorConversionCodes.BGR2GRAY);
+                if (inputImage.Channels() > 1)
+                    Cv2.CvtColor(inputImage, grayImage, ColorConversionCodes.BGR2GRAY);
                 else
-                    grayImage = workImage.Clone();
+                    grayImage = inputImage.Clone();
+
+                // ROI 사용 시: CircleROI 파라미터에서 CenterPoint/ExpectedRadius 도출
+                Point2d effectiveCenter = CenterPoint;
+                double effectiveRadius = ExpectedRadius;
+
+                if (UseROI && AssociatedROIShape is CircleROI circleROI)
+                {
+                    effectiveCenter = new Point2d(circleROI.CenterX, circleROI.CenterY);
+                    effectiveRadius = circleROI.Radius;
+                }
+                else if (UseROI && ROI.Width > 0 && ROI.Height > 0)
+                {
+                    // Fallback: 사각형 ROI의 중심과 내접원 반경 사용
+                    var roi = GetAdjustedROI(inputImage);
+                    effectiveCenter = new Point2d(roi.X + roi.Width / 2.0, roi.Y + roi.Height / 2.0);
+                    effectiveRadius = Math.Min(roi.Width, roi.Height) / 2.0;
+                }
 
                 // 결과 이미지 생성 (원본 컬러 이미지 기반)
                 Mat overlayImage = GetColorOverlayBase(inputImage);
 
                 // 예상 원 표시
                 Cv2.Circle(overlayImage,
-                    new Point((int)CenterPoint.X, (int)CenterPoint.Y),
-                    (int)ExpectedRadius,
+                    new Point((int)effectiveCenter.X, (int)effectiveCenter.Y),
+                    (int)effectiveRadius,
                     new Scalar(128, 128, 128), 1);
 
                 // 각 Caliper 위치에서 Edge 검출
@@ -144,12 +171,17 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                     double dirX = Math.Cos(angleRad);
                     double dirY = Math.Sin(angleRad);
 
-                    var searchStart = new Point2d(
-                        CenterPoint.X + dirX * (ExpectedRadius - SearchLength / 2),
-                        CenterPoint.Y + dirY * (ExpectedRadius - SearchLength / 2));
-                    var searchEnd = new Point2d(
-                        CenterPoint.X + dirX * (ExpectedRadius + SearchLength / 2),
-                        CenterPoint.Y + dirY * (ExpectedRadius + SearchLength / 2));
+                    // 검색 라인의 안쪽/바깥쪽 끝점
+                    var innerPoint = new Point2d(
+                        effectiveCenter.X + dirX * (effectiveRadius - SearchLength / 2),
+                        effectiveCenter.Y + dirY * (effectiveRadius - SearchLength / 2));
+                    var outerPoint = new Point2d(
+                        effectiveCenter.X + dirX * (effectiveRadius + SearchLength / 2),
+                        effectiveCenter.Y + dirY * (effectiveRadius + SearchLength / 2));
+
+                    // SearchDirection에 따라 검색 시작/끝 결정
+                    var searchStart = SearchDirection == CircleSearchDirection.InwardToOutward ? innerPoint : outerPoint;
+                    var searchEnd = SearchDirection == CircleSearchDirection.InwardToOutward ? outerPoint : innerPoint;
 
                     // Edge 검출
                     var edge = FindEdgeAlongLine(grayImage, searchStart, searchEnd, SearchWidth);
@@ -242,9 +274,6 @@ namespace VMS.VisionSetup.VisionTools.Measurement
 
                 result.OutputImage = grayImage;
                 result.OverlayImage = overlayImage;
-
-                if (workImage != inputImage)
-                    workImage.Dispose();
             }
             catch (Exception ex)
             {
@@ -541,7 +570,8 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 EdgeThreshold = this.EdgeThreshold,
                 FitMethod = this.FitMethod,
                 RansacThreshold = this.RansacThreshold,
-                MinFoundCalipers = this.MinFoundCalipers
+                MinFoundCalipers = this.MinFoundCalipers,
+                SearchDirection = this.SearchDirection
             };
             CopyPlcMappingsTo(clone);
             return clone;
@@ -562,5 +592,16 @@ namespace VMS.VisionSetup.VisionTools.Measurement
     {
         LeastSquares,
         RANSAC
+    }
+
+    /// <summary>
+    /// CircleFitTool Caliper 검색 방향
+    /// </summary>
+    public enum CircleSearchDirection
+    {
+        /// <summary>안쪽 → 바깥쪽 (중심에서 멀어지는 방향)</summary>
+        InwardToOutward,
+        /// <summary>바깥쪽 → 안쪽 (중심으로 향하는 방향)</summary>
+        OutwardToInward
     }
 }

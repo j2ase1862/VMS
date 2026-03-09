@@ -255,6 +255,12 @@ namespace VMS.VisionSetup.Models
         [ObservableProperty]
         private double _angle;  // 회전 각도 (도)
 
+        /// <summary>
+        /// 탐색 방향: true = Width 축 방향, false = Height 축 방향
+        /// </summary>
+        [ObservableProperty]
+        private bool _searchAlongWidth = true;
+
         public override ROIShapeType ShapeType => ROIShapeType.RectangleAffine;
 
         public RectangleAffineROI() { }
@@ -357,11 +363,12 @@ namespace VMS.VisionSetup.Models
                 { HandleType.Center, new System.Windows.Point(CenterX, CenterY) }
             };
 
-            // 회전 핸들 (위쪽 중앙에서 약간 위에)
+            // 회전 핸들 (회전된 프레임의 위쪽 방향)
+            // 로컬 (0,-1) 방향을 [cos -sin; sin cos] 행렬로 회전 → (sinθ, -cosθ)
             double radians = Angle * Math.PI / 180.0;
             double rotateHandleDistance = Height / 2 + 30;
             handles[HandleType.Rotate] = new System.Windows.Point(
-                CenterX - rotateHandleDistance * Math.Sin(radians),
+                CenterX + rotateHandleDistance * Math.Sin(radians),
                 CenterY - rotateHandleDistance * Math.Cos(radians));
 
             return handles;
@@ -443,6 +450,12 @@ namespace VMS.VisionSetup.Models
 
         [ObservableProperty]
         private double _radius = 50;
+
+        /// <summary>
+        /// 검색 방향: true = 안쪽→바깥쪽, false = 바깥쪽→안쪽
+        /// </summary>
+        [ObservableProperty]
+        private bool _searchOutward = true;
 
         public override ROIShapeType ShapeType => ROIShapeType.Circle;
 

@@ -27,5 +27,14 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         public ScorerMode ScorerMode { get => TypedTool.ScorerMode; set => TypedTool.ScorerMode = value; }
         public double[]? LastProfile => TypedTool.LastProfile;
         public double[]? LastGradient => TypedTool.LastGradient;
+
+        // 개선 파라미터
+        public ProjectionMode ProjectionMode { get => TypedTool.ProjectionMode; set => TypedTool.ProjectionMode = value; }
+        public bool UseGaussianFilter { get => TypedTool.UseGaussianFilter; set => TypedTool.UseGaussianFilter = value; }
+        public double GaussianSigma { get => TypedTool.GaussianSigma; set => TypedTool.GaussianSigma = value; }
+        public bool UseNormalizedContrast { get => TypedTool.UseNormalizedContrast; set => TypedTool.UseNormalizedContrast = value; }
+        public SubPixelMethod SubPixelMethod { get => TypedTool.SubPixelMethod; set => TypedTool.SubPixelMethod = value; }
+        public CaliperSearchAxis SearchAxis { get => TypedTool.SearchAxis; set => TypedTool.SearchAxis = value; }
+        public EdgeSelectionMode SelectionMode { get => TypedTool.SelectionMode; set => TypedTool.SelectionMode = value; }
     }
 }
