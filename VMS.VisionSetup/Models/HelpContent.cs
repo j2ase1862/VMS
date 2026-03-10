@@ -281,6 +281,19 @@ namespace VMS.VisionSetup.Models
                 }
             },
 
+            // Geometry
+            ["GeometryTool"] = new ToolHelp
+            {
+                Name = "Geometry (기하 연산)",
+                Description = "연결된 도구들에서 추출한 기하 요소(점, 직선, 원) 사이의 관계를 계산합니다.\nCaliper, LineFit, CircleFit 등의 결과를 입력으로 받아 거리, 각도, 교차점 등 고차원 치수를 도출합니다.",
+                Usage = "Measurement 도구들의 결과를 조합하여 정밀 치수를 측정할 때 사용합니다.\n• Result 연결 타입으로 소스 도구를 연결하세요.\n• 2개 이상의 기하 요소가 연결되어야 연산이 가능합니다.\n• CaliperTool → Point, LineFitTool → Line, CircleFitTool → Circle로 자동 변환됩니다.",
+                CognexEquivalent = "CogDistancePointLineTool, CogIntersectLineLineTool, CogAngleLineLineTool",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["Operation"] = "기하 연산 종류:\n• PointPointDistance: 두 점 사이의 유클리드 거리\n• PointLineDistance: 점에서 직선까지의 수직 거리 (수선의 발 좌표도 출력)\n• LineLineDistance: 두 직선 사이의 수직 거리 (폭/갭 측정, 평행도 검사에 활용)\n• LineLineAngle: 두 직선 사이의 각도 (0°~90° 및 부호 있는 각도)\n• LineLineIntersection: 두 직선의 교차점 좌표\n• LineCircleIntersection: 직선과 원의 교차점 (접선인 경우 1개, 관통 시 2개)\n• CircleCircleDistance: 두 원의 중심 간 거리 및 엣지 간 거리"
+                }
+            },
+
             // Code Reading
             ["CodeReaderTool"] = new ToolHelp
             {

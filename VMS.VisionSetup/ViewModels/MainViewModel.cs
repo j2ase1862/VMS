@@ -454,6 +454,7 @@ namespace VMS.VisionSetup.ViewModels
             measurement.Tools.Add(new ToolItem { Name = "Caliper", ToolType = "CaliperTool" });
             measurement.Tools.Add(new ToolItem { Name = "Line Fit", ToolType = "LineFitTool" });
             measurement.Tools.Add(new ToolItem { Name = "Circle Fit", ToolType = "CircleFitTool" });
+            measurement.Tools.Add(new ToolItem { Name = "Geometry", ToolType = "GeometryTool" });
             ToolTree.Add(measurement);
 
             // Code Reading 카테고리
@@ -1747,6 +1748,7 @@ namespace VMS.VisionSetup.ViewModels
                 CaliperTool t => new CaliperToolSettingsViewModel(t),
                 LineFitTool t => new LineFitToolSettingsViewModel(t),
                 CircleFitTool t => new CircleFitToolSettingsViewModel(t),
+                GeometryTool t => new GeometryToolSettingsViewModel(t),
                 HeightSlicerTool t => new HeightSlicerToolSettingsViewModel(t),
                 ResultTool t => new ResultToolSettingsViewModel(t),
                 CodeReaderTool t => new CodeReaderToolSettingsViewModel(t),

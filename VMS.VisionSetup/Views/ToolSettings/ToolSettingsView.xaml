@@ -55,6 +55,9 @@
         <DataTemplate x:Key="CodeReaderTemplate" DataType="{x:Type vm:CodeReaderToolSettingsViewModel}">
             <tools:CodeReaderToolSettings/>
         </DataTemplate>
+        <DataTemplate x:Key="GeometryTemplate" DataType="{x:Type vm:GeometryToolSettingsViewModel}">
+            <tools:GeometryToolSettings/>
+        </DataTemplate>
         <DataTemplate x:Key="ResultTemplate" DataType="{x:Type vm:ResultToolSettingsViewModel}">
             <tools:ResultToolSettings/>
         </DataTemplate>
@@ -73,6 +76,7 @@
             CircleFitTemplate="{StaticResource CircleFitTemplate}"
             HeightSlicerTemplate="{StaticResource HeightSlicerTemplate}"
             CodeReaderTemplate="{StaticResource CodeReaderTemplate}"
+            GeometryTemplate="{StaticResource GeometryTemplate}"
             ResultTemplate="{StaticResource ResultTemplate}"/>
     </UserControl.Resources>
 
