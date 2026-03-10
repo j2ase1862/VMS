@@ -117,6 +117,9 @@ namespace VMS.VisionSetup.Models
                     ["MaxScale"] = "검색할 최대 스케일. 1.1 = 110% 크기.",
                     ["ScaleStep"] = "스케일 검색 간격. 작을수록 정밀하지만 보정 단계에서 계산량 증가.",
                     ["ScoreThreshold"] = "최종 그래디언트 내적 점수 임계값 (0~1). 이 값 이상이면 매칭 성공.\n• 0.5: 느슨한 매칭\n• 0.7: 일반적\n• 0.85: 엄격한 매칭",
+                    ["UseContrastInvariant"] = "대비 불변 매칭 활성화. 활성화하면 조명 변화로 인한 대비 차이에 강건해집니다.\n그래디언트 방향만 비교하여 밝기 변화에 영향을 덜 받습니다.",
+                    ["IsAutoTuneEnabled"] = "자동 튜닝 활성화. 활성화하면 매칭 실행 시 파라미터를 자동으로 최적화합니다.\n초기 설정이 어려운 경우 활성화하면 도움이 됩니다.",
+                    ["CurvatureWeight"] = "곡률 가중치 (0~1). 에지 포인트 샘플링 시 곡률이 높은 부분(코너, 곡선)에 가중치를 부여합니다.\n• 0: 균일 샘플링\n• 0.5: 곡률 부분 가중 (권장)\n• 1.0: 곡률 부분만 집중",
                     ["NumLevels"] = "이미지 피라미드 레벨 수 (현재 미사용, 향후 확장용).",
                     ["Greediness"] = "조기 종료 탐욕도 (0~1). 높을수록 빠르지만 놓칠 가능성 증가.\n• 0: 모든 포인트 평가 (정확)\n• 0.8: 기본값 (속도/정확도 균형)\n• 1.0: 가장 빠름 (놓칠 위험)",
                     ["UseSearchRegion"] = "Search Region 사용 여부. 활성화하면 지정된 영역 내에서만 패턴을 검색합니다.",
@@ -189,11 +192,21 @@ namespace VMS.VisionSetup.Models
                 {
                     ["StartPoint"] = "검색 시작점 좌표.",
                     ["EndPoint"] = "검색 끝점 좌표.",
-                    ["SearchWidth"] = "검색 영역 너비 (픽셀).",
-                    ["Polarity"] = "엣지 극성:\n• LightToDark: 밝음→어두움\n• DarkToLight: 어두움→밝음\n• Any: 양방향",
-                    ["EdgeThreshold"] = "엣지 검출 임계값. 높을수록 강한 엣지만 검출.",
-                    ["Mode"] = "캘리퍼 모드:\n• SingleEdge: 단일 엣지 검출\n• EdgePair: 엣지 쌍 검출 (폭 측정)",
-                    ["ExpectedWidth"] = "예상 폭 (EdgePair 모드에서 사용)."
+                    ["SearchWidth"] = "프로파일 투영 폭 (픽셀). 검색 라인에 수직인 방향의 폭으로, 이 범위 내 픽셀을 평균하여 프로파일을 생성합니다.\n• 클수록 노이즈에 강하지만 미세 엣지를 놓칠 수 있음\n• 작을수록 정밀하지만 노이즈에 민감",
+                    ["SearchAxis"] = "탐색 방향 축 설정. ROI의 Width/Height 비율이 변해도 탐색 방향이 고정됩니다.\n• AlongWidth: ROI의 Width 축 방향으로 탐색\n• AlongHeight: ROI의 Height 축 방향으로 탐색\n\n화살표 방향이 실제 탐색 방향을 나타냅니다.",
+                    ["Polarity"] = "검출할 엣지의 극성 (탐색 방향 기준):\n• DarkToLight: 탐색 방향을 따라 어두움→밝음으로 변하는 엣지\n• LightToDark: 탐색 방향을 따라 밝음→어두움으로 변하는 엣지\n• Any: 양방향 모두 검출",
+                    ["EdgeThreshold"] = "엣지 검출 임계값 (그래디언트 크기). 높을수록 강한 엣지만 검출됩니다.\n• 낮은 값 (5~20): 약한 엣지도 검출 (노이즈 주의)\n• 중간 값 (30~60): 일반적인 사용\n• 높은 값 (70~100): 매우 강한 엣지만 검출",
+                    ["FilterHalfWidth"] = "미분 필터의 반폭. 필터 커널 크기 = 2×반폭+1.\n• 작을수록 (1~2): 날카로운 엣지에 민감, 노이즈에 약함\n• 클수록 (4~10): 넓은 영역 평균, 노이즈에 강함\n\nGaussian Filter 사용 시 가우시안 커널 크기도 이 값으로 결정됩니다.",
+                    ["Mode"] = "캘리퍼 동작 모드:\n• SingleEdge: 단일 엣지 검출 — 1개의 엣지 위치 반환\n• EdgePair: 엣지 쌍 검출 — 반대 극성의 두 엣지 사이 폭(Width) 측정",
+                    ["MaxEdges"] = "최대 검출 엣지 수. 이 수를 초과하는 엣지 후보는 Score 순으로 잘립니다.\n• EdgePair 모드에서는 쌍 조합의 기반이 되므로 충분히 크게 설정",
+                    ["ScorerMode"] = "엣지 점수 산정 모드. 여러 엣지 후보 중 최적을 선정하는 가중치 프리셋:\n• MaxContrast: 대비(밝기 차이)가 가장 큰 엣지 우선\n• Closest: 검색 라인 중앙에 가장 가까운 엣지 우선\n• BestOverall: 대비 + 위치 + 극성 종합 평가\n• Custom: 가중치를 수동 설정",
+                    ["SelectionMode"] = "최종 엣지 선택 방식 (Cognex 호환):\n• Best: Score가 가장 높은 엣지 선택\n• First: 검색 시작점에서 가장 가까운 엣지 선택\n• Last: 검색 시작점에서 가장 먼 엣지 선택\n\nFirst/Last는 밀집된 패턴에서 특정 위치의 엣지만 선택할 때 유용합니다.",
+                    ["ExpectedWidth"] = "예상 폭 (EdgePair 모드에서 사용). 엣지 쌍 사이 거리가 이 값에 가까운 쌍이 우선 선택됩니다.",
+                    ["ProjectionMode"] = "프로파일 투영 방식:\n• Uniform: 균일 평균 — 검색 폭 내 모든 픽셀을 동일 가중치로 평균\n• Gaussian: 가우시안 가중 평균 — 중심선에 가까운 픽셀에 높은 가중치\n\nGaussian 모드는 엣지 양 끝단의 노이즈 영향을 줄여줍니다.",
+                    ["UseGaussianFilter"] = "가우시안 1D 필터 사용 여부.\n• 활성화: 가우시안 평활화 + 가우시안 미분 커널 적용 (정밀도 향상)\n• 비활성화: 기존 이동 평균 미분 필터 사용 (빠름)\n\n고정밀 측정에는 활성화를 권장합니다.",
+                    ["GaussianSigma"] = "가우시안 필터의 표준편차 (σ). Gaussian Filter 활성화 시 사용됩니다.\n• 작을수록 (0.3~1.0): 날카로운 엣지에 민감\n• 클수록 (2.0~5.0): 넓은 범위 평활화, 노이즈에 강함\n• 권장: 1.0~2.0",
+                    ["UseNormalizedContrast"] = "정규화된 대비 스코어링 사용 여부.\n• 활성화: 그래디언트를 국부 평균 밝기로 나누어 정규화 — 조명 불균일 환경에 효과적\n• 비활성화: 절대 그래디언트 값으로 스코어링",
+                    ["SubPixelMethod"] = "서브픽셀 보간 방법:\n• Parabolic: 3점 포물선 보간 (기본, 빠름)\n• Gaussian: 3점 가우시안 피팅 (대칭 피크에 정확)\n• Quartic5Point: 5점 다항식 피팅 (고정밀, 약간 느림)\n\n고정밀 측정에는 Gaussian 또는 Quartic5Point를 권장합니다."
                 }
             },
 
@@ -205,14 +218,15 @@ namespace VMS.VisionSetup.Models
                 CognexEquivalent = "CogFindLineTool",
                 Parameters = new Dictionary<string, string>
                 {
-                    ["NumCalipers"] = "사용할 캘리퍼 수. 많을수록 정확하지만 느림.",
-                    ["SearchLength"] = "각 캘리퍼의 검색 길이.",
-                    ["SearchWidth"] = "각 캘리퍼의 검색 너비.",
-                    ["Polarity"] = "검출할 엣지의 극성.",
-                    ["EdgeThreshold"] = "엣지 검출 임계값.",
-                    ["FitMethod"] = "라인 피팅 방법:\n• LeastSquares: 최소자승법\n• RANSAC: 이상치에 강건함\n• Huber: 로버스트 피팅",
-                    ["RansacThreshold"] = "RANSAC 이상치 판정 거리.",
-                    ["MinFoundCalipers"] = "최소 검출 캘리퍼 수. 이보다 적으면 실패."
+                    ["NumCalipers"] = "사용할 캘리퍼 수. 기준선을 따라 균등 배치됩니다.\n• 많을수록 정확하지만 처리 시간 증가\n• 권장: 5~20",
+                    ["SearchLength"] = "각 캘리퍼의 검색 길이 (기준선에 수직 방향). 엣지를 찾기 위해 탐색하는 거리입니다.\n• 짧으면 빠르지만 엣지가 범위 밖일 수 있음\n• 길면 넓은 범위 탐색 가능",
+                    ["SearchWidth"] = "각 캘리퍼의 프로파일 투영 폭 (기준선 방향). 이 범위 내 픽셀을 평균하여 노이즈를 줄입니다.",
+                    ["Polarity"] = "검출할 엣지의 극성 (탐색 방향 기준):\n• DarkToLight: 어두움→밝음 방향 엣지\n• LightToDark: 밝음→어두움 방향 엣지\n• Any: 양방향 모두 검출",
+                    ["EdgeThreshold"] = "엣지 검출 임계값. 그래디언트 크기가 이 값을 초과해야 엣지로 인정됩니다.",
+                    ["FilterHalfWidth"] = "미분 필터의 반폭. 필터 커널 크기 = 2×반폭+1.\n• 작을수록: 날카로운 엣지에 민감\n• 클수록: 노이즈에 강함",
+                    ["FitMethod"] = "라인 피팅 방법:\n• LeastSquares: 최소자승법 — 빠르지만 이상치에 민감\n• RANSAC: 이상치에 강건함 — 부분적으로 가려진 엣지에 효과적\n• Huber: 로버스트 피팅 — LeastSquares와 RANSAC의 중간",
+                    ["RansacThreshold"] = "RANSAC 이상치 판정 거리 (픽셀). 피팅 라인으로부터 이 거리 이상 떨어진 점은 이상치로 처리됩니다.",
+                    ["MinFoundCalipers"] = "최소 검출 캘리퍼 수. 유효 엣지가 이보다 적으면 피팅 실패로 판정됩니다."
                 }
             },
 
@@ -225,15 +239,45 @@ namespace VMS.VisionSetup.Models
                 Parameters = new Dictionary<string, string>
                 {
                     ["CenterPoint"] = "예상 원 중심 좌표.",
-                    ["ExpectedRadius"] = "예상 원 반지름.",
-                    ["NumCalipers"] = "원주를 따라 배치할 캘리퍼 수.",
-                    ["SearchLength"] = "각 캘리퍼의 검색 길이 (반경 방향).",
-                    ["SearchWidth"] = "각 캘리퍼의 검색 너비.",
-                    ["StartAngle"] = "검색 시작 각도 (도).",
-                    ["EndAngle"] = "검색 끝 각도 (도).",
-                    ["Polarity"] = "검출할 엣지의 극성.",
-                    ["EdgeThreshold"] = "엣지 검출 임계값.",
-                    ["FitMethod"] = "원 피팅 방법:\n• LeastSquares: 최소자승법\n• RANSAC: 이상치에 강건함"
+                    ["CenterPoint.X"] = "예상 원 중심의 X 좌표 (픽셀). ROI 설정 시 자동으로 동기화됩니다.",
+                    ["CenterPoint.Y"] = "예상 원 중심의 Y 좌표 (픽셀). ROI 설정 시 자동으로 동기화됩니다.",
+                    ["ExpectedRadius"] = "예상 원 반지름 (픽셀). 이 반지름을 기준으로 캘리퍼가 방사형으로 배치됩니다.\nROI 설정 시 자동으로 동기화됩니다.",
+                    ["NumCalipers"] = "원주를 따라 배치할 캘리퍼 수.\n• 많을수록 정확하지만 처리 시간 증가\n• 권장: 8~36 (원 크기에 따라 조정)",
+                    ["SearchLength"] = "각 캘리퍼의 검색 길이 (반경 방향). 예상 반지름을 중심으로 안쪽/바깥쪽으로 탐색하는 거리입니다.",
+                    ["SearchWidth"] = "각 캘리퍼의 프로파일 투영 폭 (원주 접선 방향). 이 범위 내 픽셀을 평균하여 노이즈를 줄입니다.",
+                    ["StartAngle"] = "검색 시작 각도 (도). 0°=오른쪽, 90°=아래쪽.\n전체 원: 0°, 부분 원호: 시작 위치 지정.",
+                    ["EndAngle"] = "검색 끝 각도 (도). 0°=오른쪽, 90°=아래쪽.\n전체 원: 360°, 부분 원호: 끝 위치 지정.",
+                    ["SearchDirection"] = "캘리퍼 탐색 방향:\n• InwardToOutward: 원 중심에서 바깥쪽으로 탐색\n• OutwardToInward: 바깥쪽에서 원 중심으로 탐색\n\n객체 안에서 바깥 엣지를 찾을 때는 InwardToOutward,\n바깥에서 안쪽 엣지를 찾을 때는 OutwardToInward를 사용합니다.",
+                    ["Polarity"] = "검출할 엣지의 극성 (탐색 방향 기준):\n• DarkToLight: 어두움→밝음 방향 엣지\n• LightToDark: 밝음→어두움 방향 엣지\n• Any: 양방향 모두 검출",
+                    ["EdgeThreshold"] = "엣지 검출 임계값. 그래디언트 크기가 이 값을 초과해야 엣지로 인정됩니다.",
+                    ["FitMethod"] = "원 피팅 방법:\n• LeastSquares: 최소자승법 — 빠르고 일반적\n• RANSAC: 이상치에 강건함 — 부분적으로 가려진 원에 효과적"
+                }
+            },
+
+            // 3D Analysis
+            ["HeightSlicerTool"] = new ToolHelp
+            {
+                Name = "Height Slicer (높이 슬라이서)",
+                Description = "3D 포인트 클라우드 데이터에서 지정된 높이 범위의 영역을 추출하여 2D 이미지로 변환합니다.",
+                Usage = "3D 검사에서 특정 높이 범위의 객체만 분리할 때 사용됩니다. 높이 기반 결함 검출, 볼륨 측정의 전처리 단계로 활용됩니다.",
+                CognexEquivalent = "CogIPOneImageTool (3D Height Slice)",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["MinZ"] = "최소 높이값 (mm). 이 높이 이하의 포인트는 제외됩니다.\n• 배경(바닥면)을 제거할 때 사용\n• 기준면 높이보다 약간 높게 설정",
+                    ["MaxZ"] = "최대 높이값 (mm). 이 높이 이상의 포인트는 제외됩니다.\n• 관심 영역의 상한 설정\n• MinZ~MaxZ 범위의 포인트만 결과에 포함"
+                }
+            },
+
+            // Judgment
+            ["ResultTool"] = new ToolHelp
+            {
+                Name = "Result (결과 판정)",
+                Description = "연결된 도구들의 결과를 종합하여 최종 OK/NG 판정을 수행합니다.",
+                Usage = "검사 파이프라인의 마지막 단계에서 사용됩니다. 여러 도구의 성공/실패 결과를 논리 연산으로 결합하여 최종 판정을 내립니다.",
+                CognexEquivalent = "CogResultAnalysisTool",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["JudgmentMode"] = "판정 모드:\n• AllPass: 연결된 모든 도구가 성공해야 OK (AND 논리)\n• AnyPass: 연결된 도구 중 하나라도 성공하면 OK (OR 논리)"
                 }
             },
 
