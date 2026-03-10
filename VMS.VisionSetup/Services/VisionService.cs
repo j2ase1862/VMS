@@ -697,7 +697,7 @@ namespace VMS.VisionSetup.Services
 
                 // 1. Result 연결 확인: Source가 실패이면 건너뛰기
                 //    ResultTool은 실패 정보를 수집해야 하므로 스킵 우회
-                if (tool is not ResultTool && ShouldSkipByResultConnection(tool, resultMap))
+                if (tool is not ResultTool and not GeometryTool && ShouldSkipByResultConnection(tool, resultMap))
                 {
                     var skipResult = new VisionResult
                     {
@@ -762,6 +762,27 @@ namespace VMS.VisionSetup.Services
                                     Success = srcResult.Success,
                                     Message = srcResult.Message
                                 });
+                            }
+                        }
+                    }
+
+                    // GeometryTool: Execute 전에 연결된 소스의 기하 데이터 주입
+                    if (tool is GeometryTool gt)
+                    {
+                        gt.SourceGeometries.Clear();
+                        foreach (var conn in _connections
+                            .Where(c => c.TargetId == tool.Id && c.Type == ConnectionType.Result))
+                        {
+                            if (resultMap.TryGetValue(conn.SourceId, out var srcResult))
+                            {
+                                var srcTool = sortedTools.FirstOrDefault(t => t.Id == conn.SourceId);
+                                var geo = GeometryTool.ExtractGeometry(
+                                    conn.SourceId,
+                                    srcTool?.Name ?? conn.SourceId,
+                                    srcTool?.ToolType ?? "",
+                                    srcResult);
+                                if (geo != null)
+                                    gt.SourceGeometries.Add(geo);
                             }
                         }
                     }
@@ -851,6 +872,7 @@ namespace VMS.VisionSetup.Services
                 "CaliperTool" => new CaliperTool(),
                 "LineFitTool" => new LineFitTool(),
                 "CircleFitTool" => new CircleFitTool(),
+                "GeometryTool" => new GeometryTool(),
 
                 // Code Reading
                 "CodeReaderTool" => new CodeReaderTool(),
@@ -894,7 +916,8 @@ namespace VMS.VisionSetup.Services
                 {
                     "CaliperTool",
                     "LineFitTool",
-                    "CircleFitTool"
+                    "CircleFitTool",
+                    "GeometryTool"
                 },
                 ["Code Reading"] = new[]
                 {
@@ -925,6 +948,7 @@ namespace VMS.VisionSetup.Services
                 "CaliperTool" => "Caliper",
                 "LineFitTool" => "Line Fit",
                 "CircleFitTool" => "Circle Fit",
+                "GeometryTool" => "Geometry",
                 "HeightSlicerTool" => "Height Slicer",
                 "CodeReaderTool" => "Code Reader",
                 "ResultTool" => "Result",

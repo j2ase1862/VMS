@@ -255,6 +255,10 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["DrawOverlay"] = codeReader.DrawOverlay;
                     break;
 
+                case GeometryTool geom:
+                    config.Parameters["Operation"] = geom.Operation.ToString();
+                    break;
+
                 case ResultTool resultTool:
                     config.Parameters["JudgmentMode"] = resultTool.JudgmentMode.ToString();
                     break;
@@ -303,6 +307,7 @@ namespace VMS.VisionSetup.Services
                 "CircleFitTool" => DeserializeCircleFitTool(config),
                 "HeightSlicerTool" => DeserializeHeightSlicerTool(config),
                 "CodeReaderTool" => DeserializeCodeReaderTool(config),
+                "GeometryTool" => DeserializeGeometryTool(config),
                 "ResultTool" => DeserializeResultTool(config),
                 _ => null
             };
@@ -801,6 +806,17 @@ namespace VMS.VisionSetup.Services
                 tool.UseRegexMatch = GetBool(urm);
             if (p.TryGetValue("DrawOverlay", out var dov))
                 tool.DrawOverlay = GetBool(dov);
+
+            return tool;
+        }
+
+        private static GeometryTool DeserializeGeometryTool(ToolConfig config)
+        {
+            var tool = new GeometryTool();
+            var p = config.Parameters;
+
+            if (p.TryGetValue("Operation", out var op))
+                tool.Operation = Enum.Parse<GeometryOperation>(GetString(op));
 
             return tool;
         }

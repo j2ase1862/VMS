@@ -19,6 +19,7 @@ namespace VMS.VisionSetup.Views.ToolSettings
         public DataTemplate? CircleFitTemplate { get; set; }
         public DataTemplate? HeightSlicerTemplate { get; set; }
         public DataTemplate? CodeReaderTemplate { get; set; }
+        public DataTemplate? GeometryTemplate { get; set; }
         public DataTemplate? ResultTemplate { get; set; }
 
         public override DataTemplate? SelectTemplate(object? item, DependencyObject container)
@@ -38,6 +39,7 @@ namespace VMS.VisionSetup.Views.ToolSettings
                 CircleFitToolSettingsViewModel => CircleFitTemplate,
                 HeightSlicerToolSettingsViewModel => HeightSlicerTemplate,
                 CodeReaderToolSettingsViewModel => CodeReaderTemplate,
+                GeometryToolSettingsViewModel => GeometryTemplate,
                 ResultToolSettingsViewModel => ResultTemplate,
                 _ => base.SelectTemplate(item, container)
             };
