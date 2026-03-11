@@ -10,6 +10,7 @@
         xmlns:vm="clr-namespace:VMS.VisionSetup.ViewModels"
         xmlns:recipe="clr-namespace:VMS.VisionSetup.Views.Recipe"
         xmlns:camera="clr-namespace:VMS.VisionSetup.Views.Camera"
+
         mc:Ignorable="d"
         Title="BODA VISION AI - OpenCvSharp Vision System"
         WindowStartupLocation="Manual"
@@ -1023,6 +1024,7 @@
                                                              Margin="5"/>
                             </Grid>
                         </TabItem>
+
                     </TabControl>
                 </Border>
             </Grid>

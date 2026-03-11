@@ -58,6 +58,9 @@
         <DataTemplate x:Key="GeometryTemplate" DataType="{x:Type vm:GeometryToolSettingsViewModel}">
             <tools:GeometryToolSettings/>
         </DataTemplate>
+        <DataTemplate x:Key="OCRTemplate" DataType="{x:Type vm:OCRToolSettingsViewModel}">
+            <tools:OCRToolSettings/>
+        </DataTemplate>
         <DataTemplate x:Key="ResultTemplate" DataType="{x:Type vm:ResultToolSettingsViewModel}">
             <tools:ResultToolSettings/>
         </DataTemplate>
@@ -77,6 +80,7 @@
             HeightSlicerTemplate="{StaticResource HeightSlicerTemplate}"
             CodeReaderTemplate="{StaticResource CodeReaderTemplate}"
             GeometryTemplate="{StaticResource GeometryTemplate}"
+            OCRTemplate="{StaticResource OCRTemplate}"
             ResultTemplate="{StaticResource ResultTemplate}"/>
     </UserControl.Resources>
 

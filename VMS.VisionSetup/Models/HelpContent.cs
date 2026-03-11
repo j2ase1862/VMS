@@ -281,6 +281,51 @@ namespace VMS.VisionSetup.Models
                 }
             },
 
+            // Identification
+            ["OCRTool"] = new ToolHelp
+            {
+                Name = "OCR (문자 인식)",
+                Description = "듀얼 엔진 OCR 문자 인식 도구입니다.\nTesseract 5 LSTM 또는 PP-OCRv4 ONNX 엔진을 선택할 수 있습니다.\n유통기한, 시리얼 번호, 로트 번호 등 산업용 문자를 인식합니다.\n폰트 학습 없이 범용적으로 영어, 한국어, 일본어, 중국어를 인식할 수 있습니다.",
+                Usage = "PCB 마킹 판독, 부품 라벨 검사, 유통기한 확인, 시리얼 번호 검증에 사용됩니다.\n• ROI를 문자 영역에 맞게 설정하면 인식 속도와 정확도가 향상됩니다.\n• 기울어진 문자는 RectangleAffine ROI로 WarpAffine 정규화를 적용하세요.\n• tessdata 폴더에 언어별 .traineddata 파일이 필요합니다.",
+                CognexEquivalent = "CogOCRMaxTool, CogOCRMaxFontTool",
+                Parameters = new Dictionary<string, string>
+                {
+                    // Engine
+                    ["OcrEngine"] = "OCR 엔진 선택:\n• Tesseract: Tesseract 5 LSTM 기반 (세밀한 설정 가능, tessdata 필요)\n• PPOcrOnnx: PP-OCRv4 ONNX Runtime 기반 (한글/산업용 텍스트에 강력, 자동 모델 다운로드)\n\nPP-OCR ONNX는 자체 전처리를 수행하므로 Preprocessing 설정이 적용되지 않습니다.",
+
+                    // Detection
+                    ["Language"] = "OCR 인식 언어:\n• English: 영어 (eng)\n• Korean: 한국어 (kor)\n• Japanese: 일본어 (jpn)\n• ChineseSimplified: 중국어 간체 (chi_sim)\n• EnglishKorean: 영어+한국어 동시 인식 (eng+kor)",
+                    ["PageSegMode"] = "페이지 분할 모드 (텍스트 레이아웃 해석 방법):\n• Auto: 자동 감지\n• SingleBlock: 단일 텍스트 블록 (기본 문서)\n• SingleLine: 단일 라인 (시리얼 번호 등)\n• SingleWord: 단일 단어\n• SingleChar: 단일 문자\n• VerticalBlock: 세로 텍스트",
+                    ["EngineMode"] = "OCR 엔진 모드:\n• LstmOnly: LSTM 신경망만 사용 (기본, 정확도 우선)\n• Combined: Legacy + LSTM 결합 (호환성)\n• LegacyOnly: 기존 Tesseract 엔진 (속도 우선)",
+                    ["CharacterWhitelist"] = "인식 허용 문자 제한. 빈 문자열이면 모든 문자를 인식합니다.\n\n예시:\n• \"0123456789\": 숫자만 인식\n• \"0123456789ABCDEF\": 16진수 문자만\n• \"0123456789-/\": 날짜 형식 (2024-01/15)",
+                    ["ConfidenceThreshold"] = "최소 신뢰도 임계값 (0~100%).\n이 값 미만의 인식 결과는 무시됩니다.\n• 기본값: 40%\n• 높일수록 오인식 감소, 미인식 증가",
+
+                    // Preprocessing
+                    ["AutoPreprocess"] = "자동 전처리 활성화.\n• CLAHE 대비 향상 → Otsu 이진화 → 모폴로지 노이즈 제거\n• 비활성화: 원본 그레이스케일 이미지 그대로 OCR 수행\n• 이미 전처리된 이미지를 입력받는 경우 비활성화하세요.",
+                    ["InvertImage"] = "이미지 반전.\nTesseract는 흰 배경에 검은 글씨를 선호합니다.\n• 검은 배경에 흰 글씨인 경우 활성화하세요.\n• 레이저 마킹(밝은 각인)에 유용합니다.",
+                    ["TargetTextHeight"] = "목표 문자 높이(px). 이미지의 문자가 이 높이보다 작으면 자동으로 확대합니다.\nTesseract는 30~40px 이상의 문자 높이에서 최적 성능을 발휘합니다.\n• 기본값: 40\n• 0: 스케일업 비활성화\n• 최대 4배까지 확대",
+                    ["DenoiseLevel"] = "노이즈 제거 강도. 이진화 전에 GaussianBlur를 적용하여 픽셀 노이즈를 제거합니다.\n문자 외곽선이 부드러워져 인식률이 향상됩니다.\n• 0: 없음\n• 1: 약 (3x3 커널, 기본값)\n• 2: 중 (5x5 커널)\n• 3: 강 (7x7 커널)\n\n강한 노이즈 제거는 얇은 문자를 훼손할 수 있으므로 주의하세요.",
+                    ["DotMatrixMode"] = "도트 매트릭스 모드. 도트 프린트로 인쇄된 끊어진 문자를 연결합니다.\n• 활성화: 팽창(Dilation)으로 인접 도트를 연결 → 오프닝으로 잔여 노이즈 제거\n• 유통기한 도트 마킹, 잉크젯 인쇄 등에 효과적입니다.\n• 일반 인쇄 문자에는 비활성화하세요 (문자가 두꺼워져 인식률 저하 가능).",
+
+                    // Verification
+                    ["EnableVerification"] = "텍스트 검증 활성화. 인식된 텍스트를 ExpectedText와 비교하여 PASS/FAIL 판정합니다.\n비활성화 시 문자가 인식되고 신뢰도가 충분하면 항상 Success입니다.",
+                    ["ExpectedText"] = "기대 텍스트. 인식 결과와 비교할 문자열입니다.\n• UseRegexMatch 비활성화: 대소문자 무시 정확히 일치\n• UseRegexMatch 활성화: 정규식 패턴 매칭\n\n예시: \"LOT-12345\", \"^SN\\d{8}$\"",
+                    ["UseRegexMatch"] = "정규식 매칭 사용 여부.\n• 비활성화: 인식 텍스트 == ExpectedText (대소문자 무시)\n• 활성화: Regex.IsMatch(인식 텍스트, ExpectedText)\n\n예시: ^\\d{4}[-/]\\d{2}[-/]\\d{2}$ → 날짜 형식 검증",
+
+                    // Display
+                    ["DrawOverlay"] = "인식 결과 오버레이 표시. 단어별 바운딩 박스와 신뢰도를 이미지 위에 그립니다.\n• 녹색: 인식 성공 (PASS)\n• 빨간색: 인식 실패 (FAIL)",
+
+                    // Advanced
+                    ["TessdataPath"] = "tessdata 폴더 경로. 비어있으면 실행 파일 기준 ./tessdata/ 를 자동 탐색합니다.\n\ntessdata 파일 다운로드:\n• LSTM (권장): github.com/tesseract-ocr/tessdata_best\n• Fast: github.com/tesseract-ocr/tessdata_fast",
+
+                    // PP-OCR ONNX
+                    ["MaxSideLen"] = "PP-OCR ONNX 엔진의 입력 이미지 최대 변 길이 (320~4096 픽셀).\n이미지의 긴 변이 이 값을 초과하면 비율을 유지하며 축소합니다.\n작은 이미지는 이 값까지 확대됩니다.\n• 960 (기본): 일반적인 텍스트 인식에 적합\n• 1600~2000: 신문, 조밀한 표 등 작은 글씨가 많은 이미지에 권장\n• 높을수록 정확하지만 처리 시간과 메모리 사용량 증가",
+                    ["CustomDetModelPath"] = "커스텀 Detection 모델 파일 경로 (.onnx).\nFine-tuning된 텍스트 검출 모델을 사용하려면 ONNX 파일의 전체 경로를 입력하세요.\n비어있으면 기본 PP-OCRv4 Detection 모델을 사용합니다.\n\n예: C:\\Models\\custom_det.onnx",
+                    ["CustomRecModelPath"] = "커스텀 Recognition 모델 파일 경로 (.onnx).\nFine-tuning된 텍스트 인식 모델을 사용하려면 ONNX 파일의 전체 경로를 입력하세요.\n비어있으면 기본 PP-OCRv4 Recognition 모델을 사용합니다.\n\n예: C:\\Models\\custom_rec.onnx",
+                    ["CustomDictPath"] = "커스텀 딕셔너리 파일 경로 (.txt).\nFine-tuning 시 사용한 문자 사전 파일을 지정합니다.\n한 줄에 하나의 문자가 기록된 텍스트 파일이어야 합니다.\n비어있으면 기본 ppocr_keys_v1.txt를 사용합니다."
+                }
+            },
+
             // Geometry
             ["GeometryTool"] = new ToolHelp
             {

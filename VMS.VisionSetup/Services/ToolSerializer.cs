@@ -4,6 +4,7 @@ using VMS.VisionSetup.VisionTools.ImageProcessing;
 using VMS.VisionSetup.VisionTools.Measurement;
 using VMS.VisionSetup.VisionTools.PatternMatching;
 using VMS.VisionSetup.VisionTools.CodeReading;
+using VMS.VisionSetup.VisionTools.Identification;
 using VMS.VisionSetup.VisionTools.Result;
 using VMS.PLC.Models;
 using OpenCvSharp;
@@ -259,6 +260,29 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["Operation"] = geom.Operation.ToString();
                     break;
 
+                case OCRTool ocr:
+                    config.Parameters["OcrEngine"] = ocr.OcrEngine.ToString();
+                    config.Parameters["Language"] = ocr.Language.ToString();
+                    config.Parameters["PageSegMode"] = ocr.PageSegMode.ToString();
+                    config.Parameters["EngineMode"] = ocr.EngineMode.ToString();
+                    config.Parameters["CharacterWhitelist"] = ocr.CharacterWhitelist;
+                    config.Parameters["ConfidenceThreshold"] = ocr.ConfidenceThreshold;
+                    config.Parameters["AutoPreprocess"] = ocr.AutoPreprocess;
+                    config.Parameters["InvertImage"] = ocr.InvertImage;
+                    config.Parameters["TargetTextHeight"] = ocr.TargetTextHeight;
+                    config.Parameters["DenoiseLevel"] = ocr.DenoiseLevel;
+                    config.Parameters["DotMatrixMode"] = ocr.DotMatrixMode;
+                    config.Parameters["EnableVerification"] = ocr.EnableVerification;
+                    config.Parameters["ExpectedText"] = ocr.ExpectedText;
+                    config.Parameters["UseRegexMatch"] = ocr.UseRegexMatch;
+                    config.Parameters["DrawOverlay"] = ocr.DrawOverlay;
+                    config.Parameters["TessdataPath"] = ocr.TessdataPath;
+                    config.Parameters["MaxSideLen"] = ocr.MaxSideLen;
+                    config.Parameters["CustomDetModelPath"] = ocr.CustomDetModelPath;
+                    config.Parameters["CustomRecModelPath"] = ocr.CustomRecModelPath;
+                    config.Parameters["CustomDictPath"] = ocr.CustomDictPath;
+                    break;
+
                 case ResultTool resultTool:
                     config.Parameters["JudgmentMode"] = resultTool.JudgmentMode.ToString();
                     break;
@@ -308,6 +332,7 @@ namespace VMS.VisionSetup.Services
                 "HeightSlicerTool" => DeserializeHeightSlicerTool(config),
                 "CodeReaderTool" => DeserializeCodeReaderTool(config),
                 "GeometryTool" => DeserializeGeometryTool(config),
+                "OCRTool" => DeserializeOCRTool(config),
                 "ResultTool" => DeserializeResultTool(config),
                 _ => null
             };
@@ -817,6 +842,60 @@ namespace VMS.VisionSetup.Services
 
             if (p.TryGetValue("Operation", out var op))
                 tool.Operation = Enum.Parse<GeometryOperation>(GetString(op));
+
+            return tool;
+        }
+
+        private static OCRTool DeserializeOCRTool(ToolConfig config)
+        {
+            var tool = new OCRTool();
+            var p = config.Parameters;
+
+            if (p.TryGetValue("OcrEngine", out var oe))
+            {
+                string engineStr = GetString(oe);
+                // 하위 호환: 기존 레시피의 "PaddleOCR" → "PPOcrOnnx"
+                if (engineStr == "PaddleOCR") engineStr = "PPOcrOnnx";
+                tool.OcrEngine = Enum.Parse<OcrEngineType>(engineStr);
+            }
+            if (p.TryGetValue("Language", out var lang))
+                tool.Language = Enum.Parse<OcrLanguage>(GetString(lang));
+            if (p.TryGetValue("PageSegMode", out var psm))
+                tool.PageSegMode = Enum.Parse<OcrPageSegMode>(GetString(psm));
+            if (p.TryGetValue("EngineMode", out var em))
+                tool.EngineMode = Enum.Parse<OcrEngineMode>(GetString(em));
+            if (p.TryGetValue("CharacterWhitelist", out var cw))
+                tool.CharacterWhitelist = GetString(cw);
+            if (p.TryGetValue("ConfidenceThreshold", out var ct))
+                tool.ConfidenceThreshold = GetDouble(ct);
+            if (p.TryGetValue("AutoPreprocess", out var ap))
+                tool.AutoPreprocess = GetBool(ap);
+            if (p.TryGetValue("InvertImage", out var inv))
+                tool.InvertImage = GetBool(inv);
+            if (p.TryGetValue("TargetTextHeight", out var tth))
+                tool.TargetTextHeight = GetInt(tth);
+            if (p.TryGetValue("DenoiseLevel", out var dnl))
+                tool.DenoiseLevel = GetInt(dnl);
+            if (p.TryGetValue("DotMatrixMode", out var dmm))
+                tool.DotMatrixMode = GetBool(dmm);
+            if (p.TryGetValue("EnableVerification", out var ev))
+                tool.EnableVerification = GetBool(ev);
+            if (p.TryGetValue("ExpectedText", out var et))
+                tool.ExpectedText = GetString(et);
+            if (p.TryGetValue("UseRegexMatch", out var urm))
+                tool.UseRegexMatch = GetBool(urm);
+            if (p.TryGetValue("DrawOverlay", out var dov))
+                tool.DrawOverlay = GetBool(dov);
+            if (p.TryGetValue("TessdataPath", out var tp))
+                tool.TessdataPath = GetString(tp);
+            if (p.TryGetValue("MaxSideLen", out var msl))
+                tool.MaxSideLen = GetInt(msl);
+            if (p.TryGetValue("CustomDetModelPath", out var cdm))
+                tool.CustomDetModelPath = GetString(cdm);
+            if (p.TryGetValue("CustomRecModelPath", out var crm))
+                tool.CustomRecModelPath = GetString(crm);
+            if (p.TryGetValue("CustomDictPath", out var cdp))
+                tool.CustomDictPath = GetString(cdp);
 
             return tool;
         }

@@ -10,6 +10,7 @@ using VMS.VisionSetup.VisionTools.ImageProcessing;
 using VMS.VisionSetup.VisionTools.Measurement;
 using VMS.VisionSetup.VisionTools.PatternMatching;
 using VMS.VisionSetup.VisionTools.CodeReading;
+using VMS.VisionSetup.VisionTools.Identification;
 using VMS.VisionSetup.VisionTools.Result;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -457,6 +458,11 @@ namespace VMS.VisionSetup.ViewModels
             measurement.Tools.Add(new ToolItem { Name = "Geometry", ToolType = "GeometryTool" });
             ToolTree.Add(measurement);
 
+            // Identification 카테고리
+            var identification = new ToolCategory { CategoryName = "Identification" };
+            identification.Tools.Add(new ToolItem { Name = "OCR", ToolType = "OCRTool" });
+            ToolTree.Add(identification);
+
             // Code Reading 카테고리
             var codeReading = new ToolCategory { CategoryName = "Code Reading" };
             codeReading.Tools.Add(new ToolItem { Name = "Code Reader", ToolType = "CodeReaderTool" });
@@ -684,6 +690,12 @@ namespace VMS.VisionSetup.ViewModels
                                 parts.Add($"TotalArea={areaStr}");
                             }
                             resultValue = string.Join(", ", parts);
+                        }
+                        else if (visionTool is OCRTool)
+                        {
+                            // OCRTool: 인식된 문자만 표시
+                            if (lastResult.Data.TryGetValue("RecognizedText", out var text))
+                                resultValue = text?.ToString()?.Trim() ?? "";
                         }
                         else
                         {
@@ -1751,6 +1763,7 @@ namespace VMS.VisionSetup.ViewModels
                 GeometryTool t => new GeometryToolSettingsViewModel(t),
                 HeightSlicerTool t => new HeightSlicerToolSettingsViewModel(t),
                 ResultTool t => new ResultToolSettingsViewModel(t),
+                OCRTool t => new OCRToolSettingsViewModel(t),
                 CodeReaderTool t => new CodeReaderToolSettingsViewModel(t),
                 _ => null
             };

@@ -1,0 +1,169 @@
+<UserControl x:Class="VMS.VisionSetup.Views.ToolSettings.Tools.OCRToolSettings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls"
+             xmlns:conv="clr-namespace:VMS.VisionSetup.Converters"
+             xmlns:ocr="clr-namespace:VMS.VisionSetup.VisionTools.Identification">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
+    </UserControl.Resources>
+    <StackPanel>
+        <!-- Engine Selection -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Engine" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="0,5,0,0">
+                <controls:EnumComboBoxParameter Label="OCR Engine"
+                    ItemsSource="{conv:EnumValues {x:Type ocr:OcrEngineType}}"
+                    SelectedValue="{Binding OcrEngine}"
+                    ToolType="OCRTool" ParameterName="OcrEngine"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- Detection Settings -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Detection" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="0,5,0,0">
+                <!-- Tesseract-specific settings -->
+                <controls:EnumComboBoxParameter Label="Language"
+                    ItemsSource="{conv:EnumValues {x:Type ocr:OcrLanguage}}"
+                    SelectedValue="{Binding Language}"
+                    Visibility="{Binding IsTesseract, Converter={StaticResource BoolToVisConverter}}"
+                    ToolType="OCRTool" ParameterName="Language"/>
+
+                <controls:EnumComboBoxParameter Label="Page Seg Mode"
+                    ItemsSource="{conv:EnumValues {x:Type ocr:OcrPageSegMode}}"
+                    SelectedValue="{Binding PageSegMode}"
+                    Visibility="{Binding IsTesseract, Converter={StaticResource BoolToVisConverter}}"
+                    ToolType="OCRTool" ParameterName="PageSegMode"/>
+
+                <controls:EnumComboBoxParameter Label="Engine Mode"
+                    ItemsSource="{conv:EnumValues {x:Type ocr:OcrEngineMode}}"
+                    SelectedValue="{Binding EngineMode}"
+                    Visibility="{Binding IsTesseract, Converter={StaticResource BoolToVisConverter}}"
+                    ToolType="OCRTool" ParameterName="EngineMode"/>
+
+                <controls:TextBoxParameter Label="Char Whitelist"
+                    Value="{Binding CharacterWhitelist}"
+                    Visibility="{Binding IsTesseract, Converter={StaticResource BoolToVisConverter}}"
+                    ToolType="OCRTool" ParameterName="CharacterWhitelist"/>
+
+                <!-- PP-OCR ONNX info -->
+                <TextBlock Text="PP-OCRv4 ONNX model (Chinese/English/Korean) — ONNX Runtime based"
+                    Visibility="{Binding IsPPOcrOnnx, Converter={StaticResource BoolToVisConverter}}"
+                    Foreground="#999" FontSize="11" Margin="5,2" TextWrapping="Wrap"/>
+
+                <controls:SliderParameter Label="Max Side Length"
+                    Value="{Binding MaxSideLen}"
+                    Minimum="320" Maximum="4096" TickFrequency="160" ValueFormat="F0"
+                    Visibility="{Binding IsPPOcrOnnx, Converter={StaticResource BoolToVisConverter}}"
+                    ToolType="OCRTool" ParameterName="MaxSideLen"/>
+
+                <!-- Custom Model Paths (PP-OCR ONNX) -->
+                <controls:TextBoxParameter Label="Custom Det Model"
+                    Value="{Binding CustomDetModelPath}"
+                    Visibility="{Binding IsPPOcrOnnx, Converter={StaticResource BoolToVisConverter}}"
+                    ToolType="OCRTool" ParameterName="CustomDetModelPath"/>
+
+                <controls:TextBoxParameter Label="Custom Rec Model"
+                    Value="{Binding CustomRecModelPath}"
+                    Visibility="{Binding IsPPOcrOnnx, Converter={StaticResource BoolToVisConverter}}"
+                    ToolType="OCRTool" ParameterName="CustomRecModelPath"/>
+
+                <controls:TextBoxParameter Label="Custom Dict File"
+                    Value="{Binding CustomDictPath}"
+                    Visibility="{Binding IsPPOcrOnnx, Converter={StaticResource BoolToVisConverter}}"
+                    ToolType="OCRTool" ParameterName="CustomDictPath"/>
+
+                <TextBlock Text="Custom model active"
+                    Visibility="{Binding HasCustomModel, Converter={StaticResource BoolToVisConverter}}"
+                    Foreground="#4CAF50" FontSize="11" Margin="5,2" FontWeight="Bold"/>
+
+                <!-- Common settings -->
+                <controls:SliderParameter Label="Confidence Threshold"
+                    Value="{Binding ConfidenceThreshold}"
+                    Minimum="0" Maximum="100" TickFrequency="5" ValueFormat="F0"
+                    ToolType="OCRTool" ParameterName="ConfidenceThreshold"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- Preprocessing Settings (Tesseract only) -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}"
+                  Visibility="{Binding IsTesseract, Converter={StaticResource BoolToVisConverter}}">
+            <Expander.Header>
+                <TextBlock Text="Preprocessing" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="0,5,0,0">
+                <controls:CheckBoxParameter Label="Auto Preprocess"
+                    IsChecked="{Binding AutoPreprocess}"
+                    ToolType="OCRTool" ParameterName="AutoPreprocess"/>
+
+                <controls:CheckBoxParameter Label="Invert Image"
+                    IsChecked="{Binding InvertImage}"
+                    ToolType="OCRTool" ParameterName="InvertImage"/>
+
+                <controls:SliderParameter Label="Target Text Height"
+                    Value="{Binding TargetTextHeight}"
+                    Minimum="0" Maximum="200" TickFrequency="10" ValueFormat="F0"
+                    ToolType="OCRTool" ParameterName="TargetTextHeight"/>
+
+                <controls:SliderParameter Label="Denoise Level"
+                    Value="{Binding DenoiseLevel}"
+                    Minimum="0" Maximum="3" TickFrequency="1" ValueFormat="F0"
+                    ToolType="OCRTool" ParameterName="DenoiseLevel"/>
+
+                <controls:CheckBoxParameter Label="Dot Matrix Mode"
+                    IsChecked="{Binding DotMatrixMode}"
+                    ToolType="OCRTool" ParameterName="DotMatrixMode"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- Verification Settings -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Verification" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="0,5,0,0">
+                <controls:CheckBoxParameter Label="Enable Verification"
+                    IsChecked="{Binding EnableVerification}"
+                    ToolType="OCRTool" ParameterName="EnableVerification"/>
+
+                <controls:TextBoxParameter Label="Expected Text"
+                    Value="{Binding ExpectedText}"
+                    ToolType="OCRTool" ParameterName="ExpectedText"/>
+
+                <controls:CheckBoxParameter Label="Use Regex Match"
+                    IsChecked="{Binding UseRegexMatch}"
+                    ToolType="OCRTool" ParameterName="UseRegexMatch"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- Display Settings -->
+        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Display" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="0,5,0,0">
+                <controls:CheckBoxParameter Label="Draw Overlay"
+                    IsChecked="{Binding DrawOverlay}"
+                    ToolType="OCRTool" ParameterName="DrawOverlay"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- Advanced (Tesseract only) -->
+        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}"
+                  Visibility="{Binding IsTesseract, Converter={StaticResource BoolToVisConverter}}">
+            <Expander.Header>
+                <TextBlock Text="Advanced" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="0,5,0,0">
+                <controls:TextBoxParameter Label="Tessdata Path"
+                    Value="{Binding TessdataPath}"
+                    ToolType="OCRTool" ParameterName="TessdataPath"/>
+            </StackPanel>
+        </Expander>
+    </StackPanel>
+</UserControl>
