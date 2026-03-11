@@ -2,7 +2,7 @@ using System.Windows;
 using Microsoft.Win32;
 using VMS.Core.Interfaces;
 
-namespace VMS.Labeling.Services
+namespace VMS.DeepLearning.Services
 {
     public class LabelingDialogService : ILabelingDialogService
     {

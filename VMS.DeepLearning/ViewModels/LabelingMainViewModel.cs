@@ -10,7 +10,7 @@ using System.Threading;
 using VMS.Core.Interfaces;
 using VMS.Core.Models.Annotation;
 
-namespace VMS.Labeling.ViewModels
+namespace VMS.DeepLearning.ViewModels
 {
     public partial class LabelingMainViewModel : ObservableObject
     {
@@ -65,7 +65,32 @@ namespace VMS.Labeling.ViewModels
         private string _newDatasetName = string.Empty;
 
         [ObservableProperty]
-        private LabelType _newDatasetTaskType = LabelType.TextLine;
+        private DatasetTaskType _newDatasetTaskType = DatasetTaskType.Detection;
+
+        // ── Task Type Mode Properties ──
+
+        /// <summary>현재 데이터셋이 BoundingBox 라벨링이 필요한 모드인지 (Detection, OCR)</summary>
+        public bool IsBoundingBoxMode => CurrentDataset?.DatasetTaskType is DatasetTaskType.Detection or DatasetTaskType.OCR;
+
+        /// <summary>현재 데이터셋이 이미지 단위 분류 모드인지</summary>
+        public bool IsClassificationMode => CurrentDataset?.DatasetTaskType == DatasetTaskType.Classification;
+
+        /// <summary>현재 데이터셋이 이상 탐지 모드인지</summary>
+        public bool IsAnomalyMode => CurrentDataset?.DatasetTaskType == DatasetTaskType.AnomalyDetection;
+
+        /// <summary>현재 이미지의 분류 클래스 (Classification/Anomaly 모드)</summary>
+        public string? CurrentImageClass
+        {
+            get => CurrentImage?.Labels.FirstOrDefault()?.ClassName;
+            set
+            {
+                if (CurrentImage == null || CurrentDataset == null || value == null) return;
+                AssignImageClass(value);
+            }
+        }
+
+        /// <summary>DatasetTaskType 열거값 (ComboBox 바인딩용)</summary>
+        public Array DatasetTaskTypes => Enum.GetValues(typeof(DatasetTaskType));
 
         // ── Image Navigation ──
 
@@ -99,6 +124,19 @@ namespace VMS.Labeling.ViewModels
         [ObservableProperty]
         private string _windowTitle = "VMS Labeling";
 
+        partial void OnCurrentDatasetChanged(AnnotationDataset? value)
+        {
+            OnPropertyChanged(nameof(IsBoundingBoxMode));
+            OnPropertyChanged(nameof(IsClassificationMode));
+            OnPropertyChanged(nameof(IsAnomalyMode));
+            OnPropertyChanged(nameof(CurrentImageClass));
+        }
+
+        partial void OnCurrentImageChanged(AnnotationImage? value)
+        {
+            OnPropertyChanged(nameof(CurrentImageClass));
+        }
+
         #region Dataset Commands
 
         [RelayCommand]
@@ -114,7 +152,7 @@ namespace VMS.Labeling.ViewModels
             CurrentDataset = dataset;
             NewDatasetName = string.Empty;
             RefreshDatasetList();
-            StatusMessage = $"데이터셋 '{dataset.Name}' 생성 완료.";
+            StatusMessage = $"데이터셋 '{dataset.Name}' 생성 완료. [{dataset.DatasetTaskType}]";
             UpdateWindowTitle();
         }
 
@@ -135,7 +173,7 @@ namespace VMS.Labeling.ViewModels
             else
                 ClearCurrentImage();
 
-            StatusMessage = $"데이터셋 '{CurrentDataset.Name}' — 이미지 {CurrentDataset.TotalImages}장, 라벨 {CurrentDataset.TotalLabels}개";
+            StatusMessage = $"데이터셋 '{CurrentDataset.Name}' [{CurrentDataset.DatasetTaskType}] — 이미지 {CurrentDataset.TotalImages}장, 라벨 {CurrentDataset.TotalLabels}개";
             UpdateWindowTitle();
         }
 
@@ -249,12 +287,14 @@ namespace VMS.Labeling.ViewModels
 
         /// <summary>
         /// 바운딩 박스가 생성되었을 때 호출 (View code-behind에서 호출)
+        /// Detection/OCR 모드에서만 유효
         /// </summary>
         public LabelInfo? OnBoundingBoxCreated(Rect boundingBox)
         {
             if (CurrentDataset == null || CurrentImage == null) return null;
+            if (!IsBoundingBoxMode) return null;
 
-            string className = SelectedClassName ?? CurrentDataset.Classes.FirstOrDefault() ?? "text";
+            string className = SelectedClassName ?? CurrentDataset.Classes.FirstOrDefault() ?? "object";
 
             if (!CurrentDataset.Classes.Contains(className))
                 _annotationService.AddClass(CurrentDataset, className);
@@ -319,6 +359,38 @@ namespace VMS.Labeling.ViewModels
             _annotationService.RemoveLabel(CurrentImage, SelectedLabel.Id);
             SelectedLabel = null;
             OnPropertyChanged(nameof(CurrentImage));
+            UpdateStatusMessage();
+        }
+
+        /// <summary>
+        /// Classification/Anomaly 모드: 이미지에 클래스 할당 (기존 라벨 대체)
+        /// </summary>
+        [RelayCommand]
+        private void AssignClass(string? className)
+        {
+            if (className != null)
+                AssignImageClass(className);
+        }
+
+        private void AssignImageClass(string className)
+        {
+            if (CurrentImage == null || CurrentDataset == null) return;
+
+            // 기존 라벨 모두 제거 (이미지 단위 분류는 1개 라벨만)
+            foreach (var label in CurrentImage.Labels.ToList())
+                _annotationService.RemoveLabel(CurrentImage, label.Id);
+
+            var labelType = IsAnomalyMode ? LabelType.AnomalyMask : LabelType.ImageClass;
+
+            var newLabel = new LabelInfo
+            {
+                ClassName = className,
+                LabelType = labelType,
+                IsVerified = true
+            };
+            _annotationService.AddLabel(CurrentImage, newLabel);
+
+            OnPropertyChanged(nameof(CurrentImageClass));
             UpdateStatusMessage();
         }
 
@@ -395,6 +467,59 @@ namespace VMS.Labeling.ViewModels
                 _dialogService.ShowInformation($"PaddleOCR 포맷 내보내기 완료.\n{path}", "Export");
             else
                 _dialogService.ShowError("PaddleOCR Export에 실패했습니다.", "오류");
+        }
+
+        [RelayCommand]
+        private void ExportClassification()
+        {
+            if (CurrentDataset == null) return;
+
+            var path = _dialogService.ShowFolderDialog("Classification 내보내기 폴더 선택");
+            if (path == null) return;
+
+            if (_annotationService.ExportClassification(CurrentDataset, path))
+                _dialogService.ShowInformation($"Classification 포맷 내보내기 완료.\n{path}\n\ntrain_classifier.py로 학습할 수 있습니다.", "Export");
+            else
+                _dialogService.ShowError("Classification Export에 실패했습니다.", "오류");
+        }
+
+        [RelayCommand]
+        private void ExportAnomaly()
+        {
+            if (CurrentDataset == null) return;
+
+            var path = _dialogService.ShowFolderDialog("Anomaly 내보내기 폴더 선택");
+            if (path == null) return;
+
+            if (_annotationService.ExportAnomaly(CurrentDataset, path))
+                _dialogService.ShowInformation($"Anomaly (MVTec) 포맷 내보내기 완료.\n{path}\n\ntrain_anomaly.py로 학습할 수 있습니다.", "Export");
+            else
+                _dialogService.ShowError("Anomaly Export에 실패했습니다.", "오류");
+        }
+
+        /// <summary>
+        /// 현재 DatasetTaskType에 맞는 기본 Export 실행
+        /// </summary>
+        [RelayCommand]
+        private void ExportForCurrentTask()
+        {
+            if (CurrentDataset == null) return;
+
+            switch (CurrentDataset.DatasetTaskType)
+            {
+                case DatasetTaskType.Detection:
+                    ExportYolo();
+                    break;
+                case DatasetTaskType.Classification:
+                    ExportClassification();
+                    break;
+                case DatasetTaskType.AnomalyDetection:
+                    ExportAnomaly();
+                    break;
+                case DatasetTaskType.OCR:
+                    ExportPaddleOcr();
+                    break;
+            }
         }
 
         #endregion
@@ -476,9 +601,17 @@ namespace VMS.Labeling.ViewModels
             if (TrainingStatus.State == TrainingState.Completed &&
                 !string.IsNullOrEmpty(TrainingStatus.OnnxOutputPath))
             {
+                string toolName = CurrentDataset.DatasetTaskType switch
+                {
+                    DatasetTaskType.Detection => "Detection Tool > Model Path",
+                    DatasetTaskType.Classification => "Classify Tool > Model Path",
+                    DatasetTaskType.AnomalyDetection => "Anomaly Tool > Model Path",
+                    _ => "해당 Tool > Model Path"
+                };
+
                 _dialogService.ShowInformation(
                     $"학습 완료!\n\nONNX 모델: {TrainingStatus.OnnxOutputPath}\n\n" +
-                    "VMS VisionSetup의 OCR Tool > Custom Model Path에\n이 경로를 지정하면 즉시 적용됩니다.",
+                    $"VMS VisionSetup의 {toolName}에\n이 경로를 지정하면 즉시 적용됩니다.",
                     "Training Complete");
             }
         }
@@ -545,22 +678,59 @@ namespace VMS.Labeling.ViewModels
                 return;
             }
 
+            string taskLabel = CurrentDataset.DatasetTaskType switch
+            {
+                DatasetTaskType.Detection => "Detection",
+                DatasetTaskType.Classification => "Classification",
+                DatasetTaskType.AnomalyDetection => "Anomaly",
+                DatasetTaskType.OCR => "OCR",
+                _ => ""
+            };
+
             string imgInfo = CurrentImage != null
-                ? $"[{CurrentImageIndex + 1}/{CurrentDataset.TotalImages}] {CurrentImage.ImagePath} — 라벨 {CurrentImage.Labels.Count}개"
+                ? $"[{CurrentImageIndex + 1}/{CurrentDataset.TotalImages}] {CurrentImage.ImagePath}"
                 : $"이미지 {CurrentDataset.TotalImages}장";
 
-            StatusMessage = $"{CurrentDataset.Name}: {imgInfo}";
+            // Classification/Anomaly 모드에서는 현재 이미지의 클래스를 표시
+            if ((IsClassificationMode || IsAnomalyMode) && CurrentImage != null)
+            {
+                string cls = CurrentImageClass ?? "(미분류)";
+                imgInfo += $" — {cls}";
+            }
+            else if (CurrentImage != null)
+            {
+                imgInfo += $" — 라벨 {CurrentImage.Labels.Count}개";
+            }
+
+            StatusMessage = $"[{taskLabel}] {CurrentDataset.Name}: {imgInfo}";
         }
 
         private void UpdateWindowTitle()
         {
-            WindowTitle = CurrentDataset != null
-                ? $"VMS Labeling — {CurrentDataset.Name}"
-                : "VMS Labeling";
+            if (CurrentDataset != null)
+            {
+                string taskLabel = CurrentDataset.DatasetTaskType switch
+                {
+                    DatasetTaskType.Detection => "Detection",
+                    DatasetTaskType.Classification => "Classification",
+                    DatasetTaskType.AnomalyDetection => "Anomaly",
+                    DatasetTaskType.OCR => "OCR",
+                    _ => ""
+                };
+                WindowTitle = $"VMS Labeling — {CurrentDataset.Name} [{taskLabel}]";
+            }
+            else
+            {
+                WindowTitle = "VMS Labeling";
+            }
         }
 
         public static System.Windows.Media.Color GetClassColor(string className)
         {
+            // 특별 클래스에 대해 고정 색상
+            if (className == "good") return System.Windows.Media.Color.FromRgb(76, 175, 80);    // green
+            if (className == "defect") return System.Windows.Media.Color.FromRgb(244, 67, 54);  // red
+
             int hash = className.GetHashCode();
             byte r = (byte)((hash & 0xFF0000) >> 16 | 0x80);
             byte g = (byte)((hash & 0x00FF00) >> 8 | 0x80);

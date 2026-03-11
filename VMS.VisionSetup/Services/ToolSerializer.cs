@@ -5,6 +5,7 @@ using VMS.VisionSetup.VisionTools.Measurement;
 using VMS.VisionSetup.VisionTools.PatternMatching;
 using VMS.VisionSetup.VisionTools.CodeReading;
 using VMS.VisionSetup.VisionTools.Identification;
+using VMS.VisionSetup.VisionTools.DeepLearning;
 using VMS.VisionSetup.VisionTools.Result;
 using VMS.PLC.Models;
 using OpenCvSharp;
@@ -283,6 +284,34 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["CustomDictPath"] = ocr.CustomDictPath;
                     break;
 
+                case DetectionTool detection:
+                    config.Parameters["ModelPath"] = detection.ModelPath;
+                    config.Parameters["InputSize"] = detection.InputSize;
+                    config.Parameters["ConfidenceThreshold"] = detection.ConfidenceThreshold;
+                    config.Parameters["IouThreshold"] = detection.IouThreshold;
+                    config.Parameters["ClassNamesText"] = detection.ClassNamesText;
+                    config.Parameters["DrawOverlay"] = detection.DrawOverlay;
+                    break;
+
+                case ClassifyTool classify:
+                    config.Parameters["ModelPath"] = classify.ModelPath;
+                    config.Parameters["InputWidth"] = classify.InputWidth;
+                    config.Parameters["InputHeight"] = classify.InputHeight;
+                    config.Parameters["ConfidenceThreshold"] = classify.ConfidenceThreshold;
+                    config.Parameters["ClassNamesText"] = classify.ClassNamesText;
+                    config.Parameters["UseImageNetNormalization"] = classify.UseImageNetNormalization;
+                    config.Parameters["DrawOverlay"] = classify.DrawOverlay;
+                    break;
+
+                case AnomalyTool anomaly:
+                    config.Parameters["ModelPath"] = anomaly.ModelPath;
+                    config.Parameters["InputSize"] = anomaly.InputSize;
+                    config.Parameters["AnomalyThreshold"] = anomaly.AnomalyThreshold;
+                    config.Parameters["DrawOverlay"] = anomaly.DrawOverlay;
+                    config.Parameters["ShowHeatmap"] = anomaly.ShowHeatmap;
+                    config.Parameters["HeatmapOpacity"] = anomaly.HeatmapOpacity;
+                    break;
+
                 case ResultTool resultTool:
                     config.Parameters["JudgmentMode"] = resultTool.JudgmentMode.ToString();
                     break;
@@ -333,6 +362,9 @@ namespace VMS.VisionSetup.Services
                 "CodeReaderTool" => DeserializeCodeReaderTool(config),
                 "GeometryTool" => DeserializeGeometryTool(config),
                 "OCRTool" => DeserializeOCRTool(config),
+                "DetectionTool" => DeserializeDetectionTool(config),
+                "ClassifyTool" => DeserializeClassifyTool(config),
+                "AnomalyTool" => DeserializeAnomalyTool(config),
                 "ResultTool" => DeserializeResultTool(config),
                 _ => null
             };
@@ -896,6 +928,71 @@ namespace VMS.VisionSetup.Services
                 tool.CustomRecModelPath = GetString(crm);
             if (p.TryGetValue("CustomDictPath", out var cdp))
                 tool.CustomDictPath = GetString(cdp);
+
+            return tool;
+        }
+
+        private static DetectionTool DeserializeDetectionTool(ToolConfig config)
+        {
+            var tool = new DetectionTool();
+            var p = config.Parameters;
+
+            if (p.TryGetValue("ModelPath", out var mp))
+                tool.ModelPath = GetString(mp);
+            if (p.TryGetValue("InputSize", out var isz))
+                tool.InputSize = GetInt(isz);
+            if (p.TryGetValue("ConfidenceThreshold", out var ct))
+                tool.ConfidenceThreshold = GetDouble(ct);
+            if (p.TryGetValue("IouThreshold", out var iou))
+                tool.IouThreshold = GetDouble(iou);
+            if (p.TryGetValue("ClassNamesText", out var cn))
+                tool.ClassNamesText = GetString(cn);
+            if (p.TryGetValue("DrawOverlay", out var dov))
+                tool.DrawOverlay = GetBool(dov);
+
+            return tool;
+        }
+
+        private static ClassifyTool DeserializeClassifyTool(ToolConfig config)
+        {
+            var tool = new ClassifyTool();
+            var p = config.Parameters;
+
+            if (p.TryGetValue("ModelPath", out var mp))
+                tool.ModelPath = GetString(mp);
+            if (p.TryGetValue("InputWidth", out var iw))
+                tool.InputWidth = GetInt(iw);
+            if (p.TryGetValue("InputHeight", out var ih))
+                tool.InputHeight = GetInt(ih);
+            if (p.TryGetValue("ConfidenceThreshold", out var ct))
+                tool.ConfidenceThreshold = GetDouble(ct);
+            if (p.TryGetValue("ClassNamesText", out var cn))
+                tool.ClassNamesText = GetString(cn);
+            if (p.TryGetValue("UseImageNetNormalization", out var uin))
+                tool.UseImageNetNormalization = GetBool(uin);
+            if (p.TryGetValue("DrawOverlay", out var dov))
+                tool.DrawOverlay = GetBool(dov);
+
+            return tool;
+        }
+
+        private static AnomalyTool DeserializeAnomalyTool(ToolConfig config)
+        {
+            var tool = new AnomalyTool();
+            var p = config.Parameters;
+
+            if (p.TryGetValue("ModelPath", out var mp))
+                tool.ModelPath = GetString(mp);
+            if (p.TryGetValue("InputSize", out var isz))
+                tool.InputSize = GetInt(isz);
+            if (p.TryGetValue("AnomalyThreshold", out var at))
+                tool.AnomalyThreshold = GetDouble(at);
+            if (p.TryGetValue("DrawOverlay", out var dov))
+                tool.DrawOverlay = GetBool(dov);
+            if (p.TryGetValue("ShowHeatmap", out var sh))
+                tool.ShowHeatmap = GetBool(sh);
+            if (p.TryGetValue("HeatmapOpacity", out var ho))
+                tool.HeatmapOpacity = GetDouble(ho);
 
             return tool;
         }

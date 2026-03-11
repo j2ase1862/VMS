@@ -61,6 +61,15 @@
         <DataTemplate x:Key="OCRTemplate" DataType="{x:Type vm:OCRToolSettingsViewModel}">
             <tools:OCRToolSettings/>
         </DataTemplate>
+        <DataTemplate x:Key="DetectionTemplate" DataType="{x:Type vm:DetectionToolSettingsViewModel}">
+            <tools:DetectionToolSettings/>
+        </DataTemplate>
+        <DataTemplate x:Key="ClassifyTemplate" DataType="{x:Type vm:ClassifyToolSettingsViewModel}">
+            <tools:ClassifyToolSettings/>
+        </DataTemplate>
+        <DataTemplate x:Key="AnomalyTemplate" DataType="{x:Type vm:AnomalyToolSettingsViewModel}">
+            <tools:AnomalyToolSettings/>
+        </DataTemplate>
         <DataTemplate x:Key="ResultTemplate" DataType="{x:Type vm:ResultToolSettingsViewModel}">
             <tools:ResultToolSettings/>
         </DataTemplate>
@@ -81,6 +90,9 @@
             CodeReaderTemplate="{StaticResource CodeReaderTemplate}"
             GeometryTemplate="{StaticResource GeometryTemplate}"
             OCRTemplate="{StaticResource OCRTemplate}"
+            DetectionTemplate="{StaticResource DetectionTemplate}"
+            ClassifyTemplate="{StaticResource ClassifyTemplate}"
+            AnomalyTemplate="{StaticResource AnomalyTemplate}"
             ResultTemplate="{StaticResource ResultTemplate}"/>
     </UserControl.Resources>
 
