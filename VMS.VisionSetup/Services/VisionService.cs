@@ -7,6 +7,7 @@ using VMS.VisionSetup.VisionTools.Measurement;
 using VMS.VisionSetup.VisionTools.PatternMatching;
 using VMS.VisionSetup.VisionTools.CodeReading;
 using VMS.VisionSetup.VisionTools.Identification;
+using VMS.VisionSetup.VisionTools.DeepLearning;
 using VMS.VisionSetup.VisionTools.Result;
 using CommunityToolkit.Mvvm.ComponentModel;
 using OpenCvSharp;
@@ -881,6 +882,11 @@ namespace VMS.VisionSetup.Services
                 // Code Reading
                 "CodeReaderTool" => new CodeReaderTool(),
 
+                // Deep Learning
+                "DetectionTool" => new DetectionTool(),
+                "ClassifyTool" => new ClassifyTool(),
+                "AnomalyTool" => new AnomalyTool(),
+
                 // Judgment
                 "ResultTool" => new ResultTool(),
 
@@ -931,6 +937,12 @@ namespace VMS.VisionSetup.Services
                 {
                     "CodeReaderTool"
                 },
+                ["Deep Learning"] = new[]
+                {
+                    "DetectionTool",
+                    "ClassifyTool",
+                    "AnomalyTool"
+                },
                 ["Judgment"] = new[]
                 {
                     "ResultTool"
@@ -960,6 +972,9 @@ namespace VMS.VisionSetup.Services
                 "HeightSlicerTool" => "Height Slicer",
                 "OCRTool" => "OCR",
                 "CodeReaderTool" => "Code Reader",
+                "DetectionTool" => "Detection (YOLO)",
+                "ClassifyTool" => "Classify",
+                "AnomalyTool" => "Anomaly",
                 "ResultTool" => "Result",
                 _ => toolType
             };

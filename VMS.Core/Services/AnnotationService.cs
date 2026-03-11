@@ -62,6 +62,42 @@ namespace VMS.Core.Services
             return dataset;
         }
 
+        public AnnotationDataset CreateDataset(string name, DatasetTaskType datasetTaskType)
+        {
+            // DatasetTaskType → LabelType 매핑
+            var labelType = datasetTaskType switch
+            {
+                DatasetTaskType.Detection => LabelType.BoundingBox,
+                DatasetTaskType.Classification => LabelType.ImageClass,
+                DatasetTaskType.AnomalyDetection => LabelType.AnomalyMask,
+                DatasetTaskType.OCR => LabelType.TextLine,
+                _ => LabelType.BoundingBox
+            };
+
+            var dataset = new AnnotationDataset
+            {
+                Name = name,
+                TaskType = labelType,
+                DatasetTaskType = datasetTaskType,
+                CreatedAt = DateTime.Now,
+                ModifiedAt = DateTime.Now
+            };
+
+            // Anomaly 데이터셋은 기본 클래스 자동 추가
+            if (datasetTaskType == DatasetTaskType.AnomalyDetection)
+            {
+                dataset.Classes.Add("good");
+                dataset.Classes.Add("defect");
+            }
+
+            string datasetDir = GetDatasetDirectory(dataset);
+            Directory.CreateDirectory(datasetDir);
+            Directory.CreateDirectory(Path.Combine(datasetDir, ImagesFolderName));
+
+            SaveDataset(dataset);
+            return dataset;
+        }
+
         public AnnotationDataset? LoadDataset(string datasetPath)
         {
             try
@@ -523,6 +559,97 @@ namespace VMS.Core.Services
             catch (Exception ex)
             {
                 Debug.WriteLine($"PaddleOCR Rec Export 실패: {ex.Message}");
+                return false;
+            }
+        }
+
+        #endregion
+
+        #region Export — Classification
+
+        public bool ExportClassification(AnnotationDataset dataset, string outputPath)
+        {
+            try
+            {
+                Directory.CreateDirectory(outputPath);
+
+                // class별 폴더 구조: train/{class}/, val/{class}/
+                foreach (var split in new[] { "train", "val" })
+                    foreach (var cls in dataset.Classes)
+                        Directory.CreateDirectory(Path.Combine(outputPath, split, cls));
+
+                foreach (var image in dataset.Images.Where(i => i.IsLabeled))
+                {
+                    string srcPath = GetImageFullPath(dataset, image);
+                    if (!File.Exists(srcPath)) continue;
+
+                    // Classification: 첫 번째 라벨의 ClassName을 이미지 클래스로 사용
+                    string className = image.Labels.FirstOrDefault()?.ClassName ?? "unknown";
+                    bool isTrain = image.Split == DataSplit.Train;
+                    string splitDir = isTrain ? "train" : "val";
+
+                    string destDir = Path.Combine(outputPath, splitDir, className);
+                    Directory.CreateDirectory(destDir);
+                    string destPath = Path.Combine(destDir, Path.GetFileName(image.ImagePath));
+                    File.Copy(srcPath, destPath, overwrite: true);
+                }
+
+                // classes.txt
+                File.WriteAllLines(Path.Combine(outputPath, "classes.txt"), dataset.Classes);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Classification Export 실패: {ex.Message}");
+                return false;
+            }
+        }
+
+        #endregion
+
+        #region Export — Anomaly Detection
+
+        public bool ExportAnomaly(AnnotationDataset dataset, string outputPath)
+        {
+            try
+            {
+                Directory.CreateDirectory(outputPath);
+
+                // MVTec 스타일: train/good/, test/good/, test/defect/
+                string trainGoodDir = Path.Combine(outputPath, "train", "good");
+                string testGoodDir = Path.Combine(outputPath, "test", "good");
+                string testDefectDir = Path.Combine(outputPath, "test", "defect");
+                Directory.CreateDirectory(trainGoodDir);
+                Directory.CreateDirectory(testGoodDir);
+                Directory.CreateDirectory(testDefectDir);
+
+                foreach (var image in dataset.Images)
+                {
+                    string srcPath = GetImageFullPath(dataset, image);
+                    if (!File.Exists(srcPath)) continue;
+
+                    // "good" 클래스이면 정상, 그 외는 불량
+                    string className = image.Labels.FirstOrDefault()?.ClassName?.ToLower() ?? "good";
+                    bool isGood = className == "good" || className == "normal" || className == "ok";
+                    bool isTrain = image.Split == DataSplit.Train;
+
+                    string destDir;
+                    if (isTrain && isGood)
+                        destDir = trainGoodDir;
+                    else if (isGood)
+                        destDir = testGoodDir;
+                    else
+                        destDir = testDefectDir;
+
+                    string destPath = Path.Combine(destDir, Path.GetFileName(image.ImagePath));
+                    File.Copy(srcPath, destPath, overwrite: true);
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Anomaly Export 실패: {ex.Message}");
                 return false;
             }
         }

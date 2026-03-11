@@ -3,11 +3,11 @@ using System.IO;
 using System.Windows;
 using VMS.Core.Interfaces;
 using VMS.Core.Services;
-using VMS.Labeling.Services;
-using VMS.Labeling.ViewModels;
-using VMS.Labeling.Views;
+using VMS.DeepLearning.Services;
+using VMS.DeepLearning.ViewModels;
+using VMS.DeepLearning.Views;
 
-namespace VMS.Labeling
+namespace VMS.DeepLearning
 {
     public partial class App : Application
     {

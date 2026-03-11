@@ -4,8 +4,16 @@ namespace VMS.Core.Models.Annotation
 {
     public enum TrainingTarget
     {
+        /// <summary>텍스트 검출 모델</summary>
         Detection,
-        Recognition
+        /// <summary>텍스트 인식 모델</summary>
+        Recognition,
+        /// <summary>YOLO 객체 검출 모델</summary>
+        YoloDetection,
+        /// <summary>이미지 분류 모델</summary>
+        Classification,
+        /// <summary>이상 탐지 모델</summary>
+        AnomalyDetection
     }
 
     public class TrainingConfig : ObservableObject

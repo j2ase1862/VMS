@@ -35,6 +35,14 @@ namespace VMS.Core.Models.Annotation
             set => SetProperty(ref _taskType, value);
         }
 
+        private DatasetTaskType _datasetTaskType = DatasetTaskType.Detection;
+        /// <summary>데이터셋 작업 유형 (Detection/Classification/OCR/AnomalyDetection)</summary>
+        public DatasetTaskType DatasetTaskType
+        {
+            get => _datasetTaskType;
+            set => SetProperty(ref _datasetTaskType, value);
+        }
+
         private ObservableCollection<string> _classes = new();
         public ObservableCollection<string> Classes
         {

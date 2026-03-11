@@ -339,6 +339,59 @@ namespace VMS.VisionSetup.Models
                 }
             },
 
+            // Deep Learning
+            ["DetectionTool"] = new ToolHelp
+            {
+                Name = "Detection (객체 검출)",
+                Description = "YOLO ONNX 기반 객체 검출 도구입니다.\nYOLOv8/v11 모델을 로드하여 이미지에서 객체의 위치와 클래스를 검출합니다.",
+                Usage = "부품 유무 검사, 다종 객체 검출, 결함 검출에 사용됩니다.\n• VMS.DeepLearning 앱에서 데이터셋을 라벨링하고 YOLO 형식으로 학습한 ONNX 모델을 사용합니다.\n• Class Names에 학습 시 사용한 클래스 이름을 콤마로 구분하여 입력하세요.",
+                CognexEquivalent = "Cognex ViDi Blue Locate",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["ModelPath"] = "YOLO ONNX 모델 파일 경로 (.onnx).\nVMS.DeepLearning에서 학습한 best.onnx 파일을 지정합니다.",
+                    ["InputSize"] = "모델 입력 이미지 크기 (픽셀).\n학습 시 설정한 imgsz와 동일하게 설정하세요.\n• YOLOv8 기본: 640",
+                    ["ConfidenceThreshold"] = "검출 신뢰도 임계값 (0~1). 이 값 이상의 신뢰도를 가진 객체만 검출됩니다.\n• 낮은 값 (0.25): 많은 객체 검출, 오검출 증가\n• 높은 값 (0.7): 확실한 객체만 검출",
+                    ["IouThreshold"] = "NMS IoU 임계값 (0~1). 겹치는 검출 박스를 제거하는 기준입니다.\n• 낮은 값 (0.3): 강한 중복 제거\n• 높은 값 (0.7): 약한 중복 제거 (밀집 객체에 적합)",
+                    ["ClassNamesText"] = "클래스 이름 목록 (콤마 구분).\n학습 시 사용한 클래스 순서대로 입력합니다.\n예: good,defect,crack",
+                    ["DrawOverlay"] = "검출 결과 오버레이 표시. 바운딩 박스, 클래스 이름, 신뢰도를 이미지 위에 그립니다."
+                }
+            },
+
+            ["ClassifyTool"] = new ToolHelp
+            {
+                Name = "Classify (이미지 분류)",
+                Description = "ONNX 기반 이미지 분류 도구입니다.\nResNet, MobileNet 등 분류 모델의 ONNX를 로드하여 이미지를 분류합니다.",
+                Usage = "양품/불량 판정, 부품 종류 분류, 외관 등급 판정에 사용됩니다.\n• VMS.DeepLearning 앱에서 ImageFolder 형식으로 학습한 ONNX 모델을 사용합니다.\n• Class Names에 학습 시 사용한 폴더명(클래스)을 콤마로 구분하여 입력하세요.",
+                CognexEquivalent = "Cognex ViDi Green Classify",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["ModelPath"] = "분류 ONNX 모델 파일 경로 (.onnx).\nVMS.DeepLearning에서 학습한 classifier.onnx 파일을 지정합니다.",
+                    ["InputWidth"] = "모델 입력 이미지 너비 (픽셀). 학습 시 imgsz와 동일하게 설정.\n• 기본값: 224",
+                    ["InputHeight"] = "모델 입력 이미지 높이 (픽셀). 학습 시 imgsz와 동일하게 설정.\n• 기본값: 224",
+                    ["ConfidenceThreshold"] = "분류 신뢰도 임계값 (0~1). Top-1 클래스의 신뢰도가 이 값 이상이면 PASS.\n• 기본값: 0.5",
+                    ["ClassNamesText"] = "클래스 이름 목록 (콤마 구분).\n학습 데이터의 폴더명 순서대로 입력합니다.\n예: good,scratch,dent",
+                    ["UseImageNetNormalization"] = "ImageNet 정규화 사용 여부.\n• 활성화 (기본): mean=[0.485,0.456,0.406], std=[0.229,0.224,0.225]\n• 비활성화: 0~1 단순 정규화\n\ntorchvision pretrained 모델은 활성화를 권장합니다.",
+                    ["DrawOverlay"] = "분류 결과 오버레이 표시. 클래스 이름과 신뢰도를 이미지 위에 표시하고, PASS/FAIL에 따라 녹색/빨간색 테두리를 그립니다."
+                }
+            },
+
+            ["AnomalyTool"] = new ToolHelp
+            {
+                Name = "Anomaly (이상 탐지)",
+                Description = "ONNX 기반 이상 탐지 도구입니다.\nPatchCore, FastFlow, EfficientAD 등 anomalib 호환 모델을 로드하여 정상/이상 판정 및 히트맵을 생성합니다.",
+                Usage = "학습 데이터에 정상 이미지만 사용하여 이상(결함)을 탐지합니다.\n• VMS.DeepLearning 앱에서 MVTec 형식으로 학습한 ONNX 모델을 사용합니다.\n• Anomaly Threshold를 조정하여 정상/이상 경계를 설정합니다.\n• 히트맵으로 이상 영역을 시각적으로 확인할 수 있습니다.",
+                CognexEquivalent = "Cognex ViDi Red Analyze",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["ModelPath"] = "이상 탐지 ONNX 모델 파일 경로 (.onnx).\nanomalib 또는 VMS.DeepLearning에서 학습한 모델을 지정합니다.",
+                    ["InputSize"] = "모델 입력 이미지 크기 (픽셀). 학습 시 image_size와 동일하게 설정.\n• 기본값: 224",
+                    ["AnomalyThreshold"] = "이상 판정 임계값 (0~1). Anomaly Score가 이 값 미만이면 정상, 이상이면 이상으로 판정합니다.\n• 낮은 값 (0.3): 엄격한 판정 (약간의 이상도 검출)\n• 높은 값 (0.7): 느슨한 판정 (확실한 이상만 검출)",
+                    ["DrawOverlay"] = "판정 결과 오버레이 표시. NORMAL/ANOMALY 텍스트와 점수를 표시하고, 정상=녹색/이상=빨간색 테두리를 그립니다.",
+                    ["ShowHeatmap"] = "이상 히트맵 표시. 모델이 anomaly_map을 출력하는 경우 Jet 컬러맵으로 이상 영역을 시각화합니다.",
+                    ["HeatmapOpacity"] = "히트맵 투명도 (0~1). 원본 이미지 위에 히트맵을 알파 블렌딩하는 비율입니다.\n• 0: 히트맵 미표시\n• 0.4 (기본): 적당한 투명도\n• 1.0: 히트맵만 표시"
+                }
+            },
+
             // Code Reading
             ["CodeReaderTool"] = new ToolHelp
             {

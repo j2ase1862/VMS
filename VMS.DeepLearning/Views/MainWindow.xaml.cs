@@ -8,9 +8,9 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using VMS.Core.Models.Annotation;
-using VMS.Labeling.ViewModels;
+using VMS.DeepLearning.ViewModels;
 
-namespace VMS.Labeling.Views
+namespace VMS.DeepLearning.Views
 {
     public partial class MainWindow : System.Windows.Window
     {
@@ -63,11 +63,18 @@ namespace VMS.Labeling.Views
             var mat = ViewModel?.CurrentMat;
             if (image == null || mat == null || mat.IsDisposed || mat.Empty()) return;
 
-            // 이미지 좌표 → 캔버스 좌표 변환을 위한 스케일 계산
             double canvasW = AnnotationCanvas.ActualWidth;
             double canvasH = AnnotationCanvas.ActualHeight;
             if (canvasW <= 0 || canvasH <= 0) return;
 
+            // Classification/Anomaly 모드: 이미지 위에 클래스 표시 오버레이
+            if (ViewModel != null && !ViewModel.IsBoundingBoxMode)
+            {
+                DrawClassIndicatorOverlay(image, canvasW, canvasH);
+                return;
+            }
+
+            // Detection/OCR 모드: 바운딩 박스 표시
             double scaleX = canvasW / mat.Width;
             double scaleY = canvasH / mat.Height;
             double scale = Math.Min(scaleX, scaleY);
@@ -77,8 +84,6 @@ namespace VMS.Labeling.Views
             foreach (var label in image.Labels)
             {
                 var color = LabelingMainViewModel.GetClassColor(label.ClassName);
-                var brush = new SolidColorBrush(color);
-                brush.Opacity = 0.6;
 
                 var rect = new System.Windows.Shapes.Rectangle
                 {
@@ -94,7 +99,6 @@ namespace VMS.Labeling.Views
                 Canvas.SetTop(rect, offsetY + label.BoundingBox.Y * scale);
                 AnnotationCanvas.Children.Add(rect);
 
-                // Class name label
                 var textBlock = new TextBlock
                 {
                     Text = label.ClassName,
@@ -109,11 +113,47 @@ namespace VMS.Labeling.Views
             }
         }
 
+        private void DrawClassIndicatorOverlay(AnnotationImage image, double canvasW, double canvasH)
+        {
+            if (image.Labels.Count == 0) return;
+
+            var label = image.Labels[0];
+            var color = LabelingMainViewModel.GetClassColor(label.ClassName);
+
+            // 이미지 위에 반투명 테두리 표시
+            var border = new System.Windows.Shapes.Rectangle
+            {
+                Stroke = new SolidColorBrush(color),
+                StrokeThickness = 4,
+                Fill = Brushes.Transparent,
+                Width = canvasW,
+                Height = canvasH
+            };
+            Canvas.SetLeft(border, 0);
+            Canvas.SetTop(border, 0);
+            AnnotationCanvas.Children.Add(border);
+
+            // 클래스 이름 배지
+            var badge = new TextBlock
+            {
+                Text = label.ClassName.ToUpper(),
+                Foreground = Brushes.White,
+                Background = new SolidColorBrush(Color.FromArgb(200, color.R, color.G, color.B)),
+                FontSize = 14,
+                FontWeight = FontWeights.Bold,
+                Padding = new Thickness(8, 4, 8, 4)
+            };
+            Canvas.SetLeft(badge, 8);
+            Canvas.SetTop(badge, 8);
+            AnnotationCanvas.Children.Add(badge);
+        }
+
         #region Bounding Box Drawing
 
         private void AnnotationCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (ViewModel?.CurrentMat == null || ViewModel.CurrentImage == null) return;
+            if (!ViewModel.IsBoundingBoxMode) return;
 
             _isDrawing = true;
             _drawStart = e.GetPosition(AnnotationCanvas);

@@ -8,6 +8,7 @@ namespace VMS.Core.Interfaces
         string DatasetFolderPath { get; }
 
         AnnotationDataset CreateDataset(string name, LabelType taskType);
+        AnnotationDataset CreateDataset(string name, DatasetTaskType datasetTaskType);
         AnnotationDataset? LoadDataset(string datasetPath);
         bool SaveDataset(AnnotationDataset dataset);
         bool DeleteDataset(string datasetId);
@@ -30,5 +31,11 @@ namespace VMS.Core.Interfaces
         bool ExportYolo(AnnotationDataset dataset, string outputPath);
         bool ExportPaddleOcrDet(AnnotationDataset dataset, string outputPath);
         bool ExportPaddleOcrRec(AnnotationDataset dataset, string outputPath);
+
+        /// <summary>이미지 분류 학습 포맷으로 내보내기 (class별 폴더 구조)</summary>
+        bool ExportClassification(AnnotationDataset dataset, string outputPath);
+
+        /// <summary>이상 탐지 학습 포맷으로 내보내기 (good/bad 폴더 구조)</summary>
+        bool ExportAnomaly(AnnotationDataset dataset, string outputPath);
     }
 }

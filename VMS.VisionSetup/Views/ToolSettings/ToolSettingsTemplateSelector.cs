@@ -21,6 +21,9 @@ namespace VMS.VisionSetup.Views.ToolSettings
         public DataTemplate? CodeReaderTemplate { get; set; }
         public DataTemplate? GeometryTemplate { get; set; }
         public DataTemplate? OCRTemplate { get; set; }
+        public DataTemplate? DetectionTemplate { get; set; }
+        public DataTemplate? ClassifyTemplate { get; set; }
+        public DataTemplate? AnomalyTemplate { get; set; }
         public DataTemplate? ResultTemplate { get; set; }
 
         public override DataTemplate? SelectTemplate(object? item, DependencyObject container)
@@ -42,6 +45,9 @@ namespace VMS.VisionSetup.Views.ToolSettings
                 CodeReaderToolSettingsViewModel => CodeReaderTemplate,
                 GeometryToolSettingsViewModel => GeometryTemplate,
                 OCRToolSettingsViewModel => OCRTemplate,
+                DetectionToolSettingsViewModel => DetectionTemplate,
+                ClassifyToolSettingsViewModel => ClassifyTemplate,
+                AnomalyToolSettingsViewModel => AnomalyTemplate,
                 ResultToolSettingsViewModel => ResultTemplate,
                 _ => base.SelectTemplate(item, container)
             };

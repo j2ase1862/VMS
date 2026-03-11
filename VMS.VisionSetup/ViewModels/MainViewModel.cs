@@ -11,6 +11,7 @@ using VMS.VisionSetup.VisionTools.Measurement;
 using VMS.VisionSetup.VisionTools.PatternMatching;
 using VMS.VisionSetup.VisionTools.CodeReading;
 using VMS.VisionSetup.VisionTools.Identification;
+using VMS.VisionSetup.VisionTools.DeepLearning;
 using VMS.VisionSetup.VisionTools.Result;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -472,6 +473,13 @@ namespace VMS.VisionSetup.ViewModels
             var threeD = new ToolCategory { CategoryName = "3D Analysis" };
             threeD.Tools.Add(new ToolItem { Name = "Height Slicer", ToolType = "HeightSlicerTool" });
             ToolTree.Add(threeD);
+
+            // Deep Learning 카테고리
+            var deepLearning = new ToolCategory { CategoryName = "Deep Learning" };
+            deepLearning.Tools.Add(new ToolItem { Name = "Detection (YOLO)", ToolType = "DetectionTool" });
+            deepLearning.Tools.Add(new ToolItem { Name = "Classify", ToolType = "ClassifyTool" });
+            deepLearning.Tools.Add(new ToolItem { Name = "Anomaly", ToolType = "AnomalyTool" });
+            ToolTree.Add(deepLearning);
 
             // Judgment 카테고리
             var judgment = new ToolCategory { CategoryName = "Judgment" };
@@ -1765,6 +1773,9 @@ namespace VMS.VisionSetup.ViewModels
                 ResultTool t => new ResultToolSettingsViewModel(t),
                 OCRTool t => new OCRToolSettingsViewModel(t),
                 CodeReaderTool t => new CodeReaderToolSettingsViewModel(t),
+                DetectionTool t => new DetectionToolSettingsViewModel(t),
+                ClassifyTool t => new ClassifyToolSettingsViewModel(t),
+                AnomalyTool t => new AnomalyToolSettingsViewModel(t),
                 _ => null
             };
         }

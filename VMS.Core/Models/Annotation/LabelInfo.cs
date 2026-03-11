@@ -17,7 +17,31 @@ namespace VMS.Core.Models.Annotation
         Polygon,
 
         /// <summary>텍스트 라인 (OCR Recognition용)</summary>
-        TextLine
+        TextLine,
+
+        /// <summary>이미지 단위 분류 (Classification용)</summary>
+        ImageClass,
+
+        /// <summary>정상/이상 마킹 (Anomaly Detection용)</summary>
+        AnomalyMask
+    }
+
+    /// <summary>
+    /// 데이터셋 작업 유형 (ViDi Tool 대응)
+    /// </summary>
+    public enum DatasetTaskType
+    {
+        /// <summary>Locate — 객체 검출 (YOLO)</summary>
+        Detection,
+
+        /// <summary>Classify — 이미지 분류 (Green)</summary>
+        Classification,
+
+        /// <summary>Read — OCR 텍스트 인식</summary>
+        OCR,
+
+        /// <summary>Analyze — 이상 탐지 (Red)</summary>
+        AnomalyDetection
     }
 
     /// <summary>
