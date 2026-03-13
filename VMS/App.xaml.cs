@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Windows;
+using VMS.Camera.Services;
 using VMS.Interfaces;
 using VMS.PLC.Interfaces;
 using VMS.PLC.Models;
@@ -37,6 +38,20 @@ namespace VMS
 
             await splash.FadeOutAsync();
             splash.Close();
+
+            // ── SharedFrameWriter (MMF 프레임 공유) ──
+            SharedFrameWriter? sharedFrameWriter = null;
+            try
+            {
+                sharedFrameWriter = new SharedFrameWriter();
+                sharedFrameWriter.Initialize();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] SharedFrameWriter init failed: {ex.Message}");
+                sharedFrameWriter?.Dispose();
+                sharedFrameWriter = null;
+            }
 
             // ── PLC connection setup ──
             var systemConfig = configService.LoadSystemConfiguration();
@@ -195,13 +210,46 @@ namespace VMS
                 () => Shutdown(),
                 autoProcessService,
                 userService,
-                logService);
+                logService,
+                sharedFrameWriter,
+                plcConnection: plcConnection,
+                plcVendorName: systemConfig.PlcVendor.ToString(),
+                plcIpAddress: systemConfig.PlcIpAddress);
 
             var mainWindow = new MainWindow();
             mainWindow.DataContext = mainViewModel;
             MainWindow = mainWindow;
-            mainWindow.Closed += (_, _) => Shutdown();
+            mainWindow.Closed += (_, _) =>
+            {
+                sharedFrameWriter?.Dispose();
+                Shutdown();
+            };
             mainWindow.Show();
+
+            // ── 카메라 자동 연결 (UI 표시 후 백그라운드) ──
+            _ = Task.Run(async () =>
+            {
+                foreach (var cam in mainViewModel.Cameras.Where(c => c.IsEnabled))
+                {
+                    try
+                    {
+                        await Current.Dispatcher.InvokeAsync(async () =>
+                        {
+                            await cam.InitializeConnectionAsync();
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"[App] Camera auto-connect failed ({cam.Name}): {ex.Message}");
+                    }
+                }
+                await Current.Dispatcher.InvokeAsync(() =>
+                {
+                    logService.Log(
+                        $"카메라 자동 연결 완료 ({mainViewModel.Cameras.Count(c => c.IsConnected)}/{mainViewModel.Cameras.Count(c => c.IsEnabled)})",
+                        VMS.Interfaces.LogLevel.Info, "System");
+                });
+            });
         }
 
         /// <summary>

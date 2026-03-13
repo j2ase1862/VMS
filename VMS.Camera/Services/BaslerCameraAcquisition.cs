@@ -106,7 +106,7 @@ namespace VMS.Camera.Services
             }
         }
 
-        public async Task<AcquisitionResult> AcquireAsync()
+        public async Task<AcquisitionResult> AcquireAsync(int timeoutMs = 5000)
         {
             if (!IsConnected || _pylonCamera == null || _converter == null)
             {
@@ -125,9 +125,9 @@ namespace VMS.Camera.Services
                 // Start grab (single frame)
                 _pylonCamera.StreamGrabber.Start(1, GrabStrategy.OneByOne, GrabLoop.ProvidedByUser);
 
-                // Retrieve grab result with 5-second timeout
+                // Retrieve grab result with timeout
                 using var grabResult = _pylonCamera.StreamGrabber.RetrieveResult(
-                    5000, TimeoutHandling.ThrowException);
+                    timeoutMs, TimeoutHandling.ThrowException);
 
                 if (grabResult.GrabSucceeded)
                 {

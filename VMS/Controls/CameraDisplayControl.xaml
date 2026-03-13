@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:VMS.ViewModels"
              xmlns:controls="clr-namespace:VMS.Controls"
+             xmlns:core="clr-namespace:VMS.Core.Controls;assembly=VMS.Core"
              d:DataContext="{d:DesignInstance vm:CameraViewModel}"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -97,7 +98,7 @@
                 </Grid>
             </Border>
 
-            <!-- Camera 2D/3D view tabs -->
+            <!-- Camera 2D / Depth Map / Point Cloud view tabs -->
             <TabControl Grid.Row="1" Margin="4"
                         SelectedIndex="{Binding SelectedViewTab}"
                         Background="#1E1E1E"
@@ -135,7 +136,7 @@
                     </Style>
                 </TabControl.Resources>
 
-                <!-- 2D View Tab -->
+                <!-- Tab 0: 2D View -->
                 <TabItem Header="2D">
                     <Border Background="#1E1E1E">
                         <Grid>
@@ -163,8 +164,36 @@
                     </Border>
                 </TabItem>
 
-                <!-- 3D View Tab -->
-                <TabItem Header="3D">
+                <!-- Tab 1: Depth Map -->
+                <TabItem Header="Depth Map">
+                    <Border Background="#1E1E1E">
+                        <Grid>
+                            <!-- Placeholder when no point cloud -->
+                            <StackPanel VerticalAlignment="Center"
+                                        HorizontalAlignment="Center"
+                                        Visibility="{Binding CurrentPointCloud, Converter={StaticResource NullToVisibilityConverter}, ConverterParameter=Invert}">
+                                <TextBlock Text="&#xE81C;"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="48"
+                                           Foreground="#404040"
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock Text="No Depth Data"
+                                           Foreground="#606060"
+                                           FontSize="12"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,8,0,0"/>
+                            </StackPanel>
+
+                            <!-- Depth Map Viewer -->
+                            <core:DepthMapViewer
+                                PointCloud="{Binding CurrentPointCloud}"
+                                Visibility="{Binding CurrentPointCloud, Converter={StaticResource NullToVisibilityConverter}}"/>
+                        </Grid>
+                    </Border>
+                </TabItem>
+
+                <!-- Tab 2: Point Cloud (3D viewer) -->
+                <TabItem Header="Point Cloud">
                     <Border Background="#1E1E1E">
                         <Grid>
                             <!-- Placeholder when no point cloud -->
@@ -184,7 +213,7 @@
                             </StackPanel>
 
                             <!-- Point Cloud Viewer -->
-                            <controls:PointCloudViewer
+                            <core:PointCloudViewer
                                 PointCloud="{Binding CurrentPointCloud}"
                                 Visibility="{Binding CurrentPointCloud, Converter={StaticResource NullToVisibilityConverter}}"/>
                         </Grid>

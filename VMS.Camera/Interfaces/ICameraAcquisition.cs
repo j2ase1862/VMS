@@ -13,6 +13,11 @@ namespace VMS.Camera.Interfaces
 
         Task DisconnectAsync();
 
-        Task<AcquisitionResult> AcquireAsync();
+        Task<AcquisitionResult> AcquireAsync(int timeoutMs = 5000);
+
+        /// <summary>
+        /// Live 모드 다운샘플링 스트라이드 (1 = 전체 해상도, 2 = 1/4)
+        /// </summary>
+        int DownsampleStride { get => 1; set { } }
     }
 }

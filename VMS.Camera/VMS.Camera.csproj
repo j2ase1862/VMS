@@ -13,15 +13,33 @@
     <PackageReference Include="OpenCvSharp4" Version="4.11.0.20250507" />
   </ItemGroup>
 
-  <!-- Mech-Mind SDK: define MECHMIND_AVAILABLE when MechEyeApiNet.dll is present -->
-  <PropertyGroup Condition="Exists('C:\Mech-Mind\Mech-Eye SDK-2.5.4\API\dll\net48\MechEyeApiNet.dll')">
+  <!-- Mech-Mind SDK: prefer netstandard2.0 (compatible with .NET 8), fallback to net48 -->
+  <PropertyGroup Condition="Exists('C:\Mech-Mind\Mech-Eye SDK-2.5.4\API\dll\netstandard2.0\MechEyeApiNet.dll') Or Exists('C:\Mech-Mind\Mech-Eye SDK-2.5.4\API\dll\net48\MechEyeApiNet.dll')">
     <DefineConstants>$(DefineConstants);MECHMIND_AVAILABLE</DefineConstants>
   </PropertyGroup>
 
-  <ItemGroup Condition="Exists('C:\Mech-Mind\Mech-Eye SDK-2.5.4\API\dll\net48\MechEyeApiNet.dll')">
+  <ItemGroup Condition="Exists('C:\Mech-Mind\Mech-Eye SDK-2.5.4\API\dll\netstandard2.0\MechEyeApiNet.dll')">
+    <Reference Include="MechEyeApiNet">
+      <HintPath>C:\Mech-Mind\Mech-Eye SDK-2.5.4\API\dll\netstandard2.0\MechEyeApiNet.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup Condition="!Exists('C:\Mech-Mind\Mech-Eye SDK-2.5.4\API\dll\netstandard2.0\MechEyeApiNet.dll') And Exists('C:\Mech-Mind\Mech-Eye SDK-2.5.4\API\dll\net48\MechEyeApiNet.dll')">
     <Reference Include="MechEyeApiNet">
       <HintPath>C:\Mech-Mind\Mech-Eye SDK-2.5.4\API\dll\net48\MechEyeApiNet.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <!-- Mech-Mind native DLLs (C++ SDK) must be copied to output for P/Invoke -->
+  <ItemGroup Condition="Exists('C:\Mech-Mind\Mech-Eye SDK-2.5.4\API\dll\MechEyeApi.dll')">
+    <None Include="C:\Mech-Mind\Mech-Eye SDK-2.5.4\API\dll\MechEyeApi.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>MechEyeApi.dll</Link>
+    </None>
+    <None Include="C:\Mech-Mind\Mech-Eye SDK-2.5.4\API\dll\MechEyeApiWrapper.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>MechEyeApiWrapper.dll</Link>
+    </None>
   </ItemGroup>
 
   <!-- Basler Pylon SDK: define BASLER_AVAILABLE when pylon SDK is installed -->

@@ -9,6 +9,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
@@ -29,6 +30,8 @@ namespace VMS.ViewModels
         private ICameraAcquisition? _acquisition;
         private Models.Recipe? _currentRecipe;
         private BitmapSource? _originalImage;  // 검사용 원본 이미지 (오버레이 전)
+        private CancellationTokenSource? _liveGrabCts;
+        private Task? _liveGrabTask;
 
         [ObservableProperty]
         private string _id = string.Empty;
@@ -41,6 +44,9 @@ namespace VMS.ViewModels
 
         [ObservableProperty]
         private CameraManufacturer _manufacturer;
+
+        [ObservableProperty]
+        private CameraType _cameraType = CameraType.AreaScan2D;
 
         [ObservableProperty]
         private bool _isEnabled = true;
@@ -58,13 +64,16 @@ namespace VMS.ViewModels
         private bool _isConnected;
 
         [ObservableProperty]
+        private bool _isLiveGrabbing;
+
+        [ObservableProperty]
         private BitmapSource? _currentImage;
 
         [ObservableProperty]
         private PointCloudData? _currentPointCloud;
 
         [ObservableProperty]
-        private int _selectedViewTab;  // 0=2D, 1=3D
+        private int _selectedViewTab;  // 0=2D, 1=Depth Map, 2=Point Cloud
 
         // Layout properties
         [ObservableProperty]
@@ -143,6 +152,12 @@ namespace VMS.ViewModels
         private double _lastExecutionTimeMs;
 
         public ObservableCollection<ToolResultItem> ToolRunResults { get; } = new();
+
+        /// <summary>
+        /// Raised after a frame is acquired (Grab or Live).
+        /// Used by SharedFrameWriter to share frames with VisionSetup.
+        /// </summary>
+        public event Action<AcquisitionResult>? FrameAcquired;
 
         /// <summary>
         /// Raised after an inspection result is recorded (ok/ng).
@@ -230,6 +245,27 @@ namespace VMS.ViewModels
             IsControlBoxOpen = false;
         }
 
+        /// <summary>
+        /// 카메라 연결 초기화. 앱 시작 시 호출.
+        /// </summary>
+        public async Task InitializeConnectionAsync()
+        {
+            try
+            {
+                _acquisition = CameraAcquisitionFactory.Create(ToCameraInfo());
+                var connected = await _acquisition.ConnectAsync(ToCameraInfo());
+                IsConnected = connected;
+                ResultMessage = connected
+                    ? $"Connected: {Name}"
+                    : $"Connection failed: {Name}";
+            }
+            catch (Exception ex)
+            {
+                IsConnected = false;
+                ResultMessage = $"Connection error: {ex.Message}";
+            }
+        }
+
         [RelayCommand]
         private async Task GrabAsync()
         {
@@ -251,6 +287,8 @@ namespace VMS.ViewModels
                 var result = await _acquisition.AcquireAsync();
                 if (result.Success)
                 {
+                    FrameAcquired?.Invoke(result);
+
                     if (result.Image2D != null)
                     {
                         var bmp = MatToBitmapSource(result.Image2D);
@@ -261,7 +299,9 @@ namespace VMS.ViewModels
 
                     if (result.PointCloud != null)
                     {
+                        var old = CurrentPointCloud;
                         CurrentPointCloud = result.PointCloud;
+                        old?.Dispose();
                         SelectedViewTab = 1;
                     }
 
@@ -276,6 +316,99 @@ namespace VMS.ViewModels
             {
                 ResultMessage = $"Grab error: {ex.Message}";
             }
+        }
+
+        public async Task StartLiveGrabAsync()
+        {
+            if (IsLiveGrabbing) return;
+
+            try
+            {
+                _acquisition ??= CameraAcquisitionFactory.Create(ToCameraInfo());
+
+                if (!_acquisition.IsConnected)
+                {
+                    var connected = await _acquisition.ConnectAsync(ToCameraInfo());
+                    if (!connected)
+                    {
+                        ResultMessage = "Camera connection failed";
+                        return;
+                    }
+                    IsConnected = true;
+                }
+
+                _liveGrabCts = new CancellationTokenSource();
+                var ct = _liveGrabCts.Token;
+                IsLiveGrabbing = true;
+
+                // Live 모드: stride=2 로 다운샘플링 (포인트 1/4)
+                _acquisition.DownsampleStride = 2;
+
+                _liveGrabTask = Task.Run(async () =>
+                {
+                    while (!ct.IsCancellationRequested)
+                    {
+                        var result = await _acquisition.AcquireAsync();
+                        if (result.Success)
+                        {
+                            FrameAcquired?.Invoke(result);
+
+                            BitmapSource? bmp = null;
+                            if (result.Image2D != null)
+                            {
+                                bmp = MatToBitmapSource(result.Image2D);
+                                result.Image2D.Dispose();
+                            }
+
+                            var pointCloud = result.PointCloud;
+
+                            if (bmp != null || pointCloud != null)
+                            {
+                                await Application.Current.Dispatcher.InvokeAsync(() =>
+                                {
+                                    if (bmp != null)
+                                        CurrentImage = bmp;
+                                    if (pointCloud != null)
+                                    {
+                                        var old = CurrentPointCloud;
+                                        CurrentPointCloud = pointCloud;
+                                        old?.Dispose();
+                                    }
+                                });
+                            }
+                        }
+                    }
+                }, ct);
+            }
+            catch (Exception ex)
+            {
+                ResultMessage = $"Live grab error: {ex.Message}";
+                IsLiveGrabbing = false;
+            }
+        }
+
+        public async Task StopLiveGrabAsync()
+        {
+            if (!IsLiveGrabbing) return;
+
+            _liveGrabCts?.Cancel();
+            if (_liveGrabTask != null)
+            {
+                try
+                {
+                    await _liveGrabTask;
+                }
+                catch (OperationCanceledException) { }
+            }
+
+            _liveGrabCts?.Dispose();
+            _liveGrabCts = null;
+            _liveGrabTask = null;
+            IsLiveGrabbing = false;
+
+            // 전체 해상도 복원
+            if (_acquisition != null)
+                _acquisition.DownsampleStride = 1;
         }
 
         [RelayCommand]
@@ -478,7 +611,8 @@ namespace VMS.ViewModels
                 Id = Id,
                 Name = Name,
                 Manufacturer = Manufacturer.ToString().Replace("_", " "),
-                ConnectionString = IpAddress
+                ConnectionString = IpAddress,
+                CameraType = CameraType
             };
         }
 
@@ -516,6 +650,7 @@ namespace VMS.ViewModels
                 Name = config.Name,
                 IpAddress = config.IpAddress,
                 Manufacturer = config.Manufacturer,
+                CameraType = config.CameraType,
                 IsEnabled = config.IsEnabled
             };
 

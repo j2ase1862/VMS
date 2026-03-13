@@ -29,6 +29,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\VMS.Camera\VMS.Camera.csproj" />
+    <ProjectReference Include="..\VMS.Core\VMS.Core.csproj" />
   </ItemGroup>
 
   <!-- Build order: VMS.VisionSetup and VMS.AppSetup must build first (post-build copies to this output) -->

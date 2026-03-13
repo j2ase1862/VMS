@@ -91,6 +91,46 @@
                         </StackPanel>
                     </Border>
 
+                    <!-- Grab (single shot) -->
+                    <Button Background="#2196F3"
+                            Foreground="White"
+                            Command="{Binding GrabCommand}"
+                            IsEnabled="{Binding CanStartStop}"
+                            Visibility="{Binding IsLiveMode, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
+                            Style="{StaticResource ModernButton}"
+                            Margin="4,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE722;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0"/>
+                            <TextBlock Text="Grab"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Live Start/Stop buttons -->
+                    <Button Background="#4CAF50"
+                            Foreground="White"
+                            Command="{Binding StartLiveCommand}"
+                            IsEnabled="{Binding CanStartStop}"
+                            Visibility="{Binding IsLiveMode, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
+                            Style="{StaticResource ModernButton}"
+                            Margin="4,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE714;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0"/>
+                            <TextBlock Text="Live Start"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Background="#FF9800"
+                            Foreground="White"
+                            Command="{Binding StopLiveCommand}"
+                            Visibility="{Binding IsLiveMode, Converter={StaticResource BoolToVisibilityConverter}}"
+                            Style="{StaticResource ModernButton}"
+                            Margin="4,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0"/>
+                            <TextBlock Text="Live Stop"/>
+                        </StackPanel>
+                    </Button>
+
                     <!-- Start/Stop buttons -->
                     <Button Style="{StaticResource ModernButton}"
                             Command="{Binding StartInspectionCommand}"
@@ -657,30 +697,121 @@
         </Border>
 
         <!-- ════════════════════════════════════════════════════════════ -->
-        <!-- Row 4: Status Bar -->
+        <!-- Row 4: Status Bar — Equipment Connection Status -->
         <!-- ════════════════════════════════════════════════════════════ -->
         <Border Grid.Row="4" Background="#2D2D2D">
-            <Grid Margin="16,0">
+            <Grid Margin="12,0">
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Status indicator -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                <!-- [0] System Status -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                     <Ellipse Width="8" Height="8"
                              Fill="{Binding IsRunning, Converter={StaticResource BoolToColorConverter}}"
-                             Margin="0,0,8,0"/>
+                             Margin="0,0,6,0"/>
                     <TextBlock Text="{Binding SystemStatus}"
-                               Foreground="#B0B0B0"
+                               Foreground="#B0B0B0" FontSize="12"
                                VerticalAlignment="Center"/>
                 </StackPanel>
 
-                <!-- Camera count -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal">
-                    <TextBlock Text="Cameras: " Foreground="#808080"/>
-                    <TextBlock Text="{Binding Cameras.Count}" Foreground="White"/>
+                <!-- [1] Separator -->
+                <Rectangle Grid.Column="1" Width="1" Fill="#404040" Margin="10,6"/>
+
+                <!-- [2] Camera Status -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="&#xE722;" FontFamily="Segoe MDL2 Assets"
+                               FontSize="13" Foreground="#B0B0B0"
+                               VerticalAlignment="Center" Margin="0,0,5,0"/>
+                    <Ellipse Width="8" Height="8" Margin="0,0,5,0">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Fill" Value="#555555"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CameraConnectionStatus}" Value="All">
+                                        <Setter Property="Fill" Value="#4CAF50"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding CameraConnectionStatus}" Value="Partial">
+                                        <Setter Property="Fill" Value="#FF9800"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding CameraConnectionStatus}" Value="None">
+                                        <Setter Property="Fill" Value="#F44336"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
+                    <TextBlock Foreground="#B0B0B0" FontSize="12" VerticalAlignment="Center">
+                        <Run Text="CAM"/>
+                        <Run Text="{Binding ConnectedCameraCount, Mode=OneWay}"/>/<Run Text="{Binding TotalCameraCount, Mode=OneWay}"/>
+                    </TextBlock>
+                </StackPanel>
+
+                <!-- [3] Separator -->
+                <Rectangle Grid.Column="3" Width="1" Fill="#404040" Margin="10,6"/>
+
+                <!-- [4] PLC Status -->
+                <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="&#xE950;" FontFamily="Segoe MDL2 Assets"
+                               FontSize="13" Foreground="#B0B0B0"
+                               VerticalAlignment="Center" Margin="0,0,5,0"/>
+                    <Ellipse Width="8" Height="8" Margin="0,0,5,0">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Fill" Value="#555555"/>
+                                <Style.Triggers>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding IsPlcConfigured}" Value="True"/>
+                                            <Condition Binding="{Binding IsPlcConnected}" Value="True"/>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Fill" Value="#4CAF50"/>
+                                    </MultiDataTrigger>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding IsPlcConfigured}" Value="True"/>
+                                            <Condition Binding="{Binding IsPlcConnected}" Value="False"/>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Fill" Value="#F44336"/>
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
+                    <TextBlock FontSize="12" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#B0B0B0"/>
+                                <Setter Property="Text" Value="PLC N/A"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsPlcConfigured}" Value="True">
+                                        <Setter Property="Text" Value="{Binding PlcVendorName}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Text="{Binding PlcIpAddress}" Foreground="#808080" FontSize="11"
+                               VerticalAlignment="Center" Margin="6,0,0,0"
+                               Visibility="{Binding IsPlcConfigured, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                </StackPanel>
+
+                <!-- [5] Spacer -->
+
+                <!-- [6] Robot (placeholder) -->
+                <StackPanel Grid.Column="6" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="&#xE99A;" FontFamily="Segoe MDL2 Assets"
+                               FontSize="13" Foreground="#808080"
+                               VerticalAlignment="Center" Margin="0,0,5,0"/>
+                    <Ellipse Width="8" Height="8" Fill="#555555" Margin="0,0,5,0"/>
+                    <TextBlock Text="ROBOT N/A" Foreground="#808080" FontSize="12"
+                               VerticalAlignment="Center"/>
                 </StackPanel>
             </Grid>
         </Border>
