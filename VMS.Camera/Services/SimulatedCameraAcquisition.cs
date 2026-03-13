@@ -28,7 +28,7 @@ namespace VMS.Camera.Services
             return Task.CompletedTask;
         }
 
-        public Task<AcquisitionResult> AcquireAsync()
+        public Task<AcquisitionResult> AcquireAsync(int timeoutMs = 5000)
         {
             if (!IsConnected || _camera == null)
             {
@@ -60,7 +60,8 @@ namespace VMS.Camera.Services
 
         private static bool Is3DCamera(CameraInfo camera)
         {
-            return camera.Manufacturer.Contains("Mech", StringComparison.OrdinalIgnoreCase);
+            return camera.CameraType == CameraType.AreaScan3D ||
+                   camera.CameraType == CameraType.LineScan3D;
         }
 
         /// <summary>
@@ -124,8 +125,10 @@ namespace VMS.Camera.Services
             const int gridHeight = 150;
             int count = gridWidth * gridHeight;
             var rng = new Random(DateTime.Now.Millisecond);
-            var positions = new Vector3[count];
-            var colors = new System.Windows.Media.Color[count];
+
+            var data = PointCloudData.CreatePooled(count, "Simulated 3D Scan", gridWidth, gridHeight);
+            var positions = data.Positions;
+            var colors = data.Colors;
 
             for (int row = 0; row < gridHeight; row++)
             {
@@ -156,14 +159,7 @@ namespace VMS.Camera.Services
                 }
             }
 
-            return new PointCloudData
-            {
-                Name = "Simulated 3D Scan",
-                Positions = positions,
-                Colors = colors,
-                GridWidth = gridWidth,
-                GridHeight = gridHeight
-            };
+            return data;
         }
 
         public void Dispose()

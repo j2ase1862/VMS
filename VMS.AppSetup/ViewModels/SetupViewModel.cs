@@ -117,6 +117,9 @@ namespace VMS.AppSetup.ViewModels
 
         // Enum values for binding
         public Array CameraManufacturers => Enum.GetValues(typeof(CameraManufacturer));
+        public Array CameraTypes => Enum.GetValues(typeof(CameraType));
+        public Array TriggerSources => Enum.GetValues(typeof(TriggerSource));
+        public Array CaptureModes3D => Enum.GetValues(typeof(CaptureMode3D));
         public Array PlcVendors => Enum.GetValues(typeof(PlcVendor));
         public Array CommunicationTypes => Enum.GetValues(typeof(PlcCommunicationType));
         public Array CameraModes => Enum.GetValues(typeof(CameraMode));
@@ -186,11 +189,6 @@ namespace VMS.AppSetup.ViewModels
 
         partial void OnCameraModeChanged(CameraMode value)
         {
-            if (value == CameraMode.Live)
-            {
-                // In Live mode, scan for connected cameras
-                ScanForCameras();
-            }
         }
 
         partial void OnVirtualCameraCountChanged(int value)
@@ -292,18 +290,11 @@ namespace VMS.AppSetup.ViewModels
         [RelayCommand]
         private void ScanForCameras()
         {
-            // In a real implementation, this would scan the network for cameras
-            // For now, we'll simulate finding some cameras
-            Cameras.Clear();
-
-            // Simulated camera discovery
+            // TODO: Implement actual network camera discovery
             _dialogService.ShowInformation(
-                "카메라 스캔 기능은 실제 카메라 SDK 연동 후 구현됩니다.\n\n" +
-                "현재는 가상 모드를 사용하여 카메라를 수동으로 설정하세요.",
+                "카메라 스캔 기능은 아직 구현되지 않았습니다.\n\n" +
+                "카메라를 수동으로 추가하려면 '+ Add Camera' 버튼을 사용하세요.",
                 "Camera Scan");
-
-            // Switch to virtual mode for now
-            CameraMode = CameraMode.Virtual;
         }
 
         private void UpdateVirtualCameras()

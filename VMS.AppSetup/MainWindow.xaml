@@ -213,76 +213,204 @@
                                     <DataTemplate>
                                         <Border Background="#2D2D30" BorderBrush="#3E3E42" BorderThickness="1"
                                                 CornerRadius="6" Padding="15,12" Margin="0,4">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-
-                                                <!-- Enable Checkbox -->
-                                                <CheckBox Grid.Column="0"
-                                                          IsChecked="{Binding IsEnabled, Mode=TwoWay}"
-                                                          VerticalAlignment="Center" Margin="0,0,15,0"
-                                                          ToolTip="Enable/Disable Camera"/>
-
-                                                <!-- Camera Info -->
-                                                <Grid Grid.Column="1" VerticalAlignment="Center">
-                                                    <Grid.RowDefinitions>
-                                                        <RowDefinition Height="Auto"/>
-                                                        <RowDefinition Height="Auto"/>
-                                                    </Grid.RowDefinitions>
+                                            <StackPanel>
+                                                <!-- Row 1: Basic Info -->
+                                                <Grid>
                                                     <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="60"/>
+                                                        <ColumnDefinition Width="Auto"/>
                                                         <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="Auto"/>
                                                     </Grid.ColumnDefinitions>
 
-                                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:"
-                                                               Foreground="#888888" FontSize="12" VerticalAlignment="Center"/>
-                                                    <TextBox Grid.Row="0" Grid.Column="1"
-                                                             Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
-                                                             Background="#3E3E42" Foreground="White"
-                                                             BorderBrush="#555555" BorderThickness="1"
-                                                             Padding="6,4" FontSize="12" Margin="0,0,0,6"/>
+                                                    <!-- Enable Checkbox -->
+                                                    <CheckBox Grid.Column="0"
+                                                              IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+                                                              VerticalAlignment="Center" Margin="0,0,15,0"
+                                                              ToolTip="Enable/Disable Camera"/>
 
-                                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="IP:"
-                                                               Foreground="#888888" FontSize="12" VerticalAlignment="Center"/>
-                                                    <TextBox Grid.Row="1" Grid.Column="1"
-                                                             Text="{Binding IpAddress, UpdateSourceTrigger=PropertyChanged}"
-                                                             Background="#3E3E42" Foreground="White"
-                                                             BorderBrush="#555555" BorderThickness="1"
-                                                             Padding="6,4" FontSize="12"/>
+                                                    <!-- Camera Info -->
+                                                    <Grid Grid.Column="1" VerticalAlignment="Center">
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="60"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:"
+                                                                   Foreground="#888888" FontSize="12" VerticalAlignment="Center"/>
+                                                        <TextBox Grid.Row="0" Grid.Column="1"
+                                                                 Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                                                                 Background="#3E3E42" Foreground="White"
+                                                                 BorderBrush="#555555" BorderThickness="1"
+                                                                 Padding="6,4" FontSize="12" Margin="0,0,0,6"/>
+
+                                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="IP:"
+                                                                   Foreground="#888888" FontSize="12" VerticalAlignment="Center"/>
+                                                        <TextBox Grid.Row="1" Grid.Column="1"
+                                                                 Text="{Binding IpAddress, UpdateSourceTrigger=PropertyChanged}"
+                                                                 Background="#3E3E42" Foreground="White"
+                                                                 BorderBrush="#555555" BorderThickness="1"
+                                                                 Padding="6,4" FontSize="12"/>
+                                                    </Grid>
+
+                                                    <!-- Camera Type -->
+                                                    <ComboBox Grid.Column="2"
+                                                              ItemsSource="{Binding DataContext.CameraTypes, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                              SelectedItem="{Binding CameraType}"
+                                                              Width="110" Margin="10,0"
+                                                              VerticalAlignment="Center"
+                                                              Style="{StaticResource ComboStyle}"
+                                                              Padding="8,6" FontSize="12"/>
+
+                                                    <!-- Manufacturer -->
+                                                    <ComboBox Grid.Column="3"
+                                                              ItemsSource="{Binding DataContext.CameraManufacturers, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                              SelectedItem="{Binding Manufacturer}"
+                                                              Width="110" Margin="0,0,10,0"
+                                                              VerticalAlignment="Center"
+                                                              Style="{StaticResource ComboStyle}"
+                                                              Padding="8,6" FontSize="12"/>
+
+                                                    <!-- Remove Button -->
+                                                    <Button Grid.Column="4" Content="✕"
+                                                            Command="{Binding DataContext.RemoveCameraCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            CommandParameter="{Binding}"
+                                                            Background="#D32F2F" Foreground="White"
+                                                            Width="32" Height="32" FontSize="14"
+                                                            BorderThickness="0" Cursor="Hand"
+                                                            ToolTip="Remove Camera">
+                                                        <Button.Template>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Border Background="{TemplateBinding Background}"
+                                                                        CornerRadius="4">
+                                                                    <ContentPresenter HorizontalAlignment="Center"
+                                                                                      VerticalAlignment="Center"/>
+                                                                </Border>
+                                                            </ControlTemplate>
+                                                        </Button.Template>
+                                                    </Button>
                                                 </Grid>
 
-                                                <!-- Manufacturer -->
-                                                <ComboBox Grid.Column="2"
-                                                          ItemsSource="{Binding DataContext.CameraManufacturers, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                          SelectedItem="{Binding Manufacturer}"
-                                                          Width="110" Margin="15,0"
-                                                          VerticalAlignment="Center"
-                                                          Style="{StaticResource ComboStyle}"
-                                                          Padding="8,6" FontSize="12"/>
+                                                <!-- Row 2: Area Scan Parameters -->
+                                                <Border Background="#252526" CornerRadius="4" Padding="10,8" Margin="0,8,0,0"
+                                                        Visibility="{Binding IsAreaScan, Converter={StaticResource BoolToVisConverter}}">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="8"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel Grid.Column="0">
+                                                            <TextBlock Text="Exposure (μs)" Foreground="#888888" FontSize="11" Margin="0,0,0,3"/>
+                                                            <TextBox Text="{Binding Exposure, UpdateSourceTrigger=PropertyChanged}"
+                                                                     Background="#3E3E42" Foreground="White"
+                                                                     BorderBrush="#555555" BorderThickness="1"
+                                                                     Padding="6,4" FontSize="12"/>
+                                                        </StackPanel>
+                                                        <StackPanel Grid.Column="2">
+                                                            <TextBlock Text="Gain" Foreground="#888888" FontSize="11" Margin="0,0,0,3"/>
+                                                            <TextBox Text="{Binding Gain, UpdateSourceTrigger=PropertyChanged}"
+                                                                     Background="#3E3E42" Foreground="White"
+                                                                     BorderBrush="#555555" BorderThickness="1"
+                                                                     Padding="6,4" FontSize="12"/>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
 
-                                                <!-- Remove Button -->
-                                                <Button Grid.Column="3" Content="✕"
-                                                        Command="{Binding DataContext.RemoveCameraCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                        CommandParameter="{Binding}"
-                                                        Background="#D32F2F" Foreground="White"
-                                                        Width="32" Height="32" FontSize="14"
-                                                        BorderThickness="0" Cursor="Hand"
-                                                        ToolTip="Remove Camera">
-                                                    <Button.Template>
-                                                        <ControlTemplate TargetType="Button">
-                                                            <Border Background="{TemplateBinding Background}"
-                                                                    CornerRadius="4">
-                                                                <ContentPresenter HorizontalAlignment="Center"
-                                                                                  VerticalAlignment="Center"/>
-                                                            </Border>
-                                                        </ControlTemplate>
-                                                    </Button.Template>
-                                                </Button>
-                                            </Grid>
+                                                <!-- Row 3: Line Scan Parameters -->
+                                                <Border Background="#252526" CornerRadius="4" Padding="10,8" Margin="0,8,0,0"
+                                                        Visibility="{Binding IsLineScan, Converter={StaticResource BoolToVisConverter}}">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="8"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="8"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="8"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel Grid.Column="0">
+                                                            <TextBlock Text="Trigger" Foreground="#888888" FontSize="11" Margin="0,0,0,3"/>
+                                                            <ComboBox ItemsSource="{Binding DataContext.TriggerSources, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                      SelectedItem="{Binding TriggerSource}"
+                                                                      Style="{StaticResource ComboStyle}"
+                                                                      Padding="6,4" FontSize="12"/>
+                                                        </StackPanel>
+                                                        <StackPanel Grid.Column="2">
+                                                            <TextBlock Text="Line Rate (Hz)" Foreground="#888888" FontSize="11" Margin="0,0,0,3"/>
+                                                            <TextBox Text="{Binding LineRate, UpdateSourceTrigger=PropertyChanged}"
+                                                                     Background="#3E3E42" Foreground="White"
+                                                                     BorderBrush="#555555" BorderThickness="1"
+                                                                     Padding="6,4" FontSize="12"/>
+                                                        </StackPanel>
+                                                        <StackPanel Grid.Column="4">
+                                                            <TextBlock Text="Scan Length" Foreground="#888888" FontSize="11" Margin="0,0,0,3"/>
+                                                            <TextBox Text="{Binding ScanLength, UpdateSourceTrigger=PropertyChanged}"
+                                                                     Background="#3E3E42" Foreground="White"
+                                                                     BorderBrush="#555555" BorderThickness="1"
+                                                                     Padding="6,4" FontSize="12"/>
+                                                        </StackPanel>
+                                                        <StackPanel Grid.Column="6"
+                                                                    Visibility="{Binding ShowEncoderResolution, Converter={StaticResource BoolToVisConverter}}">
+                                                            <TextBlock Text="Encoder Res (P/mm)" Foreground="#888888" FontSize="11" Margin="0,0,0,3"/>
+                                                            <TextBox Text="{Binding EncoderResolution, UpdateSourceTrigger=PropertyChanged}"
+                                                                     Background="#3E3E42" Foreground="White"
+                                                                     BorderBrush="#555555" BorderThickness="1"
+                                                                     Padding="6,4" FontSize="12"/>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+
+                                                <!-- Row 4: 3D Camera Parameters -->
+                                                <Border Background="#252526" CornerRadius="4" Padding="10,8" Margin="0,8,0,0"
+                                                        Visibility="{Binding Is3DCamera, Converter={StaticResource BoolToVisConverter}}">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="8"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="8"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="8"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel Grid.Column="0">
+                                                            <TextBlock Text="Capture Mode" Foreground="#888888" FontSize="11" Margin="0,0,0,3"/>
+                                                            <ComboBox ItemsSource="{Binding DataContext.CaptureModes3D, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                      SelectedItem="{Binding CaptureMode}"
+                                                                      Style="{StaticResource ComboStyle}"
+                                                                      Padding="6,4" FontSize="12"/>
+                                                        </StackPanel>
+                                                        <StackPanel Grid.Column="2">
+                                                            <TextBlock Text="Filter Strength" Foreground="#888888" FontSize="11" Margin="0,0,0,3"/>
+                                                            <TextBox Text="{Binding FilterStrength, UpdateSourceTrigger=PropertyChanged}"
+                                                                     Background="#3E3E42" Foreground="White"
+                                                                     BorderBrush="#555555" BorderThickness="1"
+                                                                     Padding="6,4" FontSize="12"/>
+                                                        </StackPanel>
+                                                        <StackPanel Grid.Column="4">
+                                                            <TextBlock Text="Z Min (mm)" Foreground="#888888" FontSize="11" Margin="0,0,0,3"/>
+                                                            <TextBox Text="{Binding ZRangeMin, UpdateSourceTrigger=PropertyChanged}"
+                                                                     Background="#3E3E42" Foreground="White"
+                                                                     BorderBrush="#555555" BorderThickness="1"
+                                                                     Padding="6,4" FontSize="12"/>
+                                                        </StackPanel>
+                                                        <StackPanel Grid.Column="6">
+                                                            <TextBlock Text="Z Max (mm)" Foreground="#888888" FontSize="11" Margin="0,0,0,3"/>
+                                                            <TextBox Text="{Binding ZRangeMax, UpdateSourceTrigger=PropertyChanged}"
+                                                                     Background="#3E3E42" Foreground="White"
+                                                                     BorderBrush="#555555" BorderThickness="1"
+                                                                     Padding="6,4" FontSize="12"/>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </StackPanel>
                                         </Border>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>

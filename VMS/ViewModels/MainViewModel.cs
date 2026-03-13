@@ -1,6 +1,8 @@
 using VMS.Camera.Models;
+using VMS.Camera.Services;
 using VMS.Interfaces;
 using VMS.Models;
+using VMS.PLC.Interfaces;
 using VMS.Views;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -67,6 +69,9 @@ namespace VMS.ViewModels
         private bool _isRunning;
 
         [ObservableProperty]
+        private bool _isLiveMode;
+
+        [ObservableProperty]
         private string _systemStatus = "Ready";
 
         [ObservableProperty]
@@ -104,7 +109,32 @@ namespace VMS.ViewModels
         public bool CanManageUsers => _userService?.HasPermission(UserPermission.ManageUsers) ?? false;
         public bool CanLaunchVisionSetup => _userService?.HasPermission(UserPermission.LaunchVisionSetup) ?? true;
         public bool CanLaunchAppSetup => _userService?.HasPermission(UserPermission.LaunchAppSetup) ?? true;
-        public bool CanStartStop => _userService?.HasPermission(UserPermission.StartStop) ?? true;
+        public bool HasConnectedCamera => Cameras.Any(c => c.IsConnected);
+        public bool CanStartStop => HasConnectedCamera && (_userService?.HasPermission(UserPermission.StartStop) ?? true);
+
+        // ── Equipment status (StatusBar) ──
+        public string PlcVendorName { get; }
+        public string PlcIpAddress { get; }
+        public bool IsPlcConfigured => PlcVendorName != "None";
+        public bool IsPlcConnected => _plcConnection?.IsConnected ?? false;
+
+        public int ConnectedCameraCount => Cameras.Count(c => c.IsConnected);
+        public int TotalCameraCount => Cameras.Count;
+
+        /// <summary>
+        /// "All" = 전부 연결, "Partial" = 일부, "None" = 0대 연결, "Empty" = 카메라 미설정
+        /// </summary>
+        public string CameraConnectionStatus
+        {
+            get
+            {
+                if (TotalCameraCount == 0) return "Empty";
+                var connected = ConnectedCameraCount;
+                if (connected == TotalCameraCount) return "All";
+                if (connected > 0) return "Partial";
+                return "None";
+            }
+        }
 
         // ── Dashboard ──
         [ObservableProperty]
@@ -123,6 +153,8 @@ namespace VMS.ViewModels
         private readonly IInspectionService _inspectionService;
         private readonly IAutoProcessService? _autoProcessService;
         private readonly IUserService? _userService;
+        private readonly SharedFrameWriter? _sharedFrameWriter;
+        private readonly IPlcConnection? _plcConnection;
         private readonly Action _shutdownAction;
         private SystemConfiguration _systemConfig;
 
@@ -135,7 +167,11 @@ namespace VMS.ViewModels
             Action shutdownAction,
             IAutoProcessService? autoProcessService = null,
             IUserService? userService = null,
-            ISystemLogService? logService = null)
+            ISystemLogService? logService = null,
+            SharedFrameWriter? sharedFrameWriter = null,
+            IPlcConnection? plcConnection = null,
+            string plcVendorName = "None",
+            string plcIpAddress = "")
         {
             _configService = configService;
             _recipeService = recipeService;
@@ -145,8 +181,19 @@ namespace VMS.ViewModels
             _autoProcessService = autoProcessService;
             _userService = userService;
             LogService = logService;
+            _sharedFrameWriter = sharedFrameWriter;
+            _plcConnection = plcConnection;
+            PlcVendorName = plcVendorName;
+            PlcIpAddress = plcIpAddress;
             _shutdownAction = shutdownAction;
             _systemConfig = new SystemConfiguration();
+
+            // Subscribe to PLC connection state changes
+            if (_plcConnection != null)
+            {
+                _plcConnection.ConnectionStateChanged += (_, _) =>
+                    OnPropertyChanged(nameof(IsPlcConnected));
+            }
 
             // Initialize user display
             UpdateUserDisplay();
@@ -254,6 +301,8 @@ namespace VMS.ViewModels
 
         private void WireCameraEvents(CameraViewModel cam)
         {
+            cam.FrameAcquired += result => _sharedFrameWriter?.WriteFrame(result);
+
             cam.InspectionCompleted += (cameraName, ok, image) =>
             {
                 TotalInspections++;
@@ -265,6 +314,17 @@ namespace VMS.ViewModels
                     $"Inspection {(ok ? "OK" : "NG")} - {cameraName}",
                     ok ? LogLevel.Success : LogLevel.Warning,
                     "Inspection");
+            };
+
+            cam.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(CameraViewModel.IsConnected))
+                {
+                    OnPropertyChanged(nameof(HasConnectedCamera));
+                    OnPropertyChanged(nameof(CanStartStop));
+                    OnPropertyChanged(nameof(ConnectedCameraCount));
+                    OnPropertyChanged(nameof(CameraConnectionStatus));
+                }
             };
         }
 
@@ -550,10 +610,65 @@ namespace VMS.ViewModels
         }
 
         [RelayCommand]
+        private async Task GrabAsync()
+        {
+            if (IsRunning || IsLiveMode) return;
+
+            SystemStatus = "Grabbing...";
+            foreach (var cam in Cameras.Where(c => c.IsEnabled))
+            {
+                await cam.GrabCommand.ExecuteAsync(null);
+            }
+            SystemStatus = "Ready";
+        }
+
+        [RelayCommand]
+        private async Task StartLiveAsync()
+        {
+            if (IsLiveMode || IsRunning) return;
+
+            IsLiveMode = true;
+            SystemStatus = "Live Starting...";
+            LogService?.Log("Live grab starting...", LogLevel.Info, "System");
+
+            foreach (var cam in Cameras.Where(c => c.IsEnabled))
+            {
+                await cam.StartLiveGrabAsync();
+            }
+
+            SystemStatus = "Live";
+            LogService?.Log("Live grab started", LogLevel.Success, "System");
+        }
+
+        [RelayCommand]
+        private async Task StopLiveAsync()
+        {
+            if (!IsLiveMode) return;
+
+            SystemStatus = "Live Stopping...";
+            LogService?.Log("Live grab stopping...", LogLevel.Info, "System");
+
+            foreach (var cam in Cameras)
+            {
+                await cam.StopLiveGrabAsync();
+            }
+
+            IsLiveMode = false;
+            SystemStatus = "Ready";
+            LogService?.Log("Live grab stopped", LogLevel.Info, "System");
+        }
+
+        [RelayCommand]
         private async Task StartInspectionAsync()
         {
             if (_autoProcessService != null && _autoProcessService.IsRunning)
                 return; // 이전 Stop이 아직 진행 중
+
+            // Live 모드 실행 중이면 자동 중지 (상호 배타적)
+            if (IsLiveMode)
+            {
+                await StopLiveAsync();
+            }
 
             IsRunning = true;
             SystemStatus = "Starting...";

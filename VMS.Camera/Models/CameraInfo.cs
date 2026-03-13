@@ -98,6 +98,16 @@ namespace VMS.Camera.Models
             set => SetProperty(ref _isEnabled, value);
         }
 
+        private CameraType _cameraType = CameraType.AreaScan2D;
+        /// <summary>
+        /// 카메라 타입 (Area Scan 2D/3D, Line Scan 2D/3D)
+        /// </summary>
+        public CameraType CameraType
+        {
+            get => _cameraType;
+            set => SetProperty(ref _cameraType, value);
+        }
+
         /// <summary>
         /// 표시용 해상도 문자열
         /// </summary>

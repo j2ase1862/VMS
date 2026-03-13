@@ -129,7 +129,7 @@ namespace VMS.Camera.Services
             }
         }
 
-        public async Task<AcquisitionResult> AcquireAsync()
+        public async Task<AcquisitionResult> AcquireAsync(int timeoutMs = 5000)
         {
             if (!IsConnected || _milDigitizer == MIL.M_NULL || _milImage == MIL.M_NULL)
             {

@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Diagnostics;
 
 namespace VMS.VisionSetup.Services
 {
@@ -25,7 +26,8 @@ namespace VMS.VisionSetup.Services
         {
             WriteIndented = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            Converters = { new JsonStringEnumConverter() }
         };
 
         private CameraService()
@@ -52,6 +54,7 @@ namespace VMS.VisionSetup.Services
 
         /// <summary>
         /// 카메라 레지스트리를 파일에서 로드
+        /// AppSetup이 저장한 SystemConfiguration 형식과 CameraRegistry 형식 모두 지원
         /// </summary>
         public List<CameraInfo> LoadCameraRegistry()
         {
@@ -64,16 +67,79 @@ namespace VMS.VisionSetup.Services
                 }
 
                 var json = File.ReadAllText(_cameraRegistryPath);
-                var registry = JsonSerializer.Deserialize<CameraRegistry>(json, JsonOptions);
-                _cameras = registry?.Cameras ?? new List<CameraInfo>();
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                // AppSetup이 저장한 SystemConfiguration 형식 감지 (applicationName 또는 plcVendor 필드 존재)
+                if (root.TryGetProperty("applicationName", out _) ||
+                    root.TryGetProperty("plcVendor", out _))
+                {
+                    _cameras = LoadFromSystemConfiguration(root);
+                    Debug.WriteLine($"SystemConfiguration 형식에서 카메라 {_cameras.Count}대 로드 완료");
+                }
+                else
+                {
+                    // 기존 CameraRegistry 형식
+                    var registry = JsonSerializer.Deserialize<CameraRegistry>(json, JsonOptions);
+                    _cameras = registry?.Cameras ?? new List<CameraInfo>();
+                    Debug.WriteLine($"CameraRegistry 형식에서 카메라 {_cameras.Count}대 로드 완료");
+                }
+
                 return _cameras;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"카메라 레지스트리 로드 실패: {ex.Message}");
+                Debug.WriteLine($"카메라 레지스트리 로드 실패: {ex.Message}");
                 _cameras = new List<CameraInfo>();
                 return _cameras;
             }
+        }
+
+        /// <summary>
+        /// SystemConfiguration JSON에서 CameraConfiguration → CameraInfo 변환
+        /// </summary>
+        private static List<CameraInfo> LoadFromSystemConfiguration(JsonElement root)
+        {
+            var cameras = new List<CameraInfo>();
+
+            if (!root.TryGetProperty("cameras", out var camerasElement))
+                return cameras;
+
+            foreach (var cam in camerasElement.EnumerateArray())
+            {
+                var info = new CameraInfo
+                {
+                    Id = cam.TryGetProperty("id", out var id)
+                        ? id.GetString() ?? Guid.NewGuid().ToString()
+                        : Guid.NewGuid().ToString(),
+                    Name = cam.TryGetProperty("name", out var name)
+                        ? name.GetString() ?? string.Empty
+                        : string.Empty,
+                    ConnectionString = cam.TryGetProperty("ipAddress", out var ip)
+                        ? ip.GetString() ?? string.Empty
+                        : string.Empty,
+                    IsEnabled = !cam.TryGetProperty("isEnabled", out var enabled) || enabled.GetBoolean(),
+                };
+
+                // Manufacturer: enum 문자열 → CameraInfo.Manufacturer (string)
+                if (cam.TryGetProperty("manufacturer", out var mfr) &&
+                    mfr.ValueKind == JsonValueKind.String)
+                {
+                    info.Manufacturer = mfr.GetString() ?? "Other";
+                }
+
+                // CameraType: enum 문자열 → CameraType enum
+                if (cam.TryGetProperty("cameraType", out var ct) &&
+                    ct.ValueKind == JsonValueKind.String)
+                {
+                    if (Enum.TryParse<CameraType>(ct.GetString(), out var cameraType))
+                        info.CameraType = cameraType;
+                }
+
+                cameras.Add(info);
+            }
+
+            return cameras;
         }
 
         /// <summary>

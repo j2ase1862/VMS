@@ -24,6 +24,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Numerics;
+using System.Threading;
 using System.Windows.Media;
 using CvRect = OpenCvSharp.Rect;
 
@@ -65,6 +66,8 @@ namespace VMS.VisionSetup.ViewModels
         private VisionToolBase? _subscribedTool;
         private bool _isSyncingROI;
         private ICameraAcquisition? _cameraAcquisition;
+        private SharedFrameReader? _sharedFrameReader;
+        private CancellationTokenSource? _liveReceiveCts;
         #endregion
 
         #region Properties
@@ -255,6 +258,14 @@ namespace VMS.VisionSetup.ViewModels
         [ObservableProperty]
         private float _pointCloudYMax = 60f;
 
+        // Height Slicing 저장 값
+        private float? _savedHeightBaseline;
+        private float? _savedHeightLowerLimit;
+        private float? _savedHeightUpperLimit;
+
+        [ObservableProperty]
+        private bool _isHeightSlicingSaved;
+
         public HeightMapMetadata? CurrentHeightMapMetadata { get; private set; }
 
         #region Camera Connection Properties
@@ -270,6 +281,10 @@ namespace VMS.VisionSetup.ViewModels
         // 이미지 획득 중 상태
         [ObservableProperty]
         private bool _isAcquiring;
+
+        // VMS 라이브 수신 중 상태
+        [ObservableProperty]
+        private bool _isReceivingFromVms;
 
         #endregion
 
@@ -351,6 +366,13 @@ namespace VMS.VisionSetup.ViewModels
         public RelayCommand DisconnectCameraCommand { get; }
         public RelayCommand GenerateHeightMapCommand { get; }
         public RelayCommand SaveRecipeCommand { get; }
+        public RelayCommand ReceiveFromVmsCommand { get; }
+        public RelayCommand StartLiveReceiveCommand { get; }
+        public RelayCommand StopLiveReceiveCommand { get; }
+        public RelayCommand SavePointCloudCommand { get; }
+        public RelayCommand LoadPointCloudCommand { get; }
+        public RelayCommand SaveHeightSlicingCommand { get; }
+        public RelayCommand ClearHeightSlicingCommand { get; }
         #endregion
 
         #region Constructor
@@ -391,6 +413,13 @@ namespace VMS.VisionSetup.ViewModels
             DisconnectCameraCommand = new RelayCommand(async () => await DisconnectCamera(), () => IsCameraConnected);
             GenerateHeightMapCommand = new RelayCommand(GenerateHeightMap, CanGenerateHeightMap);
             SaveRecipeCommand = new RelayCommand(SaveCurrentRecipe, () => _recipeService.CurrentRecipe != null);
+            ReceiveFromVmsCommand = new RelayCommand(async () => await ReceiveFromVms(), () => !IsReceivingFromVms);
+            StartLiveReceiveCommand = new RelayCommand(async () => await StartLiveReceive(), () => !IsReceivingFromVms);
+            StopLiveReceiveCommand = new RelayCommand(StopLiveReceive, () => IsReceivingFromVms);
+            SavePointCloudCommand = new RelayCommand(SavePointCloud, () => CurrentPointCloud != null);
+            LoadPointCloudCommand = new RelayCommand(LoadPointCloud);
+            SaveHeightSlicingCommand = new RelayCommand(SaveHeightSlicing, () => CurrentPointCloud != null);
+            ClearHeightSlicingCommand = new RelayCommand(ClearHeightSlicing, () => IsHeightSlicingSaved);
 
             // 레시피 변경 이벤트 구독
             _recipeService.CurrentRecipeChanged += OnCurrentRecipeChanged;
@@ -1691,25 +1720,103 @@ namespace VMS.VisionSetup.ViewModels
         {
             if (value != null && value.Positions.Length > 0)
             {
-                float yMin = float.MaxValue;
-                float yMax = float.MinValue;
-                foreach (var pos in value.Positions)
+                int count = value.PointCount;
+                float zMin = float.MaxValue;
+                float zMax = float.MinValue;
+                for (int i = 0; i < count; i++)
                 {
-                    if (pos.Y < yMin) yMin = pos.Y;
-                    if (pos.Y > yMax) yMax = pos.Y;
+                    float z = value.Positions[i].Z;
+                    if (z < zMin) zMin = z;
+                    if (z > zMax) zMax = z;
                 }
 
-                PointCloudYMin = yMin;
-                PointCloudYMax = yMax;
-                HeightBaseline = 0f;
-                HeightLowerLimit = yMin;
-                HeightUpperLimit = yMax;
+                PointCloudYMin = zMin;
+                PointCloudYMax = zMax;
+
+                if (_savedHeightBaseline.HasValue)
+                {
+                    HeightBaseline = _savedHeightBaseline.Value;
+                    HeightLowerLimit = _savedHeightLowerLimit!.Value;
+                    HeightUpperLimit = _savedHeightUpperLimit!.Value;
+                }
+                else
+                {
+                    HeightBaseline = 0f;
+                    HeightLowerLimit = zMin;
+                    HeightUpperLimit = zMax;
+                }
             }
 
             GenerateHeightMapCommand.NotifyCanExecuteChanged();
+            SaveHeightSlicingCommand.NotifyCanExecuteChanged();
+            SavePointCloudCommand.NotifyCanExecuteChanged();
+        }
+
+        private void SavePointCloud()
+        {
+            if (CurrentPointCloud == null) return;
+
+            var filePath = _dialogService.ShowSaveFileDialog(
+                "VPC Point Cloud (*.vpc)|*.vpc", ".vpc", CurrentPointCloud.Name);
+
+            if (filePath != null)
+            {
+                try
+                {
+                    CurrentPointCloud.SaveToFile(filePath);
+                    StatusMessage = $"3D 데이터 저장 완료: {System.IO.Path.GetFileName(filePath)}";
+                }
+                catch (Exception ex)
+                {
+                    StatusMessage = $"3D 데이터 저장 실패: {ex.Message}";
+                }
+            }
+        }
+
+        private void LoadPointCloud()
+        {
+            var filePath = _dialogService.ShowOpenFileDialog(
+                "3D 데이터 열기",
+                "VPC Point Cloud (*.vpc)|*.vpc|All Files (*.*)|*.*");
+
+            if (filePath != null)
+            {
+                try
+                {
+                    var data = PointCloudData.LoadFromFile(filePath);
+                    var old = CurrentPointCloud;
+                    CurrentPointCloud = data;
+                    old?.Dispose();
+                    StatusMessage = $"3D 데이터 로드 완료: {data.Name} ({data.PointCount:N0} points)";
+                }
+                catch (Exception ex)
+                {
+                    StatusMessage = $"3D 데이터 로드 실패: {ex.Message}";
+                }
+            }
         }
 
         private bool CanGenerateHeightMap() => CurrentPointCloud?.IsOrganized == true;
+
+        private void SaveHeightSlicing()
+        {
+            _savedHeightBaseline = HeightBaseline;
+            _savedHeightLowerLimit = HeightLowerLimit;
+            _savedHeightUpperLimit = HeightUpperLimit;
+            IsHeightSlicingSaved = true;
+            ClearHeightSlicingCommand.NotifyCanExecuteChanged();
+            StatusMessage = $"Height Slicing 설정 저장됨: Baseline={HeightBaseline:F1}, 범위=[{HeightLowerLimit:F1}, {HeightUpperLimit:F1}]";
+        }
+
+        private void ClearHeightSlicing()
+        {
+            _savedHeightBaseline = null;
+            _savedHeightLowerLimit = null;
+            _savedHeightUpperLimit = null;
+            IsHeightSlicingSaved = false;
+            ClearHeightSlicingCommand.NotifyCanExecuteChanged();
+            StatusMessage = "Height Slicing 설정 초기화됨";
+        }
 
         private void GenerateHeightMap()
         {
@@ -1778,6 +1885,126 @@ namespace VMS.VisionSetup.ViewModels
                 AnomalyTool t => new AnomalyToolSettingsViewModel(t),
                 _ => null
             };
+        }
+
+        #endregion
+
+        #region VMS Frame Receive
+
+        private async System.Threading.Tasks.Task ReceiveFromVms()
+        {
+            try
+            {
+                _sharedFrameReader ??= new SharedFrameReader();
+
+                if (!_sharedFrameReader.TryConnect())
+                {
+                    StatusMessage = "VMS에 연결할 수 없습니다 (VMS가 실행 중인지 확인)";
+                    _sharedFrameReader.Dispose();
+                    _sharedFrameReader = null;
+                    return;
+                }
+
+                if (!_sharedFrameReader.IsWriterAlive)
+                {
+                    StatusMessage = "VMS가 비활성 상태입니다";
+                    return;
+                }
+
+                var frame = _sharedFrameReader.TryReadFrame(skipIfSameFrame: false);
+                if (frame == null)
+                {
+                    StatusMessage = "프레임 읽기 실패 (VMS에서 Grab을 먼저 실행하세요)";
+                    return;
+                }
+
+                ApplySharedFrame(frame);
+                StatusMessage = $"VMS 프레임 수신 완료 (Frame #{frame.FrameCounter})";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"VMS 프레임 수신 오류: {ex.Message}";
+            }
+
+            await System.Threading.Tasks.Task.CompletedTask;
+        }
+
+        private async System.Threading.Tasks.Task StartLiveReceive()
+        {
+            _sharedFrameReader ??= new SharedFrameReader();
+
+            if (!_sharedFrameReader.TryConnect())
+            {
+                StatusMessage = "VMS에 연결할 수 없습니다 (VMS가 실행 중인지 확인)";
+                _sharedFrameReader.Dispose();
+                _sharedFrameReader = null;
+                return;
+            }
+
+            IsReceivingFromVms = true;
+            NotifyLiveReceiveCommands();
+            StatusMessage = "VMS 라이브 수신 시작";
+
+            _liveReceiveCts = new CancellationTokenSource();
+            var ct = _liveReceiveCts.Token;
+
+            await System.Threading.Tasks.Task.Run(async () =>
+            {
+                while (!ct.IsCancellationRequested)
+                {
+                    if (!_sharedFrameReader.IsWriterAlive)
+                    {
+                        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                        {
+                            StatusMessage = "VMS가 종료되었습니다";
+                            StopLiveReceive();
+                        });
+                        break;
+                    }
+
+                    if (_sharedFrameReader.WaitForFrame(500))
+                    {
+                        var frame = _sharedFrameReader.TryReadFrame();
+                        if (frame != null)
+                        {
+                            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                            {
+                                ApplySharedFrame(frame);
+                            });
+                        }
+                    }
+                }
+            }, ct);
+        }
+
+        private void StopLiveReceive()
+        {
+            _liveReceiveCts?.Cancel();
+            _liveReceiveCts?.Dispose();
+            _liveReceiveCts = null;
+            IsReceivingFromVms = false;
+            NotifyLiveReceiveCommands();
+            StatusMessage = "VMS 라이브 수신 중지";
+        }
+
+        private void ApplySharedFrame(SharedFrameData frame)
+        {
+            if (frame.Image2D != null)
+            {
+                CurrentImage = frame.Image2D;
+            }
+
+            if (frame.PointCloud != null)
+            {
+                CurrentPointCloud = frame.PointCloud;
+            }
+        }
+
+        private void NotifyLiveReceiveCommands()
+        {
+            ReceiveFromVmsCommand.NotifyCanExecuteChanged();
+            StartLiveReceiveCommand.NotifyCanExecuteChanged();
+            StopLiveReceiveCommand.NotifyCanExecuteChanged();
         }
 
         #endregion

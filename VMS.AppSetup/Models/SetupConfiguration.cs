@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Text.Json.Serialization;
 using VMS.Camera.Models;
 using VMS.PLC.Models;
@@ -72,8 +73,71 @@ namespace VMS.AppSetup.Models
         [ObservableProperty]
         private CameraManufacturer _manufacturer = CameraManufacturer.Other;
 
+        // Camera Type
+        [ObservableProperty]
+        private CameraType _cameraType = CameraType.AreaScan2D;
+
+        // Area Scan parameters
+        [ObservableProperty]
+        private double _exposure = 5000;
+
+        [ObservableProperty]
+        private double _gain = 1.0;
+
+        // Line Scan parameters
+        [ObservableProperty]
+        private TriggerSource _triggerSource = TriggerSource.Internal;
+
+        [ObservableProperty]
+        private double _lineRate = 10000;
+
+        [ObservableProperty]
+        private double _encoderResolution = 10.0;
+
+        [ObservableProperty]
+        private int _scanLength = 4096;
+
+        // 3D Camera parameters
+        [ObservableProperty]
+        private CaptureMode3D _captureMode = CaptureMode3D.Both;
+
+        [ObservableProperty]
+        private int _filterStrength = 3;
+
+        [ObservableProperty]
+        private double _zRangeMin = 0;
+
+        [ObservableProperty]
+        private double _zRangeMax = 1000;
+
+        // Dynamic UI visibility properties
+        [JsonIgnore]
+        public bool IsAreaScan => CameraType == CameraType.AreaScan2D || CameraType == CameraType.AreaScan3D;
+
+        [JsonIgnore]
+        public bool IsLineScan => CameraType == CameraType.LineScan2D || CameraType == CameraType.LineScan3D;
+
+        [JsonIgnore]
+        public bool Is3DCamera => CameraType == CameraType.AreaScan3D || CameraType == CameraType.LineScan3D;
+
+        [JsonIgnore]
+        public bool ShowEncoderResolution => IsLineScan && TriggerSource == TriggerSource.Encoder;
+
         [JsonIgnore]
         public string DisplayInfo => $"{Manufacturer} - {IpAddress}";
+
+        partial void OnCameraTypeChanged(CameraType value)
+        {
+            OnPropertyChanged(nameof(IsAreaScan));
+            OnPropertyChanged(nameof(IsLineScan));
+            OnPropertyChanged(nameof(Is3DCamera));
+            OnPropertyChanged(nameof(ShowEncoderResolution));
+        }
+
+        partial void OnTriggerSourceChanged(TriggerSource value)
+        {
+            OnPropertyChanged(nameof(ShowEncoderResolution));
+        }
     }
 
     /// <summary>

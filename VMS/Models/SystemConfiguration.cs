@@ -50,6 +50,24 @@ namespace VMS.Models
         public string Name { get; set; } = string.Empty;
         public string IpAddress { get; set; } = string.Empty;
         public CameraManufacturer Manufacturer { get; set; } = CameraManufacturer.Other;
+        public CameraType CameraType { get; set; } = CameraType.AreaScan2D;
+
+        // Area Scan parameters
+        public double Exposure { get; set; } = 5000;
+        public double Gain { get; set; } = 1.0;
+
+        // Line Scan parameters
+        public TriggerSource TriggerSource { get; set; } = TriggerSource.Internal;
+        public double LineRate { get; set; } = 10000;
+        public double EncoderResolution { get; set; } = 10.0;
+        public int ScanLength { get; set; } = 4096;
+
+        // 3D Camera parameters
+        public CaptureMode3D CaptureMode { get; set; } = CaptureMode3D.Both;
+        public int FilterStrength { get; set; } = 3;
+        public double ZRangeMin { get; set; } = 0;
+        public double ZRangeMax { get; set; } = 1000;
+
         public int StepCount { get; set; } = 1;
         public List<StepConfiguration> Steps { get; set; } = new();
     }
