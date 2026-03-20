@@ -1,3 +1,4 @@
+using VMS.Camera.Converters;
 using VMS.Camera.Models;
 using VMS.VisionSetup.Interfaces;
 using VMS.VisionSetup.Models;
@@ -115,6 +116,18 @@ namespace VMS.VisionSetup.Services
             {
                 _lastCompositeOverlay?.Dispose();
                 _lastCompositeOverlay = value;
+            }
+        }
+
+        // CV_32FC1 float depth map (HeightSlicerTool 등 정밀 도구용)
+        private Mat? _currentDepthMap32F;
+        public Mat? CurrentDepthMap32F
+        {
+            get => _currentDepthMap32F;
+            private set
+            {
+                _currentDepthMap32F?.Dispose();
+                SetProperty(ref _currentDepthMap32F, value);
             }
         }
 
@@ -608,6 +621,7 @@ namespace VMS.VisionSetup.Services
             ApplyCoordinatesConnection(tool, resultMap);
 
             // Resolve connected input for the target tool
+            // HeightSlicerTool: 연결이 없을 때 CV_32FC1 depth map 입력
             var connectedImage = GetConnectedInputImage(tool, resultMap);
             Mat toolInput;
             bool ownsToolInput;
@@ -615,6 +629,11 @@ namespace VMS.VisionSetup.Services
             {
                 toolInput = connectedImage;
                 ownsToolInput = false;
+            }
+            else if (tool is HeightSlicerTool && CurrentDepthMap32F != null && !CurrentDepthMap32F.IsDisposed)
+            {
+                toolInput = CurrentDepthMap32F.Clone();
+                ownsToolInput = true;
             }
             else
             {
@@ -718,6 +737,7 @@ namespace VMS.VisionSetup.Services
 
                 // 3. Image 연결: 연결된 Source의 출력 이미지를 입력으로 사용
                 //    연결이 없으면 원본 이미지 사용 (각 도구가 독립적으로 원본 처리)
+                //    HeightSlicerTool은 연결이 없을 때 CV_32FC1 depth map을 입력으로 수신
                 Mat inputImage;
                 var connectedImage = GetConnectedInputImage(tool, resultMap);
                 bool usesBaseImage = connectedImage == null;
@@ -737,6 +757,11 @@ namespace VMS.VisionSetup.Services
                         }
                         tool.SetCachedGrayscale(cachedGray.Clone());
                     }
+                }
+                else if (tool is HeightSlicerTool && CurrentDepthMap32F != null && !CurrentDepthMap32F.IsDisposed)
+                {
+                    // HeightSlicerTool: CV_32FC1 float depth map 입력
+                    inputImage = CurrentDepthMap32F.Clone();
                 }
                 else
                 {
@@ -981,42 +1006,25 @@ namespace VMS.VisionSetup.Services
         }
 
         /// <summary>
-        /// 3D 포인트 클라우드를 높이 슬라이싱하여 2D 그레이스케일 Height Map 생성
-        /// Y축 = 높이, 정렬된(organized) 그리드 포인트 클라우드 필요
+        /// 3D 포인트 클라우드를 높이 슬라이싱하여 2D Height Map 생성
+        /// Z축 = 높이 (PointCloudViewer/DepthMapViewer와 일치)
+        /// CV_32FC1 float map + CV_8UC1 정규화 map 동시 생성
         /// </summary>
-        public (Mat HeightMap, HeightMapMetadata Metadata) GenerateHeightMap(
+        public (Mat HeightMap8U, Mat DepthMap32F, HeightMapMetadata Metadata) GenerateHeightMap(
             PointCloudData pointCloud, float zRef, float zMin, float zMax)
         {
-            if (!pointCloud.IsOrganized)
-                throw new InvalidOperationException("Height map requires an organized (grid) point cloud.");
+            // PointCloudConverter로 위임 (Z축 사용, unsafe 최적화)
+            var depthMap32F = PointCloudConverter.ToDepthMap32F(pointCloud, zRef);
+            var heightMap8U = PointCloudConverter.DepthMap32FTo8U(depthMap32F, zMin, zMax);
 
+            // Per-pixel 3D lookup 테이블 생성
             int w = pointCloud.GridWidth;
             int h = pointCloud.GridHeight;
-            float range = zMax - zMin;
-            if (range <= 0) range = 1f;
-
-            var heightMap = new Mat(h, w, MatType.CV_8UC1, Scalar.All(0));
             var pixelTo3D = new Vector3?[w * h];
-
-            unsafe
+            var positions = pointCloud.Positions;
+            for (int i = 0; i < w * h; i++)
             {
-                byte* ptr = (byte*)heightMap.Data;
-                var positions = pointCloud.Positions;
-
-                for (int row = 0; row < h; row++)
-                {
-                    for (int col = 0; col < w; col++)
-                    {
-                        int idx = row * w + col;
-                        var pos = positions[idx];
-                        pixelTo3D[idx] = pos;
-
-                        float normalizedY = pos.Y - zRef;
-                        float t = (normalizedY - zMin) / range;
-                        t = Math.Clamp(t, 0f, 1f);
-                        ptr[idx] = (byte)(t * 255f);
-                    }
-                }
+                pixelTo3D[i] = positions[i];
             }
 
             var metadata = new HeightMapMetadata
@@ -1026,10 +1034,14 @@ namespace VMS.VisionSetup.Services
                 ZReference = zRef,
                 ZMin = zMin,
                 ZMax = zMax,
+                DepthMap32F = depthMap32F,
                 PixelTo3D = pixelTo3D
             };
 
-            return (heightMap, metadata);
+            // VisionService에 float map 보관 (HeightSlicerTool 라우팅용)
+            CurrentDepthMap32F = depthMap32F.Clone();
+
+            return (heightMap8U, depthMap32F, metadata);
         }
 
         /// <summary>
@@ -1039,6 +1051,7 @@ namespace VMS.VisionSetup.Services
         {
             CurrentImage?.Dispose();
             CurrentImage = null;
+            CurrentDepthMap32F = null;
             LastCompositeOverlay = null;
         }
     }

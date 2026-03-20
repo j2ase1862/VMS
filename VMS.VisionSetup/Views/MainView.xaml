@@ -332,6 +332,37 @@
 
                     <Rectangle Width="1" Fill="#555555" Margin="4,4"/>
 
+                    <!-- Height Map -->
+                    <Button Command="{Binding GenerateHeightMapCommand}"
+                            Style="{StaticResource ToolbarButtonStyle}" Background="#1565C0" ToolTip="Generate Height Map from 3D data">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="M2,16 L6,8 L10,12 L14,4 L18,10 L18,16 Z"
+                                  Stroke="White" StrokeThickness="1.2" Fill="Transparent"
+                                  Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
+                            <TextBlock Text="Height Map" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding SaveHeightSlicingCommand}"
+                            Style="{StaticResource ToolbarButtonStyle}" Background="#00695C" ToolTip="Save Height Slicing settings">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="M3,2 L3,18 L17,18 L17,6 L13,2 Z M6,2 L6,7 L12,7 L12,2 M6,12 L14,12 M6,15 L14,15"
+                                  Stroke="White" StrokeThickness="1.2" Fill="Transparent"
+                                  Width="13" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
+                            <TextBlock Text="Save Slicing" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding ClearHeightSlicingCommand}"
+                            Style="{StaticResource ToolbarButtonStyle}" Background="#C62828" ToolTip="Clear Height Slicing settings">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="M4,4 L16,16 M16,4 L4,16"
+                                  Stroke="White" StrokeThickness="1.5" Fill="Transparent"
+                                  Width="12" Height="12" Stretch="Uniform" VerticalAlignment="Center"/>
+                            <TextBlock Text="Clear Slicing" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Rectangle Width="1" Fill="#555555" Margin="4,4"/>
+
                     <!-- From VMS (단발 수신) -->
                     <Button Command="{Binding ReceiveFromVmsCommand}"
                             Style="{StaticResource ToolbarButtonStyle}" Background="#E65100" ToolTip="Receive frame from VMS">
@@ -654,7 +685,7 @@
             <!-- Center Panel - Workspace and Images -->
             <Grid Grid.Column="1">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1400"/>
+                    <ColumnDefinition Width="700"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
@@ -853,7 +884,7 @@
                         </TabControl.Resources>
 
                         <!-- 2D View Tab -->
-                        <TabItem Header="2D View">
+                        <TabItem Header="2D Image (Depth Source)">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -1011,9 +1042,14 @@
                                                    Margin="0,8,0,0"/>
                                     </StackPanel>
 
-                                    <!-- Depth Map Viewer -->
+                                    <!-- Depth Map Viewer with integrated ColorBar and range thumbs -->
                                     <core:DepthMapViewer
                                         PointCloud="{Binding CurrentPointCloud}"
+                                        ShowColorBar="True"
+                                        RangeMin="{Binding DepthRangeMin, Mode=TwoWay}"
+                                        RangeMax="{Binding DepthRangeMax, Mode=TwoWay}"
+                                        DataMin="{Binding PointCloudYMin}"
+                                        DataMax="{Binding PointCloudYMax}"
                                         Visibility="{Binding CurrentPointCloud, Converter={StaticResource NullToCollapsedConverter}}"/>
                                 </Grid>
                             </Border>
@@ -1021,99 +1057,17 @@
 
                         <!-- 3D View Tab -->
                         <TabItem Header="Point Cloud">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
-                                </Grid.RowDefinitions>
-
-                                <!-- Header with Load Sample button -->
-                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,5">
-                                    <Button Content="Load Sample"
-                                            Command="{Binding LoadSamplePointCloudCommand}"
-                                            Style="{StaticResource ToolbarButtonStyle}"
-                                            Background="#7B1FA2"/>
-                                </StackPanel>
-
-                                <!-- Height Slicing Panel -->
-                                <Border Grid.Row="1" Background="#2D2D30" CornerRadius="4" Margin="10,2,10,5" Padding="10,6">
-                                    <StackPanel>
-                                        <TextBlock Text="Height Slicing" Foreground="#FFD700" FontWeight="Bold" FontSize="13" Margin="0,0,0,6"/>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="70"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="60"/>
-                                            </Grid.ColumnDefinitions>
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
-                                            </Grid.RowDefinitions>
-
-                                            <!-- Baseline -->
-                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Baseline" Foreground="#CCCCCC" VerticalAlignment="Center" FontSize="11"/>
-                                            <Slider Grid.Row="0" Grid.Column="1"
-                                                    Value="{Binding HeightBaseline}"
-                                                    Minimum="{Binding PointCloudYMin}" Maximum="{Binding PointCloudYMax}"
-                                                    VerticalAlignment="Center" Margin="4,2"/>
-                                            <TextBox Grid.Row="0" Grid.Column="2"
-                                                     Text="{Binding HeightBaseline, StringFormat=F1}"
-                                                     Background="#3C3C3C" Foreground="#CCCCCC" BorderBrush="#555555"
-                                                     FontSize="11" Padding="3,1" VerticalAlignment="Center"/>
-
-                                            <!-- Lower Limit -->
-                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Lower" Foreground="#CCCCCC" VerticalAlignment="Center" FontSize="11"/>
-                                            <Slider Grid.Row="1" Grid.Column="1"
-                                                    Value="{Binding HeightLowerLimit}"
-                                                    Minimum="{Binding PointCloudYMin}" Maximum="{Binding PointCloudYMax}"
-                                                    VerticalAlignment="Center" Margin="4,2"/>
-                                            <TextBox Grid.Row="1" Grid.Column="2"
-                                                     Text="{Binding HeightLowerLimit, StringFormat=F1}"
-                                                     Background="#3C3C3C" Foreground="#CCCCCC" BorderBrush="#555555"
-                                                     FontSize="11" Padding="3,1" VerticalAlignment="Center"/>
-
-                                            <!-- Upper Limit -->
-                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Upper" Foreground="#CCCCCC" VerticalAlignment="Center" FontSize="11"/>
-                                            <Slider Grid.Row="2" Grid.Column="1"
-                                                    Value="{Binding HeightUpperLimit}"
-                                                    Minimum="{Binding PointCloudYMin}" Maximum="{Binding PointCloudYMax}"
-                                                    VerticalAlignment="Center" Margin="4,2"/>
-                                            <TextBox Grid.Row="2" Grid.Column="2"
-                                                     Text="{Binding HeightUpperLimit, StringFormat=F1}"
-                                                     Background="#3C3C3C" Foreground="#CCCCCC" BorderBrush="#555555"
-                                                     FontSize="11" Padding="3,1" VerticalAlignment="Center"/>
-                                        </Grid>
-
-                                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                                            <Button Content="Generate Height Map"
-                                                    Command="{Binding GenerateHeightMapCommand}"
-                                                    Background="#0E639C" Foreground="White"
-                                                    Padding="12,4"
-                                                    FontSize="12"/>
-                                            <Button Content="Save"
-                                                    Command="{Binding SaveHeightSlicingCommand}"
-                                                    Background="#2E7D32" Foreground="White"
-                                                    Padding="12,4" Margin="6,0,0,0"
-                                                    FontSize="12"/>
-                                            <Button Content="Clear"
-                                                    Command="{Binding ClearHeightSlicingCommand}"
-                                                    Background="#555555" Foreground="White"
-                                                    Padding="12,4" Margin="6,0,0,0"
-                                                    FontSize="12"/>
-                                        </StackPanel>
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- 3D Point Cloud Canvas -->
-                                <controls:PointDrawingCanvas x:Name="PointCanvasControl" Grid.Row="2"
-                                                             PointCloud="{Binding CurrentPointCloud}"
-                                                             HeightSliceBaseline="{Binding HeightBaseline}"
-                                                             HeightSliceLower="{Binding HeightLowerLimit}"
-                                                             HeightSliceUpper="{Binding HeightUpperLimit}"
-                                                             Margin="5"/>
-                            </Grid>
+                            <Border Background="#1E1E1E">
+                                <Grid>
+                                    <!-- PointDrawingCanvas with 3D viewer -->
+                                    <controls:PointDrawingCanvas x:Name="PointCanvasControl"
+                                                                 PointCloud="{Binding CurrentPointCloud}"
+                                                                 HeightSliceBaseline="{Binding HeightBaseline}"
+                                                                 HeightSliceLower="{Binding HeightLowerLimit}"
+                                                                 HeightSliceUpper="{Binding HeightUpperLimit}"
+                                                                 Margin="0"/>
+                                </Grid>
+                            </Border>
                         </TabItem>
 
                     </TabControl>

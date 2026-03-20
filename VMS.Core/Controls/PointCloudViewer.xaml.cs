@@ -188,6 +188,108 @@ namespace VMS.Core.Controls
             geo.Colors = axisColors;
 
             AxisLines.Geometry = geo;
+
+            // Build axis labels (viewport Y = data Z height, viewport Z = data Y)
+            BuildAxisLabel(AxisLabelX, "X", new Vector3(len * 1.1f, 0, 0), new Color4(1, 0, 0, 1));
+            BuildAxisLabel(AxisLabelY, "Z(mm)", new Vector3(0, len * 1.1f, 0), new Color4(0, 1, 0, 1));
+            BuildAxisLabel(AxisLabelZ, "Y(mm)", new Vector3(0, 0, len * 1.1f), new Color4(0, 0.5f, 1, 1));
+        }
+
+        private static void BuildAxisLabel(BillboardTextModel3D model, string text, Vector3 position, Color4 color)
+        {
+            var billboard = new BillboardSingleText3D()
+            {
+                FontColor = color,
+                BackgroundColor = new Color4(0, 0, 0, 0),
+                FontSize = 14,
+                FontWeight = SharpDX.DirectWrite.FontWeight.Bold,
+            };
+            billboard.TextInfo = new TextInfo(text, position);
+            model.Geometry = billboard;
+        }
+
+        private void BuildGridTickLabels(Vector3Collection positions)
+        {
+            if (positions.Count == 0)
+            {
+                GridTickLabels.Geometry = null;
+                return;
+            }
+
+            var min = new Vector3(float.MaxValue);
+            var max = new Vector3(float.MinValue);
+            for (int i = 0; i < positions.Count; i++)
+            {
+                min = Vector3.Min(min, new Vector3(positions[i].X, positions[i].Y, positions[i].Z));
+                max = Vector3.Max(max, new Vector3(positions[i].X, positions[i].Y, positions[i].Z));
+            }
+
+            var tickText = new BillboardText3D();
+            var tickColor = new Color4(0.6f, 0.6f, 0.6f, 1f);
+            int tickCount = 5;
+
+            // X-axis ticks (along grid X, at Y=0, Z=0 edge)
+            float gridXMax = max.X - min.X;
+            float gridZMax = max.Z - min.Z;
+            for (int i = 0; i <= tickCount; i++)
+            {
+                float x = gridXMax * i / tickCount;
+                float dataX = min.X + (max.X - min.X) * i / tickCount;
+                tickText.TextInfo.Add(new TextInfo(
+                    dataX.ToString("F0"), new Vector3(x, 0f, -20f))
+                { Foreground = tickColor, Scale = 0.6f });
+            }
+
+            // Z-axis ticks (along grid Z = data Y, at Y=0, X=0 edge)
+            for (int i = 0; i <= tickCount; i++)
+            {
+                float z = gridZMax * i / tickCount;
+                float dataY = min.Z + (max.Z - min.Z) * i / tickCount;
+                tickText.TextInfo.Add(new TextInfo(
+                    dataY.ToString("F0"), new Vector3(-20f, 0f, z))
+                { Foreground = tickColor, Scale = 0.6f });
+            }
+
+            // Y-axis ticks (vertical, show original data Z values)
+            // viewport Y = dataZ - zMax, so dataZ = viewportY + zMax
+            for (int i = 0; i <= tickCount; i++)
+            {
+                float viewportY = min.Y + (max.Y - min.Y) * i / tickCount;
+                float dataZ = viewportY + _dataZMax;
+                tickText.TextInfo.Add(new TextInfo(
+                    dataZ.ToString("F1"), new Vector3(-20f, viewportY, 0f))
+                { Foreground = tickColor, Scale = 0.6f });
+            }
+
+            GridTickLabels.Geometry = tickText;
+
+            // Update grid to match data bounds
+            RebuildGridForData(min, max);
+        }
+
+        private void RebuildGridForData(Vector3 min, Vector3 max)
+        {
+            var builder = new LineBuilder();
+            int divisions = 10;
+
+            // Grid top-left corner at (0, 0, 0), extends in +X and +Z
+            float gridXMax = max.X - min.X;
+            float gridZMax = max.Z - min.Z;
+            float xStep = gridXMax / divisions;
+            float zStep = gridZMax / divisions;
+
+            for (int i = 0; i <= divisions; i++)
+            {
+                float x = xStep * i;
+                builder.AddLine(new Vector3(x, 0f, 0f), new Vector3(x, 0f, gridZMax));
+            }
+            for (int i = 0; i <= divisions; i++)
+            {
+                float z = zStep * i;
+                builder.AddLine(new Vector3(0f, 0f, z), new Vector3(gridXMax, 0f, z));
+            }
+
+            GridLines.Geometry = builder.ToLineGeometry3D();
         }
 
         #endregion
@@ -361,30 +463,40 @@ namespace VMS.Core.Controls
             var pointColors = new Color4Collection(displayCount);
             var indices = new IntCollection(displayCount);
 
-            // ── Single pass: positions + min/max (Z = depth/height) ──
+            // ── Pass 1: Calculate Z bounds ──
             float zMin = float.MaxValue;
             float zMax = float.MinValue;
-            int idx = 0;
 
             for (int i = 0; i < totalCount; i += lodStride)
             {
                 var p = positions[i];
+                if (p.Z == 0f || float.IsNaN(p.Z) || float.IsInfinity(p.Z)) continue;
                 if (p.Z < zMin) zMin = p.Z;
                 if (p.Z > zMax) zMax = p.Z;
-                pointPositions.Add(new Vector3(p.X, p.Y, p.Z));
+            }
+
+            if (zMin >= zMax) { zMin = 0f; zMax = 1f; }
+            _dataZMin = zMin;
+            _dataZMax = zMax;
+            float range = zMax - zMin;
+
+            // ── Pass 2: Build positions + colors ──
+            // Viewport Y = p.Z - zMax → grid(Y=0) at top, data hangs below (negative Y)
+            int idx = 0;
+            for (int i = 0; i < totalCount; i += lodStride)
+            {
+                var p = positions[i];
+                if (p.Z == 0f || float.IsNaN(p.Z) || float.IsInfinity(p.Z)) continue;
+
+                float viewportY = p.Z - zMax;
+                pointPositions.Add(new Vector3(p.X, viewportY, p.Y));
+
+                float t = range > 0.0001f ? 1f - (p.Z - zMin) / range : 0.5f;
+                pointColors.Add(JetColormap(t));
                 indices.Add(idx++);
             }
 
-            _dataZMin = zMin;
-            _dataZMax = zMax;
-
-            // ── Color pass (Z-axis colormap) ──
-            float range = zMax - zMin;
-            for (int i = 0; i < totalCount; i += lodStride)
-            {
-                float t = range > 0.0001f ? (positions[i].Z - zMin) / range : 0.5f;
-                pointColors.Add(JetColormap(t));
-            }
+            displayCount = idx;
 
             geometry.Positions = pointPositions;
             geometry.Colors = pointColors;
@@ -406,6 +518,8 @@ namespace VMS.Core.Controls
                 _hasInitialFit = true;
                 FitCameraToData(pointPositions);
             }
+
+            BuildGridTickLabels(pointPositions);
 
             PointCloudRendered?.Invoke(zMin, zMax, displayCount, totalCount);
         }
@@ -456,8 +570,14 @@ namespace VMS.Core.Controls
             for (int i = 0; i < totalCount; i += _currentLodStride)
             {
                 var p = positions[i];
-                pointPositions.Add(new Vector3(p.X, p.Y, p.Z));
-                float t = range > 0.0001f ? (p.Z - zMin) / range : 0.5f;
+
+                // Skip invalid points: Z==0 (no depth) or NaN/Infinity
+                if (p.Z == 0f || float.IsNaN(p.Z) || float.IsInfinity(p.Z)) continue;
+
+                // Grid(Y=0) at top, data hangs below (negative Y)
+                float viewportY = p.Z - _dataZMax;
+                pointPositions.Add(new Vector3(p.X, viewportY, p.Y));
+                float t = range > 0.0001f ? 1f - (p.Z - zMin) / range : 0.5f;
                 pointColors.Add(JetColormap(t));
                 indices.Add(idx++);
             }
@@ -487,7 +607,7 @@ namespace VMS.Core.Controls
             {
                 MainCamera.Position = new Point3D(200, 200, 200);
                 MainCamera.LookDirection = new Vector3D(-200, -200, -200);
-                MainCamera.UpDirection = new Vector3D(0, 1, 0);
+                MainCamera.UpDirection = new Vector3D(0, -1, 0);
             }
         }
 
@@ -563,7 +683,7 @@ namespace VMS.Core.Controls
                 center.X - MainCamera.Position.X,
                 center.Y - MainCamera.Position.Y,
                 center.Z - MainCamera.Position.Z);
-            MainCamera.UpDirection = new Vector3D(0, 1, 0);
+            MainCamera.UpDirection = new Vector3D(0, -1, 0);
         }
 
         private (Vector3 center, float distance) GetCloudBounds()
@@ -595,7 +715,7 @@ namespace VMS.Core.Controls
             var (center, dist) = GetCloudBounds();
             MainCamera.Position = new Point3D(center.X, center.Y + dist, center.Z);
             MainCamera.LookDirection = new Vector3D(0, -1, 0);
-            MainCamera.UpDirection = new Vector3D(0, 0, -1);
+            MainCamera.UpDirection = new Vector3D(0, 0, 1);
         }
 
         private void BtnFrontView_Click(object sender, RoutedEventArgs e)
@@ -603,7 +723,7 @@ namespace VMS.Core.Controls
             var (center, dist) = GetCloudBounds();
             MainCamera.Position = new Point3D(center.X, center.Y, center.Z + dist);
             MainCamera.LookDirection = new Vector3D(0, 0, -1);
-            MainCamera.UpDirection = new Vector3D(0, 1, 0);
+            MainCamera.UpDirection = new Vector3D(0, -1, 0);
         }
 
         private void BtnSideView_Click(object sender, RoutedEventArgs e)
@@ -611,7 +731,7 @@ namespace VMS.Core.Controls
             var (center, dist) = GetCloudBounds();
             MainCamera.Position = new Point3D(center.X + dist, center.Y, center.Z);
             MainCamera.LookDirection = new Vector3D(-1, 0, 0);
-            MainCamera.UpDirection = new Vector3D(0, 1, 0);
+            MainCamera.UpDirection = new Vector3D(0, -1, 0);
         }
 
         #endregion

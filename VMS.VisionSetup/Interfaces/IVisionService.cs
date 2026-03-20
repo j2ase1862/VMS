@@ -10,6 +10,7 @@ namespace VMS.VisionSetup.Interfaces
     public interface IVisionService
     {
         Mat? CurrentImage { get; set; }
+        Mat? CurrentDepthMap32F { get; }
         ObservableCollection<VisionToolBase> Tools { get; }
         ObservableCollection<VisionResult> Results { get; }
         double TotalExecutionTime { get; }
@@ -27,7 +28,7 @@ namespace VMS.VisionSetup.Interfaces
         void ClearConnections();
         VisionResult ExecuteTool(VisionToolBase tool, Mat? inputImage = null);
         Task<List<VisionResult>> ExecuteAllAsync();
-        (Mat HeightMap, HeightMapMetadata Metadata) GenerateHeightMap(
+        (Mat HeightMap8U, Mat DepthMap32F, HeightMapMetadata Metadata) GenerateHeightMap(
             PointCloudData pointCloud, float zRef, float zMin, float zMax);
     }
 }

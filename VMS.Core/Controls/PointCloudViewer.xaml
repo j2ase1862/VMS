@@ -45,6 +45,9 @@
                          Background="Black"
                          ShowCoordinateSystem="True"
                          CoordinateSystemLabelForeground="White"
+                         CoordinateSystemLabelX="X"
+                         CoordinateSystemLabelY="Z"
+                         CoordinateSystemLabelZ="Y"
                          ShowFrameRate="False"
                          EnableDeferredRendering="False"
                          IsShadowMappingEnabled="False"
@@ -62,7 +65,7 @@
                 <hx:PerspectiveCamera x:Name="MainCamera"
                                        Position="200,200,200"
                                        LookDirection="-200,-200,-200"
-                                       UpDirection="0,1,0"
+                                       UpDirection="0,-1,0"
                                        FarPlaneDistance="10000"
                                        NearPlaneDistance="0.1"
                                        FieldOfView="45"/>
@@ -79,6 +82,14 @@
 
             <!-- Point Cloud -->
             <hx:PointGeometryModel3D x:Name="PointCloudModel" Size="5,5" Color="White"/>
+
+            <!-- Axis Labels (Billboard Text) -->
+            <hx:BillboardTextModel3D x:Name="AxisLabelX" FixedSize="True"/>
+            <hx:BillboardTextModel3D x:Name="AxisLabelY" FixedSize="True"/>
+            <hx:BillboardTextModel3D x:Name="AxisLabelZ" FixedSize="True"/>
+
+            <!-- Grid Tick Labels -->
+            <hx:BillboardTextModel3D x:Name="GridTickLabels" FixedSize="True"/>
 
         </hx:Viewport3DX>
 
@@ -126,11 +137,11 @@
                 <Rectangle Grid.Row="1" Width="12" Margin="0,2" RadiusX="2" RadiusY="2">
                     <Rectangle.Fill>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                            <GradientStop Color="#FFFF0000" Offset="0.0"/>
-                            <GradientStop Color="#FFFFFF00" Offset="0.25"/>
+                            <GradientStop Color="#FF0000FF" Offset="0.0"/>
+                            <GradientStop Color="#FF00FFFF" Offset="0.25"/>
                             <GradientStop Color="#FF00FF00" Offset="0.5"/>
-                            <GradientStop Color="#FF00FFFF" Offset="0.75"/>
-                            <GradientStop Color="#FF0000FF" Offset="1.0"/>
+                            <GradientStop Color="#FFFFFF00" Offset="0.75"/>
+                            <GradientStop Color="#FFFF0000" Offset="1.0"/>
                         </LinearGradientBrush>
                     </Rectangle.Fill>
                 </Rectangle>

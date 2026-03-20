@@ -117,7 +117,8 @@ namespace VMS.VisionSetup.Controls
 
             MinValueLabel.Text = yMin.ToString("F1");
             MaxValueLabel.Text = yMax.ToString("F1");
-            ColorBarPanel.Visibility = Visibility.Visible;
+            // Color bar is now provided by the external left panel in MainView
+            // ColorBarPanel.Visibility = Visibility.Visible;
 
             InnerViewer.StatusText = $"Loaded: {PointCloud?.Name} ({totalCount:N0} points)";
         }
@@ -155,10 +156,15 @@ namespace VMS.VisionSetup.Controls
 
             for (int i = 0; i < totalCount; i += stride)
             {
-                float normalizedZ = positions[i].Z - baseline;
+                var p = positions[i];
+
+                // Skip invalid points: Z==0 (no depth) or NaN/Infinity
+                if (p.Z == 0f || float.IsNaN(p.Z) || float.IsInfinity(p.Z)) continue;
+
+                float normalizedZ = p.Z - baseline;
                 if (normalizedZ >= lower && normalizedZ <= upper)
                 {
-                    float t = range > 0.0001f ? (normalizedZ - lower) / range : 0.5f;
+                    float t = range > 0.0001f ? 1f - (normalizedZ - lower) / range : 0.5f;
                     colors.Add(PointCloudViewer.JetColormap(t));
                     inCount++;
                 }

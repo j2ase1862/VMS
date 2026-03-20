@@ -8,12 +8,12 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="50"/>
+            <ColumnDefinition Width="80"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- Color Bar (left side, Mech-Mind style) -->
-        <Border Grid.Column="0" Background="#282828" Margin="4,4,0,4" CornerRadius="4" Padding="4">
+        <!-- Color Bar with interactive range thumbs -->
+        <Border Grid.Column="0" x:Name="ColorBarBorder" Background="#282828" Margin="4,4,0,4" CornerRadius="4" Padding="4">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -21,22 +21,73 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
+                <!-- DataMax label -->
                 <TextBlock Grid.Row="0" x:Name="MaxValueLabel" Text="--"
                            Foreground="White" FontSize="9" FontWeight="Bold"
                            HorizontalAlignment="Center" Margin="0,2"/>
 
-                <Rectangle Grid.Row="1" Width="16" Margin="0,4" RadiusX="2" RadiusY="2">
-                    <Rectangle.Fill>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                            <GradientStop Color="#FFFF0000" Offset="0.0"/>
-                            <GradientStop Color="#FFFFFF00" Offset="0.25"/>
-                            <GradientStop Color="#FF00FF00" Offset="0.5"/>
-                            <GradientStop Color="#FF00FFFF" Offset="0.75"/>
-                            <GradientStop Color="#FF0000FF" Offset="1.0"/>
-                        </LinearGradientBrush>
-                    </Rectangle.Fill>
-                </Rectangle>
+                <!-- Gradient area with overlays and thumbs -->
+                <Grid Grid.Row="1" Margin="0,4">
+                    <!-- Gradient bar -->
+                    <Rectangle x:Name="GradientRect" Width="20" HorizontalAlignment="Left" RadiusX="2" RadiusY="2">
+                        <Rectangle.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Color="#FF0000FF" Offset="0.0"/>
+                                <GradientStop Color="#FF00FFFF" Offset="0.25"/>
+                                <GradientStop Color="#FF00FF00" Offset="0.5"/>
+                                <GradientStop Color="#FFFFFF00" Offset="0.75"/>
+                                <GradientStop Color="#FFFF0000" Offset="1.0"/>
+                            </LinearGradientBrush>
+                        </Rectangle.Fill>
+                    </Rectangle>
 
+                    <!-- Canvas for dim overlays and thumbs -->
+                    <Canvas x:Name="ThumbCanvas" HorizontalAlignment="Stretch" SizeChanged="ThumbCanvas_SizeChanged">
+                        <!-- Upper dim overlay (above max thumb = out of range) -->
+                        <Rectangle x:Name="UpperDimOverlay" Width="20" Canvas.Left="0" Canvas.Top="0"
+                                   Fill="#AA000000" RadiusX="2" RadiusY="2"/>
+
+                        <!-- Lower dim overlay (below min thumb = out of range) -->
+                        <Rectangle x:Name="LowerDimOverlay" Width="20" Canvas.Left="0"
+                                   Fill="#AA000000" RadiusX="2" RadiusY="2"/>
+
+                        <!-- Max Thumb -->
+                        <Canvas x:Name="MaxThumbElement" Cursor="SizeNS"
+                                MouseLeftButtonDown="MaxThumb_MouseLeftButtonDown"
+                                MouseLeftButtonUp="Thumb_MouseLeftButtonUp"
+                                MouseMove="MaxThumb_MouseMove">
+                            <!-- Horizontal line across gradient -->
+                            <Line X1="0" Y1="0" X2="20" Y2="0"
+                                  Stroke="#00BFFF" StrokeThickness="2"/>
+                            <!-- Triangle marker -->
+                            <Polygon Points="22,0 30,-5 30,5"
+                                     Fill="#00BFFF"/>
+                            <!-- Value label -->
+                            <TextBlock x:Name="MaxThumbLabel" Text="--"
+                                       Canvas.Left="32" Canvas.Top="-7"
+                                       Foreground="#00BFFF" FontSize="9" FontWeight="Bold"/>
+                        </Canvas>
+
+                        <!-- Min Thumb -->
+                        <Canvas x:Name="MinThumbElement" Cursor="SizeNS"
+                                MouseLeftButtonDown="MinThumb_MouseLeftButtonDown"
+                                MouseLeftButtonUp="Thumb_MouseLeftButtonUp"
+                                MouseMove="MinThumb_MouseMove">
+                            <!-- Horizontal line across gradient -->
+                            <Line X1="0" Y1="0" X2="20" Y2="0"
+                                  Stroke="#FF6347" StrokeThickness="2"/>
+                            <!-- Triangle marker -->
+                            <Polygon Points="22,0 30,-5 30,5"
+                                     Fill="#FF6347"/>
+                            <!-- Value label -->
+                            <TextBlock x:Name="MinThumbLabel" Text="--"
+                                       Canvas.Left="32" Canvas.Top="-7"
+                                       Foreground="#FF6347" FontSize="9" FontWeight="Bold"/>
+                        </Canvas>
+                    </Canvas>
+                </Grid>
+
+                <!-- DataMin label -->
                 <TextBlock Grid.Row="2" x:Name="MinValueLabel" Text="--"
                            Foreground="White" FontSize="9" FontWeight="Bold"
                            HorizontalAlignment="Center" Margin="0,2"/>

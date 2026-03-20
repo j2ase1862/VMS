@@ -1,3 +1,4 @@
+using VMS.Camera.Converters;
 using VMS.Camera.Interfaces;
 using VMS.Camera.Models;
 using VMS.Camera.Services;
@@ -267,6 +268,16 @@ namespace VMS.VisionSetup.ViewModels
         private bool _isHeightSlicingSaved;
 
         public HeightMapMetadata? CurrentHeightMapMetadata { get; private set; }
+
+        // 3D Display Controls
+        [ObservableProperty]
+        private int _depthPointSize = 1;
+
+        [ObservableProperty]
+        private float _depthRangeMin;
+
+        [ObservableProperty]
+        private float _depthRangeMax;
 
         #region Camera Connection Properties
 
@@ -1290,6 +1301,23 @@ namespace VMS.VisionSetup.ViewModels
             {
                 CurrentRecipeName = recipe.Name;
                 MigrateStepSequencing(recipe);
+
+                // Height Slicing 설정 복원
+                if (recipe.HeightSlicing != null)
+                {
+                    _savedHeightBaseline = recipe.HeightSlicing.HeightBaseline;
+                    _savedHeightLowerLimit = recipe.HeightSlicing.HeightLowerLimit;
+                    _savedHeightUpperLimit = recipe.HeightSlicing.HeightUpperLimit;
+                    IsHeightSlicingSaved = true;
+                }
+                else
+                {
+                    _savedHeightBaseline = null;
+                    _savedHeightLowerLimit = null;
+                    _savedHeightUpperLimit = null;
+                    IsHeightSlicingSaved = false;
+                }
+                ClearHeightSlicingCommand.NotifyCanExecuteChanged();
             }
             else
             {
@@ -1630,6 +1658,7 @@ namespace VMS.VisionSetup.ViewModels
                     CurrentImage = result.Image2D;
 
                     // 3D 포인트 클라우드가 있으면 적용
+                    // OnCurrentPointCloudChanged에서 파라미터 복원 + 자동 Height Map 생성 처리
                     if (result.PointCloud != null)
                     {
                         CurrentPointCloud = result.PointCloud;
@@ -1732,6 +1761,8 @@ namespace VMS.VisionSetup.ViewModels
 
                 PointCloudYMin = zMin;
                 PointCloudYMax = zMax;
+                DepthRangeMin = zMin;
+                DepthRangeMax = zMax;
 
                 if (_savedHeightBaseline.HasValue)
                 {
@@ -1750,6 +1781,20 @@ namespace VMS.VisionSetup.ViewModels
             GenerateHeightMapCommand.NotifyCanExecuteChanged();
             SaveHeightSlicingCommand.NotifyCanExecuteChanged();
             SavePointCloudCommand.NotifyCanExecuteChanged();
+
+            // 자동 Height Map 생성 — PointCloud가 설정되면 즉시 rule-base 도구 사용 가능
+            if (value != null && value.IsOrganized)
+            {
+                GenerateHeightMap();
+
+                // 레시피에 저장된 DepthRange 슬라이더 값 복원 (GenerateHeightMap이 덮어쓴 후)
+                var slicing = _recipeService.CurrentRecipe?.HeightSlicing;
+                if (slicing != null)
+                {
+                    DepthRangeMin = slicing.DepthRangeMin;
+                    DepthRangeMax = slicing.DepthRangeMax;
+                }
+            }
         }
 
         private void SavePointCloud()
@@ -1805,6 +1850,22 @@ namespace VMS.VisionSetup.ViewModels
             _savedHeightUpperLimit = HeightUpperLimit;
             IsHeightSlicingSaved = true;
             ClearHeightSlicingCommand.NotifyCanExecuteChanged();
+
+            // 레시피에 영속 저장
+            var recipe = _recipeService.CurrentRecipe;
+            if (recipe != null)
+            {
+                recipe.HeightSlicing = new HeightSlicingSettings
+                {
+                    HeightBaseline = HeightBaseline,
+                    HeightLowerLimit = HeightLowerLimit,
+                    HeightUpperLimit = HeightUpperLimit,
+                    DepthRangeMin = DepthRangeMin,
+                    DepthRangeMax = DepthRangeMax
+                };
+                _recipeService.SaveRecipe(recipe);
+            }
+
             StatusMessage = $"Height Slicing 설정 저장됨: Baseline={HeightBaseline:F1}, 범위=[{HeightLowerLimit:F1}, {HeightUpperLimit:F1}]";
         }
 
@@ -1815,7 +1876,33 @@ namespace VMS.VisionSetup.ViewModels
             _savedHeightUpperLimit = null;
             IsHeightSlicingSaved = false;
             ClearHeightSlicingCommand.NotifyCanExecuteChanged();
+
+            // 레시피에서도 제거
+            var recipe = _recipeService.CurrentRecipe;
+            if (recipe != null)
+            {
+                recipe.HeightSlicing = null;
+                _recipeService.SaveRecipe(recipe);
+            }
+
             StatusMessage = "Height Slicing 설정 초기화됨";
+        }
+
+        partial void OnDepthRangeMinChanged(float value) => ApplyDepthRangeFilter();
+
+        partial void OnDepthRangeMaxChanged(float value) => ApplyDepthRangeFilter();
+
+        private void ApplyDepthRangeFilter()
+        {
+            var depthMap32F = _visionService.CurrentDepthMap32F;
+            if (depthMap32F == null)
+                return;
+
+            // CurrentDepthMap32F는 baseline 상대값 (pos.Z - HeightBaseline) 이므로
+            // DepthRangeMin/Max (raw Z값)에서 baseline을 빼서 좌표계 일치
+            float filterMin = DepthRangeMin - HeightBaseline;
+            float filterMax = DepthRangeMax - HeightBaseline;
+            CurrentImage = PointCloudConverter.DepthMap32FTo8UFiltered(depthMap32F, filterMin, filterMax);
         }
 
         private void GenerateHeightMap()
@@ -1825,11 +1912,18 @@ namespace VMS.VisionSetup.ViewModels
 
             try
             {
-                var (heightMap, metadata) = _visionService.GenerateHeightMap(
+                var (heightMap8U, _, metadata) = _visionService.GenerateHeightMap(
                     CurrentPointCloud, HeightBaseline, HeightLowerLimit, HeightUpperLimit);
 
-                CurrentImage = heightMap;
+                // 8-bit map은 표시 및 일반 2D 도구용
+                CurrentImage = heightMap8U;
                 CurrentHeightMapMetadata = metadata;
+                // float map은 VisionService.CurrentDepthMap32F에 clone 저장됨
+                // metadata.DepthMap32F에도 원본 참조 보관됨 (GetInterpolatedZ용)
+
+                // DepthRange 슬라이더를 HeightLimit 범위로 동기화
+                DepthRangeMin = HeightLowerLimit;
+                DepthRangeMax = HeightUpperLimit;
 
                 StatusMessage = $"Height Map 생성 완료: {metadata.Width}x{metadata.Height} " +
                     $"(Baseline={HeightBaseline:F1}, Range=[{HeightLowerLimit:F1}, {HeightUpperLimit:F1}])";

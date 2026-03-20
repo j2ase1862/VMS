@@ -250,16 +250,72 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
 
             try
             {
-                // ROI 오프셋 계산 (ROI 좌표계 → 원본 이미지 좌표계 변환)
-                // FindContours는 ROI 잘라낸 이미지 기준 좌표(0,0)를 반환하므로
-                // 절대 좌표 변환 시 ROI 시작점만큼 오프셋을 더해야 함
-                var adjustedROI = GetAdjustedROI(inputImage);
-                int offsetX = UseROI ? adjustedROI.X : 0;
-                int offsetY = UseROI ? adjustedROI.Y : 0;
+                // 회전 각도 결정: 라이브 ROI shape 또는 저장된 ROIAngle 사용
+                double effectiveAngle = AssociatedROIShape is RectangleAffineROI liveROI
+                    ? liveROI.Angle : ROIAngle;
 
-                // ROI 영역만 잘라내어 작업 이미지 생성
-                Mat workImage = GetROIImage(inputImage);
+                bool useRotatedROI = UseROI && ROI.Width > 0 && ROI.Height > 0
+                    && Math.Abs(effectiveAngle) > 0.001;
+
+                Mat workImage;
                 Mat binaryImage = new Mat();
+                int offsetX, offsetY;
+                double roiCenterX, roiCenterY;
+                int roiW, roiH;
+                Mat? rotationMatrixFwd = null;
+
+                if (useRotatedROI)
+                {
+                    // ── 회전 ROI: 역회전 → 축 정렬 크롭 → 정회전(좌표 복원) ──
+                    var adjustedROI = GetAdjustedROI(inputImage);
+                    roiCenterX = ROICenterX != 0 ? ROICenterX : adjustedROI.X + adjustedROI.Width / 2.0;
+                    roiCenterY = ROICenterY != 0 ? ROICenterY : adjustedROI.Y + adjustedROI.Height / 2.0;
+                    roiW = adjustedROI.Width;
+                    roiH = adjustedROI.Height;
+
+                    var center = new Point2f((float)roiCenterX, (float)roiCenterY);
+
+                    // 역회전 행렬로 이미지를 회전하여 ROI를 축 정렬
+                    var rotMatInv = Cv2.GetRotationMatrix2D(center, -effectiveAngle, 1.0);
+                    using var rotatedImage = new Mat();
+                    Cv2.WarpAffine(inputImage, rotatedImage, rotMatInv, inputImage.Size(),
+                        InterpolationFlags.Linear, BorderTypes.Reflect101);
+
+                    // 축 정렬된 영역으로 크롭
+                    int cropX = Math.Max(0, (int)(roiCenterX - roiW / 2.0));
+                    int cropY = Math.Max(0, (int)(roiCenterY - roiH / 2.0));
+                    int cropW = Math.Min(roiW, rotatedImage.Width - cropX);
+                    int cropH = Math.Min(roiH, rotatedImage.Height - cropY);
+
+                    if (cropW <= 0 || cropH <= 0)
+                    {
+                        workImage = inputImage.Clone();
+                        offsetX = 0;
+                        offsetY = 0;
+                    }
+                    else
+                    {
+                        workImage = new Mat(rotatedImage, new Rect(cropX, cropY, cropW, cropH));
+                        offsetX = cropX;
+                        offsetY = cropY;
+                    }
+
+                    // 정회전 행렬 (좌표 복원용)
+                    rotationMatrixFwd = Cv2.GetRotationMatrix2D(center, effectiveAngle, 1.0);
+                    rotMatInv.Dispose();
+                }
+                else
+                {
+                    // ── 기존 로직: 축 정렬 ROI ──
+                    var adjustedROI = GetAdjustedROI(inputImage);
+                    offsetX = UseROI ? adjustedROI.X : 0;
+                    offsetY = UseROI ? adjustedROI.Y : 0;
+                    roiCenterX = 0;
+                    roiCenterY = 0;
+                    roiW = 0;
+                    roiH = 0;
+                    workImage = GetROIImage(inputImage);
+                }
 
                 // 그레이스케일 변환
                 Mat grayImage = new Mat();
@@ -291,10 +347,19 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
 
                 foreach (var contour in contours)
                 {
-                    // 상대 좌표(ROI 기준)를 절대 좌표(원본 이미지 기준)로 즉시 변환
-                    // 이후 CalculateBlobProperties가 반환하는 모든 속성
-                    // (CenterX, CenterY, BoundingRect 등)이 절대 좌표로 저장됨
-                    Point[] absoluteContour = OffsetPoints(contour, offsetX, offsetY);
+                    Point[] absoluteContour;
+
+                    if (useRotatedROI && rotationMatrixFwd != null)
+                    {
+                        // 로컬 좌표 → 역회전된 이미지 좌표 → 정회전하여 원본 좌표로 복원
+                        absoluteContour = TransformContourToOriginal(contour, offsetX, offsetY, rotationMatrixFwd);
+                    }
+                    else
+                    {
+                        // 상대 좌표를 절대 좌표로 변환
+                        absoluteContour = OffsetPoints(contour, offsetX, offsetY);
+                    }
+
                     var blob = CalculateBlobProperties(absoluteContour, blobId);
 
                     if (blob.Area >= MinArea && blob.Area <= MaxArea &&
@@ -305,6 +370,8 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
                         blobId++;
                     }
                 }
+
+                rotationMatrixFwd?.Dispose();
 
                 // 결과 정렬 및 최대 개수 제한
                 blobs = SortBlobs(blobs);
@@ -438,7 +505,70 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
                 }
 
                 // 최종 결과 이미지 구성
-                result.OutputImage = UseROI ? ApplyROIResult(inputImage, binaryImage) : binaryImage.Clone();
+                if (useRotatedROI)
+                {
+                    // 회전된 ROI 마스크를 사용하여 결과 이미지 합성
+                    var resultImage = new Mat(inputImage.Size(), binaryImage.Type(), Scalar.Black);
+                    using var mask = new Mat(inputImage.Size(), MatType.CV_8UC1, Scalar.Black);
+                    var roiShape = AssociatedROIShape as RectangleAffineROI;
+                    if (roiShape != null)
+                    {
+                        var corners = roiShape.GetCorners();
+                        var cvPoints = new Point[]
+                        {
+                            new Point((int)corners[0].X, (int)corners[0].Y),
+                            new Point((int)corners[1].X, (int)corners[1].Y),
+                            new Point((int)corners[2].X, (int)corners[2].Y),
+                            new Point((int)corners[3].X, (int)corners[3].Y)
+                        };
+                        Cv2.FillConvexPoly(mask, cvPoints, Scalar.White);
+                    }
+                    else
+                    {
+                        // Fallback: ROIAngle로 직접 마스크 생성
+                        var affineROI = new RectangleAffineROI(roiCenterX, roiCenterY, roiW, roiH, effectiveAngle);
+                        var corners = affineROI.GetCorners();
+                        var cvPoints = new Point[]
+                        {
+                            new Point((int)corners[0].X, (int)corners[0].Y),
+                            new Point((int)corners[1].X, (int)corners[1].Y),
+                            new Point((int)corners[2].X, (int)corners[2].Y),
+                            new Point((int)corners[3].X, (int)corners[3].Y)
+                        };
+                        Cv2.FillConvexPoly(mask, cvPoints, Scalar.White);
+                    }
+
+                    // 역회전 → 이진화 결과를 정회전 → 마스크 적용
+                    var center2f = new Point2f((float)roiCenterX, (float)roiCenterY);
+                    using var rotMatFwd = Cv2.GetRotationMatrix2D(center2f, effectiveAngle, 1.0);
+                    using var binaryFull = new Mat(inputImage.Size(), binaryImage.Type(), Scalar.Black);
+
+                    // binaryImage를 역회전된 전체 이미지 위 올바른 위치에 복원
+                    int pX = Math.Max(0, (int)(roiCenterX - roiW / 2.0));
+                    int pY = Math.Max(0, (int)(roiCenterY - roiH / 2.0));
+                    int pW = Math.Min(binaryImage.Width, binaryFull.Width - pX);
+                    int pH = Math.Min(binaryImage.Height, binaryFull.Height - pY);
+                    if (pW > 0 && pH > 0)
+                    {
+                        var srcRegion = binaryImage.Width == pW && binaryImage.Height == pH
+                            ? binaryImage : new Mat(binaryImage, new Rect(0, 0, pW, pH));
+                        srcRegion.CopyTo(new Mat(binaryFull, new Rect(pX, pY, pW, pH)));
+                        if (srcRegion != binaryImage) srcRegion.Dispose();
+                    }
+
+                    // 정회전하여 원본 좌표계로 복원
+                    using var binaryRotated = new Mat();
+                    Cv2.WarpAffine(binaryFull, binaryRotated, rotMatFwd, inputImage.Size(),
+                        InterpolationFlags.Linear, BorderTypes.Constant, Scalar.Black);
+
+                    // 마스크 적용
+                    binaryRotated.CopyTo(resultImage, mask);
+                    result.OutputImage = resultImage;
+                }
+                else
+                {
+                    result.OutputImage = UseROI ? ApplyROIResult(inputImage, binaryImage) : binaryImage.Clone();
+                }
                 result.OverlayImage = overlayImage;
                 if (workImage != inputImage)
                     workImage.Dispose();
@@ -543,6 +673,35 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
             return sorted.ToList();
         }
 
+        /// <summary>
+        /// 로컬 contour 좌표를 역회전 이미지 좌표로 오프셋 후, 정회전 행렬로 원본 좌표로 복원
+        /// </summary>
+        private static Point[] TransformContourToOriginal(Point[] localContour, int cropX, int cropY, Mat rotationMatrixFwd)
+        {
+            // 행렬 값 추출 (2x3 affine matrix)
+            double m00 = rotationMatrixFwd.At<double>(0, 0);
+            double m01 = rotationMatrixFwd.At<double>(0, 1);
+            double m02 = rotationMatrixFwd.At<double>(0, 2);
+            double m10 = rotationMatrixFwd.At<double>(1, 0);
+            double m11 = rotationMatrixFwd.At<double>(1, 1);
+            double m12 = rotationMatrixFwd.At<double>(1, 2);
+
+            var result = new Point[localContour.Length];
+            for (int i = 0; i < localContour.Length; i++)
+            {
+                // 로컬 → 역회전된 이미지 좌표
+                double ix = localContour[i].X + cropX;
+                double iy = localContour[i].Y + cropY;
+
+                // 정회전 행렬 적용 → 원본 좌표
+                double ox = m00 * ix + m01 * iy + m02;
+                double oy = m10 * ix + m11 * iy + m12;
+
+                result[i] = new Point((int)Math.Round(ox), (int)Math.Round(oy));
+            }
+            return result;
+        }
+
         private static Point[] OffsetPoints(Point[] points, int offsetX, int offsetY)
         {
             if (offsetX == 0 && offsetY == 0)
@@ -593,6 +752,9 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
                 IsEnabled = this.IsEnabled,
                 ROI = this.ROI,
                 UseROI = this.UseROI,
+                ROIAngle = this.ROIAngle,
+                ROICenterX = this.ROICenterX,
+                ROICenterY = this.ROICenterY,
                 UseInternalThreshold = this.UseInternalThreshold,
                 ThresholdValue = this.ThresholdValue,
                 SegmentationPolarity = this.SegmentationPolarity,

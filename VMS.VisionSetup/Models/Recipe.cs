@@ -107,6 +107,11 @@ namespace VMS.VisionSetup.Models
         public SequenceConfig? ProcessSequence { get; set; }
 
         /// <summary>
+        /// Height Slicing 설정 (저장된 경우)
+        /// </summary>
+        public HeightSlicingSettings? HeightSlicing { get; set; }
+
+        /// <summary>
         /// 표시용 정보 문자열
         /// </summary>
         [JsonIgnore]
@@ -222,6 +227,18 @@ namespace VMS.VisionSetup.Models
                 return false;
             return true;
         }
+    }
+
+    /// <summary>
+    /// Height Slicing 설정
+    /// </summary>
+    public class HeightSlicingSettings
+    {
+        public float HeightBaseline { get; set; }
+        public float HeightLowerLimit { get; set; }
+        public float HeightUpperLimit { get; set; }
+        public float DepthRangeMin { get; set; }
+        public float DepthRangeMax { get; set; }
     }
 
     /// <summary>
