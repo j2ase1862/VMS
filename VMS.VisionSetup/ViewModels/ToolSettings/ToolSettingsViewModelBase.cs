@@ -1,4 +1,5 @@
 using VMS.VisionSetup.Models;
+using VMS.VisionSetup.VisionTools.BlobAnalysis;
 using VMS.VisionSetup.VisionTools.Measurement;
 using VMS.PLC.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -28,7 +29,7 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
                     WeakReferenceMessenger.Default.Send(new RequestDrawROIMessage(useAffine: false, useCircle: true));
                     return;
                 }
-                bool isMeasurement = Tool is LineFitTool or CaliperTool;
+                bool isMeasurement = Tool is LineFitTool or CaliperTool or BlobTool;
                 WeakReferenceMessenger.Default.Send(new RequestDrawROIMessage(isMeasurement));
             });
 
@@ -44,11 +45,11 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
             {
                 if (!UseROI || ROIWidth <= 0 || ROIHeight <= 0) return;
 
-                bool isMeasurementTool = Tool is LineFitTool or CaliperTool;
+                bool isAffineTool = Tool is LineFitTool or CaliperTool or BlobTool;
                 bool isCircleFitTool = Tool is CircleFitTool;
 
-                // 측정 도구인데 기존 ROI가 RectangleROI면 → RectangleAffineROI로 변환
-                if (isMeasurementTool && AssociatedROIShape is RectangleROI oldRect)
+                // Affine 도구인데 기존 ROI가 RectangleROI면 → RectangleAffineROI로 변환
+                if (isAffineTool && AssociatedROIShape is RectangleROI oldRect)
                 {
                     AssociatedROIShape = new RectangleAffineROI(
                         oldRect.X + oldRect.Width / 2.0,
@@ -58,7 +59,7 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
                         Tool.ROIAngle)
                     {
                         Name = oldRect.Name,
-                        ShowSearchArrow = true
+                        ShowSearchArrow = Tool is LineFitTool or CaliperTool
                     };
                 }
 
@@ -96,7 +97,7 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
                             SearchOutward = cft.SearchDirection == CircleSearchDirection.InwardToOutward
                         };
                     }
-                    else if (isMeasurementTool)
+                    else if (isAffineTool)
                     {
                         AssociatedROIShape = new RectangleAffineROI(
                             Tool.ROICenterX != 0 ? Tool.ROICenterX : ROIX + ROIWidth / 2.0,
@@ -106,7 +107,7 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
                             Tool.ROIAngle)
                         {
                             Name = $"{Name} ROI",
-                            ShowSearchArrow = true
+                            ShowSearchArrow = Tool is LineFitTool or CaliperTool
                         };
                     }
                     else

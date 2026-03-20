@@ -38,13 +38,31 @@ namespace VMS.VisionSetup.VisionTools.ImageProcessing
 
             try
             {
-                // inputImage는 3D 카메라로부터 획득한 CV_32F 타입의 Depth Map이라고 가정
-                if (inputImage.Type() != MatType.CV_32FC1)
+                // 입력 타입 확인 및 변환
+                Mat floatInput;
+                bool needDisposeFloat = false;
+
+                if (inputImage.Type() == MatType.CV_32FC1)
                 {
-                    throw new Exception("입력 이미지가 32비트 Float(Depth) 형식이 아닙니다.");
+                    floatInput = inputImage;
+                }
+                else if (inputImage.Type() == MatType.CV_8UC1)
+                {
+                    floatInput = new Mat();
+                    inputImage.ConvertTo(floatInput, MatType.CV_32FC1);
+                    needDisposeFloat = true;
+                }
+                else
+                {
+                    result.Success = false;
+                    result.Message = $"Slicing 실패: 지원하지 않는 이미지 형식입니다 ({inputImage.Type()})";
+                    sw.Stop();
+                    ExecutionTime = sw.Elapsed.TotalMilliseconds;
+                    LastResult = result;
+                    return result;
                 }
 
-                Mat workImage = GetROIImage(inputImage);
+                Mat workImage = GetROIImage(floatInput);
                 Mat mask = new Mat();
                 Mat normalized = new Mat();
                 Mat outputImage = new Mat();
@@ -62,7 +80,7 @@ namespace VMS.VisionSetup.VisionTools.ImageProcessing
                 normalized.CopyTo(outputImage, mask);
 
                 // ROI 결과 적용 (필요시)
-                Mat finalOutput = UseROI ? ApplyROIResult(inputImage, outputImage) : outputImage;
+                Mat finalOutput = UseROI ? ApplyROIResult(floatInput, outputImage) : outputImage;
 
                 result.Success = true;
                 result.OutputImage = finalOutput;
@@ -74,7 +92,8 @@ namespace VMS.VisionSetup.VisionTools.ImageProcessing
                 mask.Dispose();
                 normalized.Dispose();
                 if (outputImage != finalOutput) outputImage.Dispose();
-                if (workImage != inputImage) workImage.Dispose();
+                if (workImage != floatInput) workImage.Dispose();
+                if (needDisposeFloat) floatInput.Dispose();
             }
             catch (Exception ex)
             {
