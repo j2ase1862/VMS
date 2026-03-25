@@ -332,6 +332,81 @@ namespace VMS.VisionSetup.ViewModels
             }
         }
 
+        // 검사 모드 (SingleShot / MultiView)
+        public InspectionMode[] InspectionModes { get; } = (InspectionMode[])Enum.GetValues(typeof(InspectionMode));
+
+        private InspectionMode _selectedInspectionMode = InspectionMode.SingleShot;
+        public InspectionMode SelectedInspectionMode
+        {
+            get => _selectedInspectionMode;
+            set
+            {
+                if (SetProperty(ref _selectedInspectionMode, value))
+                {
+                    OnPropertyChanged(nameof(IsMultiViewMode));
+                    OnPropertyChanged(nameof(MultiViewStatusText));
+                    ConnectRobotCommand?.NotifyCanExecuteChanged();
+                    DisconnectRobotCommand?.NotifyCanExecuteChanged();
+                    MultiViewCaptureCommand?.NotifyCanExecuteChanged();
+                    MultiViewProcessCommand?.NotifyCanExecuteChanged();
+                    MultiViewClearCommand?.NotifyCanExecuteChanged();
+                }
+            }
+        }
+
+        /// <summary>MultiView 모드 여부 (UI Visibility 바인딩용)</summary>
+        public bool IsMultiViewMode => SelectedInspectionMode == InspectionMode.MultiView;
+
+        // 로봇 연결 설정
+        private string _robotIpAddress = "192.168.1.100";
+        public string RobotIpAddress
+        {
+            get => _robotIpAddress;
+            set => SetProperty(ref _robotIpAddress, value);
+        }
+
+        private int _robotPort = 30003;
+        public int RobotPort
+        {
+            get => _robotPort;
+            set => SetProperty(ref _robotPort, value);
+        }
+
+        // 로봇 회전 표현 방식
+        public EulerConvention[] EulerConventions { get; } = (EulerConvention[])Enum.GetValues(typeof(EulerConvention));
+
+        private EulerConvention _selectedEulerConvention = EulerConvention.UR_RotationVector;
+        public EulerConvention SelectedEulerConvention
+        {
+            get => _selectedEulerConvention;
+            set => SetProperty(ref _selectedEulerConvention, value);
+        }
+
+        // 로봇 연결 상태
+        [ObservableProperty]
+        private bool _isRobotConnected;
+
+        // 멀티뷰 세션
+        private MultiViewSession? _multiViewSession;
+
+        /// <summary>멀티뷰 수집된 스캔 수</summary>
+        public string MultiViewStatusText => _multiViewSession != null
+            ? $"스캔: {_multiViewSession.Scans.Count}개 | {_multiViewSession.StatusMessage}"
+            : "세션 없음";
+
+        // 정합 전략
+        public RegistrationStrategy[] RegistrationStrategies { get; } = (RegistrationStrategy[])Enum.GetValues(typeof(RegistrationStrategy));
+
+        private RegistrationStrategy _selectedRegistrationStrategy = RegistrationStrategy.PoseOnly;
+        public RegistrationStrategy SelectedRegistrationStrategy
+        {
+            get => _selectedRegistrationStrategy;
+            set => SetProperty(ref _selectedRegistrationStrategy, value);
+        }
+
+        // 로봇 서비스 (DI 또는 직접 생성)
+        private IRobotService? _robotService;
+
         // 스텝 목록 (선택된 카메라 기준)
         public ObservableCollection<InspectionStep> Steps { get; } = new();
 
@@ -382,6 +457,11 @@ namespace VMS.VisionSetup.ViewModels
         public RelayCommand StopLiveReceiveCommand { get; }
         public RelayCommand SavePointCloudCommand { get; }
         public RelayCommand LoadPointCloudCommand { get; }
+        public RelayCommand ConnectRobotCommand { get; }
+        public RelayCommand DisconnectRobotCommand { get; }
+        public RelayCommand MultiViewCaptureCommand { get; }
+        public RelayCommand MultiViewProcessCommand { get; }
+        public RelayCommand MultiViewClearCommand { get; }
         public RelayCommand SaveHeightSlicingCommand { get; }
         public RelayCommand ClearHeightSlicingCommand { get; }
         #endregion
@@ -431,6 +511,13 @@ namespace VMS.VisionSetup.ViewModels
             LoadPointCloudCommand = new RelayCommand(LoadPointCloud);
             SaveHeightSlicingCommand = new RelayCommand(SaveHeightSlicing, () => CurrentPointCloud != null);
             ClearHeightSlicingCommand = new RelayCommand(ClearHeightSlicing, () => IsHeightSlicingSaved);
+
+            // MultiView 관련 커맨드
+            ConnectRobotCommand = new RelayCommand(async () => await ConnectRobot(), () => !IsRobotConnected && IsMultiViewMode);
+            DisconnectRobotCommand = new RelayCommand(async () => await DisconnectRobot(), () => IsRobotConnected);
+            MultiViewCaptureCommand = new RelayCommand(async () => await MultiViewCapture(), () => IsMultiViewMode && IsCameraConnected && IsRobotConnected);
+            MultiViewProcessCommand = new RelayCommand(async () => await MultiViewProcess(), () => _multiViewSession?.Scans.Count > 0);
+            MultiViewClearCommand = new RelayCommand(MultiViewClear, () => _multiViewSession?.Scans.Count > 0);
 
             // 레시피 변경 이벤트 구독
             _recipeService.CurrentRecipeChanged += OnCurrentRecipeChanged;
@@ -1318,6 +1405,9 @@ namespace VMS.VisionSetup.ViewModels
                     IsHeightSlicingSaved = false;
                 }
                 ClearHeightSlicingCommand.NotifyCanExecuteChanged();
+
+                // MultiView 설정 복원
+                LoadMultiViewSettingsFromRecipe(recipe);
             }
             else
             {
@@ -1695,6 +1785,172 @@ namespace VMS.VisionSetup.ViewModels
             {
                 SelectedCamera = Cameras.FirstOrDefault(c => c.Id == selectedId);
             }
+        }
+
+        #endregion
+
+        #region Robot / MultiView
+
+        private async System.Threading.Tasks.Task ConnectRobot()
+        {
+            try
+            {
+                _robotService?.Dispose();
+
+                // 시뮬레이션 모드: IP가 "SIM" 또는 비어있으면 SimulatedRobotService 사용
+                if (string.IsNullOrWhiteSpace(RobotIpAddress) || RobotIpAddress.Equals("SIM", StringComparison.OrdinalIgnoreCase))
+                {
+                    _robotService = new SimulatedRobotService { Convention = SelectedEulerConvention };
+                }
+                else
+                {
+                    _robotService = new TcpRobotService { Convention = SelectedEulerConvention };
+                }
+
+                var success = await _robotService.ConnectAsync(RobotIpAddress, RobotPort);
+                IsRobotConnected = success;
+
+                if (success)
+                {
+                    // 세션 초기화
+                    _multiViewSession?.Dispose();
+                    _multiViewSession = new MultiViewSession
+                    {
+                        Strategy = SelectedRegistrationStrategy
+                    };
+
+                    StatusMessage = $"로봇 연결됨: {RobotIpAddress}:{RobotPort} ({SelectedEulerConvention})";
+                }
+                else
+                {
+                    StatusMessage = "로봇 연결 실패";
+                }
+
+                ConnectRobotCommand.NotifyCanExecuteChanged();
+                DisconnectRobotCommand.NotifyCanExecuteChanged();
+                MultiViewCaptureCommand.NotifyCanExecuteChanged();
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"로봇 연결 오류: {ex.Message}";
+            }
+        }
+
+        private async System.Threading.Tasks.Task DisconnectRobot()
+        {
+            try
+            {
+                if (_robotService != null)
+                {
+                    await _robotService.DisconnectAsync();
+                    _robotService.Dispose();
+                    _robotService = null;
+                }
+
+                IsRobotConnected = false;
+                StatusMessage = "로봇 연결 해제됨";
+
+                ConnectRobotCommand.NotifyCanExecuteChanged();
+                DisconnectRobotCommand.NotifyCanExecuteChanged();
+                MultiViewCaptureCommand.NotifyCanExecuteChanged();
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"로봇 해제 오류: {ex.Message}";
+            }
+        }
+
+        /// <summary>
+        /// 현재 위치에서 1회 촬영 + 로봇 포즈 수집 (MultiView 모드)
+        /// 로봇이 이미 목표 위치에 도달한 상태에서 호출
+        /// </summary>
+        private async System.Threading.Tasks.Task MultiViewCapture()
+        {
+            if (_robotService == null || _cameraAcquisition == null || _multiViewSession == null)
+                return;
+
+            try
+            {
+                IsAcquiring = true;
+                AcquireImageCommand.NotifyCanExecuteChanged();
+
+                // Auto-connect camera
+                if (!IsCameraConnected)
+                {
+                    await ConnectCamera();
+                    if (!IsCameraConnected) return;
+                }
+
+                var scan = await _multiViewSession.CaptureAtCurrentPoseAsync(_robotService, _cameraAcquisition);
+
+                if (scan != null)
+                {
+                    // 2D 이미지 표시 (마지막 촬영본)
+                    if (scan.Image2D != null)
+                        CurrentImage = scan.Image2D.Clone();
+
+                    // 3D 포인트 클라우드 표시
+                    if (scan.PointCloud != null)
+                        CurrentPointCloud = scan.PointCloud;
+
+                    StatusMessage = $"MultiView 스캔 {_multiViewSession.Scans.Count}개 수집완료 | {scan.Pose}";
+                }
+
+                OnPropertyChanged(nameof(MultiViewStatusText));
+                MultiViewProcessCommand.NotifyCanExecuteChanged();
+                MultiViewClearCommand.NotifyCanExecuteChanged();
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"MultiView 촬영 오류: {ex.Message}";
+            }
+            finally
+            {
+                IsAcquiring = false;
+                AcquireImageCommand.NotifyCanExecuteChanged();
+            }
+        }
+
+        /// <summary>
+        /// 수집된 스캔 데이터를 정합하여 통합 포인트 클라우드 생성
+        /// </summary>
+        private async System.Threading.Tasks.Task MultiViewProcess()
+        {
+            if (_multiViewSession == null || _multiViewSession.Scans.Count == 0) return;
+
+            try
+            {
+                _multiViewSession.Strategy = SelectedRegistrationStrategy;
+                StatusMessage = "MultiView 정합 처리 중...";
+
+                var merged = await _multiViewSession.ProcessAsync();
+
+                if (merged != null)
+                {
+                    CurrentPointCloud = merged;
+                    StatusMessage = $"MultiView 정합 완료: {merged.PointCount:N0} pts";
+                }
+                else
+                {
+                    StatusMessage = "MultiView 정합 실패";
+                }
+
+                OnPropertyChanged(nameof(MultiViewStatusText));
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"MultiView 정합 오류: {ex.Message}";
+            }
+        }
+
+        /// <summary>스캔 데이터 초기화</summary>
+        private void MultiViewClear()
+        {
+            _multiViewSession?.ClearScans();
+            OnPropertyChanged(nameof(MultiViewStatusText));
+            MultiViewProcessCommand.NotifyCanExecuteChanged();
+            MultiViewClearCommand.NotifyCanExecuteChanged();
+            StatusMessage = "MultiView 세션 초기화됨";
         }
 
         #endregion
@@ -2113,6 +2369,7 @@ namespace VMS.VisionSetup.ViewModels
             if (currentRecipe != null)
             {
                 SaveWorkspaceToStep();
+                SaveMultiViewSettingsToRecipe(currentRecipe);
                 currentRecipe.ModifiedAt = DateTime.Now;
                 _recipeService.SaveRecipe(currentRecipe);
                 StatusMessage = $"Recipe saved: {currentRecipe.Name}";
@@ -2131,8 +2388,29 @@ namespace VMS.VisionSetup.ViewModels
             if (loadedRecipe != null)
             {
                 CurrentRecipeName = loadedRecipe.Name;
+                LoadMultiViewSettingsFromRecipe(loadedRecipe);
                 StatusMessage = $"Recipe loaded: {loadedRecipe.Name}";
             }
+        }
+
+        /// <summary>MultiView 설정을 Recipe에 저장</summary>
+        private void SaveMultiViewSettingsToRecipe(Recipe recipe)
+        {
+            recipe.InspectionMode = SelectedInspectionMode;
+            recipe.RobotIpAddress = RobotIpAddress;
+            recipe.RobotPort = RobotPort;
+            recipe.EulerConvention = SelectedEulerConvention;
+            recipe.RegistrationStrategy = SelectedRegistrationStrategy;
+        }
+
+        /// <summary>Recipe에서 MultiView 설정 복원</summary>
+        private void LoadMultiViewSettingsFromRecipe(Recipe recipe)
+        {
+            SelectedInspectionMode = recipe.InspectionMode;
+            RobotIpAddress = recipe.RobotIpAddress;
+            RobotPort = recipe.RobotPort;
+            SelectedEulerConvention = recipe.EulerConvention;
+            SelectedRegistrationStrategy = recipe.RegistrationStrategy;
         }
 
         public void OpenCameraManager()

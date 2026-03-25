@@ -131,6 +131,14 @@ namespace VMS.VisionSetup.Services
             }
         }
 
+        // 3D 높이맵 메타데이터 (PlaneFitTool, Geometry3DTool 등 3D 측정 도구용)
+        private HeightMapMetadata? _currentHeightMapMetadata;
+        public HeightMapMetadata? CurrentHeightMapMetadata
+        {
+            get => _currentHeightMapMetadata;
+            set => SetProperty(ref _currentHeightMapMetadata, value);
+        }
+
         private VisionService() { }
 
         /// <summary>
@@ -1041,6 +1049,9 @@ namespace VMS.VisionSetup.Services
             // VisionService에 float map 보관 (HeightSlicerTool 라우팅용)
             CurrentDepthMap32F = depthMap32F.Clone();
 
+            // 3D 측정 도구용 메타데이터 보관 (PlaneFitTool, Geometry3DTool)
+            CurrentHeightMapMetadata = metadata;
+
             return (heightMap8U, depthMap32F, metadata);
         }
 
@@ -1052,6 +1063,7 @@ namespace VMS.VisionSetup.Services
             CurrentImage?.Dispose();
             CurrentImage = null;
             CurrentDepthMap32F = null;
+            CurrentHeightMapMetadata = null;
             LastCompositeOverlay = null;
         }
     }
