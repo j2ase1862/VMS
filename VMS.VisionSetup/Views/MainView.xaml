@@ -544,213 +544,71 @@
                         </ComboBox>
                     </StackPanel>
 
-                    <!-- Row 2: Inspection Mode Selector -->
+                    <!-- Row 2: Inspection Mode + MultiView Setup Button -->
                     <StackPanel Grid.Row="2" Margin="8,2,8,0">
                         <TextBlock Text="Inspection Mode" Foreground="#FFD700" FontWeight="Bold" FontSize="12" Margin="0,6,0,4"/>
-                        <ComboBox ItemsSource="{Binding InspectionModes}"
-                                  SelectedItem="{Binding SelectedInspectionMode}"
-                                  Background="#3C3C3C" Foreground="Black"
-                                  BorderBrush="#555555" BorderThickness="1"
-                                  FontSize="11" Padding="6,4" MinHeight="28"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox ItemsSource="{Binding InspectionModes}"
+                                      SelectedItem="{Binding SelectedInspectionMode}"
+                                      Background="#3C3C3C" Foreground="Black"
+                                      BorderBrush="#555555" BorderThickness="1"
+                                      FontSize="11" Padding="6,4" MinHeight="28"/>
 
-                        <!-- MultiView 모드 전용 패널 -->
-                        <Border Background="#2A2A2A" CornerRadius="4" Margin="0,6,0,0" Padding="8,6"
-                                Visibility="{Binding IsMultiViewMode, Converter={StaticResource BoolToVisibility}}">
-                            <StackPanel>
-                                <!-- Robot Connection -->
-                                <TextBlock Text="Robot" Foreground="#FF9800" FontWeight="Bold" FontSize="11" Margin="0,0,0,4"/>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBox Text="{Binding RobotIpAddress, UpdateSourceTrigger=PropertyChanged}"
-                                             Background="#3C3C3C" Foreground="White" BorderBrush="#555555"
-                                             FontSize="11" Padding="4,3" VerticalContentAlignment="Center"/>
-                                    <TextBox Grid.Column="1" Text="{Binding RobotPort, UpdateSourceTrigger=PropertyChanged}"
-                                             Background="#3C3C3C" Foreground="White" BorderBrush="#555555"
-                                             FontSize="11" Padding="4,3" Width="55" Margin="4,0,0,0"
-                                             VerticalContentAlignment="Center"/>
-                                </Grid>
+                            <!-- MultiView Setup 버튼 (MultiView 모드일 때만 표시) -->
+                            <Button Grid.Column="1" Click="MultiViewSetup_Click" Cursor="Hand"
+                                    BorderThickness="0" Padding="0" Margin="4,0,0,0"
+                                    ToolTip="MultiView Scan Setup"
+                                    Visibility="{Binding IsMultiViewMode, Converter={StaticResource BoolToVisibility}}">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="Bd" Background="#E65100" CornerRadius="3" Padding="8,4">
+                                            <TextBlock Text="Setup" Foreground="White" FontSize="11" FontWeight="SemiBold"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bd" Property="Background" Value="#FF6D00"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </Grid>
 
-                                <ComboBox ItemsSource="{Binding EulerConventions}"
-                                          SelectedItem="{Binding SelectedEulerConvention}"
-                                          Background="#3C3C3C" Foreground="Black" BorderBrush="#555555"
-                                          FontSize="10" Padding="4,3" MinHeight="24" Margin="0,4,0,0"/>
-
-                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                    <Button Command="{Binding ConnectRobotCommand}" Cursor="Hand" BorderThickness="0" Padding="0">
-                                        <Button.Template>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border Background="#4CAF50" CornerRadius="3" Padding="10,3"
-                                                        Opacity="{TemplateBinding Opacity}">
-                                                    <TextBlock Text="Connect" Foreground="White" FontSize="10" FontWeight="SemiBold"/>
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Button.Template>
-                                    </Button>
-                                    <Button Command="{Binding DisconnectRobotCommand}" Cursor="Hand" BorderThickness="0" Padding="0" Margin="4,0,0,0">
-                                        <Button.Template>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border Background="#F44336" CornerRadius="3" Padding="10,3">
-                                                    <TextBlock Text="Disconnect" Foreground="White" FontSize="10" FontWeight="SemiBold"/>
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Button.Template>
-                                    </Button>
-                                    <Ellipse Width="9" Height="9" Margin="8,0,0,0" VerticalAlignment="Center">
-                                        <Ellipse.Style>
-                                            <Style TargetType="Ellipse">
-                                                <Setter Property="Fill" Value="#F44336"/>
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding IsRobotConnected}" Value="True">
-                                                        <Setter Property="Fill" Value="#4CAF50"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Ellipse.Style>
-                                    </Ellipse>
-                                </StackPanel>
-
-                                <!-- Registration Strategy -->
-                                <TextBlock Text="Strategy" Foreground="#FF9800" FontWeight="Bold" FontSize="11" Margin="0,8,0,4"/>
-                                <ComboBox ItemsSource="{Binding RegistrationStrategies}"
-                                          SelectedItem="{Binding SelectedRegistrationStrategy}"
-                                          Background="#3C3C3C" Foreground="Black" BorderBrush="#555555"
-                                          FontSize="10" Padding="4,3" MinHeight="24"/>
-
-                                <!-- MultiView Controls -->
-                                <TextBlock Text="Scan" Foreground="#FF9800" FontWeight="Bold" FontSize="11" Margin="0,8,0,4"/>
-                                <UniformGrid Columns="3" HorizontalAlignment="Stretch">
-                                    <Button Command="{Binding MultiViewCaptureCommand}" Cursor="Hand" BorderThickness="0" Padding="0"
-                                            ToolTip="현재 위치에서 촬영 + 포즈 수집">
-                                        <Button.Template>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border Background="#2196F3" CornerRadius="3" Padding="6,4" Margin="0,0,2,0">
-                                                    <TextBlock Text="Capture" Foreground="White" FontSize="10" FontWeight="SemiBold"
-                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Button.Template>
-                                    </Button>
-                                    <Button Command="{Binding MultiViewProcessCommand}" Cursor="Hand" BorderThickness="0" Padding="0"
-                                            ToolTip="수집된 스캔 데이터 정합 실행">
-                                        <Button.Template>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border Background="#9C27B0" CornerRadius="3" Padding="6,4" Margin="2,0">
-                                                    <TextBlock Text="Process" Foreground="White" FontSize="10" FontWeight="SemiBold"
-                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Button.Template>
-                                    </Button>
-                                    <Button Command="{Binding MultiViewClearCommand}" Cursor="Hand" BorderThickness="0" Padding="0"
-                                            ToolTip="스캔 데이터 초기화">
-                                        <Button.Template>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border Background="#757575" CornerRadius="3" Padding="6,4" Margin="2,0,0,0">
-                                                    <TextBlock Text="Clear" Foreground="White" FontSize="10" FontWeight="SemiBold"
-                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Button.Template>
-                                    </Button>
-                                </UniformGrid>
-
-                                <!-- Status -->
-                                <TextBlock Text="{Binding MultiViewStatusText}" Foreground="#AAAAAA"
-                                           FontSize="10" TextWrapping="Wrap" Margin="0,6,0,0"/>
-
-                                <!-- Waypoint Planner -->
-                                <TextBlock Text="Waypoint Planner" Foreground="#FF9800" FontWeight="Bold" FontSize="11" Margin="0,10,0,4"/>
-
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-
-                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Pattern" Foreground="#999" FontSize="10"
-                                               VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                    <ComboBox Grid.Row="0" Grid.Column="1"
-                                              ItemsSource="{Binding WaypointPatterns}"
-                                              SelectedItem="{Binding SelectedWaypointPattern}"
-                                              Background="#3C3C3C" Foreground="Black" BorderBrush="#555555"
-                                              FontSize="10" Padding="3,2" MinHeight="22"/>
-
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Count" Foreground="#999" FontSize="10"
-                                               VerticalAlignment="Center" Margin="0,3,4,0"/>
-                                    <TextBox Grid.Row="1" Grid.Column="1"
-                                             Text="{Binding WaypointCount, UpdateSourceTrigger=PropertyChanged}"
-                                             Background="#3C3C3C" Foreground="White" BorderBrush="#555555"
-                                             FontSize="10" Padding="3,2" Margin="0,3,0,0"
-                                             VerticalContentAlignment="Center"/>
-
-                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Dist (mm)" Foreground="#999" FontSize="10"
-                                               VerticalAlignment="Center" Margin="0,3,4,0"/>
-                                    <TextBox Grid.Row="2" Grid.Column="1"
-                                             Text="{Binding ScanDistance, UpdateSourceTrigger=PropertyChanged}"
-                                             Background="#3C3C3C" Foreground="White" BorderBrush="#555555"
-                                             FontSize="10" Padding="3,2" Margin="0,3,0,0"
-                                             VerticalContentAlignment="Center"/>
-                                </Grid>
-
-                                <UniformGrid Columns="2" Margin="0,6,0,0">
-                                    <Button Command="{Binding GenerateWaypointsCommand}" Cursor="Hand" BorderThickness="0" Padding="0">
-                                        <Button.Template>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border Background="#00897B" CornerRadius="3" Padding="6,4" Margin="0,0,2,0">
-                                                    <TextBlock Text="Generate" Foreground="White" FontSize="10" FontWeight="SemiBold"
-                                                               HorizontalAlignment="Center"/>
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Button.Template>
-                                    </Button>
-                                    <Button Command="{Binding ClearWaypointsCommand}" Cursor="Hand" BorderThickness="0" Padding="0">
-                                        <Button.Template>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border Background="#757575" CornerRadius="3" Padding="6,4" Margin="2,0,0,0">
-                                                    <TextBlock Text="Clear WP" Foreground="White" FontSize="10" FontWeight="SemiBold"
-                                                               HorizontalAlignment="Center"/>
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Button.Template>
-                                    </Button>
-                                </UniformGrid>
-
-                                <UniformGrid Columns="2" Margin="0,4,0,0">
-                                    <Button Command="{Binding StartWaypointScanCommand}" Cursor="Hand" BorderThickness="0" Padding="0">
-                                        <Button.Template>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border Background="#E65100" CornerRadius="3" Padding="6,4" Margin="0,0,2,0">
-                                                    <TextBlock Text="▶ Auto Scan" Foreground="White" FontSize="10" FontWeight="SemiBold"
-                                                               HorizontalAlignment="Center"/>
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Button.Template>
-                                    </Button>
-                                    <Button Command="{Binding StopWaypointScanCommand}" Cursor="Hand" BorderThickness="0" Padding="0">
-                                        <Button.Template>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border Background="#B71C1C" CornerRadius="3" Padding="6,4" Margin="2,0,0,0">
-                                                    <TextBlock Text="■ Stop" Foreground="White" FontSize="10" FontWeight="SemiBold"
-                                                               HorizontalAlignment="Center"/>
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Button.Template>
-                                    </Button>
-                                </UniformGrid>
-
-                                <!-- Planner Status -->
-                                <TextBlock Text="{Binding WaypointPlanner.StatusMessage}" Foreground="#AAAAAA"
-                                           FontSize="10" TextWrapping="Wrap" Margin="0,4,0,0"/>
-                            </StackPanel>
-                        </Border>
+                        <!-- Robot 연결 상태 표시 (간략) -->
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0"
+                                    Visibility="{Binding IsMultiViewMode, Converter={StaticResource BoolToVisibility}}">
+                            <Ellipse Width="8" Height="8" VerticalAlignment="Center">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Fill" Value="#F44336"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsRobotConnected}" Value="True">
+                                                <Setter Property="Fill" Value="#4CAF50"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
+                            <TextBlock Foreground="#AAAAAA" FontSize="10" Margin="6,0,0,0"
+                                       VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="Robot Disconnected"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsRobotConnected}" Value="True">
+                                                <Setter Property="Text" Value="Robot Connected"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock Text="{Binding MultiViewStatusText}" Foreground="#777" FontSize="10"
+                                       Margin="10,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
                     </StackPanel>
 
                     <!-- Row 3: Step Management Header + Buttons -->
@@ -860,7 +718,7 @@
                                   Margin="5,0,5,5">
                             <TreeView.ItemContainerStyle>
                                 <Style TargetType="TreeViewItem">
-                                    <Setter Property="IsExpanded" Value="True"/>
+                                    <Setter Property="IsExpanded" Value="False"/>
                                     <Setter Property="Foreground" Value="White"/>
                                 </Style>
                             </TreeView.ItemContainerStyle>
