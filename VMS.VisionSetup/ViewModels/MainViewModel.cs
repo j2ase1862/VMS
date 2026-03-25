@@ -409,6 +409,9 @@ namespace VMS.VisionSetup.ViewModels
         // 로봇 서비스 (DI 또는 직접 생성)
         private IRobotService? _robotService;
 
+        /// <summary>시뮬레이션 로봇 사용 여부</summary>
+        public bool IsSimulatedRobot => _robotService is SimulatedRobotService;
+
         // 웨이포인트 플래너
         private readonly WaypointPlannerService _waypointPlanner = new();
         public WaypointPlannerService WaypointPlanner => _waypointPlanner;
@@ -558,7 +561,7 @@ namespace VMS.VisionSetup.ViewModels
             // MultiView 관련 커맨드
             ConnectRobotCommand = new RelayCommand(async () => await ConnectRobot(), () => !IsRobotConnected && IsMultiViewMode);
             DisconnectRobotCommand = new RelayCommand(async () => await DisconnectRobot(), () => IsRobotConnected);
-            MultiViewCaptureCommand = new RelayCommand(async () => await MultiViewCapture(), () => IsMultiViewMode && IsCameraConnected && IsRobotConnected);
+            MultiViewCaptureCommand = new RelayCommand(async () => await MultiViewCapture(), () => IsMultiViewMode && IsRobotConnected && (IsCameraConnected || IsSimulatedRobot));
             MultiViewProcessCommand = new RelayCommand(async () => await MultiViewProcess(), () => _multiViewSession?.Scans.Count > 0);
             MultiViewClearCommand = new RelayCommand(MultiViewClear, () => _multiViewSession?.Scans.Count > 0);
 
@@ -566,7 +569,7 @@ namespace VMS.VisionSetup.ViewModels
             GenerateWaypointsCommand = new RelayCommand(GenerateWaypoints, () => IsMultiViewMode);
             ClearWaypointsCommand = new RelayCommand(ClearWaypoints, () => _waypointPlanner.Waypoints.Count > 0);
             StartWaypointScanCommand = new RelayCommand(async () => await StartWaypointScan(),
-                () => IsMultiViewMode && IsCameraConnected && IsRobotConnected && _waypointPlanner.Waypoints.Count > 0 && !_waypointPlanner.IsScanning);
+                () => IsMultiViewMode && IsRobotConnected && (IsCameraConnected || IsSimulatedRobot) && _waypointPlanner.Waypoints.Count > 0 && !_waypointPlanner.IsScanning);
             StopWaypointScanCommand = new RelayCommand(StopWaypointScan, () => _waypointPlanner.IsScanning);
 
             // 레시피 변경 이벤트 구독
@@ -1740,6 +1743,8 @@ namespace VMS.VisionSetup.ViewModels
 
                 ConnectCameraCommand.NotifyCanExecuteChanged();
                 DisconnectCameraCommand.NotifyCanExecuteChanged();
+                MultiViewCaptureCommand.NotifyCanExecuteChanged();
+                StartWaypointScanCommand.NotifyCanExecuteChanged();
             }
             catch (Exception ex)
             {
@@ -1764,6 +1769,8 @@ namespace VMS.VisionSetup.ViewModels
 
                 ConnectCameraCommand.NotifyCanExecuteChanged();
                 DisconnectCameraCommand.NotifyCanExecuteChanged();
+                MultiViewCaptureCommand.NotifyCanExecuteChanged();
+                StartWaypointScanCommand.NotifyCanExecuteChanged();
             }
             catch (Exception ex)
             {
@@ -1879,6 +1886,7 @@ namespace VMS.VisionSetup.ViewModels
                 ConnectRobotCommand.NotifyCanExecuteChanged();
                 DisconnectRobotCommand.NotifyCanExecuteChanged();
                 MultiViewCaptureCommand.NotifyCanExecuteChanged();
+                StartWaypointScanCommand.NotifyCanExecuteChanged();
             }
             catch (Exception ex)
             {
@@ -1903,6 +1911,7 @@ namespace VMS.VisionSetup.ViewModels
                 ConnectRobotCommand.NotifyCanExecuteChanged();
                 DisconnectRobotCommand.NotifyCanExecuteChanged();
                 MultiViewCaptureCommand.NotifyCanExecuteChanged();
+                StartWaypointScanCommand.NotifyCanExecuteChanged();
             }
             catch (Exception ex)
             {
