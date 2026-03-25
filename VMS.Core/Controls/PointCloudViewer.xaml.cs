@@ -2,6 +2,8 @@ using HelixToolkit;
 using HelixToolkit.Maths;
 using HelixToolkit.SharpDX;
 using HelixToolkit.Wpf.SharpDX;
+using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using System.Windows;
 using System.Windows.Controls;
@@ -94,6 +96,40 @@ namespace VMS.Core.Controls
         {
             get => (string)GetValue(StatusTextProperty);
             set => SetValue(StatusTextProperty, value);
+        }
+
+        // ── Waypoints ──
+
+        public static readonly DependencyProperty WaypointsProperty =
+            DependencyProperty.Register(
+                nameof(Waypoints),
+                typeof(IEnumerable<VMS.Camera.Models.ScanWaypoint>),
+                typeof(PointCloudViewer),
+                new PropertyMetadata(null, OnWaypointsChanged));
+
+        public IEnumerable<VMS.Camera.Models.ScanWaypoint>? Waypoints
+        {
+            get => (IEnumerable<VMS.Camera.Models.ScanWaypoint>?)GetValue(WaypointsProperty);
+            set => SetValue(WaypointsProperty, value);
+        }
+
+        public static readonly DependencyProperty ActiveWaypointIndexProperty =
+            DependencyProperty.Register(
+                nameof(ActiveWaypointIndex),
+                typeof(int),
+                typeof(PointCloudViewer),
+                new PropertyMetadata(-1, OnWaypointsChanged));
+
+        public int ActiveWaypointIndex
+        {
+            get => (int)GetValue(ActiveWaypointIndexProperty);
+            set => SetValue(ActiveWaypointIndexProperty, value);
+        }
+
+        private static void OnWaypointsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is PointCloudViewer viewer)
+                viewer.RenderWaypoints();
         }
 
         #endregion
@@ -732,6 +768,122 @@ namespace VMS.Core.Controls
             MainCamera.Position = new Point3D(center.X + dist, center.Y, center.Z);
             MainCamera.LookDirection = new Vector3D(-1, 0, 0);
             MainCamera.UpDirection = new Vector3D(0, -1, 0);
+        }
+
+        #endregion
+
+        #region Waypoint Rendering
+
+        /// <summary>
+        /// 웨이포인트를 3D 뷰포트에 렌더링 (카메라 위치 + 방향 화살표 + 라벨)
+        /// </summary>
+        public void RenderWaypoints()
+        {
+            // 기존 웨이포인트 모델 제거
+            ClearWaypointModels();
+
+            var waypoints = Waypoints;
+            if (waypoints == null) return;
+
+            int activeIdx = ActiveWaypointIndex;
+
+            foreach (var wp in waypoints)
+            {
+                // 좌표 변환 (Data 좌표계 → Viewport 좌표계: Y↔Z swap, Y negate)
+                var vpPos = DataToViewport(wp.CameraPosition);
+                var vpTarget = DataToViewport(wp.LookAtTarget);
+                var dir = vpTarget - vpPos;
+                float dirLen = dir.Length();
+                if (dirLen > 1e-3f) dir /= dirLen;
+
+                // 색상 결정
+                Color4 color = wp.IsCompleted ? new Color4(0.2f, 1f, 0.2f, 1f)   // LimeGreen
+                    : wp.Index == activeIdx ? new Color4(1f, 1f, 0f, 1f)         // Yellow
+                    : new Color4(0f, 1f, 1f, 1f);                                // Cyan
+
+                var mediaColor = System.Windows.Media.Color.FromScRgb(1f, color.Red, color.Green, color.Blue);
+
+                // 1. 카메라 위치 점
+                var wpPointGeo = new PointGeometry3D();
+                wpPointGeo.Positions = new Vector3Collection(new[]
+                {
+                    new Vector3(vpPos.X, vpPos.Y, vpPos.Z)
+                });
+                var wpPointModel = new PointGeometryModel3D
+                {
+                    Geometry = wpPointGeo,
+                    Color = mediaColor,
+                    Size = new System.Windows.Size(12, 12),
+                    Tag = "Waypoint"
+                };
+                Viewport.Items.Add(wpPointModel);
+
+                // 2. 방향 화살표 (Position → LookAt)
+                float defaultArrowLen = 30f;
+                float arrowLen = dirLen > 1f ? MathF.Min(dirLen * 0.5f, 80f) : defaultArrowLen;
+                var arrowEnd = vpPos + dir * arrowLen;
+
+                var arrowGeo = new LineGeometry3D();
+                var arrowPositions = new Vector3Collection();
+                var arrowIndices = new IntCollection();
+
+                arrowPositions.Add(new Vector3(vpPos.X, vpPos.Y, vpPos.Z));
+                arrowPositions.Add(new Vector3(arrowEnd.X, arrowEnd.Y, arrowEnd.Z));
+                arrowIndices.Add(0);
+                arrowIndices.Add(1);
+
+                arrowGeo.Positions = arrowPositions;
+                arrowGeo.Indices = arrowIndices;
+
+                var arrowModel = new LineGeometryModel3D
+                {
+                    Geometry = arrowGeo,
+                    Color = mediaColor,
+                    Thickness = wp.Index == activeIdx ? 3.0 : 1.5,
+                    Tag = "Waypoint"
+                };
+                Viewport.Items.Add(arrowModel);
+
+                // 3. 라벨 (번호)
+                var labelGeo = new BillboardText3D();
+                labelGeo.TextInfo.Add(new TextInfo(
+                    $" {wp.Index + 1}",
+                    new Vector3(vpPos.X, vpPos.Y - 5, vpPos.Z))
+                {
+                    Foreground = color,
+                    Scale = 1.0f
+                });
+                var labelModel = new BillboardTextModel3D
+                {
+                    Geometry = labelGeo,
+                    FixedSize = true,
+                    Tag = "Waypoint"
+                };
+                Viewport.Items.Add(labelModel);
+            }
+        }
+
+        /// <summary>기존 웨이포인트 모델 모두 제거</summary>
+        private void ClearWaypointModels()
+        {
+            var toRemove = Viewport.Items
+                .OfType<Element3D>()
+                .Where(e => e.Tag is string tag && tag == "Waypoint")
+                .ToList();
+
+            foreach (var item in toRemove)
+                Viewport.Items.Remove(item);
+        }
+
+        /// <summary>웨이포인트 표시 갱신 요청 (외부 호출용)</summary>
+        public void RefreshWaypoints() => RenderWaypoints();
+
+        /// <summary>Data 좌표 → Viewport 좌표 변환 (Y↔Z swap + Y negate)</summary>
+        private static Vector3 DataToViewport(Vector3 dataPos)
+        {
+            // PointCloudViewer 좌표 규칙:
+            // Viewport X = Data X, Viewport Y = -Data Z (height), Viewport Z = Data Y
+            return new Vector3(dataPos.X, -dataPos.Z, dataPos.Y);
         }
 
         #endregion

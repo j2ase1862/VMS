@@ -350,6 +350,8 @@ namespace VMS.VisionSetup.ViewModels
                     MultiViewCaptureCommand?.NotifyCanExecuteChanged();
                     MultiViewProcessCommand?.NotifyCanExecuteChanged();
                     MultiViewClearCommand?.NotifyCanExecuteChanged();
+                    GenerateWaypointsCommand?.NotifyCanExecuteChanged();
+                    StartWaypointScanCommand?.NotifyCanExecuteChanged();
                 }
             }
         }
@@ -407,6 +409,43 @@ namespace VMS.VisionSetup.ViewModels
         // 로봇 서비스 (DI 또는 직접 생성)
         private IRobotService? _robotService;
 
+        // 웨이포인트 플래너
+        private readonly WaypointPlannerService _waypointPlanner = new();
+        public WaypointPlannerService WaypointPlanner => _waypointPlanner;
+
+        // 웨이포인트 패턴 선택
+        public WaypointPattern[] WaypointPatterns { get; } = (WaypointPattern[])Enum.GetValues(typeof(WaypointPattern));
+
+        private WaypointPattern _selectedWaypointPattern = WaypointPattern.TopPlusRing;
+        public WaypointPattern SelectedWaypointPattern
+        {
+            get => _selectedWaypointPattern;
+            set => SetProperty(ref _selectedWaypointPattern, value);
+        }
+
+        private int _waypointCount = 5;
+        public int WaypointCount
+        {
+            get => _waypointCount;
+            set => SetProperty(ref _waypointCount, Math.Max(1, value));
+        }
+
+        private float _scanDistance = 500f;
+        public float ScanDistance
+        {
+            get => _scanDistance;
+            set => SetProperty(ref _scanDistance, MathF.Max(50f, value));
+        }
+
+        private float _scanElevation = 30f;
+        public float ScanElevation
+        {
+            get => _scanElevation;
+            set => SetProperty(ref _scanElevation, Math.Clamp(value, 5f, 85f));
+        }
+
+        private CancellationTokenSource? _waypointScanCts;
+
         // 스텝 목록 (선택된 카메라 기준)
         public ObservableCollection<InspectionStep> Steps { get; } = new();
 
@@ -462,6 +501,10 @@ namespace VMS.VisionSetup.ViewModels
         public RelayCommand MultiViewCaptureCommand { get; }
         public RelayCommand MultiViewProcessCommand { get; }
         public RelayCommand MultiViewClearCommand { get; }
+        public RelayCommand GenerateWaypointsCommand { get; }
+        public RelayCommand ClearWaypointsCommand { get; }
+        public RelayCommand StartWaypointScanCommand { get; }
+        public RelayCommand StopWaypointScanCommand { get; }
         public RelayCommand SaveHeightSlicingCommand { get; }
         public RelayCommand ClearHeightSlicingCommand { get; }
         #endregion
@@ -518,6 +561,13 @@ namespace VMS.VisionSetup.ViewModels
             MultiViewCaptureCommand = new RelayCommand(async () => await MultiViewCapture(), () => IsMultiViewMode && IsCameraConnected && IsRobotConnected);
             MultiViewProcessCommand = new RelayCommand(async () => await MultiViewProcess(), () => _multiViewSession?.Scans.Count > 0);
             MultiViewClearCommand = new RelayCommand(MultiViewClear, () => _multiViewSession?.Scans.Count > 0);
+
+            // Waypoint Planner 커맨드
+            GenerateWaypointsCommand = new RelayCommand(GenerateWaypoints, () => IsMultiViewMode);
+            ClearWaypointsCommand = new RelayCommand(ClearWaypoints, () => _waypointPlanner.Waypoints.Count > 0);
+            StartWaypointScanCommand = new RelayCommand(async () => await StartWaypointScan(),
+                () => IsMultiViewMode && IsCameraConnected && IsRobotConnected && _waypointPlanner.Waypoints.Count > 0 && !_waypointPlanner.IsScanning);
+            StopWaypointScanCommand = new RelayCommand(StopWaypointScan, () => _waypointPlanner.IsScanning);
 
             // 레시피 변경 이벤트 구독
             _recipeService.CurrentRecipeChanged += OnCurrentRecipeChanged;
@@ -1941,6 +1991,113 @@ namespace VMS.VisionSetup.ViewModels
             {
                 StatusMessage = $"MultiView 정합 오류: {ex.Message}";
             }
+        }
+
+        #endregion
+
+        #region Waypoint Planner
+
+        private void GenerateWaypoints()
+        {
+            // Object 중심: 현재 PointCloud의 중심점, 없으면 원점
+            var center = System.Numerics.Vector3.Zero;
+            if (CurrentPointCloud != null && CurrentPointCloud.PointCount > 0)
+            {
+                float cx = 0, cy = 0, cz = 0;
+                int count = CurrentPointCloud.PointCount;
+                for (int i = 0; i < count; i++)
+                {
+                    cx += CurrentPointCloud.Positions[i].X;
+                    cy += CurrentPointCloud.Positions[i].Y;
+                    cz += CurrentPointCloud.Positions[i].Z;
+                }
+                center = new System.Numerics.Vector3(cx / count, cy / count, cz / count);
+            }
+
+            _waypointPlanner.GenerateWaypoints(
+                SelectedWaypointPattern, WaypointCount, center, ScanDistance, ScanElevation);
+
+            // 3D Viewer에 웨이포인트 표시 갱신
+            OnPropertyChanged(nameof(WaypointPlanner));
+            ClearWaypointsCommand.NotifyCanExecuteChanged();
+            StartWaypointScanCommand.NotifyCanExecuteChanged();
+            StatusMessage = $"{_waypointPlanner.Waypoints.Count}개 웨이포인트 생성됨 ({SelectedWaypointPattern})";
+        }
+
+        private void ClearWaypoints()
+        {
+            _waypointPlanner.ClearWaypoints();
+            OnPropertyChanged(nameof(WaypointPlanner));
+            ClearWaypointsCommand.NotifyCanExecuteChanged();
+            StartWaypointScanCommand.NotifyCanExecuteChanged();
+            StatusMessage = "웨이포인트 초기화됨";
+        }
+
+        /// <summary>
+        /// 웨이포인트 자동 스캔 실행: VMS → Robot 포즈 전송 → 이동 → 촬영 → 정합
+        /// </summary>
+        private async System.Threading.Tasks.Task StartWaypointScan()
+        {
+            if (_robotService == null || _cameraAcquisition == null) return;
+
+            // 세션 초기화
+            _multiViewSession?.Dispose();
+            _multiViewSession = new MultiViewSession
+            {
+                Strategy = SelectedRegistrationStrategy
+            };
+
+            _waypointPlanner.ResetCompletionStatus();
+            _waypointScanCts = new CancellationTokenSource();
+
+            StopWaypointScanCommand.NotifyCanExecuteChanged();
+            StartWaypointScanCommand.NotifyCanExecuteChanged();
+
+            try
+            {
+                var success = await _waypointPlanner.ExecuteScanSequenceAsync(
+                    _robotService,
+                    _cameraAcquisition,
+                    _multiViewSession,
+                    System.Numerics.Matrix4x4.Identity, // 핸드-아이 역행렬 (TODO: 캘리브레이션 로드)
+                    SelectedEulerConvention,
+                    "MOVEJ",
+                    300,
+                    _waypointScanCts.Token);
+
+                if (success && _multiViewSession.Scans.Count > 0)
+                {
+                    // 자동 정합
+                    StatusMessage = "정합 처리 중...";
+                    var merged = await _multiViewSession.ProcessAsync();
+                    if (merged != null)
+                    {
+                        CurrentPointCloud = merged;
+                        StatusMessage = $"웨이포인트 스캔 완료: {merged.PointCount:N0} pts";
+                    }
+                }
+
+                OnPropertyChanged(nameof(MultiViewStatusText));
+                MultiViewProcessCommand.NotifyCanExecuteChanged();
+                MultiViewClearCommand.NotifyCanExecuteChanged();
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"웨이포인트 스캔 오류: {ex.Message}";
+            }
+            finally
+            {
+                _waypointScanCts?.Dispose();
+                _waypointScanCts = null;
+                StopWaypointScanCommand.NotifyCanExecuteChanged();
+                StartWaypointScanCommand.NotifyCanExecuteChanged();
+            }
+        }
+
+        private void StopWaypointScan()
+        {
+            _waypointScanCts?.Cancel();
+            StatusMessage = "웨이포인트 스캔 중지 요청됨";
         }
 
         /// <summary>스캔 데이터 초기화</summary>
