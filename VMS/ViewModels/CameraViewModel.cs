@@ -51,6 +51,19 @@ namespace VMS.ViewModels
         [ObservableProperty]
         private bool _isEnabled = true;
 
+        // Frame Grabber (Matrox/Dalsa) settings
+        [ObservableProperty]
+        private string _boardType = string.Empty;
+
+        [ObservableProperty]
+        private int _boardNumber;
+
+        [ObservableProperty]
+        private int _digitizerNumber;
+
+        [ObservableProperty]
+        private string _dcfFilePath = string.Empty;
+
         [ObservableProperty]
         private bool _isPassed = false;  // Bypass checkbox: checked = always OK without inspection
 
@@ -606,13 +619,18 @@ namespace VMS.ViewModels
 
         private CameraInfo ToCameraInfo()
         {
+            // Frame Grabber: BoardType을 ConnectionString으로 사용
+            var isFrameGrabber = Manufacturer == CameraManufacturer.Matrox || Manufacturer == CameraManufacturer.Dalsa;
             return new CameraInfo
             {
                 Id = Id,
                 Name = Name,
                 Manufacturer = Manufacturer.ToString().Replace("_", " "),
-                ConnectionString = IpAddress,
-                CameraType = CameraType
+                ConnectionString = isFrameGrabber && !string.IsNullOrEmpty(BoardType) ? BoardType : IpAddress,
+                CameraType = CameraType,
+                BoardNumber = BoardNumber,
+                DigitizerNumber = DigitizerNumber,
+                DcfFilePath = DcfFilePath
             };
         }
 
@@ -651,7 +669,11 @@ namespace VMS.ViewModels
                 IpAddress = config.IpAddress,
                 Manufacturer = config.Manufacturer,
                 CameraType = config.CameraType,
-                IsEnabled = config.IsEnabled
+                IsEnabled = config.IsEnabled,
+                BoardType = config.BoardType,
+                BoardNumber = config.BoardNumber,
+                DigitizerNumber = config.DigitizerNumber,
+                DcfFilePath = config.DcfFilePath
             };
 
             // Create steps from configuration or default

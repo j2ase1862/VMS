@@ -136,6 +136,16 @@ namespace VMS.VisionSetup.Services
                         info.CameraType = cameraType;
                 }
 
+                // Frame Grabber (Matrox/Dalsa) 설정
+                if (cam.TryGetProperty("boardType", out var bt) && bt.ValueKind == JsonValueKind.String)
+                    info.ConnectionString = bt.GetString() ?? info.ConnectionString;
+                if (cam.TryGetProperty("boardNumber", out var bn) && bn.ValueKind == JsonValueKind.Number)
+                    info.BoardNumber = bn.GetInt32();
+                if (cam.TryGetProperty("digitizerNumber", out var dn) && dn.ValueKind == JsonValueKind.Number)
+                    info.DigitizerNumber = dn.GetInt32();
+                if (cam.TryGetProperty("dcfFilePath", out var dcf) && dcf.ValueKind == JsonValueKind.String)
+                    info.DcfFilePath = dcf.GetString() ?? string.Empty;
+
                 cameras.Add(info);
             }
 

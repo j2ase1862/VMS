@@ -110,6 +110,23 @@ namespace VMS.AppSetup.Models
         [ObservableProperty]
         private double _zRangeMax = 1000;
 
+        // Frame Grabber (Matrox/Dalsa) parameters
+        /// <summary>보드 타입 (SOLIOS, RAPIXO, RADIENT 등)</summary>
+        [ObservableProperty]
+        private string _boardType = "SOLIOS";
+
+        /// <summary>보드 번호 (0 = M_DEV0, 1 = M_DEV1, ...)</summary>
+        [ObservableProperty]
+        private int _boardNumber;
+
+        /// <summary>디지타이저(채널) 번호 (0 = CH0, 1 = CH1, ...)</summary>
+        [ObservableProperty]
+        private int _digitizerNumber;
+
+        /// <summary>DCF 파일 경로 (Camera Link 카메라 설정)</summary>
+        [ObservableProperty]
+        private string _dcfFilePath = string.Empty;
+
         // Dynamic UI visibility properties
         [JsonIgnore]
         public bool IsAreaScan => CameraType == CameraType.AreaScan2D || CameraType == CameraType.AreaScan3D;
@@ -119,6 +136,9 @@ namespace VMS.AppSetup.Models
 
         [JsonIgnore]
         public bool Is3DCamera => CameraType == CameraType.AreaScan3D || CameraType == CameraType.LineScan3D;
+
+        [JsonIgnore]
+        public bool IsFrameGrabber => Manufacturer == CameraManufacturer.Matrox || Manufacturer == CameraManufacturer.Dalsa;
 
         [JsonIgnore]
         public bool ShowEncoderResolution => IsLineScan && TriggerSource == TriggerSource.Encoder;
@@ -137,6 +157,11 @@ namespace VMS.AppSetup.Models
         partial void OnTriggerSourceChanged(TriggerSource value)
         {
             OnPropertyChanged(nameof(ShowEncoderResolution));
+        }
+
+        partial void OnManufacturerChanged(CameraManufacturer value)
+        {
+            OnPropertyChanged(nameof(IsFrameGrabber));
         }
     }
 
