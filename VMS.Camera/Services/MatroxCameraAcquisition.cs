@@ -49,10 +49,10 @@ namespace VMS.Camera.Services
                 MIL.MappControl(MIL.M_DEFAULT, MIL.M_ERROR, MIL.M_PRINT_DISABLE);
 
                 // 2. MIL System 할당 (프레임 그래버 보드)
-                // ConnectionString으로 시스템 타입 지정 가능 (예: "M_SYSTEM_SOLIOS", "M_SYSTEM_RAPIXO")
-                // 비어있으면 M_SYSTEM_DEFAULT (자동 탐지)
+                // ConnectionString으로 시스템 타입 지정 가능 (예: "SOLIOS", "RAPIXO")
                 var systemType = ResolveSystemType(camera.ConnectionString);
-                MIL.MsysAlloc(MIL.M_DEFAULT, systemType, MIL.M_DEFAULT, MIL.M_DEFAULT, ref _milSystem);
+                long boardDev = camera.BoardNumber >= 0 ? MIL.M_DEV0 + camera.BoardNumber : MIL.M_DEFAULT;
+                MIL.MsysAlloc(MIL.M_DEFAULT, systemType, boardDev, MIL.M_DEFAULT, ref _milSystem);
 
                 if (_milSystem == MIL.M_NULL)
                 {
@@ -62,7 +62,9 @@ namespace VMS.Camera.Services
                 }
 
                 // 3. Digitizer 할당 (카메라 인터페이스)
-                MIL.MdigAlloc(_milSystem, MIL.M_DEFAULT, "M_DEFAULT", MIL.M_DEFAULT, ref _milDigitizer);
+                long digDev = camera.DigitizerNumber >= 0 ? MIL.M_DEV0 + camera.DigitizerNumber : MIL.M_DEFAULT;
+                var dcfPath = !string.IsNullOrWhiteSpace(camera.DcfFilePath) ? camera.DcfFilePath : "M_DEFAULT";
+                MIL.MdigAlloc(_milSystem, digDev, dcfPath, MIL.M_DEFAULT, ref _milDigitizer);
 
                 if (_milDigitizer == MIL.M_NULL)
                 {

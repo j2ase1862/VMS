@@ -6,7 +6,7 @@
         xmlns:converters="clr-namespace:VMS.AppSetup.Converters"
         mc:Ignorable="d"
         Title="BODA Vision System Setup"
-        Width="860" Height="720"
+        Width="960" Height="820"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         Background="#1E1E1E">
@@ -409,6 +409,74 @@
                                                                      Padding="6,4" FontSize="12"/>
                                                         </StackPanel>
                                                     </Grid>
+                                                </Border>
+
+                                                <!-- Row 5: Frame Grabber Parameters (Matrox/Dalsa) -->
+                                                <Border Background="#252526" CornerRadius="4" Padding="10,8" Margin="0,8,0,0"
+                                                        Visibility="{Binding IsFrameGrabber, Converter={StaticResource BoolToVisConverter}}">
+                                                    <StackPanel>
+                                                        <TextBlock Text="Frame Grabber (MIL)" Foreground="#FF9800" FontWeight="Bold" FontSize="11" Margin="0,0,0,6"/>
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="8"/>
+                                                                <ColumnDefinition Width="0.6*"/>
+                                                                <ColumnDefinition Width="8"/>
+                                                                <ColumnDefinition Width="0.6*"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <StackPanel Grid.Column="0">
+                                                                <TextBlock Text="Board Type" Foreground="#888888" FontSize="11" Margin="0,0,0,3"/>
+                                                                <ComboBox SelectedItem="{Binding BoardType}"
+                                                                          IsEditable="True" IsReadOnly="False"
+                                                                          Style="{StaticResource ComboStyle}"
+                                                                          Padding="6,4" FontSize="12">
+                                                                    <ComboBoxItem Content="SOLIOS"/>
+                                                                    <ComboBoxItem Content="RAPIXO"/>
+                                                                    <ComboBoxItem Content="RADIENT"/>
+                                                                    <ComboBoxItem Content="ORION"/>
+                                                                    <ComboBoxItem Content="MORPHIS"/>
+                                                                    <ComboBoxItem Content="GIGE"/>
+                                                                    <ComboBoxItem Content="USB3"/>
+                                                                    <ComboBoxItem Content="GENTL"/>
+                                                                    <ComboBoxItem Content="HOST"/>
+                                                                </ComboBox>
+                                                            </StackPanel>
+                                                            <StackPanel Grid.Column="2">
+                                                                <TextBlock Text="Board #" Foreground="#888888" FontSize="11" Margin="0,0,0,3"/>
+                                                                <TextBox Text="{Binding BoardNumber, UpdateSourceTrigger=PropertyChanged}"
+                                                                         Background="#3E3E42" Foreground="White"
+                                                                         BorderBrush="#555555" BorderThickness="1"
+                                                                         Padding="6,4" FontSize="12"/>
+                                                            </StackPanel>
+                                                            <StackPanel Grid.Column="4">
+                                                                <TextBlock Text="Digitizer #" Foreground="#888888" FontSize="11" Margin="0,0,0,3"/>
+                                                                <TextBox Text="{Binding DigitizerNumber, UpdateSourceTrigger=PropertyChanged}"
+                                                                         Background="#3E3E42" Foreground="White"
+                                                                         BorderBrush="#555555" BorderThickness="1"
+                                                                         Padding="6,4" FontSize="12"/>
+                                                            </StackPanel>
+                                                        </Grid>
+                                                        <StackPanel Margin="0,6,0,0">
+                                                            <TextBlock Text="DCF File (Camera Link)" Foreground="#888888" FontSize="11" Margin="0,0,0,3"/>
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <TextBox Grid.Column="0"
+                                                                         Text="{Binding DcfFilePath, UpdateSourceTrigger=PropertyChanged}"
+                                                                         Background="#3E3E42" Foreground="White"
+                                                                         BorderBrush="#555555" BorderThickness="1"
+                                                                         Padding="6,4" FontSize="12"/>
+                                                                <Button Grid.Column="1" Content="..." Margin="4,0,0,0"
+                                                                        Width="32" FontWeight="Bold"
+                                                                        Click="BrowseDcfFile_Click"
+                                                                        Background="#3E3E42" Foreground="White"
+                                                                        BorderBrush="#555555" BorderThickness="1"
+                                                                        Cursor="Hand" ToolTip="Browse DCF file"/>
+                                                            </Grid>
+                                                        </StackPanel>
+                                                    </StackPanel>
                                                 </Border>
                                             </StackPanel>
                                         </Border>

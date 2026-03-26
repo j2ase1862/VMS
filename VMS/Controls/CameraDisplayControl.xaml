@@ -39,6 +39,21 @@
                                    Foreground="#808080"
                                    VerticalAlignment="Center"
                                    Margin="0,0,8,0"/>
+                        <!-- Connection status indicator -->
+                        <Ellipse Width="8" Height="8" VerticalAlignment="Center" Margin="0,0,6,0">
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Setter Property="Fill" Value="#F44336"/>
+                                    <Setter Property="ToolTip" Value="Disconnected"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                                            <Setter Property="Fill" Value="#4CAF50"/>
+                                            <Setter Property="ToolTip" Value="Connected"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
                         <TextBlock Text="{Binding Name}"
                                    Foreground="White"
                                    FontWeight="SemiBold"

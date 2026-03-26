@@ -68,6 +68,12 @@ namespace VMS.Models
         public double ZRangeMin { get; set; } = 0;
         public double ZRangeMax { get; set; } = 1000;
 
+        // Frame Grabber (Matrox/Dalsa) parameters
+        public string BoardType { get; set; } = "SOLIOS";
+        public int BoardNumber { get; set; }
+        public int DigitizerNumber { get; set; }
+        public string DcfFilePath { get; set; } = string.Empty;
+
         public int StepCount { get; set; } = 1;
         public List<StepConfiguration> Steps { get; set; } = new();
     }
