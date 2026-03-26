@@ -332,32 +332,8 @@ namespace VMS.VisionSetup.ViewModels
             }
         }
 
-        // 검사 모드 (SingleShot / MultiView)
-        public InspectionMode[] InspectionModes { get; } = (InspectionMode[])Enum.GetValues(typeof(InspectionMode));
-
-        private InspectionMode _selectedInspectionMode = InspectionMode.SingleShot;
-        public InspectionMode SelectedInspectionMode
-        {
-            get => _selectedInspectionMode;
-            set
-            {
-                if (SetProperty(ref _selectedInspectionMode, value))
-                {
-                    OnPropertyChanged(nameof(IsMultiViewMode));
-                    OnPropertyChanged(nameof(MultiViewStatusText));
-                    ConnectRobotCommand?.NotifyCanExecuteChanged();
-                    DisconnectRobotCommand?.NotifyCanExecuteChanged();
-                    MultiViewCaptureCommand?.NotifyCanExecuteChanged();
-                    MultiViewProcessCommand?.NotifyCanExecuteChanged();
-                    MultiViewClearCommand?.NotifyCanExecuteChanged();
-                    GenerateWaypointsCommand?.NotifyCanExecuteChanged();
-                    StartWaypointScanCommand?.NotifyCanExecuteChanged();
-                }
-            }
-        }
-
-        /// <summary>MultiView 모드 여부 (UI Visibility 바인딩용)</summary>
-        public bool IsMultiViewMode => SelectedInspectionMode == InspectionMode.MultiView;
+        /// <summary>로봇 웨이포인트가 있는 스텝이 존재하는지 (UI Visibility 바인딩용)</summary>
+        public bool NeedsRobot => Steps.Any(s => s.RobotWaypoint != null);
 
         // 로봇 연결 설정
         private string _robotIpAddress = "192.168.1.100";
@@ -559,17 +535,17 @@ namespace VMS.VisionSetup.ViewModels
             ClearHeightSlicingCommand = new RelayCommand(ClearHeightSlicing, () => IsHeightSlicingSaved);
 
             // MultiView 관련 커맨드
-            ConnectRobotCommand = new RelayCommand(async () => await ConnectRobot(), () => !IsRobotConnected && IsMultiViewMode);
+            ConnectRobotCommand = new RelayCommand(async () => await ConnectRobot(), () => !IsRobotConnected && NeedsRobot);
             DisconnectRobotCommand = new RelayCommand(async () => await DisconnectRobot(), () => IsRobotConnected);
-            MultiViewCaptureCommand = new RelayCommand(async () => await MultiViewCapture(), () => IsMultiViewMode && IsRobotConnected && (IsCameraConnected || IsSimulatedRobot));
+            MultiViewCaptureCommand = new RelayCommand(async () => await MultiViewCapture(), () => NeedsRobot && IsRobotConnected && (IsCameraConnected || IsSimulatedRobot));
             MultiViewProcessCommand = new RelayCommand(async () => await MultiViewProcess(), () => _multiViewSession?.Scans.Count > 0);
             MultiViewClearCommand = new RelayCommand(MultiViewClear, () => _multiViewSession?.Scans.Count > 0);
 
             // Waypoint Planner 커맨드
-            GenerateWaypointsCommand = new RelayCommand(GenerateWaypoints, () => IsMultiViewMode);
+            GenerateWaypointsCommand = new RelayCommand(GenerateWaypoints, () => _recipeService.CurrentRecipe != null && SelectedCamera != null);
             ClearWaypointsCommand = new RelayCommand(ClearWaypoints, () => _waypointPlanner.Waypoints.Count > 0);
             StartWaypointScanCommand = new RelayCommand(async () => await StartWaypointScan(),
-                () => IsMultiViewMode && IsRobotConnected && (IsCameraConnected || IsSimulatedRobot) && _waypointPlanner.Waypoints.Count > 0 && !_waypointPlanner.IsScanning);
+                () => NeedsRobot && IsRobotConnected && (IsCameraConnected || IsSimulatedRobot) && _waypointPlanner.Waypoints.Count > 0 && !_waypointPlanner.IsScanning);
             StopWaypointScanCommand = new RelayCommand(StopWaypointScan, () => _waypointPlanner.IsScanning);
 
             // 레시피 변경 이벤트 구독
@@ -652,6 +628,8 @@ namespace VMS.VisionSetup.ViewModels
             // 3D Analysis 카테고리
             var threeD = new ToolCategory { CategoryName = "3D Analysis" };
             threeD.Tools.Add(new ToolItem { Name = "Height Slicer", ToolType = "HeightSlicerTool" });
+            threeD.Tools.Add(new ToolItem { Name = "Plane Fit", ToolType = "PlaneFitTool" });
+            threeD.Tools.Add(new ToolItem { Name = "3D Geometry", ToolType = "Geometry3DTool" });
             ToolTree.Add(threeD);
 
             // Deep Learning 카테고리
@@ -1460,7 +1438,7 @@ namespace VMS.VisionSetup.ViewModels
                 ClearHeightSlicingCommand.NotifyCanExecuteChanged();
 
                 // MultiView 설정 복원
-                LoadMultiViewSettingsFromRecipe(recipe);
+                LoadRobotSettingsFromRecipe(recipe);
             }
             else
             {
@@ -1496,6 +1474,13 @@ namespace VMS.VisionSetup.ViewModels
                     Steps.Add(step);
                 }
             }
+
+            // Step 구성 변경에 따라 로봇 관련 UI 갱신
+            OnPropertyChanged(nameof(NeedsRobot));
+            ConnectRobotCommand?.NotifyCanExecuteChanged();
+            MultiViewCaptureCommand?.NotifyCanExecuteChanged();
+            GenerateWaypointsCommand?.NotifyCanExecuteChanged();
+            StartWaypointScanCommand?.NotifyCanExecuteChanged();
         }
 
         private void AddStep()
@@ -2008,6 +1993,9 @@ namespace VMS.VisionSetup.ViewModels
 
         private void GenerateWaypoints()
         {
+            var recipe = _recipeService.CurrentRecipe;
+            if (recipe == null || SelectedCamera == null) return;
+
             // Object 중심: 현재 PointCloud의 중심점, 없으면 원점
             var center = System.Numerics.Vector3.Zero;
             if (CurrentPointCloud != null && CurrentPointCloud.PointCount > 0)
@@ -2026,6 +2014,9 @@ namespace VMS.VisionSetup.ViewModels
             _waypointPlanner.GenerateWaypoints(
                 SelectedWaypointPattern, WaypointCount, center, ScanDistance, ScanElevation);
 
+            // 기존 로봇 웨이포인트 스텝 제거 후 웨이포인트별 스텝 생성
+            SyncWaypointsToSteps(recipe);
+
             // 3D Viewer에 웨이포인트 표시 갱신
             OnPropertyChanged(nameof(WaypointPlanner));
             ClearWaypointsCommand.NotifyCanExecuteChanged();
@@ -2035,11 +2026,55 @@ namespace VMS.VisionSetup.ViewModels
 
         private void ClearWaypoints()
         {
+            var recipe = _recipeService.CurrentRecipe;
+
             _waypointPlanner.ClearWaypoints();
+
+            // 로봇 웨이포인트가 있는 스텝 제거
+            if (recipe != null)
+            {
+                var robotSteps = recipe.Steps.Where(s => s.RobotWaypoint != null).ToList();
+                foreach (var step in robotSteps)
+                    recipe.Steps.Remove(step);
+                RefreshSteps();
+            }
+
             OnPropertyChanged(nameof(WaypointPlanner));
             ClearWaypointsCommand.NotifyCanExecuteChanged();
             StartWaypointScanCommand.NotifyCanExecuteChanged();
             StatusMessage = "웨이포인트 초기화됨";
+        }
+
+        /// <summary>
+        /// 웨이포인트 목록을 InspectionStep과 동기화:
+        /// 기존 로봇 스텝 제거 → 웨이포인트별 새 스텝 생성
+        /// </summary>
+        private void SyncWaypointsToSteps(Recipe recipe)
+        {
+            var cameraId = SelectedCamera?.Id ?? string.Empty;
+
+            // 기존 로봇 웨이포인트 스텝 제거
+            var robotSteps = recipe.Steps.Where(s => s.RobotWaypoint != null && s.CameraId == cameraId).ToList();
+            foreach (var step in robotSteps)
+                recipe.Steps.Remove(step);
+
+            // 웨이포인트별 새 스텝 생성
+            int camIdx = GetCameraDisplayIndex(cameraId);
+            foreach (var wp in _waypointPlanner.Waypoints)
+            {
+                var step = new InspectionStep
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = $"{camIdx}-{wp.Index + 1} {wp.Name}",
+                    Sequence = wp.Index + 1,
+                    CameraId = cameraId,
+                    RobotWaypoint = wp,
+                    Tools = new List<ToolConfig>()
+                };
+                recipe.Steps.Add(step);
+            }
+
+            RefreshSteps();
         }
 
         /// <summary>
@@ -2393,6 +2428,8 @@ namespace VMS.VisionSetup.ViewModels
                 CircleFitTool t => new CircleFitToolSettingsViewModel(t),
                 GeometryTool t => new GeometryToolSettingsViewModel(t),
                 HeightSlicerTool t => new HeightSlicerToolSettingsViewModel(t),
+                PlaneFitTool t => new PlaneFitToolSettingsViewModel(t),
+                Geometry3DTool t => new Geometry3DToolSettingsViewModel(t),
                 ResultTool t => new ResultToolSettingsViewModel(t),
                 OCRTool t => new OCRToolSettingsViewModel(t),
                 CodeReaderTool t => new CodeReaderToolSettingsViewModel(t),
@@ -2535,7 +2572,7 @@ namespace VMS.VisionSetup.ViewModels
             if (currentRecipe != null)
             {
                 SaveWorkspaceToStep();
-                SaveMultiViewSettingsToRecipe(currentRecipe);
+                SaveRobotSettingsToRecipe(currentRecipe);
                 currentRecipe.ModifiedAt = DateTime.Now;
                 _recipeService.SaveRecipe(currentRecipe);
                 StatusMessage = $"Recipe saved: {currentRecipe.Name}";
@@ -2554,29 +2591,28 @@ namespace VMS.VisionSetup.ViewModels
             if (loadedRecipe != null)
             {
                 CurrentRecipeName = loadedRecipe.Name;
-                LoadMultiViewSettingsFromRecipe(loadedRecipe);
+                LoadRobotSettingsFromRecipe(loadedRecipe);
                 StatusMessage = $"Recipe loaded: {loadedRecipe.Name}";
             }
         }
 
-        /// <summary>MultiView 설정을 Recipe에 저장</summary>
-        private void SaveMultiViewSettingsToRecipe(Recipe recipe)
+        /// <summary>로봇 설정을 Recipe에 저장</summary>
+        private void SaveRobotSettingsToRecipe(Recipe recipe)
         {
-            recipe.InspectionMode = SelectedInspectionMode;
             recipe.RobotIpAddress = RobotIpAddress;
             recipe.RobotPort = RobotPort;
             recipe.EulerConvention = SelectedEulerConvention;
             recipe.RegistrationStrategy = SelectedRegistrationStrategy;
         }
 
-        /// <summary>Recipe에서 MultiView 설정 복원</summary>
-        private void LoadMultiViewSettingsFromRecipe(Recipe recipe)
+        /// <summary>Recipe에서 로봇 설정 복원</summary>
+        private void LoadRobotSettingsFromRecipe(Recipe recipe)
         {
-            SelectedInspectionMode = recipe.InspectionMode;
             RobotIpAddress = recipe.RobotIpAddress;
             RobotPort = recipe.RobotPort;
             SelectedEulerConvention = recipe.EulerConvention;
             SelectedRegistrationStrategy = recipe.RegistrationStrategy;
+            OnPropertyChanged(nameof(NeedsRobot));
         }
 
         public void OpenCameraManager()

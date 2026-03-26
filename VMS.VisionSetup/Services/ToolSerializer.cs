@@ -261,6 +261,22 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["Operation"] = geom.Operation.ToString();
                     break;
 
+                case PlaneFitTool planeFit:
+                    config.Parameters["FitMethod"] = planeFit.FitMethod.ToString();
+                    config.Parameters["RansacIterations"] = planeFit.RansacIterations;
+                    config.Parameters["RansacThreshold"] = planeFit.RansacThreshold;
+                    config.Parameters["SampleStride"] = planeFit.SampleStride;
+                    break;
+
+                case Geometry3DTool geom3D:
+                    config.Parameters["Operation"] = geom3D.Operation.ToString();
+                    config.Parameters["UseManualPoints"] = geom3D.UseManualPoints;
+                    config.Parameters["PointAX"] = geom3D.PointA.X;
+                    config.Parameters["PointAY"] = geom3D.PointA.Y;
+                    config.Parameters["PointBX"] = geom3D.PointB.X;
+                    config.Parameters["PointBY"] = geom3D.PointB.Y;
+                    break;
+
                 case OCRTool ocr:
                     config.Parameters["OcrEngine"] = ocr.OcrEngine.ToString();
                     config.Parameters["Language"] = ocr.Language.ToString();
@@ -361,6 +377,8 @@ namespace VMS.VisionSetup.Services
                 "HeightSlicerTool" => DeserializeHeightSlicerTool(config),
                 "CodeReaderTool" => DeserializeCodeReaderTool(config),
                 "GeometryTool" => DeserializeGeometryTool(config),
+                "PlaneFitTool" => DeserializePlaneFitTool(config),
+                "Geometry3DTool" => DeserializeGeometry3DTool(config),
                 "OCRTool" => DeserializeOCRTool(config),
                 "DetectionTool" => DeserializeDetectionTool(config),
                 "ClassifyTool" => DeserializeClassifyTool(config),
@@ -874,6 +892,40 @@ namespace VMS.VisionSetup.Services
 
             if (p.TryGetValue("Operation", out var op))
                 tool.Operation = Enum.Parse<GeometryOperation>(GetString(op));
+
+            return tool;
+        }
+
+        private static PlaneFitTool DeserializePlaneFitTool(ToolConfig config)
+        {
+            var tool = new PlaneFitTool();
+            var p = config.Parameters;
+
+            if (p.TryGetValue("FitMethod", out var fm))
+                tool.FitMethod = Enum.Parse<PlaneFitMethod>(GetString(fm));
+            if (p.TryGetValue("RansacIterations", out var ri))
+                tool.RansacIterations = GetInt(ri);
+            if (p.TryGetValue("RansacThreshold", out var rt))
+                tool.RansacThreshold = GetDouble(rt);
+            if (p.TryGetValue("SampleStride", out var ss))
+                tool.SampleStride = GetInt(ss);
+
+            return tool;
+        }
+
+        private static Geometry3DTool DeserializeGeometry3DTool(ToolConfig config)
+        {
+            var tool = new Geometry3DTool();
+            var p = config.Parameters;
+
+            if (p.TryGetValue("Operation", out var op))
+                tool.Operation = Enum.Parse<Geometry3DOperation>(GetString(op));
+            if (p.TryGetValue("UseManualPoints", out var ump))
+                tool.UseManualPoints = GetBool(ump);
+            if (p.TryGetValue("PointAX", out var pax) && p.TryGetValue("PointAY", out var pay))
+                tool.PointA = new OpenCvSharp.Point2d(GetDouble(pax), GetDouble(pay));
+            if (p.TryGetValue("PointBX", out var pbx) && p.TryGetValue("PointBY", out var pby))
+                tool.PointB = new OpenCvSharp.Point2d(GetDouble(pbx), GetDouble(pby));
 
             return tool;
         }

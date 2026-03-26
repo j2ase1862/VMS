@@ -896,6 +896,8 @@ namespace VMS.VisionSetup.Services
                 "MorphologyTool" => new MorphologyTool(),
                 "HistogramTool" => new HistogramTool(),
                 "HeightSlicerTool" => new HeightSlicerTool(),
+                "PlaneFitTool" => new PlaneFitTool(),
+                "Geometry3DTool" => new Geometry3DTool(),
 
                 // Pattern Matching
                 "FeatureMatchTool" => new FeatureMatchTool(),
@@ -945,7 +947,9 @@ namespace VMS.VisionSetup.Services
                 },
                 ["3D Analysis"] = new[]
                 {
-                    "HeightSlicerTool"
+                    "HeightSlicerTool",
+                    "PlaneFitTool",
+                    "Geometry3DTool"
                 },
                 ["Pattern Matching"] = new[]
                 {
@@ -1003,6 +1007,8 @@ namespace VMS.VisionSetup.Services
                 "CircleFitTool" => "Circle Fit",
                 "GeometryTool" => "Geometry",
                 "HeightSlicerTool" => "Height Slicer",
+                "PlaneFitTool" => "Plane Fit",
+                "Geometry3DTool" => "3D Geometry",
                 "OCRTool" => "OCR",
                 "CodeReaderTool" => "Code Reader",
                 "DetectionTool" => "Detection (YOLO)",

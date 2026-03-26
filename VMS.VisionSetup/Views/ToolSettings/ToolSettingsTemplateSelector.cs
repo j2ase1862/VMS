@@ -24,6 +24,8 @@ namespace VMS.VisionSetup.Views.ToolSettings
         public DataTemplate? DetectionTemplate { get; set; }
         public DataTemplate? ClassifyTemplate { get; set; }
         public DataTemplate? AnomalyTemplate { get; set; }
+        public DataTemplate? PlaneFitTemplate { get; set; }
+        public DataTemplate? Geometry3DTemplate { get; set; }
         public DataTemplate? ResultTemplate { get; set; }
 
         public override DataTemplate? SelectTemplate(object? item, DependencyObject container)
@@ -44,6 +46,8 @@ namespace VMS.VisionSetup.Views.ToolSettings
                 HeightSlicerToolSettingsViewModel => HeightSlicerTemplate,
                 CodeReaderToolSettingsViewModel => CodeReaderTemplate,
                 GeometryToolSettingsViewModel => GeometryTemplate,
+                PlaneFitToolSettingsViewModel => PlaneFitTemplate,
+                Geometry3DToolSettingsViewModel => Geometry3DTemplate,
                 OCRToolSettingsViewModel => OCRTemplate,
                 DetectionToolSettingsViewModel => DetectionTemplate,
                 ClassifyToolSettingsViewModel => ClassifyTemplate,

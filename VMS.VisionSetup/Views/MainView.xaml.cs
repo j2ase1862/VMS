@@ -692,6 +692,24 @@ namespace VMS.VisionSetup
             window.ShowDialog();
         }
 
+        private void ToolPaletteExpandAll_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is ViewModels.MainViewModel vm)
+            {
+                foreach (var category in vm.ToolTree)
+                    category.IsExpanded = true;
+            }
+        }
+
+        private void ToolPaletteCollapseAll_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is ViewModels.MainViewModel vm)
+            {
+                foreach (var category in vm.ToolTree)
+                    category.IsExpanded = false;
+            }
+        }
+
         #endregion
     }
 }

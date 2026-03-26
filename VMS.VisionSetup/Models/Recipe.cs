@@ -107,10 +107,7 @@ namespace VMS.VisionSetup.Models
         /// </summary>
         public SequenceConfig? ProcessSequence { get; set; }
 
-        #region 3D MultiView Settings
-
-        /// <summary>검사 모드 (SingleShot / MultiView)</summary>
-        public InspectionMode InspectionMode { get; set; } = InspectionMode.SingleShot;
+        #region Robot Settings
 
         /// <summary>로봇 IP 주소</summary>
         public string RobotIpAddress { get; set; } = "192.168.1.100";

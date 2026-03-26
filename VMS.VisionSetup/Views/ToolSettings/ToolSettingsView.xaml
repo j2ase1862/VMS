@@ -70,6 +70,12 @@
         <DataTemplate x:Key="AnomalyTemplate" DataType="{x:Type vm:AnomalyToolSettingsViewModel}">
             <tools:AnomalyToolSettings/>
         </DataTemplate>
+        <DataTemplate x:Key="PlaneFitTemplate" DataType="{x:Type vm:PlaneFitToolSettingsViewModel}">
+            <tools:PlaneFitToolSettings/>
+        </DataTemplate>
+        <DataTemplate x:Key="Geometry3DTemplate" DataType="{x:Type vm:Geometry3DToolSettingsViewModel}">
+            <tools:Geometry3DToolSettings/>
+        </DataTemplate>
         <DataTemplate x:Key="ResultTemplate" DataType="{x:Type vm:ResultToolSettingsViewModel}">
             <tools:ResultToolSettings/>
         </DataTemplate>
@@ -93,6 +99,8 @@
             DetectionTemplate="{StaticResource DetectionTemplate}"
             ClassifyTemplate="{StaticResource ClassifyTemplate}"
             AnomalyTemplate="{StaticResource AnomalyTemplate}"
+            PlaneFitTemplate="{StaticResource PlaneFitTemplate}"
+            Geometry3DTemplate="{StaticResource Geometry3DTemplate}"
             ResultTemplate="{StaticResource ResultTemplate}"/>
     </UserControl.Resources>
 

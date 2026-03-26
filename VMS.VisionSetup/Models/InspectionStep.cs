@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using VMS.Camera.Models;
 
 namespace VMS.VisionSetup.Models
 {
@@ -140,9 +141,19 @@ namespace VMS.VisionSetup.Models
         }
 
         /// <summary>
+        /// 로봇 웨이포인트 (null이면 로봇 이동 없이 고정 위치 촬영)
+        /// </summary>
+        private ScanWaypoint? _robotWaypoint;
+        public ScanWaypoint? RobotWaypoint
+        {
+            get => _robotWaypoint;
+            set => SetProperty(ref _robotWaypoint, value);
+        }
+
+        /// <summary>
         /// 표시용 스텝 정보 문자열
         /// </summary>
         [JsonIgnore]
-        public string DisplayInfo => $"{Name}";
+        public string DisplayInfo => RobotWaypoint != null ? $"{Name} (Robot)" : Name;
     }
 }
