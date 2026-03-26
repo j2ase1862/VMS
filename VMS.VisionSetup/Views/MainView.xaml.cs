@@ -2,6 +2,7 @@ using VMS.VisionSetup.Controls;
 using VMS.VisionSetup.Helpers;
 using VMS.VisionSetup.Models;
 using VMS.VisionSetup.ViewModels;
+using VMS.VisionSetup.Views;
 using VMS.VisionSetup.VisionTools.PatternMatching;
 using CommunityToolkit.Mvvm.Messaging;
 using System;
@@ -676,6 +677,37 @@ namespace VMS.VisionSetup
         {
             var vm = DataContext as MainViewModel;
             vm?.OpenSequenceEditor();
+        }
+
+        /// <summary>
+        /// MultiView 스캔 설정 다이얼로그 열기
+        /// </summary>
+        private void MultiViewSetup_Click(object sender, RoutedEventArgs e)
+        {
+            var window = new MultiViewSetupWindow
+            {
+                Owner = this,
+                DataContext = this.DataContext  // MainViewModel 공유
+            };
+            window.ShowDialog();
+        }
+
+        private void ToolPaletteExpandAll_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is ViewModels.MainViewModel vm)
+            {
+                foreach (var category in vm.ToolTree)
+                    category.IsExpanded = true;
+            }
+        }
+
+        private void ToolPaletteCollapseAll_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is ViewModels.MainViewModel vm)
+            {
+                foreach (var category in vm.ToolTree)
+                    category.IsExpanded = false;
+            }
         }
 
         #endregion

@@ -72,7 +72,7 @@ namespace VMS.VisionSetup.Models
             set => SetProperty(ref _categoryName, value);
         }
 
-        private bool _isExpanded = true;
+        private bool _isExpanded = false;
         public bool IsExpanded
         {
             get => _isExpanded;

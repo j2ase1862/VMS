@@ -68,6 +68,27 @@ namespace VMS.VisionSetup.Controls
             set => SetValue(HeightSliceUpperProperty, value);
         }
 
+        // Waypoints (pass-through to InnerViewer)
+
+        public static readonly DependencyProperty WaypointsProperty =
+            DependencyProperty.Register(
+                nameof(Waypoints),
+                typeof(System.Collections.Generic.IEnumerable<ScanWaypoint>),
+                typeof(PointDrawingCanvas),
+                new PropertyMetadata(null, OnWaypointsChanged));
+
+        public System.Collections.Generic.IEnumerable<ScanWaypoint>? Waypoints
+        {
+            get => (System.Collections.Generic.IEnumerable<ScanWaypoint>?)GetValue(WaypointsProperty);
+            set => SetValue(WaypointsProperty, value);
+        }
+
+        private static void OnWaypointsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is PointDrawingCanvas canvas)
+                canvas.InnerViewer.Waypoints = e.NewValue as System.Collections.Generic.IEnumerable<ScanWaypoint>;
+        }
+
         #endregion
 
         public PointDrawingCanvas()

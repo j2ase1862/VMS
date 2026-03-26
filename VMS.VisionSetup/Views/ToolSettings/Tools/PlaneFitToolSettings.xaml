@@ -1,0 +1,42 @@
+<UserControl x:Class="VMS.VisionSetup.Views.ToolSettings.Tools.PlaneFitToolSettings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls"
+             xmlns:conv="clr-namespace:VMS.VisionSetup.Converters"
+             xmlns:meas="clr-namespace:VMS.VisionSetup.VisionTools.Measurement">
+    <StackPanel>
+        <controls:EnumComboBoxParameter Label="Fit Method"
+            ItemsSource="{conv:EnumValues {x:Type meas:PlaneFitMethod}}"
+            SelectedValue="{Binding FitMethod}"
+            ToolType="PlaneFitTool" ParameterName="FitMethod"/>
+
+        <!-- RANSAC Parameters (visible only when RANSAC selected) -->
+        <StackPanel>
+            <StackPanel.Style>
+                <Style TargetType="StackPanel">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding FitMethod}" Value="{x:Static meas:PlaneFitMethod.RANSAC}">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </StackPanel.Style>
+
+            <controls:SliderParameter Label="RANSAC Iterations"
+                Value="{Binding RansacIterations}" Minimum="10" Maximum="5000"
+                TickFrequency="10" ValueFormat="F0"
+                ToolType="PlaneFitTool" ParameterName="RansacIterations"/>
+
+            <controls:SliderParameter Label="RANSAC Threshold (mm)"
+                Value="{Binding RansacThreshold}" Minimum="0.01" Maximum="5.0"
+                TickFrequency="0.01" ValueFormat="F2"
+                ToolType="PlaneFitTool" ParameterName="RansacThreshold"/>
+        </StackPanel>
+
+        <controls:SliderParameter Label="Sample Stride"
+            Value="{Binding SampleStride}" Minimum="1" Maximum="16"
+            TickFrequency="1" ValueFormat="F0"
+            ToolType="PlaneFitTool" ParameterName="SampleStride"/>
+    </StackPanel>
+</UserControl>
