@@ -1,3 +1,4 @@
+using VMS.Camera.Converters;
 using VMS.Camera.Models;
 using VMS.VisionSetup.Interfaces;
 using VMS.VisionSetup.Models;
@@ -5,6 +6,10 @@ using VMS.VisionSetup.VisionTools.BlobAnalysis;
 using VMS.VisionSetup.VisionTools.ImageProcessing;
 using VMS.VisionSetup.VisionTools.Measurement;
 using VMS.VisionSetup.VisionTools.PatternMatching;
+using VMS.VisionSetup.VisionTools.CodeReading;
+using VMS.VisionSetup.VisionTools.Identification;
+using VMS.VisionSetup.VisionTools.DeepLearning;
+using VMS.VisionSetup.VisionTools.Result;
 using CommunityToolkit.Mvvm.ComponentModel;
 using OpenCvSharp;
 using OpenCvSharp.WpfExtensions;
@@ -112,6 +117,26 @@ namespace VMS.VisionSetup.Services
                 _lastCompositeOverlay?.Dispose();
                 _lastCompositeOverlay = value;
             }
+        }
+
+        // CV_32FC1 float depth map (HeightSlicerTool 등 정밀 도구용)
+        private Mat? _currentDepthMap32F;
+        public Mat? CurrentDepthMap32F
+        {
+            get => _currentDepthMap32F;
+            private set
+            {
+                _currentDepthMap32F?.Dispose();
+                SetProperty(ref _currentDepthMap32F, value);
+            }
+        }
+
+        // 3D 높이맵 메타데이터 (PlaneFitTool, Geometry3DTool 등 3D 측정 도구용)
+        private HeightMapMetadata? _currentHeightMapMetadata;
+        public HeightMapMetadata? CurrentHeightMapMetadata
+        {
+            get => _currentHeightMapMetadata;
+            set => SetProperty(ref _currentHeightMapMetadata, value);
         }
 
         private VisionService() { }
@@ -604,6 +629,7 @@ namespace VMS.VisionSetup.Services
             ApplyCoordinatesConnection(tool, resultMap);
 
             // Resolve connected input for the target tool
+            // HeightSlicerTool: 연결이 없을 때 CV_32FC1 depth map 입력
             var connectedImage = GetConnectedInputImage(tool, resultMap);
             Mat toolInput;
             bool ownsToolInput;
@@ -611,6 +637,11 @@ namespace VMS.VisionSetup.Services
             {
                 toolInput = connectedImage;
                 ownsToolInput = false;
+            }
+            else if (tool is HeightSlicerTool && CurrentDepthMap32F != null && !CurrentDepthMap32F.IsDisposed)
+            {
+                toolInput = CurrentDepthMap32F.Clone();
+                ownsToolInput = true;
             }
             else
             {
@@ -620,12 +651,14 @@ namespace VMS.VisionSetup.Services
 
             try
             {
+                tool.OverlayBaseImage = toolInput;
                 var result = tool.Execute(toolInput);
                 tool.LastResult = result;
                 return result;
             }
             finally
             {
+                tool.OverlayBaseImage = null;
                 if (ownsToolInput)
                     toolInput.Dispose();
                 foreach (var ci in clonedInputs)
@@ -692,7 +725,8 @@ namespace VMS.VisionSetup.Services
                     continue;
 
                 // 1. Result 연결 확인: Source가 실패이면 건너뛰기
-                if (ShouldSkipByResultConnection(tool, resultMap))
+                //    ResultTool은 실패 정보를 수집해야 하므로 스킵 우회
+                if (tool is not ResultTool and not GeometryTool && ShouldSkipByResultConnection(tool, resultMap))
                 {
                     var skipResult = new VisionResult
                     {
@@ -711,6 +745,7 @@ namespace VMS.VisionSetup.Services
 
                 // 3. Image 연결: 연결된 Source의 출력 이미지를 입력으로 사용
                 //    연결이 없으면 원본 이미지 사용 (각 도구가 독립적으로 원본 처리)
+                //    HeightSlicerTool은 연결이 없을 때 CV_32FC1 depth map을 입력으로 수신
                 Mat inputImage;
                 var connectedImage = GetConnectedInputImage(tool, resultMap);
                 bool usesBaseImage = connectedImage == null;
@@ -731,6 +766,11 @@ namespace VMS.VisionSetup.Services
                         tool.SetCachedGrayscale(cachedGray.Clone());
                     }
                 }
+                else if (tool is HeightSlicerTool && CurrentDepthMap32F != null && !CurrentDepthMap32F.IsDisposed)
+                {
+                    // HeightSlicerTool: CV_32FC1 float depth map 입력
+                    inputImage = CurrentDepthMap32F.Clone();
+                }
                 else
                 {
                     inputImage = CurrentImage.Clone();
@@ -740,6 +780,48 @@ namespace VMS.VisionSetup.Services
 
                 try
                 {
+                    // ResultTool: Execute 전에 연결된 소스 결과 주입
+                    if (tool is ResultTool rt)
+                    {
+                        rt.SourceResults.Clear();
+                        foreach (var conn in _connections
+                            .Where(c => c.TargetId == tool.Id && c.Type == ConnectionType.Result))
+                        {
+                            if (resultMap.TryGetValue(conn.SourceId, out var srcResult))
+                            {
+                                var srcTool = sortedTools.FirstOrDefault(t => t.Id == conn.SourceId);
+                                rt.SourceResults.Add(new SourceToolResult
+                                {
+                                    ToolId = conn.SourceId,
+                                    ToolName = srcTool?.Name ?? conn.SourceId,
+                                    Success = srcResult.Success,
+                                    Message = srcResult.Message
+                                });
+                            }
+                        }
+                    }
+
+                    // GeometryTool: Execute 전에 연결된 소스의 기하 데이터 주입
+                    if (tool is GeometryTool gt)
+                    {
+                        gt.SourceGeometries.Clear();
+                        foreach (var conn in _connections
+                            .Where(c => c.TargetId == tool.Id && c.Type == ConnectionType.Result))
+                        {
+                            if (resultMap.TryGetValue(conn.SourceId, out var srcResult))
+                            {
+                                var srcTool = sortedTools.FirstOrDefault(t => t.Id == conn.SourceId);
+                                var geo = GeometryTool.ExtractGeometry(
+                                    conn.SourceId,
+                                    srcTool?.Name ?? conn.SourceId,
+                                    srcTool?.ToolType ?? "",
+                                    srcResult);
+                                if (geo != null)
+                                    gt.SourceGeometries.Add(geo);
+                            }
+                        }
+                    }
+
                     var result = tool.Execute(inputImage);
                     tool.LastResult = result;
                     results.Add(result);
@@ -788,7 +870,12 @@ namespace VMS.VisionSetup.Services
 
             sw.Stop();
             TotalExecutionTime = sw.Elapsed.TotalMilliseconds;
-            LastRunSuccess = allSuccess;
+
+            // ResultTool이 존재하면 최종 판정은 ResultTool의 Success로 결정
+            var resultToolInstance = sortedTools.OfType<ResultTool>().FirstOrDefault();
+            LastRunSuccess = resultToolInstance != null
+                ? resultMap.TryGetValue(resultToolInstance.Id, out var rtResult) && rtResult.Success
+                : allSuccess;
             IsRunning = false;
 
             return results;
@@ -809,6 +896,8 @@ namespace VMS.VisionSetup.Services
                 "MorphologyTool" => new MorphologyTool(),
                 "HistogramTool" => new HistogramTool(),
                 "HeightSlicerTool" => new HeightSlicerTool(),
+                "PlaneFitTool" => new PlaneFitTool(),
+                "Geometry3DTool" => new Geometry3DTool(),
 
                 // Pattern Matching
                 "FeatureMatchTool" => new FeatureMatchTool(),
@@ -820,6 +909,21 @@ namespace VMS.VisionSetup.Services
                 "CaliperTool" => new CaliperTool(),
                 "LineFitTool" => new LineFitTool(),
                 "CircleFitTool" => new CircleFitTool(),
+                "GeometryTool" => new GeometryTool(),
+
+                // Identification
+                "OCRTool" => new OCRTool(),
+
+                // Code Reading
+                "CodeReaderTool" => new CodeReaderTool(),
+
+                // Deep Learning
+                "DetectionTool" => new DetectionTool(),
+                "ClassifyTool" => new ClassifyTool(),
+                "AnomalyTool" => new AnomalyTool(),
+
+                // Judgment
+                "ResultTool" => new ResultTool(),
 
                 _ => null
             };
@@ -843,7 +947,9 @@ namespace VMS.VisionSetup.Services
                 },
                 ["3D Analysis"] = new[]
                 {
-                    "HeightSlicerTool"
+                    "HeightSlicerTool",
+                    "PlaneFitTool",
+                    "Geometry3DTool"
                 },
                 ["Pattern Matching"] = new[]
                 {
@@ -857,7 +963,26 @@ namespace VMS.VisionSetup.Services
                 {
                     "CaliperTool",
                     "LineFitTool",
-                    "CircleFitTool"
+                    "CircleFitTool",
+                    "GeometryTool"
+                },
+                ["Identification"] = new[]
+                {
+                    "OCRTool"
+                },
+                ["Code Reading"] = new[]
+                {
+                    "CodeReaderTool"
+                },
+                ["Deep Learning"] = new[]
+                {
+                    "DetectionTool",
+                    "ClassifyTool",
+                    "AnomalyTool"
+                },
+                ["Judgment"] = new[]
+                {
+                    "ResultTool"
                 }
             };
         }
@@ -880,48 +1005,40 @@ namespace VMS.VisionSetup.Services
                 "CaliperTool" => "Caliper",
                 "LineFitTool" => "Line Fit",
                 "CircleFitTool" => "Circle Fit",
+                "GeometryTool" => "Geometry",
                 "HeightSlicerTool" => "Height Slicer",
+                "PlaneFitTool" => "Plane Fit",
+                "Geometry3DTool" => "3D Geometry",
+                "OCRTool" => "OCR",
+                "CodeReaderTool" => "Code Reader",
+                "DetectionTool" => "Detection (YOLO)",
+                "ClassifyTool" => "Classify",
+                "AnomalyTool" => "Anomaly",
+                "ResultTool" => "Result",
                 _ => toolType
             };
         }
 
         /// <summary>
-        /// 3D 포인트 클라우드를 높이 슬라이싱하여 2D 그레이스케일 Height Map 생성
-        /// Y축 = 높이, 정렬된(organized) 그리드 포인트 클라우드 필요
+        /// 3D 포인트 클라우드를 높이 슬라이싱하여 2D Height Map 생성
+        /// Z축 = 높이 (PointCloudViewer/DepthMapViewer와 일치)
+        /// CV_32FC1 float map + CV_8UC1 정규화 map 동시 생성
         /// </summary>
-        public (Mat HeightMap, HeightMapMetadata Metadata) GenerateHeightMap(
+        public (Mat HeightMap8U, Mat DepthMap32F, HeightMapMetadata Metadata) GenerateHeightMap(
             PointCloudData pointCloud, float zRef, float zMin, float zMax)
         {
-            if (!pointCloud.IsOrganized)
-                throw new InvalidOperationException("Height map requires an organized (grid) point cloud.");
+            // PointCloudConverter로 위임 (Z축 사용, unsafe 최적화)
+            var depthMap32F = PointCloudConverter.ToDepthMap32F(pointCloud, zRef);
+            var heightMap8U = PointCloudConverter.DepthMap32FTo8U(depthMap32F, zMin, zMax);
 
+            // Per-pixel 3D lookup 테이블 생성
             int w = pointCloud.GridWidth;
             int h = pointCloud.GridHeight;
-            float range = zMax - zMin;
-            if (range <= 0) range = 1f;
-
-            var heightMap = new Mat(h, w, MatType.CV_8UC1, Scalar.All(0));
             var pixelTo3D = new Vector3?[w * h];
-
-            unsafe
+            var positions = pointCloud.Positions;
+            for (int i = 0; i < w * h; i++)
             {
-                byte* ptr = (byte*)heightMap.Data;
-                var positions = pointCloud.Positions;
-
-                for (int row = 0; row < h; row++)
-                {
-                    for (int col = 0; col < w; col++)
-                    {
-                        int idx = row * w + col;
-                        var pos = positions[idx];
-                        pixelTo3D[idx] = pos;
-
-                        float normalizedY = pos.Y - zRef;
-                        float t = (normalizedY - zMin) / range;
-                        t = Math.Clamp(t, 0f, 1f);
-                        ptr[idx] = (byte)(t * 255f);
-                    }
-                }
+                pixelTo3D[i] = positions[i];
             }
 
             var metadata = new HeightMapMetadata
@@ -931,10 +1048,17 @@ namespace VMS.VisionSetup.Services
                 ZReference = zRef,
                 ZMin = zMin,
                 ZMax = zMax,
+                DepthMap32F = depthMap32F,
                 PixelTo3D = pixelTo3D
             };
 
-            return (heightMap, metadata);
+            // VisionService에 float map 보관 (HeightSlicerTool 라우팅용)
+            CurrentDepthMap32F = depthMap32F.Clone();
+
+            // 3D 측정 도구용 메타데이터 보관 (PlaneFitTool, Geometry3DTool)
+            CurrentHeightMapMetadata = metadata;
+
+            return (heightMap8U, depthMap32F, metadata);
         }
 
         /// <summary>
@@ -944,6 +1068,8 @@ namespace VMS.VisionSetup.Services
         {
             CurrentImage?.Dispose();
             CurrentImage = null;
+            CurrentDepthMap32F = null;
+            CurrentHeightMapMetadata = null;
             LastCompositeOverlay = null;
         }
     }

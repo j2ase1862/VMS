@@ -13,6 +13,22 @@ namespace VMS.Camera.Interfaces
 
         Task DisconnectAsync();
 
-        Task<AcquisitionResult> AcquireAsync();
+        Task<AcquisitionResult> AcquireAsync(int timeoutMs = 5000);
+
+        /// <summary>
+        /// Live 모드 다운샘플링 스트라이드 (1 = 전체 해상도, 2 = 1/4)
+        /// </summary>
+        int DownsampleStride { get => 1; set { } }
+
+        /// <summary>
+        /// 연속 획득 시작 (MdigProcess 등 하드웨어 연속 그랩)
+        /// 지원하지 않는 구현체는 기본 no-op
+        /// </summary>
+        void StartProcessing() { }
+
+        /// <summary>
+        /// 연속 획득 중지
+        /// </summary>
+        void StopProcessing() { }
     }
 }

@@ -32,6 +32,17 @@ namespace VMS.Camera.Services
 #endif
             }
 
+            if (manufacturer.Contains("Matrox", StringComparison.OrdinalIgnoreCase) ||
+                manufacturer.Contains("Dalsa", StringComparison.OrdinalIgnoreCase))
+            {
+#if MIL_AVAILABLE
+                return new MatroxCameraAcquisition();
+#else
+                System.Diagnostics.Debug.WriteLine("Matrox MIL SDK가 설치되지 않았습니다. 시뮬레이션 모드로 전환합니다.");
+                return new SimulatedCameraAcquisition();
+#endif
+            }
+
             // 향후 실제 SDK 구현 시 여기에 추가:
             // "HIK" => new HikCameraAcquisition(),
 

@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using VMS.Camera.Models;
 using VMS.PLC.Models.Sequence;
 
 namespace VMS.VisionSetup.Models
@@ -105,6 +106,30 @@ namespace VMS.VisionSetup.Models
         /// 통합 프로세스 시퀀스 설정
         /// </summary>
         public SequenceConfig? ProcessSequence { get; set; }
+
+        #region Robot Settings
+
+        /// <summary>로봇 IP 주소</summary>
+        public string RobotIpAddress { get; set; } = "192.168.1.100";
+
+        /// <summary>로봇 포트</summary>
+        public int RobotPort { get; set; } = 30003;
+
+        /// <summary>로봇 회전 표현 방식</summary>
+        public EulerConvention EulerConvention { get; set; } = EulerConvention.UR_RotationVector;
+
+        /// <summary>정합 전략</summary>
+        public RegistrationStrategy RegistrationStrategy { get; set; } = RegistrationStrategy.PoseOnly;
+
+        /// <summary>핸드-아이 캘리브레이션 파일 경로</summary>
+        public string? HandEyeCalibrationPath { get; set; }
+
+        #endregion
+
+        /// <summary>
+        /// Height Slicing 설정 (저장된 경우)
+        /// </summary>
+        public HeightSlicingSettings? HeightSlicing { get; set; }
 
         /// <summary>
         /// 표시용 정보 문자열
@@ -222,6 +247,18 @@ namespace VMS.VisionSetup.Models
                 return false;
             return true;
         }
+    }
+
+    /// <summary>
+    /// Height Slicing 설정
+    /// </summary>
+    public class HeightSlicingSettings
+    {
+        public float HeightBaseline { get; set; }
+        public float HeightLowerLimit { get; set; }
+        public float HeightUpperLimit { get; set; }
+        public float DepthRangeMin { get; set; }
+        public float DepthRangeMax { get; set; }
     }
 
     /// <summary>

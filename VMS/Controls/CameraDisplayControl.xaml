@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:VMS.ViewModels"
              xmlns:controls="clr-namespace:VMS.Controls"
+             xmlns:core="clr-namespace:VMS.Core.Controls;assembly=VMS.Core"
              d:DataContext="{d:DesignInstance vm:CameraViewModel}"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -38,6 +39,21 @@
                                    Foreground="#808080"
                                    VerticalAlignment="Center"
                                    Margin="0,0,8,0"/>
+                        <!-- Connection status indicator -->
+                        <Ellipse Width="8" Height="8" VerticalAlignment="Center" Margin="0,0,6,0">
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Setter Property="Fill" Value="#F44336"/>
+                                    <Setter Property="ToolTip" Value="Disconnected"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                                            <Setter Property="Fill" Value="#4CAF50"/>
+                                            <Setter Property="ToolTip" Value="Connected"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
                         <TextBlock Text="{Binding Name}"
                                    Foreground="White"
                                    FontWeight="SemiBold"
@@ -97,7 +113,7 @@
                 </Grid>
             </Border>
 
-            <!-- Camera 2D/3D view tabs -->
+            <!-- Camera 2D / Depth Map / Point Cloud view tabs -->
             <TabControl Grid.Row="1" Margin="4"
                         SelectedIndex="{Binding SelectedViewTab}"
                         Background="#1E1E1E"
@@ -135,7 +151,7 @@
                     </Style>
                 </TabControl.Resources>
 
-                <!-- 2D View Tab -->
+                <!-- Tab 0: 2D View -->
                 <TabItem Header="2D">
                     <Border Background="#1E1E1E">
                         <Grid>
@@ -163,8 +179,36 @@
                     </Border>
                 </TabItem>
 
-                <!-- 3D View Tab -->
-                <TabItem Header="3D">
+                <!-- Tab 1: Depth Map -->
+                <TabItem Header="Depth Map">
+                    <Border Background="#1E1E1E">
+                        <Grid>
+                            <!-- Placeholder when no point cloud -->
+                            <StackPanel VerticalAlignment="Center"
+                                        HorizontalAlignment="Center"
+                                        Visibility="{Binding CurrentPointCloud, Converter={StaticResource NullToVisibilityConverter}, ConverterParameter=Invert}">
+                                <TextBlock Text="&#xE81C;"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="48"
+                                           Foreground="#404040"
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock Text="No Depth Data"
+                                           Foreground="#606060"
+                                           FontSize="12"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,8,0,0"/>
+                            </StackPanel>
+
+                            <!-- Depth Map Viewer -->
+                            <core:DepthMapViewer
+                                PointCloud="{Binding CurrentPointCloud}"
+                                Visibility="{Binding CurrentPointCloud, Converter={StaticResource NullToVisibilityConverter}}"/>
+                        </Grid>
+                    </Border>
+                </TabItem>
+
+                <!-- Tab 2: Point Cloud (3D viewer) -->
+                <TabItem Header="Point Cloud">
                     <Border Background="#1E1E1E">
                         <Grid>
                             <!-- Placeholder when no point cloud -->
@@ -184,7 +228,7 @@
                             </StackPanel>
 
                             <!-- Point Cloud Viewer -->
-                            <controls:PointCloudViewer
+                            <core:PointCloudViewer
                                 PointCloud="{Binding CurrentPointCloud}"
                                 Visibility="{Binding CurrentPointCloud, Converter={StaticResource NullToVisibilityConverter}}"/>
                         </Grid>
@@ -381,23 +425,48 @@
                 </Grid>
             </Border>
 
-            <!-- Resize grip (bottom-right corner) -->
-            <Thumb Grid.Row="1" Grid.RowSpan="3"
-                   Width="16" Height="16"
-                   HorizontalAlignment="Right"
-                   VerticalAlignment="Bottom"
-                   Cursor="SizeNWSE"
-                   x:Name="ResizeGrip">
-                <Thumb.Template>
-                    <ControlTemplate TargetType="Thumb">
-                        <Grid Background="Transparent">
-                            <Path Data="M 0,16 L 16,0 M 5,16 L 16,5 M 10,16 L 16,10"
-                                  Stroke="#606060"
-                                  StrokeThickness="1"/>
-                        </Grid>
-                    </ControlTemplate>
-                </Thumb.Template>
-            </Thumb>
+            <!-- 8-direction resize handles -->
+            <Grid Grid.Row="0" Grid.RowSpan="4" Panel.ZIndex="5">
+                <Grid.Resources>
+                    <Style x:Key="ResizeThumbStyle" TargetType="Thumb">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Thumb">
+                                    <Border Background="Transparent"/>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Grid.Resources>
+
+                <!-- Edge handles (6px thick) -->
+                <Thumb x:Name="ResizeTop" Height="6" VerticalAlignment="Top"
+                       Margin="8,0,8,0" Cursor="SizeNS"
+                       Style="{StaticResource ResizeThumbStyle}"/>
+                <Thumb x:Name="ResizeBottom" Height="6" VerticalAlignment="Bottom"
+                       Margin="8,0,8,0" Cursor="SizeNS"
+                       Style="{StaticResource ResizeThumbStyle}"/>
+                <Thumb x:Name="ResizeLeft" Width="6" HorizontalAlignment="Left"
+                       Margin="0,8,0,8" Cursor="SizeWE"
+                       Style="{StaticResource ResizeThumbStyle}"/>
+                <Thumb x:Name="ResizeRight" Width="6" HorizontalAlignment="Right"
+                       Margin="0,8,0,8" Cursor="SizeWE"
+                       Style="{StaticResource ResizeThumbStyle}"/>
+
+                <!-- Corner handles (8x8) -->
+                <Thumb x:Name="ResizeTopLeft" Width="8" Height="8"
+                       VerticalAlignment="Top" HorizontalAlignment="Left"
+                       Cursor="SizeNWSE" Style="{StaticResource ResizeThumbStyle}"/>
+                <Thumb x:Name="ResizeTopRight" Width="8" Height="8"
+                       VerticalAlignment="Top" HorizontalAlignment="Right"
+                       Cursor="SizeNESW" Style="{StaticResource ResizeThumbStyle}"/>
+                <Thumb x:Name="ResizeBottomLeft" Width="8" Height="8"
+                       VerticalAlignment="Bottom" HorizontalAlignment="Left"
+                       Cursor="SizeNESW" Style="{StaticResource ResizeThumbStyle}"/>
+                <Thumb x:Name="ResizeBottomRight" Width="8" Height="8"
+                       VerticalAlignment="Bottom" HorizontalAlignment="Right"
+                       Cursor="SizeNWSE" Style="{StaticResource ResizeThumbStyle}"/>
+            </Grid>
 
             <!-- Inline Control Box Overlay -->
             <Border Grid.Row="0" Grid.RowSpan="4"

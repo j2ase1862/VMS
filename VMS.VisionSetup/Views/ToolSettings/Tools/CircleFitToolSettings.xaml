@@ -35,6 +35,10 @@
             Value="{Binding EndAngle}" Minimum="0" Maximum="360"
             TickFrequency="5" ValueFormat="F0"
             ToolType="CircleFitTool" ParameterName="EndAngle"/>
+        <controls:EnumComboBoxParameter Label="Search Direction"
+            ItemsSource="{conv:EnumValues {x:Type meas:CircleSearchDirection}}"
+            SelectedValue="{Binding SearchDirection}"
+            ToolType="CircleFitTool" ParameterName="SearchDirection"/>
         <controls:EnumComboBoxParameter Label="Polarity"
             ItemsSource="{conv:EnumValues {x:Type meas:EdgePolarity}}"
             SelectedValue="{Binding Polarity}"

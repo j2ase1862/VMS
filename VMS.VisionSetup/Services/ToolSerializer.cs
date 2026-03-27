@@ -3,6 +3,10 @@ using VMS.VisionSetup.VisionTools.BlobAnalysis;
 using VMS.VisionSetup.VisionTools.ImageProcessing;
 using VMS.VisionSetup.VisionTools.Measurement;
 using VMS.VisionSetup.VisionTools.PatternMatching;
+using VMS.VisionSetup.VisionTools.CodeReading;
+using VMS.VisionSetup.VisionTools.Identification;
+using VMS.VisionSetup.VisionTools.DeepLearning;
+using VMS.VisionSetup.VisionTools.Result;
 using VMS.PLC.Models;
 using OpenCvSharp;
 using System;
@@ -43,6 +47,9 @@ namespace VMS.VisionSetup.Services
                 ROIY = tool.ROIY,
                 ROIWidth = tool.ROIWidth,
                 ROIHeight = tool.ROIHeight,
+                ROIAngle = tool.ROIAngle,
+                ROICenterX = tool.ROICenterX,
+                ROICenterY = tool.ROICenterY,
                 Parameters = new Dictionary<string, object>(),
                 PlcMappings = tool.PlcMappings.Select(m => new PlcResultMapping
                 {
@@ -213,6 +220,7 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["SearchWidth"] = lineFit.SearchWidth;
                     config.Parameters["Polarity"] = lineFit.Polarity.ToString();
                     config.Parameters["EdgeThreshold"] = lineFit.EdgeThreshold;
+                    config.Parameters["FilterHalfWidth"] = lineFit.FilterHalfWidth;
                     config.Parameters["FitMethod"] = lineFit.FitMethod.ToString();
                     config.Parameters["RansacThreshold"] = lineFit.RansacThreshold;
                     config.Parameters["MinFoundCalipers"] = lineFit.MinFoundCalipers;
@@ -237,6 +245,91 @@ namespace VMS.VisionSetup.Services
                 case HeightSlicerTool heightSlicer:
                     config.Parameters["MinZ"] = heightSlicer.MinZ;
                     config.Parameters["MaxZ"] = heightSlicer.MaxZ;
+                    break;
+
+                case CodeReaderTool codeReader:
+                    config.Parameters["CodeReaderMode"] = codeReader.CodeReaderMode.ToString();
+                    config.Parameters["MaxCodeCount"] = codeReader.MaxCodeCount;
+                    config.Parameters["TryHarder"] = codeReader.TryHarder;
+                    config.Parameters["EnableVerification"] = codeReader.EnableVerification;
+                    config.Parameters["ExpectedText"] = codeReader.ExpectedText;
+                    config.Parameters["UseRegexMatch"] = codeReader.UseRegexMatch;
+                    config.Parameters["DrawOverlay"] = codeReader.DrawOverlay;
+                    break;
+
+                case GeometryTool geom:
+                    config.Parameters["Operation"] = geom.Operation.ToString();
+                    break;
+
+                case PlaneFitTool planeFit:
+                    config.Parameters["FitMethod"] = planeFit.FitMethod.ToString();
+                    config.Parameters["RansacIterations"] = planeFit.RansacIterations;
+                    config.Parameters["RansacThreshold"] = planeFit.RansacThreshold;
+                    config.Parameters["SampleStride"] = planeFit.SampleStride;
+                    break;
+
+                case Geometry3DTool geom3D:
+                    config.Parameters["Operation"] = geom3D.Operation.ToString();
+                    config.Parameters["UseManualPoints"] = geom3D.UseManualPoints;
+                    config.Parameters["PointAX"] = geom3D.PointA.X;
+                    config.Parameters["PointAY"] = geom3D.PointA.Y;
+                    config.Parameters["PointBX"] = geom3D.PointB.X;
+                    config.Parameters["PointBY"] = geom3D.PointB.Y;
+                    break;
+
+                case OCRTool ocr:
+                    config.Parameters["OcrEngine"] = ocr.OcrEngine.ToString();
+                    config.Parameters["Language"] = ocr.Language.ToString();
+                    config.Parameters["PageSegMode"] = ocr.PageSegMode.ToString();
+                    config.Parameters["EngineMode"] = ocr.EngineMode.ToString();
+                    config.Parameters["CharacterWhitelist"] = ocr.CharacterWhitelist;
+                    config.Parameters["ConfidenceThreshold"] = ocr.ConfidenceThreshold;
+                    config.Parameters["AutoPreprocess"] = ocr.AutoPreprocess;
+                    config.Parameters["InvertImage"] = ocr.InvertImage;
+                    config.Parameters["TargetTextHeight"] = ocr.TargetTextHeight;
+                    config.Parameters["DenoiseLevel"] = ocr.DenoiseLevel;
+                    config.Parameters["DotMatrixMode"] = ocr.DotMatrixMode;
+                    config.Parameters["EnableVerification"] = ocr.EnableVerification;
+                    config.Parameters["ExpectedText"] = ocr.ExpectedText;
+                    config.Parameters["UseRegexMatch"] = ocr.UseRegexMatch;
+                    config.Parameters["DrawOverlay"] = ocr.DrawOverlay;
+                    config.Parameters["TessdataPath"] = ocr.TessdataPath;
+                    config.Parameters["MaxSideLen"] = ocr.MaxSideLen;
+                    config.Parameters["CustomDetModelPath"] = ocr.CustomDetModelPath;
+                    config.Parameters["CustomRecModelPath"] = ocr.CustomRecModelPath;
+                    config.Parameters["CustomDictPath"] = ocr.CustomDictPath;
+                    break;
+
+                case DetectionTool detection:
+                    config.Parameters["ModelPath"] = detection.ModelPath;
+                    config.Parameters["InputSize"] = detection.InputSize;
+                    config.Parameters["ConfidenceThreshold"] = detection.ConfidenceThreshold;
+                    config.Parameters["IouThreshold"] = detection.IouThreshold;
+                    config.Parameters["ClassNamesText"] = detection.ClassNamesText;
+                    config.Parameters["DrawOverlay"] = detection.DrawOverlay;
+                    break;
+
+                case ClassifyTool classify:
+                    config.Parameters["ModelPath"] = classify.ModelPath;
+                    config.Parameters["InputWidth"] = classify.InputWidth;
+                    config.Parameters["InputHeight"] = classify.InputHeight;
+                    config.Parameters["ConfidenceThreshold"] = classify.ConfidenceThreshold;
+                    config.Parameters["ClassNamesText"] = classify.ClassNamesText;
+                    config.Parameters["UseImageNetNormalization"] = classify.UseImageNetNormalization;
+                    config.Parameters["DrawOverlay"] = classify.DrawOverlay;
+                    break;
+
+                case AnomalyTool anomaly:
+                    config.Parameters["ModelPath"] = anomaly.ModelPath;
+                    config.Parameters["InputSize"] = anomaly.InputSize;
+                    config.Parameters["AnomalyThreshold"] = anomaly.AnomalyThreshold;
+                    config.Parameters["DrawOverlay"] = anomaly.DrawOverlay;
+                    config.Parameters["ShowHeatmap"] = anomaly.ShowHeatmap;
+                    config.Parameters["HeatmapOpacity"] = anomaly.HeatmapOpacity;
+                    break;
+
+                case ResultTool resultTool:
+                    config.Parameters["JudgmentMode"] = resultTool.JudgmentMode.ToString();
                     break;
 
                 default:
@@ -282,6 +375,15 @@ namespace VMS.VisionSetup.Services
                 "LineFitTool" => DeserializeLineFitTool(config),
                 "CircleFitTool" => DeserializeCircleFitTool(config),
                 "HeightSlicerTool" => DeserializeHeightSlicerTool(config),
+                "CodeReaderTool" => DeserializeCodeReaderTool(config),
+                "GeometryTool" => DeserializeGeometryTool(config),
+                "PlaneFitTool" => DeserializePlaneFitTool(config),
+                "Geometry3DTool" => DeserializeGeometry3DTool(config),
+                "OCRTool" => DeserializeOCRTool(config),
+                "DetectionTool" => DeserializeDetectionTool(config),
+                "ClassifyTool" => DeserializeClassifyTool(config),
+                "AnomalyTool" => DeserializeAnomalyTool(config),
+                "ResultTool" => DeserializeResultTool(config),
                 _ => null
             };
 
@@ -302,6 +404,9 @@ namespace VMS.VisionSetup.Services
             tool.Y = config.Y;
             tool.UseROI = config.UseROI;
             tool.ROI = new Rect(config.ROIX, config.ROIY, config.ROIWidth, config.ROIHeight);
+            tool.ROIAngle = config.ROIAngle;
+            tool.ROICenterX = config.ROICenterX;
+            tool.ROICenterY = config.ROICenterY;
 
             // PLC 매핑 복원 (1:N)
             if (config.PlcMappings != null && config.PlcMappings.Count > 0)
@@ -696,6 +801,8 @@ namespace VMS.VisionSetup.Services
                 tool.Polarity = Enum.Parse<EdgePolarity>(GetString(polarity));
             if (p.TryGetValue("EdgeThreshold", out var et))
                 tool.EdgeThreshold = GetDouble(et);
+            if (p.TryGetValue("FilterHalfWidth", out var fhw))
+                tool.FilterHalfWidth = GetInt(fhw);
             if (p.TryGetValue("FitMethod", out var fm))
                 tool.FitMethod = Enum.Parse<LineFitMethod>(GetString(fm));
             if (p.TryGetValue("RansacThreshold", out var rt))
@@ -751,6 +858,204 @@ namespace VMS.VisionSetup.Services
                 tool.MinZ = (float)GetDouble(minZ);
             if (p.TryGetValue("MaxZ", out var maxZ))
                 tool.MaxZ = (float)GetDouble(maxZ);
+
+            return tool;
+        }
+
+        private static CodeReaderTool DeserializeCodeReaderTool(ToolConfig config)
+        {
+            var tool = new CodeReaderTool();
+            var p = config.Parameters;
+
+            if (p.TryGetValue("CodeReaderMode", out var crm))
+                tool.CodeReaderMode = Enum.Parse<CodeReaderMode>(GetString(crm));
+            if (p.TryGetValue("MaxCodeCount", out var mcc))
+                tool.MaxCodeCount = GetInt(mcc);
+            if (p.TryGetValue("TryHarder", out var th))
+                tool.TryHarder = GetBool(th);
+            if (p.TryGetValue("EnableVerification", out var ev))
+                tool.EnableVerification = GetBool(ev);
+            if (p.TryGetValue("ExpectedText", out var et))
+                tool.ExpectedText = GetString(et);
+            if (p.TryGetValue("UseRegexMatch", out var urm))
+                tool.UseRegexMatch = GetBool(urm);
+            if (p.TryGetValue("DrawOverlay", out var dov))
+                tool.DrawOverlay = GetBool(dov);
+
+            return tool;
+        }
+
+        private static GeometryTool DeserializeGeometryTool(ToolConfig config)
+        {
+            var tool = new GeometryTool();
+            var p = config.Parameters;
+
+            if (p.TryGetValue("Operation", out var op))
+                tool.Operation = Enum.Parse<GeometryOperation>(GetString(op));
+
+            return tool;
+        }
+
+        private static PlaneFitTool DeserializePlaneFitTool(ToolConfig config)
+        {
+            var tool = new PlaneFitTool();
+            var p = config.Parameters;
+
+            if (p.TryGetValue("FitMethod", out var fm))
+                tool.FitMethod = Enum.Parse<PlaneFitMethod>(GetString(fm));
+            if (p.TryGetValue("RansacIterations", out var ri))
+                tool.RansacIterations = GetInt(ri);
+            if (p.TryGetValue("RansacThreshold", out var rt))
+                tool.RansacThreshold = GetDouble(rt);
+            if (p.TryGetValue("SampleStride", out var ss))
+                tool.SampleStride = GetInt(ss);
+
+            return tool;
+        }
+
+        private static Geometry3DTool DeserializeGeometry3DTool(ToolConfig config)
+        {
+            var tool = new Geometry3DTool();
+            var p = config.Parameters;
+
+            if (p.TryGetValue("Operation", out var op))
+                tool.Operation = Enum.Parse<Geometry3DOperation>(GetString(op));
+            if (p.TryGetValue("UseManualPoints", out var ump))
+                tool.UseManualPoints = GetBool(ump);
+            if (p.TryGetValue("PointAX", out var pax) && p.TryGetValue("PointAY", out var pay))
+                tool.PointA = new OpenCvSharp.Point2d(GetDouble(pax), GetDouble(pay));
+            if (p.TryGetValue("PointBX", out var pbx) && p.TryGetValue("PointBY", out var pby))
+                tool.PointB = new OpenCvSharp.Point2d(GetDouble(pbx), GetDouble(pby));
+
+            return tool;
+        }
+
+        private static OCRTool DeserializeOCRTool(ToolConfig config)
+        {
+            var tool = new OCRTool();
+            var p = config.Parameters;
+
+            if (p.TryGetValue("OcrEngine", out var oe))
+            {
+                string engineStr = GetString(oe);
+                // 하위 호환: 기존 레시피의 "PaddleOCR" → "PPOcrOnnx"
+                if (engineStr == "PaddleOCR") engineStr = "PPOcrOnnx";
+                tool.OcrEngine = Enum.Parse<OcrEngineType>(engineStr);
+            }
+            if (p.TryGetValue("Language", out var lang))
+                tool.Language = Enum.Parse<OcrLanguage>(GetString(lang));
+            if (p.TryGetValue("PageSegMode", out var psm))
+                tool.PageSegMode = Enum.Parse<OcrPageSegMode>(GetString(psm));
+            if (p.TryGetValue("EngineMode", out var em))
+                tool.EngineMode = Enum.Parse<OcrEngineMode>(GetString(em));
+            if (p.TryGetValue("CharacterWhitelist", out var cw))
+                tool.CharacterWhitelist = GetString(cw);
+            if (p.TryGetValue("ConfidenceThreshold", out var ct))
+                tool.ConfidenceThreshold = GetDouble(ct);
+            if (p.TryGetValue("AutoPreprocess", out var ap))
+                tool.AutoPreprocess = GetBool(ap);
+            if (p.TryGetValue("InvertImage", out var inv))
+                tool.InvertImage = GetBool(inv);
+            if (p.TryGetValue("TargetTextHeight", out var tth))
+                tool.TargetTextHeight = GetInt(tth);
+            if (p.TryGetValue("DenoiseLevel", out var dnl))
+                tool.DenoiseLevel = GetInt(dnl);
+            if (p.TryGetValue("DotMatrixMode", out var dmm))
+                tool.DotMatrixMode = GetBool(dmm);
+            if (p.TryGetValue("EnableVerification", out var ev))
+                tool.EnableVerification = GetBool(ev);
+            if (p.TryGetValue("ExpectedText", out var et))
+                tool.ExpectedText = GetString(et);
+            if (p.TryGetValue("UseRegexMatch", out var urm))
+                tool.UseRegexMatch = GetBool(urm);
+            if (p.TryGetValue("DrawOverlay", out var dov))
+                tool.DrawOverlay = GetBool(dov);
+            if (p.TryGetValue("TessdataPath", out var tp))
+                tool.TessdataPath = GetString(tp);
+            if (p.TryGetValue("MaxSideLen", out var msl))
+                tool.MaxSideLen = GetInt(msl);
+            if (p.TryGetValue("CustomDetModelPath", out var cdm))
+                tool.CustomDetModelPath = GetString(cdm);
+            if (p.TryGetValue("CustomRecModelPath", out var crm))
+                tool.CustomRecModelPath = GetString(crm);
+            if (p.TryGetValue("CustomDictPath", out var cdp))
+                tool.CustomDictPath = GetString(cdp);
+
+            return tool;
+        }
+
+        private static DetectionTool DeserializeDetectionTool(ToolConfig config)
+        {
+            var tool = new DetectionTool();
+            var p = config.Parameters;
+
+            if (p.TryGetValue("ModelPath", out var mp))
+                tool.ModelPath = GetString(mp);
+            if (p.TryGetValue("InputSize", out var isz))
+                tool.InputSize = GetInt(isz);
+            if (p.TryGetValue("ConfidenceThreshold", out var ct))
+                tool.ConfidenceThreshold = GetDouble(ct);
+            if (p.TryGetValue("IouThreshold", out var iou))
+                tool.IouThreshold = GetDouble(iou);
+            if (p.TryGetValue("ClassNamesText", out var cn))
+                tool.ClassNamesText = GetString(cn);
+            if (p.TryGetValue("DrawOverlay", out var dov))
+                tool.DrawOverlay = GetBool(dov);
+
+            return tool;
+        }
+
+        private static ClassifyTool DeserializeClassifyTool(ToolConfig config)
+        {
+            var tool = new ClassifyTool();
+            var p = config.Parameters;
+
+            if (p.TryGetValue("ModelPath", out var mp))
+                tool.ModelPath = GetString(mp);
+            if (p.TryGetValue("InputWidth", out var iw))
+                tool.InputWidth = GetInt(iw);
+            if (p.TryGetValue("InputHeight", out var ih))
+                tool.InputHeight = GetInt(ih);
+            if (p.TryGetValue("ConfidenceThreshold", out var ct))
+                tool.ConfidenceThreshold = GetDouble(ct);
+            if (p.TryGetValue("ClassNamesText", out var cn))
+                tool.ClassNamesText = GetString(cn);
+            if (p.TryGetValue("UseImageNetNormalization", out var uin))
+                tool.UseImageNetNormalization = GetBool(uin);
+            if (p.TryGetValue("DrawOverlay", out var dov))
+                tool.DrawOverlay = GetBool(dov);
+
+            return tool;
+        }
+
+        private static AnomalyTool DeserializeAnomalyTool(ToolConfig config)
+        {
+            var tool = new AnomalyTool();
+            var p = config.Parameters;
+
+            if (p.TryGetValue("ModelPath", out var mp))
+                tool.ModelPath = GetString(mp);
+            if (p.TryGetValue("InputSize", out var isz))
+                tool.InputSize = GetInt(isz);
+            if (p.TryGetValue("AnomalyThreshold", out var at))
+                tool.AnomalyThreshold = GetDouble(at);
+            if (p.TryGetValue("DrawOverlay", out var dov))
+                tool.DrawOverlay = GetBool(dov);
+            if (p.TryGetValue("ShowHeatmap", out var sh))
+                tool.ShowHeatmap = GetBool(sh);
+            if (p.TryGetValue("HeatmapOpacity", out var ho))
+                tool.HeatmapOpacity = GetDouble(ho);
+
+            return tool;
+        }
+
+        private static ResultTool DeserializeResultTool(ToolConfig config)
+        {
+            var tool = new ResultTool();
+            var p = config.Parameters;
+
+            if (p.TryGetValue("JudgmentMode", out var jm))
+                tool.JudgmentMode = Enum.Parse<ResultJudgmentMode>(GetString(jm));
 
             return tool;
         }

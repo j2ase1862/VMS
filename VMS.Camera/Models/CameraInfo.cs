@@ -98,6 +98,46 @@ namespace VMS.Camera.Models
             set => SetProperty(ref _isEnabled, value);
         }
 
+        private CameraType _cameraType = CameraType.AreaScan2D;
+        /// <summary>
+        /// 카메라 타입 (Area Scan 2D/3D, Line Scan 2D/3D)
+        /// </summary>
+        public CameraType CameraType
+        {
+            get => _cameraType;
+            set => SetProperty(ref _cameraType, value);
+        }
+
+        /// <summary>
+        /// 보드 번호 (프레임 그래버: M_DEV0=0, M_DEV1=1, ...)
+        /// </summary>
+        public int BoardNumber { get; set; }
+
+        /// <summary>
+        /// 디지타이저(채널) 번호 (프레임 그래버: CH0=0, CH1=1, ...)
+        /// </summary>
+        public int DigitizerNumber { get; set; }
+
+        /// <summary>
+        /// DCF 파일 경로 (Camera Link 카메라 설정 파일)
+        /// </summary>
+        public string DcfFilePath { get; set; } = string.Empty;
+
+        /// <summary>
+        /// 라인스캔 스캔 길이 (라인 수)
+        /// </summary>
+        public int ScanLength { get; set; } = 4096;
+
+        /// <summary>
+        /// 라인스캔 라인 레이트 (lines/sec)
+        /// </summary>
+        public double LineRate { get; set; } = 10000;
+
+        /// <summary>
+        /// 트리거 소스 (Internal, Encoder)
+        /// </summary>
+        public string TriggerSource { get; set; } = "Internal";
+
         /// <summary>
         /// 표시용 해상도 문자열
         /// </summary>

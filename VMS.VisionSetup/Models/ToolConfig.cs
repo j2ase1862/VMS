@@ -150,6 +150,36 @@ namespace VMS.VisionSetup.Models
             set => SetProperty(ref _roiHeight, value);
         }
 
+        private double _roiAngle;
+        /// <summary>
+        /// ROI 회전 각도 (RectangleAffineROI 사용 시)
+        /// </summary>
+        public double ROIAngle
+        {
+            get => _roiAngle;
+            set => SetProperty(ref _roiAngle, value);
+        }
+
+        private double _roiCenterX;
+        /// <summary>
+        /// ROI 회전 중심 X (RectangleAffineROI 사용 시)
+        /// </summary>
+        public double ROICenterX
+        {
+            get => _roiCenterX;
+            set => SetProperty(ref _roiCenterX, value);
+        }
+
+        private double _roiCenterY;
+        /// <summary>
+        /// ROI 회전 중심 Y (RectangleAffineROI 사용 시)
+        /// </summary>
+        public double ROICenterY
+        {
+            get => _roiCenterY;
+            set => SetProperty(ref _roiCenterY, value);
+        }
+
         #endregion
 
         /// <summary>

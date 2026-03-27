@@ -1,4 +1,6 @@
 using VMS.VisionSetup.Models;
+using VMS.VisionSetup.VisionTools.BlobAnalysis;
+using VMS.VisionSetup.VisionTools.Measurement;
 using VMS.PLC.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -22,7 +24,13 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
 
             DrawROICommand = new RelayCommand(() =>
             {
-                WeakReferenceMessenger.Default.Send(new RequestDrawROIMessage());
+                if (Tool is CircleFitTool)
+                {
+                    WeakReferenceMessenger.Default.Send(new RequestDrawROIMessage(useAffine: false, useCircle: true));
+                    return;
+                }
+                bool isMeasurement = Tool is LineFitTool or CaliperTool or BlobTool;
+                WeakReferenceMessenger.Default.Send(new RequestDrawROIMessage(isMeasurement));
             });
 
             ClearROICommand = new RelayCommand(() =>
@@ -37,16 +45,83 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
             {
                 if (!UseROI || ROIWidth <= 0 || ROIHeight <= 0) return;
 
+                bool isAffineTool = Tool is LineFitTool or CaliperTool or BlobTool;
+                bool isCircleFitTool = Tool is CircleFitTool;
+
+                // Affine 도구인데 기존 ROI가 RectangleROI면 → RectangleAffineROI로 변환
+                if (isAffineTool && AssociatedROIShape is RectangleROI oldRect)
+                {
+                    AssociatedROIShape = new RectangleAffineROI(
+                        oldRect.X + oldRect.Width / 2.0,
+                        oldRect.Y + oldRect.Height / 2.0,
+                        oldRect.Width,
+                        oldRect.Height,
+                        Tool.ROIAngle)
+                    {
+                        Name = oldRect.Name,
+                        ShowSearchArrow = Tool is LineFitTool or CaliperTool
+                    };
+                }
+
+                // CircleFitTool인데 기존 ROI가 CircleROI가 아니면 → CircleROI로 변환
+                if (isCircleFitTool && AssociatedROIShape is not CircleROI)
+                {
+                    var cft = (CircleFitTool)Tool;
+                    AssociatedROIShape = new CircleROI(
+                        cft.CenterPoint.X, cft.CenterPoint.Y, cft.ExpectedRadius)
+                    {
+                        Name = $"{Name} ROI",
+                        ShowSearchArrow = true,
+                        SearchOutward = cft.SearchDirection == CircleSearchDirection.InwardToOutward
+                    };
+                }
+
+                // CircleROI의 검색 방향 동기화
+                if (isCircleFitTool && AssociatedROIShape is CircleROI existingCircle)
+                {
+                    var cft = (CircleFitTool)Tool;
+                    existingCircle.ShowSearchArrow = true;
+                    existingCircle.SearchOutward = cft.SearchDirection == CircleSearchDirection.InwardToOutward;
+                }
+
                 if (AssociatedROIShape == null)
                 {
-                    AssociatedROIShape = new RectangleROI
+                    if (isCircleFitTool)
                     {
-                        X = ROIX,
-                        Y = ROIY,
-                        Width = ROIWidth,
-                        Height = ROIHeight,
-                        Name = $"{Name} ROI"
-                    };
+                        var cft = (CircleFitTool)Tool;
+                        AssociatedROIShape = new CircleROI(
+                            cft.CenterPoint.X, cft.CenterPoint.Y, cft.ExpectedRadius)
+                        {
+                            Name = $"{Name} ROI",
+                            ShowSearchArrow = true,
+                            SearchOutward = cft.SearchDirection == CircleSearchDirection.InwardToOutward
+                        };
+                    }
+                    else if (isAffineTool)
+                    {
+                        AssociatedROIShape = new RectangleAffineROI(
+                            Tool.ROICenterX != 0 ? Tool.ROICenterX : ROIX + ROIWidth / 2.0,
+                            Tool.ROICenterY != 0 ? Tool.ROICenterY : ROIY + ROIHeight / 2.0,
+                            ROIWidth,
+                            ROIHeight,
+                            Tool.ROIAngle)
+                        {
+                            Name = $"{Name} ROI",
+                            ShowSearchArrow = Tool is LineFitTool or CaliperTool
+                        };
+                    }
+                    else
+                    {
+                        AssociatedROIShape = new RectangleROI
+                        {
+                            X = ROIX,
+                            Y = ROIY,
+                            Width = ROIWidth,
+                            Height = ROIHeight,
+                            Name = $"{Name} ROI",
+                            ShowSearchArrow = false
+                        };
+                    }
                 }
 
                 WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(AssociatedROIShape));
@@ -73,6 +148,8 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         public int ROIY { get => Tool.ROIY; set => Tool.ROIY = value; }
         public int ROIWidth { get => Tool.ROIWidth; set => Tool.ROIWidth = value; }
         public int ROIHeight { get => Tool.ROIHeight; set => Tool.ROIHeight = value; }
+
+        public double ROIAngle { get => Tool.ROIAngle; set => Tool.ROIAngle = value; }
 
         public ROIShape? AssociatedROIShape { get => Tool.AssociatedROIShape; set => Tool.AssociatedROIShape = value; }
 
@@ -106,6 +183,9 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
 
         // View-state: FeatureMatchTool overrides to true (has its own ROI section)
         public virtual bool HasCustomROISection => false;
+
+        // View-state: ResultTool overrides to true (최종 판정은 시퀀스 에디터가 담당)
+        public virtual bool HidePlcSection => false;
 
         public virtual void Dispose()
         {

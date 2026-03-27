@@ -19,6 +19,8 @@ namespace VMS.Services.Sequence
         private readonly Action<string, bool> _setResultFunc;
         private readonly Action<string> _resetFunc;
         private readonly Func<string, IReadOnlyList<ToolInspectionResult>?>? _getToolResultsFunc;
+        private readonly Func<int, Task>? _recipeChangeByIndexFunc;
+        private readonly Action<int>? _stepChangeFunc;
 
         // Event-based trigger: per-address TaskCompletionSource for BitChanged events
         private readonly Dictionary<string, TaskCompletionSource<bool>> _bitWaiters = new();
@@ -36,8 +38,15 @@ namespace VMS.Services.Sequence
         // Repeat 카운터 (노드 ID → 현재 반복 횟수)
         private readonly Dictionary<string, int> _repeatCounters = new();
 
+        // Reset 신호 모니터링
+        private CancellationTokenSource? _resetCts;
+        private string? _resetAddress;
+        private InputCheckMode _resetCheckMode;
+        private int? _resetCompareValue;
+
         public bool IsRunning { get; private set; }
         public string? CurrentNodeId { get; private set; }
+        public bool WasReset { get; private set; }
 
         public event EventHandler<SequenceNodeEventArgs>? NodeExecuting;
         public event EventHandler<SequenceNodeEventArgs>? NodeCompleted;
@@ -51,7 +60,9 @@ namespace VMS.Services.Sequence
             Func<string, Task<bool>> inspectFunc,
             Action<string, bool> setResultFunc,
             Action<string> resetFunc,
-            Func<string, IReadOnlyList<ToolInspectionResult>?>? getToolResultsFunc = null)
+            Func<string, IReadOnlyList<ToolInspectionResult>?>? getToolResultsFunc = null,
+            Func<int, Task>? recipeChangeByIndexFunc = null,
+            Action<int>? stepChangeFunc = null)
         {
             _plc = plc;
             _vendor = vendor;
@@ -60,6 +71,8 @@ namespace VMS.Services.Sequence
             _setResultFunc = setResultFunc;
             _resetFunc = resetFunc;
             _getToolResultsFunc = getToolResultsFunc;
+            _recipeChangeByIndexFunc = recipeChangeByIndexFunc;
+            _stepChangeFunc = stepChangeFunc;
 
             _plc.BitChanged += OnPlcBitChanged;
         }
@@ -68,9 +81,70 @@ namespace VMS.Services.Sequence
         {
             if (IsRunning) return;
             IsRunning = true;
+            WasReset = false;
             _repeatCounters.Clear();
             _cameraResults.Clear();
             _lastInspectionOk = true;
+
+            // Reset 신호 모니터링 설정
+            using var resetCts = new CancellationTokenSource();
+            using var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, resetCts.Token);
+            PlcAddress? resetAddr = null;
+            Task? resetPollingTask = null;
+            var isBitMode = config.ResetSignalCheckMode == InputCheckMode.BitOn
+                         || config.ResetSignalCheckMode == InputCheckMode.BitOff;
+
+            if (!string.IsNullOrEmpty(config.ResetSignalAddress))
+            {
+                try
+                {
+                    var parsed = PlcAddress.Parse(config.ResetSignalAddress, _vendor);
+                    resetAddr = parsed;
+                    _resetCts = resetCts;
+                    _resetCheckMode = config.ResetSignalCheckMode;
+                    _resetCompareValue = config.ResetSignalCompareValue;
+
+                    if (isBitMode)
+                    {
+                        // Bit 모드: 이벤트 기반 모니터링
+                        _resetAddress = parsed.RawAddress.ToUpperInvariant();
+                        await _plc.StartMonitoringAsync(parsed, 50);
+                    }
+                    else
+                    {
+                        // Word 모드: 폴링 기반 모니터링
+                        _resetAddress = null; // BitChanged 이벤트 무시
+                        resetPollingTask = Task.Run(async () =>
+                        {
+                            while (!ct.IsCancellationRequested && !resetCts.IsCancellationRequested)
+                            {
+                                try
+                                {
+                                    var met = await CheckSignalAsync(
+                                        config.ResetSignalAddress, config.ResetSignalCheckMode, config.ResetSignalCompareValue);
+                                    if (met)
+                                    {
+                                        resetCts.Cancel();
+                                        return;
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    Debug.WriteLine($"[SequenceEngine] Reset polling error: {ex.Message}");
+                                }
+                                await Task.Delay(50, CancellationToken.None);
+                            }
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[SequenceEngine] Reset signal monitoring setup failed: {ex.Message}");
+                    resetAddr = null;
+                    _resetCts = null;
+                    _resetAddress = null;
+                }
+            }
 
             try
             {
@@ -87,7 +161,7 @@ namespace VMS.Services.Sequence
 
                 var currentNodeId = startNode.NextNodeId;
 
-                while (currentNodeId != null && !ct.IsCancellationRequested)
+                while (currentNodeId != null && !combinedCts.Token.IsCancellationRequested)
                 {
                     if (!lookup.TryGetValue(currentNodeId, out var node))
                     {
@@ -102,13 +176,20 @@ namespace VMS.Services.Sequence
 
                     try
                     {
-                        var nextId = await ExecuteNodeAsync(node, config, ct);
+                        var nextId = await ExecuteNodeAsync(node, config, combinedCts.Token);
                         NodeCompleted?.Invoke(this, args);
                         currentNodeId = nextId;
                     }
+                    catch (OperationCanceledException) when (resetCts.IsCancellationRequested && !ct.IsCancellationRequested)
+                    {
+                        // Reset 신호 감지 → Start로 복귀 (RunAsync 정상 리턴)
+                        WasReset = true;
+                        Debug.WriteLine("[SequenceEngine] Reset signal detected — returning to Start");
+                        break;
+                    }
                     catch (OperationCanceledException)
                     {
-                        throw;
+                        throw; // 외부 취소 (Stop 버튼) → 상위로 전파
                     }
                     catch (Exception ex)
                     {
@@ -118,11 +199,34 @@ namespace VMS.Services.Sequence
                     }
                 }
 
+                // 외부 취소가 아닌지 확인 후 전파
+                ct.ThrowIfCancellationRequested();
+
                 CurrentNodeId = null;
                 SequenceCompleted?.Invoke(this, EventArgs.Empty);
             }
             finally
             {
+                // Reset 모니터링 정리
+                if (resetAddr != null)
+                {
+                    _resetCts = null;
+                    _resetAddress = null;
+
+                    if (isBitMode)
+                    {
+                        try { await _plc.StopMonitoringAsync(resetAddr); }
+                        catch { /* 이미 중단됐을 수 있음 */ }
+                    }
+
+                    // 폴링 태스크 정리 (이미 resetCts 취소됨)
+                    if (resetPollingTask != null)
+                    {
+                        try { await resetPollingTask; }
+                        catch { /* 무시 */ }
+                    }
+                }
+
                 IsRunning = false;
                 CancelAllWaiters();
             }
@@ -140,6 +244,8 @@ namespace VMS.Services.Sequence
                 SequenceNodeType.Branch => ExecuteBranch(node),
                 SequenceNodeType.Delay => await ExecuteDelayAsync(node, ct),
                 SequenceNodeType.Repeat => ExecuteRepeat(node),
+                SequenceNodeType.RecipeChange => await ExecuteRecipeChangeAsync(node),
+                SequenceNodeType.StepChange => await ExecuteStepChangeAsync(node),
                 _ => node.NextNodeId
             };
         }
@@ -276,11 +382,99 @@ namespace VMS.Services.Sequence
             return node.NextNodeId;
         }
 
+        // --- 공용: 신호 조건 확인 (Bit/Word 모두 지원) ---
+        private async Task<bool> CheckSignalAsync(string address, InputCheckMode checkMode, int? compareValue)
+        {
+            var addr = PlcAddress.Parse(address, _vendor);
+
+            switch (checkMode)
+            {
+                case InputCheckMode.BitOn:
+                    return await _plc.ReadBitAsync(addr);
+
+                case InputCheckMode.BitOff:
+                    return !await _plc.ReadBitAsync(addr);
+
+                case InputCheckMode.WordEquals:
+                    return await _plc.ReadWordAsync(addr) == (compareValue ?? 0);
+
+                case InputCheckMode.WordGreaterThan:
+                    return await _plc.ReadWordAsync(addr) > (compareValue ?? 0);
+
+                case InputCheckMode.WordLessThan:
+                    return await _plc.ReadWordAsync(addr) < (compareValue ?? 0);
+
+                default:
+                    return false;
+            }
+        }
+
+        // --- RecipeChange: 신호 조건 확인 → PLC 레시피 인덱스 읽기 → 비교 → 변경 ---
+        private async Task<string?> ExecuteRecipeChangeAsync(SequenceNodeConfig node)
+        {
+            if (_recipeChangeByIndexFunc == null || string.IsNullOrEmpty(node.RecipeIndexAddress))
+                return node.NextNodeId;
+
+            // 신호 주소가 설정된 경우: 조건 미충족이면 스킵
+            if (!string.IsNullOrEmpty(node.RecipeSignalAddress))
+            {
+                var conditionMet = await CheckSignalAsync(
+                    node.RecipeSignalAddress, node.RecipeSignalCheckMode, node.RecipeSignalCompareValue);
+                if (!conditionMet)
+                    return node.NextNodeId; // 조건 미충족 → 레시피 변경 불필요
+            }
+
+            // 인덱스 주소에서 Word 읽기 → 델리게이트 호출 (비교/변경)
+            var indexAddr = PlcAddress.Parse(node.RecipeIndexAddress, _vendor);
+            int recipeIndex = await _plc.ReadWordAsync(indexAddr);
+            await _recipeChangeByIndexFunc(recipeIndex);
+
+            return node.NextNodeId;
+        }
+
+        // --- StepChange: 신호 조건 확인 → PLC 스텝 인덱스 읽기 → 카메라 스텝 설정 ---
+        private async Task<string?> ExecuteStepChangeAsync(SequenceNodeConfig node)
+        {
+            if (_stepChangeFunc == null)
+                return node.NextNodeId;
+
+            int stepIndex = 0; // 기본값: 스텝 1 (index 0)
+
+            if (!string.IsNullOrEmpty(node.StepSignalAddress) && !string.IsNullOrEmpty(node.StepIndexAddress))
+            {
+                // 신호 조건 확인
+                var conditionMet = await CheckSignalAsync(
+                    node.StepSignalAddress, node.StepSignalCheckMode, node.StepSignalCompareValue);
+
+                if (conditionMet)
+                {
+                    // 조건 충족 → 스텝 인덱스 읽기
+                    var indexAddr = PlcAddress.Parse(node.StepIndexAddress, _vendor);
+                    stepIndex = await _plc.ReadWordAsync(indexAddr);
+                }
+            }
+
+            _stepChangeFunc(stepIndex);
+            return node.NextNodeId;
+        }
+
         // --- PLC 비트 대기 (AutoProcessService에서 이전) ---
 
         private void OnPlcBitChanged(object? sender, PlcBitChangedEventArgs e)
         {
             var key = e.Address.RawAddress.ToUpperInvariant();
+
+            // Reset 신호 감지 — Bit 모드일 때 조건 충족 시 시퀀스 즉시 중단
+            if (_resetAddress != null && key == _resetAddress)
+            {
+                var expectedValue = _resetCheckMode == InputCheckMode.BitOn;
+                if (e.NewValue == expectedValue)
+                {
+                    _resetCts?.Cancel();
+                    return;
+                }
+            }
+
             lock (_waiterLock)
             {
                 if (_bitWaiters.TryGetValue(key, out var tcs))

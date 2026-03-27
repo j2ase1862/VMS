@@ -1,6 +1,8 @@
 using System.Windows;
 using Microsoft.Win32;
 using VMS.Interfaces;
+using VMS.ViewModels;
+using VMS.Views;
 
 namespace VMS.Services
 {
@@ -49,6 +51,17 @@ namespace VMS.Services
             };
 
             return dialog.ShowDialog() == true ? dialog.FileName : null;
+        }
+
+        public bool ShowLoginDialog(IUserService userService)
+        {
+            var vm = new LoginViewModel(userService);
+            var window = new LoginWindow
+            {
+                DataContext = vm,
+                Owner = Application.Current.MainWindow
+            };
+            return window.ShowDialog() == true;
         }
     }
 }

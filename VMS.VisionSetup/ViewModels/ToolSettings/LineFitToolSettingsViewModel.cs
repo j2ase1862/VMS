@@ -16,6 +16,7 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         public double SearchWidth { get => TypedTool.SearchWidth; set => TypedTool.SearchWidth = value; }
         public EdgePolarity Polarity { get => TypedTool.Polarity; set => TypedTool.Polarity = value; }
         public double EdgeThreshold { get => TypedTool.EdgeThreshold; set => TypedTool.EdgeThreshold = value; }
+        public int FilterHalfWidth { get => TypedTool.FilterHalfWidth; set => TypedTool.FilterHalfWidth = value; }
         public LineFitMethod FitMethod { get => TypedTool.FitMethod; set => TypedTool.FitMethod = value; }
         public double RansacThreshold { get => TypedTool.RansacThreshold; set => TypedTool.RansacThreshold = value; }
         public int MinFoundCalipers { get => TypedTool.MinFoundCalipers; set => TypedTool.MinFoundCalipers = value; }

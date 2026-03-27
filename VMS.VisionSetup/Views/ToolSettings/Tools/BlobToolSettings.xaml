@@ -40,59 +40,6 @@
             </StackPanel>
         </Expander>
 
-        <!-- Shape Filter -->
-        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}">
-            <Expander.Header>
-                <TextBlock Text="Shape Filter" Style="{StaticResource ExpanderHeaderStyle}"/>
-            </Expander.Header>
-            <StackPanel Margin="5,0,0,0">
-                <controls:SliderParameter Label="Min Circularity"
-                    Value="{Binding MinCircularity}" Minimum="0" Maximum="1"
-                    TickFrequency="0.05" ValueFormat="F2"
-                    ToolType="BlobTool" ParameterName="MinCircularity"/>
-                <controls:SliderParameter Label="Max Circularity"
-                    Value="{Binding MaxCircularity}" Minimum="0" Maximum="1"
-                    TickFrequency="0.05" ValueFormat="F2"
-                    ToolType="BlobTool" ParameterName="MaxCircularity"/>
-                <controls:TextBoxParameter Label="Min Perimeter"
-                    Value="{Binding MinPerimeter}"
-                    ToolType="BlobTool" ParameterName="MinPerimeter"/>
-                <controls:TextBoxParameter Label="Max Perimeter"
-                    Value="{Binding MaxPerimeter}"
-                    ToolType="BlobTool" ParameterName="MaxPerimeter"/>
-                <controls:TextBoxParameter Label="Min Aspect Ratio"
-                    Value="{Binding MinAspectRatio}"
-                    ToolType="BlobTool" ParameterName="MinAspectRatio"/>
-                <controls:TextBoxParameter Label="Max Aspect Ratio"
-                    Value="{Binding MaxAspectRatio}"
-                    ToolType="BlobTool" ParameterName="MaxAspectRatio"/>
-                <controls:SliderParameter Label="Min Convexity"
-                    Value="{Binding MinConvexity}" Minimum="0" Maximum="1"
-                    TickFrequency="0.05" ValueFormat="F2"
-                    ToolType="BlobTool" ParameterName="MinConvexity"/>
-            </StackPanel>
-        </Expander>
-
-        <!-- Sort & Limit -->
-        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}">
-            <Expander.Header>
-                <TextBlock Text="Sort &amp; Limit" Style="{StaticResource ExpanderHeaderStyle}"/>
-            </Expander.Header>
-            <StackPanel Margin="5,0,0,0">
-                <controls:EnumComboBoxParameter Label="Sort By"
-                    ItemsSource="{conv:EnumValues {x:Type blob:BlobSortBy}}"
-                    SelectedValue="{Binding SortBy}"
-                    ToolType="BlobTool" ParameterName="SortBy"/>
-                <controls:CheckBoxParameter Label="Sort Descending"
-                    IsChecked="{Binding SortDescending}"
-                    ToolType="BlobTool" ParameterName="SortDescending"/>
-                <controls:SliderParameter Label="Max Blob Count"
-                    Value="{Binding MaxBlobCount}" Minimum="1" Maximum="100"
-                    TickFrequency="1" ValueFormat="F0"
-                    ToolType="BlobTool" ParameterName="MaxBlobCount"/>
-            </StackPanel>
-        </Expander>
-
         <!-- Judgment -->
         <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
             <Expander.Header>

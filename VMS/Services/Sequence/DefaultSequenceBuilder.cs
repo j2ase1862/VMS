@@ -8,7 +8,9 @@ namespace VMS.Services.Sequence
     /// 전체 프로세스 시퀀스를 생성한다 (단일 시퀀스에서 모든 카메라를 순차 검사).
     ///
     /// Start
+    ///   → RecipeChange (Signal + Index 주소로 레시피 변경 체크)
     ///   → InputCheck (TriggerAddress, BitOn)
+    ///   → StepChange (Signal + Index 주소로 스텝 변경 체크)
     ///   → OutputAction (BusyAddress = true)
     ///   → Inspection (Camera1)
     ///   → Inspection (Camera2)
@@ -19,7 +21,7 @@ namespace VMS.Services.Sequence
     ///   → OutputAction (CompleteAddress = true)
     ///   → InputCheck (TriggerAddress, BitOff, 30s)
     ///   → Clear all outputs
-    ///   → Repeat (→ InputCheck)
+    ///   → Repeat (→ RecipeChange)
     /// </summary>
     public static class DefaultSequenceBuilder
     {
@@ -36,7 +38,12 @@ namespace VMS.Services.Sequence
         {
             var config = new SequenceConfig
             {
-                Name = "Default Process Sequence"
+                Name = "Default Process Sequence",
+                ResetSignalAddress = string.IsNullOrWhiteSpace(signalConfig.ResetSignalAddress)
+                    ? null
+                    : signalConfig.ResetSignalAddress,
+                ResetSignalCheckMode = signalConfig.ResetSignalCheckMode,
+                ResetSignalCompareValue = signalConfig.ResetSignalCompareValue
             };
 
             if (signalConfig.SignalMaps.Count == 0)
@@ -44,7 +51,13 @@ namespace VMS.Services.Sequence
 
             // 단일 카메라인 경우 기존 BuildFromSignalMap 호환
             if (signalConfig.SignalMaps.Count == 1)
-                return BuildFromSignalMap(signalConfig.SignalMaps[0]);
+            {
+                var singleConfig = BuildFromSignalMap(signalConfig.SignalMaps[0]);
+                singleConfig.ResetSignalAddress = config.ResetSignalAddress;
+                singleConfig.ResetSignalCheckMode = config.ResetSignalCheckMode;
+                singleConfig.ResetSignalCompareValue = config.ResetSignalCompareValue;
+                return singleConfig;
+            }
 
             var nodes = new List<SequenceNodeConfig>();
             var edges = new List<SequenceEdgeConfig>();
@@ -57,15 +70,25 @@ namespace VMS.Services.Sequence
             var startNode = CreateNode(SequenceNodeType.Start, "Start", ref index);
             nodes.Add(startNode);
 
+            // --- RecipeChange: 레시피 변경 체크 ---
+            var recipeChange = CreateNode(SequenceNodeType.RecipeChange, "Recipe Change", ref index);
+            nodes.Add(recipeChange);
+            Link(startNode, recipeChange, edges, "Next");
+
             // --- InputCheck: TriggerAddress BitOn ---
             var waitTrigger = CreateNode(SequenceNodeType.InputCheck, "Wait Trigger", ref index);
             waitTrigger.PlcAddress = primaryMap.TriggerAddress;
             waitTrigger.CheckMode = InputCheckMode.BitOn;
             nodes.Add(waitTrigger);
-            Link(startNode, waitTrigger, edges, "Next");
+            Link(recipeChange, waitTrigger, edges, "Next");
+
+            // --- StepChange: 스텝 변경 체크 ---
+            var stepChange = CreateNode(SequenceNodeType.StepChange, "Step Change", ref index);
+            nodes.Add(stepChange);
+            Link(waitTrigger, stepChange, edges, "Next");
 
             // --- Busy ON (각 카메라 채널) ---
-            var prevNode = waitTrigger;
+            var prevNode = stepChange;
             foreach (var signalMap in signalConfig.SignalMaps)
             {
                 if (!string.IsNullOrEmpty(signalMap.BusyAddress))
@@ -261,9 +284,9 @@ namespace VMS.Services.Sequence
                 }
             }
 
-            // --- Repeat → WaitTrigger ---
+            // --- Repeat → RecipeChange ---
             var repeat = CreateNode(SequenceNodeType.Repeat, "Repeat", ref index);
-            repeat.RepeatTargetNodeId = waitTrigger.Id;
+            repeat.RepeatTargetNodeId = recipeChange.Id;
             repeat.RepeatCount = -1;
             nodes.Add(repeat);
             Link(prevNode, repeat, edges, "Next");
@@ -296,16 +319,26 @@ namespace VMS.Services.Sequence
             var startNode = CreateNode(SequenceNodeType.Start, "Start", ref index);
             nodes.Add(startNode);
 
+            // --- RecipeChange: 레시피 변경 체크 ---
+            var recipeChange = CreateNode(SequenceNodeType.RecipeChange, "Recipe Change", ref index);
+            nodes.Add(recipeChange);
+            Link(startNode, recipeChange, edges, "Next");
+
             // --- InputCheck: TriggerAddress BitOn (WaitTrigger) ---
             var waitTrigger = CreateNode(SequenceNodeType.InputCheck, "Wait Trigger", ref index);
             waitTrigger.PlcAddress = signalMap.TriggerAddress;
             waitTrigger.CheckMode = InputCheckMode.BitOn;
             nodes.Add(waitTrigger);
-            Link(startNode, waitTrigger, edges, "Next");
+            Link(recipeChange, waitTrigger, edges, "Next");
+
+            // --- StepChange: 스텝 변경 체크 ---
+            var stepChange = CreateNode(SequenceNodeType.StepChange, "Step Change", ref index);
+            nodes.Add(stepChange);
+            Link(waitTrigger, stepChange, edges, "Next");
 
             // --- OutputAction: BusyAddress = true ---
             SequenceNodeConfig? busyOn = null;
-            var prevNode = waitTrigger;
+            var prevNode = stepChange;
             if (!string.IsNullOrEmpty(signalMap.BusyAddress))
             {
                 busyOn = CreateNode(SequenceNodeType.OutputAction, "Busy ON", ref index);
@@ -458,9 +491,9 @@ namespace VMS.Services.Sequence
                 prevNode = resultNgOff;
             }
 
-            // --- Repeat → WaitTrigger (무한 반복) ---
+            // --- Repeat → RecipeChange (무한 반복) ---
             var repeat = CreateNode(SequenceNodeType.Repeat, "Repeat", ref index);
-            repeat.RepeatTargetNodeId = waitTrigger.Id;
+            repeat.RepeatTargetNodeId = recipeChange.Id;
             repeat.RepeatCount = -1;
             nodes.Add(repeat);
             Link(prevNode, repeat, edges, "Next");

@@ -10,6 +10,7 @@ using VsToolConfig = VMS.VisionSetup.Models.ToolConfig;
 using VsConnectionType = VMS.VisionSetup.Models.ConnectionType;
 using VisionToolBase = VMS.VisionSetup.Models.VisionToolBase;
 using VisionResult = VMS.VisionSetup.Models.VisionResult;
+using VMS.VisionSetup.VisionTools.Result;
 
 namespace VMS.Services
 {
@@ -135,8 +136,8 @@ namespace VMS.Services
 
                     var toolSw = Stopwatch.StartNew();
 
-                    // Result 연결 확인
-                    if (ShouldSkipByResultConnection(tool, ctx.Connections, resultMap))
+                    // Result 연결 확인 (ResultTool은 실패 정보를 수집해야 하므로 스킵 우회)
+                    if (tool is not ResultTool && ShouldSkipByResultConnection(tool, ctx.Connections, resultMap))
                     {
                         var skipResult = new VisionResult
                         {
@@ -181,6 +182,27 @@ namespace VMS.Services
 
                     try
                     {
+                        // ResultTool: Execute 전에 연결된 소스 결과 주입
+                        if (tool is ResultTool rt)
+                        {
+                            rt.SourceResults.Clear();
+                            foreach (var conn in ctx.Connections
+                                .Where(c => c.TargetId == tool.Id && c.Type == VsConnectionType.Result))
+                            {
+                                if (resultMap.TryGetValue(conn.SourceId, out var srcResult))
+                                {
+                                    var srcTool = ctx.SortedTools.FirstOrDefault(t => t.Id == conn.SourceId);
+                                    rt.SourceResults.Add(new SourceToolResult
+                                    {
+                                        ToolId = conn.SourceId,
+                                        ToolName = srcTool?.Name ?? conn.SourceId,
+                                        Success = srcResult.Success,
+                                        Message = srcResult.Message
+                                    });
+                                }
+                            }
+                        }
+
                         var toolResult = tool.Execute(toolInput);
                         tool.LastResult = toolResult;
                         resultMap[tool.Id] = toolResult;
@@ -228,8 +250,14 @@ namespace VMS.Services
                     }
                 }
 
-                result.Success = allSuccess;
-                result.Message = allSuccess ? "All tools passed" : "One or more tools failed";
+                // ResultTool이 존재하면 최종 판정은 ResultTool의 Success로 결정
+                var resultToolInstance = ctx.SortedTools.OfType<ResultTool>().FirstOrDefault();
+                bool finalSuccess = resultToolInstance != null
+                    ? resultMap.TryGetValue(resultToolInstance.Id, out var rtResult) && rtResult.Success
+                    : allSuccess;
+
+                result.Success = finalSuccess;
+                result.Message = finalSuccess ? "All tools passed" : "One or more tools failed";
                 result.OverlayImage = compositeOverlay;
             }
             catch (Exception ex)

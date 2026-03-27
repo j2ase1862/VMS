@@ -5,8 +5,10 @@ using MechCameraInfo = MMind.Eye.CameraInfo;
 #endif
 using OpenCvSharp;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using VMS.Camera.Interfaces;
 using VMS.Camera.Models;
+using WpfColor = System.Windows.Media.Color;
 
 namespace VMS.Camera.Services
 {
@@ -17,12 +19,47 @@ namespace VMS.Camera.Services
 #if MECHMIND_AVAILABLE
     public class MechMindCameraAcquisition : ICameraAcquisition
     {
+        private static readonly string[] SdkSearchPaths = new[]
+        {
+            @"C:\Mech-Mind\Mech-Eye SDK-2.5.4",
+            @"C:\Mech-Mind\Mech-Eye SDK-2.5.4\API\dll"
+        };
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern bool AddDllDirectory(string lpPathName);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern bool SetDefaultDllDirectories(uint directoryFlags);
+
+        private const uint LOAD_LIBRARY_SEARCH_DEFAULT_DIRS = 0x00001000;
+
+        static MechMindCameraAcquisition()
+        {
+            try
+            {
+                SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+                foreach (var path in SdkSearchPaths)
+                {
+                    if (System.IO.Directory.Exists(path))
+                    {
+                        AddDllDirectory(path);
+                        System.Diagnostics.Debug.WriteLine($"[MechMind] DLL search path added: {path}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MechMind] DLL path setup failed: {ex.Message}");
+            }
+        }
+
         private Models.CameraInfo? _camera;
         private Profiler? _profiler;
         private MechCamera? _mechCamera;
         private bool _disposed;
 
         public bool IsConnected { get; private set; }
+        public int DownsampleStride { get; set; } = 1;
 
         public async Task<bool> ConnectAsync(Models.CameraInfo camera)
         {
@@ -89,7 +126,7 @@ namespace VMS.Camera.Services
             }
         }
 
-        public async Task<AcquisitionResult> AcquireAsync()
+        public async Task<AcquisitionResult> AcquireAsync(int timeoutMs = 5000)
         {
             if (!IsConnected || _mechCamera == null || _camera == null)
             {
@@ -117,10 +154,11 @@ namespace VMS.Camera.Services
                 var frame2D = frame2DAnd3D.Frame2D();
                 var frame3D = frame2DAnd3D.Frame3D();
 
+                var stride = Math.Max(1, DownsampleStride);
                 var result = new AcquisitionResult
                 {
                     Image2D = ConvertFrame2DToMat(frame2D),
-                    PointCloud = ConvertFrame3DToPointCloud(frame3D, frame2D),
+                    PointCloud = ConvertFrame3DToPointCloud(frame3D, frame2D, stride),
                     Success = true,
                     Message = "Mech-Mind 2D+3D 획득 완료"
                 };
@@ -170,19 +208,25 @@ namespace VMS.Camera.Services
         }
 
         /// <summary>
-        /// Frame3D → PointCloudData 변환
+        /// Frame3D → PointCloudData 변환 (Parallel.For + ArrayPool + Stride)
         /// </summary>
-        private static PointCloudData ConvertFrame3DToPointCloud(Frame3D frame3D, Frame2D frame2D)
+        private static PointCloudData ConvertFrame3DToPointCloud(Frame3D frame3D, Frame2D frame2D, int stride = 1)
         {
             var depthMap = frame3D.GetDepthMap();
             var colorMap = frame2D.GetColorImage();
 
-            int width = (int)depthMap.Width();
-            int height = (int)depthMap.Height();
-            int count = width * height;
+            int srcWidth = (int)depthMap.Width();
+            int srcHeight = (int)depthMap.Height();
 
-            var positions = new Vector3[count];
-            var colors = new System.Windows.Media.Color[count];
+            // Stride 적용 후 출력 크기
+            int outWidth = (srcWidth + stride - 1) / stride;
+            int outHeight = (srcHeight + stride - 1) / stride;
+            int outCount = outWidth * outHeight;
+
+            // ArrayPool에서 배열 대여
+            var data = PointCloudData.CreatePooled(outCount, "Mech-Mind 3D Scan", outWidth, outHeight);
+            var positions = data.Positions;
+            var colors = data.Colors;
 
             nint depthPtr = depthMap.Data();
             nint colorPtr = colorMap.Data();
@@ -190,49 +234,51 @@ namespace VMS.Camera.Services
             int colorHeight = (int)colorMap.Height();
             bool hasColor = colorPtr != nint.Zero && colorWidth > 0 && colorHeight > 0;
 
+            // Pointer를 nint로 캡처 (lambda에서 포인터 직접 캡처 불가)
+            nint dp = depthPtr;
+            nint cp = colorPtr;
+
             unsafe
             {
-                float* depthData = (float*)depthPtr;
-                byte* colorData = hasColor ? (byte*)colorPtr : null;
-
-                for (int row = 0; row < height; row++)
+                Parallel.For(0, outHeight, outRow =>
                 {
-                    for (int col = 0; col < width; col++)
-                    {
-                        int i = row * width + col;
-                        float z = depthData[i];
+                    float* depthData = (float*)dp;
+                    byte* colorData = hasColor ? (byte*)cp : null;
 
-                        // Use pixel coordinates as X/Y, depth as Z (in mm)
-                        positions[i] = new Vector3(col, row, float.IsNaN(z) ? 0f : z);
+                    int srcRow = outRow * stride;
+                    for (int outCol = 0; outCol < outWidth; outCol++)
+                    {
+                        int srcCol = outCol * stride;
+                        int srcIdx = srcRow * srcWidth + srcCol;
+                        int dstIdx = outRow * outWidth + outCol;
+
+                        float z = depthData[srcIdx];
+                        positions[dstIdx] = new Vector3(srcCol, srcRow, float.IsNaN(z) ? 0f : z);
 
                         if (hasColor && colorData != null)
                         {
-                            colors[i] = System.Windows.Media.Color.FromRgb(
-                                colorData[i * 3],
-                                colorData[i * 3 + 1],
-                                colorData[i * 3 + 2]);
+                            int cCol = srcCol * colorWidth / srcWidth;
+                            int cRow = srcRow * colorHeight / srcHeight;
+                            int ci = (cRow * colorWidth + cCol) * 3;
+                            colors[dstIdx] = WpfColor.FromRgb(
+                                colorData[ci],
+                                colorData[ci + 1],
+                                colorData[ci + 2]);
                         }
                         else
                         {
-                            // Colorize by depth using jet colormap
-                            float t = Math.Clamp(z / 1000f, 0f, 1f);
+                            float safeZ = float.IsNaN(z) ? 0f : z;
+                            float t = Math.Clamp(safeZ / 1000f, 0f, 1f);
                             byte r = (byte)(255 * Math.Clamp(1.5f - Math.Abs(t - 0.75f) * 4f, 0f, 1f));
                             byte g = (byte)(255 * Math.Clamp(1.5f - Math.Abs(t - 0.5f) * 4f, 0f, 1f));
                             byte b = (byte)(255 * Math.Clamp(1.5f - Math.Abs(t - 0.25f) * 4f, 0f, 1f));
-                            colors[i] = System.Windows.Media.Color.FromRgb(r, g, b);
+                            colors[dstIdx] = WpfColor.FromRgb(r, g, b);
                         }
                     }
-                }
+                });
             }
 
-            return new PointCloudData
-            {
-                Name = "Mech-Mind 3D Scan",
-                Positions = positions,
-                Colors = colors,
-                GridWidth = width,
-                GridHeight = height
-            };
+            return data;
         }
 
         public void Dispose()

@@ -2,6 +2,7 @@ using VMS.VisionSetup.Controls;
 using VMS.VisionSetup.Helpers;
 using VMS.VisionSetup.Models;
 using VMS.VisionSetup.ViewModels;
+using VMS.VisionSetup.Views;
 using VMS.VisionSetup.VisionTools.PatternMatching;
 using CommunityToolkit.Mvvm.Messaging;
 using System;
@@ -72,7 +73,14 @@ namespace VMS.VisionSetup
             WeakReferenceMessenger.Default.Register<RequestDrawROIMessage>(this, (r, msg) =>
             {
                 _isDrawingSearchRegion = false;
-                ImageCanvasControl.ActivateDrawingMode(EditMode.DrawRectangle);
+                EditMode mode;
+                if (msg.UseCircle)
+                    mode = EditMode.DrawCircle;
+                else if (msg.UseAffine)
+                    mode = EditMode.DrawRectangleAffine;
+                else
+                    mode = EditMode.DrawRectangle;
+                ImageCanvasControl.ActivateDrawingMode(mode);
             });
             WeakReferenceMessenger.Default.Register<RequestClearROIMessage>(this, (r, msg) =>
             {
@@ -672,12 +680,34 @@ namespace VMS.VisionSetup
         }
 
         /// <summary>
-        /// 현재 레시피 저장
+        /// MultiView 스캔 설정 다이얼로그 열기
         /// </summary>
-        private void SaveRecipe_Click(object sender, RoutedEventArgs e)
+        private void MultiViewSetup_Click(object sender, RoutedEventArgs e)
         {
-            var vm = DataContext as MainViewModel;
-            vm?.SaveCurrentRecipe();
+            var window = new MultiViewSetupWindow
+            {
+                Owner = this,
+                DataContext = this.DataContext  // MainViewModel 공유
+            };
+            window.ShowDialog();
+        }
+
+        private void ToolPaletteExpandAll_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is ViewModels.MainViewModel vm)
+            {
+                foreach (var category in vm.ToolTree)
+                    category.IsExpanded = true;
+            }
+        }
+
+        private void ToolPaletteCollapseAll_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is ViewModels.MainViewModel vm)
+            {
+                foreach (var category in vm.ToolTree)
+                    category.IsExpanded = false;
+            }
         }
 
         #endregion

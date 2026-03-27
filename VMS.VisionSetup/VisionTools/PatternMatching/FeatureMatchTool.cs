@@ -1334,21 +1334,6 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
             return new Mat(input, new Rect(0, 0, input.Width, input.Height));
         }
 
-        private Mat GetColorOverlayBase(Mat inputImage)
-        {
-            var orig = OverlayBaseImage ?? VisionService.Instance.CurrentImage;
-            if (orig != null && !orig.Empty()
-                && orig.Width == inputImage.Width && orig.Height == inputImage.Height)
-            {
-                return orig.Channels() >= 3
-                    ? orig.Clone()
-                    : orig.CvtColor(ColorConversionCodes.GRAY2BGR);
-            }
-            return inputImage.Channels() >= 3
-                ? inputImage.Clone()
-                : inputImage.CvtColor(ColorConversionCodes.GRAY2BGR);
-        }
-
         private Mat DrawOverlay(Mat inputImage, double cx, double cy, double angle, double scale,
             int templateWidth, int templateHeight, List<EdgePoint> modelEdges)
         {

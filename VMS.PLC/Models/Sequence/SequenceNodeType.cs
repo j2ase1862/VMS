@@ -12,6 +12,8 @@ namespace VMS.PLC.Models.Sequence
         Inspection,
         Branch,
         Delay,
-        Repeat
+        Repeat,
+        RecipeChange,
+        StepChange
     }
 }

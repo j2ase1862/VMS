@@ -6,6 +6,8 @@ using VMS.PLC.Models;
 using VMS.PLC.Models.Sequence;
 using VMS.Services.Sequence;
 
+// ISystemLogService integration for runtime logging
+
 namespace VMS.Services
 {
     /// <summary>
@@ -27,9 +29,12 @@ namespace VMS.Services
         private readonly Action<string, bool> _setResultFunc;
         private readonly Action<string> _resetFunc;
         private readonly Func<string, IReadOnlyList<ToolInspectionResult>?>? _getToolResultsFunc;
+        private readonly Func<int, Task>? _recipeChangeByIndexFunc;
+        private readonly Action<int>? _stepChangeFunc;
 
         // Single process sequence config (from Recipe or auto-generated)
         private readonly SequenceConfig? _processSequence;
+        private readonly ISystemLogService? _logService;
 
         private readonly Dictionary<string, AutoProcessState> _cameraStates = new();
         private CancellationTokenSource? _cts;
@@ -51,7 +56,10 @@ namespace VMS.Services
             Action<string, bool> setResultFunc,
             Action<string> resetFunc,
             Func<string, IReadOnlyList<ToolInspectionResult>?>? getToolResultsFunc = null,
-            SequenceConfig? processSequence = null)
+            Func<int, Task>? recipeChangeByIndexFunc = null,
+            Action<int>? stepChangeFunc = null,
+            SequenceConfig? processSequence = null,
+            ISystemLogService? logService = null)
         {
             _plc = plc;
             _signalConfig = signalConfig;
@@ -61,7 +69,10 @@ namespace VMS.Services
             _setResultFunc = setResultFunc;
             _resetFunc = resetFunc;
             _getToolResultsFunc = getToolResultsFunc;
+            _recipeChangeByIndexFunc = recipeChangeByIndexFunc;
+            _stepChangeFunc = stepChangeFunc;
             _processSequence = processSequence;
+            _logService = logService;
         }
 
         public async Task StartAsync(CancellationToken cancellationToken = default)
@@ -70,6 +81,7 @@ namespace VMS.Services
 
             _cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             IsRunning = true;
+            _logService?.Log("AutoProcess started", LogLevel.Success, "AutoProcess");
 
             // Connect PLC if not already connected
             if (!_plc.IsConnected)
@@ -97,8 +109,8 @@ namespace VMS.Services
                 _cameraStates[signalMap.CameraId] = AutoProcessState.WaitTrigger;
             }
 
-            // Start single unified process task
-            _processTask = RunProcessAsync(_cts.Token);
+            // Start single unified process task on ThreadPool to avoid UI thread blocking
+            _processTask = Task.Run(() => RunProcessAsync(_cts.Token));
 
             // Start heartbeat task if any signal map has a heartbeat address
             var heartbeatMap = _signalConfig.SignalMaps.FirstOrDefault(m => !string.IsNullOrEmpty(m.HeartbeatAddress));
@@ -147,6 +159,7 @@ namespace VMS.Services
             _cts?.Dispose();
             _cts = null;
             IsRunning = false;
+            _logService?.Log("AutoProcess stopped", LogLevel.Info, "AutoProcess");
         }
 
         public AutoProcessState GetCameraState(string cameraId)
@@ -165,7 +178,8 @@ namespace VMS.Services
 
             var engine = new SequenceEngine(
                 _plc, _vendor, _grabFunc, _inspectFunc,
-                _setResultFunc, _resetFunc, _getToolResultsFunc);
+                _setResultFunc, _resetFunc, _getToolResultsFunc,
+                _recipeChangeByIndexFunc, _stepChangeFunc);
 
             engine.NodeExecuting += (s, e) => MapNodeToState(e);
             engine.SequenceError += (s, e) =>
@@ -180,6 +194,14 @@ namespace VMS.Services
                 {
                     SetAllCameraStates(AutoProcessState.WaitTrigger);
                     await engine.RunAsync(config, ct);
+
+                    // Reset 신호에 의한 재시작
+                    if (engine.WasReset)
+                    {
+                        _logService?.Log("Reset signal detected — clearing outputs and restarting sequence", LogLevel.Warning, "AutoProcess");
+                        foreach (var signalMap in _signalConfig.SignalMaps)
+                            await ClearOutputSignals(signalMap);
+                    }
                 }
                 catch (OperationCanceledException)
                 {
@@ -188,6 +210,7 @@ namespace VMS.Services
                 catch (Exception ex)
                 {
                     Debug.WriteLine($"[AutoProcess] Process error: {ex.Message}");
+                    _logService?.Log($"Process error: {ex.Message}", LogLevel.Error, "AutoProcess");
                     SetAllCameraStates(AutoProcessState.Error);
                     await Task.Delay(ErrorRecoveryDelayMs, ct);
 
@@ -219,6 +242,11 @@ namespace VMS.Services
                 case SequenceNodeType.OutputAction:
                 case SequenceNodeType.Branch:
                     SetAllCameraStates(AutoProcessState.WritingResult);
+                    break;
+
+                case SequenceNodeType.RecipeChange:
+                case SequenceNodeType.StepChange:
+                    SetAllCameraStates(AutoProcessState.WaitTrigger);
                     break;
             }
         }

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using VMS.PLC.Models;
+using VMS.VisionSetup.Services;
 
 namespace VMS.VisionSetup.Models
 {
@@ -102,6 +103,29 @@ namespace VMS.VisionSetup.Models
         {
             get => _roi.Height;
             set { ROI = new Rect(_roi.X, _roi.Y, _roi.Width, value); }
+        }
+
+        // ROI 회전 각도 (RectangleAffineROI 사용 시 저장/직렬화용)
+        private double _roiAngle;
+        public double ROIAngle
+        {
+            get => _roiAngle;
+            set => SetProperty(ref _roiAngle, value);
+        }
+
+        // ROI 회전 중심 좌표 (RectangleAffineROI 사용 시)
+        private double _roiCenterX;
+        public double ROICenterX
+        {
+            get => _roiCenterX;
+            set => SetProperty(ref _roiCenterX, value);
+        }
+
+        private double _roiCenterY;
+        public double ROICenterY
+        {
+            get => _roiCenterY;
+            set => SetProperty(ref _roiCenterY, value);
         }
 
         // 캔버스에 표시된 ROI Shape 참조 (도구 전환 시 복원용)
@@ -208,6 +232,26 @@ namespace VMS.VisionSetup.Models
         {
             _cachedGrayscale?.Dispose();
             _cachedGrayscale = null;
+        }
+
+        /// <summary>
+        /// 오버레이 렌더링용 컬러 이미지 획득.
+        /// OverlayBaseImage → VisionService.CurrentImage → inputImage 순으로 fallback.
+        /// 항상 BGR 3채널 Mat을 반환.
+        /// </summary>
+        protected Mat GetColorOverlayBase(Mat inputImage)
+        {
+            var orig = OverlayBaseImage ?? VisionService.Instance.CurrentImage;
+            if (orig != null && !orig.Empty()
+                && orig.Width == inputImage.Width && orig.Height == inputImage.Height)
+            {
+                return orig.Channels() >= 3
+                    ? orig.Clone()
+                    : orig.CvtColor(ColorConversionCodes.GRAY2BGR);
+            }
+            return inputImage.Channels() >= 3
+                ? inputImage.Clone()
+                : inputImage.CvtColor(ColorConversionCodes.GRAY2BGR);
         }
 
         /// <summary>

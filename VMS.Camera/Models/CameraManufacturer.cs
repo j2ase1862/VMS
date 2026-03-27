@@ -12,6 +12,7 @@ namespace VMS.Camera.Models
         Cognex,
         Keyence,
         Dalsa,
+        Matrox,
         Baumer,
         Allied_Vision,
         FLIR,

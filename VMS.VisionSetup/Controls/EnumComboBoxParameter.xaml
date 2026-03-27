@@ -13,7 +13,7 @@
         </StackPanel>
         <ComboBox ItemsSource="{Binding ItemsSource, ElementName=Root}"
                   SelectedItem="{Binding SelectedValue, ElementName=Root, Mode=TwoWay}"
-                  Background="#3E3E42" Foreground="Black" BorderBrush="#555555"
+                  Background="White" Foreground="Black" BorderBrush="#AAAAAA"
                   Margin="0,0,0,5"/>
     </StackPanel>
 </UserControl>

@@ -1,3 +1,4 @@
+using VMS.Camera.Converters;
 using VMS.Camera.Interfaces;
 using VMS.Camera.Models;
 using VMS.Camera.Services;
@@ -9,6 +10,10 @@ using VMS.VisionSetup.VisionTools.BlobAnalysis;
 using VMS.VisionSetup.VisionTools.ImageProcessing;
 using VMS.VisionSetup.VisionTools.Measurement;
 using VMS.VisionSetup.VisionTools.PatternMatching;
+using VMS.VisionSetup.VisionTools.CodeReading;
+using VMS.VisionSetup.VisionTools.Identification;
+using VMS.VisionSetup.VisionTools.DeepLearning;
+using VMS.VisionSetup.VisionTools.Result;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -20,6 +25,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Numerics;
+using System.Threading;
 using System.Windows.Media;
 using CvRect = OpenCvSharp.Rect;
 
@@ -61,6 +67,8 @@ namespace VMS.VisionSetup.ViewModels
         private VisionToolBase? _subscribedTool;
         private bool _isSyncingROI;
         private ICameraAcquisition? _cameraAcquisition;
+        private SharedFrameReader? _sharedFrameReader;
+        private CancellationTokenSource? _liveReceiveCts;
         #endregion
 
         #region Properties
@@ -251,7 +259,25 @@ namespace VMS.VisionSetup.ViewModels
         [ObservableProperty]
         private float _pointCloudYMax = 60f;
 
+        // Height Slicing 저장 값
+        private float? _savedHeightBaseline;
+        private float? _savedHeightLowerLimit;
+        private float? _savedHeightUpperLimit;
+
+        [ObservableProperty]
+        private bool _isHeightSlicingSaved;
+
         public HeightMapMetadata? CurrentHeightMapMetadata { get; private set; }
+
+        // 3D Display Controls
+        [ObservableProperty]
+        private int _depthPointSize = 1;
+
+        [ObservableProperty]
+        private float _depthRangeMin;
+
+        [ObservableProperty]
+        private float _depthRangeMax;
 
         #region Camera Connection Properties
 
@@ -266,6 +292,10 @@ namespace VMS.VisionSetup.ViewModels
         // 이미지 획득 중 상태
         [ObservableProperty]
         private bool _isAcquiring;
+
+        // VMS 라이브 수신 중 상태
+        [ObservableProperty]
+        private bool _isReceivingFromVms;
 
         #endregion
 
@@ -301,6 +331,99 @@ namespace VMS.VisionSetup.ViewModels
                 }
             }
         }
+
+        /// <summary>로봇 웨이포인트가 있는 스텝이 존재하는지 (UI Visibility 바인딩용)</summary>
+        public bool NeedsRobot => Steps.Any(s => s.RobotWaypoint != null);
+
+        // 로봇 연결 설정
+        private string _robotIpAddress = "192.168.1.100";
+        public string RobotIpAddress
+        {
+            get => _robotIpAddress;
+            set => SetProperty(ref _robotIpAddress, value);
+        }
+
+        private int _robotPort = 30003;
+        public int RobotPort
+        {
+            get => _robotPort;
+            set => SetProperty(ref _robotPort, value);
+        }
+
+        // 로봇 회전 표현 방식
+        public EulerConvention[] EulerConventions { get; } = (EulerConvention[])Enum.GetValues(typeof(EulerConvention));
+
+        private EulerConvention _selectedEulerConvention = EulerConvention.UR_RotationVector;
+        public EulerConvention SelectedEulerConvention
+        {
+            get => _selectedEulerConvention;
+            set => SetProperty(ref _selectedEulerConvention, value);
+        }
+
+        // 로봇 연결 상태
+        [ObservableProperty]
+        private bool _isRobotConnected;
+
+        // 멀티뷰 세션
+        private MultiViewSession? _multiViewSession;
+
+        /// <summary>멀티뷰 수집된 스캔 수</summary>
+        public string MultiViewStatusText => _multiViewSession != null
+            ? $"스캔: {_multiViewSession.Scans.Count}개 | {_multiViewSession.StatusMessage}"
+            : "세션 없음";
+
+        // 정합 전략
+        public RegistrationStrategy[] RegistrationStrategies { get; } = (RegistrationStrategy[])Enum.GetValues(typeof(RegistrationStrategy));
+
+        private RegistrationStrategy _selectedRegistrationStrategy = RegistrationStrategy.PoseOnly;
+        public RegistrationStrategy SelectedRegistrationStrategy
+        {
+            get => _selectedRegistrationStrategy;
+            set => SetProperty(ref _selectedRegistrationStrategy, value);
+        }
+
+        // 로봇 서비스 (DI 또는 직접 생성)
+        private IRobotService? _robotService;
+
+        /// <summary>시뮬레이션 로봇 사용 여부</summary>
+        public bool IsSimulatedRobot => _robotService is SimulatedRobotService;
+
+        // 웨이포인트 플래너
+        private readonly WaypointPlannerService _waypointPlanner = new();
+        public WaypointPlannerService WaypointPlanner => _waypointPlanner;
+
+        // 웨이포인트 패턴 선택
+        public WaypointPattern[] WaypointPatterns { get; } = (WaypointPattern[])Enum.GetValues(typeof(WaypointPattern));
+
+        private WaypointPattern _selectedWaypointPattern = WaypointPattern.TopPlusRing;
+        public WaypointPattern SelectedWaypointPattern
+        {
+            get => _selectedWaypointPattern;
+            set => SetProperty(ref _selectedWaypointPattern, value);
+        }
+
+        private int _waypointCount = 5;
+        public int WaypointCount
+        {
+            get => _waypointCount;
+            set => SetProperty(ref _waypointCount, Math.Max(1, value));
+        }
+
+        private float _scanDistance = 500f;
+        public float ScanDistance
+        {
+            get => _scanDistance;
+            set => SetProperty(ref _scanDistance, MathF.Max(50f, value));
+        }
+
+        private float _scanElevation = 30f;
+        public float ScanElevation
+        {
+            get => _scanElevation;
+            set => SetProperty(ref _scanElevation, Math.Clamp(value, 5f, 85f));
+        }
+
+        private CancellationTokenSource? _waypointScanCts;
 
         // 스텝 목록 (선택된 카메라 기준)
         public ObservableCollection<InspectionStep> Steps { get; } = new();
@@ -347,6 +470,22 @@ namespace VMS.VisionSetup.ViewModels
         public RelayCommand DisconnectCameraCommand { get; }
         public RelayCommand GenerateHeightMapCommand { get; }
         public RelayCommand SaveRecipeCommand { get; }
+        public RelayCommand ReceiveFromVmsCommand { get; }
+        public RelayCommand StartLiveReceiveCommand { get; }
+        public RelayCommand StopLiveReceiveCommand { get; }
+        public RelayCommand SavePointCloudCommand { get; }
+        public RelayCommand LoadPointCloudCommand { get; }
+        public RelayCommand ConnectRobotCommand { get; }
+        public RelayCommand DisconnectRobotCommand { get; }
+        public RelayCommand MultiViewCaptureCommand { get; }
+        public RelayCommand MultiViewProcessCommand { get; }
+        public RelayCommand MultiViewClearCommand { get; }
+        public RelayCommand GenerateWaypointsCommand { get; }
+        public RelayCommand ClearWaypointsCommand { get; }
+        public RelayCommand StartWaypointScanCommand { get; }
+        public RelayCommand StopWaypointScanCommand { get; }
+        public RelayCommand SaveHeightSlicingCommand { get; }
+        public RelayCommand ClearHeightSlicingCommand { get; }
         #endregion
 
         #region Constructor
@@ -387,6 +526,27 @@ namespace VMS.VisionSetup.ViewModels
             DisconnectCameraCommand = new RelayCommand(async () => await DisconnectCamera(), () => IsCameraConnected);
             GenerateHeightMapCommand = new RelayCommand(GenerateHeightMap, CanGenerateHeightMap);
             SaveRecipeCommand = new RelayCommand(SaveCurrentRecipe, () => _recipeService.CurrentRecipe != null);
+            ReceiveFromVmsCommand = new RelayCommand(async () => await ReceiveFromVms(), () => !IsReceivingFromVms);
+            StartLiveReceiveCommand = new RelayCommand(async () => await StartLiveReceive(), () => !IsReceivingFromVms);
+            StopLiveReceiveCommand = new RelayCommand(StopLiveReceive, () => IsReceivingFromVms);
+            SavePointCloudCommand = new RelayCommand(SavePointCloud, () => CurrentPointCloud != null);
+            LoadPointCloudCommand = new RelayCommand(LoadPointCloud);
+            SaveHeightSlicingCommand = new RelayCommand(SaveHeightSlicing, () => CurrentPointCloud != null);
+            ClearHeightSlicingCommand = new RelayCommand(ClearHeightSlicing, () => IsHeightSlicingSaved);
+
+            // MultiView 관련 커맨드
+            ConnectRobotCommand = new RelayCommand(async () => await ConnectRobot(), () => !IsRobotConnected && NeedsRobot);
+            DisconnectRobotCommand = new RelayCommand(async () => await DisconnectRobot(), () => IsRobotConnected);
+            MultiViewCaptureCommand = new RelayCommand(async () => await MultiViewCapture(), () => NeedsRobot && IsRobotConnected && (IsCameraConnected || IsSimulatedRobot));
+            MultiViewProcessCommand = new RelayCommand(async () => await MultiViewProcess(), () => _multiViewSession?.Scans.Count > 0);
+            MultiViewClearCommand = new RelayCommand(MultiViewClear, () => _multiViewSession?.Scans.Count > 0);
+
+            // Waypoint Planner 커맨드
+            GenerateWaypointsCommand = new RelayCommand(GenerateWaypoints, () => _recipeService.CurrentRecipe != null && SelectedCamera != null);
+            ClearWaypointsCommand = new RelayCommand(ClearWaypoints, () => _waypointPlanner.Waypoints.Count > 0);
+            StartWaypointScanCommand = new RelayCommand(async () => await StartWaypointScan(),
+                () => NeedsRobot && IsRobotConnected && (IsCameraConnected || IsSimulatedRobot) && _waypointPlanner.Waypoints.Count > 0 && !_waypointPlanner.IsScanning);
+            StopWaypointScanCommand = new RelayCommand(StopWaypointScan, () => _waypointPlanner.IsScanning);
 
             // 레시피 변경 이벤트 구독
             _recipeService.CurrentRecipeChanged += OnCurrentRecipeChanged;
@@ -452,12 +612,37 @@ namespace VMS.VisionSetup.ViewModels
             measurement.Tools.Add(new ToolItem { Name = "Caliper", ToolType = "CaliperTool" });
             measurement.Tools.Add(new ToolItem { Name = "Line Fit", ToolType = "LineFitTool" });
             measurement.Tools.Add(new ToolItem { Name = "Circle Fit", ToolType = "CircleFitTool" });
+            measurement.Tools.Add(new ToolItem { Name = "Geometry", ToolType = "GeometryTool" });
             ToolTree.Add(measurement);
+
+            // Identification 카테고리
+            var identification = new ToolCategory { CategoryName = "Identification" };
+            identification.Tools.Add(new ToolItem { Name = "OCR", ToolType = "OCRTool" });
+            ToolTree.Add(identification);
+
+            // Code Reading 카테고리
+            var codeReading = new ToolCategory { CategoryName = "Code Reading" };
+            codeReading.Tools.Add(new ToolItem { Name = "Code Reader", ToolType = "CodeReaderTool" });
+            ToolTree.Add(codeReading);
 
             // 3D Analysis 카테고리
             var threeD = new ToolCategory { CategoryName = "3D Analysis" };
             threeD.Tools.Add(new ToolItem { Name = "Height Slicer", ToolType = "HeightSlicerTool" });
+            threeD.Tools.Add(new ToolItem { Name = "Plane Fit", ToolType = "PlaneFitTool" });
+            threeD.Tools.Add(new ToolItem { Name = "3D Geometry", ToolType = "Geometry3DTool" });
             ToolTree.Add(threeD);
+
+            // Deep Learning 카테고리
+            var deepLearning = new ToolCategory { CategoryName = "Deep Learning" };
+            deepLearning.Tools.Add(new ToolItem { Name = "Detection (YOLO)", ToolType = "DetectionTool" });
+            deepLearning.Tools.Add(new ToolItem { Name = "Classify", ToolType = "ClassifyTool" });
+            deepLearning.Tools.Add(new ToolItem { Name = "Anomaly", ToolType = "AnomalyTool" });
+            ToolTree.Add(deepLearning);
+
+            // Judgment 카테고리
+            var judgment = new ToolCategory { CategoryName = "Judgment" };
+            judgment.Tools.Add(new ToolItem { Name = "Result", ToolType = "ResultTool" });
+            ToolTree.Add(judgment);
         }
 
         private void CloseApplication()
@@ -671,6 +856,12 @@ namespace VMS.VisionSetup.ViewModels
                                 parts.Add($"TotalArea={areaStr}");
                             }
                             resultValue = string.Join(", ", parts);
+                        }
+                        else if (visionTool is OCRTool)
+                        {
+                            // OCRTool: 인식된 문자만 표시
+                            if (lastResult.Data.TryGetValue("RecognizedText", out var text))
+                                resultValue = text?.ToString()?.Trim() ?? "";
                         }
                         else
                         {
@@ -1025,12 +1216,50 @@ namespace VMS.VisionSetup.ViewModels
             _isSyncingROI = true;
             try
             {
-                var rect = roi.GetBoundingRect();
-                tool.ROI = rect;
+                // 측정 도구에 검색 방향 화살표 표시
+                roi.ShowSearchArrow = tool is LineFitTool or CaliperTool or CircleFitTool;
+
+                if (roi is CircleROI circleROI && tool is CircleFitTool cft)
+                {
+                    // CircleROI → CircleFitTool 좌표 동기화
+                    cft.CenterPoint = new OpenCvSharp.Point2d(circleROI.CenterX, circleROI.CenterY);
+                    cft.ExpectedRadius = circleROI.Radius;
+
+                    // 검색 방향 동기화
+                    circleROI.SearchOutward = cft.SearchDirection == CircleSearchDirection.InwardToOutward;
+
+                    // ROI 바운딩 rect도 저장 (GetROIImage 등 기본 기능용)
+                    tool.ROI = circleROI.GetBoundingRect();
+                }
+                else if (roi is RectangleAffineROI affineROI)
+                {
+                    // Affine ROI: 실제 Width/Height와 회전 각도/중심 좌표 저장
+                    tool.ROI = new CvRect(
+                        (int)(affineROI.CenterX - affineROI.Width / 2),
+                        (int)(affineROI.CenterY - affineROI.Height / 2),
+                        (int)affineROI.Width,
+                        (int)affineROI.Height);
+                    tool.ROIAngle = affineROI.Angle;
+                    tool.ROICenterX = affineROI.CenterX;
+                    tool.ROICenterY = affineROI.CenterY;
+
+                    // CaliperTool: 탐색 방향 동기화
+                    if (tool is CaliperTool caliper)
+                    {
+                        affineROI.SearchAlongWidth = caliper.SearchAxis == CaliperSearchAxis.AlongWidth;
+                    }
+                }
+                else
+                {
+                    var rect = roi.GetBoundingRect();
+                    tool.ROI = rect;
+                }
+
                 tool.UseROI = true;
                 tool.AssociatedROIShape = roi;
 
-                StatusMessage = $"ROI 적용됨: {tool.Name} - ({rect.X}, {rect.Y}, {rect.Width}, {rect.Height})";
+                var appliedRect = tool.ROI;
+                StatusMessage = $"ROI 적용됨: {tool.Name} - ({appliedRect.X}, {appliedRect.Y}, {appliedRect.Width}, {appliedRect.Height})";
             }
             finally
             {
@@ -1106,11 +1335,48 @@ namespace VMS.VisionSetup.ViewModels
             if (_isSyncingROI) return;
             if (sender is not VisionToolBase tool) return;
 
+            // CircleFitTool 속성 변경 → CircleROI 동기화
+            if (tool is CircleFitTool cft &&
+                e.PropertyName is nameof(CircleFitTool.CenterPoint) or nameof(CircleFitTool.ExpectedRadius)
+                    or nameof(CircleFitTool.SearchDirection))
+            {
+                if (tool.AssociatedROIShape is CircleROI circleROI)
+                {
+                    circleROI.CenterX = cft.CenterPoint.X;
+                    circleROI.CenterY = cft.CenterPoint.Y;
+                    circleROI.Radius = cft.ExpectedRadius;
+                    circleROI.SearchOutward = cft.SearchDirection == CircleSearchDirection.InwardToOutward;
+                    tool.ROI = circleROI.GetBoundingRect();
+                    WeakReferenceMessenger.Default.Send(new RequestRefreshROIMessage(circleROI));
+                }
+            }
+
+            // CaliperTool.SearchAxis 변경 → RectangleAffineROI 동기화
+            if (tool is CaliperTool caliper && e.PropertyName is nameof(CaliperTool.SearchAxis))
+            {
+                if (tool.AssociatedROIShape is RectangleAffineROI affineROI)
+                {
+                    affineROI.SearchAlongWidth = caliper.SearchAxis == CaliperSearchAxis.AlongWidth;
+                    WeakReferenceMessenger.Default.Send(new RequestRefreshROIMessage(affineROI));
+                }
+            }
+
             // ROI 프록시 속성 변경 시 AssociatedROIShape 좌표 동기화
             if (e.PropertyName is nameof(VisionToolBase.ROIX) or nameof(VisionToolBase.ROIY)
                 or nameof(VisionToolBase.ROIWidth) or nameof(VisionToolBase.ROIHeight))
             {
-                if (tool.AssociatedROIShape is RectangleROI rectROI)
+                if (tool.AssociatedROIShape is RectangleAffineROI affineROI)
+                {
+                    // Affine ROI: CenterX/Y와 Width/Height 업데이트 (Angle 유지)
+                    affineROI.CenterX = tool.ROIX + tool.ROIWidth / 2.0;
+                    affineROI.CenterY = tool.ROIY + tool.ROIHeight / 2.0;
+                    affineROI.Width = Math.Max(1, tool.ROIWidth);
+                    affineROI.Height = Math.Max(1, tool.ROIHeight);
+                    tool.ROICenterX = affineROI.CenterX;
+                    tool.ROICenterY = affineROI.CenterY;
+                    WeakReferenceMessenger.Default.Send(new RequestRefreshROIMessage(affineROI));
+                }
+                else if (tool.AssociatedROIShape is RectangleROI rectROI)
                 {
                     rectROI.X = tool.ROIX;
                     rectROI.Y = tool.ROIY;
@@ -1153,6 +1419,26 @@ namespace VMS.VisionSetup.ViewModels
             {
                 CurrentRecipeName = recipe.Name;
                 MigrateStepSequencing(recipe);
+
+                // Height Slicing 설정 복원
+                if (recipe.HeightSlicing != null)
+                {
+                    _savedHeightBaseline = recipe.HeightSlicing.HeightBaseline;
+                    _savedHeightLowerLimit = recipe.HeightSlicing.HeightLowerLimit;
+                    _savedHeightUpperLimit = recipe.HeightSlicing.HeightUpperLimit;
+                    IsHeightSlicingSaved = true;
+                }
+                else
+                {
+                    _savedHeightBaseline = null;
+                    _savedHeightLowerLimit = null;
+                    _savedHeightUpperLimit = null;
+                    IsHeightSlicingSaved = false;
+                }
+                ClearHeightSlicingCommand.NotifyCanExecuteChanged();
+
+                // MultiView 설정 복원
+                LoadRobotSettingsFromRecipe(recipe);
             }
             else
             {
@@ -1161,6 +1447,7 @@ namespace VMS.VisionSetup.ViewModels
 
             RefreshSteps();
             AddStepCommand.NotifyCanExecuteChanged();
+            SaveRecipeCommand.NotifyCanExecuteChanged();
         }
 
         private void LoadCameras()
@@ -1187,6 +1474,13 @@ namespace VMS.VisionSetup.ViewModels
                     Steps.Add(step);
                 }
             }
+
+            // Step 구성 변경에 따라 로봇 관련 UI 갱신
+            OnPropertyChanged(nameof(NeedsRobot));
+            ConnectRobotCommand?.NotifyCanExecuteChanged();
+            MultiViewCaptureCommand?.NotifyCanExecuteChanged();
+            GenerateWaypointsCommand?.NotifyCanExecuteChanged();
+            StartWaypointScanCommand?.NotifyCanExecuteChanged();
         }
 
         private void AddStep()
@@ -1434,6 +1728,8 @@ namespace VMS.VisionSetup.ViewModels
 
                 ConnectCameraCommand.NotifyCanExecuteChanged();
                 DisconnectCameraCommand.NotifyCanExecuteChanged();
+                MultiViewCaptureCommand.NotifyCanExecuteChanged();
+                StartWaypointScanCommand.NotifyCanExecuteChanged();
             }
             catch (Exception ex)
             {
@@ -1458,6 +1754,8 @@ namespace VMS.VisionSetup.ViewModels
 
                 ConnectCameraCommand.NotifyCanExecuteChanged();
                 DisconnectCameraCommand.NotifyCanExecuteChanged();
+                MultiViewCaptureCommand.NotifyCanExecuteChanged();
+                StartWaypointScanCommand.NotifyCanExecuteChanged();
             }
             catch (Exception ex)
             {
@@ -1492,6 +1790,7 @@ namespace VMS.VisionSetup.ViewModels
                     CurrentImage = result.Image2D;
 
                     // 3D 포인트 클라우드가 있으면 적용
+                    // OnCurrentPointCloudChanged에서 파라미터 복원 + 자동 Height Map 생성 처리
                     if (result.PointCloud != null)
                     {
                         CurrentPointCloud = result.PointCloud;
@@ -1528,6 +1827,331 @@ namespace VMS.VisionSetup.ViewModels
             {
                 SelectedCamera = Cameras.FirstOrDefault(c => c.Id == selectedId);
             }
+        }
+
+        #endregion
+
+        #region Robot / MultiView
+
+        private async System.Threading.Tasks.Task ConnectRobot()
+        {
+            try
+            {
+                _robotService?.Dispose();
+
+                // 시뮬레이션 모드: IP가 "SIM" 또는 비어있으면 SimulatedRobotService 사용
+                if (string.IsNullOrWhiteSpace(RobotIpAddress) || RobotIpAddress.Equals("SIM", StringComparison.OrdinalIgnoreCase))
+                {
+                    _robotService = new SimulatedRobotService { Convention = SelectedEulerConvention };
+                }
+                else
+                {
+                    _robotService = new TcpRobotService { Convention = SelectedEulerConvention };
+                }
+
+                var success = await _robotService.ConnectAsync(RobotIpAddress, RobotPort);
+                IsRobotConnected = success;
+
+                if (success)
+                {
+                    // 세션 초기화
+                    _multiViewSession?.Dispose();
+                    _multiViewSession = new MultiViewSession
+                    {
+                        Strategy = SelectedRegistrationStrategy
+                    };
+
+                    StatusMessage = $"로봇 연결됨: {RobotIpAddress}:{RobotPort} ({SelectedEulerConvention})";
+                }
+                else
+                {
+                    StatusMessage = "로봇 연결 실패";
+                }
+
+                ConnectRobotCommand.NotifyCanExecuteChanged();
+                DisconnectRobotCommand.NotifyCanExecuteChanged();
+                MultiViewCaptureCommand.NotifyCanExecuteChanged();
+                StartWaypointScanCommand.NotifyCanExecuteChanged();
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"로봇 연결 오류: {ex.Message}";
+            }
+        }
+
+        private async System.Threading.Tasks.Task DisconnectRobot()
+        {
+            try
+            {
+                if (_robotService != null)
+                {
+                    await _robotService.DisconnectAsync();
+                    _robotService.Dispose();
+                    _robotService = null;
+                }
+
+                IsRobotConnected = false;
+                StatusMessage = "로봇 연결 해제됨";
+
+                ConnectRobotCommand.NotifyCanExecuteChanged();
+                DisconnectRobotCommand.NotifyCanExecuteChanged();
+                MultiViewCaptureCommand.NotifyCanExecuteChanged();
+                StartWaypointScanCommand.NotifyCanExecuteChanged();
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"로봇 해제 오류: {ex.Message}";
+            }
+        }
+
+        /// <summary>
+        /// 현재 위치에서 1회 촬영 + 로봇 포즈 수집 (MultiView 모드)
+        /// 로봇이 이미 목표 위치에 도달한 상태에서 호출
+        /// </summary>
+        private async System.Threading.Tasks.Task MultiViewCapture()
+        {
+            if (_robotService == null || _cameraAcquisition == null || _multiViewSession == null)
+                return;
+
+            try
+            {
+                IsAcquiring = true;
+                AcquireImageCommand.NotifyCanExecuteChanged();
+
+                // Auto-connect camera
+                if (!IsCameraConnected)
+                {
+                    await ConnectCamera();
+                    if (!IsCameraConnected) return;
+                }
+
+                var scan = await _multiViewSession.CaptureAtCurrentPoseAsync(_robotService, _cameraAcquisition);
+
+                if (scan != null)
+                {
+                    // 2D 이미지 표시 (마지막 촬영본)
+                    if (scan.Image2D != null)
+                        CurrentImage = scan.Image2D.Clone();
+
+                    // 3D 포인트 클라우드 표시
+                    if (scan.PointCloud != null)
+                        CurrentPointCloud = scan.PointCloud;
+
+                    StatusMessage = $"MultiView 스캔 {_multiViewSession.Scans.Count}개 수집완료 | {scan.Pose}";
+                }
+
+                OnPropertyChanged(nameof(MultiViewStatusText));
+                MultiViewProcessCommand.NotifyCanExecuteChanged();
+                MultiViewClearCommand.NotifyCanExecuteChanged();
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"MultiView 촬영 오류: {ex.Message}";
+            }
+            finally
+            {
+                IsAcquiring = false;
+                AcquireImageCommand.NotifyCanExecuteChanged();
+            }
+        }
+
+        /// <summary>
+        /// 수집된 스캔 데이터를 정합하여 통합 포인트 클라우드 생성
+        /// </summary>
+        private async System.Threading.Tasks.Task MultiViewProcess()
+        {
+            if (_multiViewSession == null || _multiViewSession.Scans.Count == 0) return;
+
+            try
+            {
+                _multiViewSession.Strategy = SelectedRegistrationStrategy;
+                StatusMessage = "MultiView 정합 처리 중...";
+
+                var merged = await _multiViewSession.ProcessAsync();
+
+                if (merged != null)
+                {
+                    CurrentPointCloud = merged;
+                    StatusMessage = $"MultiView 정합 완료: {merged.PointCount:N0} pts";
+                }
+                else
+                {
+                    StatusMessage = "MultiView 정합 실패";
+                }
+
+                OnPropertyChanged(nameof(MultiViewStatusText));
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"MultiView 정합 오류: {ex.Message}";
+            }
+        }
+
+        #endregion
+
+        #region Waypoint Planner
+
+        private void GenerateWaypoints()
+        {
+            var recipe = _recipeService.CurrentRecipe;
+            if (recipe == null || SelectedCamera == null) return;
+
+            // Object 중심: 현재 PointCloud의 중심점, 없으면 원점
+            var center = System.Numerics.Vector3.Zero;
+            if (CurrentPointCloud != null && CurrentPointCloud.PointCount > 0)
+            {
+                float cx = 0, cy = 0, cz = 0;
+                int count = CurrentPointCloud.PointCount;
+                for (int i = 0; i < count; i++)
+                {
+                    cx += CurrentPointCloud.Positions[i].X;
+                    cy += CurrentPointCloud.Positions[i].Y;
+                    cz += CurrentPointCloud.Positions[i].Z;
+                }
+                center = new System.Numerics.Vector3(cx / count, cy / count, cz / count);
+            }
+
+            _waypointPlanner.GenerateWaypoints(
+                SelectedWaypointPattern, WaypointCount, center, ScanDistance, ScanElevation);
+
+            // 기존 로봇 웨이포인트 스텝 제거 후 웨이포인트별 스텝 생성
+            SyncWaypointsToSteps(recipe);
+
+            // 3D Viewer에 웨이포인트 표시 갱신
+            OnPropertyChanged(nameof(WaypointPlanner));
+            ClearWaypointsCommand.NotifyCanExecuteChanged();
+            StartWaypointScanCommand.NotifyCanExecuteChanged();
+            StatusMessage = $"{_waypointPlanner.Waypoints.Count}개 웨이포인트 생성됨 ({SelectedWaypointPattern})";
+        }
+
+        private void ClearWaypoints()
+        {
+            var recipe = _recipeService.CurrentRecipe;
+
+            _waypointPlanner.ClearWaypoints();
+
+            // 로봇 웨이포인트가 있는 스텝 제거
+            if (recipe != null)
+            {
+                var robotSteps = recipe.Steps.Where(s => s.RobotWaypoint != null).ToList();
+                foreach (var step in robotSteps)
+                    recipe.Steps.Remove(step);
+                RefreshSteps();
+            }
+
+            OnPropertyChanged(nameof(WaypointPlanner));
+            ClearWaypointsCommand.NotifyCanExecuteChanged();
+            StartWaypointScanCommand.NotifyCanExecuteChanged();
+            StatusMessage = "웨이포인트 초기화됨";
+        }
+
+        /// <summary>
+        /// 웨이포인트 목록을 InspectionStep과 동기화:
+        /// 기존 로봇 스텝 제거 → 웨이포인트별 새 스텝 생성
+        /// </summary>
+        private void SyncWaypointsToSteps(Recipe recipe)
+        {
+            var cameraId = SelectedCamera?.Id ?? string.Empty;
+
+            // 기존 로봇 웨이포인트 스텝 제거
+            var robotSteps = recipe.Steps.Where(s => s.RobotWaypoint != null && s.CameraId == cameraId).ToList();
+            foreach (var step in robotSteps)
+                recipe.Steps.Remove(step);
+
+            // 웨이포인트별 새 스텝 생성
+            int camIdx = GetCameraDisplayIndex(cameraId);
+            foreach (var wp in _waypointPlanner.Waypoints)
+            {
+                var step = new InspectionStep
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = $"{camIdx}-{wp.Index + 1} {wp.Name}",
+                    Sequence = wp.Index + 1,
+                    CameraId = cameraId,
+                    RobotWaypoint = wp,
+                    Tools = new List<ToolConfig>()
+                };
+                recipe.Steps.Add(step);
+            }
+
+            RefreshSteps();
+        }
+
+        /// <summary>
+        /// 웨이포인트 자동 스캔 실행: VMS → Robot 포즈 전송 → 이동 → 촬영 → 정합
+        /// </summary>
+        private async System.Threading.Tasks.Task StartWaypointScan()
+        {
+            if (_robotService == null || _cameraAcquisition == null) return;
+
+            // 세션 초기화
+            _multiViewSession?.Dispose();
+            _multiViewSession = new MultiViewSession
+            {
+                Strategy = SelectedRegistrationStrategy
+            };
+
+            _waypointPlanner.ResetCompletionStatus();
+            _waypointScanCts = new CancellationTokenSource();
+
+            StopWaypointScanCommand.NotifyCanExecuteChanged();
+            StartWaypointScanCommand.NotifyCanExecuteChanged();
+
+            try
+            {
+                var success = await _waypointPlanner.ExecuteScanSequenceAsync(
+                    _robotService,
+                    _cameraAcquisition,
+                    _multiViewSession,
+                    System.Numerics.Matrix4x4.Identity, // 핸드-아이 역행렬 (TODO: 캘리브레이션 로드)
+                    SelectedEulerConvention,
+                    "MOVEJ",
+                    300,
+                    _waypointScanCts.Token);
+
+                if (success && _multiViewSession.Scans.Count > 0)
+                {
+                    // 자동 정합
+                    StatusMessage = "정합 처리 중...";
+                    var merged = await _multiViewSession.ProcessAsync();
+                    if (merged != null)
+                    {
+                        CurrentPointCloud = merged;
+                        StatusMessage = $"웨이포인트 스캔 완료: {merged.PointCount:N0} pts";
+                    }
+                }
+
+                OnPropertyChanged(nameof(MultiViewStatusText));
+                MultiViewProcessCommand.NotifyCanExecuteChanged();
+                MultiViewClearCommand.NotifyCanExecuteChanged();
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"웨이포인트 스캔 오류: {ex.Message}";
+            }
+            finally
+            {
+                _waypointScanCts?.Dispose();
+                _waypointScanCts = null;
+                StopWaypointScanCommand.NotifyCanExecuteChanged();
+                StartWaypointScanCommand.NotifyCanExecuteChanged();
+            }
+        }
+
+        private void StopWaypointScan()
+        {
+            _waypointScanCts?.Cancel();
+            StatusMessage = "웨이포인트 스캔 중지 요청됨";
+        }
+
+        /// <summary>스캔 데이터 초기화</summary>
+        private void MultiViewClear()
+        {
+            _multiViewSession?.ClearScans();
+            OnPropertyChanged(nameof(MultiViewStatusText));
+            MultiViewProcessCommand.NotifyCanExecuteChanged();
+            MultiViewClearCommand.NotifyCanExecuteChanged();
+            StatusMessage = "MultiView 세션 초기화됨";
         }
 
         #endregion
@@ -1582,25 +2206,161 @@ namespace VMS.VisionSetup.ViewModels
         {
             if (value != null && value.Positions.Length > 0)
             {
-                float yMin = float.MaxValue;
-                float yMax = float.MinValue;
-                foreach (var pos in value.Positions)
+                int count = value.PointCount;
+                float zMin = float.MaxValue;
+                float zMax = float.MinValue;
+                for (int i = 0; i < count; i++)
                 {
-                    if (pos.Y < yMin) yMin = pos.Y;
-                    if (pos.Y > yMax) yMax = pos.Y;
+                    float z = value.Positions[i].Z;
+                    if (z < zMin) zMin = z;
+                    if (z > zMax) zMax = z;
                 }
 
-                PointCloudYMin = yMin;
-                PointCloudYMax = yMax;
-                HeightBaseline = 0f;
-                HeightLowerLimit = yMin;
-                HeightUpperLimit = yMax;
+                PointCloudYMin = zMin;
+                PointCloudYMax = zMax;
+                DepthRangeMin = zMin;
+                DepthRangeMax = zMax;
+
+                if (_savedHeightBaseline.HasValue)
+                {
+                    HeightBaseline = _savedHeightBaseline.Value;
+                    HeightLowerLimit = _savedHeightLowerLimit!.Value;
+                    HeightUpperLimit = _savedHeightUpperLimit!.Value;
+                }
+                else
+                {
+                    HeightBaseline = 0f;
+                    HeightLowerLimit = zMin;
+                    HeightUpperLimit = zMax;
+                }
             }
 
             GenerateHeightMapCommand.NotifyCanExecuteChanged();
+            SaveHeightSlicingCommand.NotifyCanExecuteChanged();
+            SavePointCloudCommand.NotifyCanExecuteChanged();
+
+            // 자동 Height Map 생성 — PointCloud가 설정되면 즉시 rule-base 도구 사용 가능
+            if (value != null && value.IsOrganized)
+            {
+                GenerateHeightMap();
+
+                // 레시피에 저장된 DepthRange 슬라이더 값 복원 (GenerateHeightMap이 덮어쓴 후)
+                var slicing = _recipeService.CurrentRecipe?.HeightSlicing;
+                if (slicing != null)
+                {
+                    DepthRangeMin = slicing.DepthRangeMin;
+                    DepthRangeMax = slicing.DepthRangeMax;
+                }
+            }
+        }
+
+        private void SavePointCloud()
+        {
+            if (CurrentPointCloud == null) return;
+
+            var filePath = _dialogService.ShowSaveFileDialog(
+                "VPC Point Cloud (*.vpc)|*.vpc", ".vpc", CurrentPointCloud.Name);
+
+            if (filePath != null)
+            {
+                try
+                {
+                    CurrentPointCloud.SaveToFile(filePath);
+                    StatusMessage = $"3D 데이터 저장 완료: {System.IO.Path.GetFileName(filePath)}";
+                }
+                catch (Exception ex)
+                {
+                    StatusMessage = $"3D 데이터 저장 실패: {ex.Message}";
+                }
+            }
+        }
+
+        private void LoadPointCloud()
+        {
+            var filePath = _dialogService.ShowOpenFileDialog(
+                "3D 데이터 열기",
+                "VPC Point Cloud (*.vpc)|*.vpc|All Files (*.*)|*.*");
+
+            if (filePath != null)
+            {
+                try
+                {
+                    var data = PointCloudData.LoadFromFile(filePath);
+                    var old = CurrentPointCloud;
+                    CurrentPointCloud = data;
+                    old?.Dispose();
+                    StatusMessage = $"3D 데이터 로드 완료: {data.Name} ({data.PointCount:N0} points)";
+                }
+                catch (Exception ex)
+                {
+                    StatusMessage = $"3D 데이터 로드 실패: {ex.Message}";
+                }
+            }
         }
 
         private bool CanGenerateHeightMap() => CurrentPointCloud?.IsOrganized == true;
+
+        private void SaveHeightSlicing()
+        {
+            _savedHeightBaseline = HeightBaseline;
+            _savedHeightLowerLimit = HeightLowerLimit;
+            _savedHeightUpperLimit = HeightUpperLimit;
+            IsHeightSlicingSaved = true;
+            ClearHeightSlicingCommand.NotifyCanExecuteChanged();
+
+            // 레시피에 영속 저장
+            var recipe = _recipeService.CurrentRecipe;
+            if (recipe != null)
+            {
+                recipe.HeightSlicing = new HeightSlicingSettings
+                {
+                    HeightBaseline = HeightBaseline,
+                    HeightLowerLimit = HeightLowerLimit,
+                    HeightUpperLimit = HeightUpperLimit,
+                    DepthRangeMin = DepthRangeMin,
+                    DepthRangeMax = DepthRangeMax
+                };
+                _recipeService.SaveRecipe(recipe);
+            }
+
+            StatusMessage = $"Height Slicing 설정 저장됨: Baseline={HeightBaseline:F1}, 범위=[{HeightLowerLimit:F1}, {HeightUpperLimit:F1}]";
+        }
+
+        private void ClearHeightSlicing()
+        {
+            _savedHeightBaseline = null;
+            _savedHeightLowerLimit = null;
+            _savedHeightUpperLimit = null;
+            IsHeightSlicingSaved = false;
+            ClearHeightSlicingCommand.NotifyCanExecuteChanged();
+
+            // 레시피에서도 제거
+            var recipe = _recipeService.CurrentRecipe;
+            if (recipe != null)
+            {
+                recipe.HeightSlicing = null;
+                _recipeService.SaveRecipe(recipe);
+            }
+
+            StatusMessage = "Height Slicing 설정 초기화됨";
+        }
+
+        partial void OnDepthRangeMinChanged(float value) => ApplyDepthRangeFilter();
+
+        partial void OnDepthRangeMaxChanged(float value) => ApplyDepthRangeFilter();
+
+        private void ApplyDepthRangeFilter()
+        {
+            var depthMap32F = _visionService.CurrentDepthMap32F;
+            if (depthMap32F == null)
+                return;
+
+            // CurrentDepthMap32F는 baseline 상대값 (pos.Z - HeightBaseline) 이므로
+            // DepthRangeMin/Max (raw Z값)에서 baseline을 빼서 좌표계 일치
+            float filterMin = DepthRangeMin - HeightBaseline;
+            float filterMax = DepthRangeMax - HeightBaseline;
+            CurrentImage = PointCloudConverter.DepthMap32FTo8UFiltered(depthMap32F, filterMin, filterMax);
+        }
 
         private void GenerateHeightMap()
         {
@@ -1609,11 +2369,18 @@ namespace VMS.VisionSetup.ViewModels
 
             try
             {
-                var (heightMap, metadata) = _visionService.GenerateHeightMap(
+                var (heightMap8U, _, metadata) = _visionService.GenerateHeightMap(
                     CurrentPointCloud, HeightBaseline, HeightLowerLimit, HeightUpperLimit);
 
-                CurrentImage = heightMap;
+                // 8-bit map은 표시 및 일반 2D 도구용
+                CurrentImage = heightMap8U;
                 CurrentHeightMapMetadata = metadata;
+                // float map은 VisionService.CurrentDepthMap32F에 clone 저장됨
+                // metadata.DepthMap32F에도 원본 참조 보관됨 (GetInterpolatedZ용)
+
+                // DepthRange 슬라이더를 HeightLimit 범위로 동기화
+                DepthRangeMin = HeightLowerLimit;
+                DepthRangeMax = HeightUpperLimit;
 
                 StatusMessage = $"Height Map 생성 완료: {metadata.Width}x{metadata.Height} " +
                     $"(Baseline={HeightBaseline:F1}, Range=[{HeightLowerLimit:F1}, {HeightUpperLimit:F1}])";
@@ -1659,9 +2426,138 @@ namespace VMS.VisionSetup.ViewModels
                 CaliperTool t => new CaliperToolSettingsViewModel(t),
                 LineFitTool t => new LineFitToolSettingsViewModel(t),
                 CircleFitTool t => new CircleFitToolSettingsViewModel(t),
+                GeometryTool t => new GeometryToolSettingsViewModel(t),
                 HeightSlicerTool t => new HeightSlicerToolSettingsViewModel(t),
+                PlaneFitTool t => new PlaneFitToolSettingsViewModel(t),
+                Geometry3DTool t => new Geometry3DToolSettingsViewModel(t),
+                ResultTool t => new ResultToolSettingsViewModel(t),
+                OCRTool t => new OCRToolSettingsViewModel(t),
+                CodeReaderTool t => new CodeReaderToolSettingsViewModel(t),
+                DetectionTool t => new DetectionToolSettingsViewModel(t),
+                ClassifyTool t => new ClassifyToolSettingsViewModel(t),
+                AnomalyTool t => new AnomalyToolSettingsViewModel(t),
                 _ => null
             };
+        }
+
+        #endregion
+
+        #region VMS Frame Receive
+
+        private async System.Threading.Tasks.Task ReceiveFromVms()
+        {
+            try
+            {
+                _sharedFrameReader ??= new SharedFrameReader();
+
+                if (!_sharedFrameReader.TryConnect())
+                {
+                    StatusMessage = "VMS에 연결할 수 없습니다 (VMS가 실행 중인지 확인)";
+                    _sharedFrameReader.Dispose();
+                    _sharedFrameReader = null;
+                    return;
+                }
+
+                if (!_sharedFrameReader.IsWriterAlive)
+                {
+                    StatusMessage = "VMS가 비활성 상태입니다";
+                    return;
+                }
+
+                var frame = _sharedFrameReader.TryReadFrame(skipIfSameFrame: false);
+                if (frame == null)
+                {
+                    StatusMessage = "프레임 읽기 실패 (VMS에서 Grab을 먼저 실행하세요)";
+                    return;
+                }
+
+                ApplySharedFrame(frame);
+                StatusMessage = $"VMS 프레임 수신 완료 (Frame #{frame.FrameCounter})";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"VMS 프레임 수신 오류: {ex.Message}";
+            }
+
+            await System.Threading.Tasks.Task.CompletedTask;
+        }
+
+        private async System.Threading.Tasks.Task StartLiveReceive()
+        {
+            _sharedFrameReader ??= new SharedFrameReader();
+
+            if (!_sharedFrameReader.TryConnect())
+            {
+                StatusMessage = "VMS에 연결할 수 없습니다 (VMS가 실행 중인지 확인)";
+                _sharedFrameReader.Dispose();
+                _sharedFrameReader = null;
+                return;
+            }
+
+            IsReceivingFromVms = true;
+            NotifyLiveReceiveCommands();
+            StatusMessage = "VMS 라이브 수신 시작";
+
+            _liveReceiveCts = new CancellationTokenSource();
+            var ct = _liveReceiveCts.Token;
+
+            await System.Threading.Tasks.Task.Run(async () =>
+            {
+                while (!ct.IsCancellationRequested)
+                {
+                    if (!_sharedFrameReader.IsWriterAlive)
+                    {
+                        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                        {
+                            StatusMessage = "VMS가 종료되었습니다";
+                            StopLiveReceive();
+                        });
+                        break;
+                    }
+
+                    if (_sharedFrameReader.WaitForFrame(500))
+                    {
+                        var frame = _sharedFrameReader.TryReadFrame();
+                        if (frame != null)
+                        {
+                            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                            {
+                                ApplySharedFrame(frame);
+                            });
+                        }
+                    }
+                }
+            }, ct);
+        }
+
+        private void StopLiveReceive()
+        {
+            _liveReceiveCts?.Cancel();
+            _liveReceiveCts?.Dispose();
+            _liveReceiveCts = null;
+            IsReceivingFromVms = false;
+            NotifyLiveReceiveCommands();
+            StatusMessage = "VMS 라이브 수신 중지";
+        }
+
+        private void ApplySharedFrame(SharedFrameData frame)
+        {
+            if (frame.Image2D != null)
+            {
+                CurrentImage = frame.Image2D;
+            }
+
+            if (frame.PointCloud != null)
+            {
+                CurrentPointCloud = frame.PointCloud;
+            }
+        }
+
+        private void NotifyLiveReceiveCommands()
+        {
+            ReceiveFromVmsCommand.NotifyCanExecuteChanged();
+            StartLiveReceiveCommand.NotifyCanExecuteChanged();
+            StopLiveReceiveCommand.NotifyCanExecuteChanged();
         }
 
         #endregion
@@ -1676,6 +2572,7 @@ namespace VMS.VisionSetup.ViewModels
             if (currentRecipe != null)
             {
                 SaveWorkspaceToStep();
+                SaveRobotSettingsToRecipe(currentRecipe);
                 currentRecipe.ModifiedAt = DateTime.Now;
                 _recipeService.SaveRecipe(currentRecipe);
                 StatusMessage = $"Recipe saved: {currentRecipe.Name}";
@@ -1694,8 +2591,28 @@ namespace VMS.VisionSetup.ViewModels
             if (loadedRecipe != null)
             {
                 CurrentRecipeName = loadedRecipe.Name;
+                LoadRobotSettingsFromRecipe(loadedRecipe);
                 StatusMessage = $"Recipe loaded: {loadedRecipe.Name}";
             }
+        }
+
+        /// <summary>로봇 설정을 Recipe에 저장</summary>
+        private void SaveRobotSettingsToRecipe(Recipe recipe)
+        {
+            recipe.RobotIpAddress = RobotIpAddress;
+            recipe.RobotPort = RobotPort;
+            recipe.EulerConvention = SelectedEulerConvention;
+            recipe.RegistrationStrategy = SelectedRegistrationStrategy;
+        }
+
+        /// <summary>Recipe에서 로봇 설정 복원</summary>
+        private void LoadRobotSettingsFromRecipe(Recipe recipe)
+        {
+            RobotIpAddress = recipe.RobotIpAddress;
+            RobotPort = recipe.RobotPort;
+            SelectedEulerConvention = recipe.EulerConvention;
+            SelectedRegistrationStrategy = recipe.RegistrationStrategy;
+            OnPropertyChanged(nameof(NeedsRobot));
         }
 
         public void OpenCameraManager()

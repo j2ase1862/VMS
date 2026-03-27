@@ -50,6 +50,37 @@ namespace VMS.PLC.Models.Sequence
         /// <summary>검사 대상 카메라 ID</summary>
         public string? CameraId { get; set; }
 
+        // --- RecipeChange 파라미터 ---
+
+        /// <summary>레시피 변경 요청 신호 PLC 주소 (예: Y101, D200)</summary>
+        public string? RecipeSignalAddress { get; set; }
+
+        /// <summary>레시피 신호 체크 모드 (BitOn/BitOff/WordEquals 등)</summary>
+        public InputCheckMode RecipeSignalCheckMode { get; set; } = InputCheckMode.BitOn;
+
+        /// <summary>레시피 신호 Word 비교값 (WordEquals, WordGreaterThan, WordLessThan용)</summary>
+        public int? RecipeSignalCompareValue { get; set; }
+
+        /// <summary>레시피 인덱스를 읽을 PLC 주소 (Word, 예: D101)</summary>
+        public string? RecipeIndexAddress { get; set; }
+
+        /// <summary>변경할 레시피 ID (정적 모드 — PLC 주소 미설정 시 폴백)</summary>
+        public string? RecipeId { get; set; }
+
+        // --- StepChange 파라미터 ---
+
+        /// <summary>스텝 변경 요청 신호 PLC 주소 (예: Y102, D300)</summary>
+        public string? StepSignalAddress { get; set; }
+
+        /// <summary>스텝 신호 체크 모드 (BitOn/BitOff/WordEquals 등)</summary>
+        public InputCheckMode StepSignalCheckMode { get; set; } = InputCheckMode.BitOn;
+
+        /// <summary>스텝 신호 Word 비교값 (WordEquals, WordGreaterThan, WordLessThan용)</summary>
+        public int? StepSignalCompareValue { get; set; }
+
+        /// <summary>스텝 인덱스를 읽을 PLC 주소 (Word)</summary>
+        public string? StepIndexAddress { get; set; }
+
         // --- Delay 파라미터 ---
 
         /// <summary>지연 시간 (ms)</summary>
