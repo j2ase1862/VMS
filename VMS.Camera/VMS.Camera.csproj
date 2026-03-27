@@ -54,13 +54,13 @@
   </ItemGroup>
 
   <!-- Matrox MIL SDK: define MIL_AVAILABLE when MIL is installed -->
-  <PropertyGroup Condition="Exists('C:\Program Files\Matrox Imaging\MIL\Include\Matrox.MatroxImagingLibrary.dll')">
+  <PropertyGroup Condition="Exists('C:\Program Files\Matrox Imaging\MIL\MIL.NET\Matrox.MatroxImagingLibrary.dll')">
     <DefineConstants>$(DefineConstants);MIL_AVAILABLE</DefineConstants>
   </PropertyGroup>
 
-  <ItemGroup Condition="Exists('C:\Program Files\Matrox Imaging\MIL\Include\Matrox.MatroxImagingLibrary.dll')">
+  <ItemGroup Condition="Exists('C:\Program Files\Matrox Imaging\MIL\MIL.NET\Matrox.MatroxImagingLibrary.dll')">
     <Reference Include="Matrox.MatroxImagingLibrary">
-      <HintPath>C:\Program Files\Matrox Imaging\MIL\Include\Matrox.MatroxImagingLibrary.dll</HintPath>
+      <HintPath>C:\Program Files\Matrox Imaging\MIL\MIL.NET\Matrox.MatroxImagingLibrary.dll</HintPath>
     </Reference>
   </ItemGroup>
 

@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
         xmlns:converters="clr-namespace:VMS.AppSetup.Converters"
         mc:Ignorable="d"
         Title="BODA Vision System Setup"
@@ -426,19 +427,19 @@
                                                             </Grid.ColumnDefinitions>
                                                             <StackPanel Grid.Column="0">
                                                                 <TextBlock Text="Board Type" Foreground="#888888" FontSize="11" Margin="0,0,0,3"/>
-                                                                <ComboBox SelectedItem="{Binding BoardType}"
+                                                                <ComboBox Text="{Binding BoardType}"
                                                                           IsEditable="True" IsReadOnly="False"
                                                                           Style="{StaticResource ComboStyle}"
                                                                           Padding="6,4" FontSize="12">
-                                                                    <ComboBoxItem Content="SOLIOS"/>
-                                                                    <ComboBoxItem Content="RAPIXO"/>
-                                                                    <ComboBoxItem Content="RADIENT"/>
-                                                                    <ComboBoxItem Content="ORION"/>
-                                                                    <ComboBoxItem Content="MORPHIS"/>
-                                                                    <ComboBoxItem Content="GIGE"/>
-                                                                    <ComboBoxItem Content="USB3"/>
-                                                                    <ComboBoxItem Content="GENTL"/>
-                                                                    <ComboBoxItem Content="HOST"/>
+                                                                    <sys:String>SOLIOS</sys:String>
+                                                                    <sys:String>RAPIXO</sys:String>
+                                                                    <sys:String>RADIENT</sys:String>
+                                                                    <sys:String>ORION</sys:String>
+                                                                    <sys:String>MORPHIS</sys:String>
+                                                                    <sys:String>GIGE</sys:String>
+                                                                    <sys:String>USB3</sys:String>
+                                                                    <sys:String>GENTL</sys:String>
+                                                                    <sys:String>HOST</sys:String>
                                                                 </ComboBox>
                                                             </StackPanel>
                                                             <StackPanel Grid.Column="2">

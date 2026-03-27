@@ -124,6 +124,21 @@ namespace VMS.Camera.Models
         public string DcfFilePath { get; set; } = string.Empty;
 
         /// <summary>
+        /// 라인스캔 스캔 길이 (라인 수)
+        /// </summary>
+        public int ScanLength { get; set; } = 4096;
+
+        /// <summary>
+        /// 라인스캔 라인 레이트 (lines/sec)
+        /// </summary>
+        public double LineRate { get; set; } = 10000;
+
+        /// <summary>
+        /// 트리거 소스 (Internal, Encoder)
+        /// </summary>
+        public string TriggerSource { get; set; } = "Internal";
+
+        /// <summary>
         /// 표시용 해상도 문자열
         /// </summary>
         [JsonIgnore]

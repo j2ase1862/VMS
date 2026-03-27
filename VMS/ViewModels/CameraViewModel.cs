@@ -64,6 +64,16 @@ namespace VMS.ViewModels
         [ObservableProperty]
         private string _dcfFilePath = string.Empty;
 
+        // Line Scan parameters
+        [ObservableProperty]
+        private int _scanLength = 4096;
+
+        [ObservableProperty]
+        private double _lineRate = 10000;
+
+        [ObservableProperty]
+        private string _triggerSource = "Internal";
+
         [ObservableProperty]
         private bool _isPassed = false;  // Bypass checkbox: checked = always OK without inspection
 
@@ -630,7 +640,10 @@ namespace VMS.ViewModels
                 CameraType = CameraType,
                 BoardNumber = BoardNumber,
                 DigitizerNumber = DigitizerNumber,
-                DcfFilePath = DcfFilePath
+                DcfFilePath = DcfFilePath,
+                ScanLength = ScanLength,
+                LineRate = LineRate,
+                TriggerSource = TriggerSource
             };
         }
 
@@ -647,11 +660,10 @@ namespace VMS.ViewModels
             };
 
             int stride = (int)mat.Step();
-            byte[] data = new byte[stride * mat.Height];
-            Marshal.Copy(mat.Data, data, 0, data.Length);
 
+            // IntPtr에서 직접 BitmapSource 생성 (byte[] 중간 복사 제거)
             var bitmapSource = BitmapSource.Create(
-                mat.Width, mat.Height, 96, 96, format, null, data, stride);
+                mat.Width, mat.Height, 96, 96, format, null, mat.Data, stride * mat.Height, stride);
             bitmapSource.Freeze();
             return bitmapSource;
         }
@@ -673,7 +685,10 @@ namespace VMS.ViewModels
                 BoardType = config.BoardType,
                 BoardNumber = config.BoardNumber,
                 DigitizerNumber = config.DigitizerNumber,
-                DcfFilePath = config.DcfFilePath
+                DcfFilePath = config.DcfFilePath,
+                ScanLength = config.ScanLength,
+                LineRate = config.LineRate,
+                TriggerSource = config.TriggerSource.ToString()
             };
 
             // Create steps from configuration or default
