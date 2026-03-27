@@ -1,0 +1,77 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+
+  <Package Name="BODA Vision System"
+           Manufacturer="VASIM"
+           Version="1.0.0.0"
+           UpgradeCode="A70E988A-739F-4CDC-BE08-EBFE03DACA32"
+           Codepage="949"
+           Language="1042">
+
+    <MajorUpgrade DowngradeErrorMessage="최신 버전이 이미 설치되어 있습니다." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Feature Id="Main" Title="BODA Vision System" Level="1">
+      <ComponentGroupRef Id="AppFiles" />
+      <ComponentRef Id="DesktopShortcutComp" />
+      <ComponentRef Id="StartMenuShortcutComp" />
+    </Feature>
+
+    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+
+  </Package>
+
+  <!-- Directory Structure -->
+  <Fragment>
+    <StandardDirectory Id="ProgramFiles6432Folder">
+      <Directory Id="INSTALLFOLDER" Name="VASIM\BODA Vision System" />
+    </StandardDirectory>
+  </Fragment>
+
+  <!-- Application Files: harvest all files from VMS build output -->
+  <Fragment>
+    <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
+      <Files Include="$(var.VMS.TargetDir)**" />
+    </ComponentGroup>
+  </Fragment>
+
+  <!-- Desktop Shortcut -->
+  <Fragment>
+    <StandardDirectory Id="DesktopFolder">
+      <Component Id="DesktopShortcutComp">
+        <Shortcut Id="DesktopShortcut"
+                  Name="VMS 실행"
+                  Target="[INSTALLFOLDER]VMS.exe"
+                  WorkingDirectory="INSTALLFOLDER" />
+        <RegistryValue Root="HKCU"
+                       Key="Software\VASIM\BODA Vision System"
+                       Name="DesktopShortcut"
+                       Type="integer"
+                       Value="1"
+                       KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+  </Fragment>
+
+  <!-- Start Menu Shortcut -->
+  <Fragment>
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="AppMenuFolder" Name="VASIM">
+        <Component Id="StartMenuShortcutComp">
+          <Shortcut Id="StartMenuShortcut"
+                    Name="BODA Vision System"
+                    Target="[INSTALLFOLDER]VMS.exe"
+                    WorkingDirectory="INSTALLFOLDER" />
+          <RemoveFolder Id="RemoveAppMenuFolder" On="uninstall" />
+          <RegistryValue Root="HKCU"
+                         Key="Software\VASIM\BODA Vision System"
+                         Name="StartMenuShortcut"
+                         Type="integer"
+                         Value="1"
+                         KeyPath="yes" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+  </Fragment>
+
+</Wix>

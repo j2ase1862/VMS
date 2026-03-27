@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VMS.Camera\VMS.Camera.csproj" />
+    <ProjectReference Include="..\VMS.PLC\VMS.PLC.csproj" />
+  </ItemGroup>
+
+  <!-- After build, copy output to VMS output directory -->
+  <Target Name="CopyToVmsOutput" AfterTargets="Build">
+    <PropertyGroup>
+      <VmsOutputDir>..\VMS\bin\$(Configuration)\net8.0-windows\</VmsOutputDir>
+    </PropertyGroup>
+    <ItemGroup>
+      <AppSetupOutputFiles Include="$(TargetDir)**\*.*" />
+    </ItemGroup>
+    <MakeDir Directories="$(VmsOutputDir)" Condition="!Exists('$(VmsOutputDir)')" />
+    <Copy SourceFiles="@(AppSetupOutputFiles)" DestinationFolder="$(VmsOutputDir)%(RecursiveDir)" SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

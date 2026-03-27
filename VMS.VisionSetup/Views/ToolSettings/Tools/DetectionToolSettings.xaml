@@ -1,0 +1,54 @@
+<UserControl x:Class="VMS.VisionSetup.Views.ToolSettings.Tools.DetectionToolSettings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls">
+    <StackPanel>
+        <!-- Model -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Model" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:TextBoxParameter Label="Model Path (.onnx)"
+                    Value="{Binding ModelPath}"
+                    ToolType="DetectionTool" ParameterName="ModelPath"/>
+                <controls:SliderParameter Label="Input Size"
+                    Value="{Binding InputSize}" Minimum="320" Maximum="1280"
+                    TickFrequency="32" ValueFormat="F0"
+                    ToolType="DetectionTool" ParameterName="InputSize"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- Detection -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Detection" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:SliderParameter Label="Confidence Threshold"
+                    Value="{Binding ConfidenceThreshold}" Minimum="0.1" Maximum="1.0"
+                    TickFrequency="0.05" ValueFormat="F2"
+                    ToolType="DetectionTool" ParameterName="ConfidenceThreshold"/>
+                <controls:SliderParameter Label="IoU Threshold"
+                    Value="{Binding IouThreshold}" Minimum="0.1" Maximum="1.0"
+                    TickFrequency="0.05" ValueFormat="F2"
+                    ToolType="DetectionTool" ParameterName="IouThreshold"/>
+                <controls:TextBoxParameter Label="Class Names (comma-separated)"
+                    Value="{Binding ClassNamesText}"
+                    ToolType="DetectionTool" ParameterName="ClassNamesText"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- Display -->
+        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Display" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:CheckBoxParameter Label="Draw Overlay"
+                    IsChecked="{Binding DrawOverlay}"
+                    ToolType="DetectionTool" ParameterName="DrawOverlay"/>
+            </StackPanel>
+        </Expander>
+    </StackPanel>
+</UserControl>

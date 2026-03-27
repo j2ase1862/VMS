@@ -1,0 +1,25 @@
+<UserControl x:Class="VMS.VisionSetup.Views.ToolSettings.Tools.BlurToolSettings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls"
+             xmlns:conv="clr-namespace:VMS.VisionSetup.Converters"
+             xmlns:ip="clr-namespace:VMS.VisionSetup.VisionTools.ImageProcessing">
+    <StackPanel>
+        <controls:EnumComboBoxParameter Label="Blur Type"
+            ItemsSource="{conv:EnumValues {x:Type ip:BlurType}}"
+            SelectedValue="{Binding BlurType}"
+            ToolType="BlurTool" ParameterName="BlurType"/>
+        <controls:SliderParameter Label="Kernel Size"
+            Value="{Binding KernelSize}" Minimum="1" Maximum="31"
+            TickFrequency="2" SnapToTick="True" ValueFormat="F0"
+            ToolType="BlurTool" ParameterName="KernelSize"/>
+        <controls:SliderParameter Label="Sigma X"
+            Value="{Binding SigmaX}" Minimum="0" Maximum="10"
+            TickFrequency="0.5" ValueFormat="F2"
+            ToolType="BlurTool" ParameterName="SigmaX"/>
+        <controls:SliderParameter Label="Sigma Y"
+            Value="{Binding SigmaY}" Minimum="0" Maximum="10"
+            TickFrequency="0.5" ValueFormat="F2"
+            ToolType="BlurTool" ParameterName="SigmaY"/>
+    </StackPanel>
+</UserControl>
