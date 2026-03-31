@@ -142,6 +142,7 @@ namespace VMS.ViewModels
             set => SetProperty(ref _webStatusText, value);
         }
 
+
         public int ConnectedCameraCount => Cameras.Count(c => c.IsConnected);
         public int TotalCameraCount => Cameras.Count;
 
@@ -227,6 +228,7 @@ namespace VMS.ViewModels
                 _heartbeatService.ConnectionStatusChanged += OnWebConnectionStatusChanged;
             }
 
+
             // Subscribe to PLC connection state changes
             if (_plcConnection != null)
             {
@@ -254,6 +256,7 @@ namespace VMS.ViewModels
                     });
                 };
             }
+
 
             // Initialize user display
             UpdateUserDisplay();

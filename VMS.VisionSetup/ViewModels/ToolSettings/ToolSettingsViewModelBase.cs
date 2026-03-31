@@ -336,6 +336,7 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
             }
         }
 
+
         public virtual void Dispose()
         {
             Tool.PropertyChanged -= OnModelPropertyChanged;

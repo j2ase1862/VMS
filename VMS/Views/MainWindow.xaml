@@ -163,6 +163,7 @@
                         </StackPanel>
                     </Button>
 
+
                     <!-- Start/Stop buttons -->
                     <Button Style="{StaticResource ModernButton}"
                             Command="{Binding StartInspectionCommand}"

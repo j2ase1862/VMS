@@ -95,6 +95,7 @@ namespace VMS.ViewModels
         /// </summary>
         public bool SuppressLiveDisplay { get; set; }
 
+
         [ObservableProperty]
         private BitmapSource? _currentImage;
 
@@ -388,34 +389,32 @@ namespace VMS.ViewModels
                         {
                             FrameAcquired?.Invoke(result);
 
+                            BitmapSource? bmp = null;
                             if (result.Image2D != null)
                             {
                                 // Roller inspection: 원본 Mat을 Dispose 전에 전달
                                 LiveFrameReady?.Invoke(result.Image2D);
 
                                 if (!SuppressLiveDisplay)
-                                {
-                                    var bmp = MatToBitmapSource(result.Image2D);
-                                    if (bmp != null)
-                                    {
-                                        await Application.Current.Dispatcher.InvokeAsync(() =>
-                                        {
-                                            CurrentImage = bmp;
-                                        });
-                                    }
-                                }
+                                    bmp = MatToBitmapSource(result.Image2D);
 
                                 result.Image2D.Dispose();
                             }
 
-                            if (!SuppressLiveDisplay && result.PointCloud != null)
+                            var pointCloud = !SuppressLiveDisplay ? result.PointCloud : null;
+
+                            if (bmp != null || pointCloud != null)
                             {
-                                var pointCloud = result.PointCloud;
                                 await Application.Current.Dispatcher.InvokeAsync(() =>
                                 {
-                                    var old = CurrentPointCloud;
-                                    CurrentPointCloud = pointCloud;
-                                    old?.Dispose();
+                                    if (bmp != null)
+                                        CurrentImage = bmp;
+                                    if (pointCloud != null)
+                                    {
+                                        var old = CurrentPointCloud;
+                                        CurrentPointCloud = pointCloud;
+                                        old?.Dispose();
+                                    }
                                 });
                             }
                         }
