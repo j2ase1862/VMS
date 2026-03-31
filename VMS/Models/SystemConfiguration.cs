@@ -39,6 +39,11 @@ namespace VMS.Models
         public PlcWriteMode WriteMode { get; set; } = PlcWriteMode.Handshake;
         public PlcEndianMode EndianMode { get; set; } = PlcEndianMode.LittleEndian;
 
+        // Web Parameter Sync
+        public string WebServerUrl { get; set; } = "http://localhost:5292";
+        public string VisionServerUrl { get; set; } = "http://localhost:5000";
+        public int ClientIndex { get; set; } = 1;
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string Version { get; set; } = "1.0.0";
     }

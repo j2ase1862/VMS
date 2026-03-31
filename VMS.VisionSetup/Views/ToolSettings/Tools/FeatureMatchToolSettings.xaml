@@ -84,6 +84,9 @@
                     Value="{Binding ScoreThreshold}" Minimum="0.1" Maximum="1"
                     TickFrequency="0.05" ValueFormat="F2"
                     ToolType="FeatureMatchTool" ParameterName="ScoreThreshold"/>
+                <controls:ParamCodeLink
+                    AvailableParamCodes="{Binding AvailableParamCodes}"
+                    SelectedItem="{Binding SelectedScoreThresholdCode}"/>
                 <controls:CheckBoxParameter Label="Contrast Invariant"
                     IsChecked="{Binding UseContrastInvariant}"
                     ToolType="FeatureMatchTool" ParameterName="UseContrastInvariant"/>

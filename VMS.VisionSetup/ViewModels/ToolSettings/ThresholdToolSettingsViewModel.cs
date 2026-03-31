@@ -1,4 +1,5 @@
 using OpenCvSharp;
+using VMS.VisionSetup.Models;
 using VMS.VisionSetup.VisionTools.ImageProcessing;
 using ThresholdType = VMS.VisionSetup.VisionTools.ImageProcessing.ThresholdType;
 
@@ -8,7 +9,17 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
     {
         private ThresholdTool TypedTool => (ThresholdTool)Tool;
 
-        public ThresholdToolSettingsViewModel(ThresholdTool tool) : base(tool) { }
+        public ThresholdToolSettingsViewModel(ThresholdTool tool) : base(tool)
+        {
+            LoadAvailableParamCodes();
+        }
+
+        // Web ParamCode Links
+        public ParamCodeItem? SelectedThresholdValueCode
+        {
+            get => GetLinkedParamCodeItem(nameof(ThresholdValue));
+            set { SetLinkedParamCode(nameof(ThresholdValue), value); OnPropertyChanged(); }
+        }
 
         public double ThresholdValue { get => TypedTool.ThresholdValue; set => TypedTool.ThresholdValue = value; }
         public double MaxValue { get => TypedTool.MaxValue; set => TypedTool.MaxValue = value; }

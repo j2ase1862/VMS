@@ -27,6 +27,9 @@
                     Value="{Binding EdgeThreshold}" Minimum="1" Maximum="100"
                     TickFrequency="1" ValueFormat="F0"
                     ToolType="CaliperTool" ParameterName="EdgeThreshold"/>
+                <controls:ParamCodeLink
+                    AvailableParamCodes="{Binding AvailableParamCodes}"
+                    SelectedItem="{Binding SelectedEdgeThresholdCode}"/>
                 <controls:SliderParameter Label="Filter Half Width"
                     Value="{Binding FilterHalfWidth}" Minimum="1" Maximum="10"
                     TickFrequency="1" SnapToTick="True" ValueFormat="F0"

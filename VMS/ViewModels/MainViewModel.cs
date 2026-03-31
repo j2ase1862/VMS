@@ -1,5 +1,7 @@
 using VMS.Camera.Models;
 using VMS.Camera.Services;
+using VMS.Core.Interfaces;
+using VMS.Core.Services;
 using VMS.Interfaces;
 using VMS.Models;
 using VMS.PLC.Interfaces;
@@ -12,6 +14,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Media.Imaging;
 
 namespace VMS.ViewModels
@@ -72,6 +75,9 @@ namespace VMS.ViewModels
         private bool _isLiveMode;
 
         [ObservableProperty]
+        private bool _isRollerInspecting;
+
+        [ObservableProperty]
         private string _systemStatus = "Ready";
 
         [ObservableProperty]
@@ -118,6 +124,24 @@ namespace VMS.ViewModels
         public bool IsPlcConfigured => PlcVendorName != "None";
         public bool IsPlcConnected => _plcConnection?.IsConnected ?? false;
 
+        private bool _isWebConnected;
+        public bool IsWebConnected
+        {
+            get => _isWebConnected;
+            set
+            {
+                if (SetProperty(ref _isWebConnected, value))
+                    WebStatusText = value ? "Web Connected" : "Web Disconnected";
+            }
+        }
+
+        private string _webStatusText = "Web Disconnected";
+        public string WebStatusText
+        {
+            get => _webStatusText;
+            set => SetProperty(ref _webStatusText, value);
+        }
+
         public int ConnectedCameraCount => Cameras.Count(c => c.IsConnected);
         public int TotalCameraCount => Cameras.Count;
 
@@ -155,6 +179,9 @@ namespace VMS.ViewModels
         private readonly IUserService? _userService;
         private readonly SharedFrameWriter? _sharedFrameWriter;
         private readonly IPlcConnection? _plcConnection;
+        private readonly IRollerInspectionService? _rollerInspectionService;
+        private readonly HeartbeatService? _heartbeatService;
+        private readonly IParameterSyncService? _parameterSyncService;
         private readonly Action _shutdownAction;
         private SystemConfiguration _systemConfig;
 
@@ -171,7 +198,10 @@ namespace VMS.ViewModels
             SharedFrameWriter? sharedFrameWriter = null,
             IPlcConnection? plcConnection = null,
             string plcVendorName = "None",
-            string plcIpAddress = "")
+            string plcIpAddress = "",
+            IRollerInspectionService? rollerInspectionService = null,
+            HeartbeatService? heartbeatService = null,
+            IParameterSyncService? parameterSyncService = null)
         {
             _configService = configService;
             _recipeService = recipeService;
@@ -185,14 +215,44 @@ namespace VMS.ViewModels
             _plcConnection = plcConnection;
             PlcVendorName = plcVendorName;
             PlcIpAddress = plcIpAddress;
+            _rollerInspectionService = rollerInspectionService;
+            _heartbeatService = heartbeatService;
+            _parameterSyncService = parameterSyncService;
             _shutdownAction = shutdownAction;
             _systemConfig = new SystemConfiguration();
+
+            // Subscribe to Web heartbeat connection state changes
+            if (_heartbeatService != null)
+            {
+                _heartbeatService.ConnectionStatusChanged += OnWebConnectionStatusChanged;
+            }
 
             // Subscribe to PLC connection state changes
             if (_plcConnection != null)
             {
                 _plcConnection.ConnectionStateChanged += (_, _) =>
                     OnPropertyChanged(nameof(IsPlcConnected));
+            }
+
+            // Subscribe to roller inspection results
+            if (_rollerInspectionService != null)
+            {
+                _rollerInspectionService.PaperCaptured += result =>
+                {
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        // 캡처된 용지 이미지를 첫 번째 카메라에 표시
+                        var cam = Cameras.FirstOrDefault(c => c.IsEnabled);
+                        if (cam != null && result.PaperImage != null)
+                        {
+                            cam.CurrentImage = result.PaperImage;
+                        }
+
+                        LogService?.Log(
+                            $"Paper captured: {result.FrameCount} frames, {result.CaptureTimeMs:F0}ms",
+                            LogLevel.Success, "Roller");
+                    });
+                };
             }
 
             // Initialize user display
@@ -659,6 +719,51 @@ namespace VMS.ViewModels
         }
 
         [RelayCommand]
+        private async Task ToggleRollerInspectionAsync()
+        {
+            if (_rollerInspectionService == null) return;
+
+            if (IsRollerInspecting)
+            {
+                // 중지
+                _rollerInspectionService.Stop();
+
+                // 카메라 이벤트 해제 및 Live 표시 복원
+                foreach (var cam in Cameras)
+                {
+                    cam.LiveFrameReady -= _rollerInspectionService.ProcessFrame;
+                    cam.SuppressLiveDisplay = false;
+                }
+
+                // Live 모드도 중지
+                if (IsLiveMode)
+                    await StopLiveAsync();
+
+                IsRollerInspecting = false;
+                SystemStatus = "Ready";
+                LogService?.Log("Roller inspection stopped", LogLevel.Info, "Roller");
+            }
+            else
+            {
+                // 시작: Live 모드를 먼저 활성화
+                if (!IsLiveMode)
+                    await StartLiveAsync();
+
+                // 카메라 이벤트 연결 및 Live 표시 억제
+                foreach (var cam in Cameras.Where(c => c.IsEnabled))
+                {
+                    cam.SuppressLiveDisplay = true;
+                    cam.LiveFrameReady += _rollerInspectionService.ProcessFrame;
+                }
+
+                _rollerInspectionService.Start();
+                IsRollerInspecting = true;
+                SystemStatus = "Roller Inspecting";
+                LogService?.Log("Roller inspection started", LogLevel.Success, "Roller");
+            }
+        }
+
+        [RelayCommand]
         private async Task StartInspectionAsync()
         {
             if (_autoProcessService != null && _autoProcessService.IsRunning)
@@ -765,6 +870,22 @@ namespace VMS.ViewModels
         }
 
         [RelayCommand]
+        private void OpenSyncParameters()
+        {
+            if (_parameterSyncService == null)
+            {
+                System.Windows.MessageBox.Show(
+                    "Parameter Sync Service is not available.\nCheck WebServerUrl configuration in AppSetup.",
+                    "Sync Parameters", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var dialog = new ParameterSyncDialog(_parameterSyncService);
+            dialog.Owner = Application.Current.MainWindow;
+            dialog.ShowDialog();
+        }
+
+        [RelayCommand]
         private void ExitApplication()
         {
             if (_dialogService.ShowConfirmation(
@@ -795,6 +916,14 @@ namespace VMS.ViewModels
         partial void OnTotalInspectionsChanged(int value)
         {
             OnPropertyChanged(nameof(PassRate));
+        }
+
+        private void OnWebConnectionStatusChanged(bool connected)
+        {
+            Application.Current?.Dispatcher.BeginInvoke(() =>
+            {
+                IsWebConnected = connected;
+            });
         }
     }
 }

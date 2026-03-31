@@ -15,6 +15,9 @@
             Value="{Binding ExpectedRadius}" Minimum="10" Maximum="500"
             TickFrequency="5" ValueFormat="F0"
             ToolType="CircleFitTool" ParameterName="ExpectedRadius"/>
+        <controls:ParamCodeLink
+            AvailableParamCodes="{Binding AvailableParamCodes}"
+            SelectedItem="{Binding SelectedExpectedRadiusCode}"/>
         <controls:SliderParameter Label="Num Calipers"
             Value="{Binding NumCalipers}" Minimum="3" Maximum="64"
             TickFrequency="1" ValueFormat="F0"
@@ -47,6 +50,9 @@
             Value="{Binding EdgeThreshold}" Minimum="1" Maximum="100"
             TickFrequency="1" ValueFormat="F0"
             ToolType="CircleFitTool" ParameterName="EdgeThreshold"/>
+        <controls:ParamCodeLink
+            AvailableParamCodes="{Binding AvailableParamCodes}"
+            SelectedItem="{Binding SelectedEdgeThresholdCode}"/>
         <controls:EnumComboBoxParameter Label="Fit Method"
             ItemsSource="{conv:EnumValues {x:Type meas:CircleFitMethod}}"
             SelectedValue="{Binding FitMethod}"

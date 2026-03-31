@@ -202,6 +202,9 @@ namespace VMS.VisionSetup.Models
         /// </summary>
         public Dictionary<string, object>? ROIShapeData { get; set; }
 
+        // Web 파라미터 연동 (PropertyName → ParamCode)
+        public Dictionary<string, int> LinkedParamCodes { get; set; } = new();
+
         // PLC 결과 매핑 (1:N)
         public List<PlcResultMapping> PlcMappings { get; set; } = new();
 

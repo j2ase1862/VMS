@@ -1,11 +1,16 @@
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Windows;
 using VMS.Camera.Services;
+using VMS.Core.Interfaces;
+using VMS.Core.Services;
 using VMS.Interfaces;
+using HeartbeatService = VMS.Core.Services.HeartbeatService;
 using VMS.PLC.Interfaces;
 using VMS.PLC.Models;
 using VMS.PLC.Models.Sequence;
@@ -13,6 +18,7 @@ using VMS.PLC.Services;
 using VMS.Services;
 using VMS.ViewModels;
 using VMS.Views;
+using VsParameterApplyService = VMS.VisionSetup.Services.ParameterApplyService;
 
 namespace VMS
 {
@@ -105,6 +111,41 @@ namespace VMS
                 userService: userService,
                 logService: logService);
 
+            // ── Web Parameter Sync Service ──
+            IParameterSyncService? parameterSyncService = null;
+            try
+            {
+                parameterSyncService = new ParameterSyncService(
+                    systemConfig.WebServerUrl, systemConfig.ClientIndex);
+                parameterSyncService.StartPeriodicSync(60);
+
+                // InspectionService에 주입
+                InspectionService.ParameterSyncService = parameterSyncService;
+                InspectionService.ParameterApplyService =
+                    new VsParameterApplyService(parameterSyncService);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] ParameterSyncService init failed: {ex.Message}");
+            }
+
+            // ── Web Heartbeat Service ──
+            HeartbeatService? heartbeatService = null;
+            try
+            {
+                heartbeatService = new HeartbeatService(
+                    systemConfig.WebServerUrl,
+                    systemConfig.VisionServerUrl,
+                    systemConfig.ClientIndex,
+                    systemConfig.SystemIpAddress,
+                    systemConfig.ApplicationName);
+                heartbeatService.Start();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] HeartbeatService init failed: {ex.Message}");
+            }
+
             // Load system-level process sequence
             var processSequence = LoadSystemSequence();
 
@@ -194,11 +235,18 @@ namespace VMS
                             foreach (var cam in mainViewModel.Cameras)
                                 cam.SetRecipe(recipe);
                             logService.Log($"Recipe changed to [{recipeIndex}] {recipe.Name}", LogLevel.Success, "RecipeChange");
+
+                            // Web 파라미터 동기화 — 레시피 변경 시 해당 레시피 파라미터 로드
+                            if (parameterSyncService != null)
+                                _ = parameterSyncService.LoadRecipeAsync(recipeIndex);
                         }
                     });
                 },
                 processSequence: processSequence,
                 logService: logService);
+
+            // ── Roller Inspection Service ──
+            IRollerInspectionService rollerInspectionService = new RollerInspectionService(logService);
 
             // Re-create MainViewModel with AutoProcessService injected
             mainViewModel = new MainViewModel(
@@ -207,23 +255,23 @@ namespace VMS
                 dialogService,
                 processService,
                 inspectionService,
-                () => Shutdown(),
+                () => ForceShutdown(mainViewModel, heartbeatService, parameterSyncService, sharedFrameWriter, plcConnection, autoProcessService),
                 autoProcessService,
                 userService,
                 logService,
                 sharedFrameWriter,
                 plcConnection: plcConnection,
                 plcVendorName: systemConfig.PlcVendor.ToString(),
-                plcIpAddress: systemConfig.PlcIpAddress);
+                plcIpAddress: systemConfig.PlcIpAddress,
+                rollerInspectionService: rollerInspectionService,
+                heartbeatService: heartbeatService,
+                parameterSyncService: parameterSyncService);
 
             var mainWindow = new MainWindow();
             mainWindow.DataContext = mainViewModel;
             MainWindow = mainWindow;
             mainWindow.Closed += (_, _) =>
-            {
-                sharedFrameWriter?.Dispose();
-                Shutdown();
-            };
+                ForceShutdown(mainViewModel, heartbeatService, parameterSyncService, sharedFrameWriter, plcConnection, autoProcessService);
             mainWindow.Show();
 
             // ── 카메라 자동 연결 (UI 표시 후 백그라운드) ──
@@ -280,6 +328,63 @@ namespace VMS
                 Debug.WriteLine($"[App] System sequence load error: {ex.Message}");
                 return null;
             }
+        }
+
+        /// <summary>
+        /// 프로세스를 확실히 종료.
+        /// UI 스레드에서 Dispose를 호출하지 않음 — 모든 정리는 백그라운드에서.
+        /// Kill 타이머(별도 스레드)가 Dispose 블로킹과 무관하게 프로세스를 종료.
+        /// </summary>
+        private static int _shutdownRequested;
+        private void ForceShutdown(
+            MainViewModel? viewModel,
+            HeartbeatService? heartbeat,
+            IParameterSyncService? paramSync,
+            SharedFrameWriter? frameWriter,
+            IPlcConnection? plcConnection,
+            IAutoProcessService? autoProcess)
+        {
+            if (Interlocked.Exchange(ref _shutdownRequested, 1) == 1)
+                return;
+
+            // ① Kill 타이머: 3초 후 무조건 프로세스 종료 (Dispose 블로킹과 독립)
+            new Thread(() =>
+            {
+                Thread.Sleep(3000);
+                Process.GetCurrentProcess().Kill();
+            })
+            { IsBackground = false, Name = "KillTimer" }.Start();
+
+            // ② 정리 스레드: 카메라/PLC/서비스 정리 시도 (블로킹되면 ①이 종료시킴)
+            new Thread(() =>
+            {
+                // 카메라 Live 중지 + 연결 해제
+                if (viewModel != null)
+                {
+                    foreach (var cam in viewModel.Cameras)
+                    {
+                        try { cam.StopLiveGrabAsync().Wait(500); } catch { }
+                    }
+                }
+
+                // AutoProcess 정지
+                try { autoProcess?.StopAsync().Wait(1000); } catch { }
+
+                // PLC 연결 해제
+                try { plcConnection?.DisconnectAsync().Wait(1000); } catch { }
+
+                // Web 서비스 정리
+                try { heartbeat?.Dispose(); } catch { }
+                try { paramSync?.Dispose(); } catch { }
+                try { frameWriter?.Dispose(); } catch { }
+
+                // 정리 완료 → 즉시 종료
+                Process.GetCurrentProcess().Kill();
+            })
+            { IsBackground = true, Name = "CleanupThread" }.Start();
+
+            // UI 스레드: WPF 종료 시작 (non-blocking, 즉시 반환)
+            try { Shutdown(); } catch { }
         }
     }
 }

@@ -1,4 +1,5 @@
 using OpenCvSharp;
+using VMS.VisionSetup.Models;
 using VMS.VisionSetup.VisionTools.Measurement;
 
 namespace VMS.VisionSetup.ViewModels.ToolSettings
@@ -7,7 +8,22 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
     {
         private LineFitTool TypedTool => (LineFitTool)Tool;
 
-        public LineFitToolSettingsViewModel(LineFitTool tool) : base(tool) { }
+        public LineFitToolSettingsViewModel(LineFitTool tool) : base(tool)
+        {
+            LoadAvailableParamCodes();
+        }
+
+        // Web ParamCode Links
+        public ParamCodeItem? SelectedEdgeThresholdCode
+        {
+            get => GetLinkedParamCodeItem(nameof(EdgeThreshold));
+            set { SetLinkedParamCode(nameof(EdgeThreshold), value); OnPropertyChanged(); }
+        }
+        public ParamCodeItem? SelectedSearchLengthCode
+        {
+            get => GetLinkedParamCodeItem(nameof(SearchLength));
+            set { SetLinkedParamCode(nameof(SearchLength), value); OnPropertyChanged(); }
+        }
 
         public Point2d StartPoint { get => TypedTool.StartPoint; set => TypedTool.StartPoint = value; }
         public Point2d EndPoint { get => TypedTool.EndPoint; set => TypedTool.EndPoint = value; }

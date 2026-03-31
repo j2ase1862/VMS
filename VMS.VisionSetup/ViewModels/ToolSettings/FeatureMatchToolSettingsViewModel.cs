@@ -5,6 +5,8 @@ using CommunityToolkit.Mvvm.Messaging;
 using OpenCvSharp;
 using System.Collections.ObjectModel;
 
+// ParamCode support
+
 namespace VMS.VisionSetup.ViewModels.ToolSettings
 {
     public class FeatureMatchToolSettingsViewModel : ToolSettingsViewModelBase
@@ -13,6 +15,8 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
 
         public FeatureMatchToolSettingsViewModel(FeatureMatchTool tool) : base(tool)
         {
+            LoadAvailableParamCodes();
+
             RemoveModelCommand = new RelayCommand<FeatureMatchModel>(m => { if (m != null) TypedTool.RemoveModel(m); });
 
             ClearSearchRegionCommand = new RelayCommand(() =>
@@ -83,6 +87,13 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         public double MaxScale { get => TypedTool.MaxScale; set => TypedTool.MaxScale = value; }
         public double ScaleStep { get => TypedTool.ScaleStep; set => TypedTool.ScaleStep = value; }
         public double ScoreThreshold { get => TypedTool.ScoreThreshold; set => TypedTool.ScoreThreshold = value; }
+
+        // Web ParamCode Link
+        public ParamCodeItem? SelectedScoreThresholdCode
+        {
+            get => GetLinkedParamCodeItem(nameof(ScoreThreshold));
+            set { SetLinkedParamCode(nameof(ScoreThreshold), value); OnPropertyChanged(); }
+        }
         public int NumLevels { get => TypedTool.NumLevels; set => TypedTool.NumLevels = value; }
         public double Greediness { get => TypedTool.Greediness; set => TypedTool.Greediness = value; }
         public int MaxModelPoints { get => TypedTool.MaxModelPoints; set => TypedTool.MaxModelPoints = value; }

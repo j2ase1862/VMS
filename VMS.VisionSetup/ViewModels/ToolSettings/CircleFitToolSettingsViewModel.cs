@@ -1,4 +1,5 @@
 using OpenCvSharp;
+using VMS.VisionSetup.Models;
 using VMS.VisionSetup.VisionTools.Measurement;
 
 namespace VMS.VisionSetup.ViewModels.ToolSettings
@@ -7,7 +8,22 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
     {
         private CircleFitTool TypedTool => (CircleFitTool)Tool;
 
-        public CircleFitToolSettingsViewModel(CircleFitTool tool) : base(tool) { }
+        public CircleFitToolSettingsViewModel(CircleFitTool tool) : base(tool)
+        {
+            LoadAvailableParamCodes();
+        }
+
+        // Web ParamCode Links
+        public ParamCodeItem? SelectedExpectedRadiusCode
+        {
+            get => GetLinkedParamCodeItem(nameof(ExpectedRadius));
+            set { SetLinkedParamCode(nameof(ExpectedRadius), value); OnPropertyChanged(); }
+        }
+        public ParamCodeItem? SelectedEdgeThresholdCode
+        {
+            get => GetLinkedParamCodeItem(nameof(EdgeThreshold));
+            set { SetLinkedParamCode(nameof(EdgeThreshold), value); OnPropertyChanged(); }
+        }
 
         public Point2d CenterPoint { get => TypedTool.CenterPoint; set => TypedTool.CenterPoint = value; }
         public double ExpectedRadius { get => TypedTool.ExpectedRadius; set => TypedTool.ExpectedRadius = value; }

@@ -4,8 +4,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using VMS.Core.Interfaces;
+using VMS.Core.Models.ParameterSync;
 using VMS.Interfaces;
 using VMS.Models;
+using VMS.VisionSetup.Interfaces;
 using VsToolConfig = VMS.VisionSetup.Models.ToolConfig;
 using VsConnectionType = VMS.VisionSetup.Models.ConnectionType;
 using VisionToolBase = VMS.VisionSetup.Models.VisionToolBase;
@@ -26,6 +29,12 @@ namespace VMS.Services
 
         private readonly Dictionary<string, StepExecutionContext> _stepContexts = new();
         private readonly object _contextLock = new();
+
+        /// <summary>Web 파라미터 동기화 서비스 (외부 주입, nullable)</summary>
+        public static IParameterSyncService? ParameterSyncService { get; set; }
+
+        /// <summary>Web 파라미터 적용 서비스 (외부 주입, nullable)</summary>
+        public static IParameterApplyService? ParameterApplyService { get; set; }
 
         private InspectionService() { }
 
@@ -165,6 +174,9 @@ namespace VMS.Services
                         continue;
                     }
 
+                    // Web 파라미터 적용 (LinkedParamCodes → 도구 프로퍼티)
+                    ParameterApplyService?.ApplyParameters(tool);
+
                     // Coordinates 연결 적용 (Fixture offset)
                     ApplyCoordinatesConnection(tool, ctx.Connections, resultMap);
 
@@ -259,6 +271,9 @@ namespace VMS.Services
                 result.Success = finalSuccess;
                 result.Message = finalSuccess ? "All tools passed" : "One or more tools failed";
                 result.OverlayImage = compositeOverlay;
+
+                // Web 파라미터 결과 수집 및 업로드
+                CollectAndUploadParameterResults(ctx, resultMap);
             }
             catch (Exception ex)
             {
@@ -270,6 +285,67 @@ namespace VMS.Services
             result.ExecutionTimeMs = sw.Elapsed.TotalMilliseconds;
             return result;
         }
+
+        #region Web Parameter Result Collection
+
+        private static void CollectAndUploadParameterResults(
+            StepExecutionContext ctx, Dictionary<string, VisionResult> resultMap)
+        {
+            var syncService = ParameterSyncService;
+            if (syncService == null || syncService.CurrentRecipeId <= 0)
+                return;
+
+            var paramResults = new List<ParameterResultDto>();
+
+            foreach (var tool in ctx.SortedTools)
+            {
+                if (tool.LinkedParamCodes == null || tool.LinkedParamCodes.Count == 0)
+                    continue;
+
+                if (!resultMap.TryGetValue(tool.Id, out var toolResult) || toolResult.Data == null)
+                    continue;
+
+                foreach (var (propertyName, paramCode) in tool.LinkedParamCodes)
+                {
+                    // 결과 데이터에서 해당 프로퍼티 이름의 측정값 탐색
+                    if (toolResult.Data.TryGetValue(propertyName, out var measuredObj))
+                    {
+                        try
+                        {
+                            var measuredValue = Convert.ToDouble(measuredObj);
+                            paramResults.Add(new ParameterResultDto
+                            {
+                                ParamCode = paramCode,
+                                MeasuredValue = measuredValue,
+                                Judgment = toolResult.Success ? "OK" : "NG",
+                                Timestamp = DateTime.UtcNow
+                            });
+                        }
+                        catch
+                        {
+                            // 숫자 변환 실패 시 스킵
+                        }
+                    }
+                }
+            }
+
+            if (paramResults.Count > 0)
+            {
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await syncService.UploadResultsAsync(syncService.CurrentRecipeId, paramResults);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"[InspectionService] Parameter result upload error: {ex.Message}");
+                    }
+                });
+            }
+        }
+
+        #endregion
 
         #region Tool Config Conversion
 
@@ -306,7 +382,10 @@ namespace VMS.Services
                     {
                         SourceToolId = c.SourceToolId,
                         ConnectionType = c.ConnectionType
-                    }).ToList() ?? new List<VMS.VisionSetup.Models.ToolConnectionConfig>()
+                    }).ToList() ?? new List<VMS.VisionSetup.Models.ToolConnectionConfig>(),
+                    LinkedParamCodes = src.LinkedParamCodes != null && src.LinkedParamCodes.Count > 0
+                        ? new Dictionary<string, int>(src.LinkedParamCodes)
+                        : new Dictionary<string, int>()
                 };
                 result.Add(dst);
             }
