@@ -1,6 +1,7 @@
 using VMS.VisionSetup.Models;
 using VMS.VisionSetup.VisionTools.BlobAnalysis;
 using VMS.VisionSetup.VisionTools.Measurement;
+using VMS.Core.Interfaces;
 using VMS.PLC.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -10,6 +11,8 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.Linq;
 
 namespace VMS.VisionSetup.ViewModels.ToolSettings
 {
@@ -186,6 +189,153 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
 
         // View-state: ResultTool overrides to true (최종 판정은 시퀀스 에디터가 담당)
         public virtual bool HidePlcSection => false;
+
+        // ── Web Parameter Link (ParamCode) ──
+
+        /// <summary>ParameterSyncService 참조 (App 시작 시 정적 설정)</summary>
+        public static IParameterSyncService? SyncService { get; set; }
+
+        /// <summary>ComboBox ItemsSource용 — "None" + 동기화된 파라미터 목록</summary>
+        public ObservableCollection<ParamCodeItem> AvailableParamCodes { get; } = new();
+
+        /// <summary>AvailableParamCodes 목록을 SyncService 캐시에서 로드.
+        /// 캐시가 비어있으면 비동기로 첫 번째 레시피를 자동 로드 시도.</summary>
+        public void LoadAvailableParamCodes()
+        {
+            if (SyncService == null)
+            {
+                EnsureNoneItem();
+                return;
+            }
+
+            var items = SyncService.GetAll();
+            if (items.Count > 0)
+            {
+                PopulateFromCache(items);
+            }
+            else
+            {
+                // 캐시가 비어있음 → 백그라운드에서 로드 후 UI 갱신
+                EnsureNoneItem();
+                _ = LoadParamCodesAsync();
+            }
+        }
+
+        private async System.Threading.Tasks.Task LoadParamCodesAsync()
+        {
+            if (SyncService == null) return;
+
+            try
+            {
+                // 레시피 목록이 없으면 먼저 가져오기
+                if (SyncService.Recipes.Count == 0)
+                    await SyncService.SyncRecipesAsync();
+
+                // 현재 로드된 레시피가 없으면 첫 번째 레시피 로드
+                if (SyncService.CurrentRecipeId <= 0 && SyncService.Recipes.Count > 0)
+                    await SyncService.LoadRecipeAsync(SyncService.Recipes[0].Id);
+
+                var items = SyncService.GetAll();
+                if (items.Count > 0)
+                {
+                    System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
+                        PopulateFromCache(items));
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[ToolSettings] LoadParamCodesAsync failed: {ex.Message}");
+            }
+        }
+
+        private void PopulateFromCache(List<Core.Models.ParameterSync.RecipeParameterDto> items)
+        {
+            AvailableParamCodes.Clear();
+            AvailableParamCodes.Add(new ParamCodeItem
+            {
+                ParamCode = null,
+                DisplayText = "(None)"
+            });
+
+            foreach (var p in items)
+            {
+                var desc = string.IsNullOrEmpty(p.Description) ? "" : $" - {p.Description}";
+                var unit = string.IsNullOrEmpty(p.Unit) ? "" : $" [{p.Unit}]";
+                AvailableParamCodes.Add(new ParamCodeItem
+                {
+                    ParamCode = p.ParamCode,
+                    DisplayText = $"#{p.ParamCode}: {p.ParamValue:F4}{unit}{desc}",
+                    Value = p.ParamValue,
+                    Unit = p.Unit
+                });
+            }
+        }
+
+        private void EnsureNoneItem()
+        {
+            if (AvailableParamCodes.Count == 0)
+            {
+                AvailableParamCodes.Add(new ParamCodeItem
+                {
+                    ParamCode = null,
+                    DisplayText = "(None)"
+                });
+            }
+        }
+
+        /// <summary>
+        /// 특정 프로퍼티에 연결된 ParamCodeItem을 반환 (ComboBox SelectedItem용).
+        /// LinkedParamCodes에 없으면 "(None)" 항목 반환.
+        /// </summary>
+        public ParamCodeItem? GetLinkedParamCodeItem(string propertyName)
+        {
+            if (Tool.LinkedParamCodes.TryGetValue(propertyName, out var code))
+                return AvailableParamCodes.FirstOrDefault(p => p.ParamCode == code);
+            return AvailableParamCodes.FirstOrDefault(p => p.ParamCode == null);
+        }
+
+        /// <summary>
+        /// ParamCode 선택 시 호출 — LinkedParamCodes 갱신 + 값 자동 적용.
+        /// </summary>
+        public void SetLinkedParamCode(string propertyName, ParamCodeItem? item)
+        {
+            if (item == null || item.ParamCode == null)
+            {
+                // 연동 해제
+                Tool.LinkedParamCodes.Remove(propertyName);
+                return;
+            }
+
+            Tool.LinkedParamCodes[propertyName] = item.ParamCode.Value;
+
+            // 값 자동 적용 (리플렉션)
+            var prop = Tool.GetType().GetProperty(propertyName,
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+            if (prop != null && prop.CanWrite)
+            {
+                try
+                {
+                    object converted;
+                    if (prop.PropertyType == typeof(double))
+                        converted = item.Value;
+                    else if (prop.PropertyType == typeof(int))
+                        converted = (int)Math.Round(item.Value);
+                    else if (prop.PropertyType == typeof(float))
+                        converted = (float)item.Value;
+                    else
+                        converted = Convert.ChangeType(item.Value, prop.PropertyType);
+
+                    prop.SetValue(Tool, converted);
+                    OnPropertyChanged(propertyName);
+                    Debug.WriteLine($"[ParamCode] {Tool.Name}.{propertyName} = {item.Value} (Code #{item.ParamCode})");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[ParamCode] Failed to set {propertyName}: {ex.Message}");
+                }
+            }
+        }
+
 
         public virtual void Dispose()
         {

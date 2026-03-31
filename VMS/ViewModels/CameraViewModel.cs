@@ -89,6 +89,13 @@ namespace VMS.ViewModels
         [ObservableProperty]
         private bool _isLiveGrabbing;
 
+        /// <summary>
+        /// True일 때 Live 프레임의 화면 표시를 억제합니다.
+        /// 롤러 검사 모드에서 용지 캡처 완료 시에만 이미지를 표시하기 위해 사용됩니다.
+        /// </summary>
+        public bool SuppressLiveDisplay { get; set; }
+
+
         [ObservableProperty]
         private BitmapSource? _currentImage;
 
@@ -181,6 +188,12 @@ namespace VMS.ViewModels
         /// Used by SharedFrameWriter to share frames with VisionSetup.
         /// </summary>
         public event Action<AcquisitionResult>? FrameAcquired;
+
+        /// <summary>
+        /// Raised with the raw Mat frame during Live grab (before disposal).
+        /// Used by RollerInspectionService for real-time frame analysis.
+        /// </summary>
+        public event Action<OpenCvSharp.Mat>? LiveFrameReady;
 
         /// <summary>
         /// Raised after an inspection result is recorded (ok/ng).
@@ -379,11 +392,16 @@ namespace VMS.ViewModels
                             BitmapSource? bmp = null;
                             if (result.Image2D != null)
                             {
-                                bmp = MatToBitmapSource(result.Image2D);
+                                // Roller inspection: 원본 Mat을 Dispose 전에 전달
+                                LiveFrameReady?.Invoke(result.Image2D);
+
+                                if (!SuppressLiveDisplay)
+                                    bmp = MatToBitmapSource(result.Image2D);
+
                                 result.Image2D.Dispose();
                             }
 
-                            var pointCloud = result.PointCloud;
+                            var pointCloud = !SuppressLiveDisplay ? result.PointCloud : null;
 
                             if (bmp != null || pointCloud != null)
                             {

@@ -18,6 +18,9 @@
                     Value="{Binding ThresholdValue}" Minimum="0" Maximum="255"
                     TickFrequency="1" ValueFormat="F0"
                     ToolType="BlobTool" ParameterName="ThresholdValue"/>
+                <controls:ParamCodeLink
+                    AvailableParamCodes="{Binding AvailableParamCodes}"
+                    SelectedItem="{Binding SelectedThresholdCode}"/>
                 <controls:EnumComboBoxParameter Label="Segmentation Polarity"
                     ItemsSource="{conv:EnumValues {x:Type blob:SegmentationPolarity}}"
                     SelectedValue="{Binding SegmentationPolarity}"
@@ -34,9 +37,15 @@
                 <controls:TextBoxParameter Label="Min Area"
                     Value="{Binding MinArea}"
                     ToolType="BlobTool" ParameterName="MinArea"/>
+                <controls:ParamCodeLink
+                    AvailableParamCodes="{Binding AvailableParamCodes}"
+                    SelectedItem="{Binding SelectedMinAreaCode}"/>
                 <controls:TextBoxParameter Label="Max Area"
                     Value="{Binding MaxArea}"
                     ToolType="BlobTool" ParameterName="MaxArea"/>
+                <controls:ParamCodeLink
+                    AvailableParamCodes="{Binding AvailableParamCodes}"
+                    SelectedItem="{Binding SelectedMaxAreaCode}"/>
             </StackPanel>
         </Expander>
 
@@ -75,6 +84,9 @@
                 <controls:TextBoxParameter Label="Expected Count"
                     Value="{Binding ExpectedCount}"
                     ToolType="BlobTool" ParameterName="ExpectedCount"/>
+                <controls:ParamCodeLink
+                    AvailableParamCodes="{Binding AvailableParamCodes}"
+                    SelectedItem="{Binding SelectedExpectedCountCode}"/>
                 <controls:TextBoxParameter Label="Expected Count Max"
                     Value="{Binding ExpectedCountMax}"
                     ToolType="BlobTool" ParameterName="ExpectedCountMax"/>

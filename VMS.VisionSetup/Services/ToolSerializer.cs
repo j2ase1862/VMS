@@ -337,6 +337,10 @@ namespace VMS.VisionSetup.Services
                     break;
             }
 
+            // Web 파라미터 연동 (LinkedParamCodes)
+            if (tool.LinkedParamCodes != null && tool.LinkedParamCodes.Count > 0)
+                config.LinkedParamCodes = new Dictionary<string, int>(tool.LinkedParamCodes);
+
             // Fixture 기준 좌표 저장 (Coordinates 연결에 의한 ROI 오프셋 기준점)
             if (tool.HasFixtureBaseROI)
             {
@@ -431,6 +435,10 @@ namespace VMS.VisionSetup.Services
                     DataType = config.ResultDataType
                 });
             }
+
+            // Web 파라미터 연동 복원 (LinkedParamCodes)
+            if (config.LinkedParamCodes != null && config.LinkedParamCodes.Count > 0)
+                tool.LinkedParamCodes = new Dictionary<string, int>(config.LinkedParamCodes);
 
             // Fixture 기준 좌표 복원 (레시피에 저장된 경우)
             if (config.Parameters.TryGetValue("_FixtureRefX", out var frx))

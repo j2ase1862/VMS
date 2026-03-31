@@ -48,6 +48,11 @@ namespace VMS.AppSetup.Models
         public PlcWriteMode WriteMode { get; set; } = PlcWriteMode.Handshake;
         public PlcEndianMode EndianMode { get; set; } = PlcEndianMode.LittleEndian;
 
+        // Page 2: Web Server Integration
+        public int ClientIndex { get; set; } = 1;
+        public string WebServerUrl { get; set; } = "http://localhost:5292";
+        public string VisionServerUrl { get; set; } = "http://localhost:5000";
+
         // Metadata
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string Version { get; set; } = "1.0.0";

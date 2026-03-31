@@ -131,6 +131,39 @@
                         </StackPanel>
                     </Button>
 
+                    <!-- Roller Inspection Toggle -->
+                    <Button Foreground="White"
+                            Command="{Binding ToggleRollerInspectionCommand}"
+                            IsEnabled="{Binding CanStartStop}"
+                            Margin="4,0">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource ModernButton}">
+                                <Setter Property="Background" Value="#9C27B0"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsRollerInspecting}" Value="True">
+                                        <Setter Property="Background" Value="#F44336"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE8B0;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0"/>
+                            <TextBlock>
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="Roller"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsRollerInspecting}" Value="True">
+                                                <Setter Property="Text" Value="Roller Stop"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </Button>
+
+
                     <!-- Start/Stop buttons -->
                     <Button Style="{StaticResource ModernButton}"
                             Command="{Binding StartInspectionCommand}"
@@ -580,6 +613,31 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- Web Sync Section -->
+                        <Border Background="#3D3D3D"
+                                CornerRadius="8"
+                                Padding="12"
+                                Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="Web Parameters"
+                                           FontWeight="SemiBold"
+                                           Foreground="#FF9800"
+                                           Margin="0,0,0,12"/>
+
+                                <Button Command="{Binding OpenSyncParametersCommand}"
+                                        Style="{StaticResource ModernButton}"
+                                        Background="#FF9800"
+                                        HorizontalAlignment="Stretch">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE895;"
+                                                   FontFamily="Segoe MDL2 Assets"
+                                                   Margin="0,0,8,0"/>
+                                        <TextBlock Text="Sync Parameters"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+
                         <!-- Statistics Section -->
                         <Border Background="#3D3D3D"
                                 CornerRadius="8"
@@ -707,6 +765,8 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
@@ -802,10 +862,48 @@
                                Visibility="{Binding IsPlcConfigured, Converter={StaticResource BoolToVisibilityConverter}}"/>
                 </StackPanel>
 
-                <!-- [5] Spacer -->
+                <!-- [5] Separator -->
+                <Rectangle Grid.Column="5" Width="1" Fill="#404040" Margin="10,6"/>
 
-                <!-- [6] Robot (placeholder) -->
+                <!-- [6] Web Status -->
                 <StackPanel Grid.Column="6" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="&#xE774;" FontFamily="Segoe MDL2 Assets"
+                               FontSize="13" Foreground="#B0B0B0"
+                               VerticalAlignment="Center" Margin="0,0,5,0"/>
+                    <Ellipse Width="8" Height="8" Margin="0,0,5,0">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Fill" Value="#555555"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsWebConnected}" Value="True">
+                                        <Setter Property="Fill" Value="#4CAF50"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsWebConnected}" Value="False">
+                                        <Setter Property="Fill" Value="#F44336"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
+                    <TextBlock Text="{Binding WebStatusText}" FontSize="12"
+                               VerticalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#B0B0B0"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsWebConnected}" Value="True">
+                                        <Setter Property="Foreground" Value="#4CAF50"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+
+                <!-- [7] Spacer -->
+
+                <!-- [8] Robot (placeholder) -->
+                <StackPanel Grid.Column="8" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="&#xE99A;" FontFamily="Segoe MDL2 Assets"
                                FontSize="13" Foreground="#808080"
                                VerticalAlignment="Center" Margin="0,0,5,0"/>

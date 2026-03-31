@@ -34,6 +34,16 @@ namespace VMS.AppSetup.ViewModels
         [ObservableProperty]
         private string _systemIpAddress = "192.168.0.1";
 
+        // Page 2: Web Server Integration
+        [ObservableProperty]
+        private int _clientIndex = 1;
+
+        [ObservableProperty]
+        private string _webServerUrl = "http://localhost:5292";
+
+        [ObservableProperty]
+        private string _visionServerUrl = "http://localhost:5000";
+
         // Page 3: Camera Settings
         [ObservableProperty]
         private CameraMode _cameraMode = CameraMode.Virtual;
@@ -147,6 +157,9 @@ namespace VMS.AppSetup.ViewModels
             {
                 ApplicationName = config.ApplicationName;
                 SystemIpAddress = config.SystemIpAddress;
+                ClientIndex = config.ClientIndex;
+                WebServerUrl = config.WebServerUrl;
+                VisionServerUrl = config.VisionServerUrl;
                 CameraMode = config.CameraMode;
 
                 // PLC Vendor & Communication
@@ -324,6 +337,9 @@ namespace VMS.AppSetup.ViewModels
             {
                 ApplicationName = ApplicationName,
                 SystemIpAddress = SystemIpAddress,
+                ClientIndex = ClientIndex,
+                WebServerUrl = WebServerUrl,
+                VisionServerUrl = VisionServerUrl,
                 CameraMode = CameraMode,
                 Cameras = Cameras.ToList(),
 

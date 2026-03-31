@@ -175,6 +175,13 @@ namespace VMS.VisionSetup.Models
             set => SetProperty(ref _executionTime, value);
         }
 
+        // Web 파라미터 연동 (PropertyName → ParamCode)
+        /// <summary>
+        /// Web에서 동기화된 파라미터 코드를 도구 프로퍼티에 매핑.
+        /// Key: 프로퍼티 이름 (예: "ThresholdValue"), Value: ParamCode (정수)
+        /// </summary>
+        public Dictionary<string, int> LinkedParamCodes { get; set; } = new();
+
         // PLC 결과 전송 설정 (1:N 매핑)
         /// <summary>
         /// PLC 결과 매핑 리스트. 하나의 도구에서 여러 결과를 서로 다른 PLC 주소로 전송 가능.

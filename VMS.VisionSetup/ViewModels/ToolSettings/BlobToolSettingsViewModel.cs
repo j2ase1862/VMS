@@ -1,5 +1,6 @@
 using OpenCvSharp;
 using System;
+using VMS.VisionSetup.Models;
 using VMS.VisionSetup.VisionTools.BlobAnalysis;
 
 namespace VMS.VisionSetup.ViewModels.ToolSettings
@@ -8,7 +9,35 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
     {
         private BlobTool TypedTool => (BlobTool)Tool;
 
-        public BlobToolSettingsViewModel(BlobTool tool) : base(tool) { }
+        public BlobToolSettingsViewModel(BlobTool tool) : base(tool)
+        {
+            LoadAvailableParamCodes();
+        }
+
+        // ── Web Parameter Link (ParamCode) ──
+        public ParamCodeItem? SelectedMinAreaCode
+        {
+            get => GetLinkedParamCodeItem(nameof(MinArea));
+            set { SetLinkedParamCode(nameof(MinArea), value); OnPropertyChanged(); }
+        }
+
+        public ParamCodeItem? SelectedMaxAreaCode
+        {
+            get => GetLinkedParamCodeItem(nameof(MaxArea));
+            set { SetLinkedParamCode(nameof(MaxArea), value); OnPropertyChanged(); }
+        }
+
+        public ParamCodeItem? SelectedThresholdCode
+        {
+            get => GetLinkedParamCodeItem(nameof(ThresholdValue));
+            set { SetLinkedParamCode(nameof(ThresholdValue), value); OnPropertyChanged(); }
+        }
+
+        public ParamCodeItem? SelectedExpectedCountCode
+        {
+            get => GetLinkedParamCodeItem(nameof(ExpectedCount));
+            set { SetLinkedParamCode(nameof(ExpectedCount), value); OnPropertyChanged(); }
+        }
 
         // Segmentation
         public bool UseInternalThreshold { get => TypedTool.UseInternalThreshold; set => TypedTool.UseInternalThreshold = value; }

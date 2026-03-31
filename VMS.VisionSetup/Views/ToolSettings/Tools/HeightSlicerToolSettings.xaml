@@ -7,9 +7,15 @@
             Value="{Binding MinZ}" Minimum="-10000" Maximum="10000"
             TickFrequency="1" ValueFormat="F1"
             ToolType="HeightSlicerTool" ParameterName="MinZ"/>
+        <controls:ParamCodeLink
+            AvailableParamCodes="{Binding AvailableParamCodes}"
+            SelectedItem="{Binding SelectedMinZCode}"/>
         <controls:SliderParameter Label="Max Z (mm)"
             Value="{Binding MaxZ}" Minimum="-10000" Maximum="10000"
             TickFrequency="1" ValueFormat="F1"
             ToolType="HeightSlicerTool" ParameterName="MaxZ"/>
+        <controls:ParamCodeLink
+            AvailableParamCodes="{Binding AvailableParamCodes}"
+            SelectedItem="{Binding SelectedMaxZCode}"/>
     </StackPanel>
 </UserControl>

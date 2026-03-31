@@ -28,6 +28,9 @@ namespace VMS.Models
         // Connections to other tools
         public List<ToolConnectionConfig> Connections { get; set; } = new();
 
+        // Web parameter linking (PropertyName → ParamCode)
+        public Dictionary<string, int> LinkedParamCodes { get; set; } = new();
+
         // PLC result mappings (1:N)
         public List<PlcResultMapping> PlcMappings { get; set; } = new();
 
