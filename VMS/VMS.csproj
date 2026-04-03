@@ -10,7 +10,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="icon\Vasim.ico" />
+    <Resource Include="icon\Vasim.ico" />
+    <Resource Include="icon\Vasim.png" />
+    <Resource Include="icon\ci_img2.png" />
   </ItemGroup>
 
   <ItemGroup>

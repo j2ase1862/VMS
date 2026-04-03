@@ -1,5 +1,6 @@
 using System.Windows;
 using Microsoft.Win32;
+using VMS.Core.Interfaces;
 using VMS.VisionSetup.Interfaces;
 using VMS.VisionSetup.Models;
 
@@ -14,11 +15,14 @@ namespace VMS.VisionSetup.Services
     {
         private readonly ICameraService _cameraService;
         private readonly IRecipeService _recipeService;
+        private readonly IParameterSyncService? _parameterSyncService;
 
-        public DialogService(ICameraService cameraService, IRecipeService recipeService)
+        public DialogService(ICameraService cameraService, IRecipeService recipeService,
+            IParameterSyncService? parameterSyncService = null)
         {
             _cameraService = cameraService;
             _recipeService = recipeService;
+            _parameterSyncService = parameterSyncService;
         }
 
         public void ShowInformation(string message, string title)
@@ -83,7 +87,7 @@ namespace VMS.VisionSetup.Services
         public Recipe? ShowRecipeManagerDialog()
         {
             Recipe? loadedRecipe = null;
-            var window = new RecipeManagerWindow(_recipeService, _cameraService, this);
+            var window = new RecipeManagerWindow(_recipeService, _cameraService, this, _parameterSyncService);
             window.Owner = Application.Current.MainWindow;
             window.RecipeLoaded += (s, recipe) =>
             {

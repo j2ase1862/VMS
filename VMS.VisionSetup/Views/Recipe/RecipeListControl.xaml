@@ -83,7 +83,7 @@
 
         <!-- Header -->
         <TextBlock Grid.Row="0" Text="Recipe Manager"
-                   Foreground="#FFD700" FontWeight="Bold" FontSize="16"
+                   Foreground="#CCCCCC" FontWeight="Bold" FontSize="16"
                    Margin="0,0,0,10"/>
 
         <!-- Search Box -->

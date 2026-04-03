@@ -10,8 +10,8 @@
              mc:Ignorable="d">
 
     <Border Background="#2D2D2D"
-            BorderBrush="{Binding StatusText, Converter={StaticResource StatusStateToColorConverter}}"
-            BorderThickness="3"
+            BorderBrush="#3D3D3D"
+            BorderThickness="1"
             CornerRadius="8">
         <Grid>
             <Grid.RowDefinitions>

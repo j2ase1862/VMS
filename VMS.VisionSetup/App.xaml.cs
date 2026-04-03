@@ -25,8 +25,6 @@ namespace VMS.VisionSetup
             IVisionService visionService = VisionService.Instance;
             IRecipeService recipeService = RecipeService.Instance;
             ICameraService cameraService = CameraService.Instance;
-            IDialogService dialogService = new DialogService(cameraService, recipeService);
-
             // ── Web Parameter Sync Service ──
             IParameterSyncService? parameterSyncService = null;
             IParameterApplyService? parameterApplyService = null;
@@ -63,6 +61,9 @@ namespace VMS.VisionSetup
             {
                 Debug.WriteLine($"[App] ParameterSyncService init failed: {ex.Message}");
             }
+
+            // DialogService에 parameterSyncService 주입 (Web 레시피 동기화용)
+            IDialogService dialogService = new DialogService(cameraService, recipeService, parameterSyncService);
 
             // If recipe file path is passed as argument, pre-load it
             if (e.Args.Length > 0)

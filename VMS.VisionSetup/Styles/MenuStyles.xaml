@@ -88,7 +88,7 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsHighlighted" Value="True">
                             <Setter TargetName="HeaderBorder" Property="Background" Value="#3D3D40"/>
-                            <Setter Property="Foreground" Value="#FFD700"/>
+                            <Setter Property="Foreground" Value="White"/>
                         </Trigger>
                         <Trigger Property="IsSubmenuOpen" Value="True">
                             <Setter TargetName="HeaderBorder" Property="Background" Value="#3D3D40"/>

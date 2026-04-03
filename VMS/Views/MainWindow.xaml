@@ -61,11 +61,13 @@
 
                 <!-- Logo and Title -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="16,0">
-                    <TextBlock Text="&#xE774;"
-                               FontFamily="Segoe MDL2 Assets"
-                               FontSize="24"
-                               Foreground="#2196F3"
-                               VerticalAlignment="Center"/>
+                    <Border Background="White" CornerRadius="1" Padding="6,2"
+                            VerticalAlignment="Center">
+                        <Image Source="/icon/ci_img2.png"
+                               Height="24"
+                               Stretch="Uniform"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Border>
                     <TextBlock Text="{Binding ApplicationTitle}"
                                FontSize="18"
                                FontWeight="SemiBold"
@@ -92,7 +94,7 @@
                     </Border>
 
                     <!-- Grab (single shot) -->
-                    <Button Background="#2196F3"
+                    <Button Background="#3D3D3D"
                             Foreground="White"
                             Command="{Binding GrabCommand}"
                             IsEnabled="{Binding CanStartStop}"
@@ -100,13 +102,13 @@
                             Style="{StaticResource ModernButton}"
                             Margin="4,0">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE722;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0"/>
+                            <TextBlock Text="&#xE722;" FontFamily="Segoe MDL2 Assets" Foreground="#2196F3" Margin="0,0,6,0"/>
                             <TextBlock Text="Grab"/>
                         </StackPanel>
                     </Button>
 
                     <!-- Live Start/Stop buttons -->
-                    <Button Background="#4CAF50"
+                    <Button Background="#3D3D3D"
                             Foreground="White"
                             Command="{Binding StartLiveCommand}"
                             IsEnabled="{Binding CanStartStop}"
@@ -114,19 +116,19 @@
                             Style="{StaticResource ModernButton}"
                             Margin="4,0">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE714;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0"/>
+                            <TextBlock Text="&#xE714;" FontFamily="Segoe MDL2 Assets" Foreground="#4CAF50" Margin="0,0,6,0"/>
                             <TextBlock Text="Live Start"/>
                         </StackPanel>
                     </Button>
 
-                    <Button Background="#FF9800"
+                    <Button Background="#3D3D3D"
                             Foreground="White"
                             Command="{Binding StopLiveCommand}"
                             Visibility="{Binding IsLiveMode, Converter={StaticResource BoolToVisibilityConverter}}"
                             Style="{StaticResource ModernButton}"
                             Margin="4,0">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0"/>
+                            <TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" Foreground="#FF9800" Margin="0,0,6,0"/>
                             <TextBlock Text="Live Stop"/>
                         </StackPanel>
                     </Button>
@@ -138,16 +140,28 @@
                             Margin="4,0">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource ModernButton}">
-                                <Setter Property="Background" Value="#9C27B0"/>
+                                <Setter Property="Background" Value="#3D3D3D"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsRollerInspecting}" Value="True">
-                                        <Setter Property="Background" Value="#F44336"/>
+                                        <Setter Property="Background" Value="#4A2020"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Button.Style>
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE8B0;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0"/>
+                            <TextBlock FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="&#xE8B0;"/>
+                                        <Setter Property="Foreground" Value="#00ADB5"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsRollerInspecting}" Value="True">
+                                                <Setter Property="Foreground" Value="#F44336"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                             <TextBlock>
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
@@ -163,12 +177,16 @@
                         </StackPanel>
                     </Button>
 
+                    <!-- Separator before Start/Stop -->
+                    <Rectangle Width="1" Fill="#404040" Margin="8,10"/>
 
-                    <!-- Start/Stop buttons -->
-                    <Button Style="{StaticResource ModernButton}"
+                    <!-- Start/Stop buttons — Start is the ONE primary action -->
+                    <Button Background="#00ADB5"
+                            Foreground="White"
                             Command="{Binding StartInspectionCommand}"
                             IsEnabled="{Binding CanStartStop}"
                             Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
+                            Style="{StaticResource ModernButton}"
                             Margin="4,0">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0"/>
@@ -176,14 +194,14 @@
                         </StackPanel>
                     </Button>
 
-                    <Button Background="#F44336"
+                    <Button Background="#4A2020"
                             Foreground="White"
                             Command="{Binding StopInspectionCommand}"
                             Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}}"
                             Style="{StaticResource ModernButton}"
                             Margin="4,0">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0"/>
+                            <TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" Foreground="#F44336" Margin="0,0,6,0"/>
                             <TextBlock Text="Stop"/>
                         </StackPanel>
                     </Button>
@@ -600,7 +618,7 @@
 
                                 <Button Command="{Binding LaunchSetupCommand}"
                                         IsEnabled="{Binding CanLaunchAppSetup}"
-                                        Background="#4CAF50"
+                                        Background="#404040"
                                         Style="{StaticResource ModernButton}"
                                         HorizontalAlignment="Stretch">
                                     <StackPanel Orientation="Horizontal">
@@ -621,12 +639,12 @@
                             <StackPanel>
                                 <TextBlock Text="Web Parameters"
                                            FontWeight="SemiBold"
-                                           Foreground="#FF9800"
+                                           Foreground="#00ADB5"
                                            Margin="0,0,0,12"/>
 
                                 <Button Command="{Binding OpenSyncParametersCommand}"
                                         Style="{StaticResource ModernButton}"
-                                        Background="#FF9800"
+                                        Background="#404040"
                                         HorizontalAlignment="Stretch">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="&#xE895;"
