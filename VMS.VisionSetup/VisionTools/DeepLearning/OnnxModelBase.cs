@@ -34,6 +34,41 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         }
 
         /// <summary>
+        /// ONNX 메타데이터에서 클래스 이름을 읽습니다.
+        /// Ultralytics 모델은 metadata에 "names" 키로 {0: 'class0', 1: 'class1', ...} 형태로 저장합니다.
+        /// </summary>
+        protected string[] ReadClassNamesFromMetadata()
+        {
+            if (_session == null) return Array.Empty<string>();
+
+            var metadata = _session.ModelMetadata.CustomMetadataMap;
+            if (!metadata.TryGetValue("names", out var namesStr))
+                return Array.Empty<string>();
+
+            try
+            {
+                // "{0: 'object', 1: 'logo'}" 형태 파싱
+                var entries = new SortedDictionary<int, string>();
+                var cleaned = namesStr.Trim('{', '}');
+                foreach (var pair in cleaned.Split(','))
+                {
+                    var parts = pair.Split(':', 2);
+                    if (parts.Length == 2 &&
+                        int.TryParse(parts[0].Trim(), out int idx))
+                    {
+                        var name = parts[1].Trim().Trim('\'', '"', ' ');
+                        entries[idx] = name;
+                    }
+                }
+                return entries.Values.ToArray();
+            }
+            catch
+            {
+                return Array.Empty<string>();
+            }
+        }
+
+        /// <summary>
         /// 이미지를 NCHW float 텐서로 변환 (ImageNet 정규화)
         /// </summary>
         protected static DenseTensor<float> PreprocessImage(Mat image, int targetW, int targetH,

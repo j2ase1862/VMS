@@ -14,6 +14,80 @@ using VMS.Core.Models.Annotation;
 namespace VMS.Core.Services
 {
     /// <summary>
+    /// OpenCvSharp.Rect を X, Y, Width, Height で正しく JSON シリアライズするコンバーター
+    /// </summary>
+    internal class RectJsonConverter : JsonConverter<Rect>
+    {
+        public override Rect Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            int x = 0, y = 0, w = 0, h = 0;
+            while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
+            {
+                if (reader.TokenType == JsonTokenType.PropertyName)
+                {
+                    string prop = reader.GetString() ?? "";
+                    reader.Read();
+                    switch (prop)
+                    {
+                        case "x": x = reader.GetInt32(); break;
+                        case "y": y = reader.GetInt32(); break;
+                        case "width": w = reader.GetInt32(); break;
+                        case "height": h = reader.GetInt32(); break;
+                        default:
+                            reader.Skip();
+                            break;
+                    }
+                }
+            }
+            return new Rect(x, y, w, h);
+        }
+
+        public override void Write(Utf8JsonWriter writer, Rect value, JsonSerializerOptions options)
+        {
+            writer.WriteStartObject();
+            writer.WriteNumber("x", value.X);
+            writer.WriteNumber("y", value.Y);
+            writer.WriteNumber("width", value.Width);
+            writer.WriteNumber("height", value.Height);
+            writer.WriteEndObject();
+        }
+    }
+
+    /// <summary>
+    /// OpenCvSharp.Point2d 用コンバーター
+    /// </summary>
+    internal class Point2dJsonConverter : JsonConverter<Point2d>
+    {
+        public override Point2d Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            double x = 0, y = 0;
+            while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
+            {
+                if (reader.TokenType == JsonTokenType.PropertyName)
+                {
+                    string prop = reader.GetString() ?? "";
+                    reader.Read();
+                    switch (prop)
+                    {
+                        case "x": x = reader.GetDouble(); break;
+                        case "y": y = reader.GetDouble(); break;
+                        default: reader.Skip(); break;
+                    }
+                }
+            }
+            return new Point2d(x, y);
+        }
+
+        public override void Write(Utf8JsonWriter writer, Point2d value, JsonSerializerOptions options)
+        {
+            writer.WriteStartObject();
+            writer.WriteNumber("x", value.X);
+            writer.WriteNumber("y", value.Y);
+            writer.WriteEndObject();
+        }
+    }
+
+    /// <summary>
     /// 딥러닝 라벨링 데이터셋 관리 서비스.
     /// JSON 기반 파일 저장 방식으로 데이터셋을 관리합니다.
     /// </summary>
@@ -29,7 +103,12 @@ namespace VMS.Core.Services
             WriteIndented = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
+            Converters =
+            {
+                new JsonStringEnumConverter(JsonNamingPolicy.CamelCase),
+                new RectJsonConverter(),
+                new Point2dJsonConverter()
+            }
         };
 
         public AnnotationService(string datasetFolderPath)
@@ -71,6 +150,7 @@ namespace VMS.Core.Services
                 DatasetTaskType.Classification => LabelType.ImageClass,
                 DatasetTaskType.AnomalyDetection => LabelType.AnomalyMask,
                 DatasetTaskType.OCR => LabelType.TextLine,
+                DatasetTaskType.Segmentation => LabelType.Polygon,
                 _ => LabelType.BoundingBox
             };
 
@@ -650,6 +730,78 @@ namespace VMS.Core.Services
             catch (Exception ex)
             {
                 Debug.WriteLine($"Anomaly Export 실패: {ex.Message}");
+                return false;
+            }
+        }
+
+        #endregion
+
+        #region Export — YOLO Segmentation
+
+        public bool ExportYoloSeg(AnnotationDataset dataset, string outputPath)
+        {
+            try
+            {
+                string trainImgDir = Path.Combine(outputPath, "images", "train");
+                string valImgDir = Path.Combine(outputPath, "images", "val");
+                string trainLblDir = Path.Combine(outputPath, "labels", "train");
+                string valLblDir = Path.Combine(outputPath, "labels", "val");
+
+                Directory.CreateDirectory(trainImgDir);
+                Directory.CreateDirectory(valImgDir);
+                Directory.CreateDirectory(trainLblDir);
+                Directory.CreateDirectory(valLblDir);
+
+                var yamlSb = new StringBuilder();
+                yamlSb.AppendLine($"train: images/train");
+                yamlSb.AppendLine($"val: images/val");
+                yamlSb.AppendLine($"nc: {dataset.Classes.Count}");
+                yamlSb.Append("names: [");
+                yamlSb.Append(string.Join(", ", dataset.Classes.Select(c => $"'{c}'")));
+                yamlSb.AppendLine("]");
+                File.WriteAllText(Path.Combine(outputPath, "data.yaml"), yamlSb.ToString());
+
+                foreach (var image in dataset.Images.Where(i => i.IsLabeled))
+                {
+                    bool isTrain = image.Split == DataSplit.Train;
+                    string imgDir = isTrain ? trainImgDir : valImgDir;
+                    string lblDir = isTrain ? trainLblDir : valLblDir;
+
+                    string srcPath = GetImageFullPath(dataset, image);
+                    if (!File.Exists(srcPath)) continue;
+
+                    string destImgPath = Path.Combine(imgDir, Path.GetFileName(image.ImagePath));
+                    File.Copy(srcPath, destImgPath, overwrite: true);
+
+                    string lblFileName = Path.GetFileNameWithoutExtension(image.ImagePath) + ".txt";
+                    var lblSb = new StringBuilder();
+
+                    foreach (var label in image.Labels)
+                    {
+                        int classIdx = dataset.Classes.IndexOf(label.ClassName);
+                        if (classIdx < 0) continue;
+                        if (label.Points.Count < 3) continue;
+
+                        // YOLO-Seg format: class x1 y1 x2 y2 ... xn yn (normalized)
+                        var coords = new StringBuilder();
+                        coords.Append(classIdx);
+                        foreach (var pt in label.Points)
+                        {
+                            double nx = pt.X / image.ImageWidth;
+                            double ny = pt.Y / image.ImageHeight;
+                            coords.AppendFormat(CultureInfo.InvariantCulture, " {0:F6} {1:F6}", nx, ny);
+                        }
+                        lblSb.AppendLine(coords.ToString());
+                    }
+
+                    File.WriteAllText(Path.Combine(lblDir, lblFileName), lblSb.ToString());
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"YOLO-Seg Export 실패: {ex.Message}");
                 return false;
             }
         }

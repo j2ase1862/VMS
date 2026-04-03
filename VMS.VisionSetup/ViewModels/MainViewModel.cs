@@ -2626,6 +2626,34 @@ namespace VMS.VisionSetup.ViewModels
             _dialogService.ShowSequenceEditorDialog();
         }
 
+        public void LaunchDeepLearning()
+        {
+            try
+            {
+                var currentDir = AppDomain.CurrentDomain.BaseDirectory;
+                var exePath = System.IO.Path.Combine(currentDir, "VMS.DeepLearning.exe");
+
+                if (!System.IO.File.Exists(exePath))
+                {
+                    _dialogService.ShowWarning(
+                        "VMS.DeepLearning 프로그램을 찾을 수 없습니다.\n" +
+                        "프로젝트를 먼저 빌드해 주세요.",
+                        "Deep Learning");
+                    return;
+                }
+
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = exePath,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                _dialogService.ShowError($"VMS.DeepLearning 실행 실패: {ex.Message}", "Error");
+            }
+        }
+
         public void RenameTool(ToolItem tool)
         {
             if (tool == null) return;

@@ -225,7 +225,15 @@ namespace VMS.Core.Services
         {
             var sb = new System.Text.StringBuilder();
             sb.Append($"\"{config.TrainingScriptPath}\"");
-            sb.Append($" --target {config.Target.ToString().ToLower()}");
+
+            // --target は train_ppocr.py のみ使用 (detection/recognition)
+            // train_yolo.py, train_classifier.py, train_anomaly.py は --target 不要
+            var scriptName = Path.GetFileName(config.TrainingScriptPath).ToLowerInvariant();
+            if (scriptName.Contains("ppocr"))
+            {
+                sb.Append($" --target {config.Target.ToString().ToLower()}");
+            }
+
             sb.Append($" --dataset \"{config.DatasetPath}\"");
             sb.Append($" --output \"{config.OutputDir}\"");
             sb.Append($" --epochs {config.Epochs}");

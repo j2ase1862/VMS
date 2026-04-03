@@ -13,7 +13,9 @@ namespace VMS.Core.Models.Annotation
         /// <summary>이미지 분류 모델</summary>
         Classification,
         /// <summary>이상 탐지 모델</summary>
-        AnomalyDetection
+        AnomalyDetection,
+        /// <summary>YOLO 인스턴스 세그멘테이션 모델</summary>
+        YoloSegmentation
     }
 
     public class TrainingConfig : ObservableObject

@@ -9,24 +9,49 @@ using System.Linq;
 using System.Threading;
 using VMS.Core.Interfaces;
 using VMS.Core.Models.Annotation;
+using VMS.DeepLearning.Services;
 
 namespace VMS.DeepLearning.ViewModels
 {
+    /// <summary>
+    /// ComboBox 표시용 DatasetTaskType 항목
+    /// </summary>
+    public class TaskTypeItem
+    {
+        public DatasetTaskType Value { get; }
+        public string DisplayName { get; }
+        public string Description { get; }
+        public string Workflow { get; }
+
+        public TaskTypeItem(DatasetTaskType value, string displayName, string description, string workflow)
+        {
+            Value = value;
+            DisplayName = displayName;
+            Description = description;
+            Workflow = workflow;
+        }
+
+        public override string ToString() => DisplayName;
+    }
+
     public partial class LabelingMainViewModel : ObservableObject
     {
         private readonly IAnnotationService _annotationService;
         private readonly ITrainingService _trainingService;
         private readonly ILabelingDialogService _dialogService;
+        private readonly ISamService _samService;
         private CancellationTokenSource? _trainingCts;
 
         public LabelingMainViewModel(
             IAnnotationService annotationService,
             ITrainingService trainingService,
-            ILabelingDialogService dialogService)
+            ILabelingDialogService dialogService,
+            ISamService samService)
         {
             _annotationService = annotationService;
             _trainingService = trainingService;
             _dialogService = dialogService;
+            _samService = samService;
 
             TrainingConfig = new TrainingConfig();
             TrainingStatus = trainingService.Status;
@@ -78,6 +103,9 @@ namespace VMS.DeepLearning.ViewModels
         /// <summary>현재 데이터셋이 이상 탐지 모드인지</summary>
         public bool IsAnomalyMode => CurrentDataset?.DatasetTaskType == DatasetTaskType.AnomalyDetection;
 
+        /// <summary>현재 데이터셋이 세그멘테이션 모드인지</summary>
+        public bool IsSegmentationMode => CurrentDataset?.DatasetTaskType == DatasetTaskType.Segmentation;
+
         /// <summary>현재 이미지의 분류 클래스 (Classification/Anomaly 모드)</summary>
         public string? CurrentImageClass
         {
@@ -89,8 +117,44 @@ namespace VMS.DeepLearning.ViewModels
             }
         }
 
-        /// <summary>DatasetTaskType 열거값 (ComboBox 바인딩용)</summary>
-        public Array DatasetTaskTypes => Enum.GetValues(typeof(DatasetTaskType));
+        /// <summary>DatasetTaskType 항목 (ComboBox 바인딩용)</summary>
+        public List<TaskTypeItem> DatasetTaskTypes { get; } = new()
+        {
+            new(DatasetTaskType.Detection,
+                "Detection — 객체 검출",
+                "바운딩 박스로 객체 위치를 지정합니다. YOLO 형식으로 Export하여 DetectionTool에 적용합니다.",
+                "박스 라벨링 → Export YOLO → 학습 → Detection Tool"),
+            new(DatasetTaskType.Classification,
+                "Classification — 이미지 분류",
+                "이미지 전체를 클래스별로 분류합니다. ImageFolder 형식으로 Export하여 ClassifyTool에 적용합니다.",
+                "이미지별 클래스 지정 → Export Classification → 학습 → Classify Tool"),
+            new(DatasetTaskType.AnomalyDetection,
+                "Anomaly — 이상 탐지",
+                "정상/불량으로 분류합니다. MVTec 형식으로 Export하여 AnomalyTool에 적용합니다.",
+                "GOOD/DEFECT 분류 → Export Anomaly → 학습 → Anomaly Tool"),
+            new(DatasetTaskType.OCR,
+                "OCR — 텍스트 인식",
+                "바운딩 박스로 텍스트 영역을 지정하고 Transcription을 입력합니다. PaddleOCR 형식으로 Export합니다.",
+                "박스 라벨링 + 텍스트 입력 → Export PaddleOCR → 학습 → OCR Tool"),
+            new(DatasetTaskType.Segmentation,
+                "Segmentation — 인스턴스 세그멘테이션",
+                "SAM 모델로 객체를 클릭하면 자동 폴리곤 마스크를 생성합니다. YOLO-Seg 형식으로 Export합니다.",
+                "SAM 모델 로드 → 클릭 세그멘테이션 → Export YOLO-Seg → 학습"),
+        };
+
+        /// <summary>선택된 TaskType의 설명 텍스트</summary>
+        public string NewDatasetTaskDescription =>
+            DatasetTaskTypes.FirstOrDefault(t => t.Value == NewDatasetTaskType)?.Description ?? "";
+
+        /// <summary>선택된 TaskType의 워크플로우 텍스트</summary>
+        public string NewDatasetTaskWorkflow =>
+            DatasetTaskTypes.FirstOrDefault(t => t.Value == NewDatasetTaskType)?.Workflow ?? "";
+
+        partial void OnNewDatasetTaskTypeChanged(DatasetTaskType value)
+        {
+            OnPropertyChanged(nameof(NewDatasetTaskDescription));
+            OnPropertyChanged(nameof(NewDatasetTaskWorkflow));
+        }
 
         // ── Image Navigation ──
 
@@ -124,12 +188,84 @@ namespace VMS.DeepLearning.ViewModels
         [ObservableProperty]
         private string _windowTitle = "VMS Labeling";
 
+        // ── SAM ──
+
+        [ObservableProperty]
+        private string _samEncoderPath = string.Empty;
+
+        [ObservableProperty]
+        private string _samDecoderPath = string.Empty;
+
+        [ObservableProperty]
+        private bool _isSamModelLoaded;
+
+        [ObservableProperty]
+        private bool _isSamProcessing;
+
+        [ObservableProperty]
+        private string _samStatusMessage = string.Empty;
+
+        [ObservableProperty]
+        private ObservableCollection<SamPoint> _samClickPoints = new();
+
+        [ObservableProperty]
+        private List<Point2d>? _currentSamPreviewPolygon;
+
         partial void OnCurrentDatasetChanged(AnnotationDataset? value)
         {
             OnPropertyChanged(nameof(IsBoundingBoxMode));
             OnPropertyChanged(nameof(IsClassificationMode));
             OnPropertyChanged(nameof(IsAnomalyMode));
+            OnPropertyChanged(nameof(IsSegmentationMode));
             OnPropertyChanged(nameof(CurrentImageClass));
+            AutoMatchTrainingScript();
+        }
+
+        /// <summary>
+        /// 현재 DatasetTaskType에 맞는 학습 스크립트를 자동 설정합니다.
+        /// </summary>
+        private void AutoMatchTrainingScript()
+        {
+            if (CurrentDataset == null) return;
+
+            var scriptName = CurrentDataset.DatasetTaskType switch
+            {
+                DatasetTaskType.Detection => "train_yolo.py",
+                DatasetTaskType.Classification => "train_classifier.py",
+                DatasetTaskType.AnomalyDetection => "train_anomaly.py",
+                DatasetTaskType.OCR => "train_ppocr.py",
+                DatasetTaskType.Segmentation => "train_yolo_seg.py",
+                _ => null
+            };
+
+            if (scriptName == null) return;
+
+            // 이미 올바른 스크립트가 설정되어 있으면 스킵
+            if (!string.IsNullOrEmpty(TrainingConfig.TrainingScriptPath) &&
+                TrainingConfig.TrainingScriptPath.EndsWith(scriptName, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            // scripts/ 폴더에서 스크립트 검색
+            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            var candidates = new[]
+            {
+                Path.Combine(baseDir, "scripts", scriptName),
+                Path.Combine(baseDir, scriptName),
+                // VMS.VisionSetup 동일 경로
+                Path.Combine(Path.GetDirectoryName(baseDir.TrimEnd(Path.DirectorySeparatorChar)) ?? "", "VMS.VisionSetup", "scripts", scriptName),
+            };
+
+            foreach (var path in candidates)
+            {
+                if (File.Exists(path))
+                {
+                    TrainingConfig.TrainingScriptPath = path;
+                    return;
+                }
+            }
+
+            // 파일을 찾지 못하면 파일명만 설정 (사용자가 수동 지정 가능)
+            TrainingConfig.TrainingScriptPath = scriptName;
         }
 
         partial void OnCurrentImageChanged(AnnotationImage? value)
@@ -447,7 +583,10 @@ namespace VMS.DeepLearning.ViewModels
             if (path == null) return;
 
             if (_annotationService.ExportYolo(CurrentDataset, path))
-                _dialogService.ShowInformation($"YOLO 포맷 내보내기 완료.\n{path}", "Export");
+            {
+                TrainingConfig.DatasetPath = path;
+                _dialogService.ShowInformation($"YOLO 포맷 내보내기 완료.\n{path}\n\n학습 데이터셋 경로가 자동 설정되었습니다.", "Export");
+            }
             else
                 _dialogService.ShowError("YOLO Export에 실패했습니다.", "오류");
         }
@@ -464,7 +603,10 @@ namespace VMS.DeepLearning.ViewModels
             bool recOk = _annotationService.ExportPaddleOcrRec(CurrentDataset, path);
 
             if (detOk && recOk)
-                _dialogService.ShowInformation($"PaddleOCR 포맷 내보내기 완료.\n{path}", "Export");
+            {
+                TrainingConfig.DatasetPath = path;
+                _dialogService.ShowInformation($"PaddleOCR 포맷 내보내기 완료.\n{path}\n\n학습 데이터셋 경로가 자동 설정되었습니다.", "Export");
+            }
             else
                 _dialogService.ShowError("PaddleOCR Export에 실패했습니다.", "오류");
         }
@@ -478,7 +620,10 @@ namespace VMS.DeepLearning.ViewModels
             if (path == null) return;
 
             if (_annotationService.ExportClassification(CurrentDataset, path))
-                _dialogService.ShowInformation($"Classification 포맷 내보내기 완료.\n{path}\n\ntrain_classifier.py로 학습할 수 있습니다.", "Export");
+            {
+                TrainingConfig.DatasetPath = path;
+                _dialogService.ShowInformation($"Classification 포맷 내보내기 완료.\n{path}\n\n학습 데이터셋 경로가 자동 설정되었습니다.", "Export");
+            }
             else
                 _dialogService.ShowError("Classification Export에 실패했습니다.", "오류");
         }
@@ -492,9 +637,29 @@ namespace VMS.DeepLearning.ViewModels
             if (path == null) return;
 
             if (_annotationService.ExportAnomaly(CurrentDataset, path))
-                _dialogService.ShowInformation($"Anomaly (MVTec) 포맷 내보내기 완료.\n{path}\n\ntrain_anomaly.py로 학습할 수 있습니다.", "Export");
+            {
+                TrainingConfig.DatasetPath = path;
+                _dialogService.ShowInformation($"Anomaly (MVTec) 포맷 내보내기 완료.\n{path}\n\n학습 데이터셋 경로가 자동 설정되었습니다.", "Export");
+            }
             else
                 _dialogService.ShowError("Anomaly Export에 실패했습니다.", "오류");
+        }
+
+        [RelayCommand]
+        private void ExportYoloSeg()
+        {
+            if (CurrentDataset == null) return;
+
+            var path = _dialogService.ShowFolderDialog("YOLO-Seg 내보내기 폴더 선택");
+            if (path == null) return;
+
+            if (_annotationService.ExportYoloSeg(CurrentDataset, path))
+            {
+                TrainingConfig.DatasetPath = path;
+                _dialogService.ShowInformation($"YOLO-Seg 포맷 내보내기 완료.\n{path}\n\n학습 데이터셋 경로가 자동 설정되었습니다.", "Export");
+            }
+            else
+                _dialogService.ShowError("YOLO-Seg Export에 실패했습니다.", "오류");
         }
 
         /// <summary>
@@ -519,7 +684,137 @@ namespace VMS.DeepLearning.ViewModels
                 case DatasetTaskType.OCR:
                     ExportPaddleOcr();
                     break;
+                case DatasetTaskType.Segmentation:
+                    ExportYoloSeg();
+                    break;
             }
+        }
+
+        #endregion
+
+        #region SAM Commands
+
+        [RelayCommand]
+        private void SelectSamEncoder()
+        {
+            var path = _dialogService.ShowOpenFileDialog("SAM Encoder ONNX 선택", "ONNX Model|*.onnx|모든 파일|*.*");
+            if (path != null)
+                SamEncoderPath = path;
+        }
+
+        [RelayCommand]
+        private void SelectSamDecoder()
+        {
+            var path = _dialogService.ShowOpenFileDialog("SAM Decoder ONNX 선택", "ONNX Model|*.onnx|모든 파일|*.*");
+            if (path != null)
+                SamDecoderPath = path;
+        }
+
+        [RelayCommand]
+        private void LoadSamModel()
+        {
+            if (string.IsNullOrEmpty(SamEncoderPath) || string.IsNullOrEmpty(SamDecoderPath))
+            {
+                _dialogService.ShowWarning("Encoder와 Decoder ONNX 파일 경로를 모두 지정하세요.", "경고");
+                return;
+            }
+
+            try
+            {
+                _samService.LoadModel(SamEncoderPath, SamDecoderPath);
+                IsSamModelLoaded = true;
+                SamStatusMessage = "SAM 모델 로드 완료";
+            }
+            catch (Exception ex)
+            {
+                IsSamModelLoaded = false;
+                SamStatusMessage = $"모델 로드 실패: {ex.Message}";
+                _dialogService.ShowError($"SAM 모델 로드 실패:\n{ex.Message}", "오류");
+            }
+        }
+
+        /// <summary>
+        /// SAM 클릭 처리 — 인코딩 + 디코딩 + 프리뷰 갱신
+        /// </summary>
+        public async System.Threading.Tasks.Task OnSamClickAsync(double imgX, double imgY, bool isBackground)
+        {
+            if (!IsSamModelLoaded || CurrentMat == null || IsSamProcessing) return;
+
+            IsSamProcessing = true;
+            SamStatusMessage = "처리 중...";
+
+            try
+            {
+                // 첫 클릭 시 임베딩 계산
+                if (SamClickPoints.Count == 0)
+                {
+                    SamStatusMessage = "이미지 임베딩 생성 중...";
+                    await _samService.ComputeEmbeddingAsync(CurrentMat);
+                }
+
+                var point = new SamPoint(imgX, imgY, isBackground ? 0 : 1);
+                SamClickPoints.Add(point);
+
+                // 디코딩
+                var polygon = _samService.Predict(SamClickPoints.ToList());
+                CurrentSamPreviewPolygon = polygon;
+
+                SamStatusMessage = polygon != null
+                    ? $"폴리곤 {polygon.Count}점 — Enter로 확정, Esc로 초기화"
+                    : "마스크 생성 실패 — 다른 위치를 클릭하세요";
+            }
+            catch (Exception ex)
+            {
+                SamStatusMessage = $"SAM 오류: {ex.Message}";
+            }
+            finally
+            {
+                IsSamProcessing = false;
+            }
+        }
+
+        [RelayCommand]
+        private void ConfirmSamLabel()
+        {
+            if (CurrentDataset == null || CurrentImage == null || CurrentSamPreviewPolygon == null) return;
+
+            string className = SelectedClassName ?? CurrentDataset.Classes.FirstOrDefault() ?? "object";
+            if (!CurrentDataset.Classes.Contains(className))
+                _annotationService.AddClass(CurrentDataset, className);
+
+            // 폴리곤의 바운딩 박스 계산
+            double minX = CurrentSamPreviewPolygon.Min(p => p.X);
+            double minY = CurrentSamPreviewPolygon.Min(p => p.Y);
+            double maxX = CurrentSamPreviewPolygon.Max(p => p.X);
+            double maxY = CurrentSamPreviewPolygon.Max(p => p.Y);
+
+            var label = new LabelInfo
+            {
+                ClassName = className,
+                LabelType = LabelType.Polygon,
+                BoundingBox = new OpenCvSharp.Rect(
+                    (int)minX, (int)minY,
+                    (int)(maxX - minX), (int)(maxY - minY)),
+                Points = new List<Point2d>(CurrentSamPreviewPolygon),
+                IsVerified = true
+            };
+
+            _annotationService.AddLabel(CurrentImage, label);
+            SelectedLabel = label;
+
+            // 프리뷰 초기화, 클릭 포인트 유지하지 않음
+            CurrentSamPreviewPolygon = null;
+            SamClickPoints.Clear();
+            SamStatusMessage = "라벨 확정 완료 — 다음 객체를 클릭하세요";
+            UpdateStatusMessage();
+        }
+
+        [RelayCommand]
+        private void ClearSamPreview()
+        {
+            CurrentSamPreviewPolygon = null;
+            SamClickPoints.Clear();
+            SamStatusMessage = IsSamModelLoaded ? "초기화됨 — 객체를 클릭하세요" : "";
         }
 
         #endregion
@@ -570,11 +865,12 @@ namespace VMS.DeepLearning.ViewModels
 
             if (string.IsNullOrEmpty(TrainingConfig.DatasetPath))
             {
-                string datasetDir = Path.Combine(
-                    _annotationService.DatasetFolderPath,
-                    string.Join("_", CurrentDataset.Name.Split(Path.GetInvalidFileNameChars(),
-                        StringSplitOptions.RemoveEmptyEntries)));
-                TrainingConfig.DatasetPath = datasetDir;
+                _dialogService.ShowWarning(
+                    "학습 데이터셋 경로가 설정되지 않았습니다.\n" +
+                    "먼저 Export를 실행하여 학습 데이터를 내보내세요.\n\n" +
+                    "(Export 시 데이터셋 경로가 자동 설정됩니다.)",
+                    "경고");
+                return;
             }
 
             if (string.IsNullOrEmpty(TrainingConfig.OutputDir))
@@ -582,6 +878,17 @@ namespace VMS.DeepLearning.ViewModels
                 TrainingConfig.OutputDir = Path.Combine(
                     _annotationService.DatasetFolderPath, "training_output");
             }
+
+            // DatasetTaskType에 맞게 TrainingTarget 자동 설정
+            TrainingConfig.Target = CurrentDataset.DatasetTaskType switch
+            {
+                DatasetTaskType.Detection => TrainingTarget.YoloDetection,
+                DatasetTaskType.Classification => TrainingTarget.Classification,
+                DatasetTaskType.AnomalyDetection => TrainingTarget.AnomalyDetection,
+                DatasetTaskType.OCR => TrainingTarget.Recognition,
+                DatasetTaskType.Segmentation => TrainingTarget.YoloSegmentation,
+                _ => TrainingConfig.Target
+            };
 
             TrainingLog.Clear();
             _trainingCts = new CancellationTokenSource();
@@ -606,6 +913,7 @@ namespace VMS.DeepLearning.ViewModels
                     DatasetTaskType.Detection => "Detection Tool > Model Path",
                     DatasetTaskType.Classification => "Classify Tool > Model Path",
                     DatasetTaskType.AnomalyDetection => "Anomaly Tool > Model Path",
+                    DatasetTaskType.Segmentation => "Detection Tool > Model Path (Seg)",
                     _ => "해당 Tool > Model Path"
                 };
 
@@ -647,6 +955,9 @@ namespace VMS.DeepLearning.ViewModels
             CurrentMat = File.Exists(imgPath) ? Cv2.ImRead(imgPath, ImreadModes.Color) : null;
 
             SelectedLabel = null;
+            _samService.ClearEmbedding();
+            CurrentSamPreviewPolygon = null;
+            SamClickPoints.Clear();
             UpdateStatusMessage();
         }
 
@@ -684,6 +995,7 @@ namespace VMS.DeepLearning.ViewModels
                 DatasetTaskType.Classification => "Classification",
                 DatasetTaskType.AnomalyDetection => "Anomaly",
                 DatasetTaskType.OCR => "OCR",
+                DatasetTaskType.Segmentation => "Segmentation",
                 _ => ""
             };
 
@@ -715,6 +1027,7 @@ namespace VMS.DeepLearning.ViewModels
                     DatasetTaskType.Classification => "Classification",
                     DatasetTaskType.AnomalyDetection => "Anomaly",
                     DatasetTaskType.OCR => "OCR",
+                    DatasetTaskType.Segmentation => "Segmentation",
                     _ => ""
                 };
                 WindowTitle = $"VMS Labeling — {CurrentDataset.Name} [{taskLabel}]";
