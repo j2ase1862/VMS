@@ -102,7 +102,7 @@
             </Grid.RowDefinitions>
 
             <TextBlock Grid.Row="0" Text="Cameras"
-                       Foreground="#FFD700" FontWeight="Bold" FontSize="14"
+                       Foreground="#CCCCCC" FontWeight="Bold" FontSize="14"
                        Margin="0,0,0,10"/>
 
             <ListBox Grid.Row="1"
@@ -137,7 +137,7 @@
                 </Grid.RowDefinitions>
 
                 <TextBlock Grid.Row="0" Text="Camera Properties"
-                           Foreground="#FFD700" FontWeight="Bold" FontSize="14"
+                           Foreground="#CCCCCC" FontWeight="Bold" FontSize="14"
                            Margin="0,0,0,15"/>
 
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">

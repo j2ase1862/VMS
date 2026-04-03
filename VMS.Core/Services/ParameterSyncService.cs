@@ -39,6 +39,7 @@ namespace VMS.Core.Services
 
         public event Action<bool, int>? SyncCompleted;
         public event Action<int, string, int>? RecipeLoaded;
+        public event Action<List<RecipeSummaryDto>>? RecipeListChanged;
 
         public DateTime? LastSyncedAt { get; private set; }
         public int CurrentRecipeId { get; private set; }
@@ -71,9 +72,21 @@ namespace VMS.Core.Services
                 }
 
                 var json = await response.Content.ReadAsStringAsync();
-                var recipes = JsonSerializer.Deserialize<List<RecipeSummaryDto>>(json, JsonOptions);
-                Recipes = recipes ?? new();
+                var recipes = JsonSerializer.Deserialize<List<RecipeSummaryDto>>(json, JsonOptions) ?? new();
+
+                // 변경 감지: ID 집합 비교
+                var oldIds = new HashSet<int>(Recipes.Select(r => r.Id));
+                var newIds = new HashSet<int>(recipes.Select(r => r.Id));
+                bool changed = !oldIds.SetEquals(newIds);
+
+                Recipes = recipes;
                 Debug.WriteLine($"[ParameterSync] Synced {Recipes.Count} recipes");
+
+                if (changed)
+                {
+                    RecipeListChanged?.Invoke(recipes);
+                }
+
                 return true;
             }
             catch (Exception ex)
@@ -147,6 +160,9 @@ namespace VMS.Core.Services
             _periodicTimer = new Timer(
                 async _ =>
                 {
+                    // 레시피 목록도 주기적으로 갱신 (Web에서 추가/삭제된 레시피 반영)
+                    await SyncRecipesAsync();
+
                     if (CurrentRecipeId > 0)
                         await SyncAsync();
                 },

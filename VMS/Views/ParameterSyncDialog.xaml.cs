@@ -72,11 +72,28 @@ namespace VMS.Views
 
         private async void BtnSync_Click(object sender, RoutedEventArgs e)
         {
-            var selected = cboRecipes.SelectedItem as RecipeSummaryDto;
-            if (selected == null) return;
-
             btnSync.IsEnabled = false;
-            await LoadRecipeParameters(selected.Id);
+            txtSyncStatus.Text = "Refreshing recipes...";
+
+            // 레시피 목록 새로고침 (Web에서 추가된 레시피 반영)
+            await _syncService.SyncRecipesAsync();
+            var recipes = _syncService.Recipes;
+            var previousSelected = cboRecipes.SelectedItem as RecipeSummaryDto;
+
+            _initializing = true;
+            cboRecipes.ItemsSource = recipes;
+
+            // 이전 선택 유지 또는 첫 번째 항목 선택
+            var reselect = recipes.FirstOrDefault(r => r.Id == previousSelected?.Id)
+                        ?? recipes.FirstOrDefault();
+            cboRecipes.SelectedItem = reselect;
+            _initializing = false;
+
+            if (reselect != null)
+                await LoadRecipeParameters(reselect.Id);
+            else
+                txtSyncStatus.Text = "No recipes found";
+
             btnSync.IsEnabled = true;
         }
 

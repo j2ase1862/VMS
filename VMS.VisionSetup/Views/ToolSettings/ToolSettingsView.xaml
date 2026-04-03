@@ -108,7 +108,7 @@
         <StackPanel Margin="10">
             <!-- Tool Header -->
             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                <TextBlock Text="{Binding Name}" Foreground="#FFD700"
+                <TextBlock Text="{Binding Name}" Foreground="#CCCCCC"
                            FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
                 <controls:HelpIcon ToolType="{Binding ToolType}"
                                    Margin="8,0,0,0" VerticalAlignment="Center"/>

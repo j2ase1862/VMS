@@ -119,6 +119,9 @@ namespace VMS
                     systemConfig.WebServerUrl, systemConfig.ClientIndex);
                 parameterSyncService.StartPeriodicSync(60);
 
+                // 앱 시작 시 Web 레시피 목록 동기화
+                _ = parameterSyncService.SyncRecipesAsync();
+
                 // InspectionService에 주입
                 InspectionService.ParameterSyncService = parameterSyncService;
                 InspectionService.ParameterApplyService =
@@ -214,7 +217,7 @@ namespace VMS
                 },
                 recipeChangeByIndexFunc: async (recipeIndex) =>
                 {
-                    await Current.Dispatcher.InvokeAsync(() =>
+                    await Current.Dispatcher.InvokeAsync(async () =>
                     {
                         var recipes = recipeService.GetRecipeList();
                         if (recipeIndex < 0 || recipeIndex >= recipes.Count)
@@ -237,9 +240,21 @@ namespace VMS
                                 cam.SetRecipe(recipe);
                             logService.Log($"Recipe changed to [{recipeIndex}] {recipe.Name}", LogLevel.Success, "RecipeChange");
 
-                            // Web 파라미터 동기화 — 레시피 변경 시 해당 레시피 파라미터 로드
+                            // Web 파라미터 동기화 — Web 레시피 목록을 먼저 갱신 후 올바른 ID로 로드
                             if (parameterSyncService != null)
-                                _ = parameterSyncService.LoadRecipeAsync(recipeIndex);
+                            {
+                                await parameterSyncService.SyncRecipesAsync();
+                                var webRecipes = parameterSyncService.Recipes;
+                                if (recipeIndex >= 0 && recipeIndex < webRecipes.Count)
+                                {
+                                    var webRecipeId = webRecipes[recipeIndex].Id;
+                                    await parameterSyncService.LoadRecipeAsync(webRecipeId);
+                                }
+                                else
+                                {
+                                    logService.Log($"Web recipe index {recipeIndex} out of range (0~{webRecipes.Count - 1})", LogLevel.Warning, "RecipeChange");
+                                }
+                            }
                         }
                     });
                 },

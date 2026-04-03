@@ -39,7 +39,7 @@
 
     <!-- Section Header -->
     <Style x:Key="SectionHeaderStyle" TargetType="TextBlock">
-        <Setter Property="Foreground" Value="#FFD700"/>
+        <Setter Property="Foreground" Value="#CCCCCC"/>
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="FontWeight" Value="Bold"/>
         <Setter Property="Margin" Value="0,15,0,5"/>
@@ -62,7 +62,7 @@
 
     <!-- Expander Header TextBlock -->
     <Style x:Key="ExpanderHeaderStyle" TargetType="TextBlock">
-        <Setter Property="Foreground" Value="#FFD700"/>
+        <Setter Property="Foreground" Value="#CCCCCC"/>
         <Setter Property="FontWeight" Value="Bold"/>
         <Setter Property="FontSize" Value="12"/>
     </Style>

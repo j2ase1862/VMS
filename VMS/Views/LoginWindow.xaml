@@ -28,12 +28,7 @@
             </Grid.RowDefinitions>
 
             <!-- Logo -->
-            <StackPanel Grid.Row="0" HorizontalAlignment="Center" Margin="0,0,0,24">
-                <TextBlock Text="&#xE774;"
-                           FontFamily="Segoe MDL2 Assets"
-                           FontSize="48"
-                           Foreground="#2196F3"
-                           HorizontalAlignment="Center"/>
+            <StackPanel Grid.Row="0" HorizontalAlignment="Center" Margin="0,0,0,24">                
                 <TextBlock Text="BODA Vision System"
                            FontSize="20"
                            FontWeight="SemiBold"

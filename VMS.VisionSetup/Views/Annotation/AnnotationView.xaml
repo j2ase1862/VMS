@@ -27,7 +27,7 @@
                 <!-- Dataset Section -->
                 <Expander Grid.Row="0" IsExpanded="True" Margin="5">
                     <Expander.Header>
-                        <TextBlock Text="Dataset" Foreground="#FFD700" FontWeight="Bold" FontSize="12"/>
+                        <TextBlock Text="Dataset" Foreground="#CCCCCC" FontWeight="Bold" FontSize="12"/>
                     </Expander.Header>
                     <StackPanel Margin="0,5,0,0">
                         <!-- Dataset List -->
@@ -85,7 +85,7 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="Images" Foreground="#FFD700" FontWeight="Bold"
+                        <TextBlock Text="Images" Foreground="#CCCCCC" FontWeight="Bold"
                                    FontSize="12" VerticalAlignment="Center"/>
                         <Button Grid.Column="1" Content="+ Add" Command="{Binding AddImagesCommand}"
                                 Background="#0078D4" Foreground="White" BorderThickness="0"
@@ -191,7 +191,7 @@
                 <!-- Classes Section -->
                 <Expander Grid.Row="0" IsExpanded="True" Margin="5">
                     <Expander.Header>
-                        <TextBlock Text="Classes" Foreground="#FFD700" FontWeight="Bold" FontSize="12"/>
+                        <TextBlock Text="Classes" Foreground="#CCCCCC" FontWeight="Bold" FontSize="12"/>
                     </Expander.Header>
                     <StackPanel Margin="0,5,0,0">
                         <ListBox ItemsSource="{Binding CurrentDataset.Classes}"
@@ -228,7 +228,7 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <Grid>
-                        <TextBlock Text="Labels" Foreground="#FFD700" FontWeight="Bold"
+                        <TextBlock Text="Labels" Foreground="#CCCCCC" FontWeight="Bold"
                                    FontSize="12" VerticalAlignment="Center"/>
                         <Button Content="Delete" HorizontalAlignment="Right"
                                 Command="{Binding DeleteSelectedLabelCommand}"
@@ -268,7 +268,7 @@
                             Converter={StaticResource BoolToVis},
                             FallbackValue=Collapsed}">
                     <StackPanel>
-                        <TextBlock Text="Selected Label" Foreground="#FFD700"
+                        <TextBlock Text="Selected Label" Foreground="#CCCCCC"
                                    FontWeight="Bold" FontSize="11" Margin="0,0,0,4"/>
 
                         <!-- Class selection -->
@@ -290,7 +290,7 @@
                 <!-- Export & Training Section -->
                 <Expander Grid.Row="3" IsExpanded="False" Margin="5,0,5,5">
                     <Expander.Header>
-                        <TextBlock Text="Export &amp; Training" Foreground="#FFD700" FontWeight="Bold" FontSize="12"/>
+                        <TextBlock Text="Export &amp; Training" Foreground="#CCCCCC" FontWeight="Bold" FontSize="12"/>
                     </Expander.Header>
                     <StackPanel Margin="0,5,0,0">
                         <!-- Export -->

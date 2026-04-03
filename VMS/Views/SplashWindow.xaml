@@ -109,8 +109,7 @@
                     <Border.Effect>
                         <DropShadowEffect BlurRadius="12" ShadowDepth="0" Color="#2196F3" Opacity="0.3"/>
                     </Border.Effect>
-                    <TextBlock Text="VMS" FontSize="26" FontWeight="Bold" Foreground="White"
-                               HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="Segoe UI"/>
+                    
                 </Border>
             </Grid>
 

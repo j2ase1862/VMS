@@ -17,6 +17,9 @@ namespace VMS.Core.Interfaces
         /// <summary>레시피 로드 완료 이벤트 (recipeId, recipeName, paramCount)</summary>
         event Action<int, string, int>? RecipeLoaded;
 
+        /// <summary>Web 레시피 목록이 변경되었을 때 발생</summary>
+        event Action<List<RecipeSummaryDto>>? RecipeListChanged;
+
         /// <summary>마지막 동기화 시각</summary>
         DateTime? LastSyncedAt { get; }
 

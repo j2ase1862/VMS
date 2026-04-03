@@ -1,11 +1,16 @@
+using VMS.Core.Interfaces;
 using VMS.VisionSetup.Interfaces;
 using VMS.VisionSetup.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
+using System.Windows;
 
 namespace VMS.VisionSetup.ViewModels
 {
@@ -13,6 +18,7 @@ namespace VMS.VisionSetup.ViewModels
     {
         private readonly IRecipeService _recipeService;
         private readonly IDialogService _dialogService;
+        private readonly IParameterSyncService? _parameterSyncService;
 
         [ObservableProperty]
         private ObservableCollection<RecipeInfo> _recipes = new();
@@ -26,15 +32,17 @@ namespace VMS.VisionSetup.ViewModels
         [ObservableProperty]
         private bool _hasSelection;
 
-        private System.Collections.Generic.List<RecipeInfo> _allRecipes = new();
+        private List<RecipeInfo> _allRecipes = new();
 
         public event EventHandler<RecipeInfo>? RecipeSelected;
         public event EventHandler<Recipe>? RecipeLoaded;
 
-        public RecipeListViewModel(IRecipeService recipeService, IDialogService dialogService)
+        public RecipeListViewModel(IRecipeService recipeService, IDialogService dialogService,
+            IParameterSyncService? parameterSyncService = null)
         {
             _recipeService = recipeService;
             _dialogService = dialogService;
+            _parameterSyncService = parameterSyncService;
             RefreshRecipeList();
         }
 
@@ -42,6 +50,82 @@ namespace VMS.VisionSetup.ViewModels
         {
             _allRecipes = _recipeService.GetRecipeList();
             ApplyFilter();
+
+            // Web에서 추가된 레시피를 로컬에 동기화
+            if (_parameterSyncService != null)
+            {
+                _ = SyncWebRecipesToLocalAsync();
+            }
+        }
+
+        private async Task SyncWebRecipesToLocalAsync()
+        {
+            try
+            {
+                await _parameterSyncService!.SyncRecipesAsync();
+                var webRecipes = _parameterSyncService.Recipes;
+                var recipeFolderPath = _recipeService.RecipeFolderPath;
+                var localRecipes = _recipeService.GetRecipeList();
+                var localNames = localRecipes.Select(r => r.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                bool anyNew = false;
+
+                foreach (var web in webRecipes)
+                {
+                    var webFilePath = Path.Combine(recipeFolderPath, $"web_{web.Id}.json");
+                    if (!File.Exists(webFilePath) && !localNames.Contains(web.Name))
+                    {
+                        var recipe = new Recipe
+                        {
+                            Id = $"web_{web.Id}",
+                            Name = web.Name,
+                            Description = web.Description,
+                            CreatedAt = DateTime.UtcNow,
+                            ModifiedAt = DateTime.UtcNow,
+                            Author = "Web"
+                        };
+                        _recipeService.SaveRecipe(recipe, webFilePath);
+                        anyNew = true;
+                    }
+                }
+
+                // Web 파일 정리: 서버에서 삭제된 레시피 또는 로컬에 동일 이름이 있는 중복 파일 제거
+                var webIds = webRecipes.Select(r => r.Id).ToHashSet();
+                var webNameById = webRecipes.ToDictionary(r => r.Id, r => r.Name);
+                var nonWebLocalNames = localRecipes
+                    .Where(r => !r.FilePath.Contains("web_"))
+                    .Select(r => r.Name)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+                var webFiles = Directory.GetFiles(recipeFolderPath, "web_*.json");
+                foreach (var file in webFiles)
+                {
+                    var fileName = Path.GetFileNameWithoutExtension(file);
+                    if (fileName.StartsWith("web_") && int.TryParse(fileName.Substring(4), out var fileWebId))
+                    {
+                        // 서버에서 삭제되었거나, 로컬에 동일 이름 레시피가 이미 존재하면 삭제
+                        bool deletedOnServer = !webIds.Contains(fileWebId);
+                        bool duplicateName = webNameById.TryGetValue(fileWebId, out var webName)
+                            && nonWebLocalNames.Contains(webName);
+                        if (deletedOnServer || duplicateName)
+                        {
+                            File.Delete(file);
+                            anyNew = true;
+                        }
+                    }
+                }
+
+                if (anyNew)
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        _allRecipes = _recipeService.GetRecipeList();
+                        ApplyFilter();
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[RecipeList] Web recipe sync failed: {ex.Message}");
+            }
         }
 
         partial void OnSearchTextChanged(string value)

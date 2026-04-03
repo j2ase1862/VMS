@@ -264,6 +264,15 @@ namespace VMS.ViewModels
             LoadConfiguration();
             RefreshRecipeList();
 
+            // Web 레시피 목록 변경 시 자동 갱신
+            if (_parameterSyncService != null)
+            {
+                _parameterSyncService.RecipeListChanged += recipes =>
+                {
+                    Application.Current.Dispatcher.BeginInvoke(async () => await SyncWebRecipesToLocalAsync());
+                };
+            }
+
             LogService?.Log("Application started", LogLevel.Success, "System");
         }
 
@@ -604,6 +613,83 @@ namespace VMS.ViewModels
             foreach (var info in _recipeService.GetRecipeList())
             {
                 RecipeList.Add(info);
+            }
+
+            // Web에서 추가된 레시피를 로컬에 동기화
+            if (_parameterSyncService != null)
+            {
+                _ = SyncWebRecipesToLocalAsync();
+            }
+        }
+
+        private async Task SyncWebRecipesToLocalAsync()
+        {
+            try
+            {
+                await _parameterSyncService!.SyncRecipesAsync();
+                var webRecipes = _parameterSyncService.Recipes;
+                var localRecipes = _recipeService.GetRecipeList();
+                var localNames = localRecipes.Select(r => r.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                bool anyNew = false;
+
+                foreach (var web in webRecipes)
+                {
+                    var webFilePath = Path.Combine(_recipeService.RecipesDirectory, $"web_{web.Id}.json");
+                    if (!File.Exists(webFilePath) && !localNames.Contains(web.Name))
+                    {
+                        var recipe = new Recipe
+                        {
+                            Id = $"web_{web.Id}",
+                            Name = web.Name,
+                            Description = web.Description,
+                            CreatedAt = DateTime.UtcNow,
+                            ModifiedAt = DateTime.UtcNow
+                        };
+                        _recipeService.SaveRecipe(recipe, webFilePath);
+                        anyNew = true;
+                    }
+                }
+
+                // Web 파일 정리: 서버에서 삭제된 레시피 또는 로컬에 동일 이름이 있는 중복 파일 제거
+                var webIds = webRecipes.Select(r => r.Id).ToHashSet();
+                var webNameById = webRecipes.ToDictionary(r => r.Id, r => r.Name);
+                var nonWebLocalNames = localRecipes
+                    .Where(r => !r.FilePath.Contains("web_"))
+                    .Select(r => r.Name)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+                var webFiles = Directory.GetFiles(_recipeService.RecipesDirectory, "web_*.json");
+                foreach (var file in webFiles)
+                {
+                    var fileName = Path.GetFileNameWithoutExtension(file);
+                    if (fileName.StartsWith("web_") && int.TryParse(fileName.Substring(4), out var fileWebId))
+                    {
+                        // 서버에서 삭제되었거나, 로컬에 동일 이름 레시피가 이미 존재하면 삭제
+                        bool deletedOnServer = !webIds.Contains(fileWebId);
+                        bool duplicateName = webNameById.TryGetValue(fileWebId, out var webName)
+                            && nonWebLocalNames.Contains(webName);
+                        if (deletedOnServer || duplicateName)
+                        {
+                            File.Delete(file);
+                            anyNew = true;
+                        }
+                    }
+                }
+
+                if (anyNew)
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        RecipeList.Clear();
+                        foreach (var info in _recipeService.GetRecipeList())
+                        {
+                            RecipeList.Add(info);
+                        }
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MainViewModel] Web recipe sync failed: {ex.Message}");
             }
         }
 
