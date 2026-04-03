@@ -32,6 +32,9 @@
     <ProjectReference Include="..\VMS.Camera\VMS.Camera.csproj" />
     <ProjectReference Include="..\VMS.Core\VMS.Core.csproj" />
     <ProjectReference Include="..\VMS.PLC\VMS.PLC.csproj" />
+    <ProjectReference Include="..\VMS.DeepLearning\VMS.DeepLearning.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>

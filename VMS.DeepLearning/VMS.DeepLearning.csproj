@@ -8,12 +8,14 @@
     <UseWPF>true</UseWPF>
     <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
     <PlatformTarget>x64</PlatformTarget>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RootNamespace>VMS.DeepLearning</RootNamespace>
     <AssemblyName>VMS.DeepLearning</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.21.0" />
     <PackageReference Include="OpenCvSharp4" Version="4.11.0.20250507" />
     <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.11.0.20250507" />
     <PackageReference Include="OpenCvSharp4.WpfExtensions" Version="4.11.0.20250507" />
@@ -22,5 +24,22 @@
   <ItemGroup>
     <ProjectReference Include="..\VMS.Core\VMS.Core.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="scripts\*.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <!-- After build, copy DeepLearning EXE to VisionSetup output directory -->
+  <Target Name="CopyToVisionSetupOutput" AfterTargets="Build">
+    <PropertyGroup>
+      <VisionSetupOutputDir>..\VMS.VisionSetup\bin\$(Configuration)\$(TargetFramework)\</VisionSetupOutputDir>
+    </PropertyGroup>
+    <Copy SourceFiles="$(TargetDir)VMS.DeepLearning.exe;$(TargetDir)VMS.DeepLearning.dll;$(TargetDir)VMS.DeepLearning.deps.json;$(TargetDir)VMS.DeepLearning.runtimeconfig.json"
+          DestinationFolder="$(VisionSetupOutputDir)"
+          SkipUnchangedFiles="true"
+          Condition="Exists('$(VisionSetupOutputDir)')" />
+  </Target>
 
 </Project>

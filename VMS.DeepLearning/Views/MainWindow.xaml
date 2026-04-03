@@ -3,11 +3,17 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:VMS.DeepLearning.ViewModels"
         xmlns:ann="clr-namespace:VMS.Core.Models.Annotation;assembly=VMS.Core"
+        xmlns:local="clr-namespace:VMS.DeepLearning.Views"
         Title="{Binding WindowTitle}" Width="1400" Height="900"
         WindowStartupLocation="CenterScreen" WindowState="Maximized"
         Background="#1E1E1E">
+    <Window.InputBindings>
+        <KeyBinding Key="Return" Command="{Binding ConfirmSamLabelCommand}"/>
+        <KeyBinding Key="Escape" Command="{Binding ClearSamPreviewCommand}"/>
+    </Window.InputBindings>
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <local:NotNullToVisibilityConverter x:Key="NotNullToVis"/>
     </Window.Resources>
 
     <Grid>
@@ -70,8 +76,8 @@
                                             <TextBlock Text="{Binding Name}" FontSize="12"/>
                                             <TextBlock Foreground="#888" FontSize="10" Margin="6,0,0,0"
                                                        VerticalAlignment="Center">
-                                                <Run Text="{Binding DatasetTaskType, StringFormat='[{0}]'}"/>
-                                                <Run Text="{Binding TotalImages, StringFormat=' ({0})'}"/>
+                                                <Run Text="{Binding DatasetTaskType, StringFormat='[{0}]', Mode=OneWay}"/>
+                                                <Run Text="{Binding TotalImages, StringFormat=' ({0})', Mode=OneWay}"/>
                                             </TextBlock>
                                         </StackPanel>
                                     </DataTemplate>
@@ -93,8 +99,27 @@
 
                             <!-- Task Type Selector -->
                             <ComboBox ItemsSource="{Binding DatasetTaskTypes}"
-                                      SelectedItem="{Binding NewDatasetTaskType}"
+                                      SelectedValue="{Binding NewDatasetTaskType}"
+                                      SelectedValuePath="Value"
+                                      DisplayMemberPath="DisplayName"
                                       FontSize="11" Margin="0,4,0,0"/>
+
+                            <!-- Task Type 설명 -->
+                            <Border Background="#1A1A2E" CornerRadius="4" Padding="8,6"
+                                    Margin="0,4,0,0" BorderBrush="#333" BorderThickness="1">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding NewDatasetTaskDescription}"
+                                               Foreground="#AAAAAA" FontSize="10.5"
+                                               TextWrapping="Wrap"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                        <TextBlock Text="▶" Foreground="#0078D4" FontSize="9"
+                                                   VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                        <TextBlock Text="{Binding NewDatasetTaskWorkflow}"
+                                                   Foreground="#4FC3F7" FontSize="9.5"
+                                                   TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
 
                             <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                                 <Button Content="Load" Command="{Binding SelectDatasetCommand}"
@@ -188,18 +213,84 @@
 
             <!-- ═══ Center: Image Canvas ═══ -->
             <Grid Grid.Column="1" Background="#1A1A1A">
-                <Border Margin="8" Background="#111" BorderBrush="#333" BorderThickness="1">
-                    <Grid>
+                <Border x:Name="ImageBorder" Margin="8" Background="#111" BorderBrush="#333" BorderThickness="1"
+                        ClipToBounds="True"
+                        MouseWheel="ImageBorder_MouseWheel"
+                        PreviewMouseDown="ImageBorder_PreviewMouseDown"
+                        PreviewMouseUp="ImageBorder_PreviewMouseUp"
+                        MouseMove="ImageBorder_MouseMove">
+                    <Grid x:Name="ImageContainer">
+                        <Grid.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform x:Name="ZoomTransform" ScaleX="1" ScaleY="1"/>
+                                <TranslateTransform x:Name="PanTransform" X="0" Y="0"/>
+                            </TransformGroup>
+                        </Grid.RenderTransform>
+
                         <!-- Image display -->
                         <Image x:Name="MainImage" Stretch="Uniform"
                                RenderOptions.BitmapScalingMode="NearestNeighbor"/>
 
-                        <!-- Canvas for bounding box drawing (Detection/OCR) -->
+                        <!-- Canvas for bounding box drawing (Detection/OCR) and SAM clicks (Segmentation) -->
                         <Canvas x:Name="AnnotationCanvas"
                                 Background="Transparent"
                                 MouseLeftButtonDown="AnnotationCanvas_MouseLeftButtonDown"
                                 MouseMove="AnnotationCanvas_MouseMove"
-                                MouseLeftButtonUp="AnnotationCanvas_MouseLeftButtonUp"/>
+                                MouseLeftButtonUp="AnnotationCanvas_MouseLeftButtonUp"
+                                MouseRightButtonDown="AnnotationCanvas_MouseRightButtonDown"/>
+
+                        <!-- Floating toolbar for bounding box drawing (Detection/OCR) -->
+                        <Border VerticalAlignment="Top" HorizontalAlignment="Left"
+                                Margin="12,12,0,0" Padding="6,4" CornerRadius="6"
+                                Background="#CC2D2D30" BorderBrush="#555" BorderThickness="1"
+                                Visibility="{Binding IsBoundingBoxMode, Converter={StaticResource BoolToVis}, FallbackValue=Collapsed}">
+                            <StackPanel Orientation="Horizontal">
+                                <Border Background="#0078D4" CornerRadius="3" Padding="8,4" Margin="0,0,6,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="M2,2 L18,2 L18,18 L2,18 Z"
+                                              Stroke="White" StrokeThickness="1.5" StrokeDashArray="3,2"
+                                              Fill="Transparent" Width="14" Height="14"
+                                              Stretch="Uniform" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Draw Box" Foreground="White" FontSize="11"
+                                                   FontWeight="SemiBold" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Foreground="#999" FontSize="11" VerticalAlignment="Center">
+                                    <Run Text="드래그로 바운딩 박스 생성" FontStyle="Italic"/>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- SAM floating toolbar (Segmentation mode) -->
+                        <Border VerticalAlignment="Top" HorizontalAlignment="Left"
+                                Margin="12,12,0,0" Padding="6,4" CornerRadius="6"
+                                Background="#CC2D2D30" BorderBrush="#555" BorderThickness="1"
+                                Visibility="{Binding IsSegmentationMode, Converter={StaticResource BoolToVis}, FallbackValue=Collapsed}">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Border Background="#0078D4" CornerRadius="3" Padding="8,4" Margin="0,0,6,0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Ellipse Width="12" Height="12" Fill="#4CAF50"
+                                                     Stroke="White" StrokeThickness="1" VerticalAlignment="Center"/>
+                                            <TextBlock Text="SAM Segment" Foreground="White" FontSize="11"
+                                                       FontWeight="SemiBold" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <TextBlock Foreground="#999" FontSize="11" VerticalAlignment="Center">
+                                        <Run Text="좌클릭=전경  우클릭=배경" FontStyle="Italic"/>
+                                    </TextBlock>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                    <Button Content="Confirm (Enter)" Command="{Binding ConfirmSamLabelCommand}"
+                                            Style="{StaticResource SuccessButton}"
+                                            Padding="8,3" FontSize="10" Margin="0,0,4,0"/>
+                                    <Button Content="Clear (Esc)" Command="{Binding ClearSamPreviewCommand}"
+                                            Padding="8,3" FontSize="10" Margin="0,0,8,0"/>
+                                    <TextBlock Text="{Binding SamStatusMessage}" Foreground="#4FC3F7"
+                                               FontSize="10" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
 
                         <!-- Classification/Anomaly: Current class indicator overlay -->
                         <Border x:Name="ClassIndicatorOverlay"
@@ -293,9 +384,21 @@
                             </StackPanel>
                         </Expander>
 
-                        <!-- Labels Section (Detection/OCR만 표시) -->
-                        <Expander IsExpanded="True" Margin="0,0,0,8"
-                                  Visibility="{Binding IsBoundingBoxMode, Converter={StaticResource BoolToVis}, FallbackValue=Visible}">
+                        <!-- Labels Section (Detection/OCR/Segmentation 표시) -->
+                        <Expander IsExpanded="True" Margin="0,0,0,8">
+                            <Expander.Style>
+                                <Style TargetType="Expander" BasedOn="{StaticResource {x:Type Expander}}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsBoundingBoxMode}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsSegmentationMode}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Expander.Style>
                             <Expander.Header>
                                 <Grid>
                                     <TextBlock Text="Labels" Style="{StaticResource SectionHeader}"/>
@@ -374,7 +477,7 @@
                         <Border Background="#2D2D30" BorderBrush="#3F3F46" BorderThickness="1"
                                 Padding="10" Margin="0,0,0,8" CornerRadius="3"
                                 Visibility="{Binding SelectedLabel,
-                                    Converter={StaticResource BoolToVis},
+                                    Converter={StaticResource NotNullToVis},
                                     FallbackValue=Collapsed}">
                             <StackPanel>
                                 <TextBlock Text="Label Editor" Style="{StaticResource SectionHeader}"/>
@@ -398,6 +501,51 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- SAM Model Section (Segmentation only) -->
+                        <Expander IsExpanded="True" Margin="0,0,0,8"
+                                  Visibility="{Binding IsSegmentationMode, Converter={StaticResource BoolToVis}, FallbackValue=Collapsed}">
+                            <Expander.Header>
+                                <TextBlock Text="SAM Model" Style="{StaticResource SectionHeader}"/>
+                            </Expander.Header>
+                            <StackPanel Margin="0,6,0,0">
+                                <Grid>
+                                    <TextBlock Text="Encoder:" Foreground="#999" FontSize="11"/>
+                                    <Button Content="..." HorizontalAlignment="Right" Width="28"
+                                            Command="{Binding SelectSamEncoderCommand}"
+                                            Padding="0,1" FontSize="10"/>
+                                </Grid>
+                                <TextBox Text="{Binding SamEncoderPath, UpdateSourceTrigger=LostFocus}"
+                                         FontSize="10" Margin="0,2,0,6"/>
+
+                                <Grid>
+                                    <TextBlock Text="Decoder:" Foreground="#999" FontSize="11"/>
+                                    <Button Content="..." HorizontalAlignment="Right" Width="28"
+                                            Command="{Binding SelectSamDecoderCommand}"
+                                            Padding="0,1" FontSize="10"/>
+                                </Grid>
+                                <TextBox Text="{Binding SamDecoderPath, UpdateSourceTrigger=LostFocus}"
+                                         FontSize="10" Margin="0,2,0,6"/>
+
+                                <Button Content="Load SAM Model" Command="{Binding LoadSamModelCommand}"
+                                        Style="{StaticResource PrimaryButton}"
+                                        Padding="8,6" FontSize="12" Margin="0,4,0,4"/>
+
+                                <TextBlock Foreground="#888" FontSize="10" Margin="0,2,0,0" TextWrapping="Wrap">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                            <Setter Property="Text" Value="MobileSAM Encoder/Decoder ONNX 파일을 지정하세요."/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsSamModelLoaded}" Value="True">
+                                                    <Setter Property="Text" Value="SAM 모델 로드됨 — 이미지 위를 클릭하세요."/>
+                                                    <Setter Property="Foreground" Value="#4CAF50"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </Expander>
+
                         <!-- Export Section -->
                         <Expander IsExpanded="False" Margin="0,0,0,8">
                             <Expander.Header>
@@ -417,6 +565,8 @@
                                     <Run Text="Anomaly → MVTec format"/>
                                     <LineBreak/>
                                     <Run Text="OCR → PaddleOCR format"/>
+                                    <LineBreak/>
+                                    <Run Text="Segmentation → YOLO-Seg format"/>
                                 </TextBlock>
                             </StackPanel>
                         </Expander>
@@ -432,7 +582,11 @@
                                          FontSize="12" Margin="0,2,0,6"/>
 
                                 <Grid>
-                                    <TextBlock Text="Script:" Foreground="#999" FontSize="11"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Script" Foreground="#999" FontSize="11"/>
+                                        <TextBlock Text=" (자동 매칭)" Foreground="#4CAF50" FontSize="10"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
                                     <Button Content="..." HorizontalAlignment="Right" Width="28"
                                             Command="{Binding SelectTrainingScriptCommand}"
                                             Padding="0,1" FontSize="10"/>

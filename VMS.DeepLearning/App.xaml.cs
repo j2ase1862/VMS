@@ -22,8 +22,9 @@ namespace VMS.DeepLearning
             IAnnotationService annotationService = new AnnotationService(datasetFolder);
             ITrainingService trainingService = new TrainingService();
             ILabelingDialogService dialogService = new LabelingDialogService();
+            ISamService samService = new SamService();
 
-            var viewModel = new LabelingMainViewModel(annotationService, trainingService, dialogService);
+            var viewModel = new LabelingMainViewModel(annotationService, trainingService, dialogService, samService);
 
             var mainWindow = new MainWindow
             {

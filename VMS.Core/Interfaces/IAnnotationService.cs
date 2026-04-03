@@ -37,5 +37,8 @@ namespace VMS.Core.Interfaces
 
         /// <summary>이상 탐지 학습 포맷으로 내보내기 (good/bad 폴더 구조)</summary>
         bool ExportAnomaly(AnnotationDataset dataset, string outputPath);
+
+        /// <summary>YOLO 세그멘테이션 학습 포맷으로 내보내기 (정규화 폴리곤 좌표)</summary>
+        bool ExportYoloSeg(AnnotationDataset dataset, string outputPath);
     }
 }

@@ -1,8 +1,11 @@
 using OpenCvSharp;
 using OpenCvSharp.WpfExtensions;
 using System;
+using System.Globalization;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -12,12 +15,60 @@ using VMS.DeepLearning.ViewModels;
 
 namespace VMS.DeepLearning.Views
 {
+    /// <summary>
+    /// null이 아니면 Visible, null이면 Collapsed
+    /// </summary>
+    public class NotNullToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+            => value != null ? Visibility.Visible : Visibility.Collapsed;
+
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+            => throw new NotSupportedException();
+    }
+
     public partial class MainWindow : System.Windows.Window
     {
         private bool _isDrawing;
         private System.Windows.Point _drawStart;
         private System.Windows.Shapes.Rectangle? _drawingRect;
         private LabelingMainViewModel? ViewModel => DataContext as LabelingMainViewModel;
+
+        // Zoom/Pan state
+        private double _zoomLevel = 1.0;
+        private const double ZoomMin = 0.5;
+        private const double ZoomMax = 20.0;
+        private const double ZoomStep = 1.2;
+        private bool _isPanning;
+        private System.Windows.Point _panStart;
+        private double _panStartX, _panStartY;
+
+        /// <summary>
+        /// 캔버스 좌표를 이미지 좌표로 변환. null이면 이미지 밖.
+        /// </summary>
+        private (double imgX, double imgY)? CanvasToImageCoords(System.Windows.Point canvasPoint)
+        {
+            var mat = ViewModel?.CurrentMat;
+            if (mat == null || mat.IsDisposed || mat.Empty()) return null;
+
+            double canvasW = AnnotationCanvas.ActualWidth;
+            double canvasH = AnnotationCanvas.ActualHeight;
+            if (canvasW <= 0 || canvasH <= 0) return null;
+
+            double scaleX = canvasW / mat.Width;
+            double scaleY = canvasH / mat.Height;
+            double scale = Math.Min(scaleX, scaleY);
+            double offsetX = (canvasW - mat.Width * scale) / 2;
+            double offsetY = (canvasH - mat.Height * scale) / 2;
+
+            double imgX = (canvasPoint.X - offsetX) / scale;
+            double imgY = (canvasPoint.Y - offsetY) / scale;
+
+            if (imgX < 0 || imgX >= mat.Width || imgY < 0 || imgY >= mat.Height)
+                return null;
+
+            return (imgX, imgY);
+        }
 
         public MainWindow()
         {
@@ -35,12 +86,15 @@ namespace VMS.DeepLearning.Views
                         UpdateImageDisplay();
                     else if (args.PropertyName == nameof(vm.CurrentImage))
                         RedrawAnnotations();
+                    else if (args.PropertyName == nameof(vm.CurrentSamPreviewPolygon))
+                        RedrawAnnotations();
                 };
             }
         }
 
         private void UpdateImageDisplay()
         {
+            ResetZoomPan();
             var mat = ViewModel?.CurrentMat;
             if (mat != null && !mat.IsDisposed && !mat.Empty())
             {
@@ -68,13 +122,12 @@ namespace VMS.DeepLearning.Views
             if (canvasW <= 0 || canvasH <= 0) return;
 
             // Classification/Anomaly 모드: 이미지 위에 클래스 표시 오버레이
-            if (ViewModel != null && !ViewModel.IsBoundingBoxMode)
+            if (ViewModel != null && !ViewModel.IsBoundingBoxMode && !ViewModel.IsSegmentationMode)
             {
                 DrawClassIndicatorOverlay(image, canvasW, canvasH);
                 return;
             }
 
-            // Detection/OCR 모드: 바운딩 박스 표시
             double scaleX = canvasW / mat.Width;
             double scaleY = canvasH / mat.Height;
             double scale = Math.Min(scaleX, scaleY);
@@ -85,30 +138,108 @@ namespace VMS.DeepLearning.Views
             {
                 var color = LabelingMainViewModel.GetClassColor(label.ClassName);
 
-                var rect = new System.Windows.Shapes.Rectangle
+                if (label.LabelType == LabelType.Polygon && label.Points.Count >= 3)
                 {
-                    Stroke = new SolidColorBrush(color),
-                    StrokeThickness = 2,
-                    Fill = new SolidColorBrush(Color.FromArgb(30, color.R, color.G, color.B)),
-                    Width = label.BoundingBox.Width * scale,
-                    Height = label.BoundingBox.Height * scale,
-                    Tag = label.Id
-                };
+                    // Polygon rendering
+                    DrawPolygon(label.Points, scale, offsetX, offsetY, color, label.Id, label.ClassName);
+                }
+                else
+                {
+                    // BoundingBox rendering
+                    var rect = new System.Windows.Shapes.Rectangle
+                    {
+                        Stroke = new SolidColorBrush(color),
+                        StrokeThickness = 2,
+                        Fill = new SolidColorBrush(Color.FromArgb(30, color.R, color.G, color.B)),
+                        Width = label.BoundingBox.Width * scale,
+                        Height = label.BoundingBox.Height * scale,
+                        Tag = label.Id
+                    };
 
-                Canvas.SetLeft(rect, offsetX + label.BoundingBox.X * scale);
-                Canvas.SetTop(rect, offsetY + label.BoundingBox.Y * scale);
-                AnnotationCanvas.Children.Add(rect);
+                    Canvas.SetLeft(rect, offsetX + label.BoundingBox.X * scale);
+                    Canvas.SetTop(rect, offsetY + label.BoundingBox.Y * scale);
+                    AnnotationCanvas.Children.Add(rect);
+
+                    var textBlock = new TextBlock
+                    {
+                        Text = label.ClassName,
+                        Foreground = Brushes.White,
+                        Background = new SolidColorBrush(Color.FromArgb(180, color.R, color.G, color.B)),
+                        FontSize = 11,
+                        Padding = new Thickness(3, 1, 3, 1)
+                    };
+                    Canvas.SetLeft(textBlock, offsetX + label.BoundingBox.X * scale);
+                    Canvas.SetTop(textBlock, offsetY + label.BoundingBox.Y * scale - 18);
+                    AnnotationCanvas.Children.Add(textBlock);
+                }
+            }
+
+            // SAM preview polygon (green dashed)
+            if (ViewModel?.CurrentSamPreviewPolygon != null && ViewModel.CurrentSamPreviewPolygon.Count >= 3)
+            {
+                DrawPolygon(ViewModel.CurrentSamPreviewPolygon, scale, offsetX, offsetY,
+                    Color.FromRgb(0, 255, 0), null, null, isDashed: true);
+            }
+
+            // SAM click points visualization
+            if (ViewModel?.SamClickPoints != null)
+            {
+                foreach (var pt in ViewModel.SamClickPoints)
+                {
+                    double cx = offsetX + pt.X * scale;
+                    double cy = offsetY + pt.Y * scale;
+                    var dotColor = pt.Label == 1 ? Colors.LimeGreen : Colors.Red;
+
+                    var dot = new Ellipse
+                    {
+                        Width = 10, Height = 10,
+                        Fill = new SolidColorBrush(dotColor),
+                        Stroke = Brushes.White,
+                        StrokeThickness = 1.5
+                    };
+                    Canvas.SetLeft(dot, cx - 5);
+                    Canvas.SetTop(dot, cy - 5);
+                    AnnotationCanvas.Children.Add(dot);
+                }
+            }
+        }
+
+        private void DrawPolygon(
+            System.Collections.Generic.List<OpenCvSharp.Point2d> points,
+            double scale, double offsetX, double offsetY,
+            Color color, string? tag, string? className, bool isDashed = false)
+        {
+            var polygon = new System.Windows.Shapes.Polygon
+            {
+                Stroke = new SolidColorBrush(color),
+                StrokeThickness = isDashed ? 2 : 2,
+                Fill = new SolidColorBrush(Color.FromArgb(isDashed ? (byte)50 : (byte)30, color.R, color.G, color.B)),
+                Tag = tag
+            };
+
+            if (isDashed)
+                polygon.StrokeDashArray = new DoubleCollection { 4, 2 };
+
+            foreach (var pt in points)
+                polygon.Points.Add(new System.Windows.Point(offsetX + pt.X * scale, offsetY + pt.Y * scale));
+
+            AnnotationCanvas.Children.Add(polygon);
+
+            if (className != null && points.Count > 0)
+            {
+                double minX = points.Min(p => p.X);
+                double minY = points.Min(p => p.Y);
 
                 var textBlock = new TextBlock
                 {
-                    Text = label.ClassName,
+                    Text = className,
                     Foreground = Brushes.White,
                     Background = new SolidColorBrush(Color.FromArgb(180, color.R, color.G, color.B)),
                     FontSize = 11,
                     Padding = new Thickness(3, 1, 3, 1)
                 };
-                Canvas.SetLeft(textBlock, offsetX + label.BoundingBox.X * scale);
-                Canvas.SetTop(textBlock, offsetY + label.BoundingBox.Y * scale - 18);
+                Canvas.SetLeft(textBlock, offsetX + minX * scale);
+                Canvas.SetTop(textBlock, offsetY + minY * scale - 18);
                 AnnotationCanvas.Children.Add(textBlock);
             }
         }
@@ -153,10 +284,32 @@ namespace VMS.DeepLearning.Views
         private void AnnotationCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (ViewModel?.CurrentMat == null || ViewModel.CurrentImage == null) return;
+
+            // Segmentation mode: SAM foreground click
+            if (ViewModel.IsSegmentationMode)
+            {
+                var coords = CanvasToImageCoords(e.GetPosition(AnnotationCanvas));
+                if (coords.HasValue && ViewModel.IsSamModelLoaded)
+                    _ = ViewModel.OnSamClickAsync(coords.Value.imgX, coords.Value.imgY, isBackground: false);
+                return;
+            }
+
             if (!ViewModel.IsBoundingBoxMode) return;
 
+            var clickPos = e.GetPosition(AnnotationCanvas);
+
+            // 기존 바운딩 박스 클릭 확인 — 히트 테스트
+            var hitLabel = HitTestLabel(clickPos);
+            if (hitLabel != null)
+            {
+                ViewModel.SelectedLabel = hitLabel;
+                HighlightSelectedBox(hitLabel.Id);
+                return;
+            }
+
+            // 빈 곳 클릭 — 새 박스 그리기 시작
             _isDrawing = true;
-            _drawStart = e.GetPosition(AnnotationCanvas);
+            _drawStart = clickPos;
 
             _drawingRect = new System.Windows.Shapes.Rectangle
             {
@@ -170,6 +323,59 @@ namespace VMS.DeepLearning.Views
             AnnotationCanvas.Children.Add(_drawingRect);
 
             AnnotationCanvas.CaptureMouse();
+        }
+
+        /// <summary>
+        /// 클릭 위치에 해당하는 라벨을 찾습니다.
+        /// </summary>
+        private LabelInfo? HitTestLabel(System.Windows.Point canvasPoint)
+        {
+            if (ViewModel?.CurrentMat == null || ViewModel.CurrentImage == null) return null;
+
+            var mat = ViewModel.CurrentMat;
+            double canvasW = AnnotationCanvas.ActualWidth;
+            double canvasH = AnnotationCanvas.ActualHeight;
+            double scaleX = canvasW / mat.Width;
+            double scaleY = canvasH / mat.Height;
+            double scale = Math.Min(scaleX, scaleY);
+            double offsetX = (canvasW - mat.Width * scale) / 2;
+            double offsetY = (canvasH - mat.Height * scale) / 2;
+
+            // 역순 순회 (위에 그려진 것 먼저)
+            foreach (var label in ViewModel.CurrentImage.Labels.AsEnumerable().Reverse())
+            {
+                double left = offsetX + label.BoundingBox.X * scale;
+                double top = offsetY + label.BoundingBox.Y * scale;
+                double width = label.BoundingBox.Width * scale;
+                double height = label.BoundingBox.Height * scale;
+
+                if (canvasPoint.X >= left && canvasPoint.X <= left + width &&
+                    canvasPoint.Y >= top && canvasPoint.Y <= top + height)
+                {
+                    return label;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// 선택된 박스를 시각적으로 강조합니다.
+        /// </summary>
+        private void HighlightSelectedBox(string labelId)
+        {
+            foreach (var child in AnnotationCanvas.Children.OfType<System.Windows.Shapes.Rectangle>())
+            {
+                if (child.Tag is string id && id == labelId)
+                {
+                    child.StrokeThickness = 3;
+                    child.StrokeDashArray = new DoubleCollection { 4, 2 };
+                }
+                else if (child.Tag is string)
+                {
+                    child.StrokeThickness = 2;
+                    child.StrokeDashArray = null;
+                }
+            }
         }
 
         private void AnnotationCanvas_MouseMove(object sender, MouseEventArgs e)
@@ -198,11 +404,17 @@ namespace VMS.DeepLearning.Views
             double w = _drawingRect.Width;
             double h = _drawingRect.Height;
 
-            // 최소 크기 체크 — 너무 작은 박스는 클릭으로 간주
+            // 최소 크기 체크 — 너무 작은 박스는 클릭으로 간주하여 선택 시도
             if (w < 10 || h < 10)
             {
                 AnnotationCanvas.Children.Remove(_drawingRect);
                 _drawingRect = null;
+                var hitLabel = HitTestLabel(_drawStart);
+                if (hitLabel != null && ViewModel != null)
+                {
+                    ViewModel.SelectedLabel = hitLabel;
+                    HighlightSelectedBox(hitLabel.Id);
+                }
                 return;
             }
 
@@ -246,6 +458,96 @@ namespace VMS.DeepLearning.Views
             AnnotationCanvas.Children.Remove(_drawingRect);
             _drawingRect = null;
             RedrawAnnotations();
+        }
+
+        #endregion
+
+        #region Zoom / Pan
+
+        private void ImageBorder_MouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            // Zoom at cursor position
+            var cursorPos = e.GetPosition(ImageContainer);
+
+            double oldZoom = _zoomLevel;
+            if (e.Delta > 0)
+                _zoomLevel = Math.Min(ZoomMax, _zoomLevel * ZoomStep);
+            else
+                _zoomLevel = Math.Max(ZoomMin, _zoomLevel / ZoomStep);
+
+            double factor = _zoomLevel / oldZoom;
+
+            ZoomTransform.ScaleX = _zoomLevel;
+            ZoomTransform.ScaleY = _zoomLevel;
+
+            // Adjust pan to keep cursor position stable
+            PanTransform.X = cursorPos.X - factor * (cursorPos.X - PanTransform.X);
+            PanTransform.Y = cursorPos.Y - factor * (cursorPos.Y - PanTransform.Y);
+
+            e.Handled = true;
+        }
+
+        private void ImageBorder_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Middle)
+            {
+                if (e.ClickCount == 2)
+                {
+                    // Double middle-click: reset zoom/pan
+                    ResetZoomPan();
+                    e.Handled = true;
+                    return;
+                }
+                _isPanning = true;
+                _panStart = e.GetPosition(ImageBorder);
+                _panStartX = PanTransform.X;
+                _panStartY = PanTransform.Y;
+                ImageBorder.CaptureMouse();
+                ImageBorder.Cursor = System.Windows.Input.Cursors.Hand;
+                e.Handled = true;
+            }
+        }
+
+        private void ImageBorder_PreviewMouseUp(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Middle && _isPanning)
+            {
+                _isPanning = false;
+                ImageBorder.ReleaseMouseCapture();
+                ImageBorder.Cursor = null;
+                e.Handled = true;
+            }
+        }
+
+        private void ImageBorder_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (!_isPanning) return;
+            var pos = e.GetPosition(ImageBorder);
+            PanTransform.X = _panStartX + (pos.X - _panStart.X);
+            PanTransform.Y = _panStartY + (pos.Y - _panStart.Y);
+        }
+
+        private void ResetZoomPan()
+        {
+            _zoomLevel = 1.0;
+            ZoomTransform.ScaleX = 1;
+            ZoomTransform.ScaleY = 1;
+            PanTransform.X = 0;
+            PanTransform.Y = 0;
+        }
+
+        #endregion
+
+        #region SAM Right-Click (Background)
+
+        private void AnnotationCanvas_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (ViewModel == null || !ViewModel.IsSegmentationMode) return;
+            if (!ViewModel.IsSamModelLoaded || ViewModel.CurrentMat == null) return;
+
+            var coords = CanvasToImageCoords(e.GetPosition(AnnotationCanvas));
+            if (coords.HasValue)
+                _ = ViewModel.OnSamClickAsync(coords.Value.imgX, coords.Value.imgY, isBackground: true);
         }
 
         #endregion

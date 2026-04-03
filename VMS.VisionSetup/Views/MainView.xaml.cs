@@ -680,6 +680,15 @@ namespace VMS.VisionSetup
         }
 
         /// <summary>
+        /// Deep Learning 라벨링/학습 앱 실행
+        /// </summary>
+        private void DeepLearning_Click(object sender, RoutedEventArgs e)
+        {
+            var vm = DataContext as MainViewModel;
+            vm?.LaunchDeepLearning();
+        }
+
+        /// <summary>
         /// MultiView 스캔 설정 다이얼로그 열기
         /// </summary>
         private void MultiViewSetup_Click(object sender, RoutedEventArgs e)

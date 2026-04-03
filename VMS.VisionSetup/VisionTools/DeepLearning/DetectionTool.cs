@@ -4,6 +4,7 @@ using Microsoft.ML.OnnxRuntime.Tensors;
 using OpenCvSharp;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using VMS.VisionSetup.Models;
 
@@ -26,7 +27,7 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         private int _inputSize = 640;
 
         [ObservableProperty]
-        private double _confidenceThreshold = 0.5;
+        private double _confidenceThreshold = 0.25;
 
         [ObservableProperty]
         private double _iouThreshold = 0.45;
@@ -36,6 +37,10 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
 
         [ObservableProperty]
         private bool _drawOverlay = true;
+
+        /// <summary>ONNX 메타데이터에서 로드된 클래스 목록</summary>
+        [ObservableProperty]
+        private ObservableCollection<string> _modelClassNames = new();
 
         public DetectionTool()
         {
@@ -47,6 +52,28 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         {
             _engine?.Dispose();
             _engine = null;
+            LoadModelMetadata(value);
+        }
+
+        private void LoadModelMetadata(string modelPath)
+        {
+            ModelClassNames.Clear();
+            if (string.IsNullOrEmpty(modelPath) || !System.IO.File.Exists(modelPath))
+                return;
+
+            try
+            {
+                using var tempEngine = new YoloOnnxEngine(modelPath);
+                var names = tempEngine.GetClassNames();
+                if (names.Length > 0)
+                {
+                    foreach (var name in names)
+                        ModelClassNames.Add(name);
+
+                    ClassNamesText = string.Join(", ", names);
+                }
+            }
+            catch { /* 모델 로드 실패 시 무시 */ }
         }
 
         public string[] ClassNames => string.IsNullOrWhiteSpace(ClassNamesText)
@@ -193,27 +220,40 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
             LoadModel(modelPath);
         }
 
+        /// <summary>ONNX 메타데이터에서 클래스 이름 배열을 반환합니다.</summary>
+        public string[] GetClassNames() => ReadClassNamesFromMetadata();
+
         public List<DetectionResult> Detect(Mat image, int inputSize, float confThreshold, float iouThreshold)
         {
             if (_session == null) return new List<DetectionResult>();
 
-            // 전처리: letterbox resize
-            float scaleX = (float)image.Width / inputSize;
-            float scaleY = (float)image.Height / inputSize;
+            // Letterbox 전처리: 비율 유지 + 패딩 (Ultralytics 학습 방식과 동일)
+            float scale = Math.Min((float)inputSize / image.Width, (float)inputSize / image.Height);
+            int newW = (int)(image.Width * scale);
+            int newH = (int)(image.Height * scale);
+            int padX = (inputSize - newW) / 2;
+            int padY = (inputSize - newH) / 2;
 
-            var tensor = PreprocessImageSimple(image, inputSize, inputSize);
+            using var resized = new Mat();
+            Cv2.Resize(image, resized, new Size(newW, newH));
+
+            using var letterbox = new Mat(inputSize, inputSize, image.Type(), new Scalar(114, 114, 114));
+            resized.CopyTo(letterbox[new Rect(padX, padY, newW, newH)]);
+
+            var tensor = PreprocessImageSimple(letterbox, inputSize, inputSize);
 
             var inputs = CreateInput(GetInputName(), tensor);
 
             using var outputs = _session.Run(inputs);
             var output = outputs.First().AsTensor<float>();
 
-            return ParseYoloOutput(output, scaleX, scaleY, confThreshold, iouThreshold,
+            // letterbox 좌표 → 원본 이미지 좌표 변환을 위한 스케일
+            return ParseYoloOutput(output, scale, padX, padY, confThreshold, iouThreshold,
                 image.Width, image.Height);
         }
 
         private static List<DetectionResult> ParseYoloOutput(
-            Tensor<float> output, float scaleX, float scaleY,
+            Tensor<float> output, float scale, int padX, int padY,
             float confThreshold, float iouThreshold,
             int imgWidth, int imgHeight)
         {
@@ -284,10 +324,11 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
 
                 if (maxScore < confThreshold) continue;
 
-                int x1 = Math.Clamp((int)((cx - w / 2) * scaleX), 0, imgWidth);
-                int y1 = Math.Clamp((int)((cy - h / 2) * scaleY), 0, imgHeight);
-                int x2 = Math.Clamp((int)((cx + w / 2) * scaleX), 0, imgWidth);
-                int y2 = Math.Clamp((int)((cy + h / 2) * scaleY), 0, imgHeight);
+                // letterbox 좌표 → 원본 이미지 좌표
+                int x1 = Math.Clamp((int)((cx - w / 2 - padX) / scale), 0, imgWidth);
+                int y1 = Math.Clamp((int)((cy - h / 2 - padY) / scale), 0, imgHeight);
+                int x2 = Math.Clamp((int)((cx + w / 2 - padX) / scale), 0, imgWidth);
+                int y2 = Math.Clamp((int)((cy + h / 2 - padY) / scale), 0, imgHeight);
 
                 candidates.Add((new DetectionResult
                 {

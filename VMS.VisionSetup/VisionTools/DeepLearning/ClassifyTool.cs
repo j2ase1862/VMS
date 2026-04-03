@@ -4,6 +4,7 @@ using Microsoft.ML.OnnxRuntime.Tensors;
 using OpenCvSharp;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using VMS.VisionSetup.Models;
 
@@ -40,6 +41,10 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         [ObservableProperty]
         private bool _useImageNetNormalization = true;
 
+        /// <summary>ONNX 메타데이터에서 로드된 클래스 목록</summary>
+        [ObservableProperty]
+        private ObservableCollection<string> _modelClassNames = new();
+
         public ClassifyTool()
         {
             Name = "Classify";
@@ -50,6 +55,27 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         {
             _engine?.Dispose();
             _engine = null;
+            LoadModelMetadata(value);
+        }
+
+        private void LoadModelMetadata(string modelPath)
+        {
+            ModelClassNames.Clear();
+            if (string.IsNullOrEmpty(modelPath) || !System.IO.File.Exists(modelPath))
+                return;
+
+            try
+            {
+                using var tempEngine = new ClassifierOnnxEngine(modelPath);
+                var names = tempEngine.GetClassNames();
+                if (names.Length > 0)
+                {
+                    foreach (var name in names)
+                        ModelClassNames.Add(name);
+                    ClassNamesText = string.Join(", ", names);
+                }
+            }
+            catch { }
         }
 
         public string[] ClassNames => string.IsNullOrWhiteSpace(ClassNamesText)
@@ -165,6 +191,8 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         {
             LoadModel(modelPath);
         }
+
+        public string[] GetClassNames() => ReadClassNamesFromMetadata();
 
         public ClassificationResult Classify(Mat image, int inputW, int inputH, bool useImageNet)
         {

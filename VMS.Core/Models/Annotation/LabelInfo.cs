@@ -41,7 +41,10 @@ namespace VMS.Core.Models.Annotation
         OCR,
 
         /// <summary>Analyze — 이상 탐지 (Red)</summary>
-        AnomalyDetection
+        AnomalyDetection,
+
+        /// <summary>Segment — 인스턴스 세그멘테이션</summary>
+        Segmentation
     }
 
     /// <summary>
