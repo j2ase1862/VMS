@@ -1,8 +1,20 @@
+using Microsoft.Win32;
+using System;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 
 namespace VMS.VisionSetup.Controls
 {
+    /// <summary>null이 아니면 true</summary>
+    public class NotNullToBoolConverter : IValueConverter
+    {
+        public static readonly NotNullToBoolConverter Instance = new();
+        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) => value != null;
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
+    }
+
     public partial class TextBoxParameter : UserControl
     {
         public static readonly DependencyProperty LabelProperty =
@@ -18,14 +30,43 @@ namespace VMS.VisionSetup.Controls
         public static readonly DependencyProperty ParameterNameProperty =
             DependencyProperty.Register(nameof(ParameterName), typeof(string), typeof(TextBoxParameter), new PropertyMetadata(null));
 
+        public static readonly DependencyProperty BrowseFilterProperty =
+            DependencyProperty.Register(nameof(BrowseFilter), typeof(string), typeof(TextBoxParameter), new PropertyMetadata(null));
+
         public string Label { get => (string)GetValue(LabelProperty); set => SetValue(LabelProperty, value); }
         public object? Value { get => GetValue(ValueProperty); set => SetValue(ValueProperty, value); }
         public string? ToolType { get => (string?)GetValue(ToolTypeProperty); set => SetValue(ToolTypeProperty, value); }
         public string? ParameterName { get => (string?)GetValue(ParameterNameProperty); set => SetValue(ParameterNameProperty, value); }
 
+        /// <summary>
+        /// 파일 탐색기 필터. 설정하면 탐색 버튼이 표시됩니다.
+        /// 예: "ONNX Models (*.onnx)|*.onnx|All Files (*.*)|*.*"
+        /// </summary>
+        public string? BrowseFilter { get => (string?)GetValue(BrowseFilterProperty); set => SetValue(BrowseFilterProperty, value); }
+
         public TextBoxParameter()
         {
             InitializeComponent();
+        }
+
+        private void BrowseButton_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new OpenFileDialog
+            {
+                Title = Label ?? "파일 선택",
+                Filter = BrowseFilter ?? "All Files (*.*)|*.*"
+            };
+
+            if (Value is string currentPath && !string.IsNullOrEmpty(currentPath))
+            {
+                try { dialog.InitialDirectory = System.IO.Path.GetDirectoryName(currentPath) ?? ""; }
+                catch { /* ignore */ }
+            }
+
+            if (dialog.ShowDialog() == true)
+            {
+                SetCurrentValue(ValueProperty, (object)dialog.FileName);
+            }
         }
     }
 }
