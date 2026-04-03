@@ -11,6 +11,7 @@
             <StackPanel Margin="5,0,0,0">
                 <controls:TextBoxParameter Label="Model Path (.onnx)"
                     Value="{Binding ModelPath}"
+                    BrowseFilter="ONNX Models (*.onnx)|*.onnx|All Files (*.*)|*.*"
                     ToolType="ClassifyTool" ParameterName="ModelPath"/>
                 <controls:SliderParameter Label="Input Width"
                     Value="{Binding InputWidth}" Minimum="32" Maximum="640"
@@ -33,9 +34,36 @@
                     Value="{Binding ConfidenceThreshold}" Minimum="0.1" Maximum="1.0"
                     TickFrequency="0.05" ValueFormat="F2"
                     ToolType="ClassifyTool" ParameterName="ConfidenceThreshold"/>
-                <controls:TextBoxParameter Label="Class Names (comma-separated)"
-                    Value="{Binding ClassNamesText}"
-                    ToolType="ClassifyTool" ParameterName="ClassNamesText"/>
+                <!-- Class Names: 모델 메타데이터에서 자동 로드 -->
+                <StackPanel Margin="0,5,0,5">
+                    <TextBlock Text="Class Names" Foreground="LightGray" FontSize="12" Margin="0,0,0,4"/>
+                    <ComboBox ItemsSource="{Binding ModelClassNames}"
+                              SelectedIndex="0">
+                        <ComboBox.Style>
+                            <Style TargetType="ComboBox" BasedOn="{StaticResource SettingComboBoxStyle}">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ModelClassNames.Count, FallbackValue=0}" Value="0">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ComboBox.Style>
+                    </ComboBox>
+                    <TextBlock Foreground="#666" FontSize="10" FontStyle="Italic">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ModelClassNames.Count, FallbackValue=0}" Value="0">
+                                        <Setter Property="Text" Value="모델을 선택하면 클래스가 자동으로 로드됩니다."/>
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
                 <controls:CheckBoxParameter Label="Use ImageNet Normalization"
                     IsChecked="{Binding UseImageNetNormalization}"
                     ToolType="ClassifyTool" ParameterName="UseImageNetNormalization"/>

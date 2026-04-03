@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using VMS.VisionSetup.VisionTools.DeepLearning;
 
 namespace VMS.VisionSetup.ViewModels.ToolSettings
@@ -16,6 +17,7 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         public double ConfidenceThreshold { get => TypedTool.ConfidenceThreshold; set => TypedTool.ConfidenceThreshold = value; }
         public double IouThreshold { get => TypedTool.IouThreshold; set => TypedTool.IouThreshold = value; }
         public string ClassNamesText { get => TypedTool.ClassNamesText; set => TypedTool.ClassNamesText = value; }
+        public ObservableCollection<string> ModelClassNames => TypedTool.ModelClassNames;
 
         // Display
         public bool DrawOverlay { get => TypedTool.DrawOverlay; set => TypedTool.DrawOverlay = value; }
