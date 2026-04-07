@@ -90,8 +90,14 @@ def main():
 
     val_loader = None
     if os.path.exists(val_dir):
-        val_dataset = datasets.ImageFolder(val_dir, transform=transform_val)
-        val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=2)
+        try:
+            val_dataset = datasets.ImageFolder(val_dir, transform=transform_val)
+            if len(val_dataset) > 0:
+                val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=2)
+            else:
+                print("Warning: val 데이터가 비어있어 train 데이터로 검증합니다.", flush=True)
+        except FileNotFoundError:
+            print("Warning: val 폴더에 유효한 이미지가 없어 train 데이터로 검증합니다.", flush=True)
 
     num_classes = len(train_dataset.classes)
     class_names = train_dataset.classes
@@ -198,6 +204,16 @@ def main():
             dynamic_axes={"input": {0: "batch"}, "output": {0: "batch"}},
             opset_version=13,
         )
+
+        # ONNX 모델에 클래스명 메타데이터 삽입 (Ultralytics 호환 형식)
+        import onnx
+        onnx_model = onnx.load(onnx_path)
+        names_str = "{" + ", ".join(f"{i}: '{n}'" for i, n in enumerate(class_names)) + "}"
+        meta = onnx_model.metadata_props.add()
+        meta.key = "names"
+        meta.value = names_str
+        onnx.save(onnx_model, onnx_path)
+
         print(f"[ONNX] {onnx_path}", flush=True)
 
     print("[PROGRESS] 100", flush=True)

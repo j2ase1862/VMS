@@ -1,3 +1,6 @@
+using System;
+using System.Diagnostics;
+using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace VMS.Core.Models.Annotation
@@ -69,11 +72,40 @@ namespace VMS.Core.Models.Annotation
             set => SetProperty(ref _batchSize, value);
         }
 
-        private string _pythonPath = "python";
+        private string _pythonPath = DetectPython();
         public string PythonPath
         {
             get => _pythonPath;
             set => SetProperty(ref _pythonPath, value);
+        }
+
+        private static string DetectPython()
+        {
+            // py launcher로 3.12 → 3.11 → 3.10 순서로 torch 설치된 Python 탐색
+            string[] versions = ["3.12", "3.11", "3.10"];
+            foreach (var ver in versions)
+            {
+                try
+                {
+                    var psi = new ProcessStartInfo
+                    {
+                        FileName = "py",
+                        Arguments = $"-{ver} -c \"import torch; import sys; print(sys.executable)\"",
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        CreateNoWindow = true
+                    };
+                    using var proc = Process.Start(psi);
+                    if (proc == null) continue;
+                    string output = proc.StandardOutput.ReadToEnd().Trim();
+                    proc.WaitForExit(5000);
+                    if (proc.ExitCode == 0 && File.Exists(output))
+                        return output;
+                }
+                catch { }
+            }
+            return "python";
         }
 
         private string _trainingScriptPath = string.Empty;

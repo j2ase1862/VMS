@@ -10,6 +10,7 @@ namespace VMS.VisionSetup.Interfaces
         void ShowError(string message, string title);
         bool ShowConfirmation(string message, string title);
         string? ShowOpenFileDialog(string title, string filter);
+        string? ShowFolderBrowserDialog(string description);
         string? ShowSaveFileDialog(string filter, string defaultExt, string? fileName = null);
         string? ShowRenameDialog(string currentName);
         void ShowCameraManagerDialog();
