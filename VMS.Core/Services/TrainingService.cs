@@ -64,6 +64,7 @@ namespace VMS.Core.Services
                     StandardOutputEncoding = System.Text.Encoding.UTF8,
                     StandardErrorEncoding = System.Text.Encoding.UTF8
                 };
+                startInfo.Environment["PYTHONIOENCODING"] = "utf-8";
 
                 _trainingProcess = new Process { StartInfo = startInfo };
                 _trainingProcess.Start();
@@ -234,8 +235,8 @@ namespace VMS.Core.Services
                 sb.Append($" --target {config.Target.ToString().ToLower()}");
             }
 
-            sb.Append($" --dataset \"{config.DatasetPath}\"");
-            sb.Append($" --output \"{config.OutputDir}\"");
+            sb.Append($" --dataset \"{config.DatasetPath.TrimEnd('\\')}\"");
+            sb.Append($" --output \"{config.OutputDir.TrimEnd('\\')}\"");
             sb.Append($" --epochs {config.Epochs}");
             sb.Append($" --lr {config.LearningRate.ToString(CultureInfo.InvariantCulture)}");
             sb.Append($" --batch_size {config.BatchSize}");

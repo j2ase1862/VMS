@@ -11,6 +11,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RootNamespace>VMS.DeepLearning</RootNamespace>
     <AssemblyName>VMS.DeepLearning</AssemblyName>
+    <ApplicationIcon>Resources\app.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,6 +24,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\VMS.Core\VMS.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\app.ico" />
   </ItemGroup>
 
   <ItemGroup>

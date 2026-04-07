@@ -6,7 +6,8 @@
         xmlns:local="clr-namespace:VMS.DeepLearning.Views"
         Title="{Binding WindowTitle}" Width="1400" Height="900"
         WindowStartupLocation="CenterScreen" WindowState="Maximized"
-        Background="#1E1E1E">
+        Background="#1E1E1E"
+        Icon="/Resources/app.ico">
     <Window.InputBindings>
         <KeyBinding Key="Return" Command="{Binding ConfirmSamLabelCommand}"/>
         <KeyBinding Key="Escape" Command="{Binding ClearSamPreviewCommand}"/>

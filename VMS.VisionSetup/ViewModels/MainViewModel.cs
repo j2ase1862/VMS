@@ -37,6 +37,13 @@ namespace VMS.VisionSetup.ViewModels
         ResultImage
     }
 
+    public enum FolderNavigationMode
+    {
+        NavigateOnly,
+        AutoRunAll,
+        AutoRunSelected
+    }
+
     #region Messenger Messages
 
     public class RequestShowToolROIMessage
@@ -69,6 +76,8 @@ namespace VMS.VisionSetup.ViewModels
         private ICameraAcquisition? _cameraAcquisition;
         private SharedFrameReader? _sharedFrameReader;
         private CancellationTokenSource? _liveReceiveCts;
+        private string[] _imageFolderFiles = Array.Empty<string>();
+        private int _currentImageIndex = -1;
         #endregion
 
         #region Properties
@@ -107,6 +116,19 @@ namespace VMS.VisionSetup.ViewModels
                 NotifyCommandsCanExecuteChanged();
             }
         }
+
+        // 이미지 폴더 탐색
+        private FolderNavigationMode _folderNavigationMode = FolderNavigationMode.NavigateOnly;
+        public FolderNavigationMode FolderNavigationMode
+        {
+            get => _folderNavigationMode;
+            set => SetProperty(ref _folderNavigationMode, value);
+        }
+
+        public bool HasImageFolder => _imageFolderFiles.Length > 0;
+        public string ImageFolderInfo => _imageFolderFiles.Length > 0
+            ? $"{_currentImageIndex + 1} / {_imageFolderFiles.Length}  -  {System.IO.Path.GetFileName(_imageFolderFiles[_currentImageIndex])}"
+            : string.Empty;
 
         // 표시용 이미지
         [ObservableProperty]
@@ -486,6 +508,9 @@ namespace VMS.VisionSetup.ViewModels
         public RelayCommand StopWaypointScanCommand { get; }
         public RelayCommand SaveHeightSlicingCommand { get; }
         public RelayCommand ClearHeightSlicingCommand { get; }
+        public RelayCommand OpenImageFolderCommand { get; }
+        public RelayCommand PreviousImageCommand { get; }
+        public RelayCommand NextImageCommand { get; }
         #endregion
 
         #region Constructor
@@ -506,6 +531,9 @@ namespace VMS.VisionSetup.ViewModels
 
             CloseCommand = new RelayCommand(CloseApplication);
             OpenImageFileCommand = new RelayCommand(OpenImageFile);
+            OpenImageFolderCommand = new RelayCommand(OpenImageFolder);
+            PreviousImageCommand = new RelayCommand(NavigatePreviousImage, () => _currentImageIndex > 0);
+            NextImageCommand = new RelayCommand(NavigateNextImage, () => _currentImageIndex < _imageFolderFiles.Length - 1);
             RunAllCommand = new RelayCommand(async () => await RunAllTools(), () => !IsRunning && CurrentImage != null);
             RunSelectedCommand = new RelayCommand(RunSelectedTool, () => !IsRunning && SelectedTool != null && CurrentImage != null);
             ClearToolsCommand = new RelayCommand(ClearAllTools);
@@ -673,6 +701,73 @@ namespace VMS.VisionSetup.ViewModels
                     StatusMessage = $"이미지 로드 실패: {ex.Message}";
                     System.Diagnostics.Debug.WriteLine($"이미지 로드 실패: {ex.Message}");
                 }
+            }
+        }
+
+        private void OpenImageFolder()
+        {
+            var folderPath = _dialogService.ShowFolderBrowserDialog("이미지 폴더 선택");
+            if (folderPath == null) return;
+
+            var extensions = new[] { ".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff" };
+            _imageFolderFiles = System.IO.Directory.GetFiles(folderPath)
+                .Where(f => extensions.Contains(System.IO.Path.GetExtension(f).ToLowerInvariant()))
+                .OrderBy(f => f)
+                .ToArray();
+
+            if (_imageFolderFiles.Length == 0)
+            {
+                StatusMessage = "선택한 폴더에 이미지 파일이 없습니다.";
+                return;
+            }
+
+            _currentImageIndex = 0;
+            LoadCurrentFolderImage();
+        }
+
+        private void NavigatePreviousImage()
+        {
+            if (_currentImageIndex <= 0) return;
+            _currentImageIndex--;
+            LoadCurrentFolderImage();
+        }
+
+        private void NavigateNextImage()
+        {
+            if (_currentImageIndex >= _imageFolderFiles.Length - 1) return;
+            _currentImageIndex++;
+            LoadCurrentFolderImage();
+        }
+
+        private async void LoadCurrentFolderImage()
+        {
+            try
+            {
+                var mat = Cv2.ImRead(_imageFolderFiles[_currentImageIndex]);
+                if (!mat.Empty())
+                {
+                    CurrentImage = mat;
+                    SelectedDisplayMode = ImageDisplayMode.OriginalImage;
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"이미지 로드 실패: {ex.Message}";
+            }
+
+            OnPropertyChanged(nameof(HasImageFolder));
+            OnPropertyChanged(nameof(ImageFolderInfo));
+            PreviousImageCommand.NotifyCanExecuteChanged();
+            NextImageCommand.NotifyCanExecuteChanged();
+
+            // 모드에 따라 자동 실행
+            if (FolderNavigationMode == FolderNavigationMode.AutoRunAll && RunAllCommand.CanExecute(null))
+            {
+                await RunAllTools();
+            }
+            else if (FolderNavigationMode == FolderNavigationMode.AutoRunSelected && RunSelectedCommand.CanExecute(null))
+            {
+                RunSelectedTool();
             }
         }
 

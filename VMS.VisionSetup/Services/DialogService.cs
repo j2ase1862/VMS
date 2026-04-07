@@ -55,6 +55,15 @@ namespace VMS.VisionSetup.Services
             return dialog.ShowDialog() == true ? dialog.FileName : null;
         }
 
+        public string? ShowFolderBrowserDialog(string description)
+        {
+            var dialog = new OpenFolderDialog
+            {
+                Title = description
+            };
+            return dialog.ShowDialog() == true ? dialog.FolderName : null;
+        }
+
         public string? ShowSaveFileDialog(string filter, string defaultExt, string? fileName = null)
         {
             var dialog = new SaveFileDialog
