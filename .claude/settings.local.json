@@ -3,7 +3,8 @@
     "allow": [
       "Bash(dotnet build:*)",
       "Read(//c/Users/vinos/.nuget/packages/opencvsharp4/4.11.0.20250507/lib/net6.0/**)",
-      "Bash(dotnet tool:*)"
+      "Bash(dotnet tool:*)",
+      "WebSearch"
     ]
   }
 }

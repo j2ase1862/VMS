@@ -1,3 +1,4 @@
+using VMS.Camera.Models;
 using VMS.VisionSetup.Interfaces;
 using VMS.VisionSetup.Models;
 using System;
@@ -20,6 +21,11 @@ namespace VMS.VisionSetup.Services
         private readonly string _appDataPath;
         private readonly string _recipeFolderPath;
         private Recipe? _currentRecipe;
+
+        // AppSetup에서 로드한 기본 로봇 설정
+        private string _defaultRobotIpAddress = "192.168.1.100";
+        private int _defaultRobotPort = 30003;
+        private EulerConvention _defaultEulerConvention = EulerConvention.UR_RotationVector;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
@@ -139,6 +145,16 @@ namespace VMS.VisionSetup.Services
         #region Recipe Management
 
         /// <summary>
+        /// AppSetup에서 로드한 기본 로봇 설정을 적용
+        /// </summary>
+        public void SetRobotDefaults(string ipAddress, int port, EulerConvention convention)
+        {
+            _defaultRobotIpAddress = ipAddress;
+            _defaultRobotPort = port;
+            _defaultEulerConvention = convention;
+        }
+
+        /// <summary>
         /// 새 레시피 생성
         /// </summary>
         public Recipe CreateNewRecipe(string? name = null)
@@ -154,7 +170,10 @@ namespace VMS.VisionSetup.Services
                 Author = Environment.UserName,
                 UsedCameraIds = new List<string>(),
                 Steps = new List<InspectionStep>(),
-                Criteria = new PassFailCriteria { RequireAllToolsPass = true }
+                Criteria = new PassFailCriteria { RequireAllToolsPass = true },
+                RobotIpAddress = _defaultRobotIpAddress,
+                RobotPort = _defaultRobotPort,
+                EulerConvention = _defaultEulerConvention
             };
 
             CurrentRecipe = recipe;

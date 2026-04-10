@@ -382,6 +382,14 @@ namespace VMS.VisionSetup.ViewModels
             set => SetProperty(ref _selectedEulerConvention, value);
         }
 
+        // 로봇 통신 프로토콜 모드 (AppSetup에서 설정)
+        private RobotProtocolMode _robotProtocolMode = RobotProtocolMode.VendorNative;
+        public RobotProtocolMode RobotProtocolMode
+        {
+            get => _robotProtocolMode;
+            set => SetProperty(ref _robotProtocolMode, value);
+        }
+
         // 로봇 연결 상태
         [ObservableProperty]
         private bool _isRobotConnected;
@@ -409,6 +417,15 @@ namespace VMS.VisionSetup.ViewModels
 
         /// <summary>시뮬레이션 로봇 사용 여부</summary>
         public bool IsSimulatedRobot => _robotService is SimulatedRobotService;
+
+        /// <summary>현재 로봇 서비스 (Hand-Eye 캘리브레이션 위저드 등 외부 접근용)</summary>
+        public IRobotService? RobotService => _robotService;
+
+        /// <summary>현재 카메라 획득 인터페이스</summary>
+        public ICameraAcquisition? CameraAcquisition => _cameraAcquisition;
+
+        /// <summary>다이얼로그 서비스 접근</summary>
+        public IDialogService DialogServiceAccessor => _dialogService;
 
         // 웨이포인트 플래너
         private readonly WaypointPlannerService _waypointPlanner = new();
@@ -446,6 +463,26 @@ namespace VMS.VisionSetup.ViewModels
         }
 
         private CancellationTokenSource? _waypointScanCts;
+
+        // Hand-Eye 캘리브레이션
+        private readonly HandEyeCalibrationService _handEyeCalibration = new();
+        private Matrix4x4 _handEyeMatrix = Matrix4x4.Identity;
+
+        private string? _handEyeCalibrationPath;
+        public string? HandEyeCalibrationPath
+        {
+            get => _handEyeCalibrationPath;
+            set
+            {
+                if (SetProperty(ref _handEyeCalibrationPath, value))
+                {
+                    LoadHandEyeCalibration();
+                    OnPropertyChanged(nameof(IsHandEyeCalibrated));
+                }
+            }
+        }
+
+        public bool IsHandEyeCalibrated => _handEyeCalibration.IsCalibrated;
 
         // 스텝 목록 (선택된 카메라 기준)
         public ObservableCollection<InspectionStep> Steps { get; } = new();
@@ -519,13 +556,17 @@ namespace VMS.VisionSetup.ViewModels
             IRecipeService recipeService,
             ICameraService cameraService,
             IDialogService dialogService,
-            Action shutdownAction)
+            Action shutdownAction,
+            IRobotService? robotService = null)
         {
             _visionService = visionService;
             _recipeService = recipeService;
             _cameraService = cameraService;
             _dialogService = dialogService;
             _shutdownAction = shutdownAction;
+
+            // AppSetup에서 생성된 로봇 서비스 적용 (연결은 사용자가 수동으로)
+            _robotService = robotService;
 
             InitializeToolTree();
 
@@ -1928,21 +1969,50 @@ namespace VMS.VisionSetup.ViewModels
 
         #region Robot / MultiView
 
+        private void LoadHandEyeCalibration()
+        {
+            if (string.IsNullOrEmpty(_handEyeCalibrationPath) || !System.IO.File.Exists(_handEyeCalibrationPath))
+            {
+                _handEyeMatrix = Matrix4x4.Identity;
+                return;
+            }
+
+            if (_handEyeCalibration.LoadResult(_handEyeCalibrationPath))
+            {
+                _handEyeMatrix = _handEyeCalibration.ResultMatrix;
+                StatusMessage = $"핸드-아이 캘리브레이션 로드됨: {System.IO.Path.GetFileName(_handEyeCalibrationPath)}";
+            }
+            else
+            {
+                _handEyeMatrix = Matrix4x4.Identity;
+                StatusMessage = "핸드-아이 캘리브레이션 파일 로드 실패";
+            }
+        }
+
+        [RelayCommand]
+        private void BrowseHandEyeCalibration()
+        {
+            var path = _dialogService.ShowOpenFileDialog("핸드-아이 캘리브레이션 선택", "캘리브레이션 파일|*.json|모든 파일|*.*");
+            if (!string.IsNullOrEmpty(path))
+            {
+                HandEyeCalibrationPath = path;
+            }
+        }
+
         private async System.Threading.Tasks.Task ConnectRobot()
         {
             try
             {
                 _robotService?.Dispose();
 
-                // 시뮬레이션 모드: IP가 "SIM" 또는 비어있으면 SimulatedRobotService 사용
-                if (string.IsNullOrWhiteSpace(RobotIpAddress) || RobotIpAddress.Equals("SIM", StringComparison.OrdinalIgnoreCase))
+                var config = new RobotConnectionConfig
                 {
-                    _robotService = new SimulatedRobotService { Convention = SelectedEulerConvention };
-                }
-                else
-                {
-                    _robotService = new TcpRobotService { Convention = SelectedEulerConvention };
-                }
+                    Convention = SelectedEulerConvention,
+                    IpAddress = RobotIpAddress,
+                    Port = RobotPort,
+                    ProtocolMode = RobotProtocolMode
+                };
+                _robotService = RobotServiceFactory.Create(config);
 
                 var success = await _robotService.ConnectAsync(RobotIpAddress, RobotPort);
                 IsRobotConnected = success;
@@ -2194,11 +2264,14 @@ namespace VMS.VisionSetup.ViewModels
 
             try
             {
+                // 핸드-아이 역행렬 계산
+                Matrix4x4.Invert(_handEyeMatrix, out var handEyeInverse);
+
                 var success = await _waypointPlanner.ExecuteScanSequenceAsync(
                     _robotService,
                     _cameraAcquisition,
                     _multiViewSession,
-                    System.Numerics.Matrix4x4.Identity, // 핸드-아이 역행렬 (TODO: 캘리브레이션 로드)
+                    handEyeInverse,
                     SelectedEulerConvention,
                     "MOVEJ",
                     300,
@@ -2698,6 +2771,7 @@ namespace VMS.VisionSetup.ViewModels
             recipe.RobotPort = RobotPort;
             recipe.EulerConvention = SelectedEulerConvention;
             recipe.RegistrationStrategy = SelectedRegistrationStrategy;
+            recipe.HandEyeCalibrationPath = HandEyeCalibrationPath;
         }
 
         /// <summary>Recipe에서 로봇 설정 복원</summary>
@@ -2707,6 +2781,7 @@ namespace VMS.VisionSetup.ViewModels
             RobotPort = recipe.RobotPort;
             SelectedEulerConvention = recipe.EulerConvention;
             SelectedRegistrationStrategy = recipe.RegistrationStrategy;
+            HandEyeCalibrationPath = recipe.HandEyeCalibrationPath;
             OnPropertyChanged(nameof(NeedsRobot));
         }
 

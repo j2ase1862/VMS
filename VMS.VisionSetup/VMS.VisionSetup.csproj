@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <Resource Include="icon\VisionSetup.ico" />
+    <Resource Include="icon\RecipeManager.ico" />
   </ItemGroup>
 
   <ItemGroup>

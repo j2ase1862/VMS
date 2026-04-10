@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Text.Json.Serialization;
 using VMS.Camera.Models;
 using VMS.PLC.Models;
+using RobotProtocolMode = VMS.Camera.Models.RobotProtocolMode;
 
 namespace VMS.AppSetup.Models
 {
@@ -53,9 +54,32 @@ namespace VMS.AppSetup.Models
         public string WebServerUrl { get; set; } = "http://localhost:5292";
         public string VisionServerUrl { get; set; } = "http://localhost:5000";
 
+        // Page 5: Robot Settings
+        public bool IsRobotEnabled { get; set; }
+        public RobotVendor RobotVendor { get; set; } = RobotVendor.None;
+        public string RobotIpAddress { get; set; } = "192.168.0.200";
+        public int RobotPort { get; set; } = 30003;
+        public EulerConvention EulerConvention { get; set; } = EulerConvention.UR_RotationVector;
+        public RobotProtocolMode RobotProtocolMode { get; set; } = RobotProtocolMode.VendorNative;
+        public byte RobotModbusUnitId { get; set; } = 1;
+        public ushort RobotModbusPoseRegister { get; set; } = 270;
+
         // Metadata
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string Version { get; set; } = "1.0.0";
+    }
+
+    /// <summary>
+    /// 로봇 제조사
+    /// </summary>
+    public enum RobotVendor
+    {
+        None,
+        UR,
+        Doosan,
+        Jaka,
+        ABB,
+        Fanuc
     }
 
     /// <summary>

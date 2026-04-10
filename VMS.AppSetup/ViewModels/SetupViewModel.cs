@@ -2,6 +2,8 @@ using VMS.AppSetup.Interfaces;
 using VMS.AppSetup.Models;
 using VMS.Camera.Models;
 using VMS.PLC.Models;
+using EulerConvention = VMS.Camera.Models.EulerConvention;
+using RobotProtocolMode = VMS.Camera.Models.RobotProtocolMode;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
@@ -12,7 +14,7 @@ namespace VMS.AppSetup.ViewModels
 {
     public partial class SetupViewModel : ObservableObject
     {
-        private const int TotalPages = 4;
+        private const int TotalPages = 5;
 
         private readonly IConfigurationService _configService;
         private readonly IDialogService _dialogService;
@@ -107,10 +109,38 @@ namespace VMS.AppSetup.ViewModels
         [ObservableProperty]
         private PlcEndianMode _endianMode = PlcEndianMode.LittleEndian;
 
+        // Page 5: Robot Settings
+        [ObservableProperty]
+        private bool _isRobotEnabled;
+
+        [ObservableProperty]
+        private RobotVendor _selectedRobotVendor = RobotVendor.None;
+
+        [ObservableProperty]
+        private string _robotIpAddress = "192.168.0.200";
+
+        [ObservableProperty]
+        private int _robotPort = 30003;
+
+        [ObservableProperty]
+        private EulerConvention _selectedEulerConvention = EulerConvention.UR_RotationVector;
+
+        [ObservableProperty]
+        private RobotProtocolMode _selectedRobotProtocolMode = RobotProtocolMode.VendorNative;
+
+        [ObservableProperty]
+        private byte _robotModbusUnitId = 1;
+
+        [ObservableProperty]
+        private ushort _robotModbusPoseRegister = 270;
+
         // Dynamic visibility
         public bool IsSerialMode => SelectedCommunicationType == PlcCommunicationType.Serial;
         public bool IsEthernetMode => SelectedCommunicationType != PlcCommunicationType.Serial;
         public bool IsModbusVendor => SelectedPlcVendor == PlcVendor.Modbus;
+        public bool IsRobotVendorSelected => SelectedRobotVendor != RobotVendor.None;
+        public bool IsRobotModbusMode => SelectedRobotProtocolMode == RobotProtocolMode.ModbusTcp;
+        public bool ShowRobotModbusOption => SelectedRobotVendor == RobotVendor.Doosan;
 
         // Navigation
         [ObservableProperty]
@@ -137,6 +167,9 @@ namespace VMS.AppSetup.ViewModels
         public Array SerialStopBitsValues => Enum.GetValues(typeof(PlcSerialStopBits));
         public Array WriteModes => Enum.GetValues(typeof(PlcWriteMode));
         public Array EndianModes => Enum.GetValues(typeof(PlcEndianMode));
+        public Array RobotVendors => Enum.GetValues(typeof(RobotVendor));
+        public Array EulerConventions => Enum.GetValues(typeof(EulerConvention));
+        public Array RobotProtocolModes => Enum.GetValues(typeof(RobotProtocolMode));
         public int[] BaudRateOptions => [9600, 19200, 38400, 57600, 115200];
         public int[] DataBitsOptions => [7, 8];
 
@@ -188,6 +221,16 @@ namespace VMS.AppSetup.ViewModels
                 WriteMode = config.WriteMode;
                 EndianMode = config.EndianMode;
 
+                // Robot
+                IsRobotEnabled = config.IsRobotEnabled;
+                SelectedRobotVendor = config.RobotVendor;
+                RobotIpAddress = config.RobotIpAddress;
+                RobotPort = config.RobotPort;
+                SelectedEulerConvention = config.EulerConvention;
+                SelectedRobotProtocolMode = config.RobotProtocolMode;
+                RobotModbusUnitId = config.RobotModbusUnitId;
+                RobotModbusPoseRegister = config.RobotModbusPoseRegister;
+
                 foreach (var cam in config.Cameras)
                 {
                     Cameras.Add(cam);
@@ -223,6 +266,83 @@ namespace VMS.AppSetup.ViewModels
             OnPropertyChanged(nameof(IsModbusVendor));
         }
 
+        partial void OnSelectedRobotVendorChanged(RobotVendor value)
+        {
+            OnPropertyChanged(nameof(IsRobotVendorSelected));
+
+            // 제조사별 기본 EulerConvention 및 포트 자동 매핑
+            (SelectedEulerConvention, RobotPort) = value switch
+            {
+                RobotVendor.UR => (EulerConvention.UR_RotationVector, 30003),
+                RobotVendor.Doosan => (EulerConvention.Doosan_ZYX, 12345),
+                RobotVendor.Jaka => (EulerConvention.Jaka_XYZ, 10001),
+                RobotVendor.ABB => (EulerConvention.ABB_Quaternion, 6511),
+                RobotVendor.Fanuc => (EulerConvention.Fanuc_WPR, 18735),
+                _ => (SelectedEulerConvention, RobotPort)
+            };
+
+            // 프로토콜 모드 기본값 리셋 + 설명/옵션 갱신
+            SelectedRobotProtocolMode = RobotProtocolMode.VendorNative;
+            OnPropertyChanged(nameof(ShowRobotModbusOption));
+            OnPropertyChanged(nameof(RobotProtocolDescription));
+        }
+
+        partial void OnSelectedRobotProtocolModeChanged(RobotProtocolMode value)
+        {
+            OnPropertyChanged(nameof(RobotProtocolDescription));
+            OnPropertyChanged(nameof(IsRobotModbusMode));
+
+            // Modbus-TCP 선택 시 포트 자동 변경
+            if (value == RobotProtocolMode.ModbusTcp)
+            {
+                RobotPort = 502;
+            }
+            else if (value == RobotProtocolMode.VendorNative)
+            {
+                // 네이티브 모드로 돌아가면 제조사 기본 포트로 복원
+                RobotPort = SelectedRobotVendor switch
+                {
+                    RobotVendor.UR => 30003,
+                    RobotVendor.Doosan => 12345,
+                    RobotVendor.Jaka => 10001,
+                    RobotVendor.ABB => 6511,
+                    RobotVendor.Fanuc => 18735,
+                    _ => RobotPort
+                };
+            }
+        }
+
+        /// <summary>
+        /// 현재 선택된 Vendor + Protocol 조합에 대한 설명 텍스트
+        /// </summary>
+        public string RobotProtocolDescription => (SelectedRobotVendor, SelectedRobotProtocolMode) switch
+        {
+            (RobotVendor.UR, RobotProtocolMode.VendorNative) =>
+                "UR Real-Time Interface (포트 30003): 125Hz 바이너리 패킷에서 TCP 포즈를 자동으로 읽습니다.",
+            (RobotVendor.Doosan, RobotProtocolMode.VendorNative) =>
+                "Doosan DRL JSON Protocol: {\"cmd\":\"get_current_posx\"} 형식으로 JSON 포즈 데이터를 수신합니다.",
+            (RobotVendor.Doosan, RobotProtocolMode.ModbusTcp) =>
+                "Doosan Modbus-TCP (포트 502): DRL 프로그램 없이 Holding Register에서 실시간 TCP 포즈를 읽습니다. " +
+                "레지스터 6개(X/Y/Z/Rx/Ry/Rz)를 32-bit float으로 파싱합니다.",
+            (RobotVendor.Jaka, RobotProtocolMode.VendorNative) =>
+                "Jaka SDK JSON Protocol: {\"cmdName\":\"get_tcp_pos\"} 형식으로 JSON 포즈 데이터를 수신합니다.",
+            (RobotVendor.ABB, RobotProtocolMode.VendorNative) =>
+                "ABB RAPID Socket: [x,y,z],[q1,q2,q3,q4] robtarget 형식으로 쿼터니언 포즈를 수신합니다.",
+            (RobotVendor.Fanuc, RobotProtocolMode.VendorNative) =>
+                "Fanuc KAREL/TP Socket: CURPOS X:.. Y:.. Z:.. W:.. P:.. R:.. 형식으로 WPR 포즈를 수신합니다.",
+            (_, RobotProtocolMode.CustomSocket) =>
+                "Custom Socket Server: 사용자 로봇 프로그램의 소켓 서버에 텍스트 명령을 전송하고 CSV 응답(x,y,z,rx,ry,rz)을 파싱합니다.",
+            _ => "로봇 제조사를 선택하세요."
+        };
+
+        partial void OnIsRobotEnabledChanged(bool value)
+        {
+            if (value && SelectedRobotVendor == RobotVendor.None)
+            {
+                SelectedRobotVendor = RobotVendor.UR;
+            }
+        }
+
         private void UpdatePageInfo()
         {
             CanGoBack = CurrentPage > 1;
@@ -237,7 +357,8 @@ namespace VMS.AppSetup.ViewModels
                         "You will set up:\n" +
                         "• Application settings and network configuration\n" +
                         "• Camera connections and manufacturers\n" +
-                        "• PLC communication interface\n\n" +
+                        "• PLC communication interface\n" +
+                        "• Robot integration (optional)\n\n" +
                         "Click 'Next' to begin the setup process.";
                     break;
                 case 2:
@@ -252,6 +373,11 @@ namespace VMS.AppSetup.ViewModels
                 case 4:
                     PageTitle = "PLC Communication";
                     PageDescription = "Configure the PLC vendor and communication interface.";
+                    break;
+                case 5:
+                    PageTitle = "Robot Configuration";
+                    PageDescription = "Configure robot integration for multi-view 3D scanning.\n" +
+                        "Enable this if your system uses a robot for camera positioning.";
                     break;
             }
         }
@@ -367,7 +493,17 @@ namespace VMS.AppSetup.ViewModels
 
                 // Data Synchronization
                 WriteMode = WriteMode,
-                EndianMode = EndianMode
+                EndianMode = EndianMode,
+
+                // Robot
+                IsRobotEnabled = IsRobotEnabled,
+                RobotVendor = SelectedRobotVendor,
+                RobotIpAddress = RobotIpAddress,
+                RobotPort = RobotPort,
+                EulerConvention = SelectedEulerConvention,
+                RobotProtocolMode = SelectedRobotProtocolMode,
+                RobotModbusUnitId = RobotModbusUnitId,
+                RobotModbusPoseRegister = RobotModbusPoseRegister
             };
 
             if (_configService.SaveConfiguration(config))

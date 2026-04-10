@@ -115,6 +115,54 @@
                     </StackPanel>
                 </Grid>
 
+                <!-- Hand-Eye Calibration -->
+                <TextBlock Text="Hand-Eye Calibration" Style="{StaticResource SectionLabel}"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox Grid.Column="0"
+                             Text="{Binding HandEyeCalibrationPath, UpdateSourceTrigger=PropertyChanged}"
+                             Background="#2D2D30" Foreground="White" BorderBrush="#555"
+                             FontSize="10" Padding="6,4" IsReadOnly="True"
+                             ToolTip="{Binding HandEyeCalibrationPath}"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <Button Command="{Binding BrowseHandEyeCalibrationCommand}"
+                                Content="..." Background="#3A3A3C"
+                                Style="{StaticResource ActionButton}" Padding="10,4" Margin="4,0,0,0"/>
+                        <Button x:Name="CalibrateButton" Click="HandEyeCalibrate_Click"
+                                Content="Calibrate" Background="#9C27B0"
+                                Style="{StaticResource ActionButton}" Padding="10,4" Margin="4,0,0,0"/>
+                    </StackPanel>
+                </Grid>
+                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                    <Ellipse Width="8" Height="8" VerticalAlignment="Center">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Fill" Value="#F44336"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsHandEyeCalibrated}" Value="True">
+                                        <Setter Property="Fill" Value="#4CAF50"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
+                    <TextBlock Foreground="#999" FontSize="10" Margin="6,0,0,0" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Text" Value="Not Calibrated"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsHandEyeCalibrated}" Value="True">
+                                        <Setter Property="Text" Value="Calibrated"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+
                 <!-- Strategy -->
                 <TextBlock Text="Registration Strategy" Style="{StaticResource SectionLabel}"/>
                 <ComboBox ItemsSource="{Binding RegistrationStrategies}"
