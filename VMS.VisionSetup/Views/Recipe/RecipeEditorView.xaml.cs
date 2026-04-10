@@ -237,6 +237,20 @@ namespace VMS.VisionSetup.Views.Recipe
                     break;
                 }
             }
+
+            // Robot Waypoint 정보 표시
+            if (step.RobotWaypoint != null)
+            {
+                StepWaypointPanel.Visibility = Visibility.Visible;
+                var wp = step.RobotWaypoint;
+                WaypointPositionText.Text = $"{wp.CameraPosition.X:F1}, {wp.CameraPosition.Y:F1}, {wp.CameraPosition.Z:F1}";
+                WaypointTargetText.Text = $"{wp.LookAtTarget.X:F1}, {wp.LookAtTarget.Y:F1}, {wp.LookAtTarget.Z:F1}";
+                WaypointDistanceText.Text = $"Distance: {wp.Distance:F1} mm";
+            }
+            else
+            {
+                StepWaypointPanel.Visibility = Visibility.Collapsed;
+            }
         }
 
         private void ShowToolProperties(string toolId, string? stepId)

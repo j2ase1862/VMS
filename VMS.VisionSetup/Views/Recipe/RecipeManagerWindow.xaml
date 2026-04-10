@@ -8,7 +8,8 @@
         Title="Recipe Manager"
         Width="900" Height="650"
         WindowStartupLocation="CenterOwner"
-        Background="#1E1E1E">
+        Background="#1E1E1E"
+        Icon="/icon/RecipeManager.ico">
 
     <Grid>
         <Grid.ColumnDefinitions>

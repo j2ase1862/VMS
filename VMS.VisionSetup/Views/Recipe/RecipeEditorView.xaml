@@ -222,6 +222,32 @@
                                     </StackPanel>
                                 </Grid>
 
+                                <!-- Robot Waypoint Info (shown when step has waypoint) -->
+                                <Border x:Name="StepWaypointPanel" Background="#1E3A2E" CornerRadius="4"
+                                        Padding="10,8" Margin="0,10,0,0" Visibility="Collapsed">
+                                    <StackPanel>
+                                        <TextBlock Text="Robot Waypoint" Foreground="#4CAF50"
+                                                   FontWeight="Bold" FontSize="11" Margin="0,0,0,6"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="10"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="Position (X, Y, Z)" Foreground="#888888" FontSize="10"/>
+                                                <TextBlock x:Name="WaypointPositionText" Foreground="White" FontSize="11"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock Text="Target (X, Y, Z)" Foreground="#888888" FontSize="10"/>
+                                                <TextBlock x:Name="WaypointTargetText" Foreground="White" FontSize="11"/>
+                                            </StackPanel>
+                                        </Grid>
+                                        <TextBlock x:Name="WaypointDistanceText" Foreground="#888888" FontSize="10"
+                                                   Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                </Border>
+
                                 <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                                     <Button Content="Move Up" Click="MoveStepUp_Click"
                                             Style="{StaticResource SecondaryButtonStyle}" Width="70"/>

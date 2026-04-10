@@ -140,7 +140,7 @@
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
                     <TextBlock Text="Step " Foreground="#888888" FontSize="14"/>
                     <TextBlock Text="{Binding CurrentPage}" Foreground="#FFD700" FontSize="14" FontWeight="Bold"/>
-                    <TextBlock Text=" of 4" Foreground="#888888" FontSize="14"/>
+                    <TextBlock Text=" of 5" Foreground="#888888" FontSize="14"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -513,6 +513,126 @@
                         </ScrollViewer>
                     </Border>
                 </Grid>
+
+                <!-- Page 5: Robot Configuration -->
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              Visibility="{Binding CurrentPage, Converter={StaticResource PageConverter}, ConverterParameter=5}">
+                    <StackPanel MaxWidth="600" VerticalAlignment="Top">
+                        <!-- Robot Enable Toggle -->
+                        <Border Background="#252526" CornerRadius="6" Padding="15" Margin="0,0,0,15">
+                            <StackPanel>
+                                <CheckBox Content="Enable Robot Integration" IsChecked="{Binding IsRobotEnabled}"
+                                          Foreground="White" FontSize="14" FontWeight="SemiBold"/>
+                                <TextBlock Text="멀티뷰 3D 스캔을 위해 로봇을 사용하려면 활성화하세요."
+                                           Foreground="#888888" FontSize="11" Margin="20,6,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Robot Settings (visible when enabled) -->
+                        <StackPanel Visibility="{Binding IsRobotEnabled, Converter={StaticResource BoolToVisConverter}}">
+                            <!-- Robot Vendor Selection -->
+                            <TextBlock Text="Robot Vendor" Style="{StaticResource LabelStyle}"/>
+                            <Border Background="#252526" CornerRadius="6" Padding="10" Margin="0,0,0,15">
+                                <StackPanel>
+                                    <RadioButton Content="Universal Robots (UR)" GroupName="RobotVendor"
+                                                 IsChecked="{Binding SelectedRobotVendor, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=UR}"
+                                                 Foreground="White" FontSize="13" Margin="5"/>
+                                    <RadioButton Content="Doosan Robotics" GroupName="RobotVendor"
+                                                 IsChecked="{Binding SelectedRobotVendor, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Doosan}"
+                                                 Foreground="White" FontSize="13" Margin="5"/>
+                                    <RadioButton Content="Jaka Robotics" GroupName="RobotVendor"
+                                                 IsChecked="{Binding SelectedRobotVendor, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Jaka}"
+                                                 Foreground="White" FontSize="13" Margin="5"/>
+                                    <RadioButton Content="ABB" GroupName="RobotVendor"
+                                                 IsChecked="{Binding SelectedRobotVendor, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=ABB}"
+                                                 Foreground="White" FontSize="13" Margin="5"/>
+                                    <RadioButton Content="Fanuc" GroupName="RobotVendor"
+                                                 IsChecked="{Binding SelectedRobotVendor, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Fanuc}"
+                                                 Foreground="White" FontSize="13" Margin="5"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Connection Settings -->
+                            <TextBlock Text="Connection Settings" Style="{StaticResource LabelStyle}"/>
+                            <Border Background="#252526" CornerRadius="6" Padding="15" Margin="0,0,0,15">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="2*"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Robot IP Address" Style="{StaticResource LabelStyle}"/>
+                                        <TextBox Text="{Binding RobotIpAddress, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource InputStyle}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Port" Style="{StaticResource LabelStyle}"/>
+                                        <TextBox Text="{Binding RobotPort, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource InputStyle}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <!-- Communication Protocol -->
+                            <TextBlock Text="Communication Protocol" Style="{StaticResource LabelStyle}"/>
+                            <Border Background="#252526" CornerRadius="6" Padding="15" Margin="0,0,0,15">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                        <RadioButton Content="Vendor Native" GroupName="RobotProtocol"
+                                                     IsChecked="{Binding SelectedRobotProtocolMode, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=VendorNative}"
+                                                     Foreground="White" FontSize="13" Margin="0,0,20,0"/>
+                                        <RadioButton Content="Modbus-TCP" GroupName="RobotProtocol"
+                                                     IsChecked="{Binding SelectedRobotProtocolMode, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=ModbusTcp}"
+                                                     Foreground="White" FontSize="13" Margin="0,0,20,0"
+                                                     Visibility="{Binding ShowRobotModbusOption, Converter={StaticResource BoolToVisConverter}}"/>
+                                        <RadioButton Content="Custom Socket (CSV)" GroupName="RobotProtocol"
+                                                     IsChecked="{Binding SelectedRobotProtocolMode, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=CustomSocket}"
+                                                     Foreground="White" FontSize="13"/>
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding RobotProtocolDescription}"
+                                               Foreground="#888888" FontSize="11" TextWrapping="Wrap"/>
+
+                                    <!-- Modbus-TCP Settings (visible when Modbus mode selected) -->
+                                    <StackPanel Margin="0,10,0,0"
+                                                Visibility="{Binding IsRobotModbusMode, Converter={StaticResource BoolToVisConverter}}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="12"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="Unit ID" Foreground="#999" FontSize="11" Margin="0,0,0,4"/>
+                                                <TextBox Text="{Binding RobotModbusUnitId, UpdateSourceTrigger=PropertyChanged}"
+                                                         Style="{StaticResource InputStyle}"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock Text="Pose Start Register" Foreground="#999" FontSize="11" Margin="0,0,0,4"/>
+                                                <TextBox Text="{Binding RobotModbusPoseRegister, UpdateSourceTrigger=PropertyChanged}"
+                                                         Style="{StaticResource InputStyle}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                        <TextBlock Text="Holding Register 주소입니다. 기본값 270은 Doosan 표준 TCP 포즈 레지스터입니다."
+                                                   Foreground="#666666" FontSize="10" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Euler Convention (auto-selected by vendor, but editable) -->
+                            <TextBlock Text="Euler Convention" Style="{StaticResource LabelStyle}"/>
+                            <Border Background="#252526" CornerRadius="6" Padding="15" Margin="0,0,0,15">
+                                <StackPanel>
+                                    <ComboBox ItemsSource="{Binding EulerConventions}"
+                                              SelectedItem="{Binding SelectedEulerConvention}"
+                                              Style="{StaticResource ComboStyle}"/>
+                                    <TextBlock Text="로봇 제조사 선택 시 자동으로 설정됩니다. 필요 시 수동 변경 가능합니다."
+                                               Foreground="#666666" FontSize="11" Margin="0,6,0,0"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
 
                 <!-- Page 4: PLC Configuration -->
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
