@@ -689,6 +689,15 @@ namespace VMS.VisionSetup
         }
 
         /// <summary>
+        /// ONNX Runtime 설정 다이얼로그 — Execution Provider / TensorRT 캐시·FP16 편집.
+        /// </summary>
+        private void OnnxSettings_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new OnnxSettingsDialog { Owner = System.Windows.Window.GetWindow(this) };
+            dialog.ShowDialog();
+        }
+
+        /// <summary>
         /// MultiView 스캔 설정 다이얼로그 열기
         /// </summary>
         private void MultiViewSetup_Click(object sender, RoutedEventArgs e)

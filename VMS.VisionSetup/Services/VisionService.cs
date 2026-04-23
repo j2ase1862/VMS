@@ -725,8 +725,8 @@ namespace VMS.VisionSetup.Services
                     continue;
 
                 // 1. Result 연결 확인: Source가 실패이면 건너뛰기
-                //    ResultTool은 실패 정보를 수집해야 하므로 스킵 우회
-                if (tool is not ResultTool and not GeometryTool && ShouldSkipByResultConnection(tool, resultMap))
+                //    ResultTool / EnsembleTool은 실패 정보를 수집해야 하므로 스킵 우회
+                if (tool is not ResultTool and not GeometryTool and not EnsembleTool && ShouldSkipByResultConnection(tool, resultMap))
                 {
                     var skipResult = new VisionResult
                     {
@@ -796,6 +796,29 @@ namespace VMS.VisionSetup.Services
                                     ToolName = srcTool?.Name ?? conn.SourceId,
                                     Success = srcResult.Success,
                                     Message = srcResult.Message
+                                });
+                            }
+                        }
+                    }
+
+                    // EnsembleTool: Execute 전에 연결된 소스의 전체 VisionResult 주입
+                    if (tool is EnsembleTool et)
+                    {
+                        et.SourceResults.Clear();
+                        foreach (var conn in _connections
+                            .Where(c => c.TargetId == tool.Id && c.Type == ConnectionType.Result))
+                        {
+                            if (resultMap.TryGetValue(conn.SourceId, out var srcResult))
+                            {
+                                var srcTool = sortedTools.FirstOrDefault(t => t.Id == conn.SourceId);
+                                et.SourceResults.Add(new SourceToolResultEx
+                                {
+                                    ToolId = conn.SourceId,
+                                    ToolName = srcTool?.Name ?? conn.SourceId,
+                                    ToolType = srcTool?.ToolType ?? string.Empty,
+                                    Success = srcResult.Success,
+                                    Message = srcResult.Message,
+                                    FullResult = srcResult
                                 });
                             }
                         }
@@ -921,6 +944,7 @@ namespace VMS.VisionSetup.Services
                 "DetectionTool" => new DetectionTool(),
                 "ClassifyTool" => new ClassifyTool(),
                 "AnomalyTool" => new AnomalyTool(),
+                "EnsembleTool" => new EnsembleTool(),
 
                 // Judgment
                 "ResultTool" => new ResultTool(),
@@ -978,7 +1002,8 @@ namespace VMS.VisionSetup.Services
                 {
                     "DetectionTool",
                     "ClassifyTool",
-                    "AnomalyTool"
+                    "AnomalyTool",
+                    "EnsembleTool"
                 },
                 ["Judgment"] = new[]
                 {
@@ -1014,6 +1039,7 @@ namespace VMS.VisionSetup.Services
                 "DetectionTool" => "Detection (YOLO)",
                 "ClassifyTool" => "Classify",
                 "AnomalyTool" => "Anomaly",
+                "EnsembleTool" => "Ensemble",
                 "ResultTool" => "Result",
                 _ => toolType
             };

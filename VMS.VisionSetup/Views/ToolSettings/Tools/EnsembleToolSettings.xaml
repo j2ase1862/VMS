@@ -1,0 +1,103 @@
+<UserControl x:Class="VMS.VisionSetup.Views.ToolSettings.Tools.EnsembleToolSettings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls"
+             xmlns:conv="clr-namespace:VMS.VisionSetup.Converters"
+             xmlns:dl="clr-namespace:VMS.VisionSetup.VisionTools.DeepLearning">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+    </UserControl.Resources>
+    <StackPanel>
+        <TextBlock Foreground="#888" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,6"
+                   Text="소스 도구의 Result 연결을 받아 앙상블 판정합니다. Detection(알려진 결함) + Anomaly(비정상 상태) 조합을 권장합니다."/>
+
+        <controls:EnumComboBoxParameter Label="Ensemble Mode"
+            ItemsSource="{conv:EnumValues {x:Type dl:EnsembleMode}}"
+            SelectedValue="{Binding Mode}"
+            ToolType="EnsembleTool" ParameterName="Mode"/>
+
+        <!-- Weighted 모드 전용 -->
+        <Border BorderBrush="#333" BorderThickness="1" CornerRadius="3"
+                Padding="6" Margin="0,4">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Mode}" Value="Weighted">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <StackPanel>
+                <TextBlock Text="Weighted Score Parameters" Foreground="#AAA" FontWeight="Bold"
+                           FontSize="11" Margin="0,0,0,4"/>
+                <controls:SliderParameter Label="Detection Weight"
+                    Value="{Binding DetectionWeight}" Minimum="0.0" Maximum="1.0"
+                    TickFrequency="0.05" ValueFormat="F2"
+                    ToolType="EnsembleTool" ParameterName="DetectionWeight"/>
+                <controls:SliderParameter Label="Anomaly Weight"
+                    Value="{Binding AnomalyWeight}" Minimum="0.0" Maximum="1.0"
+                    TickFrequency="0.05" ValueFormat="F2"
+                    ToolType="EnsembleTool" ParameterName="AnomalyWeight"/>
+                <controls:SliderParameter Label="NG Threshold"
+                    Value="{Binding WeightedThreshold}" Minimum="0.0" Maximum="1.0"
+                    TickFrequency="0.05" ValueFormat="F2"
+                    ToolType="EnsembleTool" ParameterName="WeightedThreshold"/>
+            </StackPanel>
+        </Border>
+
+        <controls:CheckBoxParameter Label="Draw Overlay"
+            IsChecked="{Binding DrawOverlay}"
+            ToolType="EnsembleTool" ParameterName="DrawOverlay"/>
+
+        <!-- Last Execution Source Results -->
+        <TextBlock Text="Source Results" Foreground="#AAAAAA" FontWeight="Bold"
+                   Margin="0,10,0,5" FontSize="12"/>
+        <ItemsControl ItemsSource="{Binding SourceResults}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border BorderBrush="#3F3F46" BorderThickness="0,0,0,1"
+                            Padding="4,3" Margin="0,1">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Width="14" FontWeight="Bold" FontSize="11"
+                                       VerticalAlignment="Center" Margin="0,0,6,0">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="NG"/>
+                                        <Setter Property="Foreground" Value="#FF6B68"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Success}" Value="True">
+                                                <Setter Property="Text" Value="OK"/>
+                                                <Setter Property="Foreground" Value="#4EC94E"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock Text="{Binding ToolName}" Foreground="#CCCCCC"
+                                       FontSize="11" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding ToolType, StringFormat=' ({0})'}"
+                                       Foreground="#888" FontSize="10"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <TextBlock Text="No source tools connected" Foreground="#666666"
+                   FontSize="11" Margin="0,5,0,0" FontStyle="Italic">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding SourceResults.Count}" Value="0">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+    </StackPanel>
+</UserControl>

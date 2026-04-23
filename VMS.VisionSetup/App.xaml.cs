@@ -12,6 +12,8 @@ using VMS.VisionSetup.Interfaces;
 using VMS.VisionSetup.Services;
 using VMS.VisionSetup.ViewModels;
 using VMS.VisionSetup.ViewModels.ToolSettings;
+using VMS.VisionSetup.VisionTools.DeepLearning;
+using ISLMChatService = VMS.VisionSetup.Interfaces.ISLMChatService;
 
 namespace VMS.VisionSetup
 {
@@ -23,6 +25,9 @@ namespace VMS.VisionSetup
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+
+            // ── ONNX Execution Provider 설정 로드 ──
+            LoadAIConfig();
 
             // Create services
             IVisionService visionService = VisionService.Instance;
@@ -95,6 +100,9 @@ namespace VMS.VisionSetup
                     robotConfig.ipAddress, robotConfig.port, robotConfig.convention);
             }
 
+            // ── SLM Chat Service ──
+            ISLMChatService slmChatService = new SLMChatService();
+
             // DialogService에 parameterSyncService 주입 (Web 레시피 동기화용)
             IDialogService dialogService = new DialogService(cameraService, recipeService, parameterSyncService);
 
@@ -116,11 +124,13 @@ namespace VMS.VisionSetup
                 dialogService,
                 () =>
                 {
+                    slmChatService?.Dispose();
                     robotService?.Dispose();
                     parameterSyncService?.Dispose();
                     Shutdown();
                 },
-                robotService);
+                robotService,
+                slmChatService);
 
             // AppSetup 기본 로봇 설정을 ViewModel에 적용 (레시피 미로드 시 기본값)
             if (robotConfig.isEnabled)
@@ -189,6 +199,55 @@ namespace VMS.VisionSetup
                 Debug.WriteLine($"[App] LoadRobotConfig error: {ex.Message}");
                 return (false, "192.168.0.200", 30003, EulerConvention.UR_RotationVector,
                     RobotProtocolMode.VendorNative, 1, 270);
+            }
+        }
+
+        /// <summary>
+        /// system_config.json의 AI(ONNX) 섹션에서 Execution Provider 설정을 읽어
+        /// OnnxModelBase 정적 속성에 반영합니다.
+        /// JSON 예:
+        ///   "onnxExecutionProvider": "Auto" | "Cpu" | "Cuda" | "DirectML" | "TensorRT"
+        ///   "tensorRTCachePath": "C:/trt_cache"
+        ///   "tensorRTFp16": true
+        /// </summary>
+        private static void LoadAIConfig()
+        {
+            try
+            {
+                var configPath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "BODA VISION AI", "system_config.json");
+
+                if (!File.Exists(configPath)) return;
+
+                var json = File.ReadAllText(configPath);
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                if (root.TryGetProperty("onnxExecutionProvider", out var epProp) &&
+                    Enum.TryParse<OnnxExecutionProvider>(epProp.GetString(), ignoreCase: true, out var ep))
+                {
+                    OnnxModelBase.PreferredProvider = ep;
+                }
+
+                if (root.TryGetProperty("tensorRTCachePath", out var cacheProp))
+                {
+                    var cachePath = cacheProp.GetString();
+                    // 빈 문자열이면 OnnxModelBase의 합리적 기본값(LocalAppData/trt_cache)을 유지한다.
+                    // 기본값 자체가 TRT 엔진 재빌드(30~60초)를 피하는 핵심이므로 명시적 빈 값으로 비활성화하지 않는다.
+                    if (!string.IsNullOrWhiteSpace(cachePath))
+                        OnnxModelBase.TensorRTCachePath = cachePath;
+                }
+
+                if (root.TryGetProperty("tensorRTFp16", out var fp16Prop))
+                    OnnxModelBase.TensorRTFp16 = fp16Prop.GetBoolean();
+
+                Debug.WriteLine($"[App] ONNX EP: {OnnxModelBase.PreferredProvider}, " +
+                    $"TRT cache: '{OnnxModelBase.TensorRTCachePath}', FP16: {OnnxModelBase.TensorRTFp16}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] LoadAIConfig error: {ex.Message}");
             }
         }
 

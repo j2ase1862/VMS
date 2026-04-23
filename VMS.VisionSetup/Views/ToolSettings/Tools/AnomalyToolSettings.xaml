@@ -33,6 +33,57 @@
             </StackPanel>
         </Expander>
 
+        <!-- Auto Calibration -->
+        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Auto Threshold Calibration" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <TextBlock Foreground="#888" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,6"
+                           Text="정상 이미지 폴더의 점수 분포로 threshold를 자동 산출합니다. 공식: threshold = mean + σ × std"/>
+
+                <TextBlock Text="Normal Images Folder" Foreground="LightGray" FontSize="12" Margin="0,0,0,2"/>
+                <Grid Margin="0,0,0,6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox Text="{Binding CalibrationFolder, UpdateSourceTrigger=LostFocus}"
+                             FontSize="12" VerticalContentAlignment="Center"/>
+                    <Button Grid.Column="1" Content="..." Width="30" Margin="4,0,0,0"
+                            Command="{Binding BrowseCalibrationFolderCommand}"
+                            ToolTip="정상 이미지만 있는 폴더를 선택하세요."/>
+                </Grid>
+
+                <controls:SliderParameter Label="Sigma (k)"
+                    Value="{Binding CalibrationSigma}" Minimum="1.0" Maximum="6.0"
+                    TickFrequency="0.5" ValueFormat="F1"
+                    ToolTip="표준편차 배수. 2σ=95% / 3σ=99.7%(권장) / 4σ=99.994%. 값↑ = 보수적(미검↑, 과검↓)"
+                    ToolType="AnomalyTool" ParameterName="CalibrationSigma"/>
+
+                <Button Content="Calibrate Threshold"
+                        Command="{Binding CalibrateCommand}"
+                        Margin="0,4,0,4" Padding="8,6">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                            <Setter Property="IsEnabled" Value="True"/>
+                            <Setter Property="Content" Value="Calibrate Threshold"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsCalibrating}" Value="True">
+                                    <Setter Property="IsEnabled" Value="False"/>
+                                    <Setter Property="Content" Value="Calibrating..."/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <TextBlock Text="{Binding CalibrationReport, FallbackValue=''}"
+                           Foreground="#4FC3F7" FontSize="11" TextWrapping="Wrap"
+                           Margin="0,4,0,0"/>
+            </StackPanel>
+        </Expander>
+
         <!-- Display -->
         <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
             <Expander.Header>

@@ -70,6 +70,9 @@
         <DataTemplate x:Key="AnomalyTemplate" DataType="{x:Type vm:AnomalyToolSettingsViewModel}">
             <tools:AnomalyToolSettings/>
         </DataTemplate>
+        <DataTemplate x:Key="EnsembleTemplate" DataType="{x:Type vm:EnsembleToolSettingsViewModel}">
+            <tools:EnsembleToolSettings/>
+        </DataTemplate>
         <DataTemplate x:Key="PlaneFitTemplate" DataType="{x:Type vm:PlaneFitToolSettingsViewModel}">
             <tools:PlaneFitToolSettings/>
         </DataTemplate>
@@ -99,6 +102,7 @@
             DetectionTemplate="{StaticResource DetectionTemplate}"
             ClassifyTemplate="{StaticResource ClassifyTemplate}"
             AnomalyTemplate="{StaticResource AnomalyTemplate}"
+            EnsembleTemplate="{StaticResource EnsembleTemplate}"
             PlaneFitTemplate="{StaticResource PlaneFitTemplate}"
             Geometry3DTemplate="{StaticResource Geometry3DTemplate}"
             ResultTemplate="{StaticResource ResultTemplate}"/>

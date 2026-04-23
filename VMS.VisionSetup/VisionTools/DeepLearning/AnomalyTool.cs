@@ -4,7 +4,10 @@ using Microsoft.ML.OnnxRuntime.Tensors;
 using OpenCvSharp;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using VMS.VisionSetup.Models;
 
 namespace VMS.VisionSetup.VisionTools.DeepLearning
@@ -21,6 +24,7 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
     public partial class AnomalyTool : VisionToolBase
     {
         private AnomalyOnnxEngine? _engine;
+        private readonly object _engineLock = new();
 
         // ── Parameters ──
 
@@ -42,16 +46,118 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         [ObservableProperty]
         private double _heatmapOpacity = 0.4;
 
+        // ── 자동 임계값 캘리브레이션 ──
+
+        /// <summary>캘리브레이션용 정상 이미지 폴더</summary>
+        [ObservableProperty]
+        private string _calibrationFolder = string.Empty;
+
+        /// <summary>threshold = mean + k·std 에서의 k 값 (기본 3σ = 99.7% 분위, 보수적: 0.27% 오검)</summary>
+        [ObservableProperty]
+        private double _calibrationSigma = 3.0;
+
+        /// <summary>마지막 캘리브레이션 결과 메시지 (UI 표시용)</summary>
+        [ObservableProperty]
+        private string _calibrationReport = string.Empty;
+
         public AnomalyTool()
         {
             Name = "Anomaly";
             ToolType = "AnomalyTool";
         }
 
+        /// <summary>
+        /// CalibrationFolder 내 이미지들을 순차 추론하여 AnomalyScore 분포를 구한 뒤,
+        /// mean + sigma·std 값으로 AnomalyThreshold를 자동 설정합니다.
+        /// 정상 이미지만 포함된 폴더를 지정하세요.
+        /// </summary>
+        public async Task<bool> CalibrateThresholdAsync(CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(CalibrationFolder) || !Directory.Exists(CalibrationFolder))
+            {
+                CalibrationReport = "캘리브레이션 폴더가 유효하지 않습니다.";
+                return false;
+            }
+            if (string.IsNullOrEmpty(ModelPath))
+            {
+                CalibrationReport = "모델 경로를 먼저 지정하세요.";
+                return false;
+            }
+
+            var exts = new[] { ".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".tif" };
+            var files = Directory
+                .EnumerateFiles(CalibrationFolder, "*.*", SearchOption.AllDirectories)
+                .Where(f => exts.Contains(Path.GetExtension(f).ToLowerInvariant()))
+                .ToList();
+
+            if (files.Count < 3)
+            {
+                CalibrationReport = $"이미지가 부족합니다 ({files.Count}장). 3장 이상 권장.";
+                return false;
+            }
+
+            var calibEngine = EnsureEngine();
+
+            var scores = new List<double>(files.Count);
+            await Task.Run(() =>
+            {
+                foreach (var f in files)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    try
+                    {
+                        using var img = Cv2.ImRead(f, ImreadModes.Color);
+                        if (img.Empty()) continue;
+                        var r = calibEngine.Detect(img, InputSize);
+                        scores.Add(r.AnomalyScore);
+                        r.AnomalyMap?.Dispose();
+                    }
+                    catch { /* 개별 실패는 무시하고 계속 */ }
+                }
+            }, ct);
+
+            if (scores.Count == 0)
+            {
+                CalibrationReport = "유효한 이미지에서 점수를 얻지 못했습니다.";
+                return false;
+            }
+
+            double mean = scores.Average();
+            double variance = scores.Sum(s => (s - mean) * (s - mean)) / scores.Count;
+            double std = Math.Sqrt(variance);
+            double suggested = mean + CalibrationSigma * std;
+
+            AnomalyThreshold = Math.Clamp(suggested, 0.0, 1.0);
+            CalibrationReport =
+                $"샘플 {scores.Count}장 · mean={mean:F3} · std={std:F3} · " +
+                $"suggested={suggested:F3} (→ 적용: {AnomalyThreshold:F3})";
+            return true;
+        }
+
         partial void OnModelPathChanged(string value)
         {
-            _engine?.Dispose();
-            _engine = null;
+            // 캐시가 엔진 생명주기를 관리한다 — 이 도구는 Dispose하지 않는다.
+            lock (_engineLock)
+            {
+                _engine = null;
+            }
+            OnnxEngineCache.PrefetchAnomaly(value, InputSize);
+        }
+
+        private AnomalyOnnxEngine EnsureEngine()
+        {
+            lock (_engineLock)
+            {
+                if (_engine != null) return _engine;
+            }
+
+            var engine = OnnxEngineCache.GetAnomaly(ModelPath, InputSize);
+
+            lock (_engineLock)
+            {
+                _engine = engine;
+                return engine;
+            }
         }
 
         public override VisionResult Execute(Mat inputImage)
@@ -69,9 +175,8 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
 
                 var roiImage = UseROI ? GetROIImage(inputImage) : inputImage;
 
-                _engine ??= new AnomalyOnnxEngine(ModelPath);
-
-                var anomalyResult = _engine.Detect(roiImage, InputSize);
+                var engine = EnsureEngine();
+                var anomalyResult = engine.Detect(roiImage, InputSize);
 
                 bool isNormal = anomalyResult.AnomalyScore < AnomalyThreshold;
 
@@ -151,6 +256,8 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
                 DrawOverlay = this.DrawOverlay,
                 ShowHeatmap = this.ShowHeatmap,
                 HeatmapOpacity = this.HeatmapOpacity,
+                CalibrationFolder = this.CalibrationFolder,
+                CalibrationSigma = this.CalibrationSigma,
                 UseROI = this.UseROI,
                 ROI = this.ROI
             };

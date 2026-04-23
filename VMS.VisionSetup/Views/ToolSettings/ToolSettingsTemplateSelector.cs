@@ -24,6 +24,7 @@ namespace VMS.VisionSetup.Views.ToolSettings
         public DataTemplate? DetectionTemplate { get; set; }
         public DataTemplate? ClassifyTemplate { get; set; }
         public DataTemplate? AnomalyTemplate { get; set; }
+        public DataTemplate? EnsembleTemplate { get; set; }
         public DataTemplate? PlaneFitTemplate { get; set; }
         public DataTemplate? Geometry3DTemplate { get; set; }
         public DataTemplate? ResultTemplate { get; set; }
@@ -52,6 +53,7 @@ namespace VMS.VisionSetup.Views.ToolSettings
                 DetectionToolSettingsViewModel => DetectionTemplate,
                 ClassifyToolSettingsViewModel => ClassifyTemplate,
                 AnomalyToolSettingsViewModel => AnomalyTemplate,
+                EnsembleToolSettingsViewModel => EnsembleTemplate,
                 ResultToolSettingsViewModel => ResultTemplate,
                 _ => base.SelectTemplate(item, container)
             };

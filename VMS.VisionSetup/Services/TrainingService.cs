@@ -257,8 +257,8 @@ namespace VMS.VisionSetup.Services
             var sb = new System.Text.StringBuilder();
             sb.Append($"\"{config.TrainingScriptPath}\"");
             sb.Append($" --target {config.Target.ToString().ToLower()}");
-            sb.Append($" --dataset \"{config.DatasetPath}\"");
-            sb.Append($" --output \"{config.OutputDir}\"");
+            sb.Append($" --dataset \"{NormalizeDir(config.DatasetPath)}\"");
+            sb.Append($" --output \"{NormalizeDir(config.OutputDir)}\"");
             sb.Append($" --epochs {config.Epochs}");
             sb.Append($" --lr {config.LearningRate.ToString(CultureInfo.InvariantCulture)}");
             sb.Append($" --batch_size {config.BatchSize}");
@@ -269,7 +269,42 @@ namespace VMS.VisionSetup.Services
             if (config.ExportOnnx)
                 sb.Append(" --export_onnx");
 
+            var inv = CultureInfo.InvariantCulture;
+            var scriptName = Path.GetFileName(config.TrainingScriptPath).ToLowerInvariant();
+
+            // Augmentation (YOLO 학습 스크립트에만 의미 있음)
+            if (scriptName.Contains("yolo"))
+            {
+                sb.Append($" --mosaic {config.Mosaic.ToString(inv)}");
+                sb.Append($" --mixup {config.Mixup.ToString(inv)}");
+                sb.Append($" --hsv_h {config.HsvH.ToString(inv)}");
+                sb.Append($" --hsv_s {config.HsvS.ToString(inv)}");
+                sb.Append($" --hsv_v {config.HsvV.ToString(inv)}");
+            }
+
+            // PatchCore/Anomaly 튜닝
+            if (scriptName.Contains("anomaly"))
+            {
+                if (!string.IsNullOrWhiteSpace(config.AnomalyMethod))
+                    sb.Append($" --method {config.AnomalyMethod}");
+                if (!string.IsNullOrWhiteSpace(config.AnomalyBackbone))
+                    sb.Append($" --backbone {config.AnomalyBackbone}");
+                sb.Append($" --coreset_ratio {config.CoresetRatio.ToString(inv)}");
+            }
+
             return sb.ToString();
+        }
+
+        // 드라이브 루트(D:\)를 --dataset/--output으로 전달할 때 발생하는 두 가지 문제를 회피한다:
+        //  1) TrimEnd('\\') 적용 시 "D:"가 되어, Python의 os.path.join("D:", "x")가 드라이브-상대 경로 "D:x"를 반환해 파일을 찾지 못함.
+        //  2) 반대로 "D:\" 그대로 넘기면 Windows 커맨드라인에서 "D:\"가 이스케이프된 쿼트로 파싱되어 인자 경계가 깨짐.
+        // 드라이브 루트는 "D:\." 형태로 치환해 두 문제를 동시에 해결한다. 그 외 경로는 후행 구분자만 제거.
+        private static string NormalizeDir(string path)
+        {
+            if (string.IsNullOrEmpty(path)) return path;
+            if (path.Length == 3 && path[1] == ':' && (path[2] == '\\' || path[2] == '/'))
+                return path[0] + ":\\.";
+            return path.TrimEnd('\\', '/');
         }
 
         private static void ValidateConfig(TrainingConfig config)

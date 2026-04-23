@@ -1,6 +1,7 @@
 using VMS.Camera.Models;
 using VMS.VisionSetup.Interfaces;
 using VMS.VisionSetup.Models;
+using VMS.VisionSetup.VisionTools.DeepLearning;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -90,6 +91,9 @@ namespace VMS.VisionSetup.Services
                 if (recipe != null)
                 {
                     CurrentRecipe = recipe;
+                    // 레시피에 포함된 모든 DL 도구의 ONNX 모델을 Step Load 이전에 미리 백그라운드 워밍업.
+                    // 사용자가 Step/Image/Run 조작을 하는 동안 엔진이 준비되므로 첫 Run 지연이 크게 줄어든다.
+                    PrefetchDeepLearningModels(recipe);
                 }
 
                 return recipe;
@@ -99,6 +103,76 @@ namespace VMS.VisionSetup.Services
                 System.Diagnostics.Debug.WriteLine($"레시피 로드 실패: {ex.Message}");
                 return null;
             }
+        }
+
+        /// <summary>
+        /// 레시피 내 모든 InspectionStep → Tool 중 DetectionTool/ClassifyTool/AnomalyTool의
+        /// ModelPath를 추출해 OnnxEngineCache에 비동기 프리페치 요청.
+        /// </summary>
+        private static void PrefetchDeepLearningModels(Recipe recipe)
+        {
+            foreach (var step in recipe.Steps)
+            {
+                foreach (var tool in step.Tools)
+                {
+                    if (!tool.Parameters.TryGetValue("ModelPath", out var mpObj))
+                        continue;
+                    var modelPath = CoerceString(mpObj);
+                    if (string.IsNullOrEmpty(modelPath)) continue;
+
+                    switch (tool.ToolType)
+                    {
+                        case "DetectionTool":
+                            OnnxEngineCache.PrefetchYolo(modelPath,
+                                CoerceInt(tool.Parameters, "InputSize", 640));
+                            break;
+                        case "ClassifyTool":
+                            OnnxEngineCache.PrefetchClassifier(modelPath,
+                                CoerceInt(tool.Parameters, "InputWidth", 224),
+                                CoerceInt(tool.Parameters, "InputHeight", 224),
+                                CoerceBool(tool.Parameters, "UseImageNetNormalization", true));
+                            break;
+                        case "AnomalyTool":
+                            OnnxEngineCache.PrefetchAnomaly(modelPath,
+                                CoerceInt(tool.Parameters, "InputSize", 224));
+                            break;
+                    }
+                }
+            }
+        }
+
+        // JSON 역직렬화는 Parameters 값을 JsonElement 또는 박싱된 원시 타입으로 남긴다.
+        // 두 경로를 모두 안전하게 처리한다.
+        private static string CoerceString(object? v) => v switch
+        {
+            null => string.Empty,
+            string s => s,
+            JsonElement je when je.ValueKind == JsonValueKind.String => je.GetString() ?? string.Empty,
+            _ => v.ToString() ?? string.Empty
+        };
+
+        private static int CoerceInt(Dictionary<string, object> p, string key, int defaultValue)
+        {
+            if (!p.TryGetValue(key, out var v) || v == null) return defaultValue;
+            return v switch
+            {
+                int i => i,
+                long l => (int)l,
+                JsonElement je when je.ValueKind == JsonValueKind.Number => je.GetInt32(),
+                _ => int.TryParse(v.ToString(), out var parsed) ? parsed : defaultValue
+            };
+        }
+
+        private static bool CoerceBool(Dictionary<string, object> p, string key, bool defaultValue)
+        {
+            if (!p.TryGetValue(key, out var v) || v == null) return defaultValue;
+            return v switch
+            {
+                bool b => b,
+                JsonElement je when je.ValueKind == JsonValueKind.True => true,
+                JsonElement je when je.ValueKind == JsonValueKind.False => false,
+                _ => bool.TryParse(v.ToString(), out var parsed) ? parsed : defaultValue
+            };
         }
 
         /// <summary>

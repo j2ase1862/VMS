@@ -307,6 +307,38 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["IouThreshold"] = detection.IouThreshold;
                     config.Parameters["ClassNamesText"] = detection.ClassNamesText;
                     config.Parameters["DrawOverlay"] = detection.DrawOverlay;
+                    config.Parameters["UseClahe"] = detection.UseClahe;
+                    config.Parameters["ClaheClipLimit"] = detection.ClaheClipLimit;
+                    config.Parameters["ClaheTileGridSize"] = detection.ClaheTileGridSize;
+                    config.Parameters["UsePerClassThresholds"] = detection.UsePerClassThresholds;
+                    config.Parameters["UseSahi"] = detection.UseSahi;
+                    config.Parameters["SahiTileSize"] = detection.SahiTileSize;
+                    config.Parameters["SahiOverlapRatio"] = detection.SahiOverlapRatio;
+                    config.Parameters["UseDotAnalysis"] = detection.UseDotAnalysis;
+                    config.Parameters["DotDetectionMethod"] = detection.DotDetectionMethod.ToString();
+                    config.Parameters["MinDotArea"] = detection.MinDotArea;
+                    config.Parameters["MaxDotArea"] = detection.MaxDotArea;
+                    config.Parameters["DotCircularityThreshold"] = detection.DotCircularityThreshold;
+                    config.Parameters["MinDotDistance"] = detection.MinDotDistance;
+                    config.Parameters["DotPatternMetric"] = detection.DotPatternMetric.ToString();
+                    config.Parameters["DotPreprocessMode"] = detection.DotPreprocessMode.ToString();
+                    config.Parameters["DotClaheClipLimit"] = detection.DotClaheClipLimit;
+                    config.Parameters["DotMorphKernelSize"] = detection.DotMorphKernelSize;
+                    config.Parameters["DotThresholdMode"] = detection.DotThresholdMode.ToString();
+                    config.Parameters["DotAdaptiveBlockSize"] = detection.DotAdaptiveBlockSize;
+                    config.Parameters["DotAdaptiveC"] = detection.DotAdaptiveC;
+                    // 클래스별 임계값은 "ClassName:threshold" 문자열 리스트로 직렬화
+                    config.Parameters["ClassThresholds"] = string.Join(";",
+                        detection.ClassThresholds.Select(c =>
+                            $"{c.ClassId}|{c.ClassName}|{c.Threshold.ToString(System.Globalization.CultureInfo.InvariantCulture)}"));
+                    // Dot 기대값: "ClassId|ClassName|ExpectedCount|CountTolerance|RefAngle|AngleTolerance|CheckAngle"
+                    config.Parameters["DotExpectations"] = string.Join(";",
+                        detection.DotExpectations.Select(e =>
+                        {
+                            var inv = System.Globalization.CultureInfo.InvariantCulture;
+                            return $"{e.ClassId}|{e.ClassName}|{e.ExpectedCount}|{e.CountTolerance}|" +
+                                   $"{e.ReferenceAngle.ToString(inv)}|{e.AngleTolerance.ToString(inv)}|{e.CheckAngle}";
+                        }));
                     break;
 
                 case ClassifyTool classify:
@@ -326,10 +358,20 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["DrawOverlay"] = anomaly.DrawOverlay;
                     config.Parameters["ShowHeatmap"] = anomaly.ShowHeatmap;
                     config.Parameters["HeatmapOpacity"] = anomaly.HeatmapOpacity;
+                    config.Parameters["CalibrationFolder"] = anomaly.CalibrationFolder;
+                    config.Parameters["CalibrationSigma"] = anomaly.CalibrationSigma;
                     break;
 
                 case ResultTool resultTool:
                     config.Parameters["JudgmentMode"] = resultTool.JudgmentMode.ToString();
+                    break;
+
+                case EnsembleTool ensemble:
+                    config.Parameters["Mode"] = ensemble.Mode.ToString();
+                    config.Parameters["DetectionWeight"] = ensemble.DetectionWeight;
+                    config.Parameters["AnomalyWeight"] = ensemble.AnomalyWeight;
+                    config.Parameters["WeightedThreshold"] = ensemble.WeightedThreshold;
+                    config.Parameters["DrawOverlay"] = ensemble.DrawOverlay;
                     break;
 
                 default:
@@ -387,6 +429,7 @@ namespace VMS.VisionSetup.Services
                 "DetectionTool" => DeserializeDetectionTool(config),
                 "ClassifyTool" => DeserializeClassifyTool(config),
                 "AnomalyTool" => DeserializeAnomalyTool(config),
+                "EnsembleTool" => DeserializeEnsembleTool(config),
                 "ResultTool" => DeserializeResultTool(config),
                 _ => null
             };
@@ -1009,6 +1052,101 @@ namespace VMS.VisionSetup.Services
                 tool.ClassNamesText = GetString(cn);
             if (p.TryGetValue("DrawOverlay", out var dov))
                 tool.DrawOverlay = GetBool(dov);
+            if (p.TryGetValue("UseClahe", out var uc))
+                tool.UseClahe = GetBool(uc);
+            if (p.TryGetValue("ClaheClipLimit", out var ccl))
+                tool.ClaheClipLimit = GetDouble(ccl);
+            if (p.TryGetValue("ClaheTileGridSize", out var ctg))
+                tool.ClaheTileGridSize = GetInt(ctg);
+            if (p.TryGetValue("UsePerClassThresholds", out var upc))
+                tool.UsePerClassThresholds = GetBool(upc);
+            if (p.TryGetValue("UseSahi", out var us))
+                tool.UseSahi = GetBool(us);
+            if (p.TryGetValue("SahiTileSize", out var sts))
+                tool.SahiTileSize = GetInt(sts);
+            if (p.TryGetValue("SahiOverlapRatio", out var sor))
+                tool.SahiOverlapRatio = GetDouble(sor);
+            if (p.TryGetValue("ClassThresholds", out var cthStr))
+            {
+                var s = GetString(cthStr);
+                if (!string.IsNullOrEmpty(s))
+                {
+                    // ClassThresholds는 ModelPath 설정 시 모델 메타데이터에서 자동 채워지므로
+                    // 저장된 값으로 덮어쓴다 (사용자 커스텀 임계값 복원).
+                    tool.ClassThresholds.Clear();
+                    foreach (var entry in s.Split(';', StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        var parts = entry.Split('|');
+                        if (parts.Length == 3 &&
+                            int.TryParse(parts[0], out int cid) &&
+                            double.TryParse(parts[2], System.Globalization.NumberStyles.Any,
+                                System.Globalization.CultureInfo.InvariantCulture, out double th))
+                        {
+                            tool.ClassThresholds.Add(new VisionTools.DeepLearning.ClassThresholdEntry
+                            {
+                                ClassId = cid,
+                                ClassName = parts[1],
+                                Threshold = th
+                            });
+                        }
+                    }
+                }
+            }
+
+            // Dot Cluster Analysis
+            if (p.TryGetValue("UseDotAnalysis", out var uda)) tool.UseDotAnalysis = GetBool(uda);
+            if (p.TryGetValue("DotDetectionMethod", out var ddm) &&
+                Enum.TryParse<VisionTools.DeepLearning.DotDetectionMethod>(GetString(ddm), true, out var m))
+                tool.DotDetectionMethod = m;
+            if (p.TryGetValue("MinDotArea", out var mna)) tool.MinDotArea = GetInt(mna);
+            if (p.TryGetValue("MaxDotArea", out var mxa)) tool.MaxDotArea = GetInt(mxa);
+            if (p.TryGetValue("DotCircularityThreshold", out var dct)) tool.DotCircularityThreshold = GetDouble(dct);
+            if (p.TryGetValue("MinDotDistance", out var mnd)) tool.MinDotDistance = GetInt(mnd);
+            if (p.TryGetValue("DotPatternMetric", out var dpm) &&
+                Enum.TryParse<VisionTools.DeepLearning.DotPatternMetric>(GetString(dpm), true, out var pm))
+                tool.DotPatternMetric = pm;
+            if (p.TryGetValue("DotPreprocessMode", out var dpp) &&
+                Enum.TryParse<VisionTools.DeepLearning.DotPreprocessMode>(GetString(dpp), true, out var pp))
+                tool.DotPreprocessMode = pp;
+            if (p.TryGetValue("DotClaheClipLimit", out var dccl)) tool.DotClaheClipLimit = GetDouble(dccl);
+            if (p.TryGetValue("DotMorphKernelSize", out var dmk)) tool.DotMorphKernelSize = GetInt(dmk);
+            if (p.TryGetValue("DotThresholdMode", out var dtm) &&
+                Enum.TryParse<VisionTools.DeepLearning.DotThresholdMode>(GetString(dtm), true, out var tm))
+                tool.DotThresholdMode = tm;
+            if (p.TryGetValue("DotAdaptiveBlockSize", out var dabs)) tool.DotAdaptiveBlockSize = GetInt(dabs);
+            if (p.TryGetValue("DotAdaptiveC", out var dac)) tool.DotAdaptiveC = GetDouble(dac);
+            if (p.TryGetValue("DotExpectations", out var deStr))
+            {
+                var s = GetString(deStr);
+                if (!string.IsNullOrEmpty(s))
+                {
+                    tool.DotExpectations.Clear();
+                    var inv = System.Globalization.CultureInfo.InvariantCulture;
+                    foreach (var entry in s.Split(';', StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        var parts = entry.Split('|');
+                        if (parts.Length == 7 &&
+                            int.TryParse(parts[0], out int cid) &&
+                            int.TryParse(parts[2], out int exp) &&
+                            int.TryParse(parts[3], out int ctol) &&
+                            double.TryParse(parts[4], System.Globalization.NumberStyles.Any, inv, out double refAng) &&
+                            double.TryParse(parts[5], System.Globalization.NumberStyles.Any, inv, out double angTol) &&
+                            bool.TryParse(parts[6], out bool checkAng))
+                        {
+                            tool.DotExpectations.Add(new VisionTools.DeepLearning.DotClusterExpectation
+                            {
+                                ClassId = cid,
+                                ClassName = parts[1],
+                                ExpectedCount = exp,
+                                CountTolerance = ctol,
+                                ReferenceAngle = refAng,
+                                AngleTolerance = angTol,
+                                CheckAngle = checkAng
+                            });
+                        }
+                    }
+                }
+            }
 
             return tool;
         }
@@ -1053,6 +1191,10 @@ namespace VMS.VisionSetup.Services
                 tool.ShowHeatmap = GetBool(sh);
             if (p.TryGetValue("HeatmapOpacity", out var ho))
                 tool.HeatmapOpacity = GetDouble(ho);
+            if (p.TryGetValue("CalibrationFolder", out var cf))
+                tool.CalibrationFolder = GetString(cf);
+            if (p.TryGetValue("CalibrationSigma", out var cs))
+                tool.CalibrationSigma = GetDouble(cs);
 
             return tool;
         }
@@ -1064,6 +1206,25 @@ namespace VMS.VisionSetup.Services
 
             if (p.TryGetValue("JudgmentMode", out var jm))
                 tool.JudgmentMode = Enum.Parse<ResultJudgmentMode>(GetString(jm));
+
+            return tool;
+        }
+
+        private static EnsembleTool DeserializeEnsembleTool(ToolConfig config)
+        {
+            var tool = new EnsembleTool();
+            var p = config.Parameters;
+
+            if (p.TryGetValue("Mode", out var mode))
+                tool.Mode = Enum.Parse<EnsembleMode>(GetString(mode));
+            if (p.TryGetValue("DetectionWeight", out var dw))
+                tool.DetectionWeight = GetDouble(dw);
+            if (p.TryGetValue("AnomalyWeight", out var aw))
+                tool.AnomalyWeight = GetDouble(aw);
+            if (p.TryGetValue("WeightedThreshold", out var wt))
+                tool.WeightedThreshold = GetDouble(wt);
+            if (p.TryGetValue("DrawOverlay", out var dov))
+                tool.DrawOverlay = GetBool(dov);
 
             return tool;
         }

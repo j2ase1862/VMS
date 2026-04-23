@@ -15,7 +15,8 @@ stdout 프로토콜:
     pip install ultralytics onnx
 
 사용 예:
-    python train_yolo.py --dataset ./data --output ./output --epochs 100
+    python train_yolo.py --dataset ./data --output ./output --epochs 100 \
+        --mosaic 1.0 --mixup 0.1 --hsv_h 0.015 --hsv_s 0.7 --hsv_v 0.4
 """
 
 import argparse
@@ -34,6 +35,19 @@ def main():
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--imgsz", type=int, default=640, help="Input image size")
     parser.add_argument("--export_onnx", action="store_true", help="Export to ONNX after training")
+
+    # ── Augmentation (Ultralytics 파라미터 패스스루) ──
+    parser.add_argument("--mosaic", type=float, default=1.0,
+                        help="Mosaic augmentation probability (0.0~1.0). 작은 객체 검출 향상")
+    parser.add_argument("--mixup", type=float, default=0.0,
+                        help="Mixup augmentation probability (0.0~1.0)")
+    parser.add_argument("--hsv_h", type=float, default=0.015,
+                        help="HSV Hue augmentation range (0.0~1.0)")
+    parser.add_argument("--hsv_s", type=float, default=0.7,
+                        help="HSV Saturation augmentation range (0.0~1.0)")
+    parser.add_argument("--hsv_v", type=float, default=0.4,
+                        help="HSV Value/Brightness augmentation range (0.0~1.0) — 공장 조명 변동 대응에 중요")
+
     args = parser.parse_args()
 
     os.makedirs(args.output, exist_ok=True)
@@ -51,6 +65,8 @@ def main():
         sys.exit(1)
 
     print(f"[PROGRESS] 0", flush=True)
+    print(f"[AUG] mosaic={args.mosaic} mixup={args.mixup} hsv_h={args.hsv_h} hsv_s={args.hsv_s} hsv_v={args.hsv_v}",
+          flush=True)
 
     # 모델 로드
     model = YOLO(args.pretrained)
@@ -77,6 +93,12 @@ def main():
         name="train",
         exist_ok=True,
         verbose=False,
+        # ── Augmentation ──
+        mosaic=args.mosaic,
+        mixup=args.mixup,
+        hsv_h=args.hsv_h,
+        hsv_s=args.hsv_s,
+        hsv_v=args.hsv_v,
     )
 
     # 최적 모델 복사
