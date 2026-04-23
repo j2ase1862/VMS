@@ -357,8 +357,21 @@
                                             CommandParameter="defect"/>
                                 </StackPanel>
 
-                                <!-- Detection/OCR: 기존 클래스 리스트 -->
-                                <StackPanel Visibility="{Binding IsBoundingBoxMode, Converter={StaticResource BoolToVis}, FallbackValue=Visible}">
+                                <!-- Detection/OCR/Segmentation: 기존 클래스 리스트 -->
+                                <StackPanel>
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsBoundingBoxMode}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsSegmentationMode}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
                                     <ListBox ItemsSource="{Binding CurrentDataset.Classes}"
                                              SelectedItem="{Binding SelectedClassName}"
                                              MaxHeight="140">
@@ -620,6 +633,115 @@
                                                  FontSize="12"/>
                                     </StackPanel>
                                 </Grid>
+
+                                <!-- ═══ Anomaly (PatchCore) ═══ -->
+                                <Expander IsExpanded="False" Margin="0,8,0,0">
+                                    <Expander.Header>
+                                        <TextBlock Text="Anomaly (PatchCore)" Foreground="#BBB" FontSize="11"/>
+                                    </Expander.Header>
+                                    <StackPanel Margin="0,6,0,0">
+                                        <TextBlock Foreground="#888" FontSize="10" TextWrapping="Wrap"
+                                                   Margin="0,0,0,6"
+                                                   Text="anomalib 사용 시 적용됩니다. 미세 결함 검출률 개선을 위해 resnet50 + coreset 0.2 이상을 시도해 보세요."/>
+
+                                        <TextBlock Text="Method:" Foreground="#999" FontSize="11"/>
+                                        <ComboBox SelectedValue="{Binding TrainingConfig.AnomalyMethod}"
+                                                  SelectedValuePath="Content"
+                                                  FontSize="12" Margin="0,2,0,6">
+                                            <ComboBoxItem Content="patchcore"/>
+                                            <ComboBoxItem Content="fastflow"/>
+                                            <ComboBoxItem Content="efficient_ad"/>
+                                        </ComboBox>
+
+                                        <TextBlock Text="Backbone:" Foreground="#999" FontSize="11"/>
+                                        <ComboBox SelectedValue="{Binding TrainingConfig.AnomalyBackbone}"
+                                                  SelectedValuePath="Content"
+                                                  FontSize="12" Margin="0,2,0,6">
+                                            <ComboBoxItem Content="resnet18"/>
+                                            <ComboBoxItem Content="resnet50"/>
+                                            <ComboBoxItem Content="wide_resnet50_2"/>
+                                        </ComboBox>
+
+                                        <TextBlock Text="Coreset Ratio (0.01~1.0):" Foreground="#999" FontSize="11"/>
+                                        <TextBox Text="{Binding TrainingConfig.CoresetRatio, StringFormat=F2}"
+                                                 FontSize="12" Margin="0,2,0,0"
+                                                 ToolTip="코어셋 샘플링 비율. 값↑=미검률↓ + 메모리↑ (기본 0.10)"/>
+                                    </StackPanel>
+                                </Expander>
+
+                                <!-- ═══ Augmentation (YOLO) ═══ -->
+                                <Expander IsExpanded="False" Margin="0,8,0,0">
+                                    <Expander.Header>
+                                        <TextBlock Text="Augmentation (YOLO)" Foreground="#BBB" FontSize="11"/>
+                                    </Expander.Header>
+                                    <StackPanel Margin="0,6,0,0">
+                                        <TextBlock Foreground="#888" FontSize="10" TextWrapping="Wrap"
+                                                   Margin="0,0,0,6"
+                                                   Text="Ultralytics 증강 파라미터. 조명/색감 변동이 큰 공장 환경에서는 hsv_v를 0.5~0.7로 높이세요."/>
+
+                                        <!-- Preset Buttons -->
+                                        <TextBlock Text="Presets" Foreground="#999" FontSize="10" Margin="0,0,0,4"/>
+                                        <WrapPanel Margin="0,0,0,8">
+                                            <Button Content="Default" Command="{Binding PresetAugDefaultCommand}"
+                                                    Padding="8,3" FontSize="10" Margin="0,0,4,4"
+                                                    ToolTip="Ultralytics 기본값"/>
+                                            <Button Content="Factory Lighting" Command="{Binding PresetAugFactoryLightingCommand}"
+                                                    Padding="8,3" FontSize="10" Margin="0,0,4,4"
+                                                    ToolTip="공장 조명 변동 강건화 (HSV-V=0.7)"/>
+                                            <Button Content="Small Defects" Command="{Binding PresetAugSmallDefectsCommand}"
+                                                    Padding="8,3" FontSize="10" Margin="0,0,4,4"
+                                                    ToolTip="작은 결함 검출 (Mixup 0.15)"/>
+                                            <Button Content="Minimal" Command="{Binding PresetAugMinimalCommand}"
+                                                    Padding="8,3" FontSize="10" Margin="0,0,4,4"
+                                                    ToolTip="최소 증강 (대규모 데이터셋용)"/>
+                                        </WrapPanel>
+
+                                        <Grid Margin="0,2">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Margin="0,0,4,0">
+                                                <TextBlock Text="Mosaic (0~1):" Foreground="#999" FontSize="11"/>
+                                                <TextBox Text="{Binding TrainingConfig.Mosaic, StringFormat=F2}"
+                                                         FontSize="12"
+                                                         ToolTip="Mosaic 증강 확률. 1.0=항상 적용. 작은 객체 검출 향상에 효과적 (기본 1.0)"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Margin="4,0,0,0">
+                                                <TextBlock Text="Mixup (0~1):" Foreground="#999" FontSize="11"/>
+                                                <TextBox Text="{Binding TrainingConfig.Mixup, StringFormat=F2}"
+                                                         FontSize="12"
+                                                         ToolTip="Mixup 증강 확률. 분류 분기 강건화 (기본 0.0)"/>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <Grid Margin="0,4,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Margin="0,0,2,0">
+                                                <TextBlock Text="HSV-H:" Foreground="#999" FontSize="11"/>
+                                                <TextBox Text="{Binding TrainingConfig.HsvH, StringFormat=F3}"
+                                                         FontSize="12"
+                                                         ToolTip="Hue 색감 증강 (기본 0.015)"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Margin="2,0">
+                                                <TextBlock Text="HSV-S:" Foreground="#999" FontSize="11"/>
+                                                <TextBox Text="{Binding TrainingConfig.HsvS, StringFormat=F2}"
+                                                         FontSize="12"
+                                                         ToolTip="Saturation 포화도 증강 (기본 0.7)"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" Margin="2,0,0,0">
+                                                <TextBlock Text="HSV-V:" Foreground="#999" FontSize="11"/>
+                                                <TextBox Text="{Binding TrainingConfig.HsvV, StringFormat=F2}"
+                                                         FontSize="12"
+                                                         ToolTip="Value/Brightness 증강. 조명 변동 대응의 핵심 (기본 0.4)"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
+                                </Expander>
 
                                 <!-- Start/Stop -->
                                 <Grid Margin="0,10,0,0">

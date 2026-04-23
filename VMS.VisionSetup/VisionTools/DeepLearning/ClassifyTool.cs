@@ -17,6 +17,7 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
     public partial class ClassifyTool : VisionToolBase
     {
         private ClassifierOnnxEngine? _engine;
+        private readonly object _engineLock = new();
 
         // ── Parameters ──
 
@@ -53,9 +54,29 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
 
         partial void OnModelPathChanged(string value)
         {
-            _engine?.Dispose();
-            _engine = null;
+            // 캐시가 엔진 생명주기를 관리한다 — 이 도구는 Dispose하지 않는다.
+            lock (_engineLock)
+            {
+                _engine = null;
+            }
             LoadModelMetadata(value);
+            OnnxEngineCache.PrefetchClassifier(value, InputWidth, InputHeight, UseImageNetNormalization);
+        }
+
+        private ClassifierOnnxEngine EnsureEngine()
+        {
+            lock (_engineLock)
+            {
+                if (_engine != null) return _engine;
+            }
+
+            var engine = OnnxEngineCache.GetClassifier(ModelPath, InputWidth, InputHeight, UseImageNetNormalization);
+
+            lock (_engineLock)
+            {
+                _engine = engine;
+                return engine;
+            }
         }
 
         private void LoadModelMetadata(string modelPath)
@@ -66,8 +87,8 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
 
             try
             {
-                using var tempEngine = new ClassifierOnnxEngine(modelPath);
-                var names = tempEngine.GetClassNames();
+                // InferenceSession 생성 없이 ONNX 파일에서 메타데이터만 직접 파싱한다.
+                var names = OnnxModelBase.ReadClassNamesFromFile(modelPath);
                 if (names.Length > 0)
                 {
                     foreach (var name in names)
@@ -97,9 +118,8 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
 
                 var roiImage = UseROI ? GetROIImage(inputImage) : inputImage;
 
-                _engine ??= new ClassifierOnnxEngine(ModelPath);
-
-                var classResult = _engine.Classify(roiImage, InputWidth, InputHeight, UseImageNetNormalization);
+                var engine = EnsureEngine();
+                var classResult = engine.Classify(roiImage, InputWidth, InputHeight, UseImageNetNormalization);
 
                 string className = classResult.ClassId < ClassNames.Length
                     ? ClassNames[classResult.ClassId]

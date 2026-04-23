@@ -6,6 +6,7 @@ using VMS.VisionSetup.Interfaces;
 using VMS.VisionSetup.Models;
 using VMS.VisionSetup.Services;
 using VMS.VisionSetup.ViewModels.ToolSettings;
+using VMS.VisionSetup.Views;
 using VMS.VisionSetup.VisionTools.BlobAnalysis;
 using VMS.VisionSetup.VisionTools.ImageProcessing;
 using VMS.VisionSetup.VisionTools.Measurement;
@@ -70,6 +71,8 @@ namespace VMS.VisionSetup.ViewModels
         private readonly ICameraService _cameraService;
         private readonly IDialogService _dialogService;
         private readonly Action _shutdownAction;
+        private readonly ISLMChatService? _chatService;
+        private ChatWindow? _chatWindow;
         private Mat? _currentImage;
         private VisionToolBase? _subscribedTool;
         private bool _isSyncingROI;
@@ -548,6 +551,7 @@ namespace VMS.VisionSetup.ViewModels
         public RelayCommand OpenImageFolderCommand { get; }
         public RelayCommand PreviousImageCommand { get; }
         public RelayCommand NextImageCommand { get; }
+        public RelayCommand ShowChatWindowCommand { get; }
         #endregion
 
         #region Constructor
@@ -557,13 +561,15 @@ namespace VMS.VisionSetup.ViewModels
             ICameraService cameraService,
             IDialogService dialogService,
             Action shutdownAction,
-            IRobotService? robotService = null)
+            IRobotService? robotService = null,
+            ISLMChatService? chatService = null)
         {
             _visionService = visionService;
             _recipeService = recipeService;
             _cameraService = cameraService;
             _dialogService = dialogService;
             _shutdownAction = shutdownAction;
+            _chatService = chatService;
 
             // AppSetup에서 생성된 로봇 서비스 적용 (연결은 사용자가 수동으로)
             _robotService = robotService;
@@ -609,6 +615,9 @@ namespace VMS.VisionSetup.ViewModels
             MultiViewCaptureCommand = new RelayCommand(async () => await MultiViewCapture(), () => NeedsRobot && IsRobotConnected && (IsCameraConnected || IsSimulatedRobot));
             MultiViewProcessCommand = new RelayCommand(async () => await MultiViewProcess(), () => _multiViewSession?.Scans.Count > 0);
             MultiViewClearCommand = new RelayCommand(MultiViewClear, () => _multiViewSession?.Scans.Count > 0);
+
+            // SLM Chat Bot 커맨드
+            ShowChatWindowCommand = new RelayCommand(ShowChatWindow);
 
             // Waypoint Planner 커맨드
             GenerateWaypointsCommand = new RelayCommand(GenerateWaypoints, () => _recipeService.CurrentRecipe != null && SelectedCamera != null);
@@ -716,7 +725,29 @@ namespace VMS.VisionSetup.ViewModels
 
         private void CloseApplication()
         {
+            _chatService?.Dispose();
             _shutdownAction();
+        }
+
+        private void ShowChatWindow()
+        {
+            if (_chatService == null)
+            {
+                System.Windows.MessageBox.Show(
+                    "SLM Chat 서비스가 초기화되지 않았습니다.\nOllama가 설치되어 있는지 확인하세요.",
+                    "SLM Chat", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                return;
+            }
+
+            if (_chatWindow == null || !_chatWindow.IsLoaded)
+            {
+                var toolGenerator = new SLMToolGeneratorService();
+                var chatViewModel = new ChatViewModel(_chatService, toolGenerator, this);
+                _chatWindow = new ChatWindow { DataContext = chatViewModel };
+            }
+
+            _chatWindow.Show();
+            _chatWindow.Activate();
         }
 
         private void OpenImageFile()
@@ -2604,6 +2635,7 @@ namespace VMS.VisionSetup.ViewModels
                 DetectionTool t => new DetectionToolSettingsViewModel(t),
                 ClassifyTool t => new ClassifyToolSettingsViewModel(t),
                 AnomalyTool t => new AnomalyToolSettingsViewModel(t),
+                EnsembleTool t => new EnsembleToolSettingsViewModel(t),
                 _ => null
             };
         }

@@ -41,6 +41,11 @@ def main():
     parser.add_argument("--output", required=True, help="Output directory")
     parser.add_argument("--method", default="patchcore", choices=["patchcore", "fastflow", "efficient_ad"],
                         help="Anomaly detection method")
+    parser.add_argument("--backbone", default="resnet18",
+                        choices=["resnet18", "resnet50", "wide_resnet50_2"],
+                        help="특징 추출 백본. 깊은 모델일수록 미세 결함 검출↑")
+    parser.add_argument("--coreset_ratio", type=float, default=0.1,
+                        help="PatchCore 코어셋 샘플링 비율 (0.01~1.0). 기본 0.1. 값↑=미검↓ + 메모리↑")
     parser.add_argument("--epochs", type=int, default=1, help="Epochs (PatchCore=1, others may vary)")
     parser.add_argument("--lr", type=float, default=0.001)
     parser.add_argument("--batch_size", type=int, default=32)
@@ -78,15 +83,23 @@ def train_with_anomalib(args):
     from anomalib.deploy import ExportType
 
     print("[PROGRESS] 0", flush=True)
+    print(f"[CONFIG] method={args.method} backbone={args.backbone} coreset={args.coreset_ratio}", flush=True)
 
-    # 모델 선택
-    model_map = {
-        "patchcore": Patchcore,
-        "fastflow": FastFlow,
-        "efficient_ad": EfficientAd,
-    }
-    ModelClass = model_map[args.method]
-    model = ModelClass()
+    # 모델 선택 + 백본/coreset 파라미터 주입
+    if args.method == "patchcore":
+        # anomalib 최신 API: backbone / coreset_sampling_ratio
+        try:
+            model = Patchcore(backbone=args.backbone, coreset_sampling_ratio=args.coreset_ratio)
+        except TypeError:
+            # 구버전 호환 (파라미터명 차이)
+            model = Patchcore()
+    elif args.method == "fastflow":
+        try:
+            model = FastFlow(backbone=args.backbone)
+        except TypeError:
+            model = FastFlow()
+    else:  # efficient_ad
+        model = EfficientAd()
 
     # 데이터 모듈
     datamodule = Folder(
@@ -151,9 +164,16 @@ def train_simple_patchcore(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}", flush=True)
     print("[PROGRESS] 0", flush=True)
+    print(f"[CONFIG] backbone={args.backbone} coreset={args.coreset_ratio}", flush=True)
 
-    # 특징 추출 모델 (ResNet18 중간층)
-    backbone = models.resnet18(weights="DEFAULT")
+    # 백본 선택 (중간층 hook 방식)
+    backbone_map = {
+        "resnet18": models.resnet18,
+        "resnet50": models.resnet50,
+        "wide_resnet50_2": models.wide_resnet50_2,
+    }
+    backbone_ctor = backbone_map.get(args.backbone, models.resnet18)
+    backbone = backbone_ctor(weights="DEFAULT")
     backbone.eval()
     backbone = backbone.to(device)
 
@@ -201,6 +221,16 @@ def train_simple_patchcore(args):
 
     print("[PROGRESS] 75", flush=True)
 
+    # Coreset 서브샘플링 (PatchCore greedy approximation: 무작위 샘플로 근사)
+    coreset_ratio = max(0.01, min(1.0, float(args.coreset_ratio)))
+    if coreset_ratio < 1.0:
+        n_total = feature_matrix.shape[0]
+        n_keep = max(1, int(n_total * coreset_ratio))
+        rng = np.random.default_rng(42)
+        idx = rng.choice(n_total, size=n_keep, replace=False)
+        feature_matrix = feature_matrix[idx]
+        print(f"Coreset: {n_total} → {n_keep} samples (ratio={coreset_ratio:.2f})", flush=True)
+
     # KNN 모델 학습
     k = min(9, len(feature_matrix))
     knn = NearestNeighbors(n_neighbors=k, metric="euclidean")
@@ -217,6 +247,8 @@ def train_simple_patchcore(args):
     # 모델 데이터 저장
     model_data = {
         "method": "simple_patchcore",
+        "backbone": args.backbone,
+        "coreset_ratio": coreset_ratio,
         "input_size": args.imgsz,
         "threshold": threshold,
         "feature_dim": feature_matrix.shape[1],

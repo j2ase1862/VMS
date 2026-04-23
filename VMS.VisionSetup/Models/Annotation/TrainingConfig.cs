@@ -98,5 +98,65 @@ namespace VMS.VisionSetup.Models.Annotation
             get => _exportOnnx;
             set => SetProperty(ref _exportOnnx, value);
         }
+
+        // ─────────────── Data Augmentation (YOLO) ───────────────
+
+        private double _mosaic = 1.0;
+        public double Mosaic
+        {
+            get => _mosaic;
+            set => SetProperty(ref _mosaic, value);
+        }
+
+        private double _mixup;
+        public double Mixup
+        {
+            get => _mixup;
+            set => SetProperty(ref _mixup, value);
+        }
+
+        private double _hsvH = 0.015;
+        public double HsvH
+        {
+            get => _hsvH;
+            set => SetProperty(ref _hsvH, value);
+        }
+
+        private double _hsvS = 0.7;
+        public double HsvS
+        {
+            get => _hsvS;
+            set => SetProperty(ref _hsvS, value);
+        }
+
+        private double _hsvV = 0.4;
+        public double HsvV
+        {
+            get => _hsvV;
+            set => SetProperty(ref _hsvV, value);
+        }
+
+        // ─────────────── Anomaly (PatchCore) ───────────────
+
+        private string _anomalyMethod = "patchcore";
+        public string AnomalyMethod
+        {
+            get => _anomalyMethod;
+            set => SetProperty(ref _anomalyMethod, value);
+        }
+
+        private string _anomalyBackbone = "resnet18";
+        public string AnomalyBackbone
+        {
+            get => _anomalyBackbone;
+            set => SetProperty(ref _anomalyBackbone, value);
+        }
+
+        private double _coresetRatio = 0.1;
+        public double CoresetRatio
+        {
+            get => _coresetRatio;
+            set => SetProperty(ref _coresetRatio, value);
+        }
     }
 }

@@ -932,6 +932,52 @@ namespace VMS.DeepLearning.ViewModels
             OnPropertyChanged(nameof(IsTraining));
         }
 
+        // ── Augmentation 프리셋 ──
+
+        /// <summary>Ultralytics 기본값 (균형잡힌 일반 학습).</summary>
+        [RelayCommand]
+        private void PresetAugDefault()
+        {
+            TrainingConfig.Mosaic = 1.0;
+            TrainingConfig.Mixup = 0.0;
+            TrainingConfig.HsvH = 0.015;
+            TrainingConfig.HsvS = 0.7;
+            TrainingConfig.HsvV = 0.4;
+        }
+
+        /// <summary>공장 조명 변동 강건화 — HSV-V를 공격적으로 증강하여 조명 변화에 대응.</summary>
+        [RelayCommand]
+        private void PresetAugFactoryLighting()
+        {
+            TrainingConfig.Mosaic = 1.0;
+            TrainingConfig.Mixup = 0.1;
+            TrainingConfig.HsvH = 0.02;
+            TrainingConfig.HsvS = 0.8;
+            TrainingConfig.HsvV = 0.7;  // ← 조명 변동에 핵심
+        }
+
+        /// <summary>작은 결함 검출 — Mosaic + Mixup 최대로 문맥 다양화.</summary>
+        [RelayCommand]
+        private void PresetAugSmallDefects()
+        {
+            TrainingConfig.Mosaic = 1.0;
+            TrainingConfig.Mixup = 0.15;
+            TrainingConfig.HsvH = 0.015;
+            TrainingConfig.HsvS = 0.7;
+            TrainingConfig.HsvV = 0.5;
+        }
+
+        /// <summary>최소 증강 — 이미 대규모 데이터셋이거나 증강이 오히려 악영향일 때.</summary>
+        [RelayCommand]
+        private void PresetAugMinimal()
+        {
+            TrainingConfig.Mosaic = 0.5;
+            TrainingConfig.Mixup = 0.0;
+            TrainingConfig.HsvH = 0.005;
+            TrainingConfig.HsvS = 0.3;
+            TrainingConfig.HsvV = 0.2;
+        }
+
         #endregion
 
         #region Navigation Helpers
