@@ -72,6 +72,8 @@ namespace VMS.VisionSetup.ViewModels
         private readonly IDialogService _dialogService;
         private readonly Action _shutdownAction;
         private readonly ISLMChatService? _chatService;
+        private readonly IParameterApplyService? _parameterApplyService;
+        private readonly IImageAnalysisService? _imageAnalysisService;
         private ChatWindow? _chatWindow;
         private Mat? _currentImage;
         private VisionToolBase? _subscribedTool;
@@ -562,7 +564,9 @@ namespace VMS.VisionSetup.ViewModels
             IDialogService dialogService,
             Action shutdownAction,
             IRobotService? robotService = null,
-            ISLMChatService? chatService = null)
+            ISLMChatService? chatService = null,
+            IParameterApplyService? parameterApplyService = null,
+            IImageAnalysisService? imageAnalysisService = null)
         {
             _visionService = visionService;
             _recipeService = recipeService;
@@ -570,6 +574,8 @@ namespace VMS.VisionSetup.ViewModels
             _dialogService = dialogService;
             _shutdownAction = shutdownAction;
             _chatService = chatService;
+            _parameterApplyService = parameterApplyService;
+            _imageAnalysisService = imageAnalysisService;
 
             // AppSetup에서 생성된 로봇 서비스 적용 (연결은 사용자가 수동으로)
             _robotService = robotService;
@@ -741,8 +747,8 @@ namespace VMS.VisionSetup.ViewModels
 
             if (_chatWindow == null || !_chatWindow.IsLoaded)
             {
-                var toolGenerator = new SLMToolGeneratorService();
-                var chatViewModel = new ChatViewModel(_chatService, toolGenerator, this);
+                var toolGenerator = new SLMToolGeneratorService(_parameterApplyService);
+                var chatViewModel = new ChatViewModel(_chatService, toolGenerator, this, _imageAnalysisService);
                 _chatWindow = new ChatWindow { DataContext = chatViewModel };
             }
 

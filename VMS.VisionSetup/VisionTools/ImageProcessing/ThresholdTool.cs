@@ -1,3 +1,4 @@
+using VMS.VisionSetup.Attributes;
 using VMS.VisionSetup.Models;
 using OpenCvSharp;
 using System;
@@ -12,6 +13,10 @@ namespace VMS.VisionSetup.VisionTools.ImageProcessing
     public class ThresholdTool : VisionToolBase
     {
         private double _thresholdValue = 128;
+        [TunableParam(
+            Description = "이진화 임계값. 픽셀이 이 값보다 크면 흰색, 작으면 검정으로 변환. 이미지 평균 밝기 근처가 합리적.",
+            Tier = TuningTier.ImageDependent,
+            Min = 0, Max = 255, DefaultHint = "128")]
         public double ThresholdValue
         {
             get => _thresholdValue;
@@ -26,6 +31,9 @@ namespace VMS.VisionSetup.VisionTools.ImageProcessing
         }
 
         private ThresholdType _thresholdType = ThresholdType.Binary;
+        [TunableParam(
+            Description = "이진화 방향. Binary: 임계값보다 크면 흰색. BinaryInv: 임계값보다 크면 검정(어두운 객체 검출 시).",
+            Tier = TuningTier.Semantic, DefaultHint = "Binary")]
         public ThresholdType ThresholdType
         {
             get => _thresholdType;
@@ -33,6 +41,9 @@ namespace VMS.VisionSetup.VisionTools.ImageProcessing
         }
 
         private bool _useOtsu = false;
+        [TunableParam(
+            Description = "true면 Otsu 알고리즘으로 임계값 자동 결정. 히스토그램이 bimodal(이중 봉우리)일 때 권장.",
+            Tier = TuningTier.Semantic, DefaultHint = "false")]
         public bool UseOtsu
         {
             get => _useOtsu;
@@ -40,6 +51,9 @@ namespace VMS.VisionSetup.VisionTools.ImageProcessing
         }
 
         private bool _useAdaptive = false;
+        [TunableParam(
+            Description = "true면 지역적 적응형 이진화. 조명이 불균일하거나 그라데이션이 있을 때 사용. UseOtsu와 동시 사용 불가.",
+            Tier = TuningTier.Semantic, DefaultHint = "false")]
         public bool UseAdaptive
         {
             get => _useAdaptive;
@@ -47,6 +61,9 @@ namespace VMS.VisionSetup.VisionTools.ImageProcessing
         }
 
         private AdaptiveThresholdTypes _adaptiveMethod = AdaptiveThresholdTypes.GaussianC;
+        [TunableParam(
+            Description = "적응형 이진화 가중치 계산 방법. MeanC: 단순 평균. GaussianC: 가우시안 가중 평균(권장).",
+            Tier = TuningTier.Semantic, DependsOn = "UseAdaptive", DefaultHint = "GaussianC")]
         public AdaptiveThresholdTypes AdaptiveMethod
         {
             get => _adaptiveMethod;
@@ -54,6 +71,10 @@ namespace VMS.VisionSetup.VisionTools.ImageProcessing
         }
 
         private int _blockSize = 11;
+        [TunableParam(
+            Description = "적응형 이진화의 지역 윈도우 크기(홀수). 작은 객체는 5~11, 큰 객체는 21~51.",
+            Tier = TuningTier.DomainCommon, Min = 3, Max = 99,
+            DependsOn = "UseAdaptive", DefaultHint = "11")]
         public int BlockSize
         {
             get => _blockSize;
@@ -61,6 +82,10 @@ namespace VMS.VisionSetup.VisionTools.ImageProcessing
         }
 
         private double _cValue = 2;
+        [TunableParam(
+            Description = "적응형 이진화의 평균에서 빼는 상수. 노이즈에 강건하게 하려면 값을 키움(보통 2~10).",
+            Tier = TuningTier.ImageDependent, Min = -20, Max = 20,
+            DependsOn = "UseAdaptive", DefaultHint = "2")]
         public double CValue
         {
             get => _cValue;

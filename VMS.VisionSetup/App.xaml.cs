@@ -103,6 +103,9 @@ namespace VMS.VisionSetup
             // ── SLM Chat Service ──
             ISLMChatService slmChatService = new SLMChatService();
 
+            // ── Image Analysis Service (Phase 3) ──
+            IImageAnalysisService imageAnalysisService = new ImageAnalysisService();
+
             // DialogService에 parameterSyncService 주입 (Web 레시피 동기화용)
             IDialogService dialogService = new DialogService(cameraService, recipeService, parameterSyncService);
 
@@ -130,7 +133,9 @@ namespace VMS.VisionSetup
                     Shutdown();
                 },
                 robotService,
-                slmChatService);
+                slmChatService,
+                parameterApplyService,
+                imageAnalysisService);
 
             // AppSetup 기본 로봇 설정을 ViewModel에 적용 (레시피 미로드 시 기본값)
             if (robotConfig.isEnabled)

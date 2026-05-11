@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -9,6 +10,9 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using VMS.VisionSetup.Interfaces;
+using VMS.VisionSetup.VisionTools.BlobAnalysis;
+using VMS.VisionSetup.VisionTools.ImageProcessing;
+using VMS.VisionSetup.VisionTools.Measurement;
 
 namespace VMS.VisionSetup.Services
 {
@@ -31,7 +35,18 @@ namespace VMS.VisionSetup.Services
 
         #region System Prompts
 
-        private const string SystemPrompt =
+        /// <summary>
+        /// [TunableParam] 어트리뷰트가 부착된 도구들의 파라미터 스키마.
+        /// 첫 호출 시 한 번만 생성.
+        /// </summary>
+        private static readonly string TunableParamSection = Services.ParameterSchemaExtractor.BuildPromptSection(new[]
+        {
+            typeof(ThresholdTool),
+            typeof(BlobTool),
+            typeof(CaliperTool),
+        });
+
+        private const string SystemPromptBase =
 @"당신은 산업용 머신 비전 검사 솔루션의 레시피를 설계하는 전문가입니다.
 사용자의 자연어 요청을 분석하여, 비전 도구 구성을 JSON 형식으로 정확히 생성하십시오.
 
@@ -73,20 +88,22 @@ namespace VMS.VisionSetup.Services
       ""ToolType"": ""도구 타입 (위 목록 중 하나)"",
       ""ToolName"": ""고유한 도구 이름"",
       ""InputSource"": ""Camera 또는 이전 도구의 ToolName"",
-      ""Description"": ""이 도구를 추가한 이유""
+      ""Description"": ""이 도구를 추가한 이유"",
+      ""Parameters"": { ""PropertyName"": value, ...  }  // 선택 사항. 아래 [튜닝 가능 파라미터] 섹션 참조
     }
   ]
 }
 
-[예시 1 - 표면 검사 + 위치 보정]
-사용자: ""제품 위치가 흔들리는데, 표면 이물을 검출해줘""
+[예시 1 - 표면 검사 + 위치 보정 + 파라미터]
+사용자: ""제품 위치가 흔들리는데, 어두운 배경 위에 있는 작은 흰색 이물을 검출해줘""
 {
   ""Action"": ""Create"",
   ""RecipeName"": ""SurfaceInspection"",
   ""Sequence"": [
     { ""ToolType"": ""GrayscaleTool"", ""ToolName"": ""PreProcess"", ""InputSource"": ""Camera"", ""Description"": ""전처리용 그레이스케일 변환"" },
     { ""ToolType"": ""FeatureMatchTool"", ""ToolName"": ""PosAlign"", ""InputSource"": ""PreProcess"", ""Description"": ""제품 위치 보정 (흔들림 대응)"" },
-    { ""ToolType"": ""BlobTool"", ""ToolName"": ""DefectBlob"", ""InputSource"": ""PosAlign"", ""Description"": ""이물/결함 검출"" },
+    { ""ToolType"": ""BlobTool"", ""ToolName"": ""DefectBlob"", ""InputSource"": ""PosAlign"", ""Description"": ""이물 검출"",
+      ""Parameters"": { ""SegmentationPolarity"": ""LightOnDark"", ""MinArea"": 30, ""MaxArea"": 5000 } },
     { ""ToolType"": ""ResultTool"", ""ToolName"": ""Judgment"", ""InputSource"": ""DefectBlob"", ""Description"": ""최종 판정"" }
   ]
 }
@@ -146,7 +163,7 @@ namespace VMS.VisionSetup.Services
 - 캔버스에 도구가 있고 사용자가 변경을 요청하면 → ""Modify""
 - 새 레시피를 만들라고 하면 → ""Create""";
 
-        private const string OperatorSystemPrompt =
+        private const string OperatorSystemPromptBase =
 @"당신은 제조 현장 작업자의 일상 표현을 비전 검사 레시피로 변환하는 전문 통역사입니다.
 작업자의 한국어 요청을 분석하여, 적절한 비전 도구 JSON을 정확히 생성하십시오.
 
@@ -228,6 +245,104 @@ namespace VMS.VisionSetup.Services
 - 캔버스에 도구가 없으면 → 항상 ""Create""
 - 캔버스에 도구가 있고 변경 요청 → ""Modify""
 - 새 레시피 요청 → ""Create""";
+
+        /// <summary>
+        /// Phase 5: 실행 결과 컨텍스트가 주어졌을 때 LLM의 응답 방식.
+        /// </summary>
+        private const string ExecutionFeedbackSection =
+@"[실행 피드백 / Execution Feedback]
+사용자 메시지에 [Execution Feedback] 블록이 포함되어 있으면, 각 도구의 마지막 실행 결과입니다.
+- success: true/false (실행 성공 여부)
+- data: 검출 개수, 측정값 등 도구 출력
+- message: 도구가 남긴 한 줄 요약
+
+대응 규칙:
+1. 사용자가 ""왜 안 잡혀?"", ""결과가 이상해"", ""더 늘려줘"" 같은 진단·조정 요청을 하면:
+   - 결과를 한국어로 한두 줄 분석
+   - 조정 방향 명확히 제시(어떤 도구의 어떤 파라미터를 어느 방향으로)
+   - Modify 액션으로 ""SetParameters"" 또는 기존 연산을 사용해 새 JSON 출력
+2. 결과가 비어 있거나(검출 0건) 사용자 의도와 동떨어지면:
+   - ThresholdValue, MinArea 등을 어떻게 바꿀지 추정 (필요하면 분석 재요청도 가능)
+3. 사용자가 단순히 ""성공했어"", ""좋아""라고 하면 짧게 확인만 응답(JSON 없음).
+
+[Modify - SetParameters 연산]
+도구 자체는 그대로 두고 파라미터만 갱신할 때 사용:
+{
+  ""Action"": ""Modify"",
+  ""Changes"": [
+    { ""Operation"": ""SetParameters"", ""ToolName"": ""DefectBlob"",
+      ""Parameters"": { ""MinArea"": 30, ""ThresholdValue"": 95 } }
+  ]
+}
+
+주의:
+- [Execution Feedback]이 있어도 사용자가 새 도구 추가/제거를 명시적으로 요청하면 Create/Modify-AddTool로 응답.
+- 결과를 무시한 추정은 금물. 반드시 data 값을 근거로 제시.";
+
+        /// <summary>
+        /// Phase 4a: SLM이 도구의 ROI를 텍스트로 지정하는 힌트 규약.
+        /// </summary>
+        private const string RoiHintSection =
+@"[ROI 힌트 / Region of Interest Hint]
+사용자가 검사 영역을 한정하는 의도를 보이면, 도구에 ""RoiHint"" 필드를 추가하십시오.
+사용 가능한 Strategy:
+- FullImage: 전체 이미지. 기본값(생략 가능).
+- CenterRect: 이미지 중앙 영역만. ""MarginPercent"": 0~45 로 가장자리 여백 비율 지정.
+- Custom: 명시적 좌표. ""X"", ""Y"", ""Width"", ""Height"" 필수.
+
+판단 규칙:
+- ""중앙만"", ""가운데"", ""중심부"" → CenterRect, MarginPercent ~20
+- ""위쪽"", ""아래쪽"", ""왼쪽 절반"" 등 구체적 영역 → Custom (이미지 크기는 [Image Analysis] 컨텍스트에 pixelCount/roi로 들어옴, 또는 사용자가 명시한 비율로 추정)
+- ""전체"", 언급 없음 → RoiHint 생략
+
+예시:
+{ ""ToolType"": ""BlobTool"", ""ToolName"": ""Center"", ""InputSource"": ""Threshold"",
+  ""RoiHint"": { ""Strategy"": ""CenterRect"", ""MarginPercent"": 20 },
+  ""Parameters"": { ""MinArea"": 50 } }
+
+주의: RoiHint는 그 도구의 검사 영역만 한정합니다. 다음 도구들에 자동 전파되지 않습니다.";
+
+        /// <summary>
+        /// Phase 3: ImageDependent 파라미터 결정 전 이미지 분석을 요청할 수 있는 2단계 추론 지시.
+        /// </summary>
+        private const string TwoStepInferenceSection =
+@"[2단계 추론 / Two-step Inference]
+ImageDependent Tier 파라미터(ThresholdValue, EdgeThreshold, CValue 등)를 정확히 정하려면
+실제 이미지 통계가 필요합니다. 다음 두 가지 중 하나를 출력하십시오:
+
+(A) 분석이 필요한 경우 — 첫 응답에서 분석만 요청:
+{
+  ""AnalysisRequests"": [""histogram""],
+  ""Reason"": ""BlobTool 임계값 결정을 위해 픽셀 분포 필요"",
+  ""AnalysisRoi"": { ""Strategy"": ""CenterRect"", ""MarginPercent"": 20 }  // 선택 — 분석 영역 한정
+}
+사용 가능한 함수: histogram, edges
+- histogram: mean, stdDev, p10/p50/p90, otsuThreshold, hasBimodal, darkPeak, lightPeak
+- edges: edgeDensity, meanGradientMagnitude, dominantAngleDeg, suggestedCannyLow/High
+
+분석이 완료되면 [Image Analysis] 컨텍스트가 다음 턴에 자동 주입됩니다.
+그때 비로소 최종 ""Action"": ""Create""/""Modify"" JSON을 출력하십시오.
+
+(B) Tier=Semantic/DomainCommon 파라미터만 필요한 경우 — 분석 없이 바로 최종 JSON.
+
+판단 기준:
+- 사용자가 ""임계값"", ""에지 강도"", ""밝기"" 같이 통계를 언급 → 분석 요청
+- 사용자가 위치/형상/크기만 언급 → 분석 없이 바로 응답
+- 이미 [Image Analysis] 컨텍스트가 들어와 있으면 절대 다시 요청하지 말고 최종 JSON 출력";
+
+        // Phase 2~5: 어트리뷰트 스키마 + 2단계 추론 + ROI 힌트 + 실행 피드백.
+        private static readonly string SystemPrompt =
+            CombineSections(SystemPromptBase, TunableParamSection, TwoStepInferenceSection,
+                RoiHintSection, ExecutionFeedbackSection);
+
+        private static readonly string OperatorSystemPrompt =
+            CombineSections(OperatorSystemPromptBase, TunableParamSection, TwoStepInferenceSection,
+                RoiHintSection, ExecutionFeedbackSection);
+
+        private static string CombineSections(params string[] parts)
+        {
+            return string.Join("\n\n", parts.Where(p => !string.IsNullOrEmpty(p)));
+        }
 
         #endregion
 

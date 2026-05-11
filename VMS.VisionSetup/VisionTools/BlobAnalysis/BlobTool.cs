@@ -1,3 +1,4 @@
+using VMS.VisionSetup.Attributes;
 using VMS.VisionSetup.Models;
 using VMS.VisionSetup.Services;
 using OpenCvSharp;
@@ -16,6 +17,9 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
     {
         // Threshold 설정 (내부 이진화용)
         private bool _useInternalThreshold = true;
+        [TunableParam(
+            Description = "true면 BlobTool 내부에서 이진화 수행. false면 입력 이미지가 이미 이진화되어 있다고 가정.",
+            Tier = TuningTier.Semantic, DefaultHint = "true")]
         public bool UseInternalThreshold
         {
             get => _useInternalThreshold;
@@ -23,6 +27,11 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
         }
 
         private double _thresholdValue = 128;
+        [TunableParam(
+            Description = "내부 이진화 임계값. 이미지 평균 밝기 근처가 합리적.",
+            Tier = TuningTier.ImageDependent,
+            Min = 0, Max = 255,
+            DependsOn = "UseInternalThreshold", DefaultHint = "128")]
         public double ThresholdValue
         {
             get => _thresholdValue;
@@ -30,6 +39,9 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
         }
 
         private SegmentationPolarity _segmentationPolarity = SegmentationPolarity.LightOnDark;
+        [TunableParam(
+            Description = "검출 객체의 밝기 극성. LightOnDark: 어두운 배경의 밝은 객체. DarkOnLight: 밝은 배경의 어두운 객체.",
+            Tier = TuningTier.Semantic, DefaultHint = "LightOnDark")]
         public SegmentationPolarity SegmentationPolarity
         {
             get => _segmentationPolarity;
@@ -38,6 +50,9 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
 
         // 면적 필터
         private double _minArea = 100;
+        [TunableParam(
+            Description = "검출 객체 최소 면적(픽셀). 작은 노이즈 제거용. 작은 결함은 10~50, 일반 객체는 100~500.",
+            Tier = TuningTier.DomainCommon, Min = 0, Max = 100000, DefaultHint = "100")]
         public double MinArea
         {
             get => _minArea;
@@ -45,6 +60,9 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
         }
 
         private double _maxArea = double.MaxValue;
+        [TunableParam(
+            Description = "검출 객체 최대 면적(픽셀). 너무 큰 영역(배경 등) 제외용. 무제한이면 매우 큰 값 사용.",
+            Tier = TuningTier.DomainCommon, Min = 0)]
         public double MaxArea
         {
             get => _maxArea;
@@ -68,6 +86,9 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
 
         // 형상 필터
         private double _minCircularity = 0;
+        [TunableParam(
+            Description = "검출 객체 최소 원형도(0~1). 1에 가까울수록 원형. 원형 객체만 찾으려면 0.7 이상.",
+            Tier = TuningTier.DomainCommon, Min = 0, Max = 1, DefaultHint = "0")]
         public double MinCircularity
         {
             get => _minCircularity;
@@ -75,6 +96,9 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
         }
 
         private double _maxCircularity = 1;
+        [TunableParam(
+            Description = "검출 객체 최대 원형도. 보통 1로 두고 MinCircularity로 필터.",
+            Tier = TuningTier.DomainCommon, Min = 0, Max = 1, DefaultHint = "1")]
         public double MaxCircularity
         {
             get => _maxCircularity;
@@ -82,6 +106,9 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
         }
 
         private double _minAspectRatio = 0;
+        [TunableParam(
+            Description = "검출 객체 최소 종횡비(W/H). 길쭉한 객체 필터링용. 정사각형 근처는 0.8~1.2.",
+            Tier = TuningTier.DomainCommon, Min = 0, DefaultHint = "0")]
         public double MinAspectRatio
         {
             get => _minAspectRatio;
@@ -89,6 +116,9 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
         }
 
         private double _maxAspectRatio = double.MaxValue;
+        [TunableParam(
+            Description = "검출 객체 최대 종횡비. 매우 길쭉한 객체 제외용.",
+            Tier = TuningTier.DomainCommon, Min = 0)]
         public double MaxAspectRatio
         {
             get => _maxAspectRatio;
@@ -105,6 +135,9 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
 
         // 최대 Blob 수
         private int _maxBlobCount = 100;
+        [TunableParam(
+            Description = "결과로 반환할 최대 객체 수. SortBy 기준 상위 N개만 유지.",
+            Tier = TuningTier.DomainCommon, Min = 1, Max = 10000, DefaultHint = "100")]
         public int MaxBlobCount
         {
             get => _maxBlobCount;
@@ -113,6 +146,9 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
 
         // 정렬 기준
         private BlobSortBy _sortBy = BlobSortBy.Area;
+        [TunableParam(
+            Description = "Blob 정렬 기준. Area: 면적. Position: 위치. 기본 Area.",
+            Tier = TuningTier.Semantic, DefaultHint = "Area")]
         public BlobSortBy SortBy
         {
             get => _sortBy;
@@ -336,6 +372,25 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
                     binaryImage = grayImage.Clone();
                     if (SegmentationPolarity == SegmentationPolarity.DarkOnLight)
                         Cv2.BitwiseNot(binaryImage, binaryImage);
+                }
+
+                // 비사각형 ROI(Circle/Ellipse/Polygon) 마스크 적용: contour 검출과 결과가 도형 안에 한정됨.
+                // 회전 사각형(useRotatedROI)은 위쪽 분기에서 별도 처리되므로 여기 도달하지 않음.
+                if (!useRotatedROI)
+                {
+                    using var shapeMaskFull = GetNonRectangularShapeMask(inputImage);
+                    if (shapeMaskFull != null)
+                    {
+                        var adjustedROIForMask = GetAdjustedROI(inputImage);
+                        if (adjustedROIForMask.Width > 0 && adjustedROIForMask.Height > 0)
+                        {
+                            using var maskCrop = new Mat(shapeMaskFull, adjustedROIForMask);
+                            if (maskCrop.Size() == binaryImage.Size())
+                            {
+                                Cv2.BitwiseAnd(binaryImage, maskCrop, binaryImage);
+                            }
+                        }
+                    }
                 }
 
                 // Contour 검출 (잘라낸 이미지 기준 상대 좌표 반환, 0,0 기준)
