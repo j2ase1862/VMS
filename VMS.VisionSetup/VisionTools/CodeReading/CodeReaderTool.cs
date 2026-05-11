@@ -111,6 +111,8 @@ namespace VMS.VisionSetup.VisionTools.CodeReading
                 {
                     // 기본 축 정렬 ROI crop
                     workImage = GetROIImage(inputImage);
+                    // 비사각형 ROI(Circle/Polygon)인 경우 도형 밖을 흰색으로 가려 인식 영역 한정
+                    ApplyShapeMaskInPlace(workImage, inputImage, Scalar.White);
                 }
 
                 try

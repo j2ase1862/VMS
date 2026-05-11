@@ -137,8 +137,13 @@ namespace VMS.VisionSetup.Services
 | ConnectionType | 의미 | 사용 조건 |
 |---|---|---|
 | Image | 이미지 전달 | 소스가 GrayscaleTool, BlurTool, ThresholdTool, EdgeDetectionTool, MorphologyTool, HistogramTool일 때 |
-| Coordinates | 좌표/위치 전달 | 소스가 FeatureMatchTool, CaliperTool, BlobTool, LineFitTool, CircleFitTool일 때 |
+| Coordinates | 좌표/위치 전달 + **자동 ROI 추적(Fixture Transform)** | 소스가 FeatureMatchTool, CaliperTool, BlobTool, LineFitTool, CircleFitTool일 때 |
 | Result | 결과 전달 | 소스가 CodeReaderTool, OCRTool, DetectionTool, ClassifyTool, AnomalyTool, GeometryTool, ResultTool일 때 |
+
+**Coordinates 연결의 핵심 효과**: Target 도구의 ROI가 Source의 CenterX/Y/Angle 변화에 따라 매 실행마다 자동 변환됩니다.
+- 첫 실행 시 사용자/기본 ROI가 ""기준 ROI""로 저장됨
+- 이후 부품이 다른 위치/각도로 와도 Target ROI가 자동 추적
+- 사용자가 ROI를 안 그려도 200×200 기본 ROI가 Source 위치에 자동 생성됨
 
 [Create 시 Connection 규칙]
 - InputSource 필드로 연결을 정의합니다. ConnectionType은 자동 결정됩니다.
@@ -168,7 +173,7 @@ namespace VMS.VisionSetup.Services
 작업자의 한국어 요청을 분석하여, 적절한 비전 도구 JSON을 정확히 생성하십시오.
 
 [자동 판단 규칙]
-1. 흔들림/위치변동/틀어짐/움직임 → FeatureMatchTool로 위치 보정 먼저
+1. 흔들림/위치변동/틀어짐/움직임 → FeatureMatchTool로 위치 보정 먼저, 검사 도구는 FeatureMatch에서 Coordinates 연결(=Fixture로 ROI 자동 추적)
 2. 이물/얼룩/덩어리/홀/구멍/개수 → BlobTool 사용
 3. 코드/바코드/QR/DataMatrix/문자 → CodeReaderTool 사용
 4. 거리/폭/너비/간격/두께/측정 → CaliperTool 사용
@@ -245,6 +250,83 @@ namespace VMS.VisionSetup.Services
 - 캔버스에 도구가 없으면 → 항상 ""Create""
 - 캔버스에 도구가 있고 변경 요청 → ""Modify""
 - 새 레시피 요청 → ""Create""";
+
+        /// <summary>
+        /// Fixture 패턴 가이드: 부품 위치 변동에 자동 대응.
+        /// </summary>
+        private const string FixturePatternSection =
+@"[Fixture Pattern — 부품 위치 자동 추적]
+실제 산업 검사에선 부품이 매번 같은 위치에 오지 않습니다(컨베이어, 트레이, 로봇 픽업).
+정적 ROI는 부품이 움직이면 무용지물이므로 다음 패턴을 적극 활용하십시오.
+
+발동 조건 (사용자 표현):
+- ""부품이 움직여"" / ""위치가 흔들려"" / ""매번 다른 자리"" / ""틀어져"" / ""회전된 채""
+- 또는 사용자 의도 상 명시는 안 했지만 컨베이어/로봇/트레이 상황이 명확한 경우
+
+처방 — 시퀀스 구성:
+1. **첫 번째에 FeatureMatchTool 배치**: 부품의 기준 위치를 찾는 역할
+2. **검사 도구(BlobTool, CaliperTool, OCRTool 등)를 FeatureMatch에서 Coordinates로 연결**
+3. 검사 도구에는 별도 ROI 설정 불필요 — Fixture Transform이 자동 처리
+
+결과: 부품이 어디에 있든, 어떤 각도로 있든 검사 도구의 ROI가 자동으로 그 위치를 따라감.
+
+예시 (Create):
+{
+  ""Action"": ""Create"",
+  ""RecipeName"": ""DynamicInspection"",
+  ""Sequence"": [
+    { ""ToolType"": ""GrayscaleTool"", ""ToolName"": ""Pre"", ""InputSource"": ""Camera"" },
+    { ""ToolType"": ""FeatureMatchTool"", ""ToolName"": ""LocatePart"", ""InputSource"": ""Pre"",
+      ""Description"": ""부품 기준 위치 추적"" },
+    { ""ToolType"": ""BlobTool"", ""ToolName"": ""DefectInspect"", ""InputSource"": ""LocatePart"",
+      ""Description"": ""부품 위치 기준 결함 검출 (Fixture로 자동 추적)"",
+      ""Parameters"": { ""MinArea"": 30 } },
+    { ""ToolType"": ""ResultTool"", ""ToolName"": ""Judge"", ""InputSource"": ""DefectInspect"" }
+  ]
+}
+
+주의:
+- FeatureMatch에는 부품의 ""기준 모양""에 해당하는 패턴 영역을 사용자가 한 번 그려야 합니다(첫 실행 후).
+- 부품 위치 변동 의도가 없으면 강제로 FeatureMatch 추가하지 마십시오 — 불필요한 복잡도.";
+
+        /// <summary>
+        /// Step 2 (RAG): [Similar Recipes] 컨텍스트가 주어졌을 때 활용 방법.
+        /// </summary>
+        private const string SimilarRecipesSection =
+@"[유사 레시피 / Similar Recipes]
+사용자 메시지에 [Similar Recipes] 블록이 포함되어 있으면, 키워드 기반으로 검색된 과거 레시피입니다.
+
+활용 규칙:
+- 구조 참고용입니다. 도구 시퀀스 패턴(예: Grayscale → FeatureMatch → Blob → Result)을 참고하되, 그대로 복사하지 마십시오.
+- 사용자의 현재 요청에 더 정확히 맞도록 도구 추가/제거/순서 변경을 고려하십시오.
+- 과거 레시피의 RecipeName을 그대로 쓰지 말고 현재 요청에 맞는 새 이름을 만드십시오.
+- 유사도가 낮아 보이면 무시해도 됩니다(블록이 있다고 반드시 따라야 하는 것은 아님).";
+
+        /// <summary>
+        /// Step 1 (Confidence): 파라미터별 신뢰도 레이블 가이드.
+        /// </summary>
+        private const string ConfidenceSection =
+@"[파라미터 신뢰도 / Parameter Confidence]
+Parameters에 값을 넣을 때, ""ParameterConfidence"" 필드로 각 값의 신뢰도를 표시할 수 있습니다.
+형식: { ""PropertyName"": ""high|medium|low"" }
+
+판단 기준:
+- high: 사용자가 명시적으로 지정했거나, 의미/도메인 상 결정적인 값
+  예: ""DarkOnLight""을 사용자가 ""어두운 결함""이라고 했을 때 → SegmentationPolarity = ""high""
+- medium: 합리적 추정. 사용자 의도와 부합하지만 값 자체는 도메인 상식 기반
+  예: ""작은 결함"" → MinArea = 30, confidence = ""medium""
+- low: 이미지 통계 없이 추측한 ImageDependent 값
+  예: 분석 결과 없이 추정한 ThresholdValue = 128 → ""low"" (가능하면 분석 요청을 먼저)
+
+작성 규칙:
+- 모든 파라미터에 대해 채울 필요 없음. 비어 있으면 ""high""로 간주.
+- [Image Analysis] 결과에서 직접 도출된 값(otsuThreshold 등)은 ""high"".
+- 사용자가 ""대충"" / ""아무거나"" 같이 의도가 모호하면 ""low"".
+
+예시:
+""Parameters"": { ""MinArea"": 30, ""ThresholdValue"": 128, ""SegmentationPolarity"": ""DarkOnLight"" },
+""ParameterConfidence"": { ""MinArea"": ""medium"", ""ThresholdValue"": ""low"" }
+// SegmentationPolarity는 생략 → high로 간주";
 
         /// <summary>
         /// Phase 5: 실행 결과 컨텍스트가 주어졌을 때 LLM의 응답 방식.
@@ -330,14 +412,16 @@ ImageDependent Tier 파라미터(ThresholdValue, EdgeThreshold, CValue 등)를 �
 - 사용자가 위치/형상/크기만 언급 → 분석 없이 바로 응답
 - 이미 [Image Analysis] 컨텍스트가 들어와 있으면 절대 다시 요청하지 말고 최종 JSON 출력";
 
-        // Phase 2~5: 어트리뷰트 스키마 + 2단계 추론 + ROI 힌트 + 실행 피드백.
+        // Phase 2~5 + Step 1~2 + Fixture: 모든 보조 섹션을 합성.
         private static readonly string SystemPrompt =
             CombineSections(SystemPromptBase, TunableParamSection, TwoStepInferenceSection,
-                RoiHintSection, ExecutionFeedbackSection);
+                RoiHintSection, ExecutionFeedbackSection, ConfidenceSection,
+                SimilarRecipesSection, FixturePatternSection);
 
         private static readonly string OperatorSystemPrompt =
             CombineSections(OperatorSystemPromptBase, TunableParamSection, TwoStepInferenceSection,
-                RoiHintSection, ExecutionFeedbackSection);
+                RoiHintSection, ExecutionFeedbackSection, ConfidenceSection,
+                SimilarRecipesSection, FixturePatternSection);
 
         private static string CombineSections(params string[] parts)
         {

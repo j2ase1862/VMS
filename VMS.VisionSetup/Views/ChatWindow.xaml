@@ -223,11 +223,18 @@
                         <TextBlock Text="SLM Recipe Bot" Foreground="WhiteSmoke" FontWeight="SemiBold"
                                    FontSize="13" Margin="8,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
-                    <CheckBox Content="Operator Mode"
-                              IsChecked="{Binding IsOperatorMode}"
-                              Style="{StaticResource ToggleSwitchStyle}"
-                              VerticalAlignment="Center"
-                              HorizontalAlignment="Right" Margin="0,0,40,0"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                VerticalAlignment="Center" Margin="0,0,40,0">
+                        <CheckBox Content="자동 실행"
+                                  IsChecked="{Binding IsAutoRunEnabled}"
+                                  Style="{StaticResource ToggleSwitchStyle}"
+                                  VerticalAlignment="Center" Margin="0,0,14,0"
+                                  ToolTip="레시피 Apply 후 자동으로 도구 실행 + 결과 메시지 추가"/>
+                        <CheckBox Content="Operator Mode"
+                                  IsChecked="{Binding IsOperatorMode}"
+                                  Style="{StaticResource ToggleSwitchStyle}"
+                                  VerticalAlignment="Center"/>
+                    </StackPanel>
                     <Button Content="X" HorizontalAlignment="Right" VerticalAlignment="Center"
                             Width="32" Height="28" Margin="0,0,4,0"
                             Command="{Binding CloseCommand}"

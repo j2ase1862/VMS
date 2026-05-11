@@ -74,6 +74,7 @@ namespace VMS.VisionSetup.ViewModels
         private readonly ISLMChatService? _chatService;
         private readonly IParameterApplyService? _parameterApplyService;
         private readonly IImageAnalysisService? _imageAnalysisService;
+        private readonly IRecipeRetrievalService? _recipeRetrievalService;
         private ChatWindow? _chatWindow;
         private Mat? _currentImage;
         private VisionToolBase? _subscribedTool;
@@ -566,7 +567,8 @@ namespace VMS.VisionSetup.ViewModels
             IRobotService? robotService = null,
             ISLMChatService? chatService = null,
             IParameterApplyService? parameterApplyService = null,
-            IImageAnalysisService? imageAnalysisService = null)
+            IImageAnalysisService? imageAnalysisService = null,
+            IRecipeRetrievalService? recipeRetrievalService = null)
         {
             _visionService = visionService;
             _recipeService = recipeService;
@@ -576,6 +578,7 @@ namespace VMS.VisionSetup.ViewModels
             _chatService = chatService;
             _parameterApplyService = parameterApplyService;
             _imageAnalysisService = imageAnalysisService;
+            _recipeRetrievalService = recipeRetrievalService;
 
             // AppSetup에서 생성된 로봇 서비스 적용 (연결은 사용자가 수동으로)
             _robotService = robotService;
@@ -587,7 +590,7 @@ namespace VMS.VisionSetup.ViewModels
             OpenImageFolderCommand = new RelayCommand(OpenImageFolder);
             PreviousImageCommand = new RelayCommand(NavigatePreviousImage, () => _currentImageIndex > 0);
             NextImageCommand = new RelayCommand(NavigateNextImage, () => _currentImageIndex < _imageFolderFiles.Length - 1);
-            RunAllCommand = new RelayCommand(async () => await RunAllTools(), () => !IsRunning && CurrentImage != null);
+            RunAllCommand = new RelayCommand(async () => await RunAllToolsAsync(), () => !IsRunning && CurrentImage != null);
             RunSelectedCommand = new RelayCommand(RunSelectedTool, () => !IsRunning && SelectedTool != null && CurrentImage != null);
             ClearToolsCommand = new RelayCommand(ClearAllTools);
             RemoveToolCommand = new RelayCommand<ToolItem>(RemoveTool);
@@ -748,7 +751,8 @@ namespace VMS.VisionSetup.ViewModels
             if (_chatWindow == null || !_chatWindow.IsLoaded)
             {
                 var toolGenerator = new SLMToolGeneratorService(_parameterApplyService);
-                var chatViewModel = new ChatViewModel(_chatService, toolGenerator, this, _imageAnalysisService);
+                var chatViewModel = new ChatViewModel(_chatService, toolGenerator, this,
+                    _imageAnalysisService, _recipeRetrievalService);
                 _chatWindow = new ChatWindow { DataContext = chatViewModel };
             }
 
@@ -841,7 +845,7 @@ namespace VMS.VisionSetup.ViewModels
             // 모드에 따라 자동 실행
             if (FolderNavigationMode == FolderNavigationMode.AutoRunAll && RunAllCommand.CanExecute(null))
             {
-                await RunAllTools();
+                await RunAllToolsAsync();
             }
             else if (FolderNavigationMode == FolderNavigationMode.AutoRunSelected && RunSelectedCommand.CanExecute(null))
             {
@@ -895,9 +899,9 @@ namespace VMS.VisionSetup.ViewModels
         }
 
         /// <summary>
-        /// 모든 도구 실행
+        /// 모든 도구 실행. ChatViewModel 등 외부에서 자동 실행할 수 있도록 public.
         /// </summary>
-        private async System.Threading.Tasks.Task RunAllTools()
+        public async System.Threading.Tasks.Task RunAllToolsAsync()
         {
             if (CurrentImage == null || CurrentImage.Empty())
             {

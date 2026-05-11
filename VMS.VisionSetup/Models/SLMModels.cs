@@ -65,6 +65,14 @@ namespace VMS.VisionSetup.Models
         /// </summary>
         [JsonPropertyName("RoiHint")]
         public RoiHint? RoiHint { get; set; }
+
+        /// <summary>
+        /// 단계 1 (Confidence): 파라미터별 신뢰도 레이블.
+        /// 키는 PropertyName, 값은 "high" / "medium" / "low".
+        /// Parameters에 있는 키만 의미가 있음. 모든 파라미터에 대해 채울 필요 없음.
+        /// </summary>
+        [JsonPropertyName("ParameterConfidence")]
+        public Dictionary<string, string>? ParameterConfidence { get; set; }
     }
 
     public class SLMChangeItem
@@ -104,6 +112,12 @@ namespace VMS.VisionSetup.Models
         /// </summary>
         [JsonPropertyName("RoiHint")]
         public RoiHint? RoiHint { get; set; }
+
+        /// <summary>
+        /// AddTool / SetParameters 시 파라미터 신뢰도.
+        /// </summary>
+        [JsonPropertyName("ParameterConfidence")]
+        public Dictionary<string, string>? ParameterConfidence { get; set; }
     }
 
     /// <summary>

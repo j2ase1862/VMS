@@ -267,6 +267,30 @@ namespace VMS.VisionSetup.Models
         public abstract VisionResult Execute(Mat inputImage);
 
         /// <summary>
+        /// GetROIImage()로 얻은 cropped workImage에 비사각형 ROI 도형 마스크를 in-place 적용.
+        /// 도형 밖 영역을 fillColor로 칠해서, 마스크를 출력에 활용 안 하는 도구(CodeReader, OCR 등)도
+        /// Circle/Ellipse/Polygon ROI를 존중하도록 함. 사각형 ROI 또는 ROI 미사용 시 no-op.
+        /// </summary>
+        /// <param name="workImage">GetROIImage()로 얻은 cropped Mat (bounding rect 기준)</param>
+        /// <param name="inputImage">원본 입력 이미지(크기 참조용)</param>
+        /// <param name="fillColor">도형 밖을 채울 색상(기본: 흰색 — 인식기 친화)</param>
+        protected void ApplyShapeMaskInPlace(Mat workImage, Mat inputImage, Scalar? fillColor = null)
+        {
+            using var fullMask = GetNonRectangularShapeMask(inputImage);
+            if (fullMask == null) return;
+
+            var adjROI = GetAdjustedROI(inputImage);
+            if (adjROI.Width <= 0 || adjROI.Height <= 0) return;
+
+            using var cropMask = new Mat(fullMask, adjROI);
+            if (cropMask.Size() != workImage.Size()) return;
+
+            using var invMask = new Mat();
+            Cv2.BitwiseNot(cropMask, invMask);
+            workImage.SetTo(fillColor ?? Scalar.White, invMask);
+        }
+
+        /// <summary>
         /// AssociatedROIShape이 비사각형(Circle/Ellipse/Polygon)일 때만 입력 이미지 크기의 채우기 마스크 반환.
         /// 사각형(Rectangle/RectangleAffine)이거나 ROI 미사용이면 null.
         /// 호출자는 반환 값을 Dispose해야 함.
