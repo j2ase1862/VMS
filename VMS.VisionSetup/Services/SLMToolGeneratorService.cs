@@ -106,7 +106,8 @@ namespace VMS.VisionSetup.Services
                             if (!string.IsNullOrEmpty(c.InputSource) &&
                                 !c.InputSource!.Equals("Camera", StringComparison.OrdinalIgnoreCase))
                                 sb.AppendLine($"     입력: {c.InputSource}");
-                            AppendParametersPreview(sb, c.Parameters, indent: "     ");
+                            AppendParametersPreview(sb, c.Parameters, indent: "     ",
+                                confidence: c.ParameterConfidence);
                             AppendRoiHintPreview(sb, c.RoiHint, indent: "     ");
                             break;
 
@@ -125,7 +126,8 @@ namespace VMS.VisionSetup.Services
 
                         case "SetParameters":
                             sb.AppendLine($"파라미터 갱신: {c.ToolName}");
-                            AppendParametersPreview(sb, c.Parameters, indent: "     ");
+                            AppendParametersPreview(sb, c.Parameters, indent: "     ",
+                                confidence: c.ParameterConfidence);
                             AppendRoiHintPreview(sb, c.RoiHint, indent: "     ");
                             break;
 
@@ -175,20 +177,28 @@ namespace VMS.VisionSetup.Services
                         var sourceItem = action.Sequence.FirstOrDefault(s =>
                             s.ToolName.Equals(item.InputSource, StringComparison.OrdinalIgnoreCase));
                         string connTypeName = "이미지";
+                        string fixtureNote = string.Empty;
                         if (sourceItem != null)
                         {
                             var connType = DetermineConnectionType(sourceItem.ToolType, item.ToolType);
                             connTypeName = GetConnectionTypeDisplayName(connType.ToString());
+                            // Fixture Transform: Coordinates 연결 + ResultTool 아닌 경우 ROI가 자동 추적됨
+                            if (connType == ConnectionType.Coordinates
+                                && !item.ToolType.Equals("ResultTool", StringComparison.OrdinalIgnoreCase))
+                            {
+                                fixtureNote = " ★ Fixture: 위치 자동 추적";
+                            }
                         }
-                        sb.AppendLine($"     << {item.InputSource} ({connTypeName} 연결)");
+                        sb.AppendLine($"     << {item.InputSource} ({connTypeName} 연결){fixtureNote}");
                     }
                     else
                     {
                         sb.AppendLine($"     << 카메라 (직접 입력)");
                     }
 
-                    // SLM이 지정한 파라미터 미리보기
-                    AppendParametersPreview(sb, item.Parameters, indent: "     ");
+                    // SLM이 지정한 파라미터 미리보기 (신뢰도 포함)
+                    AppendParametersPreview(sb, item.Parameters, indent: "     ",
+                        confidence: item.ParameterConfidence);
 
                     // ROI 힌트 미리보기 (Phase 4a)
                     AppendRoiHintPreview(sb, item.RoiHint, indent: "     ");
@@ -301,10 +311,11 @@ namespace VMS.VisionSetup.Services
 
         /// <summary>
         /// SLM이 지정한 Parameters dictionary를 미리보기 텍스트로 변환.
-        /// JsonElement는 ToString으로 평탄화하여 사용자 가독성 확보.
+        /// JsonElement는 ToString으로 평탄화. confidence가 high가 아니면 인라인으로 표시.
         /// </summary>
         private static void AppendParametersPreview(StringBuilder sb,
-            Dictionary<string, object?>? parameters, string indent)
+            Dictionary<string, object?>? parameters, string indent,
+            Dictionary<string, string>? confidence = null)
         {
             if (parameters == null || parameters.Count == 0)
                 return;
@@ -318,7 +329,17 @@ namespace VMS.VisionSetup.Services
                     JsonElement je => FormatJsonElement(je),
                     _ => val.ToString() ?? "(null)"
                 };
-                sb.AppendLine($"{indent}  • {key} = {display}");
+
+                string suffix = string.Empty;
+                if (confidence != null && confidence.TryGetValue(key, out var c))
+                {
+                    var lc = c.Trim().ToLowerInvariant();
+                    // high는 default이므로 표시 생략
+                    if (lc == "low") suffix = "  ⚠ 낮음 (검증 권장)";
+                    else if (lc == "medium" || lc == "med") suffix = "  · 보통";
+                }
+
+                sb.AppendLine($"{indent}  • {key} = {display}{suffix}");
             }
         }
 
@@ -765,13 +786,42 @@ namespace VMS.VisionSetup.Services
 
             var lines = new List<string> { "Tools:" };
             foreach (var t in vm.DroppedTools)
-                lines.Add($"- \"{t.Name}\" (Type: {t.ToolType})");
+            {
+                string roiInfo = BuildToolRoiSummary(t.VisionTool);
+                lines.Add(string.IsNullOrEmpty(roiInfo)
+                    ? $"- \"{t.Name}\" (Type: {t.ToolType})"
+                    : $"- \"{t.Name}\" (Type: {t.ToolType}) {roiInfo}");
+            }
 
             lines.Add("Connections:");
             foreach (var c in vm.Connections)
                 lines.Add($"- \"{c.SourceToolItem?.Name}\" -> \"{c.TargetToolItem?.Name}\" ({c.Type})");
 
             return string.Join("\n", lines);
+        }
+
+        /// <summary>
+        /// 도구의 ROI 정보를 한 줄 컴팩트 텍스트로 노출(LLM이 ROI 패턴 참고용).
+        /// </summary>
+        private static string BuildToolRoiSummary(VisionToolBase? tool)
+        {
+            if (tool == null || !tool.UseROI) return string.Empty;
+
+            var shape = tool.AssociatedROIShape;
+            if (shape is CircleROI circle)
+                return $"[ROI: Circle(cx={(int)circle.CenterX},cy={(int)circle.CenterY},r={(int)circle.Radius})]";
+            if (shape is EllipseROI ellipse)
+                return $"[ROI: Ellipse(cx={(int)ellipse.CenterX},cy={(int)ellipse.CenterY},rx={(int)ellipse.RadiusX},ry={(int)ellipse.RadiusY},angle={ellipse.Angle:0.#})]";
+            if (shape is PolygonROI polygon && polygon.Points != null)
+                return $"[ROI: Polygon(points={polygon.Points.Count})]";
+            if (shape is RectangleAffineROI affine)
+                return $"[ROI: RectAffine(cx={(int)affine.CenterX},cy={(int)affine.CenterY},w={(int)affine.Width},h={(int)affine.Height},angle={affine.Angle:0.#})]";
+
+            // Rectangle or fallback
+            var r = tool.ROI;
+            if (r.Width > 0 && r.Height > 0)
+                return $"[ROI: Rect(x={r.X},y={r.Y},w={r.Width},h={r.Height})]";
+            return string.Empty;
         }
 
         private ConnectionType DetermineConnectionType(string sourceToolType, string targetToolType)

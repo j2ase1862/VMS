@@ -38,6 +38,7 @@ namespace VMS.VisionSetup.ViewModels
         private readonly SLMToolGeneratorService _toolGenerator;
         private readonly MainViewModel _mainViewModel;
         private readonly IImageAnalysisService? _imageAnalysisService;
+        private readonly IRecipeRetrievalService? _recipeRetrievalService;
         private const int MaxAnalysisRounds = 1;
 
         [ObservableProperty]
@@ -58,6 +59,13 @@ namespace VMS.VisionSetup.ViewModels
         [ObservableProperty]
         private bool _isOperatorMode;
 
+        /// <summary>
+        /// Phase 5.5: Apply 후 자동으로 RunAllToolsAsync 호출 + 결과 요약 메시지.
+        /// 사용자가 끄면 기존처럼 수동 Run.
+        /// </summary>
+        [ObservableProperty]
+        private bool _isAutoRunEnabled = true;
+
         private string? _lastJsonResponse;
         private string? _lastUserRequest;
         private CancellationTokenSource? _cts;
@@ -70,12 +78,14 @@ namespace VMS.VisionSetup.ViewModels
             ISLMChatService chatService,
             SLMToolGeneratorService toolGenerator,
             MainViewModel mainViewModel,
-            IImageAnalysisService? imageAnalysisService = null)
+            IImageAnalysisService? imageAnalysisService = null,
+            IRecipeRetrievalService? recipeRetrievalService = null)
         {
             _chatService = chatService;
             _toolGenerator = toolGenerator;
             _mainViewModel = mainViewModel;
             _imageAnalysisService = imageAnalysisService;
+            _recipeRetrievalService = recipeRetrievalService;
 
             // 자동 연결 시도
             _ = ConnectModel();
@@ -163,8 +173,8 @@ namespace VMS.VisionSetup.ViewModels
             StatusMessage = "AI가 레시피를 생성 중...";
             _cts = new CancellationTokenSource();
 
-            // 캔버스 + 실행 피드백 컨텍스트 설정 (Phase 5)
-            _chatService.SetCanvasContext(BuildSessionContext());
+            // 캔버스 + 실행 피드백 + 유사 레시피 컨텍스트 (Phase 5 + Step 2)
+            _chatService.SetCanvasContext(BuildSessionContext(message));
 
             try
             {
@@ -238,7 +248,7 @@ namespace VMS.VisionSetup.ViewModels
         private bool CanSendMessage() => IsModelLoaded && !IsBusy;
 
         [RelayCommand(CanExecute = nameof(CanApplyRecipe))]
-        private void ApplyRecipe()
+        private async System.Threading.Tasks.Task ApplyRecipe()
         {
             if (string.IsNullOrEmpty(_lastJsonResponse))
                 return;
@@ -246,6 +256,7 @@ namespace VMS.VisionSetup.ViewModels
             IsBusy = true;
             StatusMessage = "레시피 적용 중...";
 
+            bool anyApplied = false;
             try
             {
                 var action = _toolGenerator.ParseActionJson(_lastJsonResponse);
@@ -261,6 +272,7 @@ namespace VMS.VisionSetup.ViewModels
 
                     if (applied > 0)
                     {
+                        anyApplied = true;
                         StatusMessage = $"수정 완료: {applied}개 변경 적용됨";
                         Messages.Add(new ChatMessage
                         {
@@ -288,6 +300,7 @@ namespace VMS.VisionSetup.ViewModels
 
                     if (created > 0)
                     {
+                        anyApplied = true;
                         StatusMessage = $"레시피 '{action.RecipeName}' 적용 완료: {created}개 도구 생성됨";
                         Messages.Add(new ChatMessage
                         {
@@ -309,6 +322,28 @@ namespace VMS.VisionSetup.ViewModels
                         });
                     }
                 }
+
+                // Phase 5.5: 적용 성공 + AutoRun ON이면 즉시 실행 후 결과 요약 메시지
+                if (anyApplied && IsAutoRunEnabled
+                    && _mainViewModel.CurrentImage != null && !_mainViewModel.CurrentImage.Empty())
+                {
+                    StatusMessage = "자동 실행 중...";
+                    try
+                    {
+                        await _mainViewModel.RunAllToolsAsync();
+                        string summary = BuildRunSummary(_mainViewModel.ExecutionQueue);
+                        Messages.Add(new ChatMessage { Content = summary, IsUser = false });
+                        StatusMessage = summary;
+                    }
+                    catch (Exception runEx)
+                    {
+                        Messages.Add(new ChatMessage
+                        {
+                            Content = $"자동 실행 실패: {runEx.Message}",
+                            IsUser = false
+                        });
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -321,6 +356,32 @@ namespace VMS.VisionSetup.ViewModels
         }
 
         private bool CanApplyRecipe() => !string.IsNullOrEmpty(_lastJsonResponse) && !IsBusy;
+
+        /// <summary>
+        /// 자동 실행 후 사용자에게 보여줄 짧은 한국어 요약.
+        /// 도구별 핵심 지표(BlobCount, 측정값 등)만 추출.
+        /// </summary>
+        private static string BuildRunSummary(System.Collections.ObjectModel.ObservableCollection<Models.VisionToolBase> tools)
+        {
+            int total = 0, success = 0;
+            var details = new System.Collections.Generic.List<string>();
+            foreach (var t in tools)
+            {
+                if (t.LastResult == null) continue;
+                total++;
+                if (t.LastResult.Success) success++;
+
+                if (t.LastResult.Data.TryGetValue("BlobCount", out var bc))
+                    details.Add($"{t.Name}: {bc}개");
+                else if (t.LastResult.Data.TryGetValue("Distance", out var d))
+                    details.Add($"{t.Name}: {d}");
+                else if (t.LastResult.Data.TryGetValue("EdgeCount", out var ec))
+                    details.Add($"{t.Name}: 엣지 {ec}");
+            }
+
+            string head = total == 0 ? "실행 결과 없음" : $"실행 완료: {success}/{total} 성공";
+            return details.Count > 0 ? $"{head} — {string.Join(", ", details)}" : head;
+        }
 
         [RelayCommand(CanExecute = nameof(CanResetSession))]
         private void ResetSession()
@@ -347,20 +408,30 @@ namespace VMS.VisionSetup.ViewModels
         }
 
         /// <summary>
-        /// Canvas 상태 + Execution Feedback을 한 묶음으로 prepend.
+        /// Canvas 상태 + Execution Feedback + 유사 레시피를 한 묶음으로 prepend.
         /// LLM은 시스템 프롬프트의 정의에 따라 각 [...] 라벨을 해석.
         /// </summary>
-        private string? BuildSessionContext()
+        private string? BuildSessionContext(string? userMessage = null)
         {
             var canvas = _toolGenerator.BuildCanvasContext(_mainViewModel);
             var feedback = ExecutionFeedbackBuilder.Build(_mainViewModel.ExecutionQueue);
+            string? similar = null;
+            if (_recipeRetrievalService != null && !string.IsNullOrEmpty(userMessage))
+            {
+                try { similar = _recipeRetrievalService.BuildSimilarRecipesContext(userMessage); }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ChatViewModel] Retrieval failed: {ex.Message}");
+                }
+            }
 
-            if (string.IsNullOrEmpty(canvas) && string.IsNullOrEmpty(feedback))
+            if (string.IsNullOrEmpty(canvas) && string.IsNullOrEmpty(feedback) && string.IsNullOrEmpty(similar))
                 return null;
 
             var parts = new System.Collections.Generic.List<string>();
             if (!string.IsNullOrEmpty(canvas)) parts.Add(canvas);
             if (!string.IsNullOrEmpty(feedback)) parts.Add(feedback);
+            if (!string.IsNullOrEmpty(similar)) parts.Add(similar);
             return string.Join("\n\n", parts);
         }
 
