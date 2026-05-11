@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using OpenCvSharp;
+using VMS.VisionSetup.Interfaces;
 using VMS.VisionSetup.Models;
 using VMS.VisionSetup.ViewModels;
 
@@ -11,6 +13,13 @@ namespace VMS.VisionSetup.Services
 {
     public class SLMToolGeneratorService
     {
+        private readonly IParameterApplyService? _parameterApplyService;
+
+        public SLMToolGeneratorService(IParameterApplyService? parameterApplyService = null)
+        {
+            _parameterApplyService = parameterApplyService;
+        }
+
         private static readonly HashSet<string> ImageToolTypes = new(StringComparer.OrdinalIgnoreCase)
         {
             "GrayscaleTool", "BlurTool", "ThresholdTool", "EdgeDetectionTool",
@@ -83,6 +92,7 @@ namespace VMS.VisionSetup.Services
                         "RemoveTool" => "-",
                         "AddConnection" => ">>",
                         "RemoveConnection" => "xx",
+                        "SetParameters" => "~",
                         _ => "?"
                     };
 
@@ -96,6 +106,8 @@ namespace VMS.VisionSetup.Services
                             if (!string.IsNullOrEmpty(c.InputSource) &&
                                 !c.InputSource!.Equals("Camera", StringComparison.OrdinalIgnoreCase))
                                 sb.AppendLine($"     입력: {c.InputSource}");
+                            AppendParametersPreview(sb, c.Parameters, indent: "     ");
+                            AppendRoiHintPreview(sb, c.RoiHint, indent: "     ");
                             break;
 
                         case "RemoveTool":
@@ -109,6 +121,12 @@ namespace VMS.VisionSetup.Services
 
                         case "RemoveConnection":
                             sb.AppendLine($"연결 제거: {c.SourceTool} -> {c.TargetTool}");
+                            break;
+
+                        case "SetParameters":
+                            sb.AppendLine($"파라미터 갱신: {c.ToolName}");
+                            AppendParametersPreview(sb, c.Parameters, indent: "     ");
+                            AppendRoiHintPreview(sb, c.RoiHint, indent: "     ");
                             break;
 
                         default:
@@ -169,6 +187,12 @@ namespace VMS.VisionSetup.Services
                         sb.AppendLine($"     << 카메라 (직접 입력)");
                     }
 
+                    // SLM이 지정한 파라미터 미리보기
+                    AppendParametersPreview(sb, item.Parameters, indent: "     ");
+
+                    // ROI 힌트 미리보기 (Phase 4a)
+                    AppendRoiHintPreview(sb, item.RoiHint, indent: "     ");
+
                     if (i < action.Sequence.Count - 1)
                         sb.AppendLine();
                 }
@@ -195,6 +219,138 @@ namespace VMS.VisionSetup.Services
             sb.AppendLine();
             sb.AppendLine("'Apply Recipe' 버튼을 누르면 위 구성이 워크스페이스에 적용됩니다.");
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// RoiHint를 실제 Rect로 해상도. 이미지 크기는 VisionService.CurrentImage에서 가져옴.
+        /// 실패하면 error 메시지 반환(rect=기본값).
+        /// </summary>
+        public static bool TryResolveRoi(RoiHint hint, out Rect rect, out string? error)
+        {
+            rect = new Rect();
+            error = null;
+
+            var image = VisionService.Instance.CurrentImage;
+            int imgW = image?.Width ?? 0;
+            int imgH = image?.Height ?? 0;
+
+            string strategy = (hint.Strategy ?? "FullImage").Trim();
+
+            if (strategy.Equals("FullImage", StringComparison.OrdinalIgnoreCase)
+                || strategy.Equals("Inherit", StringComparison.OrdinalIgnoreCase))
+            {
+                if (imgW == 0 || imgH == 0)
+                {
+                    error = "image not loaded — ROI not applied";
+                    return false;
+                }
+                rect = new Rect(0, 0, imgW, imgH);
+                return true;
+            }
+
+            if (strategy.Equals("CenterRect", StringComparison.OrdinalIgnoreCase))
+            {
+                if (imgW == 0 || imgH == 0)
+                {
+                    error = "image not loaded — CenterRect needs image size";
+                    return false;
+                }
+                int margin = Math.Clamp(hint.MarginPercent ?? 20, 0, 45);
+                int mx = (int)(imgW * margin / 100.0);
+                int my = (int)(imgH * margin / 100.0);
+                rect = new Rect(mx, my, Math.Max(1, imgW - 2 * mx), Math.Max(1, imgH - 2 * my));
+                return true;
+            }
+
+            if (strategy.Equals("Custom", StringComparison.OrdinalIgnoreCase))
+            {
+                if (!hint.X.HasValue || !hint.Y.HasValue || !hint.Width.HasValue || !hint.Height.HasValue)
+                {
+                    error = "Custom strategy requires X/Y/Width/Height";
+                    return false;
+                }
+                int x = Math.Max(0, hint.X.Value);
+                int y = Math.Max(0, hint.Y.Value);
+                int w = Math.Max(1, hint.Width.Value);
+                int h = Math.Max(1, hint.Height.Value);
+                if (imgW > 0) w = Math.Min(w, imgW - x);
+                if (imgH > 0) h = Math.Min(h, imgH - y);
+                rect = new Rect(x, y, w, h);
+                return true;
+            }
+
+            error = $"unknown strategy '{strategy}'";
+            return false;
+        }
+
+        /// <summary>
+        /// 현재 시퀀스의 도구 중 가장 첫 번째 측정/판정 도구(BlobTool, Threshold 등)의 RoiHint를 추출.
+        /// 분석 단계에서 ""어디를 분석할지"" 결정용. 없으면 null.
+        /// </summary>
+        public static Rect? PickAnalysisRoi(SLMActionModel action)
+        {
+            if (action.Sequence == null) return null;
+            foreach (var item in action.Sequence)
+            {
+                if (item.RoiHint == null) continue;
+                if (TryResolveRoi(item.RoiHint, out var rect, out _))
+                    return rect;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// SLM이 지정한 Parameters dictionary를 미리보기 텍스트로 변환.
+        /// JsonElement는 ToString으로 평탄화하여 사용자 가독성 확보.
+        /// </summary>
+        private static void AppendParametersPreview(StringBuilder sb,
+            Dictionary<string, object?>? parameters, string indent)
+        {
+            if (parameters == null || parameters.Count == 0)
+                return;
+
+            sb.AppendLine($"{indent}파라미터:");
+            foreach (var (key, val) in parameters)
+            {
+                string display = val switch
+                {
+                    null => "(null)",
+                    JsonElement je => FormatJsonElement(je),
+                    _ => val.ToString() ?? "(null)"
+                };
+                sb.AppendLine($"{indent}  • {key} = {display}");
+            }
+        }
+
+        /// <summary>
+        /// ROI 힌트를 한 줄 미리보기로 변환.
+        /// </summary>
+        private static void AppendRoiHintPreview(StringBuilder sb, RoiHint? hint, string indent)
+        {
+            if (hint == null) return;
+            string strategy = hint.Strategy ?? "FullImage";
+            string detail = strategy switch
+            {
+                "FullImage" => "(전체)",
+                "Inherit" => "(이전 도구 ROI 상속)",
+                "CenterRect" => $"(가장자리 {hint.MarginPercent ?? 20}% 제외)",
+                "Custom" => $"(X={hint.X},Y={hint.Y},W={hint.Width},H={hint.Height})",
+                _ => "(?)"
+            };
+            sb.AppendLine($"{indent}ROI: {strategy} {detail}");
+        }
+
+        private static string FormatJsonElement(JsonElement je)
+        {
+            return je.ValueKind switch
+            {
+                JsonValueKind.String => je.GetString() ?? "",
+                JsonValueKind.Number => je.GetRawText(),
+                JsonValueKind.True => "true",
+                JsonValueKind.False => "false",
+                JsonValueKind.Null => "(null)",
+                _ => je.GetRawText()
+            };
         }
 
         private void AppendFlowChain(StringBuilder sb, string toolName, List<SLMToolItem> sequence,
@@ -331,6 +487,32 @@ namespace VMS.VisionSetup.Services
 
                     createdTools[item.ToolName] = toolItem;
                     Debug.WriteLine($"[SLMToolGenerator] Created: {item.ToolType} as '{item.ToolName}'");
+
+                    // SLM이 추정한 파라미터 적용 (Phase 2)
+                    if (item.Parameters != null && item.Parameters.Count > 0
+                        && _parameterApplyService != null
+                        && toolItem.VisionTool != null)
+                    {
+                        var (applied, warnings) = _parameterApplyService.ApplyParameters(
+                            toolItem.VisionTool, item.Parameters);
+                        Debug.WriteLine($"[SLMToolGenerator] Applied {applied} params to '{item.ToolName}'");
+                        foreach (var w in warnings)
+                            errors.Add($"[{item.ToolName}] {w}");
+                    }
+
+                    // Phase 4a: ROI 힌트 적용
+                    if (item.RoiHint != null && toolItem.VisionTool != null)
+                    {
+                        if (TryResolveRoi(item.RoiHint, out var rect, out var hintErr))
+                        {
+                            toolItem.VisionTool.UseROI = true;
+                            toolItem.VisionTool.ROI = rect;
+                        }
+                        else if (hintErr != null)
+                        {
+                            errors.Add($"[{item.ToolName}] RoiHint: {hintErr}");
+                        }
+                    }
                 }
                 else
                 {
@@ -462,6 +644,32 @@ namespace VMS.VisionSetup.Services
                                             mainViewModel.AddConnection(sourceTool, toolItem, connType);
                                         }
                                     }
+
+                                    // SLM 추정 파라미터 적용
+                                    if (change.Parameters != null && change.Parameters.Count > 0
+                                        && _parameterApplyService != null
+                                        && toolItem.VisionTool != null)
+                                    {
+                                        var (a, w) = _parameterApplyService.ApplyParameters(
+                                            toolItem.VisionTool, change.Parameters);
+                                        Debug.WriteLine($"[SLMToolGenerator] AddTool: applied {a} params to '{change.ToolName}'");
+                                        foreach (var msg in w)
+                                            errors.Add($"[{change.ToolName}] {msg}");
+                                    }
+
+                                    // Phase 4a: ROI 힌트 적용 (AddTool)
+                                    if (change.RoiHint != null && toolItem.VisionTool != null)
+                                    {
+                                        if (TryResolveRoi(change.RoiHint, out var rect, out var hintErr))
+                                        {
+                                            toolItem.VisionTool.UseROI = true;
+                                            toolItem.VisionTool.ROI = rect;
+                                        }
+                                        else if (hintErr != null)
+                                        {
+                                            errors.Add($"[{change.ToolName}] RoiHint: {hintErr}");
+                                        }
+                                    }
                                     appliedCount++;
                                 }
                                 else
@@ -483,6 +691,52 @@ namespace VMS.VisionSetup.Services
                                 mainViewModel.DroppedTools.Remove(tool);
                                 if (tool.VisionTool != null)
                                     mainViewModel.ExecutionQueue.Remove(tool.VisionTool);
+                                appliedCount++;
+                            }
+                            break;
+
+                        // Phase 5: 도구는 그대로 두고 파라미터만 갱신
+                        case "SetParameters":
+                            {
+                                var tool = FindToolByName(mainViewModel, change.ToolName);
+                                if (tool == null || tool.VisionTool == null)
+                                {
+                                    errors.Add($"SetParameters: tool not found '{change.ToolName}'");
+                                    break;
+                                }
+
+                                if (change.Parameters == null || change.Parameters.Count == 0)
+                                {
+                                    errors.Add($"SetParameters: no parameters for '{change.ToolName}'");
+                                    break;
+                                }
+
+                                if (_parameterApplyService == null)
+                                {
+                                    errors.Add("SetParameters: ParameterApplyService not available");
+                                    break;
+                                }
+
+                                var (a, w) = _parameterApplyService.ApplyParameters(
+                                    tool.VisionTool, change.Parameters);
+                                Debug.WriteLine($"[SLMToolGenerator] SetParameters: applied {a} params to '{change.ToolName}'");
+                                foreach (var msg in w)
+                                    errors.Add($"[{change.ToolName}] {msg}");
+
+                                // RoiHint도 SetParameters에서 같이 받을 수 있게
+                                if (change.RoiHint != null)
+                                {
+                                    if (TryResolveRoi(change.RoiHint, out var rect, out var hintErr))
+                                    {
+                                        tool.VisionTool.UseROI = true;
+                                        tool.VisionTool.ROI = rect;
+                                    }
+                                    else if (hintErr != null)
+                                    {
+                                        errors.Add($"[{change.ToolName}] RoiHint: {hintErr}");
+                                    }
+                                }
+
                                 appliedCount++;
                             }
                             break;

@@ -1,3 +1,4 @@
+using VMS.VisionSetup.Attributes;
 using VMS.VisionSetup.Models;
 using VMS.VisionSetup.Services;
 using OpenCvSharp;
@@ -30,6 +31,9 @@ namespace VMS.VisionSetup.VisionTools.Measurement
         }
 
         private double _searchWidth = 20;
+        [TunableParam(
+            Description = "검색 영역의 폭(픽셀). 클수록 노이즈에 강건하지만 정밀도 감소. 보통 10~50.",
+            Tier = TuningTier.DomainCommon, Min = 1, Max = 500, DefaultHint = "20")]
         public double SearchWidth
         {
             get => _searchWidth;
@@ -38,6 +42,9 @@ namespace VMS.VisionSetup.VisionTools.Measurement
 
         // Edge 검출 설정
         private EdgePolarity _polarity = EdgePolarity.DarkToLight;
+        [TunableParam(
+            Description = "찾을 엣지의 극성. DarkToLight: 검정→흰색 전환. LightToDark: 흰색→검정 전환. Any: 모두.",
+            Tier = TuningTier.Semantic, DefaultHint = "DarkToLight")]
         public EdgePolarity Polarity
         {
             get => _polarity;
@@ -45,6 +52,9 @@ namespace VMS.VisionSetup.VisionTools.Measurement
         }
 
         private double _edgeThreshold = 30;
+        [TunableParam(
+            Description = "엣지로 판정하기 위한 최소 강도 차이. 낮으면 약한 엣지도 검출, 높으면 강한 엣지만. 보통 20~80.",
+            Tier = TuningTier.ImageDependent, Min = 1, Max = 255, DefaultHint = "30")]
         public double EdgeThreshold
         {
             get => _edgeThreshold;
@@ -52,6 +62,9 @@ namespace VMS.VisionSetup.VisionTools.Measurement
         }
 
         private int _filterHalfWidth = 2;
+        [TunableParam(
+            Description = "엣지 검출 필터 반폭(픽셀). 클수록 노이즈 강건, 작을수록 정밀. 보통 1~5.",
+            Tier = TuningTier.DomainCommon, Min = 1, Max = 20, DefaultHint = "2")]
         public int FilterHalfWidth
         {
             get => _filterHalfWidth;
@@ -60,6 +73,9 @@ namespace VMS.VisionSetup.VisionTools.Measurement
 
         // 측정 모드
         private CaliperMode _mode = CaliperMode.SingleEdge;
+        [TunableParam(
+            Description = "측정 모드. SingleEdge: 단일 엣지 위치. EdgePair: 두 엣지 사이 거리(폭/간격 측정).",
+            Tier = TuningTier.Semantic, DefaultHint = "SingleEdge")]
         public CaliperMode Mode
         {
             get => _mode;
@@ -68,6 +84,10 @@ namespace VMS.VisionSetup.VisionTools.Measurement
 
         // Edge Pair 설정 (Width 측정용)
         private double _expectedWidth = 50;
+        [TunableParam(
+            Description = "EdgePair 모드에서 기대하는 두 엣지 사이 거리(픽셀).",
+            Tier = TuningTier.DomainCommon, Min = 1,
+            DependsOn = "Mode", DefaultHint = "50")]
         public double ExpectedWidth
         {
             get => _expectedWidth;
@@ -75,6 +95,10 @@ namespace VMS.VisionSetup.VisionTools.Measurement
         }
 
         private double _widthTolerance = 20;
+        [TunableParam(
+            Description = "ExpectedWidth 허용 오차(픽셀). ±이 범위 내 엣지 쌍만 채택.",
+            Tier = TuningTier.DomainCommon, Min = 0,
+            DependsOn = "Mode", DefaultHint = "20")]
         public double WidthTolerance
         {
             get => _widthTolerance;
@@ -82,6 +106,9 @@ namespace VMS.VisionSetup.VisionTools.Measurement
         }
 
         private int _maxEdges = 10;
+        [TunableParam(
+            Description = "결과에 포함할 최대 엣지 수. 강도 순 상위 N개 유지.",
+            Tier = TuningTier.DomainCommon, Min = 1, Max = 1000, DefaultHint = "10")]
         public int MaxEdges
         {
             get => _maxEdges;
@@ -169,6 +196,9 @@ namespace VMS.VisionSetup.VisionTools.Measurement
 
         // 에지 선택 모드 (Best/First/Last)
         private EdgeSelectionMode _selectionMode = EdgeSelectionMode.Best;
+        [TunableParam(
+            Description = "여러 엣지 중 어떤 것을 채택할지. Best: 강도 최대. First: 첫 번째. Last: 마지막.",
+            Tier = TuningTier.Semantic, DefaultHint = "Best")]
         public EdgeSelectionMode SelectionMode
         {
             get => _selectionMode;
@@ -177,6 +207,9 @@ namespace VMS.VisionSetup.VisionTools.Measurement
 
         // 탐색 방향 축 설정 (W/H 비율에 관계없이 고정)
         private CaliperSearchAxis _searchAxis = CaliperSearchAxis.AlongWidth;
+        [TunableParam(
+            Description = "엣지 탐색 방향. AlongWidth: ROI 가로 방향 탐색. AlongHeight: 세로 방향 탐색.",
+            Tier = TuningTier.Semantic, DefaultHint = "AlongWidth")]
         public CaliperSearchAxis SearchAxis
         {
             get => _searchAxis;

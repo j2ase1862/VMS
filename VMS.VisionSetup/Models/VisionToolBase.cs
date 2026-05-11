@@ -267,6 +267,21 @@ namespace VMS.VisionSetup.Models
         public abstract VisionResult Execute(Mat inputImage);
 
         /// <summary>
+        /// AssociatedROIShape이 비사각형(Circle/Ellipse/Polygon)일 때만 입력 이미지 크기의 채우기 마스크 반환.
+        /// 사각형(Rectangle/RectangleAffine)이거나 ROI 미사용이면 null.
+        /// 호출자는 반환 값을 Dispose해야 함.
+        /// 도구는 이 마스크를 활용해 contour 검출/binary 결과가 실제 도형 안에 한정되도록 함.
+        /// </summary>
+        protected Mat? GetNonRectangularShapeMask(Mat inputImage)
+        {
+            if (!UseROI) return null;
+            var shape = AssociatedROIShape;
+            if (shape == null) return null;
+            if (shape is RectangleROI || shape is RectangleAffineROI) return null;
+            return shape.CreateMask(inputImage.Width, inputImage.Height);
+        }
+
+        /// <summary>
         /// ROI가 설정된 경우 해당 영역만 추출
         /// </summary>
         protected Mat GetROIImage(Mat inputImage)
@@ -337,6 +352,18 @@ namespace VMS.VisionSetup.Models
                 Cv2.Resize(processedROI, resized, new Size(adjustedROI.Width, adjustedROI.Height));
                 resized.CopyTo(destRegion);
                 resized.Dispose();
+            }
+
+            // 비사각형 ROI(Circle/Ellipse/Polygon)일 때, 도형 밖 영역을 fillColor로 마스킹.
+            // 회전 사각형은 도구별 특수 처리되므로 여기 도달하지 않음(GetNonRectangularShapeMask가 null 반환).
+            using var shapeMask = GetNonRectangularShapeMask(inputImage);
+            if (shapeMask != null && !shapeMask.Empty()
+                && shapeMask.Width == resultImage.Width
+                && shapeMask.Height == resultImage.Height)
+            {
+                using var invMask = new Mat();
+                Cv2.BitwiseNot(shapeMask, invMask);
+                resultImage.SetTo(fillColor ?? Scalar.Black, invMask);
             }
 
             return resultImage;

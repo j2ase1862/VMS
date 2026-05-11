@@ -1,12 +1,14 @@
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Text.Json;
 using System.Threading;
 using System.Windows;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VMS.VisionSetup.Interfaces;
+using VMS.VisionSetup.Models;
 using VMS.VisionSetup.Services;
 
 namespace VMS.VisionSetup.ViewModels
@@ -35,6 +37,8 @@ namespace VMS.VisionSetup.ViewModels
         private readonly ISLMChatService _chatService;
         private readonly SLMToolGeneratorService _toolGenerator;
         private readonly MainViewModel _mainViewModel;
+        private readonly IImageAnalysisService? _imageAnalysisService;
+        private const int MaxAnalysisRounds = 1;
 
         [ObservableProperty]
         private string _userInput = string.Empty;
@@ -46,7 +50,7 @@ namespace VMS.VisionSetup.ViewModels
         private bool _isModelLoaded;
 
         [ObservableProperty]
-        private string _modelName = "gemma3:4b";
+        private string _modelName = "qwen2.5:7b-instruct";
 
         [ObservableProperty]
         private string _statusMessage = "모델 이름을 입력하고 Connect를 클릭하세요.";
@@ -65,11 +69,13 @@ namespace VMS.VisionSetup.ViewModels
         public ChatViewModel(
             ISLMChatService chatService,
             SLMToolGeneratorService toolGenerator,
-            MainViewModel mainViewModel)
+            MainViewModel mainViewModel,
+            IImageAnalysisService? imageAnalysisService = null)
         {
             _chatService = chatService;
             _toolGenerator = toolGenerator;
             _mainViewModel = mainViewModel;
+            _imageAnalysisService = imageAnalysisService;
 
             // 자동 연결 시도
             _ = ConnectModel();
@@ -157,27 +163,57 @@ namespace VMS.VisionSetup.ViewModels
             StatusMessage = "AI가 레시피를 생성 중...";
             _cts = new CancellationTokenSource();
 
-            // 캔버스 컨텍스트 설정
-            _chatService.SetCanvasContext(_toolGenerator.BuildCanvasContext(_mainViewModel));
+            // 캔버스 + 실행 피드백 컨텍스트 설정 (Phase 5)
+            _chatService.SetCanvasContext(BuildSessionContext());
 
             try
             {
-                // 스트리밍 토큰은 UI에 표시하지 않고 내부에서만 수집
                 string response = await _chatService.SendMessageAsync(message, onToken: null, _cts.Token);
+                var action = _toolGenerator.ParseActionJson(response);
+
+                // Phase 3: 2단계 추론 — AnalysisRequests가 있으면 분석 실행 후 재호출.
+                int round = 0;
+                while (action != null && action.AnalysisRequests != null
+                       && action.AnalysisRequests.Count > 0
+                       && round < MaxAnalysisRounds)
+                {
+                    round++;
+                    botMessage.Content = action.Reason is { Length: > 0 } r
+                        ? $"이미지 분석 중... ({r})"
+                        : "이미지 분석 중...";
+                    StatusMessage = "이미지 분석 중...";
+
+                    string? analysisContext = TryBuildAnalysisContext(action.AnalysisRequests, action.AnalysisRoi);
+                    if (analysisContext == null)
+                    {
+                        botMessage.Content = "이미지가 로드되지 않았거나 분석 서비스가 없습니다. "
+                            + "이미지를 먼저 열거나 다시 요청해 주세요.";
+                        StatusMessage = "분석 실패";
+                        return;
+                    }
+
+                    response = await _chatService.SendMessageAsync(analysisContext, onToken: null, _cts.Token);
+                    action = _toolGenerator.ParseActionJson(response);
+                }
 
                 _lastJsonResponse = response;
 
-                // JSON을 파싱하여 사람이 읽을 수 있는 미리보기로 변환
-                var action = _toolGenerator.ParseActionJson(response);
                 if (action != null)
                 {
+                    if (action.AnalysisRequests != null && action.AnalysisRequests.Count > 0)
+                    {
+                        // LLM이 분석 결과 받고도 또 분석 요청 → 안전상 거부
+                        botMessage.Content = "분석 결과를 활용하지 못했습니다. 요청을 더 구체적으로 적어 주세요.";
+                        StatusMessage = "분석 루프 중단";
+                        return;
+                    }
+
                     string preview = _toolGenerator.BuildPreviewText(action);
                     botMessage.Content = preview;
                     StatusMessage = "레시피 생성 완료. 'Apply Recipe'를 클릭하여 적용하세요.";
                 }
                 else
                 {
-                    // 파싱 실패 시 원본 응답 표시
                     botMessage.Content = $"JSON 파싱에 실패했습니다.\n\n원본 응답:\n{response}";
                     StatusMessage = "응답을 파싱할 수 없습니다.";
                 }
@@ -308,6 +344,67 @@ namespace VMS.VisionSetup.ViewModels
         {
             _cts?.Cancel();
             CloseAction?.Invoke();
+        }
+
+        /// <summary>
+        /// Canvas 상태 + Execution Feedback을 한 묶음으로 prepend.
+        /// LLM은 시스템 프롬프트의 정의에 따라 각 [...] 라벨을 해석.
+        /// </summary>
+        private string? BuildSessionContext()
+        {
+            var canvas = _toolGenerator.BuildCanvasContext(_mainViewModel);
+            var feedback = ExecutionFeedbackBuilder.Build(_mainViewModel.ExecutionQueue);
+
+            if (string.IsNullOrEmpty(canvas) && string.IsNullOrEmpty(feedback))
+                return null;
+
+            var parts = new System.Collections.Generic.List<string>();
+            if (!string.IsNullOrEmpty(canvas)) parts.Add(canvas);
+            if (!string.IsNullOrEmpty(feedback)) parts.Add(feedback);
+            return string.Join("\n\n", parts);
+        }
+
+        /// <summary>
+        /// SLM이 요청한 분석을 현재 이미지에 대해 실행하고, LLM이 다음 턴에 읽기 좋은
+        /// 텍스트 블록으로 직렬화. 실패 시 null 반환.
+        /// </summary>
+        private string? TryBuildAnalysisContext(
+            System.Collections.Generic.List<string> requests,
+            RoiHint? analysisRoi)
+        {
+            if (_imageAnalysisService == null) return null;
+
+            var image = _mainViewModel.CurrentImage;
+            if (image == null || image.Empty()) return null;
+
+            // Phase 4a: AnalysisRoi 힌트가 있으면 해당 영역에 한정 분석
+            OpenCvSharp.Rect? roiRect = null;
+            if (analysisRoi != null
+                && SLMToolGeneratorService.TryResolveRoi(analysisRoi, out var resolved, out _))
+            {
+                roiRect = resolved;
+            }
+
+            ImageAnalysisBundle bundle;
+            try
+            {
+                bundle = _imageAnalysisService.AnalyzeBundle(image, requests.ToArray(), roi: roiRect);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ChatViewModel] Analysis failed: {ex.Message}");
+                return null;
+            }
+
+            // LLM-친화 직렬화: 빈 필드는 제외, 들여쓰기 적용.
+            string json = JsonSerializer.Serialize(bundle, new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+            });
+
+            return "[Image Analysis]\n" + json
+                + "\n\n[Original Request]\n" + (_lastUserRequest ?? "");
         }
     }
 }
