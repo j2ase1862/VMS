@@ -11,6 +11,8 @@
     <Window.InputBindings>
         <KeyBinding Key="Return" Command="{Binding ConfirmSamLabelCommand}"/>
         <KeyBinding Key="Escape" Command="{Binding ClearSamPreviewCommand}"/>
+        <KeyBinding Key="Left" Command="{Binding PreviousImageCommand}"/>
+        <KeyBinding Key="Right" Command="{Binding NextImageCommand}"/>
     </Window.InputBindings>
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
@@ -164,6 +166,67 @@
                                 <Button Content="▶" Command="{Binding NextImageCommand}"
                                         Width="34" Padding="0,2" FontSize="12" Margin="4,0,0,0"/>
                             </StackPanel>
+
+                            <!-- v1 Inference Mode: 학습 후 즉시 검증 -->
+                            <Border Background="#2D2D30" BorderBrush="#3F3F46" BorderThickness="1"
+                                    CornerRadius="3" Padding="6,4" Margin="0,2,0,2">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <CheckBox Content="Inference Mode"
+                                                  IsChecked="{Binding IsInferenceModeEnabled}"
+                                                  Foreground="#DDD" FontSize="11" FontWeight="SemiBold"
+                                                  VerticalAlignment="Center"
+                                                  ToolTip="학습된 ONNX 모델로 prev/next 이미지마다 즉시 검증 (Detection only)"/>
+                                        <TextBlock Text="●" Foreground="#00DCFF" FontSize="11"
+                                                   Margin="6,0,0,0" VerticalAlignment="Center"
+                                                   Visibility="{Binding IsInferenceRunning, Converter={StaticResource BoolToVis}, FallbackValue=Collapsed}"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,3,0,0"
+                                                Visibility="{Binding IsInferenceModeEnabled, Converter={StaticResource BoolToVis}, FallbackValue=Collapsed}">
+                                        <Button Content="모델..." Command="{Binding BrowseInferenceModelCommand}"
+                                                Padding="6,1" FontSize="10" Margin="0,0,4,0"/>
+                                        <TextBlock Text="{Binding InferenceStatus}" Foreground="#888"
+                                                   FontSize="10" VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+
+                                    <!-- Conf/IoU thresholds (학습 직후 검증용) -->
+                                    <Grid Margin="0,4,0,0"
+                                          Visibility="{Binding IsInferenceModeEnabled, Converter={StaticResource BoolToVis}, FallbackValue=Collapsed}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Conf" Foreground="#AAA"
+                                                   FontSize="10" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                        <Slider Grid.Row="0" Grid.Column="1" Minimum="0.01" Maximum="0.95"
+                                                Value="{Binding ConfidenceThreshold}" TickFrequency="0.05"
+                                                VerticalAlignment="Center"
+                                                ToolTip="신뢰도 임계값. 학습 직후 모델은 낮게(0.05~0.15) 설정 권장"/>
+                                        <TextBlock Grid.Row="0" Grid.Column="2"
+                                                   Text="{Binding ConfidenceThreshold, StringFormat='{}{0:F2}'}"
+                                                   Foreground="#CCC" FontSize="10" Width="32"
+                                                   TextAlignment="Right" VerticalAlignment="Center"/>
+
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="IoU" Foreground="#AAA"
+                                                   FontSize="10" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                        <Slider Grid.Row="1" Grid.Column="1" Minimum="0.1" Maximum="0.9"
+                                                Value="{Binding IouThreshold}" TickFrequency="0.05"
+                                                VerticalAlignment="Center"
+                                                ToolTip="NMS IoU 임계값. 박스 중복 제거 강도"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="2"
+                                                   Text="{Binding IouThreshold, StringFormat='{}{0:F2}'}"
+                                                   Foreground="#CCC" FontSize="10" Width="32"
+                                                   TextAlignment="Right" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
                     </Border>
 

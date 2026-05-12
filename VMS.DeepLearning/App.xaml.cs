@@ -3,6 +3,7 @@ using System.IO;
 using System.Windows;
 using VMS.Core.Interfaces;
 using VMS.Core.Services;
+using VMS.DeepLearning.Interfaces;
 using VMS.DeepLearning.Services;
 using VMS.DeepLearning.ViewModels;
 using VMS.DeepLearning.Views;
@@ -23,8 +24,10 @@ namespace VMS.DeepLearning
             ITrainingService trainingService = new TrainingService();
             ILabelingDialogService dialogService = new LabelingDialogService();
             ISamService samService = new SamService();
+            IInferenceService inferenceService = new OnnxDetectionInference();
 
-            var viewModel = new LabelingMainViewModel(annotationService, trainingService, dialogService, samService);
+            var viewModel = new LabelingMainViewModel(annotationService, trainingService, dialogService,
+                samService, inferenceService);
 
             var mainWindow = new MainWindow
             {

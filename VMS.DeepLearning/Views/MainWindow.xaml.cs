@@ -89,6 +89,9 @@ namespace VMS.DeepLearning.Views
                     else if (args.PropertyName == nameof(vm.CurrentSamPreviewPolygon))
                         RedrawAnnotations();
                 };
+
+                // v1 Inference: 예측 결과 변경 시 박스 다시 그리기
+                vm.LatestPredictions.CollectionChanged += (_, _) => RedrawAnnotations();
             }
         }
 
@@ -200,6 +203,40 @@ namespace VMS.DeepLearning.Views
                     Canvas.SetLeft(dot, cx - 5);
                     Canvas.SetTop(dot, cy - 5);
                     AnnotationCanvas.Children.Add(dot);
+                }
+            }
+
+            // v1 Inference: 예측 박스 (시안 색, 어노테이션과 시각 구분)
+            if (ViewModel?.LatestPredictions != null && ViewModel.LatestPredictions.Count > 0)
+            {
+                var predColor = Color.FromRgb(0, 220, 255); // Cyan
+                foreach (var pred in ViewModel.LatestPredictions)
+                {
+                    var rect = new System.Windows.Shapes.Rectangle
+                    {
+                        Stroke = new SolidColorBrush(predColor),
+                        StrokeThickness = 2,
+                        StrokeDashArray = new DoubleCollection { 4, 2 },
+                        Fill = new SolidColorBrush(Color.FromArgb(20, predColor.R, predColor.G, predColor.B)),
+                        Width = pred.Width * scale,
+                        Height = pred.Height * scale,
+                    };
+                    Canvas.SetLeft(rect, offsetX + pred.X * scale);
+                    Canvas.SetTop(rect, offsetY + pred.Y * scale);
+                    AnnotationCanvas.Children.Add(rect);
+
+                    var label = new TextBlock
+                    {
+                        Text = $"{pred.ClassName} {pred.Confidence:F2}",
+                        Foreground = Brushes.Black,
+                        Background = new SolidColorBrush(predColor),
+                        FontSize = 11,
+                        FontWeight = FontWeights.SemiBold,
+                        Padding = new Thickness(3, 1, 3, 1)
+                    };
+                    Canvas.SetLeft(label, offsetX + pred.X * scale);
+                    Canvas.SetTop(label, offsetY + pred.Y * scale - 18);
+                    AnnotationCanvas.Children.Add(label);
                 }
             }
         }

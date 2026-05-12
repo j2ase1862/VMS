@@ -9,6 +9,8 @@ using System.Linq;
 using System.Threading;
 using VMS.Core.Interfaces;
 using VMS.Core.Models.Annotation;
+using VMS.DeepLearning.Interfaces;
+using VMS.DeepLearning.Models;
 using VMS.DeepLearning.Services;
 
 namespace VMS.DeepLearning.ViewModels
@@ -40,18 +42,21 @@ namespace VMS.DeepLearning.ViewModels
         private readonly ITrainingService _trainingService;
         private readonly ILabelingDialogService _dialogService;
         private readonly ISamService _samService;
+        private readonly IInferenceService? _inferenceService;
         private CancellationTokenSource? _trainingCts;
 
         public LabelingMainViewModel(
             IAnnotationService annotationService,
             ITrainingService trainingService,
             ILabelingDialogService dialogService,
-            ISamService samService)
+            ISamService samService,
+            IInferenceService? inferenceService = null)
         {
             _annotationService = annotationService;
             _trainingService = trainingService;
             _dialogService = dialogService;
             _samService = samService;
+            _inferenceService = inferenceService;
 
             TrainingConfig = new TrainingConfig();
             TrainingStatus = trainingService.Status;
@@ -219,6 +224,35 @@ namespace VMS.DeepLearning.ViewModels
             OnPropertyChanged(nameof(IsSegmentationMode));
             OnPropertyChanged(nameof(CurrentImageClass));
             AutoMatchTrainingScript();
+            RestoreInferenceModelFromDataset(value);
+        }
+
+        /// <summary>
+        /// 데이터셋 변경 시 이전 inference 상태 정리하고, 데이터셋에 저장된 모델 경로가 있으면 자동 복원.
+        /// 단, 토글은 사용자가 직접 켜도록 — 자동 ON은 데이터셋 전환마다 무거운 모델 로드를 강제하므로 보류.
+        /// </summary>
+        private void RestoreInferenceModelFromDataset(AnnotationDataset? dataset)
+        {
+            // 이전 상태 정리
+            if (IsInferenceModeEnabled) IsInferenceModeEnabled = false;
+            InferenceModelPath = string.Empty;
+            LatestPredictions.Clear();
+
+            if (dataset == null || string.IsNullOrEmpty(dataset.LastOnnxModelPath))
+            {
+                InferenceStatus = string.Empty;
+                return;
+            }
+
+            if (File.Exists(dataset.LastOnnxModelPath))
+            {
+                InferenceModelPath = dataset.LastOnnxModelPath;
+                InferenceStatus = "이전 학습 모델 발견 — Inference Mode를 켜면 자동 로드됩니다";
+            }
+            else
+            {
+                InferenceStatus = $"이전 모델 경로 사라짐: {Path.GetFileName(dataset.LastOnnxModelPath)}";
+            }
         }
 
         /// <summary>
@@ -271,7 +305,175 @@ namespace VMS.DeepLearning.ViewModels
         partial void OnCurrentImageChanged(AnnotationImage? value)
         {
             OnPropertyChanged(nameof(CurrentImageClass));
+            // v1 Inference: 토글 켜져 있고 모델 로드되어 있으면 자동 추론
+            RunInferenceIfEnabled();
         }
+
+        #region Inference v1 (Detection-only)
+
+        [ObservableProperty]
+        private bool _isInferenceModeEnabled;
+
+        [ObservableProperty]
+        private string _inferenceModelPath = string.Empty;
+
+        [ObservableProperty]
+        private bool _isInferenceRunning;
+
+        [ObservableProperty]
+        private string _inferenceStatus = string.Empty;
+
+        /// <summary>
+        /// Inference Confidence 임계값 (0~1). 학습 직후 모델은 점수가 낮은 경우가 많아 기본 0.10.
+        /// </summary>
+        [ObservableProperty]
+        private double _confidenceThreshold = 0.10;
+
+        /// <summary>
+        /// NMS IoU 임계값 (0~1). 기본 0.45.
+        /// </summary>
+        [ObservableProperty]
+        private double _iouThreshold = 0.45;
+
+        partial void OnConfidenceThresholdChanged(double value)
+        {
+            if (IsInferenceModeEnabled) RunInferenceIfEnabled();
+        }
+
+        partial void OnIouThresholdChanged(double value)
+        {
+            if (IsInferenceModeEnabled) RunInferenceIfEnabled();
+        }
+
+        /// <summary>현재 이미지에 대한 마지막 예측 결과. View에서 박스 오버레이로 그림.</summary>
+        public ObservableCollection<DetectionPrediction> LatestPredictions { get; } = new();
+
+        partial void OnIsInferenceModeEnabledChanged(bool value)
+        {
+            if (value)
+            {
+                // 토글 ON: 모델 경로 비어 있으면 TrainingStatus.OnnxOutputPath 자동 사용
+                if (string.IsNullOrEmpty(InferenceModelPath)
+                    && !string.IsNullOrEmpty(TrainingStatus?.OnnxOutputPath))
+                {
+                    InferenceModelPath = TrainingStatus.OnnxOutputPath;
+                }
+
+                TryLoadInferenceModel();
+                RunInferenceIfEnabled();
+            }
+            else
+            {
+                LatestPredictions.Clear();
+                _inferenceService?.UnloadModel();
+                InferenceStatus = string.Empty;
+            }
+        }
+
+        partial void OnInferenceModelPathChanged(string value)
+        {
+            if (IsInferenceModeEnabled)
+            {
+                TryLoadInferenceModel();
+                RunInferenceIfEnabled();
+            }
+        }
+
+        private void TryLoadInferenceModel()
+        {
+            if (_inferenceService == null)
+            {
+                InferenceStatus = "Inference 서비스 없음";
+                return;
+            }
+            if (string.IsNullOrEmpty(InferenceModelPath) || !File.Exists(InferenceModelPath))
+            {
+                InferenceStatus = "모델 경로가 비어있거나 파일 없음";
+                return;
+            }
+
+            try
+            {
+                _inferenceService.LoadModel(InferenceModelPath);
+                InferenceStatus = $"모델 로드 완료: {Path.GetFileName(InferenceModelPath)}";
+            }
+            catch (Exception ex)
+            {
+                InferenceStatus = $"모델 로드 실패: {ex.Message}";
+                _dialogService.ShowError(ex.Message, "Inference 모델 로드 실패");
+            }
+        }
+
+        private void RunInferenceIfEnabled()
+        {
+            if (!IsInferenceModeEnabled || _inferenceService == null || !_inferenceService.IsLoaded)
+            {
+                LatestPredictions.Clear();
+                return;
+            }
+            if (CurrentImage == null || string.IsNullOrEmpty(CurrentImage.ImagePath)
+                || !File.Exists(CurrentImage.ImagePath))
+            {
+                LatestPredictions.Clear();
+                InferenceStatus = "이미지 없음";
+                return;
+            }
+
+            IsInferenceRunning = true;
+            try
+            {
+                using var mat = Cv2.ImRead(CurrentImage.ImagePath);
+                if (mat.Empty())
+                {
+                    InferenceStatus = "이미지 로드 실패: " + CurrentImage.ImagePath;
+                    return;
+                }
+
+                var result = _inferenceService.Predict(mat,
+                    (float)ConfidenceThreshold, (float)IouThreshold);
+
+                LatestPredictions.Clear();
+                foreach (var p in result.Predictions) LatestPredictions.Add(p);
+
+                if (result.Predictions.Count > 0)
+                {
+                    InferenceStatus = $"검출 {result.Predictions.Count}개 · maxConf {result.MaxRawConfidence:F2}";
+                }
+                else
+                {
+                    // 진단: 후보가 있지만 threshold에 걸렸는지, 아예 모델이 nothing을 내는지 구분
+                    if (result.MaxRawConfidence > 0)
+                    {
+                        InferenceStatus = $"검출 0개 — maxConf {result.MaxRawConfidence:F3} (threshold {ConfidenceThreshold:F2}). " +
+                                          $"threshold 낮추기 권장.";
+                    }
+                    else
+                    {
+                        InferenceStatus = $"검출 0개 — 모델이 후보 없음. 클래스 {result.NumClasses}, input {result.InputSize}px";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                InferenceStatus = $"추론 실패: {ex.Message}";
+            }
+            finally
+            {
+                IsInferenceRunning = false;
+            }
+        }
+
+        [RelayCommand]
+        private void BrowseInferenceModel()
+        {
+            var path = _dialogService.ShowOpenFileDialog(
+                "ONNX 모델 선택",
+                "ONNX Model|*.onnx|All Files|*.*");
+            if (!string.IsNullOrEmpty(path))
+                InferenceModelPath = path;
+        }
+
+        #endregion
 
         #region Dataset Commands
 
@@ -917,9 +1119,29 @@ namespace VMS.DeepLearning.ViewModels
                     _ => "해당 Tool > Model Path"
                 };
 
+                // 영속화: 다음 세션에서 데이터셋 로드 시 InferenceModelPath 자동 복원
+                CurrentDataset.LastOnnxModelPath = TrainingStatus.OnnxOutputPath;
+                try { _annotationService.SaveDataset(CurrentDataset); }
+                catch (Exception saveEx)
+                {
+                    System.Diagnostics.Debug.WriteLine(
+                        $"[Training] Failed to persist LastOnnxModelPath: {saveEx.Message}");
+                }
+
+                // v1 Inference: Detection만 자동 inference 지원. 학습된 모델을 즉시 로드해 prev/next로 검증 가능.
+                bool autoInferenceSupported = CurrentDataset.DatasetTaskType == DatasetTaskType.Detection;
+                if (autoInferenceSupported && _inferenceService != null)
+                {
+                    InferenceModelPath = TrainingStatus.OnnxOutputPath;
+                    IsInferenceModeEnabled = true;
+                }
+
+                string extra = autoInferenceSupported
+                    ? "\n\n✓ Inference Mode가 자동 활성화되었습니다. prev/next로 즉시 검증 가능."
+                    : $"\n\nVMS VisionSetup의 {toolName}에\n이 경로를 지정하면 즉시 적용됩니다.";
+
                 _dialogService.ShowInformation(
-                    $"학습 완료!\n\nONNX 모델: {TrainingStatus.OnnxOutputPath}\n\n" +
-                    $"VMS VisionSetup의 {toolName}에\n이 경로를 지정하면 즉시 적용됩니다.",
+                    $"학습 완료!\n\nONNX 모델: {TrainingStatus.OnnxOutputPath}{extra}",
                     "Training Complete");
             }
         }

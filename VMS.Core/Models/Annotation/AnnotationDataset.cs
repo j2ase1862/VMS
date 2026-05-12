@@ -78,6 +78,17 @@ namespace VMS.Core.Models.Annotation
             set => SetProperty(ref _modifiedAt, value);
         }
 
+        private string _lastOnnxModelPath = string.Empty;
+        /// <summary>
+        /// 마지막 학습 결과 ONNX 모델 경로. Inference Mode 자동 복원용.
+        /// 학습 완료 시 TrainingStatus.OnnxOutputPath를 저장하고, 데이터셋 다시 로드할 때 참조.
+        /// </summary>
+        public string LastOnnxModelPath
+        {
+            get => _lastOnnxModelPath;
+            set => SetProperty(ref _lastOnnxModelPath, value);
+        }
+
         public int TotalImages => Images.Count;
         public int LabeledImages => Images.Count(i => i.IsLabeled);
         public int TotalLabels => Images.Sum(i => i.Labels.Count);
