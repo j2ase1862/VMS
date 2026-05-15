@@ -61,6 +61,9 @@ namespace VMS.VisionSetup.Services
             set
             {
                 _currentRecipe = value;
+                // 레시피 전환 시 캘리브레이션 메타데이터를 런타임 슬롯으로 동기화.
+                // null 레시피이거나 캘리브레이션이 없으면 슬롯도 클리어.
+                VisionService.Instance.CurrentCalibrationMetadata = value?.Calibration;
                 CurrentRecipeChanged?.Invoke(this, value);
             }
         }
@@ -135,6 +138,15 @@ namespace VMS.VisionSetup.Services
                         case "AnomalyTool":
                             OnnxEngineCache.PrefetchAnomaly(modelPath,
                                 CoerceInt(tool.Parameters, "InputSize", 224));
+                            break;
+                        case "SegmentationTool":
+                            OnnxEngineCache.PrefetchSegmentation(modelPath,
+                                CoerceInt(tool.Parameters, "InputSize", 512),
+                                CoerceBool(tool.Parameters, "UseImageNetNormalization", true));
+                            break;
+                        case "YoloSegTool":
+                            OnnxEngineCache.PrefetchYoloSeg(modelPath,
+                                CoerceInt(tool.Parameters, "InputSize", 640));
                             break;
                     }
                 }

@@ -139,6 +139,22 @@ namespace VMS.VisionSetup.Services
             set => SetProperty(ref _currentHeightMapMetadata, value);
         }
 
+        // 카메라 캘리브레이션 메타데이터 (CalibrationTool이 set, ImageRectifyTool/측정 도구가 get)
+        private CalibrationMetadata? _currentCalibrationMetadata;
+        public CalibrationMetadata? CurrentCalibrationMetadata
+        {
+            get => _currentCalibrationMetadata;
+            set => SetProperty(ref _currentCalibrationMetadata, value);
+        }
+
+        // 3D 점군 데이터 (PointCloudFilterTool 등 점군 처리 도구가 get/set, MainViewModel과 동기화)
+        private VMS.Camera.Models.PointCloudData? _currentPointCloud;
+        public VMS.Camera.Models.PointCloudData? CurrentPointCloud
+        {
+            get => _currentPointCloud;
+            set => SetProperty(ref _currentPointCloud, value);
+        }
+
         private VisionService() { }
 
         /// <summary>
@@ -921,9 +937,13 @@ namespace VMS.VisionSetup.Services
                 "HeightSlicerTool" => new HeightSlicerTool(),
                 "PlaneFitTool" => new PlaneFitTool(),
                 "Geometry3DTool" => new Geometry3DTool(),
+                "PointCloudFilterTool" => new VisionTools.PointCloud.PointCloudFilterTool(),
+                "PointCloudRegistrationTool" => new VisionTools.PointCloud.PointCloudRegistrationTool(),
+                "PointCloudClusterTool" => new VisionTools.PointCloud.PointCloudClusterTool(),
 
                 // Pattern Matching
                 "FeatureMatchTool" => new FeatureMatchTool(),
+                "ShapeMatchTool" => new ShapeMatchTool(),
 
                 // Blob Analysis
                 "BlobTool" => new BlobTool(),
@@ -945,9 +965,18 @@ namespace VMS.VisionSetup.Services
                 "ClassifyTool" => new ClassifyTool(),
                 "AnomalyTool" => new AnomalyTool(),
                 "EnsembleTool" => new EnsembleTool(),
+                "SegmentationTool" => new SegmentationTool(),
+                "YoloSegTool" => new YoloSegTool(),
 
                 // Judgment
                 "ResultTool" => new ResultTool(),
+
+                // Calibration
+                "ImageRectifyTool" => new VisionTools.Calibration.ImageRectifyTool(),
+
+                // Color
+                "ColorExtractTool" => new VisionTools.Color.ColorExtractTool(),
+                "ColorMatchTool" => new VisionTools.Color.ColorMatchTool(),
 
                 _ => null
             };
@@ -971,13 +1000,17 @@ namespace VMS.VisionSetup.Services
                 },
                 ["3D Analysis"] = new[]
                 {
+                    "PointCloudFilterTool",
+                    "PointCloudRegistrationTool",
+                    "PointCloudClusterTool",
                     "HeightSlicerTool",
                     "PlaneFitTool",
                     "Geometry3DTool"
                 },
                 ["Pattern Matching"] = new[]
                 {
-                    "FeatureMatchTool"
+                    "FeatureMatchTool",
+                    "ShapeMatchTool"
                 },
                 ["Blob Analysis"] = new[]
                 {
@@ -1003,11 +1036,22 @@ namespace VMS.VisionSetup.Services
                     "DetectionTool",
                     "ClassifyTool",
                     "AnomalyTool",
-                    "EnsembleTool"
+                    "EnsembleTool",
+                    "SegmentationTool",
+                    "YoloSegTool"
                 },
                 ["Judgment"] = new[]
                 {
                     "ResultTool"
+                },
+                ["Calibration"] = new[]
+                {
+                    "ImageRectifyTool"
+                },
+                ["Color"] = new[]
+                {
+                    "ColorExtractTool",
+                    "ColorMatchTool"
                 }
             };
         }
@@ -1026,6 +1070,7 @@ namespace VMS.VisionSetup.Services
                 "MorphologyTool" => "Morphology",
                 "HistogramTool" => "Histogram",
                 "FeatureMatchTool" => "Feature Match",
+                "ShapeMatchTool" => "Shape Match",
                 "BlobTool" => "Blob Analysis",
                 "CaliperTool" => "Caliper",
                 "LineFitTool" => "Line Fit",
@@ -1034,13 +1079,21 @@ namespace VMS.VisionSetup.Services
                 "HeightSlicerTool" => "Height Slicer",
                 "PlaneFitTool" => "Plane Fit",
                 "Geometry3DTool" => "3D Geometry",
+                "PointCloudFilterTool" => "PointCloud Filter",
+                "PointCloudRegistrationTool" => "PointCloud Registration",
+                "PointCloudClusterTool" => "PointCloud Cluster",
                 "OCRTool" => "OCR",
                 "CodeReaderTool" => "Code Reader",
                 "DetectionTool" => "Detection (YOLO)",
                 "ClassifyTool" => "Classify",
                 "AnomalyTool" => "Anomaly",
                 "EnsembleTool" => "Ensemble",
+                "SegmentationTool" => "Segmentation",
+                "YoloSegTool" => "YOLOv8-seg",
                 "ResultTool" => "Result",
+                "ImageRectifyTool" => "Image Rectify",
+                "ColorExtractTool" => "Color Extract",
+                "ColorMatchTool" => "Color Match",
                 _ => toolType
             };
         }

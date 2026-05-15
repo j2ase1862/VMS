@@ -82,6 +82,33 @@
         <DataTemplate x:Key="ResultTemplate" DataType="{x:Type vm:ResultToolSettingsViewModel}">
             <tools:ResultToolSettings/>
         </DataTemplate>
+        <DataTemplate x:Key="ImageRectifyTemplate" DataType="{x:Type vm:ImageRectifyToolSettingsViewModel}">
+            <tools:ImageRectifyToolSettings/>
+        </DataTemplate>
+        <DataTemplate x:Key="SegmentationTemplate" DataType="{x:Type vm:SegmentationToolSettingsViewModel}">
+            <tools:SegmentationToolSettings/>
+        </DataTemplate>
+        <DataTemplate x:Key="YoloSegTemplate" DataType="{x:Type vm:YoloSegToolSettingsViewModel}">
+            <tools:YoloSegToolSettings/>
+        </DataTemplate>
+        <DataTemplate x:Key="ShapeMatchTemplate" DataType="{x:Type vm:ShapeMatchToolSettingsViewModel}">
+            <tools:ShapeMatchToolSettings/>
+        </DataTemplate>
+        <DataTemplate x:Key="ColorExtractTemplate" DataType="{x:Type vm:ColorExtractToolSettingsViewModel}">
+            <tools:ColorExtractToolSettings/>
+        </DataTemplate>
+        <DataTemplate x:Key="ColorMatchTemplate" DataType="{x:Type vm:ColorMatchToolSettingsViewModel}">
+            <tools:ColorMatchToolSettings/>
+        </DataTemplate>
+        <DataTemplate x:Key="PointCloudFilterTemplate" DataType="{x:Type vm:PointCloudFilterToolSettingsViewModel}">
+            <tools:PointCloudFilterToolSettings/>
+        </DataTemplate>
+        <DataTemplate x:Key="PointCloudRegistrationTemplate" DataType="{x:Type vm:PointCloudRegistrationToolSettingsViewModel}">
+            <tools:PointCloudRegistrationToolSettings/>
+        </DataTemplate>
+        <DataTemplate x:Key="PointCloudClusterTemplate" DataType="{x:Type vm:PointCloudClusterToolSettingsViewModel}">
+            <tools:PointCloudClusterToolSettings/>
+        </DataTemplate>
 
         <ts:ToolSettingsTemplateSelector x:Key="ToolTemplateSelector"
             GrayscaleTemplate="{StaticResource GrayscaleTemplate}"
@@ -105,7 +132,16 @@
             EnsembleTemplate="{StaticResource EnsembleTemplate}"
             PlaneFitTemplate="{StaticResource PlaneFitTemplate}"
             Geometry3DTemplate="{StaticResource Geometry3DTemplate}"
-            ResultTemplate="{StaticResource ResultTemplate}"/>
+            ResultTemplate="{StaticResource ResultTemplate}"
+            ImageRectifyTemplate="{StaticResource ImageRectifyTemplate}"
+            SegmentationTemplate="{StaticResource SegmentationTemplate}"
+            YoloSegTemplate="{StaticResource YoloSegTemplate}"
+            ShapeMatchTemplate="{StaticResource ShapeMatchTemplate}"
+            ColorExtractTemplate="{StaticResource ColorExtractTemplate}"
+            ColorMatchTemplate="{StaticResource ColorMatchTemplate}"
+            PointCloudFilterTemplate="{StaticResource PointCloudFilterTemplate}"
+            PointCloudRegistrationTemplate="{StaticResource PointCloudRegistrationTemplate}"
+            PointCloudClusterTemplate="{StaticResource PointCloudClusterTemplate}"/>
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">

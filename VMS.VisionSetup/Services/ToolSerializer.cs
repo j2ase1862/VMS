@@ -374,6 +374,131 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["DrawOverlay"] = ensemble.DrawOverlay;
                     break;
 
+                case ShapeMatchTool shape:
+                    config.Parameters["AngleStep"] = shape.AngleStep;
+                    config.Parameters["MinScale"] = shape.MinScale;
+                    config.Parameters["MaxScale"] = shape.MaxScale;
+                    config.Parameters["ScaleStep"] = shape.ScaleStep;
+                    config.Parameters["ScoreThreshold"] = shape.ScoreThreshold;
+                    config.Parameters["NumPyramidLevels"] = shape.NumPyramidLevels;
+                    config.Parameters["TopCandidates"] = shape.TopCandidates;
+                    config.Parameters["MaxInstances"] = shape.MaxInstances;
+                    config.Parameters["NmsDistanceFactor"] = shape.NmsDistanceFactor;
+                    config.Parameters["UseSearchRegion"] = shape.UseSearchRegion;
+                    config.Parameters["SearchRegionX"] = shape.SearchRegionX;
+                    config.Parameters["SearchRegionY"] = shape.SearchRegionY;
+                    config.Parameters["SearchRegionWidth"] = shape.SearchRegionWidth;
+                    config.Parameters["SearchRegionHeight"] = shape.SearchRegionHeight;
+                    if (shape.TemplatePngBytes != null && shape.TemplatePngBytes.Length > 0)
+                        config.Parameters["TemplatePngBase64"] = Convert.ToBase64String(shape.TemplatePngBytes);
+                    break;
+
+                case SegmentationTool seg:
+                    config.Parameters["ModelPath"] = seg.ModelPath;
+                    config.Parameters["InputSize"] = seg.InputSize;
+                    config.Parameters["UseImageNetNormalization"] = seg.UseImageNetNormalization;
+                    config.Parameters["ShowOverlay"] = seg.ShowOverlay;
+                    config.Parameters["OverlayOpacity"] = seg.OverlayOpacity;
+                    config.Parameters["BackgroundClass"] = seg.BackgroundClass;
+                    break;
+
+                case YoloSegTool ys:
+                    config.Parameters["ModelPath"] = ys.ModelPath;
+                    config.Parameters["InputSize"] = ys.InputSize;
+                    config.Parameters["ConfidenceThreshold"] = ys.ConfidenceThreshold;
+                    config.Parameters["IouThreshold"] = ys.IouThreshold;
+                    config.Parameters["MaskThreshold"] = ys.MaskThreshold;
+                    config.Parameters["ShowOverlay"] = ys.ShowOverlay;
+                    config.Parameters["OverlayOpacity"] = ys.OverlayOpacity;
+                    config.Parameters["DrawBoxes"] = ys.DrawBoxes;
+                    break;
+
+                case VisionTools.PointCloud.PointCloudFilterTool pcf:
+                    config.Parameters["EnableVoxelGrid"] = pcf.EnableVoxelGrid;
+                    config.Parameters["VoxelSize"] = pcf.VoxelSize;
+                    config.Parameters["EnableSor"] = pcf.EnableSor;
+                    config.Parameters["SorK"] = pcf.SorK;
+                    config.Parameters["SorStddev"] = pcf.SorStddev;
+                    break;
+
+                case VisionTools.PointCloud.PointCloudRegistrationTool pcr:
+                    config.Parameters["ReferencePath"] = pcr.ReferencePath;
+                    config.Parameters["MaxIterations"] = pcr.MaxIterations;
+                    config.Parameters["Tolerance"] = pcr.Tolerance;
+                    config.Parameters["ApplyTransformToSource"] = pcr.ApplyTransformToSource;
+                    break;
+
+                case VisionTools.PointCloud.PointCloudClusterTool pcc:
+                    config.Parameters["Tolerance"] = pcc.Tolerance;
+                    config.Parameters["MinPoints"] = pcc.MinPoints;
+                    config.Parameters["MaxPoints"] = pcc.MaxPoints;
+                    config.Parameters["MaxReportedClusters"] = pcc.MaxReportedClusters;
+                    config.Parameters["OutputMode"] = pcc.OutputMode.ToString();
+                    break;
+
+                case VisionTools.Calibration.ImageRectifyTool rectify:
+                    config.Parameters["Undistort"] = rectify.Undistort;
+                    config.Parameters["ApplyHomography"] = rectify.ApplyHomography;
+                    break;
+
+                case VisionTools.Color.ColorMatchTool cmTool:
+                    config.Parameters["ColorTolerance"] = cmTool.ColorTolerance;
+                    config.Parameters["MorphKernelSize"] = cmTool.MorphKernelSize;
+                    config.Parameters["ShowOverlay"] = cmTool.ShowOverlay;
+                    config.Parameters["OverlayOpacity"] = cmTool.OverlayOpacity;
+                    config.Parameters["UseSearchRegion"] = cmTool.UseSearchRegion;
+                    config.Parameters["SearchRegionX"] = cmTool.SearchRegionX;
+                    config.Parameters["SearchRegionY"] = cmTool.SearchRegionY;
+                    config.Parameters["SearchRegionWidth"] = cmTool.SearchRegionWidth;
+                    config.Parameters["SearchRegionHeight"] = cmTool.SearchRegionHeight;
+                    var cmModelList = new List<Dictionary<string, object>>();
+                    foreach (var m in cmTool.Models)
+                    {
+                        cmModelList.Add(new Dictionary<string, object>
+                        {
+                            ["Name"] = m.Name,
+                            ["IsEnabled"] = m.IsEnabled,
+                            ["MeanL"] = m.MeanL,
+                            ["MeanA"] = m.MeanA,
+                            ["MeanB"] = m.MeanB
+                        });
+                    }
+                    config.Parameters["Models"] = cmModelList;
+                    int cmSelIdx = cmTool.SelectedModel != null ? cmTool.Models.IndexOf(cmTool.SelectedModel) : 0;
+                    config.Parameters["SelectedModelIndex"] = cmSelIdx;
+                    break;
+
+                case VisionTools.Color.ColorExtractTool cx:
+                    config.Parameters["MorphKernelSize"] = cx.MorphKernelSize;
+                    config.Parameters["InvertMask"] = cx.InvertMask;
+                    config.Parameters["ShowOverlay"] = cx.ShowOverlay;
+                    config.Parameters["OverlayOpacity"] = cx.OverlayOpacity;
+                    config.Parameters["UseSearchRegion"] = cx.UseSearchRegion;
+                    config.Parameters["SearchRegionX"] = cx.SearchRegionX;
+                    config.Parameters["SearchRegionY"] = cx.SearchRegionY;
+                    config.Parameters["SearchRegionWidth"] = cx.SearchRegionWidth;
+                    config.Parameters["SearchRegionHeight"] = cx.SearchRegionHeight;
+                    // Models 컬렉션 직렬화 (Dictionary 리스트)
+                    var modelList = new List<Dictionary<string, object>>();
+                    foreach (var m in cx.Models)
+                    {
+                        modelList.Add(new Dictionary<string, object>
+                        {
+                            ["Name"] = m.Name,
+                            ["IsEnabled"] = m.IsEnabled,
+                            ["HueMin"] = m.HueMin,
+                            ["HueMax"] = m.HueMax,
+                            ["SaturationMin"] = m.SaturationMin,
+                            ["SaturationMax"] = m.SaturationMax,
+                            ["ValueMin"] = m.ValueMin,
+                            ["ValueMax"] = m.ValueMax
+                        });
+                    }
+                    config.Parameters["Models"] = modelList;
+                    int selectedIdx = cx.SelectedModel != null ? cx.Models.IndexOf(cx.SelectedModel) : 0;
+                    config.Parameters["SelectedModelIndex"] = selectedIdx;
+                    break;
+
                 default:
                     // Unknown tool type - save what we can
                     break;
@@ -431,6 +556,15 @@ namespace VMS.VisionSetup.Services
                 "AnomalyTool" => DeserializeAnomalyTool(config),
                 "EnsembleTool" => DeserializeEnsembleTool(config),
                 "ResultTool" => DeserializeResultTool(config),
+                "ShapeMatchTool" => DeserializeShapeMatchTool(config),
+                "SegmentationTool" => DeserializeSegmentationTool(config),
+                "YoloSegTool" => DeserializeYoloSegTool(config),
+                "ImageRectifyTool" => DeserializeImageRectifyTool(config),
+                "PointCloudFilterTool" => DeserializePointCloudFilterTool(config),
+                "PointCloudRegistrationTool" => DeserializePointCloudRegistrationTool(config),
+                "PointCloudClusterTool" => DeserializePointCloudClusterTool(config),
+                "ColorExtractTool" => DeserializeColorExtractTool(config),
+                "ColorMatchTool" => DeserializeColorMatchTool(config),
                 _ => null
             };
 
@@ -1226,6 +1360,213 @@ namespace VMS.VisionSetup.Services
             if (p.TryGetValue("DrawOverlay", out var dov))
                 tool.DrawOverlay = GetBool(dov);
 
+            return tool;
+        }
+
+        private static ShapeMatchTool DeserializeShapeMatchTool(ToolConfig config)
+        {
+            var tool = new ShapeMatchTool();
+            var p = config.Parameters;
+
+            if (p.TryGetValue("AngleStep", out var astep)) tool.AngleStep = GetDouble(astep);
+            if (p.TryGetValue("MinScale", out var mns)) tool.MinScale = GetDouble(mns);
+            if (p.TryGetValue("MaxScale", out var mxs)) tool.MaxScale = GetDouble(mxs);
+            if (p.TryGetValue("ScaleStep", out var sstep)) tool.ScaleStep = GetDouble(sstep);
+            if (p.TryGetValue("ScoreThreshold", out var st)) tool.ScoreThreshold = GetDouble(st);
+            if (p.TryGetValue("NumPyramidLevels", out var npl)) tool.NumPyramidLevels = GetInt(npl);
+            if (p.TryGetValue("TopCandidates", out var tc)) tool.TopCandidates = GetInt(tc);
+            if (p.TryGetValue("MaxInstances", out var mi)) tool.MaxInstances = GetInt(mi);
+            if (p.TryGetValue("NmsDistanceFactor", out var ndf)) tool.NmsDistanceFactor = GetDouble(ndf);
+            if (p.TryGetValue("UseSearchRegion", out var usr)) tool.UseSearchRegion = GetBool(usr);
+            int sx = p.TryGetValue("SearchRegionX", out var srx) ? GetInt(srx) : 0;
+            int sy = p.TryGetValue("SearchRegionY", out var sry) ? GetInt(sry) : 0;
+            int sw = p.TryGetValue("SearchRegionWidth", out var srw) ? GetInt(srw) : 0;
+            int sh = p.TryGetValue("SearchRegionHeight", out var srh) ? GetInt(srh) : 0;
+            tool.SearchRegion = new Rect(sx, sy, sw, sh);
+
+            if (p.TryGetValue("TemplatePngBase64", out var b64))
+            {
+                try
+                {
+                    var s = GetString(b64);
+                    if (!string.IsNullOrEmpty(s))
+                        tool.TemplatePngBytes = Convert.FromBase64String(s);
+                }
+                catch { /* corrupt template — ignore, user can retrain */ }
+            }
+            return tool;
+        }
+
+        private static YoloSegTool DeserializeYoloSegTool(ToolConfig config)
+        {
+            var tool = new YoloSegTool();
+            var p = config.Parameters;
+            if (p.TryGetValue("ModelPath", out var mp)) tool.ModelPath = GetString(mp);
+            if (p.TryGetValue("InputSize", out var ins)) tool.InputSize = GetInt(ins);
+            if (p.TryGetValue("ConfidenceThreshold", out var ct)) tool.ConfidenceThreshold = (float)GetDouble(ct);
+            if (p.TryGetValue("IouThreshold", out var iou)) tool.IouThreshold = (float)GetDouble(iou);
+            if (p.TryGetValue("MaskThreshold", out var mt)) tool.MaskThreshold = (float)GetDouble(mt);
+            if (p.TryGetValue("ShowOverlay", out var sho)) tool.ShowOverlay = GetBool(sho);
+            if (p.TryGetValue("OverlayOpacity", out var oo)) tool.OverlayOpacity = GetDouble(oo);
+            if (p.TryGetValue("DrawBoxes", out var db)) tool.DrawBoxes = GetBool(db);
+            return tool;
+        }
+
+        private static SegmentationTool DeserializeSegmentationTool(ToolConfig config)
+        {
+            var tool = new SegmentationTool();
+            var p = config.Parameters;
+            if (p.TryGetValue("ModelPath", out var mp)) tool.ModelPath = GetString(mp);
+            if (p.TryGetValue("InputSize", out var ins)) tool.InputSize = GetInt(ins);
+            if (p.TryGetValue("UseImageNetNormalization", out var uin)) tool.UseImageNetNormalization = GetBool(uin);
+            if (p.TryGetValue("ShowOverlay", out var sho)) tool.ShowOverlay = GetBool(sho);
+            if (p.TryGetValue("OverlayOpacity", out var oo)) tool.OverlayOpacity = GetDouble(oo);
+            if (p.TryGetValue("BackgroundClass", out var bc)) tool.BackgroundClass = GetInt(bc);
+            return tool;
+        }
+
+        private static VisionTools.Calibration.ImageRectifyTool DeserializeImageRectifyTool(ToolConfig config)
+        {
+            var tool = new VisionTools.Calibration.ImageRectifyTool();
+            var p = config.Parameters;
+            if (p.TryGetValue("Undistort", out var u)) tool.Undistort = GetBool(u);
+            if (p.TryGetValue("ApplyHomography", out var ah)) tool.ApplyHomography = GetBool(ah);
+            return tool;
+        }
+
+        private static VisionTools.PointCloud.PointCloudFilterTool DeserializePointCloudFilterTool(ToolConfig config)
+        {
+            var tool = new VisionTools.PointCloud.PointCloudFilterTool();
+            var p = config.Parameters;
+            if (p.TryGetValue("EnableVoxelGrid", out var ev)) tool.EnableVoxelGrid = GetBool(ev);
+            if (p.TryGetValue("VoxelSize", out var vs)) tool.VoxelSize = (float)GetDouble(vs);
+            if (p.TryGetValue("EnableSor", out var es)) tool.EnableSor = GetBool(es);
+            if (p.TryGetValue("SorK", out var sk)) tool.SorK = GetInt(sk);
+            if (p.TryGetValue("SorStddev", out var ss)) tool.SorStddev = GetDouble(ss);
+            return tool;
+        }
+
+        private static VisionTools.PointCloud.PointCloudRegistrationTool DeserializePointCloudRegistrationTool(ToolConfig config)
+        {
+            var tool = new VisionTools.PointCloud.PointCloudRegistrationTool();
+            var p = config.Parameters;
+            if (p.TryGetValue("ReferencePath", out var rp)) tool.ReferencePath = GetString(rp);
+            if (p.TryGetValue("MaxIterations", out var mi)) tool.MaxIterations = GetInt(mi);
+            if (p.TryGetValue("Tolerance", out var tol)) tool.Tolerance = (float)GetDouble(tol);
+            if (p.TryGetValue("ApplyTransformToSource", out var atts)) tool.ApplyTransformToSource = GetBool(atts);
+            return tool;
+        }
+
+        private static VisionTools.PointCloud.PointCloudClusterTool DeserializePointCloudClusterTool(ToolConfig config)
+        {
+            var tool = new VisionTools.PointCloud.PointCloudClusterTool();
+            var p = config.Parameters;
+            if (p.TryGetValue("Tolerance", out var tol)) tool.Tolerance = (float)GetDouble(tol);
+            if (p.TryGetValue("MinPoints", out var mn)) tool.MinPoints = GetInt(mn);
+            if (p.TryGetValue("MaxPoints", out var mx)) tool.MaxPoints = GetInt(mx);
+            if (p.TryGetValue("MaxReportedClusters", out var mrc)) tool.MaxReportedClusters = GetInt(mrc);
+            if (p.TryGetValue("OutputMode", out var om))
+                tool.OutputMode = Enum.Parse<VisionTools.PointCloud.PointCloudClusterTool.ClusterOutputMode>(GetString(om));
+            return tool;
+        }
+
+        private static VisionTools.Color.ColorMatchTool DeserializeColorMatchTool(ToolConfig config)
+        {
+            var tool = new VisionTools.Color.ColorMatchTool();
+            var p = config.Parameters;
+            if (p.TryGetValue("ColorTolerance", out var ct)) tool.ColorTolerance = GetDouble(ct);
+            if (p.TryGetValue("MorphKernelSize", out var mk)) tool.MorphKernelSize = GetInt(mk);
+            if (p.TryGetValue("ShowOverlay", out var sho)) tool.ShowOverlay = GetBool(sho);
+            if (p.TryGetValue("OverlayOpacity", out var oo)) tool.OverlayOpacity = GetDouble(oo);
+            if (p.TryGetValue("UseSearchRegion", out var usr)) tool.UseSearchRegion = GetBool(usr);
+            int sx = p.TryGetValue("SearchRegionX", out var srx) ? GetInt(srx) : 0;
+            int sy = p.TryGetValue("SearchRegionY", out var sry) ? GetInt(sry) : 0;
+            int sw = p.TryGetValue("SearchRegionWidth", out var srw) ? GetInt(srw) : 0;
+            int sh = p.TryGetValue("SearchRegionHeight", out var srh) ? GetInt(srh) : 0;
+            tool.SearchRegion = new Rect(sx, sy, sw, sh);
+
+            if (p.TryGetValue("Models", out var modelsObj))
+            {
+                var loaded = new List<VisionTools.Color.ColorMatchModel>();
+                if (modelsObj is JsonElement je && je.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var item in je.EnumerateArray())
+                    {
+                        loaded.Add(new VisionTools.Color.ColorMatchModel
+                        {
+                            Name = item.TryGetProperty("Name", out var n) ? n.GetString() ?? "Model" : "Model",
+                            IsEnabled = !item.TryGetProperty("IsEnabled", out var ie) || ie.GetBoolean(),
+                            MeanL = item.TryGetProperty("MeanL", out var ml) ? ml.GetInt32() : 0,
+                            MeanA = item.TryGetProperty("MeanA", out var ma) ? ma.GetInt32() : 128,
+                            MeanB = item.TryGetProperty("MeanB", out var mb) ? mb.GetInt32() : 128
+                        });
+                    }
+                }
+                if (loaded.Count > 0)
+                {
+                    tool.Models.Clear();
+                    foreach (var m in loaded) tool.Models.Add(m);
+                    int selIdx = p.TryGetValue("SelectedModelIndex", out var sid) ? GetInt(sid) : 0;
+                    tool.SelectedModel = tool.Models[Math.Clamp(selIdx, 0, tool.Models.Count - 1)];
+                }
+            }
+            return tool;
+        }
+
+        private static VisionTools.Color.ColorExtractTool DeserializeColorExtractTool(ToolConfig config)
+        {
+            var tool = new VisionTools.Color.ColorExtractTool();
+            var p = config.Parameters;
+            if (p.TryGetValue("MorphKernelSize", out var mk)) tool.MorphKernelSize = GetInt(mk);
+            if (p.TryGetValue("InvertMask", out var inv)) tool.InvertMask = GetBool(inv);
+            if (p.TryGetValue("ShowOverlay", out var sho)) tool.ShowOverlay = GetBool(sho);
+            if (p.TryGetValue("OverlayOpacity", out var oo)) tool.OverlayOpacity = GetDouble(oo);
+            if (p.TryGetValue("UseSearchRegion", out var usr)) tool.UseSearchRegion = GetBool(usr);
+            int sx = p.TryGetValue("SearchRegionX", out var srx) ? GetInt(srx) : 0;
+            int sy = p.TryGetValue("SearchRegionY", out var sry) ? GetInt(sry) : 0;
+            int sw = p.TryGetValue("SearchRegionWidth", out var srw) ? GetInt(srw) : 0;
+            int sh = p.TryGetValue("SearchRegionHeight", out var srh) ? GetInt(srh) : 0;
+            tool.SearchRegion = new Rect(sx, sy, sw, sh);
+
+            // Models 컬렉션 복원
+            if (p.TryGetValue("Models", out var modelsObj))
+            {
+                var loaded = new List<VisionTools.Color.ColorModel>();
+                if (modelsObj is JsonElement je && je.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var item in je.EnumerateArray())
+                    {
+                        loaded.Add(new VisionTools.Color.ColorModel
+                        {
+                            Name = item.TryGetProperty("Name", out var n) ? n.GetString() ?? "Model" : "Model",
+                            IsEnabled = !item.TryGetProperty("IsEnabled", out var ie) || ie.GetBoolean(),
+                            HueMin = item.TryGetProperty("HueMin", out var hmn) ? hmn.GetInt32() : 0,
+                            HueMax = item.TryGetProperty("HueMax", out var hmx) ? hmx.GetInt32() : 179,
+                            SaturationMin = item.TryGetProperty("SaturationMin", out var smn) ? smn.GetInt32() : 50,
+                            SaturationMax = item.TryGetProperty("SaturationMax", out var smx) ? smx.GetInt32() : 255,
+                            ValueMin = item.TryGetProperty("ValueMin", out var vmn) ? vmn.GetInt32() : 50,
+                            ValueMax = item.TryGetProperty("ValueMax", out var vmx) ? vmx.GetInt32() : 255
+                        });
+                    }
+                }
+                if (loaded.Count > 0)
+                {
+                    tool.Models.Clear();
+                    foreach (var m in loaded) tool.Models.Add(m);
+                    int selIdx = p.TryGetValue("SelectedModelIndex", out var sid) ? GetInt(sid) : 0;
+                    tool.SelectedModel = tool.Models[Math.Clamp(selIdx, 0, tool.Models.Count - 1)];
+                }
+            }
+            else
+            {
+                // 구버전 호환 — 단일 HSV 필드만 있는 경우
+                if (p.TryGetValue("HueMin", out var hmn)) tool.HueMin = GetInt(hmn);
+                if (p.TryGetValue("HueMax", out var hmx)) tool.HueMax = GetInt(hmx);
+                if (p.TryGetValue("SaturationMin", out var smn)) tool.SaturationMin = GetInt(smn);
+                if (p.TryGetValue("SaturationMax", out var smx)) tool.SaturationMax = GetInt(smx);
+                if (p.TryGetValue("ValueMin", out var vmn)) tool.ValueMin = GetInt(vmn);
+                if (p.TryGetValue("ValueMax", out var vmx)) tool.ValueMax = GetInt(vmx);
+            }
             return tool;
         }
 

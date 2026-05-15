@@ -98,6 +98,17 @@ namespace VMS.VisionSetup
                 _isDrawingSearchRegion = false;
                 vm.ClearSearchRegion();
             });
+
+            // 이미지 한 픽셀 픽 (ColorMatchTool)
+            WeakReferenceMessenger.Default.Register<RequestPickColorMessage>(this, (r, msg) =>
+            {
+                ImageCanvasControl.ActivateDrawingMode(EditMode.PickPoint);
+            });
+            ImageCanvasControl.PointPicked += (imgX, imgY) =>
+            {
+                if (DataContext is MainViewModel mvm)
+                    mvm.OnColorPickedFromImage(imgX, imgY);
+            };
         }
 
         #region Tool Position Change Tracking
@@ -534,10 +545,27 @@ namespace VMS.VisionSetup
         {
             if (e.LeftButton == MouseButtonState.Pressed && sender is FrameworkElement fe && fe.DataContext is ToolItem tool)
             {
+                // HelpIcon(또는 그 자식) 위에서 시작된 마우스 이벤트면 드래그 시작 안 함.
+                // 그렇지 않으면 ? 클릭이 드래그로 인식되어 ToggleButton.Click이 안 발생.
+                if (IsOriginatingFrom<VMS.VisionSetup.Controls.HelpIcon>(e.OriginalSource)) return;
+
                 DataObject data = new DataObject();
                 data.SetData("Object", tool);
                 DragDrop.DoDragDrop(fe, data, DragDropEffects.Copy);
             }
+        }
+
+        private static bool IsOriginatingFrom<T>(object? source) where T : DependencyObject
+        {
+            var current = source as DependencyObject;
+            while (current != null)
+            {
+                if (current is T) return true;
+                current = current is System.Windows.Media.Visual or System.Windows.Media.Media3D.Visual3D
+                    ? System.Windows.Media.VisualTreeHelper.GetParent(current)
+                    : System.Windows.LogicalTreeHelper.GetParent(current);
+            }
+            return false;
         }
 
         /// <summary>
@@ -668,6 +696,15 @@ namespace VMS.VisionSetup
         {
             var vm = DataContext as MainViewModel;
             vm?.OpenCameraManager();
+        }
+
+        /// <summary>
+        /// 캘리브레이션 관리자 열기
+        /// </summary>
+        private void CalibrationManager_Click(object sender, RoutedEventArgs e)
+        {
+            var vm = DataContext as MainViewModel;
+            vm?.OpenCalibrationManager();
         }
 
         /// <summary>

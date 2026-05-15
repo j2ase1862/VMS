@@ -45,34 +45,37 @@
     </UserControl.Resources>
 
     <Grid>
+        <!-- 호버 트리거: 마우스 진입 시 짧은 delay 후 Popup 표시, 떠나면 자동 닫기 -->
         <ToggleButton x:Name="HelpButton"
                       Style="{StaticResource HelpToggleButtonStyle}"
-                      IsChecked="{Binding IsOpen, ElementName=HelpPopup, Mode=TwoWay}"
-                      ToolTipService.InitialShowDelay="0"
-                      ToolTipService.ShowDuration="60000">
-            <ToggleButton.ToolTip>
-                <ToolTip x:Name="QuickTooltip" MaxWidth="300">
-                    <TextBlock x:Name="TooltipText"
-                               TextWrapping="Wrap"
-                               Text="도움말을 로드 중..."/>
-                </ToolTip>
-            </ToggleButton.ToolTip>
-        </ToggleButton>
+                      MouseEnter="HelpButton_MouseEnter"
+                      MouseLeave="HelpButton_MouseLeave"/>
 
         <!-- Help Popup -->
+        <!--
+            StaysOpen=True: 팝업 외부 클릭에 즉시 닫히지 않음.
+            팝업 내부 클릭/휠 이벤트가 자식 컨트롤(Border)에서 정상 처리되도록 보장.
+            닫기: X 버튼 또는 ? 아이콘 재클릭.
+        -->
         <Popup x:Name="HelpPopup"
                PlacementTarget="{Binding ElementName=HelpButton}"
                Placement="Right"
-               StaysOpen="False"
+               StaysOpen="True"
                AllowsTransparency="True"
                PopupAnimation="Fade">
-            <Border Background="#2D2D30"
+            <Border x:Name="HelpBorder"
+                    Background="#2D2D30"
                     BorderBrush="#007ACC"
                     BorderThickness="1"
                     CornerRadius="5"
                     MaxWidth="400"
                     MinWidth="250"
-                    Padding="15">
+                    Padding="15"
+                    Cursor="Hand"
+                    MouseEnter="HelpBorder_MouseEnter"
+                    MouseLeave="HelpBorder_MouseLeave"
+                    PreviewMouseWheel="HelpBorder_PreviewMouseWheel"
+                    PreviewMouseLeftButtonDown="HelpBorder_MouseLeftButtonDown">
                 <Border.Effect>
                     <DropShadowEffect Color="Black" BlurRadius="10" Opacity="0.5"/>
                 </Border.Effect>
@@ -98,16 +101,16 @@
                                    FontWeight="Bold"
                                    FontSize="14"/>
 
-                        <ToggleButton Grid.Column="1"
-                                      Content="X"
-                                      Background="Transparent"
-                                      Foreground="Gray"
-                                      BorderThickness="0"
-                                      FontWeight="Bold"
-                                      Cursor="Hand"
-                                      IsChecked="{Binding IsChecked, ElementName=HelpButton, Mode=TwoWay}"
-                                      Width="20" Height="20"
-                                      VerticalAlignment="Top"/>
+                        <Button Grid.Column="1"
+                                Content="X"
+                                Background="Transparent"
+                                Foreground="Gray"
+                                BorderThickness="0"
+                                FontWeight="Bold"
+                                Cursor="Hand"
+                                Click="CloseHelp_Click"
+                                Width="20" Height="20"
+                                VerticalAlignment="Top"/>
                     </Grid>
 
                     <!-- Cognex Equivalent (if available) -->
@@ -130,8 +133,9 @@
                     </Border>
 
                     <!-- Content -->
-                    <ScrollViewer Grid.Row="2"
-                                  MaxHeight="300"
+                    <ScrollViewer x:Name="HelpScroll"
+                                  Grid.Row="2"
+                                  MaxHeight="600"
                                   VerticalScrollBarVisibility="Auto">
                         <StackPanel>
                             <!-- Description -->

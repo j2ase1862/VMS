@@ -23,7 +23,9 @@ namespace VMS.VisionSetup.Controls
         DrawRectangleAffine,
         DrawCircle,
         DrawEllipse,
-        DrawPolygon
+        DrawPolygon,
+        /// <summary>한 픽셀 클릭 픽 모드. 클릭 시 PointPicked 이벤트 발생 후 Select 모드로 자동 복귀.</summary>
+        PickPoint
     }
 
     /// <summary>
@@ -212,6 +214,9 @@ namespace VMS.VisionSetup.Controls
 
         #region Mouse Event Handlers
 
+        /// <summary>한 픽셀 픽 모드에서 클릭 시 발생. (imageX, imageY)는 이미지 좌표(Stretch=None + ZoomTransform 기준).</summary>
+        public event System.Action<double, double>? PointPicked;
+
         private void Canvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (!IsROIEditingEnabled) return;
@@ -219,6 +224,16 @@ namespace VMS.VisionSetup.Controls
             var pos = e.GetPosition(DrawingCanvas);
             _startPoint = pos;
             _lastMousePos = pos;
+
+            // PickPoint 모드는 캡처/드래그 없이 한 점만 처리
+            if (_currentMode == EditMode.PickPoint)
+            {
+                PointPicked?.Invoke(pos.X, pos.Y);
+                // 자동 해제 — Select 모드로 복귀
+                _currentMode = EditMode.Select;
+                e.Handled = true;
+                return;
+            }
 
             DrawingCanvas.CaptureMouse();
 

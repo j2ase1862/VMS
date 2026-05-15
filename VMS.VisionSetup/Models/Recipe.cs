@@ -132,6 +132,12 @@ namespace VMS.VisionSetup.Models
         public HeightSlicingSettings? HeightSlicing { get; set; }
 
         /// <summary>
+        /// 카메라 캘리브레이션 메타데이터 (저장된 경우).
+        /// 레시피 로드 시 VisionService.CurrentCalibrationMetadata로 적재되어 측정 도구의 mm 변환에 사용.
+        /// </summary>
+        public CalibrationMetadata? Calibration { get; set; }
+
+        /// <summary>
         /// 표시용 정보 문자열
         /// </summary>
         [JsonIgnore]

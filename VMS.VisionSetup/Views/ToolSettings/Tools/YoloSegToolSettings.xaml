@@ -1,0 +1,63 @@
+<UserControl x:Class="VMS.VisionSetup.Views.ToolSettings.Tools.YoloSegToolSettings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls">
+    <StackPanel>
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Model" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:TextBoxParameter Label="Model Path (.onnx)"
+                    Value="{Binding ModelPath}"
+                    BrowseFilter="ONNX Models (*.onnx)|*.onnx|All Files (*.*)|*.*"
+                    ToolType="YoloSegTool" ParameterName="ModelPath"/>
+                <controls:SliderParameter Label="Input Size"
+                    Value="{Binding InputSize}" Minimum="64" Maximum="1280"
+                    TickFrequency="32" ValueFormat="F0"
+                    ToolType="YoloSegTool" ParameterName="InputSize"/>
+            </StackPanel>
+        </Expander>
+
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Detection" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:SliderParameter Label="Confidence Threshold"
+                    Value="{Binding ConfidenceThreshold}" Minimum="0.01" Maximum="1.0"
+                    TickFrequency="0.05" ValueFormat="F2"
+                    ToolType="YoloSegTool" ParameterName="ConfidenceThreshold"/>
+                <controls:SliderParameter Label="IoU Threshold (NMS)"
+                    Value="{Binding IouThreshold}" Minimum="0.1" Maximum="1.0"
+                    TickFrequency="0.05" ValueFormat="F2"
+                    ToolType="YoloSegTool" ParameterName="IouThreshold"/>
+                <controls:SliderParameter Label="Mask Threshold"
+                    Value="{Binding MaskThreshold}" Minimum="0.1" Maximum="0.99"
+                    TickFrequency="0.05" ValueFormat="F2"
+                    ToolType="YoloSegTool" ParameterName="MaskThreshold"/>
+            </StackPanel>
+        </Expander>
+
+        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Display" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:CheckBoxParameter Label="Show Mask Overlay"
+                    IsChecked="{Binding ShowOverlay}"
+                    ToolType="YoloSegTool" ParameterName="ShowOverlay"/>
+                <controls:SliderParameter Label="Overlay Opacity"
+                    Value="{Binding OverlayOpacity}" Minimum="0.0" Maximum="1.0"
+                    TickFrequency="0.05" ValueFormat="F2"
+                    ToolType="YoloSegTool" ParameterName="OverlayOpacity"/>
+                <controls:CheckBoxParameter Label="Draw Boxes + Labels"
+                    IsChecked="{Binding DrawBoxes}"
+                    ToolType="YoloSegTool" ParameterName="DrawBoxes"/>
+            </StackPanel>
+        </Expander>
+
+        <TextBlock Text="Expected ONNX I/O: output0 = [1, 4+nc+32, N] (detect + mask coefs), output1 = [1, 32, mh, mw] (prototypes). Ultralytics YOLOv8/v11-seg 표준 export."
+                   Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,8,0,0"/>
+    </StackPanel>
+</UserControl>

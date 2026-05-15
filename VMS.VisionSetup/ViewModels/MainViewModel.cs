@@ -687,6 +687,7 @@ namespace VMS.VisionSetup.ViewModels
             // Pattern Matching 카테고리
             var patternMatching = new ToolCategory { CategoryName = "Pattern Matching" };
             patternMatching.Tools.Add(new ToolItem { Name = "Feature Match", ToolType = "FeatureMatchTool" });
+            patternMatching.Tools.Add(new ToolItem { Name = "Shape Match", ToolType = "ShapeMatchTool" });
             ToolTree.Add(patternMatching);
 
             // Blob Analysis 카테고리
@@ -714,6 +715,9 @@ namespace VMS.VisionSetup.ViewModels
 
             // 3D Analysis 카테고리
             var threeD = new ToolCategory { CategoryName = "3D Analysis" };
+            threeD.Tools.Add(new ToolItem { Name = "PointCloud Filter", ToolType = "PointCloudFilterTool" });
+            threeD.Tools.Add(new ToolItem { Name = "PointCloud Registration", ToolType = "PointCloudRegistrationTool" });
+            threeD.Tools.Add(new ToolItem { Name = "PointCloud Cluster", ToolType = "PointCloudClusterTool" });
             threeD.Tools.Add(new ToolItem { Name = "Height Slicer", ToolType = "HeightSlicerTool" });
             threeD.Tools.Add(new ToolItem { Name = "Plane Fit", ToolType = "PlaneFitTool" });
             threeD.Tools.Add(new ToolItem { Name = "3D Geometry", ToolType = "Geometry3DTool" });
@@ -722,6 +726,8 @@ namespace VMS.VisionSetup.ViewModels
             // Deep Learning 카테고리
             var deepLearning = new ToolCategory { CategoryName = "Deep Learning" };
             deepLearning.Tools.Add(new ToolItem { Name = "Detection (YOLO)", ToolType = "DetectionTool" });
+            deepLearning.Tools.Add(new ToolItem { Name = "Segmentation", ToolType = "SegmentationTool" });
+            deepLearning.Tools.Add(new ToolItem { Name = "YOLOv8-seg", ToolType = "YoloSegTool" });
             deepLearning.Tools.Add(new ToolItem { Name = "Classify", ToolType = "ClassifyTool" });
             deepLearning.Tools.Add(new ToolItem { Name = "Anomaly", ToolType = "AnomalyTool" });
             ToolTree.Add(deepLearning);
@@ -730,6 +736,17 @@ namespace VMS.VisionSetup.ViewModels
             var judgment = new ToolCategory { CategoryName = "Judgment" };
             judgment.Tools.Add(new ToolItem { Name = "Result", ToolType = "ResultTool" });
             ToolTree.Add(judgment);
+
+            // Color 카테고리
+            var color = new ToolCategory { CategoryName = "Color" };
+            color.Tools.Add(new ToolItem { Name = "Color Extract", ToolType = "ColorExtractTool" });
+            color.Tools.Add(new ToolItem { Name = "Color Match", ToolType = "ColorMatchTool" });
+            ToolTree.Add(color);
+
+            // Calibration 카테고리 (캘리브레이션은 메뉴, 보정 적용 도구만 팔레트)
+            var calibration = new ToolCategory { CategoryName = "Calibration" };
+            calibration.Tools.Add(new ToolItem { Name = "Image Rectify", ToolType = "ImageRectifyTool" });
+            ToolTree.Add(calibration);
         }
 
         private void CloseApplication()
@@ -1447,9 +1464,49 @@ namespace VMS.VisionSetup.ViewModels
         /// <summary>
         /// Search Region 생성 이벤트 처리 (FeatureMatchTool용)
         /// </summary>
+        /// <summary>
+        /// 이미지에서 픽셀 좌표가 클릭되면 호출 — 현재 선택된 도구가 ColorMatchTool이면 그 픽셀의 BGR을
+        /// 추출해 SelectedModel을 한 픽셀 학습 (Lab 변환).
+        /// </summary>
+        public void OnColorPickedFromImage(double imgX, double imgY)
+        {
+            var img = VisionService.Instance.CurrentImage;
+            if (img == null || img.Empty()) return;
+            int ix = (int)Math.Round(imgX);
+            int iy = (int)Math.Round(imgY);
+            if (ix < 0 || iy < 0 || ix >= img.Width || iy >= img.Height) return;
+
+            try
+            {
+                // BGR 3채널 또는 그레이 처리
+                if (img.Channels() >= 3)
+                {
+                    var p = img.Get<Vec3b>(iy, ix);
+                    if (SelectedVisionTool is VisionTools.Color.ColorMatchTool cm)
+                    {
+                        cm.PickFromPixel(p.Item0, p.Item1, p.Item2);
+                        StatusMessage = $"Picked @({ix},{iy}) BGR=({p.Item0},{p.Item1},{p.Item2})";
+                    }
+                }
+                else
+                {
+                    byte v = img.Get<byte>(iy, ix);
+                    if (SelectedVisionTool is VisionTools.Color.ColorMatchTool cm)
+                    {
+                        cm.PickFromPixel(v, v, v);
+                        StatusMessage = $"Picked @({ix},{iy}) Gray={v}";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Pick failed: {ex.Message}";
+            }
+        }
+
         public void OnSearchRegionCreated(ROIShape roi)
         {
-            roi.Color = System.Windows.Media.Colors.Cyan;
+            roi.Color = System.Windows.Media.Colors.Yellow;
             roi.Name = "SearchRegion";
 
             if (SelectedVisionTool is FeatureMatchTool ft)
@@ -1471,6 +1528,60 @@ namespace VMS.VisionSetup.ViewModels
 
                 StatusMessage = $"Search Region 설정됨: ({ft.SearchRegion.X}, {ft.SearchRegion.Y}, {ft.SearchRegion.Width}, {ft.SearchRegion.Height})";
             }
+            else if (SelectedVisionTool is ShapeMatchTool sm)
+            {
+                _isSyncingROI = true;
+                try
+                {
+                    sm.SearchRegion = roi.GetBoundingRect();
+                    sm.UseSearchRegion = true;
+                    sm.AssociatedSearchRegionShape = roi;
+                }
+                finally
+                {
+                    _isSyncingROI = false;
+                }
+
+                WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(sm.AssociatedROIShape));
+
+                StatusMessage = $"Search Region 설정됨: ({sm.SearchRegion.X}, {sm.SearchRegion.Y}, {sm.SearchRegion.Width}, {sm.SearchRegion.Height})";
+            }
+            else if (SelectedVisionTool is VisionTools.Color.ColorExtractTool cx)
+            {
+                _isSyncingROI = true;
+                try
+                {
+                    cx.SearchRegion = roi.GetBoundingRect();
+                    cx.UseSearchRegion = true;
+                    cx.AssociatedSearchRegionShape = roi;
+                }
+                finally
+                {
+                    _isSyncingROI = false;
+                }
+
+                WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(cx.AssociatedROIShape));
+
+                StatusMessage = $"Search Region 설정됨: ({cx.SearchRegion.X}, {cx.SearchRegion.Y}, {cx.SearchRegion.Width}, {cx.SearchRegion.Height})";
+            }
+            else if (SelectedVisionTool is VisionTools.Color.ColorMatchTool cm)
+            {
+                _isSyncingROI = true;
+                try
+                {
+                    cm.SearchRegion = roi.GetBoundingRect();
+                    cm.UseSearchRegion = true;
+                    cm.AssociatedSearchRegionShape = roi;
+                }
+                finally
+                {
+                    _isSyncingROI = false;
+                }
+
+                WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(cm.AssociatedROIShape));
+
+                StatusMessage = $"Search Region 설정됨: ({cm.SearchRegion.X}, {cm.SearchRegion.Y}, {cm.SearchRegion.Width}, {cm.SearchRegion.Height})";
+            }
         }
 
         /// <summary>
@@ -1486,6 +1597,36 @@ namespace VMS.VisionSetup.ViewModels
 
                 // Refresh canvas to show only the ROI
                 WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(ft.AssociatedROIShape));
+
+                StatusMessage = "Search Region이 해제되었습니다.";
+            }
+            else if (SelectedVisionTool is ShapeMatchTool sm)
+            {
+                sm.UseSearchRegion = false;
+                sm.SearchRegion = new CvRect();
+                sm.AssociatedSearchRegionShape = null;
+
+                WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(sm.AssociatedROIShape));
+
+                StatusMessage = "Search Region이 해제되었습니다.";
+            }
+            else if (SelectedVisionTool is VisionTools.Color.ColorExtractTool cx)
+            {
+                cx.UseSearchRegion = false;
+                cx.SearchRegion = new CvRect();
+                cx.AssociatedSearchRegionShape = null;
+
+                WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(cx.AssociatedROIShape));
+
+                StatusMessage = "Search Region이 해제되었습니다.";
+            }
+            else if (SelectedVisionTool is VisionTools.Color.ColorMatchTool cm)
+            {
+                cm.UseSearchRegion = false;
+                cm.SearchRegion = new CvRect();
+                cm.AssociatedSearchRegionShape = null;
+
+                WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(cm.AssociatedROIShape));
 
                 StatusMessage = "Search Region이 해제되었습니다.";
             }
@@ -2413,6 +2554,9 @@ namespace VMS.VisionSetup.ViewModels
 
         partial void OnCurrentPointCloudChanged(PointCloudData? value)
         {
+            // 도구가 접근 가능하도록 VisionService 슬롯과 동기화
+            VisionService.Instance.CurrentPointCloud = value;
+
             if (value != null && value.Positions.Length > 0)
             {
                 int count = value.PointCount;
@@ -2631,6 +2775,7 @@ namespace VMS.VisionSetup.ViewModels
                 MorphologyTool t => new MorphologyToolSettingsViewModel(t),
                 HistogramTool t => new HistogramToolSettingsViewModel(t),
                 FeatureMatchTool t => new FeatureMatchToolSettingsViewModel(t),
+                ShapeMatchTool t => new ShapeMatchToolSettingsViewModel(t),
                 BlobTool t => new BlobToolSettingsViewModel(t),
                 CaliperTool t => new CaliperToolSettingsViewModel(t),
                 LineFitTool t => new LineFitToolSettingsViewModel(t),
@@ -2646,6 +2791,14 @@ namespace VMS.VisionSetup.ViewModels
                 ClassifyTool t => new ClassifyToolSettingsViewModel(t),
                 AnomalyTool t => new AnomalyToolSettingsViewModel(t),
                 EnsembleTool t => new EnsembleToolSettingsViewModel(t),
+                SegmentationTool t => new SegmentationToolSettingsViewModel(t),
+                YoloSegTool t => new YoloSegToolSettingsViewModel(t),
+                VisionTools.Calibration.ImageRectifyTool t => new ImageRectifyToolSettingsViewModel(t),
+                VisionTools.Color.ColorExtractTool t => new ColorExtractToolSettingsViewModel(t),
+                VisionTools.Color.ColorMatchTool t => new ColorMatchToolSettingsViewModel(t),
+                VisionTools.PointCloud.PointCloudFilterTool t => new PointCloudFilterToolSettingsViewModel(t),
+                VisionTools.PointCloud.PointCloudRegistrationTool t => new PointCloudRegistrationToolSettingsViewModel(t),
+                VisionTools.PointCloud.PointCloudClusterTool t => new PointCloudClusterToolSettingsViewModel(t),
                 _ => null
             };
         }
@@ -2836,6 +2989,11 @@ namespace VMS.VisionSetup.ViewModels
         public void OpenSequenceEditor()
         {
             _dialogService.ShowSequenceEditorDialog();
+        }
+
+        public void OpenCalibrationManager()
+        {
+            _dialogService.ShowCalibrationManagerDialog();
         }
 
         public void LaunchDeepLearning()

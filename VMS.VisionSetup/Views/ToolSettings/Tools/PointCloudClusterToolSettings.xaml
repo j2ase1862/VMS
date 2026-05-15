@@ -1,0 +1,47 @@
+<UserControl x:Class="VMS.VisionSetup.Views.ToolSettings.Tools.PointCloudClusterToolSettings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls"
+             xmlns:conv="clr-namespace:VMS.VisionSetup.Converters"
+             xmlns:pc="clr-namespace:VMS.VisionSetup.VisionTools.PointCloud">
+    <StackPanel>
+        <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,8"
+                   Text="유클리드 클러스터링 — 거리 tolerance 이내 점들을 연결해 클러스터 형성. 분리된 객체 검출 / 노이즈 제거 / 컴포넌트 카운트에 사용."/>
+
+        <!-- Clustering Parameters -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Clustering Parameters" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:SliderParameter Label="Tolerance (mm)"
+                    Value="{Binding Tolerance}" Minimum="0.1" Maximum="50.0"
+                    TickFrequency="0.1" ValueFormat="F2"
+                    ToolType="PointCloudClusterTool" ParameterName="Tolerance"/>
+                <controls:TextBoxParameter Label="Min Points"
+                    Value="{Binding MinPoints}"
+                    ToolType="PointCloudClusterTool" ParameterName="MinPoints"/>
+                <controls:TextBoxParameter Label="Max Points"
+                    Value="{Binding MaxPoints}"
+                    ToolType="PointCloudClusterTool" ParameterName="MaxPoints"/>
+                <controls:SliderParameter Label="Max Reported Clusters"
+                    Value="{Binding MaxReportedClusters}" Minimum="1" Maximum="50"
+                    TickFrequency="1" ValueFormat="F0"
+                    ToolType="PointCloudClusterTool" ParameterName="MaxReportedClusters"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- Output -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Output Mode" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:EnumComboBoxParameter Label="Output Mode"
+                    ItemsSource="{conv:EnumValues {x:Type pc:PointCloudClusterTool+ClusterOutputMode}}"
+                    SelectedValue="{Binding OutputMode}"
+                    ToolType="PointCloudClusterTool" ParameterName="OutputMode"/>
+            </StackPanel>
+        </Expander>
+    </StackPanel>
+</UserControl>
