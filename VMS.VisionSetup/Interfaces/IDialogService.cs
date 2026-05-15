@@ -16,5 +16,6 @@ namespace VMS.VisionSetup.Interfaces
         void ShowCameraManagerDialog();
         Recipe? ShowRecipeManagerDialog();
         void ShowSequenceEditorDialog();
+        void ShowCalibrationManagerDialog();
     }
 }

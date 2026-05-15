@@ -7,6 +7,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using VMS.Core.Interfaces;
 using VMS.Core.Models.Annotation;
 using VMS.DeepLearning.Interfaces;
@@ -471,6 +472,222 @@ namespace VMS.DeepLearning.ViewModels
                 "ONNX Model|*.onnx|All Files|*.*");
             if (!string.IsNullOrEmpty(path))
                 InferenceModelPath = path;
+        }
+
+        #endregion
+
+        #region Active Learning (Failed Image Collection)
+
+        /// <summary>외부 테스트 이미지가 있는 폴더 (학습되지 않은 검증용).</summary>
+        [ObservableProperty]
+        private string _testFolderPath = string.Empty;
+
+        /// <summary>실패 판정 임계값. MaxRawConfidence 가 이 값 미만이면 "모델이 못 본" 이미지로 분류.</summary>
+        [ObservableProperty]
+        private double _failureThreshold = 0.10;
+
+        /// <summary>일괄 추론 진행 여부.</summary>
+        [ObservableProperty]
+        private bool _isBatchInferring;
+
+        /// <summary>일괄 추론 진행률 0~100.</summary>
+        [ObservableProperty]
+        private int _batchProgress;
+
+        /// <summary>일괄 추론 상태 메시지.</summary>
+        [ObservableProperty]
+        private string _batchStatus = string.Empty;
+
+        /// <summary>데이터셋 추가 시 모델 예측을 초기 라벨로 채울지 여부.</summary>
+        [ObservableProperty]
+        private bool _usePredictionsAsInitialLabels;
+
+        /// <summary>일괄 추론 결과 목록 (낮은 conf부터 정렬).</summary>
+        public ObservableCollection<FailedImage> FailedImages { get; } = new();
+
+        [RelayCommand]
+        private void BrowseTestFolder()
+        {
+            var path = _dialogService.ShowFolderDialog("테스트 이미지 폴더 선택");
+            if (!string.IsNullOrEmpty(path))
+                TestFolderPath = path;
+        }
+
+        [RelayCommand]
+        private async Task RunBatchInferenceAsync()
+        {
+            if (_inferenceService == null || !_inferenceService.IsLoaded)
+            {
+                _dialogService.ShowWarning(
+                    "Inference Mode를 켜고 모델을 로드한 후 실행하세요.", "모델 미로드");
+                return;
+            }
+            if (string.IsNullOrEmpty(TestFolderPath) || !Directory.Exists(TestFolderPath))
+            {
+                _dialogService.ShowWarning("테스트 폴더를 선택하세요.", "폴더 없음");
+                return;
+            }
+
+            string[] extensions = { ".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff" };
+            var files = Directory.EnumerateFiles(TestFolderPath, "*", SearchOption.TopDirectoryOnly)
+                .Where(f => extensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
+                .ToList();
+
+            if (files.Count == 0)
+            {
+                _dialogService.ShowWarning(
+                    "폴더에서 이미지 파일을 찾지 못했습니다.", "이미지 없음");
+                return;
+            }
+
+            FailedImages.Clear();
+            IsBatchInferring = true;
+            BatchProgress = 0;
+            BatchStatus = $"0 / {files.Count}";
+
+            float conf = (float)ConfidenceThreshold;
+            float iou = (float)IouThreshold;
+
+            try
+            {
+                var results = await Task.Run(() =>
+                {
+                    var list = new List<FailedImage>(files.Count);
+                    int done = 0;
+                    foreach (var path in files)
+                    {
+                        try
+                        {
+                            using var mat = Cv2.ImRead(path);
+                            if (!mat.Empty())
+                            {
+                                var r = _inferenceService.Predict(mat, conf, iou);
+                                list.Add(new FailedImage
+                                {
+                                    SourcePath = path,
+                                    MaxConfidence = r.MaxRawConfidence,
+                                    DetectionCount = r.Predictions.Count,
+                                    Predictions = r.Predictions,
+                                });
+                            }
+                        }
+                        catch
+                        {
+                            // 개별 이미지 실패는 무시 — 진행 계속
+                        }
+
+                        done++;
+                        int pct = (int)(done * 100.0 / files.Count);
+                        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                        {
+                            BatchProgress = pct;
+                            BatchStatus = $"{done} / {files.Count}";
+                        });
+                    }
+                    return list;
+                });
+
+                // conf 오름차순 정렬 (실패한 것 = 낮은 conf 가 위로)
+                foreach (var item in results.OrderBy(r => r.MaxConfidence))
+                {
+                    // 실패 임계값 미만은 자동 선택 — 사용자가 라벨링 대상 후보로 즉시 인지
+                    item.IsSelected = item.MaxConfidence < FailureThreshold;
+                    FailedImages.Add(item);
+                }
+
+                int failed = FailedImages.Count(f => f.MaxConfidence < FailureThreshold);
+                BatchStatus = $"완료 — 총 {FailedImages.Count}장, 실패 {failed}장 (선택됨)";
+            }
+            catch (Exception ex)
+            {
+                BatchStatus = $"일괄 추론 오류: {ex.Message}";
+                _dialogService.ShowError(ex.Message, "Batch Inference 실패");
+            }
+            finally
+            {
+                IsBatchInferring = false;
+            }
+        }
+
+        [RelayCommand]
+        private void SelectAllFailed()
+        {
+            foreach (var f in FailedImages) f.IsSelected = true;
+        }
+
+        [RelayCommand]
+        private void DeselectAllFailed()
+        {
+            foreach (var f in FailedImages) f.IsSelected = false;
+        }
+
+        [RelayCommand]
+        private void AddSelectedToDataset()
+        {
+            if (CurrentDataset == null)
+            {
+                _dialogService.ShowWarning("현재 데이터셋이 없습니다.", "데이터셋 없음");
+                return;
+            }
+
+            var selected = FailedImages.Where(f => f.IsSelected).ToList();
+            if (selected.Count == 0)
+            {
+                _dialogService.ShowWarning("선택된 이미지가 없습니다.", "선택 없음");
+                return;
+            }
+
+            if (!_dialogService.ShowConfirmation(
+                $"{selected.Count}장을 '{CurrentDataset.Name}' 에 추가하시겠습니까?" +
+                (UsePredictionsAsInitialLabels ? "\n(모델 예측을 초기 라벨로 채웁니다)" : ""),
+                "데이터셋에 추가"))
+                return;
+
+            int addedImages = 0;
+            int addedLabels = 0;
+
+            foreach (var f in selected)
+            {
+                var img = _annotationService.AddImage(CurrentDataset, f.SourcePath);
+                if (img == null) continue;
+                addedImages++;
+
+                if (UsePredictionsAsInitialLabels && f.Predictions.Count > 0)
+                {
+                    foreach (var pred in f.Predictions)
+                    {
+                        // 데이터셋에 클래스 자동 등록
+                        if (!CurrentDataset.Classes.Contains(pred.ClassName))
+                            _annotationService.AddClass(CurrentDataset, pred.ClassName);
+
+                        img.Labels.Add(new LabelInfo
+                        {
+                            ClassName = pred.ClassName,
+                            LabelType = LabelType.BoundingBox,
+                            BoundingBox = new Rect(pred.X, pred.Y, pred.Width, pred.Height),
+                            Confidence = pred.Confidence,
+                            IsVerified = false, // 사용자 검토 필요
+                        });
+                        addedLabels++;
+                    }
+                    img.IsLabeled = img.Labels.Count > 0;
+                }
+            }
+
+            CurrentDataset.RefreshStatistics();
+            _annotationService.SaveDataset(CurrentDataset);
+
+            // 추가한 항목 리스트에서 제거 — 동일 이미지 재추가 방지
+            foreach (var f in selected) FailedImages.Remove(f);
+
+            BatchStatus = $"{addedImages}장 추가됨" +
+                (UsePredictionsAsInitialLabels ? $", 라벨 {addedLabels}개 (검토 필요)" : "");
+            _dialogService.ShowInformation(
+                $"{addedImages}장 이미지를 데이터셋에 추가했습니다." +
+                (UsePredictionsAsInitialLabels && addedLabels > 0
+                    ? $"\n초기 라벨 {addedLabels}개는 IsVerified=false 상태입니다 — prev/next로 확인·수정 후 재학습하세요."
+                    : "\nprev/next로 이동해 라벨링 후 재학습하세요."),
+                "완료");
         }
 
         #endregion
@@ -1121,6 +1338,16 @@ namespace VMS.DeepLearning.ViewModels
 
                 // 영속화: 다음 세션에서 데이터셋 로드 시 InferenceModelPath 자동 복원
                 CurrentDataset.LastOnnxModelPath = TrainingStatus.OnnxOutputPath;
+
+                // 학습 스냅샷: 라벨이 있어 실제 학습에 들어간 이미지 ID 기록.
+                // 이후 추가/삭제된 이미지를 "미학습"으로 식별하기 위함.
+                CurrentDataset.LastTrainedImageIds = CurrentDataset.Images
+                    .Where(i => i.IsLabeled)
+                    .Select(i => i.Id)
+                    .ToList();
+                CurrentDataset.LastTrainedAt = DateTime.Now;
+                CurrentDataset.RefreshStatistics();
+
                 try { _annotationService.SaveDataset(CurrentDataset); }
                 catch (Exception saveEx)
                 {

@@ -1,0 +1,54 @@
+<UserControl x:Class="VMS.VisionSetup.Views.ToolSettings.Tools.PointCloudRegistrationToolSettings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls">
+    <StackPanel>
+        <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,8"
+                   Text="ICP(Iterative Closest Point)로 Reference 점군과 현재 점군을 정합. 결과 4x4 변환 행렬이 Source에 적용되어 VisionService.CurrentPointCloud가 갱신됨."/>
+
+        <!-- Reference -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Reference Point Cloud" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <TextBlock Text="{Binding ReferencePath, FallbackValue='(no reference)', TargetNullValue='(no reference)'}"
+                           Foreground="#CCCCCC" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,4"/>
+                <TextBlock Foreground="#999999" FontSize="11" Margin="0,2,0,4">
+                    <Run Text="Status: "/>
+                    <Run Text="{Binding TrainStatus, Mode=OneWay}" Foreground="#00BFFF" FontWeight="Bold"/>
+                </TextBlock>
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="Save Current as Reference"
+                            Command="{Binding SaveCurrentAsReferenceCommand}"
+                            Background="#2D7D46" Foreground="White" BorderThickness="0"
+                            FontWeight="SemiBold" Padding="10,4" Margin="0,0,8,0" Cursor="Hand"/>
+                    <Button Content="Clear"
+                            Command="{Binding ClearReferenceCommand}"
+                            Background="#555555" Foreground="White" BorderThickness="0"
+                            Padding="10,4" Cursor="Hand"/>
+                </StackPanel>
+            </StackPanel>
+        </Expander>
+
+        <!-- ICP Parameters -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="ICP Parameters" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:SliderParameter Label="Max Iterations"
+                    Value="{Binding MaxIterations}" Minimum="1" Maximum="200"
+                    TickFrequency="5" ValueFormat="F0"
+                    ToolType="PointCloudRegistrationTool" ParameterName="MaxIterations"/>
+                <controls:SliderParameter Label="Tolerance (mm)"
+                    Value="{Binding Tolerance}" Minimum="0.001" Maximum="1.0"
+                    TickFrequency="0.001" ValueFormat="F3"
+                    ToolType="PointCloudRegistrationTool" ParameterName="Tolerance"/>
+                <controls:CheckBoxParameter Label="Apply Transform to Source"
+                    IsChecked="{Binding ApplyTransformToSource}"
+                    ToolType="PointCloudRegistrationTool" ParameterName="ApplyTransformToSource"/>
+            </StackPanel>
+        </Expander>
+    </StackPanel>
+</UserControl>

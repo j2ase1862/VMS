@@ -397,6 +397,49 @@ namespace VMS.VisionSetup.Models
         /// 도구의 복제본 생성
         /// </summary>
         public abstract VisionToolBase Clone();
+
+        // ────────────────────────────────────────────────────────────
+        // 캘리브레이션 기반 mm 변환 헬퍼 (측정 도구가 결과 Data에 mm 키를 함께 노출하기 위함)
+        // ────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// VisionService.CurrentCalibrationMetadata가 있으면 (xKey, yKey) 픽셀 좌표를 mm 좌표로 변환해
+        /// {xKey}Mm, {yKey}Mm 키로 추가. Homography가 있으면 perspective 변환, 없으면 등방 스케일링.
+        /// 캘리브레이션이 없거나 키가 없으면 no-op.
+        /// </summary>
+        protected static void AddCoordMm(VisionResult result, string xKey, string yKey, CalibrationMetadata? cal)
+        {
+            if (cal == null) return;
+            if (!result.Data.TryGetValue(xKey, out var xObj) || !result.Data.TryGetValue(yKey, out var yObj))
+                return;
+            if (!TryToDouble(xObj, out var x) || !TryToDouble(yObj, out var y)) return;
+            var (xMm, yMm) = cal.PixelToMm(x, y);
+            result.Data[xKey + "Mm"] = xMm;
+            result.Data[yKey + "Mm"] = yMm;
+        }
+
+        /// <summary>
+        /// 스칼라 픽셀 길이를 mm로 변환해 {key}Mm 키로 추가 (등방 PixelSizeMm 가정).
+        /// </summary>
+        protected static void AddLengthMm(VisionResult result, string key, CalibrationMetadata? cal)
+        {
+            if (cal == null) return;
+            if (!result.Data.TryGetValue(key, out var obj)) return;
+            if (!TryToDouble(obj, out var v)) return;
+            result.Data[key + "Mm"] = cal.LengthToMm(v);
+        }
+
+        private static bool TryToDouble(object obj, out double value)
+        {
+            switch (obj)
+            {
+                case double d: value = d; return true;
+                case float f: value = f; return true;
+                case int i: value = i; return true;
+                case long l: value = l; return true;
+                default: value = 0; return false;
+            }
+        }
     }
 
     /// <summary>

@@ -1,0 +1,58 @@
+<UserControl x:Class="VMS.VisionSetup.Views.ToolSettings.Tools.SegmentationToolSettings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls">
+    <StackPanel>
+        <!-- Model -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Model" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:TextBoxParameter Label="Model Path (.onnx)"
+                    Value="{Binding ModelPath}"
+                    BrowseFilter="ONNX Models (*.onnx)|*.onnx|All Files (*.*)|*.*"
+                    ToolType="SegmentationTool" ParameterName="ModelPath"/>
+                <controls:SliderParameter Label="Input Size"
+                    Value="{Binding InputSize}" Minimum="64" Maximum="1024"
+                    TickFrequency="32" ValueFormat="F0"
+                    ToolType="SegmentationTool" ParameterName="InputSize"/>
+                <controls:CheckBoxParameter Label="ImageNet Normalization"
+                    IsChecked="{Binding UseImageNetNormalization}"
+                    ToolType="SegmentationTool" ParameterName="UseImageNetNormalization"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- Classes -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Classes" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:SliderParameter Label="Background Class Index"
+                    Value="{Binding BackgroundClass}" Minimum="0" Maximum="32"
+                    TickFrequency="1" ValueFormat="F0"
+                    ToolType="SegmentationTool" ParameterName="BackgroundClass"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- Display -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Display" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:CheckBoxParameter Label="Show Overlay"
+                    IsChecked="{Binding ShowOverlay}"
+                    ToolType="SegmentationTool" ParameterName="ShowOverlay"/>
+                <controls:SliderParameter Label="Overlay Opacity"
+                    Value="{Binding OverlayOpacity}" Minimum="0.0" Maximum="1.0"
+                    TickFrequency="0.05" ValueFormat="F2"
+                    ToolType="SegmentationTool" ParameterName="OverlayOpacity"/>
+            </StackPanel>
+        </Expander>
+
+        <TextBlock Text="Expected ONNX I/O: input [1,3,H,W], output [1,C,H,W] logits. Class names auto-loaded from model metadata 'names' if present."
+                   Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,8,0,0"/>
+    </StackPanel>
+</UserControl>

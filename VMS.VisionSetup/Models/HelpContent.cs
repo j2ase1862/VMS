@@ -130,6 +130,146 @@ namespace VMS.VisionSetup.Models
                 }
             },
 
+            ["YoloSegTool"] = new ToolHelp
+            {
+                Name = "YOLOv8-seg (인스턴스 분할)",
+                Description = "Ultralytics YOLOv8/v11 인스턴스 분할 ONNX 추론. 한 이미지에서 객체마다 박스 + 클래스 + 픽셀 마스크를 동시 출력.\n출력 두 텐서: output0(detections + 32 mask coefs) + output1(32 prototype masks). 후처리: NMS → coef×prototypes → sigmoid → threshold.",
+                Usage = "1) Ultralytics에서 학습한 .pt를 .onnx로 export(yolo export model=best.pt format=onnx). 2) Model Path 지정. 3) Confidence / IoU / Mask Threshold 조정. 4) Run → 결과 Data의 Inst{i}_* 키로 각 인스턴스 정보 확인.",
+                CognexEquivalent = "ViDi Blue Locate (인스턴스 모드) / Red Supervised",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["ModelPath"] = "YOLOv8-seg ONNX 모델 파일 경로 (.onnx). Ultralytics export 형식.",
+                    ["InputSize"] = "추론 입력 크기. 학습 시 사용한 imgsz와 일치 권장.\n• 320: 빠름, 정확도 ↓\n• 640: 기본\n• 1280: 정밀, 느림",
+                    ["ConfidenceThreshold"] = "객체 confidence 임계값. 이하 박스는 버림.\n• 0.1~0.2: 많이 검출 (오탐 ↑)\n• 0.25: 기본\n• 0.5+: 보수적 (놓침 ↑)",
+                    ["IouThreshold"] = "NMS IoU 임계값. 같은 클래스의 중복 박스 억제 기준.\n• 0.3: 엄격 (가까운 객체도 분리)\n• 0.45: 기본\n• 0.7+: 관대 (중복 잘 허용)",
+                    ["MaskThreshold"] = "인스턴스 마스크 sigmoid 후 binary 임계값.\n• 0.3: 마스크가 객체보다 약간 크게\n• 0.5: 기본\n• 0.7: 마스크가 객체보다 약간 작게 (코어 영역만)",
+                    ["ShowOverlay"] = "각 인스턴스 마스크를 컬러 반투명 오버레이로 표시.",
+                    ["OverlayOpacity"] = "마스크 오버레이 투명도 (0~1).",
+                    ["DrawBoxes"] = "박스 + 클래스명 + 점수 라벨 표시 여부."
+                }
+            },
+
+            ["ColorExtractTool"] = new ToolHelp
+            {
+                Name = "Color Extract (HSV 다중 모델 추출)",
+                Description = "입력 컬러 이미지를 HSV로 변환한 후, 학습된 컬러 모델들의 inRange 결과를 OR로 합산해 마스크를 생성.\n같은 색의 미묘한 변종(조명·그라데이션·질감)을 여러 모델로 등록해 견고하게 추출.\n특정 컬러 객체 검출 / 결함 영역 분할 / 후속 BlobTool 입력에 사용.",
+                Usage = "1) Models에서 모델 선택(기본 'Model 1' 자동 생성). 2) 'Use Training Region' 체크 + ROI를 색 영역에 그림. 3) 'Train Selected Model' 클릭하면 H/S/V 범위 자동 설정. 4) 변종이 있으면 '+ Add'로 새 모델 추가 후 다른 영역 학습. 5) 결과 마스크를 BlobTool 등에 연결.",
+                CognexEquivalent = "CogColorExtractorTool",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["HueMin"] = "선택된 모델의 색상(Hue) 최소값 (0-179, OpenCV HSV 기준).\n• 빨강: 0~10 / 160~179 (Min>Max로 입력해 두 구간 자동 합산)\n• 주황: 10~20\n• 노랑: 20~30\n• 초록: 35~85\n• 파랑: 100~130\n• 보라: 130~160",
+                    ["HueMax"] = "선택된 모델의 색상(Hue) 최대값 (0-179).\nHueMin > HueMax 면 빨간색처럼 원형 구간(예: 170→10)을 자동으로 두 번 inRange 합니다.",
+                    ["SaturationMin"] = "채도 최소값 (0-255). 낮으면 옅은 색·회색까지 포함. 산업 영상에서는 보통 50 이상 권장.",
+                    ["SaturationMax"] = "채도 최대값 (0-255). 보통 255.",
+                    ["ValueMin"] = "명도 최소값 (0-255). 너무 어두운 영역 제외용. 보통 50 이상.",
+                    ["ValueMax"] = "명도 최대값 (0-255). 너무 밝은 반사·할레이션 제외용. 보통 255.",
+                    ["MorphKernelSize"] = "후처리 모폴로지 커널 크기 (0이면 비활성).\n• 0: 처리 안 함 (가장 빠름)\n• 3~5: 작은 노이즈 제거 (Open) + 작은 구멍 채우기 (Close)\n• 7+: 강한 후처리, 결과 형상이 부풀어 보일 수 있음",
+                    ["InvertMask"] = "마스크 반전. true면 범위 밖 픽셀이 추출됨 (배경 추출용).",
+                    ["ShowOverlay"] = "결과 오버레이에 마스크 영역을 자홍색 반투명으로 표시.",
+                    ["OverlayOpacity"] = "오버레이 투명도 (0~1).",
+                    ["UseSearchRegion"] = "Search Region 사용 여부. 활성화하면 지정된 영역 안에서만 컬러 추출 → 속도 향상 + 외부 노이즈 차단.\n주의: Training Region(UseROI)과 별개. UseROI는 학습용, UseSearchRegion은 Execute 검색용.",
+                    ["SearchRegionX"] = "Search Region의 X 좌표 (픽셀).",
+                    ["SearchRegionY"] = "Search Region의 Y 좌표 (픽셀).",
+                    ["SearchRegionWidth"] = "Search Region의 너비 (픽셀).",
+                    ["SearchRegionHeight"] = "Search Region의 높이 (픽셀)."
+                }
+            },
+
+            ["PointCloudRegistrationTool"] = new ToolHelp
+            {
+                Name = "PointCloud Registration (ICP 정합)",
+                Description = "Iterative Closest Point 알고리즘으로 Reference 점군과 Source 점군(VisionService.CurrentPointCloud)을 정합.\n4x4 변환 행렬을 산출하고 ApplyTransformToSource가 true이면 Source에 적용해 정합된 점군으로 갱신.\n다중 시야각 스캔 병합, 부품 위치 측정, 정렬 오차 보정에 사용.",
+                Usage = "1) 기준 자세에서 점군을 획득 → 'Save Current as Reference'로 .vpc 파일에 저장. 2) 이후 새 점군 획득 시 이 도구를 Run하면 ICP가 정합 변환을 계산 → 결과 행렬은 Data에 노출, 정합된 점군은 후속 3D 도구가 사용.",
+                CognexEquivalent = "(PCL/Open3D ICP)",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["ReferencePath"] = ".vpc 파일 경로 (Reference 점군). 'Save Current as Reference' 버튼으로 현재 점군을 저장하면 자동 설정.",
+                    ["MaxIterations"] = "ICP 반복 최대 횟수. 수렴 안 되어도 이 횟수에서 중단.\n• 20~30: 빠름, 거친 정합\n• 50: 기본 (균형)\n• 100~200: 정밀, 느림",
+                    ["Tolerance"] = "수렴 임계 (mm). 반복 간 변환 변화량이 이 값보다 작으면 수렴 판정 후 종료.\n• 0.001~0.005: 매우 정밀\n• 0.01: 기본\n• 0.05~0.1: 빠른 수렴, 정밀도 ↓",
+                    ["ApplyTransformToSource"] = "true: 산출된 변환을 Source에 적용 후 VisionService.CurrentPointCloud 갱신 (후속 도구가 정합된 점군 사용).\nfalse: 변환 행렬만 산출, Source는 그대로 유지."
+                }
+            },
+
+            ["PointCloudClusterTool"] = new ToolHelp
+            {
+                Name = "PointCloud Cluster (유클리드 클러스터링)",
+                Description = "거리 tolerance 이내 점들을 BFS로 연결해 클러스터를 형성. 그리드 해싱으로 O(N) 평균 복잡도.\n분리된 객체 검출, 노이즈 클러스터 제거, 부품 개수 카운트 등에 사용.",
+                Usage = "1) Tolerance를 두 점이 같은 객체로 묶일 만큼의 거리로 설정. 2) Min/MaxPoints로 노이즈/배경 필터링. 3) OutputMode 선택: LargestOnly(가장 큰 객체만 남김), AllMerged(노이즈 제거 합산), KeepOriginal(메트릭만).\n결과 Data에서 ClusterCount + 각 Cluster{i}_Points/CenterX/Y/Z 확인 가능.",
+                CognexEquivalent = "(PCL EuclideanClusterExtraction)",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["Tolerance"] = "동일 클러스터 판정 거리 (mm). 두 점이 이 거리 이내면 같은 클러스터.\n• 1~3: 매우 가까운 점만 (조밀한 객체)\n• 5: 기본\n• 10~20: 느슨한 묶음 (희소 점군)",
+                    ["MinPoints"] = "클러스터 최소 점 수. 이하면 노이즈로 간주하고 무시.\n• 20~50: 작은 객체 검출\n• 100: 기본\n• 500+: 큰 객체만",
+                    ["MaxPoints"] = "클러스터 최대 점 수. 이상이면 배경/큰 덩어리로 간주하고 무시.\n• 점군 전체 크기 - 1 (큰 값): 사실상 제한 없음\n• 점군의 50%: 배경 제외",
+                    ["MaxReportedClusters"] = "결과 Data에 노출할 상위 클러스터 수 (실제로는 모두 처리, 표시 제한만).",
+                    ["OutputMode"] = "결과 처리 모드:\n• LargestOnly: VisionService.CurrentPointCloud를 가장 큰 클러스터로 교체 (객체 분리용)\n• AllMerged: 활성 클러스터들을 모두 합산 (작은 노이즈 제거)\n• KeepOriginal: CurrentPointCloud 유지, 메트릭만"
+                }
+            },
+
+            ["PointCloudFilterTool"] = new ToolHelp
+            {
+                Name = "PointCloud Filter (점군 필터링)",
+                Description = "3D 카메라로 획득한 점군을 다운샘플(VoxelGrid)하고 통계적 outlier(SOR)를 제거.\n결과는 VisionService.CurrentPointCloud에 갱신되어 후속 도구(HeightSlicer, PlaneFit, Geometry3D)가 사용.\n이미지 출력은 입력 그대로 pass-through.",
+                Usage = "3D 카메라 grab 후 첫 단계로 배치 권장. VoxelGrid는 거의 항상 활성화(점 수 감소 → 후속 속도 향상). SOR은 노이즈가 많을 때만 (KNN 검색이라 비용 큼).",
+                CognexEquivalent = "(PCL VoxelGrid + StatisticalOutlierRemoval)",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["EnableVoxelGrid"] = "VoxelGrid 다운샘플 활성화. 같은 voxel 안의 모든 점을 1개로 합쳐 점 수를 크게 줄임.",
+                    ["VoxelSize"] = "Voxel 한 변의 길이 (mm). 작을수록 정밀도 ↑, 점 수 ↑, 속도 ↓.\n• 0.1~0.5: 정밀 (작은 부품 측정)\n• 1.0: 기본 (일반)\n• 2.0~5.0: 거친 다운샘플 (속도 우선)",
+                    ["EnableSor"] = "Statistical Outlier Removal 활성화. 통계적 outlier(노이즈/스파이크) 제거. KNN 검색이라 큰 점군에서는 시간 비용이 큼.",
+                    ["SorK"] = "이웃 점 개수 (K-Nearest Neighbors). 각 점의 K개 이웃과의 평균 거리를 계산해 통계 분포 산출.\n• 10~20: 빠름, 거친 판정\n• 30: 기본 (균형)\n• 50~100: 정밀, 느림",
+                    ["SorStddev"] = "표준편차 배수. 평균거리 ± 이 값 × σ 밖의 점은 outlier로 제거.\n• 1.0: 엄격 (많이 제거)\n• 2.0: 기본 (균형)\n• 3.0~5.0: 느슨 (강한 outlier만 제거)"
+                }
+            },
+
+            ["ColorMatchTool"] = new ToolHelp
+            {
+                Name = "Color Match (Lab ΔE 거리 매칭)",
+                Description = "BGR을 Lab 색공간으로 변환한 후, 학습된 컬러 패치의 평균 Lab과 픽셀별 ΔE76 거리(유클리드)를 계산.\n거리가 Tolerance 이내인 픽셀을 매칭으로 표시. 활성 모델들의 매칭 결과는 OR로 합산.\nLab는 인지 균일 색공간이라 HSV inRange보다 조명 변화에 강건.",
+                Usage = "1) Models에서 모델 선택(기본 'Model 1' 자동 생성). 2) 'Use Training Region' 체크 + ROI를 학습 색 영역에 그림. 3) 'Train Selected Model' 클릭 — 평균 Lab(L, a, b) 자동 계산. 4) ColorTolerance(ΔE 임계)로 매칭 영역 조정. 5) 변종이 있으면 '+ Add'로 새 모델 추가 후 학습.",
+                CognexEquivalent = "CogColorMatchTool",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["MeanL"] = "선택 모델의 학습 평균 L (밝기 채널, OpenCV 8-bit Lab 0-255).\n• 어두운 색: 50 이하\n• 중간 밝기: 100~180\n• 밝은 색/흰색: 200 이상",
+                    ["MeanA"] = "선택 모델의 학습 평균 a (적-녹 축, OpenCV 8-bit 0-255, 중성=128).\n• 128 미만: 녹 계열\n• 128 초과: 적 계열",
+                    ["MeanB"] = "선택 모델의 학습 평균 b (황-청 축, OpenCV 8-bit 0-255, 중성=128).\n• 128 미만: 청 계열\n• 128 초과: 황 계열",
+                    ["ColorTolerance"] = "ΔE76 거리 임계값. 픽셀의 Lab가 모델 평균에서 이 거리 이내면 매칭.\n• 5~10: 매우 엄격 (정밀한 색 일치)\n• 15~25: 일반 (기본 25, 권장)\n• 30~50: 느슨 (조명 변동 큰 환경)\n• 50+: 매우 느슨 (다른 색까지 잡힐 수 있음)",
+                    ["MorphKernelSize"] = "후처리 모폴로지 커널 크기 (0이면 비활성).\n• 0: 처리 안 함 (가장 빠름)\n• 3~5: 작은 노이즈 제거 (Open) + 작은 구멍 채우기 (Close)\n• 7+: 강한 후처리",
+                    ["ShowOverlay"] = "결과 오버레이에 매칭 영역을 초록색 반투명으로 표시.",
+                    ["OverlayOpacity"] = "오버레이 투명도 (0~1).",
+                    ["UseSearchRegion"] = "Search Region 사용 여부. 활성화하면 지정된 영역 안에서만 매칭 → 속도 향상 + 외부 노이즈 차단.\n주의: Training Region(UseROI)과 별개. UseROI는 학습용, UseSearchRegion은 Execute 검색용.",
+                    ["SearchRegionX"] = "Search Region의 X 좌표 (픽셀).",
+                    ["SearchRegionY"] = "Search Region의 Y 좌표 (픽셀).",
+                    ["SearchRegionWidth"] = "Search Region의 너비 (픽셀).",
+                    ["SearchRegionHeight"] = "Search Region의 높이 (픽셀)."
+                }
+            },
+
+            ["ShapeMatchTool"] = new ToolHelp
+            {
+                Name = "Shape Match (NCC + 피라미드 형상 매칭)",
+                Description = "정규화 상관(NCC) + 다중 해상도 피라미드 + Coarse-to-Fine 회전·스케일 탐색으로 학습된 형상을 검출합니다.\n1단계 Coarse: 1/2^N 해상도에서 큰 각도 스텝으로 모든 후보 평가\n2단계 Fine: 풀 해상도에서 상위 N개 후보 주변만 정밀화\nFeatureMatchTool의 에지 기반 매칭에 비해 단순하지만, 텍스처 없는 단색 형상·로고·인쇄 마크에 안정적입니다.",
+                Usage = "Training Region에 패턴을 학습(Train Template) → Search Region으로 검색 범위 제한 → Run. 회전 범위는 ±180° 고정이며 AngleStep으로 정밀도를 조절합니다.",
+                CognexEquivalent = "CogPMAlignTool (PatMax) — 단순화된 NCC 버전",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["AngleStep"] = "회전 각도 검색 간격 (도). 작을수록 정밀하지만 매칭 횟수 증가.\n• 5°: 기본 (속도/정확도 균형)\n• 2°: 정밀, 느림\n• 10° 이상: 빠름, 정밀도 ↓",
+                    ["MinScale"] = "검색할 최소 스케일 배수.\n• 0.8: 학습 대비 80% 크기까지 허용\n• 1.0: 스케일 변화 없음 (가장 빠름)",
+                    ["MaxScale"] = "검색할 최대 스케일 배수.\n• 1.2: 학습 대비 120% 크기까지 허용\n• 1.0: 스케일 변화 없음",
+                    ["ScaleStep"] = "스케일 검색 간격.\n• 0.05~0.1 권장\n• 너무 작으면 매칭 횟수 폭증",
+                    ["ScoreThreshold"] = "매칭 점수 임계값 (0~1). 이 값 이상이면 Pass.\n• 0.5: 느슨한 매칭\n• 0.7: 기본\n• 0.85: 엄격한 매칭\nNCC 특성상 조명 변화에는 강건하지만 부분 가림에는 약합니다.",
+                    ["NumPyramidLevels"] = "피라미드 단계 수 (1~4).\n• 1: 풀 해상도만 (단순, 느림)\n• 2: 1/2 다운샘플 (기본)\n• 3: 1/4 다운샘플 (빠름, 작은 객체에선 위험)\n• 4: 1/8 다운샘플 (매우 빠름, 대형 객체용)",
+                    ["TopCandidates"] = "Fine pass에서 정밀화할 상위 후보 수.\n• 1: 가장 빠르나 최적해를 놓칠 수 있음\n• 3: 기본 (균형)\n• 5+: 안전, 느림",
+                    ["MaxInstances"] = "찾을 최대 인스턴스 수.\n• 1: 단일 매칭 (기존 동작, 가장 빠름)\n• 2~20: 한 이미지에 같은 패턴이 여러 개 있을 때 (예: PCB의 동일 부품 N개)\n다중 모드에서는 매칭맵의 로컬 피크를 여러 개 추출 + NMS로 중복 제거.",
+                    ["NmsDistanceFactor"] = "NMS(중복 억제) 중심 거리 임계 배수. 매칭 박스의 짧은 변 × 이 값보다 가까운 매칭들은 중복으로 간주, 점수 높은 것만 살림.\n• 0.3: 매우 좁게 (박스가 거의 겹쳐도 별개)\n• 0.5: 기본\n• 1.0: 박스 폭만큼 떨어져야 별개\n• 1.5~2.0: 매우 넓게 (정말 떨어진 것만)",
+                    ["UseSearchRegion"] = "Search Region 사용 여부. 활성화하면 지정 영역에서만 검색하므로 속도가 영역 크기에 비례해 빨라집니다.",
+                    ["SearchRegionX"] = "Search Region의 X 좌표 (픽셀).",
+                    ["SearchRegionY"] = "Search Region의 Y 좌표 (픽셀).",
+                    ["SearchRegionWidth"] = "Search Region의 너비 (픽셀).",
+                    ["SearchRegionHeight"] = "Search Region의 높이 (픽셀)."
+                }
+            },
+
             // Blob Analysis
             ["BlobTool"] = new ToolHelp
             {

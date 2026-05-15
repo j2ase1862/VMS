@@ -463,6 +463,13 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 result.OutputImage = grayImage;
                 result.OverlayImage = overlayImage;
 
+                // 캘리브레이션이 있으면 mm 키 추가 (없으면 no-op)
+                var cal = VisionService.Instance.CurrentCalibrationMetadata;
+                AddCoordMm(result, "EdgeX", "EdgeY", cal);
+                AddCoordMm(result, "Edge1X", "Edge1Y", cal);
+                AddCoordMm(result, "Edge2X", "Edge2Y", cal);
+                AddCoordMm(result, "CenterX", "CenterY", cal);
+                AddLengthMm(result, "Width", cal);
             }
             catch (Exception ex)
             {
@@ -991,7 +998,11 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             {
                 "Success", "EdgeX", "EdgeY", "EdgeScore", "Width",
                 "Edge1X", "Edge1Y", "Edge2X", "Edge2Y",
-                "CenterX", "CenterY", "EdgeCount"
+                "CenterX", "CenterY", "EdgeCount",
+                // 캘리브레이션 적용 시 채워지는 mm 키 (없으면 결측)
+                "EdgeXMm", "EdgeYMm", "WidthMm",
+                "Edge1XMm", "Edge1YMm", "Edge2XMm", "Edge2YMm",
+                "CenterXMm", "CenterYMm"
             };
         }
 

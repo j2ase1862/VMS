@@ -1,0 +1,45 @@
+<UserControl x:Class="VMS.VisionSetup.Views.ToolSettings.Tools.PointCloudFilterToolSettings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls">
+    <StackPanel>
+        <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,8"
+                   Text="3D 카메라로 획득한 점군을 다운샘플 + 노이즈 제거. 결과는 후속 도구(HeightSlicer, PlaneFit, Geometry3D)가 사용."/>
+
+        <!-- Voxel Grid -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Voxel Grid Downsample" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:CheckBoxParameter Label="Enable Voxel Grid"
+                    IsChecked="{Binding EnableVoxelGrid}"
+                    ToolType="PointCloudFilterTool" ParameterName="EnableVoxelGrid"/>
+                <controls:SliderParameter Label="Voxel Size (mm)"
+                    Value="{Binding VoxelSize}" Minimum="0.05" Maximum="20.0"
+                    TickFrequency="0.05" ValueFormat="F2"
+                    ToolType="PointCloudFilterTool" ParameterName="VoxelSize"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- Statistical Outlier Removal -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Statistical Outlier Removal (SOR)" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:CheckBoxParameter Label="Enable SOR"
+                    IsChecked="{Binding EnableSor}"
+                    ToolType="PointCloudFilterTool" ParameterName="EnableSor"/>
+                <controls:SliderParameter Label="Neighbor Count (K)"
+                    Value="{Binding SorK}" Minimum="5" Maximum="100"
+                    TickFrequency="5" ValueFormat="F0"
+                    ToolType="PointCloudFilterTool" ParameterName="SorK"/>
+                <controls:SliderParameter Label="Stddev Multiplier"
+                    Value="{Binding SorStddev}" Minimum="0.5" Maximum="5.0"
+                    TickFrequency="0.1" ValueFormat="F2"
+                    ToolType="PointCloudFilterTool" ParameterName="SorStddev"/>
+            </StackPanel>
+        </Expander>
+    </StackPanel>
+</UserControl>

@@ -1,0 +1,131 @@
+{
+  "id": "22222222-2222-2222-2222-222222222222",
+  "name": "Sample - Shape Match + Caliper",
+  "description": "ShapeMatch로 앵커 패턴을 찾고, Caliper로 엣지 위치를 측정. Result로 통합 판정. 템플릿은 사용자가 UI에서 학습 후 저장 필요.",
+  "version": "1.0.0",
+  "createdAt": "2026-05-15T00:00:00Z",
+  "modifiedAt": "2026-05-15T00:00:00Z",
+  "author": "VMS-sample",
+  "usedCameraIds": [],
+  "steps": [
+    {
+      "id": "step-shape-1",
+      "name": "Measurement Camera",
+      "sequence": 1,
+      "cameraId": "",
+      "resolution": 0.05,
+      "exposure": 1500,
+      "gain": 1.0,
+      "lightingChannel": 0,
+      "lightingIntensity": 120,
+      "description": "패턴 탐색 후 Caliper로 폭 측정 — 50mm 기준 ±0.5mm 허용",
+      "isEnabled": true,
+      "tools": [
+        {
+          "id": "tool-shape-match-1",
+          "toolType": "ShapeMatchTool",
+          "name": "Anchor Pattern",
+          "sequence": 1,
+          "isEnabled": true,
+          "x": 60,
+          "y": 80,
+          "useROI": true,
+          "roix": 100,
+          "roiy": 100,
+          "roiWidth": 200,
+          "roiHeight": 200,
+          "roiAngle": 0,
+          "roiCenterX": 200,
+          "roiCenterY": 200,
+          "parameters": {
+            "AngleStep": 2.0,
+            "MinScale": 1.0,
+            "MaxScale": 1.0,
+            "ScaleStep": 0.1,
+            "ScoreThreshold": 0.7,
+            "NumPyramidLevels": 3,
+            "TopCandidates": 5,
+            "MaxInstances": 1,
+            "NmsDistanceFactor": 0.5,
+            "UseSearchRegion": true,
+            "SearchRegionX": 50,
+            "SearchRegionY": 50,
+            "SearchRegionWidth": 900,
+            "SearchRegionHeight": 600
+          },
+          "connections": []
+        },
+        {
+          "id": "tool-caliper-1",
+          "toolType": "CaliperTool",
+          "name": "Width Caliper",
+          "sequence": 2,
+          "isEnabled": true,
+          "x": 260,
+          "y": 80,
+          "useROI": false,
+          "roix": 0,
+          "roiy": 0,
+          "roiWidth": 0,
+          "roiHeight": 0,
+          "roiAngle": 0,
+          "roiCenterX": 0,
+          "roiCenterY": 0,
+          "parameters": {
+            "StartPointX": 400,
+            "StartPointY": 300,
+            "EndPointX": 600,
+            "EndPointY": 300,
+            "SearchWidth": 40,
+            "Polarity": "Any",
+            "EdgeThreshold": 15,
+            "FilterHalfWidth": 2,
+            "Mode": "PairWidth",
+            "ExpectedWidth": 100,
+            "WidthTolerance": 10,
+            "MaxEdges": 4,
+            "ScorerMode": "Contrast",
+            "ExpectedPosition": 0.5,
+            "ContrastWeight": 1.0,
+            "PositionWeight": 0.0,
+            "PositionSigma": 0.25,
+            "PolarityWeight": 0.0
+          },
+          "connections": [
+            { "sourceToolId": "tool-shape-match-1", "connectionType": "Coordinates" }
+          ]
+        },
+        {
+          "id": "tool-result-2",
+          "toolType": "ResultTool",
+          "name": "Final Verdict",
+          "sequence": 3,
+          "isEnabled": true,
+          "x": 460,
+          "y": 80,
+          "useROI": false,
+          "roix": 0,
+          "roiy": 0,
+          "roiWidth": 0,
+          "roiHeight": 0,
+          "roiAngle": 0,
+          "roiCenterX": 0,
+          "roiCenterY": 0,
+          "parameters": {
+            "JudgmentMode": "And"
+          },
+          "connections": [
+            { "sourceToolId": "tool-shape-match-1", "connectionType": "Result" },
+            { "sourceToolId": "tool-caliper-1", "connectionType": "Result" }
+          ]
+        }
+      ]
+    }
+  ],
+  "criteria": {
+    "requireAllToolsPass": true,
+    "toolCriteria": {},
+    "maxExecutionTime": 0
+  },
+  "tags": ["sample", "measurement", "pattern-match"]
+}

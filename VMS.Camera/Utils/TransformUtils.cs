@@ -545,6 +545,161 @@ namespace VMS.Camera.Utils
         }
 
         #endregion
+
+        #region Euclidean Clustering
+
+        /// <summary>
+        /// 유클리드 거리 기반 점군 클러스터링.
+        /// 거리 tolerance 이내 점들을 BFS로 연결 → 클러스터 형성.
+        /// 그리드 해싱 (voxel = tolerance)으로 인접 이웃만 검사해 O(N) 평균 복잡도.
+        /// </summary>
+        /// <param name="source">입력 점군</param>
+        /// <param name="tolerance">동일 클러스터 판정 거리 (mm)</param>
+        /// <param name="minPoints">최소 클러스터 크기 (이하 무시 → 노이즈)</param>
+        /// <param name="maxPoints">최대 클러스터 크기 (이상 무시 → 배경 큰 덩어리 제외)</param>
+        /// <returns>크기 내림차순 정렬된 클러스터 목록 (각각 PointCloudData)</returns>
+        public static List<PointCloudData> EuclideanClustering(
+            PointCloudData source, float tolerance, int minPoints, int maxPoints)
+        {
+            int n = source.PointCount;
+            var result = new List<PointCloudData>();
+            if (n == 0 || tolerance <= 0) return result;
+
+            var positions = source.Positions;
+            var colors = source.Colors;
+            bool hasColors = colors != null && colors.Length >= n;
+
+            // 그리드 해싱
+            float invTol = 1f / tolerance;
+            var grid = new Dictionary<(int, int, int), List<int>>(n / 4);
+            for (int i = 0; i < n; i++)
+            {
+                var p = positions[i];
+                var key = (
+                    (int)System.Math.Floor(p.X * invTol),
+                    (int)System.Math.Floor(p.Y * invTol),
+                    (int)System.Math.Floor(p.Z * invTol));
+                if (!grid.TryGetValue(key, out var bucket))
+                {
+                    bucket = new List<int>(8);
+                    grid[key] = bucket;
+                }
+                bucket.Add(i);
+            }
+
+            var visited = new bool[n];
+            var clusters = new List<List<int>>();
+            var queue = new Queue<int>(128);
+            float tolSq = tolerance * tolerance;
+
+            for (int seed = 0; seed < n; seed++)
+            {
+                if (visited[seed]) continue;
+
+                var cluster = new List<int>(64);
+                queue.Clear();
+                queue.Enqueue(seed);
+                visited[seed] = true;
+
+                while (queue.Count > 0)
+                {
+                    int idx = queue.Dequeue();
+                    cluster.Add(idx);
+                    var p = positions[idx];
+
+                    int cx = (int)System.Math.Floor(p.X * invTol);
+                    int cy = (int)System.Math.Floor(p.Y * invTol);
+                    int cz = (int)System.Math.Floor(p.Z * invTol);
+
+                    for (int dx = -1; dx <= 1; dx++)
+                    for (int dy = -1; dy <= 1; dy++)
+                    for (int dz = -1; dz <= 1; dz++)
+                    {
+                        if (!grid.TryGetValue((cx + dx, cy + dy, cz + dz), out var bucket)) continue;
+                        for (int k = 0; k < bucket.Count; k++)
+                        {
+                            int nIdx = bucket[k];
+                            if (visited[nIdx]) continue;
+                            var q = positions[nIdx];
+                            float ddx = p.X - q.X;
+                            float ddy = p.Y - q.Y;
+                            float ddz = p.Z - q.Z;
+                            if (ddx * ddx + ddy * ddy + ddz * ddz <= tolSq)
+                            {
+                                visited[nIdx] = true;
+                                queue.Enqueue(nIdx);
+                            }
+                        }
+                    }
+                }
+
+                if (cluster.Count >= minPoints && cluster.Count <= maxPoints)
+                    clusters.Add(cluster);
+            }
+
+            // 크기 내림차순 정렬
+            clusters.Sort((a, b) => b.Count.CompareTo(a.Count));
+
+            // 인덱스 리스트 → PointCloudData
+            for (int ci = 0; ci < clusters.Count; ci++)
+            {
+                var indices = clusters[ci];
+                var clusterPositions = new Vector3[indices.Count];
+                System.Windows.Media.Color[] clusterColors =
+                    hasColors ? new System.Windows.Media.Color[indices.Count] : System.Array.Empty<System.Windows.Media.Color>();
+
+                for (int j = 0; j < indices.Count; j++)
+                {
+                    clusterPositions[j] = positions[indices[j]];
+                    if (hasColors) clusterColors[j] = colors![indices[j]];
+                }
+
+                result.Add(new PointCloudData
+                {
+                    Name = $"Cluster_{ci}",
+                    Positions = clusterPositions,
+                    Colors = clusterColors,
+                    PointCount = indices.Count
+                });
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// 여러 PointCloudData를 위치/색상 배열로 단순 병합 (그리드 메타 무시).
+        /// </summary>
+        public static PointCloudData ConcatenateClouds(IList<PointCloudData> clouds, string name = "Merged")
+        {
+            int total = 0;
+            bool anyColors = false;
+            for (int i = 0; i < clouds.Count; i++)
+            {
+                total += clouds[i].PointCount;
+                if (clouds[i].Colors != null && clouds[i].Colors.Length >= clouds[i].PointCount)
+                    anyColors = true;
+            }
+            var positions = new Vector3[total];
+            var colors = anyColors ? new System.Windows.Media.Color[total] : System.Array.Empty<System.Windows.Media.Color>();
+            int offset = 0;
+            for (int i = 0; i < clouds.Count; i++)
+            {
+                var c = clouds[i];
+                int count = c.PointCount;
+                System.Array.Copy(c.Positions, 0, positions, offset, count);
+                if (anyColors && c.Colors != null && c.Colors.Length >= count)
+                    System.Array.Copy(c.Colors, 0, colors, offset, count);
+                offset += count;
+            }
+            return new PointCloudData
+            {
+                Name = name,
+                Positions = positions,
+                Colors = colors,
+                PointCount = total
+            };
+        }
+
+        #endregion
     }
 
     /// <summary>

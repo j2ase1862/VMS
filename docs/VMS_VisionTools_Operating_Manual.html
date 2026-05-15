@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VMS VisionSetup — 신규 비전 도구 운영 매뉴얼</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --primary: #1a365d;
+            --primary-light: #2b6cb0;
+            --accent: #3182ce;
+            --bg: #ffffff;
+            --bg-alt: #f7fafc;
+            --bg-code: #edf2f7;
+            --border: #e2e8f0;
+            --text: #1a202c;
+            --text-light: #4a5568;
+            --text-muted: #718096;
+            --success: #38a169;
+            --warning: #d69e2e;
+            --danger: #e53e3e;
+            --info: #3182ce;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--text);
+            background: var(--bg);
+            line-height: 1.8;
+            font-size: 15px;
+        }
+
+        @media print {
+            body { font-size: 11pt; line-height: 1.6; }
+            .sidebar { display: none !important; }
+            .main-content { margin-left: 0 !important; max-width: 100% !important; padding: 0 20px !important; }
+            .doc-header { break-after: page; }
+            h2 { break-before: page; }
+            table { break-inside: avoid; }
+            .mermaid-wrapper { break-inside: avoid; }
+            .back-to-top { display: none !important; }
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0; left: 0;
+            width: 280px;
+            height: 100vh;
+            background: var(--primary);
+            color: #fff;
+            overflow-y: auto;
+            z-index: 100;
+            padding: 24px 0;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        .sidebar-header { padding: 0 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom: 16px; }
+        .sidebar-header h3 { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+        .sidebar-header p { font-size: 12px; color: rgba(255,255,255,0.6); }
+        .sidebar nav ul { list-style: none; padding: 0; }
+        .sidebar nav ul li a {
+            display: block;
+            padding: 8px 20px;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-size: 13px;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        .sidebar nav ul li a:hover,
+        .sidebar nav ul li a.active {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border-left-color: var(--accent);
+        }
+        .sidebar nav ul li.section-item a { font-weight: 600; font-size: 14px; padding: 10px 20px; color: #fff; }
+        .sidebar nav ul li.sub-item a { padding-left: 36px; font-size: 12.5px; }
+
+        .main-content { margin-left: 280px; max-width: 980px; padding: 40px 48px 80px; }
+
+        .doc-header { margin-bottom: 48px; padding-bottom: 32px; border-bottom: 3px solid var(--primary); }
+        .doc-header h1 { font-size: 28px; font-weight: 800; color: var(--primary); margin-bottom: 24px; line-height: 1.3; }
+        .doc-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .doc-meta .meta-item { display: flex; border-bottom: 1px solid var(--border); }
+        .doc-meta .meta-item:nth-last-child(-n+2) { border-bottom: none; }
+        .doc-meta .meta-label {
+            flex: 0 0 100px;
+            padding: 10px 16px;
+            background: var(--bg-alt);
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-light);
+            border-right: 1px solid var(--border);
+        }
+        .doc-meta .meta-value { flex: 1; padding: 10px 16px; font-size: 13px; }
+
+        h2 {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 56px 0 24px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--primary);
+            scroll-margin-top: 24px;
+        }
+        h3 { font-size: 18px; font-weight: 600; color: var(--primary-light); margin: 36px 0 16px; scroll-margin-top: 24px; }
+        h4 { font-size: 15px; font-weight: 600; color: var(--text); margin: 24px 0 12px; }
+        p { margin-bottom: 16px; color: var(--text); }
+
+        table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 13.5px; }
+        thead th { background: var(--primary); color: #fff; font-weight: 600; padding: 10px 14px; text-align: left; font-size: 13px; white-space: nowrap; }
+        tbody td { padding: 9px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+        tbody tr:nth-child(even) { background: var(--bg-alt); }
+        tbody tr:hover { background: #ebf4ff; }
+
+        code {
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 13px;
+            background: var(--bg-code);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #c53030;
+        }
+        pre {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 20px 24px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 16px 0 24px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        pre code { background: transparent; padding: 0; color: inherit; font-size: inherit; }
+
+        .mermaid-wrapper {
+            margin: 24px 0;
+            padding: 24px;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            text-align: center;
+            overflow-x: auto;
+        }
+        .mermaid-wrapper pre.mermaid { background: transparent; color: var(--text); padding: 0; margin: 0; border-radius: 0; }
+        .mermaid-wrapper .diagram-title { font-size: 13px; color: var(--text-muted); margin-top: 12px; font-style: italic; }
+
+        .back-to-top {
+            position: fixed;
+            bottom: 24px; right: 24px;
+            width: 44px; height: 44px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 50;
+            transition: opacity 0.3s;
+        }
+        .back-to-top:hover { background: var(--primary-light); }
+
+        .doc-footer { margin-top: 64px; padding-top: 24px; border-top: 2px solid var(--primary); }
+        .doc-footer table { max-width: 400px; }
+
+        hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+        ul, ol { margin: 8px 0 16px 24px; }
+        li { margin-bottom: 4px; }
+
+        .highlight-box {
+            background: #ebf8ff;
+            border-left: 4px solid var(--accent);
+            padding: 16px 20px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+            font-size: 14px;
+        }
+        .warn-box {
+            background: #fffaf0;
+            border-left: 4px solid var(--warning);
+            padding: 16px 20px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+            font-size: 14px;
+        }
+        .danger-box {
+            background: #fff5f5;
+            border-left: 4px solid var(--danger);
+            padding: 16px 20px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+            font-size: 14px;
+        }
+
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+        .badge-info { background: #bee3f8; color: #2a4365; }
+        .badge-new { background: #c6f6d5; color: #22543d; }
+        .badge-cog { background: #fbd38d; color: #7b341e; }
+
+        .step-list { counter-reset: step; padding-left: 0; }
+        .step-list li {
+            list-style: none;
+            counter-increment: step;
+            padding-left: 44px;
+            position: relative;
+            margin-bottom: 12px;
+        }
+        .step-list li::before {
+            content: counter(step);
+            position: absolute;
+            left: 0; top: 0;
+            width: 28px; height: 28px;
+            background: var(--accent);
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; padding: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- 사이드바 네비게이션 -->
+<aside class="sidebar">
+    <div class="sidebar-header">
+        <h3>VMS VisionSetup</h3>
+        <p>신규 비전 도구 운영 매뉴얼 v1.0</p>
+    </div>
+    <nav>
+        <ul>
+            <li class="section-item"><a href="#section1">1. 개요</a></li>
+            <li class="sub-item"><a href="#section1-1">1.1 매뉴얼 목적</a></li>
+            <li class="sub-item"><a href="#section1-2">1.2 추가 도구 요약</a></li>
+            <li class="sub-item"><a href="#section1-3">1.3 공통 워크플로</a></li>
+            <li class="section-item"><a href="#section2">2. 캘리브레이션 (Calibration)</a></li>
+            <li class="sub-item"><a href="#section2-1">2.1 Calibration Manager 진입</a></li>
+            <li class="sub-item"><a href="#section2-2">2.2 Checkerboard 모드</a></li>
+            <li class="sub-item"><a href="#section2-3">2.3 N-Point 모드</a></li>
+            <li class="sub-item"><a href="#section2-4">2.4 SingleScale 모드</a></li>
+            <li class="sub-item"><a href="#section2-5">2.5 ImageRectifyTool</a></li>
+            <li class="sub-item"><a href="#section2-6">2.6 mm 측정 변환</a></li>
+            <li class="section-item"><a href="#section3">3. ShapeMatchTool</a></li>
+            <li class="sub-item"><a href="#section3-1">3.1 도구 개요</a></li>
+            <li class="sub-item"><a href="#section3-2">3.2 단일 인스턴스</a></li>
+            <li class="sub-item"><a href="#section3-3">3.3 다중 인스턴스 (NMS)</a></li>
+            <li class="sub-item"><a href="#section3-4">3.4 Region 분리 / Fixture</a></li>
+            <li class="sub-item"><a href="#section3-5">3.5 전문가 모드</a></li>
+            <li class="sub-item"><a href="#section3-6">3.6 성능 튜닝</a></li>
+            <li class="section-item"><a href="#section4">4. 컬러 도구</a></li>
+            <li class="sub-item"><a href="#section4-1">4.1 ColorExtractTool (HSV)</a></li>
+            <li class="sub-item"><a href="#section4-2">4.2 ColorMatchTool (Lab ΔE)</a></li>
+            <li class="sub-item"><a href="#section4-3">4.3 다중 모델 관리</a></li>
+            <li class="sub-item"><a href="#section4-4">4.4 학습 방법 비교</a></li>
+            <li class="section-item"><a href="#section5">5. 3D 포인트클라우드</a></li>
+            <li class="sub-item"><a href="#section5-1">5.1 PointCloudFilterTool</a></li>
+            <li class="sub-item"><a href="#section5-2">5.2 PointCloudRegistrationTool</a></li>
+            <li class="sub-item"><a href="#section5-3">5.3 PointCloudClusterTool</a></li>
+            <li class="section-item"><a href="#section6">6. 딥러닝 분할</a></li>
+            <li class="sub-item"><a href="#section6-1">6.1 SegmentationTool (Semantic)</a></li>
+            <li class="sub-item"><a href="#section6-2">6.2 YoloSegTool (Instance)</a></li>
+            <li class="sub-item"><a href="#section6-3">6.3 ONNX 모델 워밍업</a></li>
+            <li class="section-item"><a href="#section7">7. UX 개선</a></li>
+            <li class="sub-item"><a href="#section7-1">7.1 HelpIcon 호버 팝업</a></li>
+            <li class="sub-item"><a href="#section7-2">7.2 점 픽업 모드</a></li>
+            <li class="sub-item"><a href="#section7-3">7.3 키보드 단축키</a></li>
+            <li class="sub-item"><a href="#section7-4">7.4 전문가 모드</a></li>
+            <li class="section-item"><a href="#section8">8. 회귀 테스트</a></li>
+            <li class="sub-item"><a href="#section8-1">8.1 xUnit 프로젝트</a></li>
+            <li class="sub-item"><a href="#section8-2">8.2 실행 방법</a></li>
+            <li class="section-item"><a href="#section9">9. 샘플 레시피</a></li>
+            <li class="sub-item"><a href="#section9-1">9.1 Color Label Inspection</a></li>
+            <li class="sub-item"><a href="#section9-2">9.2 Shape Match + Caliper</a></li>
+            <li class="section-item"><a href="#section10">10. 부록</a></li>
+            <li class="sub-item"><a href="#section10-a">부록 A. 파라미터 매트릭스</a></li>
+            <li class="sub-item"><a href="#section10-b">부록 B. 주요 파일</a></li>
+            <li class="sub-item"><a href="#section10-c">부록 C. 트러블슈팅</a></li>
+            <li class="sub-item"><a href="#section10-d">부록 D. Cognex 대응표</a></li>
+        </ul>
+    </nav>
+</aside>
+
+<!-- 메인 콘텐츠 -->
+<div class="main-content">
+
+    <!-- 문서 헤더 -->
+    <header class="doc-header">
+        <h1>VMS VisionSetup<br>— 신규 비전 도구 운영 매뉴얼</h1>
+        <div class="doc-meta">
+            <div class="meta-item"><div class="meta-label">문서명</div><div class="meta-value">VMS VisionSetup 신규 비전 도구 운영 매뉴얼</div></div>
+            <div class="meta-item"><div class="meta-label">제품 버전</div><div class="meta-value">VMS 1.0 (Cognex Gap Closing PR #1–#14)</div></div>
+            <div class="meta-item"><div class="meta-label">문서 버전</div><div class="meta-value">1.0</div></div>
+            <div class="meta-item"><div class="meta-label">작성일</div><div class="meta-value">2026-05-15</div></div>
+            <div class="meta-item"><div class="meta-label">대상 모듈</div><div class="meta-value">VMS.VisionSetup (.NET 8.0 WPF)</div></div>
+            <div class="meta-item"><div class="meta-label">구성</div><div class="meta-value">OpenCvSharp4 4.11 · ONNX Runtime · HelixToolkit.SharpDX</div></div>
+        </div>
+    </header>
+
+    <!-- 1. 개요 -->
+    <h2 id="section1">1. 개요</h2>
+
+    <h3 id="section1-1">1.1 매뉴얼 목적</h3>
+    <p>본 매뉴얼은 <strong>Cognex VisionPro / ViDi</strong> 대비 부족했던 기능을 보완하기 위해 추가된 <strong>14개 PR(PR #1 – PR #14)</strong> 의 산출물을 실제 현장에서 운영하는 방법을 안내한다. 기존 도구(Blur · Threshold · Edge · Blob · Caliper 등) 사용법은 별도 매뉴얼을 참고한다.</p>
+    <div class="highlight-box">
+        본 매뉴얼은 <code>D:\Repo\VMS\docs\sample-recipes\</code> 의 두 샘플 레시피와 <code>VMS.VisionSetup.Tests</code> 회귀 테스트(63개) 통과를 전제로 동작 검증된 절차를 정리한다.
+    </div>
+
+    <h3 id="section1-2">1.2 추가 도구 요약</h3>
+    <table>
+        <thead><tr><th>카테고리</th><th>도구 / 기능</th><th>대응 Cognex</th><th>비고</th></tr></thead>
+        <tbody>
+            <tr><td>Calibration</td><td>Calibration Manager (Checkerboard / N-Point / SingleScale)</td><td>CogCalibCheckerboardTool, CogCalibNPointToNPointTool</td><td><span class="badge badge-new">NEW</span> 독립 윈도우 (PR #2–#3, #2b–#2c)</td></tr>
+            <tr><td>Calibration</td><td>ImageRectifyTool</td><td>CogUndistortImageTool</td><td><span class="badge badge-new">NEW</span> 파이프라인 도구 (PR #4)</td></tr>
+            <tr><td>Measurement</td><td>Caliper / CircleFit / Geometry mm 출력</td><td>(VisionPro Calibration Space)</td><td>PR #5</td></tr>
+            <tr><td>Pattern</td><td>ShapeMatchTool (NCC + 회전 + 다중 인스턴스 + Region 분리)</td><td>CogPMAlignTool (PatMax/PatQuick)</td><td><span class="badge badge-new">NEW</span> PR #8 ~ #12b</td></tr>
+            <tr><td>Color</td><td>ColorExtractTool (HSV In-Range, 다중 모델)</td><td>CogColorExtractTool</td><td><span class="badge badge-new">NEW</span> PR #10 ~ #10g</td></tr>
+            <tr><td>Color</td><td>ColorMatchTool (Lab ΔE76)</td><td>CogColorMatchTool</td><td><span class="badge badge-new">NEW</span> PR #11, #11c</td></tr>
+            <tr><td>3D PointCloud</td><td>PointCloudFilterTool (VoxelGrid + SOR)</td><td>VisionPro 3D Filter</td><td><span class="badge badge-new">NEW</span> PR #13</td></tr>
+            <tr><td>3D PointCloud</td><td>PointCloudRegistrationTool (ICP)</td><td>VisionPro 3D Align</td><td><span class="badge badge-new">NEW</span> PR #13b</td></tr>
+            <tr><td>3D PointCloud</td><td>PointCloudClusterTool (Euclidean)</td><td>VisionPro 3D Cluster</td><td><span class="badge badge-new">NEW</span> PR #13c</td></tr>
+            <tr><td>Deep Learning</td><td>SegmentationTool (Semantic, ONNX)</td><td>ViDi Blue Locate / Red Analyze</td><td><span class="badge badge-new">NEW</span> PR #7</td></tr>
+            <tr><td>Deep Learning</td><td>YoloSegTool (Instance, YOLOv8-seg ONNX)</td><td>ViDi Red Analyze (Instance)</td><td><span class="badge badge-new">NEW</span> PR #14</td></tr>
+            <tr><td>UX</td><td>HelpIcon 호버 팝업 · 점 픽업 모드 · 키보드 단축키 · 전문가 모드</td><td>—</td><td>PR #8d / #3 / 부속 작업</td></tr>
+            <tr><td>QA</td><td>xUnit 테스트 + ToolSerializer Round-Trip</td><td>—</td><td><span class="badge badge-new">NEW</span> PR #6a (63 tests)</td></tr>
+            <tr><td>QA</td><td>샘플 레시피 + 검증 가이드</td><td>—</td><td><span class="badge badge-new">NEW</span> PR #6b</td></tr>
+        </tbody>
+    </table>
+
+    <h3 id="section1-3">1.3 공통 워크플로</h3>
+    <div class="mermaid-wrapper">
+        <pre class="mermaid">
+flowchart LR
+    A[이미지/포인트클라우드 로드] --> B[Calibration<br>레시피에 적용]
+    B --> C[도구 추가<br>Tool Palette → Drag]
+    C --> D[Training ROI<br>드래그 + Train]
+    D --> E[Search Region<br>드래그]
+    E --> F[Run]
+    F --> G{판정}
+    G -->|Pass| H[Result Tool]
+    G -->|Fail| I[원인 분석<br>HelpIcon]
+    H --> J[Recipe Save]
+        </pre>
+        <div class="diagram-title">Figure 1. 신규 도구의 공통 운영 흐름</div>
+    </div>
+
+    <ul>
+        <li><strong>Training ROI</strong> — 학습 영역 (패턴/컬러 기준 지정)</li>
+        <li><strong>Search Region</strong> — 검색 영역 (실제 검사 범위 한정 → 성능·오검출 동시 개선)</li>
+        <li><strong>Fixture</strong> — 앵커 도구의 결과 좌표를 후속 도구의 ROI 오프셋으로 전달 (Coordinates Connection)</li>
+    </ul>
+
+    <!-- 2. 캘리브레이션 -->
+    <h2 id="section2">2. 캘리브레이션 (Calibration)</h2>
+    <p>픽셀 좌표를 실제 mm 단위로 변환하기 위한 카메라 보정 작업이다. 본 모듈은 독립 윈도우로 제공되며, 결과를 현재 레시피의 <code>Recipe.Calibration</code> 슬롯에 적용한다. 이후 ImageRectifyTool · Caliper · CircleFit · Geometry 도구가 동일 슬롯을 참조해 mm 결과를 함께 출력한다.</p>
+
+    <h3 id="section2-1">2.1 Calibration Manager 진입</h3>
+    <ol class="step-list">
+        <li>VisionSetup 메인 메뉴 → <strong>Calibration</strong> 버튼 클릭.</li>
+        <li>독립 윈도우 <strong>Calibration Manager</strong> 가 열린다.</li>
+        <li>상단 <strong>Image Source</strong> 콤보박스에서 입력 소스를 선택한다.</li>
+    </ol>
+    <table>
+        <thead><tr><th>Image Source</th><th>설명</th><th>사용 상황</th></tr></thead>
+        <tbody>
+            <tr><td><code>File</code></td><td>로컬 폴더의 이미지 파일 사용</td><td>오프라인 검증, 사전 캡쳐 이미지</td></tr>
+            <tr><td><code>Camera</code></td><td>Calibration Manager가 직접 카메라 연결</td><td>VMS 메인 앱이 카메라를 점유하지 않을 때</td></tr>
+            <tr><td><code>VMS Shared Frame</code></td><td>VMS 앱이 점유한 카메라의 SharedFrame을 차용</td><td>운영 중 카메라 분리 없이 보정</td></tr>
+        </tbody>
+    </table>
+    <div class="warn-box">
+        <strong>주의 — 카메라 점유 충돌</strong><br>
+        VMS 메인 앱이 카메라에 연결된 상태에서 <code>Camera</code> 소스를 선택하면 연결이 끊어진다. 운영 중에는 <code>VMS Shared Frame</code> 사용을 권장한다.
+    </div>
+
+    <h3 id="section2-2">2.2 Checkerboard 모드</h3>
+    <p>OpenCV <code>CalibrateCamera</code> 알고리즘을 이용한 표준 카메라 캘리브레이션이다. 내부 왜곡 계수(distortion)와 카메라 매트릭스를 산출한다.</p>
+    <h4>운영 절차</h4>
+    <ol class="step-list">
+        <li><strong>Mode</strong> = <code>Checkerboard</code> 선택.</li>
+        <li>패턴 크기 입력: <strong>Inner Corners X × Y</strong> (예: 9×6 체커보드의 내부 코너 = 8×5).</li>
+        <li>한 칸의 실제 크기(mm) 입력 (<strong>Square Size mm</strong>).</li>
+        <li>여러 각도/위치에서 체커보드를 캡쳐 · 로드하여 다중 뷰 누적.</li>
+        <li><strong>Detect Corners</strong> 클릭 → 코너가 인식된 이미지만 누적 목록에 추가.</li>
+        <li>최소 8장 이상 누적 후 <strong>Calibrate</strong> 클릭.</li>
+        <li>결과 패널에 <strong>RMS Reprojection Error</strong> 표시 → <strong>1.0 px 이하</strong> 권장.</li>
+        <li><strong>Apply to Current Recipe</strong> 클릭 → 현재 레시피에 캘리브레이션 저장.</li>
+    </ol>
+
+    <h3 id="section2-3">2.3 N-Point 모드</h3>
+    <p>이미지 평면 ↔ 월드 평면의 4점 이상 매칭으로 <strong>Homography</strong> 행렬을 산출한다. 평면 작업물에서 mm 변환이 필요할 때 사용한다.</p>
+    <ol class="step-list">
+        <li><strong>Mode</strong> = <code>NPoint</code> 선택.</li>
+        <li><strong>Image Canvas</strong> 가 <code>PickPoint</code> 모드로 전환된다 (십자 커서 표시).</li>
+        <li>이미지 상의 기준점을 클릭 → 우측 입력 패널에 World X / World Y (mm) 입력.</li>
+        <li>최소 4점 이상 입력 후 <strong>Calibrate</strong> 클릭.</li>
+        <li>Homography 9개 원소가 결과 패널에 표시 → Recipe에 Apply.</li>
+    </ol>
+
+    <h3 id="section2-4">2.4 SingleScale 모드</h3>
+    <p>가장 단순한 보정. 알려진 길이의 기준선(예: 캘리퍼 자) 한 개로 <strong>픽셀당 mm</strong> 비율만 계산한다.</p>
+    <ol class="step-list">
+        <li><strong>Mode</strong> = <code>SingleScale</code> 선택.</li>
+        <li>이미지 위 기준선 두 끝점을 픽한다.</li>
+        <li>실제 길이(mm) 입력 → <strong>Calibrate</strong>.</li>
+        <li>Scale (mm/pixel) 값이 산출되어 Recipe.Calibration 으로 저장.</li>
+    </ol>
+    <div class="highlight-box">
+        SingleScale은 카메라 왜곡 보정이 불가능하다. 정밀 측정이 필요하면 Checkerboard를, 평면 정합이 필요하면 N-Point를 사용한다.
+    </div>
+
+    <h3 id="section2-5">2.5 ImageRectifyTool — 파이프라인 첫 도구</h3>
+    <p>위 캘리브레이션이 적용된 레시피에서, 카메라 왜곡과 평면 변환을 실제 이미지에 적용하기 위한 <strong>파이프라인 도구</strong>이다. 후속 도구는 보정된 이미지를 받는다.</p>
+    <table>
+        <thead><tr><th>파라미터</th><th>설명</th><th>기본값</th></tr></thead>
+        <tbody>
+            <tr><td><code>Undistort</code></td><td>왜곡 계수 적용 (Checkerboard 결과 사용)</td><td>true</td></tr>
+            <tr><td><code>ApplyHomography</code></td><td>Homography 적용 (N-Point 결과 사용)</td><td>false</td></tr>
+        </tbody>
+    </table>
+    <div class="warn-box">
+        ImageRectifyTool은 <strong>파이프라인 첫 위치</strong>에 배치해야 후속 도구의 좌표가 보정된 이미지 기준으로 동작한다.
+    </div>
+
+    <h3 id="section2-6">2.6 mm 측정 변환</h3>
+    <p>PR #5 부터 다음 도구의 결과 패널에 픽셀과 함께 mm 단위가 동시 출력된다.</p>
+    <table>
+        <thead><tr><th>도구</th><th>mm 출력 항목</th></tr></thead>
+        <tbody>
+            <tr><td><code>CaliperTool</code></td><td>EdgePositionMm, PairWidthMm</td></tr>
+            <tr><td><code>CircleFitTool</code></td><td>CenterXMm, CenterYMm, RadiusMm</td></tr>
+            <tr><td><code>GeometryTool</code></td><td>각종 거리/길이 mm</td></tr>
+            <tr><td><code>Geometry3DTool</code></td><td>3D 좌표 mm</td></tr>
+        </tbody>
+    </table>
+    <p>Recipe.Calibration 이 비어있을 경우 mm 출력은 생략되고 픽셀 값만 표시된다.</p>
+
+    <!-- 3. ShapeMatchTool -->
+    <h2 id="section3">3. ShapeMatchTool — PatMax-like</h2>
+
+    <h3 id="section3-1">3.1 도구 개요</h3>
+    <p>NCC(Normalized Cross-Correlation) 기반 회전 불변 패턴 매칭 도구. Cognex PatMax/PatQuick 의 대체 구현으로, 다음 가속 기법을 결합했다.</p>
+    <ul>
+        <li><strong>이미지 피라미드</strong> + <strong>Coarse-to-Fine</strong> 탐색 (PR #8c)</li>
+        <li><strong>회전 템플릿 사전 캐싱</strong> — 동일 템플릿 반복 Run 시 추가 단축 (PR #8e)</li>
+        <li>다중 인스턴스 + NMS 중복 제거 (PR #12)</li>
+        <li>Training Region / Search Region 분리 (PR #8b)</li>
+    </ul>
+    <div class="highlight-box">
+        벤치마크 예: 1280×1024 이미지, AngleStep 2°, NumPyramidLevels 3 — <strong>1.5 – 2.5초</strong>. PR #8e 이후 동일 템플릿 재실행 시 <strong>~70% 단축</strong>.
+    </div>
+
+    <h3 id="section3-2">3.2 단일 인스턴스 워크플로</h3>
+    <ol class="step-list">
+        <li>학습용 이미지를 로드한다.</li>
+        <li>Tool Palette → <code>Shape Match</code> 드래그 → 캔버스에 추가.</li>
+        <li>이미지 위에서 <strong>Training ROI</strong>(노란 사각형) 드래그 — 앵커 패턴 영역.</li>
+        <li>우측 파라미터 패널 → <strong>Train Template</strong> 클릭.</li>
+        <li>토스트 "템플릿 학습 완료" 표시, 미리보기 패치 갱신.</li>
+        <li>검색 이미지를 로드한다.</li>
+        <li><strong>Use Search Region</strong> 체크 → 캔버스에서 <strong>Search Region</strong> 드래그(시안 점선).</li>
+        <li>Score Threshold 조정 (기본 0.7, 산업 환경 0.5–0.8 권장).</li>
+        <li><strong>Run</strong> 클릭 → 1순위 매칭이 오버레이로 표시.</li>
+    </ol>
+
+    <h3 id="section3-3">3.3 다중 인스턴스 (NMS)</h3>
+    <p>동일 패턴이 한 이미지에 여러 개 있을 때, 후처리 NMS로 중복을 제거하고 최대 N개를 반환한다.</p>
+    <table>
+        <thead><tr><th>파라미터</th><th>설명</th><th>권장</th></tr></thead>
+        <tbody>
+            <tr><td><code>MaxInstances</code></td><td>반환할 최대 인스턴스 수</td><td>1 ~ 16</td></tr>
+            <tr><td><code>NmsDistanceFactor</code></td><td>NMS 거리 임계비 (템플릿 대각선 × factor)</td><td>0.3 ~ 0.6</td></tr>
+            <tr><td><code>TopCandidates</code></td><td>NMS 전 후보 풀 크기</td><td>MaxInstances × 3 이상</td></tr>
+        </tbody>
+    </table>
+
+    <h3 id="section3-4">3.4 Training Region / Search Region / Fixture</h3>
+    <p>FeatureMatchTool 과 동일 컨셉이다.</p>
+    <div class="mermaid-wrapper">
+        <pre class="mermaid">
+flowchart LR
+    A[Training ROI<br>학습 시에만 사용] --> T[Template]
+    T --> R[Search Region<br>Run 시 검색 범위]
+    R --> M[Match 결과<br>X, Y, Angle, Score]
+    M --> F[Fixture<br>Coordinates 연결]
+    F --> N[후속 도구<br>ROI 자동 이동]
+        </pre>
+        <div class="diagram-title">Figure 2. Training Region · Search Region · Fixture 흐름</div>
+    </div>
+    <div class="warn-box">
+        <strong>주의</strong> — Search Region이 활성화돼도 좌표를 드래그하지 않으면 (0,0,0,0) 으로 저장되어 전체 이미지가 검색된다. 반드시 드래그 후 저장.
+    </div>
+
+    <h3 id="section3-5">3.5 전문가 모드 파라미터</h3>
+    <table>
+        <thead><tr><th>파라미터</th><th>모드</th><th>설명</th></tr></thead>
+        <tbody>
+            <tr><td><code>ScoreThreshold</code></td><td>일반</td><td>매칭 임계값 (0.0 ~ 1.0)</td></tr>
+            <tr><td><code>UseSearchRegion / SearchRegion</code></td><td>일반</td><td>검색 영역 한정</td></tr>
+            <tr><td><code>MaxInstances / NmsDistanceFactor</code></td><td>일반</td><td>다중 인스턴스 검출</td></tr>
+            <tr><td><code>AngleStep</code></td><td>전문가</td><td>회전 스텝(°). 작을수록 정밀·느림</td></tr>
+            <tr><td><code>MinScale / MaxScale / ScaleStep</code></td><td>전문가</td><td>스케일 탐색 범위 (기본 1.0–1.0)</td></tr>
+            <tr><td><code>NumPyramidLevels</code></td><td>전문가</td><td>피라미드 단계(2–4 권장)</td></tr>
+            <tr><td><code>TopCandidates</code></td><td>전문가</td><td>NMS 전 후보 수</td></tr>
+        </tbody>
+    </table>
+
+    <h3 id="section3-6">3.6 성능 튜닝 체크리스트</h3>
+    <ol>
+        <li>Search Region을 가능한 좁힌다 → 1차 효과가 가장 크다.</li>
+        <li>AngleStep을 키운다 (1° → 2° → 3°).</li>
+        <li>NumPyramidLevels을 2 → 3으로 늘린다 (큰 템플릿일수록 효과).</li>
+        <li>스케일 탐색이 불필요하면 <code>MinScale = MaxScale = 1.0</code>.</li>
+        <li>동일 템플릿 반복 사용 — 회전 캐시 자동 적용.</li>
+    </ol>
+
+    <!-- 4. 컬러 도구 -->
+    <h2 id="section4">4. 컬러 도구</h2>
+
+    <h3 id="section4-1">4.1 ColorExtractTool (HSV In-Range)</h3>
+    <p>HSV 색공간의 H/S/V 6개 슬라이더로 정의된 박스 안의 픽셀만 추출하는 도구. 마스크 이미지를 출력하므로 후단 BlobTool과 연결해 개수/면적 검증에 사용한다.</p>
+    <h4>워크플로</h4>
+    <ol class="step-list">
+        <li>컬러 이미지 로드.</li>
+        <li>Tool Palette → <code>Color Extract</code> 추가.</li>
+        <li><strong>Training ROI</strong> 드래그(추출 기준 색 영역).</li>
+        <li><strong>Train from ROI</strong> 클릭 → ROI 내부 HSV 평균 ± 2.5σ 자동 입력.</li>
+        <li>필요 시 H/S/V 슬라이더 미세조정 (전문가 모드에서 노출).</li>
+        <li>(선택) <strong>Use Search Region</strong> + Search Region 지정.</li>
+        <li><strong>Run</strong> → 마스크 오버레이 + Pixel Count 표시.</li>
+    </ol>
+    <h4>주요 파라미터</h4>
+    <table>
+        <thead><tr><th>파라미터</th><th>범위</th><th>의미</th></tr></thead>
+        <tbody>
+            <tr><td><code>HueMin / HueMax</code></td><td>0 – 179</td><td>색상(OpenCV HSV)</td></tr>
+            <tr><td><code>SaturationMin / Max</code></td><td>0 – 255</td><td>채도</td></tr>
+            <tr><td><code>ValueMin / Max</code></td><td>0 – 255</td><td>명도</td></tr>
+            <tr><td><code>MorphKernelSize</code></td><td>1 – 15</td><td>마스크 노이즈 제거 (Open/Close)</td></tr>
+            <tr><td><code>InvertMask</code></td><td>bool</td><td>마스크 반전 출력</td></tr>
+            <tr><td><code>ShowOverlay / OverlayOpacity</code></td><td>bool / 0–1</td><td>결과 이미지 위 표시 옵션</td></tr>
+        </tbody>
+    </table>
+
+    <h3 id="section4-2">4.2 ColorMatchTool (Lab ΔE76)</h3>
+    <p>학습 색 기준의 <strong>Lab 색차(ΔE76)</strong>가 임계 이하인 픽셀을 추출한다. 산업 환경의 동일 색상 재현성 검사에 유리하다.</p>
+    <h4>학습 — 단일 픽셀</h4>
+    <ol class="step-list">
+        <li>Tool 추가 후 <strong>Pick Pixel</strong> 클릭.</li>
+        <li>ImageCanvas 모드가 <code>PickPoint</code>로 전환(십자 커서).</li>
+        <li>기준 색 위치 클릭 → 픽셀 BGR → Lab 변환 후 SelectedModel의 MeanL/A/B 갱신.</li>
+    </ol>
+    <h4>학습 — ROI 평균</h4>
+    <ol class="step-list">
+        <li><strong>Training ROI</strong> 드래그.</li>
+        <li><strong>Train from ROI</strong> → ROI 내부 평균 Lab가 모델에 반영.</li>
+    </ol>
+    <h4>주요 파라미터</h4>
+    <table>
+        <thead><tr><th>파라미터</th><th>권장</th><th>의미</th></tr></thead>
+        <tbody>
+            <tr><td><code>ColorTolerance (ΔE)</code></td><td>5 – 15</td><td>색차 허용. 산업 정밀 검사 8 권장</td></tr>
+            <tr><td><code>MorphKernelSize</code></td><td>1 – 7</td><td>마스크 후처리</td></tr>
+            <tr><td><code>UseSearchRegion</code></td><td>—</td><td>검색 영역 한정</td></tr>
+        </tbody>
+    </table>
+
+    <h3 id="section4-3">4.3 다중 모델 관리</h3>
+    <p>ColorExtract / ColorMatch 모두 한 도구 안에 여러 컬러 모델을 가질 수 있다. 동일 색이 조명·질감에 따라 미세하게 다르게 보일 때 모델을 추가로 등록하면 Run 시 <strong>OR 합집합</strong>으로 결합한다.</p>
+    <ol class="step-list">
+        <li>모델 목록 우측 <strong>+ Add Model</strong> 클릭 → 새 항목 생성.</li>
+        <li>각 모델 선택 후 학습 (픽 또는 ROI).</li>
+        <li>각 항목 <strong>IsEnabled</strong> 체크로 ON/OFF.</li>
+        <li>항목 우측에 학습 색 미니 패치 + 마스크 픽셀 수 인라인 표시.</li>
+    </ol>
+    <div class="highlight-box">
+        한 도구에 <strong>완전 다른 색</strong>을 등록하지 말 것. 그 경우는 도구를 분리해야 결과 해석이 명확하다. 동일 색상의 미세 변형만 같은 도구에 두는 것이 권장 사용 패턴.
+    </div>
+
+    <h3 id="section4-4">4.4 학습 방법 비교</h3>
+    <table>
+        <thead><tr><th>방법</th><th>도구</th><th>장점</th><th>단점</th></tr></thead>
+        <tbody>
+            <tr><td>Train from ROI</td><td>Extract · Match</td><td>여러 픽셀 통계 → 안정</td><td>ROI에 다른 색 섞이면 오염</td></tr>
+            <tr><td>Pick Pixel</td><td>Match</td><td>1픽셀 정밀 지정</td><td>국소 노이즈에 민감</td></tr>
+            <tr><td>수동 슬라이더</td><td>Extract</td><td>임의 범위 지정</td><td>경험 필요</td></tr>
+        </tbody>
+    </table>
+
+    <!-- 5. 3D 포인트클라우드 -->
+    <h2 id="section5">5. 3D 포인트클라우드</h2>
+    <p>3D 카메라(structured light / stereo) 의 출력을 받아 처리하는 파이프라인 도구 3종이다. 입력은 <code>VisionService.CurrentPointCloud</code>(PointCloudData), 출력 역시 같은 슬롯을 갱신해 다음 도구로 전달한다.</p>
+
+    <h3 id="section5-1">5.1 PointCloudFilterTool</h3>
+    <p>다운샘플링과 이상치 제거를 한 도구에서 수행한다.</p>
+    <table>
+        <thead><tr><th>파라미터</th><th>설명</th><th>권장</th></tr></thead>
+        <tbody>
+            <tr><td><code>EnableVoxelGrid</code></td><td>VoxelGrid 다운샘플링 사용 여부</td><td>true</td></tr>
+            <tr><td><code>VoxelSize</code></td><td>복셀 한 변(mm)</td><td>1.0 – 3.0</td></tr>
+            <tr><td><code>EnableSor</code></td><td>Statistical Outlier Removal 사용 여부</td><td>true</td></tr>
+            <tr><td><code>SorK</code></td><td>이웃 점 수(KNN)</td><td>20 – 50</td></tr>
+            <tr><td><code>SorStddev</code></td><td>표준편차 임계</td><td>1.0 – 2.0</td></tr>
+        </tbody>
+    </table>
+    <h4>검증 절차</h4>
+    <ol class="step-list">
+        <li><code>.vpc</code> 포인트클라우드 로드 → 3D 뷰에 포인트 표시.</li>
+        <li>Tool 추가 → 위 파라미터 설정 → Run.</li>
+        <li>결과 패널의 "Filtered Point Count" 가 입력 대비 명확히 감소함을 확인.</li>
+    </ol>
+
+    <h3 id="section5-2">5.2 PointCloudRegistrationTool (ICP)</h3>
+    <p>참조 클라우드(Reference) 와 현재 클라우드의 ICP(Iterative Closest Point) 정합을 수행한다.</p>
+    <table>
+        <thead><tr><th>파라미터</th><th>설명</th></tr></thead>
+        <tbody>
+            <tr><td><code>ReferencePath</code></td><td>정답 .vpc 파일 경로</td></tr>
+            <tr><td><code>MaxIterations</code></td><td>최대 반복 (기본 50)</td></tr>
+            <tr><td><code>Tolerance</code></td><td>수렴 임계 (1e-5 권장)</td></tr>
+            <tr><td><code>ApplyTransformToSource</code></td><td>true 면 정합된 클라우드를 CurrentPointCloud로 갱신</td></tr>
+        </tbody>
+    </table>
+    <h4>출력</h4>
+    <ul>
+        <li>4×4 변환 행렬 (Rotation + Translation)</li>
+        <li>Mean Squared Error</li>
+        <li>수렴 반복 횟수</li>
+    </ul>
+
+    <h3 id="section5-3">5.3 PointCloudClusterTool</h3>
+    <p>Euclidean Clustering 으로 인접 포인트 그룹을 분리한다. 그리드 해싱 + BFS로 구현되어 큰 클라우드도 빠르게 처리한다.</p>
+    <table>
+        <thead><tr><th>파라미터</th><th>설명</th></tr></thead>
+        <tbody>
+            <tr><td><code>Tolerance</code></td><td>같은 클러스터로 인정할 이웃 거리(mm)</td></tr>
+            <tr><td><code>MinPoints / MaxPoints</code></td><td>클러스터 점 수 범위</td></tr>
+            <tr><td><code>MaxReportedClusters</code></td><td>결과 보고 상한</td></tr>
+            <tr><td><code>OutputMode</code></td><td><code>LargestCluster</code> · <code>AllClusters</code> · <code>Report</code></td></tr>
+        </tbody>
+    </table>
+
+    <!-- 6. 딥러닝 분할 -->
+    <h2 id="section6">6. 딥러닝 분할</h2>
+
+    <h3 id="section6-1">6.1 SegmentationTool (Semantic)</h3>
+    <p>ONNX 모델 입력 <code>1×3×H×W</code> → 출력 <code>1×C×H×W</code> 의 채널별 확률 맵에서 argmax 로 클래스 마스크를 만든다.</p>
+    <table>
+        <thead><tr><th>파라미터</th><th>설명</th></tr></thead>
+        <tbody>
+            <tr><td><code>ModelPath</code></td><td>ONNX 파일 경로</td></tr>
+            <tr><td><code>InputSize</code></td><td>학습 시 입력 변(픽셀). 보통 512</td></tr>
+            <tr><td><code>UseImageNetNormalization</code></td><td>학습 정규화 일치 시 true</td></tr>
+            <tr><td><code>BackgroundClass</code></td><td>배경으로 처리할 클래스 ID</td></tr>
+            <tr><td><code>ShowOverlay / OverlayOpacity</code></td><td>오버레이 옵션</td></tr>
+        </tbody>
+    </table>
+
+    <h3 id="section6-2">6.2 YoloSegTool (Instance, YOLOv8-seg)</h3>
+    <p>YOLOv8-seg ONNX 의 후처리 — NMS + mask coef × prototypes + sigmoid — 를 모두 내장한 인스턴스 분할 도구.</p>
+    <table>
+        <thead><tr><th>파라미터</th><th>설명</th><th>기본</th></tr></thead>
+        <tbody>
+            <tr><td><code>ModelPath</code></td><td>YOLOv8-seg ONNX</td><td>—</td></tr>
+            <tr><td><code>InputSize</code></td><td>640</td><td>640</td></tr>
+            <tr><td><code>ConfidenceThreshold</code></td><td>객체 신뢰도</td><td>0.25</td></tr>
+            <tr><td><code>IouThreshold</code></td><td>NMS IoU</td><td>0.45</td></tr>
+            <tr><td><code>MaskThreshold</code></td><td>마스크 이진화</td><td>0.5</td></tr>
+            <tr><td><code>DrawBoxes</code></td><td>박스 표시</td><td>true</td></tr>
+        </tbody>
+    </table>
+
+    <h3 id="section6-3">6.3 ONNX 모델 워밍업</h3>
+    <p>레시피 Load 시 <code>RecipeService.PrefetchDeepLearningModels</code> 가 모든 DL 도구의 ONNX 모델을 백그라운드로 미리 메모리에 적재한다. 따라서 첫 Run의 5초+ 지연이 사실상 사라진다.</p>
+    <div class="mermaid-wrapper">
+        <pre class="mermaid">
+sequenceDiagram
+    participant U as 사용자
+    participant R as RecipeService
+    participant C as OnnxEngineCache
+    participant V as VisionService
+
+    U->>R: LoadRecipe()
+    R->>R: Recipe Steps 순회
+    loop Each DL Tool
+        R->>C: Prefetch{Yolo/Seg/...}(modelPath)
+        C-->>C: 백그라운드 적재
+    end
+    R-->>U: Recipe loaded
+    U->>V: Run
+    V->>C: GetEngine(modelPath)
+    C-->>V: 캐시 hit (즉시 반환)
+    V-->>U: 결과
+        </pre>
+        <div class="diagram-title">Figure 3. ONNX 모델 자동 워밍업 시퀀스</div>
+    </div>
+
+    <!-- 7. UX 개선 -->
+    <h2 id="section7">7. UX 개선</h2>
+
+    <h3 id="section7-1">7.1 HelpIcon 호버 팝업</h3>
+    <p>도구 팔레트의 도구 아이콘 옆 <strong>?</strong> 아이콘 또는 파라미터별 ? 아이콘에 마우스를 올리면 <strong>300 ms 지연 후 팝업</strong>이 열려 한국어 설명을 표시한다.</p>
+    <ul>
+        <li>팝업 본문 클릭 → 윈도우가 확장되어 더 긴 설명 표시.</li>
+        <li>X 버튼 클릭 → 팝업 닫힘.</li>
+        <li>마우스가 아이콘 또는 팝업 안에 있을 때는 닫히지 않는다 (StaysOpen).</li>
+        <li>휠 스크롤로 긴 내용 탐색 가능.</li>
+    </ul>
+
+    <h3 id="section7-2">7.2 ImageCanvas 점 픽업 모드</h3>
+    <p>PR #3 / PR #11c에서 도입된 <code>EditMode.PickPoint</code>. Calibration N-Point 및 ColorMatch Pick Pixel에서 사용된다.</p>
+    <ul>
+        <li>모드 진입 시 십자(crosshair) 커서로 전환.</li>
+        <li>좌클릭 시 <code>PointPicked</code> 이벤트 발생 → 좌표가 VM으로 전달.</li>
+        <li>ESC 또는 모드 종료 버튼으로 복귀.</li>
+    </ul>
+
+    <h3 id="section7-3">7.3 키보드 단축키</h3>
+    <table>
+        <thead><tr><th>단축키</th><th>동작</th></tr></thead>
+        <tbody>
+            <tr><td>← / →</td><td>폴더 로드 시 Previous / Next Image</td></tr>
+            <tr><td>Ctrl + S</td><td>현재 레시피 저장 (메뉴 단축키)</td></tr>
+        </tbody>
+    </table>
+
+    <h3 id="section7-4">7.4 전문가 모드</h3>
+    <p>도구 파라미터 패널 상단 <strong>Expert Mode</strong> 체크박스로 토글한다. 다음 그룹은 체크 시에만 노출된다.</p>
+    <table>
+        <thead><tr><th>도구</th><th>전문가 전용 파라미터</th></tr></thead>
+        <tbody>
+            <tr><td>ShapeMatchTool</td><td>AngleStep · MinScale/MaxScale · NumPyramidLevels · TopCandidates</td></tr>
+            <tr><td>ColorExtractTool</td><td>H/S/V Min·Max 슬라이더</td></tr>
+        </tbody>
+    </table>
+    <div class="highlight-box">
+        Search Region · Score Threshold · Training ROI는 <strong>일반 모드에서도 항상 노출</strong>된다 — 검사 운영 중 자주 조정해야 하기 때문이다.
+    </div>
+
+    <!-- 8. 회귀 테스트 -->
+    <h2 id="section8">8. 회귀 테스트</h2>
+
+    <h3 id="section8-1">8.1 xUnit 프로젝트 — VMS.VisionSetup.Tests</h3>
+    <p>PR #6a에서 도입된 회귀 테스트 인프라. <code>ToolSerializer</code> 의 모든 등록 도구에 대해 자동으로 직렬화 round-trip을 검증한다.</p>
+    <table>
+        <thead><tr><th>테스트 클래스</th><th>검증 항목</th></tr></thead>
+        <tbody>
+            <tr><td><code>ToolSerializerRoundTripTests.CreateTool_ReturnsNonNull</code></td><td>모든 ToolType이 <code>CreateTool</code>로 생성 가능</td></tr>
+            <tr><td><code>ToolSerializerRoundTripTests.RoundTrip_PreservesBaseProperties</code></td><td>Serialize → JSON → Deserialize 후 베이스 프로퍼티 보존</td></tr>
+            <tr><td><code>ToolSerializerRoundTripTests.AllRegisteredToolTypes_CanSerializeAndDeserialize</code></td><td>모든 ToolType이 switch case에 등록되어 있음</td></tr>
+        </tbody>
+    </table>
+    <div class="highlight-box">
+        결과: <strong>63 / 63 tests passed (4.2 s)</strong>. 새 도구 추가 시 <code>ToolSerializer</code> switch case 누락이 즉시 빨간 줄로 드러난다.
+    </div>
+
+    <h3 id="section8-2">8.2 실행 방법</h3>
+<pre><code># 솔루션 루트에서
+dotnet test VMS.VisionSetup.Tests
+
+# 또는 Visual Studio Test Explorer에서 실행
+</code></pre>
+
+    <!-- 9. 샘플 레시피 -->
+    <h2 id="section9">9. 샘플 레시피</h2>
+    <p>두 샘플은 <code>D:\Repo\VMS\docs\sample-recipes\</code> 에 위치한다. <strong>Recipe Manager → Import</strong> 로 가져와 사용한다.</p>
+
+    <h3 id="section9-1">9.1 sample_color_label_inspection.json</h3>
+    <p>오렌지 색상 로고가 정확히 1개 검출되는지 확인하는 시나리오.</p>
+    <div class="mermaid-wrapper">
+        <pre class="mermaid">
+flowchart LR
+    I[Color Image] --> CE[ColorExtractTool<br>HSV Orange]
+    CE -- Image --> B[BlobTool<br>Count == 1]
+    B -- Result --> R[ResultTool<br>AND]
+    R --> V[Verdict]
+        </pre>
+        <div class="diagram-title">Figure 4. Color Label Inspection 파이프라인</div>
+    </div>
+    <h4>검증 시나리오</h4>
+    <table>
+        <thead><tr><th>이미지</th><th>기대 Blob 카운트</th><th>Result</th></tr></thead>
+        <tbody>
+            <tr><td>정상 라벨</td><td>1</td><td><span class="badge badge-new">Pass</span></td></tr>
+            <tr><td>로고 누락/가려짐</td><td>0</td><td><span class="badge badge-cog">Fail</span></td></tr>
+            <tr><td>로고 분리(찢김)</td><td>≥ 2</td><td><span class="badge badge-cog">Fail</span></td></tr>
+        </tbody>
+    </table>
+
+    <h3 id="section9-2">9.2 sample_shape_match_measurement.json</h3>
+    <p>앵커 패턴을 ShapeMatch로 찾고, Caliper로 폭을 측정. ShapeMatch 결과 좌표를 Caliper의 Fixture로 전달한다.</p>
+    <div class="mermaid-wrapper">
+        <pre class="mermaid">
+flowchart LR
+    I[Image] --> SM[ShapeMatchTool<br>Anchor Pattern]
+    SM -- Coordinates --> CA[CaliperTool<br>Width Caliper]
+    SM -- Result --> R[ResultTool]
+    CA -- Result --> R
+        </pre>
+        <div class="diagram-title">Figure 5. ShapeMatch → Caliper 측정 파이프라인</div>
+    </div>
+    <div class="warn-box">
+        샘플 JSON에는 ShapeMatchTool의 <code>TemplatePngBase64</code> 가 포함되지 않는다. Import 후 UI에서 한 번 학습하고 <strong>Save</strong> 해야 실제 동작한다.
+    </div>
+
+    <!-- 10. 부록 -->
+    <h2 id="section10">10. 부록</h2>
+
+    <h3 id="section10-a">부록 A. 도구별 파라미터 매트릭스</h3>
+    <table>
+        <thead><tr><th>도구</th><th>핵심 파라미터</th><th>전문가 모드</th></tr></thead>
+        <tbody>
+            <tr><td><code>ImageRectifyTool</code></td><td>Undistort, ApplyHomography</td><td>—</td></tr>
+            <tr><td><code>ShapeMatchTool</code></td><td>ScoreThreshold, UseSearchRegion, MaxInstances, NmsDistanceFactor</td><td>AngleStep, MinScale/MaxScale, NumPyramidLevels, TopCandidates</td></tr>
+            <tr><td><code>ColorExtractTool</code></td><td>Models[], Training ROI, Search Region, MorphKernelSize</td><td>HueMin/Max, SatMin/Max, ValMin/Max</td></tr>
+            <tr><td><code>ColorMatchTool</code></td><td>Models[], ColorTolerance, MorphKernelSize, Search Region</td><td>MeanL/A/B 직접 입력</td></tr>
+            <tr><td><code>PointCloudFilterTool</code></td><td>EnableVoxelGrid, VoxelSize, EnableSor, SorK, SorStddev</td><td>—</td></tr>
+            <tr><td><code>PointCloudRegistrationTool</code></td><td>ReferencePath, MaxIterations, Tolerance, ApplyTransformToSource</td><td>—</td></tr>
+            <tr><td><code>PointCloudClusterTool</code></td><td>Tolerance, MinPoints, MaxPoints, OutputMode</td><td>—</td></tr>
+            <tr><td><code>SegmentationTool</code></td><td>ModelPath, InputSize, UseImageNetNormalization, BackgroundClass</td><td>—</td></tr>
+            <tr><td><code>YoloSegTool</code></td><td>ModelPath, InputSize, ConfidenceThreshold, IouThreshold, MaskThreshold</td><td>—</td></tr>
+        </tbody>
+    </table>
+
+    <h3 id="section10-b">부록 B. 주요 파일 경로</h3>
+    <table>
+        <thead><tr><th>파일 / 경로</th><th>역할</th></tr></thead>
+        <tbody>
+            <tr><td><code>VMS.VisionSetup/Models/CalibrationMetadata.cs</code></td><td>카메라 매트릭스 + 왜곡계수 + Homography 직렬화 모델</td></tr>
+            <tr><td><code>VMS.VisionSetup/Services/CalibrationService.cs</code></td><td>Checkerboard / N-Point / SingleScale 알고리즘</td></tr>
+            <tr><td><code>VMS.VisionSetup/Views/Calibration/CalibrationManagerWindow.xaml</code></td><td>독립 캘리브레이션 윈도우</td></tr>
+            <tr><td><code>VMS.VisionSetup/VisionTools/Calibration/ImageRectifyTool.cs</code></td><td>왜곡 보정 + Homography 파이프라인 도구</td></tr>
+            <tr><td><code>VMS.VisionSetup/VisionTools/PatternMatching/ShapeMatchTool.cs</code></td><td>NCC 패턴 매칭 + 다중 인스턴스</td></tr>
+            <tr><td><code>VMS.VisionSetup/VisionTools/Color/ColorExtractTool.cs</code></td><td>HSV 다중 모델 추출</td></tr>
+            <tr><td><code>VMS.VisionSetup/VisionTools/Color/ColorMatchTool.cs</code></td><td>Lab ΔE 다중 모델 매칭</td></tr>
+            <tr><td><code>VMS.VisionSetup/VisionTools/PointCloud/PointCloudFilterTool.cs</code></td><td>VoxelGrid + SOR</td></tr>
+            <tr><td><code>VMS.VisionSetup/VisionTools/PointCloud/PointCloudRegistrationTool.cs</code></td><td>ICP 정합</td></tr>
+            <tr><td><code>VMS.VisionSetup/VisionTools/PointCloud/PointCloudClusterTool.cs</code></td><td>Euclidean Clustering</td></tr>
+            <tr><td><code>VMS.VisionSetup/VisionTools/DeepLearning/SegmentationTool.cs</code></td><td>Semantic Segmentation (ONNX)</td></tr>
+            <tr><td><code>VMS.VisionSetup/VisionTools/DeepLearning/YoloSegTool.cs</code></td><td>YOLOv8-seg Instance Segmentation</td></tr>
+            <tr><td><code>VMS.VisionSetup/Services/ToolSerializer.cs</code></td><td>Tool ↔ ToolConfig 직렬화</td></tr>
+            <tr><td><code>VMS.VisionSetup/Services/RecipeService.cs</code></td><td>레시피 CRUD + DL 모델 프리페치</td></tr>
+            <tr><td><code>VMS.VisionSetup/Controls/HelpIcon.xaml.cs</code></td><td>호버 팝업 도움말</td></tr>
+            <tr><td><code>VMS.VisionSetup/Controls/ImageCanvas.xaml.cs</code></td><td>EditMode.PickPoint + PointPicked 이벤트</td></tr>
+            <tr><td><code>VMS.VisionSetup.Tests/ToolSerializerRoundTripTests.cs</code></td><td>xUnit Round-Trip 회귀 테스트</td></tr>
+            <tr><td><code>docs/sample-recipes/sample_color_label_inspection.json</code></td><td>Color 검사 샘플</td></tr>
+            <tr><td><code>docs/sample-recipes/sample_shape_match_measurement.json</code></td><td>패턴 + 측정 샘플</td></tr>
+            <tr><td><code>docs/VMS_VisionTools_Validation_Guide.md</code></td><td>마크다운 검증 가이드</td></tr>
+        </tbody>
+    </table>
+
+    <h3 id="section10-c">부록 C. 트러블슈팅</h3>
+    <table>
+        <thead><tr><th>증상</th><th>원인 / 조치</th></tr></thead>
+        <tbody>
+            <tr><td>Recipe Load 후 ShapeMatchTool이 사라짐</td><td>ToolSerializer 누락 (구버전). PR #9 이후 빌드인지 확인. <code>dotnet test</code> 통과 여부로 검증.</td></tr>
+            <tr><td>Search Region 좌표가 0 으로 저장</td><td>토글만 켜고 드래그를 안 함. 영역 드래그 후 저장 필요.</td></tr>
+            <tr><td>ColorExtract 결과 마스크가 비어있음</td><td>HSV 범위가 너무 좁음. Training ROI 재학습 또는 H/S/V Min 값 완화.</td></tr>
+            <tr><td>ColorMatch가 모든 픽셀을 매칭</td><td>ColorTolerance(ΔE) 가 너무 큼. 5–10 권장.</td></tr>
+            <tr><td>Caliper/CircleFit 결과에 mm 가 없음</td><td>Recipe.Calibration 이 비어 있음. Calibration Manager에서 Apply 필요.</td></tr>
+            <tr><td>ONNX 도구 첫 Run 이 5초+ 소요</td><td>모델 워밍업 진행 중. PR #14 이후 Recipe Load 시 자동 Prefetch 가 동작하므로 두 번째 Run부터 정상.</td></tr>
+            <tr><td>HelpIcon 팝업이 안 뜸</td><td>마우스 오버 300 ms 미만 또는 다른 팝업에 가려짐. 팝업 외 영역 클릭 후 재시도.</td></tr>
+            <tr><td>Calibration Manager 열자 카메라 끊김</td><td>Image Source = <code>Camera</code> 가 카메라를 점유. 운영 중에는 <code>VMS Shared Frame</code> 사용.</td></tr>
+            <tr><td>ShapeMatch 가 SearchRegion 밖에서도 결과를 냄</td><td>PR #8f 이전 빌드. 최신 빌드 사용 + Search Region 드래그 필수.</td></tr>
+        </tbody>
+    </table>
+
+    <h3 id="section10-d">부록 D. Cognex 대응표</h3>
+    <table>
+        <thead><tr><th>Cognex 도구</th><th>VMS 대응 도구</th><th>비고</th></tr></thead>
+        <tbody>
+            <tr><td>CogPMAlignTool (PatMax / PatQuick)</td><td><code>ShapeMatchTool</code></td><td>NCC + 피라미드 + 회전 캐시</td></tr>
+            <tr><td>CogFeatureMatchTool</td><td><code>FeatureMatchTool</code> (기존)</td><td>—</td></tr>
+            <tr><td>CogColorExtractTool</td><td><code>ColorExtractTool</code></td><td>HSV In-Range + 다중 모델</td></tr>
+            <tr><td>CogColorMatchTool</td><td><code>ColorMatchTool</code></td><td>Lab ΔE76</td></tr>
+            <tr><td>CogCalibCheckerboardTool</td><td>Calibration Manager (Checkerboard)</td><td>독립 윈도우</td></tr>
+            <tr><td>CogCalibNPointToNPointTool</td><td>Calibration Manager (N-Point)</td><td>Homography</td></tr>
+            <tr><td>CogUndistortImageTool</td><td><code>ImageRectifyTool</code></td><td>파이프라인 도구</td></tr>
+            <tr><td>CogCaliperTool (Calibration Space)</td><td><code>CaliperTool</code> (PR #5 이후)</td><td>mm 동시 출력</td></tr>
+            <tr><td>VisionPro 3D Filter</td><td><code>PointCloudFilterTool</code></td><td>VoxelGrid + SOR</td></tr>
+            <tr><td>VisionPro 3D Align</td><td><code>PointCloudRegistrationTool</code></td><td>ICP</td></tr>
+            <tr><td>VisionPro 3D Cluster</td><td><code>PointCloudClusterTool</code></td><td>Euclidean</td></tr>
+            <tr><td>ViDi Blue Locate / Red Analyze (Semantic)</td><td><code>SegmentationTool</code></td><td>ONNX argmax</td></tr>
+            <tr><td>ViDi Red Analyze (Instance)</td><td><code>YoloSegTool</code></td><td>YOLOv8-seg ONNX</td></tr>
+        </tbody>
+    </table>
+
+    <!-- 문서 끝 -->
+    <div class="doc-footer">
+        <table>
+            <thead><tr><th>항목</th><th>내용</th></tr></thead>
+            <tbody>
+                <tr><td>작성일</td><td>2026-05-15</td></tr>
+                <tr><td>작성자</td><td>VMS 개발팀</td></tr>
+                <tr><td>승인자</td><td>-</td></tr>
+                <tr><td>문서 버전</td><td>1.0</td></tr>
+                <tr><td>관련 문서</td><td>docs/VMS_VisionTools_Validation_Guide.md</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<!-- Back to Top 버튼 -->
+<button class="back-to-top" id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8593;</button>
+
+<script>
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'base',
+        themeVariables: {
+            fontFamily: 'Pretendard, Noto Sans KR, sans-serif',
+            fontSize: '13px',
+            primaryColor: '#dbeafe',
+            primaryTextColor: '#1e3a5f',
+            primaryBorderColor: '#3b82f6',
+            secondaryColor: '#e0f2fe',
+            secondaryTextColor: '#1e3a5f',
+            secondaryBorderColor: '#60a5fa',
+            tertiaryColor: '#f0f9ff',
+            tertiaryTextColor: '#1e3a5f',
+            tertiaryBorderColor: '#93c5fd',
+            lineColor: '#3b82f6',
+            textColor: '#1e3a5f',
+            entityBorder: '#3b82f6',
+            entityBkg: '#eff6ff',
+            entityTextColor: '#1e3a5f',
+            attributeBackgroundColorEven: '#f8fafc',
+            attributeBackgroundColorOdd: '#eff6ff',
+            labelColor: '#1e3a5f',
+            altBackground: '#e0f2fe',
+            noteBkgColor: '#fef3c7',
+            noteTextColor: '#92400e',
+            noteBorderColor: '#f59e0b'
+        },
+        flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis', padding: 16 },
+        sequence: { useMaxWidth: true, showSequenceNumbers: true }
+    });
+
+    window.addEventListener('scroll', function() {
+        const btn = document.getElementById('backToTop');
+        btn.style.display = window.scrollY > 300 ? 'flex' : 'none';
+    });
+
+    window.addEventListener('scroll', function() {
+        const sections = document.querySelectorAll('h2[id], h3[id]');
+        const navLinks = document.querySelectorAll('.sidebar nav a');
+        let current = '';
+        sections.forEach(section => {
+            if (window.scrollY >= section.offsetTop - 60) current = section.getAttribute('id');
+        });
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === '#' + current) link.classList.add('active');
+        });
+    });
+</script>
+
+</body>
+</html>
