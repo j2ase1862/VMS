@@ -772,7 +772,7 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                         Cv2.Rectangle(overlay,
                             new Point(SearchRegion.X, SearchRegion.Y),
                             new Point(SearchRegion.X + SearchRegion.Width, SearchRegion.Y + SearchRegion.Height),
-                            new Scalar(255, 255, 0), 2);
+                            new Scalar(0, 255, 255), 2);
                         result.OverlayImage = overlay;
                     }
                 }
@@ -1372,7 +1372,7 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                 Cv2.Rectangle(overlay,
                     new Point(SearchRegion.X, SearchRegion.Y),
                     new Point(SearchRegion.X + SearchRegion.Width, SearchRegion.Y + SearchRegion.Height),
-                    new Scalar(255, 255, 0), 2);
+                    new Scalar(0, 255, 255), 2);
             }
 
             return overlay;

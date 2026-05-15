@@ -5,6 +5,7 @@ using VMS.VisionSetup.Interfaces;
 using VMS.VisionSetup.Models;
 
 using VMS.VisionSetup.Views;
+using VMS.VisionSetup.Views.Calibration;
 using VMS.VisionSetup.Views.Camera;
 using VMS.VisionSetup.Views.Recipe;
 using VMS.VisionSetup.Views.Sequence;
@@ -89,6 +90,13 @@ namespace VMS.VisionSetup.Services
         public void ShowCameraManagerDialog()
         {
             var window = new CameraManagerWindow(_cameraService, this);
+            window.Owner = Application.Current.MainWindow;
+            window.ShowDialog();
+        }
+
+        public void ShowCalibrationManagerDialog()
+        {
+            var window = new CalibrationManagerWindow(_recipeService, this);
             window.Owner = Application.Current.MainWindow;
             window.ShowDialog();
         }

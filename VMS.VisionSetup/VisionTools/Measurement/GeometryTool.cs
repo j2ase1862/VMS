@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using VMS.VisionSetup.Models;
+using VMS.VisionSetup.Services;
 
 namespace VMS.VisionSetup.VisionTools.Measurement
 {
@@ -175,6 +176,13 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             result.Data["PointBX"] = ptB.Value.X;
             result.Data["PointBY"] = ptB.Value.Y;
 
+            var calPP = VisionService.Instance.CurrentCalibrationMetadata;
+            AddCoordMm(result, "PointAX", "PointAY", calPP);
+            AddCoordMm(result, "PointBX", "PointBY", calPP);
+            AddLengthMm(result, "Distance", calPP);
+            AddLengthMm(result, "DeltaX", calPP);
+            AddLengthMm(result, "DeltaY", calPP);
+
             // 시각화: 두 점 사이 거리선
             Cv2.Line(overlay,
                 new Point((int)ptA.Value.X, (int)ptA.Value.Y),
@@ -234,6 +242,12 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             result.Data["PointY"] = qy;
             result.Data["SignedDistance"] = cross;
 
+            var calPL = VisionService.Instance.CurrentCalibrationMetadata;
+            AddCoordMm(result, "FootX", "FootY", calPL);
+            AddCoordMm(result, "PointX", "PointY", calPL);
+            AddLengthMm(result, "Distance", calPL);
+            AddLengthMm(result, "SignedDistance", calPL);
+
             // 시각화: 수선
             Cv2.Line(overlay,
                 new Point((int)qx, (int)qy),
@@ -289,6 +303,11 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             result.Data["FootAX"] = footAX;
             result.Data["FootAY"] = footAY;
             result.Data["ParallelAngle"] = parallelAngle;
+
+            var calLL = VisionService.Instance.CurrentCalibrationMetadata;
+            AddCoordMm(result, "FootAX", "FootAY", calLL);
+            AddLengthMm(result, "Distance", calLL);
+            AddLengthMm(result, "SignedDistance", calLL);
 
             // 시각화: 수선 (B 기준점 → A 직선 위 수선의 발)
             Cv2.Line(overlay,
@@ -376,6 +395,10 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             result.Data["CenterX"] = ix;
             result.Data["CenterY"] = iy;
 
+            var calLI = VisionService.Instance.CurrentCalibrationMetadata;
+            AddCoordMm(result, "IntersectionX", "IntersectionY", calLI);
+            AddCoordMm(result, "CenterX", "CenterY", calLI);
+
             // 시각화
             Cv2.Circle(overlay, new Point((int)ix, (int)iy), 6, new Scalar(0, 255, 0), -1);
             Cv2.DrawMarker(overlay, new Point((int)ix, (int)iy),
@@ -443,6 +466,11 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 result.Data["Intersection2Y"] = iy2;
             }
 
+            var calCI = VisionService.Instance.CurrentCalibrationMetadata;
+            AddCoordMm(result, "Intersection1X", "Intersection1Y", calCI);
+            if (intersectionCount == 2)
+                AddCoordMm(result, "Intersection2X", "Intersection2Y", calCI);
+
             // 시각화
             Cv2.Circle(overlay, new Point((int)ix1, (int)iy1), 5, new Scalar(0, 255, 0), -1);
             if (intersectionCount == 2)
@@ -477,6 +505,14 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             result.Data["CenterBX"] = b.X;
             result.Data["CenterBY"] = b.Y;
             result.Data["RadiusB"] = b.Radius;
+
+            var calCC = VisionService.Instance.CurrentCalibrationMetadata;
+            AddCoordMm(result, "CenterAX", "CenterAY", calCC);
+            AddCoordMm(result, "CenterBX", "CenterBY", calCC);
+            AddLengthMm(result, "CenterDistance", calCC);
+            AddLengthMm(result, "EdgeDistance", calCC);
+            AddLengthMm(result, "RadiusA", calCC);
+            AddLengthMm(result, "RadiusB", calCC);
 
             // 시각화: 중심 간 거리선
             Cv2.Line(overlay,
@@ -679,7 +715,17 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 "FootAX", "FootAY", "ParallelAngle",
                 "CenterDistance", "EdgeDistance",
                 "IntersectionCount", "Intersection1X", "Intersection1Y",
-                "Intersection2X", "Intersection2Y"
+                "Intersection2X", "Intersection2Y",
+                // 캘리브레이션 적용 시 채워지는 mm 키
+                "DistanceMm", "DeltaXMm", "DeltaYMm", "SignedDistanceMm",
+                "CenterDistanceMm", "EdgeDistanceMm",
+                "PointAXMm", "PointAYMm", "PointBXMm", "PointBYMm",
+                "FootXMm", "FootYMm", "PointXMm", "PointYMm",
+                "FootAXMm", "FootAYMm",
+                "IntersectionXMm", "IntersectionYMm", "CenterXMm", "CenterYMm",
+                "Intersection1XMm", "Intersection1YMm", "Intersection2XMm", "Intersection2YMm",
+                "CenterAXMm", "CenterAYMm", "CenterBXMm", "CenterBYMm",
+                "RadiusAMm", "RadiusBMm"
             };
         }
 

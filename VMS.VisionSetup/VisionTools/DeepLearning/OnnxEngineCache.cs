@@ -27,6 +27,8 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         private static readonly ConcurrentDictionary<string, Task<YoloOnnxEngine>> _yolo = new();
         private static readonly ConcurrentDictionary<string, Task<ClassifierOnnxEngine>> _cls = new();
         private static readonly ConcurrentDictionary<string, Task<AnomalyOnnxEngine>> _anom = new();
+        private static readonly ConcurrentDictionary<string, Task<SegmentationOnnxEngine>> _seg = new();
+        private static readonly ConcurrentDictionary<string, Task<YoloSegOnnxEngine>> _yoloSeg = new();
 
         // ── YOLO (DetectionTool) ──
 
@@ -123,6 +125,68 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
             return engine;
         }
 
+        // ── Segmentation (SegmentationTool) ──
+
+        public static void PrefetchSegmentation(string modelPath, int inputSize = 512, bool useImageNet = true)
+        {
+            if (!IsValidPath(modelPath)) return;
+            _seg.GetOrAdd(modelPath, p => Task.Run(() => CreateSegmentation(p, inputSize, useImageNet)));
+        }
+
+        public static SegmentationOnnxEngine GetSegmentation(string modelPath, int inputSize = 512, bool useImageNet = true)
+        {
+            if (!IsValidPath(modelPath))
+                return new SegmentationOnnxEngine(modelPath);
+
+            var task = _seg.GetOrAdd(modelPath, p => Task.Run(() => CreateSegmentation(p, inputSize, useImageNet)));
+            return task.GetAwaiter().GetResult();
+        }
+
+        private static SegmentationOnnxEngine CreateSegmentation(string modelPath, int inputSize, bool useImageNet)
+        {
+            var sw = Stopwatch.StartNew();
+            var engine = new SegmentationOnnxEngine(modelPath);
+            try
+            {
+                using var dummy = new Mat(inputSize, inputSize, MatType.CV_8UC3, Scalar.All(0));
+                engine.Segment(dummy, inputSize, inputSize, useImageNet);
+            }
+            catch (Exception ex) { Debug.WriteLine($"[OnnxCache] Segmentation warmup failed: {ex.Message}"); }
+            Debug.WriteLine($"[OnnxCache] Segmentation loaded {Path.GetFileName(modelPath)} in {sw.ElapsedMilliseconds}ms (EP: {engine.ActiveProvider})");
+            return engine;
+        }
+
+        // ── YoloSeg (YoloSegTool) ──
+
+        public static void PrefetchYoloSeg(string modelPath, int inputSize = 640)
+        {
+            if (!IsValidPath(modelPath)) return;
+            _yoloSeg.GetOrAdd(modelPath, p => Task.Run(() => CreateYoloSeg(p, inputSize)));
+        }
+
+        public static YoloSegOnnxEngine GetYoloSeg(string modelPath, int inputSize = 640)
+        {
+            if (!IsValidPath(modelPath))
+                return new YoloSegOnnxEngine(modelPath);
+
+            var task = _yoloSeg.GetOrAdd(modelPath, p => Task.Run(() => CreateYoloSeg(p, inputSize)));
+            return task.GetAwaiter().GetResult();
+        }
+
+        private static YoloSegOnnxEngine CreateYoloSeg(string modelPath, int inputSize)
+        {
+            var sw = Stopwatch.StartNew();
+            var engine = new YoloSegOnnxEngine(modelPath);
+            try
+            {
+                using var dummy = new Mat(inputSize, inputSize, MatType.CV_8UC3, Scalar.All(0));
+                engine.Segment(dummy, inputSize, 0.25f, 0.45f, 0.5f);
+            }
+            catch (Exception ex) { Debug.WriteLine($"[OnnxCache] YoloSeg warmup failed: {ex.Message}"); }
+            Debug.WriteLine($"[OnnxCache] YoloSeg loaded {Path.GetFileName(modelPath)} in {sw.ElapsedMilliseconds}ms (EP: {engine.ActiveProvider})");
+            return engine;
+        }
+
         // ── 공통 ──
 
         private static bool IsValidPath(string? modelPath)
@@ -134,6 +198,8 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
             DisposeAll(_yolo);
             DisposeAll(_cls);
             DisposeAll(_anom);
+            DisposeAll(_seg);
+            DisposeAll(_yoloSeg);
         }
 
         private static void DisposeAll<T>(ConcurrentDictionary<string, Task<T>> dict) where T : IDisposable

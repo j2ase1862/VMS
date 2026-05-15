@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 
@@ -78,11 +79,63 @@ namespace VMS.Core.Models.Annotation
             set => SetProperty(ref _modifiedAt, value);
         }
 
+        private string _lastOnnxModelPath = string.Empty;
+        /// <summary>
+        /// 마지막 학습 결과 ONNX 모델 경로. Inference Mode 자동 복원용.
+        /// 학습 완료 시 TrainingStatus.OnnxOutputPath를 저장하고, 데이터셋 다시 로드할 때 참조.
+        /// </summary>
+        public string LastOnnxModelPath
+        {
+            get => _lastOnnxModelPath;
+            set => SetProperty(ref _lastOnnxModelPath, value);
+        }
+
+        private List<string> _lastTrainedImageIds = new();
+        /// <summary>
+        /// 마지막 학습에 사용된 이미지 ID 스냅샷.
+        /// 학습 후 추가/삭제된 이미지를 식별해 "미학습" 카운트 계산에 사용.
+        /// </summary>
+        public List<string> LastTrainedImageIds
+        {
+            get => _lastTrainedImageIds;
+            set => SetProperty(ref _lastTrainedImageIds, value);
+        }
+
+        private DateTime? _lastTrainedAt;
+        /// <summary>마지막 학습 완료 시각. null 이면 한 번도 학습 안 됨.</summary>
+        public DateTime? LastTrainedAt
+        {
+            get => _lastTrainedAt;
+            set => SetProperty(ref _lastTrainedAt, value);
+        }
+
         public int TotalImages => Images.Count;
         public int LabeledImages => Images.Count(i => i.IsLabeled);
         public int TotalLabels => Images.Sum(i => i.Labels.Count);
         public int TrainCount => Images.Count(i => i.Split == DataSplit.Train);
         public int ValidationCount => Images.Count(i => i.Split == DataSplit.Validation);
+
+        /// <summary>마지막 학습에 포함됐고 현재도 데이터셋에 남아있는 이미지 수.</summary>
+        public int TrainedImagesCount
+        {
+            get
+            {
+                if (LastTrainedImageIds.Count == 0) return 0;
+                var trainedSet = new HashSet<string>(LastTrainedImageIds);
+                return Images.Count(i => trainedSet.Contains(i.Id));
+            }
+        }
+
+        /// <summary>학습 후 추가됐거나 한 번도 학습 안 된 이미지 수 (라벨 유무 무관).</summary>
+        public int UnTrainedImagesCount
+        {
+            get
+            {
+                if (LastTrainedImageIds.Count == 0) return Images.Count;
+                var trainedSet = new HashSet<string>(LastTrainedImageIds);
+                return Images.Count(i => !trainedSet.Contains(i.Id));
+            }
+        }
 
         public void RefreshStatistics()
         {
@@ -91,6 +144,8 @@ namespace VMS.Core.Models.Annotation
             OnPropertyChanged(nameof(TotalLabels));
             OnPropertyChanged(nameof(TrainCount));
             OnPropertyChanged(nameof(ValidationCount));
+            OnPropertyChanged(nameof(TrainedImagesCount));
+            OnPropertyChanged(nameof(UnTrainedImagesCount));
         }
     }
 }

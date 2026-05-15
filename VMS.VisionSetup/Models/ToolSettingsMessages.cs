@@ -25,6 +25,8 @@ namespace VMS.VisionSetup.Models
     public sealed class RequestClearROIMessage { }
     public sealed class RequestDrawSearchRegionMessage { }
     public sealed class RequestClearSearchRegionMessage { }
+    /// <summary>이미지에서 한 픽셀 픽 모드 활성화 요청. MainView가 ImageCanvas의 EditMode.PickPoint 전환.</summary>
+    public sealed class RequestPickColorMessage { }
 
     // ViewModel-level messages (handled by MainViewModel)
     public sealed class RequestTrainPatternMessage { }

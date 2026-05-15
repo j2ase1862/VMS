@@ -80,3 +80,25 @@ Desktop.ini
 *.exp
 *.lib
 !NativeVision/NativeVision.dll
+
+## DeepLearning — model weights & datasets (never commit; too large / per-user)
+*.onnx
+*.pt
+*.pth
+*.weights
+*.h5
+*.pkl
+*.safetensors
+VMS.DeepLearning/images/
+VMS.DeepLearning/labels/
+VMS.DeepLearning/models/
+VMS.DeepLearning/train/
+VMS.DeepLearning/val/
+VMS.DeepLearning/datasets/
+VMS.DeepLearning/runs/
+VMS.DeepLearning/data.yaml
+VMS.DeepLearning/scripts/images/
+VMS.DeepLearning/scripts/labels/
+VMS.DeepLearning/scripts/train/
+VMS.DeepLearning/scripts/val/
+VMS.DeepLearning/scripts/data.yaml

@@ -1,4 +1,5 @@
 using VMS.VisionSetup.Models;
+using VMS.VisionSetup.Services;
 using OpenCvSharp;
 using System;
 using System.Collections.Generic;
@@ -274,6 +275,12 @@ namespace VMS.VisionSetup.VisionTools.Measurement
 
                 result.OutputImage = grayImage;
                 result.OverlayImage = overlayImage;
+
+                // 캘리브레이션이 있으면 mm 키 추가
+                var cal = VisionService.Instance.CurrentCalibrationMetadata;
+                AddCoordMm(result, "CenterX", "CenterY", cal);
+                AddLengthMm(result, "Radius", cal);
+                AddLengthMm(result, "Diameter", cal);
             }
             catch (Exception ex)
             {
@@ -543,7 +550,9 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             return new List<string>
             {
                 "Success", "FoundCount", "CenterX", "CenterY", "Radius",
-                "Diameter", "FitError", "InlierCount"
+                "Diameter", "FitError", "InlierCount",
+                // 캘리브레이션 적용 시 채워지는 mm 키
+                "CenterXMm", "CenterYMm", "RadiusMm", "DiameterMm"
             };
         }
 
