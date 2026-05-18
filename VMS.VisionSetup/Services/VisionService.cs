@@ -415,6 +415,41 @@ namespace VMS.VisionSetup.Services
                         int h = tool.FixtureBaseROI.Height > 0 ? tool.FixtureBaseROI.Height : 100;
                         tool.ROI = new Rect((int)(newCX - w / 2.0), (int)(newCY - h / 2.0), w, h);
                         tool.UseROI = true;
+
+                        // SearchRegion(Execute용)도 같은 delta로 시프트.
+                        // ShapeMatch/Color*/OCV처럼 Training Region과 별도 Search Region을 갖는 도구에 적용.
+                        if (tool is ISearchRegionTool srt && srt.UseSearchRegion
+                            && srt.SearchRegion.Width > 0 && srt.SearchRegion.Height > 0)
+                        {
+                            if (!tool.HasFixtureBaseSearchRegion)
+                            {
+                                tool.FixtureBaseSearchRegion = srt.SearchRegion;
+                                tool.HasFixtureBaseSearchRegion = true;
+                            }
+
+                            double srBaseCX = tool.FixtureBaseSearchRegion.X + tool.FixtureBaseSearchRegion.Width / 2.0;
+                            double srBaseCY = tool.FixtureBaseSearchRegion.Y + tool.FixtureBaseSearchRegion.Height / 2.0;
+
+                            double newSrCX, newSrCY;
+                            if (Math.Abs(deltaAngle) > 0.01)
+                            {
+                                double srRelX = srBaseCX - refX;
+                                double srRelY = srBaseCY - refY;
+                                double rad2 = deltaAngle * Math.PI / 180.0;
+                                newSrCX = foundX + srRelX * Math.Cos(rad2) - srRelY * Math.Sin(rad2);
+                                newSrCY = foundY + srRelX * Math.Sin(rad2) + srRelY * Math.Cos(rad2);
+                            }
+                            else
+                            {
+                                newSrCX = srBaseCX + (foundX - refX);
+                                newSrCY = srBaseCY + (foundY - refY);
+                            }
+
+                            int sw = tool.FixtureBaseSearchRegion.Width;
+                            int sh = tool.FixtureBaseSearchRegion.Height;
+                            srt.SearchRegion = new Rect(
+                                (int)(newSrCX - sw / 2.0), (int)(newSrCY - sh / 2.0), sw, sh);
+                        }
                     }
                     // Fallback: BoundingRect
                     else if (sourceResult.Data.TryGetValue("BoundingRect", out var rectObj) && rectObj is Rect boundingRect)

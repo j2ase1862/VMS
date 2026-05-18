@@ -12,9 +12,68 @@ namespace VMS.VisionSetup.VisionTools.Identification
     /// 각 문자가 학습 폰트와 일치하는지 검증. Cognex OcrMax의 Verify 모드 대응.
     /// 입력 이미지 → 이진화 → Connected Components 분할 → 문자별 라이브러리 매칭 → 개별 점수.
     /// </summary>
-    public class OCVTool : VisionToolBase
+    public class OCVTool : VisionToolBase, ISearchRegionTool
     {
         public FontLibrary FontLibrary { get; private set; } = new();
+
+        // ── Search Region (Training Region과 분리) ──
+        // 의미:
+        //   UseROI / ROI*                   → Training Region (TrainFromImage가 사용)
+        //   UseSearchRegion / SearchRegion* → Search Region   (Execute가 사용)
+        // ShapeMatchTool / FeatureMatchTool과 동일 컨셉.
+
+        private Rect _searchRegion;
+        public Rect SearchRegion
+        {
+            get => _searchRegion;
+            set
+            {
+                if (SetProperty(ref _searchRegion, value))
+                {
+                    if (!IsFixtureTransformActive)
+                        HasFixtureBaseSearchRegion = false;
+                    OnPropertyChanged(nameof(SearchRegionX));
+                    OnPropertyChanged(nameof(SearchRegionY));
+                    OnPropertyChanged(nameof(SearchRegionWidth));
+                    OnPropertyChanged(nameof(SearchRegionHeight));
+                }
+            }
+        }
+        public int SearchRegionX
+        {
+            get => _searchRegion.X;
+            set { SearchRegion = new Rect(value, _searchRegion.Y, _searchRegion.Width, _searchRegion.Height); }
+        }
+        public int SearchRegionY
+        {
+            get => _searchRegion.Y;
+            set { SearchRegion = new Rect(_searchRegion.X, value, _searchRegion.Width, _searchRegion.Height); }
+        }
+        public int SearchRegionWidth
+        {
+            get => _searchRegion.Width;
+            set { SearchRegion = new Rect(_searchRegion.X, _searchRegion.Y, value, _searchRegion.Height); }
+        }
+        public int SearchRegionHeight
+        {
+            get => _searchRegion.Height;
+            set { SearchRegion = new Rect(_searchRegion.X, _searchRegion.Y, _searchRegion.Width, value); }
+        }
+
+        private bool _useSearchRegion;
+        public bool UseSearchRegion
+        {
+            get => _useSearchRegion;
+            set => SetProperty(ref _useSearchRegion, value);
+        }
+
+        // 캔버스에 표시된 SearchRegion ROIShape 참조 (도구 전환 시 복원용)
+        private ROIShape? _associatedSearchRegionShape;
+        public ROIShape? AssociatedSearchRegionShape
+        {
+            get => _associatedSearchRegionShape;
+            set => SetProperty(ref _associatedSearchRegionShape, value);
+        }
 
         // ── 분할 파라미터 ──
 
@@ -116,8 +175,27 @@ namespace VMS.VisionSetup.VisionTools.Identification
 
             try
             {
-                Mat workImage = GetROIImage(inputImage);
-                ApplyShapeMaskInPlace(workImage, inputImage, Scalar.White);
+                // Execute는 SearchRegion 사용 (Training Region과 분리).
+                // SearchRegion 미사용 시 전체 이미지를 검색 영역으로.
+                Mat workImage;
+                int searchOffsetX = 0, searchOffsetY = 0;
+                if (UseSearchRegion)
+                {
+                    var adj = GetAdjustedSearchRegion(inputImage);
+                    if (adj.Width <= 0 || adj.Height <= 0)
+                    {
+                        result.Success = false;
+                        result.Message = "Search Region이 유효하지 않습니다.";
+                        return result;
+                    }
+                    workImage = new Mat(inputImage, adj);
+                    searchOffsetX = adj.X;
+                    searchOffsetY = adj.Y;
+                }
+                else
+                {
+                    workImage = inputImage.Clone();
+                }
 
                 try
                 {
@@ -174,7 +252,8 @@ namespace VMS.VisionSetup.VisionTools.Identification
                     if (DrawOverlay)
                     {
                         Mat overlay = GetColorOverlayBase(inputImage);
-                        DrawOverlayGraphics(overlay, inputImage, segments, readChars, perCharScores, expectedSet, lengthMatch);
+                        DrawOverlayGraphics(overlay, segments, readChars, perCharScores,
+                            expectedSet, lengthMatch, searchOffsetX, searchOffsetY);
                         result.OverlayImage = overlay;
                     }
                     result.OutputImage = inputImage.Clone();
@@ -235,13 +314,10 @@ namespace VMS.VisionSetup.VisionTools.Identification
             return rects;
         }
 
-        private void DrawOverlayGraphics(Mat overlay, Mat inputImage, List<Rect> segments,
-            List<string> chars, List<double> scores, bool expectedSet, bool lengthMatch)
+        private void DrawOverlayGraphics(Mat overlay, List<Rect> segments,
+            List<string> chars, List<double> scores, bool expectedSet, bool lengthMatch,
+            int ox, int oy)
         {
-            var adjustedROI = GetAdjustedROI(inputImage);
-            int ox = UseROI ? adjustedROI.X : 0;
-            int oy = UseROI ? adjustedROI.Y : 0;
-
             for (int i = 0; i < segments.Count; i++)
             {
                 var s = segments[i];
@@ -263,6 +339,27 @@ namespace VMS.VisionSetup.VisionTools.Identification
             }
         }
 
+        /// <summary>
+        /// SearchRegion을 이미지 영역과 교집합으로 정규화 (음수 width 등 보정).
+        /// GetAdjustedROI와 동일 로직.
+        /// </summary>
+        private Rect GetAdjustedSearchRegion(Mat inputImage)
+        {
+            int x1 = _searchRegion.X;
+            int y1 = _searchRegion.Y;
+            int x2 = _searchRegion.X + _searchRegion.Width;
+            int y2 = _searchRegion.Y + _searchRegion.Height;
+            int minX = Math.Min(x1, x2);
+            int maxX = Math.Max(x1, x2);
+            int minY = Math.Min(y1, y2);
+            int maxY = Math.Max(y1, y2);
+            int sx = Math.Clamp(minX, 0, inputImage.Width);
+            int sy = Math.Clamp(minY, 0, inputImage.Height);
+            int ex = Math.Clamp(maxX, 0, inputImage.Width);
+            int ey = Math.Clamp(maxY, 0, inputImage.Height);
+            return new Rect(sx, sy, ex - sx, ey - sy);
+        }
+
         public override List<string> GetAvailableResultKeys() => new()
         {
             "Success", "ReadString", "CharCount", "GoodCharCount", "BadCharCount",
@@ -282,7 +379,9 @@ namespace VMS.VisionSetup.VisionTools.Identification
                 InvertImage = this.InvertImage,
                 MatchThreshold = this.MatchThreshold,
                 ExpectedText = this.ExpectedText,
-                DrawOverlay = this.DrawOverlay
+                DrawOverlay = this.DrawOverlay,
+                UseSearchRegion = this.UseSearchRegion,
+                SearchRegion = this.SearchRegion
             };
             // 폰트 라이브러리 깊은 복사 (PNG bytes는 immutable로 취급)
             foreach (var t in FontLibrary.Templates)

@@ -431,7 +431,7 @@ namespace VMS.VisionSetup.Models
                 Parameters = new Dictionary<string, string>
                 {
                     // Engine
-                    ["OcrEngine"] = "OCR 엔진 선택:\n• Tesseract: Tesseract 5 LSTM 기반 (세밀한 설정 가능, tessdata 필요)\n• PPOcrOnnx: PP-OCRv4 ONNX Runtime 기반 (한글/산업용 텍스트에 강력, 자동 모델 다운로드)\n\nPP-OCR ONNX는 자체 전처리를 수행하므로 Preprocessing 설정이 적용되지 않습니다.",
+                    ["OcrEngine"] = "OCR 엔진 선택:\n• Tesseract: Tesseract 5 LSTM 기반 (tessdata 필요, 세밀한 전처리/PSM 제어)\n• PPOcrOnnx: PP-OCRv4 ONNX Runtime 기반 (모델 자동 다운로드, 자체 전처리, 산업용 우수)\n\n──────────────────\n엔진별 강약 (산업 라벨 기준)\n──────────────────\n\n[PPOcrOnnx 권장 — 대부분의 산업 케이스]\n• DB Detection 모델이 텍스트 영역을 먼저 자동으로 찾고 → CRNN 인식 → 노이즈/배경 면역\n• PP-OCRv4는 SynthText, ICDAR, MTWI 등 대규모 산업/다국어 데이터셋으로 학습\n• 회전, 원근, 저대비, 이질 폰트(스텐실, 도트 매트릭스, 임프린트)에 강건\n• 흰배경/검은배경 자동 처리 (Invert 불필요)\n• 자체 전처리 수행 — Auto Preprocess/Invert/Denoise/Target Height 설정 무시\n• Char Whitelist + Output Format으로 산업용 검증 완성\n\n[Tesseract — 제한적 사용]\n• 학습 분포: 주로 문서 스캔 (책, 신문, 폼). 산업 폰트는 학습 분포 밖\n• Detection 단계 없음 — 입력 전체를 텍스트로 가정. ROI에 테두리/잡음 섞이면 line finder 실패\n• 검은 글자 + 흰 배경 + 30~40px 이상 글자 높이가 사실상 전제\n• Otsu 이진화가 ideal ratio(20%)에 못 맞추는 백/흑 반전 라벨에 약함\n• 유리한 케이스: 깨끗한 영문 문서 스캔, Times/Arial/Courier 단순 폰트, 단일 단어 (PSM=SingleWord) + 매우 tight한 ROI\n• 한글/일본어 일부 케이스에서 PP-OCR 사전 부족 시 대안\n\n[더 강력한 검증이 필요할 때]\n• OCV (Optical Character Verification) 도구 — 학습된 폰트 라이브러리로 문자 단위 NCC 매칭. 정해진 폰트의 PASS/FAIL 검증에 최적.",
 
                     // Detection
                     ["Language"] = "OCR 인식 언어:\n• English: 영어 (eng)\n• Korean: 한국어 (kor)\n• Japanese: 일본어 (jpn)\n• ChineseSimplified: 중국어 간체 (chi_sim)\n• EnglishKorean: 영어+한국어 동시 인식 (eng+kor)",
@@ -446,6 +446,10 @@ namespace VMS.VisionSetup.Models
                     ["TargetTextHeight"] = "목표 문자 높이(px). 이미지의 문자가 이 높이보다 작으면 자동으로 확대합니다.\nTesseract는 30~40px 이상의 문자 높이에서 최적 성능을 발휘합니다.\n• 기본값: 40\n• 0: 스케일업 비활성화\n• 최대 4배까지 확대",
                     ["DenoiseLevel"] = "노이즈 제거 강도. 이진화 전에 GaussianBlur를 적용하여 픽셀 노이즈를 제거합니다.\n문자 외곽선이 부드러워져 인식률이 향상됩니다.\n• 0: 없음\n• 1: 약 (3x3 커널, 기본값)\n• 2: 중 (5x5 커널)\n• 3: 강 (7x7 커널)\n\n강한 노이즈 제거는 얇은 문자를 훼손할 수 있으므로 주의하세요.",
                     ["DotMatrixMode"] = "도트 매트릭스 모드. 도트 프린트로 인쇄된 끊어진 문자를 연결합니다.\n• 활성화: 팽창(Dilation)으로 인접 도트를 연결 → 오프닝으로 잔여 노이즈 제거\n• 유통기한 도트 마킹, 잉크젯 인쇄 등에 효과적입니다.\n• 일반 인쇄 문자에는 비활성화하세요 (문자가 두꺼워져 인식률 저하 가능).",
+
+                    // Output Format
+                    ["FormatPreset"] = "결과 형식 프리셋. 산업 라벨에서 자주 쓰는 날짜/시간/LOT 패턴을 자동 적용해 모델 오인식 (예: '/' → '7')을 위치 기반으로 강제 보정합니다.\n\n토큰 규칙:\n• D/M/Y/H/S/f = 숫자 자리 (해당 자리가 숫자가 아니면 매칭 실패)\n• L = 영문자, A = 영숫자, ? = 임의\n• 그 외 모든 char (/, -, :, ., 공백 등) = 리터럴. OCR이 무엇을 봤든 그 자리에 강제 치환\n\n예: DD/MM/YYYY 프리셋 + OCR 결과 '31703/2099' → 위치 2의 '7'이 '/'로 강제 치환 → '31/03/2099'.\n\n매칭 실패 시 원본 텍스트 그대로 반환 (RawText 키에도 노출). 자유 텍스트는 'None' 선택 또는 'Custom' + 빈 입력.",
+                    ["CustomOutputFormat"] = "Custom 선택 시 직접 입력하는 패턴 목록 (한 줄에 하나).\n여러 패턴이 있으면 길이 긴 순으로 시도되어 첫 매칭 성공 패턴이 채택됩니다.\n\n예시:\nDD/MM/YYYY HH:MM:SS.fff\nDD/MM/YYYY HH:MM:SS\nDD/MM/YYYY HH:MM\nDD/MM/YYYY",
 
                     // Verification
                     ["EnableVerification"] = "텍스트 검증 활성화. 인식된 텍스트를 ExpectedText와 비교하여 PASS/FAIL 판정합니다.\n비활성화 시 문자가 인식되고 신뢰도가 충분하면 항상 Success입니다.",
@@ -573,7 +577,12 @@ namespace VMS.VisionSetup.Models
                 CognexEquivalent = "CogOCRMaxTool (Verify Mode), CogOCRMaxFontTool",
                 Parameters = new Dictionary<string, string>
                 {
-                    ["KnownString"] = "Train 시 사용할 정답 문자열. ROI 내부 분할 segments와 1:1 대응됩니다.\n예: \"ABC123\" → 6개 문자로 분할되어야 학습 성공.\n분할 개수가 다르면 분할 파라미터(Min/Max Height/Width) 조정 또는 ROI 재설정.",
+                    ["KnownString"] = "Train 시 사용할 정답 문자열. Training Region 내부 분할 segments와 1:1 대응됩니다.\n예: \"ABC123\" → 6개 문자로 분할되어야 학습 성공.\n분할 개수가 다르면 분할 파라미터(Min/Max Height/Width) 조정 또는 Training Region 재설정.",
+                    ["UseSearchRegion"] = "검색 영역 사용 여부. Execute 단계에서 문자를 검색할 영역을 Training Region과 분리해서 지정.\n• 비활성: 전체 이미지에서 검색\n• 활성: SearchRegion(X/Y/W/H)으로 지정한 사각형만 검색\n\n학습은 정해진 위치(라벨 인쇄 표본)에서 하고, 검증은 매번 다른 위치의 라벨(컨베이어 위 등)에서 하는 워크플로우에 필수. FeatureMatchTool로 fixture 보정 후 SearchRegion을 위치 보정해도 좋음.",
+                    ["SearchRegionX"] = "검색 영역 좌상단 X 좌표 (픽셀).",
+                    ["SearchRegionY"] = "검색 영역 좌상단 Y 좌표 (픽셀).",
+                    ["SearchRegionWidth"] = "검색 영역 너비 (픽셀).",
+                    ["SearchRegionHeight"] = "검색 영역 높이 (픽셀).",
                     ["InvertImage"] = "이진화 후 흰=배경/검=문자인 경우 활성화.\n기본은 흰 배경 + 검은 문자. 통계로 자동 판정하므로 대부분 비활성화로 동작합니다.",
                     ["MinCharHeight"] = "분할된 컴포넌트 최소 높이(px). 이 미만은 노이즈로 간주하여 무시.",
                     ["MaxCharHeight"] = "분할된 컴포넌트 최대 높이(px). 이를 초과하면 배경 영역으로 간주하여 무시.",

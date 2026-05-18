@@ -227,5 +227,44 @@ namespace VMS.VisionSetup.Tests
             _out.WriteLine($"\nLOT hit: {lotHit}/{files.Length}");
             _out.WriteLine($"EXP hit: {expHit}/{files.Length}");
         }
+
+        /// <summary>
+        /// FormatPreset DateDmy 적용 시 EXP "31/03/2099"가 정확히 추출되는지 검증.
+        /// PP-OCR가 '/'를 '7'로 misread하더라도 리터럴 강제 치환으로 복원되어야 함.
+        /// </summary>
+        [Fact]
+        public void Ocr_FormatPreset_DateDmy_ExtractsExpExactly()
+        {
+            if (!Directory.Exists(ImageFolder)) { _out.WriteLine("SKIP"); return; }
+
+            var files = Directory.GetFiles(ImageFolder, "*.jpg").OrderBy(f => f).ToArray();
+            int exactHit = 0;
+
+            foreach (var path in files)
+            {
+                using var img = Cv2.ImRead(path, ImreadModes.Color);
+                if (img.Empty()) continue;
+
+                var tool = new OCRTool
+                {
+                    OcrEngine = OcrEngineType.PPOcrOnnx,
+                    MaxSideLen = 1600,
+                    ConfidenceThreshold = 30,
+                    CharacterWhitelist = "0123456789/",
+                    FormatPreset = OcrOutputFormatPreset.DateDmy,
+                    DrawOverlay = false
+                };
+                var result = tool.Execute(img);
+                string text = result.Data.TryGetValue("RecognizedText", out var t) ? t?.ToString() ?? "" : "";
+                string raw = result.Data.TryGetValue("RawText", out var r) ? r?.ToString() ?? "" : "";
+                bool matched = result.Data.TryGetValue("FormatMatched", out var m) && m is bool b && b;
+                bool exact = text.Contains("31/03/2099");
+                if (exact) exactHit++;
+                _out.WriteLine($"{Path.GetFileName(path)}: exact={(exact ? "Y" : "N")} matched={matched}");
+                _out.WriteLine($"  raw       : \"{raw.Replace("\n", " ")}\"");
+                _out.WriteLine($"  formatted : \"{text.Replace("\n", " ")}\"");
+            }
+            _out.WriteLine($"\n31/03/2099 exact: {exactHit}/{files.Length}");
+        }
     }
 }

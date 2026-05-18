@@ -1,4 +1,7 @@
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
+using OpenCvSharp;
+using VMS.VisionSetup.Models;
 using VMS.VisionSetup.Services;
 using VMS.VisionSetup.VisionTools.Identification;
 
@@ -13,7 +16,30 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
             TrainCommand = new RelayCommand(Train);
             ClearLibraryCommand = new RelayCommand(ClearLibrary);
             RemoveCharCommand = new RelayCommand<string>(RemoveChar);
+
+            DrawSearchRegionCommand = new RelayCommand(() =>
+                WeakReferenceMessenger.Default.Send(new RequestDrawSearchRegionMessage()));
+            ClearSearchRegionCommand = new RelayCommand(() =>
+            {
+                UseSearchRegion = false;
+                SearchRegion = new Rect();
+                WeakReferenceMessenger.Default.Send(new RequestClearSearchRegionMessage());
+            });
         }
+
+        /// <summary>Train Region(UseROI)과 Search Region(UseSearchRegion)을 자체 UI로 분리.</summary>
+        public override bool HasCustomROISection => true;
+
+        // ── Search Region ──
+        public bool UseSearchRegion { get => TypedTool.UseSearchRegion; set { TypedTool.UseSearchRegion = value; OnPropertyChanged(); } }
+        public Rect SearchRegion { get => TypedTool.SearchRegion; set { TypedTool.SearchRegion = value; OnPropertyChanged(); } }
+        public int SearchRegionX { get => TypedTool.SearchRegionX; set { TypedTool.SearchRegionX = value; OnPropertyChanged(); } }
+        public int SearchRegionY { get => TypedTool.SearchRegionY; set { TypedTool.SearchRegionY = value; OnPropertyChanged(); } }
+        public int SearchRegionWidth { get => TypedTool.SearchRegionWidth; set { TypedTool.SearchRegionWidth = value; OnPropertyChanged(); } }
+        public int SearchRegionHeight { get => TypedTool.SearchRegionHeight; set { TypedTool.SearchRegionHeight = value; OnPropertyChanged(); } }
+
+        public IRelayCommand DrawSearchRegionCommand { get; }
+        public IRelayCommand ClearSearchRegionCommand { get; }
 
         // Segmentation
         public int MinCharHeight { get => TypedTool.MinCharHeight; set { TypedTool.MinCharHeight = value; OnPropertyChanged(); } }

@@ -6,6 +6,7 @@
              xmlns:ocr="clr-namespace:VMS.VisionSetup.VisionTools.Identification">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
+        <conv:EnumDescriptionConverter x:Key="EnumDesc"/>
     </UserControl.Resources>
     <StackPanel>
         <!-- Engine Selection -->
@@ -117,6 +118,52 @@
                 <controls:CheckBoxParameter Label="Dot Matrix Mode"
                     IsChecked="{Binding DotMatrixMode}"
                     ToolType="OCRTool" ParameterName="DotMatrixMode"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- Output Format -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Output Format" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="0,5,0,0">
+                <StackPanel Orientation="Horizontal" Margin="0,5,0,2">
+                    <TextBlock Text="Format Preset" Foreground="LightGray" FontSize="12"
+                               VerticalAlignment="Center"/>
+                    <controls:HelpIcon ToolType="OCRTool" ParameterName="FormatPreset"
+                                       Margin="5,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+                <ComboBox ItemsSource="{conv:EnumValues {x:Type ocr:OcrOutputFormatPreset}}"
+                          SelectedItem="{Binding FormatPreset}"
+                          Background="White" Foreground="Black" BorderBrush="#AAAAAA"
+                          Margin="0,0,0,5">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Converter={StaticResource EnumDesc}}"/>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <!-- 직접 입력 선택 시만 노출. 멀티라인 — 여러 패턴 줄바꿈 구분 -->
+                <StackPanel Visibility="{Binding IsCustomFormat, Converter={StaticResource BoolToVisConverter}}">
+                    <TextBlock Text="Custom Patterns (한 줄에 하나)"
+                               Foreground="LightGray" FontSize="12" Margin="0,6,0,2"/>
+                    <TextBox Text="{Binding CustomOutputFormat, UpdateSourceTrigger=PropertyChanged}"
+                             AcceptsReturn="True" TextWrapping="NoWrap"
+                             VerticalScrollBarVisibility="Auto"
+                             MinHeight="60" MaxHeight="120"
+                             FontFamily="Consolas"
+                             Background="White" Foreground="Black"
+                             BorderBrush="#AAAAAA" Padding="5,3" Margin="0,0,0,5"/>
+                </StackPanel>
+
+                <TextBlock Foreground="#999999" FontSize="11" Margin="0,2,0,2">
+                    <Run Text="적용 패턴: "/>
+                    <Run Text="{Binding EffectivePattern, Mode=OneWay}"
+                         Foreground="#00BFFF" FontFamily="Consolas"/>
+                </TextBlock>
+                <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,0"
+                           Text="토큰: D/M/Y/H/S/f=숫자, L=영문자, A=영숫자, ?=임의. 그 외 모든 char(/, -, :, . 등)는 리터럴로 그 자리에 강제 치환됩니다. PP-OCR의 '/' ↔ '7' 오인식 보정 등에 사용."/>
             </StackPanel>
         </Expander>
 

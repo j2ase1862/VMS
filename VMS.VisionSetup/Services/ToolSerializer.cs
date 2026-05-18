@@ -302,6 +302,8 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["CustomDetModelPath"] = ocr.CustomDetModelPath;
                     config.Parameters["CustomRecModelPath"] = ocr.CustomRecModelPath;
                     config.Parameters["CustomDictPath"] = ocr.CustomDictPath;
+                    config.Parameters["FormatPreset"] = ocr.FormatPreset.ToString();
+                    config.Parameters["CustomOutputFormat"] = ocr.CustomOutputFormat;
                     break;
 
                 case OCVTool ocv:
@@ -312,6 +314,11 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["MatchThreshold"] = ocv.MatchThreshold;
                     config.Parameters["ExpectedText"] = ocv.ExpectedText;
                     config.Parameters["DrawOverlay"] = ocv.DrawOverlay;
+                    config.Parameters["UseSearchRegion"] = ocv.UseSearchRegion;
+                    config.Parameters["SearchRegionX"] = ocv.SearchRegionX;
+                    config.Parameters["SearchRegionY"] = ocv.SearchRegionY;
+                    config.Parameters["SearchRegionWidth"] = ocv.SearchRegionWidth;
+                    config.Parameters["SearchRegionHeight"] = ocv.SearchRegionHeight;
                     config.Parameters["FontLibraryJson"] = ocv.FontLibrary.ToJson();
                     break;
 
@@ -1190,6 +1197,11 @@ namespace VMS.VisionSetup.Services
                 tool.CustomRecModelPath = GetString(crm);
             if (p.TryGetValue("CustomDictPath", out var cdp))
                 tool.CustomDictPath = GetString(cdp);
+            if (p.TryGetValue("FormatPreset", out var fp) &&
+                Enum.TryParse<OcrOutputFormatPreset>(GetString(fp), true, out var preset))
+                tool.FormatPreset = preset;
+            if (p.TryGetValue("CustomOutputFormat", out var cof))
+                tool.CustomOutputFormat = GetString(cof);
 
             return tool;
         }
@@ -1206,6 +1218,12 @@ namespace VMS.VisionSetup.Services
             if (p.TryGetValue("MatchThreshold", out var mt)) tool.MatchThreshold = GetDouble(mt);
             if (p.TryGetValue("ExpectedText", out var et)) tool.ExpectedText = GetString(et);
             if (p.TryGetValue("DrawOverlay", out var dov)) tool.DrawOverlay = GetBool(dov);
+            if (p.TryGetValue("UseSearchRegion", out var usr)) tool.UseSearchRegion = GetBool(usr);
+            int sx = p.TryGetValue("SearchRegionX", out var srx) ? GetInt(srx) : 0;
+            int sy = p.TryGetValue("SearchRegionY", out var sry) ? GetInt(sry) : 0;
+            int sw = p.TryGetValue("SearchRegionWidth", out var srw) ? GetInt(srw) : 0;
+            int sh = p.TryGetValue("SearchRegionHeight", out var srh) ? GetInt(srh) : 0;
+            tool.SearchRegion = new Rect(sx, sy, sw, sh);
             if (p.TryGetValue("FontLibraryJson", out var fl))
             {
                 var loaded = FontLibrary.FromJson(GetString(fl));

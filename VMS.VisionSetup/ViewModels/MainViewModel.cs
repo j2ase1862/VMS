@@ -1583,6 +1583,24 @@ namespace VMS.VisionSetup.ViewModels
 
                 StatusMessage = $"Search Region 설정됨: ({cm.SearchRegion.X}, {cm.SearchRegion.Y}, {cm.SearchRegion.Width}, {cm.SearchRegion.Height})";
             }
+            else if (SelectedVisionTool is OCVTool ocv)
+            {
+                _isSyncingROI = true;
+                try
+                {
+                    ocv.SearchRegion = roi.GetBoundingRect();
+                    ocv.UseSearchRegion = true;
+                    ocv.AssociatedSearchRegionShape = roi;
+                }
+                finally
+                {
+                    _isSyncingROI = false;
+                }
+
+                WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(ocv.AssociatedROIShape));
+
+                StatusMessage = $"Search Region 설정됨: ({ocv.SearchRegion.X}, {ocv.SearchRegion.Y}, {ocv.SearchRegion.Width}, {ocv.SearchRegion.Height})";
+            }
         }
 
         /// <summary>
@@ -1628,6 +1646,16 @@ namespace VMS.VisionSetup.ViewModels
                 cm.AssociatedSearchRegionShape = null;
 
                 WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(cm.AssociatedROIShape));
+
+                StatusMessage = "Search Region이 해제되었습니다.";
+            }
+            else if (SelectedVisionTool is OCVTool ocv)
+            {
+                ocv.UseSearchRegion = false;
+                ocv.SearchRegion = new CvRect();
+                ocv.AssociatedSearchRegionShape = null;
+
+                WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(ocv.AssociatedROIShape));
 
                 StatusMessage = "Search Region이 해제되었습니다.";
             }

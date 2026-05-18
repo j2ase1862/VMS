@@ -16,7 +16,7 @@ namespace VMS.VisionSetup.VisionTools.Color
     /// Execute는 활성 모델들의 inRange 결과를 OR로 합산.
     /// Training Region(UseROI)에서 SelectedModel을 학습. Search Region(UseSearchRegion)에서 매칭 수행.
     /// </summary>
-    public class ColorExtractTool : VisionToolBase
+    public class ColorExtractTool : VisionToolBase, ISearchRegionTool
     {
         // ── 모델 컬렉션 ──
         public ObservableCollection<ColorModel> Models { get; } = new();
@@ -124,6 +124,8 @@ namespace VMS.VisionSetup.VisionTools.Color
             {
                 if (SetProperty(ref _searchRegion, value))
                 {
+                    if (!IsFixtureTransformActive)
+                        HasFixtureBaseSearchRegion = false;
                     OnPropertyChanged(nameof(SearchRegionX));
                     OnPropertyChanged(nameof(SearchRegionY));
                     OnPropertyChanged(nameof(SearchRegionWidth));
