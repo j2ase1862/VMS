@@ -172,7 +172,12 @@ namespace VMS.VisionSetup.Tests
                 _out.WriteLine($"{Path.GetFileName(path)}: {(ok ? "PASS" : "FAIL")} | " +
                     $"{GetVal(result.Data, "DecodedText")} | " +
                     $"Grade={GetVal(result.Data, "OverallGrade")} | " +
-                    $"PPM={GetVal(result.Data, "PixelsPerModule")}");
+                    $"N={GetVal(result.Data, "SymbolSize")} | " +
+                    $"PPM={GetVal(result.Data, "PixelsPerModule")} | " +
+                    $"SC={GetVal(result.Data, "SymbolContrast")} | " +
+                    $"MOD={GetVal(result.Data, "Modulation")} | " +
+                    $"FPD={GetVal(result.Data, "FixedPatternDamage")} | " +
+                    $"AN={GetVal(result.Data, "AxialNonuniformity")}");
             }
             _out.WriteLine($"\n{success}/{files.Length} PASS");
             Assert.True(success >= files.Length * 9 / 10,

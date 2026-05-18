@@ -189,6 +189,8 @@ namespace VMS.VisionSetup.VisionTools.CodeReading
                                 code.Points = code.Points
                                     .Select(p => new Point2f(p.X + rect.X, p.Y + rect.Y))
                                     .ToArray();
+                                // Locator bbox를 grader corner 재추정 hint로 전달
+                                code.BoundingBox = rect;
                                 codes.Add(code);
                             }
                         }
@@ -235,13 +237,14 @@ namespace VMS.VisionSetup.VisionTools.CodeReading
                     if (EnableQualityGrading && codes.Count > 0)
                     {
                         var dm = codes.FirstOrDefault(c =>
-                            c.Format.Equals("DATA_MATRIX", StringComparison.OrdinalIgnoreCase) && c.Points.Length >= 3);
+                            c.Format.Equals("DATA_MATRIX", StringComparison.OrdinalIgnoreCase)
+                            && (c.BoundingBox.HasValue || c.Points.Length >= 3));
                         if (dm != null)
                         {
                             using Mat gray = workImage.Channels() > 1
                                 ? workImage.CvtColor(ColorConversionCodes.BGR2GRAY)
                                 : workImage.Clone();
-                            quality = DataMatrixQualityGrader.Grade(gray, dm.Points, decoded: true);
+                            quality = DataMatrixQualityGrader.Grade(gray, dm.BoundingBox, dm.Points, decoded: true);
                             result.Data["OverallGrade"] = quality.OverallGrade.ToString();
                             result.Data["SymbolContrast"] = quality.SymbolContrast;
                             result.Data["Modulation"] = quality.Modulation;
