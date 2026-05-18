@@ -48,7 +48,6 @@
 
                 <controls:TextBoxParameter Label="Char Whitelist"
                     Value="{Binding CharacterWhitelist}"
-                    Visibility="{Binding IsTesseract, Converter={StaticResource BoolToVisConverter}}"
                     ToolType="OCRTool" ParameterName="CharacterWhitelist"/>
 
                 <!-- PP-OCR ONNX info -->

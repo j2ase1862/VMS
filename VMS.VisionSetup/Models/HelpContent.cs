@@ -437,7 +437,7 @@ namespace VMS.VisionSetup.Models
                     ["Language"] = "OCR 인식 언어:\n• English: 영어 (eng)\n• Korean: 한국어 (kor)\n• Japanese: 일본어 (jpn)\n• ChineseSimplified: 중국어 간체 (chi_sim)\n• EnglishKorean: 영어+한국어 동시 인식 (eng+kor)",
                     ["PageSegMode"] = "페이지 분할 모드 (텍스트 레이아웃 해석 방법):\n• Auto: 자동 감지\n• SingleBlock: 단일 텍스트 블록 (기본 문서)\n• SingleLine: 단일 라인 (시리얼 번호 등)\n• SingleWord: 단일 단어\n• SingleChar: 단일 문자\n• VerticalBlock: 세로 텍스트",
                     ["EngineMode"] = "OCR 엔진 모드:\n• LstmOnly: LSTM 신경망만 사용 (기본, 정확도 우선)\n• Combined: Legacy + LSTM 결합 (호환성)\n• LegacyOnly: 기존 Tesseract 엔진 (속도 우선)",
-                    ["CharacterWhitelist"] = "인식 허용 문자 제한. 빈 문자열이면 모든 문자를 인식합니다.\n\n예시:\n• \"0123456789\": 숫자만 인식\n• \"0123456789ABCDEF\": 16진수 문자만\n• \"0123456789-/\": 날짜 형식 (2024-01/15)",
+                    ["CharacterWhitelist"] = "인식 허용 문자 제한. 빈 문자열이면 모든 문자를 인식합니다.\nTesseract와 PP-OCR 모두 지원.\n\n예시:\n• \"0123456789\": 숫자만 인식\n• \"0123456789ABCDEF\": 16진수 문자만\n• \"0123456789-/\": 날짜 형식 (2024-01/15)\n\n주요 효과:\n• '/' ↔ '7', 'O' ↔ '0', 'l' ↔ '1' 같은 시각적 혼동 차단\n• 산업용 시리얼/LOT/날짜에 strongly 추천",
                     ["ConfidenceThreshold"] = "최소 신뢰도 임계값 (0~100%).\n이 값 미만의 인식 결과는 무시됩니다.\n• 기본값: 40%\n• 높일수록 오인식 감소, 미인식 증가",
 
                     // Preprocessing

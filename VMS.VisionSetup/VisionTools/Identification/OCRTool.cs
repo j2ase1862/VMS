@@ -500,6 +500,7 @@ namespace VMS.VisionSetup.VisionTools.Identification
                     string.IsNullOrEmpty(CustomDictPath) ? null : CustomDictPath)
                 : new PaddleOcrOnnxEngine();
             _onnxEngine.MaxSideLen = MaxSideLen;
+            _onnxEngine.WhitelistChars = CharacterWhitelist; // 빈 문자열이면 전체 사전 허용
 
             var ocrResults = _onnxEngine.Run(workImage);
 
