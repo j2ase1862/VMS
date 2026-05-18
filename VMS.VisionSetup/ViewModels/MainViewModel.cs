@@ -706,6 +706,7 @@ namespace VMS.VisionSetup.ViewModels
             // Identification 카테고리
             var identification = new ToolCategory { CategoryName = "Identification" };
             identification.Tools.Add(new ToolItem { Name = "OCR", ToolType = "OCRTool" });
+            identification.Tools.Add(new ToolItem { Name = "OCV", ToolType = "OCVTool" });
             ToolTree.Add(identification);
 
             // Code Reading 카테고리
@@ -2786,6 +2787,7 @@ namespace VMS.VisionSetup.ViewModels
                 Geometry3DTool t => new Geometry3DToolSettingsViewModel(t),
                 ResultTool t => new ResultToolSettingsViewModel(t),
                 OCRTool t => new OCRToolSettingsViewModel(t),
+                OCVTool t => new OCVToolSettingsViewModel(t),
                 CodeReaderTool t => new CodeReaderToolSettingsViewModel(t),
                 DetectionTool t => new DetectionToolSettingsViewModel(t),
                 ClassifyTool t => new ClassifyToolSettingsViewModel(t),

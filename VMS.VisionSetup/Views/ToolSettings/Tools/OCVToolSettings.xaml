@@ -1,0 +1,96 @@
+<UserControl x:Class="VMS.VisionSetup.Views.ToolSettings.Tools.OCVToolSettings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls">
+    <StackPanel>
+        <!-- Train -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Font Library Training" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,6"
+                           Text="1) ROI에 텍스트를 배치. 2) Known String에 동일 문자를 입력. 3) Train 클릭. 분할 개수가 글자 수와 일치해야 학습됩니다."/>
+
+                <TextBlock Foreground="#999999" FontSize="11" Margin="0,2,0,2">
+                    <Run Text="Status: "/>
+                    <Run Text="{Binding TrainStatus, Mode=OneWay}" Foreground="#00BFFF" FontWeight="Bold"/>
+                </TextBlock>
+                <TextBlock Foreground="#999999" FontSize="11" Margin="0,2,0,2">
+                    <Run Text="Library: "/>
+                    <Run Text="{Binding LibraryCount, Mode=OneWay}" Foreground="White" FontWeight="Bold"/>
+                    <Run Text=" templates"/>
+                </TextBlock>
+                <TextBlock Foreground="#999999" FontSize="11" Margin="0,2,0,6" TextWrapping="Wrap">
+                    <Run Text="Chars: "/>
+                    <Run Text="{Binding LibraryChars, Mode=OneWay}" Foreground="#FFCC66" FontFamily="Consolas"/>
+                </TextBlock>
+
+                <controls:TextBoxParameter Label="Known String"
+                    Value="{Binding KnownString, UpdateSourceTrigger=PropertyChanged}"
+                    ToolType="OCVTool" ParameterName="KnownString"/>
+
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                    <Button Content="Train" Command="{Binding TrainCommand}"
+                            Background="#007ACC" Foreground="White" BorderThickness="0"
+                            Padding="12,4" Margin="0,0,8,0" Cursor="Hand"/>
+                    <Button Content="Clear Library" Command="{Binding ClearLibraryCommand}"
+                            Background="#555555" Foreground="White" BorderThickness="0"
+                            Padding="12,4" Cursor="Hand"/>
+                </StackPanel>
+            </StackPanel>
+        </Expander>
+
+        <!-- Segmentation -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Segmentation" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:CheckBoxParameter Label="Invert Image"
+                    IsChecked="{Binding InvertImage}"
+                    ToolType="OCVTool" ParameterName="InvertImage"/>
+                <controls:SliderParameter Label="Min Char Height"
+                    Value="{Binding MinCharHeight}" Minimum="2" Maximum="200"
+                    TickFrequency="2" ValueFormat="F0"
+                    ToolType="OCVTool" ParameterName="MinCharHeight"/>
+                <controls:SliderParameter Label="Max Char Height"
+                    Value="{Binding MaxCharHeight}" Minimum="10" Maximum="500"
+                    TickFrequency="10" ValueFormat="F0"
+                    ToolType="OCVTool" ParameterName="MaxCharHeight"/>
+                <controls:SliderParameter Label="Min Char Width"
+                    Value="{Binding MinCharWidth}" Minimum="1" Maximum="100"
+                    TickFrequency="1" ValueFormat="F0"
+                    ToolType="OCVTool" ParameterName="MinCharWidth"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- Matching -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Matching" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:SliderParameter Label="Match Threshold"
+                    Value="{Binding MatchThreshold}" Minimum="0" Maximum="1"
+                    TickFrequency="0.05" ValueFormat="F2"
+                    ToolType="OCVTool" ParameterName="MatchThreshold"/>
+                <controls:TextBoxParameter Label="Expected Text (optional)"
+                    Value="{Binding ExpectedText, UpdateSourceTrigger=PropertyChanged}"
+                    ToolType="OCVTool" ParameterName="ExpectedText"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- Display -->
+        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Display" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:CheckBoxParameter Label="Draw Overlay"
+                    IsChecked="{Binding DrawOverlay}"
+                    ToolType="OCVTool" ParameterName="DrawOverlay"/>
+            </StackPanel>
+        </Expander>
+    </StackPanel>
+</UserControl>

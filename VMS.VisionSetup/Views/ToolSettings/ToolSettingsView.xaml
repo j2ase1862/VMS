@@ -61,6 +61,9 @@
         <DataTemplate x:Key="OCRTemplate" DataType="{x:Type vm:OCRToolSettingsViewModel}">
             <tools:OCRToolSettings/>
         </DataTemplate>
+        <DataTemplate x:Key="OCVTemplate" DataType="{x:Type vm:OCVToolSettingsViewModel}">
+            <tools:OCVToolSettings/>
+        </DataTemplate>
         <DataTemplate x:Key="DetectionTemplate" DataType="{x:Type vm:DetectionToolSettingsViewModel}">
             <tools:DetectionToolSettings/>
         </DataTemplate>
@@ -126,6 +129,7 @@
             CodeReaderTemplate="{StaticResource CodeReaderTemplate}"
             GeometryTemplate="{StaticResource GeometryTemplate}"
             OCRTemplate="{StaticResource OCRTemplate}"
+            OCVTemplate="{StaticResource OCVTemplate}"
             DetectionTemplate="{StaticResource DetectionTemplate}"
             ClassifyTemplate="{StaticResource ClassifyTemplate}"
             AnomalyTemplate="{StaticResource AnomalyTemplate}"

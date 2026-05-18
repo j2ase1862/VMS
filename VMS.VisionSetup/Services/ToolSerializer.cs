@@ -251,10 +251,14 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["CodeReaderMode"] = codeReader.CodeReaderMode.ToString();
                     config.Parameters["MaxCodeCount"] = codeReader.MaxCodeCount;
                     config.Parameters["TryHarder"] = codeReader.TryHarder;
+                    config.Parameters["UseLocalization"] = codeReader.UseLocalization;
                     config.Parameters["EnableVerification"] = codeReader.EnableVerification;
                     config.Parameters["ExpectedText"] = codeReader.ExpectedText;
                     config.Parameters["UseRegexMatch"] = codeReader.UseRegexMatch;
                     config.Parameters["DrawOverlay"] = codeReader.DrawOverlay;
+                    config.Parameters["ParseGs1"] = codeReader.ParseGs1;
+                    config.Parameters["EnableQualityGrading"] = codeReader.EnableQualityGrading;
+                    config.Parameters["MinPassGrade"] = codeReader.MinPassGrade.ToString();
                     break;
 
                 case GeometryTool geom:
@@ -298,6 +302,17 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["CustomDetModelPath"] = ocr.CustomDetModelPath;
                     config.Parameters["CustomRecModelPath"] = ocr.CustomRecModelPath;
                     config.Parameters["CustomDictPath"] = ocr.CustomDictPath;
+                    break;
+
+                case OCVTool ocv:
+                    config.Parameters["MinCharHeight"] = ocv.MinCharHeight;
+                    config.Parameters["MaxCharHeight"] = ocv.MaxCharHeight;
+                    config.Parameters["MinCharWidth"] = ocv.MinCharWidth;
+                    config.Parameters["InvertImage"] = ocv.InvertImage;
+                    config.Parameters["MatchThreshold"] = ocv.MatchThreshold;
+                    config.Parameters["ExpectedText"] = ocv.ExpectedText;
+                    config.Parameters["DrawOverlay"] = ocv.DrawOverlay;
+                    config.Parameters["FontLibraryJson"] = ocv.FontLibrary.ToJson();
                     break;
 
                 case DetectionTool detection:
@@ -551,6 +566,7 @@ namespace VMS.VisionSetup.Services
                 "PlaneFitTool" => DeserializePlaneFitTool(config),
                 "Geometry3DTool" => DeserializeGeometry3DTool(config),
                 "OCRTool" => DeserializeOCRTool(config),
+                "OCVTool" => DeserializeOCVTool(config),
                 "DetectionTool" => DeserializeDetectionTool(config),
                 "ClassifyTool" => DeserializeClassifyTool(config),
                 "AnomalyTool" => DeserializeAnomalyTool(config),
@@ -1058,6 +1074,8 @@ namespace VMS.VisionSetup.Services
                 tool.MaxCodeCount = GetInt(mcc);
             if (p.TryGetValue("TryHarder", out var th))
                 tool.TryHarder = GetBool(th);
+            if (p.TryGetValue("UseLocalization", out var ulc))
+                tool.UseLocalization = GetBool(ulc);
             if (p.TryGetValue("EnableVerification", out var ev))
                 tool.EnableVerification = GetBool(ev);
             if (p.TryGetValue("ExpectedText", out var et))
@@ -1066,6 +1084,13 @@ namespace VMS.VisionSetup.Services
                 tool.UseRegexMatch = GetBool(urm);
             if (p.TryGetValue("DrawOverlay", out var dov))
                 tool.DrawOverlay = GetBool(dov);
+            if (p.TryGetValue("ParseGs1", out var pgs))
+                tool.ParseGs1 = GetBool(pgs);
+            if (p.TryGetValue("EnableQualityGrading", out var eqg))
+                tool.EnableQualityGrading = GetBool(eqg);
+            if (p.TryGetValue("MinPassGrade", out var mpg) &&
+                Enum.TryParse<CodeQualityGrade>(GetString(mpg), true, out var grade))
+                tool.MinPassGrade = grade;
 
             return tool;
         }
@@ -1166,6 +1191,27 @@ namespace VMS.VisionSetup.Services
             if (p.TryGetValue("CustomDictPath", out var cdp))
                 tool.CustomDictPath = GetString(cdp);
 
+            return tool;
+        }
+
+        private static OCVTool DeserializeOCVTool(ToolConfig config)
+        {
+            var tool = new OCVTool();
+            var p = config.Parameters;
+
+            if (p.TryGetValue("MinCharHeight", out var mnh)) tool.MinCharHeight = GetInt(mnh);
+            if (p.TryGetValue("MaxCharHeight", out var mxh)) tool.MaxCharHeight = GetInt(mxh);
+            if (p.TryGetValue("MinCharWidth", out var mnw)) tool.MinCharWidth = GetInt(mnw);
+            if (p.TryGetValue("InvertImage", out var inv)) tool.InvertImage = GetBool(inv);
+            if (p.TryGetValue("MatchThreshold", out var mt)) tool.MatchThreshold = GetDouble(mt);
+            if (p.TryGetValue("ExpectedText", out var et)) tool.ExpectedText = GetString(et);
+            if (p.TryGetValue("DrawOverlay", out var dov)) tool.DrawOverlay = GetBool(dov);
+            if (p.TryGetValue("FontLibraryJson", out var fl))
+            {
+                var loaded = FontLibrary.FromJson(GetString(fl));
+                foreach (var t in loaded.Templates)
+                    if (t.TemplatePng != null) tool.FontLibrary.Add(t.Char, t.TemplatePng);
+            }
             return tool;
         }
 

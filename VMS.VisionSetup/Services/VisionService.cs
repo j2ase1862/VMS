@@ -956,6 +956,7 @@ namespace VMS.VisionSetup.Services
 
                 // Identification
                 "OCRTool" => new OCRTool(),
+                "OCVTool" => new OCVTool(),
 
                 // Code Reading
                 "CodeReaderTool" => new CodeReaderTool(),
@@ -1025,7 +1026,8 @@ namespace VMS.VisionSetup.Services
                 },
                 ["Identification"] = new[]
                 {
-                    "OCRTool"
+                    "OCRTool",
+                    "OCVTool"
                 },
                 ["Code Reading"] = new[]
                 {
@@ -1083,6 +1085,7 @@ namespace VMS.VisionSetup.Services
                 "PointCloudRegistrationTool" => "PointCloud Registration",
                 "PointCloudClusterTool" => "PointCloud Cluster",
                 "OCRTool" => "OCR",
+                "OCVTool" => "OCV",
                 "CodeReaderTool" => "Code Reader",
                 "DetectionTool" => "Detection (YOLO)",
                 "ClassifyTool" => "Classify",

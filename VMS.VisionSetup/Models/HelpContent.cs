@@ -545,14 +545,42 @@ namespace VMS.VisionSetup.Models
                     ["CodeReaderMode"] = "코드 인식 모드:\n• Auto: 모든 코드 타입 자동 인식 (느리지만 범용)\n• QRCode: QR 코드 전용 (빠름)\n• Barcode1D: 1D 바코드 전용 (CODE_128, CODE_39, EAN_13 등)\n• DataMatrix: DataMatrix 전용 (PCB 마킹에 주로 사용)\n• PDF417: PDF417 전용",
                     ["MaxCodeCount"] = "최대 인식 코드 수 (1~50).\n하나의 이미지에서 여러 코드를 동시에 인식할 때 결과 수를 제한합니다.\n• 기본값: 10",
                     ["TryHarder"] = "정밀 검출 모드. 활성화하면 더 많은 시간을 들여 코드를 찾습니다.\n• 활성화 (권장): 인식률 향상, 속도 약간 저하\n• 비활성화: 빠르지만 흐릿하거나 작은 코드를 놓칠 수 있음",
+                    ["UseLocalization"] = "DataMatrix 후보 영역 사전 탐색 (DataMatrix/Auto 모드에서만 동작).\nROI가 넓고 텍스트/잡음이 섞여 있어 ZXing 직접 디코딩이 실패하는 경우, OpenCV 휴리스틱(adaptive threshold + morph close + contour 정사각/고밀도 필터)으로 DM 후보 bbox를 먼저 찾아 영역별로 디코딩합니다.\n• DataMatrix 위치가 이미지 내에서 이동하고 주변에 다른 텍스트가 있을 때 활성화 권장\n• 깨끗한 단일 코드 이미지는 추가 시간 미미 (후보 0~1개)\n• QR/1D 바코드에는 영향 없음 (DM/Auto 모드 한정)",
 
                     // Verification
                     ["EnableVerification"] = "텍스트 검증 활성화. 활성화하면 디코딩된 텍스트를 ExpectedText와 비교하여 PASS/FAIL을 판정합니다.\n비활성화 시 코드가 1개 이상 검출되면 항상 Success입니다.",
                     ["ExpectedText"] = "기대 텍스트. 디코딩된 코드 중 이 텍스트와 일치하는 코드가 있으면 PASS.\n• UseRegexMatch 비활성화: 정확히 일치해야 합격\n• UseRegexMatch 활성화: 정규식 패턴으로 매칭\n\n예시: \"ABC-12345\", \"^LOT-\\d{6}$\"",
                     ["UseRegexMatch"] = "정규식 매칭 사용 여부.\n• 비활성화: 디코딩 텍스트 == ExpectedText 정확히 일치\n• 활성화: Regex.IsMatch(디코딩 텍스트, ExpectedText)로 패턴 매칭\n\n정규식 예시:\n• ^SN\\d{8}$: \"SN\" + 숫자 8자리\n• ^(OK|PASS): \"OK\" 또는 \"PASS\"로 시작",
 
+                    // GS1
+                    ["ParseGs1"] = "GS1 AI(Application Identifier) 파싱.\nFNC1 구분자가 포함되거나 GS1 심볼 식별자(]C1, ]d2 등)가 있는 데이터를 (01)GTIN, (10)Batch, (17)Expiry, (21)Serial 등으로 분리합니다.\n\n결과 키:\n• Gs1Formatted: \"(01)08801234567890 (17)260101 (10)LOT123\" 형식\n• Gs1ElementCount: 추출된 AI 개수\n• Gs1_01, Gs1_17, Gs1_10 등: 각 AI 값 (PLC 매핑 가능)",
+
+                    // Quality Grading
+                    ["EnableQualityGrading"] = "ISO/IEC 15415 간소화 품질 등급 계산 (DataMatrix 한정).\n활성화 시 다음 결과 키가 노출됩니다:\n• OverallGrade (A~F): 최종 등급\n• SymbolContrast: 명/암 모듈 대비 (0~1)\n• Modulation: 모듈 균일도\n• FixedPatternDamage: L-finder/클럭 트랙 무결성\n• AxialNonuniformity: 가로/세로 모듈 폭 차이\n• PixelsPerModule: 모듈당 픽셀 수\n• SymbolSize: 추정 심볼 크기 (n×n 모듈)",
+                    ["MinPassGrade"] = "품질 등급 활성화 시 PASS 판정의 최소 OverallGrade.\n계산된 등급이 이 값보다 낮으면 Success=false로 처리됩니다.\n• A (4.0): 매우 엄격, 신규 마킹 검증용\n• C (2.0, 기본): 산업 표준 최저 허용\n• F: 등급 게이팅 비활성화 (디코딩만 성공하면 PASS)",
+
                     // Display
-                    ["DrawOverlay"] = "검출 결과 오버레이 표시. 활성화하면 검출된 코드 위치에 폴리곤과 디코딩 텍스트를 그립니다.\n• 녹색: 인식 성공 (PASS)\n• 빨간색: 인식 실패 (FAIL)"
+                    ["DrawOverlay"] = "검출 결과 오버레이 표시. 활성화하면 검출된 코드 위치에 폴리곤과 디코딩 텍스트를 그립니다.\n• 녹색: 인식 성공 (PASS)\n• 빨간색: 인식 실패 (FAIL)\n품질 등급 활성화 시 상단에 SC/MOD/FPD/AN/PPM 요약 배지, GS1 활성화 시 파싱된 AI 문자열 배지가 추가됩니다."
+                }
+            },
+
+            // OCV
+            ["OCVTool"] = new ToolHelp
+            {
+                Name = "OCV (문자 검증)",
+                Description = "학습된 폰트 라이브러리와의 NCC 매칭으로 각 문자가 학습 폰트와 일치하는지 검증합니다.\nOCR이 '읽기'라면 OCV는 '대조 검증' — 인쇄 결함(찍힘, 번짐, 누락)을 문자 단위로 검출합니다.\n동일 문자에 여러 폰트/스타일 템플릿을 등록 가능 (매칭은 최고 점수 사용).",
+                Usage = "PCB 마킹 PASS/FAIL 검증, 정해진 폰트의 시리얼 번호 OK 판정, 도트 마킹 일관성 검사에 사용됩니다.\n1) ROI를 학습용 텍스트에 맞추고 Known String 입력 후 Train 클릭.\n2) 분할 개수와 Known String 길이가 일치해야 학습 성공.\n3) 학습 후 새 이미지에서 자동으로 분할/매칭하여 GoodChar/BadChar 카운트.",
+                CognexEquivalent = "CogOCRMaxTool (Verify Mode), CogOCRMaxFontTool",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["KnownString"] = "Train 시 사용할 정답 문자열. ROI 내부 분할 segments와 1:1 대응됩니다.\n예: \"ABC123\" → 6개 문자로 분할되어야 학습 성공.\n분할 개수가 다르면 분할 파라미터(Min/Max Height/Width) 조정 또는 ROI 재설정.",
+                    ["InvertImage"] = "이진화 후 흰=배경/검=문자인 경우 활성화.\n기본은 흰 배경 + 검은 문자. 통계로 자동 판정하므로 대부분 비활성화로 동작합니다.",
+                    ["MinCharHeight"] = "분할된 컴포넌트 최소 높이(px). 이 미만은 노이즈로 간주하여 무시.",
+                    ["MaxCharHeight"] = "분할된 컴포넌트 최대 높이(px). 이를 초과하면 배경 영역으로 간주하여 무시.",
+                    ["MinCharWidth"] = "분할된 컴포넌트 최소 너비(px). 점선/얇은 줄 노이즈 제거용.",
+                    ["MatchThreshold"] = "NCC 매칭 임계값 (0~1). 각 문자의 최고 매칭 점수가 이 미만이면 BadChar로 판정.\n• 0.65 (기본): 산업 인쇄 문자 기본값\n• 0.80+: 엄격한 일치 요구 (동일 폰트만 통과)\n• 0.50 이하: 매우 관대 (오인식 위험)",
+                    ["ExpectedText"] = "(선택) 예상 텍스트. 비어있지 않으면 위치별 char를 비교하여 추가 검증.\n분할 개수와 길이가 다르면 LengthMatch=false로 FAIL 처리.\n비어있으면 NCC 점수만으로 판정.",
+                    ["DrawOverlay"] = "분할 박스 + 인식 문자 + 점수 오버레이.\n• 녹색: 매칭 PASS\n• 빨간색: BadChar (점수 < Threshold 또는 ExpectedText 불일치)"
                 }
             }
         };
