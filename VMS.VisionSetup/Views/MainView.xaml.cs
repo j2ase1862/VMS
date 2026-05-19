@@ -737,6 +737,19 @@ namespace VMS.VisionSetup
         }
 
         /// <summary>
+        /// 배치 테스트 러너 — 폴더 이미지에 현재 레시피 일괄 적용 → CSV 리포트.
+        /// </summary>
+        private void BatchTest_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new VMS.VisionSetup.Views.BatchTest.BatchTestWindow(
+                VMS.VisionSetup.Services.VisionService.Instance)
+            {
+                Owner = System.Windows.Window.GetWindow(this)
+            };
+            dialog.ShowDialog();
+        }
+
+        /// <summary>
         /// 합성 OCR 데이터 생성기 윈도우 — PP-OCR fine-tuning / OCV 학습용 데이터셋 자동 생성.
         /// </summary>
         private void SynthData_Click(object sender, RoutedEventArgs e)

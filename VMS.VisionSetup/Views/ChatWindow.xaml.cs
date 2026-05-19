@@ -17,7 +17,6 @@ namespace VMS.VisionSetup.Views
         {
             if (DataContext is ChatViewModel vm)
             {
-                // Auto-scroll on new messages
                 ((INotifyCollectionChanged)vm.Messages).CollectionChanged += (_, _) =>
                 {
                     ChatScrollViewer.ScrollToEnd();
@@ -27,20 +26,6 @@ namespace VMS.VisionSetup.Views
             }
 
             InputTextBox.Focus();
-        }
-
-        private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            if (e.ClickCount == 2)
-            {
-                WindowState = WindowState == WindowState.Maximized
-                    ? WindowState.Normal
-                    : WindowState.Maximized;
-            }
-            else
-            {
-                DragMove();
-            }
         }
 
         private void InputTextBox_KeyDown(object sender, KeyEventArgs e)

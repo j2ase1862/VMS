@@ -1,0 +1,504 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        WindowStyles.xaml
+        =================
+        독립 Window / Dialog 공통 디자인 시스템.
+        - 색 토큰 (SolidColorBrush)
+        - 컨테이너 (Card / Surface / SectionHeader)
+        - 폼 컨트롤 (TextBox / ComboBox / CheckBox / ScrollBar)
+        - 버튼 (Primary / Success / Warning / Danger / Secondary / Ghost / Close)
+        - 보조 컴포넌트 (StatusPill / FieldLabel / MutedText)
+
+        호환 원칙: 이미 사용 중인 ToolSettingsStyles.xaml의 키는 건드리지 않음.
+        새로운 키는 모두 `Window` 접두사 또는 `Modern` 접두사 사용.
+    -->
+
+    <!-- ========================= COLOR TOKENS (GitHub-Dark + Teal) ========================= -->
+    <Color x:Key="ColorBgWindow">#0A1218</Color>
+    <Color x:Key="ColorBgTitleBar">#0D161E</Color>
+    <Color x:Key="ColorBgCard">#131C24</Color>
+    <Color x:Key="ColorBgSurface">#1B2530</Color>
+    <Color x:Key="ColorBgInput">#0E1620</Color>
+    <Color x:Key="ColorBgHover">#1F2A36</Color>
+    <Color x:Key="ColorBgSelected">#1C3344</Color>
+
+    <Color x:Key="ColorBorderSubtle">#22303C</Color>
+    <Color x:Key="ColorBorderStrong">#34465A</Color>
+    <Color x:Key="ColorBorderFocus">#14B8A6</Color>
+
+    <Color x:Key="ColorTextPrimary">#E6EDF3</Color>
+    <Color x:Key="ColorTextSecondary">#9FB2C2</Color>
+    <Color x:Key="ColorTextMuted">#5E7388</Color>
+    <Color x:Key="ColorTextDisabled">#3F4E5C</Color>
+    <Color x:Key="ColorTextAccent">#22D3EE</Color>
+
+    <Color x:Key="ColorAccent">#14B8A6</Color>
+    <Color x:Key="ColorAccentHover">#2DD4BF</Color>
+    <Color x:Key="ColorAccentPressed">#0E9587</Color>
+
+    <Color x:Key="ColorSuccess">#10B981</Color>
+    <Color x:Key="ColorSuccessSoft">#0E3A2E</Color>
+
+    <Color x:Key="ColorWarning">#F59E0B</Color>
+    <Color x:Key="ColorWarningSoft">#3A2A12</Color>
+
+    <Color x:Key="ColorDanger">#EF4444</Color>
+    <Color x:Key="ColorDangerSoft">#3F1B1B</Color>
+
+    <Color x:Key="ColorInfo">#3B82F6</Color>
+    <Color x:Key="ColorInfoSoft">#16243F</Color>
+
+    <Color x:Key="ColorNeutral">#22303C</Color>
+    <Color x:Key="ColorNeutralHover">#2C3D4D</Color>
+
+    <!-- ========================= BRUSHES ========================= -->
+    <SolidColorBrush x:Key="BrushBgWindow"     Color="{StaticResource ColorBgWindow}"/>
+    <SolidColorBrush x:Key="BrushBgCard"       Color="{StaticResource ColorBgCard}"/>
+    <SolidColorBrush x:Key="BrushBgSurface"    Color="{StaticResource ColorBgSurface}"/>
+    <SolidColorBrush x:Key="BrushBgInput"      Color="{StaticResource ColorBgInput}"/>
+    <SolidColorBrush x:Key="BrushBgHover"      Color="{StaticResource ColorBgHover}"/>
+    <SolidColorBrush x:Key="BrushBgSelected"   Color="{StaticResource ColorBgSelected}"/>
+
+    <SolidColorBrush x:Key="BrushBorderSubtle" Color="{StaticResource ColorBorderSubtle}"/>
+    <SolidColorBrush x:Key="BrushBorderStrong" Color="{StaticResource ColorBorderStrong}"/>
+    <SolidColorBrush x:Key="BrushBorderFocus"  Color="{StaticResource ColorBorderFocus}"/>
+
+    <SolidColorBrush x:Key="BrushTextPrimary"   Color="{StaticResource ColorTextPrimary}"/>
+    <SolidColorBrush x:Key="BrushTextSecondary" Color="{StaticResource ColorTextSecondary}"/>
+    <SolidColorBrush x:Key="BrushTextMuted"     Color="{StaticResource ColorTextMuted}"/>
+    <SolidColorBrush x:Key="BrushTextDisabled"  Color="{StaticResource ColorTextDisabled}"/>
+    <SolidColorBrush x:Key="BrushTextAccent"    Color="{StaticResource ColorTextAccent}"/>
+
+    <SolidColorBrush x:Key="BrushBgTitleBar" Color="{StaticResource ColorBgTitleBar}"/>
+
+    <SolidColorBrush x:Key="BrushAccent" Color="{StaticResource ColorAccent}"/>
+    <SolidColorBrush x:Key="BrushAccentHover" Color="{StaticResource ColorAccentHover}"/>
+    <SolidColorBrush x:Key="BrushSuccess" Color="{StaticResource ColorSuccess}"/>
+    <SolidColorBrush x:Key="BrushSuccessSoft" Color="{StaticResource ColorSuccessSoft}"/>
+    <SolidColorBrush x:Key="BrushWarning" Color="{StaticResource ColorWarning}"/>
+    <SolidColorBrush x:Key="BrushWarningSoft" Color="{StaticResource ColorWarningSoft}"/>
+    <SolidColorBrush x:Key="BrushDanger" Color="{StaticResource ColorDanger}"/>
+    <SolidColorBrush x:Key="BrushDangerSoft" Color="{StaticResource ColorDangerSoft}"/>
+    <SolidColorBrush x:Key="BrushInfo" Color="{StaticResource ColorInfo}"/>
+    <SolidColorBrush x:Key="BrushInfoSoft" Color="{StaticResource ColorInfoSoft}"/>
+    <SolidColorBrush x:Key="BrushNeutral" Color="{StaticResource ColorNeutral}"/>
+
+    <!-- ========================= TYPOGRAPHY ========================= -->
+    <Style x:Key="WindowSectionHeader" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource BrushTextAccent}"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Margin" Value="0,14,0,6"/>
+    </Style>
+
+    <Style x:Key="WindowSectionHeaderFirst" TargetType="TextBlock" BasedOn="{StaticResource WindowSectionHeader}">
+        <Setter Property="Margin" Value="0,0,0,6"/>
+    </Style>
+
+    <Style x:Key="WindowFieldLabel" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Margin" Value="0,6,0,2"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <Style x:Key="WindowMutedText" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+
+    <Style x:Key="WindowBodyText" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+
+    <Style x:Key="WindowMonospace" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+        <Setter Property="FontFamily" Value="Consolas"/>
+        <Setter Property="FontSize" Value="11"/>
+    </Style>
+
+    <!-- ========================= CONTAINERS ========================= -->
+    <!-- 카드: 둥근 모서리 + 1px 보더, 섹션 묶음에 사용 -->
+    <Style x:Key="WindowCard" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource BrushBgCard}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderSubtle}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="14,12"/>
+    </Style>
+
+    <!-- 강조 표면 (예: 통계 바, 입력 영역) -->
+    <Style x:Key="WindowSurface" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource BrushBgSurface}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderSubtle}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="10,8"/>
+    </Style>
+
+    <!-- 어두운 표면 (로그 같은 단조 영역) -->
+    <Style x:Key="WindowLogSurface" TargetType="Border">
+        <Setter Property="Background" Value="#141414"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderSubtle}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="4"/>
+    </Style>
+
+    <!-- ========================= TEXTBOX ========================= -->
+    <Style x:Key="WindowDarkTextBox" TargetType="TextBox">
+        <Setter Property="Background" Value="{StaticResource BrushBgInput}"/>
+        <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderSubtle}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="8,5"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="CaretBrush" Value="White"/>
+        <Setter Property="SelectionBrush" Value="{StaticResource BrushAccent}"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="4"
+                            SnapsToDevicePixels="True">
+                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource BrushBorderFocus}"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource BrushBorderStrong}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="WindowReadOnlyTextBox" TargetType="TextBox" BasedOn="{StaticResource WindowDarkTextBox}">
+        <Setter Property="IsReadOnly" Value="True"/>
+        <Setter Property="Background" Value="#1A1A1A"/>
+        <Setter Property="Foreground" Value="{StaticResource BrushTextAccent}"/>
+        <Setter Property="FontFamily" Value="Consolas"/>
+    </Style>
+
+    <!-- ========================= COMBOBOX ========================= -->
+    <Style x:Key="WindowDarkComboBoxItem" TargetType="ComboBoxItem">
+        <Setter Property="Background" Value="{StaticResource BrushBgSurface}"/>
+        <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+        <Setter Property="Padding" Value="8,5"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBoxItem">
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            Padding="{TemplateBinding Padding}"
+                            BorderThickness="0">
+                        <ContentPresenter VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#3E5C8C"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource BrushBgSelected}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ComboBox: 표준 WPF 토글-버튼 스타일을 유지하되 색상만 다크 테마로 -->
+    <Style x:Key="WindowDarkComboBox" TargetType="ComboBox">
+        <Setter Property="Background" Value="{StaticResource BrushBgInput}"/>
+        <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderSubtle}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="8,5"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="MinHeight" Value="28"/>
+        <Setter Property="ItemContainerStyle" Value="{StaticResource WindowDarkComboBoxItem}"/>
+    </Style>
+
+    <!-- ========================= CHECKBOX ========================= -->
+    <Style x:Key="WindowDarkCheckBox" TargetType="CheckBox">
+        <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Margin" Value="0,4"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <StackPanel Orientation="Horizontal">
+                        <Border x:Name="Box"
+                                Width="16" Height="16"
+                                Background="{StaticResource BrushBgInput}"
+                                BorderBrush="{StaticResource BrushBorderStrong}"
+                                BorderThickness="1"
+                                CornerRadius="3"
+                                VerticalAlignment="Center"
+                                SnapsToDevicePixels="True">
+                            <Path x:Name="Check"
+                                  Data="M 2 7 L 6 11 L 13 3"
+                                  Stroke="White" StrokeThickness="2"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                  Visibility="Collapsed"/>
+                        </Border>
+                        <ContentPresenter Margin="8,0,0,0"
+                                          VerticalAlignment="Center"
+                                          RecognizesAccessKey="True"/>
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Box" Property="Background" Value="{StaticResource BrushAccent}"/>
+                            <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
+                            <Setter TargetName="Check" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource BrushBorderFocus}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ========================= MODERN BUTTONS ========================= -->
+    <!--
+        모든 모던 버튼의 베이스: CornerRadius 4, hover/pressed 색 변화, IsEnabled opacity.
+        실제 색은 BasedOn에서 Background 오버라이드.
+    -->
+    <Style x:Key="ModernButtonBase" TargetType="Button">
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="14,7"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Background" Value="{StaticResource BrushAccent}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="4"
+                            Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          RecognizesAccessKey="True"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Opacity" Value="0.88"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Bd" Property="Opacity" Value="0.72"/>
+                            <Setter TargetName="Bd" Property="RenderTransform">
+                                <Setter.Value>
+                                    <ScaleTransform ScaleX="0.97" ScaleY="0.97"/>
+                                </Setter.Value>
+                            </Setter>
+                            <Setter TargetName="Bd" Property="RenderTransformOrigin" Value="0.5,0.5"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Bd" Property="Opacity" Value="0.35"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ModernPrimaryButton" TargetType="Button" BasedOn="{StaticResource ModernButtonBase}">
+        <Setter Property="Background" Value="{StaticResource BrushAccent}"/>
+    </Style>
+
+    <Style x:Key="ModernSuccessButton" TargetType="Button" BasedOn="{StaticResource ModernButtonBase}">
+        <Setter Property="Background" Value="{StaticResource BrushSuccess}"/>
+    </Style>
+
+    <Style x:Key="ModernWarningButton" TargetType="Button" BasedOn="{StaticResource ModernButtonBase}">
+        <Setter Property="Background" Value="{StaticResource BrushWarning}"/>
+    </Style>
+
+    <Style x:Key="ModernDangerButton" TargetType="Button" BasedOn="{StaticResource ModernButtonBase}">
+        <Setter Property="Background" Value="{StaticResource BrushDanger}"/>
+    </Style>
+
+    <Style x:Key="ModernSecondaryButton" TargetType="Button" BasedOn="{StaticResource ModernButtonBase}">
+        <Setter Property="Background" Value="{StaticResource BrushNeutral}"/>
+        <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+    </Style>
+
+    <!-- Ghost(외곽선만 있는) 버튼: Browse..., Copy 같은 보조 액션 -->
+    <Style x:Key="ModernGhostButton" TargetType="Button">
+        <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="10,5"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Background" Value="{StaticResource BrushBgHover}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{StaticResource BrushBorderSubtle}"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#4A4A50"/>
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource BrushBorderStrong}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#2A2A2E"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.45"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Window 닫기 X 버튼 (chromeless 윈도우용) -->
+    <Style x:Key="ModernCloseIconButton" TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Width" Value="32"/>
+        <Setter Property="Height" Value="28"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="4">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#E81123"/>
+                            <Setter Property="Foreground" Value="White"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ========================= TITLE BAR BUTTONS (chromeless windows) ========================= -->
+    <Style x:Key="TitleBarButton" TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Width" Value="46"/>
+        <Setter Property="Height" Value="42"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd" Background="{TemplateBinding Background}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource BrushBgHover}"/>
+                            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="TitleBarCloseButton" TargetType="Button" BasedOn="{StaticResource TitleBarButton}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd" Background="{TemplateBinding Background}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#E81123"/>
+                            <Setter Property="Foreground" Value="White"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ========================= STATUS / PROGRESS ========================= -->
+    <Style x:Key="WindowStatusBar" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource BrushAccent}"/>
+        <Setter Property="Padding" Value="12,5"/>
+    </Style>
+
+    <Style x:Key="WindowStatusText" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+    </Style>
+
+    <Style x:Key="WindowMetricLabel" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <Style x:Key="WindowMetricValue" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource BrushTextAccent}"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <!-- ProgressBar: 색상만 다크 테마, Template은 시스템 기본 사용 (안전) -->
+    <Style x:Key="WindowProgressBar" TargetType="ProgressBar">
+        <Setter Property="Background" Value="#202024"/>
+        <Setter Property="Foreground" Value="{StaticResource BrushAccent}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderSubtle}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Height" Value="8"/>
+    </Style>
+
+    <!-- ========================= LISTBOX (로그 등) ========================= -->
+    <Style x:Key="WindowDarkListBox" TargetType="ListBox">
+        <Setter Property="Background" Value="#141414"/>
+        <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="FontFamily" Value="Consolas"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
+    </Style>
+
+</ResourceDictionary>
