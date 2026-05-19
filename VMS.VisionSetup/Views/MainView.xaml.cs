@@ -735,6 +735,18 @@ namespace VMS.VisionSetup
         }
 
         /// <summary>
+        /// 합성 OCR 데이터 생성기 윈도우 — PP-OCR fine-tuning / OCV 학습용 데이터셋 자동 생성.
+        /// </summary>
+        private void SynthData_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new VMS.VisionSetup.Views.SynthData.SynthDataWindow
+            {
+                Owner = System.Windows.Window.GetWindow(this)
+            };
+            dialog.ShowDialog();
+        }
+
+        /// <summary>
         /// MultiView 스캔 설정 다이얼로그 열기
         /// </summary>
         private void MultiViewSetup_Click(object sender, RoutedEventArgs e)

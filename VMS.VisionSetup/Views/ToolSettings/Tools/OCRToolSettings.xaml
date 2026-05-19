@@ -65,16 +65,19 @@
                 <!-- Custom Model Paths (PP-OCR ONNX) -->
                 <controls:TextBoxParameter Label="Custom Det Model"
                     Value="{Binding CustomDetModelPath}"
+                    BrowseFilter="ONNX Models (*.onnx)|*.onnx|All Files (*.*)|*.*"
                     Visibility="{Binding IsPPOcrOnnx, Converter={StaticResource BoolToVisConverter}}"
                     ToolType="OCRTool" ParameterName="CustomDetModelPath"/>
 
                 <controls:TextBoxParameter Label="Custom Rec Model"
                     Value="{Binding CustomRecModelPath}"
+                    BrowseFilter="ONNX Models (*.onnx)|*.onnx|All Files (*.*)|*.*"
                     Visibility="{Binding IsPPOcrOnnx, Converter={StaticResource BoolToVisConverter}}"
                     ToolType="OCRTool" ParameterName="CustomRecModelPath"/>
 
                 <controls:TextBoxParameter Label="Custom Dict File"
                     Value="{Binding CustomDictPath}"
+                    BrowseFilter="Text Files (*.txt)|*.txt|All Files (*.*)|*.*"
                     Visibility="{Binding IsPPOcrOnnx, Converter={StaticResource BoolToVisConverter}}"
                     ToolType="OCRTool" ParameterName="CustomDictPath"/>
 
@@ -208,6 +211,7 @@
             <StackPanel Margin="0,5,0,0">
                 <controls:TextBoxParameter Label="Tessdata Path"
                     Value="{Binding TessdataPath}"
+                    BrowseFolder="True"
                     ToolType="OCRTool" ParameterName="TessdataPath"/>
             </StackPanel>
         </Expander>

@@ -32,6 +32,9 @@
                             <DataTrigger Binding="{Binding BrowseFilter, ElementName=Root, Converter={x:Static controls:NotNullToBoolConverter.Instance}}" Value="True">
                                 <Setter Property="Visibility" Value="Visible"/>
                             </DataTrigger>
+                            <DataTrigger Binding="{Binding BrowseFolder, ElementName=Root}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
                         </Style.Triggers>
                     </Style>
                 </Button.Style>

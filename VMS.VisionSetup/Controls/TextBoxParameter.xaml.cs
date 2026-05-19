@@ -33,6 +33,9 @@ namespace VMS.VisionSetup.Controls
         public static readonly DependencyProperty BrowseFilterProperty =
             DependencyProperty.Register(nameof(BrowseFilter), typeof(string), typeof(TextBoxParameter), new PropertyMetadata(null));
 
+        public static readonly DependencyProperty BrowseFolderProperty =
+            DependencyProperty.Register(nameof(BrowseFolder), typeof(bool), typeof(TextBoxParameter), new PropertyMetadata(false));
+
         public string Label { get => (string)GetValue(LabelProperty); set => SetValue(LabelProperty, value); }
         public object? Value { get => GetValue(ValueProperty); set => SetValue(ValueProperty, value); }
         public string? ToolType { get => (string?)GetValue(ToolTypeProperty); set => SetValue(ToolTypeProperty, value); }
@@ -44,6 +47,11 @@ namespace VMS.VisionSetup.Controls
         /// </summary>
         public string? BrowseFilter { get => (string?)GetValue(BrowseFilterProperty); set => SetValue(BrowseFilterProperty, value); }
 
+        /// <summary>
+        /// 폴더 탐색 모드. true면 OpenFolderDialog 사용 (BrowseFilter 무시).
+        /// </summary>
+        public bool BrowseFolder { get => (bool)GetValue(BrowseFolderProperty); set => SetValue(BrowseFolderProperty, value); }
+
         public TextBoxParameter()
         {
             InitializeComponent();
@@ -51,22 +59,31 @@ namespace VMS.VisionSetup.Controls
 
         private void BrowseButton_Click(object sender, RoutedEventArgs e)
         {
+            string? current = Value as string;
+            if (BrowseFolder)
+            {
+                var dlg = new OpenFolderDialog { Title = Label ?? "폴더 선택" };
+                if (!string.IsNullOrEmpty(current) && System.IO.Directory.Exists(current))
+                    dlg.InitialDirectory = current;
+                if (dlg.ShowDialog() == true)
+                    SetCurrentValue(ValueProperty, (object)dlg.FolderName);
+                return;
+            }
+
             var dialog = new OpenFileDialog
             {
                 Title = Label ?? "파일 선택",
                 Filter = BrowseFilter ?? "All Files (*.*)|*.*"
             };
 
-            if (Value is string currentPath && !string.IsNullOrEmpty(currentPath))
+            if (!string.IsNullOrEmpty(current))
             {
-                try { dialog.InitialDirectory = System.IO.Path.GetDirectoryName(currentPath) ?? ""; }
+                try { dialog.InitialDirectory = System.IO.Path.GetDirectoryName(current) ?? ""; }
                 catch { /* ignore */ }
             }
 
             if (dialog.ShowDialog() == true)
-            {
                 SetCurrentValue(ValueProperty, (object)dialog.FileName);
-            }
         }
     }
 }
