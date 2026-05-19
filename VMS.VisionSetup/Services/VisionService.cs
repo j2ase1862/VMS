@@ -347,6 +347,27 @@ namespace VMS.VisionSetup.Services
                     if (!resultMap.TryGetValue(conn.SourceId, out var sourceResult) || sourceResult.Data == null)
                         continue;
 
+                    // PolarUnwrapTool 특수 처리 — CircleFit/SourceCenter를 그대로 Center/Radius로 주입
+                    // (ROI fixture 변환과 다른 의미 — 회전/이동 보정이 아니라 원의 실제 위치 전달)
+                    if (tool is VisionTools.ImageProcessing.PolarUnwrapTool polar
+                        && sourceResult.Data.TryGetValue("CenterX", out var pcx)
+                        && sourceResult.Data.TryGetValue("CenterY", out var pcy))
+                    {
+                        polar.CenterX = Convert.ToDouble(pcx);
+                        polar.CenterY = Convert.ToDouble(pcy);
+                        if (sourceResult.Data.TryGetValue("Radius", out var prObj))
+                        {
+                            double r = Convert.ToDouble(prObj);
+                            // 사용자가 InnerRadius/OuterRadius를 명시 안 했으면 (둘 다 0) 합리적 기본값
+                            if (polar.OuterRadius <= 0 || polar.InnerRadius < 0)
+                            {
+                                polar.InnerRadius = Math.Max(0, r * 0.6);
+                                polar.OuterRadius = r * 1.1;
+                            }
+                        }
+                        continue; // fixture 경로 스킵
+                    }
+
                     // Fixture transform: CenterX/CenterY available → apply delta
                     if (sourceResult.Data.TryGetValue("CenterX", out var cx) &&
                         sourceResult.Data.TryGetValue("CenterY", out var cy))
@@ -989,6 +1010,10 @@ namespace VMS.VisionSetup.Services
                 "CircleFitTool" => new CircleFitTool(),
                 "GeometryTool" => new GeometryTool(),
 
+                // Image Enhancement / Polar
+                "ImageEnhanceTool" => new VisionTools.ImageProcessing.ImageEnhanceTool(),
+                "PolarUnwrapTool" => new VisionTools.ImageProcessing.PolarUnwrapTool(),
+
                 // Identification
                 "OCRTool" => new OCRTool(),
                 "OCVTool" => new OCVTool(),
@@ -1032,7 +1057,9 @@ namespace VMS.VisionSetup.Services
                     "ThresholdTool",
                     "EdgeDetectionTool",
                     "MorphologyTool",
-                    "HistogramTool"
+                    "HistogramTool",
+                    "ImageEnhanceTool",
+                    "PolarUnwrapTool"
                 },
                 ["3D Analysis"] = new[]
                 {
@@ -1121,6 +1148,8 @@ namespace VMS.VisionSetup.Services
                 "PointCloudClusterTool" => "PointCloud Cluster",
                 "OCRTool" => "OCR",
                 "OCVTool" => "OCV",
+                "ImageEnhanceTool" => "Image Enhance",
+                "PolarUnwrapTool" => "Polar Unwrap",
                 "CodeReaderTool" => "Code Reader",
                 "DetectionTool" => "Detection (YOLO)",
                 "ClassifyTool" => "Classify",

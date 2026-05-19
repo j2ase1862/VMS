@@ -64,6 +64,12 @@
         <DataTemplate x:Key="OCVTemplate" DataType="{x:Type vm:OCVToolSettingsViewModel}">
             <tools:OCVToolSettings/>
         </DataTemplate>
+        <DataTemplate x:Key="ImageEnhanceTemplate" DataType="{x:Type vm:ImageEnhanceToolSettingsViewModel}">
+            <tools:ImageEnhanceToolSettings/>
+        </DataTemplate>
+        <DataTemplate x:Key="PolarUnwrapTemplate" DataType="{x:Type vm:PolarUnwrapToolSettingsViewModel}">
+            <tools:PolarUnwrapToolSettings/>
+        </DataTemplate>
         <DataTemplate x:Key="DetectionTemplate" DataType="{x:Type vm:DetectionToolSettingsViewModel}">
             <tools:DetectionToolSettings/>
         </DataTemplate>
@@ -130,6 +136,8 @@
             GeometryTemplate="{StaticResource GeometryTemplate}"
             OCRTemplate="{StaticResource OCRTemplate}"
             OCVTemplate="{StaticResource OCVTemplate}"
+            ImageEnhanceTemplate="{StaticResource ImageEnhanceTemplate}"
+            PolarUnwrapTemplate="{StaticResource PolarUnwrapTemplate}"
             DetectionTemplate="{StaticResource DetectionTemplate}"
             ClassifyTemplate="{StaticResource ClassifyTemplate}"
             AnomalyTemplate="{StaticResource AnomalyTemplate}"

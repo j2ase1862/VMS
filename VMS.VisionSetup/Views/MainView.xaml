@@ -1168,6 +1168,14 @@
                                             Padding="8,2" Margin="10,0,0,0"
                                             FontSize="11" Cursor="Hand"
                                             Visibility="{Binding IsOriginalImageMode, Converter={StaticResource InverseBoolToVisibility}}"/>
+
+                                    <Button Content="💾 Save Image"
+                                            Command="{Binding SaveDisplayedImageCommand}"
+                                            Background="#0E639C" Foreground="White"
+                                            BorderBrush="#1177BB" BorderThickness="1"
+                                            Padding="8,2" Margin="6,0,0,0"
+                                            FontSize="11" Cursor="Hand"
+                                            ToolTip="현재 표시 중인 이미지(Original/Result)를 파일로 저장 (PNG/JPG/BMP/TIFF)"/>
                                 </StackPanel>
 
                                 <!-- Row 1: ImageCanvas -->

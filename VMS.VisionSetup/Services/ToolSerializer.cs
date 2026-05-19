@@ -306,6 +306,24 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["CustomOutputFormat"] = ocr.CustomOutputFormat;
                     break;
 
+                case VisionTools.ImageProcessing.ImageEnhanceTool enh:
+                    config.Parameters["Mode"] = enh.Mode.ToString();
+                    config.Parameters["Amount"] = enh.Amount;
+                    config.Parameters["BlurKernelSize"] = enh.BlurKernelSize;
+                    config.Parameters["Threshold"] = enh.Threshold;
+                    break;
+
+                case VisionTools.ImageProcessing.PolarUnwrapTool pol:
+                    config.Parameters["CenterX"] = pol.CenterX;
+                    config.Parameters["CenterY"] = pol.CenterY;
+                    config.Parameters["InnerRadius"] = pol.InnerRadius;
+                    config.Parameters["OuterRadius"] = pol.OuterRadius;
+                    config.Parameters["StartAngleDeg"] = pol.StartAngleDeg;
+                    config.Parameters["Direction"] = pol.Direction.ToString();
+                    config.Parameters["OutputWidth"] = pol.OutputWidth;
+                    config.Parameters["OutputHeight"] = pol.OutputHeight;
+                    break;
+
                 case OCVTool ocv:
                     config.Parameters["MinCharHeight"] = ocv.MinCharHeight;
                     config.Parameters["MaxCharHeight"] = ocv.MaxCharHeight;
@@ -574,6 +592,8 @@ namespace VMS.VisionSetup.Services
                 "Geometry3DTool" => DeserializeGeometry3DTool(config),
                 "OCRTool" => DeserializeOCRTool(config),
                 "OCVTool" => DeserializeOCVTool(config),
+                "ImageEnhanceTool" => DeserializeImageEnhanceTool(config),
+                "PolarUnwrapTool" => DeserializePolarUnwrapTool(config),
                 "DetectionTool" => DeserializeDetectionTool(config),
                 "ClassifyTool" => DeserializeClassifyTool(config),
                 "AnomalyTool" => DeserializeAnomalyTool(config),
@@ -1203,6 +1223,36 @@ namespace VMS.VisionSetup.Services
             if (p.TryGetValue("CustomOutputFormat", out var cof))
                 tool.CustomOutputFormat = GetString(cof);
 
+            return tool;
+        }
+
+        private static VisionTools.ImageProcessing.ImageEnhanceTool DeserializeImageEnhanceTool(ToolConfig config)
+        {
+            var tool = new VisionTools.ImageProcessing.ImageEnhanceTool();
+            var p = config.Parameters;
+            if (p.TryGetValue("Mode", out var m) &&
+                Enum.TryParse<VisionTools.ImageProcessing.ImageEnhanceMode>(GetString(m), true, out var mode))
+                tool.Mode = mode;
+            if (p.TryGetValue("Amount", out var a)) tool.Amount = GetDouble(a);
+            if (p.TryGetValue("BlurKernelSize", out var bk)) tool.BlurKernelSize = GetInt(bk);
+            if (p.TryGetValue("Threshold", out var th)) tool.Threshold = GetInt(th);
+            return tool;
+        }
+
+        private static VisionTools.ImageProcessing.PolarUnwrapTool DeserializePolarUnwrapTool(ToolConfig config)
+        {
+            var tool = new VisionTools.ImageProcessing.PolarUnwrapTool();
+            var p = config.Parameters;
+            if (p.TryGetValue("CenterX", out var cx)) tool.CenterX = GetDouble(cx);
+            if (p.TryGetValue("CenterY", out var cy)) tool.CenterY = GetDouble(cy);
+            if (p.TryGetValue("InnerRadius", out var ir)) tool.InnerRadius = GetDouble(ir);
+            if (p.TryGetValue("OuterRadius", out var or)) tool.OuterRadius = GetDouble(or);
+            if (p.TryGetValue("StartAngleDeg", out var sa)) tool.StartAngleDeg = GetDouble(sa);
+            if (p.TryGetValue("Direction", out var d) &&
+                Enum.TryParse<VisionTools.ImageProcessing.PolarUnwrapDirection>(GetString(d), true, out var dir))
+                tool.Direction = dir;
+            if (p.TryGetValue("OutputWidth", out var ow)) tool.OutputWidth = GetInt(ow);
+            if (p.TryGetValue("OutputHeight", out var oh)) tool.OutputHeight = GetInt(oh);
             return tool;
         }
 

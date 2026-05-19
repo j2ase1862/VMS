@@ -568,6 +568,42 @@ namespace VMS.VisionSetup.Models
                 }
             },
 
+            // Image Enhance
+            ["ImageEnhanceTool"] = new ToolHelp
+            {
+                Name = "Image Enhance (선명도 강화)",
+                Description = "Sharpen 또는 Unsharp Mask로 이미지 선명도를 강화합니다. OCR/CodeReader 전단 전처리에 유용.",
+                Usage = "PCB 마킹, 라벨 인쇄 등 미세한 글자/패턴을 더 선명하게.\n• Sharpen: 단순 Laplacian 3x3 — 빠르지만 노이즈 동시 증폭\n• Unsharp Mask (산업 표준): Gaussian blur 후 원본−blur 차이를 amount로 강조. Threshold로 잡음 영역은 sharp 회피.",
+                CognexEquivalent = "CogIPOneImageTool — Sharpen / Unsharp 연산자",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["Mode"] = "Sharpen: 3x3 라플라시안 커널 컨볼루션 (단순/빠름)\nUnsharpMask: 원본 + amount×(원본 − Gaussian blur). 더 자연스럽고 제어 가능 — 권장.",
+                    ["Amount"] = "강화 강도. 0.5~2.0이 일반적. 너무 크면 halo/ringing 아티팩트 발생.",
+                    ["BlurKernelSize"] = "(Unsharp Mask 전용) Gaussian 커널 크기. 홀수 (3, 5, 7, 11...). 클수록 큰 구조물 강조, 작은 디테일 보존.",
+                    ["Threshold"] = "(Unsharp Mask 전용) 원본과 blur의 차이가 이 값 미만이면 변경 안 함. 잡음 영역 sharpening 회피.\n• 0: 모든 픽셀 강화 (잡음도 증폭)\n• 5~15: 잡음 억제 + 글자 강화 균형\n• 30+: 강한 엣지만 강화"
+                }
+            },
+
+            // Polar Unwrap
+            ["PolarUnwrapTool"] = new ToolHelp
+            {
+                Name = "Polar Unwrap (원형 → 직사각형)",
+                Description = "원형/원통 표면의 라벨을 극좌표 변환으로 직사각형으로 펼칩니다.\n캡/약병/파이프 라벨 OCR이나 코드 인식의 표준 전처리.",
+                Usage = "Center는 수동 입력 또는 CircleFit Tool 결과를 Coordinates 연결로 자동 주입.\n1) 라벨 영역의 내반경(병목)과 외반경(병몸)을 추정해서 InnerRadius/OuterRadius 입력\n2) 시작 각도 + 방향 설정 (라벨 텍스트가 좌→우 정렬되도록)\n3) 출력 너비/높이는 0이면 자동 (둘레 × 반경 차)\n4) 출력을 OCRTool/CodeReaderTool에 연결",
+                CognexEquivalent = "CogPolarUnwrapTool",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["CenterX"] = "원 중심 X 좌표 (픽셀). CircleFit 도구의 CenterX를 Coordinates 연결로 자동 주입 가능.",
+                    ["CenterY"] = "원 중심 Y 좌표 (픽셀).",
+                    ["InnerRadius"] = "내반경 (픽셀). 라벨이 시작되는 안쪽 경계. 0이면 중심부터 펼침.",
+                    ["OuterRadius"] = "외반경 (픽셀). 라벨 바깥 경계. InnerRadius보다 커야 함.",
+                    ["StartAngleDeg"] = "펼침 시작 각도(°). 0 = 오른쪽(3시), 90 = 위, 180 = 왼쪽, 270 = 아래.\n출력 이미지의 좌측 첫 컬럼이 이 각도에서 시작.",
+                    ["Direction"] = "회전 방향:\n• Clockwise: 시계방향 — 출력 가로축이 시계방향으로 진행\n• Counterclockwise: 반시계방향 (기본, Cognex 동일)",
+                    ["OutputWidth"] = "출력 너비 (px). 0이면 자동: 2π × OuterRadius (둘레 근사).\n후속 도구의 해상도를 고정하려면 명시.",
+                    ["OutputHeight"] = "출력 높이 (px). 0이면 자동: OuterRadius − InnerRadius."
+                }
+            },
+
             // OCV
             ["OCVTool"] = new ToolHelp
             {

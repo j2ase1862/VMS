@@ -6,10 +6,10 @@
              xmlns:meas="clr-namespace:VMS.VisionSetup.VisionTools.Measurement">
     <StackPanel>
         <controls:TextBoxParameter Label="Center X"
-            Value="{Binding CenterPoint.X}"
+            Value="{Binding CenterX, UpdateSourceTrigger=PropertyChanged}"
             ToolType="CircleFitTool" ParameterName="CenterPoint.X"/>
         <controls:TextBoxParameter Label="Center Y"
-            Value="{Binding CenterPoint.Y}"
+            Value="{Binding CenterY, UpdateSourceTrigger=PropertyChanged}"
             ToolType="CircleFitTool" ParameterName="CenterPoint.Y"/>
         <controls:SliderParameter Label="Expected Radius"
             Value="{Binding ExpectedRadius}" Minimum="10" Maximum="500"

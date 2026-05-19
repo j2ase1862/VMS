@@ -74,7 +74,9 @@ namespace VMS.VisionSetup
             {
                 _isDrawingSearchRegion = false;
                 EditMode mode;
-                if (msg.UseCircle)
+                if (msg.UseAnnulus)
+                    mode = EditMode.DrawAnnulus;
+                else if (msg.UseCircle)
                     mode = EditMode.DrawCircle;
                 else if (msg.UseAffine)
                     mode = EditMode.DrawRectangleAffine;

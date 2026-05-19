@@ -6,20 +6,16 @@ namespace VMS.VisionSetup.Models
     // View-level messages (handled by MainView.xaml.cs)
     public sealed class RequestDrawROIMessage
     {
-        /// <summary>
-        /// 회전 가능한 Affine ROI를 그릴지 여부 (측정 도구용)
-        /// </summary>
         public bool UseAffine { get; }
-
-        /// <summary>
-        /// 원형 ROI를 그릴지 여부 (CircleFitTool용)
-        /// </summary>
         public bool UseCircle { get; }
+        /// <summary>도넛형 Annulus ROI 그리기 (PolarUnwrapTool 등).</summary>
+        public bool UseAnnulus { get; }
 
-        public RequestDrawROIMessage(bool useAffine = false, bool useCircle = false)
+        public RequestDrawROIMessage(bool useAffine = false, bool useCircle = false, bool useAnnulus = false)
         {
             UseAffine = useAffine;
             UseCircle = useCircle;
+            UseAnnulus = useAnnulus;
         }
     }
     public sealed class RequestClearROIMessage { }
