@@ -18,6 +18,9 @@ namespace VMS.VisionSetup.Interfaces
         bool LastRunSuccess { get; }
         Mat? LastCompositeOverlay { get; }
 
+        /// <summary>마지막 ExecuteAll의 도구 ID → 결과 매핑 (topological sort 영향 없이 안전 lookup).</summary>
+        Dictionary<string, VisionResult> LastExecutionResultsById { get; }
+
         void SetImage(Mat image);
         void AddTool(VisionToolBase tool);
         void RemoveTool(VisionToolBase tool);

@@ -155,5 +155,7 @@ namespace VMS.VisionSetup.Models
         /// </summary>
         [JsonIgnore]
         public string DisplayInfo => RobotWaypoint != null ? $"{Name} (Robot)" : Name;
+
+        public override string ToString() => DisplayInfo;
     }
 }

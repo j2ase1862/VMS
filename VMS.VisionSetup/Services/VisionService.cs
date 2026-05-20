@@ -966,6 +966,10 @@ namespace VMS.VisionSetup.Services
             sw.Stop();
             TotalExecutionTime = sw.Elapsed.TotalMilliseconds;
 
+            // 외부에서 도구↔결과 매핑이 필요한 경우 사용 (BatchTestRunner 등)
+            // resultMap은 topological sort 영향 없이 id로 안전하게 lookup 가능
+            LastExecutionResultsById = new Dictionary<string, VisionResult>(resultMap);
+
             // ResultTool이 존재하면 최종 판정은 ResultTool의 Success로 결정
             var resultToolInstance = sortedTools.OfType<ResultTool>().FirstOrDefault();
             LastRunSuccess = resultToolInstance != null
@@ -975,6 +979,13 @@ namespace VMS.VisionSetup.Services
 
             return results;
         }
+
+        /// <summary>
+        /// 마지막 ExecuteAll 실행의 도구 ID → 결과 매핑.
+        /// ExecuteAll이 topological sort 순으로 결과를 반환하기 때문에,
+        /// 외부에서 Tools 컬렉션 순서와 일치한다고 가정하면 안 됨. 이 dictionary로 안전 lookup.
+        /// </summary>
+        public Dictionary<string, VisionResult> LastExecutionResultsById { get; private set; } = new();
 
         /// <summary>
         /// 도구 타입에 따른 새 인스턴스 생성

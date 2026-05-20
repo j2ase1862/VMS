@@ -20,11 +20,14 @@ namespace VMS.VisionSetup.Services.BatchTesting
             IList<BatchImageResult> results,
             ObservableCollection<VisionToolBase> tools)
         {
-            // 1) 컬럼 헤더 결정 — 도구별 (ToolName, [Success + 결과 키들])
+            // 1) 컬럼 헤더 결정 — 도구별 키 = (a) GetAvailableResultKeys 선언 키 ∪ (b) 모든 결과의 Data에 실제로 나타난 키
+            //    (b)를 포함하여 도구가 선언 깜빡한 키나 동적 키(예: Gs1_{AI})도 자동 캡처
             var toolColumns = new List<(VisionToolBase Tool, List<string> Keys)>();
             foreach (var t in tools)
             {
                 var keys = new List<string> { "Success" };
+
+                // (a) 선언된 키
                 try
                 {
                     var resultKeys = t.GetAvailableResultKeys();
@@ -32,11 +35,22 @@ namespace VMS.VisionSetup.Services.BatchTesting
                         if (!keys.Contains(k)) keys.Add(k);
                 }
                 catch { /* 일부 도구는 비어있을 수 있음 */ }
+
+                // (b) 실제 결과에서 발견된 키 union
+                foreach (var r in results)
+                {
+                    if (!r.ToolResults.TryGetValue(t.Id, out var toolRes)) continue;
+                    if (toolRes?.Data == null) continue;
+                    foreach (var k in toolRes.Data.Keys)
+                        if (!keys.Contains(k)) keys.Add(k);
+                }
+
                 toolColumns.Add((t, keys));
             }
 
             // 2) 헤더 작성
-            var header = new List<string> { "image_path", "success", "total_ms", "failure_reason" };
+            var header = new List<string> { "image_path", "success", "total_ms", "failure_reason",
+                                             "thresholds_passed", "threshold_violations" };
             foreach (var (tool, keys) in toolColumns)
                 foreach (var k in keys)
                     header.Add($"{SanitizeColumn(tool.Name)}.{k}");
@@ -52,7 +66,9 @@ namespace VMS.VisionSetup.Services.BatchTesting
                     r.ImagePath,
                     r.Success ? "PASS" : "FAIL",
                     r.TotalMs.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
-                    r.FailureReason ?? string.Empty
+                    r.FailureReason ?? string.Empty,
+                    r.ThresholdsPassed ? "true" : "false",
+                    string.Join(" | ", r.ThresholdViolations ?? new List<string>())
                 };
 
                 foreach (var (tool, keys) in toolColumns)

@@ -59,6 +59,20 @@ namespace VMS.VisionSetup.ViewModels
         public RequestRefreshROIMessage(ROIShape? roiShape) => ROIShape = roiShape;
     }
 
+    /// <summary>
+    /// 외부(예: Batch Test 창)에서 특정 Step을 메인 워크스페이스에 로드해 달라고 요청.
+    /// </summary>
+    public class RequestLoadStepMessage
+    {
+        public Recipe Recipe { get; }
+        public InspectionStep Step { get; }
+        public RequestLoadStepMessage(Recipe recipe, InspectionStep step)
+        {
+            Recipe = recipe;
+            Step = step;
+        }
+    }
+
     #endregion
 
     public partial class MainViewModel : ObservableObject
@@ -665,6 +679,16 @@ namespace VMS.VisionSetup.ViewModels
             WeakReferenceMessenger.Default.Register<RequestShowToolROIMessage>(this, (r, m) =>
             {
                 SelectedDisplayMode = ImageDisplayMode.OriginalImage;
+            });
+
+            // Batch Test 창에서 Step 선택 시 → 메인 워크스페이스에 그 Step의 도구 로드
+            WeakReferenceMessenger.Default.Register<RequestLoadStepMessage>(this, (r, m) =>
+            {
+                if (_recipeService.CurrentRecipe?.Id != m.Recipe.Id)
+                {
+                    _recipeService.SetCurrentRecipe(m.Recipe);
+                }
+                SelectedStep = m.Step;
             });
         }
         #endregion

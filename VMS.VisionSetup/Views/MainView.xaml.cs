@@ -742,7 +742,9 @@ namespace VMS.VisionSetup
         private void BatchTest_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new VMS.VisionSetup.Views.BatchTest.BatchTestWindow(
-                VMS.VisionSetup.Services.VisionService.Instance)
+                VMS.VisionSetup.Services.VisionService.Instance,
+                VMS.VisionSetup.Services.RecipeService.Instance,
+                VMS.VisionSetup.Services.CameraService.Instance)
             {
                 Owner = System.Windows.Window.GetWindow(this)
             };

@@ -22,6 +22,15 @@ namespace VMS.VisionSetup.Services.BatchTesting
         public string? FailureReason { get; set; }
         /// <summary>도구 ID → VisionResult. CSV 생성기가 이걸 동적 컬럼으로 펼침.</summary>
         public Dictionary<string, VisionResult> ToolResults { get; set; } = new();
+
+        /// <summary>임계치(Recipe.Criteria) 통과 여부 — 모든 도구 결과가 정의된 범위 안에 있을 때 true.</summary>
+        public bool ThresholdsPassed { get; set; } = true;
+
+        /// <summary>임계치 위반 메시지 목록 — Failure Browser/CSV 에서 사람이 읽는 용.</summary>
+        public List<string> ThresholdViolations { get; set; } = new();
+
+        /// <summary>DataGrid 표시용 — ImagePath의 파일명 부분.</summary>
+        public string FileName => string.IsNullOrEmpty(ImagePath) ? "" : Path.GetFileName(ImagePath);
     }
 
     public class BatchTestConfig
@@ -32,6 +41,9 @@ namespace VMS.VisionSetup.Services.BatchTesting
         public string OutputCsvPath { get; set; } = string.Empty;
         public bool SaveFailureOverlays { get; set; } = true;
         public string? FailureOverlayDir { get; set; }
+
+        /// <summary>도구별 Pass/Fail 임계치. null이면 임계치 평가 생략.</summary>
+        public PassFailCriteria? Criteria { get; set; }
     }
 
     /// <summary>
@@ -86,14 +98,38 @@ namespace VMS.VisionSetup.Services.BatchTesting
                         // ExecuteAllAsync는 내부적으로 Task.Run으로 동기 ExecuteAll 호출 — 우리는 이미 백그라운드.
                         var toolResults = _visionService.ExecuteAllAsync().GetAwaiter().GetResult();
 
-                        // 도구 ID로 매핑 — Tools 컬렉션과 같은 순서
-                        var tools = _visionService.Tools;
-                        for (int i = 0; i < tools.Count && i < toolResults.Count; i++)
-                            item.ToolResults[tools[i].Id] = toolResults[i];
+                        // 도구 ID로 안전 매핑 — ExecuteAll은 topological sort 순서로 결과를 반환하므로
+                        // 인덱스 기반 매핑(tools[i] ↔ toolResults[i])은 잘못된 도구에 결과가 붙는 버그를 만든다.
+                        var resultMap = _visionService.LastExecutionResultsById;
+                        var pairs = new List<(VisionToolBase tool, VisionResult res)>();
+                        foreach (var tool in _visionService.Tools)
+                        {
+                            if (resultMap.TryGetValue(tool.Id, out var res))
+                            {
+                                item.ToolResults[tool.Id] = res;
+                                pairs.Add((tool, res));
+                            }
+                        }
 
-                        item.Success = _visionService.LastRunSuccess && toolResults.All(r => r.Success);
+                        // 임계치 평가 (Recipe.Criteria 가 있을 때만)
+                        var execSuccess = _visionService.LastRunSuccess && toolResults.All(r => r.Success);
+                        if (cfg.Criteria != null)
+                        {
+                            var eval = PassFailEvaluator.EvaluateAll(pairs, cfg.Criteria);
+                            item.ThresholdsPassed = eval.Pass;
+                            item.ThresholdViolations = eval.Violations;
+                        }
+
+                        item.Success = execSuccess && item.ThresholdsPassed;
                         if (!item.Success)
-                            item.FailureReason = toolResults.FirstOrDefault(r => !r.Success)?.Message ?? "도구 실행 실패";
+                        {
+                            if (!execSuccess)
+                                item.FailureReason = toolResults.FirstOrDefault(r => !r.Success)?.Message ?? "도구 실행 실패";
+                            else if (!item.ThresholdsPassed)
+                                item.FailureReason = $"임계치 위반 {item.ThresholdViolations.Count}건: " +
+                                    string.Join(" | ", item.ThresholdViolations.Take(2)) +
+                                    (item.ThresholdViolations.Count > 2 ? " …" : "");
+                        }
 
                         // 실패 오버레이 저장
                         if (!item.Success && cfg.SaveFailureOverlays && !string.IsNullOrEmpty(cfg.FailureOverlayDir))
