@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMS — OCR 합성 데이터 생성기 운영 매뉴얼</title>
+<style>
+  :root{
+    --primary:#1a365d; --primary-light:#2b6cb0; --accent:#3182ce;
+    --bg:#fff; --bg-alt:#f7fafc; --bg-code:#edf2f7; --border:#e2e8f0;
+    --text:#1a202c; --text-light:#4a5568; --text-muted:#718096;
+    --success:#38a169; --warning:#d69e2e; --danger:#e53e3e; --info:#3182ce;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    font-family:'Pretendard','Noto Sans KR',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    color:var(--text); background:var(--bg); line-height:1.8; font-size:15px;
+  }
+  @media print {
+    body{font-size:11pt;line-height:1.6}
+    .sidebar{display:none!important}
+    .main{margin-left:0!important;max-width:100%!important;padding:0 20px!important}
+    h2{break-before:page} table{break-inside:avoid}
+  }
+  .sidebar{
+    position:fixed; top:0; left:0; width:260px; height:100vh;
+    background:var(--primary); color:#fff; overflow-y:auto;
+    padding:24px 0; box-shadow:2px 0 10px rgba(0,0,0,0.1);
+  }
+  .sidebar-header{padding:0 20px 16px; border-bottom:1px solid rgba(255,255,255,0.15); margin-bottom:12px}
+  .sidebar-header h3{font-size:16px; font-weight:700; margin-bottom:4px}
+  .sidebar-header p{font-size:12px; color:rgba(255,255,255,0.7)}
+  .sidebar a{
+    display:block; padding:8px 20px; color:rgba(255,255,255,0.85);
+    text-decoration:none; font-size:13px; border-left:3px solid transparent;
+    transition:all 0.15s;
+  }
+  .sidebar a:hover{background:rgba(255,255,255,0.08); border-left-color:var(--accent); color:#fff}
+  .sidebar a.indent{padding-left:36px; font-size:12px}
+  .sidebar h4{
+    padding:14px 20px 6px; font-size:11px; font-weight:600;
+    color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:0.05em;
+  }
+  .main{margin-left:260px; max-width:920px; padding:40px 56px}
+  .doc-header{
+    padding:24px 0 32px; border-bottom:2px solid var(--primary); margin-bottom:32px;
+  }
+  .doc-header h1{font-size:30px; font-weight:800; color:var(--primary); margin-bottom:8px}
+  .doc-header p{color:var(--text-light); font-size:14px}
+  .doc-meta{
+    display:flex; gap:24px; margin-top:14px; font-size:12px; color:var(--text-muted);
+  }
+  .doc-meta span strong{color:var(--text)}
+
+  h2{
+    font-size:22px; font-weight:700; color:var(--primary);
+    margin:48px 0 16px; padding-bottom:8px; border-bottom:1px solid var(--border);
+    scroll-margin-top:20px;
+  }
+  h3{
+    font-size:17px; font-weight:600; color:var(--primary-light);
+    margin:28px 0 10px; scroll-margin-top:20px;
+  }
+  h4{font-size:14px; font-weight:600; color:var(--text); margin:18px 0 8px}
+  p{margin-bottom:12px}
+  ul,ol{margin:8px 0 16px 24px}
+  li{margin-bottom:6px}
+  code{
+    background:var(--bg-code); padding:2px 6px; border-radius:3px;
+    font-family:'Consolas',Monaco,monospace; font-size:13px; color:var(--danger);
+  }
+  pre{
+    background:#1e293b; color:#e2e8f0; padding:16px 20px; border-radius:6px;
+    overflow-x:auto; margin:12px 0 20px; font-size:13px; line-height:1.6;
+  }
+  pre code{background:none; color:inherit; padding:0; font-size:inherit}
+  table{
+    border-collapse:collapse; width:100%; margin:12px 0 20px;
+    font-size:13px; box-shadow:0 1px 3px rgba(0,0,0,0.05);
+  }
+  th{
+    background:var(--primary); color:#fff; padding:10px 14px;
+    text-align:left; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.03em;
+  }
+  td{padding:10px 14px; border-bottom:1px solid var(--border)}
+  tr:hover td{background:var(--bg-alt)}
+  .note{
+    background:#ebf8ff; border-left:4px solid var(--info);
+    padding:12px 16px; margin:14px 0; border-radius:3px; font-size:13.5px;
+  }
+  .warn{
+    background:#fffaf0; border-left:4px solid var(--warning);
+    padding:12px 16px; margin:14px 0; border-radius:3px; font-size:13.5px;
+  }
+  .success{
+    background:#f0fff4; border-left:4px solid var(--success);
+    padding:12px 16px; margin:14px 0; border-radius:3px; font-size:13.5px;
+  }
+  .step{
+    background:var(--bg-alt); border-left:3px solid var(--accent);
+    padding:14px 18px; margin:14px 0; border-radius:3px;
+  }
+  .step-num{
+    display:inline-block; background:var(--primary); color:#fff;
+    width:24px; height:24px; line-height:24px; text-align:center;
+    border-radius:50%; font-size:12px; font-weight:700; margin-right:8px;
+  }
+  .badge{
+    display:inline-block; padding:2px 8px; background:var(--bg-code);
+    color:var(--text-light); border-radius:10px; font-size:11px; font-weight:600;
+  }
+  .badge.success{background:#c6f6d5; color:#22543d}
+  .badge.warn{background:#fefcbf; color:#744210}
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <h3>OCR Synth Data</h3>
+    <p>VMS VisionSetup 운영 매뉴얼</p>
+  </div>
+  <h4>시작</h4>
+  <a href="#overview">1. 개요</a>
+  <a href="#when">2. 언제 사용하나</a>
+  <a href="#launch">3. 실행</a>
+  <h4>설정</h4>
+  <a href="#font">4. 폰트</a>
+  <a href="#patterns">5. 패턴</a>
+  <a href="#dataset">6. 데이터셋</a>
+  <a href="#background">7. 배경</a>
+  <a href="#augmentation">8. 증강</a>
+  <h4>실행 / 활용</h4>
+  <a href="#generate">9. 생성 실행</a>
+  <a href="#output">10. 출력 구조</a>
+  <a href="#train">11. PP-OCR Fine-tuning</a>
+  <a href="#apply">12. 학습 모델 적용</a>
+  <h4>참고</h4>
+  <a href="#tips">13. 실전 팁</a>
+  <a href="#tokens">14. 토큰 레퍼런스</a>
+  <a href="#troubleshoot">15. 문제 해결</a>
+</nav>
+
+<main class="main">
+
+<header class="doc-header">
+  <h1>OCR 합성 데이터 생성기</h1>
+  <p>PP-OCR fine-tuning 및 OCV 학습용 라벨링된 합성 데이터셋 자동 생성</p>
+  <div class="doc-meta">
+    <span><strong>대상</strong> VMS.VisionSetup ≥ 2026.05</span>
+    <span><strong>출력</strong> PaddleOCR rec / OCV char patches</span>
+    <span><strong>사용 권한</strong> 비전 엔지니어</span>
+  </div>
+</header>
+
+<h2 id="overview">1. 개요</h2>
+<p>
+  산업 라벨(LOT, 시리얼, 유통기한 등) OCR 인식률을 끌어올리기 위해
+  <strong>PP-OCRv4 rec 모델 fine-tuning</strong> 또는
+  <strong>OCV(Optical Character Verification) 폰트 라이브러리</strong>에 학습시킬 데이터를
+  자동 생성합니다. 사용자가 패턴(예: <code>DD/MM/YYYY</code>)과 폰트를 지정하면,
+  유효한 무작위 문자열을 생성 → 폰트로 렌더 → 배경 합성 → 증강을 거쳐
+  PaddleOCR 학습 포맷으로 저장합니다.
+</p>
+
+<div class="note">
+  <strong>특징</strong> — 토큰 기반 mini-DSL이라 <em>OCR Output Format</em>과 같은 표기법을 그대로 사용.
+  알려진 날짜 패턴은 실제 유효한 datetime 값으로 생성되어 학습 분포 가치를 보존합니다.
+</div>
+
+<h2 id="when">2. 언제 사용하나</h2>
+<ul>
+  <li>PP-OCR가 산업용 폰트(스텐실, 도트, 임프린트)에서 <code>/</code> → <code>7</code>처럼 시각적 혼동을 보일 때</li>
+  <li>실제 라벨 이미지가 부족(50장 미만)해서 직접 학습이 어려울 때</li>
+  <li>새로운 라벨 형식이 도입되어 모델 재학습이 필요할 때</li>
+  <li>OCV 폰트 라이브러리에 등록할 문자 patch가 부족할 때</li>
+</ul>
+
+<h2 id="launch">3. 실행</h2>
+<div class="step">
+  <span class="step-num">▶</span>
+  메뉴 <code>Run › OCR Synth Data...</code> 클릭 → 설정 윈도우 오픈
+</div>
+
+<h2 id="font">4. 폰트 설정</h2>
+<table>
+  <thead><tr><th>항목</th><th>설명</th><th>권장</th></tr></thead>
+  <tbody>
+    <tr><td>기본 폰트</td><td>시스템 설치 폰트 콤보에서 선택</td><td>Arial / Consolas</td></tr>
+    <tr><td>추가 폰트</td><td>줄바꿈/콤마 구분 — 생성 시 무작위 선택</td><td>다수 등록 시 분포 다양화</td></tr>
+    <tr><td>크기 Min/Max (px)</td><td>이 범위에서 무작위 크기 선택</td><td>28 / 64</td></tr>
+    <tr><td>Bold/Italic 무작위</td><td>스타일 변동 추가</td><td>ON</td></tr>
+  </tbody>
+</table>
+
+<div class="warn">
+  <strong>중요</strong> — 학습 효과의 가장 큰 변수는 <em>실제 라벨 폰트와 합성에 쓴 폰트의 유사도</em>입니다.
+  대상 라벨이 OCR-A/B나 특수 산업 폰트면 해당 TTF를 시스템에 설치한 뒤 추가 폰트에 등록하세요.
+  일반 시스템 폰트로만 학습하면 distribution gap이 남습니다.
+</div>
+
+<h2 id="patterns">5. 패턴</h2>
+<p>한 줄에 한 패턴 입력. 프리셋 버튼으로 자주 쓰는 패턴 빠르게 추가:</p>
+<pre><code>DD/MM/YYYY
+DDDDDDD
+YYYY-MM-DD HH:MM:SS
+LOT-DDDDDDDD</code></pre>
+
+<p>실행 시 패턴 하나가 무작위로 선택되어 샘플 생성. 각 패턴은 다음 규칙으로 무작위 문자열로 변환:</p>
+<table>
+  <thead><tr><th>토큰</th><th>의미</th><th>예</th></tr></thead>
+  <tbody>
+    <tr><td><code>D</code> <code>M</code> <code>Y</code> <code>H</code> <code>S</code> <code>f</code></td><td>숫자 (0~9)</td><td>D → 7</td></tr>
+    <tr><td><code>L</code></td><td>영문자 대문자</td><td>L → A</td></tr>
+    <tr><td><code>A</code></td><td>영숫자</td><td>A → K 또는 3</td></tr>
+    <tr><td><code>?</code></td><td>임의 (영숫자)</td><td>? → 5</td></tr>
+    <tr><td>그 외</td><td>리터럴 — 그 자리에 그대로 출력</td><td><code>/</code>, <code>-</code>, <code>:</code>, <code>.</code>, 공백</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <strong>스마트 생성</strong> — 알려진 datetime 패턴(<code>DD/MM/YYYY</code>, <code>YYYY-MM-DD HH:MM:SS</code> 등)은
+  실제 유효한 날짜/시간 값으로 채워집니다 (예: 31일 ≠ 02월). 무의미한 조합 방지.
+</div>
+
+<h2 id="dataset">6. 데이터셋 설정</h2>
+<table>
+  <thead><tr><th>항목</th><th>설명</th><th>권장</th></tr></thead>
+  <tbody>
+    <tr><td>샘플 수</td><td>총 생성 이미지 개수</td><td>2,000~10,000 (fine-tuning 시작 2,000)</td></tr>
+    <tr><td>Val 비율</td><td>validation 분할 비율 (0~0.5)</td><td>0.2 (8:2)</td></tr>
+    <tr><td>출력 포맷</td><td><span class="badge success">PaddleOCR rec</span> 또는 <span class="badge">OCV char patches</span></td><td>PP-OCR 학습 → rec</td></tr>
+    <tr><td>출력 폴더</td><td>Browse... 클릭 → 빈 폴더 선택</td><td>새 폴더 사용 (기존 파일 덮어쓰기 방지)</td></tr>
+  </tbody>
+</table>
+
+<h2 id="background">7. 배경</h2>
+<table>
+  <thead><tr><th>모드</th><th>설명</th><th>현실성</th></tr></thead>
+  <tbody>
+    <tr><td>Solid</td><td>흰 배경 + 검정 글자</td><td>낮음 (sanity 검증용)</td></tr>
+    <tr><td>Gradient</td><td>무작위 grayscale gradient — 조명 불균일 모사</td><td>중간</td></tr>
+    <tr><td><strong>From Folder</strong></td><td>실제 라벨에서 텍스트 없는 영역 crop들의 폴더 사용</td><td><strong>최고 — 권장</strong></td></tr>
+  </tbody>
+</table>
+<p><code>흑/백 무작위 반전</code> ON → 흰 글자/검 배경 케이스도 학습 분포에 포함됨.</p>
+
+<h2 id="augmentation">8. 증강 (현실 환경에 맞게)</h2>
+<table>
+  <thead><tr><th>파라미터</th><th>의미</th><th>일반값</th><th>강화값</th></tr></thead>
+  <tbody>
+    <tr><td>회전 ± (deg)</td><td>라벨 부착 각도 변동</td><td>3</td><td>5~10</td></tr>
+    <tr><td>원근 jitter</td><td>카메라 각도 보정 불완전</td><td>0.02</td><td>0.05</td></tr>
+    <tr><td>Blur 커널 (0/3/5)</td><td>초점 흐림</td><td>3</td><td>5</td></tr>
+    <tr><td>Gaussian 노이즈 std</td><td>센서 noise</td><td>5</td><td>10~15</td></tr>
+    <tr><td>밝기 jitter ±</td><td>조명 변동</td><td>0.1</td><td>0.2</td></tr>
+    <tr><td>대비 jitter ±</td><td>대비 변동</td><td>0.1</td><td>0.2</td></tr>
+    <tr><td>도트 매트릭스</td><td>잉크젯/도트 프린트 효과</td><td>OFF</td><td>대상 라벨이 도트면 ON</td></tr>
+  </tbody>
+</table>
+
+<h2 id="generate">9. 생성 실행</h2>
+<div class="step"><span class="step-num">1</span>모든 설정 입력 후 <code>Generate</code> 클릭</div>
+<div class="step"><span class="step-num">2</span>진행률 바로 상태 확인 (UI 멈춤 없음 — 백그라운드 비동기 실행)</div>
+<div class="step"><span class="step-num">3</span>완료 후 상태 메시지에 <code>train N + val M</code> 표시</div>
+
+<p>1,000샘플 약 30~60초 (폰트 크기와 증강 설정에 따라).</p>
+
+<h2 id="output">10. 출력 구조</h2>
+<pre><code>output_dir/
+├── train_crops/      # 000001.png ~ (학습 이미지)
+├── val_crops/        # 000123.png ~ (검증 이미지)
+├── train_rec.txt     # 각 줄: train_crops/000001.png\t31/03/2099
+├── val_rec.txt       # 검증 라벨 파일
+└── dict.txt          # 학습 데이터에 나타난 unique char 목록</code></pre>
+
+<div class="note">
+  <strong>dict.txt</strong>는 PP-OCR 학습 시 character set 정의에 그대로 사용됩니다.
+  생성된 데이터에 등장하지 않는 문자는 학습되지 않으므로, 모든 필요한 문자가 포함됐는지
+  생성 후 확인하세요.
+</div>
+
+<h2 id="train">11. PP-OCR Fine-tuning</h2>
+<p>이미 존재하는 <code>VMS.VisionSetup/scripts/train_ppocr.py</code>로 학습:</p>
+<pre><code>python VMS.VisionSetup/scripts/train_ppocr.py \
+  --target recognition \
+  --dataset output_dir \
+  --output trained_model_dir \
+  --epochs 50 \
+  --pretrained models/ppocr/ch_PP-OCRv4_rec_infer</code></pre>
+
+<div class="warn">
+  사전 학습 모델(<code>ch_PP-OCRv4_rec_infer</code>)부터 fine-tuning하면
+  훨씬 빠르게 수렴하고 generalization도 좋습니다. 0부터 학습은 권장하지 않음.
+</div>
+
+<h2 id="apply">12. 학습 모델 적용</h2>
+<div class="step">
+  <span class="step-num">1</span>
+  OCR Tool Settings → <code>Engine = PPOcrOnnx</code>
+</div>
+<div class="step">
+  <span class="step-num">2</span>
+  <code>Custom Rec Model</code> 필드의 <strong>📂 Browse</strong> 버튼 클릭 → 학습 결과 <code>.onnx</code> 선택
+</div>
+<div class="step">
+  <span class="step-num">3</span>
+  <code>Custom Dict File</code> → <code>dict.txt</code> 선택
+</div>
+<div class="step">
+  <span class="step-num">4</span>
+  Recipe 재실행 → 인식률 검증
+</div>
+
+<h2 id="tips">13. 실전 팁</h2>
+<ul>
+  <li>
+    <strong>현실 50장 + 합성 2,000장 혼합</strong>이 가장 안정적.
+    합성만으로는 distribution gap이 남습니다.
+  </li>
+  <li>
+    <strong>From Folder 모드 권장</strong> — 실제 라벨에서 텍스트 없는 영역(여백, 라벨 가장자리)을
+    잘라 폴더에 모아두세요. 100~500장이면 충분히 다양성 확보.
+  </li>
+  <li>
+    <strong>대상 폰트 확보</strong> — 라벨 폰트와 다르면 효과 제한적. OCR-A/B 또는
+    산업용 폰트 .ttf를 구해 시스템에 설치 후 추가 폰트에 등록.
+  </li>
+  <li>
+    <strong>증강 단계적 강화</strong> — 첫 학습은 약한 증강(회전 3°, blur 3)으로 시작,
+    검증 인식률이 정체되면 강한 증강(회전 8°, blur 5, noise 15)으로 재학습.
+  </li>
+  <li>
+    <strong>RandomSeed 고정</strong> (테스트용) — 디버깅 시 결과 재현 가능.
+  </li>
+</ul>
+
+<h2 id="tokens">14. 토큰 레퍼런스</h2>
+<table>
+  <thead><tr><th>패턴 예시</th><th>의미</th><th>생성 결과 (예)</th></tr></thead>
+  <tbody>
+    <tr><td><code>DD/MM/YYYY</code></td><td>날짜 dd/mm/yyyy (유효 datetime)</td><td>31/03/2099</td></tr>
+    <tr><td><code>YYYY-MM-DDTHH:MM:SS</code></td><td>ISO 8601 datetime</td><td>2024-06-15T14:32:08</td></tr>
+    <tr><td><code>DDDDDDD</code></td><td>7자리 숫자 LOT</td><td>9876543</td></tr>
+    <tr><td><code>LOT-DDDDDDDD</code></td><td>리터럴 + 8자리</td><td>LOT-12345678</td></tr>
+    <tr><td><code>LL-DDDDDD</code></td><td>영문 2자리 - 숫자 6자리</td><td>AB-123456</td></tr>
+    <tr><td><code>AAAAAA</code></td><td>영숫자 6자리</td><td>K3M9Q1</td></tr>
+  </tbody>
+</table>
+
+<h2 id="troubleshoot">15. 문제 해결</h2>
+
+<h3>생성된 텍스트가 잘림</h3>
+<p>폰트 크기가 너무 크거나 패딩 부족. <code>FontSizeMax</code>를 줄이거나
+폰트 크기 분포 조정. 패딩은 코드 상수(10px)로 고정 — 글자 굵기 큰 폰트는 영향 받을 수 있음.</p>
+
+<h3>From Folder 모드인데 배경이 단색으로 나옴</h3>
+<p>지정 폴더에 jpg/png/bmp 파일이 없거나 경로 오류 → Solid 모드로 fallback. 폴더 경로와
+파일 존재 확인. 1개라도 있어야 동작.</p>
+
+<h3>학습 모델 적용 후 오히려 인식률 저하</h3>
+<ul>
+  <li>합성 폰트가 실제 라벨 폰트와 너무 다름 → 폰트 교체</li>
+  <li>증강이 너무 약함 → 회전/blur/노이즈 강화</li>
+  <li>샘플 수 부족 → 5,000장 이상으로 증가</li>
+  <li>dict.txt에 실제 필요한 문자 누락 → 패턴 추가 후 재생성</li>
+</ul>
+
+<h3>dict.txt에 한국어/특수문자가 빠짐</h3>
+<p>패턴에 직접 리터럴로 포함되어야 합니다. <code>?</code> 토큰은 영숫자만 생성하므로
+한국어가 필요한 경우 Custom 패턴에 한국어 char를 직접 작성:</p>
+<pre><code>LOT-가나다-DDDDDD
+유통기한: DD/MM/YYYY</code></pre>
+
+<h3>UI 멈춤</h3>
+<p>샘플 수가 10,000을 넘으면 메모리 사용량과 처리 시간 증가. 첫 실행은 1,000~2,000으로 시작.
+배치 분할 실행 권장.</p>
+
+<hr style="margin-top:48px; border:none; border-top:1px solid var(--border)">
+<p style="text-align:center; color:var(--text-muted); font-size:12px; margin-top:24px">
+  VMS VisionSetup — OCR 합성 데이터 생성기 운영 매뉴얼 · 2026
+</p>
+
+</main>
+</body>
+</html>

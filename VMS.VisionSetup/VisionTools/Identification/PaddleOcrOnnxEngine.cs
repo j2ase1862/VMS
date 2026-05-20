@@ -53,6 +53,38 @@ namespace VMS.VisionSetup.VisionTools.Identification
         // ── Recognition 파라미터 ──
         private const int RecImageHeight = 48;
 
+        private string _whitelist = string.Empty;
+        private HashSet<int>? _whitelistIndices;
+        /// <summary>
+        /// 인식 허용 문자 화이트리스트. 비어있으면 전체 사전 사용.
+        /// CTC 디코딩 시 사전 인덱스 중 화이트리스트에 없는 char는 argmax 후보에서 제외 →
+        /// 산업용 문자(숫자/날짜) 인식 시 '/' ↔ '7' 같은 시각적 혼동 차단.
+        /// blank(idx 0)는 항상 허용.
+        /// </summary>
+        public string WhitelistChars
+        {
+            get => _whitelist;
+            set
+            {
+                _whitelist = value ?? string.Empty;
+                _whitelistIndices = null; // 사전 빌드는 첫 호출 시 lazy
+            }
+        }
+
+        private HashSet<int>? GetWhitelistIndices()
+        {
+            if (string.IsNullOrEmpty(_whitelist)) return null;
+            if (_whitelistIndices != null) return _whitelistIndices;
+            var set = new HashSet<int> { 0 }; // blank 항상 허용
+            for (int i = 1; i < _dictionary.Length; i++)
+            {
+                if (!string.IsNullOrEmpty(_dictionary[i]) && _whitelist.Contains(_dictionary[i]))
+                    set.Add(i);
+            }
+            _whitelistIndices = set;
+            return set;
+        }
+
         // ── ImageNet normalization (Detection) ──
         private static readonly float[] DetMean = { 0.485f, 0.456f, 0.406f };
         private static readonly float[] DetStd = { 0.229f, 0.224f, 0.225f };
@@ -193,8 +225,21 @@ namespace VMS.VisionSetup.VisionTools.Identification
             float ratioH = (float)origH / resizedH;
             float ratioW = (float)origW / resizedW;
 
+            // DEBUG: 확률맵 통계 (Dimension/max/mean) — 모델 출력 검증용
+            if (DebugLogger != null)
+            {
+                var dims = outputTensor.Dimensions.ToArray();
+                float maxV = float.MinValue, sumV = 0f;
+                int count = 0;
+                foreach (var v in outputTensor) { if (v > maxV) maxV = v; sumV += v; count++; }
+                DebugLogger($"  [det] tensor dims=[{string.Join(",", dims)}] max={maxV:F4} mean={sumV / count:F4} count={count}");
+            }
+
             return PostprocessDetection(outputTensor, resizedH, resizedW, ratioH, ratioW);
         }
+
+        /// <summary>(테스트용) 검출 단계 진단 로그 callback.</summary>
+        public static Action<string>? DebugLogger { get; set; }
 
         private void GetResizeInfo(int origH, int origW, out int resizedH, out int resizedW)
         {
@@ -262,24 +307,25 @@ namespace VMS.VisionSetup.VisionTools.Identification
                 RetrievalModes.List, ContourApproximationModes.ApproxSimple);
 
             var results = new List<Point2f[]>();
+            int rejTooShort = 0, rejScore = 0, rejSize = 0, rejPerim = 0;
 
             foreach (var contour in contours)
             {
-                if (contour.Length < 4) continue;
+                if (contour.Length < 4) { rejTooShort++; continue; }
 
                 // 박스 점수 계산 (윤곽선 내부 확률 평균)
                 float score = ComputeBoxScore(probMap, contour);
-                if (score < DetDbBoxThresh) continue;
+                if (score < DetDbBoxThresh) { rejScore++; continue; }
 
                 // 최소 면적 회전 사각형 → 언클립(확장)
                 var rect = Cv2.MinAreaRect(contour);
                 if (rect.Size.Width < MinBoxSideLen || rect.Size.Height < MinBoxSideLen)
-                    continue;
+                { rejSize++; continue; }
 
                 // 언클립: 폴리곤 확장
                 double area = Cv2.ContourArea(contour);
                 double perimeter = Cv2.ArcLength(contour, true);
-                if (perimeter < 1.0) continue;
+                if (perimeter < 1.0) { rejPerim++; continue; }
 
                 float distance = (float)(area * DetDbUnclipRatio / perimeter);
                 rect.Size = new Size2f(
@@ -297,6 +343,8 @@ namespace VMS.VisionSetup.VisionTools.Identification
                 results.Add(points);
             }
 
+            DebugLogger?.Invoke($"  [post] contours={contours.Length} kept={results.Count} " +
+                $"rej(short/score/size/perim)={rejTooShort}/{rejScore}/{rejSize}/{rejPerim}");
             return results;
         }
 
@@ -304,24 +352,42 @@ namespace VMS.VisionSetup.VisionTools.Identification
         {
             var boundingRect = Cv2.BoundingRect(contour);
 
-            // 클리핑
             int xMin = Math.Max(0, boundingRect.X);
             int yMin = Math.Max(0, boundingRect.Y);
             int xMax = Math.Min(probMap.Cols, boundingRect.X + boundingRect.Width);
             int yMax = Math.Min(probMap.Rows, boundingRect.Y + boundingRect.Height);
-
             if (xMax <= xMin || yMax <= yMin) return 0f;
 
-            // 마스크 생성
-            using var mask = Mat.Zeros(yMax - yMin, xMax - xMin, MatType.CV_8UC1);
-            var shifted = contour.Select(p =>
-                new Point(p.X - xMin, p.Y - yMin)).ToArray();
-            Cv2.FillPoly(mask, new[] { shifted }, new Scalar(1));
+            int w = xMax - xMin, h = yMax - yMin;
 
-            // 마스크 영역 내 확률 평균
-            using var roi = new Mat(probMap, new Rect(xMin, yMin, xMax - xMin, yMax - yMin));
-            var mean = Cv2.Mean(roi, mask);
-            return (float)mean.Val0;
+            using var mask = new Mat(h, w, MatType.CV_8UC1, Scalar.All(0));
+            var shifted = contour.Select(p => new Point(p.X - xMin, p.Y - yMin)).ToArray();
+            Cv2.FillPoly(mask, new[] { shifted }, new Scalar(255));
+
+            // 직접 픽셀 합산 (Cv2.Mean이 CV_32FC1 ROI + CV_8UC1 mask 조합에서 0 반환 이슈 회피)
+            double sum = 0;
+            int count = 0;
+            unsafe
+            {
+                float* probPtr = (float*)probMap.Data;
+                long probStride = probMap.Step() / sizeof(float);
+                byte* maskPtr = (byte*)mask.Data;
+                long maskStride = mask.Step();
+                for (int y = 0; y < h; y++)
+                {
+                    float* probRow = probPtr + (yMin + y) * probStride + xMin;
+                    byte* maskRow = maskPtr + y * maskStride;
+                    for (int x = 0; x < w; x++)
+                    {
+                        if (maskRow[x] > 0)
+                        {
+                            sum += probRow[x];
+                            count++;
+                        }
+                    }
+                }
+            }
+            return count > 0 ? (float)(sum / count) : 0f;
         }
 
         #endregion
@@ -415,14 +481,16 @@ namespace VMS.VisionSetup.VisionTools.Identification
             var chars = new List<string>();
             var confidences = new List<float>();
             int lastIdx = 0; // blank
+            var allowed = GetWhitelistIndices();
 
             for (int t = 0; t < timeSteps; t++)
             {
-                // argmax + softmax max 계산
+                // argmax (whitelist 적용 시 허용 인덱스만 후보)
                 int bestIdx = 0;
-                float bestVal = output[0, t, 0];
-                for (int c = 1; c < numClasses; c++)
+                float bestVal = float.MinValue;
+                for (int c = 0; c < numClasses; c++)
                 {
+                    if (allowed != null && !allowed.Contains(c)) continue;
                     if (output[0, t, c] > bestVal)
                     {
                         bestVal = output[0, t, c];
@@ -430,12 +498,10 @@ namespace VMS.VisionSetup.VisionTools.Identification
                     }
                 }
 
-                // softmax로 신뢰도 계산
-                float maxLogit = bestVal;
-                float sumExp = 0f;
-                for (int c = 0; c < numClasses; c++)
-                    sumExp += MathF.Exp(output[0, t, c] - maxLogit);
-                float prob = 1.0f / sumExp;
+                // PP-OCRv4 ONNX export는 softmax가 모델 내장 → output은 이미 확률.
+                // 추가 softmax 적용 시 1/sumExp ≈ 1/numClasses로 값이 뭉개짐.
+                // bestVal이 이미 해당 클래스의 확률. 안전을 위해 [0,1] clamp.
+                float prob = Math.Clamp(bestVal, 0f, 1f);
 
                 // CTC: 연속 중복 제거 + blank(0) 스킵
                 if (bestIdx != 0 && bestIdx != lastIdx)

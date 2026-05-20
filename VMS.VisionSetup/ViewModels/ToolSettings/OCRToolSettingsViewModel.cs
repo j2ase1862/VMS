@@ -112,6 +112,37 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
             set { TypedTool.DotMatrixMode = value; OnPropertyChanged(); }
         }
 
+        // ── Output Format ──
+
+        public OcrOutputFormatPreset FormatPreset
+        {
+            get => TypedTool.FormatPreset;
+            set
+            {
+                TypedTool.FormatPreset = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsCustomFormat));
+                OnPropertyChanged(nameof(EffectivePattern));
+            }
+        }
+
+        public string CustomOutputFormat
+        {
+            get => TypedTool.CustomOutputFormat;
+            set
+            {
+                TypedTool.CustomOutputFormat = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(EffectivePattern));
+            }
+        }
+
+        /// <summary>Custom 선택 시 멀티라인 TextBox 노출 트리거.</summary>
+        public bool IsCustomFormat => FormatPreset == OcrOutputFormatPreset.Custom;
+
+        /// <summary>UI 미리보기 — 실제 적용될 패턴.</summary>
+        public string EffectivePattern => TypedTool.EffectiveOutputFormat;
+
         // ── Verification ──
 
         public bool EnableVerification

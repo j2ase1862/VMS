@@ -12,7 +12,7 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
     /// ROI에서 그레이 템플릿을 학습하고, Execute 시 회전/스케일 그리드를 탐색해 최고 점수 매칭을 반환.
     /// 다중 인스턴스, GHT(엣지 기반) 모드는 Phase 2에서.
     /// </summary>
-    public class ShapeMatchTool : VisionToolBase
+    public class ShapeMatchTool : VisionToolBase, ISearchRegionTool
     {
         // ── 학습된 템플릿 (PNG 인코딩으로 Recipe 직렬화 친화) ──
         private byte[]? _templatePngBytes;
@@ -140,6 +140,9 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
             {
                 if (SetProperty(ref _searchRegion, value))
                 {
+                    // 사용자가 SearchRegion을 수동 변경하면 fixture base를 새 기준으로 리셋
+                    if (!IsFixtureTransformActive)
+                        HasFixtureBaseSearchRegion = false;
                     OnPropertyChanged(nameof(SearchRegionX));
                     OnPropertyChanged(nameof(SearchRegionY));
                     OnPropertyChanged(nameof(SearchRegionWidth));

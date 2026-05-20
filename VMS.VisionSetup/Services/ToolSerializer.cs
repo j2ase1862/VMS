@@ -251,10 +251,14 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["CodeReaderMode"] = codeReader.CodeReaderMode.ToString();
                     config.Parameters["MaxCodeCount"] = codeReader.MaxCodeCount;
                     config.Parameters["TryHarder"] = codeReader.TryHarder;
+                    config.Parameters["UseLocalization"] = codeReader.UseLocalization;
                     config.Parameters["EnableVerification"] = codeReader.EnableVerification;
                     config.Parameters["ExpectedText"] = codeReader.ExpectedText;
                     config.Parameters["UseRegexMatch"] = codeReader.UseRegexMatch;
                     config.Parameters["DrawOverlay"] = codeReader.DrawOverlay;
+                    config.Parameters["ParseGs1"] = codeReader.ParseGs1;
+                    config.Parameters["EnableQualityGrading"] = codeReader.EnableQualityGrading;
+                    config.Parameters["MinPassGrade"] = codeReader.MinPassGrade.ToString();
                     break;
 
                 case GeometryTool geom:
@@ -298,6 +302,42 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["CustomDetModelPath"] = ocr.CustomDetModelPath;
                     config.Parameters["CustomRecModelPath"] = ocr.CustomRecModelPath;
                     config.Parameters["CustomDictPath"] = ocr.CustomDictPath;
+                    config.Parameters["FormatPreset"] = ocr.FormatPreset.ToString();
+                    config.Parameters["CustomOutputFormat"] = ocr.CustomOutputFormat;
+                    break;
+
+                case VisionTools.ImageProcessing.ImageEnhanceTool enh:
+                    config.Parameters["Mode"] = enh.Mode.ToString();
+                    config.Parameters["Amount"] = enh.Amount;
+                    config.Parameters["BlurKernelSize"] = enh.BlurKernelSize;
+                    config.Parameters["Threshold"] = enh.Threshold;
+                    break;
+
+                case VisionTools.ImageProcessing.PolarUnwrapTool pol:
+                    config.Parameters["CenterX"] = pol.CenterX;
+                    config.Parameters["CenterY"] = pol.CenterY;
+                    config.Parameters["InnerRadius"] = pol.InnerRadius;
+                    config.Parameters["OuterRadius"] = pol.OuterRadius;
+                    config.Parameters["StartAngleDeg"] = pol.StartAngleDeg;
+                    config.Parameters["Direction"] = pol.Direction.ToString();
+                    config.Parameters["OutputWidth"] = pol.OutputWidth;
+                    config.Parameters["OutputHeight"] = pol.OutputHeight;
+                    break;
+
+                case OCVTool ocv:
+                    config.Parameters["MinCharHeight"] = ocv.MinCharHeight;
+                    config.Parameters["MaxCharHeight"] = ocv.MaxCharHeight;
+                    config.Parameters["MinCharWidth"] = ocv.MinCharWidth;
+                    config.Parameters["InvertImage"] = ocv.InvertImage;
+                    config.Parameters["MatchThreshold"] = ocv.MatchThreshold;
+                    config.Parameters["ExpectedText"] = ocv.ExpectedText;
+                    config.Parameters["DrawOverlay"] = ocv.DrawOverlay;
+                    config.Parameters["UseSearchRegion"] = ocv.UseSearchRegion;
+                    config.Parameters["SearchRegionX"] = ocv.SearchRegionX;
+                    config.Parameters["SearchRegionY"] = ocv.SearchRegionY;
+                    config.Parameters["SearchRegionWidth"] = ocv.SearchRegionWidth;
+                    config.Parameters["SearchRegionHeight"] = ocv.SearchRegionHeight;
+                    config.Parameters["FontLibraryJson"] = ocv.FontLibrary.ToJson();
                     break;
 
                 case DetectionTool detection:
@@ -551,6 +591,9 @@ namespace VMS.VisionSetup.Services
                 "PlaneFitTool" => DeserializePlaneFitTool(config),
                 "Geometry3DTool" => DeserializeGeometry3DTool(config),
                 "OCRTool" => DeserializeOCRTool(config),
+                "OCVTool" => DeserializeOCVTool(config),
+                "ImageEnhanceTool" => DeserializeImageEnhanceTool(config),
+                "PolarUnwrapTool" => DeserializePolarUnwrapTool(config),
                 "DetectionTool" => DeserializeDetectionTool(config),
                 "ClassifyTool" => DeserializeClassifyTool(config),
                 "AnomalyTool" => DeserializeAnomalyTool(config),
@@ -1058,6 +1101,8 @@ namespace VMS.VisionSetup.Services
                 tool.MaxCodeCount = GetInt(mcc);
             if (p.TryGetValue("TryHarder", out var th))
                 tool.TryHarder = GetBool(th);
+            if (p.TryGetValue("UseLocalization", out var ulc))
+                tool.UseLocalization = GetBool(ulc);
             if (p.TryGetValue("EnableVerification", out var ev))
                 tool.EnableVerification = GetBool(ev);
             if (p.TryGetValue("ExpectedText", out var et))
@@ -1066,6 +1111,13 @@ namespace VMS.VisionSetup.Services
                 tool.UseRegexMatch = GetBool(urm);
             if (p.TryGetValue("DrawOverlay", out var dov))
                 tool.DrawOverlay = GetBool(dov);
+            if (p.TryGetValue("ParseGs1", out var pgs))
+                tool.ParseGs1 = GetBool(pgs);
+            if (p.TryGetValue("EnableQualityGrading", out var eqg))
+                tool.EnableQualityGrading = GetBool(eqg);
+            if (p.TryGetValue("MinPassGrade", out var mpg) &&
+                Enum.TryParse<CodeQualityGrade>(GetString(mpg), true, out var grade))
+                tool.MinPassGrade = grade;
 
             return tool;
         }
@@ -1165,7 +1217,69 @@ namespace VMS.VisionSetup.Services
                 tool.CustomRecModelPath = GetString(crm);
             if (p.TryGetValue("CustomDictPath", out var cdp))
                 tool.CustomDictPath = GetString(cdp);
+            if (p.TryGetValue("FormatPreset", out var fp) &&
+                Enum.TryParse<OcrOutputFormatPreset>(GetString(fp), true, out var preset))
+                tool.FormatPreset = preset;
+            if (p.TryGetValue("CustomOutputFormat", out var cof))
+                tool.CustomOutputFormat = GetString(cof);
 
+            return tool;
+        }
+
+        private static VisionTools.ImageProcessing.ImageEnhanceTool DeserializeImageEnhanceTool(ToolConfig config)
+        {
+            var tool = new VisionTools.ImageProcessing.ImageEnhanceTool();
+            var p = config.Parameters;
+            if (p.TryGetValue("Mode", out var m) &&
+                Enum.TryParse<VisionTools.ImageProcessing.ImageEnhanceMode>(GetString(m), true, out var mode))
+                tool.Mode = mode;
+            if (p.TryGetValue("Amount", out var a)) tool.Amount = GetDouble(a);
+            if (p.TryGetValue("BlurKernelSize", out var bk)) tool.BlurKernelSize = GetInt(bk);
+            if (p.TryGetValue("Threshold", out var th)) tool.Threshold = GetInt(th);
+            return tool;
+        }
+
+        private static VisionTools.ImageProcessing.PolarUnwrapTool DeserializePolarUnwrapTool(ToolConfig config)
+        {
+            var tool = new VisionTools.ImageProcessing.PolarUnwrapTool();
+            var p = config.Parameters;
+            if (p.TryGetValue("CenterX", out var cx)) tool.CenterX = GetDouble(cx);
+            if (p.TryGetValue("CenterY", out var cy)) tool.CenterY = GetDouble(cy);
+            if (p.TryGetValue("InnerRadius", out var ir)) tool.InnerRadius = GetDouble(ir);
+            if (p.TryGetValue("OuterRadius", out var or)) tool.OuterRadius = GetDouble(or);
+            if (p.TryGetValue("StartAngleDeg", out var sa)) tool.StartAngleDeg = GetDouble(sa);
+            if (p.TryGetValue("Direction", out var d) &&
+                Enum.TryParse<VisionTools.ImageProcessing.PolarUnwrapDirection>(GetString(d), true, out var dir))
+                tool.Direction = dir;
+            if (p.TryGetValue("OutputWidth", out var ow)) tool.OutputWidth = GetInt(ow);
+            if (p.TryGetValue("OutputHeight", out var oh)) tool.OutputHeight = GetInt(oh);
+            return tool;
+        }
+
+        private static OCVTool DeserializeOCVTool(ToolConfig config)
+        {
+            var tool = new OCVTool();
+            var p = config.Parameters;
+
+            if (p.TryGetValue("MinCharHeight", out var mnh)) tool.MinCharHeight = GetInt(mnh);
+            if (p.TryGetValue("MaxCharHeight", out var mxh)) tool.MaxCharHeight = GetInt(mxh);
+            if (p.TryGetValue("MinCharWidth", out var mnw)) tool.MinCharWidth = GetInt(mnw);
+            if (p.TryGetValue("InvertImage", out var inv)) tool.InvertImage = GetBool(inv);
+            if (p.TryGetValue("MatchThreshold", out var mt)) tool.MatchThreshold = GetDouble(mt);
+            if (p.TryGetValue("ExpectedText", out var et)) tool.ExpectedText = GetString(et);
+            if (p.TryGetValue("DrawOverlay", out var dov)) tool.DrawOverlay = GetBool(dov);
+            if (p.TryGetValue("UseSearchRegion", out var usr)) tool.UseSearchRegion = GetBool(usr);
+            int sx = p.TryGetValue("SearchRegionX", out var srx) ? GetInt(srx) : 0;
+            int sy = p.TryGetValue("SearchRegionY", out var sry) ? GetInt(sry) : 0;
+            int sw = p.TryGetValue("SearchRegionWidth", out var srw) ? GetInt(srw) : 0;
+            int sh = p.TryGetValue("SearchRegionHeight", out var srh) ? GetInt(srh) : 0;
+            tool.SearchRegion = new Rect(sx, sy, sw, sh);
+            if (p.TryGetValue("FontLibraryJson", out var fl))
+            {
+                var loaded = FontLibrary.FromJson(GetString(fl));
+                foreach (var t in loaded.Templates)
+                    if (t.TemplatePng != null) tool.FontLibrary.Add(t.Char, t.TemplatePng);
+            }
             return tool;
         }
 

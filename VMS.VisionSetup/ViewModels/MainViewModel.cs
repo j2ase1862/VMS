@@ -59,6 +59,20 @@ namespace VMS.VisionSetup.ViewModels
         public RequestRefreshROIMessage(ROIShape? roiShape) => ROIShape = roiShape;
     }
 
+    /// <summary>
+    /// 외부(예: Batch Test 창)에서 특정 Step을 메인 워크스페이스에 로드해 달라고 요청.
+    /// </summary>
+    public class RequestLoadStepMessage
+    {
+        public Recipe Recipe { get; }
+        public InspectionStep Step { get; }
+        public RequestLoadStepMessage(Recipe recipe, InspectionStep step)
+        {
+            Recipe = recipe;
+            Step = step;
+        }
+    }
+
     #endregion
 
     public partial class MainViewModel : ObservableObject
@@ -524,6 +538,7 @@ namespace VMS.VisionSetup.ViewModels
         public RelayCommand TrainPatternCommand { get; }
         public RelayCommand AutoTuneCommand { get; }
         public RelayCommand ClearResultImageCommand { get; }
+        public RelayCommand SaveDisplayedImageCommand { get; }
         public RelayCommand AddStepCommand { get; }
         public RelayCommand DeleteStepCommand { get; }
         public RelayCommand MoveStepUpCommand { get; }
@@ -599,6 +614,7 @@ namespace VMS.VisionSetup.ViewModels
             TrainPatternCommand = new RelayCommand(TrainPattern, () => SelectedVisionTool is FeatureMatchTool);
             AutoTuneCommand = new RelayCommand(AutoTuneParameters, () => SelectedVisionTool is FeatureMatchTool);
             ClearResultImageCommand = new RelayCommand(ClearResultImage);
+            SaveDisplayedImageCommand = new RelayCommand(SaveDisplayedImage);
             AddStepCommand = new RelayCommand(AddStep, () => _recipeService.CurrentRecipe != null && SelectedCamera != null);
             DeleteStepCommand = new RelayCommand(DeleteStep, () => SelectedStep != null);
             MoveStepUpCommand = new RelayCommand(MoveStepUp, () => SelectedStep != null);
@@ -664,6 +680,16 @@ namespace VMS.VisionSetup.ViewModels
             {
                 SelectedDisplayMode = ImageDisplayMode.OriginalImage;
             });
+
+            // Batch Test 창에서 Step 선택 시 → 메인 워크스페이스에 그 Step의 도구 로드
+            WeakReferenceMessenger.Default.Register<RequestLoadStepMessage>(this, (r, m) =>
+            {
+                if (_recipeService.CurrentRecipe?.Id != m.Recipe.Id)
+                {
+                    _recipeService.SetCurrentRecipe(m.Recipe);
+                }
+                SelectedStep = m.Step;
+            });
         }
         #endregion
 
@@ -674,6 +700,8 @@ namespace VMS.VisionSetup.ViewModels
             var preprocessing = new ToolCategory { CategoryName = "Preprocessing (Color)" };
             preprocessing.Tools.Add(new ToolItem { Name = "Blur", ToolType = "BlurTool" });
             preprocessing.Tools.Add(new ToolItem { Name = "Morphology", ToolType = "MorphologyTool" });
+            preprocessing.Tools.Add(new ToolItem { Name = "Image Enhance", ToolType = "ImageEnhanceTool" });
+            preprocessing.Tools.Add(new ToolItem { Name = "Polar Unwrap", ToolType = "PolarUnwrapTool" });
             ToolTree.Add(preprocessing);
 
             // Conversion 카테고리 (출력: 항상 그레이스케일 1채널)
@@ -706,6 +734,7 @@ namespace VMS.VisionSetup.ViewModels
             // Identification 카테고리
             var identification = new ToolCategory { CategoryName = "Identification" };
             identification.Tools.Add(new ToolItem { Name = "OCR", ToolType = "OCRTool" });
+            identification.Tools.Add(new ToolItem { Name = "OCV", ToolType = "OCVTool" });
             ToolTree.Add(identification);
 
             // Code Reading 카테고리
@@ -1206,6 +1235,43 @@ namespace VMS.VisionSetup.ViewModels
         }
 
         /// <summary>
+        /// 현재 표시 중인 이미지(DisplayMat — Original 또는 Result)를 파일로 저장.
+        /// Result 모드면 처리 결과 이미지, Original 모드면 원본 이미지.
+        /// </summary>
+        public void SaveDisplayedImage()
+        {
+            var mat = DisplayMat;
+            if (mat == null || mat.Empty())
+            {
+                StatusMessage = "저장할 이미지가 없습니다.";
+                return;
+            }
+
+            string defaultName = SelectedDisplayMode == ImageDisplayMode.ResultImage
+                ? $"result_{DateTime.Now:yyyyMMdd_HHmmss}.png"
+                : $"original_{DateTime.Now:yyyyMMdd_HHmmss}.png";
+
+            var dlg = new Microsoft.Win32.SaveFileDialog
+            {
+                Title = "이미지 저장",
+                Filter = "PNG (*.png)|*.png|JPEG (*.jpg)|*.jpg|BMP (*.bmp)|*.bmp|TIFF (*.tif)|*.tif",
+                FileName = defaultName,
+                DefaultExt = ".png"
+            };
+            if (dlg.ShowDialog() != true) return;
+
+            try
+            {
+                OpenCvSharp.Cv2.ImWrite(dlg.FileName, mat);
+                StatusMessage = $"저장됨: {dlg.FileName}";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"저장 실패: {ex.Message}";
+            }
+        }
+
+        /// <summary>
         /// 도구 순서 위로 이동
         /// </summary>
         private void MoveToolUp(ToolItem? tool)
@@ -1425,6 +1491,16 @@ namespace VMS.VisionSetup.ViewModels
                     // ROI 바운딩 rect도 저장 (GetROIImage 등 기본 기능용)
                     tool.ROI = circleROI.GetBoundingRect();
                 }
+                else if (roi is AnnulusROI annulusROI && tool is VisionTools.ImageProcessing.PolarUnwrapTool put)
+                {
+                    // AnnulusROI → PolarUnwrap 좌표 / 반경 동기화
+                    put.CenterX = annulusROI.CenterX;
+                    put.CenterY = annulusROI.CenterY;
+                    put.InnerRadius = annulusROI.InnerRadius;
+                    put.OuterRadius = annulusROI.OuterRadius;
+                    tool.ROI = annulusROI.GetBoundingRect();
+                    tool.AssociatedROIShape = annulusROI;
+                }
                 else if (roi is RectangleAffineROI affineROI)
                 {
                     // Affine ROI: 실제 Width/Height와 회전 각도/중심 좌표 저장
@@ -1582,6 +1658,24 @@ namespace VMS.VisionSetup.ViewModels
 
                 StatusMessage = $"Search Region 설정됨: ({cm.SearchRegion.X}, {cm.SearchRegion.Y}, {cm.SearchRegion.Width}, {cm.SearchRegion.Height})";
             }
+            else if (SelectedVisionTool is OCVTool ocv)
+            {
+                _isSyncingROI = true;
+                try
+                {
+                    ocv.SearchRegion = roi.GetBoundingRect();
+                    ocv.UseSearchRegion = true;
+                    ocv.AssociatedSearchRegionShape = roi;
+                }
+                finally
+                {
+                    _isSyncingROI = false;
+                }
+
+                WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(ocv.AssociatedROIShape));
+
+                StatusMessage = $"Search Region 설정됨: ({ocv.SearchRegion.X}, {ocv.SearchRegion.Y}, {ocv.SearchRegion.Width}, {ocv.SearchRegion.Height})";
+            }
         }
 
         /// <summary>
@@ -1627,6 +1721,16 @@ namespace VMS.VisionSetup.ViewModels
                 cm.AssociatedSearchRegionShape = null;
 
                 WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(cm.AssociatedROIShape));
+
+                StatusMessage = "Search Region이 해제되었습니다.";
+            }
+            else if (SelectedVisionTool is OCVTool ocv)
+            {
+                ocv.UseSearchRegion = false;
+                ocv.SearchRegion = new CvRect();
+                ocv.AssociatedSearchRegionShape = null;
+
+                WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(ocv.AssociatedROIShape));
 
                 StatusMessage = "Search Region이 해제되었습니다.";
             }
@@ -2774,6 +2878,8 @@ namespace VMS.VisionSetup.ViewModels
                 EdgeDetectionTool t => new EdgeDetectionToolSettingsViewModel(t),
                 MorphologyTool t => new MorphologyToolSettingsViewModel(t),
                 HistogramTool t => new HistogramToolSettingsViewModel(t),
+                VisionTools.ImageProcessing.ImageEnhanceTool t => new ImageEnhanceToolSettingsViewModel(t),
+                VisionTools.ImageProcessing.PolarUnwrapTool t => new PolarUnwrapToolSettingsViewModel(t),
                 FeatureMatchTool t => new FeatureMatchToolSettingsViewModel(t),
                 ShapeMatchTool t => new ShapeMatchToolSettingsViewModel(t),
                 BlobTool t => new BlobToolSettingsViewModel(t),
@@ -2786,6 +2892,7 @@ namespace VMS.VisionSetup.ViewModels
                 Geometry3DTool t => new Geometry3DToolSettingsViewModel(t),
                 ResultTool t => new ResultToolSettingsViewModel(t),
                 OCRTool t => new OCRToolSettingsViewModel(t),
+                OCVTool t => new OCVToolSettingsViewModel(t),
                 CodeReaderTool t => new CodeReaderToolSettingsViewModel(t),
                 DetectionTool t => new DetectionToolSettingsViewModel(t),
                 ClassifyTool t => new ClassifyToolSettingsViewModel(t),

@@ -1,0 +1,541 @@
+<Window x:Class="VMS.VisionSetup.Views.BatchTest.BatchTestWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        xmlns:c="clr-namespace:VMS.VisionSetup.Views.Common"
+        Title="Batch Test Runner"
+        Width="1080" Height="800"
+        MinWidth="780" MinHeight="560"
+        WindowStyle="None"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource BrushBgWindow}"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType">
+
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="42" CornerRadius="0"
+                            GlassFrameThickness="0" ResizeBorderThickness="6"
+                            UseAeroCaptionButtons="False"/>
+    </shell:WindowChrome.WindowChrome>
+
+    <Border Background="{StaticResource BrushBgWindow}"
+            BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="42"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <c:ChromelessTitleBar Grid.Row="0"
+                                  TitleText="Batch Test Runner"
+                                  StatusText="{Binding StatusMessage}"/>
+
+            <Grid Grid.Row="1" Margin="22,18,22,16">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0"
+                           Text="Recipe → Camera → Step 을 선택하고, 폴더 이미지에 도구 파이프라인을 일괄 적용합니다."
+                           Foreground="{StaticResource BrushTextMuted}" FontSize="12"
+                           Margin="0,0,0,12"/>
+
+                <!-- ============ Active Pipeline ============ -->
+                <Border Grid.Row="1" Style="{StaticResource WindowCard}" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="ACTIVE PIPELINE"
+                                       Style="{StaticResource WindowSectionHeaderFirst}" Margin="0"/>
+                            <TextBlock Grid.Column="2"
+                                       Foreground="{StaticResource BrushTextMuted}" FontSize="10" FontWeight="SemiBold"
+                                       VerticalAlignment="Center" Margin="0,0,12,0">
+                                <Run Text="Tools: "/>
+                                <Run Text="{Binding ActiveToolCount, Mode=OneWay}"
+                                     Foreground="{StaticResource BrushTextAccent}" FontWeight="Bold"/>
+                            </TextBlock>
+                            <StackPanel Grid.Column="3" Orientation="Horizontal">
+                                <Button Content="Auto-tune..."
+                                        Command="{Binding AutoTuneCommand}"
+                                        Style="{StaticResource ModernGhostButton}"
+                                        ToolTip="도구 파라미터를 자동 sweep해서 최고 PASS율 값 탐색"
+                                        Margin="0,0,6,0"/>
+                                <Button Content="Edit Thresholds..."
+                                        Command="{Binding EditThresholdsCommand}"
+                                        Style="{StaticResource ModernGhostButton}"
+                                        ToolTip="도구별 Pass/Fail 판정 기준 (출력 값 검사)"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid Grid.Row="1" Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="RECIPE" Style="{StaticResource WindowFieldLabel}" Margin="0,0,0,4"/>
+                                <ComboBox ItemsSource="{Binding RecipeList}"
+                                          SelectedItem="{Binding SelectedRecipeInfo}"
+                                          Style="{StaticResource WindowDarkComboBox}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="CAMERA" Style="{StaticResource WindowFieldLabel}" Margin="0,0,0,4"/>
+                                <ComboBox ItemsSource="{Binding Cameras}"
+                                          SelectedItem="{Binding SelectedCamera}"
+                                          Style="{StaticResource WindowDarkComboBox}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="4">
+                                <TextBlock Text="STEP" Style="{StaticResource WindowFieldLabel}" Margin="0,0,0,4"/>
+                                <ComboBox ItemsSource="{Binding StepsForCamera}"
+                                          SelectedItem="{Binding SelectedStep}"
+                                          Style="{StaticResource WindowDarkComboBox}"/>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <!-- Setup (2 columns) -->
+                <Grid Grid.Row="2" Margin="0,0,0,14">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="14"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Style="{StaticResource WindowCard}">
+                        <StackPanel>
+                            <TextBlock Text="INPUT" Style="{StaticResource WindowSectionHeaderFirst}"/>
+
+                            <TextBlock Text="이미지 폴더" Style="{StaticResource WindowFieldLabel}"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0"
+                                         Text="{Binding ImageFolder, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource WindowDarkTextBox}"/>
+                                <Button Grid.Column="1" Content="Browse"
+                                        Command="{Binding BrowseImageFolderCommand}"
+                                        Style="{StaticResource ModernGhostButton}" Margin="8,0,0,0"/>
+                            </Grid>
+
+                            <CheckBox Content="하위 폴더 재귀 탐색"
+                                      IsChecked="{Binding RecurseSubfolders}"
+                                      Style="{StaticResource WindowDarkCheckBox}"
+                                      Margin="0,14,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="2" Style="{StaticResource WindowCard}">
+                        <StackPanel>
+                            <TextBlock Text="OUTPUT" Style="{StaticResource WindowSectionHeaderFirst}"/>
+
+                            <TextBlock Text="CSV 리포트" Style="{StaticResource WindowFieldLabel}"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0"
+                                         Text="{Binding OutputCsvPath, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource WindowDarkTextBox}"/>
+                                <Button Grid.Column="1" Content="Browse"
+                                        Command="{Binding BrowseOutputCsvCommand}"
+                                        Style="{StaticResource ModernGhostButton}" Margin="8,0,0,0"/>
+                            </Grid>
+
+                            <CheckBox Content="실패 케이스 오버레이 저장"
+                                      IsChecked="{Binding SaveFailureOverlays}"
+                                      Style="{StaticResource WindowDarkCheckBox}"
+                                      Margin="0,14,0,6"/>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0"
+                                         Text="{Binding FailureOverlayDir, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource WindowDarkTextBox}"/>
+                                <Button Grid.Column="1" Content="Browse"
+                                        Command="{Binding BrowseFailureDirCommand}"
+                                        Style="{StaticResource ModernGhostButton}" Margin="8,0,0,0"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- Metric Tiles -->
+                <Grid Grid.Row="3" Margin="0,0,0,14">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" CornerRadius="10" Padding="18,14" BorderThickness="1"
+                            Background="{StaticResource BrushInfoSoft}"
+                            BorderBrush="{StaticResource BrushInfo}">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Rectangle Width="4" Height="14" Fill="{StaticResource BrushInfo}"
+                                           RadiusX="2" RadiusY="2" VerticalAlignment="Center"/>
+                                <TextBlock Text="PROCESSED" FontSize="11" FontWeight="SemiBold"
+                                           Foreground="{StaticResource BrushInfo}" Margin="8,0,0,0"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                <TextBlock Text="{Binding ProgressCurrent}" FontSize="28" FontWeight="Light"
+                                           Foreground="{StaticResource BrushTextPrimary}"/>
+                                <TextBlock Text=" / " Foreground="{StaticResource BrushTextMuted}"
+                                           FontSize="14" VerticalAlignment="Center" Margin="4,0"/>
+                                <TextBlock Text="{Binding ProgressTotal}" Foreground="{StaticResource BrushTextSecondary}"
+                                           FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="2" CornerRadius="10" Padding="18,14" BorderThickness="1"
+                            Background="{StaticResource BrushSuccessSoft}"
+                            BorderBrush="{StaticResource BrushSuccess}">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Rectangle Width="4" Height="14" Fill="{StaticResource BrushSuccess}"
+                                           RadiusX="2" RadiusY="2" VerticalAlignment="Center"/>
+                                <TextBlock Text="PASS" FontSize="11" FontWeight="SemiBold"
+                                           Foreground="{StaticResource BrushSuccess}" Margin="8,0,0,0"/>
+                            </StackPanel>
+                            <TextBlock Text="{Binding PassCount}" FontSize="28" FontWeight="Light"
+                                       Foreground="{StaticResource BrushTextPrimary}" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="4" CornerRadius="10" Padding="18,14" BorderThickness="1"
+                            Background="{StaticResource BrushDangerSoft}"
+                            BorderBrush="{StaticResource BrushDanger}">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Rectangle Width="4" Height="14" Fill="{StaticResource BrushDanger}"
+                                           RadiusX="2" RadiusY="2" VerticalAlignment="Center"/>
+                                <TextBlock Text="FAIL" FontSize="11" FontWeight="SemiBold"
+                                           Foreground="{StaticResource BrushDanger}" Margin="8,0,0,0"/>
+                            </StackPanel>
+                            <TextBlock Text="{Binding FailCount}" FontSize="28" FontWeight="Light"
+                                       Foreground="{StaticResource BrushTextPrimary}" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="6" CornerRadius="10" Padding="18,14" BorderThickness="1"
+                            Background="{StaticResource BrushWarningSoft}"
+                            BorderBrush="{StaticResource BrushWarning}">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Rectangle Width="4" Height="14" Fill="{StaticResource BrushWarning}"
+                                           RadiusX="2" RadiusY="2" VerticalAlignment="Center"/>
+                                <TextBlock Text="AVG TIME" FontSize="11" FontWeight="SemiBold"
+                                           Foreground="{StaticResource BrushWarning}" Margin="8,0,0,0"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                <TextBlock Text="{Binding AvgMs, StringFormat=F1}" FontSize="28" FontWeight="Light"
+                                           Foreground="{StaticResource BrushTextPrimary}"/>
+                                <TextBlock Text=" ms" Foreground="{StaticResource BrushTextMuted}"
+                                           FontSize="14" FontWeight="SemiBold"
+                                           VerticalAlignment="Bottom" Margin="4,0,0,8"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- Activity (progress + tabbed [Log / Results]) -->
+                <Border Grid.Row="4" Style="{StaticResource WindowCard}" Padding="18,14,18,14">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Top row: ACTIVITY title + progress + counts + quick actions -->
+                        <Grid Grid.Row="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="ACTIVITY"
+                                       Style="{StaticResource WindowSectionHeaderFirst}" Margin="0"/>
+                            <ProgressBar Grid.Column="1" Margin="14,0,14,2" Height="4"
+                                         Minimum="0" Maximum="{Binding ProgressTotal}"
+                                         Value="{Binding ProgressCurrent}"
+                                         Background="{StaticResource BrushBgInput}"
+                                         Foreground="{StaticResource BrushAccent}"
+                                         BorderThickness="0"/>
+                            <TextBlock Grid.Column="2"
+                                       Foreground="{StaticResource BrushTextMuted}" FontSize="10" FontWeight="SemiBold"
+                                       VerticalAlignment="Center" Margin="0,0,12,0">
+                                <Run Text="{Binding ProgressCurrent, Mode=OneWay}"/>
+                                <Run Text="/"/>
+                                <Run Text="{Binding ProgressTotal, Mode=OneWay}"/>
+                            </TextBlock>
+                            <StackPanel Grid.Column="3" Orientation="Horizontal">
+                                <Button Content="Browse Failures"
+                                        Command="{Binding BrowseFailuresCommand}"
+                                        Style="{StaticResource ModernGhostButton}"
+                                        ToolTip="실패 케이스를 좌우 split 뷰로 검토 (← → 키 이동)"
+                                        Margin="0,0,6,0"/>
+                                <Button Content="Open CSV"
+                                        Command="{Binding OpenOutputCsvCommand}"
+                                        Style="{StaticResource ModernGhostButton}"
+                                        ToolTip="CSV 리포트를 기본 연결 프로그램으로 엽니다"
+                                        Margin="0,0,6,0"/>
+                                <Button Content="Failure Folder"
+                                        Command="{Binding OpenFailureFolderCommand}"
+                                        Style="{StaticResource ModernGhostButton}"
+                                        ToolTip="실패 오버레이가 저장된 폴더를 엽니다"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- TabControl: Live Log / Results -->
+                        <TabControl Grid.Row="2" Style="{StaticResource WindowDarkTabControl}" Margin="0,10,0,0">
+                            <!-- Live Log Tab -->
+                            <TabItem Header="Live Log">
+                                <Border Background="{StaticResource BrushBgInput}"
+                                        CornerRadius="6" BorderBrush="{StaticResource BrushBorderSubtle}"
+                                        BorderThickness="1" Margin="0,10,0,0">
+                                    <Grid>
+                                        <ListBox ItemsSource="{Binding LogLines}"
+                                                 Background="Transparent" Foreground="{StaticResource BrushTextSecondary}"
+                                                 BorderThickness="0"
+                                                 FontFamily="Consolas" FontSize="11"
+                                                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                                 ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+                                        <TextBlock Text="아직 실행되지 않았습니다. Run을 눌러 시작하세요."
+                                                   Foreground="{StaticResource BrushTextMuted}"
+                                                   FontSize="12" FontStyle="Italic"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   IsHitTestVisible="False">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding LogLines.Count}" Value="0">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
+                                </Border>
+                            </TabItem>
+
+                            <!-- Results Tab -->
+                            <TabItem Header="Results">
+                                <Grid Margin="0,10,0,0">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Filter chips -->
+                                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                                        <RadioButton GroupName="Filter"
+                                                     IsChecked="{Binding IsAllFilter, Mode=OneWay}"
+                                                     Command="{Binding SetFilterCommand}" CommandParameter="All"
+                                                     Style="{StaticResource FilterChip}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="All"/>
+                                                <TextBlock Text="  "/>
+                                                <TextBlock Text="{Binding Results.Count, Mode=OneWay}" Opacity="0.7"/>
+                                            </StackPanel>
+                                        </RadioButton>
+                                        <RadioButton GroupName="Filter"
+                                                     IsChecked="{Binding IsPassFilter, Mode=OneWay}"
+                                                     Command="{Binding SetFilterCommand}" CommandParameter="Pass"
+                                                     Style="{StaticResource FilterChip}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Ellipse Width="6" Height="6" Fill="{StaticResource BrushSuccess}"
+                                                         VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                <TextBlock Text="Pass"/>
+                                                <TextBlock Text="  "/>
+                                                <TextBlock Text="{Binding PassCount, Mode=OneWay}" Opacity="0.7"/>
+                                            </StackPanel>
+                                        </RadioButton>
+                                        <RadioButton GroupName="Filter"
+                                                     IsChecked="{Binding IsFailFilter, Mode=OneWay}"
+                                                     Command="{Binding SetFilterCommand}" CommandParameter="Fail"
+                                                     Style="{StaticResource FilterChip}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Ellipse Width="6" Height="6" Fill="{StaticResource BrushDanger}"
+                                                         VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                <TextBlock Text="Fail"/>
+                                                <TextBlock Text="  "/>
+                                                <TextBlock Text="{Binding FailCount, Mode=OneWay}" Opacity="0.7"/>
+                                            </StackPanel>
+                                        </RadioButton>
+                                        <TextBlock Text="더블클릭으로 Failure Browser 오픈 (원본·오버레이 좌우 비교, ← → 키 이동)"
+                                                   Foreground="{StaticResource BrushTextMuted}"
+                                                   FontSize="10" FontStyle="Italic"
+                                                   VerticalAlignment="Center" Margin="14,0,0,0"/>
+                                    </StackPanel>
+
+                                    <!-- Results DataGrid -->
+                                    <Border Grid.Row="1" Background="{StaticResource BrushBgInput}"
+                                            CornerRadius="6" BorderBrush="{StaticResource BrushBorderSubtle}"
+                                            BorderThickness="1">
+                                        <Grid>
+                                            <DataGrid x:Name="ResultsGrid"
+                                                      ItemsSource="{Binding ResultsView}"
+                                                      SelectedItem="{Binding SelectedResult}"
+                                                      Style="{StaticResource WindowDarkDataGrid}"
+                                                      AutoGenerateColumns="False"
+                                                      MouseDoubleClick="ResultsGrid_MouseDoubleClick">
+                                                <DataGrid.Columns>
+                                                    <DataGridTemplateColumn Header="Status" Width="76" CanUserSort="False">
+                                                        <DataGridTemplateColumn.CellTemplate>
+                                                            <DataTemplate>
+                                                                <Border CornerRadius="3" Padding="6,1"
+                                                                        HorizontalAlignment="Left"
+                                                                        VerticalAlignment="Center">
+                                                                    <Border.Style>
+                                                                        <Style TargetType="Border">
+                                                                            <Setter Property="Background" Value="{StaticResource BrushSuccessSoft}"/>
+                                                                            <Setter Property="BorderBrush" Value="{StaticResource BrushSuccess}"/>
+                                                                            <Setter Property="BorderThickness" Value="1"/>
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding Success}" Value="False">
+                                                                                    <Setter Property="Background" Value="{StaticResource BrushDangerSoft}"/>
+                                                                                    <Setter Property="BorderBrush" Value="{StaticResource BrushDanger}"/>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </Border.Style>
+                                                                    <TextBlock FontSize="10" FontWeight="Bold">
+                                                                        <TextBlock.Style>
+                                                                            <Style TargetType="TextBlock">
+                                                                                <Setter Property="Text" Value="PASS"/>
+                                                                                <Setter Property="Foreground" Value="{StaticResource BrushSuccess}"/>
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding Success}" Value="False">
+                                                                                        <Setter Property="Text" Value="FAIL"/>
+                                                                                        <Setter Property="Foreground" Value="{StaticResource BrushDanger}"/>
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </TextBlock.Style>
+                                                                    </TextBlock>
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </DataGridTemplateColumn.CellTemplate>
+                                                    </DataGridTemplateColumn>
+                                                    <DataGridTextColumn Header="File"
+                                                                        Binding="{Binding FileName, Mode=OneWay}"
+                                                                        Width="*" IsReadOnly="True">
+                                                        <DataGridTextColumn.ElementStyle>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                                <Setter Property="ToolTip" Value="{Binding ImagePath}"/>
+                                                            </Style>
+                                                        </DataGridTextColumn.ElementStyle>
+                                                    </DataGridTextColumn>
+                                                    <DataGridTextColumn Header="Time (ms)"
+                                                                        Binding="{Binding TotalMs, StringFormat=F1}"
+                                                                        Width="90" IsReadOnly="True">
+                                                        <DataGridTextColumn.ElementStyle>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                                <Setter Property="HorizontalAlignment" Value="Right"/>
+                                                                <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}"/>
+                                                            </Style>
+                                                        </DataGridTextColumn.ElementStyle>
+                                                    </DataGridTextColumn>
+                                                    <DataGridTextColumn Header="Failure Reason"
+                                                                        Binding="{Binding FailureReason}"
+                                                                        Width="2*" IsReadOnly="True">
+                                                        <DataGridTextColumn.ElementStyle>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                                <Setter Property="Foreground" Value="{StaticResource BrushDanger}"/>
+                                                                <Setter Property="ToolTip" Value="{Binding FailureReason}"/>
+                                                            </Style>
+                                                        </DataGridTextColumn.ElementStyle>
+                                                    </DataGridTextColumn>
+                                                </DataGrid.Columns>
+                                            </DataGrid>
+                                            <TextBlock Text="결과가 없습니다."
+                                                       Foreground="{StaticResource BrushTextMuted}"
+                                                       FontSize="12" FontStyle="Italic"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       IsHitTestVisible="False">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Results.Count}" Value="0">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Grid>
+                                    </Border>
+                                </Grid>
+                            </TabItem>
+                        </TabControl>
+                    </Grid>
+                </Border>
+
+                <!-- Action Bar -->
+                <Grid Grid.Row="5" Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0" Text="{Binding StatusMessage}"
+                               Foreground="{StaticResource BrushTextSecondary}"
+                               FontSize="12" VerticalAlignment="Center"/>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <Button Content="Cancel" Command="{Binding CancelCommand}"
+                                Style="{StaticResource ModernDangerButton}" Margin="0,0,8,0"/>
+                        <Button Content="Run Batch" Command="{Binding RunCommand}"
+                                Style="{StaticResource ModernPrimaryButton}" Padding="24,7" Margin="0,0,8,0"/>
+                        <Button Content="Close"
+                                Command="{x:Static SystemCommands.CloseWindowCommand}"
+                                Style="{StaticResource ModernGhostButton}"/>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

@@ -38,6 +38,18 @@ namespace VMS.VisionSetup.VisionTools.CodeReading
             set => SetProperty(ref _tryHarder, value);
         }
 
+        private bool _useLocalization = true;
+        /// <summary>
+        /// DataMatrix 후보 영역 사전 탐색 활성화 (DataMatrix/Auto 모드 한정).
+        /// ZXing 직접 디코딩이 잡음(텍스트 등)에 묻혀 실패하는 경우 OpenCV 휴리스틱으로
+        /// DM 후보 bbox를 먼저 찾아 영역별 디코딩 fallback. 깨끗한 이미지는 추가 시간 미미.
+        /// </summary>
+        public bool UseLocalization
+        {
+            get => _useLocalization;
+            set => SetProperty(ref _useLocalization, value);
+        }
+
         // ── 판정 설정 ──
 
         private bool _enableVerification = false;
@@ -59,6 +71,42 @@ namespace VMS.VisionSetup.VisionTools.CodeReading
         {
             get => _useRegexMatch;
             set => SetProperty(ref _useRegexMatch, value);
+        }
+
+        // ── GS1 / 품질 등급 ──
+
+        private bool _parseGs1;
+        /// <summary>
+        /// 디코딩된 문자열이 GS1 데이터(FNC1 포함 또는 GS1 심볼 식별자 접두사)인 경우 AI 분리 파싱.
+        /// Result에 Gs1Formatted, Gs1{AI} 키 추가.
+        /// </summary>
+        public bool ParseGs1
+        {
+            get => _parseGs1;
+            set => SetProperty(ref _parseGs1, value);
+        }
+
+        private bool _enableQualityGrading;
+        /// <summary>
+        /// ISO/IEC 15415 간소화 품질 등급 계산 (DataMatrix 한정).
+        /// 활성화 시 OverallGrade·SC·MOD·FPD·AN·PPM·SymbolSize 결과 키 노출.
+        /// </summary>
+        public bool EnableQualityGrading
+        {
+            get => _enableQualityGrading;
+            set => SetProperty(ref _enableQualityGrading, value);
+        }
+
+        private CodeQualityGrade _minPassGrade = CodeQualityGrade.F;
+        /// <summary>
+        /// 품질 등급 활성화 시 PASS 판정의 최소 OverallGrade.
+        /// 기본 F = 게이팅 비활성화 (디코딩 성공이면 PASS, 등급은 정보 제공 용도).
+        /// 등급 자체를 PASS 조건에 포함하려면 C 이상으로 상향.
+        /// </summary>
+        public CodeQualityGrade MinPassGrade
+        {
+            get => _minPassGrade;
+            set => SetProperty(ref _minPassGrade, value);
         }
 
         // ── 표시 설정 ──
@@ -117,8 +165,36 @@ namespace VMS.VisionSetup.VisionTools.CodeReading
 
                 try
                 {
-                    // 코드 인식
+                    // 1) 1차: 전체 ROI 직접 디코딩
                     var codes = _codeReader.Read(workImage, CodeReaderMode, TryHarder);
+
+                    // 2) 2차 (fallback): DataMatrix 후보 영역 사전 탐색 후 영역별 디코딩.
+                    //    DM/Auto 모드 + UseLocalization 활성화 시. 1차에서 검출된 텍스트는 중복 제거.
+                    //    각 후보에 대해 orig → 2x → CLAHE → CLAHE+2x 다단계 fallback 적용
+                    //    (작은 DM은 모듈당 픽셀 부족으로 ZXing이 실패 → 업스케일로 회복).
+                    if (UseLocalization &&
+                        (CodeReaderMode == CodeReaderMode.DataMatrix || CodeReaderMode == CodeReaderMode.Auto))
+                    {
+                        var candidates = DataMatrixLocator.FindCandidates(workImage);
+                        foreach (var rect in candidates)
+                        {
+                            if (rect.Width <= 0 || rect.Height <= 0) continue;
+                            using var sub = new Mat(workImage, rect);
+                            var subCodes = DecodeCandidateWithFallbacks(sub);
+                            foreach (var code in subCodes)
+                            {
+                                if (codes.Any(c => string.Equals(c.Text, code.Text, StringComparison.Ordinal)))
+                                    continue;
+                                // sub 좌표 → workImage 좌표로 평행이동 (스케일은 fallback 내부에서 이미 역변환)
+                                code.Points = code.Points
+                                    .Select(p => new Point2f(p.X + rect.X, p.Y + rect.Y))
+                                    .ToArray();
+                                // Locator bbox를 grader corner 재추정 hint로 전달
+                                code.BoundingBox = rect;
+                                codes.Add(code);
+                            }
+                        }
+                    }
 
                     // MaxCodeCount 제한
                     if (codes.Count > MaxCodeCount)
@@ -142,20 +218,51 @@ namespace VMS.VisionSetup.VisionTools.CodeReading
                         result.Data["CodeFormat"] = string.Empty;
                     }
 
+                    // GS1 파싱 (첫 번째 GS1 형식 코드 대상)
+                    if (ParseGs1 && codes.Count > 0)
+                    {
+                        var gs1Source = codes.FirstOrDefault(c => Gs1Parser.LooksLikeGs1(c.Text));
+                        if (gs1Source != null)
+                        {
+                            var elements = Gs1Parser.Parse(gs1Source.Text);
+                            result.Data["Gs1Formatted"] = Gs1Parser.Format(elements);
+                            result.Data["Gs1ElementCount"] = elements.Count;
+                            foreach (var el in elements)
+                                result.Data[$"Gs1_{el.AI}"] = el.Value;
+                        }
+                    }
+
+                    // 품질 등급 (DataMatrix 한정)
+                    DataMatrixQualityReport? quality = null;
+                    if (EnableQualityGrading && codes.Count > 0)
+                    {
+                        var dm = codes.FirstOrDefault(c =>
+                            c.Format.Equals("DATA_MATRIX", StringComparison.OrdinalIgnoreCase)
+                            && (c.BoundingBox.HasValue || c.Points.Length >= 3));
+                        if (dm != null)
+                        {
+                            using Mat gray = workImage.Channels() > 1
+                                ? workImage.CvtColor(ColorConversionCodes.BGR2GRAY)
+                                : workImage.Clone();
+                            quality = DataMatrixQualityGrader.Grade(gray, dm.BoundingBox, dm.Points, decoded: true);
+                            result.Data["OverallGrade"] = quality.OverallGrade.ToString();
+                            result.Data["SymbolContrast"] = quality.SymbolContrast;
+                            result.Data["Modulation"] = quality.Modulation;
+                            result.Data["FixedPatternDamage"] = quality.FixedPatternDamage;
+                            result.Data["AxialNonuniformity"] = quality.AxialNonuniformity;
+                            result.Data["PixelsPerModule"] = quality.PixelsPerModule;
+                            result.Data["SymbolSize"] = quality.SymbolSize;
+                        }
+                    }
+
                     // 판정
                     bool success;
                     if (EnableVerification && codes.Count > 0)
                     {
                         if (UseRegexMatch)
                         {
-                            try
-                            {
-                                success = codes.Any(c => Regex.IsMatch(c.Text, ExpectedText));
-                            }
-                            catch (RegexParseException)
-                            {
-                                success = false;
-                            }
+                            try { success = codes.Any(c => Regex.IsMatch(c.Text, ExpectedText)); }
+                            catch (RegexParseException) { success = false; }
                         }
                         else
                         {
@@ -167,10 +274,16 @@ namespace VMS.VisionSetup.VisionTools.CodeReading
                         success = codes.Count > 0;
                     }
 
+                    // 품질 등급 게이팅
+                    if (success && quality != null && (int)quality.OverallGrade < (int)MinPassGrade)
+                        success = false;
+
                     result.Data["Success"] = success;
                     result.Success = success;
                     result.Message = codes.Count > 0
-                        ? $"코드 {codes.Count}개 검출: {codes[0].Text}"
+                        ? (quality != null
+                            ? $"코드 {codes.Count}개 검출: {codes[0].Text} | {quality.OverallGrade}"
+                            : $"코드 {codes.Count}개 검출: {codes[0].Text}")
                         : "코드를 찾을 수 없습니다";
 
                     // 오버레이 그리기
@@ -225,6 +338,25 @@ namespace VMS.VisionSetup.VisionTools.CodeReading
                             }
                         }
 
+                        // 품질 등급 / GS1 정보 상단 배지
+                        int badgeY = 22;
+                        if (quality != null)
+                        {
+                            var gradeColor = (int)quality.OverallGrade >= (int)MinPassGrade
+                                ? new Scalar(0, 255, 0) : new Scalar(0, 0, 255);
+                            Cv2.PutText(overlayImage, quality.FormatSummary(),
+                                new Point(10, badgeY), HersheyFonts.HersheySimplex, 0.5, gradeColor, 1);
+                            badgeY += 20;
+                        }
+                        if (ParseGs1 && result.Data.TryGetValue("Gs1Formatted", out var gs1Obj))
+                        {
+                            string gs1Text = gs1Obj?.ToString() ?? string.Empty;
+                            if (!string.IsNullOrEmpty(gs1Text))
+                                Cv2.PutText(overlayImage, "GS1: " + gs1Text,
+                                    new Point(10, badgeY), HersheyFonts.HersheySimplex, 0.5,
+                                    new Scalar(255, 255, 0), 1);
+                        }
+
                         result.OverlayImage = overlayImage;
                     }
 
@@ -246,6 +378,57 @@ namespace VMS.VisionSetup.VisionTools.CodeReading
             ExecutionTime = sw.Elapsed.TotalMilliseconds;
             LastResult = result;
             return result;
+        }
+
+        /// <summary>
+        /// 후보 영역 sub-image에 대해 다단계 fallback 디코딩.
+        /// 시도 순: 원본 → 2x 업스케일 → CLAHE → CLAHE+2x.
+        /// 2x 스케일 시 반환되는 Points는 원본 좌표계로 역변환하여 반환.
+        /// </summary>
+        private List<CodeResult> DecodeCandidateWithFallbacks(Mat sub)
+        {
+            // 1) 원본
+            var results = _codeReader.Read(sub, CodeReaderMode.DataMatrix, TryHarder);
+            if (results.Count > 0) return results;
+
+            // 2) 2x cubic 업스케일 — 작은 DM 모듈 회복
+            using var sub2x = new Mat();
+            Cv2.Resize(sub, sub2x, new Size(sub.Width * 2, sub.Height * 2),
+                0, 0, InterpolationFlags.Cubic);
+            results = _codeReader.Read(sub2x, CodeReaderMode.DataMatrix, TryHarder);
+            if (results.Count > 0)
+            {
+                ScalePointsInPlace(results, 0.5f);
+                return results;
+            }
+
+            // 3) CLAHE — 저대비/레이저 마킹 보조
+            using var gray = sub.Channels() > 1
+                ? sub.CvtColor(ColorConversionCodes.BGR2GRAY) : sub.Clone();
+            using var clahe = Cv2.CreateCLAHE(4.0, new Size(8, 8));
+            using var enhanced = new Mat();
+            clahe.Apply(gray, enhanced);
+            results = _codeReader.Read(enhanced, CodeReaderMode.DataMatrix, TryHarder);
+            if (results.Count > 0) return results;
+
+            // 4) CLAHE + 2x
+            using var enh2x = new Mat();
+            Cv2.Resize(enhanced, enh2x, new Size(enhanced.Width * 2, enhanced.Height * 2),
+                0, 0, InterpolationFlags.Cubic);
+            results = _codeReader.Read(enh2x, CodeReaderMode.DataMatrix, TryHarder);
+            if (results.Count > 0)
+            {
+                ScalePointsInPlace(results, 0.5f);
+                return results;
+            }
+
+            return new List<CodeResult>();
+        }
+
+        private static void ScalePointsInPlace(List<CodeResult> results, float factor)
+        {
+            foreach (var c in results)
+                c.Points = c.Points.Select(p => new Point2f(p.X * factor, p.Y * factor)).ToArray();
         }
 
         /// <summary>
@@ -305,7 +488,14 @@ namespace VMS.VisionSetup.VisionTools.CodeReading
 
         public override List<string> GetAvailableResultKeys()
         {
-            return new List<string> { "Success", "DecodedText", "CodeFormat", "CodeCount" };
+            return new List<string>
+            {
+                "Success", "DecodedText", "CodeFormat", "CodeCount",
+                "Gs1Formatted", "Gs1ElementCount",
+                "OverallGrade", "SymbolContrast", "Modulation",
+                "FixedPatternDamage", "AxialNonuniformity",
+                "PixelsPerModule", "SymbolSize"
+            };
         }
 
         public override VisionToolBase Clone()
@@ -320,10 +510,14 @@ namespace VMS.VisionSetup.VisionTools.CodeReading
                 CodeReaderMode = this.CodeReaderMode,
                 MaxCodeCount = this.MaxCodeCount,
                 TryHarder = this.TryHarder,
+                UseLocalization = this.UseLocalization,
                 EnableVerification = this.EnableVerification,
                 ExpectedText = this.ExpectedText,
                 UseRegexMatch = this.UseRegexMatch,
-                DrawOverlay = this.DrawOverlay
+                DrawOverlay = this.DrawOverlay,
+                ParseGs1 = this.ParseGs1,
+                EnableQualityGrading = this.EnableQualityGrading,
+                MinPassGrade = this.MinPassGrade
             };
             CopyPlcMappingsTo(clone);
             return clone;

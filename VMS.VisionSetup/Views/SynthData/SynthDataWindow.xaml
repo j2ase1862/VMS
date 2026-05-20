@@ -1,0 +1,455 @@
+<Window x:Class="VMS.VisionSetup.Views.SynthData.SynthDataWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        xmlns:c="clr-namespace:VMS.VisionSetup.Views.Common"
+        xmlns:vm="clr-namespace:VMS.VisionSetup.ViewModels"
+        xmlns:ocr="clr-namespace:VMS.VisionSetup.VisionTools.Identification"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        Title="Synthetic Data Generator"
+        Width="900" Height="920"
+        MinWidth="780" MinHeight="640"
+        WindowStyle="None"
+        Background="{StaticResource BrushBgWindow}"
+        WindowStartupLocation="CenterOwner"
+        TextOptions.TextFormattingMode="Display">
+
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="42" CornerRadius="0"
+                            GlassFrameThickness="0" ResizeBorderThickness="6"
+                            UseAeroCaptionButtons="False"/>
+    </shell:WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </Window.Resources>
+
+    <Border Background="{StaticResource BrushBgWindow}"
+            BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="1">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="42"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <c:ChromelessTitleBar Grid.Row="0"
+                              TitleText="Synthetic Data Generator"
+                              StatusText="{Binding StatusMessage}"/>
+
+        <Grid Grid.Row="1" Margin="22,16,22,16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Title -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+            <TextBlock Text="Synthetic Data Generator &#x2022; Fine-tuning"
+                       Foreground="{StaticResource BrushTextPrimary}"
+                       FontSize="20" FontWeight="Light"/>
+            <TextBlock Text="폰트·패턴·증강을 조합해 OCR 학습 데이터셋을 생성하고, PaddleOCR 인식 모델을 파인튜닝합니다."
+                       Style="{StaticResource WindowMutedText}" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+
+                <!-- ============= Font Card ============= -->
+                <Border Style="{StaticResource WindowCard}" Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="Font" Style="{StaticResource WindowSectionHeaderFirst}"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="기본 폰트" Style="{StaticResource WindowFieldLabel}"/>
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding AvailableFonts}"
+                                      SelectedItem="{Binding SelectedFont}"
+                                      Style="{StaticResource WindowDarkComboBox}"
+                                      Margin="0,4,0,0"/>
+                        </Grid>
+
+                        <TextBlock Text="추가 폰트 (줄바꿈 또는 콤마로 구분 — 무작위 선택)"
+                                   Style="{StaticResource WindowFieldLabel}"/>
+                        <TextBox Text="{Binding AdditionalFontsText, UpdateSourceTrigger=PropertyChanged}"
+                                 AcceptsReturn="True" MinHeight="48"
+                                 Style="{StaticResource WindowDarkTextBox}"/>
+
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                                <TextBlock Text="폰트 크기 Min (px)" Style="{StaticResource WindowFieldLabel}"/>
+                                <TextBox Text="{Binding FontSizeMin, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource WindowDarkTextBox}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Margin="0,0,10,0">
+                                <TextBlock Text="Max (px)" Style="{StaticResource WindowFieldLabel}"/>
+                                <TextBox Text="{Binding FontSizeMax, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource WindowDarkTextBox}"/>
+                            </StackPanel>
+                            <CheckBox Grid.Column="2" Content="Bold/Italic 무작위"
+                                      IsChecked="{Binding RandomBoldItalic}"
+                                      Style="{StaticResource WindowDarkCheckBox}"
+                                      VerticalAlignment="Bottom" Margin="0,0,0,8"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- ============= Patterns Card ============= -->
+                <Border Style="{StaticResource WindowCard}" Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="Patterns" Style="{StaticResource WindowSectionHeaderFirst}"/>
+                        <TextBlock Text="한 줄에 하나씩. 토큰: D/M/Y/H/S/f=숫자, L=영문자, A=영숫자, ?=임의."
+                                   Style="{StaticResource WindowMutedText}" Margin="0,0,0,6"/>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock Text="프리셋:"
+                                       Style="{StaticResource WindowFieldLabel}"
+                                       Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <Button Content="DD/MM/YYYY" Margin="2,0"
+                                    Style="{StaticResource ModernGhostButton}"
+                                    Command="{Binding AddPresetCommand}"
+                                    CommandParameter="{x:Static ocr:OcrOutputFormatPreset.DateDmy}"/>
+                            <Button Content="YYYY-MM-DD" Margin="4,0,0,0"
+                                    Style="{StaticResource ModernGhostButton}"
+                                    Command="{Binding AddPresetCommand}"
+                                    CommandParameter="{x:Static ocr:OcrOutputFormatPreset.DateYmdDash}"/>
+                            <Button Content="HH:MM:SS" Margin="4,0,0,0"
+                                    Style="{StaticResource ModernGhostButton}"
+                                    Command="{Binding AddPresetCommand}"
+                                    CommandParameter="{x:Static ocr:OcrOutputFormatPreset.DateTimeSec}"/>
+                            <Button Content="LOT7" Margin="4,0,0,0"
+                                    Style="{StaticResource ModernGhostButton}"
+                                    Command="{Binding AddPresetCommand}"
+                                    CommandParameter="{x:Static ocr:OcrOutputFormatPreset.Lot7}"/>
+                        </StackPanel>
+                        <TextBox Text="{Binding PatternsText, UpdateSourceTrigger=PropertyChanged}"
+                                 AcceptsReturn="True" MinHeight="80" FontFamily="Consolas"
+                                 Style="{StaticResource WindowDarkTextBox}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- ============= Dataset Card ============= -->
+                <Border Style="{StaticResource WindowCard}" Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="Dataset" Style="{StaticResource WindowSectionHeaderFirst}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                                <TextBlock Text="샘플 수" Style="{StaticResource WindowFieldLabel}"/>
+                                <TextBox Text="{Binding SampleCount, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource WindowDarkTextBox}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Margin="0,0,10,0">
+                                <TextBlock Text="Val 비율 (0~0.5)" Style="{StaticResource WindowFieldLabel}"/>
+                                <TextBox Text="{Binding ValRatio, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource WindowDarkTextBox}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="출력 포맷" Style="{StaticResource WindowFieldLabel}"/>
+                                <ComboBox SelectedIndex="{Binding OutputFormatIndex}"
+                                          Style="{StaticResource WindowDarkComboBox}">
+                                    <ComboBoxItem Content="PaddleOCR rec"/>
+                                    <ComboBoxItem Content="OCV char patches"/>
+                                </ComboBox>
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Text="출력 폴더" Style="{StaticResource WindowFieldLabel}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding OutputDir, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource WindowDarkTextBox}"/>
+                            <Button Grid.Column="1" Content="Browse..."
+                                    Command="{Binding BrowseOutputDirCommand}"
+                                    Style="{StaticResource ModernGhostButton}" Margin="6,0,0,0"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- ============= Background Card ============= -->
+                <Border Style="{StaticResource WindowCard}" Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="Background" Style="{StaticResource WindowSectionHeaderFirst}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="모드" Style="{StaticResource WindowFieldLabel}"/>
+                                <ComboBox SelectedIndex="{Binding BackgroundModeIndex}"
+                                          Style="{StaticResource WindowDarkComboBox}">
+                                    <ComboBoxItem Content="Solid (White)"/>
+                                    <ComboBoxItem Content="Gradient (random grayscale)"/>
+                                    <ComboBoxItem Content="From Folder (실제 라벨 배경)"/>
+                                </ComboBox>
+                            </StackPanel>
+                            <CheckBox Grid.Column="1" Content="흰/검 무작위 반전"
+                                      IsChecked="{Binding RandomizeInvert}"
+                                      Style="{StaticResource WindowDarkCheckBox}"
+                                      VerticalAlignment="Bottom" Margin="14,0,0,8"/>
+                        </Grid>
+
+                        <TextBlock Text="배경 이미지 폴더 (FromFolder 모드)" Style="{StaticResource WindowFieldLabel}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding BackgroundFolderPath, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource WindowDarkTextBox}"/>
+                            <Button Grid.Column="1" Content="Browse..."
+                                    Command="{Binding BrowseBackgroundFolderCommand}"
+                                    Style="{StaticResource ModernGhostButton}" Margin="6,0,0,0"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- ============= Augmentation Card ============= -->
+                <Border Style="{StaticResource WindowCard}" Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="Augmentation" Style="{StaticResource WindowSectionHeaderFirst}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                                <TextBlock Text="회전 ± (deg)" Style="{StaticResource WindowFieldLabel}"/>
+                                <TextBox Text="{Binding RotationDegMax, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource WindowDarkTextBox}"/>
+                                <TextBlock Text="Blur 최대 커널 (0/3/5)" Style="{StaticResource WindowFieldLabel}"/>
+                                <TextBox Text="{Binding BlurMaxKernel, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource WindowDarkTextBox}"/>
+                                <TextBlock Text="밝기 jitter (±, 0~0.3)" Style="{StaticResource WindowFieldLabel}"/>
+                                <TextBox Text="{Binding BrightnessJitter, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource WindowDarkTextBox}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="원근 jitter (0~0.05)" Style="{StaticResource WindowFieldLabel}"/>
+                                <TextBox Text="{Binding PerspectiveJitter, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource WindowDarkTextBox}"/>
+                                <TextBlock Text="Gaussian 노이즈 std (0~25)" Style="{StaticResource WindowFieldLabel}"/>
+                                <TextBox Text="{Binding NoiseStdMax, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource WindowDarkTextBox}"/>
+                                <TextBlock Text="대비 jitter (±, 0~0.3)" Style="{StaticResource WindowFieldLabel}"/>
+                                <TextBox Text="{Binding ContrastJitter, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource WindowDarkTextBox}"/>
+                            </StackPanel>
+                        </Grid>
+                        <CheckBox Content="도트 매트릭스 효과 (잉크젯/도트 프린트 모사)"
+                                  IsChecked="{Binding DotMatrixMode}"
+                                  Style="{StaticResource WindowDarkCheckBox}"
+                                  Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- ============= Training Card ============= -->
+                <Border Style="{StaticResource WindowCard}" Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="Training — PP-OCR Fine-tuning"
+                                   Style="{StaticResource WindowSectionHeaderFirst}"/>
+
+                        <TextBlock Text="Python 실행파일 (paddlepaddle 설치된 venv)"
+                                   Style="{StaticResource WindowFieldLabel}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding PythonPath, UpdateSourceTrigger=PropertyChanged}"
+                                     FontFamily="Consolas"
+                                     Style="{StaticResource WindowDarkTextBox}"/>
+                            <Button Grid.Column="1" Content="Browse..."
+                                    Command="{Binding BrowsePythonCommand}"
+                                    Style="{StaticResource ModernGhostButton}" Margin="6,0,0,0"/>
+                        </Grid>
+
+                        <TextBlock Text="train_ppocr.py 경로" Style="{StaticResource WindowFieldLabel}"/>
+                        <TextBox Text="{Binding TrainScriptPath, UpdateSourceTrigger=PropertyChanged}"
+                                 FontFamily="Consolas"
+                                 Style="{StaticResource WindowDarkTextBox}"/>
+
+                        <TextBlock Text="학습 출력 폴더" Style="{StaticResource WindowFieldLabel}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding TrainOutputDir, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource WindowDarkTextBox}"/>
+                            <Button Grid.Column="1" Content="Browse..."
+                                    Command="{Binding BrowseTrainOutputCommand}"
+                                    Style="{StaticResource ModernGhostButton}" Margin="6,0,0,0"/>
+                        </Grid>
+
+                        <TextBlock Text="사전학습 모델 prefix (.pdparams 제외)"
+                                   Style="{StaticResource WindowFieldLabel}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding PretrainedModel, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource WindowDarkTextBox}"/>
+                            <Button Grid.Column="1" Content="Browse..."
+                                    Command="{Binding BrowsePretrainedCommand}"
+                                    Style="{StaticResource ModernGhostButton}" Margin="6,0,0,0"/>
+                        </Grid>
+
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                                <TextBlock Text="Epochs" Style="{StaticResource WindowFieldLabel}"/>
+                                <TextBox Text="{Binding Epochs, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource WindowDarkTextBox}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Margin="0,0,10,0">
+                                <TextBlock Text="Batch Size" Style="{StaticResource WindowFieldLabel}"/>
+                                <TextBox Text="{Binding BatchSize, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource WindowDarkTextBox}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Margin="0,0,10,0">
+                                <TextBlock Text="Learning Rate" Style="{StaticResource WindowFieldLabel}"/>
+                                <TextBox Text="{Binding LearningRate, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource WindowDarkTextBox}"/>
+                            </StackPanel>
+                            <CheckBox Grid.Column="3" Content="ONNX export"
+                                      IsChecked="{Binding ExportOnnx}"
+                                      Style="{StaticResource WindowDarkCheckBox}"
+                                      VerticalAlignment="Bottom" Margin="0,0,0,8"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- ============= Training Progress Card ============= -->
+                <Border Style="{StaticResource WindowCard}" Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="Training Progress" Style="{StaticResource WindowSectionHeaderFirst}"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Margin="0,0,16,6" Foreground="{StaticResource BrushTextSecondary}" VerticalAlignment="Center">
+                                <Run Text="Epoch:"/>
+                                <Run Text="{Binding TrainEpoch, Mode=OneWay}" Foreground="{StaticResource BrushTextAccent}" FontWeight="Bold"/>
+                                <Run Text="/"/>
+                                <Run Text="{Binding TrainEpochTotal, Mode=OneWay}"/>
+                                <Run Text="  Loss:"/>
+                                <Run Text="{Binding LastLoss, Mode=OneWay, StringFormat=F4, FallbackValue=-}" Foreground="#FFCC66"/>
+                                <Run Text="  Acc:"/>
+                                <Run Text="{Binding LastAcc, Mode=OneWay, StringFormat=F4, FallbackValue=-}" Foreground="#4CAF50"/>
+                            </TextBlock>
+                            <ProgressBar Grid.Column="1" Minimum="0" Maximum="100"
+                                         Value="{Binding TrainProgress}"
+                                         Style="{StaticResource WindowProgressBar}"
+                                         VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <TextBlock Text="ONNX 출력 경로" Style="{StaticResource WindowFieldLabel}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding ResultOnnxPath, Mode=OneWay}"
+                                     Style="{StaticResource WindowReadOnlyTextBox}"
+                                     Foreground="#4CAF50"/>
+                            <Button Grid.Column="1" Content="Copy"
+                                    Click="CopyOnnxPath_Click"
+                                    Style="{StaticResource ModernGhostButton}"
+                                    Margin="6,0,0,0"/>
+                        </Grid>
+
+                        <Grid Margin="0,8,0,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,4">
+                                <TextBlock Text="Training Log" Foreground="{StaticResource BrushTextSecondary}" VerticalAlignment="Center"/>
+                                <Button Content="Copy All" Click="CopyLog_Click"
+                                        Style="{StaticResource ModernGhostButton}"
+                                        Margin="10,0,0,0"/>
+                                <Button Content="Clear" Click="ClearLog_Click"
+                                        Style="{StaticResource ModernGhostButton}"
+                                        Margin="4,0,0,0"/>
+                                <TextBlock Text=" Visual Studio Output 창에도 동시 출력됩니다"
+                                           Foreground="{StaticResource BrushTextMuted}" FontSize="11"
+                                           VerticalAlignment="Center" Margin="8,0,0,0"/>
+                            </StackPanel>
+                            <Border Grid.Row="1" Style="{StaticResource WindowLogSurface}">
+                                <TextBox x:Name="LogTextBox" Height="180"
+                                         IsReadOnly="True" AcceptsReturn="True"
+                                         TextWrapping="NoWrap"
+                                         FontFamily="Consolas" FontSize="11"
+                                         Background="Transparent" Foreground="{StaticResource BrushTextSecondary}"
+                                         BorderThickness="0"
+                                         HorizontalScrollBarVisibility="Auto"
+                                         VerticalScrollBarVisibility="Auto"/>
+                            </Border>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Bottom Action Bar -->
+        <StackPanel Grid.Row="2" Margin="0,12,0,0">
+            <ProgressBar Minimum="0" Maximum="{Binding ProgressTotal}"
+                         Value="{Binding ProgressCurrent}"
+                         Style="{StaticResource WindowProgressBar}" Margin="0,0,0,6"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="{Binding StatusMessage}"
+                           Foreground="{StaticResource BrushTextAccent}"
+                           VerticalAlignment="Center" FontSize="12"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Content="Cancel Train" Command="{Binding CancelTrainCommand}"
+                            Style="{StaticResource ModernDangerButton}" Margin="0,0,8,0"/>
+                    <Button Content="Generate" Command="{Binding GenerateCommand}"
+                            Style="{StaticResource ModernSecondaryButton}" Margin="0,0,8,0"/>
+                    <Button Content="Generate &amp; Train" Command="{Binding GenerateAndTrainCommand}"
+                            Style="{StaticResource ModernPrimaryButton}" Padding="20,7" Margin="0,0,8,0"/>
+                    <Button Content="Close"
+                            Command="{x:Static SystemCommands.CloseWindowCommand}"
+                            Style="{StaticResource ModernGhostButton}"/>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+        </Grid>
+    </Grid>
+    </Border>
+</Window>

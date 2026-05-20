@@ -14,7 +14,7 @@ namespace VMS.VisionSetup.VisionTools.Color
     /// HSV inRange보다 조명 변화에 강건. 색상 유사도 점수 기반.
     /// Training Region(UseROI)에서 SelectedModel 학습. Search Region(UseSearchRegion)에서 매칭.
     /// </summary>
-    public class ColorMatchTool : VisionToolBase
+    public class ColorMatchTool : VisionToolBase, ISearchRegionTool
     {
         // ── 모델 컬렉션 ──
         public ObservableCollection<ColorMatchModel> Models { get; } = new();
@@ -106,6 +106,8 @@ namespace VMS.VisionSetup.VisionTools.Color
             {
                 if (SetProperty(ref _searchRegion, value))
                 {
+                    if (!IsFixtureTransformActive)
+                        HasFixtureBaseSearchRegion = false;
                     OnPropertyChanged(nameof(SearchRegionX));
                     OnPropertyChanged(nameof(SearchRegionY));
                     OnPropertyChanged(nameof(SearchRegionWidth));

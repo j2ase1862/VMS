@@ -24,6 +24,7 @@ namespace VMS.VisionSetup.Controls
         DrawCircle,
         DrawEllipse,
         DrawPolygon,
+        DrawAnnulus,
         /// <summary>한 픽셀 클릭 픽 모드. 클릭 시 PointPicked 이벤트 발생 후 Select 모드로 자동 복귀.</summary>
         PickPoint
     }
@@ -247,6 +248,7 @@ namespace VMS.VisionSetup.Controls
                 case EditMode.DrawRectangleAffine:
                 case EditMode.DrawCircle:
                 case EditMode.DrawEllipse:
+                case EditMode.DrawAnnulus:
                     StartDrawing(pos);
                     break;
 
@@ -451,6 +453,17 @@ namespace VMS.VisionSetup.Controls
                         Fill = new SolidColorBrush(System.Windows.Media.Color.FromArgb(40, 0, 255, 255))
                     };
                     break;
+
+                case EditMode.DrawAnnulus:
+                    // 외륜만 임시 미리보기 — 내륜은 FinishDrawing 시 outer × 0.5로 자동 생성
+                    _tempShape = new Ellipse
+                    {
+                        Stroke = Brushes.Orange,
+                        StrokeThickness = 2,
+                        StrokeDashArray = new DoubleCollection { 4, 2 },
+                        Fill = new SolidColorBrush(System.Windows.Media.Color.FromArgb(40, 255, 165, 0))
+                    };
+                    break;
             }
 
             if (_tempShape != null)
@@ -472,9 +485,9 @@ namespace VMS.VisionSetup.Controls
             double width = Math.Abs(currentPos.X - _startPoint.X);
             double height = Math.Abs(currentPos.Y - _startPoint.Y);
 
-            if (_currentMode == EditMode.DrawCircle)
+            if (_currentMode == EditMode.DrawCircle || _currentMode == EditMode.DrawAnnulus)
             {
-                // 원은 중심에서 드래그
+                // 원/도넛: 중심에서 드래그
                 double radius = Math.Sqrt(width * width + height * height);
                 width = height = radius * 2;
                 x = _startPoint.X - radius;
@@ -502,7 +515,7 @@ namespace VMS.VisionSetup.Controls
             double width = Math.Abs(endPos.X - _startPoint.X);
             double height = Math.Abs(endPos.Y - _startPoint.Y);
 
-            if (width < 10 && height < 10 && _currentMode != EditMode.DrawCircle)
+            if (width < 10 && height < 10 && _currentMode != EditMode.DrawCircle && _currentMode != EditMode.DrawAnnulus)
             {
                 StatusText.Text = "ROI가 너무 작습니다. 다시 그려주세요.";
                 return;
@@ -546,6 +559,18 @@ namespace VMS.VisionSetup.Controls
                         (_startPoint.Y + endPos.Y) / 2,
                         width / 2, height / 2, 0);
                     newROI.Name = $"Ellipse_{ROICollection?.Count ?? 0 + 1}";
+                    break;
+
+                case EditMode.DrawAnnulus:
+                    double outerR = Math.Sqrt(width * width + height * height);
+                    if (outerR < 15)
+                    {
+                        StatusText.Text = "도넛이 너무 작습니다. 다시 그려주세요.";
+                        return;
+                    }
+                    // 기본 inner = outer × 0.5 — 사용자가 핸들로 조정
+                    newROI = new AnnulusROI(_startPoint.X, _startPoint.Y, outerR * 0.5, outerR);
+                    newROI.Name = $"Annulus_{ROICollection?.Count ?? 0 + 1}";
                     break;
             }
 
@@ -734,6 +759,44 @@ namespace VMS.VisionSetup.Controls
                     };
                     visuals.Add(poly);
                     DrawingCanvas.Children.Add(poly);
+                    break;
+
+                case AnnulusROI annulus:
+                    // 외륜 — 채움 + 내륜 — 채움 클리어. EvenOdd fill rule로 도넛 형태 표현.
+                    var path = new System.Windows.Shapes.Path
+                    {
+                        Stroke = strokeBrush,
+                        StrokeThickness = roi.StrokeThickness,
+                        Fill = fillBrush
+                    };
+                    var pg = new PathGeometry { FillRule = FillRule.EvenOdd };
+                    var outerFig = new PathFigure { StartPoint = new System.Windows.Point(annulus.CenterX + annulus.OuterRadius, annulus.CenterY), IsClosed = true };
+                    outerFig.Segments.Add(new ArcSegment(
+                        new System.Windows.Point(annulus.CenterX - annulus.OuterRadius, annulus.CenterY),
+                        new System.Windows.Size(annulus.OuterRadius, annulus.OuterRadius),
+                        0, false, SweepDirection.Clockwise, true));
+                    outerFig.Segments.Add(new ArcSegment(
+                        new System.Windows.Point(annulus.CenterX + annulus.OuterRadius, annulus.CenterY),
+                        new System.Windows.Size(annulus.OuterRadius, annulus.OuterRadius),
+                        0, false, SweepDirection.Clockwise, true));
+                    pg.Figures.Add(outerFig);
+
+                    if (annulus.InnerRadius > 0)
+                    {
+                        var innerFig = new PathFigure { StartPoint = new System.Windows.Point(annulus.CenterX + annulus.InnerRadius, annulus.CenterY), IsClosed = true };
+                        innerFig.Segments.Add(new ArcSegment(
+                            new System.Windows.Point(annulus.CenterX - annulus.InnerRadius, annulus.CenterY),
+                            new System.Windows.Size(annulus.InnerRadius, annulus.InnerRadius),
+                            0, false, SweepDirection.Counterclockwise, true));
+                        innerFig.Segments.Add(new ArcSegment(
+                            new System.Windows.Point(annulus.CenterX + annulus.InnerRadius, annulus.CenterY),
+                            new System.Windows.Size(annulus.InnerRadius, annulus.InnerRadius),
+                            0, false, SweepDirection.Counterclockwise, true));
+                        pg.Figures.Add(innerFig);
+                    }
+                    path.Data = pg;
+                    visuals.Add(path);
+                    DrawingCanvas.Children.Add(path);
                     break;
             }
 

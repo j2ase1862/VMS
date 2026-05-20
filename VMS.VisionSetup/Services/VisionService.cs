@@ -347,6 +347,27 @@ namespace VMS.VisionSetup.Services
                     if (!resultMap.TryGetValue(conn.SourceId, out var sourceResult) || sourceResult.Data == null)
                         continue;
 
+                    // PolarUnwrapTool 특수 처리 — CircleFit/SourceCenter를 그대로 Center/Radius로 주입
+                    // (ROI fixture 변환과 다른 의미 — 회전/이동 보정이 아니라 원의 실제 위치 전달)
+                    if (tool is VisionTools.ImageProcessing.PolarUnwrapTool polar
+                        && sourceResult.Data.TryGetValue("CenterX", out var pcx)
+                        && sourceResult.Data.TryGetValue("CenterY", out var pcy))
+                    {
+                        polar.CenterX = Convert.ToDouble(pcx);
+                        polar.CenterY = Convert.ToDouble(pcy);
+                        if (sourceResult.Data.TryGetValue("Radius", out var prObj))
+                        {
+                            double r = Convert.ToDouble(prObj);
+                            // 사용자가 InnerRadius/OuterRadius를 명시 안 했으면 (둘 다 0) 합리적 기본값
+                            if (polar.OuterRadius <= 0 || polar.InnerRadius < 0)
+                            {
+                                polar.InnerRadius = Math.Max(0, r * 0.6);
+                                polar.OuterRadius = r * 1.1;
+                            }
+                        }
+                        continue; // fixture 경로 스킵
+                    }
+
                     // Fixture transform: CenterX/CenterY available → apply delta
                     if (sourceResult.Data.TryGetValue("CenterX", out var cx) &&
                         sourceResult.Data.TryGetValue("CenterY", out var cy))
@@ -415,6 +436,41 @@ namespace VMS.VisionSetup.Services
                         int h = tool.FixtureBaseROI.Height > 0 ? tool.FixtureBaseROI.Height : 100;
                         tool.ROI = new Rect((int)(newCX - w / 2.0), (int)(newCY - h / 2.0), w, h);
                         tool.UseROI = true;
+
+                        // SearchRegion(Execute용)도 같은 delta로 시프트.
+                        // ShapeMatch/Color*/OCV처럼 Training Region과 별도 Search Region을 갖는 도구에 적용.
+                        if (tool is ISearchRegionTool srt && srt.UseSearchRegion
+                            && srt.SearchRegion.Width > 0 && srt.SearchRegion.Height > 0)
+                        {
+                            if (!tool.HasFixtureBaseSearchRegion)
+                            {
+                                tool.FixtureBaseSearchRegion = srt.SearchRegion;
+                                tool.HasFixtureBaseSearchRegion = true;
+                            }
+
+                            double srBaseCX = tool.FixtureBaseSearchRegion.X + tool.FixtureBaseSearchRegion.Width / 2.0;
+                            double srBaseCY = tool.FixtureBaseSearchRegion.Y + tool.FixtureBaseSearchRegion.Height / 2.0;
+
+                            double newSrCX, newSrCY;
+                            if (Math.Abs(deltaAngle) > 0.01)
+                            {
+                                double srRelX = srBaseCX - refX;
+                                double srRelY = srBaseCY - refY;
+                                double rad2 = deltaAngle * Math.PI / 180.0;
+                                newSrCX = foundX + srRelX * Math.Cos(rad2) - srRelY * Math.Sin(rad2);
+                                newSrCY = foundY + srRelX * Math.Sin(rad2) + srRelY * Math.Cos(rad2);
+                            }
+                            else
+                            {
+                                newSrCX = srBaseCX + (foundX - refX);
+                                newSrCY = srBaseCY + (foundY - refY);
+                            }
+
+                            int sw = tool.FixtureBaseSearchRegion.Width;
+                            int sh = tool.FixtureBaseSearchRegion.Height;
+                            srt.SearchRegion = new Rect(
+                                (int)(newSrCX - sw / 2.0), (int)(newSrCY - sh / 2.0), sw, sh);
+                        }
                     }
                     // Fallback: BoundingRect
                     else if (sourceResult.Data.TryGetValue("BoundingRect", out var rectObj) && rectObj is Rect boundingRect)
@@ -910,6 +966,10 @@ namespace VMS.VisionSetup.Services
             sw.Stop();
             TotalExecutionTime = sw.Elapsed.TotalMilliseconds;
 
+            // 외부에서 도구↔결과 매핑이 필요한 경우 사용 (BatchTestRunner 등)
+            // resultMap은 topological sort 영향 없이 id로 안전하게 lookup 가능
+            LastExecutionResultsById = new Dictionary<string, VisionResult>(resultMap);
+
             // ResultTool이 존재하면 최종 판정은 ResultTool의 Success로 결정
             var resultToolInstance = sortedTools.OfType<ResultTool>().FirstOrDefault();
             LastRunSuccess = resultToolInstance != null
@@ -919,6 +979,13 @@ namespace VMS.VisionSetup.Services
 
             return results;
         }
+
+        /// <summary>
+        /// 마지막 ExecuteAll 실행의 도구 ID → 결과 매핑.
+        /// ExecuteAll이 topological sort 순으로 결과를 반환하기 때문에,
+        /// 외부에서 Tools 컬렉션 순서와 일치한다고 가정하면 안 됨. 이 dictionary로 안전 lookup.
+        /// </summary>
+        public Dictionary<string, VisionResult> LastExecutionResultsById { get; private set; } = new();
 
         /// <summary>
         /// 도구 타입에 따른 새 인스턴스 생성
@@ -954,8 +1021,13 @@ namespace VMS.VisionSetup.Services
                 "CircleFitTool" => new CircleFitTool(),
                 "GeometryTool" => new GeometryTool(),
 
+                // Image Enhancement / Polar
+                "ImageEnhanceTool" => new VisionTools.ImageProcessing.ImageEnhanceTool(),
+                "PolarUnwrapTool" => new VisionTools.ImageProcessing.PolarUnwrapTool(),
+
                 // Identification
                 "OCRTool" => new OCRTool(),
+                "OCVTool" => new OCVTool(),
 
                 // Code Reading
                 "CodeReaderTool" => new CodeReaderTool(),
@@ -996,7 +1068,9 @@ namespace VMS.VisionSetup.Services
                     "ThresholdTool",
                     "EdgeDetectionTool",
                     "MorphologyTool",
-                    "HistogramTool"
+                    "HistogramTool",
+                    "ImageEnhanceTool",
+                    "PolarUnwrapTool"
                 },
                 ["3D Analysis"] = new[]
                 {
@@ -1025,7 +1099,8 @@ namespace VMS.VisionSetup.Services
                 },
                 ["Identification"] = new[]
                 {
-                    "OCRTool"
+                    "OCRTool",
+                    "OCVTool"
                 },
                 ["Code Reading"] = new[]
                 {
@@ -1083,6 +1158,9 @@ namespace VMS.VisionSetup.Services
                 "PointCloudRegistrationTool" => "PointCloud Registration",
                 "PointCloudClusterTool" => "PointCloud Cluster",
                 "OCRTool" => "OCR",
+                "OCVTool" => "OCV",
+                "ImageEnhanceTool" => "Image Enhance",
+                "PolarUnwrapTool" => "Polar Unwrap",
                 "CodeReaderTool" => "Code Reader",
                 "DetectionTool" => "Detection (YOLO)",
                 "ClassifyTool" => "Classify",

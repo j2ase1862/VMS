@@ -251,6 +251,36 @@ namespace VMS.VisionSetup.VisionTools.Identification
             set => SetProperty(ref _dotMatrixMode, value);
         }
 
+        // ── Output Format ──
+
+        private OcrOutputFormatPreset _formatPreset = OcrOutputFormatPreset.None;
+        /// <summary>
+        /// 결과 형식 프리셋 (DD/MM/YYYY 등). Custom 선택 시 CustomOutputFormat 사용.
+        /// </summary>
+        public OcrOutputFormatPreset FormatPreset
+        {
+            get => _formatPreset;
+            set => SetProperty(ref _formatPreset, value);
+        }
+
+        private string _customOutputFormat = string.Empty;
+        /// <summary>
+        /// FormatPreset == Custom일 때 사용자 입력 패턴. 여러 패턴은 줄바꿈으로 구분.
+        /// </summary>
+        public string CustomOutputFormat
+        {
+            get => _customOutputFormat;
+            set => SetProperty(ref _customOutputFormat, value ?? string.Empty);
+        }
+
+        /// <summary>
+        /// 실제 적용할 패턴 문자열. 프리셋 선택 시 사전 정의 패턴, Custom 시 사용자 입력.
+        /// </summary>
+        public string EffectiveOutputFormat =>
+            FormatPreset == OcrOutputFormatPreset.Custom
+                ? CustomOutputFormat
+                : OcrFormatMatcher.GetPatternFor(FormatPreset);
+
         // ── Verification Settings ──
 
         private bool _enableVerification;
@@ -357,14 +387,24 @@ namespace VMS.VisionSetup.VisionTools.Identification
                         ocrResult = ExecuteTesseract(workImage);
                     }
 
-                    string recognizedText = ocrResult.Text?.Trim() ?? string.Empty;
+                    string rawText = ocrResult.Text?.Trim() ?? string.Empty;
                     float meanConfidence = ocrResult.MeanConfidence;
+
+                    // 형식 기반 후처리 — 리터럴 강제 치환으로 '/' ↔ '7' 등 model 오인식 복원
+                    string activeFormat = EffectiveOutputFormat;
+                    var (formatted, matched, matchedPattern) =
+                        OcrFormatMatcher.Apply(rawText, activeFormat);
+                    string recognizedText = formatted;
 
                     // 결과 데이터 저장
                     result.Data["RecognizedText"] = recognizedText;
+                    result.Data["RawText"] = rawText;
+                    result.Data["FormatMatched"] = matched;
+                    if (matched) result.Data["MatchedPattern"] = matchedPattern ?? string.Empty;
                     result.Data["Confidence"] = (double)meanConfidence;
                     result.Data["WordCount"] = ocrResult.Words.Count;
                     result.Data["Engine"] = OcrEngine.ToString();
+                    result.Data["AppliedWhitelist"] = CharacterWhitelist; // 디버그 — GUI에서 binding 적용 여부 확인
 
                     if (ocrResult.Words.Count > 0)
                     {
@@ -500,6 +540,7 @@ namespace VMS.VisionSetup.VisionTools.Identification
                     string.IsNullOrEmpty(CustomDictPath) ? null : CustomDictPath)
                 : new PaddleOcrOnnxEngine();
             _onnxEngine.MaxSideLen = MaxSideLen;
+            _onnxEngine.WhitelistChars = CharacterWhitelist; // 빈 문자열이면 전체 사전 허용
 
             var ocrResults = _onnxEngine.Run(workImage);
 
@@ -874,7 +915,8 @@ namespace VMS.VisionSetup.VisionTools.Identification
         {
             return new List<string>
             {
-                "RecognizedText", "Confidence", "WordCount",
+                "RecognizedText", "RawText", "FormatMatched", "MatchedPattern",
+                "Confidence", "WordCount",
                 "Words", "WordConfidences", "VerificationPass"
             };
         }
@@ -905,7 +947,9 @@ namespace VMS.VisionSetup.VisionTools.Identification
                 TessdataPath = this.TessdataPath,
                 CustomDetModelPath = this.CustomDetModelPath,
                 CustomRecModelPath = this.CustomRecModelPath,
-                CustomDictPath = this.CustomDictPath
+                CustomDictPath = this.CustomDictPath,
+                FormatPreset = this.FormatPreset,
+                CustomOutputFormat = this.CustomOutputFormat
             };
             CopyPlcMappingsTo(clone);
             return clone;

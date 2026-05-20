@@ -282,5 +282,10 @@ namespace VMS.VisionSetup.Models
         public int ToolCount { get; set; }
 
         public string ModifiedAtDisplay => ModifiedAt.ToString("yyyy-MM-dd HH:mm");
+
+        /// <summary>ComboBox/리스트 표시용 — Recipe.DisplayInfo와 동일 포맷.</summary>
+        public string DisplayInfo => string.IsNullOrEmpty(Version) ? Name : $"{Name} (v{Version})";
+
+        public override string ToString() => DisplayInfo;
     }
 }

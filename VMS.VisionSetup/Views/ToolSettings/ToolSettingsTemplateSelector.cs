@@ -21,6 +21,9 @@ namespace VMS.VisionSetup.Views.ToolSettings
         public DataTemplate? CodeReaderTemplate { get; set; }
         public DataTemplate? GeometryTemplate { get; set; }
         public DataTemplate? OCRTemplate { get; set; }
+        public DataTemplate? OCVTemplate { get; set; }
+        public DataTemplate? ImageEnhanceTemplate { get; set; }
+        public DataTemplate? PolarUnwrapTemplate { get; set; }
         public DataTemplate? DetectionTemplate { get; set; }
         public DataTemplate? ClassifyTemplate { get; set; }
         public DataTemplate? AnomalyTemplate { get; set; }
@@ -59,6 +62,9 @@ namespace VMS.VisionSetup.Views.ToolSettings
                 PlaneFitToolSettingsViewModel => PlaneFitTemplate,
                 Geometry3DToolSettingsViewModel => Geometry3DTemplate,
                 OCRToolSettingsViewModel => OCRTemplate,
+                OCVToolSettingsViewModel => OCVTemplate,
+                ImageEnhanceToolSettingsViewModel => ImageEnhanceTemplate,
+                PolarUnwrapToolSettingsViewModel => PolarUnwrapTemplate,
                 DetectionToolSettingsViewModel => DetectionTemplate,
                 ClassifyToolSettingsViewModel => ClassifyTemplate,
                 AnomalyToolSettingsViewModel => AnomalyTemplate,

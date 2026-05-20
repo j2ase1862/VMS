@@ -1,0 +1,356 @@
+<Window x:Class="VMS.VisionSetup.Views.BatchTest.AutoTuneWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        xmlns:c="clr-namespace:VMS.VisionSetup.Views.Common"
+        Title="Auto-tune Wizard"
+        Width="1100" Height="820"
+        MinWidth="840" MinHeight="560"
+        WindowStyle="None"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource BrushBgWindow}"
+        TextOptions.TextFormattingMode="Display">
+
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="42" CornerRadius="0"
+                            GlassFrameThickness="0" ResizeBorderThickness="6"
+                            UseAeroCaptionButtons="False"/>
+    </shell:WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </Window.Resources>
+
+    <Border Background="{StaticResource BrushBgWindow}"
+            BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="42"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <c:ChromelessTitleBar Grid.Row="0"
+                                  TitleText="Auto-tune Wizard"
+                                  StatusText="{Binding StatusMessage}"/>
+
+            <Grid Grid.Row="1" Margin="22,16,22,12">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0"
+                           Text="여러 파라미터를 동시에 sweep하면서 폴더 검사 → PASS율이 가장 높은 조합 자동 탐색."
+                           Foreground="{StaticResource BrushTextMuted}" FontSize="12"
+                           Margin="0,0,0,12"/>
+
+                <!-- INPUT -->
+                <Border Grid.Row="1" Style="{StaticResource WindowCard}" Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="INPUT" Style="{StaticResource WindowSectionHeaderFirst}"/>
+                        <TextBlock Text="이미지 폴더" Style="{StaticResource WindowFieldLabel}"/>
+                        <TextBox Text="{Binding ImageFolder, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource WindowDarkTextBox}"/>
+                        <CheckBox Content="하위 폴더 재귀 탐색"
+                                  IsChecked="{Binding RecurseSubfolders}"
+                                  Style="{StaticResource WindowDarkCheckBox}"
+                                  Margin="0,10,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- SWEEPS -->
+                <Border Grid.Row="2" Style="{StaticResource WindowCard}" Margin="0,0,0,10">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="SWEEPS"
+                                       Style="{StaticResource WindowSectionHeaderFirst}" Margin="0"/>
+                            <Button Grid.Column="1" Content="+ Add Sweep"
+                                    Command="{Binding AddSweepCommand}"
+                                    Style="{StaticResource ModernGhostButton}"/>
+                        </Grid>
+
+                        <ItemsControl ItemsSource="{Binding Sweeps}" Margin="0,8,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource BrushBgInput}"
+                                            BorderBrush="{StaticResource BrushBorderSubtle}"
+                                            BorderThickness="1" CornerRadius="4"
+                                            Padding="10,8" Margin="0,0,0,6">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="2*"/>
+                                                <ColumnDefinition Width="8"/>
+                                                <ColumnDefinition Width="2*"/>
+                                                <ColumnDefinition Width="8"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="8"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="8"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="10"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="8"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <ComboBox Grid.Column="0"
+                                                      ItemsSource="{Binding AvailableTools}"
+                                                      SelectedItem="{Binding SelectedTool}"
+                                                      Style="{StaticResource WindowDarkComboBox}"
+                                                      ToolTip="도구"
+                                                      VerticalAlignment="Center"/>
+                                            <ComboBox Grid.Column="2"
+                                                      ItemsSource="{Binding AvailableParameters}"
+                                                      SelectedItem="{Binding SelectedParameter}"
+                                                      Style="{StaticResource WindowDarkComboBox}"
+                                                      ToolTip="파라미터"
+                                                      VerticalAlignment="Center"/>
+                                            <TextBox Grid.Column="4"
+                                                     Text="{Binding FromText, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource WindowDarkTextBox}"
+                                                     ToolTip="From"
+                                                     VerticalAlignment="Center"/>
+                                            <TextBox Grid.Column="6"
+                                                     Text="{Binding ToText, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource WindowDarkTextBox}"
+                                                     ToolTip="To"
+                                                     VerticalAlignment="Center"/>
+                                            <TextBox Grid.Column="8"
+                                                     Text="{Binding StepText, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource WindowDarkTextBox}"
+                                                     ToolTip="Step"
+                                                     VerticalAlignment="Center"/>
+                                            <!-- 현재값 chip — Parameter 선택 시 표시 -->
+                                            <Border Grid.Column="10"
+                                                    Background="{StaticResource BrushBgSurface}"
+                                                    BorderBrush="{StaticResource BrushBorderSubtle}"
+                                                    BorderThickness="1" CornerRadius="10"
+                                                    Padding="9,3"
+                                                    VerticalAlignment="Center"
+                                                    Visibility="{Binding HasCurrentValue, Converter={StaticResource BoolToVis}}"
+                                                    ToolTip="이 파라미터에 현재 도구에 설정된 값">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="현재"
+                                                               Foreground="{StaticResource BrushTextMuted}"
+                                                               FontSize="10" FontWeight="SemiBold"
+                                                               VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                    <TextBlock Text="{Binding CurrentValueText}"
+                                                               Foreground="{StaticResource BrushTextAccent}"
+                                                               FontSize="11" FontFamily="Consolas" FontWeight="SemiBold"
+                                                               VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <Button Grid.Column="12" Content="✕"
+                                                    Command="{Binding DataContext.RemoveSweepCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}"
+                                                    Style="{StaticResource ModernGhostButton}"
+                                                    Padding="8,4"
+                                                    VerticalAlignment="Center"
+                                                    ToolTip="이 sweep 삭제"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <CheckBox Grid.Column="0" Content="Random search"
+                                      IsChecked="{Binding UseRandomSearch}"
+                                      Style="{StaticResource WindowDarkCheckBox}"
+                                      Margin="0,0,12,0"
+                                      ToolTip="전체 조합 대신 N개 무작위 샘플"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                        Visibility="{Binding UseRandomSearch, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="Max samples:"
+                                           Foreground="{StaticResource BrushTextMuted}"
+                                           FontSize="11" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                <TextBox Text="{Binding MaxSamplesText, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource WindowDarkTextBox}"
+                                         Width="60"/>
+                            </StackPanel>
+                            <TextBlock Grid.Column="3" Text="{Binding CombinationCountText}"
+                                       Foreground="{StaticResource BrushTextAccent}"
+                                       FontSize="11" FontWeight="SemiBold"
+                                       VerticalAlignment="Center"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- PROGRESS -->
+                <Border Grid.Row="3" Style="{StaticResource WindowSurface}" Padding="16,10" Margin="0,0,0,10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ProgressBar Grid.Column="0" Minimum="0" Maximum="{Binding ProgressTotal}"
+                                     Value="{Binding ProgressCurrent}"
+                                     Background="{StaticResource BrushBgInput}"
+                                     Foreground="{StaticResource BrushAccent}"
+                                     Height="6" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1"
+                                   Foreground="{StaticResource BrushTextMuted}" FontSize="10" FontWeight="SemiBold"
+                                   VerticalAlignment="Center">
+                            <Run Text="{Binding ProgressCurrent, Mode=OneWay}"/>
+                            <Run Text="/"/>
+                            <Run Text="{Binding ProgressTotal, Mode=OneWay}"/>
+                        </TextBlock>
+                    </Grid>
+                </Border>
+
+                <!-- RESULTS -->
+                <Border Grid.Row="4" Style="{StaticResource WindowCard}" Padding="0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Text="RESULTS"
+                                   Style="{StaticResource WindowSectionHeaderFirst}"
+                                   Margin="18,12,18,8"/>
+                        <Border Grid.Row="1" Background="{StaticResource BrushBgInput}"
+                                BorderBrush="{StaticResource BrushBorderSubtle}"
+                                BorderThickness="0,1,0,0">
+                            <DataGrid ItemsSource="{Binding ResultsView}"
+                                      Style="{StaticResource WindowDarkDataGrid}"
+                                      AutoGenerateColumns="False"
+                                      RowHeight="32">
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="DataGridRow" BasedOn="{StaticResource WindowDarkDataGridRow}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsBest}" Value="True">
+                                                <Setter Property="Background" Value="{StaticResource BrushSuccessSoft}"/>
+                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.RowStyle>
+                                <DataGrid.Columns>
+                                    <DataGridTemplateColumn Header="Best" Width="50" CanUserSort="False">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="★"
+                                                           Foreground="{StaticResource BrushSuccess}"
+                                                           FontSize="14" FontWeight="Bold"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                           Visibility="{Binding IsBest, Converter={StaticResource BoolToVis}}"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="Combination"
+                                                        Binding="{Binding CombinationText}" Width="*"
+                                                        IsReadOnly="True">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Setter Property="FontFamily" Value="Consolas"/>
+                                                <Setter Property="FontSize" Value="11"/>
+                                                <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+                                                <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                                <Setter Property="ToolTip" Value="{Binding CombinationText}"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Header="Total" Binding="{Binding Total}" Width="70"
+                                                        IsReadOnly="True">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="HorizontalAlignment" Value="Right"/>
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Header="Pass" Binding="{Binding Pass}" Width="70"
+                                                        IsReadOnly="True">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="HorizontalAlignment" Value="Right"/>
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Setter Property="Foreground" Value="{StaticResource BrushSuccess}"/>
+                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Header="Fail" Binding="{Binding Fail}" Width="70"
+                                                        IsReadOnly="True">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="HorizontalAlignment" Value="Right"/>
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Setter Property="Foreground" Value="{StaticResource BrushDanger}"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Header="Pass Rate" Binding="{Binding PassRateText}" Width="100"
+                                                        IsReadOnly="True">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="HorizontalAlignment" Value="Right"/>
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Setter Property="Foreground" Value="{StaticResource BrushTextAccent}"/>
+                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Header="Avg ms" Binding="{Binding AvgMs, StringFormat=F1}" Width="90"
+                                                        IsReadOnly="True">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="HorizontalAlignment" Value="Right"/>
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- Bottom -->
+            <Border Grid.Row="2" Background="{StaticResource BrushBgTitleBar}"
+                    BorderBrush="{StaticResource BrushBorderSubtle}"
+                    BorderThickness="0,1,0,0" Padding="22,12">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="{Binding StatusMessage}"
+                               Foreground="{StaticResource BrushTextSecondary}"
+                               FontSize="11" VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <Button Content="Cancel" Command="{Binding CancelCommand}"
+                                Style="{StaticResource ModernDangerButton}" Margin="0,0,8,0"/>
+                        <Button Content="Apply Best" Command="{Binding ApplyBestCommand}"
+                                Style="{StaticResource ModernSuccessButton}" Margin="0,0,8,0"
+                                ToolTip="최고 조합의 모든 파라미터를 도구에 적용 + Recipe 저장"/>
+                        <Button Content="Run Sweep" Command="{Binding RunCommand}"
+                                Style="{StaticResource ModernPrimaryButton}"
+                                Padding="22,7" Margin="0,0,8,0"/>
+                        <Button Content="Close"
+                                Command="{x:Static SystemCommands.CloseWindowCommand}"
+                                Style="{StaticResource ModernGhostButton}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

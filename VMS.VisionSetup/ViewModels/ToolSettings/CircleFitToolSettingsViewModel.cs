@@ -26,6 +26,29 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         }
 
         public Point2d CenterPoint { get => TypedTool.CenterPoint; set => TypedTool.CenterPoint = value; }
+
+        // Point2d는 struct라 {Binding CenterPoint.X} 서브프로퍼티 바인딩이 안정적이지 못함.
+        // X/Y를 명시적 double 프로퍼티로 노출하고 CenterPoint 변경 시 함께 notify.
+        public double CenterX
+        {
+            get => TypedTool.CenterPoint.X;
+            set { TypedTool.CenterPoint = new Point2d(value, TypedTool.CenterPoint.Y); }
+        }
+        public double CenterY
+        {
+            get => TypedTool.CenterPoint.Y;
+            set { TypedTool.CenterPoint = new Point2d(TypedTool.CenterPoint.X, value); }
+        }
+
+        protected override void OnToolPropertyChanged(string? propertyName)
+        {
+            base.OnToolPropertyChanged(propertyName);
+            if (propertyName == nameof(CircleFitTool.CenterPoint))
+            {
+                OnPropertyChanged(nameof(CenterX));
+                OnPropertyChanged(nameof(CenterY));
+            }
+        }
         public double ExpectedRadius { get => TypedTool.ExpectedRadius; set => TypedTool.ExpectedRadius = value; }
         public int NumCalipers { get => TypedTool.NumCalipers; set => TypedTool.NumCalipers = value; }
         public double SearchLength { get => TypedTool.SearchLength; set => TypedTool.SearchLength = value; }

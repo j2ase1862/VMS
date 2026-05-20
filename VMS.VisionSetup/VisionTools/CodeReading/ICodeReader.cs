@@ -24,6 +24,13 @@ namespace VMS.VisionSetup.VisionTools.CodeReading
 
         /// <summary>코드 꼭짓점 좌표 (4점)</summary>
         public Point2f[] Points { get; set; } = System.Array.Empty<Point2f>();
+
+        /// <summary>
+        /// (선택) 검출 영역의 축정렬 bbox — Localization 경로에서 후보 영역을 그대로 채워
+        /// quality grader가 ZXing ResultPoints 대신 신뢰 가능한 corner 재추정에 사용.
+        /// 직접 디코딩 경로에서는 null.
+        /// </summary>
+        public Rect? BoundingBox { get; set; }
     }
 
     /// <summary>

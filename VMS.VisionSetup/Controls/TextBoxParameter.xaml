@@ -16,7 +16,7 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <TextBox Text="{Binding Value, ElementName=Root, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+            <TextBox Text="{Binding Value, ElementName=Root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      Background="White" Foreground="Black" BorderBrush="#AAAAAA"
                      Padding="5,3" Margin="0,0,0,5"/>
             <Button x:Name="BrowseBtn" Grid.Column="1" Content="📂" FontSize="13"
@@ -30,6 +30,9 @@
                         <Setter Property="Visibility" Value="Collapsed"/>
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding BrowseFilter, ElementName=Root, Converter={x:Static controls:NotNullToBoolConverter.Instance}}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding BrowseFolder, ElementName=Root}" Value="True">
                                 <Setter Property="Visibility" Value="Visible"/>
                             </DataTrigger>
                         </Style.Triggers>

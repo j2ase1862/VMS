@@ -431,13 +431,13 @@ namespace VMS.VisionSetup.Models
                 Parameters = new Dictionary<string, string>
                 {
                     // Engine
-                    ["OcrEngine"] = "OCR 엔진 선택:\n• Tesseract: Tesseract 5 LSTM 기반 (세밀한 설정 가능, tessdata 필요)\n• PPOcrOnnx: PP-OCRv4 ONNX Runtime 기반 (한글/산업용 텍스트에 강력, 자동 모델 다운로드)\n\nPP-OCR ONNX는 자체 전처리를 수행하므로 Preprocessing 설정이 적용되지 않습니다.",
+                    ["OcrEngine"] = "OCR 엔진 선택:\n• Tesseract: Tesseract 5 LSTM 기반 (tessdata 필요, 세밀한 전처리/PSM 제어)\n• PPOcrOnnx: PP-OCRv4 ONNX Runtime 기반 (모델 자동 다운로드, 자체 전처리, 산업용 우수)\n\n──────────────────\n엔진별 강약 (산업 라벨 기준)\n──────────────────\n\n[PPOcrOnnx 권장 — 대부분의 산업 케이스]\n• DB Detection 모델이 텍스트 영역을 먼저 자동으로 찾고 → CRNN 인식 → 노이즈/배경 면역\n• PP-OCRv4는 SynthText, ICDAR, MTWI 등 대규모 산업/다국어 데이터셋으로 학습\n• 회전, 원근, 저대비, 이질 폰트(스텐실, 도트 매트릭스, 임프린트)에 강건\n• 흰배경/검은배경 자동 처리 (Invert 불필요)\n• 자체 전처리 수행 — Auto Preprocess/Invert/Denoise/Target Height 설정 무시\n• Char Whitelist + Output Format으로 산업용 검증 완성\n\n[Tesseract — 제한적 사용]\n• 학습 분포: 주로 문서 스캔 (책, 신문, 폼). 산업 폰트는 학습 분포 밖\n• Detection 단계 없음 — 입력 전체를 텍스트로 가정. ROI에 테두리/잡음 섞이면 line finder 실패\n• 검은 글자 + 흰 배경 + 30~40px 이상 글자 높이가 사실상 전제\n• Otsu 이진화가 ideal ratio(20%)에 못 맞추는 백/흑 반전 라벨에 약함\n• 유리한 케이스: 깨끗한 영문 문서 스캔, Times/Arial/Courier 단순 폰트, 단일 단어 (PSM=SingleWord) + 매우 tight한 ROI\n• 한글/일본어 일부 케이스에서 PP-OCR 사전 부족 시 대안\n\n[더 강력한 검증이 필요할 때]\n• OCV (Optical Character Verification) 도구 — 학습된 폰트 라이브러리로 문자 단위 NCC 매칭. 정해진 폰트의 PASS/FAIL 검증에 최적.",
 
                     // Detection
                     ["Language"] = "OCR 인식 언어:\n• English: 영어 (eng)\n• Korean: 한국어 (kor)\n• Japanese: 일본어 (jpn)\n• ChineseSimplified: 중국어 간체 (chi_sim)\n• EnglishKorean: 영어+한국어 동시 인식 (eng+kor)",
                     ["PageSegMode"] = "페이지 분할 모드 (텍스트 레이아웃 해석 방법):\n• Auto: 자동 감지\n• SingleBlock: 단일 텍스트 블록 (기본 문서)\n• SingleLine: 단일 라인 (시리얼 번호 등)\n• SingleWord: 단일 단어\n• SingleChar: 단일 문자\n• VerticalBlock: 세로 텍스트",
                     ["EngineMode"] = "OCR 엔진 모드:\n• LstmOnly: LSTM 신경망만 사용 (기본, 정확도 우선)\n• Combined: Legacy + LSTM 결합 (호환성)\n• LegacyOnly: 기존 Tesseract 엔진 (속도 우선)",
-                    ["CharacterWhitelist"] = "인식 허용 문자 제한. 빈 문자열이면 모든 문자를 인식합니다.\n\n예시:\n• \"0123456789\": 숫자만 인식\n• \"0123456789ABCDEF\": 16진수 문자만\n• \"0123456789-/\": 날짜 형식 (2024-01/15)",
+                    ["CharacterWhitelist"] = "인식 허용 문자 제한. 빈 문자열이면 모든 문자를 인식합니다.\nTesseract와 PP-OCR 모두 지원.\n\n예시:\n• \"0123456789\": 숫자만 인식\n• \"0123456789ABCDEF\": 16진수 문자만\n• \"0123456789-/\": 날짜 형식 (2024-01/15)\n\n주요 효과:\n• '/' ↔ '7', 'O' ↔ '0', 'l' ↔ '1' 같은 시각적 혼동 차단\n• 산업용 시리얼/LOT/날짜에 strongly 추천",
                     ["ConfidenceThreshold"] = "최소 신뢰도 임계값 (0~100%).\n이 값 미만의 인식 결과는 무시됩니다.\n• 기본값: 40%\n• 높일수록 오인식 감소, 미인식 증가",
 
                     // Preprocessing
@@ -446,6 +446,10 @@ namespace VMS.VisionSetup.Models
                     ["TargetTextHeight"] = "목표 문자 높이(px). 이미지의 문자가 이 높이보다 작으면 자동으로 확대합니다.\nTesseract는 30~40px 이상의 문자 높이에서 최적 성능을 발휘합니다.\n• 기본값: 40\n• 0: 스케일업 비활성화\n• 최대 4배까지 확대",
                     ["DenoiseLevel"] = "노이즈 제거 강도. 이진화 전에 GaussianBlur를 적용하여 픽셀 노이즈를 제거합니다.\n문자 외곽선이 부드러워져 인식률이 향상됩니다.\n• 0: 없음\n• 1: 약 (3x3 커널, 기본값)\n• 2: 중 (5x5 커널)\n• 3: 강 (7x7 커널)\n\n강한 노이즈 제거는 얇은 문자를 훼손할 수 있으므로 주의하세요.",
                     ["DotMatrixMode"] = "도트 매트릭스 모드. 도트 프린트로 인쇄된 끊어진 문자를 연결합니다.\n• 활성화: 팽창(Dilation)으로 인접 도트를 연결 → 오프닝으로 잔여 노이즈 제거\n• 유통기한 도트 마킹, 잉크젯 인쇄 등에 효과적입니다.\n• 일반 인쇄 문자에는 비활성화하세요 (문자가 두꺼워져 인식률 저하 가능).",
+
+                    // Output Format
+                    ["FormatPreset"] = "결과 형식 프리셋. 산업 라벨에서 자주 쓰는 날짜/시간/LOT 패턴을 자동 적용해 모델 오인식 (예: '/' → '7')을 위치 기반으로 강제 보정합니다.\n\n토큰 규칙:\n• D/M/Y/H/S/f = 숫자 자리 (해당 자리가 숫자가 아니면 매칭 실패)\n• L = 영문자, A = 영숫자, ? = 임의\n• 그 외 모든 char (/, -, :, ., 공백 등) = 리터럴. OCR이 무엇을 봤든 그 자리에 강제 치환\n\n예: DD/MM/YYYY 프리셋 + OCR 결과 '31703/2099' → 위치 2의 '7'이 '/'로 강제 치환 → '31/03/2099'.\n\n매칭 실패 시 원본 텍스트 그대로 반환 (RawText 키에도 노출). 자유 텍스트는 'None' 선택 또는 'Custom' + 빈 입력.",
+                    ["CustomOutputFormat"] = "Custom 선택 시 직접 입력하는 패턴 목록 (한 줄에 하나).\n여러 패턴이 있으면 길이 긴 순으로 시도되어 첫 매칭 성공 패턴이 채택됩니다.\n\n예시:\nDD/MM/YYYY HH:MM:SS.fff\nDD/MM/YYYY HH:MM:SS\nDD/MM/YYYY HH:MM\nDD/MM/YYYY",
 
                     // Verification
                     ["EnableVerification"] = "텍스트 검증 활성화. 인식된 텍스트를 ExpectedText와 비교하여 PASS/FAIL 판정합니다.\n비활성화 시 문자가 인식되고 신뢰도가 충분하면 항상 Success입니다.",
@@ -545,14 +549,83 @@ namespace VMS.VisionSetup.Models
                     ["CodeReaderMode"] = "코드 인식 모드:\n• Auto: 모든 코드 타입 자동 인식 (느리지만 범용)\n• QRCode: QR 코드 전용 (빠름)\n• Barcode1D: 1D 바코드 전용 (CODE_128, CODE_39, EAN_13 등)\n• DataMatrix: DataMatrix 전용 (PCB 마킹에 주로 사용)\n• PDF417: PDF417 전용",
                     ["MaxCodeCount"] = "최대 인식 코드 수 (1~50).\n하나의 이미지에서 여러 코드를 동시에 인식할 때 결과 수를 제한합니다.\n• 기본값: 10",
                     ["TryHarder"] = "정밀 검출 모드. 활성화하면 더 많은 시간을 들여 코드를 찾습니다.\n• 활성화 (권장): 인식률 향상, 속도 약간 저하\n• 비활성화: 빠르지만 흐릿하거나 작은 코드를 놓칠 수 있음",
+                    ["UseLocalization"] = "DataMatrix 후보 영역 사전 탐색 (DataMatrix/Auto 모드에서만 동작).\nROI가 넓고 텍스트/잡음이 섞여 있어 ZXing 직접 디코딩이 실패하는 경우, OpenCV 휴리스틱(adaptive threshold + morph close + contour 정사각/고밀도 필터)으로 DM 후보 bbox를 먼저 찾아 영역별로 디코딩합니다.\n• DataMatrix 위치가 이미지 내에서 이동하고 주변에 다른 텍스트가 있을 때 활성화 권장\n• 깨끗한 단일 코드 이미지는 추가 시간 미미 (후보 0~1개)\n• QR/1D 바코드에는 영향 없음 (DM/Auto 모드 한정)",
 
                     // Verification
                     ["EnableVerification"] = "텍스트 검증 활성화. 활성화하면 디코딩된 텍스트를 ExpectedText와 비교하여 PASS/FAIL을 판정합니다.\n비활성화 시 코드가 1개 이상 검출되면 항상 Success입니다.",
                     ["ExpectedText"] = "기대 텍스트. 디코딩된 코드 중 이 텍스트와 일치하는 코드가 있으면 PASS.\n• UseRegexMatch 비활성화: 정확히 일치해야 합격\n• UseRegexMatch 활성화: 정규식 패턴으로 매칭\n\n예시: \"ABC-12345\", \"^LOT-\\d{6}$\"",
                     ["UseRegexMatch"] = "정규식 매칭 사용 여부.\n• 비활성화: 디코딩 텍스트 == ExpectedText 정확히 일치\n• 활성화: Regex.IsMatch(디코딩 텍스트, ExpectedText)로 패턴 매칭\n\n정규식 예시:\n• ^SN\\d{8}$: \"SN\" + 숫자 8자리\n• ^(OK|PASS): \"OK\" 또는 \"PASS\"로 시작",
 
+                    // GS1
+                    ["ParseGs1"] = "GS1 AI(Application Identifier) 파싱.\nFNC1 구분자가 포함되거나 GS1 심볼 식별자(]C1, ]d2 등)가 있는 데이터를 (01)GTIN, (10)Batch, (17)Expiry, (21)Serial 등으로 분리합니다.\n\n결과 키:\n• Gs1Formatted: \"(01)08801234567890 (17)260101 (10)LOT123\" 형식\n• Gs1ElementCount: 추출된 AI 개수\n• Gs1_01, Gs1_17, Gs1_10 등: 각 AI 값 (PLC 매핑 가능)",
+
+                    // Quality Grading
+                    ["EnableQualityGrading"] = "ISO/IEC 15415 간소화 품질 등급 계산 (DataMatrix 한정).\n활성화 시 다음 결과 키가 노출됩니다:\n• OverallGrade (A~F): 최종 등급\n• SymbolContrast: 명/암 모듈 대비 (0~1)\n• Modulation: 모듈 균일도\n• FixedPatternDamage: L-finder/클럭 트랙 무결성\n• AxialNonuniformity: 가로/세로 모듈 폭 차이\n• PixelsPerModule: 모듈당 픽셀 수\n• SymbolSize: 추정 심볼 크기 (n×n 모듈)",
+                    ["MinPassGrade"] = "품질 등급 활성화 시 PASS 판정의 최소 OverallGrade.\n계산된 등급이 이 값보다 낮으면 Success=false로 처리됩니다.\n• A (4.0): 매우 엄격, 신규 마킹 검증용\n• C (2.0, 기본): 산업 표준 최저 허용\n• F: 등급 게이팅 비활성화 (디코딩만 성공하면 PASS)",
+
                     // Display
-                    ["DrawOverlay"] = "검출 결과 오버레이 표시. 활성화하면 검출된 코드 위치에 폴리곤과 디코딩 텍스트를 그립니다.\n• 녹색: 인식 성공 (PASS)\n• 빨간색: 인식 실패 (FAIL)"
+                    ["DrawOverlay"] = "검출 결과 오버레이 표시. 활성화하면 검출된 코드 위치에 폴리곤과 디코딩 텍스트를 그립니다.\n• 녹색: 인식 성공 (PASS)\n• 빨간색: 인식 실패 (FAIL)\n품질 등급 활성화 시 상단에 SC/MOD/FPD/AN/PPM 요약 배지, GS1 활성화 시 파싱된 AI 문자열 배지가 추가됩니다."
+                }
+            },
+
+            // Image Enhance
+            ["ImageEnhanceTool"] = new ToolHelp
+            {
+                Name = "Image Enhance (선명도 강화)",
+                Description = "Sharpen 또는 Unsharp Mask로 이미지 선명도를 강화합니다. OCR/CodeReader 전단 전처리에 유용.",
+                Usage = "PCB 마킹, 라벨 인쇄 등 미세한 글자/패턴을 더 선명하게.\n• Sharpen: 단순 Laplacian 3x3 — 빠르지만 노이즈 동시 증폭\n• Unsharp Mask (산업 표준): Gaussian blur 후 원본−blur 차이를 amount로 강조. Threshold로 잡음 영역은 sharp 회피.",
+                CognexEquivalent = "CogIPOneImageTool — Sharpen / Unsharp 연산자",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["Mode"] = "Sharpen: 3x3 라플라시안 커널 컨볼루션 (단순/빠름)\nUnsharpMask: 원본 + amount×(원본 − Gaussian blur). 더 자연스럽고 제어 가능 — 권장.",
+                    ["Amount"] = "강화 강도. 0.5~2.0이 일반적. 너무 크면 halo/ringing 아티팩트 발생.",
+                    ["BlurKernelSize"] = "(Unsharp Mask 전용) Gaussian 커널 크기. 홀수 (3, 5, 7, 11...). 클수록 큰 구조물 강조, 작은 디테일 보존.",
+                    ["Threshold"] = "(Unsharp Mask 전용) 원본과 blur의 차이가 이 값 미만이면 변경 안 함. 잡음 영역 sharpening 회피.\n• 0: 모든 픽셀 강화 (잡음도 증폭)\n• 5~15: 잡음 억제 + 글자 강화 균형\n• 30+: 강한 엣지만 강화"
+                }
+            },
+
+            // Polar Unwrap
+            ["PolarUnwrapTool"] = new ToolHelp
+            {
+                Name = "Polar Unwrap (원형 → 직사각형)",
+                Description = "원형/원통 표면의 라벨을 극좌표 변환으로 직사각형으로 펼칩니다.\n캡/약병/파이프 라벨 OCR이나 코드 인식의 표준 전처리.",
+                Usage = "Center는 수동 입력 또는 CircleFit Tool 결과를 Coordinates 연결로 자동 주입.\n1) 라벨 영역의 내반경(병목)과 외반경(병몸)을 추정해서 InnerRadius/OuterRadius 입력\n2) 시작 각도 + 방향 설정 (라벨 텍스트가 좌→우 정렬되도록)\n3) 출력 너비/높이는 0이면 자동 (둘레 × 반경 차)\n4) 출력을 OCRTool/CodeReaderTool에 연결",
+                CognexEquivalent = "CogPolarUnwrapTool",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["CenterX"] = "원 중심 X 좌표 (픽셀). CircleFit 도구의 CenterX를 Coordinates 연결로 자동 주입 가능.",
+                    ["CenterY"] = "원 중심 Y 좌표 (픽셀).",
+                    ["InnerRadius"] = "내반경 (픽셀). 라벨이 시작되는 안쪽 경계. 0이면 중심부터 펼침.",
+                    ["OuterRadius"] = "외반경 (픽셀). 라벨 바깥 경계. InnerRadius보다 커야 함.",
+                    ["StartAngleDeg"] = "펼침 시작 각도(°). 0 = 오른쪽(3시), 90 = 위, 180 = 왼쪽, 270 = 아래.\n출력 이미지의 좌측 첫 컬럼이 이 각도에서 시작.",
+                    ["Direction"] = "회전 방향:\n• Clockwise: 시계방향 — 출력 가로축이 시계방향으로 진행\n• Counterclockwise: 반시계방향 (기본, Cognex 동일)",
+                    ["OutputWidth"] = "출력 너비 (px). 0이면 자동: 2π × OuterRadius (둘레 근사).\n후속 도구의 해상도를 고정하려면 명시.",
+                    ["OutputHeight"] = "출력 높이 (px). 0이면 자동: OuterRadius − InnerRadius."
+                }
+            },
+
+            // OCV
+            ["OCVTool"] = new ToolHelp
+            {
+                Name = "OCV (문자 검증)",
+                Description = "학습된 폰트 라이브러리와의 NCC 매칭으로 각 문자가 학습 폰트와 일치하는지 검증합니다.\nOCR이 '읽기'라면 OCV는 '대조 검증' — 인쇄 결함(찍힘, 번짐, 누락)을 문자 단위로 검출합니다.\n동일 문자에 여러 폰트/스타일 템플릿을 등록 가능 (매칭은 최고 점수 사용).",
+                Usage = "PCB 마킹 PASS/FAIL 검증, 정해진 폰트의 시리얼 번호 OK 판정, 도트 마킹 일관성 검사에 사용됩니다.\n1) ROI를 학습용 텍스트에 맞추고 Known String 입력 후 Train 클릭.\n2) 분할 개수와 Known String 길이가 일치해야 학습 성공.\n3) 학습 후 새 이미지에서 자동으로 분할/매칭하여 GoodChar/BadChar 카운트.",
+                CognexEquivalent = "CogOCRMaxTool (Verify Mode), CogOCRMaxFontTool",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["KnownString"] = "Train 시 사용할 정답 문자열. Training Region 내부 분할 segments와 1:1 대응됩니다.\n예: \"ABC123\" → 6개 문자로 분할되어야 학습 성공.\n분할 개수가 다르면 분할 파라미터(Min/Max Height/Width) 조정 또는 Training Region 재설정.",
+                    ["UseSearchRegion"] = "검색 영역 사용 여부. Execute 단계에서 문자를 검색할 영역을 Training Region과 분리해서 지정.\n• 비활성: 전체 이미지에서 검색\n• 활성: SearchRegion(X/Y/W/H)으로 지정한 사각형만 검색\n\n학습은 정해진 위치(라벨 인쇄 표본)에서 하고, 검증은 매번 다른 위치의 라벨(컨베이어 위 등)에서 하는 워크플로우에 필수. FeatureMatchTool로 fixture 보정 후 SearchRegion을 위치 보정해도 좋음.",
+                    ["SearchRegionX"] = "검색 영역 좌상단 X 좌표 (픽셀).",
+                    ["SearchRegionY"] = "검색 영역 좌상단 Y 좌표 (픽셀).",
+                    ["SearchRegionWidth"] = "검색 영역 너비 (픽셀).",
+                    ["SearchRegionHeight"] = "검색 영역 높이 (픽셀).",
+                    ["InvertImage"] = "이진화 후 흰=배경/검=문자인 경우 활성화.\n기본은 흰 배경 + 검은 문자. 통계로 자동 판정하므로 대부분 비활성화로 동작합니다.",
+                    ["MinCharHeight"] = "분할된 컴포넌트 최소 높이(px). 이 미만은 노이즈로 간주하여 무시.",
+                    ["MaxCharHeight"] = "분할된 컴포넌트 최대 높이(px). 이를 초과하면 배경 영역으로 간주하여 무시.",
+                    ["MinCharWidth"] = "분할된 컴포넌트 최소 너비(px). 점선/얇은 줄 노이즈 제거용.",
+                    ["MatchThreshold"] = "NCC 매칭 임계값 (0~1). 각 문자의 최고 매칭 점수가 이 미만이면 BadChar로 판정.\n• 0.65 (기본): 산업 인쇄 문자 기본값\n• 0.80+: 엄격한 일치 요구 (동일 폰트만 통과)\n• 0.50 이하: 매우 관대 (오인식 위험)",
+                    ["ExpectedText"] = "(선택) 예상 텍스트. 비어있지 않으면 위치별 char를 비교하여 추가 검증.\n분할 개수와 길이가 다르면 LengthMatch=false로 FAIL 처리.\n비어있으면 NCC 점수만으로 판정.",
+                    ["DrawOverlay"] = "분할 박스 + 인식 문자 + 점수 오버레이.\n• 녹색: 매칭 PASS\n• 빨간색: BadChar (점수 < Threshold 또는 ExpectedText 불일치)"
                 }
             }
         };

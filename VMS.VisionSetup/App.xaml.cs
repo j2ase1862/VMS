@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using System.Windows;
+using System.Windows.Input;
+using System.Windows.Shell;
 using VMS.Camera.Interfaces;
 using VMS.Camera.Models;
 using VMS.Camera.Services;
@@ -25,6 +27,9 @@ namespace VMS.VisionSetup
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+
+            // ── Chromeless 윈도우용 SystemCommands 클래스 와이드 바인딩 ──
+            RegisterChromelessWindowCommands();
 
             // ── ONNX Execution Provider 설정 로드 ──
             LoadAIConfig();
@@ -154,6 +159,34 @@ namespace VMS.VisionSetup
             var mainView = new MainView();
             mainView.DataContext = viewModel;
             mainView.Show();
+        }
+
+        /// <summary>
+        /// Chromeless Window가 SystemCommands.{Minimize,Maximize,Restore,Close}WindowCommand 를
+        /// 그대로 사용할 수 있도록, Window 타입에 클래스 와이드 커맨드 바인딩을 한 번 등록한다.
+        /// 윈도우별 code-behind 핸들러가 필요 없어진다.
+        /// </summary>
+        private static void RegisterChromelessWindowCommands()
+        {
+            CommandManager.RegisterClassCommandBinding(typeof(Window),
+                new CommandBinding(SystemCommands.MinimizeWindowCommand,
+                    (s, e) => { if (s is Window w) SystemCommands.MinimizeWindow(w); }));
+            CommandManager.RegisterClassCommandBinding(typeof(Window),
+                new CommandBinding(SystemCommands.MaximizeWindowCommand,
+                    (s, e) =>
+                    {
+                        if (s is Window w)
+                        {
+                            if (w.WindowState == WindowState.Maximized) SystemCommands.RestoreWindow(w);
+                            else SystemCommands.MaximizeWindow(w);
+                        }
+                    }));
+            CommandManager.RegisterClassCommandBinding(typeof(Window),
+                new CommandBinding(SystemCommands.RestoreWindowCommand,
+                    (s, e) => { if (s is Window w) SystemCommands.RestoreWindow(w); }));
+            CommandManager.RegisterClassCommandBinding(typeof(Window),
+                new CommandBinding(SystemCommands.CloseWindowCommand,
+                    (s, e) => { if (s is Window w) SystemCommands.CloseWindow(w); }));
         }
 
         /// <summary>

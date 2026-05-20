@@ -1,0 +1,32 @@
+<UserControl x:Class="VMS.VisionSetup.Views.ToolSettings.Tools.ImageEnhanceToolSettings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls"
+             xmlns:conv="clr-namespace:VMS.VisionSetup.Converters"
+             xmlns:ip="clr-namespace:VMS.VisionSetup.VisionTools.ImageProcessing">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
+    <StackPanel>
+        <controls:EnumComboBoxParameter Label="Mode"
+            ItemsSource="{conv:EnumValues {x:Type ip:ImageEnhanceMode}}"
+            SelectedValue="{Binding Mode}"
+            ToolType="ImageEnhanceTool" ParameterName="Mode"/>
+
+        <controls:SliderParameter Label="Amount"
+            Value="{Binding Amount}" Minimum="0.1" Maximum="3.0"
+            TickFrequency="0.1" ValueFormat="F2"
+            ToolType="ImageEnhanceTool" ParameterName="Amount"/>
+
+        <StackPanel Visibility="{Binding IsUnsharpMask, Converter={StaticResource BoolToVis}}">
+            <controls:SliderParameter Label="Blur Kernel"
+                Value="{Binding BlurKernelSize}" Minimum="3" Maximum="31"
+                TickFrequency="2" ValueFormat="F0"
+                ToolType="ImageEnhanceTool" ParameterName="BlurKernelSize"/>
+            <controls:SliderParameter Label="Threshold (0=off)"
+                Value="{Binding Threshold}" Minimum="0" Maximum="64"
+                TickFrequency="2" ValueFormat="F0"
+                ToolType="ImageEnhanceTool" ParameterName="Threshold"/>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

@@ -159,6 +159,11 @@ namespace VMS.VisionSetup.Models
         public double FixtureRefY { get; set; }      // 최초 실행 시 FeatureMatch foundY
         public double FixtureRefAngle { get; set; }  // 최초 실행 시 FeatureMatch angle
 
+        // SearchRegion(Execute용)도 동일한 Fixture 변환을 받기 위한 base.
+        // ISearchRegionTool 구현 도구가 사용. ROI(Training Region)와 별개로 관리.
+        public Rect FixtureBaseSearchRegion { get; set; }
+        public bool HasFixtureBaseSearchRegion { get; set; }
+
         // 마지막 실행 결과
         private VisionResult? _lastResult;
         public VisionResult? LastResult
@@ -440,6 +445,16 @@ namespace VMS.VisionSetup.Models
                 default: value = 0; return false;
             }
         }
+    }
+
+    /// <summary>
+    /// Execute용 Search Region을 별도로 갖는 도구. Training Region(UseROI/ROI)와 분리되어
+    /// FeatureMatchTool 등의 fixture 변환을 받을 때 SearchRegion도 함께 시프트되도록 함.
+    /// </summary>
+    public interface ISearchRegionTool
+    {
+        bool UseSearchRegion { get; set; }
+        Rect SearchRegion { get; set; }
     }
 
     /// <summary>

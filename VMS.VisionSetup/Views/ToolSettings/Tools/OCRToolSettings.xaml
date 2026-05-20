@@ -6,6 +6,7 @@
              xmlns:ocr="clr-namespace:VMS.VisionSetup.VisionTools.Identification">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
+        <conv:EnumDescriptionConverter x:Key="EnumDesc"/>
     </UserControl.Resources>
     <StackPanel>
         <!-- Engine Selection -->
@@ -48,7 +49,6 @@
 
                 <controls:TextBoxParameter Label="Char Whitelist"
                     Value="{Binding CharacterWhitelist}"
-                    Visibility="{Binding IsTesseract, Converter={StaticResource BoolToVisConverter}}"
                     ToolType="OCRTool" ParameterName="CharacterWhitelist"/>
 
                 <!-- PP-OCR ONNX info -->
@@ -65,16 +65,19 @@
                 <!-- Custom Model Paths (PP-OCR ONNX) -->
                 <controls:TextBoxParameter Label="Custom Det Model"
                     Value="{Binding CustomDetModelPath}"
+                    BrowseFilter="ONNX Models (*.onnx)|*.onnx|All Files (*.*)|*.*"
                     Visibility="{Binding IsPPOcrOnnx, Converter={StaticResource BoolToVisConverter}}"
                     ToolType="OCRTool" ParameterName="CustomDetModelPath"/>
 
                 <controls:TextBoxParameter Label="Custom Rec Model"
                     Value="{Binding CustomRecModelPath}"
+                    BrowseFilter="ONNX Models (*.onnx)|*.onnx|All Files (*.*)|*.*"
                     Visibility="{Binding IsPPOcrOnnx, Converter={StaticResource BoolToVisConverter}}"
                     ToolType="OCRTool" ParameterName="CustomRecModelPath"/>
 
                 <controls:TextBoxParameter Label="Custom Dict File"
                     Value="{Binding CustomDictPath}"
+                    BrowseFilter="Text Files (*.txt)|*.txt|All Files (*.*)|*.*"
                     Visibility="{Binding IsPPOcrOnnx, Converter={StaticResource BoolToVisConverter}}"
                     ToolType="OCRTool" ParameterName="CustomDictPath"/>
 
@@ -121,6 +124,52 @@
             </StackPanel>
         </Expander>
 
+        <!-- Output Format -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Output Format" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="0,5,0,0">
+                <StackPanel Orientation="Horizontal" Margin="0,5,0,2">
+                    <TextBlock Text="Format Preset" Foreground="LightGray" FontSize="12"
+                               VerticalAlignment="Center"/>
+                    <controls:HelpIcon ToolType="OCRTool" ParameterName="FormatPreset"
+                                       Margin="5,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+                <ComboBox ItemsSource="{conv:EnumValues {x:Type ocr:OcrOutputFormatPreset}}"
+                          SelectedItem="{Binding FormatPreset}"
+                          Background="White" Foreground="Black" BorderBrush="#AAAAAA"
+                          Margin="0,0,0,5">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Converter={StaticResource EnumDesc}}"/>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <!-- 직접 입력 선택 시만 노출. 멀티라인 — 여러 패턴 줄바꿈 구분 -->
+                <StackPanel Visibility="{Binding IsCustomFormat, Converter={StaticResource BoolToVisConverter}}">
+                    <TextBlock Text="Custom Patterns (한 줄에 하나)"
+                               Foreground="LightGray" FontSize="12" Margin="0,6,0,2"/>
+                    <TextBox Text="{Binding CustomOutputFormat, UpdateSourceTrigger=PropertyChanged}"
+                             AcceptsReturn="True" TextWrapping="NoWrap"
+                             VerticalScrollBarVisibility="Auto"
+                             MinHeight="60" MaxHeight="120"
+                             FontFamily="Consolas"
+                             Background="White" Foreground="Black"
+                             BorderBrush="#AAAAAA" Padding="5,3" Margin="0,0,0,5"/>
+                </StackPanel>
+
+                <TextBlock Foreground="#999999" FontSize="11" Margin="0,2,0,2">
+                    <Run Text="적용 패턴: "/>
+                    <Run Text="{Binding EffectivePattern, Mode=OneWay}"
+                         Foreground="#00BFFF" FontFamily="Consolas"/>
+                </TextBlock>
+                <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,0"
+                           Text="토큰: D/M/Y/H/S/f=숫자, L=영문자, A=영숫자, ?=임의. 그 외 모든 char(/, -, :, . 등)는 리터럴로 그 자리에 강제 치환됩니다. PP-OCR의 '/' ↔ '7' 오인식 보정 등에 사용."/>
+            </StackPanel>
+        </Expander>
+
         <!-- Verification Settings -->
         <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
             <Expander.Header>
@@ -162,6 +211,7 @@
             <StackPanel Margin="0,5,0,0">
                 <controls:TextBoxParameter Label="Tessdata Path"
                     Value="{Binding TessdataPath}"
+                    BrowseFolder="True"
                     ToolType="OCRTool" ParameterName="TessdataPath"/>
             </StackPanel>
         </Expander>

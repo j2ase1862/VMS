@@ -316,6 +316,24 @@
                             </MenuItem.Icon>
                         </MenuItem>
 
+                        <!-- Batch Test Runner -->
+                        <MenuItem Header="_Batch Test..." Click="BatchTest_Click">
+                            <MenuItem.Icon>
+                                <Path Data="M2,2 L7,2 L7,7 L2,7 Z M9,2 L14,2 L14,7 L9,7 Z M2,9 L7,9 L7,14 L2,14 Z M9,9 L14,9 L14,14 L9,14 Z M3,4 L5,6 L6,3 M10,4 L12,6 L13,3 M3,11 L5,13 L6,10 M10,11 L12,13 L13,10"
+                                      Stroke="#4CAF50" StrokeThickness="1.2" Fill="Transparent"
+                                      Width="13" Height="13" Stretch="Uniform"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+
+                        <!-- Synthetic OCR Data Generator -->
+                        <MenuItem Header="OCR _Synth Data..." Click="SynthData_Click">
+                            <MenuItem.Icon>
+                                <Path Data="M2,4 L18,4 L18,8 L2,8 Z M2,10 L18,10 L18,14 L2,14 Z M4,16 L10,16 L10,18 L4,18 Z"
+                                      Stroke="#9C27B0" StrokeThickness="1.1" Fill="Transparent"
+                                      Width="14" Height="14" Stretch="Uniform"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+
                         <!-- Inference Engine Settings -->
                         <MenuItem Header="Inference _Settings..." Click="OnnxSettings_Click">
                             <MenuItem.Icon>
@@ -1159,6 +1177,14 @@
                                             Padding="8,2" Margin="10,0,0,0"
                                             FontSize="11" Cursor="Hand"
                                             Visibility="{Binding IsOriginalImageMode, Converter={StaticResource InverseBoolToVisibility}}"/>
+
+                                    <Button Content="💾 Save Image"
+                                            Command="{Binding SaveDisplayedImageCommand}"
+                                            Background="#0E639C" Foreground="White"
+                                            BorderBrush="#1177BB" BorderThickness="1"
+                                            Padding="8,2" Margin="6,0,0,0"
+                                            FontSize="11" Cursor="Hand"
+                                            ToolTip="현재 표시 중인 이미지(Original/Result)를 파일로 저장 (PNG/JPG/BMP/TIFF)"/>
                                 </StackPanel>
 
                                 <!-- Row 1: ImageCanvas -->

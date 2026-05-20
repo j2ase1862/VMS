@@ -19,7 +19,8 @@ namespace VMS.VisionSetup.Models
         Circle,
         Ellipse,
         Polygon,
-        Line
+        Line,
+        Annulus           // 도넛형 (원환) — PolarUnwrap 등 캡/원통 라벨 용
     }
 
     /// <summary>
@@ -37,7 +38,10 @@ namespace VMS.VisionSetup.Models
         BottomLeft,
         Left,
         Center,       // 이동용
-        Rotate        // 회전용
+        Rotate,       // 회전용
+        // Annulus 전용 — 외륜/내륜의 4점 핸들
+        OuterTop, OuterRight, OuterBottom, OuterLeft,
+        InnerTop, InnerRight, InnerBottom, InnerLeft
     }
 
     /// <summary>
@@ -787,5 +791,107 @@ namespace VMS.VisionSetup.Models
                 StrokeThickness = this.StrokeThickness
             };
         }
+    }
+
+    /// <summary>
+    /// 도넛형 ROI (원환, Annulus).
+    /// Cognex CogPolarUnwrapTool과 동일 — 캡/원통 라벨 펼침에 사용.
+    /// 4점 외륜 핸들 + 4점 내륜 핸들로 두 반경을 독립 조정.
+    /// </summary>
+    public partial class AnnulusROI : ROIShape
+    {
+        [ObservableProperty] private double _centerX;
+        [ObservableProperty] private double _centerY;
+        [ObservableProperty] private double _innerRadius = 50;
+        [ObservableProperty] private double _outerRadius = 120;
+        /// <summary>호 시작 각도 (°). 0=우측 3시. 기본은 360° 전체 환.</summary>
+        [ObservableProperty] private double _startAngleDeg;
+        /// <summary>호 종료 각도 (°). 360이면 닫힌 환.</summary>
+        [ObservableProperty] private double _endAngleDeg = 360;
+
+        public override ROIShapeType ShapeType => ROIShapeType.Annulus;
+
+        public AnnulusROI() { }
+
+        public AnnulusROI(double centerX, double centerY, double innerRadius, double outerRadius)
+        {
+            CenterX = centerX;
+            CenterY = centerY;
+            InnerRadius = innerRadius;
+            OuterRadius = outerRadius;
+        }
+
+        public override CvRect GetBoundingRect() => new CvRect(
+            (int)(CenterX - OuterRadius), (int)(CenterY - OuterRadius),
+            (int)(OuterRadius * 2), (int)(OuterRadius * 2));
+
+        public override Mat CreateMask(int width, int height)
+        {
+            var mask = new Mat(height, width, MatType.CV_8UC1, Scalar.Black);
+            Cv2.Circle(mask, new CvPoint((int)CenterX, (int)CenterY), (int)OuterRadius, Scalar.White, -1);
+            if (InnerRadius > 0)
+                Cv2.Circle(mask, new CvPoint((int)CenterX, (int)CenterY), (int)InnerRadius, Scalar.Black, -1);
+            return mask;
+        }
+
+        public override bool ContainsPoint(WpfPoint point)
+        {
+            double dx = point.X - CenterX;
+            double dy = point.Y - CenterY;
+            double d = Math.Sqrt(dx * dx + dy * dy);
+            return d >= InnerRadius && d <= OuterRadius;
+        }
+
+        public override Dictionary<HandleType, WpfPoint> GetHandles() => new()
+        {
+            { HandleType.Center,       new WpfPoint(CenterX, CenterY) },
+            { HandleType.OuterTop,     new WpfPoint(CenterX, CenterY - OuterRadius) },
+            { HandleType.OuterRight,   new WpfPoint(CenterX + OuterRadius, CenterY) },
+            { HandleType.OuterBottom,  new WpfPoint(CenterX, CenterY + OuterRadius) },
+            { HandleType.OuterLeft,    new WpfPoint(CenterX - OuterRadius, CenterY) },
+            { HandleType.InnerTop,     new WpfPoint(CenterX, CenterY - InnerRadius) },
+            { HandleType.InnerRight,   new WpfPoint(CenterX + InnerRadius, CenterY) },
+            { HandleType.InnerBottom,  new WpfPoint(CenterX, CenterY + InnerRadius) },
+            { HandleType.InnerLeft,    new WpfPoint(CenterX - InnerRadius, CenterY) },
+        };
+
+        public override void Move(double deltaX, double deltaY)
+        {
+            CenterX += deltaX;
+            CenterY += deltaY;
+        }
+
+        public override void ResizeByHandle(HandleType handle, WpfPoint newPosition)
+        {
+            double dx = newPosition.X - CenterX;
+            double dy = newPosition.Y - CenterY;
+            double dist = Math.Sqrt(dx * dx + dy * dy);
+            switch (handle)
+            {
+                case HandleType.Center:
+                    CenterX = newPosition.X; CenterY = newPosition.Y; break;
+                case HandleType.OuterTop:
+                case HandleType.OuterRight:
+                case HandleType.OuterBottom:
+                case HandleType.OuterLeft:
+                    OuterRadius = Math.Max(InnerRadius + 4, dist);
+                    break;
+                case HandleType.InnerTop:
+                case HandleType.InnerRight:
+                case HandleType.InnerBottom:
+                case HandleType.InnerLeft:
+                    InnerRadius = Math.Clamp(dist, 0, OuterRadius - 4);
+                    break;
+            }
+        }
+
+        public override ROIShape Clone() => new AnnulusROI(CenterX, CenterY, InnerRadius, OuterRadius)
+        {
+            Name = this.Name,
+            Color = this.Color,
+            StrokeThickness = this.StrokeThickness,
+            StartAngleDeg = this.StartAngleDeg,
+            EndAngleDeg = this.EndAngleDeg
+        };
     }
 }

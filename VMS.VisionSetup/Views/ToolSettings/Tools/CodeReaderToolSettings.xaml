@@ -22,6 +22,9 @@
                 <controls:CheckBoxParameter Label="Try Harder"
                     IsChecked="{Binding TryHarder}"
                     ToolType="CodeReaderTool" ParameterName="TryHarder"/>
+                <controls:CheckBoxParameter Label="DM Candidate Localization"
+                    IsChecked="{Binding UseLocalization}"
+                    ToolType="CodeReaderTool" ParameterName="UseLocalization"/>
             </StackPanel>
         </Expander>
 
@@ -40,6 +43,34 @@
                 <controls:CheckBoxParameter Label="Use Regex Match"
                     IsChecked="{Binding UseRegexMatch}"
                     ToolType="CodeReaderTool" ParameterName="UseRegexMatch"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- GS1 Parsing -->
+        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="GS1" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:CheckBoxParameter Label="Parse GS1 AIs"
+                    IsChecked="{Binding ParseGs1}"
+                    ToolType="CodeReaderTool" ParameterName="ParseGs1"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- Quality Grading (ISO/IEC 15415, DataMatrix) -->
+        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Quality Grading" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:CheckBoxParameter Label="Enable Grading"
+                    IsChecked="{Binding EnableQualityGrading}"
+                    ToolType="CodeReaderTool" ParameterName="EnableQualityGrading"/>
+                <controls:EnumComboBoxParameter Label="Min Pass Grade"
+                    ItemsSource="{conv:EnumValues {x:Type cr:CodeQualityGrade}}"
+                    SelectedValue="{Binding MinPassGrade}"
+                    ToolType="CodeReaderTool" ParameterName="MinPassGrade"/>
             </StackPanel>
         </Expander>
 
