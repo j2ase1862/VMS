@@ -147,18 +147,40 @@
                         </StackPanel>
                     </Button>
 
-                    <!-- 선택된 작업지시 표시 -->
+                    <!-- 선택된 작업지시 표시 — 텍스트 + 진행률 ProgressBar (B4) -->
                     <Border Background="#252525" CornerRadius="4" Padding="10,4" Margin="6,8,0,8"
                             BorderBrush="#14B8A6" BorderThickness="1"
                             VerticalAlignment="Center"
                             Visibility="{Binding SelectedWorkOrder, Converter={StaticResource NullToVisibilityConverter}}"
-                            ToolTip="현재 선택된 작업지시">
+                            ToolTip="현재 선택된 작업지시 — 진행률 실시간">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="WO:" Foreground="#14B8A6" FontSize="10" FontWeight="SemiBold"
                                        VerticalAlignment="Center" Margin="0,0,6,0"/>
                             <TextBlock Text="{Binding SelectedWorkOrderText}"
                                        Foreground="White" FontSize="11"
                                        VerticalAlignment="Center"/>
+
+                            <!-- 진행률 ProgressBar — 얇은 가로 (B4) -->
+                            <ProgressBar Width="80" Height="6"
+                                         Minimum="0" Maximum="100"
+                                         Value="{Binding SelectedWorkOrderProgressPercent, Mode=OneWay}"
+                                         Margin="10,0,0,0" VerticalAlignment="Center"
+                                         BorderThickness="0"
+                                         Visibility="{Binding HasSelectedWorkOrderProgress, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <ProgressBar.Template>
+                                    <ControlTemplate TargetType="ProgressBar">
+                                        <Border CornerRadius="3" Background="#1A1A1C">
+                                            <Grid HorizontalAlignment="Stretch" ClipToBounds="True">
+                                                <Border x:Name="PART_Track"/>
+                                                <Border x:Name="PART_Indicator"
+                                                        HorizontalAlignment="Left"
+                                                        Background="#14B8A6"
+                                                        CornerRadius="3"/>
+                                            </Grid>
+                                        </Border>
+                                    </ControlTemplate>
+                                </ProgressBar.Template>
+                            </ProgressBar>
                         </StackPanel>
                     </Border>
 

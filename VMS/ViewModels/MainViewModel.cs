@@ -1146,10 +1146,20 @@ namespace VMS.ViewModels
         public string SelectedWorkOrderText => SelectedWorkOrder == null
             ? ""
             : $"{SelectedWorkOrder.OrderNo} · {SelectedWorkOrder.ProductName} ({SelectedWorkOrder.ProgressText})";
+
+        // B4: 헤더 WO 칩의 ProgressBar 시각화용 — 0~100 percent
+        public double SelectedWorkOrderProgressPercent =>
+            SelectedWorkOrder?.PlannedQuantity > 0
+                ? System.Math.Min(100.0, (double)SelectedWorkOrder.ProducedQuantity / SelectedWorkOrder.PlannedQuantity * 100.0)
+                : 0;
+        public bool HasSelectedWorkOrderProgress =>
+            SelectedWorkOrder != null && SelectedWorkOrder.PlannedQuantity > 0;
         partial void OnSelectedWorkOrderChanged(VMS.Core.Models.ParameterSync.WorkOrderDto? value)
         {
             OnPropertyChanged(nameof(SelectedWorkOrderText));
             OnPropertyChanged(nameof(CanStartStop));
+            OnPropertyChanged(nameof(SelectedWorkOrderProgressPercent));
+            OnPropertyChanged(nameof(HasSelectedWorkOrderProgress));
             if (value != null)
             {
                 // 컨텍스트 자동 채움 — Phase 3 추적성 필드
@@ -1275,6 +1285,7 @@ namespace VMS.ViewModels
                 // CanStartStop 은 Status 도 보므로 함께 갱신.
                 OnPropertyChanged(nameof(SelectedWorkOrderText));
                 OnPropertyChanged(nameof(CanStartStop));
+                OnPropertyChanged(nameof(SelectedWorkOrderProgressPercent));
             });
         }
 
