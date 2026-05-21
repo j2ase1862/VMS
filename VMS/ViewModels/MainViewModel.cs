@@ -1296,14 +1296,14 @@ namespace VMS.ViewModels
                     _ = StopInspectionAsync();
                 }
 
-                // 작업자 확인 + 다음 WO 선택 흐름 (B2)
-                var msg =
-                    $"작업지시 {progress.OrderNo} 이 계획 수량 {progress.PlannedQuantity} 에 도달했습니다.\n\n" +
-                    $"총 검사 {progress.ProducedQuantity}건 (Pass {progress.PassQuantity} / NG {progress.NgQuantity})\n" +
-                    (wasRunning ? "AUTO RUN 이 자동 정지되었습니다.\n" : "") +
-                    "\n다음 작업지시를 선택하시겠습니까?";
-
-                bool pickNext = _dialogService.ShowConfirmation(msg, "작업지시 완료");
+                // B3: 큰 다이얼로그 + 사운드 + KPI 카드. 결과 = "다음 작업지시 선택" / "닫기".
+                var dlg = new VMS.VisionSetup.Views.WorkOrderCompletedDialog(progress)
+                {
+                    Owner = Application.Current?.Windows.Cast<Window>().FirstOrDefault(w => w.IsActive)
+                           ?? Application.Current?.MainWindow
+                };
+                dlg.ShowDialog();
+                bool pickNext = dlg.PickNext;
 
                 // 어느 경우든 현재 WO 는 unselect — Completed 상태로 남아있으면 혼란 + AUTO RUN 비활성 유지
                 SelectedWorkOrder = null;
