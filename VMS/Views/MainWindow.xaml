@@ -84,15 +84,16 @@
                             HorizontalAlignment="Center">
 
                     <!-- ═══ Stage 1: 작업자 chip (Web 인증 — VMS LoginWindow의 시스템 사용자와 별개) ═══ -->
-                    <Border Background="#3D3D3D" CornerRadius="4" Padding="10,4" Margin="0,8,0,8"
+                    <Border Background="#3D3D3D" CornerRadius="4" Padding="10,0" Height="32"
                             BorderBrush="#14B8A6" BorderThickness="1"
                             VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="Operator:" Foreground="#14B8A6" FontSize="10" FontWeight="SemiBold"
                                        VerticalAlignment="Center" Margin="0,0,8,0"/>
                             <Button Content="Login..." Command="{Binding LoginOperatorCommand}"
-                                    Padding="10,2" FontSize="11"
+                                    Height="22" Padding="10,0" FontSize="11"
                                     Background="#14B8A6" Foreground="White" BorderThickness="0"
+                                    VerticalAlignment="Center"
                                     Cursor="Hand" ToolTip="Web에 등록된 작업자(사번+PIN)로 로그인">
                                 <Button.Style>
                                     <Style TargetType="Button">
@@ -125,9 +126,10 @@
                                     <Run Text=")"/>
                                 </TextBlock>
                                 <Button Content="Logout" Command="{Binding LogoutOperatorCommand}"
-                                        Margin="10,0,0,0" Padding="8,2" FontSize="10"
+                                        Margin="10,0,0,0" Height="22" Padding="8,0" FontSize="10"
                                         Background="Transparent" Foreground="#B0B0B0"
                                         BorderBrush="#707070" BorderThickness="1"
+                                        VerticalAlignment="Center"
                                         Cursor="Hand"/>
                             </StackPanel>
                         </StackPanel>
@@ -135,7 +137,8 @@
 
                     <!-- Work Orders 버튼 (로그인 후만 활성) -->
                     <Button Command="{Binding OpenWorkOrderListCommand}"
-                            Margin="6,8,0,8" Padding="12,4" FontSize="11" FontWeight="SemiBold"
+                            Margin="6,0,0,0" Height="32" Padding="12,0"
+                            FontSize="11" FontWeight="SemiBold"
                             Background="#252525" Foreground="#14B8A6"
                             BorderBrush="#14B8A6" BorderThickness="1"
                             Cursor="Hand" VerticalAlignment="Center"
@@ -148,7 +151,7 @@
                     </Button>
 
                     <!-- 선택된 작업지시 표시 — 텍스트 + 진행률 ProgressBar (B4) -->
-                    <Border Background="#252525" CornerRadius="4" Padding="10,4" Margin="6,8,0,8"
+                    <Border Background="#252525" CornerRadius="4" Padding="10,0" Margin="6,0,0,0" Height="32"
                             BorderBrush="#14B8A6" BorderThickness="1"
                             VerticalAlignment="Center"
                             Visibility="{Binding SelectedWorkOrder, Converter={StaticResource NullToVisibilityConverter}}"
@@ -185,7 +188,7 @@
                     </Border>
 
                     <!-- 현재 로드된 Recipe 표시 (WO 선택 시 자동 로드 결과) -->
-                    <Border Background="#252525" CornerRadius="4" Padding="10,4" Margin="6,8,0,8"
+                    <Border Background="#252525" CornerRadius="4" Padding="10,0" Margin="6,0,0,0" Height="32"
                             BorderBrush="#3D7DE8" BorderThickness="1"
                             VerticalAlignment="Center"
                             Visibility="{Binding CurrentRecipe, Converter={StaticResource NullToVisibilityConverter}}"
@@ -202,7 +205,7 @@
                     </Border>
 
                     <!-- ═══ Phase 3: Inspection Context (Web 업로드 시 자동 첨부) ═══ -->
-                    <Border Background="#3D3D3D" CornerRadius="4" Padding="10,4" Margin="6,8,0,8"
+                    <Border Background="#3D3D3D" CornerRadius="4" Padding="10,0" Margin="6,0,0,0" Height="32"
                             VerticalAlignment="Center"
                             ToolTip="검사 결과 업로드 시 자동 첨부 (WO/Lot/Op ID + Serial)">
                         <StackPanel Orientation="Horizontal">
@@ -212,37 +215,42 @@
                             <TextBox Text="{Binding WorkOrderIdText, UpdateSourceTrigger=PropertyChanged}"
                                      Width="50" Height="22" FontSize="11"
                                      Background="#252525" Foreground="White" BorderBrush="#555"
+                                     VerticalAlignment="Center"
                                      VerticalContentAlignment="Center" Padding="4,0"
                                      ToolTip="WorkOrder ID (정수)"/>
                             <TextBlock Text="Lot" Foreground="#B0B0B0" FontSize="10" VerticalAlignment="Center" Margin="6,0,3,0"/>
                             <TextBox Text="{Binding LotIdText, UpdateSourceTrigger=PropertyChanged}"
                                      Width="50" Height="22" FontSize="11"
                                      Background="#252525" Foreground="White" BorderBrush="#555"
+                                     VerticalAlignment="Center"
                                      VerticalContentAlignment="Center" Padding="4,0"
                                      ToolTip="Lot ID (정수)"/>
                             <TextBlock Text="S/N" Foreground="#B0B0B0" FontSize="10" VerticalAlignment="Center" Margin="6,0,3,0"/>
                             <TextBox Text="{Binding SerialNumberText, UpdateSourceTrigger=PropertyChanged}"
                                      Width="100" Height="22" FontSize="11"
                                      Background="#252525" Foreground="White" BorderBrush="#555"
+                                     VerticalAlignment="Center"
                                      VerticalContentAlignment="Center" Padding="4,0"
                                      ToolTip="제품 시리얼 (바코드 스캐너 OK)"/>
                             <Button Content="✕" Command="{Binding ClearInspectionContextCommand}"
-                                    Margin="6,0,0,0" Padding="6,1" FontSize="10"
+                                    Margin="6,0,0,0" Height="22" Padding="6,0" FontSize="10"
                                     Background="Transparent" Foreground="#B0B0B0"
                                     BorderBrush="#555" BorderThickness="1"
+                                    VerticalAlignment="Center"
                                     Cursor="Hand" ToolTip="모든 컨텍스트 필드 비우기"/>
                         </StackPanel>
                     </Border>
 
                     <!-- ═══ AUTO RUN — 운영 흐름의 단일 Primary 액션 ═══ -->
-                    <Rectangle Width="1" Fill="#404040" Margin="14,10"/>
+                    <Rectangle Width="1" Fill="#404040" Margin="14,8"/>
 
                     <Button Command="{Binding StartInspectionCommand}"
                             IsEnabled="{Binding CanStartStop}"
                             Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
                             Background="#00ADB5" Foreground="White"
                             BorderThickness="0" Cursor="Hand"
-                            Padding="20,0" Margin="0,6,0,6"
+                            Padding="20,0" Margin="0,0,6,0" Height="34"
+                            VerticalAlignment="Center"
                             FontSize="13" FontWeight="Bold"
                             ToolTip="검사 시작 — 카메라 연결 + 작업자 로그인 + 작업지시 선택 후 활성"
                             ToolTipService.ShowOnDisabled="True">
@@ -279,7 +287,8 @@
                             Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}}"
                             Background="#E53935" Foreground="White"
                             BorderThickness="0" Cursor="Hand"
-                            Padding="20,0" Margin="0,6,0,6"
+                            Padding="20,0" Margin="0,0,6,0" Height="34"
+                            VerticalAlignment="Center"
                             FontSize="13" FontWeight="Bold">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
@@ -309,7 +318,8 @@
 
                 <!-- User Info (clickable for user switch) -->
                 <Border Grid.Column="2" Background="#3D3D3D" CornerRadius="4"
-                        Padding="8,4" Margin="0,8,8,8"
+                        Padding="10,0" Margin="0,0,8,0" Height="32"
+                        VerticalAlignment="Center"
                         Cursor="Hand"
                         Visibility="{Binding CurrentUserDisplay, Converter={StaticResource NullToVisibilityConverter}}">
                     <Border.InputBindings>
