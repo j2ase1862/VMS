@@ -271,6 +271,18 @@ namespace VMS.ViewModels
                 _vmsHubClient.WorkOrderCompleted += OnWorkOrderCompletedFromServer;
             }
 
+            // D8: InspectionService 가 push 한 레코드에 WorkOrderNo 보강 (Id 만 가지고 있음).
+            // RecordAdded 는 UI 스레드에서 발생 (Add 가 Dispatcher.Invoke 함).
+            VMS.Core.Services.RecentInspectionsService.Instance.RecordAdded += record =>
+            {
+                if (record.WorkOrderId.HasValue
+                    && SelectedWorkOrder?.Id == record.WorkOrderId
+                    && string.IsNullOrEmpty(record.WorkOrderNo))
+                {
+                    record.WorkOrderNo = SelectedWorkOrder.OrderNo;
+                }
+            };
+
 
             // Subscribe to PLC connection state changes
             if (_plcConnection != null)
@@ -1165,6 +1177,17 @@ namespace VMS.ViewModels
                 : 0;
         public bool HasSelectedWorkOrderProgress =>
             SelectedWorkOrder != null && SelectedWorkOrder.PlannedQuantity > 0;
+
+        // D8: 최근 검사 히스토리 서비스 — XAML 바인딩용
+        public VMS.Core.Services.RecentInspectionsService RecentInspections =>
+            VMS.Core.Services.RecentInspectionsService.Instance;
+
+        [RelayCommand]
+        private void ClearRecentInspections()
+        {
+            RecentInspections.Clear();
+            OnPropertyChanged(nameof(RecentInspections));
+        }
         partial void OnSelectedWorkOrderChanged(VMS.Core.Models.ParameterSync.WorkOrderDto? value)
         {
             OnPropertyChanged(nameof(SelectedWorkOrderText));

@@ -5,7 +5,9 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using VMS.Core.Interfaces;
+using VMS.Core.Models;
 using VMS.Core.Models.ParameterSync;
+using VMS.Core.Services;
 using VMS.Interfaces;
 using VMS.Models;
 using VMS.VisionSetup.Interfaces;
@@ -331,6 +333,26 @@ namespace VMS.Services
 
             if (paramResults.Count > 0)
             {
+                // D8: VMS 자체 히스토리 — Web 끊겨도 작업자가 사이드 패널에서 즉시 확인.
+                // 업로드 전에 푸시 — 네트워크 상태와 무관하게 항상 기록.
+                var isPass = paramResults.All(r => r.Judgment == "OK");
+                var ngCodes = paramResults.Where(r => r.Judgment == "NG")
+                                          .Select(r => r.ParamCode.ToString())
+                                          .Distinct()
+                                          .ToList();
+                var recipeName = syncService.Recipes
+                    .FirstOrDefault(r => r.Id == syncService.CurrentRecipeId)?.Name;
+                RecentInspectionsService.Instance.Add(new InspectionRecord
+                {
+                    IsPass = isPass,
+                    NgCodes = ngCodes,
+                    RecipeId = syncService.CurrentRecipeId,
+                    RecipeName = recipeName,
+                    WorkOrderId = syncService.WorkOrderId,
+                    LotId = syncService.LotId,
+                    SerialNumber = syncService.SerialNumber
+                });
+
                 _ = Task.Run(async () =>
                 {
                     try

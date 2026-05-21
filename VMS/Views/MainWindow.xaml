@@ -873,6 +873,140 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- D8: Recent Inspections (VMS 자체 히스토리 — Web 의존 없음) -->
+                        <Border Background="#3D3D3D"
+                                CornerRadius="8"
+                                Padding="12"
+                                Margin="0,0,0,16">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Recent Inspections"
+                                               FontWeight="SemiBold" Foreground="#14B8A6"
+                                               VerticalAlignment="Center"/>
+                                    <Button Grid.Column="1"
+                                            Content="Clear"
+                                            Command="{Binding ClearRecentInspectionsCommand}"
+                                            Height="22" Padding="8,0" FontSize="10"
+                                            Background="Transparent" Foreground="#B0B0B0"
+                                            BorderBrush="#555" BorderThickness="1"
+                                            Cursor="Hand"
+                                            VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <!-- 3-cell stats: Total / Pass / NG -->
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                                        <TextBlock Text="Total" Foreground="#B0B0B0" FontSize="10"
+                                                   HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{Binding RecentInspections.TotalCount}"
+                                                   Foreground="White" FontWeight="Bold" FontSize="18"
+                                                   HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                                        <TextBlock Text="Pass" Foreground="#14B8A6" FontSize="10"
+                                                   HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{Binding RecentInspections.PassCount}"
+                                                   Foreground="#14B8A6" FontWeight="Bold" FontSize="18"
+                                                   HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                                        <TextBlock Text="NG" Foreground="#E53935" FontSize="10"
+                                                   HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{Binding RecentInspections.NgCount}"
+                                                   Foreground="#E53935" FontWeight="Bold" FontSize="18"
+                                                   HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Grid>
+                                <TextBlock Text="{Binding RecentInspections.PassRate, StringFormat={}Pass rate {0:N1}%}"
+                                           Foreground="#B0B0B0" FontSize="10"
+                                           HorizontalAlignment="Center" Margin="0,0,0,10"/>
+
+                                <!-- ListBox — 최근 N건 (Items 는 ObservableCollection, [0]=최신) -->
+                                <ListBox ItemsSource="{Binding RecentInspections.Items}"
+                                         Background="#252525" BorderThickness="0"
+                                         MaxHeight="220"
+                                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem">
+                                            <Setter Property="Padding" Value="0"/>
+                                            <Setter Property="Margin" Value="0"/>
+                                            <Setter Property="BorderThickness" Value="0"/>
+                                            <Setter Property="Focusable" Value="False"/>
+                                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="4,3" ToolTip="{Binding TimestampFull}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="58"/>
+                                                    <ColumnDefinition Width="28"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="{Binding TimestampShort}"
+                                                           Foreground="#808080" FontFamily="Consolas" FontSize="10"
+                                                           VerticalAlignment="Center"/>
+                                                <Border Grid.Column="1" CornerRadius="3" Padding="4,1"
+                                                        HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="#E53935"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsPass}" Value="True">
+                                                                    <Setter Property="Background" Value="#14B8A6"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Foreground="White" FontSize="9" FontWeight="Bold">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Text" Value="NG"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsPass}" Value="True">
+                                                                        <Setter Property="Text" Value="OK"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Border>
+                                                <StackPanel Grid.Column="2" Margin="6,0,0,0" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding DisplayLabel}"
+                                                               Foreground="White" FontSize="11"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding NgCodesText}"
+                                                               Foreground="#E53935" FontSize="9"
+                                                               TextTrimming="CharacterEllipsis">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsPass}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </StackPanel>
+                        </Border>
+
                         <!-- Statistics Section -->
                         <Border Background="#3D3D3D"
                                 CornerRadius="8"
