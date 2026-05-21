@@ -121,7 +121,11 @@ namespace VMS.ViewModels
             && (_userService?.HasPermission(UserPermission.StartStop) ?? true)
             // Web 통합 환경 (OperatorAuthService 존재) 에서는 Operator 로그인 + WO 선택 필수.
             // OperatorAuthService 가 없으면 standalone — 기존 동작 유지.
-            && (_operatorAuthService == null || (IsOperatorLoggedIn && SelectedWorkOrder != null));
+            && (_operatorAuthService == null
+                || (IsOperatorLoggedIn
+                    && SelectedWorkOrder != null
+                    // Completed/Closed 상태에서는 결과 업로드해도 카운터가 증가하지 않으므로 비활성.
+                    && (SelectedWorkOrder.Status == "Planned" || SelectedWorkOrder.Status == "InProgress")));
 
         // ── Equipment status (StatusBar) ──
         public string PlcVendorName { get; }
@@ -1267,12 +1271,14 @@ namespace VMS.ViewModels
                 SelectedWorkOrder.NgQuantity = progress.NgQuantity;
                 SelectedWorkOrder.Status = progress.Status;
 
-                // DTO 필드 변경은 INPC 를 발생시키지 않으므로 SelectedWorkOrderText 만 수동 알림
+                // DTO 필드 변경은 INPC 를 발생시키지 않으므로 수동 알림.
+                // CanStartStop 은 Status 도 보므로 함께 갱신.
                 OnPropertyChanged(nameof(SelectedWorkOrderText));
+                OnPropertyChanged(nameof(CanStartStop));
             });
         }
 
-        // Stage 3: 계획 수량 도달 — 알람 + AUTO RUN 자동 정지
+        // Stage 3 / B2: 계획 수량 도달 — 알람 + AUTO RUN 자동 정지 + 다음 WO 선택 흐름
         private void OnWorkOrderCompletedFromServer(VMS.Core.Models.ParameterSync.WorkOrderProgressDto progress)
         {
             Application.Current?.Dispatcher.Invoke(() =>
@@ -1284,17 +1290,28 @@ namespace VMS.ViewModels
                 SystemStatus = $"✓ WO {progress.OrderNo} 완료 — {progress.ProducedQuantity}/{progress.PlannedQuantity}";
 
                 // AUTO RUN 자동 정지 (실행 중일 때만)
-                if (IsRunning)
+                bool wasRunning = IsRunning;
+                if (wasRunning)
                 {
                     _ = StopInspectionAsync();
                 }
 
-                // 작업자 알림
-                _dialogService.ShowInformation(
+                // 작업자 확인 + 다음 WO 선택 흐름 (B2)
+                var msg =
                     $"작업지시 {progress.OrderNo} 이 계획 수량 {progress.PlannedQuantity} 에 도달했습니다.\n\n" +
-                    $"총 검사 {progress.ProducedQuantity}건 (Pass {progress.PassQuantity} / NG {progress.NgQuantity})\n\n" +
-                    (IsRunning ? "AUTO RUN 이 자동 정지되었습니다." : ""),
-                    "작업지시 완료");
+                    $"총 검사 {progress.ProducedQuantity}건 (Pass {progress.PassQuantity} / NG {progress.NgQuantity})\n" +
+                    (wasRunning ? "AUTO RUN 이 자동 정지되었습니다.\n" : "") +
+                    "\n다음 작업지시를 선택하시겠습니까?";
+
+                bool pickNext = _dialogService.ShowConfirmation(msg, "작업지시 완료");
+
+                // 어느 경우든 현재 WO 는 unselect — Completed 상태로 남아있으면 혼란 + AUTO RUN 비활성 유지
+                SelectedWorkOrder = null;
+
+                if (pickNext && OpenWorkOrderListCommand.CanExecute(null))
+                {
+                    OpenWorkOrderListCommand.Execute(null);
+                }
             });
         }
 
