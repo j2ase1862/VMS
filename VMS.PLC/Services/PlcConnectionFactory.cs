@@ -21,8 +21,7 @@ namespace VMS.PLC.Services
                 PlcVendor.Siemens => new SiemensS7Connection(),
                 PlcVendor.LS => new LsXgtConnection(),
                 PlcVendor.Omron => new OmronFinsConnection(),
-                // Modbus TCP: use SimulatedPlcConnection until ModbusTcpConnection is implemented
-                PlcVendor.Modbus => new SimulatedPlcConnection(),
+                PlcVendor.Modbus => new ModbusTcpConnection(),
                 _ => new SimulatedPlcConnection()
             };
 

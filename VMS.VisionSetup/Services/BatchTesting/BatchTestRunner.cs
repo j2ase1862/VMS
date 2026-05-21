@@ -29,6 +29,15 @@ namespace VMS.VisionSetup.Services.BatchTesting
         /// <summary>임계치 위반 메시지 목록 — Failure Browser/CSV 에서 사람이 읽는 용.</summary>
         public List<string> ThresholdViolations { get; set; } = new();
 
+        /// <summary>골든셋에 이 이미지의 정답 entry가 등록되어 있는지.</summary>
+        public bool HasGoldenEntry { get; set; }
+
+        /// <summary>골든셋 비교 통과 여부 — 정답과 모든 값이 매칭될 때 true. HasGoldenEntry=false면 vacuously true.</summary>
+        public bool GoldenPassed { get; set; } = true;
+
+        /// <summary>골든셋 mismatch 메시지 목록.</summary>
+        public List<string> GoldenMismatches { get; set; } = new();
+
         /// <summary>DataGrid 표시용 — ImagePath의 파일명 부분.</summary>
         public string FileName => string.IsNullOrEmpty(ImagePath) ? "" : Path.GetFileName(ImagePath);
     }
@@ -44,6 +53,9 @@ namespace VMS.VisionSetup.Services.BatchTesting
 
         /// <summary>도구별 Pass/Fail 임계치. null이면 임계치 평가 생략.</summary>
         public PassFailCriteria? Criteria { get; set; }
+
+        /// <summary>골든셋 — 등록된 이미지는 결과와 비교, 미등록 이미지는 무시.</summary>
+        public GoldenSet? GoldenSet { get; set; }
     }
 
     /// <summary>
@@ -120,7 +132,23 @@ namespace VMS.VisionSetup.Services.BatchTesting
                             item.ThresholdViolations = eval.Violations;
                         }
 
-                        item.Success = execSuccess && item.ThresholdsPassed;
+                        // 골든셋 평가 (등록된 이미지만)
+                        if (cfg.GoldenSet != null)
+                        {
+                            // 도구 ID → 이름 매핑 (사용자가 읽는 메시지 위해)
+                            var toolNameMap = _visionService.Tools.ToDictionary(t => t.Id, t => t.Name);
+                            // 임계치까지 반영된 item.Success를 미리 한 번 계산해서 evaluator에 넘김
+                            var tentativeSuccess = execSuccess && item.ThresholdsPassed;
+                            var prevSuccess = item.Success;
+                            item.Success = tentativeSuccess;  // evaluator가 ExpectedSuccess 비교에 사용
+                            var gEval = GoldenSetEvaluator.Evaluate(path, item, cfg.GoldenSet, toolNameMap);
+                            item.Success = prevSuccess;  // 아래에서 최종 결정
+                            item.HasGoldenEntry = gEval.HasEntry;
+                            item.GoldenPassed = gEval.Pass;
+                            item.GoldenMismatches = gEval.Mismatches;
+                        }
+
+                        item.Success = execSuccess && item.ThresholdsPassed && item.GoldenPassed;
                         if (!item.Success)
                         {
                             if (!execSuccess)
@@ -129,6 +157,10 @@ namespace VMS.VisionSetup.Services.BatchTesting
                                 item.FailureReason = $"임계치 위반 {item.ThresholdViolations.Count}건: " +
                                     string.Join(" | ", item.ThresholdViolations.Take(2)) +
                                     (item.ThresholdViolations.Count > 2 ? " …" : "");
+                            else if (!item.GoldenPassed)
+                                item.FailureReason = $"골든셋 mismatch {item.GoldenMismatches.Count}건: " +
+                                    string.Join(" | ", item.GoldenMismatches.Take(2)) +
+                                    (item.GoldenMismatches.Count > 2 ? " …" : "");
                         }
 
                         // 실패 오버레이 저장

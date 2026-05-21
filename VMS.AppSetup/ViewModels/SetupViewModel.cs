@@ -1,5 +1,6 @@
 using VMS.AppSetup.Interfaces;
 using VMS.AppSetup.Models;
+using VMS.AppSetup.Services;
 using VMS.Camera.Models;
 using VMS.PLC.Models;
 using EulerConvention = VMS.Camera.Models.EulerConvention;
@@ -9,6 +10,7 @@ using CommunityToolkit.Mvvm.Input;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace VMS.AppSetup.ViewModels
 {
@@ -426,14 +428,84 @@ namespace VMS.AppSetup.ViewModels
             }
         }
 
-        [RelayCommand]
-        private void ScanForCameras()
+        [ObservableProperty] private bool _isScanning;
+
+        [RelayCommand(CanExecute = nameof(CanScan))]
+        private async Task ScanForCamerasAsync()
         {
-            // TODO: Implement actual network camera discovery
-            _dialogService.ShowInformation(
-                "카메라 스캔 기능은 아직 구현되지 않았습니다.\n\n" +
-                "카메라를 수동으로 추가하려면 '+ Add Camera' 버튼을 사용하세요.",
-                "Camera Scan");
+            IsScanning = true;
+            try
+            {
+                // GigE Vision 표준 discovery (UDP 3956 broadcast)
+                var found = await GigEVisionDiscovery.DiscoverAsync(timeoutMs: 2000);
+
+                if (found.Count == 0)
+                {
+                    _dialogService.ShowInformation(
+                        "GigE 카메라를 찾지 못했습니다.\n\n" +
+                        "• 카메라가 같은 서브넷에 있는지 확인하세요.\n" +
+                        "• 방화벽이 UDP 3956 포트를 차단하지 않는지 확인하세요.\n" +
+                        "• USB 카메라는 자동 스캔되지 않습니다 (수동 추가 사용).",
+                        "Camera Scan");
+                    return;
+                }
+
+                // 중복 IP 제외하고 자동 추가
+                int added = 0;
+                foreach (var dev in found)
+                {
+                    if (Cameras.Any(c => string.Equals(c.IpAddress, dev.IpAddress, StringComparison.OrdinalIgnoreCase)))
+                        continue;
+
+                    Cameras.Add(new CameraConfiguration
+                    {
+                        Name = string.IsNullOrEmpty(dev.UserDefinedName)
+                            ? $"{dev.Manufacturer} {dev.Model}".Trim()
+                            : dev.UserDefinedName,
+                        IpAddress = dev.IpAddress,
+                        Manufacturer = ResolveManufacturer(dev.Manufacturer),
+                        IsEnabled = true
+                    });
+                    added++;
+                }
+
+                var summary = string.Join("\n", found.Select(d => $"  • {d}"));
+                _dialogService.ShowInformation(
+                    $"{found.Count}개 카메라 발견 — {added}개 추가됨 (기존 IP는 제외).\n\n{summary}",
+                    "Camera Scan");
+            }
+            catch (Exception ex)
+            {
+                _dialogService.ShowInformation(
+                    $"카메라 스캔 중 오류 발생:\n{ex.Message}",
+                    "Camera Scan Error");
+            }
+            finally
+            {
+                IsScanning = false;
+            }
+        }
+
+        private bool CanScan() => !IsScanning;
+
+        /// <summary>제조사 문자열 → CameraManufacturer 매핑 (case-insensitive).</summary>
+        private static CameraManufacturer ResolveManufacturer(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return CameraManufacturer.Other;
+            var s = raw.ToLowerInvariant();
+            if (s.Contains("hik")) return CameraManufacturer.HIK;
+            if (s.Contains("basler")) return CameraManufacturer.Basler;
+            if (s.Contains("ids") || s.Contains("imaging development")) return CameraManufacturer.IDS;
+            if (s.Contains("mech") || s.Contains("mind")) return CameraManufacturer.Mech_Mind;
+            if (s.Contains("baumer")) return CameraManufacturer.Baumer;
+            if (s.Contains("allied")) return CameraManufacturer.Allied_Vision;
+            if (s.Contains("flir")) return CameraManufacturer.FLIR;
+            if (s.Contains("jai")) return CameraManufacturer.JAI;
+            if (s.Contains("cognex")) return CameraManufacturer.Cognex;
+            if (s.Contains("keyence")) return CameraManufacturer.Keyence;
+            if (s.Contains("matrox")) return CameraManufacturer.Matrox;
+            if (s.Contains("dalsa") || s.Contains("teledyne")) return CameraManufacturer.Dalsa;
+            return CameraManufacturer.Other;
         }
 
         private void UpdateVirtualCameras()

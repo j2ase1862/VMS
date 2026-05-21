@@ -58,6 +58,8 @@ namespace VMS.VisionSetup.ViewModels
         public ObservableCollection<ToolResultRow> ToolRows { get; } = new();
         public ObservableCollection<string> ThresholdViolations { get; } = new();
         public bool HasViolations => ThresholdViolations.Count > 0;
+        public ObservableCollection<string> GoldenMismatches { get; } = new();
+        public bool HasGoldenMismatches => GoldenMismatches.Count > 0;
 
         public IRelayCommand PrevCommand { get; }
         public IRelayCommand NextCommand { get; }
@@ -110,6 +112,13 @@ namespace VMS.VisionSetup.ViewModels
                 foreach (var v in r.ThresholdViolations)
                     ThresholdViolations.Add(v);
             OnPropertyChanged(nameof(HasViolations));
+
+            // 골든셋 mismatch
+            GoldenMismatches.Clear();
+            if (r.GoldenMismatches != null)
+                foreach (var m in r.GoldenMismatches)
+                    GoldenMismatches.Add(m);
+            OnPropertyChanged(nameof(HasGoldenMismatches));
 
             NotifyCommands();
         }

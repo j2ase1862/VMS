@@ -13,6 +13,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="VMS.AppSetup.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\VMS.Camera\VMS.Camera.csproj" />
     <ProjectReference Include="..\VMS.PLC\VMS.PLC.csproj" />
   </ItemGroup>

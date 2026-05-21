@@ -43,8 +43,16 @@ namespace VMS.Camera.Services
 #endif
             }
 
-            // 향후 실제 SDK 구현 시 여기에 추가:
-            // "HIK" => new HikCameraAcquisition(),
+            // Hikrobot / Hikvision / HIK
+            if (manufacturer.Contains("Hik", StringComparison.OrdinalIgnoreCase))
+            {
+#if HIK_AVAILABLE
+                return new HikCameraAcquisition();
+#else
+                System.Diagnostics.Debug.WriteLine("Hikrobot MVS SDK가 설치되지 않았습니다. 시뮬레이션 모드로 전환합니다.");
+                return new SimulatedCameraAcquisition();
+#endif
+            }
 
             return new SimulatedCameraAcquisition();
         }
