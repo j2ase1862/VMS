@@ -20,6 +20,12 @@ namespace VMS.Core.Interfaces
         /// <summary>Web 레시피 목록이 변경되었을 때 발생</summary>
         event Action<List<RecipeSummaryDto>>? RecipeListChanged;
 
+        /// <summary>Stage 3 — 검사 결과 업로드 후 서버가 갱신한 WO 진행률 스냅샷 (WO 가 첨부된 경우만)</summary>
+        event Action<WorkOrderProgressDto>? WorkOrderProgressed;
+
+        /// <summary>Stage 3 — 이 업로드로 WO 가 막 Completed 전이된 경우 발생 (계획 수량 도달)</summary>
+        event Action<WorkOrderProgressDto>? WorkOrderCompleted;
+
         /// <summary>마지막 동기화 시각</summary>
         DateTime? LastSyncedAt { get; }
 

@@ -246,6 +246,13 @@ namespace VMS.ViewModels
                 _ = _operatorAuthService.FetchCurrentSessionAsync();
             }
 
+            // Stage 3: WO 진행률 / 완료 이벤트 구독 (서버가 업로드 응답에 포함)
+            if (_parameterSyncService != null)
+            {
+                _parameterSyncService.WorkOrderProgressed += OnWorkOrderProgressed;
+                _parameterSyncService.WorkOrderCompleted += OnWorkOrderCompletedFromServer;
+            }
+
 
             // Subscribe to PLC connection state changes
             if (_plcConnection != null)
@@ -1207,6 +1214,49 @@ namespace VMS.ViewModels
             {
                 LogService?.Log($"WO recipe auto-load failed: {ex.Message}", LogLevel.Error, "WorkOrder");
             }
+        }
+
+        // Stage 3: 검사 결과 업로드 응답에서 WO 진행률 갱신
+        private void OnWorkOrderProgressed(VMS.Core.Models.ParameterSync.WorkOrderProgressDto progress)
+        {
+            Application.Current?.Dispatcher.Invoke(() =>
+            {
+                if (SelectedWorkOrder == null || SelectedWorkOrder.Id != progress.Id) return;
+
+                SelectedWorkOrder.ProducedQuantity = progress.ProducedQuantity;
+                SelectedWorkOrder.PassQuantity = progress.PassQuantity;
+                SelectedWorkOrder.NgQuantity = progress.NgQuantity;
+                SelectedWorkOrder.Status = progress.Status;
+
+                // DTO 필드 변경은 INPC 를 발생시키지 않으므로 SelectedWorkOrderText 만 수동 알림
+                OnPropertyChanged(nameof(SelectedWorkOrderText));
+            });
+        }
+
+        // Stage 3: 계획 수량 도달 — 알람 + AUTO RUN 자동 정지
+        private void OnWorkOrderCompletedFromServer(VMS.Core.Models.ParameterSync.WorkOrderProgressDto progress)
+        {
+            Application.Current?.Dispatcher.Invoke(() =>
+            {
+                LogService?.Log(
+                    $"WO {progress.OrderNo} 계획 수량 도달 — Completed ({progress.ProducedQuantity}/{progress.PlannedQuantity}, Pass {progress.PassQuantity} / NG {progress.NgQuantity})",
+                    LogLevel.Success, "WorkOrder");
+
+                SystemStatus = $"✓ WO {progress.OrderNo} 완료 — {progress.ProducedQuantity}/{progress.PlannedQuantity}";
+
+                // AUTO RUN 자동 정지 (실행 중일 때만)
+                if (IsRunning)
+                {
+                    _ = StopInspectionAsync();
+                }
+
+                // 작업자 알림
+                _dialogService.ShowInformation(
+                    $"작업지시 {progress.OrderNo} 이 계획 수량 {progress.PlannedQuantity} 에 도달했습니다.\n\n" +
+                    $"총 검사 {progress.ProducedQuantity}건 (Pass {progress.PassQuantity} / NG {progress.NgQuantity})\n\n" +
+                    (IsRunning ? "AUTO RUN 이 자동 정지되었습니다." : ""),
+                    "작업지시 완료");
+            });
         }
 
         [RelayCommand(CanExecute = nameof(CanOpenWorkOrderList))]

@@ -40,6 +40,8 @@ namespace VMS.Core.Services
         public event Action<bool, int>? SyncCompleted;
         public event Action<int, string, int>? RecipeLoaded;
         public event Action<List<RecipeSummaryDto>>? RecipeListChanged;
+        public event Action<WorkOrderProgressDto>? WorkOrderProgressed;
+        public event Action<WorkOrderProgressDto>? WorkOrderCompleted;
 
         public DateTime? LastSyncedAt { get; private set; }
         public int CurrentRecipeId { get; private set; }
@@ -242,6 +244,32 @@ namespace VMS.Core.Services
                 }
 
                 Debug.WriteLine($"[ParameterSync] Uploaded {results.Count} results for recipe {recipeId}");
+
+                // Stage 3: 응답에서 WO 진행률 추출 → 이벤트 발생
+                try
+                {
+                    var body = await response.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrWhiteSpace(body))
+                    {
+                        using var doc = JsonDocument.Parse(body);
+                        if (doc.RootElement.TryGetProperty("workOrder", out var woElem)
+                            && woElem.ValueKind == JsonValueKind.Object)
+                        {
+                            var progress = JsonSerializer.Deserialize<WorkOrderProgressDto>(woElem.GetRawText(), JsonOptions);
+                            if (progress != null)
+                            {
+                                WorkOrderProgressed?.Invoke(progress);
+                                if (progress.Completed)
+                                    WorkOrderCompleted?.Invoke(progress);
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[ParameterSync] WO progress parse skip: {ex.Message}");
+                }
+
                 return true;
             }
             catch (Exception ex)
