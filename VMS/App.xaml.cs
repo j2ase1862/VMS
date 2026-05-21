@@ -167,6 +167,18 @@ namespace VMS
                 Debug.WriteLine($"[App] LotClient init failed: {ex.Message}");
             }
 
+            // ── VMS Hub Client (C5: SignalR 실시간 푸시) ──
+            VMS.Core.Services.VmsHubClient? vmsHubClient = null;
+            try
+            {
+                vmsHubClient = new VMS.Core.Services.VmsHubClient(systemConfig.WebServerUrl);
+                _ = vmsHubClient.StartAsync(); // fire & forget — 실패해도 응답 기반 fallback 으로 동작
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] VmsHubClient init failed: {ex.Message}");
+            }
+
             // ── Web Heartbeat Service ──
             HeartbeatService? heartbeatService = null;
             try
@@ -311,6 +323,7 @@ namespace VMS
                     operatorAuthService?.Dispose();
                     workOrderClient?.Dispose();
                     lotClient?.Dispose();
+                    if (vmsHubClient != null) _ = vmsHubClient.DisposeAsync();
                     ForceShutdown(mainViewModel, heartbeatService, parameterSyncService, sharedFrameWriter, plcConnection, autoProcessService);
                 },
                 autoProcessService,
@@ -325,7 +338,8 @@ namespace VMS
                 parameterSyncService: parameterSyncService,
                 operatorAuthService: operatorAuthService,
                 workOrderClient: workOrderClient,
-                lotClient: lotClient);
+                lotClient: lotClient,
+                vmsHubClient: vmsHubClient);
 
             var mainWindow = new MainWindow();
             mainWindow.DataContext = mainViewModel;
@@ -335,6 +349,7 @@ namespace VMS
                 operatorAuthService?.Dispose();
                 workOrderClient?.Dispose();
                 lotClient?.Dispose();
+                if (vmsHubClient != null) _ = vmsHubClient.DisposeAsync();
                 ForceShutdown(mainViewModel, heartbeatService, parameterSyncService, sharedFrameWriter, plcConnection, autoProcessService);
             };
             mainWindow.Show();

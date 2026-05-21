@@ -195,6 +195,8 @@ namespace VMS.ViewModels
         private readonly VMS.Core.Services.OperatorAuthService? _operatorAuthService;
         private readonly VMS.Core.Services.WorkOrderClient? _workOrderClient;
         private readonly VMS.Core.Services.LotClient? _lotClient;
+        private readonly VMS.Core.Services.VmsHubClient? _vmsHubClient;
+        private int? _lastCompletedNotifiedWoId; // C5: 중복 Completed 알림 가드
         private readonly Action _shutdownAction;
         private SystemConfiguration _systemConfig;
 
@@ -217,7 +219,8 @@ namespace VMS.ViewModels
             IParameterSyncService? parameterSyncService = null,
             VMS.Core.Services.OperatorAuthService? operatorAuthService = null,
             VMS.Core.Services.WorkOrderClient? workOrderClient = null,
-            VMS.Core.Services.LotClient? lotClient = null)
+            VMS.Core.Services.LotClient? lotClient = null,
+            VMS.Core.Services.VmsHubClient? vmsHubClient = null)
         {
             _configService = configService;
             _recipeService = recipeService;
@@ -237,6 +240,7 @@ namespace VMS.ViewModels
             _operatorAuthService = operatorAuthService;
             _workOrderClient = workOrderClient;
             _lotClient = lotClient;
+            _vmsHubClient = vmsHubClient;
             _shutdownAction = shutdownAction;
             _systemConfig = new SystemConfiguration();
 
@@ -258,6 +262,13 @@ namespace VMS.ViewModels
             {
                 _parameterSyncService.WorkOrderProgressed += OnWorkOrderProgressed;
                 _parameterSyncService.WorkOrderCompleted += OnWorkOrderCompletedFromServer;
+            }
+
+            // C5: SignalR — 다른 클라이언트의 업로드도 받아 헤더 칩 진행률 즉시 반영
+            if (_vmsHubClient != null)
+            {
+                _vmsHubClient.WorkOrderUpdated += OnWorkOrderProgressed;
+                _vmsHubClient.WorkOrderCompleted += OnWorkOrderCompletedFromServer;
             }
 
 
@@ -1160,6 +1171,10 @@ namespace VMS.ViewModels
             OnPropertyChanged(nameof(CanStartStop));
             OnPropertyChanged(nameof(SelectedWorkOrderProgressPercent));
             OnPropertyChanged(nameof(HasSelectedWorkOrderProgress));
+
+            // C5: WO 가 바뀌면 완료 알림 가드 리셋 (새 WO 가 완료될 때 다시 알림 가능하도록).
+            if (value?.Id != _lastCompletedNotifiedWoId)
+                _lastCompletedNotifiedWoId = null;
             if (value != null)
             {
                 // 컨텍스트 자동 채움 — Phase 3 추적성 필드
@@ -1289,11 +1304,16 @@ namespace VMS.ViewModels
             });
         }
 
-        // Stage 3 / B2: 계획 수량 도달 — 알람 + AUTO RUN 자동 정지 + 다음 WO 선택 흐름
+        // Stage 3 / B2 / C5: 계획 수량 도달 — 알람 + AUTO RUN 자동 정지 + 다음 WO 선택 흐름.
+        // 응답 파싱과 SignalR 둘 다에서 같은 이벤트가 올 수 있으므로 _lastCompletedNotifiedWoId 가드.
         private void OnWorkOrderCompletedFromServer(VMS.Core.Models.ParameterSync.WorkOrderProgressDto progress)
         {
             Application.Current?.Dispatcher.Invoke(() =>
             {
+                // 같은 WO 에 대해 이미 알림을 띄웠으면 skip (응답 + SignalR 중복 차단)
+                if (_lastCompletedNotifiedWoId == progress.Id) return;
+                _lastCompletedNotifiedWoId = progress.Id;
+
                 LogService?.Log(
                     $"WO {progress.OrderNo} 계획 수량 도달 — Completed ({progress.ProducedQuantity}/{progress.PlannedQuantity}, Pass {progress.PassQuantity} / NG {progress.NgQuantity})",
                     LogLevel.Success, "WorkOrder");
