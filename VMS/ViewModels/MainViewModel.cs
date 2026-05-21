@@ -116,7 +116,12 @@ namespace VMS.ViewModels
         public bool CanLaunchVisionSetup => _userService?.HasPermission(UserPermission.LaunchVisionSetup) ?? true;
         public bool CanLaunchAppSetup => _userService?.HasPermission(UserPermission.LaunchAppSetup) ?? true;
         public bool HasConnectedCamera => Cameras.Any(c => c.IsConnected);
-        public bool CanStartStop => HasConnectedCamera && (_userService?.HasPermission(UserPermission.StartStop) ?? true);
+        public bool CanStartStop =>
+            HasConnectedCamera
+            && (_userService?.HasPermission(UserPermission.StartStop) ?? true)
+            // Web 통합 환경 (OperatorAuthService 존재) 에서는 Operator 로그인 + WO 선택 필수.
+            // OperatorAuthService 가 없으면 standalone — 기존 동작 유지.
+            && (_operatorAuthService == null || (IsOperatorLoggedIn && SelectedWorkOrder != null));
 
         // ── Equipment status (StatusBar) ──
         public string PlcVendorName { get; }
@@ -1068,6 +1073,7 @@ namespace VMS.ViewModels
             OpenWorkOrderListCommand.NotifyCanExecuteChanged();
             LoginOperatorCommand.NotifyCanExecuteChanged();
             LogoutOperatorCommand.NotifyCanExecuteChanged();
+            OnPropertyChanged(nameof(CanStartStop));
         }
 
         private void OnOperatorSessionChanged(VMS.Core.Models.ParameterSync.OperatorSessionDto? session)
@@ -1129,11 +1135,77 @@ namespace VMS.ViewModels
         partial void OnSelectedWorkOrderChanged(VMS.Core.Models.ParameterSync.WorkOrderDto? value)
         {
             OnPropertyChanged(nameof(SelectedWorkOrderText));
+            OnPropertyChanged(nameof(CanStartStop));
             if (value != null)
             {
                 // 컨텍스트 자동 채움 — Phase 3 추적성 필드
                 WorkOrderIdText = value.Id.ToString();
                 // Lot은 별도 — Stage 3에서 활성 Lot 찾기. 현재는 비움.
+
+                // WO 의 RecipeName 으로 레시피 자동 로드 (사이드 패널 로그인 우회)
+                _ = LoadRecipeFromWorkOrderAsync(value);
+            }
+        }
+
+        /// <summary>
+        /// 선택된 WO 의 RecipeName 으로 로컬 레시피를 찾아 자동 로드.
+        /// 로컬에 없으면 Web 레시피를 동기화 후 재시도. Web 파라미터도 매칭되면 함께 로드.
+        /// 사이드 패널의 별도 사용자 로그인을 거치지 않는다 — Operator 로그인 만으로 충분.
+        /// </summary>
+        private async Task LoadRecipeFromWorkOrderAsync(VMS.Core.Models.ParameterSync.WorkOrderDto wo)
+        {
+            if (string.IsNullOrWhiteSpace(wo.RecipeName)) return;
+
+            try
+            {
+                var info = _recipeService.GetRecipeList()
+                    .FirstOrDefault(r => string.Equals(r.Name, wo.RecipeName, StringComparison.OrdinalIgnoreCase));
+
+                // 로컬에 없으면 Web 동기화 후 재시도
+                if (info == null && _parameterSyncService != null)
+                {
+                    await SyncWebRecipesToLocalAsync();
+                    info = _recipeService.GetRecipeList()
+                        .FirstOrDefault(r => string.Equals(r.Name, wo.RecipeName, StringComparison.OrdinalIgnoreCase));
+                }
+
+                if (info == null)
+                {
+                    SystemStatus = $"Recipe '{wo.RecipeName}' not found (WO {wo.OrderNo})";
+                    LogService?.Log($"WO {wo.OrderNo}: recipe '{wo.RecipeName}' not found locally or on Web", LogLevel.Warning, "WorkOrder");
+                    return;
+                }
+
+                if (CurrentRecipe?.Id == info.Id) return; // 이미 로드됨 — 스킵
+
+                var recipe = _recipeService.LoadRecipe(info.FilePath);
+                if (recipe == null)
+                {
+                    SystemStatus = $"Failed to load recipe '{info.Name}'";
+                    return;
+                }
+
+                CurrentRecipe = recipe;
+                CurrentRecipeName = recipe.Name;
+                _currentRecipeFilePath = info.FilePath;
+                foreach (var cam in Cameras)
+                    cam.SetRecipe(recipe);
+
+                SystemStatus = $"WO {wo.OrderNo} → Recipe '{recipe.Name}' loaded";
+                LogService?.Log($"WO {wo.OrderNo} auto-loaded recipe '{recipe.Name}'", LogLevel.Success, "WorkOrder");
+
+                // Web 파라미터 동기화 — 이름 매칭
+                if (_parameterSyncService != null)
+                {
+                    var webRecipe = _parameterSyncService.Recipes
+                        .FirstOrDefault(r => string.Equals(r.Name, wo.RecipeName, StringComparison.OrdinalIgnoreCase));
+                    if (webRecipe != null)
+                        await _parameterSyncService.LoadRecipeAsync(webRecipe.Id);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService?.Log($"WO recipe auto-load failed: {ex.Message}", LogLevel.Error, "WorkOrder");
             }
         }
 

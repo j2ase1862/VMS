@@ -38,7 +38,8 @@
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="상태 필터:" Style="{StaticResource WindowFieldLabel}"
                                VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <ComboBox SelectedItem="{Binding StatusFilter}"
+                    <ComboBox SelectedValue="{Binding StatusFilter}"
+                              SelectedValuePath="Content"
                               Width="140"
                               Style="{StaticResource WindowDarkComboBox}">
                         <ComboBoxItem Content="활성"/>

@@ -76,138 +76,15 @@
                                Margin="12,0,0,0"/>
                 </StackPanel>
 
-                <!-- Center: Recipe info and controls -->
+                <!-- Center: 운영 흐름 (Operator → Work Order → AUTO RUN) -->
+                <!-- Grab/Live/Roller 는 Settings 사이드 패널의 Camera Control 섹션으로 이동 -->
+                <!-- Recipe 표시는 사이드 패널 Recipe 섹션에 있음 — 헤더에서 제거 -->
                 <StackPanel Grid.Column="1"
                             Orientation="Horizontal"
                             HorizontalAlignment="Center">
-                    <Border Background="#3D3D3D" CornerRadius="4" Padding="12,4" Margin="0,0,16,0">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE82D;"
-                                       FontFamily="Segoe MDL2 Assets"
-                                       Foreground="#808080"
-                                       VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding CurrentRecipeName}"
-                                       Foreground="White"
-                                       VerticalAlignment="Center"
-                                       Margin="8,0,0,0"/>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- Grab (single shot) -->
-                    <Button Background="#3D3D3D"
-                            Foreground="White"
-                            Command="{Binding GrabCommand}"
-                            IsEnabled="{Binding CanStartStop}"
-                            Visibility="{Binding IsLiveMode, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
-                            Style="{StaticResource ModernButton}"
-                            Margin="4,0">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE722;" FontFamily="Segoe MDL2 Assets" Foreground="#2196F3" Margin="0,0,6,0"/>
-                            <TextBlock Text="Grab"/>
-                        </StackPanel>
-                    </Button>
-
-                    <!-- Live Start/Stop buttons -->
-                    <Button Background="#3D3D3D"
-                            Foreground="White"
-                            Command="{Binding StartLiveCommand}"
-                            IsEnabled="{Binding CanStartStop}"
-                            Visibility="{Binding IsLiveMode, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
-                            Style="{StaticResource ModernButton}"
-                            Margin="4,0">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE714;" FontFamily="Segoe MDL2 Assets" Foreground="#4CAF50" Margin="0,0,6,0"/>
-                            <TextBlock Text="Live Start"/>
-                        </StackPanel>
-                    </Button>
-
-                    <Button Background="#3D3D3D"
-                            Foreground="White"
-                            Command="{Binding StopLiveCommand}"
-                            Visibility="{Binding IsLiveMode, Converter={StaticResource BoolToVisibilityConverter}}"
-                            Style="{StaticResource ModernButton}"
-                            Margin="4,0">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" Foreground="#FF9800" Margin="0,0,6,0"/>
-                            <TextBlock Text="Live Stop"/>
-                        </StackPanel>
-                    </Button>
-
-                    <!-- Roller Inspection Toggle -->
-                    <Button Foreground="White"
-                            Command="{Binding ToggleRollerInspectionCommand}"
-                            IsEnabled="{Binding CanStartStop}"
-                            Margin="4,0">
-                        <Button.Style>
-                            <Style TargetType="Button" BasedOn="{StaticResource ModernButton}">
-                                <Setter Property="Background" Value="#3D3D3D"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsRollerInspecting}" Value="True">
-                                        <Setter Property="Background" Value="#4A2020"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Text" Value="&#xE8B0;"/>
-                                        <Setter Property="Foreground" Value="#00ADB5"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsRollerInspecting}" Value="True">
-                                                <Setter Property="Foreground" Value="#F44336"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                            <TextBlock>
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Text" Value="Roller"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsRollerInspecting}" Value="True">
-                                                <Setter Property="Text" Value="Roller Stop"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                        </StackPanel>
-                    </Button>
-
-                    <!-- Separator before Start/Stop -->
-                    <Rectangle Width="1" Fill="#404040" Margin="8,10"/>
-
-                    <!-- Start/Stop buttons — Start is the ONE primary action -->
-                    <Button Background="#00ADB5"
-                            Foreground="White"
-                            Command="{Binding StartInspectionCommand}"
-                            IsEnabled="{Binding CanStartStop}"
-                            Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
-                            Style="{StaticResource ModernButton}"
-                            Margin="4,0">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0"/>
-                            <TextBlock Text="Start"/>
-                        </StackPanel>
-                    </Button>
-
-                    <Button Background="#4A2020"
-                            Foreground="White"
-                            Command="{Binding StopInspectionCommand}"
-                            Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}}"
-                            Style="{StaticResource ModernButton}"
-                            Margin="4,0">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" Foreground="#F44336" Margin="0,0,6,0"/>
-                            <TextBlock Text="Stop"/>
-                        </StackPanel>
-                    </Button>
 
                     <!-- ═══ Stage 1: 작업자 chip (Web 인증 — VMS LoginWindow의 시스템 사용자와 별개) ═══ -->
-                    <Border Background="#3D3D3D" CornerRadius="4" Padding="10,4" Margin="12,8,0,8"
+                    <Border Background="#3D3D3D" CornerRadius="4" Padding="10,4" Margin="0,8,0,8"
                             BorderBrush="#14B8A6" BorderThickness="1"
                             VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
@@ -285,6 +162,23 @@
                         </StackPanel>
                     </Border>
 
+                    <!-- 현재 로드된 Recipe 표시 (WO 선택 시 자동 로드 결과) -->
+                    <Border Background="#252525" CornerRadius="4" Padding="10,4" Margin="6,8,0,8"
+                            BorderBrush="#3D7DE8" BorderThickness="1"
+                            VerticalAlignment="Center"
+                            Visibility="{Binding CurrentRecipe, Converter={StaticResource NullToVisibilityConverter}}"
+                            ToolTip="현재 로드된 레시피 — 작업지시 선택 시 자동 로드">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE82D;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                       Foreground="#3D7DE8" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Text="Recipe:" Foreground="#3D7DE8" FontSize="10" FontWeight="SemiBold"
+                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Text="{Binding CurrentRecipeName}"
+                                       Foreground="White" FontSize="11" FontWeight="SemiBold"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
                     <!-- ═══ Phase 3: Inspection Context (Web 업로드 시 자동 첨부) ═══ -->
                     <Border Background="#3D3D3D" CornerRadius="4" Padding="10,4" Margin="6,8,0,8"
                             VerticalAlignment="Center"
@@ -317,6 +211,78 @@
                                     Cursor="Hand" ToolTip="모든 컨텍스트 필드 비우기"/>
                         </StackPanel>
                     </Border>
+
+                    <!-- ═══ AUTO RUN — 운영 흐름의 단일 Primary 액션 ═══ -->
+                    <Rectangle Width="1" Fill="#404040" Margin="14,10"/>
+
+                    <Button Command="{Binding StartInspectionCommand}"
+                            IsEnabled="{Binding CanStartStop}"
+                            Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
+                            Background="#00ADB5" Foreground="White"
+                            BorderThickness="0" Cursor="Hand"
+                            Padding="20,0" Margin="0,6,0,6"
+                            FontSize="13" FontWeight="Bold"
+                            ToolTip="검사 시작 — 카메라 연결 + 작업자 로그인 + 작업지시 선택 후 활성"
+                            ToolTipService.ShowOnDisabled="True">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}"
+                                        CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter VerticalAlignment="Center"
+                                                      HorizontalAlignment="Center"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Style.Triggers>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Background" Value="#2D5A5C"/>
+                                        <Setter Property="Foreground" Value="#7A9A9C"/>
+                                    </Trigger>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#12C1CA"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets"
+                                       FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="AUTO RUN" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Command="{Binding StopInspectionCommand}"
+                            Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}}"
+                            Background="#E53935" Foreground="White"
+                            BorderThickness="0" Cursor="Hand"
+                            Padding="20,0" Margin="0,6,0,6"
+                            FontSize="13" FontWeight="Bold">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}"
+                                        CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter VerticalAlignment="Center"
+                                                      HorizontalAlignment="Center"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#EF5350"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets"
+                                       FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="STOP" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
 
                 <!-- User Info (clickable for user switch) -->
@@ -583,6 +549,113 @@
                                    FontWeight="SemiBold"
                                    Foreground="White"
                                    Margin="0,0,0,16"/>
+
+                        <!-- Camera Control Section — 헤더에서 옮겨온 도구 액션 -->
+                        <Border Background="#3D3D3D"
+                                CornerRadius="8"
+                                Padding="12"
+                                Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="Camera Control"
+                                           FontWeight="SemiBold"
+                                           Foreground="#2196F3"
+                                           Margin="0,0,0,12"/>
+
+                                <!-- Grab (single shot) -->
+                                <Button Command="{Binding GrabCommand}"
+                                        IsEnabled="{Binding CanStartStop}"
+                                        Visibility="{Binding IsLiveMode, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
+                                        Background="#404040" Foreground="White"
+                                        Style="{StaticResource ModernButton}"
+                                        HorizontalAlignment="Stretch"
+                                        Margin="0,0,0,6"
+                                        ToolTipService.ShowOnDisabled="True"
+                                        ToolTip="단일 이미지 캡처">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE722;" FontFamily="Segoe MDL2 Assets"
+                                                   Foreground="#2196F3" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Grab"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- Live Start -->
+                                <Button Command="{Binding StartLiveCommand}"
+                                        IsEnabled="{Binding CanStartStop}"
+                                        Visibility="{Binding IsLiveMode, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
+                                        Background="#404040" Foreground="White"
+                                        Style="{StaticResource ModernButton}"
+                                        HorizontalAlignment="Stretch"
+                                        Margin="0,0,0,6"
+                                        ToolTipService.ShowOnDisabled="True"
+                                        ToolTip="연속 라이브 그랩 시작">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE714;" FontFamily="Segoe MDL2 Assets"
+                                                   Foreground="#4CAF50" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Live Start"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- Live Stop -->
+                                <Button Command="{Binding StopLiveCommand}"
+                                        Visibility="{Binding IsLiveMode, Converter={StaticResource BoolToVisibilityConverter}}"
+                                        Background="#404040" Foreground="White"
+                                        Style="{StaticResource ModernButton}"
+                                        HorizontalAlignment="Stretch"
+                                        Margin="0,0,0,6">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets"
+                                                   Foreground="#FF9800" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Live Stop"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- Roller Toggle -->
+                                <Button Command="{Binding ToggleRollerInspectionCommand}"
+                                        IsEnabled="{Binding CanStartStop}"
+                                        Foreground="White"
+                                        HorizontalAlignment="Stretch"
+                                        ToolTipService.ShowOnDisabled="True"
+                                        ToolTip="롤러 검사 모드 토글">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource ModernButton}">
+                                            <Setter Property="Background" Value="#404040"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsRollerInspecting}" Value="True">
+                                                    <Setter Property="Background" Value="#4A2020"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Text" Value="&#xE8B0;"/>
+                                                    <Setter Property="Foreground" Value="#00ADB5"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsRollerInspecting}" Value="True">
+                                                            <Setter Property="Foreground" Value="#F44336"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock>
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Text" Value="Roller"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsRollerInspecting}" Value="True">
+                                                            <Setter Property="Text" Value="Roller Stop"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Border>
 
                         <!-- Recipe Section -->
                         <Border Background="#3D3D3D"
