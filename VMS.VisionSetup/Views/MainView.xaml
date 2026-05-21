@@ -560,6 +560,44 @@
                                      VerticalAlignment="Center" GroupName="FolderNavMode" ToolTip="Auto Run Selected on navigate"
                                      IsChecked="{Binding FolderNavigationMode, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=AutoRunSelected}"/>
                     </StackPanel>
+
+                    <!-- ═══ Phase 3: Inspection Context (Web 업로드 시 자동 첨부) ═══ -->
+                    <Border Background="#1B2530" BorderBrush="#34465A" BorderThickness="1"
+                            CornerRadius="6" Padding="10,4" Margin="12,0,0,0" VerticalAlignment="Center"
+                            ToolTip="검사 결과 업로드 시 추적성 컨텍스트로 자동 첨부 (WO/Lot/Operator ID + Serial)">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Context:" Foreground="#14B8A6" FontSize="10" FontWeight="SemiBold"
+                                       VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="WO" Foreground="#9FB2C2" FontSize="10" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBox Text="{Binding WorkOrderIdText, UpdateSourceTrigger=PropertyChanged}"
+                                     Width="56" Height="22" FontSize="11"
+                                     Background="#0E1620" Foreground="#E6EDF3" BorderBrush="#22303C"
+                                     VerticalContentAlignment="Center" Padding="4,0"
+                                     ToolTip="WorkOrder ID (정수, 비우면 무시)"/>
+                            <TextBlock Text="Lot" Foreground="#9FB2C2" FontSize="10" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                            <TextBox Text="{Binding LotIdText, UpdateSourceTrigger=PropertyChanged}"
+                                     Width="56" Height="22" FontSize="11"
+                                     Background="#0E1620" Foreground="#E6EDF3" BorderBrush="#22303C"
+                                     VerticalContentAlignment="Center" Padding="4,0"
+                                     ToolTip="Lot ID (정수, 비우면 무시)"/>
+                            <TextBlock Text="Op" Foreground="#9FB2C2" FontSize="10" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                            <TextBox Text="{Binding OperatorIdText, UpdateSourceTrigger=PropertyChanged}"
+                                     Width="56" Height="22" FontSize="11"
+                                     Background="#0E1620" Foreground="#E6EDF3" BorderBrush="#22303C"
+                                     VerticalContentAlignment="Center" Padding="4,0"
+                                     ToolTip="Operator ID (정수, 비우면 무시)"/>
+                            <TextBlock Text="S/N" Foreground="#9FB2C2" FontSize="10" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                            <TextBox Text="{Binding SerialNumberText, UpdateSourceTrigger=PropertyChanged}"
+                                     Width="120" Height="22" FontSize="11"
+                                     Background="#0E1620" Foreground="#E6EDF3" BorderBrush="#22303C"
+                                     VerticalContentAlignment="Center" Padding="4,0"
+                                     ToolTip="제품 시리얼 (바코드 스캐너로 입력 가능)"/>
+                            <Button Content="Clear" Command="{Binding ClearInspectionContextCommand}"
+                                    Margin="8,0,0,0" Padding="8,2" FontSize="10"
+                                    Background="Transparent" Foreground="#9FB2C2" BorderBrush="#34465A" BorderThickness="1"
+                                    Cursor="Hand" ToolTip="모든 컨텍스트 필드 비우기"/>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
             </StackPanel>
         </Border>

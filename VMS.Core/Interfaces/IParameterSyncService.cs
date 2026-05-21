@@ -58,5 +58,15 @@ namespace VMS.Core.Interfaces
 
         /// <summary>검사 결과를 서버에 업로드</summary>
         Task<bool> UploadResultsAsync(int recipeId, List<ParameterResultDto> results);
+
+        // ─── Phase 3 추적성 컨텍스트 (UploadResultsAsync 호출 시 자동 첨부) ───
+        /// <summary>업로드 시 첨부할 작업지시 ID. null이면 미선택.</summary>
+        int? WorkOrderId { get; set; }
+        /// <summary>업로드 시 첨부할 Lot ID.</summary>
+        int? LotId { get; set; }
+        /// <summary>업로드 시 첨부할 작업자 ID.</summary>
+        int? OperatorId { get; set; }
+        /// <summary>업로드 시 첨부할 제품 시리얼 (바코드).</summary>
+        string? SerialNumber { get; set; }
     }
 }

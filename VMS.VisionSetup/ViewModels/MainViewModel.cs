@@ -89,6 +89,7 @@ namespace VMS.VisionSetup.ViewModels
         private readonly IParameterApplyService? _parameterApplyService;
         private readonly IImageAnalysisService? _imageAnalysisService;
         private readonly IRecipeRetrievalService? _recipeRetrievalService;
+        private readonly VMS.Core.Interfaces.IParameterSyncService? _parameterSyncService;
         private ChatWindow? _chatWindow;
         private Mat? _currentImage;
         private VisionToolBase? _subscribedTool;
@@ -149,6 +150,43 @@ namespace VMS.VisionSetup.ViewModels
         public string ImageFolderInfo => _imageFolderFiles.Length > 0
             ? $"{_currentImageIndex + 1} / {_imageFolderFiles.Length}  -  {System.IO.Path.GetFileName(_imageFolderFiles[_currentImageIndex])}"
             : string.Empty;
+
+        // ─── Phase 3 추적성 컨텍스트 (Web 업로드 시 자동 첨부) ───
+        // TextBox 바인딩 호환을 위해 string 프로퍼티. 값 변경 시 int.TryParse 해서 SyncService에 전달.
+        [ObservableProperty] private string _workOrderIdText = "";
+        [ObservableProperty] private string _lotIdText = "";
+        [ObservableProperty] private string _operatorIdText = "";
+        [ObservableProperty] private string _serialNumberText = "";
+
+        partial void OnWorkOrderIdTextChanged(string value)
+        {
+            if (_parameterSyncService != null)
+                _parameterSyncService.WorkOrderId = int.TryParse(value, out var v) ? v : null;
+        }
+        partial void OnLotIdTextChanged(string value)
+        {
+            if (_parameterSyncService != null)
+                _parameterSyncService.LotId = int.TryParse(value, out var v) ? v : null;
+        }
+        partial void OnOperatorIdTextChanged(string value)
+        {
+            if (_parameterSyncService != null)
+                _parameterSyncService.OperatorId = int.TryParse(value, out var v) ? v : null;
+        }
+        partial void OnSerialNumberTextChanged(string value)
+        {
+            if (_parameterSyncService != null)
+                _parameterSyncService.SerialNumber = string.IsNullOrWhiteSpace(value) ? null : value;
+        }
+
+        [RelayCommand]
+        private void ClearInspectionContext()
+        {
+            WorkOrderIdText = "";
+            LotIdText = "";
+            OperatorIdText = "";
+            SerialNumberText = "";
+        }
 
         // 표시용 이미지
         [ObservableProperty]
@@ -583,7 +621,8 @@ namespace VMS.VisionSetup.ViewModels
             ISLMChatService? chatService = null,
             IParameterApplyService? parameterApplyService = null,
             IImageAnalysisService? imageAnalysisService = null,
-            IRecipeRetrievalService? recipeRetrievalService = null)
+            IRecipeRetrievalService? recipeRetrievalService = null,
+            VMS.Core.Interfaces.IParameterSyncService? parameterSyncService = null)
         {
             _visionService = visionService;
             _recipeService = recipeService;
@@ -594,6 +633,7 @@ namespace VMS.VisionSetup.ViewModels
             _parameterApplyService = parameterApplyService;
             _imageAnalysisService = imageAnalysisService;
             _recipeRetrievalService = recipeRetrievalService;
+            _parameterSyncService = parameterSyncService;
 
             // AppSetup에서 생성된 로봇 서비스 적용 (연결은 사용자가 수동으로)
             _robotService = robotService;

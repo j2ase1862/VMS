@@ -208,6 +208,12 @@ namespace VMS.Core.Services
             }
         }
 
+        // ─── Phase 3 추적성 컨텍스트 ───
+        public int? WorkOrderId { get; set; }
+        public int? LotId { get; set; }
+        public int? OperatorId { get; set; }
+        public string? SerialNumber { get; set; }
+
         public async Task<bool> UploadResultsAsync(int recipeId, List<ParameterResultDto> results)
         {
             try
@@ -216,7 +222,11 @@ namespace VMS.Core.Services
                 {
                     ClientIndex = _clientIndex,
                     RecipeId = recipeId,
-                    Results = results
+                    Results = results,
+                    WorkOrderId = WorkOrderId,
+                    LotId = LotId,
+                    OperatorId = OperatorId,
+                    SerialNumber = SerialNumber
                 };
 
                 var json = JsonSerializer.Serialize(request, JsonOptions);
