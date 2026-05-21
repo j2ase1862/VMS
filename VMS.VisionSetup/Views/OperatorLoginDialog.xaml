@@ -18,6 +18,10 @@
                             UseAeroCaptionButtons="False"/>
     </shell:WindowChrome.WindowChrome>
 
+    <!-- WindowStyles 리소스는 코드 비하인드에서 InitializeComponent 직전에 Application.Resources 로 머지됨
+         (VMS Launcher 가 띄울 때도 동작하도록 EnsureWindowStylesMerged 사용). -->
+
+
     <Border Background="{StaticResource BrushBgWindow}"
             BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="1">
         <Grid>

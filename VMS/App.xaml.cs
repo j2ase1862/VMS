@@ -144,6 +144,18 @@ namespace VMS
                 Debug.WriteLine($"[App] OperatorAuthService init failed: {ex.Message}");
             }
 
+            // ── Work Order Client (Stage 2: 작업지시 목록) ──
+            VMS.Core.Services.WorkOrderClient? workOrderClient = null;
+            try
+            {
+                workOrderClient = new VMS.Core.Services.WorkOrderClient(
+                    systemConfig.WebServerUrl, systemConfig.ClientIndex);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] WorkOrderClient init failed: {ex.Message}");
+            }
+
             // ── Web Heartbeat Service ──
             HeartbeatService? heartbeatService = null;
             try
@@ -286,6 +298,7 @@ namespace VMS
                 () =>
                 {
                     operatorAuthService?.Dispose();
+                    workOrderClient?.Dispose();
                     ForceShutdown(mainViewModel, heartbeatService, parameterSyncService, sharedFrameWriter, plcConnection, autoProcessService);
                 },
                 autoProcessService,
@@ -298,13 +311,18 @@ namespace VMS
                 rollerInspectionService: rollerInspectionService,
                 heartbeatService: heartbeatService,
                 parameterSyncService: parameterSyncService,
-                operatorAuthService: operatorAuthService);
+                operatorAuthService: operatorAuthService,
+                workOrderClient: workOrderClient);
 
             var mainWindow = new MainWindow();
             mainWindow.DataContext = mainViewModel;
             MainWindow = mainWindow;
             mainWindow.Closed += (_, _) =>
+            {
+                operatorAuthService?.Dispose();
+                workOrderClient?.Dispose();
                 ForceShutdown(mainViewModel, heartbeatService, parameterSyncService, sharedFrameWriter, plcConnection, autoProcessService);
+            };
             mainWindow.Show();
 
             // ── 카메라 자동 연결 (UI 표시 후 백그라운드) ──

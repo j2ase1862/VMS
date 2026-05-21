@@ -184,6 +184,7 @@ namespace VMS.ViewModels
         private readonly HeartbeatService? _heartbeatService;
         private readonly IParameterSyncService? _parameterSyncService;
         private readonly VMS.Core.Services.OperatorAuthService? _operatorAuthService;
+        private readonly VMS.Core.Services.WorkOrderClient? _workOrderClient;
         private readonly Action _shutdownAction;
         private SystemConfiguration _systemConfig;
 
@@ -204,7 +205,8 @@ namespace VMS.ViewModels
             IRollerInspectionService? rollerInspectionService = null,
             HeartbeatService? heartbeatService = null,
             IParameterSyncService? parameterSyncService = null,
-            VMS.Core.Services.OperatorAuthService? operatorAuthService = null)
+            VMS.Core.Services.OperatorAuthService? operatorAuthService = null,
+            VMS.Core.Services.WorkOrderClient? workOrderClient = null)
         {
             _configService = configService;
             _recipeService = recipeService;
@@ -222,6 +224,7 @@ namespace VMS.ViewModels
             _heartbeatService = heartbeatService;
             _parameterSyncService = parameterSyncService;
             _operatorAuthService = operatorAuthService;
+            _workOrderClient = workOrderClient;
             _shutdownAction = shutdownAction;
             _systemConfig = new SystemConfiguration();
 
@@ -1118,16 +1121,41 @@ namespace VMS.ViewModels
         }
         private bool CanLogoutOperator() => _operatorAuthService != null && IsOperatorLoggedIn;
 
+        // Stage 2: 선택된 작업지시 (UI 표시 + ApplyContext)
+        [ObservableProperty] private VMS.Core.Models.ParameterSync.WorkOrderDto? _selectedWorkOrder;
+        public string SelectedWorkOrderText => SelectedWorkOrder == null
+            ? ""
+            : $"{SelectedWorkOrder.OrderNo} · {SelectedWorkOrder.ProductName} ({SelectedWorkOrder.ProgressText})";
+        partial void OnSelectedWorkOrderChanged(VMS.Core.Models.ParameterSync.WorkOrderDto? value)
+        {
+            OnPropertyChanged(nameof(SelectedWorkOrderText));
+            if (value != null)
+            {
+                // 컨텍스트 자동 채움 — Phase 3 추적성 필드
+                WorkOrderIdText = value.Id.ToString();
+                // Lot은 별도 — Stage 3에서 활성 Lot 찾기. 현재는 비움.
+            }
+        }
+
         [RelayCommand(CanExecute = nameof(CanOpenWorkOrderList))]
         private void OpenWorkOrderList()
         {
-            // Stage 2 자리만 잡음 — 작업 지시 목록 윈도우는 다음 작업.
-            _dialogService.ShowInformation(
-                "작업 지시 목록은 Stage 2에서 구현됩니다.\n\n" +
-                $"현재 로그인된 작업자: {CurrentOperatorName} ({CurrentOperatorEmployeeNumber})",
-                "Work Orders");
+            if (_workOrderClient == null)
+            {
+                _dialogService.ShowWarning("WorkOrder 클라이언트가 초기화되지 않았습니다.", "Work Orders");
+                return;
+            }
+            var dlg = new VMS.VisionSetup.Views.WorkOrderListWindow(_workOrderClient)
+            {
+                Owner = Application.Current?.Windows.Cast<Window>().FirstOrDefault(w => w.IsActive)
+                       ?? Application.Current?.MainWindow
+            };
+            if (dlg.ShowDialog() == true && dlg.Result != null)
+            {
+                SelectedWorkOrder = dlg.Result;
+            }
         }
-        private bool CanOpenWorkOrderList() => IsOperatorLoggedIn;
+        private bool CanOpenWorkOrderList() => IsOperatorLoggedIn && _workOrderClient != null;
 
         #endregion
     }
