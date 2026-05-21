@@ -156,6 +156,17 @@ namespace VMS
                 Debug.WriteLine($"[App] WorkOrderClient init failed: {ex.Message}");
             }
 
+            // ── Lot Client (B1: WO 선택 시 활성 Lot 자동 채움) ──
+            VMS.Core.Services.LotClient? lotClient = null;
+            try
+            {
+                lotClient = new VMS.Core.Services.LotClient(systemConfig.WebServerUrl);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] LotClient init failed: {ex.Message}");
+            }
+
             // ── Web Heartbeat Service ──
             HeartbeatService? heartbeatService = null;
             try
@@ -299,6 +310,7 @@ namespace VMS
                 {
                     operatorAuthService?.Dispose();
                     workOrderClient?.Dispose();
+                    lotClient?.Dispose();
                     ForceShutdown(mainViewModel, heartbeatService, parameterSyncService, sharedFrameWriter, plcConnection, autoProcessService);
                 },
                 autoProcessService,
@@ -312,7 +324,8 @@ namespace VMS
                 heartbeatService: heartbeatService,
                 parameterSyncService: parameterSyncService,
                 operatorAuthService: operatorAuthService,
-                workOrderClient: workOrderClient);
+                workOrderClient: workOrderClient,
+                lotClient: lotClient);
 
             var mainWindow = new MainWindow();
             mainWindow.DataContext = mainViewModel;
@@ -321,6 +334,7 @@ namespace VMS
             {
                 operatorAuthService?.Dispose();
                 workOrderClient?.Dispose();
+                lotClient?.Dispose();
                 ForceShutdown(mainViewModel, heartbeatService, parameterSyncService, sharedFrameWriter, plcConnection, autoProcessService);
             };
             mainWindow.Show();

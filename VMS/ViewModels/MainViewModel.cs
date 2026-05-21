@@ -190,6 +190,7 @@ namespace VMS.ViewModels
         private readonly IParameterSyncService? _parameterSyncService;
         private readonly VMS.Core.Services.OperatorAuthService? _operatorAuthService;
         private readonly VMS.Core.Services.WorkOrderClient? _workOrderClient;
+        private readonly VMS.Core.Services.LotClient? _lotClient;
         private readonly Action _shutdownAction;
         private SystemConfiguration _systemConfig;
 
@@ -211,7 +212,8 @@ namespace VMS.ViewModels
             HeartbeatService? heartbeatService = null,
             IParameterSyncService? parameterSyncService = null,
             VMS.Core.Services.OperatorAuthService? operatorAuthService = null,
-            VMS.Core.Services.WorkOrderClient? workOrderClient = null)
+            VMS.Core.Services.WorkOrderClient? workOrderClient = null,
+            VMS.Core.Services.LotClient? lotClient = null)
         {
             _configService = configService;
             _recipeService = recipeService;
@@ -230,6 +232,7 @@ namespace VMS.ViewModels
             _parameterSyncService = parameterSyncService;
             _operatorAuthService = operatorAuthService;
             _workOrderClient = workOrderClient;
+            _lotClient = lotClient;
             _shutdownAction = shutdownAction;
             _systemConfig = new SystemConfiguration();
 
@@ -1147,10 +1150,46 @@ namespace VMS.ViewModels
             {
                 // 컨텍스트 자동 채움 — Phase 3 추적성 필드
                 WorkOrderIdText = value.Id.ToString();
-                // Lot은 별도 — Stage 3에서 활성 Lot 찾기. 현재는 비움.
+                LotIdText = ""; // 활성 Lot 비동기 조회 결과 대기 — 그 동안은 비움
 
                 // WO 의 RecipeName 으로 레시피 자동 로드 (사이드 패널 로그인 우회)
                 _ = LoadRecipeFromWorkOrderAsync(value);
+
+                // B1: WO 의 활성 Lot 자동 채움
+                _ = LoadActiveLotForWorkOrderAsync(value.Id);
+            }
+            else
+            {
+                LotIdText = "";
+            }
+        }
+
+        /// <summary>B1 — Web 에서 WO 의 활성(Open) Lot 1개를 가져와 LotIdText 채움. 없으면 비워둠.</summary>
+        private async Task LoadActiveLotForWorkOrderAsync(int workOrderId)
+        {
+            if (_lotClient == null) return;
+            try
+            {
+                var lot = await _lotClient.GetActiveByWorkOrderAsync(workOrderId);
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    // 사용자가 그 사이 다른 WO 로 바꿨으면 무시
+                    if (SelectedWorkOrder == null || SelectedWorkOrder.Id != workOrderId) return;
+
+                    if (lot != null)
+                    {
+                        LotIdText = lot.Id.ToString();
+                        LogService?.Log($"WO {SelectedWorkOrder.OrderNo} → 활성 Lot '{lot.LotNumber}' 자동 채움", LogLevel.Info, "WorkOrder");
+                    }
+                    else
+                    {
+                        LogService?.Log($"WO {SelectedWorkOrder.OrderNo} 활성 Lot 없음 — LotIdText 비움", LogLevel.Info, "WorkOrder");
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                LogService?.Log($"활성 Lot 조회 실패: {ex.Message}", LogLevel.Warning, "WorkOrder");
             }
         }
 
