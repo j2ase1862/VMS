@@ -183,6 +183,7 @@ namespace VMS.ViewModels
         private readonly IRollerInspectionService? _rollerInspectionService;
         private readonly HeartbeatService? _heartbeatService;
         private readonly IParameterSyncService? _parameterSyncService;
+        private readonly VMS.Core.Services.OperatorAuthService? _operatorAuthService;
         private readonly Action _shutdownAction;
         private SystemConfiguration _systemConfig;
 
@@ -202,7 +203,8 @@ namespace VMS.ViewModels
             string plcIpAddress = "",
             IRollerInspectionService? rollerInspectionService = null,
             HeartbeatService? heartbeatService = null,
-            IParameterSyncService? parameterSyncService = null)
+            IParameterSyncService? parameterSyncService = null,
+            VMS.Core.Services.OperatorAuthService? operatorAuthService = null)
         {
             _configService = configService;
             _recipeService = recipeService;
@@ -219,6 +221,7 @@ namespace VMS.ViewModels
             _rollerInspectionService = rollerInspectionService;
             _heartbeatService = heartbeatService;
             _parameterSyncService = parameterSyncService;
+            _operatorAuthService = operatorAuthService;
             _shutdownAction = shutdownAction;
             _systemConfig = new SystemConfiguration();
 
@@ -226,6 +229,13 @@ namespace VMS.ViewModels
             if (_heartbeatService != null)
             {
                 _heartbeatService.ConnectionStatusChanged += OnWebConnectionStatusChanged;
+            }
+
+            // Stage 1: 작업자 세션 변경 시 ViewModel + SyncService 동기화
+            if (_operatorAuthService != null)
+            {
+                _operatorAuthService.SessionChanged += OnOperatorSessionChanged;
+                _ = _operatorAuthService.FetchCurrentSessionAsync();
             }
 
 
@@ -1014,5 +1024,111 @@ namespace VMS.ViewModels
                 IsWebConnected = connected;
             });
         }
+
+        #region Stage 1 — 작업자 로그인 + Phase 3 추적성 컨텍스트
+
+        // 작업자 로그인 상태
+        [ObservableProperty] private string _currentOperatorName = "";
+        [ObservableProperty] private string _currentOperatorEmployeeNumber = "";
+        [ObservableProperty] private bool _isOperatorLoggedIn;
+
+        // 검사 결과 업로드 시 자동 첨부될 추적성 컨텍스트 (Phase 3)
+        // TextBox 호환을 위해 string. int.TryParse → ParameterSyncService 에 propagate.
+        [ObservableProperty] private string _workOrderIdText = "";
+        [ObservableProperty] private string _lotIdText = "";
+        [ObservableProperty] private string _operatorIdText = "";
+        [ObservableProperty] private string _serialNumberText = "";
+
+        partial void OnWorkOrderIdTextChanged(string value)
+        {
+            if (_parameterSyncService != null)
+                _parameterSyncService.WorkOrderId = int.TryParse(value, out var v) ? v : null;
+        }
+        partial void OnLotIdTextChanged(string value)
+        {
+            if (_parameterSyncService != null)
+                _parameterSyncService.LotId = int.TryParse(value, out var v) ? v : null;
+        }
+        partial void OnOperatorIdTextChanged(string value)
+        {
+            if (_parameterSyncService != null)
+                _parameterSyncService.OperatorId = int.TryParse(value, out var v) ? v : null;
+        }
+        partial void OnSerialNumberTextChanged(string value)
+        {
+            if (_parameterSyncService != null)
+                _parameterSyncService.SerialNumber = string.IsNullOrWhiteSpace(value) ? null : value;
+        }
+
+        partial void OnIsOperatorLoggedInChanged(bool value)
+        {
+            OpenWorkOrderListCommand.NotifyCanExecuteChanged();
+            LoginOperatorCommand.NotifyCanExecuteChanged();
+            LogoutOperatorCommand.NotifyCanExecuteChanged();
+        }
+
+        private void OnOperatorSessionChanged(VMS.Core.Models.ParameterSync.OperatorSessionDto? session)
+        {
+            Application.Current?.Dispatcher.Invoke(() =>
+            {
+                if (session != null && session.IsActive)
+                {
+                    CurrentOperatorName = session.OperatorName;
+                    CurrentOperatorEmployeeNumber = session.EmployeeNumber;
+                    IsOperatorLoggedIn = true;
+                    OperatorIdText = session.OperatorId.ToString();
+                }
+                else
+                {
+                    CurrentOperatorName = "";
+                    CurrentOperatorEmployeeNumber = "";
+                    IsOperatorLoggedIn = false;
+                    OperatorIdText = "";
+                }
+            });
+        }
+
+        [RelayCommand]
+        private void ClearInspectionContext()
+        {
+            WorkOrderIdText = "";
+            LotIdText = "";
+            OperatorIdText = "";
+            SerialNumberText = "";
+        }
+
+        [RelayCommand(CanExecute = nameof(CanLoginOperator))]
+        private void LoginOperator()
+        {
+            if (_operatorAuthService == null) return;
+            var dlg = new VMS.VisionSetup.Views.OperatorLoginDialog(_operatorAuthService)
+            {
+                Owner = Application.Current?.Windows.Cast<Window>().FirstOrDefault(w => w.IsActive)
+                       ?? Application.Current?.MainWindow
+            };
+            dlg.ShowDialog();
+        }
+        private bool CanLoginOperator() => _operatorAuthService != null && !IsOperatorLoggedIn;
+
+        [RelayCommand(CanExecute = nameof(CanLogoutOperator))]
+        private async System.Threading.Tasks.Task LogoutOperatorAsync()
+        {
+            if (_operatorAuthService == null) return;
+            await _operatorAuthService.LogoutAsync();
+        }
+        private bool CanLogoutOperator() => _operatorAuthService != null && IsOperatorLoggedIn;
+
+        [RelayCommand(CanExecute = nameof(CanOpenWorkOrderList))]
+        private void OpenWorkOrderList()
+        {
+            // Stage 2 자리만 잡음 — 작업 지시 목록 윈도우는 다음 작업.
+            _dialogService.ShowInformation(
+                "작업 지시 목록은 Stage 2에서 구현됩니다.\n\n" +
+                $"현재 로그인된 작업자: {CurrentOperatorName} ({CurrentOperatorEmployeeNumber})",
+                "Work Orders");
+        }
+        private bool CanOpenWorkOrderList() => IsOperatorLoggedIn;
+
+        #endregion
     }
 }

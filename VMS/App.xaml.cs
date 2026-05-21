@@ -132,6 +132,18 @@ namespace VMS
                 Debug.WriteLine($"[App] ParameterSyncService init failed: {ex.Message}");
             }
 
+            // ── Operator Auth Service (Stage 1: 작업자 로그인) ──
+            VMS.Core.Services.OperatorAuthService? operatorAuthService = null;
+            try
+            {
+                operatorAuthService = new VMS.Core.Services.OperatorAuthService(
+                    systemConfig.WebServerUrl, systemConfig.ClientIndex);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] OperatorAuthService init failed: {ex.Message}");
+            }
+
             // ── Web Heartbeat Service ──
             HeartbeatService? heartbeatService = null;
             try
@@ -271,7 +283,11 @@ namespace VMS
                 dialogService,
                 processService,
                 inspectionService,
-                () => ForceShutdown(mainViewModel, heartbeatService, parameterSyncService, sharedFrameWriter, plcConnection, autoProcessService),
+                () =>
+                {
+                    operatorAuthService?.Dispose();
+                    ForceShutdown(mainViewModel, heartbeatService, parameterSyncService, sharedFrameWriter, plcConnection, autoProcessService);
+                },
                 autoProcessService,
                 userService,
                 logService,
@@ -281,7 +297,8 @@ namespace VMS
                 plcIpAddress: systemConfig.PlcIpAddress,
                 rollerInspectionService: rollerInspectionService,
                 heartbeatService: heartbeatService,
-                parameterSyncService: parameterSyncService);
+                parameterSyncService: parameterSyncService,
+                operatorAuthService: operatorAuthService);
 
             var mainWindow = new MainWindow();
             mainWindow.DataContext = mainViewModel;

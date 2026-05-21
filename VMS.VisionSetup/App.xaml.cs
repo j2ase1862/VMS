@@ -144,8 +144,7 @@ namespace VMS.VisionSetup
                 slmChatService,
                 parameterApplyService,
                 imageAnalysisService,
-                recipeRetrievalService,
-                parameterSyncService);
+                recipeRetrievalService);
 
             // AppSetup 기본 로봇 설정을 ViewModel에 적용 (레시피 미로드 시 기본값)
             if (robotConfig.isEnabled)

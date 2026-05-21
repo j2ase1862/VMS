@@ -205,6 +205,103 @@
                             <TextBlock Text="Stop"/>
                         </StackPanel>
                     </Button>
+
+                    <!-- ═══ Stage 1: 작업자 chip (Web 인증 — VMS LoginWindow의 시스템 사용자와 별개) ═══ -->
+                    <Border Background="#3D3D3D" CornerRadius="4" Padding="10,4" Margin="12,8,0,8"
+                            BorderBrush="#14B8A6" BorderThickness="1"
+                            VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Operator:" Foreground="#14B8A6" FontSize="10" FontWeight="SemiBold"
+                                       VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <Button Content="Login..." Command="{Binding LoginOperatorCommand}"
+                                    Padding="10,2" FontSize="11"
+                                    Background="#14B8A6" Foreground="White" BorderThickness="0"
+                                    Cursor="Hand" ToolTip="Web에 등록된 작업자(사번+PIN)로 로그인">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsOperatorLoggedIn}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <StackPanel Orientation="Horizontal">
+                                <StackPanel.Style>
+                                    <Style TargetType="StackPanel">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsOperatorLoggedIn}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </StackPanel.Style>
+                                <TextBlock Foreground="White" FontSize="12" FontWeight="SemiBold"
+                                           VerticalAlignment="Center">
+                                    <Run Text="{Binding CurrentOperatorName, Mode=OneWay}"/>
+                                    <Run Text=" ("/>
+                                    <Run Text="{Binding CurrentOperatorEmployeeNumber, Mode=OneWay}"
+                                         Foreground="#B0B0B0"/>
+                                    <Run Text=")"/>
+                                </TextBlock>
+                                <Button Content="Logout" Command="{Binding LogoutOperatorCommand}"
+                                        Margin="10,0,0,0" Padding="8,2" FontSize="10"
+                                        Background="Transparent" Foreground="#B0B0B0"
+                                        BorderBrush="#707070" BorderThickness="1"
+                                        Cursor="Hand"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Work Orders 버튼 (로그인 후만 활성) -->
+                    <Button Command="{Binding OpenWorkOrderListCommand}"
+                            Margin="6,8,0,8" Padding="12,4" FontSize="11" FontWeight="SemiBold"
+                            Background="#252525" Foreground="#14B8A6"
+                            BorderBrush="#14B8A6" BorderThickness="1"
+                            Cursor="Hand" VerticalAlignment="Center"
+                            ToolTip="작업 지시 목록 — 로그인 후 활성">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE8FD;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Text="Work Orders" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- ═══ Phase 3: Inspection Context (Web 업로드 시 자동 첨부) ═══ -->
+                    <Border Background="#3D3D3D" CornerRadius="4" Padding="10,4" Margin="6,8,0,8"
+                            VerticalAlignment="Center"
+                            ToolTip="검사 결과 업로드 시 자동 첨부 (WO/Lot/Op ID + Serial)">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Ctx:" Foreground="#14B8A6" FontSize="10" FontWeight="SemiBold"
+                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Text="WO" Foreground="#B0B0B0" FontSize="10" VerticalAlignment="Center" Margin="0,0,3,0"/>
+                            <TextBox Text="{Binding WorkOrderIdText, UpdateSourceTrigger=PropertyChanged}"
+                                     Width="50" Height="22" FontSize="11"
+                                     Background="#252525" Foreground="White" BorderBrush="#555"
+                                     VerticalContentAlignment="Center" Padding="4,0"
+                                     ToolTip="WorkOrder ID (정수)"/>
+                            <TextBlock Text="Lot" Foreground="#B0B0B0" FontSize="10" VerticalAlignment="Center" Margin="6,0,3,0"/>
+                            <TextBox Text="{Binding LotIdText, UpdateSourceTrigger=PropertyChanged}"
+                                     Width="50" Height="22" FontSize="11"
+                                     Background="#252525" Foreground="White" BorderBrush="#555"
+                                     VerticalContentAlignment="Center" Padding="4,0"
+                                     ToolTip="Lot ID (정수)"/>
+                            <TextBlock Text="S/N" Foreground="#B0B0B0" FontSize="10" VerticalAlignment="Center" Margin="6,0,3,0"/>
+                            <TextBox Text="{Binding SerialNumberText, UpdateSourceTrigger=PropertyChanged}"
+                                     Width="100" Height="22" FontSize="11"
+                                     Background="#252525" Foreground="White" BorderBrush="#555"
+                                     VerticalContentAlignment="Center" Padding="4,0"
+                                     ToolTip="제품 시리얼 (바코드 스캐너 OK)"/>
+                            <Button Content="✕" Command="{Binding ClearInspectionContextCommand}"
+                                    Margin="6,0,0,0" Padding="6,1" FontSize="10"
+                                    Background="Transparent" Foreground="#B0B0B0"
+                                    BorderBrush="#555" BorderThickness="1"
+                                    Cursor="Hand" ToolTip="모든 컨텍스트 필드 비우기"/>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
 
                 <!-- User Info (clickable for user switch) -->
