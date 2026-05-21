@@ -35,6 +35,9 @@ namespace VMS.Core.Interfaces
         /// <summary>캐시된 파라미터 수</summary>
         int CachedItemCount { get; }
 
+        /// <summary>C6 — 업로드 실패로 디스크 큐에 보존된 미전송 결과 개수.</summary>
+        int PendingUploadCount { get; }
+
         /// <summary>서버에서 조회된 레시피 목록</summary>
         List<RecipeSummaryDto> Recipes { get; }
 

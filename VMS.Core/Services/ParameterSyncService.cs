@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -28,6 +29,9 @@ namespace VMS.Core.Services
         private readonly object _cacheLock = new();
 
         private Timer? _periodicTimer;
+        private Timer? _retryTimer;
+        private readonly SemaphoreSlim _retryLock = new(1, 1);
+        private readonly string _queueDir;
         private bool _disposed;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
@@ -59,6 +63,27 @@ namespace VMS.Core.Services
             {
                 Timeout = TimeSpan.FromSeconds(10)
             };
+
+            // C6: 검사 결과 업로드 실패 시 디스크에 보존 (프로세스 재시작 후에도 복구)
+            _queueDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "BODA VISION AI", "upload_queue");
+            try { Directory.CreateDirectory(_queueDir); }
+            catch (Exception ex) { Debug.WriteLine($"[ParameterSync] queue dir create failed: {ex.Message}"); }
+
+            // 5초마다 큐 드레인 시도 — 시작 직후도 한 번 (이전 세션의 미전송 결과 복구)
+            _retryTimer = new Timer(_ => _ = TryDrainQueueAsync(),
+                null, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(5));
+        }
+
+        /// <summary>C6: 디스크 큐에 남아있는 미전송 결과 개수.</summary>
+        public int PendingUploadCount
+        {
+            get
+            {
+                try { return Directory.Exists(_queueDir) ? Directory.GetFiles(_queueDir, "*.json").Length : 0; }
+                catch { return 0; }
+            }
         }
 
         public async Task<bool> SyncRecipesAsync()
@@ -218,19 +243,31 @@ namespace VMS.Core.Services
 
         public async Task<bool> UploadResultsAsync(int recipeId, List<ParameterResultDto> results)
         {
+            var request = new ParameterResultUploadRequest
+            {
+                ClientIndex = _clientIndex,
+                RecipeId = recipeId,
+                Results = results,
+                WorkOrderId = WorkOrderId,
+                LotId = LotId,
+                OperatorId = OperatorId,
+                SerialNumber = SerialNumber
+            };
+
+            var ok = await TrySendAsync(request);
+            if (!ok)
+            {
+                // C6: 실패한 결과는 디스크에 보존 → retry timer 가 자동 재전송
+                EnqueueFailed(request);
+            }
+            return ok;
+        }
+
+        /// <summary>실제 HTTP POST + 응답에서 WO 진행률 이벤트 발생. 성공 = true.</summary>
+        private async Task<bool> TrySendAsync(ParameterResultUploadRequest request)
+        {
             try
             {
-                var request = new ParameterResultUploadRequest
-                {
-                    ClientIndex = _clientIndex,
-                    RecipeId = recipeId,
-                    Results = results,
-                    WorkOrderId = WorkOrderId,
-                    LotId = LotId,
-                    OperatorId = OperatorId,
-                    SerialNumber = SerialNumber
-                };
-
                 var json = JsonSerializer.Serialize(request, JsonOptions);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -243,7 +280,7 @@ namespace VMS.Core.Services
                     return false;
                 }
 
-                Debug.WriteLine($"[ParameterSync] Uploaded {results.Count} results for recipe {recipeId}");
+                Debug.WriteLine($"[ParameterSync] Uploaded {request.Results.Count} results for recipe {request.RecipeId}");
 
                 // Stage 3: 응답에서 WO 진행률 추출 → 이벤트 발생
                 try
@@ -279,12 +316,87 @@ namespace VMS.Core.Services
             }
         }
 
+        /// <summary>실패한 요청을 디스크 큐에 보존. 파일명 = timestamp+guid → 정렬 시 시간 순.</summary>
+        private void EnqueueFailed(ParameterResultUploadRequest request)
+        {
+            try
+            {
+                var filename = $"{DateTime.UtcNow:yyyyMMddHHmmssfff}_{Guid.NewGuid():N}.json";
+                var path = Path.Combine(_queueDir, filename);
+                var json = JsonSerializer.Serialize(request, JsonOptions);
+                File.WriteAllText(path, json, Encoding.UTF8);
+                Debug.WriteLine($"[ParameterSync] Queued failed upload → {filename} (pending: {PendingUploadCount})");
+            }
+            catch (Exception ex)
+            {
+                // 디스크 쓰기 실패 = 데이터 손실. 산업 환경에서는 알림 필요.
+                Debug.WriteLine($"[ParameterSync] CRITICAL: queue persist failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>큐를 시간 순으로 드레인. 첫 실패에서 멈춤 — 순서 보존 + 서버 다운 시 스팸 방지.</summary>
+        private async Task TryDrainQueueAsync()
+        {
+            if (_disposed) return;
+            // 동시 드레인 방지 — 5s 주기지만 한 번에 큐가 길면 다음 tick 과 겹칠 수 있음
+            if (!await _retryLock.WaitAsync(0)) return;
+            try
+            {
+                if (!Directory.Exists(_queueDir)) return;
+                var files = Directory.GetFiles(_queueDir, "*.json")
+                                     .OrderBy(f => f, StringComparer.Ordinal)
+                                     .ToList();
+                if (files.Count == 0) return;
+
+                foreach (var file in files)
+                {
+                    if (_disposed) break;
+                    ParameterResultUploadRequest? request;
+                    try
+                    {
+                        var json = await File.ReadAllTextAsync(file);
+                        request = JsonSerializer.Deserialize<ParameterResultUploadRequest>(json, JsonOptions);
+                    }
+                    catch (Exception ex)
+                    {
+                        // 손상된 파일 — 무한 재시도 방지로 제거 (마지막 수단)
+                        Debug.WriteLine($"[ParameterSync] queue file corrupted, deleting: {Path.GetFileName(file)} — {ex.Message}");
+                        try { File.Delete(file); } catch { }
+                        continue;
+                    }
+
+                    if (request == null)
+                    {
+                        try { File.Delete(file); } catch { }
+                        continue;
+                    }
+
+                    var ok = await TrySendAsync(request);
+                    if (ok)
+                    {
+                        try { File.Delete(file); } catch (Exception ex) { Debug.WriteLine($"[ParameterSync] queue file delete failed: {ex.Message}"); }
+                    }
+                    else
+                    {
+                        // 서버가 아직 안 살아남 — 멈춤. 다음 tick 에 다시 시도.
+                        break;
+                    }
+                }
+            }
+            finally
+            {
+                _retryLock.Release();
+            }
+        }
+
         public void Dispose()
         {
             if (_disposed) return;
             _disposed = true;
 
             _periodicTimer?.Dispose();
+            _retryTimer?.Dispose();
+            _retryLock.Dispose();
             _httpClient.Dispose();
         }
     }

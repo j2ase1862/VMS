@@ -1316,8 +1316,11 @@ namespace VMS.ViewModels
                 dlg.ShowDialog();
                 bool pickNext = dlg.PickNext;
 
-                // 어느 경우든 현재 WO 는 unselect — Completed 상태로 남아있으면 혼란 + AUTO RUN 비활성 유지
-                SelectedWorkOrder = null;
+                // C6: 큐 retry 결과로 stale 한 WO 가 완료될 수 있음 — 현재 선택과 일치할 때만 unselect.
+                if (SelectedWorkOrder?.Id == progress.Id)
+                {
+                    SelectedWorkOrder = null;
+                }
 
                 if (pickNext && OpenWorkOrderListCommand.CanExecute(null))
                 {
