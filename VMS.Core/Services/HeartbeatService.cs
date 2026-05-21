@@ -153,20 +153,59 @@ namespace VMS.Core.Services
                 if (checkResponse.StatusCode != HttpStatusCode.NotFound)
                     return;
 
-                // 2. Client 미등록 → VisionServer에 직접 등록
+                // 2. Client 미등록 → VisionServer에 직접 등록 (1차 시도)
                 //    VisionServer가 공유 DB에 INSERT하면 Web에서 자동 인식
                 Debug.WriteLine($"[Heartbeat] Registering Client Index={_clientIndex} on VisionServer...");
 
                 var registerJson = $"{{\"Name\":\"{_swName}\",\"IpAddress\":\"{EscapeJson(_ipAddress)}\",\"Index\":{_clientIndex}}}";
-                var registerResponse = await _httpClient.PostAsync(
-                    $"{_visionServerUrl}/api/v1/Clients",
-                    new StringContent(registerJson, Encoding.UTF8, "application/json"),
-                    ct);
-
-                if (registerResponse.IsSuccessStatusCode)
+                bool visionServerOk = false;
+                try
                 {
-                    Debug.WriteLine($"[Heartbeat] Client Index={_clientIndex} registered on VisionServer.");
+                    var registerResponse = await _httpClient.PostAsync(
+                        $"{_visionServerUrl}/api/v1/Clients",
+                        new StringContent(registerJson, Encoding.UTF8, "application/json"),
+                        ct);
+                    visionServerOk = registerResponse.IsSuccessStatusCode;
+                    if (!visionServerOk)
+                        Debug.WriteLine($"[Heartbeat] VisionServer registration failed: {registerResponse.StatusCode}");
+                }
+                catch (OperationCanceledException) { throw; }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[Heartbeat] VisionServer unreachable: {ex.Message}");
+                }
 
+                // 2-fallback. VisionServer 실패 → Web의 self-register 엔드포인트 직접 호출
+                //    (Phase 4: VisionServer 없이도 동작 가능하게 함)
+                if (!visionServerOk)
+                {
+                    Debug.WriteLine($"[Heartbeat] Falling back to Web /api/clients/register...");
+                    try
+                    {
+                        var webRegisterJson = $"{{\"clientIndex\":{_clientIndex},\"name\":\"{_swName}\",\"ipAddress\":\"{EscapeJson(_ipAddress)}\"}}";
+                        var webRegisterResponse = await _httpClient.PostAsync(
+                            $"{_webServerUrl}/api/clients/register",
+                            new StringContent(webRegisterJson, Encoding.UTF8, "application/json"),
+                            ct);
+                        if (webRegisterResponse.IsSuccessStatusCode)
+                        {
+                            Debug.WriteLine($"[Heartbeat] Web self-register succeeded for Index={_clientIndex}.");
+                            visionServerOk = true;  // 이후 heartbeat 재시도 진행
+                        }
+                        else
+                        {
+                            Debug.WriteLine($"[Heartbeat] Web self-register failed: {webRegisterResponse.StatusCode}");
+                        }
+                    }
+                    catch (OperationCanceledException) { throw; }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"[Heartbeat] Web self-register error: {ex.Message}");
+                    }
+                }
+
+                if (visionServerOk)
+                {
                     // 3. 등록 직후 heartbeat 재시도 (Web의 DB 동기화 대기)
                     for (int retry = 0; retry < 3; retry++)
                     {
@@ -186,12 +225,7 @@ namespace VMS.Core.Services
                         Debug.WriteLine($"[Heartbeat] Post-registration heartbeat attempt {retry + 1} returned {retryResponse.StatusCode}");
                     }
 
-                    // 재시도 모두 실패 — 다음 루프에서 다시 시도
                     Debug.WriteLine($"[Heartbeat] Post-registration heartbeat failed after 3 attempts.");
-                }
-                else
-                {
-                    Debug.WriteLine($"[Heartbeat] VisionServer registration failed: {registerResponse.StatusCode}");
                 }
             }
             catch (OperationCanceledException)
