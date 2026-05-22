@@ -125,6 +125,28 @@
                                          Foreground="#B0B0B0"/>
                                     <Run Text=")"/>
                                 </TextBlock>
+                                <!-- D10: Role 뱃지 — Lead/Supervisor 일 때만 표시 -->
+                                <Border CornerRadius="3" Padding="5,1" Margin="6,0,0,0"
+                                        VerticalAlignment="Center">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Setter Property="Background" Value="#3D7DE8"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding CurrentOperatorRole}" Value="Lead">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Setter Property="Background" Value="#3D7DE8"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding CurrentOperatorRole}" Value="Supervisor">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Setter Property="Background" Value="#E85D3D"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="{Binding CurrentOperatorRole}"
+                                               Foreground="White" FontSize="9" FontWeight="Bold"/>
+                                </Border>
                                 <Button Content="Logout" Command="{Binding LogoutOperatorCommand}"
                                         Margin="10,0,0,0" Height="22" Padding="8,0" FontSize="10"
                                         Background="Transparent" Foreground="#B0B0B0"
@@ -809,11 +831,12 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- External Tools Section -->
+                        <!-- External Tools Section — D10: Supervisor 전용 -->
                         <Border Background="#3D3D3D"
                                 CornerRadius="8"
                                 Padding="12"
-                                Margin="0,0,0,16">
+                                Margin="0,0,0,16"
+                                Visibility="{Binding CanSupervisor, Converter={StaticResource BoolToVisibilityConverter}}">
                             <StackPanel>
                                 <TextBlock Text="External Tools"
                                            FontWeight="SemiBold"

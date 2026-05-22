@@ -1075,7 +1075,24 @@ namespace VMS.ViewModels
         // 작업자 로그인 상태
         [ObservableProperty] private string _currentOperatorName = "";
         [ObservableProperty] private string _currentOperatorEmployeeNumber = "";
+        [ObservableProperty] private string _currentOperatorRole = "Operator";  // D10
         [ObservableProperty] private bool _isOperatorLoggedIn;
+
+        // D10 — Role 기반 메뉴 가시성. Web 통합 환경에서만 의미. Standalone 은 항상 true (제약 없음).
+        // Lead = 반장 (Recipe 편집, Camera Control). Supervisor = + 외부 도구 (Vision Tool / System Setup) + 사용자 관리.
+        public bool CanLeadOrAbove =>
+            _operatorAuthService == null
+            || (IsOperatorLoggedIn && (CurrentOperatorRole == VMS.Core.Models.ParameterSync.OperatorRoles.Lead
+                                       || CurrentOperatorRole == VMS.Core.Models.ParameterSync.OperatorRoles.Supervisor));
+        public bool CanSupervisor =>
+            _operatorAuthService == null
+            || (IsOperatorLoggedIn && CurrentOperatorRole == VMS.Core.Models.ParameterSync.OperatorRoles.Supervisor);
+
+        partial void OnCurrentOperatorRoleChanged(string value)
+        {
+            OnPropertyChanged(nameof(CanLeadOrAbove));
+            OnPropertyChanged(nameof(CanSupervisor));
+        }
 
         // 검사 결과 업로드 시 자동 첨부될 추적성 컨텍스트 (Phase 3)
         // TextBox 호환을 위해 string. int.TryParse → ParameterSyncService 에 propagate.
@@ -1111,6 +1128,8 @@ namespace VMS.ViewModels
             LoginOperatorCommand.NotifyCanExecuteChanged();
             LogoutOperatorCommand.NotifyCanExecuteChanged();
             OnPropertyChanged(nameof(CanStartStop));
+            OnPropertyChanged(nameof(CanLeadOrAbove));
+            OnPropertyChanged(nameof(CanSupervisor));
         }
 
         private void OnOperatorSessionChanged(VMS.Core.Models.ParameterSync.OperatorSessionDto? session)
@@ -1121,6 +1140,7 @@ namespace VMS.ViewModels
                 {
                     CurrentOperatorName = session.OperatorName;
                     CurrentOperatorEmployeeNumber = session.EmployeeNumber;
+                    CurrentOperatorRole = string.IsNullOrEmpty(session.Role) ? "Operator" : session.Role;
                     IsOperatorLoggedIn = true;
                     OperatorIdText = session.OperatorId.ToString();
                 }
@@ -1128,6 +1148,7 @@ namespace VMS.ViewModels
                 {
                     CurrentOperatorName = "";
                     CurrentOperatorEmployeeNumber = "";
+                    CurrentOperatorRole = "Operator";
                     IsOperatorLoggedIn = false;
                     OperatorIdText = "";
                 }
