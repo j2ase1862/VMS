@@ -33,6 +33,8 @@
   <ItemGroup>
     <Content Include="scripts\*.py">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <!-- Publish 시 제외 — VMS.VisionSetup 과 같은 경로 충돌 + 운영자 PC 에 불필요 -->
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </Content>
   </ItemGroup>
 
