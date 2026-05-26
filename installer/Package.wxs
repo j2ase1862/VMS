@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  BODA VMS MSI 패키지 매니페스트 (WiX v5).
+
+  UpgradeCode 는 절대 변경 금지 — 동일 코드 유지해야 v1.1 → v1.2 업그레이드 시
+  기존 버전이 자동 제거됨. 변경하면 두 버전이 동시 설치되어 충돌.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+
+  <Package
+    Name="BODA VMS"
+    Manufacturer="BODA Vision AI"
+    Version="$(var.Version)"
+    UpgradeCode="9F5D7B2A-3C8F-4E1B-9D6A-1B2C3D4E5F60"
+    Scope="perMachine"
+    Compressed="yes"
+    Codepage="65001"
+    InstallerVersion="500">
+
+    <SummaryInformation
+      Description="BODA Vision Management System Installer"
+      Manufacturer="BODA Vision AI" />
+
+    <!-- 이전 버전 자동 제거 (v1.1 → v1.2 등) -->
+    <MajorUpgrade
+      DowngradeErrorMessage="더 새 버전의 BODA VMS 가 이미 설치되어 있습니다. 먼저 제거하세요." />
+
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <!--
+      설치 폴더 구조:
+        C:\Program Files\BODA VMS\
+        시작 메뉴: 프로그램 \ BODA VMS \ BODA VMS
+    -->
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="BODA VMS" />
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="ApplicationProgramsFolder" Name="BODA VMS" />
+    </StandardDirectory>
+
+    <StandardDirectory Id="DesktopFolder" />
+
+    <!-- 메인 Feature -->
+    <Feature Id="MainFeature" Title="BODA VMS" Level="1"
+             Description="Vision Management System main application + dependencies"
+             Display="expand" ConfigurableDirectory="INSTALLFOLDER">
+      <ComponentGroupRef Id="PublishedFilesGroup" />
+      <ComponentGroupRef Id="ShortcutsGroup" />
+    </Feature>
+
+    <!-- VMS publish 출력 폴더 전체를 자동 harvesting -->
+    <ComponentGroup Id="PublishedFilesGroup" Directory="INSTALLFOLDER">
+      <Files Include="$(var.PublishDir)\**" />
+    </ComponentGroup>
+
+    <!-- 시작 메뉴 + 데스크톱 바로가기 -->
+    <ComponentGroup Id="ShortcutsGroup">
+      <Component Id="StartMenuShortcut" Directory="ApplicationProgramsFolder" Guid="{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}">
+        <Shortcut Id="StartMenuVMS"
+                  Name="BODA VMS"
+                  Description="BODA Vision Management System"
+                  Target="[INSTALLFOLDER]VMS.exe"
+                  WorkingDirectory="INSTALLFOLDER"
+                  Icon="VmsIcon.ico" />
+        <Shortcut Id="StartMenuUninstall"
+                  Name="Uninstall BODA VMS"
+                  Description="BODA VMS 제거"
+                  Target="[System64Folder]msiexec.exe"
+                  Arguments="/x [ProductCode]" />
+        <RemoveFolder Id="RemoveStartMenuFolder" Directory="ApplicationProgramsFolder" On="uninstall" />
+        <RegistryValue Root="HKCU"
+                       Key="Software\BODA Vision AI\VMS"
+                       Name="installed"
+                       Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+
+      <Component Id="DesktopShortcut" Directory="DesktopFolder" Guid="{B2C3D4E5-F6A7-8901-BCDE-F12345678901}">
+        <Shortcut Id="DesktopVMS"
+                  Name="BODA VMS"
+                  Description="BODA Vision Management System"
+                  Target="[INSTALLFOLDER]VMS.exe"
+                  WorkingDirectory="INSTALLFOLDER"
+                  Icon="VmsIcon.ico" />
+        <RegistryValue Root="HKCU"
+                       Key="Software\BODA Vision AI\VMS"
+                       Name="desktopShortcut"
+                       Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <!-- 시작 메뉴 / 데스크톱 바로가기 아이콘 — VMS 의 실행 아이콘 재사용 -->
+    <Icon Id="VmsIcon.ico" SourceFile="$(var.PublishDir)\VMS.exe" />
+
+    <!-- 제어판 "프로그램 및 기능" 표시용 메타 -->
+    <Property Id="ARPPRODUCTICON" Value="VmsIcon.ico" />
+    <Property Id="ARPHELPLINK" Value="https://github.com/j2ase1862/VMS" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/j2ase1862/VMS" />
+    <!-- ARPNOMODIFY 는 WixUI_InstallDir 가 이미 설정 — 중복 정의 금지 -->
+
+    <!-- UI: 표준 InstallDir 흐름 (Welcome → License → InstallDir → Confirm → Progress → Finish) -->
+    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+    <WixVariable Id="WixUILicenseRtf" Value="License.rtf" />
+
+  </Package>
+</Wix>

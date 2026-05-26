@@ -1,6 +1,7 @@
 using VMS.Camera.Models;
 using VMS.Camera.Services;
 using VMS.Core.Interfaces;
+using VMS.Core.Models.Predictive;
 using VMS.Core.Services;
 using VMS.Interfaces;
 using VMS.Models;
@@ -15,6 +16,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace VMS.ViewModels
@@ -23,6 +25,89 @@ namespace VMS.ViewModels
     {
         [ObservableProperty]
         private string _applicationTitle = "BODA Vision System";
+
+        #region Predictive Defect Rate Widget (Plan §5.3 V5)
+
+        /// <summary>
+        /// 가장 최근 폴링 결과. PredictionPollingService.PredictionUpdated 에서 UI 스레드로 마샬링되어 들어옴.
+        /// 파생 표시 properties(PredictionDisplayText/PredictionAccentBrush/PredictionTooltip)는
+        /// partial method OnCurrentPredictionChanged 에서 OnPropertyChanged 로 갱신.
+        /// </summary>
+        [ObservableProperty]
+        private PredictionCurrentDto? _currentPrediction;
+
+        partial void OnCurrentPredictionChanged(PredictionCurrentDto? value)
+        {
+            OnPropertyChanged(nameof(PredictionDisplayText));
+            OnPropertyChanged(nameof(PredictionAccentBrush));
+            OnPropertyChanged(nameof(PredictionTooltip));
+            OnPropertyChanged(nameof(IsPredictionAvailable));
+        }
+
+        public bool IsPredictionAvailable => CurrentPrediction != null;
+
+        public string PredictionDisplayText
+        {
+            get
+            {
+                var p = CurrentPrediction;
+                if (p is null) return "—";
+                if (p.Status == "ok" && p.PredictedNgRate.HasValue)
+                    return $"{p.PredictedNgRate.Value * 100:F1}%";
+                return p.Status switch
+                {
+                    "no_model" => "모델 미등록",
+                    "no_data"  => "데이터 없음",
+                    "error"    => "오류",
+                    _ => p.Status,
+                };
+            }
+        }
+
+        /// <summary>
+        /// 위젯 BorderBrush — 임계 색상(plan §5.3 "임계 초과 시 색 변경").
+        /// 정상 OK < 5% : Green, < 10% : Orange, ≥ 10% : Red. 비-ok 상태: Gray.
+        /// </summary>
+        public Brush PredictionAccentBrush
+        {
+            get
+            {
+                var p = CurrentPrediction;
+                if (p?.Status != "ok" || !p.PredictedNgRate.HasValue)
+                    return new SolidColorBrush(Color.FromRgb(0x70, 0x70, 0x70)); // gray
+                var pct = p.PredictedNgRate.Value * 100;
+                if (pct >= 10.0) return new SolidColorBrush(Color.FromRgb(0xF4, 0x43, 0x36)); // red
+                if (pct >= 5.0)  return new SolidColorBrush(Color.FromRgb(0xFF, 0x98, 0x00)); // orange
+                return new SolidColorBrush(Color.FromRgb(0x4C, 0xAF, 0x50)); // green
+            }
+        }
+
+        public string PredictionTooltip
+        {
+            get
+            {
+                var p = CurrentPrediction;
+                if (p is null) return "예측 데이터 수신 대기 중";
+                if (p.Status == "ok" && p.PredictedNgRate.HasValue)
+                {
+                    var pct = p.PredictedNgRate.Value * 100;
+                    var hour = p.WindowStart?.ToLocalTime().ToString("MM-dd HH:mm") ?? "?";
+                    return $"다음 1시간 예상 NG율: {pct:F2}%\n대상 윈도우: {hour}\n모델: {p.ModelName ?? "?"} v{p.ModelVersion ?? "?"}\n이번 시간 검사: {p.InspectionCountThisHour}건";
+                }
+                return string.IsNullOrEmpty(p.Message) ? p.Status : $"{p.Status}: {p.Message}";
+            }
+        }
+
+        private void OnPredictionUpdated(PredictionCurrentDto dto)
+        {
+            // Polling 서비스는 Timer 스레드에서 호출 — UI 바인딩은 dispatcher 필수
+            System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
+            {
+                CurrentPrediction = dto;
+            });
+        }
+
+        #endregion
 
         private bool _isSidePanelOpen;
         public bool IsSidePanelOpen
@@ -116,7 +201,16 @@ namespace VMS.ViewModels
         public bool CanLaunchVisionSetup => _userService?.HasPermission(UserPermission.LaunchVisionSetup) ?? true;
         public bool CanLaunchAppSetup => _userService?.HasPermission(UserPermission.LaunchAppSetup) ?? true;
         public bool HasConnectedCamera => Cameras.Any(c => c.IsConnected);
-        public bool CanStartStop => HasConnectedCamera && (_userService?.HasPermission(UserPermission.StartStop) ?? true);
+        public bool CanStartStop =>
+            HasConnectedCamera
+            && (_userService?.HasPermission(UserPermission.StartStop) ?? true)
+            // Web 통합 환경 (OperatorAuthService 존재) 에서는 Operator 로그인 + WO 선택 필수.
+            // OperatorAuthService 가 없으면 standalone — 기존 동작 유지.
+            && (_operatorAuthService == null
+                || (IsOperatorLoggedIn
+                    && SelectedWorkOrder != null
+                    // Completed/Closed 상태에서는 결과 업로드해도 카운터가 증가하지 않으므로 비활성.
+                    && (SelectedWorkOrder.Status == "Planned" || SelectedWorkOrder.Status == "InProgress")));
 
         // ── Equipment status (StatusBar) ──
         public string PlcVendorName { get; }
@@ -183,6 +277,12 @@ namespace VMS.ViewModels
         private readonly IRollerInspectionService? _rollerInspectionService;
         private readonly HeartbeatService? _heartbeatService;
         private readonly IParameterSyncService? _parameterSyncService;
+        private readonly VMS.Core.Services.OperatorAuthService? _operatorAuthService;
+        private readonly VMS.Core.Services.WorkOrderClient? _workOrderClient;
+        private readonly VMS.Core.Services.LotClient? _lotClient;
+        private readonly VMS.Core.Services.VmsHubClient? _vmsHubClient;
+        private readonly IPredictionPollingService? _predictionPollingService;
+        private int? _lastCompletedNotifiedWoId; // C5: 중복 Completed 알림 가드
         private readonly Action _shutdownAction;
         private SystemConfiguration _systemConfig;
 
@@ -202,7 +302,12 @@ namespace VMS.ViewModels
             string plcIpAddress = "",
             IRollerInspectionService? rollerInspectionService = null,
             HeartbeatService? heartbeatService = null,
-            IParameterSyncService? parameterSyncService = null)
+            IParameterSyncService? parameterSyncService = null,
+            VMS.Core.Services.OperatorAuthService? operatorAuthService = null,
+            VMS.Core.Services.WorkOrderClient? workOrderClient = null,
+            VMS.Core.Services.LotClient? lotClient = null,
+            VMS.Core.Services.VmsHubClient? vmsHubClient = null,
+            IPredictionPollingService? predictionPollingService = null)
         {
             _configService = configService;
             _recipeService = recipeService;
@@ -219,6 +324,11 @@ namespace VMS.ViewModels
             _rollerInspectionService = rollerInspectionService;
             _heartbeatService = heartbeatService;
             _parameterSyncService = parameterSyncService;
+            _operatorAuthService = operatorAuthService;
+            _workOrderClient = workOrderClient;
+            _lotClient = lotClient;
+            _vmsHubClient = vmsHubClient;
+            _predictionPollingService = predictionPollingService;
             _shutdownAction = shutdownAction;
             _systemConfig = new SystemConfiguration();
 
@@ -227,6 +337,45 @@ namespace VMS.ViewModels
             {
                 _heartbeatService.ConnectionStatusChanged += OnWebConnectionStatusChanged;
             }
+
+            // Stage 1: 작업자 세션 변경 시 ViewModel + SyncService 동기화
+            if (_operatorAuthService != null)
+            {
+                _operatorAuthService.SessionChanged += OnOperatorSessionChanged;
+                _ = _operatorAuthService.FetchCurrentSessionAsync();
+            }
+
+            // Stage 3: WO 진행률 / 완료 이벤트 구독 (서버가 업로드 응답에 포함)
+            if (_parameterSyncService != null)
+            {
+                _parameterSyncService.WorkOrderProgressed += OnWorkOrderProgressed;
+                _parameterSyncService.WorkOrderCompleted += OnWorkOrderCompletedFromServer;
+            }
+
+            // C5: SignalR — 다른 클라이언트의 업로드도 받아 헤더 칩 진행률 즉시 반영
+            if (_vmsHubClient != null)
+            {
+                _vmsHubClient.WorkOrderUpdated += OnWorkOrderProgressed;
+                _vmsHubClient.WorkOrderCompleted += OnWorkOrderCompletedFromServer;
+            }
+
+            // Plan §5.3 V5 — 예측 폴링 결과를 UI 스레드로 marshall
+            if (_predictionPollingService != null)
+            {
+                _predictionPollingService.PredictionUpdated += OnPredictionUpdated;
+            }
+
+            // D8: InspectionService 가 push 한 레코드에 WorkOrderNo 보강 (Id 만 가지고 있음).
+            // RecordAdded 는 UI 스레드에서 발생 (Add 가 Dispatcher.Invoke 함).
+            VMS.Core.Services.RecentInspectionsService.Instance.RecordAdded += record =>
+            {
+                if (record.WorkOrderId.HasValue
+                    && SelectedWorkOrder?.Id == record.WorkOrderId
+                    && string.IsNullOrEmpty(record.WorkOrderNo))
+                {
+                    record.WorkOrderNo = SelectedWorkOrder.OrderNo;
+                }
+            };
 
 
             // Subscribe to PLC connection state changes
@@ -295,6 +444,9 @@ namespace VMS.ViewModels
             OnPropertyChanged(nameof(CanLaunchVisionSetup));
             OnPropertyChanged(nameof(CanLaunchAppSetup));
             OnPropertyChanged(nameof(CanStartStop));
+            // VMS 시스템 사용자 변경 시 Role-게이트 properties 도 재평가 (Admin 우회 통과 반영)
+            OnPropertyChanged(nameof(CanLeadOrAbove));
+            OnPropertyChanged(nameof(CanSupervisor));
         }
 
         /// <summary>
@@ -1014,5 +1166,353 @@ namespace VMS.ViewModels
                 IsWebConnected = connected;
             });
         }
+
+        #region Stage 1 — 작업자 로그인 + Phase 3 추적성 컨텍스트
+
+        // 작업자 로그인 상태
+        [ObservableProperty] private string _currentOperatorName = "";
+        [ObservableProperty] private string _currentOperatorEmployeeNumber = "";
+        [ObservableProperty] private string _currentOperatorRole = "Operator";  // D10
+        [ObservableProperty] private bool _isOperatorLoggedIn;
+
+        // D10 — Role 기반 메뉴 가시성. Web 통합 환경에서만 의미. Standalone 은 항상 true (제약 없음).
+        // Lead = 반장 (Recipe 편집, Camera Control). Supervisor = + 외부 도구 (Vision Tool / System Setup) + 사용자 관리.
+        // VMS 시스템 Admin (IUserService) 은 Web Operator 역할과 무관하게 통과 — 보안 모델상 최상위 우회 권한.
+        public bool CanLeadOrAbove =>
+            _operatorAuthService == null
+            || _userService?.CurrentUser?.Grade == UserGrade.Admin
+            || (IsOperatorLoggedIn && (CurrentOperatorRole == VMS.Core.Models.ParameterSync.OperatorRoles.Lead
+                                       || CurrentOperatorRole == VMS.Core.Models.ParameterSync.OperatorRoles.Supervisor));
+        public bool CanSupervisor =>
+            _operatorAuthService == null
+            || _userService?.CurrentUser?.Grade == UserGrade.Admin
+            || (IsOperatorLoggedIn && CurrentOperatorRole == VMS.Core.Models.ParameterSync.OperatorRoles.Supervisor);
+
+        partial void OnCurrentOperatorRoleChanged(string value)
+        {
+            OnPropertyChanged(nameof(CanLeadOrAbove));
+            OnPropertyChanged(nameof(CanSupervisor));
+        }
+
+        // 검사 결과 업로드 시 자동 첨부될 추적성 컨텍스트 (Phase 3)
+        // TextBox 호환을 위해 string. int.TryParse → ParameterSyncService 에 propagate.
+        [ObservableProperty] private string _workOrderIdText = "";
+        [ObservableProperty] private string _lotIdText = "";
+        [ObservableProperty] private string _operatorIdText = "";
+        [ObservableProperty] private string _serialNumberText = "";
+
+        partial void OnWorkOrderIdTextChanged(string value)
+        {
+            if (_parameterSyncService != null)
+                _parameterSyncService.WorkOrderId = int.TryParse(value, out var v) ? v : null;
+        }
+        partial void OnLotIdTextChanged(string value)
+        {
+            if (_parameterSyncService != null)
+                _parameterSyncService.LotId = int.TryParse(value, out var v) ? v : null;
+        }
+        partial void OnOperatorIdTextChanged(string value)
+        {
+            if (_parameterSyncService != null)
+                _parameterSyncService.OperatorId = int.TryParse(value, out var v) ? v : null;
+        }
+        partial void OnSerialNumberTextChanged(string value)
+        {
+            if (_parameterSyncService != null)
+                _parameterSyncService.SerialNumber = string.IsNullOrWhiteSpace(value) ? null : value;
+        }
+
+        partial void OnIsOperatorLoggedInChanged(bool value)
+        {
+            OpenWorkOrderListCommand.NotifyCanExecuteChanged();
+            LoginOperatorCommand.NotifyCanExecuteChanged();
+            LogoutOperatorCommand.NotifyCanExecuteChanged();
+            OnPropertyChanged(nameof(CanStartStop));
+            OnPropertyChanged(nameof(CanLeadOrAbove));
+            OnPropertyChanged(nameof(CanSupervisor));
+        }
+
+        private void OnOperatorSessionChanged(VMS.Core.Models.ParameterSync.OperatorSessionDto? session)
+        {
+            Application.Current?.Dispatcher.Invoke(() =>
+            {
+                if (session != null && session.IsActive)
+                {
+                    CurrentOperatorName = session.OperatorName;
+                    CurrentOperatorEmployeeNumber = session.EmployeeNumber;
+                    CurrentOperatorRole = string.IsNullOrEmpty(session.Role) ? "Operator" : session.Role;
+                    IsOperatorLoggedIn = true;
+                    OperatorIdText = session.OperatorId.ToString();
+                }
+                else
+                {
+                    CurrentOperatorName = "";
+                    CurrentOperatorEmployeeNumber = "";
+                    CurrentOperatorRole = "Operator";
+                    IsOperatorLoggedIn = false;
+                    OperatorIdText = "";
+                }
+            });
+        }
+
+        [RelayCommand]
+        private void ClearInspectionContext()
+        {
+            WorkOrderIdText = "";
+            LotIdText = "";
+            OperatorIdText = "";
+            SerialNumberText = "";
+        }
+
+        [RelayCommand(CanExecute = nameof(CanLoginOperator))]
+        private void LoginOperator()
+        {
+            if (_operatorAuthService == null) return;
+            var dlg = new VMS.VisionSetup.Views.OperatorLoginDialog(_operatorAuthService)
+            {
+                Owner = Application.Current?.Windows.Cast<Window>().FirstOrDefault(w => w.IsActive)
+                       ?? Application.Current?.MainWindow
+            };
+            dlg.ShowDialog();
+        }
+        private bool CanLoginOperator() => _operatorAuthService != null && !IsOperatorLoggedIn;
+
+        [RelayCommand(CanExecute = nameof(CanLogoutOperator))]
+        private async System.Threading.Tasks.Task LogoutOperatorAsync()
+        {
+            if (_operatorAuthService == null) return;
+            await _operatorAuthService.LogoutAsync();
+        }
+        private bool CanLogoutOperator() => _operatorAuthService != null && IsOperatorLoggedIn;
+
+        // Stage 2: 선택된 작업지시 (UI 표시 + ApplyContext)
+        [ObservableProperty] private VMS.Core.Models.ParameterSync.WorkOrderDto? _selectedWorkOrder;
+        public string SelectedWorkOrderText => SelectedWorkOrder == null
+            ? ""
+            : $"{SelectedWorkOrder.OrderNo} · {SelectedWorkOrder.ProductName} ({SelectedWorkOrder.ProgressText})";
+
+        // B4: 헤더 WO 칩의 ProgressBar 시각화용 — 0~100 percent
+        public double SelectedWorkOrderProgressPercent =>
+            SelectedWorkOrder?.PlannedQuantity > 0
+                ? System.Math.Min(100.0, (double)SelectedWorkOrder.ProducedQuantity / SelectedWorkOrder.PlannedQuantity * 100.0)
+                : 0;
+        public bool HasSelectedWorkOrderProgress =>
+            SelectedWorkOrder != null && SelectedWorkOrder.PlannedQuantity > 0;
+
+        // D8: 최근 검사 히스토리 서비스 — XAML 바인딩용
+        public VMS.Core.Services.RecentInspectionsService RecentInspections =>
+            VMS.Core.Services.RecentInspectionsService.Instance;
+
+        [RelayCommand]
+        private void ClearRecentInspections()
+        {
+            RecentInspections.Clear();
+            OnPropertyChanged(nameof(RecentInspections));
+        }
+        partial void OnSelectedWorkOrderChanged(VMS.Core.Models.ParameterSync.WorkOrderDto? value)
+        {
+            OnPropertyChanged(nameof(SelectedWorkOrderText));
+            OnPropertyChanged(nameof(CanStartStop));
+            OnPropertyChanged(nameof(SelectedWorkOrderProgressPercent));
+            OnPropertyChanged(nameof(HasSelectedWorkOrderProgress));
+
+            // C5: WO 가 바뀌면 완료 알림 가드 리셋 (새 WO 가 완료될 때 다시 알림 가능하도록).
+            if (value?.Id != _lastCompletedNotifiedWoId)
+                _lastCompletedNotifiedWoId = null;
+            if (value != null)
+            {
+                // 컨텍스트 자동 채움 — Phase 3 추적성 필드
+                WorkOrderIdText = value.Id.ToString();
+                LotIdText = ""; // 활성 Lot 비동기 조회 결과 대기 — 그 동안은 비움
+
+                // WO 의 RecipeName 으로 레시피 자동 로드 (사이드 패널 로그인 우회)
+                _ = LoadRecipeFromWorkOrderAsync(value);
+
+                // B1: WO 의 활성 Lot 자동 채움
+                _ = LoadActiveLotForWorkOrderAsync(value.Id);
+            }
+            else
+            {
+                LotIdText = "";
+            }
+        }
+
+        /// <summary>B1 — Web 에서 WO 의 활성(Open) Lot 1개를 가져와 LotIdText 채움. 없으면 비워둠.</summary>
+        private async Task LoadActiveLotForWorkOrderAsync(int workOrderId)
+        {
+            if (_lotClient == null) return;
+            try
+            {
+                var lot = await _lotClient.GetActiveByWorkOrderAsync(workOrderId);
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    // 사용자가 그 사이 다른 WO 로 바꿨으면 무시
+                    if (SelectedWorkOrder == null || SelectedWorkOrder.Id != workOrderId) return;
+
+                    if (lot != null)
+                    {
+                        LotIdText = lot.Id.ToString();
+                        LogService?.Log($"WO {SelectedWorkOrder.OrderNo} → 활성 Lot '{lot.LotNumber}' 자동 채움", LogLevel.Info, "WorkOrder");
+                    }
+                    else
+                    {
+                        LogService?.Log($"WO {SelectedWorkOrder.OrderNo} 활성 Lot 없음 — LotIdText 비움", LogLevel.Info, "WorkOrder");
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                LogService?.Log($"활성 Lot 조회 실패: {ex.Message}", LogLevel.Warning, "WorkOrder");
+            }
+        }
+
+        /// <summary>
+        /// 선택된 WO 의 RecipeName 으로 로컬 레시피를 찾아 자동 로드.
+        /// 로컬에 없으면 Web 레시피를 동기화 후 재시도. Web 파라미터도 매칭되면 함께 로드.
+        /// 사이드 패널의 별도 사용자 로그인을 거치지 않는다 — Operator 로그인 만으로 충분.
+        /// </summary>
+        private async Task LoadRecipeFromWorkOrderAsync(VMS.Core.Models.ParameterSync.WorkOrderDto wo)
+        {
+            if (string.IsNullOrWhiteSpace(wo.RecipeName)) return;
+
+            try
+            {
+                var info = _recipeService.GetRecipeList()
+                    .FirstOrDefault(r => string.Equals(r.Name, wo.RecipeName, StringComparison.OrdinalIgnoreCase));
+
+                // 로컬에 없으면 Web 동기화 후 재시도
+                if (info == null && _parameterSyncService != null)
+                {
+                    await SyncWebRecipesToLocalAsync();
+                    info = _recipeService.GetRecipeList()
+                        .FirstOrDefault(r => string.Equals(r.Name, wo.RecipeName, StringComparison.OrdinalIgnoreCase));
+                }
+
+                if (info == null)
+                {
+                    SystemStatus = $"Recipe '{wo.RecipeName}' not found (WO {wo.OrderNo})";
+                    LogService?.Log($"WO {wo.OrderNo}: recipe '{wo.RecipeName}' not found locally or on Web", LogLevel.Warning, "WorkOrder");
+                    return;
+                }
+
+                if (CurrentRecipe?.Id == info.Id) return; // 이미 로드됨 — 스킵
+
+                var recipe = _recipeService.LoadRecipe(info.FilePath);
+                if (recipe == null)
+                {
+                    SystemStatus = $"Failed to load recipe '{info.Name}'";
+                    return;
+                }
+
+                CurrentRecipe = recipe;
+                CurrentRecipeName = recipe.Name;
+                _currentRecipeFilePath = info.FilePath;
+                foreach (var cam in Cameras)
+                    cam.SetRecipe(recipe);
+
+                SystemStatus = $"WO {wo.OrderNo} → Recipe '{recipe.Name}' loaded";
+                LogService?.Log($"WO {wo.OrderNo} auto-loaded recipe '{recipe.Name}'", LogLevel.Success, "WorkOrder");
+
+                // Web 파라미터 동기화 — 이름 매칭
+                if (_parameterSyncService != null)
+                {
+                    var webRecipe = _parameterSyncService.Recipes
+                        .FirstOrDefault(r => string.Equals(r.Name, wo.RecipeName, StringComparison.OrdinalIgnoreCase));
+                    if (webRecipe != null)
+                        await _parameterSyncService.LoadRecipeAsync(webRecipe.Id);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService?.Log($"WO recipe auto-load failed: {ex.Message}", LogLevel.Error, "WorkOrder");
+            }
+        }
+
+        // Stage 3: 검사 결과 업로드 응답에서 WO 진행률 갱신
+        private void OnWorkOrderProgressed(VMS.Core.Models.ParameterSync.WorkOrderProgressDto progress)
+        {
+            Application.Current?.Dispatcher.Invoke(() =>
+            {
+                if (SelectedWorkOrder == null || SelectedWorkOrder.Id != progress.Id) return;
+
+                SelectedWorkOrder.ProducedQuantity = progress.ProducedQuantity;
+                SelectedWorkOrder.PassQuantity = progress.PassQuantity;
+                SelectedWorkOrder.NgQuantity = progress.NgQuantity;
+                SelectedWorkOrder.Status = progress.Status;
+
+                // DTO 필드 변경은 INPC 를 발생시키지 않으므로 수동 알림.
+                // CanStartStop 은 Status 도 보므로 함께 갱신.
+                OnPropertyChanged(nameof(SelectedWorkOrderText));
+                OnPropertyChanged(nameof(CanStartStop));
+                OnPropertyChanged(nameof(SelectedWorkOrderProgressPercent));
+            });
+        }
+
+        // Stage 3 / B2 / C5: 계획 수량 도달 — 알람 + AUTO RUN 자동 정지 + 다음 WO 선택 흐름.
+        // 응답 파싱과 SignalR 둘 다에서 같은 이벤트가 올 수 있으므로 _lastCompletedNotifiedWoId 가드.
+        private void OnWorkOrderCompletedFromServer(VMS.Core.Models.ParameterSync.WorkOrderProgressDto progress)
+        {
+            Application.Current?.Dispatcher.Invoke(() =>
+            {
+                // 같은 WO 에 대해 이미 알림을 띄웠으면 skip (응답 + SignalR 중복 차단)
+                if (_lastCompletedNotifiedWoId == progress.Id) return;
+                _lastCompletedNotifiedWoId = progress.Id;
+
+                LogService?.Log(
+                    $"WO {progress.OrderNo} 계획 수량 도달 — Completed ({progress.ProducedQuantity}/{progress.PlannedQuantity}, Pass {progress.PassQuantity} / NG {progress.NgQuantity})",
+                    LogLevel.Success, "WorkOrder");
+
+                SystemStatus = $"✓ WO {progress.OrderNo} 완료 — {progress.ProducedQuantity}/{progress.PlannedQuantity}";
+
+                // AUTO RUN 자동 정지 (실행 중일 때만)
+                bool wasRunning = IsRunning;
+                if (wasRunning)
+                {
+                    _ = StopInspectionAsync();
+                }
+
+                // B3: 큰 다이얼로그 + 사운드 + KPI 카드. 결과 = "다음 작업지시 선택" / "닫기".
+                var dlg = new VMS.VisionSetup.Views.WorkOrderCompletedDialog(progress)
+                {
+                    Owner = Application.Current?.Windows.Cast<Window>().FirstOrDefault(w => w.IsActive)
+                           ?? Application.Current?.MainWindow
+                };
+                dlg.ShowDialog();
+                bool pickNext = dlg.PickNext;
+
+                // C6: 큐 retry 결과로 stale 한 WO 가 완료될 수 있음 — 현재 선택과 일치할 때만 unselect.
+                if (SelectedWorkOrder?.Id == progress.Id)
+                {
+                    SelectedWorkOrder = null;
+                }
+
+                if (pickNext && OpenWorkOrderListCommand.CanExecute(null))
+                {
+                    OpenWorkOrderListCommand.Execute(null);
+                }
+            });
+        }
+
+        [RelayCommand(CanExecute = nameof(CanOpenWorkOrderList))]
+        private void OpenWorkOrderList()
+        {
+            if (_workOrderClient == null)
+            {
+                _dialogService.ShowWarning("WorkOrder 클라이언트가 초기화되지 않았습니다.", "Work Orders");
+                return;
+            }
+            var dlg = new VMS.VisionSetup.Views.WorkOrderListWindow(_workOrderClient)
+            {
+                Owner = Application.Current?.Windows.Cast<Window>().FirstOrDefault(w => w.IsActive)
+                       ?? Application.Current?.MainWindow
+            };
+            if (dlg.ShowDialog() == true && dlg.Result != null)
+            {
+                SelectedWorkOrder = dlg.Result;
+            }
+        }
+        private bool CanOpenWorkOrderList() => IsOperatorLoggedIn && _workOrderClient != null;
+
+        #endregion
     }
 }

@@ -50,7 +50,8 @@ namespace VMS.VisionSetup.Services.BatchTesting
 
             // 2) 헤더 작성
             var header = new List<string> { "image_path", "success", "total_ms", "failure_reason",
-                                             "thresholds_passed", "threshold_violations" };
+                                             "thresholds_passed", "threshold_violations",
+                                             "golden_has_entry", "golden_passed", "golden_mismatches" };
             foreach (var (tool, keys) in toolColumns)
                 foreach (var k in keys)
                     header.Add($"{SanitizeColumn(tool.Name)}.{k}");
@@ -68,7 +69,10 @@ namespace VMS.VisionSetup.Services.BatchTesting
                     r.TotalMs.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
                     r.FailureReason ?? string.Empty,
                     r.ThresholdsPassed ? "true" : "false",
-                    string.Join(" | ", r.ThresholdViolations ?? new List<string>())
+                    string.Join(" | ", r.ThresholdViolations ?? new List<string>()),
+                    r.HasGoldenEntry ? "true" : "false",
+                    r.GoldenPassed ? "true" : "false",
+                    string.Join(" | ", r.GoldenMismatches ?? new List<string>())
                 };
 
                 foreach (var (tool, keys) in toolColumns)

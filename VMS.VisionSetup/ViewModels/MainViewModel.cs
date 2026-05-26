@@ -150,6 +150,7 @@ namespace VMS.VisionSetup.ViewModels
             ? $"{_currentImageIndex + 1} / {_imageFolderFiles.Length}  -  {System.IO.Path.GetFileName(_imageFolderFiles[_currentImageIndex])}"
             : string.Empty;
 
+
         // 표시용 이미지
         [ObservableProperty]
         private ImageSource? _displayImage;

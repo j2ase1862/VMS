@@ -1,0 +1,14 @@
+<Project>
+  <!--
+    솔루션 공용 버전. 모든 .csproj 가 자동 상속.
+    릴리스마다 이 파일만 갱신하면 됨.
+  -->
+  <PropertyGroup>
+    <Version>1.1.0</Version>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <FileVersion>1.1.0.0</FileVersion>
+    <Company>BODA Vision AI</Company>
+    <Product>BODA VMS</Product>
+    <Copyright>Copyright © BODA Vision AI 2026</Copyright>
+  </PropertyGroup>
+</Project>

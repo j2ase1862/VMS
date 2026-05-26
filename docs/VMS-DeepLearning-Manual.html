@@ -1,0 +1,667 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>VMS.DeepLearning 매뉴얼 v1.1</title>
+<style>
+  :root {
+    --bg: #0e0f12; --panel: #1a1b1f; --card: #25272d; --border: #3a3d44;
+    --text: #e8e9ec; --muted: #9b9ea4; --accent: #14b8a6; --primary: #3d7de8;
+    --warn: #f59e0b; --danger: #e53935; --ok: #10b981; --dl: #8b5cf6;
+    --code-bg: #0a0a0a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.65 'Segoe UI', 'Malgun Gothic', system-ui, sans-serif; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .layout { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; }
+
+  nav.toc { background: var(--panel); border-right: 1px solid var(--border);
+    padding: 24px 16px; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    font-size: 13px; }
+  nav.toc h2 { color: var(--dl); font-size: 14px; margin: 0 0 12px;
+    text-transform: uppercase; letter-spacing: 1px; }
+  nav.toc ol { list-style: none; padding-left: 0; margin: 0; counter-reset: l1; }
+  nav.toc > ol > li { counter-increment: l1; margin: 8px 0; }
+  nav.toc > ol > li > a { display: block; padding: 4px 8px; border-radius: 4px;
+    color: var(--text); font-weight: 600; }
+  nav.toc > ol > li > a::before { content: counter(l1) ". "; color: var(--muted); }
+  nav.toc > ol > li > a:hover { background: var(--card); text-decoration: none; }
+  nav.toc ol ol { padding-left: 12px; counter-reset: l2; }
+  nav.toc ol ol > li { counter-increment: l2; margin: 2px 0; }
+  nav.toc ol ol > li > a { display: block; padding: 2px 8px; border-radius: 4px;
+    color: var(--muted); font-weight: 400; font-size: 12px; }
+  nav.toc ol ol > li > a::before { content: counter(l1) "." counter(l2) " "; }
+  nav.toc ol ol > li > a:hover { background: var(--card); color: var(--text); }
+
+  main { padding: 40px 56px 80px; max-width: 1100px; }
+  .header-strip { background: linear-gradient(90deg, #8b5cf6, #3d7de8);
+    color: white; padding: 28px 32px; border-radius: 12px; margin-bottom: 36px; }
+  .header-strip h1 { margin: 0 0 6px; font-size: 28px; }
+  .header-strip .sub { opacity: 0.92; font-size: 14px; }
+
+  h2 { color: var(--dl); border-bottom: 2px solid var(--border);
+    padding-bottom: 6px; margin: 56px 0 18px; font-size: 22px; }
+  h3 { color: var(--primary); margin: 28px 0 10px; font-size: 17px; }
+  h4 { color: var(--text); margin: 18px 0 8px; font-size: 14px;
+    text-transform: uppercase; letter-spacing: 0.5px; }
+
+  p { margin: 8px 0 12px; }
+  ul, ol { padding-left: 22px; }
+  li { margin: 4px 0; }
+
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 3px;
+    font: 12.5px/1.5 'Consolas', monospace; color: #d4d4d4; }
+  pre { background: var(--code-bg); padding: 14px 16px; border-radius: 6px;
+    overflow-x: auto; border-left: 3px solid var(--dl); margin: 10px 0; }
+  pre code { background: none; padding: 0; }
+
+  table { border-collapse: collapse; width: 100%; margin: 10px 0 18px; font-size: 13px; }
+  th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--card); color: var(--dl); font-weight: 600; }
+  tr:nth-child(even) td { background: rgba(255,255,255,0.018); }
+
+  .callout { padding: 10px 14px; border-radius: 6px; margin: 14px 0;
+    border-left: 4px solid var(--accent); background: rgba(20,184,166,0.08); }
+  .callout.warn { border-left-color: var(--warn); background: rgba(245,158,11,0.08); }
+  .callout.danger { border-left-color: var(--danger); background: rgba(229,57,53,0.08); }
+  .callout.tip { border-left-color: var(--primary); background: rgba(61,125,232,0.08); }
+  .callout.dl { border-left-color: var(--dl); background: rgba(139,92,246,0.08); }
+
+  .chip { display: inline-block; padding: 2px 8px; border-radius: 12px;
+    font-size: 11px; font-weight: 600; margin: 0 2px; }
+  .chip.task { background: var(--dl); color: white; }
+  .chip.backend { background: var(--primary); color: white; }
+  .chip.format { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+  .chip.cls-good { background: var(--ok); color: white; }
+  .chip.cls-ng { background: var(--danger); color: white; }
+
+  ol.steps { counter-reset: s; list-style: none; padding-left: 0; }
+  ol.steps > li { counter-increment: s; padding: 6px 0 6px 36px; position: relative; }
+  ol.steps > li::before { content: counter(s); position: absolute; left: 0; top: 6px;
+    background: var(--dl); color: white; width: 24px; height: 24px;
+    border-radius: 50%; text-align: center; font-weight: 700; font-size: 12px; line-height: 24px; }
+
+  section { scroll-margin-top: 12px; }
+  @media print { .layout { grid-template-columns: 1fr; } nav.toc { display: none; }
+    main { padding: 20px; max-width: 100%; } }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<nav class="toc">
+  <h2>목차</h2>
+  <ol>
+    <li><a href="#overview">개요</a>
+      <ol>
+        <li><a href="#ov-role">역할</a></li>
+        <li><a href="#ov-arch">아키텍처</a></li>
+        <li><a href="#ov-tasks">지원 작업 5종</a></li>
+      </ol>
+    </li>
+    <li><a href="#setup">설치 / 환경 설정</a>
+      <ol>
+        <li><a href="#setup-runtime">.NET + Python 런타임</a></li>
+        <li><a href="#setup-tensorrt">TensorRT 가속 (선택)</a></li>
+        <li><a href="#setup-models">사전 학습 모델</a></li>
+      </ol>
+    </li>
+    <li><a href="#ui">UI 투어</a>
+      <ol>
+        <li><a href="#ui-layout">메인 윈도우 레이아웃</a></li>
+        <li><a href="#ui-modes">3 모드 전환</a></li>
+      </ol>
+    </li>
+    <li><a href="#labeling">라벨링</a>
+      <ol>
+        <li><a href="#lbl-flow">기본 흐름</a></li>
+        <li><a href="#lbl-detection">Detection — 바운딩박스</a></li>
+        <li><a href="#lbl-classification">Classification — 폴더</a></li>
+        <li><a href="#lbl-ocr">OCR — 텍스트 + 박스</a></li>
+        <li><a href="#lbl-anomaly">Anomaly — GOOD/DEFECT</a></li>
+        <li><a href="#lbl-segmentation">Segmentation — SAM</a></li>
+        <li><a href="#lbl-shortcuts">키보드 단축</a></li>
+      </ol>
+    </li>
+    <li><a href="#training">학습</a>
+      <ol>
+        <li><a href="#tr-protocol">stdout 프로토콜</a></li>
+        <li><a href="#tr-split">데이터셋 분할 (80:20)</a></li>
+        <li><a href="#tr-params">하이퍼파라미터</a></li>
+        <li><a href="#tr-onnx">ONNX Export</a></li>
+        <li><a href="#tr-progress">진행률 표시</a></li>
+      </ol>
+    </li>
+    <li><a href="#inference">Inference 모드</a>
+      <ol>
+        <li><a href="#inf-immediate">학습 직후 즉시 검증</a></li>
+        <li><a href="#inf-letterbox">Letterbox + NMS</a></li>
+        <li><a href="#inf-vs">VisionSetup 연동</a></li>
+      </ol>
+    </li>
+    <li><a href="#sam">SAM Segmentation</a>
+      <ol>
+        <li><a href="#sam-what">MobileSAM 개요</a></li>
+        <li><a href="#sam-prompt">전경/배경 프롬프트</a></li>
+        <li><a href="#sam-export">폴리곤 확정 + 데이터셋 저장</a></li>
+      </ol>
+    </li>
+    <li><a href="#handeye">Hand-Eye Calibration</a>
+      <ol>
+        <li><a href="#he-what">개념</a></li>
+        <li><a href="#he-flow">절차</a></li>
+      </ol>
+    </li>
+    <li><a href="#tensorrt">TensorRT 가속</a>
+      <ol>
+        <li><a href="#trt-why">왜 TensorRT</a></li>
+        <li><a href="#trt-deps">의존성</a></li>
+        <li><a href="#trt-enable">활성화</a></li>
+        <li><a href="#trt-bench">속도 비교</a></li>
+      </ol>
+    </li>
+    <li><a href="#appx">부록</a>
+      <ol>
+        <li><a href="#appx-paths">파일 경로</a></li>
+        <li><a href="#appx-scripts">학습 스크립트 목록</a></li>
+        <li><a href="#appx-trouble">자주 묻는 문제</a></li>
+      </ol>
+    </li>
+  </ol>
+</nav>
+
+<main>
+
+<div class="header-strip">
+  <h1>VMS.DeepLearning 매뉴얼</h1>
+  <div class="sub">버전 1.1.0 · 2026-05-22 · 라벨링 → 학습 → 추론 통합 워크플로</div>
+</div>
+
+<!-- ============================================================ -->
+<section id="overview">
+<h2>1. 개요</h2>
+
+<h3 id="ov-role">1.1 역할</h3>
+<p>VMS.DeepLearning 은 Cognex ViDi 대체 도구로, 현장에서 수집한 이미지로 직접
+<strong>라벨링 → 학습 → ONNX 변환 → VMS.VisionSetup 에서 추론</strong> 까지 한 번에
+처리합니다. 별도 GPU 서버 없이 단일 PC 에서 동작 (TensorRT 가속 선택).</p>
+
+<table>
+  <tr><th>측면</th><th>Cognex ViDi</th><th>VMS.DeepLearning</th></tr>
+  <tr><td>라이선스</td><td>유료 (도구별 라이선스)</td><td>내장 (오픈소스 백엔드)</td></tr>
+  <tr><td>학습 백엔드</td><td>전용 (블랙박스)</td><td>YOLOv8 (Ultralytics) / PaddleOCR / PyTorch</td></tr>
+  <tr><td>추론 형식</td><td>ViDi DB</td><td>ONNX → CPU / CUDA / TensorRT</td></tr>
+  <tr><td>커스텀 모델</td><td>제한적</td><td>Python 스크립트 수정 가능</td></tr>
+  <tr><td>VMS 통합</td><td>별도 도구</td><td>VisionSetup DetectionTool 등 직접 호출</td></tr>
+</table>
+
+<h3 id="ov-arch">1.2 아키텍처</h3>
+<ul>
+  <li><strong>UI (.NET 8 WPF)</strong>: <code>Views/MainWindow.xaml</code>, MVVM with CommunityToolkit.</li>
+  <li><strong>학습 백엔드 (Python subprocess)</strong>: <code>scripts/*.py</code> — YOLOv8 /
+      Classifier / PaddleOCR / Anomaly. <code>System.Diagnostics.Process</code> 로 실행.</li>
+  <li><strong>SAM Service (C# ONNX)</strong>: <code>Services/SamService.cs</code> — MobileSAM
+      ONNX 직접 추론.</li>
+  <li><strong>Inference (C# ONNX)</strong>: <code>Services/OnnxDetectionInference.cs</code> —
+      학습 직후 best.onnx 즉시 검증.</li>
+  <li><strong>데이터셋 저장</strong>: <code>%AppData%\VMS\Datasets\</code>.</li>
+</ul>
+
+<h3 id="ov-tasks">1.3 지원 작업 5종</h3>
+<table>
+  <tr><th>Task</th><th>설명</th><th>백엔드</th><th>포맷</th><th>대표 사용 예</th></tr>
+  <tr><td><span class="chip task">Detection</span></td><td>객체 검출 (바운딩박스)</td>
+      <td><span class="chip backend">YOLOv8</span></td>
+      <td><span class="chip format">YOLO TXT</span></td>
+      <td>여러 부품의 위치 / 개수 / 결함 위치</td></tr>
+  <tr><td><span class="chip task">Classification</span></td><td>이미지 전체 분류</td>
+      <td><span class="chip backend">PyTorch</span></td>
+      <td><span class="chip format">ImageFolder</span></td>
+      <td>Pass/Fail, 등급 분류</td></tr>
+  <tr><td><span class="chip task">OCR</span></td><td>인쇄/필기 텍스트 인식</td>
+      <td><span class="chip backend">PaddleOCR</span></td>
+      <td><span class="chip format">Paddle TXT</span></td>
+      <td>일련번호 / 라벨 글자 / Lot 코드</td></tr>
+  <tr><td><span class="chip task">Anomaly</span></td><td>이상 검출 (정상 학습)</td>
+      <td><span class="chip backend">PaDiM / PatchCore</span></td>
+      <td><span class="chip format">MVTec</span></td>
+      <td>스크래치 / 표면 결함 (NG 샘플 적은 경우)</td></tr>
+  <tr><td><span class="chip task">Segmentation</span></td><td>인스턴스 / 시맨틱 세그멘테이션</td>
+      <td><span class="chip backend">YOLO-Seg + SAM</span></td>
+      <td><span class="chip format">YOLO-Seg</span></td>
+      <td>형상 검사 / 정밀 측정 ROI</td></tr>
+</table>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="setup">
+<h2>2. 설치 / 환경 설정</h2>
+
+<h3 id="setup-runtime">2.1 .NET + Python 런타임</h3>
+<p>VMS MSI 설치 시 자동 포함:</p>
+<ul>
+  <li><strong>.NET 8</strong> — self-contained (MSI 가 포함).</li>
+  <li><strong>OpenCvSharp4 4.11</strong> — 이미지 I/O.</li>
+  <li><strong>ONNX Runtime 1.21</strong> — 추론 엔진. GPU 패키지 (CUDA/TRT) 별도 설치 시 가속.</li>
+</ul>
+<p>학습용 Python 은 별도:</p>
+<ul>
+  <li><strong>Python 3.10+</strong> 권장 — <a href="https://www.python.org">python.org</a>.</li>
+  <li>설치 후 첫 학습 시 <code>scripts/requirements.txt</code> 자동 pip install:
+      <code>ultralytics, paddlepaddle, torch, onnx, onnxruntime-gpu</code>.</li>
+  <li>또는 Conda 환경 사용 가능 — <code>Settings → DeepLearning → PythonPath</code> 에서 지정.</li>
+</ul>
+
+<h3 id="setup-tensorrt">2.2 TensorRT 가속 (선택)</h3>
+<p>YOLO ONNX 추론을 5~10× 가속. 자세한 설정은 <a href="VMS_TensorRT_Setup_Guide.md">VMS_TensorRT_Setup_Guide.md</a>.</p>
+<table>
+  <tr><th>구성 요소</th><th>버전</th><th>비고</th></tr>
+  <tr><td>NVIDIA GPU</td><td>Compute Capability 6.0+</td><td>RTX 2000 시리즈 이상 권장</td></tr>
+  <tr><td>CUDA Toolkit</td><td>12.4</td><td>NVIDIA 공식 사이트</td></tr>
+  <tr><td>cuDNN</td><td>9.x</td><td>NVIDIA 개발자 계정 필요</td></tr>
+  <tr><td>TensorRT</td><td>10.4</td><td>10.x 시리즈, .zip 압축 해제</td></tr>
+  <tr><td>환경 변수</td><td><code>PATH</code> 에 CUDA / cuDNN / TensorRT bin 폴더 추가</td><td>재부팅 권장</td></tr>
+</table>
+
+<h3 id="setup-models">2.3 사전 학습 모델 (MobileSAM)</h3>
+<p>SAM 세그멘테이션 라벨링에 사용. 첫 실행 시 자동 다운로드:</p>
+<pre><code>%LocalAppData%\BODA VISION AI\models\
+  mobile_sam_encoder.onnx   (~40MB)
+  mobile_sam_decoder.onnx   (~16MB)</code></pre>
+
+<div class="callout warn">
+인터넷 없는 환경: 사전 다운로드 후 위 경로에 수동 배치. 첫 라벨링 시 모델 로드
+2~3초 소요 후 이후는 즉시.
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="ui">
+<h2>3. UI 투어</h2>
+
+<h3 id="ui-layout">3.1 메인 윈도우 레이아웃</h3>
+<p><code>Views/MainWindow.xaml</code> — 3-패널 구조:</p>
+<table>
+  <tr><th>위치</th><th>내용</th></tr>
+  <tr><td>좌 (Dataset 패널)</td><td>현재 데이터셋 + 이미지 썸네일 리스트 + 새 이미지 추가</td></tr>
+  <tr><td>중앙 (캔버스)</td><td>현재 이미지 + 라벨 (박스/폴리곤/마스크) 오버레이. SAM 모드 시 클릭 프롬프트.</td></tr>
+  <tr><td>우 (Classes / Labels / Training)</td><td>3개 탭:<br>
+    • <strong>Classes</strong> — 클래스 정의 (색상 + 단축키)<br>
+    • <strong>Labels</strong> — 현재 이미지의 라벨 리스트<br>
+    • <strong>Training</strong> — 학습 시작 + 진행률 + 로그</td></tr>
+</table>
+
+<h3 id="ui-modes">3.2 3 모드 전환</h3>
+<p>좌상단 모드 선택기에서 라벨링/학습/추론 전환:</p>
+<ul>
+  <li><strong>Labeling Mode</strong> — 이미지에 박스/폴리곤/클래스 부착. 데이터셋 빌딩.</li>
+  <li><strong>Training Mode</strong> — 라벨링된 데이터셋으로 학습 시작. 백그라운드 진행률.</li>
+  <li><strong>Inference Mode</strong> — 학습 직후 best.onnx 를 새 이미지에 적용해 검증
+      (v1.1 신규). 따로 VMS.VisionSetup 으로 이동할 필요 없음.</li>
+</ul>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="labeling">
+<h2>4. 라벨링</h2>
+
+<h3 id="lbl-flow">4.1 기본 흐름</h3>
+<ol class="steps">
+  <li>좌상단 <strong>+ New Dataset</strong> → 이름 + Task Type 선택 (Detection / Classification / OCR / Anomaly / Segmentation).</li>
+  <li>이미지 드래그&드롭 또는 폴더 선택으로 일괄 추가.</li>
+  <li>우측 <strong>Classes</strong> 탭에서 클래스 정의 (이름 + 색 + 단축키 1-9).</li>
+  <li>각 이미지를 클릭 → 라벨링 (Task Type 별 도구 자동 활성).</li>
+  <li><strong>Save</strong> — 라벨이 즉시 데이터셋 폴더에 저장됨.</li>
+  <li>충분히 모이면 Training Mode 전환.</li>
+</ol>
+
+<h3 id="lbl-detection">4.2 Detection — 바운딩박스</h3>
+<p>YOLO 형식 (cls cx cy w h, 정규화 0~1) 으로 저장.</p>
+<ul>
+  <li>드래그로 박스 생성. 클래스는 단축키 1-9 또는 우측 패널 더블 클릭.</li>
+  <li>박스 클릭 후 핸들로 크기 조정.</li>
+  <li>박스 우클릭 → Delete / Change Class.</li>
+  <li>저장 위치:
+    <pre><code>%AppData%\VMS\Datasets\{name}\
+  images\{train|val}\*.jpg
+  labels\{train|val}\*.txt
+  data.yaml</code></pre>
+  </li>
+</ul>
+
+<h3 id="lbl-classification">4.3 Classification — 폴더 기반</h3>
+<p>ImageFolder 형식 (PyTorch torchvision 표준):</p>
+<pre><code>%AppData%\VMS\Datasets\{name}\
+  train\good\*.jpg
+  train\ng_scratch\*.jpg
+  train\ng_dent\*.jpg
+  val\...</code></pre>
+<ul>
+  <li>이미지 하나당 클래스 1개 (배타적).</li>
+  <li>단축키 1-9 누르면 즉시 해당 클래스로 분류 + 다음 이미지로 자동 이동.</li>
+  <li>라벨링 속도 매우 빠름 — 1초당 1~2장 가능.</li>
+</ul>
+
+<h3 id="lbl-ocr">4.4 OCR — 텍스트 + 박스</h3>
+<p>PaddleOCR 형식. 각 이미지마다 <code>{filename}.txt</code> 에:</p>
+<pre><code>x1,y1,x2,y2,x3,y3,x4,y4,"읽을 텍스트"
+x1,y1,x2,y2,x3,y3,x4,y4,"두 번째 영역"</code></pre>
+<ul>
+  <li>4점 다각형 (회전 텍스트 지원).</li>
+  <li>각 박스 클릭 후 우측 패널 입력란에 텍스트 입력.</li>
+  <li>합성 데이터 생성도 가능 — <code>VMS_OCR_SynthData_Manual.html</code> 참조.</li>
+</ul>
+
+<h3 id="lbl-anomaly">4.5 Anomaly — GOOD / DEFECT</h3>
+<p>MVTec 형식. 정상 이미지만으로 학습 (NG 샘플 적어도 OK).</p>
+<pre><code>%AppData%\VMS\Datasets\{name}\
+  train\good\*.png           ← 정상만 (보통 100~500장)
+  test\good\*.png            ← 검증용 정상
+  test\defect_type1\*.png    ← 결함 종류별 (선택)
+  ground_truth\defect_type1\*.png   ← 픽셀 마스크 (선택)</code></pre>
+<ul>
+  <li>라벨 자체는 없음 — 폴더 분류만.</li>
+  <li><span class="chip cls-good">GOOD</span> 버튼 / <span class="chip cls-ng">DEFECT</span>
+      버튼 클릭으로 이미지 분류 → 자동 폴더 이동.</li>
+  <li>학습 후 추론 시 픽셀 히트맵 + threshold 로 NG 픽셀 강조 표시.</li>
+</ul>
+
+<h3 id="lbl-segmentation">4.6 Segmentation — SAM 폴리곤</h3>
+<p>YOLO-Seg 형식. 인스턴스 별 폴리곤. SAM 으로 빠르게 생성 → 5장에 1분 정도.</p>
+<ol class="steps">
+  <li>이미지에 좌클릭 — 전경 점 (포함하고 싶은 영역).</li>
+  <li>우클릭 — 배경 점 (제외하고 싶은 영역).</li>
+  <li>SAM 이 실시간으로 마스크 → 폴리곤 표시.</li>
+  <li>마음에 들면 <strong>Enter</strong> → 라벨 확정 + 클래스 부여.</li>
+  <li>다시 시작은 <strong>Esc</strong> 또는 새 좌클릭.</li>
+</ol>
+<div class="callout dl">
+SAM 은 자연 이미지로 사전 학습된 강력한 prompt 기반 모델. 산업 현장 이미지에도
+대부분 잘 동작. 특이 형상은 점을 여러 개 찍어 보정.
+</div>
+
+<h3 id="lbl-shortcuts">4.7 키보드 단축</h3>
+<table>
+  <tr><th>키</th><th>기능</th></tr>
+  <tr><td><code>1</code> ~ <code>9</code></td><td>클래스 빠른 선택</td></tr>
+  <tr><td><code>D</code> / <code>A</code></td><td>다음 / 이전 이미지</td></tr>
+  <tr><td><code>Enter</code></td><td>(Segmentation) SAM 마스크 확정</td></tr>
+  <tr><td><code>Esc</code></td><td>드로잉 / 프롬프트 모드 종료</td></tr>
+  <tr><td><code>Delete</code></td><td>선택된 라벨 삭제</td></tr>
+  <tr><td><code>Ctrl+S</code></td><td>데이터셋 저장 (자동 저장도 동작)</td></tr>
+  <tr><td><code>Ctrl+Z</code></td><td>최근 라벨 변경 취소</td></tr>
+  <tr><td><code>+</code> / <code>-</code></td><td>줌 in / out</td></tr>
+</table>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="training">
+<h2>5. 학습</h2>
+
+<p>우측 패널 <strong>Training</strong> 탭 → <strong>Start Training</strong>. Python 스크립트가
+서브프로세스로 실행되며 stdout 을 UI 가 파싱해 진행률 표시.</p>
+
+<h3 id="tr-protocol">5.1 stdout 프로토콜</h3>
+<p>학습 스크립트는 다음 marker 를 stdout 으로 출력. UI 는 이를 파싱해 진행률바와 로그 갱신.</p>
+<table>
+  <tr><th>Marker</th><th>의미</th><th>예</th></tr>
+  <tr><td><code>[EPOCH]</code></td><td>현재 epoch / 총 epoch</td><td><code>[EPOCH] 3/50</code></td></tr>
+  <tr><td><code>[LOSS]</code></td><td>손실 값</td><td><code>[LOSS] train=0.142 val=0.158</code></td></tr>
+  <tr><td><code>[PROGRESS]</code></td><td>0~100 진행률</td><td><code>[PROGRESS] 42</code></td></tr>
+  <tr><td><code>[ONNX]</code></td><td>ONNX export 시작 → 완료 경로</td><td><code>[ONNX] best.onnx</code></td></tr>
+  <tr><td><code>[DONE]</code></td><td>학습 정상 완료</td><td><code>[DONE]</code></td></tr>
+  <tr><td><code>[ERROR]</code></td><td>오류 — UI 가 빨강 메시지로 표시</td><td><code>[ERROR] CUDA out of memory</code></td></tr>
+</table>
+
+<h3 id="tr-split">5.2 데이터셋 분할 (80:20)</h3>
+<p>라벨링 완료된 데이터셋을 train / val 로 자동 분할:</p>
+<ul>
+  <li>기본 80% train / 20% val. UI 슬라이더로 70/30, 90/10 등 조정.</li>
+  <li>이미지 셔플 후 분할 — 분류 데이터셋은 클래스별 비율 유지 (stratified).</li>
+  <li>분할 시드 고정 가능 — 재현성을 위해.</li>
+</ul>
+
+<h3 id="tr-params">5.3 하이퍼파라미터</h3>
+<p>UI 에서 직접 편집 (고급 사용자용):</p>
+<table>
+  <tr><th>파라미터</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>Epochs</td><td>50 (Detection) / 30 (Classifier) / 100 (Anomaly)</td><td>학습 반복 횟수</td></tr>
+  <tr><td>Batch Size</td><td>16 (Detection) / 32 (Classifier)</td><td>GPU 메모리 OOM 시 줄임</td></tr>
+  <tr><td>Image Size</td><td>640 (YOLO) / 224 (Classifier) / 256 (Anomaly)</td><td>학습 해상도</td></tr>
+  <tr><td>Learning Rate</td><td>0.01 (SGD) / 0.001 (Adam)</td><td>YOLO 는 자동 cosine 스케줄</td></tr>
+  <tr><td>Pre-trained</td><td>yolov8n.pt / yolov8s.pt</td><td>전이학습 시작점. n=nano, s=small, m=medium...</td></tr>
+  <tr><td>Augmentation</td><td>auto</td><td>YOLO 의 mosaic / mixup / hsv</td></tr>
+</table>
+
+<h3 id="tr-onnx">5.4 ONNX Export</h3>
+<p>학습 완료 시 자동으로 ONNX 변환:</p>
+<pre><code>%AppData%\VMS\Datasets\{name}\runs\train\weights\
+  best.pt        ← PyTorch 가중치 (학습용)
+  best.onnx      ← ONNX 변환본 (추론용)
+  results.csv    ← epoch 별 loss / mAP / lr 기록</code></pre>
+<p>VMS.VisionSetup 의 DetectionTool / SegmentationTool / ClassifierTool 에서 이
+<code>best.onnx</code> 를 직접 로드.</p>
+
+<h3 id="tr-progress">5.5 진행률 표시</h3>
+<p>학습 중 우측 Training 탭:</p>
+<ul>
+  <li>큰 ProgressBar (현재 epoch / 총 epoch).</li>
+  <li>실시간 train / val loss 차트 (LiveCharts).</li>
+  <li>예상 종료 시각 (ETA) — epoch 평균 시간 기반.</li>
+  <li>Stop 버튼 — 안전하게 학습 중단 (현재 epoch 까지 저장).</li>
+  <li>완료 시 자동 Inference Mode 전환 옵션 (v1.1 신규).</li>
+</ul>
+
+<div class="callout warn">
+GPU 메모리 부족 (<code>CUDA out of memory</code>): Batch Size 또는 Image Size 줄이기.
+Pre-trained 를 yolov8n (nano) 로 축소도 효과.
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="inference">
+<h2>6. Inference 모드</h2>
+
+<h3 id="inf-immediate">6.1 학습 직후 즉시 검증 (v1.1 신규)</h3>
+<p>학습 완료 직후 별도 도구로 이동 없이 같은 UI 에서 검증 이미지에 모델 적용.</p>
+<ol class="steps">
+  <li>학습 완료 → "Test on new images" 버튼.</li>
+  <li>검증 이미지 폴더 선택 (val 셋 또는 별도 신규 이미지).</li>
+  <li>각 이미지에 박스/폴리곤 자동 오버레이 + 신뢰도 점수.</li>
+  <li>좌측 썸네일에서 다음 이미지로 빠르게 이동.</li>
+  <li>잘못된 예측 발견 시 즉시 라벨링 모드로 돌아가 보완 후 재학습.</li>
+</ol>
+
+<h3 id="inf-letterbox">6.2 Letterbox + NMS 전처리</h3>
+<p><code>Services/OnnxDetectionInference.cs</code>:</p>
+<ul>
+  <li><strong>Letterbox</strong>: 다양한 종횡비 이미지를 모델 입력 (640×640) 으로 패딩.
+      비율 유지 + 회색 패딩.</li>
+  <li><strong>NMS (Non-Max Suppression)</strong>: 같은 객체에 겹치는 박스 중 신뢰도 1위만 유지.
+      IOU threshold 기본 0.45.</li>
+  <li><strong>Confidence threshold</strong>: 기본 0.25 미만 박스는 표시 안 함. UI 슬라이더 조정 가능.</li>
+</ul>
+
+<h3 id="inf-vs">6.3 VMS.VisionSetup 연동</h3>
+<p>학습된 best.onnx 를 VMS.VisionSetup 에서 즉시 사용:</p>
+<ol class="steps">
+  <li>VMS.VisionSetup 실행.</li>
+  <li>도구 팔레트 → Deep Learning → DetectionTool 드래그.</li>
+  <li>설정 패널 → Model Path → <code>best.onnx</code> 선택.</li>
+  <li>Classes 자동 로드 (학습 시 정의한 클래스명).</li>
+  <li>이미지 / 카메라에 적용.</li>
+</ol>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="sam">
+<h2>7. SAM Segmentation</h2>
+
+<h3 id="sam-what">7.1 MobileSAM 개요</h3>
+<p>Meta AI 의 Segment Anything Model 의 모바일 경량판. ~56MB ONNX 두 개 (Encoder 40MB +
+Decoder 16MB) 로 동작. CPU 에서도 1초 미만 응답. 자세한 내부 동작은
+<a href="VMS_SAM_Segmentation_Manual.md">VMS_SAM_Segmentation_Manual.md</a>.</p>
+
+<h3 id="sam-prompt">7.2 전경/배경 프롬프트</h3>
+<p>모델은 클릭 점을 "프롬프트" 로 받아 마스크를 출력:</p>
+<ul>
+  <li><strong>좌클릭 (전경)</strong>: 이 영역을 마스크에 포함시켜라.</li>
+  <li><strong>우클릭 (배경)</strong>: 이 영역은 마스크에서 제외해라.</li>
+  <li>여러 점을 찍을수록 정교한 마스크. 보통 2~5 점이면 충분.</li>
+</ul>
+
+<h3 id="sam-export">7.3 폴리곤 확정 + 데이터셋 저장</h3>
+<p>SAM 마스크는 픽셀 단위 → 폴리곤으로 단순화 (cv2.approxPolyDP) 후 라벨로 저장:</p>
+<pre><code>labels\image_001.txt:
+0 0.123 0.456 0.234 0.567 0.345 0.678 ...   ← cls polygon_xs polygon_ys</code></pre>
+<p>YOLO-Seg 형식이라 그대로 학습 가능.</p>
+
+<div class="callout tip">
+SAM 라벨링 속도: 익숙해지면 이미지당 5~10초. 100장 데이터셋이 ~15분 정도.
+기존 수동 폴리곤 (장당 30초~1분) 대비 3~6배 빠름.
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="handeye">
+<h2>8. Hand-Eye Calibration</h2>
+
+<h3 id="he-what">8.1 개념</h3>
+<p>로봇 좌표계와 카메라 좌표계의 변환 행렬을 구함. 카메라가 보는 위치를 로봇이
+정확히 집을 수 있게 함. 자세한 절차는
+<a href="VMS_HandEye_Calibration_Manual.md">VMS_HandEye_Calibration_Manual.md</a>.</p>
+
+<h3 id="he-flow">8.2 절차 요약</h3>
+<ol class="steps">
+  <li>카메라 시야에 체커보드 패턴 배치.</li>
+  <li>로봇이 여러 자세 (10~20 회) 로 패턴을 이동 → 각 자세마다 사진 1장 + 로봇 자세 저장.</li>
+  <li>VMS.DeepLearning 의 <strong>HandEye Calibration</strong> 마법사 실행.</li>
+  <li>저장한 이미지 + 자세 로드 → 자동 계산 (OpenCV calibrateHandEye).</li>
+  <li>결과 행렬을 JSON 으로 저장 → VMS.VisionSetup 의 HandEyeCalibrationTool 에서 사용.</li>
+</ol>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="tensorrt">
+<h2>9. TensorRT 가속</h2>
+
+<h3 id="trt-why">9.1 왜 TensorRT</h3>
+<table>
+  <tr><th>실행 백엔드</th><th>YOLOv8s 추론 (640×640)</th><th>비고</th></tr>
+  <tr><td>CPU (ONNX Runtime)</td><td>~250ms</td><td>현장 PC 기본</td></tr>
+  <tr><td>CUDA (ONNX Runtime GPU)</td><td>~25ms</td><td>10× 개선</td></tr>
+  <tr><td>TensorRT</td><td>~8ms</td><td>30× 개선. 실시간 라인 가능</td></tr>
+</table>
+
+<h3 id="trt-deps">9.2 의존성</h3>
+<p><a href="#setup-tensorrt">§ 2.2</a> 참조. 핵심:</p>
+<ul>
+  <li>NVIDIA GPU + CUDA 12.4 + cuDNN 9 + TensorRT 10.</li>
+  <li>ONNX Runtime <strong>Gpu</strong> 패키지 (NuGet 자동 포함).</li>
+  <li><code>PATH</code> 에 CUDA / TRT bin 폴더.</li>
+</ul>
+
+<h3 id="trt-enable">9.3 활성화</h3>
+<p>VMS.VisionSetup 의 DetectionTool 설정 패널:</p>
+<pre><code>Execution Provider:
+  ○ CPU
+  ○ CUDA
+  ● TensorRT  ← 선택
+Cache Path: %LocalAppData%\BODA VISION AI\trt_cache\</code></pre>
+<p>첫 추론 시 TRT 엔진 빌드 (~30초~2분) → 캐시. 이후는 즉시 로드.</p>
+
+<h3 id="trt-bench">9.4 속도 비교 측정</h3>
+<p>VMS.VisionSetup → 도구 우측 결과 패널의 <strong>Execution Time (ms)</strong> 필드로
+비교. 같은 이미지에서 Execution Provider 만 바꿔가며 측정.</p>
+
+<div class="callout danger">
+TensorRT 캐시는 GPU 모델 / 드라이버 버전이 바뀌면 무효화. 캐시 폴더 지우고 재빌드.
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="appx">
+<h2>10. 부록</h2>
+
+<h3 id="appx-paths">10.1 파일 / 디렉토리 경로</h3>
+<table>
+  <tr><th>경로</th><th>내용</th></tr>
+  <tr><td><code>%AppData%\VMS\Datasets\{name}\</code></td><td>데이터셋 (이미지 + 라벨 + 학습 결과)</td></tr>
+  <tr><td><code>%AppData%\VMS\Datasets\{name}\runs\train\weights\best.onnx</code></td><td>학습 산출물</td></tr>
+  <tr><td><code>%LocalAppData%\BODA VISION AI\models\</code></td><td>MobileSAM 등 사전학습 모델</td></tr>
+  <tr><td><code>%LocalAppData%\BODA VISION AI\trt_cache\</code></td><td>TensorRT 엔진 캐시</td></tr>
+  <tr><td><code>VMS.DeepLearning\scripts\</code></td><td>Python 학습 스크립트</td></tr>
+  <tr><td><code>VMS.DeepLearning\Services\SamService.cs</code></td><td>SAM ONNX 추론 구현</td></tr>
+  <tr><td><code>VMS.DeepLearning\Services\OnnxDetectionInference.cs</code></td><td>Detection 추론 구현</td></tr>
+</table>
+
+<h3 id="appx-scripts">10.2 학습 스크립트 목록</h3>
+<table>
+  <tr><th>스크립트</th><th>Task</th><th>백엔드</th><th>출력</th></tr>
+  <tr><td><code>train_yolo.py</code></td><td>Detection / Segmentation</td><td>Ultralytics YOLOv8</td><td>best.pt + best.onnx</td></tr>
+  <tr><td><code>train_classifier.py</code></td><td>Classification</td><td>PyTorch + timm</td><td>best.pt + best.onnx</td></tr>
+  <tr><td><code>train_ppocr.py</code></td><td>OCR</td><td>PaddleOCR</td><td>det/rec 별 best + onnx</td></tr>
+  <tr><td><code>train_anomaly.py</code></td><td>Anomaly</td><td>PaDiM / PatchCore</td><td>특징 통계 + best.onnx</td></tr>
+  <tr><td><code>export_mobile_sam.py</code></td><td>(보조)</td><td>—</td><td>MobileSAM ONNX 변환 (개발자용)</td></tr>
+</table>
+<p>모든 스크립트는 stdout marker 프로토콜 준수. 커스터마이즈 시 marker 출력 유지 필수.</p>
+
+<h3 id="appx-trouble">10.3 자주 묻는 문제</h3>
+
+<h4>Python 미설치 / 실행 안 됨</h4>
+<p>Settings → DeepLearning → PythonPath 에 <code>C:\Python310\python.exe</code> 같은 절대
+경로 지정. Conda 환경은 <code>C:\Users\{user}\miniconda3\envs\vms\python.exe</code>.</p>
+
+<h4>학습 시작 후 진행률 0 에서 멈춤</h4>
+<p>첫 실행 시 pip install 진행 중 (수 분 소요). 로그 패널에 pip 출력 확인. 두 번째
+이후는 즉시.</p>
+
+<h4>YOLO 학습이 너무 느림</h4>
+<p>GPU 사용 확인:</p>
+<pre><code>nvidia-smi</code></pre>
+<p>GPU 가 사용되지 않으면 PyTorch CUDA 버전 미스매치. <code>pip install torch
+--index-url https://download.pytorch.org/whl/cu124</code> 로 재설치.</p>
+
+<h4>CUDA out of memory</h4>
+<ul>
+  <li>Batch Size 절반으로 (16 → 8).</li>
+  <li>Image Size 축소 (640 → 416).</li>
+  <li>Pre-trained 작은 모델 (yolov8s → yolov8n).</li>
+  <li>다른 GPU 프로세스 종료 (브라우저 / 게임 / 다른 학습).</li>
+</ul>
+
+<h4>SAM 폴리곤이 너무 거칠다 / 너무 세밀하다</h4>
+<p>설정의 <code>polygon_simplify_epsilon</code> 조정 (기본 0.005 → 0.01 거칠게, 0.001 세밀
+하게). UI 슬라이더 제공.</p>
+
+<h4>TensorRT 첫 빌드가 매우 오래 걸림</h4>
+<p>일반적 — 2~3분. 캐시 후 이후 즉시. INT8 quantization 사용 시 추가 calibration 시간.</p>
+
+<div class="callout tip" style="margin-top: 36px;">
+관련 매뉴얼:
+<a href="BODA-VMS-User-Manual.html">통합 사용자 매뉴얼</a> ·
+<a href="VMS-VisionSetup-Manual.html">VMS.VisionSetup 매뉴얼</a> ·
+<a href="VMS_Labeling_Training_Manual.md">Labeling/Training 상세</a> ·
+<a href="VMS_DeepLearning_Detection_Improvements.md">Detection 개선 이력</a> ·
+<a href="VMS_SAM_Segmentation_Manual.md">SAM 상세</a> ·
+<a href="VMS_OCR_SynthData_Manual.html">OCR 합성 데이터</a> ·
+<a href="VMS_TensorRT_Setup_Guide.md">TensorRT 설정</a>
+</div>
+
+</section>
+
+</main>
+</div>
+</body>
+</html>

@@ -59,6 +59,9 @@ namespace VMS.VisionSetup.ViewModels
             BrowseAllResultsCommand = new RelayCommand(BrowseAllResults, () => Results.Count > 0);
             EditThresholdsCommand = new RelayCommand(EditThresholds, () => _loadedRecipe != null);
             AutoTuneCommand = new RelayCommand(OpenAutoTune, () => _visionService.Tools.Count > 0);
+            SaveAsGoldenCommand = new RelayCommand(SaveAsGolden, () => Results.Count > 0);
+            LoadGoldenCommand = new RelayCommand(LoadGolden);
+            ClearGoldenCommand = new RelayCommand(ClearGolden, () => ActiveGoldenSet != null);
 
             // 기본 출력 경로
             OutputCsvPath = Path.Combine(Path.GetTempPath(), $"batch_report_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
@@ -267,6 +270,72 @@ namespace VMS.VisionSetup.ViewModels
         public IRelayCommand BrowseAllResultsCommand { get; }
         public IRelayCommand EditThresholdsCommand { get; }
         public IRelayCommand AutoTuneCommand { get; }
+        public IRelayCommand SaveAsGoldenCommand { get; }
+        public IRelayCommand LoadGoldenCommand { get; }
+        public IRelayCommand ClearGoldenCommand { get; }
+
+        [ObservableProperty] private GoldenSet? _activeGoldenSet;
+        [ObservableProperty] private string _goldenStatusText = "골든셋: 없음";
+
+        partial void OnActiveGoldenSetChanged(GoldenSet? value)
+        {
+            GoldenStatusText = value == null ? "골든셋: 없음" : $"골든셋: {value.Name} ({value.Count}장)";
+            ClearGoldenCommand.NotifyCanExecuteChanged();
+        }
+
+        private void SaveAsGolden()
+        {
+            if (Results.Count == 0) return;
+            var dlg = new Microsoft.Win32.SaveFileDialog
+            {
+                Title = "골든셋 저장",
+                Filter = "Golden Set (*.golden.json)|*.golden.json|JSON (*.json)|*.json",
+                FileName = $"golden_{DateTime.Now:yyyyMMdd_HHmmss}.golden.json"
+            };
+            if (dlg.ShowDialog() != true) return;
+
+            var toolNames = _visionService.Tools.ToDictionary(t => t.Id, t => t.Name);
+            var golden = GoldenSet.FromBatchResults(
+                Path.GetFileNameWithoutExtension(dlg.FileName),
+                _loadedRecipe?.Name ?? "",
+                Results.ToList(),
+                toolNames);
+
+            if (golden.Save(dlg.FileName))
+            {
+                ActiveGoldenSet = golden;
+                StatusMessage = $"골든셋 저장됨: {dlg.FileName} ({golden.Count}장)";
+            }
+            else
+            {
+                StatusMessage = "골든셋 저장 실패";
+            }
+        }
+
+        private void LoadGolden()
+        {
+            var dlg = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = "골든셋 로드",
+                Filter = "Golden Set (*.golden.json;*.json)|*.golden.json;*.json"
+            };
+            if (dlg.ShowDialog() != true) return;
+
+            var golden = GoldenSet.Load(dlg.FileName);
+            if (golden == null)
+            {
+                StatusMessage = "골든셋 로드 실패 (파일 형식 오류)";
+                return;
+            }
+            ActiveGoldenSet = golden;
+            StatusMessage = $"골든셋 로드됨: {golden.Name} ({golden.Count}장)";
+        }
+
+        private void ClearGolden()
+        {
+            ActiveGoldenSet = null;
+            StatusMessage = "골든셋 비활성화";
+        }
 
         private void OpenAutoTune()
         {
@@ -458,6 +527,7 @@ namespace VMS.VisionSetup.ViewModels
                     (string.IsNullOrEmpty(r.FailureReason) ? "" : $" — {r.FailureReason}"));
                 BrowseFailuresCommand.NotifyCanExecuteChanged();
                 BrowseAllResultsCommand.NotifyCanExecuteChanged();
+                SaveAsGoldenCommand.NotifyCanExecuteChanged();
             });
             runner.Log += msg => SafeDispatch(() => LogLines.Add(msg));
 
@@ -468,7 +538,8 @@ namespace VMS.VisionSetup.ViewModels
                 OutputCsvPath = OutputCsvPath,
                 SaveFailureOverlays = SaveFailureOverlays,
                 FailureOverlayDir = string.IsNullOrEmpty(FailureOverlayDir) ? null : FailureOverlayDir,
-                Criteria = _loadedRecipe?.Criteria ?? _recipeService.CurrentRecipe?.Criteria
+                Criteria = _loadedRecipe?.Criteria ?? _recipeService.CurrentRecipe?.Criteria,
+                GoldenSet = ActiveGoldenSet
             };
 
             try

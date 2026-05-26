@@ -304,6 +304,32 @@
                                 <Run Text="{Binding ProgressTotal, Mode=OneWay}"/>
                             </TextBlock>
                             <StackPanel Grid.Column="3" Orientation="Horizontal">
+                                <Border Background="{StaticResource BrushBgSurface}"
+                                        BorderBrush="{StaticResource BrushBorderSubtle}"
+                                        BorderThickness="1" CornerRadius="10"
+                                        Padding="10,3" Margin="0,0,8,0"
+                                        VerticalAlignment="Center"
+                                        ToolTip="현재 활성 골든셋 (Load/Save 시 자동 활성)">
+                                    <TextBlock Text="{Binding GoldenStatusText}"
+                                               Foreground="{StaticResource BrushTextMuted}"
+                                               FontSize="10" FontWeight="SemiBold"
+                                               VerticalAlignment="Center"/>
+                                </Border>
+                                <Button Content="Save as Golden"
+                                        Command="{Binding SaveAsGoldenCommand}"
+                                        Style="{StaticResource ModernGhostButton}"
+                                        ToolTip="현재 batch 결과를 정답으로 저장 (이후 batch는 이 정답과 자동 비교)"
+                                        Margin="0,0,6,0"/>
+                                <Button Content="Load Golden"
+                                        Command="{Binding LoadGoldenCommand}"
+                                        Style="{StaticResource ModernGhostButton}"
+                                        ToolTip="저장된 골든셋 파일을 로드"
+                                        Margin="0,0,6,0"/>
+                                <Button Content="Clear"
+                                        Command="{Binding ClearGoldenCommand}"
+                                        Style="{StaticResource ModernGhostButton}"
+                                        ToolTip="활성 골든셋 비활성화"
+                                        Margin="0,0,12,0"/>
                                 <Button Content="Browse Failures"
                                         Command="{Binding BrowseFailuresCommand}"
                                         Style="{StaticResource ModernGhostButton}"

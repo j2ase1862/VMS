@@ -29,8 +29,67 @@ namespace VMS.PLC.Models
                 PlcVendor.Siemens => ParseSiemens(rawAddress),
                 PlcVendor.LS => ParseLsXgt(rawAddress),
                 PlcVendor.Omron => ParseOmron(rawAddress),
+                PlcVendor.Modbus => ParseModbus(rawAddress),
                 _ => ParseGeneric(rawAddress)
             };
+        }
+
+        /// <summary>
+        /// Modbus format:
+        ///   0xNNNN or 00001..09999  → Coil (FC1/FC5/FC15)
+        ///   1xNNNN or 10001..19999  → Discrete Input (FC2, read-only)
+        ///   3xNNNN or 30001..39999  → Input Register (FC4, read-only)
+        ///   4xNNNN or 40001..49999  → Holding Register (FC3/FC6/FC16)
+        ///   4xNNNN.B                → Holding Register bit (B = 0..15)
+        /// DeviceCode is normalized to "0x"/"1x"/"3x"/"4x". Offset is 0-based.
+        /// </summary>
+        private static PlcAddress ParseModbus(string raw)
+        {
+            var trimmed = raw.Trim().ToLowerInvariant();
+
+            // {prefix}{offset}[.{bit}] — prefix = 0x / 1x / 3x / 4x
+            var prefixMatch = Regex.Match(trimmed, @"^([0134])x(\d+)(?:\.(\d+))?$");
+            if (prefixMatch.Success)
+            {
+                var prefix = prefixMatch.Groups[1].Value + "x";
+                var offset = int.Parse(prefixMatch.Groups[2].Value);
+                var bit = prefixMatch.Groups[3].Success ? int.Parse(prefixMatch.Groups[3].Value) : -1;
+                return new PlcAddress
+                {
+                    RawAddress = raw,
+                    DeviceCode = prefix,
+                    Offset = offset,
+                    BitPosition = bit
+                };
+            }
+
+            // Modicon-style 5/6-digit: first digit = area, 나머지 = 1-based offset
+            //   5-digit: 0xxxx / 1xxxx / 3xxxx / 4xxxx  (4-digit rest)
+            //   6-digit: 0xxxxx / 1xxxxx / 3xxxxx / 4xxxxx  (5-digit rest)
+            var modiconMatch = Regex.Match(trimmed, @"^(\d)(\d{4,5})$");
+            if (modiconMatch.Success)
+            {
+                var first = int.Parse(modiconMatch.Groups[1].Value);
+                var rest = int.Parse(modiconMatch.Groups[2].Value);
+                string prefix = first switch
+                {
+                    4 => "4x",
+                    3 => "3x",
+                    1 => "1x",
+                    _ => "0x"
+                };
+                int offset = rest - 1;
+                if (offset < 0) offset = 0;
+                return new PlcAddress
+                {
+                    RawAddress = raw,
+                    DeviceCode = prefix,
+                    Offset = offset,
+                    BitPosition = -1
+                };
+            }
+
+            throw new FormatException($"Invalid Modbus address format: {raw} (expected 0x100, 4x100, 4x100.3, 40101 etc.)");
         }
 
         /// <summary>

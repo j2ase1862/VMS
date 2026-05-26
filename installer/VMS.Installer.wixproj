@@ -1,0 +1,56 @@
+<Project Sdk="WixToolset.Sdk/5.0.2">
+
+  <!--
+    BODA VMS MSI 인스톨러 — WiX Toolset v5
+
+    빌드 명령:
+      dotnet build installer/VMS.Installer.wixproj -c Release
+
+    산출물:
+      installer/bin/Release/BODA-VMS-1.1.0.msi
+
+    필요 사항:
+      - .NET 8 SDK (빌드 측)
+      - 첫 빌드 시 WixToolset.Sdk NuGet 패키지 자동 다운로드 (인터넷 필요)
+      - 대상 PC 의 Visual C++ Redistributable (OpenCvSharp 네이티브 DLL 의존성)
+        — 일반 Windows 10/11 은 보통 설치되어 있음. 없으면 별도 안내.
+  -->
+
+  <PropertyGroup>
+    <OutputType>Package</OutputType>
+    <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
+    <OutputName>BODA-VMS-$(Version)</OutputName>
+    <SuppressIces>ICE61;ICE91</SuppressIces>
+
+    <!-- VMS 메인 프로젝트 publish 출력 디렉토리 -->
+    <VmsProject>$(MSBuildThisFileDirectory)..\VMS\VMS.csproj</VmsProject>
+    <VmsPublishDir>$(MSBuildThisFileDirectory)..\VMS\bin\Release\net8.0-windows7.0\win-x64\publish</VmsPublishDir>
+
+    <!-- WiX 전처리 변수 — .wxs 안에서 $(var.PublishDir) 로 참조 -->
+    <DefineConstants>PublishDir=$(VmsPublishDir);Version=$(Version)</DefineConstants>
+  </PropertyGroup>
+
+  <!--
+    빌드 전에 VMS 를 self-contained 로 publish.
+    PublishSingleFile=false : 폴더 구조 유지 (디버깅 + 패치 용이)
+    self-contained true     : .NET 런타임 포함 (대상 PC 에 .NET 8 별도 설치 불필요)
+  -->
+  <Target Name="PublishVMS" BeforeTargets="BeforeBuild">
+    <Exec
+      Command="dotnet publish &quot;$(VmsProject)&quot; -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -p:DebugType=none -p:DebugSymbols=false"
+      WorkingDirectory="$(MSBuildThisFileDirectory).."
+      ConsoleToMSBuild="true" />
+  </Target>
+
+  <!-- WiX 5 SDK 가 디렉토리 내 모든 .wxs 파일을 자동 포함 — 명시 Include 불필요 -->
+
+  <!--
+    WiX UI 확장 — 기본 InstallDir UI (다음/다음/설치 흐름).
+    필요 시 WixUI_FeatureTree, WixUI_Mondo 등으로 교체 가능.
+  -->
+  <ItemGroup>
+    <PackageReference Include="WixToolset.UI.wixext" Version="5.0.2" />
+  </ItemGroup>
+
+</Project>

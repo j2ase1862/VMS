@@ -1,0 +1,895 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>BODA VMS 사용자 매뉴얼 v1.1</title>
+<style>
+  :root {
+    --bg: #0e0f12; --panel: #1a1b1f; --card: #25272d; --border: #3a3d44;
+    --text: #e8e9ec; --muted: #9b9ea4; --accent: #14b8a6; --primary: #3d7de8;
+    --warn: #f59e0b; --danger: #e53935; --ok: #10b981;
+    --code-bg: #0a0a0a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.65 'Segoe UI', 'Malgun Gothic', system-ui, sans-serif; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .layout { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; }
+
+  /* Sidebar TOC */
+  nav.toc {
+    background: var(--panel); border-right: 1px solid var(--border);
+    padding: 24px 16px; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    font-size: 13px;
+  }
+  nav.toc h2 { color: var(--accent); font-size: 14px; margin: 0 0 12px;
+    text-transform: uppercase; letter-spacing: 1px; }
+  nav.toc ol { list-style: none; padding-left: 0; margin: 0; counter-reset: l1; }
+  nav.toc > ol > li { counter-increment: l1; margin: 8px 0; }
+  nav.toc > ol > li > a { display: block; padding: 4px 8px; border-radius: 4px;
+    color: var(--text); font-weight: 600; }
+  nav.toc > ol > li > a::before { content: counter(l1) ". "; color: var(--muted); }
+  nav.toc > ol > li > a:hover { background: var(--card); text-decoration: none; }
+  nav.toc ol ol { padding-left: 12px; counter-reset: l2; }
+  nav.toc ol ol > li { counter-increment: l2; margin: 2px 0; }
+  nav.toc ol ol > li > a { display: block; padding: 2px 8px; border-radius: 4px;
+    color: var(--muted); font-weight: 400; font-size: 12px; }
+  nav.toc ol ol > li > a::before { content: counter(l1) "." counter(l2) " "; }
+  nav.toc ol ol > li > a:hover { background: var(--card); color: var(--text); }
+
+  main {
+    padding: 40px 56px 80px; max-width: 1100px;
+  }
+  .header-strip {
+    background: linear-gradient(90deg, var(--accent), var(--primary));
+    color: white; padding: 28px 32px; border-radius: 12px; margin-bottom: 36px;
+  }
+  .header-strip h1 { margin: 0 0 6px; font-size: 28px; }
+  .header-strip .sub { opacity: 0.92; font-size: 14px; }
+
+  h2 { color: var(--accent); border-bottom: 2px solid var(--border);
+    padding-bottom: 6px; margin: 56px 0 18px; font-size: 22px; }
+  h3 { color: var(--primary); margin: 28px 0 10px; font-size: 17px; }
+  h4 { color: var(--text); margin: 18px 0 8px; font-size: 14px;
+    text-transform: uppercase; letter-spacing: 0.5px; }
+
+  p { margin: 8px 0 12px; }
+  ul, ol { padding-left: 22px; }
+  li { margin: 4px 0; }
+
+  /* Code */
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 3px;
+    font: 12.5px/1.5 'Consolas', 'Cascadia Mono', monospace; color: #d4d4d4; }
+  pre { background: var(--code-bg); padding: 14px 16px; border-radius: 6px;
+    overflow-x: auto; border-left: 3px solid var(--accent); margin: 10px 0; }
+  pre code { background: none; padding: 0; }
+
+  /* Tables */
+  table { border-collapse: collapse; width: 100%; margin: 10px 0 18px;
+    font-size: 13px; }
+  th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left;
+    vertical-align: top; }
+  th { background: var(--card); color: var(--accent); font-weight: 600; }
+  tr:nth-child(even) td { background: rgba(255,255,255,0.018); }
+
+  /* Callouts */
+  .callout { padding: 10px 14px; border-radius: 6px; margin: 14px 0;
+    border-left: 4px solid var(--accent); background: rgba(20,184,166,0.08); }
+  .callout.warn { border-left-color: var(--warn); background: rgba(245,158,11,0.08); }
+  .callout.danger { border-left-color: var(--danger); background: rgba(229,57,53,0.08); }
+  .callout.tip { border-left-color: var(--primary); background: rgba(61,125,232,0.08); }
+  .callout strong { display: inline-block; margin-right: 6px; }
+
+  /* Chip + role badges (visual reference matching UI) */
+  .chip { display: inline-block; padding: 2px 8px; border-radius: 12px;
+    font-size: 11px; font-weight: 600; margin: 0 2px; }
+  .chip.role-op { background: #4a4a4a; color: white; }
+  .chip.role-lead { background: var(--primary); color: white; }
+  .chip.role-sup { background: #e85d3d; color: white; }
+  .chip.ok { background: var(--ok); color: white; }
+  .chip.ng { background: var(--danger); color: white; }
+  .chip.warn { background: var(--warn); color: white; }
+  .chip.muted { background: var(--card); color: var(--muted); border: 1px solid var(--border); }
+
+  /* Step list */
+  ol.steps { counter-reset: s; list-style: none; padding-left: 0; }
+  ol.steps > li { counter-increment: s; padding: 6px 0 6px 36px; position: relative; }
+  ol.steps > li::before { content: counter(s); position: absolute; left: 0; top: 6px;
+    background: var(--accent); color: white; width: 24px; height: 24px;
+    border-radius: 50%; text-align: center; font-weight: 700; font-size: 12px;
+    line-height: 24px; }
+
+  /* Section anchor offset */
+  section { scroll-margin-top: 12px; }
+
+  /* Print */
+  @media print {
+    .layout { grid-template-columns: 1fr; }
+    nav.toc { display: none; }
+    main { padding: 20px; max-width: 100%; }
+    pre, .callout { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<nav class="toc">
+  <h2>목차</h2>
+  <ol>
+    <li><a href="#overview">시스템 개요</a>
+      <ol>
+        <li><a href="#overview-arch">시스템 구성</a></li>
+        <li><a href="#overview-flow">운영 흐름 한눈에</a></li>
+        <li><a href="#overview-terms">핵심 용어</a></li>
+      </ol>
+    </li>
+    <li><a href="#install">설치 / 배포</a>
+      <ol>
+        <li><a href="#install-vms">VMS 클라이언트 (MSI)</a></li>
+        <li><a href="#install-web">Web 서버 (PowerShell)</a></li>
+        <li><a href="#install-network">네트워크 / 방화벽</a></li>
+        <li><a href="#install-checklist">첫 실행 전 체크리스트</a></li>
+      </ol>
+    </li>
+    <li><a href="#vms">VMS 클라이언트</a>
+      <ol>
+        <li><a href="#vms-startup">첫 실행 화면</a></li>
+        <li><a href="#vms-header">헤더 — 운영 흐름</a></li>
+        <li><a href="#vms-sidebar">사이드 패널 (Settings)</a></li>
+        <li><a href="#vms-dialog-completed">작업지시 완료 다이얼로그</a></li>
+        <li><a href="#vms-auto-run">AUTO RUN 활성화 조건</a></li>
+        <li><a href="#vms-roles">권한별 동선</a></li>
+      </ol>
+    </li>
+    <li><a href="#web">BODA.VMS.Web</a>
+      <ol>
+        <li><a href="#web-login">로그인 / 회원가입</a></li>
+        <li><a href="#web-nav">사이드 메뉴</a></li>
+        <li><a href="#web-dashboard">Dashboard</a></li>
+        <li><a href="#web-andon">Andon Board</a></li>
+        <li><a href="#web-alarms">Alarms</a></li>
+        <li><a href="#web-history">Production History</a></li>
+        <li><a href="#web-workorders">Work Orders</a></li>
+        <li><a href="#web-products">Products</a></li>
+        <li><a href="#web-recipes">Inspection Items (Recipes)</a></li>
+        <li><a href="#web-operators">Operators</a></li>
+        <li><a href="#web-lots">Lots</a></li>
+        <li><a href="#web-maintenance">Maintenance</a></li>
+        <li><a href="#web-defects">Defect Codes</a></li>
+        <li><a href="#web-shifts">Shifts</a></li>
+        <li><a href="#web-audit">Audit Logs</a></li>
+        <li><a href="#web-reports">Reports</a></li>
+        <li><a href="#web-notif">알림 (NotificationBell)</a></li>
+      </ol>
+    </li>
+    <li><a href="#workflow">통합 워크플로</a>
+      <ol>
+        <li><a href="#workflow-stages">Stage 1/2/3 일체</a></li>
+        <li><a href="#workflow-traceability">추적성 4필드</a></li>
+        <li><a href="#workflow-queue">업로드 큐 (오프라인 복구)</a></li>
+        <li><a href="#workflow-signalr">SignalR 실시간 푸시</a></li>
+        <li><a href="#workflow-multiline">다중 라인 운영</a></li>
+      </ol>
+    </li>
+    <li><a href="#admin">관리자 가이드</a>
+      <ol>
+        <li><a href="#admin-operators">Operator 등록 + Role</a></li>
+        <li><a href="#admin-wo">작업지시 라이프사이클</a></li>
+        <li><a href="#admin-alarms">알람 관리</a></li>
+        <li><a href="#admin-backup">백업 / DB 위치</a></li>
+        <li><a href="#admin-upgrade">버전 업그레이드</a></li>
+      </ol>
+    </li>
+    <li><a href="#troubleshoot">트러블슈팅</a>
+      <ol>
+        <li><a href="#trouble-vms">VMS 측</a></li>
+        <li><a href="#trouble-web">Web 측</a></li>
+        <li><a href="#trouble-integration">통합 / 네트워크</a></li>
+      </ol>
+    </li>
+    <li><a href="#appendix">부록</a>
+      <ol>
+        <li><a href="#appx-api">API 엔드포인트</a></li>
+        <li><a href="#appx-signalr">SignalR 이벤트</a></li>
+        <li><a href="#appx-paths">파일 / 디렉토리 경로</a></li>
+        <li><a href="#appx-changelog">변경 이력</a></li>
+      </ol>
+    </li>
+  </ol>
+</nav>
+
+<main>
+
+<div class="header-strip">
+  <h1>BODA VMS 사용자 매뉴얼</h1>
+  <div class="sub">버전 1.1.0 · 2026-05-22 · Vision Management System + Web MES 통합</div>
+</div>
+
+<!-- ============================================================ -->
+<section id="overview">
+<h2>1. 시스템 개요</h2>
+
+<p>BODA VMS 는 산업 현장의 머신비전 검사를 실시간 수행(<strong>VMS 클라이언트</strong>)하고,
+검사 결과 · 작업지시 · 작업자 · 알람을 중앙에서 관리(<strong>BODA.VMS.Web</strong>)하는
+통합 시스템입니다. 두 솔루션은 익명 REST + SignalR 로 단방향/양방향 통신합니다.</p>
+
+<h3 id="overview-arch">1.1 시스템 구성</h3>
+<table>
+  <tr><th>항목</th><th>VMS 클라이언트</th><th>BODA.VMS.Web (서버)</th></tr>
+  <tr><td>플랫폼</td><td>.NET 8 WPF (Windows 10/11 x64)</td><td>.NET 8 Blazor WASM + ASP.NET Core</td></tr>
+  <tr><td>역할</td><td>실시간 비전 검사 실행, 카메라/PLC 직접 제어</td><td>MES (작업지시/SPC/OEE/감사/리포트), 단일 진실 원본</td></tr>
+  <tr><td>레시피</td><td>다운로드만 (자동 동기화)</td><td>마스터 보유, CRUD 가능</td></tr>
+  <tr><td>검사 결과</td><td>임시 메모리 + 디스크 큐 → Web 업로드</td><td>영구 저장 (SQLite) + 통계 + 알람</td></tr>
+  <tr><td>인증</td><td>로컬 시스템 사용자 BCrypt + Operator 세션 (Web 인증)</td><td>JWT (관리자 / 작업자)</td></tr>
+  <tr><td>DB</td><td>로컬 SQLite (시스템 사용자만)</td><td>SQLite <code>C:\ProgramData\BODA\VMS\BodaVision.db</code></td></tr>
+  <tr><td>외부 의존</td><td>OpenCvSharp4, HelixToolkit.Wpf.SharpDX, 카메라 SDK, PLC 드라이버</td><td>없음 (Kestrel 단독)</td></tr>
+</table>
+
+<h3 id="overview-flow">1.2 운영 흐름 한눈에</h3>
+<ol class="steps">
+  <li>VMS 실행 → 카메라 자동 연결 + Web 에 Heartbeat 시작 (5초 주기).</li>
+  <li>작업자가 <strong>헤더 Operator 로그인</strong> (사번 + PIN). Web 의 작업자 마스터와 대조.</li>
+  <li>로그인 성공 → 헤더 <span class="chip role-op">Operator</span> /
+      <span class="chip role-lead">Lead</span> / <span class="chip role-sup">Supervisor</span>
+      뱃지 표시 + <strong>Work Orders</strong> 버튼 활성화.</li>
+  <li>Work Orders 클릭 → Web 에서 현재 라인의 작업지시 목록 fetch → 다이얼로그.</li>
+  <li>WO 선택 → <strong>RecipeName 자동 로드</strong> + 활성 Lot 자동 채움 +
+      AUTO RUN 활성화.</li>
+  <li>AUTO RUN 클릭 → 검사 시작. 결과는 헤더 WO 칩에 진행률 실시간 표시 (예: <code>5/100</code> + ProgressBar).</li>
+  <li>계획 수량 도달 → <strong>완료 다이얼로그</strong> 자동 표시 (KPI 카드 + 알람 사운드) +
+      AUTO RUN 자동 정지 + 다음 WO 선택 다이얼로그.</li>
+  <li>모든 검사 1건마다 Web 의 <code>InspectionHistory</code> + <code>ParameterMeasurement</code> 에 저장.
+      NG 발생 시 <code>AlarmEvent</code> 자동 생성 + 관리자 화면에 SignalR 즉시 푸시.</li>
+</ol>
+
+<h3 id="overview-terms">1.3 핵심 용어</h3>
+<table>
+  <tr><th>용어</th><th>설명</th></tr>
+  <tr><td>WO (Work Order)</td><td>작업지시. 제품 × 수량 × 레시피 단위. Planned → InProgress → Completed → Closed.</td></tr>
+  <tr><td>Lot</td><td>WO 산하의 단위 묶음 (배치). 한 WO 에 여러 Lot 가능.</td></tr>
+  <tr><td>Operator</td><td>현장 작업자. 사번 + PIN 로 키오스크 로그인. Role: Operator / Lead / Supervisor.</td></tr>
+  <tr><td>Recipe (Inspection Item)</td><td>검사 설정 묶음. 비전 도구 + 임계값 + 파라미터.</td></tr>
+  <tr><td>ParamCode / ParamValue</td><td>레시피 안의 개별 파라미터 (예: 패턴 점수 임계치 = 0.85).</td></tr>
+  <tr><td>Ctx (Context)</td><td>검사 결과에 첨부하는 추적성 4필드: WO / Lot / Operator / Serial Number.</td></tr>
+  <tr><td>AUTO RUN</td><td>VMS 의 메인 검사 시작 버튼. 운영 조건 모두 만족해야 활성.</td></tr>
+  <tr><td>Heartbeat</td><td>VMS 가 5초마다 Web 에 보내는 생존 신호. 멈추면 5분 후 stale 세션 정리.</td></tr>
+  <tr><td>NG / OK</td><td>판정 결과. NG 발생 시 자동 알람 생성.</td></tr>
+</table>
+</section>
+
+<!-- ============================================================ -->
+<section id="install">
+<h2>2. 설치 / 배포</h2>
+
+<h3 id="install-vms">2.1 VMS 클라이언트 (MSI)</h3>
+<p>자체 .NET 8 런타임을 포함한 self-contained MSI (~220MB) 한 개로 설치 완료.
+.NET 8 별도 설치 불필요.</p>
+
+<h4>설치</h4>
+<ol class="steps">
+  <li><code>BODA-VMS-1.1.0.msi</code> 더블 클릭.</li>
+  <li>Welcome → License 동의 → Install Folder (기본 <code>C:\Program Files\BODA VMS\</code>) → Install.</li>
+  <li>완료 시 시작 메뉴 + 데스크톱 바로가기 자동 생성.</li>
+</ol>
+
+<h4>제거</h4>
+<ul>
+  <li>제어판 → 프로그램 및 기능 → "BODA VMS" → 제거</li>
+  <li>또는 시작 메뉴의 "Uninstall BODA VMS" 바로가기</li>
+</ul>
+
+<h4>업그레이드 (v1.1 → v1.2)</h4>
+<p>새 MSI 더블 클릭하면 이전 버전을 자동 제거 후 새 버전 설치 (UpgradeCode 동일 유지).
+로컬 설정 파일과 카메라 보정 등은 <code>%LocalAppData%</code> 에 저장되어 보존됩니다.</p>
+
+<div class="callout warn">
+<strong>요구사항:</strong> Windows 10/11 x64. Visual C++ Redistributable (OpenCvSharp
+네이티브 DLL 의존). 일반 Windows 에 보통 설치되어 있으나 누락 시 Microsoft 공식
+사이트에서 <code>vc_redist.x64.exe</code> 다운로드 후 설치.
+</div>
+
+<h3 id="install-web">2.2 Web 서버 (PowerShell)</h3>
+<p>Kestrel 단독 + Windows Service. IIS 불필요.</p>
+
+<h4>설치</h4>
+<pre><code># 관리자 PowerShell 에서
+cd D:\Project\BODA.VMS.Web\deploy
+.\Install-Web.ps1</code></pre>
+
+<p>기본값: 설치 폴더 <code>C:\Program Files\BODA VMS Web\</code>, 포트 7144 (HTTPS),
+서비스 이름 <code>BODA-VMS-Web</code>, 부팅 시 자동 시작 (실패 시 5초 후 자동 재시작 3회).</p>
+
+<p>옵션 변경:</p>
+<pre><code>.\Install-Web.ps1 -Port 8443 -InstallPath "D:\BODA Web"</code></pre>
+
+<h4>제거</h4>
+<pre><code>.\Uninstall-Web.ps1</code></pre>
+<p>SQLite DB 는 보존 (<code>$env:LOCALAPPDATA\BODA\VMS</code>). 완전 삭제 시:</p>
+<pre><code>Remove-Item "$env:LOCALAPPDATA\BODA\VMS" -Recurse</code></pre>
+
+<h3 id="install-network">2.3 네트워크 / 방화벽</h3>
+<table>
+  <tr><th>측</th><th>포트 / 프로토콜</th><th>방향</th><th>용도</th></tr>
+  <tr><td>Web 서버</td><td>7144 / HTTPS</td><td>인바운드</td><td>VMS → Web REST API + SignalR (자동 방화벽 룰 생성)</td></tr>
+  <tr><td>Web 서버</td><td>5000-5100 / HTTP</td><td>(선택)</td><td>VisionServer 통합 시</td></tr>
+  <tr><td>VMS 클라이언트</td><td>—</td><td>아웃바운드</td><td>Web 서버 7144 접속, 카메라 GigE 3956 (UDP)</td></tr>
+</table>
+
+<div class="callout">
+<strong>HTTPS 인증서:</strong> 개발 환경은 self-signed. 첫 실행 시
+<code>dotnet dev-certs https --trust</code>. 운영은 사설 CA 또는 HTTP.
+</div>
+
+<h3 id="install-checklist">2.4 첫 실행 전 체크리스트</h3>
+<ol>
+  <li>Web 서버 먼저 시작 → 브라우저로 <code>https://&lt;서버IP&gt;:7144</code> 접속 확인.</li>
+  <li>관리자 계정으로 회원가입 → 승인 (현재 첫 사용자가 자동 Admin).</li>
+  <li>Operators 페이지에서 작업자 마스터 등록 (사번 + PIN + Role).</li>
+  <li>Products / Recipes / Work Orders 1건 이상 등록.</li>
+  <li>VMS 클라이언트 설치 후 첫 실행 → AppSetup 마법사에서
+      WebServerUrl = <code>https://&lt;서버IP&gt;:7144</code>, ClientIndex = 1, 2, 3... 라인별 지정.</li>
+  <li>VMS 실행 → 시작 화면 헤더에 Heartbeat 정상 표시 확인.</li>
+</ol>
+</section>
+
+<!-- ============================================================ -->
+<section id="vms">
+<h2>3. VMS 클라이언트 매뉴얼</h2>
+
+<h3 id="vms-startup">3.1 첫 실행 화면</h3>
+<p>실행 시:</p>
+<ol>
+  <li>Splash → 카메라 자동 검색 (백그라운드).</li>
+  <li>로컬 시스템 사용자 로그인 (엔지니어용, BCrypt). <span class="chip muted">선택</span></li>
+  <li>메인 윈도우 표시: 헤더 + KPI Strip + 카메라 캔버스 + 시스템 로그 + 사이드 패널 (접힘).</li>
+</ol>
+
+<h3 id="vms-header">3.2 헤더 — 운영 흐름</h3>
+<p>좌→우로 자연스러운 운영 동선. 모든 칩 높이 통일 (32px), AUTO RUN 만 강조 (34px).</p>
+
+<h4>3.2.1 Operator 로그인</h4>
+<p>청록 보더 칩. 로그인 전 "Login..." 버튼만 표시.</p>
+<ol class="steps">
+  <li>"Login..." 클릭 → 다크 다이얼로그 (사번 + PIN).</li>
+  <li>Web <code>/api/kiosk/login</code> 으로 대조.</li>
+  <li>성공 시 헤더 칩 형태가 "<strong>김기동 (1003)</strong> <span class="chip role-lead">Lead</span> [Logout]" 으로 변경.</li>
+</ol>
+
+<h4>3.2.2 Work Orders 버튼</h4>
+<p>Operator 로그인 후 활성. 클릭 시 Web 에서 작업지시 목록 fetch → 980×640 chromeless 다이얼로그.</p>
+<ul>
+  <li>상태 필터: 활성(Planned + InProgress) / 전체 / Planned / InProgress / Completed.</li>
+  <li>컬럼: Order No / Product / Recipe / Progress (예: 5/100) / Status (컬러 뱃지) / Planned Start.</li>
+  <li>더블 클릭 또는 Select 버튼으로 선택.</li>
+</ul>
+
+<h4>3.2.3 WO 칩 (진행률 ProgressBar)</h4>
+<p>선택된 작업지시 표시. 검사 1건마다 실시간 갱신.</p>
+<pre><code>WO: WO-20260522-001 · A001 (5/100)  [▰▰▱▱▱▱▱▱]</code></pre>
+<ul>
+  <li>ProgressBar 색: 청록 (<code>#14B8A6</code>). 트랙: <code>#1A1A1C</code>.</li>
+  <li>PlannedQuantity = 0 인 WO 는 ProgressBar 숨김.</li>
+  <li>완료(Status=Completed) 시 자동 unselect + 다음 WO 선택 다이얼로그.</li>
+</ul>
+
+<h4>3.2.4 Recipe 칩</h4>
+<p>파란 보더 (<code>#3D7DE8</code>) 책 아이콘 + 레시피명. WO 선택 시 <code>WO.RecipeName</code>
+으로 로컬 레시피 자동 로드 → 카메라 전파 → Web 파라미터 동기화. 로컬에 없으면
+Web 동기화 후 재시도.</p>
+
+<h4>3.2.5 Ctx (Inspection Context)</h4>
+<p>업로드 시 자동 첨부될 추적성 4필드:</p>
+<table>
+  <tr><th>필드</th><th>채움 방식</th><th>비고</th></tr>
+  <tr><td>WO</td><td>WO 선택 시 자동</td><td>수동 오버라이드 가능</td></tr>
+  <tr><td>Lot</td><td>WO 선택 시 활성 Lot 자동 fetch</td><td>활성 Lot 없으면 비움</td></tr>
+  <tr><td>S/N</td><td>바코드 스캐너 수동 입력</td><td>제품 시리얼 — 검사 1회 1S/N</td></tr>
+  <tr><td>Op ID</td><td>Operator 로그인 시 자동</td><td>로그아웃 시 비움</td></tr>
+</table>
+<p><strong>✕</strong> 버튼으로 모든 필드 클리어.</p>
+
+<h4>3.2.6 AUTO RUN</h4>
+<p>운영 흐름의 단일 Primary 액션. 모든 조건 만족 시 청록 (<code>#00ADB5</code>) 활성,
+실행 중에는 빨강 STOP 으로 전환.</p>
+
+<h4>3.2.7 Role 뱃지</h4>
+<p>Operator chip 안에 권한 뱃지:</p>
+<ul>
+  <li><span class="chip role-op">Operator</span> — 기본, 뱃지 없음</li>
+  <li><span class="chip role-lead">Lead</span> — 반장. 파란 뱃지.</li>
+  <li><span class="chip role-sup">Supervisor</span> — 관리자. 주황 뱃지.</li>
+</ul>
+
+<h3 id="vms-sidebar">3.3 사이드 패널 (Settings)</h3>
+<p>헤더 우측 톱니바퀴 아이콘 (<strong>⚙</strong>) 으로 토글. 320px 폭.</p>
+
+<h4>Camera Control 섹션</h4>
+<ul>
+  <li><strong>Grab</strong> — 단일 이미지 캡처. AUTO RUN 비활성 시만 활성.</li>
+  <li><strong>Live Start / Live Stop</strong> — 연속 라이브 그랩.</li>
+  <li><strong>Roller</strong> — 롤러 검사 모드 토글 (지원 카메라만).</li>
+</ul>
+
+<h4>Recipe 섹션</h4>
+<ul>
+  <li>현재 로드된 레시피 + 버전.</li>
+  <li>Available Recipes 리스트 (로컬 + Web 동기화).</li>
+  <li>Load / New / Save / Export / Import 버튼. New/Save/Delete 는 권한 필요.</li>
+</ul>
+
+<h4>External Tools 섹션 <span class="chip role-sup">Supervisor 전용</span></h4>
+<ul>
+  <li><strong>Vision Tool Setup</strong> — VMS.VisionSetup 엔지니어 워크스페이스 실행
+      (드래그로 비전 도구 파이프라인 구성).</li>
+  <li><strong>System Setup</strong> — VMS.AppSetup 마법사 (카메라 / PLC / 네트워크 / 사용자).</li>
+</ul>
+<p>Operator / Lead 등급은 이 섹션 자체가 숨겨집니다.</p>
+
+<h4>Web Parameters 섹션</h4>
+<ul>
+  <li><strong>Sync Parameters</strong> — Web 파라미터 즉시 동기화 (60초 자동 주기 외 수동 트리거).</li>
+</ul>
+
+<h4>Recent Inspections 섹션 (D8)</h4>
+<p>VMS 자체 In-Memory 순환 버퍼 (최대 200건). Web 끊겨도 작업자가 즉시 확인.</p>
+<ul>
+  <li>3-cell 통계: Total / Pass / NG + Pass rate.</li>
+  <li>ListBox 최근 N건 — 시간 (HH:mm:ss) + <span class="chip ok">OK</span> /
+      <span class="chip ng">NG</span> 뱃지 + 시리얼 · WO · Recipe + NG 코드.</li>
+  <li>Clear 버튼으로 초기화. ToolTip 으로 풀 타임스탬프.</li>
+</ul>
+<div class="callout tip">
+프로세스 재시작 시 비워짐. 영구 저장은 Web <code>InspectionHistory</code> 가 담당.
+</div>
+
+<h4>Statistics 섹션</h4>
+<p>세션 누적 통계: Total / Pass / Fail / Pass Rate.</p>
+
+<h3 id="vms-dialog-completed">3.4 작업지시 완료 다이얼로그</h3>
+<p>계획 수량 도달 시 자동 표시 (560×500 chromeless 다크, 청록 2px 보더):</p>
+<ul>
+  <li>큰 원형 ✓ 아이콘 (72px) + WO OrderNo (22pt Bold).</li>
+  <li>KPI 카드 4개: 계획 / 검사 / Pass / NG (각각 색상 차별화).</li>
+  <li>Pass rate · 진척률 표시.</li>
+  <li>표시 시 <code>SystemSounds.Asterisk</code> 자동 재생 (작업자 주의 환기).</li>
+  <li>하단 두 버튼: <strong>닫기</strong> / <strong>다음 작업지시 선택</strong> (Enter 기본).</li>
+</ul>
+
+<h3 id="vms-auto-run">3.5 AUTO RUN 활성화 조건</h3>
+<p>다음을 모두 만족해야 활성:</p>
+<ol>
+  <li>카메라 1대 이상 연결 (<code>HasConnectedCamera</code>).</li>
+  <li>시스템 사용자 StartStop 권한 (<code>UserPermission.StartStop</code>) — 미로그인 시 기본 허용.</li>
+  <li>(Web 통합 환경) Operator 로그인 상태.</li>
+  <li>(Web 통합 환경) WO 선택 상태이고 Status 가 Planned 또는 InProgress.</li>
+</ol>
+<p>비활성 시 ToolTip 으로 사유 표시. Standalone (Web 미연결) 환경은 4번 항목 우회.</p>
+
+<h3 id="vms-roles">3.6 권한별 동선</h3>
+<table>
+  <tr><th>액션</th><th>Operator</th><th>Lead</th><th>Supervisor</th></tr>
+  <tr><td>AUTO RUN / Grab / Live</td><td>✓</td><td>✓</td><td>✓</td></tr>
+  <tr><td>WO 선택</td><td>✓</td><td>✓</td><td>✓</td></tr>
+  <tr><td>Camera Control 사이드 섹션</td><td>✓</td><td>✓</td><td>✓</td></tr>
+  <tr><td>Recipe 편집 / Save / Delete</td><td>—</td><td>✓</td><td>✓</td></tr>
+  <tr><td>External Tools (Vision Tool / System Setup)</td><td>—</td><td>—</td><td>✓</td></tr>
+  <tr><td>User Management</td><td>—</td><td>—</td><td>✓ (Admin)</td></tr>
+</table>
+</section>
+
+<!-- ============================================================ -->
+<section id="web">
+<h2>4. BODA.VMS.Web (관리자 / MES)</h2>
+
+<p>브라우저로 접속 (<code>https://&lt;서버IP&gt;:7144</code>). MudBlazor 기반 다크 테마.
+사이드 메뉴 + 상단 AppBar (다국어 전환 / 알림 / 사용자).</p>
+
+<h3 id="web-login">4.1 로그인 / 회원가입</h3>
+<ol>
+  <li>"/login" 페이지에서 사용자명 + 비밀번호 입력.</li>
+  <li>회원가입 시 첫 사용자는 자동 Admin, 이후는 Pending 상태 → 기존 Admin 이 승인 필요.</li>
+  <li>JWT 토큰 발급 → localStorage 저장 → 모든 API 호출에 자동 첨부.</li>
+</ol>
+
+<h3 id="web-nav">4.2 사이드 메뉴 구조</h3>
+<table>
+  <tr><th>그룹</th><th>페이지</th></tr>
+  <tr><td>Monitoring</td><td>Dashboard / Andon Board / Alarms / Production History</td></tr>
+  <tr><td>Production</td><td>Work Orders / Products / Inspection Items / Lots</td></tr>
+  <tr><td>Quality</td><td>Quality Analysis / SPC / Defect Codes</td></tr>
+  <tr><td>People</td><td>Operators / Shifts</td></tr>
+  <tr><td>Maintenance</td><td>Maintenance Schedules</td></tr>
+  <tr><td>Admin</td><td>Clients / Users / Audit Logs / Reports</td></tr>
+</table>
+
+<h3 id="web-dashboard">4.3 Dashboard</h3>
+<p>실시간 라인 KPI: 전체 라인 카운트, Pass Rate, NG 비율, 활성 작업지시, 최근 알람 위젯.
+SignalR 로 실시간 갱신.</p>
+
+<h3 id="web-andon">4.4 Andon Board</h3>
+<p>전체 라인 실시간 상태 그리드. 각 라인 카드에 클라이언트명 + 현재 작업자 + WO 진행률 +
+알람 카운트. 알람 카운트 클릭 시 Alarms 페이지로 이동 (필터 적용).</p>
+
+<h3 id="web-alarms">4.5 Alarms</h3>
+<p>알람 목록 + 상세. 필터: 라인 / 상태 (New/Ack/Resolved) / 심각도 / 기간.</p>
+<h4>액션</h4>
+<ul>
+  <li><strong>Acknowledge</strong> (확인) — 작업자가 인지함. 배지 카운트에서 빠짐.</li>
+  <li><strong>Resolve</strong> (해제) — 다이얼로그에서 사유 입력 후 해제.</li>
+  <li>새 알람은 SignalR <code>AlarmCreated</code> 로 즉시 push.</li>
+</ul>
+
+<h3 id="web-history">4.6 Production History</h3>
+<p>검사 이력 (InspectionHistory + ParameterMeasurement). 필터: 라인 / 기간 / Pass/NG / WO / Operator.</p>
+<ul>
+  <li>각 행 클릭 시 NgDetailDialog 팝업 — 측정값 + 사진 + NG 코드.</li>
+  <li>Excel 내보내기.</li>
+  <li>읽기 전용 (감사 추적성 보존).</li>
+</ul>
+
+<h3 id="web-workorders">4.7 Work Orders</h3>
+<p>작업지시 마스터. Planned → InProgress → Completed → Closed.</p>
+<ul>
+  <li>+ 새 WO 다이얼로그 — Product / Client (라인) / Recipe / Planned Quantity / Planned Start.</li>
+  <li>OrderNo 자동 채번 (WO-{YYYYMMDD}-{NNN}).</li>
+  <li><strong>Start</strong> 버튼 — Planned → InProgress 수동 전이 (또는 VMS 첫 결과 도착 시 자동).</li>
+  <li><strong>Complete</strong> — VMS 가 자동 (PlannedQuantity 도달) 또는 수동.</li>
+  <li><strong>Close</strong> — Completed 상태에서 영구 마감.</li>
+</ul>
+
+<h3 id="web-products">4.8 Products</h3>
+<p>제품 마스터 (코드 / 이름 / 카테고리 / 활성 상태). WO 의 ProductId 가 참조.</p>
+
+<h3 id="web-recipes">4.9 Inspection Items (Recipes + Parameters)</h3>
+<p>레시피와 그 산하 파라미터 관리. VMS 가 60초 주기로 자동 동기화.</p>
+<ul>
+  <li>레시피 트리: Pattern / Blob / Dimension 카테고리.</li>
+  <li>파라미터: ParamCode (정수) / ParamValue (소수) / Description / Unit / LowerLimit / UpperLimit / IsActive.</li>
+  <li>VMS 측에서 검사 시 ParamValue 사용. LowerLimit/UpperLimit 은 향후 SPC 판정용.</li>
+</ul>
+
+<h3 id="web-operators">4.10 Operators</h3>
+<p>3개 탭:</p>
+<ul>
+  <li><strong>Operator Master</strong> — 사번 / 이름 / 부서 / Role / 활성. PIN 등록 (BCrypt 해시).</li>
+  <li><strong>Sessions</strong> — 로그인/로그아웃 이력. VMS 로그인 시 <strong>SignalR 로 실시간 갱신</strong>
+      — 새로 고침 불필요.</li>
+  <li><strong>Kiosk Links</strong> — 각 라인의 키오스크 페이지 URL.</li>
+</ul>
+
+<h4>Role 설명</h4>
+<table>
+  <tr><th>Role</th><th>설명</th><th>VMS 헤더 뱃지</th></tr>
+  <tr><td>Operator</td><td>일반 작업자. 검사 실행만.</td><td>없음</td></tr>
+  <tr><td>Lead</td><td>반장. + Recipe 편집.</td><td><span class="chip role-lead">Lead</span> 파랑</td></tr>
+  <tr><td>Supervisor</td><td>관리자. + External Tools (Vision Tool / System Setup).</td><td><span class="chip role-sup">Supervisor</span> 주황</td></tr>
+</table>
+
+<h3 id="web-lots">4.11 Lots</h3>
+<p>WO 산하 단위 묶음. LotNumber 자동 채번 (<code>{YYYYMMDD}-{OrderNo}-{Seq:D3}</code>).
+Open → Closed.</p>
+<p>VMS 가 WO 선택 시 활성(Open) Lot 1개 자동 채움. 활성 Lot 없으면 Lot 없이 진행 가능.</p>
+
+<h3 id="web-maintenance">4.12 Maintenance</h3>
+<p>예방정비 (PM) 스케줄. Overdue / DueToday / Upcoming. Perform 다이얼로그로 수행 기록.</p>
+
+<h3 id="web-defects">4.13 Defect Codes</h3>
+<p>NG 코드 마스터 (코드 / 설명 / 카테고리 / 심각도 Critical/Major/Minor).</p>
+
+<h3 id="web-shifts">4.14 Shifts</h3>
+<p>교대 정의 (시작 시간 + 시간 길이). 검사 결과의 ShiftId 자동 매핑.</p>
+
+<h3 id="web-audit">4.15 Audit Logs</h3>
+<p>모든 마스터 데이터 변경 이력 (Create / Update / Delete). 사용자 / IP / 시각 기록.
+읽기 전용.</p>
+
+<h3 id="web-reports">4.16 Reports / Quality Analysis</h3>
+<p>OEE 지표, 라인별 / 작업자별 / WO별 통계, SPC 차트 (LCL/UCL).</p>
+
+<h3 id="web-notif">4.17 알림 (NotificationBell)</h3>
+<p>상단 AppBar 우측 종 아이콘. 배지로 미확인 알람 수 표시 (100+ 시 "99+").</p>
+<h4>액션</h4>
+<ul>
+  <li>아이콘 클릭 → 최근 10건 + "N건 미확인" 헤더 + "모두 확인" 버튼.</li>
+  <li>각 알람 클릭 → Alarms 페이지로 이동.</li>
+  <li>각 알람 우측 <strong>✕</strong> 아이콘 → 개별 확인 처리.</li>
+  <li><strong>모두 확인</strong> 버튼 → 모든 New 알람 일괄 Acknowledge.</li>
+  <li>모두 감사 추적성을 위해 <strong>삭제가 아닌 Acknowledge</strong> — 알람 이력 영구 보존.</li>
+</ul>
+</section>
+
+<!-- ============================================================ -->
+<section id="workflow">
+<h2>5. 통합 워크플로</h2>
+
+<h3 id="workflow-stages">5.1 Stage 1 / 2 / 3 일체</h3>
+<table>
+  <tr><th>Stage</th><th>책임</th><th>주요 동작</th></tr>
+  <tr><td>Stage 1<br>Operator Login</td><td>Web <code>/api/kiosk/*</code><br>VMS OperatorAuthService</td>
+      <td>사번+PIN → BCrypt 대조 → JWT-free Session 생성 → VMS 헤더 칩 갱신</td></tr>
+  <tr><td>Stage 2<br>Work Order 선택</td><td>Web <code>/api/workorders/by-client/{idx}</code><br>VMS WorkOrderClient</td>
+      <td>활성 WO 목록 → VMS 다이얼로그 → 선택 → Recipe 자동 로드 + 활성 Lot fetch + AUTO RUN 활성화</td></tr>
+  <tr><td>Stage 3<br>진행률 + 완료</td><td>Web <code>/api/parameters/results</code> + SignalR<br>VMS ParameterSyncService</td>
+      <td>결과 업로드 시 응답에 WO 진행률 포함 → 헤더 ProgressBar 갱신 → 계획 수량 도달 시 자동 Completed + 알람 다이얼로그 + AUTO RUN 자동 정지</td></tr>
+</table>
+
+<h3 id="workflow-traceability">5.2 추적성 4필드</h3>
+<p>검사 결과 업로드 시 자동 첨부되어 Web <code>InspectionHistory</code> 와
+<code>ParameterMeasurement</code> 에 저장:</p>
+<table>
+  <tr><th>필드</th><th>채움 시점</th><th>비고</th></tr>
+  <tr><td>WorkOrderId</td><td>WO 선택 시</td><td>Web 의 WO Producer/Pass/Ng 카운터 자동 증가</td></tr>
+  <tr><td>LotId</td><td>WO 선택 시 활성 Lot fetch</td><td>Lot 의 Quantity/Pass/Ng 카운터 자동 증가</td></tr>
+  <tr><td>OperatorId</td><td>로그인 시</td><td>현재 키오스크 세션에서 자동 매핑도 가능</td></tr>
+  <tr><td>SerialNumber</td><td>바코드 스캐너 입력</td><td>비어 있어도 업로드 정상</td></tr>
+</table>
+
+<h3 id="workflow-queue">5.3 업로드 큐 (오프라인 복구)</h3>
+<p>Web 끊김 / 재시작 시 검사 결과 손실 방지.</p>
+<ul>
+  <li>업로드 실패 → <code>%LocalAppData%\BODA VISION AI\upload_queue\{UTC timestamp}_{guid}.json</code> 디스크 보존.</li>
+  <li>5초 주기 백그라운드 timer 가 큐 디렉토리 스캔 → 시간 순 정렬 → 한 건씩 재전송.</li>
+  <li>한 건 실패 시 즉시 중단 (순서 보존 + 서버 다운 시 스팸 방지).</li>
+  <li>VMS 프로세스 재시작 후에도 큐 파일은 디스크에 남아 자동 복구.</li>
+  <li>손상된 JSON 은 자동 삭제 (무한 재시도 방지).</li>
+</ul>
+
+<h3 id="workflow-signalr">5.4 SignalR 실시간 푸시</h3>
+<p>두 개의 SignalR Hub:</p>
+<table>
+  <tr><th>Hub</th><th>경로</th><th>인증</th><th>이벤트</th></tr>
+  <tr><td>VmsHub</td><td><code>/hubs/vms</code></td><td>JWT 필수</td><td>AlarmCreated / AlarmUpdated / NgAlert / ClientStatusChanged / OperatorSessionStarted / OperatorSessionEnded</td></tr>
+  <tr><td>VmsPublicHub</td><td><code>/hubs/vms-public</code></td><td>익명</td><td>WorkOrderUpdated / WorkOrderCompleted (VMS 클라이언트용)</td></tr>
+</table>
+
+<p>VMS 가 한 검사를 업로드하면:</p>
+<ol class="steps">
+  <li>본인은 응답 본문에서 진행률 즉시 받음 (1차).</li>
+  <li>Web 이 동시에 모든 SignalR 연결에 <code>WorkOrderUpdated</code> broadcast (2차).</li>
+  <li>같은 라인의 다른 VMS (있다면), 관리자 Dashboard / Andon / Alarms 페이지 모두 새로고침 없이 즉시 반영.</li>
+</ol>
+
+<h3 id="workflow-multiline">5.5 다중 라인 운영</h3>
+<p>여러 VMS 가 같은 Web 서버에 연결 가능. 각 VMS 는 <code>ClientIndex</code> 로 구분 (1, 2, 3...).</p>
+<ul>
+  <li>각 라인의 WO 는 <code>/api/workorders/by-client/{clientIndex}</code> 로 분리.</li>
+  <li>각 라인의 Operator 세션도 ClientId 별로 독립.</li>
+  <li>관리자 Andon Board 에서 전체 라인 동시 모니터링.</li>
+</ul>
+
+<div class="callout warn">
+<strong>ClientIndex 유일성:</strong> 동일 ClientIndex 로 두 VMS 인스턴스 실행 금지.
+Web 이 IP 덮어쓰기 + 경고만 함. 운영 규칙으로 라인별 ClientIndex 를 사전 배정.
+</div>
+</section>
+
+<!-- ============================================================ -->
+<section id="admin">
+<h2>6. 관리자 가이드</h2>
+
+<h3 id="admin-operators">6.1 Operator 등록 + Role 부여</h3>
+<ol class="steps">
+  <li>Web 의 Operators 페이지 → Operator Master 탭 → "+ 새 작업자".</li>
+  <li>사번 (예: 1003), 이름, 부서, <strong>Role</strong> (Operator / Lead / Supervisor),
+      초기 PIN (최소 4자리), 활성 상태 ON 으로 저장.</li>
+  <li>작업자가 VMS 에서 같은 사번 + PIN 으로 로그인 → 헤더에 Role 뱃지 자동 표시.</li>
+</ol>
+
+<div class="callout tip">
+PIN 분실 시 Operator 편집 다이얼로그에서 새 PIN 입력 → 기존 PIN 덮어쓰기.
+편집 시 PIN 비워두면 기존 유지.
+</div>
+
+<h3 id="admin-wo">6.2 작업지시 라이프사이클</h3>
+<table>
+  <tr><th>상태</th><th>의미</th><th>전이 트리거</th></tr>
+  <tr><td>Planned</td><td>예정. 아직 시작 안 함.</td><td>WO 생성 시 기본</td></tr>
+  <tr><td>InProgress</td><td>진행 중. 검사 결과가 카운트됨.</td><td>VMS 첫 결과 도착 또는 수동 Start</td></tr>
+  <tr><td>Completed</td><td>계획 수량 도달. ActualEndAt 자동 설정.</td><td>ProducedQuantity ≥ PlannedQuantity 시 자동 또는 수동 Complete</td></tr>
+  <tr><td>Closed</td><td>영구 마감. 더 이상 검사 안 받음.</td><td>관리자 수동 Close</td></tr>
+</table>
+
+<h3 id="admin-alarms">6.3 알람 관리</h3>
+<ul>
+  <li>NG 발생 시 자동 알람 (<code>AlarmType=NG</code>, <code>Severity=Major</code> 기본).</li>
+  <li>알람 일괄 확인: NotificationBell → "모두 확인" 또는 Alarms 페이지에서 필터+선택.</li>
+  <li>해제 (Resolve): 사유 입력 다이얼로그 → 영구 해제 상태.</li>
+  <li>해제된 알람은 Audit Logs 에 누가 언제 무엇을 했는지 기록.</li>
+</ul>
+
+<h3 id="admin-backup">6.4 백업 / DB 위치</h3>
+<table>
+  <tr><th>DB</th><th>위치</th><th>백업 방법</th></tr>
+  <tr><td>Web SQLite</td><td><code>C:\ProgramData\BODA\VMS\BodaVision.db</code></td><td>서비스 중지 후 파일 복사</td></tr>
+  <tr><td>VMS 로컬 SQLite</td><td><code>%LocalAppData%\BODA VISION AI\</code></td><td>시스템 사용자 + 설정만 — 손실 영향 적음</td></tr>
+  <tr><td>VMS 업로드 큐</td><td><code>%LocalAppData%\BODA VISION AI\upload_queue\</code></td><td>VMS 종료 전 자동 전송 대기 — 백업 불필요</td></tr>
+</table>
+
+<div class="callout danger">
+<strong>운영 백업:</strong> Web SQLite DB 를 매일 새벽 자동 복사하는 작업
+스케줄러 등록 권장. <code>BodaVision.db</code> + <code>BodaVision.db-wal</code> +
+<code>BodaVision.db-shm</code> 세 파일 모두 복사.
+</div>
+
+<h3 id="admin-upgrade">6.5 버전 업그레이드</h3>
+<h4>VMS</h4>
+<ol class="steps">
+  <li>새 MSI (<code>BODA-VMS-1.2.0.msi</code>) 더블 클릭.</li>
+  <li>이전 버전 자동 제거 → 새 버전 설치 (UpgradeCode 동일).</li>
+  <li>로컬 설정 / 캘리브레이션 데이터 보존.</li>
+</ol>
+<h4>Web</h4>
+<ol class="steps">
+  <li>관리자 PowerShell 에서 <code>.\Install-Web.ps1</code> 재실행.</li>
+  <li>서비스 중지 → publish → 서비스 재시작 자동.</li>
+  <li>DB 는 LocalAppData 에 있어 영향 없음 (자동 마이그레이션 실행 — PRAGMA + ALTER TABLE).</li>
+</ol>
+</section>
+
+<!-- ============================================================ -->
+<section id="troubleshoot">
+<h2>7. 트러블슈팅</h2>
+
+<h3 id="trouble-vms">7.1 VMS 측</h3>
+
+<h4>실행 시 DLL 오류</h4>
+<p>Visual C++ Redistributable 누락. Microsoft 사이트에서 <code>vc_redist.x64.exe</code> 설치.</p>
+
+<h4>BrushBgWindow 리소스 찾을 수 없음</h4>
+<p>VMS Launcher 가 VMS.VisionSetup 다이얼로그를 띄울 때 발생.
+이미 <code>EnsureWindowStylesMerged()</code> 로 자동 처리되지만, 다른 다이얼로그 추가 시
+같은 패턴 사용 필요.</p>
+
+<h4>카메라 자동 연결 실패</h4>
+<ul>
+  <li>System Setup 의 카메라 IP / 매뉴팩처러 확인.</li>
+  <li>방화벽: GigE Vision 은 UDP 3956 사용.</li>
+  <li>각 NIC 마다 broadcast 보내므로 NIC 메트릭 확인.</li>
+</ul>
+
+<h4>업로드 큐가 계속 쌓임</h4>
+<p>Web 연결 끊김. <code>%LocalAppData%\BODA VISION AI\upload_queue\</code> 에 .json 누적.
+Web 서버 시작 후 5초 내 자동 드레인. 직접 확인은 파일 수 모니터링.</p>
+
+<h4>AUTO RUN 이 활성 안 됨</h4>
+<p>다음 모두 확인:</p>
+<ol>
+  <li>카메라 1대 이상 연결 됨 (헤더에 연결 표시)</li>
+  <li>Operator 로그인 됨 (Operator chip 작업자 이름 표시)</li>
+  <li>WO 선택 됨 (WO chip 표시)</li>
+  <li>WO Status 가 Planned 또는 InProgress (Completed 면 비활성)</li>
+</ol>
+<p>버튼에 마우스 올리면 ToolTip 으로 사유 확인 가능.</p>
+
+<h3 id="trouble-web">7.2 Web 측</h3>
+
+<h4>Windows Service 가 시작 안 됨</h4>
+<ul>
+  <li>Event Viewer → Windows Logs → Application → "BODA-VMS-Web" 로그.</li>
+  <li>주요 원인: 포트 충돌 (<code>netstat -ano | findstr 7144</code>), HTTPS 인증서 미신뢰.</li>
+  <li>HTTPS 인증서: <code>dotnet dev-certs https --trust</code>.</li>
+</ul>
+
+<h4>1003 민병준 같은 작업자가 계속 작업중으로 표시</h4>
+<p>VMS 비정상 종료로 OperatorSession 이 active 로 남음. 자동 처리:</p>
+<ul>
+  <li>VMS graceful 종료 시 <code>/api/clients/disconnect</code> 에서 세션 자동 종료.</li>
+  <li>Web 시작 시 5분 이상 heartbeat 없는 클라이언트의 active 세션 일괄 Stale 정리.</li>
+  <li>수동 정리: DB 에서 직접 UPDATE 또는 Web 재시작.</li>
+</ul>
+
+<h4>Operators Sessions 탭이 갱신 안 됨</h4>
+<p>v1.1 부터 SignalR 로 자동 갱신. 만약 안 되면:</p>
+<ul>
+  <li>브라우저 콘솔 (F12) → Network → WS 탭 → <code>/hubs/vms</code> 연결 상태 확인.</li>
+  <li>JWT 만료 시 재로그인.</li>
+</ul>
+
+<h4>알림 배지 안 보임</h4>
+<p>NotificationBell 의 CSS <code>vms-notif-badge</code> 가 적용되도록 브라우저 캐시 클리어
+(<code>Ctrl+Shift+R</code>).</p>
+
+<h3 id="trouble-integration">7.3 통합 / 네트워크</h3>
+
+<h4>VMS 가 Web 에 연결 못 함</h4>
+<ol>
+  <li>VMS System Setup → WebServerUrl 확인 (예: <code>https://192.168.0.10:7144</code>).</li>
+  <li>Web 서버 PC 의 방화벽: <code>Get-NetFirewallRule -DisplayName "BODA VMS Web*"</code> 확인.</li>
+  <li>self-signed 인증서: 운영은 사설 CA 인증서 사용 권장. 임시 우회는 VMS 의 HttpClient
+      가 cert validation 우회 (dev only).</li>
+</ol>
+
+<h4>다른 VMS 의 검사가 내 VMS 헤더에 반영 안 됨</h4>
+<p>SignalR 연결 끊김. VMS 콘솔 출력 확인:
+<code>[VmsHubClient] Connected → https://.../hubs/vms-public</code>. 자동 재연결 정책
+(0s/2s/10s/30s 무한) 으로 보통 자체 복구.</p>
+
+<h4>검사 결과가 Web 에 안 보임</h4>
+<ol>
+  <li>VMS 업로드 큐 (<code>upload_queue\</code>) 에 .json 쌓여 있는지 확인 — 있으면 네트워크 끊김.</li>
+  <li>Web Event Viewer 로그에서 <code>/api/parameters/results</code> 호출 확인.</li>
+  <li>Recipe ID / Client Index 가 양쪽에서 일치하는지 확인.</li>
+</ol>
+</section>
+
+<!-- ============================================================ -->
+<section id="appendix">
+<h2>8. 부록</h2>
+
+<h3 id="appx-api">8.1 API 엔드포인트 (VMS ↔ Web)</h3>
+<table>
+  <tr><th>방향</th><th>HTTP</th><th>URL</th><th>인증</th><th>용도</th></tr>
+  <tr><td>VMS→Web</td><td>POST</td><td><code>/api/clients/heartbeat</code></td><td>익명</td><td>5초 주기 생존 신호</td></tr>
+  <tr><td>VMS→Web</td><td>POST</td><td><code>/api/clients/disconnect</code></td><td>익명</td><td>VMS 종료 시 graceful</td></tr>
+  <tr><td>VMS→Web</td><td>POST</td><td><code>/api/clients/register</code></td><td>익명</td><td>self-register fallback</td></tr>
+  <tr><td>VMS→Web</td><td>POST</td><td><code>/api/kiosk/login</code></td><td>익명</td><td>사번+PIN → OperatorSessionDto</td></tr>
+  <tr><td>VMS→Web</td><td>POST</td><td><code>/api/kiosk/logout</code></td><td>익명</td><td>세션 종료</td></tr>
+  <tr><td>VMS→Web</td><td>GET</td><td><code>/api/kiosk/current/{idx}</code></td><td>익명</td><td>활성 세션 조회</td></tr>
+  <tr><td>VMS→Web</td><td>GET</td><td><code>/api/workorders/by-client/{idx}</code></td><td>익명</td><td>WO 목록 (status 옵션)</td></tr>
+  <tr><td>VMS→Web</td><td>GET</td><td><code>/api/lots/active-by-workorder/{woId}</code></td><td>익명</td><td>활성 Lot 1개</td></tr>
+  <tr><td>VMS→Web</td><td>GET</td><td><code>/api/parameters/sync/recipes/{idx}</code></td><td>익명</td><td>레시피 목록</td></tr>
+  <tr><td>VMS→Web</td><td>GET</td><td><code>/api/parameters/sync/recipe/{recipeId}</code></td><td>익명</td><td>파라미터 목록</td></tr>
+  <tr><td>VMS→Web</td><td>POST</td><td><code>/api/parameters/results</code></td><td>익명</td><td>검사 결과 업로드 (응답에 workOrder 진행률)</td></tr>
+  <tr><td>관리자→Web</td><td>POST</td><td><code>/api/alarms/acknowledge-all</code></td><td>JWT (Admin/User)</td><td>알림 일괄 확인</td></tr>
+  <tr><td>관리자→Web</td><td>POST</td><td><code>/api/alarms/{id}/action</code></td><td>JWT (Admin/User)</td><td>개별 Ack/Resolve</td></tr>
+</table>
+
+<h3 id="appx-signalr">8.2 SignalR 이벤트</h3>
+<table>
+  <tr><th>Hub</th><th>이벤트</th><th>페이로드</th><th>구독 측</th></tr>
+  <tr><td>VmsHub</td><td>AlarmCreated</td><td>AlarmEventDto</td><td>NotificationBell / Alarms / Dashboard</td></tr>
+  <tr><td>VmsHub</td><td>AlarmUpdated</td><td>AlarmEventDto</td><td>위와 같음</td></tr>
+  <tr><td>VmsHub</td><td>NgAlert</td><td>string (title)</td><td>Legacy 호환</td></tr>
+  <tr><td>VmsHub</td><td>ClientStatusChanged</td><td>(int clientId, bool isAlive)</td><td>Andon Board</td></tr>
+  <tr><td>VmsHub</td><td>OperatorSessionStarted</td><td>OperatorSessionDto</td><td>Operators Sessions 탭</td></tr>
+  <tr><td>VmsHub</td><td>OperatorSessionEnded</td><td>OperatorSessionDto</td><td>위와 같음</td></tr>
+  <tr><td>VmsPublicHub</td><td>WorkOrderUpdated</td><td>{id, orderNo, plannedQuantity, producedQuantity, passQuantity, ngQuantity, status, completed}</td><td>VMS 헤더 WO 칩</td></tr>
+  <tr><td>VmsPublicHub</td><td>WorkOrderCompleted</td><td>위와 동일 (completed=true)</td><td>VMS WorkOrderCompletedDialog</td></tr>
+</table>
+
+<h3 id="appx-paths">8.3 파일 / 디렉토리 경로</h3>
+<table>
+  <tr><th>경로</th><th>용도</th></tr>
+  <tr><td><code>C:\Program Files\BODA VMS\</code></td><td>VMS 클라이언트 설치 폴더</td></tr>
+  <tr><td><code>C:\Program Files\BODA VMS Web\</code></td><td>Web 서버 설치 폴더</td></tr>
+  <tr><td><code>%LocalAppData%\BODA VISION AI\</code></td><td>VMS 사용자 설정 + 로컬 SQLite</td></tr>
+  <tr><td><code>%LocalAppData%\BODA VISION AI\upload_queue\</code></td><td>업로드 실패 큐 (C6)</td></tr>
+  <tr><td><code>%LocalAppData%\BODA VISION AI\process_sequence.json</code></td><td>AutoProcess 시퀀스</td></tr>
+  <tr><td><code>%LocalAppData%\BODA\VMS\BodaVision.db</code></td><td>Web SQLite (서비스 기본)</td></tr>
+  <tr><td><code>C:\ProgramData\BODA\VMS\BodaVision.db</code></td><td>Web SQLite (machine-wide, 운영 권장)</td></tr>
+  <tr><td><code>D:\Repo\VMS\installer\bin\x64\Release\</code></td><td>MSI 빌드 출력</td></tr>
+  <tr><td><code>D:\Project\BODA.VMS.Web\deploy\</code></td><td>Web PowerShell 배포 스크립트</td></tr>
+</table>
+
+<h3 id="appx-changelog">8.4 변경 이력 요약 (v1.1.0)</h3>
+<p>v1.0 → v1.1 주요 변경:</p>
+<ul>
+  <li><strong>Phase 7 — 운영 워크플로 (Stage 1/2/3)</strong>: Operator 로그인 → WO 선택 →
+      Recipe 자동 로드 → AUTO RUN → 진행률 실시간 + 완료 다이얼로그.</li>
+  <li><strong>B 시리즈 — 운영 UX</strong>: 활성 Lot 자동 채움, Completed 후 다음 WO,
+      알람 UX 개선 (사운드 + KPI), 진행률 ProgressBar.</li>
+  <li><strong>C 시리즈 — 인프라</strong>: SignalR 실시간 푸시, 업로드 큐 (오프라인 복구).</li>
+  <li><strong>D 시리즈 — 추가 기능</strong>: VMS 자체 Recent Inspections, Operator Role
+      기반 메뉴 가시성.</li>
+  <li><strong>UI 정렬</strong>: 헤더 칩 높이 32px 통일, 운영 흐름 단순화 (도구 →
+      사이드 패널), 알림 배지 가시성 개선.</li>
+  <li><strong>안정성</strong>: stale OperatorSession 자동 정리, 알림 일괄/개별 Acknowledge.</li>
+  <li><strong>배포</strong>: WiX MSI 인스톨러, Web Windows Service PowerShell 스크립트,
+      솔루션 공용 <code>Directory.Build.props</code>.</li>
+</ul>
+
+<p>전체 변경 사항은 양쪽 저장소의 <code>CHANGELOG.md</code> 참조.</p>
+
+<div class="callout tip" style="margin-top: 36px;">
+<strong>피드백 / 지원:</strong> 매뉴얼에서 누락된 시나리오나 추가 설명이 필요한
+부분이 있으면 BODA Vision AI 로 문의해 주세요. 다음 릴리스에서 보강합니다.
+</div>
+
+</section>
+
+</main>
+</div>
+</body>
+</html>

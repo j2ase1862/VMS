@@ -132,6 +132,83 @@ namespace VMS
                 Debug.WriteLine($"[App] ParameterSyncService init failed: {ex.Message}");
             }
 
+            // ── Predictive Polling Service (Plan §5.3 — V5 위젯) ──
+            IPredictionPollingService? predictionPollingService = null;
+            try
+            {
+                predictionPollingService = new PredictionPollingService(
+                    systemConfig.WebServerUrl, systemConfig.ClientIndex);
+                predictionPollingService.StartPeriodicPolling(60);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] PredictionPollingService init failed: {ex.Message}");
+            }
+
+            // ── Sensor Polling Service (Plan §5.2 — V4 환경 센서) ──
+            // Reader 는 Mock(모든 null)이 기본 — "센서 미연결" 안전 기본값. 실제 PLC reader 가
+            // 준비되면 IEnvironmentSensorReader 구현을 교체하기만 하면 즉시 송신 시작.
+            // Reader 가 모든 null 반환 시 SensorPollingService 가 송신 자체를 skip → 무부하.
+            ISensorPollingService? sensorPollingService = null;
+            try
+            {
+                IEnvironmentSensorReader sensorReader = new MockEnvironmentSensorReader();
+                sensorPollingService = new SensorPollingService(
+                    systemConfig.WebServerUrl, systemConfig.ClientIndex, sensorReader);
+                sensorPollingService.StartPeriodicPolling(5);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] SensorPollingService init failed: {ex.Message}");
+            }
+
+            // ── Operator Auth Service (Stage 1: 작업자 로그인) ──
+            VMS.Core.Services.OperatorAuthService? operatorAuthService = null;
+            try
+            {
+                operatorAuthService = new VMS.Core.Services.OperatorAuthService(
+                    systemConfig.WebServerUrl, systemConfig.ClientIndex);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] OperatorAuthService init failed: {ex.Message}");
+            }
+
+            // ── Work Order Client (Stage 2: 작업지시 목록) ──
+            VMS.Core.Services.WorkOrderClient? workOrderClient = null;
+            try
+            {
+                workOrderClient = new VMS.Core.Services.WorkOrderClient(
+                    systemConfig.WebServerUrl, systemConfig.ClientIndex);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] WorkOrderClient init failed: {ex.Message}");
+            }
+
+            // ── Lot Client (B1: WO 선택 시 활성 Lot 자동 채움) ──
+            VMS.Core.Services.LotClient? lotClient = null;
+            try
+            {
+                lotClient = new VMS.Core.Services.LotClient(systemConfig.WebServerUrl);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] LotClient init failed: {ex.Message}");
+            }
+
+            // ── VMS Hub Client (C5: SignalR 실시간 푸시) ──
+            VMS.Core.Services.VmsHubClient? vmsHubClient = null;
+            try
+            {
+                vmsHubClient = new VMS.Core.Services.VmsHubClient(systemConfig.WebServerUrl);
+                _ = vmsHubClient.StartAsync(); // fire & forget — 실패해도 응답 기반 fallback 으로 동작
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] VmsHubClient init failed: {ex.Message}");
+            }
+
             // ── Web Heartbeat Service ──
             HeartbeatService? heartbeatService = null;
             try
@@ -271,7 +348,16 @@ namespace VMS
                 dialogService,
                 processService,
                 inspectionService,
-                () => ForceShutdown(mainViewModel, heartbeatService, parameterSyncService, sharedFrameWriter, plcConnection, autoProcessService),
+                () =>
+                {
+                    operatorAuthService?.Dispose();
+                    workOrderClient?.Dispose();
+                    lotClient?.Dispose();
+                    if (vmsHubClient != null) _ = vmsHubClient.DisposeAsync();
+                    predictionPollingService?.Dispose();
+                    sensorPollingService?.Dispose();
+                    ForceShutdown(mainViewModel, heartbeatService, parameterSyncService, sharedFrameWriter, plcConnection, autoProcessService);
+                },
                 autoProcessService,
                 userService,
                 logService,
@@ -281,13 +367,26 @@ namespace VMS
                 plcIpAddress: systemConfig.PlcIpAddress,
                 rollerInspectionService: rollerInspectionService,
                 heartbeatService: heartbeatService,
-                parameterSyncService: parameterSyncService);
+                parameterSyncService: parameterSyncService,
+                operatorAuthService: operatorAuthService,
+                workOrderClient: workOrderClient,
+                lotClient: lotClient,
+                vmsHubClient: vmsHubClient,
+                predictionPollingService: predictionPollingService);
 
             var mainWindow = new MainWindow();
             mainWindow.DataContext = mainViewModel;
             MainWindow = mainWindow;
             mainWindow.Closed += (_, _) =>
+            {
+                operatorAuthService?.Dispose();
+                workOrderClient?.Dispose();
+                lotClient?.Dispose();
+                if (vmsHubClient != null) _ = vmsHubClient.DisposeAsync();
+                predictionPollingService?.Dispose();
+                sensorPollingService?.Dispose();
                 ForceShutdown(mainViewModel, heartbeatService, parameterSyncService, sharedFrameWriter, plcConnection, autoProcessService);
+            };
             mainWindow.Show();
 
             // ── 카메라 자동 연결 (UI 표시 후 백그라운드) ──

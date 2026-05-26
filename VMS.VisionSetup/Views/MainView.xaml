@@ -561,6 +561,7 @@
                                      IsChecked="{Binding FolderNavigationMode, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=AutoRunSelected}"/>
                     </StackPanel>
                 </StackPanel>
+
             </StackPanel>
         </Border>
 

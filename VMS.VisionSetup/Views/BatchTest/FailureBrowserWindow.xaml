@@ -242,6 +242,39 @@
                         </ItemsControl>
                     </StackPanel>
 
+                    <!-- Golden set mismatches -->
+                    <StackPanel Margin="0,0,0,8">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasGoldenMismatches}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <TextBlock Text="GOLDEN SET MISMATCHES"
+                                   Foreground="{StaticResource BrushWarning}"
+                                   FontSize="10" FontWeight="SemiBold"
+                                   Margin="0,0,0,4"/>
+                        <ItemsControl ItemsSource="{Binding GoldenMismatches}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource BrushWarningSoft}"
+                                            BorderBrush="{StaticResource BrushWarning}"
+                                            BorderThickness="1" CornerRadius="3"
+                                            Padding="8,3" Margin="0,0,0,3">
+                                        <TextBlock Text="{Binding}"
+                                                   Foreground="{StaticResource BrushWarning}"
+                                                   FontSize="11" FontFamily="Consolas"
+                                                   TextWrapping="Wrap"/>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
                     <TextBlock Text="TOOL RESULTS"
                                Foreground="{StaticResource BrushTextAccent}"
                                FontSize="10" FontWeight="SemiBold"
