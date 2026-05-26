@@ -65,8 +65,15 @@ namespace VMS.Core.Interfaces
         /// <summary>캐시된 모든 파라미터 반환</summary>
         List<RecipeParameterDto> GetAll();
 
-        /// <summary>검사 결과를 서버에 업로드</summary>
-        Task<bool> UploadResultsAsync(int recipeId, List<ParameterResultDto> results);
+        /// <summary>
+        /// 검사 결과를 서버에 업로드.
+        /// <paramref name="featureMetrics"/> 가 주어지면 Predictive_DefectRate_Plan §5.1 피처를 동봉.
+        /// 기존 호출자(피처 미전달)는 그대로 동작 — 서버는 nullable 컬럼으로 받음.
+        /// </summary>
+        Task<bool> UploadResultsAsync(
+            int recipeId,
+            List<ParameterResultDto> results,
+            InspectionFeatureMetrics? featureMetrics = null);
 
         // ─── Phase 3 추적성 컨텍스트 (UploadResultsAsync 호출 시 자동 첨부) ───
         /// <summary>업로드 시 첨부할 작업지시 ID. null이면 미선택.</summary>

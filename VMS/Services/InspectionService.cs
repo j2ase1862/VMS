@@ -274,24 +274,161 @@ namespace VMS.Services
                 result.Message = finalSuccess ? "All tools passed" : "One or more tools failed";
                 result.OverlayImage = compositeOverlay;
 
-                // Web 파라미터 결과 수집 및 업로드
-                CollectAndUploadParameterResults(ctx, resultMap);
+                // Predictive_DefectRate_Plan §5.1 — 예측 모델용 피처 산출.
+                // CycleTime 은 ToolResults 합산 후/업로드 직전에 캡처해야 의미가 있음
+                // (도구 실행 시간을 모두 포함해야 함).
+                sw.Stop();
+                result.ExecutionTimeMs = sw.Elapsed.TotalMilliseconds;
+
+                var imgMetrics = VMS.Core.Services.ImageQualityMetrics.Compute(inputImage);
+                var (dlConfidence, dlModelVersion) = ExtractDlSignal(ctx, resultMap);
+                var featureMetrics = new InspectionFeatureMetrics
+                {
+                    CycleTimeMs = (int)Math.Round(result.ExecutionTimeMs),
+                    Brightness = imgMetrics.Brightness,
+                    ContrastStd = imgMetrics.ContrastStd,
+                    FocusScore = imgMetrics.FocusScore,
+                    BlobCount = imgMetrics.BlobCount,
+                    MaxBlobAreaPx = imgMetrics.MaxBlobAreaPx,
+                    DlConfidence = dlConfidence,
+                    DlModelVersion = dlModelVersion
+                };
+
+                // Web 파라미터 결과 수집 및 업로드 (피처 동봉)
+                CollectAndUploadParameterResults(ctx, resultMap, featureMetrics);
+                return result;
             }
             catch (Exception ex)
             {
                 result.Success = false;
                 result.Message = $"Inspection error: {ex.Message}";
+                if (sw.IsRunning) sw.Stop();
+                result.ExecutionTimeMs = sw.Elapsed.TotalMilliseconds;
+                return result;
+            }
+        }
+
+        /// <summary>
+        /// Predictive_DefectRate_Plan §5.1 (V3) — DL 도구의 신뢰도와 모델 버전을 추출.
+        /// 의미 통일: DlConfidence ∈ [0,1], **높을수록 OK 일 확신**.
+        /// 도구별 매핑:
+        ///   • ClassifyTool : Data["Confidence"] 직접
+        ///   • DetectionTool: Data["Det{i}_Confidence"] 의 **최소값** (가장 위험한 검출)
+        ///   • YoloSegTool  : Data["Inst{i}_Score"] 의 최소값
+        ///   • AnomalyTool  : Data["AnomalyScore"] 는 **반대 의미**(높을수록 NG) →
+        ///                    pseudo = clamp(1 - score / threshold, 0, 1) 로 변환
+        ///   • 그 외        : 없음 (null)
+        /// 복수 DL 도구가 있으면 전체에서 최소 confidence 를 픽 → 그 도구의 ModelPath 파일명을 함께 반환.
+        /// </summary>
+        private static (double? Confidence, string? ModelVersion) ExtractDlSignal(
+            StepExecutionContext ctx, Dictionary<string, VisionResult> resultMap)
+        {
+            double? minConfidence = null;
+            string? minConfidenceModel = null;
+
+            foreach (var tool in ctx.SortedTools)
+            {
+                if (!resultMap.TryGetValue(tool.Id, out var vr) || vr.Data == null)
+                    continue;
+
+                var c = ExtractToolConfidence(tool.ToolType, vr.Data);
+                if (!c.HasValue) continue;
+
+                if (!minConfidence.HasValue || c.Value < minConfidence.Value)
+                {
+                    minConfidence = c.Value;
+                    minConfidenceModel = TryGetModelVersion(tool);
+                }
             }
 
-            sw.Stop();
-            result.ExecutionTimeMs = sw.Elapsed.TotalMilliseconds;
-            return result;
+            return (minConfidence, minConfidenceModel);
+        }
+
+        private static double? ExtractToolConfidence(string toolType, Dictionary<string, object> data)
+        {
+            switch (toolType)
+            {
+                case "ClassifyTool":
+                    return TryToDouble(data, "Confidence");
+
+                case "DetectionTool":
+                {
+                    double? min = null;
+                    int i = 0;
+                    while (data.ContainsKey($"Det{i}_Confidence"))
+                    {
+                        var v = TryToDouble(data, $"Det{i}_Confidence");
+                        if (v.HasValue && (!min.HasValue || v.Value < min.Value))
+                            min = v.Value;
+                        i++;
+                    }
+                    return min;
+                }
+
+                case "YoloSegTool":
+                {
+                    double? min = null;
+                    int i = 0;
+                    while (data.ContainsKey($"Inst{i}_Score"))
+                    {
+                        var v = TryToDouble(data, $"Inst{i}_Score");
+                        if (v.HasValue && (!min.HasValue || v.Value < min.Value))
+                            min = v.Value;
+                        i++;
+                    }
+                    return min;
+                }
+
+                case "AnomalyTool":
+                case "EnsembleTool":
+                {
+                    // AnomalyScore 는 높을수록 NG. Threshold(있다면)를 기준으로 의사 신뢰도 산출.
+                    var score = TryToDouble(data, "AnomalyScore");
+                    if (!score.HasValue) return null;
+                    var threshold = TryToDouble(data, "Threshold") ?? 1.0;
+                    if (threshold <= 0) threshold = 1.0;
+                    var pseudo = 1.0 - (score.Value / threshold);
+                    return Math.Clamp(pseudo, 0.0, 1.0);
+                }
+
+                default:
+                    return null; // 비 DL 도구
+            }
+        }
+
+        private static double? TryToDouble(Dictionary<string, object> data, string key)
+        {
+            if (!data.TryGetValue(key, out var obj) || obj == null) return null;
+            try { return Convert.ToDouble(obj); }
+            catch { return null; }
+        }
+
+        /// <summary>
+        /// 모든 DL 도구는 public string ModelPath 속성을 가지므로 reflection 으로 일관 추출.
+        /// (전용 interface 신설은 V3 범위 밖 — 추후 IDlTool 도입 시 교체.)
+        /// 반환 형식: "ToolType:파일명.onnx" — 학습-운영 간 모델 분포 추적 키로 충분.
+        /// </summary>
+        private static string? TryGetModelVersion(VisionToolBase tool)
+        {
+            try
+            {
+                var prop = tool.GetType().GetProperty("ModelPath");
+                var path = prop?.GetValue(tool) as string;
+                if (string.IsNullOrWhiteSpace(path)) return null;
+                return $"{tool.ToolType}:{System.IO.Path.GetFileName(path)}";
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         #region Web Parameter Result Collection
 
         private static void CollectAndUploadParameterResults(
-            StepExecutionContext ctx, Dictionary<string, VisionResult> resultMap)
+            StepExecutionContext ctx,
+            Dictionary<string, VisionResult> resultMap,
+            InspectionFeatureMetrics? featureMetrics = null)
         {
             var syncService = ParameterSyncService;
             if (syncService == null || syncService.CurrentRecipeId <= 0)
@@ -357,7 +494,7 @@ namespace VMS.Services
                 {
                     try
                     {
-                        await syncService.UploadResultsAsync(syncService.CurrentRecipeId, paramResults);
+                        await syncService.UploadResultsAsync(syncService.CurrentRecipeId, paramResults, featureMetrics);
                     }
                     catch (Exception ex)
                     {

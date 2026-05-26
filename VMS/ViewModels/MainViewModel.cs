@@ -1,6 +1,7 @@
 using VMS.Camera.Models;
 using VMS.Camera.Services;
 using VMS.Core.Interfaces;
+using VMS.Core.Models.Predictive;
 using VMS.Core.Services;
 using VMS.Interfaces;
 using VMS.Models;
@@ -15,6 +16,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace VMS.ViewModels
@@ -23,6 +25,89 @@ namespace VMS.ViewModels
     {
         [ObservableProperty]
         private string _applicationTitle = "BODA Vision System";
+
+        #region Predictive Defect Rate Widget (Plan §5.3 V5)
+
+        /// <summary>
+        /// 가장 최근 폴링 결과. PredictionPollingService.PredictionUpdated 에서 UI 스레드로 마샬링되어 들어옴.
+        /// 파생 표시 properties(PredictionDisplayText/PredictionAccentBrush/PredictionTooltip)는
+        /// partial method OnCurrentPredictionChanged 에서 OnPropertyChanged 로 갱신.
+        /// </summary>
+        [ObservableProperty]
+        private PredictionCurrentDto? _currentPrediction;
+
+        partial void OnCurrentPredictionChanged(PredictionCurrentDto? value)
+        {
+            OnPropertyChanged(nameof(PredictionDisplayText));
+            OnPropertyChanged(nameof(PredictionAccentBrush));
+            OnPropertyChanged(nameof(PredictionTooltip));
+            OnPropertyChanged(nameof(IsPredictionAvailable));
+        }
+
+        public bool IsPredictionAvailable => CurrentPrediction != null;
+
+        public string PredictionDisplayText
+        {
+            get
+            {
+                var p = CurrentPrediction;
+                if (p is null) return "—";
+                if (p.Status == "ok" && p.PredictedNgRate.HasValue)
+                    return $"{p.PredictedNgRate.Value * 100:F1}%";
+                return p.Status switch
+                {
+                    "no_model" => "모델 미등록",
+                    "no_data"  => "데이터 없음",
+                    "error"    => "오류",
+                    _ => p.Status,
+                };
+            }
+        }
+
+        /// <summary>
+        /// 위젯 BorderBrush — 임계 색상(plan §5.3 "임계 초과 시 색 변경").
+        /// 정상 OK < 5% : Green, < 10% : Orange, ≥ 10% : Red. 비-ok 상태: Gray.
+        /// </summary>
+        public Brush PredictionAccentBrush
+        {
+            get
+            {
+                var p = CurrentPrediction;
+                if (p?.Status != "ok" || !p.PredictedNgRate.HasValue)
+                    return new SolidColorBrush(Color.FromRgb(0x70, 0x70, 0x70)); // gray
+                var pct = p.PredictedNgRate.Value * 100;
+                if (pct >= 10.0) return new SolidColorBrush(Color.FromRgb(0xF4, 0x43, 0x36)); // red
+                if (pct >= 5.0)  return new SolidColorBrush(Color.FromRgb(0xFF, 0x98, 0x00)); // orange
+                return new SolidColorBrush(Color.FromRgb(0x4C, 0xAF, 0x50)); // green
+            }
+        }
+
+        public string PredictionTooltip
+        {
+            get
+            {
+                var p = CurrentPrediction;
+                if (p is null) return "예측 데이터 수신 대기 중";
+                if (p.Status == "ok" && p.PredictedNgRate.HasValue)
+                {
+                    var pct = p.PredictedNgRate.Value * 100;
+                    var hour = p.WindowStart?.ToLocalTime().ToString("MM-dd HH:mm") ?? "?";
+                    return $"다음 1시간 예상 NG율: {pct:F2}%\n대상 윈도우: {hour}\n모델: {p.ModelName ?? "?"} v{p.ModelVersion ?? "?"}\n이번 시간 검사: {p.InspectionCountThisHour}건";
+                }
+                return string.IsNullOrEmpty(p.Message) ? p.Status : $"{p.Status}: {p.Message}";
+            }
+        }
+
+        private void OnPredictionUpdated(PredictionCurrentDto dto)
+        {
+            // Polling 서비스는 Timer 스레드에서 호출 — UI 바인딩은 dispatcher 필수
+            System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
+            {
+                CurrentPrediction = dto;
+            });
+        }
+
+        #endregion
 
         private bool _isSidePanelOpen;
         public bool IsSidePanelOpen
@@ -196,6 +281,7 @@ namespace VMS.ViewModels
         private readonly VMS.Core.Services.WorkOrderClient? _workOrderClient;
         private readonly VMS.Core.Services.LotClient? _lotClient;
         private readonly VMS.Core.Services.VmsHubClient? _vmsHubClient;
+        private readonly IPredictionPollingService? _predictionPollingService;
         private int? _lastCompletedNotifiedWoId; // C5: 중복 Completed 알림 가드
         private readonly Action _shutdownAction;
         private SystemConfiguration _systemConfig;
@@ -220,7 +306,8 @@ namespace VMS.ViewModels
             VMS.Core.Services.OperatorAuthService? operatorAuthService = null,
             VMS.Core.Services.WorkOrderClient? workOrderClient = null,
             VMS.Core.Services.LotClient? lotClient = null,
-            VMS.Core.Services.VmsHubClient? vmsHubClient = null)
+            VMS.Core.Services.VmsHubClient? vmsHubClient = null,
+            IPredictionPollingService? predictionPollingService = null)
         {
             _configService = configService;
             _recipeService = recipeService;
@@ -241,6 +328,7 @@ namespace VMS.ViewModels
             _workOrderClient = workOrderClient;
             _lotClient = lotClient;
             _vmsHubClient = vmsHubClient;
+            _predictionPollingService = predictionPollingService;
             _shutdownAction = shutdownAction;
             _systemConfig = new SystemConfiguration();
 
@@ -269,6 +357,12 @@ namespace VMS.ViewModels
             {
                 _vmsHubClient.WorkOrderUpdated += OnWorkOrderProgressed;
                 _vmsHubClient.WorkOrderCompleted += OnWorkOrderCompletedFromServer;
+            }
+
+            // Plan §5.3 V5 — 예측 폴링 결과를 UI 스레드로 marshall
+            if (_predictionPollingService != null)
+            {
+                _predictionPollingService.PredictionUpdated += OnPredictionUpdated;
             }
 
             // D8: InspectionService 가 push 한 레코드에 WorkOrderNo 보강 (Id 만 가지고 있음).
@@ -350,6 +444,9 @@ namespace VMS.ViewModels
             OnPropertyChanged(nameof(CanLaunchVisionSetup));
             OnPropertyChanged(nameof(CanLaunchAppSetup));
             OnPropertyChanged(nameof(CanStartStop));
+            // VMS 시스템 사용자 변경 시 Role-게이트 properties 도 재평가 (Admin 우회 통과 반영)
+            OnPropertyChanged(nameof(CanLeadOrAbove));
+            OnPropertyChanged(nameof(CanSupervisor));
         }
 
         /// <summary>
@@ -1080,12 +1177,15 @@ namespace VMS.ViewModels
 
         // D10 — Role 기반 메뉴 가시성. Web 통합 환경에서만 의미. Standalone 은 항상 true (제약 없음).
         // Lead = 반장 (Recipe 편집, Camera Control). Supervisor = + 외부 도구 (Vision Tool / System Setup) + 사용자 관리.
+        // VMS 시스템 Admin (IUserService) 은 Web Operator 역할과 무관하게 통과 — 보안 모델상 최상위 우회 권한.
         public bool CanLeadOrAbove =>
             _operatorAuthService == null
+            || _userService?.CurrentUser?.Grade == UserGrade.Admin
             || (IsOperatorLoggedIn && (CurrentOperatorRole == VMS.Core.Models.ParameterSync.OperatorRoles.Lead
                                        || CurrentOperatorRole == VMS.Core.Models.ParameterSync.OperatorRoles.Supervisor));
         public bool CanSupervisor =>
             _operatorAuthService == null
+            || _userService?.CurrentUser?.Grade == UserGrade.Admin
             || (IsOperatorLoggedIn && CurrentOperatorRole == VMS.Core.Models.ParameterSync.OperatorRoles.Supervisor);
 
         partial void OnCurrentOperatorRoleChanged(string value)

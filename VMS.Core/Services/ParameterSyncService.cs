@@ -241,7 +241,10 @@ namespace VMS.Core.Services
         public int? OperatorId { get; set; }
         public string? SerialNumber { get; set; }
 
-        public async Task<bool> UploadResultsAsync(int recipeId, List<ParameterResultDto> results)
+        public async Task<bool> UploadResultsAsync(
+            int recipeId,
+            List<ParameterResultDto> results,
+            InspectionFeatureMetrics? featureMetrics = null)
         {
             var request = new ParameterResultUploadRequest
             {
@@ -253,6 +256,18 @@ namespace VMS.Core.Services
                 OperatorId = OperatorId,
                 SerialNumber = SerialNumber
             };
+
+            if (featureMetrics != null)
+            {
+                request.CycleTimeMs = featureMetrics.CycleTimeMs;
+                request.Brightness = featureMetrics.Brightness;
+                request.ContrastStd = featureMetrics.ContrastStd;
+                request.FocusScore = featureMetrics.FocusScore;
+                request.BlobCount = featureMetrics.BlobCount;
+                request.MaxBlobAreaPx = featureMetrics.MaxBlobAreaPx;
+                request.DlConfidence = featureMetrics.DlConfidence;
+                request.DlModelVersion = featureMetrics.DlModelVersion;
+            }
 
             var ok = await TrySendAsync(request);
             if (!ok)

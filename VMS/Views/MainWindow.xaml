@@ -263,6 +263,26 @@
                         </StackPanel>
                     </Border>
 
+                    <!-- ═══ Plan §5.3 V5: 예측 NG율 위젯 (60초 폴링) ═══ -->
+                    <!-- 임계 색상: < 5% Green / < 10% Orange / ≥ 10% Red / non-ok Gray -->
+                    <Border Background="#3D3D3D" CornerRadius="4" Padding="10,0" Margin="6,0,0,0" Height="32"
+                            BorderBrush="{Binding PredictionAccentBrush}" BorderThickness="1"
+                            VerticalAlignment="Center"
+                            ToolTip="{Binding PredictionTooltip}"
+                            Visibility="{Binding CurrentPrediction, Converter={StaticResource NullToVisibilityConverter}}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                       Foreground="{Binding PredictionAccentBrush}"
+                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Text="다음 1시간:" Foreground="#B0B0B0" FontSize="10" FontWeight="SemiBold"
+                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Text="{Binding PredictionDisplayText}"
+                                       Foreground="{Binding PredictionAccentBrush}"
+                                       FontSize="13" FontWeight="Bold"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
                     <!-- ═══ AUTO RUN — 운영 흐름의 단일 Primary 액션 ═══ -->
                     <Rectangle Width="1" Fill="#404040" Margin="14,8"/>
 

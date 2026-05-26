@@ -132,6 +132,36 @@ namespace VMS
                 Debug.WriteLine($"[App] ParameterSyncService init failed: {ex.Message}");
             }
 
+            // ── Predictive Polling Service (Plan §5.3 — V5 위젯) ──
+            IPredictionPollingService? predictionPollingService = null;
+            try
+            {
+                predictionPollingService = new PredictionPollingService(
+                    systemConfig.WebServerUrl, systemConfig.ClientIndex);
+                predictionPollingService.StartPeriodicPolling(60);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] PredictionPollingService init failed: {ex.Message}");
+            }
+
+            // ── Sensor Polling Service (Plan §5.2 — V4 환경 센서) ──
+            // Reader 는 Mock(모든 null)이 기본 — "센서 미연결" 안전 기본값. 실제 PLC reader 가
+            // 준비되면 IEnvironmentSensorReader 구현을 교체하기만 하면 즉시 송신 시작.
+            // Reader 가 모든 null 반환 시 SensorPollingService 가 송신 자체를 skip → 무부하.
+            ISensorPollingService? sensorPollingService = null;
+            try
+            {
+                IEnvironmentSensorReader sensorReader = new MockEnvironmentSensorReader();
+                sensorPollingService = new SensorPollingService(
+                    systemConfig.WebServerUrl, systemConfig.ClientIndex, sensorReader);
+                sensorPollingService.StartPeriodicPolling(5);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] SensorPollingService init failed: {ex.Message}");
+            }
+
             // ── Operator Auth Service (Stage 1: 작업자 로그인) ──
             VMS.Core.Services.OperatorAuthService? operatorAuthService = null;
             try
@@ -324,6 +354,8 @@ namespace VMS
                     workOrderClient?.Dispose();
                     lotClient?.Dispose();
                     if (vmsHubClient != null) _ = vmsHubClient.DisposeAsync();
+                    predictionPollingService?.Dispose();
+                    sensorPollingService?.Dispose();
                     ForceShutdown(mainViewModel, heartbeatService, parameterSyncService, sharedFrameWriter, plcConnection, autoProcessService);
                 },
                 autoProcessService,
@@ -339,7 +371,8 @@ namespace VMS
                 operatorAuthService: operatorAuthService,
                 workOrderClient: workOrderClient,
                 lotClient: lotClient,
-                vmsHubClient: vmsHubClient);
+                vmsHubClient: vmsHubClient,
+                predictionPollingService: predictionPollingService);
 
             var mainWindow = new MainWindow();
             mainWindow.DataContext = mainViewModel;
@@ -350,6 +383,8 @@ namespace VMS
                 workOrderClient?.Dispose();
                 lotClient?.Dispose();
                 if (vmsHubClient != null) _ = vmsHubClient.DisposeAsync();
+                predictionPollingService?.Dispose();
+                sensorPollingService?.Dispose();
                 ForceShutdown(mainViewModel, heartbeatService, parameterSyncService, sharedFrameWriter, plcConnection, autoProcessService);
             };
             mainWindow.Show();

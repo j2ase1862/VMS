@@ -59,5 +59,40 @@ namespace VMS.Core.Models.ParameterSync
         public int? OperatorId { get; set; }
         /// <summary>바코드/QR 스캔으로 얻은 제품 시리얼 (선택).</summary>
         public string? SerialNumber { get; set; }
+
+        // ─── Predictive_DefectRate_Plan §5.1 (V1/V2/V3): 예측 모델용 피처 ───
+        // 모두 nullable — Web 측 후방호환 유지(미지원 VMS 빌드 시 자연스럽게 NULL).
+        /// <summary>V2: 검사 1회 소요 시간(ms). 가동 페이스 둔화 = 품질 저하 선행 신호.</summary>
+        public int? CycleTimeMs { get; set; }
+        /// <summary>V1: 이미지 평균 밝기(0~255).</summary>
+        public double? Brightness { get; set; }
+        /// <summary>V1: 이미지 명암 표준편차(Contrast).</summary>
+        public double? ContrastStd { get; set; }
+        /// <summary>V1: Laplacian variance — 초점/선명도 점수.</summary>
+        public double? FocusScore { get; set; }
+        /// <summary>V1: Otsu 이진화 + connected components 로 산출한 blob 개수.</summary>
+        public int? BlobCount { get; set; }
+        /// <summary>V1: 가장 큰 blob 면적(px).</summary>
+        public double? MaxBlobAreaPx { get; set; }
+        /// <summary>V3: DL 분류/검출 모델의 신뢰도 점수(0~1). 임계 근접일수록 잠재 NG.</summary>
+        public double? DlConfidence { get; set; }
+        /// <summary>V3: 사용된 DL 모델 버전(피처 분포 변화 추적용).</summary>
+        public string? DlModelVersion { get; set; }
+    }
+
+    /// <summary>
+    /// Predictive_DefectRate_Plan §5.1 — 검사 1건의 예측 피처 묶음.
+    /// InspectionService → ParameterSyncService 로 피처를 전달할 때 사용.
+    /// </summary>
+    public class InspectionFeatureMetrics
+    {
+        public int? CycleTimeMs { get; set; }
+        public double? Brightness { get; set; }
+        public double? ContrastStd { get; set; }
+        public double? FocusScore { get; set; }
+        public int? BlobCount { get; set; }
+        public double? MaxBlobAreaPx { get; set; }
+        public double? DlConfidence { get; set; }
+        public string? DlModelVersion { get; set; }
     }
 }
