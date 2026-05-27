@@ -3096,7 +3096,9 @@ namespace VMS.VisionSetup.ViewModels
 
         public void OpenSequenceEditor()
         {
-            _dialogService.ShowSequenceEditorDialog();
+            // Phase 2b — host(VMS) 가 SequenceEditorContext.ExtraDeviceIds 에 미리 채워둔
+            // SystemConfiguration.IoBoards 의 DeviceId 들을 SequenceEditor 콤보에 자동 추가.
+            _dialogService.ShowSequenceEditorDialog(VMS.VisionSetup.Services.SequenceEditorContext.ExtraDeviceIds);
         }
 
         public void OpenCalibrationManager()

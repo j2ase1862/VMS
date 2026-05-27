@@ -53,4 +53,16 @@ namespace VMS.AppSetup.Converters
             return Binding.DoNothing;
         }
     }
+
+    /// <summary>
+    /// null → false, 그 외 → true. Remove 버튼 IsEnabled / 폼 IsEnabled 바인딩에 사용.
+    /// </summary>
+    public class NullToBoolConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+            => value != null;
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => Binding.DoNothing;
+    }
 }

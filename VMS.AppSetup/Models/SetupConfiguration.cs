@@ -54,6 +54,11 @@ namespace VMS.AppSetup.Models
         public string WebServerUrl { get; set; } = "http://localhost:5292";
         public string VisionServerUrl { get; set; } = "http://localhost:5000";
 
+        // Page 6: IO 보드 (Phase 2b) — PLC 와 동시 사용 가능한 디지털 IO 디바이스 목록.
+        // ADLink PCI-743x / Advantech PCI-17xx 등. SystemConfiguration 과 같은 필드명 →
+        // ConfigurationService 가 동일 JSON 으로 read/write.
+        public List<IoDeviceConfig> IoBoards { get; set; } = new();
+
         // Page 5: Robot Settings
         public bool IsRobotEnabled { get; set; }
         public RobotVendor RobotVendor { get; set; } = RobotVendor.None;

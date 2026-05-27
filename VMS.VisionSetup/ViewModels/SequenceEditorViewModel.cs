@@ -126,11 +126,27 @@ namespace VMS.VisionSetup.ViewModels
         [ObservableProperty]
         private int _testCycleCount;
 
-        public SequenceEditorViewModel(IRecipeService recipeService, ICameraService cameraService, IDialogService dialogService)
+        public SequenceEditorViewModel(
+            IRecipeService recipeService,
+            ICameraService cameraService,
+            IDialogService dialogService,
+            IEnumerable<string>? extraDeviceIds = null)
         {
             _recipeService = recipeService;
             _cameraService = cameraService;
             _dialogService = dialogService;
+
+            // Phase 2b — 호출자(host) 가 SystemConfiguration.IoBoards 의 DeviceId 들을 전달.
+            // 중복 방지 + 빈 문자열 필터링.
+            if (extraDeviceIds != null)
+            {
+                foreach (var id in extraDeviceIds)
+                {
+                    if (string.IsNullOrWhiteSpace(id)) continue;
+                    if (AvailableDeviceIds.Contains(id)) continue;
+                    AvailableDeviceIds.Add(id);
+                }
+            }
 
             InitializePalette();
             LoadAvailableCameras();

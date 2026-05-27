@@ -15,6 +15,7 @@
     <Window.Resources>
         <converters:PageToVisibilityConverter x:Key="PageConverter"/>
         <converters:EnumToBoolConverter x:Key="EnumToBoolConverter"/>
+        <converters:NullToBoolConverter x:Key="NullToBoolConverter"/>
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
 
         <!-- Button Styles -->
@@ -140,7 +141,7 @@
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
                     <TextBlock Text="Step " Foreground="#888888" FontSize="14"/>
                     <TextBlock Text="{Binding CurrentPage}" Foreground="#FFD700" FontSize="14" FontWeight="Bold"/>
-                    <TextBlock Text=" of 5" Foreground="#888888" FontSize="14"/>
+                    <TextBlock Text=" of 6" Foreground="#888888" FontSize="14"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -782,6 +783,123 @@
                                           Style="{StaticResource ComboStyle}"/>
                             </StackPanel>
                         </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+
+                <!-- Page 6: IO Board Configuration (Phase 2b) -->
+                <!-- PLC 와 동시 사용 가능한 디지털 IO 보드 (ADLink PCI-743x / Advantech PCI-17xx) CRUD. -->
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              Visibility="{Binding CurrentPage, Converter={StaticResource PageConverter}, ConverterParameter=6}">
+                    <Grid Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="280"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Left: 보드 리스트 + Add/Remove -->
+                        <Border Grid.Column="0" Background="#252526" CornerRadius="6" Padding="12" Margin="0,0,12,0">
+                            <DockPanel>
+                                <TextBlock DockPanel.Dock="Top" Text="등록된 IO 보드"
+                                           Style="{StaticResource LabelStyle}" Margin="0,0,0,6"/>
+
+                                <Grid DockPanel.Dock="Bottom" Margin="0,8,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Button Grid.Column="0" Content="+ Add"
+                                            Command="{Binding AddIoBoardCommand}"
+                                            Margin="0,0,4,0"
+                                            Padding="10,6"
+                                            Background="#0E639C" Foreground="White" BorderThickness="0" Cursor="Hand"/>
+                                    <Button Grid.Column="1" Content="− Remove"
+                                            Command="{Binding RemoveIoBoardCommand}"
+                                            Margin="4,0,0,0"
+                                            Padding="10,6"
+                                            Background="#5A1F1F" Foreground="White" BorderThickness="0" Cursor="Hand"
+                                            IsEnabled="{Binding SelectedIoBoard, Converter={StaticResource NullToBoolConverter}}"/>
+                                </Grid>
+
+                                <ListBox ItemsSource="{Binding IoBoardItems}"
+                                         SelectedItem="{Binding SelectedIoBoard, Mode=TwoWay}"
+                                         Background="#1E1E1E" Foreground="White"
+                                         BorderBrush="#3F3F46" BorderThickness="1">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Margin="4">
+                                                <TextBlock Text="{Binding DeviceId}" FontWeight="SemiBold" Foreground="White"/>
+                                                <TextBlock FontSize="11" Foreground="#A0A0A0">
+                                                    <Run Text="{Binding Vendor, Mode=OneWay}"/>
+                                                    <Run Text=" · "/>
+                                                    <Run Text="{Binding Model, Mode=OneWay}"/>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </DockPanel>
+                        </Border>
+
+                        <!-- Right: 선택된 보드 폼 -->
+                        <Border Grid.Column="1" Background="#252526" CornerRadius="6" Padding="16">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <StackPanel DataContext="{Binding SelectedIoBoard}"
+                                            IsEnabled="{Binding RelativeSource={RelativeSource Self}, Path=DataContext, Converter={StaticResource NullToBoolConverter}}">
+
+                                    <TextBlock Text="제조사 (Vendor)" Style="{StaticResource LabelStyle}"/>
+                                    <ComboBox ItemsSource="{Binding DataContext.IoBoardVendorValues, RelativeSource={RelativeSource AncestorType=Window}}"
+                                              SelectedItem="{Binding Vendor, Mode=TwoWay}"
+                                              Style="{StaticResource ComboStyle}" Margin="0,0,0,12"/>
+
+                                    <TextBlock Text="모델 (예: PCI-7432, PCI-1716)" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox Text="{Binding Model, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource InputStyle}" Margin="0,0,0,12"/>
+
+                                    <TextBlock Text="디바이스 ID (시퀀스 노드에서 참조할 식별자)"
+                                               Style="{StaticResource LabelStyle}"/>
+                                    <TextBox Text="{Binding DeviceId, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource InputStyle}" Margin="0,0,0,12"/>
+
+                                    <Grid Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                                            <TextBlock Text="Board ID" Style="{StaticResource LabelStyle}"/>
+                                            <TextBox Text="{Binding BoardId, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource InputStyle}"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Margin="3,0">
+                                            <TextBlock Text="Input 채널 수" Style="{StaticResource LabelStyle}"/>
+                                            <TextBox Text="{Binding InputChannelCount, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource InputStyle}"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Margin="6,0,0,0">
+                                            <TextBlock Text="Output 채널 수" Style="{StaticResource LabelStyle}"/>
+                                            <TextBox Text="{Binding OutputChannelCount, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource InputStyle}"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <CheckBox Content="활성화 (체크 해제 시 시스템 부팅 시 인스턴스 생성 skip)"
+                                              IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+                                              Foreground="#CCCCCC" Margin="0,0,0,12"/>
+
+                                    <TextBlock Text="설명 (선택)" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource InputStyle}" Margin="0,0,0,12"/>
+
+                                    <Border Background="#1E3A5F" CornerRadius="4" Padding="10" Margin="0,12,0,0">
+                                        <TextBlock Foreground="#A0D0F0" FontSize="11" TextWrapping="Wrap">
+                                            ※ 현재 Mock 구현만 활성 — 실제 ADLink DASK / Advantech DAQNavi SDK 통합은 Phase 3 작업입니다.
+                                            Phase 1+2 까지는 인프라 검증용으로 보드 등록 후 시퀀스에서 채널 read/write 호출 시 in-memory 동작합니다.
+                                        </TextBlock>
+                                    </Border>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Border>
                     </Grid>
                 </ScrollViewer>
             </Grid>

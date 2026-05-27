@@ -124,6 +124,10 @@ namespace VMS
                 }
             }
 
+            // SequenceEditor 콤보 자동 채움 (Phase 2b) — DeviceId 들을 VMS.VisionSetup 정적 holder 에 주입.
+            VMS.VisionSetup.Services.SequenceEditorContext.ExtraDeviceIds =
+                ioBoardConnections.Select(b => b.DeviceId).ToList();
+
             var signalConfig = configService.LoadPlcSignalConfiguration();
 
             var mainViewModel = new MainViewModel(
