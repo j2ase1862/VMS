@@ -5,6 +5,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:local="clr-namespace:VMS.VisionSetup.Views.Sequence"
              xmlns:vm="clr-namespace:VMS.VisionSetup.ViewModels"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls"
              mc:Ignorable="d"
              d:DesignWidth="1200" d:DesignHeight="800"
              Background="#1E1E1E">
@@ -385,8 +386,22 @@
                                 <Border Background="{Binding Color}" CornerRadius="6" Padding="10,8"
                                         Margin="2,3" Cursor="Hand"
                                         MouseLeftButtonDown="Palette_MouseLeftButtonDown">
-                                    <TextBlock Text="{Binding DisplayName}" Foreground="White"
-                                               FontWeight="SemiBold" FontSize="12"/>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding DisplayName}" Foreground="White"
+                                                   FontWeight="SemiBold" FontSize="12"
+                                                   VerticalAlignment="Center"/>
+                                        <!-- HelpIcon: ToolType binding 으로 HelpContent dictionary 의
+                                             "SequenceNode_*" entry lookup. drag 충돌은 코드비하인드에서 가드. -->
+                                        <controls:HelpIcon Grid.Column="1"
+                                                           ToolType="{Binding HelpKey}"
+                                                           Margin="6,0,0,0"
+                                                           VerticalAlignment="Center"/>
+                                    </Grid>
                                 </Border>
                             </DataTemplate>
                         </ListBox.ItemTemplate>

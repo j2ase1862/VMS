@@ -1409,6 +1409,9 @@ namespace VMS.VisionSetup.ViewModels
         public string DisplayName { get; }
         public string Color { get; }
 
+        /// <summary>HelpContent dictionary key — HelpIcon ToolType binding 용 ("SequenceNode_Start" 등).</summary>
+        public string HelpKey => $"SequenceNode_{NodeType}";
+
         public NodePaletteItem(SequenceNodeType nodeType, string displayName, string color)
         {
             NodeType = nodeType;

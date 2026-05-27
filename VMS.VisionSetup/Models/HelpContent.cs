@@ -627,6 +627,79 @@ namespace VMS.VisionSetup.Models
                     ["ExpectedText"] = "(선택) 예상 텍스트. 비어있지 않으면 위치별 char를 비교하여 추가 검증.\n분할 개수와 길이가 다르면 LengthMatch=false로 FAIL 처리.\n비어있으면 NCC 점수만으로 판정.",
                     ["DrawOverlay"] = "분할 박스 + 인식 문자 + 점수 오버레이.\n• 녹색: 매칭 PASS\n• 빨간색: BadChar (점수 < Threshold 또는 ExpectedText 불일치)"
                 }
+            },
+
+            // ─── Sequence Editor Nodes — 노드 팔레트 호버 도움말 ───
+            // key 규칙: "SequenceNode_{SequenceNodeType}" — NodePaletteItem.HelpKey 와 일치.
+            // HelpIcon 의 ToolType binding 으로 lookup.
+            ["SequenceNode_Start"] = new ToolHelp
+            {
+                Name = "Start (시작)",
+                Description = "시퀀스의 진입점입니다. 외부 트리거(PLC 신호 / 수동 실행 / 타이머)가 발생하면 이 노드부터 흐름이 시작됩니다.\n\n모든 시퀀스에 정확히 1개의 Start 노드가 존재해야 하며, 여기서 출력된 흐름이 하위 노드들로 전달됩니다. Start 가 없거나 둘 이상이면 시퀀스는 실행되지 않습니다.",
+                Usage = "시퀀스 캔버스에 가장 먼저 배치합니다. Start 의 출력 포트를 InputCheck / Inspection / Delay 등 첫 동작 노드에 연결하세요.\n\n전형적 흐름:\nStart → InputCheck(제품 도착 신호) → Inspection → Branch → End"
+            },
+
+            ["SequenceNode_End"] = new ToolHelp
+            {
+                Name = "End (종료)",
+                Description = "시퀀스 한 사이클의 종료점입니다. End 노드에 도달하면 사이클이 완료된 것으로 간주하고 결과를 외부(PLC / Web) 로 통보합니다.\n\n정상 종료(OK)와 NG 종료를 구분하려면 Branch 의 각 가지 끝에 End 를 여러 개 배치하는 패턴이 일반적입니다.",
+                Usage = "Inspection 결과 분기 끝마다 End:\nBranch.True → OutputAction(OK 램프) → End(OK)\nBranch.False → OutputAction(NG 분배) → End(NG)\n\nRepeat 안에서 End 는 사이클을 빠져나가는 break 역할로도 사용 가능."
+            },
+
+            ["SequenceNode_InputCheck"] = new ToolHelp
+            {
+                Name = "Input Check (입력 신호 검사)",
+                Description = "PLC 입력 어드레스(비트 / 워드) 의 값을 읽어 조건을 검사합니다. 검사 결과(True / False) 에 따라 다음 노드로 분기하거나 대기합니다.\n\nBranch 와의 차이: Branch 가 직전 노드 결과(주로 Inspection PASS/FAIL) 를 기준으로 한다면, InputCheck 는 외부 신호(센서·광커튼·작업자 버튼 등) 가 기준입니다.",
+                Usage = "예: '제품 도착 신호 X0 가 ON 인가?' 검사 후\n• True 가지 → Inspection (실제 검사 시작)\n• False 가지 → Delay(50ms) → 다시 InputCheck (폴링 루프)\n\n타임아웃 옵션으로 무한 대기 방지."
+            },
+
+            ["SequenceNode_OutputAction"] = new ToolHelp
+            {
+                Name = "Output Action (출력 신호 발생)",
+                Description = "PLC 출력 어드레스에 비트 / 워드 값을 씁니다. 검사 결과 알림(OK / NG 램프), 분배기 액추에이터 트리거, 컨베이어 정지·재가동 등 외부 장비 제어에 사용됩니다.",
+                Usage = "결과 분기 직후 신호 발생:\nBranch.True  → OutputAction(Y0 = ON, OK 램프)\nBranch.False → OutputAction(Y1 = ON, NG 분배기)\n\n펄스 출력이 필요한 경우:\nOutputAction(ON) → Delay(100ms) → OutputAction(OFF) 으로 폭 제어."
+            },
+
+            ["SequenceNode_Inspection"] = new ToolHelp
+            {
+                Name = "Inspection (비전 검사)",
+                Description = "현재 로드된 레시피의 비전 도구 시퀀스를 실행하고 결과(PASS / FAIL + 측정값) 를 반환합니다.\n\n카메라 그랩 → 도구 파이프라인(전처리 → 패턴매칭 → 측정 등) → 판정의 한 사이클이 이 노드 안에서 완결됩니다. 결과는 후속 Branch / OutputAction 에서 변수로 사용 가능.",
+                Usage = "표준 흐름:\nStart → InputCheck(제품 도착) → Inspection → Branch(결과 PASS/FAIL) → End\n\n멀티-스텝 검사:\nRepeat(N=4) { StepChange(idx) → Inspection } 로 한 제품의 여러 위치를 순회."
+            },
+
+            ["SequenceNode_Branch"] = new ToolHelp
+            {
+                Name = "Branch (조건 분기)",
+                Description = "이전 노드의 결과(주로 Inspection 의 PASS / FAIL 또는 사용자 정의 변수) 를 기준으로 흐름을 두 가지로 나눕니다.\n\nTrue / False 출력 포트가 각각 다른 하위 노드로 연결됩니다. 외부 신호 기반 분기가 필요하면 InputCheck 를 대신 사용하세요.",
+                Usage = "Inspection 직후 표준 패턴:\nInspection → Branch\n  ├ True  → OutputAction(OK) → End\n  └ False → OutputAction(NG) → End\n\n다중 조건은 Branch 를 직렬로 연결하거나 InputCheck 와 조합."
+            },
+
+            ["SequenceNode_Delay"] = new ToolHelp
+            {
+                Name = "Delay (시간 지연)",
+                Description = "지정한 시간(밀리초) 동안 흐름을 멈췄다가 다음 노드로 진행합니다.\n\n액추에이터 동작 완료 대기, 카메라 그랩 후 진동 안정화, 폴링 간격 확보 등에 사용됩니다.",
+                Usage = "진동 안정화:\nOutputAction(컨베이어 정지) → Delay(200ms) → Inspection\n\n폴링 간격:\nInputCheck → Delay(50ms) → 다시 InputCheck (루프)\n\n튜닝 가이드: 너무 짧으면 흔들림에 의한 검사 노이즈, 너무 길면 택트 타임 손실 — 현장에서 측정 후 결정."
+            },
+
+            ["SequenceNode_Repeat"] = new ToolHelp
+            {
+                Name = "Repeat (반복 루프)",
+                Description = "내부 노드 그룹을 지정 횟수(N회) 만큼 또는 조건이 만족될 때까지 반복 실행합니다.\n\n다중 위치 검사, 재시도 로직, 폴링 루프(신호가 들어올 때까지 대기) 등에 사용됩니다. 무한 루프 방지를 위해 항상 최대 반복 횟수 또는 타임아웃을 설정하세요.",
+                Usage = "다중 위치 순회 검사:\nRepeat(N=4) {\n  StepChange(idx=loopIndex) → Inspection\n}\n\n재시도 로직:\nRepeat(N=3) {\n  Inspection → Branch(PASS) → break\n  Branch(FAIL) → Delay(500ms) → 재시도\n}"
+            },
+
+            ["SequenceNode_RecipeChange"] = new ToolHelp
+            {
+                Name = "Recipe Change (레시피 전환)",
+                Description = "현재 로드된 비전 레시피를 다른 레시피로 교체합니다.\n\n동일 라인에서 다품종 생산 시 제품 변경(작업지시 변경) 시점에 사용합니다. 전환 시 도구 인스턴스가 재초기화되므로 Fixture 기준점도 새로 설정됩니다 — 첫 검사는 reference 캡처용으로 활용.",
+                Usage = "품종 변경 자동화:\nStart → InputCheck(품종 변경 신호 X10) → RecipeChange(RecipeId=2) → Inspection\n\nWeb WorkOrder 연동 환경:\n작업지시 선택 시 시스템이 자동으로 권장 레시피로 RecipeChange 트리거 — 작업자 수동 개입 불필요."
+            },
+
+            ["SequenceNode_StepChange"] = new ToolHelp
+            {
+                Name = "Step Change (단계 변경)",
+                Description = "현재 레시피 내에서 다음 검사 단계(InspectionStep) 로 전환합니다.\n\n한 제품에 대해 다중 위치 / 다중 카메라 검사를 순차 수행할 때 단계 인덱스를 명시적으로 변경합니다. RecipeChange 와 달리 레시피는 유지되고 단계만 이동하므로 도구 인스턴스 / Fixture 기준이 보존됩니다.",
+                Usage = "멀티-스텝 순회:\nRepeat(N=3) {\n  StepChange(idx=0) → Inspection\n  StepChange(idx=1) → Inspection\n  StepChange(idx=2) → Inspection\n}\n\n분배 기반 다음 위치 이동:\nOutputAction(분배 액추에이터) → Delay(300ms) → StepChange → Inspection"
             }
         };
 

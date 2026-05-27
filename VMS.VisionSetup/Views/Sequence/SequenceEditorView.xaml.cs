@@ -70,11 +70,28 @@ namespace VMS.VisionSetup.Views.Sequence
 
         private void Palette_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
+            // HelpIcon(? 아이콘) 위에서 시작된 click 은 drag 발동 안 함 — 도움말 팝업과 drag 충돌 방지.
+            if (e.OriginalSource is DependencyObject src && IsDescendantOfHelpIcon(src))
+                return;
+
             if (sender is FrameworkElement fe && fe.DataContext is NodePaletteItem paletteItem)
             {
                 var data = new DataObject("PaletteItem", paletteItem);
                 DragDrop.DoDragDrop(fe, data, DragDropEffects.Copy);
             }
+        }
+
+        /// <summary>주어진 요소가 HelpIcon 컨트롤의 자손인지 visual tree 를 거슬러 확인.</summary>
+        private static bool IsDescendantOfHelpIcon(DependencyObject? element)
+        {
+            while (element != null)
+            {
+                if (element is Controls.HelpIcon) return true;
+                element = element is Visual or System.Windows.Media.Media3D.Visual3D
+                    ? VisualTreeHelper.GetParent(element)
+                    : LogicalTreeHelper.GetParent(element);
+            }
+            return false;
         }
 
         private void Canvas_DragOver(object sender, DragEventArgs e)
