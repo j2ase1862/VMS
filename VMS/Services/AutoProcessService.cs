@@ -36,6 +36,10 @@ namespace VMS.Services
         private readonly SequenceConfig? _processSequence;
         private readonly ISystemLogService? _logService;
 
+        // Phase 2 — PLC + IO 보드 동시 사용 시 SequenceEngine 의 multi-device dispatch.
+        // null 이면 기존 단일 PLC 모드 (후방호환).
+        private readonly IIoDeviceRegistry? _ioRegistry;
+
         private readonly Dictionary<string, AutoProcessState> _cameraStates = new();
         private CancellationTokenSource? _cts;
         private Task? _processTask;
@@ -59,7 +63,8 @@ namespace VMS.Services
             Func<int, Task>? recipeChangeByIndexFunc = null,
             Action<int>? stepChangeFunc = null,
             SequenceConfig? processSequence = null,
-            ISystemLogService? logService = null)
+            ISystemLogService? logService = null,
+            IIoDeviceRegistry? ioRegistry = null)
         {
             _plc = plc;
             _signalConfig = signalConfig;
@@ -73,6 +78,7 @@ namespace VMS.Services
             _stepChangeFunc = stepChangeFunc;
             _processSequence = processSequence;
             _logService = logService;
+            _ioRegistry = ioRegistry;
         }
 
         public async Task StartAsync(CancellationToken cancellationToken = default)
@@ -179,7 +185,8 @@ namespace VMS.Services
             var engine = new SequenceEngine(
                 _plc, _vendor, _grabFunc, _inspectFunc,
                 _setResultFunc, _resetFunc, _getToolResultsFunc,
-                _recipeChangeByIndexFunc, _stepChangeFunc);
+                _recipeChangeByIndexFunc, _stepChangeFunc,
+                ioRegistry: _ioRegistry);
 
             engine.NodeExecuting += (s, e) => MapNodeToState(e);
             engine.SequenceError += (s, e) =>

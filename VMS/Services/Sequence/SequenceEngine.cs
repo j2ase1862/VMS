@@ -22,6 +22,12 @@ namespace VMS.Services.Sequence
         private readonly Func<int, Task>? _recipeChangeByIndexFunc;
         private readonly Action<int>? _stepChangeFunc;
 
+        // Phase 2 — IO 디바이스 dispatch. null 이면 기존 단일 PLC 모드 (후방호환).
+        // null 이 아니면 SequenceNodeConfig.DeviceId 가 비어있거나 "MainPLC" 일 때만 _plc 사용,
+        // 그 외 DeviceId 는 registry 에서 IIoBoardConnection lookup.
+        private readonly IIoDeviceRegistry? _ioRegistry;
+        private const string DefaultPlcDeviceId = "MainPLC";
+
         // Event-based trigger: per-address TaskCompletionSource for BitChanged events
         private readonly Dictionary<string, TaskCompletionSource<bool>> _bitWaiters = new();
         private readonly object _waiterLock = new();
@@ -62,7 +68,8 @@ namespace VMS.Services.Sequence
             Action<string> resetFunc,
             Func<string, IReadOnlyList<ToolInspectionResult>?>? getToolResultsFunc = null,
             Func<int, Task>? recipeChangeByIndexFunc = null,
-            Action<int>? stepChangeFunc = null)
+            Action<int>? stepChangeFunc = null,
+            IIoDeviceRegistry? ioRegistry = null)
         {
             _plc = plc;
             _vendor = vendor;
@@ -73,6 +80,7 @@ namespace VMS.Services.Sequence
             _getToolResultsFunc = getToolResultsFunc;
             _recipeChangeByIndexFunc = recipeChangeByIndexFunc;
             _stepChangeFunc = stepChangeFunc;
+            _ioRegistry = ioRegistry;
 
             _plc.BitChanged += OnPlcBitChanged;
         }
@@ -250,11 +258,18 @@ namespace VMS.Services.Sequence
             };
         }
 
-        // --- InputCheck: PLC 비트/워드 조건 대기 ---
+        // --- InputCheck: PLC 비트/워드 조건 대기 (또는 IO 보드 채널) ---
         private async Task<string?> ExecuteInputCheckAsync(SequenceNodeConfig node, CancellationToken ct)
         {
             if (string.IsNullOrEmpty(node.PlcAddress))
                 return node.NextNodeId;
+
+            // Phase 2 — DeviceId 분기. null/MainPLC = 기본 PLC, 그 외 = IO 보드 lookup.
+            if (TryGetBoardForNode(node, out var board))
+            {
+                await ExecuteBoardInputCheckAsync(board!, node, ct);
+                return node.NextNodeId;
+            }
 
             var addr = PlcAddress.Parse(node.PlcAddress, _vendor);
 
@@ -278,13 +293,21 @@ namespace VMS.Services.Sequence
             return node.NextNodeId;
         }
 
-        // --- OutputAction: PLC 비트/워드 쓰기 ---
+        // --- OutputAction: PLC 비트/워드 쓰기 (또는 IO 보드 채널) ---
         private async Task<string?> ExecuteOutputActionAsync(SequenceNodeConfig node, CancellationToken ct)
         {
             if (string.IsNullOrEmpty(node.PlcAddress))
                 return node.NextNodeId;
 
             ct.ThrowIfCancellationRequested();
+
+            // Phase 2 — DeviceId 분기. 보드는 Bit 만 지원, Int16/Int32/Float 는 경고 후 skip.
+            if (TryGetBoardForNode(node, out var board))
+            {
+                await ExecuteBoardOutputActionAsync(board!, node);
+                return node.NextNodeId;
+            }
+
             var addr = PlcAddress.Parse(node.PlcAddress, _vendor);
 
             switch (node.OutputDataType)
@@ -304,6 +327,85 @@ namespace VMS.Services.Sequence
             }
 
             return node.NextNodeId;
+        }
+
+        // ─── Phase 2 — IO 보드 디바이스 dispatch helpers ───
+
+        /// <summary>
+        /// node.DeviceId 가 IO 보드를 가리키면 true + board 출력. 그렇지 않으면 false (기본 PLC 경로 사용).
+        /// </summary>
+        private bool TryGetBoardForNode(SequenceNodeConfig node, out IIoBoardConnection? board)
+        {
+            board = null;
+            if (_ioRegistry is null) return false;
+            if (string.IsNullOrEmpty(node.DeviceId)) return false;
+            if (string.Equals(node.DeviceId, DefaultPlcDeviceId, StringComparison.Ordinal)) return false;
+
+            var device = _ioRegistry.Get(node.DeviceId);
+            if (device is IIoBoardConnection b)
+            {
+                board = b;
+                return true;
+            }
+            // 등록된 다른 디바이스가 PLC 면 기본 PLC 경로로 폴백
+            return false;
+        }
+
+        /// <summary>
+        /// IO 보드의 채널 polling. PLC 의 WaitForBitValueAsync 와 의미 동등하지만 native event 가 없어
+        /// 단순 polling (50ms 주기). InputCheck.TimeoutMs 적용.
+        /// Word 모드는 ReadPort 로 32-bit 읽어 비교.
+        /// </summary>
+        private async Task ExecuteBoardInputCheckAsync(IIoBoardConnection board, SequenceNodeConfig node, CancellationToken ct)
+        {
+            if (!int.TryParse(node.PlcAddress, out var channel))
+            {
+                Debug.WriteLine($"[Sequence] Board '{node.DeviceId}' channel parse failed: '{node.PlcAddress}'");
+                return;
+            }
+
+            var deadline = node.TimeoutMs > 0
+                ? DateTime.UtcNow.AddMilliseconds(node.TimeoutMs)
+                : DateTime.MaxValue;
+
+            while (!ct.IsCancellationRequested && DateTime.UtcNow < deadline)
+            {
+                bool satisfied = node.CheckMode switch
+                {
+                    InputCheckMode.BitOn => await board.ReadBitAsync(channel),
+                    InputCheckMode.BitOff => !await board.ReadBitAsync(channel),
+                    InputCheckMode.WordEquals => (long)(await board.ReadPortAsync(channel / 32)) == (node.CompareValue ?? 0),
+                    InputCheckMode.WordGreaterThan => (long)(await board.ReadPortAsync(channel / 32)) > (node.CompareValue ?? 0),
+                    InputCheckMode.WordLessThan => (long)(await board.ReadPortAsync(channel / 32)) < (node.CompareValue ?? 0),
+                    _ => false
+                };
+                if (satisfied) return;
+                try { await Task.Delay(50, ct); } catch (TaskCanceledException) { return; }
+            }
+        }
+
+        /// <summary>
+        /// IO 보드의 디지털 출력. 보드는 Bit 만 지원 — Int16/Int32/Float 는 경고 후 skip.
+        /// (Phase 3 SDK 통합 시 보드별로 word port write 가 가능할 수 있음 — 추후 확장.)
+        /// </summary>
+        private async Task ExecuteBoardOutputActionAsync(IIoBoardConnection board, SequenceNodeConfig node)
+        {
+            if (!int.TryParse(node.PlcAddress, out var channel))
+            {
+                Debug.WriteLine($"[Sequence] Board '{node.DeviceId}' channel parse failed: '{node.PlcAddress}'");
+                return;
+            }
+
+            switch (node.OutputDataType)
+            {
+                case PlcDataType.Bit:
+                    await board.WriteBitAsync(channel, node.BitValue ?? false);
+                    break;
+                default:
+                    Debug.WriteLine(
+                        $"[Sequence] Board '{node.DeviceId}' output type {node.OutputDataType} not supported — skip.");
+                    break;
+            }
         }
 
         // --- Inspection: 카메라별 그랩 + 검사 + 결과 쓰기 ---

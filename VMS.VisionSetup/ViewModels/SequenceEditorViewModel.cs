@@ -58,6 +58,13 @@ namespace VMS.VisionSetup.ViewModels
         /// <summary>사용 가능한 카메라 ID 목록 (Inspection 노드의 CameraId 선택용)</summary>
         public ObservableCollection<string> AvailableCameraIds { get; } = new();
 
+        /// <summary>
+        /// Phase 2 — InputCheck/OutputAction 노드의 DeviceId 콤보 옵션.
+        /// 기본 "MainPLC" 만 — 외부 host (App.xaml.cs / AppSetup UI) 가 SystemConfiguration.IoBoards
+        /// 의 DeviceId 들을 추가 호출로 채움. ComboBox.IsEditable=true 라 등록 안 된 ID 도 자유 입력.
+        /// </summary>
+        public ObservableCollection<string> AvailableDeviceIds { get; } = new() { "MainPLC" };
+
         /// <summary>노드 팔레트 아이템</summary>
         public ObservableCollection<NodePaletteItem> PaletteItems { get; } = new();
 
