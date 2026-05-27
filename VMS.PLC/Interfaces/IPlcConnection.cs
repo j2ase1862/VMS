@@ -5,11 +5,19 @@ namespace VMS.PLC.Interfaces
     /// <summary>
     /// Abstraction for PLC communication.
     /// All vendor implementations must be thread-safe.
+    ///
+    /// IIoDevice 상속 — SequenceEngine 이 PLC 와 IO 보드(IIoBoardConnection) 를 통일된
+    /// 식별 모델로 다루기 위함. DeviceId/DeviceType 은 default interface methods 로
+    /// "MainPLC"/Plc 기본값 제공 → 기존 구현체(Modbus/Mitsubishi/Siemens/LS/Omron/Simulated/
+    /// ResilientPlcConnection) 변경 없이 자동 적용. 다중 PLC 지원 시점에 override.
     /// </summary>
-    public interface IPlcConnection : IDisposable
+    public interface IPlcConnection : IIoDevice
     {
-        /// <summary>Whether the connection is currently active</summary>
-        bool IsConnected { get; }
+        // ─── IIoDevice 기본값 (C# 8 default interface methods) ───
+        // DeviceId/DeviceType 는 default → 모든 PLC 구현체가 자동으로 "MainPLC"/Plc.
+        // IsConnected 는 IIoDevice 에서 상속 — 구현체가 한 번만 구현.
+        string IIoDevice.DeviceId => "MainPLC";
+        IoDeviceType IIoDevice.DeviceType => IoDeviceType.Plc;
 
         /// <summary>Current connection state</summary>
         PlcConnectionState ConnectionState { get; }

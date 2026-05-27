@@ -17,9 +17,24 @@ namespace VMS.PLC.Models.Sequence
         /// <summary>캔버스 Y 위치</summary>
         public double Y { get; set; }
 
+        // --- IO 디바이스 선택 (Phase 1) ---
+
+        /// <summary>
+        /// 이 노드가 사용할 IO 디바이스 식별자.
+        ///   • null 또는 빈 문자열 = 기본 PLC ("MainPLC") 사용 — 후방호환 (기존 시퀀스 그대로 동작)
+        ///   • "MainPLC" = SystemConfiguration 의 단일 PLC
+        ///   • "ADLink_1" / "Advantech_Main" 등 = SystemConfiguration.IoBoards 의 IoDeviceConfig.DeviceId
+        /// SequenceEngine 이 DeviceId 로 디바이스 인스턴스 lookup 후 read/write 분기.
+        /// </summary>
+        public string? DeviceId { get; set; }
+
         // --- InputCheck 파라미터 ---
 
-        /// <summary>체크할 PLC 주소 (InputCheck, OutputAction 공용)</summary>
+        /// <summary>
+        /// 체크할 어드레스 (InputCheck, OutputAction 공용).
+        ///   • PLC: 벤더별 어드레스 문자열 (예: "X0", "M100", "D200")
+        ///   • IO 보드: 채널 번호 문자열 (예: "0", "5", "15")
+        /// </summary>
         public string? PlcAddress { get; set; }
 
         /// <summary>입력 체크 모드</summary>
