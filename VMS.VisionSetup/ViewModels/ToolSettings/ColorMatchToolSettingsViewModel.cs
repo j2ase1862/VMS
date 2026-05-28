@@ -77,12 +77,7 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
             set { SetLinkedParamCode(nameof(ColorTolerance), value); OnPropertyChanged(); }
         }
 
-        private bool _isExpertMode;
-        public bool IsExpertMode
-        {
-            get => _isExpertMode;
-            set => SetProperty(ref _isExpertMode, value);
-        }
+        // IsExpertMode 는 ToolSettingsViewModelBase 에서 도구 타입별 + 영구 저장으로 제공.
 
         private string _trainStatus = "모델 선택 후 ROI를 그리고 'Train Selected Model'을 클릭하세요.";
         public string TrainStatus

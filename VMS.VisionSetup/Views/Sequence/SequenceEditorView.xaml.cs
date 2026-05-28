@@ -70,11 +70,28 @@ namespace VMS.VisionSetup.Views.Sequence
 
         private void Palette_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
+            // HelpIcon(? 아이콘) 위에서 시작된 click 은 drag 발동 안 함 — 도움말 팝업과 drag 충돌 방지.
+            if (e.OriginalSource is DependencyObject src && IsDescendantOfHelpIcon(src))
+                return;
+
             if (sender is FrameworkElement fe && fe.DataContext is NodePaletteItem paletteItem)
             {
                 var data = new DataObject("PaletteItem", paletteItem);
                 DragDrop.DoDragDrop(fe, data, DragDropEffects.Copy);
             }
+        }
+
+        /// <summary>주어진 요소가 HelpIcon 컨트롤의 자손인지 visual tree 를 거슬러 확인.</summary>
+        private static bool IsDescendantOfHelpIcon(DependencyObject? element)
+        {
+            while (element != null)
+            {
+                if (element is Controls.HelpIcon) return true;
+                element = element is Visual or System.Windows.Media.Media3D.Visual3D
+                    ? VisualTreeHelper.GetParent(element)
+                    : LogicalTreeHelper.GetParent(element);
+            }
+            return false;
         }
 
         private void Canvas_DragOver(object sender, DragEventArgs e)
@@ -374,6 +391,19 @@ namespace VMS.VisionSetup.Views.Sequence
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
             => value is true ? Visibility.Collapsed : Visibility.Visible;
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => throw new NotSupportedException();
+    }
+
+    /// <summary>
+    /// int(Count) → Visibility — 0 이면 Collapsed, 그 외 Visible.
+    /// IO 보드 모니터 섹션이 BoardMonitorItems 가 비었을 때 숨김 처리.
+    /// </summary>
+    public class CountToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+            => (value is int count && count > 0) ? Visibility.Visible : Visibility.Collapsed;
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
             => throw new NotSupportedException();

@@ -213,6 +213,7 @@ namespace VMS.VisionSetup.Models
                 target.PlcMappings.Add(new PlcResultMapping
                 {
                     ResultKey = mapping.ResultKey,
+                    DeviceId = mapping.DeviceId,
                     PlcAddress = mapping.PlcAddress,
                     DataType = mapping.DataType
                 });

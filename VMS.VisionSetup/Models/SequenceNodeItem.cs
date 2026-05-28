@@ -53,6 +53,22 @@ namespace VMS.VisionSetup.Models
             set => SetProperty(ref _isSelected, value);
         }
 
+        /// <summary>
+        /// 노드가 사용할 IO 디바이스 식별자 (PLC: "MainPLC" / IO 보드: "ADLink_1" 등).
+        /// SequenceNodeConfig.DeviceId 의 observable 미러 — XAML 콤보가 여기에 TwoWay 바인딩.
+        /// VM 이 PropertyChanged 를 받아 SelectedDeviceType / 주소 입력 힌트를 재계산.
+        /// </summary>
+        private string? _deviceId;
+        public string? DeviceId
+        {
+            get => _deviceId;
+            set
+            {
+                if (SetProperty(ref _deviceId, value))
+                    Config.DeviceId = value;
+            }
+        }
+
         private bool _isActive;
         public bool IsActive
         {
@@ -99,6 +115,11 @@ namespace VMS.VisionSetup.Models
             _name = config.Name;
             _x = config.X;
             _y = config.Y;
+            // 새 노드 또는 레거시 노드(DeviceId 누락) 는 MainPLC 로 기본 설정 —
+            // 콤보 SelectedValue 가 미해결 상태로 표시되지 않게.
+            _deviceId = string.IsNullOrWhiteSpace(config.DeviceId) ? "MainPLC" : config.DeviceId;
+            // Config 도 동기화 — 저장 시 빈 DeviceId 가 직렬화되어 다시 누락되지 않도록.
+            Config.DeviceId = _deviceId;
         }
 
         /// <summary>노드 타입별 배경색</summary>
@@ -150,6 +171,7 @@ namespace VMS.VisionSetup.Models
             Config.X = X;
             Config.Y = Y;
             Config.NodeType = NodeType;
+            Config.DeviceId = DeviceId;
         }
     }
 }

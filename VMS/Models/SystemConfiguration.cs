@@ -39,6 +39,11 @@ namespace VMS.Models
         public PlcWriteMode WriteMode { get; set; } = PlcWriteMode.Handshake;
         public PlcEndianMode EndianMode { get; set; } = PlcEndianMode.LittleEndian;
 
+        // ─── IO 보드 (Phase 1) — PLC 와 동시 사용 가능한 디지털 IO 디바이스 목록 ───
+        // ADLink PCI-743x / Advantech PCI-17xx 등. SequenceNodeConfig.DeviceId 가
+        // 이 리스트의 DeviceId 와 매칭. 빈 리스트면 기본 PLC 만 사용 (후방호환).
+        public List<IoDeviceConfig> IoBoards { get; set; } = new();
+
         // Web Parameter Sync
         public string WebServerUrl { get; set; } = "http://localhost:5292";
         public string VisionServerUrl { get; set; } = "http://localhost:5000";

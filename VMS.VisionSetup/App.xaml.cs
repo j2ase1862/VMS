@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Input;
@@ -33,6 +34,12 @@ namespace VMS.VisionSetup
 
             // ── ONNX Execution Provider 설정 로드 ──
             LoadAIConfig();
+
+            // ── SequenceEditor 디바이스 콤보 자동 채움 (standalone / 별도 프로세스 경로) ──
+            // host(VMS App.xaml.cs) 가 띄운 경우 host 측이 이 holder 를 set 하지만, VMS.VisionSetup
+            // 단독 실행 또는 별도 프로세스로 띄운 경우엔 host 가 없음 → 직접 system_config.json 을
+            // 읽어 SequenceEditorContext.ExtraDevices 채움. (이미 host 가 채워뒀어도 idempotent)
+            PopulateSequenceEditorDevices();
 
             // Create services
             IVisionService visionService = VisionService.Instance;
@@ -241,6 +248,40 @@ namespace VMS.VisionSetup
                 Debug.WriteLine($"[App] LoadRobotConfig error: {ex.Message}");
                 return (false, "192.168.0.200", 30003, EulerConvention.UR_RotationVector,
                     RobotProtocolMode.VendorNative, 1, 270);
+            }
+        }
+
+        /// <summary>
+        /// SequenceEditor 콤보(InputCheck/OutputAction 노드) 에 표시할 디바이스 entry 들을
+        /// system_config.json 에서 읽어 SequenceEditorContext 에 주입.
+        ///   • PLC: **항상** "MainPLC" entry 를 첫 항목으로 추가 (PlcVendor=None 이어도 표시 —
+        ///     사용자가 PLC 옵션을 명시적으로 보고 선택할 수 있게. Runtime 연결 실패는 SequenceEngine 처리).
+        ///   • IO 보드: IoBoardConfigLoader 로 IoBoards 각 항목을 entry 추가 (IsEnabled 만).
+        /// </summary>
+        private static void PopulateSequenceEditorDevices()
+        {
+            try
+            {
+                var entries = new System.Collections.Generic.List<SequenceDeviceEntry>
+                {
+                    // 항상 MainPLC 노출 — IO 보드만 설정된 시스템에서도 PLC 선택지 보장.
+                    new SequenceDeviceEntry("MainPLC", VMS.PLC.Models.IoDeviceType.Plc)
+                };
+
+                // IO 보드 — IsEnabled=true 인 모든 보드 entry 추가.
+                foreach (var ioCfg in IoBoardConfigLoader.LoadFromAppData())
+                {
+                    var type = IoBoardConfigLoader.ResolveDeviceType(ioCfg);
+                    entries.Add(new SequenceDeviceEntry(ioCfg.DeviceId, type));
+                }
+
+                SequenceEditorContext.ExtraDevices = entries;
+                Debug.WriteLine($"[App] SequenceEditor devices: {entries.Count} " +
+                    $"({string.Join(", ", entries.Select(e => e.Display))})");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] PopulateSequenceEditorDevices error: {ex.Message}");
             }
         }
 

@@ -4,6 +4,9 @@
              xmlns:controls="clr-namespace:VMS.VisionSetup.Controls"
              xmlns:conv="clr-namespace:VMS.VisionSetup.Converters"
              xmlns:meas="clr-namespace:VMS.VisionSetup.VisionTools.Measurement">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
     <StackPanel>
         <!-- Edge Detection -->
         <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
@@ -11,13 +14,17 @@
                 <TextBlock Text="Edge Detection" Style="{StaticResource ExpanderHeaderStyle}"/>
             </Expander.Header>
             <StackPanel Margin="5,0,0,0">
+                <!-- Expert: Projection Width — 통합 시점에 ROI 폭 결정. -->
                 <controls:SliderParameter Label="Projection Width"
                     Value="{Binding SearchWidth}" Minimum="1" Maximum="200"
                     TickFrequency="1" ValueFormat="F0"
+                    Visibility="{Binding IsExpertMode, Converter={StaticResource BoolToVis}}"
                     ToolType="CaliperTool" ParameterName="SearchWidth"/>
+                <!-- Expert: Search Axis — 통합 시점 방향 결정. -->
                 <controls:EnumComboBoxParameter Label="Search Axis"
                     ItemsSource="{conv:EnumValues {x:Type meas:CaliperSearchAxis}}"
                     SelectedValue="{Binding SearchAxis}"
+                    Visibility="{Binding IsExpertMode, Converter={StaticResource BoolToVis}}"
                     ToolType="CaliperTool" ParameterName="SearchAxis"/>
                 <controls:EnumComboBoxParameter Label="Polarity"
                     ItemsSource="{conv:EnumValues {x:Type meas:EdgePolarity}}"
@@ -38,9 +45,11 @@
                     ItemsSource="{conv:EnumValues {x:Type meas:CaliperMode}}"
                     SelectedValue="{Binding Mode}"
                     ToolType="CaliperTool" ParameterName="Mode"/>
+                <!-- Expert: Max Edges — 통합 시점에 검출 상한 결정. -->
                 <controls:SliderParameter Label="Max Edges"
                     Value="{Binding MaxEdges}" Minimum="1" Maximum="50"
                     TickFrequency="1" SnapToTick="True" ValueFormat="F0"
+                    Visibility="{Binding IsExpertMode, Converter={StaticResource BoolToVis}}"
                     ToolType="CaliperTool" ParameterName="MaxEdges"/>
                 <controls:EnumComboBoxParameter Label="Scorer Mode"
                     ItemsSource="{conv:EnumValues {x:Type meas:ScorerMode}}"
@@ -53,8 +62,9 @@
             </StackPanel>
         </Expander>
 
-        <!-- Signal Processing (개선 옵션) -->
-        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}">
+        <!-- Expert: Signal Processing 섹션 전체 — 신호 처리 고급 옵션. -->
+        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}"
+                  Visibility="{Binding IsExpertMode, Converter={StaticResource BoolToVis}}">
             <Expander.Header>
                 <TextBlock Text="Signal Processing" Style="{StaticResource ExpanderHeaderStyle}"/>
             </Expander.Header>

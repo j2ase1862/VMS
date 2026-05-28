@@ -5,6 +5,9 @@
              xmlns:blob="clr-namespace:VMS.VisionSetup.VisionTools.BlobAnalysis"
              xmlns:conv="clr-namespace:VMS.VisionSetup.Converters">
     <StackPanel>
+        <!-- BlobTool 은 모든 파라미터가 운영자 일상 튜닝 대상 — Expert Mode 분류 불필요.
+             헤더 토글은 표시되지만 효과 없음 (의도된 동작). -->
+
         <!-- Segmentation -->
         <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
             <Expander.Header>

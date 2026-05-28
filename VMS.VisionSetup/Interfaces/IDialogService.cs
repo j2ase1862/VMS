@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using VMS.VisionSetup.Models;
+using VMS.VisionSetup.Services;
 
 
 namespace VMS.VisionSetup.Interfaces
@@ -15,7 +17,12 @@ namespace VMS.VisionSetup.Interfaces
         string? ShowRenameDialog(string currentName);
         void ShowCameraManagerDialog();
         Recipe? ShowRecipeManagerDialog();
-        void ShowSequenceEditorDialog();
+        /// <summary>
+        /// Sequence Editor 다이얼로그. extraDevices 는 InputCheck/OutputAction 노드의
+        /// 디바이스 콤보에 표시될 PLC + IO 보드 entry 리스트.
+        /// 호출자(MainViewModel) 가 SequenceEditorContext.ExtraDevices 를 그대로 전달.
+        /// </summary>
+        void ShowSequenceEditorDialog(IEnumerable<SequenceDeviceEntry>? extraDevices = null);
         void ShowCalibrationManagerDialog();
     }
 }

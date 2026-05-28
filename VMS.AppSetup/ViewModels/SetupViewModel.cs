@@ -16,7 +16,8 @@ namespace VMS.AppSetup.ViewModels
 {
     public partial class SetupViewModel : ObservableObject
     {
-        private const int TotalPages = 5;
+        // Phase 2b — Page 6 (IO 보드) 추가로 5 → 6
+        private const int TotalPages = 6;
 
         private readonly IConfigurationService _configService;
         private readonly IDialogService _dialogService;
@@ -237,8 +238,63 @@ namespace VMS.AppSetup.ViewModels
                 {
                     Cameras.Add(cam);
                 }
+
+                // Phase 2b — IO 보드 로드
+                IoBoardItems.Clear();
+                foreach (var board in config.IoBoards)
+                {
+                    IoBoardItems.Add(board);
+                }
+                if (IoBoardItems.Count > 0)
+                    SelectedIoBoard = IoBoardItems[0];
             }
         }
+
+        #region Phase 2b — IO 보드 (Page 6)
+
+        /// <summary>IO 보드 목록 — Page 6 의 리스트와 양방향 바인딩.</summary>
+        public ObservableCollection<IoDeviceConfig> IoBoardItems { get; } = new();
+
+        /// <summary>현재 편집 중인 IO 보드 — 폼이 이 객체의 properties 에 직접 바인딩.</summary>
+        [ObservableProperty]
+        private IoDeviceConfig? _selectedIoBoard;
+
+        /// <summary>Vendor 콤보 옵션 (None / AdLink / Advantech).</summary>
+        public Array IoBoardVendorValues => Enum.GetValues(typeof(IoBoardVendor));
+
+        [RelayCommand]
+        private void AddIoBoard()
+        {
+            // 새 보드의 DeviceId 는 충돌 방지를 위해 인덱스 기반 자동 명명.
+            int idx = IoBoardItems.Count + 1;
+            var board = new IoDeviceConfig
+            {
+                DeviceId = $"IoBoard_{idx}",
+                Vendor = IoBoardVendor.AdLink,
+                Model = "PCI-7432",
+                BoardId = 0,
+                InputChannelCount = 16,
+                OutputChannelCount = 16,
+                IsEnabled = true,
+                Description = string.Empty,
+            };
+            IoBoardItems.Add(board);
+            SelectedIoBoard = board;
+        }
+
+        [RelayCommand]
+        private void RemoveIoBoard()
+        {
+            if (SelectedIoBoard is null) return;
+            var idx = IoBoardItems.IndexOf(SelectedIoBoard);
+            IoBoardItems.Remove(SelectedIoBoard);
+            // 다음 항목(또는 직전 항목) 자동 선택 — 폼이 비지 않게.
+            SelectedIoBoard = IoBoardItems.Count == 0
+                ? null
+                : IoBoardItems[Math.Min(idx, IoBoardItems.Count - 1)];
+        }
+
+        #endregion
 
         partial void OnCurrentPageChanged(int value)
         {
@@ -575,7 +631,10 @@ namespace VMS.AppSetup.ViewModels
                 EulerConvention = SelectedEulerConvention,
                 RobotProtocolMode = SelectedRobotProtocolMode,
                 RobotModbusUnitId = RobotModbusUnitId,
-                RobotModbusPoseRegister = RobotModbusPoseRegister
+                RobotModbusPoseRegister = RobotModbusPoseRegister,
+
+                // Phase 2b — IO 보드
+                IoBoards = IoBoardItems.ToList()
             };
 
             if (_configService.SaveConfiguration(config))

@@ -3096,7 +3096,9 @@ namespace VMS.VisionSetup.ViewModels
 
         public void OpenSequenceEditor()
         {
-            _dialogService.ShowSequenceEditorDialog();
+            // host(VMS App.xaml.cs) 또는 standalone(VMS.VisionSetup App.xaml.cs) 이 채운 디바이스 entry
+            // 들을 그대로 전달 — PLC + IO 보드가 DeviceType 정보와 함께 콤보에 표시됨.
+            _dialogService.ShowSequenceEditorDialog(VMS.VisionSetup.Services.SequenceEditorContext.ExtraDevices);
         }
 
         public void OpenCalibrationManager()

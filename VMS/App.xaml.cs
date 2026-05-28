@@ -99,6 +99,45 @@ namespace VMS
                     Debug.WriteLine($"[PLC] {entry}");
             }
 
+            // ── IO 디바이스 레지스트리 (Phase 2 — PLC + IO 보드 통합) ──
+            // 기본 PLC 를 "MainPLC" 로 등록 + SystemConfiguration.IoBoards 의 각 보드 생성/연결/등록.
+            // SequenceEngine 이 SequenceNodeConfig.DeviceId 로 lookup 하여 적절한 디바이스에 read/write.
+            var ioDeviceRegistry = new IoDeviceRegistry();
+            ioDeviceRegistry.Register(plcConnection);  // DeviceId 기본값 = "MainPLC"
+
+            var ioBoardConnections = new List<VMS.PLC.Interfaces.IIoBoardConnection>();
+            foreach (var ioConfig in systemConfig.IoBoards ?? new List<VMS.PLC.Models.IoDeviceConfig>())
+            {
+                try
+                {
+                    var board = IoBoardConnectionFactory.Create(ioConfig);
+                    if (board is null) continue;
+                    // ConnectAsync 실패는 한 보드만 격리 — 다른 보드/PLC 는 계속 진행
+                    _ = board.ConnectAsync();
+                    ioDeviceRegistry.Register(board);
+                    ioBoardConnections.Add(board);
+                    Debug.WriteLine($"[App] IO board registered: {ioConfig.DeviceId} ({ioConfig.Vendor} {ioConfig.Model})");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[App] IO board init failed ({ioConfig.DeviceId}): {ex.Message}");
+                }
+            }
+
+            // SequenceEditor 콤보 자동 채움 — PLC + IO 보드 entry 들을 VMS.VisionSetup holder 에 주입.
+            // **항상 MainPLC 가 첫 항목** — PlcVendor=None 이어도 콤보에서 PLC 옵션 노출.
+            var sequenceDevices = new List<VMS.VisionSetup.Services.SequenceDeviceEntry>
+            {
+                new VMS.VisionSetup.Services.SequenceDeviceEntry(
+                    "MainPLC", VMS.PLC.Models.IoDeviceType.Plc)
+            };
+            foreach (var board in ioBoardConnections)
+            {
+                sequenceDevices.Add(new VMS.VisionSetup.Services.SequenceDeviceEntry(
+                    board.DeviceId, board.DeviceType));
+            }
+            VMS.VisionSetup.Services.SequenceEditorContext.ExtraDevices = sequenceDevices;
+
             var signalConfig = configService.LoadPlcSignalConfiguration();
 
             var mainViewModel = new MainViewModel(
@@ -336,7 +375,8 @@ namespace VMS
                     });
                 },
                 processSequence: processSequence,
-                logService: logService);
+                logService: logService,
+                ioRegistry: ioDeviceRegistry);
 
             // ── Roller Inspection Service ──
             IRollerInspectionService rollerInspectionService = new RollerInspectionService(logService);
@@ -356,6 +396,7 @@ namespace VMS
                     if (vmsHubClient != null) _ = vmsHubClient.DisposeAsync();
                     predictionPollingService?.Dispose();
                     sensorPollingService?.Dispose();
+                    foreach (var board in ioBoardConnections) board.Dispose();
                     ForceShutdown(mainViewModel, heartbeatService, parameterSyncService, sharedFrameWriter, plcConnection, autoProcessService);
                 },
                 autoProcessService,
@@ -385,6 +426,7 @@ namespace VMS
                 if (vmsHubClient != null) _ = vmsHubClient.DisposeAsync();
                 predictionPollingService?.Dispose();
                 sensorPollingService?.Dispose();
+                foreach (var board in ioBoardConnections) board.Dispose();
                 ForceShutdown(mainViewModel, heartbeatService, parameterSyncService, sharedFrameWriter, plcConnection, autoProcessService);
             };
             mainWindow.Show();

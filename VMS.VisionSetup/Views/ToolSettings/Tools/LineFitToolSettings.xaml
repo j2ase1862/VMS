@@ -4,6 +4,9 @@
              xmlns:controls="clr-namespace:VMS.VisionSetup.Controls"
              xmlns:conv="clr-namespace:VMS.VisionSetup.Converters"
              xmlns:meas="clr-namespace:VMS.VisionSetup.VisionTools.Measurement">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
     <StackPanel>
         <controls:SliderParameter Label="Num Calipers"
             Value="{Binding NumCalipers}" Minimum="2" Maximum="50"
@@ -35,17 +38,21 @@
             Value="{Binding FilterHalfWidth}" Minimum="1" Maximum="10"
             TickFrequency="1" SnapToTick="True" ValueFormat="F0"
             ToolType="LineFitTool" ParameterName="FilterHalfWidth"/>
+        <!-- Expert: Fit 알고리즘 + outlier 처리 — 통합 시점 튜닝. -->
         <controls:EnumComboBoxParameter Label="Fit Method"
             ItemsSource="{conv:EnumValues {x:Type meas:LineFitMethod}}"
             SelectedValue="{Binding FitMethod}"
+            Visibility="{Binding IsExpertMode, Converter={StaticResource BoolToVis}}"
             ToolType="LineFitTool" ParameterName="FitMethod"/>
         <controls:SliderParameter Label="RANSAC Threshold"
             Value="{Binding RansacThreshold}" Minimum="0.1" Maximum="20"
             TickFrequency="0.5" ValueFormat="F2"
+            Visibility="{Binding IsExpertMode, Converter={StaticResource BoolToVis}}"
             ToolType="LineFitTool" ParameterName="RansacThreshold"/>
         <controls:SliderParameter Label="Min Found Calipers"
             Value="{Binding MinFoundCalipers}" Minimum="2" Maximum="20"
             TickFrequency="1" ValueFormat="F0"
+            Visibility="{Binding IsExpertMode, Converter={StaticResource BoolToVis}}"
             ToolType="LineFitTool" ParameterName="MinFoundCalipers"/>
     </StackPanel>
 </UserControl>
