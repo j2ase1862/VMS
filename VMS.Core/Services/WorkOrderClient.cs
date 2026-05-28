@@ -6,6 +6,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
 using VMS.Core.Models.ParameterSync;
+using VMS.Core.Security;
 
 namespace VMS.Core.Services
 {
@@ -24,7 +25,8 @@ namespace VMS.Core.Services
         {
             _webServerUrl = webServerUrl.TrimEnd('/');
             _clientIndex = clientIndex;
-            _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
+            InsecureUrlGuard.Check(_webServerUrl, nameof(WorkOrderClient));
+            _httpClient = HttpClientPolicy.Build(TimeSpan.FromSeconds(8));
         }
 
         /// <summary>옵션 status — "Planned" / "InProgress" / "Completed" 등. null이면 전체.</summary>

@@ -8,6 +8,7 @@ using System.Threading;
 using System.Windows;
 using VMS.Camera.Services;
 using VMS.Core.Interfaces;
+using VMS.Core.Security;
 using VMS.Core.Services;
 using VMS.Interfaces;
 using HeartbeatService = VMS.Core.Services.HeartbeatService;
@@ -27,6 +28,11 @@ namespace VMS
         protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+
+            // 보안 정책 로드 — system_config.json 의 "securityMode" 키에서 결정.
+            // 누락 시 Development 폴백 (기존 dev 동작 호환). 모든 HttpClient / SignalR 이
+            // 이 정책을 참조하므로 다른 서비스 초기화 전에 반드시 호출.
+            SecurityOptions.LoadFromAppData();
 
             var splash = new SplashWindow();
             splash.Show();

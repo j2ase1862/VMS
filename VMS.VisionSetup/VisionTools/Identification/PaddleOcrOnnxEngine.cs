@@ -628,8 +628,8 @@ namespace VMS.VisionSetup.VisionTools.Identification
         {
             Directory.CreateDirectory(modelDir);
 
-            using var http = new HttpClient();
-            http.Timeout = TimeSpan.FromMinutes(5);
+            // 외부 모델 호스팅(HTTPS) 다운로드 — 보안 정책 일관 적용.
+            using var http = VMS.Core.Security.HttpClientPolicy.Build(TimeSpan.FromMinutes(5));
 
             foreach (var (path, file) in missing)
             {

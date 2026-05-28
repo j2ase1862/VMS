@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using VMS.Core.Interfaces;
 using VMS.Core.Models.Predictive;
+using VMS.Core.Security;
 
 namespace VMS.Core.Services
 {
@@ -39,10 +40,8 @@ namespace VMS.Core.Services
         {
             _baseUrl = baseUrl.TrimEnd('/');
             _clientIndex = clientIndex;
-            _httpClient = new HttpClient
-            {
-                Timeout = TimeSpan.FromSeconds(10)
-            };
+            InsecureUrlGuard.Check(_baseUrl, nameof(PredictionPollingService));
+            _httpClient = HttpClientPolicy.Build(TimeSpan.FromSeconds(10));
         }
 
         public void StartPeriodicPolling(int intervalSeconds = 60)

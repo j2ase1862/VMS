@@ -6,6 +6,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
 using VMS.Core.Models.ParameterSync;
+using VMS.Core.Security;
 
 namespace VMS.Core.Services
 {
@@ -23,7 +24,8 @@ namespace VMS.Core.Services
         public LotClient(string webServerUrl)
         {
             _webServerUrl = webServerUrl.TrimEnd('/');
-            _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
+            InsecureUrlGuard.Check(_webServerUrl, nameof(LotClient));
+            _httpClient = HttpClientPolicy.Build(TimeSpan.FromSeconds(8));
         }
 
         /// <summary>WO 의 활성(Open) Lot 1개. 없으면 null. 통신 실패 시도 null.</summary>

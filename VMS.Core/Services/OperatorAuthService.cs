@@ -5,6 +5,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
 using VMS.Core.Models.ParameterSync;
+using VMS.Core.Security;
 
 namespace VMS.Core.Services
 {
@@ -29,7 +30,8 @@ namespace VMS.Core.Services
         {
             _webServerUrl = webServerUrl.TrimEnd('/');
             _clientIndex = clientIndex;
-            _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+            InsecureUrlGuard.Check(_webServerUrl, nameof(OperatorAuthService));
+            _httpClient = HttpClientPolicy.Build(TimeSpan.FromSeconds(5));
         }
 
         /// <summary>EmployeeNumber + PIN으로 Web에 로그인. 성공 시 세션 반환.</summary>
