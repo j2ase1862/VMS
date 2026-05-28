@@ -38,14 +38,27 @@ namespace VMS.Core.Services
         public async Task<(bool ok, OperatorSessionDto? session, string? error)> LoginAsync(
             string employeeNumber, string pin)
         {
+            // 1) 입력 검증 — DoS / control-char 주입 방어. 비정상 입력은 네트워크 호출 없이 즉시 거부.
             try
             {
-                var req = new KioskLoginRequest
-                {
-                    ClientIndex = _clientIndex,
-                    EmployeeNumber = employeeNumber,
-                    Pin = pin
-                };
+                CredentialGuard.ValidateIdentifier(employeeNumber, nameof(employeeNumber));
+                CredentialGuard.ValidateSecret(pin, nameof(pin));
+            }
+            catch (ArgumentException ex)
+            {
+                Debug.WriteLine($"[OperatorAuth] Invalid input: {ex.Message}");
+                return (false, null, "입력 형식이 올바르지 않습니다.");
+            }
+
+            // 2) PIN 을 담은 request 객체 송신 후 finally 에서 즉시 비움 — 메모리 잔존 시간 최소화.
+            var req = new KioskLoginRequest
+            {
+                ClientIndex = _clientIndex,
+                EmployeeNumber = employeeNumber,
+                Pin = pin
+            };
+            try
+            {
                 var resp = await _httpClient.PostAsJsonAsync($"{_webServerUrl}/api/kiosk/login", req);
 
                 if (resp.IsSuccessStatusCode)
@@ -70,6 +83,12 @@ namespace VMS.Core.Services
             {
                 Debug.WriteLine($"[OperatorAuth] Login error: {ex.Message}");
                 return (false, null, $"통신 오류: {ex.Message}");
+            }
+            finally
+            {
+                // string 은 immutable 이라 완전한 zero-clearing 불가하나, 참조 끊기로 GC 후보화.
+                // req 는 LoginAsync 끝나면 GC 대상이지만 명시적으로 비워 송신 완료 직후 잔존 시간 단축.
+                req.Pin = string.Empty;
             }
         }
 
