@@ -91,7 +91,10 @@ Desktop.ini
 *.safetensors
 VMS.DeepLearning/images/
 VMS.DeepLearning/labels/
-VMS.DeepLearning/models/
+# 'models/' 는 학습 가중치(*.onnx, *.pt) 저장용 의도였으나, Windows case-insensitive
+# 파일시스템에서 코드 폴더 'Models/' 까지 무시되어 CI 빌드가 깨졌음.
+# *.onnx / *.pt / *.pth / *.weights / *.h5 / *.pkl / *.safetensors 는 위에서
+# 이미 전역 ignore 되므로 폴더 단위 ignore 는 불필요.
 VMS.DeepLearning/train/
 VMS.DeepLearning/val/
 VMS.DeepLearning/datasets/
