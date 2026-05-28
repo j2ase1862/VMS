@@ -1077,6 +1077,22 @@ namespace VMS.ViewModels
             window.ShowDialog();
         }
 
+        /// <summary>
+        /// 감사 로그 조회 윈도우 — Admin 권한 전용. CanManageUsers 와 동일한 가시성 조건.
+        /// GS 인증 이력 추적성 항목의 실제 시연 화면.
+        /// </summary>
+        [RelayCommand]
+        private void OpenAuditLogViewer()
+        {
+            var vm = new AuditLogViewerViewModel();
+            var window = new AuditLogViewerWindow
+            {
+                DataContext = vm,
+                Owner = System.Windows.Application.Current.MainWindow
+            };
+            window.ShowDialog();
+        }
+
         [RelayCommand]
         private void SwitchUser()
         {

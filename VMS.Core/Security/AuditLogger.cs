@@ -192,5 +192,78 @@ namespace VMS.Core.Security
             }
             return result;
         }
+
+        /// <summary>
+        /// 일자 범위 + 카테고리 + outcome + 텍스트 검색으로 감사 로그를 조회.
+        /// fromLocalDate ≤ entry.TimestampUtc.ToLocalTime().Date ≤ toLocalDate 범위에서
+        /// 일별 jsonl 파일들을 차례로 읽어 필터링 후 결과 반환.
+        /// </summary>
+        public IReadOnlyList<AuditLogEntry> ReadRange(
+            DateTime fromLocalDate,
+            DateTime toLocalDate,
+            AuditCategory? category = null,
+            AuditOutcome? outcome = null,
+            string? searchText = null)
+        {
+            if (toLocalDate < fromLocalDate) (fromLocalDate, toLocalDate) = (toLocalDate, fromLocalDate);
+
+            var result = new List<AuditLogEntry>();
+            var search = string.IsNullOrWhiteSpace(searchText) ? null : searchText.Trim();
+            for (var d = fromLocalDate.Date; d <= toLocalDate.Date; d = d.AddDays(1))
+            {
+                foreach (var entry in ReadDay(d))
+                {
+                    if (category.HasValue && entry.Category != category.Value) continue;
+                    if (outcome.HasValue && entry.Outcome != outcome.Value) continue;
+                    if (search != null && !MatchesSearch(entry, search)) continue;
+                    result.Add(entry);
+                }
+            }
+            return result;
+        }
+
+        private static bool MatchesSearch(AuditLogEntry entry, string search)
+        {
+            return (entry.Action?.Contains(search, StringComparison.OrdinalIgnoreCase) == true)
+                || (entry.UserName?.Contains(search, StringComparison.OrdinalIgnoreCase) == true)
+                || (entry.Source?.Contains(search, StringComparison.OrdinalIgnoreCase) == true)
+                || (entry.Details?.Contains(search, StringComparison.OrdinalIgnoreCase) == true);
+        }
+
+        /// <summary>
+        /// 감사 로그 entry 리스트를 CSV 로 export. 감사 심사 / 외부 분석용.
+        /// CSV 필드는 RFC 4180 준수 (콤마 / 따옴표 escape).
+        /// </summary>
+        public static void ExportToCsv(IEnumerable<AuditLogEntry> entries, string outputPath)
+        {
+            using var writer = new StreamWriter(outputPath, append: false, Encoding.UTF8);
+            writer.WriteLine("Timestamp(UTC),Category,Action,Outcome,User,Source,Details");
+            foreach (var e in entries)
+            {
+                writer.Write(e.TimestampUtc.ToString("o"));
+                writer.Write(',');
+                writer.Write(e.Category);
+                writer.Write(',');
+                writer.Write(CsvEscape(e.Action));
+                writer.Write(',');
+                writer.Write(e.Outcome);
+                writer.Write(',');
+                writer.Write(CsvEscape(e.UserName));
+                writer.Write(',');
+                writer.Write(CsvEscape(e.Source));
+                writer.Write(',');
+                writer.Write(CsvEscape(e.Details));
+                writer.WriteLine();
+            }
+        }
+
+        private static string CsvEscape(string? value)
+        {
+            if (string.IsNullOrEmpty(value)) return string.Empty;
+            // RFC 4180: 콤마/따옴표/개행 포함 시 전체를 따옴표로 감싸고, 내부 따옴표는 두 개로.
+            if (value.IndexOfAny(new[] { ',', '"', '\n', '\r' }) >= 0)
+                return $"\"{value.Replace("\"", "\"\"")}\"";
+            return value;
+        }
     }
 }

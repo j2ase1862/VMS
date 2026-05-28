@@ -1,0 +1,199 @@
+<Window x:Class="VMS.Views.AuditLogViewerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:sec="clr-namespace:VMS.Core.Security;assembly=VMS.Core"
+        Title="Audit Log Viewer"
+        Width="1080" Height="640"
+        WindowStartupLocation="CenterOwner"
+        Background="#1E1E1E"
+        ResizeMode="CanResizeWithGrip">
+    <Window.Resources>
+        <!-- 카테고리/outcome 콤보 null 항목(전체) 표시용 변환기는 단순 ItemTemplate 으로 처리 -->
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <TextBlock Grid.Row="0" Text="감사 로그 조회 — Audit Log Viewer"
+                   Foreground="#2196F3" FontSize="18" FontWeight="SemiBold"
+                   Margin="0,0,0,12"/>
+
+        <!-- Filter Bar -->
+        <Border Grid.Row="1" Background="#2D2D2D" CornerRadius="6" Padding="12" Margin="0,0,0,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Row 0: 날짜 / 카테고리 / Outcome -->
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="From" Foreground="#B0B0B0"
+                           VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <DatePicker Grid.Row="0" Grid.Column="1" SelectedDate="{Binding FromDate}"
+                            Margin="0,0,12,0"/>
+
+                <TextBlock Grid.Row="0" Grid.Column="2" Text="To" Foreground="#B0B0B0"
+                           VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <DatePicker Grid.Row="0" Grid.Column="3" SelectedDate="{Binding ToDate}"
+                            Margin="0,0,12,0"/>
+
+                <TextBlock Grid.Row="0" Grid.Column="4" Text="Category" Foreground="#B0B0B0"
+                           VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <ComboBox Grid.Row="0" Grid.Column="5"
+                          ItemsSource="{Binding CategoryOptions}"
+                          SelectedItem="{Binding SelectedCategory}"
+                          Background="White" Foreground="Black" Margin="0,0,12,0">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock>
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="{Binding}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding}" Value="{x:Null}">
+                                                <Setter Property="Text" Value="(전체)"/>
+                                                <Setter Property="Foreground" Value="#666666"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <TextBlock Grid.Row="0" Grid.Column="6" Text="Outcome" Foreground="#B0B0B0"
+                           VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <ComboBox Grid.Row="0" Grid.Column="7"
+                          ItemsSource="{Binding OutcomeOptions}"
+                          SelectedItem="{Binding SelectedOutcome}"
+                          Background="White" Foreground="Black" Margin="0,0,12,0">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock>
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="{Binding}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding}" Value="{x:Null}">
+                                                <Setter Property="Text" Value="(전체)"/>
+                                                <Setter Property="Foreground" Value="#666666"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <TextBlock Grid.Row="0" Grid.Column="8" Text="Search" Foreground="#B0B0B0"
+                           VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <TextBox Grid.Row="0" Grid.Column="9"
+                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                         Background="#404040" Foreground="White" BorderBrush="#3D3D3D"
+                         CaretBrush="White" Padding="6,4" MinWidth="160" Margin="0,0,12,0"
+                         ToolTip="Action / User / Source / Details 텍스트 검색"/>
+
+                <!-- Row 1: 버튼들 -->
+                <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="11"
+                            Orientation="Horizontal" Margin="0,10,0,0">
+                    <Button Content="🔍 조회" Command="{Binding SearchCommand}"
+                            Background="#2196F3" Foreground="White" BorderThickness="0"
+                            Padding="14,6" Margin="0,0,8,0" Cursor="Hand"/>
+                    <Button Content="↻ 필터 초기화" Command="{Binding ResetFiltersCommand}"
+                            Background="#555555" Foreground="White" BorderThickness="0"
+                            Padding="14,6" Margin="0,0,8,0" Cursor="Hand"/>
+                    <Button Content="📥 CSV 내보내기" Command="{Binding ExportCsvCommand}"
+                            Background="#4CAF50" Foreground="White" BorderThickness="0"
+                            Padding="14,6" Cursor="Hand"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Results DataGrid -->
+        <Border Grid.Row="2" Background="#2D2D2D" CornerRadius="6" Padding="8">
+            <DataGrid ItemsSource="{Binding Entries}"
+                      AutoGenerateColumns="False" IsReadOnly="True"
+                      Background="#2D2D2D" Foreground="White"
+                      BorderThickness="0" GridLinesVisibility="Horizontal"
+                      HorizontalGridLinesBrush="#3D3D3D"
+                      RowBackground="#2D2D2D" AlternatingRowBackground="#333333"
+                      HeadersVisibility="Column"
+                      SelectionMode="Single" SelectionUnit="FullRow"
+                      VerticalScrollBarVisibility="Auto"
+                      FontFamily="Consolas" FontSize="12">
+                <DataGrid.ColumnHeaderStyle>
+                    <Style TargetType="DataGridColumnHeader">
+                        <Setter Property="Background" Value="#3D3D3D"/>
+                        <Setter Property="Foreground" Value="#B0B0B0"/>
+                        <Setter Property="Padding" Value="8,4"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="FontWeight" Value="SemiBold"/>
+                    </Style>
+                </DataGrid.ColumnHeaderStyle>
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Timestamp (UTC)"
+                                        Binding="{Binding TimestampUtc, StringFormat='yyyy-MM-dd HH:mm:ss'}"
+                                        Width="155"/>
+                    <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="120"/>
+                    <DataGridTextColumn Header="Action" Binding="{Binding Action}" Width="160"/>
+                    <DataGridTextColumn Header="Outcome" Binding="{Binding Outcome}" Width="85">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Outcome}" Value="Success">
+                                        <Setter Property="Foreground" Value="#4CAF50"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Outcome}" Value="Failure">
+                                        <Setter Property="Foreground" Value="#F44336"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Outcome}" Value="Denied">
+                                        <Setter Property="Foreground" Value="#FFB74D"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="User" Binding="{Binding UserName}" Width="110"/>
+                    <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="160"/>
+                    <DataGridTextColumn Header="Details" Binding="{Binding Details}" Width="*"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="3" Background="#252526" Padding="10,6" Margin="0,8,0,0"
+                CornerRadius="4">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Right"
+                           Foreground="#888888" FontSize="11">
+                    <Run Text="저장 위치: "/>
+                    <Run Text="%LocalAppData%\BODA VISION AI\audit\YYYY-MM-DD.jsonl"
+                         FontFamily="Consolas" Foreground="#999999"/>
+                </TextBlock>
+                <TextBlock Text="{Binding StatusMessage}" Foreground="#CCCCCC" FontSize="11"/>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>
