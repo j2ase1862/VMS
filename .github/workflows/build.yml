@@ -52,13 +52,15 @@ jobs:
         run: dotnet build VMS.sln --configuration ${{ env.Configuration }} --no-restore /p:TreatWarningsAsErrors=false
 
       - name: Test
-        # 테스트 프로젝트가 일부만 있어도 통과하도록 --no-build 로 빌드 산출물 재사용.
-        # .trx 결과를 별도 디렉토리에 수집해 후속 단계가 업로드 가능.
+        # `*Diagnostic*` 테스트는 PP-OCRv4 ONNX 모델 등 외부 가중치 파일을 요구하는
+        # 환경 의존적 진단용 테스트라 CI runner 에선 실행 불가 → 필터로 제외.
+        # 회귀 방어 단위 테스트(PlcAddress, GigEVision, ToolSerializer) 만 CI 실행.
         run: >
           dotnet test VMS.sln
           --configuration ${{ env.Configuration }}
           --no-build
           --verbosity normal
+          --filter "FullyQualifiedName!~Diagnostic"
           --logger "trx;LogFileName=test-results.trx"
           --results-directory ${{ github.workspace }}/TestResults
 
