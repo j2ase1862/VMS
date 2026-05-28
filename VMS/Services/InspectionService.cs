@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using VMS.Core.Interfaces;
 using VMS.Core.Models;
 using VMS.Core.Models.ParameterSync;
+using VMS.Core.Security;
 using VMS.Core.Services;
 using VMS.Interfaces;
 using VMS.Models;
@@ -276,6 +277,20 @@ namespace VMS.Services
                 result.Message = finalSuccess ? "All tools passed" : "One or more tools failed";
                 result.OverlayImage = compositeOverlay;
 
+                // 감사 로그 — NG (검사 실패) 만 기록. OK 는 빈도가 높아 jsonl 폭증을 막기 위해 제외.
+                // 실패한 도구 이름을 함께 기록하여 사후 추적 가능.
+                if (!finalSuccess)
+                {
+                    var failedTools = result.ToolResults
+                        .Where(t => !t.Success)
+                        .Select(t => t.ToolName)
+                        .ToArray();
+                    AuditLogger.Instance.Log(
+                        AuditCategory.Inspection, "InspectionNG", AuditOutcome.Failure,
+                        source: nameof(InspectionService),
+                        details: $"StepId={step.Id}, FailedTools=[{string.Join(", ", failedTools)}]");
+                }
+
                 // Predictive_DefectRate_Plan §5.1 — 예측 모델용 피처 산출.
                 // CycleTime 은 ToolResults 합산 후/업로드 직전에 캡처해야 의미가 있음
                 // (도구 실행 시간을 모두 포함해야 함).
@@ -306,6 +321,10 @@ namespace VMS.Services
                 result.Message = $"Inspection error: {ex.Message}";
                 if (sw.IsRunning) sw.Stop();
                 result.ExecutionTimeMs = sw.Elapsed.TotalMilliseconds;
+                AuditLogger.Instance.Log(
+                    AuditCategory.Inspection, "InspectionException", AuditOutcome.Failure,
+                    source: nameof(InspectionService),
+                    details: $"StepId={step.Id}, {ex.GetType().Name}: {ex.Message}");
                 return result;
             }
         }

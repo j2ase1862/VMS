@@ -1,3 +1,4 @@
+using VMS.Core.Security;
 using VMS.Interfaces;
 using VMS.Models;
 using System;
@@ -54,13 +55,25 @@ namespace VMS.Services
                     if (recipe != null)
                     {
                         _currentRecipe = recipe;
+                        AuditLogger.Instance.Log(
+                            AuditCategory.RecipeChange, "LoadRecipe", AuditOutcome.Success,
+                            source: nameof(RecipeService),
+                            details: $"Id={recipe.Id}, Name='{recipe.Name}', Path='{filePath}'");
                         return recipe;
                     }
                 }
+                AuditLogger.Instance.Log(
+                    AuditCategory.RecipeChange, "LoadRecipe", AuditOutcome.Failure,
+                    source: nameof(RecipeService),
+                    details: $"Path='{filePath}' — 파일 없음 또는 deserialize null");
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error loading recipe: {ex.Message}");
+                AuditLogger.Instance.Log(
+                    AuditCategory.RecipeChange, "LoadRecipe", AuditOutcome.Failure,
+                    source: nameof(RecipeService),
+                    details: $"Path='{filePath}', {ex.GetType().Name}: {ex.Message}");
             }
 
             return null;
@@ -80,11 +93,19 @@ namespace VMS.Services
                 File.WriteAllText(path, json);
 
                 _currentRecipe = recipe;
+                AuditLogger.Instance.Log(
+                    AuditCategory.RecipeChange, "SaveRecipe", AuditOutcome.Success,
+                    source: nameof(RecipeService),
+                    details: $"Id={recipe.Id}, Name='{recipe.Name}', Path='{path}'");
                 return true;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error saving recipe: {ex.Message}");
+                AuditLogger.Instance.Log(
+                    AuditCategory.RecipeChange, "SaveRecipe", AuditOutcome.Failure,
+                    source: nameof(RecipeService),
+                    details: $"Id={recipe.Id}, Name='{recipe.Name}', {ex.GetType().Name}: {ex.Message}");
                 return false;
             }
         }
@@ -164,6 +185,10 @@ namespace VMS.Services
                     {
                         _currentRecipe = null;
                     }
+                    AuditLogger.Instance.Log(
+                        AuditCategory.RecipeChange, "DeleteRecipe", AuditOutcome.Success,
+                        source: nameof(RecipeService),
+                        details: $"Id={id}, Path='{path}'");
                     return true;
                 }
 
@@ -173,11 +198,22 @@ namespace VMS.Services
                 {
                     File.Delete(file);
                 }
+                if (files.Length > 0)
+                {
+                    AuditLogger.Instance.Log(
+                        AuditCategory.RecipeChange, "DeleteRecipe", AuditOutcome.Success,
+                        source: nameof(RecipeService),
+                        details: $"Id={id}, MatchedFiles={files.Length}");
+                }
                 return files.Length > 0;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error deleting recipe: {ex.Message}");
+                AuditLogger.Instance.Log(
+                    AuditCategory.RecipeChange, "DeleteRecipe", AuditOutcome.Failure,
+                    source: nameof(RecipeService),
+                    details: $"Id={id}, {ex.GetType().Name}: {ex.Message}");
                 return false;
             }
         }
@@ -191,11 +227,19 @@ namespace VMS.Services
             {
                 var json = JsonSerializer.Serialize(recipe, JsonOptions);
                 File.WriteAllText(exportPath, json);
+                AuditLogger.Instance.Log(
+                    AuditCategory.RecipeChange, "ExportRecipe", AuditOutcome.Success,
+                    source: nameof(RecipeService),
+                    details: $"Id={recipe.Id}, Name='{recipe.Name}', ExportPath='{exportPath}'");
                 return true;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error exporting recipe: {ex.Message}");
+                AuditLogger.Instance.Log(
+                    AuditCategory.RecipeChange, "ExportRecipe", AuditOutcome.Failure,
+                    source: nameof(RecipeService),
+                    details: $"Id={recipe.Id}, ExportPath='{exportPath}', {ex.GetType().Name}: {ex.Message}");
                 return false;
             }
         }
