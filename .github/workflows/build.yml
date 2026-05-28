@@ -37,6 +37,14 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Prepare local NuGet cache folder
+        # nuget.config 의 `local-cache` 소스가 ./packages 로컬 폴더를 가리킨다.
+        # 로컬 개발자는 이 폴더에 오프라인 패키지를 두지만, CI runner 엔 폴더가 없어
+        # restore 가 NU1301 으로 실패한다. 빈 폴더만 만들어 두면 NuGet 이 정상적으로
+        # 다음 소스(nuget.org)에서 패키지를 가져온다.
+        run: New-Item -ItemType Directory -Force -Path packages | Out-Null
+        shell: pwsh
+
       - name: Restore
         run: dotnet restore VMS.sln
 
