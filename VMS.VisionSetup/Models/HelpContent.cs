@@ -629,6 +629,86 @@ namespace VMS.VisionSetup.Models
                 }
             },
 
+            // ─── 3D Measurement / Calibration / DL 추가 도구 ───
+
+            ["PlaneFitTool"] = new ToolHelp
+            {
+                Name = "Plane Fit (3D 평면 피팅)",
+                Description = "ROI 영역 내 3D 포인트들에서 평면 방정식(ax+by+cz+d=0)을 추출합니다.\n3D 카메라 / 라인스캔 / HeightMap 메타데이터의 PixelTo3D 변환을 사용해 2D ROI → 3D 포인트로 복원 후 피팅.",
+                Usage = "평탄도 / 기울기 / 단차 측정의 기준면을 만들 때 사용. Geometry3DTool 의 PointToPlaneDistance / PlaneToPlaneAngle 입력으로 연결.\n• 평탄도 검사: 평면 피팅 후 ROI 잔차의 RMS 평가\n• 기울기 측정: 기준 평면과의 PlaneToPlaneAngle\n• 단차 검사: 두 평면 사이 PointToPlaneDistance",
+                CognexEquivalent = "Cognex 3D Plane Tool (DS1000 / DSMax)",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["FitMethod"] = "피팅 알고리즘:\n• LeastSquares: 최소자승법 — 빠르지만 outlier 에 민감\n• RANSAC: 무작위 표본 합의 — outlier 강건 (기본 권장)",
+                    ["InlierThresholdMm"] = "RANSAC inlier 판정 임계값(mm). 평면에서 이 거리 이내 점을 inlier 로 분류.\n• 0.1: 정밀 (가공면 평탄도)\n• 0.5: 일반 (보드/케이스)\n• 2.0: 거친 표면",
+                    ["MaxIterations"] = "RANSAC 최대 반복. 클수록 정확하지만 느림. 기본 200~500 권장.",
+                    ["MinInlierRatio"] = "최소 inlier 비율 (0~1). 이 비율 미만이면 피팅 실패 처리. 데이터 노이즈 많을 때 낮춤."
+                }
+            },
+
+            ["Geometry3DTool"] = new ToolHelp
+            {
+                Name = "Geometry 3D (3D 기하 연산)",
+                Description = "PlaneFitTool / CaliperTool+HeightMap 등에서 추출한 3D 기하 요소(점/평면/직선) 간 관계를 계산합니다.\n점-점 거리, 점-평면 수직거리, 평면-평면 각도 등을 산출.",
+                Usage = "3D 측정 파이프라인의 마지막 단계 — 형상 추출 도구 둘의 결과를 연결해 정량 측정값 산출.\n예: PlaneFitTool(A) + PlaneFitTool(B) → Geometry3DTool(PlaneToPlaneAngle) → 두 평면 각도 측정.",
+                CognexEquivalent = "Cognex 3D Result Analysis Tool",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["Operation"] = "기하 연산 종류:\n• PointToPointDistance: 두 점 사이 유클리드 거리(mm)\n• PointToPlaneDistance: 점에서 평면까지 수직 거리\n• PlaneToPlaneAngle: 두 평면 사이 각도(도)\n• LineToLineAngle: 두 직선 사이 각도\n• PointToLineDistance: 점에서 직선까지 수직 거리",
+                    ["ExpectedValue"] = "목표 측정값. 결과가 ExpectedValue ± Tolerance 범위 내면 OK.",
+                    ["Tolerance"] = "허용 공차. 단위는 Operation 에 따라 mm 또는 도.",
+                    ["EnableJudgment"] = "Pass/Fail 판정 활성화. 비활성 시 측정값만 반환."
+                }
+            },
+
+            ["ImageRectifyTool"] = new ToolHelp
+            {
+                Name = "Image Rectify (이미지 보정)",
+                Description = "캘리브레이션 결과를 사용해 렌즈 왜곡 제거 / 이미지 정렬을 수행합니다.\n캘리브레이션이 로드되지 않으면 입력 이미지를 그대로 통과 (pass-through, 실패가 아님).",
+                Usage = "광각 렌즈로 촬영한 영상의 핀쿠션/배럴 왜곡 제거, Hand-Eye 캘리브레이션 기반 픽셀→월드 좌표 정렬 전처리에 사용. 측정 파이프라인 최상단에 배치 권장.",
+                CognexEquivalent = "CogIPOneImageTool (Calibration Apply), Cognex Calibration Wizard",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["Undistort"] = "렌즈 왜곡 제거 활성화. 캘리브레이션 시 측정된 distortion coefficient (k1, k2, p1, p2, k3) 사용.",
+                    ["UseCalibrationFile"] = "외부 캘리브레이션 파일 사용 여부. 비활성 시 시스템 전역 캘리브레이션(AppSetup) 사용.",
+                    ["CalibrationFilePath"] = "캘리브레이션 결과 파일 경로(.json). HandEye / 카메라 내부파라미터 포함.",
+                    ["InterpolationMode"] = "보정 시 픽셀 보간:\n• Nearest: 가장 빠름, 픽셀화 발생\n• Linear: 기본 균형\n• Cubic: 가장 부드러움, 느림"
+                }
+            },
+
+            ["SegmentationTool"] = new ToolHelp
+            {
+                Name = "Segmentation (Semantic 세그멘테이션)",
+                Description = "딥러닝 모델(U-Net 등 픽셀 단위 분류)로 이미지를 클래스별 마스크로 분할합니다.\n인스턴스 분할(같은 클래스 인스턴스를 분리)이 필요하면 YoloSegTool 사용.",
+                Usage = "결함 영역 픽셀 단위 분할, 배경/전경 분리, 클래스별 영역 면적 측정에 사용. 후속 BlobTool 로 결함 개수/크기 분석 또는 ResultTool 로 OK/NG 판정.",
+                CognexEquivalent = "ViDi Red Analyze, Cognex Deep Learning Segmentation",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["ModelPath"] = "ONNX 모델 파일 경로(.onnx). U-Net 등 출력이 [B, C, H, W] 형식의 픽셀별 클래스 확률.",
+                    ["InputSize"] = "추론 입력 크기(px). 학습 시 사용한 크기와 일치 권장. 256/512/1024 등.",
+                    ["ConfidenceThreshold"] = "픽셀별 클래스 확률 임계값. 이하 픽셀은 배경 처리. 기본 0.5.",
+                    ["TargetClassIndex"] = "관심 클래스 인덱스. 다중 클래스 모델에서 특정 클래스만 마스크로 출력.",
+                    ["DrawOverlay"] = "예측 마스크를 컬러 반투명 오버레이로 표시.",
+                    ["OverlayOpacity"] = "오버레이 투명도 (0~1)."
+                }
+            },
+
+            ["EnsembleTool"] = new ToolHelp
+            {
+                Name = "Ensemble (DL 앙상블 판정)",
+                Description = "여러 딥러닝 도구 결과를 결합해 과검(오탐) / 미검(누락)을 동시에 개선합니다.\nDetection + Anomaly 등 서로 다른 알고리즘의 판정을 AND/OR/Weighted/Consensus 로 합산.",
+                Usage = "단일 모델로 만족스러운 정확도가 안 나올 때 사용. 예: Detection 으로 정상 영역 검출 + Anomaly 로 미지 결함 캐치 → AND 로 둘 다 OK 일 때만 통과 (과검 최소화).\nResultTool 의 SourceResults 처럼 여러 DL 도구를 연결 입력으로 받음.",
+                CognexEquivalent = "Cognex Deep Learning Solution Builder (Multi-model)",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["Mode"] = "앙상블 판정 모드:\n• And: 모든 소스가 정상이어야 OK — 과검 최소화 (보수적 PASS)\n• Or: 하나라도 정상이면 OK — 미검 최소화 (보수적 NG)\n• Weighted: 가중치 합산 점수로 판정\n• Consensus: 모델 간 일치 시 고신뢰, 불일치는 검토 플래그",
+                    ["DetectionWeight"] = "Weighted 모드 — Detection 실패 점수에 곱할 가중치 (0~1).",
+                    ["AnomalyWeight"] = "Weighted 모드 — Anomaly 점수에 곱할 가중치 (0~1).",
+                    ["WeightedThreshold"] = "Weighted 모드 — 가중 합산 점수가 이 값 초과 시 NG 판정. 기본 0.5.",
+                    ["DrawOverlay"] = "각 소스 모델의 판정 결과를 색상별 영역으로 시각화."
+                }
+            },
+
             // ─── Sequence Editor Nodes — 노드 팔레트 호버 도움말 ───
             // key 규칙: "SequenceNode_{SequenceNodeType}" — NodePaletteItem.HelpKey 와 일치.
             // HelpIcon 의 ToolType binding 으로 lookup.

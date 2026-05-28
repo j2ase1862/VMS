@@ -1,0 +1,74 @@
+name: Build & Test
+
+# WPF + 네이티브 비전(C++) 솔루션이므로 Windows runner 필수.
+# main / master 브랜치 push + 모든 PR 에 대해 빌드 + 테스트 실행.
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - 'feat/**'
+      - 'fix/**'
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  Configuration: Release
+
+jobs:
+  build:
+    name: Build & Test (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore VMS.sln
+
+      - name: Build
+        run: dotnet build VMS.sln --configuration ${{ env.Configuration }} --no-restore /p:TreatWarningsAsErrors=false
+
+      - name: Test
+        # 테스트 프로젝트가 일부만 있어도 통과하도록 --no-build 로 빌드 산출물 재사용.
+        # .trx 결과를 별도 디렉토리에 수집해 후속 단계가 업로드 가능.
+        run: >
+          dotnet test VMS.sln
+          --configuration ${{ env.Configuration }}
+          --no-build
+          --verbosity normal
+          --logger "trx;LogFileName=test-results.trx"
+          --results-directory ${{ github.workspace }}/TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: ${{ github.workspace }}/TestResults/**/*.trx
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Summarize build
+        if: always()
+        shell: bash
+        run: |
+          echo "### Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Configuration: ${{ env.Configuration }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Runner: windows-latest" >> $GITHUB_STEP_SUMMARY
+          echo "- .NET: $(dotnet --version)" >> $GITHUB_STEP_SUMMARY
