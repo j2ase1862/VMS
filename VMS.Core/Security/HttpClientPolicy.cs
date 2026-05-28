@@ -16,13 +16,20 @@ namespace VMS.Core.Security
     /// </summary>
     public static class HttpClientPolicy
     {
+        /// <summary>HttpClient.MaxResponseContentBufferSize 기본값 (10 MB) — JSON DDoS / 메모리 폭탄 방어.</summary>
+        public const long DefaultMaxResponseBytes = InputValidator.DefaultMaxResponseBytes;
+
         /// <summary>
         /// 표준 HttpClient 인스턴스 생성. TLS 1.2 / 1.3 만 활성, User-Agent 자동 설정,
-        /// Production 모드면 cert 엄격 검증 (self-signed 거부).
+        /// Production 모드면 cert 엄격 검증 (self-signed 거부), 응답 크기 상한 적용.
         /// </summary>
         /// <param name="timeout">요청 타임아웃.</param>
         /// <param name="options">선택적 정책. null 이면 SecurityOptions.Current 사용.</param>
-        public static HttpClient Build(TimeSpan timeout, SecurityOptions? options = null)
+        /// <param name="maxResponseBytes">응답 본문 최대 크기. 큰 모델 파일 다운로드 등 예외 케이스만 override.</param>
+        public static HttpClient Build(
+            TimeSpan timeout,
+            SecurityOptions? options = null,
+            long maxResponseBytes = DefaultMaxResponseBytes)
         {
             options ??= SecurityOptions.Current;
 
@@ -51,7 +58,10 @@ namespace VMS.Core.Security
 
             var client = new HttpClient(handler, disposeHandler: true)
             {
-                Timeout = timeout
+                Timeout = timeout,
+                // 응답 본문이 이 크기를 초과하면 HttpRequestException 발생 — 메모리 폭탄 차단.
+                // 모델 파일 다운로드 등은 maxResponseBytes 인자로 override.
+                MaxResponseContentBufferSize = maxResponseBytes
             };
             if (!string.IsNullOrWhiteSpace(options.UserAgent))
                 client.DefaultRequestHeaders.UserAgent.ParseAdd(options.UserAgent);

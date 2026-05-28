@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Tesseract;
+using VMS.Core.Security;
 using VMS.VisionSetup.Models;
 
 namespace VMS.VisionSetup.VisionTools.Identification
@@ -533,11 +534,15 @@ namespace VMS.VisionSetup.VisionTools.Identification
         /// </summary>
         private OcrResultData ExecutePaddleOCR(Mat workImage)
         {
+            // 사용자 입력 모델 경로 검증 — 확장자 화이트리스트(.onnx/.txt) + 잘못된 입력 차단.
+            // Path traversal 자체는 OS 파일 시스템 권한으로 1차 차단되지만, 확장자 검증으로 의도치 않은
+            // 바이너리 로드/실행 차단 (예: 임의 .exe 가 .onnx 자리로 들어가는 경우).
+            string? detPath = ValidateOptionalModelPath(CustomDetModelPath, ".onnx", nameof(CustomDetModelPath));
+            string? recPath = ValidateOptionalModelPath(CustomRecModelPath, ".onnx", nameof(CustomRecModelPath));
+            string? dictPath = ValidateOptionalModelPath(CustomDictPath, ".txt", nameof(CustomDictPath));
+
             _onnxEngine ??= HasCustomModel
-                ? new PaddleOcrOnnxEngine(
-                    string.IsNullOrEmpty(CustomDetModelPath) ? null : CustomDetModelPath,
-                    string.IsNullOrEmpty(CustomRecModelPath) ? null : CustomRecModelPath,
-                    string.IsNullOrEmpty(CustomDictPath) ? null : CustomDictPath)
+                ? new PaddleOcrOnnxEngine(detPath, recPath, dictPath)
                 : new PaddleOcrOnnxEngine();
             _onnxEngine.MaxSideLen = MaxSideLen;
             _onnxEngine.WhitelistChars = CharacterWhitelist; // 빈 문자열이면 전체 사전 허용
@@ -575,6 +580,20 @@ namespace VMS.VisionSetup.VisionTools.Identification
             float meanConfidence = words.Count > 0 ? totalScore / words.Count : 0f;
 
             return new OcrResultData(fullText, meanConfidence, words);
+        }
+
+        /// <summary>
+        /// 사용자 입력 모델 경로 검증. 빈 문자열은 null 반환 (기본 모델 사용).
+        /// 확장자 화이트리스트 위반 시 ArgumentException — 잘못된 파일 유형 로드 차단.
+        /// </summary>
+        private static string? ValidateOptionalModelPath(string path, string requiredExtension, string paramName)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return null;
+            // 길이 상한 — 비현실적 경로 (DoS 방어).
+            if (path.Length > 512)
+                throw new ArgumentException($"경로가 너무 깁니다 (최대 512자): '{paramName}'", paramName);
+            InputValidator.EnsureAllowedExtension(path, paramName, requiredExtension);
+            return path;
         }
 
         #region Preprocessing
@@ -854,7 +873,8 @@ namespace VMS.VisionSetup.VisionTools.Identification
 
         private string ResolveTessdataPath()
         {
-            if (!string.IsNullOrEmpty(TessdataPath) && Directory.Exists(TessdataPath))
+            // 사용자 입력 경로 — 길이 상한 + 디렉토리 존재 확인. 비정상적으로 긴 경로(DoS) 차단.
+            if (!string.IsNullOrEmpty(TessdataPath) && TessdataPath.Length <= 512 && Directory.Exists(TessdataPath))
                 return TessdataPath;
 
             // 실행 파일 기준 tessdata 폴더
