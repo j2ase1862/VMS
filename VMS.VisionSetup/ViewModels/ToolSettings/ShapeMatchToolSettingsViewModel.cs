@@ -41,13 +41,7 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         public int MaxInstances { get => TypedTool.MaxInstances; set => TypedTool.MaxInstances = value; }
         public double NmsDistanceFactor { get => TypedTool.NmsDistanceFactor; set => TypedTool.NmsDistanceFactor = value; }
 
-        /// <summary>전문가 모드 — Search Range / Speed Expander 노출. 세션 상태 (직렬화 X).</summary>
-        private bool _isExpertMode;
-        public bool IsExpertMode
-        {
-            get => _isExpertMode;
-            set => SetProperty(ref _isExpertMode, value);
-        }
+        // IsExpertMode 는 ToolSettingsViewModelBase 에서 도구 타입별 + 영구 저장으로 제공.
 
         public bool IsTrained => TypedTool.IsTrained;
         public int TemplateWidth => TypedTool.TemplateWidth;

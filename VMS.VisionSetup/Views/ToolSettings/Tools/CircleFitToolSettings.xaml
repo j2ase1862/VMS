@@ -4,6 +4,9 @@
              xmlns:controls="clr-namespace:VMS.VisionSetup.Controls"
              xmlns:conv="clr-namespace:VMS.VisionSetup.Converters"
              xmlns:meas="clr-namespace:VMS.VisionSetup.VisionTools.Measurement">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
     <StackPanel>
         <controls:TextBoxParameter Label="Center X"
             Value="{Binding CenterX, UpdateSourceTrigger=PropertyChanged}"
@@ -30,13 +33,16 @@
             Value="{Binding SearchWidth}" Minimum="1" Maximum="50"
             TickFrequency="1" ValueFormat="F0"
             ToolType="CircleFitTool" ParameterName="SearchWidth"/>
+        <!-- Expert: 호 범위 — 통합 시점 결정. 기본 0~360 도. -->
         <controls:SliderParameter Label="Start Angle"
             Value="{Binding StartAngle}" Minimum="0" Maximum="360"
             TickFrequency="5" ValueFormat="F0"
+            Visibility="{Binding IsExpertMode, Converter={StaticResource BoolToVis}}"
             ToolType="CircleFitTool" ParameterName="StartAngle"/>
         <controls:SliderParameter Label="End Angle"
             Value="{Binding EndAngle}" Minimum="0" Maximum="360"
             TickFrequency="5" ValueFormat="F0"
+            Visibility="{Binding IsExpertMode, Converter={StaticResource BoolToVis}}"
             ToolType="CircleFitTool" ParameterName="EndAngle"/>
         <controls:EnumComboBoxParameter Label="Search Direction"
             ItemsSource="{conv:EnumValues {x:Type meas:CircleSearchDirection}}"
@@ -53,9 +59,11 @@
         <controls:ParamCodeLink
             AvailableParamCodes="{Binding AvailableParamCodes}"
             SelectedItem="{Binding SelectedEdgeThresholdCode}"/>
+        <!-- Expert: Fit 알고리즘 선택 — 통합 시점 결정. -->
         <controls:EnumComboBoxParameter Label="Fit Method"
             ItemsSource="{conv:EnumValues {x:Type meas:CircleFitMethod}}"
             SelectedValue="{Binding FitMethod}"
+            Visibility="{Binding IsExpertMode, Converter={StaticResource BoolToVis}}"
             ToolType="CircleFitTool" ParameterName="FitMethod"/>
     </StackPanel>
 </UserControl>

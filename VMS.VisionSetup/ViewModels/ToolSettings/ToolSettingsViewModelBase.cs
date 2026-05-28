@@ -25,6 +25,9 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
             Tool = tool;
             tool.PropertyChanged += OnModelPropertyChanged;
 
+            // Expert 모드 — 같은 ToolType 다른 인스턴스에서 토글해도 즉시 반영되도록 이벤트 구독.
+            Services.ExpertModeService.Instance.ExpertModeChanged += OnExpertModeChanged;
+
             DrawROICommand = new RelayCommand(() =>
             {
                 if (Tool is CircleFitTool)
@@ -164,12 +167,28 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         public List<string> AvailableResultKeys => Tool.GetAvailableResultKeys();
         public Array PlcDataTypes => Enum.GetValues(typeof(PlcDataType));
 
+        /// <summary>
+        /// PLC + IO 보드 디바이스 목록 — Tool Output 매핑 DataGrid 의 Device 콤보 ItemsSource.
+        /// Phase A 에서 SequenceEditorContext.ExtraDevices 에 host(VMS) 또는 standalone(VMS.VisionSetup)
+        /// 가 채워둠 — 비어 있으면 기본 MainPLC entry 안전망 제공.
+        /// </summary>
+        public IReadOnlyList<Services.SequenceDeviceEntry> AvailableDevices
+        {
+            get
+            {
+                var src = Services.SequenceEditorContext.ExtraDevices;
+                if (src.Count > 0) return src;
+                return new[] { new Services.SequenceDeviceEntry("MainPLC", PLC.Models.IoDeviceType.Plc) };
+            }
+        }
+
         public IRelayCommand AddPlcMappingCommand => new RelayCommand(() =>
         {
             var keys = AvailableResultKeys;
             PlcMappings.Add(new PlcResultMapping
             {
-                ResultKey = keys.Count > 0 ? keys[0] : "Success"
+                ResultKey = keys.Count > 0 ? keys[0] : "Success",
+                DeviceId = AvailableDevices.Count > 0 ? AvailableDevices[0].DeviceId : "MainPLC"
             });
         });
 
@@ -340,6 +359,33 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         public virtual void Dispose()
         {
             Tool.PropertyChanged -= OnModelPropertyChanged;
+            Services.ExpertModeService.Instance.ExpertModeChanged -= OnExpertModeChanged;
+        }
+
+        // ────────────────────────────────────────────────────────────
+        // Expert Mode (도구 타입별 토글) — Tool Settings 헤더의 체크박스가 여기에 바인딩.
+        // ────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// 현재 도구 타입(Tool.ToolType)의 Expert 모드 ON/OFF.
+        /// XAML 의 Expert 전용 파라미터들이 Visibility 바인딩으로 이 값을 참조.
+        /// 토글 시 ExpertModeService 에 저장되어 같은 ToolType 의 모든 인스턴스에 즉시 적용.
+        /// </summary>
+        public bool IsExpertMode
+        {
+            get => Services.ExpertModeService.Instance.IsExpert(Tool.ToolType);
+            set
+            {
+                Services.ExpertModeService.Instance.SetExpert(Tool.ToolType, value);
+                // OnExpertModeChanged 가 OnPropertyChanged 를 호출하므로 여기서 직접 호출 불필요.
+            }
+        }
+
+        private void OnExpertModeChanged(object? sender, string changedToolType)
+        {
+            // 자신과 같은 ToolType 의 변경만 반응 — 다른 도구의 토글이 내 UI 를 흔들지 않게.
+            if (string.Equals(changedToolType, Tool.ToolType, System.StringComparison.Ordinal))
+                OnPropertyChanged(nameof(IsExpertMode));
         }
     }
 }

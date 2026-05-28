@@ -10,6 +10,7 @@
 
     <UserControl.Resources>
         <local:NodeTypeVisibilityConverter x:Key="NodeTypeVisibilityConverter"/>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <Style TargetType="TextBlock" x:Key="LabelStyle">
             <Setter Property="Foreground" Value="#CCCCCC"/>
             <Setter Property="FontSize" Value="12"/>
@@ -180,14 +181,26 @@
             <!-- InputCheck 설정 -->
             <StackPanel Visibility="{Binding SelectedNode.NodeType, Converter={StaticResource NodeTypeVisibilityConverter}, ConverterParameter=InputCheck}">
                 <TextBlock Text="── Input Check ──" Foreground="#2196F3" FontWeight="SemiBold" Margin="0,10,0,4"/>
-                <!-- Phase 2 — 디바이스 선택. "MainPLC" = 기본 PLC, 그 외 = IO 보드 (ADLink/Advantech).
-                     ComboBox IsEditable=True → 등록 안 된 ID 자유 입력 가능 (Phase 2b 에서 AppSetup 가 자동 채움). -->
+                <!-- 디바이스 선택 — IsEditable=False + SelectedValuePath=DeviceId 패턴.
+                     커스텀 ComboStyle 템플릿에 PART_EditableTextBox 가 없어 editable 모드 시각 갱신
+                     안 됨 — SelectedValue 바인딩으로 시각 피드백 정상화. -->
                 <TextBlock Text="디바이스" Style="{StaticResource LabelStyle}"/>
-                <ComboBox ItemsSource="{Binding DataContext.AvailableDeviceIds, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                          Text="{Binding SelectedNode.Config.DeviceId, UpdateSourceTrigger=PropertyChanged, TargetNullValue=MainPLC}"
-                          IsEditable="True"
-                          Style="{StaticResource ComboStyle}"/>
-                <TextBlock Text="주소 (PLC: 어드레스 / IO 보드: 채널 번호)" Style="{StaticResource LabelStyle}"/>
+                <ComboBox ItemsSource="{Binding DataContext.AvailableDevices, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                          SelectedValuePath="DeviceId"
+                          SelectedValue="{Binding SelectedNode.DeviceId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, TargetNullValue=MainPLC, FallbackValue=MainPLC}"
+                          Style="{StaticResource ComboStyle}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding DeviceId}" Foreground="#E0E0E0"/>
+                                <TextBlock Text="{Binding TypeBadge}" Foreground="#888888"
+                                           FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <TextBlock Text="{Binding DataContext.AddressInputHint, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                           Style="{StaticResource LabelStyle}"/>
                 <TextBox Text="{Binding SelectedNode.Config.PlcAddress, UpdateSourceTrigger=PropertyChanged}"
                          Style="{StaticResource InputStyle}"/>
                 <TextBlock Text="체크 모드" Style="{StaticResource LabelStyle}"/>
@@ -230,28 +243,45 @@
             <!-- OutputAction 설정 -->
             <StackPanel Visibility="{Binding SelectedNode.NodeType, Converter={StaticResource NodeTypeVisibilityConverter}, ConverterParameter=OutputAction}">
                 <TextBlock Text="── Output Action ──" Foreground="#FF9800" FontWeight="SemiBold" Margin="0,10,0,4"/>
-                <!-- Phase 2 — 디바이스 선택. IO 보드 선택 시 데이터 타입은 Bit 만 지원
-                     (Int16/Int32/Float 은 SequenceEngine 에서 경고 후 skip — Phase 3 SDK 통합 시 확장). -->
+                <!-- 디바이스 선택 — IO 보드 (ADLink/Advantech) 선택 시 Bit 만 노출
+                     (Word/Float 은 보드가 지원 안함 — Bit 강제). SelectedValuePath 패턴 적용. -->
                 <TextBlock Text="디바이스" Style="{StaticResource LabelStyle}"/>
-                <ComboBox ItemsSource="{Binding DataContext.AvailableDeviceIds, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                          Text="{Binding SelectedNode.Config.DeviceId, UpdateSourceTrigger=PropertyChanged, TargetNullValue=MainPLC}"
-                          IsEditable="True"
-                          Style="{StaticResource ComboStyle}"/>
-                <TextBlock Text="주소 (PLC: 어드레스 / IO 보드: 채널 번호)" Style="{StaticResource LabelStyle}"/>
+                <ComboBox ItemsSource="{Binding DataContext.AvailableDevices, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                          SelectedValuePath="DeviceId"
+                          SelectedValue="{Binding SelectedNode.DeviceId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, TargetNullValue=MainPLC, FallbackValue=MainPLC}"
+                          Style="{StaticResource ComboStyle}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding DeviceId}" Foreground="#E0E0E0"/>
+                                <TextBlock Text="{Binding TypeBadge}" Foreground="#888888"
+                                           FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <TextBlock Text="{Binding DataContext.AddressInputHint, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                           Style="{StaticResource LabelStyle}"/>
                 <TextBox Text="{Binding SelectedNode.Config.PlcAddress, UpdateSourceTrigger=PropertyChanged}"
                          Style="{StaticResource InputStyle}"/>
-                <TextBlock Text="데이터 타입" Style="{StaticResource LabelStyle}"/>
-                <ComboBox ItemsSource="{Binding Source={x:Static local:SequenceNodePropertiesView.PlcDataTypes}}"
-                          SelectedItem="{Binding SelectedNode.Config.OutputDataType}"
-                          Style="{StaticResource ComboStyle}"/>
+                <!-- 데이터 타입 — PLC 일 때만 보임. IO 보드는 Bit 만 가능. -->
+                <StackPanel Visibility="{Binding DataContext.IsSelectedDevicePlc, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="데이터 타입" Style="{StaticResource LabelStyle}"/>
+                    <ComboBox ItemsSource="{Binding Source={x:Static local:SequenceNodePropertiesView.PlcDataTypes}}"
+                              SelectedItem="{Binding SelectedNode.Config.OutputDataType}"
+                              Style="{StaticResource ComboStyle}"/>
+                </StackPanel>
                 <TextBlock Text="Bit 값" Style="{StaticResource LabelStyle}"/>
                 <CheckBox IsChecked="{Binding SelectedNode.Config.BitValue}" Content="ON" Style="{StaticResource CheckStyle}"/>
-                <TextBlock Text="Word/Int 값" Style="{StaticResource LabelStyle}"/>
-                <TextBox Text="{Binding SelectedNode.Config.WordValue, UpdateSourceTrigger=PropertyChanged}"
-                         Style="{StaticResource InputStyle}"/>
-                <TextBlock Text="Float 값" Style="{StaticResource LabelStyle}"/>
-                <TextBox Text="{Binding SelectedNode.Config.FloatValue, UpdateSourceTrigger=PropertyChanged}"
-                         Style="{StaticResource InputStyle}"/>
+                <!-- Word/Int / Float — PLC 일 때만 노출 (IO 보드는 Bit-only). -->
+                <StackPanel Visibility="{Binding DataContext.IsSelectedDevicePlc, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="Word/Int 값" Style="{StaticResource LabelStyle}"/>
+                    <TextBox Text="{Binding SelectedNode.Config.WordValue, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource InputStyle}"/>
+                    <TextBlock Text="Float 값" Style="{StaticResource LabelStyle}"/>
+                    <TextBox Text="{Binding SelectedNode.Config.FloatValue, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource InputStyle}"/>
+                </StackPanel>
                 <!-- 테스트 출력 버튼 -->
                 <Button Content="▶ 테스트 출력" Command="{Binding TestWriteOutputCommand}"
                         Margin="0,10,0,0" Padding="10,6" Cursor="Hand"
@@ -291,7 +321,25 @@
             <!-- RecipeChange 설정 -->
             <StackPanel Visibility="{Binding SelectedNode.NodeType, Converter={StaticResource NodeTypeVisibilityConverter}, ConverterParameter=RecipeChange}">
                 <TextBlock Text="── Recipe Change ──" Foreground="#E91E63" FontWeight="SemiBold" Margin="0,10,0,4"/>
-                <TextBlock Text="Recipe 신호 주소" Style="{StaticResource LabelStyle}"/>
+                <!-- 디바이스 선택 — Signal/Index 둘 다 이 디바이스에서 읽음.
+                     IO 보드 선택 시 Signal=채널 비트, Index=포트 번호로 해석. -->
+                <TextBlock Text="디바이스" Style="{StaticResource LabelStyle}"/>
+                <ComboBox ItemsSource="{Binding DataContext.AvailableDevices, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                          SelectedValuePath="DeviceId"
+                          SelectedValue="{Binding SelectedNode.DeviceId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, TargetNullValue=MainPLC, FallbackValue=MainPLC}"
+                          Style="{StaticResource ComboStyle}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding DeviceId}" Foreground="#E0E0E0"/>
+                                <TextBlock Text="{Binding TypeBadge}" Foreground="#888888"
+                                           FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <TextBlock Text="{Binding DataContext.SignalAddressHint, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                           Style="{StaticResource LabelStyle}"/>
                 <TextBox Text="{Binding SelectedNode.Config.RecipeSignalAddress, UpdateSourceTrigger=PropertyChanged}"
                          Style="{StaticResource InputStyle}"/>
                 <TextBlock Text="신호 체크 모드" Style="{StaticResource LabelStyle}"/>
@@ -301,7 +349,8 @@
                 <TextBlock Text="비교값 (Word 모드용)" Style="{StaticResource LabelStyle}"/>
                 <TextBox Text="{Binding SelectedNode.Config.RecipeSignalCompareValue, UpdateSourceTrigger=PropertyChanged}"
                          Style="{StaticResource InputStyle}"/>
-                <TextBlock Text="Recipe Index 주소 (Word)" Style="{StaticResource LabelStyle}" Margin="0,6,0,0"/>
+                <TextBlock Text="{Binding DataContext.IndexAddressHint, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                           Style="{StaticResource LabelStyle}" Margin="0,6,0,0"/>
                 <TextBox Text="{Binding SelectedNode.Config.RecipeIndexAddress, UpdateSourceTrigger=PropertyChanged}"
                          Style="{StaticResource InputStyle}"/>
                 <TextBlock Text="신호 조건 충족 → Index 읽기 → 현재 레시피와&#x0a;비교하여 다르면 변경, 같으면 스킵.&#x0a;신호 주소 미설정 시 매번 Index를 읽습니다."
@@ -311,7 +360,24 @@
             <!-- StepChange 설정 -->
             <StackPanel Visibility="{Binding SelectedNode.NodeType, Converter={StaticResource NodeTypeVisibilityConverter}, ConverterParameter=StepChange}">
                 <TextBlock Text="── Step Change ──" Foreground="#00897B" FontWeight="SemiBold" Margin="0,10,0,4"/>
-                <TextBlock Text="Step 신호 주소" Style="{StaticResource LabelStyle}"/>
+                <!-- 디바이스 선택 — Signal/Index 둘 다 이 디바이스에서 읽음. -->
+                <TextBlock Text="디바이스" Style="{StaticResource LabelStyle}"/>
+                <ComboBox ItemsSource="{Binding DataContext.AvailableDevices, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                          SelectedValuePath="DeviceId"
+                          SelectedValue="{Binding SelectedNode.DeviceId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, TargetNullValue=MainPLC, FallbackValue=MainPLC}"
+                          Style="{StaticResource ComboStyle}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding DeviceId}" Foreground="#E0E0E0"/>
+                                <TextBlock Text="{Binding TypeBadge}" Foreground="#888888"
+                                           FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <TextBlock Text="{Binding DataContext.SignalAddressHint, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                           Style="{StaticResource LabelStyle}"/>
                 <TextBox Text="{Binding SelectedNode.Config.StepSignalAddress, UpdateSourceTrigger=PropertyChanged}"
                          Style="{StaticResource InputStyle}"/>
                 <TextBlock Text="신호 체크 모드" Style="{StaticResource LabelStyle}"/>
@@ -321,7 +387,8 @@
                 <TextBlock Text="비교값 (Word 모드용)" Style="{StaticResource LabelStyle}"/>
                 <TextBox Text="{Binding SelectedNode.Config.StepSignalCompareValue, UpdateSourceTrigger=PropertyChanged}"
                          Style="{StaticResource InputStyle}"/>
-                <TextBlock Text="Step Index 주소 (Word)" Style="{StaticResource LabelStyle}" Margin="0,6,0,0"/>
+                <TextBlock Text="{Binding DataContext.IndexAddressHint, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                           Style="{StaticResource LabelStyle}" Margin="0,6,0,0"/>
                 <TextBox Text="{Binding SelectedNode.Config.StepIndexAddress, UpdateSourceTrigger=PropertyChanged}"
                          Style="{StaticResource InputStyle}"/>
                 <TextBlock Text="신호 조건 충족 → Step Index 읽기 → 해당 스텝의&#x0a;검사 툴로 Inspection 수행.&#x0a;신호 미설정 시 항상 스텝 1(index 0) 사용."

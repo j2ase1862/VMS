@@ -6,10 +6,8 @@
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </UserControl.Resources>
     <StackPanel>
-        <CheckBox Content="Expert Mode (L/a/b 수동 조정)"
-                  IsChecked="{Binding IsExpertMode}"
-                  Foreground="#CCCCCC" FontSize="11"
-                  Margin="0,2,0,6"/>
+        <!-- Expert Mode 토글은 ToolSettingsView 헤더로 통합됨 — 본문 자체 토글 제거.
+             IsExpertMode 가 ON 일 때 하단 L/a/b 수동 조정 Expander 노출. -->
 
         <!-- Models -->
         <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">

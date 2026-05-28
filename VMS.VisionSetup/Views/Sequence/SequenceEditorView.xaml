@@ -17,6 +17,7 @@
         <local:ConnectButtonTextConverter x:Key="ConnectButtonTextConverter"/>
         <local:PlcStatusColorConverter x:Key="PlcStatusColorConverter"/>
         <local:ConditionStatusColorConverter x:Key="ConditionStatusColorConverter"/>
+        <local:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
         <local:NullableBoolToVisibilityConverter x:Key="NullableBoolToVisibilityConverter"/>
         <local:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility"/>
 
@@ -607,9 +608,9 @@
                 </Border>
                 </Grid>
 
-                <!-- PLC I/O 모니터 패널 (하단 접이식) -->
+                <!-- PLC I/O 모니터 패널 (하단 접이식) — Phase A: PLC + IO 보드 섹션 분리 -->
                 <Border Grid.Row="1" Background="#1E1E2D" BorderBrush="#3F3F46" BorderThickness="0,1,0,0"
-                        MaxHeight="250"
+                        MaxHeight="320"
                         Visibility="{Binding IsMonitorPanelVisible, Converter={StaticResource BoolToVisibility}}">
                     <DockPanel>
                         <!-- 모니터 패널 헤더 -->
@@ -676,8 +677,16 @@
                             </DockPanel>
                         </Border>
 
-                        <!-- 모니터 데이터 그리드 -->
-                        <DataGrid ItemsSource="{Binding MonitorItems}"
+                        <!-- 모니터 본문 — 상단 PLC, 하단 IO 보드 두 섹션으로 분리 -->
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                        <!-- PLC 모니터 데이터 그리드 -->
+                        <DataGrid Grid.Row="0" ItemsSource="{Binding MonitorItems}"
                                   AutoGenerateColumns="False" IsReadOnly="True"
                                   Background="#1E1E2D" Foreground="#CCCCCC"
                                   BorderThickness="0" GridLinesVisibility="Horizontal"
@@ -752,6 +761,85 @@
                                 <DataGridTextColumn Header="갱신" Binding="{Binding LastUpdated}" Width="70"/>
                             </DataGrid.Columns>
                         </DataGrid>
+
+                        <!-- IO 보드 섹션 헤더 — BoardMonitorItems 가 있을 때만 표시 -->
+                        <Border Grid.Row="1" Background="#2D2D40" Padding="8,3"
+                                BorderBrush="#3F3F46" BorderThickness="0,1,0,1"
+                                Visibility="{Binding BoardMonitorItems.Count, Converter={StaticResource CountToVisibilityConverter}}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="IO Board Monitor" Foreground="#FF9800"
+                                           FontWeight="SemiBold" FontSize="12" Margin="0,0,10,0"/>
+                                <TextBlock Text="(채널 구성 — 라이브 폴링은 Phase B)"
+                                           Foreground="#888888" FontSize="11" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- IO 보드 모니터 데이터 그리드 -->
+                        <DataGrid Grid.Row="2" ItemsSource="{Binding BoardMonitorItems}"
+                                  AutoGenerateColumns="False" IsReadOnly="True"
+                                  Background="#1E1E2D" Foreground="#CCCCCC"
+                                  BorderThickness="0" GridLinesVisibility="Horizontal"
+                                  HorizontalGridLinesBrush="#333344"
+                                  RowBackground="#1E1E2D" AlternatingRowBackground="#222233"
+                                  HeadersVisibility="Column" CanUserResizeRows="False"
+                                  FontFamily="Consolas" FontSize="12"
+                                  MaxHeight="120"
+                                  Visibility="{Binding BoardMonitorItems.Count, Converter={StaticResource CountToVisibilityConverter}}"
+                                  SelectionMode="Single" SelectionUnit="FullRow"
+                                  VerticalScrollBarVisibility="Auto">
+                            <DataGrid.ColumnHeaderStyle>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="Background" Value="#2D2D40"/>
+                                    <Setter Property="Foreground" Value="#AAAAAA"/>
+                                    <Setter Property="Padding" Value="6,4"/>
+                                    <Setter Property="FontSize" Value="11"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="BorderBrush" Value="#3F3F46"/>
+                                    <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                                </Style>
+                            </DataGrid.ColumnHeaderStyle>
+                            <DataGrid.CellStyle>
+                                <Style TargetType="DataGridCell">
+                                    <Setter Property="BorderThickness" Value="0"/>
+                                    <Setter Property="Padding" Value="6,3"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="DataGridCell">
+                                                <Border Background="{TemplateBinding Background}"
+                                                        Padding="{TemplateBinding Padding}">
+                                                    <ContentPresenter VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </DataGrid.CellStyle>
+                            <DataGrid.Columns>
+                                <DataGridTemplateColumn Header="" Width="30">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Ellipse Width="10" Height="10"
+                                                     Fill="{Binding ConditionColor}"
+                                                     HorizontalAlignment="Center"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="디바이스" Binding="{Binding DeviceId}" Width="90"/>
+                                <DataGridTextColumn Header="벤더" Binding="{Binding VendorLabel}" Width="75"/>
+                                <DataGridTextColumn Header="I/O" Binding="{Binding Direction}" Width="55"/>
+                                <DataGridTextColumn Header="채널" Binding="{Binding Channel}" Width="50"/>
+                                <DataGridTemplateColumn Header="현재값" Width="65">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding CurrentValue}" FontWeight="Bold"
+                                                       Foreground="{Binding ConditionColor}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="참조 노드" Binding="{Binding ReferencedNodes}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        </Grid>
                     </DockPanel>
                 </Border>
             </Grid>

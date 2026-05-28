@@ -103,17 +103,8 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
             private set => SetProperty(ref _trainStatus, value);
         }
 
-        /// <summary>
-        /// 전문가 모드 — H/S/V 슬라이더 수동 미세조정 노출. 기본은 숨김.
-        /// 대부분의 사용자는 Train Selected Model로 자동 학습만 사용하면 충분.
-        /// 세션 상태 (직렬화 X).
-        /// </summary>
-        private bool _isExpertMode;
-        public bool IsExpertMode
-        {
-            get => _isExpertMode;
-            set => SetProperty(ref _isExpertMode, value);
-        }
+        // IsExpertMode 는 ToolSettingsViewModelBase 에서 도구 타입별 + 영구 저장으로 제공.
+        // 기존 동작(인스턴스 단위 세션 상태)에서 도구 타입별/영구 저장으로 격상.
 
         protected override void OnToolPropertyChanged(string? propertyName)
         {

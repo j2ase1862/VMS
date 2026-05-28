@@ -395,4 +395,17 @@ namespace VMS.VisionSetup.Views.Sequence
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
             => throw new NotSupportedException();
     }
+
+    /// <summary>
+    /// int(Count) → Visibility — 0 이면 Collapsed, 그 외 Visible.
+    /// IO 보드 모니터 섹션이 BoardMonitorItems 가 비었을 때 숨김 처리.
+    /// </summary>
+    public class CountToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+            => (value is int count && count > 0) ? Visibility.Visible : Visibility.Collapsed;
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => throw new NotSupportedException();
+    }
 }

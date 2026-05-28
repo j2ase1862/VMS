@@ -124,9 +124,19 @@ namespace VMS
                 }
             }
 
-            // SequenceEditor 콤보 자동 채움 (Phase 2b) — DeviceId 들을 VMS.VisionSetup 정적 holder 에 주입.
-            VMS.VisionSetup.Services.SequenceEditorContext.ExtraDeviceIds =
-                ioBoardConnections.Select(b => b.DeviceId).ToList();
+            // SequenceEditor 콤보 자동 채움 — PLC + IO 보드 entry 들을 VMS.VisionSetup holder 에 주입.
+            // **항상 MainPLC 가 첫 항목** — PlcVendor=None 이어도 콤보에서 PLC 옵션 노출.
+            var sequenceDevices = new List<VMS.VisionSetup.Services.SequenceDeviceEntry>
+            {
+                new VMS.VisionSetup.Services.SequenceDeviceEntry(
+                    "MainPLC", VMS.PLC.Models.IoDeviceType.Plc)
+            };
+            foreach (var board in ioBoardConnections)
+            {
+                sequenceDevices.Add(new VMS.VisionSetup.Services.SequenceDeviceEntry(
+                    board.DeviceId, board.DeviceType));
+            }
+            VMS.VisionSetup.Services.SequenceEditorContext.ExtraDevices = sequenceDevices;
 
             var signalConfig = configService.LoadPlcSignalConfiguration();
 

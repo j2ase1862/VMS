@@ -22,8 +22,9 @@
             </StackPanel>
         </Expander>
 
-        <!-- Detection Settings -->
-        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+        <!-- Expert: Detection — 언어/PSM/엔진모드/Whitelist 등 검출 알고리즘 튜닝. -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}"
+                  Visibility="{Binding IsExpertMode, Converter={StaticResource BoolToVisConverter}}">
             <Expander.Header>
                 <TextBlock Text="Detection" Style="{StaticResource ExpanderHeaderStyle}"/>
             </Expander.Header>
@@ -93,9 +94,22 @@
             </StackPanel>
         </Expander>
 
-        <!-- Preprocessing Settings (Tesseract only) -->
-        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}"
-                  Visibility="{Binding IsTesseract, Converter={StaticResource BoolToVisConverter}}">
+        <!-- Expert + Tesseract only: Preprocessing — MultiDataTrigger 로 두 조건 AND. -->
+        <Expander IsExpanded="True">
+            <Expander.Style>
+                <Style TargetType="Expander" BasedOn="{StaticResource SettingExpanderStyle}">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsExpertMode}" Value="True"/>
+                                <Condition Binding="{Binding IsTesseract}" Value="True"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </MultiDataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Expander.Style>
             <Expander.Header>
                 <TextBlock Text="Preprocessing" Style="{StaticResource ExpanderHeaderStyle}"/>
             </Expander.Header>
@@ -124,8 +138,9 @@
             </StackPanel>
         </Expander>
 
-        <!-- Output Format -->
-        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+        <!-- Expert: Output Format — 결과 패턴/포맷 정의. 통합 시점 설정. -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}"
+                  Visibility="{Binding IsExpertMode, Converter={StaticResource BoolToVisConverter}}">
             <Expander.Header>
                 <TextBlock Text="Output Format" Style="{StaticResource ExpanderHeaderStyle}"/>
             </Expander.Header>
@@ -170,8 +185,9 @@
             </StackPanel>
         </Expander>
 
-        <!-- Verification Settings -->
-        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+        <!-- Expert: Verification — Expected/Regex 정규식 비교 정의. 통합 시점 설정. -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}"
+                  Visibility="{Binding IsExpertMode, Converter={StaticResource BoolToVisConverter}}">
             <Expander.Header>
                 <TextBlock Text="Verification" Style="{StaticResource ExpanderHeaderStyle}"/>
             </Expander.Header>
@@ -202,9 +218,22 @@
             </StackPanel>
         </Expander>
 
-        <!-- Advanced (Tesseract only) -->
-        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}"
-                  Visibility="{Binding IsTesseract, Converter={StaticResource BoolToVisConverter}}">
+        <!-- Expert + Tesseract only: Advanced (Tessdata Path 등). -->
+        <Expander IsExpanded="False">
+            <Expander.Style>
+                <Style TargetType="Expander" BasedOn="{StaticResource SettingExpanderStyle}">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsExpertMode}" Value="True"/>
+                                <Condition Binding="{Binding IsTesseract}" Value="True"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </MultiDataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Expander.Style>
             <Expander.Header>
                 <TextBlock Text="Advanced" Style="{StaticResource ExpanderHeaderStyle}"/>
             </Expander.Header>

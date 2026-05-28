@@ -169,6 +169,7 @@ namespace VMS.Services
                             PlcMappings = tool.PlcMappings.Select(m => new VMS.Models.PlcResultMapping
                             {
                                 ResultKey = m.ResultKey,
+                                DeviceId = string.IsNullOrWhiteSpace(m.DeviceId) ? "MainPLC" : m.DeviceId,
                                 PlcAddress = m.PlcAddress,
                                 DataType = m.DataType
                             }).ToList()
@@ -251,6 +252,7 @@ namespace VMS.Services
                             PlcMappings = tool.PlcMappings.Select(m => new VMS.Models.PlcResultMapping
                             {
                                 ResultKey = m.ResultKey,
+                                DeviceId = string.IsNullOrWhiteSpace(m.DeviceId) ? "MainPLC" : m.DeviceId,
                                 PlcAddress = m.PlcAddress,
                                 DataType = m.DataType
                             }).ToList()

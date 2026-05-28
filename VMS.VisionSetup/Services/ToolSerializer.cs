@@ -54,6 +54,7 @@ namespace VMS.VisionSetup.Services
                 PlcMappings = tool.PlcMappings.Select(m => new PlcResultMapping
                 {
                     ResultKey = m.ResultKey,
+                    DeviceId = m.DeviceId,
                     PlcAddress = m.PlcAddress,
                     DataType = m.DataType
                 }).ToList()
@@ -640,6 +641,8 @@ namespace VMS.VisionSetup.Services
                     tool.PlcMappings.Add(new PlcResultMapping
                     {
                         ResultKey = m.ResultKey,
+                        // Phase B — DeviceId 누락(기존 레시피) 시 기본 "MainPLC" 로 폴백.
+                        DeviceId = string.IsNullOrWhiteSpace(m.DeviceId) ? "MainPLC" : m.DeviceId,
                         PlcAddress = m.PlcAddress,
                         DataType = m.DataType
                     });
@@ -651,6 +654,7 @@ namespace VMS.VisionSetup.Services
                 tool.PlcMappings.Add(new PlcResultMapping
                 {
                     ResultKey = config.ResultDataKey ?? "Success",
+                    DeviceId = "MainPLC",
                     PlcAddress = config.ResultPlcAddress,
                     DataType = config.ResultDataType
                 });

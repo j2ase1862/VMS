@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Windows;
 using VMS.VisionSetup.Interfaces;
+using VMS.VisionSetup.Services;
 using VMS.VisionSetup.ViewModels;
 
 namespace VMS.VisionSetup.Views.Sequence
@@ -11,10 +12,10 @@ namespace VMS.VisionSetup.Views.Sequence
             IRecipeService recipeService,
             ICameraService cameraService,
             IDialogService dialogService,
-            IEnumerable<string>? extraDeviceIds = null)
+            IEnumerable<SequenceDeviceEntry>? extraDevices = null)
         {
             InitializeComponent();
-            DataContext = new SequenceEditorViewModel(recipeService, cameraService, dialogService, extraDeviceIds);
+            DataContext = new SequenceEditorViewModel(recipeService, cameraService, dialogService, extraDevices);
             Closed += OnClosed;
         }
 

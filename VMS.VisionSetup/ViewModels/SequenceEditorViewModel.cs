@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -59,11 +60,48 @@ namespace VMS.VisionSetup.ViewModels
         public ObservableCollection<string> AvailableCameraIds { get; } = new();
 
         /// <summary>
-        /// Phase 2 — InputCheck/OutputAction 노드의 DeviceId 콤보 옵션.
-        /// 기본 "MainPLC" 만 — 외부 host (App.xaml.cs / AppSetup UI) 가 SystemConfiguration.IoBoards
-        /// 의 DeviceId 들을 추가 호출로 채움. ComboBox.IsEditable=true 라 등록 안 된 ID 도 자유 입력.
+        /// InputCheck/OutputAction 노드의 디바이스 콤보 옵션 (PLC + IO 보드 entry).
+        /// 외부 host (VMS App.xaml.cs / VisionSetup App.xaml.cs) 가 SequenceEditorContext.ExtraDevices
+        /// 에 PLC + IO 보드 entry 들을 채우면 ctor 가 그대로 옮겨담음.
+        /// 콤보는 IsEditable=true 라 등록 안 된 ID 도 자유 입력 가능 (하위호환).
         /// </summary>
-        public ObservableCollection<string> AvailableDeviceIds { get; } = new() { "MainPLC" };
+        public ObservableCollection<SequenceDeviceEntry> AvailableDevices { get; } = new();
+
+        /// <summary>현재 SelectedNode 의 DeviceId 가 가리키는 디바이스 종류 — UI 가 PLC/IO 보드 분기 표시.</summary>
+        [ObservableProperty]
+        private IoDeviceType _selectedDeviceType = IoDeviceType.Plc;
+
+        /// <summary>현재 선택된 디바이스가 IO 보드(ADLink/Advantech)인지 — Bit-only 토글 트리거.</summary>
+        public bool IsSelectedDeviceBoard => SelectedDeviceType == IoDeviceType.AdLinkPci743x
+                                          || SelectedDeviceType == IoDeviceType.AdvantechPci17xx;
+
+        /// <summary>현재 선택된 디바이스가 PLC 인지 — Word/Float 항목 가시성 분기.</summary>
+        public bool IsSelectedDevicePlc => SelectedDeviceType == IoDeviceType.Plc
+                                        || SelectedDeviceType == IoDeviceType.Unknown;
+
+        /// <summary>주소 입력 라벨/플레이스홀더 텍스트 — 디바이스 종류별 가이드.</summary>
+        public string AddressInputHint => IsSelectedDeviceBoard
+            ? "채널 번호 (0 ~ N-1, 예: 0, 5, 15)"
+            : "PLC 주소 (예: X0, M100, D200, %MX0.0)";
+
+        /// <summary>RecipeChange/StepChange 의 Signal 주소 라벨 — 디바이스 종류별 가이드.</summary>
+        public string SignalAddressHint => IsSelectedDeviceBoard
+            ? "Signal 채널 번호 (Bit, 예: 0, 5)"
+            : "Signal 주소 (PLC bit/word, 예: M100, D200)";
+
+        /// <summary>RecipeChange/StepChange 의 Index 주소 라벨 — 디바이스 종류별 가이드.</summary>
+        public string IndexAddressHint => IsSelectedDeviceBoard
+            ? "Index 포트 번호 (32-bit ReadPort, 예: 0, 1)"
+            : "Index 주소 (PLC Word, 예: D210)";
+
+        partial void OnSelectedDeviceTypeChanged(IoDeviceType value)
+        {
+            OnPropertyChanged(nameof(IsSelectedDeviceBoard));
+            OnPropertyChanged(nameof(IsSelectedDevicePlc));
+            OnPropertyChanged(nameof(AddressInputHint));
+            OnPropertyChanged(nameof(SignalAddressHint));
+            OnPropertyChanged(nameof(IndexAddressHint));
+        }
 
         /// <summary>노드 팔레트 아이템</summary>
         public ObservableCollection<NodePaletteItem> PaletteItems { get; } = new();
@@ -101,6 +139,12 @@ namespace VMS.VisionSetup.ViewModels
         /// <summary>PLC I/O 모니터 항목 목록</summary>
         public ObservableCollection<PlcMonitorItem> MonitorItems { get; } = new();
 
+        /// <summary>
+        /// IO 보드 채널 모니터 항목 목록 — PLC 모니터와 분리.
+        /// 라이브 폴링은 Phase B 에서 추가, 현재는 노드 구성을 표시만 (CurrentValue = "—").
+        /// </summary>
+        public ObservableCollection<IoBoardMonitorItem> BoardMonitorItems { get; } = new();
+
         [ObservableProperty]
         private bool _isPlcConnected;
 
@@ -130,27 +174,71 @@ namespace VMS.VisionSetup.ViewModels
             IRecipeService recipeService,
             ICameraService cameraService,
             IDialogService dialogService,
-            IEnumerable<string>? extraDeviceIds = null)
+            IEnumerable<SequenceDeviceEntry>? extraDevices = null)
         {
             _recipeService = recipeService;
             _cameraService = cameraService;
             _dialogService = dialogService;
 
-            // Phase 2b — 호출자(host) 가 SystemConfiguration.IoBoards 의 DeviceId 들을 전달.
-            // 중복 방지 + 빈 문자열 필터링.
-            if (extraDeviceIds != null)
+            // 호출자(host or standalone App.xaml.cs) 가 PLC + IO 보드 entry 를 전달.
+            // 중복 방지 + 빈 DeviceId 필터링.
+            if (extraDevices != null)
             {
-                foreach (var id in extraDeviceIds)
+                foreach (var d in extraDevices)
                 {
-                    if (string.IsNullOrWhiteSpace(id)) continue;
-                    if (AvailableDeviceIds.Contains(id)) continue;
-                    AvailableDeviceIds.Add(id);
+                    if (string.IsNullOrWhiteSpace(d.DeviceId)) continue;
+                    if (AvailableDevices.Any(x => x.DeviceId == d.DeviceId)) continue;
+                    AvailableDevices.Add(d);
                 }
             }
+            // 안전망 — 콤보가 비지 않도록 기본 MainPLC entry 채움.
+            if (AvailableDevices.Count == 0)
+                AvailableDevices.Add(new SequenceDeviceEntry("MainPLC", IoDeviceType.Plc));
 
             InitializePalette();
             LoadAvailableCameras();
             LoadSystemSequence();
+        }
+
+        /// <summary>SelectedNode 변경 시 SelectedDeviceType 을 재계산 + DeviceId 변경 추적 와이어.</summary>
+        partial void OnSelectedNodeChanged(SequenceNodeItem? oldValue, SequenceNodeItem? newValue)
+        {
+            if (oldValue != null)
+                oldValue.PropertyChanged -= OnSelectedNodePropertyChanged;
+            if (newValue != null)
+                newValue.PropertyChanged += OnSelectedNodePropertyChanged;
+
+            RecomputeSelectedDeviceType();
+        }
+
+        private void OnSelectedNodePropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(SequenceNodeItem.DeviceId))
+                RecomputeSelectedDeviceType();
+        }
+
+        private void RecomputeSelectedDeviceType()
+        {
+            SelectedDeviceType = ResolveDeviceType(SelectedNode?.DeviceId);
+        }
+
+        /// <summary>
+        /// 임의 DeviceId 문자열을 IoDeviceType 으로 변환. 빈/등록 안 된 ID 는 PLC 로 간주
+        /// (XAML 콤보가 IsEditable=true 라 자유 입력 가능 — 후방호환).
+        /// </summary>
+        private IoDeviceType ResolveDeviceType(string? deviceId)
+        {
+            if (string.IsNullOrWhiteSpace(deviceId)) return IoDeviceType.Plc;
+            var entry = AvailableDevices.FirstOrDefault(d =>
+                string.Equals(d.DeviceId, deviceId.Trim(), System.StringComparison.OrdinalIgnoreCase));
+            return entry?.DeviceType ?? IoDeviceType.Plc;
+        }
+
+        /// <summary>지정 노드가 IO 보드(ADLink/Advantech) 디바이스를 가리키는지.</summary>
+        private bool IsBoardNode(SequenceNodeItem node)
+        {
+            var type = ResolveDeviceType(node.DeviceId ?? node.Config?.DeviceId);
+            return type == IoDeviceType.AdLinkPci743x || type == IoDeviceType.AdvantechPci17xx;
         }
 
         private void InitializePalette()
@@ -828,11 +916,13 @@ namespace VMS.VisionSetup.ViewModels
             if (_plcConfig == null) return;
 
             // 주소 + DataType + CheckMode 조합으로 fingerprint 생성
+            // PLC 모니터는 PLC 노드만 대상 — IO 보드 노드는 별도 폴링 경로 (또는 향후 phase).
             var parts = new List<string>();
             foreach (var node in Nodes)
             {
                 var cfg = node.Config;
                 if (string.IsNullOrWhiteSpace(cfg.PlcAddress)) continue;
+                if (IsBoardNode(node)) continue;
 
                 if (cfg.NodeType == SequenceNodeType.InputCheck)
                     parts.Add($"{cfg.PlcAddress.Trim()}|I|{cfg.CheckMode}");
@@ -862,6 +952,8 @@ namespace VMS.VisionSetup.ViewModels
             {
                 var cfg = node.Config;
                 if (string.IsNullOrWhiteSpace(cfg.PlcAddress)) continue;
+                // PLC 노드만 모니터에 포함 — IO 보드 노드는 별도 모니터 (Phase B+).
+                if (IsBoardNode(node)) continue;
 
                 if (cfg.NodeType == SequenceNodeType.InputCheck)
                 {
@@ -907,6 +999,62 @@ namespace VMS.VisionSetup.ViewModels
                     ReferencedNodes = string.Join(", ", nodeNames)
                 };
                 MonitorItems.Add(item);
+            }
+
+            CollectBoardMonitorAddresses();
+        }
+
+        /// <summary>
+        /// IO 보드 노드(DeviceType=ADLink/Advantech) 들을 스캔해 BoardMonitorItems 채움.
+        /// PlcAddress 가 정수면 채널 번호로 해석, 파싱 실패 시 skip.
+        /// 같은 (DeviceId, Channel, Direction) 키는 1 행으로 그룹핑.
+        /// </summary>
+        private void CollectBoardMonitorAddresses()
+        {
+            BoardMonitorItems.Clear();
+
+            // 키 = (DeviceId, Channel, Direction) — 같은 채널을 여러 노드가 참조할 수 있음.
+            var map = new Dictionary<(string, int, PlcIoDirection), (string vendor, List<string> nodes)>();
+
+            foreach (var node in Nodes)
+            {
+                var cfg = node.Config;
+                if (string.IsNullOrWhiteSpace(cfg.PlcAddress)) continue;
+                if (!IsBoardNode(node)) continue;
+                if (cfg.NodeType != SequenceNodeType.InputCheck
+                    && cfg.NodeType != SequenceNodeType.OutputAction) continue;
+
+                if (!int.TryParse(cfg.PlcAddress.Trim(), out var channel) || channel < 0)
+                    continue;
+
+                var deviceId = node.DeviceId ?? cfg.DeviceId ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(deviceId)) continue;
+
+                var dir = cfg.NodeType == SequenceNodeType.InputCheck
+                    ? PlcIoDirection.Input : PlcIoDirection.Output;
+                var type = ResolveDeviceType(deviceId);
+                var vendor = type switch
+                {
+                    IoDeviceType.AdLinkPci743x => "ADLink",
+                    IoDeviceType.AdvantechPci17xx => "Advantech",
+                    _ => "Board"
+                };
+
+                var key = (deviceId, channel, dir);
+                if (!map.TryGetValue(key, out var entry))
+                {
+                    entry = (vendor, new List<string>());
+                    map[key] = entry;
+                }
+                entry.nodes.Add(node.Name);
+            }
+
+            foreach (var kvp in map.OrderBy(k => k.Key.Item1).ThenBy(k => k.Key.Item2))
+            {
+                var (devId, ch, dir) = kvp.Key;
+                var (vendor, nodes) = kvp.Value;
+                BoardMonitorItems.Add(new IoBoardMonitorItem(devId, vendor, ch, dir,
+                    string.Join(", ", nodes)));
             }
         }
 

@@ -85,8 +85,9 @@
             </StackPanel>
         </Expander>
 
-        <!-- Segmentation -->
-        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+        <!-- Expert: Segmentation — 문자 분할 파라미터. 통합 시점 결정. -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}"
+                  Visibility="{Binding IsExpertMode, Converter={StaticResource BoolToVis}}">
             <Expander.Header>
                 <TextBlock Text="Segmentation" Style="{StaticResource ExpanderHeaderStyle}"/>
             </Expander.Header>

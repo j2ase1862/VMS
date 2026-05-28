@@ -114,9 +114,9 @@ namespace VMS.VisionSetup.Services
             return loadedRecipe;
         }
 
-        public void ShowSequenceEditorDialog(System.Collections.Generic.IEnumerable<string>? extraDeviceIds = null)
+        public void ShowSequenceEditorDialog(System.Collections.Generic.IEnumerable<SequenceDeviceEntry>? extraDevices = null)
         {
-            var window = new SequenceEditorWindow(_recipeService, _cameraService, this, extraDeviceIds);
+            var window = new SequenceEditorWindow(_recipeService, _cameraService, this, extraDevices);
             window.Owner = Application.Current.MainWindow;
             window.ShowDialog();
         }

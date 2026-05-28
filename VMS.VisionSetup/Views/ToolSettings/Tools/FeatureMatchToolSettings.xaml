@@ -176,8 +176,9 @@
             </StackPanel>
         </Expander>
 
-        <!-- Search Range Expander -->
-        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+        <!-- Expert: Search Range — 회전/스케일 검색 범위. 통합 시점 결정. -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}"
+                  Visibility="{Binding IsExpertMode, Converter={StaticResource BoolToVis}}">
             <Expander.Header>
                 <TextBlock Text="Search Range" Style="{StaticResource ExpanderHeaderStyle}"/>
             </Expander.Header>
@@ -201,8 +202,9 @@
             </StackPanel>
         </Expander>
 
-        <!-- Accuracy / Speed Expander -->
-        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}">
+        <!-- Expert: Accuracy / Speed — 알고리즘 정밀도/속도 트레이드오프 튜닝. -->
+        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}"
+                  Visibility="{Binding IsExpertMode, Converter={StaticResource BoolToVis}}">
             <Expander.Header>
                 <TextBlock Text="Accuracy / Speed" Style="{StaticResource ExpanderHeaderStyle}"/>
             </Expander.Header>
@@ -226,8 +228,9 @@
             </StackPanel>
         </Expander>
 
-        <!-- Edge Config Expander -->
-        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}">
+        <!-- Expert: Edge Config — Canny 임계값/모델 포인트/곡률 가중치 등 엣지 검출 튜닝. -->
+        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}"
+                  Visibility="{Binding IsExpertMode, Converter={StaticResource BoolToVis}}">
             <Expander.Header>
                 <TextBlock Text="Edge Config" Style="{StaticResource ExpanderHeaderStyle}"/>
             </Expander.Header>

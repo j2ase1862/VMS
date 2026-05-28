@@ -128,8 +128,9 @@ namespace VMS.Services.Sequence
                             {
                                 try
                                 {
+                                    // Reset 신호는 시스템 레벨 — 디바이스 별도 지정 안 함 (PLC 경로 사용).
                                     var met = await CheckSignalAsync(
-                                        config.ResetSignalAddress, config.ResetSignalCheckMode, config.ResetSignalCompareValue);
+                                        null, config.ResetSignalAddress, config.ResetSignalCheckMode, config.ResetSignalCompareValue);
                                     if (met)
                                     {
                                         resetCts.Cancel();
@@ -352,6 +353,65 @@ namespace VMS.Services.Sequence
         }
 
         /// <summary>
+        /// Phase B — Tool 결과 매핑 (PlcResultMapping) 의 DeviceId 가 IO 보드면 true + board 반환.
+        /// node 와 달리 mapping 은 DeviceId 만 갖고 있으므로 TryGetBoardForNode 와 별도 helper.
+        /// </summary>
+        private bool TryGetBoardForMapping(string? deviceId, out IIoBoardConnection? board)
+        {
+            board = null;
+            if (_ioRegistry is null) return false;
+            if (string.IsNullOrWhiteSpace(deviceId)) return false;
+            if (string.Equals(deviceId, DefaultPlcDeviceId, StringComparison.Ordinal)) return false;
+
+            var device = _ioRegistry.Get(deviceId);
+            if (device is IIoBoardConnection b)
+            {
+                board = b;
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Phase B — Tool 결과 매핑 → IO 보드 출력 채널 write.
+        /// 보드는 Bit 만 지원 — Int16/Int32/Float 는 경고 후 skip (보드 채널 비트맵 모델).
+        /// ResultKey="Success" → tr.Success, 그 외 numeric 값 != 0 으로 변환.
+        /// </summary>
+        private async Task WriteBoardMappingAsync(IIoBoardConnection board, Models.PlcResultMapping mapping, ToolInspectionResult tr)
+        {
+            if (!int.TryParse(mapping.PlcAddress?.Trim(), out var channel) || channel < 0)
+            {
+                Debug.WriteLine($"[SequenceEngine] Board '{mapping.DeviceId}' channel parse failed: '{mapping.PlcAddress}' — skip.");
+                return;
+            }
+
+            if (mapping.DataType != PlcDataType.Bit)
+            {
+                Debug.WriteLine(
+                    $"[SequenceEngine] Board '{mapping.DeviceId}' mapping type {mapping.DataType} not supported — Bit only. skip.");
+                return;
+            }
+
+            bool value;
+            if (mapping.ResultKey == "Success")
+            {
+                value = tr.Success;
+            }
+            else if (TryGetNumericValue(tr, mapping.ResultKey, out var num))
+            {
+                value = num != 0;
+            }
+            else
+            {
+                Debug.WriteLine(
+                    $"[SequenceEngine] Board '{mapping.DeviceId}' mapping key '{mapping.ResultKey}' not found in tool '{tr.ToolName}' — skip.");
+                return;
+            }
+
+            await board.WriteBitAsync(channel, value);
+        }
+
+        /// <summary>
         /// IO 보드의 채널 polling. PLC 의 WaitForBitValueAsync 와 의미 동등하지만 native event 가 없어
         /// 단순 polling (50ms 주기). InputCheck.TimeoutMs 적용.
         /// Word 모드는 ReadPort 로 32-bit 읽어 비교.
@@ -485,8 +545,28 @@ namespace VMS.Services.Sequence
         }
 
         // --- 공용: 신호 조건 확인 (Bit/Word 모두 지원) ---
-        private async Task<bool> CheckSignalAsync(string address, InputCheckMode checkMode, int? compareValue)
+        // deviceId 가 IO 보드를 가리키면 채널 정수 + ReadBit/ReadPort 경로,
+        // 그 외(빈/MainPLC/미등록 ID) 는 기본 PLC 어드레스 경로.
+        private async Task<bool> CheckSignalAsync(string? deviceId, string address, InputCheckMode checkMode, int? compareValue)
         {
+            if (TryGetBoardForMapping(deviceId, out var board) && board != null)
+            {
+                if (!int.TryParse(address?.Trim(), out var ch) || ch < 0)
+                {
+                    Debug.WriteLine($"[SequenceEngine] Board '{deviceId}' signal channel parse failed: '{address}'");
+                    return false;
+                }
+                return checkMode switch
+                {
+                    InputCheckMode.BitOn => await board.ReadBitAsync(ch),
+                    InputCheckMode.BitOff => !await board.ReadBitAsync(ch),
+                    InputCheckMode.WordEquals => (long)(await board.ReadPortAsync(ch / 32)) == (compareValue ?? 0),
+                    InputCheckMode.WordGreaterThan => (long)(await board.ReadPortAsync(ch / 32)) > (compareValue ?? 0),
+                    InputCheckMode.WordLessThan => (long)(await board.ReadPortAsync(ch / 32)) < (compareValue ?? 0),
+                    _ => false
+                };
+            }
+
             var addr = PlcAddress.Parse(address, _vendor);
 
             switch (checkMode)
@@ -511,7 +591,29 @@ namespace VMS.Services.Sequence
             }
         }
 
-        // --- RecipeChange: 신호 조건 확인 → PLC 레시피 인덱스 읽기 → 비교 → 변경 ---
+        /// <summary>
+        /// Index (Word) 읽기 — Recipe/Step Change 의 인덱스 주소.
+        /// deviceId 가 IO 보드면 ReadPortAsync(portNo), 그 외 PLC ReadWordAsync.
+        /// </summary>
+        private async Task<int> ReadIndexAsync(string? deviceId, string address)
+        {
+            if (TryGetBoardForMapping(deviceId, out var board) && board != null)
+            {
+                if (!int.TryParse(address?.Trim(), out var portNo) || portNo < 0)
+                {
+                    Debug.WriteLine($"[SequenceEngine] Board '{deviceId}' index port parse failed: '{address}'");
+                    return 0;
+                }
+                var word = await board.ReadPortAsync(portNo);
+                return (int)word;
+            }
+
+            var addr = PlcAddress.Parse(address, _vendor);
+            return await _plc.ReadWordAsync(addr);
+        }
+
+        // --- RecipeChange: 신호 조건 확인 → 인덱스 읽기 → 비교 → 변경 ---
+        // node.DeviceId 가 IO 보드면 board.ReadBit/ReadPort 경로, 아니면 PLC 어드레스 경로.
         private async Task<string?> ExecuteRecipeChangeAsync(SequenceNodeConfig node)
         {
             if (_recipeChangeByIndexFunc == null || string.IsNullOrEmpty(node.RecipeIndexAddress))
@@ -521,20 +623,20 @@ namespace VMS.Services.Sequence
             if (!string.IsNullOrEmpty(node.RecipeSignalAddress))
             {
                 var conditionMet = await CheckSignalAsync(
+                    node.DeviceId,
                     node.RecipeSignalAddress, node.RecipeSignalCheckMode, node.RecipeSignalCompareValue);
                 if (!conditionMet)
                     return node.NextNodeId; // 조건 미충족 → 레시피 변경 불필요
             }
 
-            // 인덱스 주소에서 Word 읽기 → 델리게이트 호출 (비교/변경)
-            var indexAddr = PlcAddress.Parse(node.RecipeIndexAddress, _vendor);
-            int recipeIndex = await _plc.ReadWordAsync(indexAddr);
+            // 인덱스 주소에서 Word 읽기 (PLC) 또는 ReadPort (Board) → 델리게이트 호출.
+            int recipeIndex = await ReadIndexAsync(node.DeviceId, node.RecipeIndexAddress);
             await _recipeChangeByIndexFunc(recipeIndex);
 
             return node.NextNodeId;
         }
 
-        // --- StepChange: 신호 조건 확인 → PLC 스텝 인덱스 읽기 → 카메라 스텝 설정 ---
+        // --- StepChange: 신호 조건 확인 → 스텝 인덱스 읽기 → 카메라 스텝 설정 ---
         private async Task<string?> ExecuteStepChangeAsync(SequenceNodeConfig node)
         {
             if (_stepChangeFunc == null)
@@ -546,13 +648,13 @@ namespace VMS.Services.Sequence
             {
                 // 신호 조건 확인
                 var conditionMet = await CheckSignalAsync(
+                    node.DeviceId,
                     node.StepSignalAddress, node.StepSignalCheckMode, node.StepSignalCompareValue);
 
                 if (conditionMet)
                 {
-                    // 조건 충족 → 스텝 인덱스 읽기
-                    var indexAddr = PlcAddress.Parse(node.StepIndexAddress, _vendor);
-                    stepIndex = await _plc.ReadWordAsync(indexAddr);
+                    // 조건 충족 → 스텝 인덱스 읽기 (PLC Word 또는 Board ReadPort)
+                    stepIndex = await ReadIndexAsync(node.DeviceId, node.StepIndexAddress);
                 }
             }
 
@@ -701,6 +803,14 @@ namespace VMS.Services.Sequence
 
                     try
                     {
+                        // Phase B — mapping.DeviceId 가 IO 보드를 가리키면 채널 정수 write 경로로 분기.
+                        // 빈 / "MainPLC" 는 기본 PLC 경로 (후방호환).
+                        if (TryGetBoardForMapping(mapping.DeviceId, out var board) && board != null)
+                        {
+                            await WriteBoardMappingAsync(board, mapping, tr);
+                            continue;
+                        }
+
                         var addr = PlcAddress.Parse(mapping.PlcAddress, _vendor);
 
                         switch (mapping.DataType)
@@ -727,7 +837,7 @@ namespace VMS.Services.Sequence
                     }
                     catch (Exception ex)
                     {
-                        Debug.WriteLine($"[SequenceEngine] Error writing tool result '{tr.ToolName}' key '{mapping.ResultKey}' to {mapping.PlcAddress}: {ex.Message}");
+                        Debug.WriteLine($"[SequenceEngine] Error writing tool result '{tr.ToolName}' key '{mapping.ResultKey}' to {mapping.DeviceId}/{mapping.PlcAddress}: {ex.Message}");
                     }
                 }
             }

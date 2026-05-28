@@ -6,11 +6,8 @@
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </UserControl.Resources>
     <StackPanel>
-        <!-- 전문가 모드 토글 — Search Range / Speed 노출 -->
-        <CheckBox Content="Expert Mode (Search Range / Speed 노출)"
-                  IsChecked="{Binding IsExpertMode}"
-                  Foreground="#CCCCCC" FontSize="11"
-                  Margin="0,2,0,6"/>
+        <!-- Expert Mode 토글은 ToolSettingsView 헤더로 통합됨 — 본문 자체 토글 제거.
+             IsExpertMode 가 ON 일 때 Search Range / Speed Expander 노출. -->
 
         <!-- Template + Training Region -->
         <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">

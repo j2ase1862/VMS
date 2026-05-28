@@ -15,6 +15,65 @@
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
 
+        <!-- Expert Mode 토글 스위치 — CheckBox 베이스로 슬라이딩 핸들 + 애니메이션.
+             기존 체크박스 자리를 그대로 대체 (IsChecked TwoWay 호환). -->
+        <Style x:Key="ExpertModeToggleStyle" TargetType="CheckBox">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="#AAAAAA"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <ContentPresenter VerticalAlignment="Center" Margin="0,0,8,0"
+                                              TextElement.Foreground="{TemplateBinding Foreground}"
+                                              TextElement.FontSize="{TemplateBinding FontSize}"/>
+                            <Border x:Name="Track" Width="34" Height="18" CornerRadius="9"
+                                    Background="#555555" BorderBrush="#3F3F46" BorderThickness="1"
+                                    VerticalAlignment="Center">
+                                <Border x:Name="Thumb" Width="14" Height="14" CornerRadius="7"
+                                        Background="#CCCCCC" HorizontalAlignment="Left"
+                                        Margin="1,0,0,0" SnapsToDevicePixels="True">
+                                    <Border.RenderTransform>
+                                        <TranslateTransform x:Name="ThumbTransform" X="0"/>
+                                    </Border.RenderTransform>
+                                </Border>
+                            </Border>
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Track" Property="Background" Value="#0078D4"/>
+                                <Setter TargetName="Track" Property="BorderBrush" Value="#005FA3"/>
+                                <Setter TargetName="Thumb" Property="Background" Value="White"/>
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="ThumbTransform"
+                                                             Storyboard.TargetProperty="X"
+                                                             To="16" Duration="0:0:0.12"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="ThumbTransform"
+                                                             Storyboard.TargetProperty="X"
+                                                             To="0" Duration="0:0:0.12"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Track" Property="BorderBrush" Value="#0078D4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- DataTemplates for each tool ViewModel type -->
         <DataTemplate x:Key="GrayscaleTemplate" DataType="{x:Type vm:GrayscaleToolSettingsViewModel}">
             <tools:GrayscaleToolSettings/>
@@ -158,13 +217,21 @@
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="10">
-            <!-- Tool Header -->
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                <TextBlock Text="{Binding Name}" Foreground="#CCCCCC"
-                           FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
-                <controls:HelpIcon ToolType="{Binding ToolType}"
-                                   Margin="8,0,0,0" VerticalAlignment="Center"/>
-            </StackPanel>
+            <!-- Tool Header — 좌측: 도구 이름 + Help, 우측: Expert 모드 토글.
+                 토글은 현재 선택된 도구의 ToolType 에 대해서만 작동 — 같은 타입의 모든 인스턴스에 즉시 반영,
+                 system_config 와 별도의 expert_mode.json 에 영구 저장. -->
+            <DockPanel Margin="0,0,0,10">
+                <CheckBox DockPanel.Dock="Right" Content="Expert Mode"
+                          IsChecked="{Binding IsExpertMode, Mode=TwoWay}"
+                          Style="{StaticResource ExpertModeToggleStyle}"
+                          ToolTip="이 도구 타입의 고급 파라미터를 표시/숨김. 같은 타입의 모든 도구 인스턴스에 적용되고, 다음 실행에도 유지됩니다."/>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding Name}" Foreground="#CCCCCC"
+                               FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
+                    <controls:HelpIcon ToolType="{Binding ToolType}"
+                                       Margin="8,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+            </DockPanel>
 
             <!-- Tool-Specific Parameters via DataTemplateSelector -->
             <ContentControl Content="{Binding}"
@@ -231,78 +298,92 @@
 
             <TextBlock Text="PLC Output" Style="{StaticResource SectionHeaderStyle}"/>
 
-            <DataGrid ItemsSource="{Binding PlcMappings}"
-                      AutoGenerateColumns="False"
-                      CanUserAddRows="False"
-                      CanUserDeleteRows="False"
-                      CanUserReorderColumns="False"
-                      CanUserSortColumns="False"
-                      HeadersVisibility="Column"
-                      GridLinesVisibility="None"
-                      RowHeaderWidth="0"
-                      Background="White"
-                      Foreground="Black"
-                      BorderBrush="#AAAAAA"
-                      BorderThickness="1"
-                      RowBackground="White"
-                      AlternatingRowBackground="#F5F5F5"
-                      Margin="0,3,0,3"
-                      MinHeight="28"
-                      MaxHeight="200">
-                <DataGrid.ColumnHeaderStyle>
-                    <Style TargetType="DataGridColumnHeader">
-                        <Setter Property="Background" Value="#E8E8E8"/>
-                        <Setter Property="Foreground" Value="Black"/>
-                        <Setter Property="Padding" Value="4,2"/>
-                        <Setter Property="BorderBrush" Value="#CCCCCC"/>
-                        <Setter Property="BorderThickness" Value="0,0,1,1"/>
-                    </Style>
-                </DataGrid.ColumnHeaderStyle>
-                <DataGrid.Columns>
-                    <DataGridTemplateColumn Header="Key" Width="*">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <ComboBox ItemsSource="{Binding DataContext.AvailableResultKeys, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+            <!-- 매핑 카드 스택 — Tool Settings 패널이 300px 로 좁아 DataGrid 컬럼 텍스트가 잘리던 문제를
+                 카드 레이아웃으로 해결. 각 매핑이 라벨–컨트롤 세로 쌍으로 풀폭을 사용. -->
+            <ItemsControl ItemsSource="{Binding PlcMappings}" Margin="0,3,0,3">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="White" BorderBrush="#CCCCCC" BorderThickness="1"
+                                CornerRadius="3" Margin="0,0,0,4" Padding="6,4">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="65"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Row 0: Key + Remove 버튼 -->
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Key"
+                                           Foreground="#555555" FontSize="11"
+                                           VerticalAlignment="Center" Margin="0,0,4,2"/>
+                                <ComboBox Grid.Row="0" Grid.Column="1"
+                                          ItemsSource="{Binding DataContext.AvailableResultKeys, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                           SelectedItem="{Binding ResultKey, UpdateSourceTrigger=PropertyChanged}"
-                                          Background="White" Foreground="Black" BorderThickness="0"
-                                          Padding="4,2"/>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                    <DataGridTemplateColumn Header="Address" Width="*">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBox Text="{Binding PlcAddress, UpdateSourceTrigger=PropertyChanged}"
-                                         Background="White" Foreground="Black" BorderThickness="0"
-                                         Padding="4,2"/>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                    <DataGridTemplateColumn Header="Type" Width="80">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <ComboBox ItemsSource="{Binding DataContext.PlcDataTypes, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                          SelectedItem="{Binding DataType, UpdateSourceTrigger=PropertyChanged}"
-                                          Background="White" Foreground="Black" BorderThickness="0"
-                                          Padding="4,2"/>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                    <DataGridTemplateColumn Header="" Width="30">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <Button Content="X"
-                                        Command="{Binding DataContext.RemovePlcMappingCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                          Background="White" Foreground="Black"
+                                          BorderBrush="#BBBBBB" BorderThickness="1"
+                                          Padding="4,2" Margin="0,0,0,2"/>
+                                <Button Grid.Row="0" Grid.Column="2" Content="X"
+                                        Command="{Binding DataContext.RemovePlcMappingCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}"
                                         Background="Transparent" Foreground="#FF6B68"
                                         BorderThickness="0" Cursor="Hand"
-                                        FontWeight="Bold" Padding="4,0"
+                                        FontWeight="Bold" Padding="6,0" Margin="4,0,0,2"
                                         ToolTip="Remove mapping"/>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                </DataGrid.Columns>
-            </DataGrid>
+
+                                <!-- Row 1: Device -->
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Device"
+                                           Foreground="#555555" FontSize="11"
+                                           VerticalAlignment="Center" Margin="0,2,4,2"/>
+                                <ComboBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                                          ItemsSource="{Binding DataContext.AvailableDevices, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                          SelectedValuePath="DeviceId"
+                                          SelectedValue="{Binding DeviceId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, TargetNullValue=MainPLC, FallbackValue=MainPLC}"
+                                          Background="White" Foreground="Black"
+                                          BorderBrush="#BBBBBB" BorderThickness="1"
+                                          Padding="4,2" Margin="0,2,0,2">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding DeviceId}"/>
+                                                <TextBlock Text="{Binding TypeBadge}" Foreground="#999999"
+                                                           FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+
+                                <!-- Row 2: Address / Channel -->
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Address"
+                                           Foreground="#555555" FontSize="11"
+                                           VerticalAlignment="Center" Margin="0,2,4,2"/>
+                                <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
+                                         Text="{Binding PlcAddress, UpdateSourceTrigger=PropertyChanged}"
+                                         Background="White" Foreground="Black"
+                                         BorderBrush="#BBBBBB" BorderThickness="1"
+                                         Padding="4,2" Margin="0,2,0,2"
+                                         ToolTip="PLC: 어드레스 (예: D100, M100) / IO 보드: 채널 번호 (예: 0, 5)"/>
+
+                                <!-- Row 3: Type -->
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Type"
+                                           Foreground="#555555" FontSize="11"
+                                           VerticalAlignment="Center" Margin="0,2,4,0"/>
+                                <ComboBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2"
+                                          ItemsSource="{Binding DataContext.PlcDataTypes, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                          SelectedItem="{Binding DataType, UpdateSourceTrigger=PropertyChanged}"
+                                          Background="White" Foreground="Black"
+                                          BorderBrush="#BBBBBB" BorderThickness="1"
+                                          Padding="4,2" Margin="0,2,0,0"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
 
             <Button Content="+ Add PLC Mapping"
                     Command="{Binding AddPlcMappingCommand}"
