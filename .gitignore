@@ -7,6 +7,9 @@ obj/
 *.cache
 *.bak
 
+## Claude Code worktree (작업 격리용 임시 git worktree — 절대 commit 금지)
+.claude/worktrees/
+
 ## Build results
 [Dd]ebug/
 [Rr]elease/

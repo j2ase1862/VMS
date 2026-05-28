@@ -589,7 +589,9 @@ namespace VMS.VisionSetup.Views.Recipe
             _typeBox.SelectedIndex = 0;
             _typeBox.SelectionChanged += (s, e) =>
             {
-                if (_typeBox.SelectedItem is string toolType) _nameBox.Text = $"{toolType} 1";
+                // _nameBox 는 이 람다 등록 이후에 초기화되므로 SelectedIndex=0 첫 발화 시점에선 null.
+                if (_typeBox.SelectedItem is string toolType && _nameBox is not null)
+                    _nameBox.Text = $"{toolType} 1";
             };
             Grid.SetRow(_typeBox, 2);
             grid.Children.Add(_typeBox);

@@ -21,11 +21,17 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
   Configuration: Release
+  # 2026-06-02 이후 GitHub Actions 가 모든 JavaScript actions 를 Node.js 24 로 강제
+  # 실행. checkout@v4 / setup-dotnet@v4 / upload-artifact@v4 가 아직 Node 20 라 사전
+  # opt-in 으로 deprecation 안내 제거 + 2026-09-16 Node 20 제거 시 자동 동작 보장.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
   build:
     name: Build & Test (Windows)
-    runs-on: windows-latest
+    # windows-latest 가 2026-06-15 부터 windows-2025-vs2026 으로 자동 리다이렉트.
+    # 안내 메시지 제거 + 시점 일관성 위해 명시적 windows-2025 사용.
+    runs-on: windows-2025
     timeout-minutes: 25
 
     steps:
