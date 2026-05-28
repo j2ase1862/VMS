@@ -25,12 +25,20 @@ namespace VMS.Core.Security
             {
                 if (SecurityOptions.Current.RequireHttps)
                 {
+                    AuditLogger.Instance.Log(
+                        AuditCategory.Security, "InsecureHttpBlocked", AuditOutcome.Denied,
+                        source: source,
+                        details: $"URL='{url}' — Production 모드에서 HTTP 거부");
                     throw new InvalidOperationException(
                         $"보안 정책 위반 — Production 모드에서 HTTPS 가 필수입니다. " +
                         $"소스 '{source}' URL='{url}'. system_config.json 의 webServerUrl / visionServerUrl 을 " +
                         $"https:// 로 수정하거나 securityMode 를 Development 로 변경하세요.");
                 }
                 Debug.WriteLine($"[Security] WARN: '{source}' is using insecure HTTP: {url}");
+                AuditLogger.Instance.Log(
+                    AuditCategory.Security, "InsecureHttpWarning", AuditOutcome.Success,
+                    source: source,
+                    details: $"URL='{url}' — Development 모드 허용 (운영 전환 시 검토 필요)");
             }
         }
     }

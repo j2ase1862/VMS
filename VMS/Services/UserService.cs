@@ -120,6 +120,10 @@ namespace VMS.Services
             catch (ArgumentException ex)
             {
                 Debug.WriteLine($"[UserService] Invalid auth input: {ex.Message}");
+                AuditLogger.Instance.Log(
+                    AuditCategory.Authentication, "UserLogin", AuditOutcome.Denied,
+                    userName: username, source: nameof(UserService),
+                    details: $"Invalid input: {ex.Message}");
                 return false;
             }
 
@@ -131,10 +135,24 @@ namespace VMS.Services
             cmd.Parameters.AddWithValue("@username", username);
 
             using var reader = cmd.ExecuteReader();
-            if (!reader.Read()) return false;
+            if (!reader.Read())
+            {
+                AuditLogger.Instance.Log(
+                    AuditCategory.Authentication, "UserLogin", AuditOutcome.Failure,
+                    userName: username, source: nameof(UserService),
+                    details: "User not found");
+                return false;
+            }
 
             var hash = reader.GetString(reader.GetOrdinal("PasswordHash"));
-            if (!BCrypt.Net.BCrypt.Verify(password, hash)) return false;
+            if (!BCrypt.Net.BCrypt.Verify(password, hash))
+            {
+                AuditLogger.Instance.Log(
+                    AuditCategory.Authentication, "UserLogin", AuditOutcome.Denied,
+                    userName: username, source: nameof(UserService),
+                    details: "Password mismatch");
+                return false;
+            }
 
             CurrentUser = ReadUser(reader);
 
@@ -146,12 +164,23 @@ namespace VMS.Services
             updateCmd.ExecuteNonQuery();
 
             CurrentUser.LastLoginAt = DateTime.UtcNow;
+            AuditLogger.Instance.Log(
+                AuditCategory.Authentication, "UserLogin", AuditOutcome.Success,
+                userName: username, source: nameof(UserService),
+                details: $"Grade={CurrentUser.Grade}");
             return true;
         }
 
         public void Logout()
         {
+            var loggedOutUser = CurrentUser?.Username;
             CurrentUser = null;
+            if (!string.IsNullOrEmpty(loggedOutUser))
+            {
+                AuditLogger.Instance.Log(
+                    AuditCategory.Authentication, "UserLogout", AuditOutcome.Success,
+                    userName: loggedOutUser, source: nameof(UserService));
+            }
         }
 
         public bool HasPermission(UserPermission permission)
@@ -188,6 +217,10 @@ namespace VMS.Services
             catch (ArgumentException ex)
             {
                 Debug.WriteLine($"[UserService] CreateUser invalid input: {ex.Message}");
+                AuditLogger.Instance.Log(
+                    AuditCategory.UserManagement, "CreateUser", AuditOutcome.Denied,
+                    userName: CurrentUser?.Username, source: nameof(UserService),
+                    details: $"Target='{username}', Invalid input: {ex.Message}");
                 return false;
             }
 
@@ -206,10 +239,18 @@ namespace VMS.Services
                 cmd.Parameters.AddWithValue("@grade", (int)grade);
                 cmd.Parameters.AddWithValue("@created", DateTime.UtcNow.ToString("o"));
                 cmd.ExecuteNonQuery();
+                AuditLogger.Instance.Log(
+                    AuditCategory.UserManagement, "CreateUser", AuditOutcome.Success,
+                    userName: CurrentUser?.Username, source: nameof(UserService),
+                    details: $"Created='{username}', Grade={grade}");
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                AuditLogger.Instance.Log(
+                    AuditCategory.UserManagement, "CreateUser", AuditOutcome.Failure,
+                    userName: CurrentUser?.Username, source: nameof(UserService),
+                    details: $"Target='{username}', {ex.GetType().Name}: {ex.Message}");
                 return false;
             }
         }

@@ -67,6 +67,10 @@ namespace VMS.Core.Services
                     CurrentSession = session;
                     SessionChanged?.Invoke(session);
                     Debug.WriteLine($"[OperatorAuth] Login OK: {session?.OperatorName} ({session?.EmployeeNumber})");
+                    AuditLogger.Instance.Log(
+                        AuditCategory.Authentication, "OperatorLogin", AuditOutcome.Success,
+                        userName: session?.EmployeeNumber, source: nameof(OperatorAuthService),
+                        details: $"OperatorName={session?.OperatorName}, Role={session?.Role}");
                     return (true, session, null);
                 }
 
@@ -77,11 +81,20 @@ namespace VMS.Core.Services
                     _ => $"로그인 실패: {resp.StatusCode}"
                 };
                 Debug.WriteLine($"[OperatorAuth] Login failed: {resp.StatusCode}");
+                AuditLogger.Instance.Log(
+                    AuditCategory.Authentication, "OperatorLogin",
+                    resp.StatusCode == System.Net.HttpStatusCode.Unauthorized ? AuditOutcome.Denied : AuditOutcome.Failure,
+                    userName: employeeNumber, source: nameof(OperatorAuthService),
+                    details: $"HTTP {(int)resp.StatusCode}");
                 return (false, null, errorMsg);
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"[OperatorAuth] Login error: {ex.Message}");
+                AuditLogger.Instance.Log(
+                    AuditCategory.Authentication, "OperatorLogin", AuditOutcome.Failure,
+                    userName: employeeNumber, source: nameof(OperatorAuthService),
+                    details: $"Exception: {ex.GetType().Name}: {ex.Message}");
                 return (false, null, $"통신 오류: {ex.Message}");
             }
             finally
@@ -95,12 +108,16 @@ namespace VMS.Core.Services
         /// <summary>현재 세션 로그아웃.</summary>
         public async Task<bool> LogoutAsync()
         {
+            var loggedOutUser = CurrentSession?.EmployeeNumber;
             try
             {
                 var req = new KioskLogoutRequest { ClientIndex = _clientIndex };
                 var resp = await _httpClient.PostAsJsonAsync($"{_webServerUrl}/api/kiosk/logout", req);
                 CurrentSession = null;
                 SessionChanged?.Invoke(null);
+                AuditLogger.Instance.Log(
+                    AuditCategory.Authentication, "OperatorLogout", AuditOutcome.Success,
+                    userName: loggedOutUser, source: nameof(OperatorAuthService));
                 return resp.IsSuccessStatusCode || resp.StatusCode == System.Net.HttpStatusCode.NoContent;
             }
             catch (Exception ex)
@@ -109,6 +126,10 @@ namespace VMS.Core.Services
                 // 통신 실패해도 로컬 상태는 비움
                 CurrentSession = null;
                 SessionChanged?.Invoke(null);
+                AuditLogger.Instance.Log(
+                    AuditCategory.Authentication, "OperatorLogout", AuditOutcome.Failure,
+                    userName: loggedOutUser, source: nameof(OperatorAuthService),
+                    details: $"Exception: {ex.GetType().Name}: {ex.Message} (로컬 세션은 비움)");
                 return false;
             }
         }
