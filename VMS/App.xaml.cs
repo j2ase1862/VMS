@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using System.Windows;
 using VMS.Camera.Services;
+using VMS.Core.Health;
 using VMS.Core.Interfaces;
 using VMS.Core.Security;
 using VMS.Core.Services;
@@ -44,6 +45,18 @@ namespace VMS
             catch (Exception ex)
             {
                 Debug.WriteLine($"[App] AuditLogRetention 실패 (best-effort): {ex.Message}");
+            }
+
+            // 시작 헬스 체크 — 디렉토리 쓰기 가능, system_config 존재, 보안 옵션 로드,
+            // 디스크 여유 ≥ 1 GB. 종합 결과는 AuditCategory.System 의 단일 이벤트로 기록.
+            // best-effort — Fail 상태여도 UI 차단 없음 (감사 흔적 남기는 데 의의).
+            try
+            {
+                StartupHealthCheck.Run();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] StartupHealthCheck 실패 (best-effort): {ex.Message}");
             }
 
             var splash = new SplashWindow();
