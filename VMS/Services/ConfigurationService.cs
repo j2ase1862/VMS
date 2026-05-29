@@ -34,10 +34,20 @@ namespace VMS.Services
         public string ConfigDirectory => _configDirectory;
 
         private ConfigurationService()
-        {
-            _configDirectory = Path.Combine(
+            : this(Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "BODA VISION AI");
+                "BODA VISION AI"))
+        {
+        }
+
+        /// <summary>
+        /// 임의 디렉토리로 별도 인스턴스를 만들 수 있는 테스트 친화 ctor.
+        /// internal — VMS.Tests 통합 테스트에서만 호출. 운영 코드는
+        /// 반드시 <see cref="Instance"/> 싱글톤 사용.
+        /// </summary>
+        internal ConfigurationService(string configDirectory)
+        {
+            _configDirectory = configDirectory;
             _systemConfigPath = Path.Combine(_configDirectory, "system_config.json");
             _layoutConfigPath = Path.Combine(_configDirectory, "layout_config.json");
             _plcSignalConfigPath = Path.Combine(_configDirectory, "plc_signals.json");

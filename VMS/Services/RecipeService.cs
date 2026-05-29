@@ -31,10 +31,18 @@ namespace VMS.Services
         public Recipe? CurrentRecipe => _currentRecipe;
 
         private RecipeService()
+            : this(Path.Combine(ConfigurationService.Instance.ConfigDirectory, "Recipes"))
         {
-            var configDir = ConfigurationService.Instance.ConfigDirectory;
-            _recipesDirectory = Path.Combine(configDir, "Recipes");
+        }
 
+        /// <summary>
+        /// 임의 디렉토리로 별도 인스턴스를 만들 수 있는 테스트 친화 ctor.
+        /// internal — VMS.Tests 통합 테스트에서만 호출. 운영 코드는
+        /// 반드시 <see cref="Instance"/> 싱글톤 사용.
+        /// </summary>
+        internal RecipeService(string recipesDirectory)
+        {
+            _recipesDirectory = recipesDirectory;
             if (!Directory.Exists(_recipesDirectory))
             {
                 Directory.CreateDirectory(_recipesDirectory);
