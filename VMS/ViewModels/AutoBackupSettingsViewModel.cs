@@ -39,7 +39,8 @@ namespace VMS.ViewModels
         [ObservableProperty] private string _productVersion = string.Empty;
 
         [ObservableProperty] private string _statusMessage = string.Empty;
-        [ObservableProperty] private string _statusColor = "#9E9E9E";
+        // WindowStyles.xaml 색 토큰과 일치 — BrushNeutral / BrushSuccess / BrushDanger.
+        [ObservableProperty] private string _statusColor = "#22303C";
 
         // ─── 동작 ─────────────────────────────────────────────────
 
@@ -58,12 +59,12 @@ namespace VMS.ViewModels
                 StatusMessage = File.Exists(_configPath)
                     ? "현재 system_config.json 값을 로드함"
                     : "system_config.json 없음 — 저장 시 새로 생성";
-                StatusColor = "#9E9E9E";
+                StatusColor = "#22303C";  // BrushNeutral
             }
             catch (Exception ex)
             {
                 StatusMessage = $"로드 실패: {ex.Message}";
-                StatusColor = "#F44336";
+                StatusColor = "#EF4444";  // BrushDanger
             }
         }
 
@@ -130,7 +131,7 @@ namespace VMS.ViewModels
                              $"Dir={(string.IsNullOrEmpty(BackupDir) ? "(default)" : BackupDir)}");
 
                 StatusMessage = "저장됨 — VMS 재시작 후 적용됩니다.";
-                StatusColor = "#4CAF50";
+                StatusColor = "#10B981";  // BrushSuccess
             }
             catch (Exception ex)
             {
@@ -140,7 +141,7 @@ namespace VMS.ViewModels
                     source: nameof(AutoBackupSettingsViewModel),
                     details: $"{ex.GetType().Name}: {ex.Message}");
                 StatusMessage = $"저장 실패: {ex.Message}";
-                StatusColor = "#F44336";
+                StatusColor = "#EF4444";  // BrushDanger
             }
         }
     }

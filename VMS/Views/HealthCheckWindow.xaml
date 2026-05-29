@@ -3,34 +3,35 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:health="clr-namespace:VMS.Core.Health;assembly=VMS.Core"
         Title="시작 헬스 체크 — Startup Health Check"
-        Width="720" Height="520"
+        Width="760" Height="540"
         WindowStartupLocation="CenterOwner"
-        Background="#1E1E1E"
-        ResizeMode="CanResizeWithGrip">
+        Background="{StaticResource BrushBgWindow}"
+        ResizeMode="CanResizeWithGrip"
+        TextOptions.TextFormattingMode="Display">
 
     <Window.Resources>
-        <!-- 상태별 전경색 — Pass/Warn/Fail/기타 -->
+        <!-- 상태별 뱃지 색 — Pass/Warn/Fail/기타 -->
         <Style x:Key="StatusBadge" TargetType="Border">
             <Setter Property="CornerRadius" Value="3"/>
             <Setter Property="Padding" Value="6,2"/>
             <Setter Property="MinWidth" Value="56"/>
             <Setter Property="HorizontalAlignment" Value="Left"/>
-            <Setter Property="Background" Value="#9E9E9E"/>
+            <Setter Property="Background" Value="{StaticResource BrushNeutral}"/>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Status}" Value="{x:Static health:HealthCheckStatus.Pass}">
-                    <Setter Property="Background" Value="#4CAF50"/>
+                    <Setter Property="Background" Value="{StaticResource BrushSuccess}"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Status}" Value="{x:Static health:HealthCheckStatus.Warn}">
-                    <Setter Property="Background" Value="#FF9800"/>
+                    <Setter Property="Background" Value="{StaticResource BrushWarning}"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Status}" Value="{x:Static health:HealthCheckStatus.Fail}">
-                    <Setter Property="Background" Value="#F44336"/>
+                    <Setter Property="Background" Value="{StaticResource BrushDanger}"/>
                 </DataTrigger>
             </Style.Triggers>
         </Style>
     </Window.Resources>
 
-    <Grid Margin="16">
+    <Grid Margin="22,18,22,18">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -41,11 +42,12 @@
         <!-- Header -->
         <TextBlock Grid.Row="0"
                    Text="시작 헬스 체크 — Startup Health Check"
-                   Foreground="#2196F3" FontSize="18" FontWeight="SemiBold"
+                   Style="{StaticResource WindowSectionHeaderFirst}"
+                   FontSize="16"
                    Margin="0,0,0,12"/>
 
         <!-- Summary card -->
-        <Border Grid.Row="1" Background="#2D2D2D" CornerRadius="6" Padding="12" Margin="0,0,0,12">
+        <Border Grid.Row="1" Style="{StaticResource WindowCard}" Margin="0,0,0,12">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -54,33 +56,33 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" Orientation="Vertical">
-                    <TextBlock Text="Overall" Foreground="#B0B0B0" FontSize="11"/>
-                    <Border CornerRadius="4" Padding="10,4" Margin="0,4,0,0" HorizontalAlignment="Left">
+                    <TextBlock Text="OVERALL" Style="{StaticResource WindowFieldLabel}" Margin="0,0,0,4"/>
+                    <Border CornerRadius="4" Padding="12,5" HorizontalAlignment="Left">
                         <Border.Style>
                             <Style TargetType="Border">
-                                <Setter Property="Background" Value="#9E9E9E"/>
+                                <Setter Property="Background" Value="{StaticResource BrushNeutral}"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding OverallStatus}" Value="Pass">
-                                        <Setter Property="Background" Value="#4CAF50"/>
+                                        <Setter Property="Background" Value="{StaticResource BrushSuccess}"/>
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding OverallStatus}" Value="Warn">
-                                        <Setter Property="Background" Value="#FF9800"/>
+                                        <Setter Property="Background" Value="{StaticResource BrushWarning}"/>
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding OverallStatus}" Value="Fail">
-                                        <Setter Property="Background" Value="#F44336"/>
+                                        <Setter Property="Background" Value="{StaticResource BrushDanger}"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Border.Style>
                         <TextBlock Text="{Binding OverallStatus}"
-                                   Foreground="White" FontSize="14" FontWeight="SemiBold"/>
+                                   Foreground="White" FontSize="13" FontWeight="SemiBold"/>
                     </Border>
                 </StackPanel>
 
-                <StackPanel Grid.Column="1" Orientation="Vertical" Margin="20,0,0,0"
+                <StackPanel Grid.Column="1" Orientation="Vertical" Margin="22,0,0,0"
                             VerticalAlignment="Center">
-                    <TextBlock Text="{Binding SummaryLine}" Foreground="#E0E0E0" FontSize="13"/>
-                    <TextBlock Foreground="#909090" FontSize="11" Margin="0,2,0,0">
+                    <TextBlock Text="{Binding SummaryLine}" Style="{StaticResource WindowBodyText}"/>
+                    <TextBlock Style="{StaticResource WindowMutedText}" Margin="0,2,0,0">
                         <Run Text="Last run: "/>
                         <Run Text="{Binding LastRunAt, StringFormat='yyyy-MM-dd HH:mm:ss'}"/>
                     </TextBlock>
@@ -88,22 +90,20 @@
 
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button Content="Refresh" Command="{Binding RefreshCommand}"
-                            Padding="14,6" Margin="0,0,8,0"
-                            Background="#1976D2" Foreground="White" BorderThickness="0"/>
+                            Style="{StaticResource ModernPrimaryButton}"
+                            Margin="0,0,8,0"/>
                     <Button Content="Copy" Command="{Binding CopyToClipboardCommand}"
-                            Padding="14,6"
-                            Background="#424242" Foreground="White" BorderThickness="0"/>
+                            Style="{StaticResource ModernSecondaryButton}"/>
                 </StackPanel>
             </Grid>
         </Border>
 
         <!-- Items list -->
-        <Border Grid.Row="2" Background="#2D2D2D" CornerRadius="6" Padding="8">
+        <Border Grid.Row="2" Style="{StaticResource WindowCard}" Padding="8">
             <ItemsControl ItemsSource="{Binding Items}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Background="#1E1E1E" CornerRadius="4"
-                                Padding="10,8" Margin="0,2">
+                        <Border Style="{StaticResource WindowSurface}" Margin="0,2">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
@@ -120,13 +120,12 @@
 
                                 <!-- Name -->
                                 <TextBlock Grid.Column="1" Text="{Binding Name}"
-                                           Foreground="#E0E0E0" FontSize="13"
+                                           Foreground="{StaticResource BrushTextPrimary}" FontSize="12"
                                            VerticalAlignment="Center" Margin="12,0,12,0"/>
 
                                 <!-- Message -->
                                 <TextBlock Grid.Column="2" Text="{Binding Message}"
-                                           Foreground="#B0B0B0" FontSize="12"
-                                           TextWrapping="Wrap"
+                                           Style="{StaticResource WindowBodyText}"
                                            VerticalAlignment="Center"/>
                             </Grid>
                         </Border>
@@ -136,7 +135,7 @@
         </Border>
 
         <!-- Footer -->
-        <TextBlock Grid.Row="3" Foreground="#707070" FontSize="11" Margin="0,12,0,0">
+        <TextBlock Grid.Row="3" Style="{StaticResource WindowMutedText}" Margin="0,12,0,0">
             <Run Text="결과는 자동으로 AuditCategory.System / StartupHealthCheck 이벤트에 기록됩니다."/>
         </TextBlock>
     </Grid>
