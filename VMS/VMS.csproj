@@ -43,4 +43,9 @@
     <ProjectReference Include="..\VMS.PLC\VMS.PLC.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- 통합 테스트가 internal RecipeService ctor 등에 접근 — 운영 코드는 영향 없음. -->
+    <InternalsVisibleTo Include="VMS.Tests" />
+  </ItemGroup>
+
 </Project>
