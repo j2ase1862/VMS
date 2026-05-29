@@ -1126,6 +1126,22 @@ namespace VMS.ViewModels
             window.ShowDialog();
         }
 
+        /// <summary>
+        /// 자동 백업 설정 윈도우 — Admin 권한 전용. system_config.json 의 autoBackup
+        /// 객체만 격리 편집 — 다른 키는 JsonNode 로 보존. VMS 재시작 후 적용.
+        /// </summary>
+        [RelayCommand]
+        private void OpenAutoBackupSettings()
+        {
+            var vm = new AutoBackupSettingsViewModel();
+            var window = new AutoBackupSettingsWindow
+            {
+                DataContext = vm,
+                Owner = System.Windows.Application.Current.MainWindow
+            };
+            window.ShowDialog();
+        }
+
         [RelayCommand]
         private void SwitchUser()
         {

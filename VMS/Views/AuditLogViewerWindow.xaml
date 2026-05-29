@@ -3,15 +3,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:sec="clr-namespace:VMS.Core.Security;assembly=VMS.Core"
         Title="Audit Log Viewer"
-        Width="1080" Height="640"
+        Width="1100" Height="660"
         WindowStartupLocation="CenterOwner"
-        Background="#1E1E1E"
-        ResizeMode="CanResizeWithGrip">
-    <Window.Resources>
-        <!-- 카테고리/outcome 콤보 null 항목(전체) 표시용 변환기는 단순 ItemTemplate 으로 처리 -->
-    </Window.Resources>
+        Background="{StaticResource BrushBgWindow}"
+        ResizeMode="CanResizeWithGrip"
+        TextOptions.TextFormattingMode="Display">
 
-    <Grid Margin="16">
+    <Grid Margin="22,18,22,18">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -21,11 +19,12 @@
 
         <!-- Header -->
         <TextBlock Grid.Row="0" Text="감사 로그 조회 — Audit Log Viewer"
-                   Foreground="#2196F3" FontSize="18" FontWeight="SemiBold"
+                   Style="{StaticResource WindowSectionHeaderFirst}"
+                   FontSize="16"
                    Margin="0,0,0,12"/>
 
         <!-- Filter Bar -->
-        <Border Grid.Row="1" Background="#2D2D2D" CornerRadius="6" Padding="12" Margin="0,0,0,8">
+        <Border Grid.Row="1" Style="{StaticResource WindowCard}" Margin="0,0,0,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -38,30 +37,33 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- Row 0: 날짜 / 카테고리 / Outcome -->
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="From" Foreground="#B0B0B0"
-                           VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <!-- Row 0: 날짜 / 카테고리 / Outcome / Search -->
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="From"
+                           Style="{StaticResource WindowFieldLabel}"
+                           Margin="0,0,8,0"/>
                 <DatePicker Grid.Row="0" Grid.Column="1" SelectedDate="{Binding FromDate}"
-                            Margin="0,0,12,0"/>
+                            Margin="0,0,14,0"/>
 
-                <TextBlock Grid.Row="0" Grid.Column="2" Text="To" Foreground="#B0B0B0"
-                           VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <TextBlock Grid.Row="0" Grid.Column="2" Text="To"
+                           Style="{StaticResource WindowFieldLabel}"
+                           Margin="0,0,8,0"/>
                 <DatePicker Grid.Row="0" Grid.Column="3" SelectedDate="{Binding ToDate}"
-                            Margin="0,0,12,0"/>
+                            Margin="0,0,14,0"/>
 
-                <TextBlock Grid.Row="0" Grid.Column="4" Text="Category" Foreground="#B0B0B0"
-                           VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <TextBlock Grid.Row="0" Grid.Column="4" Text="Category"
+                           Style="{StaticResource WindowFieldLabel}"
+                           Margin="0,0,8,0"/>
                 <ComboBox Grid.Row="0" Grid.Column="5"
                           ItemsSource="{Binding CategoryOptions}"
                           SelectedItem="{Binding SelectedCategory}"
-                          Background="White" Foreground="Black" Margin="0,0,12,0">
+                          Style="{StaticResource WindowDarkComboBox}"
+                          Margin="0,0,14,0">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
                             <TextBlock>
@@ -71,7 +73,7 @@
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding}" Value="{x:Null}">
                                                 <Setter Property="Text" Value="(전체)"/>
-                                                <Setter Property="Foreground" Value="#666666"/>
+                                                <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}"/>
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
@@ -81,12 +83,14 @@
                     </ComboBox.ItemTemplate>
                 </ComboBox>
 
-                <TextBlock Grid.Row="0" Grid.Column="6" Text="Outcome" Foreground="#B0B0B0"
-                           VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <TextBlock Grid.Row="0" Grid.Column="6" Text="Outcome"
+                           Style="{StaticResource WindowFieldLabel}"
+                           Margin="0,0,8,0"/>
                 <ComboBox Grid.Row="0" Grid.Column="7"
                           ItemsSource="{Binding OutcomeOptions}"
                           SelectedItem="{Binding SelectedOutcome}"
-                          Background="White" Foreground="Black" Margin="0,0,12,0">
+                          Style="{StaticResource WindowDarkComboBox}"
+                          Margin="0,0,14,0">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
                             <TextBlock>
@@ -96,7 +100,7 @@
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding}" Value="{x:Null}">
                                                 <Setter Property="Text" Value="(전체)"/>
-                                                <Setter Property="Foreground" Value="#666666"/>
+                                                <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}"/>
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
@@ -106,93 +110,80 @@
                     </ComboBox.ItemTemplate>
                 </ComboBox>
 
-                <TextBlock Grid.Row="0" Grid.Column="8" Text="Search" Foreground="#B0B0B0"
-                           VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <TextBlock Grid.Row="0" Grid.Column="8" Text="Search"
+                           Style="{StaticResource WindowFieldLabel}"
+                           Margin="0,0,8,0"/>
                 <TextBox Grid.Row="0" Grid.Column="9"
                          Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                         Background="#404040" Foreground="White" BorderBrush="#3D3D3D"
-                         CaretBrush="White" Padding="6,4" MinWidth="160" Margin="0,0,12,0"
+                         Style="{StaticResource WindowDarkTextBox}"
+                         MinWidth="180"
                          ToolTip="Action / User / Source / Details 텍스트 검색"/>
 
                 <!-- Row 1: 버튼들 -->
-                <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="11"
-                            Orientation="Horizontal" Margin="0,10,0,0">
-                    <Button Content="🔍 조회" Command="{Binding SearchCommand}"
-                            Background="#2196F3" Foreground="White" BorderThickness="0"
-                            Padding="14,6" Margin="0,0,8,0" Cursor="Hand"/>
-                    <Button Content="↻ 필터 초기화" Command="{Binding ResetFiltersCommand}"
-                            Background="#555555" Foreground="White" BorderThickness="0"
-                            Padding="14,6" Margin="0,0,8,0" Cursor="Hand"/>
-                    <Button Content="📥 CSV 내보내기" Command="{Binding ExportCsvCommand}"
-                            Background="#4CAF50" Foreground="White" BorderThickness="0"
-                            Padding="14,6" Cursor="Hand"/>
+                <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="10"
+                            Orientation="Horizontal" Margin="0,12,0,0">
+                    <Button Content="조회" Command="{Binding SearchCommand}"
+                            Style="{StaticResource ModernPrimaryButton}"
+                            Margin="0,0,8,0"/>
+                    <Button Content="필터 초기화" Command="{Binding ResetFiltersCommand}"
+                            Style="{StaticResource ModernSecondaryButton}"
+                            Margin="0,0,8,0"/>
+                    <Button Content="CSV 내보내기" Command="{Binding ExportCsvCommand}"
+                            Style="{StaticResource ModernSuccessButton}"/>
                 </StackPanel>
             </Grid>
         </Border>
 
         <!-- Results DataGrid -->
-        <Border Grid.Row="2" Background="#2D2D2D" CornerRadius="6" Padding="8">
+        <Border Grid.Row="2" Style="{StaticResource WindowCard}" Padding="2">
             <DataGrid ItemsSource="{Binding Entries}"
                       AutoGenerateColumns="False" IsReadOnly="True"
-                      Background="#2D2D2D" Foreground="White"
-                      BorderThickness="0" GridLinesVisibility="Horizontal"
-                      HorizontalGridLinesBrush="#3D3D3D"
-                      RowBackground="#2D2D2D" AlternatingRowBackground="#333333"
-                      HeadersVisibility="Column"
-                      SelectionMode="Single" SelectionUnit="FullRow"
+                      Style="{StaticResource WindowDarkDataGrid}"
                       VerticalScrollBarVisibility="Auto"
-                      FontFamily="Consolas" FontSize="12">
-                <DataGrid.ColumnHeaderStyle>
-                    <Style TargetType="DataGridColumnHeader">
-                        <Setter Property="Background" Value="#3D3D3D"/>
-                        <Setter Property="Foreground" Value="#B0B0B0"/>
-                        <Setter Property="Padding" Value="8,4"/>
-                        <Setter Property="BorderThickness" Value="0"/>
-                        <Setter Property="FontWeight" Value="SemiBold"/>
-                    </Style>
-                </DataGrid.ColumnHeaderStyle>
+                      FontFamily="Consolas">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Timestamp (UTC)"
                                         Binding="{Binding TimestampUtc, StringFormat='yyyy-MM-dd HH:mm:ss'}"
-                                        Width="155"/>
-                    <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="120"/>
-                    <DataGridTextColumn Header="Action" Binding="{Binding Action}" Width="160"/>
-                    <DataGridTextColumn Header="Outcome" Binding="{Binding Outcome}" Width="85">
+                                        Width="160"/>
+                    <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="125"/>
+                    <DataGridTextColumn Header="Action" Binding="{Binding Action}" Width="170"/>
+                    <DataGridTextColumn Header="Outcome" Binding="{Binding Outcome}" Width="90">
                         <DataGridTextColumn.ElementStyle>
                             <Style TargetType="TextBlock">
                                 <Setter Property="FontWeight" Value="SemiBold"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding Outcome}" Value="Success">
-                                        <Setter Property="Foreground" Value="#4CAF50"/>
+                                        <Setter Property="Foreground" Value="{StaticResource BrushSuccess}"/>
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding Outcome}" Value="Failure">
-                                        <Setter Property="Foreground" Value="#F44336"/>
+                                        <Setter Property="Foreground" Value="{StaticResource BrushDanger}"/>
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding Outcome}" Value="Denied">
-                                        <Setter Property="Foreground" Value="#FFB74D"/>
+                                        <Setter Property="Foreground" Value="{StaticResource BrushWarning}"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
-                    <DataGridTextColumn Header="User" Binding="{Binding UserName}" Width="110"/>
-                    <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="160"/>
+                    <DataGridTextColumn Header="User" Binding="{Binding UserName}" Width="120"/>
+                    <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="170"/>
                     <DataGridTextColumn Header="Details" Binding="{Binding Details}" Width="*"/>
                 </DataGrid.Columns>
             </DataGrid>
         </Border>
 
         <!-- Status Bar -->
-        <Border Grid.Row="3" Background="#252526" Padding="10,6" Margin="0,8,0,0"
-                CornerRadius="4">
+        <Border Grid.Row="3" Style="{StaticResource WindowSurface}" Margin="0,10,0,0">
             <DockPanel>
-                <TextBlock DockPanel.Dock="Right"
-                           Foreground="#888888" FontSize="11">
+                <TextBlock DockPanel.Dock="Right" Style="{StaticResource WindowMutedText}">
                     <Run Text="저장 위치: "/>
                     <Run Text="%LocalAppData%\BODA VISION AI\audit\YYYY-MM-DD.jsonl"
-                         FontFamily="Consolas" Foreground="#999999"/>
+                         FontFamily="Consolas"
+                         Foreground="{StaticResource BrushTextSecondary}"/>
                 </TextBlock>
-                <TextBlock Text="{Binding StatusMessage}" Foreground="#CCCCCC" FontSize="11"/>
+                <TextBlock Text="{Binding StatusMessage}"
+                           Style="{StaticResource WindowBodyText}"
+                           VerticalAlignment="Center"/>
             </DockPanel>
         </Border>
     </Grid>

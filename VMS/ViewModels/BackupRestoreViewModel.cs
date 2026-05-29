@@ -30,7 +30,8 @@ namespace VMS.ViewModels
         [ObservableProperty] private bool _includeAudit;
         [ObservableProperty] private string _productVersion = "1.2.0";
         [ObservableProperty] private string _backupStatus = "Ready";
-        [ObservableProperty] private string _backupStatusColor = "#9E9E9E";
+        // WindowStyles.xaml 토큰과 일치 — BrushNeutral / BrushSuccess / BrushDanger.
+        [ObservableProperty] private string _backupStatusColor = "#22303C";
         [ObservableProperty] private string _lastBackupSummary = string.Empty;
 
         [RelayCommand]
@@ -54,14 +55,14 @@ namespace VMS.ViewModels
             if (result.Success)
             {
                 BackupStatus = "Success";
-                BackupStatusColor = "#4CAF50";
+                BackupStatusColor = "#10B981";  // BrushSuccess
                 LastBackupSummary =
                     $"{result.FileCount} 파일 · {result.BytesWritten / 1024.0:F1} KB → {result.ZipPath}";
             }
             else
             {
                 BackupStatus = "Failed";
-                BackupStatusColor = "#F44336";
+                BackupStatusColor = "#EF4444";  // BrushDanger
                 LastBackupSummary = result.ErrorMessage ?? "(원인 불명)";
             }
         }
@@ -72,7 +73,7 @@ namespace VMS.ViewModels
         [ObservableProperty] private bool _overwrite = true;
         [ObservableProperty] private bool _restoreAudit = true;
         [ObservableProperty] private string _restoreStatus = "Ready";
-        [ObservableProperty] private string _restoreStatusColor = "#9E9E9E";
+        [ObservableProperty] private string _restoreStatusColor = "#22303C";  // BrushNeutral
         [ObservableProperty] private string _lastRestoreSummary = string.Empty;
         [ObservableProperty] private string _manifestSummary = string.Empty;
 
@@ -92,7 +93,7 @@ namespace VMS.ViewModels
             if (string.IsNullOrWhiteSpace(RestoreFilePath) || !File.Exists(RestoreFilePath))
             {
                 RestoreStatus = "Failed";
-                RestoreStatusColor = "#F44336";
+                RestoreStatusColor = "#EF4444";  // BrushDanger
                 LastRestoreSummary = "백업 파일을 먼저 선택하세요.";
                 return;
             }
@@ -107,7 +108,7 @@ namespace VMS.ViewModels
             if (result.Success)
             {
                 RestoreStatus = "Success";
-                RestoreStatusColor = "#4CAF50";
+                RestoreStatusColor = "#10B981";  // BrushSuccess
                 LastRestoreSummary = $"복원 {result.FilesRestored} 파일 · skip {result.FilesSkipped} 파일";
                 if (result.Manifest != null)
                 {
@@ -121,7 +122,7 @@ namespace VMS.ViewModels
             else
             {
                 RestoreStatus = "Failed";
-                RestoreStatusColor = "#F44336";
+                RestoreStatusColor = "#EF4444";  // BrushDanger
                 LastRestoreSummary = result.ErrorMessage ?? "(원인 불명)";
                 ManifestSummary = string.Empty;
             }

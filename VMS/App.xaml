@@ -4,6 +4,14 @@
              xmlns:converters="clr-namespace:VMS.Converters"
              ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- VMS.VisionSetup 의 통일 다크 윈도우 디자인 시스템 (색 토큰, 컨트롤,
+                     모던 버튼). VMS 의 독립 다이얼로그(AuditLogViewer / HealthCheck /
+                     BackupRestore / AutoBackupSettings) 들이 동일 스타일 사용. -->
+                <ResourceDictionary Source="/VMS.VisionSetup;component/Styles/WindowStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
         <!-- Converters -->
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
@@ -118,5 +126,6 @@
             <Setter Property="Maximum" Value="100"/>
             <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
         </Style>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

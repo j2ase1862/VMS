@@ -19,7 +19,8 @@ namespace VMS.ViewModels
         public ObservableCollection<HealthCheckItem> Items { get; } = new();
 
         [ObservableProperty] private string _overallStatus = string.Empty;
-        [ObservableProperty] private string _overallStatusColor = "#9E9E9E";
+        // WindowStyles.xaml 색 토큰 — BrushNeutral.
+        [ObservableProperty] private string _overallStatusColor = "#22303C";
         [ObservableProperty] private string _summaryLine = string.Empty;
         [ObservableProperty] private DateTime _lastRunAt;
 
@@ -70,13 +71,13 @@ namespace VMS.ViewModels
             }
         }
 
-        /// <summary>주어진 상태 enum 에 대응하는 색 헥스 — XAML 바인딩용.</summary>
+        /// <summary>주어진 상태 enum 에 대응하는 색 헥스 — WindowStyles.xaml 토큰과 일치.</summary>
         public static string StatusColor(HealthCheckStatus status) => status switch
         {
-            HealthCheckStatus.Pass => "#4CAF50",  // green
-            HealthCheckStatus.Warn => "#FF9800",  // orange
-            HealthCheckStatus.Fail => "#F44336",  // red
-            _ => "#9E9E9E"
+            HealthCheckStatus.Pass => "#10B981",  // BrushSuccess
+            HealthCheckStatus.Warn => "#F59E0B",  // BrushWarning
+            HealthCheckStatus.Fail => "#EF4444",  // BrushDanger
+            _ => "#22303C"                         // BrushNeutral
         };
     }
 }
