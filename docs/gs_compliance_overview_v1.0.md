@@ -242,14 +242,18 @@
 | 레시피 | `%LocalAppData%\BODA VISION AI\recipes\` |
 
 ### 5.2 외부 의존성
-| 라이브러리 | 버전 | 용도 |
-|---|---|---|
-| CommunityToolkit.Mvvm | 8.4.0 | MVVM 인프라 |
-| OpenCvSharp4 | 4.11.0 | 이미지 처리 |
-| BCrypt.Net-Next | 4.0.3 | 비밀번호 해시 |
-| Microsoft.Data.Sqlite | 8.0.0 | 사용자 DB |
-| Microsoft.AspNetCore.SignalR.Client | 8.x | 실시간 푸시 |
-| xunit | 2.9.0 | 단위 / 통합 테스트 |
+| 라이브러리 | 버전 | 용도 | 라이선스 |
+|---|---|---|---|
+| CommunityToolkit.Mvvm | 8.4.0 | MVVM 인프라 | MIT |
+| OpenCvSharp4 | 4.11.0 | 이미지 처리 | Apache 2.0 |
+| BCrypt.Net-Next | 4.0.3 | 비밀번호 해시 | BSD-2-Clause |
+| Microsoft.Data.Sqlite | 8.0.0 | 사용자 DB | MIT |
+| Microsoft.AspNetCore.SignalR.Client | 8.x | 실시간 푸시 | MIT |
+| xunit | 2.9.0 | 단위 / 통합 테스트 | MIT |
+
+전체 의존성 / 옵션 벤더 SDK 매트릭스 + 배포 정책 → `docs/gs_distribution_policy.md` (PR26).
+NOTICE 파일 (Apache 2.0 §4 표기 의무) → 루트 `NOTICE`.
+VMS 자체 라이선스 → 루트 `LICENSE` (DRAFT, 법무 검토 필요).
 
 ### 5.3 후속 강화 후보
 | 항목 | 권장 시점 | 비고 |
