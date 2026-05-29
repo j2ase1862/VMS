@@ -306,5 +306,199 @@ namespace VMS.Core.Tests.Security
             Assert.Equal(50, dto.Status.Length);
             Assert.Equal(500, dto.Message!.Length);
         }
+
+        // ─── WorkOrderDto.Sanitize (Phase 3c) ─────────────────────
+
+        [Fact]
+        public void WorkOrderDto_Sanitize_NegativeIds_ClampedToZero()
+        {
+            var dto = new WorkOrderDto
+            {
+                Id = -1, ProductId = -2, ClientId = -3, RecipeId = -4
+            };
+            dto.Sanitize();
+            Assert.Equal(0, dto.Id);
+            Assert.Equal(0, dto.ProductId);
+            Assert.Equal(0, dto.ClientId);
+            Assert.Equal(0, dto.RecipeId);
+        }
+
+        [Fact]
+        public void WorkOrderDto_Sanitize_NullableClientIndex_NullPassThrough()
+        {
+            var dto = new WorkOrderDto { ClientIndex = null };
+            dto.Sanitize();
+            Assert.Null(dto.ClientIndex);
+        }
+
+        [Fact]
+        public void WorkOrderDto_Sanitize_NullableClientIndex_OverMax_Clamped()
+        {
+            var dto = new WorkOrderDto { ClientIndex = 5_000_000 };
+            dto.Sanitize();
+            Assert.Equal(999_999, dto.ClientIndex);
+        }
+
+        [Fact]
+        public void WorkOrderDto_Sanitize_OverlongStrings_Truncated()
+        {
+            var dto = new WorkOrderDto
+            {
+                OrderNo = new string('A', 200),
+                ProductCode = new string('B', 200),
+                ProductName = new string('C', 500),
+                ClientName = new string('D', 500),
+                RecipeName = new string('E', 500),
+                Status = new string('F', 100),
+                Note = new string('G', 1000)
+            };
+            dto.Sanitize();
+            Assert.Equal(100, dto.OrderNo.Length);
+            Assert.Equal(100, dto.ProductCode!.Length);
+            Assert.Equal(200, dto.ProductName!.Length);
+            Assert.Equal(200, dto.ClientName!.Length);
+            Assert.Equal(200, dto.RecipeName!.Length);
+            Assert.Equal(50, dto.Status.Length);
+            Assert.Equal(500, dto.Note!.Length);
+        }
+
+        [Fact]
+        public void WorkOrderDto_Sanitize_NullStatus_DefaultsToPlanned()
+        {
+            var dto = new WorkOrderDto { Status = null! };
+            dto.Sanitize();
+            Assert.Equal("Planned", dto.Status);
+        }
+
+        // ─── LotDto.Sanitize (Phase 3c) ───────────────────────────
+
+        [Fact]
+        public void LotDto_Sanitize_NegativeCounts_ClampedToZero()
+        {
+            var dto = new LotDto
+            {
+                Id = -1, WorkOrderId = -2, Sequence = -3,
+                Quantity = -100, PassCount = -50, NgCount = -10
+            };
+            dto.Sanitize();
+            Assert.Equal(0, dto.Id);
+            Assert.Equal(0, dto.WorkOrderId);
+            Assert.Equal(0, dto.Sequence);
+            Assert.Equal(0, dto.Quantity);
+            Assert.Equal(0, dto.PassCount);
+            Assert.Equal(0, dto.NgCount);
+        }
+
+        [Fact]
+        public void LotDto_Sanitize_AbsurdQuantity_ClampedToMax()
+        {
+            var dto = new LotDto { Quantity = int.MaxValue, NgCount = 999_999_999 };
+            dto.Sanitize();
+            Assert.Equal(1_000_000, dto.Quantity);
+            Assert.Equal(1_000_000, dto.NgCount);
+        }
+
+        [Fact]
+        public void LotDto_Sanitize_OverlongStrings_Truncated()
+        {
+            var dto = new LotDto
+            {
+                LotNumber = new string('L', 200),
+                WorkOrderNo = new string('W', 200),
+                Status = new string('S', 100),
+                Note = new string('N', 1000)
+            };
+            dto.Sanitize();
+            Assert.Equal(100, dto.LotNumber.Length);
+            Assert.Equal(100, dto.WorkOrderNo!.Length);
+            Assert.Equal(50, dto.Status.Length);
+            Assert.Equal(500, dto.Note!.Length);
+        }
+
+        [Fact]
+        public void LotDto_Sanitize_NullStatus_DefaultsToOpen()
+        {
+            var dto = new LotDto { Status = null! };
+            dto.Sanitize();
+            Assert.Equal("Open", dto.Status);
+        }
+
+        // ─── RecipeSummaryDto.Sanitize (Phase 3c) ─────────────────
+
+        [Fact]
+        public void RecipeSummaryDto_Sanitize_NegativeId_ClampedToZero()
+        {
+            var dto = new RecipeSummaryDto { Id = -1, Name = "Recipe-A" };
+            dto.Sanitize();
+            Assert.Equal(0, dto.Id);
+            Assert.Equal("Recipe-A", dto.Name);
+        }
+
+        [Fact]
+        public void RecipeSummaryDto_Sanitize_OverlongName_Truncated()
+        {
+            var dto = new RecipeSummaryDto
+            {
+                Name = new string('N', 500),
+                Description = new string('D', 3000)
+            };
+            dto.Sanitize();
+            Assert.Equal(200, dto.Name.Length);
+            Assert.Equal(2000, dto.Description.Length);
+        }
+
+        // ─── RecipeParameterDto.Sanitize (Phase 3c) ───────────────
+
+        [Fact]
+        public void RecipeParameterDto_Sanitize_NegativeIds_ClampedToZero()
+        {
+            var dto = new RecipeParameterDto
+            {
+                Id = -1, RecipeId = -2, ParamCode = -3, ParamValue = 0.5
+            };
+            dto.Sanitize();
+            Assert.Equal(0, dto.Id);
+            Assert.Equal(0, dto.RecipeId);
+            Assert.Equal(0, dto.ParamCode);
+        }
+
+        [Fact]
+        public void RecipeParameterDto_Sanitize_ParamValueNaN_ClampedToMin()
+        {
+            var dto = new RecipeParameterDto { ParamValue = double.NaN };
+            dto.Sanitize();
+            Assert.Equal(-1e9, dto.ParamValue);
+        }
+
+        [Fact]
+        public void RecipeParameterDto_Sanitize_ParamValueAbsurd_ClampedToMax()
+        {
+            var dto = new RecipeParameterDto { ParamValue = 1e15 };
+            dto.Sanitize();
+            Assert.Equal(1e9, dto.ParamValue);
+        }
+
+        [Fact]
+        public void RecipeParameterDto_Sanitize_ParamValueValid_Preserved()
+        {
+            var dto = new RecipeParameterDto { ParamValue = 42.5 };
+            dto.Sanitize();
+            Assert.Equal(42.5, dto.ParamValue);
+        }
+
+        [Fact]
+        public void RecipeParameterDto_Sanitize_OverlongStrings_Truncated()
+        {
+            var dto = new RecipeParameterDto
+            {
+                Description = new string('D', 1000),
+                Category = new string('C', 500),
+                Unit = new string('U', 200)
+            };
+            dto.Sanitize();
+            Assert.Equal(500, dto.Description.Length);
+            Assert.Equal(100, dto.Category.Length);
+            Assert.Equal(50, dto.Unit.Length);
+        }
     }
 }

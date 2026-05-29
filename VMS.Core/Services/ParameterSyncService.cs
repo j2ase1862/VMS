@@ -100,6 +100,9 @@ namespace VMS.Core.Services
                 var json = await response.Content.ReadAsStringAsync();
                 var recipes = JsonSerializer.Deserialize<List<RecipeSummaryDto>>(json, JsonOptions) ?? new();
 
+                // Phase 3c — 레시피 드롭다운 표시 안정성.
+                foreach (var r in recipes) r.Sanitize();
+
                 // 변경 감지: ID 집합 비교
                 var oldIds = new HashSet<int>(Recipes.Select(r => r.Id));
                 var newIds = new HashSet<int>(recipes.Select(r => r.Id));
@@ -139,6 +142,9 @@ namespace VMS.Core.Services
 
                 if (parameters == null)
                     return false;
+
+                // Phase 3c — ParamValue 가 분기 / 임계값으로 흘러가기 전 정상화.
+                foreach (var p in parameters) p.Sanitize();
 
                 lock (_cacheLock)
                 {
