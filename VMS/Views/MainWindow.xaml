@@ -428,6 +428,17 @@
                                    FontSize="16"/>
                     </Button>
 
+                    <!-- Auto Backup Settings (Admin only) — 스케줄러 설정 -->
+                    <Button Style="{StaticResource IconButton}"
+                            Command="{Binding OpenAutoBackupSettingsCommand}"
+                            IsEnabled="{Binding CanManageUsers}"
+                            ToolTip="Auto Backup Settings (자동 백업 활성화 / 주기 / 보존)"
+                            Visibility="{Binding CanManageUsers, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBlock Text="&#xE823;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="16"/>
+                    </Button>
+
                     <Button Style="{StaticResource IconButton}"
                             Command="{Binding SaveLayoutCommand}"
                             ToolTip="Save Layout">

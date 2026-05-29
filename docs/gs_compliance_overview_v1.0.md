@@ -262,7 +262,7 @@ VMS 자체 라이선스 → 루트 `LICENSE` (DRAFT, 법무 검토 필요).
 | 감사 로그 SIEM 외부 전송 | 통합 모니터링 도입 시 | 운영 절차 문서화 완료 — `docs/gs_audit_siem_integration_guide.md` (PR25) |
 | 침입 탐지 — 비정상 로그인 패턴 알림 | 사이트 규모 확대 시 | SIEM 알람 룰로 대체 가능 (PR25 §6.2) |
 
-### 5.7 자동 백업 스케줄러 (PR31)
+### 5.7 자동 백업 스케줄러 (PR31 / PR32 UI)
 | 항목 | 값 / 동작 |
 |---|---|
 | 활성 조건 | `system_config.json` 의 `autoBackup.enabled = true` (기본 false) |
@@ -274,8 +274,9 @@ VMS 자체 라이선스 → 루트 `LICENSE` (DRAFT, 법무 검토 필요).
 | 마지막 실행 시각 | `last_backup_at.txt` (ISO 8601 UTC) — 재시작 후 잔여 시간 계산 |
 | 보존 정리 | 매 tick 종료 시 패턴 일치 + RetentionDays 초과분만 삭제, 사용자 임의 ZIP 보호 |
 | 감사 기록 | `System` · `AutoBackupStarted` (시작) + `Configuration` · `AutoBackup` (매 실행 Success / Failure) |
+| 설정 UI (PR32) | 메인 헤더의 Auto Backup Settings 버튼 — Admin 전용. JsonNode 격리 편집으로 system_config.json 의 다른 키 보존, 저장 시 `Configuration · AutoBackupConfigSaved` 감사. 변경은 VMS 재시작 후 적용 |
 | 운영 차단 | 없음 (best-effort) — tick 실패는 다음 주기에 재시도 |
-| 코드 경로 | `VMS.Core/Backup/AutoBackupOptions.cs`, `VMS.Core/Backup/AutoBackupScheduler.cs` |
+| 코드 경로 | `VMS.Core/Backup/AutoBackupOptions.cs`, `VMS.Core/Backup/AutoBackupScheduler.cs`, `VMS/Views/AutoBackupSettingsWindow.xaml`, `VMS/ViewModels/AutoBackupSettingsViewModel.cs` |
 
 ### 5.6 백업 / 복원 정책 (PR29 / PR30 UI)
 | 항목 | 값 / 동작 |
