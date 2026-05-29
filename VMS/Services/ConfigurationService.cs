@@ -1,3 +1,4 @@
+using VMS.Core.Security;
 using VMS.Interfaces;
 using VMS.Models;
 using VMS.PLC.Models;
@@ -100,11 +101,19 @@ namespace VMS.Services
             {
                 var json = JsonSerializer.Serialize(config, JsonOptions);
                 File.WriteAllText(_systemConfigPath, json);
+                AuditLogger.Instance.Log(
+                    AuditCategory.Configuration, "SaveSystemConfiguration", AuditOutcome.Success,
+                    source: nameof(ConfigurationService),
+                    details: $"PlcVendor={config.PlcVendor}, IoBoards={config.IoBoards?.Count ?? 0}, Cameras={config.Cameras?.Count ?? 0}");
                 return true;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error saving system config: {ex.Message}");
+                AuditLogger.Instance.Log(
+                    AuditCategory.Configuration, "SaveSystemConfiguration", AuditOutcome.Failure,
+                    source: nameof(ConfigurationService),
+                    details: $"{ex.GetType().Name}: {ex.Message}");
                 return false;
             }
         }
@@ -119,11 +128,18 @@ namespace VMS.Services
                 config.SavedAt = DateTime.UtcNow;
                 var json = JsonSerializer.Serialize(config, JsonOptions);
                 File.WriteAllText(_layoutConfigPath, json);
+                AuditLogger.Instance.Log(
+                    AuditCategory.Configuration, "SaveLayoutConfiguration", AuditOutcome.Success,
+                    source: nameof(ConfigurationService));
                 return true;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error saving layout config: {ex.Message}");
+                AuditLogger.Instance.Log(
+                    AuditCategory.Configuration, "SaveLayoutConfiguration", AuditOutcome.Failure,
+                    source: nameof(ConfigurationService),
+                    details: $"{ex.GetType().Name}: {ex.Message}");
                 return false;
             }
         }
@@ -159,11 +175,18 @@ namespace VMS.Services
             {
                 var json = JsonSerializer.Serialize(config, JsonOptions);
                 File.WriteAllText(_plcSignalConfigPath, json);
+                AuditLogger.Instance.Log(
+                    AuditCategory.Configuration, "SavePlcSignalConfiguration", AuditOutcome.Success,
+                    source: nameof(ConfigurationService));
                 return true;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error saving PLC signal config: {ex.Message}");
+                AuditLogger.Instance.Log(
+                    AuditCategory.Configuration, "SavePlcSignalConfiguration", AuditOutcome.Failure,
+                    source: nameof(ConfigurationService),
+                    details: $"{ex.GetType().Name}: {ex.Message}");
                 return false;
             }
         }

@@ -185,9 +185,13 @@ namespace VMS.Services
 
         public bool HasPermission(UserPermission permission)
         {
-            if (CurrentUser == null) return false;
+            if (CurrentUser == null)
+            {
+                // 비로그인 상태 — 모든 권한 거부. 빈도 높아 audit log 폭증 방지 차원에서 미기록.
+                return false;
+            }
 
-            return CurrentUser.Grade switch
+            bool granted = CurrentUser.Grade switch
             {
                 UserGrade.Admin => true,
                 UserGrade.Engineer => permission switch
@@ -203,6 +207,16 @@ namespace VMS.Services
                 },
                 _ => false
             };
+
+            // 권한 거부만 기록 — 거부는 드물고 보안 의의가 크지만 허용은 빈도 높아 폭증 우려.
+            if (!granted)
+            {
+                AuditLogger.Instance.Log(
+                    AuditCategory.Authorization, "PermissionDenied", AuditOutcome.Denied,
+                    userName: CurrentUser.Username, source: nameof(UserService),
+                    details: $"Permission={permission}, Grade={CurrentUser.Grade}");
+            }
+            return granted;
         }
 
         public bool CreateUser(string username, string password, string displayName, UserGrade grade)
