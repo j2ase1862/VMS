@@ -103,9 +103,20 @@ namespace VMS.Core.Security
         };
 
         private AuditLogger()
+            : this(Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "BODA VISION AI", "audit"))
         {
-            var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            _auditDir = Path.Combine(appData, "BODA VISION AI", "audit");
+        }
+
+        /// <summary>
+        /// 임의 디렉토리로 별도 인스턴스를 만들 수 있는 테스트 친화 ctor.
+        /// internal — VMS.Core.Tests 통합 테스트에서만 호출. 운영 코드는
+        /// 반드시 <see cref="Instance"/> 싱글톤 사용.
+        /// </summary>
+        internal AuditLogger(string auditDirectory)
+        {
+            _auditDir = auditDirectory;
             try
             {
                 Directory.CreateDirectory(_auditDir);
