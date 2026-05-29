@@ -39,7 +39,11 @@ namespace VMS.Services
         /// <summary>Web 파라미터 적용 서비스 (외부 주입, nullable)</summary>
         public static IParameterApplyService? ParameterApplyService { get; set; }
 
-        private InspectionService() { }
+        /// <summary>
+        /// internal — VMS.Tests 통합 테스트에서 격리된 인스턴스를 만들 때만 호출.
+        /// 운영 코드는 반드시 <see cref="Instance"/> 싱글톤 사용.
+        /// </summary>
+        internal InspectionService() { }
 
         /// <summary>
         /// Step ID별 캐싱된 도구/연결/정렬 데이터
