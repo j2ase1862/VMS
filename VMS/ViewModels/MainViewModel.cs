@@ -1110,6 +1110,22 @@ namespace VMS.ViewModels
             window.ShowDialog();
         }
 
+        /// <summary>
+        /// 백업 / 복원 윈도우 — Admin 권한 전용. system_config / users DB / recipes 의
+        /// ZIP 백업 + manifest 검증 복원. 모든 작업 Configuration 감사 이벤트.
+        /// </summary>
+        [RelayCommand]
+        private void OpenBackupRestore()
+        {
+            var vm = new BackupRestoreViewModel();
+            var window = new BackupRestoreWindow
+            {
+                DataContext = vm,
+                Owner = System.Windows.Application.Current.MainWindow
+            };
+            window.ShowDialog();
+        }
+
         [RelayCommand]
         private void SwitchUser()
         {
