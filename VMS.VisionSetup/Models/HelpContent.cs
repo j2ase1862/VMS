@@ -780,35 +780,63 @@ namespace VMS.VisionSetup.Models
             {
                 Name = "Branch (조건 분기)",
                 Description = "이전 노드의 결과(주로 Inspection 의 PASS / FAIL 또는 사용자 정의 변수) 를 기준으로 흐름을 두 가지로 나눕니다.\n\nTrue / False 출력 포트가 각각 다른 하위 노드로 연결됩니다. 외부 신호 기반 분기가 필요하면 InputCheck 를 대신 사용하세요.",
-                Usage = "Inspection 직후 표준 패턴:\nInspection → Branch\n  ├ True  → OutputAction(OK) → End\n  └ False → OutputAction(NG) → End\n\n다중 조건은 Branch 를 직렬로 연결하거나 InputCheck 와 조합."
+                Usage = "Inspection 직후 표준 패턴:\nInspection → Branch\n  ├ True  → OutputAction(OK) → End\n  └ False → OutputAction(NG) → End\n\n다중 조건은 Branch 를 직렬로 연결하거나 InputCheck 와 조합.",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["BranchOnAllCameras"] = "분기 판정 기준:\n• 체크 (활성): 등록된 모든 카메라의 Inspection 결과가 OK 일 때만 True. 한 카메라라도 NG 면 False.\n• 해제 (기본): 직전 Inspection 노드 1개의 결과로만 분기.\n\n다중 카메라 검사가 모두 통과해야 하는 라인에서는 활성, 단일 검사 흐름에서는 해제 권장."
+                }
             },
 
             ["SequenceNode_Delay"] = new ToolHelp
             {
                 Name = "Delay (시간 지연)",
                 Description = "지정한 시간(밀리초) 동안 흐름을 멈췄다가 다음 노드로 진행합니다.\n\n액추에이터 동작 완료 대기, 카메라 그랩 후 진동 안정화, 폴링 간격 확보 등에 사용됩니다.",
-                Usage = "진동 안정화:\nOutputAction(컨베이어 정지) → Delay(200ms) → Inspection\n\n폴링 간격:\nInputCheck → Delay(50ms) → 다시 InputCheck (루프)\n\n튜닝 가이드: 너무 짧으면 흔들림에 의한 검사 노이즈, 너무 길면 택트 타임 손실 — 현장에서 측정 후 결정."
+                Usage = "진동 안정화:\nOutputAction(컨베이어 정지) → Delay(200ms) → Inspection\n\n폴링 간격:\nInputCheck → Delay(50ms) → 다시 InputCheck (루프)\n\n튜닝 가이드: 너무 짧으면 흔들림에 의한 검사 노이즈, 너무 길면 택트 타임 손실 — 현장에서 측정 후 결정.",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["DelayMs"] = "지연 시간 (밀리초).\n• 50~100: 폴링 루프 간격\n• 200~500: 진동 안정화 / 액추에이터 응답 대기\n• 1000+: 컨베이어 큰 이송 대기\n\n0 이하 입력 시 즉시 통과 (효과 없음)."
+                }
             },
 
             ["SequenceNode_Repeat"] = new ToolHelp
             {
                 Name = "Repeat (반복 루프)",
                 Description = "내부 노드 그룹을 지정 횟수(N회) 만큼 또는 조건이 만족될 때까지 반복 실행합니다.\n\n다중 위치 검사, 재시도 로직, 폴링 루프(신호가 들어올 때까지 대기) 등에 사용됩니다. 무한 루프 방지를 위해 항상 최대 반복 횟수 또는 타임아웃을 설정하세요.",
-                Usage = "다중 위치 순회 검사:\nRepeat(N=4) {\n  StepChange(idx=loopIndex) → Inspection\n}\n\n재시도 로직:\nRepeat(N=3) {\n  Inspection → Branch(PASS) → break\n  Branch(FAIL) → Delay(500ms) → 재시도\n}"
+                Usage = "다중 위치 순회 검사:\nRepeat(N=4) {\n  StepChange(idx=loopIndex) → Inspection\n}\n\n재시도 로직:\nRepeat(N=3) {\n  Inspection → Branch(PASS) → break\n  Branch(FAIL) → Delay(500ms) → 재시도\n}",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["RepeatCount"] = "최대 반복 횟수.\n• 양수 (1 이상): 명시 횟수만큼 반복 후 종료.\n• -1: 무한 반복 — 폴링 루프나 상시 모니터링용. Reset / InputCheck timeout 으로 종료 보장 필요.\n\n0 이하의 다른 값은 의미 없음 (1 회만 실행)."
+                }
             },
 
             ["SequenceNode_RecipeChange"] = new ToolHelp
             {
                 Name = "Recipe Change (레시피 전환)",
                 Description = "현재 로드된 비전 레시피를 다른 레시피로 교체합니다.\n\n동일 라인에서 다품종 생산 시 제품 변경(작업지시 변경) 시점에 사용합니다. 전환 시 도구 인스턴스가 재초기화되므로 Fixture 기준점도 새로 설정됩니다 — 첫 검사는 reference 캡처용으로 활용.",
-                Usage = "품종 변경 자동화:\nStart → InputCheck(품종 변경 신호 X10) → RecipeChange(RecipeId=2) → Inspection\n\nWeb WorkOrder 연동 환경:\n작업지시 선택 시 시스템이 자동으로 권장 레시피로 RecipeChange 트리거 — 작업자 수동 개입 불필요."
+                Usage = "품종 변경 자동화:\nStart → InputCheck(품종 변경 신호 X10) → RecipeChange(RecipeId=2) → Inspection\n\nWeb WorkOrder 연동 환경:\n작업지시 선택 시 시스템이 자동으로 권장 레시피로 RecipeChange 트리거 — 작업자 수동 개입 불필요.",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["DeviceId"] = "Signal / Index 를 읽을 디바이스. PLC 또는 IO 보드.\nIO 보드 선택 시 Signal=채널 비트, Index=포트 번호로 해석.",
+                    ["RecipeSignalAddress"] = "(선택) 레시피 변경 트리거 신호 주소.\n• 설정 시: 신호 조건 만족할 때만 Index 를 읽어 레시피 교체.\n• 미설정 시: 매 통과 시 Index 를 읽어 자동 동기화.\n\n빈도 높은 폴링 환경에서는 신호 기반이 효율적.",
+                    ["RecipeSignalCheckMode"] = "신호 검사 모드 (InputCheck 와 동일):\n• BitOn / BitOff: 1 비트 검사\n• WordEquals / GreaterThan / LessThan: 워드 비교",
+                    ["RecipeSignalCompareValue"] = "Word 모드에서 비교할 정수값.",
+                    ["RecipeIndexAddress"] = "레시피 인덱스를 담은 워드 주소.\n• PLC: D-영역 워드 주소 (예: D210).\n• IO 보드: 포트 번호 (32-bit ReadPort).\n\n읽은 정수를 레시피 목록 인덱스로 사용 — 현재 레시피와 다르면 교체."
+                }
             },
 
             ["SequenceNode_StepChange"] = new ToolHelp
             {
                 Name = "Step Change (단계 변경)",
                 Description = "현재 레시피 내에서 다음 검사 단계(InspectionStep) 로 전환합니다.\n\n한 제품에 대해 다중 위치 / 다중 카메라 검사를 순차 수행할 때 단계 인덱스를 명시적으로 변경합니다. RecipeChange 와 달리 레시피는 유지되고 단계만 이동하므로 도구 인스턴스 / Fixture 기준이 보존됩니다.",
-                Usage = "멀티-스텝 순회:\nRepeat(N=3) {\n  StepChange(idx=0) → Inspection\n  StepChange(idx=1) → Inspection\n  StepChange(idx=2) → Inspection\n}\n\n분배 기반 다음 위치 이동:\nOutputAction(분배 액추에이터) → Delay(300ms) → StepChange → Inspection"
+                Usage = "멀티-스텝 순회:\nRepeat(N=3) {\n  StepChange(idx=0) → Inspection\n  StepChange(idx=1) → Inspection\n  StepChange(idx=2) → Inspection\n}\n\n분배 기반 다음 위치 이동:\nOutputAction(분배 액추에이터) → Delay(300ms) → StepChange → Inspection",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["DeviceId"] = "Signal / Index 를 읽을 디바이스. RecipeChange 와 동일 패턴.",
+                    ["StepSignalAddress"] = "(선택) 단계 변경 트리거 신호. RecipeChange.RecipeSignalAddress 와 같은 의미 — 만족 시에만 Index 를 읽어 단계 이동.",
+                    ["StepSignalCheckMode"] = "신호 검사 모드 (Bit/Word).",
+                    ["StepSignalCompareValue"] = "Word 모드 비교값.",
+                    ["StepIndexAddress"] = "단계 인덱스를 담은 워드 주소. 미설정 시 항상 0번 단계.\n\n예: Inspection 카메라가 한 라인에 3개 있고 PLC 가 현재 위치를 D211 워드에 0/1/2 로 기록하면, 이 주소로 단계 자동 이동."
+                }
             }
         };
 
