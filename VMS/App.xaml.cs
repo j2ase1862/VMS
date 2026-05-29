@@ -34,6 +34,18 @@ namespace VMS
             // 이 정책을 참조하므로 다른 서비스 초기화 전에 반드시 호출.
             SecurityOptions.LoadFromAppData();
 
+            // 감사 로그 보존 정책 — system_config.json 의 "auditRetentionDays" 키 (기본 365).
+            // 오늘 파일은 보존 기간 무관 유지. 정리 작업 자체도 AuditCategory.System 으로 기록.
+            try
+            {
+                var retentionDays = AuditLogRetention.LoadRetentionDaysFromAppData();
+                AuditLogRetention.CleanupOldFiles(AuditLogger.Instance.AuditDirectory, retentionDays);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] AuditLogRetention 실패 (best-effort): {ex.Message}");
+            }
+
             var splash = new SplashWindow();
             splash.Show();
 

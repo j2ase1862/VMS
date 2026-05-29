@@ -96,6 +96,9 @@ namespace VMS.Core.Security
         private readonly string _auditDir;
         private readonly object _writeLock = new();
 
+        /// <summary>현재 인스턴스가 기록 중인 디렉토리. 보존 정책 등 외부 도구가 참조.</summary>
+        public string AuditDirectory => _auditDir;
+
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
             WriteIndented = false,
