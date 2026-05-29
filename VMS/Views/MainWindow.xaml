@@ -417,6 +417,17 @@
                                    FontSize="16"/>
                     </Button>
 
+                    <!-- Backup / Restore (Admin only) — 운영 데이터 백업 -->
+                    <Button Style="{StaticResource IconButton}"
+                            Command="{Binding OpenBackupRestoreCommand}"
+                            IsEnabled="{Binding CanManageUsers}"
+                            ToolTip="Backup / Restore (시스템 / 사용자 / 레시피 백업)"
+                            Visibility="{Binding CanManageUsers, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBlock Text="&#xE74C;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="16"/>
+                    </Button>
+
                     <Button Style="{StaticResource IconButton}"
                             Command="{Binding SaveLayoutCommand}"
                             ToolTip="Save Layout">
