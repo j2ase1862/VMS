@@ -1,0 +1,97 @@
+BODA Vision AI
+Copyright (c) 2024-2026 VASIM Co., Ltd.
+
+This product includes software developed by third parties.
+The following components are licensed under the Apache License 2.0:
+
+================================================================
+OpenCvSharp4 / OpenCvSharp4.runtime.win / OpenCvSharp4.Extensions / OpenCvSharp4.WpfExtensions
+  Copyright (c) shimat
+  https://github.com/shimat/opencvsharp
+  Licensed under the Apache License, Version 2.0
+
+OpenCV
+  Copyright (c) OpenCV team
+  https://opencv.org
+  Licensed under the Apache License, Version 2.0
+  (Bundled with OpenCvSharp4.runtime.win as native libraries.)
+
+Tesseract.Net SDK / tessdata
+  Copyright (c) Charles Weld and Tesseract authors
+  https://github.com/charlesw/tesseract
+  Licensed under the Apache License, Version 2.0
+
+ZXing.Net
+  Copyright (c) Michael Jahn
+  https://github.com/micjahn/ZXing.Net
+  Licensed under the Apache License, Version 2.0
+
+================================================================
+The following components are licensed under the MIT License:
+
+CommunityToolkit.Mvvm
+  Copyright (c) .NET Foundation and Contributors
+  https://github.com/CommunityToolkit/dotnet
+  Licensed under the MIT License
+
+HelixToolkit.Wpf.SharpDX
+  Copyright (c) 2014 Helix Toolkit contributors
+  https://github.com/helix-toolkit/helix-toolkit
+  Licensed under the MIT License
+
+Microsoft.Data.Sqlite
+  Copyright (c) .NET Foundation and Contributors
+  https://github.com/dotnet/efcore
+  Licensed under the MIT License
+
+Microsoft.AspNetCore.SignalR.Client
+  Copyright (c) .NET Foundation and Contributors
+  https://github.com/dotnet/aspnetcore
+  Licensed under the MIT License
+
+Microsoft.ML.OnnxRuntime.Gpu
+  Copyright (c) Microsoft Corporation
+  https://github.com/microsoft/onnxruntime
+  Licensed under the MIT License
+  (May bundle NVIDIA cuDNN under separate NVIDIA license — see vendor terms.)
+
+System.Drawing.Common
+  Copyright (c) .NET Foundation and Contributors
+  Licensed under the MIT License
+
+xUnit / Microsoft.NET.Test.Sdk / xunit.runner.visualstudio
+  Copyright (c) .NET Foundation and Contributors / xUnit.net authors
+  Test-only — not distributed with runtime binaries.
+  Licensed under the MIT License
+
+================================================================
+The following components are licensed under the BSD-2-Clause License:
+
+BCrypt.Net-Next
+  Copyright (c) 2006 Damien Miller (djm@mindrot.org)
+  Copyright (c) Chris McKee
+  https://github.com/BcryptNet/bcrypt.net
+  Licensed under the BSD-2-Clause License
+
+================================================================
+Optional vendor SDK integrations — these are referenced only when the
+target build defines the corresponding compile symbol (MECHMIND_AVAILABLE,
+BASLER_AVAILABLE, MIL_AVAILABLE) and require separate vendor licenses
+acquired by the deploying party:
+
+Mech-Mind Mech-Eye SDK         — Mech-Mind Robotics
+Basler Pylon SDK               — Basler AG
+Matrox Imaging Library (MIL)   — Matrox Electronic Systems
+ADLink DASK / Advantech DAQNavi — respective vendors
+
+The VMS core distribution without these symbols is fully compliant with
+the open-source licenses above; integrating any vendor SDK requires the
+deploying party to obtain and accept the vendor's EULA separately.
+
+================================================================
+Full Apache License 2.0 text is available at:
+  https://www.apache.org/licenses/LICENSE-2.0
+Full MIT License text is available at:
+  https://opensource.org/licenses/MIT
+Full BSD-2-Clause License text is available at:
+  https://opensource.org/licenses/BSD-2-Clause

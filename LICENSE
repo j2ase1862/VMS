@@ -1,0 +1,71 @@
+BODA Vision AI — Proprietary Commercial License
+Copyright (c) 2024-2026 VASIM Co., Ltd. All rights reserved.
+
+==============================================================================
+DRAFT — REQUIRES LEGAL REVIEW BEFORE EXTERNAL DISTRIBUTION
+This file is a template. Final license terms, jurisdiction, and warranty
+disclaimers must be reviewed and approved by VASIM's legal counsel before
+shipping to any third party. See docs/gs_distribution_policy.md §1 for
+status and §3 for the EULA template that customers receive.
+==============================================================================
+
+1. GRANT OF LICENSE
+   Subject to the terms of a separately signed commercial agreement between
+   VASIM Co., Ltd. ("Licensor") and the customer ("Licensee"), Licensor
+   grants Licensee a non-exclusive, non-transferable, non-sublicensable
+   license to install and use the BODA Vision AI software ("Software") on
+   the number of machines and at the sites specified in the agreement.
+
+2. RESTRICTIONS
+   Licensee shall not:
+   a) copy, modify, reverse-engineer, decompile, or disassemble the Software,
+      except as expressly permitted by applicable law;
+   b) redistribute, sublicense, rent, lease, or sell the Software to any
+      third party;
+   c) remove or alter any proprietary notices, branding, or copyright marks;
+   d) use the Software to develop a competing product;
+   e) circumvent any license enforcement, audit, or anti-tamper mechanism.
+
+3. THIRD-PARTY COMPONENTS
+   The Software incorporates open-source components listed in the NOTICE
+   file accompanying this distribution. Those components remain governed
+   by their respective licenses (Apache 2.0, MIT, BSD-2-Clause). This
+   commercial license applies only to the VMS-original code authored by
+   Licensor and to the integration of the components into the Software
+   as a whole.
+
+   Optional vendor SDK integrations (Mech-Mind, Basler, Matrox, ADLink,
+   Advantech) are not included by default and, if enabled, require Licensee
+   to obtain and accept the respective vendor's EULA separately.
+
+4. INTELLECTUAL PROPERTY
+   Licensor retains all right, title, and interest in and to the Software,
+   including all intellectual property rights. No rights are granted to
+   Licensee other than those expressly stated in this License.
+
+5. WARRANTY DISCLAIMER
+   THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS
+   OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANT-
+   ABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+
+6. LIMITATION OF LIABILITY
+   IN NO EVENT SHALL LICENSOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+   INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING
+   LOSS OF PROFITS, BUSINESS INTERRUPTION, OR DATA LOSS) ARISING FROM
+   THE USE OR INABILITY TO USE THE SOFTWARE, EVEN IF ADVISED OF THE
+   POSSIBILITY OF SUCH DAMAGES.
+
+7. TERM AND TERMINATION
+   This License is effective until terminated. It will terminate
+   automatically without notice if Licensee fails to comply with any
+   provision. Upon termination, Licensee must cease all use of the
+   Software and destroy all copies in its possession.
+
+8. GOVERNING LAW
+   This License is governed by the laws of the Republic of Korea.
+   Disputes shall be resolved by the competent courts of Seoul, Korea.
+
+9. CONTACT
+   VASIM Co., Ltd.
+   [Address — to be filled in by legal team]
+   [Contact email — to be filled in]
