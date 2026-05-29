@@ -143,9 +143,11 @@ namespace VMS.Core.Services
         {
             try
             {
-                return JsonSerializer.Deserialize<WorkOrderProgressDto>(
+                var dto = JsonSerializer.Deserialize<WorkOrderProgressDto>(
                     elem.GetRawText(),
                     new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                // Phase 3b — SignalR push 도 외부 입력 → sanitize.
+                return dto?.Sanitize();
             }
             catch (Exception ex)
             {

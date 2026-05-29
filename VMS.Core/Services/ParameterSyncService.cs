@@ -309,6 +309,8 @@ namespace VMS.Core.Services
                             var progress = JsonSerializer.Deserialize<WorkOrderProgressDto>(woElem.GetRawText(), JsonOptions);
                             if (progress != null)
                             {
+                                // Phase 3b — 외부 응답 sanitization (clamp 수량 / truncate 문자열).
+                                progress.Sanitize();
                                 WorkOrderProgressed?.Invoke(progress);
                                 if (progress.Completed)
                                     WorkOrderCompleted?.Invoke(progress);

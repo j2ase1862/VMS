@@ -1,3 +1,5 @@
+using VMS.Core.Security;
+
 namespace VMS.Core.Models.ParameterSync
 {
     /// <summary>
@@ -24,5 +26,23 @@ namespace VMS.Core.Models.ParameterSync
         public double PassRate => ProducedQuantity > 0
             ? System.Math.Round((double)PassQuantity / ProducedQuantity * 100, 1)
             : 0;
+
+        /// <summary>
+        /// 외부 API 응답 sanitization — Phase 3b.
+        /// 음수 수량 / 비현실적 큰 값 / 과길이 문자열을 안전 범위로 정상화.
+        /// 상한 1,000,000 은 한 작업지시당 일반 생산량 상한을 충분히 초과 — 위반 시 외부 손상으로 판단.
+        /// </summary>
+        public WorkOrderProgressDto Sanitize()
+        {
+            const string ctx = nameof(WorkOrderProgressDto);
+            Id = DtoValidator.ClampInt(Id, 0, 999_999_999, nameof(Id), ctx);
+            PlannedQuantity = DtoValidator.ClampInt(PlannedQuantity, 0, 1_000_000, nameof(PlannedQuantity), ctx);
+            ProducedQuantity = DtoValidator.ClampInt(ProducedQuantity, 0, 1_000_000, nameof(ProducedQuantity), ctx);
+            PassQuantity = DtoValidator.ClampInt(PassQuantity, 0, 1_000_000, nameof(PassQuantity), ctx);
+            NgQuantity = DtoValidator.ClampInt(NgQuantity, 0, 1_000_000, nameof(NgQuantity), ctx);
+            OrderNo = DtoValidator.Truncate(OrderNo, 100, nameof(OrderNo), ctx) ?? "";
+            Status = DtoValidator.Truncate(Status, 50, nameof(Status), ctx) ?? "";
+            return this;
+        }
     }
 }
