@@ -254,10 +254,21 @@
 ### 5.3 후속 강화 후보
 | 항목 | 권장 시점 |
 |---|---|
-| 감사 로그 보존 정책 자동화 (90일/365일) | 운영 1년차 |
 | MSI 코드 서명 (Authenticode) | 외부 배포 시점 |
 | 침입 탐지 — 비정상 로그인 패턴 알림 | 사이트 규모 확대 시 |
 | 감사 로그 SIEM 외부 전송 | 통합 모니터링 도입 시 |
+
+### 5.4 감사 로그 보존 정책 (PR22)
+| 항목 | 값 / 동작 |
+|---|---|
+| 기본 보존 기간 | 365일 (GS 권장 1년 이력) |
+| 구성 키 | `system_config.json` 의 `auditRetentionDays` (int) |
+| 안전 범위 | [7, 3650] 으로 자동 clamp — 실수 / 손상 방지 |
+| 오늘 파일 | 보존 기간 무관 항상 유지 (진행 세션 보호) |
+| 정리 실행 시점 | VMS 시작 시 1회 (`App.xaml.cs:OnStartup`) |
+| 정리 행위 감사 | `AuditCategory.System` · `AuditLogRetention` 이벤트 — Deleted / OldestRemaining 기록 |
+| 패턴 외 파일 | YYYY-MM-DD.jsonl 외 파일은 절대 삭제하지 않음 |
+| 코드 경로 | `VMS.Core/Security/AuditLogRetention.cs` |
 
 ---
 
