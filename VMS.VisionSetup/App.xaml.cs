@@ -32,6 +32,9 @@ namespace VMS.VisionSetup
             // ── Chromeless 윈도우용 SystemCommands 클래스 와이드 바인딩 ──
             RegisterChromelessWindowCommands();
 
+            // ── 보안 정책 로드 (HttpClient / SignalR 초기화 전 필수) ──
+            VMS.Core.Security.SecurityOptions.LoadFromAppData();
+
             // ── ONNX Execution Provider 설정 로드 ──
             LoadAIConfig();
 

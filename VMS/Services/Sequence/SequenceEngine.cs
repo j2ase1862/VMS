@@ -94,6 +94,12 @@ namespace VMS.Services.Sequence
             _cameraResults.Clear();
             _lastInspectionOk = true;
 
+            VMS.Core.Security.AuditLogger.Instance.Log(
+                VMS.Core.Security.AuditCategory.SequenceControl, "SequenceStart",
+                VMS.Core.Security.AuditOutcome.Success,
+                source: nameof(SequenceEngine),
+                details: $"Sequence='{config.Name}', Nodes={config.Nodes.Count}");
+
             // Reset 신호 모니터링 설정
             using var resetCts = new CancellationTokenSource();
             using var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, resetCts.Token);
@@ -238,6 +244,12 @@ namespace VMS.Services.Sequence
 
                 IsRunning = false;
                 CancelAllWaiters();
+                VMS.Core.Security.AuditLogger.Instance.Log(
+                    VMS.Core.Security.AuditCategory.SequenceControl,
+                    WasReset ? "SequenceReset" : "SequenceStop",
+                    VMS.Core.Security.AuditOutcome.Success,
+                    source: nameof(SequenceEngine),
+                    details: $"Sequence='{config.Name}', AllInspectionsOk={AllInspectionsOk}");
             }
         }
 

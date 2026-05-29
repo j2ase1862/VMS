@@ -1,0 +1,90 @@
+name: Build & Test
+
+# WPF + 네이티브 비전(C++) 솔루션이므로 Windows runner 필수.
+# main / master 브랜치 push + 모든 PR 에 대해 빌드 + 테스트 실행.
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - 'feat/**'
+      - 'fix/**'
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  Configuration: Release
+  # 2026-06-02 이후 GitHub Actions 가 모든 JavaScript actions 를 Node.js 24 로 강제
+  # 실행. checkout@v4 / setup-dotnet@v4 / upload-artifact@v4 가 아직 Node 20 라 사전
+  # opt-in 으로 deprecation 안내 제거 + 2026-09-16 Node 20 제거 시 자동 동작 보장.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+  build:
+    name: Build & Test (Windows)
+    # windows-latest 가 2026-06-15 부터 windows-2025-vs2026 으로 자동 리다이렉트.
+    # 안내 메시지 제거 + 시점 일관성 위해 명시적 windows-2025 사용.
+    runs-on: windows-2025
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Prepare local NuGet cache folder
+        # nuget.config 의 `local-cache` 소스가 ./packages 로컬 폴더를 가리킨다.
+        # 로컬 개발자는 이 폴더에 오프라인 패키지를 두지만, CI runner 엔 폴더가 없어
+        # restore 가 NU1301 으로 실패한다. 빈 폴더만 만들어 두면 NuGet 이 정상적으로
+        # 다음 소스(nuget.org)에서 패키지를 가져온다.
+        run: New-Item -ItemType Directory -Force -Path packages | Out-Null
+        shell: pwsh
+
+      - name: Restore
+        run: dotnet restore VMS.sln
+
+      - name: Build
+        run: dotnet build VMS.sln --configuration ${{ env.Configuration }} --no-restore /p:TreatWarningsAsErrors=false
+
+      - name: Test
+        # `*Diagnostic*` 테스트는 PP-OCRv4 ONNX 모델 등 외부 가중치 파일을 요구하는
+        # 환경 의존적 진단용 테스트라 CI runner 에선 실행 불가 → 필터로 제외.
+        # 회귀 방어 단위 테스트(PlcAddress, GigEVision, ToolSerializer) 만 CI 실행.
+        run: >
+          dotnet test VMS.sln
+          --configuration ${{ env.Configuration }}
+          --no-build
+          --verbosity normal
+          --filter "FullyQualifiedName!~Diagnostic"
+          --logger "trx;LogFileName=test-results.trx"
+          --results-directory ${{ github.workspace }}/TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: ${{ github.workspace }}/TestResults/**/*.trx
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Summarize build
+        if: always()
+        shell: bash
+        run: |
+          echo "### Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Configuration: ${{ env.Configuration }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Runner: windows-latest" >> $GITHUB_STEP_SUMMARY
+          echo "- .NET: $(dotnet --version)" >> $GITHUB_STEP_SUMMARY

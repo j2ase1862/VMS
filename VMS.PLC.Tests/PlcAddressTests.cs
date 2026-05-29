@@ -140,5 +140,56 @@ namespace VMS.PLC.Tests
             var b = PlcAddress.Parse("D100", PlcVendor.Mitsubishi);
             Assert.Equal(a.ToKey(), b.ToKey());
         }
+
+        // ─── 보안 검증 — 입력 길이 / Offset 범위 (GS 인증 PR3) ──────────────────────
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public void Parse_NullOrEmpty_Throws(string? raw)
+        {
+            Assert.Throws<ArgumentException>(() => PlcAddress.Parse(raw!, PlcVendor.Mitsubishi));
+        }
+
+        [Fact]
+        public void Parse_RawTooLong_Throws()
+        {
+            // 64자 초과 입력은 즉시 거부 (DoS 방어). "D" + 64자 숫자 = 65자.
+            var tooLong = "D" + new string('1', 64);
+            Assert.Throws<ArgumentException>(() => PlcAddress.Parse(tooLong, PlcVendor.Mitsubishi));
+        }
+
+        [Fact]
+        public void Parse_Modbus_OffsetAtMax_OK()
+        {
+            // 65535 = 16-bit register space 정확히 상한 — 허용.
+            var addr = PlcAddress.Parse("4x65535", PlcVendor.Modbus);
+            Assert.Equal(65535, addr.Offset);
+        }
+
+        [Fact]
+        public void Parse_Modbus_OffsetOverMax_Throws()
+        {
+            // 65536 = 16-bit 초과 — 거부.
+            Assert.Throws<ArgumentException>(() =>
+                PlcAddress.Parse("4x65536", PlcVendor.Modbus));
+        }
+
+        [Fact]
+        public void Parse_Mitsubishi_OffsetOverMax_Throws()
+        {
+            // 16M 초과 — 거부. D16777216 = 0x1000000.
+            Assert.Throws<ArgumentException>(() =>
+                PlcAddress.Parse("D16777216", PlcVendor.Mitsubishi));
+        }
+
+        [Fact]
+        public void Parse_Siemens_OffsetOverMax_Throws()
+        {
+            // 2M 초과 — 거부. DBW2097152 = 0x200000.
+            Assert.Throws<ArgumentException>(() =>
+                PlcAddress.Parse("DB1.DBW2097152", PlcVendor.Siemens));
+        }
     }
 }

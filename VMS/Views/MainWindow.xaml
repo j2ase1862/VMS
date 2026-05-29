@@ -395,6 +395,17 @@
                                    FontSize="16"/>
                     </Button>
 
+                    <!-- Audit Log Viewer (Admin only) — GS 인증 이력 추적성 -->
+                    <Button Style="{StaticResource IconButton}"
+                            Command="{Binding OpenAuditLogViewerCommand}"
+                            IsEnabled="{Binding CanManageUsers}"
+                            ToolTip="Audit Log Viewer (감사 로그 조회)"
+                            Visibility="{Binding CanManageUsers, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBlock Text="&#xE9D9;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="16"/>
+                    </Button>
+
                     <Button Style="{StaticResource IconButton}"
                             Command="{Binding SaveLayoutCommand}"
                             ToolTip="Save Layout">

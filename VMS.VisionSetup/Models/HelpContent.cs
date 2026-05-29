@@ -629,6 +629,98 @@ namespace VMS.VisionSetup.Models
                 }
             },
 
+            // ─── 3D Measurement / Calibration / DL 추가 도구 ───
+
+            ["PlaneFitTool"] = new ToolHelp
+            {
+                Name = "Plane Fit (3D 평면 피팅)",
+                Description = "ROI 영역 내 3D 포인트들에서 평면 방정식(ax+by+cz+d=0)을 추출합니다.\n3D 카메라 / 라인스캔 / HeightMap 메타데이터의 PixelTo3D 변환을 사용해 2D ROI → 3D 포인트로 복원 후 피팅.",
+                Usage = "평탄도 / 기울기 / 단차 측정의 기준면을 만들 때 사용. Geometry3DTool 의 PointToPlaneDistance / PlaneToPlaneAngle 입력으로 연결.\n• 평탄도 검사: 평면 피팅 후 ROI 잔차의 RMS 평가\n• 기울기 측정: 기준 평면과의 PlaneToPlaneAngle\n• 단차 검사: 두 평면 사이 PointToPlaneDistance",
+                CognexEquivalent = "Cognex 3D Plane Tool (DS1000 / DSMax)",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["FitMethod"] = "피팅 알고리즘:\n• LeastSquares: 최소자승법 — 빠르지만 outlier 에 민감\n• RANSAC: 무작위 표본 합의 — outlier 강건 (기본 권장)",
+                    ["InlierThresholdMm"] = "RANSAC inlier 판정 임계값(mm). 평면에서 이 거리 이내 점을 inlier 로 분류.\n• 0.1: 정밀 (가공면 평탄도)\n• 0.5: 일반 (보드/케이스)\n• 2.0: 거친 표면",
+                    ["MaxIterations"] = "RANSAC 최대 반복. 클수록 정확하지만 느림. 기본 200~500 권장.",
+                    ["MinInlierRatio"] = "최소 inlier 비율 (0~1). 이 비율 미만이면 피팅 실패 처리. 데이터 노이즈 많을 때 낮춤."
+                }
+            },
+
+            ["Geometry3DTool"] = new ToolHelp
+            {
+                Name = "Geometry 3D (3D 기하 연산)",
+                Description = "PlaneFitTool / CaliperTool+HeightMap 등에서 추출한 3D 기하 요소(점/평면/직선) 간 관계를 계산합니다.\n점-점 거리, 점-평면 수직거리, 평면-평면 각도 등을 산출.",
+                Usage = "3D 측정 파이프라인의 마지막 단계 — 형상 추출 도구 둘의 결과를 연결해 정량 측정값 산출.\n예: PlaneFitTool(A) + PlaneFitTool(B) → Geometry3DTool(PlaneToPlaneAngle) → 두 평면 각도 측정.",
+                CognexEquivalent = "Cognex 3D Result Analysis Tool",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["Operation"] = "기하 연산 종류:\n• PointToPointDistance: 두 점 사이 유클리드 거리(mm)\n• PointToPlaneDistance: 점에서 평면까지 수직 거리\n• PlaneToPlaneAngle: 두 평면 사이 각도(도)\n• LineToLineAngle: 두 직선 사이 각도\n• PointToLineDistance: 점에서 직선까지 수직 거리",
+                    ["ExpectedValue"] = "목표 측정값. 결과가 ExpectedValue ± Tolerance 범위 내면 OK.",
+                    ["Tolerance"] = "허용 공차. 단위는 Operation 에 따라 mm 또는 도.",
+                    ["EnableJudgment"] = "Pass/Fail 판정 활성화. 비활성 시 측정값만 반환."
+                }
+            },
+
+            ["ImageRectifyTool"] = new ToolHelp
+            {
+                Name = "Image Rectify (이미지 보정)",
+                Description = "캘리브레이션 결과를 사용해 렌즈 왜곡 제거 / 이미지 정렬을 수행합니다.\n캘리브레이션이 로드되지 않으면 입력 이미지를 그대로 통과 (pass-through, 실패가 아님).",
+                Usage = "광각 렌즈로 촬영한 영상의 핀쿠션/배럴 왜곡 제거, Hand-Eye 캘리브레이션 기반 픽셀→월드 좌표 정렬 전처리에 사용. 측정 파이프라인 최상단에 배치 권장.",
+                CognexEquivalent = "CogIPOneImageTool (Calibration Apply), Cognex Calibration Wizard",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["Undistort"] = "렌즈 왜곡 제거 활성화. 캘리브레이션 시 측정된 distortion coefficient (k1, k2, p1, p2, k3) 사용.",
+                    ["UseCalibrationFile"] = "외부 캘리브레이션 파일 사용 여부. 비활성 시 시스템 전역 캘리브레이션(AppSetup) 사용.",
+                    ["CalibrationFilePath"] = "캘리브레이션 결과 파일 경로(.json). HandEye / 카메라 내부파라미터 포함.",
+                    ["InterpolationMode"] = "보정 시 픽셀 보간:\n• Nearest: 가장 빠름, 픽셀화 발생\n• Linear: 기본 균형\n• Cubic: 가장 부드러움, 느림"
+                }
+            },
+
+            ["SegmentationTool"] = new ToolHelp
+            {
+                Name = "Segmentation (Semantic 세그멘테이션)",
+                Description = "딥러닝 모델(U-Net 등 픽셀 단위 분류)로 이미지를 클래스별 마스크로 분할합니다.\n인스턴스 분할(같은 클래스 인스턴스를 분리)이 필요하면 YoloSegTool 사용.",
+                Usage = "결함 영역 픽셀 단위 분할, 배경/전경 분리, 클래스별 영역 면적 측정에 사용. 후속 BlobTool 로 결함 개수/크기 분석 또는 ResultTool 로 OK/NG 판정.",
+                CognexEquivalent = "ViDi Red Analyze, Cognex Deep Learning Segmentation",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["ModelPath"] = "ONNX 모델 파일 경로(.onnx). U-Net 등 출력이 [B, C, H, W] 형식의 픽셀별 클래스 확률.",
+                    ["InputSize"] = "추론 입력 크기(px). 학습 시 사용한 크기와 일치 권장. 256/512/1024 등.",
+                    ["ConfidenceThreshold"] = "픽셀별 클래스 확률 임계값. 이하 픽셀은 배경 처리. 기본 0.5.",
+                    ["TargetClassIndex"] = "관심 클래스 인덱스. 다중 클래스 모델에서 특정 클래스만 마스크로 출력.",
+                    ["DrawOverlay"] = "예측 마스크를 컬러 반투명 오버레이로 표시.",
+                    ["OverlayOpacity"] = "오버레이 투명도 (0~1)."
+                }
+            },
+
+            ["EnsembleTool"] = new ToolHelp
+            {
+                Name = "Ensemble (DL 앙상블 판정)",
+                Description = "여러 딥러닝 도구 결과를 결합해 과검(오탐) / 미검(누락)을 동시에 개선합니다.\nDetection + Anomaly 등 서로 다른 알고리즘의 판정을 AND/OR/Weighted/Consensus 로 합산.",
+                Usage = "단일 모델로 만족스러운 정확도가 안 나올 때 사용. 예: Detection 으로 정상 영역 검출 + Anomaly 로 미지 결함 캐치 → AND 로 둘 다 OK 일 때만 통과 (과검 최소화).\nResultTool 의 SourceResults 처럼 여러 DL 도구를 연결 입력으로 받음.",
+                CognexEquivalent = "Cognex Deep Learning Solution Builder (Multi-model)",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["Mode"] = "앙상블 판정 모드:\n• And: 모든 소스가 정상이어야 OK — 과검 최소화 (보수적 PASS)\n• Or: 하나라도 정상이면 OK — 미검 최소화 (보수적 NG)\n• Weighted: 가중치 합산 점수로 판정\n• Consensus: 모델 간 일치 시 고신뢰, 불일치는 검토 플래그",
+                    ["DetectionWeight"] = "Weighted 모드 — Detection 실패 점수에 곱할 가중치 (0~1).",
+                    ["AnomalyWeight"] = "Weighted 모드 — Anomaly 점수에 곱할 가중치 (0~1).",
+                    ["WeightedThreshold"] = "Weighted 모드 — 가중 합산 점수가 이 값 초과 시 NG 판정. 기본 0.5.",
+                    ["DrawOverlay"] = "각 소스 모델의 판정 결과를 색상별 영역으로 시각화."
+                }
+            },
+
+            // ─── Common Settings — 모든 도구가 공통으로 갖는 설정 ───
+            ["Common"] = new ToolHelp
+            {
+                Name = "Common Settings",
+                Description = "모든 비전 도구가 공통으로 갖는 기본 설정. Enabled / Use ROI 두 항목.",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["Enabled"] = "도구 활성화 여부. 비활성화하면 검사 파이프라인에서 이 도구는 건너뛰어집니다.\n\n사용 예:\n• 디버깅 시 특정 도구만 활성화해 영향 분리\n• 임시로 결함 검출 도구를 끄고 정렬 도구만 실행\n• 도구 효과를 켜고/끄며 결과 비교\n\n레시피 저장 시에도 유지 — 매번 다시 켤 필요 없음.",
+                    ["UseROI"] = "관심영역(Region of Interest, ROI) 사용 여부.\n\n• 활성화: 도구가 ROI 안의 픽셀만 처리. 검사 속도 ↑, 정확도 ↑ (배경 노이즈 영향 ↓).\n• 비활성화: 전체 이미지 처리.\n\n일부 도구는 자체 ROI 섹션(Training Region / Search Region 등)을 갖고 있어 이 공용 ROI 가 숨겨집니다."
+                }
+            },
+
             // ─── Sequence Editor Nodes — 노드 팔레트 호버 도움말 ───
             // key 규칙: "SequenceNode_{SequenceNodeType}" — NodePaletteItem.HelpKey 와 일치.
             // HelpIcon 의 ToolType binding 으로 lookup.
@@ -650,14 +742,31 @@ namespace VMS.VisionSetup.Models
             {
                 Name = "Input Check (입력 신호 검사)",
                 Description = "PLC 입력 어드레스(비트 / 워드) 의 값을 읽어 조건을 검사합니다. 검사 결과(True / False) 에 따라 다음 노드로 분기하거나 대기합니다.\n\nBranch 와의 차이: Branch 가 직전 노드 결과(주로 Inspection PASS/FAIL) 를 기준으로 한다면, InputCheck 는 외부 신호(센서·광커튼·작업자 버튼 등) 가 기준입니다.",
-                Usage = "예: '제품 도착 신호 X0 가 ON 인가?' 검사 후\n• True 가지 → Inspection (실제 검사 시작)\n• False 가지 → Delay(50ms) → 다시 InputCheck (폴링 루프)\n\n타임아웃 옵션으로 무한 대기 방지."
+                Usage = "예: '제품 도착 신호 X0 가 ON 인가?' 검사 후\n• True 가지 → Inspection (실제 검사 시작)\n• False 가지 → Delay(50ms) → 다시 InputCheck (폴링 루프)\n\n타임아웃 옵션으로 무한 대기 방지.",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["DeviceId"] = "검사할 외부 디바이스 식별자.\n• MainPLC: AppSetup 에서 설정된 기본 PLC\n• ADLink_* / Advantech_*: 등록된 IO 보드\n\nIO 보드 선택 시 주소 입력 형식이 채널 번호로 자동 전환됩니다.",
+                    ["PlcAddress"] = "PLC: 벤더별 어드레스 (예: X0, M100, D200, %MX0.0).\nIO 보드: 채널 번호 (예: 0, 5, 15).\n\n비트 디바이스 (X/Y/M 등) + Bit 모드 = 비트 검사,\n워드 디바이스 (D/W 등) + Word 모드 = 정수 비교.",
+                    ["CheckMode"] = "검사 모드:\n• BitOn: 비트가 1 일 때 True\n• BitOff: 비트가 0 일 때 True\n• WordEquals: 워드 == CompareValue\n• WordGreaterThan / WordLessThan: 비교 연산",
+                    ["CompareValue"] = "Word 모드에서 비교할 정수 값. Bit 모드에서는 사용하지 않습니다.",
+                    ["TimeoutMs"] = "조건이 만족될 때까지 대기할 최대 시간 (밀리초).\n• -1: 무제한 대기 (조건 만족까지 무한 폴링)\n• 1000: 1초 후 시간 초과 시 False 분기\n• 0: 한 번만 확인 후 즉시 결과 반환"
+                }
             },
 
             ["SequenceNode_OutputAction"] = new ToolHelp
             {
                 Name = "Output Action (출력 신호 발생)",
                 Description = "PLC 출력 어드레스에 비트 / 워드 값을 씁니다. 검사 결과 알림(OK / NG 램프), 분배기 액추에이터 트리거, 컨베이어 정지·재가동 등 외부 장비 제어에 사용됩니다.",
-                Usage = "결과 분기 직후 신호 발생:\nBranch.True  → OutputAction(Y0 = ON, OK 램프)\nBranch.False → OutputAction(Y1 = ON, NG 분배기)\n\n펄스 출력이 필요한 경우:\nOutputAction(ON) → Delay(100ms) → OutputAction(OFF) 으로 폭 제어."
+                Usage = "결과 분기 직후 신호 발생:\nBranch.True  → OutputAction(Y0 = ON, OK 램프)\nBranch.False → OutputAction(Y1 = ON, NG 분배기)\n\n펄스 출력이 필요한 경우:\nOutputAction(ON) → Delay(100ms) → OutputAction(OFF) 으로 폭 제어.",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["DeviceId"] = "출력 대상 디바이스. PLC 또는 IO 보드 선택 (InputCheck 와 동일).\nIO 보드는 Bit 출력만 지원합니다.",
+                    ["PlcAddress"] = "PLC: 벤더별 어드레스 / IO 보드: 채널 번호.\n워드 출력은 D/W 영역 등 워드 디바이스 사용.",
+                    ["OutputDataType"] = "쓸 데이터 타입:\n• Bit: 1 비트 (ON/OFF)\n• Int16 (Word): 16-bit 정수\n• Int32 (DWord): 32-bit 정수\n• Float: IEEE 754 32-bit 부동소수\n\nIO 보드는 Bit 만 가능 — 그 외는 자동으로 숨겨집니다.",
+                    ["BitValue"] = "Bit 모드에서 출력할 값 (True=ON, False=OFF).",
+                    ["WordValue"] = "Word / Int16 / Int32 모드에서 출력할 정수값.",
+                    ["FloatValue"] = "Float 모드에서 출력할 실수값. IEEE 754 형식으로 32-bit 메모리에 기록됩니다."
+                }
             },
 
             ["SequenceNode_Inspection"] = new ToolHelp
@@ -671,35 +780,63 @@ namespace VMS.VisionSetup.Models
             {
                 Name = "Branch (조건 분기)",
                 Description = "이전 노드의 결과(주로 Inspection 의 PASS / FAIL 또는 사용자 정의 변수) 를 기준으로 흐름을 두 가지로 나눕니다.\n\nTrue / False 출력 포트가 각각 다른 하위 노드로 연결됩니다. 외부 신호 기반 분기가 필요하면 InputCheck 를 대신 사용하세요.",
-                Usage = "Inspection 직후 표준 패턴:\nInspection → Branch\n  ├ True  → OutputAction(OK) → End\n  └ False → OutputAction(NG) → End\n\n다중 조건은 Branch 를 직렬로 연결하거나 InputCheck 와 조합."
+                Usage = "Inspection 직후 표준 패턴:\nInspection → Branch\n  ├ True  → OutputAction(OK) → End\n  └ False → OutputAction(NG) → End\n\n다중 조건은 Branch 를 직렬로 연결하거나 InputCheck 와 조합.",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["BranchOnAllCameras"] = "분기 판정 기준:\n• 체크 (활성): 등록된 모든 카메라의 Inspection 결과가 OK 일 때만 True. 한 카메라라도 NG 면 False.\n• 해제 (기본): 직전 Inspection 노드 1개의 결과로만 분기.\n\n다중 카메라 검사가 모두 통과해야 하는 라인에서는 활성, 단일 검사 흐름에서는 해제 권장."
+                }
             },
 
             ["SequenceNode_Delay"] = new ToolHelp
             {
                 Name = "Delay (시간 지연)",
                 Description = "지정한 시간(밀리초) 동안 흐름을 멈췄다가 다음 노드로 진행합니다.\n\n액추에이터 동작 완료 대기, 카메라 그랩 후 진동 안정화, 폴링 간격 확보 등에 사용됩니다.",
-                Usage = "진동 안정화:\nOutputAction(컨베이어 정지) → Delay(200ms) → Inspection\n\n폴링 간격:\nInputCheck → Delay(50ms) → 다시 InputCheck (루프)\n\n튜닝 가이드: 너무 짧으면 흔들림에 의한 검사 노이즈, 너무 길면 택트 타임 손실 — 현장에서 측정 후 결정."
+                Usage = "진동 안정화:\nOutputAction(컨베이어 정지) → Delay(200ms) → Inspection\n\n폴링 간격:\nInputCheck → Delay(50ms) → 다시 InputCheck (루프)\n\n튜닝 가이드: 너무 짧으면 흔들림에 의한 검사 노이즈, 너무 길면 택트 타임 손실 — 현장에서 측정 후 결정.",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["DelayMs"] = "지연 시간 (밀리초).\n• 50~100: 폴링 루프 간격\n• 200~500: 진동 안정화 / 액추에이터 응답 대기\n• 1000+: 컨베이어 큰 이송 대기\n\n0 이하 입력 시 즉시 통과 (효과 없음)."
+                }
             },
 
             ["SequenceNode_Repeat"] = new ToolHelp
             {
                 Name = "Repeat (반복 루프)",
                 Description = "내부 노드 그룹을 지정 횟수(N회) 만큼 또는 조건이 만족될 때까지 반복 실행합니다.\n\n다중 위치 검사, 재시도 로직, 폴링 루프(신호가 들어올 때까지 대기) 등에 사용됩니다. 무한 루프 방지를 위해 항상 최대 반복 횟수 또는 타임아웃을 설정하세요.",
-                Usage = "다중 위치 순회 검사:\nRepeat(N=4) {\n  StepChange(idx=loopIndex) → Inspection\n}\n\n재시도 로직:\nRepeat(N=3) {\n  Inspection → Branch(PASS) → break\n  Branch(FAIL) → Delay(500ms) → 재시도\n}"
+                Usage = "다중 위치 순회 검사:\nRepeat(N=4) {\n  StepChange(idx=loopIndex) → Inspection\n}\n\n재시도 로직:\nRepeat(N=3) {\n  Inspection → Branch(PASS) → break\n  Branch(FAIL) → Delay(500ms) → 재시도\n}",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["RepeatCount"] = "최대 반복 횟수.\n• 양수 (1 이상): 명시 횟수만큼 반복 후 종료.\n• -1: 무한 반복 — 폴링 루프나 상시 모니터링용. Reset / InputCheck timeout 으로 종료 보장 필요.\n\n0 이하의 다른 값은 의미 없음 (1 회만 실행)."
+                }
             },
 
             ["SequenceNode_RecipeChange"] = new ToolHelp
             {
                 Name = "Recipe Change (레시피 전환)",
                 Description = "현재 로드된 비전 레시피를 다른 레시피로 교체합니다.\n\n동일 라인에서 다품종 생산 시 제품 변경(작업지시 변경) 시점에 사용합니다. 전환 시 도구 인스턴스가 재초기화되므로 Fixture 기준점도 새로 설정됩니다 — 첫 검사는 reference 캡처용으로 활용.",
-                Usage = "품종 변경 자동화:\nStart → InputCheck(품종 변경 신호 X10) → RecipeChange(RecipeId=2) → Inspection\n\nWeb WorkOrder 연동 환경:\n작업지시 선택 시 시스템이 자동으로 권장 레시피로 RecipeChange 트리거 — 작업자 수동 개입 불필요."
+                Usage = "품종 변경 자동화:\nStart → InputCheck(품종 변경 신호 X10) → RecipeChange(RecipeId=2) → Inspection\n\nWeb WorkOrder 연동 환경:\n작업지시 선택 시 시스템이 자동으로 권장 레시피로 RecipeChange 트리거 — 작업자 수동 개입 불필요.",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["DeviceId"] = "Signal / Index 를 읽을 디바이스. PLC 또는 IO 보드.\nIO 보드 선택 시 Signal=채널 비트, Index=포트 번호로 해석.",
+                    ["RecipeSignalAddress"] = "(선택) 레시피 변경 트리거 신호 주소.\n• 설정 시: 신호 조건 만족할 때만 Index 를 읽어 레시피 교체.\n• 미설정 시: 매 통과 시 Index 를 읽어 자동 동기화.\n\n빈도 높은 폴링 환경에서는 신호 기반이 효율적.",
+                    ["RecipeSignalCheckMode"] = "신호 검사 모드 (InputCheck 와 동일):\n• BitOn / BitOff: 1 비트 검사\n• WordEquals / GreaterThan / LessThan: 워드 비교",
+                    ["RecipeSignalCompareValue"] = "Word 모드에서 비교할 정수값.",
+                    ["RecipeIndexAddress"] = "레시피 인덱스를 담은 워드 주소.\n• PLC: D-영역 워드 주소 (예: D210).\n• IO 보드: 포트 번호 (32-bit ReadPort).\n\n읽은 정수를 레시피 목록 인덱스로 사용 — 현재 레시피와 다르면 교체."
+                }
             },
 
             ["SequenceNode_StepChange"] = new ToolHelp
             {
                 Name = "Step Change (단계 변경)",
                 Description = "현재 레시피 내에서 다음 검사 단계(InspectionStep) 로 전환합니다.\n\n한 제품에 대해 다중 위치 / 다중 카메라 검사를 순차 수행할 때 단계 인덱스를 명시적으로 변경합니다. RecipeChange 와 달리 레시피는 유지되고 단계만 이동하므로 도구 인스턴스 / Fixture 기준이 보존됩니다.",
-                Usage = "멀티-스텝 순회:\nRepeat(N=3) {\n  StepChange(idx=0) → Inspection\n  StepChange(idx=1) → Inspection\n  StepChange(idx=2) → Inspection\n}\n\n분배 기반 다음 위치 이동:\nOutputAction(분배 액추에이터) → Delay(300ms) → StepChange → Inspection"
+                Usage = "멀티-스텝 순회:\nRepeat(N=3) {\n  StepChange(idx=0) → Inspection\n  StepChange(idx=1) → Inspection\n  StepChange(idx=2) → Inspection\n}\n\n분배 기반 다음 위치 이동:\nOutputAction(분배 액추에이터) → Delay(300ms) → StepChange → Inspection",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["DeviceId"] = "Signal / Index 를 읽을 디바이스. RecipeChange 와 동일 패턴.",
+                    ["StepSignalAddress"] = "(선택) 단계 변경 트리거 신호. RecipeChange.RecipeSignalAddress 와 같은 의미 — 만족 시에만 Index 를 읽어 단계 이동.",
+                    ["StepSignalCheckMode"] = "신호 검사 모드 (Bit/Word).",
+                    ["StepSignalCompareValue"] = "Word 모드 비교값.",
+                    ["StepIndexAddress"] = "단계 인덱스를 담은 워드 주소. 미설정 시 항상 0번 단계.\n\n예: Inspection 카메라가 한 라인에 3개 있고 PLC 가 현재 위치를 D211 워드에 0/1/2 로 기록하면, 이 주소로 단계 자동 이동."
+                }
             }
         };
 

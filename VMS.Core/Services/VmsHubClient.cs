@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 using VMS.Core.Models.ParameterSync;
+using VMS.Core.Security;
 
 namespace VMS.Core.Services
 {
@@ -35,6 +36,7 @@ namespace VMS.Core.Services
         public VmsHubClient(string webServerUrl)
         {
             _hubUrl = $"{webServerUrl.TrimEnd('/')}/hubs/vms-public";
+            InsecureUrlGuard.Check(webServerUrl, nameof(VmsHubClient));
         }
 
         public async Task StartAsync()
@@ -42,19 +44,32 @@ namespace VMS.Core.Services
             if (_disposed) return;
             if (_connection != null) return;
 
+            var allowSelfSigned = SecurityOptions.Current.AllowSelfSignedCert
+                               && SecurityOptions.Current.Mode == SecurityMode.Development;
+
             _connection = new HubConnectionBuilder()
                 .WithUrl(_hubUrl, options =>
                 {
-                    // dev 환경 self-signed cert 우회 — 운영에서는 사설 CA 권장
-                    options.HttpMessageHandlerFactory = handler =>
+                    // Development + sentinel: self-signed cert 우회.
+                    // Production 모드에서는 OS 기본 검증 사용 — 사설 CA / 정식 인증서 필수.
+                    if (allowSelfSigned)
                     {
-                        if (handler is System.Net.Http.HttpClientHandler clientHandler)
+                        options.HttpMessageHandlerFactory = handler =>
                         {
-                            clientHandler.ServerCertificateCustomValidationCallback =
-                                (_, _, _, _) => true;
-                        }
-                        return handler;
-                    };
+                            if (handler is System.Net.Http.HttpClientHandler clientHandler)
+                            {
+                                clientHandler.ServerCertificateCustomValidationCallback =
+                                    (request, cert, chain, errors) =>
+                                    {
+                                        // HttpClientPolicy 와 동일 정책 — localhost / 사설망에서만 우회.
+                                        var host = request?.RequestUri?.Host ?? string.Empty;
+                                        return IsLocalOrPrivateHost(host)
+                                            || errors == System.Net.Security.SslPolicyErrors.None;
+                                    };
+                            }
+                            return handler;
+                        };
+                    }
                 })
                 .WithAutomaticReconnect() // 기본 정책: 0s/2s/10s/30s 후 무한 재시도
                 .Build();
@@ -99,6 +114,29 @@ namespace VMS.Core.Services
                 // 실패해도 _connection 은 살아있어서 다음 호출에서 재시도 가능. 운영 정책상
                 // 단순화를 위해 별도 backoff 는 안 둠 — 사용자 액션 (재로그인 등) 시 재시도.
             }
+        }
+
+        /// <summary>
+        /// SignalR cert 우회를 사설망에 제한 — HttpClientPolicy 의 동일 로직 복제.
+        /// (VMS.Core 내부 헬퍼라 HttpClientPolicy 의 private 메서드 노출 회피.)
+        /// </summary>
+        private static bool IsLocalOrPrivateHost(string host)
+        {
+            if (string.IsNullOrEmpty(host)) return false;
+            if (host.Equals("localhost", StringComparison.OrdinalIgnoreCase)) return true;
+            if (host.EndsWith(".local", StringComparison.OrdinalIgnoreCase)) return true;
+            if (System.Net.IPAddress.TryParse(host, out var ip))
+            {
+                if (System.Net.IPAddress.IsLoopback(ip)) return true;
+                var b = ip.GetAddressBytes();
+                if (b.Length == 4)
+                {
+                    if (b[0] == 10) return true;
+                    if (b[0] == 172 && b[1] >= 16 && b[1] <= 31) return true;
+                    if (b[0] == 192 && b[1] == 168) return true;
+                }
+            }
+            return false;
         }
 
         private static WorkOrderProgressDto? ParseProgress(JsonElement elem)

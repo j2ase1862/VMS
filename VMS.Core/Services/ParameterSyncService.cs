@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using VMS.Core.Interfaces;
 using VMS.Core.Models.ParameterSync;
+using VMS.Core.Security;
 
 namespace VMS.Core.Services
 {
@@ -59,10 +60,8 @@ namespace VMS.Core.Services
         {
             _baseUrl = baseUrl.TrimEnd('/');
             _clientIndex = clientIndex;
-            _httpClient = new HttpClient
-            {
-                Timeout = TimeSpan.FromSeconds(10)
-            };
+            InsecureUrlGuard.Check(_baseUrl, nameof(ParameterSyncService));
+            _httpClient = HttpClientPolicy.Build(TimeSpan.FromSeconds(10));
 
             // C6: 검사 결과 업로드 실패 시 디스크에 보존 (프로세스 재시작 후에도 복구)
             _queueDir = Path.Combine(

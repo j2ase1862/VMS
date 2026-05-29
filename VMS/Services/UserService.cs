@@ -1,5 +1,10 @@
+using System.Diagnostics;
 using System.IO;
+using System.Runtime.Versioning;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using Microsoft.Data.Sqlite;
+using VMS.Core.Security;
 using VMS.Interfaces;
 using VMS.Models;
 
@@ -11,6 +16,7 @@ namespace VMS.Services
         public static UserService Instance => _instance.Value;
 
         private readonly string _connectionString;
+        private readonly string _dbPath;
 
         public User? CurrentUser { get; private set; }
         public bool IsLoggedIn => CurrentUser != null;
@@ -22,10 +28,49 @@ namespace VMS.Services
                 "BODA VISION AI");
             Directory.CreateDirectory(dbFolder);
 
-            var dbPath = Path.Combine(dbFolder, "BodaVision.db");
-            _connectionString = $"Data Source={dbPath}";
+            _dbPath = Path.Combine(dbFolder, "BodaVision.db");
+            _connectionString = $"Data Source={_dbPath}";
 
             InitializeDatabase();
+            ApplyDatabaseFileAcl();
+        }
+
+        /// <summary>
+        /// BodaVision.db 파일에 현재 사용자만 접근 가능한 ACL 적용.
+        /// 다른 로컬 사용자 / 그룹의 권한 제거 + 상속 차단. BCrypt 해시가 있긴 하지만
+        /// 파일 노출 자체를 차단해 오프라인 brute-force 시도까지 추가 방어선.
+        /// 실패 시(권한 부족 / 비 Windows) 디버그 로그만 — 앱 동작은 계속.
+        /// </summary>
+        [SupportedOSPlatform("windows")]
+        private void ApplyDatabaseFileAcl()
+        {
+            try
+            {
+                if (!File.Exists(_dbPath)) return;
+
+                var fileInfo = new FileInfo(_dbPath);
+                var security = fileInfo.GetAccessControl();
+
+                // 상속 차단 + 기존 명시 권한 제거 (보호 모드 활성).
+                security.SetAccessRuleProtection(isProtected: true, preserveInheritance: false);
+
+                var currentUser = WindowsIdentity.GetCurrent().User;
+                if (currentUser != null)
+                {
+                    security.SetOwner(currentUser);
+                    security.SetAccessRule(new FileSystemAccessRule(
+                        currentUser,
+                        FileSystemRights.FullControl,
+                        AccessControlType.Allow));
+                }
+                fileInfo.SetAccessControl(security);
+                Debug.WriteLine($"[UserService] DB ACL applied: owner-only on {_dbPath}");
+            }
+            catch (Exception ex)
+            {
+                // 권한 부족 등 — 운영 중 ACL 변경 실패는 치명적이지 않음 (앱 격리는 OS profile 폴더로 이미 1차 방어).
+                Debug.WriteLine($"[UserService] ApplyDatabaseFileAcl 실패: {ex.Message}");
+            }
         }
 
         private void InitializeDatabase()
@@ -66,6 +111,22 @@ namespace VMS.Services
 
         public bool Authenticate(string username, string password)
         {
+            // DoS / control-char 주입 방어 — 잘못된 입력은 DB 호출 없이 즉시 거부.
+            try
+            {
+                CredentialGuard.ValidateIdentifier(username, nameof(username));
+                CredentialGuard.ValidateSecret(password, nameof(password));
+            }
+            catch (ArgumentException ex)
+            {
+                Debug.WriteLine($"[UserService] Invalid auth input: {ex.Message}");
+                AuditLogger.Instance.Log(
+                    AuditCategory.Authentication, "UserLogin", AuditOutcome.Denied,
+                    userName: username, source: nameof(UserService),
+                    details: $"Invalid input: {ex.Message}");
+                return false;
+            }
+
             using var conn = new SqliteConnection(_connectionString);
             conn.Open();
 
@@ -74,10 +135,24 @@ namespace VMS.Services
             cmd.Parameters.AddWithValue("@username", username);
 
             using var reader = cmd.ExecuteReader();
-            if (!reader.Read()) return false;
+            if (!reader.Read())
+            {
+                AuditLogger.Instance.Log(
+                    AuditCategory.Authentication, "UserLogin", AuditOutcome.Failure,
+                    userName: username, source: nameof(UserService),
+                    details: "User not found");
+                return false;
+            }
 
             var hash = reader.GetString(reader.GetOrdinal("PasswordHash"));
-            if (!BCrypt.Net.BCrypt.Verify(password, hash)) return false;
+            if (!BCrypt.Net.BCrypt.Verify(password, hash))
+            {
+                AuditLogger.Instance.Log(
+                    AuditCategory.Authentication, "UserLogin", AuditOutcome.Denied,
+                    userName: username, source: nameof(UserService),
+                    details: "Password mismatch");
+                return false;
+            }
 
             CurrentUser = ReadUser(reader);
 
@@ -89,19 +164,34 @@ namespace VMS.Services
             updateCmd.ExecuteNonQuery();
 
             CurrentUser.LastLoginAt = DateTime.UtcNow;
+            AuditLogger.Instance.Log(
+                AuditCategory.Authentication, "UserLogin", AuditOutcome.Success,
+                userName: username, source: nameof(UserService),
+                details: $"Grade={CurrentUser.Grade}");
             return true;
         }
 
         public void Logout()
         {
+            var loggedOutUser = CurrentUser?.Username;
             CurrentUser = null;
+            if (!string.IsNullOrEmpty(loggedOutUser))
+            {
+                AuditLogger.Instance.Log(
+                    AuditCategory.Authentication, "UserLogout", AuditOutcome.Success,
+                    userName: loggedOutUser, source: nameof(UserService));
+            }
         }
 
         public bool HasPermission(UserPermission permission)
         {
-            if (CurrentUser == null) return false;
+            if (CurrentUser == null)
+            {
+                // 비로그인 상태 — 모든 권한 거부. 빈도 높아 audit log 폭증 방지 차원에서 미기록.
+                return false;
+            }
 
-            return CurrentUser.Grade switch
+            bool granted = CurrentUser.Grade switch
             {
                 UserGrade.Admin => true,
                 UserGrade.Engineer => permission switch
@@ -117,10 +207,37 @@ namespace VMS.Services
                 },
                 _ => false
             };
+
+            // 권한 거부만 기록 — 거부는 드물고 보안 의의가 크지만 허용은 빈도 높아 폭증 우려.
+            if (!granted)
+            {
+                AuditLogger.Instance.Log(
+                    AuditCategory.Authorization, "PermissionDenied", AuditOutcome.Denied,
+                    userName: CurrentUser.Username, source: nameof(UserService),
+                    details: $"Permission={permission}, Grade={CurrentUser.Grade}");
+            }
+            return granted;
         }
 
         public bool CreateUser(string username, string password, string displayName, UserGrade grade)
         {
+            // 신규 사용자 생성 시점에 강한 입력 검증 — 최소 길이 4 (산업 운영자 기준, 정책 변경 시 조정).
+            try
+            {
+                CredentialGuard.ValidateIdentifier(username, nameof(username));
+                CredentialGuard.ValidateSecret(password, nameof(password), minLength: 4);
+                CredentialGuard.ValidateIdentifier(displayName, nameof(displayName));
+            }
+            catch (ArgumentException ex)
+            {
+                Debug.WriteLine($"[UserService] CreateUser invalid input: {ex.Message}");
+                AuditLogger.Instance.Log(
+                    AuditCategory.UserManagement, "CreateUser", AuditOutcome.Denied,
+                    userName: CurrentUser?.Username, source: nameof(UserService),
+                    details: $"Target='{username}', Invalid input: {ex.Message}");
+                return false;
+            }
+
             try
             {
                 using var conn = new SqliteConnection(_connectionString);
@@ -136,10 +253,18 @@ namespace VMS.Services
                 cmd.Parameters.AddWithValue("@grade", (int)grade);
                 cmd.Parameters.AddWithValue("@created", DateTime.UtcNow.ToString("o"));
                 cmd.ExecuteNonQuery();
+                AuditLogger.Instance.Log(
+                    AuditCategory.UserManagement, "CreateUser", AuditOutcome.Success,
+                    userName: CurrentUser?.Username, source: nameof(UserService),
+                    details: $"Created='{username}', Grade={grade}");
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                AuditLogger.Instance.Log(
+                    AuditCategory.UserManagement, "CreateUser", AuditOutcome.Failure,
+                    userName: CurrentUser?.Username, source: nameof(UserService),
+                    details: $"Target='{username}', {ex.GetType().Name}: {ex.Message}");
                 return false;
             }
         }

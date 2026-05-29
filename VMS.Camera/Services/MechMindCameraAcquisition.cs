@@ -54,7 +54,6 @@ namespace VMS.Camera.Services
         }
 
         private Models.CameraInfo? _camera;
-        private Profiler? _profiler;
         private MechCamera? _mechCamera;
         private bool _disposed;
 

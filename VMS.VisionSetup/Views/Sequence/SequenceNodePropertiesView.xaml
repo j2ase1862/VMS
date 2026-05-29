@@ -5,6 +5,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:local="clr-namespace:VMS.VisionSetup.Views.Sequence"
              xmlns:seq="clr-namespace:VMS.PLC.Models.Sequence;assembly=VMS.PLC"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls"
              mc:Ignorable="d"
              d:DesignWidth="280" d:DesignHeight="500">
 
@@ -180,7 +181,11 @@
 
             <!-- InputCheck 설정 -->
             <StackPanel Visibility="{Binding SelectedNode.NodeType, Converter={StaticResource NodeTypeVisibilityConverter}, ConverterParameter=InputCheck}">
-                <TextBlock Text="── Input Check ──" Foreground="#2196F3" FontWeight="SemiBold" Margin="0,10,0,4"/>
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,4">
+                    <TextBlock Text="── Input Check ──" Foreground="#2196F3" FontWeight="SemiBold"/>
+                    <controls:HelpIcon ToolType="SequenceNode_InputCheck"
+                                       Margin="8,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
                 <!-- 디바이스 선택 — IsEditable=False + SelectedValuePath=DeviceId 패턴.
                      커스텀 ComboStyle 템플릿에 PART_EditableTextBox 가 없어 editable 모드 시각 갱신
                      안 됨 — SelectedValue 바인딩으로 시각 피드백 정상화. -->
@@ -242,7 +247,11 @@
 
             <!-- OutputAction 설정 -->
             <StackPanel Visibility="{Binding SelectedNode.NodeType, Converter={StaticResource NodeTypeVisibilityConverter}, ConverterParameter=OutputAction}">
-                <TextBlock Text="── Output Action ──" Foreground="#FF9800" FontWeight="SemiBold" Margin="0,10,0,4"/>
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,4">
+                    <TextBlock Text="── Output Action ──" Foreground="#FF9800" FontWeight="SemiBold"/>
+                    <controls:HelpIcon ToolType="SequenceNode_OutputAction"
+                                       Margin="8,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
                 <!-- 디바이스 선택 — IO 보드 (ADLink/Advantech) 선택 시 Bit 만 노출
                      (Word/Float 은 보드가 지원 안함 — Bit 강제). SelectedValuePath 패턴 적용. -->
                 <TextBlock Text="디바이스" Style="{StaticResource LabelStyle}"/>
@@ -311,7 +320,11 @@
 
             <!-- Inspection 설정 -->
             <StackPanel Visibility="{Binding SelectedNode.NodeType, Converter={StaticResource NodeTypeVisibilityConverter}, ConverterParameter=Inspection}">
-                <TextBlock Text="── Inspection ──" Foreground="#9C27B0" FontWeight="SemiBold" Margin="0,10,0,4"/>
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,4">
+                    <TextBlock Text="── Inspection ──" Foreground="#9C27B0" FontWeight="SemiBold"/>
+                    <controls:HelpIcon ToolType="SequenceNode_Inspection"
+                                       Margin="8,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
                 <TextBlock Text="카메라 ID" Style="{StaticResource LabelStyle}"/>
                 <ComboBox ItemsSource="{Binding AvailableCameraIds}"
                           SelectedItem="{Binding SelectedNode.Config.CameraId}"
@@ -320,7 +333,11 @@
 
             <!-- RecipeChange 설정 -->
             <StackPanel Visibility="{Binding SelectedNode.NodeType, Converter={StaticResource NodeTypeVisibilityConverter}, ConverterParameter=RecipeChange}">
-                <TextBlock Text="── Recipe Change ──" Foreground="#E91E63" FontWeight="SemiBold" Margin="0,10,0,4"/>
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,4">
+                    <TextBlock Text="── Recipe Change ──" Foreground="#E91E63" FontWeight="SemiBold"/>
+                    <controls:HelpIcon ToolType="SequenceNode_RecipeChange"
+                                       Margin="8,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
                 <!-- 디바이스 선택 — Signal/Index 둘 다 이 디바이스에서 읽음.
                      IO 보드 선택 시 Signal=채널 비트, Index=포트 번호로 해석. -->
                 <TextBlock Text="디바이스" Style="{StaticResource LabelStyle}"/>
@@ -359,7 +376,11 @@
 
             <!-- StepChange 설정 -->
             <StackPanel Visibility="{Binding SelectedNode.NodeType, Converter={StaticResource NodeTypeVisibilityConverter}, ConverterParameter=StepChange}">
-                <TextBlock Text="── Step Change ──" Foreground="#00897B" FontWeight="SemiBold" Margin="0,10,0,4"/>
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,4">
+                    <TextBlock Text="── Step Change ──" Foreground="#00897B" FontWeight="SemiBold"/>
+                    <controls:HelpIcon ToolType="SequenceNode_StepChange"
+                                       Margin="8,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
                 <!-- 디바이스 선택 — Signal/Index 둘 다 이 디바이스에서 읽음. -->
                 <TextBlock Text="디바이스" Style="{StaticResource LabelStyle}"/>
                 <ComboBox ItemsSource="{Binding DataContext.AvailableDevices, RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -397,7 +418,11 @@
 
             <!-- Delay 설정 -->
             <StackPanel Visibility="{Binding SelectedNode.NodeType, Converter={StaticResource NodeTypeVisibilityConverter}, ConverterParameter=Delay}">
-                <TextBlock Text="── Delay ──" Foreground="#9E9E9E" FontWeight="SemiBold" Margin="0,10,0,4"/>
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,4">
+                    <TextBlock Text="── Delay ──" Foreground="#9E9E9E" FontWeight="SemiBold"/>
+                    <controls:HelpIcon ToolType="SequenceNode_Delay"
+                                       Margin="8,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
                 <TextBlock Text="지연 시간 (ms)" Style="{StaticResource LabelStyle}"/>
                 <TextBox Text="{Binding SelectedNode.Config.DelayMs, UpdateSourceTrigger=PropertyChanged}"
                          Style="{StaticResource InputStyle}"/>
@@ -405,7 +430,11 @@
 
             <!-- Repeat 설정 -->
             <StackPanel Visibility="{Binding SelectedNode.NodeType, Converter={StaticResource NodeTypeVisibilityConverter}, ConverterParameter=Repeat}">
-                <TextBlock Text="── Repeat ──" Foreground="#00BCD4" FontWeight="SemiBold" Margin="0,10,0,4"/>
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,4">
+                    <TextBlock Text="── Repeat ──" Foreground="#00BCD4" FontWeight="SemiBold"/>
+                    <controls:HelpIcon ToolType="SequenceNode_Repeat"
+                                       Margin="8,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
                 <TextBlock Text="반복 횟수 (-1=무한)" Style="{StaticResource LabelStyle}"/>
                 <TextBox Text="{Binding SelectedNode.Config.RepeatCount, UpdateSourceTrigger=PropertyChanged}"
                          Style="{StaticResource InputStyle}"/>
@@ -413,7 +442,11 @@
 
             <!-- Branch 설정 -->
             <StackPanel Visibility="{Binding SelectedNode.NodeType, Converter={StaticResource NodeTypeVisibilityConverter}, ConverterParameter=Branch}">
-                <TextBlock Text="── Branch ──" Foreground="#FFEB3B" FontWeight="SemiBold" Margin="0,10,0,4"/>
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,4">
+                    <TextBlock Text="── Branch ──" Foreground="#FFEB3B" FontWeight="SemiBold"/>
+                    <controls:HelpIcon ToolType="SequenceNode_Branch"
+                                       Margin="8,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
                 <CheckBox IsChecked="{Binding SelectedNode.Config.BranchOnAllCameras}"
                           Content="전체 카메라 결과로 판정" Style="{StaticResource CheckStyle}"/>
                 <TextBlock Text="체크: 모든 카메라 OK일 때 True&#x0a;해제: 직전 Inspection 결과로 분기"

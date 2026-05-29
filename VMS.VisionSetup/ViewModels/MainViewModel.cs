@@ -868,6 +868,10 @@ namespace VMS.VisionSetup.ViewModels
             LoadCurrentFolderImage();
         }
 
+        // async void — RelayCommand(NavigatePrevious/Next)/LoadImageFolder 가 동기 메서드라
+        // 시그니처를 async Task 로 바꾸려면 ICommand 체인 전반을 AsyncRelayCommand 로 교체
+        // 해야 함 (큰 변경). 따라서 async void 를 유지하되 **단일 try/catch 로 모든 await
+        // 까지 감싸** 프로세스 종료 위험 차단.
         private async void LoadCurrentFolderImage()
         {
             try
@@ -878,25 +882,26 @@ namespace VMS.VisionSetup.ViewModels
                     CurrentImage = mat;
                     SelectedDisplayMode = ImageDisplayMode.OriginalImage;
                 }
+
+                OnPropertyChanged(nameof(HasImageFolder));
+                OnPropertyChanged(nameof(ImageFolderInfo));
+                PreviousImageCommand.NotifyCanExecuteChanged();
+                NextImageCommand.NotifyCanExecuteChanged();
+
+                // 모드에 따라 자동 실행
+                if (FolderNavigationMode == FolderNavigationMode.AutoRunAll && RunAllCommand.CanExecute(null))
+                {
+                    await RunAllToolsAsync();
+                }
+                else if (FolderNavigationMode == FolderNavigationMode.AutoRunSelected && RunSelectedCommand.CanExecute(null))
+                {
+                    RunSelectedTool();
+                }
             }
             catch (Exception ex)
             {
-                StatusMessage = $"이미지 로드 실패: {ex.Message}";
-            }
-
-            OnPropertyChanged(nameof(HasImageFolder));
-            OnPropertyChanged(nameof(ImageFolderInfo));
-            PreviousImageCommand.NotifyCanExecuteChanged();
-            NextImageCommand.NotifyCanExecuteChanged();
-
-            // 모드에 따라 자동 실행
-            if (FolderNavigationMode == FolderNavigationMode.AutoRunAll && RunAllCommand.CanExecute(null))
-            {
-                await RunAllToolsAsync();
-            }
-            else if (FolderNavigationMode == FolderNavigationMode.AutoRunSelected && RunSelectedCommand.CanExecute(null))
-            {
-                RunSelectedTool();
+                StatusMessage = $"이미지 로드/실행 실패: {ex.Message}";
+                System.Diagnostics.Debug.WriteLine($"[MainViewModel.LoadCurrentFolderImage] {ex}");
             }
         }
 

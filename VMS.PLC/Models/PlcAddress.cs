@@ -20,10 +20,20 @@ namespace VMS.PLC.Models
 
         /// <summary>
         /// Parse a raw address string into a PlcAddress based on vendor format.
+        /// 파싱 결과의 Offset 범위를 벤더별 합리적 상한으로 검증하여
+        /// 비정상적으로 큰 Offset (음수 / 메모리 폭탄 / 오버플로우) 을 차단.
         /// </summary>
         public static PlcAddress Parse(string rawAddress, PlcVendor vendor)
         {
-            return vendor switch
+            // raw 입력 길이 상한 — 비현실적 PLC 주소 문자열 즉시 거부 (DoS 방어).
+            const int MaxRawLength = 64;
+            if (string.IsNullOrWhiteSpace(rawAddress))
+                throw new System.ArgumentException("PLC 주소가 비어 있습니다.", nameof(rawAddress));
+            if (rawAddress.Length > MaxRawLength)
+                throw new System.ArgumentException(
+                    $"PLC 주소가 너무 깁니다 (최대 {MaxRawLength}자): '{rawAddress}'", nameof(rawAddress));
+
+            var result = vendor switch
             {
                 PlcVendor.Mitsubishi => ParseMitsubishi(rawAddress),
                 PlcVendor.Siemens => ParseSiemens(rawAddress),
@@ -32,6 +42,32 @@ namespace VMS.PLC.Models
                 PlcVendor.Modbus => ParseModbus(rawAddress),
                 _ => ParseGeneric(rawAddress)
             };
+            EnsureOffsetInRange(result, vendor);
+            return result;
+        }
+
+        /// <summary>
+        /// PLC 주소 Offset 범위 검증 — 음수 / 비현실적 메모리 인덱스 차단.
+        /// 산업 PLC 의 공통 상한 기준이며, 모델별 정확한 한계는 더 좁힐 수 있음.
+        /// </summary>
+        private static void EnsureOffsetInRange(PlcAddress addr, PlcVendor vendor)
+        {
+            if (addr.Offset < 0)
+                throw new System.ArgumentException(
+                    $"PLC Offset 이 음수입니다 ({addr.Offset}). 주소='{addr.RawAddress}', 벤더={vendor}");
+
+            int max = vendor switch
+            {
+                PlcVendor.Modbus => 0xFFFF,        // 16-bit register address space (65535)
+                PlcVendor.Siemens => 0x1FFFFF,     // 약 2M (대형 DB 한계)
+                PlcVendor.Mitsubishi => 0xFFFFFF,  // 약 16M (Q series 최대)
+                PlcVendor.LS => 0xFFFFFF,
+                PlcVendor.Omron => 0xFFFFFF,
+                _ => int.MaxValue / 2              // 알 수 없는 벤더 — 보수적 상한
+            };
+            if (addr.Offset > max)
+                throw new System.ArgumentException(
+                    $"PLC Offset {addr.Offset} 가 벤더 {vendor} 의 허용 범위 [0, {max}] 를 벗어났습니다. 주소='{addr.RawAddress}'");
         }
 
         /// <summary>

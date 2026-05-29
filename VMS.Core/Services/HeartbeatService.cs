@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using VMS.Core.Security;
 
 namespace VMS.Core.Services
 {
@@ -58,10 +59,8 @@ namespace VMS.Core.Services
             _swName = EscapeJson(swName);
             _heartbeatIntervalSeconds = 5;
 
-            _httpClient = new HttpClient
-            {
-                Timeout = TimeSpan.FromSeconds(5)
-            };
+            InsecureUrlGuard.Check(_webServerUrl, nameof(HeartbeatService));
+            _httpClient = HttpClientPolicy.Build(TimeSpan.FromSeconds(5));
 
             _heartbeatJson = $"{{\"clientIndex\":{_clientIndex},\"hostName\":\"{_hostName}\",\"swName\":\"{_swName}\"}}";
         }
@@ -272,7 +271,7 @@ namespace VMS.Core.Services
             {
                 try
                 {
-                    using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(2) };
+                    using var client = HttpClientPolicy.Build(TimeSpan.FromSeconds(2));
                     var json = $"{{\"clientIndex\":{_clientIndex}}}";
                     var content = new StringContent(json, Encoding.UTF8, "application/json");
                     client.PostAsync($"{_webServerUrl}/api/clients/disconnect", content)

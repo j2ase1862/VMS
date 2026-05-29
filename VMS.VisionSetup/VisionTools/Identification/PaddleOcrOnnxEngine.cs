@@ -628,8 +628,10 @@ namespace VMS.VisionSetup.VisionTools.Identification
         {
             Directory.CreateDirectory(modelDir);
 
-            using var http = new HttpClient();
-            http.Timeout = TimeSpan.FromMinutes(5);
+            // 외부 모델 호스팅(HTTPS) 다운로드 — ONNX 모델은 수십 MB 단위라 응답 크기 상한을 200MB 로 override.
+            using var http = VMS.Core.Security.HttpClientPolicy.Build(
+                TimeSpan.FromMinutes(5),
+                maxResponseBytes: 200L * 1024 * 1024);
 
             foreach (var (path, file) in missing)
             {

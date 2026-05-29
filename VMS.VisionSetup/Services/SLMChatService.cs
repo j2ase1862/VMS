@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using VMS.Core.Security;
 using VMS.VisionSetup.Interfaces;
 using VMS.VisionSetup.VisionTools.BlobAnalysis;
 using VMS.VisionSetup.VisionTools.ImageProcessing;
@@ -22,10 +23,8 @@ namespace VMS.VisionSetup.Services
         private const int MaxHistoryMessages = 6;
         private const int MaxRetryOnParseFailure = 1;
 
-        private static readonly HttpClient _httpClient = new()
-        {
-            Timeout = TimeSpan.FromMinutes(5)
-        };
+        // Ollama 는 localhost 라 InsecureUrlGuard 통과. 정책은 그대로 적용.
+        private static readonly HttpClient _httpClient = HttpClientPolicy.Build(TimeSpan.FromMinutes(5));
 
         private string _modelName = string.Empty;
         private readonly List<object> _messages = new();

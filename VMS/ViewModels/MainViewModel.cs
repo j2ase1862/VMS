@@ -2,6 +2,7 @@ using VMS.Camera.Models;
 using VMS.Camera.Services;
 using VMS.Core.Interfaces;
 using VMS.Core.Models.Predictive;
+using VMS.Core.Security;
 using VMS.Core.Services;
 using VMS.Interfaces;
 using VMS.Models;
@@ -1077,6 +1078,22 @@ namespace VMS.ViewModels
             window.ShowDialog();
         }
 
+        /// <summary>
+        /// 감사 로그 조회 윈도우 — Admin 권한 전용. CanManageUsers 와 동일한 가시성 조건.
+        /// GS 인증 이력 추적성 항목의 실제 시연 화면.
+        /// </summary>
+        [RelayCommand]
+        private void OpenAuditLogViewer()
+        {
+            var vm = new AuditLogViewerViewModel();
+            var window = new AuditLogViewerWindow
+            {
+                DataContext = vm,
+                Owner = System.Windows.Application.Current.MainWindow
+            };
+            window.ShowDialog();
+        }
+
         [RelayCommand]
         private void SwitchUser()
         {
@@ -1330,10 +1347,20 @@ namespace VMS.ViewModels
 
                 // B1: WO 의 활성 Lot 자동 채움
                 _ = LoadActiveLotForWorkOrderAsync(value.Id);
+
+                AuditLogger.Instance.Log(
+                    AuditCategory.System, "WorkOrderSelected", AuditOutcome.Success,
+                    userName: _userService?.CurrentUser?.Username,
+                    source: nameof(MainViewModel),
+                    details: $"Id={value.Id}, OrderNo={value.OrderNo}, Recipe={value.RecipeName}, Status={value.Status}");
             }
             else
             {
                 LotIdText = "";
+                AuditLogger.Instance.Log(
+                    AuditCategory.System, "WorkOrderCleared", AuditOutcome.Success,
+                    userName: _userService?.CurrentUser?.Username,
+                    source: nameof(MainViewModel));
             }
         }
 
@@ -1461,6 +1488,12 @@ namespace VMS.ViewModels
                 LogService?.Log(
                     $"WO {progress.OrderNo} 계획 수량 도달 — Completed ({progress.ProducedQuantity}/{progress.PlannedQuantity}, Pass {progress.PassQuantity} / NG {progress.NgQuantity})",
                     LogLevel.Success, "WorkOrder");
+
+                AuditLogger.Instance.Log(
+                    AuditCategory.System, "WorkOrderCompleted", AuditOutcome.Success,
+                    userName: _userService?.CurrentUser?.Username,
+                    source: nameof(MainViewModel),
+                    details: $"Id={progress.Id}, OrderNo={progress.OrderNo}, Produced={progress.ProducedQuantity}/{progress.PlannedQuantity}, Pass={progress.PassQuantity}, NG={progress.NgQuantity}");
 
                 SystemStatus = $"✓ WO {progress.OrderNo} 완료 — {progress.ProducedQuantity}/{progress.PlannedQuantity}";
 
