@@ -1094,6 +1094,22 @@ namespace VMS.ViewModels
             window.ShowDialog();
         }
 
+        /// <summary>
+        /// 시작 헬스 체크 윈도우 — Admin 권한 전용 (Audit Viewer 와 동일).
+        /// 5개 환경 검사 결과 + Refresh / Copy 액션. 실행 자체가 System 감사 이벤트.
+        /// </summary>
+        [RelayCommand]
+        private void OpenHealthCheck()
+        {
+            var vm = new HealthCheckViewModel();
+            var window = new HealthCheckWindow
+            {
+                DataContext = vm,
+                Owner = System.Windows.Application.Current.MainWindow
+            };
+            window.ShowDialog();
+        }
+
         [RelayCommand]
         private void SwitchUser()
         {
