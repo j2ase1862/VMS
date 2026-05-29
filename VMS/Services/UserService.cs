@@ -22,10 +22,19 @@ namespace VMS.Services
         public bool IsLoggedIn => CurrentUser != null;
 
         private UserService()
-        {
-            var dbFolder = Path.Combine(
+            : this(Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "BODA VISION AI");
+                "BODA VISION AI"))
+        {
+        }
+
+        /// <summary>
+        /// 임의 디렉토리(DB 파일 위치)로 별도 인스턴스를 만들 수 있는 테스트 친화 ctor.
+        /// internal — VMS.Tests 통합 테스트에서만 호출. 운영 코드는
+        /// 반드시 <see cref="Instance"/> 싱글톤 사용.
+        /// </summary>
+        internal UserService(string dbFolder)
+        {
             Directory.CreateDirectory(dbFolder);
 
             _dbPath = Path.Combine(dbFolder, "BodaVision.db");
