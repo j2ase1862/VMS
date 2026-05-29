@@ -39,7 +39,10 @@ namespace VMS.Core.Services
                     url += $"?status={Uri.EscapeDataString(status)}";
 
                 var list = await _httpClient.GetFromJsonAsync<List<WorkOrderDto>>(url, JsonOptions);
-                return list ?? new List<WorkOrderDto>();
+                if (list == null) return new List<WorkOrderDto>();
+                // Phase 3c — WO 드롭다운 직접 바인딩 DTO sanitize.
+                foreach (var wo in list) wo.Sanitize();
+                return list;
             }
             catch (Exception ex)
             {

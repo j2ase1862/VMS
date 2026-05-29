@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using VMS.Core.Security;
 
 namespace VMS.Core.Models.ParameterSync
 {
@@ -16,6 +17,23 @@ namespace VMS.Core.Models.ParameterSync
         public string Category { get; set; } = string.Empty;
         public string Unit { get; set; } = string.Empty;
         public bool IsActive { get; set; } = true;
+
+        /// <summary>
+        /// 외부 API 응답 sanitization — Phase 3c.
+        /// ParamValue 는 자유 도메인(온도/임계/좌표 등) 이라 ±1e9 범위 — NaN/Inf 만 차단.
+        /// </summary>
+        public RecipeParameterDto Sanitize()
+        {
+            const string ctx = nameof(RecipeParameterDto);
+            Id = DtoValidator.ClampInt(Id, 0, 999_999_999, nameof(Id), ctx);
+            RecipeId = DtoValidator.ClampInt(RecipeId, 0, 999_999_999, nameof(RecipeId), ctx);
+            ParamCode = DtoValidator.ClampInt(ParamCode, 0, 999_999, nameof(ParamCode), ctx);
+            ParamValue = DtoValidator.ClampDouble(ParamValue, -1e9, 1e9, nameof(ParamValue), ctx);
+            Description = DtoValidator.Truncate(Description, 500, nameof(Description), ctx) ?? string.Empty;
+            Category = DtoValidator.Truncate(Category, 100, nameof(Category), ctx) ?? string.Empty;
+            Unit = DtoValidator.Truncate(Unit, 50, nameof(Unit), ctx) ?? string.Empty;
+            return this;
+        }
     }
 
     /// <summary>
@@ -26,6 +44,18 @@ namespace VMS.Core.Models.ParameterSync
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
+
+        /// <summary>
+        /// 외부 API 응답 sanitization — Phase 3c. 레시피 드롭다운 표시 안정성.
+        /// </summary>
+        public RecipeSummaryDto Sanitize()
+        {
+            const string ctx = nameof(RecipeSummaryDto);
+            Id = DtoValidator.ClampInt(Id, 0, 999_999_999, nameof(Id), ctx);
+            Name = DtoValidator.Truncate(Name, 200, nameof(Name), ctx) ?? string.Empty;
+            Description = DtoValidator.Truncate(Description, 2000, nameof(Description), ctx) ?? string.Empty;
+            return this;
+        }
     }
 
     /// <summary>

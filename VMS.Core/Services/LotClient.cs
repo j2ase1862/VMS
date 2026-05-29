@@ -38,7 +38,9 @@ namespace VMS.Core.Services
                 if (!response.IsSuccessStatusCode) return null;
                 var body = await response.Content.ReadAsStringAsync();
                 if (string.IsNullOrWhiteSpace(body) || body == "null") return null;
-                return JsonSerializer.Deserialize<LotDto>(body, JsonOptions);
+                var dto = JsonSerializer.Deserialize<LotDto>(body, JsonOptions);
+                // Phase 3c — Lot 자동 채움 DTO sanitize.
+                return dto?.Sanitize();
             }
             catch (Exception ex)
             {
