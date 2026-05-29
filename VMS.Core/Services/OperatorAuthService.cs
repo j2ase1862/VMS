@@ -64,6 +64,8 @@ namespace VMS.Core.Services
                 if (resp.IsSuccessStatusCode)
                 {
                     var session = await resp.Content.ReadFromJsonAsync<OperatorSessionDto>(JsonOptions);
+                    // Phase 3b — Role 화이트리스트 + 문자열 길이 sanitize (권한 결정 직전).
+                    session?.Sanitize();
                     CurrentSession = session;
                     SessionChanged?.Invoke(session);
                     Debug.WriteLine($"[OperatorAuth] Login OK: {session?.OperatorName} ({session?.EmployeeNumber})");
@@ -144,6 +146,8 @@ namespace VMS.Core.Services
                 if (resp.StatusCode == System.Net.HttpStatusCode.NoContent) return null;
 
                 var session = await resp.Content.ReadFromJsonAsync<OperatorSessionDto>(JsonOptions);
+                // Phase 3b — 세션 복원도 외부 입력 → sanitize.
+                session?.Sanitize();
                 if (session != null && session.IsActive)
                 {
                     CurrentSession = session;

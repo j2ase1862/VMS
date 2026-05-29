@@ -79,6 +79,8 @@ namespace VMS.Core.Services
                 var dto = JsonSerializer.Deserialize<PredictionCurrentDto>(json, JsonOptions);
                 if (dto != null)
                 {
+                    // Phase 3b — 위젯 직접 바인딩 DTO sanitize (PredictedNgRate [0,1] clamp).
+                    dto.Sanitize();
                     Emit(dto);
                 }
             }
