@@ -709,6 +709,18 @@ namespace VMS.VisionSetup.Models
                 }
             },
 
+            // ─── Common Settings — 모든 도구가 공통으로 갖는 설정 ───
+            ["Common"] = new ToolHelp
+            {
+                Name = "Common Settings",
+                Description = "모든 비전 도구가 공통으로 갖는 기본 설정. Enabled / Use ROI 두 항목.",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["Enabled"] = "도구 활성화 여부. 비활성화하면 검사 파이프라인에서 이 도구는 건너뛰어집니다.\n\n사용 예:\n• 디버깅 시 특정 도구만 활성화해 영향 분리\n• 임시로 결함 검출 도구를 끄고 정렬 도구만 실행\n• 도구 효과를 켜고/끄며 결과 비교\n\n레시피 저장 시에도 유지 — 매번 다시 켤 필요 없음.",
+                    ["UseROI"] = "관심영역(Region of Interest, ROI) 사용 여부.\n\n• 활성화: 도구가 ROI 안의 픽셀만 처리. 검사 속도 ↑, 정확도 ↑ (배경 노이즈 영향 ↓).\n• 비활성화: 전체 이미지 처리.\n\n일부 도구는 자체 ROI 섹션(Training Region / Search Region 등)을 갖고 있어 이 공용 ROI 가 숨겨집니다."
+                }
+            },
+
             // ─── Sequence Editor Nodes — 노드 팔레트 호버 도움말 ───
             // key 규칙: "SequenceNode_{SequenceNodeType}" — NodePaletteItem.HelpKey 와 일치.
             // HelpIcon 의 ToolType binding 으로 lookup.
@@ -730,14 +742,31 @@ namespace VMS.VisionSetup.Models
             {
                 Name = "Input Check (입력 신호 검사)",
                 Description = "PLC 입력 어드레스(비트 / 워드) 의 값을 읽어 조건을 검사합니다. 검사 결과(True / False) 에 따라 다음 노드로 분기하거나 대기합니다.\n\nBranch 와의 차이: Branch 가 직전 노드 결과(주로 Inspection PASS/FAIL) 를 기준으로 한다면, InputCheck 는 외부 신호(센서·광커튼·작업자 버튼 등) 가 기준입니다.",
-                Usage = "예: '제품 도착 신호 X0 가 ON 인가?' 검사 후\n• True 가지 → Inspection (실제 검사 시작)\n• False 가지 → Delay(50ms) → 다시 InputCheck (폴링 루프)\n\n타임아웃 옵션으로 무한 대기 방지."
+                Usage = "예: '제품 도착 신호 X0 가 ON 인가?' 검사 후\n• True 가지 → Inspection (실제 검사 시작)\n• False 가지 → Delay(50ms) → 다시 InputCheck (폴링 루프)\n\n타임아웃 옵션으로 무한 대기 방지.",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["DeviceId"] = "검사할 외부 디바이스 식별자.\n• MainPLC: AppSetup 에서 설정된 기본 PLC\n• ADLink_* / Advantech_*: 등록된 IO 보드\n\nIO 보드 선택 시 주소 입력 형식이 채널 번호로 자동 전환됩니다.",
+                    ["PlcAddress"] = "PLC: 벤더별 어드레스 (예: X0, M100, D200, %MX0.0).\nIO 보드: 채널 번호 (예: 0, 5, 15).\n\n비트 디바이스 (X/Y/M 등) + Bit 모드 = 비트 검사,\n워드 디바이스 (D/W 등) + Word 모드 = 정수 비교.",
+                    ["CheckMode"] = "검사 모드:\n• BitOn: 비트가 1 일 때 True\n• BitOff: 비트가 0 일 때 True\n• WordEquals: 워드 == CompareValue\n• WordGreaterThan / WordLessThan: 비교 연산",
+                    ["CompareValue"] = "Word 모드에서 비교할 정수 값. Bit 모드에서는 사용하지 않습니다.",
+                    ["TimeoutMs"] = "조건이 만족될 때까지 대기할 최대 시간 (밀리초).\n• -1: 무제한 대기 (조건 만족까지 무한 폴링)\n• 1000: 1초 후 시간 초과 시 False 분기\n• 0: 한 번만 확인 후 즉시 결과 반환"
+                }
             },
 
             ["SequenceNode_OutputAction"] = new ToolHelp
             {
                 Name = "Output Action (출력 신호 발생)",
                 Description = "PLC 출력 어드레스에 비트 / 워드 값을 씁니다. 검사 결과 알림(OK / NG 램프), 분배기 액추에이터 트리거, 컨베이어 정지·재가동 등 외부 장비 제어에 사용됩니다.",
-                Usage = "결과 분기 직후 신호 발생:\nBranch.True  → OutputAction(Y0 = ON, OK 램프)\nBranch.False → OutputAction(Y1 = ON, NG 분배기)\n\n펄스 출력이 필요한 경우:\nOutputAction(ON) → Delay(100ms) → OutputAction(OFF) 으로 폭 제어."
+                Usage = "결과 분기 직후 신호 발생:\nBranch.True  → OutputAction(Y0 = ON, OK 램프)\nBranch.False → OutputAction(Y1 = ON, NG 분배기)\n\n펄스 출력이 필요한 경우:\nOutputAction(ON) → Delay(100ms) → OutputAction(OFF) 으로 폭 제어.",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["DeviceId"] = "출력 대상 디바이스. PLC 또는 IO 보드 선택 (InputCheck 와 동일).\nIO 보드는 Bit 출력만 지원합니다.",
+                    ["PlcAddress"] = "PLC: 벤더별 어드레스 / IO 보드: 채널 번호.\n워드 출력은 D/W 영역 등 워드 디바이스 사용.",
+                    ["OutputDataType"] = "쓸 데이터 타입:\n• Bit: 1 비트 (ON/OFF)\n• Int16 (Word): 16-bit 정수\n• Int32 (DWord): 32-bit 정수\n• Float: IEEE 754 32-bit 부동소수\n\nIO 보드는 Bit 만 가능 — 그 외는 자동으로 숨겨집니다.",
+                    ["BitValue"] = "Bit 모드에서 출력할 값 (True=ON, False=OFF).",
+                    ["WordValue"] = "Word / Int16 / Int32 모드에서 출력할 정수값.",
+                    ["FloatValue"] = "Float 모드에서 출력할 실수값. IEEE 754 형식으로 32-bit 메모리에 기록됩니다."
+                }
             },
 
             ["SequenceNode_Inspection"] = new ToolHelp

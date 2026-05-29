@@ -240,21 +240,31 @@
             <!-- Common Settings -->
             <TextBlock Text="Common Settings" Style="{StaticResource SectionHeaderStyle}"/>
 
-            <CheckBox Content="Enabled" IsChecked="{Binding IsEnabled, FallbackValue=True}"
-                      Style="{StaticResource SettingCheckBoxStyle}"/>
+            <StackPanel Orientation="Horizontal">
+                <CheckBox Content="Enabled" IsChecked="{Binding IsEnabled, FallbackValue=True}"
+                          Style="{StaticResource SettingCheckBoxStyle}"/>
+                <controls:HelpIcon ToolType="Common"
+                                   ParameterName="Enabled"
+                                   Margin="6,0,0,0" VerticalAlignment="Center"/>
+            </StackPanel>
 
             <!-- UseROI + ROI Settings: hidden when HasCustomROISection is true -->
-            <CheckBox Content="Use ROI" IsChecked="{Binding UseROI, FallbackValue=False}">
-                <CheckBox.Style>
-                    <Style TargetType="CheckBox" BasedOn="{StaticResource SettingCheckBoxStyle}">
+            <StackPanel Orientation="Horizontal">
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding HasCustomROISection}" Value="True">
                                 <Setter Property="Visibility" Value="Collapsed"/>
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
-                </CheckBox.Style>
-            </CheckBox>
+                </StackPanel.Style>
+                <CheckBox Content="Use ROI" IsChecked="{Binding UseROI, FallbackValue=False}"
+                          Style="{StaticResource SettingCheckBoxStyle}"/>
+                <controls:HelpIcon ToolType="Common"
+                                   ParameterName="UseROI"
+                                   Margin="6,0,0,0" VerticalAlignment="Center"/>
+            </StackPanel>
 
             <!-- ROI Settings -->
             <StackPanel>
