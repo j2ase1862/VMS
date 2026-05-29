@@ -262,15 +262,16 @@ VMS 자체 라이선스 → 루트 `LICENSE` (DRAFT, 법무 검토 필요).
 | 감사 로그 SIEM 외부 전송 | 통합 모니터링 도입 시 | 운영 절차 문서화 완료 — `docs/gs_audit_siem_integration_guide.md` (PR25) |
 | 침입 탐지 — 비정상 로그인 패턴 알림 | 사이트 규모 확대 시 | SIEM 알람 룰로 대체 가능 (PR25 §6.2) |
 
-### 5.5 시작 헬스 체크 (PR27)
+### 5.5 시작 헬스 체크 (PR27 / PR28 UI)
 | 항목 | 값 / 동작 |
 |---|---|
 | 검사 항목 | AppDataDir 쓰기 가능 / AuditDir 쓰기 가능 / SystemConfig 존재 / SecurityOptions 로드 / DiskFreeSpace ≥ 1 GB |
-| 실행 시점 | VMS 시작 시 1회 (`App.xaml.cs:OnStartup`, AuditLogRetention 직후) |
+| 자동 실행 | VMS 시작 시 1회 (`App.xaml.cs:OnStartup`, AuditLogRetention 직후) |
+| 수동 실행 (UI) | 메인 헤더의 Health Check 버튼 — Admin 권한 전용. Refresh / Clipboard Copy 지원 (PR28) |
 | 결과 기록 | `AuditCategory.System` · `StartupHealthCheck` 단일 이벤트 — 종합 + 항목별 상태 details |
 | Outcome 매핑 | Overall=Pass/Warn → `Success`, Fail → `Failure` |
 | 운영 차단 | 없음 (best-effort) — 감사 흔적만 남기고 앱 진행 |
-| 코드 경로 | `VMS.Core/Health/StartupHealthCheck.cs` |
+| 코드 경로 | `VMS.Core/Health/StartupHealthCheck.cs`, `VMS/Views/HealthCheckWindow.xaml`, `VMS/ViewModels/HealthCheckViewModel.cs` |
 
 ### 5.4 감사 로그 보존 정책 (PR22)
 | 항목 | 값 / 동작 |

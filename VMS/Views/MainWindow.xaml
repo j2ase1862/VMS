@@ -406,6 +406,17 @@
                                    FontSize="16"/>
                     </Button>
 
+                    <!-- Health Check (Admin only) — 환경 자기 진단 -->
+                    <Button Style="{StaticResource IconButton}"
+                            Command="{Binding OpenHealthCheckCommand}"
+                            IsEnabled="{Binding CanManageUsers}"
+                            ToolTip="Health Check (시작 헬스 체크 — 환경 진단)"
+                            Visibility="{Binding CanManageUsers, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBlock Text="&#xEC4A;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="16"/>
+                    </Button>
+
                     <Button Style="{StaticResource IconButton}"
                             Command="{Binding SaveLayoutCommand}"
                             ToolTip="Save Layout">
