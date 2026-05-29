@@ -62,7 +62,7 @@ namespace VMS.Tests.Services
             var second = new UserService(_tempDir);
             second.Authenticate("admin", "admin123");
 
-            Assert.Equal(1, _service.GetAllUsers().Count);
+            Assert.Single(_service.GetAllUsers());
         }
 
         // ─── Authenticate ─────────────────────────────────────────
