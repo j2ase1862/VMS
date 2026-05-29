@@ -262,6 +262,17 @@ VMS 자체 라이선스 → 루트 `LICENSE` (DRAFT, 법무 검토 필요).
 | 감사 로그 SIEM 외부 전송 | 통합 모니터링 도입 시 | 운영 절차 문서화 완료 — `docs/gs_audit_siem_integration_guide.md` (PR25) |
 | 침입 탐지 — 비정상 로그인 패턴 알림 | 사이트 규모 확대 시 | SIEM 알람 룰로 대체 가능 (PR25 §6.2) |
 
+### 5.6 백업 / 복원 정책 (PR29)
+| 항목 | 값 / 동작 |
+|---|---|
+| 백업 대상 | `system_config.json` / `layout_config.json` / `plc_signals.json` / `BodaVision.db` / `recipes/` (audit/ 는 옵션) |
+| 포맷 | 표준 ZIP + 루트 `backup_manifest.json` (schemaVersion, createdAtUtc, productVersion, includesAudit, includesUsersDb, fileCount, sourceDir) |
+| 압축 | Optimal |
+| 복원 보안 | ZIP entry 경로가 target 디렉토리 밖으로 escape 시 거부 + `Security` · `BackupEntryRejected` 감사 기록 |
+| 충돌 정책 | Overwrite 옵션 (기본 true), RestoreAudit 옵션 (기본 true) |
+| 감사 기록 | `Configuration` · `BackupCreated` / `BackupRestored` (Success / Failure) |
+| 코드 경로 | `VMS.Core/Backup/BackupRestoreService.cs` |
+
 ### 5.5 시작 헬스 체크 (PR27 / PR28 UI)
 | 항목 | 값 / 동작 |
 |---|---|
