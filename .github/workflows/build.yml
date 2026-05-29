@@ -79,12 +79,27 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+      - name: Upload MSI installer
+        # WiX MSI 는 dotnet build VMS.sln 이 빌드 단계에서 자동 생성한다
+        # (VMS.MasterSetup.wixproj). 운영 배포 단위 신뢰성을 위해 30일 보관.
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: BODA-VMS-installer-${{ github.sha }}
+          path: VMS.MasterSetup/bin/${{ env.Configuration }}/*.msi
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Summarize build
         if: always()
-        shell: bash
+        shell: pwsh
         run: |
-          echo "### Build Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- Configuration: ${{ env.Configuration }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Runner: windows-latest" >> $GITHUB_STEP_SUMMARY
-          echo "- .NET: $(dotnet --version)" >> $GITHUB_STEP_SUMMARY
+          $msi = Get-ChildItem -Path "VMS.MasterSetup/bin/${{ env.Configuration }}/*.msi" -ErrorAction SilentlyContinue | Select-Object -First 1
+          $msiInfo = if ($msi) { "$($msi.Name) ($([math]::Round($msi.Length / 1MB, 2)) MB)" } else { "MSI 빌드 실패 또는 누락" }
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "### Build Summary"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Configuration**: ${{ env.Configuration }}"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Runner**: windows-2025"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **.NET**: $(dotnet --version)"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **MSI installer**: $msiInfo"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **MSI artifact**: ``BODA-VMS-installer-${{ github.sha }}`` (30 day retention)"
