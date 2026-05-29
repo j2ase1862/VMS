@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using System.Windows;
 using VMS.Camera.Services;
+using VMS.Core.Backup;
 using VMS.Core.Health;
 using VMS.Core.Interfaces;
 using VMS.Core.Security;
@@ -26,6 +27,10 @@ namespace VMS
 {
     public partial class App : Application
     {
+        // 자동 백업 스케줄러 — system_config.json 의 autoBackup.enabled=true 일 때만 활성.
+        // OnExit 에서 Dispose 로 타이머 종료.
+        private AutoBackupScheduler? _autoBackupScheduler;
+
         protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
@@ -57,6 +62,26 @@ namespace VMS
             catch (Exception ex)
             {
                 Debug.WriteLine($"[App] StartupHealthCheck 실패 (best-effort): {ex.Message}");
+            }
+
+            // 자동 백업 스케줄러 — autoBackup.enabled=true 일 때만 시작.
+            // last_backup_at.txt 기반으로 잔여 시간 계산 → 즉시 또는 잔여 시간 후 첫 백업.
+            // 운영 시작을 막지 않도록 best-effort.
+            try
+            {
+                var autoBackupOptions = AutoBackupOptions.LoadFromAppData();
+                if (autoBackupOptions.Enabled)
+                {
+                    var appDataPath = System.IO.Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                        "BODA VISION AI");
+                    _autoBackupScheduler = new AutoBackupScheduler(appDataPath, autoBackupOptions);
+                    _autoBackupScheduler.Start();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] AutoBackupScheduler 시작 실패 (best-effort): {ex.Message}");
             }
 
             var splash = new SplashWindow();
@@ -565,6 +590,10 @@ namespace VMS
                 try { heartbeat?.Dispose(); } catch { }
                 try { paramSync?.Dispose(); } catch { }
                 try { frameWriter?.Dispose(); } catch { }
+
+                // 자동 백업 스케줄러 정지 — 타이머 콜백이 진행 중이면 미완료 백업 한 건 손실 가능,
+                // 다음 시작 시 last_backup_at.txt 기반으로 자동 재개.
+                try { _autoBackupScheduler?.Dispose(); } catch { }
 
                 // 정리 완료 → 즉시 종료
                 Process.GetCurrentProcess().Kill();
