@@ -448,6 +448,13 @@
                                                    FontSize="14" Foreground="#22D3EE"/>
                                     </MenuItem.Icon>
                                 </MenuItem>
+                                <MenuItem Header="Retention Settings..."
+                                          Command="{Binding OpenRetentionSettingsCommand}">
+                                    <MenuItem.Icon>
+                                        <TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="14" Foreground="#22D3EE"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
                                 <Separator/>
                                 <MenuItem Header="Support Package..."
                                           Command="{Binding OpenSupportPackageCommand}">

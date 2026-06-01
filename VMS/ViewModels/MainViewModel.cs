@@ -1158,6 +1158,22 @@ namespace VMS.ViewModels
             window.ShowDialog();
         }
 
+        /// <summary>
+        /// 보존 정책 통합 설정 — Admin 권한 전용. 3개 보존 키 (audit / autoBackup /
+        /// uploadQueue) 를 한 화면에서 편집. 다른 system_config.json 키는 보존.
+        /// </summary>
+        [RelayCommand]
+        private void OpenRetentionSettings()
+        {
+            var vm = new RetentionSettingsViewModel();
+            var window = new RetentionSettingsWindow
+            {
+                DataContext = vm,
+                Owner = System.Windows.Application.Current.MainWindow
+            };
+            window.ShowDialog();
+        }
+
         [RelayCommand]
         private void SwitchUser()
         {
