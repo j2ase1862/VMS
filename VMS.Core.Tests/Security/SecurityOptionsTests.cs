@@ -3,6 +3,7 @@ using Xunit;
 
 namespace VMS.Core.Tests.Security
 {
+    [Collection("SecurityOptionsState")]
     public class SecurityOptionsTests
     {
         // ─── Preset 검증 ──────────────────────────────────────────

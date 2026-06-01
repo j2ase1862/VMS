@@ -4,6 +4,7 @@ using Xunit;
 
 namespace VMS.Core.Tests.Security
 {
+    [Collection("SecurityOptionsState")]
     public class HttpClientPolicyTests
     {
         // HttpClient 의 public 속성(Timeout, UserAgent, MaxResponseContentBufferSize) 만 검증.
