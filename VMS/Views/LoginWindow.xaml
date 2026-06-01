@@ -11,7 +11,7 @@
         Topmost="True"
         MouseLeftButtonDown="Window_MouseLeftButtonDown">
 
-    <Border CornerRadius="12" Margin="16" Background="#1E1E1E">
+    <Border CornerRadius="12" Margin="16" Background="{StaticResource Brush.Surface.Base}">
         <Border.Effect>
             <DropShadowEffect BlurRadius="16" ShadowDepth="2" Opacity="0.6" Color="Black"/>
         </Border.Effect>
@@ -37,7 +37,7 @@
                            Margin="0,8,0,0"/>
                 <TextBlock Text="Login"
                            FontSize="13"
-                           Foreground="#808080"
+                           Foreground="{StaticResource Brush.Text.Tertiary}"
                            HorizontalAlignment="Center"
                            Margin="0,4,0,0"/>
             </StackPanel>
@@ -45,11 +45,11 @@
             <!-- Username -->
             <StackPanel Grid.Row="1" Margin="0,0,0,12">
                 <TextBlock Text="Username"
-                           Foreground="#B0B0B0"
+                           Foreground="{StaticResource Brush.Text.Secondary}"
                            FontSize="12"
                            Margin="0,0,0,4"/>
                 <TextBox Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
-                         Background="#2D2D2D"
+                         Background="{StaticResource Brush.Surface.Raised}"
                          Foreground="White"
                          BorderBrush="#3D3D3D"
                          BorderThickness="1"
@@ -61,11 +61,11 @@
             <!-- Password -->
             <StackPanel Grid.Row="2" Margin="0,0,0,16">
                 <TextBlock Text="Password"
-                           Foreground="#B0B0B0"
+                           Foreground="{StaticResource Brush.Text.Secondary}"
                            FontSize="12"
                            Margin="0,0,0,4"/>
                 <PasswordBox x:Name="PasswordBox"
-                             Background="#2D2D2D"
+                             Background="{StaticResource Brush.Surface.Raised}"
                              Foreground="White"
                              BorderBrush="#3D3D3D"
                              BorderThickness="1"
@@ -78,7 +78,7 @@
             <!-- Error Message -->
             <TextBlock Grid.Row="3"
                        Text="{Binding ErrorMessage}"
-                       Foreground="#F44336"
+                       Foreground="{StaticResource Brush.Danger}"
                        FontSize="12"
                        TextWrapping="Wrap"
                        Margin="0,0,0,12"
@@ -88,7 +88,7 @@
             <Button Grid.Row="4"
                     Content="Login"
                     Command="{Binding LoginCommand}"
-                    Background="#2196F3"
+                    Background="{StaticResource Brush.Primary}"
                     Foreground="White"
                     FontSize="14"
                     FontWeight="SemiBold"
@@ -116,7 +116,7 @@
                     Content="Exit"
                     Click="CloseButton_Click"
                     Background="Transparent"
-                    Foreground="#808080"
+                    Foreground="{StaticResource Brush.Text.Tertiary}"
                     FontSize="12"
                     Padding="0,8"
                     Cursor="Hand"
