@@ -3,7 +3,7 @@
 
   <Package Name="BODA Vision System"
            Manufacturer="VASIM"
-           Version="1.0.0.0"
+           Version="$(var.BuildVersion)"
            UpgradeCode="A70E988A-739F-4CDC-BE08-EBFE03DACA32"
            Codepage="949"
            Language="1042">
