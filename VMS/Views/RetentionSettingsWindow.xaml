@@ -136,6 +136,59 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- 적용 미리보기 (Preview 버튼 클릭 시 표시) -->
+                        <Border Style="{StaticResource WindowCard}" Padding="18,14" Margin="0,0,0,12"
+                                Visibility="{Binding HasPreview, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <StackPanel>
+                                <TextBlock Text="적용 미리보기 (dry-run, read-only)"
+                                           Style="{StaticResource WindowSectionHeaderFirst}"/>
+
+                                <Grid Margin="0,8,0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="180"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Audit log 전역"
+                                               Style="{StaticResource WindowFieldLabel}"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding PreviewAuditSummary}"
+                                               Style="{StaticResource WindowBodyText}"/>
+                                </Grid>
+
+                                <Grid Margin="0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="180"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="자동 백업"
+                                               Style="{StaticResource WindowFieldLabel}"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding PreviewAutoBackupSummary}"
+                                               Style="{StaticResource WindowBodyText}"/>
+                                </Grid>
+
+                                <Grid Margin="0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="180"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="업로드 큐"
+                                               Style="{StaticResource WindowFieldLabel}"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding PreviewUploadQueueSummary}"
+                                               Style="{StaticResource WindowBodyText}"/>
+                                </Grid>
+
+                                <Grid Margin="0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="180"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="카테고리 필터"
+                                               Style="{StaticResource WindowFieldLabel}"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding PreviewCategorySummary}"
+                                               Style="{StaticResource WindowBodyText}"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
                         <!-- 카테고리별 차등 -->
                         <Border Style="{StaticResource WindowCard}" Padding="18,14">
                             <StackPanel>
@@ -194,6 +247,9 @@
                 <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
                     <Button Content="Reload" Command="{Binding LoadCommand}"
                             Style="{StaticResource ModernSecondaryButton}"
+                            Margin="0,0,8,0"/>
+                    <Button Content="Preview" Command="{Binding PreviewCommand}"
+                            Style="{StaticResource ModernGhostButton}"
                             Margin="0,0,8,0"/>
                     <Button Content="Save" Command="{Binding SaveCommand}"
                             Style="{StaticResource ModernPrimaryButton}"/>

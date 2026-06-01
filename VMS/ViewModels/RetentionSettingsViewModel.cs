@@ -89,6 +89,14 @@ namespace VMS.ViewModels
         [ObservableProperty] private string _statusMessage = string.Empty;
         [ObservableProperty] private string _statusColor = "#22303C";  // BrushNeutral
 
+        // ─── 미리보기 ────────────────────────────────────────────
+
+        [ObservableProperty] private string _previewAuditSummary = string.Empty;
+        [ObservableProperty] private string _previewAutoBackupSummary = string.Empty;
+        [ObservableProperty] private string _previewUploadQueueSummary = string.Empty;
+        [ObservableProperty] private string _previewCategorySummary = string.Empty;
+        [ObservableProperty] private bool _hasPreview;
+
         // 표시용 clamp 범위
         public string AuditRange => $"[{AuditLogRetention.MinRetentionDays}, {AuditLogRetention.MaxRetentionDays}]";
         public string AutoBackupRange => $"[{AutoBackupOptions.MinRetentionDays}, {AutoBackupOptions.MaxRetentionDays}]";
@@ -213,6 +221,74 @@ namespace VMS.ViewModels
                 StatusMessage = $"로드 실패: {ex.Message}";
                 StatusColor = "#EF4444";  // BrushDanger
             }
+        }
+
+        [RelayCommand]
+        private void Preview()
+        {
+            try
+            {
+                var appData = Path.GetDirectoryName(_configPath)!;
+                var auditDir = Path.Combine(appData, "audit");
+                var backupDir = Path.Combine(appData, "backups");
+                var queueDir = Path.Combine(appData, "upload_queue");
+
+                // Clamp 입력값
+                var audit = ClampInRange(AuditRetentionDays,
+                    AuditLogRetention.MinRetentionDays, AuditLogRetention.MaxRetentionDays);
+                var ab = AutoBackupOptions.ClampRetention(AutoBackupRetentionDays);
+                var queue = ClampInRange(UploadQueueRetentionDays,
+                    UploadQueueRetention.MinRetentionDays, UploadQueueRetention.MaxRetentionDays);
+
+                var perCat = new Dictionary<AuditCategory, int>();
+                foreach (var item in CategoryRetentions)
+                    perCat[item.Category] = ClampInRange(item.Days, 1, 3650);
+
+                var auditSum = RetentionPreviewService.PreviewAuditLogCleanup(auditDir, audit);
+                var abSum = RetentionPreviewService.PreviewAutoBackupCleanup(backupDir, ab);
+                var queueSum = RetentionPreviewService.PreviewUploadQueueCleanup(queueDir, queue);
+                var catSum = RetentionPreviewService.PreviewAuditCategoryFilter(auditDir, perCat);
+
+                PreviewAuditSummary = FormatSummary(auditSum);
+                PreviewAutoBackupSummary = FormatSummary(abSum);
+                PreviewUploadQueueSummary = FormatSummary(queueSum);
+                PreviewCategorySummary = FormatCategoryPreview(catSum);
+                HasPreview = true;
+
+                StatusMessage = "미리보기 — Save 를 누르지 않으면 디스크는 변경되지 않습니다.";
+                StatusColor = "#22D3EE";  // Teal accent
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"미리보기 실패: {ex.Message}";
+                StatusColor = "#EF4444";
+                HasPreview = false;
+            }
+        }
+
+        private static string FormatSummary(RetentionPreviewSummary s)
+        {
+            if (!string.IsNullOrEmpty(s.Note)) return s.Note;
+            var mb = s.BytesAffected / 1024.0 / 1024.0;
+            var sb = new System.Text.StringBuilder();
+            sb.Append($"삭제 예정 {s.FilesAffected} 파일");
+            if (s.BytesAffected > 0) sb.Append($" · {mb:F2} MB");
+            sb.Append($" (유지 {s.FilesRemaining})");
+            if (s.OldestRemainingUtc.HasValue)
+                sb.Append($" · 정리 후 가장 오래된: {s.OldestRemainingUtc.Value:yyyy-MM-dd}");
+            return sb.ToString();
+        }
+
+        private static string FormatCategoryPreview(CategoryFilterPreview p)
+        {
+            if (p.TotalLinesRemoved == 0)
+                return $"카테고리 필터링 — 영향 없음 (스캔 {p.FilesScanned} 파일)";
+            var top = p.LinesRemovedByCategory
+                .OrderByDescending(kv => kv.Value)
+                .Take(3)
+                .Select(kv => $"{kv.Key} {kv.Value}");
+            return $"라인 {p.TotalLinesRemoved} 제거 / {p.FilesWithRemovals} 파일 · " +
+                   $"빈 파일 {p.FilesEmptiedAndDeletable} · 상위: {string.Join(", ", top)}";
         }
 
         [RelayCommand]
