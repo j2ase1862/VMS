@@ -1,5 +1,18 @@
 <Project Sdk="WixToolset.Sdk/6.0.2">
 
+  <PropertyGroup>
+    <!--
+      Directory.Build.props 의 $(Version) 을 WiX preprocessor 변수로 전달.
+      Package.wxs 가 $(var.BuildVersion) 으로 참조 → MSI/Assembly 버전 동기화.
+      MSI 는 4 부분(major.minor.build.revision) 형식 요구하므로 누락 시 .0 보강.
+    -->
+    <BuildVersionFull Condition=" '$(Version)' != '' AND !$(Version.Contains('.')) ">$(Version).0.0.0</BuildVersionFull>
+    <BuildVersionFull Condition=" '$(Version)' != '' AND $(Version.Split('.').Length) == 2 ">$(Version).0.0</BuildVersionFull>
+    <BuildVersionFull Condition=" '$(Version)' != '' AND $(Version.Split('.').Length) == 3 ">$(Version).0</BuildVersionFull>
+    <BuildVersionFull Condition=" '$(BuildVersionFull)' == '' ">$(Version)</BuildVersionFull>
+    <DefineConstants>$(DefineConstants);BuildVersion=$(BuildVersionFull)</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\VMS\VMS.csproj" />
   </ItemGroup>

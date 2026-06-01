@@ -1,0 +1,132 @@
+name: Release
+
+# v* 태그(예: v1.1.0) 푸시 시 MSI 빌드 + GitHub Release 자동 발행.
+# in-app 업데이트 체커는 https://api.github.com/repos/.../releases/latest 를
+# 조회하므로 이 워크플로의 결과물(태그 + asset) 이 단일 진실 공급원이 된다.
+#
+# 사용법:
+#   1) Directory.Build.props 의 <Version> 갱신
+#   2) git tag v1.1.0 && git push origin v1.1.0
+#   3) 본 워크플로가 자동 실행 → Release 페이지에서 결과 확인
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '수동 발행할 태그 (예: v1.1.0). 미입력 시 현재 커밋 기반 v0.0.0-manual'
+        required: false
+        default: ''
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  Configuration: Release
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+permissions:
+  contents: write   # Release 생성/자산 업로드 필수
+
+jobs:
+  release:
+    name: Build MSI & Publish Release
+    runs-on: windows-2025
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve release tag
+        id: tag
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF -like 'refs/tags/*') {
+            $tag = $env:GITHUB_REF -replace '^refs/tags/', ''
+          } elseif ('${{ github.event.inputs.tag }}' -ne '') {
+            $tag = '${{ github.event.inputs.tag }}'
+          } else {
+            $tag = 'v0.0.0-manual'
+          }
+          # tag 에서 'v' 접두사 제거 → MSBuild Version 으로 전달.
+          $version = $tag -replace '^v', ''
+          "tag=$tag"           | Out-File -Append $env:GITHUB_OUTPUT
+          "version=$version"   | Out-File -Append $env:GITHUB_OUTPUT
+          Write-Host "Release tag: $tag (version=$version)"
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Prepare local NuGet cache folder
+        run: New-Item -ItemType Directory -Force -Path packages | Out-Null
+        shell: pwsh
+
+      - name: Restore
+        run: dotnet restore VMS.sln
+
+      - name: Build MSI (Release)
+        # /p:Version 으로 Directory.Build.props 의 Version 을 오버라이드 →
+        # Assembly + MSI(Package.wxs $(var.BuildVersion)) 양쪽 모두 태그 버전으로 통일.
+        run: >
+          dotnet build VMS.sln
+          --configuration ${{ env.Configuration }}
+          --no-restore
+          /p:Version=${{ steps.tag.outputs.version }}
+          /p:TreatWarningsAsErrors=false
+
+      - name: Locate MSI & compute SHA-256
+        id: msi
+        shell: pwsh
+        run: |
+          $msi = Get-ChildItem -Path "VMS.MasterSetup/bin/${{ env.Configuration }}/*.msi" | Select-Object -First 1
+          if (-not $msi) { throw "MSI not found under VMS.MasterSetup/bin/${{ env.Configuration }}/" }
+
+          # 다운로드 자산 이름에 버전 포함 → 사용자가 파일명만 봐도 식별 가능.
+          $renamed = "VMS-${{ steps.tag.outputs.version }}.msi"
+          $destDir = Join-Path $env:RUNNER_TEMP 'release-assets'
+          New-Item -ItemType Directory -Force -Path $destDir | Out-Null
+          $destMsi = Join-Path $destDir $renamed
+          Copy-Item $msi.FullName $destMsi
+
+          $hash = (Get-FileHash -Algorithm SHA256 $destMsi).Hash.ToLower()
+          $shaFile = "$destMsi.sha256"
+          "$hash  $renamed" | Out-File -FilePath $shaFile -Encoding ascii -NoNewline
+
+          $sizeMB = [math]::Round((Get-Item $destMsi).Length / 1MB, 2)
+          "msi_path=$destMsi"      | Out-File -Append $env:GITHUB_OUTPUT
+          "sha_path=$shaFile"      | Out-File -Append $env:GITHUB_OUTPUT
+          "msi_name=$renamed"      | Out-File -Append $env:GITHUB_OUTPUT
+          "sha256=$hash"           | Out-File -Append $env:GITHUB_OUTPUT
+          "size_mb=$sizeMB"        | Out-File -Append $env:GITHUB_OUTPUT
+          Write-Host "MSI: $renamed ($sizeMB MB)"
+          Write-Host "SHA-256: $hash"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: BODA VMS ${{ steps.tag.outputs.tag }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+          fail_on_unmatched_files: true
+          body: |
+            ## BODA Vision System ${{ steps.tag.outputs.tag }}
+
+            ### 다운로드
+            - **Installer**: `${{ steps.msi.outputs.msi_name }}` (${{ steps.msi.outputs.size_mb }} MB)
+            - **SHA-256**: `${{ steps.msi.outputs.sha256 }}`
+
+            ### 설치 방법
+            1. 위 MSI 파일 다운로드
+            2. SHA-256 체크섬으로 무결성 검증 (선택)
+            3. MSI 실행 → 설치 마법사 진행
+            4. 기존 버전이 있을 경우 자동 업그레이드 (MajorUpgrade)
+          files: |
+            ${{ steps.msi.outputs.msi_path }}
+            ${{ steps.msi.outputs.sha_path }}
