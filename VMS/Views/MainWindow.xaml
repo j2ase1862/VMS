@@ -395,59 +395,68 @@
                                    FontSize="16"/>
                     </Button>
 
-                    <!-- Audit Log Viewer (Admin only) — GS 인증 이력 추적성 -->
-                    <Button Style="{StaticResource IconButton}"
-                            Command="{Binding OpenAuditLogViewerCommand}"
+                    <!-- Admin Tools 통합 드롭다운 (Admin only) — 5개 진단/관리 도구를 하나의 메뉴로 -->
+                    <Button x:Name="AdminToolsButton"
+                            Style="{StaticResource IconButton}"
+                            Click="AdminToolsButton_Click"
                             IsEnabled="{Binding CanManageUsers}"
-                            ToolTip="Audit Log Viewer (감사 로그 조회)"
+                            ToolTip="Admin Tools (감사 / 헬스 / 백업 / 자동백업 / 지원 패키지)"
                             Visibility="{Binding CanManageUsers, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <TextBlock Text="&#xE9D9;"
+                        <TextBlock Text="&#xE713;"
                                    FontFamily="Segoe MDL2 Assets"
                                    FontSize="16"/>
-                    </Button>
-
-                    <!-- Health Check (Admin only) — 환경 자기 진단 -->
-                    <Button Style="{StaticResource IconButton}"
-                            Command="{Binding OpenHealthCheckCommand}"
-                            IsEnabled="{Binding CanManageUsers}"
-                            ToolTip="Health Check (시작 헬스 체크 — 환경 진단)"
-                            Visibility="{Binding CanManageUsers, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <TextBlock Text="&#xEC4A;"
-                                   FontFamily="Segoe MDL2 Assets"
-                                   FontSize="16"/>
-                    </Button>
-
-                    <!-- Backup / Restore (Admin only) — 운영 데이터 백업 -->
-                    <Button Style="{StaticResource IconButton}"
-                            Command="{Binding OpenBackupRestoreCommand}"
-                            IsEnabled="{Binding CanManageUsers}"
-                            ToolTip="Backup / Restore (시스템 / 사용자 / 레시피 백업)"
-                            Visibility="{Binding CanManageUsers, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <TextBlock Text="&#xE74C;"
-                                   FontFamily="Segoe MDL2 Assets"
-                                   FontSize="16"/>
-                    </Button>
-
-                    <!-- Auto Backup Settings (Admin only) — 스케줄러 설정 -->
-                    <Button Style="{StaticResource IconButton}"
-                            Command="{Binding OpenAutoBackupSettingsCommand}"
-                            IsEnabled="{Binding CanManageUsers}"
-                            ToolTip="Auto Backup Settings (자동 백업 활성화 / 주기 / 보존)"
-                            Visibility="{Binding CanManageUsers, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <TextBlock Text="&#xE823;"
-                                   FontFamily="Segoe MDL2 Assets"
-                                   FontSize="16"/>
-                    </Button>
-
-                    <!-- Support Package Export (Admin only) — 원격 지원용 ZIP -->
-                    <Button Style="{StaticResource IconButton}"
-                            Command="{Binding OpenSupportPackageCommand}"
-                            IsEnabled="{Binding CanManageUsers}"
-                            ToolTip="Support Package (지원 패키지 — 원격 지원/엔지니어링 분석용)"
-                            Visibility="{Binding CanManageUsers, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <TextBlock Text="&#xE8FB;"
-                                   FontFamily="Segoe MDL2 Assets"
-                                   FontSize="16"/>
+                        <Button.ContextMenu>
+                            <ContextMenu Background="#1B2530"
+                                         BorderBrush="#34465A" BorderThickness="1"
+                                         Foreground="#E6EDF3"
+                                         Placement="Bottom">
+                                <ContextMenu.Resources>
+                                    <Style TargetType="MenuItem">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="Foreground" Value="#E6EDF3"/>
+                                        <Setter Property="Padding" Value="10,6"/>
+                                        <Setter Property="Cursor" Value="Hand"/>
+                                    </Style>
+                                </ContextMenu.Resources>
+                                <MenuItem Header="Audit Log Viewer"
+                                          Command="{Binding OpenAuditLogViewerCommand}">
+                                    <MenuItem.Icon>
+                                        <TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="14" Foreground="#22D3EE"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="Health Check"
+                                          Command="{Binding OpenHealthCheckCommand}">
+                                    <MenuItem.Icon>
+                                        <TextBlock Text="&#xEC4A;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="14" Foreground="#22D3EE"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <Separator/>
+                                <MenuItem Header="Backup / Restore"
+                                          Command="{Binding OpenBackupRestoreCommand}">
+                                    <MenuItem.Icon>
+                                        <TextBlock Text="&#xE74C;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="14" Foreground="#22D3EE"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="Auto Backup Settings"
+                                          Command="{Binding OpenAutoBackupSettingsCommand}">
+                                    <MenuItem.Icon>
+                                        <TextBlock Text="&#xE823;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="14" Foreground="#22D3EE"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <Separator/>
+                                <MenuItem Header="Support Package..."
+                                          Command="{Binding OpenSupportPackageCommand}">
+                                    <MenuItem.Icon>
+                                        <TextBlock Text="&#xE8FB;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="14" Foreground="#22D3EE"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                            </ContextMenu>
+                        </Button.ContextMenu>
                     </Button>
 
                     <Button Style="{StaticResource IconButton}"
