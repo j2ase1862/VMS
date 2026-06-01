@@ -262,7 +262,7 @@ VMS 자체 라이선스 → 루트 `LICENSE` (DRAFT, 법무 검토 필요).
 | 감사 로그 SIEM 외부 전송 | 통합 모니터링 도입 시 | 운영 절차 문서화 완료 — `docs/gs_audit_siem_integration_guide.md` (PR25) |
 | 침입 탐지 — 비정상 로그인 패턴 알림 | 사이트 규모 확대 시 | SIEM 알람 룰로 대체 가능 (PR25 §6.2) |
 
-### 5.8 지원 패키지 export (PR34)
+### 5.8 지원 패키지 export (PR34 / PR35 UI)
 | 항목 | 값 / 동작 |
 |---|---|
 | 포함 | `config/system_config.json`, `config/layout_config.json`, `config/plc_signals.json`, `audit/*.jsonl` (최근 N일), `environment.txt`, `backups_index.txt`, `health_snapshot.json`, `support_manifest.json` |
@@ -272,7 +272,8 @@ VMS 자체 라이선스 → 루트 `LICENSE` (DRAFT, 법무 검토 필요).
 | Environment / BackupIndex | 기본 포함, 옵션으로 제외 가능 |
 | Manifest | schemaVersion / createdAtUtc / productVersion / machineName / auditDaysIncluded / includesEnvironment / includesBackupIndex / fileCount |
 | 감사 기록 | `System` · `SupportPackageCreated` (Success / Failure) |
-| 코드 경로 | `VMS.Core/SupportPackage/SupportPackageService.cs` |
+| 수동 실행 (UI) | 메인 헤더의 Support Package 버튼 — Admin 전용. 옵션 (감사 일수 / Env / BackupIndex / MachineName) + SaveFileDialog, 결과 상태 색 표시 (PR35) |
+| 코드 경로 | `VMS.Core/SupportPackage/SupportPackageService.cs`, `VMS/Views/SupportPackageWindow.xaml`, `VMS/ViewModels/SupportPackageViewModel.cs` |
 | 용도 | 원격 지원 / 엔지니어링 분석용 — 백업 (복원용) 과 분리 |
 
 ### 5.7 자동 백업 스케줄러 (PR31 / PR32 UI)
