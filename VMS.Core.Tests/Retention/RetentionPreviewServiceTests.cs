@@ -239,6 +239,145 @@ namespace VMS.Core.Tests.Retention
             Assert.Equal(1, preview.FilesEmptiedAndDeletable);
         }
 
+        // ─── CSV export ──────────────────────────────────────────
+
+        [Fact]
+        public void ExportToCsv_HasHeader_AndMetaRow()
+        {
+            var path = Path.Combine(_tempBase, "out.csv");
+            RetentionPreviewService.ExportToCsv(
+                new List<RetentionPreviewSummary>(),
+                new CategoryFilterPreview(),
+                new Dictionary<string, int>(),
+                path);
+
+            var lines = File.ReadAllLines(path);
+            Assert.Equal("Section,Policy,Metric,Value", lines[0]);
+            Assert.Contains(lines, l => l.StartsWith("Meta,GeneratedUtc,"));
+        }
+
+        [Fact]
+        public void ExportToCsv_WritesGlobalSummaryRows()
+        {
+            var summary = new RetentionPreviewSummary
+            {
+                PolicyName = "AuditLogRetention",
+                FilesAffected = 5,
+                BytesAffected = 1048576,
+                FilesRemaining = 30,
+                OldestRemainingUtc = new DateTime(2025, 12, 1, 0, 0, 0, DateTimeKind.Utc)
+            };
+
+            var path = Path.Combine(_tempBase, "out.csv");
+            RetentionPreviewService.ExportToCsv(
+                new[] { summary },
+                new CategoryFilterPreview(),
+                new Dictionary<string, int>(),
+                path);
+
+            var content = File.ReadAllText(path);
+            Assert.Contains("GlobalSummary,AuditLogRetention,FilesAffected,5", content);
+            Assert.Contains("GlobalSummary,AuditLogRetention,BytesAffected,1048576", content);
+            Assert.Contains("GlobalSummary,AuditLogRetention,FilesRemaining,30", content);
+            Assert.Contains("GlobalSummary,AuditLogRetention,OldestRemainingUtc,2025-12-01", content);
+        }
+
+        [Fact]
+        public void ExportToCsv_WritesSettingsSnapshot()
+        {
+            var settings = new Dictionary<string, int>
+            {
+                ["AuditRetentionDays"] = 365,
+                ["AutoBackupRetentionDays"] = 30,
+                ["UploadQueueRetentionDays"] = 30
+            };
+            var path = Path.Combine(_tempBase, "out.csv");
+            RetentionPreviewService.ExportToCsv(
+                new List<RetentionPreviewSummary>(),
+                new CategoryFilterPreview(),
+                settings,
+                path);
+
+            var content = File.ReadAllText(path);
+            Assert.Contains("Settings,AuditRetentionDays,Days,365", content);
+            Assert.Contains("Settings,AutoBackupRetentionDays,Days,30", content);
+            Assert.Contains("Settings,UploadQueueRetentionDays,Days,30", content);
+        }
+
+        [Fact]
+        public void ExportToCsv_WritesCategoryRows_OrderedByCount()
+        {
+            var cat = new CategoryFilterPreview
+            {
+                FilesScanned = 5,
+                FilesWithRemovals = 2,
+                FilesEmptiedAndDeletable = 1,
+                TotalLinesRemoved = 30,
+                LinesRemovedByCategory = new Dictionary<AuditCategory, int>
+                {
+                    [AuditCategory.System] = 20,
+                    [AuditCategory.Inspection] = 10
+                }
+            };
+            var path = Path.Combine(_tempBase, "out.csv");
+            RetentionPreviewService.ExportToCsv(
+                new List<RetentionPreviewSummary>(),
+                cat,
+                new Dictionary<string, int>(),
+                path);
+
+            var lines = File.ReadAllLines(path);
+            Assert.Contains(lines, l => l == "CategoryFilter,Total,FilesScanned,5");
+            Assert.Contains(lines, l => l == "CategoryFilter,Total,LinesRemoved,30");
+
+            // System (20) 이 Inspection (10) 보다 먼저 (DESC).
+            var sysIdx = Array.FindIndex(lines, l => l == "CategoryFilter,System,LinesRemoved,20");
+            var inspIdx = Array.FindIndex(lines, l => l == "CategoryFilter,Inspection,LinesRemoved,10");
+            Assert.True(sysIdx >= 0 && inspIdx >= 0 && sysIdx < inspIdx);
+        }
+
+        [Fact]
+        public void ExportToCsv_RFC4180Escape_CommaAndQuote()
+        {
+            var summary = new RetentionPreviewSummary
+            {
+                PolicyName = "Test,Policy",  // 콤마 포함
+                Note = "value with \"quote\""  // 따옴표 포함
+            };
+            var path = Path.Combine(_tempBase, "out.csv");
+            RetentionPreviewService.ExportToCsv(
+                new[] { summary },
+                new CategoryFilterPreview(),
+                new Dictionary<string, int>(),
+                path);
+
+            var content = File.ReadAllText(path);
+            Assert.Contains("\"Test,Policy\"", content);
+            Assert.Contains("\"value with \"\"quote\"\"\"", content);
+        }
+
+        [Fact]
+        public void ExportToCsv_NullCollections_NoThrow()
+        {
+            var path = Path.Combine(_tempBase, "out.csv");
+            RetentionPreviewService.ExportToCsv(null!, null!, null!, path);
+
+            var lines = File.ReadAllLines(path);
+            Assert.Equal("Section,Policy,Metric,Value", lines[0]);
+            Assert.Contains(lines, l => l.StartsWith("Meta,GeneratedUtc,"));
+        }
+
+        [Fact]
+        public void ExportToCsv_EmptyOutputPath_Throws()
+        {
+            Assert.Throws<ArgumentException>(() =>
+                RetentionPreviewService.ExportToCsv(
+                    new List<RetentionPreviewSummary>(),
+                    new CategoryFilterPreview(),
+                    new Dictionary<string, int>(),
+                    ""));
+        }
+
         // ─── 모든 메서드 read-only 확인 ───────────────────────────
 
         [Fact]

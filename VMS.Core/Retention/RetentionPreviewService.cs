@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Text.Json;
 using VMS.Core.Security;
 
@@ -320,6 +322,82 @@ namespace VMS.Core.Retention
                 OldestAffectedUtc = oldestAffected,
                 OldestRemainingUtc = oldestRemaining
             };
+        }
+
+        // ─── CSV export (RFC 4180) ────────────────────────────────
+
+        /// <summary>
+        /// 미리보기 결과를 RFC 4180 CSV 로 저장. 문서화 / GS 심사 자료 / 외부 검토용.
+        ///
+        /// 행 구조 (Section / Policy / Metric / Value):
+        ///   Meta              · GeneratedUtc         · -                          · 2026-06-01T04:00:00Z
+        ///   Settings          · &lt;key&gt;           · Days                       · &lt;value&gt;
+        ///   GlobalSummary     · &lt;PolicyName&gt;   · FilesAffected/Bytes/...    · &lt;value&gt;
+        ///   CategoryFilter    · Total               · LinesRemoved/...           · &lt;value&gt;
+        ///   CategoryFilter    · &lt;AuditCategory&gt;· LinesRemoved               · &lt;value&gt;
+        /// </summary>
+        public static void ExportToCsv(
+            IEnumerable<RetentionPreviewSummary> globalSummaries,
+            CategoryFilterPreview categoryPreview,
+            IReadOnlyDictionary<string, int> settingsSnapshot,
+            string outputPath)
+        {
+            if (string.IsNullOrWhiteSpace(outputPath))
+                throw new ArgumentException("outputPath 비어 있음", nameof(outputPath));
+
+            using var writer = new StreamWriter(outputPath, append: false, Encoding.UTF8);
+            writer.WriteLine("Section,Policy,Metric,Value");
+
+            // Meta — 생성 시각
+            writer.WriteLine($"Meta,GeneratedUtc,-,{CsvEscape(DateTime.UtcNow.ToString("o"))}");
+
+            // Settings snapshot
+            if (settingsSnapshot != null)
+            {
+                foreach (var kv in settingsSnapshot.OrderBy(k => k.Key, StringComparer.Ordinal))
+                {
+                    writer.WriteLine($"Settings,{CsvEscape(kv.Key)},Days,{kv.Value}");
+                }
+            }
+
+            // Global summaries
+            if (globalSummaries != null)
+            {
+                foreach (var s in globalSummaries)
+                {
+                    writer.WriteLine($"GlobalSummary,{CsvEscape(s.PolicyName)},FilesAffected,{s.FilesAffected}");
+                    writer.WriteLine($"GlobalSummary,{CsvEscape(s.PolicyName)},BytesAffected,{s.BytesAffected}");
+                    writer.WriteLine($"GlobalSummary,{CsvEscape(s.PolicyName)},FilesRemaining,{s.FilesRemaining}");
+                    if (s.OldestAffectedUtc.HasValue)
+                        writer.WriteLine($"GlobalSummary,{CsvEscape(s.PolicyName)},OldestAffectedUtc,{s.OldestAffectedUtc.Value:yyyy-MM-dd}");
+                    if (s.OldestRemainingUtc.HasValue)
+                        writer.WriteLine($"GlobalSummary,{CsvEscape(s.PolicyName)},OldestRemainingUtc,{s.OldestRemainingUtc.Value:yyyy-MM-dd}");
+                    if (!string.IsNullOrEmpty(s.Note))
+                        writer.WriteLine($"GlobalSummary,{CsvEscape(s.PolicyName)},Note,{CsvEscape(s.Note)}");
+                }
+            }
+
+            // Category filter — Total + 카테고리별
+            if (categoryPreview != null)
+            {
+                writer.WriteLine($"CategoryFilter,Total,FilesScanned,{categoryPreview.FilesScanned}");
+                writer.WriteLine($"CategoryFilter,Total,FilesWithRemovals,{categoryPreview.FilesWithRemovals}");
+                writer.WriteLine($"CategoryFilter,Total,FilesEmptiedAndDeletable,{categoryPreview.FilesEmptiedAndDeletable}");
+                writer.WriteLine($"CategoryFilter,Total,LinesRemoved,{categoryPreview.TotalLinesRemoved}");
+                foreach (var kv in categoryPreview.LinesRemovedByCategory
+                             .OrderByDescending(p => p.Value))
+                {
+                    writer.WriteLine($"CategoryFilter,{kv.Key},LinesRemoved,{kv.Value}");
+                }
+            }
+        }
+
+        private static string CsvEscape(string? value)
+        {
+            if (string.IsNullOrEmpty(value)) return string.Empty;
+            if (value.IndexOfAny(new[] { ',', '"', '\n', '\r' }) >= 0)
+                return $"\"{value.Replace("\"", "\"\"")}\"";
+            return value;
         }
 
         // ─── 카테고리 라인 분석 (parse 실패 / 누락은 keep) ───────

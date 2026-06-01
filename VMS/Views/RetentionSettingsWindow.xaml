@@ -251,6 +251,10 @@
                     <Button Content="Preview" Command="{Binding PreviewCommand}"
                             Style="{StaticResource ModernGhostButton}"
                             Margin="0,0,8,0"/>
+                    <Button Content="Export Preview..." Command="{Binding ExportPreviewCsvCommand}"
+                            Style="{StaticResource ModernGhostButton}"
+                            IsEnabled="{Binding HasPreview}"
+                            Margin="0,0,8,0"/>
                     <Button Content="Save" Command="{Binding SaveCommand}"
                             Style="{StaticResource ModernPrimaryButton}"/>
                 </StackPanel>
