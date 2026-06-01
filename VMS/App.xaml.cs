@@ -141,6 +141,11 @@ namespace VMS
             IUserService userService = UserService.Instance;
             ISystemLogService logService = SystemLogService.Instance;
 
+            // 업데이트 알림 체커(Phase B) — public repo j2ase1862/VMS 의 releases/latest 조회.
+            // 시작 시 1회 best-effort 호출(아래) + 사이드 패널 "Check for updates" 버튼으로 수동 재호출.
+            VMS.Core.Interfaces.IUpdateService updateService =
+                new VMS.Core.Services.GitHubUpdateService("j2ase1862", "VMS");
+
             await splash.FadeOutAsync();
             splash.Close();
 
@@ -512,7 +517,8 @@ namespace VMS
                 workOrderClient: workOrderClient,
                 lotClient: lotClient,
                 vmsHubClient: vmsHubClient,
-                predictionPollingService: predictionPollingService);
+                predictionPollingService: predictionPollingService,
+                updateService: updateService);
 
             var mainWindow = new MainWindow();
             mainWindow.DataContext = mainViewModel;
@@ -525,10 +531,15 @@ namespace VMS
                 if (vmsHubClient != null) _ = vmsHubClient.DisposeAsync();
                 predictionPollingService?.Dispose();
                 sensorPollingService?.Dispose();
+                updateService?.Dispose();
                 foreach (var board in ioBoardConnections) board.Dispose();
                 ForceShutdown(mainViewModel, heartbeatService, parameterSyncService, sharedFrameWriter, plcConnection, autoProcessService);
             };
             mainWindow.Show();
+
+            // 업데이트 체크 — best-effort fire-and-forget. UI 차단 금지. 실패해도 silent.
+            // 결과는 MainViewModel.LatestUpdate 에 저장되어 사이드 패널 배지가 자동 노출.
+            _ = mainViewModel.CheckForUpdatesSilentAsync();
 
             // ── 카메라 자동 연결 (UI 표시 후 백그라운드) ──
             _ = Task.Run(async () =>
