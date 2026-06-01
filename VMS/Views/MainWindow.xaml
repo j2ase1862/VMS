@@ -963,6 +963,50 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- Updates Section — 비차단 알림 + 수동 체크 (Phase B) -->
+                        <Border Background="#3D3D3D"
+                                CornerRadius="8"
+                                Padding="12"
+                                Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="Updates"
+                                           FontWeight="SemiBold"
+                                           Foreground="#FFB300"
+                                           Margin="0,0,0,12"/>
+
+                                <!-- 새 버전 감지 배지 — 클릭 시 상세 다이얼로그 -->
+                                <Button Command="{Binding ShowUpdateDetailsCommand}"
+                                        Visibility="{Binding IsUpdateAvailable, Converter={StaticResource BoolToVisibilityConverter}}"
+                                        Background="#FFB300"
+                                        Foreground="#1E1E1E"
+                                        Style="{StaticResource ModernButton}"
+                                        HorizontalAlignment="Stretch"
+                                        Margin="0,0,0,8"
+                                        ToolTip="클릭하여 릴리스 노트 확인 + 다운로드 페이지 열기">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE7C3;"
+                                                   FontFamily="Segoe MDL2 Assets"
+                                                   Margin="0,0,8,0"/>
+                                        <TextBlock Text="{Binding UpdateBadgeText}"
+                                                   FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- 수동 체크 버튼 — 항상 표시 -->
+                                <Button Command="{Binding CheckForUpdatesCommand}"
+                                        Background="#404040"
+                                        Style="{StaticResource ModernButton}"
+                                        HorizontalAlignment="Stretch">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE895;"
+                                                   FontFamily="Segoe MDL2 Assets"
+                                                   Margin="0,0,8,0"/>
+                                        <TextBlock Text="Check for updates"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+
                         <!-- Web Sync Section -->
                         <Border Background="#3D3D3D"
                                 CornerRadius="8"
