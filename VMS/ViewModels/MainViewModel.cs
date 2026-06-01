@@ -2,6 +2,7 @@ using VMS.Camera.Models;
 using VMS.Camera.Services;
 using VMS.Core.Interfaces;
 using VMS.Core.Models.Predictive;
+using VMS.Core.Models.Updates;
 using VMS.Core.Security;
 using VMS.Core.Services;
 using VMS.Interfaces;
@@ -283,6 +284,7 @@ namespace VMS.ViewModels
         private readonly VMS.Core.Services.LotClient? _lotClient;
         private readonly VMS.Core.Services.VmsHubClient? _vmsHubClient;
         private readonly IPredictionPollingService? _predictionPollingService;
+        private readonly IUpdateService? _updateService;
         private int? _lastCompletedNotifiedWoId; // C5: 중복 Completed 알림 가드
         private readonly Action _shutdownAction;
         private SystemConfiguration _systemConfig;
@@ -308,7 +310,8 @@ namespace VMS.ViewModels
             VMS.Core.Services.WorkOrderClient? workOrderClient = null,
             VMS.Core.Services.LotClient? lotClient = null,
             VMS.Core.Services.VmsHubClient? vmsHubClient = null,
-            IPredictionPollingService? predictionPollingService = null)
+            IPredictionPollingService? predictionPollingService = null,
+            IUpdateService? updateService = null)
         {
             _configService = configService;
             _recipeService = recipeService;
@@ -330,6 +333,7 @@ namespace VMS.ViewModels
             _lotClient = lotClient;
             _vmsHubClient = vmsHubClient;
             _predictionPollingService = predictionPollingService;
+            _updateService = updateService;
             _shutdownAction = shutdownAction;
             _systemConfig = new SystemConfiguration();
 
@@ -912,6 +916,132 @@ namespace VMS.ViewModels
                     "Error");
             }
         }
+
+        #region Update Notifier (Phase B)
+
+        /// <summary>
+        /// 최근 업데이트 체크 결과. null = 아직 체크 안 함 / 통신 실패.
+        /// IsUpdateAvailable / UpdateBadgeText 가 이 값을 파생.
+        /// </summary>
+        [ObservableProperty]
+        private UpdateInfo? _latestUpdate;
+
+        public bool IsUpdateAvailable => LatestUpdate?.IsUpdateAvailable == true;
+
+        public string UpdateBadgeText => IsUpdateAvailable
+            ? $"새 버전 {LatestUpdate!.LatestTagName}"
+            : string.Empty;
+
+        partial void OnLatestUpdateChanged(UpdateInfo? value)
+        {
+            OnPropertyChanged(nameof(IsUpdateAvailable));
+            OnPropertyChanged(nameof(UpdateBadgeText));
+        }
+
+        /// <summary>
+        /// 앱 시작 시 best-effort 호출 — 결과만 LatestUpdate 에 저장. 다이얼로그 미표시.
+        /// 실패해도 silent (배지가 안 뜰 뿐).
+        /// </summary>
+        public async Task CheckForUpdatesSilentAsync()
+        {
+            if (_updateService == null) return;
+            try
+            {
+                LatestUpdate = await _updateService.CheckAsync();
+                if (IsUpdateAvailable)
+                {
+                    LogService?.Log(
+                        $"새 버전 감지: {LatestUpdate!.LatestTagName} (현재 {LatestUpdate.CurrentVersion})",
+                        LogLevel.Info, "Update");
+                }
+            }
+            catch
+            {
+                // 시작 시 자동 체크 — 절대 UI 차단 금지.
+            }
+        }
+
+        /// <summary>
+        /// 사용자가 사이드 패널 "Check for updates" 버튼 클릭 시 호출.
+        /// 결과를 다이얼로그로 명시적으로 안내(최신/새 버전/실패 모두).
+        /// </summary>
+        [RelayCommand]
+        private async Task CheckForUpdatesAsync()
+        {
+            if (_updateService == null)
+            {
+                _dialogService.ShowInformation("업데이트 체커가 비활성화되어 있습니다.", "업데이트 확인");
+                return;
+            }
+
+            var info = await _updateService.CheckAsync();
+            LatestUpdate = info;
+
+            if (info == null)
+            {
+                _dialogService.ShowInformation(
+                    "업데이트 정보를 가져올 수 없습니다.\n네트워크 상태 또는 GitHub 접근 가능 여부를 확인해 주세요.",
+                    "업데이트 확인");
+                return;
+            }
+
+            if (!info.IsUpdateAvailable)
+            {
+                _dialogService.ShowInformation(
+                    $"이미 최신 버전입니다 (v{info.CurrentVersion}).",
+                    "업데이트 확인");
+                return;
+            }
+
+            ShowUpdateAvailableDialog(info);
+        }
+
+        /// <summary>
+        /// 사이드 패널 배지 클릭 시 호출 — 이미 보유한 LatestUpdate 로 즉시 다이얼로그.
+        /// 통신 없이 표시만 하므로 빠름.
+        /// </summary>
+        [RelayCommand]
+        private void ShowUpdateDetails()
+        {
+            if (LatestUpdate?.IsUpdateAvailable == true)
+                ShowUpdateAvailableDialog(LatestUpdate);
+        }
+
+        private void ShowUpdateAvailableDialog(UpdateInfo info)
+        {
+            // release notes 가 너무 길면 잘라서 표시 — 전체는 브라우저에서.
+            const int MaxNotesLength = 600;
+            var notes = string.IsNullOrWhiteSpace(info.ReleaseNotes)
+                ? string.Empty
+                : "\n\n" + (info.ReleaseNotes.Length <= MaxNotesLength
+                    ? info.ReleaseNotes
+                    : info.ReleaseNotes.Substring(0, MaxNotesLength) + "...");
+
+            var message =
+                $"새 버전 {info.LatestTagName} 이 출시되었습니다.\n" +
+                $"현재 버전: v{info.CurrentVersion}\n" +
+                $"최신 버전: v{info.LatestVersion}" +
+                notes +
+                "\n\n다운로드 페이지를 열까요?";
+
+            if (!_dialogService.ShowConfirmation(message, "업데이트 가능"))
+                return;
+
+            try
+            {
+                _processService.LaunchProcess(info.ReleaseUrl);
+                LogService?.Log($"업데이트 페이지 열림: {info.ReleaseUrl}", LogLevel.Info, "Update");
+            }
+            catch (Exception ex)
+            {
+                LogService?.Log($"업데이트 페이지 열기 실패: {ex.Message}", LogLevel.Error, "Update");
+                _dialogService.ShowError(
+                    $"브라우저로 페이지를 여는 데 실패했습니다.\n수동 접속 URL:\n{info.ReleaseUrl}",
+                    "오류");
+            }
+        }
+
+        #endregion
 
         [RelayCommand]
         private async Task GrabAsync()
