@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 
@@ -9,6 +10,20 @@ namespace VMS.Views
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        /// <summary>
+        /// Admin Tools 드롭다운 — 헤더 버튼 클릭 시 첨부된 ContextMenu 를 버튼 아래에 표시.
+        /// 메뉴 항목은 5개 Admin 윈도우 (Audit / Health / Backup / AutoBackup / Support) 진입점.
+        /// </summary>
+        private void AdminToolsButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.ContextMenu != null)
+            {
+                btn.ContextMenu.PlacementTarget = btn;
+                btn.ContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+                btn.ContextMenu.IsOpen = true;
+            }
         }
 
         protected override void OnPreviewMouseLeftButtonDown(MouseButtonEventArgs e)

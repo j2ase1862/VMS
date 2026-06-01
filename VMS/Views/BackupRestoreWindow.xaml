@@ -1,146 +1,159 @@
 <Window x:Class="VMS.Views.BackupRestoreWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="백업 / 복원 — Backup / Restore"
-        Width="760" Height="580"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        xmlns:c="clr-namespace:VMS.VisionSetup.Views.Common;assembly=VMS.VisionSetup"
+        Title="Backup / Restore"
+        Width="760" Height="600"
+        MinWidth="640" MinHeight="480"
+        WindowStyle="None"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource BrushBgWindow}"
-        ResizeMode="CanResizeWithGrip"
         TextOptions.TextFormattingMode="Display">
 
-    <Grid Margin="22,18,22,18">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="42" CornerRadius="0"
+                            GlassFrameThickness="0" ResizeBorderThickness="6"
+                            UseAeroCaptionButtons="False"/>
+    </shell:WindowChrome.WindowChrome>
 
-        <!-- Header -->
-        <TextBlock Grid.Row="0"
-                   Text="백업 / 복원 — Backup / Restore"
-                   Style="{StaticResource WindowSectionHeaderFirst}"
-                   FontSize="16"
-                   Margin="0,0,0,12"/>
+    <Border Background="{StaticResource BrushBgWindow}"
+            BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="42"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-        <!-- Backup card -->
-        <Border Grid.Row="1" Style="{StaticResource WindowCard}" Margin="0,0,0,12">
-            <StackPanel>
-                <TextBlock Text="백업 생성" Style="{StaticResource WindowSectionHeaderFirst}"/>
+            <c:ChromelessTitleBar Grid.Row="0" TitleText="백업 / 복원 — Backup / Restore"/>
 
-                <Grid Margin="0,4,0,10">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <CheckBox Grid.Column="0"
-                              Content="감사 로그 (audit/) 포함"
-                              IsChecked="{Binding IncludeAudit}"
-                              Style="{StaticResource WindowDarkCheckBox}"
-                              VerticalAlignment="Center"/>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="ProductVersion" Style="{StaticResource WindowFieldLabel}"
-                                   Margin="0,0,8,0"/>
-                        <TextBox Text="{Binding ProductVersion}" Width="110"
-                                 Style="{StaticResource WindowDarkTextBox}"/>
+            <Grid Grid.Row="1" Margin="22,16,22,16">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Backup card -->
+                <Border Grid.Row="0" Style="{StaticResource WindowCard}" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Text="백업 생성" Style="{StaticResource WindowSectionHeaderFirst}"/>
+
+                        <Grid Margin="0,4,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <CheckBox Grid.Column="0"
+                                      Content="감사 로그 (audit/) 포함"
+                                      IsChecked="{Binding IncludeAudit}"
+                                      Style="{StaticResource WindowDarkCheckBox}"
+                                      VerticalAlignment="Center"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="ProductVersion" Style="{StaticResource WindowFieldLabel}"
+                                           Margin="0,0,8,0"/>
+                                <TextBox Text="{Binding ProductVersion}" Width="110"
+                                         Style="{StaticResource WindowDarkTextBox}"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" CornerRadius="3" Padding="8,3" MinWidth="64">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="{Binding BackupStatusColor}"/>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="{Binding BackupStatus}"
+                                           Foreground="White" FontSize="11" FontWeight="SemiBold"
+                                           HorizontalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Grid.Column="1" Text="{Binding LastBackupSummary}"
+                                       Style="{StaticResource WindowBodyText}"
+                                       VerticalAlignment="Center" Margin="10,0,0,0"/>
+                            <Button Grid.Column="2" Content="Run Backup..."
+                                    Command="{Binding RunBackupCommand}"
+                                    Style="{StaticResource ModernPrimaryButton}"/>
+                        </Grid>
                     </StackPanel>
-                </Grid>
+                </Border>
 
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <Border Grid.Column="0" CornerRadius="3" Padding="8,3" MinWidth="64">
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Setter Property="Background" Value="{Binding BackupStatusColor}"/>
-                            </Style>
-                        </Border.Style>
-                        <TextBlock Text="{Binding BackupStatus}"
-                                   Foreground="White" FontSize="11" FontWeight="SemiBold"
-                                   HorizontalAlignment="Center"/>
-                    </Border>
-                    <TextBlock Grid.Column="1" Text="{Binding LastBackupSummary}"
-                               Style="{StaticResource WindowBodyText}"
-                               VerticalAlignment="Center" Margin="10,0,0,0"/>
-                    <Button Grid.Column="2" Content="Run Backup..."
-                            Command="{Binding RunBackupCommand}"
-                            Style="{StaticResource ModernPrimaryButton}"/>
-                </Grid>
-            </StackPanel>
-        </Border>
+                <!-- Restore card -->
+                <Border Grid.Row="1" Style="{StaticResource WindowCard}" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Text="백업 복원" Style="{StaticResource WindowSectionHeaderFirst}"/>
 
-        <!-- Restore card -->
-        <Border Grid.Row="2" Style="{StaticResource WindowCard}" Margin="0,0,0,12">
-            <StackPanel>
-                <TextBlock Text="백업 복원" Style="{StaticResource WindowSectionHeaderFirst}"/>
+                        <Grid Margin="0,4,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0" Text="{Binding RestoreFilePath}"
+                                     Style="{StaticResource WindowReadOnlyTextBox}"
+                                     Margin="0,0,8,0"/>
+                            <Button Grid.Column="1" Content="Browse..."
+                                    Command="{Binding PickRestoreFileCommand}"
+                                    Style="{StaticResource ModernGhostButton}"/>
+                        </Grid>
 
-                <Grid Margin="0,4,0,10">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBox Grid.Column="0" Text="{Binding RestoreFilePath}"
-                             Style="{StaticResource WindowReadOnlyTextBox}"
-                             Margin="0,0,8,0"/>
-                    <Button Grid.Column="1" Content="Browse..."
-                            Command="{Binding PickRestoreFileCommand}"
-                            Style="{StaticResource ModernGhostButton}"/>
-                </Grid>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <CheckBox Content="기존 파일 덮어쓰기 (Overwrite)"
+                                      IsChecked="{Binding Overwrite}"
+                                      Style="{StaticResource WindowDarkCheckBox}"
+                                      Margin="0,0,18,0"/>
+                            <CheckBox Content="감사 로그도 복원 (Restore Audit)"
+                                      IsChecked="{Binding RestoreAudit}"
+                                      Style="{StaticResource WindowDarkCheckBox}"/>
+                        </StackPanel>
 
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                    <CheckBox Content="기존 파일 덮어쓰기 (Overwrite)"
-                              IsChecked="{Binding Overwrite}"
-                              Style="{StaticResource WindowDarkCheckBox}"
-                              Margin="0,0,18,0"/>
-                    <CheckBox Content="감사 로그도 복원 (Restore Audit)"
-                              IsChecked="{Binding RestoreAudit}"
-                              Style="{StaticResource WindowDarkCheckBox}"/>
-                </StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" CornerRadius="3" Padding="8,3" MinWidth="64">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="{Binding RestoreStatusColor}"/>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="{Binding RestoreStatus}"
+                                           Foreground="White" FontSize="11" FontWeight="SemiBold"
+                                           HorizontalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Grid.Column="1" Text="{Binding LastRestoreSummary}"
+                                       Style="{StaticResource WindowBodyText}"
+                                       VerticalAlignment="Center" Margin="10,0,0,0"/>
+                            <Button Grid.Column="2" Content="Run Restore"
+                                    Command="{Binding RunRestoreCommand}"
+                                    Style="{StaticResource ModernPrimaryButton}"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
 
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <Border Grid.Column="0" CornerRadius="3" Padding="8,3" MinWidth="64">
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Setter Property="Background" Value="{Binding RestoreStatusColor}"/>
-                            </Style>
-                        </Border.Style>
-                        <TextBlock Text="{Binding RestoreStatus}"
-                                   Foreground="White" FontSize="11" FontWeight="SemiBold"
-                                   HorizontalAlignment="Center"/>
-                    </Border>
-                    <TextBlock Grid.Column="1" Text="{Binding LastRestoreSummary}"
-                               Style="{StaticResource WindowBodyText}"
-                               VerticalAlignment="Center" Margin="10,0,0,0"/>
-                    <Button Grid.Column="2" Content="Run Restore"
-                            Command="{Binding RunRestoreCommand}"
-                            Style="{StaticResource ModernPrimaryButton}"/>
-                </Grid>
-            </StackPanel>
-        </Border>
+                <!-- Manifest summary -->
+                <Border Grid.Row="2" Style="{StaticResource WindowCard}">
+                    <StackPanel>
+                        <TextBlock Text="복원된 백업 manifest"
+                                   Style="{StaticResource WindowSectionHeaderFirst}"/>
+                        <TextBlock Text="{Binding ManifestSummary}"
+                                   Style="{StaticResource WindowBodyText}"
+                                   Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Border>
 
-        <!-- Manifest summary -->
-        <Border Grid.Row="3" Style="{StaticResource WindowCard}">
-            <StackPanel>
-                <TextBlock Text="복원된 백업 manifest"
-                           Style="{StaticResource WindowSectionHeaderFirst}"/>
-                <TextBlock Text="{Binding ManifestSummary}"
-                           Style="{StaticResource WindowBodyText}"
-                           Margin="0,4,0,0"/>
-            </StackPanel>
-        </Border>
-
-        <!-- Footer -->
-        <TextBlock Grid.Row="4" Style="{StaticResource WindowMutedText}" Margin="0,12,0,0">
-            <Run Text="모든 작업은 AuditCategory.Configuration / BackupCreated / BackupRestored 이벤트로 기록됩니다. 복원 후에는 VMS 재시작을 권장합니다."/>
-        </TextBlock>
-    </Grid>
+                <!-- Footer -->
+                <TextBlock Grid.Row="3" Style="{StaticResource WindowMutedText}" Margin="0,12,0,0">
+                    <Run Text="모든 작업은 AuditCategory.Configuration / BackupCreated / BackupRestored 이벤트로 기록됩니다. 복원 후에는 VMS 재시작을 권장합니다."/>
+                </TextBlock>
+            </Grid>
+        </Grid>
+    </Border>
 </Window>

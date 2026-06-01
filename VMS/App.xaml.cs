@@ -35,6 +35,11 @@ namespace VMS
         {
             base.OnStartup(e);
 
+            // Chromeless Admin 윈도우들이 SystemCommands.{Minimize,Maximize,Restore,Close}
+            // WindowCommand 를 그대로 사용하도록 Window 클래스 와이드 커맨드 바인딩 등록.
+            // ChromelessTitleBar (VMS.VisionSetup.Views.Common) 가 이 커맨드들을 호출함.
+            RegisterChromelessWindowCommands();
+
             // 보안 정책 로드 — system_config.json 의 "securityMode" 키에서 결정.
             // 누락 시 Development 폴백 (기존 dev 동작 호환). 모든 HttpClient / SignalR 이
             // 이 정책을 참조하므로 다른 서비스 초기화 전에 반드시 호출.
@@ -548,6 +553,34 @@ namespace VMS
         /// UI 스레드에서 Dispose를 호출하지 않음 — 모든 정리는 백그라운드에서.
         /// Kill 타이머(별도 스레드)가 Dispose 블로킹과 무관하게 프로세스를 종료.
         /// </summary>
+        /// <summary>
+        /// Chromeless Window 가 SystemCommands.{Minimize,Maximize,Restore,Close}WindowCommand 를
+        /// 그대로 사용할 수 있도록 Window 타입에 클래스 와이드 커맨드 바인딩 등록.
+        /// VMS.VisionSetup 의 App.RegisterChromelessWindowCommands 와 동일 패턴.
+        /// </summary>
+        private static void RegisterChromelessWindowCommands()
+        {
+            System.Windows.Input.CommandManager.RegisterClassCommandBinding(typeof(Window),
+                new System.Windows.Input.CommandBinding(SystemCommands.MinimizeWindowCommand,
+                    (s, e) => { if (s is Window w) SystemCommands.MinimizeWindow(w); }));
+            System.Windows.Input.CommandManager.RegisterClassCommandBinding(typeof(Window),
+                new System.Windows.Input.CommandBinding(SystemCommands.MaximizeWindowCommand,
+                    (s, e) =>
+                    {
+                        if (s is Window w)
+                        {
+                            if (w.WindowState == WindowState.Maximized) SystemCommands.RestoreWindow(w);
+                            else SystemCommands.MaximizeWindow(w);
+                        }
+                    }));
+            System.Windows.Input.CommandManager.RegisterClassCommandBinding(typeof(Window),
+                new System.Windows.Input.CommandBinding(SystemCommands.RestoreWindowCommand,
+                    (s, e) => { if (s is Window w) SystemCommands.RestoreWindow(w); }));
+            System.Windows.Input.CommandManager.RegisterClassCommandBinding(typeof(Window),
+                new System.Windows.Input.CommandBinding(SystemCommands.CloseWindowCommand,
+                    (s, e) => { if (s is Window w) SystemCommands.CloseWindow(w); }));
+        }
+
         private static int _shutdownRequested;
         private void ForceShutdown(
             MainViewModel? viewModel,
