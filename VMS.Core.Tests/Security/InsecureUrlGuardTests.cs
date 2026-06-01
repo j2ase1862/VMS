@@ -6,10 +6,11 @@ namespace VMS.Core.Tests.Security
 {
     /// <summary>
     /// InsecureUrlGuard.Check 는 SecurityOptions.Current 의 정적 상태에 의존.
-    /// 각 테스트에서 try/finally 로 원본 모드 복원 — xUnit 병렬 실행에서도 격리 보장 위해
-    /// 같은 Collection 으로 묶어 직렬화하는 옵션은 일단 미사용 (개별 테스트가 짧고
-    /// finally 가 보장하므로 race condition 위험 낮음).
+    /// xUnit 기본 병렬 실행에서 다른 SecurityOptions 변형 테스트와 race 발생 →
+    /// "SecurityOptionsState" Collection 으로 묶어 직렬화. HttpClientPolicyTests /
+    /// SecurityOptionsTests 도 동일 Collection.
     /// </summary>
+    [Collection("SecurityOptionsState")]
     public class InsecureUrlGuardTests
     {
         [Fact]
