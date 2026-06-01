@@ -506,18 +506,19 @@ namespace VMS.ViewModels
                 }
             }
 
-            // Apply saved layout if exists
+            // If no cameras configured, add default virtual cameras
+            if (Cameras.Count == 0)
+            {
+                AddDefaultCameras();
+            }
+
+            // Apply saved layout if exists — default 카메라도 안정 ID 를 사용하므로
+            // 두 경로(system_config / default) 모두에서 복원 가능. 반드시 default 추가 *이후*.
             var layoutConfig = _configService.LoadLayoutConfiguration();
             foreach (var layout in layoutConfig.CameraLayouts)
             {
                 var camera = Cameras.FirstOrDefault(c => c.Id == layout.CameraId);
                 camera?.ApplyLayout(layout);
-            }
-
-            // If no cameras configured, add default virtual cameras
-            if (Cameras.Count == 0)
-            {
-                AddDefaultCameras();
             }
 
             // Update canvas size based on loaded camera positions
@@ -559,7 +560,8 @@ namespace VMS.ViewModels
             {
                 var vm = new CameraViewModel(_dialogService, _configService, _inspectionService)
                 {
-                    Id = Guid.NewGuid().ToString(),
+                    // 재실행 시 layout_config.json 매칭이 가능하도록 안정 ID 사용.
+                    Id = $"default-camera-{i}",
                     Name = $"Camera {i}",
                     IpAddress = $"192.168.0.{100 + i}",
                     Manufacturer = CameraManufacturer.Virtual,
