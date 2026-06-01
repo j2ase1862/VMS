@@ -1,70 +1,73 @@
 <!--
-  Design tokens — Colors (v1.0 / 2026-06-01)
+  Design tokens — Colors (v1.1 / 2026-06-02 — Indigo refresh)
 
-  목표:
-  - 14+ 종으로 흩어져 있던 인라인 색상을 5-단계 Surface + Brand + Semantic + Text 4 축으로 정리.
-  - 기존 톤(#1E1E1E / #2196F3 등)을 최대한 보존하여 운영자 학습 비용 최소화.
-  - Brush 이름은 의미(semantic)로만 부여 — view 가 "#2196F3" 가 아닌 "Brush.Primary" 를 참조.
+  v1.0 → v1.1 변경:
+  - Surface: 회색 6단계 → Tailwind slate 기반 청록 톤 5단계 (시각 계층 강화).
+  - Brand: Material Blue (#2196F3, 2014) → Indigo (#6366F1) — 현대적 차분 톤.
+  - Accent: Cyan (#06B6D4) — Indigo 와 보완. 산업 환경에서 깨끗한 정보 표시 색.
+  - Semantic: Tailwind 500 톤 (Success #10B981, Warning #F59E0B, Danger #EF4444).
+  - Legacy aliases 는 새 값을 가리키도록 갱신 — 다른 view 들도 자연스럽게 함께 변화.
 
   사용 예:
-    <Border Background="{StaticResource Brush.Surface}" .../>
+    <Border Background="{StaticResource Brush.Surface.Raised}" .../>
     <TextBlock Foreground="{StaticResource Brush.Text.Secondary}" .../>
 -->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- ──────────────── Surface (배경 계층) ────────────────
-         Deep      = 윈도우 바깥 가장 어두운 배경
-         Base      = 메인 콘텐츠 배경 (기존 #1E1E1E 유지)
-         Raised    = 카드 / 패널 (기존 #2D2D2D)
-         Overlay   = 호버 / 강조 카드 (기존 #3D3D3D)
-         Divider   = 구분선 / 미묘한 보더 -->
-    <SolidColorBrush x:Key="Brush.Surface.Deep"    Color="#161616"/>
-    <SolidColorBrush x:Key="Brush.Surface.Base"    Color="#1E1E1E"/>
-    <SolidColorBrush x:Key="Brush.Surface.Raised"  Color="#2D2D2D"/>
-    <SolidColorBrush x:Key="Brush.Surface.Overlay" Color="#3D3D3D"/>
-    <SolidColorBrush x:Key="Brush.Surface.Divider" Color="#4A4A4A"/>
+         Tailwind slate 기반 — 회색이 아닌 미세한 청록 톤이라 차가운 산업 미감.
+         Deep      = 윈도우 가장 깊은 배경 (slate-950 변형)
+         Base      = 메인 콘텐츠 (slate-900)
+         Raised    = 카드 / 패널 (slate-800)
+         Overlay   = 호버 / 강조 카드 (slate-700)
+         Divider   = 구분선 / hover-secondary (slate-600) -->
+    <SolidColorBrush x:Key="Brush.Surface.Deep"    Color="#0B1220"/>
+    <SolidColorBrush x:Key="Brush.Surface.Base"    Color="#0F172A"/>
+    <SolidColorBrush x:Key="Brush.Surface.Raised"  Color="#1E293B"/>
+    <SolidColorBrush x:Key="Brush.Surface.Overlay" Color="#334155"/>
+    <SolidColorBrush x:Key="Brush.Surface.Divider" Color="#475569"/>
 
     <!-- ──────────────── Brand ────────────────
-         Primary 는 인터랙티브 강조(주요 버튼/링크), Accent 는 보조 강조(배지 등). -->
-    <SolidColorBrush x:Key="Brush.Primary"      Color="#2196F3"/>
-    <SolidColorBrush x:Key="Brush.Primary.Dark" Color="#1976D2"/>
-    <SolidColorBrush x:Key="Brush.Accent"       Color="#14B8A6"/>
-    <SolidColorBrush x:Key="Brush.Accent.Dark"  Color="#0F9488"/>
+         Primary = Indigo-500 (#6366F1) — 인터랙티브 강조.
+         Dark    = Indigo-600 (#4F46E5) — hover/pressed.
+         Accent  = Cyan-500 (#06B6D4) — 보조 강조 (정보, 데이터 표시).
+         AccentDark = Cyan-600 (#0891B2). -->
+    <SolidColorBrush x:Key="Brush.Primary"      Color="#6366F1"/>
+    <SolidColorBrush x:Key="Brush.Primary.Dark" Color="#4F46E5"/>
+    <SolidColorBrush x:Key="Brush.Accent"       Color="#06B6D4"/>
+    <SolidColorBrush x:Key="Brush.Accent.Dark"  Color="#0891B2"/>
 
     <!-- ──────────────── Semantic (상태) ────────────────
-         용도가 분명한 색만 — 일반 UI 에서는 위 Brand/Surface 우선. -->
-    <SolidColorBrush x:Key="Brush.Success" Color="#4CAF50"/>
-    <SolidColorBrush x:Key="Brush.Warning" Color="#FF9800"/>
-    <SolidColorBrush x:Key="Brush.Danger"  Color="#F44336"/>
-    <SolidColorBrush x:Key="Brush.Info"    Color="#2196F3"/>
+         Tailwind 500 톤 — Material 보다 차분, 더 모던. -->
+    <SolidColorBrush x:Key="Brush.Success" Color="#10B981"/>
+    <SolidColorBrush x:Key="Brush.Warning" Color="#F59E0B"/>
+    <SolidColorBrush x:Key="Brush.Danger"  Color="#EF4444"/>
+    <SolidColorBrush x:Key="Brush.Info"    Color="#6366F1"/>
 
-    <!-- ──────────────── Text ────────────────
-         Primary   = 본문 (흰색)
-         Secondary = 부가 정보 / 라벨
-         Tertiary  = 비활성 / 캡션
-         OnPrimary = Primary 위에 올라가는 텍스트 (배지 등) -->
-    <SolidColorBrush x:Key="Brush.Text.Primary"   Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="Brush.Text.Secondary" Color="#B0B0B0"/>
-    <SolidColorBrush x:Key="Brush.Text.Tertiary"  Color="#808080"/>
+    <!-- ──────────────── Text ──────────────── -->
+    <SolidColorBrush x:Key="Brush.Text.Primary"   Color="#F8FAFC"/>
+    <SolidColorBrush x:Key="Brush.Text.Secondary" Color="#CBD5E1"/>
+    <SolidColorBrush x:Key="Brush.Text.Tertiary"  Color="#94A3B8"/>
     <SolidColorBrush x:Key="Brush.Text.OnPrimary" Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="Brush.Text.OnWarning" Color="#1E1E1E"/>
+    <SolidColorBrush x:Key="Brush.Text.OnWarning" Color="#1E293B"/>
 
     <!-- ──────────────── Legacy aliases ────────────────
-         기존 view 들이 이미 참조하는 키. 마이그레이션 중 한 번에 끝낼 수 없으므로
-         정의를 그대로 두되 내부적으로 새 토큰을 가리키도록. 나중에 일괄 제거. -->
-    <SolidColorBrush x:Key="PrimaryBrush"            Color="#2196F3"/>
-    <SolidColorBrush x:Key="PrimaryDarkBrush"        Color="#1976D2"/>
-    <SolidColorBrush x:Key="SecondaryBrush"          Color="#4CAF50"/>
-    <SolidColorBrush x:Key="DangerBrush"             Color="#F44336"/>
-    <SolidColorBrush x:Key="WarningBrush"            Color="#FF9800"/>
-    <SolidColorBrush x:Key="AccentBrush"             Color="#14B8A6"/>
-    <SolidColorBrush x:Key="DarkBackgroundBrush"     Color="#1E1E1E"/>
-    <SolidColorBrush x:Key="SurfaceBrush"            Color="#2D2D30"/>
-    <SolidColorBrush x:Key="PanelBackgroundBrush"    Color="#2D2D2D"/>
-    <SolidColorBrush x:Key="BorderBrush"             Color="#3D3D3D"/>
-    <SolidColorBrush x:Key="TextBrush"               Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="TextSecondaryBrush"      Color="#B0B0B0"/>
-    <SolidColorBrush x:Key="PassBrush"               Color="#4CAF50"/>
-    <SolidColorBrush x:Key="FailBrush"               Color="#F44336"/>
+         기존 view (UserManagement / Login / AuditLogViewer 등) 가 이 키를
+         이미 참조 중. 새 indigo/slate 값을 가리키도록 갱신 → 사이드 패널 뿐
+         아니라 모든 view 가 동시에 새 톤으로 전환. -->
+    <SolidColorBrush x:Key="PrimaryBrush"            Color="#6366F1"/>
+    <SolidColorBrush x:Key="PrimaryDarkBrush"        Color="#4F46E5"/>
+    <SolidColorBrush x:Key="SecondaryBrush"          Color="#10B981"/>
+    <SolidColorBrush x:Key="DangerBrush"             Color="#EF4444"/>
+    <SolidColorBrush x:Key="WarningBrush"            Color="#F59E0B"/>
+    <SolidColorBrush x:Key="AccentBrush"             Color="#06B6D4"/>
+    <SolidColorBrush x:Key="DarkBackgroundBrush"     Color="#0F172A"/>
+    <SolidColorBrush x:Key="SurfaceBrush"            Color="#1E293B"/>
+    <SolidColorBrush x:Key="PanelBackgroundBrush"    Color="#1E293B"/>
+    <SolidColorBrush x:Key="BorderBrush"             Color="#334155"/>
+    <SolidColorBrush x:Key="TextBrush"               Color="#F8FAFC"/>
+    <SolidColorBrush x:Key="TextSecondaryBrush"      Color="#CBD5E1"/>
+    <SolidColorBrush x:Key="PassBrush"               Color="#10B981"/>
+    <SolidColorBrush x:Key="FailBrush"               Color="#EF4444"/>
 </ResourceDictionary>

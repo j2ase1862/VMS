@@ -1,43 +1,46 @@
 <!--
-  Design tokens — Spacing / Radius / Elevation (v1.0 / 2026-06-01)
+  Design tokens — Spacing / Radius / Elevation (v1.1 / 2026-06-02 — refresh)
 
-  4px 그리드 기반. CornerRadius 는 카드(md=8) 가 기본, 작은 요소(sm=4),
-  큰 모달(lg=12). Elevation 은 미묘한 DropShadow — OLED/직사광선 환경 고려해 옅게.
+  v1.0 → v1.1:
+  - Radius: 4/8/12 → 6/12/16 (전반적으로 더 둥글게).
+  - Card padding/gap: 16/16 → 20/20 (숨 쉴 여백 확보).
+  - Elevation: 그림자 깊이 증가 — 카드가 평평하지 않게.
 -->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:system="clr-namespace:System;assembly=mscorlib">
 
-    <!-- ──────────────── Spacing (Thickness 토큰) ────────────────
-         Margin / Padding 에 사용. 4px 그리드. -->
+    <!-- ──────────────── Spacing (Thickness 토큰) ──────────────── -->
     <Thickness x:Key="Spacing.Xs">4</Thickness>
     <Thickness x:Key="Spacing.Sm">8</Thickness>
     <Thickness x:Key="Spacing.Md">12</Thickness>
     <Thickness x:Key="Spacing.Lg">16</Thickness>
     <Thickness x:Key="Spacing.Xl">24</Thickness>
 
-    <!-- 카드 내부 표준 패딩 / 카드 간 간격 — 가장 자주 쓰는 값. -->
-    <Thickness x:Key="Spacing.Card.Padding">16</Thickness>
-    <Thickness x:Key="Spacing.Card.Gap">0,0,0,16</Thickness>
+    <!-- 카드 내부 표준 패딩 / 카드 간 간격. -->
+    <Thickness x:Key="Spacing.Card.Padding">20</Thickness>
+    <Thickness x:Key="Spacing.Card.Gap">0,0,0,20</Thickness>
 
-    <!-- ──────────────── CornerRadius ──────────────── -->
-    <CornerRadius x:Key="Radius.Sm">4</CornerRadius>
-    <CornerRadius x:Key="Radius.Md">8</CornerRadius>
-    <CornerRadius x:Key="Radius.Lg">12</CornerRadius>
+    <!-- ──────────────── CornerRadius ────────────────
+         모서리를 키워 부드러운 인상. -->
+    <CornerRadius x:Key="Radius.Sm">6</CornerRadius>
+    <CornerRadius x:Key="Radius.Md">12</CornerRadius>
+    <CornerRadius x:Key="Radius.Lg">16</CornerRadius>
 
     <!-- ──────────────── Elevation (DropShadow) ────────────────
-         산업 환경 직사광선에서 너무 강한 그림자는 부담 — 옅게. -->
+         어두운 배경 위에서 카드가 떠 보이도록 그림자 강화.
+         산업 환경 직사광선 부담은 색이 진해 어차피 옅게 보이므로 무관. -->
     <DropShadowEffect x:Key="Elevation.Card"
                       Color="#000000"
-                      BlurRadius="8"
-                      ShadowDepth="2"
-                      Opacity="0.25"
+                      BlurRadius="16"
+                      ShadowDepth="4"
+                      Opacity="0.45"
                       Direction="270"/>
 
     <DropShadowEffect x:Key="Elevation.Dialog"
                       Color="#000000"
-                      BlurRadius="20"
-                      ShadowDepth="6"
-                      Opacity="0.45"
+                      BlurRadius="32"
+                      ShadowDepth="8"
+                      Opacity="0.55"
                       Direction="270"/>
 </ResourceDictionary>
