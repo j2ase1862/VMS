@@ -10,6 +10,7 @@ using VMS.Camera.Services;
 using VMS.Core.Backup;
 using VMS.Core.Health;
 using VMS.Core.Interfaces;
+using VMS.Core.Retention;
 using VMS.Core.Security;
 using VMS.Core.Services;
 using VMS.Interfaces;
@@ -67,6 +68,22 @@ namespace VMS
             catch (Exception ex)
             {
                 Debug.WriteLine($"[App] StartupHealthCheck 실패 (best-effort): {ex.Message}");
+            }
+
+            // upload_queue 보존 정책 — 실패한 검사 결과 업로드 JSON 누적 방지.
+            // system_config.json 의 "uploadQueueRetentionDays" (기본 30, clamp [1, 365]).
+            // 파일명 timestamp 패턴 미일치 시 절대 미터치 — 사용자 임의 파일 보호.
+            try
+            {
+                var queueDir = System.IO.Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "BODA VISION AI", "upload_queue");
+                var days = UploadQueueRetention.LoadRetentionDaysFromAppData();
+                UploadQueueRetention.CleanupOldFiles(queueDir, days);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] UploadQueueRetention 실패 (best-effort): {ex.Message}");
             }
 
             // 자동 백업 스케줄러 — autoBackup.enabled=true 일 때만 시작.

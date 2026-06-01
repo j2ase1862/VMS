@@ -262,6 +262,21 @@ VMS 자체 라이선스 → 루트 `LICENSE` (DRAFT, 법무 검토 필요).
 | 감사 로그 SIEM 외부 전송 | 통합 모니터링 도입 시 | 운영 절차 문서화 완료 — `docs/gs_audit_siem_integration_guide.md` (PR25) |
 | 침입 탐지 — 비정상 로그인 패턴 알림 | 사이트 규모 확대 시 | SIEM 알람 룰로 대체 가능 (PR25 §6.2) |
 
+### 5.9 검사 결과 — upload_queue 보존 (PR37)
+| 항목 | 값 / 동작 |
+|---|---|
+| 대상 | `%LocalAppData%\BODA VISION AI\upload_queue\*.json` — Web 업로드 실패 시 재시도용 JSON |
+| 기본 보존 | 30일 (네트워크 / Web 백엔드 장애 복구 충분 기간) |
+| 구성 키 | `system_config.json` 의 `uploadQueueRetentionDays` (int) |
+| 안전 범위 | [1, 365] 자동 clamp |
+| 파일명 패턴 | `yyyyMMddHHmmssfff_{guid:N}.json` (ParameterSyncService.EnqueueFailed) |
+| 패턴 외 파일 | timestamp prefix 미일치 / 길이 다른 / parse 실패 시 절대 미터치 — 사용자 임의 파일 보호 |
+| 정리 실행 시점 | VMS 시작 시 1회 (`App.xaml.cs:OnStartup`, StartupHealthCheck 직후) |
+| 정리 행위 감사 | `AuditCategory.System` · `UploadQueueRetention` — Deleted / OldestRemaining 기록 |
+| 운영 차단 | 없음 (best-effort) |
+| 코드 경로 | `VMS.Core/Retention/UploadQueueRetention.cs` |
+| 다른 검사 데이터 | RecentInspectionsService 는 in-memory 200건 circular — 디스크 영구 저장 없음. InspectionService 도 NG 이미지 미저장. trt_cache / BatchTest 결과는 사용자 관리. |
+
 ### 5.8 지원 패키지 export (PR34 / PR35 UI)
 | 항목 | 값 / 동작 |
 |---|---|
