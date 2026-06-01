@@ -262,14 +262,15 @@ VMS 자체 라이선스 → 루트 `LICENSE` (DRAFT, 법무 검토 필요).
 | 감사 로그 SIEM 외부 전송 | 통합 모니터링 도입 시 | 운영 절차 문서화 완료 — `docs/gs_audit_siem_integration_guide.md` (PR25) |
 | 침입 탐지 — 비정상 로그인 패턴 알림 | 사이트 규모 확대 시 | SIEM 알람 룰로 대체 가능 (PR25 §6.2) |
 
-### 5.10 보존 정책 통합 UI (PR38 + PR40 카테고리별 차등 + PR41 프리셋)
+### 5.10 보존 정책 통합 UI (PR38 + PR40 카테고리별 차등 + PR41 프리셋 + PR42 dry-run 미리보기)
 | 항목 | 값 / 동작 |
 |---|---|
 | 진입 | 메인 헤더 Admin Tools 드롭다운 → Retention Settings... — Admin 전용 |
 | 전역 편집 키 | `auditRetentionDays` (§5.4) / `autoBackup.retentionDays` (§5.7) / `uploadQueueRetentionDays` (§5.9) |
 | 카테고리별 편집 (PR40) | `auditCategoryRetentionDays` 의 9 카테고리 키 — ObservableCollection 일괄 편집 |
 | 빠른 프리셋 (PR41) | Conservative / Standard / Minimal — 3 버튼 클릭 시 12 키 동시 채움, Save 전엔 디스크 미반영 |
-| UI 구조 | ScrollViewer + 3 카드 (프리셋 / 전역 / 카테고리별) |
+| Dry-run 미리보기 (PR42) | Preview 버튼 → `VMS.Core.Retention.RetentionPreviewService` 호출, 4 정책별 영향 (삭제 예정 파일 수 / MB / 가장 오래된 남는 날짜 / 카테고리별 라인 제거 수) 표시. **파일을 절대 수정하지 않음** (read-only) |
+| UI 구조 | ScrollViewer + 4 카드 (프리셋 / 전역 / 미리보기 (옵션) / 카테고리별) |
 | 정책 | JsonNode 격리 편집 — 다른 키 / autoBackup / auditCategoryRetentionDays 객체 보존 |
 | Clamp | 저장 직전 각 키별 강제 (UI 라벨에 범위 표시) — 카테고리별은 [1, 3650] |
 | 감사 기록 | `Configuration` · `RetentionConfigSaved` (전역 + CategoryKeys 카운트 details) |
