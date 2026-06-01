@@ -439,6 +439,17 @@
                                    FontSize="16"/>
                     </Button>
 
+                    <!-- Support Package Export (Admin only) — 원격 지원용 ZIP -->
+                    <Button Style="{StaticResource IconButton}"
+                            Command="{Binding OpenSupportPackageCommand}"
+                            IsEnabled="{Binding CanManageUsers}"
+                            ToolTip="Support Package (지원 패키지 — 원격 지원/엔지니어링 분석용)"
+                            Visibility="{Binding CanManageUsers, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBlock Text="&#xE8FB;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="16"/>
+                    </Button>
+
                     <Button Style="{StaticResource IconButton}"
                             Command="{Binding SaveLayoutCommand}"
                             ToolTip="Save Layout">

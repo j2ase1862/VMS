@@ -1142,6 +1142,22 @@ namespace VMS.ViewModels
             window.ShowDialog();
         }
 
+        /// <summary>
+        /// 지원 패키지 export 윈도우 — Admin 권한 전용. 원격 지원 / 엔지니어링 분석용
+        /// ZIP 생성. 백업과 달리 BodaVision.db / recipes 는 미포함.
+        /// </summary>
+        [RelayCommand]
+        private void OpenSupportPackage()
+        {
+            var vm = new SupportPackageViewModel();
+            var window = new SupportPackageWindow
+            {
+                DataContext = vm,
+                Owner = System.Windows.Application.Current.MainWindow
+            };
+            window.ShowDialog();
+        }
+
         [RelayCommand]
         private void SwitchUser()
         {
