@@ -41,6 +41,15 @@ namespace VMS
             // ChromelessTitleBar (VMS.VisionSetup.Views.Common) 가 이 커맨드들을 호출함.
             RegisterChromelessWindowCommands();
 
+            // 최초 실행 감지 — system_config.json 부재 시 AppSetup 자동 실행 후 VMS 종료.
+            // MSI 설치 직후 빈 AppData 환경 또는 사용자가 AppData 초기화 시 트리거.
+            // AppSetup 완료(저장) → system_config.json 생성 → 사용자가 VMS 재실행 시 정상 시작.
+            if (TryLaunchInitialSetup())
+            {
+                Shutdown();
+                return;
+            }
+
             // 보안 정책 로드 — system_config.json 의 "securityMode" 키에서 결정.
             // 누락 시 Development 폴백 (기존 dev 동작 호환). 모든 HttpClient / SignalR 이
             // 이 정책을 참조하므로 다른 서비스 초기화 전에 반드시 호출.
@@ -587,6 +596,46 @@ namespace VMS
         /// 그대로 사용할 수 있도록 Window 타입에 클래스 와이드 커맨드 바인딩 등록.
         /// VMS.VisionSetup 의 App.RegisterChromelessWindowCommands 와 동일 패턴.
         /// </summary>
+        /// <summary>
+        /// system_config.json 부재 시 VMS.AppSetup.exe 를 실행. 트리거되면 true 반환 → 호출 측에서 Shutdown.
+        /// AppSetup.exe 부재 또는 실행 실패 시 false → VMS 정상 진행(기본 config 사용).
+        /// </summary>
+        private static bool TryLaunchInitialSetup()
+        {
+            try
+            {
+                var configPath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "BODA VISION AI", "system_config.json");
+                if (File.Exists(configPath)) return false;
+
+                var setupExe = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "VMS.AppSetup.exe");
+                if (!File.Exists(setupExe))
+                {
+                    Debug.WriteLine($"[App] TryLaunchInitialSetup: VMS.AppSetup.exe not found at {setupExe}");
+                    return false;
+                }
+
+                MessageBox.Show(
+                    "초기 시스템 설정이 필요합니다.\n시스템 설정 마법사를 실행합니다.\n\n설정 완료 후 VMS를 다시 실행해 주세요.",
+                    "BODA Vision System - 최초 실행",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = setupExe,
+                    UseShellExecute = true,
+                });
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] TryLaunchInitialSetup 실패: {ex.Message}");
+                return false;
+            }
+        }
+
         private static void RegisterChromelessWindowCommands()
         {
             System.Windows.Input.CommandManager.RegisterClassCommandBinding(typeof(Window),
