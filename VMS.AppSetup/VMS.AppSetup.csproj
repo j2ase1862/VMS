@@ -24,7 +24,7 @@
   <!-- After build, copy output to VMS output directory -->
   <Target Name="CopyToVmsOutput" AfterTargets="Build">
     <PropertyGroup>
-      <VmsOutputDir>..\VMS\bin\$(Configuration)\net8.0-windows\</VmsOutputDir>
+      <VmsOutputDir>..\VMS\bin\$(Configuration)\net8.0-windows7.0\</VmsOutputDir>
     </PropertyGroup>
     <ItemGroup>
       <AppSetupOutputFiles Include="$(TargetDir)**\*.*" />
