@@ -4,16 +4,16 @@
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         xmlns:c="clr-namespace:VMS.VisionSetup.Views.Common;assembly=VMS.VisionSetup"
         Title="Retention Settings"
-        Width="680" Height="540"
+        Width="760" Height="780"
+        MinWidth="680" MinHeight="540"
         WindowStyle="None"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource BrushBgWindow}"
-        ResizeMode="NoResize"
         TextOptions.TextFormattingMode="Display">
 
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="42" CornerRadius="0"
-                            GlassFrameThickness="0" ResizeBorderThickness="0"
+                            GlassFrameThickness="0" ResizeBorderThickness="6"
                             UseAeroCaptionButtons="False"/>
     </shell:WindowChrome.WindowChrome>
 
@@ -25,9 +25,7 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <c:ChromelessTitleBar Grid.Row="0"
-                                  TitleText="보존 정책 — Retention Settings"
-                                  ShowMinMaxButtons="False"/>
+            <c:ChromelessTitleBar Grid.Row="0" TitleText="보존 정책 — Retention Settings"/>
 
             <Grid Grid.Row="1" Margin="22,16,22,16">
                 <Grid.RowDefinitions>
@@ -40,66 +38,106 @@
                 <!-- Intro -->
                 <Border Grid.Row="0" Style="{StaticResource WindowSurface}" Margin="0,0,0,12">
                     <TextBlock Style="{StaticResource WindowBodyText}" TextWrapping="Wrap">
-                        <Run Text="3개 보존 정책 (감사 로그 / 자동 백업 / 업로드 큐) 을 한 화면에서 편집합니다. 다른 system_config.json 키는 보존됩니다. 변경은 "/>
+                        <Run Text="전역 보존 (Audit / AutoBackup / UploadQueue) 과 카테고리별 차등 보존 (9 audit 카테고리) 을 한 화면에서 편집합니다. 다른 system_config.json 키는 보존됩니다. 변경은 "/>
                         <Run FontWeight="SemiBold" Text="VMS 재시작 후 적용"/>
                         <Run Text="됩니다."/>
                     </TextBlock>
                 </Border>
 
-                <!-- Settings card -->
-                <Border Grid.Row="1" Style="{StaticResource WindowCard}" Padding="18,14">
+                <!-- Settings — ScrollViewer 로 카테고리 추가 시도 안전 -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
                     <StackPanel>
-                        <TextBlock Text="보존 기간 (일)" Style="{StaticResource WindowSectionHeaderFirst}"/>
+                        <!-- 전역 3종 -->
+                        <Border Style="{StaticResource WindowCard}" Padding="18,14" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="전역 보존 (일)" Style="{StaticResource WindowSectionHeaderFirst}"/>
 
-                        <!-- Audit -->
-                        <Grid Margin="0,8,0,12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="170"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="감사 로그 (audit/)"
-                                       Style="{StaticResource WindowFieldLabel}"/>
-                            <TextBox Grid.Column="1" Text="{Binding AuditRetentionDays}"
-                                     Style="{StaticResource WindowDarkTextBox}"/>
-                            <TextBlock Grid.Column="2" Text="{Binding AuditRange}"
-                                       Style="{StaticResource WindowMutedText}"
-                                       VerticalAlignment="Center" Margin="10,0,0,0"/>
-                        </Grid>
+                                <Grid Margin="0,8,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="180"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="감사 로그 (audit/)"
+                                               Style="{StaticResource WindowFieldLabel}"/>
+                                    <TextBox Grid.Column="1" Text="{Binding AuditRetentionDays}"
+                                             Style="{StaticResource WindowDarkTextBox}"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding AuditRange}"
+                                               Style="{StaticResource WindowMutedText}"
+                                               VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                </Grid>
 
-                        <!-- AutoBackup -->
-                        <Grid Margin="0,0,0,12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="170"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="자동 백업 (backups/)"
-                                       Style="{StaticResource WindowFieldLabel}"/>
-                            <TextBox Grid.Column="1" Text="{Binding AutoBackupRetentionDays}"
-                                     Style="{StaticResource WindowDarkTextBox}"/>
-                            <TextBlock Grid.Column="2" Text="{Binding AutoBackupRange}"
-                                       Style="{StaticResource WindowMutedText}"
-                                       VerticalAlignment="Center" Margin="10,0,0,0"/>
-                        </Grid>
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="180"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="자동 백업 (backups/)"
+                                               Style="{StaticResource WindowFieldLabel}"/>
+                                    <TextBox Grid.Column="1" Text="{Binding AutoBackupRetentionDays}"
+                                             Style="{StaticResource WindowDarkTextBox}"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding AutoBackupRange}"
+                                               Style="{StaticResource WindowMutedText}"
+                                               VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                </Grid>
 
-                        <!-- UploadQueue -->
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="170"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="업로드 큐 (upload_queue/)"
-                                       Style="{StaticResource WindowFieldLabel}"/>
-                            <TextBox Grid.Column="1" Text="{Binding UploadQueueRetentionDays}"
-                                     Style="{StaticResource WindowDarkTextBox}"/>
-                            <TextBlock Grid.Column="2" Text="{Binding UploadQueueRange}"
-                                       Style="{StaticResource WindowMutedText}"
-                                       VerticalAlignment="Center" Margin="10,0,0,0"/>
-                        </Grid>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="180"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="업로드 큐 (upload_queue/)"
+                                               Style="{StaticResource WindowFieldLabel}"/>
+                                    <TextBox Grid.Column="1" Text="{Binding UploadQueueRetentionDays}"
+                                             Style="{StaticResource WindowDarkTextBox}"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding UploadQueueRange}"
+                                               Style="{StaticResource WindowMutedText}"
+                                               VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 카테고리별 차등 -->
+                        <Border Style="{StaticResource WindowCard}" Padding="18,14">
+                            <StackPanel>
+                                <TextBlock Text="카테고리별 차등 보존 (일)" Style="{StaticResource WindowSectionHeaderFirst}"/>
+                                <TextBlock Style="{StaticResource WindowMutedText}" Margin="0,4,0,8" TextWrapping="Wrap">
+                                    <Run Text="전역 정리 후 남은 jsonl 의 라인을 카테고리별 보존 기간 기준으로 재필터합니다 (PR39). 기본값은 GS 권장 — 보안/사용자/설정 1095일, 인증/권한/레시피 730일, 시퀀스/검사 365일, 시스템 90일."/>
+                                </TextBlock>
+
+                                <ItemsControl ItemsSource="{Binding CategoryRetentions}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,4">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="160"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="90"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="{Binding Name}"
+                                                           Foreground="{StaticResource BrushTextPrimary}"
+                                                           FontSize="12" FontWeight="SemiBold"
+                                                           VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding Description}"
+                                                           Style="{StaticResource WindowMutedText}"
+                                                           VerticalAlignment="Center" Margin="8,0,12,0"/>
+                                                <TextBox Grid.Column="2" Text="{Binding Days}"
+                                                         Style="{StaticResource WindowDarkTextBox}"/>
+                                                <TextBlock Grid.Column="3" Text="{Binding Range}"
+                                                           Style="{StaticResource WindowMutedText}"
+                                                           VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
-                </Border>
+                </ScrollViewer>
 
                 <!-- Status -->
                 <Border Grid.Row="2" Style="{StaticResource WindowSurface}" Margin="0,12,0,0">
