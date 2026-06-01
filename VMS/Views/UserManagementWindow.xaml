@@ -5,7 +5,7 @@
         Title="User Management"
         Width="720" Height="520"
         WindowStartupLocation="CenterOwner"
-        Background="#1E1E1E"
+        Background="{StaticResource Brush.Surface.Base}"
         ResizeMode="CanResizeWithGrip">
 
     <Grid Margin="16">
@@ -15,7 +15,7 @@
         </Grid.ColumnDefinitions>
 
         <!-- User List -->
-        <Border Grid.Column="0" Background="#2D2D2D" CornerRadius="8" Padding="12" Margin="0,0,8,0">
+        <Border Grid.Column="0" Background="{StaticResource Brush.Surface.Raised}" CornerRadius="8" Padding="12" Margin="0,0,8,0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -31,15 +31,15 @@
                           SelectedItem="{Binding SelectedUser}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
-                          Background="#2D2D2D"
+                          Background="{StaticResource Brush.Surface.Raised}"
                           Foreground="White"
                           BorderThickness="0"
                           GridLinesVisibility="Horizontal"
                           HorizontalGridLinesBrush="#3D3D3D"
                           SelectionMode="Single"
                           HeadersVisibility="Column"
-                          RowBackground="#2D2D2D"
-                          AlternatingRowBackground="#333333">
+                          RowBackground="{StaticResource Brush.Surface.Raised}"
+                          AlternatingRowBackground="{StaticResource Brush.Surface.Overlay}">
                     <DataGrid.ColumnHeaderStyle>
                         <Style TargetType="DataGridColumnHeader">
                             <Setter Property="Background" Value="#3D3D3D"/>
@@ -62,28 +62,28 @@
         <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
             <StackPanel>
                 <!-- Add New User Section -->
-                <Border Background="#2D2D2D" CornerRadius="8" Padding="12" Margin="0,0,0,8">
+                <Border Background="{StaticResource Brush.Surface.Raised}" CornerRadius="8" Padding="12" Margin="0,0,0,8">
                     <StackPanel>
                         <TextBlock Text="Add New User"
-                                   FontWeight="SemiBold" Foreground="#4CAF50"
+                                   FontWeight="SemiBold" Foreground="{StaticResource Brush.Success}"
                                    Margin="0,0,0,8"/>
 
-                        <TextBlock Text="Username" Foreground="#B0B0B0" FontSize="11" Margin="0,0,0,2"/>
+                        <TextBlock Text="Username" Foreground="{StaticResource Brush.Text.Secondary}" FontSize="11" Margin="0,0,0,2"/>
                         <TextBox Text="{Binding NewUsername, UpdateSourceTrigger=PropertyChanged}"
-                                 Background="#404040" Foreground="White" BorderBrush="#3D3D3D"
+                                 Background="{StaticResource Brush.Surface.Overlay}" Foreground="White" BorderBrush="#3D3D3D"
                                  Padding="6,4" Margin="0,0,0,6" CaretBrush="White"/>
 
-                        <TextBlock Text="Display Name" Foreground="#B0B0B0" FontSize="11" Margin="0,0,0,2"/>
+                        <TextBlock Text="Display Name" Foreground="{StaticResource Brush.Text.Secondary}" FontSize="11" Margin="0,0,0,2"/>
                         <TextBox Text="{Binding NewDisplayName, UpdateSourceTrigger=PropertyChanged}"
-                                 Background="#404040" Foreground="White" BorderBrush="#3D3D3D"
+                                 Background="{StaticResource Brush.Surface.Overlay}" Foreground="White" BorderBrush="#3D3D3D"
                                  Padding="6,4" Margin="0,0,0,6" CaretBrush="White"/>
 
-                        <TextBlock Text="Password" Foreground="#B0B0B0" FontSize="11" Margin="0,0,0,2"/>
+                        <TextBlock Text="Password" Foreground="{StaticResource Brush.Text.Secondary}" FontSize="11" Margin="0,0,0,2"/>
                         <PasswordBox x:Name="NewPasswordBox"
-                                     Background="#404040" Foreground="White" BorderBrush="#3D3D3D"
+                                     Background="{StaticResource Brush.Surface.Overlay}" Foreground="White" BorderBrush="#3D3D3D"
                                      Padding="6,4" Margin="0,0,0,6" CaretBrush="White"/>
 
-                        <TextBlock Text="Grade" Foreground="#B0B0B0" FontSize="11" Margin="0,0,0,2"/>
+                        <TextBlock Text="Grade" Foreground="{StaticResource Brush.Text.Secondary}" FontSize="11" Margin="0,0,0,2"/>
                         <ComboBox ItemsSource="{Binding GradeValues}"
                                   SelectedItem="{Binding NewGrade}"
                                   Background="White" Foreground="Black" BorderBrush="#3D3D3D"
@@ -93,25 +93,25 @@
                                 Command="{Binding AddUserCommand}"
                                 Click="AddUser_Click"
                                 Style="{StaticResource ModernButton}"
-                                Background="#4CAF50"
+                                Background="{StaticResource Brush.Success}"
                                 HorizontalAlignment="Stretch"/>
                     </StackPanel>
                 </Border>
 
                 <!-- Edit Selected User Section -->
-                <Border Background="#2D2D2D" CornerRadius="8" Padding="12" Margin="0,0,0,8">
+                <Border Background="{StaticResource Brush.Surface.Raised}" CornerRadius="8" Padding="12" Margin="0,0,0,8">
                     <StackPanel>
                         <TextBlock Text="Edit Selected User"
-                                   FontWeight="SemiBold" Foreground="#FF9800"
+                                   FontWeight="SemiBold" Foreground="{StaticResource Brush.Warning}"
                                    Margin="0,0,0,8"/>
 
-                        <TextBlock Text="Display Name" Foreground="#B0B0B0" FontSize="11" Margin="0,0,0,2"/>
+                        <TextBlock Text="Display Name" Foreground="{StaticResource Brush.Text.Secondary}" FontSize="11" Margin="0,0,0,2"/>
                         <TextBox Text="{Binding SelectedUser.DisplayName, UpdateSourceTrigger=PropertyChanged}"
-                                 Background="#404040" Foreground="White" BorderBrush="#3D3D3D"
+                                 Background="{StaticResource Brush.Surface.Overlay}" Foreground="White" BorderBrush="#3D3D3D"
                                  Padding="6,4" Margin="0,0,0,6" CaretBrush="White"
                                  IsEnabled="{Binding SelectedUser, Converter={StaticResource NullToVisibilityConverter}}"/>
 
-                        <TextBlock Text="Grade" Foreground="#B0B0B0" FontSize="11" Margin="0,0,0,2"/>
+                        <TextBlock Text="Grade" Foreground="{StaticResource Brush.Text.Secondary}" FontSize="11" Margin="0,0,0,2"/>
                         <ComboBox ItemsSource="{Binding GradeValues}"
                                   SelectedItem="{Binding SelectedUser.Grade}"
                                   Background="White" Foreground="Black" BorderBrush="#3D3D3D"
@@ -121,14 +121,14 @@
                         <Button Content="Save Changes"
                                 Command="{Binding SaveUserCommand}"
                                 Style="{StaticResource ModernButton}"
-                                Background="#FF9800"
+                                Background="{StaticResource Brush.Warning}"
                                 HorizontalAlignment="Stretch"
                                 Margin="0,0,0,4"/>
 
                         <!-- Change Password -->
-                        <TextBlock Text="New Password" Foreground="#B0B0B0" FontSize="11" Margin="0,8,0,2"/>
+                        <TextBlock Text="New Password" Foreground="{StaticResource Brush.Text.Secondary}" FontSize="11" Margin="0,8,0,2"/>
                         <PasswordBox x:Name="ChangePasswordBox"
-                                     Background="#404040" Foreground="White" BorderBrush="#3D3D3D"
+                                     Background="{StaticResource Brush.Surface.Overlay}" Foreground="White" BorderBrush="#3D3D3D"
                                      Padding="6,4" Margin="0,0,0,6" CaretBrush="White"/>
 
                         <Button Content="Change Password"
@@ -142,14 +142,14 @@
                         <Button Content="Delete User"
                                 Command="{Binding DeleteUserCommand}"
                                 Style="{StaticResource ModernButton}"
-                                Background="#F44336"
+                                Background="{StaticResource Brush.Danger}"
                                 HorizontalAlignment="Stretch"/>
                     </StackPanel>
                 </Border>
 
                 <!-- Status Message -->
                 <TextBlock Text="{Binding StatusMessage}"
-                           Foreground="#B0B0B0"
+                           Foreground="{StaticResource Brush.Text.Secondary}"
                            FontSize="11"
                            TextWrapping="Wrap"
                            Margin="0,4,0,0"/>
