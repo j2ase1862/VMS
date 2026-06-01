@@ -48,6 +48,42 @@
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled">
                     <StackPanel>
+                        <!-- 빠른 프리셋 -->
+                        <Border Style="{StaticResource WindowSurface}" Margin="0,0,0,12">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="빠른 프리셋"
+                                           Style="{StaticResource WindowFieldLabel}"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1"
+                                           Style="{StaticResource WindowMutedText}"
+                                           VerticalAlignment="Center" Margin="12,0,12,0"
+                                           TextWrapping="Wrap">
+                                    <Run Text="Conservative: 규제/컴플라이언스 사이트 · Standard: GS 권장 기본 · Minimal: 소형/디스크 제한 사이트. 적용 후 Save 를 눌러야 디스크에 기록됩니다."/>
+                                </TextBlock>
+                                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                    <Button Content="Conservative"
+                                            Command="{Binding ApplyPresetCommand}"
+                                            CommandParameter="Conservative"
+                                            Style="{StaticResource ModernGhostButton}"
+                                            Margin="0,0,6,0"/>
+                                    <Button Content="Standard"
+                                            Command="{Binding ApplyPresetCommand}"
+                                            CommandParameter="Standard"
+                                            Style="{StaticResource ModernGhostButton}"
+                                            Margin="0,0,6,0"/>
+                                    <Button Content="Minimal"
+                                            Command="{Binding ApplyPresetCommand}"
+                                            CommandParameter="Minimal"
+                                            Style="{StaticResource ModernGhostButton}"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
                         <!-- 전역 3종 -->
                         <Border Style="{StaticResource WindowCard}" Padding="18,14" Margin="0,0,0,12">
                             <StackPanel>
