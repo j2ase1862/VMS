@@ -58,6 +58,18 @@ namespace VMS
                 Debug.WriteLine($"[App] AuditLogRetention 실패 (best-effort): {ex.Message}");
             }
 
+            // 카테고리별 차등 보존 (GS 권장) — Whole-file 정리 후 남은 파일에서
+            // 카테고리별 만료 라인 필터. system_config.json 의 "auditCategoryRetentionDays".
+            try
+            {
+                var perCat = AuditCategoryRetention.LoadDaysFromAppData();
+                AuditCategoryRetention.FilterFilesByCategory(AuditLogger.Instance.AuditDirectory, perCat);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] AuditCategoryRetention 실패 (best-effort): {ex.Message}");
+            }
+
             // 시작 헬스 체크 — 디렉토리 쓰기 가능, system_config 존재, 보안 옵션 로드,
             // 디스크 여유 ≥ 1 GB. 종합 결과는 AuditCategory.System 의 단일 이벤트로 기록.
             // best-effort — Fail 상태여도 UI 차단 없음 (감사 흔적 남기는 데 의의).

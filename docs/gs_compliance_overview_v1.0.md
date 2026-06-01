@@ -341,17 +341,29 @@ VMS 자체 라이선스 → 루트 `LICENSE` (DRAFT, 법무 검토 필요).
 | 운영 차단 | 없음 (best-effort) — 감사 흔적만 남기고 앱 진행 |
 | 코드 경로 | `VMS.Core/Health/StartupHealthCheck.cs`, `VMS/Views/HealthCheckWindow.xaml`, `VMS/ViewModels/HealthCheckViewModel.cs` |
 
-### 5.4 감사 로그 보존 정책 (PR22)
-| 항목 | 값 / 동작 |
-|---|---|
-| 기본 보존 기간 | 365일 (GS 권장 1년 이력) |
-| 구성 키 | `system_config.json` 의 `auditRetentionDays` (int) |
-| 안전 범위 | [7, 3650] 으로 자동 clamp — 실수 / 손상 방지 |
-| 오늘 파일 | 보존 기간 무관 항상 유지 (진행 세션 보호) |
-| 정리 실행 시점 | VMS 시작 시 1회 (`App.xaml.cs:OnStartup`) |
-| 정리 행위 감사 | `AuditCategory.System` · `AuditLogRetention` 이벤트 — Deleted / OldestRemaining 기록 |
-| 패턴 외 파일 | YYYY-MM-DD.jsonl 외 파일은 절대 삭제하지 않음 |
-| 코드 경로 | `VMS.Core/Security/AuditLogRetention.cs` |
+### 5.4 감사 로그 보존 정책 (PR22 + PR39 카테고리별 차등)
+**PR22 — 전역 파일 단위 정리**
+- 기본 365일 (clamp [7, 3650]), `system_config.json` 의 `auditRetentionDays`
+- 패턴 외 파일 미터치, 오늘 파일 무조건 유지
+- `AuditCategory.System` · `AuditLogRetention` 감사
+- 코드: `VMS.Core/Security/AuditLogRetention.cs`
+
+**PR39 — 카테고리별 차등 라인 필터** (Whole-file 정리 후 남은 파일에 적용)
+| 카테고리 | 기본 보존 일수 | 의도 |
+|---|---|---|
+| Security / UserManagement / Configuration | 1095 (3년) | 침해 / CRUD / 설정 변경 (GS critical) |
+| Authentication / Authorization / RecipeChange | 730 (2년) | 권한 / 레시피 흐름 |
+| SequenceControl / Inspection | 365 (1년) | 운영 이벤트 |
+| System | 90 (3개월) | 내부 운영 (보존 정리, 헬스 체크 등) |
+
+- `system_config.json` 의 `auditCategoryRetentionDays` 객체로 카테고리별 override (각 키 [1, 3650] clamp)
+- 라인별 timestamp + category 파싱 → 정책 적용
+- timestamp / category parse 실패 라인은 안전하게 유지 (silent drop 방지)
+- 모든 라인 제거 → 파일 삭제, 일부 남음 → rewrite
+- `AuditCategory.System` · `AuditCategoryRetention` 감사 (FilesScanned / Rewritten / Deleted / LinesRemoved)
+- 코드: `VMS.Core/Security/AuditCategoryRetention.cs`
+
+**실행 시점**: VMS 시작 시 1회 (`App.xaml.cs:OnStartup`) — AuditLogRetention 직후 카테고리별 필터 호출.
 
 ---
 
