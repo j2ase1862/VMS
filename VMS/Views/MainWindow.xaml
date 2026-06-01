@@ -395,14 +395,15 @@
                                    FontSize="16"/>
                     </Button>
 
-                    <!-- Admin Tools 통합 드롭다운 (Admin only) — 5개 진단/관리 도구를 하나의 메뉴로 -->
+                    <!-- Admin Tools 통합 드롭다운 (Admin only) — 5개 진단/관리 도구를 하나의 메뉴로.
+                         아이콘 E712 (More, 수직 3점) — Settings Panel 기어(E713)와 시각 구분 + dropdown trigger 표준. -->
                     <Button x:Name="AdminToolsButton"
                             Style="{StaticResource IconButton}"
                             Click="AdminToolsButton_Click"
                             IsEnabled="{Binding CanManageUsers}"
                             ToolTip="Admin Tools (감사 / 헬스 / 백업 / 자동백업 / 지원 패키지)"
                             Visibility="{Binding CanManageUsers, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <TextBlock Text="&#xE713;"
+                        <TextBlock Text="&#xE712;"
                                    FontFamily="Segoe MDL2 Assets"
                                    FontSize="16"/>
                         <Button.ContextMenu>
