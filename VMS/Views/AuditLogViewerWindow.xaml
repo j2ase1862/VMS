@@ -5,7 +5,7 @@
         xmlns:c="clr-namespace:VMS.VisionSetup.Views.Common;assembly=VMS.VisionSetup"
         xmlns:sec="clr-namespace:VMS.Core.Security;assembly=VMS.Core"
         Title="Audit Log Viewer"
-        Width="1120" Height="680"
+        Width="1200" Height="680"
         MinWidth="900" MinHeight="520"
         WindowStyle="None"
         WindowStartupLocation="CenterOwner"
@@ -60,11 +60,13 @@
                         <TextBlock Grid.Row="0" Grid.Column="0" Text="From"
                                    Style="{StaticResource WindowFieldLabel}" Margin="0,0,8,0"/>
                         <DatePicker Grid.Row="0" Grid.Column="1" SelectedDate="{Binding FromDate}"
+                                    Style="{StaticResource WindowDarkDatePicker}"
                                     Margin="0,0,14,0"/>
 
                         <TextBlock Grid.Row="0" Grid.Column="2" Text="To"
                                    Style="{StaticResource WindowFieldLabel}" Margin="0,0,8,0"/>
                         <DatePicker Grid.Row="0" Grid.Column="3" SelectedDate="{Binding ToDate}"
+                                    Style="{StaticResource WindowDarkDatePicker}"
                                     Margin="0,0,14,0"/>
 
                         <TextBlock Grid.Row="0" Grid.Column="4" Text="Category"
