@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Win32;
 using VMS.Core.Backup;
 using VMS.Core.Retention;
 using VMS.Core.Security;
@@ -223,6 +224,11 @@ namespace VMS.ViewModels
             }
         }
 
+        // 마지막 Preview 결과 — Export 에서 재사용. UI 미바인딩.
+        private List<RetentionPreviewSummary>? _lastPreviewSummaries;
+        private CategoryFilterPreview? _lastPreviewCategory;
+        private Dictionary<string, int>? _lastPreviewSettings;
+
         [RelayCommand]
         private void Preview()
         {
@@ -255,6 +261,18 @@ namespace VMS.ViewModels
                 PreviewCategorySummary = FormatCategoryPreview(catSum);
                 HasPreview = true;
 
+                // Export 가 같은 결과를 쓸 수 있도록 캐시.
+                _lastPreviewSummaries = new List<RetentionPreviewSummary> { auditSum, abSum, queueSum };
+                _lastPreviewCategory = catSum;
+                _lastPreviewSettings = new Dictionary<string, int>
+                {
+                    ["AuditRetentionDays"] = audit,
+                    ["AutoBackupRetentionDays"] = ab,
+                    ["UploadQueueRetentionDays"] = queue
+                };
+                foreach (var item in CategoryRetentions)
+                    _lastPreviewSettings[$"Category.{item.Category}"] = item.Days;
+
                 StatusMessage = "미리보기 — Save 를 누르지 않으면 디스크는 변경되지 않습니다.";
                 StatusColor = "#22D3EE";  // Teal accent
             }
@@ -263,6 +281,50 @@ namespace VMS.ViewModels
                 StatusMessage = $"미리보기 실패: {ex.Message}";
                 StatusColor = "#EF4444";
                 HasPreview = false;
+            }
+        }
+
+        [RelayCommand]
+        private void ExportPreviewCsv()
+        {
+            if (!HasPreview || _lastPreviewSummaries == null || _lastPreviewCategory == null)
+            {
+                StatusMessage = "Export 전에 Preview 를 먼저 실행하세요.";
+                StatusColor = "#EF4444";
+                return;
+            }
+
+            var dlg = new SaveFileDialog
+            {
+                Filter = "CSV 파일 (*.csv)|*.csv|모든 파일 (*.*)|*.*",
+                FileName = $"retention-preview-{DateTime.Now:yyyyMMdd-HHmmss}.csv",
+                DefaultExt = ".csv"
+            };
+            if (dlg.ShowDialog() != true) return;
+
+            try
+            {
+                RetentionPreviewService.ExportToCsv(
+                    _lastPreviewSummaries, _lastPreviewCategory,
+                    _lastPreviewSettings ?? new Dictionary<string, int>(),
+                    dlg.FileName);
+
+                AuditLogger.Instance.Log(
+                    AuditCategory.Configuration, "RetentionPreviewExported", AuditOutcome.Success,
+                    source: nameof(RetentionSettingsViewModel),
+                    details: $"Path={dlg.FileName}");
+
+                StatusMessage = $"CSV 저장 완료: {dlg.FileName}";
+                StatusColor = "#10B981";  // BrushSuccess
+            }
+            catch (Exception ex)
+            {
+                AuditLogger.Instance.Log(
+                    AuditCategory.Configuration, "RetentionPreviewExported", AuditOutcome.Failure,
+                    source: nameof(RetentionSettingsViewModel),
+                    details: $"{ex.GetType().Name}: {ex.Message}");
+                StatusMessage = $"CSV 저장 실패: {ex.Message}";
+                StatusColor = "#EF4444";
             }
         }
 

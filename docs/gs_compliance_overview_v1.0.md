@@ -270,6 +270,7 @@ VMS 자체 라이선스 → 루트 `LICENSE` (DRAFT, 법무 검토 필요).
 | 카테고리별 편집 (PR40) | `auditCategoryRetentionDays` 의 9 카테고리 키 — ObservableCollection 일괄 편집 |
 | 빠른 프리셋 (PR41) | Conservative / Standard / Minimal — 3 버튼 클릭 시 12 키 동시 채움, Save 전엔 디스크 미반영 |
 | Dry-run 미리보기 (PR42) | Preview 버튼 → `VMS.Core.Retention.RetentionPreviewService` 호출, 4 정책별 영향 (삭제 예정 파일 수 / MB / 가장 오래된 남는 날짜 / 카테고리별 라인 제거 수) 표시. **파일을 절대 수정하지 않음** (read-only) |
+| Dry-run CSV export (PR43) | Export Preview... 버튼 → SaveFileDialog → RFC 4180 CSV. 헤더 `Section,Policy,Metric,Value` + Meta (GeneratedUtc) + Settings 스냅샷 (전역 3 + 카테고리 9) + GlobalSummary + CategoryFilter. `Configuration · RetentionPreviewExported` 감사. GS 심사 / 문서화 / 외부 검토 자료용 |
 | UI 구조 | ScrollViewer + 4 카드 (프리셋 / 전역 / 미리보기 (옵션) / 카테고리별) |
 | 정책 | JsonNode 격리 편집 — 다른 키 / autoBackup / auditCategoryRetentionDays 객체 보존 |
 | Clamp | 저장 직전 각 키별 강제 (UI 라벨에 범위 표시) — 카테고리별은 [1, 3650] |
