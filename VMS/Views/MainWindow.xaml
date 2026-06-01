@@ -4,7 +4,7 @@
         xmlns:controls="clr-namespace:VMS.Controls"
         Title="{Binding ApplicationTitle}"
         WindowState="Maximized"
-        Background="#1E1E1E">
+        Background="{StaticResource Brush.Surface.Base}">
 
     <Window.Resources>
         <!-- Panel animation -->
@@ -50,7 +50,7 @@
         <!-- ════════════════════════════════════════════════════════════ -->
         <!-- Row 0: Header Bar + User Info -->
         <!-- ════════════════════════════════════════════════════════════ -->
-        <Border Grid.Row="0" Background="#2D2D2D">
+        <Border Grid.Row="0" Background="{StaticResource Brush.Surface.Raised}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -84,15 +84,15 @@
                             HorizontalAlignment="Center">
 
                     <!-- ═══ Stage 1: 작업자 chip (Web 인증 — VMS LoginWindow의 시스템 사용자와 별개) ═══ -->
-                    <Border Background="#3D3D3D" CornerRadius="4" Padding="10,0" Height="32"
-                            BorderBrush="#14B8A6" BorderThickness="1"
+                    <Border Background="{StaticResource Brush.Surface.Overlay}" CornerRadius="4" Padding="10,0" Height="32"
+                            BorderBrush="{StaticResource Brush.Accent}" BorderThickness="1"
                             VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Operator:" Foreground="#14B8A6" FontSize="10" FontWeight="SemiBold"
+                            <TextBlock Text="Operator:" Foreground="{StaticResource Brush.Accent}" FontSize="10" FontWeight="SemiBold"
                                        VerticalAlignment="Center" Margin="0,0,8,0"/>
                             <Button Content="Login..." Command="{Binding LoginOperatorCommand}"
                                     Height="22" Padding="10,0" FontSize="11"
-                                    Background="#14B8A6" Foreground="White" BorderThickness="0"
+                                    Background="{StaticResource Brush.Accent}" Foreground="White" BorderThickness="0"
                                     VerticalAlignment="Center"
                                     Cursor="Hand" ToolTip="Web에 등록된 작업자(사번+PIN)로 로그인">
                                 <Button.Style>
@@ -122,7 +122,7 @@
                                     <Run Text="{Binding CurrentOperatorName, Mode=OneWay}"/>
                                     <Run Text=" ("/>
                                     <Run Text="{Binding CurrentOperatorEmployeeNumber, Mode=OneWay}"
-                                         Foreground="#B0B0B0"/>
+                                         Foreground="{StaticResource Brush.Text.Secondary}"/>
                                     <Run Text=")"/>
                                 </TextBlock>
                                 <!-- D10: Role 뱃지 — Lead/Supervisor 일 때만 표시 -->
@@ -149,7 +149,7 @@
                                 </Border>
                                 <Button Content="Logout" Command="{Binding LogoutOperatorCommand}"
                                         Margin="10,0,0,0" Height="22" Padding="8,0" FontSize="10"
-                                        Background="Transparent" Foreground="#B0B0B0"
+                                        Background="Transparent" Foreground="{StaticResource Brush.Text.Secondary}"
                                         BorderBrush="#707070" BorderThickness="1"
                                         VerticalAlignment="Center"
                                         Cursor="Hand"/>
@@ -161,8 +161,8 @@
                     <Button Command="{Binding OpenWorkOrderListCommand}"
                             Margin="6,0,0,0" Height="32" Padding="12,0"
                             FontSize="11" FontWeight="SemiBold"
-                            Background="#252525" Foreground="#14B8A6"
-                            BorderBrush="#14B8A6" BorderThickness="1"
+                            Background="{StaticResource Brush.Surface.Deep}" Foreground="{StaticResource Brush.Accent}"
+                            BorderBrush="{StaticResource Brush.Accent}" BorderThickness="1"
                             Cursor="Hand" VerticalAlignment="Center"
                             ToolTip="작업 지시 목록 — 로그인 후 활성">
                         <StackPanel Orientation="Horizontal">
@@ -173,13 +173,13 @@
                     </Button>
 
                     <!-- 선택된 작업지시 표시 — 텍스트 + 진행률 ProgressBar (B4) -->
-                    <Border Background="#252525" CornerRadius="4" Padding="10,0" Margin="6,0,0,0" Height="32"
-                            BorderBrush="#14B8A6" BorderThickness="1"
+                    <Border Background="{StaticResource Brush.Surface.Deep}" CornerRadius="4" Padding="10,0" Margin="6,0,0,0" Height="32"
+                            BorderBrush="{StaticResource Brush.Accent}" BorderThickness="1"
                             VerticalAlignment="Center"
                             Visibility="{Binding SelectedWorkOrder, Converter={StaticResource NullToVisibilityConverter}}"
                             ToolTip="현재 선택된 작업지시 — 진행률 실시간">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="WO:" Foreground="#14B8A6" FontSize="10" FontWeight="SemiBold"
+                            <TextBlock Text="WO:" Foreground="{StaticResource Brush.Accent}" FontSize="10" FontWeight="SemiBold"
                                        VerticalAlignment="Center" Margin="0,0,6,0"/>
                             <TextBlock Text="{Binding SelectedWorkOrderText}"
                                        Foreground="White" FontSize="11"
@@ -199,7 +199,7 @@
                                                 <Border x:Name="PART_Track"/>
                                                 <Border x:Name="PART_Indicator"
                                                         HorizontalAlignment="Left"
-                                                        Background="#14B8A6"
+                                                        Background="{StaticResource Brush.Accent}"
                                                         CornerRadius="3"/>
                                             </Grid>
                                         </Border>
@@ -210,7 +210,7 @@
                     </Border>
 
                     <!-- 현재 로드된 Recipe 표시 (WO 선택 시 자동 로드 결과) -->
-                    <Border Background="#252525" CornerRadius="4" Padding="10,0" Margin="6,0,0,0" Height="32"
+                    <Border Background="{StaticResource Brush.Surface.Deep}" CornerRadius="4" Padding="10,0" Margin="6,0,0,0" Height="32"
                             BorderBrush="#3D7DE8" BorderThickness="1"
                             VerticalAlignment="Center"
                             Visibility="{Binding CurrentRecipe, Converter={StaticResource NullToVisibilityConverter}}"
@@ -227,36 +227,36 @@
                     </Border>
 
                     <!-- ═══ Phase 3: Inspection Context (Web 업로드 시 자동 첨부) ═══ -->
-                    <Border Background="#3D3D3D" CornerRadius="4" Padding="10,0" Margin="6,0,0,0" Height="32"
+                    <Border Background="{StaticResource Brush.Surface.Overlay}" CornerRadius="4" Padding="10,0" Margin="6,0,0,0" Height="32"
                             VerticalAlignment="Center"
                             ToolTip="검사 결과 업로드 시 자동 첨부 (WO/Lot/Op ID + Serial)">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Ctx:" Foreground="#14B8A6" FontSize="10" FontWeight="SemiBold"
+                            <TextBlock Text="Ctx:" Foreground="{StaticResource Brush.Accent}" FontSize="10" FontWeight="SemiBold"
                                        VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <TextBlock Text="WO" Foreground="#B0B0B0" FontSize="10" VerticalAlignment="Center" Margin="0,0,3,0"/>
+                            <TextBlock Text="WO" Foreground="{StaticResource Brush.Text.Secondary}" FontSize="10" VerticalAlignment="Center" Margin="0,0,3,0"/>
                             <TextBox Text="{Binding WorkOrderIdText, UpdateSourceTrigger=PropertyChanged}"
                                      Width="50" Height="22" FontSize="11"
-                                     Background="#252525" Foreground="White" BorderBrush="#555"
+                                     Background="{StaticResource Brush.Surface.Deep}" Foreground="White" BorderBrush="#555"
                                      VerticalAlignment="Center"
                                      VerticalContentAlignment="Center" Padding="4,0"
                                      ToolTip="WorkOrder ID (정수)"/>
-                            <TextBlock Text="Lot" Foreground="#B0B0B0" FontSize="10" VerticalAlignment="Center" Margin="6,0,3,0"/>
+                            <TextBlock Text="Lot" Foreground="{StaticResource Brush.Text.Secondary}" FontSize="10" VerticalAlignment="Center" Margin="6,0,3,0"/>
                             <TextBox Text="{Binding LotIdText, UpdateSourceTrigger=PropertyChanged}"
                                      Width="50" Height="22" FontSize="11"
-                                     Background="#252525" Foreground="White" BorderBrush="#555"
+                                     Background="{StaticResource Brush.Surface.Deep}" Foreground="White" BorderBrush="#555"
                                      VerticalAlignment="Center"
                                      VerticalContentAlignment="Center" Padding="4,0"
                                      ToolTip="Lot ID (정수)"/>
-                            <TextBlock Text="S/N" Foreground="#B0B0B0" FontSize="10" VerticalAlignment="Center" Margin="6,0,3,0"/>
+                            <TextBlock Text="S/N" Foreground="{StaticResource Brush.Text.Secondary}" FontSize="10" VerticalAlignment="Center" Margin="6,0,3,0"/>
                             <TextBox Text="{Binding SerialNumberText, UpdateSourceTrigger=PropertyChanged}"
                                      Width="100" Height="22" FontSize="11"
-                                     Background="#252525" Foreground="White" BorderBrush="#555"
+                                     Background="{StaticResource Brush.Surface.Deep}" Foreground="White" BorderBrush="#555"
                                      VerticalAlignment="Center"
                                      VerticalContentAlignment="Center" Padding="4,0"
                                      ToolTip="제품 시리얼 (바코드 스캐너 OK)"/>
                             <Button Content="✕" Command="{Binding ClearInspectionContextCommand}"
                                     Margin="6,0,0,0" Height="22" Padding="6,0" FontSize="10"
-                                    Background="Transparent" Foreground="#B0B0B0"
+                                    Background="Transparent" Foreground="{StaticResource Brush.Text.Secondary}"
                                     BorderBrush="#555" BorderThickness="1"
                                     VerticalAlignment="Center"
                                     Cursor="Hand" ToolTip="모든 컨텍스트 필드 비우기"/>
@@ -265,7 +265,7 @@
 
                     <!-- ═══ Plan §5.3 V5: 예측 NG율 위젯 (60초 폴링) ═══ -->
                     <!-- 임계 색상: < 5% Green / < 10% Orange / ≥ 10% Red / non-ok Gray -->
-                    <Border Background="#3D3D3D" CornerRadius="4" Padding="10,0" Margin="6,0,0,0" Height="32"
+                    <Border Background="{StaticResource Brush.Surface.Overlay}" CornerRadius="4" Padding="10,0" Margin="6,0,0,0" Height="32"
                             BorderBrush="{Binding PredictionAccentBrush}" BorderThickness="1"
                             VerticalAlignment="Center"
                             ToolTip="{Binding PredictionTooltip}"
@@ -274,7 +274,7 @@
                             <TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" FontSize="13"
                                        Foreground="{Binding PredictionAccentBrush}"
                                        VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <TextBlock Text="다음 1시간:" Foreground="#B0B0B0" FontSize="10" FontWeight="SemiBold"
+                            <TextBlock Text="다음 1시간:" Foreground="{StaticResource Brush.Text.Secondary}" FontSize="10" FontWeight="SemiBold"
                                        VerticalAlignment="Center" Margin="0,0,6,0"/>
                             <TextBlock Text="{Binding PredictionDisplayText}"
                                        Foreground="{Binding PredictionAccentBrush}"
@@ -289,7 +289,7 @@
                     <Button Command="{Binding StartInspectionCommand}"
                             IsEnabled="{Binding CanStartStop}"
                             Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
-                            Background="#00ADB5" Foreground="White"
+                            Background="{StaticResource Brush.Accent}" Foreground="White"
                             BorderThickness="0" Cursor="Hand"
                             Padding="20,0" Margin="0,0,6,0" Height="34"
                             VerticalAlignment="Center"
@@ -359,7 +359,7 @@
                 </StackPanel>
 
                 <!-- User Info (clickable for user switch) -->
-                <Border Grid.Column="2" Background="#3D3D3D" CornerRadius="4"
+                <Border Grid.Column="2" Background="{StaticResource Brush.Surface.Overlay}" CornerRadius="4"
                         Padding="10,0" Margin="0,0,8,0" Height="32"
                         VerticalAlignment="Center"
                         Cursor="Hand"
@@ -423,14 +423,14 @@
                                           Command="{Binding OpenAuditLogViewerCommand}">
                                     <MenuItem.Icon>
                                         <TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets"
-                                                   FontSize="14" Foreground="#22D3EE"/>
+                                                   FontSize="14" Foreground="{StaticResource Brush.Accent}"/>
                                     </MenuItem.Icon>
                                 </MenuItem>
                                 <MenuItem Header="Health Check"
                                           Command="{Binding OpenHealthCheckCommand}">
                                     <MenuItem.Icon>
                                         <TextBlock Text="&#xEC4A;" FontFamily="Segoe MDL2 Assets"
-                                                   FontSize="14" Foreground="#22D3EE"/>
+                                                   FontSize="14" Foreground="{StaticResource Brush.Accent}"/>
                                     </MenuItem.Icon>
                                 </MenuItem>
                                 <Separator/>
@@ -438,21 +438,21 @@
                                           Command="{Binding OpenBackupRestoreCommand}">
                                     <MenuItem.Icon>
                                         <TextBlock Text="&#xE74C;" FontFamily="Segoe MDL2 Assets"
-                                                   FontSize="14" Foreground="#22D3EE"/>
+                                                   FontSize="14" Foreground="{StaticResource Brush.Accent}"/>
                                     </MenuItem.Icon>
                                 </MenuItem>
                                 <MenuItem Header="Auto Backup Settings"
                                           Command="{Binding OpenAutoBackupSettingsCommand}">
                                     <MenuItem.Icon>
                                         <TextBlock Text="&#xE823;" FontFamily="Segoe MDL2 Assets"
-                                                   FontSize="14" Foreground="#22D3EE"/>
+                                                   FontSize="14" Foreground="{StaticResource Brush.Accent}"/>
                                     </MenuItem.Icon>
                                 </MenuItem>
                                 <MenuItem Header="Retention Settings..."
                                           Command="{Binding OpenRetentionSettingsCommand}">
                                     <MenuItem.Icon>
                                         <TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets"
-                                                   FontSize="14" Foreground="#22D3EE"/>
+                                                   FontSize="14" Foreground="{StaticResource Brush.Accent}"/>
                                     </MenuItem.Icon>
                                 </MenuItem>
                                 <Separator/>
@@ -460,7 +460,7 @@
                                           Command="{Binding OpenSupportPackageCommand}">
                                     <MenuItem.Icon>
                                         <TextBlock Text="&#xE8FB;" FontFamily="Segoe MDL2 Assets"
-                                                   FontSize="14" Foreground="#22D3EE"/>
+                                                   FontSize="14" Foreground="{StaticResource Brush.Accent}"/>
                                     </MenuItem.Icon>
                                 </MenuItem>
                             </ContextMenu>
@@ -493,7 +493,7 @@
                         <TextBlock Text="&#xE8BB;"
                                    FontFamily="Segoe MDL2 Assets"
                                    FontSize="16"
-                                   Foreground="#F44336"/>
+                                   Foreground="{StaticResource Brush.Danger}"/>
                     </Button>
                 </StackPanel>
             </Grid>
@@ -502,7 +502,7 @@
         <!-- ════════════════════════════════════════════════════════════ -->
         <!-- Row 1: Dashboard KPI Strip (always visible) -->
         <!-- ════════════════════════════════════════════════════════════ -->
-        <Border Grid.Row="1" Background="#252525">
+        <Border Grid.Row="1" Background="{StaticResource Brush.Surface.Deep}">
             <Grid Margin="8,6">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -514,9 +514,9 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- TACT TIME -->
-                <Border Grid.Column="0" Background="#2D2D2D" CornerRadius="6" Padding="12,6" Margin="2,0">
+                <Border Grid.Column="0" Background="{StaticResource Brush.Surface.Raised}" CornerRadius="6" Padding="12,6" Margin="2,0">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="TACT TIME" Foreground="#808080" FontSize="10" HorizontalAlignment="Center"/>
+                        <TextBlock Text="TACT TIME" Foreground="{StaticResource Brush.Text.Tertiary}" FontSize="10" HorizontalAlignment="Center"/>
                         <TextBlock FontSize="24" FontWeight="Bold" HorizontalAlignment="Center">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
@@ -534,9 +534,9 @@
                 </Border>
 
                 <!-- YIELD -->
-                <Border Grid.Column="1" Background="#2D2D2D" CornerRadius="6" Padding="12,6" Margin="2,0">
+                <Border Grid.Column="1" Background="{StaticResource Brush.Surface.Raised}" CornerRadius="6" Padding="12,6" Margin="2,0">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="YIELD" Foreground="#808080" FontSize="10" HorizontalAlignment="Center"/>
+                        <TextBlock Text="YIELD" Foreground="{StaticResource Brush.Text.Tertiary}" FontSize="10" HorizontalAlignment="Center"/>
                         <TextBlock FontSize="24" FontWeight="Bold" HorizontalAlignment="Center">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
@@ -554,29 +554,29 @@
                 </Border>
 
                 <!-- TOTAL -->
-                <Border Grid.Column="2" Background="#2D2D2D" CornerRadius="6" Padding="12,6" Margin="2,0">
+                <Border Grid.Column="2" Background="{StaticResource Brush.Surface.Raised}" CornerRadius="6" Padding="12,6" Margin="2,0">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="TOTAL" Foreground="#808080" FontSize="10" HorizontalAlignment="Center"/>
+                        <TextBlock Text="TOTAL" Foreground="{StaticResource Brush.Text.Tertiary}" FontSize="10" HorizontalAlignment="Center"/>
                         <TextBlock Text="{Binding Dashboard.TotalCount}"
                                    FontSize="24" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>
 
                 <!-- OK -->
-                <Border Grid.Column="3" Background="#2D2D2D" CornerRadius="6" Padding="12,6" Margin="2,0">
+                <Border Grid.Column="3" Background="{StaticResource Brush.Surface.Raised}" CornerRadius="6" Padding="12,6" Margin="2,0">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="OK" Foreground="#808080" FontSize="10" HorizontalAlignment="Center"/>
+                        <TextBlock Text="OK" Foreground="{StaticResource Brush.Text.Tertiary}" FontSize="10" HorizontalAlignment="Center"/>
                         <TextBlock Text="{Binding Dashboard.OkCount}"
-                                   FontSize="24" FontWeight="Bold" Foreground="#4CAF50" HorizontalAlignment="Center"/>
+                                   FontSize="24" FontWeight="Bold" Foreground="{StaticResource Brush.Success}" HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>
 
                 <!-- NG -->
-                <Border Grid.Column="4" Background="#2D2D2D" CornerRadius="6" Padding="12,6" Margin="2,0">
+                <Border Grid.Column="4" Background="{StaticResource Brush.Surface.Raised}" CornerRadius="6" Padding="12,6" Margin="2,0">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="NG" Foreground="#808080" FontSize="10" HorizontalAlignment="Center"/>
+                        <TextBlock Text="NG" Foreground="{StaticResource Brush.Text.Tertiary}" FontSize="10" HorizontalAlignment="Center"/>
                         <TextBlock Text="{Binding Dashboard.NgCount}"
-                                   FontSize="24" FontWeight="Bold" Foreground="#F44336" HorizontalAlignment="Center"/>
+                                   FontSize="24" FontWeight="Bold" Foreground="{StaticResource Brush.Danger}" HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>
 
@@ -587,7 +587,7 @@
                         VerticalAlignment="Center" Margin="4,0">
                     <TextBlock Text="&#xE72C;"
                                FontFamily="Segoe MDL2 Assets"
-                               FontSize="14" Foreground="#808080"/>
+                               FontSize="14" Foreground="{StaticResource Brush.Text.Tertiary}"/>
                 </Button>
             </Grid>
         </Border>
@@ -605,7 +605,7 @@
             <!-- Camera Display Area -->
             <Canvas x:Name="CameraCanvas"
                     Grid.Column="0"
-                    Background="#1E1E1E"
+                    Background="{StaticResource Brush.Surface.Base}"
                     ClipToBounds="True">
                 <ItemsControl ItemsSource="{Binding Cameras}"
                               Width="{Binding ActualWidth, ElementName=CameraCanvas}"
@@ -638,7 +638,7 @@
             </Canvas>
 
             <!-- NG Image History Sidebar (always visible) -->
-            <Border Grid.Column="1" Width="120" Background="#252525"
+            <Border Grid.Column="1" Width="120" Background="{StaticResource Brush.Surface.Deep}"
                     BorderBrush="#3D3D3D" BorderThickness="1,0,0,0">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -647,7 +647,7 @@
                     </Grid.RowDefinitions>
 
                     <TextBlock Grid.Row="0" Text="NG History"
-                               Foreground="#F44336" FontWeight="SemiBold"
+                               Foreground="{StaticResource Brush.Danger}" FontWeight="SemiBold"
                                FontSize="11" Margin="8,6"
                                HorizontalAlignment="Center"/>
 
@@ -659,18 +659,18 @@
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <Border Background="#2D2D2D" CornerRadius="4"
+                                <Border Background="{StaticResource Brush.Surface.Raised}" CornerRadius="4"
                                         Margin="4,2" Padding="2">
                                     <StackPanel>
                                         <Image Source="{Binding Thumbnail}"
                                                Width="100" Height="75"
                                                Stretch="Uniform"/>
                                         <TextBlock Text="{Binding CameraName}"
-                                                   Foreground="#B0B0B0" FontSize="9"
+                                                   Foreground="{StaticResource Brush.Text.Secondary}" FontSize="9"
                                                    HorizontalAlignment="Center"
                                                    Margin="0,2,0,0"/>
                                         <TextBlock Text="{Binding Timestamp, StringFormat='HH:mm:ss'}"
-                                                   Foreground="#808080" FontSize="8"
+                                                   Foreground="{StaticResource Brush.Text.Tertiary}" FontSize="8"
                                                    HorizontalAlignment="Center"/>
                                     </StackPanel>
                                 </Border>
@@ -684,7 +684,7 @@
             <Border x:Name="SidePanel"
                     Grid.Column="2"
                     Width="0"
-                    Background="#2D2D2D"
+                    Background="{StaticResource Brush.Surface.Raised}"
                     BorderBrush="#3D3D3D"
                     BorderThickness="1,0,0,0">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -697,21 +697,21 @@
                                    Margin="0,0,0,16"/>
 
                         <!-- Camera Control Section — 헤더에서 옮겨온 도구 액션 -->
-                        <Border Background="#3D3D3D"
+                        <Border Background="{StaticResource Brush.Surface.Overlay}"
                                 CornerRadius="8"
                                 Padding="12"
                                 Margin="0,0,0,16">
                             <StackPanel>
                                 <TextBlock Text="Camera Control"
                                            FontWeight="SemiBold"
-                                           Foreground="#2196F3"
+                                           Foreground="{StaticResource Brush.Primary}"
                                            Margin="0,0,0,12"/>
 
                                 <!-- Grab (single shot) -->
                                 <Button Command="{Binding GrabCommand}"
                                         IsEnabled="{Binding CanStartStop}"
                                         Visibility="{Binding IsLiveMode, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
-                                        Background="#404040" Foreground="White"
+                                        Background="{StaticResource Brush.Surface.Overlay}" Foreground="White"
                                         Style="{StaticResource ModernButton}"
                                         HorizontalAlignment="Stretch"
                                         Margin="0,0,0,6"
@@ -719,7 +719,7 @@
                                         ToolTip="단일 이미지 캡처">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="&#xE722;" FontFamily="Segoe MDL2 Assets"
-                                                   Foreground="#2196F3" Margin="0,0,8,0"/>
+                                                   Foreground="{StaticResource Brush.Primary}" Margin="0,0,8,0"/>
                                         <TextBlock Text="Grab"/>
                                     </StackPanel>
                                 </Button>
@@ -728,7 +728,7 @@
                                 <Button Command="{Binding StartLiveCommand}"
                                         IsEnabled="{Binding CanStartStop}"
                                         Visibility="{Binding IsLiveMode, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
-                                        Background="#404040" Foreground="White"
+                                        Background="{StaticResource Brush.Surface.Overlay}" Foreground="White"
                                         Style="{StaticResource ModernButton}"
                                         HorizontalAlignment="Stretch"
                                         Margin="0,0,0,6"
@@ -736,7 +736,7 @@
                                         ToolTip="연속 라이브 그랩 시작">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="&#xE714;" FontFamily="Segoe MDL2 Assets"
-                                                   Foreground="#4CAF50" Margin="0,0,8,0"/>
+                                                   Foreground="{StaticResource Brush.Success}" Margin="0,0,8,0"/>
                                         <TextBlock Text="Live Start"/>
                                     </StackPanel>
                                 </Button>
@@ -744,13 +744,13 @@
                                 <!-- Live Stop -->
                                 <Button Command="{Binding StopLiveCommand}"
                                         Visibility="{Binding IsLiveMode, Converter={StaticResource BoolToVisibilityConverter}}"
-                                        Background="#404040" Foreground="White"
+                                        Background="{StaticResource Brush.Surface.Overlay}" Foreground="White"
                                         Style="{StaticResource ModernButton}"
                                         HorizontalAlignment="Stretch"
                                         Margin="0,0,0,6">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets"
-                                                   Foreground="#FF9800" Margin="0,0,8,0"/>
+                                                   Foreground="{StaticResource Brush.Warning}" Margin="0,0,8,0"/>
                                         <TextBlock Text="Live Stop"/>
                                     </StackPanel>
                                 </Button>
@@ -804,18 +804,18 @@
                         </Border>
 
                         <!-- Recipe Section -->
-                        <Border Background="#3D3D3D"
+                        <Border Background="{StaticResource Brush.Surface.Overlay}"
                                 CornerRadius="8"
                                 Padding="12"
                                 Margin="0,0,0,16">
                             <StackPanel>
                                 <TextBlock Text="Recipe"
                                            FontWeight="SemiBold"
-                                           Foreground="#2196F3"
+                                           Foreground="{StaticResource Brush.Primary}"
                                            Margin="0,0,0,12"/>
 
                                 <!-- Current Recipe Display -->
-                                <Border Background="#404040"
+                                <Border Background="{StaticResource Brush.Surface.Overlay}"
                                         CornerRadius="4"
                                         Padding="8"
                                         Margin="0,0,0,12">
@@ -824,19 +824,19 @@
                                                    Foreground="White"
                                                    FontWeight="SemiBold"/>
                                         <TextBlock Text="{Binding CurrentRecipe.Version, StringFormat='v{0}', FallbackValue=''}"
-                                                   Foreground="#808080"
+                                                   Foreground="{StaticResource Brush.Text.Tertiary}"
                                                    FontSize="11"/>
                                     </StackPanel>
                                 </Border>
 
                                 <!-- Recipe List -->
                                 <TextBlock Text="Available Recipes"
-                                           Foreground="#B0B0B0"
+                                           Foreground="{StaticResource Brush.Text.Secondary}"
                                            FontSize="11"
                                            Margin="0,0,0,4"/>
                                 <ListBox ItemsSource="{Binding RecipeList}"
                                          SelectedItem="{Binding SelectedRecipeInfo}"
-                                         Background="#404040"
+                                         Background="{StaticResource Brush.Surface.Overlay}"
                                          BorderThickness="0"
                                          MaxHeight="120"
                                          Margin="0,0,0,8">
@@ -845,7 +845,7 @@
                                             <StackPanel Margin="4,2">
                                                 <TextBlock Text="{Binding Name}" Foreground="White"/>
                                                 <TextBlock Text="{Binding ModifiedAt, StringFormat='Modified: {0:yyyy-MM-dd}'}"
-                                                           Foreground="#808080" FontSize="10"/>
+                                                           Foreground="{StaticResource Brush.Text.Tertiary}" FontSize="10"/>
                                             </StackPanel>
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
@@ -924,16 +924,11 @@
                         </Border>
 
                         <!-- External Tools Section — D10: Supervisor 전용 -->
-                        <Border Background="#3D3D3D"
-                                CornerRadius="8"
-                                Padding="12"
-                                Margin="0,0,0,16"
+                        <Border Style="{StaticResource Card}"
                                 Visibility="{Binding CanSupervisor, Converter={StaticResource BoolToVisibilityConverter}}">
                             <StackPanel>
                                 <TextBlock Text="External Tools"
-                                           FontWeight="SemiBold"
-                                           Foreground="#2196F3"
-                                           Margin="0,0,0,12"/>
+                                           Style="{StaticResource Text.SectionHeader}"/>
 
                                 <Button Command="{Binding LaunchVisionToolSetupCommand}"
                                         IsEnabled="{Binding CanLaunchVisionSetup}"
@@ -950,8 +945,7 @@
 
                                 <Button Command="{Binding LaunchSetupCommand}"
                                         IsEnabled="{Binding CanLaunchAppSetup}"
-                                        Background="#404040"
-                                        Style="{StaticResource ModernButton}"
+                                        Style="{StaticResource Button.Subtle}"
                                         HorizontalAlignment="Stretch">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="&#xE713;"
@@ -963,23 +957,28 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Updates Section — 비차단 알림 + 수동 체크 (Phase B) -->
-                        <Border Background="#3D3D3D"
-                                CornerRadius="8"
-                                Padding="12"
-                                Margin="0,0,0,16">
+                        <!-- Updates Section — 비차단 알림 + 수동 체크 (Phase B).
+                             업데이트 가능 시 Card.Accent (warning 색 하단 border) 로 변형. -->
+                        <Border>
+                            <Border.Style>
+                                <Style TargetType="Border" BasedOn="{StaticResource Card}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsUpdateAvailable}" Value="True">
+                                            <Setter Property="BorderBrush"     Value="{StaticResource Brush.Warning}"/>
+                                            <Setter Property="BorderThickness" Value="0,0,0,2"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
                             <StackPanel>
                                 <TextBlock Text="Updates"
-                                           FontWeight="SemiBold"
-                                           Foreground="#FFB300"
-                                           Margin="0,0,0,12"/>
+                                           Style="{StaticResource Text.SectionHeader}"
+                                           Foreground="{StaticResource Brush.Warning}"/>
 
                                 <!-- 새 버전 감지 배지 — 클릭 시 상세 다이얼로그 -->
                                 <Button Command="{Binding ShowUpdateDetailsCommand}"
                                         Visibility="{Binding IsUpdateAvailable, Converter={StaticResource BoolToVisibilityConverter}}"
-                                        Background="#FFB300"
-                                        Foreground="#1E1E1E"
-                                        Style="{StaticResource ModernButton}"
+                                        Style="{StaticResource Button.Badge}"
                                         HorizontalAlignment="Stretch"
                                         Margin="0,0,0,8"
                                         ToolTip="클릭하여 릴리스 노트 확인 + 다운로드 페이지 열기">
@@ -987,15 +986,13 @@
                                         <TextBlock Text="&#xE7C3;"
                                                    FontFamily="Segoe MDL2 Assets"
                                                    Margin="0,0,8,0"/>
-                                        <TextBlock Text="{Binding UpdateBadgeText}"
-                                                   FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding UpdateBadgeText}"/>
                                     </StackPanel>
                                 </Button>
 
                                 <!-- 수동 체크 버튼 — 항상 표시 -->
                                 <Button Command="{Binding CheckForUpdatesCommand}"
-                                        Background="#404040"
-                                        Style="{StaticResource ModernButton}"
+                                        Style="{StaticResource Button.Subtle}"
                                         HorizontalAlignment="Stretch">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="&#xE895;"
@@ -1008,19 +1005,14 @@
                         </Border>
 
                         <!-- Web Sync Section -->
-                        <Border Background="#3D3D3D"
-                                CornerRadius="8"
-                                Padding="12"
-                                Margin="0,0,0,16">
+                        <Border Style="{StaticResource Card}">
                             <StackPanel>
                                 <TextBlock Text="Web Parameters"
-                                           FontWeight="SemiBold"
-                                           Foreground="#00ADB5"
-                                           Margin="0,0,0,12"/>
+                                           Style="{StaticResource Text.SectionHeader}"
+                                           Foreground="{StaticResource Brush.Accent}"/>
 
                                 <Button Command="{Binding OpenSyncParametersCommand}"
-                                        Style="{StaticResource ModernButton}"
-                                        Background="#404040"
+                                        Style="{StaticResource Button.Subtle}"
                                         HorizontalAlignment="Stretch">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="&#xE895;"
@@ -1033,7 +1025,7 @@
                         </Border>
 
                         <!-- D8: Recent Inspections (VMS 자체 히스토리 — Web 의존 없음) -->
-                        <Border Background="#3D3D3D"
+                        <Border Background="{StaticResource Brush.Surface.Overlay}"
                                 CornerRadius="8"
                                 Padding="12"
                                 Margin="0,0,0,16">
@@ -1044,13 +1036,13 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="Recent Inspections"
-                                               FontWeight="SemiBold" Foreground="#14B8A6"
+                                               FontWeight="SemiBold" Foreground="{StaticResource Brush.Accent}"
                                                VerticalAlignment="Center"/>
                                     <Button Grid.Column="1"
                                             Content="Clear"
                                             Command="{Binding ClearRecentInspectionsCommand}"
                                             Height="22" Padding="8,0" FontSize="10"
-                                            Background="Transparent" Foreground="#B0B0B0"
+                                            Background="Transparent" Foreground="{StaticResource Brush.Text.Secondary}"
                                             BorderBrush="#555" BorderThickness="1"
                                             Cursor="Hand"
                                             VerticalAlignment="Center"/>
@@ -1064,17 +1056,17 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" HorizontalAlignment="Center">
-                                        <TextBlock Text="Total" Foreground="#B0B0B0" FontSize="10"
+                                        <TextBlock Text="Total" Foreground="{StaticResource Brush.Text.Secondary}" FontSize="10"
                                                    HorizontalAlignment="Center"/>
                                         <TextBlock Text="{Binding RecentInspections.TotalCount}"
                                                    Foreground="White" FontWeight="Bold" FontSize="18"
                                                    HorizontalAlignment="Center"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" HorizontalAlignment="Center">
-                                        <TextBlock Text="Pass" Foreground="#14B8A6" FontSize="10"
+                                        <TextBlock Text="Pass" Foreground="{StaticResource Brush.Accent}" FontSize="10"
                                                    HorizontalAlignment="Center"/>
                                         <TextBlock Text="{Binding RecentInspections.PassCount}"
-                                                   Foreground="#14B8A6" FontWeight="Bold" FontSize="18"
+                                                   Foreground="{StaticResource Brush.Accent}" FontWeight="Bold" FontSize="18"
                                                    HorizontalAlignment="Center"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" HorizontalAlignment="Center">
@@ -1086,12 +1078,12 @@
                                     </StackPanel>
                                 </Grid>
                                 <TextBlock Text="{Binding RecentInspections.PassRate, StringFormat={}Pass rate {0:N1}%}"
-                                           Foreground="#B0B0B0" FontSize="10"
+                                           Foreground="{StaticResource Brush.Text.Secondary}" FontSize="10"
                                            HorizontalAlignment="Center" Margin="0,0,0,10"/>
 
                                 <!-- ListBox — 최근 N건 (Items 는 ObservableCollection, [0]=최신) -->
                                 <ListBox ItemsSource="{Binding RecentInspections.Items}"
-                                         Background="#252525" BorderThickness="0"
+                                         Background="{StaticResource Brush.Surface.Deep}" BorderThickness="0"
                                          MaxHeight="220"
                                          ScrollViewer.VerticalScrollBarVisibility="Auto"
                                          ScrollViewer.HorizontalScrollBarVisibility="Disabled">
@@ -1113,7 +1105,7 @@
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock Grid.Column="0" Text="{Binding TimestampShort}"
-                                                           Foreground="#808080" FontFamily="Consolas" FontSize="10"
+                                                           Foreground="{StaticResource Brush.Text.Tertiary}" FontFamily="Consolas" FontSize="10"
                                                            VerticalAlignment="Center"/>
                                                 <Border Grid.Column="1" CornerRadius="3" Padding="4,1"
                                                         HorizontalAlignment="Left" VerticalAlignment="Center">
@@ -1167,13 +1159,13 @@
                         </Border>
 
                         <!-- Statistics Section -->
-                        <Border Background="#3D3D3D"
+                        <Border Background="{StaticResource Brush.Surface.Overlay}"
                                 CornerRadius="8"
                                 Padding="12">
                             <StackPanel>
                                 <TextBlock Text="Statistics"
                                            FontWeight="SemiBold"
-                                           Foreground="#2196F3"
+                                           Foreground="{StaticResource Brush.Primary}"
                                            Margin="0,0,0,12"/>
 
                                 <Grid>
@@ -1188,16 +1180,16 @@
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
 
-                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Total" Foreground="#B0B0B0"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Total" Foreground="{StaticResource Brush.Text.Secondary}"/>
                                     <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding TotalInspections}" Foreground="White" FontWeight="Bold"/>
 
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Pass" Foreground="#4CAF50" Margin="0,4,0,0"/>
-                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding TotalPass}" Foreground="#4CAF50" FontWeight="Bold" Margin="0,4,0,0"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Pass" Foreground="{StaticResource Brush.Success}" Margin="0,4,0,0"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding TotalPass}" Foreground="{StaticResource Brush.Success}" FontWeight="Bold" Margin="0,4,0,0"/>
 
-                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Fail" Foreground="#F44336" Margin="0,4,0,0"/>
-                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding TotalFail}" Foreground="#F44336" FontWeight="Bold" Margin="0,4,0,0"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Fail" Foreground="{StaticResource Brush.Danger}" Margin="0,4,0,0"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding TotalFail}" Foreground="{StaticResource Brush.Danger}" FontWeight="Bold" Margin="0,4,0,0"/>
 
-                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Pass Rate" Foreground="#B0B0B0" Margin="0,8,0,0"/>
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Pass Rate" Foreground="{StaticResource Brush.Text.Secondary}" Margin="0,8,0,0"/>
                                     <TextBlock Grid.Row="3" Grid.Column="1"
                                                Text="{Binding PassRate, StringFormat={}{0:N1}%}"
                                                Foreground="White" FontWeight="Bold" Margin="0,8,0,0"/>
@@ -1221,16 +1213,16 @@
                 </Grid.RowDefinitions>
 
                 <!-- Log Header -->
-                <Border Grid.Row="0" Background="#252525" Padding="8,4">
+                <Border Grid.Row="0" Background="{StaticResource Brush.Surface.Deep}" Padding="8,4">
                     <Grid>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE756;"
                                        FontFamily="Segoe MDL2 Assets"
-                                       FontSize="12" Foreground="#808080"
+                                       FontSize="12" Foreground="{StaticResource Brush.Text.Tertiary}"
                                        VerticalAlignment="Center"
                                        Margin="0,0,6,0"/>
                             <TextBlock Text="System Log"
-                                       Foreground="#B0B0B0"
+                                       Foreground="{StaticResource Brush.Text.Secondary}"
                                        FontSize="12"
                                        VerticalAlignment="Center"/>
                         </StackPanel>
@@ -1241,7 +1233,7 @@
                                 Padding="4">
                             <TextBlock Text="&#xE74D;"
                                        FontFamily="Segoe MDL2 Assets"
-                                       FontSize="11" Foreground="#808080"/>
+                                       FontSize="11" Foreground="{StaticResource Brush.Text.Tertiary}"/>
                         </Button>
                     </Grid>
                 </Border>
@@ -1259,7 +1251,7 @@
                         <DataTemplate>
                             <TextBlock FontFamily="Consolas" FontSize="11" Margin="4,1">
                                 <Run Text="{Binding Timestamp, StringFormat='[HH:mm:ss]'}" Foreground="#606060"/>
-                                <Run Text="{Binding Source, StringFormat='[{0}]'}" Foreground="#808080"/>
+                                <Run Text="{Binding Source, StringFormat='[{0}]'}" Foreground="{StaticResource Brush.Text.Tertiary}"/>
                                 <Run Text="{Binding Message}" Foreground="{Binding Level, Converter={StaticResource LogLevelToColorConverter}}"/>
                             </TextBlock>
                         </DataTemplate>
@@ -1285,7 +1277,7 @@
         <!-- ════════════════════════════════════════════════════════════ -->
         <!-- Row 4: Status Bar — Equipment Connection Status -->
         <!-- ════════════════════════════════════════════════════════════ -->
-        <Border Grid.Row="4" Background="#2D2D2D">
+        <Border Grid.Row="4" Background="{StaticResource Brush.Surface.Raised}">
             <Grid Margin="12,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -1305,7 +1297,7 @@
                              Fill="{Binding IsRunning, Converter={StaticResource BoolToColorConverter}}"
                              Margin="0,0,6,0"/>
                     <TextBlock Text="{Binding SystemStatus}"
-                               Foreground="#B0B0B0" FontSize="12"
+                               Foreground="{StaticResource Brush.Text.Secondary}" FontSize="12"
                                VerticalAlignment="Center"/>
                 </StackPanel>
 
@@ -1315,7 +1307,7 @@
                 <!-- [2] Camera Status -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="&#xE722;" FontFamily="Segoe MDL2 Assets"
-                               FontSize="13" Foreground="#B0B0B0"
+                               FontSize="13" Foreground="{StaticResource Brush.Text.Secondary}"
                                VerticalAlignment="Center" Margin="0,0,5,0"/>
                     <Ellipse Width="8" Height="8" Margin="0,0,5,0">
                         <Ellipse.Style>
@@ -1335,7 +1327,7 @@
                             </Style>
                         </Ellipse.Style>
                     </Ellipse>
-                    <TextBlock Foreground="#B0B0B0" FontSize="12" VerticalAlignment="Center">
+                    <TextBlock Foreground="{StaticResource Brush.Text.Secondary}" FontSize="12" VerticalAlignment="Center">
                         <Run Text="CAM"/>
                         <Run Text="{Binding ConnectedCameraCount, Mode=OneWay}"/>/<Run Text="{Binding TotalCameraCount, Mode=OneWay}"/>
                     </TextBlock>
@@ -1347,7 +1339,7 @@
                 <!-- [4] PLC Status -->
                 <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="&#xE950;" FontFamily="Segoe MDL2 Assets"
-                               FontSize="13" Foreground="#B0B0B0"
+                               FontSize="13" Foreground="{StaticResource Brush.Text.Secondary}"
                                VerticalAlignment="Center" Margin="0,0,5,0"/>
                     <Ellipse Width="8" Height="8" Margin="0,0,5,0">
                         <Ellipse.Style>
@@ -1385,7 +1377,7 @@
                             </Style>
                         </TextBlock.Style>
                     </TextBlock>
-                    <TextBlock Text="{Binding PlcIpAddress}" Foreground="#808080" FontSize="11"
+                    <TextBlock Text="{Binding PlcIpAddress}" Foreground="{StaticResource Brush.Text.Tertiary}" FontSize="11"
                                VerticalAlignment="Center" Margin="6,0,0,0"
                                Visibility="{Binding IsPlcConfigured, Converter={StaticResource BoolToVisibilityConverter}}"/>
                 </StackPanel>
@@ -1396,7 +1388,7 @@
                 <!-- [6] Web Status -->
                 <StackPanel Grid.Column="6" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="&#xE774;" FontFamily="Segoe MDL2 Assets"
-                               FontSize="13" Foreground="#B0B0B0"
+                               FontSize="13" Foreground="{StaticResource Brush.Text.Secondary}"
                                VerticalAlignment="Center" Margin="0,0,5,0"/>
                     <Ellipse Width="8" Height="8" Margin="0,0,5,0">
                         <Ellipse.Style>
@@ -1433,10 +1425,10 @@
                 <!-- [8] Robot (placeholder) -->
                 <StackPanel Grid.Column="8" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="&#xE99A;" FontFamily="Segoe MDL2 Assets"
-                               FontSize="13" Foreground="#808080"
+                               FontSize="13" Foreground="{StaticResource Brush.Text.Tertiary}"
                                VerticalAlignment="Center" Margin="0,0,5,0"/>
                     <Ellipse Width="8" Height="8" Fill="#555555" Margin="0,0,5,0"/>
-                    <TextBlock Text="ROBOT N/A" Foreground="#808080" FontSize="12"
+                    <TextBlock Text="ROBOT N/A" Foreground="{StaticResource Brush.Text.Tertiary}" FontSize="12"
                                VerticalAlignment="Center"/>
                 </StackPanel>
             </Grid>
