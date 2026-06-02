@@ -509,18 +509,11 @@
 
                     <Rectangle Width="1" Fill="{StaticResource Brush.Surface.Overlay}" Margin="8,8"/>
 
-                    <Button Style="{StaticResource IconButton}"
-                            Command="{Binding ExitApplicationCommand}"
-                            ToolTip="Exit Application">
-                        <TextBlock Text="&#xE8BB;"
-                                   FontFamily="Segoe MDL2 Assets"
-                                   FontSize="16"
-                                   Foreground="{StaticResource Brush.Danger}"/>
-                    </Button>
-
-                    <!-- 윈도우 컨트롤 (최소화 / 최대화 토글) — 종료는 좌측 Exit 버튼이 담당.
-                         Segoe MDL2 표준 글리프(ChromeMinimize/Maximize/Restore) +
-                         IconButton 베이스로 사이드 패널 다른 IconButton 들과 톤 통일. -->
+                    <!-- 윈도우 컨트롤 (최소화 / 최대화 토글 / 닫기) — Windows 표준 순서.
+                         Segoe MDL2 표준 글리프(ChromeMinimize/Maximize/Restore/Close) +
+                         IconButton 베이스로 사이드 패널 다른 IconButton 들과 톤 통일.
+                         닫기는 SystemCommands 가 아닌 ExitApplicationCommand 사용 —
+                         앱 정리(상태 저장, 카메라 해제 등) 후 종료. -->
                     <Button Style="{StaticResource IconButton}"
                             shell:WindowChrome.IsHitTestVisibleInChrome="True"
                             Command="{x:Static SystemCommands.MinimizeWindowCommand}"
@@ -549,6 +542,16 @@
                                 </Style>
                             </TextBlock.Style>
                         </TextBlock>
+                    </Button>
+
+                    <Button Style="{StaticResource IconButton}"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                            Command="{Binding ExitApplicationCommand}"
+                            ToolTip="닫기">
+                        <TextBlock Text="&#xE8BB;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="16"
+                                   Foreground="{StaticResource Brush.Danger}"/>
                     </Button>
                 </StackPanel>
             </Grid>
