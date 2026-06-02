@@ -242,7 +242,7 @@
 
             <StackPanel Orientation="Horizontal">
                 <CheckBox Content="Enabled" IsChecked="{Binding IsEnabled, FallbackValue=True}"
-                          Style="{StaticResource SettingCheckBoxStyle}"/>
+                          Style="{StaticResource WindowDarkCheckBox}"/>
                 <controls:HelpIcon ToolType="Common"
                                    ParameterName="Enabled"
                                    Margin="6,0,0,0" VerticalAlignment="Center"/>
@@ -260,7 +260,7 @@
                     </Style>
                 </StackPanel.Style>
                 <CheckBox Content="Use ROI" IsChecked="{Binding UseROI, FallbackValue=False}"
-                          Style="{StaticResource SettingCheckBoxStyle}"/>
+                          Style="{StaticResource WindowDarkCheckBox}"/>
                 <controls:HelpIcon ToolType="Common"
                                    ParameterName="UseROI"
                                    Margin="6,0,0,0" VerticalAlignment="Center"/>

@@ -159,7 +159,7 @@
 
                     <CheckBox Content="Accumulate Multi-View"
                               IsChecked="{Binding AccumulateMultiView}"
-                              Foreground="{StaticResource BrushTextPrimary}" Margin="0,8,0,4"/>
+                              Style="{StaticResource WindowDarkCheckBox}" Margin="0,8,0,4"/>
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                         <TextBlock Foreground="{StaticResource BrushTextMuted}" FontSize="11" VerticalAlignment="Center">
                             <Run Text="Accumulated: "/>

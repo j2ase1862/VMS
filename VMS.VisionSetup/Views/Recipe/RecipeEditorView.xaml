@@ -267,11 +267,11 @@
                                            Margin="0,0,0,10"/>
 
                                 <CheckBox x:Name="ToolEnabledCheckBox" Content="Enabled"
-                                          Foreground="White" Margin="0,0,0,10"
+                                          Style="{StaticResource WindowDarkCheckBox}" Margin="0,0,0,10"
                                           Checked="ToolProperty_Changed" Unchecked="ToolProperty_Changed"/>
 
                                 <CheckBox x:Name="ToolUseROICheckBox" Content="Use ROI"
-                                          Foreground="White" Margin="0,0,0,10"
+                                          Style="{StaticResource WindowDarkCheckBox}" Margin="0,0,0,10"
                                           Checked="ToolProperty_Changed" Unchecked="ToolProperty_Changed"/>
 
                                 <StackPanel x:Name="ROIPanel">

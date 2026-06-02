@@ -309,7 +309,7 @@
                                                     </Grid.ColumnDefinitions>
                                                     <CheckBox Content="Check Angle"
                                                               IsChecked="{Binding CheckAngle}"
-                                                              Foreground="#BBB" FontSize="10"
+                                                              Style="{StaticResource WindowDarkCheckBox}" FontSize="10"
                                                               VerticalAlignment="Center"/>
                                                     <StackPanel Grid.Column="1" Orientation="Horizontal">
                                                         <TextBox Text="{Binding ReferenceAngle, StringFormat=F1}"
