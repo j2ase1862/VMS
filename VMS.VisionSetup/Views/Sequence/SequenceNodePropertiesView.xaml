@@ -21,13 +21,13 @@
         <!-- 다크 TextBox -->
         <Style TargetType="TextBox" x:Key="InputStyle">
             <Setter Property="Background" Value="#2D2D30"/>
-            <Setter Property="Foreground" Value="#E0E0E0"/>
-            <Setter Property="BorderBrush" Value="#3F3F46"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrushBgSurface}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="8,5"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="CaretBrush" Value="White"/>
-            <Setter Property="SelectionBrush" Value="#0078D4"/>
+            <Setter Property="SelectionBrush" Value="{StaticResource BrushAccent}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
@@ -43,7 +43,7 @@
                                 <Setter TargetName="Bd" Property="BorderBrush" Value="#555555"/>
                             </Trigger>
                             <Trigger Property="IsFocused" Value="True">
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="#0078D4"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -59,7 +59,7 @@
                     <ColumnDefinition Width="28"/>
                 </Grid.ColumnDefinitions>
                 <Border x:Name="Bd" Grid.ColumnSpan="2" CornerRadius="4"
-                        Background="#2D2D30" BorderBrush="#3F3F46" BorderThickness="1"/>
+                        Background="{StaticResource BrushBgCard}" BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="1"/>
                 <Border Grid.Column="1" CornerRadius="0,4,4,0" Background="Transparent">
                     <Path x:Name="Arrow" Data="M0,0 L4,4 L8,0" Stroke="#AAAAAA" StrokeThickness="1.5"
                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -71,14 +71,14 @@
                     <Setter TargetName="Arrow" Property="Stroke" Value="White"/>
                 </Trigger>
                 <Trigger Property="IsChecked" Value="True">
-                    <Setter TargetName="Bd" Property="BorderBrush" Value="#0078D4"/>
+                    <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
                 </Trigger>
             </ControlTemplate.Triggers>
         </ControlTemplate>
 
         <!-- 다크 ComboBox -->
         <Style TargetType="ComboBox" x:Key="ComboStyle">
-            <Setter Property="Foreground" Value="#E0E0E0"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Height" Value="30"/>
             <Setter Property="Template">
@@ -95,7 +95,7 @@
                                               HorizontalAlignment="Left"/>
                             <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom"
                                    AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
-                                <Border Background="#2D2D30" BorderBrush="#3F3F46" BorderThickness="1"
+                                <Border Background="{StaticResource BrushBgCard}" BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="1"
                                         CornerRadius="4" Margin="0,2,0,0"
                                         MaxHeight="{TemplateBinding MaxDropDownHeight}"
                                         MinWidth="{TemplateBinding ActualWidth}">
@@ -112,7 +112,7 @@
 
         <!-- 다크 ComboBoxItem -->
         <Style TargetType="ComboBoxItem">
-            <Setter Property="Foreground" Value="#E0E0E0"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
             <Setter Property="Padding" Value="10,6"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -125,7 +125,7 @@
                                 <Setter TargetName="Bd" Property="Background" Value="#3E3E42"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#0078D4"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource BrushAccent}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -144,7 +144,7 @@
                     <ControlTemplate TargetType="CheckBox">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <Border x:Name="Box" Width="18" Height="18" CornerRadius="3"
-                                    Background="#2D2D30" BorderBrush="#555555" BorderThickness="1.5"
+                                    Background="{StaticResource BrushBgCard}" BorderBrush="{StaticResource BrushBorderStrong}" BorderThickness="1.5"
                                     VerticalAlignment="Center">
                                 <Path x:Name="Check" Data="M3,7 L7,11 L13,3" Stroke="White" StrokeThickness="2"
                                       Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -154,12 +154,12 @@
                         </StackPanel>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Box" Property="Background" Value="#0078D4"/>
-                                <Setter TargetName="Box" Property="BorderBrush" Value="#0078D4"/>
+                                <Setter TargetName="Box" Property="Background" Value="{StaticResource BrushAccent}"/>
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
                                 <Setter TargetName="Check" Property="Visibility" Value="Visible"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Box" Property="BorderBrush" Value="#0078D4"/>
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -177,7 +177,7 @@
 
             <!-- 노드 타입 (읽기 전용) -->
             <TextBlock Text="노드 타입" Style="{StaticResource LabelStyle}"/>
-            <TextBlock Text="{Binding SelectedNode.NodeType}" Foreground="#AAAAAA" FontSize="12" Margin="0,0,0,8"/>
+            <TextBlock Text="{Binding SelectedNode.NodeType}" Foreground="{StaticResource BrushTextSecondary}" FontSize="12" Margin="0,0,0,8"/>
 
             <!-- InputCheck 설정 -->
             <StackPanel Visibility="{Binding SelectedNode.NodeType, Converter={StaticResource NodeTypeVisibilityConverter}, ConverterParameter=InputCheck}">
@@ -197,8 +197,8 @@
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding DeviceId}" Foreground="#E0E0E0"/>
-                                <TextBlock Text="{Binding TypeBadge}" Foreground="#888888"
+                                <TextBlock Text="{Binding DeviceId}" Foreground="{StaticResource BrushTextPrimary}"/>
+                                <TextBlock Text="{Binding TypeBadge}" Foreground="{StaticResource BrushTextMuted}"
                                            FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center"/>
                             </StackPanel>
                         </DataTemplate>
@@ -248,7 +248,7 @@
             <!-- OutputAction 설정 -->
             <StackPanel Visibility="{Binding SelectedNode.NodeType, Converter={StaticResource NodeTypeVisibilityConverter}, ConverterParameter=OutputAction}">
                 <StackPanel Orientation="Horizontal" Margin="0,10,0,4">
-                    <TextBlock Text="── Output Action ──" Foreground="#FF9800" FontWeight="SemiBold"/>
+                    <TextBlock Text="── Output Action ──" Foreground="{StaticResource BrushWarning}" FontWeight="SemiBold"/>
                     <controls:HelpIcon ToolType="SequenceNode_OutputAction"
                                        Margin="8,0,0,0" VerticalAlignment="Center"/>
                 </StackPanel>
@@ -262,8 +262,8 @@
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding DeviceId}" Foreground="#E0E0E0"/>
-                                <TextBlock Text="{Binding TypeBadge}" Foreground="#888888"
+                                <TextBlock Text="{Binding DeviceId}" Foreground="{StaticResource BrushTextPrimary}"/>
+                                <TextBlock Text="{Binding TypeBadge}" Foreground="{StaticResource BrushTextMuted}"
                                            FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center"/>
                             </StackPanel>
                         </DataTemplate>
@@ -348,8 +348,8 @@
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding DeviceId}" Foreground="#E0E0E0"/>
-                                <TextBlock Text="{Binding TypeBadge}" Foreground="#888888"
+                                <TextBlock Text="{Binding DeviceId}" Foreground="{StaticResource BrushTextPrimary}"/>
+                                <TextBlock Text="{Binding TypeBadge}" Foreground="{StaticResource BrushTextMuted}"
                                            FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center"/>
                             </StackPanel>
                         </DataTemplate>
@@ -371,7 +371,7 @@
                 <TextBox Text="{Binding SelectedNode.Config.RecipeIndexAddress, UpdateSourceTrigger=PropertyChanged}"
                          Style="{StaticResource InputStyle}"/>
                 <TextBlock Text="신호 조건 충족 → Index 읽기 → 현재 레시피와&#x0a;비교하여 다르면 변경, 같으면 스킵.&#x0a;신호 주소 미설정 시 매번 Index를 읽습니다."
-                           Foreground="#999999" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                           Foreground="{StaticResource BrushTextMuted}" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"/>
             </StackPanel>
 
             <!-- StepChange 설정 -->
@@ -390,8 +390,8 @@
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding DeviceId}" Foreground="#E0E0E0"/>
-                                <TextBlock Text="{Binding TypeBadge}" Foreground="#888888"
+                                <TextBlock Text="{Binding DeviceId}" Foreground="{StaticResource BrushTextPrimary}"/>
+                                <TextBlock Text="{Binding TypeBadge}" Foreground="{StaticResource BrushTextMuted}"
                                            FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center"/>
                             </StackPanel>
                         </DataTemplate>
@@ -413,13 +413,13 @@
                 <TextBox Text="{Binding SelectedNode.Config.StepIndexAddress, UpdateSourceTrigger=PropertyChanged}"
                          Style="{StaticResource InputStyle}"/>
                 <TextBlock Text="신호 조건 충족 → Step Index 읽기 → 해당 스텝의&#x0a;검사 툴로 Inspection 수행.&#x0a;신호 미설정 시 항상 스텝 1(index 0) 사용."
-                           Foreground="#999999" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                           Foreground="{StaticResource BrushTextMuted}" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"/>
             </StackPanel>
 
             <!-- Delay 설정 -->
             <StackPanel Visibility="{Binding SelectedNode.NodeType, Converter={StaticResource NodeTypeVisibilityConverter}, ConverterParameter=Delay}">
                 <StackPanel Orientation="Horizontal" Margin="0,10,0,4">
-                    <TextBlock Text="── Delay ──" Foreground="#9E9E9E" FontWeight="SemiBold"/>
+                    <TextBlock Text="── Delay ──" Foreground="{StaticResource BrushTextMuted}" FontWeight="SemiBold"/>
                     <controls:HelpIcon ToolType="SequenceNode_Delay"
                                        Margin="8,0,0,0" VerticalAlignment="Center"/>
                 </StackPanel>
@@ -450,7 +450,7 @@
                 <CheckBox IsChecked="{Binding SelectedNode.Config.BranchOnAllCameras}"
                           Content="전체 카메라 결과로 판정" Style="{StaticResource CheckStyle}"/>
                 <TextBlock Text="체크: 모든 카메라 OK일 때 True&#x0a;해제: 직전 Inspection 결과로 분기"
-                           Foreground="#999999" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                           Foreground="{StaticResource BrushTextMuted}" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"/>
             </StackPanel>
 
         </StackPanel>
