@@ -489,4 +489,136 @@
             </Setter.Value>
         </Setter>
     </Style>
+
+    <!-- ──────────────── CheckBox (default) ────────────────
+         체크 박스: Surface.Overlay 배경 + Divider 보더 + Radius.Sm (6px).
+         checked 시 Primary 채움 + Text.OnPrimary 체크마크(Segoe MDL2 \\xE73E). -->
+    <Style TargetType="CheckBox">
+        <Setter Property="Foreground"    Value="{StaticResource Brush.Text.Primary}"/>
+        <Setter Property="Background"    Value="{StaticResource Brush.Surface.Overlay}"/>
+        <Setter Property="BorderBrush"   Value="{StaticResource Brush.Surface.Divider}"/>
+        <Setter Property="FontFamily"    Value="{StaticResource Font.Family}"/>
+        <Setter Property="FontSize"      Value="{StaticResource Font.Size.Body}"/>
+        <Setter Property="Cursor"        Value="Hand"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <StackPanel Orientation="Horizontal">
+                        <Border x:Name="box"
+                                Width="18" Height="18"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="1.5"
+                                CornerRadius="{StaticResource Radius.Sm}"
+                                VerticalAlignment="Center">
+                            <TextBlock x:Name="check"
+                                       Text="&#xE73E;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="11"
+                                       Foreground="{StaticResource Brush.Text.OnPrimary}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Opacity="0"/>
+                        </Border>
+                        <ContentPresenter Margin="10,0,0,0"
+                                          VerticalAlignment="Center"
+                                          RecognizesAccessKey="True"/>
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="box" Property="BorderBrush" Value="{StaticResource Brush.Primary}"/>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="box"   Property="Background"  Value="{StaticResource Brush.Primary}"/>
+                            <Setter TargetName="box"   Property="BorderBrush" Value="{StaticResource Brush.Primary}"/>
+                            <Setter TargetName="check" Property="Opacity"     Value="1"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ──────────────── DataGrid (default) ────────────────
+         헤더는 Surface.Raised + Text.Secondary, 셀은 Surface.Base, 그리드 라인은
+         Surface.Divider, 선택 행은 Primary 강조. -->
+    <Style TargetType="DataGrid">
+        <Setter Property="Background"                       Value="{StaticResource Brush.Surface.Base}"/>
+        <Setter Property="Foreground"                       Value="{StaticResource Brush.Text.Primary}"/>
+        <Setter Property="BorderBrush"                      Value="{StaticResource Brush.Surface.Divider}"/>
+        <Setter Property="BorderThickness"                  Value="1"/>
+        <Setter Property="HorizontalGridLinesBrush"         Value="{StaticResource Brush.Surface.Divider}"/>
+        <Setter Property="VerticalGridLinesBrush"           Value="{StaticResource Brush.Surface.Divider}"/>
+        <Setter Property="RowBackground"                    Value="Transparent"/>
+        <Setter Property="AlternatingRowBackground"         Value="Transparent"/>
+        <Setter Property="RowHeaderWidth"                   Value="0"/>
+        <Setter Property="GridLinesVisibility"              Value="Horizontal"/>
+        <Setter Property="HeadersVisibility"                Value="Column"/>
+        <Setter Property="AutoGenerateColumns"              Value="False"/>
+        <Setter Property="CanUserAddRows"                   Value="False"/>
+        <Setter Property="CanUserDeleteRows"                Value="False"/>
+        <Setter Property="CanUserResizeRows"                Value="False"/>
+        <Setter Property="FontFamily"                       Value="{StaticResource Font.Family}"/>
+        <Setter Property="FontSize"                         Value="{StaticResource Font.Size.Body}"/>
+    </Style>
+
+    <Style TargetType="DataGridColumnHeader">
+        <Setter Property="Background"      Value="{StaticResource Brush.Surface.Raised}"/>
+        <Setter Property="Foreground"      Value="{StaticResource Brush.Text.Secondary}"/>
+        <Setter Property="BorderBrush"     Value="{StaticResource Brush.Surface.Divider}"/>
+        <Setter Property="BorderThickness" Value="0,0,1,1"/>
+        <Setter Property="Padding"         Value="12,10"/>
+        <Setter Property="FontWeight"      Value="SemiBold"/>
+        <Setter Property="FontSize"        Value="{StaticResource Font.Size.Caption}"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="VerticalContentAlignment"   Value="Center"/>
+    </Style>
+
+    <Style TargetType="DataGridRow">
+        <Setter Property="Background"   Value="Transparent"/>
+        <Setter Property="Foreground"   Value="{StaticResource Brush.Text.Primary}"/>
+        <Setter Property="BorderBrush"  Value="{StaticResource Brush.Surface.Divider}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="MinHeight"    Value="38"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{StaticResource Brush.Surface.Raised}"/>
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="{StaticResource Brush.Primary}"/>
+                <Setter Property="Foreground" Value="{StaticResource Brush.Text.OnPrimary}"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style TargetType="DataGridCell">
+        <Setter Property="Background"      Value="Transparent"/>
+        <Setter Property="Foreground"      Value="{StaticResource Brush.Text.Primary}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding"         Value="12,8"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DataGridCell">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter VerticalAlignment="Center"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Foreground" Value="{StaticResource Brush.Text.OnPrimary}"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
 </ResourceDictionary>
