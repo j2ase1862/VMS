@@ -518,72 +518,37 @@
                                    Foreground="{StaticResource Brush.Danger}"/>
                     </Button>
 
-                    <!-- 시스템 컨트롤 (최소화 / 최대화 토글 / 닫기) — PR #88 의 자체 chrome
-                         대신 메인 윈도우 헤더에 직접 통합. IsHitTestVisibleInChrome=True
-                         로 캡션 영역 드래그를 가로채지 않음. -->
-                    <Rectangle Width="1" Fill="{StaticResource Brush.Surface.Overlay}" Margin="8,8"/>
-
+                    <!-- 윈도우 컨트롤 (최소화 / 최대화 토글) — 종료는 좌측 Exit 버튼이 담당.
+                         Segoe MDL2 표준 글리프(ChromeMinimize/Maximize/Restore) +
+                         IconButton 베이스로 사이드 패널 다른 IconButton 들과 톤 통일. -->
                     <Button Style="{StaticResource IconButton}"
                             shell:WindowChrome.IsHitTestVisibleInChrome="True"
                             Command="{x:Static SystemCommands.MinimizeWindowCommand}"
-                            ToolTip="최소화"
-                            Width="38">
-                        <Path Data="M 0 5 L 10 5"
-                              Stroke="{StaticResource Brush.Text.Secondary}"
-                              StrokeThickness="1.2"
-                              Width="10" Height="10"/>
+                            ToolTip="최소화">
+                        <TextBlock Text="&#xE921;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="14"
+                                   Foreground="{StaticResource Brush.Text.Secondary}"/>
                     </Button>
 
-                    <Button shell:WindowChrome.IsHitTestVisibleInChrome="True"
-                            ToolTip="최대화/복원"
-                            Width="38">
-                        <Button.Style>
-                            <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
-                                <Setter Property="Command" Value="{x:Static SystemCommands.MaximizeWindowCommand}"/>
-                                <Setter Property="Content">
-                                    <Setter.Value>
-                                        <Path Data="M 0.5 0.5 L 9.5 0.5 L 9.5 9.5 L 0.5 9.5 Z"
-                                              Stroke="{StaticResource Brush.Text.Secondary}"
-                                              StrokeThickness="1.2"
-                                              Width="10" Height="10"
-                                              Fill="Transparent"/>
-                                    </Setter.Value>
-                                </Setter>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding WindowState, RelativeSource={RelativeSource AncestorType=Window}}" Value="Maximized">
-                                        <Setter Property="Command" Value="{x:Static SystemCommands.RestoreWindowCommand}"/>
-                                        <Setter Property="Content">
-                                            <Setter.Value>
-                                                <Path Data="M 2 0.5 L 9.5 0.5 L 9.5 7.5 M 0.5 2.5 L 7.5 2.5 L 7.5 9.5 L 0.5 9.5 Z"
-                                                      Stroke="{StaticResource Brush.Text.Secondary}"
-                                                      StrokeThickness="1.2"
-                                                      Width="10" Height="10"
-                                                      Fill="Transparent"/>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
-
-                    <Button shell:WindowChrome.IsHitTestVisibleInChrome="True"
-                            Command="{x:Static SystemCommands.CloseWindowCommand}"
-                            ToolTip="닫기"
-                            Width="46">
-                        <Button.Style>
-                            <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
-                                <Style.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="{StaticResource Brush.Danger}"/>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                        <Path Data="M 0 0 L 10 10 M 10 0 L 0 10"
-                              Stroke="{StaticResource Brush.Text.Secondary}"
-                              StrokeThickness="1.2"
-                              Width="10" Height="10"/>
+                    <Button Style="{StaticResource IconButton}"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                            Click="MaxRestoreButton_Click"
+                            ToolTip="최대화/복원">
+                        <TextBlock FontFamily="Segoe MDL2 Assets"
+                                   FontSize="14"
+                                   Foreground="{StaticResource Brush.Text.Secondary}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Text" Value="&#xE922;"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding WindowState, RelativeSource={RelativeSource AncestorType=Window}}" Value="Maximized">
+                                            <Setter Property="Text" Value="&#xE923;"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </Button>
                 </StackPanel>
             </Grid>

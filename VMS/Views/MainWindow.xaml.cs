@@ -35,6 +35,17 @@ namespace VMS.Views
         }
 
         /// <summary>
+        /// 최대화/복원 토글 — WindowState 에 따라 Maximized ↔ Normal.
+        /// 아이콘은 XAML 의 DataTrigger 가 WindowState 바인딩으로 자동 전환.
+        /// </summary>
+        private void MaxRestoreButton_Click(object sender, RoutedEventArgs e)
+        {
+            WindowState = WindowState == WindowState.Maximized
+                ? WindowState.Normal
+                : WindowState.Maximized;
+        }
+
+        /// <summary>
         /// Admin Tools 드롭다운 — 헤더 버튼 클릭 시 첨부된 ContextMenu 를 버튼 아래에 표시.
         /// 메뉴 항목은 5개 Admin 윈도우 (Audit / Health / Backup / AutoBackup / Support) 진입점.
         /// </summary>
