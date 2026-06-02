@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:VMS.VisionSetup.Controls"
              xmlns:annotation="clr-namespace:VMS.VisionSetup.Models.Annotation"
-             Background="#1E1E1E">
+             Background="{StaticResource BrushBgWindow}">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </UserControl.Resources>
@@ -16,7 +16,7 @@
         </Grid.ColumnDefinitions>
 
         <!-- ═══ Left Panel: Dataset & Image List ═══ -->
-        <Border Grid.Column="0" Background="#252526" BorderBrush="#333" BorderThickness="0,0,1,0">
+        <Border Grid.Column="0" Background="{StaticResource BrushBgWindow}" BorderBrush="#333" BorderThickness="0,0,1,0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -27,12 +27,12 @@
                 <!-- Dataset Section -->
                 <Expander Grid.Row="0" IsExpanded="True" Margin="5">
                     <Expander.Header>
-                        <TextBlock Text="Dataset" Foreground="#CCCCCC" FontWeight="Bold" FontSize="12"/>
+                        <TextBlock Text="Dataset" Foreground="{StaticResource BrushTextPrimary}" FontWeight="Bold" FontSize="12"/>
                     </Expander.Header>
                     <StackPanel Margin="0,5,0,0">
                         <!-- Dataset List -->
                         <ListBox ItemsSource="{Binding Datasets}" SelectedItem="{Binding CurrentDataset}"
-                                 MaxHeight="100" Background="#1E1E1E" Foreground="#CCC"
+                                 MaxHeight="100" Background="{StaticResource BrushBgWindow}" Foreground="#CCC"
                                  BorderBrush="#444" BorderThickness="1" Margin="0,0,0,5">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
@@ -57,7 +57,7 @@
                                      VerticalContentAlignment="Center"/>
                             <Button Grid.Column="1" Content="+" Width="28" Margin="3,0,0,0"
                                     Command="{Binding CreateDatasetCommand}"
-                                    Background="#0078D4" Foreground="White" BorderThickness="0"
+                                    Background="{StaticResource BrushAccent}" Foreground="White" BorderThickness="0"
                                     FontWeight="Bold" Cursor="Hand"/>
                         </Grid>
 
@@ -71,7 +71,7 @@
                                     Background="#333" Foreground="#CCC" BorderBrush="#555"
                                     Padding="8,2" FontSize="11" Cursor="Hand" Margin="0,0,3,0"/>
                             <Button Content="Delete" Command="{Binding DeleteDatasetCommand}"
-                                    Background="#442222" Foreground="#F88" BorderBrush="#555"
+                                    Background="{StaticResource BrushDangerSoft}" Foreground="#F88" BorderBrush="#555"
                                     Padding="8,2" FontSize="11" Cursor="Hand"/>
                         </StackPanel>
                     </StackPanel>
@@ -85,13 +85,13 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="Images" Foreground="#CCCCCC" FontWeight="Bold"
+                        <TextBlock Text="Images" Foreground="{StaticResource BrushTextPrimary}" FontWeight="Bold"
                                    FontSize="12" VerticalAlignment="Center"/>
                         <Button Grid.Column="1" Content="+ Add" Command="{Binding AddImagesCommand}"
-                                Background="#0078D4" Foreground="White" BorderThickness="0"
+                                Background="{StaticResource BrushAccent}" Foreground="White" BorderThickness="0"
                                 Padding="8,2" FontSize="11" Cursor="Hand" Margin="0,0,3,0"/>
                         <Button Grid.Column="2" Content="- Del" Command="{Binding RemoveCurrentImageCommand}"
-                                Background="#442222" Foreground="#F88" BorderThickness="0"
+                                Background="{StaticResource BrushDangerSoft}" Foreground="#F88" BorderThickness="0"
                                 Padding="8,2" FontSize="11" Cursor="Hand"/>
                     </Grid>
 
@@ -115,7 +115,7 @@
                 <!-- Image List -->
                 <ListBox Grid.Row="2" ItemsSource="{Binding CurrentDataset.Images}"
                          SelectedItem="{Binding CurrentImage}"
-                         Background="#1E1E1E" Foreground="#CCC"
+                         Background="{StaticResource BrushBgWindow}" Foreground="#CCC"
                          BorderThickness="0" Margin="5,0"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <ListBox.ItemTemplate>
@@ -136,7 +136,7 @@
                                             <Setter Property="Fill" Value="#666"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsLabeled}" Value="True">
-                                                    <Setter Property="Fill" Value="#4CAF50"/>
+                                                    <Setter Property="Fill" Value="{StaticResource BrushSuccess}"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -179,7 +179,7 @@
         </Grid>
 
         <!-- ═══ Right Panel: Labels & Classes ═══ -->
-        <Border Grid.Column="2" Background="#252526" BorderBrush="#333" BorderThickness="1,0,0,0">
+        <Border Grid.Column="2" Background="{StaticResource BrushBgWindow}" BorderBrush="#333" BorderThickness="1,0,0,0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -191,12 +191,12 @@
                 <!-- Classes Section -->
                 <Expander Grid.Row="0" IsExpanded="True" Margin="5">
                     <Expander.Header>
-                        <TextBlock Text="Classes" Foreground="#CCCCCC" FontWeight="Bold" FontSize="12"/>
+                        <TextBlock Text="Classes" Foreground="{StaticResource BrushTextPrimary}" FontWeight="Bold" FontSize="12"/>
                     </Expander.Header>
                     <StackPanel Margin="0,5,0,0">
                         <ListBox ItemsSource="{Binding CurrentDataset.Classes}"
                                  SelectedItem="{Binding SelectedClassName}"
-                                 MaxHeight="120" Background="#1E1E1E" Foreground="#CCC"
+                                 MaxHeight="120" Background="{StaticResource BrushBgWindow}" Foreground="#CCC"
                                  BorderBrush="#444" BorderThickness="1">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
@@ -215,7 +215,7 @@
                                      VerticalContentAlignment="Center"/>
                             <Button Grid.Column="1" Content="+" Width="28" Margin="3,0,0,0"
                                     Command="{Binding AddClassCommand}"
-                                    Background="#0078D4" Foreground="White" BorderThickness="0"
+                                    Background="{StaticResource BrushAccent}" Foreground="White" BorderThickness="0"
                                     FontWeight="Bold" Cursor="Hand"/>
                         </Grid>
                     </StackPanel>
@@ -228,16 +228,16 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <Grid>
-                        <TextBlock Text="Labels" Foreground="#CCCCCC" FontWeight="Bold"
+                        <TextBlock Text="Labels" Foreground="{StaticResource BrushTextPrimary}" FontWeight="Bold"
                                    FontSize="12" VerticalAlignment="Center"/>
                         <Button Content="Delete" HorizontalAlignment="Right"
                                 Command="{Binding DeleteSelectedLabelCommand}"
-                                Background="#442222" Foreground="#F88" BorderThickness="0"
+                                Background="{StaticResource BrushDangerSoft}" Foreground="#F88" BorderThickness="0"
                                 Padding="6,1" FontSize="10" Cursor="Hand"/>
                     </Grid>
                     <ListBox Grid.Row="1" ItemsSource="{Binding CurrentImage.Labels}"
                              SelectedItem="{Binding SelectedLabel}"
-                             Background="#1E1E1E" Foreground="#CCC"
+                             Background="{StaticResource BrushBgWindow}" Foreground="#CCC"
                              BorderBrush="#444" BorderThickness="1" Margin="0,3,0,0">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
@@ -245,12 +245,12 @@
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="{Binding ClassName}"
                                                    FontWeight="Bold" FontSize="11"
-                                                   Foreground="#4FC3F7"/>
+                                                   Foreground="{StaticResource BrushTextAccent}"/>
                                         <TextBlock Text="{Binding BoundingBox, StringFormat=' [{0}]'}"
                                                    Foreground="#888" FontSize="10" Margin="4,0,0,0"/>
                                     </StackPanel>
                                     <TextBlock Text="{Binding Transcription}"
-                                               Foreground="#AED581" FontSize="11"
+                                               Foreground="{StaticResource BrushSuccess}" FontSize="11"
                                                TextTrimming="CharacterEllipsis"
                                                Visibility="{Binding Transcription,
                                                    Converter={StaticResource BoolToVis},
@@ -262,13 +262,13 @@
                 </Grid>
 
                 <!-- Selected Label Editor -->
-                <Border Grid.Row="2" Background="#2D2D30" BorderBrush="#444"
+                <Border Grid.Row="2" Background="{StaticResource BrushBgCard}" BorderBrush="#444"
                         BorderThickness="0,1,0,0" Margin="5" Padding="5"
                         Visibility="{Binding SelectedLabel,
                             Converter={StaticResource BoolToVis},
                             FallbackValue=Collapsed}">
                     <StackPanel>
-                        <TextBlock Text="Selected Label" Foreground="#CCCCCC"
+                        <TextBlock Text="Selected Label" Foreground="{StaticResource BrushTextPrimary}"
                                    FontWeight="Bold" FontSize="11" Margin="0,0,0,4"/>
 
                         <!-- Class selection -->
@@ -290,7 +290,7 @@
                 <!-- Export & Training Section -->
                 <Expander Grid.Row="3" IsExpanded="False" Margin="5,0,5,5">
                     <Expander.Header>
-                        <TextBlock Text="Export &amp; Training" Foreground="#CCCCCC" FontWeight="Bold" FontSize="12"/>
+                        <TextBlock Text="Export &amp; Training" Foreground="{StaticResource BrushTextPrimary}" FontWeight="Bold" FontSize="12"/>
                     </Expander.Header>
                     <StackPanel Margin="0,5,0,0">
                         <!-- Export -->
@@ -310,7 +310,7 @@
                         <!-- Training Config -->
                         <Border BorderBrush="#444" BorderThickness="0,1,0,0" Margin="0,5,0,0" Padding="0,5,0,0">
                             <StackPanel>
-                                <TextBlock Text="Training" Foreground="#FF9800" FontWeight="Bold"
+                                <TextBlock Text="Training" Foreground="{StaticResource BrushWarning}" FontWeight="Bold"
                                            FontSize="11" Margin="0,0,0,4"/>
 
                                 <TextBlock Text="Python:" Foreground="#999" FontSize="10"/>
@@ -355,12 +355,12 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <Button Content="Start Training" Command="{Binding StartTrainingCommand}"
-                                            Background="#2E7D32" Foreground="White" BorderThickness="0"
+                                            Background="{StaticResource BrushSuccessSoft}" Foreground="White" BorderThickness="0"
                                             Padding="6,4" FontSize="11" FontWeight="Bold"
                                             Cursor="Hand" Margin="0,0,2,0"/>
                                     <Button Grid.Column="1" Content="Stop"
                                             Command="{Binding StopTrainingCommand}"
-                                            Background="#C62828" Foreground="White" BorderThickness="0"
+                                            Background="{StaticResource BrushDanger}" Foreground="White" BorderThickness="0"
                                             Padding="6,4" FontSize="11" FontWeight="Bold"
                                             Cursor="Hand" Margin="2,0,0,0"/>
                                 </Grid>
@@ -368,7 +368,7 @@
                                 <!-- Progress -->
                                 <ProgressBar Value="{Binding TrainingStatus.Progress, Mode=OneWay}"
                                              Minimum="0" Maximum="100" Height="10"
-                                             Background="#333" Foreground="#4CAF50"
+                                             Background="#333" Foreground="{StaticResource BrushSuccess}"
                                              BorderThickness="0" Margin="0,5,0,2"/>
                                 <TextBlock Text="{Binding TrainingStatus.Message, Mode=OneWay}"
                                            Foreground="#AAA" FontSize="10" TextTrimming="CharacterEllipsis"/>
@@ -376,16 +376,16 @@
                                 <!-- Metrics -->
                                 <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                                     <TextBlock Foreground="#888" FontSize="10">
-                                        <Run Text="Loss: "/><Run Text="{Binding TrainingStatus.Loss, Mode=OneWay, StringFormat='F4'}" Foreground="#FF9800"/>
+                                        <Run Text="Loss: "/><Run Text="{Binding TrainingStatus.Loss, Mode=OneWay, StringFormat='F4'}" Foreground="{StaticResource BrushWarning}"/>
                                     </TextBlock>
                                     <TextBlock Foreground="#888" FontSize="10" Margin="10,0,0,0">
-                                        <Run Text="Acc: "/><Run Text="{Binding TrainingStatus.Accuracy, Mode=OneWay, StringFormat='P1'}" Foreground="#4CAF50"/>
+                                        <Run Text="Acc: "/><Run Text="{Binding TrainingStatus.Accuracy, Mode=OneWay, StringFormat='P1'}" Foreground="{StaticResource BrushSuccess}"/>
                                     </TextBlock>
                                 </StackPanel>
 
                                 <!-- Log -->
                                 <ListBox ItemsSource="{Binding TrainingLog}" MaxHeight="100"
-                                         Background="#1A1A1A" Foreground="#888" BorderBrush="#333"
+                                         Background="{StaticResource BrushBgWindow}" Foreground="#888" BorderBrush="#333"
                                          BorderThickness="1" FontSize="9" FontFamily="Consolas"
                                          Margin="0,4,0,0"
                                          ScrollViewer.HorizontalScrollBarVisibility="Disabled">
