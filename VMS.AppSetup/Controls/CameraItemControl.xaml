@@ -6,7 +6,8 @@
              mc:Ignorable="d"
              d:DesignHeight="70" d:DesignWidth="400">
 
-    <Border Background="#2D2D30" BorderBrush="#3E3E42" BorderThickness="1"
+    <Border Background="{StaticResource BrushBgCard}"
+            BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="1"
             CornerRadius="6" Padding="12,10" Margin="0,4">
         <Grid>
             <Grid.ColumnDefinitions>
@@ -18,42 +19,37 @@
             <!-- Enable Checkbox -->
             <CheckBox Grid.Column="0"
                       IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+                      Style="{StaticResource WindowDarkCheckBox}"
                       VerticalAlignment="Center"
-                      Margin="0,0,12,0">
-                <CheckBox.Style>
-                    <Style TargetType="CheckBox">
-                        <Setter Property="Foreground" Value="White"/>
-                    </Style>
-                </CheckBox.Style>
-            </CheckBox>
+                      Margin="0,0,12,0"/>
 
             <!-- Camera Info -->
             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="{Binding Name}"
-                               Foreground="White" FontWeight="SemiBold" FontSize="13"/>
-                    <TextBlock Text=" - " Foreground="#888888" FontSize="13"/>
+                               Foreground="{StaticResource BrushTextPrimary}" FontWeight="SemiBold" FontSize="13"/>
+                    <TextBlock Text=" - " Foreground="{StaticResource BrushTextSecondary}" FontSize="13"/>
                     <TextBlock Text="{Binding Manufacturer}"
                                Foreground="#0078D4" FontSize="13"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
-                    <TextBlock Text="ID: " Foreground="#888888" FontSize="11"/>
-                    <TextBlock Text="{Binding Id}" Foreground="#AAAAAA" FontSize="11"
+                    <TextBlock Text="ID: " Foreground="{StaticResource BrushTextSecondary}" FontSize="11"/>
+                    <TextBlock Text="{Binding Id}" Foreground="{StaticResource BrushTextSecondary}" FontSize="11"
                                MaxWidth="150" TextTrimming="CharacterEllipsis"/>
-                    <TextBlock Text="  |  IP: " Foreground="#888888" FontSize="11" Margin="10,0,0,0"/>
-                    <TextBlock Text="{Binding IpAddress}" Foreground="#AAAAAA" FontSize="11"/>
+                    <TextBlock Text="  |  IP: " Foreground="{StaticResource BrushTextSecondary}" FontSize="11" Margin="10,0,0,0"/>
+                    <TextBlock Text="{Binding IpAddress}" Foreground="{StaticResource BrushTextSecondary}" FontSize="11"/>
                 </StackPanel>
             </StackPanel>
 
-            <!-- Status Indicator -->
+            <!-- Status Indicator: 활성 green / 비활성 muted -->
             <Border Grid.Column="2" Width="12" Height="12" CornerRadius="6"
                     VerticalAlignment="Center" Margin="10,0,0,0">
                 <Border.Style>
                     <Style TargetType="Border">
-                        <Setter Property="Background" Value="#4CAF50"/>
+                        <Setter Property="Background" Value="{StaticResource BrushSuccess}"/>
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding IsEnabled}" Value="False">
-                                <Setter Property="Background" Value="#555555"/>
+                                <Setter Property="Background" Value="{StaticResource BrushBorderStrong}"/>
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
