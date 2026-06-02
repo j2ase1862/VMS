@@ -181,8 +181,7 @@
                               AutoGenerateColumns="False"
                               CanUserAddRows="False" CanUserDeleteRows="True"
                               HeadersVisibility="Column"
-                              Background="White" Foreground="Black"
-                              GridLinesVisibility="Horizontal"
+                              Style="{StaticResource WindowDarkDataGrid}"
                               MaxHeight="180" Margin="0,0,0,6">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="PxX" Binding="{Binding PixelX, StringFormat=F1}" Width="*" IsReadOnly="True"/>
