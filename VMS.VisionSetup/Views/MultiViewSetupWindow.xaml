@@ -85,9 +85,9 @@
                     <TextBlock Grid.Row="2" Grid.Column="0" Text="" Margin="0,6,0,0"/>
                     <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Margin="0,6,0,0">
                         <Button Command="{Binding ConnectRobotCommand}" Content="Connect"
-                                Background="#4CAF50" Style="{StaticResource ActionButton}" Padding="14,5"/>
+                                Background="{StaticResource BrushSuccess}" Style="{StaticResource ActionButton}" Padding="14,5"/>
                         <Button Command="{Binding DisconnectRobotCommand}" Content="Disconnect"
-                                Background="#F44336" Style="{StaticResource ActionButton}" Padding="14,5" Margin="6,0,0,0"/>
+                                Background="{StaticResource BrushDanger}" Style="{StaticResource ActionButton}" Padding="14,5" Margin="6,0,0,0"/>
                         <Ellipse Width="10" Height="10" Margin="10,0,0,0" VerticalAlignment="Center">
                             <Ellipse.Style>
                                 <Style TargetType="Ellipse">
@@ -116,7 +116,7 @@
                              ToolTip="{Binding HandEyeCalibrationPath}"/>
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
                         <Button Command="{Binding BrowseHandEyeCalibrationCommand}"
-                                Content="..." Background="#3A3A3C"
+                                Content="..." Background="{StaticResource BrushBgSurface}"
                                 Style="{StaticResource ActionButton}" Padding="10,4" Margin="4,0,0,0"/>
                         <Button x:Name="CalibrateButton" Click="HandEyeCalibrate_Click"
                                 Content="Calibrate" Background="#9C27B0"
@@ -166,7 +166,7 @@
                     <Button Command="{Binding MultiViewClearCommand}" Content="Clear"
                             Background="#757575" Style="{StaticResource ActionButton}" Padding="8,5" Margin="2,0,0,0"/>
                 </UniformGrid>
-                <TextBlock Text="{Binding MultiViewStatusText}" Foreground="#AAAAAA"
+                <TextBlock Text="{Binding MultiViewStatusText}" Foreground="{StaticResource BrushTextSecondary}"
                            FontSize="10" TextWrapping="Wrap" Margin="0,4,0,0"/>
 
                 <!-- Waypoint Planner -->
@@ -219,7 +219,7 @@
                             Background="#B71C1C" Style="{StaticResource ActionButton}" Padding="8,5" Margin="3,0,0,0"/>
                 </UniformGrid>
 
-                <TextBlock Text="{Binding WaypointPlanner.StatusMessage}" Foreground="#AAAAAA"
+                <TextBlock Text="{Binding WaypointPlanner.StatusMessage}" Foreground="{StaticResource BrushTextSecondary}"
                            FontSize="10" TextWrapping="Wrap" Margin="0,6,0,0"/>
 
             </StackPanel>
