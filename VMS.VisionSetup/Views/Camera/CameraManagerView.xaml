@@ -102,12 +102,9 @@
                                  Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,10"/>
 
                         <TextBlock Text="Manufacturer" Style="{StaticResource WindowFieldLabel}"/>
-                        <ComboBox IsEditable="True" Text="{Binding Manufacturer, UpdateSourceTrigger=PropertyChanged}"
-                                  Background="{StaticResource BrushBgInput}"
-                                  Foreground="{StaticResource BrushTextPrimary}"
-                                  BorderBrush="{StaticResource BrushBorderSubtle}"
-                                  ItemContainerStyle="{StaticResource WindowDarkComboBoxItem}"
-                                  Padding="6,4" Margin="0,0,0,10">
+                        <ComboBox Text="{Binding Manufacturer, UpdateSourceTrigger=PropertyChanged}"
+                                  Style="{StaticResource WindowDarkComboBoxEditable}"
+                                  Margin="0,0,0,10">
                             <ComboBoxItem Content="Basler"/>
                             <ComboBoxItem Content="IDS"/>
                             <ComboBoxItem Content="HIK"/>
