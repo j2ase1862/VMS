@@ -1,0 +1,185 @@
+<!--
+  Design tokens — Window chrome (v1.0 / 2026-06-02)
+
+  WPF 기본 Window chrome (회색 시스템 타이틀바) 를 제거하고 자체 indigo/slate
+  타이틀바로 대체. WindowChrome 으로 시스템 리사이즈/스냅 동작은 보존하면서
+  외형만 커스터마이징.
+
+  Window TargetType 디폴트 스타일이라 모든 Window 자동 적용. 자체 chrome 을
+  이미 갖고 있는 윈도우(MessageDialog 등) 는 Style="{x:Null}" 로 opt-out.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework">
+
+    <!-- ──────────────── TitleBar 버튼 스타일 ────────────────
+         min / max / close 버튼 공용 — WindowChrome.IsHitTestVisibleInChrome=True 가
+         있어야 caption 영역의 드래그를 가로채지 않고 클릭 가능. -->
+    <Style x:Key="TitleBar.Button" TargetType="Button">
+        <Setter Property="Background"      Value="Transparent"/>
+        <Setter Property="Foreground"      Value="{StaticResource Brush.Text.Secondary}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Width"           Value="46"/>
+        <Setter Property="Height"          Value="36"/>
+        <Setter Property="Cursor"          Value="Hand"/>
+        <Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="bg"
+                            Background="{TemplateBinding Background}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="bg" Property="Background" Value="{StaticResource Brush.Surface.Overlay}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="TitleBar.CloseButton" TargetType="Button" BasedOn="{StaticResource TitleBar.Button}">
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{StaticResource Brush.Danger}"/>
+                <Setter Property="Foreground" Value="{StaticResource Brush.Text.OnPrimary}"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- ──────────────── Window 기본 스타일 ────────────────
+         TargetType="Window" (default) — 모든 Window 자동 적용.
+         자체 chrome 이 있는 윈도우(MessageDialog) 는 Style="{x:Null}" 로 opt-out.
+         윈도우는 Background 가 외곽 보더와 같이 노출되므로 Brush.Surface.Base 가
+         윈도우 본체 전체 색을 결정. -->
+    <Style TargetType="{x:Type Window}">
+        <Setter Property="Background"          Value="{StaticResource Brush.Surface.Base}"/>
+        <Setter Property="Foreground"          Value="{StaticResource Brush.Text.Primary}"/>
+        <Setter Property="FontFamily"          Value="{StaticResource Font.Family}"/>
+        <Setter Property="FontSize"            Value="{StaticResource Font.Size.Body}"/>
+        <Setter Property="WindowStyle"         Value="None"/>
+        <Setter Property="AllowsTransparency"  Value="False"/>
+        <Setter Property="ResizeMode"          Value="CanResize"/>
+        <Setter Property="UseLayoutRounding"   Value="True"/>
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+        <Setter Property="shell:WindowChrome.WindowChrome">
+            <Setter.Value>
+                <shell:WindowChrome CaptionHeight="36"
+                                    ResizeBorderThickness="6"
+                                    CornerRadius="0"
+                                    GlassFrameThickness="0"
+                                    UseAeroCaptionButtons="False"/>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Window}">
+                    <Border x:Name="WindowBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{StaticResource Brush.Surface.Divider}"
+                            BorderThickness="1">
+                        <DockPanel LastChildFill="True">
+                            <!-- ── 자체 TitleBar (36px) ── -->
+                            <Border DockPanel.Dock="Top"
+                                    Background="{StaticResource Brush.Surface.Raised}"
+                                    BorderBrush="{StaticResource Brush.Surface.Divider}"
+                                    BorderThickness="0,0,0,1"
+                                    Height="36">
+                                <DockPanel LastChildFill="True">
+
+                                    <!-- 닫기 (가장 우측) -->
+                                    <Button DockPanel.Dock="Right"
+                                            Style="{StaticResource TitleBar.CloseButton}"
+                                            Command="{x:Static SystemCommands.CloseWindowCommand}"
+                                            ToolTip="닫기">
+                                        <Path Data="M 0 0 L 10 10 M 10 0 L 0 10"
+                                              Stroke="{StaticResource Brush.Text.Secondary}"
+                                              StrokeThickness="1.2"
+                                              Width="10" Height="10"
+                                              SnapsToDevicePixels="True"/>
+                                    </Button>
+
+                                    <!-- 최대화/복원 — Maximize 와 Restore 두 가지 명령을 한 버튼이 동적으로 처리 -->
+                                    <Button DockPanel.Dock="Right"
+                                            ToolTip="최대화/복원">
+                                        <Button.Style>
+                                            <Style TargetType="Button" BasedOn="{StaticResource TitleBar.Button}">
+                                                <Setter Property="Command" Value="{x:Static SystemCommands.MaximizeWindowCommand}"/>
+                                                <Setter Property="Content">
+                                                    <Setter.Value>
+                                                        <Path Data="M 0.5 0.5 L 9.5 0.5 L 9.5 9.5 L 0.5 9.5 Z"
+                                                              Stroke="{StaticResource Brush.Text.Secondary}"
+                                                              StrokeThickness="1.2"
+                                                              Width="10" Height="10"
+                                                              Fill="Transparent"/>
+                                                    </Setter.Value>
+                                                </Setter>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding WindowState, RelativeSource={RelativeSource AncestorType=Window}}" Value="Maximized">
+                                                        <Setter Property="Command" Value="{x:Static SystemCommands.RestoreWindowCommand}"/>
+                                                        <Setter Property="Content">
+                                                            <Setter.Value>
+                                                                <Path Data="M 2 0.5 L 9.5 0.5 L 9.5 7.5 M 0.5 2.5 L 7.5 2.5 L 7.5 9.5 L 0.5 9.5 Z"
+                                                                      Stroke="{StaticResource Brush.Text.Secondary}"
+                                                                      StrokeThickness="1.2"
+                                                                      Width="10" Height="10"
+                                                                      Fill="Transparent"/>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+
+                                    <!-- 최소화 -->
+                                    <Button DockPanel.Dock="Right"
+                                            Style="{StaticResource TitleBar.Button}"
+                                            Command="{x:Static SystemCommands.MinimizeWindowCommand}"
+                                            ToolTip="최소화">
+                                        <Path Data="M 0 5 L 10 5"
+                                              Stroke="{StaticResource Brush.Text.Secondary}"
+                                              StrokeThickness="1.2"
+                                              Width="10" Height="10"/>
+                                    </Button>
+
+                                    <!-- 좌측: 작은 로고 점 + Window.Title -->
+                                    <Border DockPanel.Dock="Left"
+                                            Width="16" Height="16"
+                                            CornerRadius="4"
+                                            Margin="12,0,0,0"
+                                            Background="{StaticResource Brush.Primary}"
+                                            VerticalAlignment="Center"/>
+                                    <TextBlock DockPanel.Dock="Left"
+                                               Text="{TemplateBinding Title}"
+                                               Foreground="{StaticResource Brush.Text.Primary}"
+                                               FontSize="{StaticResource Font.Size.Body}"
+                                               FontWeight="SemiBold"
+                                               VerticalAlignment="Center"
+                                               Margin="10,0,0,0"
+                                               TextTrimming="CharacterEllipsis"/>
+
+                                    <!-- 가운데/우측 드래그 영역 -->
+                                    <Border Background="Transparent"/>
+                                </DockPanel>
+                            </Border>
+
+                            <!-- ── 본문 ── -->
+                            <AdornerDecorator>
+                                <ContentPresenter/>
+                            </AdornerDecorator>
+                        </DockPanel>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="WindowState" Value="Maximized">
+                            <!-- 최대화 시 외곽 보더 제거 (작업표시줄 위로 자연스럽게) -->
+                            <Setter TargetName="WindowBorder" Property="BorderThickness" Value="0"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

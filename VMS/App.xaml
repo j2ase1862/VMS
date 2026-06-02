@@ -17,6 +17,11 @@
                 <ResourceDictionary Source="/VMS;component/Themes/Typography.xaml"/>
                 <ResourceDictionary Source="/VMS;component/Themes/Spacing.xaml"/>
                 <ResourceDictionary Source="/VMS;component/Themes/Controls.xaml"/>
+
+                <!-- Window chrome 디자인 (v1.0, 2026-06-02) — 자체 indigo 타이틀바.
+                     모든 Window 자동 적용. MessageDialog 같이 자체 chrome 보유 윈도우는
+                     Style="{x:Null}" 로 opt-out. -->
+                <ResourceDictionary Source="/VMS;component/Themes/WindowStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
             <!-- Converters -->
