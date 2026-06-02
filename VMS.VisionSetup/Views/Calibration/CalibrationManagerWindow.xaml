@@ -57,14 +57,14 @@
         </Grid.ColumnDefinitions>
 
         <!-- 좌측: 이미지 미리보기 -->
-        <Border Grid.Column="0" Background="#252526" Margin="10" CornerRadius="4">
+        <Border Grid.Column="0" Background="{StaticResource BrushBgWindow}" Margin="10" CornerRadius="4">
             <Grid>
                 <Image x:Name="PreviewImageControl"
                        Source="{Binding PreviewImage}" Stretch="Uniform" Margin="10"
                        MouseLeftButtonDown="PreviewImage_MouseLeftButtonDown"
                        Cursor="Cross"/>
                 <TextBlock Text="No image loaded. Click 'Load Image...' on the right."
-                           Foreground="#666666" FontSize="13"
+                           Foreground="{StaticResource BrushTextDisabled}" FontSize="13"
                            HorizontalAlignment="Center" VerticalAlignment="Center">
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
@@ -88,19 +88,19 @@
                     SelectedValue="{Binding SelectedSourceOption}"/>
 
                 <!-- VMS Writer 활성 시 안내 -->
-                <Border Background="#3D2D10" BorderBrush="#AA7A00" BorderThickness="1"
+                <Border Background="{StaticResource BrushWarningSoft}" BorderBrush="#AA7A00" BorderThickness="1"
                         CornerRadius="3" Padding="6" Margin="0,0,0,6"
                         Visibility="{Binding IsVmsWriterAlive, Converter={StaticResource BoolToVis}}">
                     <TextBlock Text="{Binding AvailabilityMessage}"
-                               Foreground="#FFCC66" FontSize="10" TextWrapping="Wrap"/>
+                               Foreground="{StaticResource BrushWarning}" FontSize="10" TextWrapping="Wrap"/>
                 </Border>
 
                 <TextBlock Text="{Binding SourceImagePath, FallbackValue='(no image loaded)'}"
-                           Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,4"/>
+                           Foreground="{StaticResource BrushTextMuted}" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,4"/>
 
                 <!-- File 소스 -->
                 <Button Content="Load Image..." Command="{Binding LoadImageCommand}"
-                        Style="{StaticResource ActionButton}" Background="#007ACC"
+                        Style="{StaticResource ActionButton}" Background="{StaticResource BrushAccent}"
                         Visibility="{Binding IsFileSource, Converter={StaticResource BoolToVis}}"/>
 
                 <!-- Camera 직접 소스 -->
@@ -110,7 +110,7 @@
                         SelectedValue="{Binding SelectedCameraOption}"/>
                     <Button Content="Capture from Camera"
                             Command="{Binding CaptureFromCameraCommand}"
-                            Style="{StaticResource ActionButton}" Background="#007ACC"/>
+                            Style="{StaticResource ActionButton}" Background="{StaticResource BrushAccent}"/>
                 </StackPanel>
 
                 <!-- VMS Shared Frame 소스 -->
@@ -118,9 +118,9 @@
                     <Button Content="Receive Frame from VMS"
                             Command="{Binding ReceiveFromVmsCommand}"
                             IsEnabled="{Binding IsVmsWriterAlive}"
-                            Style="{StaticResource ActionButton}" Background="#007ACC"/>
+                            Style="{StaticResource ActionButton}" Background="{StaticResource BrushAccent}"/>
                     <TextBlock Text="VMS not detected. Start VMS and click Refresh."
-                               Foreground="#888888" FontSize="10" Margin="0,0,0,4"
+                               Foreground="{StaticResource BrushTextMuted}" FontSize="10" Margin="0,0,0,4"
                                TextWrapping="Wrap">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
@@ -137,7 +137,7 @@
 
                 <Button Content="Refresh Source Availability"
                         Command="{Binding RefreshSourceAvailabilityCommand}"
-                        Style="{StaticResource ActionButton}" Background="#555555"
+                        Style="{StaticResource ActionButton}" Background="{StaticResource BrushBorderStrong}"
                         Padding="8,4" FontSize="10"/>
 
                 <controls:EnumComboBoxParameter Label="Calibration Mode"
@@ -159,15 +159,15 @@
 
                     <CheckBox Content="Accumulate Multi-View"
                               IsChecked="{Binding AccumulateMultiView}"
-                              Foreground="#CCCCCC" Margin="0,8,0,4"/>
+                              Foreground="{StaticResource BrushTextPrimary}" Margin="0,8,0,4"/>
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                        <TextBlock Foreground="#999999" FontSize="11" VerticalAlignment="Center">
+                        <TextBlock Foreground="{StaticResource BrushTextMuted}" FontSize="11" VerticalAlignment="Center">
                             <Run Text="Accumulated: "/>
                             <Run Text="{Binding AccumulatedViewCount, Mode=OneWay, FallbackValue=0}"
-                                 Foreground="#00BFFF" FontWeight="Bold"/>
+                                 Foreground="{StaticResource BrushTextAccent}" FontWeight="Bold"/>
                         </TextBlock>
                         <Button Content="Reset" Command="{Binding ResetAccumulatedCommand}"
-                                Style="{StaticResource ActionButton}" Background="#555555"
+                                Style="{StaticResource ActionButton}" Background="{StaticResource BrushBorderStrong}"
                                 Padding="8,2" Margin="10,0,0,0"/>
                     </StackPanel>
                 </StackPanel>
@@ -176,7 +176,7 @@
                 <StackPanel Visibility="{Binding IsNPointMode, Converter={StaticResource BoolToVis}}">
                     <TextBlock Text="N-Point (planar)" Style="{StaticResource SectionHeader}"/>
                     <TextBlock Text="Click on the image to add a pixel point, then type its real-world mm coordinates. Need 4+ points."
-                               Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                               Foreground="{StaticResource BrushTextMuted}" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,6"/>
                     <DataGrid ItemsSource="{Binding NPointPoints}"
                               AutoGenerateColumns="False"
                               CanUserAddRows="False" CanUserDeleteRows="True"
@@ -192,58 +192,58 @@
                         </DataGrid.Columns>
                     </DataGrid>
                     <Button Content="Clear Picked Points" Command="{Binding ClearPickedPointsCommand}"
-                            Style="{StaticResource ActionButton}" Background="#555555" Padding="8,2"/>
+                            Style="{StaticResource ActionButton}" Background="{StaticResource BrushBorderStrong}" Padding="8,2"/>
                 </StackPanel>
 
                 <!-- ── Single Scale 패널 ── -->
                 <StackPanel Visibility="{Binding IsSingleScaleMode, Converter={StaticResource BoolToVis}}">
                     <TextBlock Text="Single Scale (2 points)" Style="{StaticResource SectionHeader}"/>
                     <TextBlock Text="Click two points on a feature of known length. Then enter the length below."
-                               Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,6"/>
-                    <TextBlock Foreground="#999999" FontSize="11">
+                               Foreground="{StaticResource BrushTextMuted}" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                    <TextBlock Foreground="{StaticResource BrushTextMuted}" FontSize="11">
                         <Run Text="Point 1: "/>
-                        <Run Text="{Binding ScalePoint1Display, Mode=OneWay}" Foreground="#00BFFF" FontWeight="Bold"/>
+                        <Run Text="{Binding ScalePoint1Display, Mode=OneWay}" Foreground="{StaticResource BrushTextAccent}" FontWeight="Bold"/>
                     </TextBlock>
-                    <TextBlock Foreground="#999999" FontSize="11" Margin="0,2,0,6">
+                    <TextBlock Foreground="{StaticResource BrushTextMuted}" FontSize="11" Margin="0,2,0,6">
                         <Run Text="Point 2: "/>
-                        <Run Text="{Binding ScalePoint2Display, Mode=OneWay}" Foreground="#00BFFF" FontWeight="Bold"/>
+                        <Run Text="{Binding ScalePoint2Display, Mode=OneWay}" Foreground="{StaticResource BrushTextAccent}" FontWeight="Bold"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource FieldLabel}" Text="Known Length (mm)"/>
                     <TextBox Text="{Binding KnownLengthMm, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource DarkTextBox}"/>
                     <Button Content="Clear Picked Points" Command="{Binding ClearPickedPointsCommand}"
-                            Style="{StaticResource ActionButton}" Background="#555555" Padding="8,2"/>
+                            Style="{StaticResource ActionButton}" Background="{StaticResource BrushBorderStrong}" Padding="8,2"/>
                 </StackPanel>
 
                 <TextBlock Text="Run" Style="{StaticResource SectionHeader}"/>
                 <Button Content="Run Calibration" Command="{Binding RunCalibrationCommand}"
-                        Style="{StaticResource ActionButton}" Background="#2D7D46"/>
+                        Style="{StaticResource ActionButton}" Background="{StaticResource BrushSuccess}"/>
 
                 <TextBlock Text="Result" Style="{StaticResource SectionHeader}"/>
-                <TextBlock Foreground="#999999" FontSize="11">
+                <TextBlock Foreground="{StaticResource BrushTextMuted}" FontSize="11">
                     <Run Text="Reprojection Error: "/>
                     <Run Text="{Binding ReprojectionError, Mode=OneWay, StringFormat='{}{0:F4} px', FallbackValue='-'}"
-                         Foreground="#00BFFF" FontWeight="Bold"/>
+                         Foreground="{StaticResource BrushTextAccent}" FontWeight="Bold"/>
                 </TextBlock>
-                <TextBlock Foreground="#999999" FontSize="11" Margin="0,2,0,8">
+                <TextBlock Foreground="{StaticResource BrushTextMuted}" FontSize="11" Margin="0,2,0,8">
                     <Run Text="Pixel Size: "/>
                     <Run Text="{Binding PixelSizeMm, Mode=OneWay, StringFormat='{}{0:F5} mm/px', FallbackValue='-'}"
-                         Foreground="#00BFFF" FontWeight="Bold"/>
+                         Foreground="{StaticResource BrushTextAccent}" FontWeight="Bold"/>
                 </TextBlock>
 
                 <TextBlock Text="Apply" Style="{StaticResource SectionHeader}"/>
                 <Button Content="Apply to Current Recipe"
                         Command="{Binding ApplyToRecipeCommand}"
                         IsEnabled="{Binding HasResult}"
-                        Style="{StaticResource ActionButton}" Background="#007ACC"/>
+                        Style="{StaticResource ActionButton}" Background="{StaticResource BrushAccent}"/>
                 <Button Content="Clear Calibration from Recipe"
                         Command="{Binding ClearRecipeCalibrationCommand}"
-                        Style="{StaticResource ActionButton}" Background="#8B3A3A"/>
+                        Style="{StaticResource ActionButton}" Background="{StaticResource BrushDanger}"/>
 
                 <TextBlock Text="Status" Style="{StaticResource SectionHeader}"/>
-                <Border Background="#2D2D30" CornerRadius="3" Padding="8" Margin="0,0,0,8">
+                <Border Background="{StaticResource BrushBgCard}" CornerRadius="3" Padding="8" Margin="0,0,0,8">
                     <TextBlock Text="{Binding StatusMessage}"
-                               Foreground="#CCCCCC" FontSize="11"
+                               Foreground="{StaticResource BrushTextPrimary}" FontSize="11"
                                TextWrapping="Wrap"/>
                 </Border>
 
