@@ -26,6 +26,7 @@
                         <DataTemplate DataType="{x:Type pm:FeatureMatchModel}">
                             <StackPanel Orientation="Horizontal">
                                 <CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+                                          Style="{StaticResource WindowDarkCheckBox}"
                                           VerticalAlignment="Center" Margin="0,0,5,0"/>
                                 <TextBlock Text="{Binding Name}" Foreground="White"
                                            VerticalAlignment="Center" FontSize="11" MinWidth="80"/>
@@ -95,7 +96,7 @@
                     ToolType="FeatureMatchTool" ParameterName="IsAutoTuneEnabled"/>
 
                 <!-- Training Region (ROI) -->
-                <CheckBox Content="Use Training Region" Foreground="White" Margin="0,8,0,2"
+                <CheckBox Content="Use Training Region" Style="{StaticResource WindowDarkCheckBox}" Margin="0,8,0,2"
                           IsChecked="{Binding UseROI, Mode=TwoWay}"/>
                 <StackPanel Visibility="{Binding UseROI, Converter={StaticResource BoolToVis}}">
                     <Grid Margin="0,5,0,5">

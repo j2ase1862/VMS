@@ -31,6 +31,7 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}"
+                                          Style="{StaticResource WindowDarkCheckBox}"
                                           VerticalAlignment="Center" Margin="0,0,6,0"/>
                                 <Border Grid.Column="1" Width="22" Height="22"
                                         Background="{Binding AverageBrush}"
@@ -71,7 +72,7 @@
                 <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,4"
                            Text="1) Models에서 학습할 모델 선택. 2) 'Use Training Region' 체크 → 'Draw ROI'로 학습할 색 영역 그리기. 3) 'Train Selected Model' 클릭."/>
 
-                <CheckBox Content="Use Training Region" Foreground="White" Margin="0,8,0,2"
+                <CheckBox Content="Use Training Region" Style="{StaticResource WindowDarkCheckBox}" Margin="0,8,0,2"
                           IsChecked="{Binding UseROI, Mode=TwoWay}"/>
                 <StackPanel Visibility="{Binding UseROI, Converter={StaticResource BoolToVis}}">
                     <Grid Margin="0,5,0,5">
