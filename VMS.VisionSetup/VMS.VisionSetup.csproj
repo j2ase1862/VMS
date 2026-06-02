@@ -55,10 +55,14 @@
     </None>
   </ItemGroup>
 
-  <!-- After build, copy output to VMS output directory -->
+  <!-- After build, copy output to VMS output directory.
+       VMS launcher 의 TargetFramework 는 net8.0-windows7.0 이므로 7.0 명시 필수 —
+       이전 오타("net8.0-windows") 로 잘못된 폴더에 복사돼 VMS.DeepLearning.dll
+       등이 누락, DeepLearning 메뉴 실행시 "application to execute does not exist"
+       런타임 에러 발생했음. -->
   <Target Name="CopyToVmsOutput" AfterTargets="Build">
     <PropertyGroup>
-      <VmsOutputDir>..\VMS\bin\$(Configuration)\net8.0-windows\</VmsOutputDir>
+      <VmsOutputDir>..\VMS\bin\$(Configuration)\net8.0-windows7.0\</VmsOutputDir>
     </PropertyGroup>
     <ItemGroup>
       <VisionSetupOutputFiles Include="$(TargetDir)**\*.*" />
