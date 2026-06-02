@@ -49,6 +49,13 @@ namespace VMS.Models
         public string VisionServerUrl { get; set; } = "http://localhost:5000";
         public int ClientIndex { get; set; } = 1;
 
+        /// <summary>
+        /// BODA.VMS.Web 머신 endpoint(heartbeat/register/disconnect/검사결과/센서) 호출시
+        /// X-API-Key 헤더로 송신할 비밀. 빈 문자열이면 헤더 미송신 (서버가 호환 모드일 때만 통과).
+        /// 운영 환경에서는 Web 서버의 ClientApiKey:Value 와 동일하게 설정.
+        /// </summary>
+        public string ClientApiKey { get; set; } = string.Empty;
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string Version { get; set; } = "1.0.0";
     }

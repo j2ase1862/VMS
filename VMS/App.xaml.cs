@@ -259,7 +259,7 @@ namespace VMS
             try
             {
                 parameterSyncService = new ParameterSyncService(
-                    systemConfig.WebServerUrl, systemConfig.ClientIndex);
+                    systemConfig.WebServerUrl, systemConfig.ClientIndex, systemConfig.ClientApiKey);
                 parameterSyncService.StartPeriodicSync(60);
 
                 // 앱 시작 시 Web 레시피 목록 동기화
@@ -297,7 +297,7 @@ namespace VMS
             {
                 IEnvironmentSensorReader sensorReader = new MockEnvironmentSensorReader();
                 sensorPollingService = new SensorPollingService(
-                    systemConfig.WebServerUrl, systemConfig.ClientIndex, sensorReader);
+                    systemConfig.WebServerUrl, systemConfig.ClientIndex, sensorReader, systemConfig.ClientApiKey);
                 sensorPollingService.StartPeriodicPolling(5);
             }
             catch (Exception ex)
@@ -361,7 +361,8 @@ namespace VMS
                     systemConfig.VisionServerUrl,
                     systemConfig.ClientIndex,
                     systemConfig.SystemIpAddress,
-                    systemConfig.ApplicationName);
+                    systemConfig.ApplicationName,
+                    systemConfig.ClientApiKey);
                 heartbeatService.Start();
             }
             catch (Exception ex)

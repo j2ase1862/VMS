@@ -49,6 +49,10 @@ namespace VMS.AppSetup.ViewModels
         [ObservableProperty]
         private string _visionServerUrl = "http://localhost:5000";
 
+        // GS 인증: Web 서버 X-API-Key (BODA.VMS.Web PR #10). 빈 값이면 헤더 미송신.
+        [ObservableProperty]
+        private string _clientApiKey = string.Empty;
+
         // Page 3: Camera Settings
         [ObservableProperty]
         private CameraMode _cameraMode = CameraMode.Virtual;
@@ -196,6 +200,7 @@ namespace VMS.AppSetup.ViewModels
                 ClientIndex = config.ClientIndex;
                 WebServerUrl = config.WebServerUrl;
                 VisionServerUrl = config.VisionServerUrl;
+                ClientApiKey = config.ClientApiKey;
                 CameraMode = config.CameraMode;
 
                 // PLC Vendor & Communication
@@ -594,6 +599,7 @@ namespace VMS.AppSetup.ViewModels
                 ClientIndex = ClientIndex,
                 WebServerUrl = WebServerUrl,
                 VisionServerUrl = VisionServerUrl,
+                ClientApiKey = ClientApiKey,
                 CameraMode = CameraMode,
                 Cameras = Cameras.ToList(),
 

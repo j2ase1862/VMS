@@ -56,12 +56,18 @@ namespace VMS.Core.Services
         }
         public List<RecipeSummaryDto> Recipes { get; private set; } = new();
 
-        public ParameterSyncService(string baseUrl, int clientIndex)
+        public ParameterSyncService(string baseUrl, int clientIndex, string clientApiKey = "")
         {
             _baseUrl = baseUrl.TrimEnd('/');
             _clientIndex = clientIndex;
             InsecureUrlGuard.Check(_baseUrl, nameof(ParameterSyncService));
             _httpClient = HttpClientPolicy.Build(TimeSpan.FromSeconds(10));
+
+            // GS 인증: Web 서버 X-API-Key 인증 (BODA.VMS.Web PR #10).
+            if (!string.IsNullOrWhiteSpace(clientApiKey))
+            {
+                _httpClient.DefaultRequestHeaders.Add("X-API-Key", clientApiKey);
+            }
 
             // C6: 검사 결과 업로드 실패 시 디스크에 보존 (프로세스 재시작 후에도 복구)
             _queueDir = Path.Combine(

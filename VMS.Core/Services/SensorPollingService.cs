@@ -37,13 +37,19 @@ namespace VMS.Core.Services
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         };
 
-        public SensorPollingService(string baseUrl, int clientIndex, IEnvironmentSensorReader reader)
+        public SensorPollingService(string baseUrl, int clientIndex, IEnvironmentSensorReader reader, string clientApiKey = "")
         {
             _baseUrl = baseUrl.TrimEnd('/');
             _clientIndex = clientIndex;
             _reader = reader;
             InsecureUrlGuard.Check(_baseUrl, nameof(SensorPollingService));
             _httpClient = HttpClientPolicy.Build(TimeSpan.FromSeconds(5));
+
+            // GS 인증: Web 서버 X-API-Key 인증 (BODA.VMS.Web PR #10).
+            if (!string.IsNullOrWhiteSpace(clientApiKey))
+            {
+                _httpClient.DefaultRequestHeaders.Add("X-API-Key", clientApiKey);
+            }
         }
 
         public void StartPeriodicPolling(int intervalSeconds = 5)
