@@ -10,7 +10,7 @@
              xmlns:plc="clr-namespace:VMS.PLC.Models;assembly=VMS.PLC"
              mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="300"
-             Background="#2D2D30">
+             Background="{StaticResource BrushBgCard}">
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
@@ -30,7 +30,7 @@
                                               TextElement.Foreground="{TemplateBinding Foreground}"
                                               TextElement.FontSize="{TemplateBinding FontSize}"/>
                             <Border x:Name="Track" Width="34" Height="18" CornerRadius="9"
-                                    Background="#555555" BorderBrush="#3F3F46" BorderThickness="1"
+                                    Background="{StaticResource BrushBorderStrong}" BorderBrush="#3F3F46" BorderThickness="1"
                                     VerticalAlignment="Center">
                                 <Border x:Name="Thumb" Width="14" Height="14" CornerRadius="7"
                                         Background="#CCCCCC" HorizontalAlignment="Left"
@@ -43,7 +43,7 @@
                         </StackPanel>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Track" Property="Background" Value="#0078D4"/>
+                                <Setter TargetName="Track" Property="Background" Value="{StaticResource BrushAccent}"/>
                                 <Setter TargetName="Track" Property="BorderBrush" Value="#005FA3"/>
                                 <Setter TargetName="Thumb" Property="Background" Value="White"/>
                                 <Trigger.EnterActions>
@@ -66,7 +66,7 @@
                                 </Trigger.ExitActions>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Track" Property="BorderBrush" Value="#0078D4"/>
+                                <Setter TargetName="Track" Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -226,7 +226,7 @@
                           Style="{StaticResource ExpertModeToggleStyle}"
                           ToolTip="이 도구 타입의 고급 파라미터를 표시/숨김. 같은 타입의 모든 도구 인스턴스에 적용되고, 다음 실행에도 유지됩니다."/>
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="{Binding Name}" Foreground="#CCCCCC"
+                    <TextBlock Text="{Binding Name}" Foreground="{StaticResource BrushTextPrimary}"
                                FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
                     <controls:HelpIcon ToolType="{Binding ToolType}"
                                        Margin="8,0,0,0" VerticalAlignment="Center"/>
@@ -283,13 +283,13 @@
 
                 <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
                     <Button Content="Show ROI" Command="{Binding ShowROICommand}"
-                            Background="#2D7D46" Foreground="White" BorderBrush="#1E5C32"
+                            Background="{StaticResource BrushSuccess}" Foreground="White" BorderBrush="#1E5C32"
                             Padding="10,4" Margin="0,0,10,0" Cursor="Hand"/>
                     <Button Content="Draw ROI" Command="{Binding DrawROICommand}"
-                            Background="#007ACC" Foreground="White" BorderBrush="#005A9E"
+                            Background="{StaticResource BrushAccentPressed}" Foreground="White" BorderBrush="#005A9E"
                             Padding="10,4" Margin="0,0,10,0" Cursor="Hand"/>
                     <Button Content="Clear ROI" Command="{Binding ClearROICommand}"
-                            Background="#555555" Foreground="White" BorderBrush="#444444"
+                            Background="{StaticResource BrushBorderStrong}" Foreground="White" BorderBrush="#444444"
                             Padding="10,4" Cursor="Hand"/>
                 </StackPanel>
             </StackPanel>
@@ -341,7 +341,7 @@
                                 <Button Grid.Row="0" Grid.Column="2" Content="X"
                                         Command="{Binding DataContext.RemovePlcMappingCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}"
-                                        Background="Transparent" Foreground="#FF6B68"
+                                        Background="Transparent" Foreground="{StaticResource BrushDanger}"
                                         BorderThickness="0" Cursor="Hand"
                                         FontWeight="Bold" Padding="6,0" Margin="4,0,0,2"
                                         ToolTip="Remove mapping"/>
@@ -361,7 +361,7 @@
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="{Binding DeviceId}"/>
-                                                <TextBlock Text="{Binding TypeBadge}" Foreground="#999999"
+                                                <TextBlock Text="{Binding TypeBadge}" Foreground="{StaticResource BrushTextMuted}"
                                                            FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </DataTemplate>
@@ -397,8 +397,8 @@
 
             <Button Content="+ Add PLC Mapping"
                     Command="{Binding AddPlcMappingCommand}"
-                    Background="#3E3E42" Foreground="#CCCCCC"
-                    BorderBrush="#555555" Padding="8,4"
+                    Background="{StaticResource BrushBgSurface}" Foreground="{StaticResource BrushTextPrimary}"
+                    BorderBrush="{StaticResource BrushBorderStrong}" Padding="8,4"
                     HorizontalAlignment="Left" Margin="0,2,0,5"
                     Cursor="Hand"/>
 
@@ -410,7 +410,7 @@
             <TextBlock Style="{StaticResource SettingLabelStyle}">
                 <Run Text="Last Execution Time: "/>
                 <Run Text="{Binding ExecutionTime, StringFormat='{}{0:F2} ms', FallbackValue='N/A'}"
-                     Foreground="#00BFFF" FontWeight="Bold"/>
+                     Foreground="{StaticResource BrushTextAccent}" FontWeight="Bold"/>
             </TextBlock>
         </StackPanel>
     </ScrollViewer>
