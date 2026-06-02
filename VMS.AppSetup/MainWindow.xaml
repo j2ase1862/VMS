@@ -27,75 +27,8 @@
         <converters:NullToBoolConverter x:Key="NullToBoolConverter"/>
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
 
-        <!-- Button Styles -->
-        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#0078D4"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Padding" Value="20,10"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                                CornerRadius="6" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#1084D8"/>
-                </Trigger>
-                <Trigger Property="IsEnabled" Value="False">
-                    <Setter Property="Background" Value="#555555"/>
-                    <Setter Property="Foreground" Value="#888888"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
-            <Setter Property="Background" Value="#3E3E42"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#505054"/>
-                </Trigger>
-                <Trigger Property="IsEnabled" Value="False">
-                    <Setter Property="Background" Value="#2D2D30"/>
-                    <Setter Property="Foreground" Value="#555555"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <Style x:Key="SmallButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#0078D4"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Padding" Value="12,6"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                                CornerRadius="4" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#1084D8"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <!-- TextBox/ComboBox 는 WindowDarkTextBox / WindowDarkComboBox 직접 사용 —
-             모든 입력 컨트롤이 같은 컴팩트 사이즈(약 24-26px)로 통일. -->
+        <!-- Button / TextBox / ComboBox 는 WindowStyles 의 Modern* / WindowDark* 키
+             직접 사용 — 로컬 정의 제거로 단일 디자인 시스템 유지. -->
 
         <!-- Label Style -->
         <Style x:Key="LabelStyle" TargetType="TextBlock">
@@ -234,11 +167,11 @@
                         <StackPanel Orientation="Horizontal">
                             <RadioButton Content="Live Mode (Scan Network)" GroupName="CameraMode"
                                          IsChecked="{Binding CameraMode, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Live}"
-                                         Foreground="White" FontSize="13" Margin="0,0,40,0"
+                                         Style="{StaticResource WindowDarkRadioButton}" FontSize="13" Margin="0,0,40,0"
                                          VerticalContentAlignment="Center"/>
                             <RadioButton Content="Virtual Mode (Manual Setup)" GroupName="CameraMode"
                                          IsChecked="{Binding CameraMode, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Virtual}"
-                                         Foreground="White" FontSize="13"
+                                         Style="{StaticResource WindowDarkRadioButton}" FontSize="13"
                                          VerticalContentAlignment="Center"/>
                         </StackPanel>
                     </Border>
@@ -246,9 +179,9 @@
                     <!-- Controls -->
                     <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
                         <Button Content="+ Add Camera" Command="{Binding AddCameraCommand}"
-                                Style="{StaticResource SmallButtonStyle}" Margin="0,0,10,0"/>
+                                Style="{StaticResource ModernPrimaryButton}" Margin="0,0,10,0"/>
                         <Button Content="Scan Network" Command="{Binding ScanForCamerasCommand}"
-                                Style="{StaticResource SmallButtonStyle}" Background="#3E3E42"/>
+                                Style="{StaticResource ModernSecondaryButton}"/>
                     </StackPanel>
 
                     <!-- Camera List -->
@@ -273,6 +206,7 @@
                                                     <!-- Enable Checkbox -->
                                                     <CheckBox Grid.Column="0"
                                                               IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+                                                              Style="{StaticResource WindowDarkCheckBox}"
                                                               VerticalAlignment="Center" Margin="0,0,15,0"
                                                               ToolTip="Enable/Disable Camera"/>
 
@@ -320,20 +254,9 @@
                                                     <Button Grid.Column="4" Content="✕"
                                                             Command="{Binding DataContext.RemoveCameraCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                             CommandParameter="{Binding}"
-                                                            Background="#D32F2F" Foreground="White"
-                                                            Width="32" Height="32" FontSize="14"
-                                                            BorderThickness="0" Cursor="Hand"
-                                                            ToolTip="Remove Camera">
-                                                        <Button.Template>
-                                                            <ControlTemplate TargetType="Button">
-                                                                <Border Background="{TemplateBinding Background}"
-                                                                        CornerRadius="4">
-                                                                    <ContentPresenter HorizontalAlignment="Center"
-                                                                                      VerticalAlignment="Center"/>
-                                                                </Border>
-                                                            </ControlTemplate>
-                                                        </Button.Template>
-                                                    </Button>
+                                                            Style="{StaticResource ModernDangerButton}"
+                                                            Width="32" Height="32" FontSize="14" Padding="0"
+                                                            ToolTip="Remove Camera"/>
                                                 </Grid>
 
                                                 <!-- Row 2: Area Scan Parameters -->
@@ -486,9 +409,8 @@
                                                                 <Button Grid.Column="1" Content="..." Margin="4,0,0,0"
                                                                         Width="32" FontWeight="Bold"
                                                                         Click="BrowseDcfFile_Click"
-                                                                        Background="#3E3E42" Foreground="White"
-                                                                        BorderBrush="#555555" BorderThickness="1"
-                                                                        Cursor="Hand" ToolTip="Browse DCF file"/>
+                                                                        Style="{StaticResource ModernGhostButton}"
+                                                                        ToolTip="Browse DCF file"/>
                                                             </Grid>
                                                         </StackPanel>
                                                     </StackPanel>
@@ -510,7 +432,8 @@
                         <Border Background="#252526" CornerRadius="6" Padding="15" Margin="0,0,0,15">
                             <StackPanel>
                                 <CheckBox Content="Enable Robot Integration" IsChecked="{Binding IsRobotEnabled}"
-                                          Foreground="White" FontSize="14" FontWeight="SemiBold"/>
+                                          Style="{StaticResource WindowDarkCheckBox}"
+                                          FontSize="14" FontWeight="SemiBold"/>
                                 <TextBlock Text="멀티뷰 3D 스캔을 위해 로봇을 사용하려면 활성화하세요."
                                            Foreground="#888888" FontSize="11" Margin="20,6,0,0"/>
                             </StackPanel>
@@ -524,19 +447,19 @@
                                 <StackPanel>
                                     <RadioButton Content="Universal Robots (UR)" GroupName="RobotVendor"
                                                  IsChecked="{Binding SelectedRobotVendor, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=UR}"
-                                                 Foreground="White" FontSize="13" Margin="5"/>
+                                                 Style="{StaticResource WindowDarkRadioButton}" FontSize="13" Margin="5"/>
                                     <RadioButton Content="Doosan Robotics" GroupName="RobotVendor"
                                                  IsChecked="{Binding SelectedRobotVendor, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Doosan}"
-                                                 Foreground="White" FontSize="13" Margin="5"/>
+                                                 Style="{StaticResource WindowDarkRadioButton}" FontSize="13" Margin="5"/>
                                     <RadioButton Content="Jaka Robotics" GroupName="RobotVendor"
                                                  IsChecked="{Binding SelectedRobotVendor, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Jaka}"
-                                                 Foreground="White" FontSize="13" Margin="5"/>
+                                                 Style="{StaticResource WindowDarkRadioButton}" FontSize="13" Margin="5"/>
                                     <RadioButton Content="ABB" GroupName="RobotVendor"
                                                  IsChecked="{Binding SelectedRobotVendor, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=ABB}"
-                                                 Foreground="White" FontSize="13" Margin="5"/>
+                                                 Style="{StaticResource WindowDarkRadioButton}" FontSize="13" Margin="5"/>
                                     <RadioButton Content="Fanuc" GroupName="RobotVendor"
                                                  IsChecked="{Binding SelectedRobotVendor, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Fanuc}"
-                                                 Foreground="White" FontSize="13" Margin="5"/>
+                                                 Style="{StaticResource WindowDarkRadioButton}" FontSize="13" Margin="5"/>
                                 </StackPanel>
                             </Border>
 
@@ -569,14 +492,14 @@
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                         <RadioButton Content="Vendor Native" GroupName="RobotProtocol"
                                                      IsChecked="{Binding SelectedRobotProtocolMode, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=VendorNative}"
-                                                     Foreground="White" FontSize="13" Margin="0,0,20,0"/>
+                                                     Style="{StaticResource WindowDarkRadioButton}" FontSize="13" Margin="0,0,20,0"/>
                                         <RadioButton Content="Modbus-TCP" GroupName="RobotProtocol"
                                                      IsChecked="{Binding SelectedRobotProtocolMode, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=ModbusTcp}"
-                                                     Foreground="White" FontSize="13" Margin="0,0,20,0"
+                                                     Style="{StaticResource WindowDarkRadioButton}" FontSize="13" Margin="0,0,20,0"
                                                      Visibility="{Binding ShowRobotModbusOption, Converter={StaticResource BoolToVisConverter}}"/>
                                         <RadioButton Content="Custom Socket (CSV)" GroupName="RobotProtocol"
                                                      IsChecked="{Binding SelectedRobotProtocolMode, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=CustomSocket}"
-                                                     Foreground="White" FontSize="13"/>
+                                                     Style="{StaticResource WindowDarkRadioButton}" FontSize="13"/>
                                     </StackPanel>
                                     <TextBlock Text="{Binding RobotProtocolDescription}"
                                                Foreground="#888888" FontSize="11" TextWrapping="Wrap"/>
@@ -644,22 +567,22 @@
                                 <StackPanel>
                                     <RadioButton Content="Mitsubishi" GroupName="PlcVendor"
                                                  IsChecked="{Binding SelectedPlcVendor, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Mitsubishi}"
-                                                 Foreground="White" FontSize="13" Margin="5"/>
+                                                 Style="{StaticResource WindowDarkRadioButton}" FontSize="13" Margin="5"/>
                                     <RadioButton Content="Siemens" GroupName="PlcVendor"
                                                  IsChecked="{Binding SelectedPlcVendor, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Siemens}"
-                                                 Foreground="White" FontSize="13" Margin="5"/>
+                                                 Style="{StaticResource WindowDarkRadioButton}" FontSize="13" Margin="5"/>
                                     <RadioButton Content="LS Electric" GroupName="PlcVendor"
                                                  IsChecked="{Binding SelectedPlcVendor, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=LS}"
-                                                 Foreground="White" FontSize="13" Margin="5"/>
+                                                 Style="{StaticResource WindowDarkRadioButton}" FontSize="13" Margin="5"/>
                                     <RadioButton Content="Omron" GroupName="PlcVendor"
                                                  IsChecked="{Binding SelectedPlcVendor, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Omron}"
-                                                 Foreground="White" FontSize="13" Margin="5"/>
+                                                 Style="{StaticResource WindowDarkRadioButton}" FontSize="13" Margin="5"/>
                                     <RadioButton Content="Modbus TCP" GroupName="PlcVendor"
                                                  IsChecked="{Binding SelectedPlcVendor, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Modbus}"
-                                                 Foreground="White" FontSize="13" Margin="5"/>
+                                                 Style="{StaticResource WindowDarkRadioButton}" FontSize="13" Margin="5"/>
                                     <RadioButton Content="None (No PLC)" GroupName="PlcVendor"
                                                  IsChecked="{Binding SelectedPlcVendor, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=None}"
-                                                 Foreground="White" FontSize="13" Margin="5"/>
+                                                 Style="{StaticResource WindowDarkRadioButton}" FontSize="13" Margin="5"/>
                                 </StackPanel>
                             </Border>
 
@@ -672,7 +595,8 @@
                                              Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,10"/>
 
                                     <CheckBox Content="Use Heartbeat" IsChecked="{Binding UseHeartbeat}"
-                                              Foreground="White" FontSize="13" Margin="0,0,0,8"/>
+                                              Style="{StaticResource WindowDarkCheckBox}"
+                                              FontSize="13" Margin="0,0,0,8"/>
                                     <TextBox Text="{Binding HeartbeatAddress, UpdateSourceTrigger=PropertyChanged}"
                                              Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,10"
                                              IsEnabled="{Binding UseHeartbeat}">
@@ -682,7 +606,8 @@
                                     </TextBox>
 
                                     <CheckBox Content="Auto Reconnect" IsChecked="{Binding AutoReconnect}"
-                                              Foreground="White" FontSize="13"/>
+                                              Style="{StaticResource WindowDarkCheckBox}"
+                                              FontSize="13"/>
                                 </StackPanel>
                             </Border>
 
@@ -796,14 +721,12 @@
                                     </Grid.ColumnDefinitions>
                                     <Button Grid.Column="0" Content="+ Add"
                                             Command="{Binding AddIoBoardCommand}"
-                                            Margin="0,0,4,0"
-                                            Padding="10,6"
-                                            Background="#0E639C" Foreground="White" BorderThickness="0" Cursor="Hand"/>
+                                            Style="{StaticResource ModernPrimaryButton}"
+                                            Margin="0,0,4,0"/>
                                     <Button Grid.Column="1" Content="− Remove"
                                             Command="{Binding RemoveIoBoardCommand}"
+                                            Style="{StaticResource ModernDangerButton}"
                                             Margin="4,0,0,0"
-                                            Padding="10,6"
-                                            Background="#5A1F1F" Foreground="White" BorderThickness="0" Cursor="Hand"
                                             IsEnabled="{Binding SelectedIoBoard, Converter={StaticResource NullToBoolConverter}}"/>
                                 </Grid>
 
@@ -872,7 +795,8 @@
 
                                     <CheckBox Content="활성화 (체크 해제 시 시스템 부팅 시 인스턴스 생성 skip)"
                                               IsChecked="{Binding IsEnabled, Mode=TwoWay}"
-                                              Foreground="#CCCCCC" Margin="0,0,0,12"/>
+                                              Style="{StaticResource WindowDarkCheckBox}"
+                                              Margin="0,0,0,12"/>
 
                                     <TextBlock Text="설명 (선택)" Style="{StaticResource LabelStyle}"/>
                                     <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
@@ -903,12 +827,12 @@
                 <Button Grid.Column="0" Content="← Back"
                         Command="{Binding GoBackCommand}"
                         IsEnabled="{Binding CanGoBack}"
-                        Style="{StaticResource SecondaryButtonStyle}"
+                        Style="{StaticResource ModernSecondaryButton}"
                         HorizontalAlignment="Left" Width="100"/>
 
                 <Button Grid.Column="1" Content="{Binding NextButtonText}"
                         Command="{Binding GoNextCommand}"
-                        Style="{StaticResource PrimaryButtonStyle}"
+                        Style="{StaticResource ModernPrimaryButton}"
                         HorizontalAlignment="Right" MinWidth="120"/>
             </Grid>
         </Border>
