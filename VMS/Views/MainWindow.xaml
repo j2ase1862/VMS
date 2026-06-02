@@ -131,15 +131,15 @@
                                     <Border.Style>
                                         <Style TargetType="Border">
                                             <Setter Property="Visibility" Value="Collapsed"/>
-                                            <Setter Property="Background" Value="#3D7DE8"/>
+                                            <Setter Property="Background" Value="{StaticResource Brush.Primary}"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding CurrentOperatorRole}" Value="Lead">
                                                     <Setter Property="Visibility" Value="Visible"/>
-                                                    <Setter Property="Background" Value="#3D7DE8"/>
+                                                    <Setter Property="Background" Value="{StaticResource Brush.Primary}"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding CurrentOperatorRole}" Value="Supervisor">
                                                     <Setter Property="Visibility" Value="Visible"/>
-                                                    <Setter Property="Background" Value="#E85D3D"/>
+                                                    <Setter Property="Background" Value="{StaticResource Brush.Danger}"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -150,7 +150,7 @@
                                 <Button Content="Logout" Command="{Binding LogoutOperatorCommand}"
                                         Margin="10,0,0,0" Height="22" Padding="8,0" FontSize="10"
                                         Background="Transparent" Foreground="{StaticResource Brush.Text.Secondary}"
-                                        BorderBrush="#707070" BorderThickness="1"
+                                        BorderBrush="{StaticResource Brush.Surface.Divider}" BorderThickness="1"
                                         VerticalAlignment="Center"
                                         Cursor="Hand"/>
                             </StackPanel>
@@ -194,7 +194,7 @@
                                          Visibility="{Binding HasSelectedWorkOrderProgress, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <ProgressBar.Template>
                                     <ControlTemplate TargetType="ProgressBar">
-                                        <Border CornerRadius="3" Background="#1A1A1C">
+                                        <Border CornerRadius="3" Background="{StaticResource Brush.Surface.Deep}">
                                             <Grid HorizontalAlignment="Stretch" ClipToBounds="True">
                                                 <Border x:Name="PART_Track"/>
                                                 <Border x:Name="PART_Indicator"
@@ -211,14 +211,14 @@
 
                     <!-- 현재 로드된 Recipe 표시 (WO 선택 시 자동 로드 결과) -->
                     <Border Background="{StaticResource Brush.Surface.Deep}" CornerRadius="4" Padding="10,0" Margin="6,0,0,0" Height="32"
-                            BorderBrush="#3D7DE8" BorderThickness="1"
+                            BorderBrush="{StaticResource Brush.Primary}" BorderThickness="1"
                             VerticalAlignment="Center"
                             Visibility="{Binding CurrentRecipe, Converter={StaticResource NullToVisibilityConverter}}"
                             ToolTip="현재 로드된 레시피 — 작업지시 선택 시 자동 로드">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE82D;" FontFamily="Segoe MDL2 Assets" FontSize="11"
-                                       Foreground="#3D7DE8" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <TextBlock Text="Recipe:" Foreground="#3D7DE8" FontSize="10" FontWeight="SemiBold"
+                                       Foreground="{StaticResource Brush.Primary}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Text="Recipe:" Foreground="{StaticResource Brush.Primary}" FontSize="10" FontWeight="SemiBold"
                                        VerticalAlignment="Center" Margin="0,0,6,0"/>
                             <TextBlock Text="{Binding CurrentRecipeName}"
                                        Foreground="White" FontSize="11" FontWeight="SemiBold"
@@ -284,7 +284,7 @@
                     </Border>
 
                     <!-- ═══ AUTO RUN — 운영 흐름의 단일 Primary 액션 ═══ -->
-                    <Rectangle Width="1" Fill="#404040" Margin="14,8"/>
+                    <Rectangle Width="1" Fill="{StaticResource Brush.Surface.Overlay}" Margin="14,8"/>
 
                     <Button Command="{Binding StartInspectionCommand}"
                             IsEnabled="{Binding CanStartStop}"
@@ -309,11 +309,11 @@
                             <Style TargetType="Button">
                                 <Style.Triggers>
                                     <Trigger Property="IsEnabled" Value="False">
-                                        <Setter Property="Background" Value="#2D5A5C"/>
-                                        <Setter Property="Foreground" Value="#7A9A9C"/>
+                                        <Setter Property="Background" Value="{StaticResource Brush.Surface.Overlay}"/>
+                                        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Tertiary}"/>
                                     </Trigger>
                                     <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#12C1CA"/>
+                                        <Setter Property="Background" Value="{StaticResource Brush.Accent}"/>
                                     </Trigger>
                                 </Style.Triggers>
                             </Style>
@@ -327,7 +327,7 @@
 
                     <Button Command="{Binding StopInspectionCommand}"
                             Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}}"
-                            Background="#E53935" Foreground="White"
+                            Background="{StaticResource Brush.Danger}" Foreground="White"
                             BorderThickness="0" Cursor="Hand"
                             Padding="20,0" Margin="0,0,6,0" Height="34"
                             VerticalAlignment="Center"
@@ -345,7 +345,7 @@
                             <Style TargetType="Button">
                                 <Style.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#EF5350"/>
+                                        <Setter Property="Background" Value="{StaticResource Brush.Danger}"/>
                                     </Trigger>
                                 </Style.Triggers>
                             </Style>
@@ -407,14 +407,14 @@
                                    FontFamily="Segoe MDL2 Assets"
                                    FontSize="16"/>
                         <Button.ContextMenu>
-                            <ContextMenu Background="#1B2530"
-                                         BorderBrush="#34465A" BorderThickness="1"
-                                         Foreground="#E6EDF3"
+                            <ContextMenu Background="{StaticResource Brush.Surface.Raised}"
+                                         BorderBrush="{StaticResource Brush.Surface.Divider}" BorderThickness="1"
+                                         Foreground="{StaticResource Brush.Text.Primary}"
                                          Placement="Bottom">
                                 <ContextMenu.Resources>
                                     <Style TargetType="MenuItem">
                                         <Setter Property="Background" Value="Transparent"/>
-                                        <Setter Property="Foreground" Value="#E6EDF3"/>
+                                        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}"/>
                                         <Setter Property="Padding" Value="10,6"/>
                                         <Setter Property="Cursor" Value="Hand"/>
                                     </Style>
@@ -485,7 +485,7 @@
                                    FontSize="16"/>
                     </ToggleButton>
 
-                    <Rectangle Width="1" Fill="#404040" Margin="8,8"/>
+                    <Rectangle Width="1" Fill="{StaticResource Brush.Surface.Overlay}" Margin="8,8"/>
 
                     <Button Style="{StaticResource IconButton}"
                             Command="{Binding ExitApplicationCommand}"
@@ -523,7 +523,7 @@
                                     <Setter Property="Foreground" Value="White"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding Dashboard.IsTactTimeExceeded}" Value="True">
-                                            <Setter Property="Foreground" Value="#F44336"/>
+                                            <Setter Property="Foreground" Value="{StaticResource Brush.Danger}"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -540,10 +540,10 @@
                         <TextBlock FontSize="24" FontWeight="Bold" HorizontalAlignment="Center">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
-                                    <Setter Property="Foreground" Value="#4CAF50"/>
+                                    <Setter Property="Foreground" Value="{StaticResource Brush.Success}"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding Dashboard.Yield, Converter={StaticResource CountToVisibilityConverter}}" Value="Collapsed">
-                                            <Setter Property="Foreground" Value="#FF9800"/>
+                                            <Setter Property="Foreground" Value="{StaticResource Brush.Warning}"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -639,7 +639,7 @@
 
             <!-- NG Image History Sidebar (always visible) -->
             <Border Grid.Column="1" Width="120" Background="{StaticResource Brush.Surface.Deep}"
-                    BorderBrush="#3D3D3D" BorderThickness="1,0,0,0">
+                    BorderBrush="{StaticResource Brush.Surface.Overlay}" BorderThickness="1,0,0,0">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -685,7 +685,7 @@
                     Grid.Column="2"
                     Width="0"
                     Background="{StaticResource Brush.Surface.Raised}"
-                    BorderBrush="#3D3D3D"
+                    BorderBrush="{StaticResource Brush.Surface.Overlay}"
                     BorderThickness="1,0,0,0">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="16">
@@ -764,10 +764,10 @@
                                         ToolTip="롤러 검사 모드 토글">
                                     <Button.Style>
                                         <Style TargetType="Button" BasedOn="{StaticResource ModernButton}">
-                                            <Setter Property="Background" Value="#404040"/>
+                                            <Setter Property="Background" Value="{StaticResource Brush.Surface.Overlay}"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsRollerInspecting}" Value="True">
-                                                    <Setter Property="Background" Value="#4A2020"/>
+                                                    <Setter Property="Background" Value="{StaticResource Brush.Danger}"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -777,10 +777,10 @@
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="Text" Value="&#xE8B0;"/>
-                                                    <Setter Property="Foreground" Value="#00ADB5"/>
+                                                    <Setter Property="Foreground" Value="{StaticResource Brush.Accent}"/>
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsRollerInspecting}" Value="True">
-                                                            <Setter Property="Foreground" Value="#F44336"/>
+                                                            <Setter Property="Foreground" Value="{StaticResource Brush.Danger}"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
@@ -1070,10 +1070,10 @@
                                                    HorizontalAlignment="Center"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" HorizontalAlignment="Center">
-                                        <TextBlock Text="NG" Foreground="#E53935" FontSize="10"
+                                        <TextBlock Text="NG" Foreground="{StaticResource Brush.Danger}" FontSize="10"
                                                    HorizontalAlignment="Center"/>
                                         <TextBlock Text="{Binding RecentInspections.NgCount}"
-                                                   Foreground="#E53935" FontWeight="Bold" FontSize="18"
+                                                   Foreground="{StaticResource Brush.Danger}" FontWeight="Bold" FontSize="18"
                                                    HorizontalAlignment="Center"/>
                                     </StackPanel>
                                 </Grid>
@@ -1111,10 +1111,10 @@
                                                         HorizontalAlignment="Left" VerticalAlignment="Center">
                                                     <Border.Style>
                                                         <Style TargetType="Border">
-                                                            <Setter Property="Background" Value="#E53935"/>
+                                                            <Setter Property="Background" Value="{StaticResource Brush.Danger}"/>
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding IsPass}" Value="True">
-                                                                    <Setter Property="Background" Value="#14B8A6"/>
+                                                                    <Setter Property="Background" Value="{StaticResource Brush.Accent}"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
@@ -1137,7 +1137,7 @@
                                                                Foreground="White" FontSize="11"
                                                                TextTrimming="CharacterEllipsis"/>
                                                     <TextBlock Text="{Binding NgCodesText}"
-                                                               Foreground="#E53935" FontSize="9"
+                                                               Foreground="{StaticResource Brush.Danger}" FontSize="9"
                                                                TextTrimming="CharacterEllipsis">
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
@@ -1204,8 +1204,8 @@
         <!-- ════════════════════════════════════════════════════════════ -->
         <!-- Row 3: System Log Viewer -->
         <!-- ════════════════════════════════════════════════════════════ -->
-        <Border Grid.Row="3" Background="#1A1A1A"
-                BorderBrush="#3D3D3D" BorderThickness="0,1,0,0">
+        <Border Grid.Row="3" Background="{StaticResource Brush.Surface.Deep}"
+                BorderBrush="{StaticResource Brush.Surface.Overlay}" BorderThickness="0,1,0,0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -1250,7 +1250,7 @@
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <TextBlock FontFamily="Consolas" FontSize="11" Margin="4,1">
-                                <Run Text="{Binding Timestamp, StringFormat='[HH:mm:ss]'}" Foreground="#606060"/>
+                                <Run Text="{Binding Timestamp, StringFormat='[HH:mm:ss]'}" Foreground="{StaticResource Brush.Text.Tertiary}"/>
                                 <Run Text="{Binding Source, StringFormat='[{0}]'}" Foreground="{StaticResource Brush.Text.Tertiary}"/>
                                 <Run Text="{Binding Message}" Foreground="{Binding Level, Converter={StaticResource LogLevelToColorConverter}}"/>
                             </TextBlock>
@@ -1302,7 +1302,7 @@
                 </StackPanel>
 
                 <!-- [1] Separator -->
-                <Rectangle Grid.Column="1" Width="1" Fill="#404040" Margin="10,6"/>
+                <Rectangle Grid.Column="1" Width="1" Fill="{StaticResource Brush.Surface.Overlay}" Margin="10,6"/>
 
                 <!-- [2] Camera Status -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
@@ -1312,16 +1312,16 @@
                     <Ellipse Width="8" Height="8" Margin="0,0,5,0">
                         <Ellipse.Style>
                             <Style TargetType="Ellipse">
-                                <Setter Property="Fill" Value="#555555"/>
+                                <Setter Property="Fill" Value="{StaticResource Brush.Surface.Overlay}"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding CameraConnectionStatus}" Value="All">
-                                        <Setter Property="Fill" Value="#4CAF50"/>
+                                        <Setter Property="Fill" Value="{StaticResource Brush.Success}"/>
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding CameraConnectionStatus}" Value="Partial">
-                                        <Setter Property="Fill" Value="#FF9800"/>
+                                        <Setter Property="Fill" Value="{StaticResource Brush.Warning}"/>
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding CameraConnectionStatus}" Value="None">
-                                        <Setter Property="Fill" Value="#F44336"/>
+                                        <Setter Property="Fill" Value="{StaticResource Brush.Danger}"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
@@ -1334,7 +1334,7 @@
                 </StackPanel>
 
                 <!-- [3] Separator -->
-                <Rectangle Grid.Column="3" Width="1" Fill="#404040" Margin="10,6"/>
+                <Rectangle Grid.Column="3" Width="1" Fill="{StaticResource Brush.Surface.Overlay}" Margin="10,6"/>
 
                 <!-- [4] PLC Status -->
                 <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
@@ -1344,21 +1344,21 @@
                     <Ellipse Width="8" Height="8" Margin="0,0,5,0">
                         <Ellipse.Style>
                             <Style TargetType="Ellipse">
-                                <Setter Property="Fill" Value="#555555"/>
+                                <Setter Property="Fill" Value="{StaticResource Brush.Surface.Overlay}"/>
                                 <Style.Triggers>
                                     <MultiDataTrigger>
                                         <MultiDataTrigger.Conditions>
                                             <Condition Binding="{Binding IsPlcConfigured}" Value="True"/>
                                             <Condition Binding="{Binding IsPlcConnected}" Value="True"/>
                                         </MultiDataTrigger.Conditions>
-                                        <Setter Property="Fill" Value="#4CAF50"/>
+                                        <Setter Property="Fill" Value="{StaticResource Brush.Success}"/>
                                     </MultiDataTrigger>
                                     <MultiDataTrigger>
                                         <MultiDataTrigger.Conditions>
                                             <Condition Binding="{Binding IsPlcConfigured}" Value="True"/>
                                             <Condition Binding="{Binding IsPlcConnected}" Value="False"/>
                                         </MultiDataTrigger.Conditions>
-                                        <Setter Property="Fill" Value="#F44336"/>
+                                        <Setter Property="Fill" Value="{StaticResource Brush.Danger}"/>
                                     </MultiDataTrigger>
                                 </Style.Triggers>
                             </Style>
@@ -1367,7 +1367,7 @@
                     <TextBlock FontSize="12" VerticalAlignment="Center">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
-                                <Setter Property="Foreground" Value="#B0B0B0"/>
+                                <Setter Property="Foreground" Value="{StaticResource Brush.Text.Secondary}"/>
                                 <Setter Property="Text" Value="PLC N/A"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsPlcConfigured}" Value="True">
@@ -1383,7 +1383,7 @@
                 </StackPanel>
 
                 <!-- [5] Separator -->
-                <Rectangle Grid.Column="5" Width="1" Fill="#404040" Margin="10,6"/>
+                <Rectangle Grid.Column="5" Width="1" Fill="{StaticResource Brush.Surface.Overlay}" Margin="10,6"/>
 
                 <!-- [6] Web Status -->
                 <StackPanel Grid.Column="6" Orientation="Horizontal" VerticalAlignment="Center">
@@ -1393,13 +1393,13 @@
                     <Ellipse Width="8" Height="8" Margin="0,0,5,0">
                         <Ellipse.Style>
                             <Style TargetType="Ellipse">
-                                <Setter Property="Fill" Value="#555555"/>
+                                <Setter Property="Fill" Value="{StaticResource Brush.Surface.Overlay}"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsWebConnected}" Value="True">
-                                        <Setter Property="Fill" Value="#4CAF50"/>
+                                        <Setter Property="Fill" Value="{StaticResource Brush.Success}"/>
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding IsWebConnected}" Value="False">
-                                        <Setter Property="Fill" Value="#F44336"/>
+                                        <Setter Property="Fill" Value="{StaticResource Brush.Danger}"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
@@ -1409,10 +1409,10 @@
                                VerticalAlignment="Center">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
-                                <Setter Property="Foreground" Value="#B0B0B0"/>
+                                <Setter Property="Foreground" Value="{StaticResource Brush.Text.Secondary}"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsWebConnected}" Value="True">
-                                        <Setter Property="Foreground" Value="#4CAF50"/>
+                                        <Setter Property="Foreground" Value="{StaticResource Brush.Success}"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
@@ -1427,7 +1427,7 @@
                     <TextBlock Text="&#xE99A;" FontFamily="Segoe MDL2 Assets"
                                FontSize="13" Foreground="{StaticResource Brush.Text.Tertiary}"
                                VerticalAlignment="Center" Margin="0,0,5,0"/>
-                    <Ellipse Width="8" Height="8" Fill="#555555" Margin="0,0,5,0"/>
+                    <Ellipse Width="8" Height="8" Fill="{StaticResource Brush.Surface.Divider}" Margin="0,0,5,0"/>
                     <TextBlock Text="ROBOT N/A" Foreground="{StaticResource Brush.Text.Tertiary}" FontSize="12"
                                VerticalAlignment="Center"/>
                 </StackPanel>
