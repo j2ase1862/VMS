@@ -54,6 +54,10 @@ namespace VMS.AppSetup.Models
         public string WebServerUrl { get; set; } = "http://localhost:5292";
         public string VisionServerUrl { get; set; } = "http://localhost:5000";
 
+        // GS 인증: Web 서버 X-API-Key (BODA.VMS.Web PR #10). 빈 값이면 헤더 미송신.
+        // Web 서버의 ClientApiKey:Value (user-secrets / 환경변수 ClientApiKey__Value) 와 동일하게 설정.
+        public string ClientApiKey { get; set; } = string.Empty;
+
         // Page 6: IO 보드 (Phase 2b) — PLC 와 동시 사용 가능한 디지털 IO 디바이스 목록.
         // ADLink PCI-743x / Advantech PCI-17xx 등. SystemConfiguration 과 같은 필드명 →
         // ConfigurationService 가 동일 JSON 으로 read/write.

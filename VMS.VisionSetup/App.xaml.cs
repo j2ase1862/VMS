@@ -53,8 +53,8 @@ namespace VMS.VisionSetup
             IParameterApplyService? parameterApplyService = null;
             try
             {
-                var (webUrl, clientIdx) = LoadWebSyncConfig();
-                parameterSyncService = new ParameterSyncService(webUrl, clientIdx);
+                var (webUrl, clientIdx, apiKey) = LoadWebSyncConfig();
+                parameterSyncService = new ParameterSyncService(webUrl, clientIdx, apiKey);
                 parameterApplyService = new ParameterApplyService(parameterSyncService);
 
                 // ToolSettings ParamCode ComboBox 용 정적 참조 설정
@@ -338,10 +338,10 @@ namespace VMS.VisionSetup
         }
 
         /// <summary>
-        /// AppData의 시스템 설정에서 WebServerUrl/ClientIndex를 읽어옴.
+        /// AppData의 시스템 설정에서 WebServerUrl/ClientIndex/ClientApiKey 를 읽어옴.
         /// VMS 메인 앱의 SystemConfiguration과 동일 경로 공유.
         /// </summary>
-        private static (string webUrl, int clientIndex) LoadWebSyncConfig()
+        private static (string webUrl, int clientIndex, string apiKey) LoadWebSyncConfig()
         {
             string defaultUrl = "http://localhost:5292";
             int defaultIndex = 1;
@@ -353,7 +353,7 @@ namespace VMS.VisionSetup
                     "BODA VISION AI", "system_config.json");
 
                 if (!File.Exists(configPath))
-                    return (defaultUrl, defaultIndex);
+                    return (defaultUrl, defaultIndex, string.Empty);
 
                 var json = File.ReadAllText(configPath);
                 using var doc = JsonDocument.Parse(json);
@@ -365,13 +365,18 @@ namespace VMS.VisionSetup
                 var idx = root.TryGetProperty("clientIndex", out var idxProp)
                     ? idxProp.GetInt32()
                     : defaultIndex;
+                // GS 인증: Web 서버 X-API-Key 인증 (BODA.VMS.Web PR #10). 빈 키면 서버
+                // 호환 모드(ClientApiKey:Required=false)에서만 통과.
+                var apiKey = root.TryGetProperty("clientApiKey", out var keyProp)
+                    ? keyProp.GetString() ?? string.Empty
+                    : string.Empty;
 
-                return (url, idx);
+                return (url, idx, apiKey);
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"[App] LoadWebSyncConfig error: {ex.Message}");
-                return (defaultUrl, defaultIndex);
+                return (defaultUrl, defaultIndex, string.Empty);
             }
         }
     }

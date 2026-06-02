@@ -148,7 +148,13 @@
                                 <TextBox Text="{Binding VisionServerUrl, UpdateSourceTrigger=PropertyChanged}"
                                          Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,5"/>
                                 <TextBlock Text="VisionServer API 주소 (클라이언트 자동 등록)"
-                                           Foreground="{StaticResource BrushTextMuted}" FontSize="11"/>
+                                           Foreground="{StaticResource BrushTextMuted}" FontSize="11" Margin="0,0,0,15"/>
+
+                                <TextBlock Text="Web Client API Key" Style="{StaticResource LabelStyle}"/>
+                                <TextBox Text="{Binding ClientApiKey, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,5"/>
+                                <TextBlock Text="X-API-Key 헤더 비밀 (Web 서버 ClientApiKey:Value 와 동일). 비워두면 헤더 미송신 (서버 호환 모드에서만 통과)."
+                                           Foreground="{StaticResource BrushTextMuted}" FontSize="11" TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
                     </StackPanel>
