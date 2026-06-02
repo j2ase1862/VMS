@@ -59,12 +59,12 @@
         <Style x:Key="DarkTextBox" TargetType="TextBox">
             <Setter Property="Background" Value="#2D2D30"/>
             <Setter Property="Foreground" Value="#E0E0E0"/>
-            <Setter Property="BorderBrush" Value="#3F3F46"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrushBgSurface}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="8,5"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="CaretBrush" Value="White"/>
-            <Setter Property="SelectionBrush" Value="#0078D4"/>
+            <Setter Property="SelectionBrush" Value="{StaticResource BrushAccent}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
@@ -80,7 +80,7 @@
                                 <Setter TargetName="Bd" Property="BorderBrush" Value="#555555"/>
                             </Trigger>
                             <Trigger Property="IsFocused" Value="True">
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="#0078D4"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -96,7 +96,7 @@
                     <ColumnDefinition Width="28"/>
                 </Grid.ColumnDefinitions>
                 <Border x:Name="Bd" Grid.ColumnSpan="2" CornerRadius="4"
-                        Background="#2D2D30" BorderBrush="#3F3F46" BorderThickness="1"/>
+                        Background="{StaticResource BrushBgCard}" BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="1"/>
                 <Border Grid.Column="1" CornerRadius="0,4,4,0" Background="Transparent">
                     <Path x:Name="Arrow" Data="M0,0 L4,4 L8,0" Stroke="#AAAAAA" StrokeThickness="1.5"
                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -108,7 +108,7 @@
                     <Setter TargetName="Arrow" Property="Stroke" Value="White"/>
                 </Trigger>
                 <Trigger Property="IsChecked" Value="True">
-                    <Setter TargetName="Bd" Property="BorderBrush" Value="#0078D4"/>
+                    <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
                 </Trigger>
             </ControlTemplate.Triggers>
         </ControlTemplate>
@@ -132,7 +132,7 @@
                                               HorizontalAlignment="Left"/>
                             <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom"
                                    AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
-                                <Border Background="#2D2D30" BorderBrush="#3F3F46" BorderThickness="1"
+                                <Border Background="{StaticResource BrushBgCard}" BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="1"
                                         CornerRadius="4" Margin="0,2,0,0"
                                         MaxHeight="{TemplateBinding MaxDropDownHeight}"
                                         MinWidth="{TemplateBinding ActualWidth}">
@@ -162,7 +162,7 @@
                                 <Setter TargetName="Bd" Property="Background" Value="#3E3E42"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#0078D4"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource BrushAccent}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -172,7 +172,7 @@
 
         <!-- 다크 CheckBox -->
         <Style x:Key="DarkCheckBox" TargetType="CheckBox">
-            <Setter Property="Foreground" Value="#CCCCCC"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Margin" Value="0,4"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -181,7 +181,7 @@
                     <ControlTemplate TargetType="CheckBox">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <Border x:Name="Box" Width="18" Height="18" CornerRadius="3"
-                                    Background="#2D2D30" BorderBrush="#555555" BorderThickness="1.5"
+                                    Background="{StaticResource BrushBgCard}" BorderBrush="{StaticResource BrushBorderStrong}" BorderThickness="1.5"
                                     VerticalAlignment="Center">
                                 <Path x:Name="Check" Data="M3,7 L7,11 L13,3" Stroke="White" StrokeThickness="2"
                                       Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -191,12 +191,12 @@
                         </StackPanel>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Box" Property="Background" Value="#0078D4"/>
-                                <Setter TargetName="Box" Property="BorderBrush" Value="#0078D4"/>
+                                <Setter TargetName="Box" Property="Background" Value="{StaticResource BrushAccent}"/>
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
                                 <Setter TargetName="Check" Property="Visibility" Value="Visible"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Box" Property="BorderBrush" Value="#0078D4"/>
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -262,11 +262,11 @@
         </Grid.RowDefinitions>
 
         <!-- 상단 툴바 -->
-        <Border Grid.Row="0" Background="#2D2D30" BorderBrush="#3F3F46" BorderThickness="0,0,0,1" Padding="8,6">
+        <Border Grid.Row="0" Background="{StaticResource BrushBgCard}" BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="0,0,0,1" Padding="8,6">
             <DockPanel>
                 <!-- 왼쪽: 시퀀스 이름 + Reset 신호 주소 -->
                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="프로세스 시퀀스:" Foreground="#CCCCCC" FontSize="12"
+                    <TextBlock Text="프로세스 시퀀스:" Foreground="{StaticResource BrushTextPrimary}" FontSize="12"
                                VerticalAlignment="Center" Margin="0,0,8,0"/>
                     <TextBox Text="{Binding SequenceName, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource DarkTextBox}" Width="200"/>
@@ -282,7 +282,7 @@
                                  Text="{Binding ResetSignalAddress, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource DarkTextBox}"
                                  ToolTip="예: Y200, D100 (비워두면 비활성)"/>
-                        <TextBlock Text="예: Y200" Foreground="#666666" FontSize="11"
+                        <TextBlock Text="예: Y200" Foreground="{StaticResource BrushTextDisabled}" FontSize="11"
                                    Padding="10,6" IsHitTestVisible="False">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
@@ -308,7 +308,7 @@
                 <!-- 오른쪽: 버튼 -->
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
                     <Button Content="디폴트 생성" Command="{Binding GenerateDefaultSequenceCommand}"
-                            Background="#0078D4" Style="{StaticResource ToolbarButton}"/>
+                            Background="{StaticResource BrushAccent}" Style="{StaticResource ToolbarButton}"/>
                     <Button Content="저장" Command="{Binding SaveSequenceCommand}"
                             Background="#43A047" Style="{StaticResource ToolbarButton}"/>
 
@@ -358,7 +358,7 @@
 
                     <!-- 사이클 카운트 (실행 중) -->
                     <TextBlock VerticalAlignment="Center" Margin="8,0,0,0" FontSize="12" FontWeight="SemiBold"
-                               Foreground="#4CAF50"
+                               Foreground="{StaticResource BrushSuccess}"
                                Visibility="{Binding IsTestRunning, Converter={StaticResource BoolToVisibility}}">
                         <Run Text="Cycle: "/>
                         <Run Text="{Binding TestCycleCount, Mode=OneWay}"/>
@@ -376,9 +376,9 @@
             </Grid.ColumnDefinitions>
 
             <!-- 팔레트 (왼쪽) -->
-            <Border Grid.Column="0" Background="#252526" BorderBrush="#3F3F46" BorderThickness="0,0,1,0">
+            <Border Grid.Column="0" Background="#252526" BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="0,0,1,0">
                 <DockPanel>
-                    <TextBlock DockPanel.Dock="Top" Text="노드 팔레트" Foreground="#CCCCCC"
+                    <TextBlock DockPanel.Dock="Top" Text="노드 팔레트" Foreground="{StaticResource BrushTextPrimary}"
                                FontWeight="SemiBold" FontSize="13" Margin="10,10,10,8"/>
                     <ListBox ItemsSource="{Binding PaletteItems}"
                              Style="{StaticResource PaletteListBox}">
@@ -419,12 +419,12 @@
 
                 <!-- 캔버스 -->
                 <Grid Grid.Row="0">
-                <Border Background="#1A1A1A" ClipToBounds="True"
+                <Border Background="{StaticResource BrushBgWindow}" ClipToBounds="True"
                         AllowDrop="True" Drop="Canvas_Drop" DragOver="Canvas_DragOver">
                     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
                                   x:Name="CanvasScrollViewer">
                         <Canvas x:Name="SequenceCanvas" Width="800" Height="2000"
-                                Background="#1A1A1A"
+                                Background="{StaticResource BrushBgWindow}"
                                 MouseLeftButtonDown="Canvas_MouseLeftButtonDown">
                             <!-- 엣지 (연결선) -->
                             <ItemsControl ItemsSource="{Binding Edges}" x:Name="EdgesControl">
@@ -527,7 +527,7 @@
                                             </DataTrigger>
                                             <!-- PLC 모니터: 조건 충족 (초록 Glow) -->
                                             <DataTrigger Binding="{Binding ConditionStatus}" Value="True">
-                                                <Setter TargetName="NodeBorder" Property="BorderBrush" Value="#4CAF50"/>
+                                                <Setter TargetName="NodeBorder" Property="BorderBrush" Value="{StaticResource BrushSuccess}"/>
                                                 <Setter TargetName="NodeBorder" Property="Effect">
                                                     <Setter.Value>
                                                         <DropShadowEffect Color="#4CAF50" ShadowDepth="0"
@@ -537,7 +537,7 @@
                                             </DataTrigger>
                                             <!-- PLC 모니터: 조건 미충족 (빨강 Pulse Glow) -->
                                             <DataTrigger Binding="{Binding ConditionStatus}" Value="False">
-                                                <Setter TargetName="NodeBorder" Property="BorderBrush" Value="#F44336"/>
+                                                <Setter TargetName="NodeBorder" Property="BorderBrush" Value="{StaticResource BrushDanger}"/>
                                                 <Setter TargetName="NodeBorder" Property="Effect">
                                                     <Setter.Value>
                                                         <DropShadowEffect x:Name="RedGlow" Color="#F44336"
@@ -576,7 +576,7 @@
                         Margin="0,8,8,0" IsHitTestVisible="False"
                         Visibility="{Binding IsPlcMonitoring, Converter={StaticResource BoolToVisibility}}">
                     <StackPanel>
-                        <TextBlock Text="PLC Monitor" Foreground="#AAAAAA" FontSize="10"
+                        <TextBlock Text="PLC Monitor" Foreground="{StaticResource BrushTextSecondary}" FontSize="10"
                                    FontWeight="SemiBold" Margin="0,0,0,4"/>
                         <!-- 조건 충족 -->
                         <StackPanel Orientation="Horizontal" Margin="0,2">
@@ -586,7 +586,7 @@
                                     <DropShadowEffect Color="#4CAF50" ShadowDepth="0" BlurRadius="6" Opacity="0.8"/>
                                 </Border.Effect>
                             </Border>
-                            <TextBlock Text="조건 충족" Foreground="#4CAF50" FontSize="11" VerticalAlignment="Center"/>
+                            <TextBlock Text="조건 충족" Foreground="{StaticResource BrushSuccess}" FontSize="11" VerticalAlignment="Center"/>
                         </StackPanel>
                         <!-- 조건 미충족 -->
                         <StackPanel Orientation="Horizontal" Margin="0,2">
@@ -596,28 +596,28 @@
                                     <DropShadowEffect Color="#F44336" ShadowDepth="0" BlurRadius="6" Opacity="0.8"/>
                                 </Border.Effect>
                             </Border>
-                            <TextBlock Text="조건 미충족" Foreground="#F44336" FontSize="11" VerticalAlignment="Center"/>
+                            <TextBlock Text="조건 미충족" Foreground="{StaticResource BrushDanger}" FontSize="11" VerticalAlignment="Center"/>
                         </StackPanel>
                         <!-- 선택됨 -->
                         <StackPanel Orientation="Horizontal" Margin="0,2">
                             <Border Width="16" Height="16" CornerRadius="4" Margin="0,0,6,0"
                                     BorderBrush="#FFFFFF" BorderThickness="2" Background="Transparent"/>
-                            <TextBlock Text="선택됨" Foreground="#CCCCCC" FontSize="11" VerticalAlignment="Center"/>
+                            <TextBlock Text="선택됨" Foreground="{StaticResource BrushTextPrimary}" FontSize="11" VerticalAlignment="Center"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>
                 </Grid>
 
                 <!-- PLC I/O 모니터 패널 (하단 접이식) — Phase A: PLC + IO 보드 섹션 분리 -->
-                <Border Grid.Row="1" Background="#1E1E2D" BorderBrush="#3F3F46" BorderThickness="0,1,0,0"
+                <Border Grid.Row="1" Background="{StaticResource BrushBgWindow}" BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="0,1,0,0"
                         MaxHeight="320"
                         Visibility="{Binding IsMonitorPanelVisible, Converter={StaticResource BoolToVisibility}}">
                     <DockPanel>
                         <!-- 모니터 패널 헤더 -->
-                        <Border DockPanel.Dock="Top" Background="#2D2D40" Padding="8,4">
+                        <Border DockPanel.Dock="Top" Background="{StaticResource BrushBgCard}" Padding="8,4">
                             <DockPanel>
                                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock Text="PLC I/O Monitor" Foreground="#CCCCCC"
+                                    <TextBlock Text="PLC I/O Monitor" Foreground="{StaticResource BrushTextPrimary}"
                                                FontWeight="SemiBold" FontSize="12" Margin="0,0,10,0"/>
                                     <Ellipse Width="8" Height="8" Margin="0,0,4,0"
                                              Fill="{Binding IsPlcConnected, Converter={StaticResource PlcStatusColorConverter}}"/>
@@ -646,10 +646,10 @@
                                                 <Ellipse Width="6" Height="6" Margin="0,0,4,0">
                                                     <Ellipse.Style>
                                                         <Style TargetType="Ellipse">
-                                                            <Setter Property="Fill" Value="#666666"/>
+                                                            <Setter Property="Fill" Value="{StaticResource BrushTextDisabled}"/>
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding IsPlcMonitoring}" Value="True">
-                                                                    <Setter Property="Fill" Value="#4CAF50"/>
+                                                                    <Setter Property="Fill" Value="{StaticResource BrushSuccess}"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
@@ -688,10 +688,10 @@
                         <!-- PLC 모니터 데이터 그리드 -->
                         <DataGrid Grid.Row="0" ItemsSource="{Binding MonitorItems}"
                                   AutoGenerateColumns="False" IsReadOnly="True"
-                                  Background="#1E1E2D" Foreground="#CCCCCC"
+                                  Background="{StaticResource BrushBgWindow}" Foreground="{StaticResource BrushTextPrimary}"
                                   BorderThickness="0" GridLinesVisibility="Horizontal"
                                   HorizontalGridLinesBrush="#333344"
-                                  RowBackground="#1E1E2D" AlternatingRowBackground="#222233"
+                                  RowBackground="{StaticResource BrushBgWindow}" AlternatingRowBackground="#222233"
                                   HeadersVisibility="Column" CanUserResizeRows="False"
                                   FontFamily="Consolas" FontSize="12"
                                   SelectionMode="Single" SelectionUnit="FullRow"
@@ -699,11 +699,11 @@
                             <DataGrid.ColumnHeaderStyle>
                                 <Style TargetType="DataGridColumnHeader">
                                     <Setter Property="Background" Value="#2D2D40"/>
-                                    <Setter Property="Foreground" Value="#AAAAAA"/>
+                                    <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
                                     <Setter Property="Padding" Value="6,4"/>
                                     <Setter Property="FontSize" Value="11"/>
                                     <Setter Property="FontWeight" Value="SemiBold"/>
-                                    <Setter Property="BorderBrush" Value="#3F3F46"/>
+                                    <Setter Property="BorderBrush" Value="{StaticResource BrushBgSurface}"/>
                                     <Setter Property="BorderThickness" Value="0,0,1,1"/>
                                 </Style>
                             </DataGrid.ColumnHeaderStyle>
@@ -763,8 +763,8 @@
                         </DataGrid>
 
                         <!-- IO 보드 섹션 헤더 — BoardMonitorItems 가 있을 때만 표시 -->
-                        <Border Grid.Row="1" Background="#2D2D40" Padding="8,3"
-                                BorderBrush="#3F3F46" BorderThickness="0,1,0,1"
+                        <Border Grid.Row="1" Background="{StaticResource BrushBgCard}" Padding="8,3"
+                                BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="0,1,0,1"
                                 Visibility="{Binding BoardMonitorItems.Count, Converter={StaticResource CountToVisibilityConverter}}">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="IO Board Monitor" Foreground="#FF9800"
@@ -777,10 +777,10 @@
                         <!-- IO 보드 모니터 데이터 그리드 -->
                         <DataGrid Grid.Row="2" ItemsSource="{Binding BoardMonitorItems}"
                                   AutoGenerateColumns="False" IsReadOnly="True"
-                                  Background="#1E1E2D" Foreground="#CCCCCC"
+                                  Background="{StaticResource BrushBgWindow}" Foreground="{StaticResource BrushTextPrimary}"
                                   BorderThickness="0" GridLinesVisibility="Horizontal"
                                   HorizontalGridLinesBrush="#333344"
-                                  RowBackground="#1E1E2D" AlternatingRowBackground="#222233"
+                                  RowBackground="{StaticResource BrushBgWindow}" AlternatingRowBackground="#222233"
                                   HeadersVisibility="Column" CanUserResizeRows="False"
                                   FontFamily="Consolas" FontSize="12"
                                   MaxHeight="120"
@@ -790,11 +790,11 @@
                             <DataGrid.ColumnHeaderStyle>
                                 <Style TargetType="DataGridColumnHeader">
                                     <Setter Property="Background" Value="#2D2D40"/>
-                                    <Setter Property="Foreground" Value="#AAAAAA"/>
+                                    <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
                                     <Setter Property="Padding" Value="6,4"/>
                                     <Setter Property="FontSize" Value="11"/>
                                     <Setter Property="FontWeight" Value="SemiBold"/>
-                                    <Setter Property="BorderBrush" Value="#3F3F46"/>
+                                    <Setter Property="BorderBrush" Value="{StaticResource BrushBgSurface}"/>
                                     <Setter Property="BorderThickness" Value="0,0,1,1"/>
                                 </Style>
                             </DataGrid.ColumnHeaderStyle>
@@ -845,13 +845,13 @@
             </Grid>
 
             <!-- 속성 패널 (오른쪽) -->
-            <Border Grid.Column="2" Background="#252526" BorderBrush="#3F3F46" BorderThickness="1,0,0,0">
+            <Border Grid.Column="2" Background="#252526" BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="1,0,0,0">
                 <DockPanel>
-                    <TextBlock DockPanel.Dock="Top" Text="노드 속성" Foreground="#CCCCCC"
+                    <TextBlock DockPanel.Dock="Top" Text="노드 속성" Foreground="{StaticResource BrushTextPrimary}"
                                FontWeight="SemiBold" FontSize="13" Margin="10,10,10,0"/>
 
                     <!-- 선택된 노드가 없을 때 -->
-                    <TextBlock Text="노드를 선택하세요" Foreground="#666666" FontSize="12"
+                    <TextBlock Text="노드를 선택하세요" Foreground="{StaticResource BrushTextDisabled}" FontSize="12"
                                Margin="10,20" VerticalAlignment="Top"
                                Visibility="{Binding SelectedNode, Converter={StaticResource NullToCollapsedInverseConverter}}"/>
 
@@ -868,7 +868,7 @@
                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
                     <TextBlock Text="{Binding StatusMessage}" Foreground="White" FontSize="11"/>
                     <TextBlock Text="  |  " Foreground="#80FFFFFF" Margin="8,0"/>
-                    <TextBlock Foreground="#CCCCCC" FontSize="11">
+                    <TextBlock Foreground="{StaticResource BrushTextPrimary}" FontSize="11">
                         <Run Text="노드:"/>
                         <Run Text="{Binding Nodes.Count, Mode=OneWay}"/>
                         <Run Text="  연결:"/>
@@ -878,7 +878,7 @@
                     <TextBlock Text="  [연결 모드: 대상 노드를 클릭하세요]" Foreground="#FFD700" FontSize="11"
                                Visibility="{Binding IsConnecting, Converter={StaticResource BoolToVisibility}}"/>
                     <!-- 무부하 테스트 실행 표시 -->
-                    <TextBlock Foreground="#4CAF50" FontSize="11" FontWeight="SemiBold"
+                    <TextBlock Foreground="{StaticResource BrushSuccess}" FontSize="11" FontWeight="SemiBold"
                                Visibility="{Binding IsTestRunning, Converter={StaticResource BoolToVisibility}}">
                         <Run Text="  ▶ 무부하 테스트: "/>
                         <Run Text="{Binding ActiveNodeName, Mode=OneWay}"/>
@@ -897,7 +897,7 @@
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
                     <Ellipse Width="8" Height="8" Margin="0,0,4,0"
                              Fill="{Binding IsPlcConnected, Converter={StaticResource PlcStatusColorConverter}}"/>
-                    <TextBlock Text="{Binding PlcConnectionStatus}" Foreground="#CCCCCC" FontSize="11"/>
+                    <TextBlock Text="{Binding PlcConnectionStatus}" Foreground="{StaticResource BrushTextPrimary}" FontSize="11"/>
                 </StackPanel>
             </DockPanel>
         </Border>
