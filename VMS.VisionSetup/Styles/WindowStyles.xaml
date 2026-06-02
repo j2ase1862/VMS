@@ -15,43 +15,48 @@
         새로운 키는 모두 `Window` 접두사 또는 `Modern` 접두사 사용.
     -->
 
-    <!-- ========================= COLOR TOKENS (GitHub-Dark + Teal) ========================= -->
-    <Color x:Key="ColorBgWindow">#0A1218</Color>
-    <Color x:Key="ColorBgTitleBar">#0D161E</Color>
-    <Color x:Key="ColorBgCard">#131C24</Color>
-    <Color x:Key="ColorBgSurface">#1B2530</Color>
-    <Color x:Key="ColorBgInput">#0E1620</Color>
-    <Color x:Key="ColorBgHover">#1F2A36</Color>
-    <Color x:Key="ColorBgSelected">#1C3344</Color>
+    <!-- ========================= COLOR TOKENS (Indigo + Slate, v1.1) =========================
+         2026-06-02: Teal/GitHub-Dark 톤(#14B8A6) → Tailwind Indigo(#6366F1) + Slate
+         배경 톤으로 통합. VMS 본체 디자인 시스템(VMS/Themes/Colors.xaml v1.1)과 일치.
+         SolidColorBrush 와 모든 컨트롤 스타일이 토큰 참조라 Color 값만 교체해도
+         WindowStyles 를 사용하는 모든 윈도우(Work Orders, 9개 chromeless 다이얼로그
+         등)가 자동 indigo 전환된다. -->
+    <Color x:Key="ColorBgWindow">#0B1220</Color>
+    <Color x:Key="ColorBgTitleBar">#1E293B</Color>
+    <Color x:Key="ColorBgCard">#1E293B</Color>
+    <Color x:Key="ColorBgSurface">#334155</Color>
+    <Color x:Key="ColorBgInput">#334155</Color>
+    <Color x:Key="ColorBgHover">#3E4D63</Color>
+    <Color x:Key="ColorBgSelected">#3730A3</Color>
 
-    <Color x:Key="ColorBorderSubtle">#22303C</Color>
-    <Color x:Key="ColorBorderStrong">#34465A</Color>
-    <Color x:Key="ColorBorderFocus">#14B8A6</Color>
+    <Color x:Key="ColorBorderSubtle">#334155</Color>
+    <Color x:Key="ColorBorderStrong">#475569</Color>
+    <Color x:Key="ColorBorderFocus">#6366F1</Color>
 
-    <Color x:Key="ColorTextPrimary">#E6EDF3</Color>
-    <Color x:Key="ColorTextSecondary">#9FB2C2</Color>
-    <Color x:Key="ColorTextMuted">#5E7388</Color>
-    <Color x:Key="ColorTextDisabled">#3F4E5C</Color>
-    <Color x:Key="ColorTextAccent">#22D3EE</Color>
+    <Color x:Key="ColorTextPrimary">#F8FAFC</Color>
+    <Color x:Key="ColorTextSecondary">#CBD5E1</Color>
+    <Color x:Key="ColorTextMuted">#94A3B8</Color>
+    <Color x:Key="ColorTextDisabled">#64748B</Color>
+    <Color x:Key="ColorTextAccent">#06B6D4</Color>
 
-    <Color x:Key="ColorAccent">#14B8A6</Color>
-    <Color x:Key="ColorAccentHover">#2DD4BF</Color>
-    <Color x:Key="ColorAccentPressed">#0E9587</Color>
+    <Color x:Key="ColorAccent">#6366F1</Color>
+    <Color x:Key="ColorAccentHover">#818CF8</Color>
+    <Color x:Key="ColorAccentPressed">#4338CA</Color>
 
     <Color x:Key="ColorSuccess">#10B981</Color>
-    <Color x:Key="ColorSuccessSoft">#0E3A2E</Color>
+    <Color x:Key="ColorSuccessSoft">#064E3B</Color>
 
     <Color x:Key="ColorWarning">#F59E0B</Color>
-    <Color x:Key="ColorWarningSoft">#3A2A12</Color>
+    <Color x:Key="ColorWarningSoft">#451A03</Color>
 
     <Color x:Key="ColorDanger">#EF4444</Color>
-    <Color x:Key="ColorDangerSoft">#3F1B1B</Color>
+    <Color x:Key="ColorDangerSoft">#450A0A</Color>
 
-    <Color x:Key="ColorInfo">#3B82F6</Color>
-    <Color x:Key="ColorInfoSoft">#16243F</Color>
+    <Color x:Key="ColorInfo">#6366F1</Color>
+    <Color x:Key="ColorInfoSoft">#1E1B4B</Color>
 
-    <Color x:Key="ColorNeutral">#22303C</Color>
-    <Color x:Key="ColorNeutralHover">#2C3D4D</Color>
+    <Color x:Key="ColorNeutral">#334155</Color>
+    <Color x:Key="ColorNeutralHover">#475569</Color>
 
     <!-- ========================= BRUSHES ========================= -->
     <SolidColorBrush x:Key="BrushBgWindow"     Color="{StaticResource ColorBgWindow}"/>
