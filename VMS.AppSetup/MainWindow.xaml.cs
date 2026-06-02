@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using VMS.AppSetup.Models;
 
 namespace VMS.AppSetup;
@@ -13,6 +14,12 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+
+        // chromeless 윈도우 — SystemCommands.MinimizeWindow / CloseWindow 활성화
+        CommandBindings.Add(new CommandBinding(SystemCommands.MinimizeWindowCommand,
+            (s, e) => SystemCommands.MinimizeWindow(this)));
+        CommandBindings.Add(new CommandBinding(SystemCommands.CloseWindowCommand,
+            (s, e) => SystemCommands.CloseWindow(this)));
     }
 
     private void BrowseDcfFile_Click(object sender, RoutedEventArgs e)
