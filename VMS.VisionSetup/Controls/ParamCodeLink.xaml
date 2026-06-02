@@ -5,17 +5,8 @@
     <ComboBox ItemsSource="{Binding AvailableParamCodes, ElementName=Root}"
               SelectedItem="{Binding SelectedItem, ElementName=Root, Mode=TwoWay}"
               DisplayMemberPath="DisplayText"
-              Height="22" FontSize="10"
+              Style="{StaticResource WindowDarkComboBox}"
+              Height="22" MinHeight="22" FontSize="10" Padding="4,1"
               Margin="0,2,0,4"
-              ToolTip="Web Parameter Link Code">
-        <ComboBox.Style>
-            <Style TargetType="ComboBox">
-                <Setter Property="Background" Value="#2A2A2A"/>
-                <Setter Property="Foreground" Value="#909090"/>
-                <Setter Property="BorderBrush" Value="#404040"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="Padding" Value="4,1"/>
-            </Style>
-        </ComboBox.Style>
-    </ComboBox>
+              ToolTip="Web Parameter Link Code"/>
 </UserControl>
