@@ -22,7 +22,7 @@
         WindowStyle="None"
         ResizeMode="NoResize"
         Icon="/icon/VisionSetup.ico"
-        Background="#1E1E1E">
+        Background="{StaticResource BrushBgWindow}">
 
     <Window.InputBindings>
         <!-- 폴더 이미지 네비게이션: ←/→ 키로 이전/다음 이미지 -->
@@ -81,7 +81,7 @@
                                 <Setter TargetName="ButtonBorder" Property="Background" Value="#2A2A2C"/>
                                 <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#10FFFFFF"/>
                                 <Setter TargetName="Content" Property="Opacity" Value="0.3"/>
-                                <Setter Property="Foreground" Value="#444444"/>
+                                <Setter Property="Foreground" Value="{StaticResource BrushBgHover}"/>
                                 <Setter Property="Cursor" Value="Arrow"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -92,7 +92,7 @@
 
         <!-- Danger Button Style — subtle red text/border, not red background -->
         <Style x:Key="DangerButtonStyle" TargetType="Button" BasedOn="{StaticResource ToolbarButtonStyle}">
-            <Setter Property="Foreground" Value="#E57373"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushDanger}"/>
         </Style>
 
         <!-- Step Control Button Style -->
@@ -111,7 +111,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#3E3E42"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource BrushBgSurface}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="Bd" Property="Background" Value="#505054"/>
@@ -157,7 +157,7 @@
             <Setter Property="Margin" Value="1,0"/>
         </Style>
         <Style x:Key="DangerIconButtonStyle" TargetType="Button" BasedOn="{StaticResource ToolbarIconButtonStyle}">
-            <Setter Property="Foreground" Value="#E57373"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushDanger}"/>
         </Style>
 
         <!-- Toolbar group container -->
@@ -178,7 +178,7 @@
         </Grid.RowDefinitions>
 
         <!-- Toolbar -->
-        <Border Grid.Row="0" Background="#2D2D30" Padding="10,5">
+        <Border Grid.Row="0" Background="{StaticResource BrushBgCard}" Padding="10,5">
             <DockPanel>
                 <!-- Close Button (right-aligned) -->
                 <Button DockPanel.Dock="Right" Command="{Binding CloseCommand}"
@@ -217,7 +217,7 @@
                     <Menu Background="Transparent" VerticalAlignment="Center" Margin="0,0,4,0">
                         <Menu.Resources>
                             <Style TargetType="MenuItem">
-                                <Setter Property="Foreground" Value="#1E1E1E"/>
+                                <Setter Property="Foreground" Value="{StaticResource BrushBgWindow}"/>
                                 <Setter Property="FontSize" Value="12"/>
                                 <Setter Property="FontWeight" Value="SemiBold"/>
                                 <Setter Property="Padding" Value="8,5"/>
@@ -229,7 +229,7 @@
                                         <Setter Property="Foreground" Value="White"/>
                                     </Trigger>
                                     <Trigger Property="IsEnabled" Value="False">
-                                        <Setter Property="Foreground" Value="#AAAAAA"/>
+                                        <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
                                     </Trigger>
                                 </Style.Triggers>
                             </Style>
@@ -369,10 +369,10 @@
                                                  Margin="0,-1,-1,0">
                                             <Ellipse.Style>
                                                 <Style TargetType="Ellipse">
-                                                    <Setter Property="Fill" Value="#F44336"/>
+                                                    <Setter Property="Fill" Value="{StaticResource BrushDanger}"/>
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsCameraConnected}" Value="True">
-                                                            <Setter Property="Fill" Value="#4CAF50"/>
+                                                            <Setter Property="Fill" Value="{StaticResource BrushSuccess}"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
@@ -470,7 +470,7 @@
                           Width="15" Height="12" Stretch="Uniform"/>
                 </Button>
 
-                <Border Width="1" Background="#4A4A4C" Margin="5,4" CornerRadius="1"/>
+                <Border Width="1" Background="{StaticResource BrushBgHover}" Margin="5,4" CornerRadius="1"/>
 
                 <!-- Recipe -->
                 <Button Click="RecipeManager_Click"
@@ -486,7 +486,7 @@
                           Width="13" Height="14" Stretch="Uniform"/>
                 </Button>
 
-                <Border Width="1" Background="#4A4A4C" Margin="5,4" CornerRadius="1"/>
+                <Border Width="1" Background="{StaticResource BrushBgHover}" Margin="5,4" CornerRadius="1"/>
 
                 <!-- Execute -->
                 <Button Command="{Binding RunAllCommand}"
@@ -508,7 +508,7 @@
                           Width="13" Height="14" Stretch="Uniform"/>
                 </Button>
 
-                <Border Width="1" Background="#4A4A4C" Margin="5,4" CornerRadius="1"/>
+                <Border Width="1" Background="{StaticResource BrushBgHover}" Margin="5,4" CornerRadius="1"/>
 
                 <!-- Camera -->
                 <Button Click="CameraManager_Click"
@@ -525,7 +525,7 @@
                 </Button>
 
                 <!-- SLM Chat Bot -->
-                <Border Width="1" Background="#4A4A4C" Margin="5,4" CornerRadius="1"/>
+                <Border Width="1" Background="{StaticResource BrushBgHover}" Margin="5,4" CornerRadius="1"/>
                 <Button Command="{Binding ShowChatWindowCommand}"
                         Style="{StaticResource ToolbarIconButtonStyle}" ToolTip="SLM Recipe Bot (AI)">
                     <Path Data="M12,3C17.5,3 22,6.58 22,11C22,15.42 17.5,19 12,19C10.76,19 9.57,18.82 8.47,18.5C5.55,21 2,21 2,21C4.33,18.67 4.7,17.1 4.75,16.5C3.05,15.07 2,13.13 2,11C2,6.58 6.5,3 12,3Z"
@@ -535,7 +535,7 @@
                 <!-- Folder Navigation (contextual) -->
                 <StackPanel Orientation="Horizontal"
                             Visibility="{Binding HasImageFolder, Converter={StaticResource BoolToVisibility}}">
-                    <Border Width="1" Background="#4A4A4C" Margin="5,4" CornerRadius="1"/>
+                    <Border Width="1" Background="{StaticResource BrushBgHover}" Margin="5,4" CornerRadius="1"/>
                     <Button Command="{Binding PreviousImageCommand}"
                             Style="{StaticResource ToolbarIconButtonStyle}" ToolTip="Previous Image">
                         <Path Data="M12,4 L5,10 L12,16" Stroke="White" StrokeThickness="2"
@@ -548,15 +548,15 @@
                         <Path Data="M6,4 L13,10 L6,16" Stroke="White" StrokeThickness="2"
                               Fill="Transparent" Width="10" Height="13" Stretch="Uniform"/>
                     </Button>
-                    <Border Width="1" Background="#4A4A4C" Margin="5,4" CornerRadius="1"/>
+                    <Border Width="1" Background="{StaticResource BrushBgHover}" Margin="5,4" CornerRadius="1"/>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <RadioButton Content="Navigate" Foreground="#AAA" FontSize="11" Margin="0,0,8,0"
                                      VerticalAlignment="Center" GroupName="FolderNavMode" ToolTip="Navigate Only"
                                      IsChecked="{Binding FolderNavigationMode, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=NavigateOnly}"/>
-                        <RadioButton Content="Run All" Foreground="#4CAF50" FontSize="11" Margin="0,0,8,0"
+                        <RadioButton Content="Run All" Foreground="{StaticResource BrushSuccess}" FontSize="11" Margin="0,0,8,0"
                                      VerticalAlignment="Center" GroupName="FolderNavMode" ToolTip="Auto Run All on navigate"
                                      IsChecked="{Binding FolderNavigationMode, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=AutoRunAll}"/>
-                        <RadioButton Content="Run Selected" Foreground="#00ADB5" FontSize="11"
+                        <RadioButton Content="Run Selected" Foreground="{StaticResource BrushAccent}" FontSize="11"
                                      VerticalAlignment="Center" GroupName="FolderNavMode" ToolTip="Auto Run Selected on navigate"
                                      IsChecked="{Binding FolderNavigationMode, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=AutoRunSelected}"/>
                     </StackPanel>
@@ -572,7 +572,7 @@
                StaysOpen="False"
                AllowsTransparency="True"
                IsOpen="{Binding IsCameraInfoPopupOpen, Mode=TwoWay}">
-            <Border Background="#2D2D30" BorderBrush="#555555" BorderThickness="1"
+            <Border Background="{StaticResource BrushBgCard}" BorderBrush="{StaticResource BrushBorderStrong}" BorderThickness="1"
                     CornerRadius="6" Padding="16" MinWidth="280">
                 <Border.Effect>
                     <DropShadowEffect BlurRadius="10" ShadowDepth="3" Opacity="0.5"/>
@@ -580,7 +580,7 @@
                 <Grid>
                     <!-- No camera selected -->
                     <TextBlock Text="카메라를 선택하세요"
-                               Foreground="#999999" FontSize="13"
+                               Foreground="{StaticResource BrushTextMuted}" FontSize="13"
                                HorizontalAlignment="Center" Margin="0,10"
                                Visibility="{Binding SelectedCamera, Converter={StaticResource NullToCollapsedConverter}, ConverterParameter=Invert}"/>
 
@@ -610,27 +610,27 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Manufacturer" Foreground="#999999" FontSize="12" Margin="0,2"/>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Manufacturer" Foreground="{StaticResource BrushTextMuted}" FontSize="12" Margin="0,2"/>
                             <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedCamera.Manufacturer}" Foreground="White" FontSize="12" Margin="0,2"/>
 
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Model" Foreground="#999999" FontSize="12" Margin="0,2"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Model" Foreground="{StaticResource BrushTextMuted}" FontSize="12" Margin="0,2"/>
                             <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedCamera.Model}" Foreground="White" FontSize="12" Margin="0,2"/>
 
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="IP Address" Foreground="#999999" FontSize="12" Margin="0,2"/>
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="IP Address" Foreground="{StaticResource BrushTextMuted}" FontSize="12" Margin="0,2"/>
                             <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedCamera.ConnectionString}" Foreground="White" FontSize="12" Margin="0,2"/>
 
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Resolution" Foreground="#999999" FontSize="12" Margin="0,2"/>
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Resolution" Foreground="{StaticResource BrushTextMuted}" FontSize="12" Margin="0,2"/>
                             <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedCamera.Resolution}" Foreground="White" FontSize="12" Margin="0,2"/>
 
-                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Status" Foreground="#999999" FontSize="12" Margin="0,2"/>
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Status" Foreground="{StaticResource BrushTextMuted}" FontSize="12" Margin="0,2"/>
                             <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Margin="0,2">
                                 <Ellipse Width="9" Height="9" VerticalAlignment="Center">
                                     <Ellipse.Style>
                                         <Style TargetType="Ellipse">
-                                            <Setter Property="Fill" Value="#F44336"/>
+                                            <Setter Property="Fill" Value="{StaticResource BrushDanger}"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsCameraConnected}" Value="True">
-                                                    <Setter Property="Fill" Value="#4CAF50"/>
+                                                    <Setter Property="Fill" Value="{StaticResource BrushSuccess}"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -697,11 +697,11 @@
 
                     <!-- Row 1: Camera Selector -->
                     <StackPanel Grid.Row="1" Margin="8,4,8,4">
-                        <TextBlock Text="Camera" Foreground="#CCCCCC" FontWeight="Bold" FontSize="12" Margin="0,0,0,4"/>
+                        <TextBlock Text="Camera" Foreground="{StaticResource BrushTextPrimary}" FontWeight="Bold" FontSize="12" Margin="0,0,0,4"/>
                         <ComboBox ItemsSource="{Binding Cameras}"
                                   SelectedItem="{Binding SelectedCamera}"
-                                  Background="#3C3C3C" Foreground="Black"
-                                  BorderBrush="#555555" BorderThickness="1"
+                                  Background="{StaticResource BrushBgSurface}" Foreground="Black"
+                                  BorderBrush="{StaticResource BrushBorderStrong}" BorderThickness="1"
                                   FontSize="11" Padding="6,4" MinHeight="28">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
@@ -723,7 +723,7 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="Robot MultiView" Foreground="#CCCCCC" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
+                            <TextBlock Text="Robot MultiView" Foreground="{StaticResource BrushTextPrimary}" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
 
                             <!-- MultiView Setup 버튼 -->
                             <Button Grid.Column="1" Click="MultiViewSetup_Click" Cursor="Hand"
@@ -749,16 +749,16 @@
                             <Ellipse Width="8" Height="8" VerticalAlignment="Center">
                                 <Ellipse.Style>
                                     <Style TargetType="Ellipse">
-                                        <Setter Property="Fill" Value="#F44336"/>
+                                        <Setter Property="Fill" Value="{StaticResource BrushDanger}"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding IsRobotConnected}" Value="True">
-                                                <Setter Property="Fill" Value="#4CAF50"/>
+                                                <Setter Property="Fill" Value="{StaticResource BrushSuccess}"/>
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
                                 </Ellipse.Style>
                             </Ellipse>
-                            <TextBlock Foreground="#AAAAAA" FontSize="10" Margin="6,0,0,0"
+                            <TextBlock Foreground="{StaticResource BrushTextSecondary}" FontSize="10" Margin="6,0,0,0"
                                        VerticalAlignment="Center">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
@@ -783,7 +783,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <TextBlock Grid.Column="0" Text="Steps" Foreground="#CCCCCC" FontWeight="Bold" FontSize="12"
+                        <TextBlock Grid.Column="0" Text="Steps" Foreground="{StaticResource BrushTextPrimary}" FontWeight="Bold" FontSize="12"
                                    VerticalAlignment="Center"/>
 
                         <StackPanel Grid.Column="1" Orientation="Horizontal">
@@ -828,20 +828,20 @@
                               AutoGenerateColumns="False" IsReadOnly="True"
                               SelectionMode="Single" SelectionUnit="FullRow"
                               HeadersVisibility="Column" CanUserAddRows="False"
-                              Background="#2D2D30" Foreground="White"
-                              BorderBrush="#555555" BorderThickness="1"
-                              RowBackground="#2D2D30" AlternatingRowBackground="#333337"
+                              Background="{StaticResource BrushBgCard}" Foreground="White"
+                              BorderBrush="{StaticResource BrushBorderStrong}" BorderThickness="1"
+                              RowBackground="{StaticResource BrushBgCard}" AlternatingRowBackground="#333337"
                               GridLinesVisibility="Horizontal"
                               HorizontalGridLinesBrush="#444444"
                               Margin="8,4,8,4" MaxHeight="160" MinHeight="60"
                               FontSize="11">
                         <DataGrid.ColumnHeaderStyle>
                             <Style TargetType="DataGridColumnHeader">
-                                <Setter Property="Background" Value="#3E3E42"/>
+                                <Setter Property="Background" Value="{StaticResource BrushBgSurface}"/>
                                 <Setter Property="Foreground" Value="#CCCCCC"/>
                                 <Setter Property="Padding" Value="6,3"/>
                                 <Setter Property="FontSize" Value="10"/>
-                                <Setter Property="BorderBrush" Value="#555555"/>
+                                <Setter Property="BorderBrush" Value="{StaticResource BrushBorderStrong}"/>
                                 <Setter Property="BorderThickness" Value="0,0,1,1"/>
                             </Style>
                         </DataGrid.ColumnHeaderStyle>
@@ -852,7 +852,7 @@
                                 <Setter Property="Foreground" Value="White"/>
                                 <Style.Triggers>
                                     <Trigger Property="IsSelected" Value="True">
-                                        <Setter Property="Background" Value="#0078D4"/>
+                                        <Setter Property="Background" Value="{StaticResource BrushAccent}"/>
                                         <Setter Property="Foreground" Value="White"/>
                                     </Trigger>
                                 </Style.Triggers>
@@ -862,7 +862,7 @@
                             <Style TargetType="DataGridRow">
                                 <Style.Triggers>
                                     <Trigger Property="IsSelected" Value="True">
-                                        <Setter Property="Background" Value="#0078D4"/>
+                                        <Setter Property="Background" Value="{StaticResource BrushAccent}"/>
                                     </Trigger>
                                 </Style.Triggers>
                             </Style>
@@ -887,7 +887,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="Tool Palette"
-                                       Foreground="#CCCCCC" FontWeight="Bold" FontSize="12"
+                                       Foreground="{StaticResource BrushTextPrimary}" FontWeight="Bold" FontSize="12"
                                        VerticalAlignment="Center"/>
                             <StackPanel Grid.Column="1" Orientation="Horizontal">
                                 <!-- Expand All -->
@@ -921,10 +921,10 @@
                             <TreeView.ItemTemplate>
                                 <HierarchicalDataTemplate ItemsSource="{Binding Tools}">
                                     <TextBlock Text="{Binding CategoryName}"
-                                               Foreground="#CCCCCC" FontWeight="Bold" FontSize="12"/>
+                                               Foreground="{StaticResource BrushTextPrimary}" FontWeight="Bold" FontSize="12"/>
                                     <HierarchicalDataTemplate.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Background="#3E3E42" CornerRadius="3"
+                                            <Border Background="{StaticResource BrushBgSurface}" CornerRadius="3"
                                                     Padding="8,4" Margin="0,2"
                                                     PreviewMouseMove="ToolItem_PreviewMouseMove"
                                                     Cursor="Hand">
@@ -955,7 +955,7 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- Dropped Tools Workspace -->
-                <Border Grid.Column="0" Background="#1E1E1E" Margin="5">
+                <Border Grid.Column="0" Background="{StaticResource BrushBgWindow}" Margin="5">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -966,7 +966,7 @@
                                    Foreground="Gray" FontSize="12" Margin="10,5"/>
 
                         <!-- 연결선 및 도구 워크스페이스 컨테이너 -->
-                        <Grid Grid.Row="1" AllowDrop="True" Drop="Sidebar2_Drop" Background="#2D2D30">
+                        <Grid Grid.Row="1" AllowDrop="True" Drop="Sidebar2_Drop" Background="{StaticResource BrushBgCard}">
                             <!-- 연결선 렌더링 캔버스 (도구 아래에 그려짐) -->
                             <Canvas x:Name="ConnectionCanvas" IsHitTestVisible="False"/>
 
@@ -995,7 +995,7 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Border x:Name="ToolOuterBorder"
-                                                BorderBrush="#555555" BorderThickness="1"
+                                                BorderBrush="{StaticResource BrushBorderStrong}" BorderThickness="1"
                                                 CornerRadius="4,4,0,0" Cursor="Hand" Margin="2"
                                                 MouseLeftButtonDown="Item_MouseLeftButtonDown"
                                                 MouseMove="Item_MouseMove"
@@ -1008,12 +1008,12 @@
                                                         <Style TargetType="ContextMenu">
                                                             <Setter Property="Background" Value="#2D2D30"/>
                                                             <Setter Property="Foreground" Value="White"/>
-                                                            <Setter Property="BorderBrush" Value="#555555"/>
+                                                            <Setter Property="BorderBrush" Value="{StaticResource BrushBorderStrong}"/>
                                                         </Style>
                                                     </ContextMenu.Style>
                                                     <MenuItem Header="Rename Tool"
                                                               Click="RenameToolMenuItem_Click"/>
-                                                    <Separator Background="#555555"/>
+                                                    <Separator Background="{StaticResource BrushBorderStrong}"/>
                                                     <MenuItem Header="Connect Image"
                                                               Tag="Image"
                                                               Click="ConnectMenuItem_Click">
@@ -1035,10 +1035,10 @@
                                                             <Ellipse Width="10" Height="10" Fill="#FF9800"/>
                                                         </MenuItem.Icon>
                                                     </MenuItem>
-                                                    <Separator Background="#555555"/>
+                                                    <Separator Background="{StaticResource BrushBorderStrong}"/>
                                                     <MenuItem Header="Remove Connections"
                                                               Click="RemoveConnectionsMenuItem_Click"/>
-                                                    <Separator Background="#555555"/>
+                                                    <Separator Background="{StaticResource BrushBorderStrong}"/>
                                                     <MenuItem Header="Delete Tool"
                                                               Click="DeleteToolMenuItem_Click"
                                                               Foreground="#FF5252"/>
@@ -1075,7 +1075,7 @@
                                                 </Border>
 
                                                 <!-- Tab Body: Name -->
-                                                <Border Grid.Row="1" Background="#3E3E42"
+                                                <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}"
                                                         Padding="8,5">
                                                     <TextBlock Text="{Binding Name}"
                                                                Foreground="White" FontSize="12"
@@ -1086,8 +1086,8 @@
                                         </Border>
                                         <DataTemplate.Triggers>
                                             <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                <Setter TargetName="ToolOuterBorder" Property="BorderBrush" Value="#0078D4"/>
-                                                <Setter TargetName="TabHeader" Property="Background" Value="#0078D4"/>
+                                                <Setter TargetName="ToolOuterBorder" Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
+                                                <Setter TargetName="TabHeader" Property="Background" Value="{StaticResource BrushAccent}"/>
                                             </DataTrigger>
                                         </DataTemplate.Triggers>
                                     </DataTemplate>
@@ -1104,7 +1104,7 @@
                               HorizontalAlignment="Center" Background="#333333" Cursor="SizeWE"/>
 
                 <!-- Image Display Area - TabControl with 2D/3D views -->
-                <Border Grid.Column="2" Background="#1E1E1E" Margin="5">
+                <Border Grid.Column="2" Background="{StaticResource BrushBgWindow}" Margin="5">
                     <TabControl Background="Transparent" BorderThickness="0" Padding="0">
                         <TabControl.Resources>
                             <Style TargetType="TabItem">
@@ -1127,18 +1127,18 @@
                                             </Border>
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsSelected" Value="True">
-                                                    <Setter TargetName="TabBorder" Property="Background" Value="#1E1E1E"/>
+                                                    <Setter TargetName="TabBorder" Property="Background" Value="{StaticResource BrushBgWindow}"/>
                                                     <Setter Property="Foreground" Value="White"/>
                                                 </Trigger>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter TargetName="TabBorder" Property="Background" Value="#3E3E42"/>
+                                                    <Setter TargetName="TabBorder" Property="Background" Value="{StaticResource BrushBgSurface}"/>
                                                 </Trigger>
                                                 <MultiTrigger>
                                                     <MultiTrigger.Conditions>
                                                         <Condition Property="IsSelected" Value="True"/>
                                                         <Condition Property="IsMouseOver" Value="True"/>
                                                     </MultiTrigger.Conditions>
-                                                    <Setter TargetName="TabBorder" Property="Background" Value="#1E1E1E"/>
+                                                    <Setter TargetName="TabBorder" Property="Background" Value="{StaticResource BrushBgWindow}"/>
                                                 </MultiTrigger>
                                             </ControlTemplate.Triggers>
                                         </ControlTemplate>
@@ -1160,8 +1160,8 @@
                                 <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,5">
                                     <ComboBox ItemsSource="{Binding DisplayModes}"
                                               SelectedItem="{Binding SelectedDisplayMode}"
-                                              Background="#3C3C3C" Foreground="Black"
-                                              BorderBrush="#555555" BorderThickness="1"
+                                              Background="{StaticResource BrushBgSurface}" Foreground="Black"
+                                              BorderBrush="{StaticResource BrushBorderStrong}" BorderThickness="1"
                                               FontSize="12" Padding="8,3" MinWidth="150">
                                         <ComboBox.ItemTemplate>
                                             <DataTemplate>
@@ -1173,8 +1173,8 @@
 
                                     <Button Content="Clear Result"
                                             Command="{Binding ClearResultImageCommand}"
-                                            Background="#3C3C3C" Foreground="White"
-                                            BorderBrush="#555555" BorderThickness="1"
+                                            Background="{StaticResource BrushBgSurface}" Foreground="White"
+                                            BorderBrush="{StaticResource BrushBorderStrong}" BorderThickness="1"
                                             Padding="8,2" Margin="10,0,0,0"
                                             FontSize="11" Cursor="Hand"
                                             Visibility="{Binding IsOriginalImageMode, Converter={StaticResource InverseBoolToVisibility}}"/>
@@ -1210,7 +1210,7 @@
                                         </Grid.RowDefinitions>
 
                                         <TextBlock Grid.Row="0" Text="Run Results"
-                                                   Foreground="#CCCCCC" FontWeight="Bold" FontSize="12"
+                                                   Foreground="{StaticResource BrushTextPrimary}" FontWeight="Bold" FontSize="12"
                                                    Margin="5,5,5,3"/>
 
                                         <DataGrid Grid.Row="1"
@@ -1223,9 +1223,9 @@
                                                   HeadersVisibility="Column"
                                                   GridLinesVisibility="Horizontal"
                                                   HorizontalGridLinesBrush="#444444"
-                                                  Background="#1E1E1E"
+                                                  Background="{StaticResource BrushBgWindow}"
                                                   Foreground="White"
-                                                  BorderBrush="#555555"
+                                                  BorderBrush="{StaticResource BrushBorderStrong}"
                                                   BorderThickness="1"
                                                   RowBackground="#2D2D2D"
                                                   AlternatingRowBackground="#252526"
@@ -1239,7 +1239,7 @@
                                                     <Setter Property="Foreground" Value="#CCCCCC"/>
                                                     <Setter Property="FontWeight" Value="Bold"/>
                                                     <Setter Property="Padding" Value="8,4"/>
-                                                    <Setter Property="BorderBrush" Value="#555555"/>
+                                                    <Setter Property="BorderBrush" Value="{StaticResource BrushBorderStrong}"/>
                                                     <Setter Property="BorderThickness" Value="0,0,1,1"/>
                                                 </Style>
                                             </DataGrid.ColumnHeaderStyle>
@@ -1296,7 +1296,7 @@
 
                         <!-- Depth Map Tab -->
                         <TabItem Header="Depth Map">
-                            <Border Background="#1E1E1E">
+                            <Border Background="{StaticResource BrushBgWindow}">
                                 <Grid>
                                     <!-- Placeholder when no point cloud -->
                                     <StackPanel VerticalAlignment="Center"
@@ -1329,7 +1329,7 @@
 
                         <!-- 3D View Tab -->
                         <TabItem Header="Point Cloud">
-                            <Border Background="#1E1E1E">
+                            <Border Background="{StaticResource BrushBgWindow}">
                                 <Grid>
                                     <!-- PointDrawingCanvas with 3D viewer -->
                                     <controls:PointDrawingCanvas x:Name="PointCanvasControl"
@@ -1357,7 +1357,7 @@
                     </Grid.RowDefinitions>
 
                     <TextBlock Grid.Row="0" Text="Tool Settings"
-                               Foreground="#CCCCCC" FontWeight="Bold" FontSize="14"
+                               Foreground="{StaticResource BrushTextPrimary}" FontWeight="Bold" FontSize="14"
                                Margin="10,10,10,5"/>
 
                     <ts:ToolSettingsView x:Name="ToolSettingsControl" Grid.Row="1"
@@ -1367,7 +1367,7 @@
         </Grid>
 
         <!-- Status Bar -->
-        <Border Grid.Row="3" Background="#2D2D30" BorderBrush="#3D3D3D" BorderThickness="0,1,0,0" Padding="10,5">
+        <Border Grid.Row="3" Background="{StaticResource BrushBgCard}" BorderBrush="#3D3D3D" BorderThickness="0,1,0,0" Padding="10,5">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
