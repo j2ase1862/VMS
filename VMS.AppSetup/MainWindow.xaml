@@ -4,13 +4,22 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         xmlns:converters="clr-namespace:VMS.AppSetup.Converters"
         mc:Ignorable="d"
         Title="BODA Vision System Setup"
         Width="960" Height="820"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
-        Background="#1E1E1E">
+        WindowStyle="None"
+        Background="{StaticResource BrushBgWindow}"
+        TextOptions.TextFormattingMode="Display">
+
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="80" CornerRadius="0"
+                            GlassFrameThickness="0" ResizeBorderThickness="0"
+                            UseAeroCaptionButtons="False"/>
+    </shell:WindowChrome.WindowChrome>
 
     <Window.Resources>
         <converters:PageToVisibilityConverter x:Key="PageConverter"/>
@@ -85,26 +94,8 @@
             </Style.Triggers>
         </Style>
 
-        <!-- TextBox Style -->
-        <Style x:Key="InputStyle" TargetType="TextBox">
-            <Setter Property="Background" Value="#3E3E42"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderBrush" Value="#555555"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="10,8"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="CaretBrush" Value="White"/>
-        </Style>
-
-        <!-- ComboBox Style -->
-        <Style x:Key="ComboStyle" TargetType="ComboBox">
-            <Setter Property="Background" Value="#3E3E42"/>
-            <Setter Property="Foreground" Value="Black"/>
-            <Setter Property="BorderBrush" Value="#555555"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="10,8"/>
-            <Setter Property="FontSize" Value="14"/>
-        </Style>
+        <!-- TextBox/ComboBox 는 WindowDarkTextBox / WindowDarkComboBox 직접 사용 —
+             모든 입력 컨트롤이 같은 컴팩트 사이즈(약 24-26px)로 통일. -->
 
         <!-- Label Style -->
         <Style x:Key="LabelStyle" TargetType="TextBlock">
@@ -121,11 +112,12 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Header -->
-        <Border Grid.Row="0" Background="#252526" Padding="30,20">
+        <!-- Header — chromeless 윈도우의 드래그 영역 + 페이지 타이틀/Step + 윈도우 컨트롤 -->
+        <Border Grid.Row="0" Background="{StaticResource BrushBgTitleBar}" Padding="30,20">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
@@ -133,15 +125,41 @@
                     <TextBlock Text="{Binding PageTitle}"
                                Foreground="#FFD700" FontSize="24" FontWeight="Bold"/>
                     <TextBlock Text="{Binding PageDescription}"
-                               Foreground="#AAAAAA" FontSize="12" Margin="0,8,0,0"
+                               Foreground="{StaticResource BrushTextMuted}" FontSize="12" Margin="0,8,0,0"
                                TextWrapping="Wrap" MaxWidth="550" HorizontalAlignment="Left"/>
                 </StackPanel>
 
                 <!-- Page Indicator -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
-                    <TextBlock Text="Step " Foreground="#888888" FontSize="14"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" Margin="0,4,16,0">
+                    <TextBlock Text="Step " Foreground="{StaticResource BrushTextMuted}" FontSize="14"/>
                     <TextBlock Text="{Binding CurrentPage}" Foreground="#FFD700" FontSize="14" FontWeight="Bold"/>
-                    <TextBlock Text=" of 6" Foreground="#888888" FontSize="14"/>
+                    <TextBlock Text=" of 6" Foreground="{StaticResource BrushTextMuted}" FontSize="14"/>
+                </StackPanel>
+
+                <!-- 윈도우 컨트롤 (최소화 / 닫기 — wizard 는 NoResize 라 최대화 없음).
+                     ResizeMode=NoResize 고정 사이즈(960x820) 라 최대화 의미 없음. -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
+                    <Button Style="{StaticResource ModernGhostButton}"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                            Command="{x:Static SystemCommands.MinimizeWindowCommand}"
+                            ToolTip="최소화"
+                            Width="32" Height="28" Padding="0">
+                        <TextBlock Text="&#xE921;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="11"
+                                   Foreground="{StaticResource BrushTextSecondary}"/>
+                    </Button>
+
+                    <Button Style="{StaticResource ModernGhostButton}"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                            Command="{x:Static SystemCommands.CloseWindowCommand}"
+                            ToolTip="닫기"
+                            Width="32" Height="28" Padding="0" Margin="4,0,0,0">
+                        <TextBlock Text="&#xE8BB;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="11"
+                                   Foreground="{StaticResource BrushDanger}"/>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>
@@ -166,11 +184,11 @@
                     <StackPanel MaxWidth="500" VerticalAlignment="Top">
                         <TextBlock Text="Application Name" Style="{StaticResource LabelStyle}"/>
                         <TextBox Text="{Binding ApplicationName, UpdateSourceTrigger=PropertyChanged}"
-                                 Style="{StaticResource InputStyle}" Margin="0,0,0,20"/>
+                                 Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,20"/>
 
                         <TextBlock Text="System IP Address" Style="{StaticResource LabelStyle}"/>
                         <TextBox Text="{Binding SystemIpAddress, UpdateSourceTrigger=PropertyChanged}"
-                                 Style="{StaticResource InputStyle}"/>
+                                 Style="{StaticResource WindowDarkTextBox}"/>
 
                         <TextBlock Text="This is the IP address of the machine vision system PC."
                                    Foreground="#666666" FontSize="11" Margin="0,5,0,0"/>
@@ -183,19 +201,19 @@
 
                                 <TextBlock Text="Client Index" Style="{StaticResource LabelStyle}"/>
                                 <TextBox Text="{Binding ClientIndex, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource InputStyle}" Margin="0,0,0,5"/>
+                                         Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,5"/>
                                 <TextBlock Text="BODA.VMS.Web에서 이 클라이언트를 식별하는 고유 번호입니다."
                                            Foreground="#666666" FontSize="11" Margin="0,0,0,15"/>
 
                                 <TextBlock Text="Web Server URL" Style="{StaticResource LabelStyle}"/>
                                 <TextBox Text="{Binding WebServerUrl, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource InputStyle}" Margin="0,0,0,5"/>
+                                         Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,5"/>
                                 <TextBlock Text="BODA.VMS.Web 서버 주소 (Heartbeat, 파라미터 동기화)"
                                            Foreground="#666666" FontSize="11" Margin="0,0,0,15"/>
 
                                 <TextBlock Text="Vision Server URL" Style="{StaticResource LabelStyle}"/>
                                 <TextBox Text="{Binding VisionServerUrl, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource InputStyle}" Margin="0,0,0,5"/>
+                                         Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,5"/>
                                 <TextBlock Text="VisionServer API 주소 (클라이언트 자동 등록)"
                                            Foreground="#666666" FontSize="11"/>
                             </StackPanel>
@@ -273,17 +291,13 @@
                                                                    Foreground="#888888" FontSize="12" VerticalAlignment="Center"/>
                                                         <TextBox Grid.Row="0" Grid.Column="1"
                                                                  Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
-                                                                 Background="#3E3E42" Foreground="White"
-                                                                 BorderBrush="#555555" BorderThickness="1"
-                                                                 Padding="6,4" FontSize="12" Margin="0,0,0,6"/>
+                                                                 Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,6"/>
 
                                                         <TextBlock Grid.Row="1" Grid.Column="0" Text="IP:"
                                                                    Foreground="#888888" FontSize="12" VerticalAlignment="Center"/>
                                                         <TextBox Grid.Row="1" Grid.Column="1"
                                                                  Text="{Binding IpAddress, UpdateSourceTrigger=PropertyChanged}"
-                                                                 Background="#3E3E42" Foreground="White"
-                                                                 BorderBrush="#555555" BorderThickness="1"
-                                                                 Padding="6,4" FontSize="12"/>
+                                                                 Style="{StaticResource WindowDarkTextBox}"/>
                                                     </Grid>
 
                                                     <!-- Camera Type -->
@@ -292,8 +306,7 @@
                                                               SelectedItem="{Binding CameraType}"
                                                               Width="110" Margin="10,0"
                                                               VerticalAlignment="Center"
-                                                              Style="{StaticResource ComboStyle}"
-                                                              Padding="8,6" FontSize="12"/>
+                                                              Style="{StaticResource WindowDarkComboBox}"/>
 
                                                     <!-- Manufacturer -->
                                                     <ComboBox Grid.Column="3"
@@ -301,8 +314,7 @@
                                                               SelectedItem="{Binding Manufacturer}"
                                                               Width="110" Margin="0,0,10,0"
                                                               VerticalAlignment="Center"
-                                                              Style="{StaticResource ComboStyle}"
-                                                              Padding="8,6" FontSize="12"/>
+                                                              Style="{StaticResource WindowDarkComboBox}"/>
 
                                                     <!-- Remove Button -->
                                                     <Button Grid.Column="4" Content="✕"
@@ -336,16 +348,12 @@
                                                         <StackPanel Grid.Column="0">
                                                             <TextBlock Text="Exposure (μs)" Foreground="#888888" FontSize="11" Margin="0,0,0,3"/>
                                                             <TextBox Text="{Binding Exposure, UpdateSourceTrigger=PropertyChanged}"
-                                                                     Background="#3E3E42" Foreground="White"
-                                                                     BorderBrush="#555555" BorderThickness="1"
-                                                                     Padding="6,4" FontSize="12"/>
+                                                                     Style="{StaticResource WindowDarkTextBox}"/>
                                                         </StackPanel>
                                                         <StackPanel Grid.Column="2">
                                                             <TextBlock Text="Gain" Foreground="#888888" FontSize="11" Margin="0,0,0,3"/>
                                                             <TextBox Text="{Binding Gain, UpdateSourceTrigger=PropertyChanged}"
-                                                                     Background="#3E3E42" Foreground="White"
-                                                                     BorderBrush="#555555" BorderThickness="1"
-                                                                     Padding="6,4" FontSize="12"/>
+                                                                     Style="{StaticResource WindowDarkTextBox}"/>
                                                         </StackPanel>
                                                     </Grid>
                                                 </Border>
@@ -367,30 +375,23 @@
                                                             <TextBlock Text="Trigger" Foreground="#888888" FontSize="11" Margin="0,0,0,3"/>
                                                             <ComboBox ItemsSource="{Binding DataContext.TriggerSources, RelativeSource={RelativeSource AncestorType=Window}}"
                                                                       SelectedItem="{Binding TriggerSource}"
-                                                                      Style="{StaticResource ComboStyle}"
-                                                                      Padding="6,4" FontSize="12"/>
+                                                                      Style="{StaticResource WindowDarkComboBox}"/>
                                                         </StackPanel>
                                                         <StackPanel Grid.Column="2">
                                                             <TextBlock Text="Line Rate (Hz)" Foreground="#888888" FontSize="11" Margin="0,0,0,3"/>
                                                             <TextBox Text="{Binding LineRate, UpdateSourceTrigger=PropertyChanged}"
-                                                                     Background="#3E3E42" Foreground="White"
-                                                                     BorderBrush="#555555" BorderThickness="1"
-                                                                     Padding="6,4" FontSize="12"/>
+                                                                     Style="{StaticResource WindowDarkTextBox}"/>
                                                         </StackPanel>
                                                         <StackPanel Grid.Column="4">
                                                             <TextBlock Text="Scan Length" Foreground="#888888" FontSize="11" Margin="0,0,0,3"/>
                                                             <TextBox Text="{Binding ScanLength, UpdateSourceTrigger=PropertyChanged}"
-                                                                     Background="#3E3E42" Foreground="White"
-                                                                     BorderBrush="#555555" BorderThickness="1"
-                                                                     Padding="6,4" FontSize="12"/>
+                                                                     Style="{StaticResource WindowDarkTextBox}"/>
                                                         </StackPanel>
                                                         <StackPanel Grid.Column="6"
                                                                     Visibility="{Binding ShowEncoderResolution, Converter={StaticResource BoolToVisConverter}}">
                                                             <TextBlock Text="Encoder Res (P/mm)" Foreground="#888888" FontSize="11" Margin="0,0,0,3"/>
                                                             <TextBox Text="{Binding EncoderResolution, UpdateSourceTrigger=PropertyChanged}"
-                                                                     Background="#3E3E42" Foreground="White"
-                                                                     BorderBrush="#555555" BorderThickness="1"
-                                                                     Padding="6,4" FontSize="12"/>
+                                                                     Style="{StaticResource WindowDarkTextBox}"/>
                                                         </StackPanel>
                                                     </Grid>
                                                 </Border>
@@ -412,29 +413,22 @@
                                                             <TextBlock Text="Capture Mode" Foreground="#888888" FontSize="11" Margin="0,0,0,3"/>
                                                             <ComboBox ItemsSource="{Binding DataContext.CaptureModes3D, RelativeSource={RelativeSource AncestorType=Window}}"
                                                                       SelectedItem="{Binding CaptureMode}"
-                                                                      Style="{StaticResource ComboStyle}"
-                                                                      Padding="6,4" FontSize="12"/>
+                                                                      Style="{StaticResource WindowDarkComboBox}"/>
                                                         </StackPanel>
                                                         <StackPanel Grid.Column="2">
                                                             <TextBlock Text="Filter Strength" Foreground="#888888" FontSize="11" Margin="0,0,0,3"/>
                                                             <TextBox Text="{Binding FilterStrength, UpdateSourceTrigger=PropertyChanged}"
-                                                                     Background="#3E3E42" Foreground="White"
-                                                                     BorderBrush="#555555" BorderThickness="1"
-                                                                     Padding="6,4" FontSize="12"/>
+                                                                     Style="{StaticResource WindowDarkTextBox}"/>
                                                         </StackPanel>
                                                         <StackPanel Grid.Column="4">
                                                             <TextBlock Text="Z Min (mm)" Foreground="#888888" FontSize="11" Margin="0,0,0,3"/>
                                                             <TextBox Text="{Binding ZRangeMin, UpdateSourceTrigger=PropertyChanged}"
-                                                                     Background="#3E3E42" Foreground="White"
-                                                                     BorderBrush="#555555" BorderThickness="1"
-                                                                     Padding="6,4" FontSize="12"/>
+                                                                     Style="{StaticResource WindowDarkTextBox}"/>
                                                         </StackPanel>
                                                         <StackPanel Grid.Column="6">
                                                             <TextBlock Text="Z Max (mm)" Foreground="#888888" FontSize="11" Margin="0,0,0,3"/>
                                                             <TextBox Text="{Binding ZRangeMax, UpdateSourceTrigger=PropertyChanged}"
-                                                                     Background="#3E3E42" Foreground="White"
-                                                                     BorderBrush="#555555" BorderThickness="1"
-                                                                     Padding="6,4" FontSize="12"/>
+                                                                     Style="{StaticResource WindowDarkTextBox}"/>
                                                         </StackPanel>
                                                     </Grid>
                                                 </Border>
@@ -456,8 +450,7 @@
                                                                 <TextBlock Text="Board Type" Foreground="#888888" FontSize="11" Margin="0,0,0,3"/>
                                                                 <ComboBox Text="{Binding BoardType}"
                                                                           IsEditable="True" IsReadOnly="False"
-                                                                          Style="{StaticResource ComboStyle}"
-                                                                          Padding="6,4" FontSize="12">
+                                                                          Style="{StaticResource WindowDarkComboBox}">
                                                                     <sys:String>SOLIOS</sys:String>
                                                                     <sys:String>RAPIXO</sys:String>
                                                                     <sys:String>RADIENT</sys:String>
@@ -472,16 +465,12 @@
                                                             <StackPanel Grid.Column="2">
                                                                 <TextBlock Text="Board #" Foreground="#888888" FontSize="11" Margin="0,0,0,3"/>
                                                                 <TextBox Text="{Binding BoardNumber, UpdateSourceTrigger=PropertyChanged}"
-                                                                         Background="#3E3E42" Foreground="White"
-                                                                         BorderBrush="#555555" BorderThickness="1"
-                                                                         Padding="6,4" FontSize="12"/>
+                                                                         Style="{StaticResource WindowDarkTextBox}"/>
                                                             </StackPanel>
                                                             <StackPanel Grid.Column="4">
                                                                 <TextBlock Text="Digitizer #" Foreground="#888888" FontSize="11" Margin="0,0,0,3"/>
                                                                 <TextBox Text="{Binding DigitizerNumber, UpdateSourceTrigger=PropertyChanged}"
-                                                                         Background="#3E3E42" Foreground="White"
-                                                                         BorderBrush="#555555" BorderThickness="1"
-                                                                         Padding="6,4" FontSize="12"/>
+                                                                         Style="{StaticResource WindowDarkTextBox}"/>
                                                             </StackPanel>
                                                         </Grid>
                                                         <StackPanel Margin="0,6,0,0">
@@ -493,9 +482,7 @@
                                                                 </Grid.ColumnDefinitions>
                                                                 <TextBox Grid.Column="0"
                                                                          Text="{Binding DcfFilePath, UpdateSourceTrigger=PropertyChanged}"
-                                                                         Background="#3E3E42" Foreground="White"
-                                                                         BorderBrush="#555555" BorderThickness="1"
-                                                                         Padding="6,4" FontSize="12"/>
+                                                                         Style="{StaticResource WindowDarkTextBox}"/>
                                                                 <Button Grid.Column="1" Content="..." Margin="4,0,0,0"
                                                                         Width="32" FontWeight="Bold"
                                                                         Click="BrowseDcfFile_Click"
@@ -565,12 +552,12 @@
                                     <StackPanel Grid.Column="0">
                                         <TextBlock Text="Robot IP Address" Style="{StaticResource LabelStyle}"/>
                                         <TextBox Text="{Binding RobotIpAddress, UpdateSourceTrigger=PropertyChanged}"
-                                                 Style="{StaticResource InputStyle}"/>
+                                                 Style="{StaticResource WindowDarkTextBox}"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="2">
                                         <TextBlock Text="Port" Style="{StaticResource LabelStyle}"/>
                                         <TextBox Text="{Binding RobotPort, UpdateSourceTrigger=PropertyChanged}"
-                                                 Style="{StaticResource InputStyle}"/>
+                                                 Style="{StaticResource WindowDarkTextBox}"/>
                                     </StackPanel>
                                 </Grid>
                             </Border>
@@ -606,12 +593,12 @@
                                             <StackPanel Grid.Column="0">
                                                 <TextBlock Text="Unit ID" Foreground="#999" FontSize="11" Margin="0,0,0,4"/>
                                                 <TextBox Text="{Binding RobotModbusUnitId, UpdateSourceTrigger=PropertyChanged}"
-                                                         Style="{StaticResource InputStyle}"/>
+                                                         Style="{StaticResource WindowDarkTextBox}"/>
                                             </StackPanel>
                                             <StackPanel Grid.Column="2">
                                                 <TextBlock Text="Pose Start Register" Foreground="#999" FontSize="11" Margin="0,0,0,4"/>
                                                 <TextBox Text="{Binding RobotModbusPoseRegister, UpdateSourceTrigger=PropertyChanged}"
-                                                         Style="{StaticResource InputStyle}"/>
+                                                         Style="{StaticResource WindowDarkTextBox}"/>
                                             </StackPanel>
                                         </Grid>
                                         <TextBlock Text="Holding Register 주소입니다. 기본값 270은 Doosan 표준 TCP 포즈 레지스터입니다."
@@ -626,7 +613,7 @@
                                 <StackPanel>
                                     <ComboBox ItemsSource="{Binding EulerConventions}"
                                               SelectedItem="{Binding SelectedEulerConvention}"
-                                              Style="{StaticResource ComboStyle}"/>
+                                              Style="{StaticResource WindowDarkComboBox}"/>
                                     <TextBlock Text="로봇 제조사 선택 시 자동으로 설정됩니다. 필요 시 수동 변경 가능합니다."
                                                Foreground="#666666" FontSize="11" Margin="0,6,0,0"/>
                                 </StackPanel>
@@ -682,12 +669,12 @@
                                 <StackPanel>
                                     <TextBlock Text="Polling Interval (ms)" Style="{StaticResource LabelStyle}"/>
                                     <TextBox Text="{Binding PollingIntervalMs, UpdateSourceTrigger=PropertyChanged}"
-                                             Style="{StaticResource InputStyle}" Margin="0,0,0,10"/>
+                                             Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,10"/>
 
                                     <CheckBox Content="Use Heartbeat" IsChecked="{Binding UseHeartbeat}"
                                               Foreground="White" FontSize="13" Margin="0,0,0,8"/>
                                     <TextBox Text="{Binding HeartbeatAddress, UpdateSourceTrigger=PropertyChanged}"
-                                             Style="{StaticResource InputStyle}" Margin="0,0,0,10"
+                                             Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,10"
                                              IsEnabled="{Binding UseHeartbeat}">
                                         <TextBox.Tag>
                                             <TextBlock Text="Heartbeat Address (e.g. D100)" Foreground="#666666"/>
@@ -706,12 +693,12 @@
                                     <TextBlock Text="Write Mode" Style="{StaticResource LabelStyle}"/>
                                     <ComboBox ItemsSource="{Binding WriteModes}"
                                               SelectedItem="{Binding WriteMode}"
-                                              Style="{StaticResource ComboStyle}" Margin="0,0,0,10"/>
+                                              Style="{StaticResource WindowDarkComboBox}" Margin="0,0,0,10"/>
 
                                     <TextBlock Text="Endian Mode" Style="{StaticResource LabelStyle}"/>
                                     <ComboBox ItemsSource="{Binding EndianModes}"
                                               SelectedItem="{Binding EndianMode}"
-                                              Style="{StaticResource ComboStyle}"/>
+                                              Style="{StaticResource WindowDarkComboBox}"/>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
@@ -723,24 +710,24 @@
                             <TextBlock Text="Communication Type" Style="{StaticResource LabelStyle}"/>
                             <ComboBox ItemsSource="{Binding CommunicationTypes}"
                                       SelectedItem="{Binding SelectedCommunicationType}"
-                                      Style="{StaticResource ComboStyle}" Margin="0,0,0,15"/>
+                                      Style="{StaticResource WindowDarkComboBox}" Margin="0,0,0,15"/>
 
                             <!-- Modbus Unit ID (visible when Modbus selected) -->
                             <StackPanel Visibility="{Binding IsModbusVendor, Converter={StaticResource BoolToVisConverter}}">
                                 <TextBlock Text="Modbus Unit ID (1-255)" Style="{StaticResource LabelStyle}"/>
                                 <TextBox Text="{Binding ModbusUnitId, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource InputStyle}" Margin="0,0,0,15"/>
+                                         Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,15"/>
                             </StackPanel>
 
                             <!-- Ethernet Settings (visible when NOT Serial) -->
                             <StackPanel Visibility="{Binding IsEthernetMode, Converter={StaticResource BoolToVisConverter}}">
                                 <TextBlock Text="PLC IP Address" Style="{StaticResource LabelStyle}"/>
                                 <TextBox Text="{Binding PlcIpAddress, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource InputStyle}" Margin="0,0,0,15"/>
+                                         Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,15"/>
 
                                 <TextBlock Text="PLC Port" Style="{StaticResource LabelStyle}"/>
                                 <TextBox Text="{Binding PlcPort, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource InputStyle}" Margin="0,0,0,15"/>
+                                         Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,15"/>
                             </StackPanel>
 
                             <!-- Serial Settings (visible when Serial selected) -->
@@ -750,12 +737,12 @@
 
                                 <TextBlock Text="Port Name" Style="{StaticResource LabelStyle}"/>
                                 <TextBox Text="{Binding SerialPortName, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource InputStyle}" Margin="0,0,0,10"/>
+                                         Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,10"/>
 
                                 <TextBlock Text="Baud Rate" Style="{StaticResource LabelStyle}"/>
                                 <ComboBox ItemsSource="{Binding BaudRateOptions}"
                                           SelectedItem="{Binding BaudRate}"
-                                          Style="{StaticResource ComboStyle}" Margin="0,0,0,10"/>
+                                          Style="{StaticResource WindowDarkComboBox}" Margin="0,0,0,10"/>
 
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -767,20 +754,20 @@
                                         <TextBlock Text="Data Bits" Style="{StaticResource LabelStyle}"/>
                                         <ComboBox ItemsSource="{Binding DataBitsOptions}"
                                                   SelectedItem="{Binding DataBits}"
-                                                  Style="{StaticResource ComboStyle}"/>
+                                                  Style="{StaticResource WindowDarkComboBox}"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="2">
                                         <TextBlock Text="Parity" Style="{StaticResource LabelStyle}"/>
                                         <ComboBox ItemsSource="{Binding SerialParities}"
                                                   SelectedItem="{Binding Parity}"
-                                                  Style="{StaticResource ComboStyle}"/>
+                                                  Style="{StaticResource WindowDarkComboBox}"/>
                                     </StackPanel>
                                 </Grid>
 
                                 <TextBlock Text="Stop Bits" Style="{StaticResource LabelStyle}" Margin="0,10,0,6"/>
                                 <ComboBox ItemsSource="{Binding SerialStopBitsValues}"
                                           SelectedItem="{Binding StopBits}"
-                                          Style="{StaticResource ComboStyle}"/>
+                                          Style="{StaticResource WindowDarkComboBox}"/>
                             </StackPanel>
                         </StackPanel>
                     </Grid>
@@ -849,16 +836,16 @@
                                     <TextBlock Text="제조사 (Vendor)" Style="{StaticResource LabelStyle}"/>
                                     <ComboBox ItemsSource="{Binding DataContext.IoBoardVendorValues, RelativeSource={RelativeSource AncestorType=Window}}"
                                               SelectedItem="{Binding Vendor, Mode=TwoWay}"
-                                              Style="{StaticResource ComboStyle}" Margin="0,0,0,12"/>
+                                              Style="{StaticResource WindowDarkComboBox}" Margin="0,0,0,12"/>
 
                                     <TextBlock Text="모델 (예: PCI-7432, PCI-1716)" Style="{StaticResource LabelStyle}"/>
                                     <TextBox Text="{Binding Model, UpdateSourceTrigger=PropertyChanged}"
-                                             Style="{StaticResource InputStyle}" Margin="0,0,0,12"/>
+                                             Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,12"/>
 
                                     <TextBlock Text="디바이스 ID (시퀀스 노드에서 참조할 식별자)"
                                                Style="{StaticResource LabelStyle}"/>
                                     <TextBox Text="{Binding DeviceId, UpdateSourceTrigger=PropertyChanged}"
-                                             Style="{StaticResource InputStyle}" Margin="0,0,0,12"/>
+                                             Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,12"/>
 
                                     <Grid Margin="0,0,0,12">
                                         <Grid.ColumnDefinitions>
@@ -869,17 +856,17 @@
                                         <StackPanel Grid.Column="0" Margin="0,0,6,0">
                                             <TextBlock Text="Board ID" Style="{StaticResource LabelStyle}"/>
                                             <TextBox Text="{Binding BoardId, UpdateSourceTrigger=PropertyChanged}"
-                                                     Style="{StaticResource InputStyle}"/>
+                                                     Style="{StaticResource WindowDarkTextBox}"/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Margin="3,0">
                                             <TextBlock Text="Input 채널 수" Style="{StaticResource LabelStyle}"/>
                                             <TextBox Text="{Binding InputChannelCount, UpdateSourceTrigger=PropertyChanged}"
-                                                     Style="{StaticResource InputStyle}"/>
+                                                     Style="{StaticResource WindowDarkTextBox}"/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="2" Margin="6,0,0,0">
                                             <TextBlock Text="Output 채널 수" Style="{StaticResource LabelStyle}"/>
                                             <TextBox Text="{Binding OutputChannelCount, UpdateSourceTrigger=PropertyChanged}"
-                                                     Style="{StaticResource InputStyle}"/>
+                                                     Style="{StaticResource WindowDarkTextBox}"/>
                                         </StackPanel>
                                     </Grid>
 
@@ -889,7 +876,7 @@
 
                                     <TextBlock Text="설명 (선택)" Style="{StaticResource LabelStyle}"/>
                                     <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
-                                             Style="{StaticResource InputStyle}" Margin="0,0,0,12"/>
+                                             Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,12"/>
 
                                     <Border Background="#1E3A5F" CornerRadius="4" Padding="10" Margin="0,12,0,0">
                                         <TextBlock Foreground="#A0D0F0" FontSize="11" TextWrapping="Wrap">

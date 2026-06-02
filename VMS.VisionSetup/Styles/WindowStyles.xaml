@@ -161,8 +161,9 @@
         <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorderSubtle}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Padding" Value="8,3"/>
+        <Setter Property="Padding" Value="8,0"/>
         <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Height" Value="24"/>
         <Setter Property="CaretBrush" Value="White"/>
         <Setter Property="SelectionBrush" Value="{StaticResource BrushAccent}"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -233,9 +234,9 @@
         <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorderSubtle}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Padding" Value="8,3"/>
+        <Setter Property="Padding" Value="8,0"/>
         <Setter Property="FontSize" Value="12"/>
-        <Setter Property="MinHeight" Value="26"/>
+        <Setter Property="Height" Value="24"/>
         <Setter Property="SnapsToDevicePixels" Value="True"/>
         <Setter Property="ItemContainerStyle" Value="{StaticResource WindowDarkComboBoxItem}"/>
         <Setter Property="Template">
@@ -944,9 +945,9 @@
         <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorderSubtle}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Padding" Value="8,3"/>
+        <Setter Property="Padding" Value="8,0"/>
         <Setter Property="FontSize" Value="12"/>
-        <Setter Property="MinHeight" Value="26"/>
+        <Setter Property="Height" Value="24"/>
         <Setter Property="IsEditable" Value="True"/>
         <Setter Property="SnapsToDevicePixels" Value="True"/>
         <Setter Property="ItemContainerStyle" Value="{StaticResource WindowDarkComboBoxItem}"/>
