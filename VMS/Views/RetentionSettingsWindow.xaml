@@ -6,6 +6,7 @@
         Title="Retention Settings"
         Width="760" Height="780"
         MinWidth="680" MinHeight="540"
+        Style="{x:Null}"
         WindowStyle="None"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource BrushBgWindow}"

@@ -6,6 +6,7 @@
         Background="Transparent"
         SizeToContent="Height"
         Width="460"
+        Style="{x:Null}"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         ShowInTaskbar="False"
