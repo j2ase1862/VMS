@@ -153,11 +153,12 @@
                 </StackPanel>
                 <ComboBox ItemsSource="{conv:EnumValues {x:Type ocr:OcrOutputFormatPreset}}"
                           SelectedItem="{Binding FormatPreset}"
-                          Background="White" Foreground="Black" BorderBrush="#AAAAAA"
+                          Style="{StaticResource WindowDarkComboBox}"
                           Margin="0,0,0,5">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding Converter={StaticResource EnumDesc}}"/>
+                            <TextBlock Text="{Binding Converter={StaticResource EnumDesc}}"
+                                       Foreground="{StaticResource BrushTextPrimary}"/>
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
@@ -165,14 +166,14 @@
                 <!-- 직접 입력 선택 시만 노출. 멀티라인 — 여러 패턴 줄바꿈 구분 -->
                 <StackPanel Visibility="{Binding IsCustomFormat, Converter={StaticResource BoolToVisConverter}}">
                     <TextBlock Text="Custom Patterns (한 줄에 하나)"
-                               Foreground="LightGray" FontSize="12" Margin="0,6,0,2"/>
+                               Foreground="{StaticResource BrushTextMuted}" FontSize="12" Margin="0,6,0,2"/>
                     <TextBox Text="{Binding CustomOutputFormat, UpdateSourceTrigger=PropertyChanged}"
                              AcceptsReturn="True" TextWrapping="NoWrap"
                              VerticalScrollBarVisibility="Auto"
                              MinHeight="60" MaxHeight="120"
                              FontFamily="Consolas"
-                             Background="White" Foreground="Black"
-                             BorderBrush="#AAAAAA" Padding="5,3" Margin="0,0,0,5"/>
+                             Style="{StaticResource WindowDarkTextBox}"
+                             Margin="0,0,0,5"/>
                 </StackPanel>
 
                 <TextBlock Foreground="#999999" FontSize="11" Margin="0,2,0,2">

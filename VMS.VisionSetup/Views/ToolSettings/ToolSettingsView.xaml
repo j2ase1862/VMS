@@ -313,7 +313,8 @@
             <ItemsControl ItemsSource="{Binding PlcMappings}" Margin="0,3,0,3">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Background="White" BorderBrush="#CCCCCC" BorderThickness="1"
+                        <Border Background="{StaticResource BrushBgCard}"
+                                BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="1"
                                 CornerRadius="3" Margin="0,0,0,4" Padding="6,4">
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -330,14 +331,13 @@
 
                                 <!-- Row 0: Key + Remove 버튼 -->
                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="Key"
-                                           Foreground="#555555" FontSize="11"
+                                           Foreground="{StaticResource BrushTextMuted}" FontSize="11"
                                            VerticalAlignment="Center" Margin="0,0,4,2"/>
                                 <ComboBox Grid.Row="0" Grid.Column="1"
                                           ItemsSource="{Binding DataContext.AvailableResultKeys, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                           SelectedItem="{Binding ResultKey, UpdateSourceTrigger=PropertyChanged}"
-                                          Background="White" Foreground="Black"
-                                          BorderBrush="#BBBBBB" BorderThickness="1"
-                                          Padding="4,2" Margin="0,0,0,2"/>
+                                          Style="{StaticResource WindowDarkComboBox}"
+                                          Margin="0,0,0,2"/>
                                 <Button Grid.Row="0" Grid.Column="2" Content="X"
                                         Command="{Binding DataContext.RemovePlcMappingCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}"
@@ -348,19 +348,18 @@
 
                                 <!-- Row 1: Device -->
                                 <TextBlock Grid.Row="1" Grid.Column="0" Text="Device"
-                                           Foreground="#555555" FontSize="11"
+                                           Foreground="{StaticResource BrushTextMuted}" FontSize="11"
                                            VerticalAlignment="Center" Margin="0,2,4,2"/>
                                 <ComboBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
                                           ItemsSource="{Binding DataContext.AvailableDevices, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                           SelectedValuePath="DeviceId"
                                           SelectedValue="{Binding DeviceId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, TargetNullValue=MainPLC, FallbackValue=MainPLC}"
-                                          Background="White" Foreground="Black"
-                                          BorderBrush="#BBBBBB" BorderThickness="1"
-                                          Padding="4,2" Margin="0,2,0,2">
+                                          Style="{StaticResource WindowDarkComboBox}"
+                                          Margin="0,2,0,2">
                                     <ComboBox.ItemTemplate>
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="{Binding DeviceId}"/>
+                                                <TextBlock Text="{Binding DeviceId}" Foreground="{StaticResource BrushTextPrimary}"/>
                                                 <TextBlock Text="{Binding TypeBadge}" Foreground="{StaticResource BrushTextMuted}"
                                                            FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center"/>
                                             </StackPanel>
@@ -370,25 +369,23 @@
 
                                 <!-- Row 2: Address / Channel -->
                                 <TextBlock Grid.Row="2" Grid.Column="0" Text="Address"
-                                           Foreground="#555555" FontSize="11"
+                                           Foreground="{StaticResource BrushTextMuted}" FontSize="11"
                                            VerticalAlignment="Center" Margin="0,2,4,2"/>
                                 <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
                                          Text="{Binding PlcAddress, UpdateSourceTrigger=PropertyChanged}"
-                                         Background="White" Foreground="Black"
-                                         BorderBrush="#BBBBBB" BorderThickness="1"
-                                         Padding="4,2" Margin="0,2,0,2"
+                                         Style="{StaticResource WindowDarkTextBox}"
+                                         Margin="0,2,0,2"
                                          ToolTip="PLC: 어드레스 (예: D100, M100) / IO 보드: 채널 번호 (예: 0, 5)"/>
 
                                 <!-- Row 3: Type -->
                                 <TextBlock Grid.Row="3" Grid.Column="0" Text="Type"
-                                           Foreground="#555555" FontSize="11"
+                                           Foreground="{StaticResource BrushTextMuted}" FontSize="11"
                                            VerticalAlignment="Center" Margin="0,2,4,0"/>
                                 <ComboBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2"
                                           ItemsSource="{Binding DataContext.PlcDataTypes, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                           SelectedItem="{Binding DataType, UpdateSourceTrigger=PropertyChanged}"
-                                          Background="White" Foreground="Black"
-                                          BorderBrush="#BBBBBB" BorderThickness="1"
-                                          Padding="4,2" Margin="0,2,0,0"/>
+                                          Style="{StaticResource WindowDarkComboBox}"
+                                          Margin="0,2,0,0"/>
                             </Grid>
                         </Border>
                     </DataTemplate>
