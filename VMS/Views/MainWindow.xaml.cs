@@ -1,6 +1,9 @@
+using System;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 
 namespace VMS.Views
@@ -10,6 +13,84 @@ namespace VMS.Views
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        /// <summary>
+        /// WindowStyle=None + WindowState=Maximized 조합 시 WPF 기본 동작은 모니터의 *전체*
+        /// 영역(taskbar 포함) 까지 윈도우를 확장하여 작업 표시줄을 가린다. WM_GETMINMAXINFO
+        /// 를 후킹해 maximized 크기를 모니터의 work area (taskbar 제외) 로 강제 제한.
+        ///
+        /// 표준 chromeless WPF 패턴 — DPI 변화 / 다중 모니터 / taskbar 위치(상/하/좌/우) 모두 대응.
+        /// </summary>
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+            var handle = new WindowInteropHelper(this).Handle;
+            HwndSource.FromHwnd(handle)?.AddHook(WindowProc);
+        }
+
+        private static IntPtr WindowProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            const int WM_GETMINMAXINFO = 0x0024;
+            if (msg == WM_GETMINMAXINFO)
+            {
+                AdjustMaximizedClientRect(hwnd, lParam);
+                handled = true;
+            }
+            return IntPtr.Zero;
+        }
+
+        private static void AdjustMaximizedClientRect(IntPtr hwnd, IntPtr lParam)
+        {
+            var mmi = Marshal.PtrToStructure<MINMAXINFO>(lParam);
+            var monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+            if (monitor != IntPtr.Zero)
+            {
+                var info = new MONITORINFO { cbSize = Marshal.SizeOf<MONITORINFO>() };
+                if (GetMonitorInfo(monitor, ref info))
+                {
+                    var work = info.rcWork;
+                    var screen = info.rcMonitor;
+                    mmi.ptMaxPosition.x = Math.Abs(work.left   - screen.left);
+                    mmi.ptMaxPosition.y = Math.Abs(work.top    - screen.top);
+                    mmi.ptMaxSize.x     = Math.Abs(work.right  - work.left);
+                    mmi.ptMaxSize.y     = Math.Abs(work.bottom - work.top);
+                    Marshal.StructureToPtr(mmi, lParam, true);
+                }
+            }
+        }
+
+        private const int MONITOR_DEFAULTTONEAREST = 0x00000002;
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr MonitorFromWindow(IntPtr hwnd, int dwFlags);
+
+        [DllImport("user32.dll")]
+        private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct RECT { public int left, top, right, bottom; }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct POINT { public int x, y; }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct MINMAXINFO
+        {
+            public POINT ptReserved;
+            public POINT ptMaxSize;
+            public POINT ptMaxPosition;
+            public POINT ptMinTrackSize;
+            public POINT ptMaxTrackSize;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct MONITORINFO
+        {
+            public int cbSize;
+            public RECT rcMonitor;
+            public RECT rcWork;
+            public int dwFlags;
         }
 
         /// <summary>
