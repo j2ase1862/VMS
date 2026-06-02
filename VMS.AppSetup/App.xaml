@@ -3,6 +3,13 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:VMS.AppSetup">
     <Application.Resources>
-
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- VMS.VisionSetup 의 다크 디자인 시스템(Indigo/Slate 토큰, WindowDark*
+                     컨트롤, Modern* 버튼)을 csproj 의 Linked Page 로 컴파일해 자체
+                     컴포넌트 경로로 참조. ProjectReference 없이 같은 XAML 소스 공유. -->
+                <ResourceDictionary Source="pack://application:,,,/VMS.AppSetup;component/Styles/WindowStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

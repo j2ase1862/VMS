@@ -21,6 +21,19 @@
     <ProjectReference Include="..\VMS.PLC\VMS.PLC.csproj" />
   </ItemGroup>
 
+  <!-- VMS.VisionSetup 의 다크 디자인 시스템(Indigo/Slate)을 VMS.AppSetup 에서
+       그대로 사용하기 위해 WindowStyles.xaml 을 Linked Page 로 컴파일.
+       - ProjectReference 대신 파일 링크 사용: VisionSetup 의 무거운 어셈블리
+         (OpenCvSharp / HelixToolkit 등) 의존성 회피
+       - 단일 소스 원천 유지: VisionSetup 에서 수정하면 다음 빌드시 자동 반영
+       - 런타임 pack URI: pack://application:,,,/VMS.AppSetup;component/Styles/WindowStyles.xaml -->
+  <ItemGroup>
+    <Page Include="..\VMS.VisionSetup\Styles\WindowStyles.xaml" Link="Styles\WindowStyles.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+
   <!-- After build, copy output to VMS output directory -->
   <Target Name="CopyToVmsOutput" AfterTargets="Build">
     <PropertyGroup>
