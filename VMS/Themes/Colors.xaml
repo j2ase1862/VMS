@@ -17,6 +17,9 @@
 
     <!-- ──────────────── Color 토큰 (ColorAnimation 용) ────────────────
          hover/focus transition 의 Storyboard ColorAnimation To/From 값. -->
+    <Color x:Key="Color.Surface.Deep">#0B1220</Color>
+    <Color x:Key="Color.Surface.Base">#0F172A</Color>
+    <Color x:Key="Color.Surface.Raised">#1E293B</Color>
     <Color x:Key="Color.Surface.Overlay">#334155</Color>
     <Color x:Key="Color.Surface.Divider">#475569</Color>
     <Color x:Key="Color.Primary">#6366F1</Color>

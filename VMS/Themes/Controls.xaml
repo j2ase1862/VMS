@@ -285,9 +285,11 @@
                 <ControlTemplate TargetType="TextBox">
                     <Border x:Name="border"
                             Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="{StaticResource Radius.Sm}">
+                        <Border.BorderBrush>
+                            <SolidColorBrush Color="{StaticResource Color.Surface.Divider}"/>
+                        </Border.BorderBrush>
                         <ScrollViewer x:Name="PART_ContentHost"
                                       Padding="{TemplateBinding Padding}"
                                       VerticalAlignment="Center"
@@ -297,10 +299,44 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Brush.Surface.Overlay}"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="border"
+                                                        Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
+                                                        To="{StaticResource Color.Surface.Overlay}" Duration="0:0:0.12"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="border"
+                                                        Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
+                                                        To="{StaticResource Color.Surface.Divider}" Duration="0:0:0.12"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsFocused" Value="True">
-                            <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Brush.Primary}"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="border"
+                                                        Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
+                                                        To="{StaticResource Color.Primary}" Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="border"
+                                                        Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
+                                                        To="{StaticResource Color.Surface.Divider}" Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.5"/>
@@ -407,7 +443,6 @@
          상태에서 indigo 강조. ToggleButton 은 보이지 않는 클릭 영역으로 전체를
          덮어 화살표 + 텍스트 공간 모두에서 드롭다운 토글. -->
     <Style TargetType="ComboBoxItem">
-        <Setter Property="Background"    Value="Transparent"/>
         <Setter Property="Foreground"    Value="{StaticResource Brush.Text.Primary}"/>
         <Setter Property="Padding"       Value="12,8"/>
         <Setter Property="FontFamily"    Value="{StaticResource Font.Family}"/>
@@ -416,14 +451,32 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ComboBoxItem">
-                    <Border x:Name="bg"
-                            Background="{TemplateBinding Background}"
-                            Padding="{TemplateBinding Padding}">
+                    <Border x:Name="bg" Padding="{TemplateBinding Padding}">
+                        <Border.Background>
+                            <SolidColorBrush Color="{StaticResource Color.Transparent}"/>
+                        </Border.Background>
                         <ContentPresenter VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="bg" Property="Background" Value="{StaticResource Brush.Surface.Overlay}"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="bg"
+                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                        To="{StaticResource Color.Surface.Overlay}" Duration="0:0:0.12"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="bg"
+                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                        To="{StaticResource Color.Transparent}" Duration="0:0:0.12"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="bg" Property="Background" Value="{StaticResource Brush.Primary}"/>
@@ -547,9 +600,11 @@
                 <ControlTemplate TargetType="PasswordBox">
                     <Border x:Name="border"
                             Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="{StaticResource Radius.Sm}">
+                        <Border.BorderBrush>
+                            <SolidColorBrush Color="{StaticResource Color.Surface.Divider}"/>
+                        </Border.BorderBrush>
                         <ScrollViewer x:Name="PART_ContentHost"
                                       Padding="{TemplateBinding Padding}"
                                       VerticalAlignment="Center"
@@ -557,10 +612,44 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Brush.Surface.Overlay}"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="border"
+                                                        Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
+                                                        To="{StaticResource Color.Surface.Overlay}" Duration="0:0:0.12"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="border"
+                                                        Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
+                                                        To="{StaticResource Color.Surface.Divider}" Duration="0:0:0.12"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsFocused" Value="True">
-                            <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Brush.Primary}"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="border"
+                                                        Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
+                                                        To="{StaticResource Color.Primary}" Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="border"
+                                                        Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
+                                                        To="{StaticResource Color.Surface.Divider}" Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.5"/>
@@ -768,9 +857,11 @@
             <Setter.Value>
                 <ControlTemplate TargetType="MenuItem">
                     <Border x:Name="bg"
-                            Background="{TemplateBinding Background}"
                             CornerRadius="{StaticResource Radius.Sm}"
                             Padding="{TemplateBinding Padding}">
+                        <Border.Background>
+                            <SolidColorBrush Color="{StaticResource Color.Transparent}"/>
+                        </Border.Background>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" SharedSizeGroup="Icon"/>
@@ -811,7 +902,24 @@
                             <Setter TargetName="submenuArrow" Property="Visibility" Value="Visible"/>
                         </Trigger>
                         <Trigger Property="IsHighlighted" Value="True">
-                            <Setter TargetName="bg" Property="Background" Value="{StaticResource Brush.Surface.Overlay}"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="bg"
+                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                        To="{StaticResource Color.Surface.Overlay}" Duration="0:0:0.12"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="bg"
+                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                        To="{StaticResource Color.Transparent}" Duration="0:0:0.12"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.5"/>
@@ -879,8 +987,10 @@
                         </Grid.RowDefinitions>
                         <Border x:Name="bg"
                                 Grid.Row="0"
-                                Background="{TemplateBinding Background}"
                                 Padding="{TemplateBinding Padding}">
+                            <Border.Background>
+                                <SolidColorBrush Color="{StaticResource Color.Transparent}"/>
+                            </Border.Background>
                             <ContentPresenter x:Name="header"
                                               ContentSource="Header"
                                               HorizontalAlignment="Center"
@@ -898,7 +1008,24 @@
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="bg" Property="Background" Value="{StaticResource Brush.Surface.Raised}"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="bg"
+                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                        To="{StaticResource Color.Surface.Raised}" Duration="0:0:0.12"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="bg"
+                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                        To="{StaticResource Color.Transparent}" Duration="0:0:0.12"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="bg"        Property="Background" Value="Transparent"/>
