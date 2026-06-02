@@ -627,11 +627,12 @@ namespace VMS
                     return false;
                 }
 
-                MessageBox.Show(
+                // 최초 실행 시점엔 MainWindow 가 아직 생성 전 — owner null.
+                VMS.Views.MessageDialog.Show(
+                    owner: null,
                     "초기 시스템 설정이 필요합니다.\n시스템 설정 마법사를 실행합니다.\n\n설정 완료 후 VMS를 다시 실행해 주세요.",
                     "BODA Vision System - 최초 실행",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                    VMS.Views.MessageDialogKind.Info);
 
                 Process.Start(new ProcessStartInfo
                 {
