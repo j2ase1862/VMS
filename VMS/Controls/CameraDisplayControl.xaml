@@ -119,9 +119,11 @@
                         Background="{StaticResource Brush.Surface.Base}"
                         BorderThickness="0">
                 <TabControl.Resources>
+                    <!-- 카메라 디스플레이 위에 작은 사이즈 탭 — 디폴트 TabItem 스타일을
+                         override 하여 컴팩트한 헤더. 색은 토큰 참조. -->
                     <Style TargetType="TabItem">
-                        <Setter Property="Background" Value="#2D2D2D"/>
-                        <Setter Property="Foreground" Value="#808080"/>
+                        <Setter Property="Background" Value="{StaticResource Brush.Surface.Raised}"/>
+                        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Tertiary}"/>
                         <Setter Property="Padding" Value="8,2"/>
                         <Setter Property="FontSize" Value="11"/>
                         <Setter Property="Template">
@@ -138,11 +140,11 @@
                                     </Border>
                                     <ControlTemplate.Triggers>
                                         <Trigger Property="IsSelected" Value="True">
-                                            <Setter TargetName="TabBorder" Property="Background" Value="#1E1E1E"/>
-                                            <Setter Property="Foreground" Value="White"/>
+                                            <Setter TargetName="TabBorder" Property="Background" Value="{StaticResource Brush.Surface.Base}"/>
+                                            <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}"/>
                                         </Trigger>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="TabBorder" Property="Background" Value="#3D3D3D"/>
+                                            <Setter TargetName="TabBorder" Property="Background" Value="{StaticResource Brush.Surface.Overlay}"/>
                                         </Trigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>

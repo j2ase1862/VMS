@@ -741,6 +741,139 @@
         </Setter>
     </Style>
 
+    <!-- ──────────────── TabControl + TabItem (default) ────────────────
+         탭 본문: Surface.Base. 탭 헤더: 비활성 = Surface.Raised + Text.Tertiary,
+         선택 = Surface.Base + Text.Primary + Primary 하단 강조 보더 (3px). -->
+    <Style TargetType="TabControl">
+        <Setter Property="Background"      Value="{StaticResource Brush.Surface.Base}"/>
+        <Setter Property="Foreground"      Value="{StaticResource Brush.Text.Primary}"/>
+        <Setter Property="BorderBrush"     Value="{StaticResource Brush.Surface.Divider}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding"         Value="0"/>
+        <Setter Property="FontFamily"      Value="{StaticResource Font.Family}"/>
+        <Setter Property="FontSize"        Value="{StaticResource Font.Size.Body}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TabControl">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Border Grid.Row="0"
+                                Background="Transparent"
+                                BorderBrush="{StaticResource Brush.Surface.Divider}"
+                                BorderThickness="0,0,0,1">
+                            <TabPanel x:Name="HeaderPanel"
+                                      IsItemsHost="True"
+                                      Panel.ZIndex="1"
+                                      KeyboardNavigation.TabIndex="1"/>
+                        </Border>
+                        <Border Grid.Row="1"
+                                Background="{TemplateBinding Background}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                BorderBrush="{TemplateBinding BorderBrush}">
+                            <ContentPresenter ContentSource="SelectedContent"/>
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="TabItem">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Tertiary}"/>
+        <Setter Property="Padding"    Value="16,10"/>
+        <Setter Property="FontFamily" Value="{StaticResource Font.Family}"/>
+        <Setter Property="FontSize"   Value="{StaticResource Font.Size.Body}"/>
+        <Setter Property="Cursor"     Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TabItem">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Border x:Name="bg"
+                                Grid.Row="0"
+                                Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter x:Name="header"
+                                              ContentSource="Header"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              RecognizesAccessKey="True"/>
+                        </Border>
+                        <!-- 선택 상태일 때만 보이는 indigo 하단 강조 보더 -->
+                        <Border x:Name="indicator"
+                                Grid.Row="1"
+                                Background="{StaticResource Brush.Primary}"
+                                Height="3"
+                                Margin="6,0"
+                                CornerRadius="2,2,0,0"
+                                Visibility="Collapsed"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="bg" Property="Background" Value="{StaticResource Brush.Surface.Raised}"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="bg"        Property="Background" Value="Transparent"/>
+                            <Setter Property="Foreground"  Value="{StaticResource Brush.Text.Primary}"/>
+                            <Setter Property="FontWeight"  Value="SemiBold"/>
+                            <Setter TargetName="indicator" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ──────────────── GroupBox (default) ────────────────
+         헤더 영역에 작은 라벨, 본문은 Surface.Base + 외곽 보더 + 둥근 모서리. -->
+    <Style TargetType="GroupBox">
+        <Setter Property="Background"      Value="{StaticResource Brush.Surface.Base}"/>
+        <Setter Property="Foreground"      Value="{StaticResource Brush.Text.Primary}"/>
+        <Setter Property="BorderBrush"     Value="{StaticResource Brush.Surface.Divider}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding"         Value="16"/>
+        <Setter Property="FontFamily"      Value="{StaticResource Font.Family}"/>
+        <Setter Property="FontSize"        Value="{StaticResource Font.Size.Body}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="GroupBox">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Border Grid.Row="0"
+                                Background="Transparent"
+                                Padding="4,0,0,6">
+                            <ContentPresenter ContentSource="Header"
+                                              TextBlock.Foreground="{StaticResource Brush.Text.Secondary}"
+                                              TextBlock.FontWeight="SemiBold"
+                                              TextBlock.FontSize="{StaticResource Font.Size.Caption}"/>
+                        </Border>
+                        <Border Grid.Row="1"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="{StaticResource Radius.Md}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter/>
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- Menu 안의 Separator (MenuItem 사이 구분선) -->
     <Style TargetType="Separator" x:Key="{x:Static MenuItem.SeparatorStyleKey}">
         <Setter Property="Background" Value="{StaticResource Brush.Surface.Divider}"/>
