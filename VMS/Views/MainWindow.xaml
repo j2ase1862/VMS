@@ -1,10 +1,29 @@
 <Window x:Class="VMS.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         xmlns:controls="clr-namespace:VMS.Controls"
         Title="{Binding ApplicationTitle}"
         WindowState="Maximized"
-        Background="{StaticResource Brush.Surface.Base}">
+        Background="{StaticResource Brush.Surface.Base}"
+        Style="{x:Null}"
+        WindowStyle="None"
+        AllowsTransparency="False"
+        UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Display">
+    <!--
+        PR #88 의 default Window chrome 을 opt-out (Style=null) — 메인 윈도우는
+        기존 48px 헤더 안에 시스템 컨트롤(최소화/최대화/닫기) 을 통합하여 한 줄로
+        통일된 인상. CaptionHeight=0 + 헤더 Border MouseLeftButtonDown 핸들러로
+        드래그/더블클릭 max 토글 직접 처리.
+    -->
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="0"
+                            ResizeBorderThickness="6"
+                            CornerRadius="0"
+                            GlassFrameThickness="0"
+                            UseAeroCaptionButtons="False"/>
+    </shell:WindowChrome.WindowChrome>
 
     <Window.Resources>
         <!-- Panel animation -->
@@ -48,9 +67,12 @@
         </Grid.RowDefinitions>
 
         <!-- ════════════════════════════════════════════════════════════ -->
-        <!-- Row 0: Header Bar + User Info -->
+        <!-- Row 0: Header Bar + User Info (시스템 컨트롤 통합 — chromeless drag) -->
         <!-- ════════════════════════════════════════════════════════════ -->
-        <Border Grid.Row="0" Background="{StaticResource Brush.Surface.Raised}">
+        <Border Grid.Row="0"
+                Background="{StaticResource Brush.Surface.Raised}"
+                MouseLeftButtonDown="HeaderBar_MouseLeftButtonDown"
+                Cursor="Arrow">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -489,11 +511,44 @@
 
                     <Button Style="{StaticResource IconButton}"
                             Command="{Binding ExitApplicationCommand}"
-                            ToolTip="Exit">
+                            ToolTip="Exit Application">
                         <TextBlock Text="&#xE8BB;"
                                    FontFamily="Segoe MDL2 Assets"
                                    FontSize="16"
                                    Foreground="{StaticResource Brush.Danger}"/>
+                    </Button>
+
+                    <!-- 윈도우 컨트롤 (최소화 / 최대화 토글) — 종료는 좌측 Exit 버튼이 담당.
+                         Segoe MDL2 표준 글리프(ChromeMinimize/Maximize/Restore) +
+                         IconButton 베이스로 사이드 패널 다른 IconButton 들과 톤 통일. -->
+                    <Button Style="{StaticResource IconButton}"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                            Command="{x:Static SystemCommands.MinimizeWindowCommand}"
+                            ToolTip="최소화">
+                        <TextBlock Text="&#xE921;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="14"
+                                   Foreground="{StaticResource Brush.Text.Secondary}"/>
+                    </Button>
+
+                    <Button Style="{StaticResource IconButton}"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                            Click="MaxRestoreButton_Click"
+                            ToolTip="최대화/복원">
+                        <TextBlock FontFamily="Segoe MDL2 Assets"
+                                   FontSize="14"
+                                   Foreground="{StaticResource Brush.Text.Secondary}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Text" Value="&#xE922;"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding WindowState, RelativeSource={RelativeSource AncestorType=Window}}" Value="Maximized">
+                                            <Setter Property="Text" Value="&#xE923;"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </Button>
                 </StackPanel>
             </Grid>
