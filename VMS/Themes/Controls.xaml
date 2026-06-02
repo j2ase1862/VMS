@@ -27,9 +27,8 @@
     </Style>
 
     <!-- ──────────────── ModernButton ────────────────
-         Primary action — 채워진 강조색 버튼. -->
+         Primary action — 채워진 강조색 버튼. hover 시 0.15s ease 색 전환. -->
     <Style x:Key="ModernButton" TargetType="Button">
-        <Setter Property="Background"      Value="{StaticResource Brush.Primary}"/>
         <Setter Property="Foreground"      Value="{StaticResource Brush.Text.OnPrimary}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Padding"         Value="16,10"/>
@@ -39,15 +38,38 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="border"
-                            Background="{TemplateBinding Background}"
+                    <!-- inline SolidColorBrush 로 Background 정의 — ColorAnimation 대상.
+                         TemplateBinding 으로 가져온 shared Brush 는 변경 불가. -->
+                    <Border x:Name="bg"
                             CornerRadius="{StaticResource Radius.Sm}"
                             Padding="{TemplateBinding Padding}">
+                        <Border.Background>
+                            <SolidColorBrush Color="{StaticResource Color.Primary}"/>
+                        </Border.Background>
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="{StaticResource Brush.Primary.Dark}"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="bg"
+                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                        To="{StaticResource Color.Primary.Dark}"
+                                                        Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="bg"
+                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                        To="{StaticResource Color.Primary}"
+                                                        Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.45"/>
@@ -59,10 +81,8 @@
     </Style>
 
     <!-- ──────────────── Button.Subtle ────────────────
-         배경이 Surface 와 동일하나 hover 시 살짝 밝아짐. 사이드 패널의 secondary
-         action(예: Sync Parameters, Check for updates) 에 적합. -->
+         배경이 Surface 와 동일하나 hover 시 살짝 밝아짐. 0.15s 부드러운 전환. -->
     <Style x:Key="Button.Subtle" TargetType="Button">
-        <Setter Property="Background"      Value="{StaticResource Brush.Surface.Overlay}"/>
         <Setter Property="Foreground"      Value="{StaticResource Brush.Text.Primary}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Padding"         Value="16,10"/>
@@ -72,15 +92,36 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="border"
-                            Background="{TemplateBinding Background}"
+                    <Border x:Name="bg"
                             CornerRadius="{StaticResource Radius.Sm}"
                             Padding="{TemplateBinding Padding}">
+                        <Border.Background>
+                            <SolidColorBrush Color="{StaticResource Color.Surface.Overlay}"/>
+                        </Border.Background>
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="{StaticResource Brush.Surface.Divider}"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="bg"
+                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                        To="{StaticResource Color.Surface.Divider}"
+                                                        Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="bg"
+                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                        To="{StaticResource Color.Surface.Overlay}"
+                                                        Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.45"/>
@@ -92,9 +133,8 @@
     </Style>
 
     <!-- ──────────────── Button.Badge ────────────────
-         경고색 배경의 강조 배지(예: "새 버전 v1.2.0"). -->
+         경고색 배경의 강조 배지(예: "새 버전 v1.2.0"). 0.15s 부드러운 전환. -->
     <Style x:Key="Button.Badge" TargetType="Button">
-        <Setter Property="Background"      Value="{StaticResource Brush.Warning}"/>
         <Setter Property="Foreground"      Value="{StaticResource Brush.Text.OnWarning}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Padding"         Value="16,10"/>
@@ -105,15 +145,36 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="border"
-                            Background="{TemplateBinding Background}"
+                    <Border x:Name="bg"
                             CornerRadius="{StaticResource Radius.Sm}"
                             Padding="{TemplateBinding Padding}">
+                        <Border.Background>
+                            <SolidColorBrush Color="{StaticResource Color.Warning}"/>
+                        </Border.Background>
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="#D97706"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="bg"
+                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                        To="{StaticResource Color.Warning.Hover}"
+                                                        Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="bg"
+                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                        To="{StaticResource Color.Warning}"
+                                                        Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -122,9 +183,8 @@
     </Style>
 
     <!-- ──────────────── IconButton ────────────────
-         Toolbar/inline 아이콘 액션. Transparent 배경, hover 시 옅은 강조. -->
+         Toolbar/inline 아이콘 액션. Transparent → Surface.Overlay 부드러운 전환. -->
     <Style x:Key="IconButton" TargetType="Button">
-        <Setter Property="Background"      Value="Transparent"/>
         <Setter Property="Foreground"      Value="{StaticResource Brush.Text.Primary}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Padding"         Value="8"/>
@@ -132,15 +192,36 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="border"
-                            Background="{TemplateBinding Background}"
+                    <Border x:Name="bg"
                             CornerRadius="{StaticResource Radius.Sm}"
                             Padding="{TemplateBinding Padding}">
+                        <Border.Background>
+                            <SolidColorBrush Color="{StaticResource Color.Transparent}"/>
+                        </Border.Background>
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="{StaticResource Brush.Surface.Overlay}"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="bg"
+                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                        To="{StaticResource Color.Surface.Overlay}"
+                                                        Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="bg"
+                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                        To="{StaticResource Color.Transparent}"
+                                                        Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
