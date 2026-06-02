@@ -6,6 +6,7 @@
         Title="Backup / Restore"
         Width="760" Height="600"
         MinWidth="640" MinHeight="480"
+        Style="{x:Null}"
         WindowStyle="None"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource BrushBgWindow}"

@@ -5,6 +5,7 @@
         xmlns:c="clr-namespace:VMS.VisionSetup.Views.Common;assembly=VMS.VisionSetup"
         Title="Support Package Export"
         Width="720" Height="620"
+        Style="{x:Null}"
         WindowStyle="None"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource BrushBgWindow}"

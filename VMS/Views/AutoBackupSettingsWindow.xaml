@@ -5,6 +5,7 @@
         xmlns:c="clr-namespace:VMS.VisionSetup.Views.Common;assembly=VMS.VisionSetup"
         Title="Auto Backup Settings"
         Width="680" Height="560"
+        Style="{x:Null}"
         WindowStyle="None"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource BrushBgWindow}"
