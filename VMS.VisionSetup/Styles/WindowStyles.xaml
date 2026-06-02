@@ -80,6 +80,7 @@
 
     <SolidColorBrush x:Key="BrushAccent" Color="{StaticResource ColorAccent}"/>
     <SolidColorBrush x:Key="BrushAccentHover" Color="{StaticResource ColorAccentHover}"/>
+    <SolidColorBrush x:Key="BrushAccentPressed" Color="{StaticResource ColorAccentPressed}"/>
     <SolidColorBrush x:Key="BrushSuccess" Color="{StaticResource ColorSuccess}"/>
     <SolidColorBrush x:Key="BrushSuccessSoft" Color="{StaticResource ColorSuccessSoft}"/>
     <SolidColorBrush x:Key="BrushWarning" Color="{StaticResource ColorWarning}"/>
