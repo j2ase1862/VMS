@@ -13,6 +13,28 @@ namespace VMS.Views
         }
 
         /// <summary>
+        /// 헤더 바 마우스 핸들러 — WindowChrome.CaptionHeight=0 이라 캡션 영역이 없으므로
+        /// 헤더 Border 에 직접 드래그 / 더블클릭(최대화 토글) 동작 구현.
+        /// 단일 클릭 + 드래그 → DragMove. 더블 클릭 → Maximized ↔ Normal 토글.
+        /// 자식 클릭 가능한 컨트롤(버튼 / ToggleButton 등) 은 이벤트가 핸들 처리되어 도달하지 않음.
+        /// </summary>
+        private void HeaderBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton != MouseButton.Left) return;
+
+            if (e.ClickCount == 2)
+            {
+                WindowState = WindowState == WindowState.Maximized
+                    ? WindowState.Normal
+                    : WindowState.Maximized;
+                return;
+            }
+
+            try { DragMove(); }
+            catch { /* 마우스가 이미 떼졌거나 등 — 무시 */ }
+        }
+
+        /// <summary>
         /// Admin Tools 드롭다운 — 헤더 버튼 클릭 시 첨부된 ContextMenu 를 버튼 아래에 표시.
         /// 메뉴 항목은 5개 Admin 윈도우 (Audit / Health / Backup / AutoBackup / Support) 진입점.
         /// </summary>
