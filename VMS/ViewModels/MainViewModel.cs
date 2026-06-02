@@ -1344,9 +1344,9 @@ namespace VMS.ViewModels
         {
             if (_parameterSyncService == null)
             {
-                System.Windows.MessageBox.Show(
+                _dialogService.ShowWarning(
                     "Parameter Sync Service is not available.\nCheck WebServerUrl configuration in AppSetup.",
-                    "Sync Parameters", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    "Sync Parameters");
                 return;
             }
 

@@ -8,24 +8,29 @@ namespace VMS.Services
 {
     public class DialogService : IDialogService
     {
+        // 모든 메시지 다이얼로그는 자체 다크 MessageDialog 로 통일 (WPF 기본 흰 MessageBox 대체).
+        // Owner 는 Application.Current.MainWindow — 메인 윈도우 미생성 시점(앱 시작 직후)에는 null 허용.
+
         public void ShowInformation(string message, string title)
         {
-            MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageDialog.Show(Application.Current.MainWindow, message, title, MessageDialogKind.Info);
         }
 
         public void ShowWarning(string message, string title)
         {
-            MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageDialog.Show(Application.Current.MainWindow, message, title, MessageDialogKind.Warning);
         }
 
         public void ShowError(string message, string title)
         {
-            MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageDialog.Show(Application.Current.MainWindow, message, title, MessageDialogKind.Error);
         }
 
         public bool ShowConfirmation(string message, string title)
         {
-            return MessageBox.Show(message, title, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
+            return MessageDialog.Show(
+                Application.Current.MainWindow, message, title,
+                MessageDialogKind.Question, isConfirmation: true);
         }
 
         public string? ShowSaveFileDialog(string filter, string defaultExt, string? fileName = null)
