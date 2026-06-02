@@ -6,69 +6,11 @@
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource Brush.Surface.Base}"
         ResizeMode="CanResize">
-
-    <Window.Resources>
-        <Style x:Key="AccentButton" TargetType="Button">
-            <Setter Property="Background" Value="#0078D4"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="14,6"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
-                                CornerRadius="4" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#1A8AD4"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="Bd" Property="Background" Value="#333333"/>
-                                <Setter Property="Foreground" Value="#666666"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="SubtleButton" TargetType="Button">
-            <Setter Property="Background" Value="#333333"/>
-            <Setter Property="Foreground" Value="#CCCCCC"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="16,6"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
-                                CornerRadius="4" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#444444"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="RecipeComboBox" TargetType="ComboBox">
-            <Setter Property="Background" Value="#333333"/>
-            <Setter Property="Foreground" Value="#D0D0D0"/>
-            <Setter Property="BorderBrush" Value="#444444"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="8,4"/>
-            <Setter Property="FontSize" Value="12"/>
-        </Style>
-    </Window.Resources>
+    <!--
+        Resources 의 명시 Style override(AccentButton / SubtleButton / RecipeComboBox)
+        제거 — 디폴트 ModernButton / Button.Subtle / ComboBox 자동 적용으로 indigo
+        다크 톤 통일. DataGrid 내부 ColumnHeader/Cell/Row 도 디폴트 사용.
+    -->
 
     <Grid Margin="16">
         <Grid.RowDefinitions>
@@ -81,102 +23,58 @@
         <!-- Header -->
         <StackPanel Grid.Row="0" Margin="0,0,0,14">
             <TextBlock Text="Inspection Parameters"
-                       FontSize="17" FontWeight="SemiBold"
-                       Foreground="#F0F0F0"/>
+                       Style="{StaticResource Text.Title}"/>
             <TextBlock x:Name="txtSyncStatus"
-                       FontSize="11" Foreground="{StaticResource Brush.Text.Tertiary}"
+                       Style="{StaticResource Text.Caption}"
                        Margin="0,4,0,0"/>
         </StackPanel>
 
         <!-- Toolbar -->
-        <Border Grid.Row="1" Background="{StaticResource Brush.Surface.Deep}" CornerRadius="6"
+        <Border Grid.Row="1"
+                Background="{StaticResource Brush.Surface.Raised}"
+                CornerRadius="{StaticResource Radius.Md}"
                 Padding="12,8" Margin="0,0,0,10">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Recipe" Foreground="{StaticResource Brush.Text.Tertiary}" FontSize="12"
-                           VerticalAlignment="Center" Margin="0,0,8,0"/>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Recipe"
+                           Foreground="{StaticResource Brush.Text.Secondary}"
+                           FontSize="{StaticResource Font.Size.Body}"
+                           VerticalAlignment="Center"
+                           Margin="0,0,10,0"/>
                 <ComboBox x:Name="cboRecipes"
-                          Width="220" Style="{StaticResource RecipeComboBox}"
+                          Width="240"
                           DisplayMemberPath="Name"
                           SelectionChanged="CboRecipes_SelectionChanged"/>
                 <Button x:Name="btnSync" Content="Sync"
                         Click="BtnSync_Click"
-                        Style="{StaticResource AccentButton}"
-                        Margin="10,0,0,0"/>
+                        Style="{StaticResource ModernButton}"
+                        Margin="10,0,0,0"
+                        MinWidth="70"/>
                 <TextBlock x:Name="txtItemCount"
-                           VerticalAlignment="Center" Margin="14,0,0,0"
-                           FontSize="12" Foreground="{StaticResource Brush.Text.Tertiary}"/>
+                           VerticalAlignment="Center" Margin="16,0,0,0"
+                           FontSize="{StaticResource Font.Size.Body}"
+                           Foreground="{StaticResource Brush.Text.Tertiary}"/>
             </StackPanel>
         </Border>
 
-        <!-- Parameter DataGrid -->
-        <Border Grid.Row="2" Background="{StaticResource Brush.Surface.Deep}" CornerRadius="6"
-                BorderBrush="#333333" BorderThickness="1">
+        <!-- Parameter DataGrid — 디폴트 indigo DataGrid 스타일 자동 적용 -->
+        <Border Grid.Row="2"
+                Background="{StaticResource Brush.Surface.Raised}"
+                BorderBrush="{StaticResource Brush.Surface.Divider}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource Radius.Md}"
+                ClipToBounds="True">
             <DataGrid x:Name="dgParameters"
-                      AutoGenerateColumns="False"
-                      IsReadOnly="True"
                       Background="Transparent"
-                      Foreground="{StaticResource Brush.Text.Secondary}"
                       BorderThickness="0"
-                      RowBackground="{StaticResource Brush.Surface.Deep}"
-                      AlternatingRowBackground="#2A2A2A"
-                      GridLinesVisibility="Horizontal"
-                      HorizontalGridLinesBrush="#303030"
-                      HeadersVisibility="Column"
+                      IsReadOnly="True"
                       CanUserSortColumns="True"
-                      SelectionMode="Single"
-                      FontSize="12">
-
-                <DataGrid.ColumnHeaderStyle>
-                    <Style TargetType="DataGridColumnHeader">
-                        <Setter Property="Background" Value="#1E1E1E"/>
-                        <Setter Property="Foreground" Value="#909090"/>
-                        <Setter Property="FontSize" Value="11"/>
-                        <Setter Property="FontWeight" Value="SemiBold"/>
-                        <Setter Property="Padding" Value="10,8"/>
-                        <Setter Property="BorderBrush" Value="#333333"/>
-                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                    </Style>
-                </DataGrid.ColumnHeaderStyle>
-
-                <DataGrid.CellStyle>
-                    <Style TargetType="DataGridCell">
-                        <Setter Property="Padding" Value="10,6"/>
-                        <Setter Property="BorderThickness" Value="0"/>
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="DataGridCell">
-                                    <Border Padding="{TemplateBinding Padding}"
-                                            Background="{TemplateBinding Background}">
-                                        <ContentPresenter VerticalAlignment="Center"/>
-                                    </Border>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                        <Style.Triggers>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="#0078D4"/>
-                                <Setter Property="Foreground" Value="White"/>
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </DataGrid.CellStyle>
-
-                <DataGrid.RowStyle>
-                    <Style TargetType="DataGridRow">
-                        <Style.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#303030"/>
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </DataGrid.RowStyle>
-
+                      SelectionMode="Single">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Code" Binding="{Binding ParamCode}" Width="70"/>
-                    <DataGridTextColumn Header="Value" Binding="{Binding ParamValue, StringFormat=F4}" Width="90"/>
+                    <DataGridTextColumn Header="Code"        Binding="{Binding ParamCode}" Width="80"/>
+                    <DataGridTextColumn Header="Value"       Binding="{Binding ParamValue, StringFormat=F4}" Width="100"/>
                     <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="*"/>
-                    <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="85"/>
-                    <DataGridTextColumn Header="Unit" Binding="{Binding Unit}" Width="60"/>
+                    <DataGridTextColumn Header="Category"    Binding="{Binding Category}" Width="100"/>
+                    <DataGridTextColumn Header="Unit"        Binding="{Binding Unit}" Width="70"/>
                 </DataGrid.Columns>
             </DataGrid>
         </Border>
@@ -185,7 +83,8 @@
         <StackPanel Grid.Row="3" Orientation="Horizontal"
                     HorizontalAlignment="Right" Margin="0,12,0,0">
             <Button Content="Close" Click="BtnClose_Click"
-                    Style="{StaticResource SubtleButton}"/>
+                    Style="{StaticResource Button.Subtle}"
+                    MinWidth="90"/>
         </StackPanel>
     </Grid>
 </Window>
