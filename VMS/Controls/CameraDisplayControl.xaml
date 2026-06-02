@@ -9,8 +9,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d">
 
-    <Border Background="#2D2D2D"
-            BorderBrush="#3D3D3D"
+    <Border Background="{StaticResource Brush.Surface.Raised}"
+            BorderBrush="{StaticResource Brush.Surface.Overlay}"
             BorderThickness="1"
             CornerRadius="8">
         <Grid>
@@ -23,7 +23,7 @@
 
             <!-- Header with camera name and drag handle -->
             <Border Grid.Row="0"
-                    Background="#3D3D3D"
+                    Background="{StaticResource Brush.Surface.Overlay}"
                     CornerRadius="6,6,0,0"
                     Cursor="SizeAll"
                     x:Name="DragHandle">
@@ -36,7 +36,7 @@
                     <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="8,0">
                         <TextBlock Text="&#xE722;"
                                    FontFamily="Segoe MDL2 Assets"
-                                   Foreground="#808080"
+                                   Foreground="{StaticResource Brush.Text.Tertiary}"
                                    VerticalAlignment="Center"
                                    Margin="0,0,8,0"/>
                         <!-- Connection status indicator -->
@@ -75,7 +75,7 @@
                             <TextBlock Text="&#xE713;"
                                        FontFamily="Segoe MDL2 Assets"
                                        FontSize="14"
-                                       Foreground="#B0B0B0"/>
+                                       Foreground="{StaticResource Brush.Text.Secondary}"/>
                             <Button.Style>
                                 <Style TargetType="Button">
                                     <Setter Property="Template">
@@ -116,7 +116,7 @@
             <!-- Camera 2D / Depth Map / Point Cloud view tabs -->
             <TabControl Grid.Row="1" Margin="4"
                         SelectedIndex="{Binding SelectedViewTab}"
-                        Background="#1E1E1E"
+                        Background="{StaticResource Brush.Surface.Base}"
                         BorderThickness="0">
                 <TabControl.Resources>
                     <Style TargetType="TabItem">
@@ -153,7 +153,7 @@
 
                 <!-- Tab 0: 2D View -->
                 <TabItem Header="2D">
-                    <Border Background="#1E1E1E">
+                    <Border Background="{StaticResource Brush.Surface.Base}">
                         <Grid>
                             <!-- Placeholder when no image -->
                             <StackPanel VerticalAlignment="Center"
@@ -181,7 +181,7 @@
 
                 <!-- Tab 1: Depth Map -->
                 <TabItem Header="Depth Map">
-                    <Border Background="#1E1E1E">
+                    <Border Background="{StaticResource Brush.Surface.Base}">
                         <Grid>
                             <!-- Placeholder when no point cloud -->
                             <StackPanel VerticalAlignment="Center"
@@ -209,7 +209,7 @@
 
                 <!-- Tab 2: Point Cloud (3D viewer) -->
                 <TabItem Header="Point Cloud">
-                    <Border Background="#1E1E1E">
+                    <Border Background="{StaticResource Brush.Surface.Base}">
                         <Grid>
                             <!-- Placeholder when no point cloud -->
                             <StackPanel VerticalAlignment="Center"
@@ -254,7 +254,7 @@
                                    Foreground="#FFD700" FontWeight="Bold" FontSize="11"/>
                         <TextBlock Grid.Column="1"
                                    Text="{Binding LastExecutionTimeMs, StringFormat={}{0:F1} ms}"
-                                   Foreground="#808080" FontSize="10"/>
+                                   Foreground="{StaticResource Brush.Text.Tertiary}" FontSize="10"/>
                     </Grid>
 
                     <DataGrid Grid.Row="1"
@@ -267,11 +267,11 @@
                               HeadersVisibility="Column"
                               GridLinesVisibility="Horizontal"
                               HorizontalGridLinesBrush="#444444"
-                              Background="#1E1E1E"
+                              Background="{StaticResource Brush.Surface.Base}"
                               Foreground="White"
                               BorderBrush="#555555"
                               BorderThickness="1"
-                              RowBackground="#2D2D2D"
+                              RowBackground="{StaticResource Brush.Surface.Raised}"
                               AlternatingRowBackground="#252526"
                               MaxHeight="120"
                               ScrollViewer.VerticalScrollBarVisibility="Auto"
@@ -354,7 +354,7 @@
             </Border>
 
             <!-- Footer with Pass checkbox and info -->
-            <Border Grid.Row="3" Background="#3D3D3D" CornerRadius="0,0,6,6">
+            <Border Grid.Row="3" Background="{StaticResource Brush.Surface.Overlay}" CornerRadius="0,0,6,6">
                 <Grid Margin="8,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -374,8 +374,8 @@
                                             <StackPanel Orientation="Horizontal">
                                                 <Border x:Name="CheckBorder"
                                                         Width="20" Height="20"
-                                                        Background="#404040"
-                                                        BorderBrush="#606060"
+                                                        Background="{StaticResource Brush.Surface.Overlay}"
+                                                        BorderBrush="{StaticResource Brush.Surface.Divider}"
                                                         BorderThickness="1"
                                                         CornerRadius="4">
                                                     <TextBlock x:Name="CheckMark"
@@ -412,14 +412,14 @@
                     <!-- Camera info -->
                     <TextBlock Grid.Column="1"
                                Text="{Binding IpAddress}"
-                               Foreground="#808080"
+                               Foreground="{StaticResource Brush.Text.Tertiary}"
                                FontSize="11"
                                VerticalAlignment="Center"
                                HorizontalAlignment="Center"/>
 
                     <!-- Inspection count -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal">
-                        <TextBlock Text="Count: " Foreground="#808080" FontSize="11" VerticalAlignment="Center"/>
+                        <TextBlock Text="Count: " Foreground="{StaticResource Brush.Text.Tertiary}" FontSize="11" VerticalAlignment="Center"/>
                         <TextBlock Text="{Binding InspectionCount}" Foreground="White" FontSize="11" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Grid>
@@ -531,12 +531,12 @@
                             <ColumnDefinition Width="70"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="Step:" Foreground="#B0B0B0" VerticalAlignment="Center" FontSize="11"/>
+                        <TextBlock Text="Step:" Foreground="{StaticResource Brush.Text.Secondary}" VerticalAlignment="Center" FontSize="11"/>
                         <ComboBox Grid.Column="1"
                                   ItemsSource="{Binding Steps}"
                                   SelectedItem="{Binding SelectedStep}"
                                   DisplayMemberPath="Name"
-                                  Background="#404040"
+                                  Background="{StaticResource Brush.Surface.Overlay}"
                                   Foreground="White"
                                   BorderThickness="0"
                                   Padding="6,4">
@@ -555,7 +555,7 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="50"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="Exposure:" Foreground="#B0B0B0" VerticalAlignment="Center" FontSize="11"/>
+                        <TextBlock Text="Exposure:" Foreground="{StaticResource Brush.Text.Secondary}" VerticalAlignment="Center" FontSize="11"/>
                         <Slider Grid.Column="1"
                                 Value="{Binding Exposure}"
                                 Minimum="100" Maximum="100000"
@@ -574,7 +574,7 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="50"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="Gain:" Foreground="#B0B0B0" VerticalAlignment="Center" FontSize="11"/>
+                        <TextBlock Text="Gain:" Foreground="{StaticResource Brush.Text.Secondary}" VerticalAlignment="Center" FontSize="11"/>
                         <Slider Grid.Column="1"
                                 Value="{Binding Gain}"
                                 Minimum="0" Maximum="24"
@@ -640,7 +640,7 @@
                         </Button>
                         <Button Grid.Column="1"
                                 Command="{Binding CloseControlBoxCommand}"
-                                Background="#606060"
+                                Background="{StaticResource Brush.Surface.Divider}"
                                 Style="{StaticResource ModernButton}"
                                 Padding="8,4" Margin="2,0,0,0">
                             <TextBlock Text="Close" FontSize="11"/>

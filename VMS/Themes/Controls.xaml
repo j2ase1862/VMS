@@ -183,4 +183,92 @@
         <Setter Property="Maximum" Value="100"/>
         <Setter Property="Foreground" Value="{StaticResource Brush.Primary}"/>
     </Style>
+
+    <!-- ──────────────── TextBox (default) ────────────────
+         WPF 기본 흰 배경/검정 외곽선이 다크 테마와 충돌 — TargetType 만으로 디폴트
+         적용하여 모든 윈도우의 입력 필드 톤을 일관화. 명명 키가 없으므로 view 측
+         코드 변경 없이 자동 적용된다. -->
+    <Style TargetType="TextBox">
+        <Setter Property="Background"      Value="{StaticResource Brush.Surface.Overlay}"/>
+        <Setter Property="Foreground"      Value="{StaticResource Brush.Text.Primary}"/>
+        <Setter Property="BorderBrush"     Value="{StaticResource Brush.Surface.Divider}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding"         Value="10,7"/>
+        <Setter Property="CaretBrush"      Value="{StaticResource Brush.Primary}"/>
+        <Setter Property="SelectionBrush"  Value="{StaticResource Brush.Primary}"/>
+        <Setter Property="SelectionOpacity" Value="0.35"/>
+        <Setter Property="FontFamily"      Value="{StaticResource Font.Family}"/>
+        <Setter Property="FontSize"        Value="{StaticResource Font.Size.Body}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border x:Name="border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{StaticResource Radius.Sm}">
+                        <ScrollViewer x:Name="PART_ContentHost"
+                                      Padding="{TemplateBinding Padding}"
+                                      VerticalAlignment="Center"
+                                      Focusable="False"
+                                      HorizontalScrollBarVisibility="Hidden"
+                                      VerticalScrollBarVisibility="Hidden"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Brush.Surface.Overlay}"/>
+                        </Trigger>
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Brush.Primary}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ──────────────── PasswordBox (default) ────────────────
+         TextBox 와 동일 톤. PART_ContentHost 의 ScrollViewer 만 PasswordBox 형식. -->
+    <Style TargetType="PasswordBox">
+        <Setter Property="Background"      Value="{StaticResource Brush.Surface.Overlay}"/>
+        <Setter Property="Foreground"      Value="{StaticResource Brush.Text.Primary}"/>
+        <Setter Property="BorderBrush"     Value="{StaticResource Brush.Surface.Divider}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding"         Value="10,7"/>
+        <Setter Property="CaretBrush"      Value="{StaticResource Brush.Primary}"/>
+        <Setter Property="SelectionBrush"  Value="{StaticResource Brush.Primary}"/>
+        <Setter Property="SelectionOpacity" Value="0.35"/>
+        <Setter Property="FontFamily"      Value="{StaticResource Font.Family}"/>
+        <Setter Property="FontSize"        Value="{StaticResource Font.Size.Body}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="PasswordBox">
+                    <Border x:Name="border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{StaticResource Radius.Sm}">
+                        <ScrollViewer x:Name="PART_ContentHost"
+                                      Padding="{TemplateBinding Padding}"
+                                      VerticalAlignment="Center"
+                                      Focusable="False"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Brush.Surface.Overlay}"/>
+                        </Trigger>
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Brush.Primary}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 </ResourceDictionary>
