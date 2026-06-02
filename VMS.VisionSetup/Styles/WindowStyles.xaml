@@ -668,7 +668,7 @@
 
     <Style x:Key="WindowDarkDataGridCell" TargetType="DataGridCell">
         <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Padding" Value="10,5"/>
+        <Setter Property="Padding" Value="10,8"/>
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
         <Setter Property="Template">
@@ -697,8 +697,8 @@
         <Setter Property="GridLinesVisibility" Value="Horizontal"/>
         <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource BrushBorderSubtle}"/>
         <Setter Property="HeadersVisibility" Value="Column"/>
-        <Setter Property="RowHeight" Value="28"/>
-        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="RowHeight" Value="34"/>
+        <Setter Property="FontSize" Value="12"/>
         <Setter Property="AlternationCount" Value="2"/>
         <Setter Property="CanUserAddRows" Value="False"/>
         <Setter Property="CanUserDeleteRows" Value="False"/>
