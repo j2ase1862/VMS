@@ -56,14 +56,14 @@
         </Grid.RowDefinitions>
 
         <!-- Step Progress Indicator -->
-        <Border Grid.Row="0" Background="#252526" Padding="16,10">
+        <Border Grid.Row="0" Background="{StaticResource BrushBgWindow}" Padding="16,10">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                 <TextBlock Text="0. Setup">
                     <TextBlock.Style>
                         <Style TargetType="TextBlock" BasedOn="{StaticResource StepLabel}">
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding CurrentStep}" Value="0">
-                                    <Setter Property="Foreground" Value="#FF9800"/>
+                                    <Setter Property="Foreground" Value="{StaticResource BrushWarning}"/>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
@@ -75,7 +75,7 @@
                         <Style TargetType="TextBlock" BasedOn="{StaticResource StepLabel}">
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding CurrentStep}" Value="1">
-                                    <Setter Property="Foreground" Value="#FF9800"/>
+                                    <Setter Property="Foreground" Value="{StaticResource BrushWarning}"/>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
@@ -87,7 +87,7 @@
                         <Style TargetType="TextBlock" BasedOn="{StaticResource StepLabel}">
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding CurrentStep}" Value="2">
-                                    <Setter Property="Foreground" Value="#FF9800"/>
+                                    <Setter Property="Foreground" Value="{StaticResource BrushWarning}"/>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
@@ -99,7 +99,7 @@
                         <Style TargetType="TextBlock" BasedOn="{StaticResource StepLabel}">
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding CurrentStep}" Value="3">
-                                    <Setter Property="Foreground" Value="#FF9800"/>
+                                    <Setter Property="Foreground" Value="{StaticResource BrushWarning}"/>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
@@ -131,7 +131,7 @@
                             </Style>
                         </StackPanel.Style>
 
-                        <TextBlock Text="Board Parameters" Foreground="#FF9800" FontWeight="Bold" FontSize="12" Margin="0,0,0,10"/>
+                        <TextBlock Text="Board Parameters" Foreground="{StaticResource BrushWarning}" FontWeight="Bold" FontSize="12" Margin="0,0,0,10"/>
 
                         <TextBlock Text="Corners X" Style="{StaticResource FieldLabel}"/>
                         <TextBox Text="{Binding BoardCornersX, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource DarkTextBox}" Margin="0,2,0,8"/>
@@ -161,7 +161,7 @@
                             </Style>
                         </StackPanel.Style>
 
-                        <TextBlock Text="Data Collection" Foreground="#FF9800" FontWeight="Bold" FontSize="12" Margin="0,0,0,10"/>
+                        <TextBlock Text="Data Collection" Foreground="{StaticResource BrushWarning}" FontWeight="Bold" FontSize="12" Margin="0,0,0,10"/>
 
                         <UniformGrid Columns="3" Margin="0,0,0,8">
                             <Button Command="{Binding CaptureCommand}" Content="Capture"
@@ -172,7 +172,7 @@
                                     Background="#F44336" Style="{StaticResource ActionButton}" Padding="8,5" Margin="2,0,0,0"/>
                         </UniformGrid>
 
-                        <TextBlock Foreground="#AAAAAA" FontSize="10" Margin="0,0,0,8">
+                        <TextBlock Foreground="{StaticResource BrushTextSecondary}" FontSize="10" Margin="0,0,0,8">
                             <Run Text="수집된 데이터: "/>
                             <Run Text="{Binding PairCount, Mode=OneWay}"/>
                             <Run Text=" / 최소 3개"/>
@@ -181,7 +181,7 @@
                         <DataGrid ItemsSource="{Binding CalibrationPairs}"
                                   AutoGenerateColumns="False"
                                   IsReadOnly="True"
-                                  Background="#252526" Foreground="White"
+                                  Background="{StaticResource BrushBgWindow}" Foreground="White"
                                   BorderBrush="#333" GridLinesVisibility="Horizontal"
                                   HeadersVisibility="Column" RowHeight="24"
                                   FontSize="10" MaxHeight="300"
@@ -196,7 +196,7 @@
                             </DataGrid.ColumnHeaderStyle>
                             <DataGrid.RowStyle>
                                 <Style TargetType="DataGridRow">
-                                    <Setter Property="Background" Value="#252526"/>
+                                    <Setter Property="Background" Value="{StaticResource BrushBgWindow}"/>
                                     <Style.Triggers>
                                         <Trigger Property="IsSelected" Value="True">
                                             <Setter Property="Background" Value="#3A3A3C"/>
@@ -231,14 +231,14 @@
                             </Style>
                         </StackPanel.Style>
 
-                        <TextBlock Text="Calibration" Foreground="#FF9800" FontWeight="Bold" FontSize="12" Margin="0,0,0,10"/>
+                        <TextBlock Text="Calibration" Foreground="{StaticResource BrushWarning}" FontWeight="Bold" FontSize="12" Margin="0,0,0,10"/>
 
                         <Button Command="{Binding CalibrateCommand}" Content="Run Calibration"
-                                Background="#9C27B0" Style="{StaticResource ActionButton}"
+                                Background="{StaticResource BrushTextAccent}" Style="{StaticResource ActionButton}"
                                 Padding="16,8" Margin="0,0,0,12" HorizontalAlignment="Left"/>
 
                         <ProgressBar IsIndeterminate="{Binding IsCalibrating}" Height="4"
-                                     Background="#333" Foreground="#9C27B0" Margin="0,0,0,12"
+                                     Background="#333" Foreground="{StaticResource BrushTextAccent}" Margin="0,0,0,12"
                                      Visibility="{Binding IsCalibrating, Converter={StaticResource BoolToVis}}"/>
 
                         <TextBlock Text="Reprojection Error:" Style="{StaticResource FieldLabel}" Margin="0,0,0,4"/>
@@ -248,7 +248,7 @@
 
                         <TextBlock Text="Result Matrix (T_tcp_cam):" Style="{StaticResource FieldLabel}" Margin="0,0,0,4"/>
                         <TextBox Text="{Binding ResultMatrixText, Mode=OneWay}"
-                                 Background="#1A1A1A" Foreground="#4FC3F7" BorderBrush="#333"
+                                 Background="{StaticResource BrushBgWindow}" Foreground="{StaticResource BrushTextAccent}" BorderBrush="#333"
                                  FontFamily="Consolas" FontSize="11"
                                  IsReadOnly="True" TextWrapping="Wrap"
                                  AcceptsReturn="True" Padding="8,6"
@@ -268,7 +268,7 @@
                             </Style>
                         </StackPanel.Style>
 
-                        <TextBlock Text="Save Result" Foreground="#FF9800" FontWeight="Bold" FontSize="12" Margin="0,0,0,10"/>
+                        <TextBlock Text="Save Result" Foreground="{StaticResource BrushWarning}" FontWeight="Bold" FontSize="12" Margin="0,0,0,10"/>
 
                         <Button Command="{Binding SaveResultCommand}" Content="Save as JSON..."
                                 Background="#4CAF50" Style="{StaticResource ActionButton}"
@@ -279,9 +279,9 @@
                                  Style="{StaticResource DarkTextBox}" IsReadOnly="True"
                                  TextWrapping="Wrap" Margin="0,0,0,12"/>
 
-                        <Border Background="#252526" CornerRadius="4" Padding="12" Margin="0,0,0,8">
+                        <Border Background="{StaticResource BrushBgWindow}" CornerRadius="4" Padding="12" Margin="0,0,0,8">
                             <StackPanel>
-                                <TextBlock Text="Summary" Foreground="#FF9800" FontWeight="Bold" FontSize="11" Margin="0,0,0,8"/>
+                                <TextBlock Text="Summary" Foreground="{StaticResource BrushWarning}" FontWeight="Bold" FontSize="11" Margin="0,0,0,8"/>
                                 <TextBlock Foreground="#AAA" FontSize="11">
                                     <Run Text="Data Pairs: "/>
                                     <Run Text="{Binding PairCount, Mode=OneWay}"/>
@@ -309,7 +309,7 @@
             </ScrollViewer>
 
             <!-- Right: Image Preview -->
-            <Border Grid.Column="1" Background="#111111" CornerRadius="4" BorderBrush="#333" BorderThickness="1">
+            <Border Grid.Column="1" Background="{StaticResource BrushBgWindow}" CornerRadius="4" BorderBrush="#333" BorderThickness="1">
                 <Grid>
                     <Image Source="{Binding PreviewImage}" Stretch="Uniform" Margin="4"
                            RenderOptions.BitmapScalingMode="NearestNeighbor"/>
@@ -332,8 +332,8 @@
         </Grid>
 
         <!-- Status Bar -->
-        <Border Grid.Row="2" Background="#252526" Padding="12,6">
-            <TextBlock Text="{Binding StatusMessage}" Foreground="#AAAAAA" FontSize="11"/>
+        <Border Grid.Row="2" Background="{StaticResource BrushBgWindow}" Padding="12,6">
+            <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource BrushTextSecondary}" FontSize="11"/>
         </Border>
 
         <!-- Navigation Buttons -->
