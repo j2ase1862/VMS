@@ -621,4 +621,139 @@
             </Trigger>
         </Style.Triggers>
     </Style>
+
+    <!-- ──────────────── ToolTip (default) ────────────────
+         시스템 기본 노란 / 회색 툴팁 대체. Surface.Overlay 배경 + Caption 사이즈. -->
+    <Style TargetType="ToolTip">
+        <Setter Property="Background"      Value="{StaticResource Brush.Surface.Overlay}"/>
+        <Setter Property="Foreground"      Value="{StaticResource Brush.Text.Primary}"/>
+        <Setter Property="BorderBrush"     Value="{StaticResource Brush.Surface.Divider}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding"         Value="10,6"/>
+        <Setter Property="FontFamily"      Value="{StaticResource Font.Family}"/>
+        <Setter Property="FontSize"        Value="{StaticResource Font.Size.Caption}"/>
+        <Setter Property="HasDropShadow"   Value="False"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToolTip">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{StaticResource Radius.Sm}"
+                            Padding="{TemplateBinding Padding}"
+                            Effect="{StaticResource Elevation.Card}">
+                        <ContentPresenter/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ──────────────── ContextMenu + MenuItem + Separator ──────────────── -->
+
+    <Style TargetType="ContextMenu">
+        <Setter Property="Background"      Value="{StaticResource Brush.Surface.Raised}"/>
+        <Setter Property="Foreground"      Value="{StaticResource Brush.Text.Primary}"/>
+        <Setter Property="BorderBrush"     Value="{StaticResource Brush.Surface.Divider}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding"         Value="4"/>
+        <Setter Property="FontFamily"      Value="{StaticResource Font.Family}"/>
+        <Setter Property="FontSize"        Value="{StaticResource Font.Size.Body}"/>
+        <Setter Property="HasDropShadow"   Value="False"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContextMenu">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{StaticResource Radius.Md}"
+                            Padding="{TemplateBinding Padding}"
+                            Effect="{StaticResource Elevation.Card}">
+                        <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="MenuItem">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}"/>
+        <Setter Property="Padding"    Value="10,8"/>
+        <Setter Property="FontFamily" Value="{StaticResource Font.Family}"/>
+        <Setter Property="FontSize"   Value="{StaticResource Font.Size.Body}"/>
+        <Setter Property="Cursor"     Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="MenuItem">
+                    <Border x:Name="bg"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="{StaticResource Radius.Sm}"
+                            Padding="{TemplateBinding Padding}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="Icon"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="Shortcut"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <!-- Icon (있으면 표시) -->
+                            <ContentPresenter Grid.Column="0"
+                                              ContentSource="Icon"
+                                              VerticalAlignment="Center"
+                                              Margin="0,0,8,0"/>
+                            <!-- Header (실제 텍스트) -->
+                            <ContentPresenter Grid.Column="1"
+                                              ContentSource="Header"
+                                              VerticalAlignment="Center"
+                                              RecognizesAccessKey="True"/>
+                            <!-- 단축키 -->
+                            <TextBlock Grid.Column="2"
+                                       Text="{TemplateBinding InputGestureText}"
+                                       Foreground="{StaticResource Brush.Text.Tertiary}"
+                                       Margin="24,0,0,0"
+                                       VerticalAlignment="Center"/>
+                            <!-- 서브메뉴 화살표 -->
+                            <TextBlock x:Name="submenuArrow"
+                                       Grid.Column="3"
+                                       Text="&#xE76C;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="10"
+                                       Foreground="{StaticResource Brush.Text.Secondary}"
+                                       Margin="12,0,0,0"
+                                       VerticalAlignment="Center"
+                                       Visibility="Collapsed"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Role" Value="SubmenuHeader">
+                            <Setter TargetName="submenuArrow" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="bg" Property="Background" Value="{StaticResource Brush.Surface.Overlay}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Menu 안의 Separator (MenuItem 사이 구분선) -->
+    <Style TargetType="Separator" x:Key="{x:Static MenuItem.SeparatorStyleKey}">
+        <Setter Property="Background" Value="{StaticResource Brush.Surface.Divider}"/>
+        <Setter Property="Height"     Value="1"/>
+        <Setter Property="Margin"     Value="6,4"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Separator">
+                    <Border Background="{TemplateBinding Background}"
+                            Height="{TemplateBinding Height}"
+                            Margin="{TemplateBinding Margin}"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 </ResourceDictionary>
