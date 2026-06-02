@@ -8,10 +8,10 @@
     </UserControl.Resources>
     <StackPanel Margin="0,0,0,5">
         <StackPanel Orientation="Horizontal">
-            <TextBlock Foreground="LightGray" FontSize="12" VerticalAlignment="Center">
+            <TextBlock Foreground="{StaticResource BrushTextMuted}" FontSize="12" VerticalAlignment="Center">
                 <Run Text="{Binding Label, ElementName=Root}"/><Run Text=": "/>
             </TextBlock>
-            <TextBlock Foreground="#00BFFF" FontWeight="Bold" FontSize="12" VerticalAlignment="Center">
+            <TextBlock Foreground="{StaticResource BrushAccent}" FontWeight="Bold" FontSize="12" VerticalAlignment="Center">
                 <TextBlock.Text>
                     <MultiBinding Converter="{StaticResource ValueFmtConv}">
                         <Binding Path="Value" ElementName="Root"/>
