@@ -17,6 +17,43 @@ namespace VMS.Core.Security
         Production
     }
 
+    /// <summary>현재 Current 가 결정된 출처 — startup health check / 감사 추적에 사용.</summary>
+    public enum SecurityModeSource
+    {
+        /// <summary>아직 LoadFromAppData 미호출 — 코드 디폴트(Development) 사용 중.</summary>
+        Default,
+
+        /// <summary>BODA_VMS_SECURITY_MODE 환경변수에서 결정 (최우선 신호).</summary>
+        Environment,
+
+        /// <summary>system_config.json 의 securityMode 키에서 결정.</summary>
+        ConfigFile,
+
+        /// <summary>
+        /// 환경변수도 config 도 없거나 파싱 실패 — Development 폴백.
+        /// GS 보안성 항목에서 자동 다운그레이드가 발생한 상태 — AuditLog 기록 + UI 경고 필요.
+        /// </summary>
+        FallbackOnError
+    }
+
+    /// <summary>config 누락/오류 시 어떻게 처리할지 정책.</summary>
+    public enum SecurityLoadPolicy
+    {
+        /// <summary>
+        /// 현행 호환 — 누락/오류 시 Development 폴백 + 디버그 로그. AuditLogger 가 사용 가능하면
+        /// Security 카테고리 Failure 로 기록해 다운그레이드를 감사 추적.
+        /// </summary>
+        WarnOnFallback,
+
+        /// <summary>
+        /// 운영 강제 모드 — config / 환경변수 둘 다 명시되지 않거나 파싱 실패하면
+        /// InvalidOperationException 으로 부팅 중단. MSI 배포 후 system_config.json 손상시
+        /// 보안 모드가 조용히 Development 로 다운그레이드되는 위험을 차단.
+        /// 운영자가 환경변수 BODA_VMS_SECURITY_MODE 또는 명시 config 로 결정해야 함.
+        /// </summary>
+        RequireExplicit
+    }
+
     /// <summary>
     /// 솔루션 전체 HttpClient / SignalR 의 보안 정책을 한 곳에서 관리.
     ///
@@ -72,40 +109,95 @@ namespace VMS.Core.Security
         }
 
         /// <summary>
-        /// %LocalAppData%\BODA VISION AI\system_config.json 의 "securityMode" 키
-        /// ("Production" / "Development") 를 읽어 Current 에 set. 키 누락 / 파일 없음
-        /// 시 Development 기본값.
+        /// Current 가 결정된 출처. StartupHealthCheck / AuditLog 에서 활용.
+        /// LoadFromAppData 미호출 시 <see cref="SecurityModeSource.Default"/>.
         /// </summary>
-        public static void LoadFromAppData()
+        public static SecurityModeSource CurrentSource { get; private set; } = SecurityModeSource.Default;
+
+        /// <summary>
+        /// BODA_VMS_SECURITY_MODE 환경변수가 명시되면 (최우선) 그 값으로 set.
+        /// 그 다음 system_config.json 의 securityMode 키 사용.
+        /// 둘 다 없으면 정책에 따라 Development 폴백 또는 InvalidOperationException.
+        ///
+        /// 우선순위 (high → low):
+        ///   1. 환경변수 BODA_VMS_SECURITY_MODE (운영자가 MSI 배포 후 강제 설정 가능)
+        ///   2. %LocalAppData%\BODA VISION AI\system_config.json 의 securityMode 키
+        ///   3. policy=WarnOnFallback → Development (현행 호환)
+        ///      policy=RequireExplicit → throw (보안 다운그레이드 차단)
+        /// </summary>
+        /// <param name="policy">config 누락/오류 시 처리 정책.</param>
+        /// <param name="appDataOverride">
+        /// 테스트 전용 — null 이면 Environment.GetFolderPath(LocalApplicationData) 사용.
+        /// 운영 코드는 절대 명시하지 말 것 (실제 사용자 AppData 만 사용).
+        /// </param>
+        public static void LoadFromAppData(
+            SecurityLoadPolicy policy = SecurityLoadPolicy.WarnOnFallback,
+            string? appDataOverride = null)
         {
+            // 1. 환경변수 (가장 강한 신호)
+            var envValue = Environment.GetEnvironmentVariable("BODA_VMS_SECURITY_MODE");
+            if (!string.IsNullOrWhiteSpace(envValue)
+                && Enum.TryParse<SecurityMode>(envValue, ignoreCase: true, out var envMode))
+            {
+                Current = envMode == SecurityMode.Production ? Production : Development;
+                CurrentSource = SecurityModeSource.Environment;
+                Debug.WriteLine($"[Security] 모드 = {Current.Mode} (BODA_VMS_SECURITY_MODE 환경변수).");
+                return;
+            }
+
+            // 2. system_config.json
             try
             {
-                var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                var appData = appDataOverride
+                    ?? Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
                 var path = Path.Combine(appData, "BODA VISION AI", "system_config.json");
-                if (!File.Exists(path))
+                if (File.Exists(path))
                 {
-                    Current = Development;
-                    Debug.WriteLine("[Security] system_config.json 없음 — Development 모드.");
-                    return;
-                }
-
-                using var doc = JsonDocument.Parse(File.ReadAllText(path));
-                if (doc.RootElement.TryGetProperty("securityMode", out var prop)
-                    && Enum.TryParse<SecurityMode>(prop.GetString(), ignoreCase: true, out var mode))
-                {
-                    Current = mode == SecurityMode.Production ? Production : Development;
-                    Debug.WriteLine($"[Security] 모드 = {Current.Mode} (system_config.json).");
-                }
-                else
-                {
-                    Current = Development;
-                    Debug.WriteLine("[Security] securityMode 키 누락 — Development 기본값.");
+                    using var doc = JsonDocument.Parse(File.ReadAllText(path));
+                    if (doc.RootElement.TryGetProperty("securityMode", out var prop)
+                        && Enum.TryParse<SecurityMode>(prop.GetString(), ignoreCase: true, out var mode))
+                    {
+                        Current = mode == SecurityMode.Production ? Production : Development;
+                        CurrentSource = SecurityModeSource.ConfigFile;
+                        Debug.WriteLine($"[Security] 모드 = {Current.Mode} (system_config.json).");
+                        return;
+                    }
                 }
             }
             catch (Exception ex)
             {
-                Current = Development;
-                Debug.WriteLine($"[Security] LoadFromAppData 실패 — Development 폴백: {ex.Message}");
+                Debug.WriteLine($"[Security] system_config.json 파싱 실패: {ex.Message}");
+                // 다음 단계로 폴백 (try/catch 만으로는 명시적 정책 결정 불가)
+            }
+
+            // 3. 폴백 — 정책에 따라 다른 동작
+            if (policy == SecurityLoadPolicy.RequireExplicit)
+            {
+                throw new InvalidOperationException(
+                    "보안 모드가 명시되지 않았습니다. " +
+                    "운영 배포에서는 다음 중 하나로 모드를 명시해야 합니다:\n" +
+                    "  - 환경변수: setx BODA_VMS_SECURITY_MODE Production /M\n" +
+                    "  - %LocalAppData%\\BODA VISION AI\\system_config.json 의 \"securityMode\" 키\n" +
+                    "Development 자동 폴백은 GS 보안성 항목에서 자동 다운그레이드로 감점 사유입니다.");
+            }
+
+            // WarnOnFallback — 다운그레이드를 AuditLog 에 기록해 사후 추적 가능
+            Current = Development;
+            CurrentSource = SecurityModeSource.FallbackOnError;
+            Debug.WriteLine("[Security] 환경변수 / system_config.json 미명시 — Development 폴백.");
+            try
+            {
+                AuditLogger.Instance.Log(
+                    AuditCategory.Security,
+                    "Security mode fallback to Development",
+                    AuditOutcome.Failure,
+                    source: nameof(SecurityOptions),
+                    details: "BODA_VMS_SECURITY_MODE 환경변수와 system_config.json:securityMode 둘 다 명시되지 않음. " +
+                             "운영 환경이면 환경변수 또는 config 로 Production 명시 권장.");
+            }
+            catch
+            {
+                // AuditLogger 자체가 실패해도 보안 정책 결정은 진행 (best-effort)
             }
         }
     }
