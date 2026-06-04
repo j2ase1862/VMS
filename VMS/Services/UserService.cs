@@ -130,7 +130,46 @@ namespace VMS.Services
                 cmd.Parameters.AddWithValue("@created", DateTime.UtcNow.ToString("o"));
                 cmd.ExecuteNonQuery();
             }
+
+            // 비상 local-admin 시드 (SSO Migration Plan §2.3 / SSO PR3).
+            // 항상 존재 보장 — SSO 활성 시 Web 도달 불가 상황의 유일한 폴백 진입점.
+            // 기본 비밀번호는 PR4 AppSetup wizard 에서 운영자가 변경 권장 (인스톨러 가이드 §9 갱신 예정).
+            cmd.CommandText = "SELECT COUNT(*) FROM Users WHERE Username = @username COLLATE NOCASE";
+            cmd.Parameters.Clear();
+            cmd.Parameters.AddWithValue("@username", LocalFallbackUsername);
+            if ((long)cmd.ExecuteScalar()! == 0)
+            {
+                cmd.CommandText = @"
+                    INSERT INTO Users (Username, PasswordHash, DisplayName, Grade, CreatedAt)
+                    VALUES (@username, @hash, @display, @grade, @created)";
+                cmd.Parameters.Clear();
+                cmd.Parameters.AddWithValue("@username", LocalFallbackUsername);
+                cmd.Parameters.AddWithValue("@hash", BCrypt.Net.BCrypt.HashPassword(LocalFallbackDefaultPassword));
+                cmd.Parameters.AddWithValue("@display", "Local Fallback Administrator");
+                // Admin grade 로 저장 — 실제 권한 게이트는 HasPermission 이 IsLocalFallback 으로 제한
+                cmd.Parameters.AddWithValue("@grade", (int)UserGrade.Admin);
+                cmd.Parameters.AddWithValue("@created", DateTime.UtcNow.ToString("o"));
+                cmd.ExecuteNonQuery();
+            }
         }
+
+        /// <summary>비상 폴백 계정 username (대소문자 무시). 변경시 운영 가이드/매뉴얼 동기 필요.</summary>
+        public const string LocalFallbackUsername = "local-admin";
+
+        /// <summary>초기 시드 비밀번호 — AppSetup wizard 에서 운영 첫 가동시 변경 권장.</summary>
+        public const string LocalFallbackDefaultPassword = "fallback-change-me-9999";
+
+        /// <summary>
+        /// 비상 local-admin 폴백 세션에서 허용되는 권한 집합 (SSO Migration Plan §2.3).
+        /// 운영 데이터 변경 (ManageUsers, EditRecipe, SystemConfiguration 등) 은 모두 거부.
+        /// 키오스크 운영 지속 + 시스템 진단 + Web Service 재시작만 허용.
+        /// </summary>
+        internal static readonly System.Collections.Generic.HashSet<UserPermission> LocalFallbackAllowed = new()
+        {
+            UserPermission.StartStop,
+            UserPermission.ViewStatistics,
+            UserPermission.RestartWebService
+        };
 
         public bool Authenticate(string username, string password)
         {
@@ -179,6 +218,11 @@ namespace VMS.Services
 
             CurrentUser = ReadUser(reader);
 
+            // SSO Migration §2.3: 비상 폴백 계정 식별. HasPermission 이 제한 권한 적용.
+            // username 대소문자 무관 비교 — DB 컬럼이 COLLATE NOCASE.
+            CurrentUser.IsLocalFallback = string.Equals(
+                CurrentUser.Username, LocalFallbackUsername, StringComparison.OrdinalIgnoreCase);
+
             // Update last login time
             using var updateCmd = conn.CreateCommand();
             updateCmd.CommandText = "UPDATE Users SET LastLoginAt = @now WHERE UserId = @id";
@@ -187,10 +231,15 @@ namespace VMS.Services
             updateCmd.ExecuteNonQuery();
 
             CurrentUser.LastLoginAt = DateTime.UtcNow;
+
+            // 비상 폴백 세션은 별도 details 로 표시 — 사후 분석시 식별 용이
+            var loginDetails = CurrentUser.IsLocalFallback
+                ? $"Grade={CurrentUser.Grade}, IsLocalFallback=true (restricted permissions apply)"
+                : $"Grade={CurrentUser.Grade}";
             AuditLogger.Instance.Log(
                 AuditCategory.Authentication, "UserLogin", AuditOutcome.Success,
                 userName: username, source: nameof(UserService),
-                details: $"Grade={CurrentUser.Grade}");
+                details: loginDetails);
             return true;
         }
 
@@ -241,7 +290,8 @@ namespace VMS.Services
                         Grade = MapWebRoleToGrade(result.Role),
                         PasswordHash = string.Empty,  // SSO — VMS 가 비밀번호 보관 안 함
                         CreatedAt = DateTime.UtcNow,
-                        LastLoginAt = DateTime.UtcNow
+                        LastLoginAt = DateTime.UtcNow,
+                        IsLocalFallback = false  // Web 인증 — 명시적으로 비폴백 (전체 권한 매핑된 Grade 기준)
                     };
                     AuditLogger.Instance.Log(
                         AuditCategory.Authentication, "UserLogin", AuditOutcome.Success,
@@ -295,6 +345,22 @@ namespace VMS.Services
             {
                 // 비로그인 상태 — 모든 권한 거부. 빈도 높아 audit log 폭증 방지 차원에서 미기록.
                 return false;
+            }
+
+            // SSO Migration §2.3: 비상 폴백 세션은 Grade 무관 제한 권한만 허용.
+            // 운영 데이터 변경 (ManageUsers / EditRecipe / SystemConfiguration 등) 거부.
+            if (CurrentUser.IsLocalFallback)
+            {
+                bool fallbackGranted = LocalFallbackAllowed.Contains(permission);
+                if (!fallbackGranted)
+                {
+                    AuditLogger.Instance.Log(
+                        AuditCategory.Authorization, "PermissionDenied", AuditOutcome.Denied,
+                        userName: CurrentUser.Username, source: nameof(UserService),
+                        details: $"Permission={permission}, IsLocalFallback=true — " +
+                                 "운영 데이터 변경은 Web SSO 로그인 후 수행하세요");
+                }
+                return fallbackGranted;
             }
 
             bool granted = CurrentUser.Grade switch
