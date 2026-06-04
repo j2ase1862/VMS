@@ -23,6 +23,12 @@ namespace VMS.Interfaces
         void Logout();
         bool HasPermission(UserPermission permission);
 
+        /// <summary>
+        /// 비상 local-admin 비밀번호 변경 — AppSetup wizard 가 호출 (SSO PR4).
+        /// 빈 값이면 무동작. BCrypt 해시로만 저장.
+        /// </summary>
+        bool SetLocalFallbackPassword(string newPassword);
+
         bool CreateUser(string username, string password, string displayName, UserGrade grade);
         bool UpdateUser(int userId, string displayName, UserGrade grade);
         bool ChangePassword(int userId, string newPassword);

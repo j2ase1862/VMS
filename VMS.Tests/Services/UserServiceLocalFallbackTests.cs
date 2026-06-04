@@ -157,6 +157,42 @@ namespace VMS.Tests.Services
             Assert.True(_service.HasPermission(UserPermission.EditRecipe));
         }
 
+        // ─── SetLocalFallbackPassword (SSO PR4) ───────────────────
+
+        [Fact]
+        public void SetLocalFallbackPassword_updates_hash_and_old_password_no_longer_works()
+        {
+            var ok = _service.SetLocalFallbackPassword("new-strong-pw-123");
+            Assert.True(ok);
+
+            // 옛 디폴트 비밀번호 거부
+            Assert.False(_service.Authenticate(
+                UserService.LocalFallbackUsername, UserService.LocalFallbackDefaultPassword));
+            // 새 비밀번호 통과
+            Assert.True(_service.Authenticate(
+                UserService.LocalFallbackUsername, "new-strong-pw-123"));
+        }
+
+        [Fact]
+        public void SetLocalFallbackPassword_empty_value_is_noop()
+        {
+            Assert.False(_service.SetLocalFallbackPassword(""));
+            Assert.False(_service.SetLocalFallbackPassword("   "));
+
+            // 디폴트 그대로 동작
+            Assert.True(_service.Authenticate(
+                UserService.LocalFallbackUsername, UserService.LocalFallbackDefaultPassword));
+        }
+
+        [Fact]
+        public void SetLocalFallbackPassword_too_short_rejected()
+        {
+            // 최소 길이 8 — fallback 디폴트보다 강한 정책
+            Assert.False(_service.SetLocalFallbackPassword("1234"));
+            Assert.False(_service.SetLocalFallbackPassword("1234567"));
+            Assert.True(_service.SetLocalFallbackPassword("12345678"));
+        }
+
         // ─── helper ───────────────────────────────────────────────
 
         private sealed class StubHandler : HttpMessageHandler
