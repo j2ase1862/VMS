@@ -58,9 +58,10 @@ namespace VMS.AppSetup.ViewModels
         [ObservableProperty]
         private bool _webSsoEnabled;
 
-        // PR5 UI 의 PasswordBox 와 짝 — code-behind 가 Save 직전 LocalAdminPasswordBox.Password 를
-        // 본 필드에 set 후 SaveConfiguration 이 UserService.SetLocalFallbackPassword 호출.
+        // C3 (Option C, 2026-06-04): 두 PasswordBox 와 짝 — code-behind 가 Save 직전 set 후
+        // SaveConfiguration 이 UserService.SeedInitialAdmin / SetLocalFallbackPassword 호출.
         // ViewModel 자체에 평문 보관 시간을 최소화 (Save 후 빈 문자열로 즉시 폐기).
+        public string InitialAdminPassword { get; set; } = string.Empty;
         public string LocalFallbackAdminPassword { get; set; } = string.Empty;
 
         // Page 3: Camera Settings
@@ -661,9 +662,29 @@ namespace VMS.AppSetup.ViewModels
 
             if (_configService.SaveConfiguration(config))
             {
-                _dialogService.ShowInformation(
-                    $"설정이 저장되었습니다.\n\n저장 위치: {_configService.ConfigFilePath}",
-                    "Setup Complete");
+                // C3: PasswordBox 입력값 BCrypt 해시로 DB 시드 — system_config.json 저장 후 즉시 실행.
+                // 비어 있으면 무동작 (기존 비밀번호 보존).
+                var seededAdmin = false;
+                var updatedLocalAdmin = false;
+                try
+                {
+                    if (!string.IsNullOrWhiteSpace(InitialAdminPassword))
+                        seededAdmin = Services.InitialAdminSeeder.SeedAdminIfMissing(InitialAdminPassword);
+                    if (!string.IsNullOrWhiteSpace(LocalFallbackAdminPassword))
+                        updatedLocalAdmin = Services.InitialAdminSeeder.SetLocalFallbackPassword(LocalFallbackAdminPassword);
+                }
+                finally
+                {
+                    // 평문 비밀번호 즉시 폐기 — 메모리 transit 최소화
+                    InitialAdminPassword = string.Empty;
+                    LocalFallbackAdminPassword = string.Empty;
+                }
+
+                var msg = $"설정이 저장되었습니다.\n\n저장 위치: {_configService.ConfigFilePath}";
+                if (seededAdmin) msg += "\n\n✓ admin 계정 초기 시드 완료.";
+                if (updatedLocalAdmin) msg += "\n✓ local-admin 비밀번호 변경 완료.";
+
+                _dialogService.ShowInformation(msg, "Setup Complete");
 
                 // Close the application
                 _shutdownAction();

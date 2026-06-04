@@ -22,6 +22,20 @@ public partial class MainWindow : Window
             (s, e) => SystemCommands.CloseWindow(this)));
     }
 
+    // C3 (Option C, 2026-06-04): PasswordBox 는 보안상 데이터바인딩 미지원.
+    // PasswordChanged 이벤트로 ViewModel 에 평문 전달 — Save 시점에 BCrypt 시드 후 폐기.
+    private void InitialAdminPasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is ViewModels.SetupViewModel vm)
+            vm.InitialAdminPassword = InitialAdminPasswordBox.Password;
+    }
+
+    private void LocalAdminPasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is ViewModels.SetupViewModel vm)
+            vm.LocalFallbackAdminPassword = LocalAdminPasswordBox.Password;
+    }
+
     private void BrowseDcfFile_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button button) return;

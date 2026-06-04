@@ -167,17 +167,43 @@
                                 <CheckBox Content="Web SSO 활성 — Admin/Manager 인증을 BODA.VMS.Web 으로 위임"
                                           IsChecked="{Binding WebSsoEnabled}"
                                           Style="{StaticResource WindowDarkCheckBox}" Margin="0,0,0,5"/>
-                                <TextBlock TextWrapping="Wrap" FontSize="11" Margin="0,0,0,12"
+                                <TextBlock TextWrapping="Wrap" FontSize="11" Margin="0,0,0,15"
                                            Foreground="{StaticResource BrushTextMuted}">
                                     활성 시 일반 사용자는 Web 의 admin 계정으로 로그인 (단일 계정 관리).
                                     Web 도달 불가 시 비상 계정 'local-admin' 만 진입 가능 (제한 권한 — 운영 데이터 변경 불가).
                                 </TextBlock>
+                            </StackPanel>
+                        </Border>
 
+                        <!-- 초기 비밀번호 (Option C, 2026-06-04) — 디폴트 시드 제거 후 명시 입력 필수 -->
+                        <Border Background="{StaticResource BrushBgCard}" CornerRadius="6" Padding="15" Margin="0,15,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Initial Admin Passwords (보안 — 강한 비밀번호 필수)" FontSize="14" FontWeight="SemiBold"
+                                           Foreground="#FFD700" Margin="0,0,0,12"/>
+
+                                <TextBlock TextWrapping="Wrap" FontSize="11" Margin="0,0,0,12"
+                                           Foreground="{StaticResource BrushTextMuted}">
+                                    <Bold>신규 install 시 두 비밀번호 입력 필수:</Bold> 디폴트 비밀번호 자동 시드는 제거됨 (GS 보안성 위반).
+                                    최소 8 자, 12 자+ 권장. 기존 install 에 이미 admin/local-admin 존재 시 비워두면 변경 안 함.
+                                </TextBlock>
+
+                                <TextBlock Text="VMS Admin 비밀번호" Style="{StaticResource LabelStyle}"/>
+                                <PasswordBox x:Name="InitialAdminPasswordBox"
+                                             PasswordChanged="InitialAdminPasswordBox_PasswordChanged"
+                                             Style="{StaticResource WindowDarkPasswordBox}" Margin="0,0,0,5"/>
+                                <TextBlock TextWrapping="Wrap" FontSize="11" Margin="0,0,0,12"
+                                           Foreground="{StaticResource BrushTextMuted}">
+                                    사용자 인증용 정규 admin 계정 — VMS 단독 운영 / SSO 비활성 환경에서 사용.
+                                </TextBlock>
+
+                                <TextBlock Text="Local Fallback Admin 비밀번호 (비상용)" Style="{StaticResource LabelStyle}"/>
+                                <PasswordBox x:Name="LocalAdminPasswordBox"
+                                             PasswordChanged="LocalAdminPasswordBox_PasswordChanged"
+                                             Style="{StaticResource WindowDarkPasswordBox}" Margin="0,0,0,5"/>
                                 <TextBlock TextWrapping="Wrap" FontSize="11"
                                            Foreground="{StaticResource BrushTextMuted}">
-                                    <Bold>운영 첫 가동 시:</Bold> local-admin 디폴트 비밀번호
-                                    (fallback-change-me-9999) 로 1회 로그인 후 VMS 사용자 관리에서 비밀번호 변경 필요.
-                                    상세 절차는 docs/msi_build_guide.md §10 참고.
+                                    'local-admin' 계정 — Web 도달 불가 시에만 사용 (제한 권한). 운영자가 안전한 곳에 별도 보관.
+                                    상세 절차: docs/msi_build_guide.md §10 / §11.
                                 </TextBlock>
                             </StackPanel>
                         </Border>

@@ -1,6 +1,6 @@
 # MSI 빌드 가이드 (BODA Vision AI)
 
-문서 버전: v1.2
+문서 버전: v1.3
 대상 빌드: master @ 2026-06-04
 범위: `VMS.MasterSetup` 프로젝트로 BODA Vision System MSI 인스톨러 생성
 
@@ -318,7 +318,76 @@ VMS Admin/Manager 인증을 BODA.VMS.Web 으로 위임해 **단일 사용자 계
 
 ---
 
-## 11. 관련 문서
+## 11. 초기 admin 비밀번호 설정 (필수 — Option C, 2026-06-04)
+
+**디폴트 admin 비밀번호 자동 시드가 제거**되었습니다 (VMS/Web 둘 다). 약한 디폴트 (admin/admin / admin/admin123) 가 GS 보안성 위반 + 양쪽 시스템 비밀번호 불일치 운영 부담 해소.
+
+| 시스템 | 시드 동작 |
+|--------|----------|
+| VMS UserService | InitializeDatabase 가 local-admin 만 자동 시드. 정규 admin 은 AppSetup wizard 의 PasswordBox 또는 운영자 명시 호출 필요 |
+| BODA.VMS.Web | Initial:AdminPassword 환경변수 미설정 + DB 에 admin 없으면 부팅 차단 (InvalidOperationException) |
+
+### 11.1 신규 install 절차
+
+#### VMS 데스크탑
+**AppSetup wizard Page 2 → "Initial Admin Passwords" 카드** 에서 2 PasswordBox 입력:
+- **VMS Admin 비밀번호**: 정규 admin 계정 — VMS 단독 운영 / SSO 비활성 환경에서 사용
+- **Local Fallback Admin 비밀번호**: 비상 폴백 — Web 도달 불가 시에만 사용 (제한 권한)
+
+**규칙**: 최소 8 자, **12 자 이상 권장**. 양쪽 비밀번호는 **다르게 설정** (한쪽 침해가 다른쪽까지 미치지 않도록).
+
+저장 직후 BCrypt 해시로 DB 기록 + 평문 메모리에서 즉시 폐기.
+
+#### BODA.VMS.Web 서버
+**Windows Service 설치 직후 (또는 첫 가동 전)** 환경변수 설정:
+
+```powershell
+# 운영 (관리자 PowerShell)
+setx Initial__AdminPassword "<12자+ 강한 비밀번호>" /M
+
+# 선택 — username 변경시
+setx Initial__AdminUsername "<username>" /M
+
+# 또는 개발/QA
+dotnet user-secrets set Initial:AdminPassword <비밀번호> --project BODA.VMS.Web/BODA.VMS.Web
+```
+
+미설정 시 Windows Service 가 InvalidOperationException 으로 부팅 차단 → 이벤트 뷰어 / Serilog 로그에 다음 메시지:
+```
+초기 admin 계정이 DB 에 없고 Initial:AdminPassword 가 미설정.
+다음 중 하나로 명시:
+  - 운영: setx Initial__AdminPassword "<강한 비밀번호>" /M
+  ...
+```
+
+### 11.2 기존 install 호환 (마이그레이션)
+
+이미 admin 계정이 DB 에 존재하는 환경은 본 변경의 영향 zero — 기존 비밀번호 그대로 사용. 운영자가 권장 시점에 비밀번호 변경:
+
+| 시스템 | 변경 방법 |
+|--------|----------|
+| VMS admin | VMS 로그인 → 사용자 관리 UI → "비밀번호 변경" |
+| VMS local-admin | 동일 (사용자 관리 UI) 또는 AppSetup wizard 재실행 후 LocalAdminPasswordBox 입력 |
+| Web admin | Web UI → 사용자 관리 → "비밀번호 변경" |
+
+### 11.3 비밀번호 정책 권장
+
+- 최소 12 자 (운영 환경)
+- 대/소문자 + 숫자 + 특수문자 3 종 이상
+- 사전 단어 / 디폴트 패턴 (admin, password, 1234, qwerty 등) 금지
+- 90 일마다 변경 권장 (GS 보안성 권고)
+- 양쪽 시스템 별도 — **동기 금지** (역할/사용 빈도 다름)
+
+### 11.4 검증
+
+- VMS 시작 → 입력한 admin 비밀번호로 로그인 → 정상
+- 옛 admin123 시도 → 실패 (기존 install 아닌 경우)
+- Web 시작 → /health 200 → admin 으로 로그인 → 정상
+- 환경변수 미설정 상태로 Web 재시작 → 부팅 차단 → 이벤트 로그 확인
+
+---
+
+## 12. 관련 문서
 
 | 문서 | 내용 |
 |---|---|
@@ -338,3 +407,4 @@ VMS Admin/Manager 인증을 BODA.VMS.Web 으로 위임해 **단일 사용자 계
 | v1.0 | 2026-06-01 | 초안 — 로컬 / CI 빌드 절차, 프로젝트 구조, 커스터마이징, 트러블슈팅, 검증 |
 | v1.1 | 2026-06-04 | §9 운영 설치 후 보안 모드 설정 절차 추가 (PR P5-A 의 RequireExplicit 활성화 대응) |
 | v1.2 | 2026-06-04 | §10 Web SSO 통합 운영 절차 추가 (SSO PR1~5: 단일 사용자 계정 + local-admin 폴백) |
+| v1.3 | 2026-06-04 | §11 초기 admin 비밀번호 설정 절차 추가 (Option C: VMS/Web 양쪽 디폴트 시드 제거, 운영자 명시 입력 필수) |
