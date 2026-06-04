@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using VMS.Core.Health;
+using VMS.Core.Security;
 using Xunit;
 
 namespace VMS.Core.Tests.Health
@@ -10,7 +11,10 @@ namespace VMS.Core.Tests.Health
     /// StartupHealthCheck 의 개별 검사 결과 + Overall 종합 상태 검증.
     /// 임시 디렉토리로 격리 — 운영 AppData 영향 없음. auditAfter=false 로
     /// 감사 로거 부수효과 제거.
+    /// SecurityOptionsState Collection — SecurityOptions.Current/CurrentSource 가 정적이라
+    /// 다른 테스트와 직렬화 필요.
     /// </summary>
+    [Collection("SecurityOptionsState")]
     public class StartupHealthCheckTests : IDisposable
     {
         private readonly string _tempBase;
@@ -122,14 +126,57 @@ namespace VMS.Core.Tests.Health
         // ─── SecurityOptions ──────────────────────────────────────
 
         [Fact]
-        public void Run_SecurityOptions_ReportsCurrentMode()
+        public void Run_SecurityOptions_explicit_env_reports_Pass_with_Source()
         {
-            var report = StartupHealthCheck.Run(_appDataDir, _auditDir, auditAfter: false);
+            // 환경변수로 명시 → Source=Environment 보장 (FallbackOnError 아닌 결정적 상태)
+            var prev = Environment.GetEnvironmentVariable("BODA_VMS_SECURITY_MODE");
+            Environment.SetEnvironmentVariable("BODA_VMS_SECURITY_MODE", "Production");
+            try
+            {
+                SecurityOptions.LoadFromAppData();
+                var report = StartupHealthCheck.Run(_appDataDir, _auditDir, auditAfter: false);
+                var sec = report.Items.Single(i => i.Name == "SecurityOptions");
 
-            var sec = report.Items.Single(i => i.Name == "SecurityOptions");
-            // Current 가 set 되어 있으면 (어떤 시점에 LoadFromAppData 호출됨) Pass.
-            Assert.Equal(HealthCheckStatus.Pass, sec.Status);
-            Assert.Contains("Mode=", sec.Message);
+                Assert.Equal(HealthCheckStatus.Pass, sec.Status);
+                Assert.Contains("Mode=", sec.Message);
+                Assert.Contains("Source=Environment", sec.Message);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("BODA_VMS_SECURITY_MODE", prev);
+            }
+        }
+
+        [Fact]
+        public void Run_SecurityOptions_FallbackOnError_reports_Warn()
+        {
+            // 환경변수 / config 둘 다 없는 상태 → FallbackOnError + Warn (운영 다운그레이드 시각화)
+            var prev = Environment.GetEnvironmentVariable("BODA_VMS_SECURITY_MODE");
+            Environment.SetEnvironmentVariable("BODA_VMS_SECURITY_MODE", null);
+
+            // 임시 AppData 에 system_config.json 없음 → fallback 발생
+            var emptyAppData = Path.Combine(_tempBase, "empty_appdata");
+            Directory.CreateDirectory(emptyAppData);
+
+            try
+            {
+                SecurityOptions.LoadFromAppData(
+                    SecurityLoadPolicy.WarnOnFallback,
+                    appDataOverride: emptyAppData);
+
+                Assert.Equal(SecurityModeSource.FallbackOnError, SecurityOptions.CurrentSource);
+
+                var report = StartupHealthCheck.Run(_appDataDir, _auditDir, auditAfter: false);
+                var sec = report.Items.Single(i => i.Name == "SecurityOptions");
+
+                Assert.Equal(HealthCheckStatus.Warn, sec.Status);
+                Assert.Contains("FallbackOnError", sec.Message);
+                Assert.Contains("BODA_VMS_SECURITY_MODE", sec.Message);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("BODA_VMS_SECURITY_MODE", prev);
+            }
         }
 
         // ─── 종합 상태 / 카운트 ──────────────────────────────────

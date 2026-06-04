@@ -50,10 +50,29 @@ namespace VMS
                 return;
             }
 
-            // 보안 정책 로드 — system_config.json 의 "securityMode" 키에서 결정.
-            // 누락 시 Development 폴백 (기존 dev 동작 호환). 모든 HttpClient / SignalR 이
-            // 이 정책을 참조하므로 다른 서비스 초기화 전에 반드시 호출.
-            SecurityOptions.LoadFromAppData();
+            // 보안 정책 로드 — 우선순위: BODA_VMS_SECURITY_MODE 환경변수 → system_config.json:securityMode → 폴백.
+            // 정책 결정:
+            //   DEBUG 빌드 또는 BODA_VMS_RELAX_SECURITY=1 환경변수 → WarnOnFallback (Development 폴백 허용)
+            //   RELEASE 빌드 → RequireExplicit (config / 환경변수로 모드 명시 안 하면 부팅 중단)
+            // 운영 배포: setx BODA_VMS_SECURITY_MODE Production /M 으로 강제 (또는 system_config.json:securityMode).
+            // 모든 HttpClient / SignalR 이 이 정책을 참조하므로 다른 서비스 초기화 전에 반드시 호출.
+            var securityPolicy = ResolveSecurityLoadPolicy();
+            try
+            {
+                SecurityOptions.LoadFromAppData(securityPolicy);
+            }
+            catch (InvalidOperationException ex)
+            {
+                // RequireExplicit 정책에서 config / env 모두 누락 → 운영자에게 명확한 메시지로 알리고 종료.
+                // 자동 다운그레이드보다 명시적 부팅 중단이 GS 보안성 항목에서 안전.
+                MessageBox.Show(
+                    "보안 모드가 명시되지 않아 앱을 시작할 수 없습니다.\n\n" + ex.Message,
+                    "BODA VMS — 보안 정책 오류",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                Shutdown(exitCode: 2);
+                return;
+            }
 
             // 감사 로그 보존 정책 — system_config.json 의 "auditRetentionDays" 키 (기본 365).
             // 오늘 파일은 보존 기간 무관 유지. 정리 작업 자체도 AuditCategory.System 으로 기록.
@@ -647,6 +666,32 @@ namespace VMS
                 Debug.WriteLine($"[App] TryLaunchInitialSetup 실패: {ex.Message}");
                 return false;
             }
+        }
+
+        /// <summary>
+        /// 빌드 구성 + 환경변수로 SecurityOptions 폴백 정책 결정.
+        ///
+        /// 결정 규칙:
+        /// - DEBUG 빌드 → WarnOnFallback (개발자 편의 — config 없어도 Development 폴백 진행)
+        /// - RELEASE 빌드 → RequireExplicit (운영 안전 — config / env 없으면 부팅 중단)
+        /// - BODA_VMS_RELAX_SECURITY=1 환경변수 → 빌드 구성 무시하고 WarnOnFallback 강제
+        ///   (QA / 테스트 환경에서 일시 우회)
+        /// </summary>
+        private static SecurityLoadPolicy ResolveSecurityLoadPolicy()
+        {
+            // 일시 우회 — QA 환경에서 운영 빌드를 디버깅할 때 사용. 운영 자동 배포는 본 변수 미설정.
+            var relax = Environment.GetEnvironmentVariable("BODA_VMS_RELAX_SECURITY");
+            if (string.Equals(relax, "1", StringComparison.Ordinal) ||
+                string.Equals(relax, "true", StringComparison.OrdinalIgnoreCase))
+            {
+                return SecurityLoadPolicy.WarnOnFallback;
+            }
+
+#if DEBUG
+            return SecurityLoadPolicy.WarnOnFallback;
+#else
+            return SecurityLoadPolicy.RequireExplicit;
+#endif
         }
 
         private static void RegisterChromelessWindowCommands()
