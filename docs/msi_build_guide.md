@@ -1,7 +1,7 @@
 # MSI 빌드 가이드 (BODA Vision AI)
 
-문서 버전: v1.0
-대상 빌드: master @ 2026-06-01
+문서 버전: v1.1
+대상 빌드: master @ 2026-06-04
 범위: `VMS.MasterSetup` 프로젝트로 BODA Vision System MSI 인스톨러 생성
 
 > 코드 서명 (Authenticode) 은 별도 문서 — [gs_msi_code_signing_guide.md](gs/gs_msi_code_signing_guide.md) (PR24) 참고.
@@ -225,7 +225,55 @@ msiexec /x $code /qb
 
 ---
 
-## 9. 관련 문서
+## 9. 운영 설치 후 보안 모드 설정 (필수)
+
+**RELEASE 빌드 MSI 는 보안 모드가 명시되지 않으면 부팅 중단**합니다 (PR #123 의
+`SecurityLoadPolicy.RequireExplicit` 정책, PR P5-A 에서 활성화). 운영 PC 설치 직후
+다음 중 **반드시 한 가지** 설정 — 누락 시 VMS 시작 시 "보안 정책 오류" 메시지박스 표시 후 종료.
+
+### 9.1 권장 — 시스템 환경변수 (관리자 PowerShell)
+```powershell
+# 운영 (Production): HTTPS 강제 + 엄격한 인증서 검증
+[Environment]::SetEnvironmentVariable("BODA_VMS_SECURITY_MODE", "Production", "Machine")
+
+# 또는 setx 명령 (재부팅 또는 새 세션부터 반영)
+setx BODA_VMS_SECURITY_MODE Production /M
+```
+
+장점:
+- system_config.json 손상 / 누락 시에도 보안 모드 유지 (자동 다운그레이드 차단)
+- AppSetup wizard 재실행해도 보안 모드는 환경변수가 우선
+
+### 9.2 대안 — system_config.json
+AppSetup wizard 실행 시 자동 생성. 수동 편집 시:
+```json
+{
+  "securityMode": "Production",
+  ...
+}
+```
+경로: `%LocalAppData%\BODA VISION AI\system_config.json`
+
+### 9.3 QA / 디버깅 임시 우회
+운영 빌드를 QA 환경에서 일시적으로 Development 모드로 띄우려면:
+```powershell
+$env:BODA_VMS_RELAX_SECURITY = "1"   # 현재 세션만
+# 또는 setx BODA_VMS_RELAX_SECURITY 1
+```
+설정 시 `SecurityLoadPolicy.WarnOnFallback` 으로 강제 — system_config.json 누락도 허용.
+**운영 PC 에는 절대 설정 금지** (인증 다운그레이드 사유).
+
+### 9.4 결정 검증
+설치 + 환경변수 설정 후 VMS 시작:
+- 정상 시작 → 보안 모드 결정됨
+- 시작 시 "보안 정책 오류" 메시지박스 표시 → 9.1 또는 9.2 설정 누락. 환경변수는 새 PowerShell 세션 또는 재부팅 후 반영됨.
+- 시작 후 헬스 체크 UI 의 SecurityOptions 항목 메시지 확인:
+  - `Mode=Production, Source=Environment` 또는 `Source=ConfigFile` → 정상
+  - `Source=FallbackOnError` → Development 폴백 발생 (Warn) → 9.1 / 9.2 명시 권장
+
+---
+
+## 10. 관련 문서
 
 | 문서 | 내용 |
 |---|---|
@@ -242,3 +290,4 @@ msiexec /x $code /qb
 | 버전 | 날짜 | 변경 |
 |---|---|---|
 | v1.0 | 2026-06-01 | 초안 — 로컬 / CI 빌드 절차, 프로젝트 구조, 커스터마이징, 트러블슈팅, 검증 |
+| v1.1 | 2026-06-04 | §9 운영 설치 후 보안 모드 설정 절차 추가 (PR P5-A 의 RequireExplicit 활성화 대응) |

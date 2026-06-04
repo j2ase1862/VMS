@@ -195,15 +195,30 @@ namespace VMS.Core.Health
         private static HealthCheckItem CheckSecurityOptionsLoaded()
         {
             // SecurityOptions.Current 가 어떤 값이든 set 되어 있으면 LoadFromAppData 호출됨.
-            // null 이라면 App.xaml.cs OnStartup 순서가 잘못된 것.
+            // CurrentSource 가 FallbackOnError 면 운영 다운그레이드 발생 — Warn 으로 표면화.
             try
             {
                 var mode = SecurityOptions.Current.Mode;
+                var source = SecurityOptions.CurrentSource;
+
+                // 폴백 결정 — config / env 둘 다 없거나 파싱 실패해서 Development 강제.
+                // GS 보안성 항목에서 자동 다운그레이드는 감점 사유 — 운영자가 즉시 자각하도록 Warn.
+                if (source == SecurityModeSource.FallbackOnError)
+                {
+                    return new HealthCheckItem
+                    {
+                        Name = "SecurityOptions",
+                        Status = HealthCheckStatus.Warn,
+                        Message = $"Mode={mode}, Source=FallbackOnError — " +
+                                  "BODA_VMS_SECURITY_MODE 환경변수 또는 system_config.json:securityMode 로 명시 권장"
+                    };
+                }
+
                 return new HealthCheckItem
                 {
                     Name = "SecurityOptions",
                     Status = HealthCheckStatus.Pass,
-                    Message = $"loaded, Mode={mode}"
+                    Message = $"Mode={mode}, Source={source}"
                 };
             }
             catch (Exception ex)
