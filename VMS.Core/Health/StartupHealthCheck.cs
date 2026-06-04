@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using VMS.Core.Security;
 
 namespace VMS.Core.Health
@@ -63,6 +67,8 @@ namespace VMS.Core.Health
     /// 3. system_config.json 존재 (없으면 Warn — Development 모드 fallback)
     /// 4. SecurityOptions 로드됨 (LoadFromAppData 호출됨)
     /// 5. 디스크 여유 용량 ≥ 1 GB (운영 시 검사 결과 / 감사 로그 누적 여유)
+    /// 6. Web 서버 도달성 (검토사항 P3a) — system_config.json:webServerUrl 의 /health 응답.
+    ///    Web 통신 미설정이면 skip, URL 잘못/서버 미가동이면 Warn (운영자 조치 필요).
     ///
     /// 결과는 단일 AuditCategory.System "StartupHealthCheck" 이벤트로 기록 —
     /// Overall=Pass/Warn/Fail + 각 항목 상태를 details 에 인라인.
@@ -70,9 +76,11 @@ namespace VMS.Core.Health
     public static class StartupHealthCheck
     {
         public const long MinFreeBytes = 1L * 1024 * 1024 * 1024;  // 1 GB
+        public static readonly TimeSpan WebReachabilityTimeout = TimeSpan.FromSeconds(5);
 
         /// <summary>
         /// 기본 AppData 위치 (`%LocalAppData%\BODA VISION AI`) 로 진단 실행 + 감사 기록.
+        /// system_config.json 에서 webServerUrl 추출해 도달성 검사 포함.
         /// </summary>
         public static HealthCheckReport Run()
         {
@@ -80,14 +88,23 @@ namespace VMS.Core.Health
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "BODA VISION AI");
             var auditDir = Path.Combine(appData, "audit");
-            return Run(appData, auditDir, auditAfter: true);
+            return Run(appData, auditDir, auditAfter: true,
+                webServerUrl: TryReadWebServerUrl(appData),
+                httpClient: null);
         }
 
         /// <summary>
-        /// 임의 경로로 실행 — 테스트 격리용.
+        /// 임의 경로 + 옵션으로 실행 — 테스트 격리용.
         /// </summary>
         /// <param name="auditAfter">true 면 결과를 AuditCategory.System 으로 기록.</param>
-        public static HealthCheckReport Run(string appDataDir, string auditDir, bool auditAfter)
+        /// <param name="webServerUrl">Web 도달성 검사 대상 URL. null/빈 값이면 검사 skip.</param>
+        /// <param name="httpClient">Web 도달성 검사용 HttpClient. null 이면 기본 인스턴스 생성.</param>
+        public static HealthCheckReport Run(
+            string appDataDir,
+            string auditDir,
+            bool auditAfter,
+            string? webServerUrl = null,
+            HttpClient? httpClient = null)
         {
             var items = new List<HealthCheckItem>
             {
@@ -95,7 +112,8 @@ namespace VMS.Core.Health
                 CheckDirectoryWriteable("AuditDir", auditDir),
                 CheckSystemConfigPresent(appDataDir),
                 CheckSecurityOptionsLoaded(),
-                CheckDiskFreeSpace(appDataDir, MinFreeBytes)
+                CheckDiskFreeSpace(appDataDir, MinFreeBytes),
+                CheckWebServerReachable(webServerUrl, httpClient)
             };
 
             var report = new HealthCheckReport { Items = items };
@@ -196,6 +214,96 @@ namespace VMS.Core.Health
                     Status = HealthCheckStatus.Fail,
                     Message = $"not loaded: {ex.Message}"
                 };
+            }
+        }
+
+        /// <summary>
+        /// system_config.json 에서 webServerUrl 키 추출. 누락/오류 시 null 반환.
+        /// SecurityOptions 와 유사 패턴 — 진단 자체가 config 오류로 실패해서는 안 됨.
+        /// </summary>
+        private static string? TryReadWebServerUrl(string appDataDir)
+        {
+            try
+            {
+                var path = Path.Combine(appDataDir, "system_config.json");
+                if (!File.Exists(path)) return null;
+
+                using var doc = JsonDocument.Parse(File.ReadAllText(path));
+                if (doc.RootElement.TryGetProperty("webServerUrl", out var prop))
+                {
+                    var value = prop.GetString();
+                    return string.IsNullOrWhiteSpace(value) ? null : value;
+                }
+                return null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Web 서버 /health endpoint 도달성 검사 — VMS 가 운영 중 보낼 heartbeat/result POST 가
+        /// 실제로 도달 가능한지 시작 시점에 확인. 미설정이면 skip (Web 통신 미사용 환경).
+        /// 5초 timeout — 시작 지연 최소화. Web 측 /health 는 익명 endpoint 라 X-API-Key 불필요.
+        /// </summary>
+        private static HealthCheckItem CheckWebServerReachable(string? webServerUrl, HttpClient? injected)
+        {
+            if (string.IsNullOrWhiteSpace(webServerUrl))
+            {
+                return new HealthCheckItem
+                {
+                    Name = "WebServer",
+                    Status = HealthCheckStatus.Pass,
+                    Message = "skipped — webServerUrl 미설정 (Web 통신 사용 안 함)"
+                };
+            }
+
+            HttpClient? owned = null;
+            var http = injected;
+            if (http == null)
+            {
+                owned = new HttpClient { Timeout = WebReachabilityTimeout };
+                http = owned;
+            }
+
+            try
+            {
+                var url = webServerUrl.TrimEnd('/') + "/health";
+                using var cts = new CancellationTokenSource(WebReachabilityTimeout);
+                var resp = http.GetAsync(url, cts.Token).GetAwaiter().GetResult();
+                // 200 Healthy / 503 Unhealthy — 둘 다 health endpoint 응답이므로 "도달" 으로 간주.
+                // 다른 상태 (404 / 401 등) 는 잘못된 endpoint 또는 인증 필요 — Warn 으로 운영자 조치 유도.
+                if ((int)resp.StatusCode == 200 || (int)resp.StatusCode == 503)
+                {
+                    return new HealthCheckItem
+                    {
+                        Name = "WebServer",
+                        Status = HealthCheckStatus.Pass,
+                        Message = $"reachable {url} → HTTP {(int)resp.StatusCode}"
+                    };
+                }
+                return new HealthCheckItem
+                {
+                    Name = "WebServer",
+                    Status = HealthCheckStatus.Warn,
+                    Message = $"unexpected response {url} → HTTP {(int)resp.StatusCode} " +
+                              "(/health endpoint 가 200/503 외 응답 — Web 버전/경로 확인 필요)"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new HealthCheckItem
+                {
+                    Name = "WebServer",
+                    Status = HealthCheckStatus.Warn,
+                    Message = $"unreachable {webServerUrl}: {ex.GetType().Name} — " +
+                              "Web 서버 미가동, URL 오타, 방화벽 차단, 또는 시작 직후 짧은 지연일 수 있음"
+                };
+            }
+            finally
+            {
+                owned?.Dispose();
             }
         }
 

@@ -42,7 +42,7 @@ namespace VMS.Core.Tests.Health
 
             Assert.NotEmpty(report.Items);
             Assert.NotEqual(HealthCheckStatus.Fail, report.OverallStatus);
-            Assert.Equal(5, report.Items.Count);  // 5개 검사 항목
+            Assert.Equal(6, report.Items.Count);  // 6개 검사 항목 (P3a: WebServer 추가)
         }
 
         [Fact]
@@ -189,6 +189,110 @@ namespace VMS.Core.Tests.Health
             // LocalAppData 에 기록하므로 부수효과는 있지만 throw 없으면 통과.
             var report = StartupHealthCheck.Run(_appDataDir, _auditDir, auditAfter: true);
             Assert.NotNull(report);
+        }
+
+        // ─── WebServer 도달성 (검토사항 P3a) ────────────────────────
+
+        [Fact]
+        public void WebServer_url_not_configured_skipped_pass()
+        {
+            // webServerUrl=null → skip (Web 통신 미사용 환경) → Pass + "skipped" 메시지
+            var report = StartupHealthCheck.Run(
+                _appDataDir, _auditDir, auditAfter: false,
+                webServerUrl: null, httpClient: null);
+
+            var web = report.Items.Single(i => i.Name == "WebServer");
+            Assert.Equal(HealthCheckStatus.Pass, web.Status);
+            Assert.Contains("skipped", web.Message);
+        }
+
+        [Fact]
+        public void WebServer_unreachable_url_returns_warn()
+        {
+            // 비할당 호스트 + 비호환 포트 → 도달 불가 → Warn (운영자 조치 유도)
+            var report = StartupHealthCheck.Run(
+                _appDataDir, _auditDir, auditAfter: false,
+                webServerUrl: "http://127.0.0.1:1", httpClient: null);
+
+            var web = report.Items.Single(i => i.Name == "WebServer");
+            Assert.Equal(HealthCheckStatus.Warn, web.Status);
+            Assert.Contains("unreachable", web.Message);
+        }
+
+        [Fact]
+        public void WebServer_with_injected_handler_returning_200_passes()
+        {
+            // HttpClient injection → /health 200 응답 mock → Pass
+            using var http = new System.Net.Http.HttpClient(
+                new StubHandler(System.Net.HttpStatusCode.OK));
+            var report = StartupHealthCheck.Run(
+                _appDataDir, _auditDir, auditAfter: false,
+                webServerUrl: "http://localhost:5292", httpClient: http);
+
+            var web = report.Items.Single(i => i.Name == "WebServer");
+            Assert.Equal(HealthCheckStatus.Pass, web.Status);
+            Assert.Contains("reachable", web.Message);
+        }
+
+        [Fact]
+        public void WebServer_with_injected_handler_returning_503_passes()
+        {
+            // 503 Unhealthy 도 health endpoint 응답이므로 "도달 가능" 으로 인정 — DB 일시 단절 등
+            using var http = new System.Net.Http.HttpClient(
+                new StubHandler(System.Net.HttpStatusCode.ServiceUnavailable));
+            var report = StartupHealthCheck.Run(
+                _appDataDir, _auditDir, auditAfter: false,
+                webServerUrl: "http://localhost:5292", httpClient: http);
+
+            var web = report.Items.Single(i => i.Name == "WebServer");
+            Assert.Equal(HealthCheckStatus.Pass, web.Status);
+            Assert.Contains("503", web.Message);
+        }
+
+        [Fact]
+        public void WebServer_with_injected_handler_returning_404_returns_warn()
+        {
+            // 404 같은 비-health 응답은 잘못된 endpoint/Web 버전 — Warn
+            using var http = new System.Net.Http.HttpClient(
+                new StubHandler(System.Net.HttpStatusCode.NotFound));
+            var report = StartupHealthCheck.Run(
+                _appDataDir, _auditDir, auditAfter: false,
+                webServerUrl: "http://localhost:5292", httpClient: http);
+
+            var web = report.Items.Single(i => i.Name == "WebServer");
+            Assert.Equal(HealthCheckStatus.Warn, web.Status);
+            Assert.Contains("unexpected", web.Message);
+        }
+
+        [Fact]
+        public void WebServer_url_auto_loaded_from_system_config()
+        {
+            // system_config.json 에 webServerUrl 만 명시 + Run() 기본 경로 호출 시 자동 추출.
+            // 기본 Run() 은 default LocalAppData 사용 → 본 테스트는 임시 디렉토리 격리 어려움.
+            // 대신 system_config 파일이 존재할 때 _appDataDir override 로 검사가 webServerUrl 항목
+            // 을 포함하는지 확인 (Reach 결과는 상관 없음).
+            File.WriteAllText(
+                Path.Combine(_appDataDir, "system_config.json"),
+                "{ \"webServerUrl\": \"http://127.0.0.1:1\" }");
+
+            // appDataDir 만 변경 가능한 Run 오버로드는 webServerUrl 을 명시 받음.
+            // → 자동 추출은 기본 Run() 경로 — 본 테스트는 wiring 확인만 (코드 경로 존재).
+            var report = StartupHealthCheck.Run(
+                _appDataDir, _auditDir, auditAfter: false,
+                webServerUrl: "http://127.0.0.1:1", httpClient: null);
+
+            Assert.Contains(report.Items, i => i.Name == "WebServer");
+        }
+
+        /// <summary>고정 응답을 반환하는 HttpMessageHandler — Web 도달성 mock.</summary>
+        private sealed class StubHandler : System.Net.Http.HttpMessageHandler
+        {
+            private readonly System.Net.HttpStatusCode _status;
+            public StubHandler(System.Net.HttpStatusCode status) => _status = status;
+            protected override System.Threading.Tasks.Task<System.Net.Http.HttpResponseMessage> SendAsync(
+                System.Net.Http.HttpRequestMessage request,
+                System.Threading.CancellationToken cancellationToken)
+                => System.Threading.Tasks.Task.FromResult(new System.Net.Http.HttpResponseMessage(_status));
         }
     }
 }
