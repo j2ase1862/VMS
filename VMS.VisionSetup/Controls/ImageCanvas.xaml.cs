@@ -401,7 +401,12 @@ namespace VMS.VisionSetup.Controls
             if (oldROI != null)
             {
                 oldROI.IsSelected = false;
-                RefreshROI(oldROI);
+                // oldROI 가 ROICollection 에서 이미 제거됐다면 (예: ShowToolROIs(null) 호출 후)
+                // RefreshROI 가 DrawROI 로 본체를 다시 그려 잔존시키는 문제 방지.
+                if (ROICollection != null && ROICollection.Contains(oldROI))
+                {
+                    RefreshROI(oldROI);
+                }
             }
 
             if (newROI != null)
@@ -1344,11 +1349,9 @@ namespace VMS.VisionSetup.Controls
         /// </summary>
         public void ShowToolROI(ROIShape? roi)
         {
-            // 기존 ROI 시각 요소 모두 제거
-            foreach (var kvp in _roiVisuals.ToList())
-            {
-                ClearROIVisuals(kvp.Key);
-            }
+            // 캔버스 완전 clear — _roiVisuals 미추적 visual (본체/handles/search arrow) 잔존 방지.
+            DrawingCanvas.Children.Clear();
+            _roiVisuals.Clear();
             ROICollection?.Clear();
 
             if (roi != null)
@@ -1370,11 +1373,9 @@ namespace VMS.VisionSetup.Controls
         /// </summary>
         public void ShowToolROIs(ROIShape? roi, ROIShape? searchRegion = null)
         {
-            // 기존 ROI 시각 요소 모두 제거
-            foreach (var kvp in _roiVisuals.ToList())
-            {
-                ClearROIVisuals(kvp.Key);
-            }
+            // 캔버스 완전 clear — _roiVisuals 미추적 visual (본체/handles/search arrow) 잔존 방지.
+            DrawingCanvas.Children.Clear();
+            _roiVisuals.Clear();
             ROICollection?.Clear();
 
             ROICollection ??= new ObservableCollection<ROIShape>();
