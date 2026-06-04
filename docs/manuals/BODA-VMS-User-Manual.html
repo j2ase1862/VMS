@@ -141,6 +141,7 @@
         <li><a href="#vms-dialog-completed">작업지시 완료 다이얼로그</a></li>
         <li><a href="#vms-auto-run">AUTO RUN 활성화 조건</a></li>
         <li><a href="#vms-roles">권한별 동선</a></li>
+        <li><a href="#vms-usergrade">로컬 UserGrade 권한 매트릭스</a></li>
       </ol>
     </li>
     <li><a href="#web">BODA.VMS.Web</a>
@@ -477,6 +478,33 @@ Web 동기화 후 재시도.</p>
   <tr><td>External Tools (Vision Tool / System Setup)</td><td>—</td><td>—</td><td>✓</td></tr>
   <tr><td>User Management</td><td>—</td><td>—</td><td>✓ (Admin)</td></tr>
 </table>
+<p>위 표는 <strong>Web 작업자 마스터 Role</strong> (사번 + PIN 키오스크 로그인) 기준입니다.
+VMS 로컬 시스템 사용자 등급은 별도 체계로 §3.7 참조.</p>
+
+<h3 id="vms-usergrade">3.7 로컬 UserGrade 권한 매트릭스</h3>
+<p>VMS 데스크탑은 운영체제 사용자와 별개로 <strong>로컬 시스템 사용자</strong> (BCrypt 해시 저장, <code>%LocalAppData%\BODA VISION AI\BodaVision.db</code>) 를 3 등급으로 분리합니다.
+SSO 활성 환경에서 Admin / Engineer 는 Web 으로 인증 위임되며, <code>local-admin</code> 비상 폴백만 로컬 인증을 사용합니다.</p>
+<table>
+  <tr><th>권한 (<code>UserPermission</code>)</th><th>Operator</th><th>Engineer</th><th>Admin</th><th>local-admin<br>(비상 폴백)</th></tr>
+  <tr><td>StartStop (AUTO RUN 시작/정지)</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+  <tr><td>ViewStatistics (통계 / 이력 조회)</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+  <tr><td>EditRecipe (레시피 편집)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
+  <tr><td>DeleteRecipe (레시피 삭제)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
+  <tr><td>CameraSettings (카메라 설정)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
+  <tr><td>LaunchVisionSetup (Vision Tool 실행)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
+  <tr><td>LaunchAppSetup (System Setup 실행)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
+  <tr><td>SystemConfiguration (시스템 구성 변경)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
+  <tr><td>RestartWebService (Web 서비스 재시작)</td><td>—</td><td>✓</td><td>✓</td><td>✓</td></tr>
+  <tr><td>ManageUsers (사용자 관리)</td><td>—</td><td>—</td><td>✓</td><td>—</td></tr>
+</table>
+<p><strong>local-admin 폴백 규칙</strong> — Web SSO 다운 시 비상 진입용. Grade 무관, 위 표의
+<code>StartStop</code> / <code>ViewStatistics</code> / <code>RestartWebService</code> 3 개만 허용.
+운영 데이터 변경 (ManageUsers / EditRecipe / SystemConfiguration 등) 은 거부되며 모든 거부는
+<code>AuditCategory.Authorization</code> 로 기록됩니다. 설계 근거: <code>docs/gs/SSO_Migration_Plan.md §2.3</code>.</p>
+<p><strong>비로그인 상태</strong> — 모든 권한 거부 (단, AUTO RUN 의 StartStop 게이트는 <code>HasConnectedCamera</code> 등 §3.5 조건이 우선).</p>
+<p><strong>권한 거부 감사</strong> — <code>HasPermission</code> 이 거부할 때마다 <code>%LocalAppData%\BODA VISION AI\audit\YYYY-MM-DD.jsonl</code> 에
+<code>PermissionDenied</code> 이벤트로 기록 (Username / Grade / Permission). 허용은 빈도 폭증 우려로 미기록.</p>
+<p>진실 소스 (Grade ↔ 권한 매핑 로직): <code>VMS/Services/UserService.cs</code> <code>HasPermission</code>. 매트릭스 변경 시 본 매뉴얼 동기 필요.</p>
 </section>
 
 <!-- ============================================================ -->
