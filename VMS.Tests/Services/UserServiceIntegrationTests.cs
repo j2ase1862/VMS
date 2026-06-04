@@ -58,11 +58,12 @@ namespace VMS.Tests.Services
         [Fact]
         public void Ctor_DoesNotReseed_OnExistingDb()
         {
-            // 같은 디렉토리로 두 번째 인스턴스를 만들면 기존 DB 재사용 — admin 1명만 있어야 함.
+            // 같은 디렉토리로 두 번째 인스턴스를 만들면 기존 DB 재사용 —
+            // admin + local-admin (SSO PR3 시드) 2 명만 있어야 함 (재시드 안 함).
             var second = new UserService(_tempDir);
             second.Authenticate("admin", "admin123");
 
-            Assert.Single(_service.GetAllUsers());
+            Assert.Equal(2, _service.GetAllUsers().Count);
         }
 
         // ─── Authenticate ─────────────────────────────────────────
@@ -307,13 +308,14 @@ namespace VMS.Tests.Services
         [Fact]
         public void GetAllUsers_ReturnsAllSeeded_AndCreated()
         {
-            // 시드 admin 1명 + 추가 2명.
+            // 시드 admin + local-admin (SSO PR3) 2명 + 추가 2명 = 4명.
             _service.CreateUser("u1", "pw1234", "U1", UserGrade.Operator);
             _service.CreateUser("u2", "pw1234", "U2", UserGrade.Engineer);
 
             var users = _service.GetAllUsers();
-            Assert.Equal(3, users.Count);
+            Assert.Equal(4, users.Count);
             Assert.Contains(users, u => u.Username == "admin");
+            Assert.Contains(users, u => u.Username == UserService.LocalFallbackUsername);
             Assert.Contains(users, u => u.Username == "u1");
             Assert.Contains(users, u => u.Username == "u2");
         }
