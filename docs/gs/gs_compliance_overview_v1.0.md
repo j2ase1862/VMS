@@ -251,15 +251,15 @@
 | Microsoft.AspNetCore.SignalR.Client | 8.x | 실시간 푸시 | MIT |
 | xunit | 2.9.0 | 단위 / 통합 테스트 | MIT |
 
-전체 의존성 / 옵션 벤더 SDK 매트릭스 + 배포 정책 → `docs/gs_distribution_policy.md` (PR26).
+전체 의존성 / 옵션 벤더 SDK 매트릭스 + 배포 정책 → `docs/gs/gs_distribution_policy.md` (PR26).
 NOTICE 파일 (Apache 2.0 §4 표기 의무) → 루트 `NOTICE`.
 VMS 자체 라이선스 → 루트 `LICENSE` (DRAFT, 법무 검토 필요).
 
 ### 5.3 후속 강화 후보
 | 항목 | 권장 시점 | 비고 |
 |---|---|---|
-| MSI 코드 서명 (Authenticode) | 외부 배포 시점 | 운영 절차 문서화 완료 — `docs/gs_msi_code_signing_guide.md` (PR24) |
-| 감사 로그 SIEM 외부 전송 | 통합 모니터링 도입 시 | 운영 절차 문서화 완료 — `docs/gs_audit_siem_integration_guide.md` (PR25) |
+| MSI 코드 서명 (Authenticode) | 외부 배포 시점 | 운영 절차 문서화 완료 — `docs/gs/gs_msi_code_signing_guide.md` (PR24) |
+| 감사 로그 SIEM 외부 전송 | 통합 모니터링 도입 시 | 운영 절차 문서화 완료 — `docs/gs/gs_audit_siem_integration_guide.md` (PR25) |
 | 침입 탐지 — 비정상 로그인 패턴 알림 | 사이트 규모 확대 시 | SIEM 알람 룰로 대체 가능 (PR25 §6.2) |
 
 ### 5.10 보존 정책 통합 UI (PR38 + PR40 카테고리별 차등 + PR41 프리셋 + PR42 dry-run 미리보기)

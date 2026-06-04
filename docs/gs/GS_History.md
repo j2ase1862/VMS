@@ -25,11 +25,11 @@
 | **합계** | **45 PR** | PR1 ~ PR44 + PR119 |
 
 ### 1.2 산출물 (4 GS 문서 + 코드 변경)
-- `docs/gs_compliance_overview_v1.0.md` (PR21) — ISO/IEC 25051 항목별 PR1~20 매핑
-- `docs/gs_msi_code_signing_guide.md` (PR24) — MSI 코드 서명 운영 가이드
-- `docs/gs_audit_siem_integration_guide.md` (PR25) — 감사 로그 SIEM 외부 전송
-- `docs/gs_distribution_policy.md` (PR26) — 라이선스 / NOTICE / 배포 정책
-- `docs/GS_History.md` (본 문서) — 시간순 히스토리
+- `docs/gs/gs_compliance_overview_v1.0.md` (PR21) — ISO/IEC 25051 항목별 PR1~20 매핑
+- `docs/gs/gs_msi_code_signing_guide.md` (PR24) — MSI 코드 서명 운영 가이드
+- `docs/gs/gs_audit_siem_integration_guide.md` (PR25) — 감사 로그 SIEM 외부 전송
+- `docs/gs/gs_distribution_policy.md` (PR26) — 라이선스 / NOTICE / 배포 정책
+- `docs/gs/GS_History.md` (본 문서) — 시간순 히스토리
 
 ---
 
@@ -111,10 +111,10 @@ GS 인증 작업을 13 phase 로 나눠 시간순으로 정리. 한 phase 안에
 
 | PR | 산출물 |
 |----|--------|
-| **PR21** | `docs/gs_compliance_overview_v1.0.md` (385 줄) — ISO/IEC 25051 항목별 PR1~20 매핑 |
-| **PR24** | `docs/gs_msi_code_signing_guide.md` — MSI 코드 서명 운영 가이드 |
-| **PR25** | `docs/gs_audit_siem_integration_guide.md` — 감사 로그 SIEM 외부 전송 |
-| **PR26** | `docs/gs_distribution_policy.md` + `LICENSE` + `NOTICE` — 배포 정책 + OSS 라이선스 표기 |
+| **PR21** | `docs/gs/gs_compliance_overview_v1.0.md` (385 줄) — ISO/IEC 25051 항목별 PR1~20 매핑 |
+| **PR24** | `docs/gs/gs_msi_code_signing_guide.md` — MSI 코드 서명 운영 가이드 |
+| **PR25** | `docs/gs/gs_audit_siem_integration_guide.md` — 감사 로그 SIEM 외부 전송 |
+| **PR26** | `docs/gs/gs_distribution_policy.md` + `LICENSE` + `NOTICE` — 배포 정책 + OSS 라이선스 표기 |
 
 ---
 
@@ -296,10 +296,10 @@ GS 인증 신청에는 영향 없음. 운영 개선 / 차기 인증 갱신을 �
 ## 7. 참고 자료
 
 ### 본 솔루션 GS 문서
-- `docs/gs_compliance_overview_v1.0.md` (PR21) — ISO/IEC 25051 항목별 매핑
-- `docs/gs_msi_code_signing_guide.md` (PR24)
-- `docs/gs_audit_siem_integration_guide.md` (PR25)
-- `docs/gs_distribution_policy.md` (PR26)
+- `docs/gs/gs_compliance_overview_v1.0.md` (PR21) — ISO/IEC 25051 항목별 매핑
+- `docs/gs/gs_msi_code_signing_guide.md` (PR24)
+- `docs/gs/gs_audit_siem_integration_guide.md` (PR25)
+- `docs/gs/gs_distribution_policy.md` (PR26)
 - `LICENSE`, `NOTICE` (PR26)
 
 ### 짝 솔루션 (BODA.VMS.Web)
