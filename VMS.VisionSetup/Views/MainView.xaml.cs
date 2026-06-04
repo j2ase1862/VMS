@@ -60,6 +60,12 @@ namespace VMS.VisionSetup
             // ROI 동기화 이벤트 구독 via WeakReferenceMessenger
             WeakReferenceMessenger.Default.Register<RequestShowToolROIMessage>(this, (r, m) =>
             {
+                // Tool 전환 등으로 ROI 가 null 이면 SearchRegion 도 함께 clear (일관성).
+                if (m.ROIShape == null)
+                {
+                    ImageCanvasControl.ShowToolROIs(null, null);
+                    return;
+                }
                 var ft = vm.SelectedVisionTool as FeatureMatchTool;
                 var searchRoi = (ft != null && ft.UseSearchRegion) ? ft.AssociatedSearchRegionShape : null;
                 ImageCanvasControl.ShowToolROIs(m.ROIShape, searchRoi);
@@ -724,6 +730,7 @@ namespace VMS.VisionSetup
         private void DeepLearning_Click(object sender, RoutedEventArgs e)
         {
             var vm = DataContext as MainViewModel;
+
             vm?.LaunchDeepLearning();
         }
 

@@ -254,8 +254,14 @@ namespace VMS.VisionSetup.ViewModels
                     SelectedToolSettings = null;
                 }
 
-                // 도구 전환 시 해당 도구의 ROI를 캔버스에 표시
-                WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(value?.VisionTool?.AssociatedROIShape));
+                // 도구 전환 시 이전 도구의 결과 잔상 제거 — 새 도구 실행 전까지 Original 표시
+                ResultImage = null;
+                ResultMat = null;
+                OverlayImage = null;
+                SelectedDisplayMode = ImageDisplayMode.OriginalImage;
+
+                // 도구 전환 시 ROI 캔버스 항상 clear — 새 도구의 ROI 는 Show ROI 명시 클릭 시 표시.
+                WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(null));
             }
         }
 
@@ -880,7 +886,12 @@ namespace VMS.VisionSetup.ViewModels
                 if (!mat.Empty())
                 {
                     CurrentImage = mat;
-                    SelectedDisplayMode = ImageDisplayMode.OriginalImage;
+                    // AutoRunAll/AutoRunSelected 모드는 직후 RunAll/RunSelected 가 Result 로 재설정 —
+                    // Original 로 깜빡임 방지 차 NavigateOnly 일 때만 Original 강제.
+                    if (FolderNavigationMode == FolderNavigationMode.NavigateOnly)
+                    {
+                        SelectedDisplayMode = ImageDisplayMode.OriginalImage;
+                    }
                 }
 
                 OnPropertyChanged(nameof(HasImageFolder));
