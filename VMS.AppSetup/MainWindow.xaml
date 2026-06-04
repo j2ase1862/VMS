@@ -157,6 +157,30 @@
                                            Foreground="{StaticResource BrushTextMuted}" FontSize="11" TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
+
+                        <!-- Web SSO (단일 사용자 계정 통합) — SSO Migration Plan §2.2 / PR5 -->
+                        <Border Background="{StaticResource BrushBgCard}" CornerRadius="6" Padding="15" Margin="0,15,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Web SSO (Single Sign-On)" FontSize="14" FontWeight="SemiBold"
+                                           Foreground="#FFD700" Margin="0,0,0,12"/>
+
+                                <CheckBox Content="Web SSO 활성 — Admin/Manager 인증을 BODA.VMS.Web 으로 위임"
+                                          IsChecked="{Binding WebSsoEnabled}"
+                                          Style="{StaticResource WindowDarkCheckBox}" Margin="0,0,0,5"/>
+                                <TextBlock TextWrapping="Wrap" FontSize="11" Margin="0,0,0,12"
+                                           Foreground="{StaticResource BrushTextMuted}">
+                                    활성 시 일반 사용자는 Web 의 admin 계정으로 로그인 (단일 계정 관리).
+                                    Web 도달 불가 시 비상 계정 'local-admin' 만 진입 가능 (제한 권한 — 운영 데이터 변경 불가).
+                                </TextBlock>
+
+                                <TextBlock TextWrapping="Wrap" FontSize="11"
+                                           Foreground="{StaticResource BrushTextMuted}">
+                                    <Bold>운영 첫 가동 시:</Bold> local-admin 디폴트 비밀번호
+                                    (fallback-change-me-9999) 로 1회 로그인 후 VMS 사용자 관리에서 비밀번호 변경 필요.
+                                    상세 절차는 docs/msi_build_guide.md §10 참고.
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </Grid>
 

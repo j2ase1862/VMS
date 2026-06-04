@@ -1,6 +1,6 @@
 # MSI 빌드 가이드 (BODA Vision AI)
 
-문서 버전: v1.1
+문서 버전: v1.2
 대상 빌드: master @ 2026-06-04
 범위: `VMS.MasterSetup` 프로젝트로 BODA Vision System MSI 인스톨러 생성
 
@@ -273,7 +273,52 @@ $env:BODA_VMS_RELAX_SECURITY = "1"   # 현재 세션만
 
 ---
 
-## 10. 관련 문서
+## 10. Web SSO 통합 운영 (선택 — 단일 사용자 계정)
+
+VMS Admin/Manager 인증을 BODA.VMS.Web 으로 위임해 **단일 사용자 계정** 으로 운영. 비밀번호 동기화 부담 / 감사 추적 단절 해소. **설계 문서**: [`docs/gs/SSO_Migration_Plan.md`](gs/SSO_Migration_Plan.md).
+
+### 10.1 활성 조건
+- BODA.VMS.Web 이 운영 가동 중 (단일 PC 운영 시 Windows Service 자동 시작 권장)
+- VMS 와 Web 간 통신 가능 (`http(s)://<host>:5292` — `system_config.json:webServerUrl`)
+- Web 측 admin 계정에 운영자 등록 완료
+
+### 10.2 활성 절차
+1. **VMS.AppSetup wizard** Page 2 → "Web SSO (Single Sign-On)" 카드 → "Web SSO 활성" 체크
+2. wizard 저장 → `system_config.json` 에 `"webSso": { "enabled": true, "webServerUrl": "..." }` 기록
+3. VMS 재시작 → 다음부터 모든 username/password 로그인이 Web 으로 위임
+
+### 10.3 비상 local-admin 운영
+**Web 도달 불가 시 유일한 진입점**. SSO 활성 후에도 별도 시드 계정 `local-admin` 이 항상 존재.
+
+| 항목 | 값 / 정책 |
+|------|----------|
+| 디폴트 비밀번호 | `fallback-change-me-9999` |
+| 허용 권한 | `StartStop`, `ViewStatistics`, `RestartWebService` (키오스크 운영 + 진단 + Web 재시작) |
+| 거부 권한 | `ManageUsers`, `EditRecipe`, `SystemConfiguration` 등 운영 데이터 변경 전체 |
+| 사용 로그 | `AuditCategory.Authentication / Success` 에 `IsLocalFallback=true (restricted permissions apply)` 명시 |
+| 거부 로그 | `AuditCategory.Authorization / Denied` + "Web SSO 로그인 후 수행하세요" 안내 |
+
+### 10.4 운영 첫 가동 시 — local-admin 비밀번호 변경 (필수)
+1. SSO 활성 + 운영 PC 재시작
+2. **VMS 로그인 화면 → username `local-admin` + 디폴트 비밀번호** 로 1회 로그인
+3. VMS 사용자 관리 UI → "비밀번호 변경" 으로 강한 비밀번호로 교체
+4. 이후 일반 사용자는 Web admin 계정으로 로그인, local-admin 은 Web 도달 불가 시 응급 진입용
+
+### 10.5 운영 검증
+- AppSetup 저장 후 `system_config.json` 확인: `"webSso": { "enabled": true, "webServerUrl": "..." }`
+- VMS 시작 → 로그인 화면에서 SSO 모드 안내 (PR4 의 `IsWebSsoEnabled` 표시 — UI 향후 보강)
+- Web admin 자격으로 로그인 → 성공 → 감사 로그에 "Web SSO ok, Role=..., Grade=..." 기록
+- Web Service 일시 중지 → 일반 admin 로그인 시 "local-admin 만 로그인 가능" 안내
+- local-admin 로그인 → 운영 데이터 변경 시도 → 거부 + AuditLog 기록
+
+### 10.6 비활성화 / 롤백
+- AppSetup wizard 재실행 → "Web SSO 활성" 체크 해제 → VMS 재시작
+- 기존 로컬 사용자 계정 그대로 사용 가능 (PR3 가 admin 시드 보존)
+- 마이그레이션 PR 시퀀스 (#128 / #129 / #130 / #131 / 본 #132) 의 어떤 단계 후에도 SSO=false 로 즉시 복원 가능
+
+---
+
+## 11. 관련 문서
 
 | 문서 | 내용 |
 |---|---|
@@ -281,6 +326,7 @@ $env:BODA_VMS_RELAX_SECURITY = "1"   # 현재 세션만
 | [gs_distribution_policy.md](gs/gs_distribution_policy.md) | 라이선스 / 배포 채널 / EULA |
 | [manual_regression_v1.2.md](manual_regression_v1.2.md) | MSI 다운로드 후 운영 환경 회귀 가이드 |
 | [gs_compliance_overview_v1.0.md](gs/gs_compliance_overview_v1.0.md) | GS 인증 보안 정책 종합 |
+| [SSO_Migration_Plan.md](gs/SSO_Migration_Plan.md) | VMS ↔ Web SSO 통합 마이그레이션 설계 (PR1~5) |
 | `.github/workflows/build.yml` | CI 빌드 / artifact 정의 |
 | `VMS.MasterSetup/Package.wxs` | MSI 구조 정의 |
 
@@ -291,3 +337,4 @@ $env:BODA_VMS_RELAX_SECURITY = "1"   # 현재 세션만
 |---|---|---|
 | v1.0 | 2026-06-01 | 초안 — 로컬 / CI 빌드 절차, 프로젝트 구조, 커스터마이징, 트러블슈팅, 검증 |
 | v1.1 | 2026-06-04 | §9 운영 설치 후 보안 모드 설정 절차 추가 (PR P5-A 의 RequireExplicit 활성화 대응) |
+| v1.2 | 2026-06-04 | §10 Web SSO 통합 운영 절차 추가 (SSO PR1~5: 단일 사용자 계정 + local-admin 폴백) |

@@ -53,6 +53,16 @@ namespace VMS.AppSetup.ViewModels
         [ObservableProperty]
         private string _clientApiKey = string.Empty;
 
+        // SSO Migration Plan §2.2 (SSO PR4 모델 + PR5 UI):
+        // Web SSO 활성 여부. true 면 LoginViewModel 이 Admin/Manager 인증을 Web 으로 위임.
+        [ObservableProperty]
+        private bool _webSsoEnabled;
+
+        // PR5 UI 의 PasswordBox 와 짝 — code-behind 가 Save 직전 LocalAdminPasswordBox.Password 를
+        // 본 필드에 set 후 SaveConfiguration 이 UserService.SetLocalFallbackPassword 호출.
+        // ViewModel 자체에 평문 보관 시간을 최소화 (Save 후 빈 문자열로 즉시 폐기).
+        public string LocalFallbackAdminPassword { get; set; } = string.Empty;
+
         // Page 3: Camera Settings
         [ObservableProperty]
         private CameraMode _cameraMode = CameraMode.Virtual;
@@ -201,6 +211,7 @@ namespace VMS.AppSetup.ViewModels
                 WebServerUrl = config.WebServerUrl;
                 VisionServerUrl = config.VisionServerUrl;
                 ClientApiKey = config.ClientApiKey;
+                WebSsoEnabled = config.WebSso?.Enabled ?? false;
                 CameraMode = config.CameraMode;
 
                 // PLC Vendor & Communication
@@ -600,6 +611,11 @@ namespace VMS.AppSetup.ViewModels
                 WebServerUrl = WebServerUrl,
                 VisionServerUrl = VisionServerUrl,
                 ClientApiKey = ClientApiKey,
+                WebSso = new WebSsoSettings
+                {
+                    Enabled = WebSsoEnabled,
+                    WebServerUrl = WebSsoEnabled ? WebServerUrl : string.Empty
+                },
                 CameraMode = CameraMode,
                 Cameras = Cameras.ToList(),
 
