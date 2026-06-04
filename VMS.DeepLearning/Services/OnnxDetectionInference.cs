@@ -1,14 +1,32 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using OpenCvSharp;
+using VMS.Core.Security;
 using VMS.DeepLearning.Interfaces;
 using VMS.DeepLearning.Models;
 
 namespace VMS.DeepLearning.Services
 {
+    /// <summary>
+    /// ONNX 모델 로드 실패 시 throw 되는 명시적 예외 — 손상/조작된 모델 파일,
+    /// 호환 안 되는 OpRange, 메모리 부족 등 native 실패를 .NET 예외로 wrap.
+    /// 호출자는 본 예외만 catch 하면 모델 결함을 일관 처리 가능.
+    /// GS 인증 결함 허용성 요구사항 대응 (PR P1-#4).
+    /// </summary>
+    public sealed class OnnxLoadException : Exception
+    {
+        public string ModelPath { get; }
+        public OnnxLoadException(string modelPath, string message, Exception inner)
+            : base(message, inner)
+        {
+            ModelPath = modelPath;
+        }
+    }
+
     /// <summary>
     /// YOLOv8/v11 ONNX 추론 — VMS.VisionSetup의 YoloOnnxEngine과 동일 로직 미니멀 버전.
     /// Letterbox 전처리 + [1,84,8400]/[1,8400,84] 자동 감지 + NMS.
@@ -32,20 +50,42 @@ namespace VMS.DeepLearning.Services
         {
             UnloadModel();
 
+            if (!File.Exists(onnxPath))
+                throw new FileNotFoundException($"ONNX 모델을 찾을 수 없습니다: {onnxPath}");
+
             var options = new SessionOptions
             {
                 GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL
             };
 
-            _session = new InferenceSession(onnxPath, options);
-            _modelPath = onnxPath;
+            // GS 결함 허용성: 손상/조작된 ONNX 가 native exception 으로 호출자 (LabelingMainViewModel
+            // 등) 흐름을 깨지 않도록 OnnxLoadException 으로 wrap + AuditLog 기록.
+            try
+            {
+                _session = new InferenceSession(onnxPath, options);
+                _modelPath = onnxPath;
 
-            // 메타데이터에서 클래스 이름과 input 크기 추출
-            _classNames = ReadClassNamesFromMetadata(_session);
-            _inputSize = ReadInputSizeFromMetadata(_session);
+                // 메타데이터에서 클래스 이름과 input 크기 추출
+                _classNames = ReadClassNamesFromMetadata(_session);
+                _inputSize = ReadInputSizeFromMetadata(_session);
 
-            // 출력 차원에서 클래스 수 추출
-            _numClasses = ReadNumClassesFromOutput(_session);
+                // 출력 차원에서 클래스 수 추출
+                _numClasses = ReadNumClassesFromOutput(_session);
+            }
+            catch (Exception ex) when (ex is not FileNotFoundException && ex is not OnnxLoadException)
+            {
+                UnloadModel();
+                AuditLogger.Instance.Log(
+                    AuditCategory.Inspection,
+                    "Model Configuration Load Error",
+                    AuditOutcome.Failure,
+                    source: nameof(OnnxDetectionInference),
+                    details: $"path={onnxPath} error={ex.GetType().Name}: {ex.Message}");
+                throw new OnnxLoadException(
+                    onnxPath,
+                    $"ONNX 모델 로드 실패 ({Path.GetFileName(onnxPath)}): {ex.Message}",
+                    ex);
+            }
         }
 
         public void UnloadModel()

@@ -6,9 +6,26 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using VMS.Core.Security;
 
 namespace VMS.VisionSetup.VisionTools.DeepLearning
 {
+    /// <summary>
+    /// ONNX 모델 로드 실패 시 throw 되는 명시적 예외 — 손상/조작된 모델 파일,
+    /// 호환 안 되는 OpRange, 메모리 부족 등 native ONNX Runtime 실패를 .NET 예외로 wrap.
+    /// 호출자는 본 예외만 잡으면 모델 관련 결함을 모두 처리할 수 있어 sequence engine
+    /// 무한 폴백 부담을 줄인다. GS 인증 결함 허용성 요구사항 대응 (PR P1-#4).
+    /// </summary>
+    public sealed class OnnxLoadException : Exception
+    {
+        public string ModelPath { get; }
+        public OnnxLoadException(string modelPath, string message, Exception inner)
+            : base(message, inner)
+        {
+            ModelPath = modelPath;
+        }
+    }
+
     /// <summary>
     /// 추론 실행 제공자(Execution Provider) 우선순위
     /// </summary>
@@ -67,7 +84,28 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
             ActiveProvider = AttachExecutionProvider(options, preferred);
 
             _session?.Dispose();
-            _session = new InferenceSession(modelPath, options);
+
+            // GS 결함 허용성: 손상/조작된 ONNX 파일이 native exception (OnnxRuntimeException,
+            // AccessViolationException 등) 으로 sequence engine 전체를 다운시키지 않도록 wrap.
+            // 호출자는 OnnxLoadException 만 catch 하면 모델 결함을 일관 처리 가능.
+            try
+            {
+                _session = new InferenceSession(modelPath, options);
+            }
+            catch (Exception ex)
+            {
+                _session = null;
+                AuditLogger.Instance.Log(
+                    AuditCategory.Inspection,
+                    "Model Configuration Load Error",
+                    AuditOutcome.Failure,
+                    source: nameof(OnnxModelBase),
+                    details: $"path={modelPath} provider={ActiveProvider} error={ex.GetType().Name}: {ex.Message}");
+                throw new OnnxLoadException(
+                    modelPath,
+                    $"ONNX 모델 로드 실패 ({Path.GetFileName(modelPath)}): {ex.Message}",
+                    ex);
+            }
         }
 
         /// <summary>

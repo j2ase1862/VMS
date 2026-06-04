@@ -3,8 +3,10 @@ using Microsoft.ML.OnnxRuntime.Tensors;
 using OpenCvSharp;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using VMS.Core.Security;
 
 namespace VMS.DeepLearning.Services
 {
@@ -55,13 +57,44 @@ namespace VMS.DeepLearning.Services
         {
             _encoderSession?.Dispose();
             _decoderSession?.Dispose();
+            _encoderSession = null;
+            _decoderSession = null;
             _imageEmbedding = null;
+
+            if (!File.Exists(encoderPath))
+                throw new FileNotFoundException($"SAM encoder 모델을 찾을 수 없습니다: {encoderPath}");
+            if (!File.Exists(decoderPath))
+                throw new FileNotFoundException($"SAM decoder 모델을 찾을 수 없습니다: {decoderPath}");
 
             var options = new SessionOptions();
             options.GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL;
 
-            _encoderSession = new InferenceSession(encoderPath, options);
-            _decoderSession = new InferenceSession(decoderPath, options);
+            // GS 결함 허용성: 손상/조작된 ONNX 가 native exception 으로 호출자 흐름을
+            // 깨지 않도록 OnnxLoadException 으로 wrap + AuditLog 기록.
+            try
+            {
+                _encoderSession = new InferenceSession(encoderPath, options);
+                _decoderSession = new InferenceSession(decoderPath, options);
+            }
+            catch (Exception ex) when (ex is not FileNotFoundException && ex is not OnnxLoadException)
+            {
+                _encoderSession?.Dispose();
+                _decoderSession?.Dispose();
+                _encoderSession = null;
+                _decoderSession = null;
+
+                var failedPath = _encoderSession == null ? encoderPath : decoderPath;
+                AuditLogger.Instance.Log(
+                    AuditCategory.Inspection,
+                    "Model Configuration Load Error",
+                    AuditOutcome.Failure,
+                    source: nameof(SamService),
+                    details: $"encoder={encoderPath} decoder={decoderPath} error={ex.GetType().Name}: {ex.Message}");
+                throw new OnnxLoadException(
+                    failedPath,
+                    $"SAM 모델 로드 실패: {ex.Message}",
+                    ex);
+            }
         }
 
         public async Task ComputeEmbeddingAsync(Mat image)
