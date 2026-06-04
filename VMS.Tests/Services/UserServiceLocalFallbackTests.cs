@@ -25,6 +25,8 @@ namespace VMS.Tests.Services
         {
             _tempDir = Path.Combine(Path.GetTempPath(), $"users_fb_{Guid.NewGuid():N}");
             _service = new UserService(_tempDir);
+            // Option C: admin 명시 시드 (디폴트 시드 제거됨)
+            _service.SeedInitialAdmin("admin123", "Administrator");
         }
 
         public void Dispose()
@@ -35,11 +37,32 @@ namespace VMS.Tests.Services
         // ─── seed ───────────────────────────────────────────────
 
         [Fact]
-        public void InitializeDatabase_seeds_local_admin_alongside_admin()
+        public void InitializeDatabase_seeds_local_admin_automatically()
         {
+            // Option C (2026-06-04): admin 디폴트 시드 제거. local-admin 만 자동 시드.
+            // setUp 이 SeedInitialAdmin 호출했으므로 admin 도 존재.
             var users = _service.GetAllUsers();
             Assert.Contains(users, u => u.Username == "admin");
             Assert.Contains(users, u => u.Username == UserService.LocalFallbackUsername);
+        }
+
+        [Fact]
+        public void InitializeDatabase_alone_seeds_only_local_admin_no_regular_admin()
+        {
+            // Fresh ctor (setUp 미실행 — SeedInitialAdmin 호출 안 함) → local-admin 만 존재
+            var freshDir = Path.Combine(Path.GetTempPath(), $"users_freshfb_{Guid.NewGuid():N}");
+            try
+            {
+                var fresh = new UserService(freshDir);
+                var users = fresh.GetAllUsers();
+
+                Assert.Single(users);
+                Assert.Equal(UserService.LocalFallbackUsername, users[0].Username);
+            }
+            finally
+            {
+                try { Directory.Delete(freshDir, recursive: true); } catch { /* best effort */ }
+            }
         }
 
         [Fact]

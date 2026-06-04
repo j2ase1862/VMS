@@ -22,6 +22,10 @@ namespace VMS.Tests.Services
         {
             _tempDir = Path.Combine(Path.GetTempPath(), $"users_int_{Guid.NewGuid():N}");
             _service = new UserService(_tempDir);
+            // Option C (2026-06-04): admin/admin123 디폴트 시드 제거 후 운영자가 명시 시드.
+            // 기존 테스트들이 admin/admin123 로그인을 가정하므로 테스트 setup 에서 동일 자격 시드.
+            // (운영에서는 AppSetup wizard 가 SeedInitialAdmin 호출 — PR C3)
+            _service.SeedInitialAdmin("admin123", "Administrator");
         }
 
         public void Dispose()
@@ -37,7 +41,7 @@ namespace VMS.Tests.Services
             }
         }
 
-        // ─── 초기화 — seed admin/admin123 ─────────────────────────
+        // ─── 초기화 (Option C: admin 시드 제거됨) ────────────────────
 
         [Fact]
         public void Ctor_CreatesDbFile()
@@ -47,19 +51,23 @@ namespace VMS.Tests.Services
         }
 
         [Fact]
-        public void Ctor_SeedsDefaultAdmin()
+        public void Ctor_seeds_local_admin_only_not_regular_admin()
         {
-            // 빈 DB 라면 admin/admin123 으로 한 번에 로그인 가능해야 함.
-            Assert.True(_service.Authenticate("admin", "admin123"));
-            Assert.Equal("admin", _service.CurrentUser!.Username);
-            Assert.Equal(UserGrade.Admin, _service.CurrentUser.Grade);
+            // Option C (2026-06-04): InitializeDatabase 가 더 이상 admin/admin123 시드 안 함.
+            // local-admin 만 자동 시드 — 정규 admin 은 SeedInitialAdmin 명시 호출 필요.
+            // 본 테스트의 setUp 이 SeedInitialAdmin("admin123") 를 호출했으므로 admin 도 존재.
+            var fresh = new UserService(Path.Combine(Path.GetTempPath(), $"fresh_{Guid.NewGuid():N}"));
+            var users = fresh.GetAllUsers();
+
+            Assert.Single(users);
+            Assert.Equal(UserService.LocalFallbackUsername, users[0].Username);
         }
 
         [Fact]
         public void Ctor_DoesNotReseed_OnExistingDb()
         {
             // 같은 디렉토리로 두 번째 인스턴스를 만들면 기존 DB 재사용 —
-            // admin + local-admin (SSO PR3 시드) 2 명만 있어야 함 (재시드 안 함).
+            // setUp 이 SeedInitialAdmin 호출 + InitializeDatabase 가 local-admin 시드 = 2 명.
             var second = new UserService(_tempDir);
             second.Authenticate("admin", "admin123");
 

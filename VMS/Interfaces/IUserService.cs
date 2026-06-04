@@ -24,6 +24,12 @@ namespace VMS.Interfaces
         bool HasPermission(UserPermission permission);
 
         /// <summary>
+        /// 초기 admin 계정 시드 — Option C (2026-06-04): 디폴트 admin/admin123 시드 제거 후
+        /// AppSetup wizard 가 호출. 이미 존재하면 false (보존). 빈 비밀번호 / 길이 8 미만 거부.
+        /// </summary>
+        bool SeedInitialAdmin(string password, string displayName = "Administrator");
+
+        /// <summary>
         /// 비상 local-admin 비밀번호 변경 — AppSetup wizard 가 호출 (SSO PR4).
         /// 빈 값이면 무동작. BCrypt 해시로만 저장.
         /// </summary>

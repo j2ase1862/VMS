@@ -114,22 +114,10 @@ namespace VMS.Services
                 )";
             cmd.ExecuteNonQuery();
 
-            // Seed default admin account if no users exist
-            cmd.CommandText = "SELECT COUNT(*) FROM Users";
-            var count = (long)cmd.ExecuteScalar()!;
-            if (count == 0)
-            {
-                cmd.CommandText = @"
-                    INSERT INTO Users (Username, PasswordHash, DisplayName, Grade, CreatedAt)
-                    VALUES (@username, @hash, @display, @grade, @created)";
-                cmd.Parameters.Clear();
-                cmd.Parameters.AddWithValue("@username", "admin");
-                cmd.Parameters.AddWithValue("@hash", BCrypt.Net.BCrypt.HashPassword("admin123"));
-                cmd.Parameters.AddWithValue("@display", "Administrator");
-                cmd.Parameters.AddWithValue("@grade", (int)UserGrade.Admin);
-                cmd.Parameters.AddWithValue("@created", DateTime.UtcNow.ToString("o"));
-                cmd.ExecuteNonQuery();
-            }
+            // Option C (사용자 결정 2026-06-04): admin/admin123 디폴트 시드 제거.
+            // 약한 디폴트 비밀번호가 GS 보안성 위반 + 양쪽 시스템 admin 비밀번호 불일치 운영 부담.
+            // 신규 install: AppSetup wizard 의 SeedInitialAdmin 호출로 운영자가 비밀번호 입력.
+            // 기존 install: DB 에 이미 있는 admin/admin123 그대로 보존 (마이그레이션은 운영 가이드 §11).
 
             // 비상 local-admin 시드 (SSO Migration Plan §2.3 / SSO PR3).
             // 항상 존재 보장 — SSO 활성 시 Web 도달 불가 상황의 유일한 폴백 진입점.
@@ -389,6 +377,63 @@ namespace VMS.Services
                     details: $"Permission={permission}, Grade={CurrentUser.Grade}");
             }
             return granted;
+        }
+
+        /// <summary>
+        /// 초기 admin 계정 시드 — Option C (사용자 결정 2026-06-04): InitializeDatabase 의 디폴트
+        /// admin/admin123 시드 제거 후, AppSetup wizard 또는 첫 가동 흐름에서 운영자가 비밀번호 입력해
+        /// 명시적으로 시드해야 함.
+        ///
+        /// 동작:
+        /// - admin 이 이미 존재 → false (보존). 기존 install 호환.
+        /// - admin 없음 → 입력 비밀번호로 BCrypt 해시 후 시드 + AuditLog 기록. true.
+        /// - 비밀번호 최소 길이 8.
+        ///
+        /// 호출자는 평문 비밀번호 인자를 즉시 폐기 권장 (메모리 transit 최소화).
+        /// </summary>
+        public bool SeedInitialAdmin(string password, string displayName = "Administrator")
+        {
+            if (string.IsNullOrWhiteSpace(password)) return false;
+            try
+            {
+                CredentialGuard.ValidateSecret(password, nameof(password), minLength: 8);
+            }
+            catch (ArgumentException ex)
+            {
+                AuditLogger.Instance.Log(
+                    AuditCategory.UserManagement, "SeedInitialAdmin", AuditOutcome.Denied,
+                    userName: "admin", source: nameof(UserService),
+                    details: $"Invalid input: {ex.Message}");
+                return false;
+            }
+
+            using var conn = new SqliteConnection(_connectionString);
+            conn.Open();
+
+            // 이미 존재하면 보존 — 기존 운영 환경 무영향
+            using var checkCmd = conn.CreateCommand();
+            checkCmd.CommandText = "SELECT COUNT(*) FROM Users WHERE Username = 'admin' COLLATE NOCASE";
+            if ((long)checkCmd.ExecuteScalar()! > 0)
+            {
+                return false;
+            }
+
+            using var insertCmd = conn.CreateCommand();
+            insertCmd.CommandText = @"
+                INSERT INTO Users (Username, PasswordHash, DisplayName, Grade, CreatedAt)
+                VALUES ('admin', @hash, @display, @grade, @created)";
+            insertCmd.Parameters.AddWithValue("@hash", BCrypt.Net.BCrypt.HashPassword(password));
+            insertCmd.Parameters.AddWithValue("@display",
+                string.IsNullOrWhiteSpace(displayName) ? "Administrator" : displayName.Trim());
+            insertCmd.Parameters.AddWithValue("@grade", (int)UserGrade.Admin);
+            insertCmd.Parameters.AddWithValue("@created", DateTime.UtcNow.ToString("o"));
+            insertCmd.ExecuteNonQuery();
+
+            AuditLogger.Instance.Log(
+                AuditCategory.UserManagement, "SeedInitialAdmin", AuditOutcome.Success,
+                userName: "admin", source: nameof(UserService),
+                details: "Initial admin account seeded via AppSetup or first-launch flow");
+            return true;
         }
 
         /// <summary>
