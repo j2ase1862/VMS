@@ -3,8 +3,11 @@ using System.IO;
 using System.Runtime.Versioning;
 using System.Security.AccessControl;
 using System.Security.Principal;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Data.Sqlite;
 using VMS.Core.Security;
+using VMS.Core.Services;
 using VMS.Interfaces;
 using VMS.Models;
 
@@ -202,6 +205,89 @@ namespace VMS.Services
                     userName: loggedOutUser, source: nameof(UserService));
             }
         }
+
+        // ─── SSO (SSO Migration Plan §2.2) ───────────────────────────
+
+        public async Task<bool> AuthenticateViaWebAsync(
+            string username, string password, WebAuthClient client, CancellationToken ct = default)
+        {
+            if (client is null) throw new ArgumentNullException(nameof(client));
+
+            // DoS / control-char 방어 — Web 호출 전 즉시 거부
+            try
+            {
+                CredentialGuard.ValidateIdentifier(username, nameof(username));
+                CredentialGuard.ValidateSecret(password, nameof(password));
+            }
+            catch (ArgumentException ex)
+            {
+                AuditLogger.Instance.Log(
+                    AuditCategory.Authentication, "UserLogin", AuditOutcome.Denied,
+                    userName: username, source: nameof(UserService),
+                    details: $"Invalid input: {ex.Message}");
+                return false;
+            }
+
+            var result = await client.LoginAsync(username, password, ct).ConfigureAwait(false);
+
+            switch (result.Kind)
+            {
+                case WebAuthResultKind.Success:
+                    CurrentUser = new User
+                    {
+                        UserId = -1,  // SSO 사용자 — DB 영속 없음, in-memory 만
+                        Username = result.Username ?? username,
+                        DisplayName = result.DisplayName ?? username,
+                        Grade = MapWebRoleToGrade(result.Role),
+                        PasswordHash = string.Empty,  // SSO — VMS 가 비밀번호 보관 안 함
+                        CreatedAt = DateTime.UtcNow,
+                        LastLoginAt = DateTime.UtcNow
+                    };
+                    AuditLogger.Instance.Log(
+                        AuditCategory.Authentication, "UserLogin", AuditOutcome.Success,
+                        userName: CurrentUser.Username, source: nameof(UserService),
+                        details: $"Web SSO ok, Role={result.Role}, Grade={CurrentUser.Grade}");
+                    return true;
+
+                case WebAuthResultKind.InvalidCredentials:
+                    AuditLogger.Instance.Log(
+                        AuditCategory.Authentication, "UserLogin", AuditOutcome.Denied,
+                        userName: username, source: nameof(UserService),
+                        details: $"Web SSO rejected: {result.ErrorDetail}");
+                    return false;
+
+                case WebAuthResultKind.WebUnreachable:
+                    AuditLogger.Instance.Log(
+                        AuditCategory.Authentication, "UserLogin", AuditOutcome.Failure,
+                        userName: username, source: nameof(UserService),
+                        details: $"Web unreachable: {result.ErrorDetail} — caller may attempt local fallback");
+                    return false;
+
+                case WebAuthResultKind.ServerError:
+                default:
+                    AuditLogger.Instance.Log(
+                        AuditCategory.Authentication, "UserLogin", AuditOutcome.Failure,
+                        userName: username, source: nameof(UserService),
+                        details: $"Web server error: {result.ErrorDetail}");
+                    return false;
+            }
+        }
+
+        /// <summary>
+        /// Web Role 문자열 → VMS UserGrade 매핑.
+        /// - "Admin"   → Admin (전체 권한)
+        /// - "Manager" → Engineer (관리자급, 사용자 관리 제외)
+        /// - "User"    → Engineer (일반 운영자, 키오스크보다 높음)
+        /// - 미지원    → Operator (안전 디폴트, 키오스크 권한만)
+        /// 운영 정책 변경 시 본 매퍼만 수정.
+        /// </summary>
+        internal static UserGrade MapWebRoleToGrade(string? webRole) => webRole switch
+        {
+            "Admin"   => UserGrade.Admin,
+            "Manager" => UserGrade.Engineer,
+            "User"    => UserGrade.Engineer,
+            _         => UserGrade.Operator
+        };
 
         public bool HasPermission(UserPermission permission)
         {
