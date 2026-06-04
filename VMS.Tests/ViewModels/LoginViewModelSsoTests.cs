@@ -29,6 +29,8 @@ namespace VMS.Tests.ViewModels
         {
             _tempDir = Path.Combine(Path.GetTempPath(), $"users_lvm_{Guid.NewGuid():N}");
             _userService = new UserService(_tempDir);
+            // Option C: admin 명시 시드 (디폴트 시드 제거됨)
+            _userService.SeedInitialAdmin("admin123", "Administrator");
         }
 
         public void Dispose()
