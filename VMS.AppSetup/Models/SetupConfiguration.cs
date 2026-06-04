@@ -58,6 +58,18 @@ namespace VMS.AppSetup.Models
         // Web 서버의 ClientApiKey:Value (user-secrets / 환경변수 ClientApiKey__Value) 와 동일하게 설정.
         public string ClientApiKey { get; set; } = string.Empty;
 
+        // SSO Migration Plan §2.2 (SSO PR4) — Web SSO 통합 옵션.
+        // JSON 으로 "webSso" : { "enabled": true, "webServerUrl": "..." } 객체로 직렬화.
+        // VMS.Core.Security.WebSsoConfig.LoadFromAppData 가 본 스키마 그대로 파싱.
+        public WebSsoSettings WebSso { get; set; } = new();
+
+        // 비상 local-admin 비밀번호 변경 (선택) — 비어 있으면 기존 비밀번호 유지.
+        // AppSetup wizard 에서 운영 첫 가동시 디폴트 (fallback-change-me-9999) 변경 권장.
+        // system_config.json 에는 절대 저장 안 함 — 저장 직후 UserService.SetLocalFallbackPassword 로
+        // BCrypt 해시로만 DB 갱신 후 메모리에서 폐기 (SetupViewModel.SaveConfiguration 책임).
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string LocalFallbackAdminPassword { get; set; } = string.Empty;
+
         // Page 6: IO 보드 (Phase 2b) — PLC 와 동시 사용 가능한 디지털 IO 디바이스 목록.
         // ADLink PCI-743x / Advantech PCI-17xx 등. SystemConfiguration 과 같은 필드명 →
         // ConfigurationService 가 동일 JSON 으로 read/write.
@@ -210,6 +222,19 @@ namespace VMS.AppSetup.Models
     {
         Live,   // 실제 연결된 카메라 표시
         Virtual // 가상 카메라 설정
+    }
+
+    /// <summary>
+    /// SSO 옵션 — system_config.json:webSso 객체로 직렬화.
+    /// VMS.Core.Security.WebSsoConfig 가 본 스키마 그대로 읽음.
+    /// </summary>
+    public sealed class WebSsoSettings
+    {
+        /// <summary>Web SSO 활성 여부 (기본 false — 현행 로컬 인증 유지).</summary>
+        public bool Enabled { get; set; }
+
+        /// <summary>SSO 대상 Web URL. 빈 값이면 루트 WebServerUrl 사용 (호환).</summary>
+        public string WebServerUrl { get; set; } = string.Empty;
     }
 
 }

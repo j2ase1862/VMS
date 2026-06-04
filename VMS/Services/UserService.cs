@@ -391,6 +391,58 @@ namespace VMS.Services
             return granted;
         }
 
+        /// <summary>
+        /// 비상 local-admin 의 비밀번호를 변경 (SSO Migration §3 — AppSetup wizard 사용).
+        /// 디폴트 시드 비밀번호 (LocalFallbackDefaultPassword) 를 운영 환경에서 변경하는 유일한 경로.
+        /// AppSetup wizard 가 SaveConfiguration 시점에 호출 — 빈 값 전달시 무동작.
+        ///
+        /// 보안:
+        /// - newPassword 는 BCrypt 해시로만 DB 저장 (평문 보관 X)
+        /// - 최소 길이 8 (LocalFallbackDefaultPassword 보다 강한 정책)
+        /// - 호출자는 평문을 메모리에서 즉시 폐기 권장
+        /// </summary>
+        public bool SetLocalFallbackPassword(string newPassword)
+        {
+            if (string.IsNullOrWhiteSpace(newPassword)) return false;
+            try
+            {
+                CredentialGuard.ValidateSecret(newPassword, nameof(newPassword), minLength: 8);
+            }
+            catch (ArgumentException ex)
+            {
+                AuditLogger.Instance.Log(
+                    AuditCategory.UserManagement, "SetLocalFallbackPassword", AuditOutcome.Denied,
+                    userName: LocalFallbackUsername, source: nameof(UserService),
+                    details: $"Invalid input: {ex.Message}");
+                return false;
+            }
+
+            using var conn = new SqliteConnection(_connectionString);
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+                UPDATE Users SET PasswordHash = @hash
+                WHERE Username = @username COLLATE NOCASE";
+            cmd.Parameters.AddWithValue("@hash", BCrypt.Net.BCrypt.HashPassword(newPassword));
+            cmd.Parameters.AddWithValue("@username", LocalFallbackUsername);
+            var affected = cmd.ExecuteNonQuery();
+
+            if (affected == 0)
+            {
+                AuditLogger.Instance.Log(
+                    AuditCategory.UserManagement, "SetLocalFallbackPassword", AuditOutcome.Failure,
+                    userName: LocalFallbackUsername, source: nameof(UserService),
+                    details: "local-admin row not found — InitializeDatabase 시드가 실패했을 가능성");
+                return false;
+            }
+
+            AuditLogger.Instance.Log(
+                AuditCategory.UserManagement, "SetLocalFallbackPassword", AuditOutcome.Success,
+                userName: LocalFallbackUsername, source: nameof(UserService),
+                details: "local-admin password updated via AppSetup wizard");
+            return true;
+        }
+
         public bool CreateUser(string username, string password, string displayName, UserGrade grade)
         {
             // 신규 사용자 생성 시점에 강한 입력 검증 — 최소 길이 4 (산업 운영자 기준, 정책 변경 시 조정).
