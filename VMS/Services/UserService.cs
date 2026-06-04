@@ -87,6 +87,17 @@ namespace VMS.Services
             using var conn = new SqliteConnection(_connectionString);
             conn.Open();
 
+            // GS 결함 허용성 / 가혹 테스트 안전 (검토사항 P2): journal_mode=WAL 명시.
+            // BodaVision.db 는 VMS 데스크탑 + BODA.VMS.Web 이 동시 접근하므로 default
+            // "delete" mode 면 동시 쓰기 SQLITE_BUSY 충돌 위험. WAL 은 한 번 설정하면
+            // 파일에 persistent 라 양측이 어느 쪽이 먼저 떠도 동일 모드 보장.
+            // Web 측 Program.cs 도 동일 PRAGMA 호출 — idempotent 라 중복 OK.
+            using (var pragma = conn.CreateCommand())
+            {
+                pragma.CommandText = "PRAGMA journal_mode=WAL;";
+                pragma.ExecuteNonQuery();
+            }
+
             using var cmd = conn.CreateCommand();
             cmd.CommandText = @"
                 CREATE TABLE IF NOT EXISTS Users (
