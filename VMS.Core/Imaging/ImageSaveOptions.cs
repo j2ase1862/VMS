@@ -23,6 +23,11 @@ namespace VMS.Core.Imaging
         public const ImageSaveFormat DefaultFormat = ImageSaveFormat.Png;
         public const string DefaultSeparator = "_";
         public const string DefaultTimestampFormat = "yyyyMMdd_HHmmss_fff";
+        public const int DefaultRetentionDays = 0;   // 0 = 무제한(자동 삭제 안 함)
+        public const int MaxRetentionDays = 3650;    // 10년 상한 — 손상/오입력 보호
+        public const int DefaultThumbnailMaxEdge = 1024;  // 장변 px — Web 전송 썸네일
+        public const int MinThumbnailMaxEdge = 128;
+        public const int MaxThumbnailMaxEdge = 8192;
 
         /// <summary>양품(OK) 이미지를 디스크에 저장할지 여부.</summary>
         public bool SaveOkImages { get; init; }
@@ -47,6 +52,32 @@ namespace VMS.Core.Imaging
 
         /// <summary>타임스탬프 토큰 포맷. 기본 "yyyyMMdd_HHmmss_fff".</summary>
         public string TimestampFormat { get; init; } = DefaultTimestampFormat;
+
+        /// <summary>
+        /// 이미지 보존 기간(일). 0 이면 무제한(자동 삭제 안 함). 양수면 BaseDir 아래
+        /// 연월일 폴더 중 기준일보다 오래된 것을 자동 삭제.
+        /// </summary>
+        public int RetentionDays { get; init; } = DefaultRetentionDays;
+
+        // ── Web 연동 (BODA.VMS.Web) ──────────────────────────────
+
+        /// <summary>
+        /// 이미지 전달 모드. Auto = Web 호스트가 자기 머신이면 SharedPath(무전송),
+        /// 아니면 Upload. SharedPath/Upload 로 수동 고정 가능.
+        /// </summary>
+        public ImageDeliveryMode DeliveryMode { get; init; } = ImageDeliveryMode.Auto;
+
+        /// <summary>양품(OK) 이미지를 Web 으로 전송할지 여부 (Upload 모드에서만 의미).</summary>
+        public bool WebSendOk { get; init; }
+
+        /// <summary>불량(NG) 이미지를 Web 으로 전송할지 여부 (Upload 모드에서만 의미).</summary>
+        public bool WebSendNg { get; init; }
+
+        /// <summary>Web 전송 화질 — 풀(원본) 또는 썸네일. 기본 썸네일(대역폭/저장 절감).</summary>
+        public WebImageVariant WebImageVariant { get; init; } = WebImageVariant.Thumbnail;
+
+        /// <summary>썸네일 장변 px (Web 전송용). 기본 1024.</summary>
+        public int ThumbnailMaxEdge { get; init; } = DefaultThumbnailMaxEdge;
 
         /// <summary>파일명 규칙 — 토큰 순서 + on/off.</summary>
         public List<FileNameTokenSetting> FileNameTokens { get; init; } = DefaultTokens();
@@ -107,6 +138,27 @@ namespace VMS.Core.Imaging
                     && !string.IsNullOrWhiteSpace(tsProp.GetString()))
                     tsFormat = tsProp.GetString()!;
 
+                int retentionDays = DefaultRetentionDays;
+                if (elem.TryGetProperty("retentionDays", out var rdProp) && rdProp.TryGetInt32(out var rdVal))
+                    retentionDays = ClampRetention(rdVal);
+
+                var deliveryMode = ImageDeliveryMode.Auto;
+                if (elem.TryGetProperty("deliveryMode", out var dmProp) && dmProp.ValueKind == JsonValueKind.String
+                    && Enum.TryParse<ImageDeliveryMode>(dmProp.GetString(), ignoreCase: true, out var dmVal))
+                    deliveryMode = dmVal;
+
+                bool webSendOk = elem.TryGetProperty("webSendOk", out var wsoProp) && wsoProp.ValueKind == JsonValueKind.True;
+                bool webSendNg = elem.TryGetProperty("webSendNg", out var wsnProp) && wsnProp.ValueKind == JsonValueKind.True;
+
+                var webVariant = WebImageVariant.Thumbnail;
+                if (elem.TryGetProperty("webImageVariant", out var wvProp) && wvProp.ValueKind == JsonValueKind.String
+                    && Enum.TryParse<WebImageVariant>(wvProp.GetString(), ignoreCase: true, out var wvVal))
+                    webVariant = wvVal;
+
+                int thumbEdge = DefaultThumbnailMaxEdge;
+                if (elem.TryGetProperty("thumbnailMaxEdge", out var teProp) && teProp.TryGetInt32(out var teVal))
+                    thumbEdge = ClampThumbnailEdge(teVal);
+
                 var tokens = ParseTokens(elem);
 
                 return new ImageSaveOptions
@@ -118,6 +170,12 @@ namespace VMS.Core.Imaging
                     JpegQuality = quality,
                     Separator = separator,
                     TimestampFormat = tsFormat,
+                    RetentionDays = retentionDays,
+                    DeliveryMode = deliveryMode,
+                    WebSendOk = webSendOk,
+                    WebSendNg = webSendNg,
+                    WebImageVariant = webVariant,
+                    ThumbnailMaxEdge = thumbEdge,
                     FileNameTokens = tokens
                 };
             }
@@ -190,6 +248,20 @@ namespace VMS.Core.Imaging
             return quality;
         }
 
+        public static int ClampRetention(int days)
+        {
+            if (days < 0) return 0;
+            if (days > MaxRetentionDays) return MaxRetentionDays;
+            return days;
+        }
+
+        public static int ClampThumbnailEdge(int px)
+        {
+            if (px < MinThumbnailMaxEdge) return MinThumbnailMaxEdge;
+            if (px > MaxThumbnailMaxEdge) return MaxThumbnailMaxEdge;
+            return px;
+        }
+
         /// <summary>대소문자 무시 파싱 — 알 수 없는 값은 기본 포맷(PNG).</summary>
         public static ImageSaveFormat ParseFormat(string? value)
         {
@@ -242,6 +314,26 @@ namespace VMS.Core.Imaging
         Tiff
     }
 
+    /// <summary>이미지 전달 모드 — Web 으로 보낼지/공유 경로로 둘지.</summary>
+    public enum ImageDeliveryMode
+    {
+        /// <summary>Web 호스트가 자기 머신이면 SharedPath, 아니면 Upload 로 자동 판단.</summary>
+        Auto,
+        /// <summary>같은 머신/공유 경로 — Web 이 로컬 경로를 직접 읽으므로 전송 안 함.</summary>
+        SharedPath,
+        /// <summary>다른 머신 — Web 으로 업로드.</summary>
+        Upload
+    }
+
+    /// <summary>Web 전송 이미지 화질.</summary>
+    public enum WebImageVariant
+    {
+        /// <summary>원본 그대로.</summary>
+        Full,
+        /// <summary>장변 ThumbnailMaxEdge 로 축소(JPEG).</summary>
+        Thumbnail
+    }
+
     /// <summary>파일명을 구성하는 토큰 종류.</summary>
     public enum FileNameToken
     {
@@ -271,6 +363,8 @@ namespace VMS.Core.Imaging
         public bool Ok { get; init; }
         public string CameraName { get; init; } = string.Empty;
         public int StepNumber { get; init; }
+        /// <summary>결과 업로드와 공유하는 상관 키(Web 매칭용). null 이면 업로더가 자체 생성.</summary>
+        public string? CorrelationKey { get; init; }
         public string RecipeName { get; init; } = string.Empty;
         public string WorkOrder { get; init; } = string.Empty;
         public string Lot { get; init; } = string.Empty;

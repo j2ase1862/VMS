@@ -115,7 +115,11 @@ namespace VMS.Services
         private StepInspectionResult ExecuteStep(InspectionStep step, Mat inputImage)
         {
             var sw = Stopwatch.StartNew();
-            var result = new StepInspectionResult();
+            var result = new StepInspectionResult
+            {
+                // 결과 업로드와 이미지 업로드가 공유할 상관 키 — 검사 1회당 1개.
+                CorrelationKey = Guid.NewGuid().ToString("N")
+            };
 
             try
             {
@@ -315,8 +319,8 @@ namespace VMS.Services
                     DlModelVersion = dlModelVersion
                 };
 
-                // Web 파라미터 결과 수집 및 업로드 (피처 동봉)
-                CollectAndUploadParameterResults(ctx, resultMap, featureMetrics);
+                // Web 파라미터 결과 수집 및 업로드 (피처 + 이미지와 공유할 상관 키 동봉)
+                CollectAndUploadParameterResults(ctx, resultMap, featureMetrics, result.CorrelationKey);
                 return result;
             }
             catch (Exception ex)
@@ -453,7 +457,8 @@ namespace VMS.Services
         private static void CollectAndUploadParameterResults(
             StepExecutionContext ctx,
             Dictionary<string, VisionResult> resultMap,
-            InspectionFeatureMetrics? featureMetrics = null)
+            InspectionFeatureMetrics? featureMetrics = null,
+            string? correlationKey = null)
         {
             var syncService = ParameterSyncService;
             if (syncService == null || syncService.CurrentRecipeId <= 0)
@@ -519,7 +524,7 @@ namespace VMS.Services
                 {
                     try
                     {
-                        await syncService.UploadResultsAsync(syncService.CurrentRecipeId, paramResults, featureMetrics);
+                        await syncService.UploadResultsAsync(syncService.CurrentRecipeId, paramResults, featureMetrics, correlationKey);
                     }
                     catch (Exception ex)
                     {

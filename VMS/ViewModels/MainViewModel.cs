@@ -291,6 +291,8 @@ namespace VMS.ViewModels
         private SystemConfiguration _systemConfig;
         // 검사 판정 이미지(양품/불량) 저장 설정 — 시작 시 로드, 설정 윈도우 종료 후 재로드.
         private ImageSaveOptions _imageSaveOptions = ImageSaveOptions.LoadFromAppData();
+        // 검사 이미지 Web 업로드(Upload 모드) — 없으면 미전송.
+        private readonly VMS.Services.ImageUpload.IImageUploadService? _imageUploadService;
 
         public MainViewModel(
             IConfigurationService configService,
@@ -314,7 +316,8 @@ namespace VMS.ViewModels
             VMS.Core.Services.LotClient? lotClient = null,
             VMS.Core.Services.VmsHubClient? vmsHubClient = null,
             IPredictionPollingService? predictionPollingService = null,
-            IUpdateService? updateService = null)
+            IUpdateService? updateService = null,
+            VMS.Services.ImageUpload.IImageUploadService? imageUploadService = null)
         {
             _configService = configService;
             _recipeService = recipeService;
@@ -337,6 +340,7 @@ namespace VMS.ViewModels
             _vmsHubClient = vmsHubClient;
             _predictionPollingService = predictionPollingService;
             _updateService = updateService;
+            _imageUploadService = imageUploadService;
             _shutdownAction = shutdownAction;
             _systemConfig = new SystemConfiguration();
 
@@ -536,7 +540,7 @@ namespace VMS.ViewModels
         {
             cam.FrameAcquired += result => _sharedFrameWriter?.WriteFrame(result);
 
-            cam.InspectionCompleted += (cameraName, ok, image, stepNumber) =>
+            cam.InspectionCompleted += (cameraName, ok, image, stepNumber, correlationKey) =>
             {
                 TotalInspections++;
                 if (ok) TotalPass++;
@@ -550,6 +554,7 @@ namespace VMS.ViewModels
                     Ok = ok,
                     CameraName = cameraName,
                     StepNumber = stepNumber,
+                    CorrelationKey = correlationKey,
                     RecipeName = (CurrentRecipeName == "No Recipe Loaded") ? string.Empty : (CurrentRecipeName ?? string.Empty),
                     WorkOrder = SelectedWorkOrder?.OrderNo ?? WorkOrderIdText ?? string.Empty,
                     Lot = LotIdText ?? string.Empty,
@@ -557,6 +562,9 @@ namespace VMS.ViewModels
                     Timestamp = DateTime.Now
                 };
                 VMS.Services.InspectionImageSaver.Save(_imageSaveOptions, image, imageContext);
+
+                // Web 업로드 큐 적재(Upload 모드 + OK/NG 전송 토글 시) — 택트와 분리된 비동기.
+                _imageUploadService?.Enqueue(image, imageContext, _imageSaveOptions);
 
                 LogService?.Log(
                     $"Inspection {(ok ? "OK" : "NG")} - {cameraName}",
@@ -1341,6 +1349,7 @@ namespace VMS.ViewModels
             window.ShowDialog();
 
             // 저장된 설정을 즉시 반영 — 다음 검사 판정부터 새 옵션 적용.
+            // (이미지 보존 삭제는 인프로세스가 아니라 Windows 예약 작업이 담당 — 디자인 §7)
             _imageSaveOptions = ImageSaveOptions.LoadFromAppData();
         }
 

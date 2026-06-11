@@ -73,7 +73,8 @@ namespace VMS.Core.Interfaces
         Task<bool> UploadResultsAsync(
             int recipeId,
             List<ParameterResultDto> results,
-            InspectionFeatureMetrics? featureMetrics = null);
+            InspectionFeatureMetrics? featureMetrics = null,
+            string? correlationKey = null);
 
         // ─── Phase 3 추적성 컨텍스트 (UploadResultsAsync 호출 시 자동 첨부) ───
         /// <summary>업로드 시 첨부할 작업지시 ID. null이면 미선택.</summary>

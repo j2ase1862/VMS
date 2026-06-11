@@ -36,6 +36,24 @@ namespace VMS
         {
             base.OnStartup(e);
 
+            // 헤드리스 이미지 보존 정리 모드 — Windows 예약 작업이 'VMS.exe --cleanup-images'
+            // 로 호출(야간). UI 없이 오래된 날짜 폴더만 삭제 후 즉시 종료 → 검사 가동과 분리.
+            if (e.Args.Any(a => string.Equals(a, "--cleanup-images", StringComparison.OrdinalIgnoreCase)))
+            {
+                try
+                {
+                    var removed = VMS.Core.Imaging.ImageRetentionCleaner.Cleanup(
+                        VMS.Core.Imaging.ImageSaveOptions.LoadFromAppData());
+                    System.Diagnostics.Debug.WriteLine($"[App] --cleanup-images: {removed} folder(s) removed");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[App] --cleanup-images failed: {ex.Message}");
+                }
+                Shutdown();
+                return;
+            }
+
             // Chromeless Admin 윈도우들이 SystemCommands.{Minimize,Maximize,Restore,Close}
             // WindowCommand 를 그대로 사용하도록 Window 클래스 와이드 커맨드 바인딩 등록.
             // ChromelessTitleBar (VMS.VisionSetup.Views.Common) 가 이 커맨드들을 호출함.
@@ -505,6 +523,19 @@ namespace VMS
             // ── Roller Inspection Service ──
             IRollerInspectionService rollerInspectionService = new RollerInspectionService(logService);
 
+            // ── Image Upload Service (검사 이미지 → BODA.VMS.Web, Upload 모드) ──
+            VMS.Services.ImageUpload.IImageUploadService? imageUploadService = null;
+            try
+            {
+                imageUploadService = new VMS.Services.ImageUpload.ImageUploadService(
+                    systemConfig.WebServerUrl, systemConfig.ClientIndex, systemConfig.ClientApiKey);
+                imageUploadService.Start();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] ImageUploadService init failed: {ex.Message}");
+            }
+
             // Re-create MainViewModel with AutoProcessService injected
             mainViewModel = new MainViewModel(
                 configService,
@@ -538,7 +569,8 @@ namespace VMS
                 lotClient: lotClient,
                 vmsHubClient: vmsHubClient,
                 predictionPollingService: predictionPollingService,
-                updateService: updateService);
+                updateService: updateService,
+                imageUploadService: imageUploadService);
 
             var mainWindow = new MainWindow();
             mainWindow.DataContext = mainViewModel;
@@ -552,6 +584,7 @@ namespace VMS
                 predictionPollingService?.Dispose();
                 sensorPollingService?.Dispose();
                 updateService?.Dispose();
+                imageUploadService?.Dispose();
                 foreach (var board in ioBoardConnections) board.Dispose();
                 ForceShutdown(mainViewModel, heartbeatService, parameterSyncService, sharedFrameWriter, plcConnection, autoProcessService);
             };

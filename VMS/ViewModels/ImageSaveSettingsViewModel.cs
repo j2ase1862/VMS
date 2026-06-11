@@ -41,6 +41,14 @@ namespace VMS.ViewModels
         [ObservableProperty] private ImageSaveFormat _selectedFormat = ImageSaveOptions.DefaultFormat;
         [ObservableProperty] private int _jpegQuality = ImageSaveOptions.DefaultJpegQuality;
         [ObservableProperty] private string _separator = ImageSaveOptions.DefaultSeparator;
+        [ObservableProperty] private int _retentionDays = ImageSaveOptions.DefaultRetentionDays;
+
+        // Web 연동
+        [ObservableProperty] private ImageDeliveryMode _deliveryMode = ImageDeliveryMode.Auto;
+        [ObservableProperty] private bool _webSendOk;
+        [ObservableProperty] private bool _webSendNg;
+        [ObservableProperty] private WebImageVariant _webImageVariant = WebImageVariant.Thumbnail;
+        [ObservableProperty] private int _thumbnailMaxEdge = ImageSaveOptions.DefaultThumbnailMaxEdge;
 
         [ObservableProperty] private string _previewFileName = string.Empty;
         [ObservableProperty] private string _previewPath = string.Empty;
@@ -55,6 +63,12 @@ namespace VMS.ViewModels
         /// <summary>ComboBox 항목 소스 — 지원 포맷 전체.</summary>
         public ImageSaveFormat[] AvailableFormats { get; } =
             (ImageSaveFormat[])Enum.GetValues(typeof(ImageSaveFormat));
+
+        public ImageDeliveryMode[] AvailableDeliveryModes { get; } =
+            (ImageDeliveryMode[])Enum.GetValues(typeof(ImageDeliveryMode));
+
+        public WebImageVariant[] AvailableWebVariants { get; } =
+            (WebImageVariant[])Enum.GetValues(typeof(WebImageVariant));
 
         // 변경 시 즉시 예시 갱신.
         partial void OnSelectedFormatChanged(ImageSaveFormat value) => UpdatePreview();
@@ -75,6 +89,12 @@ namespace VMS.ViewModels
                 SelectedFormat = loaded.Format;
                 JpegQuality = loaded.JpegQuality;
                 Separator = loaded.Separator;
+                RetentionDays = loaded.RetentionDays;
+                DeliveryMode = loaded.DeliveryMode;
+                WebSendOk = loaded.WebSendOk;
+                WebSendNg = loaded.WebSendNg;
+                WebImageVariant = loaded.WebImageVariant;
+                ThumbnailMaxEdge = loaded.ThumbnailMaxEdge;
 
                 RebuildTokens(loaded.FileNameTokens);
 
@@ -121,6 +141,10 @@ namespace VMS.ViewModels
             {
                 var q = ImageSaveOptions.ClampQuality(JpegQuality);
                 if (q != JpegQuality) JpegQuality = q;
+                var rd = ImageSaveOptions.ClampRetention(RetentionDays);
+                if (rd != RetentionDays) RetentionDays = rd;
+                var te = ImageSaveOptions.ClampThumbnailEdge(ThumbnailMaxEdge);
+                if (te != ThumbnailMaxEdge) ThumbnailMaxEdge = te;
 
                 // 다른 키 보존을 위해 JsonNode 로 read-modify-write.
                 Directory.CreateDirectory(Path.GetDirectoryName(_configPath)!);
@@ -143,6 +167,12 @@ namespace VMS.ViewModels
                 imageSave["jpegQuality"] = JpegQuality;
                 imageSave["separator"] = Separator ?? ImageSaveOptions.DefaultSeparator;
                 imageSave["timestampFormat"] = ImageSaveOptions.DefaultTimestampFormat;
+                imageSave["retentionDays"] = RetentionDays;
+                imageSave["deliveryMode"] = DeliveryMode.ToString();
+                imageSave["webSendOk"] = WebSendOk;
+                imageSave["webSendNg"] = WebSendNg;
+                imageSave["webImageVariant"] = WebImageVariant.ToString();
+                imageSave["thumbnailMaxEdge"] = ThumbnailMaxEdge;
                 if (!string.IsNullOrWhiteSpace(BaseDir))
                     imageSave["baseDir"] = BaseDir;
                 else
@@ -167,7 +197,7 @@ namespace VMS.ViewModels
                     AuditCategory.Configuration, "ImageSaveConfigSaved", AuditOutcome.Success,
                     source: nameof(ImageSaveSettingsViewModel),
                     details: $"OK={SaveOkImages}, NG={SaveNgImages}, Base={(string.IsNullOrEmpty(BaseDir) ? "-" : BaseDir)}, " +
-                             $"Format={SelectedFormat}, JpegQuality={JpegQuality}, " +
+                             $"Format={SelectedFormat}, JpegQuality={JpegQuality}, Retention={RetentionDays}d, " +
                              $"Rule={string.Join("|", Tokens.Where(t => t.Enabled).Select(t => t.Token))}");
 
                 StatusMessage = "저장됨 — 검사 이미지 저장 설정이 적용됩니다.";
@@ -214,6 +244,12 @@ namespace VMS.ViewModels
             JpegQuality = JpegQuality,
             Separator = Separator ?? ImageSaveOptions.DefaultSeparator,
             TimestampFormat = ImageSaveOptions.DefaultTimestampFormat,
+            RetentionDays = RetentionDays,
+            DeliveryMode = DeliveryMode,
+            WebSendOk = WebSendOk,
+            WebSendNg = WebSendNg,
+            WebImageVariant = WebImageVariant,
+            ThumbnailMaxEdge = ThumbnailMaxEdge,
             FileNameTokens = Tokens
                 .Select(t => new FileNameTokenSetting { Token = t.Token, Enabled = t.Enabled })
                 .ToList()

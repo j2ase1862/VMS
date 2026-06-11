@@ -255,7 +255,8 @@ namespace VMS.Core.Services
         public async Task<bool> UploadResultsAsync(
             int recipeId,
             List<ParameterResultDto> results,
-            InspectionFeatureMetrics? featureMetrics = null)
+            InspectionFeatureMetrics? featureMetrics = null,
+            string? correlationKey = null)
         {
             var request = new ParameterResultUploadRequest
             {
@@ -265,7 +266,8 @@ namespace VMS.Core.Services
                 WorkOrderId = WorkOrderId,
                 LotId = LotId,
                 OperatorId = OperatorId,
-                SerialNumber = SerialNumber
+                SerialNumber = SerialNumber,
+                CorrelationKey = correlationKey
             };
 
             if (featureMetrics != null)

@@ -90,6 +90,12 @@ namespace VMS.Core.Models.ParameterSync
         /// <summary>바코드/QR 스캔으로 얻은 제품 시리얼 (선택).</summary>
         public string? SerialNumber { get; set; }
 
+        /// <summary>
+        /// 이미지 업로드와 동일하게 싣는 상관 키. Web 이 InspectionHistory 행과
+        /// 이미지(/api/inspection-images)를 순서무관 매칭하는 데 사용. null 이면 미연동.
+        /// </summary>
+        public string? CorrelationKey { get; set; }
+
         // ─── Predictive_DefectRate_Plan §5.1 (V1/V2/V3): 예측 모델용 피처 ───
         // 모두 nullable — Web 측 후방호환 유지(미지원 VMS 빌드 시 자연스럽게 NULL).
         /// <summary>V2: 검사 1회 소요 시간(ms). 가동 페이스 둔화 = 품질 저하 선행 신호.</summary>
