@@ -540,7 +540,7 @@ namespace VMS.ViewModels
         {
             cam.FrameAcquired += result => _sharedFrameWriter?.WriteFrame(result);
 
-            cam.InspectionCompleted += (cameraName, ok, image, stepNumber) =>
+            cam.InspectionCompleted += (cameraName, ok, image, stepNumber, correlationKey) =>
             {
                 TotalInspections++;
                 if (ok) TotalPass++;
@@ -554,6 +554,7 @@ namespace VMS.ViewModels
                     Ok = ok,
                     CameraName = cameraName,
                     StepNumber = stepNumber,
+                    CorrelationKey = correlationKey,
                     RecipeName = (CurrentRecipeName == "No Recipe Loaded") ? string.Empty : (CurrentRecipeName ?? string.Empty),
                     WorkOrder = SelectedWorkOrder?.OrderNo ?? WorkOrderIdText ?? string.Empty,
                     Lot = LotIdText ?? string.Empty,

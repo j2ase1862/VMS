@@ -113,16 +113,42 @@
 - `InspectionHistory.ImagePath` 는 이 서빙 URL(또는 내부 식별자)로 채움. NgDetailDialog 가 그대로 표시.
 
 ### 6.3 저장 (Web)
-- 파일시스템: `{ImageStoreRoot}\{yyyy-MM-dd}\{verdict}\{id}_{variant}.{ext}` (DB blob 비사용).
-- DB: 이미지 메타(id, path, variant, size, correlationKey, createdAt) 테이블 또는 `InspectionHistory` 확장.
+- 파일시스템: `{ImageStoreRoot}\{yyyy-MM-dd}\{verdict}\{correlationKey}.{ext}` (DB blob 비사용).
+- 서빙: `UseStaticFiles` + `PhysicalFileProvider`(RequestPath=`/images`). `ImagePath` = `/images/...` 상대 URL.
+- DB: **`InspectionHistory` 확장**(결정 #3) — `CorrelationKey`(인덱스) 컬럼 추가 + 기존 `ImagePath` 사용. 별도 테이블 없음.
+  - 스키마는 EF 마이그레이션이 아니라 **Program.cs 부트스트랩 SQL**(CREATE TABLE IF NOT EXISTS + PRAGMA table_info + ALTER TABLE ADD COLUMN, 멱등)로 관리 → `CorrelationKey` 컬럼 추가 분기만 넣으면 됨.
+
+### 6.4 상관(correlation) & 순서 보장 — 핵심
+이미지 업로드(`/api/inspection-images`)와 결과 업로드(`/api/parameters/results`)는 **독립 경로**라 도착 순서가 보장되지 않는다. 해결:
+- **공유 `CorrelationKey`** (구현: 방식 A): `InspectionService.ExecuteStep` 이 검사 1회당 **GUID 키 1개**를 생성해 `StepInspectionResult.CorrelationKey` 에 싣는다. 이 키가 두 경로로 흐른다:
+  - 결과 업로드: `UploadResultsAsync(..., correlationKey)` → `ParameterResultUploadRequest.CorrelationKey` → 결과 엔드포인트가 `InspectionHistory.CorrelationKey` 저장.
+  - 이미지 업로드: `InspectionCompleted(..., correlationKey)` 이벤트 → `InspectionImageContext.CorrelationKey` → 이미지 meta.
+  - (GUID 사용 — 판정값이 키에 안 들어가므로 "결과 업로드 시점엔 판정 확정 전" 같은 순환 의존 없음. 동일 키 보장.)
+- **순서 무관 매칭(별도 테이블 없이)**: 이미지 ingest가 `CorrelationKey`로 `InspectionHistory`를 조회 —
+  - **있으면**: 파일 저장 + `ImagePath` 세팅 → 200.
+  - **없으면**(결과가 아직 도착 전): **409 반환**(디스크 미기록) → **VMS 업로더가 백오프 재시도**(이미 구현한 큐가 그대로 처리). 결과 레코드 생성 후 재시도에서 매칭됨. → 고아 파일 없음, 사이드 테이블 불필요.
 
 ---
 
 ## 7. 로컬 삭제 = 예약 작업 (별도 합의, 본 설계와 독립 진행 가능)
 
-- 현재 **인프로세스 startup 정리**(MainViewModel)는 **제거**하고, 재사용 가능한 `ImageRetentionCleaner` 로직은 유지.
-- **경량 콘솔 모드/EXE + Windows 예약 작업**(예: 새벽 3시)으로 호출 → 야간 실행으로 디스크 I/O 경합 회피.
+- 현재 **인프로세스 startup 정리**(MainViewModel)는 **제거**됨. 재사용 가능한 `ImageRetentionCleaner` 로직은 유지.
+- **헤드리스 모드 + Windows 예약 작업**(야간)으로 호출 → 디스크 I/O 경합 회피.
+  - 구현: `VMS.exe --cleanup-images` → `App.OnStartup` 가 인자 감지 → UI 없이 `ImageRetentionCleaner.Cleanup(ImageSaveOptions.LoadFromAppData())` 실행 후 즉시 종료. 보존 기간/경로는 설정 창의 imageSave 값 사용.
 - 모드 A: 보존기간을 아카이브 요구에 맞게 **길게**. 모드 B: 로컬은 **짧게**(단기 버퍼).
+
+### 7.1 예약 작업 등록 (관리자 PowerShell, 매일 03:00)
+```powershell
+$exe = "C:\Program Files\BODA VISION AI\VMS.exe"   # 실제 설치 경로로 교체
+$action  = New-ScheduledTaskAction -Execute $exe -Argument "--cleanup-images"
+$trigger = New-ScheduledTaskTrigger -Daily -At 3:00am
+$set     = New-ScheduledTaskSettingsSet -StartWhenAvailable -DontStopOnIdleEnd
+Register-ScheduledTask -TaskName "BODA VMS Image Cleanup" `
+    -Action $action -Trigger $trigger -Settings $set `
+    -Description "오래된 검사 이미지 날짜 폴더 정리 (imageSave.retentionDays 기준)" -RunLevel Highest
+```
+- 보존 기간이 0(무제한)이면 정리는 no-op — 작업이 돌아도 아무것도 삭제 안 함.
+- 검사 이미지 저장 경로/보존일은 VMS 설정 창(Image Save Settings)에서 변경.
 
 ---
 
@@ -143,6 +169,7 @@
 3. 썸네일 생성 옵션 + 설정 창 UI(§8).
 4. 모드 감지(`imageDelivery=auto`) + sharedPath 시 무전송 분기.
 5. 인프로세스 startup 정리 제거(§7).
+6. **(신규) VMS.Core**: `ParameterResultUploadRequest`에 `CorrelationKey` 추가 + 결과 업로드 시 이미지와 동일 키 생성·전송(§6.4).
 
 ### BODA.VMS.Web (`feat/inspection-image-archive`)
 1. ingest 엔드포인트(멱등) + 저장 서비스(파일시스템).

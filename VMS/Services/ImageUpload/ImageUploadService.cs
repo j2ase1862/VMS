@@ -273,7 +273,9 @@ namespace VMS.Services.ImageUpload
         // ── helpers ──────────────────────────────────────────────
 
         private static string BuildCorrelationKey(InspectionImageContext ctx)
-            => $"{ctx.Timestamp:yyyyMMddHHmmssfff}|{ctx.CameraName}|{ctx.StepNumber}|{(ctx.Ok ? "OK" : "NG")}";
+            => !string.IsNullOrWhiteSpace(ctx.CorrelationKey)
+                ? ctx.CorrelationKey!  // 결과 업로드와 공유된 키 — Web 매칭 성립
+                : $"{ctx.Timestamp:yyyyMMddHHmmssfff}|{ctx.CameraName}|{ctx.StepNumber}|{(ctx.Ok ? "OK" : "NG")}";
 
         private static string Sanitize(string s)
         {

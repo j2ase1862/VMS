@@ -11,6 +11,8 @@ namespace VMS.Interfaces
         public string Message { get; set; } = string.Empty;
         public Mat? OverlayImage { get; set; }
         public double ExecutionTimeMs { get; set; }
+        /// <summary>이 검사의 상관 키 — 결과 업로드와 이미지 업로드가 공유(Web 매칭용).</summary>
+        public string? CorrelationKey { get; set; }
         public List<ToolInspectionResult> ToolResults { get; set; } = new();
     }
 

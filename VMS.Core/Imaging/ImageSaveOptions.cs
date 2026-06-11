@@ -363,6 +363,8 @@ namespace VMS.Core.Imaging
         public bool Ok { get; init; }
         public string CameraName { get; init; } = string.Empty;
         public int StepNumber { get; init; }
+        /// <summary>결과 업로드와 공유하는 상관 키(Web 매칭용). null 이면 업로더가 자체 생성.</summary>
+        public string? CorrelationKey { get; init; }
         public string RecipeName { get; init; } = string.Empty;
         public string WorkOrder { get; init; } = string.Empty;
         public string Lot { get; init; } = string.Empty;
