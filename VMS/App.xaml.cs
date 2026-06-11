@@ -505,6 +505,19 @@ namespace VMS
             // ── Roller Inspection Service ──
             IRollerInspectionService rollerInspectionService = new RollerInspectionService(logService);
 
+            // ── Image Upload Service (검사 이미지 → BODA.VMS.Web, Upload 모드) ──
+            VMS.Services.ImageUpload.IImageUploadService? imageUploadService = null;
+            try
+            {
+                imageUploadService = new VMS.Services.ImageUpload.ImageUploadService(
+                    systemConfig.WebServerUrl, systemConfig.ClientIndex, systemConfig.ClientApiKey);
+                imageUploadService.Start();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] ImageUploadService init failed: {ex.Message}");
+            }
+
             // Re-create MainViewModel with AutoProcessService injected
             mainViewModel = new MainViewModel(
                 configService,
@@ -538,7 +551,8 @@ namespace VMS
                 lotClient: lotClient,
                 vmsHubClient: vmsHubClient,
                 predictionPollingService: predictionPollingService,
-                updateService: updateService);
+                updateService: updateService,
+                imageUploadService: imageUploadService);
 
             var mainWindow = new MainWindow();
             mainWindow.DataContext = mainViewModel;
@@ -552,6 +566,7 @@ namespace VMS
                 predictionPollingService?.Dispose();
                 sensorPollingService?.Dispose();
                 updateService?.Dispose();
+                imageUploadService?.Dispose();
                 foreach (var board in ioBoardConnections) board.Dispose();
                 ForceShutdown(mainViewModel, heartbeatService, parameterSyncService, sharedFrameWriter, plcConnection, autoProcessService);
             };
