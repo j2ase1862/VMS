@@ -17,6 +17,29 @@
                             UseAeroCaptionButtons="False"/>
     </shell:WindowChrome.WindowChrome>
 
+    <Window.Resources>
+        <!-- 모든 데이터 셀 공통 — 폰트 크기/수직 중앙 정렬 통일(셀 높이 내 클리핑 방지) -->
+        <Style x:Key="WoCellText" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        </Style>
+        <Style x:Key="WoCellOrderNo" TargetType="TextBlock" BasedOn="{StaticResource WoCellText}">
+            <Setter Property="FontFamily" Value="Consolas"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+        </Style>
+        <Style x:Key="WoCellProgress" TargetType="TextBlock" BasedOn="{StaticResource WoCellText}">
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextAccent}"/>
+        </Style>
+        <Style x:Key="WoCellMuted" TargetType="TextBlock" BasedOn="{StaticResource WoCellText}">
+            <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}"/>
+        </Style>
+    </Window.Resources>
+
     <Border Background="{StaticResource BrushBgWindow}"
             BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="1">
         <Grid>
@@ -62,36 +85,23 @@
                       ItemsSource="{Binding ItemsView}"
                       SelectedItem="{Binding SelectedItem}"
                       Style="{StaticResource WindowDarkDataGrid}"
+                      RowHeight="36"
                       AutoGenerateColumns="False"
                       MouseDoubleClick="DataGrid_MouseDoubleClick"
                       Margin="20,10">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Order No" Binding="{Binding OrderNo}" Width="140" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="VerticalAlignment" Value="Center"/>
-                                <Setter Property="FontFamily" Value="Consolas"/>
-                                <Setter Property="FontWeight" Value="SemiBold"/>
-                                <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
-                    <DataGridTextColumn Header="Product" Binding="{Binding ProductName}" Width="*" IsReadOnly="True"/>
-                    <DataGridTextColumn Header="Recipe" Binding="{Binding RecipeName}" Width="180" IsReadOnly="True"/>
-                    <DataGridTextColumn Header="Progress" Binding="{Binding ProgressText}" Width="100" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Center"/>
-                                <Setter Property="VerticalAlignment" Value="Center"/>
-                                <Setter Property="Foreground" Value="{StaticResource BrushTextAccent}"/>
-                                <Setter Property="FontWeight" Value="SemiBold"/>
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Order No" Binding="{Binding OrderNo}" Width="140" IsReadOnly="True"
+                                        ElementStyle="{StaticResource WoCellOrderNo}"/>
+                    <DataGridTextColumn Header="Product" Binding="{Binding ProductName}" Width="*" IsReadOnly="True"
+                                        ElementStyle="{StaticResource WoCellText}"/>
+                    <DataGridTextColumn Header="Recipe" Binding="{Binding RecipeName}" Width="180" IsReadOnly="True"
+                                        ElementStyle="{StaticResource WoCellText}"/>
+                    <DataGridTextColumn Header="Progress" Binding="{Binding ProgressText}" Width="100" IsReadOnly="True"
+                                        ElementStyle="{StaticResource WoCellProgress}"/>
                     <DataGridTemplateColumn Header="Status" Width="100" CanUserSort="False">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <Border CornerRadius="3" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <Border CornerRadius="3" Padding="8,3" HorizontalAlignment="Left" VerticalAlignment="Center">
                                     <Border.Style>
                                         <Style TargetType="Border">
                                             <Setter Property="Background" Value="{StaticResource BrushNeutral}"/>
@@ -105,7 +115,7 @@
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
-                                    <TextBlock Text="{Binding Status}" FontSize="10" FontWeight="SemiBold">
+                                    <TextBlock Text="{Binding Status}" FontSize="12" FontWeight="SemiBold">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
@@ -124,15 +134,8 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTextColumn Header="Planned Start" Binding="{Binding PlannedStartAt, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" Width="140" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="VerticalAlignment" Value="Center"/>
-                                <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}"/>
-                                <Setter Property="FontSize" Value="10"/>
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Planned Start" Binding="{Binding PlannedStartAt, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" Width="140" IsReadOnly="True"
+                                        ElementStyle="{StaticResource WoCellMuted}"/>
                 </DataGrid.Columns>
             </DataGrid>
 
