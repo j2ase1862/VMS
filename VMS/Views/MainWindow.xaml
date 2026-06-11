@@ -1082,6 +1082,29 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- Image Saving Section — 검사 판정(양품/불량) 이미지 저장 설정. Admin 전용. -->
+                        <Border Style="{StaticResource Card}"
+                                Visibility="{Binding CanManageUsers, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <StackPanel>
+                                <TextBlock Text="Image Saving"
+                                           Style="{StaticResource Text.SectionHeader}"
+                                           Foreground="{StaticResource Brush.Accent}"/>
+
+                                <Button Command="{Binding OpenImageSaveSettingsCommand}"
+                                        Style="{StaticResource Button.Subtle}"
+                                        HorizontalAlignment="Stretch"
+                                        ToolTip="양품/불량 이미지 저장 폴더 및 품질 설정">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xEB9F;"
+                                                   FontFamily="Segoe MDL2 Assets"
+                                                   Margin="0,0,8,0"
+                                                   ToolTip="이미지 저장"/>
+                                        <TextBlock Text="Image Save Settings"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+
                         <!-- D8: Recent Inspections (VMS 자체 히스토리 — Web 의존 없음) -->
                         <Border Background="{StaticResource Brush.Surface.Overlay}"
                                 CornerRadius="8"

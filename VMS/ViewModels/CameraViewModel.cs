@@ -197,9 +197,10 @@ namespace VMS.ViewModels
 
         /// <summary>
         /// Raised after an inspection result is recorded (ok/ng).
-        /// Provides (cameraName, ok, currentImage) for dashboard tracking.
+        /// Provides (cameraName, ok, currentImage, stepNumber) for dashboard tracking
+        /// and image saving. stepNumber is the inspected step's Sequence (0 if none).
         /// </summary>
-        public event Action<string, bool, BitmapSource?>? InspectionCompleted;
+        public event Action<string, bool, BitmapSource?, int>? InspectionCompleted;
 
         /// <summary>
         /// 마지막 검사의 개별 도구 결과 (AutoProcessService PLC 전송용)
@@ -257,7 +258,9 @@ namespace VMS.ViewModels
             if (ok) PassCount++;
             else FailCount++;
 
-            InspectionCompleted?.Invoke(Name, ok, CurrentImage);
+            // 방금 검사한 스텝 번호(Sequence) — 이미지 파일명 규칙의 Step 토큰용. 없으면 0.
+            int stepNumber = FindCurrentStep()?.Sequence ?? 0;
+            InspectionCompleted?.Invoke(Name, ok, CurrentImage, stepNumber);
         }
 
         /// <summary>
