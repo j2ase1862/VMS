@@ -85,7 +85,7 @@
                       ItemsSource="{Binding ItemsView}"
                       SelectedItem="{Binding SelectedItem}"
                       Style="{StaticResource WindowDarkDataGrid}"
-                      RowHeight="36"
+                      RowHeight="42"
                       AutoGenerateColumns="False"
                       MouseDoubleClick="DataGrid_MouseDoubleClick"
                       Margin="20,10">
@@ -101,7 +101,7 @@
                     <DataGridTemplateColumn Header="Status" Width="100" CanUserSort="False">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <Border CornerRadius="3" Padding="8,3" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <Border CornerRadius="3" Padding="10,4" HorizontalAlignment="Left" VerticalAlignment="Center">
                                     <Border.Style>
                                         <Style TargetType="Border">
                                             <Setter Property="Background" Value="{StaticResource BrushNeutral}"/>
@@ -115,7 +115,9 @@
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
-                                    <TextBlock Text="{Binding Status}" FontSize="12" FontWeight="SemiBold">
+                                    <TextBlock Text="{Binding Status}" FontSize="12" FontWeight="SemiBold"
+                                               VerticalAlignment="Center" HorizontalAlignment="Center"
+                                               TextOptions.TextFormattingMode="Ideal">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
