@@ -1,5 +1,6 @@
 using VMS.Camera.Models;
 using VMS.Camera.Services;
+using VMS.Core.Imaging;
 using VMS.Core.Interfaces;
 using VMS.Core.Models.Predictive;
 using VMS.Core.Models.Updates;
@@ -288,6 +289,8 @@ namespace VMS.ViewModels
         private int? _lastCompletedNotifiedWoId; // C5: 중복 Completed 알림 가드
         private readonly Action _shutdownAction;
         private SystemConfiguration _systemConfig;
+        // 검사 판정 이미지(양품/불량) 저장 설정 — 시작 시 로드, 설정 윈도우 종료 후 재로드.
+        private ImageSaveOptions _imageSaveOptions = ImageSaveOptions.LoadFromAppData();
 
         public MainViewModel(
             IConfigurationService configService,
@@ -533,13 +536,28 @@ namespace VMS.ViewModels
         {
             cam.FrameAcquired += result => _sharedFrameWriter?.WriteFrame(result);
 
-            cam.InspectionCompleted += (cameraName, ok, image) =>
+            cam.InspectionCompleted += (cameraName, ok, image, stepNumber) =>
             {
                 TotalInspections++;
                 if (ok) TotalPass++;
                 else TotalFail++;
 
                 Dashboard.RecordInspectionResult(ok, cameraName, image);
+
+                // 판정 이미지 저장 — 설정(imageSave) 의 폴더 구조/파일명 규칙으로 OK/NG 이미지 기록.
+                var imageContext = new InspectionImageContext
+                {
+                    Ok = ok,
+                    CameraName = cameraName,
+                    StepNumber = stepNumber,
+                    RecipeName = (CurrentRecipeName == "No Recipe Loaded") ? string.Empty : (CurrentRecipeName ?? string.Empty),
+                    WorkOrder = SelectedWorkOrder?.OrderNo ?? WorkOrderIdText ?? string.Empty,
+                    Lot = LotIdText ?? string.Empty,
+                    Serial = SerialNumberText ?? string.Empty,
+                    Timestamp = DateTime.Now
+                };
+                VMS.Services.InspectionImageSaver.Save(_imageSaveOptions, image, imageContext);
+
                 LogService?.Log(
                     $"Inspection {(ok ? "OK" : "NG")} - {cameraName}",
                     ok ? LogLevel.Success : LogLevel.Warning,
@@ -1304,6 +1322,26 @@ namespace VMS.ViewModels
                 Owner = System.Windows.Application.Current.MainWindow
             };
             window.ShowDialog();
+        }
+
+        /// <summary>
+        /// 검사 판정 이미지 저장 설정 윈도우. system_config.json 의 imageSave 객체만
+        /// 격리 편집 — 다른 키는 JsonNode 로 보존. 윈도우 종료 후 옵션을 즉시 재로드해
+        /// 재시작 없이도 다음 검사부터 적용된다.
+        /// </summary>
+        [RelayCommand]
+        private void OpenImageSaveSettings()
+        {
+            var vm = new ImageSaveSettingsViewModel();
+            var window = new ImageSaveSettingsWindow
+            {
+                DataContext = vm,
+                Owner = System.Windows.Application.Current.MainWindow
+            };
+            window.ShowDialog();
+
+            // 저장된 설정을 즉시 반영 — 다음 검사 판정부터 새 옵션 적용.
+            _imageSaveOptions = ImageSaveOptions.LoadFromAppData();
         }
 
         [RelayCommand]
