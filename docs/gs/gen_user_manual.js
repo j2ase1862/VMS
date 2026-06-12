@@ -121,7 +121,31 @@ const POST = {
     () => caption("그림. Inference Settings… — 딥러닝 추론(ONNX) 설정"),
   ],
   "4. BODA.VMS.Web (관리자 / MES)": [
-    () => placeholder("BODA.VMS.Web 관리 화면(Dashboard / Production History / Work Orders / Alarms / Audit Logs 등) 스크린샷은 Web 서버 실행 환경에서 캡처하여 삽입 예정."),
+    () => P("아래는 BODA.VMS.Web(ASP.NET Core 8 + Blazor) 관리 화면이다(Admin 로그인 기준)."),
+    () => imgPara("40_web_login.png", 360),
+    () => caption("그림 4-0. Web 로그인"),
+  ],
+  "4.3 Dashboard": [
+    () => imgPara("41_web_dashboard.png", 600),
+    () => caption("그림. Dashboard — 현장 KPI(전체 클라이언트/금일 생산·합격/불량률) + 사이드 메뉴"),
+  ],
+  "4.5 Alarms": [() => imgPara("43_web_알람.png", 600), () => caption("그림. Alarms — 알람 목록")],
+  "4.6 Production History": [() => imgPara("44_web_생산_이력.png", 600), () => caption("그림. Production History — 라인/기간/결과 필터, 검사 이력(이미지 포함), Excel 내보내기")],
+  "4.7 Work Orders": [() => imgPara("45_web_작업_지시.png", 600), () => caption("그림. Work Orders — 작업지시 목록/관리")],
+  "4.8 Products": [() => imgPara("46_web_제품.png", 600), () => caption("그림. Products — 제품 관리")],
+  "4.9 Inspection Items (Recipes + Parameters)": [() => imgPara("58_web_검사_항목.png", 600), () => caption("그림. Inspection Items — 검사 항목(레시피/파라미터)")],
+  "4.10 Operators": [() => imgPara("47_web_작업자.png", 600), () => caption("그림. Operators — 작업자 관리")],
+  "4.12 Maintenance": [() => imgPara("56_web_예방_보전.png", 600), () => caption("그림. Maintenance — 예방 보전")],
+  "4.13 Defect Codes": [() => imgPara("50_web_불량_코드.png", 600), () => caption("그림. Defect Codes — 불량 코드 관리")],
+  "4.14 Shifts": [() => imgPara("59_web_교대_마스터.png", 600), () => caption("그림. Shifts — 교대 마스터")],
+  "4.15 Audit Logs": [() => imgPara("61_web_감사_로그.png", 600), () => caption("그림. Audit Logs — 감사 로그")],
+  "4.16 Reports / Quality Analysis": [
+    () => imgPara("52_web_PDF_리포트.png", 600), () => caption("그림. PDF 리포트"),
+    () => imgPara("48_web_파레토_분석.png", 560), () => caption("그림. 파레토 분석"),
+    () => imgPara("49_web_SPC_관리도.png", 560), () => caption("그림. SPC 관리도"),
+    () => imgPara("54_web_OEE_설비종합효율.png", 560), () => caption("그림. OEE 설비종합효율"),
+    () => imgPara("55_web_설비_신뢰성_MTBF_MTTR.png", 560), () => caption("그림. 설비 신뢰성 (MTBF/MTTR)"),
+    () => imgPara("57_web_불량률_예측.png", 560), () => caption("그림. 불량률 예측"),
   ],
 };
 // 챕터 3 말미(4장 직전)에 관리자 도구 다이얼로그 섹션 삽입
