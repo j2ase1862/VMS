@@ -90,9 +90,19 @@ const POST = {
   "3.1 첫 실행 화면": [
     () => imgPara("01_vms_main.png", 600), () => caption("그림. VMS 첫 실행 화면 (로그인 전) — 헤더 / KPI 스트립 / 카메라 표시 영역"),
   ],
+  "3.2.2 Work Orders 버튼": [
+    () => imgPara("20_dlg_workorders.png", 560),
+    () => caption("그림. Work Orders 다이얼로그 — 상태 필터 / Refresh / 목록(Order No·Product·Recipe·Progress·Status·Planned Start) / Select·Cancel"),
+  ],
   "3.3 사이드 패널 (Settings)": [
     () => imgPara("05_vms_sidepanel.png", 600),
     () => caption("그림. 사이드 패널(Settings) 펼친 상태 — Camera Control / Recipe / External Tools / Updates / Web Parameters / Image Saving"),
+    () => P("[Image Save Settings] 버튼 — 검사 판정 이미지(양품/불량) 저장 설정 다이얼로그:"),
+    () => imgPara("21_dlg_imagesave.png", 460),
+    () => caption("그림. Image Save Settings — 저장(경로/보존) / 포맷·품질 / 파일명 규칙 / Web 연동"),
+    () => P("[Sync Parameters] 버튼 — Web 서버와 레시피 파라미터 동기화 다이얼로그:"),
+    () => imgPara("22_dlg_syncparams.png", 460),
+    () => caption("그림. Sync Parameters — Web 파라미터 동기화"),
     () => P("외부 도구의 [Vision Tool Setup] 버튼으로 실행되는 비전 설정(VMS.VisionSetup) 화면은 다음과 같다.", {}),
     () => imgPara("03_visionsetup.png", 600),
     () => caption("그림. 비전 설정(VMS.VisionSetup) — 카메라 / Steps / Tool Palette(12 카테고리) / Tool Workspace / ROI 도구 / 이미지 뷰"),
@@ -101,6 +111,24 @@ const POST = {
     () => placeholder("BODA.VMS.Web 관리 화면(Dashboard / Production History / Work Orders / Alarms / Audit Logs 등) 스크린샷은 Web 서버 실행 환경에서 캡처하여 삽입 예정."),
   ],
 };
+// 챕터 3 말미(4장 직전)에 관리자 도구 다이얼로그 섹션 삽입
+const ADMIN_BEFORE = "4. BODA.VMS.Web (관리자 / MES)";
+function adminDialogsSection() {
+  const out = [];
+  out.push(new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("3.8 관리자 도구 다이얼로그 (Admin 전용)")] }));
+  out.push(P("헤더의 User Management 아이콘과 Admin Tools(⋮) 드롭다운에서 실행되는 관리자 전용 다이얼로그다. (Admin 권한 로그인 시에만 표시)"));
+  const dlgs = [
+    ["23_dlg_usermgmt.png", "User Management — 사용자 계정·권한(UserGrade) 관리"],
+    ["24_dlg_audit.png", "Audit Log Viewer — 감사 로그 조회(카테고리/기간 필터)"],
+    ["25_dlg_health.png", "Health Check — 시스템 상태 점검"],
+    ["26_dlg_backup.png", "Backup / Restore — 데이터 백업 및 복원"],
+    ["27_dlg_autobackup.png", "Auto Backup Settings — 자동 백업 정책"],
+    ["28_dlg_retention.png", "Retention Settings — 데이터 보존 정책(감사/백업/업로드 큐 + 카테고리별)"],
+    ["29_dlg_support.png", "Support Package — 원격 지원용 진단 패키지 생성"],
+  ];
+  dlgs.forEach(([f, c]) => { out.push(imgPara(f, 540)); out.push(caption("그림. " + c)); });
+  return out;
+}
 // 챕터 3 시작 전에 AppSetup 마법사 섹션을 끼워넣음 (= 설치 챕터 말미)
 const WIZARD_BEFORE = "3. VMS 클라이언트 매뉴얼";
 function wizardSection() {
@@ -131,6 +159,7 @@ for (let i = start + 1; i < blocks.length; i++) {
   if (b.t === "h") {
     const txt = norm(b.text);
     if (txt === WIZARD_BEFORE) wizardSection().forEach(x => body.push(x));
+    if (txt === ADMIN_BEFORE) adminDialogsSection().forEach(x => body.push(x));
     // html H2->docx H1, H3->H2, H4->H3
     const lvl = b.level === 2 ? HeadingLevel.HEADING_1 : b.level === 3 ? HeadingLevel.HEADING_2 : HeadingLevel.HEADING_3;
     body.push(new Paragraph({ heading: lvl, children: [new TextRun(b.text)] }));
