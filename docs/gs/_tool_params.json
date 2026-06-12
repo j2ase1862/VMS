@@ -1,0 +1,1242 @@
+[
+ {
+  "tool": "Grayscale (그레이 변환)",
+  "category": "Conversion",
+  "file": "GrayscaleToolSettings.xaml",
+  "params": []
+ },
+ {
+  "tool": "Threshold (이진화)",
+  "category": "Conversion",
+  "file": "ThresholdToolSettings.xaml",
+  "params": [
+   {
+    "label": "Threshold Value",
+    "param": "ThresholdValue",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "255",
+    "enum": null
+   },
+   {
+    "label": "Max Value",
+    "param": "MaxValue",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "255",
+    "enum": null
+   },
+   {
+    "label": "Use Otsu",
+    "param": "UseOtsu",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Use Adaptive",
+    "param": "UseAdaptive",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Block Size",
+    "param": "BlockSize",
+    "ctrl": "슬라이더",
+    "min": "3",
+    "max": "51",
+    "enum": null
+   },
+   {
+    "label": "Constant C",
+    "param": "CValue",
+    "ctrl": "슬라이더",
+    "min": "-20",
+    "max": "20",
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Blur (블러)",
+  "category": "Preprocessing",
+  "file": "BlurToolSettings.xaml",
+  "params": [
+   {
+    "label": "Blur Type",
+    "param": "BlurType",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "BlurType"
+   },
+   {
+    "label": "Kernel Size",
+    "param": "KernelSize",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "31",
+    "enum": null
+   },
+   {
+    "label": "Sigma X",
+    "param": "SigmaX",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "10",
+    "enum": null
+   },
+   {
+    "label": "Sigma Y",
+    "param": "SigmaY",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "10",
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Morphology (형태학 연산)",
+  "category": "Preprocessing",
+  "file": "MorphologyToolSettings.xaml",
+  "params": [
+   {
+    "label": "Operation",
+    "param": "Operation",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "MorphologyOperation"
+   },
+   {
+    "label": "Kernel Width",
+    "param": "KernelWidth",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "21",
+    "enum": null
+   },
+   {
+    "label": "Kernel Height",
+    "param": "KernelHeight",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "21",
+    "enum": null
+   },
+   {
+    "label": "Iterations",
+    "param": "Iterations",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "10",
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Edge Detection (에지 검출)",
+  "category": "Preprocessing",
+  "file": "EdgeDetectionToolSettings.xaml",
+  "params": [
+   {
+    "label": "Method",
+    "param": "Method",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "EdgeDetectionMethod"
+   },
+   {
+    "label": "Canny Threshold 1",
+    "param": "CannyThreshold1",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "255",
+    "enum": null
+   },
+   {
+    "label": "Canny Threshold 2",
+    "param": "CannyThreshold2",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "255",
+    "enum": null
+   },
+   {
+    "label": "Aperture Size",
+    "param": "CannyApertureSize",
+    "ctrl": "슬라이더",
+    "min": "3",
+    "max": "7",
+    "enum": null
+   },
+   {
+    "label": "L2 Gradient",
+    "param": "L2Gradient",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Histogram (히스토그램)",
+  "category": "Preprocessing",
+  "file": "HistogramToolSettings.xaml",
+  "params": [
+   {
+    "label": "Operation",
+    "param": "Operation",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "HistogramOperation"
+   },
+   {
+    "label": "Clip Limit",
+    "param": "ClipLimit",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "10",
+    "enum": null
+   },
+   {
+    "label": "Tile Grid Width",
+    "param": "TileGridWidth",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "16",
+    "enum": null
+   },
+   {
+    "label": "Tile Grid Height",
+    "param": "TileGridHeight",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "16",
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Blob Analysis (블롭 분석)",
+  "category": "Blob",
+  "file": "BlobToolSettings.xaml",
+  "params": [
+   {
+    "label": "Use Internal Threshold",
+    "param": "UseInternalThreshold",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Threshold Value",
+    "param": "ThresholdValue",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "255",
+    "enum": null
+   },
+   {
+    "label": "Segmentation Polarity",
+    "param": "SegmentationPolarity",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "SegmentationPolarity"
+   },
+   {
+    "label": "Min Area",
+    "param": "MinArea",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Max Area",
+    "param": "MaxArea",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Enable Judgment",
+    "param": "EnableJudgment",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Use Area Judgment",
+    "param": "UseAreaJudgment",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Expected Area",
+    "param": "ExpectedArea",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Area Tolerance (+)",
+    "param": "AreaTolerancePlus",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Area Tolerance (-)",
+    "param": "AreaToleranceMinus",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Use Count Judgment",
+    "param": "UseCountJudgment",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Count Mode",
+    "param": "CountMode",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "CountJudgmentMode"
+   },
+   {
+    "label": "Expected Count",
+    "param": "ExpectedCount",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Expected Count Max",
+    "param": "ExpectedCountMax",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Draw Contours",
+    "param": "DrawContours",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Draw Bounding Box",
+    "param": "DrawBoundingBox",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Draw Center Point",
+    "param": "DrawCenterPoint",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Draw Labels",
+    "param": "DrawLabels",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Caliper (캘리퍼 측정)",
+  "category": "Measurement",
+  "file": "CaliperToolSettings.xaml",
+  "params": [
+   {
+    "label": "Projection Width",
+    "param": "SearchWidth",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "200",
+    "enum": null
+   },
+   {
+    "label": "Search Axis",
+    "param": "SearchAxis",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "CaliperSearchAxis"
+   },
+   {
+    "label": "Polarity",
+    "param": "Polarity",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "EdgePolarity"
+   },
+   {
+    "label": "Edge Threshold",
+    "param": "EdgeThreshold",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "100",
+    "enum": null
+   },
+   {
+    "label": "Filter Half Width",
+    "param": "FilterHalfWidth",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "10",
+    "enum": null
+   },
+   {
+    "label": "Mode",
+    "param": "Mode",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "CaliperMode"
+   },
+   {
+    "label": "Max Edges",
+    "param": "MaxEdges",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "50",
+    "enum": null
+   },
+   {
+    "label": "Scorer Mode",
+    "param": "ScorerMode",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "ScorerMode"
+   },
+   {
+    "label": "Edge Selection",
+    "param": "SelectionMode",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "EdgeSelectionMode"
+   },
+   {
+    "label": "Projection Mode",
+    "param": "ProjectionMode",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "ProjectionMode"
+   },
+   {
+    "label": "Gaussian Filter",
+    "param": "UseGaussianFilter",
+    "ctrl": "BoolParameter",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Gaussian Sigma",
+    "param": "GaussianSigma",
+    "ctrl": "슬라이더",
+    "min": "0.3",
+    "max": "5.0",
+    "enum": null
+   },
+   {
+    "label": "Normalized Contrast",
+    "param": "UseNormalizedContrast",
+    "ctrl": "BoolParameter",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Sub-Pixel Method",
+    "param": "SubPixelMethod",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "SubPixelMethod"
+   }
+  ]
+ },
+ {
+  "tool": "Line Fit (직선 피팅)",
+  "category": "Measurement",
+  "file": "LineFitToolSettings.xaml",
+  "params": [
+   {
+    "label": "Num Calipers",
+    "param": "NumCalipers",
+    "ctrl": "슬라이더",
+    "min": "2",
+    "max": "50",
+    "enum": null
+   },
+   {
+    "label": "Search Length",
+    "param": "SearchLength",
+    "ctrl": "슬라이더",
+    "min": "10",
+    "max": "200",
+    "enum": null
+   },
+   {
+    "label": "Search Width",
+    "param": "SearchWidth",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "50",
+    "enum": null
+   },
+   {
+    "label": "Polarity",
+    "param": "Polarity",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "EdgePolarity"
+   },
+   {
+    "label": "Edge Threshold",
+    "param": "EdgeThreshold",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "100",
+    "enum": null
+   },
+   {
+    "label": "Filter Half Width",
+    "param": "FilterHalfWidth",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "10",
+    "enum": null
+   },
+   {
+    "label": "Fit Method",
+    "param": "FitMethod",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "LineFitMethod"
+   },
+   {
+    "label": "RANSAC Threshold",
+    "param": "RansacThreshold",
+    "ctrl": "슬라이더",
+    "min": "0.1",
+    "max": "20",
+    "enum": null
+   },
+   {
+    "label": "Min Found Calipers",
+    "param": "MinFoundCalipers",
+    "ctrl": "슬라이더",
+    "min": "2",
+    "max": "20",
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Circle Fit (원 피팅)",
+  "category": "Measurement",
+  "file": "CircleFitToolSettings.xaml",
+  "params": [
+   {
+    "label": "Center X",
+    "param": "CenterPoint.X",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Center Y",
+    "param": "CenterPoint.Y",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Expected Radius",
+    "param": "ExpectedRadius",
+    "ctrl": "슬라이더",
+    "min": "10",
+    "max": "500",
+    "enum": null
+   },
+   {
+    "label": "Num Calipers",
+    "param": "NumCalipers",
+    "ctrl": "슬라이더",
+    "min": "3",
+    "max": "64",
+    "enum": null
+   },
+   {
+    "label": "Search Length",
+    "param": "SearchLength",
+    "ctrl": "슬라이더",
+    "min": "10",
+    "max": "200",
+    "enum": null
+   },
+   {
+    "label": "Search Width",
+    "param": "SearchWidth",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "50",
+    "enum": null
+   },
+   {
+    "label": "Start Angle",
+    "param": "StartAngle",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "360",
+    "enum": null
+   },
+   {
+    "label": "End Angle",
+    "param": "EndAngle",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "360",
+    "enum": null
+   },
+   {
+    "label": "Search Direction",
+    "param": "SearchDirection",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "CircleSearchDirection"
+   },
+   {
+    "label": "Polarity",
+    "param": "Polarity",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "EdgePolarity"
+   },
+   {
+    "label": "Edge Threshold",
+    "param": "EdgeThreshold",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "100",
+    "enum": null
+   },
+   {
+    "label": "Fit Method",
+    "param": "FitMethod",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "CircleFitMethod"
+   }
+  ]
+ },
+ {
+  "tool": "Geometry (기하 측정)",
+  "category": "Measurement",
+  "file": "GeometryToolSettings.xaml",
+  "params": [
+   {
+    "label": "Operation",
+    "param": "Operation",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "GeometryOperation"
+   }
+  ]
+ },
+ {
+  "tool": "Shape Match (형상 매칭)",
+  "category": "Pattern Matching",
+  "file": "ShapeMatchToolSettings.xaml",
+  "params": [
+   {
+    "label": "Angle Step (°)",
+    "param": "AngleStep",
+    "ctrl": "슬라이더",
+    "min": "0.5",
+    "max": "30",
+    "enum": null
+   },
+   {
+    "label": "Min Scale",
+    "param": "MinScale",
+    "ctrl": "슬라이더",
+    "min": "0.2",
+    "max": "2.0",
+    "enum": null
+   },
+   {
+    "label": "Max Scale",
+    "param": "MaxScale",
+    "ctrl": "슬라이더",
+    "min": "0.2",
+    "max": "3.0",
+    "enum": null
+   },
+   {
+    "label": "Scale Step",
+    "param": "ScaleStep",
+    "ctrl": "슬라이더",
+    "min": "0.01",
+    "max": "0.5",
+    "enum": null
+   },
+   {
+    "label": "Score Threshold",
+    "param": "ScoreThreshold",
+    "ctrl": "슬라이더",
+    "min": "0.0",
+    "max": "1.0",
+    "enum": null
+   },
+   {
+    "label": "Max Instances",
+    "param": "MaxInstances",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "20",
+    "enum": null
+   },
+   {
+    "label": "NMS Distance Factor",
+    "param": "NmsDistanceFactor",
+    "ctrl": "슬라이더",
+    "min": "0.1",
+    "max": "2.0",
+    "enum": null
+   },
+   {
+    "label": "Pyramid Levels",
+    "param": "NumPyramidLevels",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "4",
+    "enum": null
+   },
+   {
+    "label": "Top Candidates to Refine",
+    "param": "TopCandidates",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "10",
+    "enum": null
+   },
+   {
+    "label": "Use Search Region",
+    "param": "UseSearchRegion",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "X",
+    "param": "SearchRegionX",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Y",
+    "param": "SearchRegionY",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Width",
+    "param": "SearchRegionWidth",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Height",
+    "param": "SearchRegionHeight",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Feature Match (특징 매칭)",
+  "category": "Pattern Matching",
+  "file": "FeatureMatchToolSettings.xaml",
+  "params": [
+   {
+    "label": "Score Threshold",
+    "param": "ScoreThreshold",
+    "ctrl": "슬라이더",
+    "min": "0.1",
+    "max": "1",
+    "enum": null
+   },
+   {
+    "label": "Contrast Invariant",
+    "param": "UseContrastInvariant",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Auto Apply Tune",
+    "param": "IsAutoTuneEnabled",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Angle Start",
+    "param": "AngleStart",
+    "ctrl": "슬라이더",
+    "min": "-180",
+    "max": "180",
+    "enum": null
+   },
+   {
+    "label": "Angle Extent",
+    "param": "AngleExtent",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "360",
+    "enum": null
+   },
+   {
+    "label": "Min Scale",
+    "param": "MinScale",
+    "ctrl": "슬라이더",
+    "min": "0.5",
+    "max": "1",
+    "enum": null
+   },
+   {
+    "label": "Max Scale",
+    "param": "MaxScale",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "2",
+    "enum": null
+   },
+   {
+    "label": "Angle Step",
+    "param": "AngleStep",
+    "ctrl": "슬라이더",
+    "min": "0.1",
+    "max": "10",
+    "enum": null
+   },
+   {
+    "label": "Scale Step",
+    "param": "ScaleStep",
+    "ctrl": "슬라이더",
+    "min": "0.01",
+    "max": "0.5",
+    "enum": null
+   },
+   {
+    "label": "Greediness",
+    "param": "Greediness",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "1",
+    "enum": null
+   },
+   {
+    "label": "Num Levels",
+    "param": "NumLevels",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "6",
+    "enum": null
+   },
+   {
+    "label": "Canny Low",
+    "param": "CannyLow",
+    "ctrl": "슬라이더",
+    "min": "10",
+    "max": "200",
+    "enum": null
+   },
+   {
+    "label": "Canny High",
+    "param": "CannyHigh",
+    "ctrl": "슬라이더",
+    "min": "50",
+    "max": "400",
+    "enum": null
+   },
+   {
+    "label": "Max Model Points",
+    "param": "MaxModelPoints",
+    "ctrl": "슬라이더",
+    "min": "50",
+    "max": "1000",
+    "enum": null
+   },
+   {
+    "label": "Curvature Weight",
+    "param": "CurvatureWeight",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "1",
+    "enum": null
+   },
+   {
+    "label": "Use Search Region",
+    "param": "UseSearchRegion",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "X",
+    "param": "SearchRegionX",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Y",
+    "param": "SearchRegionY",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Width",
+    "param": "SearchRegionWidth",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Height",
+    "param": "SearchRegionHeight",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Code Reader (코드 판독)",
+  "category": "Code Reading",
+  "file": "CodeReaderToolSettings.xaml",
+  "params": [
+   {
+    "label": "Code Reader Mode",
+    "param": "CodeReaderMode",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "CodeReaderMode"
+   },
+   {
+    "label": "Max Code Count",
+    "param": "MaxCodeCount",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "50",
+    "enum": null
+   },
+   {
+    "label": "Try Harder",
+    "param": "TryHarder",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "DM Candidate Localization",
+    "param": "UseLocalization",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Enable Verification",
+    "param": "EnableVerification",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Expected Text",
+    "param": "ExpectedText",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Use Regex Match",
+    "param": "UseRegexMatch",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Parse GS1 AIs",
+    "param": "ParseGs1",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Enable Grading",
+    "param": "EnableQualityGrading",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Min Pass Grade",
+    "param": "MinPassGrade",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "CodeQualityGrade"
+   },
+   {
+    "label": "Draw Overlay",
+    "param": "DrawOverlay",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "OCR (문자 인식)",
+  "category": "Identification",
+  "file": "OCRToolSettings.xaml",
+  "params": [
+   {
+    "label": "OCR Engine",
+    "param": "OcrEngine",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "OcrEngineType"
+   },
+   {
+    "label": "Language",
+    "param": "Language",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "OcrLanguage"
+   },
+   {
+    "label": "Page Seg Mode",
+    "param": "PageSegMode",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "OcrPageSegMode"
+   },
+   {
+    "label": "Engine Mode",
+    "param": "EngineMode",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "OcrEngineMode"
+   },
+   {
+    "label": "Char Whitelist",
+    "param": "CharacterWhitelist",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Max Side Length",
+    "param": "MaxSideLen",
+    "ctrl": "슬라이더",
+    "min": "320",
+    "max": "4096",
+    "enum": null
+   },
+   {
+    "label": "Custom Det Model",
+    "param": "CustomDetModelPath",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Custom Rec Model",
+    "param": "CustomRecModelPath",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Custom Dict File",
+    "param": "CustomDictPath",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Confidence Threshold",
+    "param": "ConfidenceThreshold",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "100",
+    "enum": null
+   },
+   {
+    "label": "Auto Preprocess",
+    "param": "AutoPreprocess",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Invert Image",
+    "param": "InvertImage",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Target Text Height",
+    "param": "TargetTextHeight",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "200",
+    "enum": null
+   },
+   {
+    "label": "Denoise Level",
+    "param": "DenoiseLevel",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "3",
+    "enum": null
+   },
+   {
+    "label": "Dot Matrix Mode",
+    "param": "DotMatrixMode",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Enable Verification",
+    "param": "EnableVerification",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Expected Text",
+    "param": "ExpectedText",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Use Regex Match",
+    "param": "UseRegexMatch",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Draw Overlay",
+    "param": "DrawOverlay",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Tessdata Path",
+    "param": "TessdataPath",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   }
+  ]
+ }
+]

@@ -13,6 +13,7 @@ const {
 const DIR = __dirname;
 const SHOT = path.join(DIR, "screenshots");
 const blocks = JSON.parse(fs.readFileSync(path.join(DIR, "_manual_blocks.json"), "utf-8"));
+const tools = JSON.parse(fs.readFileSync(path.join(DIR, "_tool_params.json"), "utf-8"));
 const OUT = path.join(DIR, "VMS_사용자매뉴얼_v1.0.docx");
 
 const PAGE_W = 11906, PAGE_H = 16838, MARGIN = 1440;
@@ -140,6 +141,157 @@ for (let i = start + 1; i < blocks.length; i++) {
     body.push(bullet(b.text));
   } else if (b.t === "table") {
     body.push(tableBlock(b));
+    body.push(new Paragraph({ spacing: { after: 120 }, children: [] }));
+  }
+}
+
+// ---- #4: 비전 도구 파라미터 (핵심 툴) — 코드(ToolSettings XAML)에서 전수 추출 ----
+const DESC = {
+  // Threshold
+  ThresholdValue: "이진화 임계값. 픽셀값이 이 값보다 크면 전경(흰색)으로 처리.",
+  MaxValue: "이진화 시 전경에 적용할 최대값(보통 255).",
+  UseOtsu: "Otsu 자동 임계값 사용(체크 시 Threshold Value 무시).",
+  UseAdaptive: "적응형 이진화 사용(국소 영역별 임계값 — 조명 불균일에 강함).",
+  BlockSize: "적응형 이진화 국소 블록 크기(홀수).",
+  CValue: "적응형 이진화 보정 상수(클수록 전경 감소).",
+  // Blur
+  BlurType: "블러 종류(Gaussian / Median / Box 등).",
+  KernelSize: "커널 크기(홀수). 클수록 강한 평활화.",
+  SigmaX: "가우시안 X 표준편차(0이면 커널에서 자동 산출).",
+  SigmaY: "가우시안 Y 표준편차(0이면 SigmaX 사용).",
+  // Morphology
+  Operation: "연산 종류 선택.",
+  KernelWidth: "구조요소(커널) 너비.",
+  KernelHeight: "구조요소(커널) 높이.",
+  Iterations: "연산 반복 횟수.",
+  // Edge
+  Method: "에지 검출 방법(Canny / Sobel / Laplacian 등).",
+  CannyThreshold1: "Canny 하위(연결) 임계값.",
+  CannyThreshold2: "Canny 상위(강한 에지) 임계값.",
+  CannyApertureSize: "Sobel 연산 커널 크기(홀수).",
+  L2Gradient: "정확한 L2 norm 그래디언트 사용(정밀도↑, 속도↓).",
+  ClipLimit: "CLAHE 대비 제한값(클수록 대비 강조).",
+  TileGridWidth: "CLAHE 타일 격자 가로 분할 수.",
+  TileGridHeight: "CLAHE 타일 격자 세로 분할 수.",
+  // Blob
+  UseInternalThreshold: "툴 내부에서 이진화를 수행(외부 전처리 불필요).",
+  SegmentationPolarity: "전경 극성(밝은 블롭 / 어두운 블롭).",
+  MinArea: "검출 최소 면적(px) — 이보다 작은 블롭 제거.",
+  MaxArea: "검출 최대 면적(px) — 이보다 큰 블롭 제거.",
+  EnableJudgment: "이 도구의 OK/NG 판정 사용.",
+  UseAreaJudgment: "면적 기준 판정 사용.",
+  ExpectedArea: "기준(목표) 면적.",
+  AreaTolerancePlus: "면적 상한 허용오차(+).",
+  AreaToleranceMinus: "면적 하한 허용오차(−).",
+  UseCountJudgment: "블롭 개수 기준 판정 사용.",
+  CountMode: "개수 판정 모드(정확히/이상/범위 등).",
+  ExpectedCount: "기준 개수.",
+  ExpectedCountMax: "개수 상한(범위 모드).",
+  DrawContours: "결과 윤곽선 오버레이 표시.",
+  DrawBoundingBox: "외접 사각형 표시.",
+  DrawCenterPoint: "블롭 중심점 표시.",
+  DrawLabels: "블롭 번호/라벨 표시.",
+  // Caliper / Fit 공통
+  SearchWidth: "탐색(투영) 폭.",
+  SearchAxis: "탐색 축 방향.",
+  Polarity: "에지 극성(밝→어두 / 어두→밝 / 모두).",
+  EdgeThreshold: "에지로 인정할 최소 강도.",
+  FilterHalfWidth: "에지 검출 필터 반폭(노이즈 평활).",
+  Mode: "동작 모드.",
+  MaxEdges: "검출할 최대 에지 수.",
+  ScorerMode: "에지 점수 산정 방식.",
+  SelectionMode: "사용할 에지 선택 방식(첫/최강/마지막 등).",
+  ProjectionMode: "프로파일 투영 방식.",
+  UseGaussianFilter: "가우시안 필터 적용.",
+  GaussianSigma: "가우시안 시그마.",
+  UseNormalizedContrast: "대비 정규화 사용.",
+  SubPixelMethod: "서브픽셀 보간 방식(정밀 위치).",
+  NumCalipers: "사용할 캘리퍼 개수(많을수록 정밀/느림).",
+  SearchLength: "각 캘리퍼 탐색 길이.",
+  FitMethod: "피팅 방법(최소제곱 / RANSAC 등).",
+  RansacThreshold: "RANSAC 인라이어 허용오차.",
+  MinFoundCalipers: "유효로 인정할 최소 캘리퍼 수.",
+  ExpectedRadius: "예상 반지름.",
+  StartAngle: "탐색 시작 각도.",
+  EndAngle: "탐색 종료 각도.",
+  SearchDirection: "에지 탐색 방향(내→외 / 외→내).",
+  "CenterPoint.X": "예상 중심 X 좌표.",
+  "CenterPoint.Y": "예상 중심 Y 좌표.",
+  // Shape / Feature Match
+  AngleStep: "각도 탐색 간격(작을수록 정밀/느림).",
+  MinScale: "최소 스케일(축소 한계).",
+  MaxScale: "최대 스케일(확대 한계).",
+  ScaleStep: "스케일 탐색 간격.",
+  ScoreThreshold: "매칭 점수 임계값(이상이면 검출).",
+  MaxInstances: "최대 검출 개수.",
+  NmsDistanceFactor: "중복 검출 억제(NMS) 거리 계수.",
+  NumPyramidLevels: "이미지 피라미드 레벨 수(속도↑).",
+  TopCandidates: "정밀화할 상위 후보 수.",
+  UseSearchRegion: "탐색 영역 제한 사용.",
+  SearchRegionX: "탐색 영역 X.", SearchRegionY: "탐색 영역 Y.",
+  SearchRegionWidth: "탐색 영역 너비.", SearchRegionHeight: "탐색 영역 높이.",
+  UseContrastInvariant: "명암 반전에도 매칭(대비 불변).",
+  IsAutoTuneEnabled: "파라미터 자동 튜닝 적용.",
+  AngleStart: "각도 탐색 시작.",
+  AngleExtent: "각도 탐색 범위.",
+  Greediness: "탐욕도(높을수록 빠르나 정확도↓).",
+  NumLevels: "피라미드 레벨 수.",
+  CannyLow: "모델 에지 추출 하위 임계값.",
+  CannyHigh: "모델 에지 추출 상위 임계값.",
+  MaxModelPoints: "모델 특징점 최대 수.",
+  CurvatureWeight: "곡률 가중치.",
+  // Code Reader
+  CodeReaderMode: "판독 모드(1D 바코드 / 2D / 자동).",
+  MaxCodeCount: "한 화면에서 판독할 최대 코드 수.",
+  TryHarder: "정밀(저품질 코드) 탐색 강화.",
+  UseLocalization: "DataMatrix 후보 지역화 사용.",
+  EnableVerification: "판독 결과 검증(기대값 비교) 사용.",
+  ExpectedText: "기대 문자열(검증/비교용).",
+  UseRegexMatch: "정규식으로 결과 검증.",
+  ParseGs1: "GS1 Application Identifier 파싱.",
+  EnableQualityGrading: "코드 인쇄 품질 등급화.",
+  MinPassGrade: "합격으로 인정할 최소 품질 등급.",
+  DrawOverlay: "결과 오버레이 표시.",
+  // OCR
+  OcrEngine: "OCR 엔진(Tesseract / PaddleOCR 등).",
+  Language: "인식 언어.",
+  PageSegMode: "페이지 분할 모드(단어/줄/블록 등).",
+  EngineMode: "엔진 모드(legacy / LSTM 등).",
+  CharacterWhitelist: "허용할 문자 집합(오인식 감소).",
+  MaxSideLen: "입력 이미지 최대 변 길이(리사이즈).",
+  CustomDetModelPath: "커스텀 검출 모델 경로.",
+  CustomRecModelPath: "커스텀 인식 모델 경로.",
+  CustomDictPath: "커스텀 문자 사전 경로.",
+  ConfidenceThreshold: "인식 신뢰도 임계값.",
+  AutoPreprocess: "자동 전처리(이진화/대비 보정 등).",
+  InvertImage: "이미지 명암 반전 후 인식.",
+  TargetTextHeight: "목표 글자 높이(0=자동).",
+  DenoiseLevel: "노이즈 제거 강도.",
+  DotMatrixMode: "도트매트릭스(각인) 문자 모드.",
+  TessdataPath: "Tesseract tessdata 경로.",
+};
+{
+  body.push(new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun("9. 비전 도구 파라미터 (핵심 툴)")] }));
+  body.push(P("VisionSetup의 Tool Palette에서 도구를 Tool Workspace로 드래그한 뒤 선택하면, 우측 파라미터 패널에 아래 항목이 표시된다. 파라미터 라벨은 실제 UI 표기와 동일하며, 본 장은 카테고리별 핵심 도구를 다룬다(나머지 도구는 후속 배치)."));
+  let n = 0;
+  for (const t of tools) {
+    n++;
+    body.push(new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun(`9.${n} ${t.tool}`)] }));
+    body.push(P(`카테고리: ${t.category}`, { size: 18, color: "595959" }));
+    body.push(placeholder(`${t.tool} 파라미터 패널 스크린샷 — Tool Palette에서 드래그 → 선택 시 우측 패널`));
+    if (!t.params || !t.params.length) {
+      body.push(P("이 도구는 별도 수치 파라미터 없이 ROI/입력 연결만으로 동작한다."));
+      continue;
+    }
+    const c1 = 2500, c2 = 2100, c3 = CONTENT_W - c1 - c2;
+    const rows = [new TableRow({ tableHeader: true, children: [hcell("파라미터 (UI 라벨)", c1), hcell("컨트롤 / 범위", c2), hcell("설명", c3)] })];
+    t.params.forEach((pp, i) => {
+      const ctrl = pp.enum ? `${pp.ctrl} (${pp.enum})` : ((pp.min || pp.max) ? `${pp.ctrl} [${pp.min}~${pp.max}]` : pp.ctrl);
+      const desc = DESC[pp.param] || (pp.label + ".");
+      const fill = i % 2 ? "F4F7FB" : undefined;
+      rows.push(new TableRow({ children: [dcell(pp.label, c1, fill), dcell(ctrl, c2, fill), dcell(desc, c3, fill)] }));
+    });
+    body.push(new Table({ width: { size: CONTENT_W, type: WidthType.DXA }, columnWidths: [c1, c2, c3], rows }));
     body.push(new Paragraph({ spacing: { after: 120 }, children: [] }));
   }
 }
