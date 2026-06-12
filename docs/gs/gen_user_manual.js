@@ -272,7 +272,7 @@ const DESC = {
 };
 {
   body.push(new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun("9. 비전 도구 파라미터 (핵심 툴)")] }));
-  body.push(P("VisionSetup의 Tool Palette에서 도구를 Tool Workspace로 드래그한 뒤 선택하면, 우측 파라미터 패널에 아래 항목이 표시된다. 파라미터 라벨은 실제 UI 표기와 동일하며, 본 장은 카테고리별 핵심 도구를 다룬다(나머지 도구는 후속 배치)."));
+  body.push(P("VisionSetup의 Tool Palette에서 도구를 Tool Workspace로 드래그한 뒤 선택하면, 우측 파라미터 패널에 아래 항목이 표시된다. 파라미터 라벨은 실제 UI 표기와 동일하며, 본 장은 Tool Palette의 전체 도구를 카테고리 순으로 다룬다. (딥러닝/3D 도구는 모델·프리셋 선택 기반이라 수치 파라미터가 적을 수 있다. 파라미터 패널 스크린샷은 후속 캡처 예정.)"));
   let n = 0;
   for (const t of tools) {
     n++;

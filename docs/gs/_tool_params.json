@@ -225,6 +225,369 @@
   ]
  },
  {
+  "tool": "Image Enhance (이미지 보정)",
+  "category": "Preprocessing",
+  "file": "ImageEnhanceToolSettings.xaml",
+  "params": [
+   {
+    "label": "Mode",
+    "param": "Mode",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "ImageEnhanceMode"
+   },
+   {
+    "label": "Amount",
+    "param": "Amount",
+    "ctrl": "슬라이더",
+    "min": "0.1",
+    "max": "3.0",
+    "enum": null
+   },
+   {
+    "label": "Blur Kernel",
+    "param": "BlurKernelSize",
+    "ctrl": "슬라이더",
+    "min": "3",
+    "max": "31",
+    "enum": null
+   },
+   {
+    "label": "Threshold (0=off)",
+    "param": "Threshold",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "64",
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Image Rectify (이미지 정류)",
+  "category": "Preprocessing",
+  "file": "ImageRectifyToolSettings.xaml",
+  "params": [
+   {
+    "label": "Undistort (lens distortion)",
+    "param": "Undistort",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Apply Homography (NPoint planar)",
+    "param": "ApplyHomography",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Polar Unwrap (극좌표 펼치기)",
+  "category": "Preprocessing",
+  "file": "PolarUnwrapToolSettings.xaml",
+  "params": [
+   {
+    "label": "Center X (px)",
+    "param": "CenterX",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Center Y (px)",
+    "param": "CenterY",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Inner Radius (px)",
+    "param": "InnerRadius",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Outer Radius (px)",
+    "param": "OuterRadius",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Start Angle (°)",
+    "param": "StartAngleDeg",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "360",
+    "enum": null
+   },
+   {
+    "label": "Direction",
+    "param": "Direction",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "PolarUnwrapDirection"
+   },
+   {
+    "label": "Output Width (0=auto)",
+    "param": "OutputWidth",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Output Height (0=auto)",
+    "param": "OutputHeight",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Color Extract (색 추출)",
+  "category": "Color",
+  "file": "ColorExtractToolSettings.xaml",
+  "params": [
+   {
+    "label": "Hue Min (0-179)",
+    "param": "HueMin",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "179",
+    "enum": null
+   },
+   {
+    "label": "Hue Max (0-179)",
+    "param": "HueMax",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "179",
+    "enum": null
+   },
+   {
+    "label": "Saturation Min",
+    "param": "SaturationMin",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "255",
+    "enum": null
+   },
+   {
+    "label": "Saturation Max",
+    "param": "SaturationMax",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "255",
+    "enum": null
+   },
+   {
+    "label": "Value Min",
+    "param": "ValueMin",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "255",
+    "enum": null
+   },
+   {
+    "label": "Value Max",
+    "param": "ValueMax",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "255",
+    "enum": null
+   },
+   {
+    "label": "Morphology Kernel",
+    "param": "MorphKernelSize",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "15",
+    "enum": null
+   },
+   {
+    "label": "Invert Mask",
+    "param": "InvertMask",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Show Overlay",
+    "param": "ShowOverlay",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Overlay Opacity",
+    "param": "OverlayOpacity",
+    "ctrl": "슬라이더",
+    "min": "0.0",
+    "max": "1.0",
+    "enum": null
+   },
+   {
+    "label": "Use Search Region",
+    "param": "UseSearchRegion",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "X",
+    "param": "SearchRegionX",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Y",
+    "param": "SearchRegionY",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Width",
+    "param": "SearchRegionWidth",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Height",
+    "param": "SearchRegionHeight",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Color Match (색 매칭)",
+  "category": "Color",
+  "file": "ColorMatchToolSettings.xaml",
+  "params": [
+   {
+    "label": "Mean L (0-255)",
+    "param": "MeanL",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "255",
+    "enum": null
+   },
+   {
+    "label": "Mean a (0-255)",
+    "param": "MeanA",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "255",
+    "enum": null
+   },
+   {
+    "label": "Mean b (0-255)",
+    "param": "MeanB",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "255",
+    "enum": null
+   },
+   {
+    "label": "Color Tolerance (ΔE76)",
+    "param": "ColorTolerance",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "100",
+    "enum": null
+   },
+   {
+    "label": "Morphology Kernel",
+    "param": "MorphKernelSize",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "15",
+    "enum": null
+   },
+   {
+    "label": "Show Overlay",
+    "param": "ShowOverlay",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Overlay Opacity",
+    "param": "OverlayOpacity",
+    "ctrl": "슬라이더",
+    "min": "0.0",
+    "max": "1.0",
+    "enum": null
+   },
+   {
+    "label": "Use Search Region",
+    "param": "UseSearchRegion",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "X",
+    "param": "SearchRegionX",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Y",
+    "param": "SearchRegionY",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Width",
+    "param": "SearchRegionWidth",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Height",
+    "param": "SearchRegionHeight",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   }
+  ]
+ },
+ {
   "tool": "Blob Analysis (블롭 분석)",
   "category": "Blob",
   "file": "BlobToolSettings.xaml",
@@ -978,101 +1341,6 @@
   ]
  },
  {
-  "tool": "Code Reader (코드 판독)",
-  "category": "Code Reading",
-  "file": "CodeReaderToolSettings.xaml",
-  "params": [
-   {
-    "label": "Code Reader Mode",
-    "param": "CodeReaderMode",
-    "ctrl": "선택(목록)",
-    "min": null,
-    "max": null,
-    "enum": "CodeReaderMode"
-   },
-   {
-    "label": "Max Code Count",
-    "param": "MaxCodeCount",
-    "ctrl": "슬라이더",
-    "min": "1",
-    "max": "50",
-    "enum": null
-   },
-   {
-    "label": "Try Harder",
-    "param": "TryHarder",
-    "ctrl": "체크박스",
-    "min": null,
-    "max": null,
-    "enum": null
-   },
-   {
-    "label": "DM Candidate Localization",
-    "param": "UseLocalization",
-    "ctrl": "체크박스",
-    "min": null,
-    "max": null,
-    "enum": null
-   },
-   {
-    "label": "Enable Verification",
-    "param": "EnableVerification",
-    "ctrl": "체크박스",
-    "min": null,
-    "max": null,
-    "enum": null
-   },
-   {
-    "label": "Expected Text",
-    "param": "ExpectedText",
-    "ctrl": "입력",
-    "min": null,
-    "max": null,
-    "enum": null
-   },
-   {
-    "label": "Use Regex Match",
-    "param": "UseRegexMatch",
-    "ctrl": "체크박스",
-    "min": null,
-    "max": null,
-    "enum": null
-   },
-   {
-    "label": "Parse GS1 AIs",
-    "param": "ParseGs1",
-    "ctrl": "체크박스",
-    "min": null,
-    "max": null,
-    "enum": null
-   },
-   {
-    "label": "Enable Grading",
-    "param": "EnableQualityGrading",
-    "ctrl": "체크박스",
-    "min": null,
-    "max": null,
-    "enum": null
-   },
-   {
-    "label": "Min Pass Grade",
-    "param": "MinPassGrade",
-    "ctrl": "선택(목록)",
-    "min": null,
-    "max": null,
-    "enum": "CodeQualityGrade"
-   },
-   {
-    "label": "Draw Overlay",
-    "param": "DrawOverlay",
-    "ctrl": "체크박스",
-    "min": null,
-    "max": null,
-    "enum": null
-   }
-  ]
- },
- {
   "tool": "OCR (문자 인식)",
   "category": "Identification",
   "file": "OCRToolSettings.xaml",
@@ -1236,6 +1504,903 @@
     "min": null,
     "max": null,
     "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "OCV (문자 검증)",
+  "category": "Identification",
+  "file": "OCVToolSettings.xaml",
+  "params": [
+   {
+    "label": "Known String",
+    "param": "KnownString",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Invert Image",
+    "param": "InvertImage",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Min Char Height",
+    "param": "MinCharHeight",
+    "ctrl": "슬라이더",
+    "min": "2",
+    "max": "200",
+    "enum": null
+   },
+   {
+    "label": "Max Char Height",
+    "param": "MaxCharHeight",
+    "ctrl": "슬라이더",
+    "min": "10",
+    "max": "500",
+    "enum": null
+   },
+   {
+    "label": "Min Char Width",
+    "param": "MinCharWidth",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "100",
+    "enum": null
+   },
+   {
+    "label": "Match Threshold",
+    "param": "MatchThreshold",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "1",
+    "enum": null
+   },
+   {
+    "label": "Expected Text (optional)",
+    "param": "ExpectedText",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Use Search Region",
+    "param": "UseSearchRegion",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "X",
+    "param": "SearchRegionX",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Y",
+    "param": "SearchRegionY",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Width",
+    "param": "SearchRegionWidth",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Height",
+    "param": "SearchRegionHeight",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Draw Overlay",
+    "param": "DrawOverlay",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Code Reader (코드 판독)",
+  "category": "Code Reading",
+  "file": "CodeReaderToolSettings.xaml",
+  "params": [
+   {
+    "label": "Code Reader Mode",
+    "param": "CodeReaderMode",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "CodeReaderMode"
+   },
+   {
+    "label": "Max Code Count",
+    "param": "MaxCodeCount",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "50",
+    "enum": null
+   },
+   {
+    "label": "Try Harder",
+    "param": "TryHarder",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "DM Candidate Localization",
+    "param": "UseLocalization",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Enable Verification",
+    "param": "EnableVerification",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Expected Text",
+    "param": "ExpectedText",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Use Regex Match",
+    "param": "UseRegexMatch",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Parse GS1 AIs",
+    "param": "ParseGs1",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Enable Grading",
+    "param": "EnableQualityGrading",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Min Pass Grade",
+    "param": "MinPassGrade",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "CodeQualityGrade"
+   },
+   {
+    "label": "Draw Overlay",
+    "param": "DrawOverlay",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Geometry 3D (3D 기하)",
+  "category": "3D Analysis",
+  "file": "Geometry3DToolSettings.xaml",
+  "params": [
+   {
+    "label": "Operation",
+    "param": "Operation",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "Geometry3DOperation"
+   },
+   {
+    "label": "Use Manual Points",
+    "param": "UseManualPoints",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Plane Fit (평면 피팅)",
+  "category": "3D Analysis",
+  "file": "PlaneFitToolSettings.xaml",
+  "params": [
+   {
+    "label": "Fit Method",
+    "param": "FitMethod",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "PlaneFitMethod"
+   },
+   {
+    "label": "RANSAC Iterations",
+    "param": "RansacIterations",
+    "ctrl": "슬라이더",
+    "min": "10",
+    "max": "5000",
+    "enum": null
+   },
+   {
+    "label": "RANSAC Threshold (mm)",
+    "param": "RansacThreshold",
+    "ctrl": "슬라이더",
+    "min": "0.01",
+    "max": "5.0",
+    "enum": null
+   },
+   {
+    "label": "Sample Stride",
+    "param": "SampleStride",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "16",
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Height Slicer (높이 슬라이스)",
+  "category": "3D Analysis",
+  "file": "HeightSlicerToolSettings.xaml",
+  "params": [
+   {
+    "label": "Min Z (mm)",
+    "param": "MinZ",
+    "ctrl": "슬라이더",
+    "min": "-10000",
+    "max": "10000",
+    "enum": null
+   },
+   {
+    "label": "Max Z (mm)",
+    "param": "MaxZ",
+    "ctrl": "슬라이더",
+    "min": "-10000",
+    "max": "10000",
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Point Cloud Cluster (포인트클라우드 클러스터)",
+  "category": "3D Analysis",
+  "file": "PointCloudClusterToolSettings.xaml",
+  "params": [
+   {
+    "label": "Tolerance (mm)",
+    "param": "Tolerance",
+    "ctrl": "슬라이더",
+    "min": "0.1",
+    "max": "50.0",
+    "enum": null
+   },
+   {
+    "label": "Min Points",
+    "param": "MinPoints",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Max Points",
+    "param": "MaxPoints",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Max Reported Clusters",
+    "param": "MaxReportedClusters",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "50",
+    "enum": null
+   },
+   {
+    "label": "Output Mode",
+    "param": "OutputMode",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Point Cloud Filter (포인트클라우드 필터)",
+  "category": "3D Analysis",
+  "file": "PointCloudFilterToolSettings.xaml",
+  "params": [
+   {
+    "label": "Enable Voxel Grid",
+    "param": "EnableVoxelGrid",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Voxel Size (mm)",
+    "param": "VoxelSize",
+    "ctrl": "슬라이더",
+    "min": "0.05",
+    "max": "20.0",
+    "enum": null
+   },
+   {
+    "label": "Enable SOR",
+    "param": "EnableSor",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Neighbor Count (K)",
+    "param": "SorK",
+    "ctrl": "슬라이더",
+    "min": "5",
+    "max": "100",
+    "enum": null
+   },
+   {
+    "label": "Stddev Multiplier",
+    "param": "SorStddev",
+    "ctrl": "슬라이더",
+    "min": "0.5",
+    "max": "5.0",
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Point Cloud Registration (포인트클라우드 정합)",
+  "category": "3D Analysis",
+  "file": "PointCloudRegistrationToolSettings.xaml",
+  "params": [
+   {
+    "label": "Max Iterations",
+    "param": "MaxIterations",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "200",
+    "enum": null
+   },
+   {
+    "label": "Tolerance (mm)",
+    "param": "Tolerance",
+    "ctrl": "슬라이더",
+    "min": "0.001",
+    "max": "1.0",
+    "enum": null
+   },
+   {
+    "label": "Apply Transform to Source",
+    "param": "ApplyTransformToSource",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Detection (딥러닝 검출)",
+  "category": "Deep Learning",
+  "file": "DetectionToolSettings.xaml",
+  "params": [
+   {
+    "label": "Model Path (.onnx)",
+    "param": "ModelPath",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Inference Size (px)",
+    "param": "InputSize",
+    "ctrl": "슬라이더",
+    "min": "320",
+    "max": "1280",
+    "enum": null
+   },
+   {
+    "label": "Use SAHI",
+    "param": "UseSahi",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Tile Size (px)",
+    "param": "SahiTileSize",
+    "ctrl": "슬라이더",
+    "min": "320",
+    "max": "1536",
+    "enum": null
+   },
+   {
+    "label": "Overlap Ratio",
+    "param": "SahiOverlapRatio",
+    "ctrl": "슬라이더",
+    "min": "0.0",
+    "max": "0.5",
+    "enum": null
+   },
+   {
+    "label": "Use CLAHE",
+    "param": "UseClahe",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Clip Limit",
+    "param": "ClaheClipLimit",
+    "ctrl": "슬라이더",
+    "min": "1.0",
+    "max": "10.0",
+    "enum": null
+   },
+   {
+    "label": "Tile Grid Size",
+    "param": "ClaheTileGridSize",
+    "ctrl": "슬라이더",
+    "min": "2",
+    "max": "16",
+    "enum": null
+   },
+   {
+    "label": "Confidence Threshold",
+    "param": "ConfidenceThreshold",
+    "ctrl": "슬라이더",
+    "min": "0.1",
+    "max": "1.0",
+    "enum": null
+   },
+   {
+    "label": "IoU Threshold",
+    "param": "IouThreshold",
+    "ctrl": "슬라이더",
+    "min": "0.1",
+    "max": "1.0",
+    "enum": null
+   },
+   {
+    "label": "Use Per-Class Thresholds",
+    "param": "UsePerClassThresholds",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Use Dot Analysis",
+    "param": "UseDotAnalysis",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Min Dot Area (px²)",
+    "param": "MinDotArea",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "1000",
+    "enum": null
+   },
+   {
+    "label": "Max Dot Area (px²)",
+    "param": "MaxDotArea",
+    "ctrl": "슬라이더",
+    "min": "10",
+    "max": "5000",
+    "enum": null
+   },
+   {
+    "label": "Circularity (0~1)",
+    "param": "DotCircularityThreshold",
+    "ctrl": "슬라이더",
+    "min": "0.0",
+    "max": "1.0",
+    "enum": null
+   },
+   {
+    "label": "Min Dot Distance (px)",
+    "param": "MinDotDistance",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "100",
+    "enum": null
+   },
+   {
+    "label": "CLAHE Clip Limit",
+    "param": "DotClaheClipLimit",
+    "ctrl": "슬라이더",
+    "min": "1.0",
+    "max": "10.0",
+    "enum": null
+   },
+   {
+    "label": "Morph Kernel Size (px)",
+    "param": "DotMorphKernelSize",
+    "ctrl": "슬라이더",
+    "min": "3",
+    "max": "51",
+    "enum": null
+   },
+   {
+    "label": "Adaptive Block Size",
+    "param": "DotAdaptiveBlockSize",
+    "ctrl": "슬라이더",
+    "min": "3",
+    "max": "101",
+    "enum": null
+   },
+   {
+    "label": "Adaptive C",
+    "param": "DotAdaptiveC",
+    "ctrl": "슬라이더",
+    "min": "-10.0",
+    "max": "30.0",
+    "enum": null
+   },
+   {
+    "label": "Draw Overlay",
+    "param": "DrawOverlay",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Segmentation (분할)",
+  "category": "Deep Learning",
+  "file": "SegmentationToolSettings.xaml",
+  "params": [
+   {
+    "label": "Model Path (.onnx)",
+    "param": "ModelPath",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Input Size",
+    "param": "InputSize",
+    "ctrl": "슬라이더",
+    "min": "64",
+    "max": "1024",
+    "enum": null
+   },
+   {
+    "label": "ImageNet Normalization",
+    "param": "UseImageNetNormalization",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Background Class Index",
+    "param": "BackgroundClass",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "32",
+    "enum": null
+   },
+   {
+    "label": "Show Overlay",
+    "param": "ShowOverlay",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Overlay Opacity",
+    "param": "OverlayOpacity",
+    "ctrl": "슬라이더",
+    "min": "0.0",
+    "max": "1.0",
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "YOLO Segmentation",
+  "category": "Deep Learning",
+  "file": "YoloSegToolSettings.xaml",
+  "params": [
+   {
+    "label": "Model Path (.onnx)",
+    "param": "ModelPath",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Input Size",
+    "param": "InputSize",
+    "ctrl": "슬라이더",
+    "min": "64",
+    "max": "1280",
+    "enum": null
+   },
+   {
+    "label": "Confidence Threshold",
+    "param": "ConfidenceThreshold",
+    "ctrl": "슬라이더",
+    "min": "0.01",
+    "max": "1.0",
+    "enum": null
+   },
+   {
+    "label": "IoU Threshold (NMS)",
+    "param": "IouThreshold",
+    "ctrl": "슬라이더",
+    "min": "0.1",
+    "max": "1.0",
+    "enum": null
+   },
+   {
+    "label": "Mask Threshold",
+    "param": "MaskThreshold",
+    "ctrl": "슬라이더",
+    "min": "0.1",
+    "max": "0.99",
+    "enum": null
+   },
+   {
+    "label": "Show Mask Overlay",
+    "param": "ShowOverlay",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Overlay Opacity",
+    "param": "OverlayOpacity",
+    "ctrl": "슬라이더",
+    "min": "0.0",
+    "max": "1.0",
+    "enum": null
+   },
+   {
+    "label": "Draw Boxes + Labels",
+    "param": "DrawBoxes",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Anomaly (이상 탐지)",
+  "category": "Deep Learning",
+  "file": "AnomalyToolSettings.xaml",
+  "params": [
+   {
+    "label": "Model Path (.onnx)",
+    "param": "ModelPath",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Input Size",
+    "param": "InputSize",
+    "ctrl": "슬라이더",
+    "min": "64",
+    "max": "512",
+    "enum": null
+   },
+   {
+    "label": "Anomaly Threshold",
+    "param": "AnomalyThreshold",
+    "ctrl": "슬라이더",
+    "min": "0.0",
+    "max": "1.0",
+    "enum": null
+   },
+   {
+    "label": "Sigma (k)",
+    "param": "CalibrationSigma",
+    "ctrl": "슬라이더",
+    "min": "1.0",
+    "max": "6.0",
+    "enum": null
+   },
+   {
+    "label": "Draw Overlay",
+    "param": "DrawOverlay",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Show Heatmap",
+    "param": "ShowHeatmap",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Heatmap Opacity",
+    "param": "HeatmapOpacity",
+    "ctrl": "슬라이더",
+    "min": "0.0",
+    "max": "1.0",
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Classify (분류)",
+  "category": "Deep Learning",
+  "file": "ClassifyToolSettings.xaml",
+  "params": [
+   {
+    "label": "Model Path (.onnx)",
+    "param": "ModelPath",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Input Width",
+    "param": "InputWidth",
+    "ctrl": "슬라이더",
+    "min": "32",
+    "max": "640",
+    "enum": null
+   },
+   {
+    "label": "Input Height",
+    "param": "InputHeight",
+    "ctrl": "슬라이더",
+    "min": "32",
+    "max": "640",
+    "enum": null
+   },
+   {
+    "label": "Confidence Threshold",
+    "param": "ConfidenceThreshold",
+    "ctrl": "슬라이더",
+    "min": "0.1",
+    "max": "1.0",
+    "enum": null
+   },
+   {
+    "label": "Use ImageNet Normalization",
+    "param": "UseImageNetNormalization",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Draw Overlay",
+    "param": "DrawOverlay",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Ensemble (앙상블)",
+  "category": "Judgment",
+  "file": "EnsembleToolSettings.xaml",
+  "params": [
+   {
+    "label": "Ensemble Mode",
+    "param": "Mode",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "EnsembleMode"
+   },
+   {
+    "label": "Detection Weight",
+    "param": "DetectionWeight",
+    "ctrl": "슬라이더",
+    "min": "0.0",
+    "max": "1.0",
+    "enum": null
+   },
+   {
+    "label": "Anomaly Weight",
+    "param": "AnomalyWeight",
+    "ctrl": "슬라이더",
+    "min": "0.0",
+    "max": "1.0",
+    "enum": null
+   },
+   {
+    "label": "NG Threshold",
+    "param": "WeightedThreshold",
+    "ctrl": "슬라이더",
+    "min": "0.0",
+    "max": "1.0",
+    "enum": null
+   },
+   {
+    "label": "Draw Overlay",
+    "param": "DrawOverlay",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Result (결과/판정)",
+  "category": "Judgment",
+  "file": "ResultToolSettings.xaml",
+  "params": [
+   {
+    "label": "Judgment Mode",
+    "param": "JudgmentMode",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "ResultJudgmentMode"
    }
   ]
  }
