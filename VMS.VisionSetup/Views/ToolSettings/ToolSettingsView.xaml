@@ -177,6 +177,9 @@
         <DataTemplate x:Key="PointCloudClusterTemplate" DataType="{x:Type vm:PointCloudClusterToolSettingsViewModel}">
             <tools:PointCloudClusterToolSettings/>
         </DataTemplate>
+        <DataTemplate x:Key="PhotometricStereoTemplate" DataType="{x:Type vm:PhotometricStereoToolSettingsViewModel}">
+            <tools:PhotometricStereoToolSettings/>
+        </DataTemplate>
 
         <ts:ToolSettingsTemplateSelector x:Key="ToolTemplateSelector"
             GrayscaleTemplate="{StaticResource GrayscaleTemplate}"
@@ -212,7 +215,8 @@
             ColorMatchTemplate="{StaticResource ColorMatchTemplate}"
             PointCloudFilterTemplate="{StaticResource PointCloudFilterTemplate}"
             PointCloudRegistrationTemplate="{StaticResource PointCloudRegistrationTemplate}"
-            PointCloudClusterTemplate="{StaticResource PointCloudClusterTemplate}"/>
+            PointCloudClusterTemplate="{StaticResource PointCloudClusterTemplate}"
+            PhotometricStereoTemplate="{StaticResource PhotometricStereoTemplate}"/>
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
