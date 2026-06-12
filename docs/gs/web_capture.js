@@ -80,6 +80,23 @@ async function main() {
   await waitFor("document.querySelectorAll('nav a, aside a, .mud-nav-link').length>=4", 35000);
   await sleep(2500);
   console.log("post-login url:", await eval("return location.href"));
+
+  // 다크 모드 활성화 — 상단 우측 아이콘 버튼 중 테마 토글 탐색(배경 명도 변화로 판별)
+  const bgLight = await eval("return getComputedStyle(document.body).backgroundColor");
+  const hbN = await eval("window.__hb=[...document.querySelectorAll('button')].filter(b=>{const r=b.getBoundingClientRect();return r.top<70 && r.left>window.innerWidth-380 && r.width>0 && r.width<70;}); return window.__hb.length;");
+  let darkOn = false;
+  for (let i = 0; i < hbN; i++) {
+    await eval(`if(window.__hb[${i}])window.__hb[${i}].click(); return 1;`);
+    await sleep(800);
+    const bg = await eval("const m=(getComputedStyle(document.body).backgroundColor||'').match(/(\\d+),\\s*(\\d+),\\s*(\\d+)/); return m?Math.round(0.299*+m[1]+0.587*+m[2]+0.114*+m[3]):255;");
+    if (bg < 110) { darkOn = true; console.log("dark toggled at btn", i, "lum", bg); break; }
+    // 테마 토글이 아니었으면 열린 메뉴/패널 닫기
+    await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", windowsVirtualKeyCode: 27 });
+    await send("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape", windowsVirtualKeyCode: 27 });
+    await sleep(300);
+  }
+  console.log("dark mode:", darkOn, "| from", bgLight);
+  await sleep(1000);
   await shot("41_web_dashboard.png");
 
   // 접힌 네비 그룹 모두 펼치기 (BUTTON aria-expanded=false)
