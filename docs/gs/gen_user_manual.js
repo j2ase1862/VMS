@@ -315,7 +315,38 @@ const DESC = {
 {
   body.push(new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun("9. 비전 도구 파라미터 (핵심 툴)")] }));
   body.push(P("VisionSetup의 Tool Palette에서 도구를 Tool Workspace로 드래그한 뒤 선택하면, 우측 파라미터 패널에 아래 항목이 표시된다. 파라미터 라벨은 실제 UI 표기와 동일하며, 본 장은 Tool Palette의 전체 도구를 카테고리 순으로 다룬다. (딥러닝/3D 도구는 모델·프리셋 선택 기반이라 수치 파라미터가 적을 수 있다. 파라미터 패널 스크린샷은 후속 캡처 예정.)"));
-  let n = 0;
+  // 9.1 팔레트 카테고리 개요
+  body.push(new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("9.1 툴 팔레트 카테고리 개요")] }));
+  body.push(P("Tool Palette는 카테고리로 묶여 있으며, 각 카테고리의 주요 도구는 다음과 같다. (상세 파라미터는 9.2 이하 참조)"));
+  const CATDESC = {
+    "Conversion": "그레이 변환·이진화 — 후속 처리를 위한 기본 변환",
+    "Preprocessing": "블러·모폴로지·에지·히스토그램·보정 등 영상 전처리",
+    "Color": "색 추출·색 매칭 — 컬러 기반 검사",
+    "Blob": "블롭(영역) 검출·계수·면적/형상 판정",
+    "Measurement": "캘리퍼·직선/원 피팅·기하 — 치수 측정",
+    "Pattern Matching": "형상/특징 기반 패턴 매칭·정렬",
+    "Identification": "OCR/OCV — 문자 인식·검증",
+    "Code Reading": "바코드/QR/DataMatrix 판독",
+    "3D Analysis": "포인트클라우드·평면/높이·3D 기하",
+    "Deep Learning": "검출·분할·이상·분류 (ONNX 추론)",
+    "Judgment": "종합 판정·앙상블·결과 출력",
+  };
+  const catOrder = ["Conversion", "Preprocessing", "Color", "Blob", "Measurement", "Pattern Matching", "Identification", "Code Reading", "3D Analysis", "Deep Learning", "Judgment"];
+  const groups = {}; for (const t of tools) { (groups[t.category] = groups[t.category] || []).push(t.tool); }
+  {
+    const c1 = 1700, c2 = 3700, c3 = CONTENT_W - 1700 - 3700;
+    const rows = [new TableRow({ tableHeader: true, children: [hcell("카테고리", c1), hcell("포함 도구", c2), hcell("용도", c3)] })];
+    let gi = 0;
+    for (const cat of catOrder) {
+      if (!groups[cat]) continue;
+      const fill = gi % 2 ? "F4F7FB" : undefined; gi++;
+      rows.push(new TableRow({ children: [dcell(cat, c1, fill), dcell(groups[cat].join(", "), c2, fill), dcell(CATDESC[cat] || "", c3, fill)] }));
+    }
+    body.push(new Table({ width: { size: CONTENT_W, type: WidthType.DXA }, columnWidths: [1700, 3700, CONTENT_W - 1700 - 3700], rows }));
+  }
+  body.push(P("※ Calibration 카테고리(카메라/핸드아이 보정)는 별도 캘리브레이션 도구로 제공된다.", { size: 18, color: "595959" }));
+  body.push(new Paragraph({ spacing: { after: 120 }, children: [] }));
+  let n = 1;
   for (const t of tools) {
     n++;
     body.push(new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun(`9.${n} ${t.tool}`)] }));
