@@ -181,6 +181,7 @@
 
                     <!-- Work Orders 버튼 (로그인 후만 활성) -->
                     <Button Command="{Binding OpenWorkOrderListCommand}"
+                            AutomationProperties.Name="Work Orders"
                             Margin="6,0,0,0" Height="32" Padding="12,0"
                             FontSize="11" FontWeight="SemiBold"
                             Background="{StaticResource Brush.Surface.Deep}" Foreground="{StaticResource Brush.Accent}"
@@ -409,6 +410,7 @@
                     <!-- User Management (Admin only) -->
                     <Button Style="{StaticResource IconButton}"
                             Command="{Binding OpenUserManagementCommand}"
+                            AutomationProperties.Name="User Management"
                             IsEnabled="{Binding CanManageUsers}"
                             ToolTip="User Management"
                             Visibility="{Binding CanManageUsers, Converter={StaticResource BoolToVisibilityConverter}}">
@@ -767,6 +769,7 @@
 
                                 <!-- Grab (single shot) -->
                                 <Button Command="{Binding GrabCommand}"
+                                        AutomationProperties.Name="Grab"
                                         IsEnabled="{Binding CanStartStop}"
                                         Visibility="{Binding IsLiveMode, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
                                         Background="{StaticResource Brush.Surface.Overlay}" Foreground="White"
@@ -784,6 +787,7 @@
 
                                 <!-- Live Start -->
                                 <Button Command="{Binding StartLiveCommand}"
+                                        AutomationProperties.Name="Live Start"
                                         IsEnabled="{Binding CanStartStop}"
                                         Visibility="{Binding IsLiveMode, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
                                         Background="{StaticResource Brush.Surface.Overlay}" Foreground="White"
@@ -801,6 +805,7 @@
 
                                 <!-- Live Stop -->
                                 <Button Command="{Binding StopLiveCommand}"
+                                        AutomationProperties.Name="Live Stop"
                                         Visibility="{Binding IsLiveMode, Converter={StaticResource BoolToVisibilityConverter}}"
                                         Background="{StaticResource Brush.Surface.Overlay}" Foreground="White"
                                         Style="{StaticResource ModernButton}"
@@ -815,6 +820,7 @@
 
                                 <!-- Roller Toggle -->
                                 <Button Command="{Binding ToggleRollerInspectionCommand}"
+                                        AutomationProperties.Name="Roller"
                                         IsEnabled="{Binding CanStartStop}"
                                         Foreground="White"
                                         HorizontalAlignment="Stretch"
@@ -917,6 +923,7 @@
                                     </Grid.ColumnDefinitions>
                                     <Button Grid.Column="0"
                                             Command="{Binding LoadRecipeCommand}"
+                                            AutomationProperties.Name="Load"
                                             Style="{StaticResource ModernButton}"
                                             Margin="0,0,4,0">
                                         <StackPanel Orientation="Horizontal">
@@ -929,6 +936,7 @@
                                     </Button>
                                     <Button Grid.Column="1"
                                             Command="{Binding NewRecipeCommand}"
+                                            AutomationProperties.Name="New"
                                             IsEnabled="{Binding CanEditRecipe}"
                                             Style="{StaticResource ModernButton}"
                                             Margin="4,0,0,0">
@@ -950,6 +958,7 @@
                                     </Grid.ColumnDefinitions>
                                     <Button Grid.Column="0"
                                             Command="{Binding SaveCurrentRecipeCommand}"
+                                            AutomationProperties.Name="Save Recipe"
                                             IsEnabled="{Binding CanEditRecipe}"
                                             Style="{StaticResource ModernButton}"
                                             Margin="0,0,2,0"
@@ -960,6 +969,7 @@
                                     </Button>
                                     <Button Grid.Column="1"
                                             Command="{Binding ExportRecipeCommand}"
+                                            AutomationProperties.Name="Export Recipe"
                                             Style="{StaticResource ModernButton}"
                                             Margin="2,0,2,0"
                                             ToolTip="Export Recipe">
@@ -969,6 +979,7 @@
                                     </Button>
                                     <Button Grid.Column="2"
                                             Command="{Binding ImportRecipeCommand}"
+                                            AutomationProperties.Name="Import Recipe"
                                             IsEnabled="{Binding CanEditRecipe}"
                                             Style="{StaticResource ModernButton}"
                                             Margin="2,0,0,0"
@@ -989,6 +1000,7 @@
                                            Style="{StaticResource Text.SectionHeader}"/>
 
                                 <Button Command="{Binding LaunchVisionToolSetupCommand}"
+                                        AutomationProperties.Name="Vision Tool Setup"
                                         IsEnabled="{Binding CanLaunchVisionSetup}"
                                         Style="{StaticResource ModernButton}"
                                         HorizontalAlignment="Stretch"
@@ -1002,6 +1014,7 @@
                                 </Button>
 
                                 <Button Command="{Binding LaunchSetupCommand}"
+                                        AutomationProperties.Name="System Setup"
                                         IsEnabled="{Binding CanLaunchAppSetup}"
                                         Style="{StaticResource Button.Subtle}"
                                         HorizontalAlignment="Stretch">
@@ -1050,6 +1063,7 @@
 
                                 <!-- 수동 체크 버튼 — 항상 표시 -->
                                 <Button Command="{Binding CheckForUpdatesCommand}"
+                                        AutomationProperties.Name="Check for updates"
                                         Style="{StaticResource Button.Subtle}"
                                         HorizontalAlignment="Stretch">
                                     <StackPanel Orientation="Horizontal">
@@ -1070,6 +1084,7 @@
                                            Foreground="{StaticResource Brush.Accent}"/>
 
                                 <Button Command="{Binding OpenSyncParametersCommand}"
+                                        AutomationProperties.Name="Sync Parameters"
                                         Style="{StaticResource Button.Subtle}"
                                         HorizontalAlignment="Stretch">
                                     <StackPanel Orientation="Horizontal">
@@ -1091,6 +1106,7 @@
                                            Foreground="{StaticResource Brush.Accent}"/>
 
                                 <Button Command="{Binding OpenImageSaveSettingsCommand}"
+                                        AutomationProperties.Name="Image Save Settings"
                                         Style="{StaticResource Button.Subtle}"
                                         HorizontalAlignment="Stretch"
                                         ToolTip="양품/불량 이미지 저장 폴더 및 품질 설정">
