@@ -1,0 +1,3463 @@
+[
+ {
+  "t": "h",
+  "level": 2,
+  "text": "목차"
+ },
+ {
+  "t": "li",
+  "text": "시스템 개요",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "시스템 구성",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "운영 흐름 한눈에",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "핵심 용어",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "설치 / 배포",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "VMS 클라이언트 (MSI)",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Web 서버 (PowerShell)",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "네트워크 / 방화벽",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "첫 실행 전 체크리스트",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "VMS 클라이언트",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "첫 실행 화면",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "헤더 — 운영 흐름",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "사이드 패널 (Settings)",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "작업지시 완료 다이얼로그",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "AUTO RUN 활성화 조건",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "권한별 동선",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "로컬 UserGrade 권한 매트릭스",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "BODA.VMS.Web",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "로그인 / 회원가입",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "사이드 메뉴",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Dashboard",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Andon Board",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Alarms",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Production History",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Work Orders",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Products",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Inspection Items (Recipes)",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Operators",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Lots",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Maintenance",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Defect Codes",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Shifts",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Audit Logs",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Reports",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "알림 (NotificationBell)",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "통합 워크플로",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Stage 1/2/3 일체",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "추적성 4필드",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "업로드 큐 (오프라인 복구)",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "SignalR 실시간 푸시",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "다중 라인 운영",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "관리자 가이드",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Operator 등록 + Role",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "작업지시 라이프사이클",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "알람 관리",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "백업 / DB 위치",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "버전 업그레이드",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "트러블슈팅",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "VMS 측",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Web 측",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "통합 / 네트워크",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "부록",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "API 엔드포인트",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "SignalR 이벤트",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "파일 / 디렉토리 경로",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "변경 이력",
+  "ordered": true
+ },
+ {
+  "t": "h",
+  "level": 1,
+  "text": "BODA VMS 사용자 매뉴얼"
+ },
+ {
+  "t": "h",
+  "level": 2,
+  "text": "1. 시스템 개요"
+ },
+ {
+  "t": "p",
+  "text": "BODA VMS 는 산업 현장의 머신비전 검사를 실시간 수행(VMS 클라이언트)하고,\n검사 결과 · 작업지시 · 작업자 · 알람을 중앙에서 관리(BODA.VMS.Web)하는\n통합 시스템입니다. 두 솔루션은 익명 REST + SignalR 로 단방향/양방향 통신합니다."
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "1.1 시스템 구성"
+ },
+ {
+  "t": "table",
+  "rows": [
+   [
+    {
+     "text": "항목",
+     "header": true
+    },
+    {
+     "text": "VMS 클라이언트",
+     "header": true
+    },
+    {
+     "text": "BODA.VMS.Web (서버)",
+     "header": true
+    }
+   ],
+   [
+    {
+     "text": "플랫폼",
+     "header": false
+    },
+    {
+     "text": ".NET 8 WPF (Windows 10/11 x64)",
+     "header": false
+    },
+    {
+     "text": ".NET 8 Blazor WASM + ASP.NET Core",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "역할",
+     "header": false
+    },
+    {
+     "text": "실시간 비전 검사 실행, 카메라/PLC 직접 제어",
+     "header": false
+    },
+    {
+     "text": "MES (작업지시/SPC/OEE/감사/리포트), 단일 진실 원본",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "레시피",
+     "header": false
+    },
+    {
+     "text": "다운로드만 (자동 동기화)",
+     "header": false
+    },
+    {
+     "text": "마스터 보유, CRUD 가능",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "검사 결과",
+     "header": false
+    },
+    {
+     "text": "임시 메모리 + 디스크 큐 → Web 업로드",
+     "header": false
+    },
+    {
+     "text": "영구 저장 (SQLite) + 통계 + 알람",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "인증",
+     "header": false
+    },
+    {
+     "text": "로컬 시스템 사용자 BCrypt + Operator 세션 (Web 인증)",
+     "header": false
+    },
+    {
+     "text": "JWT (관리자 / 작업자)",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "DB",
+     "header": false
+    },
+    {
+     "text": "로컬 SQLite (시스템 사용자만)",
+     "header": false
+    },
+    {
+     "text": "SQLite C:\\ProgramData\\BODA\\VMS\\BodaVision.db",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "외부 의존",
+     "header": false
+    },
+    {
+     "text": "OpenCvSharp4, HelixToolkit.Wpf.SharpDX, 카메라 SDK, PLC 드라이버",
+     "header": false
+    },
+    {
+     "text": "없음 (Kestrel 단독)",
+     "header": false
+    }
+   ]
+  ]
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "1.2 운영 흐름 한눈에"
+ },
+ {
+  "t": "li",
+  "text": "VMS 실행 → 카메라 자동 연결 + Web 에 Heartbeat 시작 (5초 주기).",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "작업자가 헤더 Operator 로그인 (사번 + PIN). Web 의 작업자 마스터와 대조.",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "로그인 성공 → 헤더 Operator /\nLead / Supervisor\n뱃지 표시 + Work Orders 버튼 활성화.",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Work Orders 클릭 → Web 에서 현재 라인의 작업지시 목록 fetch → 다이얼로그.",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "WO 선택 → RecipeName 자동 로드 + 활성 Lot 자동 채움 +\nAUTO RUN 활성화.",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "AUTO RUN 클릭 → 검사 시작. 결과는 헤더 WO 칩에 진행률 실시간 표시 (예: 5/100 + ProgressBar).",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "계획 수량 도달 → 완료 다이얼로그 자동 표시 (KPI 카드 + 알람 사운드) +\nAUTO RUN 자동 정지 + 다음 WO 선택 다이얼로그.",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "모든 검사 1건마다 Web 의 InspectionHistory + ParameterMeasurement 에 저장.\nNG 발생 시 AlarmEvent 자동 생성 + 관리자 화면에 SignalR 즉시 푸시.",
+  "ordered": true
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "1.3 핵심 용어"
+ },
+ {
+  "t": "table",
+  "rows": [
+   [
+    {
+     "text": "용어",
+     "header": true
+    },
+    {
+     "text": "설명",
+     "header": true
+    }
+   ],
+   [
+    {
+     "text": "WO (Work Order)",
+     "header": false
+    },
+    {
+     "text": "작업지시. 제품 × 수량 × 레시피 단위. Planned → InProgress → Completed → Closed.",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "Lot",
+     "header": false
+    },
+    {
+     "text": "WO 산하의 단위 묶음 (배치). 한 WO 에 여러 Lot 가능.",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "Operator",
+     "header": false
+    },
+    {
+     "text": "현장 작업자. 사번 + PIN 로 키오스크 로그인. Role: Operator / Lead / Supervisor.",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "Recipe (Inspection Item)",
+     "header": false
+    },
+    {
+     "text": "검사 설정 묶음. 비전 도구 + 임계값 + 파라미터.",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "ParamCode / ParamValue",
+     "header": false
+    },
+    {
+     "text": "레시피 안의 개별 파라미터 (예: 패턴 점수 임계치 = 0.85).",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "Ctx (Context)",
+     "header": false
+    },
+    {
+     "text": "검사 결과에 첨부하는 추적성 4필드: WO / Lot / Operator / Serial Number.",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "AUTO RUN",
+     "header": false
+    },
+    {
+     "text": "VMS 의 메인 검사 시작 버튼. 운영 조건 모두 만족해야 활성.",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "Heartbeat",
+     "header": false
+    },
+    {
+     "text": "VMS 가 5초마다 Web 에 보내는 생존 신호. 멈추면 5분 후 stale 세션 정리.",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "NG / OK",
+     "header": false
+    },
+    {
+     "text": "판정 결과. NG 발생 시 자동 알람 생성.",
+     "header": false
+    }
+   ]
+  ]
+ },
+ {
+  "t": "h",
+  "level": 2,
+  "text": "2. 설치 / 배포"
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "2.1 VMS 클라이언트 (MSI)"
+ },
+ {
+  "t": "p",
+  "text": "자체 .NET 8 런타임을 포함한 self-contained MSI (~220MB) 한 개로 설치 완료.\n.NET 8 별도 설치 불필요."
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "설치"
+ },
+ {
+  "t": "li",
+  "text": "BODA-VMS-1.1.0.msi 더블 클릭.",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Welcome → License 동의 → Install Folder (기본 C:\\Program Files\\BODA VMS\\) → Install.",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "완료 시 시작 메뉴 + 데스크톱 바로가기 자동 생성.",
+  "ordered": true
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "제거"
+ },
+ {
+  "t": "li",
+  "text": "제어판 → 프로그램 및 기능 → \"BODA VMS\" → 제거",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "또는 시작 메뉴의 \"Uninstall BODA VMS\" 바로가기",
+  "ordered": false
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "업그레이드 (v1.1 → v1.2)"
+ },
+ {
+  "t": "p",
+  "text": "새 MSI 더블 클릭하면 이전 버전을 자동 제거 후 새 버전 설치 (UpgradeCode 동일 유지).\n로컬 설정 파일과 카메라 보정 등은 %LocalAppData% 에 저장되어 보존됩니다."
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "2.2 Web 서버 (PowerShell)"
+ },
+ {
+  "t": "p",
+  "text": "Kestrel 단독 + Windows Service. IIS 불필요."
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "설치"
+ },
+ {
+  "t": "p",
+  "text": "기본값: 설치 폴더 C:\\Program Files\\BODA VMS Web\\, 포트 7144 (HTTPS),\n서비스 이름 BODA-VMS-Web, 부팅 시 자동 시작 (실패 시 5초 후 자동 재시작 3회)."
+ },
+ {
+  "t": "p",
+  "text": "옵션 변경:"
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "제거"
+ },
+ {
+  "t": "p",
+  "text": "SQLite DB 는 보존 ($env:LOCALAPPDATA\\BODA\\VMS). 완전 삭제 시:"
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "2.3 네트워크 / 방화벽"
+ },
+ {
+  "t": "table",
+  "rows": [
+   [
+    {
+     "text": "측",
+     "header": true
+    },
+    {
+     "text": "포트 / 프로토콜",
+     "header": true
+    },
+    {
+     "text": "방향",
+     "header": true
+    },
+    {
+     "text": "용도",
+     "header": true
+    }
+   ],
+   [
+    {
+     "text": "Web 서버",
+     "header": false
+    },
+    {
+     "text": "7144 / HTTPS",
+     "header": false
+    },
+    {
+     "text": "인바운드",
+     "header": false
+    },
+    {
+     "text": "VMS → Web REST API + SignalR (자동 방화벽 룰 생성)",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "Web 서버",
+     "header": false
+    },
+    {
+     "text": "5000-5100 / HTTP",
+     "header": false
+    },
+    {
+     "text": "(선택)",
+     "header": false
+    },
+    {
+     "text": "VisionServer 통합 시",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "VMS 클라이언트",
+     "header": false
+    },
+    {
+     "text": "—",
+     "header": false
+    },
+    {
+     "text": "아웃바운드",
+     "header": false
+    },
+    {
+     "text": "Web 서버 7144 접속, 카메라 GigE 3956 (UDP)",
+     "header": false
+    }
+   ]
+  ]
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "2.4 첫 실행 전 체크리스트"
+ },
+ {
+  "t": "li",
+  "text": "Web 서버 먼저 시작 → 브라우저로 https://<서버IP>:7144 접속 확인.",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "관리자 계정으로 회원가입 → 승인 (현재 첫 사용자가 자동 Admin).",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Operators 페이지에서 작업자 마스터 등록 (사번 + PIN + Role).",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Products / Recipes / Work Orders 1건 이상 등록.",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "VMS 클라이언트 설치 후 첫 실행 → AppSetup 마법사에서\nWebServerUrl = https://<서버IP>:7144, ClientIndex = 1, 2, 3... 라인별 지정.",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "VMS 실행 → 시작 화면 헤더에 Heartbeat 정상 표시 확인.",
+  "ordered": true
+ },
+ {
+  "t": "h",
+  "level": 2,
+  "text": "3. VMS 클라이언트 매뉴얼"
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "3.1 첫 실행 화면"
+ },
+ {
+  "t": "p",
+  "text": "실행 시:"
+ },
+ {
+  "t": "li",
+  "text": "Splash → 카메라 자동 검색 (백그라운드).",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "로컬 시스템 사용자 로그인 (엔지니어용, BCrypt). 선택",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "메인 윈도우 표시: 헤더 + KPI Strip + 카메라 캔버스 + 시스템 로그 + 사이드 패널 (접힘).",
+  "ordered": true
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "3.2 헤더 — 운영 흐름"
+ },
+ {
+  "t": "p",
+  "text": "좌→우로 자연스러운 운영 동선. 모든 칩 높이 통일 (32px), AUTO RUN 만 강조 (34px)."
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "3.2.1 Operator 로그인"
+ },
+ {
+  "t": "p",
+  "text": "청록 보더 칩. 로그인 전 \"Login...\" 버튼만 표시."
+ },
+ {
+  "t": "li",
+  "text": "\"Login...\" 클릭 → 다크 다이얼로그 (사번 + PIN).",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Web /api/kiosk/login 으로 대조.",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "성공 시 헤더 칩 형태가 \"김기동 (1003) Lead [Logout]\" 으로 변경.",
+  "ordered": true
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "3.2.2 Work Orders 버튼"
+ },
+ {
+  "t": "p",
+  "text": "Operator 로그인 후 활성. 클릭 시 Web 에서 작업지시 목록 fetch → 980×640 chromeless 다이얼로그."
+ },
+ {
+  "t": "li",
+  "text": "상태 필터: 활성(Planned + InProgress) / 전체 / Planned / InProgress / Completed.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "컬럼: Order No / Product / Recipe / Progress (예: 5/100) / Status (컬러 뱃지) / Planned Start.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "더블 클릭 또는 Select 버튼으로 선택.",
+  "ordered": false
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "3.2.3 WO 칩 (진행률 ProgressBar)"
+ },
+ {
+  "t": "p",
+  "text": "선택된 작업지시 표시. 검사 1건마다 실시간 갱신."
+ },
+ {
+  "t": "li",
+  "text": "ProgressBar 색: 청록 (#14B8A6). 트랙: #1A1A1C.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "PlannedQuantity = 0 인 WO 는 ProgressBar 숨김.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "완료(Status=Completed) 시 자동 unselect + 다음 WO 선택 다이얼로그.",
+  "ordered": false
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "3.2.4 Recipe 칩"
+ },
+ {
+  "t": "p",
+  "text": "파란 보더 (#3D7DE8) 책 아이콘 + 레시피명. WO 선택 시 WO.RecipeName\n으로 로컬 레시피 자동 로드 → 카메라 전파 → Web 파라미터 동기화. 로컬에 없으면\nWeb 동기화 후 재시도."
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "3.2.5 Ctx (Inspection Context)"
+ },
+ {
+  "t": "p",
+  "text": "업로드 시 자동 첨부될 추적성 4필드:"
+ },
+ {
+  "t": "table",
+  "rows": [
+   [
+    {
+     "text": "필드",
+     "header": true
+    },
+    {
+     "text": "채움 방식",
+     "header": true
+    },
+    {
+     "text": "비고",
+     "header": true
+    }
+   ],
+   [
+    {
+     "text": "WO",
+     "header": false
+    },
+    {
+     "text": "WO 선택 시 자동",
+     "header": false
+    },
+    {
+     "text": "수동 오버라이드 가능",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "Lot",
+     "header": false
+    },
+    {
+     "text": "WO 선택 시 활성 Lot 자동 fetch",
+     "header": false
+    },
+    {
+     "text": "활성 Lot 없으면 비움",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "S/N",
+     "header": false
+    },
+    {
+     "text": "바코드 스캐너 수동 입력",
+     "header": false
+    },
+    {
+     "text": "제품 시리얼 — 검사 1회 1S/N",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "Op ID",
+     "header": false
+    },
+    {
+     "text": "Operator 로그인 시 자동",
+     "header": false
+    },
+    {
+     "text": "로그아웃 시 비움",
+     "header": false
+    }
+   ]
+  ]
+ },
+ {
+  "t": "p",
+  "text": "✕ 버튼으로 모든 필드 클리어."
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "3.2.6 AUTO RUN"
+ },
+ {
+  "t": "p",
+  "text": "운영 흐름의 단일 Primary 액션. 모든 조건 만족 시 청록 (#00ADB5) 활성,\n실행 중에는 빨강 STOP 으로 전환."
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "3.2.7 Role 뱃지"
+ },
+ {
+  "t": "p",
+  "text": "Operator chip 안에 권한 뱃지:"
+ },
+ {
+  "t": "li",
+  "text": "Operator — 기본, 뱃지 없음",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "Lead — 반장. 파란 뱃지.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "Supervisor — 관리자. 주황 뱃지.",
+  "ordered": false
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "3.3 사이드 패널 (Settings)"
+ },
+ {
+  "t": "p",
+  "text": "헤더 우측 톱니바퀴 아이콘 (⚙) 으로 토글. 320px 폭."
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "Camera Control 섹션"
+ },
+ {
+  "t": "li",
+  "text": "Grab — 단일 이미지 캡처. AUTO RUN 비활성 시만 활성.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "Live Start / Live Stop — 연속 라이브 그랩.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "Roller — 롤러 검사 모드 토글 (지원 카메라만).",
+  "ordered": false
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "Recipe 섹션"
+ },
+ {
+  "t": "li",
+  "text": "현재 로드된 레시피 + 버전.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "Available Recipes 리스트 (로컬 + Web 동기화).",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "Load / New / Save / Export / Import 버튼. New/Save/Delete 는 권한 필요.",
+  "ordered": false
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "External Tools 섹션 Supervisor 전용"
+ },
+ {
+  "t": "li",
+  "text": "Vision Tool Setup — VMS.VisionSetup 엔지니어 워크스페이스 실행\n(드래그로 비전 도구 파이프라인 구성).",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "System Setup — VMS.AppSetup 마법사 (카메라 / PLC / 네트워크 / 사용자).",
+  "ordered": false
+ },
+ {
+  "t": "p",
+  "text": "Operator / Lead 등급은 이 섹션 자체가 숨겨집니다."
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "Web Parameters 섹션"
+ },
+ {
+  "t": "li",
+  "text": "Sync Parameters — Web 파라미터 즉시 동기화 (60초 자동 주기 외 수동 트리거).",
+  "ordered": false
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "Recent Inspections 섹션 (D8)"
+ },
+ {
+  "t": "p",
+  "text": "VMS 자체 In-Memory 순환 버퍼 (최대 200건). Web 끊겨도 작업자가 즉시 확인."
+ },
+ {
+  "t": "li",
+  "text": "3-cell 통계: Total / Pass / NG + Pass rate.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "ListBox 최근 N건 — 시간 (HH:mm:ss) + OK /\nNG 뱃지 + 시리얼 · WO · Recipe + NG 코드.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "Clear 버튼으로 초기화. ToolTip 으로 풀 타임스탬프.",
+  "ordered": false
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "Statistics 섹션"
+ },
+ {
+  "t": "p",
+  "text": "세션 누적 통계: Total / Pass / Fail / Pass Rate."
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "3.4 작업지시 완료 다이얼로그"
+ },
+ {
+  "t": "p",
+  "text": "계획 수량 도달 시 자동 표시 (560×500 chromeless 다크, 청록 2px 보더):"
+ },
+ {
+  "t": "li",
+  "text": "큰 원형 ✓ 아이콘 (72px) + WO OrderNo (22pt Bold).",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "KPI 카드 4개: 계획 / 검사 / Pass / NG (각각 색상 차별화).",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "Pass rate · 진척률 표시.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "표시 시 SystemSounds.Asterisk 자동 재생 (작업자 주의 환기).",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "하단 두 버튼: 닫기 / 다음 작업지시 선택 (Enter 기본).",
+  "ordered": false
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "3.5 AUTO RUN 활성화 조건"
+ },
+ {
+  "t": "p",
+  "text": "다음을 모두 만족해야 활성:"
+ },
+ {
+  "t": "li",
+  "text": "카메라 1대 이상 연결 (HasConnectedCamera).",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "시스템 사용자 StartStop 권한 (UserPermission.StartStop) — 미로그인 시 기본 허용.",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "(Web 통합 환경) Operator 로그인 상태.",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "(Web 통합 환경) WO 선택 상태이고 Status 가 Planned 또는 InProgress.",
+  "ordered": true
+ },
+ {
+  "t": "p",
+  "text": "비활성 시 ToolTip 으로 사유 표시. Standalone (Web 미연결) 환경은 4번 항목 우회."
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "3.6 권한별 동선"
+ },
+ {
+  "t": "table",
+  "rows": [
+   [
+    {
+     "text": "액션",
+     "header": true
+    },
+    {
+     "text": "Operator",
+     "header": true
+    },
+    {
+     "text": "Lead",
+     "header": true
+    },
+    {
+     "text": "Supervisor",
+     "header": true
+    }
+   ],
+   [
+    {
+     "text": "AUTO RUN / Grab / Live",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "WO 선택",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "Camera Control 사이드 섹션",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "Recipe 편집 / Save / Delete",
+     "header": false
+    },
+    {
+     "text": "—",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "External Tools (Vision Tool / System Setup)",
+     "header": false
+    },
+    {
+     "text": "—",
+     "header": false
+    },
+    {
+     "text": "—",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "User Management",
+     "header": false
+    },
+    {
+     "text": "—",
+     "header": false
+    },
+    {
+     "text": "—",
+     "header": false
+    },
+    {
+     "text": "✓ (Admin)",
+     "header": false
+    }
+   ]
+  ]
+ },
+ {
+  "t": "p",
+  "text": "위 표는 Web 작업자 마스터 Role (사번 + PIN 키오스크 로그인) 기준입니다.\nVMS 로컬 시스템 사용자 등급은 별도 체계로 §3.7 참조."
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "3.7 로컬 UserGrade 권한 매트릭스"
+ },
+ {
+  "t": "p",
+  "text": "VMS 데스크탑은 운영체제 사용자와 별개로 로컬 시스템 사용자 (BCrypt 해시 저장, %LocalAppData%\\BODA VISION AI\\BodaVision.db) 를 3 등급으로 분리합니다.\nSSO 활성 환경에서 Admin / Engineer 는 Web 으로 인증 위임되며, local-admin 비상 폴백만 로컬 인증을 사용합니다."
+ },
+ {
+  "t": "table",
+  "rows": [
+   [
+    {
+     "text": "권한 (UserPermission)",
+     "header": true
+    },
+    {
+     "text": "Operator",
+     "header": true
+    },
+    {
+     "text": "Engineer",
+     "header": true
+    },
+    {
+     "text": "Admin",
+     "header": true
+    },
+    {
+     "text": "local-admin (비상 폴백)",
+     "header": true
+    }
+   ],
+   [
+    {
+     "text": "StartStop (AUTO RUN 시작/정지)",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "ViewStatistics (통계 / 이력 조회)",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "EditRecipe (레시피 편집)",
+     "header": false
+    },
+    {
+     "text": "—",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    },
+    {
+     "text": "—",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "DeleteRecipe (레시피 삭제)",
+     "header": false
+    },
+    {
+     "text": "—",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    },
+    {
+     "text": "—",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "CameraSettings (카메라 설정)",
+     "header": false
+    },
+    {
+     "text": "—",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    },
+    {
+     "text": "—",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "LaunchVisionSetup (Vision Tool 실행)",
+     "header": false
+    },
+    {
+     "text": "—",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    },
+    {
+     "text": "—",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "LaunchAppSetup (System Setup 실행)",
+     "header": false
+    },
+    {
+     "text": "—",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    },
+    {
+     "text": "—",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "SystemConfiguration (시스템 구성 변경)",
+     "header": false
+    },
+    {
+     "text": "—",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    },
+    {
+     "text": "—",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "RestartWebService (Web 서비스 재시작)",
+     "header": false
+    },
+    {
+     "text": "—",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "ManageUsers (사용자 관리)",
+     "header": false
+    },
+    {
+     "text": "—",
+     "header": false
+    },
+    {
+     "text": "—",
+     "header": false
+    },
+    {
+     "text": "✓",
+     "header": false
+    },
+    {
+     "text": "—",
+     "header": false
+    }
+   ]
+  ]
+ },
+ {
+  "t": "p",
+  "text": "local-admin 폴백 규칙 — Web SSO 다운 시 비상 진입용. Grade 무관, 위 표의\nStartStop / ViewStatistics / RestartWebService 3 개만 허용.\n운영 데이터 변경 (ManageUsers / EditRecipe / SystemConfiguration 등) 은 거부되며 모든 거부는\nAuditCategory.Authorization 로 기록됩니다. 설계 근거: docs/gs/SSO_Migration_Plan.md §2.3."
+ },
+ {
+  "t": "p",
+  "text": "비로그인 상태 — 모든 권한 거부 (단, AUTO RUN 의 StartStop 게이트는 HasConnectedCamera 등 §3.5 조건이 우선)."
+ },
+ {
+  "t": "p",
+  "text": "권한 거부 감사 — HasPermission 이 거부할 때마다 %LocalAppData%\\BODA VISION AI\\audit\\YYYY-MM-DD.jsonl 에\nPermissionDenied 이벤트로 기록 (Username / Grade / Permission). 허용은 빈도 폭증 우려로 미기록."
+ },
+ {
+  "t": "p",
+  "text": "진실 소스 (Grade ↔ 권한 매핑 로직): VMS/Services/UserService.cs HasPermission. 매트릭스 변경 시 본 매뉴얼 동기 필요."
+ },
+ {
+  "t": "h",
+  "level": 2,
+  "text": "4. BODA.VMS.Web (관리자 / MES)"
+ },
+ {
+  "t": "p",
+  "text": "브라우저로 접속 (https://<서버IP>:7144). MudBlazor 기반 다크 테마.\n사이드 메뉴 + 상단 AppBar (다국어 전환 / 알림 / 사용자)."
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "4.1 로그인 / 회원가입"
+ },
+ {
+  "t": "li",
+  "text": "\"/login\" 페이지에서 사용자명 + 비밀번호 입력.",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "회원가입 시 첫 사용자는 자동 Admin, 이후는 Pending 상태 → 기존 Admin 이 승인 필요.",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "JWT 토큰 발급 → localStorage 저장 → 모든 API 호출에 자동 첨부.",
+  "ordered": true
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "4.2 사이드 메뉴 구조"
+ },
+ {
+  "t": "table",
+  "rows": [
+   [
+    {
+     "text": "그룹",
+     "header": true
+    },
+    {
+     "text": "페이지",
+     "header": true
+    }
+   ],
+   [
+    {
+     "text": "Monitoring",
+     "header": false
+    },
+    {
+     "text": "Dashboard / Andon Board / Alarms / Production History",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "Production",
+     "header": false
+    },
+    {
+     "text": "Work Orders / Products / Inspection Items / Lots",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "Quality",
+     "header": false
+    },
+    {
+     "text": "Quality Analysis / SPC / Defect Codes",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "People",
+     "header": false
+    },
+    {
+     "text": "Operators / Shifts",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "Maintenance",
+     "header": false
+    },
+    {
+     "text": "Maintenance Schedules",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "Admin",
+     "header": false
+    },
+    {
+     "text": "Clients / Users / Audit Logs / Reports",
+     "header": false
+    }
+   ]
+  ]
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "4.3 Dashboard"
+ },
+ {
+  "t": "p",
+  "text": "실시간 라인 KPI: 전체 라인 카운트, Pass Rate, NG 비율, 활성 작업지시, 최근 알람 위젯.\nSignalR 로 실시간 갱신."
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "4.4 Andon Board"
+ },
+ {
+  "t": "p",
+  "text": "전체 라인 실시간 상태 그리드. 각 라인 카드에 클라이언트명 + 현재 작업자 + WO 진행률 +\n알람 카운트. 알람 카운트 클릭 시 Alarms 페이지로 이동 (필터 적용)."
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "4.5 Alarms"
+ },
+ {
+  "t": "p",
+  "text": "알람 목록 + 상세. 필터: 라인 / 상태 (New/Ack/Resolved) / 심각도 / 기간."
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "액션"
+ },
+ {
+  "t": "li",
+  "text": "Acknowledge (확인) — 작업자가 인지함. 배지 카운트에서 빠짐.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "Resolve (해제) — 다이얼로그에서 사유 입력 후 해제.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "새 알람은 SignalR AlarmCreated 로 즉시 push.",
+  "ordered": false
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "4.6 Production History"
+ },
+ {
+  "t": "p",
+  "text": "검사 이력 (InspectionHistory + ParameterMeasurement). 필터: 라인 / 기간 / Pass/NG / WO / Operator."
+ },
+ {
+  "t": "li",
+  "text": "각 행 클릭 시 NgDetailDialog 팝업 — 측정값 + 사진 + NG 코드.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "Excel 내보내기.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "읽기 전용 (감사 추적성 보존).",
+  "ordered": false
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "4.7 Work Orders"
+ },
+ {
+  "t": "p",
+  "text": "작업지시 마스터. Planned → InProgress → Completed → Closed."
+ },
+ {
+  "t": "li",
+  "text": "+ 새 WO 다이얼로그 — Product / Client (라인) / Recipe / Planned Quantity / Planned Start.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "OrderNo 자동 채번 (WO-{YYYYMMDD}-{NNN}).",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "Start 버튼 — Planned → InProgress 수동 전이 (또는 VMS 첫 결과 도착 시 자동).",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "Complete — VMS 가 자동 (PlannedQuantity 도달) 또는 수동.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "Close — Completed 상태에서 영구 마감.",
+  "ordered": false
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "4.8 Products"
+ },
+ {
+  "t": "p",
+  "text": "제품 마스터 (코드 / 이름 / 카테고리 / 활성 상태). WO 의 ProductId 가 참조."
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "4.9 Inspection Items (Recipes + Parameters)"
+ },
+ {
+  "t": "p",
+  "text": "레시피와 그 산하 파라미터 관리. VMS 가 60초 주기로 자동 동기화."
+ },
+ {
+  "t": "li",
+  "text": "레시피 트리: Pattern / Blob / Dimension 카테고리.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "파라미터: ParamCode (정수) / ParamValue (소수) / Description / Unit / LowerLimit / UpperLimit / IsActive.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "VMS 측에서 검사 시 ParamValue 사용. LowerLimit/UpperLimit 은 향후 SPC 판정용.",
+  "ordered": false
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "4.10 Operators"
+ },
+ {
+  "t": "p",
+  "text": "3개 탭:"
+ },
+ {
+  "t": "li",
+  "text": "Operator Master — 사번 / 이름 / 부서 / Role / 활성. PIN 등록 (BCrypt 해시).",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "Sessions — 로그인/로그아웃 이력. VMS 로그인 시 SignalR 로 실시간 갱신\n— 새로 고침 불필요.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "Kiosk Links — 각 라인의 키오스크 페이지 URL.",
+  "ordered": false
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "Role 설명"
+ },
+ {
+  "t": "table",
+  "rows": [
+   [
+    {
+     "text": "Role",
+     "header": true
+    },
+    {
+     "text": "설명",
+     "header": true
+    },
+    {
+     "text": "VMS 헤더 뱃지",
+     "header": true
+    }
+   ],
+   [
+    {
+     "text": "Operator",
+     "header": false
+    },
+    {
+     "text": "일반 작업자. 검사 실행만.",
+     "header": false
+    },
+    {
+     "text": "없음",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "Lead",
+     "header": false
+    },
+    {
+     "text": "반장. + Recipe 편집.",
+     "header": false
+    },
+    {
+     "text": "Lead 파랑",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "Supervisor",
+     "header": false
+    },
+    {
+     "text": "관리자. + External Tools (Vision Tool / System Setup).",
+     "header": false
+    },
+    {
+     "text": "Supervisor 주황",
+     "header": false
+    }
+   ]
+  ]
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "4.11 Lots"
+ },
+ {
+  "t": "p",
+  "text": "WO 산하 단위 묶음. LotNumber 자동 채번 ({YYYYMMDD}-{OrderNo}-{Seq:D3}).\nOpen → Closed."
+ },
+ {
+  "t": "p",
+  "text": "VMS 가 WO 선택 시 활성(Open) Lot 1개 자동 채움. 활성 Lot 없으면 Lot 없이 진행 가능."
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "4.12 Maintenance"
+ },
+ {
+  "t": "p",
+  "text": "예방정비 (PM) 스케줄. Overdue / DueToday / Upcoming. Perform 다이얼로그로 수행 기록."
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "4.13 Defect Codes"
+ },
+ {
+  "t": "p",
+  "text": "NG 코드 마스터 (코드 / 설명 / 카테고리 / 심각도 Critical/Major/Minor)."
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "4.14 Shifts"
+ },
+ {
+  "t": "p",
+  "text": "교대 정의 (시작 시간 + 시간 길이). 검사 결과의 ShiftId 자동 매핑."
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "4.15 Audit Logs"
+ },
+ {
+  "t": "p",
+  "text": "모든 마스터 데이터 변경 이력 (Create / Update / Delete). 사용자 / IP / 시각 기록.\n읽기 전용."
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "4.16 Reports / Quality Analysis"
+ },
+ {
+  "t": "p",
+  "text": "OEE 지표, 라인별 / 작업자별 / WO별 통계, SPC 차트 (LCL/UCL)."
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "4.17 알림 (NotificationBell)"
+ },
+ {
+  "t": "p",
+  "text": "상단 AppBar 우측 종 아이콘. 배지로 미확인 알람 수 표시 (100+ 시 \"99+\")."
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "액션"
+ },
+ {
+  "t": "li",
+  "text": "아이콘 클릭 → 최근 10건 + \"N건 미확인\" 헤더 + \"모두 확인\" 버튼.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "각 알람 클릭 → Alarms 페이지로 이동.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "각 알람 우측 ✕ 아이콘 → 개별 확인 처리.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "모두 확인 버튼 → 모든 New 알람 일괄 Acknowledge.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "모두 감사 추적성을 위해 삭제가 아닌 Acknowledge — 알람 이력 영구 보존.",
+  "ordered": false
+ },
+ {
+  "t": "h",
+  "level": 2,
+  "text": "5. 통합 워크플로"
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "5.1 Stage 1 / 2 / 3 일체"
+ },
+ {
+  "t": "table",
+  "rows": [
+   [
+    {
+     "text": "Stage",
+     "header": true
+    },
+    {
+     "text": "책임",
+     "header": true
+    },
+    {
+     "text": "주요 동작",
+     "header": true
+    }
+   ],
+   [
+    {
+     "text": "Stage 1 Operator Login",
+     "header": false
+    },
+    {
+     "text": "Web /api/kiosk/* VMS OperatorAuthService",
+     "header": false
+    },
+    {
+     "text": "사번+PIN → BCrypt 대조 → JWT-free Session 생성 → VMS 헤더 칩 갱신",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "Stage 2 Work Order 선택",
+     "header": false
+    },
+    {
+     "text": "Web /api/workorders/by-client/{idx} VMS WorkOrderClient",
+     "header": false
+    },
+    {
+     "text": "활성 WO 목록 → VMS 다이얼로그 → 선택 → Recipe 자동 로드 + 활성 Lot fetch + AUTO RUN 활성화",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "Stage 3 진행률 + 완료",
+     "header": false
+    },
+    {
+     "text": "Web /api/parameters/results + SignalR VMS ParameterSyncService",
+     "header": false
+    },
+    {
+     "text": "결과 업로드 시 응답에 WO 진행률 포함 → 헤더 ProgressBar 갱신 → 계획 수량 도달 시 자동 Completed + 알람 다이얼로그 + AUTO RUN 자동 정지",
+     "header": false
+    }
+   ]
+  ]
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "5.2 추적성 4필드"
+ },
+ {
+  "t": "p",
+  "text": "검사 결과 업로드 시 자동 첨부되어 Web InspectionHistory 와\nParameterMeasurement 에 저장:"
+ },
+ {
+  "t": "table",
+  "rows": [
+   [
+    {
+     "text": "필드",
+     "header": true
+    },
+    {
+     "text": "채움 시점",
+     "header": true
+    },
+    {
+     "text": "비고",
+     "header": true
+    }
+   ],
+   [
+    {
+     "text": "WorkOrderId",
+     "header": false
+    },
+    {
+     "text": "WO 선택 시",
+     "header": false
+    },
+    {
+     "text": "Web 의 WO Producer/Pass/Ng 카운터 자동 증가",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "LotId",
+     "header": false
+    },
+    {
+     "text": "WO 선택 시 활성 Lot fetch",
+     "header": false
+    },
+    {
+     "text": "Lot 의 Quantity/Pass/Ng 카운터 자동 증가",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "OperatorId",
+     "header": false
+    },
+    {
+     "text": "로그인 시",
+     "header": false
+    },
+    {
+     "text": "현재 키오스크 세션에서 자동 매핑도 가능",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "SerialNumber",
+     "header": false
+    },
+    {
+     "text": "바코드 스캐너 입력",
+     "header": false
+    },
+    {
+     "text": "비어 있어도 업로드 정상",
+     "header": false
+    }
+   ]
+  ]
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "5.3 업로드 큐 (오프라인 복구)"
+ },
+ {
+  "t": "p",
+  "text": "Web 끊김 / 재시작 시 검사 결과 손실 방지."
+ },
+ {
+  "t": "li",
+  "text": "업로드 실패 → %LocalAppData%\\BODA VISION AI\\upload_queue\\{UTC timestamp}_{guid}.json 디스크 보존.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "5초 주기 백그라운드 timer 가 큐 디렉토리 스캔 → 시간 순 정렬 → 한 건씩 재전송.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "한 건 실패 시 즉시 중단 (순서 보존 + 서버 다운 시 스팸 방지).",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "VMS 프로세스 재시작 후에도 큐 파일은 디스크에 남아 자동 복구.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "손상된 JSON 은 자동 삭제 (무한 재시도 방지).",
+  "ordered": false
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "5.4 SignalR 실시간 푸시"
+ },
+ {
+  "t": "p",
+  "text": "두 개의 SignalR Hub:"
+ },
+ {
+  "t": "table",
+  "rows": [
+   [
+    {
+     "text": "Hub",
+     "header": true
+    },
+    {
+     "text": "경로",
+     "header": true
+    },
+    {
+     "text": "인증",
+     "header": true
+    },
+    {
+     "text": "이벤트",
+     "header": true
+    }
+   ],
+   [
+    {
+     "text": "VmsHub",
+     "header": false
+    },
+    {
+     "text": "/hubs/vms",
+     "header": false
+    },
+    {
+     "text": "JWT 필수",
+     "header": false
+    },
+    {
+     "text": "AlarmCreated / AlarmUpdated / NgAlert / ClientStatusChanged / OperatorSessionStarted / OperatorSessionEnded",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "VmsPublicHub",
+     "header": false
+    },
+    {
+     "text": "/hubs/vms-public",
+     "header": false
+    },
+    {
+     "text": "익명",
+     "header": false
+    },
+    {
+     "text": "WorkOrderUpdated / WorkOrderCompleted (VMS 클라이언트용)",
+     "header": false
+    }
+   ]
+  ]
+ },
+ {
+  "t": "p",
+  "text": "VMS 가 한 검사를 업로드하면:"
+ },
+ {
+  "t": "li",
+  "text": "본인은 응답 본문에서 진행률 즉시 받음 (1차).",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Web 이 동시에 모든 SignalR 연결에 WorkOrderUpdated broadcast (2차).",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "같은 라인의 다른 VMS (있다면), 관리자 Dashboard / Andon / Alarms 페이지 모두 새로고침 없이 즉시 반영.",
+  "ordered": true
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "5.5 다중 라인 운영"
+ },
+ {
+  "t": "p",
+  "text": "여러 VMS 가 같은 Web 서버에 연결 가능. 각 VMS 는 ClientIndex 로 구분 (1, 2, 3...)."
+ },
+ {
+  "t": "li",
+  "text": "각 라인의 WO 는 /api/workorders/by-client/{clientIndex} 로 분리.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "각 라인의 Operator 세션도 ClientId 별로 독립.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "관리자 Andon Board 에서 전체 라인 동시 모니터링.",
+  "ordered": false
+ },
+ {
+  "t": "h",
+  "level": 2,
+  "text": "6. 관리자 가이드"
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "6.1 Operator 등록 + Role 부여"
+ },
+ {
+  "t": "li",
+  "text": "Web 의 Operators 페이지 → Operator Master 탭 → \"+ 새 작업자\".",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "사번 (예: 1003), 이름, 부서, Role (Operator / Lead / Supervisor),\n초기 PIN (최소 4자리), 활성 상태 ON 으로 저장.",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "작업자가 VMS 에서 같은 사번 + PIN 으로 로그인 → 헤더에 Role 뱃지 자동 표시.",
+  "ordered": true
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "6.2 작업지시 라이프사이클"
+ },
+ {
+  "t": "table",
+  "rows": [
+   [
+    {
+     "text": "상태",
+     "header": true
+    },
+    {
+     "text": "의미",
+     "header": true
+    },
+    {
+     "text": "전이 트리거",
+     "header": true
+    }
+   ],
+   [
+    {
+     "text": "Planned",
+     "header": false
+    },
+    {
+     "text": "예정. 아직 시작 안 함.",
+     "header": false
+    },
+    {
+     "text": "WO 생성 시 기본",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "InProgress",
+     "header": false
+    },
+    {
+     "text": "진행 중. 검사 결과가 카운트됨.",
+     "header": false
+    },
+    {
+     "text": "VMS 첫 결과 도착 또는 수동 Start",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "Completed",
+     "header": false
+    },
+    {
+     "text": "계획 수량 도달. ActualEndAt 자동 설정.",
+     "header": false
+    },
+    {
+     "text": "ProducedQuantity ≥ PlannedQuantity 시 자동 또는 수동 Complete",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "Closed",
+     "header": false
+    },
+    {
+     "text": "영구 마감. 더 이상 검사 안 받음.",
+     "header": false
+    },
+    {
+     "text": "관리자 수동 Close",
+     "header": false
+    }
+   ]
+  ]
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "6.3 알람 관리"
+ },
+ {
+  "t": "li",
+  "text": "NG 발생 시 자동 알람 (AlarmType=NG, Severity=Major 기본).",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "알람 일괄 확인: NotificationBell → \"모두 확인\" 또는 Alarms 페이지에서 필터+선택.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "해제 (Resolve): 사유 입력 다이얼로그 → 영구 해제 상태.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "해제된 알람은 Audit Logs 에 누가 언제 무엇을 했는지 기록.",
+  "ordered": false
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "6.4 백업 / DB 위치"
+ },
+ {
+  "t": "table",
+  "rows": [
+   [
+    {
+     "text": "DB",
+     "header": true
+    },
+    {
+     "text": "위치",
+     "header": true
+    },
+    {
+     "text": "백업 방법",
+     "header": true
+    }
+   ],
+   [
+    {
+     "text": "Web SQLite",
+     "header": false
+    },
+    {
+     "text": "C:\\ProgramData\\BODA\\VMS\\BodaVision.db",
+     "header": false
+    },
+    {
+     "text": "서비스 중지 후 파일 복사",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "VMS 로컬 SQLite",
+     "header": false
+    },
+    {
+     "text": "%LocalAppData%\\BODA VISION AI\\",
+     "header": false
+    },
+    {
+     "text": "시스템 사용자 + 설정만 — 손실 영향 적음",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "VMS 업로드 큐",
+     "header": false
+    },
+    {
+     "text": "%LocalAppData%\\BODA VISION AI\\upload_queue\\",
+     "header": false
+    },
+    {
+     "text": "VMS 종료 전 자동 전송 대기 — 백업 불필요",
+     "header": false
+    }
+   ]
+  ]
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "6.5 버전 업그레이드"
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "VMS"
+ },
+ {
+  "t": "li",
+  "text": "새 MSI (BODA-VMS-1.2.0.msi) 더블 클릭.",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "이전 버전 자동 제거 → 새 버전 설치 (UpgradeCode 동일).",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "로컬 설정 / 캘리브레이션 데이터 보존.",
+  "ordered": true
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "Web"
+ },
+ {
+  "t": "li",
+  "text": "관리자 PowerShell 에서 .\\Install-Web.ps1 재실행.",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "서비스 중지 → publish → 서비스 재시작 자동.",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "DB 는 LocalAppData 에 있어 영향 없음 (자동 마이그레이션 실행 — PRAGMA + ALTER TABLE).",
+  "ordered": true
+ },
+ {
+  "t": "h",
+  "level": 2,
+  "text": "7. 트러블슈팅"
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "7.1 VMS 측"
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "실행 시 DLL 오류"
+ },
+ {
+  "t": "p",
+  "text": "Visual C++ Redistributable 누락. Microsoft 사이트에서 vc_redist.x64.exe 설치."
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "BrushBgWindow 리소스 찾을 수 없음"
+ },
+ {
+  "t": "p",
+  "text": "VMS Launcher 가 VMS.VisionSetup 다이얼로그를 띄울 때 발생.\n이미 EnsureWindowStylesMerged() 로 자동 처리되지만, 다른 다이얼로그 추가 시\n같은 패턴 사용 필요."
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "카메라 자동 연결 실패"
+ },
+ {
+  "t": "li",
+  "text": "System Setup 의 카메라 IP / 매뉴팩처러 확인.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "방화벽: GigE Vision 은 UDP 3956 사용.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "각 NIC 마다 broadcast 보내므로 NIC 메트릭 확인.",
+  "ordered": false
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "업로드 큐가 계속 쌓임"
+ },
+ {
+  "t": "p",
+  "text": "Web 연결 끊김. %LocalAppData%\\BODA VISION AI\\upload_queue\\ 에 .json 누적.\nWeb 서버 시작 후 5초 내 자동 드레인. 직접 확인은 파일 수 모니터링."
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "AUTO RUN 이 활성 안 됨"
+ },
+ {
+  "t": "p",
+  "text": "다음 모두 확인:"
+ },
+ {
+  "t": "li",
+  "text": "카메라 1대 이상 연결 됨 (헤더에 연결 표시)",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Operator 로그인 됨 (Operator chip 작업자 이름 표시)",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "WO 선택 됨 (WO chip 표시)",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "WO Status 가 Planned 또는 InProgress (Completed 면 비활성)",
+  "ordered": true
+ },
+ {
+  "t": "p",
+  "text": "버튼에 마우스 올리면 ToolTip 으로 사유 확인 가능."
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "7.2 Web 측"
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "Windows Service 가 시작 안 됨"
+ },
+ {
+  "t": "li",
+  "text": "Event Viewer → Windows Logs → Application → \"BODA-VMS-Web\" 로그.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "주요 원인: 포트 충돌 (netstat -ano | findstr 7144), HTTPS 인증서 미신뢰.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "HTTPS 인증서: dotnet dev-certs https --trust.",
+  "ordered": false
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "1003 민병준 같은 작업자가 계속 작업중으로 표시"
+ },
+ {
+  "t": "p",
+  "text": "VMS 비정상 종료로 OperatorSession 이 active 로 남음. 자동 처리:"
+ },
+ {
+  "t": "li",
+  "text": "VMS graceful 종료 시 /api/clients/disconnect 에서 세션 자동 종료.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "Web 시작 시 5분 이상 heartbeat 없는 클라이언트의 active 세션 일괄 Stale 정리.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "수동 정리: DB 에서 직접 UPDATE 또는 Web 재시작.",
+  "ordered": false
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "Operators Sessions 탭이 갱신 안 됨"
+ },
+ {
+  "t": "p",
+  "text": "v1.1 부터 SignalR 로 자동 갱신. 만약 안 되면:"
+ },
+ {
+  "t": "li",
+  "text": "브라우저 콘솔 (F12) → Network → WS 탭 → /hubs/vms 연결 상태 확인.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "JWT 만료 시 재로그인.",
+  "ordered": false
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "알림 배지 안 보임"
+ },
+ {
+  "t": "p",
+  "text": "NotificationBell 의 CSS vms-notif-badge 가 적용되도록 브라우저 캐시 클리어\n(Ctrl+Shift+R)."
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "7.3 통합 / 네트워크"
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "VMS 가 Web 에 연결 못 함"
+ },
+ {
+  "t": "li",
+  "text": "VMS System Setup → WebServerUrl 확인 (예: https://192.168.0.10:7144).",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Web 서버 PC 의 방화벽: Get-NetFirewallRule -DisplayName \"BODA VMS Web*\" 확인.",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "self-signed 인증서: 운영은 사설 CA 인증서 사용 권장. 임시 우회는 VMS 의 HttpClient\n가 cert validation 우회 (dev only).",
+  "ordered": true
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "다른 VMS 의 검사가 내 VMS 헤더에 반영 안 됨"
+ },
+ {
+  "t": "p",
+  "text": "SignalR 연결 끊김. VMS 콘솔 출력 확인:\n[VmsHubClient] Connected → https://.../hubs/vms-public. 자동 재연결 정책\n(0s/2s/10s/30s 무한) 으로 보통 자체 복구."
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "검사 결과가 Web 에 안 보임"
+ },
+ {
+  "t": "li",
+  "text": "VMS 업로드 큐 (upload_queue\\) 에 .json 쌓여 있는지 확인 — 있으면 네트워크 끊김.",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Web Event Viewer 로그에서 /api/parameters/results 호출 확인.",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Recipe ID / Client Index 가 양쪽에서 일치하는지 확인.",
+  "ordered": true
+ },
+ {
+  "t": "h",
+  "level": 2,
+  "text": "8. 부록"
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "8.1 API 엔드포인트 (VMS ↔ Web)"
+ },
+ {
+  "t": "table",
+  "rows": [
+   [
+    {
+     "text": "방향",
+     "header": true
+    },
+    {
+     "text": "HTTP",
+     "header": true
+    },
+    {
+     "text": "URL",
+     "header": true
+    },
+    {
+     "text": "인증",
+     "header": true
+    },
+    {
+     "text": "용도",
+     "header": true
+    }
+   ],
+   [
+    {
+     "text": "VMS→Web",
+     "header": false
+    },
+    {
+     "text": "POST",
+     "header": false
+    },
+    {
+     "text": "/api/clients/heartbeat",
+     "header": false
+    },
+    {
+     "text": "익명",
+     "header": false
+    },
+    {
+     "text": "5초 주기 생존 신호",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "VMS→Web",
+     "header": false
+    },
+    {
+     "text": "POST",
+     "header": false
+    },
+    {
+     "text": "/api/clients/disconnect",
+     "header": false
+    },
+    {
+     "text": "익명",
+     "header": false
+    },
+    {
+     "text": "VMS 종료 시 graceful",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "VMS→Web",
+     "header": false
+    },
+    {
+     "text": "POST",
+     "header": false
+    },
+    {
+     "text": "/api/clients/register",
+     "header": false
+    },
+    {
+     "text": "익명",
+     "header": false
+    },
+    {
+     "text": "self-register fallback",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "VMS→Web",
+     "header": false
+    },
+    {
+     "text": "POST",
+     "header": false
+    },
+    {
+     "text": "/api/kiosk/login",
+     "header": false
+    },
+    {
+     "text": "익명",
+     "header": false
+    },
+    {
+     "text": "사번+PIN → OperatorSessionDto",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "VMS→Web",
+     "header": false
+    },
+    {
+     "text": "POST",
+     "header": false
+    },
+    {
+     "text": "/api/kiosk/logout",
+     "header": false
+    },
+    {
+     "text": "익명",
+     "header": false
+    },
+    {
+     "text": "세션 종료",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "VMS→Web",
+     "header": false
+    },
+    {
+     "text": "GET",
+     "header": false
+    },
+    {
+     "text": "/api/kiosk/current/{idx}",
+     "header": false
+    },
+    {
+     "text": "익명",
+     "header": false
+    },
+    {
+     "text": "활성 세션 조회",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "VMS→Web",
+     "header": false
+    },
+    {
+     "text": "GET",
+     "header": false
+    },
+    {
+     "text": "/api/workorders/by-client/{idx}",
+     "header": false
+    },
+    {
+     "text": "익명",
+     "header": false
+    },
+    {
+     "text": "WO 목록 (status 옵션)",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "VMS→Web",
+     "header": false
+    },
+    {
+     "text": "GET",
+     "header": false
+    },
+    {
+     "text": "/api/lots/active-by-workorder/{woId}",
+     "header": false
+    },
+    {
+     "text": "익명",
+     "header": false
+    },
+    {
+     "text": "활성 Lot 1개",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "VMS→Web",
+     "header": false
+    },
+    {
+     "text": "GET",
+     "header": false
+    },
+    {
+     "text": "/api/parameters/sync/recipes/{idx}",
+     "header": false
+    },
+    {
+     "text": "익명",
+     "header": false
+    },
+    {
+     "text": "레시피 목록",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "VMS→Web",
+     "header": false
+    },
+    {
+     "text": "GET",
+     "header": false
+    },
+    {
+     "text": "/api/parameters/sync/recipe/{recipeId}",
+     "header": false
+    },
+    {
+     "text": "익명",
+     "header": false
+    },
+    {
+     "text": "파라미터 목록",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "VMS→Web",
+     "header": false
+    },
+    {
+     "text": "POST",
+     "header": false
+    },
+    {
+     "text": "/api/parameters/results",
+     "header": false
+    },
+    {
+     "text": "익명",
+     "header": false
+    },
+    {
+     "text": "검사 결과 업로드 (응답에 workOrder 진행률)",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "관리자→Web",
+     "header": false
+    },
+    {
+     "text": "POST",
+     "header": false
+    },
+    {
+     "text": "/api/alarms/acknowledge-all",
+     "header": false
+    },
+    {
+     "text": "JWT (Admin/User)",
+     "header": false
+    },
+    {
+     "text": "알림 일괄 확인",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "관리자→Web",
+     "header": false
+    },
+    {
+     "text": "POST",
+     "header": false
+    },
+    {
+     "text": "/api/alarms/{id}/action",
+     "header": false
+    },
+    {
+     "text": "JWT (Admin/User)",
+     "header": false
+    },
+    {
+     "text": "개별 Ack/Resolve",
+     "header": false
+    }
+   ]
+  ]
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "8.2 SignalR 이벤트"
+ },
+ {
+  "t": "table",
+  "rows": [
+   [
+    {
+     "text": "Hub",
+     "header": true
+    },
+    {
+     "text": "이벤트",
+     "header": true
+    },
+    {
+     "text": "페이로드",
+     "header": true
+    },
+    {
+     "text": "구독 측",
+     "header": true
+    }
+   ],
+   [
+    {
+     "text": "VmsHub",
+     "header": false
+    },
+    {
+     "text": "AlarmCreated",
+     "header": false
+    },
+    {
+     "text": "AlarmEventDto",
+     "header": false
+    },
+    {
+     "text": "NotificationBell / Alarms / Dashboard",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "VmsHub",
+     "header": false
+    },
+    {
+     "text": "AlarmUpdated",
+     "header": false
+    },
+    {
+     "text": "AlarmEventDto",
+     "header": false
+    },
+    {
+     "text": "위와 같음",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "VmsHub",
+     "header": false
+    },
+    {
+     "text": "NgAlert",
+     "header": false
+    },
+    {
+     "text": "string (title)",
+     "header": false
+    },
+    {
+     "text": "Legacy 호환",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "VmsHub",
+     "header": false
+    },
+    {
+     "text": "ClientStatusChanged",
+     "header": false
+    },
+    {
+     "text": "(int clientId, bool isAlive)",
+     "header": false
+    },
+    {
+     "text": "Andon Board",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "VmsHub",
+     "header": false
+    },
+    {
+     "text": "OperatorSessionStarted",
+     "header": false
+    },
+    {
+     "text": "OperatorSessionDto",
+     "header": false
+    },
+    {
+     "text": "Operators Sessions 탭",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "VmsHub",
+     "header": false
+    },
+    {
+     "text": "OperatorSessionEnded",
+     "header": false
+    },
+    {
+     "text": "OperatorSessionDto",
+     "header": false
+    },
+    {
+     "text": "위와 같음",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "VmsPublicHub",
+     "header": false
+    },
+    {
+     "text": "WorkOrderUpdated",
+     "header": false
+    },
+    {
+     "text": "{id, orderNo, plannedQuantity, producedQuantity, passQuantity, ngQuantity, status, completed}",
+     "header": false
+    },
+    {
+     "text": "VMS 헤더 WO 칩",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "VmsPublicHub",
+     "header": false
+    },
+    {
+     "text": "WorkOrderCompleted",
+     "header": false
+    },
+    {
+     "text": "위와 동일 (completed=true)",
+     "header": false
+    },
+    {
+     "text": "VMS WorkOrderCompletedDialog",
+     "header": false
+    }
+   ]
+  ]
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "8.3 파일 / 디렉토리 경로"
+ },
+ {
+  "t": "table",
+  "rows": [
+   [
+    {
+     "text": "경로",
+     "header": true
+    },
+    {
+     "text": "용도",
+     "header": true
+    }
+   ],
+   [
+    {
+     "text": "C:\\Program Files\\BODA VMS\\",
+     "header": false
+    },
+    {
+     "text": "VMS 클라이언트 설치 폴더",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "C:\\Program Files\\BODA VMS Web\\",
+     "header": false
+    },
+    {
+     "text": "Web 서버 설치 폴더",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "%LocalAppData%\\BODA VISION AI\\",
+     "header": false
+    },
+    {
+     "text": "VMS 사용자 설정 + 로컬 SQLite",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "%LocalAppData%\\BODA VISION AI\\upload_queue\\",
+     "header": false
+    },
+    {
+     "text": "업로드 실패 큐 (C6)",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "%LocalAppData%\\BODA VISION AI\\process_sequence.json",
+     "header": false
+    },
+    {
+     "text": "AutoProcess 시퀀스",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "%LocalAppData%\\BODA\\VMS\\BodaVision.db",
+     "header": false
+    },
+    {
+     "text": "Web SQLite (서비스 기본)",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "C:\\ProgramData\\BODA\\VMS\\BodaVision.db",
+     "header": false
+    },
+    {
+     "text": "Web SQLite (machine-wide, 운영 권장)",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "D:\\Repo\\VMS\\installer\\bin\\x64\\Release\\",
+     "header": false
+    },
+    {
+     "text": "MSI 빌드 출력",
+     "header": false
+    }
+   ],
+   [
+    {
+     "text": "D:\\Project\\BODA.VMS.Web\\deploy\\",
+     "header": false
+    },
+    {
+     "text": "Web PowerShell 배포 스크립트",
+     "header": false
+    }
+   ]
+  ]
+ },
+ {
+  "t": "h",
+  "level": 3,
+  "text": "8.4 변경 이력 요약 (v1.1.0)"
+ },
+ {
+  "t": "p",
+  "text": "v1.0 → v1.1 주요 변경:"
+ },
+ {
+  "t": "li",
+  "text": "Phase 7 — 운영 워크플로 (Stage 1/2/3): Operator 로그인 → WO 선택 →\nRecipe 자동 로드 → AUTO RUN → 진행률 실시간 + 완료 다이얼로그.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "B 시리즈 — 운영 UX: 활성 Lot 자동 채움, Completed 후 다음 WO,\n알람 UX 개선 (사운드 + KPI), 진행률 ProgressBar.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "C 시리즈 — 인프라: SignalR 실시간 푸시, 업로드 큐 (오프라인 복구).",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "D 시리즈 — 추가 기능: VMS 자체 Recent Inspections, Operator Role\n기반 메뉴 가시성.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "UI 정렬: 헤더 칩 높이 32px 통일, 운영 흐름 단순화 (도구 →\n사이드 패널), 알림 배지 가시성 개선.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "안정성: stale OperatorSession 자동 정리, 알림 일괄/개별 Acknowledge.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "배포: WiX MSI 인스톨러, Web Windows Service PowerShell 스크립트,\n솔루션 공용 Directory.Build.props.",
+  "ordered": false
+ },
+ {
+  "t": "p",
+  "text": "전체 변경 사항은 양쪽 저장소의 CHANGELOG.md 참조."
+ }
+]
