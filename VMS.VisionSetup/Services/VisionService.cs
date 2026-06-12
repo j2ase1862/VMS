@@ -1050,6 +1050,9 @@ namespace VMS.VisionSetup.Services
                 "ColorExtractTool" => new VisionTools.Color.ColorExtractTool(),
                 "ColorMatchTool" => new VisionTools.Color.ColorMatchTool(),
 
+                // Surface Analysis
+                "PhotometricStereoTool" => new VisionTools.SurfaceAnalysis.PhotometricStereoTool(),
+
                 _ => null
             };
         }
@@ -1127,6 +1130,10 @@ namespace VMS.VisionSetup.Services
                 {
                     "ColorExtractTool",
                     "ColorMatchTool"
+                },
+                ["Surface Analysis"] = new[]
+                {
+                    "PhotometricStereoTool"
                 }
             };
         }

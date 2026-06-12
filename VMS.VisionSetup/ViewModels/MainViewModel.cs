@@ -783,6 +783,11 @@ namespace VMS.VisionSetup.ViewModels
             var calibration = new ToolCategory { CategoryName = "Calibration" };
             calibration.Tools.Add(new ToolItem { Name = "Image Rectify", ToolType = "ImageRectifyTool" });
             ToolTree.Add(calibration);
+
+            // Surface Analysis 카테고리 (조명 기반 표면 결함 검사)
+            var surface = new ToolCategory { CategoryName = "Surface Analysis" };
+            surface.Tools.Add(new ToolItem { Name = "Photometric Stereo", ToolType = "PhotometricStereoTool" });
+            ToolTree.Add(surface);
         }
 
         private void CloseApplication()
@@ -2923,6 +2928,7 @@ namespace VMS.VisionSetup.ViewModels
                 VisionTools.PointCloud.PointCloudFilterTool t => new PointCloudFilterToolSettingsViewModel(t),
                 VisionTools.PointCloud.PointCloudRegistrationTool t => new PointCloudRegistrationToolSettingsViewModel(t),
                 VisionTools.PointCloud.PointCloudClusterTool t => new PointCloudClusterToolSettingsViewModel(t),
+                VisionTools.SurfaceAnalysis.PhotometricStereoTool t => new PhotometricStereoToolSettingsViewModel(t),
                 _ => null
             };
         }

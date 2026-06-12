@@ -76,6 +76,15 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["SigmaSpace"] = blur.SigmaSpace;
                     break;
 
+                case VisionTools.SurfaceAnalysis.PhotometricStereoTool ps:
+                    config.Parameters["OutputType"] = ps.OutputType.ToString();
+                    config.Parameters["CurvatureGain"] = ps.CurvatureGain;
+                    config.Parameters["ShadowThreshold"] = ps.ShadowThreshold;
+                    config.Parameters["HighlightThreshold"] = ps.HighlightThreshold;
+                    // 조명 목록(방향 + 이미지 경로)은 JSON 문자열로 저장
+                    config.Parameters["Lights"] = System.Text.Json.JsonSerializer.Serialize(ps.Lights);
+                    break;
+
                 case ThresholdTool threshold:
                     config.Parameters["ThresholdValue"] = threshold.ThresholdValue;
                     config.Parameters["MaxValue"] = threshold.MaxValue;
@@ -609,6 +618,7 @@ namespace VMS.VisionSetup.Services
                 "PointCloudClusterTool" => DeserializePointCloudClusterTool(config),
                 "ColorExtractTool" => DeserializeColorExtractTool(config),
                 "ColorMatchTool" => DeserializeColorMatchTool(config),
+                "PhotometricStereoTool" => DeserializePhotometricStereoTool(config),
                 _ => null
             };
 
@@ -710,6 +720,38 @@ namespace VMS.VisionSetup.Services
                 tool.SigmaColor = GetDouble(sigmaColor);
             if (p.TryGetValue("SigmaSpace", out var sigmaSpace))
                 tool.SigmaSpace = GetDouble(sigmaSpace);
+
+            return tool;
+        }
+
+        private static VisionTools.SurfaceAnalysis.PhotometricStereoTool DeserializePhotometricStereoTool(ToolConfig config)
+        {
+            var tool = new VisionTools.SurfaceAnalysis.PhotometricStereoTool();
+            var p = config.Parameters;
+
+            if (p.TryGetValue("OutputType", out var outputType))
+                tool.OutputType = Enum.Parse<VisionTools.SurfaceAnalysis.PsOutputType>(GetString(outputType));
+            if (p.TryGetValue("CurvatureGain", out var curvatureGain))
+                tool.CurvatureGain = GetDouble(curvatureGain);
+            if (p.TryGetValue("ShadowThreshold", out var shadowThreshold))
+                tool.ShadowThreshold = GetInt(shadowThreshold);
+            if (p.TryGetValue("HighlightThreshold", out var highlightThreshold))
+                tool.HighlightThreshold = GetInt(highlightThreshold);
+
+            if (p.TryGetValue("Lights", out var lights))
+            {
+                var json = GetString(lights);
+                if (!string.IsNullOrWhiteSpace(json))
+                {
+                    var list = System.Text.Json.JsonSerializer
+                        .Deserialize<List<VisionTools.SurfaceAnalysis.LightSample>>(json);
+                    if (list != null)
+                    {
+                        tool.Lights.Clear();
+                        foreach (var l in list) tool.Lights.Add(l);
+                    }
+                }
+            }
 
             return tool;
         }

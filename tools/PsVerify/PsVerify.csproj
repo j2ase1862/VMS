@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 포토메트릭 스테레오 알고리즘 검증용 콘솔 (솔루션에는 포함하지 않음).
+       실제 PhotometricStereoTool 코드를 합성 데이터로 호출해 법선 복원 정확도를 측정. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows7.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <PlatformTarget>x64</PlatformTarget>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\VMS.VisionSetup\VMS.VisionSetup.csproj" />
+  </ItemGroup>
+
+</Project>

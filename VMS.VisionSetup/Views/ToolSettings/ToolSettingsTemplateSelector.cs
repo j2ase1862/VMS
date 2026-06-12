@@ -40,6 +40,7 @@ namespace VMS.VisionSetup.Views.ToolSettings
         public DataTemplate? PointCloudFilterTemplate { get; set; }
         public DataTemplate? PointCloudRegistrationTemplate { get; set; }
         public DataTemplate? PointCloudClusterTemplate { get; set; }
+        public DataTemplate? PhotometricStereoTemplate { get; set; }
 
         public override DataTemplate? SelectTemplate(object? item, DependencyObject container)
         {
@@ -79,6 +80,7 @@ namespace VMS.VisionSetup.Views.ToolSettings
                 PointCloudFilterToolSettingsViewModel => PointCloudFilterTemplate,
                 PointCloudRegistrationToolSettingsViewModel => PointCloudRegistrationTemplate,
                 PointCloudClusterToolSettingsViewModel => PointCloudClusterTemplate,
+                PhotometricStereoToolSettingsViewModel => PhotometricStereoTemplate,
                 _ => base.SelectTemplate(item, container)
             };
         }
