@@ -1,7 +1,7 @@
 # VMS (BODA Vision AI) — GS 인증 대응 작업 히스토리
 
-**문서 버전**: 1.0
-**작성일**: 2026-06-04
+**문서 버전**: 1.1
+**작성일**: 2026-06-04 (v1.0) / **개정**: 2026-06-10 (v1.1 — SSO / Option C / 매뉴얼 매트릭스 반영)
 **대상**: VMS 솔루션 (WPF 데스크탑) — `VMS / VMS.AppSetup / VMS.VisionSetup / VMS.DeepLearning / VMS.Core / VMS.PLC / VMS.Camera / VMS.MasterSetup`
 **기준**: 한국 TTA GS(Good Software) 인증, ISO/IEC 25051 (소비자용 소프트웨어 품질 요구사항)
 
@@ -22,13 +22,20 @@
 | CI/MSI 빌드 | 2 | PR16, 44 |
 | 문서화 (GS 종합 / SIEM / MSI 서명 / 배포 정책 / 운영 회귀 가이드) | 6 | PR11, 17, 21, 24, 25, 26 |
 | Web 솔루션 짝 작업 (X-API-Key 헤더 송신) | 1 | PR119 |
-| **합계** | **45 PR** | PR1 ~ PR44 + PR119 |
+| 외부 검토 대응 (Tiffany P1~P5) | 6 | PR122~127 |
+| SSO Migration (단일 사용자 인증 흐름) | 5 | PR128~132 |
+| Option C (디폴트 admin 시드 제거) | 2 | PR133~134 |
+| 매뉴얼 일관성 (User Manual UserGrade 매트릭스 + 회귀) | 3 | PR135~137 |
+| **합계** | **58 PR** | PR1 ~ PR44 + PR119 + PR122~137 |
 
-### 1.2 산출물 (4 GS 문서 + 코드 변경)
-- `docs/gs/gs_compliance_overview_v1.0.md` (PR21) — ISO/IEC 25051 항목별 PR1~20 매핑
+> v1.0 (2026-06-04) 은 PR1~44 + PR119(45 PR)까지 기록했으며, v1.1 (2026-06-10) 에서 외부검토 대응·SSO·Option C·매뉴얼 매트릭스(PR122~137)를 Phase 15~17 로 추가했다.
+
+### 1.2 산출물 (6 GS 문서 + 코드 변경)
+- `docs/gs/gs_compliance_overview_v1.0.md` (PR21, v1.1 개정) — ISO/IEC 25051 항목별 매핑 (§3.1 후속 PR / §6 인증 아키텍처 포함)
 - `docs/gs/gs_msi_code_signing_guide.md` (PR24) — MSI 코드 서명 운영 가이드
 - `docs/gs/gs_audit_siem_integration_guide.md` (PR25) — 감사 로그 SIEM 외부 전송
 - `docs/gs/gs_distribution_policy.md` (PR26) — 라이선스 / NOTICE / 배포 정책
+- `docs/gs/SSO_Migration_Plan.md` (PR128) — VMS↔Web SSO 설계
 - `docs/gs/GS_History.md` (본 문서) — 시간순 히스토리
 
 ---
@@ -168,7 +175,7 @@ GS 인증 작업을 13 phase 로 나눠 시간순으로 정리. 한 phase 안에
 | **PR22** | `feat(security): 감사 로그 보존 정책 자동화` — 초기 보존 정책 (단순 일수 컷오프) |
 | **PR37 (M)** | `feat(security): upload_queue 보존 정책` |
 | **PR38** | `feat(ui): 보존 정책 통합 설정 UI` |
-| **PR39 (S)** | `feat(security): 감사 로그 카테고리별 차등 보존` — Authentication / SecurityEvent / Configuration / WorkOrder 등 카테고리별 기간 차등 |
+| **PR39 (S)** | `feat(security): 감사 로그 카테고리별 차등 보존` — 9 카테고리(Security / UserManagement / Configuration / Authentication / Authorization / RecipeChange / SequenceControl / Inspection / System) 별 보존 기간 차등 |
 | **PR40 (V)** | `feat(ui): 보존 정책 UI 에 카테고리별 차등 편집 추가` |
 | **PR41 (W)** | `feat(ui): 보존 정책 빠른 프리셋 — Conservative / Standard / Minimal` |
 | **PR42 (X)** | `feat(security): 보존 정책 dry-run 미리보기` — 실제 삭제 전 영향 받을 행 수 확인 |
@@ -197,6 +204,53 @@ GS 인증 작업을 13 phase 로 나눠 시간순으로 정리. 한 phase 안에
 - `VMS.AppSetup` Page 2 "Web Server Integration" 카드 — "Web Client API Key" 입력 UI 신규
 - `VMS\Models\SystemConfiguration.cs` — `ClientApiKey` 필드 추가, `%LocalAppData%\BODA VISION AI\system_config.json` 의 `clientApiKey` 키로 저장
 - 호환 모드 (Web 측 `ClientApiKey:Required=false`) 에서는 헤더 송신해도 무영향 — 운영 전환 시점에 Web 만 `Required=true` 로 토글하면 enforcement 활성화
+
+---
+
+### Phase 15: 외부 검토 대응 (Tiffany P1~P5) (PR122~127)
+**목적**: 외부 보안 검토자의 지적 사항 처리 — 신뢰성 / 보안 모드 / 데이터 무결성 보강.
+
+| PR | 내용 |
+|----|------|
+| **PR122** | `fix(reliability): ONNX 로드 실패 OnnxLoadException wrap` — SequenceEngine 안전화 (P1-#4) |
+| **PR123** | `fix(security): SecurityOptions 폴백 정책 명시화` (P1-#3) |
+| **PR124** | `fix(data): SQLite PRAGMA WAL 명시 — InitializeDatabase` (P2) |
+| **PR125** | `feat(reliability): Startup health check 에 WebServer 도달성 항목 추가` (P3a) |
+| **PR126** | `test(traceability): 보존 정책 프리셋 ↔ 매뉴얼 상수 자동 회귀` (P4) |
+| **PR127** | `feat(security): RELEASE = RequireExplicit enforcement 활성 + FallbackOnError 시 Warn` (P5) |
+
+> **사실관계 다름으로 skip 된 지적** (3건): #2 Audit BCrypt 정합 (VMS=JSONL append-only, Web=SQLite — 동일 저장소 아님) / #5 CSV BOM (.NET `Encoding.UTF8` 이미 BOM emit) / #1·#3b DB 공유 전제 (두 시스템 다른 DB 파일).
+
+---
+
+### Phase 16: SSO Migration — 단일 사용자 인증 흐름 (PR128~132)
+**목적**: ISO/IEC 25051 보안성 — VMS↔Web 사용자 인증 일원화 (선택 활성), 비상 로컬 폴백 유지.
+
+| PR | 내용 |
+|----|------|
+| **PR128** | `feat(sso): SSO 설계 문서 + WebAuthClient 인프라` — `docs/gs/SSO_Migration_Plan.md` + `WebAuthClient` (Success / InvalidCredentials / WebUnreachable / ServerError 4 분류) |
+| **PR129** | `feat(sso): UserService.AuthenticateViaWebAsync + WebSsoConfig` — `system_config.json:webSso` 로 활성 |
+| **PR130** | `feat(sso): 비상 local-admin 폴백 계정 + 권한 제한` — `User.IsLocalFallback` + `UserPermission.RestartWebService` + 제한 권한 + AuditLog 강제 |
+| **PR131** | `feat(sso): LoginViewModel SSO 라우팅` — 일반→Web / local-admin→로컬 + `SetupConfiguration.WebSso` |
+| **PR132** | `feat(sso): AppSetup Web SSO 카드 + 운영 가이드 §10` |
+
+**활성화**: AppSetup → "Web SSO 활성" 체크 → 저장 → VMS 재시작. 미활성시 기존 로컬 사번-PIN 인증 그대로.
+**책임 분리**: Admin/Manager → Web(master) / 키오스크 운영자 → VMS 로컬(오프라인 필수) / 비상 → local-admin(제한). 비밀번호 동기 금지.
+
+---
+
+### Phase 17: Option C(디폴트 시드 제거) + 매뉴얼 매트릭스 (PR133~137)
+**목적**: ISO/IEC 25051 보안성 — 출고 디폴트 자격증명 제거 (GS critical) + 매뉴얼-코드 일관성 회귀.
+
+| PR | 내용 |
+|----|------|
+| **PR133 (C1)** | `feat(security): VMS admin 디폴트 시드 제거 + SeedInitialAdmin 헬퍼` — 하드코딩 `admin/admin123` 삭제. local-admin 자동 시드만 유지. 기존 install 호환 (admin 존재시 skip) |
+| **PR134 (C3)** | `feat(security): AppSetup wizard PasswordBox + 운영 가이드 §11` — Page 2 "Initial Admin Passwords" 카드(PasswordBox 2종) + `VMS.AppSetup/Services/InitialAdminSeeder` (SQLite + BCrypt 직접) |
+| **PR135** | `docs(manual): User Manual §3.7 — 로컬 UserGrade 권한 매트릭스 추가` |
+| **PR136** | `fix(visionsetup): Tool 전환 / 폴더 네비 시 이전 결과·ROI 잔존 제거` (운영 UX) |
+| **PR137** | `test(docs): User Manual §3.7 ↔ UserGrade/Permission 매트릭스 회귀 44 테스트` |
+
+> **Option C 보안 의의 (GS critical)**: 출고 디폴트 자격증명을 완전히 제거. 신규 install 은 운영자가 강한 비밀번호(최소 8자, 12자+ 권장)를 명시 입력하지 않으면 admin 계정이 생성되지 않는다. 짝 작업 Web #35(C2) 는 `Initial:AdminPassword` 미설정시 부팅 차단. VMS local-admin·Web admin 비밀번호 별도 관리 (동기 금지).
 
 ---
 
@@ -249,20 +303,38 @@ GS 인증 작업을 13 phase 로 나눠 시간순으로 정리. 한 phase 안에
 | PR43 (Y) | 보안 | 보존 정책 dry-run CSV export |
 | **PR44** | **문서** | **MSI 빌드 가이드 v1.0** |
 | **PR119** | **보안** | **X-API-Key 헤더 송신 — BODA.VMS.Web PR #10 짝** |
+| PR122 | 신뢰성 | ONNX 로드 실패 OnnxLoadException wrap (외부검토 P1-#4) |
+| PR123 | 보안 | SecurityOptions 폴백 정책 명시화 (외부검토 P1-#3) |
+| PR124 | 데이터 | SQLite PRAGMA WAL 명시 (외부검토 P2) |
+| PR125 | 신뢰성 | Startup health check — WebServer 도달성 항목 (외부검토 P3a) |
+| PR126 | 테스트 | 보존 정책 프리셋 ↔ 매뉴얼 상수 회귀 (외부검토 P4) |
+| PR127 | 보안 | RELEASE RequireExplicit enforcement 활성 (외부검토 P5) |
+| **PR128** | **인증** | **SSO 설계 문서 + WebAuthClient 인프라** |
+| PR129 | 인증 | UserService.AuthenticateViaWebAsync + WebSsoConfig |
+| PR130 | 인증 | 비상 local-admin 폴백 + 권한 제한 |
+| PR131 | 인증 | LoginViewModel SSO 라우팅 + SetupConfiguration.WebSso |
+| PR132 | 인증 | AppSetup Web SSO 카드 + 가이드 §10 |
+| **PR133** | **보안 (Option C)** | **VMS admin 디폴트 시드 제거 + SeedInitialAdmin 헬퍼** |
+| **PR134** | **보안 (Option C)** | **AppSetup PasswordBox + InitialAdminSeeder + 가이드 §11** |
+| PR135 | 문서 | User Manual §3.7 로컬 UserGrade 권한 매트릭스 |
+| PR136 | UX | VisionSetup Tool 전환/폴더 네비 시 결과·ROI 잔존 제거 |
+| PR137 | 테스트 | User Manual §3.7 ↔ UserGrade/Permission 회귀 44 |
 
 ---
 
 ## 4. Web 솔루션과의 짝 작업 매핑
 
-VMS 데스크탑은 BODA.VMS.Web 과 SQLite DB 공유 + 5 머신 endpoint 로 통신. Web 측 GS 작업과 짝지어진 VMS 측 변경 사항:
+VMS 데스크탑은 BODA.VMS.Web 과 **별도 사용자 DB** 를 가지며 5 머신 endpoint + (선택) SSO 로 통신한다. 두 시스템은 같은 이름(`BodaVision.db`)이지만 다른 파일을 사용한다 — VMS=`%LocalAppData%\BODA VISION AI\`, Web=`C:\ProgramData\BODA\VMS\`. Web 측 GS 작업과 짝지어진 VMS 측 변경 사항:
 
 | Web PR | VMS PR | 짝 내용 |
 |--------|--------|---------|
 | Web #10 (X-API-Key feature flag) | **VMS PR119** | VMS 가 heartbeat / register / disconnect / inspection result / sensor 호출시 `X-API-Key` 헤더 자동 송신. `system_config.json` 의 `clientApiKey` 필드 |
 | Web #30 (익명 GET endpoint X-API-Key) | (VMS 변경 불필요) | VMS GET 호출에도 같은 `clientApiKey` 사용 — VMS 측 코드는 이미 `HttpClient.DefaultRequestHeaders` 사용해 자동 적용 |
 | Web #18~#19 (SignalR Hub Authorize) | (VMS 변경 불필요) | VMS 가 호출하는 `/hubs/vms-public` 은 익명 유지 — `/hubs/vms` 는 JWT 사용자만 |
+| Web 인증 endpoint (JWT) | **VMS PR128~132 (SSO)** | SSO 활성시 VMS 일반 사용자 인증을 `WebAuthClient` 로 Web 에 위임, 비상시 `local-admin` 로컬 폴백 |
+| **Web #35 (Option C2 — admin 시드 제거)** | **VMS PR133~134 (Option C1/C3)** | 양 시스템 모두 디폴트 admin 자동 시드 제거. Web=`Initial:AdminPassword` 미설정시 부팅 차단 / VMS=AppSetup PasswordBox 명시 입력 |
 
-**완전한 Web 측 작업 인덱스**: `D:\Project\BODA.VMS.Web\docs\GS_Certification_Baseline.md` (Critical 4 + High 4 + 잔여 7, 자동 테스트 384) 참조.
+**완전한 Web 측 작업 인덱스**: `D:\Project\BODA.VMS.Web\docs\GS_Certification_Baseline.md` (v1.1 — Critical 4 + High 4 + 잔여 7 + Option C, 자동 테스트 424) 참조.
 
 ---
 
@@ -270,13 +342,14 @@ VMS 데스크탑은 BODA.VMS.Web 과 SQLite DB 공유 + 5 머신 endpoint 로 �
 
 | 항목 | 값 |
 |------|-----|
-| 솔루션 빌드 버전 | v1.2.0 (PR44 시점) |
-| 보안 모드 | Development (개발) / Production (운영) 이중 — `system_config.json:securityMode` |
-| 감사 로그 | `%ProgramData%\BODA\VMS\Logs\audit\*.db` (SQLite, BCrypt 무결성 해시) |
-| 백업 경로 | 사용자 설정 (기본 `%ProgramData%\BODA\VMS\Backups\`) — 자동 백업 스케줄러 활성시 매일 |
-| 보존 정책 | 카테고리별 차등 (Authentication 365d / SecurityEvent 730d / Configuration 365d / WorkOrder 1095d 기본 프리셋) |
-| 자동 테스트 | VMS.Core.Tests + VMS.Tests + VMS.AppSetup.Tests + 통합 (PR7/8/12~15/18/23 누적) |
+| 솔루션 빌드 버전 | v1.2.0 (master @ 2026-06-10, PR1~137) |
+| 보안 모드 | env `BODA_VMS_SECURITY_MODE` (최우선) → `system_config.json:securityMode` → 폴백/throw. RELEASE = `RequireExplicit` (PR127), DEBUG = `WarnOnFallback`, QA 우회 = `BODA_VMS_RELAX_SECURITY=1` |
+| 감사 로그 | `%LocalAppData%\BODA VISION AI\audit\YYYY-MM-DD.jsonl` (JSONL append-only — 일별 회전. SQLite/BCrypt 아님; append-only 가 변조 방지) |
+| 백업 경로 | 사용자 설정 (기본 `%LocalAppData%\BODA VISION AI\backups\`) — 자동 백업 스케줄러 활성시 주기 백업 |
+| 보존 정책 | 9 카테고리 차등 (Security/UserManagement/Configuration 1095d · Authentication/Authorization/RecipeChange 730d · SequenceControl/Inspection 365d · System 90d 기본). `auditCategoryRetentionDays` 로 override |
+| 자동 테스트 | **677** (Core 339 + VMS 203 + VisionSetup 79 + PLC 48 + AppSetup 8, Diagnostic 제외) — CI windows-2025 |
 | Web 통신 보안 | X-API-Key 호환 모드 (Required=false 기본) — Web 서버에서 Required=true 토글시 강제 |
+| 사용자 인증 | 로컬 사번-PIN (기본) + (선택) Web SSO 위임 + 비상 local-admin 폴백 (PR128~132). 디폴트 admin 시드 제거 — 신규 install 명시 비밀번호 필수 (Option C, PR133~134) |
 
 ---
 
@@ -285,30 +358,42 @@ VMS 데스크탑은 BODA.VMS.Web 과 SQLite DB 공유 + 5 머신 endpoint 로 �
 GS 인증 신청에는 영향 없음. 운영 개선 / 차기 인증 갱신을 위한 후속 항목:
 
 1. **MSI 자동 서명 — CI 파이프라인 통합** — 현재 PR44 가이드는 수동 절차. EV 인증서 / HSM 도입 검토.
-2. **시작 헬스 체크 — 추가 진단 항목** — 디스크 여유 / 메모리 / 네트워크 latency 체크 추가.
-3. **백업 — 별도 디스크/네트워크 드라이브 자동 전송** — 현재는 같은 머신 보관 (단일 실패점).
-4. **감사 로그 SIEM 실시간 전송** — 가이드(PR25)는 작성, 실제 forwarder 통합은 운영 사이트별 적용 필요.
-5. **VMS.DeepLearning 보안 모드 정합성** — DL 추론 입력 (사용자 업로드 이미지) sanitization 표준 적용 확인.
-6. **VMS ↔ Web JWT 기반 사용자 SSO** — 현재 두 솔루션이 별도 사용자 DB. 운영자 단일 인증 흐름 도입 가능.
+2. **백업 — 별도 디스크/네트워크 드라이브 자동 전송** — 현재는 같은 머신 보관 (단일 실패점). (`DatabaseBackup:Destination` 별도 디스크 권장은 Web 측 적용)
+3. **감사 로그 SIEM 실시간 전송** — 가이드(PR25)는 작성, 실제 forwarder 통합은 운영 사이트별 적용 필요.
+4. **VMS.DeepLearning 보안 모드 정합성** — DL 추론 입력 (사용자 업로드 이미지) sanitization 표준 적용 확인.
+5. **OpenTelemetry 관측성 / 백업 복구 자동 검증** — CI/CD 성숙 후 도입 후보.
+6. **`LICENSE` 법무 검토** — 현재 DRAFT (`LICENSE:5` "REQUIRES LEGAL REVIEW BEFORE EXTERNAL DISTRIBUTION"). 외부 배포/제출 전 VASIM 법무 승인 필요 — `gs_distribution_policy §1` 에서 상태 관리.
+
+> **완료된 후속 항목** (v1.0 에서 후보였으나 처리됨): ~~VMS↔Web JWT 사용자 SSO~~ → Phase 16 (PR128~132) 구현 완료. ~~시작 헬스 체크 추가 진단~~ → PR125 WebServer 도달성 항목 추가. ~~매뉴얼-상수 일관성 확장~~ → PR126/137 회귀 테스트.
 
 ---
 
 ## 7. 참고 자료
 
 ### 본 솔루션 GS 문서
-- `docs/gs/gs_compliance_overview_v1.0.md` (PR21) — ISO/IEC 25051 항목별 매핑
+- `docs/gs/gs_compliance_overview_v1.0.md` (PR21, v1.1 개정) — ISO/IEC 25051 항목별 매핑 (§3.1 후속 PR / §6 인증 아키텍처)
 - `docs/gs/gs_msi_code_signing_guide.md` (PR24)
 - `docs/gs/gs_audit_siem_integration_guide.md` (PR25)
 - `docs/gs/gs_distribution_policy.md` (PR26)
-- `LICENSE`, `NOTICE` (PR26)
+- `docs/gs/SSO_Migration_Plan.md` (PR128) — VMS↔Web SSO 설계
+- `LICENSE`(DRAFT — 법무 검토 대기), `NOTICE` (PR26)
+- 운영 절차: `docs/msi_build_guide.md` v1.3 — §9 보안 모드 env / §10 Web SSO 활성 / §11 초기 비밀번호 입력
 
 ### 짝 솔루션 (BODA.VMS.Web)
-- `D:\Project\BODA.VMS.Web\docs\GS_Certification_Baseline.md` (v1.1) — Web 서버 GS 작업 (Critical 4 + High 4 + 잔여 7, 자동 테스트 384)
+- `D:\Project\BODA.VMS.Web\docs\GS_Certification_Baseline.md` (v1.1) — Web 서버 GS 작업 (Critical 4 + High 4 + 잔여 7 + Option C, 자동 테스트 424)
 
 ### 외부 기준
 - ISO/IEC 25010:2011 — Systems and software Quality Requirements and Evaluation (SQuaRE) — System and software quality models
 - ISO/IEC 25051:2014 — Requirements for quality of Ready to Use Software Product (RUSP)
 - TTA GS 인증 평가 기준 (한국정보통신기술협회)
+
+---
+
+## 8. 변경 이력
+| 버전 | 날짜 | 변경 |
+|------|------|------|
+| 1.0 | 2026-06-04 | 초안 — Phase 1~14 (PR1~44 + PR119), 45 PR |
+| 1.1 | 2026-06-10 | Phase 15~17 추가 (외부검토 PR122~127 / SSO PR128~132 / Option C PR133~134 / 매뉴얼 매트릭스 PR135~137), 58 PR. §5 스냅샷 정정 (감사 로그 JSONL 경로·9 카테고리 보존·테스트 677). §4 "DB 공유" → "별도 DB" 정정 + Web #35 짝 추가. §6 후속 항목에서 완료된 SSO 제거 + LICENSE 법무 검토 명시 |
 
 ---
 
