@@ -57,6 +57,13 @@ namespace VMS.VisionSetup
             // 도구 위치 변경 시 연결선 업데이트를 위한 이벤트 등록
             vm.DroppedTools.CollectionChanged += DroppedTools_CollectionChanged;
 
+            // 홍보 데모: 3D 카메라 턴테이블 회전 제어 (View 전용 동작)
+            WeakReferenceMessenger.Default.Register<VMS.VisionSetup.Demo.Demo3DOrbitMessage>(this, (r, m) =>
+            {
+                if (m.Start) PointCanvasControl.StartAutoOrbit();
+                else PointCanvasControl.StopAutoOrbit();
+            });
+
             // ROI 동기화 이벤트 구독 via WeakReferenceMessenger
             WeakReferenceMessenger.Default.Register<RequestShowToolROIMessage>(this, (r, m) =>
             {

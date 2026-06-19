@@ -108,3 +108,21 @@ VMS.DeepLearning/scripts/labels/
 VMS.DeepLearning/scripts/train/
 VMS.DeepLearning/scripts/val/
 VMS.DeepLearning/scripts/data.yaml
+# ONNX external weight data (별도 .data 파일은 *.onnx 패턴에 안 걸림)
+*.onnx.data
+
+## Node 의존성 (캡처 자동화 tools/webcap)
+node_modules/
+
+## 홍보영상 생성 도구/중간 산출물 (재생성 가능 — tools/*.py 로 빌드)
+tools/ffmpeg/
+docs/promo/*.mp4
+docs/promo/web/
+!docs/promo/VMS_Promo_Final.mp4
+
+## Claude Code 런타임 락
+.claude/scheduled_tasks.lock
+
+## 임시 테스트 출력
+docs/DRepoVMSval_test_output.txt
+docs/D*val_test_output.txt

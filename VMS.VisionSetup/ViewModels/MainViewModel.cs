@@ -98,6 +98,9 @@ namespace VMS.VisionSetup.ViewModels
         private CancellationTokenSource? _liveReceiveCts;
         private string[] _imageFolderFiles = Array.Empty<string>();
         private int _currentImageIndex = -1;
+
+        // 홍보 데모 자동 시연 오케스트레이터
+        private readonly VMS.VisionSetup.Demo.DemoOrchestrator _demoOrchestrator;
         #endregion
 
         #region Properties
@@ -307,6 +310,27 @@ namespace VMS.VisionSetup.ViewModels
 
         [ObservableProperty]
         private float _pointCloudYMax = 60f;
+
+        // ── 홍보 데모(전시회 부스) 모드 ──
+        // 중앙 이미지 탭 인덱스 (0=2D, 1=Depth Map, 2=Point Cloud)
+        [ObservableProperty]
+        private int _centerTabIndex;
+
+        [ObservableProperty]
+        private bool _isDemoRunning;
+
+        // 부스=루프 재생, 녹화=1회 재생
+        [ObservableProperty]
+        private bool _demoLoop = true;
+
+        [ObservableProperty]
+        private string _demoSceneTitle = "";
+
+        [ObservableProperty]
+        private string _demoCaption = "";
+
+        [ObservableProperty]
+        private string _demoSubCaption = "";
 
         // Height Slicing 저장 값
         private float? _savedHeightBaseline;
@@ -562,6 +586,9 @@ namespace VMS.VisionSetup.ViewModels
         public RelayCommand StopLiveReceiveCommand { get; }
         public RelayCommand SavePointCloudCommand { get; }
         public RelayCommand LoadPointCloudCommand { get; }
+        public RelayCommand StartDemoCommand { get; }
+        public RelayCommand StartDemoOnceCommand { get; }
+        public RelayCommand StopDemoCommand { get; }
         public RelayCommand ConnectRobotCommand { get; }
         public RelayCommand DisconnectRobotCommand { get; }
         public RelayCommand MultiViewCaptureCommand { get; }
@@ -638,6 +665,13 @@ namespace VMS.VisionSetup.ViewModels
             StopLiveReceiveCommand = new RelayCommand(StopLiveReceive, () => IsReceivingFromVms);
             SavePointCloudCommand = new RelayCommand(SavePointCloud, () => CurrentPointCloud != null);
             LoadPointCloudCommand = new RelayCommand(LoadPointCloud);
+
+            // 홍보 데모 모드
+            _demoOrchestrator = new VMS.VisionSetup.Demo.DemoOrchestrator(this);
+            StartDemoCommand = new RelayCommand(async () => await _demoOrchestrator.RunAsync(), () => !IsDemoRunning);
+            // 녹화 전용: Loop 무시하고 1회만 재생
+            StartDemoOnceCommand = new RelayCommand(async () => { DemoLoop = false; await _demoOrchestrator.RunAsync(); }, () => !IsDemoRunning);
+            StopDemoCommand = new RelayCommand(() => _demoOrchestrator.Stop(), () => IsDemoRunning);
             SaveHeightSlicingCommand = new RelayCommand(SaveHeightSlicing, () => CurrentPointCloud != null);
             ClearHeightSlicingCommand = new RelayCommand(ClearHeightSlicing, () => IsHeightSlicingSaved);
 
@@ -964,6 +998,31 @@ namespace VMS.VisionSetup.ViewModels
             _visionService.AddTool(visionTool);
 
             return newTool;
+        }
+
+        // ── 홍보 데모 지원용 public 진입점 (DemoOrchestrator 에서 호출) ──
+
+        /// <summary>데모용: 팔레트 ToolType 으로 도구를 워크스페이스에 추가하고 선택한다.</summary>
+        public ToolItem? AddDemoTool(string toolType, double x, double y)
+        {
+            var source = ToolTree.SelectMany(c => c.Tools).FirstOrDefault(t => t.ToolType == toolType);
+            if (source == null) return null;
+            var item = CreateDroppedTool(source, x, y);
+            if (item != null) SelectedTool = item;
+            return item;
+        }
+
+        /// <summary>데모용: 워크스페이스의 모든 도구/연결을 초기화한다.</summary>
+        public void DemoClearWorkspace() => ClearAllTools();
+
+        /// <summary>데모용: 2D 캔버스를 원본 이미지 표시 모드로 전환한다.</summary>
+        public void DemoShowOriginalImage() => SelectedDisplayMode = ImageDisplayMode.OriginalImage;
+
+        partial void OnIsDemoRunningChanged(bool value)
+        {
+            StartDemoCommand?.NotifyCanExecuteChanged();
+            StartDemoOnceCommand?.NotifyCanExecuteChanged();
+            StopDemoCommand?.NotifyCanExecuteChanged();
         }
 
         /// <summary>

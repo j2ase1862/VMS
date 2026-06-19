@@ -28,6 +28,10 @@
         <!-- 폴더 이미지 네비게이션: ←/→ 키로 이전/다음 이미지 -->
         <KeyBinding Key="Left"  Command="{Binding PreviousImageCommand}"/>
         <KeyBinding Key="Right" Command="{Binding NextImageCommand}"/>
+        <!-- 홍보 데모: F9 시작(루프 토글 따름) / F8 1회 재생(녹화용) / Esc 정지 -->
+        <KeyBinding Key="F9"  Command="{Binding StartDemoCommand}"/>
+        <KeyBinding Key="F8"  Command="{Binding StartDemoOnceCommand}"/>
+        <KeyBinding Key="Escape" Command="{Binding StopDemoCommand}"/>
     </Window.InputBindings>
 
     <Window.Resources>
@@ -278,6 +282,23 @@
                                           Width="13" Height="13" Stretch="Uniform"/>
                                 </MenuItem.Icon>
                             </MenuItem>
+                        </MenuItem>
+
+                        <!-- Demo (홍보 영상) -->
+                        <MenuItem Header="De_mo">
+                            <MenuItem Header="▶  Start Promo Demo" Command="{Binding StartDemoCommand}" InputGestureText="F9">
+                                <MenuItem.Icon>
+                                    <Path Data="M4,2 L16,10 L4,18 Z" Fill="#00ADB5"
+                                          Width="11" Height="12" Stretch="Uniform"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="■  Stop Demo" Command="{Binding StopDemoCommand}" InputGestureText="Esc">
+                                <MenuItem.Icon>
+                                    <Rectangle Width="10" Height="10" Fill="#E57373"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <Separator/>
+                            <MenuItem Header="Loop Playback (부스용)" IsCheckable="True" IsChecked="{Binding DemoLoop}"/>
                         </MenuItem>
 
                         <!-- Recipe -->
@@ -1102,7 +1123,8 @@
 
                 <!-- Image Display Area - TabControl with 2D/3D views -->
                 <Border Grid.Column="2" Background="{StaticResource BrushBgWindow}" Margin="5">
-                    <TabControl Background="Transparent" BorderThickness="0" Padding="0">
+                    <TabControl Background="Transparent" BorderThickness="0" Padding="0"
+                                SelectedIndex="{Binding CenterTabIndex, Mode=TwoWay}">
                         <TabControl.Resources>
                             <Style TargetType="TabItem">
                                 <Setter Property="Background" Value="#2D2D30"/>
@@ -1387,5 +1409,38 @@
                 </StackPanel>
             </Grid>
         </Border>
+
+        <!-- ═══ 홍보 데모 자막 오버레이 (IsDemoRunning 일 때만 표시, 클릭 무시) ═══ -->
+        <Grid Grid.Row="0" Grid.RowSpan="4" IsHitTestVisible="False" Panel.ZIndex="1000"
+              Visibility="{Binding IsDemoRunning, Converter={StaticResource BoolToVisibility}}">
+
+            <!-- 상단 브랜드 / LIVE DEMO 배지 -->
+            <Border HorizontalAlignment="Left" VerticalAlignment="Top" Margin="28,22"
+                    Background="#CC00ADB5" CornerRadius="4" Padding="12,5">
+                <StackPanel Orientation="Horizontal">
+                    <Ellipse Width="9" Height="9" Fill="#FF4D4D" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock Text="VMS · LIVE DEMO" Foreground="White" FontWeight="Bold" FontSize="13"/>
+                </StackPanel>
+            </Border>
+
+            <!-- 하단 로워서드 자막 -->
+            <Border VerticalAlignment="Bottom" Height="170">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#00000000" Offset="0"/>
+                        <GradientStop Color="#E6000000" Offset="0.5"/>
+                        <GradientStop Color="#F5000000" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.Background>
+                <StackPanel VerticalAlignment="Bottom" Margin="52,0,52,40">
+                    <TextBlock Text="{Binding DemoSceneTitle}" Foreground="#00D8E0"
+                               FontSize="15" FontWeight="Bold" Margin="0,0,0,6"/>
+                    <TextBlock Text="{Binding DemoCaption}" Foreground="White"
+                               FontSize="30" FontWeight="Bold" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding DemoSubCaption}" Foreground="#B8C6CC"
+                               FontSize="15" Margin="0,8,0,0"/>
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </Window>

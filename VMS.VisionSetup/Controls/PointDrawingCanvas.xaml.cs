@@ -248,5 +248,15 @@ namespace VMS.VisionSetup.Controls
         }
 
         #endregion
+
+        #region Auto-orbit (promotional demo)
+
+        /// <summary>Start turntable auto-rotation of the 3D camera (promotional demo).</summary>
+        public void StartAutoOrbit(double degreesPerSecond = 24.0) => InnerViewer.StartAutoOrbit(degreesPerSecond);
+
+        /// <summary>Stop turntable auto-rotation.</summary>
+        public void StopAutoOrbit() => InnerViewer.StopAutoOrbit();
+
+        #endregion
     }
 }

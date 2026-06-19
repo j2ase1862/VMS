@@ -647,6 +647,51 @@ namespace VMS.Core.Controls
             }
         }
 
+        // ── Turntable auto-orbit (promotional demo) ──
+        private System.Windows.Threading.DispatcherTimer? _orbitTimer;
+
+        /// <summary>
+        /// Rotate the camera around its look-at target (turntable) by the given yaw degrees.
+        /// </summary>
+        public void OrbitBy(double yawDeg)
+        {
+            var pos = MainCamera.Position;
+            var look = MainCamera.LookDirection;
+            var up = MainCamera.UpDirection;
+            var target = pos + look;
+            var offset = pos - target;
+
+            var rot = new AxisAngleRotation3D(up, yawDeg);
+            var transform = new RotateTransform3D(rot);
+            offset = transform.Transform(offset);
+
+            MainCamera.Position = target + offset;
+            MainCamera.LookDirection = target - MainCamera.Position;
+        }
+
+        /// <summary>
+        /// Start a continuous turntable rotation of the camera (for the promotional demo).
+        /// </summary>
+        public void StartAutoOrbit(double degreesPerSecond = 24.0)
+        {
+            StopAutoOrbit();
+            const double fps = 60.0;
+            double perTick = degreesPerSecond / fps;
+            _orbitTimer = new System.Windows.Threading.DispatcherTimer
+            {
+                Interval = System.TimeSpan.FromMilliseconds(1000.0 / fps)
+            };
+            _orbitTimer.Tick += (_, _) => OrbitBy(perTick);
+            _orbitTimer.Start();
+        }
+
+        /// <summary>Stop turntable auto-rotation.</summary>
+        public void StopAutoOrbit()
+        {
+            _orbitTimer?.Stop();
+            _orbitTimer = null;
+        }
+
         /// <summary>
         /// Get the current data Z-axis (depth/height) bounds.
         /// </summary>
