@@ -119,6 +119,11 @@ tools/ffmpeg/
 docs/promo/*.mp4
 docs/promo/web/
 !docs/promo/VMS_Promo_Final.mp4
+# 중간 버전 보존 (홍보영상 변천 기록)
+!docs/promo/vms_promo_v2.mp4
+!docs/promo/vms_promo_v3.mp4
+!docs/promo/vms_promo_v4.mp4
+!docs/promo/vms_promo_v5.mp4
 
 ## Claude Code 런타임 락
 .claude/scheduled_tasks.lock
