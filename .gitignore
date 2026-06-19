@@ -116,8 +116,7 @@ node_modules/
 
 ## 홍보영상 생성 도구 (재생성 가능 — tools/*.py 로 빌드)
 tools/ffmpeg/
-# docs/promo/*.mp4 (최종본/중간본/컴포넌트 클립 전부 저장소 보존)
-docs/promo/web/
+# docs/promo/*.mp4 + docs/promo/web/*.png 전부 저장소 보존
 
 ## Claude Code 런타임 락
 .claude/scheduled_tasks.lock
