@@ -114,6 +114,7 @@
 
                 <!-- Page 2: Application Settings -->
                 <Grid Visibility="{Binding CurrentPage, Converter={StaticResource PageConverter}, ConverterParameter=2}">
+                  <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel MaxWidth="500" VerticalAlignment="Top">
                         <TextBlock Text="Application Name" Style="{StaticResource LabelStyle}"/>
                         <TextBox Text="{Binding ApplicationName, UpdateSourceTrigger=PropertyChanged}"
@@ -208,6 +209,7 @@
                             </StackPanel>
                         </Border>
                     </StackPanel>
+                  </ScrollViewer>
                 </Grid>
 
                 <!-- Page 3: Camera Configuration -->
