@@ -590,6 +590,65 @@ namespace VMS
             };
             mainWindow.Show();
 
+#if DEBUG
+            // 매뉴얼/문서용 다이얼로그 전체 캡처 — "--capture-dialogs [폴더]" 인자에서만.
+            // Release(배포) 빌드엔 #if DEBUG 로 이 블록과 Capture.ControlCapturer 가 컴파일되지 않는다.
+            {
+                static bool TryGetDir(string[] a, string flag, out string dir)
+                {
+                    dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "VMS.Capture");
+                    for (int i = 0; i < a.Length; i++)
+                    {
+                        if (!string.Equals(a[i], flag, StringComparison.OrdinalIgnoreCase)) continue;
+                        if (i + 1 < a.Length && !a[i + 1].StartsWith("--")) dir = a[i + 1];
+                        return true;
+                    }
+                    return false;
+                }
+                if (TryGetDir(e.Args, "--capture-dialogs", out string capDir))
+                {
+                    var logp = System.IO.Path.Combine(capDir, "_capture.log");
+                    _ = mainWindow.Dispatcher.BeginInvoke(
+                        System.Windows.Threading.DispatcherPriority.ApplicationIdle,
+                        new Action(async () =>
+                        {
+                            try
+                            {
+                                var wins = new System.Collections.Generic.List<(string, System.Windows.Window)>();
+                                void Add(string n, Func<System.Windows.Window> f)
+                                {
+                                    try { wins.Add((n, f())); }
+                                    catch (Exception ex)
+                                    {
+                                        System.IO.Directory.CreateDirectory(capDir);
+                                        System.IO.File.AppendAllText(logp, n + " ctor: " + ex + "\n");
+                                    }
+                                }
+                                if (workOrderClient != null)
+                                    Add("WorkOrders", () => new VMS.VisionSetup.Views.WorkOrderListWindow(workOrderClient));
+                                if (parameterSyncService != null)
+                                    Add("SyncParameters", () => new Views.ParameterSyncDialog(parameterSyncService));
+                                Add("UserManagement", () => new Views.UserManagementWindow());
+                                Add("AuditLog", () => new Views.AuditLogViewerWindow());
+                                Add("HealthCheck", () => new Views.HealthCheckWindow());
+                                Add("AutoBackup", () => new Views.AutoBackupSettingsWindow());
+                                Add("Retention", () => new Views.RetentionSettingsWindow());
+                                Add("SupportPackage", () => new Views.SupportPackageWindow());
+                                Add("ImageSave", () => new Views.ImageSaveSettingsWindow());
+                                Add("BackupRestore", () => new Views.BackupRestoreWindow());
+                                await Capture.ControlCapturer.RunWindowsFullAsync(wins, capDir, mainWindow);
+                            }
+                            catch (Exception ex)
+                            {
+                                System.IO.Directory.CreateDirectory(capDir);
+                                System.IO.File.AppendAllText(logp, "run: " + ex + "\n");
+                            }
+                            finally { Shutdown(); }
+                        }));
+                }
+            }
+#endif
+
             // 업데이트 체크 — best-effort fire-and-forget. UI 차단 금지. 실패해도 silent.
             // 결과는 MainViewModel.LatestUpdate 에 저장되어 사이드 패널 배지가 자동 노출.
             _ = mainViewModel.CheckForUpdatesSilentAsync();
