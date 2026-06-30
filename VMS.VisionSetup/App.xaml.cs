@@ -172,13 +172,15 @@ namespace VMS.VisionSetup
 
 #if DEBUG
             // 매뉴얼/문서용 캡처 — Release(배포) 빌드에는 #if DEBUG 로 컴파일되지 않는다.
-            //  "--capture-controls [폴더]"  : 컨트롤 개별 PNG (Expander 펼침 + 탭 순회 포함)
-            //  "--capture-fullpage [폴더]"  : MainView 전체 화면 1장
+            //  "--capture-controls [폴더]"   : 컨트롤 개별 PNG (Expander 펼침 + 탭 순회 포함)
+            //  "--capture-fullpage [폴더]"   : MainView 전체 화면 1장
+            //  "--capture-toolpanels [폴더]" : 전 비전 툴의 우측 Tool Settings 파라미터 패널
             bool isControls = TryGetCaptureOutputDir(e.Args, "--capture-controls", out string captureDir);
             bool isFullPage = TryGetCaptureOutputDir(e.Args, "--capture-fullpage", out string fullPageDir);
-            if (isControls || isFullPage)
+            bool isToolPanels = TryGetCaptureOutputDir(e.Args, "--capture-toolpanels", out string toolPanelsDir);
+            if (isControls || isFullPage || isToolPanels)
             {
-                string dir = isControls ? captureDir : fullPageDir;
+                string dir = isControls ? captureDir : isFullPage ? fullPageDir : toolPanelsDir;
                 var dbgLog = Path.Combine(dir, "_capture.log");
                 mainView.Dispatcher.BeginInvoke(
                     System.Windows.Threading.DispatcherPriority.ApplicationIdle,
@@ -190,6 +192,8 @@ namespace VMS.VisionSetup
                                 await Capture.ControlCapturer.RunAsync(mainView, captureDir);
                             if (isFullPage)
                                 await Capture.ControlCapturer.RunFullPageAsync(mainView, fullPageDir);
+                            if (isToolPanels)
+                                await Capture.ControlCapturer.RunToolPanelsAsync(mainView, toolPanelsDir);
                         }
                         catch (Exception ex)
                         {

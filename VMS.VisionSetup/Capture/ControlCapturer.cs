@@ -174,6 +174,121 @@ namespace VMS.VisionSetup.Capture
             encoder.Save(fs);
         }
 
+        /// <summary>
+        /// 모든 비전 툴의 우측 Tool Settings 파라미터 패널을 한 장씩 캡처한다.
+        /// 각 ToolType 으로 VisionTool 을 만들어 MainViewModel.SelectedTool 에 할당하면
+        /// 우측 ToolSettingsControl(ScrollViewer>StackPanel) 이 해당 툴 패널로 렌더된다.
+        /// 스크롤에 가려지는 부분까지 StackPanel 을 무한 높이로 측정해 전체를 담는다.
+        /// </summary>
+        public static async Task RunToolPanelsAsync(Window window, string outputDir)
+        {
+            Directory.CreateDirectory(outputDir);
+            if (window.DataContext is not ViewModels.MainViewModel vm) return;
+
+            double w = window.Width;
+            double h = window.Height;
+            if (double.IsNaN(w) || w < 1) w = 1920;
+            if (double.IsNaN(h) || h < 1) h = 1080;
+            var size = new Size(w, h);
+
+            Brush backdrop = window.Background ?? new SolidColorBrush(Color.FromRgb(0x1E, 0x1E, 0x2E));
+            if (backdrop.CanFreeze) backdrop.Freeze();
+
+            await LayoutPass(window, size);
+
+            var settingsHost = window.FindName("ToolSettingsControl") as FrameworkElement;
+            if (settingsHost == null) return;
+
+            var manifest = new List<string>();
+            int seq = 0;
+            foreach (var cat in vm.ToolTree)
+            {
+                foreach (var ti in cat.Tools)
+                {
+                    var vt = Services.VisionService.CreateTool(ti.ToolType);
+                    if (vt == null)
+                    {
+                        manifest.Add($"| {ti.Name} | {ti.ToolType} | (CreateTool null) |");
+                        continue;
+                    }
+                    var sel = new Models.ToolItem { Name = ti.Name, ToolType = ti.ToolType, VisionTool = vt };
+                    try { vm.SelectedTool = sel; }
+                    catch { manifest.Add($"| {ti.Name} | {ti.ToolType} | (select 예외) |"); continue; }
+
+                    await LayoutPass(window, size);
+                    await LayoutPass(window, size);   // 템플릿 셀렉터 렌더 안정화
+
+                    var sp = FindSettingsStackPanel(settingsHost);
+                    seq++;
+                    string file = $"{seq:D2}_{Sanitize(ti.Name)}.png";
+                    bool ok = sp != null && RenderFullElement(sp, backdrop, Path.Combine(outputDir, file));
+                    manifest.Add($"| {ti.Name} | {ti.ToolType} | {(ok ? file : "(패널 없음)")} |");
+                }
+            }
+            try { vm.SelectedTool = null; } catch { }
+
+            var sb = new StringBuilder();
+            sb.AppendLine("# VMS.VisionSetup 툴 파라미터 패널 캡처 인덱스");
+            sb.AppendLine();
+            sb.AppendLine($"출력 폴더: {outputDir}");
+            sb.AppendLine();
+            sb.AppendLine("| Tool | ToolType | File |");
+            sb.AppendLine("|------|----------|------|");
+            foreach (var line in manifest) sb.AppendLine(line);
+            File.WriteAllText(Path.Combine(outputDir, "INDEX.md"), sb.ToString(), Encoding.UTF8);
+        }
+
+        /// <summary>ToolSettingsControl 내부의 설정 콘텐츠 StackPanel(ScrollViewer 의 Content)을 찾는다.</summary>
+        private static StackPanel? FindSettingsStackPanel(DependencyObject host)
+        {
+            int n = VisualTreeHelper.GetChildrenCount(host);
+            for (int i = 0; i < n; i++)
+            {
+                var child = VisualTreeHelper.GetChild(host, i);
+                if (child is ScrollViewer sv && sv.Content is StackPanel sp)
+                    return sp;
+                var found = FindSettingsStackPanel(child);
+                if (found != null) return found;
+            }
+            return null;
+        }
+
+        /// <summary>요소를 무한 높이로 강제 측정해 스크롤에 가려지는 부분까지 full 로 렌더(패딩 포함).</summary>
+        private static bool RenderFullElement(FrameworkElement element, Brush backdrop, string path)
+        {
+            try
+            {
+                double w = element.ActualWidth > 1 ? element.ActualWidth : 300;
+                element.Measure(new Size(w, double.PositiveInfinity));
+                double h = element.DesiredSize.Height;
+                if (h < 1) h = element.ActualHeight;
+                element.Arrange(new Rect(new Point(0, 0), new Size(w, h)));
+                element.UpdateLayout();
+
+                const double pad = 12;
+                double tw = w + 2 * pad, th = h + 2 * pad;
+                var dv = new DrawingVisual();
+                using (var ctx = dv.RenderOpen())
+                {
+                    ctx.DrawRectangle(backdrop, null, new Rect(0, 0, tw, th));
+                    var vb = new VisualBrush(element) { Stretch = Stretch.None, AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Top };
+                    ctx.DrawRectangle(vb, null, new Rect(pad, pad, w, h));
+                }
+                var rtb = new RenderTargetBitmap(
+                    (int)(tw * Scale), (int)(th * Scale), 96 * Scale, 96 * Scale, PixelFormats.Pbgra32);
+                rtb.Render(dv);
+                var encoder = new PngBitmapEncoder();
+                encoder.Frames.Add(BitmapFrame.Create(rtb));
+                using var fs = File.Create(path);
+                encoder.Save(fs);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         private static async Task LayoutPass(Window window, Size size)
         {
             for (int pass = 0; pass < 2; pass++)
