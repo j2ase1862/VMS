@@ -175,12 +175,15 @@ namespace VMS.VisionSetup
             //  "--capture-controls [폴더]"   : 컨트롤 개별 PNG (Expander 펼침 + 탭 순회 포함)
             //  "--capture-fullpage [폴더]"   : MainView 전체 화면 1장
             //  "--capture-toolpanels [폴더]" : 전 비전 툴의 우측 Tool Settings 파라미터 패널
+            //  "--capture-dialogs [폴더]"    : VisionSetup 다이얼로그 전체 캡처(Sequence/BatchTest …)
             bool isControls = TryGetCaptureOutputDir(e.Args, "--capture-controls", out string captureDir);
             bool isFullPage = TryGetCaptureOutputDir(e.Args, "--capture-fullpage", out string fullPageDir);
             bool isToolPanels = TryGetCaptureOutputDir(e.Args, "--capture-toolpanels", out string toolPanelsDir);
-            if (isControls || isFullPage || isToolPanels)
+            bool isDialogs = TryGetCaptureOutputDir(e.Args, "--capture-dialogs", out string dialogsDir);
+            if (isControls || isFullPage || isToolPanels || isDialogs)
             {
-                string dir = isControls ? captureDir : isFullPage ? fullPageDir : toolPanelsDir;
+                string dir = isControls ? captureDir : isFullPage ? fullPageDir
+                           : isToolPanels ? toolPanelsDir : dialogsDir;
                 var dbgLog = Path.Combine(dir, "_capture.log");
                 mainView.Dispatcher.BeginInvoke(
                     System.Windows.Threading.DispatcherPriority.ApplicationIdle,
@@ -194,6 +197,24 @@ namespace VMS.VisionSetup
                                 await Capture.ControlCapturer.RunFullPageAsync(mainView, fullPageDir);
                             if (isToolPanels)
                                 await Capture.ControlCapturer.RunToolPanelsAsync(mainView, toolPanelsDir);
+                            if (isDialogs)
+                            {
+                                var wins = new System.Collections.Generic.List<(string, Window)>();
+                                try { wins.Add(("Sequence", new Views.Sequence.SequenceEditorWindow(
+                                    recipeService, cameraService, dialogService, SequenceEditorContext.ExtraDevices))); }
+                                catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "Sequence ctor: " + ex + "\n"); }
+                                try { wins.Add(("BatchTest", new Views.BatchTest.BatchTestWindow(
+                                    visionService, recipeService, cameraService))); }
+                                catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "BatchTest ctor: " + ex + "\n"); }
+                                try { wins.Add(("CameraManager", new Views.Camera.CameraManagerWindow(
+                                    cameraService, dialogService))); }
+                                catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "CameraManager ctor: " + ex + "\n"); }
+                                try { wins.Add(("InferenceSettings", new Views.OnnxSettingsDialog())); }
+                                catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "InferenceSettings ctor: " + ex + "\n"); }
+                                try { wins.Add(("SynthData", new Views.SynthData.SynthDataWindow())); }
+                                catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "SynthData ctor: " + ex + "\n"); }
+                                await Capture.ControlCapturer.RunWindowsFullAsync(wins, dialogsDir, mainView);
+                            }
                         }
                         catch (Exception ex)
                         {

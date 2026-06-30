@@ -289,6 +289,66 @@ namespace VMS.VisionSetup.Capture
             }
         }
 
+        /// <summary>
+        /// 다이얼로그 창들을 각각 전체(잘림 없이) 캡처한다. 화면 밖으로 Show 하여 레이아웃을
+        /// 확정한 뒤 창 루트를 통째로 렌더하고 닫는다. (수동 영역 캡처가 다이얼로그보다 작게
+        /// 잡혀 우/하단이 잘리던 문제를, 창 공칭 크기 전체 렌더로 해결.)
+        /// </summary>
+        public static async Task RunWindowsFullAsync(
+            System.Collections.Generic.IReadOnlyList<(string name, Window win)> windows,
+            string outputDir, Window owner)
+        {
+            Directory.CreateDirectory(outputDir);
+            foreach (var (name, win) in windows)
+            {
+                try
+                {
+                    win.Owner = owner;
+                    win.ShowInTaskbar = false;
+                    win.WindowStartupLocation = WindowStartupLocation.Manual;
+                    win.Left = -32000; win.Top = -32000;   // 사용자 화면에 깜빡이지 않게 오프스크린
+                    win.Show();
+
+                    double w = double.IsNaN(win.Width) || win.Width < 1 ? 1280 : win.Width;
+                    double h = double.IsNaN(win.Height) || win.Height < 1 ? 800 : win.Height;
+                    var size = new Size(w, h);
+                    for (int i = 0; i < 3; i++)
+                    {
+                        win.Measure(size);
+                        win.Arrange(new Rect(new Point(0, 0), size));
+                        win.UpdateLayout();
+                        await win.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Background);
+                    }
+
+                    var root = win.Content as FrameworkElement ?? (FrameworkElement)win;
+                    double rw = root.ActualWidth > 1 ? root.ActualWidth : w;
+                    double rh = root.ActualHeight > 1 ? root.ActualHeight : h;
+                    Brush backdrop = win.Background ?? new SolidColorBrush(Color.FromRgb(0x1E, 0x1E, 0x2E));
+                    var bounds = new Rect(new Point(0, 0), new Size(rw, rh));
+
+                    var dv = new DrawingVisual();
+                    using (var ctx = dv.RenderOpen())
+                    {
+                        ctx.DrawRectangle(backdrop, null, bounds);
+                        ctx.DrawRectangle(new VisualBrush(root)
+                        { Stretch = Stretch.None, AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Top },
+                            null, bounds);
+                    }
+                    var rtb = new RenderTargetBitmap(
+                        (int)(rw * Scale), (int)(rh * Scale), 96 * Scale, 96 * Scale, PixelFormats.Pbgra32);
+                    rtb.Render(dv);
+                    var enc = new PngBitmapEncoder();
+                    enc.Frames.Add(BitmapFrame.Create(rtb));
+                    using (var fs = File.Create(Path.Combine(outputDir, name + ".png"))) enc.Save(fs);
+                }
+                catch (System.Exception ex)
+                {
+                    File.AppendAllText(Path.Combine(outputDir, "_dialog.log"), name + ": " + ex + "\n");
+                }
+                finally { try { win.Close(); } catch { } }
+            }
+        }
+
         private static async Task LayoutPass(Window window, Size size)
         {
             for (int pass = 0; pass < 2; pass++)
