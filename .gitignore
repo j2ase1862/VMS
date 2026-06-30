@@ -108,3 +108,6 @@ VMS.DeepLearning/scripts/labels/
 VMS.DeepLearning/scripts/train/
 VMS.DeepLearning/scripts/val/
 VMS.DeepLearning/scripts/data.yaml
+
+## 매뉴얼용 컨트롤 코드 캡처 산출물 (DEBUG ControlCapturer 로 재생성 가능 — 저장소 비대화 방지)
+docs/control-capture/
