@@ -199,19 +199,23 @@ namespace VMS.VisionSetup
                                 await Capture.ControlCapturer.RunToolPanelsAsync(mainView, toolPanelsDir);
                             if (isDialogs)
                             {
-                                var wins = new System.Collections.Generic.List<(string, Window)>();
+                                // fitScroll=true: 내부 ScrollViewer 콘텐츠에 맞춰 창을 키워 전체 스크롤 담기.
+                                var wins = new System.Collections.Generic.List<(string, Window, bool)>();
                                 try { wins.Add(("Sequence", new Views.Sequence.SequenceEditorWindow(
-                                    recipeService, cameraService, dialogService, SequenceEditorContext.ExtraDevices))); }
+                                    recipeService, cameraService, dialogService, SequenceEditorContext.ExtraDevices), false)); }
                                 catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "Sequence ctor: " + ex + "\n"); }
                                 try { wins.Add(("BatchTest", new Views.BatchTest.BatchTestWindow(
-                                    visionService, recipeService, cameraService))); }
+                                    visionService, recipeService, cameraService), false)); }
                                 catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "BatchTest ctor: " + ex + "\n"); }
                                 try { wins.Add(("CameraManager", new Views.Camera.CameraManagerWindow(
-                                    cameraService, dialogService))); }
+                                    cameraService, dialogService), false)); }
                                 catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "CameraManager ctor: " + ex + "\n"); }
-                                try { wins.Add(("InferenceSettings", new Views.OnnxSettingsDialog())); }
+                                try { wins.Add(("RecipeManager", new Views.Recipe.RecipeManagerWindow(
+                                    recipeService, cameraService, dialogService, parameterSyncService), true)); }
+                                catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "RecipeManager ctor: " + ex + "\n"); }
+                                try { wins.Add(("InferenceSettings", new Views.OnnxSettingsDialog(), false)); }
                                 catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "InferenceSettings ctor: " + ex + "\n"); }
-                                try { wins.Add(("SynthData", new Views.SynthData.SynthDataWindow())); }
+                                try { wins.Add(("SynthData", new Views.SynthData.SynthDataWindow(), true)); }
                                 catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "SynthData ctor: " + ex + "\n"); }
                                 await Capture.ControlCapturer.RunWindowsFullAsync(wins, dialogsDir, mainView);
                             }

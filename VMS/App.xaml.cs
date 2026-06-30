@@ -614,10 +614,14 @@ namespace VMS
                         {
                             try
                             {
-                                var wins = new System.Collections.Generic.List<(string, System.Windows.Window)>();
-                                void Add(string n, Func<System.Windows.Window> f)
+                                // 첫 실행 화면 — 이미 보여진 MainWindow 를 현재 상태 그대로 전체 렌더.
+                                await Capture.ControlCapturer.CaptureLiveWindowAsync(mainWindow, capDir, "MainWindow");
+
+                                // fitScroll=true: 내부 ScrollViewer 콘텐츠에 맞춰 창을 키워 전체 스크롤 담기.
+                                var wins = new System.Collections.Generic.List<(string, System.Windows.Window, bool)>();
+                                void Add(string n, Func<System.Windows.Window> f, bool fitScroll = false)
                                 {
-                                    try { wins.Add((n, f())); }
+                                    try { wins.Add((n, f(), fitScroll)); }
                                     catch (Exception ex)
                                     {
                                         System.IO.Directory.CreateDirectory(capDir);
@@ -634,7 +638,7 @@ namespace VMS
                                 Add("AutoBackup", () => new Views.AutoBackupSettingsWindow());
                                 Add("Retention", () => new Views.RetentionSettingsWindow());
                                 Add("SupportPackage", () => new Views.SupportPackageWindow());
-                                Add("ImageSave", () => new Views.ImageSaveSettingsWindow());
+                                Add("ImageSave", () => new Views.ImageSaveSettingsWindow(), fitScroll: true);
                                 Add("BackupRestore", () => new Views.BackupRestoreWindow());
                                 await Capture.ControlCapturer.RunWindowsFullAsync(wins, capDir, mainWindow);
                             }

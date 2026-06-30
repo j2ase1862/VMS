@@ -295,11 +295,11 @@ namespace VMS.VisionSetup.Capture
         /// 잡혀 우/하단이 잘리던 문제를, 창 공칭 크기 전체 렌더로 해결.)
         /// </summary>
         public static async Task RunWindowsFullAsync(
-            System.Collections.Generic.IReadOnlyList<(string name, Window win)> windows,
+            System.Collections.Generic.IReadOnlyList<(string name, Window win, bool fitScroll)> windows,
             string outputDir, Window owner)
         {
             Directory.CreateDirectory(outputDir);
-            foreach (var (name, win) in windows)
+            foreach (var (name, win, fitScroll) in windows)
             {
                 try
                 {
@@ -307,39 +307,32 @@ namespace VMS.VisionSetup.Capture
                     win.ShowInTaskbar = false;
                     win.WindowStartupLocation = WindowStartupLocation.Manual;
                     win.Left = -32000; win.Top = -32000;   // 사용자 화면에 깜빡이지 않게 오프스크린
-                    win.Show();
 
                     double w = double.IsNaN(win.Width) || win.Width < 1 ? 1280 : win.Width;
                     double h = double.IsNaN(win.Height) || win.Height < 1 ? 800 : win.Height;
-                    var size = new Size(w, h);
-                    for (int i = 0; i < 3; i++)
+                    bool standard = win.WindowStyle != WindowStyle.None;
+                    if (standard) win.SizeToContent = SizeToContent.Height;
+                    win.Show();
+
+                    await LayoutWindow(win, standard, w, h);
+
+                    // fitScroll: chromeless 창에서 메인 콘텐츠 ScrollViewer 가 넘치면 창을 키워 전체 담기.
+                    if (fitScroll && !standard)
                     {
-                        win.Measure(size);
-                        win.Arrange(new Rect(new Point(0, 0), size));
-                        win.UpdateLayout();
-                        await win.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Background);
+                        var sv = FindContentScrollViewer(win);
+                        if (sv?.Content is FrameworkElement sc)
+                        {
+                            double cw = sc.ActualWidth > 1 ? sc.ActualWidth : w;
+                            sc.Measure(new Size(cw, double.PositiveInfinity));
+                            double extra = sc.DesiredSize.Height - sv.ActualHeight;
+                            if (extra > 2) { h += extra + 10; await LayoutWindow(win, false, w, h); }
+                        }
                     }
 
                     var root = win.Content as FrameworkElement ?? (FrameworkElement)win;
-                    double rw = root.ActualWidth > 1 ? root.ActualWidth : w;
-                    double rh = root.ActualHeight > 1 ? root.ActualHeight : h;
-                    Brush backdrop = win.Background ?? new SolidColorBrush(Color.FromRgb(0x1E, 0x1E, 0x2E));
-                    var bounds = new Rect(new Point(0, 0), new Size(rw, rh));
-
-                    var dv = new DrawingVisual();
-                    using (var ctx = dv.RenderOpen())
-                    {
-                        ctx.DrawRectangle(backdrop, null, bounds);
-                        ctx.DrawRectangle(new VisualBrush(root)
-                        { Stretch = Stretch.None, AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Top },
-                            null, bounds);
-                    }
-                    var rtb = new RenderTargetBitmap(
-                        (int)(rw * Scale), (int)(rh * Scale), 96 * Scale, 96 * Scale, PixelFormats.Pbgra32);
-                    rtb.Render(dv);
-                    var enc = new PngBitmapEncoder();
-                    enc.Frames.Add(BitmapFrame.Create(rtb));
-                    using (var fs = File.Create(Path.Combine(outputDir, name + ".png"))) enc.Save(fs);
+                    double rw = standard ? Math.Max(root.ActualWidth, w) : (root.ActualWidth > 1 ? root.ActualWidth : w);
+                    double rh = standard ? Math.Max(root.ActualHeight, h) : (root.ActualHeight > 1 ? root.ActualHeight : h);
+                    RenderRootToFile(win, root, rw, rh, Path.Combine(outputDir, name + ".png"));
                 }
                 catch (System.Exception ex)
                 {
@@ -347,6 +340,67 @@ namespace VMS.VisionSetup.Capture
                 }
                 finally { try { win.Close(); } catch { } }
             }
+        }
+
+        private static async Task LayoutWindow(Window win, bool standard, double w, double h)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                if (standard)
+                {
+                    win.Measure(new Size(w, double.PositiveInfinity));
+                    win.Arrange(new Rect(new Point(0, 0), new Size(w, win.DesiredSize.Height)));
+                }
+                else
+                {
+                    win.Measure(new Size(w, h));
+                    win.Arrange(new Rect(new Point(0, 0), new Size(w, h)));
+                }
+                win.UpdateLayout();
+                await win.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Background);
+            }
+        }
+
+        private static ScrollViewer? FindContentScrollViewer(DependencyObject root)
+        {
+            ScrollViewer? best = null;
+            double bestH = 0;
+            void Walk(DependencyObject n)
+            {
+                int c = VisualTreeHelper.GetChildrenCount(n);
+                for (int i = 0; i < c; i++)
+                {
+                    var ch = VisualTreeHelper.GetChild(n, i);
+                    if (ch is ScrollViewer sv && sv.Content is Panel p && p.ActualHeight > bestH)
+                    {
+                        bestH = p.ActualHeight; best = sv;
+                    }
+                    Walk(ch);
+                }
+            }
+            Walk(root);
+            return best;
+        }
+
+        private static void RenderRootToFile(Window win, FrameworkElement root, double rw, double rh, string path)
+        {
+            Brush backdrop = win.Background ?? new SolidColorBrush(Color.FromRgb(0x1E, 0x1E, 0x2E));
+            var bounds = new Rect(new Point(0, 0), new Size(rw, rh));
+            var dv = new DrawingVisual();
+            using (var ctx = dv.RenderOpen())
+            {
+                ctx.DrawRectangle(backdrop, null, bounds);
+                ctx.DrawRectangle(new VisualBrush(root)
+                { Stretch = Stretch.None, AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Top },
+                    null, bounds);
+            }
+            var rtb = new RenderTargetBitmap(
+                (int)(rw * Scale), (int)(rh * Scale), 96 * Scale, 96 * Scale, PixelFormats.Pbgra32);
+            rtb.Render(dv);
+            var enc = new PngBitmapEncoder();
+            enc.Frames.Add(BitmapFrame.Create(rtb));
+            using var fs = File.Create(path);
+            enc.Save(fs);
         }
 
         private static async Task LayoutPass(Window window, Size size)
