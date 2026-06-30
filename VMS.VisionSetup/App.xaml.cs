@@ -206,6 +206,13 @@ namespace VMS.VisionSetup
                                 try { wins.Add(("BatchTest", new Views.BatchTest.BatchTestWindow(
                                     visionService, recipeService, cameraService))); }
                                 catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "BatchTest ctor: " + ex + "\n"); }
+                                try { wins.Add(("CameraManager", new Views.Camera.CameraManagerWindow(
+                                    cameraService, dialogService))); }
+                                catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "CameraManager ctor: " + ex + "\n"); }
+                                try { wins.Add(("InferenceSettings", new Views.OnnxSettingsDialog())); }
+                                catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "InferenceSettings ctor: " + ex + "\n"); }
+                                try { wins.Add(("SynthData", new Views.SynthData.SynthDataWindow())); }
+                                catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "SynthData ctor: " + ex + "\n"); }
                                 await Capture.ControlCapturer.RunWindowsFullAsync(wins, dialogsDir, mainView);
                             }
                         }
