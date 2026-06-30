@@ -93,6 +93,117 @@ namespace VMS.AppSetup.Capture
         }
 
         /// <summary>
+        /// 지정 페이지의 "스크롤 포함 전체 콘텐츠"를 한 장의 긴 PNG 로 캡처한다.
+        /// ScrollViewer 의 뷰포트(820 고정)에 잘리지 않도록, 콘텐츠 전체 높이만큼
+        /// 윈도우 높이를 키워 레이아웃한 뒤 루트(헤더+콘텐츠+푸터)를 통째로 렌더한다.
+        /// 페이지 5(Robot)는 기본 상태가 짧으므로 로봇 연동을 켜 전체 폼을 노출한다.
+        /// </summary>
+        public static async Task RunFullPageAsync(Window window, SetupViewModel vm, string outputDir)
+        {
+            Directory.CreateDirectory(outputDir);
+
+            // page2 = MaxWidth 500, page5 = MaxWidth 600 StackPanel — 두 페이지만 ScrollViewer 가
+            // StackPanel 을 직접 감싸므로 MaxWidth 로 식별 가능. 페이지 Visibility 바인딩에 의존하지 않고
+            // 패널을 직접 측정·배치·렌더한다(헤드리스에서 CurrentPage→Visibility 전파가 불안정한 문제 회피).
+            var targets = new (int page, string tag, double maxWidth, Action<SetupViewModel> scene)[]
+            {
+                (2, "ApplicationSettings", 500, _ => { }),
+                (5, "RobotConfiguration", 600, v =>
+                {
+                    v.IsRobotEnabled = true;
+                    v.SelectedRobotVendor = RobotVendor.Doosan;             // 벤더/연결/프로토콜 노출
+                    v.SelectedRobotProtocolMode = RobotProtocolMode.ModbusTcp; // Modbus 설정까지 노출
+                }),
+            };
+
+            double baseW = double.IsNaN(window.Width) ? 960 : window.Width;
+            double baseH = double.IsNaN(window.Height) ? 820 : window.Height;
+            Brush backdrop = window.Background ?? new SolidColorBrush(Color.FromRgb(0x1E, 0x1E, 0x2E));
+            if (backdrop.CanFreeze) backdrop.Freeze();
+
+            // 워밍업 — 모든 페이지의 템플릿/비주얼이 한 번 실체화되도록 전체를 레이아웃.
+            for (int w = 0; w < 2; w++)
+            {
+                LayoutAt(window, baseW, baseH);
+                await window.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Background);
+            }
+
+            foreach (var (page, tag, maxWidth, scene) in targets)
+            {
+                vm.CurrentPage = page;
+                scene(vm);
+
+                // 조건부 콘텐츠(로봇 폼 등)의 바인딩이 반영되도록 디스패처를 충분히 비운다.
+                for (int i = 0; i < 3; i++)
+                {
+                    LayoutAt(window, baseW, baseH);
+                    await window.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Background);
+                }
+
+                var panel = FindPageContentPanel(window, maxWidth);
+                if (panel == null) continue;
+
+                // 무한 높이로 강제 측정 → 스크롤에 가려지는 부분까지 전체 desired 크기 확보 후 배치.
+                double w = double.IsNaN(panel.MaxWidth) || panel.MaxWidth < 1 ? maxWidth : panel.MaxWidth;
+                panel.Measure(new Size(w, double.PositiveInfinity));
+                double fullH = panel.DesiredSize.Height;
+                double fullW = panel.DesiredSize.Width > 1 ? panel.DesiredSize.Width : w;
+                panel.Arrange(new Rect(new Point(0, 0), new Size(fullW, fullH)));
+                panel.UpdateLayout();
+
+                string path = Path.Combine(outputDir, $"FullPage_P{page}_{tag}.png");
+                RenderElement(panel, fullW, fullH, 24, backdrop, path);
+            }
+        }
+
+        private static void LayoutAt(Window w, double width, double height)
+        {
+            w.Measure(new Size(width, height));
+            w.Arrange(new Rect(new Point(0, 0), new Size(width, height)));
+            w.UpdateLayout();
+        }
+
+        /// <summary>
+        /// ScrollViewer 가 직접 감싼 StackPanel 중 지정 MaxWidth 와 일치하는 것을 찾는다.
+        /// Collapsed 페이지의 패널도 트리에 남아 있으므로 unpruned 전체 트리를 순회한다.
+        /// </summary>
+        private static StackPanel? FindPageContentPanel(DependencyObject root, double maxWidth)
+        {
+            int n = VisualTreeHelper.GetChildrenCount(root);
+            for (int i = 0; i < n; i++)
+            {
+                var child = VisualTreeHelper.GetChild(root, i);
+                if (child is ScrollViewer sv && sv.Content is StackPanel sp
+                    && Math.Abs(sp.MaxWidth - maxWidth) < 1)
+                    return sp;
+                var found = FindPageContentPanel(child, maxWidth);
+                if (found != null) return found;
+            }
+            return null;
+        }
+
+        /// <summary>요소를 패딩 포함 다크 배경 위에 full 크기로 렌더하여 PNG 저장.</summary>
+        private static void RenderElement(FrameworkElement element, double w, double h, double pad, Brush backdrop, string path)
+        {
+            double totalW = w + 2 * pad;
+            double totalH = h + 2 * pad;
+            var dv = new DrawingVisual();
+            using (var ctx = dv.RenderOpen())
+            {
+                ctx.DrawRectangle(backdrop, null, new Rect(0, 0, totalW, totalH));
+                var vb = new VisualBrush(element) { Stretch = Stretch.None, AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Top };
+                ctx.DrawRectangle(vb, null, new Rect(pad, pad, w, h));
+            }
+            var rtb = new RenderTargetBitmap(
+                (int)(totalW * Scale), (int)(totalH * Scale), 96 * Scale, 96 * Scale, PixelFormats.Pbgra32);
+            rtb.Render(dv);
+            var encoder = new PngBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create(rtb));
+            using var fs = File.Create(path);
+            encoder.Save(fs);
+        }
+
+        /// <summary>
         /// 페이지별 캡처 장면 목록. 각 페이지는 "default" 장면 + 조건부 패널을 켠 변형 장면을 갖는다.
         /// 같은 컨트롤은 seen 집합으로 1회만 캡처되므로, 변형 장면에서는 새로 노출된 것만 잡힌다.
         /// </summary>
