@@ -23,11 +23,15 @@ public partial class App : Application
         mainWindow.Show();
 
 #if DEBUG
-        // 매뉴얼/문서용 컨트롤 코드 캡처 — "--capture-controls [출력폴더]" 인자로 실행할 때만.
-        // Release(배포) 빌드에는 #if DEBUG 로 인해 이 블록과 ControlCapturer 가 컴파일되지 않는다.
-        if (TryGetCaptureOutputDir(e.Args, out string captureDir))
+        // 매뉴얼/문서용 캡처 — Release(배포) 빌드에는 #if DEBUG 로 컴파일되지 않는다.
+        //  "--capture-controls [폴더]"  : 컨트롤 개별 PNG 캡처
+        //  "--capture-fullpage [폴더]"  : 페이지 2·5 의 스크롤 포함 전체 콘텐츠 캡처
+        bool isControls = TryGetCaptureOutputDir(e.Args, "--capture-controls", out string captureDir);
+        bool isFullPage = TryGetCaptureOutputDir(e.Args, "--capture-fullpage", out string fullPageDir);
+        if (isControls || isFullPage)
         {
-            var dbgLog = System.IO.Path.Combine(captureDir, "_capture.log");
+            string dir = isControls ? captureDir : fullPageDir;
+            var dbgLog = System.IO.Path.Combine(dir, "_capture.log");
             // Loaded 에 의존하지 않고 디스패처가 idle 되는 즉시 실행 — headless/데스크톱 모두 동작.
             mainWindow.Dispatcher.BeginInvoke(
                 System.Windows.Threading.DispatcherPriority.ApplicationIdle,
@@ -35,11 +39,14 @@ public partial class App : Application
                 {
                     try
                     {
-                        await Capture.ControlCapturer.RunAsync(mainWindow, setupVm, captureDir);
+                        if (isControls)
+                            await Capture.ControlCapturer.RunAsync(mainWindow, setupVm, captureDir);
+                        if (isFullPage)
+                            await Capture.ControlCapturer.RunFullPageAsync(mainWindow, setupVm, fullPageDir);
                     }
                     catch (System.Exception ex)
                     {
-                        System.IO.Directory.CreateDirectory(captureDir);
+                        System.IO.Directory.CreateDirectory(dir);
                         System.IO.File.WriteAllText(dbgLog, "Capture failed: " + ex);
                     }
                     Shutdown();
@@ -49,12 +56,12 @@ public partial class App : Application
     }
 
 #if DEBUG
-    private static bool TryGetCaptureOutputDir(string[] args, out string outputDir)
+    private static bool TryGetCaptureOutputDir(string[] args, string flag, out string outputDir)
     {
         outputDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "VMS.AppSetup.Capture");
         for (int i = 0; i < args.Length; i++)
         {
-            if (!string.Equals(args[i], "--capture-controls", System.StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(args[i], flag, System.StringComparison.OrdinalIgnoreCase))
                 continue;
             if (i + 1 < args.Length && !args[i + 1].StartsWith("--"))
                 outputDir = args[i + 1];
