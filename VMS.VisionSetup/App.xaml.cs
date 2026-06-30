@@ -169,7 +169,47 @@ namespace VMS.VisionSetup
             var mainView = new MainView();
             mainView.DataContext = viewModel;
             mainView.Show();
+
+#if DEBUG
+            // 매뉴얼/문서용 컨트롤 코드 캡처 — "--capture-controls [출력폴더]" 인자로 실행할 때만.
+            // Release(배포) 빌드에는 #if DEBUG 로 인해 이 블록과 ControlCapturer 가 컴파일되지 않는다.
+            if (TryGetCaptureOutputDir(e.Args, out string captureDir))
+            {
+                var dbgLog = Path.Combine(captureDir, "_capture.log");
+                mainView.Dispatcher.BeginInvoke(
+                    System.Windows.Threading.DispatcherPriority.ApplicationIdle,
+                    new Action(async () =>
+                    {
+                        try
+                        {
+                            await Capture.ControlCapturer.RunAsync(mainView, captureDir);
+                        }
+                        catch (Exception ex)
+                        {
+                            Directory.CreateDirectory(captureDir);
+                            File.WriteAllText(dbgLog, "Capture failed: " + ex);
+                        }
+                        Shutdown();
+                    }));
+            }
+#endif
         }
+
+#if DEBUG
+        private static bool TryGetCaptureOutputDir(string[] args, out string outputDir)
+        {
+            outputDir = Path.Combine(Path.GetTempPath(), "VMS.VisionSetup.Capture");
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (!string.Equals(args[i], "--capture-controls", StringComparison.OrdinalIgnoreCase))
+                    continue;
+                if (i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+                    outputDir = args[i + 1];
+                return true;
+            }
+            return false;
+        }
+#endif
 
         /// <summary>
         /// Chromeless Window가 SystemCommands.{Minimize,Maximize,Restore,Close}WindowCommand 를
