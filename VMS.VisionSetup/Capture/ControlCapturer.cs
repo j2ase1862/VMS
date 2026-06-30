@@ -50,16 +50,38 @@ namespace VMS.VisionSetup.Capture
             Brush backdrop = window.Background ?? new SolidColorBrush(Color.FromRgb(0x1E, 0x1E, 0x2E));
             if (backdrop.CanFreeze) backdrop.Freeze();
 
-            // headless(무 데스크톱) 환경에서도 동작하도록 레이아웃을 코드로 강제.
-            for (int pass = 0; pass < 2; pass++)
-            {
-                window.Measure(size);
-                window.Arrange(new Rect(new Point(0, 0), size));
-                window.UpdateLayout();
-                await window.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Background);
-            }
+            await LayoutPass(window, size);
 
+            // 1) 기본 화면 캡처
             int total = CaptureVisible(window, outputDir, seen, manifest, backdrop);
+
+            // 2) 숨은 컨트롤 노출 — 접힌 Expander 펼치기 + TabControl 모든 탭 순회.
+            //    중첩(탭 안의 Expander 등)을 위해 최대 3 라운드 반복. seen 집합으로 중복 1회만.
+            for (int round = 0; round < 3; round++)
+            {
+                bool expanded = ExpandAllExpanders(window);
+                if (expanded) await LayoutPass(window, size);
+
+                int before = total;
+                total += CaptureVisible(window, outputDir, seen, manifest, backdrop);
+
+                foreach (var tc in FindAll<TabControl>(window))
+                {
+                    if (tc.Items.Count <= 1) continue;
+                    int orig = tc.SelectedIndex;
+                    for (int i = 0; i < tc.Items.Count; i++)
+                    {
+                        tc.SelectedIndex = i;
+                        await LayoutPass(window, size);
+                        total += CaptureVisible(window, outputDir, seen, manifest, backdrop);
+                    }
+                    tc.SelectedIndex = orig;
+                }
+
+                await LayoutPass(window, size);
+                total += CaptureVisible(window, outputDir, seen, manifest, backdrop);
+                if (total == before && !expanded) break;   // 더 이상 새 컨트롤 없음 → 수렴
+            }
 
             var sb = new StringBuilder();
             sb.AppendLine("# VMS.VisionSetup 컨트롤 캡처 인덱스");
@@ -106,6 +128,94 @@ namespace VMS.VisionSetup.Capture
             }
 
             return count;
+        }
+
+        /// <summary>
+        /// MainView 전체 화면(헤더+패널+팔레트 등)을 한 장의 PNG 로 캡처한다.
+        /// 접힌 Expander 를 모두 펼쳐 Tool Palette 전체가 보이도록 한 뒤 윈도우 루트를 통째로 렌더.
+        /// </summary>
+        public static async Task RunFullPageAsync(Window window, string outputDir)
+        {
+            Directory.CreateDirectory(outputDir);
+
+            double w = window.Width;
+            double h = window.Height;
+            if (double.IsNaN(w) || w < 1) w = 1920;
+            if (double.IsNaN(h) || h < 1) h = 1080;
+            var size = new Size(w, h);
+
+            Brush backdrop = window.Background ?? new SolidColorBrush(Color.FromRgb(0x1E, 0x1E, 0x2E));
+            if (backdrop.CanFreeze) backdrop.Freeze();
+
+            await LayoutPass(window, size);
+            for (int round = 0; round < 3; round++)
+            {
+                if (!ExpandAllExpanders(window)) break;
+                await LayoutPass(window, size);
+            }
+
+            var root = window.Content as FrameworkElement ?? window;
+            double rw = root.ActualWidth > 1 ? root.ActualWidth : w;
+            double rh = root.ActualHeight > 1 ? root.ActualHeight : h;
+            var bounds = new Rect(new Point(0, 0), new Size(rw, rh));
+
+            var dv = new DrawingVisual();
+            using (var ctx = dv.RenderOpen())
+            {
+                ctx.DrawRectangle(backdrop, null, bounds);
+                ctx.DrawRectangle(new VisualBrush(root) { Stretch = Stretch.None }, null, bounds);
+            }
+            var rtb = new RenderTargetBitmap(
+                (int)(rw * Scale), (int)(rh * Scale), 96 * Scale, 96 * Scale, PixelFormats.Pbgra32);
+            rtb.Render(dv);
+            var encoder = new PngBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create(rtb));
+            using var fs = File.Create(Path.Combine(outputDir, "FullPage_MainView.png"));
+            encoder.Save(fs);
+        }
+
+        private static async Task LayoutPass(Window window, Size size)
+        {
+            for (int pass = 0; pass < 2; pass++)
+            {
+                window.Measure(size);
+                window.Arrange(new Rect(new Point(0, 0), size));
+                window.UpdateLayout();
+                await window.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Background);
+            }
+        }
+
+        /// <summary>
+        /// 접힌 Expander 와 TreeViewItem(Tool Palette 카테고리)을 모두 펼친다.
+        /// 하나라도 새로 펼쳤으면 true. (Tool Palette 는 TreeView 라 카테고리=TreeViewItem)
+        /// </summary>
+        private static bool ExpandAllExpanders(DependencyObject root)
+        {
+            bool changed = false;
+            foreach (var ex in FindAll<Expander>(root))
+            {
+                if (!ex.IsExpanded) { ex.IsExpanded = true; changed = true; }
+            }
+            foreach (var ti in FindAll<TreeViewItem>(root))
+            {
+                // 자식이 있는(=펼칠 수 있는) 카테고리만. 잎 노드(툴)는 무시.
+                if (!ti.IsExpanded && ti.Items.Count > 0) { ti.IsExpanded = true; changed = true; }
+            }
+            return changed;
+        }
+
+        /// <summary>비주얼 트리에서 타입 T 인스턴스를 모두 수집(비활성/Collapsed 포함 — 펼치기 대상이므로).</summary>
+        private static List<T> FindAll<T>(DependencyObject root) where T : DependencyObject
+        {
+            var result = new List<T>();
+            int n = VisualTreeHelper.GetChildrenCount(root);
+            for (int i = 0; i < n; i++)
+            {
+                var child = VisualTreeHelper.GetChild(root, i);
+                if (child is T t) result.Add(t);
+                result.AddRange(FindAll<T>(child));
+            }
+            return result;
         }
 
         /// <summary>대상 컨트롤 분류 — 해당 없으면 null.</summary>

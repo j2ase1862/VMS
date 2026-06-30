@@ -171,22 +171,29 @@ namespace VMS.VisionSetup
             mainView.Show();
 
 #if DEBUG
-            // 매뉴얼/문서용 컨트롤 코드 캡처 — "--capture-controls [출력폴더]" 인자로 실행할 때만.
-            // Release(배포) 빌드에는 #if DEBUG 로 인해 이 블록과 ControlCapturer 가 컴파일되지 않는다.
-            if (TryGetCaptureOutputDir(e.Args, out string captureDir))
+            // 매뉴얼/문서용 캡처 — Release(배포) 빌드에는 #if DEBUG 로 컴파일되지 않는다.
+            //  "--capture-controls [폴더]"  : 컨트롤 개별 PNG (Expander 펼침 + 탭 순회 포함)
+            //  "--capture-fullpage [폴더]"  : MainView 전체 화면 1장
+            bool isControls = TryGetCaptureOutputDir(e.Args, "--capture-controls", out string captureDir);
+            bool isFullPage = TryGetCaptureOutputDir(e.Args, "--capture-fullpage", out string fullPageDir);
+            if (isControls || isFullPage)
             {
-                var dbgLog = Path.Combine(captureDir, "_capture.log");
+                string dir = isControls ? captureDir : fullPageDir;
+                var dbgLog = Path.Combine(dir, "_capture.log");
                 mainView.Dispatcher.BeginInvoke(
                     System.Windows.Threading.DispatcherPriority.ApplicationIdle,
                     new Action(async () =>
                     {
                         try
                         {
-                            await Capture.ControlCapturer.RunAsync(mainView, captureDir);
+                            if (isControls)
+                                await Capture.ControlCapturer.RunAsync(mainView, captureDir);
+                            if (isFullPage)
+                                await Capture.ControlCapturer.RunFullPageAsync(mainView, fullPageDir);
                         }
                         catch (Exception ex)
                         {
-                            Directory.CreateDirectory(captureDir);
+                            Directory.CreateDirectory(dir);
                             File.WriteAllText(dbgLog, "Capture failed: " + ex);
                         }
                         Shutdown();
@@ -196,12 +203,12 @@ namespace VMS.VisionSetup
         }
 
 #if DEBUG
-        private static bool TryGetCaptureOutputDir(string[] args, out string outputDir)
+        private static bool TryGetCaptureOutputDir(string[] args, string flag, out string outputDir)
         {
             outputDir = Path.Combine(Path.GetTempPath(), "VMS.VisionSetup.Capture");
             for (int i = 0; i < args.Length; i++)
             {
-                if (!string.Equals(args[i], "--capture-controls", StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(args[i], flag, StringComparison.OrdinalIgnoreCase))
                     continue;
                 if (i + 1 < args.Length && !args[i + 1].StartsWith("--"))
                     outputDir = args[i + 1];
