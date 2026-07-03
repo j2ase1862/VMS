@@ -103,22 +103,87 @@ const POST = {
     () => P("[Sync Parameters] 버튼 — Web 서버와 레시피 파라미터 동기화 다이얼로그:"),
     () => imgPara("22_dlg_syncparams.png", 460),
     () => caption("그림. Sync Parameters — Web 파라미터 동기화"),
-    () => P("외부 도구의 [Vision Tool Setup] 버튼으로 실행되는 비전 설정(VMS.VisionSetup) 화면은 다음과 같다.", {}),
-    () => imgPara("03_visionsetup.png", 600),
-    () => caption("그림. 비전 설정(VMS.VisionSetup) — 카메라 / Steps / Tool Palette(12 카테고리) / Tool Workspace / ROI 도구 / 이미지 뷰"),
-    () => P("VisionSetup 상단 메뉴에서 열리는 주요 다이얼로그:"),
+    () => P("외부 도구의 [Vision Tool Setup] 버튼으로 실행되는 비전 설정(VMS.VisionSetup) 화면은 다음과 같다. 그림 아래에 영역별 주요 컨트롤과 그 역할을 표로 정리했다.", {}),
+    () => imgPara("03_visionsetup_full.png", 620),
+    () => caption("그림. 비전 설정(VMS.VisionSetup) — 카메라 / Steps / Tool Palette(12 카테고리) / Tool Workspace / ROI 도구 / 이미지 뷰 / Tool Settings  [전체 화면 — Tool Palette 펼침]"),
+    () => P("■ 헤더 툴바", { bold: true }),
+    () => visTable([
+      ["Open Image (Ctrl+O)", ["hdr_open_image.png"], "검사할 이미지 파일을 연다"],
+      ["Open Image Folder", ["hdr_open_folder.png"], "폴더를 열어 이미지 목록을 탐색한다(이전/다음 이미지 이동)"],
+      ["Recipe Manager", ["hdr_recipe_manager.png"], "레시피 목록/스텝·툴 구성/속성 편집 다이얼로그를 연다"],
+      ["Save Recipe (Ctrl+S)", ["hdr_save_recipe.png"], "현재 레시피를 저장한다"],
+      ["Run All Tools (F5)", ["hdr_run_all.png"], "현재 스텝의 툴 파이프라인 전체를 실행한다"],
+      ["Run Selected Tool (F6)", ["hdr_run_selected.png"], "선택한 툴만 실행한다"],
+      ["Clear All Tools", ["hdr_clear_tools.png"], "Tool Workspace 의 툴을 모두 삭제한다"],
+      ["Camera Manager", ["hdr_camera_manager.png"], "카메라 등록/연결 관리 다이얼로그를 연다"],
+      ["Acquire Image", ["hdr_acquire.png"], "연결된 카메라에서 이미지를 취득한다"],
+      ["SLM Recipe Bot (AI)", ["hdr_slm_bot.png"], "AI 챗봇으로 레시피 구성을 보조한다"],
+    ]),
+    () => P("■ 카메라 / Steps 패널", { bold: true }),
+    () => visTable([
+      ["Camera", ["cam_combo.png"], "활성 카메라를 선택한다"],
+      ["Step 추가 / 삭제", ["step_add.png", "step_delete.png"], "검사 스텝을 추가 / 선택 스텝을 삭제한다"],
+      ["Generate Robot Waypoint Steps", ["step_waypoint.png"], "로봇 웨이포인트 기반 스텝을 자동 생성한다(멀티뷰 3D 스캔)"],
+      ["Move Up / Move Down", ["step_up.png", "step_down.png"], "스텝 실행 순서를 위/아래로 이동한다"],
+    ]),
+    () => P("■ Tool Palette / 이미지 뷰 · ROI 도구", { bold: true }),
+    () => visTable([
+      ["Expand All / Collapse All", ["palette_expand.png", "palette_collapse.png"], "팔레트 12개 카테고리를 전체 펼침/접힘. 툴은 Tool Workspace 로 드래그해 추가한다"],
+      ["이미지 소스", ["img_source.png"], "표시할 이미지를 선택한다(Original Image / 각 툴의 결과 이미지)"],
+      ["[Save Image]", ["img_save.png"], "현재 표시 중인 이미지(Original/Result)를 PNG/JPG/BMP/TIFF 파일로 저장한다"],
+      ["ROI 도형", ["roi_select.png", "roi_rect.png", "roi_rectaffine.png", "roi_circle.png", "roi_ellipse.png", "roi_polygon.png"], "관심영역(ROI) 그리기 — Select(선택/이동) / Rectangle / RectAffine(회전 사각형) / Circle / Ellipse / Polygon"],
+      ["줌", ["zoom_out.png", "zoom_in.png", "zoom_fit.png"], "배율 축소(−)/확대(+) / 화면 맞춤(Fit)"],
+      ["[Delete] / [Clear All]", ["roi_delete.png", "roi_clear.png"], "선택한 ROI 삭제 / 모든 ROI 삭제"],
+      ["3D 뷰 카메라", ["view3d_reset.png", "view3d_top.png", "view3d_front.png", "view3d_side.png"], "Point Cloud 뷰 시점 프리셋 — Reset / Top / Front / Side"],
+    ]),
+    () => P("■ Tool Settings 패널 (우측)", { bold: true }),
+    () => visTable([
+      ["Expert Mode", ["ts_expert.png"], "고급 파라미터를 노출하는 토글"],
+      ["Enabled", ["ts_enabled.png"], "선택 툴의 실행 활성/비활성 (Common Settings)"],
+      ["Use ROI", ["ts_useroi.png"], "체크 시 ROI 영역 내에서만 툴을 실행한다"],
+      ["[+ Add PLC Mapping]", ["ts_addplc.png"], "툴 결과값을 PLC 주소에 매핑해 검사 결과를 전송한다 (PLC Output)"],
+    ]),
+    () => P("VisionSetup 상단 메뉴에서 열리는 주요 다이얼로그: (각 그림 아래에 주요 컨트롤 설명)"),
     () => imgPara("33_dlg_cameramgr.png", 520),
     () => caption("그림. Camera → Camera Manager — 카메라 등록/연결 관리"),
+    () => bullet("Cameras 목록 — 등록된 카메라(이름·제조사)를 표시한다. 선택하면 우측 패널에 연결 상태와 파라미터 설정이 표시된다."),
+    () => bullet("[Add] / [Remove] — 카메라를 등록 / 선택한 카메라를 제거한다."),
     () => imgPara("34_dlg_recipemgr.png", 540),
     () => caption("그림. Recipe → Recipe Manager — 레시피 목록/관리"),
+    () => bullet("좌측 목록 — Search recipes 검색창 + [X](초기화), 레시피 카드(이름·버전·스텝/툴 수·수정일시·작성자)."),
+    () => bullet("[New] / [Load] / [Delete] — 레시피 생성 / 선택 레시피를 VisionSetup 에 로드 / 삭제."),
+    () => bullet("[Import] / [Export] / [Open Folder] — 레시피 파일 가져오기 / 내보내기 / 저장 폴더 열기."),
+    () => bullet("중앙 트리 — 로드된 레시피의 Step/Tool 구조. [Add Step] / [Add Tool] / [Remove] 로 편집한다."),
+    () => bullet("우측 Properties — 선택 항목의 속성 표시/편집. 상단 [Save] / [Discard] 로 변경을 저장/취소한다."),
     () => imgPara("35_dlg_sequence.png", 540),
     () => caption("그림. Sequence — 검사 시퀀스 편집"),
+    () => bullet("상단 바 — 프로세스 시퀀스 선택, Reset 신호 설정, [디폴트 생성] / [저장] / [가져오기] / [내보내기] / [PLC Monitor] / [무부하 테스트]."),
+    () => bullet("좌측 노드 팔레트 — Start / End / Input Check / Output Action / Inspection / Branch / Delay / Repeat / Recipe Change / Step Change 노드를 캔버스로 드래그한다."),
+    () => bullet("중앙 캔버스 — 노드를 Next 링크로 연결해 검사 시퀀스를 구성한다."),
+    () => bullet("우측 노드 속성 — 선택한 노드의 파라미터를 편집한다."),
+    () => bullet("하단 상태바 — 로드된 시퀀스 이름과 노드/연결 수를 표시한다."),
     () => imgPara("30_dlg_batchtest.png", 540),
     () => caption("그림. Batch Test… — 다수 이미지 일괄 검사/검증"),
+    () => bullet("ACTIVE PIPELINE — Recipe → Camera → Step 콤보로 적용할 파이프라인 선택. Tools 수 표시 + [Auto-tune…] / [Edit Thresholds…]."),
+    () => bullet("INPUT — 이미지 폴더 + [Browse], [하위 폴더 재귀 탐색] 체크."),
+    () => bullet("OUTPUT — CSV 리포트 저장 경로, [실패 케이스 오버레이 저장] + 저장 폴더."),
+    () => bullet("통계 카드 — PROCESSED / PASS / FAIL / AVG TIME(ms) 실시간 집계."),
+    () => bullet("ACTIVITY — 진행률, 골든셋([Save as Golden] / [Load Golden] / [Clear]), [Browse Failures] / [Open CSV] / [Failure Folder], Live Log·Results 탭."),
+    () => bullet("[Run Batch] / [Cancel] / [Close] — 일괄 검사 실행 / 중단 / 닫기."),
     () => imgPara("31_dlg_synthdata.png", 540),
     () => caption("그림. OCR Synth Data… — OCR 합성 데이터 생성"),
+    () => bullet("Font — 기본/추가 폰트, 폰트 크기 Min·Max(px), Bold/Italic 무작위."),
+    () => bullet("Patterns — 생성할 텍스트 토큰 패턴(D/M/Y/H/S=날짜·시각, L=영문자, A=영숫자, ?=임의) + 프리셋 칩."),
+    () => bullet("Dataset — 샘플 수, Val 비율(0~0.3), 출력 포맷(PaddleOCR rec)·출력 폴더."),
+    () => bullet("Background / Augmentation — 배경 모드(Solid/FromFolder)·흑/백 무작위 반전, 회전·원근 jitter·Blur·노이즈·밝기/대비 jitter·도트 매트릭스 효과."),
+    () => bullet("Training — PP-OCR Fine-tuning: Python 실행파일, train_ppocr.py 경로, 학습 출력 폴더, 사전학습 모델 prefix, Epochs/Batch Size/Learning Rate, ONNX export."),
+    () => bullet("Training Progress — Epoch/Loss/Acc 진행, ONNX 출력 경로, 학습 로그. 하단 [Generate] / [Generate & Train] / [Cancel Train]."),
     () => imgPara("32_dlg_inference.png", 460),
     () => caption("그림. Inference Settings… — 딥러닝 추론(ONNX) 설정"),
+    () => bullet("Execution Provider — ONNX Runtime 실행 백엔드 선택(Auto / CPU / CUDA / TensorRT)."),
+    () => bullet("TensorRT Engine Cache Folder — 엔진 캐시 폴더. 설정 시 재실행에서 엔진 재빌드를 건너뛴다(비우면 캐시 없음)."),
+    () => bullet("Enable TensorRT FP16 — RTX 계열에서 2~3배 속도 향상."),
+    () => bullet("[Save] / [Cancel] — 저장(다음 모델 로드/세션 재생성 시점부터 적용) / 취소."),
   ],
   "4. BODA.VMS.Web (관리자 / MES)": [
     () => P("아래는 BODA.VMS.Web(ASP.NET Core 8 + Blazor) 관리 화면이다(Admin 로그인 기준)."),
@@ -218,23 +283,46 @@ const WIZARD_BEFORE = "3. VMS 클라이언트 매뉴얼";
 
 // 마법사 컨트롤 항목 표 — 컨트롤 이미지(appsetup_ctl/, --capture-controls 산출물) + 항목/설명/기본값
 const WIZ_COLW = [1600, 3000, 3100, 1326]; // 항목 / 컨트롤 / 설명 / 기본값 (합 = CONTENT_W)
-function ctlCell(files, w) {
+function ctlCell(files, w, dir = "appsetup_ctl") {
   // 컨트롤 캡처는 2x DPI → 1/2 스케일이 원래 크기. 셀 폭(px) 초과 시 셀에 맞춰 축소.
+  // 작은 아이콘은 한 줄에 여러 개 배치.
   const maxPx = Math.floor(w / 1440 * 96) - 12;
-  const paras = (files || []).map(f => {
-    const full = path.join(SHOT, "appsetup_ctl", f);
-    if (!fs.existsSync(full)) return P(`[${f}]`, { color: "C00000" });
+  const lines = [];
+  let cur = [], curW = 0;
+  (files || []).forEach(f => {
+    const full = path.join(SHOT, dir, f);
+    if (!fs.existsSync(full)) { lines.push([new TextRun({ text: `[${f}]`, color: "C00000", size: 16 })]); return; }
     const buf = fs.readFileSync(full);
     const iw = buf.readUInt32BE(16), ih = buf.readUInt32BE(20);
     const wPx = Math.min(Math.round(iw / 2), maxPx);
     const hPx = Math.round(wPx * ih / iw);
-    return new Paragraph({ spacing: { before: 20, after: 20 }, alignment: AlignmentType.CENTER,
-      children: [new ImageRun({ type: "png", data: buf, transformation: { width: wPx, height: hPx },
-        altText: { title: f, description: f, name: f } })] });
+    const run = new ImageRun({ type: "png", data: buf, transformation: { width: wPx, height: hPx },
+      altText: { title: f, description: f, name: f } });
+    if (cur.length && curW + wPx + 6 > maxPx) { lines.push(cur); cur = []; curW = 0; }
+    if (cur.length) { cur.push(new TextRun({ text: " " })); curW += 6; }
+    cur.push(run); curW += wPx;
   });
+  if (cur.length) lines.push(cur);
+  const paras = lines.map(children => new Paragraph({ spacing: { before: 20, after: 20 }, alignment: AlignmentType.CENTER, children }));
   return new TableCell({ borders, width: { size: w, type: WidthType.DXA }, margins: cellMargins,
     verticalAlign: VerticalAlign.CENTER, children: paras.length ? paras : [new Paragraph({ spacing: { after: 0 }, children: runs("—", { size: 18 }) })] });
 }
+// VisionSetup 주요 컨트롤 표 — 항목 / 컨트롤 / 설명 3열 (visionsetup_ctl/)
+const VIS_COLW = [2000, 2800, 4226];
+function visTable(rows) {
+  const heads = ["항목", "컨트롤", "설명"];
+  const trs = [new TableRow({ tableHeader: true, children: heads.map((h, i) => hcell(h, VIS_COLW[i])) })];
+  rows.forEach(([name, files, desc], ri) => {
+    const fill = ri % 2 ? "F4F7FB" : undefined;
+    trs.push(new TableRow({ children: [
+      dcell(name, VIS_COLW[0], fill),
+      ctlCell(files, VIS_COLW[1], "visionsetup_ctl"),
+      dcell(desc, VIS_COLW[2], fill),
+    ] }));
+  });
+  return new Table({ width: { size: CONTENT_W, type: WidthType.DXA }, columnWidths: VIS_COLW, rows: trs });
+}
+
 function wizardTable(rows) {
   const heads = ["항목", "컨트롤", "설명", "기본값 / 예시"];
   const trs = [new TableRow({ tableHeader: true, children: heads.map((h, i) => hcell(h, WIZ_COLW[i])) })];
