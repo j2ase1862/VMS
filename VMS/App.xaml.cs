@@ -629,17 +629,79 @@ namespace VMS
                                     }
                                 }
                                 if (workOrderClient != null)
-                                    Add("WorkOrders", () => new VMS.VisionSetup.Views.WorkOrderListWindow(workOrderClient));
+                                    Add("WorkOrders", () =>
+                                    {
+                                        var win = new VMS.VisionSetup.Views.WorkOrderListWindow(workOrderClient);
+                                        // Web 작업지시 조회가 캡처 환경에서 응답하지 않을 때만 문서용 대표 1건 표시.
+                                        if (win.DataContext is VMS.VisionSetup.ViewModels.WorkOrderListViewModel wvm && wvm.Items.Count == 0)
+                                        {
+                                            wvm.Items.Add(new VMS.Core.Models.ParameterSync.WorkOrderDto
+                                            {
+                                                OrderNo = "WO-20260521-001", ProductName = "A001", RecipeName = "A1",
+                                                PlannedQuantity = 500, ProducedQuantity = 320, PassQuantity = 312, NgQuantity = 8,
+                                                Status = "InProgress", PlannedStartAt = DateTime.Today.AddHours(9)
+                                            });
+                                            wvm.StatusMessage = "1건";
+                                        }
+                                        return win;
+                                    });
                                 if (parameterSyncService != null)
                                     Add("SyncParameters", () => new Views.ParameterSyncDialog(parameterSyncService));
-                                Add("UserManagement", () => new Views.UserManagementWindow());
-                                Add("AuditLog", () => new Views.AuditLogViewerWindow());
-                                Add("HealthCheck", () => new Views.HealthCheckWindow());
-                                Add("AutoBackup", () => new Views.AutoBackupSettingsWindow());
-                                Add("Retention", () => new Views.RetentionSettingsWindow());
-                                Add("SupportPackage", () => new Views.SupportPackageWindow());
-                                Add("ImageSave", () => new Views.ImageSaveSettingsWindow(), fitScroll: true);
-                                Add("BackupRestore", () => new Views.BackupRestoreWindow());
+                                // §3.8 관리자 다이얼로그 — DataContext(VM) 를 주입해 실제 값이 채워진 상태로 캡처.
+                                // (정상 실행은 MainViewModel 이 동일하게 VM 을 주입한다. DataContext 없이 new 하면
+                                //  바인딩이 전부 비어 그림이 공란/빈 표로 나온다.)
+                                Add("UserManagement", () =>
+                                {
+                                    var vm = new UserManagementViewModel(userService, dialogService);
+                                    if (vm.Users.Count == 0)
+                                    {
+                                        // 서비스에 계정이 없을 때만 문서용 대표 사용자 표시.
+                                        vm.Users.Add(new VMS.Models.User { Username = "admin", DisplayName = "Administrator", Grade = VMS.Models.UserGrade.Admin, LastLoginAt = DateTime.Now });
+                                        vm.Users.Add(new VMS.Models.User { Username = "engineer", DisplayName = "Line Engineer", Grade = VMS.Models.UserGrade.Engineer, LastLoginAt = DateTime.Now.AddHours(-3) });
+                                        vm.Users.Add(new VMS.Models.User { Username = "operator", DisplayName = "Shift Operator", Grade = VMS.Models.UserGrade.Operator, LastLoginAt = DateTime.Now.AddDays(-1) });
+                                    }
+                                    return new Views.UserManagementWindow { DataContext = vm };
+                                });
+                                Add("AuditLog", () =>
+                                {
+                                    var vm = new AuditLogViewerViewModel();
+                                    if (vm.Entries.Count == 0)
+                                    {
+                                        // 감사 로그가 아직 없을 때만 문서용 대표 이벤트 표시.
+                                        var now = DateTime.UtcNow;
+                                        void E(int m, VMS.Core.Security.AuditCategory c, string a, VMS.Core.Security.AuditOutcome o, string u, string s) =>
+                                            vm.Entries.Add(new VMS.Core.Security.AuditLogEntry { TimestampUtc = now.AddMinutes(-m), Category = c, Action = a, Outcome = o, UserName = u, Source = s });
+                                        E(2,  VMS.Core.Security.AuditCategory.Authentication, "LoginSucceeded",    VMS.Core.Security.AuditOutcome.Success, "admin",    "LoginWindow");
+                                        E(5,  VMS.Core.Security.AuditCategory.Authentication, "LoginFailed",       VMS.Core.Security.AuditOutcome.Failure, "operator", "LoginWindow");
+                                        E(9,  VMS.Core.Security.AuditCategory.Authorization,  "AccessDenied",      VMS.Core.Security.AuditOutcome.Denied,  "operator", "UserManagementViewModel");
+                                        E(14, VMS.Core.Security.AuditCategory.UserManagement,  "UserCreated",       VMS.Core.Security.AuditOutcome.Success, "admin",    "UserManagementViewModel");
+                                        E(21, VMS.Core.Security.AuditCategory.Configuration,   "AutoBackupConfigSaved", VMS.Core.Security.AuditOutcome.Success, "admin", "AutoBackupSettingsViewModel");
+                                        E(33, VMS.Core.Security.AuditCategory.RecipeChange,    "RecipeSaved",       VMS.Core.Security.AuditOutcome.Success, "engineer", "RecipeService");
+                                        E(48, VMS.Core.Security.AuditCategory.Inspection,      "InspectionNG",      VMS.Core.Security.AuditOutcome.Failure, "operator", "VisionService");
+                                        E(60, VMS.Core.Security.AuditCategory.System,          "StartupHealthCheck", VMS.Core.Security.AuditOutcome.Success, "system",  "StartupHealthCheck");
+                                        vm.EntryCount = vm.Entries.Count;
+                                        vm.StatusMessage = $"{vm.FromDate:yyyy-MM-dd} ~ {vm.ToDate:yyyy-MM-dd}: {vm.EntryCount}건";
+                                    }
+                                    return new Views.AuditLogViewerWindow { DataContext = vm };
+                                });
+                                Add("HealthCheck", () => new Views.HealthCheckWindow { DataContext = new HealthCheckViewModel() });
+                                Add("AutoBackup", () =>
+                                {
+                                    var vm = new AutoBackupSettingsViewModel { Enabled = true, ProductVersion = "1.2.0" };
+                                    if (string.IsNullOrWhiteSpace(vm.BackupDir))
+                                        vm.BackupDir = @"D:\BODA-VMS\backups";
+                                    return new Views.AutoBackupSettingsWindow { DataContext = vm };
+                                });
+                                Add("Retention", () => new Views.RetentionSettingsWindow { DataContext = new RetentionSettingsViewModel() });
+                                Add("SupportPackage", () => new Views.SupportPackageWindow { DataContext = new SupportPackageViewModel() });
+                                Add("ImageSave", () =>
+                                {
+                                    var vm = new ImageSaveSettingsViewModel
+                                    { SaveOkImages = true, SaveNgImages = true, RetentionDays = 30, WebSendNg = true };
+                                    if (string.IsNullOrWhiteSpace(vm.BaseDir)) vm.BaseDir = @"D:\BODA-VMS\images";
+                                    return new Views.ImageSaveSettingsWindow { DataContext = vm };
+                                }, fitScroll: true);
+                                Add("BackupRestore", () => new Views.BackupRestoreWindow { DataContext = new BackupRestoreViewModel() });
                                 await Capture.ControlCapturer.RunWindowsFullAsync(wins, capDir, mainWindow);
                             }
                             catch (Exception ex)

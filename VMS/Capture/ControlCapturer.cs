@@ -54,6 +54,11 @@ namespace VMS.Capture
 
                     await LayoutWindow(win, standard, w, h);
 
+                    // Web 비동기 조회(WorkOrders / SyncParameters 등)가 렌더 전에 채워지도록 settle 대기.
+                    // 로컬 서비스만 쓰는 창은 이미 채워져 있어 무해(대기만 추가).
+                    await Task.Delay(900);
+                    await LayoutWindow(win, standard, w, h);
+
                     // fitScroll: chromeless 창에서 메인 콘텐츠 ScrollViewer 가 넘치면 창을 키워 전체 담기.
                     if (fitScroll && !standard)
                     {
