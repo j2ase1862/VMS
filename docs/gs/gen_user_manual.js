@@ -118,7 +118,7 @@ const POST = {
     () => ctlImg("sec_web_parameters.png", 290),
     () => caption("그림. Web Parameters 섹션 — [Sync Parameters]"),
   ],
-  "Recent Inspections 섹션 (D8)": [
+  "Recent Inspections 섹션": [
     () => ctlImg("sec_recent.png", 290),
     () => caption("그림. Recent Inspections 섹션 — Total / Pass / NG + Pass rate, [Clear]"),
   ],
@@ -138,7 +138,7 @@ const POST = {
     () => imgPara("20_dlg_workorders.png", 560),
     () => caption("그림. Work Orders 다이얼로그 — 상태 필터 / Refresh / 목록(Order No·Product·Recipe·Progress·Status·Planned Start) / Select·Cancel"),
   ],
-  "3.2.3 WO 칩 (진행률 ProgressBar)": [
+  "3.2.3 WO 칩 (진행률 표시)": [
     () => ctlImg("hdr_wo_chip.png", 340),
     () => caption("그림. WO 칩 — 작업지시 번호 · 제품 · 진행(생산/계획) + 실시간 진행률 바"),
   ],
@@ -412,6 +412,7 @@ function wizardTable(rows) {
 function wizardSection() {
   const out = [];
   out.push(new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("2.5 최초 실행 — 시스템 설정 마법사 (VMS.AppSetup)")] }));
+  out.push(P("⚙ 이 절은 설치 담당자용입니다. 마법사는 설치 후 최초 1회(또는 설정 파일이 없을 때)만 나타나며, 일반 작업자는 볼 일이 없습니다.", { size: 18, color: "595959" }));
   out.push(P("VMS 설치 후 최초 실행 시(또는 system_config.json 부재 시) 시스템 설정 마법사가 자동 실행된다. 총 6단계로 애플리케이션·네트워크·카메라·PLC·로봇/IO 및 초기 관리자 계정을 구성한 뒤 [Finish] 로 저장한다. 카메라가 없는 환경에서는 3단계에서 [Virtual Mode (Manual Setup)] 를 선택해 가상 구성으로 진행할 수 있다. 각 단계의 그림 아래에 입력 항목별 컨트롤 이미지와 설명을 표로 정리했다."));
   const steps = [
     ["10_appsetup_step1.png", 470, "1단계 — 시작(Welcome)", [
@@ -507,11 +508,18 @@ function norm(s) { return s.replace(/\s+/g, " ").trim(); }
 
 // ---- build body ----
 const body = [];
+// 순서 있는 목록(<ol>)은 목록마다 1부터 다시 시작해야 하므로 그룹별 numbering 참조를 만든다.
+let olGroups = 0, prevOrderedLi = false;
+function numbered(text, group) {
+  return new Paragraph({ numbering: { reference: "n" + group, level: 0 }, spacing: { after: 50, line: 264 },
+    children: runs(text, { size: 21 }) });
+}
 // drop everything before H1 title
 let start = blocks.findIndex(b => b.t === "h" && b.level === 1);
 if (start < 0) start = 0;
 for (let i = start + 1; i < blocks.length; i++) {
   const b = blocks[i];
+  const isOrderedLi = b.t === "li" && !!b.ordered;
   if (b.t === "h") {
     const txt = norm(b.text);
     if (txt === WIZARD_BEFORE) wizardSection().forEach(x => body.push(x));
@@ -523,11 +531,17 @@ for (let i = start + 1; i < blocks.length; i++) {
   } else if (b.t === "p") {
     body.push(P(b.text));
   } else if (b.t === "li") {
-    body.push(bullet(b.text));
+    if (isOrderedLi) {
+      if (!prevOrderedLi) olGroups++;
+      body.push(numbered(b.text, olGroups - 1));
+    } else {
+      body.push(bullet(b.text));
+    }
   } else if (b.t === "table") {
     body.push(tableBlock(b));
     body.push(new Paragraph({ spacing: { after: 120 }, children: [] }));
   }
+  prevOrderedLi = isOrderedLi;
 }
 
 // ---- #4: 비전 도구 파라미터 (핵심 툴) — 코드(ToolSettings XAML)에서 전수 추출 ----
@@ -752,6 +766,12 @@ const doc = new Document({
   numbering: { config: [
     { reference: "b", levels: [{ level: 0, format: LevelFormat.BULLET, text: "•", alignment: AlignmentType.LEFT,
       style: { paragraph: { indent: { left: 500, hanging: 250 } } } }] },
+    // 순서 목록 그룹 — 목록마다 1부터 재시작 (body 빌드에서 그룹 수 확정)
+    ...Array.from({ length: olGroups }, (_, i) => ({
+      reference: "n" + i,
+      levels: [{ level: 0, format: LevelFormat.DECIMAL, text: "%1.", alignment: AlignmentType.LEFT,
+        style: { paragraph: { indent: { left: 500, hanging: 250 } } } }],
+    })),
   ] },
   sections: [{
     properties: { page: { size: { width: PAGE_W, height: PAGE_H }, margin: { top: MARGIN, right: MARGIN, bottom: MARGIN, left: MARGIN } } },
