@@ -212,50 +212,49 @@
 <section id="overview">
 <h2>1. 시스템 개요</h2>
 
-<p>BODA VMS 는 산업 현장의 머신비전 검사를 실시간 수행(<strong>VMS 클라이언트</strong>)하고,
-검사 결과 · 작업지시 · 작업자 · 알람을 중앙에서 관리(<strong>BODA.VMS.Web</strong>)하는
-통합 시스템입니다. 두 솔루션은 익명 REST + SignalR 로 단방향/양방향 통신합니다.</p>
+<p>BODA VMS 는 두 프로그램으로 구성된 통합 시스템입니다. 현장 PC 의 <strong>VMS 클라이언트</strong>가
+카메라로 제품을 검사하고, 관리 서버인 <strong>BODA.VMS.Web</strong> 이 검사 결과 · 작업지시 · 작업자 · 알람을
+한곳에서 관리합니다. 두 프로그램은 네트워크로 자동 연동되며, 검사 결과와 알람은 실시간으로 서버 화면에 반영됩니다.</p>
 
 <h3 id="overview-arch">1.1 시스템 구성</h3>
 <table>
   <tr><th>항목</th><th>VMS 클라이언트</th><th>BODA.VMS.Web (서버)</th></tr>
   <tr><td>플랫폼</td><td>.NET 8 WPF (Windows 10/11 x64)</td><td>.NET 8 Blazor WASM + ASP.NET Core</td></tr>
-  <tr><td>역할</td><td>실시간 비전 검사 실행, 카메라/PLC 직접 제어</td><td>MES (작업지시/SPC/OEE/감사/리포트), 단일 진실 원본</td></tr>
-  <tr><td>레시피</td><td>다운로드만 (자동 동기화)</td><td>마스터 보유, CRUD 가능</td></tr>
-  <tr><td>검사 결과</td><td>임시 메모리 + 디스크 큐 → Web 업로드</td><td>영구 저장 (SQLite) + 통계 + 알람</td></tr>
-  <tr><td>인증</td><td>로컬 시스템 사용자 BCrypt + Operator 세션 (Web 인증)</td><td>JWT (관리자 / 작업자)</td></tr>
-  <tr><td>DB</td><td>로컬 SQLite (시스템 사용자만)</td><td>SQLite <code>C:\ProgramData\BODA\VMS\BodaVision.db</code></td></tr>
-  <tr><td>외부 의존</td><td>OpenCvSharp4, HelixToolkit.Wpf.SharpDX, 카메라 SDK, PLC 드라이버</td><td>없음 (Kestrel 단독)</td></tr>
+  <tr><td>역할</td><td>제품을 실시간으로 검사하고 카메라·PLC 를 직접 제어</td><td>작업지시 · 품질 통계 · 알람 · 리포트를 관리 (기준 데이터 보관)</td></tr>
+  <tr><td>레시피</td><td>서버에서 자동으로 내려받아 사용</td><td>원본 보관 — 등록/수정/삭제는 여기서</td></tr>
+  <tr><td>검사 결과</td><td>검사 즉시 서버로 자동 업로드 (네트워크가 끊기면 보관했다가 재전송)</td><td>영구 저장 + 통계 + 알람</td></tr>
+  <tr><td>인증</td><td>시스템 사용자 로그인(비밀번호 암호화 저장) + 작업자 로그인(사번 + PIN, 서버 대조)</td><td>웹 로그인 (관리자 / 작업자)</td></tr>
+  <tr><td>데이터 저장</td><td>PC 안에 저장 (시스템 사용자 정보만)</td><td>서버 DB <code>C:\ProgramData\BODA\VMS\BodaVision.db</code></td></tr>
+  <tr><td>별도 설치물</td><td>없음 — 카메라 SDK · PLC 드라이버 포함</td><td>없음 — 단독 실행</td></tr>
 </table>
 
 <h3 id="overview-flow">1.2 운영 흐름 한눈에</h3>
 <ol class="steps">
-  <li>VMS 실행 → 카메라 자동 연결 + Web 에 Heartbeat 시작 (5초 주기).</li>
-  <li>작업자가 <strong>헤더 Operator 로그인</strong> (사번 + PIN). Web 의 작업자 마스터와 대조.</li>
-  <li>로그인 성공 → 헤더 <span class="chip role-op">Operator</span> /
-      <span class="chip role-lead">Lead</span> / <span class="chip role-sup">Supervisor</span>
-      뱃지 표시 + <strong>Work Orders</strong> 버튼 활성화.</li>
-  <li>Work Orders 클릭 → Web 에서 현재 라인의 작업지시 목록 fetch → 다이얼로그.</li>
-  <li>WO 선택 → <strong>RecipeName 자동 로드</strong> + 활성 Lot 자동 채움 +
-      AUTO RUN 활성화.</li>
-  <li>AUTO RUN 클릭 → 검사 시작. 결과는 헤더 WO 칩에 진행률 실시간 표시 (예: <code>5/100</code> + ProgressBar).</li>
-  <li>계획 수량 도달 → <strong>완료 다이얼로그</strong> 자동 표시 (KPI 카드 + 알람 사운드) +
-      AUTO RUN 자동 정지 + 다음 WO 선택 다이얼로그.</li>
-  <li>모든 검사 1건마다 Web 의 <code>InspectionHistory</code> + <code>ParameterMeasurement</code> 에 저장.
-      NG 발생 시 <code>AlarmEvent</code> 자동 생성 + 관리자 화면에 SignalR 즉시 푸시.</li>
+  <li>VMS 를 실행하면 카메라가 자동으로 연결되고, Web 서버와의 연결 상태가 헤더에 표시됩니다.</li>
+  <li>작업자가 헤더의 <strong>[Login...]</strong> 버튼을 눌러 사번과 PIN 으로 로그인합니다.
+      입력한 정보는 Web 서버의 작업자 명단과 대조됩니다.</li>
+  <li>로그인하면 이름과 권한 뱃지(<span class="chip role-op">Operator</span> /
+      <span class="chip role-lead">Lead</span> / <span class="chip role-sup">Supervisor</span>)가 표시되고
+      <strong>[Work Orders]</strong> 버튼이 활성화됩니다.</li>
+  <li>[Work Orders] 를 눌러 오늘 작업할 작업지시를 선택합니다.</li>
+  <li>작업지시를 선택하면 <strong>검사 레시피가 자동으로 불러와지고</strong> [AUTO RUN] 버튼이 켜집니다.</li>
+  <li>[AUTO RUN] 을 누르면 검사가 시작됩니다. 진행 수량은 헤더에 실시간으로 표시됩니다 (예: <code>5/100</code>).</li>
+  <li>계획 수량을 다 채우면 <strong>완료 알림 창</strong>이 뜨고 검사가 자동으로 멈춥니다.
+      이어서 다음 작업지시를 바로 선택할 수 있습니다.</li>
+  <li>검사 결과는 건마다 Web 서버에 자동 저장되고, 불량(NG)이 나오면 관리자 화면에 즉시 알람이 표시됩니다.</li>
 </ol>
 
 <h3 id="overview-terms">1.3 핵심 용어</h3>
 <table>
   <tr><th>용어</th><th>설명</th></tr>
   <tr><td>WO (Work Order)</td><td>작업지시. 제품 × 수량 × 레시피 단위. Planned → InProgress → Completed → Closed.</td></tr>
-  <tr><td>Lot</td><td>WO 산하의 단위 묶음 (배치). 한 WO 에 여러 Lot 가능.</td></tr>
+  <tr><td>Lot</td><td>하나의 작업지시 안에서 나누어 관리하는 생산 묶음. 한 WO 에 여러 Lot 가능.</td></tr>
   <tr><td>Operator</td><td>현장 작업자. 사번 + PIN 로 키오스크 로그인. Role: Operator / Lead / Supervisor.</td></tr>
   <tr><td>Recipe (Inspection Item)</td><td>검사 설정 묶음. 비전 도구 + 임계값 + 파라미터.</td></tr>
   <tr><td>ParamCode / ParamValue</td><td>레시피 안의 개별 파라미터 (예: 패턴 점수 임계치 = 0.85).</td></tr>
   <tr><td>Ctx (Context)</td><td>검사 결과에 첨부하는 추적성 4필드: WO / Lot / Operator / Serial Number.</td></tr>
   <tr><td>AUTO RUN</td><td>VMS 의 메인 검사 시작 버튼. 운영 조건 모두 만족해야 활성.</td></tr>
-  <tr><td>Heartbeat</td><td>VMS 가 5초마다 Web 에 보내는 생존 신호. 멈추면 5분 후 stale 세션 정리.</td></tr>
+  <tr><td>Heartbeat</td><td>VMS 가 5초마다 Web 에 보내는 "살아있음" 신호. 신호가 멈추면 5분 후 해당 접속 정보가 정리됩니다.</td></tr>
   <tr><td>NG / OK</td><td>판정 결과. NG 발생 시 자동 알람 생성.</td></tr>
 </table>
 </section>
@@ -264,9 +263,12 @@
 <section id="install">
 <h2>2. 설치 / 배포</h2>
 
+<div class="callout"><strong>⚙ 이 장은 설치 담당자/관리자용입니다.</strong> 현장에서 검사만 수행하는
+작업자는 3장(VMS 클라이언트 매뉴얼)부터 읽으면 됩니다.</div>
+
 <h3 id="install-vms">2.1 VMS 클라이언트 (MSI)</h3>
-<p>자체 .NET 8 런타임을 포함한 self-contained MSI (~220MB) 한 개로 설치 완료.
-.NET 8 별도 설치 불필요.</p>
+<p>설치 파일(MSI, 약 220MB) 하나만 실행하면 설치가 끝납니다. 실행에 필요한 구성 요소(.NET 8)가
+모두 포함되어 있어 다른 프로그램을 먼저 설치할 필요가 없습니다.</p>
 
 <h4>설치</h4>
 <ol class="steps">
@@ -292,7 +294,8 @@
 </div>
 
 <h3 id="install-web">2.2 Web 서버 (PowerShell)</h3>
-<p>Kestrel 단독 + Windows Service. IIS 불필요.</p>
+<p>Web 서버는 Windows 서비스로 설치되어 부팅 시 자동 시작됩니다.
+별도의 웹 서버 프로그램(IIS 등)은 필요 없습니다.</p>
 
 <h4>설치</h4>
 <pre><code># 관리자 PowerShell 에서
@@ -339,64 +342,76 @@ cd D:\Project\BODA.VMS.Web\deploy
 <section id="vms">
 <h2>3. VMS 클라이언트 매뉴얼</h2>
 
+<div class="callout tip">
+<strong>빠른 시작 — 검사를 시작하는 가장 짧은 길</strong>
+<ol class="steps">
+  <li>헤더의 Operator <strong>[Login...]</strong> 버튼을 누르고 사번과 PIN 을 입력합니다.</li>
+  <li><strong>[Work Orders]</strong> 버튼을 눌러 오늘 작업할 작업지시를 더블 클릭으로 선택합니다.</li>
+  <li>레시피가 자동으로 불러와지고 <strong>[AUTO RUN]</strong> 버튼이 켜집니다.</li>
+  <li>[AUTO RUN] 을 누르면 검사가 시작됩니다. 멈추려면 같은 자리의 빨간 [STOP] 을 누릅니다.</li>
+  <li>진행 상황은 헤더의 WO 칩(예: 5/100)과 사이드 패널의 Recent Inspections 에서 확인합니다.</li>
+</ol>
+각 버튼과 화면 요소의 자세한 설명은 아래 3.1 ~ 3.3 을 참고하세요.
+</div>
+
 <h3 id="vms-startup">3.1 첫 실행 화면</h3>
-<p>실행 시:</p>
+<p>VMS 를 실행하면 다음 순서로 화면이 나타납니다:</p>
 <ol>
-  <li>Splash → 카메라 자동 검색 (백그라운드).</li>
-  <li>로컬 시스템 사용자 로그인 (엔지니어용, BCrypt). <span class="chip muted">선택</span></li>
-  <li>메인 윈도우 표시: 헤더 + KPI Strip + 카메라 캔버스 + 시스템 로그 + 사이드 패널 (접힘).</li>
+  <li>시작 화면(Splash)이 표시되는 동안 카메라를 자동으로 찾아 연결합니다.</li>
+  <li>시스템 사용자 로그인 창이 표시됩니다 (엔지니어·관리자용). <span class="chip muted">선택</span></li>
+  <li>메인 화면이 표시됩니다: 헤더 + KPI 스트립(생산 현황 요약) + 카메라 화면 + 시스템 로그 + 사이드 패널(접힘).</li>
 </ol>
 
 <h3 id="vms-header">3.2 헤더 — 운영 흐름</h3>
-<p>좌→우로 자연스러운 운영 동선. 모든 칩 높이 통일 (32px), AUTO RUN 만 강조 (34px).</p>
+<p>헤더의 버튼과 표시는 왼쪽에서 오른쪽으로 실제 작업 순서대로 배치되어 있습니다:
+<strong>작업자 로그인 → 작업지시 선택 → 검사 시작(AUTO RUN)</strong>.</p>
 
 <h4>3.2.1 Operator 로그인</h4>
-<p>청록 보더 칩. 로그인 전 "Login..." 버튼만 표시.</p>
+<p>로그인 전에는 [Login...] 버튼만 표시됩니다.</p>
 <ol class="steps">
-  <li>"Login..." 클릭 → 다크 다이얼로그 (사번 + PIN).</li>
-  <li>Web <code>/api/kiosk/login</code> 으로 대조.</li>
-  <li>성공 시 헤더 칩 형태가 "<strong>김기동 (1003)</strong> <span class="chip role-lead">Lead</span> [Logout]" 으로 변경.</li>
+  <li>[Login...] 을 클릭하면 로그인 창이 열립니다 (사번 + PIN).</li>
+  <li>입력한 사번과 PIN 을 Web 서버의 작업자 명단과 대조합니다.</li>
+  <li>성공하면 칩이 "<strong>김기동 (1003)</strong> <span class="chip role-lead">Lead</span> [Logout]" 형태로 바뀝니다.</li>
 </ol>
 
 <h4>3.2.2 Work Orders 버튼</h4>
-<p>Operator 로그인 후 활성. 클릭 시 Web 에서 작업지시 목록 fetch → 980×640 chromeless 다이얼로그.</p>
+<p>작업자 로그인 후 사용할 수 있습니다. 클릭하면 Web 서버에서 작업지시 목록을 불러와 창으로 보여줍니다.</p>
 <ul>
-  <li>상태 필터: 활성(Planned + InProgress) / 전체 / Planned / InProgress / Completed.</li>
-  <li>컬럼: Order No / Product / Recipe / Progress (예: 5/100) / Status (컬러 뱃지) / Planned Start.</li>
-  <li>더블 클릭 또는 Select 버튼으로 선택.</li>
+  <li>상태 필터 — 활성(Planned + InProgress) / 전체 / Planned / InProgress / Completed 로 추려 볼 수 있습니다.</li>
+  <li>목록 항목 — 작업지시 번호, 제품, 레시피, 진행(예: 5/100), 상태, 계획 시작 시각.</li>
+  <li>원하는 작업지시를 더블 클릭하거나 [Select] 버튼으로 선택합니다.</li>
 </ul>
 
-<h4>3.2.3 WO 칩 (진행률 ProgressBar)</h4>
-<p>선택된 작업지시 표시. 검사 1건마다 실시간 갱신.</p>
+<h4>3.2.3 WO 칩 (진행률 표시)</h4>
+<p>선택한 작업지시가 헤더에 표시되고, 검사 1건이 끝날 때마다 진행 수량이 실시간으로 올라갑니다.</p>
 <pre><code>WO: WO-20260522-001 · A001 (5/100)  [▰▰▱▱▱▱▱▱]</code></pre>
 <ul>
-  <li>ProgressBar 색: 청록 (<code>#14B8A6</code>). 트랙: <code>#1A1A1C</code>.</li>
-  <li>PlannedQuantity = 0 인 WO 는 ProgressBar 숨김.</li>
-  <li>완료(Status=Completed) 시 자동 unselect + 다음 WO 선택 다이얼로그.</li>
+  <li>계획 수량이 0 인 작업지시는 진행률 막대가 표시되지 않습니다.</li>
+  <li>작업지시가 완료되면 선택이 자동으로 해제되고, 다음 작업지시 선택 창이 열립니다.</li>
 </ul>
 
 <h4>3.2.4 Recipe 칩</h4>
-<p>파란 보더 (<code>#3D7DE8</code>) 책 아이콘 + 레시피명. WO 선택 시 <code>WO.RecipeName</code>
-으로 로컬 레시피 자동 로드 → 카메라 전파 → Web 파라미터 동기화. 로컬에 없으면
-Web 동기화 후 재시도.</p>
+<p>현재 사용 중인 레시피 이름이 표시됩니다. 작업지시를 선택하면 그 작업지시에 지정된 레시피가
+자동으로 불러와지고, 카메라 설정과 Web 파라미터도 함께 맞춰집니다. PC 에 없는 레시피는
+Web 서버에서 받아 온 뒤 다시 시도합니다.</p>
 
 <h4>3.2.5 Ctx (Inspection Context)</h4>
-<p>업로드 시 자동 첨부될 추적성 4필드:</p>
+<p>검사 결과와 함께 서버에 기록되는 추적 정보 4가지입니다. 대부분 자동으로 채워집니다:</p>
 <table>
   <tr><th>필드</th><th>채움 방식</th><th>비고</th></tr>
-  <tr><td>WO</td><td>WO 선택 시 자동</td><td>수동 오버라이드 가능</td></tr>
-  <tr><td>Lot</td><td>WO 선택 시 활성 Lot 자동 fetch</td><td>활성 Lot 없으면 비움</td></tr>
-  <tr><td>S/N</td><td>바코드 스캐너 수동 입력</td><td>제품 시리얼 — 검사 1회 1S/N</td></tr>
-  <tr><td>Op ID</td><td>Operator 로그인 시 자동</td><td>로그아웃 시 비움</td></tr>
+  <tr><td>WO</td><td>작업지시 선택 시 자동</td><td>직접 수정 가능</td></tr>
+  <tr><td>Lot</td><td>작업지시 선택 시 활성 Lot 자동 채움</td><td>활성 Lot 없으면 비움</td></tr>
+  <tr><td>S/N</td><td>바코드 스캐너로 입력</td><td>제품 시리얼 — 검사 1회당 1개</td></tr>
+  <tr><td>Op ID</td><td>작업자 로그인 시 자동</td><td>로그아웃하면 비움</td></tr>
 </table>
-<p><strong>✕</strong> 버튼으로 모든 필드 클리어.</p>
+<p><strong>[✕]</strong> 버튼을 누르면 모든 필드가 지워집니다.</p>
 
 <h4>3.2.6 AUTO RUN</h4>
-<p>운영 흐름의 단일 Primary 액션. 모든 조건 만족 시 청록 (<code>#00ADB5</code>) 활성,
-실행 중에는 빨강 STOP 으로 전환.</p>
+<p>검사를 시작하는 메인 버튼입니다. 시작 조건(§3.5)을 모두 만족하면 청록색으로 활성화되고,
+검사가 실행되는 동안에는 같은 자리가 빨간 [STOP] 버튼으로 바뀝니다.</p>
 
 <h4>3.2.7 Role 뱃지</h4>
-<p>Operator chip 안에 권한 뱃지:</p>
+<p>Operator 칩 안에 작업자의 권한이 뱃지로 표시됩니다:</p>
 <ul>
   <li><span class="chip role-op">Operator</span> — 기본, 뱃지 없음</li>
   <li><span class="chip role-lead">Lead</span> — 반장. 파란 뱃지.</li>
@@ -404,20 +419,22 @@ Web 동기화 후 재시도.</p>
 </ul>
 
 <h3 id="vms-sidebar">3.3 사이드 패널 (Settings)</h3>
-<p>헤더 우측 톱니바퀴 아이콘 (<strong>⚙</strong>) 으로 토글. 320px 폭.</p>
+<p>헤더 오른쪽 끝의 톱니바퀴(<strong>⚙</strong>) 아이콘으로 열고 닫습니다.
+열 때 시스템 사용자 로그인이 필요합니다.</p>
 
 <h4>Camera Control 섹션</h4>
 <ul>
-  <li><strong>Grab</strong> — 단일 이미지 캡처. AUTO RUN 비활성 시만 활성.</li>
-  <li><strong>Live Start / Live Stop</strong> — 연속 라이브 그랩.</li>
-  <li><strong>Roller</strong> — 롤러 검사 모드 토글 (지원 카메라만).</li>
+  <li><strong>[Grab]</strong> — 사진을 한 장 촬영합니다. 검사(AUTO RUN)가 멈춰 있을 때만 사용할 수 있습니다.</li>
+  <li><strong>[Live Start] / [Live Stop]</strong> — 카메라 영상을 실시간으로 계속 표시하거나 멈춥니다.</li>
+  <li><strong>[Roller]</strong> — 롤러 검사 모드를 켜고 끕니다 (지원 카메라에서만).</li>
 </ul>
 
 <h4>Recipe 섹션</h4>
 <ul>
-  <li>현재 로드된 레시피 + 버전.</li>
-  <li>Available Recipes 리스트 (로컬 + Web 동기화).</li>
-  <li>Load / New / Save / Export / Import 버튼. New/Save/Delete 는 권한 필요.</li>
+  <li>현재 사용 중인 레시피 이름과 버전이 표시됩니다.</li>
+  <li>Available Recipes — 사용할 수 있는 레시피 목록 (Web 서버와 자동 동기화).</li>
+  <li>[Load](불러오기) / [New](새로 만들기) / 저장 · 내보내기 · 가져오기 버튼.
+      새로 만들기/저장/삭제에는 권한이 필요합니다.</li>
 </ul>
 
 <h4>External Tools 섹션 <span class="chip role-sup">Supervisor 전용</span></h4>
@@ -430,43 +447,47 @@ Web 동기화 후 재시도.</p>
 
 <h4>Web Parameters 섹션</h4>
 <ul>
-  <li><strong>Sync Parameters</strong> — Web 파라미터 즉시 동기화 (60초 자동 주기 외 수동 트리거).</li>
+  <li><strong>[Sync Parameters]</strong> — Web 서버의 파라미터를 지금 즉시 가져옵니다.
+      (평소에는 60초마다 자동으로 동기화되며, 이 버튼은 기다리지 않고 바로 반영하고 싶을 때 사용합니다.)</li>
 </ul>
 
-<h4>Recent Inspections 섹션 (D8)</h4>
-<p>VMS 자체 In-Memory 순환 버퍼 (최대 200건). Web 끊겨도 작업자가 즉시 확인.</p>
+<h4>Recent Inspections 섹션</h4>
+<p>최근 검사 결과를 VMS 안에 최대 200건까지 보관해 보여줍니다.
+Web 연결이 끊겨 있어도 작업자가 바로 확인할 수 있습니다.</p>
 <ul>
-  <li>3-cell 통계: Total / Pass / NG + Pass rate.</li>
-  <li>ListBox 최근 N건 — 시간 (HH:mm:ss) + <span class="chip ok">OK</span> /
-      <span class="chip ng">NG</span> 뱃지 + 시리얼 · WO · Recipe + NG 코드.</li>
-  <li>Clear 버튼으로 초기화. ToolTip 으로 풀 타임스탬프.</li>
+  <li>요약 통계 — Total / Pass / NG 건수와 합격률(Pass rate).</li>
+  <li>최근 목록 — 시각, <span class="chip ok">OK</span> / <span class="chip ng">NG</span> 판정,
+      시리얼 · 작업지시 · 레시피, NG 코드.</li>
+  <li>[Clear] 버튼으로 목록을 비웁니다.</li>
 </ul>
 <div class="callout tip">
-프로세스 재시작 시 비워짐. 영구 저장은 Web <code>InspectionHistory</code> 가 담당.
+VMS 를 다시 시작하면 이 목록은 비워집니다. 전체 검사 이력은 Web 의 Production History
+화면에서 언제든 조회할 수 있습니다.
 </div>
 
 <h4>Statistics 섹션</h4>
 <p>세션 누적 통계: Total / Pass / Fail / Pass Rate.</p>
 
 <h3 id="vms-dialog-completed">3.4 작업지시 완료 다이얼로그</h3>
-<p>계획 수량 도달 시 자동 표시 (560×500 chromeless 다크, 청록 2px 보더):</p>
+<p>계획 수량에 도달하면 완료 알림 창이 자동으로 표시됩니다:</p>
 <ul>
-  <li>큰 원형 ✓ 아이콘 (72px) + WO OrderNo (22pt Bold).</li>
-  <li>KPI 카드 4개: 계획 / 검사 / Pass / NG (각각 색상 차별화).</li>
-  <li>Pass rate · 진척률 표시.</li>
-  <li>표시 시 <code>SystemSounds.Asterisk</code> 자동 재생 (작업자 주의 환기).</li>
-  <li>하단 두 버튼: <strong>닫기</strong> / <strong>다음 작업지시 선택</strong> (Enter 기본).</li>
+  <li>완료된 작업지시 번호와 큰 체크(✓) 표시.</li>
+  <li>KPI 카드 4개 — 계획 / 검사 / Pass / NG 수량.</li>
+  <li>합격률과 진척률.</li>
+  <li>알림음이 함께 울려 작업자가 알아차리기 쉽습니다.</li>
+  <li>하단 버튼 — <strong>[닫기]</strong> / <strong>[다음 작업지시 선택]</strong> (Enter 키로 바로 선택).</li>
 </ul>
 
 <h3 id="vms-auto-run">3.5 AUTO RUN 활성화 조건</h3>
-<p>다음을 모두 만족해야 활성:</p>
+<p>[AUTO RUN] 버튼은 다음 조건을 모두 만족해야 켜집니다:</p>
 <ol>
-  <li>카메라 1대 이상 연결 (<code>HasConnectedCamera</code>).</li>
-  <li>시스템 사용자 StartStop 권한 (<code>UserPermission.StartStop</code>) — 미로그인 시 기본 허용.</li>
-  <li>(Web 통합 환경) Operator 로그인 상태.</li>
-  <li>(Web 통합 환경) WO 선택 상태이고 Status 가 Planned 또는 InProgress.</li>
+  <li>카메라가 1대 이상 연결되어 있어야 합니다.</li>
+  <li>시스템 사용자에게 검사 시작/정지 권한이 있어야 합니다 (시스템 사용자 미로그인 시 기본 허용).</li>
+  <li>(Web 연동 환경) 작업자가 로그인되어 있어야 합니다.</li>
+  <li>(Web 연동 환경) 작업지시가 선택되어 있고, 상태가 Planned 또는 InProgress 여야 합니다.</li>
 </ol>
-<p>비활성 시 ToolTip 으로 사유 표시. Standalone (Web 미연결) 환경은 4번 항목 우회.</p>
+<p>버튼이 꺼져 있을 때 마우스를 올리면 이유가 말풍선으로 표시됩니다.
+Web 을 사용하지 않는 단독(Standalone) 환경에서는 3 · 4번 조건이 적용되지 않습니다.</p>
 
 <h3 id="vms-roles">3.6 권한별 동선</h3>
 <table>
@@ -482,8 +503,12 @@ Web 동기화 후 재시도.</p>
 VMS 로컬 시스템 사용자 등급은 별도 체계로 §3.7 참조.</p>
 
 <h3 id="vms-usergrade">3.7 로컬 UserGrade 권한 매트릭스</h3>
-<p>VMS 데스크탑은 운영체제 사용자와 별개로 <strong>로컬 시스템 사용자</strong> (BCrypt 해시 저장, <code>%LocalAppData%\BODA VISION AI\BodaVision.db</code>) 를 3 등급으로 분리합니다.
-SSO 활성 환경에서 Admin / Engineer 는 Web 으로 인증 위임되며, <code>local-admin</code> 비상 폴백만 로컬 인증을 사용합니다.</p>
+<div class="callout"><strong>⚙ 이 절은 관리자용입니다.</strong> 계정 권한을 설정하는 관리자가 참고하는
+기준표이며, 일반 작업자는 읽지 않아도 됩니다.</div>
+<p>VMS 는 운영체제(Windows) 사용자와 별개로 <strong>로컬 시스템 사용자</strong>를 3 등급으로 나누어
+관리합니다 (비밀번호는 암호화되어 <code>%LocalAppData%\BODA VISION AI\BodaVision.db</code> 에 저장).
+SSO 를 켠 환경에서 Admin / Engineer 는 Web 으로 인증을 위임하며, <code>local-admin</code> 비상 계정만
+로컬 인증을 사용합니다.</p>
 <table>
   <tr><th>권한 (<code>UserPermission</code>)</th><th>Operator</th><th>Engineer</th><th>Admin</th><th>local-admin<br>(비상 폴백)</th></tr>
   <tr><td>StartStop (AUTO RUN 시작/정지)</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
@@ -497,14 +522,13 @@ SSO 활성 환경에서 Admin / Engineer 는 Web 으로 인증 위임되며, <co
   <tr><td>RestartWebService (Web 서비스 재시작)</td><td>—</td><td>✓</td><td>✓</td><td>✓</td></tr>
   <tr><td>ManageUsers (사용자 관리)</td><td>—</td><td>—</td><td>✓</td><td>—</td></tr>
 </table>
-<p><strong>local-admin 폴백 규칙</strong> — Web SSO 다운 시 비상 진입용. Grade 무관, 위 표의
-<code>StartStop</code> / <code>ViewStatistics</code> / <code>RestartWebService</code> 3 개만 허용.
-운영 데이터 변경 (ManageUsers / EditRecipe / SystemConfiguration 등) 은 거부되며 모든 거부는
-<code>AuditCategory.Authorization</code> 로 기록됩니다. 설계 근거: <code>docs/gs/SSO_Migration_Plan.md §2.3</code>.</p>
-<p><strong>비로그인 상태</strong> — 모든 권한 거부 (단, AUTO RUN 의 StartStop 게이트는 <code>HasConnectedCamera</code> 등 §3.5 조건이 우선).</p>
-<p><strong>권한 거부 감사</strong> — <code>HasPermission</code> 이 거부할 때마다 <code>%LocalAppData%\BODA VISION AI\audit\YYYY-MM-DD.jsonl</code> 에
-<code>PermissionDenied</code> 이벤트로 기록 (Username / Grade / Permission). 허용은 빈도 폭증 우려로 미기록.</p>
-<p>진실 소스 (Grade ↔ 권한 매핑 로직): <code>VMS/Services/UserService.cs</code> <code>HasPermission</code>. 매트릭스 변경 시 본 매뉴얼 동기 필요.</p>
+<p><strong>local-admin 비상 계정 규칙</strong> — Web SSO 에 접속할 수 없을 때 비상 진입용 계정입니다.
+등급과 무관하게 위 표의 검사 시작/정지 · 통계 조회 · Web 서비스 재시작 3 가지만 허용되며,
+운영 데이터 변경(사용자 관리 / 레시피 편집 / 시스템 구성 등)은 거부됩니다.
+거부된 시도는 모두 감사 로그에 기록됩니다.</p>
+<p><strong>비로그인 상태</strong> — 모든 권한이 거부됩니다 (AUTO RUN 은 §3.5 의 조건을 따릅니다).</p>
+<p><strong>권한 거부 기록</strong> — 권한이 거부될 때마다 감사 로그
+(<code>%LocalAppData%\BODA VISION AI\audit\</code>) 에 사용자 · 등급 · 요청 권한이 기록됩니다.</p>
 </section>
 
 <!-- ============================================================ -->
