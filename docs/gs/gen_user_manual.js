@@ -153,34 +153,194 @@ const ADMIN_BEFORE = "4. BODA.VMS.Web (관리자 / MES)";
 function adminDialogsSection() {
   const out = [];
   out.push(new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("3.8 관리자 도구 다이얼로그 (Admin 전용)")] }));
-  out.push(P("헤더의 User Management 아이콘과 Admin Tools(⋮) 드롭다운에서 실행되는 관리자 전용 다이얼로그다. (Admin 권한 로그인 시에만 표시)"));
+  out.push(P("헤더의 User Management 아이콘과 Admin Tools(⋮) 드롭다운에서 실행되는 관리자 전용 다이얼로그다. (Admin 권한 로그인 시에만 표시) 각 그림 아래에 화면의 주요 컨트롤과 그 역할을 정리했다."));
   const dlgs = [
-    ["23_dlg_usermgmt.png", "User Management — 사용자 계정·권한(UserGrade) 관리"],
-    ["24_dlg_audit.png", "Audit Log Viewer — 감사 로그 조회(카테고리/기간 필터)"],
-    ["25_dlg_health.png", "Health Check — 시스템 상태 점검"],
-    ["26_dlg_backup.png", "Backup / Restore — 데이터 백업 및 복원"],
-    ["27_dlg_autobackup.png", "Auto Backup Settings — 자동 백업 정책"],
-    ["28_dlg_retention.png", "Retention Settings — 데이터 보존 정책(감사/백업/업로드 큐 + 카테고리별)"],
-    ["29_dlg_support.png", "Support Package — 원격 지원용 진단 패키지 생성"],
+    ["23_dlg_usermgmt.png", "User Management — 사용자 계정·권한(UserGrade) 관리", [
+      "Users 목록 — 등록된 계정을 표로 표시(Username / Display Name / Grade / Last Login). 행을 선택하면 우측 [Edit Selected User] 패널에 값이 채워진다.",
+      "Add New User — Username·Display Name·Password 입력, Grade 콤보(권한 등급) 선택 후 [Add User] 로 신규 계정을 추가한다.",
+      "Edit Selected User — 선택한 사용자의 Display Name·Grade 를 수정하고 [Save Changes] 로 저장한다.",
+      "New Password + [Change Password] — 선택 사용자의 비밀번호를 재설정한다.",
+      "[Delete User] — 선택한 사용자 계정을 삭제한다.",
+      "하단 상태 메시지 — 추가/저장/삭제 등 작업 결과를 표시한다.",
+    ]],
+    ["24_dlg_audit.png", "Audit Log Viewer — 감사 로그 조회(카테고리/기간 필터)", [
+      "상단 상태 — 현재 조회 기간과 결과 건수(예: 2026-06-05 ~ 2026-06-12: 331건).",
+      "필터 바 — From / To 날짜, Category(감사 카테고리, 비우면 전체), Outcome(Success / Failure / Denied, 비우면 전체), Search(Action·User·Source·Details 텍스트 검색).",
+      "버튼 — [조회] 필터 적용 · [필터 초기화] 조건 리셋 · [CSV 내보내기] 현재 결과를 CSV 파일로 저장.",
+      "결과 그리드 — Timestamp(UTC) / Category / Action / Outcome / User / Source / Details. Outcome 은 성공(초록)·실패(빨강)·거부(주황)로 색상 구분된다.",
+      "하단 — 원본 로그 저장 위치(%LocalAppData%\\BODA VISION AI\\audit\\YYYY-MM-DD.jsonl) 안내.",
+    ]],
+    ["25_dlg_health.png", "Health Check — 시스템 상태 점검", [
+      "요약 카드 — OVERALL 종합 상태 배지(Pass 초록 / Warn 주황 / Fail 빨강), 요약 문구, 마지막 점검 시각(Last run).",
+      "[Refresh] — 점검을 다시 실행한다. [Copy] — 점검 결과 전체를 클립보드로 복사한다.",
+      "항목 목록 — 점검 항목마다 상태 배지(Pass / Warn / Fail) + 항목명 + 상세 메시지를 한 줄씩 표시한다.",
+      "하단 — 결과는 System / StartupHealthCheck 감사 이벤트로 자동 기록된다.",
+    ]],
+    ["26_dlg_backup.png", "Backup / Restore — 데이터 백업 및 복원", [
+      "백업 생성 — [감사 로그(audit/) 포함] 체크, ProductVersion(manifest 기록용) 입력, 상태 배지와 최근 백업 요약, [Run Backup...](저장 경로 지정 후 백업 실행).",
+      "백업 복원 — 복원할 파일 경로(읽기 전용) + [Browse...], [기존 파일 덮어쓰기]·[감사 로그도 복원] 체크, 상태 배지와 최근 복원 요약, [Run Restore].",
+      "복원된 백업 manifest — 복원한 백업의 manifest(생성 시각·버전·포함 항목) 요약을 표시한다.",
+      "하단 — 모든 작업은 Configuration / BackupCreated·BackupRestored 감사 이벤트로 기록되며, 복원 후에는 VMS 재시작을 권장한다.",
+    ]],
+    ["27_dlg_autobackup.png", "Auto Backup Settings — 자동 백업 정책", [
+      "[자동 백업 활성화] — 주기적 자동 백업 사용 여부.",
+      "백업 주기(시간) [1–720] · 보존 기간(일) [1–365] — 자동 백업 실행 간격과 오래된 백업 삭제 기준.",
+      "백업 위치 + [Browse...] — 저장 폴더(비우면 %LocalAppData%\\BODA VISION AI\\backups).",
+      "[감사 로그(audit/) 포함] — 자동 백업에 감사 로그 포함 여부(보통 끔; 감사 보존은 별도 정책).",
+      "ProductVersion(manifest) — 백업 manifest 에 기록할 제품 버전.",
+      "하단 상태 표시줄 · [Reload](디스크 저장값 다시 읽기) · [Save](변경 저장).",
+    ]],
+    ["28_dlg_retention.png", "Retention Settings — 데이터 보존 정책(감사/백업/업로드 큐 + 카테고리별)", [
+      "빠른 프리셋 — [Conservative](규제 사이트) / [Standard](GS 권장 기본) / [Minimal](디스크 제한 사이트) 로 값을 일괄 채운다(적용 후 Save 필요).",
+      "전역 보존(일) — 감사 로그(audit/) · 자동 백업(backups/) · 업로드 큐(upload_queue/) 각각의 보존 기간. 입력란 옆에 허용 범위를 표시한다.",
+      "카테고리별 차등 보존(일) — 9개 audit 카테고리별로 보존 기간을 별도 지정(전역 정리 후 재필터). 기본값은 GS 권장(보안/사용자/설정 1095일, 인증/권한/레시피 730일, 시퀀스/검사 365일, 시스템 90일).",
+      "적용 미리보기 — [Preview] 를 누르면 dry-run(실제 삭제 없음) 결과 요약이 표시되고 [Export Preview...] 로 CSV 저장이 가능하다.",
+      "하단 — 상태 표시줄 · [Reload] · [Preview] · [Export Preview...] · [Save]. 변경은 VMS 재시작 후 적용된다.",
+    ]],
+    ["29_dlg_support.png", "Support Package — 원격 지원용 진단 패키지 생성", [
+      "안내 — 원격 지원/분석용 ZIP 을 생성한다. 백업과 달리 사용자 DB(BCrypt 해시)와 레시피는 포함되지 않는다.",
+      "포함할 감사 로그 일수 [1–90] · ProductVersion(manifest) — 패키지에 담을 감사 로그 범위와 기록 버전.",
+      "[환경 정보 포함] — OS / .NET / CPU / 메모리 / 드라이브 정보 포함.",
+      "[백업 인덱스 포함] — 백업 파일명·크기·시각 등 메타데이터만 포함(내용 제외).",
+      "[MachineName / DomainName 포함] — 사이트 식별 PII 로 기본 제외.",
+      "상태 배지 + 요약 · [Run Export...](ZIP 생성). 작업은 System / SupportPackageCreated 감사 이벤트로 기록된다.",
+    ]],
   ];
-  dlgs.forEach(([f, c]) => { out.push(imgPara(f, 540)); out.push(caption("그림. " + c)); });
+  dlgs.forEach(([f, c, items]) => {
+    out.push(imgPara(f, 540));
+    out.push(caption("그림. " + c));
+    (items || []).forEach(t => out.push(bullet(t)));
+  });
   return out;
 }
 // 챕터 3 시작 전에 AppSetup 마법사 섹션을 끼워넣음 (= 설치 챕터 말미)
 const WIZARD_BEFORE = "3. VMS 클라이언트 매뉴얼";
+
+// 마법사 컨트롤 항목 표 — 컨트롤 이미지(appsetup_ctl/, --capture-controls 산출물) + 항목/설명/기본값
+const WIZ_COLW = [1600, 3000, 3100, 1326]; // 항목 / 컨트롤 / 설명 / 기본값 (합 = CONTENT_W)
+function ctlCell(files, w) {
+  // 컨트롤 캡처는 2x DPI → 1/2 스케일이 원래 크기. 셀 폭(px) 초과 시 셀에 맞춰 축소.
+  const maxPx = Math.floor(w / 1440 * 96) - 12;
+  const paras = (files || []).map(f => {
+    const full = path.join(SHOT, "appsetup_ctl", f);
+    if (!fs.existsSync(full)) return P(`[${f}]`, { color: "C00000" });
+    const buf = fs.readFileSync(full);
+    const iw = buf.readUInt32BE(16), ih = buf.readUInt32BE(20);
+    const wPx = Math.min(Math.round(iw / 2), maxPx);
+    const hPx = Math.round(wPx * ih / iw);
+    return new Paragraph({ spacing: { before: 20, after: 20 }, alignment: AlignmentType.CENTER,
+      children: [new ImageRun({ type: "png", data: buf, transformation: { width: wPx, height: hPx },
+        altText: { title: f, description: f, name: f } })] });
+  });
+  return new TableCell({ borders, width: { size: w, type: WidthType.DXA }, margins: cellMargins,
+    verticalAlign: VerticalAlign.CENTER, children: paras.length ? paras : [new Paragraph({ spacing: { after: 0 }, children: runs("—", { size: 18 }) })] });
+}
+function wizardTable(rows) {
+  const heads = ["항목", "컨트롤", "설명", "기본값 / 예시"];
+  const trs = [new TableRow({ tableHeader: true, children: heads.map((h, i) => hcell(h, WIZ_COLW[i])) })];
+  rows.forEach(([name, files, desc, def], ri) => {
+    const fill = ri % 2 ? "F4F7FB" : undefined;
+    trs.push(new TableRow({ children: [
+      dcell(name, WIZ_COLW[0], fill),
+      ctlCell(files, WIZ_COLW[1]),
+      dcell(desc, WIZ_COLW[2], fill),
+      dcell(def, WIZ_COLW[3], fill),
+    ] }));
+  });
+  return new Table({ width: { size: CONTENT_W, type: WidthType.DXA }, columnWidths: WIZ_COLW, rows: trs });
+}
+
 function wizardSection() {
   const out = [];
   out.push(new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("2.5 최초 실행 — 시스템 설정 마법사 (VMS.AppSetup)")] }));
-  out.push(P("VMS 설치 후 최초 실행 시(또는 system_config.json 부재 시) 시스템 설정 마법사가 자동 실행된다. 총 6단계로 애플리케이션·네트워크·카메라·PLC·로봇/IO 및 초기 관리자 계정을 구성한 뒤 [Finish] 로 저장한다. 카메라가 없는 환경에서는 3단계에서 [Virtual Mode (Manual Setup)] 를 선택해 가상 구성으로 진행할 수 있다."));
+  out.push(P("VMS 설치 후 최초 실행 시(또는 system_config.json 부재 시) 시스템 설정 마법사가 자동 실행된다. 총 6단계로 애플리케이션·네트워크·카메라·PLC·로봇/IO 및 초기 관리자 계정을 구성한 뒤 [Finish] 로 저장한다. 카메라가 없는 환경에서는 3단계에서 [Virtual Mode (Manual Setup)] 를 선택해 가상 구성으로 진행할 수 있다. 각 단계의 그림 아래에 입력 항목별 컨트롤 이미지와 설명을 표로 정리했다."));
   const steps = [
-    ["10_appsetup_step1.png", "1단계 — 시작(Welcome)"],
-    ["10_appsetup_step2.png", "2단계 — Application Settings: 애플리케이션명 / System IP / Web Server 연동(Client Index·Web Server URL·API Key) / SSO"],
-    ["10_appsetup_step3.png", "3단계 — Camera Configuration: Live/Virtual 모드, [+ Add Camera], [Scan Network], 노출/게인/캡처모드"],
-    ["10_appsetup_step4.png", "4단계 — PLC Communication: 벤더 / 통신 타입 / IP·Port / 폴링·하트비트 / Write·Endian"],
-    ["10_appsetup_step5.png", "5단계 — Robot Configuration: 로봇 연동(Enable) / 벤더 / 연결 / 프로토콜"],
-    ["10_appsetup_step6.png", "6단계 — Robot/IO Configuration: 등록된 IO 보드(벤더·모델·채널), [Finish] 로 저장"],
+    ["10_appsetup_step1.png", 470, "1단계 — 시작(Welcome)", [
+      P("1단계는 마법사 시작 화면으로 입력 항목이 없다. [Next] 를 눌러 진행하며, 이후 애플리케이션·네트워크 → 카메라 → PLC → 로봇 → IO 보드 순으로 구성한다."),
+      wizardTable([
+        ["[← Back] / [Next]", ["P1_default_11_Button__Back.png", "P1_default_12_Button_Next.png"], "이전 / 다음 단계로 이동. 모든 단계 하단에 공통 표시되며, 마지막 6단계에서는 [Next] 대신 [Finish] 가 표시된다", "—"],
+      ]),
+    ]],
+    ["10_appsetup_step2_full.png", 460, "2단계 — Application Settings: 애플리케이션명 / System IP / Web Server 연동(Client Index·Web Server URL·API Key) / SSO  [전체 화면 — 스크롤 콘텐츠 포함]", [
+      P("■ 2단계 입력 항목 상세", { bold: true }),
+      wizardTable([
+        ["Application Name", ["P2_default_02_TextBox_OP102.png"], "시스템을 식별하는 애플리케이션 표시 이름", "BODA Vision System"],
+        ["System IP Address", ["P2_default_04_TextBox_1921681102.png"], "머신비전 시스템 PC의 IP 주소", "192.168.0.1"],
+        ["Client Index", ["P2_default_08_TextBox_2.png"], "BODA.VMS.Web에서 이 클라이언트를 식별하는 고유 번호(설치 라인별 1, 2, 3…)", "1"],
+        ["Web Server URL", ["P2_default_11_TextBox_httplocalhost5292.png"], "BODA.VMS.Web 서버 주소 — Heartbeat 전송·파라미터 동기화에 사용", "http://localhost:5292"],
+        ["Vision Server URL", ["P2_default_14_TextBox_httplocalhost5000.png"], "VisionServer API 주소 — 클라이언트 자동 등록에 사용", "http://localhost:5000"],
+        ["Web Client API Key", ["P2_default_17_TextBox_TextBox.png"], "X-API-Key 헤더 비밀값(Web 서버의 ClientApiKey:Value와 동일). 비우면 헤더를 보내지 않으며 서버 호환 모드에서만 통과", "(빈 값)"],
+        ["Web SSO 활성", ["P2_default_20_CheckBox_Web_SSO_활성__AdminManager_인증을_BODAVMSWeb_.png"], "체크 시 Admin/Manager 인증을 BODA.VMS.Web으로 위임(단일 계정 관리). Web 도달 불가 시 비상 계정 'local-admin'만 제한 권한으로 진입", "해제"],
+        ["VMS Admin 비밀번호", ["P2_default_25_PasswordBox_InitialAdminPasswordBox.png"], "사용자 인증용 정규 admin 계정 비밀번호. VMS 단독 운영 또는 SSO 비활성 환경에서 사용. 최소 8자, 12자 이상 권장", "신규 설치 시 필수"],
+        ["Local Fallback Admin 비밀번호", ["P2_default_28_PasswordBox_LocalAdminPasswordBox.png"], "'local-admin' 비상 계정 비밀번호. Web 도달 불가 시에만 제한 권한으로 사용하며 안전한 곳에 별도 보관", "신규 설치 시 필수"],
+      ]),
+      P("※ 신규 설치 시 두 비밀번호는 필수 입력입니다(디폴트 비밀번호 자동 시드는 보안상 제거됨). 기존 설치에 이미 계정이 존재하면 비워 두어 변경하지 않을 수 있습니다.", { size: 18, color: "595959" }),
+    ]],
+    ["10_appsetup_step3.png", 470, "3단계 — Camera Configuration: Live/Virtual 모드, [+ Add Camera], [Scan Network], 노출/게인/캡처모드", [
+      P("■ 3단계 입력 항목 상세", { bold: true }),
+      wizardTable([
+        ["카메라 모드", ["P3_default_01_RadioButton_Live_Mode_Scan_Network.png", "P3_default_02_RadioButton_Virtual_Mode_Manual_Setup.png"], "Live: 네트워크 스캔으로 연결 카메라 자동 검출 / Virtual: 카메라 없이 수동 구성", "Virtual"],
+        ["[+ Add Camera]", ["P3_default_03_Button__Add_Camera.png"], "카메라 항목을 수동으로 추가", "—"],
+        ["[Scan Network]", ["P3_default_04_Button_Scan_Network.png"], "GigE Vision 표준(UDP 3956 브로드캐스트)으로 네트워크 카메라 검색", "—"],
+        ["Name / IP", ["P3_camtypes_03_TextBox_AreaCam.png", "P3_camtypes_05_TextBox_1921680101.png"], "카메라 식별 이름 / IP 주소", "Camera 1 / 192.168.0.101"],
+        ["Camera Type", ["P3_camtypes_06_ComboBox_AreaScan2D.png"], "스캔 방식(AreaScan2D·3D / LineScan2D·3D). 선택에 따라 하단 파라미터 패널 전환", "AreaScan2D"],
+        ["Manufacturer", ["P3_camtypes_07_ComboBox_HIK.png"], "제조사. Matrox·Dalsa 선택 시 Frame Grabber(MIL) 패널 표시", "HIK"],
+        ["〈Area Scan〉 Exposure(μs) / Gain", ["P3_camtypes_10_TextBox_5000.png", "P3_camtypes_12_TextBox_1.png"], "노출 시간 / 게인", "5000 / 1.0"],
+        ["〈Line Scan〉 Trigger / Line Rate / Scan Length", ["P3_camtypes_22_ComboBox_Encoder.png", "P3_camtypes_24_TextBox_10000.png"], "트리거 소스(Internal·Encoder) / 라인 레이트(Hz) / 스캔 길이", "Internal / 10000 / 4096"],
+        ["〈Line Scan·Encoder〉 Encoder Res(P/mm)", ["P3_camtypes_28_TextBox_10.png"], "트리거가 Encoder일 때 표시 — 엔코더 해상도", "10.0"],
+        ["〈3D〉 Capture Mode / Filter / Z Min·Max(mm)", ["P3_camtypes_42_ComboBox_Both.png", "P3_camtypes_44_TextBox_3.png"], "2D·3D 캡처 모드 / 필터 강도 / Z 범위", "Both / 3 / 0·1000"],
+        ["〈Frame Grabber〉 Board Type / Board# / Digitizer# / DCF", ["P3_camtypes_63_ComboBox_ComboBox.png", "P3_camtypes_70_Button_unnamed.png"], "MIL 보드 타입 / 보드·디지타이저 번호 / Camera Link DCF 파일", "SOLIOS / 0 / 0 / —"],
+      ]),
+      P("※ 〈 〉 표시 항목은 선택한 카메라 타입·제조사에 해당하는 패널이 나타날 때만 표시됩니다.", { size: 18, color: "595959" }),
+    ]],
+    ["10_appsetup_step4.png", 470, "4단계 — PLC Communication: 벤더 / 통신 타입 / IP·Port / 폴링·하트비트 / Write·Endian", [
+      P("■ 4단계 입력 항목 상세", { bold: true }),
+      wizardTable([
+        ["PLC Vendor", ["P4_ethernet_02_RadioButton_Mitsubishi.png", "P4_ethernet_06_RadioButton_Modbus_TCP.png"], "Mitsubishi / Siemens / LS Electric / Omron / Modbus TCP / None", "None"],
+        ["Communication Type", ["P4_ethernet_20_ComboBox_Ethernet.png"], "통신 방식(Ethernet / Serial 등)", "Ethernet"],
+        ["〈Ethernet〉 PLC IP Address / PLC Port", ["P4_ethernet_22_TextBox_1921680100.png", "P4_ethernet_24_TextBox_502.png"], "PLC IP 주소 / 포트", "192.168.0.100 / 502"],
+        ["〈Modbus 벤더〉 Modbus Unit ID", ["P4_modbus_02_TextBox_255.png"], "Modbus 슬레이브 ID(1–255)", "255"],
+        ["〈Serial〉 Port / Baud / Data / Parity / Stop", ["P4_serial_03_TextBox_COM1.png", "P4_serial_05_ComboBox_115200.png"], "시리얼 포트 파라미터", "COM1 / 115200 / 8 / None / One"],
+        ["Polling Interval(ms)", ["P4_ethernet_10_TextBox_20.png"], "PLC 폴링 주기", "20"],
+        ["Use Heartbeat / Heartbeat Address", ["P4_ethernet_11_CheckBox_Use_Heartbeat.png"], "하트비트 감시 사용 / 주소(예: D100)", "해제 / —"],
+        ["Auto Reconnect", ["P4_ethernet_13_CheckBox_Auto_Reconnect.png"], "연결 끊김 시 자동 재접속", "사용"],
+        ["Write Mode / Endian Mode", ["P4_ethernet_16_ComboBox_Handshake.png", "P4_ethernet_18_ComboBox_LittleEndian.png"], "데이터 쓰기 모드 / 워드 바이트 순서", "Handshake / LittleEndian"],
+      ]),
+      P("※ 통신 타입이 Serial이면 IP·Port 대신 시리얼 포트 항목이, Modbus 벤더면 Modbus Unit ID가 표시됩니다.", { size: 18, color: "595959" }),
+    ]],
+    ["10_appsetup_step5_full.png", 520, "5단계 — Robot Configuration: 로봇 연동(Enable) / 벤더 / 연결 / 프로토콜  [전체 화면 — 로봇 연동 활성, 스크롤 콘텐츠 포함]", [
+      P("■ 5단계 입력 항목 상세", { bold: true }),
+      wizardTable([
+        ["Enable Robot Integration", ["P5_disabled_01_CheckBox_Enable_Robot_Integration.png"], "멀티뷰 3D 스캔용 로봇 사용 활성화. 해제 시 이하 항목 숨김", "해제"],
+        ["Robot Vendor", ["P5_enabled_02_RadioButton_Universal_Robots_UR.png", "P5_enabled_03_RadioButton_Doosan_Robotics.png"], "UR / Doosan / Jaka / ABB / Fanuc. 선택 시 Euler 규약·포트 자동 설정", "UR"],
+        ["Robot IP Address / Port", ["P5_enabled_09_TextBox_1921680200.png", "P5_enabled_11_TextBox_502.png"], "로봇 IP / 포트(벤더 기본값)", "192.168.0.200 / 30003"],
+        ["Communication Protocol", ["P5_enabled_13_RadioButton_Vendor_Native.png", "P5_enabled_14_RadioButton_Modbus-TCP.png"], "Vendor Native / Modbus-TCP(Doosan 전용) / Custom Socket(CSV)", "Vendor Native"],
+        ["〈Modbus-TCP〉 Unit ID / Pose Start Register", ["P5_enabled_18_TextBox_1.png", "P5_enabled_20_TextBox_270.png"], "Holding Register 기반 실시간 TCP 포즈 읽기(기본 270=Doosan 표준)", "1 / 270"],
+        ["Euler Convention", ["P5_enabled_23_ComboBox_Doosan_ZYX.png"], "회전 표현 규약. 벤더 선택 시 자동 설정, 수동 변경 가능", "UR_RotationVector"],
+      ]),
+      P("※ 로봇 연동을 활성화해야 벤더·연결·프로토콜·Euler 항목이 표시되며, Modbus-TCP는 Doosan 선택 시에만 제공됩니다.", { size: 18, color: "595959" }),
+    ]],
+    ["10_appsetup_step6.png", 470, "6단계 — Robot/IO Configuration: 등록된 IO 보드(벤더·모델·채널), [Finish] 로 저장", [
+      P("■ 6단계 입력 항목 상세", { bold: true }),
+      wizardTable([
+        ["[+ Add] / [− Remove]", ["P6_withboard_02_Button__Add.png", "P6_withboard_03_Button__Remove.png"], "IO 보드 추가 / 선택 보드 제거", "—"],
+        ["Vendor", ["P6_withboard_06_ComboBox_AdLink.png"], "제조사(None / AdLink / Advantech)", "AdLink"],
+        ["Model", ["P6_withboard_08_TextBox_PCI-7432.png"], "보드 모델(예: PCI-7432, PCI-1716)", "PCI-7432"],
+        ["Device ID", ["P6_withboard_10_TextBox_IoBoard_1.png"], "시퀀스 노드에서 참조할 식별자", "IoBoard_1"],
+        ["Board ID", ["P6_withboard_12_TextBox_0.png"], "보드 인덱스", "0"],
+        ["Input / Output 채널 수", ["P6_withboard_14_TextBox_16.png", "P6_withboard_16_TextBox_16.png"], "디지털 입력 / 출력 채널 수", "16 / 16"],
+        ["활성화", ["P6_withboard_17_CheckBox_활성화_체크_해제_시_시스템_부팅_시_인스턴스_생성_skip.png"], "해제 시 시스템 부팅 시 인스턴스 생성 skip", "사용"],
+        ["설명", ["P6_withboard_19_TextBox_TextBox.png"], "보드에 대한 메모(선택 입력)", "—"],
+      ]),
+      P("※ 현재 Mock 구현만 활성 — 실제 ADLink DASK / Advantech DAQNavi SDK 통합은 Phase 3 작업입니다.", { size: 18, color: "595959" }),
+    ]],
   ];
-  steps.forEach(([f, c]) => { out.push(imgPara(f, 470)); out.push(caption("그림. " + c)); });
+  steps.forEach(([f, w, c, extra]) => {
+    out.push(imgPara(f, w));
+    out.push(caption("그림. " + c));
+    (extra || []).forEach(x => out.push(x));
+    out.push(new Paragraph({ spacing: { after: 120 }, children: [] }));
+  });
   return out;
 }
 
