@@ -605,7 +605,26 @@ namespace VMS
                     }
                     return false;
                 }
-                if (TryGetDir(e.Args, "--capture-dialogs", out string capDir))
+                // 메인 화면 컨트롤 개별 캡처 — "--capture-controls [폴더]" (§3.1~3.3 매뉴얼용)
+                if (TryGetDir(e.Args, "--capture-controls", out string ctlCapDir))
+                {
+                    _ = mainWindow.Dispatcher.BeginInvoke(
+                        System.Windows.Threading.DispatcherPriority.ApplicationIdle,
+                        new Action(async () =>
+                        {
+                            try
+                            {
+                                await Capture.ControlCapturer.RunControlsAsync(mainWindow, mainViewModel, userService, ctlCapDir);
+                            }
+                            catch (Exception ex)
+                            {
+                                System.IO.Directory.CreateDirectory(ctlCapDir);
+                                System.IO.File.AppendAllText(System.IO.Path.Combine(ctlCapDir, "_controls.log"), "run: " + ex + "\n");
+                            }
+                            finally { Shutdown(); }
+                        }));
+                }
+                else if (TryGetDir(e.Args, "--capture-dialogs", out string capDir))
                 {
                     var logp = System.IO.Path.Combine(capDir, "_capture.log");
                     _ = mainWindow.Dispatcher.BeginInvoke(

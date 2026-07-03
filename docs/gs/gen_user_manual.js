@@ -54,6 +54,18 @@ function caption(text) {
   return new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 160 },
     children: [new TextRun({ text, italics: true, size: 18, color: "595959" })] });
 }
+// VMS 메인 화면 컨트롤 캡처(vms_ctl/, 2x DPI) — 1/2 스케일(원래 크기), capW 초과 시 축소.
+function ctlImg(file, capW) {
+  const full = path.join(SHOT, "vms_ctl", file);
+  if (!fs.existsSync(full)) return P(`[스크린샷 자리: ${file}]`, { color: "C00000", bold: true });
+  const buf = fs.readFileSync(full);
+  const iw = buf.readUInt32BE(16), ih = buf.readUInt32BE(20);
+  const wPx = Math.min(Math.round(iw / 2), capW);
+  const hPx = Math.round(wPx * ih / iw);
+  return new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 60, after: 40 },
+    children: [new ImageRun({ type: "png", data: buf, transformation: { width: wPx, height: hPx },
+      altText: { title: file, description: file, name: file } })] });
+}
 function placeholder(text) {
   return new Paragraph({ spacing: { before: 60, after: 160 }, shading: { fill: "FFF2CC", type: ShadingType.CLEAR },
     border: { top: { style: BorderStyle.SINGLE, size: 4, color: "E0B000" }, bottom: { style: BorderStyle.SINGLE, size: 4, color: "E0B000" },
@@ -90,14 +102,73 @@ const POST = {
   "3.1 첫 실행 화면": [
     () => imgPara("01_vms_main.png", 600), () => caption("그림. VMS 첫 실행 화면 (로그인 전) — 헤더 / KPI 스트립 / 카메라 표시 영역"),
   ],
+  "Camera Control 섹션": [
+    () => ctlImg("sec_camera_control.png", 290),
+    () => caption("그림. Camera Control 섹션 — [Grab] / [Live Start] / [Roller] (카메라 연결 후 활성)"),
+  ],
+  "Recipe 섹션": [
+    () => ctlImg("sec_recipe.png", 290),
+    () => caption("그림. Recipe 섹션 — 현재 레시피 / Available Recipes 목록 / [Load]·[New] / 저장·내보내기·가져오기"),
+  ],
+  "External Tools 섹션 Supervisor 전용": [
+    () => ctlImg("sec_external_tools.png", 290),
+    () => caption("그림. External Tools 섹션 — [Vision Tool Setup] / [System Setup] (Supervisor·Admin 전용)"),
+  ],
+  "Web Parameters 섹션": [
+    () => ctlImg("sec_web_parameters.png", 290),
+    () => caption("그림. Web Parameters 섹션 — [Sync Parameters]"),
+  ],
+  "Recent Inspections 섹션 (D8)": [
+    () => ctlImg("sec_recent.png", 290),
+    () => caption("그림. Recent Inspections 섹션 — Total / Pass / NG + Pass rate, [Clear]"),
+  ],
+  "Statistics 섹션": [
+    () => ctlImg("sec_statistics.png", 290),
+    () => caption("그림. Statistics 섹션 — 세션 누적 Total / Pass / Fail / Pass Rate"),
+  ],
+  "3.2.1 Operator 로그인": [
+    () => ctlImg("hdr_operator_chip.png", 200),
+    () => caption("그림. Operator 칩 — 로그인 전([Login...] 버튼)"),
+    () => ctlImg("hdr_operator_chip_in.png", 300),
+    () => caption("그림. Operator 칩 — 로그인 후(이름·사번 + Role 뱃지 + [Logout])"),
+  ],
   "3.2.2 Work Orders 버튼": [
+    () => ctlImg("hdr_workorders_btn.png", 180),
+    () => caption("그림. [Work Orders] 버튼 — 작업자 로그인 후 활성"),
     () => imgPara("20_dlg_workorders.png", 560),
     () => caption("그림. Work Orders 다이얼로그 — 상태 필터 / Refresh / 목록(Order No·Product·Recipe·Progress·Status·Planned Start) / Select·Cancel"),
   ],
+  "3.2.3 WO 칩 (진행률 ProgressBar)": [
+    () => ctlImg("hdr_wo_chip.png", 340),
+    () => caption("그림. WO 칩 — 작업지시 번호 · 제품 · 진행(생산/계획) + 실시간 진행률 바"),
+  ],
+  "3.2.4 Recipe 칩": [
+    () => ctlImg("hdr_recipe_chip.png", 160),
+    () => caption("그림. Recipe 칩 — 작업지시 선택 시 자동 로드된 레시피 이름"),
+  ],
+  "3.2.5 Ctx (Inspection Context)": [
+    () => ctlImg("hdr_ctx_chip.png", 360),
+    () => caption("그림. Ctx 칩 — WO / Lot / S/N 입력(검사 결과 업로드 시 자동 첨부) + [✕] 전체 비우기"),
+  ],
+  "3.2.6 AUTO RUN": [
+    () => ctlImg("hdr_autorun_btn.png", 150),
+    () => caption("그림. [AUTO RUN] — 운영 흐름의 단일 실행 버튼(활성화 조건은 §3.5)"),
+  ],
+  "3.2.7 Role 뱃지": [
+    () => ctlImg("hdr_operator_chip_in.png", 300),
+    () => caption("그림. Role 뱃지 — Supervisor(빨강) / Lead(보라) 일 때만 표시, Operator 는 뱃지 없음"),
+  ],
   "3.3 사이드 패널 (Settings)": [
+    () => ctlImg("hdr_panel_toggle.png", 36),
+    () => caption("그림. 헤더 우측 설정(⚙) 토글 — 사이드 패널 열기/닫기 (시스템 사용자 로그인 필요)"),
     () => imgPara("05_vms_sidepanel.png", 600),
     () => caption("그림. 사이드 패널(Settings) 펼친 상태 — Camera Control / Recipe / External Tools / Updates / Web Parameters / Image Saving"),
-    () => P("[Image Save Settings] 버튼 — 검사 판정 이미지(양품/불량) 저장 설정 다이얼로그:"),
+    () => P("Updates 섹션 — 새 버전 감지 배지와 수동 체크 버튼(업그레이드 절차는 §6.5):"),
+    () => ctlImg("sec_updates.png", 290),
+    () => caption("그림. Updates 섹션 — [Check for updates], 새 버전 감지 시 배지 표시"),
+    () => P("Image Saving 섹션(Admin 전용)의 [Image Save Settings] 버튼 — 검사 판정 이미지(양품/불량) 저장 설정 다이얼로그:"),
+    () => ctlImg("sec_image_saving.png", 290),
+    () => caption("그림. Image Saving 섹션 — [Image Save Settings] (Admin 전용)"),
     () => imgPara("21_dlg_imagesave.png", 460),
     () => caption("그림. Image Save Settings — 저장(경로/보존) / 포맷·품질 / 파일명 규칙 / Web 연동"),
     () => P("[Sync Parameters] 버튼 — Web 서버와 레시피 파라미터 동기화 다이얼로그:"),
