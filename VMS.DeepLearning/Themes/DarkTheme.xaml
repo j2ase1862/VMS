@@ -283,4 +283,21 @@
         <Setter Property="FontWeight" Value="Bold"/>
     </Style>
 
+    <!-- 도움말 툴팁 (기본) — 시스템 밝은 툴팁 대체: 다크 배경 + 자동 줄바꿈.
+         섹션 헤더 ⓘ 아이콘의 쉬운 설명 등 긴 문장을 감안해 MaxWidth 로 감싼다. -->
+    <Style TargetType="ToolTip">
+        <Setter Property="Background" Value="{StaticResource BgLightBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource FgPrimaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="10,8"/>
+        <Setter Property="ContentTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <TextBlock Text="{Binding}" TextWrapping="Wrap" MaxWidth="330" FontSize="12"/>
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 </ResourceDictionary>
