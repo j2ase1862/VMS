@@ -14,6 +14,7 @@ class P(HTMLParser):
         # table state
         self.tbl = None; self.row = None; self.cell = None
         self.list_stack = []     # 'ul'/'ol'
+        self.div_stack = []      # True = callout div (직접 텍스트를 문단으로 승격)
 
     def handle_starttag(self, tag, attrs):
         if tag in ("script", "style"): self.skip += 1; return
@@ -32,6 +33,13 @@ class P(HTMLParser):
             if self.tbl is not None: self.row = []
         elif tag in ("td","th"):
             if self.tbl is not None: self.cell = {"text":"","header": tag=="th"}
+        elif tag == "div":
+            # callout 박스는 <p> 없이 직접 텍스트를 담는 경우가 많다 — 문단 블록으로 승격.
+            # (그 외 div 의 직접 텍스트는 기존대로 무시: 표지 sub 등)
+            is_callout = "callout" in dict(attrs).get("class", "")
+            self.div_stack.append(is_callout)
+            if is_callout:
+                self.flush(); self.cur = {"t": "p", "text": ""}
         elif tag == "br":
             if self.cur is not None: self.cur["text"] += "\n"
             elif self.cell is not None: self.cell["text"] += " "
@@ -45,6 +53,12 @@ class P(HTMLParser):
             self.flush()
         elif tag in ("ul","ol"):
             if self.list_stack: self.list_stack.pop()
+            # callout div 안에서 리스트 뒤에 이어지는 직접 텍스트도 문단으로.
+            if any(self.div_stack):
+                self.flush(); self.cur = {"t": "p", "text": ""}
+        elif tag == "div":
+            if self.div_stack and self.div_stack.pop():
+                self.flush()
         elif tag in ("td","th"):
             if self.cell is not None and self.row is not None:
                 self.row.append(self.cell); self.cell = None
