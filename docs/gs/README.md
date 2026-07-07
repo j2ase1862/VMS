@@ -17,7 +17,7 @@ docs/gs/
 
 | 파일 | 생성기 |
 |------|--------|
-| `VMS_사용자매뉴얼_v1.0.docx` | `pipeline/parse_manual.py` → `pipeline/gen_user_manual.js` |
+| `VMS_사용자매뉴얼_v1.1.docx` | `pipeline/parse_manual.py` → `pipeline/gen_user_manual.js` |
 | `VMS_제품설명서_v1.0.docx` | `pipeline/gen_product_description.js` |
 | `VMS_OSS_라이선스_확인서_v1.0.docx` `VMS_GS_신청서_템플릿_v1.0.docx` `VMS_GS_신청_체크리스트_v1.0.docx` | `pipeline/gen_gs_supporting_docs.js` |
 
@@ -29,7 +29,7 @@ docs/gs/
 ```powershell
 cd docs/gs/pipeline
 python parse_manual.py    # 매뉴얼 HTML → _manual_blocks.json
-node gen_user_manual.js   # → ../VMS_사용자매뉴얼_v1.0.docx
+node gen_user_manual.js   # → ../VMS_사용자매뉴얼_v1.1.docx
 ```
 
 ## guides/ — 가이드 문서

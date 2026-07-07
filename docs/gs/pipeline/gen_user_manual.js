@@ -1,6 +1,6 @@
 // GS 제출용 사용자 취급 설명서(매뉴얼) 생성기
 // 입력: _manual_blocks.json (parse_manual.py 출력) + screenshots/
-// 출력: VMS_사용자매뉴얼_v1.0.docx
+// 출력: VMS_사용자매뉴얼_v1.1.docx
 const path = require("path");
 const fs = require("fs");
 const GLOBAL = "C:/Users/vinos/AppData/Roaming/npm/node_modules";
@@ -15,7 +15,7 @@ const GS = path.join(DIR, "..");          // docs/gs — 제출물(docx)·screen
 const SHOT = path.join(GS, "screenshots");
 const blocks = JSON.parse(fs.readFileSync(path.join(DIR, "_manual_blocks.json"), "utf-8"));
 const tools = JSON.parse(fs.readFileSync(path.join(DIR, "_tool_params.json"), "utf-8"));
-const OUT = path.join(GS, "VMS_사용자매뉴얼_v1.0.docx");
+const OUT = path.join(GS, "VMS_사용자매뉴얼_v1.1.docx");
 
 const PAGE_W = 11906, PAGE_H = 16838, MARGIN = 1440;
 const CONTENT_W = PAGE_W - 2 * MARGIN; // 9026
@@ -739,7 +739,7 @@ front.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 52
   children: [new TextRun({ text: "설치 · 환경 설정 · UI 화면별 조작법 (스크린샷 포함)", size: 22, color: "595959" })] }));
 front.push(imgPara("05_vms_sidepanel.png", 460));
 front.push(new Paragraph({ spacing: { before: 520 }, alignment: AlignmentType.CENTER,
-  children: [new TextRun({ text: "GS 인증 제출용 · 버전 1.0 · 2026-06-12", size: 22 })] }));
+  children: [new TextRun({ text: "GS 인증 제출용 · 버전 1.1 · 2026-07-07", size: 22 })] }));
 front.push(new Paragraph({ children: [new PageBreak()] }));
 front.push(new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun("목차")] }));
 front.push(new TableOfContents("목차", { hyperlink: true, headingStyleRange: "1-3" }));
@@ -777,7 +777,7 @@ const doc = new Document({
   sections: [{
     properties: { page: { size: { width: PAGE_W, height: PAGE_H }, margin: { top: MARGIN, right: MARGIN, bottom: MARGIN, left: MARGIN } } },
     headers: { default: new Header({ children: [new Paragraph({ alignment: AlignmentType.RIGHT,
-      children: [new TextRun({ text: "BODA VMS 사용자 취급 설명서 v1.0", size: 16, color: "808080" })] })] }) },
+      children: [new TextRun({ text: "BODA VMS 사용자 취급 설명서 v1.1", size: 16, color: "808080" })] })] }) },
     footers: { default: new Footer({ children: [new Paragraph({ alignment: AlignmentType.CENTER,
       children: [new TextRun({ children: [PageNumber.CURRENT], size: 16, color: "808080" }),
         new TextRun({ text: " / ", size: 16, color: "808080" }),
