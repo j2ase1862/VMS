@@ -98,15 +98,32 @@ namespace VMS.DeepLearning.Capture
         {
             // 같은 텍스트가 버튼 등에도 있을 수 있어(예: 툴바 [Export] vs Export 섹션),
             // 모든 매칭을 순회해 Expander 조상이 있는 첫 항목을 취한다.
+            // 섹션 헤더에 ⓘ 도움말 Run 이 붙으면 Text 프로퍼티가 비므로(Inlines 에만 존재)
+            // InlineText 연결 문자열로 "헤더"/"헤더 ⓘ" 정확일치 매칭.
             FrameworkElement? SectionExpander(string header)
             {
+                string withIcon = header + " ⓘ";
                 foreach (var d in EnumerateVisibleTree(window))
-                    if (d is TextBlock tb && tb.Text == header && FindAncestor<Expander>(tb) is Expander ex)
-                        return ex;
+                    if (d is TextBlock tb)
+                    {
+                        string t = InlineText(tb);
+                        if ((t == header || t == withIcon) && FindAncestor<Expander>(tb) is Expander ex)
+                            return ex;
+                    }
                 return null;
             }
-            FrameworkElement? SectionBorder(string text) =>
-                FindAncestor<Border>(FindByExactText(window, text));
+            FrameworkElement? SectionBorder(string text)
+            {
+                string withIcon = text + " ⓘ";
+                foreach (var d in EnumerateVisibleTree(window))
+                    if (d is TextBlock tb)
+                    {
+                        string t = InlineText(tb);
+                        if (t == text || t == withIcon)
+                            return FindAncestor<Border>(tb);
+                    }
+                return null;
+            }
 
             yield return ("S1_detection", () =>
             {
@@ -301,10 +318,20 @@ namespace VMS.DeepLearning.Capture
             }
         }
 
+        /// <summary>Run 인라인 구성 TextBlock 은 Text 가 비어 있어 Inlines 를 이어붙여 읽는다.</summary>
+        private static string InlineText(TextBlock tb)
+        {
+            if (!string.IsNullOrEmpty(tb.Text)) return tb.Text;
+            var sb = new System.Text.StringBuilder();
+            foreach (var inline in tb.Inlines)
+                if (inline is System.Windows.Documents.Run r) sb.Append(r.Text);
+            return sb.ToString();
+        }
+
         private static TextBlock? FindByExactText(DependencyObject root, string text)
         {
             foreach (var d in EnumerateVisibleTree(root))
-                if (d is TextBlock tb && tb.Text == text) return tb;
+                if (d is TextBlock tb && InlineText(tb) == text) return tb;
             return null;
         }
 
