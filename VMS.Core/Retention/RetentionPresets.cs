@@ -17,7 +17,7 @@ namespace VMS.Core.Retention
 
     /// <summary>
     /// 사이트 운영 환경에 맞춘 빠른 보존 정책 프리셋 — UI(RetentionSettingsViewModel) 와
-    /// 매뉴얼(docs/gs/gs_compliance_overview_v1.0.md §5.10) 의 단일 진실 공급원.
+    /// 매뉴얼(docs/gs/guides/gs_compliance_overview_v1.0.md §5.10) 의 단일 진실 공급원.
     ///
     /// 프리셋 의미:
     /// - Conservative — 규제 / 컴플라이언스 사이트 (장기 보존)

@@ -3,7 +3,7 @@ import json, re, html
 from html.parser import HTMLParser
 
 SRC = r"D:\Repo\VMS\docs\manuals\BODA-VMS-User-Manual.html"
-OUT = r"D:\Repo\VMS\docs\gs\_manual_blocks.json"
+OUT = r"D:\Repo\VMS\docs\gs\pipeline\_manual_blocks.json"
 
 class P(HTMLParser):
     def __init__(self):

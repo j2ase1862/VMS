@@ -10,11 +10,12 @@ const {
   VerticalAlign, PageNumber, PageBreak, Header, Footer, ImageRun, TableOfContents,
 } = require(path.join(GLOBAL, "docx"));
 
-const DIR = __dirname;
-const SHOT = path.join(DIR, "screenshots");
+const DIR = __dirname;                    // docs/gs/pipeline — 스크립트·중간 산출물
+const GS = path.join(DIR, "..");          // docs/gs — 제출물(docx)·screenshots
+const SHOT = path.join(GS, "screenshots");
 const blocks = JSON.parse(fs.readFileSync(path.join(DIR, "_manual_blocks.json"), "utf-8"));
 const tools = JSON.parse(fs.readFileSync(path.join(DIR, "_tool_params.json"), "utf-8"));
-const OUT = path.join(DIR, "VMS_사용자매뉴얼_v1.0.docx");
+const OUT = path.join(GS, "VMS_사용자매뉴얼_v1.0.docx");
 
 const PAGE_W = 11906, PAGE_H = 16838, MARGIN = 1440;
 const CONTENT_W = PAGE_W - 2 * MARGIN; // 9026

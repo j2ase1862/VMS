@@ -10,7 +10,7 @@ using Xunit;
 namespace VMS.Core.Tests.Retention
 {
     /// <summary>
-    /// docs/gs/gs_compliance_overview_v1.0.md §5.10 의 "프리셋 값" 표와
+    /// docs/gs/guides/gs_compliance_overview_v1.0.md §5.10 의 "프리셋 값" 표와
     /// VMS.Core.Retention.RetentionPresets 코드 상수의 일치성 자동 검증 (검토사항 P4).
     ///
     /// 한쪽만 수정하면 빌드 실패 → 매뉴얼/코드 drift 사전 차단.
@@ -31,7 +31,7 @@ namespace VMS.Core.Tests.Retention
             var dir = Path.GetDirectoryName(thisFile)!;
             // VMS.Core.Tests/Retention/ → ../../ = repo root
             var repoRoot = Path.GetFullPath(Path.Combine(dir, "..", ".."));
-            return Path.Combine(repoRoot, "docs", "gs", "gs_compliance_overview_v1.0.md");
+            return Path.Combine(repoRoot, "docs", "gs", "guides", "gs_compliance_overview_v1.0.md");
         }
 
         [Fact]
