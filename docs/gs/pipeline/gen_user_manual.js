@@ -455,6 +455,7 @@ function wizardSection() {
   out.push(new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("2.5 최초 실행 — 시스템 설정 마법사 (VMS.AppSetup)")] }));
   out.push(P("⚙ 이 절은 설치 담당자용입니다. 마법사는 설치 후 최초 1회(또는 설정 파일이 없을 때)만 나타나며, 일반 작업자는 볼 일이 없습니다.", { size: 18, color: "595959" }));
   out.push(P("VMS 설치 후 최초 실행 시(또는 system_config.json 부재 시) 시스템 설정 마법사가 자동 실행된다. 총 6단계로 애플리케이션·네트워크·카메라·PLC·로봇/IO 및 초기 관리자 계정을 구성한 뒤 [Finish] 로 저장한다. 카메라가 없는 환경에서는 3단계에서 [Virtual Mode (Manual Setup)] 를 선택해 가상 구성으로 진행할 수 있다. 각 단계의 그림 아래에 입력 항목별 컨트롤 이미지와 설명을 표로 정리했다."));
+  out.push(P("입력란 라벨 옆의 ⓘ 아이콘에 마우스를 올리면 그 항목의 쉬운 설명이 말풍선으로 표시된다 — 이 표의 설명과 같은 내용이므로, 설정 중에 매뉴얼을 뒤지지 않아도 된다."));
   const steps = [
     ["10_appsetup_step1.png", 470, "1단계 — 시작(Welcome)", [
       P("1단계는 마법사 시작 화면으로 입력 항목이 없다. [Next] 를 눌러 진행하며, 이후 애플리케이션·네트워크 → 카메라 → PLC → 로봇 → IO 보드 순으로 구성한다."),
