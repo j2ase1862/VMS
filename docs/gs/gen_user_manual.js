@@ -257,7 +257,7 @@ const POST = {
     () => bullet("[Save] / [Cancel] — 저장(다음 모델 로드/세션 재생성 시점부터 적용) / 취소."),
   ],
   "4. BODA.VMS.Web (관리자 / MES)": [
-    () => P("아래는 BODA.VMS.Web(ASP.NET Core 8 + Blazor) 관리 화면이다(Admin 로그인 기준)."),
+    () => P("아래 그림은 BODA.VMS.Web 관리 화면입니다(관리자 로그인 기준)."),
     () => imgPara("40_web_login.png", 360),
     () => caption("그림 4-0. Web 로그인"),
   ],

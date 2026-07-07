@@ -176,7 +176,7 @@
  },
  {
   "t": "li",
-  "text": "알림 (NotificationBell)",
+  "text": "알림 (종 아이콘)",
   "ordered": true
  },
  {
@@ -186,7 +186,7 @@
  },
  {
   "t": "li",
-  "text": "Stage 1/2/3 일체",
+  "text": "운영 3단계 흐름",
   "ordered": true
  },
  {
@@ -201,7 +201,7 @@
  },
  {
   "t": "li",
-  "text": "SignalR 실시간 푸시",
+  "text": "실시간 반영",
   "ordered": true
  },
  {
@@ -1662,7 +1662,11 @@
  },
  {
   "t": "p",
-  "text": "브라우저로 접속 (https://<서버IP>:7144). MudBlazor 기반 다크 테마.\n사이드 메뉴 + 상단 AppBar (다국어 전환 / 알림 / 사용자)."
+  "text": "⚙ 이 장은 관리 화면(Web)을 사용하는 관리자·반장용입니다.\n현장에서 검사만 수행하는 작업자는 읽지 않아도 됩니다."
+ },
+ {
+  "t": "p",
+  "text": "BODA.VMS.Web 은 별도 프로그램 설치 없이 브라우저로 접속해서 사용합니다.\n주소창에 https://<서버IP>:7144 를 입력하세요. 화면 왼쪽에는 메뉴 목록이,\n위쪽 막대에는 언어 전환 · 알림 종 · 로그인 사용자 표시가 있습니다."
  },
  {
   "t": "h",
@@ -1671,23 +1675,27 @@
  },
  {
   "t": "li",
-  "text": "\"/login\" 페이지에서 사용자명 + 비밀번호 입력.",
+  "text": "접속하면 로그인 화면이 표시됩니다. 사용자 이름과 비밀번호를 입력합니다.",
   "ordered": true
  },
  {
   "t": "li",
-  "text": "회원가입 시 첫 사용자는 자동 Admin, 이후는 Pending 상태 → 기존 Admin 이 승인 필요.",
+  "text": "계정이 없으면 회원가입을 먼저 합니다. 가장 처음 가입한 사용자는 자동으로\n관리자(Admin)가 되고, 그 이후에 가입한 사용자는 \"승인 대기\" 상태가 되어\n기존 관리자가 승인해 주어야 로그인할 수 있습니다.",
   "ordered": true
  },
  {
   "t": "li",
-  "text": "JWT 토큰 발급 → localStorage 저장 → 모든 API 호출에 자동 첨부.",
+  "text": "한 번 로그인하면 브라우저가 로그인 상태를 기억하므로, 로그인이 만료되기 전까지는\n다시 입력할 필요가 없습니다.",
   "ordered": true
  },
  {
   "t": "h",
   "level": 3,
   "text": "4.2 사이드 메뉴 구조"
+ },
+ {
+  "t": "p",
+  "text": "왼쪽 사이드 메뉴는 업무 성격별로 다음과 같이 묶여 있습니다:"
  },
  {
   "t": "table",
@@ -1771,7 +1779,7 @@
  },
  {
   "t": "p",
-  "text": "실시간 라인 KPI: 전체 라인 카운트, Pass Rate, NG 비율, 활성 작업지시, 최근 알람 위젯.\nSignalR 로 실시간 갱신."
+  "text": "공장 전체 현황을 한 화면에 보여주는 상황판입니다. 전체 라인 수, 합격률(Pass Rate),\n불량(NG) 비율, 진행 중인 작업지시, 최근 알람이 카드로 표시됩니다.\n검사 결과가 들어올 때마다 새로 고침 없이 자동으로 갱신됩니다."
  },
  {
   "t": "h",
@@ -1780,7 +1788,7 @@
  },
  {
   "t": "p",
-  "text": "전체 라인 실시간 상태 그리드. 각 라인 카드에 클라이언트명 + 현재 작업자 + WO 진행률 +\n알람 카운트. 알람 카운트 클릭 시 Alarms 페이지로 이동 (필터 적용)."
+  "text": "모든 라인의 실시간 상태를 카드로 나란히 보여주는 현황판입니다.\n각 라인 카드에는 라인 이름, 현재 로그인한 작업자, 작업지시 진행률, 알람 개수가 표시됩니다.\n알람 개수를 클릭하면 해당 라인으로 추려진 Alarms 페이지로 이동합니다."
  },
  {
   "t": "h",
@@ -1789,26 +1797,21 @@
  },
  {
   "t": "p",
-  "text": "알람 목록 + 상세. 필터: 라인 / 상태 (New/Ack/Resolved) / 심각도 / 기간."
+  "text": "발생한 알람을 모아 보고 처리하는 화면입니다. 라인, 처리 상태(New / Ack / Resolved),\n심각도, 기간으로 추려 볼 수 있고, 새 알람은 새로 고침 없이 목록에 즉시 나타납니다."
  },
  {
   "t": "h",
   "level": 4,
-  "text": "액션"
+  "text": "처리 방법"
  },
  {
   "t": "li",
-  "text": "Acknowledge (확인) — 작업자가 인지함. 배지 카운트에서 빠짐.",
+  "text": "Acknowledge(확인) — \"알람을 봤다\"는 표시입니다. 확인하면 알림 종의\n미확인 개수에서 빠집니다.",
   "ordered": false
  },
  {
   "t": "li",
-  "text": "Resolve (해제) — 다이얼로그에서 사유 입력 후 해제.",
-  "ordered": false
- },
- {
-  "t": "li",
-  "text": "새 알람은 SignalR AlarmCreated 로 즉시 push.",
+  "text": "Resolve(해제) — 원인을 조치한 뒤 사유를 입력하고 알람을 종결합니다.",
   "ordered": false
  },
  {
@@ -1818,21 +1821,21 @@
  },
  {
   "t": "p",
-  "text": "검사 이력 (InspectionHistory + ParameterMeasurement). 필터: 라인 / 기간 / Pass/NG / WO / Operator."
+  "text": "모든 검사 이력을 조회하는 화면입니다. 라인, 기간, 판정(Pass/NG), 작업지시, 작업자로\n추려 볼 수 있습니다."
  },
  {
   "t": "li",
-  "text": "각 행 클릭 시 NgDetailDialog 팝업 — 측정값 + 사진 + NG 코드.",
+  "text": "행을 클릭하면 상세 창이 열려 측정값, 검사 사진, 불량(NG) 코드를 확인할 수 있습니다.",
   "ordered": false
  },
  {
   "t": "li",
-  "text": "Excel 내보내기.",
+  "text": "[Excel 내보내기] 버튼으로 현재 목록을 엑셀 파일로 저장할 수 있습니다.",
   "ordered": false
  },
  {
   "t": "li",
-  "text": "읽기 전용 (감사 추적성 보존).",
+  "text": "검사 이력은 읽기 전용입니다 — 품질 기록의 신뢰성을 위해 수정하거나 지울 수 없습니다.",
   "ordered": false
  },
  {
@@ -1842,31 +1845,31 @@
  },
  {
   "t": "p",
-  "text": "작업지시 마스터. Planned → InProgress → Completed → Closed."
+  "text": "작업지시를 만들고 관리하는 화면입니다. 작업지시는\nPlanned(예정) → InProgress(진행 중) → Completed(완료) → Closed(마감) 순서로 진행됩니다."
  },
  {
   "t": "li",
-  "text": "+ 새 WO 다이얼로그 — Product / Client (라인) / Recipe / Planned Quantity / Planned Start.",
+  "text": "[+] 버튼으로 새 작업지시를 만듭니다 — 제품, 라인, 레시피, 계획 수량, 계획 시작 시각을 입력합니다.",
   "ordered": false
  },
  {
   "t": "li",
-  "text": "OrderNo 자동 채번 (WO-{YYYYMMDD}-{NNN}).",
+  "text": "작업지시 번호는 자동으로 매겨집니다 (예: WO-20260522-001).",
   "ordered": false
  },
  {
   "t": "li",
-  "text": "Start 버튼 — Planned → InProgress 수동 전이 (또는 VMS 첫 결과 도착 시 자동).",
+  "text": "[Start] — 예정 상태를 진행 중으로 바꿉니다. VMS 에서 첫 검사 결과가 도착하면\n자동으로도 바뀝니다.",
   "ordered": false
  },
  {
   "t": "li",
-  "text": "Complete — VMS 가 자동 (PlannedQuantity 도달) 또는 수동.",
+  "text": "[Complete] — 생산 수량이 계획 수량에 도달하면 자동으로 완료되며,\n필요하면 수동으로도 완료할 수 있습니다.",
   "ordered": false
  },
  {
   "t": "li",
-  "text": "Close — Completed 상태에서 영구 마감.",
+  "text": "[Close] — 완료된 작업지시를 영구 마감합니다. 마감한 뒤에는 검사 결과를 더 받지 않습니다.",
   "ordered": false
  },
  {
@@ -1876,7 +1879,7 @@
  },
  {
   "t": "p",
-  "text": "제품 마스터 (코드 / 이름 / 카테고리 / 활성 상태). WO 의 ProductId 가 참조."
+  "text": "제품 기준 정보를 관리하는 화면입니다 — 제품 코드, 이름, 분류, 사용 여부를 등록합니다.\n작업지시를 만들 때 여기에 등록된 제품 중에서 선택하게 됩니다."
  },
  {
   "t": "h",
@@ -1885,21 +1888,21 @@
  },
  {
   "t": "p",
-  "text": "레시피와 그 산하 파라미터 관리. VMS 가 60초 주기로 자동 동기화."
+  "text": "검사 레시피와 그 안의 파라미터(검사 기준값)를 관리하는 화면입니다.\n여기서 수정한 내용은 VMS 가 60초마다 자동으로 내려받아 사용합니다."
  },
  {
   "t": "li",
-  "text": "레시피 트리: Pattern / Blob / Dimension 카테고리.",
+  "text": "레시피는 Pattern / Blob / Dimension 세 갈래로 나뉘어 트리로 표시됩니다.",
   "ordered": false
  },
  {
   "t": "li",
-  "text": "파라미터: ParamCode (정수) / ParamValue (소수) / Description / Unit / LowerLimit / UpperLimit / IsActive.",
+  "text": "파라미터마다 코드 번호(ParamCode), 기준값(ParamValue), 설명, 단위, 상한/하한, 사용 여부를 지정합니다.",
   "ordered": false
  },
  {
   "t": "li",
-  "text": "VMS 측에서 검사 시 ParamValue 사용. LowerLimit/UpperLimit 은 향후 SPC 판정용.",
+  "text": "VMS 는 검사할 때 기준값(ParamValue)을 사용합니다. 상한/하한은 앞으로 제공될\n통계 기반 판정(SPC)에 쓰일 예정입니다.",
   "ordered": false
  },
  {
@@ -1909,21 +1912,21 @@
  },
  {
   "t": "p",
-  "text": "3개 탭:"
+  "text": "현장 작업자를 관리하는 화면으로, 탭 3개로 나뉩니다:"
  },
  {
   "t": "li",
-  "text": "Operator Master — 사번 / 이름 / 부서 / Role / 활성. PIN 등록 (BCrypt 해시).",
+  "text": "Operator Master — 작업자 명단입니다. 사번, 이름, 부서, 권한(Role), 사용 여부를\n등록하고 로그인용 PIN 을 지정합니다. PIN 은 암호화되어 저장됩니다.",
   "ordered": false
  },
  {
   "t": "li",
-  "text": "Sessions — 로그인/로그아웃 이력. VMS 로그인 시 SignalR 로 실시간 갱신\n— 새로 고침 불필요.",
+  "text": "Sessions — 작업자의 로그인/로그아웃 이력입니다. 작업자가 VMS 에서 로그인하면\n새로 고침 없이 이 화면에 바로 나타납니다.",
   "ordered": false
  },
  {
   "t": "li",
-  "text": "Kiosk Links — 각 라인의 키오스크 페이지 URL.",
+  "text": "Kiosk Links — 각 라인의 키오스크 페이지 주소 모음입니다.",
   "ordered": false
  },
  {
@@ -1954,7 +1957,7 @@
      "header": false
     },
     {
-     "text": "일반 작업자. 검사 실행만.",
+     "text": "일반 작업자. 검사 실행만 할 수 있습니다.",
      "header": false
     },
     {
@@ -1968,7 +1971,7 @@
      "header": false
     },
     {
-     "text": "반장. + Recipe 편집.",
+     "text": "반장. 검사 실행에 더해 레시피를 편집할 수 있습니다.",
      "header": false
     },
     {
@@ -1982,7 +1985,7 @@
      "header": false
     },
     {
-     "text": "관리자. + External Tools (Vision Tool / System Setup).",
+     "text": "관리자. Lead 권한에 더해 외부 도구(Vision Tool Setup / System Setup)를 실행할 수 있습니다.",
      "header": false
     },
     {
@@ -1999,11 +2002,11 @@
  },
  {
   "t": "p",
-  "text": "WO 산하 단위 묶음. LotNumber 자동 채번 ({YYYYMMDD}-{OrderNo}-{Seq:D3}).\nOpen → Closed."
+  "text": "하나의 작업지시 안에서 생산 묶음(Lot)을 나누어 관리하는 화면입니다.\nLot 번호는 날짜 · 작업지시 번호 · 순번으로 자동으로 매겨지고,\nOpen(사용 중) → Closed(마감) 상태로 관리됩니다."
  },
  {
   "t": "p",
-  "text": "VMS 가 WO 선택 시 활성(Open) Lot 1개 자동 채움. 활성 Lot 없으면 Lot 없이 진행 가능."
+  "text": "VMS 에서 작업지시를 선택하면 사용 중(Open)인 Lot 이 자동으로 채워집니다.\n사용 중인 Lot 이 없으면 Lot 없이도 검사를 진행할 수 있습니다."
  },
  {
   "t": "h",
@@ -2012,7 +2015,7 @@
  },
  {
   "t": "p",
-  "text": "예방정비 (PM) 스케줄. Overdue / DueToday / Upcoming. Perform 다이얼로그로 수행 기록."
+  "text": "설비 예방정비(PM) 일정을 관리하는 화면입니다. 정비 항목이 기한 초과(Overdue),\n오늘 예정(Due Today), 예정(Upcoming)으로 구분되어 표시되고,\n[Perform] 버튼으로 수행 결과를 기록합니다."
  },
  {
   "t": "h",
@@ -2021,7 +2024,7 @@
  },
  {
   "t": "p",
-  "text": "NG 코드 마스터 (코드 / 설명 / 카테고리 / 심각도 Critical/Major/Minor)."
+  "text": "불량(NG) 코드 기준 정보를 관리하는 화면입니다 — 코드, 설명, 분류,\n심각도(Critical / Major / Minor)를 등록합니다."
  },
  {
   "t": "h",
@@ -2030,7 +2033,7 @@
  },
  {
   "t": "p",
-  "text": "교대 정의 (시작 시간 + 시간 길이). 검사 결과의 ShiftId 자동 매핑."
+  "text": "교대 근무를 정의하는 화면입니다 (시작 시각과 근무 시간). 검사 결과는 검사한 시각에 따라\n해당 교대에 자동으로 배정되어, 교대별 통계를 볼 수 있습니다."
  },
  {
   "t": "h",
@@ -2039,7 +2042,7 @@
  },
  {
   "t": "p",
-  "text": "모든 마스터 데이터 변경 이력 (Create / Update / Delete). 사용자 / IP / 시각 기록.\n읽기 전용."
+  "text": "기준 정보(작업지시 · 제품 · 작업자 등)를 누가 언제 만들고, 고치고, 지웠는지 기록한 화면입니다.\n사용자, 접속 주소(IP), 시각이 함께 남으며, 기록은 읽기 전용이라 수정할 수 없습니다."
  },
  {
   "t": "h",
@@ -2048,46 +2051,45 @@
  },
  {
   "t": "p",
-  "text": "OEE 지표, 라인별 / 작업자별 / WO별 통계, SPC 차트 (LCL/UCL)."
+  "text": "생산 · 품질 통계를 보는 화면입니다. 설비종합효율(OEE) 지표, 라인별 · 작업자별 · 작업지시별 통계,\n공정 관리도(SPC 차트)를 제공합니다."
  },
  {
   "t": "h",
   "level": 3,
-  "text": "4.17 알림 (NotificationBell)"
+  "text": "4.17 알림 (종 아이콘)"
  },
  {
   "t": "p",
-  "text": "상단 AppBar 우측 종 아이콘. 배지로 미확인 알람 수 표시 (100+ 시 \"99+\")."
+  "text": "화면 위쪽 막대의 오른쪽에 있는 종 모양 아이콘입니다. 아직 확인하지 않은 알람 수가\n숫자 배지로 표시됩니다 (100건이 넘으면 \"99+\"로 표시)."
  },
  {
   "t": "h",
   "level": 4,
-  "text": "액션"
+  "text": "사용 방법"
  },
  {
   "t": "li",
-  "text": "아이콘 클릭 → 최근 10건 + \"N건 미확인\" 헤더 + \"모두 확인\" 버튼.",
+  "text": "종 아이콘을 클릭하면 최근 알람 10건과 미확인 건수가 표시됩니다.",
   "ordered": false
  },
  {
   "t": "li",
-  "text": "각 알람 클릭 → Alarms 페이지로 이동.",
+  "text": "알람 하나를 클릭하면 Alarms 페이지로 이동합니다.",
   "ordered": false
  },
  {
   "t": "li",
-  "text": "각 알람 우측 ✕ 아이콘 → 개별 확인 처리.",
+  "text": "알람 오른쪽의 ✕ 를 누르면 그 알람만 확인 처리됩니다.",
   "ordered": false
  },
  {
   "t": "li",
-  "text": "모두 확인 버튼 → 모든 New 알람 일괄 Acknowledge.",
+  "text": "[모두 확인] 버튼을 누르면 새 알람 전체가 한 번에 확인 처리됩니다.",
   "ordered": false
  },
  {
-  "t": "li",
-  "text": "모두 감사 추적성을 위해 삭제가 아닌 Acknowledge — 알람 이력 영구 보존.",
-  "ordered": false
+  "t": "p",
+  "text": "확인 처리는 알람을 지우는 것이 아닙니다 — 품질 기록 보존을 위해\n알람 이력은 삭제되지 않고 영구 보존됩니다."
  },
  {
   "t": "h",
@@ -2095,66 +2097,58 @@
   "text": "5. 통합 워크플로"
  },
  {
+  "t": "p",
+  "text": "이 장은 VMS 클라이언트와 Web 서버가 뒤에서 어떻게 맞물려 동작하는지 설명합니다.\n평소 운영에 꼭 필요한 내용은 아니지만, 시스템을 이해하거나 문제 원인을 찾을 때 도움이 됩니다."
+ },
+ {
   "t": "h",
   "level": 3,
-  "text": "5.1 Stage 1 / 2 / 3 일체"
+  "text": "5.1 운영 3단계 — 로그인 · 작업지시 · 진행/완료"
+ },
+ {
+  "t": "p",
+  "text": "3장에서 본 운영 흐름은 두 프로그램이 다음처럼 역할을 나누어 처리합니다:"
  },
  {
   "t": "table",
   "rows": [
    [
     {
-     "text": "Stage",
+     "text": "단계",
      "header": true
     },
     {
-     "text": "책임",
-     "header": true
-    },
-    {
-     "text": "주요 동작",
+     "text": "무슨 일이 일어나는지",
      "header": true
     }
    ],
    [
     {
-     "text": "Stage 1 Operator Login",
+     "text": "1단계 작업자 로그인",
      "header": false
     },
     {
-     "text": "Web /api/kiosk/* VMS OperatorAuthService",
-     "header": false
-    },
-    {
-     "text": "사번+PIN → BCrypt 대조 → JWT-free Session 생성 → VMS 헤더 칩 갱신",
+     "text": "VMS 가 입력받은 사번과 PIN 을 Web 서버로 보내면, 서버가 작업자 명단과 대조해\n 로그인 세션을 만들어 줍니다. 성공하면 VMS 헤더에 작업자 이름과 권한 뱃지가 표시됩니다.",
      "header": false
     }
    ],
    [
     {
-     "text": "Stage 2 Work Order 선택",
+     "text": "2단계 작업지시 선택",
      "header": false
     },
     {
-     "text": "Web /api/workorders/by-client/{idx} VMS WorkOrderClient",
-     "header": false
-    },
-    {
-     "text": "활성 WO 목록 → VMS 다이얼로그 → 선택 → Recipe 자동 로드 + 활성 Lot fetch + AUTO RUN 활성화",
+     "text": "VMS 가 Web 서버에서 이 라인의 작업지시 목록을 받아 와 창으로 보여줍니다.\n 하나를 선택하면 그 작업지시에 지정된 레시피가 자동으로 불러와지고,\n 사용 중인 Lot 이 채워지며, [AUTO RUN] 버튼이 켜집니다.",
      "header": false
     }
    ],
    [
     {
-     "text": "Stage 3 진행률 + 완료",
+     "text": "3단계 진행 / 완료",
      "header": false
     },
     {
-     "text": "Web /api/parameters/results + SignalR VMS ParameterSyncService",
-     "header": false
-    },
-    {
-     "text": "결과 업로드 시 응답에 WO 진행률 포함 → 헤더 ProgressBar 갱신 → 계획 수량 도달 시 자동 Completed + 알람 다이얼로그 + AUTO RUN 자동 정지",
+     "text": "검사 1건이 끝날 때마다 결과가 서버로 올라가고, 서버가 알려 주는 진행 수량이\n 헤더 진행률에 바로 반영됩니다. 계획 수량에 도달하면 작업지시가 자동으로 완료되고,\n 완료 알림 창이 뜨며 검사가 자동으로 멈춥니다.",
      "header": false
     }
    ]
@@ -2167,7 +2161,7 @@
  },
  {
   "t": "p",
-  "text": "검사 결과 업로드 시 자동 첨부되어 Web InspectionHistory 와\nParameterMeasurement 에 저장:"
+  "text": "검사 결과 한 건마다 다음 4가지 추적 정보가 자동으로 붙어 서버에 저장됩니다.\n덕분에 나중에 \"이 제품을 누가, 어떤 작업지시에서, 어떤 묶음으로 검사했는지\" 역추적할 수 있습니다:"
  },
  {
   "t": "table",
@@ -2178,7 +2172,7 @@
      "header": true
     },
     {
-     "text": "채움 시점",
+     "text": "채워지는 시점",
      "header": true
     },
     {
@@ -2188,57 +2182,57 @@
    ],
    [
     {
-     "text": "WorkOrderId",
+     "text": "작업지시 (WO)",
      "header": false
     },
     {
-     "text": "WO 선택 시",
+     "text": "작업지시 선택 시 자동",
      "header": false
     },
     {
-     "text": "Web 의 WO Producer/Pass/Ng 카운터 자동 증가",
+     "text": "작업지시의 생산 / 합격 / 불량 수량이 자동으로 올라갑니다",
      "header": false
     }
    ],
    [
     {
-     "text": "LotId",
+     "text": "Lot",
      "header": false
     },
     {
-     "text": "WO 선택 시 활성 Lot fetch",
+     "text": "작업지시 선택 시 사용 중인 Lot 자동 채움",
      "header": false
     },
     {
-     "text": "Lot 의 Quantity/Pass/Ng 카운터 자동 증가",
+     "text": "Lot 의 수량 집계도 자동으로 올라갑니다",
      "header": false
     }
    ],
    [
     {
-     "text": "OperatorId",
+     "text": "작업자",
      "header": false
     },
     {
-     "text": "로그인 시",
+     "text": "작업자 로그인 시 자동",
      "header": false
     },
     {
-     "text": "현재 키오스크 세션에서 자동 매핑도 가능",
+     "text": "로그아웃하면 비워집니다",
      "header": false
     }
    ],
    [
     {
-     "text": "SerialNumber",
+     "text": "시리얼 번호 (S/N)",
      "header": false
     },
     {
-     "text": "바코드 스캐너 입력",
+     "text": "바코드 스캐너로 입력",
      "header": false
     },
     {
-     "text": "비어 있어도 업로드 정상",
+     "text": "비어 있어도 업로드에는 문제가 없습니다",
      "header": false
     }
    ]
@@ -2251,119 +2245,59 @@
  },
  {
   "t": "p",
-  "text": "Web 끊김 / 재시작 시 검사 결과 손실 방지."
+  "text": "네트워크가 끊기거나 Web 서버가 꺼져 있어도 검사 결과를 잃어버리지 않습니다:"
  },
  {
   "t": "li",
-  "text": "업로드 실패 → %LocalAppData%\\BODA VISION AI\\upload_queue\\{UTC timestamp}_{guid}.json 디스크 보존.",
+  "text": "업로드에 실패한 결과는 VMS 가 PC 디스크에 파일로 보관합니다.",
   "ordered": false
  },
  {
   "t": "li",
-  "text": "5초 주기 백그라운드 timer 가 큐 디렉토리 스캔 → 시간 순 정렬 → 한 건씩 재전송.",
+  "text": "몇 초 간격으로 서버 연결을 다시 시도해서, 연결이 돌아오면 보관한 결과를 순서대로 다시 보냅니다.",
   "ordered": false
  },
  {
   "t": "li",
-  "text": "한 건 실패 시 즉시 중단 (순서 보존 + 서버 다운 시 스팸 방지).",
+  "text": "재전송 중 한 건이 실패하면 잠시 멈췄다가 다시 시도합니다 — 결과 순서가 뒤섞이지 않습니다.",
   "ordered": false
  },
  {
   "t": "li",
-  "text": "VMS 프로세스 재시작 후에도 큐 파일은 디스크에 남아 자동 복구.",
+  "text": "VMS 를 껐다 켜도 보관된 결과는 그대로 남아 있다가 자동으로 전송됩니다.",
   "ordered": false
  },
  {
-  "t": "li",
-  "text": "손상된 JSON 은 자동 삭제 (무한 재시도 방지).",
-  "ordered": false
+  "t": "p",
+  "text": "보관 위치와 확인 방법은 §7.1 의 \"검사 결과가 서버로 안 올라가고 계속 쌓임\" 항목을 참고하세요."
  },
  {
   "t": "h",
   "level": 3,
-  "text": "5.4 SignalR 실시간 푸시"
+  "text": "5.4 실시간 반영"
  },
  {
   "t": "p",
-  "text": "두 개의 SignalR Hub:"
+  "text": "검사 결과 · 알람 · 작업지시 변경은 새로 고침 없이 관련된 모든 화면에 즉시 반영됩니다.\nVMS 가 검사 결과 한 건을 올리면:"
  },
  {
-  "t": "table",
-  "rows": [
-   [
-    {
-     "text": "Hub",
-     "header": true
-    },
-    {
-     "text": "경로",
-     "header": true
-    },
-    {
-     "text": "인증",
-     "header": true
-    },
-    {
-     "text": "이벤트",
-     "header": true
-    }
-   ],
-   [
-    {
-     "text": "VmsHub",
-     "header": false
-    },
-    {
-     "text": "/hubs/vms",
-     "header": false
-    },
-    {
-     "text": "JWT 필수",
-     "header": false
-    },
-    {
-     "text": "AlarmCreated / AlarmUpdated / NgAlert / ClientStatusChanged / OperatorSessionStarted / OperatorSessionEnded",
-     "header": false
-    }
-   ],
-   [
-    {
-     "text": "VmsPublicHub",
-     "header": false
-    },
-    {
-     "text": "/hubs/vms-public",
-     "header": false
-    },
-    {
-     "text": "익명",
-     "header": false
-    },
-    {
-     "text": "WorkOrderUpdated / WorkOrderCompleted (VMS 클라이언트용)",
-     "header": false
-    }
-   ]
-  ]
+  "t": "li",
+  "text": "VMS 는 서버 응답에서 진행 수량을 즉시 돌려받아 헤더 진행률에 반영합니다.",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "동시에 서버가 접속 중인 모든 화면에 변경 사실을 알립니다.",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "같은 라인의 다른 VMS 와 관리자의 Dashboard / Andon Board / Alarms 화면이\n모두 새로 고침 없이 즉시 갱신됩니다.",
+  "ordered": true
  },
  {
   "t": "p",
-  "text": "VMS 가 한 검사를 업로드하면:"
- },
- {
-  "t": "li",
-  "text": "본인은 응답 본문에서 진행률 즉시 받음 (1차).",
-  "ordered": true
- },
- {
-  "t": "li",
-  "text": "Web 이 동시에 모든 SignalR 연결에 WorkOrderUpdated broadcast (2차).",
-  "ordered": true
- },
- {
-  "t": "li",
-  "text": "같은 라인의 다른 VMS (있다면), 관리자 Dashboard / Andon / Alarms 페이지 모두 새로고침 없이 즉시 반영.",
-  "ordered": true
+  "text": "이 실시간 반영에 쓰이는 기술 이벤트 목록은 부록 §8.2 에 정리되어 있습니다."
  },
  {
   "t": "h",
@@ -2372,31 +2306,35 @@
  },
  {
   "t": "p",
-  "text": "여러 VMS 가 같은 Web 서버에 연결 가능. 각 VMS 는 ClientIndex 로 구분 (1, 2, 3...)."
+  "text": "VMS 여러 대(여러 라인)를 하나의 Web 서버에 연결할 수 있습니다.\n각 VMS 는 설치할 때 지정한 라인 번호(ClientIndex)로 구분됩니다 (1, 2, 3...)."
  },
  {
   "t": "li",
-  "text": "각 라인의 WO 는 /api/workorders/by-client/{clientIndex} 로 분리.",
+  "text": "작업지시 목록은 라인 번호별로 분리되어, 각 라인은 자기 라인의 작업지시만 봅니다.",
   "ordered": false
  },
  {
   "t": "li",
-  "text": "각 라인의 Operator 세션도 ClientId 별로 독립.",
+  "text": "작업자 로그인 세션도 라인별로 독립적입니다.",
   "ordered": false
  },
  {
   "t": "li",
-  "text": "관리자 Andon Board 에서 전체 라인 동시 모니터링.",
+  "text": "관리자는 Andon Board 에서 모든 라인을 한 화면에서 모니터링할 수 있습니다.",
   "ordered": false
  },
  {
   "t": "p",
-  "text": "ClientIndex 유일성: 동일 ClientIndex 로 두 VMS 인스턴스 실행 금지.\nWeb 이 IP 덮어쓰기 + 경고만 함. 운영 규칙으로 라인별 ClientIndex 를 사전 배정."
+  "text": "라인 번호는 겹치면 안 됩니다: 같은 라인 번호(ClientIndex)로 VMS 두 대를\n동시에 실행하지 마세요. 설치할 때 라인마다 번호를 미리 정해서 배정해 두는 것을 권장합니다."
  },
  {
   "t": "h",
   "level": 2,
   "text": "6. 관리자 가이드"
+ },
+ {
+  "t": "p",
+  "text": "⚙ 이 장은 관리자용입니다. 작업자 등록, 작업지시 운영,\n알람 · 백업 · 업그레이드 등 시스템을 관리하는 사람을 위한 장입니다."
  },
  {
   "t": "h",
@@ -2440,7 +2378,7 @@
      "header": true
     },
     {
-     "text": "전이 트리거",
+     "text": "언제 바뀌는지",
      "header": true
     }
    ],
@@ -2450,11 +2388,11 @@
      "header": false
     },
     {
-     "text": "예정. 아직 시작 안 함.",
+     "text": "예정. 아직 시작하지 않았습니다.",
      "header": false
     },
     {
-     "text": "WO 생성 시 기본",
+     "text": "작업지시를 만들면 이 상태로 시작합니다",
      "header": false
     }
    ],
@@ -2464,11 +2402,11 @@
      "header": false
     },
     {
-     "text": "진행 중. 검사 결과가 카운트됨.",
+     "text": "진행 중. 검사 결과가 집계됩니다.",
      "header": false
     },
     {
-     "text": "VMS 첫 결과 도착 또는 수동 Start",
+     "text": "VMS 에서 첫 검사 결과가 도착하거나, [Start] 버튼을 누르면",
      "header": false
     }
    ],
@@ -2478,11 +2416,11 @@
      "header": false
     },
     {
-     "text": "계획 수량 도달. ActualEndAt 자동 설정.",
+     "text": "완료. 실제 종료 시각이 자동으로 기록됩니다.",
      "header": false
     },
     {
-     "text": "ProducedQuantity ≥ PlannedQuantity 시 자동 또는 수동 Complete",
+     "text": "생산 수량이 계획 수량에 도달하면 자동, 또는 [Complete] 버튼으로 수동",
      "header": false
     }
    ],
@@ -2492,11 +2430,11 @@
      "header": false
     },
     {
-     "text": "영구 마감. 더 이상 검사 안 받음.",
+     "text": "영구 마감. 더 이상 검사 결과를 받지 않습니다.",
      "header": false
     },
     {
-     "text": "관리자 수동 Close",
+     "text": "관리자가 [Close] 버튼을 누르면",
      "header": false
     }
    ]
@@ -2509,22 +2447,22 @@
  },
  {
   "t": "li",
-  "text": "NG 발생 시 자동 알람 (AlarmType=NG, Severity=Major 기본).",
+  "text": "불량(NG)이 발생하면 알람이 자동으로 만들어집니다 (기본 심각도는 Major).",
   "ordered": false
  },
  {
   "t": "li",
-  "text": "알람 일괄 확인: NotificationBell → \"모두 확인\" 또는 Alarms 페이지에서 필터+선택.",
+  "text": "여러 알람을 한 번에 확인하려면 — 알림 종의 [모두 확인] 버튼을 누르거나,\nAlarms 페이지에서 필터로 추린 뒤 선택해서 처리합니다.",
   "ordered": false
  },
  {
   "t": "li",
-  "text": "해제 (Resolve): 사유 입력 다이얼로그 → 영구 해제 상태.",
+  "text": "해제(Resolve)할 때는 조치 사유를 입력합니다. 해제된 알람은 종결 상태로 남습니다.",
   "ordered": false
  },
  {
   "t": "li",
-  "text": "해제된 알람은 Audit Logs 에 누가 언제 무엇을 했는지 기록.",
+  "text": "누가 언제 알람을 처리했는지는 Audit Logs 에 기록됩니다.",
   "ordered": false
  },
  {
@@ -2573,7 +2511,7 @@
      "header": false
     },
     {
-     "text": "시스템 사용자 + 설정만 — 손실 영향 적음",
+     "text": "시스템 사용자 계정과 설정만 저장 — 잃어도 영향이 적습니다",
      "header": false
     }
    ],
@@ -2587,7 +2525,7 @@
      "header": false
     },
     {
-     "text": "VMS 종료 전 자동 전송 대기 — 백업 불필요",
+     "text": "전송 대기 중인 검사 결과 — 자동으로 비워지므로 백업이 필요 없습니다",
      "header": false
     }
    ]
@@ -2609,17 +2547,17 @@
  },
  {
   "t": "li",
-  "text": "새 MSI (BODA-VMS-1.2.0.msi) 더블 클릭.",
+  "text": "새 버전 설치 파일(예: BODA-VMS-1.2.0.msi)을 더블 클릭합니다.",
   "ordered": true
  },
  {
   "t": "li",
-  "text": "이전 버전 자동 제거 → 새 버전 설치 (UpgradeCode 동일).",
+  "text": "이전 버전이 자동으로 제거되고 새 버전이 설치됩니다.",
   "ordered": true
  },
  {
   "t": "li",
-  "text": "로컬 설정 / 캘리브레이션 데이터 보존.",
+  "text": "로컬 설정과 카메라 보정 데이터는 그대로 보존됩니다.",
   "ordered": true
  },
  {
@@ -2629,23 +2567,27 @@
  },
  {
   "t": "li",
-  "text": "관리자 PowerShell 에서 .\\Install-Web.ps1 재실행.",
+  "text": "관리자 PowerShell 에서 .\\Install-Web.ps1 을 다시 실행합니다.",
   "ordered": true
  },
  {
   "t": "li",
-  "text": "서비스 중지 → publish → 서비스 재시작 자동.",
+  "text": "서비스 중지 → 새 파일 배포 → 서비스 재시작이 자동으로 진행됩니다.",
   "ordered": true
  },
  {
   "t": "li",
-  "text": "DB 는 LocalAppData 에 있어 영향 없음 (자동 마이그레이션 실행 — PRAGMA + ALTER TABLE).",
+  "text": "데이터베이스는 그대로 유지됩니다. 새 버전에서 데이터 구조가 바뀌는 경우에도\n서버가 시작하면서 자동으로 반영합니다.",
   "ordered": true
  },
  {
   "t": "h",
   "level": 2,
   "text": "7. 트러블슈팅"
+ },
+ {
+  "t": "p",
+  "text": "자주 겪는 문제와 해결 방법입니다. 증상을 찾아 순서대로 확인해 보세요.\nPowerShell 명령이 나오는 항목은 ⚙ 관리자(또는 설치 담당자)용입니다."
  },
  {
   "t": "h",
@@ -2655,82 +2597,69 @@
  {
   "t": "h",
   "level": 4,
-  "text": "실행 시 DLL 오류"
+  "text": "실행하자마자 DLL 오류가 뜸"
  },
  {
   "t": "p",
-  "text": "Visual C++ Redistributable 누락. Microsoft 사이트에서 vc_redist.x64.exe 설치."
+  "text": "Windows 구성 요소(Visual C++ 재배포 패키지)가 없어서 생기는 문제입니다.\nMicrosoft 공식 사이트에서 vc_redist.x64.exe 를 내려받아 설치하면\n해결됩니다 (§2.1 요구사항 참고)."
  },
  {
   "t": "h",
   "level": 4,
-  "text": "BrushBgWindow 리소스 찾을 수 없음"
+  "text": "카메라가 자동으로 연결되지 않음"
  },
  {
-  "t": "p",
-  "text": "VMS Launcher 가 VMS.VisionSetup 다이얼로그를 띄울 때 발생.\n이미 EnsureWindowStylesMerged() 로 자동 처리되지만, 다른 다이얼로그 추가 시\n같은 패턴 사용 필요."
+  "t": "li",
+  "text": "System Setup(설정 마법사)에서 카메라 IP 주소와 제조사가 맞게 입력되어 있는지 확인합니다.",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "⚙ 방화벽이 카메라 통신(GigE Vision — UDP 3956 포트)을 막고 있지 않은지 확인합니다.",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "⚙ 네트워크 카드가 여러 개인 PC 라면, 카메라가 연결된 네트워크 카드가\n우선되도록 네트워크 설정을 확인합니다.",
+  "ordered": true
  },
  {
   "t": "h",
   "level": 4,
-  "text": "카메라 자동 연결 실패"
+  "text": "검사 결과가 서버로 안 올라가고 계속 쌓임"
  },
  {
-  "t": "li",
-  "text": "System Setup 의 카메라 IP / 매뉴팩처러 확인.",
-  "ordered": false
- },
- {
-  "t": "li",
-  "text": "방화벽: GigE Vision 은 UDP 3956 사용.",
-  "ordered": false
- },
- {
-  "t": "li",
-  "text": "각 NIC 마다 broadcast 보내므로 NIC 메트릭 확인.",
-  "ordered": false
+  "t": "p",
+  "text": "Web 서버와의 연결이 끊긴 상태입니다. 검사 결과는 잃어버리지 않고\n%LocalAppData%\\BODA VISION AI\\upload_queue\\ 폴더에 파일로 보관되며,\nWeb 서버가 다시 켜지면 몇 초 안에 자동으로 전송됩니다.\n이 폴더의 파일 수가 줄어드는지를 보면 전송 여부를 확인할 수 있습니다."
  },
  {
   "t": "h",
   "level": 4,
-  "text": "업로드 큐가 계속 쌓임"
+  "text": "[AUTO RUN] 버튼이 켜지지 않음"
  },
  {
   "t": "p",
-  "text": "Web 연결 끊김. %LocalAppData%\\BODA VISION AI\\upload_queue\\ 에 .json 누적.\nWeb 서버 시작 후 5초 내 자동 드레인. 직접 확인은 파일 수 모니터링."
- },
- {
-  "t": "h",
-  "level": 4,
-  "text": "AUTO RUN 이 활성 안 됨"
- },
- {
-  "t": "p",
-  "text": "다음 모두 확인:"
+  "text": "버튼 위에 마우스를 올리면 어떤 조건이 빠졌는지 말풍선으로 알려 줍니다.\n다음을 차례로 확인하세요:"
  },
  {
   "t": "li",
-  "text": "카메라 1대 이상 연결 됨 (헤더에 연결 표시)",
+  "text": "카메라가 연결되어 있는지 (헤더에 연결 표시).",
   "ordered": true
  },
  {
   "t": "li",
-  "text": "Operator 로그인 됨 (Operator chip 작업자 이름 표시)",
+  "text": "작업자가 로그인되어 있는지 (헤더 Operator 칩에 이름 표시).",
   "ordered": true
  },
  {
   "t": "li",
-  "text": "WO 선택 됨 (WO chip 표시)",
+  "text": "작업지시가 선택되어 있는지 (헤더에 WO 칩 표시).",
   "ordered": true
  },
  {
   "t": "li",
-  "text": "WO Status 가 Planned 또는 InProgress (Completed 면 비활성)",
+  "text": "작업지시 상태가 예정(Planned) 또는 진행 중(InProgress)인지 —\n완료된 작업지시로는 검사를 시작할 수 없습니다.",
   "ordered": true
- },
- {
-  "t": "p",
-  "text": "버튼에 마우스 올리면 ToolTip 으로 사유 확인 가능."
  },
  {
   "t": "h",
@@ -2738,76 +2667,80 @@
   "text": "7.2 Web 측"
  },
  {
-  "t": "h",
-  "level": 4,
-  "text": "Windows Service 가 시작 안 됨"
- },
- {
-  "t": "li",
-  "text": "Event Viewer → Windows Logs → Application → \"BODA-VMS-Web\" 로그.",
-  "ordered": false
- },
- {
-  "t": "li",
-  "text": "주요 원인: 포트 충돌 (netstat -ano | findstr 7144), HTTPS 인증서 미신뢰.",
-  "ordered": false
- },
- {
-  "t": "li",
-  "text": "HTTPS 인증서: dotnet dev-certs https --trust.",
-  "ordered": false
+  "t": "p",
+  "text": "⚙ 이 절은 관리자용입니다. 서버 로그 확인과\nPowerShell 명령을 다룹니다."
  },
  {
   "t": "h",
   "level": 4,
-  "text": "1003 민병준 같은 작업자가 계속 작업중으로 표시"
+  "text": "Web 서비스가 시작되지 않음"
+ },
+ {
+  "t": "li",
+  "text": "Windows 이벤트 뷰어에서 오류 로그를 확인합니다:\nEvent Viewer → Windows Logs → Application → \"BODA-VMS-Web\".",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "가장 흔한 원인은 포트 충돌입니다. 다른 프로그램이 7144 포트를 쓰고 있는지 확인합니다:\nnetstat -ano | findstr 7144",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "HTTPS 인증서 문제라면 인증서를 신뢰 목록에 등록합니다:\ndotnet dev-certs https --trust",
+  "ordered": true
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "로그아웃한 작업자가 계속 \"작업 중\"으로 표시됨"
  },
  {
   "t": "p",
-  "text": "VMS 비정상 종료로 OperatorSession 이 active 로 남음. 자동 처리:"
+  "text": "VMS 가 비정상 종료되면 작업자 세션이 서버에 열린 채로 남을 수 있습니다.\n보통은 다음처럼 자동으로 정리됩니다:"
  },
  {
   "t": "li",
-  "text": "VMS graceful 종료 시 /api/clients/disconnect 에서 세션 자동 종료.",
+  "text": "VMS 를 정상 종료하면 세션도 함께 종료됩니다.",
   "ordered": false
  },
  {
   "t": "li",
-  "text": "Web 시작 시 5분 이상 heartbeat 없는 클라이언트의 active 세션 일괄 Stale 정리.",
+  "text": "생존 신호(Heartbeat)가 5분 이상 끊긴 클라이언트의 세션은\nWeb 서버가 시작할 때 자동으로 정리합니다.",
   "ordered": false
  },
  {
   "t": "li",
-  "text": "수동 정리: DB 에서 직접 UPDATE 또는 Web 재시작.",
-  "ordered": false
- },
- {
-  "t": "h",
-  "level": 4,
-  "text": "Operators Sessions 탭이 갱신 안 됨"
- },
- {
-  "t": "p",
-  "text": "v1.1 부터 SignalR 로 자동 갱신. 만약 안 되면:"
- },
- {
-  "t": "li",
-  "text": "브라우저 콘솔 (F12) → Network → WS 탭 → /hubs/vms 연결 상태 확인.",
-  "ordered": false
- },
- {
-  "t": "li",
-  "text": "JWT 만료 시 재로그인.",
+  "text": "바로 정리해야 한다면 Web 서비스를 재시작하세요.",
   "ordered": false
  },
  {
   "t": "h",
   "level": 4,
-  "text": "알림 배지 안 보임"
+  "text": "Operators 의 Sessions 탭이 갱신되지 않음"
  },
  {
   "t": "p",
-  "text": "NotificationBell 의 CSS vms-notif-badge 가 적용되도록 브라우저 캐시 클리어\n(Ctrl+Shift+R)."
+  "text": "이 화면은 원래 새로 고침 없이 자동으로 갱신됩니다. 갱신되지 않으면:"
+ },
+ {
+  "t": "li",
+  "text": "로그인이 만료되었을 수 있습니다. 로그아웃했다가 다시 로그인해 보세요.",
+  "ordered": false
+ },
+ {
+  "t": "li",
+  "text": "페이지를 새로 고침(F5)해서 실시간 연결을 다시 맺어 보세요.",
+  "ordered": false
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "알림 종 배지가 보이지 않음"
+ },
+ {
+  "t": "p",
+  "text": "브라우저에 이전 버전 화면이 저장(캐시)되어 있는 경우입니다.\n강력 새로 고침(Ctrl+Shift+R)으로 캐시를 지우면 해결됩니다."
  },
  {
   "t": "h",
@@ -2815,58 +2748,66 @@
   "text": "7.3 통합 / 네트워크"
  },
  {
-  "t": "h",
-  "level": 4,
-  "text": "VMS 가 Web 에 연결 못 함"
- },
- {
-  "t": "li",
-  "text": "VMS System Setup → WebServerUrl 확인 (예: https://192.168.0.10:7144).",
-  "ordered": true
- },
- {
-  "t": "li",
-  "text": "Web 서버 PC 의 방화벽: Get-NetFirewallRule -DisplayName \"BODA VMS Web*\" 확인.",
-  "ordered": true
- },
- {
-  "t": "li",
-  "text": "self-signed 인증서: 운영은 사설 CA 인증서 사용 권장. 임시 우회는 VMS 의 HttpClient\n가 cert validation 우회 (dev only).",
-  "ordered": true
+  "t": "p",
+  "text": "⚙ 이 절은 관리자용입니다."
  },
  {
   "t": "h",
   "level": 4,
-  "text": "다른 VMS 의 검사가 내 VMS 헤더에 반영 안 됨"
+  "text": "VMS 가 Web 서버에 연결하지 못함"
+ },
+ {
+  "t": "li",
+  "text": "VMS 의 System Setup 에서 서버 주소(WebServerUrl)가 맞는지 확인합니다\n(예: https://192.168.0.10:7144).",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "Web 서버 PC 의 방화벽 규칙이 살아 있는지 확인합니다:\nGet-NetFirewallRule -DisplayName \"BODA VMS Web*\"",
+  "ordered": true
+ },
+ {
+  "t": "li",
+  "text": "운영 환경에서는 신뢰할 수 있는 인증서(사설 CA) 사용을 권장합니다.\n자체 서명(self-signed) 인증서는 개발 · 테스트용입니다.",
+  "ordered": true
+ },
+ {
+  "t": "h",
+  "level": 4,
+  "text": "다른 VMS 의 검사가 내 화면에 반영되지 않음"
  },
  {
   "t": "p",
-  "text": "SignalR 연결 끊김. VMS 콘솔 출력 확인:\n[VmsHubClient] Connected → https://.../hubs/vms-public. 자동 재연결 정책\n(0s/2s/10s/30s 무한) 으로 보통 자체 복구."
+  "text": "실시간 연결이 잠시 끊긴 경우입니다. 연결은 몇 초 간격으로 자동 재시도되므로\n보통 스스로 복구됩니다. 오래 지속되면 네트워크 상태와 Web 서버가 켜져 있는지 확인하세요."
  },
  {
   "t": "h",
   "level": 4,
-  "text": "검사 결과가 Web 에 안 보임"
+  "text": "검사 결과가 Web 에 보이지 않음"
  },
  {
   "t": "li",
-  "text": "VMS 업로드 큐 (upload_queue\\) 에 .json 쌓여 있는지 확인 — 있으면 네트워크 끊김.",
+  "text": "VMS 의 업로드 보관 폴더(%LocalAppData%\\BODA VISION AI\\upload_queue\\)에\n파일이 쌓여 있는지 확인합니다 — 쌓여 있다면 네트워크가 끊긴 것입니다 (§7.1 참고).",
   "ordered": true
  },
  {
   "t": "li",
-  "text": "Web Event Viewer 로그에서 /api/parameters/results 호출 확인.",
+  "text": "Web 서버의 이벤트 뷰어 로그에서 검사 결과 수신 기록이 있는지 확인합니다.",
   "ordered": true
  },
  {
   "t": "li",
-  "text": "Recipe ID / Client Index 가 양쪽에서 일치하는지 확인.",
+  "text": "레시피와 라인 번호(ClientIndex)가 VMS 와 Web 양쪽에서 일치하는지 확인합니다.",
   "ordered": true
  },
  {
   "t": "h",
   "level": 2,
   "text": "8. 부록"
+ },
+ {
+  "t": "p",
+  "text": "⚙ 부록은 관리자와 기술 지원 담당자용 참고 자료입니다.\n일반 운영에는 필요하지 않습니다."
  },
  {
   "t": "h",
