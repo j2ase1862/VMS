@@ -105,7 +105,7 @@ namespace VMS.ViewModels
 
         // ─── 프리셋 ──────────────────────────────────────────────
         // 단일 진실 공급원: VMS.Core.Retention.RetentionPresets.
-        // 매뉴얼(docs/gs/gs_compliance_overview_v1.0.md §5.10) 와 자동 회귀 테스트로 일치 보장.
+        // 매뉴얼(docs/gs/guides/gs_compliance_overview_v1.0.md §5.10) 와 자동 회귀 테스트로 일치 보장.
 
         [RelayCommand]
         private void ApplyPreset(string? presetName)

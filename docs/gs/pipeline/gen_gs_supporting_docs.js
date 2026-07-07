@@ -58,7 +58,7 @@ function makeDoc(headerText, children) {
     }],
   });
 }
-function write(name, doc) { return Packer.toBuffer(doc).then((b) => { fs.writeFileSync(path.join(DIR, name), b); console.log("WROTE " + name + " (" + b.length + ")"); }); }
+function write(name, doc) { return Packer.toBuffer(doc).then((b) => { fs.writeFileSync(path.join(DIR, "..", name), b); console.log("WROTE " + name + " (" + b.length + ")"); }); }
 
 // ===================== 1) OSS 라이선스 확인서 =====================
 const dist = [

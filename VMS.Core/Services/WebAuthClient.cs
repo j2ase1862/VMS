@@ -11,7 +11,7 @@ namespace VMS.Core.Services
 {
     /// <summary>
     /// VMS 데스크탑이 BODA.VMS.Web 의 /api/auth/login 을 호출해 JWT 를 받는 클라이언트.
-    /// SSO 마이그레이션 (docs/gs/SSO_Migration_Plan.md) 의 인프라 컴포넌트 — 본 클래스는
+    /// SSO 마이그레이션 (docs/gs/guides/SSO_Migration_Plan.md) 의 인프라 컴포넌트 — 본 클래스는
     /// 호출 책임만 가지며, UserService 통합은 PR2 에서 수행.
     ///
     /// 결과 분류 (WebAuthResultKind):

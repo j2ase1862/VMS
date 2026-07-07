@@ -6,7 +6,7 @@
 
 > 관련 문서:
 > - MSI 빌드 자체는 [msi_build_guide.md](msi_build_guide.md)
-> - 코드 서명은 [gs_msi_code_signing_guide.md](gs/gs_msi_code_signing_guide.md) (미적용 상태)
+> - 코드 서명은 [gs_msi_code_signing_guide.md](gs/guides/gs_msi_code_signing_guide.md) (미적용 상태)
 
 ---
 
@@ -265,7 +265,7 @@ GitHubUpdateService.CheckAsync()          # best-effort, 10s 타임아웃
 ### 6.1 SmartScreen / 코드 사이닝
 
 - 현재 MSI 는 **미서명 상태** → 사용자가 매번 "알 수 없는 게시자" 경고를 *추가 정보 → 실행* 으로 통과해야 함.
-- Authenticode 인증서를 적용하면 경고가 사라지고 사용자 신뢰도가 올라감 — 별도 가이드: [gs_msi_code_signing_guide.md](gs/gs_msi_code_signing_guide.md).
+- Authenticode 인증서를 적용하면 경고가 사라지고 사용자 신뢰도가 올라감 — 별도 가이드: [gs_msi_code_signing_guide.md](gs/guides/gs_msi_code_signing_guide.md).
 - 자동 업데이트 알림은 코드 사이닝과 독립적으로 동작 — 다만 사이닝 없으면 매 업데이트마다 사용자가 SmartScreen 무시 클릭 필요.
 
 ### 6.2 MSI MajorUpgrade
@@ -363,7 +363,7 @@ MSI 는 `INSTALLFOLDER`(Program Files) 만 교체. `%LocalAppData%` 는 미터�
 
 ### 8.4 후속 작업 후보
 
-- 코드 사이닝 인증서 적용 (`gs/gs_msi_code_signing_guide.md` 참고)
+- 코드 사이닝 인증서 적용 (`gs/guides/gs_msi_code_signing_guide.md` 참고)
 - 릴리스 노트의 Markdown 렌더링 (현재 plain text 표시)
 - "이 버전 건너뛰기" 옵션 (사용자별 sentinel 파일)
 - 폐쇄망 환경용 매니페스트 미러링 (현재는 GitHub 직접 접근 가정)

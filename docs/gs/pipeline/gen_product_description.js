@@ -9,8 +9,8 @@ const {
   VerticalAlign, PageNumber, PageBreak, Header, Footer, ImageRun, TableOfContents,
 } = require(path.join(GLOBAL, "docx"));
 
-const SHOT = path.join(__dirname, "screenshots");
-const OUT = path.join(__dirname, "VMS_제품설명서_v1.0.docx");
+const SHOT = path.join(__dirname, "..", "screenshots");
+const OUT = path.join(__dirname, "..", "VMS_제품설명서_v1.0.docx");
 
 // ---- A4 ----
 const PAGE_W = 11906, PAGE_H = 16838, MARGIN = 1440;

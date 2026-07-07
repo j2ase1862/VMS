@@ -9,7 +9,7 @@ namespace VMS.Core.Security
     /// VMS 데스크탑이 BODA.VMS.Web 으로 SSO 인증을 위임할지 여부 + Web 서버 URL.
     /// system_config.json 의 "webSso" 객체에서 읽음 — 누락시 비활성 기본값.
     ///
-    /// SSO Migration (docs/gs/SSO_Migration_Plan.md):
+    /// SSO Migration (docs/gs/guides/SSO_Migration_Plan.md):
     /// - PR2 (본 PR): 본 설정 로드 + UserService.AuthenticateViaWebAsync 추가. 호출자 미적용.
     /// - PR4: AppSetup wizard UI 로 활성화 + LoginViewModel 분기
     /// </summary>

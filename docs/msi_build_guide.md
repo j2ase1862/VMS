@@ -4,7 +4,7 @@
 대상 빌드: master @ 2026-06-04
 범위: `VMS.MasterSetup` 프로젝트로 BODA Vision System MSI 인스톨러 생성
 
-> 코드 서명 (Authenticode) 은 별도 문서 — [gs_msi_code_signing_guide.md](gs/gs_msi_code_signing_guide.md) (PR24) 참고.
+> 코드 서명 (Authenticode) 은 별도 문서 — [gs_msi_code_signing_guide.md](gs/guides/gs_msi_code_signing_guide.md) (PR24) 참고.
 
 ---
 
@@ -147,7 +147,7 @@ master 머지 직전 hotfix 시 수동 변경. (현재 자동화 안 됨 — 후
 ```xml
 <Package Name="BODA Vision System" Manufacturer="VASIM" ... />
 ```
-OEM 배포 시 동시 변경 + NOTICE / LICENSE 표기 정책 확인 필요 (gs/gs_distribution_policy.md §4.2).
+OEM 배포 시 동시 변경 + NOTICE / LICENSE 표기 정책 확인 필요 (gs/guides/gs_distribution_policy.md §4.2).
 
 ### 6.3 설치 경로
 `Package.wxs` line 27:
@@ -179,7 +179,7 @@ OEM 배포 시 동시 변경 + NOTICE / LICENSE 표기 정책 확인 필요 (gs/
 | `error WIX5051: Files matched 0 files` | `$(var.VMS.TargetDir)` 가 비어있음 | VMS.csproj 가 net8.0-windows7.0 TargetFramework 로 출력했는지 확인 |
 | `error 1316: A network error occurred while attempting to read from C:\\Users\\...` 설치 시점 | 동일 UpgradeCode 의 다른 버전 캐시 충돌 | `msiexec /x {UpgradeCode}` 로 기존 제품 제거 후 재시도 |
 | 한글 설치 화면 글자 깨짐 | Codepage / Language 불일치 | Package.wxs 의 `Codepage="949" Language="1042"` 유지 확인 |
-| SmartScreen 차단 (외부 배포) | 미서명 MSI | [gs_msi_code_signing_guide.md](gs/gs_msi_code_signing_guide.md) 절차 적용 |
+| SmartScreen 차단 (외부 배포) | 미서명 MSI | [gs_msi_code_signing_guide.md](gs/guides/gs_msi_code_signing_guide.md) 절차 적용 |
 | 단축키 생성 안 됨 | RegistryValue KeyPath 누락 | KeyPath="yes" 확인 |
 | 업그레이드 시 이전 설치본 제거 안 됨 | UpgradeCode 가 변경되었거나 Version 미증가 | UpgradeCode 는 영구 고정, Version 만 증가 |
 
@@ -275,7 +275,7 @@ $env:BODA_VMS_RELAX_SECURITY = "1"   # 현재 세션만
 
 ## 10. Web SSO 통합 운영 (선택 — 단일 사용자 계정)
 
-VMS Admin/Manager 인증을 BODA.VMS.Web 으로 위임해 **단일 사용자 계정** 으로 운영. 비밀번호 동기화 부담 / 감사 추적 단절 해소. **설계 문서**: [`docs/gs/SSO_Migration_Plan.md`](gs/SSO_Migration_Plan.md).
+VMS Admin/Manager 인증을 BODA.VMS.Web 으로 위임해 **단일 사용자 계정** 으로 운영. 비밀번호 동기화 부담 / 감사 추적 단절 해소. **설계 문서**: [`docs/gs/guides/SSO_Migration_Plan.md`](gs/guides/SSO_Migration_Plan.md).
 
 ### 10.1 활성 조건
 - BODA.VMS.Web 이 운영 가동 중 (단일 PC 운영 시 Windows Service 자동 시작 권장)
@@ -391,11 +391,11 @@ dotnet user-secrets set Initial:AdminPassword <비밀번호> --project BODA.VMS.
 
 | 문서 | 내용 |
 |---|---|
-| [gs_msi_code_signing_guide.md](gs/gs_msi_code_signing_guide.md) | Authenticode 코드 서명 운영 절차 |
-| [gs_distribution_policy.md](gs/gs_distribution_policy.md) | 라이선스 / 배포 채널 / EULA |
+| [gs_msi_code_signing_guide.md](gs/guides/gs_msi_code_signing_guide.md) | Authenticode 코드 서명 운영 절차 |
+| [gs_distribution_policy.md](gs/guides/gs_distribution_policy.md) | 라이선스 / 배포 채널 / EULA |
 | [manual_regression_v1.2.md](manual_regression_v1.2.md) | MSI 다운로드 후 운영 환경 회귀 가이드 |
-| [gs_compliance_overview_v1.0.md](gs/gs_compliance_overview_v1.0.md) | GS 인증 보안 정책 종합 |
-| [SSO_Migration_Plan.md](gs/SSO_Migration_Plan.md) | VMS ↔ Web SSO 통합 마이그레이션 설계 (PR1~5) |
+| [gs_compliance_overview_v1.0.md](gs/guides/gs_compliance_overview_v1.0.md) | GS 인증 보안 정책 종합 |
+| [SSO_Migration_Plan.md](gs/guides/SSO_Migration_Plan.md) | VMS ↔ Web SSO 통합 마이그레이션 설계 (PR1~5) |
 | `.github/workflows/build.yml` | CI 빌드 / artifact 정의 |
 | `VMS.MasterSetup/Package.wxs` | MSI 구조 정의 |
 

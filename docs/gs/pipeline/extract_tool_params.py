@@ -2,7 +2,7 @@
 import json, re, os
 
 BASE = r"D:\Repo\VMS\VMS.VisionSetup\Views\ToolSettings\Tools"
-OUT = r"D:\Repo\VMS\docs\gs\_tool_params.json"
+OUT = r"D:\Repo\VMS\docs\gs\pipeline\_tool_params.json"
 
 # (표시명, 카테고리, 파일) — 전체 도구(카테고리 순)
 CORE = [
