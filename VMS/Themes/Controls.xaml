@@ -714,6 +714,14 @@
         <Setter Property="FontFamily"      Value="{StaticResource Font.Family}"/>
         <Setter Property="FontSize"        Value="{StaticResource Font.Size.Caption}"/>
         <Setter Property="HasDropShadow"   Value="False"/>
+        <!-- 긴 도움말 문장은 자동 줄바꿈 (ⓘ 섹션 설명 등) -->
+        <Setter Property="ContentTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <TextBlock Text="{Binding}" TextWrapping="Wrap" MaxWidth="330"/>
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ToolTip">
