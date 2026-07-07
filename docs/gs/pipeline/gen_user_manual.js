@@ -56,8 +56,8 @@ function caption(text) {
     children: [new TextRun({ text, italics: true, size: 18, color: "595959" })] });
 }
 // VMS 메인 화면 컨트롤 캡처(vms_ctl/, 2x DPI) — 1/2 스케일(원래 크기), capW 초과 시 축소.
-function ctlImg(file, capW) {
-  const full = path.join(SHOT, "vms_ctl", file);
+function ctlImg(file, capW, dir = "vms_ctl") {
+  const full = path.join(SHOT, dir, file);
   if (!fs.existsSync(full)) return P(`[스크린샷 자리: ${file}]`, { color: "C00000", bold: true });
   const buf = fs.readFileSync(full);
   const iw = buf.readUInt32BE(16), ih = buf.readUInt32BE(20);
@@ -257,6 +257,46 @@ const POST = {
     () => bullet("Enable TensorRT FP16 — RTX 계열에서 2~3배 속도 향상."),
     () => bullet("[Save] / [Cancel] — 저장(다음 모델 로드/세션 재생성 시점부터 적용) / 취소."),
   ],
+  "3.8 딥러닝 라벨링·학습 (VMS.DeepLearning)": [
+    () => imgPara("06_deeplearning_full.png", 620),
+    () => caption("그림. VMS.DeepLearning — 데이터셋·이미지 목록(좌) / 라벨링 캔버스(중) / 클래스·라벨·학습(우)  [Detection 데이터셋 예시]"),
+  ],
+  "화면 구성": [
+    () => ctlImg("bar_toolbar.png", 460, "deeplearning_ctl"),
+    () => caption("그림. 상단 툴바 — [New Dataset] / [Save] / [Add Images] / [Auto Split] / [Export]"),
+    () => ctlImg("sec_dataset.png", 250, "deeplearning_ctl"),
+    () => caption("그림. Dataset 섹션 — 데이터셋 목록, 새 이름 + 작업 유형 선택, [Load]·[Save]·[Delete]"),
+    () => ctlImg("sec_images.png", 250, "deeplearning_ctl"),
+    () => caption("그림. Images 섹션 — [+ Add]·[- Del], 이미지 이동(◀/▶), 라벨·학습 현황 요약"),
+    () => ctlImg("sec_classes.png", 250, "deeplearning_ctl"),
+    () => caption("그림. Classes 섹션 — 클래스 목록과 추가([+])"),
+    () => ctlImg("sec_labels.png", 250, "deeplearning_ctl"),
+    () => caption("그림. Labels 섹션 — 현재 이미지의 라벨 목록, [Delete]"),
+    () => ctlImg("sec_label_editor.png", 250, "deeplearning_ctl"),
+    () => caption("그림. Label Editor — 선택한 라벨의 클래스 / 텍스트(Transcription) / 검증 여부 편집"),
+    () => ctlImg("sec_export.png", 250, "deeplearning_ctl"),
+    () => caption("그림. Export 섹션 — [Auto Split (Train/Val)] / [Export for Training] + 작업 유형별 내보내기 형식 안내"),
+    () => ctlImg("sec_training.png", 250, "deeplearning_ctl"),
+    () => caption("그림. Training 섹션 — Python·스크립트·출력 경로, Epochs/Batch Size, [Start Training]·[Stop], 진행률·로그"),
+  ],
+  "작업 유형 — 데이터셋을 만들 때 선택": [
+    () => ctlImg("sec_classes_anomaly.png", 250, "deeplearning_ctl"),
+    () => caption("그림. Anomaly(이상 탐지) 유형의 분류 버튼 — [GOOD (정상)] / [DEFECT (불량)]"),
+  ],
+  "학습 결과 바로 확인 (Inference Mode)": [
+    () => ctlImg("sec_inference.png", 250, "deeplearning_ctl"),
+    () => caption("그림. Inference Mode — 모델 선택, Conf(신뢰도)·IoU(중복 제거) 슬라이더"),
+  ],
+  "부족한 데이터 보강 (Active Learning)": [
+    () => ctlImg("sec_active_learning.png", 250, "deeplearning_ctl"),
+    () => caption("그림. Active Learning — 테스트 폴더 / 실패 기준 / [▶ 일괄 추론 실행] / [✚ 데이터셋에 추가]"),
+  ],
+  "클릭 한 번으로 윤곽 라벨링 (SAM)": [
+    () => ctlImg("sec_sam_model.png", 250, "deeplearning_ctl"),
+    () => caption("그림. SAM Model 섹션 — Encoder/Decoder 파일 지정, [Load SAM Model]"),
+    () => ctlImg("bar_sam_toolbar.png", 340, "deeplearning_ctl"),
+    () => caption("그림. SAM 라벨링 도구모음 — 좌클릭 전경 / 우클릭 배경, [Confirm (Enter)]·[Clear (Esc)]"),
+  ],
   "4. BODA.VMS.Web (관리자 / MES)": [
     () => P("아래 그림은 BODA.VMS.Web 관리 화면입니다(관리자 로그인 기준)."),
     () => imgPara("40_web_login.png", 360),
@@ -289,7 +329,7 @@ const POST = {
 const ADMIN_BEFORE = "4. BODA.VMS.Web (관리자 / MES)";
 function adminDialogsSection() {
   const out = [];
-  out.push(new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("3.8 관리자 도구 다이얼로그 (Admin 전용)")] }));
+  out.push(new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("3.9 관리자 도구 다이얼로그 (Admin 전용)")] }));
   out.push(P("헤더의 User Management 아이콘과 Admin Tools(⋮) 드롭다운에서 실행되는 관리자 전용 다이얼로그다. (Admin 권한 로그인 시에만 표시) 각 그림 아래에 화면의 주요 컨트롤과 그 역할을 정리했다."));
   const dlgs = [
     ["23_dlg_usermgmt.png", "User Management — 사용자 계정·권한(UserGrade) 관리", [
