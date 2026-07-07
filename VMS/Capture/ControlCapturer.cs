@@ -152,6 +152,10 @@ namespace VMS.Capture
                 }
 
                 total += CaptureVisibleControls(window, tag, outputDir, seen, manifest, backdrop);
+
+                // 사이드 패널 펼침 장면은 풀 윈도우도 저장 — 매뉴얼 05_vms_sidepanel 갱신용.
+                if (tag == "S3_sidepanel")
+                    await CaptureLiveWindowAsync(window, outputDir, "S3_full_sidepanel");
             }
 
             var sb = new System.Text.StringBuilder();
@@ -223,8 +227,11 @@ namespace VMS.Capture
                 ("hdr_recipe_chip", () => FindByToolTipPrefix<System.Windows.Controls.Border>(window, "현재 로드된 레시피")),
             });
 
+            // 섹션 헤더에 ⓘ 도움말 Run 이 붙음(예: "Camera Control ⓘ"). Run 인라인으로 구성한
+            // TextBlock 은 Text 프로퍼티가 비어 있어(Inlines 에만 존재) Inlines 연결 문자열로 찾는다.
+            // prefix 매칭은 헤더 칩("Recipe:") 오매칭을 부르므로 "헤더" / "헤더 ⓘ" 정확일치만 허용.
             FrameworkElement? SectionCard(string header) =>
-                FindAncestor<System.Windows.Controls.Border>(FindByExactText(window, header));
+                FindAncestor<System.Windows.Controls.Border>(FindSectionHeader(window, header));
 
             yield return ("S3_sidepanel", () =>
             {
@@ -330,6 +337,27 @@ namespace VMS.Capture
         {
             foreach (var d in EnumerateVisibleTree(root))
                 if (d is TextBlock tb && tb.Text == text) return tb;
+            return null;
+        }
+
+        private static string InlineText(TextBlock tb)
+        {
+            if (!string.IsNullOrEmpty(tb.Text)) return tb.Text;
+            var sb = new System.Text.StringBuilder();
+            foreach (var inline in tb.Inlines)
+                if (inline is System.Windows.Documents.Run r) sb.Append(r.Text);
+            return sb.ToString();
+        }
+
+        private static TextBlock? FindSectionHeader(DependencyObject root, string header)
+        {
+            string withIcon = header + " ⓘ";
+            foreach (var d in EnumerateVisibleTree(root))
+                if (d is TextBlock tb)
+                {
+                    string t = InlineText(tb);
+                    if (t == header || t == withIcon) return tb;
+                }
             return null;
         }
 

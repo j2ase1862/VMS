@@ -697,7 +697,8 @@
 
                     <!-- Row 1: Camera Selector -->
                     <StackPanel Grid.Row="1" Margin="8,4,8,4">
-                        <TextBlock Text="Camera" Foreground="{StaticResource BrushTextPrimary}" FontWeight="Bold" FontSize="12" Margin="0,0,0,4"/>
+                        <TextBlock Foreground="{StaticResource BrushTextPrimary}" FontWeight="Bold" FontSize="12" Margin="0,0,0,4" Cursor="Help"
+                                   ToolTip="이미지 취득에 사용할 활성 카메라를 선택합니다. 카메라 등록·연결은 Camera Manager 에서 합니다."><Run Text="Camera"/><Run Text=" ⓘ" Foreground="{StaticResource BrushTextMuted}"/></TextBlock>
                         <ComboBox ItemsSource="{Binding Cameras}"
                                   SelectedItem="{Binding SelectedCamera}"
                                   Style="{StaticResource WindowDarkComboBox}"
@@ -780,8 +781,9 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <TextBlock Grid.Column="0" Text="Steps" Foreground="{StaticResource BrushTextPrimary}" FontWeight="Bold" FontSize="12"
-                                   VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="0" Foreground="{StaticResource BrushTextPrimary}" FontWeight="Bold" FontSize="12"
+                                   VerticalAlignment="Center" Cursor="Help"
+                                   ToolTip="검사 스텝 목록입니다. 스텝은 위에서 아래 순서로 실행되며, 각 스텝이 자기 도구 파이프라인을 가집니다. 위/아래 버튼으로 순서를 바꿉니다."><Run Text="Steps"/><Run Text=" ⓘ" Foreground="{StaticResource BrushTextMuted}"/></TextBlock>
 
                         <StackPanel Grid.Column="1" Orientation="Horizontal">
                             <!-- Add Step -->
@@ -883,9 +885,10 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Tool Palette"
+                            <TextBlock Grid.Column="0"
                                        Foreground="{StaticResource BrushTextPrimary}" FontWeight="Bold" FontSize="12"
-                                       VerticalAlignment="Center"/>
+                                       VerticalAlignment="Center" Cursor="Help"
+                                       ToolTip="비전 도구 팔레트입니다 (12 카테고리). 도구를 가운데 Tool Workspace 로 드래그하면 현재 스텝의 파이프라인에 추가됩니다."><Run Text="Tool Palette"/><Run Text=" ⓘ" Foreground="{StaticResource BrushTextMuted}"/></TextBlock>
                             <StackPanel Grid.Column="1" Orientation="Horizontal">
                                 <!-- Expand All -->
                                 <Button Click="ToolPaletteExpandAll_Click" ToolTip="Expand All"
@@ -1352,9 +1355,10 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Text="Tool Settings"
+                    <TextBlock Grid.Row="0"
                                Foreground="{StaticResource BrushTextPrimary}" FontWeight="Bold" FontSize="14"
-                               Margin="10,10,10,5"/>
+                               Margin="10,10,10,5" Cursor="Help"
+                               ToolTip="선택한 도구의 파라미터를 편집하는 패널입니다. Tool Workspace 에서 도구를 클릭하면 해당 도구의 설정이 표시됩니다."><Run Text="Tool Settings"/><Run Text=" ⓘ" Foreground="{StaticResource BrushTextMuted}"/></TextBlock>
 
                     <ts:ToolSettingsView x:Name="ToolSettingsControl" Grid.Row="1"
                                          DataContext="{Binding SelectedToolSettings}"/>
