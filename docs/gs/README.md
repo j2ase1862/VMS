@@ -55,6 +55,24 @@ node gen_user_manual.js   # → ../VMS_사용자매뉴얼_v1.0.docx
 | `web_capture.js` | BODA.VMS.Web 화면 캡처 (Chrome DevTools Protocol) → `../screenshots/` |
 | `_manual_blocks.json` `_tool_params.json` | 중간 산출물 (재생성 가능하지만 diff 추적을 위해 커밋) |
 
+## 컨트롤 캡처 도구 (UI 변경 시 재캡처)
+
+| 앱 | 명령 | 산출 |
+|----|------|------|
+| VMS.AppSetup | `VMS.AppSetup.exe --capture-controls [폴더]` / `--capture-fullpage` | 마법사 6페이지 컨트롤 / 2·5단계 풀페이지 |
+| VMS.VisionSetup | `--capture-controls` / `--capture-fullpage` / `--capture-toolpanels` / `--capture-dialogs` | MainView 컨트롤 / 전체화면 / 툴 패널 34종 / 다이얼로그 |
+| VMS | `VMS.exe --capture-controls [폴더]` / `--capture-dialogs` | 헤더 칩·사이드 패널 (장면 3개) / 관리자 다이얼로그 |
+
+- 전부 `#if DEBUG` 전용 (Release 무영향). Debug 빌드 후 실행. 원본 출력은 `docs/control-capture/`.
+- 매뉴얼에 쓰는 선별본은 `screenshots/{appsetup_ctl, visionsetup_ctl, vms_ctl}/` 에 커밋됨.
+- UI 를 바꾸면 해당 앱 캡처 재실행 → 선별본 교체 → docx 재생성.
+
+## 검증 렌더 (docx 육안 확인)
+
+Word COM 으로 docx→XPS 변환(`ExportAsFixedFormat` 포맷 18) → XPS fpage 는 UTF-16 으로 읽고
+`UnicodeString` 속성을 이어붙여 텍스트 검색(글리프 런으로 분절되어 있음) → 대상 페이지만
+`docs/control-capture/_work/render_xps.ps1` 로 PNG 렌더 후 육안 확인.
+
 ## 짝 솔루션 (Web 서버)
 
 BODA.VMS.Web 측 GS 작업 → `D:\Project\BODA.VMS.Web\docs\GS_Certification_Baseline.md` (v1.1, 609 줄). VMS PR119 ↔ Web PR #10 (X-API-Key) 짝.
