@@ -41,7 +41,9 @@ class P(HTMLParser):
             if is_callout:
                 self.flush(); self.cur = {"t": "p", "text": ""}
         elif tag == "br":
-            if self.cur is not None: self.cur["text"] += "\n"
+            # 의도된 줄바꿈은 <br> 만 — HTML 소스의 raw 개행(코드 정리용 줄 감싸기)과
+            # 구분하기 위해 sentinel 로 표시하고 flush 에서 \n 으로 복원한다.
+            if self.cur is not None: self.cur["text"] += "\x00"
             elif self.cell is not None: self.cell["text"] += " "
 
     def handle_endtag(self, tag):
@@ -77,8 +79,11 @@ class P(HTMLParser):
 
     def flush(self):
         if self.cur is not None:
-            t = re.sub(r"[ \t]+", " ", self.cur["text"]).strip()
-            t = re.sub(r"\n ?", "\n", t)
+            # HTML 소스의 raw 개행은 렌더링과 동일하게 공백으로 접는다 — 그대로 두면
+            # docx 생성기(runs)가 \n 마다 강제 줄바꿈을 넣어 문장 중간이 끊긴다.
+            t = re.sub(r"\s*\n\s*", " ", self.cur["text"])
+            t = re.sub(r"[ \t]+", " ", t).strip()
+            t = re.sub(r" ?\x00 ?", "\n", t)   # <br> sentinel 만 진짜 줄바꿈으로
             if t:
                 self.cur["text"] = t; self.blocks.append(self.cur)
             self.cur = None

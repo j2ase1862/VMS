@@ -714,7 +714,8 @@
         <Setter Property="FontFamily"      Value="{StaticResource Font.Family}"/>
         <Setter Property="FontSize"        Value="{StaticResource Font.Size.Caption}"/>
         <Setter Property="HasDropShadow"   Value="False"/>
-        <!-- 긴 도움말 문장은 자동 줄바꿈 (ⓘ 섹션 설명 등) -->
+        <!-- 긴 도움말 문장은 자동 줄바꿈 (비활성 버튼 사유 등 컨트롤 자체 ToolTip 용.
+             섹션 도움말은 VisionSetup 의 HelpIcon ? 아이콘 → hover 팝업으로 표시) -->
         <Setter Property="ContentTemplate">
             <Setter.Value>
                 <DataTemplate>
