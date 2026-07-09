@@ -283,8 +283,9 @@
         <Setter Property="FontWeight" Value="Bold"/>
     </Style>
 
-    <!-- 도움말 툴팁 (기본) — 시스템 밝은 툴팁 대체: 다크 배경 + 자동 줄바꿈.
-         섹션 헤더 ⓘ 아이콘의 쉬운 설명 등 긴 문장을 감안해 MaxWidth 로 감싼다. -->
+    <!-- 다크 테마 툴팁 (기본) — 시스템 밝은 툴팁 대체: 다크 배경 + 자동 줄바꿈.
+         버튼 등 컨트롤 자체 ToolTip 용. 섹션 헤더/라벨 도움말은 VisionSetup 과 동일한
+         HelpIcon(? 아이콘 → hover 팝업) 컨트롤로 표시한다. -->
     <Style TargetType="ToolTip">
         <Setter Property="Background" Value="{StaticResource BgLightBrush}"/>
         <Setter Property="Foreground" Value="{StaticResource FgPrimaryBrush}"/>

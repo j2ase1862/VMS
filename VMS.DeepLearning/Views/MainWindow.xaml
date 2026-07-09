@@ -4,6 +4,7 @@
         xmlns:vm="clr-namespace:VMS.DeepLearning.ViewModels"
         xmlns:ann="clr-namespace:VMS.Core.Models.Annotation;assembly=VMS.Core"
         xmlns:local="clr-namespace:VMS.DeepLearning.Views"
+        xmlns:controls="clr-namespace:VMS.VisionSetup.Controls"
         Title="{Binding WindowTitle}" Width="1400" Height="900"
         WindowStartupLocation="CenterScreen" WindowState="Maximized"
         Background="#1E1E1E"
@@ -73,8 +74,7 @@
                     <!-- Dataset Section -->
                     <Expander Grid.Row="0" IsExpanded="True" Margin="8,8,8,4">
                         <Expander.Header>
-                            <TextBlock Style="{StaticResource SectionHeader}" Cursor="Help"
-                                       ToolTip="데이터셋(사진 묶음) 관리입니다. 이름을 입력하고 작업 유형을 골라 [+] 로 만들고, [Load] 로 불러와 작업합니다."><Run Text="Dataset"/><Run Text=" ⓘ" Foreground="#888888"/></TextBlock>
+                            <TextBlock Style="{StaticResource SectionHeader}"><Run Text="Dataset"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Dataset" CustomDescription="데이터셋(사진 묶음) 관리입니다. 이름을 입력하고 작업 유형을 골라 [+] 로 만들고, [Load] 로 불러와 작업합니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                         </Expander.Header>
                         <StackPanel Margin="0,6,0,0">
                             <ListBox ItemsSource="{Binding Datasets}" SelectedItem="{Binding CurrentDataset}"
@@ -147,8 +147,7 @@
                             BorderBrush="#3F3F46" BorderThickness="0,1,0,0">
                         <StackPanel>
                             <Grid>
-                                <TextBlock Style="{StaticResource SectionHeader}" Cursor="Help"
-                                           ToolTip="현재 데이터셋의 사진 목록입니다. ◀/▶ 또는 키보드 ←/→ 로 이동하며, 초록 점은 라벨이 완료된 사진입니다."><Run Text="Images"/><Run Text=" ⓘ" Foreground="#888888"/></TextBlock>
+                                <TextBlock Style="{StaticResource SectionHeader}"><Run Text="Images"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Images" CustomDescription="현재 데이터셋의 사진 목록입니다. ◀/▶ 또는 키보드 ←/→ 로 이동하며, 초록 점은 라벨이 완료된 사진입니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                                     <Button Content="+ Add" Command="{Binding AddImagesCommand}"
                                             Style="{StaticResource PrimaryButton}"
@@ -525,8 +524,7 @@
                         <!-- Classes Section -->
                         <Expander IsExpanded="True" Margin="0,0,0,8">
                             <Expander.Header>
-                                <TextBlock Style="{StaticResource SectionHeader}" Cursor="Help"
-                                           ToolTip="구분할 항목(클래스) 목록입니다. 예: scratch, dent. 아래 입력란과 [+] 버튼으로 추가합니다."><Run Text="Classes"/><Run Text=" ⓘ" Foreground="#888888"/></TextBlock>
+                                <TextBlock Style="{StaticResource SectionHeader}"><Run Text="Classes"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Classes" CustomDescription="구분할 항목(클래스) 목록입니다. 예: scratch, dent. 아래 입력란과 [+] 버튼으로 추가합니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                             </Expander.Header>
                             <StackPanel Margin="0,6,0,0">
                                 <!-- Classification/Anomaly: 클래스 버튼으로 표시 -->
@@ -622,8 +620,7 @@
                             </Expander.Style>
                             <Expander.Header>
                                 <Grid>
-                                    <TextBlock Style="{StaticResource SectionHeader}" Cursor="Help"
-                                               ToolTip="현재 사진에 표시된 정답(라벨) 목록입니다. 항목을 선택하면 아래 Label Editor 에서 수정할 수 있습니다."><Run Text="Labels"/><Run Text=" ⓘ" Foreground="#888888"/></TextBlock>
+                                    <TextBlock Style="{StaticResource SectionHeader}"><Run Text="Labels"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Labels" CustomDescription="현재 사진에 표시된 정답(라벨) 목록입니다. 항목을 선택하면 아래 Label Editor 에서 수정할 수 있습니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                                     <Button Content="Delete" HorizontalAlignment="Right"
                                             Command="{Binding DeleteSelectedLabelCommand}"
                                             Style="{StaticResource DangerButton}"
@@ -670,8 +667,7 @@
                                 </Style>
                             </Border.Style>
                             <StackPanel>
-                                <TextBlock Style="{StaticResource SectionHeader}" Cursor="Help"
-                                           ToolTip="현재 사진에 지정된 클래스입니다. 위 Classes 의 버튼을 누르면 바뀝니다."><Run Text="Current Image Class"/><Run Text=" ⓘ" Foreground="#888888"/></TextBlock>
+                                <TextBlock Style="{StaticResource SectionHeader}"><Run Text="Current Image Class"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Current Image Class" CustomDescription="현재 사진에 지정된 클래스입니다. 위 Classes 의 버튼을 누르면 바뀝니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                                 <TextBlock FontSize="20" FontWeight="Bold" Margin="0,6,0,0"
                                            HorizontalAlignment="Center">
                                     <TextBlock.Style>
@@ -703,24 +699,21 @@
                                     Converter={StaticResource NotNullToVis},
                                     FallbackValue=Collapsed}">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource SectionHeader}" Cursor="Help"
-                                           ToolTip="선택한 라벨을 수정하는 곳입니다 — 클래스 변경, 정답 텍스트(OCR), 검토 완료 표시."><Run Text="Label Editor"/><Run Text=" ⓘ" Foreground="#888888"/></TextBlock>
+                                <TextBlock Style="{StaticResource SectionHeader}"><Run Text="Label Editor"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Label Editor" CustomDescription="선택한 라벨을 수정하는 곳입니다 — 클래스 변경, 정답 텍스트(OCR), 검토 완료 표시." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
 
                                 <TextBlock Text="Class:" Foreground="#999" FontSize="11" Margin="0,4,0,2"/>
                                 <ComboBox ItemsSource="{Binding CurrentDataset.Classes}"
                                           SelectedItem="{Binding SelectedLabel.ClassName}"
                                           FontSize="12" Margin="0,0,0,8"/>
 
-                                <TextBlock Foreground="#999" FontSize="11" Margin="0,0,0,2" Cursor="Help"
-                                           ToolTip="OCR 데이터셋에서 이 상자 안 문자의 정답 텍스트입니다."><Run Text="Transcription:"/><Run Text=" ⓘ" Foreground="#666666"/></TextBlock>
+                                <TextBlock Foreground="#999" FontSize="11" Margin="0,0,0,2"><Run Text="Transcription:"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Transcription" CustomDescription="OCR 데이터셋에서 이 상자 안 문자의 정답 텍스트입니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                                 <TextBox Text="{Binding SelectedLabel.Transcription, UpdateSourceTrigger=PropertyChanged}"
                                          FontSize="14" FontFamily="Consolas"
                                          Padding="6,4" Margin="0,0,0,4"/>
 
                                 <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                                     <TextBlock Foreground="#999" FontSize="11"
-                                               VerticalAlignment="Center" Margin="0,0,6,0" Cursor="Help"
-                                               ToolTip="사람이 검토를 마친 라벨 표시입니다. 모델 예측으로 자동 생성된 라벨은 검토 후 체크하세요."><Run Text="Verified:"/><Run Text=" ⓘ" Foreground="#666666"/></TextBlock>
+                                               VerticalAlignment="Center" Margin="0,0,6,0"><Run Text="Verified:"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Verified" CustomDescription="사람이 검토를 마친 라벨 표시입니다. 모델 예측으로 자동 생성된 라벨은 검토 후 체크하세요." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                                     <CheckBox IsChecked="{Binding SelectedLabel.IsVerified}"
                                               VerticalAlignment="Center"/>
                                 </StackPanel>
@@ -731,13 +724,11 @@
                         <Expander IsExpanded="True" Margin="0,0,0,8"
                                   Visibility="{Binding IsSegmentationMode, Converter={StaticResource BoolToVis}, FallbackValue=Collapsed}">
                             <Expander.Header>
-                                <TextBlock Style="{StaticResource SectionHeader}" Cursor="Help"
-                                           ToolTip="클릭 한 번으로 윤곽을 따 주는 SAM 모델입니다. Encoder/Decoder ONNX 파일 두 개를 지정하고 [Load SAM Model] 을 누르세요."><Run Text="SAM Model"/><Run Text=" ⓘ" Foreground="#888888"/></TextBlock>
+                                <TextBlock Style="{StaticResource SectionHeader}"><Run Text="SAM Model"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="SAM Model" CustomDescription="클릭 한 번으로 윤곽을 따 주는 SAM 모델입니다. Encoder/Decoder ONNX 파일 두 개를 지정하고 [Load SAM Model] 을 누르세요." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                             </Expander.Header>
                             <StackPanel Margin="0,6,0,0">
                                 <Grid>
-                                    <TextBlock Foreground="#999" FontSize="11" Cursor="Help"
-                                               ToolTip="SAM 모델 파일 중 이미지 분석 담당(Encoder) ONNX 파일입니다."><Run Text="Encoder:"/><Run Text=" ⓘ" Foreground="#666666"/></TextBlock>
+                                    <TextBlock Foreground="#999" FontSize="11"><Run Text="Encoder:"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Encoder" CustomDescription="SAM 모델 파일 중 이미지 분석 담당(Encoder) ONNX 파일입니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                                     <Button Content="..." HorizontalAlignment="Right" Width="28"
                                             Command="{Binding SelectSamEncoderCommand}"
                                             Padding="0,1" FontSize="10"/>
@@ -746,8 +737,7 @@
                                          FontSize="10" Margin="0,2,0,6"/>
 
                                 <Grid>
-                                    <TextBlock Foreground="#999" FontSize="11" Cursor="Help"
-                                               ToolTip="SAM 모델 파일 중 클릭 지점에서 마스크를 만드는(Decoder) ONNX 파일입니다."><Run Text="Decoder:"/><Run Text=" ⓘ" Foreground="#666666"/></TextBlock>
+                                    <TextBlock Foreground="#999" FontSize="11"><Run Text="Decoder:"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Decoder" CustomDescription="SAM 모델 파일 중 클릭 지점에서 마스크를 만드는(Decoder) ONNX 파일입니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                                     <Button Content="..." HorizontalAlignment="Right" Width="28"
                                             Command="{Binding SelectSamDecoderCommand}"
                                             Padding="0,1" FontSize="10"/>
@@ -778,8 +768,7 @@
                         <!-- Export Section -->
                         <Expander IsExpanded="False" Margin="0,0,0,8">
                             <Expander.Header>
-                                <TextBlock Style="{StaticResource SectionHeader}" Cursor="Help"
-                                           ToolTip="라벨링 결과를 학습 스크립트가 읽는 형식으로 내보냅니다. 작업 유형에 맞는 형식이 자동으로 선택됩니다."><Run Text="Export"/><Run Text=" ⓘ" Foreground="#888888"/></TextBlock>
+                                <TextBlock Style="{StaticResource SectionHeader}"><Run Text="Export"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Export" CustomDescription="라벨링 결과를 학습 스크립트가 읽는 형식으로 내보냅니다. 작업 유형에 맞는 형식이 자동으로 선택됩니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                             </Expander.Header>
                             <StackPanel Margin="0,8,0,0">
                                 <Button Content="Auto Split (Train/Val)" Command="{Binding AutoSplitCommand}"
@@ -804,22 +793,21 @@
                         <!-- Training Section -->
                         <Expander IsExpanded="False" Margin="0,0,0,8">
                             <Expander.Header>
-                                <TextBlock Style="{StaticResource SectionHeader}" Cursor="Help"
-                                           ToolTip="모델 학습 실행입니다. Python 환경에서 학습 스크립트를 실행하고 진행률·Loss·정확도·로그를 보여줍니다."><Run Text="Training"/><Run Text=" ⓘ" Foreground="#888888"/></TextBlock>
+                                <TextBlock Style="{StaticResource SectionHeader}"><Run Text="Training"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Training" CustomDescription="모델 학습 실행입니다. Python 환경에서 학습 스크립트를 실행하고 진행률·Loss·정확도·로그를 보여줍니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                             </Expander.Header>
                             <StackPanel Margin="0,8,0,0">
-                                <TextBlock Foreground="#999" FontSize="11" Cursor="Help"
-                                           ToolTip="학습에 사용할 Python 실행 파일 경로입니다. 학습용 패키지가 설치된 환경이어야 합니다."><Run Text="Python:"/><Run Text=" ⓘ" Foreground="#666666"/></TextBlock>
+                                <TextBlock Foreground="#999" FontSize="11"><Run Text="Python:"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Python" CustomDescription="학습에 사용할 Python 실행 파일 경로입니다. 학습용 패키지가 설치된 환경이어야 합니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                                 <TextBox Text="{Binding TrainingConfig.PythonPath, UpdateSourceTrigger=LostFocus}"
                                          FontSize="12" Margin="0,2,0,6"/>
 
                                 <Grid>
-                                    <StackPanel Orientation="Horizontal" Cursor="Help"
-                                                ToolTip="학습 스크립트입니다. 데이터셋의 작업 유형에 맞는 스크립트가 자동으로 선택되며, 필요하면 [...] 로 직접 지정합니다.">
+                                    <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="Script" Foreground="#999" FontSize="11"/>
                                         <TextBlock Text=" (자동 매칭)" Foreground="#4CAF50" FontSize="10"
                                                    VerticalAlignment="Center"/>
-                                        <TextBlock Text=" ⓘ" Foreground="#666666" FontSize="11"/>
+                                        <controls:HelpIcon CustomTitle="Script"
+                                                           CustomDescription="학습 스크립트입니다. 데이터셋의 작업 유형에 맞는 스크립트가 자동으로 선택되며, 필요하면 [...] 로 직접 지정합니다."
+                                                           Margin="5,0,0,0" VerticalAlignment="Center"/>
                                     </StackPanel>
                                     <Button Content="..." HorizontalAlignment="Right" Width="28"
                                             Command="{Binding SelectTrainingScriptCommand}"
@@ -829,8 +817,7 @@
                                          FontSize="11" Margin="0,2,0,6"/>
 
                                 <Grid>
-                                    <TextBlock Foreground="#999" FontSize="11" Cursor="Help"
-                                               ToolTip="학습 결과(모델 파일)가 저장될 폴더입니다."><Run Text="Output:"/><Run Text=" ⓘ" Foreground="#666666"/></TextBlock>
+                                    <TextBlock Foreground="#999" FontSize="11"><Run Text="Output:"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Output" CustomDescription="학습 결과(모델 파일)가 저장될 폴더입니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                                     <Button Content="..." HorizontalAlignment="Right" Width="28"
                                             Command="{Binding SelectOutputDirCommand}"
                                             Padding="0,1" FontSize="10"/>
@@ -844,14 +831,12 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Margin="0,0,4,0">
-                                        <TextBlock Foreground="#999" FontSize="11" Cursor="Help"
-                                                   ToolTip="전체 사진을 몇 번 반복해서 학습할지입니다. 많을수록 오래 걸리고, 너무 많으면 외운 것처럼 되어(과적합) 새 사진에 약해질 수 있습니다."><Run Text="Epochs:"/><Run Text=" ⓘ" Foreground="#666666"/></TextBlock>
+                                        <TextBlock Foreground="#999" FontSize="11"><Run Text="Epochs:"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Epochs" CustomDescription="전체 사진을 몇 번 반복해서 학습할지입니다. 많을수록 오래 걸리고, 너무 많으면 외운 것처럼 되어(과적합) 새 사진에 약해질 수 있습니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                                         <TextBox Text="{Binding TrainingConfig.Epochs}"
                                                  FontSize="12"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Margin="4,0,0,0">
-                                        <TextBlock Foreground="#999" FontSize="11" Cursor="Help"
-                                                   ToolTip="한 번에 같이 학습하는 사진 수입니다. GPU 메모리가 부족하면 줄이세요."><Run Text="Batch Size:"/><Run Text=" ⓘ" Foreground="#666666"/></TextBlock>
+                                        <TextBlock Foreground="#999" FontSize="11"><Run Text="Batch Size:"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Batch Size" CustomDescription="한 번에 같이 학습하는 사진 수입니다. GPU 메모리가 부족하면 줄이세요." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                                         <TextBox Text="{Binding TrainingConfig.BatchSize}"
                                                  FontSize="12"/>
                                     </StackPanel>
@@ -867,8 +852,7 @@
                                                    Margin="0,0,0,6"
                                                    Text="anomalib 사용 시 적용됩니다. 미세 결함 검출률 개선을 위해 resnet50 + coreset 0.2 이상을 시도해 보세요."/>
 
-                                        <TextBlock Foreground="#999" FontSize="11" Cursor="Help"
-                                                   ToolTip="이상 탐지 알고리즘입니다. 기본 patchcore 를 권장합니다."><Run Text="Method:"/><Run Text=" ⓘ" Foreground="#666666"/></TextBlock>
+                                        <TextBlock Foreground="#999" FontSize="11"><Run Text="Method:"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Method" CustomDescription="이상 탐지 알고리즘입니다. 기본 patchcore 를 권장합니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                                         <ComboBox SelectedValue="{Binding TrainingConfig.AnomalyMethod}"
                                                   SelectedValuePath="Content"
                                                   FontSize="12" Margin="0,2,0,6">
@@ -877,8 +861,7 @@
                                             <ComboBoxItem Content="efficient_ad"/>
                                         </ComboBox>
 
-                                        <TextBlock Foreground="#999" FontSize="11" Cursor="Help"
-                                                   ToolTip="특징 추출에 쓰는 신경망입니다. 미세 결함 검출에는 resnet50 이상을 권장합니다."><Run Text="Backbone:"/><Run Text=" ⓘ" Foreground="#666666"/></TextBlock>
+                                        <TextBlock Foreground="#999" FontSize="11"><Run Text="Backbone:"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Backbone" CustomDescription="특징 추출에 쓰는 신경망입니다. 미세 결함 검출에는 resnet50 이상을 권장합니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                                         <ComboBox SelectedValue="{Binding TrainingConfig.AnomalyBackbone}"
                                                   SelectedValuePath="Content"
                                                   FontSize="12" Margin="0,2,0,6">
