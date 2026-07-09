@@ -1,3 +1,5 @@
+using VMS.Camera.Configuration;
+
 namespace VMS.Camera.Models
 {
     /// <summary>
@@ -6,10 +8,12 @@ namespace VMS.Camera.Models
     public static class SharedFrameConstants
     {
         // ── 동기화 객체 이름 ──
-        public const string MmfName = "Local\\VMS_SharedFrame_Mmf";
-        public const string MutexName = "Local\\VMS_SharedFrame_Mutex";
-        public const string FrameReadyEventName = "Local\\VMS_SharedFrame_FrameReady";
-        public const string WriterAliveEventName = "Local\\VMS_SharedFrame_WriterAlive";
+        // 인스턴스별 접미사(예: ".line2")로 분리 — 한 PC 에서 VMS 2개가 떠도
+        // 서로의 프레임 채널을 밟지 않는다. 기본 인스턴스는 기존 이름 유지.
+        public static string MmfName => AppDataPaths.QualifyIpcName("Local\\VMS_SharedFrame_Mmf");
+        public static string MutexName => AppDataPaths.QualifyIpcName("Local\\VMS_SharedFrame_Mutex");
+        public static string FrameReadyEventName => AppDataPaths.QualifyIpcName("Local\\VMS_SharedFrame_FrameReady");
+        public static string WriterAliveEventName => AppDataPaths.QualifyIpcName("Local\\VMS_SharedFrame_WriterAlive");
 
         // ── MMF 용량 ──
         public const long MmfCapacity = 100 * 1024 * 1024; // 100 MB

@@ -22,9 +22,7 @@ namespace VMS.VisionSetup.Services
         private const string CacheKey = "tensorRTCachePath";
         private const string Fp16Key = "tensorRTFp16";
 
-        public static string ConfigPath => Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "BODA VISION AI", "system_config.json");
+        public static string ConfigPath => VMS.Camera.Configuration.AppDataPaths.SystemConfigFile;
 
         public readonly record struct OnnxSettings(
             OnnxExecutionProvider Provider,

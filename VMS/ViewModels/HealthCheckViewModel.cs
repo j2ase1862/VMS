@@ -32,9 +32,7 @@ namespace VMS.ViewModels
         [RelayCommand]
         private void Refresh()
         {
-            var appData = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "BODA VISION AI");
+            var appData = VMS.Camera.Configuration.AppDataPaths.Root;
             var auditDir = Path.Combine(appData, "audit");
 
             // auditAfter=true — UI 의 Refresh 도 감사 흔적 남김 (Admin 의 진단 실행 추적).

@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using VMS.Core.Interfaces;
 using VMS.Core.Models.ParameterSync;
 using VMS.Core.Security;
+using VMS.Camera.Configuration;
 
 namespace VMS.Core.Services
 {
@@ -70,9 +71,7 @@ namespace VMS.Core.Services
             }
 
             // C6: 검사 결과 업로드 실패 시 디스크에 보존 (프로세스 재시작 후에도 복구)
-            _queueDir = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "BODA VISION AI", "upload_queue");
+            _queueDir = AppDataPaths.GetPath("upload_queue");
             try { Directory.CreateDirectory(_queueDir); }
             catch (Exception ex) { Debug.WriteLine($"[ParameterSync] queue dir create failed: {ex.Message}"); }
 

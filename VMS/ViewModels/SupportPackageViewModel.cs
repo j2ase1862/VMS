@@ -18,9 +18,7 @@ namespace VMS.ViewModels
 
         public SupportPackageViewModel()
         {
-            _appDataDir = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "BODA VISION AI");
+            _appDataDir = VMS.Camera.Configuration.AppDataPaths.Root;
             DefaultFileName = $"BODA-VMS-support-{DateTime.Now:yyyyMMdd-HHmmss}.zip";
         }
 

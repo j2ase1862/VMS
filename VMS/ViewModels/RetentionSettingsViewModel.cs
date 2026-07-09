@@ -27,10 +27,7 @@ namespace VMS.ViewModels
 
         public RetentionSettingsViewModel()
         {
-            var appData = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "BODA VISION AI");
-            _configPath = Path.Combine(appData, "system_config.json");
+            _configPath = VMS.Camera.Configuration.AppDataPaths.SystemConfigFile;
 
             CategoryRetentions = new ObservableCollection<CategoryRetentionItem>();
             // 카테고리 순서 — GS overview §5.4 그룹 순서와 일치.

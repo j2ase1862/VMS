@@ -122,9 +122,8 @@ namespace VMS.VisionSetup.ViewModels
         private const string SequenceFileFilter = "시퀀스 파일 (*.seq.json)|*.seq.json|JSON 파일 (*.json)|*.json|모든 파일 (*.*)|*.*";
 
         /// <summary>시스템 레벨 시퀀스 파일 경로 (AppData)</summary>
-        private static readonly string SystemSequencePath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "BODA VISION AI", "process_sequence.json");
+        private static readonly string SystemSequencePath =
+            VMS.Camera.Configuration.AppDataPaths.GetPath("process_sequence.json");
 
         /// <summary>현재 열린 파일 경로 (null이면 시스템 시퀀스)</summary>
         [ObservableProperty]

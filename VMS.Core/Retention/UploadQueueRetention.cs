@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Text.Json;
 using VMS.Core.Security;
+using VMS.Camera.Configuration;
 
 namespace VMS.Core.Retention
 {
@@ -38,8 +39,7 @@ namespace VMS.Core.Retention
         {
             try
             {
-                var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                var path = Path.Combine(appData, "BODA VISION AI", "system_config.json");
+                var path = AppDataPaths.SystemConfigFile;
                 if (!File.Exists(path)) return DefaultRetentionDays;
 
                 using var doc = JsonDocument.Parse(File.ReadAllText(path));

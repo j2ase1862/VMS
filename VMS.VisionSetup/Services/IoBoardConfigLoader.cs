@@ -30,8 +30,7 @@ namespace VMS.VisionSetup.Services
         {
             try
             {
-                var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                var configPath = Path.Combine(appData, "BODA VISION AI", "system_config.json");
+                var configPath = VMS.Camera.Configuration.AppDataPaths.SystemConfigFile;
 
                 if (!File.Exists(configPath))
                     return new List<IoDeviceConfig>();

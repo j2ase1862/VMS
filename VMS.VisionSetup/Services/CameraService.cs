@@ -39,9 +39,7 @@ namespace VMS.VisionSetup.Services
 
         private string GetAppDataPath()
         {
-            // Use local AppData for BODA VISION AI
-            var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            return Path.Combine(appData, "BODA VISION AI");
+            return VMS.Camera.Configuration.AppDataPaths.Root;
         }
 
         private void EnsureDirectoryExists()

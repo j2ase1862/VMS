@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
+using VMS.Camera.Configuration;
 
 namespace VMS.Core.Backup
 {
@@ -34,8 +35,7 @@ namespace VMS.Core.Backup
         {
             try
             {
-                var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                var path = Path.Combine(appData, "BODA VISION AI", "system_config.json");
+                var path = AppDataPaths.SystemConfigFile;
                 if (!File.Exists(path)) return new AutoBackupOptions();
 
                 using var doc = JsonDocument.Parse(File.ReadAllText(path));

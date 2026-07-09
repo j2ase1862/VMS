@@ -22,10 +22,7 @@ namespace VMS.ViewModels
 
         public AutoBackupSettingsViewModel()
         {
-            var appData = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "BODA VISION AI");
-            _configPath = Path.Combine(appData, "system_config.json");
+            _configPath = VMS.Camera.Configuration.AppDataPaths.SystemConfigFile;
             Load();
         }
 

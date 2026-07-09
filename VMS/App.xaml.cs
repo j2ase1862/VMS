@@ -36,6 +36,21 @@ namespace VMS
         {
             base.OnStartup(e);
 
+            // 다중 인스턴스 해석 — "--instance <이름>" 인자 → BODA_VMS_INSTANCE 환경변수 → 기본.
+            // 모든 AppData 경로/IPC 이름이 이 결과에서 파생되므로 다른 어떤 초기화보다 먼저.
+            // 환경변수로 export 되어 External Tools 로 뜨는 자식 프로세스가 자동 상속.
+            try
+            {
+                VMS.Camera.Configuration.AppDataPaths.Initialize(e.Args);
+            }
+            catch (ArgumentException ex)
+            {
+                MessageBox.Show(ex.Message, "BODA VMS — 인스턴스 이름 오류",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                Shutdown(exitCode: 2);
+                return;
+            }
+
             // 헤드리스 이미지 보존 정리 모드 — Windows 예약 작업이 'VMS.exe --cleanup-images'
             // 로 호출(야간). UI 없이 오래된 날짜 폴더만 삭제 후 즉시 종료 → 검사 가동과 분리.
             if (e.Args.Any(a => string.Equals(a, "--cleanup-images", StringComparison.OrdinalIgnoreCase)))
@@ -133,9 +148,7 @@ namespace VMS
             // 파일명 timestamp 패턴 미일치 시 절대 미터치 — 사용자 임의 파일 보호.
             try
             {
-                var queueDir = System.IO.Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "BODA VISION AI", "upload_queue");
+                var queueDir = VMS.Camera.Configuration.AppDataPaths.GetPath("upload_queue");
                 var days = UploadQueueRetention.LoadRetentionDaysFromAppData();
                 UploadQueueRetention.CleanupOldFiles(queueDir, days);
             }
@@ -152,9 +165,7 @@ namespace VMS
                 var autoBackupOptions = AutoBackupOptions.LoadFromAppData();
                 if (autoBackupOptions.Enabled)
                 {
-                    var appDataPath = System.IO.Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                        "BODA VISION AI");
+                    var appDataPath = VMS.Camera.Configuration.AppDataPaths.Root;
                     _autoBackupScheduler = new AutoBackupScheduler(appDataPath, autoBackupOptions);
                     _autoBackupScheduler.Start();
                 }
@@ -772,9 +783,7 @@ namespace VMS
         {
             try
             {
-                var path = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "BODA VISION AI", "process_sequence.json");
+                var path = VMS.Camera.Configuration.AppDataPaths.GetPath("process_sequence.json");
 
                 if (!File.Exists(path)) return null;
 
@@ -812,9 +821,7 @@ namespace VMS
         {
             try
             {
-                var configPath = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "BODA VISION AI", "system_config.json");
+                var configPath = VMS.Camera.Configuration.AppDataPaths.SystemConfigFile;
                 if (File.Exists(configPath)) return false;
 
                 var setupExe = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "VMS.AppSetup.exe");

@@ -14,6 +14,21 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        // 다중 인스턴스 해석 — "--instance <이름>" 인자 → BODA_VMS_INSTANCE 환경변수 → 기본.
+        // VMS 에서 System Setup 으로 실행되면 환경변수로 인스턴스가 자동 상속된다.
+        // ConfigurationService 가 경로를 잡기 전에 반드시 먼저 호출.
+        try
+        {
+            VMS.Camera.Configuration.AppDataPaths.Initialize(e.Args);
+        }
+        catch (System.ArgumentException ex)
+        {
+            MessageBox.Show(ex.Message, "BODA Vision Setup — 인스턴스 이름 오류",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+            Shutdown(exitCode: 2);
+            return;
+        }
+
         IConfigurationService configService = ConfigurationService.Instance;
         IDialogService dialogService = new DialogService();
 
