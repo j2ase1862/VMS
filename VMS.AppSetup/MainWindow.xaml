@@ -74,8 +74,17 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0">
-                    <TextBlock Text="{Binding PageTitle}"
-                               Foreground="#FFD700" FontSize="24" FontWeight="Bold"/>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding PageTitle}"
+                                   Foreground="#FFD700" FontSize="24" FontWeight="Bold"/>
+                        <!-- 다중 인스턴스 배지 — "instance" 인자로 실행됐을 때만 표시 -->
+                        <Border Visibility="{Binding IsNamedInstance, Converter={StaticResource BoolToVisConverter}}"
+                                Background="#1E3A5F" BorderBrush="#3B6EA5" BorderThickness="1"
+                                CornerRadius="4" Padding="8,3" Margin="14,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding InstanceName, Mode=OneWay, StringFormat='인스턴스: {0}'}"
+                                       Foreground="#A0D0F0" FontSize="12" FontWeight="SemiBold"/>
+                        </Border>
+                    </StackPanel>
                     <TextBlock Text="{Binding PageDescription}"
                                Foreground="{StaticResource BrushTextMuted}" FontSize="12" Margin="0,8,0,0"
                                TextWrapping="Wrap" MaxWidth="550" HorizontalAlignment="Left"/>

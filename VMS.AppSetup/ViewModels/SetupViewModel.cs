@@ -191,6 +191,11 @@ namespace VMS.AppSetup.ViewModels
         public int[] BaudRateOptions => [9600, 19200, 38400, 57600, 115200];
         public int[] DataBitsOptions => [7, 8];
 
+        // ── 다중 인스턴스 배지 — 어느 인스턴스를 설정 중인지 헤더에 표시 ──
+        // (한 PC 두 라인 운용 시 잘못된 인스턴스에 저장하는 실수 방지)
+        public string InstanceName => VMS.Camera.Configuration.AppDataPaths.InstanceName;
+        public bool IsNamedInstance => !VMS.Camera.Configuration.AppDataPaths.IsDefaultInstance;
+
         public SetupViewModel(IConfigurationService configService, IDialogService dialogService, Action shutdownAction)
         {
             _configService = configService;

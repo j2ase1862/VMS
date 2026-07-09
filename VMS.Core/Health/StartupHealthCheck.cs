@@ -107,6 +107,7 @@ namespace VMS.Core.Health
         {
             var items = new List<HealthCheckItem>
             {
+                CheckInstance(),
                 CheckDirectoryWriteable("AppDataDir", appDataDir),
                 CheckDirectoryWriteable("AuditDir", auditDir),
                 CheckSystemConfigPresent(appDataDir),
@@ -170,6 +171,19 @@ namespace VMS.Core.Health
                 };
             }
         }
+
+        /// <summary>
+        /// 실행 중인 인스턴스 표시 — 한 PC 두 라인 운용 시 어느 인스턴스의 진단인지 식별.
+        /// 항상 Pass (정보성 항목).
+        /// </summary>
+        private static HealthCheckItem CheckInstance() => new()
+        {
+            Name = "Instance",
+            Status = HealthCheckStatus.Pass,
+            Message = AppDataPaths.IsDefaultInstance
+                ? "기본 인스턴스"
+                : $"인스턴스 '{AppDataPaths.InstanceName}' ({AppDataPaths.Root})"
+        };
 
         private static HealthCheckItem CheckSystemConfigPresent(string appDataDir)
         {

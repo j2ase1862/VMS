@@ -387,7 +387,44 @@ dotnet user-secrets set Initial:AdminPassword <비밀번호> --project BODA.VMS.
 
 ---
 
-## 12. 관련 문서
+## 12. 다중 인스턴스 운용 (선택 — 한 PC 두 라인)
+
+설비 PC 한 대에서 VMS 를 두 라인으로 운용할 때의 설치 후 구성 절차.
+설계 배경: [multi-instance-support.md](design/multi-instance-support.md)
+
+### 12.1 개념
+
+- 인스턴스는 `--instance <이름>` 인자로 구분한다 (이름: 영문/숫자/하이픈/밑줄 1~32자).
+- 인자 없이 실행하면 **기본 인스턴스** — 기존 단일 라인 설치와 완전히 동일하게 동작.
+- 인스턴스별 데이터 위치: `%LocalAppData%\BODA VISION AI\instances\<이름>\`
+  (설정 · 레시피 · 사용자 DB · 감사 로그 · 업로드 큐 전부 분리)
+- VMS 에서 External Tools 로 여는 Vision Tool Setup / System Setup 은
+  같은 인스턴스를 자동으로 상속한다 (환경변수 `BODA_VMS_INSTANCE`).
+
+### 12.2 구성 절차
+
+1. **바로가기 2개 생성** — 설치된 `VMS.exe` 를 대상으로:
+   - `BODA VMS` : 인자 없음 (기본 인스턴스, 1번 라인)
+   - `BODA VMS - line2` : 대상 뒤에 ` --instance line2` 추가
+2. **2번 인스턴스 초기 구성** — `VMS.AppSetup.exe --instance line2` 실행
+   (헤더에 `인스턴스: line2` 배지가 보이는지 확인) →
+   2번 라인의 카메라 / ClientIndex / PLC / 비밀번호 구성 후 저장.
+3. 각 바로가기로 VMS 실행 — 각자 자기 카메라에만 연결되고,
+   Web 서버에는 서로 다른 라인(ClientIndex)으로 표시된다.
+
+### 12.3 주의사항
+
+- **카메라를 겹치게 등록하지 말 것** — 같은 카메라 IP 를 두 인스턴스에 등록하면
+  GigE 제어 채널 특성상 나중에 뜬 쪽이 연결에 실패한다.
+- **ClientIndex 는 인스턴스마다 다르게** — 매뉴얼 §5.5 라인 번호 규칙 그대로.
+- **NIC 대역폭은 공유** — GigE 패킷 크기 / 인터패킷 딜레이는 두 인스턴스의
+  카메라 수 합산 기준으로 튜닝.
+- 잘못된 인스턴스 이름(한글/공백 등)으로 실행하면 시작 시 오류 메시지와 함께
+  종료된다 — 조용히 기본 인스턴스로 뜨지 않는다(카메라 공유 사고 방지).
+
+---
+
+## 13. 관련 문서
 
 | 문서 | 내용 |
 |---|---|
@@ -396,6 +433,7 @@ dotnet user-secrets set Initial:AdminPassword <비밀번호> --project BODA.VMS.
 | [manual_regression_v1.2.md](manual_regression_v1.2.md) | MSI 다운로드 후 운영 환경 회귀 가이드 |
 | [gs_compliance_overview_v1.0.md](gs/guides/gs_compliance_overview_v1.0.md) | GS 인증 보안 정책 종합 |
 | [SSO_Migration_Plan.md](gs/guides/SSO_Migration_Plan.md) | VMS ↔ Web SSO 통합 마이그레이션 설계 (PR1~5) |
+| [multi-instance-support.md](design/multi-instance-support.md) | 다중 인스턴스(한 PC 두 라인) 설계 |
 | `.github/workflows/build.yml` | CI 빌드 / artifact 정의 |
 | `VMS.MasterSetup/Package.wxs` | MSI 구조 정의 |
 
@@ -408,3 +446,4 @@ dotnet user-secrets set Initial:AdminPassword <비밀번호> --project BODA.VMS.
 | v1.1 | 2026-06-04 | §9 운영 설치 후 보안 모드 설정 절차 추가 (PR P5-A 의 RequireExplicit 활성화 대응) |
 | v1.2 | 2026-06-04 | §10 Web SSO 통합 운영 절차 추가 (SSO PR1~5: 단일 사용자 계정 + local-admin 폴백) |
 | v1.3 | 2026-06-04 | §11 초기 admin 비밀번호 설정 절차 추가 (Option C: VMS/Web 양쪽 디폴트 시드 제거, 운영자 명시 입력 필수) |
+| v1.4 | 2026-07-09 | §12 다중 인스턴스 운용(한 PC 두 라인) 절차 추가 — --instance 바로가기 / AppSetup 인스턴스별 구성 / 주의사항 |
