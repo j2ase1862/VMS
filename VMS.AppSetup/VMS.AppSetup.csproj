@@ -36,6 +36,18 @@
     </Page>
   </ItemGroup>
 
+  <!-- VisionSetup 의 HelpIcon(? 아이콘 → hover/클릭 팝업) 컨트롤을 동일한 Linked Page
+       방식으로 재사용 — 4개 앱 도움말 UX 통일. HelpContent.cs 는 HelpIcon.xaml.cs 의
+       컴파일 의존성(도구 도움말 사전) — AppSetup 에서는 CustomTitle/CustomDescription 경로만 사용. -->
+  <ItemGroup>
+    <Page Include="..\VMS.VisionSetup\Controls\HelpIcon.xaml" Link="Controls\HelpIcon.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Compile Include="..\VMS.VisionSetup\Controls\HelpIcon.xaml.cs" Link="Controls\HelpIcon.xaml.cs" />
+    <Compile Include="..\VMS.VisionSetup\Models\HelpContent.cs" Link="Models\HelpContent.cs" />
+  </ItemGroup>
+
   <!-- After build, copy output to VMS output directory -->
   <Target Name="CopyToVmsOutput" AfterTargets="Build">
     <PropertyGroup>
