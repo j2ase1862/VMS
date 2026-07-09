@@ -46,7 +46,17 @@ namespace VMS.Core.Tests.Health
 
             Assert.NotEmpty(report.Items);
             Assert.NotEqual(HealthCheckStatus.Fail, report.OverallStatus);
-            Assert.Equal(6, report.Items.Count);  // 6개 검사 항목 (P3a: WebServer 추가)
+            Assert.Equal(7, report.Items.Count);  // 7개 검사 항목 (P3a: WebServer, 다중 인스턴스: Instance 추가)
+        }
+
+        [Fact]
+        public void Run_Includes_Instance_info_item()
+        {
+            var report = StartupHealthCheck.Run(_appDataDir, _auditDir, auditAfter: false);
+
+            var inst = report.Items.Single(i => i.Name == "Instance");
+            Assert.Equal(HealthCheckStatus.Pass, inst.Status);   // 정보성 — 항상 Pass
+            Assert.False(string.IsNullOrWhiteSpace(inst.Message));
         }
 
         [Fact]
