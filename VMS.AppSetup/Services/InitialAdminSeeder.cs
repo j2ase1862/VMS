@@ -17,10 +17,9 @@ namespace VMS.AppSetup.Services
         private const string DbFileName = "BodaVision.db";
         private const string LocalFallbackUsername = "local-admin";
 
-        /// <summary>VMS UserService 가 사용하는 DB 경로 (LocalAppData).</summary>
-        public static string GetDefaultDbPath() => Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "BODA VISION AI", DbFileName);
+        /// <summary>VMS UserService 가 사용하는 DB 경로 (인스턴스별 AppData).</summary>
+        public static string GetDefaultDbPath() =>
+            VMS.Camera.Configuration.AppDataPaths.GetPath(DbFileName);
 
         /// <summary>
         /// admin 시드 — 빈 비밀번호면 skip, 길이 8 미만이면 false.

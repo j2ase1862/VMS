@@ -56,9 +56,8 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         /// 기본값: %LocalAppData%\BODA VISION AI\trt_cache — TRT를 처음 쓰는 사용자도 자동 캐시가
         /// 동작하게 한다. TRT 엔진 빌드는 모델당 30~60초가 걸릴 수 있어 캐시가 없으면 매 실행마다 반복된다.
         /// </summary>
-        public static string TensorRTCachePath { get; set; } = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "BODA VISION AI", "trt_cache");
+        public static string TensorRTCachePath { get; set; } =
+            VMS.Camera.Configuration.AppDataPaths.GetPath("trt_cache");
 
         /// <summary>TensorRT 빌드 시 FP16 최적화 활성화 (RTX 이상 GPU에서 2~3배 속도 향상)</summary>
         public static bool TensorRTFp16 { get; set; } = true;

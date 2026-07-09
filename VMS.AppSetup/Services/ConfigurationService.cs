@@ -27,9 +27,7 @@ namespace VMS.AppSetup.Services
 
         private ConfigurationService()
         {
-            _configFolderPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "BODA VISION AI");
+            _configFolderPath = VMS.Camera.Configuration.AppDataPaths.Root;
             _configFilePath = Path.Combine(_configFolderPath, "system_config.json");
             EnsureDirectoryExists();
         }

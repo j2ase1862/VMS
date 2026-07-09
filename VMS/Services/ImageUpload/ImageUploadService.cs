@@ -55,8 +55,7 @@ namespace VMS.Services.ImageUpload
             if (!string.IsNullOrWhiteSpace(clientApiKey))
                 _httpClient.DefaultRequestHeaders.Add("X-API-Key", clientApiKey);
 
-            var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            _queueDir = Path.Combine(appData, "BODA VISION AI", "image_upload_queue");
+            _queueDir = VMS.Camera.Configuration.AppDataPaths.GetPath("image_upload_queue");
         }
 
         public void Start()

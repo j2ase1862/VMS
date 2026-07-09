@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
+using VMS.Camera.Configuration;
 
 namespace VMS.Core.Security
 {
@@ -32,11 +33,9 @@ namespace VMS.Core.Security
         {
             try
             {
-                var appData = appDataOverride
-                    ?? Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                        "BODA VISION AI");
-                var path = Path.Combine(appData, "system_config.json");
+                var path = appDataOverride != null
+                    ? Path.Combine(appDataOverride, "system_config.json")
+                    : AppDataPaths.SystemConfigFile;
                 if (!File.Exists(path)) return Disabled;
 
                 using var doc = JsonDocument.Parse(File.ReadAllText(path));

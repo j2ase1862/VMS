@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using VMS.Camera.Configuration;
 
 namespace VMS.Core.Imaging
 {
@@ -103,8 +104,7 @@ namespace VMS.Core.Imaging
         {
             try
             {
-                var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                var path = Path.Combine(appData, "BODA VISION AI", "system_config.json");
+                var path = AppDataPaths.SystemConfigFile;
                 if (!File.Exists(path)) return new ImageSaveOptions();
 
                 using var doc = JsonDocument.Parse(File.ReadAllText(path));

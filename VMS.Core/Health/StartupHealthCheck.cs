@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using VMS.Core.Security;
+using VMS.Camera.Configuration;
 
 namespace VMS.Core.Health
 {
@@ -84,9 +85,7 @@ namespace VMS.Core.Health
         /// </summary>
         public static HealthCheckReport Run()
         {
-            var appData = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "BODA VISION AI");
+            var appData = AppDataPaths.Root;
             var auditDir = Path.Combine(appData, "audit");
             return Run(appData, auditDir, auditAfter: true,
                 webServerUrl: TryReadWebServerUrl(appData),

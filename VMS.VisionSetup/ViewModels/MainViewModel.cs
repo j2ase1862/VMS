@@ -78,7 +78,8 @@ namespace VMS.VisionSetup.ViewModels
     public partial class MainViewModel : ObservableObject
     {
         #region Fields
-        private readonly string _appName = "BODA VISION AI";
+        // 브랜드명 — AppData 루트 폴더 이름과 동일한 단일 원천을 공유
+        private readonly string _appName = VMS.Camera.Configuration.AppDataPaths.RootFolderName;
         private readonly string _appVersion = "1.0.0";
         private readonly IVisionService _visionService;
         private readonly IRecipeService _recipeService;

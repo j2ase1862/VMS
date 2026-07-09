@@ -18,9 +18,7 @@ namespace VMS.ViewModels
 
         public BackupRestoreViewModel()
         {
-            _appDataDir = System.IO.Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "BODA VISION AI");
+            _appDataDir = VMS.Camera.Configuration.AppDataPaths.Root;
             BackupFileName = $"BODA-VMS-backup-{DateTime.Now:yyyyMMdd-HHmmss}.zip";
         }
 

@@ -25,9 +25,7 @@ namespace VMS.Services
         public bool IsLoggedIn => CurrentUser != null;
 
         private UserService()
-            : this(Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "BODA VISION AI"))
+            : this(VMS.Camera.Configuration.AppDataPaths.Root)
         {
         }
 

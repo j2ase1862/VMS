@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using VMS.Camera.Configuration;
 
 namespace VMS.Core.Security
 {
@@ -32,8 +33,7 @@ namespace VMS.Core.Security
         {
             try
             {
-                var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                var path = Path.Combine(appData, "BODA VISION AI", "system_config.json");
+                var path = AppDataPaths.SystemConfigFile;
                 if (!File.Exists(path)) return DefaultRetentionDays;
 
                 using var doc = JsonDocument.Parse(File.ReadAllText(path));

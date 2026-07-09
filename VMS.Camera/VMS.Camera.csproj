@@ -13,6 +13,11 @@
     <PackageReference Include="OpenCvSharp4" Version="4.11.0.20250507" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- AppDataPaths.ResetForTests — 인스턴스 해석 상태 초기화 (테스트 전용) -->
+    <InternalsVisibleTo Include="VMS.Core.Tests" />
+  </ItemGroup>
+
   <!-- Mech-Mind SDK: prefer netstandard2.0 (compatible with .NET 8), fallback to net48 -->
   <PropertyGroup Condition="Exists('C:\Mech-Mind\Mech-Eye SDK-2.5.4\API\dll\netstandard2.0\MechEyeApiNet.dll') Or Exists('C:\Mech-Mind\Mech-Eye SDK-2.5.4\API\dll\net48\MechEyeApiNet.dll')">
     <DefineConstants>$(DefineConstants);MECHMIND_AVAILABLE</DefineConstants>

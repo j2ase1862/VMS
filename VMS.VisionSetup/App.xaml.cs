@@ -29,6 +29,21 @@ namespace VMS.VisionSetup
         {
             base.OnStartup(e);
 
+            // ── 다중 인스턴스 해석 — "--instance <이름>" → BODA_VMS_INSTANCE 환경변수 → 기본 ──
+            // VMS(External Tools)에서 실행되면 환경변수로 인스턴스가 자동 상속된다.
+            // 모든 AppData 경로가 여기서 파생되므로 보안 정책 로드보다 먼저.
+            try
+            {
+                VMS.Camera.Configuration.AppDataPaths.Initialize(e.Args);
+            }
+            catch (ArgumentException ex)
+            {
+                MessageBox.Show(ex.Message, "BODA Vision Tool Setup — 인스턴스 이름 오류",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                Shutdown(exitCode: 2);
+                return;
+            }
+
             // ── Chromeless 윈도우용 SystemCommands 클래스 와이드 바인딩 ──
             RegisterChromelessWindowCommands();
 
@@ -283,9 +298,7 @@ namespace VMS.VisionSetup
         {
             try
             {
-                var configPath = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "BODA VISION AI", "system_config.json");
+                var configPath = VMS.Camera.Configuration.AppDataPaths.SystemConfigFile;
 
                 if (!File.Exists(configPath))
                     return (false, "192.168.0.200", 30003, EulerConvention.UR_RotationVector,
@@ -376,9 +389,7 @@ namespace VMS.VisionSetup
         {
             try
             {
-                var configPath = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "BODA VISION AI", "system_config.json");
+                var configPath = VMS.Camera.Configuration.AppDataPaths.SystemConfigFile;
 
                 if (!File.Exists(configPath)) return;
 
@@ -424,9 +435,7 @@ namespace VMS.VisionSetup
 
             try
             {
-                var configPath = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "BODA VISION AI", "system_config.json");
+                var configPath = VMS.Camera.Configuration.AppDataPaths.SystemConfigFile;
 
                 if (!File.Exists(configPath))
                     return (defaultUrl, defaultIndex, string.Empty);

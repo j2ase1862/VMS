@@ -5,6 +5,7 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using VMS.Camera.Configuration;
 
 namespace VMS.Core.Security
 {
@@ -106,9 +107,7 @@ namespace VMS.Core.Security
         };
 
         private AuditLogger()
-            : this(Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "BODA VISION AI", "audit"))
+            : this(AppDataPaths.GetPath("audit"))
         {
         }
 

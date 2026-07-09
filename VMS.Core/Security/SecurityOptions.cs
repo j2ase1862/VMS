@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
+using VMS.Camera.Configuration;
 
 namespace VMS.Core.Security
 {
@@ -148,9 +149,9 @@ namespace VMS.Core.Security
             // 2. system_config.json
             try
             {
-                var appData = appDataOverride
-                    ?? Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                var path = Path.Combine(appData, "BODA VISION AI", "system_config.json");
+                var path = appDataOverride != null
+                    ? Path.Combine(appDataOverride, AppDataPaths.RootFolderName, "system_config.json")
+                    : AppDataPaths.SystemConfigFile;
                 if (File.Exists(path))
                 {
                     using var doc = JsonDocument.Parse(File.ReadAllText(path));
@@ -177,7 +178,7 @@ namespace VMS.Core.Security
                     "보안 모드가 명시되지 않았습니다. " +
                     "운영 배포에서는 다음 중 하나로 모드를 명시해야 합니다:\n" +
                     "  - 환경변수: setx BODA_VMS_SECURITY_MODE Production /M\n" +
-                    "  - %LocalAppData%\\BODA VISION AI\\system_config.json 의 \"securityMode\" 키\n" +
+                    $"  - {AppDataPaths.SystemConfigFile} 의 \"securityMode\" 키\n" +
                     "Development 자동 폴백은 GS 보안성 항목에서 자동 다운그레이드로 감점 사유입니다.");
             }
 

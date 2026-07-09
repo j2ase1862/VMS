@@ -25,10 +25,7 @@ namespace VMS.ViewModels
 
         public ImageSaveSettingsViewModel()
         {
-            var appData = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "BODA VISION AI");
-            _configPath = Path.Combine(appData, "system_config.json");
+            _configPath = VMS.Camera.Configuration.AppDataPaths.SystemConfigFile;
             Tokens.CollectionChanged += (_, _) => UpdatePreview();
             Load();
         }

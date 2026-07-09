@@ -34,8 +34,7 @@ namespace VMS.VisionSetup.Services
 
         private ExpertModeService()
         {
-            var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            _configPath = Path.Combine(appData, "BODA VISION AI", "expert_mode.json");
+            _configPath = VMS.Camera.Configuration.AppDataPaths.GetPath("expert_mode.json");
             Load();
         }
 
