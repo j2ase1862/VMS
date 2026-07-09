@@ -128,6 +128,48 @@ namespace VMS.AppSetup.Capture
                 await window.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Background);
             }
 
+            // ── 창 단위 캡처: 스크롤이 없는 페이지(1·3·4·6)는 960x820 윈도우 전체를 렌더 ──
+            // 매뉴얼 10_appsetup_step{1,3,4,6}.png 의 재현 가능한 생성 경로
+            // (기존에는 수동 창 스크린샷이라 UI 변경 시 재캡처가 불가능했다).
+            var windowShots = new (int page, string tag, Action<SetupViewModel> scene)[]
+            {
+                (1, "Welcome", _ => { }),
+                (3, "CameraConfiguration", v =>
+                {
+                    // 실제 장비 구성과 무관한 결정적 상태 — 3D 카메라 1대(노출/게인/캡처모드 패널 노출)
+                    v.CameraMode = CameraMode.Live;
+                    v.Cameras.Clear();
+                    v.Cameras.Add(new CameraConfiguration
+                    {
+                        Name = "Cam1", IpAddress = "192.168.1.60",
+                        Manufacturer = CameraManufacturer.Mech_Mind, CameraType = CameraType.AreaScan3D
+                    });
+                }),
+                (4, "PLCCommunication", v =>
+                {
+                    v.SelectedPlcVendor = PlcVendor.Mitsubishi;
+                    v.SelectedCommunicationType = PlcCommunicationType.Ethernet;
+                    v.UseHeartbeat = true;
+                }),
+                (6, "IOConfiguration", v =>
+                {
+                    if (v.SelectedIoBoard is null && v.AddIoBoardCommand.CanExecute(null))
+                        v.AddIoBoardCommand.Execute(null);
+                }),
+            };
+            foreach (var (page, tag, scene) in windowShots)
+            {
+                vm.CurrentPage = page;
+                scene(vm);
+                for (int i = 0; i < 3; i++)
+                {
+                    LayoutAt(window, baseW, baseH);
+                    await window.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Background);
+                }
+                RenderElement(window, baseW, baseH, 0, backdrop,
+                    Path.Combine(outputDir, $"Window_P{page}_{tag}.png"));
+            }
+
             foreach (var (page, tag, maxWidth, scene) in targets)
             {
                 vm.CurrentPage = page;
