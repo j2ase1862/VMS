@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         xmlns:controls="clr-namespace:VMS.Controls"
+        xmlns:vs="clr-namespace:VMS.VisionSetup.Controls;assembly=VMS.VisionSetup"
         Title="{Binding ApplicationTitle}"
         WindowState="Maximized"
         Background="{StaticResource Brush.Surface.Base}"
@@ -764,8 +765,7 @@
                             <StackPanel>
                                 <TextBlock FontWeight="SemiBold"
                                            Foreground="{StaticResource Brush.Primary}"
-                                           Margin="0,0,0,12" Cursor="Help"
-                                           ToolTip="카메라 수동 조작입니다. 검사(AUTO RUN)가 멈춰 있을 때 사진 한 장 촬영(Grab), 실시간 영상(Live), 롤러 검사 모드를 사용할 수 있습니다."><Run Text="Camera Control"/><Run Text=" ⓘ" Foreground="{StaticResource Brush.Text.Tertiary}"/></TextBlock>
+                                           Margin="0,0,0,12"><Run Text="Camera Control"/><InlineUIContainer BaselineAlignment="Center"><vs:HelpIcon CustomTitle="Camera Control" CustomDescription="카메라 수동 조작입니다. 검사(AUTO RUN)가 멈춰 있을 때 사진 한 장 촬영(Grab), 실시간 영상(Live), 롤러 검사 모드를 사용할 수 있습니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
 
                                 <!-- Grab (single shot) -->
                                 <Button Command="{Binding GrabCommand}"
@@ -876,8 +876,7 @@
                             <StackPanel>
                                 <TextBlock FontWeight="SemiBold"
                                            Foreground="{StaticResource Brush.Primary}"
-                                           Margin="0,0,0,12" Cursor="Help"
-                                           ToolTip="검사 레시피 관리입니다. 현재 레시피 확인과 불러오기·새로 만들기·저장을 합니다. 작업지시를 선택하면 레시피는 자동으로 불러와집니다."><Run Text="Recipe"/><Run Text=" ⓘ" Foreground="{StaticResource Brush.Text.Tertiary}"/></TextBlock>
+                                           Margin="0,0,0,12"><Run Text="Recipe"/><InlineUIContainer BaselineAlignment="Center"><vs:HelpIcon CustomTitle="Recipe" CustomDescription="검사 레시피 관리입니다. 현재 레시피 확인과 불러오기·새로 만들기·저장을 합니다. 작업지시를 선택하면 레시피는 자동으로 불러와집니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
 
                                 <!-- Current Recipe Display -->
                                 <Border Background="{StaticResource Brush.Surface.Overlay}"
@@ -1000,8 +999,7 @@
                         <Border Style="{StaticResource Card}"
                                 Visibility="{Binding CanSupervisor, Converter={StaticResource BoolToVisibilityConverter}}">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource Text.SectionHeader}" Cursor="Help"
-                                           ToolTip="엔지니어용 외부 도구입니다 — 비전 설정(Vision Tool Setup)과 시스템 설정(System Setup). Supervisor·Admin 등급에서만 보입니다."><Run Text="External Tools"/><Run Text=" ⓘ" Foreground="{StaticResource Brush.Text.Tertiary}"/></TextBlock>
+                                <TextBlock Style="{StaticResource Text.SectionHeader}"><Run Text="External Tools"/><InlineUIContainer BaselineAlignment="Center"><vs:HelpIcon CustomTitle="External Tools" CustomDescription="엔지니어용 외부 도구입니다 — 비전 설정(Vision Tool Setup)과 시스템 설정(System Setup). Supervisor·Admin 등급에서만 보입니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
 
                                 <Button Command="{Binding LaunchVisionToolSetupCommand}"
                                         AutomationProperties.Name="Vision Tool Setup"
@@ -1049,8 +1047,7 @@
                             </Border.Style>
                             <StackPanel>
                                 <TextBlock Style="{StaticResource Text.SectionHeader}"
-                                           Foreground="{StaticResource Brush.Warning}" Cursor="Help"
-                                           ToolTip="프로그램 새 버전 확인입니다. 새 버전이 감지되면 이 섹션에 배지가 표시됩니다."><Run Text="Updates"/><Run Text=" ⓘ" Foreground="{StaticResource Brush.Text.Tertiary}"/></TextBlock>
+                                           Foreground="{StaticResource Brush.Warning}"><Run Text="Updates"/><InlineUIContainer BaselineAlignment="Center"><vs:HelpIcon CustomTitle="Updates" CustomDescription="프로그램 새 버전 확인입니다. 새 버전이 감지되면 이 섹션에 배지가 표시됩니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
 
                                 <!-- 새 버전 감지 배지 — 클릭 시 상세 다이얼로그 -->
                                 <Button Command="{Binding ShowUpdateDetailsCommand}"
@@ -1087,8 +1084,7 @@
                         <Border Style="{StaticResource Card}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource Text.SectionHeader}"
-                                           Foreground="{StaticResource Brush.Accent}" Cursor="Help"
-                                           ToolTip="Web 서버와의 파라미터 동기화입니다. 평소 60초마다 자동으로 동기화되며, 아래 버튼은 기다리지 않고 지금 즉시 반영할 때 사용합니다."><Run Text="Web Parameters"/><Run Text=" ⓘ" Foreground="{StaticResource Brush.Text.Tertiary}"/></TextBlock>
+                                           Foreground="{StaticResource Brush.Accent}"><Run Text="Web Parameters"/><InlineUIContainer BaselineAlignment="Center"><vs:HelpIcon CustomTitle="Web Parameters" CustomDescription="Web 서버와의 파라미터 동기화입니다. 평소 60초마다 자동으로 동기화되며, 아래 버튼은 기다리지 않고 지금 즉시 반영할 때 사용합니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
 
                                 <Button Command="{Binding OpenSyncParametersCommand}"
                                         AutomationProperties.Name="Sync Parameters"
@@ -1110,8 +1106,7 @@
                                 Visibility="{Binding CanManageUsers, Converter={StaticResource BoolToVisibilityConverter}}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource Text.SectionHeader}"
-                                           Foreground="{StaticResource Brush.Accent}" Cursor="Help"
-                                           ToolTip="검사 판정 이미지(양품/불량)의 저장 위치·형식·보존 기간 설정입니다 (Admin 전용)."><Run Text="Image Saving"/><Run Text=" ⓘ" Foreground="{StaticResource Brush.Text.Tertiary}"/></TextBlock>
+                                           Foreground="{StaticResource Brush.Accent}"><Run Text="Image Saving"/><InlineUIContainer BaselineAlignment="Center"><vs:HelpIcon CustomTitle="Image Saving" CustomDescription="검사 판정 이미지(양품/불량)의 저장 위치·형식·보존 기간 설정입니다 (Admin 전용)." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
 
                                 <Button Command="{Binding OpenImageSaveSettingsCommand}"
                                         AutomationProperties.Name="Image Save Settings"
@@ -1142,8 +1137,7 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0"
                                                FontWeight="SemiBold" Foreground="{StaticResource Brush.Accent}"
-                                               VerticalAlignment="Center" Cursor="Help"
-                                               ToolTip="최근 검사 결과를 VMS 안에 최대 200건까지 보관해 보여줍니다. Web 연결이 끊겨도 확인할 수 있고, VMS 를 다시 시작하면 비워집니다 (전체 이력은 Web 의 Production History)."><Run Text="Recent Inspections"/><Run Text=" ⓘ" Foreground="{StaticResource Brush.Text.Tertiary}"/></TextBlock>
+                                               VerticalAlignment="Center"><Run Text="Recent Inspections"/><InlineUIContainer BaselineAlignment="Center"><vs:HelpIcon CustomTitle="Recent Inspections" CustomDescription="최근 검사 결과를 VMS 안에 최대 200건까지 보관해 보여줍니다. Web 연결이 끊겨도 확인할 수 있고, VMS 를 다시 시작하면 비워집니다 (전체 이력은 Web 의 Production History)." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                                     <Button Grid.Column="1"
                                             Content="Clear"
                                             Command="{Binding ClearRecentInspectionsCommand}"
@@ -1272,8 +1266,7 @@
                             <StackPanel>
                                 <TextBlock FontWeight="SemiBold"
                                            Foreground="{StaticResource Brush.Primary}"
-                                           Margin="0,0,0,12" Cursor="Help"
-                                           ToolTip="이번 실행(세션) 동안의 누적 통계입니다 — 전체 / 합격 / 불량 건수와 합격률."><Run Text="Statistics"/><Run Text=" ⓘ" Foreground="{StaticResource Brush.Text.Tertiary}"/></TextBlock>
+                                           Margin="0,0,0,12"><Run Text="Statistics"/><InlineUIContainer BaselineAlignment="Center"><vs:HelpIcon CustomTitle="Statistics" CustomDescription="이번 실행(세션) 동안의 누적 통계입니다 — 전체 / 합격 / 불량 건수와 합격률." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
 
                                 <Grid>
                                     <Grid.ColumnDefinitions>
