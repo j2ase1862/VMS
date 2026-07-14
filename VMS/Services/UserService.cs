@@ -143,7 +143,7 @@ namespace VMS.Services
         public const string LocalFallbackUsername = "local-admin";
 
         /// <summary>초기 시드 비밀번호 — AppSetup wizard 에서 운영 첫 가동시 변경 권장.</summary>
-        public const string LocalFallbackDefaultPassword = "fallback-change-me-9999";
+        public const string LocalFallbackDefaultPassword = "vasim1234";
 
         /// <summary>
         /// 비상 local-admin 폴백 세션에서 허용되는 권한 집합 (SSO Migration Plan §2.3).

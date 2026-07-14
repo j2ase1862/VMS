@@ -293,7 +293,7 @@ VMS Admin/Manager 인증을 BODA.VMS.Web 으로 위임해 **단일 사용자 계
 
 | 항목 | 값 / 정책 |
 |------|----------|
-| 디폴트 비밀번호 | `fallback-change-me-9999` |
+| 디폴트 비밀번호 | `vasim1234` |
 | 허용 권한 | `StartStop`, `ViewStatistics`, `RestartWebService` (키오스크 운영 + 진단 + Web 재시작) |
 | 거부 권한 | `ManageUsers`, `EditRecipe`, `SystemConfiguration` 등 운영 데이터 변경 전체 |
 | 사용 로그 | `AuditCategory.Authentication / Success` 에 `IsLocalFallback=true (restricted permissions apply)` 명시 |
@@ -338,6 +338,9 @@ VMS Admin/Manager 인증을 BODA.VMS.Web 으로 위임해 **단일 사용자 계
 **규칙**: 최소 8 자, **12 자 이상 권장**. 양쪽 비밀번호는 **다르게 설정** (한쪽 침해가 다른쪽까지 미치지 않도록).
 
 저장 직후 BCrypt 해시로 DB 기록 + 평문 메모리에서 즉시 폐기.
+`BodaVision.db` 가 아직 없는 신규 install(설치 직후 VMS 미실행)에서도 wizard 가 DB 를
+직접 생성 후 시드하므로, 설치 → wizard 1회 실행만으로 admin 준비가 끝난다.
+저장 완료 메시지의 "✓ admin 계정 초기 시드 완료" 로 시드 여부를 확인할 수 있다.
 
 #### BODA.VMS.Web 서버
 **Windows Service 설치 직후 (또는 첫 가동 전)** 환경변수 설정:

@@ -64,7 +64,7 @@ namespace VMS.AppSetup.Models
         public WebSsoSettings WebSso { get; set; } = new();
 
         // 비상 local-admin 비밀번호 변경 (선택) — 비어 있으면 기존 비밀번호 유지.
-        // AppSetup wizard 에서 운영 첫 가동시 디폴트 (fallback-change-me-9999) 변경 권장.
+        // AppSetup wizard 에서 운영 첫 가동시 디폴트 (vasim1234) 변경 권장.
         // system_config.json 에는 절대 저장 안 함 — 저장 직후 UserService.SetLocalFallbackPassword 로
         // BCrypt 해시로만 DB 갱신 후 메모리에서 폐기 (SetupViewModel.SaveConfiguration 책임).
         [System.Text.Json.Serialization.JsonIgnore]
