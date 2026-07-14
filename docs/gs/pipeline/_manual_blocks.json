@@ -795,6 +795,11 @@
  },
  {
   "t": "li",
+  "text": "마법사 마지막 Security Mode 단계에서 현장(운영) PC는 Production을 그대로 두고 [Finish]로 저장합니다. 보안 모드가 저장되어 있지 않으면 VMS가 시작 시 \"보안 정책 오류\"를 표시하고 실행되지 않습니다.",
+  "ordered": true
+ },
+ {
+  "t": "li",
   "text": "VMS 실행 → 시작 화면 헤더에 Heartbeat 정상 표시 확인.",
   "ordered": true
  },

@@ -454,13 +454,13 @@ function wizardSection() {
   const out = [];
   out.push(new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("2.5 최초 실행 — 시스템 설정 마법사 (VMS.AppSetup)")] }));
   out.push(P("⚙ 이 절은 설치 담당자용입니다. 마법사는 설치 후 최초 1회(또는 설정 파일이 없을 때)만 나타나며, 일반 작업자는 볼 일이 없습니다.", { size: 18, color: "595959" }));
-  out.push(P("VMS 설치 후 최초 실행 시(또는 system_config.json 부재 시) 시스템 설정 마법사가 자동 실행된다. 총 6단계로 애플리케이션·네트워크·카메라·PLC·로봇/IO 및 초기 관리자 계정을 구성한 뒤 [Finish] 로 저장한다. 카메라가 없는 환경에서는 3단계에서 [Virtual Mode (Manual Setup)] 를 선택해 가상 구성으로 진행할 수 있다. 각 단계의 그림 아래에 입력 항목별 컨트롤 이미지와 설명을 표로 정리했다."));
+  out.push(P("VMS 설치 후 최초 실행 시(또는 system_config.json 부재 시) 시스템 설정 마법사가 자동 실행된다. 총 7단계로 애플리케이션·네트워크·카메라·PLC·로봇/IO·보안 모드 및 초기 관리자 계정을 구성한 뒤 [Finish] 로 저장한다. 카메라가 없는 환경에서는 3단계에서 [Virtual Mode (Manual Setup)] 를 선택해 가상 구성으로 진행할 수 있다. 각 단계의 그림 아래에 입력 항목별 컨트롤 이미지와 설명을 표로 정리했다."));
   out.push(P("입력란 라벨 옆의 ⓘ 아이콘에 마우스를 올리면 그 항목의 쉬운 설명이 말풍선으로 표시된다 — 이 표의 설명과 같은 내용이므로, 설정 중에 매뉴얼을 뒤지지 않아도 된다."));
   const steps = [
     ["10_appsetup_step1.png", 470, "1단계 — 시작(Welcome)", [
-      P("1단계는 마법사 시작 화면으로 입력 항목이 없다. [Next] 를 눌러 진행하며, 이후 애플리케이션·네트워크 → 카메라 → PLC → 로봇 → IO 보드 순으로 구성한다."),
+      P("1단계는 마법사 시작 화면으로 입력 항목이 없다. [Next] 를 눌러 진행하며, 이후 애플리케이션·네트워크 → 카메라 → PLC → 로봇 → IO 보드 → 보안 모드 순으로 구성한다."),
       wizardTable([
-        ["[← Back] / [Next]", ["P1_default_11_Button__Back.png", "P1_default_12_Button_Next.png"], "이전 / 다음 단계로 이동. 모든 단계 하단에 공통 표시되며, 마지막 6단계에서는 [Next] 대신 [Finish] 가 표시된다", "—"],
+        ["[← Back] / [Next]", ["P1_default_11_Button__Back.png", "P1_default_12_Button_Next.png"], "이전 / 다음 단계로 이동. 모든 단계 하단에 공통 표시되며, 마지막 7단계에서는 [Next] 대신 [Finish] 가 표시된다", "—"],
       ]),
     ]],
     ["10_appsetup_step2_full.png", 460, "2단계 — Application Settings: 애플리케이션명 / System IP / Web Server 연동(Client Index·Web Server URL·API Key) / SSO  [전체 화면 — 스크롤 콘텐츠 포함]", [
@@ -522,7 +522,7 @@ function wizardSection() {
       ]),
       P("※ 로봇 연동을 활성화해야 벤더·연결·프로토콜·Euler 항목이 표시되며, Modbus-TCP는 Doosan 선택 시에만 제공됩니다.", { size: 18, color: "595959" }),
     ]],
-    ["10_appsetup_step6.png", 470, "6단계 — Robot/IO Configuration: 등록된 IO 보드(벤더·모델·채널), [Finish] 로 저장", [
+    ["10_appsetup_step6.png", 470, "6단계 — IO Board Configuration: 등록된 IO 보드(벤더·모델·채널)", [
       P("■ 6단계 입력 항목 상세", { bold: true }),
       wizardTable([
         ["[+ Add] / [− Remove]", ["P6_withboard_02_Button__Add.png", "P6_withboard_03_Button__Remove.png"], "IO 보드 추가 / 선택 보드 제거", "—"],
@@ -535,6 +535,15 @@ function wizardSection() {
         ["설명", ["P6_withboard_19_TextBox_TextBox.png"], "보드에 대한 메모(선택 입력)", "—"],
       ]),
       P("※ 현재 Mock 구현만 활성 — 실제 ADLink DASK / Advantech DAQNavi SDK 통합은 Phase 3 작업입니다.", { size: 18, color: "595959" }),
+    ]],
+    ["10_appsetup_step7.png", 470, "7단계 — Security Mode: 운영(Production)/개발(Development) 선택, [Finish] 로 저장", [
+      P("마지막 단계에서 이 PC 의 보안 모드를 선택한다. 여기서 선택한 값이 설정 파일에 함께 저장되며, 보안 모드가 저장되어 있지 않으면 VMS 가 시작 시 '보안 정책 오류' 를 표시하고 실행되지 않는다. 현장(운영) PC 는 반드시 Production 을 선택한다."),
+      P("■ 7단계 입력 항목 상세", { bold: true }),
+      wizardTable([
+        ["Production (운영 — 권장)", ["P7_default_03_RadioButton_Production_운영__권장.png"], "서버와의 통신에 HTTPS 를 강제하고 인증서를 엄격하게 검증한다. 현장에 설치하는 PC 는 반드시 이 모드를 사용", "선택됨"],
+        ["Development (개발 — 사내 테스트 전용)", ["P7_default_05_RadioButton_Development_개발__사내_테스트_전용.png"], "HTTP 와 자체 서명 인증서를 허용한다. 사내 개발·테스트 환경에서만 사용하며, 운영 PC 에는 설정하지 않는다", "—"],
+      ]),
+      P("※ 전산 담당자가 PC 에 보안 모드 환경변수(BODA_VMS_SECURITY_MODE)를 별도로 설정해 둔 경우에는 환경변수가 이 선택보다 우선 적용됩니다.", { size: 18, color: "595959" }),
     ]],
   ];
   steps.forEach(([f, w, c, extra]) => {
