@@ -245,7 +245,8 @@ setx BODA_VMS_SECURITY_MODE Production /M
 - AppSetup wizard 재실행해도 보안 모드는 환경변수가 우선
 
 ### 9.2 대안 — system_config.json
-AppSetup wizard 실행 시 자동 생성. 수동 편집 시:
+AppSetup wizard 의 **Security Mode 페이지(마지막 단계)** 에서 선택 시 자동 기록 (기본 Production).
+구버전 wizard 로 생성한 config 에는 이 키가 없음 — wizard 재실행 후 저장하거나 수동 편집:
 ```json
 {
   "securityMode": "Production",

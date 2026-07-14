@@ -32,7 +32,7 @@ namespace VMS.AppSetup.Capture
     internal static class ControlCapturer
     {
         private const double Scale = 2.0;       // 2x (192 DPI) — 매뉴얼용 선명도
-        private const int TotalPages = 6;
+        private const int TotalPages = 7;
 
         /// <summary>
         /// 한 페이지 안에서 캡처할 "장면" — 기본 상태 외에 조건부 패널을 켠 변형도 포함.
@@ -41,7 +41,7 @@ namespace VMS.AppSetup.Capture
         private sealed record Scene(int Page, string Tag, Action<SetupViewModel> Apply);
 
         /// <summary>
-        /// 6 개 페이지를 차례로 전환하며 보이는 모든 대상 컨트롤을 PNG 로 저장한다.
+        /// 7 개 페이지를 차례로 전환하며 보이는 모든 대상 컨트롤을 PNG 로 저장한다.
         /// 조건부로 숨겨지는 컨트롤(Serial/Modbus/로봇 활성/카메라 타입별 패널 등)은
         /// 변형 장면(Scene)에서 상태를 켜 노출시킨 뒤 캡처한다.
         /// </summary>
@@ -128,8 +128,8 @@ namespace VMS.AppSetup.Capture
                 await window.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Background);
             }
 
-            // ── 창 단위 캡처: 스크롤이 없는 페이지(1·3·4·6)는 960x820 윈도우 전체를 렌더 ──
-            // 매뉴얼 10_appsetup_step{1,3,4,6}.png 의 재현 가능한 생성 경로
+            // ── 창 단위 캡처: 스크롤이 없는 페이지(1·3·4·6·7)는 960x820 윈도우 전체를 렌더 ──
+            // 매뉴얼 10_appsetup_step{1,3,4,6,7}.png 의 재현 가능한 생성 경로
             // (기존에는 수동 창 스크린샷이라 UI 변경 시 재캡처가 불가능했다).
             var windowShots = new (int page, string tag, Action<SetupViewModel> scene)[]
             {
@@ -156,6 +156,7 @@ namespace VMS.AppSetup.Capture
                     if (v.SelectedIoBoard is null && v.AddIoBoardCommand.CanExecute(null))
                         v.AddIoBoardCommand.Execute(null);
                 }),
+                (7, "SecurityMode", _ => { }),
             };
             foreach (var (page, tag, scene) in windowShots)
             {
@@ -318,6 +319,9 @@ namespace VMS.AppSetup.Capture
                 if (vm.SelectedIoBoard is null && vm.AddIoBoardCommand.CanExecute(null))
                     vm.AddIoBoardCommand.Execute(null);
             });
+
+            // ── Page 7 (Security Mode): 조건부 패널 없음 — Production/Development 라디오 ──
+            yield return new Scene(7, "default", _ => { });
         }
 
         private static int CaptureVisible(

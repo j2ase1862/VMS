@@ -17,7 +17,8 @@ namespace VMS.AppSetup.ViewModels
     public partial class SetupViewModel : ObservableObject
     {
         // Phase 2b — Page 6 (IO 보드) 추가로 5 → 6
-        private const int TotalPages = 6;
+        // Page 7 (보안 모드) 추가로 6 → 7 — RELEASE VMS 의 RequireExplicit 부팅 정책 대응
+        private const int TotalPages = 7;
 
         private readonly IConfigurationService _configService;
         private readonly IDialogService _dialogService;
@@ -63,6 +64,11 @@ namespace VMS.AppSetup.ViewModels
         // ViewModel 자체에 평문 보관 시간을 최소화 (Save 후 빈 문자열로 즉시 폐기).
         public string InitialAdminPassword { get; set; } = string.Empty;
         public string LocalFallbackAdminPassword { get; set; } = string.Empty;
+
+        // Page 7: Security Mode — system_config.json:securityMode 로 저장.
+        // 기본 Production: 현장 PC 에서 미선택 저장 시에도 RELEASE VMS 가 부팅 가능 + 보안 다운그레이드 없음.
+        [ObservableProperty]
+        private SecurityMode _securityMode = SecurityMode.Production;
 
         // Page 3: Camera Settings
         [ObservableProperty]
@@ -218,6 +224,7 @@ namespace VMS.AppSetup.ViewModels
                 VisionServerUrl = config.VisionServerUrl;
                 ClientApiKey = config.ClientApiKey;
                 WebSsoEnabled = config.WebSso?.Enabled ?? false;
+                SecurityMode = config.SecurityMode;
                 CameraMode = config.CameraMode;
 
                 // PLC Vendor & Communication
@@ -438,7 +445,8 @@ namespace VMS.AppSetup.ViewModels
                         "• Application settings and network configuration\n" +
                         "• Camera connections and manufacturers\n" +
                         "• PLC communication interface\n" +
-                        "• Robot integration (optional)\n\n" +
+                        "• Robot integration (optional)\n" +
+                        "• Security mode (Production / Development)\n\n" +
                         "Click 'Next' to begin the setup process.";
                     break;
                 case 2:
@@ -458,6 +466,15 @@ namespace VMS.AppSetup.ViewModels
                     PageTitle = "Robot Configuration";
                     PageDescription = "Configure robot integration for multi-view 3D scanning.\n" +
                         "Enable this if your system uses a robot for camera positioning.";
+                    break;
+                case 6:
+                    PageTitle = "IO Board Configuration";
+                    PageDescription = "Configure digital IO boards (ADLink / Advantech) used alongside the PLC.";
+                    break;
+                case 7:
+                    PageTitle = "Security Mode";
+                    PageDescription = "Choose the security mode written to system_config.json.\n" +
+                        "Production is required on field PCs — VMS refuses to start without an explicit mode.";
                     break;
             }
         }
@@ -622,6 +639,7 @@ namespace VMS.AppSetup.ViewModels
                     Enabled = WebSsoEnabled,
                     WebServerUrl = WebSsoEnabled ? WebServerUrl : string.Empty
                 },
+                SecurityMode = SecurityMode,
                 CameraMode = CameraMode,
                 Cameras = Cameras.ToList(),
 
