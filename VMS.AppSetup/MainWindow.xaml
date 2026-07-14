@@ -94,7 +94,7 @@
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" Margin="0,4,16,0">
                     <TextBlock Text="Step " Foreground="{StaticResource BrushTextMuted}" FontSize="14"/>
                     <TextBlock Text="{Binding CurrentPage}" Foreground="#FFD700" FontSize="14" FontWeight="Bold"/>
-                    <TextBlock Text=" of 6" Foreground="{StaticResource BrushTextMuted}" FontSize="14"/>
+                    <TextBlock Text=" of 7" Foreground="{StaticResource BrushTextMuted}" FontSize="14"/>
                 </StackPanel>
 
                 <!-- 윈도우 컨트롤 (최소화 / 닫기 — wizard 는 NoResize 라 최대화 없음).
@@ -903,6 +903,51 @@
                         </Border>
                     </Grid>
                 </ScrollViewer>
+
+                <!-- Page 7: Security Mode -->
+                <!-- RELEASE 빌드 VMS 는 securityMode 미명시 시 부팅 중단 (SecurityLoadPolicy.RequireExplicit).
+                     wizard 가 항상 이 키를 기록해 현장 설치 직후 "보안 정책 오류" 부팅 실패를 방지. -->
+                <Grid Visibility="{Binding CurrentPage, Converter={StaticResource PageConverter}, ConverterParameter=7}">
+                  <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel MaxWidth="500" VerticalAlignment="Top">
+                        <Border Background="{StaticResource BrushBgCard}" CornerRadius="6" Padding="15">
+                            <StackPanel>
+                                <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="#FFD700" Margin="0,0,0,12"><Run Text="Security Mode (보안 모드 — 필수)"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Security Mode (보안 모드)" CustomDescription="VMS 가 네트워크 통신에 적용할 보안 수준입니다. 현장(운영) PC 는 반드시 Production 을 선택하세요." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
+
+                                <TextBlock TextWrapping="Wrap" FontSize="11" Margin="0,0,0,15"
+                                           Foreground="{StaticResource BrushTextMuted}">
+                                    운영 배포(RELEASE) VMS 는 보안 모드가 명시되지 않으면 시작하지 않습니다.
+                                    여기서 선택한 값이 system_config.json 의 securityMode 로 저장됩니다.
+                                </TextBlock>
+
+                                <RadioButton Content="Production (운영 — 권장)" GroupName="SecurityMode"
+                                             IsChecked="{Binding SecurityMode, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Production}"
+                                             Style="{StaticResource WindowDarkRadioButton}" FontSize="13"/>
+                                <TextBlock TextWrapping="Wrap" FontSize="11" Margin="24,3,0,15"
+                                           Foreground="{StaticResource BrushTextMuted}">
+                                    HTTPS 강제 + 인증서 엄격 검증. 현장 설치 PC 는 반드시 이 모드를 사용하세요.
+                                </TextBlock>
+
+                                <RadioButton Content="Development (개발 — 사내 테스트 전용)" GroupName="SecurityMode"
+                                             IsChecked="{Binding SecurityMode, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Development}"
+                                             Style="{StaticResource WindowDarkRadioButton}" FontSize="13"/>
+                                <TextBlock TextWrapping="Wrap" FontSize="11" Margin="24,3,0,0"
+                                           Foreground="{StaticResource BrushTextMuted}">
+                                    HTTP 허용 + self-signed 인증서 우회. 로컬/사내 테스트 환경에서만 사용하세요.
+                                    운영 PC 에 설정하면 GS 보안성 항목 감점 사유가 됩니다.
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="#1E3A5F" CornerRadius="4" Padding="10" Margin="0,15,0,0">
+                            <TextBlock Foreground="#A0D0F0" FontSize="11" TextWrapping="Wrap">
+                                ※ 환경변수 BODA_VMS_SECURITY_MODE 가 설정된 PC 에서는 환경변수가 이 설정보다 우선합니다
+                                (docs/msi_build_guide.md §9 참고).
+                            </TextBlock>
+                        </Border>
+                    </StackPanel>
+                  </ScrollViewer>
+                </Grid>
             </Grid>
         </Border>
 

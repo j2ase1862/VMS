@@ -75,6 +75,12 @@ namespace VMS.AppSetup.Models
         // ConfigurationService 가 동일 JSON 으로 read/write.
         public List<IoDeviceConfig> IoBoards { get; set; } = new();
 
+        // Page 7: Security Mode — system_config.json 의 "securityMode" 키로 직렬화.
+        // VMS.Core.Security.SecurityOptions.LoadFromAppData 가 이 키를 읽어 부팅 시 정책 결정.
+        // RELEASE 빌드 VMS 는 RequireExplicit 정책이라 이 키(또는 BODA_VMS_SECURITY_MODE 환경변수)
+        // 미명시 시 부팅 중단 — wizard 가 항상 기록해 현장 설치 직후 부팅 실패를 방지.
+        public SecurityMode SecurityMode { get; set; } = SecurityMode.Production;
+
         // Page 5: Robot Settings
         public bool IsRobotEnabled { get; set; }
         public RobotVendor RobotVendor { get; set; } = RobotVendor.None;
@@ -88,6 +94,20 @@ namespace VMS.AppSetup.Models
         // Metadata
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string Version { get; set; } = "1.0.0";
+    }
+
+    /// <summary>
+    /// 애플리케이션 보안 모드 — VMS.Core.Security.SecurityMode 와 이름 일치 필수
+    /// (JsonStringEnumConverter 로 "Development"/"Production" 문자열 직렬화 후
+    /// VMS 측이 Enum.TryParse 로 파싱).
+    /// </summary>
+    public enum SecurityMode
+    {
+        /// <summary>개발 모드 — HTTP 허용, self-signed cert 우회. 로컬/사내 테스트만.</summary>
+        Development,
+
+        /// <summary>운영 모드 — HTTPS 강제, cert 엄격 검증. 현장 배포 기본값.</summary>
+        Production
     }
 
     /// <summary>
