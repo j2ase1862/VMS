@@ -2228,6 +2228,11 @@ namespace VMS.VisionSetup.ViewModels
                     }
                 }
 
+                // 선택된 스텝의 노출/게인을 카메라에 적용 후 획득 — 지원 구현체(Mech-Mind 등)만
+                // 실제 반영되고 나머지는 no-op. 스텝 미선택 시 카메라 현재 설정 그대로.
+                if (SelectedStep != null)
+                    await _cameraAcquisition!.ApplySettingsAsync(SelectedStep.Exposure, SelectedStep.Gain);
+
                 var result = await _cameraAcquisition!.AcquireAsync();
 
                 if (result.Success && result.Image2D != null)
