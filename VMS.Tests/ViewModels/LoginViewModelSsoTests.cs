@@ -155,6 +155,23 @@ namespace VMS.Tests.ViewModels
             Assert.Contains(UserService.LocalFallbackUsername, vm.ErrorMessage);
         }
 
+        [Fact]
+        public async Task SSO_enabled_factory_blocked_by_security_policy_shows_error_not_crash()
+        {
+            // WebAuthClient ctor 의 InsecureUrlGuard 가 Production + 원격 http 를 거부하는
+            // 상황 — RelayCommand 로 예외가 새지 않고 안내 메시지로 표시돼야 한다.
+            var ssoOn = new WebSsoConfig { Enabled = true, WebServerUrl = "http://192.168.0.10:5292" };
+            var vm = new LoginViewModel(_userService, ssoOn,
+                url => throw new InvalidOperationException("보안 정책 위반 — Production 모드에서 HTTPS 가 필수입니다."));
+
+            vm.Username = "alice";
+            vm.Password = "x";
+            await vm.LoginCommand.ExecuteAsync(null);
+
+            Assert.False(vm.IsAuthenticated);
+            Assert.Contains("보안 정책", vm.ErrorMessage);
+        }
+
         // ─── 입력 검증 ─────────────────────────────────────────
 
         [Theory]
