@@ -1,7 +1,8 @@
-#if MECHMIND_AVAILABLE
+﻿#if MECHMIND_AVAILABLE
 using MMind.Eye;
 using MechCamera = MMind.Eye.Camera;
 using MechCameraInfo = MMind.Eye.CameraInfo;
+using Scan2D = MMind.Eye.Scanning2DSetting;
 #endif
 using OpenCvSharp;
 using System.Numerics;
@@ -63,6 +64,9 @@ namespace VMS.Camera.Services
         public async Task<bool> ConnectAsync(Models.CameraInfo camera)
         {
             _camera = camera;
+            // 재연결 시 이전 적용 캐시 무효화 — 카메라가 바뀌었거나 전원 재투입일 수 있음
+            _appliedExposureUs = -1;
+            _appliedGain = double.NaN;
 
             try
             {
@@ -122,6 +126,74 @@ namespace VMS.Camera.Services
             finally
             {
                 IsConnected = false;
+            }
+        }
+
+        // 마지막으로 적용 성공한 값 — 같은 값이면 UserSet 왕복 생략 (Grab 마다 호출되므로)
+        private double _appliedExposureUs = -1;
+        private double _appliedGain = double.NaN;
+
+        /// <summary>
+        /// 2D 이미지 노출/게인 적용. Mech-Eye 규칙 두 가지에 주의:
+        /// 1) Scan2DExposureTime 은 Scan2DExposureMode=Timed 일 때만 유효 (Auto/HDR/Flash 면 무시됨)
+        ///    → 모드를 Timed 로 함께 강제한다.
+        /// 2) 단위가 ms (VMS 스텝 설정은 µs) → 변환 + SDK 허용 범위로 clamp.
+        /// Gain(Scan2DGain, dB)은 모델별 미지원이 있어 실패해도 전체 실패로 치지 않는다.
+        /// </summary>
+        public Task<bool> ApplySettingsAsync(double exposureUs, double gain)
+        {
+            if (!IsConnected || _mechCamera == null) return Task.FromResult(false);
+            if (exposureUs == _appliedExposureUs && gain == _appliedGain) return Task.FromResult(true);
+
+            try
+            {
+                var userSet = _mechCamera.CurrentUserSet();
+                bool ok = true;
+
+                if (exposureUs > 0)
+                {
+                    var modeStatus = userSet.SetEnumValue(
+                        Scan2D.ExposureMode.Name,
+                        (int)Scan2D.ExposureMode.Value.Timed);
+                    if (!modeStatus.IsOK())
+                    {
+                        System.Diagnostics.Debug.WriteLine(
+                            $"[MechMind] Scan2DExposureMode=Timed 실패: {modeStatus.ErrorDescription}");
+                        ok = false;
+                    }
+
+                    double exposureMs = Math.Clamp(exposureUs / 1000.0, 0.1, 999.0);
+                    var expStatus = userSet.SetFloatValue(
+                        Scan2D.ExposureTime.Name, exposureMs);
+                    if (!expStatus.IsOK())
+                    {
+                        System.Diagnostics.Debug.WriteLine(
+                            $"[MechMind] Scan2DExposureTime={exposureMs}ms 실패: {expStatus.ErrorDescription}");
+                        ok = false;
+                    }
+                }
+
+                if (gain >= 0)
+                {
+                    var gainStatus = userSet.SetFloatValue(Scan2D.Gain.Name, gain);
+                    if (!gainStatus.IsOK())
+                        System.Diagnostics.Debug.WriteLine(
+                            $"[MechMind] Scan2DGain={gain}dB 실패(모델 미지원 가능): {gainStatus.ErrorDescription}");
+                }
+
+                if (ok)
+                {
+                    _appliedExposureUs = exposureUs;
+                    _appliedGain = gain;
+                    System.Diagnostics.Debug.WriteLine(
+                        $"[MechMind] 2D 노출 {exposureUs}µs(→{Math.Clamp(exposureUs / 1000.0, 0.1, 999.0)}ms) / 게인 {gain}dB 적용");
+                }
+                return Task.FromResult(ok);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MechMind] 파라미터 적용 오류: {ex.Message}");
+                return Task.FromResult(false);
             }
         }
 
