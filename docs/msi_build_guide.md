@@ -272,6 +272,16 @@ $env:BODA_VMS_RELAX_SECURITY = "1"   # 현재 세션만
   - `Mode=Production, Source=Environment` 또는 `Source=ConfigFile` → 정상
   - `Source=FallbackOnError` → Development 폴백 발생 (Warn) → 9.1 / 9.2 명시 권장
 
+### 9.5 Loopback(오프라인 단일 PC) 예외
+
+Production 모드는 http:// URL 을 거부하지만, **loopback 호스트(`localhost` / `127.0.0.0/8` / `[::1]`)는 예외로 허용**한다.
+Web 서버가 같은 PC 의 Kestrel(HTTP) 로 동작하는 오프라인 단일 PC 구성에서 트래픽이 PC 밖으로
+나가지 않고, 인터넷 없는 환경에선 공인 인증서 발급도 불가능하기 때문. 허용 시 감사 로그에
+`InsecureHttpLoopbackAllowed` 로 기록된다.
+
+- 허용: `http://localhost:5292`, `http://127.0.0.1:5292`
+- 거부(기존과 동일): 사설망 포함 원격 http (예: `http://192.168.0.10:5292`), hosts 파일 별칭
+
 ---
 
 ## 10. Web SSO 통합 운영 (선택 — 단일 사용자 계정)
