@@ -56,6 +56,41 @@ namespace VMS.Core.Tests.Security
         }
 
         [Theory]
+        [InlineData("http://localhost:5292")]
+        [InlineData("http://LOCALHOST:5292")]
+        [InlineData("http://127.0.0.1:5292")]
+        [InlineData("http://127.0.0.1")]
+        [InlineData("http://[::1]:5292")]
+        public void Check_HttpLoopback_Production_NoThrow(string url)
+        {
+            var original = SecurityOptions.Current;
+            try
+            {
+                // 오프라인 단일 PC 구성 — 같은 PC 의 Kestrel HTTP 는 트래픽이 밖으로
+                // 나가지 않으므로 Production 에서도 허용.
+                SecurityOptions.Current = SecurityOptions.Production;
+                InsecureUrlGuard.Check(url, "TestSource");
+            }
+            finally { SecurityOptions.Current = original; }
+        }
+
+        [Theory]
+        [InlineData("http://192.168.0.10:5292")]  // 사설망도 원격은 원격
+        [InlineData("http://boda-vms.com")]
+        [InlineData("http://my-local-alias:5292")] // hosts 별칭은 판정 불가 → 비허용
+        public void Check_HttpNonLoopback_Production_StillThrows(string url)
+        {
+            var original = SecurityOptions.Current;
+            try
+            {
+                SecurityOptions.Current = SecurityOptions.Production;
+                Assert.Throws<InvalidOperationException>(() =>
+                    InsecureUrlGuard.Check(url, "TestSource"));
+            }
+            finally { SecurityOptions.Current = original; }
+        }
+
+        [Theory]
         [InlineData(null)]
         [InlineData("")]
         [InlineData("   ")]
