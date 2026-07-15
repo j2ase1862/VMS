@@ -31,11 +31,16 @@ namespace VMS.Core.Services
             if (string.IsNullOrWhiteSpace(webServerUrl))
                 throw new ArgumentException("webServerUrl 비어 있음", nameof(webServerUrl));
 
+            // 자격증명이 평문으로 실리는 유일한 VMS→Web 경로 — 다른 Web 연동 서비스와
+            // 동일하게 보안 정책 적용 (Production 은 원격 http 거부, loopback 은 허용).
+            Security.InsecureUrlGuard.Check(webServerUrl, nameof(WebAuthClient));
+
             _loginUrl = new Uri(new Uri(webServerUrl.TrimEnd('/') + "/"), "api/auth/login");
 
             if (httpClient is null)
             {
-                _http = new HttpClient { Timeout = timeout ?? TimeSpan.FromSeconds(5) };
+                // TLS 1.2/1.3 + Production cert 엄격 검증 + UA + 응답 크기 상한.
+                _http = Security.HttpClientPolicy.Build(timeout ?? TimeSpan.FromSeconds(5));
                 _ownsHttp = true;
             }
             else
