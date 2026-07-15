@@ -78,6 +78,9 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
+                    <!-- AUTO RUN/STOP 전용 고정 열 — chips(col 1)가 좁은 해상도에서
+                         넘쳐도 Primary 액션은 절대 잘리지 않도록 분리 -->
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
@@ -102,8 +105,18 @@
                 <!-- Center: 운영 흐름 (Operator → Work Order → AUTO RUN) -->
                 <!-- Grab/Live/Roller 는 Settings 사이드 패널의 Camera Control 섹션으로 이동 -->
                 <!-- Recipe 표시는 사이드 패널 Recipe 섹션에 있음 — 헤더에서 제거 -->
-                <StackPanel Grid.Column="1"
-                            Orientation="Horizontal"
+                <!-- chips 폭이 상태(로그인/WO 선택)에 따라 늘어나므로, 좁은 해상도에서는
+                     잘라내는 대신 가로 스크롤 허용 — Ctx 의 S/N 입력(바코드)까지 항상 접근 가능. -->
+                <ScrollViewer Grid.Column="1"
+                              HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Disabled">
+                    <ScrollViewer.Resources>
+                        <!-- 48px 헤더 안에서 콘텐츠(34px)를 가리지 않도록 슬림 스크롤바 -->
+                        <Style TargetType="ScrollBar">
+                            <Setter Property="Height" Value="8"/>
+                        </Style>
+                    </ScrollViewer.Resources>
+                <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Center">
 
                     <!-- ═══ Stage 1: 작업자 chip (Web 인증 — VMS LoginWindow의 시스템 사용자와 별개) ═══ -->
@@ -307,8 +320,12 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- ═══ AUTO RUN — 운영 흐름의 단일 Primary 액션 ═══ -->
-                    <Rectangle Width="1" Fill="{StaticResource Brush.Surface.Overlay}" Margin="14,8"/>
+                </StackPanel>
+                </ScrollViewer>
+
+                <!-- ═══ AUTO RUN — 운영 흐름의 단일 Primary 액션 ═══ -->
+                <!-- chips StackPanel 밖 고정 열(col 2) — 어떤 해상도에서도 항상 표시 -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0">
 
                     <Button Command="{Binding StartInspectionCommand}"
                             IsEnabled="{Binding CanStartStop}"
@@ -383,7 +400,7 @@
                 </StackPanel>
 
                 <!-- User Info (clickable for user switch) -->
-                <Border Grid.Column="2" Background="{StaticResource Brush.Surface.Overlay}" CornerRadius="4"
+                <Border Grid.Column="3" Background="{StaticResource Brush.Surface.Overlay}" CornerRadius="4"
                         Padding="10,0" Margin="0,0,8,0" Height="32"
                         VerticalAlignment="Center"
                         Cursor="Hand"
@@ -407,7 +424,7 @@
                 </Border>
 
                 <!-- Right: Toolbar buttons -->
-                <StackPanel Grid.Column="3" Orientation="Horizontal" Margin="0,0,8,0">
+                <StackPanel Grid.Column="4" Orientation="Horizontal" Margin="0,0,8,0">
                     <!-- User Management (Admin only) -->
                     <Button Style="{StaticResource IconButton}"
                             Command="{Binding OpenUserManagementCommand}"
