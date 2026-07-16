@@ -65,6 +65,13 @@ namespace VMS.AppSetup.ViewModels
         public string InitialAdminPassword { get; set; } = string.Empty;
         public string LocalFallbackAdminPassword { get; set; } = string.Empty;
 
+        // SSO 활성 시 admin 로그인은 Web 계정으로 위임되어 로컬 admin 비밀번호가 사용되지
+        // 않음 — View 가 입력란을 비활성화하지만, VM 쪽 평문도 즉시 폐기 (이중 방어).
+        partial void OnWebSsoEnabledChanged(bool value)
+        {
+            if (value) InitialAdminPassword = string.Empty;
+        }
+
         // Page 7: Security Mode — system_config.json:securityMode 로 저장.
         // 기본 Production: 현장 PC 에서 미선택 저장 시에도 RELEASE VMS 가 부팅 가능 + 보안 다운그레이드 없음.
         [ObservableProperty]
@@ -690,7 +697,9 @@ namespace VMS.AppSetup.ViewModels
                 var seededAdmin = false;
                 var updatedLocalAdmin = false;
                 var adminAlreadyExists = false;
-                var adminInputGiven = !string.IsNullOrWhiteSpace(InitialAdminPassword);
+                // SSO 활성이면 admin 은 Web 계정으로 로그인하므로 로컬 시드 자체를 건너뜀
+                // (View 에서 입력란 비활성 + 입력값 폐기 — 여기는 마지막 방어선).
+                var adminInputGiven = !WebSsoEnabled && !string.IsNullOrWhiteSpace(InitialAdminPassword);
                 var localInputGiven = !string.IsNullOrWhiteSpace(LocalFallbackAdminPassword);
                 try
                 {
