@@ -15,6 +15,7 @@
       <ComponentGroupRef Id="AppFiles" />
       <ComponentRef Id="DesktopShortcutComp" />
       <ComponentRef Id="StartMenuShortcutComp" />
+      <ComponentRef Id="StartMenuAppSetupShortcutComp" />
     </Feature>
 
     <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
@@ -66,6 +67,21 @@
           <RegistryValue Root="HKCU"
                          Key="Software\VASIM\BODA Vision System"
                          Name="StartMenuShortcut"
+                         Type="integer"
+                         Value="1"
+                         KeyPath="yes" />
+        </Component>
+        <!-- AppSetup 은 설치/업데이트 직후 반드시 1회 실행해야 하는 필수 단계
+             (보안 모드·admin 시드) — 바로가기가 없으면 운영자가 설치 폴더를
+             직접 뒤져야 해서 단계를 건너뛰기 쉬움 (현장 보안 정책 오류의 주원인). -->
+        <Component Id="StartMenuAppSetupShortcutComp">
+          <Shortcut Id="StartMenuAppSetupShortcut"
+                    Name="BODA VMS 설정 마법사 (AppSetup)"
+                    Target="[INSTALLFOLDER]VMS.AppSetup.exe"
+                    WorkingDirectory="INSTALLFOLDER" />
+          <RegistryValue Root="HKCU"
+                         Key="Software\VASIM\BODA Vision System"
+                         Name="StartMenuAppSetupShortcut"
                          Type="integer"
                          Value="1"
                          KeyPath="yes" />
