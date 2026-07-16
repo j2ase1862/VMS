@@ -11,7 +11,7 @@ BODA.VMS.Web `docs/Production_Deploy_Runbook.md`
 
 ## 0. 사전 준비물
 
-- [ ] VMS MSI 설치 파일 — [GitHub Releases](https://github.com/j2ase1862/VMS/releases) 최신 버전 (v1.4.5 기준 작성; 릴리즈 미발행 버전은 USB 패키지의 MSI 사용)
+- [ ] VMS MSI 설치 파일 — [GitHub Releases](https://github.com/j2ase1862/VMS/releases) 최신 버전 (v1.4.7 기준 작성; 릴리즈 미발행 버전은 USB 패키지의 `VMS-<버전>.msi` 사용)
 - [ ] BODA.VMS.Web 게시본 (`dotnet publish -c Release -r win-x64 --self-contained true` 산출물)
 - [ ] 비밀번호 사전 준비 (모두 **서로 다르게**, 12자 이상 권장 — msi_build_guide §11.3):
   - [ ] Web admin 초기 비밀번호 (`Initial__AdminPassword`)
@@ -65,9 +65,22 @@ Start-Service BodaVmsWeb
 
 ### 2-1. MSI 설치
 
-- [ ] MSI 실행 (기존 설치 PC 는 업그레이드로 덮어씀 — 별도 제거 불필요)
+- [ ] MSI 실행 — 파일명 `VMS-<버전>.msi` (v1.4.6 부터 파일명에 버전 명시)
+      (기존 설치 PC 는 업그레이드로 덮어씀 — 별도 제거 불필요)
 
-### 2-2. AppSetup 마법사 1회 실행
+### 2-2. AppSetup 마법사 1회 실행 — **업데이트 설치에서도 생략 금지**
+
+> ⚠ **현장 검증 사례 (2026-07-16)**: 업그레이드 설치 후 마법사를 건너뛰고 VMS 를 바로 실행하면
+> **"보안 모드가 명시되지 않아 앱을 시작할 수 없습니다"** 로 부팅이 차단될 수 있다
+> (구버전 config 에 `securityMode` 키가 없는 경우). 표준 순서는 항상 **MSI → 마법사 → VMS**.
+> 마법사 없이 즉시 복구하려면: `setx BODA_VMS_SECURITY_MODE Production /M` 후 VMS 재실행.
+
+- [ ] 시작 메뉴 → **"BODA VMS 설정 마법사 (AppSetup)"** 실행 (v1.4.6 부터 바로가기 제공.
+      이전 버전은 `C:\Program Files\VASIM\BODA Vision System\VMS.AppSetup.exe` 직접 실행)
+- [ ] 시작 직후 **"설정 로드 실패"** 창이 뜨는지 확인 (v1.4.7):
+      뜨면 기존 설정 파일이 손상/비호환 상태 — **저장하지 말고** 창에 표시된
+      `system_config.json.invalid.bak` 파일을 수거해 보고. 그대로 저장하면 기존 설정이 기본값으로 덮어써짐
+- [ ] 기존 설정 PC 는 각 페이지 값이 이전 설정대로 복원되어 있는지 확인 (마법사 = 기존 설정 편집기)
 
 - [ ] Page 2 "Web Server Integration" — Web URL 입력 (`http://<host>:5292`)
 - [ ] (선택) Page 2 "Web Client API Key" — enforcement 사용 시에만 입력, 각주 [1] 참고
@@ -87,6 +100,8 @@ Start-Service BodaVmsWeb
 ### 2-3. VMS 검증
 
 - [ ] VMS 부팅 → **"보안 정책 오류" 메시지 없음**
+      — 뜨면 2-2 마법사 실행 누락이 대표 원인. 재발 시 **마법사를 실행한 것과 같은 Windows
+      계정인지** 확인 (설정은 사용자별 `%LocalAppData%` 저장 — 계정이 다르면 빈 설정으로 보임)
 - [ ] admin 로그인 성공 (SSO 활성 시 Web admin 계정으로)
 - [ ] 헬스 체크 UI → `Mode=Production, Source=ConfigFile` (또는 `Source=Environment`)
       — `Source=FallbackOnError` 면 보안 모드 명시 누락 (msi_build_guide §9)
@@ -136,3 +151,4 @@ Web 서버의 `ClientApiKey__Value` 와 정확히 일치시킬 것.
 |------|------|
 | 2026-07-15 | 최초 작성 — v1.4.1 현장 검증 대비, Web→VMS 설치 순서 표준화 |
 | 2026-07-16 | v1.4.5 반영 — SSO 체크 시 admin 입력란 비활성(PR #190), 저장 메시지 분기(✓/⚠) 판독 기준, admin 미적용 재실행 안내 추가 |
+| 2026-07-16 | v1.4.7 반영 — 현장 검증 결과(업그레이드 후 보안 정책 오류 부팅 차단) 트러블슈팅 반영, 시작 메뉴 AppSetup 바로가기(#192), MSI 파일명 버전 명시(#193), 설정 로드 실패 경고·.invalid.bak 대응(#194) |
