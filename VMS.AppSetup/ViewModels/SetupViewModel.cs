@@ -689,11 +689,20 @@ namespace VMS.AppSetup.ViewModels
                 // 비어 있으면 무동작 (기존 비밀번호 보존).
                 var seededAdmin = false;
                 var updatedLocalAdmin = false;
+                var adminAlreadyExists = false;
+                var adminInputGiven = !string.IsNullOrWhiteSpace(InitialAdminPassword);
+                var localInputGiven = !string.IsNullOrWhiteSpace(LocalFallbackAdminPassword);
                 try
                 {
-                    if (!string.IsNullOrWhiteSpace(InitialAdminPassword))
-                        seededAdmin = Services.InitialAdminSeeder.SeedAdminIfMissing(InitialAdminPassword);
-                    if (!string.IsNullOrWhiteSpace(LocalFallbackAdminPassword))
+                    if (adminInputGiven)
+                    {
+                        // admin 은 최초 시드 전용 — 재실행에서 이미 존재하면 입력값이 적용되지
+                        // 않으므로 8자 미만 실패와 구분해 명시적으로 안내 (착각 방지).
+                        adminAlreadyExists = Services.InitialAdminSeeder.AdminExists();
+                        if (!adminAlreadyExists)
+                            seededAdmin = Services.InitialAdminSeeder.SeedAdminIfMissing(InitialAdminPassword);
+                    }
+                    if (localInputGiven)
                         updatedLocalAdmin = Services.InitialAdminSeeder.SetLocalFallbackPassword(LocalFallbackAdminPassword);
                 }
                 finally
@@ -704,8 +713,18 @@ namespace VMS.AppSetup.ViewModels
                 }
 
                 var msg = $"설정이 저장되었습니다.\n\n저장 위치: {_configService.ConfigFilePath}";
-                if (seededAdmin) msg += "\n\n✓ admin 계정 초기 시드 완료.";
-                if (updatedLocalAdmin) msg += "\n✓ local-admin 비밀번호 변경 완료.";
+                if (seededAdmin)
+                    msg += "\n\n✓ admin 계정 초기 시드 완료.";
+                else if (adminAlreadyExists)
+                    msg += "\n\n⚠ admin 계정이 이미 존재하여 입력한 비밀번호는 적용되지 않았습니다." +
+                           "\n   비밀번호 변경은 VMS 로그인 후 [사용자 관리]에서," +
+                           "\n   Web 연동(SSO) 환경에서는 Web 관리 화면에서 하세요.";
+                else if (adminInputGiven)
+                    msg += "\n\n⚠ admin 비밀번호가 8자 미만이라 계정이 생성되지 않았습니다.";
+                if (updatedLocalAdmin)
+                    msg += "\n✓ local-admin 비밀번호 변경 완료.";
+                else if (localInputGiven)
+                    msg += "\n⚠ local-admin 비밀번호가 8자 미만이라 변경되지 않았습니다.";
 
                 _dialogService.ShowInformation(msg, "Setup Complete");
 

@@ -58,6 +58,22 @@ namespace VMS.AppSetup.Services
         }
 
         /// <summary>
+        /// admin 행 존재 여부 — wizard 재실행(업데이트 후 등)에서 "이미 존재하여 입력한
+        /// 비밀번호가 적용되지 않음" 안내를 8자 미만 실패와 구분하기 위한 조회.
+        /// DB 파일이 없으면 false (파일을 생성하지 않음).
+        /// </summary>
+        public static bool AdminExists(string dbPath = "")
+        {
+            if (string.IsNullOrEmpty(dbPath)) dbPath = GetDefaultDbPath();
+            if (!File.Exists(dbPath)) return false;
+
+            using var conn = OpenWithSchema(dbPath);
+            using var check = conn.CreateCommand();
+            check.CommandText = "SELECT COUNT(*) FROM Users WHERE Username = 'admin' COLLATE NOCASE";
+            return (long)check.ExecuteScalar()! > 0;
+        }
+
+        /// <summary>
         /// admin 시드 — 빈 비밀번호면 skip, 길이 8 미만이면 false.
         /// 이미 admin 존재시 false 반환 (덮어쓰기 안 함).
         /// DB 파일이 없으면 생성 후 시드 (신규 install 첫 wizard 실행 지원).
