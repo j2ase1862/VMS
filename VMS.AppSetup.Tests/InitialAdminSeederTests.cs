@@ -78,6 +78,29 @@ namespace VMS.AppSetup.Tests
         }
 
         [Fact]
+        public void AdminExists_NoDbFile_ReturnsFalseWithoutCreatingDb()
+        {
+            Assert.False(InitialAdminSeeder.AdminExists(_dbPath));
+            Assert.False(File.Exists(_dbPath));   // 조회만으로 DB 파일이 생기면 안 됨
+        }
+
+        [Fact]
+        public void AdminExists_AfterSeed_ReturnsTrue()
+        {
+            Assert.False(InitialAdminSeeder.AdminExists(_dbPath));
+            Assert.True(InitialAdminSeeder.SeedAdminIfMissing("StrongPass12!", _dbPath));
+            Assert.True(InitialAdminSeeder.AdminExists(_dbPath));
+        }
+
+        [Fact]
+        public void AdminExists_DbWithOnlyLocalAdmin_ReturnsFalse()
+        {
+            // 신규 install 에서 local-admin 만 먼저 시드된 상태 — admin 은 아직 없음
+            Assert.True(InitialAdminSeeder.SetLocalFallbackPassword("FallbackPass12!", _dbPath));
+            Assert.False(InitialAdminSeeder.AdminExists(_dbPath));
+        }
+
+        [Fact]
         public void SetLocalFallbackPassword_NoDbFile_CreatesDbAndSeedsLocalAdmin()
         {
             Assert.False(File.Exists(_dbPath));

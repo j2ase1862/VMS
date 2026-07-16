@@ -80,11 +80,26 @@ namespace VMS.ViewModels
                     return;
                 }
 
-                using var client = _clientFactory(_ssoConfig.WebServerUrl);
-                if (await _userService.AuthenticateViaWebAsync(Username, Password, client))
+                WebAuthClient client;
+                try
                 {
-                    IsAuthenticated = true;
+                    client = _clientFactory(_ssoConfig.WebServerUrl);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    // InsecureUrlGuard — Production 모드에서 원격 http:// Web URL 거부.
+                    // 자격증명 평문 송신을 막은 것이므로 로그인 실패로 표시하고 설정 안내.
+                    ErrorMessage = $"보안 정책으로 Web 로그인이 차단되었습니다. {ex.Message}";
                     return;
+                }
+
+                using (client)
+                {
+                    if (await _userService.AuthenticateViaWebAsync(Username, Password, client))
+                    {
+                        IsAuthenticated = true;
+                        return;
+                    }
                 }
 
                 // Web 거부 / 도달 불가 — 일반 사용자에게는 폴백 미허용. 안내 메시지로 구분.
