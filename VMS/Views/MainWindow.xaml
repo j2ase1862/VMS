@@ -75,6 +75,18 @@
                 MouseLeftButtonDown="HeaderBar_MouseLeftButtonDown"
                 Cursor="Arrow">
             <Grid>
+                <Grid.Resources>
+                    <!-- 컴팩트 헤더(창 폭 < MainWindow.CompactHeaderThreshold)에서 숨길 보조
+                         요소용 공용 스타일 — 사번/뱃지/진행률 바/보조 라벨 등. 핵심 정보(이름,
+                         WO 번호, 레시피명, S/N 입력)는 항상 유지해 스크롤 없이 한 줄에 들어가게. -->
+                    <Style x:Key="HideWhenCompact" TargetType="FrameworkElement">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsCompactHeader, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Resources>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
@@ -105,8 +117,10 @@
                 <!-- Center: 운영 흐름 (Operator → Work Order → AUTO RUN) -->
                 <!-- Grab/Live/Roller 는 Settings 사이드 패널의 Camera Control 섹션으로 이동 -->
                 <!-- Recipe 표시는 사이드 패널 Recipe 섹션에 있음 — 헤더에서 제거 -->
-                <!-- chips 폭이 상태(로그인/WO 선택)에 따라 늘어나므로, 좁은 해상도에서는
-                     잘라내는 대신 가로 스크롤 허용 — Ctx 의 S/N 입력(바코드)까지 항상 접근 가능. -->
+                <!-- chips 폭이 상태(로그인/WO 선택)에 따라 늘어남. 좁은 폭에서는 IsCompactHeader
+                     (MainWindow DP, 창 폭 < 1600) 로 보조 요소를 축약해 한 줄에 수용 — 사번/뱃지/
+                     진행률 바/보조 라벨/WO·Lot 수동 입력 숨김, 긴 텍스트 말줄임(전체는 툴팁).
+                     그래도 넘치는 극단 케이스만 가로 스크롤(최후 안전망) — S/N 입력(바코드)은 항상 노출. -->
                 <ScrollViewer Grid.Column="1"
                               HorizontalScrollBarVisibility="Auto"
                               VerticalScrollBarVisibility="Disabled">
@@ -154,8 +168,13 @@
                                     </Style>
                                 </StackPanel.Style>
                                 <TextBlock Foreground="White" FontSize="12" FontWeight="SemiBold"
-                                           VerticalAlignment="Center">
-                                    <Run Text="{Binding CurrentOperatorName, Mode=OneWay}"/>
+                                           VerticalAlignment="Center"
+                                           Text="{Binding CurrentOperatorName, Mode=OneWay}"
+                                           ToolTip="{Binding CurrentOperatorEmployeeNumber}"/>
+                                <!-- 사번 — 컴팩트에서는 숨김 (이름 툴팁으로 확인 가능) -->
+                                <TextBlock Foreground="White" FontSize="12" FontWeight="SemiBold"
+                                           VerticalAlignment="Center"
+                                           Style="{StaticResource HideWhenCompact}">
                                     <Run Text=" ("/>
                                     <Run Text="{Binding CurrentOperatorEmployeeNumber, Mode=OneWay}"
                                          Foreground="{StaticResource Brush.Text.Secondary}"/>
@@ -176,6 +195,10 @@
                                                 <DataTrigger Binding="{Binding CurrentOperatorRole}" Value="Supervisor">
                                                     <Setter Property="Visibility" Value="Visible"/>
                                                     <Setter Property="Background" Value="{StaticResource Brush.Danger}"/>
+                                                </DataTrigger>
+                                                <!-- 컴팩트 — Role 트리거보다 뒤에 두어 우선 적용 (뱃지 숨김) -->
+                                                <DataTrigger Binding="{Binding IsCompactHeader, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -205,7 +228,9 @@
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE8FD;" FontFamily="Segoe MDL2 Assets" FontSize="13"
                                        VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <TextBlock Text="Work Orders" VerticalAlignment="Center"/>
+                            <!-- 컴팩트 — 아이콘만 (툴팁으로 기능 확인) -->
+                            <TextBlock Text="Work Orders" VerticalAlignment="Center"
+                                       Style="{StaticResource HideWhenCompact}"/>
                         </StackPanel>
                     </Button>
 
@@ -218,11 +243,25 @@
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="WO:" Foreground="{StaticResource Brush.Accent}" FontSize="10" FontWeight="SemiBold"
                                        VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <TextBlock Text="{Binding SelectedWorkOrderText}"
-                                       Foreground="White" FontSize="11"
-                                       VerticalAlignment="Center"/>
+                            <TextBlock Foreground="White" FontSize="11"
+                                       VerticalAlignment="Center"
+                                       Text="{Binding SelectedWorkOrderText}"
+                                       TextTrimming="CharacterEllipsis"
+                                       ToolTip="{Binding SelectedWorkOrderText}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <!-- 컴팩트 — 긴 WO 텍스트는 말줄임 (전체는 툴팁) -->
+                                            <DataTrigger Binding="{Binding IsCompactHeader, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                <Setter Property="MaxWidth" Value="110"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
 
-                            <!-- 진행률 ProgressBar — 얇은 가로 (B4) -->
+                            <!-- 진행률 ProgressBar — 얇은 가로 (B4). 컴팩트에서는 숨김 -->
+                            <Grid Style="{StaticResource HideWhenCompact}">
                             <ProgressBar Width="80" Height="6"
                                          Minimum="0" Maximum="100"
                                          Value="{Binding SelectedWorkOrderProgressPercent, Mode=OneWay}"
@@ -243,6 +282,7 @@
                                     </ControlTemplate>
                                 </ProgressBar.Template>
                             </ProgressBar>
+                            </Grid>
                         </StackPanel>
                     </Border>
 
@@ -255,11 +295,26 @@
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE82D;" FontFamily="Segoe MDL2 Assets" FontSize="11"
                                        Foreground="{StaticResource Brush.Primary}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <!-- 컴팩트 — 라벨 숨김 (아이콘이 레시피임을 표시) -->
                             <TextBlock Text="Recipe:" Foreground="{StaticResource Brush.Primary}" FontSize="10" FontWeight="SemiBold"
-                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <TextBlock Text="{Binding CurrentRecipeName}"
-                                       Foreground="White" FontSize="11" FontWeight="SemiBold"
-                                       VerticalAlignment="Center"/>
+                                       VerticalAlignment="Center" Margin="0,0,6,0"
+                                       Style="{StaticResource HideWhenCompact}"/>
+                            <TextBlock Foreground="White" FontSize="11" FontWeight="SemiBold"
+                                       VerticalAlignment="Center"
+                                       Text="{Binding CurrentRecipeName}"
+                                       TextTrimming="CharacterEllipsis"
+                                       ToolTip="{Binding CurrentRecipeName}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <!-- 컴팩트 — 긴 레시피명 말줄임 (전체는 툴팁) -->
+                                            <DataTrigger Binding="{Binding IsCompactHeader, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                <Setter Property="MaxWidth" Value="90"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                         </StackPanel>
                     </Border>
 
@@ -270,20 +325,24 @@
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="Ctx:" Foreground="{StaticResource Brush.Accent}" FontSize="10" FontWeight="SemiBold"
                                        VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <TextBlock Text="WO" Foreground="{StaticResource Brush.Text.Secondary}" FontSize="10" VerticalAlignment="Center" Margin="0,0,3,0"/>
-                            <TextBox Text="{Binding WorkOrderIdText, UpdateSourceTrigger=PropertyChanged}"
-                                     Width="50" Height="22" FontSize="11"
-                                     Background="{StaticResource Brush.Surface.Deep}" Foreground="White" BorderBrush="#555"
-                                     VerticalAlignment="Center"
-                                     VerticalContentAlignment="Center" Padding="4,0"
-                                     ToolTip="WorkOrder ID (정수)"/>
-                            <TextBlock Text="Lot" Foreground="{StaticResource Brush.Text.Secondary}" FontSize="10" VerticalAlignment="Center" Margin="6,0,3,0"/>
-                            <TextBox Text="{Binding LotIdText, UpdateSourceTrigger=PropertyChanged}"
-                                     Width="50" Height="22" FontSize="11"
-                                     Background="{StaticResource Brush.Surface.Deep}" Foreground="White" BorderBrush="#555"
-                                     VerticalAlignment="Center"
-                                     VerticalContentAlignment="Center" Padding="4,0"
-                                     ToolTip="Lot ID (정수)"/>
+                            <!-- WO/Lot 수동 입력 — 컴팩트에서는 숨김 (WO 선택 시 자동 첨부되는 값이라
+                                 수동 입력 빈도 낮음). S/N(바코드 스캔)은 어떤 폭에서도 항상 노출. -->
+                            <StackPanel Orientation="Horizontal" Style="{StaticResource HideWhenCompact}">
+                                <TextBlock Text="WO" Foreground="{StaticResource Brush.Text.Secondary}" FontSize="10" VerticalAlignment="Center" Margin="0,0,3,0"/>
+                                <TextBox Text="{Binding WorkOrderIdText, UpdateSourceTrigger=PropertyChanged}"
+                                         Width="50" Height="22" FontSize="11"
+                                         Background="{StaticResource Brush.Surface.Deep}" Foreground="White" BorderBrush="#555"
+                                         VerticalAlignment="Center"
+                                         VerticalContentAlignment="Center" Padding="4,0"
+                                         ToolTip="WorkOrder ID (정수)"/>
+                                <TextBlock Text="Lot" Foreground="{StaticResource Brush.Text.Secondary}" FontSize="10" VerticalAlignment="Center" Margin="6,0,3,0"/>
+                                <TextBox Text="{Binding LotIdText, UpdateSourceTrigger=PropertyChanged}"
+                                         Width="50" Height="22" FontSize="11"
+                                         Background="{StaticResource Brush.Surface.Deep}" Foreground="White" BorderBrush="#555"
+                                         VerticalAlignment="Center"
+                                         VerticalContentAlignment="Center" Padding="4,0"
+                                         ToolTip="Lot ID (정수)"/>
+                            </StackPanel>
                             <TextBlock Text="S/N" Foreground="{StaticResource Brush.Text.Secondary}" FontSize="10" VerticalAlignment="Center" Margin="6,0,3,0"/>
                             <TextBox Text="{Binding SerialNumberText, UpdateSourceTrigger=PropertyChanged}"
                                      Width="100" Height="22" FontSize="11"
@@ -311,8 +370,10 @@
                             <TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" FontSize="13"
                                        Foreground="{Binding PredictionAccentBrush}"
                                        VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <!-- 컴팩트 — 라벨 숨김 (아이콘 + 수치만, 상세는 툴팁) -->
                             <TextBlock Text="다음 1시간:" Foreground="{StaticResource Brush.Text.Secondary}" FontSize="10" FontWeight="SemiBold"
-                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                       VerticalAlignment="Center" Margin="0,0,6,0"
+                                       Style="{StaticResource HideWhenCompact}"/>
                             <TextBlock Text="{Binding PredictionDisplayText}"
                                        Foreground="{Binding PredictionAccentBrush}"
                                        FontSize="13" FontWeight="Bold"
