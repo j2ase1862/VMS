@@ -837,18 +837,22 @@
                         </StackPanel>
                     </Grid>
 
-                    <!-- Row 4: Step DataGrid -->
+                    <!-- Row 4: Step DataGrid — 선택 행 아래로 노출/게인 즉시 편집 패널(RowDetails)이
+                         펼쳐진다. 칼럼 추가 대신 RowDetails 를 쓰는 이유: 패널 폭(~240px)에
+                         편집 가능한 숫자 칼럼 2개를 더 넣으면 기존 칼럼이 잘리기 때문 (UX 결정 2026-07-16).
+                         값 변경은 즉시 스텝에 저장되고 Acquire/Camera Live 가 바로 반영. -->
                     <DataGrid Grid.Row="4" ItemsSource="{Binding Steps}"
                               SelectedItem="{Binding SelectedStep}"
                               AutoGenerateColumns="False" IsReadOnly="True"
                               SelectionMode="Single" SelectionUnit="FullRow"
                               HeadersVisibility="Column" CanUserAddRows="False"
+                              RowDetailsVisibilityMode="VisibleWhenSelected"
                               Background="{StaticResource BrushBgCard}" Foreground="White"
                               BorderBrush="{StaticResource BrushBorderStrong}" BorderThickness="1"
                               RowBackground="{StaticResource BrushBgCard}" AlternatingRowBackground="#333337"
                               GridLinesVisibility="Horizontal"
                               HorizontalGridLinesBrush="#444444"
-                              Margin="8,4,8,4" MaxHeight="160" MinHeight="60"
+                              Margin="8,4,8,4" MaxHeight="200" MinHeight="60"
                               FontSize="11">
                         <DataGrid.ColumnHeaderStyle>
                             <Style TargetType="DataGridColumnHeader">
@@ -887,6 +891,38 @@
                             <DataGridTextColumn Header="Resolution" Binding="{Binding Resolution, StringFormat={}{0:F3}}" Width="70"/>
                             <DataGridTextColumn Header="Tools" Binding="{Binding Tools.Count}" Width="40"/>
                         </DataGrid.Columns>
+                        <DataGrid.RowDetailsTemplate>
+                            <DataTemplate>
+                                <Border Background="{StaticResource BrushBgSurface}"
+                                        BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="0,0,0,1"
+                                        Padding="8,6">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="Exp (µs)" FontSize="10"
+                                                   Foreground="{StaticResource BrushTextMuted}"
+                                                   VerticalAlignment="Center" Margin="0,0,4,0"
+                                                   ToolTip="노출 시간 (µs) — Acquire Image / Camera Live 에 즉시 적용"/>
+                                        <TextBox Grid.Column="1" Height="22" FontSize="11"
+                                                 Text="{Binding Exposure, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource WindowDarkTextBox}"
+                                                 VerticalContentAlignment="Center" Margin="0,0,8,0"/>
+                                        <TextBlock Grid.Column="2" Text="Gain" FontSize="10"
+                                                   Foreground="{StaticResource BrushTextMuted}"
+                                                   VerticalAlignment="Center" Margin="0,0,4,0"
+                                                   ToolTip="게인 — Acquire Image / Camera Live 에 즉시 적용"/>
+                                        <TextBox Grid.Column="3" Height="22" FontSize="11"
+                                                 Text="{Binding Gain, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource WindowDarkTextBox}"
+                                                 VerticalContentAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </DataGrid.RowDetailsTemplate>
                     </DataGrid>
 
                     <!-- Row 5: Tool Palette -->

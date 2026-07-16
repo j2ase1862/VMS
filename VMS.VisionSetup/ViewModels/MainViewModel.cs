@@ -2313,10 +2313,6 @@ namespace VMS.VisionSetup.ViewModels
                 }
             }
 
-            // 선택 스텝의 노출/게인 적용 — 지원 구현체(Mech-Mind 등)만 실제 반영
-            if (SelectedStep != null)
-                await _cameraAcquisition!.ApplySettingsAsync(SelectedStep.Exposure, SelectedStep.Gain);
-
             _cameraLiveCts = new CancellationTokenSource();
             var ct = _cameraLiveCts.Token;
             IsCameraLive = true;
@@ -2328,6 +2324,12 @@ namespace VMS.VisionSetup.ViewModels
             {
                 while (!ct.IsCancellationRequested && _cameraAcquisition != null)
                 {
+                    // 선택 스텝의 노출/게인을 매 프레임 적용 — 라이브 중 Steps 그리드의
+                    // RowDetails 에서 값을 편집하면 실시간 반영 (노출 튜닝 워크플로).
+                    // 지원 구현체(Mech-Mind 등)는 동일 값 캐시로 no-op 이라 SDK 왕복 비용 없음.
+                    if (SelectedStep != null)
+                        await _cameraAcquisition.ApplySettingsAsync(SelectedStep.Exposure, SelectedStep.Gain);
+
                     var result = await _cameraAcquisition.AcquireAsync();
                     if (ct.IsCancellationRequested) break;
 
