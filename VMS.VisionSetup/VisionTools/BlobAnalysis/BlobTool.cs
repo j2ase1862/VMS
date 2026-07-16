@@ -284,6 +284,13 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
             var result = new VisionResult();
             var sw = Stopwatch.StartNew();
 
+            // 중간 Mat — 예외/조기 경로를 포함해 finally에서 일괄 해제 (FeatureMatchTool의 using 패턴 준용)
+            Mat? workImage = null;
+            Mat? grayImage = null;
+            Mat? binaryImage = null;
+            Mat? rotationMatrixFwd = null;
+            Mat? overlayImage = null;
+
             try
             {
                 // 회전 각도 결정: 라이브 ROI shape 또는 저장된 ROIAngle 사용
@@ -293,12 +300,9 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
                 bool useRotatedROI = UseROI && ROI.Width > 0 && ROI.Height > 0
                     && Math.Abs(effectiveAngle) > 0.001;
 
-                Mat workImage;
-                Mat binaryImage = new Mat();
                 int offsetX, offsetY;
                 double roiCenterX, roiCenterY;
                 int roiW, roiH;
-                Mat? rotationMatrixFwd = null;
 
                 if (useRotatedROI)
                 {
@@ -354,15 +358,20 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
                 }
 
                 // 그레이스케일 변환
-                Mat grayImage = new Mat();
                 if (workImage.Channels() > 1)
+                {
+                    grayImage = new Mat();
                     Cv2.CvtColor(workImage, grayImage, ColorConversionCodes.BGR2GRAY);
+                }
                 else
+                {
                     grayImage = workImage.Clone();
+                }
 
                 // 이진화 처리
                 if (UseInternalThreshold)
                 {
+                    binaryImage = new Mat();
                     var threshType = SegmentationPolarity == SegmentationPolarity.DarkOnLight
                         ? ThresholdTypes.BinaryInv : ThresholdTypes.Binary;
                     Cv2.Threshold(grayImage, binaryImage, ThresholdValue, 255, threshType);
@@ -426,7 +435,7 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
                     }
                 }
 
-                rotationMatrixFwd?.Dispose();
+                // rotationMatrixFwd는 finally에서 해제
 
                 // 결과 정렬 및 최대 개수 제한
                 blobs = SortBlobs(blobs);
@@ -451,7 +460,7 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
                 result.Data["Blobs"] = blobs;
 
                 // 결과 오버레이 이미지 생성 (원본 컬러 이미지 기반)
-                Mat overlayImage = GetColorOverlayBase(inputImage);
+                overlayImage = GetColorOverlayBase(inputImage);
 
                 // Blob 그래픽 그리기
                 // blob 데이터는 이미 절대 좌표이므로 오프셋을 다시 적용하지 않음
@@ -625,13 +634,22 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
                     result.OutputImage = UseROI ? ApplyROIResult(inputImage, binaryImage) : binaryImage.Clone();
                 }
                 result.OverlayImage = overlayImage;
-                if (workImage != inputImage)
-                    workImage.Dispose();
+                overlayImage = null;    // 소유권이 result로 이전됨 — finally에서 해제 금지
             }
             catch (Exception ex)
             {
                 result.Success = false;
                 result.Message = $"Blob 분석 실패: {ex.Message}";
+            }
+            finally
+            {
+                // 중간 Mat 일괄 해제 — 예외 경로 포함, 실행마다 네이티브 버퍼가 GC에 의존하지 않도록
+                rotationMatrixFwd?.Dispose();
+                grayImage?.Dispose();
+                binaryImage?.Dispose();
+                overlayImage?.Dispose();    // 정상 경로에서는 result로 이전 후 null이므로 no-op
+                if (workImage != null && !ReferenceEquals(workImage, inputImage))
+                    workImage.Dispose();    // 서브매트 뷰 해제 — 원본 버퍼는 참조 카운트로 보존
             }
 
             sw.Stop();

@@ -2040,8 +2040,10 @@ namespace VMS.VisionSetup.ViewModels
 
             foreach (var config in toolConfigs)
             {
-                if (!config.IsEnabled) continue;
-
+                // 비활성(IsEnabled=false) 도구도 워크스페이스에 로드한다.
+                // 실행 스킵은 VisionService.ExecuteAll()의 IsEnabled 체크가 담당하므로 여기서 제외하면 안 됨 —
+                // 로드에서 제외하면 SaveWorkspaceToStep()이 Tools.Clear() 후 워크스페이스만 저장하므로
+                // 로드→저장 한 번에 비활성 도구(와 그 연결)가 레시피에서 영구 삭제된다.
                 var visionTool = ToolSerializer.DeserializeTool(config);
                 if (visionTool == null) continue;
 
