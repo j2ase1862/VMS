@@ -11,6 +11,11 @@
     <BuildVersionFull Condition=" '$(Version)' != '' AND $(Version.Split('.').Length) == 3 ">$(Version).0</BuildVersionFull>
     <BuildVersionFull Condition=" '$(BuildVersionFull)' == '' ">$(Version)</BuildVersionFull>
     <DefineConstants>$(DefineConstants);BuildVersion=$(BuildVersionFull)</DefineConstants>
+    <!--
+      MSI 파일명에 버전 명시 (VMS-1.4.6.msi) — GitHub 릴리즈 자산 명명과 동일.
+      현장에서 USB/다운로드 파일만 보고 버전을 식별할 수 있도록.
+    -->
+    <OutputName>VMS-$(Version)</OutputName>
   </PropertyGroup>
 
   <ItemGroup>
