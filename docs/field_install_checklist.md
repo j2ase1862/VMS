@@ -11,12 +11,12 @@ BODA.VMS.Web `docs/Production_Deploy_Runbook.md`
 
 ## 0. 사전 준비물
 
-- [ ] VMS MSI 설치 파일 — [GitHub Releases](https://github.com/j2ase1862/VMS/releases) 최신 버전 (v1.4.1 이상)
+- [ ] VMS MSI 설치 파일 — [GitHub Releases](https://github.com/j2ase1862/VMS/releases) 최신 버전 (v1.4.5 기준 작성; 릴리즈 미발행 버전은 USB 패키지의 MSI 사용)
 - [ ] BODA.VMS.Web 게시본 (`dotnet publish -c Release -r win-x64 --self-contained true` 산출물)
 - [ ] 비밀번호 사전 준비 (모두 **서로 다르게**, 12자 이상 권장 — msi_build_guide §11.3):
   - [ ] Web admin 초기 비밀번호 (`Initial__AdminPassword`)
-  - [ ] VMS admin 비밀번호 (마법사 입력)
-  - [ ] VMS local-admin 비밀번호 (마법사 입력)
+  - [ ] VMS admin 비밀번호 (마법사 입력) — **SSO 사용 시 불필요** (v1.4.5 부터 SSO 체크 시 입력란 비활성, admin 로그인은 Web 계정 사용)
+  - [ ] VMS local-admin 비밀번호 (마법사 입력 — SSO 여부와 무관하게 항상 필요)
   - [ ] JWT 서명 키 32자 이상 (`Jwt__Key`) — Web 서버 전용. AppSetup 에는 입력란 없음
   - [ ] (API Key enforcement 사용 시) `ClientApiKey__Value` — 각주 [1] 참고
 - [ ] 현장 PC 에서 관리자 PowerShell 실행 가능 확인
@@ -69,13 +69,20 @@ Start-Service BodaVmsWeb
 
 ### 2-2. AppSetup 마법사 1회 실행
 
-- [ ] Page 2 "Initial Admin Passwords" — VMS admin / local-admin 비밀번호 2개 입력
 - [ ] Page 2 "Web Server Integration" — Web URL 입력 (`http://<host>:5292`)
 - [ ] (선택) Page 2 "Web Client API Key" — enforcement 사용 시에만 입력, 각주 [1] 참고
 - [ ] (SSO 사용 시) Page 2 "Web SSO" 카드 — "Web SSO 활성" 체크
+      (v1.4.5 부터 체크 시 admin 비밀번호 입력란이 자동 비활성 + 안내 문구 표시 — 정상 동작)
+- [ ] Page 2 "Initial Admin Passwords" 입력:
+  - SSO 미사용 → VMS admin / local-admin 비밀번호 **2개** 입력
+  - SSO 사용 → **local-admin 만** 입력 (admin 입력란은 비활성 — admin 은 Web 계정으로 로그인)
 - [ ] 마지막 7단계 Security Mode — **Production** 유지 → Finish
-- [ ] 저장 메시지에 **"✓ admin 계정 초기 시드 완료"** 확인
-      (v1.4.1 부터 VMS 선실행 없이도 마법사가 DB 생성 + 시드 — PR #180)
+- [ ] 저장 메시지 확인 (v1.4.1 부터 VMS 선실행 없이도 마법사가 DB 생성 + 시드 — PR #180):
+  - SSO 미사용 신규 install → **"✓ admin 계정 초기 시드 완료"** + **"✓ local-admin 비밀번호 변경 완료"**
+  - SSO 사용 → **"✓ local-admin 비밀번호 변경 완료"** 만 표시 (admin 시드 없음 — 정상)
+  - **"⚠ admin 계정이 이미 존재하여 …"** 표시 → 재실행/업데이트 상황. admin 비밀번호는 바뀌지 않았음 —
+    변경이 필요하면 VMS 로그인 후 [사용자 관리] 에서 (v1.4.5 부터 표시, 이전 버전은 무통보)
+  - **"⚠ … 8자 미만 …"** 표시 → 해당 비밀번호 미적용. 다시 실행해 8자 이상으로 입력
 
 ### 2-3. VMS 검증
 
@@ -88,8 +95,8 @@ Start-Service BodaVmsWeb
 
 ## 3. SSO 마무리 (SSO 사용 시 — msi_build_guide §10.4 필수)
 
-- [ ] VMS 로그인 화면 → `local-admin` + 디폴트 `vasim1234` 로 1회 로그인
-- [ ] 사용자 관리 UI → local-admin 비밀번호를 강한 비밀번호로 즉시 변경
+- [ ] VMS 로그인 화면 → `local-admin` + **마법사에서 입력한 비밀번호**로 1회 로그인 (폴백 진입 확인)
+      — 마법사에서 비워뒀다면 디폴트 `vasim1234` 로 로그인 후 사용자 관리 UI 에서 **즉시 강한 비밀번호로 변경**
 - [ ] Web admin 계정으로 재로그인 → 감사 로그에 "Web SSO ok" 기록 확인
 - [ ] (선택) Web 서비스 일시 중지 → 일반 admin 로그인 거부 + local-admin 폴백 진입 확인 → 서비스 재시작
 
@@ -128,3 +135,4 @@ Web 서버의 `ClientApiKey__Value` 와 정확히 일치시킬 것.
 | 날짜 | 내용 |
 |------|------|
 | 2026-07-15 | 최초 작성 — v1.4.1 현장 검증 대비, Web→VMS 설치 순서 표준화 |
+| 2026-07-16 | v1.4.5 반영 — SSO 체크 시 admin 입력란 비활성(PR #190), 저장 메시지 분기(✓/⚠) 판독 기준, admin 미적용 재실행 안내 추가 |
