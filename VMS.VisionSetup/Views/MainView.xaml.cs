@@ -37,6 +37,10 @@ namespace VMS.VisionSetup
 
             // DataContext is set by App.xaml.cs via DI
             DataContextChanged += OnDataContextChanged;
+
+            // 창 닫힘 = 앱 종료 경로 — 카메라 SDK 스레드/공유 메모리/수신 루프를 정리해
+            // 프로세스 잔존 방지 (App.xaml ShutdownMode=OnMainWindowClose 와 한 쌍).
+            Closing += (_, _) => (DataContext as MainViewModel)?.Cleanup();
         }
 
         private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)

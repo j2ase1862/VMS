@@ -1,7 +1,11 @@
-﻿<Application x:Class="VMS.VisionSetup.App"
+﻿<!-- ShutdownMode 명시: 기본값(OnLastWindowClosed)은 숨은 보조 윈도우/다이얼로그가
+     남아 있으면 메인 창을 닫아도 프로세스가 종료되지 않는다 (현장 보고: 백그라운드
+     VMS.VisionSetup.exe 잔존). 메인 창 닫힘 = 앱 종료로 고정. -->
+<Application x:Class="VMS.VisionSetup.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:VMS.VisionSetup"
+             ShutdownMode="OnMainWindowClose"
 >
     <Application.Resources>
         <ResourceDictionary>
