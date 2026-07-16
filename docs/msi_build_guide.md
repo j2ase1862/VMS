@@ -55,8 +55,10 @@ ProjectReference 가 VMS 본체 빌드를 트리거하므로 사실상 (3.1) 과
 
 ### 3.3 빌드 산출물
 ```
-VMS.MasterSetup/bin/Release/VMS.MasterSetup.msi
+VMS.MasterSetup/bin/Release/VMS-<버전>.msi     # 예: VMS-1.4.6.msi
 ```
+파일명의 버전은 `Directory.Build.props` 의 `$(Version)` 을 따름
+(wixproj `OutputName` — v1.4.6 부터. 이전 버전 산출물명은 `VMS.MasterSetup.msi`).
 
 용량 확인:
 ```powershell
@@ -191,7 +193,7 @@ OEM 배포 시 동시 변경 + NOTICE / LICENSE 표기 정책 확인 필요 (gs/
 ```powershell
 $wi = New-Object -ComObject WindowsInstaller.Installer
 $db = $wi.GetType().InvokeMember("OpenDatabase", "InvokeMethod", $null, $wi,
-    @("VMS.MasterSetup\bin\Release\VMS.MasterSetup.msi", 0))
+    @((Resolve-Path "VMS.MasterSetup\bin\Release\VMS-*.msi").Path, 0))
 $view = $db.GetType().InvokeMember("OpenView", "InvokeMethod", $null, $db,
     @("SELECT * FROM Property WHERE Property='ProductVersion' OR Property='Manufacturer' OR Property='ProductName' OR Property='UpgradeCode'"))
 $view.GetType().InvokeMember("Execute", "InvokeMethod", $null, $view, $null)
@@ -206,17 +208,17 @@ while ($true) {
 
 ### 8.2 설치 dry-run (실제 설치 X)
 ```powershell
-msiexec /a "VMS.MasterSetup\bin\Release\VMS.MasterSetup.msi" TARGETDIR="C:\Temp\msi-extract" /qb
+msiexec /a "VMS.MasterSetup\bin\Release\VMS-1.4.6.msi" TARGETDIR="C:\Temp\msi-extract" /qb
 ```
 관리 설치 (administrative install) — MSI 내용을 추출만 하고 실제 시스템 변경 없음.
 
 ### 8.3 정식 설치 / 제거
 ```powershell
 # 설치 (조용한 모드)
-msiexec /i "VMS.MasterSetup.msi" /qb
+msiexec /i "VMS-1.4.6.msi" /qb
 
 # UI 표시 설치
-msiexec /i "VMS.MasterSetup.msi"
+msiexec /i "VMS-1.4.6.msi"
 
 # 제거 (UpgradeCode 기준)
 $code = "{A70E988A-739F-4CDC-BE08-EBFE03DACA32}"
