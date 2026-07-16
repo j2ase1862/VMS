@@ -784,10 +784,10 @@
                                            Foreground="{StaticResource Brush.Primary}"
                                            Margin="0,0,0,12"><Run Text="Camera Control"/><InlineUIContainer BaselineAlignment="Center"><vs:HelpIcon CustomTitle="Camera Control" CustomDescription="카메라 수동 조작입니다. 검사(AUTO RUN)가 멈춰 있을 때 사진 한 장 촬영(Grab), 실시간 영상(Live), 롤러 검사 모드를 사용할 수 있습니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
 
-                                <!-- Grab (single shot) -->
+                                <!-- Grab (single shot) — 순수 카메라 조작이라 WO 선택 불필요 (CanOperateCamera) -->
                                 <Button Command="{Binding GrabCommand}"
                                         AutomationProperties.Name="Grab"
-                                        IsEnabled="{Binding CanStartStop}"
+                                        IsEnabled="{Binding CanOperateCamera}"
                                         Visibility="{Binding IsLiveMode, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
                                         Background="{StaticResource Brush.Surface.Overlay}" Foreground="White"
                                         Style="{StaticResource ModernButton}"
@@ -802,10 +802,10 @@
                                     </StackPanel>
                                 </Button>
 
-                                <!-- Live Start -->
+                                <!-- Live Start — 순수 카메라 조작이라 WO 선택 불필요 (CanOperateCamera) -->
                                 <Button Command="{Binding StartLiveCommand}"
                                         AutomationProperties.Name="Live Start"
-                                        IsEnabled="{Binding CanStartStop}"
+                                        IsEnabled="{Binding CanOperateCamera}"
                                         Visibility="{Binding IsLiveMode, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
                                         Background="{StaticResource Brush.Surface.Overlay}" Foreground="White"
                                         Style="{StaticResource ModernButton}"
@@ -836,14 +836,14 @@
                                     </StackPanel>
                                 </Button>
 
-                                <!-- Roller Toggle -->
+                                <!-- Roller Toggle — 검사 결과가 생기므로 WO 게이트 유지 + 라인스캔 카메라 구성 시에만 -->
                                 <Button Command="{Binding ToggleRollerInspectionCommand}"
                                         AutomationProperties.Name="Roller"
-                                        IsEnabled="{Binding CanStartStop}"
+                                        IsEnabled="{Binding CanToggleRollerInspection}"
                                         Foreground="White"
                                         HorizontalAlignment="Stretch"
                                         ToolTipService.ShowOnDisabled="True"
-                                        ToolTip="롤러 검사 모드 토글">
+                                        ToolTip="롤러 검사 모드 토글 (라인스캔 카메라 구성 시)">
                                     <Button.Style>
                                         <Style TargetType="Button" BasedOn="{StaticResource ModernButton}">
                                             <Setter Property="Background" Value="{StaticResource Brush.Surface.Overlay}"/>

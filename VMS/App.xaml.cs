@@ -563,7 +563,7 @@ namespace VMS
                     predictionPollingService?.Dispose();
                     sensorPollingService?.Dispose();
                     foreach (var board in ioBoardConnections) board.Dispose();
-                    ForceShutdown(mainViewModel, heartbeatService, parameterSyncService, sharedFrameWriter, plcConnection, autoProcessService);
+                    ForceShutdown(mainViewModel, heartbeatService, parameterSyncService, sharedFrameWriter, plcConnection, autoProcessService, processService);
                 },
                 autoProcessService,
                 userService,
@@ -597,7 +597,7 @@ namespace VMS
                 updateService?.Dispose();
                 imageUploadService?.Dispose();
                 foreach (var board in ioBoardConnections) board.Dispose();
-                ForceShutdown(mainViewModel, heartbeatService, parameterSyncService, sharedFrameWriter, plcConnection, autoProcessService);
+                ForceShutdown(mainViewModel, heartbeatService, parameterSyncService, sharedFrameWriter, plcConnection, autoProcessService, processService);
             };
             mainWindow.Show();
 
@@ -908,7 +908,8 @@ namespace VMS
             IParameterSyncService? paramSync,
             SharedFrameWriter? frameWriter,
             IPlcConnection? plcConnection,
-            IAutoProcessService? autoProcess)
+            IAutoProcessService? autoProcess,
+            IProcessService? processService = null)
         {
             if (Interlocked.Exchange(ref _shutdownRequested, 1) == 1)
                 return;
@@ -924,6 +925,10 @@ namespace VMS
             // ② 정리 스레드: 카메라/PLC/서비스 정리 시도 (블로킹되면 ①이 종료시킴)
             new Thread(() =>
             {
+                // 자식 프로세스(VisionSetup/AppSetup) 정리 — 창이 있으면 정상 닫기 요청만,
+                // 창 없는 잔존 프로세스는 강제 종료. Kill 타이머(3초) 안에 끝나도록 짧은 대기.
+                try { processService?.ShutdownLaunchedProcesses(gracefulTimeoutMs: 1500); } catch { }
+
                 // 카메라 Live 중지 + 연결 해제
                 if (viewModel != null)
                 {

@@ -215,6 +215,28 @@ namespace VMS.ViewModels
                     // Completed/Closed 상태에서는 결과 업로드해도 카운터가 증가하지 않으므로 비활성.
                     && (SelectedWorkOrder.Status == "Planned" || SelectedWorkOrder.Status == "InProgress")));
 
+        /// <summary>
+        /// 카메라 조작(Grab / Live Start) 활성 조건 — CanStartStop 에서 Work Order 요건을 뺀 것.
+        /// Grab/Live 는 레시피·WO 데이터를 사용하지 않는 순수 카메라 조작이므로, 카메라 상태
+        /// 확인·노출 튜닝을 WO 선택 전에도 할 수 있어야 한다 (현장 피드백 2026-07-16).
+        /// 검사 결과가 생성되는 AUTO RUN / Roller 는 추적성(WO/Lot/SN) 확보를 위해
+        /// CanStartStop(WO 필수)을 유지한다.
+        /// </summary>
+        public bool CanOperateCamera =>
+            HasConnectedCamera
+            && (_userService?.HasPermission(UserPermission.StartStop) ?? true)
+            && (_operatorAuthService == null || IsOperatorLoggedIn);
+
+        /// <summary>
+        /// Roller 검사 토글 활성 — 검사 결과가 생기므로 CanStartStop(WO 포함) 유지.
+        /// 추가로 롤러 검사는 라인스캔 전용이므로, AppSetup 구성 카메라 중
+        /// LineScan2D/LineScan3D 가 있을 때만 활성 (에어리어 전용 장비에서는 항상 비활성).
+        /// </summary>
+        public bool CanToggleRollerInspection =>
+            CanStartStop
+            && Cameras.Any(c => c.CameraType == VMS.Camera.Models.CameraType.LineScan2D
+                             || c.CameraType == VMS.Camera.Models.CameraType.LineScan3D);
+
         // ── Equipment status (StatusBar) ──
         public string PlcVendorName { get; }
         public string PlcIpAddress { get; }
@@ -456,6 +478,8 @@ namespace VMS.ViewModels
             OnPropertyChanged(nameof(CanLaunchVisionSetup));
             OnPropertyChanged(nameof(CanLaunchAppSetup));
             OnPropertyChanged(nameof(CanStartStop));
+            OnPropertyChanged(nameof(CanOperateCamera));
+            OnPropertyChanged(nameof(CanToggleRollerInspection));
             // VMS 시스템 사용자 변경 시 Role-게이트 properties 도 재평가 (Admin 우회 통과 반영)
             OnPropertyChanged(nameof(CanLeadOrAbove));
             OnPropertyChanged(nameof(CanSupervisor));
@@ -578,6 +602,8 @@ namespace VMS.ViewModels
                 {
                     OnPropertyChanged(nameof(HasConnectedCamera));
                     OnPropertyChanged(nameof(CanStartStop));
+                    OnPropertyChanged(nameof(CanOperateCamera));
+                    OnPropertyChanged(nameof(CanToggleRollerInspection));
                     OnPropertyChanged(nameof(ConnectedCameraCount));
                     OnPropertyChanged(nameof(CameraConnectionStatus));
                 }
@@ -1504,6 +1530,8 @@ namespace VMS.ViewModels
             LoginOperatorCommand.NotifyCanExecuteChanged();
             LogoutOperatorCommand.NotifyCanExecuteChanged();
             OnPropertyChanged(nameof(CanStartStop));
+            OnPropertyChanged(nameof(CanOperateCamera));
+            OnPropertyChanged(nameof(CanToggleRollerInspection));
             OnPropertyChanged(nameof(CanLeadOrAbove));
             OnPropertyChanged(nameof(CanSupervisor));
         }
@@ -1589,6 +1617,7 @@ namespace VMS.ViewModels
         {
             OnPropertyChanged(nameof(SelectedWorkOrderText));
             OnPropertyChanged(nameof(CanStartStop));
+            OnPropertyChanged(nameof(CanToggleRollerInspection));
             OnPropertyChanged(nameof(SelectedWorkOrderProgressPercent));
             OnPropertyChanged(nameof(HasSelectedWorkOrderProgress));
 
@@ -1730,6 +1759,7 @@ namespace VMS.ViewModels
                 // CanStartStop 은 Status 도 보므로 함께 갱신.
                 OnPropertyChanged(nameof(SelectedWorkOrderText));
                 OnPropertyChanged(nameof(CanStartStop));
+                OnPropertyChanged(nameof(CanToggleRollerInspection));
                 OnPropertyChanged(nameof(SelectedWorkOrderProgressPercent));
             });
         }
