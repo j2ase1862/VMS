@@ -30,6 +30,15 @@ public partial class MainWindow : Window
             vm.InitialAdminPassword = InitialAdminPasswordBox.Password;
     }
 
+    // SSO 체크로 입력란이 비활성화되면 이미 입력된 값도 폐기 — 비활성 상태의
+    // 잔여 입력이 "설정했다" 는 착각을 남기지 않도록. (PasswordChanged 가 이어서
+    // 발생해 ViewModel 쪽 평문도 함께 비워짐)
+    private void InitialAdminPasswordBox_IsEnabledChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (e.NewValue is false && InitialAdminPasswordBox.Password.Length > 0)
+            InitialAdminPasswordBox.Password = string.Empty;
+    }
+
     private void LocalAdminPasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
     {
         if (DataContext is ViewModels.SetupViewModel vm)
