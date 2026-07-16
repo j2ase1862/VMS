@@ -18,6 +18,9 @@ namespace VMS.VisionSetup.Interfaces
         bool LastRunSuccess { get; }
         Mat? LastCompositeOverlay { get; }
 
+        /// <summary>마지막 실행의 파이프라인 경고 (연결 사이클, 이미지 연결 폴백 등). null이면 경고 없음.</summary>
+        string? LastPipelineWarning { get; }
+
         /// <summary>마지막 ExecuteAll의 도구 ID → 결과 매핑 (topological sort 영향 없이 안전 lookup).</summary>
         Dictionary<string, VisionResult> LastExecutionResultsById { get; }
 
