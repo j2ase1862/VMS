@@ -12,10 +12,11 @@ namespace VMS.Views
     {
         /// <summary>
         /// 컴팩트 헤더 임계 폭 — 이보다 좁으면 헤더 chips 가 축약 표시로 전환된다
-        /// (사번/Role 뱃지·진행률 바·보조 라벨 숨김). 풀 chips + 고정 열(로고/AUTO RUN/
-        /// User/툴바) 합이 ~1650px 라 그 이하에서 가로 스크롤이 생기던 것을 축약으로 흡수.
+        /// (사번/Role 뱃지·진행률 바·보조 라벨 숨김). 풀 chips 는 레시피명/WO 텍스트
+        /// 길이에 따라 고정 열 포함 1920px 도 넘칠 수 있어 (현장 보고: 1920 에서 스크롤바)
+        /// FHD(1920) 이하는 항상 축약 — 축약도 핵심 정보(이름/WO/레시피/S/N)는 유지.
         /// </summary>
-        private const double CompactHeaderThreshold = 1600;
+        private const double CompactHeaderThreshold = 1980;
 
         /// <summary>
         /// 헤더 축약 모드 — 순수 뷰 레이아웃 상태라 ViewModel 이 아닌 윈도우 DP 로 관리.
