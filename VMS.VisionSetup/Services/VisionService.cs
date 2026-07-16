@@ -753,6 +753,9 @@ namespace VMS.VisionSetup.Services
         /// </summary>
         public List<VisionResult> ExecuteAll()
         {
+            // 이전 실행 결과의 Mat을 먼저 해제 — 연속 검사(AUTO RUN)에서
+            // 참조만 끊긴 대형 네이티브 버퍼가 GC 파이널라이저에 의존해 쌓이는 것을 방지
+            ReleasePreviousResults();
             Results.Clear();
             var results = new List<VisionResult>();
 
@@ -986,6 +989,29 @@ namespace VMS.VisionSetup.Services
         /// 외부에서 Tools 컬렉션 순서와 일치한다고 가정하면 안 됨. 이 dictionary로 안전 lookup.
         /// </summary>
         public Dictionary<string, VisionResult> LastExecutionResultsById { get; private set; } = new();
+
+        /// <summary>
+        /// 이전 실행 결과가 보유한 Mat(OutputImage/OverlayImage) 해제.
+        /// Results / LastExecutionResultsById / 각 도구의 LastResult가 동일 VisionResult 인스턴스를
+        /// 공유하므로 참조 기준으로 1회씩만 순회 (ReleaseMats 자체도 idempotent라 이중 해제 없음).
+        /// 표시 경로(MainViewModel)는 실행 직후 ToWriteableBitmap()/Clone() 복사본을 만들고,
+        /// CurrentImage/DisplayImage는 결과 Mat과 소유권이 분리되어 있으므로
+        /// 다음 실행 시점의 이전 결과 해제는 화면에 표시 중인 이미지에 영향을 주지 않는다.
+        /// </summary>
+        private void ReleasePreviousResults()
+        {
+            var released = new HashSet<VisionResult>();
+            foreach (var result in Results)
+            {
+                if (released.Add(result))
+                    result.ReleaseMats();
+            }
+            foreach (var result in LastExecutionResultsById.Values)
+            {
+                if (released.Add(result))
+                    result.ReleaseMats();
+            }
+        }
 
         /// <summary>
         /// 도구 타입에 따른 새 인스턴스 생성
@@ -1230,6 +1256,11 @@ namespace VMS.VisionSetup.Services
         /// </summary>
         public void Dispose()
         {
+            // 마지막 실행 결과의 Mat도 함께 정리 (CurrentImage 등과 동일한 수명 종료 지점)
+            ReleasePreviousResults();
+            Results.Clear();
+            LastExecutionResultsById = new Dictionary<string, VisionResult>();
+
             CurrentImage?.Dispose();
             CurrentImage = null;
             CurrentDepthMap32F = null;

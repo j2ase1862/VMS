@@ -272,14 +272,22 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             var result = new VisionResult();
             var sw = Stopwatch.StartNew();
 
+            // 중간 Mat — 조기 리턴/예외 경로를 포함해 finally에서 해제.
+            // 정상 경로에서는 result로 소유권 이전 후 null 처리 (FeatureMatchTool의 using 패턴 준용)
+            Mat? grayImage = null;
+            Mat? overlayImage = null;
+
             try
             {
-                Mat grayImage = new Mat();
-
                 if (inputImage.Channels() > 1)
+                {
+                    grayImage = new Mat();
                     Cv2.CvtColor(inputImage, grayImage, ColorConversionCodes.BGR2GRAY);
+                }
                 else
+                {
                     grayImage = inputImage.Clone();
+                }
 
                 // When UseROI is true, derive search line from the ROI rectangle:
                 //   longer axis → search direction, shorter axis → search width
@@ -375,7 +383,7 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 LastGradient = gradient;
 
                 // 결과 이미지 생성 — draw on original color image
-                Mat overlayImage = GetColorOverlayBase(inputImage);
+                overlayImage = GetColorOverlayBase(inputImage);
 
                 // 검색 영역 표시
                 DrawSearchRegion(overlayImage, searchStart, searchEnd, searchWidth, vx, vy);
@@ -462,6 +470,8 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 result.Data["Edges"] = edges;
                 result.OutputImage = grayImage;
                 result.OverlayImage = overlayImage;
+                grayImage = null;       // 소유권이 result로 이전됨 — finally에서 해제 금지
+                overlayImage = null;
 
                 // 캘리브레이션이 있으면 mm 키 추가 (없으면 no-op)
                 var cal = VisionService.Instance.CurrentCalibrationMetadata;
@@ -475,6 +485,12 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             {
                 result.Success = false;
                 result.Message = $"Caliper 실행 실패: {ex.Message}";
+            }
+            finally
+            {
+                // 조기 리턴("검색 라인이 너무 짧습니다")·예외 경로에서 소유권 이전 전의 Mat 해제
+                grayImage?.Dispose();
+                overlayImage?.Dispose();
             }
 
             sw.Stop();

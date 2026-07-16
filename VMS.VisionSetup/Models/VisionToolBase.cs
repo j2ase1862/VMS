@@ -169,7 +169,20 @@ namespace VMS.VisionSetup.Models
         public VisionResult? LastResult
         {
             get => _lastResult;
-            set => SetProperty(ref _lastResult, value);
+            set
+            {
+                // 도구 내부에서 set한 결과를 VisionService가 같은 인스턴스로 다시 set하는 경우가 있음 — 무시
+                if (ReferenceEquals(_lastResult, value))
+                    return;
+
+                // 교체되는 이전 결과의 Mat(OutputImage/OverlayImage)을 해제해 네이티브 메모리 누수 방지.
+                // Results/LastExecutionResultsById가 같은 인스턴스를 공유할 수 있으나
+                // ReleaseMats()는 idempotent라 중복 호출에 안전.
+                // 표시 경로(MainViewModel)는 표시 시점에 ToWriteableBitmap()/Clone() 복사본을 만들므로
+                // 이전 결과의 원본 Mat 해제는 화면 표시와 무관하다.
+                _lastResult?.ReleaseMats();
+                SetProperty(ref _lastResult, value);
+            }
         }
 
         // 실행 시간 (ms)
@@ -496,6 +509,24 @@ namespace VMS.VisionSetup.Models
 
         // Graphics 오버레이 정보
         public List<GraphicOverlay> Graphics { get; set; } = new List<GraphicOverlay>();
+
+        /// <summary>
+        /// 보유한 Mat 리소스(OutputImage/OverlayImage) 해제.
+        /// 파이프라인 재실행 시 이전 결과 정리용 — Results/LastExecutionResultsById/도구별 LastResult가
+        /// 동일 인스턴스를 공유하므로 중복 호출에 안전하도록 idempotent(해제 후 null)로 구현.
+        /// Data/Message는 유지되므로 결과 텍스트를 참조하는 곳(ChatViewModel 등)은 영향 없음.
+        /// </summary>
+        public void ReleaseMats()
+        {
+            // 필드 직접 접근: 해제 알림으로 UI 바인딩을 흔들지 않기 위해 SetProperty 미사용
+            var output = _outputImage;
+            _outputImage = null;
+            output?.Dispose();
+
+            var overlay = _overlayImage;
+            _overlayImage = null;
+            overlay?.Dispose();
+        }
     }
 
     /// <summary>
