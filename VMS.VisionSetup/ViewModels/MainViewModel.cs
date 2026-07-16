@@ -97,6 +97,7 @@ namespace VMS.VisionSetup.ViewModels
         private ICameraAcquisition? _cameraAcquisition;
         private SharedFrameReader? _sharedFrameReader;
         private CancellationTokenSource? _liveReceiveCts;
+        private CancellationTokenSource? _cameraLiveCts;
         private string[] _imageFolderFiles = Array.Empty<string>();
         private int _currentImageIndex = -1;
         #endregion
@@ -347,6 +348,10 @@ namespace VMS.VisionSetup.ViewModels
         [ObservableProperty]
         private bool _isReceivingFromVms;
 
+        // 카메라 직접 라이브(연속 Grab) 중 상태 — VMS 수신(IsReceivingFromVms)과 별개
+        [ObservableProperty]
+        private bool _isCameraLive;
+
         #endregion
 
         #region Recipe / Camera / Step Properties
@@ -554,6 +559,8 @@ namespace VMS.VisionSetup.ViewModels
         public RelayCommand LoadSamplePointCloudCommand { get; }
         public RelayCommand ShowCameraInfoCommand { get; }
         public RelayCommand AcquireImageCommand { get; }
+        public RelayCommand StartCameraLiveCommand { get; }
+        public RelayCommand StopCameraLiveCommand { get; }
         public RelayCommand ConnectCameraCommand { get; }
         public RelayCommand DisconnectCameraCommand { get; }
         public RelayCommand GenerateHeightMapCommand { get; }
@@ -629,7 +636,9 @@ namespace VMS.VisionSetup.ViewModels
             MoveStepDownCommand = new RelayCommand(MoveStepDown, () => SelectedStep != null);
             LoadSamplePointCloudCommand = new RelayCommand(LoadSamplePointCloud);
             ShowCameraInfoCommand = new RelayCommand(ShowCameraInfo);
-            AcquireImageCommand = new RelayCommand(async () => await AcquireImage(), () => SelectedCamera != null && !IsAcquiring);
+            AcquireImageCommand = new RelayCommand(async () => await AcquireImage(), () => SelectedCamera != null && !IsAcquiring && !IsCameraLive);
+            StartCameraLiveCommand = new RelayCommand(async () => await StartCameraLive(), () => SelectedCamera != null && !IsCameraLive && !IsAcquiring);
+            StopCameraLiveCommand = new RelayCommand(StopCameraLive, () => IsCameraLive);
             ConnectCameraCommand = new RelayCommand(async () => await ConnectCamera(), () => SelectedCamera != null && !IsCameraConnected);
             DisconnectCameraCommand = new RelayCommand(async () => await DisconnectCamera(), () => IsCameraConnected);
             GenerateHeightMapCommand = new RelayCommand(GenerateHeightMap, CanGenerateHeightMap);
@@ -793,8 +802,24 @@ namespace VMS.VisionSetup.ViewModels
 
         private void CloseApplication()
         {
-            _chatService?.Dispose();
+            Cleanup();
             _shutdownAction();
+        }
+
+        /// <summary>
+        /// 종료 시 리소스 정리 — 백그라운드 수신 루프 / 카메라 SDK 스레드 / 공유 메모리
+        /// 핸들이 남아 창을 닫아도 프로세스가 종료되지 않는 문제 방지.
+        /// MainView.Closing 과 CloseApplication 양쪽에서 호출 (idempotent).
+        /// </summary>
+        public void Cleanup()
+        {
+            try { StopCameraLive(); } catch { /* 종료 경로 — 실패해도 계속 */ }
+            try { StopLiveReceive(); } catch { }
+            try { _sharedFrameReader?.Dispose(); } catch { }
+            _sharedFrameReader = null;
+            try { _cameraAcquisition?.Dispose(); } catch { }
+            _cameraAcquisition = null;
+            try { _chatService?.Dispose(); } catch { }
         }
 
         private void ShowChatWindow()
@@ -2187,6 +2212,8 @@ namespace VMS.VisionSetup.ViewModels
         {
             try
             {
+                StopCameraLive();   // 라이브 반복 Grab 중이면 먼저 중지
+
                 if (_cameraAcquisition != null)
                 {
                     await _cameraAcquisition.DisconnectAsync();
@@ -2262,6 +2289,83 @@ namespace VMS.VisionSetup.ViewModels
                 IsAcquiring = false;
                 AcquireImageCommand.NotifyCanExecuteChanged();
             }
+        }
+
+        /// <summary>
+        /// 카메라 직접 라이브 — 선택 스텝의 노출/게인을 적용한 뒤 AcquireAsync 를 반복해
+        /// Image Viewer 를 갱신한다. VMS 공유 메모리 수신(StartLiveReceive)과 별개로,
+        /// VMS 본체 없이 카메라만으로 라이브 확인이 필요할 때 사용 (노출 튜닝 등).
+        /// 하드웨어 스트리밍(StartProcessing)이 아닌 소프트웨어 반복 Grab 이므로
+        /// 프레임률은 카메라 획득 시간에 종속된다.
+        /// </summary>
+        private async System.Threading.Tasks.Task StartCameraLive()
+        {
+            if (SelectedCamera == null || IsCameraLive) return;
+
+            // Acquire Image 와 동일 규칙: 미연결이면 자동 연결
+            if (!IsCameraConnected)
+            {
+                await ConnectCamera();
+                if (!IsCameraConnected)
+                {
+                    StatusMessage = "카메라 연결 실패로 라이브 중단";
+                    return;
+                }
+            }
+
+            // 선택 스텝의 노출/게인 적용 — 지원 구현체(Mech-Mind 등)만 실제 반영
+            if (SelectedStep != null)
+                await _cameraAcquisition!.ApplySettingsAsync(SelectedStep.Exposure, SelectedStep.Gain);
+
+            _cameraLiveCts = new CancellationTokenSource();
+            var ct = _cameraLiveCts.Token;
+            IsCameraLive = true;
+            NotifyCameraLiveCommands();
+            StatusMessage = $"카메라 라이브 시작: {SelectedCamera.Name}";
+
+            var stopped = "카메라 라이브 중지";
+            try
+            {
+                while (!ct.IsCancellationRequested && _cameraAcquisition != null)
+                {
+                    var result = await _cameraAcquisition.AcquireAsync();
+                    if (ct.IsCancellationRequested) break;
+
+                    if (!result.Success)
+                    {
+                        // 연속 실패 스팸 방지 — 첫 실패에서 라이브 중단
+                        stopped = $"카메라 라이브 중단: {result.Message}";
+                        break;
+                    }
+
+                    if (result.Image2D != null) CurrentImage = result.Image2D;
+                    if (result.PointCloud != null) CurrentPointCloud = result.PointCloud;
+                }
+            }
+            catch (Exception ex)
+            {
+                stopped = $"카메라 라이브 오류: {ex.Message}";
+            }
+            finally
+            {
+                _cameraLiveCts?.Dispose();
+                _cameraLiveCts = null;
+                IsCameraLive = false;
+                NotifyCameraLiveCommands();
+                StatusMessage = stopped;
+            }
+        }
+
+        private void StopCameraLive()
+        {
+            _cameraLiveCts?.Cancel();
+        }
+
+        private void NotifyCameraLiveCommands()
+        {
+            AcquireImageCommand.NotifyCanExecuteChanged();
+            StartCameraLiveCommand.NotifyCanExecuteChanged();
+            StopCameraLiveCommand.NotifyCanExecuteChanged();
         }
 
         /// <summary>

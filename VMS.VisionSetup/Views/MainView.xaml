@@ -344,7 +344,7 @@
                         </MenuItem>
 
                         <!-- Camera -->
-                        <MenuItem Header="_Camera">
+                        <MenuItem x:Name="CameraTopMenuItem" Header="_Camera">
                             <MenuItem Header="Camera Manager" Click="CameraManager_Click">
                                 <MenuItem.Icon>
                                     <Path Data="M2,6 L2,15 L18,15 L18,6 L15,6 L13,4 L7,4 L5,6 Z M10,7.5 A2.5,2.5 0 1 1 10,12.5 A2.5,2.5 0 1 1 10,7.5"
@@ -389,19 +389,33 @@
                                           Width="14" Height="13" Stretch="Uniform"/>
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="Receive from VMS" Command="{Binding ReceiveFromVmsCommand}">
+                            <MenuItem Header="Start Camera Live" Command="{Binding StartCameraLiveCommand}"
+                                      ToolTip="선택 카메라에서 연속 획득해 실시간 표시 (선택 스텝의 노출/게인 적용)">
+                                <MenuItem.Icon>
+                                    <Path Data="M4,2 L16,10 L4,18 Z" Fill="#4CAF50" Width="11" Height="11" Stretch="Uniform"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Stop Camera Live" Command="{Binding StopCameraLiveCommand}">
+                                <MenuItem.Icon>
+                                    <Path Data="M3,3 L17,3 L17,17 L3,17 Z" Fill="#F44336" Width="10" Height="10" Stretch="Uniform"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <Separator/>
+                            <MenuItem Header="Receive from VMS" Command="{Binding ReceiveFromVmsCommand}"
+                                      ToolTip="VMS 본체가 마지막으로 획득한 프레임 1장을 가져옴">
                                 <MenuItem.Icon>
                                     <Path Data="M3,4 L3,16 L17,16 L17,4 Z M7,1 L7,4 M13,1 L13,4 M3,8 L17,8"
                                           Stroke="#BBBBBB" StrokeThickness="1.1" Fill="Transparent"
                                           Width="13" Height="13" Stretch="Uniform"/>
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="Start Live Receive" Command="{Binding StartLiveReceiveCommand}">
+                            <MenuItem Header="Start Live Receive (from VMS)" Command="{Binding StartLiveReceiveCommand}"
+                                      ToolTip="VMS 본체가 송출하는 라이브 프레임 수신 — VMS 실행 + VMS 쪽 Live 가동 필요">
                                 <MenuItem.Icon>
                                     <Ellipse Width="10" Height="10" Fill="#4CAF50"/>
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="Stop Live Receive" Command="{Binding StopLiveReceiveCommand}">
+                            <MenuItem Header="Stop Live Receive (from VMS)" Command="{Binding StopLiveReceiveCommand}">
                                 <MenuItem.Icon>
                                     <Ellipse Width="10" Height="10" Fill="#F44336"/>
                                 </MenuItem.Icon>
@@ -565,9 +579,11 @@
             </StackPanel>
         </Border>
 
-        <!-- Camera Info Popup -->
+        <!-- Camera Info Popup — 앵커는 메뉴바의 최상위 Camera 항목.
+             서브메뉴 항목(CameraInfoMenuItem)에 앵커하면 메뉴가 닫히는 순간 대상이
+             비주얼 트리에서 사라져 Popup 이 표시되지 않는다 (클릭해도 무반응 증상). -->
         <Popup x:Name="CameraInfoPopup"
-               PlacementTarget="{Binding ElementName=CameraInfoMenuItem}"
+               PlacementTarget="{Binding ElementName=CameraTopMenuItem}"
                Placement="Bottom"
                StaysOpen="False"
                AllowsTransparency="True"
