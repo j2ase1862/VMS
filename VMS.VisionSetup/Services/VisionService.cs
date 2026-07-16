@@ -107,6 +107,24 @@ namespace VMS.VisionSetup.Services
             private set => SetProperty(ref _lastRunSuccess, value);
         }
 
+        // 마지막 실행에서 발생한 파이프라인 경고 (연결 사이클, 이미지 연결 폴백 등)
+        // 실행 자체는 계속하되 사용자에게 표면화해야 하는 상황을 누적. null이면 경고 없음.
+        private string? _lastPipelineWarning;
+        public string? LastPipelineWarning
+        {
+            get => _lastPipelineWarning;
+            private set => SetProperty(ref _lastPipelineWarning, value);
+        }
+
+        /// <summary>파이프라인 경고 누적 (실행 중 여러 건 발생 가능 — " / "로 연결)</summary>
+        private void AppendPipelineWarning(string message)
+        {
+            Debug.WriteLine($"[VisionService] Pipeline warning: {message}");
+            LastPipelineWarning = string.IsNullOrEmpty(LastPipelineWarning)
+                ? message
+                : $"{LastPipelineWarning} / {message}";
+        }
+
         // 합성 오버레이 이미지 (모든 도구의 그래픽을 하나로 합성)
         private Mat? _lastCompositeOverlay;
         public Mat? LastCompositeOverlay
@@ -301,6 +319,13 @@ namespace VMS.VisionSetup.Services
                 // Execute()는 입력을 수정하지 않으므로 안전하게 공유 가능
                 if (sourceResult.OutputImage != null && !sourceResult.OutputImage.Empty())
                     return sourceResult.OutputImage;
+
+                // Source가 OutputImage를 만들지 못한 경우(도구 실행 실패 등) 원본 이미지로 폴백.
+                // 사용자가 명시적으로 연결한 경로가 무시되는 것이므로 침묵하지 않고 경고로 표면화.
+                var sourceName = Tools.FirstOrDefault(t => t.Id == imageConnection.SourceId)?.Name
+                    ?? imageConnection.SourceId;
+                AppendPipelineWarning(
+                    $"'{sourceName}'의 출력 이미지가 없어 '{tool.Name}'에 원본 이미지가 입력됨");
             }
 
             return null;
@@ -472,23 +497,19 @@ namespace VMS.VisionSetup.Services
                                 (int)(newSrCX - sw / 2.0), (int)(newSrCY - sh / 2.0), sw, sh);
                         }
                     }
-                    // Fallback: BoundingRect
+                    // Fallback: BoundingRect (CenterX/CenterY가 없는 소스용)
                     else if (sourceResult.Data.TryGetValue("BoundingRect", out var rectObj) && rectObj is Rect boundingRect)
                     {
                         tool.ROI = boundingRect;
                         tool.UseROI = true;
                     }
-                // Fallback: center-based (non-fixture sources)
-                else if (sourceResult.Data.TryGetValue("CenterX", out var fcx) &&
-                         sourceResult.Data.TryGetValue("CenterY", out var fcy))
-                {
-                    double centerX = Convert.ToDouble(fcx);
-                    double centerY = Convert.ToDouble(fcy);
-                    int roiW = tool.ROI.Width > 0 ? tool.ROI.Width : 100;
-                    int roiH = tool.ROI.Height > 0 ? tool.ROI.Height : 100;
-                    tool.ROI = new Rect((int)(centerX - roiW / 2), (int)(centerY - roiH / 2), roiW, roiH);
-                    tool.UseROI = true;
-                }
+                    // NOTE: 과거 여기 있던 "center-based (non-fixture sources)" 폴백 분기는 제거됨.
+                    // 초기 구현에서는 첫 분기가 TrainedCenterX/Y(FeatureMatch 전용 키)를 요구해
+                    // CenterX/CenterY만 가진 비-Fixture 소스(Blob 등)가 이 폴백으로 처리됐으나,
+                    // 32e75f0에서 첫 분기가 "첫 적용 시점 스냅샷(FixtureRef*)" 방식으로 일반화되며
+                    // CenterX/CenterY만 있어도 첫 분기가 처리하게 됨 (사용자 ROI 미지정 시
+                    // FixtureBaseROI가 기준 좌표 중심으로 생성되어 폴백과 동일한 배치 결과).
+                    // → 조건이 첫 분기와 동일해져 도달 불가한 죽은 코드였음.
                 }
             }
             finally
@@ -504,7 +525,8 @@ namespace VMS.VisionSetup.Services
         /// <summary>
         /// 연결 의존성에 따라 도구를 위상 정렬 (소스가 타겟보다 먼저 실행되도록)
         /// </summary>
-        private List<VisionToolBase> TopologicalSort(IEnumerable<VisionToolBase> tools)
+        /// <param name="cycleTools">사이클에 포함되어 위상 정렬이 불가능했던 도구들 (원래 순서로 뒤에 append됨)</param>
+        private List<VisionToolBase> TopologicalSort(IEnumerable<VisionToolBase> tools, out List<VisionToolBase> cycleTools)
         {
             var toolList = tools.ToList();
             var toolById = toolList.ToDictionary(t => t.Id);
@@ -546,13 +568,20 @@ namespace VMS.VisionSetup.Services
                 }
             }
 
-            // If cycle detected (sorted.Count < toolList.Count), append remaining in original order
+            // If cycle detected (sorted.Count < toolList.Count), append remaining in original order.
+            // 실행 자체는 계속하되 호출자(ExecuteAll)가 cycleTools로 경고를 표면화한다.
+            cycleTools = new List<VisionToolBase>();
             if (sorted.Count < toolList.Count)
             {
                 var sortedIds = new HashSet<string>(sorted.Select(t => t.Id));
                 foreach (var t in toolList)
+                {
                     if (!sortedIds.Contains(t.Id))
+                    {
                         sorted.Add(t);
+                        cycleTools.Add(t);
+                    }
+                }
             }
 
             return sorted;
@@ -635,6 +664,8 @@ namespace VMS.VisionSetup.Services
         /// </summary>
         public VisionResult ExecuteTool(VisionToolBase tool, Mat? inputImage = null)
         {
+            LastPipelineWarning = null;
+
             var image = inputImage ?? CurrentImage;
             if (image == null || image.Empty())
             {
@@ -756,7 +787,11 @@ namespace VMS.VisionSetup.Services
             // 이전 실행 결과의 Mat을 먼저 해제 — 연속 검사(AUTO RUN)에서
             // 참조만 끊긴 대형 네이티브 버퍼가 GC 파이널라이저에 의존해 쌓이는 것을 방지
             ReleasePreviousResults();
-            Results.Clear();
+            LastPipelineWarning = null;
+
+            // Results(ObservableCollection)는 UI 스레드 소유 — ExecuteAllAsync가 Task.Run으로
+            // 이 메서드를 백그라운드에서 실행하므로 여기서는 로컬 리스트에만 모으고,
+            // 실행 완료 후 PublishResults()가 UI 스레드로 마샬링해 일괄 반영한다.
             var results = new List<VisionResult>();
 
             if (CurrentImage == null || CurrentImage.Empty())
@@ -767,7 +802,7 @@ namespace VMS.VisionSetup.Services
                     Message = "입력 이미지가 없습니다."
                 };
                 results.Add(errorResult);
-                Results.Add(errorResult);
+                PublishResults(results);
                 LastRunSuccess = false;
                 return results;
             }
@@ -792,7 +827,13 @@ namespace VMS.VisionSetup.Services
             var connectedGrayCache = new Dictionary<string, Mat>();
 
             // Topological sort: ensures sources execute before their targets
-            var sortedTools = TopologicalSort(Tools);
+            var sortedTools = TopologicalSort(Tools, out var cycleTools);
+            if (cycleTools.Count > 0)
+            {
+                // 사이클이 있으면 해당 도구들은 의존성 보장 없이 원래 순서로 실행됨 — 침묵하지 않고 표면화
+                AppendPipelineWarning(
+                    $"도구 연결에 순환이 감지되어 다음 도구는 연결 순서 보장 없이 실행됨: {string.Join(", ", cycleTools.Select(t => t.Name))}");
+            }
 
             foreach (var tool in sortedTools)
             {
@@ -809,7 +850,6 @@ namespace VMS.VisionSetup.Services
                         Message = $"연결된 도구의 결과가 실패하여 건너뜀: {tool.Name}"
                     };
                     results.Add(skipResult);
-                    Results.Add(skipResult);
                     resultMap[tool.Id] = skipResult;
                     allSuccess = false;
                     continue;
@@ -923,7 +963,6 @@ namespace VMS.VisionSetup.Services
                     var result = tool.Execute(inputImage);
                     tool.LastResult = result;
                     results.Add(result);
-                    Results.Add(result);
                     resultMap[tool.Id] = result;
 
                     if (!result.Success)
@@ -965,6 +1004,9 @@ namespace VMS.VisionSetup.Services
             connectedGrayCache.Clear();
 
             LastCompositeOverlay = compositeOverlay;
+
+            // 실행 결과를 UI 스레드에서 일괄 반영 (백그라운드 CollectionChanged 크래시 방지)
+            PublishResults(results);
 
             sw.Stop();
             TotalExecutionTime = sw.Elapsed.TotalMilliseconds;
@@ -1011,6 +1053,36 @@ namespace VMS.VisionSetup.Services
                 if (released.Add(result))
                     result.ReleaseMats();
             }
+        }
+
+        /// <summary>
+        /// 실행 결과를 Results(ObservableCollection)에 일괄 반영.
+        /// ObservableCollection의 CollectionChanged는 컬렉션을 생성한(바인딩하는) 스레드에서만
+        /// 안전하므로, 백그라운드 실행(ExecuteAllAsync → Task.Run) 중에는 로컬 리스트에 모았다가
+        /// 이 메서드가 UI 디스패처로 마샬링해 Clear+Add를 한 번에 수행한다.
+        /// Invoke(동기)를 사용해 ExecuteAll() 반환 시점에 Results가 최신임을 보장 (기존 호출자 동작 보존).
+        /// </summary>
+        private void PublishResults(List<VisionResult> results)
+        {
+            InvokeOnUIThread(() =>
+            {
+                Results.Clear();
+                foreach (var r in results)
+                    Results.Add(r);
+            });
+        }
+
+        /// <summary>
+        /// UI 디스패처에서 동기 실행. WPF Application이 없거나(단위 테스트)
+        /// 이미 UI 스레드면 직접 실행.
+        /// </summary>
+        private static void InvokeOnUIThread(Action action)
+        {
+            var dispatcher = System.Windows.Application.Current?.Dispatcher;
+            if (dispatcher == null || dispatcher.CheckAccess())
+                action();
+            else
+                dispatcher.Invoke(action);
         }
 
         /// <summary>

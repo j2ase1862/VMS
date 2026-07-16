@@ -1031,6 +1031,10 @@ namespace VMS.VisionSetup.ViewModels
                 int successCount = results.Count(r => r.Success);
                 StatusMessage = $"실행 완료: {successCount}/{results.Count} 성공";
 
+                // 파이프라인 경고 표면화 (연결 사이클, 이미지 연결 폴백 등 — 실행은 계속되지만 사용자가 알아야 함)
+                if (!string.IsNullOrEmpty(_visionService.LastPipelineWarning))
+                    StatusMessage += $" [경고] {_visionService.LastPipelineWarning}";
+
                 UpdateToolRunResults();
             }
             catch (Exception ex)
@@ -1077,6 +1081,10 @@ namespace VMS.VisionSetup.ViewModels
                 StatusMessage = result.Success
                     ? $"실행 완료: {result.Message}"
                     : $"실행 실패: {result.Message}";
+
+                // 파이프라인 경고 표면화 (업스트림 이미지 연결 폴백 등)
+                if (!string.IsNullOrEmpty(_visionService.LastPipelineWarning))
+                    StatusMessage += $" [경고] {_visionService.LastPipelineWarning}";
 
                 UpdateToolRunResults(SelectedTool.VisionTool);
             }

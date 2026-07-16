@@ -776,6 +776,13 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                         result.OverlayImage = overlay;
                     }
                 }
+
+                // 위치 검출 도구는 이미지를 변형하지 않으므로 입력을 그대로 다음 도구로 전달 (passthrough).
+                // 미설정 시 이 도구를 Image 연결 소스로 쓰면 하류가 조용히 원본 이미지로 폴백했었음
+                // (VisionService.GetConnectedInputImage). Clone인 이유: 입력 Mat은 VisionService 소유
+                // (원본 Clone) 또는 업스트림 결과와의 공유 참조라서, 소유권이 VisionResult로 이전되는
+                // OutputImage(재실행 시 ReleaseMats로 Dispose됨)에 그대로 담으면 이중 해제/사후 변조 위험.
+                result.OutputImage = inputImage.Clone();
             }
             catch (Exception ex)
             {
