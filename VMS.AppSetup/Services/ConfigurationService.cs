@@ -26,8 +26,17 @@ namespace VMS.AppSetup.Services
         };
 
         private ConfigurationService()
+            : this(VMS.Camera.Configuration.AppDataPaths.Root)
         {
-            _configFolderPath = VMS.Camera.Configuration.AppDataPaths.Root;
+        }
+
+        /// <summary>
+        /// 임의 폴더로 별도 인스턴스를 만들 수 있는 테스트 친화 ctor.
+        /// internal — VMS.AppSetup.Tests 전용. 운영 코드는 <see cref="Instance"/> 싱글톤 사용.
+        /// </summary>
+        internal ConfigurationService(string configFolderPath)
+        {
+            _configFolderPath = configFolderPath;
             _configFilePath = Path.Combine(_configFolderPath, "system_config.json");
             EnsureDirectoryExists();
         }
@@ -66,10 +75,23 @@ namespace VMS.AppSetup.Services
         }
 
         /// <summary>
-        /// 설정 로드
+        /// 직전 <see cref="LoadConfiguration"/> 의 실패 원인. null 이면 성공 또는 파일 없음(정상).
+        /// wizard 가 "기본값으로 시작" 사실을 운영자에게 알리는 데 사용 — 무통보로 기본값이
+        /// 뜨면 저장 시 기존 설정이 통째로 덮어써지는 사고로 이어진다.
+        /// </summary>
+        public string? LastLoadError { get; private set; }
+
+        /// <summary>파싱 실패한 원본을 보존하는 경로 — 진단/복구용.</summary>
+        public string InvalidBackupPath => _configFilePath + ".invalid.bak";
+
+        /// <summary>
+        /// 설정 로드. 파일이 없으면 null (신규 install — 정상).
+        /// 파싱 실패 시에도 null 을 반환하되 LastLoadError 에 원인을 남기고,
+        /// 원본을 InvalidBackupPath 로 보존한다 (이후 저장이 원본을 덮어써도 복구 가능).
         /// </summary>
         public SetupConfiguration? LoadConfiguration()
         {
+            LastLoadError = null;
             try
             {
                 if (!File.Exists(_configFilePath))
@@ -81,6 +103,16 @@ namespace VMS.AppSetup.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"설정 로드 실패: {ex.Message}");
+                LastLoadError = ex.Message;
+                try
+                {
+                    File.Copy(_configFilePath, InvalidBackupPath, overwrite: true);
+                }
+                catch (Exception backupEx)
+                {
+                    // 보존 실패는 치명적이지 않음 — 원인 메시지에 덧붙여 운영자가 수동 백업하도록.
+                    LastLoadError += $" (원본 보존 실패: {backupEx.Message})";
+                }
                 return null;
             }
         }
