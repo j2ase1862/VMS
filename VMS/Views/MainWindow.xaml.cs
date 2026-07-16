@@ -10,9 +10,32 @@ namespace VMS.Views
 {
     public partial class MainWindow : Window
     {
+        /// <summary>
+        /// 컴팩트 헤더 임계 폭 — 이보다 좁으면 헤더 chips 가 축약 표시로 전환된다
+        /// (사번/Role 뱃지·진행률 바·보조 라벨 숨김). 풀 chips + 고정 열(로고/AUTO RUN/
+        /// User/툴바) 합이 ~1650px 라 그 이하에서 가로 스크롤이 생기던 것을 축약으로 흡수.
+        /// </summary>
+        private const double CompactHeaderThreshold = 1600;
+
+        /// <summary>
+        /// 헤더 축약 모드 — 순수 뷰 레이아웃 상태라 ViewModel 이 아닌 윈도우 DP 로 관리.
+        /// 헤더 chips 의 Style DataTrigger 가 RelativeSource 로 바인딩.
+        /// </summary>
+        public static readonly DependencyProperty IsCompactHeaderProperty =
+            DependencyProperty.Register(nameof(IsCompactHeader), typeof(bool), typeof(MainWindow),
+                new PropertyMetadata(false));
+
+        public bool IsCompactHeader
+        {
+            get => (bool)GetValue(IsCompactHeaderProperty);
+            set => SetValue(IsCompactHeaderProperty, value);
+        }
+
         public MainWindow()
         {
             InitializeComponent();
+
+            SizeChanged += (_, e) => IsCompactHeader = e.NewSize.Width < CompactHeaderThreshold;
         }
 
         /// <summary>
