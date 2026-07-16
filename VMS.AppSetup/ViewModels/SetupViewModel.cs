@@ -222,6 +222,20 @@ namespace VMS.AppSetup.ViewModels
         private void LoadExistingConfiguration()
         {
             var config = _configService.LoadConfiguration();
+
+            // 파싱 실패 무통보 방지 — 기본값으로 뜬 wizard 를 그대로 저장하면 기존 설정이
+            // 통째로 덮어써지므로, 실패 사실 + 원인 + 원본 보존 위치를 반드시 알린다.
+            if (config == null && _configService.LastLoadError != null)
+            {
+                _dialogService.ShowError(
+                    "기존 설정 파일을 읽지 못해 모든 항목이 기본값으로 시작합니다.\n\n" +
+                    $"원인: {_configService.LastLoadError}\n\n" +
+                    $"원본 파일 보존 위치:\n{_configService.InvalidBackupPath}\n\n" +
+                    "⚠ 이 상태로 저장하면 기존 설정이 기본값으로 덮어써집니다.\n" +
+                    "저장 전 각 페이지의 값을 반드시 확인하세요.",
+                    "설정 로드 실패");
+            }
+
             if (config != null)
             {
                 ApplicationName = config.ApplicationName;
@@ -260,13 +274,16 @@ namespace VMS.AppSetup.ViewModels
                 WriteMode = config.WriteMode;
                 EndianMode = config.EndianMode;
 
-                // Robot
+                // Robot — 순서 주의: SelectedRobotVendor / SelectedRobotProtocolMode 의
+                // OnChanged 핸들러는 사용자 조작용 자동 매핑이라 포트·EulerConvention·프로토콜을
+                // 기본값으로 리셋한다. side-effect 있는 프로퍼티를 먼저 설정하고, 저장값
+                // 복원(RobotPort 등)은 반드시 그 뒤에 — 아니면 로드 때마다 저장 포트가 유실됨.
                 IsRobotEnabled = config.IsRobotEnabled;
-                SelectedRobotVendor = config.RobotVendor;
+                SelectedRobotVendor = config.RobotVendor;             // 포트/컨벤션/프로토콜 리셋 발화
+                SelectedRobotProtocolMode = config.RobotProtocolMode; // 포트 리셋 발화 (Modbus=502 등)
                 RobotIpAddress = config.RobotIpAddress;
-                RobotPort = config.RobotPort;
+                RobotPort = config.RobotPort;                         // 저장값이 최종 승자
                 SelectedEulerConvention = config.EulerConvention;
-                SelectedRobotProtocolMode = config.RobotProtocolMode;
                 RobotModbusUnitId = config.RobotModbusUnitId;
                 RobotModbusPoseRegister = config.RobotModbusPoseRegister;
 
