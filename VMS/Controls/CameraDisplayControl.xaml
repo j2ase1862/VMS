@@ -206,21 +206,6 @@
                                 PointCloud="{Binding CurrentPointCloud}"
                                 Visibility="{Binding CurrentPointCloud, Converter={StaticResource NullToVisibilityConverter}}"/>
 
-                            <!-- Save 3D data (.vpc) — VisionSetup 에서 로드하여 레시피 설정에 사용.
-                                 좌상단 배치: 우측은 인라인 컨트롤 박스(width 280, ZIndex 10)가
-                                 열리면 덮이는 영역이라 패널을 연 채 Grab 하는 흐름에서 가려짐 -->
-                            <Button HorizontalAlignment="Left" VerticalAlignment="Top"
-                                    Margin="6,6,0,0"
-                                    Command="{Binding SavePointCloudCommand}"
-                                    Style="{StaticResource ModernButton}"
-                                    Padding="8,4"
-                                    ToolTip="3D 데이터 저장 (.vpc) — VisionSetup에서 열 수 있습니다"
-                                    Visibility="{Binding CurrentPointCloud, Converter={StaticResource NullToVisibilityConverter}}">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="11" Margin="0,0,4,0"/>
-                                    <TextBlock Text="Save 3D" FontSize="11"/>
-                                </StackPanel>
-                            </Button>
                         </Grid>
                     </Border>
                 </TabItem>
@@ -250,21 +235,6 @@
                                 PointCloud="{Binding CurrentPointCloud}"
                                 Visibility="{Binding CurrentPointCloud, Converter={StaticResource NullToVisibilityConverter}}"/>
 
-                            <!-- Save 3D data (.vpc) — VisionSetup 에서 로드하여 레시피 설정에 사용.
-                                 좌상단 배치: 우측은 인라인 컨트롤 박스(width 280, ZIndex 10)가
-                                 열리면 덮이는 영역이라 패널을 연 채 Grab 하는 흐름에서 가려짐 -->
-                            <Button HorizontalAlignment="Left" VerticalAlignment="Top"
-                                    Margin="6,6,0,0"
-                                    Command="{Binding SavePointCloudCommand}"
-                                    Style="{StaticResource ModernButton}"
-                                    Padding="8,4"
-                                    ToolTip="3D 데이터 저장 (.vpc) — VisionSetup에서 열 수 있습니다"
-                                    Visibility="{Binding CurrentPointCloud, Converter={StaticResource NullToVisibilityConverter}}">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="11" Margin="0,0,4,0"/>
-                                    <TextBlock Text="Save 3D" FontSize="11"/>
-                                </StackPanel>
-                            </Button>
                         </Grid>
                     </Border>
                 </TabItem>
@@ -656,27 +626,39 @@
                         </Button>
                     </Grid>
 
-                    <!-- Action buttons row 2: Save / Close -->
+                    <!-- Action buttons row 2: Save Parameter / Save 3D / Close -->
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="4*"/>
+                            <ColumnDefinition Width="3*"/>
+                            <ColumnDefinition Width="2*"/>
                         </Grid.ColumnDefinitions>
                         <Button Grid.Column="0"
                                 Command="{Binding SaveSettingsCommand}"
                                 Background="#4CAF50"
                                 Style="{StaticResource ModernButton}"
-                                Padding="8,4" Margin="0,0,2,0">
+                                ToolTip="스텝별 노출/게인 설정을 저장합니다"
+                                Padding="6,4" Margin="0,0,2,0">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="11" Margin="0,0,4,0"/>
-                                <TextBlock Text="Save" FontSize="11"/>
+                                <TextBlock Text="Save Parameter" FontSize="11"/>
                             </StackPanel>
                         </Button>
                         <Button Grid.Column="1"
+                                Command="{Binding SavePointCloudCommand}"
+                                Style="{StaticResource ModernButton}"
+                                ToolTip="Grab한 3D 데이터를 .vpc 파일로 저장합니다 — VisionSetup에서 열 수 있습니다"
+                                Padding="6,4" Margin="2,0,2,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="11" Margin="0,0,4,0"/>
+                                <TextBlock Text="Save 3D" FontSize="11"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="2"
                                 Command="{Binding CloseControlBoxCommand}"
                                 Background="{StaticResource Brush.Surface.Divider}"
                                 Style="{StaticResource ModernButton}"
-                                Padding="8,4" Margin="2,0,0,0">
+                                Padding="6,4" Margin="2,0,0,0">
                             <TextBlock Text="Close" FontSize="11"/>
                         </Button>
                     </Grid>
