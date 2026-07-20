@@ -178,9 +178,20 @@ namespace VMS.VisionSetup.Models
             ["PointCloudRegistrationTool"] = new ToolHelp
             {
                 Name = "PointCloud Registration (ICP 정합)",
-                Description = "Iterative Closest Point 알고리즘으로 Reference 점군과 Source 점군(VisionService.CurrentPointCloud)을 정합.\n4x4 변환 행렬을 산출하고 ApplyTransformToSource가 true이면 Source에 적용해 정합된 점군으로 갱신.\n다중 시야각 스캔 병합, 부품 위치 측정, 정렬 오차 보정에 사용.",
-                Usage = "1) 기준 자세에서 점군을 획득 → 'Save Current as Reference'로 .vpc 파일에 저장. 2) 이후 새 점군 획득 시 이 도구를 Run하면 ICP가 정합 변환을 계산 → 결과 행렬은 Data에 노출, 정합된 점군은 후속 3D 도구가 사용.",
+                Description = "기준으로 저장해 둔 3D 데이터와 지금 찍은 3D 데이터를 겹쳐 맞추는(정렬하는) 도구입니다.\n\n[언제 쓰나요]\n• 부품이 매번 조금씩 다른 위치·각도로 놓일 때 — 기준 대비 얼마나 이동/회전됐는지 측정\n• 뒤에 오는 측정 도구가 항상 같은 자세의 점군을 받도록 자세를 맞춰줄 때\n• 로봇으로 여러 방향에서 찍은 스캔을 하나로 합칠 때\n\n알고리즘은 ICP(Iterative Closest Point) — 두 점군의 가까운 점끼리 짝지어 오차가 줄어들 때까지 반복해 맞춥니다. 산출된 4x4 변환 행렬은 ApplyTransformToSource가 켜져 있으면 현재 점군에 적용됩니다.",
+                Usage = "1) 기준 자세에서 점군을 획득 → 'Save Current as Reference'로 .vpc 파일에 저장. 2) 이후 새 점군 획득 시 이 도구를 Run하면 ICP가 정합 변환을 계산 → 정합된 점군은 후속 3D 도구가 사용.\n\n[결과 보는 법] MeanError(mm)가 작고 Converged=True면 잘 맞은 것. MeanError가 크면 기준과 현재가 너무 다르거나(다른 부품/큰 자세 차이) 반복 횟수가 부족한 것.",
                 CognexEquivalent = "(PCL/Open3D ICP)",
+                Results = new Dictionary<string, string>
+                {
+                    ["MeanError"] = "정합 품질 (mm). 맞춘 뒤 두 점군 사이의 평균 거리 — 작을수록 잘 맞은 것. Tolerance 근처까지 내려갔으면 성공.",
+                    ["Iterations"] = "실제 수행한 반복 횟수. MaxIterations에 닿았다면 수렴 전에 중단된 것.",
+                    ["Converged"] = "True = Tolerance 이내로 수렴 (성공). False = 반복 소진 — MaxIterations를 늘리거나 기준·현재 점군이 같은 대상인지 확인.",
+                    ["TranslationX/Y/Z"] = "기준 대비 이동량 (mm, 축별).",
+                    ["TranslationNorm"] = "이동량의 총 크기 (mm). '기준 위치에서 얼마나 밀려 있었나'.",
+                    ["RotationX/Y/Z"] = "기준 대비 회전량 (도, 축별).",
+                    ["RefPoints / SrcPoints"] = "기준 점군 / 현재 점군의 점 개수.",
+                    ["M11~M44"] = "4x4 변환 행렬 원소 (계산용 원자료). 일반적으로는 위의 이동/회전 값만 보면 됩니다."
+                },
                 Parameters = new Dictionary<string, string>
                 {
                     ["ReferencePath"] = ".vpc 파일 경로 (Reference 점군). 'Save Current as Reference' 버튼으로 현재 점군을 저장하면 자동 설정.",
@@ -193,9 +204,17 @@ namespace VMS.VisionSetup.Models
             ["PointCloudClusterTool"] = new ToolHelp
             {
                 Name = "PointCloud Cluster (유클리드 클러스터링)",
-                Description = "거리 tolerance 이내 점들을 BFS로 연결해 클러스터를 형성. 그리드 해싱으로 O(N) 평균 복잡도.\n분리된 객체 검출, 노이즈 클러스터 제거, 부품 개수 카운트 등에 사용.",
-                Usage = "1) Tolerance를 두 점이 같은 객체로 묶일 만큼의 거리로 설정. 2) Min/MaxPoints로 노이즈/배경 필터링. 3) OutputMode 선택: LargestOnly(가장 큰 객체만 남김), AllMerged(노이즈 제거 합산), KeepOriginal(메트릭만).\n결과 Data에서 ClusterCount + 각 Cluster{i}_Points/CenterX/Y/Z 확인 가능.",
+                Description = "한 화면의 점군을 덩어리(물체)별로 나누는 도구입니다. 서로 가까운 점들을 같은 물체로 묶습니다.\n\n[언제 쓰나요]\n• 트레이 위 부품이 몇 개인지 세고 싶을 때\n• 여러 물체 중 가장 큰 것 하나만 남기고 싶을 때\n• 작은 부스러기(노이즈 덩어리)를 걸러내고 싶을 때\n\n알고리즘은 유클리드 클러스터링 — Tolerance(mm) 이내로 가까운 점들을 연결해 하나의 덩어리로 만듭니다.",
+                Usage = "1) Tolerance를 '같은 물체로 볼 점 사이 거리'로 설정. 2) Min/MaxPoints로 너무 작은 덩어리(노이즈)/너무 큰 덩어리(배경) 제외. 3) OutputMode 선택: LargestOnly(가장 큰 물체만 남김), AllMerged(노이즈만 제거하고 전부 유지), KeepOriginal(점군은 그대로, 개수·위치만 측정).",
                 CognexEquivalent = "(PCL EuclideanClusterExtraction)",
+                Results = new Dictionary<string, string>
+                {
+                    ["ClusterCount"] = "찾은 덩어리(물체) 개수. 부품 카운트가 목적이면 이 값을 판정에 사용.",
+                    ["LargestPoints"] = "가장 큰 덩어리의 점 개수.",
+                    ["Cluster{i}_Points"] = "i번째 덩어리의 점 개수 (큰 것부터 순서대로, MaxReportedClusters 개까지 표시).",
+                    ["Cluster{i}_CenterX/Y/Z"] = "i번째 덩어리의 중심 위치 (mm). 물체가 어디 있는지 좌표로 확인.",
+                    ["TotalClusteredPoints"] = "모든 덩어리 점 수 합계 (노이즈로 걸러진 점 제외)."
+                },
                 Parameters = new Dictionary<string, string>
                 {
                     ["Tolerance"] = "동일 클러스터 판정 거리 (mm). 두 점이 이 거리 이내면 같은 클러스터.\n• 1~3: 매우 가까운 점만 (조밀한 객체)\n• 5: 기본\n• 10~20: 느슨한 묶음 (희소 점군)",
@@ -209,9 +228,16 @@ namespace VMS.VisionSetup.Models
             ["PointCloudFilterTool"] = new ToolHelp
             {
                 Name = "PointCloud Filter (점군 필터링)",
-                Description = "3D 카메라로 획득한 점군을 다운샘플(VoxelGrid)하고 통계적 outlier(SOR)를 제거.\n결과는 VisionService.CurrentPointCloud에 갱신되어 후속 도구(HeightSlicer, PlaneFit, Geometry3D)가 사용.\n이미지 출력은 입력 그대로 pass-through.",
-                Usage = "3D 카메라 grab 후 첫 단계로 배치 권장. VoxelGrid는 거의 항상 활성화(점 수 감소 → 후속 속도 향상). SOR은 노이즈가 많을 때만 (KNN 검색이라 비용 큼).",
+                Description = "3D 촬영 직후의 '지저분한 점군'을 청소하는 도구입니다. 점이 너무 많으면 솎아내고(VoxelGrid 다운샘플), 표면에서 튄 점(노이즈)은 지웁니다(SOR).\n\n[언제 쓰나요]\n• 3D 카메라 데이터가 수십만~수백만 점이라 뒤 단계가 느릴 때 → VoxelGrid로 솎아내기\n• 표면 주변에 튀는 점이 많아 측정이 흔들릴 때 → SOR로 제거\n• 대부분의 3D 파이프라인에서 첫 단계로 배치 권장\n\n청소된 점군은 후속 3D 도구(HeightSlicer, PlaneFit, Geometry3D 등)가 그대로 사용합니다.",
+                Usage = "3D 카메라 grab 후 첫 단계로 배치 권장. VoxelGrid는 거의 항상 켜두세요(점 수 감소 → 후속 속도 향상). SOR은 노이즈가 많을 때만 — 점군이 클수록 오래 걸리므로 VoxelGrid로 먼저 솎아낸 뒤 적용하는 것이 좋습니다.",
                 CognexEquivalent = "(PCL VoxelGrid + StatisticalOutlierRemoval)",
+                Results = new Dictionary<string, string>
+                {
+                    ["InputPoints"] = "필터를 거치기 전의 점 개수.",
+                    ["OutputPoints"] = "필터 후 남은 점 개수.",
+                    ["ReductionRatio"] = "줄어든 비율 (0~1). 0.3이면 30%가 제거됐다는 뜻. 너무 크면(예: 0.9↑) VoxelSize가 과한지 확인.",
+                    ["AppliedVoxel / AppliedSor"] = "각 필터가 실제로 실행됐는지 (체크 상태 반영)."
+                },
                 Parameters = new Dictionary<string, string>
                 {
                     ["EnableVoxelGrid"] = "VoxelGrid 다운샘플 활성화. 같은 voxel 안의 모든 점을 1개로 합쳐 점 수를 크게 줄임.",
@@ -875,5 +901,10 @@ namespace VMS.VisionSetup.Models
         public string Usage { get; set; } = "";
         public string CognexEquivalent { get; set; } = "";
         public Dictionary<string, string>? Parameters { get; set; }
+
+        /// <summary>
+        /// Run Results 의 Data 키별 의미. 키 순서대로 도움말 팝업 "결과값 보는 법" 섹션에 표시.
+        /// </summary>
+        public Dictionary<string, string>? Results { get; set; }
     }
 }

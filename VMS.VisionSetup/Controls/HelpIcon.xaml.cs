@@ -1,5 +1,6 @@
 using VMS.VisionSetup.Models;
 using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -92,6 +93,7 @@ namespace VMS.VisionSetup.Controls
                 HelpDescription.Text = CustomDescription;
                 CognexBorder.Visibility = Visibility.Collapsed;
                 UsageBorder.Visibility = Visibility.Collapsed;
+                ResultsBorder.Visibility = Visibility.Collapsed;
                 return;
             }
 
@@ -102,6 +104,7 @@ namespace VMS.VisionSetup.Controls
                 HelpDescription.Text = "도움말 정보가 없습니다.";
                 CognexBorder.Visibility = Visibility.Collapsed;
                 UsageBorder.Visibility = Visibility.Collapsed;
+                ResultsBorder.Visibility = Visibility.Collapsed;
                 return;
             }
 
@@ -112,6 +115,7 @@ namespace VMS.VisionSetup.Controls
                 HelpDescription.Text = "이 도구에 대한 도움말이 아직 준비되지 않았습니다.";
                 CognexBorder.Visibility = Visibility.Collapsed;
                 UsageBorder.Visibility = Visibility.Collapsed;
+                ResultsBorder.Visibility = Visibility.Collapsed;
                 return;
             }
 
@@ -133,6 +137,7 @@ namespace VMS.VisionSetup.Controls
                     CognexBorder.Visibility = Visibility.Collapsed;
                     UsageBorder.Visibility = Visibility.Collapsed;
                 }
+                ResultsBorder.Visibility = Visibility.Collapsed;
                 return;
             }
 
@@ -160,6 +165,18 @@ namespace VMS.VisionSetup.Controls
             else
             {
                 UsageBorder.Visibility = Visibility.Collapsed;
+            }
+
+            // 결과값 도움말 표시
+            if (toolHelp.Results != null && toolHelp.Results.Count > 0)
+            {
+                ResultsText.Text = string.Join("\n",
+                    toolHelp.Results.Select(kv => $"• {kv.Key}: {kv.Value}"));
+                ResultsBorder.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                ResultsBorder.Visibility = Visibility.Collapsed;
             }
         }
 

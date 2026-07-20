@@ -125,8 +125,8 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                     return result;
                 }
 
-                // ICP 실행 → 변환 행렬
-                var transform = TransformUtils.ICP(reference, src, MaxIterations, Tolerance);
+                // ICP 실행 → 변환 행렬 + 정합 품질 통계
+                var transform = TransformUtils.ICP(reference, src, MaxIterations, Tolerance, out var stats);
 
                 // Source에 적용
                 if (ApplyTransformToSource)
@@ -134,6 +134,11 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                     var aligned = TransformUtils.TransformPointCloud(src, transform);
                     VisionService.Instance.CurrentPointCloud = aligned;
                 }
+
+                // 정합 품질 — 결과 판정의 1차 지표
+                result.Data["MeanError"] = (double)stats.MeanError;
+                result.Data["Iterations"] = stats.Iterations;
+                result.Data["Converged"] = stats.Converged;
 
                 // 결과 행렬을 키별로 노출 (4x4 = 16개)
                 result.Data["RefPoints"] = reference.PointCount;
@@ -152,10 +157,18 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                     transform.M42 * transform.M42 +
                     transform.M43 * transform.M43);
 
+                // 회전 성분을 오일러 각(도)으로 — M11~M44 원소보다 해석 쉬운 편의값
+                var euler = TransformUtils.ToEulerAnglesDegrees(transform);
+                result.Data["RotationX"] = (double)euler.X;
+                result.Data["RotationY"] = (double)euler.Y;
+                result.Data["RotationZ"] = (double)euler.Z;
+
                 result.OutputImage = inputImage.Clone();
                 result.Success = true;
-                result.Message = $"ICP aligned: |Δt|={result.Data["TranslationNorm"]:F3}mm "
-                    + $"(Ref={reference.PointCount}, Src={src.PointCount}, MaxIter={MaxIterations})";
+                result.Message = $"ICP {(stats.Converged ? "converged" : "NOT converged")} "
+                    + $"in {stats.Iterations} iter, mean error {stats.MeanError:F3}mm, "
+                    + $"|Δt|={result.Data["TranslationNorm"]:F3}mm "
+                    + $"(Ref={reference.PointCount}, Src={src.PointCount})";
             }
             catch (Exception ex)
             {
@@ -175,8 +188,10 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
         {
             return new List<string>
             {
-                "Success", "RefPoints", "SrcPoints",
+                "Success", "MeanError", "Iterations", "Converged",
+                "RefPoints", "SrcPoints",
                 "TranslationX", "TranslationY", "TranslationZ", "TranslationNorm",
+                "RotationX", "RotationY", "RotationZ",
                 "M11", "M12", "M13", "M14",
                 "M21", "M22", "M23", "M24",
                 "M31", "M32", "M33", "M34",
