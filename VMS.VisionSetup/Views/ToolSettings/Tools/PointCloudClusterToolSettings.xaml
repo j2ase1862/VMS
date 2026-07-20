@@ -6,7 +6,7 @@
              xmlns:pc="clr-namespace:VMS.VisionSetup.VisionTools.PointCloud">
     <StackPanel>
         <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,8"
-                   Text="유클리드 클러스터링 — 거리 tolerance 이내 점들을 연결해 클러스터 형성. 분리된 객체 검출 / 노이즈 제거 / 컴포넌트 카운트에 사용."/>
+                   Text="점군을 덩어리(물체)별로 나눕니다 — 트레이 위 부품 개수 세기, 가장 큰 물체만 골라내기, 부스러기 덩어리 제거에 사용. Tolerance(mm) 이내로 가까운 점들이 같은 물체로 묶입니다."/>
 
         <!-- Clustering Parameters -->
         <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
@@ -24,6 +24,8 @@
                 <controls:TextBoxParameter Label="Max Points"
                     Value="{Binding MaxPoints}"
                     ToolType="PointCloudClusterTool" ParameterName="MaxPoints"/>
+                <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,4"
+                           Text="단위: 점 개수 — Min보다 작은 덩어리는 노이즈로, Max보다 큰 덩어리는 배경으로 보고 무시합니다."/>
                 <controls:SliderParameter Label="Max Reported Clusters"
                     Value="{Binding MaxReportedClusters}" Minimum="1" Maximum="50"
                     TickFrequency="1" ValueFormat="F0"

@@ -280,6 +280,14 @@ namespace VMS.Camera.Utils
         /// <returns>Source를 Reference에 맞추는 변환 행렬</returns>
         public static Matrix4x4 ICP(PointCloudData reference, PointCloudData source,
             int maxIterations = 50, float tolerance = 0.01f)
+            => ICP(reference, source, maxIterations, tolerance, out _);
+
+        /// <summary>
+        /// ICP + 실행 통계. 정합 품질 판단(수렴 여부·평균 오차)이 필요한 호출자용 —
+        /// 기존 시그니처는 통계를 버리고 행렬만 반환한다.
+        /// </summary>
+        public static Matrix4x4 ICP(PointCloudData reference, PointCloudData source,
+            int maxIterations, float tolerance, out IcpStats stats)
         {
             int srcCount = source.PointCount;
             int refCount = reference.PointCount;
@@ -289,9 +297,13 @@ namespace VMS.Camera.Utils
             Array.Copy(source.Positions, srcPoints, srcCount);
 
             var accumulatedTransform = Matrix4x4.Identity;
+            float lastMeanError = float.MaxValue;
+            int iterationsRun = 0;
+            bool converged = false;
 
             for (int iter = 0; iter < maxIterations; iter++)
             {
+                iterationsRun = iter + 1;
                 // 1. Find closest points (brute-force, 다운샘플 후 사용 권장)
                 var correspondences = FindClosestPoints(reference.Positions, refCount, srcPoints, srcCount);
 
@@ -379,11 +391,59 @@ namespace VMS.Camera.Utils
                 }
 
                 float meanError = errorCount > 0 ? totalError / errorCount : float.MaxValue;
+                lastMeanError = meanError;
                 if (meanError < tolerance)
+                {
+                    converged = true;
                     break;
+                }
             }
 
+            stats = new IcpStats
+            {
+                MeanError = lastMeanError,
+                Iterations = iterationsRun,
+                Converged = converged
+            };
             return accumulatedTransform;
+        }
+
+        /// <summary>
+        /// ICP 실행 통계 — 정합 품질 판단용.
+        /// </summary>
+        public readonly struct IcpStats
+        {
+            /// <summary>마지막 반복의 대응점 평균 거리 (mm). 작을수록 잘 맞은 것.</summary>
+            public float MeanError { get; init; }
+            /// <summary>실제 수행된 반복 횟수.</summary>
+            public int Iterations { get; init; }
+            /// <summary>tolerance 이내로 수렴했는지. false 면 maxIterations 소진 또는 대응점 부족 중단.</summary>
+            public bool Converged { get; init; }
+        }
+
+        /// <summary>
+        /// 변환 행렬의 회전 성분을 오일러 각(도)으로 변환 — 결과 해석 편의용.
+        /// X/Y/Z 축 회전량 (roll/pitch/yaw). 분해 실패 시 Zero.
+        /// </summary>
+        public static Vector3 ToEulerAnglesDegrees(Matrix4x4 m)
+        {
+            if (!Matrix4x4.Decompose(m, out _, out var q, out _))
+                return Vector3.Zero;
+
+            const float rad2Deg = 180f / MathF.PI;
+
+            float sinrCosp = 2f * (q.W * q.X + q.Y * q.Z);
+            float cosrCosp = 1f - 2f * (q.X * q.X + q.Y * q.Y);
+            float rollX = MathF.Atan2(sinrCosp, cosrCosp);
+
+            float sinp = Math.Clamp(2f * (q.W * q.Y - q.Z * q.X), -1f, 1f);
+            float pitchY = MathF.Asin(sinp);
+
+            float sinyCosp = 2f * (q.W * q.Z + q.X * q.Y);
+            float cosyCosp = 1f - 2f * (q.Y * q.Y + q.Z * q.Z);
+            float yawZ = MathF.Atan2(sinyCosp, cosyCosp);
+
+            return new Vector3(rollX * rad2Deg, pitchY * rad2Deg, yawZ * rad2Deg);
         }
 
         #region ICP Internal

@@ -4,7 +4,7 @@
              xmlns:controls="clr-namespace:VMS.VisionSetup.Controls">
     <StackPanel>
         <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,8"
-                   Text="3D 카메라로 획득한 점군을 다운샘플 + 노이즈 제거. 결과는 후속 도구(HeightSlicer, PlaneFit, Geometry3D)가 사용."/>
+                   Text="3D 촬영 직후의 점군을 청소합니다 — 점이 너무 많으면 솎아내고(Voxel), 표면에서 튄 점은 지웁니다(SOR). 3D 분석의 첫 단계로 배치를 권장하며, 청소된 점군은 후속 도구(HeightSlicer, PlaneFit, Geometry3D)가 사용합니다."/>
 
         <!-- Voxel Grid -->
         <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
@@ -31,6 +31,8 @@
                 <controls:CheckBoxParameter Label="Enable SOR"
                     IsChecked="{Binding EnableSor}"
                     ToolType="PointCloudFilterTool" ParameterName="EnableSor"/>
+                <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,4"
+                           Text="⚠ 점군이 클수록 오래 걸립니다 — Voxel로 먼저 솎아낸 뒤 사용을 권장."/>
                 <controls:SliderParameter Label="Neighbor Count (K)"
                     Value="{Binding SorK}" Minimum="5" Maximum="100"
                     TickFrequency="5" ValueFormat="F0"

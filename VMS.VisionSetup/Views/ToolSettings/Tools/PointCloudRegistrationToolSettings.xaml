@@ -4,7 +4,7 @@
              xmlns:controls="clr-namespace:VMS.VisionSetup.Controls">
     <StackPanel>
         <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,8"
-                   Text="ICP(Iterative Closest Point)로 Reference 점군과 현재 점군을 정합. 결과 4x4 변환 행렬이 Source에 적용되어 VisionService.CurrentPointCloud가 갱신됨."/>
+                   Text="기준으로 저장한 3D 데이터와 현재 3D 데이터를 겹쳐 맞춥니다(ICP 정합). 부품이 매번 조금씩 다르게 놓일 때 이동·회전량을 측정하거나 자세를 맞출 때 사용. 결과의 MeanError(mm)가 작고 Converged=True면 성공입니다."/>
 
         <!-- Reference -->
         <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
@@ -38,7 +38,7 @@
             </Expander.Header>
             <StackPanel Margin="5,0,0,0">
                 <controls:SliderParameter Label="Max Iterations"
-                    Value="{Binding MaxIterations}" Minimum="1" Maximum="200"
+                    Value="{Binding MaxIterations}" Minimum="1" Maximum="500"
                     TickFrequency="5" ValueFormat="F0"
                     ToolType="PointCloudRegistrationTool" ParameterName="MaxIterations"/>
                 <controls:SliderParameter Label="Tolerance (mm)"
