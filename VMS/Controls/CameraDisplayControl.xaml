@@ -206,9 +206,11 @@
                                 PointCloud="{Binding CurrentPointCloud}"
                                 Visibility="{Binding CurrentPointCloud, Converter={StaticResource NullToVisibilityConverter}}"/>
 
-                            <!-- Save 3D data (.vpc) — VisionSetup 에서 로드하여 레시피 설정에 사용 -->
-                            <Button HorizontalAlignment="Right" VerticalAlignment="Top"
-                                    Margin="0,6,6,0"
+                            <!-- Save 3D data (.vpc) — VisionSetup 에서 로드하여 레시피 설정에 사용.
+                                 좌상단 배치: 우측은 인라인 컨트롤 박스(width 280, ZIndex 10)가
+                                 열리면 덮이는 영역이라 패널을 연 채 Grab 하는 흐름에서 가려짐 -->
+                            <Button HorizontalAlignment="Left" VerticalAlignment="Top"
+                                    Margin="6,6,0,0"
                                     Command="{Binding SavePointCloudCommand}"
                                     Style="{StaticResource ModernButton}"
                                     Padding="8,4"
@@ -248,9 +250,11 @@
                                 PointCloud="{Binding CurrentPointCloud}"
                                 Visibility="{Binding CurrentPointCloud, Converter={StaticResource NullToVisibilityConverter}}"/>
 
-                            <!-- Save 3D data (.vpc) — VisionSetup 에서 로드하여 레시피 설정에 사용 -->
-                            <Button HorizontalAlignment="Right" VerticalAlignment="Top"
-                                    Margin="0,6,6,0"
+                            <!-- Save 3D data (.vpc) — VisionSetup 에서 로드하여 레시피 설정에 사용.
+                                 좌상단 배치: 우측은 인라인 컨트롤 박스(width 280, ZIndex 10)가
+                                 열리면 덮이는 영역이라 패널을 연 채 Grab 하는 흐름에서 가려짐 -->
+                            <Button HorizontalAlignment="Left" VerticalAlignment="Top"
+                                    Margin="6,6,0,0"
                                     Command="{Binding SavePointCloudCommand}"
                                     Style="{StaticResource ModernButton}"
                                     Padding="8,4"
