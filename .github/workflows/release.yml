@@ -8,6 +8,14 @@ name: Release
 #   1) Directory.Build.props 의 <Version> 갱신
 #   2) git tag v1.1.0 && git push origin v1.1.0
 #   3) 본 워크플로가 자동 실행 → Release 페이지에서 결과 확인
+#
+# 수동(dev PC) 발행 보호:
+#   CI 러너에는 Mech-Eye SDK 가 없어 MECHMIND_AVAILABLE 미정의 → CI MSI 는
+#   Mech-Mind 미지원. Mech-Mind 포함 MSI 는 dev PC 로컬 빌드 후 수동 발행한다.
+#   이때 태그 push 로 본 워크플로가 함께 돌면서 수동 자산을 CI 빌드로 덮어쓴
+#   사고(v1.4.10, 2026-07-16)가 있어, 동일 태그 릴리즈에 이미 .msi 자산이
+#   존재하면 CI 발행을 통째로 건너뛴다. 수동 발행 시에는 반드시
+#   "MSI 빌드 완료 → gh release create (자산 포함) → 태그 push" 순서를 지킬 것.
 
 on:
   push:
@@ -57,19 +65,44 @@ jobs:
           "version=$version"   | Out-File -Append $env:GITHUB_OUTPUT
           Write-Host "Release tag: $tag (version=$version)"
 
+      - name: Guard — skip if release already has an MSI asset
+        id: guard
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 수동(dev PC) 발행 릴리즈 보호: 동일 태그 릴리즈에 이미 .msi 자산이 있으면
+          # Mech-Mind 미지원 CI 빌드로 덮어쓰지 않도록 이후 단계를 모두 건너뛴다.
+          $skip = 'false'
+          $json = gh release view '${{ steps.tag.outputs.tag }}' --repo $env:GITHUB_REPOSITORY --json assets 2>$null
+          if ($LASTEXITCODE -eq 0 -and $json) {
+            $assets = ($json | ConvertFrom-Json).assets
+            if ($assets | Where-Object { $_.name -like '*.msi' }) {
+              $skip = 'true'
+              Write-Host "::notice::Release '${{ steps.tag.outputs.tag }}' already has an MSI asset (manual publish) - skipping CI build & publish."
+            }
+          }
+          "skip=$skip" | Out-File -Append $env:GITHUB_OUTPUT
+          # gh 조회 실패(릴리즈 없음 포함)는 skip=false 로 정상 진행 — 가드 자체가 발행을 막으면 안 됨.
+          exit 0
+
       - name: Setup .NET 8
+        if: steps.guard.outputs.skip != 'true'
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
       - name: Prepare local NuGet cache folder
+        if: steps.guard.outputs.skip != 'true'
         run: New-Item -ItemType Directory -Force -Path packages | Out-Null
         shell: pwsh
 
       - name: Restore
+        if: steps.guard.outputs.skip != 'true'
         run: dotnet restore VMS.sln
 
       - name: Build MSI (Release)
+        if: steps.guard.outputs.skip != 'true'
         # /p:Version 으로 Directory.Build.props 의 Version 을 오버라이드 →
         # Assembly + MSI(Package.wxs $(var.BuildVersion)) 양쪽 모두 태그 버전으로 통일.
         run: >
@@ -80,6 +113,7 @@ jobs:
           /p:TreatWarningsAsErrors=false
 
       - name: Locate MSI & compute SHA-256
+        if: steps.guard.outputs.skip != 'true'
         id: msi
         shell: pwsh
         run: |
@@ -107,6 +141,7 @@ jobs:
           Write-Host "SHA-256: $hash"
 
       - name: Create GitHub Release
+        if: steps.guard.outputs.skip != 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.tag.outputs.tag }}
