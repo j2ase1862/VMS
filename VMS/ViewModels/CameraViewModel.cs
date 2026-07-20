@@ -324,6 +324,12 @@ namespace VMS.ViewModels
                     IsConnected = true;
                 }
 
+                // 선택 스텝의 노출/게인을 카메라에 반영 후 촬영.
+                // 미구현 제조사는 ICameraAcquisition 기본 no-op (#188).
+                var step = SelectedStep;
+                if (step != null)
+                    await _acquisition.ApplySettingsAsync(step.Exposure, step.Gain);
+
                 var result = await _acquisition.AcquireAsync();
                 if (result.Success)
                 {
@@ -388,6 +394,12 @@ namespace VMS.ViewModels
                 {
                     while (!ct.IsCancellationRequested)
                     {
+                        // 매 프레임 선택 스텝의 노출/게인 반영 — 라이브 중 슬라이더
+                        // 조작이 실시간 적용됨 (VisionSetup Camera Live 와 동일, #199)
+                        var liveStep = SelectedStep;
+                        if (liveStep != null)
+                            await _acquisition.ApplySettingsAsync(liveStep.Exposure, liveStep.Gain);
+
                         var result = await _acquisition.AcquireAsync();
                         if (result.Success)
                         {
