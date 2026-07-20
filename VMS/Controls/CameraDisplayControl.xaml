@@ -205,6 +205,20 @@
                             <core:DepthMapViewer
                                 PointCloud="{Binding CurrentPointCloud}"
                                 Visibility="{Binding CurrentPointCloud, Converter={StaticResource NullToVisibilityConverter}}"/>
+
+                            <!-- Save 3D data (.vpc) — VisionSetup 에서 로드하여 레시피 설정에 사용 -->
+                            <Button HorizontalAlignment="Right" VerticalAlignment="Top"
+                                    Margin="0,6,6,0"
+                                    Command="{Binding SavePointCloudCommand}"
+                                    Style="{StaticResource ModernButton}"
+                                    Padding="8,4"
+                                    ToolTip="3D 데이터 저장 (.vpc) — VisionSetup에서 열 수 있습니다"
+                                    Visibility="{Binding CurrentPointCloud, Converter={StaticResource NullToVisibilityConverter}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="11" Margin="0,0,4,0"/>
+                                    <TextBlock Text="Save 3D" FontSize="11"/>
+                                </StackPanel>
+                            </Button>
                         </Grid>
                     </Border>
                 </TabItem>
@@ -233,6 +247,20 @@
                             <core:PointCloudViewer
                                 PointCloud="{Binding CurrentPointCloud}"
                                 Visibility="{Binding CurrentPointCloud, Converter={StaticResource NullToVisibilityConverter}}"/>
+
+                            <!-- Save 3D data (.vpc) — VisionSetup 에서 로드하여 레시피 설정에 사용 -->
+                            <Button HorizontalAlignment="Right" VerticalAlignment="Top"
+                                    Margin="0,6,6,0"
+                                    Command="{Binding SavePointCloudCommand}"
+                                    Style="{StaticResource ModernButton}"
+                                    Padding="8,4"
+                                    ToolTip="3D 데이터 저장 (.vpc) — VisionSetup에서 열 수 있습니다"
+                                    Visibility="{Binding CurrentPointCloud, Converter={StaticResource NullToVisibilityConverter}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="11" Margin="0,0,4,0"/>
+                                    <TextBlock Text="Save 3D" FontSize="11"/>
+                                </StackPanel>
+                            </Button>
                         </Grid>
                     </Border>
                 </TabItem>

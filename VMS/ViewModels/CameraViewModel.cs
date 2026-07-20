@@ -456,6 +456,43 @@ namespace VMS.ViewModels
                 _acquisition.DownsampleStride = 1;
         }
 
+        private bool CanSavePointCloud() => CurrentPointCloud != null && !IsLiveGrabbing;
+
+        /// <summary>
+        /// Grab 으로 획득한 3D 데이터를 .vpc 파일로 저장.
+        /// VisionSetup 의 LoadPointCloud 와 동일 포맷(VMS.Camera.Models.PointCloudData)이라
+        /// 저장 파일을 VisionSetup 에서 열어 레시피/툴 설정에 사용할 수 있다.
+        /// </summary>
+        [RelayCommand(CanExecute = nameof(CanSavePointCloud))]
+        private void SavePointCloud()
+        {
+            if (_dialogService == null || CurrentPointCloud == null) return;
+
+            var safeName = string.Join("_", Name.Split(System.IO.Path.GetInvalidFileNameChars(),
+                StringSplitOptions.RemoveEmptyEntries));
+            var defaultName = $"{(safeName.Length > 0 ? safeName : "Camera")}_{DateTime.Now:yyyyMMdd_HHmmss}";
+
+            var filePath = _dialogService.ShowSaveFileDialog(
+                "VPC Point Cloud (*.vpc)|*.vpc", ".vpc", defaultName);
+            if (filePath == null) return;
+
+            try
+            {
+                CurrentPointCloud.SaveToFile(filePath);
+                ResultMessage = $"3D data saved: {System.IO.Path.GetFileName(filePath)}";
+            }
+            catch (Exception ex)
+            {
+                ResultMessage = $"3D save failed: {ex.Message}";
+            }
+        }
+
+        partial void OnCurrentPointCloudChanged(PointCloudData? value)
+            => SavePointCloudCommand.NotifyCanExecuteChanged();
+
+        partial void OnIsLiveGrabbingChanged(bool value)
+            => SavePointCloudCommand.NotifyCanExecuteChanged();
+
         [RelayCommand]
         private void OpenImage()
         {
