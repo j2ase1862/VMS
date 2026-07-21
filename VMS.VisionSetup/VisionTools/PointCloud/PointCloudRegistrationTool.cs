@@ -50,6 +50,25 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
             set => SetProperty(ref _applyTransformToSource, value);
         }
 
+        private bool _enableCoarseAlignment = true;
+        /// <summary>
+        /// PCA 거친 정렬을 ICP 앞단에 수행. 초기 자세 차이가 커도 수렴하도록 함.
+        /// 이미 정렬된 상태에서는 거의 항등 변환이라 부작용 없음.
+        /// </summary>
+        public bool EnableCoarseAlignment
+        {
+            get => _enableCoarseAlignment;
+            set => SetProperty(ref _enableCoarseAlignment, value);
+        }
+
+        private float _confidenceDistanceMm = 1.0f;
+        /// <summary>Confidence(inlier 비율) 판정 거리 (mm) — 정합 후 이 거리 이내로 붙은 점을 inlier로 집계.</summary>
+        public float ConfidenceDistanceMm
+        {
+            get => _confidenceDistanceMm;
+            set => SetProperty(ref _confidenceDistanceMm, Math.Clamp(value, 0.01f, 100f));
+        }
+
         public bool IsReferenceLoaded => !string.IsNullOrEmpty(ReferencePath) && File.Exists(ReferencePath);
 
         public PointCloudRegistrationTool()
@@ -125,8 +144,32 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                     return result;
                 }
 
-                // ICP 실행 → 변환 행렬 + 정합 품질 통계
-                var transform = TransformUtils.ICP(reference, src, MaxIterations, Tolerance, out var stats);
+                // 1단계: PCA 거친 정렬 (옵션) — 초기 자세 차이 해소 후 ICP 수렴 보장
+                var coarse = Matrix4x4.Identity;
+                PointCloudData icpInput = src;
+                PointCloudData? coarseCopy = null;
+                if (EnableCoarseAlignment)
+                {
+                    coarse = TransformUtils.CoarseAlignPCA(reference, src);
+                    coarseCopy = TransformUtils.TransformPointCloud(src, coarse);
+                    icpInput = coarseCopy;
+                }
+
+                // 2단계: ICP 정밀 정합 → 전체 변환 = coarse ∘ icp (행벡터 규약: coarse * icp)
+                Matrix4x4 transform;
+                TransformUtils.IcpStats stats;
+                try
+                {
+                    var icp = TransformUtils.ICP(reference, icpInput, MaxIterations, Tolerance, out stats);
+                    transform = coarse * icp;
+                }
+                finally
+                {
+                    coarseCopy?.Dispose();
+                }
+
+                // 정합 신뢰도 — 원본 소스 기준 inlier 비율 (0~1)
+                var confidence = TransformUtils.ComputeInlierRatio(reference, src, transform, ConfidenceDistanceMm);
 
                 // Source에 적용
                 if (ApplyTransformToSource)
@@ -139,6 +182,8 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                 result.Data["MeanError"] = (double)stats.MeanError;
                 result.Data["Iterations"] = stats.Iterations;
                 result.Data["Converged"] = stats.Converged;
+                result.Data["Confidence"] = (double)confidence;
+                result.Data["CoarseApplied"] = EnableCoarseAlignment;
 
                 // 결과 행렬을 키별로 노출 (4x4 = 16개)
                 result.Data["RefPoints"] = reference.PointCount;
@@ -167,6 +212,8 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                 result.Success = true;
                 result.Message = $"ICP {(stats.Converged ? "converged" : "NOT converged")} "
                     + $"in {stats.Iterations} iter, mean error {stats.MeanError:F3}mm, "
+                    + $"confidence {confidence:P0}"
+                    + $"{(EnableCoarseAlignment ? " (coarse+fine)" : "")}, "
                     + $"|Δt|={result.Data["TranslationNorm"]:F3}mm "
                     + $"(Ref={reference.PointCount}, Src={src.PointCount})";
             }
@@ -189,6 +236,7 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
             return new List<string>
             {
                 "Success", "MeanError", "Iterations", "Converged",
+                "Confidence", "CoarseApplied",
                 "RefPoints", "SrcPoints",
                 "TranslationX", "TranslationY", "TranslationZ", "TranslationNorm",
                 "RotationX", "RotationY", "RotationZ",
@@ -209,7 +257,9 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                 ReferencePath = this.ReferencePath,
                 MaxIterations = this.MaxIterations,
                 Tolerance = this.Tolerance,
-                ApplyTransformToSource = this.ApplyTransformToSource
+                ApplyTransformToSource = this.ApplyTransformToSource,
+                EnableCoarseAlignment = this.EnableCoarseAlignment,
+                ConfidenceDistanceMm = this.ConfidenceDistanceMm
             };
             CopyPlcMappingsTo(clone);
             return clone;

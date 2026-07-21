@@ -178,14 +178,16 @@ namespace VMS.VisionSetup.Models
             ["PointCloudRegistrationTool"] = new ToolHelp
             {
                 Name = "PointCloud Registration (ICP 정합)",
-                Description = "기준으로 저장해 둔 3D 데이터와 지금 찍은 3D 데이터를 겹쳐 맞추는(정렬하는) 도구입니다.\n\n[언제 쓰나요]\n• 부품이 매번 조금씩 다른 위치·각도로 놓일 때 — 기준 대비 얼마나 이동/회전됐는지 측정\n• 뒤에 오는 측정 도구가 항상 같은 자세의 점군을 받도록 자세를 맞춰줄 때\n• 로봇으로 여러 방향에서 찍은 스캔을 하나로 합칠 때\n\n알고리즘은 ICP(Iterative Closest Point) — 두 점군의 가까운 점끼리 짝지어 오차가 줄어들 때까지 반복해 맞춥니다. 산출된 4x4 변환 행렬은 ApplyTransformToSource가 켜져 있으면 현재 점군에 적용됩니다.",
+                Description = "기준으로 저장해 둔 3D 데이터와 지금 찍은 3D 데이터를 겹쳐 맞추는(정렬하는) 도구입니다.\n\n[언제 쓰나요]\n• 부품이 매번 조금씩 다른 위치·각도로 놓일 때 — 기준 대비 얼마나 이동/회전됐는지 측정\n• 뒤에 오는 측정 도구가 항상 같은 자세의 점군을 받도록 자세를 맞춰줄 때\n• 로봇으로 여러 방향에서 찍은 스캔을 하나로 합칠 때\n\n정렬은 2단계로 진행됩니다 — ①PCA 거친 정렬(Enable Coarse Alignment): 두 점군의 중심과 주성분 축을 먼저 맞춰 큰 자세 차이를 해소 ②ICP(Iterative Closest Point) 정밀 정합: 가까운 점끼리 짝지어 오차가 줄어들 때까지 반복. 산출된 4x4 변환 행렬은 ApplyTransformToSource가 켜져 있으면 현재 점군에 적용됩니다.",
                 Usage = "1) 기준 자세에서 점군을 획득 → 'Save Current as Reference'로 .vpc 파일에 저장. 2) 이후 새 점군 획득 시 이 도구를 Run하면 ICP가 정합 변환을 계산 → 정합된 점군은 후속 3D 도구가 사용.\n\n[결과 보는 법] MeanError(mm)가 작고 Converged=True면 잘 맞은 것. MeanError가 크면 기준과 현재가 너무 다르거나(다른 부품/큰 자세 차이) 반복 횟수가 부족한 것.",
                 CognexEquivalent = "(PCL/Open3D ICP)",
                 Results = new Dictionary<string, string>
                 {
                     ["MeanError"] = "정합 품질 (mm). 맞춘 뒤 두 점군 사이의 평균 거리 — 작을수록 잘 맞은 것. Tolerance 근처까지 내려갔으면 성공.",
+                    ["Confidence"] = "정합 신뢰도 (0~1). 정합 후 Confidence Distance 이내로 기준에 붙은 점의 비율. 0.9 이상이면 잘 맞은 것, 0.5 이하면 다른 부품이거나 정합 실패 의심.",
                     ["Iterations"] = "실제 수행한 반복 횟수. MaxIterations에 닿았다면 수렴 전에 중단된 것.",
                     ["Converged"] = "True = Tolerance 이내로 수렴 (성공). False = 반복 소진 — MaxIterations를 늘리거나 기준·현재 점군이 같은 대상인지 확인.",
+                    ["CoarseApplied"] = "PCA 거친 정렬이 수행됐는지 (Enable Coarse Alignment 체크 상태 반영).",
                     ["TranslationX/Y/Z"] = "기준 대비 이동량 (mm, 축별).",
                     ["TranslationNorm"] = "이동량의 총 크기 (mm). '기준 위치에서 얼마나 밀려 있었나'.",
                     ["RotationX/Y/Z"] = "기준 대비 회전량 (도, 축별).",
@@ -195,6 +197,8 @@ namespace VMS.VisionSetup.Models
                 Parameters = new Dictionary<string, string>
                 {
                     ["ReferencePath"] = ".vpc 파일 경로 (Reference 점군). 'Save Current as Reference' 버튼으로 현재 점군을 저장하면 자동 설정.",
+                    ["EnableCoarseAlignment"] = "PCA 거친 정렬을 ICP 앞에 수행합니다 (기본 켬).\n부품이 기준과 크게 다른 각도(90도 이상)로 놓여도 정합되게 해줍니다. 이미 비슷한 자세라면 거의 아무 것도 안 하므로 켜두어도 부작용이 없습니다.\n주의: 구/정육면체처럼 완전 대칭인 물체에는 효과가 없습니다.",
+                    ["ConfidenceDistanceMm"] = "Confidence(신뢰도) 판정 거리 (mm). 정합 후 이 거리 이내로 기준에 붙은 점을 '맞은 점'으로 집계.\n• 표면 정밀도 좋은 부품: 0.5~1.0\n• 일반: 1.0 (기본)\n• 거친 스캔: 2.0~5.0",
                     ["MaxIterations"] = "ICP 반복 최대 횟수. 수렴 안 되어도 이 횟수에서 중단.\n• 20~30: 빠름, 거친 정합\n• 50: 기본 (균형)\n• 100~200: 정밀, 느림",
                     ["Tolerance"] = "수렴 임계 (mm). 반복 간 변환 변화량이 이 값보다 작으면 수렴 판정 후 종료.\n• 0.001~0.005: 매우 정밀\n• 0.01: 기본\n• 0.05~0.1: 빠른 수렴, 정밀도 ↓",
                     ["ApplyTransformToSource"] = "true: 산출된 변환을 Source에 적용 후 VisionService.CurrentPointCloud 갱신 (후속 도구가 정합된 점군 사용).\nfalse: 변환 행렬만 산출, Source는 그대로 유지."

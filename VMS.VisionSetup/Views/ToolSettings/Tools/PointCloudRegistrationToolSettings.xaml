@@ -37,6 +37,9 @@
                 <TextBlock Text="ICP Parameters" Style="{StaticResource ExpanderHeaderStyle}"/>
             </Expander.Header>
             <StackPanel Margin="5,0,0,0">
+                <controls:CheckBoxParameter Label="Enable Coarse Alignment"
+                    IsChecked="{Binding EnableCoarseAlignment}"
+                    ToolType="PointCloudRegistrationTool" ParameterName="EnableCoarseAlignment"/>
                 <controls:SliderParameter Label="Max Iterations"
                     Value="{Binding MaxIterations}" Minimum="1" Maximum="500"
                     TickFrequency="5" ValueFormat="F0"
@@ -45,6 +48,10 @@
                     Value="{Binding Tolerance}" Minimum="0.001" Maximum="1.0"
                     TickFrequency="0.001" ValueFormat="F3"
                     ToolType="PointCloudRegistrationTool" ParameterName="Tolerance"/>
+                <controls:SliderParameter Label="Confidence Distance (mm)"
+                    Value="{Binding ConfidenceDistanceMm}" Minimum="0.05" Maximum="10.0"
+                    TickFrequency="0.05" ValueFormat="F2"
+                    ToolType="PointCloudRegistrationTool" ParameterName="ConfidenceDistanceMm"/>
                 <controls:CheckBoxParameter Label="Apply Transform to Source"
                     IsChecked="{Binding ApplyTransformToSource}"
                     ToolType="PointCloudRegistrationTool" ParameterName="ApplyTransformToSource"/>
