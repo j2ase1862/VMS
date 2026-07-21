@@ -158,8 +158,19 @@ namespace VMS.Core.Controls
                 _effectsManager = new DefaultEffectsManager();
                 Viewport.EffectsManager = _effectsManager;
             }
-            BuildGridLines();
-            BuildAxisLines();
+
+            // 탭 전환 시 Loaded 가 재발생한다 — 이미 점군이 표시 중이면 데이터 기준
+            // 그리드/박스/축을 재구성하고, 기본(원점 ±500) 그리드로 되돌리지 않는다.
+            // (기본 그리드로 덮어쓰면 그리드만 점군에서 분리되어 보이는 버그)
+            if (PointCloudModel.Geometry is PointGeometry3D geo && geo.Positions is { Count: > 0 })
+            {
+                BuildGridTickLabels(geo.Positions);
+            }
+            else
+            {
+                BuildGridLines();
+                BuildAxisLines();
+            }
 
             // Wire mouse events on the viewport
             Viewport.PreviewMouseLeftButtonDown += OnPreviewMouseLeftButtonDown;
