@@ -348,8 +348,9 @@ namespace VMS.Camera.Utils
                     h11, h12, h13, h21, h22, h23, h31, h32, h33,
                     out var U, out var Vt);
 
-                // R = V × U^T
-                Matrix4x4.Invert(U, out var Ut);
+                // R = V × U^T — U 는 SvdDecompose3x3 에서 정규직교 보장되므로
+                // 역행렬 대신 전치 사용 (특이 행렬 Invert 실패 → NaN 오염 경로 제거)
+                var Ut = Transpose3x3(U);
                 var rotation = Vt * Ut;
 
                 // det(R) < 0이면 반사 보정
@@ -419,6 +420,230 @@ namespace VMS.Camera.Utils
             public int Iterations { get; init; }
             /// <summary>tolerance 이내로 수렴했는지. false 면 maxIterations 소진 또는 대응점 부족 중단.</summary>
             public bool Converged { get; init; }
+        }
+
+        /// <summary>
+        /// PCA(주성분) 기반 거친 정렬 — ICP 앞단의 초기 자세 추정.
+        /// 두 점군의 중심과 주성분 축을 맞추는 변환을 산출한다. PCA 축의 부호 모호성
+        /// 때문에 프로퍼 회전 후보 4개를 만들고, 정렬 후 대응점 평균 거리가 최소인
+        /// 후보를 선택한다. 초기 자세 차이가 커서 ICP 단독으로는 수렴하지 못하는
+        /// 경우를 해결한다 (Mech-Vision 의 3D Coarse Matching 에 해당하는 간이안).
+        /// 한계: 완전 대칭(구/정육면체) 물체는 주성분 축이 정의되지 않아 효과 없음.
+        /// </summary>
+        public static Matrix4x4 CoarseAlignPCA(PointCloudData reference, PointCloudData source)
+        {
+            int refCount = reference.PointCount;
+            int srcCount = source.PointCount;
+            if (refCount < 3 || srcCount < 3) return Matrix4x4.Identity;
+
+            var refCentroid = ComputeCentroid(reference.Positions, refCount);
+            var srcCentroid = ComputeCentroid(source.Positions, srcCount);
+
+            var refAxes = PrincipalAxes(reference.Positions, refCount, refCentroid);
+            var srcAxes = PrincipalAxes(source.Positions, srcCount, srcCentroid);
+
+            // 후보 스코어링용 소스 샘플 (성능 — 최근접 탐색이 O(N·M))
+            var samples = SamplePositions(source.Positions, srcCount, 2000);
+
+            // PCA 축 부호 모호성 → 프로퍼 회전(det=+1)이 되는 부호 조합 4개
+            var flips = new[]
+            {
+                new Vector3(1, 1, 1), new Vector3(1, -1, -1),
+                new Vector3(-1, 1, -1), new Vector3(-1, -1, 1)
+            };
+
+            var best = Matrix4x4.Identity;
+            float bestScore = float.MaxValue;
+
+            foreach (var f in flips)
+            {
+                // 행벡터 규약: src 축(행렬 A 행) → 부호 적용된 ref 축(행렬 B 행) 매핑.
+                // A·R = B, A 는 정규직교 → R = Aᵀ·B
+                var a = AxesToMatrix(srcAxes[0], srcAxes[1], srcAxes[2]);
+                var b = AxesToMatrix(refAxes[0] * f.X, refAxes[1] * f.Y, refAxes[2] * f.Z);
+                var rotation = Matrix4x4.Transpose(a) * b;
+
+                // t = refCentroid − srcCentroid·R
+                var t = refCentroid - Vector3.Transform(srcCentroid, rotation);
+                var candidate = rotation;
+                candidate.M41 = t.X; candidate.M42 = t.Y; candidate.M43 = t.Z;
+
+                float score = MeanNearestDistance(reference.Positions, refCount, samples, candidate);
+                if (score < bestScore)
+                {
+                    bestScore = score;
+                    best = candidate;
+                }
+            }
+
+            return best;
+        }
+
+        /// <summary>
+        /// 정합 신뢰도 — 변환 적용 후 소스 점 중 최근접 기준점과의 거리가
+        /// threshold(mm) 이내인 점의 비율 (0~1). Mech-Vision 의 matching
+        /// score/confidence 에 해당하는 지표. 성능을 위해 최대 2000점 샘플링.
+        /// </summary>
+        public static float ComputeInlierRatio(PointCloudData reference, PointCloudData source,
+            Matrix4x4 transform, float thresholdMm)
+        {
+            int refCount = reference.PointCount;
+            int srcCount = source.PointCount;
+            if (refCount == 0 || srcCount == 0) return 0f;
+
+            var samples = SamplePositions(source.Positions, srcCount, 2000);
+            var transformed = new Vector3[samples.Length];
+            for (int i = 0; i < samples.Length; i++)
+                transformed[i] = Vector3.Transform(samples[i], transform);
+
+            var correspondences = FindClosestPoints(reference.Positions, refCount, transformed, transformed.Length);
+
+            int inliers = 0, valid = 0;
+            for (int i = 0; i < transformed.Length; i++)
+            {
+                if (correspondences[i] < 0) continue;
+                valid++;
+                if (Vector3.Distance(transformed[i], reference.Positions[correspondences[i]]) <= thresholdMm)
+                    inliers++;
+            }
+            return valid > 0 ? (float)inliers / valid : 0f;
+        }
+
+        private static Vector3 ComputeCentroid(Vector3[] positions, int count)
+        {
+            Vector3 sum = Vector3.Zero;
+            for (int i = 0; i < count; i++) sum += positions[i];
+            return sum / count;
+        }
+
+        private static Vector3[] SamplePositions(Vector3[] positions, int count, int maxSamples)
+        {
+            if (count <= maxSamples)
+            {
+                var all = new Vector3[count];
+                Array.Copy(positions, all, count);
+                return all;
+            }
+            int stride = count / maxSamples;
+            var samples = new Vector3[count / stride];
+            for (int i = 0; i < samples.Length; i++)
+                samples[i] = positions[i * stride];
+            return samples;
+        }
+
+        private static float MeanNearestDistance(Vector3[] refPositions, int refCount,
+            Vector3[] srcSamples, Matrix4x4 transform)
+        {
+            var transformed = new Vector3[srcSamples.Length];
+            for (int i = 0; i < srcSamples.Length; i++)
+                transformed[i] = Vector3.Transform(srcSamples[i], transform);
+
+            var correspondences = FindClosestPoints(refPositions, refCount, transformed, transformed.Length);
+
+            float total = 0;
+            int valid = 0;
+            for (int i = 0; i < transformed.Length; i++)
+            {
+                if (correspondences[i] < 0) continue;
+                total += Vector3.Distance(transformed[i], refPositions[correspondences[i]]);
+                valid++;
+            }
+            return valid > 0 ? total / valid : float.MaxValue;
+        }
+
+        /// <summary>공분산 3x3의 고유벡터(주성분 축) — 고유값 내림차순, 단위 벡터.</summary>
+        private static Vector3[] PrincipalAxes(Vector3[] positions, int count, Vector3 centroid)
+        {
+            // 공분산 (대칭 3x3)
+            double c11 = 0, c12 = 0, c13 = 0, c22 = 0, c23 = 0, c33 = 0;
+            for (int i = 0; i < count; i++)
+            {
+                var d = positions[i] - centroid;
+                c11 += d.X * d.X; c12 += d.X * d.Y; c13 += d.X * d.Z;
+                c22 += d.Y * d.Y; c23 += d.Y * d.Z; c33 += d.Z * d.Z;
+            }
+
+            var (values, vectors) = JacobiEigenSymmetric3x3(c11, c12, c13, c22, c23, c33);
+
+            // 고유값 내림차순 정렬
+            var order = new[] { 0, 1, 2 };
+            Array.Sort(order, (x, y) => values[y].CompareTo(values[x]));
+            var v0 = Vector3.Normalize(vectors[order[0]]);
+            var v1 = Vector3.Normalize(vectors[order[1]]);
+            var v2 = Vector3.Normalize(vectors[order[2]]);
+
+            // 오른손 좌표계 강제 — 기준/현재 축 삼조의 손대칭이 어긋나면
+            // 후보 회전이 전부 반사(det=-1)가 되어 올바른 자세가 후보에 없게 된다
+            if (Vector3.Dot(Vector3.Cross(v0, v1), v2) < 0)
+                v2 = -v2;
+
+            return new[] { v0, v1, v2 };
+        }
+
+        /// <summary>대칭 3x3 행렬의 Jacobi 고유값 분해 — (고유값, 고유벡터) 반환.</summary>
+        private static (double[] values, Vector3[] vectors) JacobiEigenSymmetric3x3(
+            double a11, double a12, double a13, double a22, double a23, double a33)
+        {
+            var a = new[,] { { a11, a12, a13 }, { a12, a22, a23 }, { a13, a23, a33 } };
+            var v = new[,] { { 1.0, 0, 0 }, { 0, 1.0, 0 }, { 0, 0, 1.0 } };
+
+            for (int sweep = 0; sweep < 50; sweep++)
+            {
+                double off = Math.Abs(a[0, 1]) + Math.Abs(a[0, 2]) + Math.Abs(a[1, 2]);
+                if (off < 1e-12) break;
+
+                for (int p = 0; p < 2; p++)
+                {
+                    for (int q = p + 1; q < 3; q++)
+                    {
+                        if (Math.Abs(a[p, q]) < 1e-15) continue;
+
+                        double theta = (a[q, q] - a[p, p]) / (2.0 * a[p, q]);
+                        double t = Math.Sign(theta) / (Math.Abs(theta) + Math.Sqrt(theta * theta + 1.0));
+                        if (theta == 0) t = 1.0;
+                        double c = 1.0 / Math.Sqrt(t * t + 1.0);
+                        double s = t * c;
+
+                        for (int k = 0; k < 3; k++)
+                        {
+                            double akp = a[k, p], akq = a[k, q];
+                            a[k, p] = c * akp - s * akq;
+                            a[k, q] = s * akp + c * akq;
+                        }
+                        for (int k = 0; k < 3; k++)
+                        {
+                            double apk = a[p, k], aqk = a[q, k];
+                            a[p, k] = c * apk - s * aqk;
+                            a[q, k] = s * apk + c * aqk;
+                        }
+                        for (int k = 0; k < 3; k++)
+                        {
+                            double vkp = v[k, p], vkq = v[k, q];
+                            v[k, p] = c * vkp - s * vkq;
+                            v[k, q] = s * vkp + c * vkq;
+                        }
+                    }
+                }
+            }
+
+            var values = new[] { a[0, 0], a[1, 1], a[2, 2] };
+            var vectors = new[]
+            {
+                new Vector3((float)v[0, 0], (float)v[1, 0], (float)v[2, 0]),
+                new Vector3((float)v[0, 1], (float)v[1, 1], (float)v[2, 1]),
+                new Vector3((float)v[0, 2], (float)v[1, 2], (float)v[2, 2])
+            };
+            return (values, vectors);
+        }
+
+        /// <summary>행벡터 규약 — 세 축을 행으로 갖는 회전 행렬.</summary>
+        private static Matrix4x4 AxesToMatrix(Vector3 row1, Vector3 row2, Vector3 row3)
+        {
+            return new Matrix4x4(
+                row1.X, row1.Y, row1.Z, 0,
+                row2.X, row2.Y, row2.Z, 0,
+                row3.X, row3.Y, row3.Z, 0,
+                0, 0, 0, 1);
         }
 
         /// <summary>
@@ -535,6 +760,38 @@ namespace VMS.Camera.Utils
             Sinv.M33 = s3 > 1e-10f ? 1.0f / s3 : 0;
 
             U = H * V * Sinv;
+
+            // H 가 rank-deficient 면(대응점 coplanar/colinear) 특이값 0 → U 에 영 열이
+            // 생겨 이후 회전 계산이 NaN 으로 오염된다. Gram-Schmidt + 외적으로 열을
+            // 보완해 항상 정규직교 행렬을 보장한다.
+            OrthonormalizeColumns3x3(ref U);
+        }
+
+        /// <summary>3x3 부분의 열벡터를 정규직교화 — 영/퇴화 열은 외적으로 보완.</summary>
+        private static void OrthonormalizeColumns3x3(ref Matrix4x4 m)
+        {
+            var c1 = new Vector3(m.M11, m.M21, m.M31);
+            var c2 = new Vector3(m.M12, m.M22, m.M32);
+
+            c1 = c1.LengthSquared() > 1e-12f ? Vector3.Normalize(c1) : Vector3.UnitX;
+
+            c2 -= Vector3.Dot(c2, c1) * c1;
+            if (c2.LengthSquared() > 1e-12f)
+            {
+                c2 = Vector3.Normalize(c2);
+            }
+            else
+            {
+                // c1 과 평행/영 — c1 에 수직인 임의 축 선택
+                var helper = MathF.Abs(c1.X) < 0.9f ? Vector3.UnitX : Vector3.UnitY;
+                c2 = Vector3.Normalize(Vector3.Cross(c1, helper));
+            }
+
+            var c3 = Vector3.Cross(c1, c2);
+
+            m.M11 = c1.X; m.M21 = c1.Y; m.M31 = c1.Z;
+            m.M12 = c2.X; m.M22 = c2.Y; m.M32 = c2.Z;
+            m.M13 = c3.X; m.M23 = c3.Y; m.M33 = c3.Z;
         }
 
         private static Matrix4x4 Transpose3x3(Matrix4x4 m)
@@ -555,7 +812,10 @@ namespace VMS.Camera.Utils
             if (MathF.Abs(apq) < 1e-10f) return;
 
             float tau = (aqq - app) / (2.0f * apq);
-            float t = MathF.Sign(tau) / (MathF.Abs(tau) + MathF.Sqrt(1 + tau * tau));
+            // tau=0 이면 Sign(0)=0 → t=0 으로 회전이 멈추는 정지 버그 — 45° 회전이 정답
+            float t = tau == 0f
+                ? 1f
+                : MathF.Sign(tau) / (MathF.Abs(tau) + MathF.Sqrt(1 + tau * tau));
             float c = 1.0f / MathF.Sqrt(1 + t * t);
             float s = t * c;
 

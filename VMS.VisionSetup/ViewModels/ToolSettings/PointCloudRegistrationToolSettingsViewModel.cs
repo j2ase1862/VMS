@@ -19,6 +19,8 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         public int MaxIterations { get => TypedTool.MaxIterations; set => TypedTool.MaxIterations = value; }
         public float Tolerance { get => TypedTool.Tolerance; set => TypedTool.Tolerance = value; }
         public bool ApplyTransformToSource { get => TypedTool.ApplyTransformToSource; set => TypedTool.ApplyTransformToSource = value; }
+        public bool EnableCoarseAlignment { get => TypedTool.EnableCoarseAlignment; set => TypedTool.EnableCoarseAlignment = value; }
+        public float ConfidenceDistanceMm { get => TypedTool.ConfidenceDistanceMm; set => TypedTool.ConfidenceDistanceMm = value; }
         public bool IsReferenceLoaded => TypedTool.IsReferenceLoaded;
 
         public IRelayCommand SaveCurrentAsReferenceCommand { get; }
