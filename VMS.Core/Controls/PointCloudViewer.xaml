@@ -74,8 +74,11 @@
             <hx:AmbientLight3D Color="#404040"/>
             <hx:DirectionalLight3D Direction="-1,-1,-1" Color="White"/>
 
-            <!-- Grid -->
-            <hx:LineGeometryModel3D x:Name="GridLines" Color="Gray" Thickness="0.5"/>
+            <!-- Grid (데이터 바운딩 박스 바닥면에 정합 — Mech-Eye Viewer 스타일) -->
+            <hx:LineGeometryModel3D x:Name="GridLines" Color="#5A5A5A" Thickness="0.5"/>
+
+            <!-- Data Bounding Box (반투명 청록 와이어프레임) -->
+            <hx:LineGeometryModel3D x:Name="BoundsBoxLines" Color="#7F5FB0C8" Thickness="1.0"/>
 
             <!-- Axis Lines -->
             <hx:LineGeometryModel3D x:Name="AxisLines" Thickness="2.0"/>
