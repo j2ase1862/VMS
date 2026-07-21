@@ -287,9 +287,10 @@ namespace VMS.Core.Controls
             var tickColor = new Color4(0.78f, 0.78f, 0.78f, 1f);
             int tickCount = 5;
 
-            // 바닥면 = 가장 깊은 쪽(y = max.Y, 시트/배경 레벨) — Mech-Eye 처럼
-            // 그리드·눈금·축을 점군 아래 면에 배치한다
-            float floorY = max.Y;
+            // 바닥면 = 가장 깊은 쪽보다 약간 더 아래 — 시트의 깊은 부분과 그리드가
+            // 같은 평면에서 겹쳐 안 보이는 문제 방지 (장면 크기의 1.5% 만큼 분리)
+            float floorGap = MathF.Max((max - min).Length() * 0.015f, 2f);
+            float floorY = max.Y + floorGap;
 
             // X 눈금 — 앞쪽 바닥 모서리(z = max.Z)를 따라, 실좌표 위치에 배치
             for (int i = 0; i <= tickCount; i++)
@@ -321,9 +322,9 @@ namespace VMS.Core.Controls
 
             GridTickLabels.Geometry = tickText;
 
-            RebuildGridForData(min, max);
-            BuildBoundsBox(min, max);
-            RebuildAxisEdges(min, max, margin);
+            RebuildGridForData(min, max, floorY);
+            BuildBoundsBox(min, max, floorY);
+            RebuildAxisEdges(min, max, margin, floorY);
         }
 
         /// <summary>
@@ -368,14 +369,12 @@ namespace VMS.Core.Controls
             return (min, max);
         }
 
-        private void RebuildGridForData(Vector3 min, Vector3 max)
+        private void RebuildGridForData(Vector3 min, Vector3 max, float floorY)
         {
             var builder = new LineBuilder();
 
-            // 바닥면(y = max.Y, 가장 깊은 쪽 = 시트/배경 레벨)에 배치 — Mech-Eye 스타일.
             // 간격은 라운드 값(1/2/5×10ⁿ) 자동 선택으로 약 30칸 — 데이터 크기와
             // 무관하게 정사각 셀 + 좌표 정렬(라인이 간격의 배수 좌표에 놓임).
-            float floorY = max.Y;
             float step = NiceGridStep(MathF.Max(max.X - min.X, max.Z - min.Z));
 
             for (int i = (int)MathF.Ceiling(min.X / step); i * step <= max.X; i++)
@@ -412,26 +411,26 @@ namespace VMS.Core.Controls
             return nice * pow;
         }
 
-        /// <summary>데이터 바운딩 박스 와이어프레임 (12 모서리).</summary>
-        private void BuildBoundsBox(Vector3 min, Vector3 max)
+        /// <summary>데이터 바운딩 박스 와이어프레임 (12 모서리). 바닥은 floorY(그리드 면)까지.</summary>
+        private void BuildBoundsBox(Vector3 min, Vector3 max, float floorY)
         {
             var b = new LineBuilder();
 
-            // 바닥 4모서리
+            // 위쪽(카메라 가까운 면) 4모서리
             b.AddLine(new Vector3(min.X, min.Y, min.Z), new Vector3(max.X, min.Y, min.Z));
             b.AddLine(new Vector3(max.X, min.Y, min.Z), new Vector3(max.X, min.Y, max.Z));
             b.AddLine(new Vector3(max.X, min.Y, max.Z), new Vector3(min.X, min.Y, max.Z));
             b.AddLine(new Vector3(min.X, min.Y, max.Z), new Vector3(min.X, min.Y, min.Z));
-            // 천장 4모서리
-            b.AddLine(new Vector3(min.X, max.Y, min.Z), new Vector3(max.X, max.Y, min.Z));
-            b.AddLine(new Vector3(max.X, max.Y, min.Z), new Vector3(max.X, max.Y, max.Z));
-            b.AddLine(new Vector3(max.X, max.Y, max.Z), new Vector3(min.X, max.Y, max.Z));
-            b.AddLine(new Vector3(min.X, max.Y, max.Z), new Vector3(min.X, max.Y, min.Z));
+            // 바닥(그리드 면) 4모서리
+            b.AddLine(new Vector3(min.X, floorY, min.Z), new Vector3(max.X, floorY, min.Z));
+            b.AddLine(new Vector3(max.X, floorY, min.Z), new Vector3(max.X, floorY, max.Z));
+            b.AddLine(new Vector3(max.X, floorY, max.Z), new Vector3(min.X, floorY, max.Z));
+            b.AddLine(new Vector3(min.X, floorY, max.Z), new Vector3(min.X, floorY, min.Z));
             // 수직 4모서리
-            b.AddLine(new Vector3(min.X, min.Y, min.Z), new Vector3(min.X, max.Y, min.Z));
-            b.AddLine(new Vector3(max.X, min.Y, min.Z), new Vector3(max.X, max.Y, min.Z));
-            b.AddLine(new Vector3(max.X, min.Y, max.Z), new Vector3(max.X, max.Y, max.Z));
-            b.AddLine(new Vector3(min.X, min.Y, max.Z), new Vector3(min.X, max.Y, max.Z));
+            b.AddLine(new Vector3(min.X, min.Y, min.Z), new Vector3(min.X, floorY, min.Z));
+            b.AddLine(new Vector3(max.X, min.Y, min.Z), new Vector3(max.X, floorY, min.Z));
+            b.AddLine(new Vector3(max.X, min.Y, max.Z), new Vector3(max.X, floorY, max.Z));
+            b.AddLine(new Vector3(min.X, min.Y, max.Z), new Vector3(min.X, floorY, max.Z));
 
             BoundsBoxLines.Geometry = b.ToLineGeometry3D();
         }
@@ -440,14 +439,12 @@ namespace VMS.Core.Controls
         /// 축 라인·라벨을 박스 모서리에 배치 — X(적): 앞 바닥, Y(녹): 오른쪽 바닥,
         /// Z(청): 왼쪽 앞 수직. 눈금 라벨과 같은 모서리를 공유해 읽기 일관성 유지.
         /// </summary>
-        private void RebuildAxisEdges(Vector3 min, Vector3 max, float margin)
+        private void RebuildAxisEdges(Vector3 min, Vector3 max, float margin, float floorY)
         {
-            float floorY = max.Y;   // 바닥면(시트 레벨) — 그리드·눈금과 동일 면
-
             var builder = new LineBuilder();
             builder.AddLine(new Vector3(min.X, floorY, max.Z), new Vector3(max.X, floorY, max.Z)); // X
             builder.AddLine(new Vector3(max.X, floorY, min.Z), new Vector3(max.X, floorY, max.Z)); // 데이터 Y
-            builder.AddLine(new Vector3(min.X, max.Y, max.Z), new Vector3(min.X, min.Y, max.Z));   // 높이(데이터 Z)
+            builder.AddLine(new Vector3(min.X, floorY, max.Z), new Vector3(min.X, min.Y, max.Z));  // 높이(데이터 Z)
 
             var geo = builder.ToLineGeometry3D();
             geo.Colors = new Color4Collection
