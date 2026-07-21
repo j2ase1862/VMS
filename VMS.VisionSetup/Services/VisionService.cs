@@ -1105,6 +1105,7 @@ namespace VMS.VisionSetup.Services
                 "PointCloudFilterTool" => new VisionTools.PointCloud.PointCloudFilterTool(),
                 "PointCloudRegistrationTool" => new VisionTools.PointCloud.PointCloudRegistrationTool(),
                 "PointCloudClusterTool" => new VisionTools.PointCloud.PointCloudClusterTool(),
+                "PointCloudDeviationTool" => new VisionTools.PointCloud.PointCloudDeviationTool(),
 
                 // Pattern Matching
                 "FeatureMatchTool" => new FeatureMatchTool(),
