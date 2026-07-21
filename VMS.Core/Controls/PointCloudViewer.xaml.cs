@@ -287,12 +287,16 @@ namespace VMS.Core.Controls
             var tickColor = new Color4(0.78f, 0.78f, 0.78f, 1f);
             int tickCount = 5;
 
+            // 바닥면 = 가장 깊은 쪽(y = max.Y, 시트/배경 레벨) — Mech-Eye 처럼
+            // 그리드·눈금·축을 점군 아래 면에 배치한다
+            float floorY = max.Y;
+
             // X 눈금 — 앞쪽 바닥 모서리(z = max.Z)를 따라, 실좌표 위치에 배치
             for (int i = 0; i <= tickCount; i++)
             {
                 float x = min.X + (max.X - min.X) * i / tickCount;
                 tickText.TextInfo.Add(new TextInfo(
-                    x.ToString("F1"), new Vector3(x, min.Y, max.Z + margin))
+                    x.ToString("F1"), new Vector3(x, floorY, max.Z + margin))
                 { Foreground = tickColor, Scale = 0.6f });
             }
 
@@ -301,7 +305,7 @@ namespace VMS.Core.Controls
             {
                 float z = min.Z + (max.Z - min.Z) * i / tickCount;
                 tickText.TextInfo.Add(new TextInfo(
-                    z.ToString("F1"), new Vector3(max.X + margin, min.Y, z))
+                    z.ToString("F1"), new Vector3(max.X + margin, floorY, z))
                 { Foreground = tickColor, Scale = 0.6f });
             }
 
@@ -367,25 +371,45 @@ namespace VMS.Core.Controls
         private void RebuildGridForData(Vector3 min, Vector3 max)
         {
             var builder = new LineBuilder();
-            int divisions = 10;
 
-            // 그리드를 데이터 실좌표 범위에 정합 — 바닥면(y = min.Y)에 배치.
-            // (기존: 원점 앵커라 점군과 그리드가 어긋났음)
-            float xStep = (max.X - min.X) / divisions;
-            float zStep = (max.Z - min.Z) / divisions;
+            // 바닥면(y = max.Y, 가장 깊은 쪽 = 시트/배경 레벨)에 배치 — Mech-Eye 스타일.
+            // 간격은 라운드 값(1/2/5×10ⁿ) 자동 선택으로 약 30칸 — 데이터 크기와
+            // 무관하게 정사각 셀 + 좌표 정렬(라인이 간격의 배수 좌표에 놓임).
+            float floorY = max.Y;
+            float step = NiceGridStep(MathF.Max(max.X - min.X, max.Z - min.Z));
 
-            for (int i = 0; i <= divisions; i++)
+            for (int i = (int)MathF.Ceiling(min.X / step); i * step <= max.X; i++)
             {
-                float x = min.X + xStep * i;
-                builder.AddLine(new Vector3(x, min.Y, min.Z), new Vector3(x, min.Y, max.Z));
+                float x = i * step;
+                builder.AddLine(new Vector3(x, floorY, min.Z), new Vector3(x, floorY, max.Z));
             }
-            for (int i = 0; i <= divisions; i++)
+            for (int i = (int)MathF.Ceiling(min.Z / step); i * step <= max.Z; i++)
             {
-                float z = min.Z + zStep * i;
-                builder.AddLine(new Vector3(min.X, min.Y, z), new Vector3(max.X, min.Y, z));
+                float z = i * step;
+                builder.AddLine(new Vector3(min.X, floorY, z), new Vector3(max.X, floorY, z));
             }
+
+            // 경계선 — 데이터 범위 끝단은 항상 표시
+            builder.AddLine(new Vector3(min.X, floorY, min.Z), new Vector3(min.X, floorY, max.Z));
+            builder.AddLine(new Vector3(max.X, floorY, min.Z), new Vector3(max.X, floorY, max.Z));
+            builder.AddLine(new Vector3(min.X, floorY, min.Z), new Vector3(max.X, floorY, min.Z));
+            builder.AddLine(new Vector3(min.X, floorY, max.Z), new Vector3(max.X, floorY, max.Z));
 
             GridLines.Geometry = builder.ToLineGeometry3D();
+        }
+
+        /// <summary>
+        /// 그리드 간격 — 큰 축 기준 약 30칸이 되도록 1/2/5×10ⁿ 라운드 값 선택.
+        /// 예: 폭 1900mm → 50mm 간격(38칸), 폭 200mm → 5mm 간격(40칸).
+        /// </summary>
+        public static float NiceGridStep(float extent)
+        {
+            if (extent <= 0f) return 1f;
+            float raw = extent / 30f;
+            float pow = MathF.Pow(10f, MathF.Floor(MathF.Log10(raw)));
+            float mantissa = raw / pow;
+            float nice = mantissa < 1.5f ? 1f : mantissa < 3.5f ? 2f : mantissa < 7.5f ? 5f : 10f;
+            return nice * pow;
         }
 
         /// <summary>데이터 바운딩 박스 와이어프레임 (12 모서리).</summary>
@@ -418,10 +442,12 @@ namespace VMS.Core.Controls
         /// </summary>
         private void RebuildAxisEdges(Vector3 min, Vector3 max, float margin)
         {
+            float floorY = max.Y;   // 바닥면(시트 레벨) — 그리드·눈금과 동일 면
+
             var builder = new LineBuilder();
-            builder.AddLine(new Vector3(min.X, min.Y, max.Z), new Vector3(max.X, min.Y, max.Z)); // X
-            builder.AddLine(new Vector3(max.X, min.Y, min.Z), new Vector3(max.X, min.Y, max.Z)); // 데이터 Y
-            builder.AddLine(new Vector3(min.X, min.Y, max.Z), new Vector3(min.X, max.Y, max.Z)); // 높이(데이터 Z)
+            builder.AddLine(new Vector3(min.X, floorY, max.Z), new Vector3(max.X, floorY, max.Z)); // X
+            builder.AddLine(new Vector3(max.X, floorY, min.Z), new Vector3(max.X, floorY, max.Z)); // 데이터 Y
+            builder.AddLine(new Vector3(min.X, max.Y, max.Z), new Vector3(min.X, min.Y, max.Z));   // 높이(데이터 Z)
 
             var geo = builder.ToLineGeometry3D();
             geo.Colors = new Color4Collection
@@ -433,9 +459,9 @@ namespace VMS.Core.Controls
             AxisLines.Geometry = geo;
 
             BuildAxisLabel(AxisLabelX, "X(mm)",
-                new Vector3((min.X + max.X) * 0.5f, min.Y, max.Z + margin * 2.2f), AxisColorX);
+                new Vector3((min.X + max.X) * 0.5f, floorY, max.Z + margin * 2.2f), AxisColorX);
             BuildAxisLabel(AxisLabelZ, "Y(mm)",
-                new Vector3(max.X + margin * 2.2f, min.Y, (min.Z + max.Z) * 0.5f), AxisColorY);
+                new Vector3(max.X + margin * 2.2f, floorY, (min.Z + max.Z) * 0.5f), AxisColorY);
             BuildAxisLabel(AxisLabelY, "Z(mm)",
                 new Vector3(min.X - margin * 2.2f, (min.Y + max.Y) * 0.5f, max.Z), AxisColorZ);
         }
