@@ -215,21 +215,27 @@ namespace VMS.Core.Controls
 
             var geo = builder.ToLineGeometry3D();
 
+            // Mech-Eye 규약: 데이터 X=적 / Y=녹 / Z=청.
+            // viewport Y = 데이터 Z(높이) → 청, viewport Z = 데이터 Y → 녹.
             var axisColors = new Color4Collection
             {
-                new Color4(1, 0, 0, 1), new Color4(1, 0, 0, 1),
-                new Color4(0, 1, 0, 1), new Color4(0, 1, 0, 1),
-                new Color4(0, 0, 1, 1), new Color4(0, 0, 1, 1)
+                AxisColorX, AxisColorX,
+                AxisColorZ, AxisColorZ,
+                AxisColorY, AxisColorY
             };
             geo.Colors = axisColors;
 
             AxisLines.Geometry = geo;
 
-            // Build axis labels (viewport Y = data Z height, viewport Z = data Y)
-            BuildAxisLabel(AxisLabelX, "X", new Vector3(len * 1.1f, 0, 0), new Color4(1, 0, 0, 1));
-            BuildAxisLabel(AxisLabelY, "Z(mm)", new Vector3(0, len * 1.1f, 0), new Color4(0, 1, 0, 1));
-            BuildAxisLabel(AxisLabelZ, "Y(mm)", new Vector3(0, 0, len * 1.1f), new Color4(0, 0.5f, 1, 1));
+            BuildAxisLabel(AxisLabelX, "X(mm)", new Vector3(len * 1.1f, 0, 0), AxisColorX);
+            BuildAxisLabel(AxisLabelY, "Z(mm)", new Vector3(0, len * 1.1f, 0), AxisColorZ);
+            BuildAxisLabel(AxisLabelZ, "Y(mm)", new Vector3(0, 0, len * 1.1f), AxisColorY);
         }
+
+        // 데이터 축 색 (Mech-Eye 규약): X=적, Y=녹, Z=청
+        private static readonly Color4 AxisColorX = new(1f, 0.25f, 0.25f, 1f);
+        private static readonly Color4 AxisColorY = new(0.3f, 1f, 0.3f, 1f);
+        private static readonly Color4 AxisColorZ = new(0.35f, 0.65f, 1f, 1f);
 
         private static void BuildAxisLabel(BillboardTextModel3D model, string text, Vector3 position, Color4 color)
         {
@@ -244,11 +250,17 @@ namespace VMS.Core.Controls
             model.Geometry = billboard;
         }
 
+        /// <summary>
+        /// 데이터 바운딩 박스에 정합된 그리드·박스·축·눈금을 재구성 (Mech-Eye Viewer 스타일).
+        /// 그리드는 원점(0,0)이 아니라 점군의 실좌표 범위(FOV)에 정확히 겹쳐 그려지고,
+        /// 눈금 라벨은 박스 모서리를 따라 실제 좌표값을 표시한다.
+        /// </summary>
         private void BuildGridTickLabels(Vector3Collection positions)
         {
             if (positions.Count == 0)
             {
                 GridTickLabels.Geometry = null;
+                BoundsBoxLines.Geometry = null;
                 return;
             }
 
@@ -260,47 +272,46 @@ namespace VMS.Core.Controls
                 max = Vector3.Max(max, new Vector3(positions[i].X, positions[i].Y, positions[i].Z));
             }
 
+            // 라벨을 박스 밖으로 밀어내는 여백 — 데이터 크기에 비례
+            float margin = MathF.Max((max - min).Length() * 0.04f, 5f);
+
             var tickText = new BillboardText3D();
-            var tickColor = new Color4(0.6f, 0.6f, 0.6f, 1f);
+            var tickColor = new Color4(0.78f, 0.78f, 0.78f, 1f);
             int tickCount = 5;
 
-            // X-axis ticks (along grid X, at Y=0, Z=0 edge)
-            float gridXMax = max.X - min.X;
-            float gridZMax = max.Z - min.Z;
+            // X 눈금 — 앞쪽 바닥 모서리(z = max.Z)를 따라, 실좌표 위치에 배치
             for (int i = 0; i <= tickCount; i++)
             {
-                float x = gridXMax * i / tickCount;
-                float dataX = min.X + (max.X - min.X) * i / tickCount;
+                float x = min.X + (max.X - min.X) * i / tickCount;
                 tickText.TextInfo.Add(new TextInfo(
-                    dataX.ToString("F0"), new Vector3(x, 0f, -20f))
+                    x.ToString("F1"), new Vector3(x, min.Y, max.Z + margin))
                 { Foreground = tickColor, Scale = 0.6f });
             }
 
-            // Z-axis ticks (along grid Z = data Y, at Y=0, X=0 edge)
+            // Y(데이터) 눈금 — 오른쪽 바닥 모서리(x = max.X)를 따라 (viewport Z = 데이터 Y)
             for (int i = 0; i <= tickCount; i++)
             {
-                float z = gridZMax * i / tickCount;
-                float dataY = min.Z + (max.Z - min.Z) * i / tickCount;
+                float z = min.Z + (max.Z - min.Z) * i / tickCount;
                 tickText.TextInfo.Add(new TextInfo(
-                    dataY.ToString("F0"), new Vector3(-20f, 0f, z))
+                    z.ToString("F1"), new Vector3(max.X + margin, min.Y, z))
                 { Foreground = tickColor, Scale = 0.6f });
             }
 
-            // Y-axis ticks (vertical, show original data Z values)
-            // viewport Y = dataZ - zMax, so dataZ = viewportY + zMax
+            // Z(높이) 눈금 — 왼쪽 앞 수직 모서리를 따라. viewport Y = dataZ - zMax
             for (int i = 0; i <= tickCount; i++)
             {
                 float viewportY = min.Y + (max.Y - min.Y) * i / tickCount;
                 float dataZ = viewportY + _dataZMax;
                 tickText.TextInfo.Add(new TextInfo(
-                    dataZ.ToString("F1"), new Vector3(-20f, viewportY, 0f))
+                    dataZ.ToString("F1"), new Vector3(min.X - margin, viewportY, max.Z))
                 { Foreground = tickColor, Scale = 0.6f });
             }
 
             GridTickLabels.Geometry = tickText;
 
-            // Update grid to match data bounds
             RebuildGridForData(min, max);
+            BuildBoundsBox(min, max);
+            RebuildAxisEdges(min, max, margin);
         }
 
         private void RebuildGridForData(Vector3 min, Vector3 max)
@@ -308,24 +319,75 @@ namespace VMS.Core.Controls
             var builder = new LineBuilder();
             int divisions = 10;
 
-            // Grid top-left corner at (0, 0, 0), extends in +X and +Z
-            float gridXMax = max.X - min.X;
-            float gridZMax = max.Z - min.Z;
-            float xStep = gridXMax / divisions;
-            float zStep = gridZMax / divisions;
+            // 그리드를 데이터 실좌표 범위에 정합 — 바닥면(y = min.Y)에 배치.
+            // (기존: 원점 앵커라 점군과 그리드가 어긋났음)
+            float xStep = (max.X - min.X) / divisions;
+            float zStep = (max.Z - min.Z) / divisions;
 
             for (int i = 0; i <= divisions; i++)
             {
-                float x = xStep * i;
-                builder.AddLine(new Vector3(x, 0f, 0f), new Vector3(x, 0f, gridZMax));
+                float x = min.X + xStep * i;
+                builder.AddLine(new Vector3(x, min.Y, min.Z), new Vector3(x, min.Y, max.Z));
             }
             for (int i = 0; i <= divisions; i++)
             {
-                float z = zStep * i;
-                builder.AddLine(new Vector3(0f, 0f, z), new Vector3(gridXMax, 0f, z));
+                float z = min.Z + zStep * i;
+                builder.AddLine(new Vector3(min.X, min.Y, z), new Vector3(max.X, min.Y, z));
             }
 
             GridLines.Geometry = builder.ToLineGeometry3D();
+        }
+
+        /// <summary>데이터 바운딩 박스 와이어프레임 (12 모서리).</summary>
+        private void BuildBoundsBox(Vector3 min, Vector3 max)
+        {
+            var b = new LineBuilder();
+
+            // 바닥 4모서리
+            b.AddLine(new Vector3(min.X, min.Y, min.Z), new Vector3(max.X, min.Y, min.Z));
+            b.AddLine(new Vector3(max.X, min.Y, min.Z), new Vector3(max.X, min.Y, max.Z));
+            b.AddLine(new Vector3(max.X, min.Y, max.Z), new Vector3(min.X, min.Y, max.Z));
+            b.AddLine(new Vector3(min.X, min.Y, max.Z), new Vector3(min.X, min.Y, min.Z));
+            // 천장 4모서리
+            b.AddLine(new Vector3(min.X, max.Y, min.Z), new Vector3(max.X, max.Y, min.Z));
+            b.AddLine(new Vector3(max.X, max.Y, min.Z), new Vector3(max.X, max.Y, max.Z));
+            b.AddLine(new Vector3(max.X, max.Y, max.Z), new Vector3(min.X, max.Y, max.Z));
+            b.AddLine(new Vector3(min.X, max.Y, max.Z), new Vector3(min.X, max.Y, min.Z));
+            // 수직 4모서리
+            b.AddLine(new Vector3(min.X, min.Y, min.Z), new Vector3(min.X, max.Y, min.Z));
+            b.AddLine(new Vector3(max.X, min.Y, min.Z), new Vector3(max.X, max.Y, min.Z));
+            b.AddLine(new Vector3(max.X, min.Y, max.Z), new Vector3(max.X, max.Y, max.Z));
+            b.AddLine(new Vector3(min.X, min.Y, max.Z), new Vector3(min.X, max.Y, max.Z));
+
+            BoundsBoxLines.Geometry = b.ToLineGeometry3D();
+        }
+
+        /// <summary>
+        /// 축 라인·라벨을 박스 모서리에 배치 — X(적): 앞 바닥, Y(녹): 오른쪽 바닥,
+        /// Z(청): 왼쪽 앞 수직. 눈금 라벨과 같은 모서리를 공유해 읽기 일관성 유지.
+        /// </summary>
+        private void RebuildAxisEdges(Vector3 min, Vector3 max, float margin)
+        {
+            var builder = new LineBuilder();
+            builder.AddLine(new Vector3(min.X, min.Y, max.Z), new Vector3(max.X, min.Y, max.Z)); // X
+            builder.AddLine(new Vector3(max.X, min.Y, min.Z), new Vector3(max.X, min.Y, max.Z)); // 데이터 Y
+            builder.AddLine(new Vector3(min.X, min.Y, max.Z), new Vector3(min.X, max.Y, max.Z)); // 높이(데이터 Z)
+
+            var geo = builder.ToLineGeometry3D();
+            geo.Colors = new Color4Collection
+            {
+                AxisColorX, AxisColorX,
+                AxisColorY, AxisColorY,
+                AxisColorZ, AxisColorZ
+            };
+            AxisLines.Geometry = geo;
+
+            BuildAxisLabel(AxisLabelX, "X(mm)",
+                new Vector3((min.X + max.X) * 0.5f, min.Y, max.Z + margin * 2.2f), AxisColorX);
+            BuildAxisLabel(AxisLabelZ, "Y(mm)",
+                new Vector3(max.X + margin * 2.2f, min.Y, (min.Z + max.Z) * 0.5f), AxisColorY);
+            BuildAxisLabel(AxisLabelY, "Z(mm)",
+                new Vector3(min.X - margin * 2.2f, (min.Y + max.Y) * 0.5f, max.Z), AxisColorZ);
         }
 
         #endregion
