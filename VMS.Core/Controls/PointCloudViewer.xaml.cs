@@ -264,13 +264,10 @@ namespace VMS.Core.Controls
                 return;
             }
 
-            var min = new Vector3(float.MaxValue);
-            var max = new Vector3(float.MinValue);
-            for (int i = 0; i < positions.Count; i++)
-            {
-                min = Vector3.Min(min, new Vector3(positions[i].X, positions[i].Y, positions[i].Z));
-                max = Vector3.Max(max, new Vector3(positions[i].X, positions[i].Y, positions[i].Z));
-            }
+            // 로버스트 바운즈 (0.5%~99.5% 백분위) — 실측 점군의 소수 깊이 이상점이
+            // 박스/그리드를 부풀려 본체에서 멀리 떨어져 보이는 문제 방지.
+            // (Mech-Eye Viewer 가 그리드를 점군에 밀착시켜 보이는 것과 같은 효과)
+            var (min, max) = ComputeRobustBounds(positions);
 
             // 라벨을 박스 밖으로 밀어내는 여백 — 데이터 크기에 비례
             float margin = MathF.Max((max - min).Length() * 0.04f, 5f);
@@ -312,6 +309,48 @@ namespace VMS.Core.Controls
             RebuildGridForData(min, max);
             BuildBoundsBox(min, max);
             RebuildAxisEdges(min, max, margin);
+        }
+
+        /// <summary>
+        /// 축별 0.5%~99.5% 백분위 바운즈 — 소수 이상점(outlier)이 그리드/박스를
+        /// 부풀리지 않도록 한다. 성능을 위해 최대 10만 점 스트라이드 샘플링.
+        /// 축 범위가 0에 수렴하면(평면 등) 전체 대각선의 0.5%만큼 확장해 퇴화 방지.
+        /// </summary>
+        public static (Vector3 min, Vector3 max) ComputeRobustBounds(Vector3Collection positions)
+        {
+            int count = positions.Count;
+            int stride = Math.Max(1, count / 100_000);
+            int sampleCount = (count + stride - 1) / stride;
+
+            var xs = new float[sampleCount];
+            var ys = new float[sampleCount];
+            var zs = new float[sampleCount];
+            int n = 0;
+            for (int i = 0; i < count; i += stride)
+            {
+                xs[n] = positions[i].X;
+                ys[n] = positions[i].Y;
+                zs[n] = positions[i].Z;
+                n++;
+            }
+
+            Array.Sort(xs, 0, n);
+            Array.Sort(ys, 0, n);
+            Array.Sort(zs, 0, n);
+
+            int lo = (int)(n * 0.005f);
+            int hi = Math.Max(lo, (int)(n * 0.995f) - 1);
+
+            var min = new Vector3(xs[lo], ys[lo], zs[lo]);
+            var max = new Vector3(xs[hi], ys[hi], zs[hi]);
+
+            // 퇴화 방지 — 축 범위가 거의 0이면 살짝 벌려 박스가 접히지 않게
+            float pad = MathF.Max((max - min).Length() * 0.005f, 0.5f);
+            if (max.X - min.X < pad) { min.X -= pad; max.X += pad; }
+            if (max.Y - min.Y < pad) { min.Y -= pad; max.Y += pad; }
+            if (max.Z - min.Z < pad) { min.Z -= pad; max.Z += pad; }
+
+            return (min, max);
         }
 
         private void RebuildGridForData(Vector3 min, Vector3 max)
