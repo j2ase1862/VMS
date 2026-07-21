@@ -46,6 +46,27 @@ namespace VMS.Core.Tests
             Assert.True(min.Y <= -46f && max.Y >= -2f);
         }
 
+        [Theory]
+        [InlineData(1900f, 50f)]    // 현장 시트 크기 → 50mm 간격 (38칸)
+        [InlineData(200f, 5f)]      // 소형 부품 → 5mm 간격 (40칸)
+        [InlineData(30f, 1f)]       // 극소형 → 1mm 간격
+        public void NiceGridStep_picks_round_interval(float extent, float expected)
+        {
+            Assert.Equal(expected, PointCloudViewer.NiceGridStep(extent), 3);
+        }
+
+        [Fact]
+        public void NiceGridStep_keeps_cell_count_in_dense_range()
+        {
+            // 어떤 크기에서도 대략 15~75칸 — "촘촘하되 과밀하지 않게"
+            foreach (var extent in new[] { 5f, 42f, 137f, 850f, 1916f, 12000f })
+            {
+                float step = PointCloudViewer.NiceGridStep(extent);
+                float cells = extent / step;
+                Assert.True(cells >= 15f && cells <= 75f, $"extent={extent}: {cells}칸");
+            }
+        }
+
         [Fact]
         public void Flat_axis_is_padded_to_avoid_degenerate_box()
         {
