@@ -759,15 +759,20 @@ namespace VMS.VisionSetup.ViewModels
             codeReading.Tools.Add(new ToolItem { Name = "Code Reader", ToolType = "CodeReaderTool" });
             ToolTree.Add(codeReading);
 
-            // 3D Analysis 카테고리
-            var threeD = new ToolCategory { CategoryName = "3D Analysis" };
-            threeD.Tools.Add(new ToolItem { Name = "PointCloud Filter", ToolType = "PointCloudFilterTool" });
-            threeD.Tools.Add(new ToolItem { Name = "PointCloud Registration", ToolType = "PointCloudRegistrationTool" });
-            threeD.Tools.Add(new ToolItem { Name = "PointCloud Cluster", ToolType = "PointCloudClusterTool" });
-            threeD.Tools.Add(new ToolItem { Name = "Height Slicer", ToolType = "HeightSlicerTool" });
-            threeD.Tools.Add(new ToolItem { Name = "Plane Fit", ToolType = "PlaneFitTool" });
-            threeD.Tools.Add(new ToolItem { Name = "3D Geometry", ToolType = "Geometry3DTool" });
-            ToolTree.Add(threeD);
+            // 3D 카테고리 — 점군 가공(Processing)과 측정/검사(Measurement)로 세분화.
+            // 카테고리는 팔레트 표시 전용이며 레시피 직렬화는 ToolType 기준이라 호환 영향 없음.
+            var threeDProcessing = new ToolCategory { CategoryName = "3D Processing" };
+            threeDProcessing.Tools.Add(new ToolItem { Name = "PointCloud Filter", ToolType = "PointCloudFilterTool" });
+            threeDProcessing.Tools.Add(new ToolItem { Name = "PointCloud Registration", ToolType = "PointCloudRegistrationTool" });
+            threeDProcessing.Tools.Add(new ToolItem { Name = "PointCloud Cluster", ToolType = "PointCloudClusterTool" });
+            ToolTree.Add(threeDProcessing);
+
+            var threeDMeasurement = new ToolCategory { CategoryName = "3D Measurement" };
+            threeDMeasurement.Tools.Add(new ToolItem { Name = "PointCloud Deviation", ToolType = "PointCloudDeviationTool" });
+            threeDMeasurement.Tools.Add(new ToolItem { Name = "Height Slicer", ToolType = "HeightSlicerTool" });
+            threeDMeasurement.Tools.Add(new ToolItem { Name = "Plane Fit", ToolType = "PlaneFitTool" });
+            threeDMeasurement.Tools.Add(new ToolItem { Name = "3D Geometry", ToolType = "Geometry3DTool" });
+            ToolTree.Add(threeDMeasurement);
 
             // Deep Learning 카테고리
             var deepLearning = new ToolCategory { CategoryName = "Deep Learning" };
@@ -3050,6 +3055,7 @@ namespace VMS.VisionSetup.ViewModels
                 VisionTools.PointCloud.PointCloudFilterTool t => new PointCloudFilterToolSettingsViewModel(t),
                 VisionTools.PointCloud.PointCloudRegistrationTool t => new PointCloudRegistrationToolSettingsViewModel(t),
                 VisionTools.PointCloud.PointCloudClusterTool t => new PointCloudClusterToolSettingsViewModel(t),
+                VisionTools.PointCloud.PointCloudDeviationTool t => new PointCloudDeviationToolSettingsViewModel(t),
                 VisionTools.SurfaceAnalysis.PhotometricStereoTool t => new PhotometricStereoToolSettingsViewModel(t),
                 _ => null
             };

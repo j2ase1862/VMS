@@ -476,6 +476,16 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["MaxIterations"] = pcr.MaxIterations;
                     config.Parameters["Tolerance"] = pcr.Tolerance;
                     config.Parameters["ApplyTransformToSource"] = pcr.ApplyTransformToSource;
+                    config.Parameters["EnableCoarseAlignment"] = pcr.EnableCoarseAlignment;
+                    config.Parameters["ConfidenceDistanceMm"] = pcr.ConfidenceDistanceMm;
+                    break;
+
+                case VisionTools.PointCloud.PointCloudDeviationTool pcd:
+                    config.Parameters["ReferencePath"] = pcd.ReferencePath;
+                    config.Parameters["ToleranceMm"] = pcd.ToleranceMm;
+                    config.Parameters["HeatmapRangeMm"] = pcd.HeatmapRangeMm;
+                    config.Parameters["MaxDefectRatioPercent"] = pcd.MaxDefectRatioPercent;
+                    config.Parameters["OutputMode"] = pcd.OutputMode.ToString();
                     break;
 
                 case VisionTools.PointCloud.PointCloudClusterTool pcc:
@@ -616,6 +626,7 @@ namespace VMS.VisionSetup.Services
                 "PointCloudFilterTool" => DeserializePointCloudFilterTool(config),
                 "PointCloudRegistrationTool" => DeserializePointCloudRegistrationTool(config),
                 "PointCloudClusterTool" => DeserializePointCloudClusterTool(config),
+                "PointCloudDeviationTool" => DeserializePointCloudDeviationTool(config),
                 "ColorExtractTool" => DeserializeColorExtractTool(config),
                 "ColorMatchTool" => DeserializeColorMatchTool(config),
                 "PhotometricStereoTool" => DeserializePhotometricStereoTool(config),
@@ -1614,6 +1625,21 @@ namespace VMS.VisionSetup.Services
             if (p.TryGetValue("MaxIterations", out var mi)) tool.MaxIterations = GetInt(mi);
             if (p.TryGetValue("Tolerance", out var tol)) tool.Tolerance = (float)GetDouble(tol);
             if (p.TryGetValue("ApplyTransformToSource", out var atts)) tool.ApplyTransformToSource = GetBool(atts);
+            if (p.TryGetValue("EnableCoarseAlignment", out var eca)) tool.EnableCoarseAlignment = GetBool(eca);
+            if (p.TryGetValue("ConfidenceDistanceMm", out var cdm)) tool.ConfidenceDistanceMm = (float)GetDouble(cdm);
+            return tool;
+        }
+
+        private static VisionTools.PointCloud.PointCloudDeviationTool DeserializePointCloudDeviationTool(ToolConfig config)
+        {
+            var tool = new VisionTools.PointCloud.PointCloudDeviationTool();
+            var p = config.Parameters;
+            if (p.TryGetValue("ReferencePath", out var rp)) tool.ReferencePath = GetString(rp);
+            if (p.TryGetValue("ToleranceMm", out var tol)) tool.ToleranceMm = (float)GetDouble(tol);
+            if (p.TryGetValue("HeatmapRangeMm", out var hr)) tool.HeatmapRangeMm = (float)GetDouble(hr);
+            if (p.TryGetValue("MaxDefectRatioPercent", out var mdr)) tool.MaxDefectRatioPercent = (float)GetDouble(mdr);
+            if (p.TryGetValue("OutputMode", out var om))
+                tool.OutputMode = Enum.Parse<VisionTools.PointCloud.PointCloudDeviationTool.DeviationOutputMode>(GetString(om));
             return tool;
         }
 

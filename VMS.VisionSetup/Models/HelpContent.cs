@@ -252,6 +252,30 @@ namespace VMS.VisionSetup.Models
                 }
             },
 
+            ["PointCloudDeviationTool"] = new ToolHelp
+            {
+                Name = "PointCloud Deviation (3D 편차 검사)",
+                Description = "기준(양품) 3D 데이터와 지금 찍은 3D 데이터를 점 단위로 비교해서, 어느 부위가 얼마나 어긋났는지(변형/수축/이물) 색으로 보여주는 검사 도구입니다.\n\n[언제 쓰나요]\n• 양품 대비 변형·수축·돌출을 부위별로 확인하고 싶을 때 (CAD Compare 검사)\n• 허용 오차(예: ±0.5mm)를 벗어난 영역이 있는지 자동 판정하고 싶을 때\n• 불량 부위의 개수·크기·위치까지 측정하고 싶을 때 (DefectsOnly → Cluster 연결)\n\n색 규칙: 초록 = 기준과 일치, 노랑 = 어긋나기 시작, 빨강 = Heatmap Range 이상 어긋남.",
+                Usage = "1) 양품을 스캔해 'Save Current as Reference'로 기준 저장. 2) 검사 대상 스캔 → Registration으로 자세를 맞춘 뒤 이 도구를 Run. 3) 3D 뷰에서 히트맵 확인, 결과의 DefectRatio로 OK/NG.\n\n[주의] 자세가 안 맞은 상태로 실행하면 전체가 빨갛게 나옵니다 — 반드시 Registration(Coarse Alignment 켬)을 앞단에 두세요.",
+                CognexEquivalent = "(CAD Compare / GOM Inspect 계열)",
+                Results = new Dictionary<string, string>
+                {
+                    ["MeanDeviation"] = "전체 점의 평균 편차 (mm). 전반적으로 얼마나 어긋났는지.",
+                    ["MaxDeviation"] = "가장 크게 어긋난 점의 편차 (mm). 탐색 반경을 넘으면 메시지에 '+' 와 함께 반경값으로 표시됩니다.",
+                    ["DefectPoints"] = "Tolerance를 벗어난 점 개수.",
+                    ["DefectRatio"] = "불량 점 비율 (0~1). 이 값 × 100이 Max Defect Ratio(%) 이하면 OK.",
+                    ["CheckedPoints"] = "검사한 전체 점 개수."
+                },
+                Parameters = new Dictionary<string, string>
+                {
+                    ["ReferencePath"] = "기준(양품) 점군 .vpc 파일 경로. 'Save Current as Reference' 버튼으로 현재 점군을 저장하면 자동 설정.",
+                    ["ToleranceMm"] = "허용 편차 (mm). 이보다 멀리 어긋난 점은 불량으로 집계.\n• 0.1~0.3: 정밀 부품\n• 0.5: 기본\n• 1.0~2.0: 거친 스캔/큰 부품",
+                    ["HeatmapRangeMm"] = "히트맵 색 스케일 상한 (mm). 이 값 이상 어긋나면 완전한 빨강.\n보통 Tolerance의 2배 정도로 두면 불량 경계가 노랑~빨강 사이에 보입니다.",
+                    ["MaxDefectRatioPercent"] = "합격 기준 — 불량 점 비율(%)이 이 값 이하면 OK.\n• 0: 한 점이라도 벗어나면 NG (가장 엄격 — 노이즈 오검 주의)\n• 0.5: 기본 (측정 노이즈 허용)\n• 1~5: 느슨",
+                    ["OutputMode"] = "결과 처리:\n• ColorizeAll: 전체 점을 히트맵으로 색칠 (검토용, 기본)\n• DefectsOnly: 불량 점만 남김 — 뒤에 PointCloud Cluster를 연결하면 불량 영역별 개수·크기·중심 좌표 자동 측정\n• KeepOriginal: 점군은 그대로, 수치만 측정"
+                }
+            },
+
             ["ColorMatchTool"] = new ToolHelp
             {
                 Name = "Color Match (Lab ΔE 거리 매칭)",

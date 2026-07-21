@@ -480,6 +480,79 @@ namespace VMS.Camera.Utils
         }
 
         /// <summary>
+        /// 소스 각 점에서 기준 점군까지의 최근접 거리 (mm) — 편차(deviation) 분석용.
+        /// 공간 그리드 해싱(셀 = maxSearchRadius)으로 O(N) 평균 — 전점 계산에서
+        /// brute-force O(N·M) 을 회피. 거리는 maxSearchRadius 이내에서 정확하고,
+        /// 그 밖이면 maxSearchRadius 로 클램프된다 (편차 판정 목적엔 충분 —
+        /// 어차피 tolerance 초과).
+        /// </summary>
+        public static float[] ComputeNearestDistances(PointCloudData reference, PointCloudData source,
+            float maxSearchRadius)
+        {
+            int refCount = reference.PointCount;
+            int srcCount = source.PointCount;
+            var distances = new float[srcCount];
+            if (refCount == 0)
+            {
+                Array.Fill(distances, maxSearchRadius);
+                return distances;
+            }
+
+            // 기준 점군을 셀 크기 = maxSearchRadius 그리드에 해싱 —
+            // 이웃 27셀 탐색으로 반경 내 최근접이 보장됨
+            float cell = Math.Max(maxSearchRadius, 1e-3f);
+            var grid = new Dictionary<(int, int, int), List<int>>();
+            for (int i = 0; i < refCount; i++)
+            {
+                var p = reference.Positions[i];
+                if (float.IsNaN(p.X)) continue;
+                var key = ((int)MathF.Floor(p.X / cell), (int)MathF.Floor(p.Y / cell), (int)MathF.Floor(p.Z / cell));
+                if (!grid.TryGetValue(key, out var list))
+                {
+                    list = new List<int>();
+                    grid[key] = list;
+                }
+                list.Add(i);
+            }
+
+            System.Threading.Tasks.Parallel.For(0, srcCount, i =>
+            {
+                var sp = source.Positions[i];
+                if (float.IsNaN(sp.X))
+                {
+                    distances[i] = maxSearchRadius;
+                    return;
+                }
+
+                int cx = (int)MathF.Floor(sp.X / cell);
+                int cy = (int)MathF.Floor(sp.Y / cell);
+                int cz = (int)MathF.Floor(sp.Z / cell);
+
+                float minSq = maxSearchRadius * maxSearchRadius;
+                bool found = false;
+                for (int dx = -1; dx <= 1; dx++)
+                    for (int dy = -1; dy <= 1; dy++)
+                        for (int dz = -1; dz <= 1; dz++)
+                        {
+                            if (!grid.TryGetValue((cx + dx, cy + dy, cz + dz), out var bucket)) continue;
+                            foreach (var ri in bucket)
+                            {
+                                float d2 = Vector3.DistanceSquared(sp, reference.Positions[ri]);
+                                if (d2 <= minSq)
+                                {
+                                    minSq = d2;
+                                    found = true;
+                                }
+                            }
+                        }
+
+                distances[i] = found ? MathF.Sqrt(minSq) : maxSearchRadius;
+            });
+
+            return distances;
+        }
+
+        /// <summary>
         /// 정합 신뢰도 — 변환 적용 후 소스 점 중 최근접 기준점과의 거리가
         /// threshold(mm) 이내인 점의 비율 (0~1). Mech-Vision 의 matching
         /// score/confidence 에 해당하는 지표. 성능을 위해 최대 2000점 샘플링.

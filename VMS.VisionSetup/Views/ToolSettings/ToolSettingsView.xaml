@@ -177,6 +177,9 @@
         <DataTemplate x:Key="PointCloudClusterTemplate" DataType="{x:Type vm:PointCloudClusterToolSettingsViewModel}">
             <tools:PointCloudClusterToolSettings/>
         </DataTemplate>
+        <DataTemplate x:Key="PointCloudDeviationTemplate" DataType="{x:Type vm:PointCloudDeviationToolSettingsViewModel}">
+            <tools:PointCloudDeviationToolSettings/>
+        </DataTemplate>
         <DataTemplate x:Key="PhotometricStereoTemplate" DataType="{x:Type vm:PhotometricStereoToolSettingsViewModel}">
             <tools:PhotometricStereoToolSettings/>
         </DataTemplate>
@@ -216,6 +219,7 @@
             PointCloudFilterTemplate="{StaticResource PointCloudFilterTemplate}"
             PointCloudRegistrationTemplate="{StaticResource PointCloudRegistrationTemplate}"
             PointCloudClusterTemplate="{StaticResource PointCloudClusterTemplate}"
+            PointCloudDeviationTemplate="{StaticResource PointCloudDeviationTemplate}"
             PhotometricStereoTemplate="{StaticResource PhotometricStereoTemplate}"/>
     </UserControl.Resources>
 

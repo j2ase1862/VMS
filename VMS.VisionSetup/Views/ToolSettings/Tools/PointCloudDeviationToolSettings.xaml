@@ -1,0 +1,72 @@
+<UserControl x:Class="VMS.VisionSetup.Views.ToolSettings.Tools.PointCloudDeviationToolSettings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls"
+             xmlns:conv="clr-namespace:VMS.VisionSetup.Converters"
+             xmlns:pc="clr-namespace:VMS.VisionSetup.VisionTools.PointCloud">
+    <StackPanel>
+        <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,8"
+                   Text="기준 점군과 현재 점군을 점별로 비교해 어느 부위가 얼마나 어긋났는지 히트맵(녹→황→적)으로 보여줍니다. 허용 오차를 벗어난 점 비율로 OK/NG 판정. Registration으로 자세를 맞춘 뒤 사용하세요."/>
+
+        <!-- Reference -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Reference Point Cloud" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <TextBlock Text="{Binding ReferencePath, FallbackValue='(no reference)', TargetNullValue='(no reference)'}"
+                           Foreground="#CCCCCC" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,4"/>
+                <TextBlock Foreground="#999999" FontSize="11" Margin="0,2,0,4">
+                    <Run Text="Status: "/>
+                    <Run Text="{Binding TrainStatus, Mode=OneWay}" Foreground="#00BFFF" FontWeight="Bold"/>
+                </TextBlock>
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="Save Current as Reference"
+                            Command="{Binding SaveCurrentAsReferenceCommand}"
+                            Background="#2D7D46" Foreground="White" BorderThickness="0"
+                            FontWeight="SemiBold" Padding="10,4" Margin="0,0,8,0" Cursor="Hand"/>
+                    <Button Content="Clear"
+                            Command="{Binding ClearReferenceCommand}"
+                            Background="#555555" Foreground="White" BorderThickness="0"
+                            Padding="10,4" Cursor="Hand"/>
+                </StackPanel>
+            </StackPanel>
+        </Expander>
+
+        <!-- Deviation Parameters -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Deviation Parameters" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:SliderParameter Label="Tolerance (mm)"
+                    Value="{Binding ToleranceMm}" Minimum="0.01" Maximum="10.0"
+                    TickFrequency="0.01" ValueFormat="F2"
+                    ToolType="PointCloudDeviationTool" ParameterName="ToleranceMm"/>
+                <controls:SliderParameter Label="Heatmap Range (mm)"
+                    Value="{Binding HeatmapRangeMm}" Minimum="0.05" Maximum="10.0"
+                    TickFrequency="0.05" ValueFormat="F2"
+                    ToolType="PointCloudDeviationTool" ParameterName="HeatmapRangeMm"/>
+                <controls:SliderParameter Label="Max Defect Ratio (%)"
+                    Value="{Binding MaxDefectRatioPercent}" Minimum="0" Maximum="100"
+                    TickFrequency="0.1" ValueFormat="F1"
+                    ToolType="PointCloudDeviationTool" ParameterName="MaxDefectRatioPercent"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- Output -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Output Mode" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:EnumComboBoxParameter Label="Output Mode"
+                    ItemsSource="{conv:EnumValues {x:Type pc:PointCloudDeviationTool+DeviationOutputMode}}"
+                    SelectedValue="{Binding OutputMode}"
+                    ToolType="PointCloudDeviationTool" ParameterName="OutputMode"/>
+                <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,4"
+                           Text="DefectsOnly로 초과점만 남긴 뒤 PointCloud Cluster를 연결하면 불량 영역의 개수·크기·위치를 자동 측정할 수 있습니다."/>
+            </StackPanel>
+        </Expander>
+    </StackPanel>
+</UserControl>
