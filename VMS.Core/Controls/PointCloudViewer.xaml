@@ -96,40 +96,50 @@
 
         </hx:Viewport3DX>
 
-        <!-- Toolbar Overlay -->
+        <!-- Point count (top-left) -->
         <StackPanel Orientation="Horizontal"
                     HorizontalAlignment="Left" VerticalAlignment="Top"
                     Margin="6,6,0,0">
-            <Button x:Name="BtnResetView" Content="Reset"
-                    Click="BtnResetView_Click"
-                    Style="{StaticResource ViewerToolbarButton}"/>
-            <Button x:Name="BtnTopView" Content="Top"
-                    Click="BtnTopView_Click"
-                    Style="{StaticResource ViewerToolbarButton}"/>
-            <Button x:Name="BtnFrontView" Content="Front"
-                    Click="BtnFrontView_Click"
-                    Style="{StaticResource ViewerToolbarButton}"/>
-            <Button x:Name="BtnSideView" Content="Side"
-                    Click="BtnSideView_Click"
-                    Style="{StaticResource ViewerToolbarButton}"/>
-
             <TextBlock x:Name="PointCountText"
                        Foreground="#AAAAAA" FontSize="10"
-                       VerticalAlignment="Center" Margin="10,0,0,0"/>
+                       VerticalAlignment="Center"/>
             <TextBlock x:Name="LodIndicator"
                        Foreground="#FF9800" FontSize="10"
                        VerticalAlignment="Center" Margin="6,0,0,0"/>
         </StackPanel>
 
-        <!-- Color Bar (right side) -->
-        <Border HorizontalAlignment="Right" VerticalAlignment="Stretch"
-                Margin="0,30,6,10" Width="30"
-                Background="#88000000" CornerRadius="3" Padding="3"
+        <!-- View Toolbar (right vertical, Mech-Eye style) -->
+        <StackPanel Orientation="Vertical"
+                    HorizontalAlignment="Right" VerticalAlignment="Top"
+                    Margin="0,6,6,0">
+            <StackPanel.Resources>
+                <Style TargetType="Button" BasedOn="{StaticResource ViewerToolbarButton}">
+                    <Setter Property="Margin" Value="0,0,0,3"/>
+                    <Setter Property="MinWidth" Value="38"/>
+                </Style>
+            </StackPanel.Resources>
+            <Button x:Name="BtnResetView" Content="Reset" ToolTip="데이터에 맞춰 시점 초기화"
+                    Click="BtnResetView_Click"/>
+            <Button x:Name="BtnTopView" Content="Top" ToolTip="위에서 보기"
+                    Click="BtnTopView_Click"/>
+            <Button x:Name="BtnFrontView" Content="Front" ToolTip="정면에서 보기"
+                    Click="BtnFrontView_Click"/>
+            <Button x:Name="BtnSideView" Content="Side" ToolTip="측면에서 보기"
+                    Click="BtnSideView_Click"/>
+            <Button x:Name="BtnToggleGrid" Content="Grid" ToolTip="그리드/박스/눈금 표시 전환"
+                    Click="BtnToggleGrid_Click"/>
+        </StackPanel>
+
+        <!-- Depth Range + Color Bar (left side, Mech-Eye style) -->
+        <Border HorizontalAlignment="Left" VerticalAlignment="Stretch"
+                Margin="6,34,0,10" Width="66"
+                Background="#88000000" CornerRadius="3" Padding="4"
                 x:Name="ColorBarPanel" Visibility="Collapsed">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
@@ -137,21 +147,46 @@
                            Foreground="White" FontSize="9" FontWeight="Bold"
                            HorizontalAlignment="Center" Margin="0,1"/>
 
-                <Rectangle Grid.Row="1" Width="12" Margin="0,2" RadiusX="2" RadiusY="2">
-                    <Rectangle.Fill>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                            <GradientStop Color="#FF0000FF" Offset="0.0"/>
-                            <GradientStop Color="#FF00FFFF" Offset="0.25"/>
-                            <GradientStop Color="#FF00FF00" Offset="0.5"/>
-                            <GradientStop Color="#FFFFFF00" Offset="0.75"/>
-                            <GradientStop Color="#FFFF0000" Offset="1.0"/>
-                        </LinearGradientBrush>
-                    </Rectangle.Fill>
-                </Rectangle>
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Rectangle Grid.Column="0" Width="12" Margin="0,6" RadiusX="2" RadiusY="2">
+                        <Rectangle.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Color="#FF0000FF" Offset="0.0"/>
+                                <GradientStop Color="#FF00FFFF" Offset="0.25"/>
+                                <GradientStop Color="#FF00FF00" Offset="0.5"/>
+                                <GradientStop Color="#FFFFFF00" Offset="0.75"/>
+                                <GradientStop Color="#FFFF0000" Offset="1.0"/>
+                            </LinearGradientBrush>
+                        </Rectangle.Fill>
+                    </Rectangle>
+
+                    <!-- 깊이 표시 범위 — 상/하한 슬라이더 겹침 배치 (범위 슬라이더 대용) -->
+                    <Grid Grid.Column="1" Margin="2,0,0,0">
+                        <Slider x:Name="DepthMaxSlider" Orientation="Vertical"
+                                HorizontalAlignment="Left" Width="18"
+                                ValueChanged="DepthSlider_ValueChanged"
+                                ToolTip="표시 상한 (mm)"/>
+                        <Slider x:Name="DepthMinSlider" Orientation="Vertical"
+                                HorizontalAlignment="Right" Width="18"
+                                ValueChanged="DepthSlider_ValueChanged"
+                                ToolTip="표시 하한 (mm)"/>
+                    </Grid>
+                </Grid>
 
                 <TextBlock Grid.Row="2" x:Name="MinValueLabel" Text=""
                            Foreground="White" FontSize="9" FontWeight="Bold"
                            HorizontalAlignment="Center" Margin="0,1"/>
+
+                <Button Grid.Row="3" x:Name="BtnResetDepthRange" Content="전체"
+                        ToolTip="깊이 표시 범위를 전체 데이터로 초기화"
+                        Click="BtnResetDepthRange_Click"
+                        Style="{StaticResource ViewerToolbarButton}"
+                        Margin="0,3,0,0" HorizontalAlignment="Stretch"/>
             </Grid>
         </Border>
 
