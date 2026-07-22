@@ -250,6 +250,9 @@ namespace VMS.VisionSetup.ViewModels
                     _subscribedTool = value.VisionTool;
                     _subscribedTool.PropertyChanged += OnSelectedToolPropertyChanged;
                     SelectedToolSettings = CreateToolSettingsViewModel(value.VisionTool);
+
+                    // 도구를 선택하면 우측 패널을 Tool Settings 로 전환 (스텝 선택과 마지막 선택 우선)
+                    ShowCameraSettings = false;
                 }
                 else
                 {
@@ -531,9 +534,29 @@ namespace VMS.VisionSetup.ViewModels
                 {
                     if (value != null)
                         LoadStepToWorkspace(value);
+
+                    // 우측 패널 전환: 스텝 선택 → 카메라 파라미터, 도구 선택 → 도구 파라미터
+                    ShowCameraSettings = value != null;
                 }
             }
         }
+
+        // 우측 패널 모드 — true 면 선택 스텝의 카메라 파라미터(노출/게인/3D 후처리),
+        // false 면 선택 도구의 Tool Settings 표시 (마지막 선택이 이긴다)
+        [ObservableProperty]
+        private bool _showCameraSettings;
+
+        // 3D 후처리 프리셋 콤보 항목 (Mech-Eye Viewer 후처리 UX: 끄기/약/중/강)
+        // 인스턴스 프로퍼티 — WPF Binding 경로는 정적 프로퍼티를 해석하지 못한다
+        public IReadOnlyList<KeyValuePair<PointCloudPostProcessPreset, string>> PostProcessPresetItems { get; } =
+            new List<KeyValuePair<PointCloudPostProcessPreset, string>>
+            {
+                new(PointCloudPostProcessPreset.CameraDefault, "카메라 설정 유지"),
+                new(PointCloudPostProcessPreset.Off, "끄기"),
+                new(PointCloudPostProcessPreset.Weak, "약"),
+                new(PointCloudPostProcessPreset.Normal, "중"),
+                new(PointCloudPostProcessPreset.Strong, "강"),
+            };
 
         #endregion
 
@@ -2303,6 +2326,24 @@ namespace VMS.VisionSetup.ViewModels
             }
         }
 
+        /// <summary>
+        /// 선택 스텝의 카메라 파라미터(2D 노출/게인 + 3D 후처리/뎁스 범위)를 획득 전에 적용.
+        /// Acquire / Camera Live 양쪽에서 호출 — 미지원 구현체는 no-op, 동일 값은 캐시 스킵.
+        /// </summary>
+        private async System.Threading.Tasks.Task ApplyStepCameraSettingsAsync()
+        {
+            if (SelectedStep == null || _cameraAcquisition == null) return;
+
+            await _cameraAcquisition.ApplySettingsAsync(SelectedStep.Exposure, SelectedStep.Gain);
+            await _cameraAcquisition.Apply3DSettingsAsync(new Scan3DSettings
+            {
+                PostProcessPreset = SelectedStep.PointCloudPostProcess,
+                UseDepthRange = SelectedStep.UseDepthRange,
+                DepthRangeMinMm = SelectedStep.DepthRangeMinMm,
+                DepthRangeMaxMm = SelectedStep.DepthRangeMaxMm
+            });
+        }
+
         private async System.Threading.Tasks.Task AcquireImage()
         {
             if (SelectedCamera == null) return;
@@ -2323,10 +2364,10 @@ namespace VMS.VisionSetup.ViewModels
                     }
                 }
 
-                // 선택된 스텝의 노출/게인을 카메라에 적용 후 획득 — 지원 구현체(Mech-Mind 등)만
-                // 실제 반영되고 나머지는 no-op. 스텝 미선택 시 카메라 현재 설정 그대로.
-                if (SelectedStep != null)
-                    await _cameraAcquisition!.ApplySettingsAsync(SelectedStep.Exposure, SelectedStep.Gain);
+                // 선택된 스텝의 노출/게인 + 3D 후처리/뎁스 범위를 카메라에 적용 후 획득 —
+                // 지원 구현체(Mech-Mind 등)만 실제 반영되고 나머지는 no-op.
+                // 스텝 미선택 시 카메라 현재 설정 그대로.
+                await ApplyStepCameraSettingsAsync();
 
                 var result = await _cameraAcquisition!.AcquireAsync();
 
@@ -2392,11 +2433,10 @@ namespace VMS.VisionSetup.ViewModels
             {
                 while (!ct.IsCancellationRequested && _cameraAcquisition != null)
                 {
-                    // 선택 스텝의 노출/게인을 매 프레임 적용 — 라이브 중 Steps 그리드의
-                    // RowDetails 에서 값을 편집하면 실시간 반영 (노출 튜닝 워크플로).
+                    // 선택 스텝의 노출/게인 + 3D 후처리를 매 프레임 적용 — 라이브 중 Camera
+                    // Settings 패널에서 값을 편집하면 실시간 반영 (노출/후처리 튜닝 워크플로).
                     // 지원 구현체(Mech-Mind 등)는 동일 값 캐시로 no-op 이라 SDK 왕복 비용 없음.
-                    if (SelectedStep != null)
-                        await _cameraAcquisition.ApplySettingsAsync(SelectedStep.Exposure, SelectedStep.Gain);
+                    await ApplyStepCameraSettingsAsync();
 
                     var result = await _cameraAcquisition.AcquireAsync();
                     if (ct.IsCancellationRequested) break;

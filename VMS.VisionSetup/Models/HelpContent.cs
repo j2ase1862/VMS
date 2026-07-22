@@ -232,8 +232,8 @@ namespace VMS.VisionSetup.Models
             ["PointCloudFilterTool"] = new ToolHelp
             {
                 Name = "PointCloud Filter (점군 필터링)",
-                Description = "3D 촬영 직후의 '지저분한 점군'을 청소하는 도구입니다. 점이 너무 많으면 솎아내고(VoxelGrid 다운샘플), 표면에서 튄 점(노이즈)은 지웁니다(SOR).\n\n[언제 쓰나요]\n• 3D 카메라 데이터가 수십만~수백만 점이라 뒤 단계가 느릴 때 → VoxelGrid로 솎아내기\n• 표면 주변에 튀는 점이 많아 측정이 흔들릴 때 → SOR로 제거\n• 대부분의 3D 파이프라인에서 첫 단계로 배치 권장\n\n청소된 점군은 후속 3D 도구(HeightSlicer, PlaneFit, Geometry3D 등)가 그대로 사용합니다.",
-                Usage = "3D 카메라 grab 후 첫 단계로 배치 권장. VoxelGrid는 거의 항상 켜두세요(점 수 감소 → 후속 속도 향상). SOR은 노이즈가 많을 때만 — 점군이 클수록 오래 걸리므로 VoxelGrid로 먼저 솎아낸 뒤 적용하는 것이 좋습니다.",
+                Description = "레시피 처리 단계에서 점군을 가공하는 도구입니다. 점이 너무 많으면 솎아내고(VoxelGrid 다운샘플), 표면에서 튄 점(노이즈)은 지웁니다(SOR).\n\n[언제 쓰나요]\n• Registration/Deviation 같은 뒤 단계가 느릴 때 → VoxelGrid로 솎아내기\n• 저장된 .vpc 파일을 불러와 작업할 때(카메라 없음) → SOR로 보정\n\n[촬영 노이즈 제거는 카메라 쪽에서]\n실카메라 촬영 노이즈(표면 스무딩·이상점 제거)는 이 도구가 아니라 스텝 선택 시 우측 Camera Settings 패널의 '포인트 클라우드 후처리'로 설정하세요. 촬영 시점에 카메라 안에서 정리되므로 Depth Map·점군·모든 후속 툴이 일관되게 깨끗한 데이터를 받습니다.\n\n가공된 점군은 후속 점군 도구(Registration, Deviation, Cluster, PlaneFit 등)가 그대로 사용합니다. 단, Grab 시 이미 만들어진 Depth Map(HeightSlicer 입력)에는 반영되지 않습니다.",
+                Usage = "Registration/Deviation 앞에 배치해 VoxelGrid로 점 수를 줄이는 것이 주 용도입니다(속도 향상). SOR은 저장된 .vpc 보정 등 카메라 후처리를 쓸 수 없는 경우에 — 점군이 클수록 오래 걸리므로 VoxelGrid로 먼저 솎아낸 뒤 적용하세요.",
                 CognexEquivalent = "(PCL VoxelGrid + StatisticalOutlierRemoval)",
                 Results = new Dictionary<string, string>
                 {

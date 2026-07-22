@@ -1,0 +1,93 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using VMS.Camera.Models;
+using VMS.VisionSetup.Models;
+using Xunit;
+
+namespace VMS.VisionSetup.Tests
+{
+    /// <summary>
+    /// 스텝별 3D 카메라 파라미터(후처리 프리셋/뎁스 범위) 레시피 직렬화 회귀 테스트.
+    /// RecipeService 와 동일한 JsonSerializerOptions 로 round-trip 을 검증한다.
+    /// </summary>
+    public class InspectionStepScan3DSettingsTests
+    {
+        // RecipeService.JsonOptions 와 동일 구성
+        private static readonly JsonSerializerOptions JsonOptions = new()
+        {
+            WriteIndented = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        };
+
+        [Fact]
+        public void RoundTrip_Preserves3DCameraParameters()
+        {
+            var step = new InspectionStep
+            {
+                Name = "Top Scan",
+                Exposure = 12000,
+                Gain = 2.5,
+                PointCloudPostProcess = PointCloudPostProcessPreset.Strong,
+                UseDepthRange = true,
+                DepthRangeMinMm = 780,
+                DepthRangeMaxMm = 1180
+            };
+
+            var json = JsonSerializer.Serialize(step, JsonOptions);
+            var restored = JsonSerializer.Deserialize<InspectionStep>(json, JsonOptions)!;
+
+            Assert.Equal(PointCloudPostProcessPreset.Strong, restored.PointCloudPostProcess);
+            Assert.True(restored.UseDepthRange);
+            Assert.Equal(780, restored.DepthRangeMinMm);
+            Assert.Equal(1180, restored.DepthRangeMaxMm);
+        }
+
+        [Fact]
+        public void Serialize_WritesPresetAsReadableString()
+        {
+            var step = new InspectionStep { PointCloudPostProcess = PointCloudPostProcessPreset.Normal };
+
+            var json = JsonSerializer.Serialize(step, JsonOptions);
+
+            // 레시피 JSON 가독성 — 숫자가 아니라 enum 이름으로 기록
+            Assert.Contains("\"pointCloudPostProcess\": \"Normal\"", json);
+        }
+
+        [Fact]
+        public void Deserialize_LegacyRecipeWithoutNewFields_UsesSafeDefaults()
+        {
+            // 구버전 레시피 (신규 필드 없음) — 카메라 설정을 건드리지 않는 기본값이어야 함
+            var legacyJson = """
+            {
+              "name": "Legacy Step",
+              "exposure": 5000,
+              "gain": 1.0
+            }
+            """;
+
+            var restored = JsonSerializer.Deserialize<InspectionStep>(legacyJson, JsonOptions)!;
+
+            Assert.Equal(PointCloudPostProcessPreset.CameraDefault, restored.PointCloudPostProcess);
+            Assert.False(restored.UseDepthRange);
+        }
+
+        [Fact]
+        public void Scan3DSettings_RecordEquality_EnablesApplyCache()
+        {
+            // MechMindCameraAcquisition 이 동일 설정 재적용을 값 동등성으로 스킵하는 전제 검증
+            var a = new Scan3DSettings
+            {
+                PostProcessPreset = PointCloudPostProcessPreset.Normal,
+                UseDepthRange = true,
+                DepthRangeMinMm = 780,
+                DepthRangeMaxMm = 1180
+            };
+            var b = a with { };
+            var c = a with { DepthRangeMaxMm = 1200 };
+
+            Assert.Equal(a, b);
+            Assert.NotEqual(a, c);
+        }
+    }
+}

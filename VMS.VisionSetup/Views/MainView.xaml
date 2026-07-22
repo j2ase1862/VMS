@@ -1398,7 +1398,7 @@
                 </Border>
             </Grid>
 
-            <!-- Right Panel - Tool Settings -->
+            <!-- Right Panel - Tool Settings / Camera Settings (마지막 선택이 우선: 스텝 → 카메라, 도구 → 툴) -->
             <Border Grid.Column="2" Background="#252526" BorderBrush="#3D3D3D" BorderThickness="1,0,0,0"
                     Margin="0,2,0,0">
                 <Grid>
@@ -1407,13 +1407,89 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0"
-                               Foreground="{StaticResource BrushTextPrimary}" FontWeight="Bold" FontSize="14"
-                               Margin="10,10,10,5" Cursor="Help"
-                               ToolTip="선택한 도구의 파라미터를 편집하는 패널입니다. Tool Workspace 에서 도구를 클릭하면 해당 도구의 설정이 표시됩니다."><Run Text="Tool Settings"/><Run Text=" ⓘ" Foreground="{StaticResource BrushTextMuted}"/></TextBlock>
+                    <Grid Grid.Row="0">
+                        <TextBlock Foreground="{StaticResource BrushTextPrimary}" FontWeight="Bold" FontSize="14"
+                                   Margin="10,10,10,5" Cursor="Help"
+                                   Visibility="{Binding ShowCameraSettings, Converter={StaticResource InverseBoolToVisibility}}"
+                                   ToolTip="선택한 도구의 파라미터를 편집하는 패널입니다. Tool Workspace 에서 도구를 클릭하면 해당 도구의 설정이 표시됩니다."><Run Text="Tool Settings"/><Run Text=" ⓘ" Foreground="{StaticResource BrushTextMuted}"/></TextBlock>
+                        <TextBlock Foreground="{StaticResource BrushTextPrimary}" FontWeight="Bold" FontSize="14"
+                                   Margin="10,10,10,5" Cursor="Help"
+                                   Visibility="{Binding ShowCameraSettings, Converter={StaticResource BoolToVisibility}}"
+                                   ToolTip="선택한 스텝의 카메라 파라미터입니다. Acquire Image / Camera Live 실행 시 카메라에 적용됩니다. 도구를 클릭하면 Tool Settings 로 전환됩니다."><Run Text="Camera Settings"/><Run Text=" ⓘ" Foreground="{StaticResource BrushTextMuted}"/></TextBlock>
+                    </Grid>
 
-                    <ts:ToolSettingsView x:Name="ToolSettingsControl" Grid.Row="1"
-                                         DataContext="{Binding SelectedToolSettings}"/>
+                    <Grid Grid.Row="1">
+                        <ContentControl Visibility="{Binding ShowCameraSettings, Converter={StaticResource InverseBoolToVisibility}}">
+                            <ts:ToolSettingsView x:Name="ToolSettingsControl"
+                                                 DataContext="{Binding SelectedToolSettings}"/>
+                        </ContentControl>
+
+                        <!-- 카메라 파라미터 패널 — Mech-Eye Viewer 파라미터 패널과 동일 개념.
+                             값은 스텝(레시피)에 저장되고, Grab/Live 시 카메라에 적용된다. -->
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      Visibility="{Binding ShowCameraSettings, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Margin="12,4,12,12">
+                                <TextBlock Foreground="{StaticResource BrushTextMuted}" FontSize="11"
+                                           TextWrapping="Wrap"
+                                           Text="{Binding SelectedStep.Name, StringFormat='스텝: {0} — Acquire/Live 시 적용, 레시피에 저장됩니다.'}"/>
+
+                                <!-- 2D 이미지 -->
+                                <TextBlock Text="2D 이미지" Foreground="{StaticResource BrushTextPrimary}"
+                                           FontWeight="SemiBold" Margin="0,12,0,6"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="8"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="노출 (µs)" Foreground="{StaticResource BrushTextMuted}" FontSize="11" Margin="0,0,0,2"/>
+                                        <TextBox Text="{Binding SelectedStep.Exposure, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="게인 (dB)" Foreground="{StaticResource BrushTextMuted}" FontSize="11" Margin="0,0,0,2"/>
+                                        <TextBox Text="{Binding SelectedStep.Gain, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- 3D 스캔 (구조광 카메라) -->
+                                <TextBlock Text="3D 스캔" Foreground="{StaticResource BrushTextPrimary}"
+                                           FontWeight="SemiBold" Margin="0,16,0,2"/>
+                                <TextBlock Foreground="{StaticResource BrushTextMuted}" FontSize="11" TextWrapping="Wrap"
+                                           Text="촬영 시 카메라 내부에서 적용됩니다 (Mech-Mind 지원). 여기서 정제된 데이터가 Depth Map·점군·후속 툴에 그대로 전달됩니다."/>
+
+                                <TextBlock Text="포인트 클라우드 후처리 (스무딩·노이즈 제거)" Foreground="{StaticResource BrushTextMuted}"
+                                           FontSize="11" Margin="0,8,0,2"/>
+                                <ComboBox ItemsSource="{Binding PostProcessPresetItems}"
+                                          SelectedValuePath="Key" DisplayMemberPath="Value"
+                                          SelectedValue="{Binding SelectedStep.PointCloudPostProcess}"/>
+
+                                <CheckBox Content="뎁스 범위 제한 (mm)" Margin="0,12,0,4"
+                                          Foreground="{StaticResource BrushTextPrimary}"
+                                          IsChecked="{Binding SelectedStep.UseDepthRange}"
+                                          ToolTip="카메라 기준 거리(mm)로 유효 깊이 구간을 제한합니다. 범위 밖은 촬영 단계에서 제거되어 배경/바닥 제거에 유용합니다."/>
+                                <Grid IsEnabled="{Binding SelectedStep.UseDepthRange}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="8"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="하한" Foreground="{StaticResource BrushTextMuted}" FontSize="11" Margin="0,0,0,2"/>
+                                        <TextBox Text="{Binding SelectedStep.DepthRangeMinMm, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="상한" Foreground="{StaticResource BrushTextMuted}" FontSize="11" Margin="0,0,0,2"/>
+                                        <TextBox Text="{Binding SelectedStep.DepthRangeMaxMm, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <TextBlock Foreground="{StaticResource BrushTextMuted}" FontSize="11" TextWrapping="Wrap"
+                                           Margin="0,12,0,0"
+                                           Text="레시피 처리용 점군 다운샘플(VoxelGrid)은 툴 팔레트의 PointCloud Filter 를 사용하세요."/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
                 </Grid>
             </Border>
         </Grid>

@@ -22,6 +22,13 @@ namespace VMS.Camera.Interfaces
         Task<bool> ApplySettingsAsync(double exposureUs, double gain) => Task.FromResult(false);
 
         /// <summary>
+        /// 3D 스캔 후처리(스무딩/노이즈 제거)·뎁스 범위를 카메라에 적용 — 촬영 시점
+        /// 카메라 내부 처리라 depth map/점군/후속 도구가 모두 정제된 데이터를 받는다.
+        /// 지원하는 구현체(Mech-Mind 등)만 override — 기본은 no-op.
+        /// </summary>
+        Task<bool> Apply3DSettingsAsync(Scan3DSettings settings) => Task.FromResult(false);
+
+        /// <summary>
         /// Live 모드 다운샘플링 스트라이드 (1 = 전체 해상도, 2 = 1/4)
         /// </summary>
         int DownsampleStride { get => 1; set { } }
