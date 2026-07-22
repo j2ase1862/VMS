@@ -23,6 +23,11 @@
                             Command="{Binding SaveCurrentAsReferenceCommand}"
                             Background="#2D7D46" Foreground="White" BorderThickness="0"
                             FontWeight="SemiBold" Padding="10,4" Margin="0,0,8,0" Cursor="Hand"/>
+                    <Button Content="Load..."
+                            ToolTip="기준 파일 선택 — .vpc(스캔) 또는 .stl(CAD)"
+                            Command="{Binding LoadReferenceCommand}"
+                            Background="#3A6EA5" Foreground="White" BorderThickness="0"
+                            Padding="10,4" Margin="0,0,8,0" Cursor="Hand"/>
                     <Button Content="Clear"
                             Command="{Binding ClearReferenceCommand}"
                             Background="#555555" Foreground="White" BorderThickness="0"

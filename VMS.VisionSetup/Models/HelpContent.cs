@@ -196,7 +196,7 @@ namespace VMS.VisionSetup.Models
                 },
                 Parameters = new Dictionary<string, string>
                 {
-                    ["ReferencePath"] = ".vpc 파일 경로 (Reference 점군). 'Save Current as Reference' 버튼으로 현재 점군을 저장하면 자동 설정.",
+                    ["ReferencePath"] = "기준 파일 경로 — .vpc(스캔 점군) 또는 .stl(CAD 메시).\n• 'Save Current as Reference': 현재 점군을 .vpc 로 저장해 기준으로 설정\n• 'Load...': 기존 .vpc 또는 CAD .stl 선택 — STL 은 실행 시 표면을 점군으로 샘플링(약 20만 점)해 사용.",
                     ["EnableCoarseAlignment"] = "PCA 거친 정렬을 ICP 앞에 수행합니다 (기본 켬).\n부품이 기준과 크게 다른 각도(90도 이상)로 놓여도 정합되게 해줍니다. 이미 비슷한 자세라면 거의 아무 것도 안 하므로 켜두어도 부작용이 없습니다.\n주의: 구/정육면체처럼 완전 대칭인 물체에는 효과가 없습니다.",
                     ["ConfidenceDistanceMm"] = "Confidence(신뢰도) 판정 거리 (mm). 정합 후 이 거리 이내로 기준에 붙은 점을 '맞은 점'으로 집계.\n• 표면 정밀도 좋은 부품: 0.5~1.0\n• 일반: 1.0 (기본)\n• 거친 스캔: 2.0~5.0",
                     ["MaxIterations"] = "ICP 반복 최대 횟수. 수렴 안 되어도 이 횟수에서 중단.\n• 20~30: 빠름, 거친 정합\n• 50: 기본 (균형)\n• 100~200: 정밀, 느림",
@@ -268,7 +268,7 @@ namespace VMS.VisionSetup.Models
                 },
                 Parameters = new Dictionary<string, string>
                 {
-                    ["ReferencePath"] = "기준(양품) 점군 .vpc 파일 경로. 'Save Current as Reference' 버튼으로 현재 점군을 저장하면 자동 설정.",
+                    ["ReferencePath"] = "기준 파일 경로 — .vpc(양품 스캔) 또는 .stl(CAD 메시).\n• 'Save Current as Reference': 현재 점군을 .vpc 로 저장해 기준으로 설정\n• 'Load...': 기존 .vpc 또는 CAD .stl 선택 — STL 은 실행 시 표면을 점군으로 샘플링(약 20만 점). CAD 대비 실물 편차 검사(CAD Compare)가 가능해집니다.",
                     ["ToleranceMm"] = "허용 편차 (mm). 이보다 멀리 어긋난 점은 불량으로 집계.\n• 0.1~0.3: 정밀 부품\n• 0.5: 기본\n• 1.0~2.0: 거친 스캔/큰 부품",
                     ["HeatmapRangeMm"] = "히트맵 색 스케일 상한 (mm). 이 값 이상 어긋나면 완전한 빨강.\n보통 Tolerance의 2배 정도로 두면 불량 경계가 노랑~빨강 사이에 보입니다.",
                     ["MaxDefectRatioPercent"] = "합격 기준 — 불량 점 비율(%)이 이 값 이하면 OK.\n• 0: 한 점이라도 벗어나면 NG (가장 엄격 — 노이즈 오검 주의)\n• 0.5: 기본 (측정 노이즈 허용)\n• 1~5: 느슨",
