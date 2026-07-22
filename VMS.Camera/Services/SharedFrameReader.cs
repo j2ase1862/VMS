@@ -42,6 +42,29 @@ namespace VMS.Camera.Services
         }
 
         /// <summary>
+        /// VMS 메인 앱 실행 여부 — 연결 없이 WriterAlive 이벤트만 프로브.
+        /// VMS 메인은 시작 시 SharedFrameWriter.Initialize 에서 이벤트를 Set 하고
+        /// 종료 시 리셋하므로, VisionSetup 이 카메라 소유권 중재(직접 연결 차단)
+        /// 판단에 사용할 수 있다.
+        /// </summary>
+        public static bool IsVmsMainRunning()
+        {
+            try
+            {
+                if (!EventWaitHandle.TryOpenExisting(SharedFrameConstants.WriterAliveEventName, out var handle))
+                    return false;
+                using (handle)
+                {
+                    return handle.WaitOne(0);
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Writer 생존 확인 (비차단)
         /// </summary>
         public bool IsWriterAlive
