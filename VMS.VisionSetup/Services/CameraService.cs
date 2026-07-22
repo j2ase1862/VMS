@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Diagnostics;
 
@@ -96,7 +97,7 @@ namespace VMS.VisionSetup.Services
         /// <summary>
         /// SystemConfiguration JSON에서 CameraConfiguration → CameraInfo 변환
         /// </summary>
-        private static List<CameraInfo> LoadFromSystemConfiguration(JsonElement root)
+        internal static List<CameraInfo> LoadFromSystemConfiguration(JsonElement root)
         {
             var cameras = new List<CameraInfo>();
 
@@ -134,8 +135,12 @@ namespace VMS.VisionSetup.Services
                         info.CameraType = cameraType;
                 }
 
-                // Frame Grabber (Matrox/Dalsa) 설정
-                if (cam.TryGetProperty("boardType", out var bt) && bt.ValueKind == JsonValueKind.String)
+                // Frame Grabber (Matrox/Dalsa) 설정 — boardType 은 프레임 그래버에서만
+                // 연결 문자열이다. AppSetup 은 모든 카메라에 boardType 기본값("SOLIOS")을
+                // 직렬화하므로, 제조사 구분 없이 덮어쓰면 GigE 카메라의 ipAddress 가
+                // 사라진다 (현장 검증 2026-07-22: Connection String 미연동 원인).
+                if (IsFrameGrabber(info.Manufacturer) &&
+                    cam.TryGetProperty("boardType", out var bt) && bt.ValueKind == JsonValueKind.String)
                     info.ConnectionString = bt.GetString() ?? info.ConnectionString;
                 if (cam.TryGetProperty("boardNumber", out var bn) && bn.ValueKind == JsonValueKind.Number)
                     info.BoardNumber = bn.GetInt32();
@@ -144,6 +149,16 @@ namespace VMS.VisionSetup.Services
                 if (cam.TryGetProperty("dcfFilePath", out var dcf) && dcf.ValueKind == JsonValueKind.String)
                     info.DcfFilePath = dcf.GetString() ?? string.Empty;
 
+                // VisionSetup 이 병합 저장하는 부가 필드 — AppSetup 은 기록하지 않으므로 있을 때만
+                if (cam.TryGetProperty("model", out var model) && model.ValueKind == JsonValueKind.String)
+                    info.Model = model.GetString() ?? string.Empty;
+                if (cam.TryGetProperty("serialNumber", out var sn) && sn.ValueKind == JsonValueKind.String)
+                    info.SerialNumber = sn.GetString() ?? string.Empty;
+                if (cam.TryGetProperty("width", out var w) && w.ValueKind == JsonValueKind.Number)
+                    info.Width = w.GetInt32();
+                if (cam.TryGetProperty("height", out var h) && h.ValueKind == JsonValueKind.Number)
+                    info.Height = h.GetInt32();
+
                 cameras.Add(info);
             }
 
@@ -151,7 +166,11 @@ namespace VMS.VisionSetup.Services
         }
 
         /// <summary>
-        /// 카메라 레지스트리를 파일에 저장
+        /// 카메라 레지스트리를 파일에 저장.
+        /// 파일이 AppSetup 의 SystemConfiguration 형식이면 cameras 배열만 갱신하고
+        /// 나머지 설정(PLC/로봇/보안모드/Web 등)은 그대로 보존한다 — 파일 전체를
+        /// CameraRegistry 형식으로 교체하면 AppSetup 설정이 통째로 소실된다
+        /// (현장 검증 2026-07-22).
         /// </summary>
         public bool SaveCameraRegistry(List<CameraInfo>? cameras = null)
         {
@@ -161,6 +180,16 @@ namespace VMS.VisionSetup.Services
                     _cameras = cameras;
 
                 EnsureDirectoryExists();
+
+                if (File.Exists(_cameraRegistryPath) &&
+                    JsonNode.Parse(File.ReadAllText(_cameraRegistryPath)) is JsonObject rootNode &&
+                    (rootNode.ContainsKey("applicationName") || rootNode.ContainsKey("plcVendor")))
+                {
+                    MergeCamerasIntoSystemConfiguration(rootNode, _cameras);
+                    File.WriteAllText(_cameraRegistryPath,
+                        rootNode.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+                    return true;
+                }
 
                 var registry = new CameraRegistry { Cameras = _cameras };
                 var json = JsonSerializer.Serialize(registry, JsonOptions);
@@ -173,6 +202,62 @@ namespace VMS.VisionSetup.Services
                 return false;
             }
         }
+
+        /// <summary>
+        /// SystemConfiguration JSON 루트의 "cameras" 배열을 CameraInfo 목록으로 갱신.
+        /// 같은 id 의 기존 entry 는 노출/게인 등 AppSetup 전용 필드를 보존한 채 갱신하고,
+        /// 목록에 없는 entry 는 제거, 새 카메라는 추가한다.
+        /// </summary>
+        internal static void MergeCamerasIntoSystemConfiguration(JsonObject root, List<CameraInfo> cameras)
+        {
+            var existing = root["cameras"] as JsonArray;
+            var merged = new JsonArray();
+
+            foreach (var cam in cameras)
+            {
+                var entry = existing?.OfType<JsonObject>()
+                    .FirstOrDefault(o => (string?)o["id"] == cam.Id)
+                    ?.DeepClone() as JsonObject ?? new JsonObject();
+
+                entry["id"] = cam.Id;
+                entry["name"] = cam.Name;
+                entry["isEnabled"] = cam.IsEnabled;
+                entry["cameraType"] = cam.CameraType.ToString();
+
+                // ConnectionString 의 의미가 제조사에 따라 다르다 — 프레임 그래버는
+                // boardType(SOLIOS 등), 그 외는 ipAddress. LoadFromSystemConfiguration 과 대칭.
+                if (IsFrameGrabber(cam.Manufacturer))
+                    entry["boardType"] = cam.ConnectionString;
+                else
+                    entry["ipAddress"] = cam.ConnectionString;
+
+                // AppSetup/VMS 는 manufacturer 를 enum 문자열로 파싱하므로 알 수 없는
+                // 값을 쓰면 설정 로드가 깨진다 — 파싱 가능한 값만 기록.
+                if (Enum.TryParse<CameraManufacturer>(cam.Manufacturer, ignoreCase: true, out var mfr))
+                    entry["manufacturer"] = mfr.ToString();
+                else if (entry["manufacturer"] is null)
+                    entry["manufacturer"] = nameof(CameraManufacturer.Other);
+
+                entry["boardNumber"] = cam.BoardNumber;
+                entry["digitizerNumber"] = cam.DigitizerNumber;
+                entry["dcfFilePath"] = cam.DcfFilePath;
+
+                // VisionSetup 전용 부가 필드 — AppSetup/VMS 파서는 무시(unknown property)
+                entry["model"] = cam.Model;
+                entry["serialNumber"] = cam.SerialNumber;
+                entry["width"] = cam.Width;
+                entry["height"] = cam.Height;
+
+                merged.Add(entry);
+            }
+
+            root["cameras"] = merged;
+        }
+
+        /// <summary>연결 문자열이 IP 가 아닌 보드 타입인 프레임 그래버 제조사 여부</summary>
+        private static bool IsFrameGrabber(string manufacturer) =>
+            manufacturer.Equals(nameof(CameraManufacturer.Matrox), StringComparison.OrdinalIgnoreCase) ||
+            manufacturer.Equals(nameof(CameraManufacturer.Dalsa), StringComparison.OrdinalIgnoreCase);
 
         /// <summary>
         /// 새 카메라 추가

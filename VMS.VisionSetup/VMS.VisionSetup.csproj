@@ -18,6 +18,10 @@
     <Resource Include="icon\RecipeManager.ico" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="VMS.VisionSetup.Tests" />
+  </ItemGroup>
+
   <!-- Python 학습 스크립트 — 빌드 시 bin/scripts/로 복사 -->
   <ItemGroup>
     <Content Include="scripts\*.py">
