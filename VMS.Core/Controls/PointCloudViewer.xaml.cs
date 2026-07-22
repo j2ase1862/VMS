@@ -679,6 +679,7 @@ namespace VMS.Core.Controls
                 MinValueLabel.Text = zMin.ToString("F1");
                 MaxValueLabel.Text = zMax.ToString("F1");
                 ColorBarPanel.Visibility = Visibility.Visible;
+                ResetDepthSliders(zMin, zMax);
             }
 
             PointCountText.Text = $"{displayCount:N0} / {totalCount:N0} pts";
@@ -880,6 +881,84 @@ namespace VMS.Core.Controls
         {
             ResetView();
         }
+
+        #region Depth Range Slider / Grid Toggle
+
+        private bool _suppressDepthSliderEvents;
+        private System.Windows.Threading.DispatcherTimer? _recolorThrottle;
+        private bool _sceneOverlayVisible = true;
+
+        /// <summary>새 데이터 로드 시 깊이 표시 범위를 전체로 초기화.</summary>
+        private void ResetDepthSliders(float zMin, float zMax)
+        {
+            _suppressDepthSliderEvents = true;
+            DepthMinSlider.Minimum = zMin;
+            DepthMinSlider.Maximum = zMax;
+            DepthMaxSlider.Minimum = zMin;
+            DepthMaxSlider.Maximum = zMax;
+            DepthMinSlider.Value = zMin;
+            DepthMaxSlider.Value = zMax;
+            _suppressDepthSliderEvents = false;
+        }
+
+        private void DepthSlider_ValueChanged(object sender,
+            RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (_suppressDepthSliderEvents) return;
+
+            // 상한 ≥ 하한 강제 — 겹침 배치한 두 슬라이더를 범위 슬라이더처럼 사용
+            if (DepthMinSlider.Value > DepthMaxSlider.Value)
+            {
+                _suppressDepthSliderEvents = true;
+                if (ReferenceEquals(sender, DepthMinSlider))
+                    DepthMaxSlider.Value = DepthMinSlider.Value;
+                else
+                    DepthMinSlider.Value = DepthMaxSlider.Value;
+                _suppressDepthSliderEvents = false;
+            }
+
+            MinValueLabel.Text = DepthMinSlider.Value.ToString("F1");
+            MaxValueLabel.Text = DepthMaxSlider.Value.ToString("F1");
+
+            // 재색칠은 지오메트리 재구성이라 드래그 중 과호출 방지 (120ms 스로틀)
+            _recolorThrottle ??= new System.Windows.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(120)
+            };
+            _recolorThrottle.Stop();
+            _recolorThrottle.Tick -= RecolorThrottle_Tick;
+            _recolorThrottle.Tick += RecolorThrottle_Tick;
+            _recolorThrottle.Start();
+        }
+
+        private void RecolorThrottle_Tick(object? sender, EventArgs e)
+        {
+            _recolorThrottle?.Stop();
+            RecolorWithRange((float)DepthMinSlider.Value, (float)DepthMaxSlider.Value);
+        }
+
+        private void BtnResetDepthRange_Click(object sender, RoutedEventArgs e)
+        {
+            ResetDepthSliders(_dataZMin, _dataZMax);
+            MinValueLabel.Text = _dataZMin.ToString("F1");
+            MaxValueLabel.Text = _dataZMax.ToString("F1");
+            RecolorWithRange(_dataZMin, _dataZMax);
+        }
+
+        private void BtnToggleGrid_Click(object sender, RoutedEventArgs e)
+        {
+            _sceneOverlayVisible = !_sceneOverlayVisible;
+            var vis = _sceneOverlayVisible ? Visibility.Visible : Visibility.Collapsed;
+            GridLines.Visibility = vis;
+            BoundsBoxLines.Visibility = vis;
+            GridTickLabels.Visibility = vis;
+            AxisLines.Visibility = vis;
+            AxisLabelX.Visibility = vis;
+            AxisLabelY.Visibility = vis;
+            AxisLabelZ.Visibility = vis;
+        }
+
+        #endregion
 
         private void BtnTopView_Click(object sender, RoutedEventArgs e)
         {
