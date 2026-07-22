@@ -124,6 +124,11 @@ namespace VMS.VisionSetup.ViewModels
         // 도구 실행 결과 목록 (DataGrid 바인딩용)
         public ObservableCollection<ToolResultItem> ToolRunResults { get; } = new();
 
+        // CurrentImage 가 Height Map 렌더링(진짜 2D 이미지가 없을 때의 폴백)인지 추적 —
+        // 카메라 2D 이미지가 있으면 Height Map 이 2D 탭을 덮어쓰지 않게 하기 위함.
+        // 기본 false (카메라/파일 이미지) — Height Map 폴백 경로만 할당 직후 true 로 표시.
+        private bool _currentImageIsHeightMap;
+
         // 현재 이미지
         public Mat? CurrentImage
         {
@@ -132,6 +137,7 @@ namespace VMS.VisionSetup.ViewModels
             {
                 _currentImage?.Dispose();
                 SetProperty(ref _currentImage, value);
+                _currentImageIsHeightMap = false;
                 if (value != null)
                     _visionService.SetImage(value);
                 UpdateDisplayImage();
@@ -537,6 +543,7 @@ namespace VMS.VisionSetup.ViewModels
 
                     // 우측 패널 전환: 스텝 선택 → 카메라 파라미터, 도구 선택 → 도구 파라미터
                     ShowCameraSettings = value != null;
+                    UpdateStepCameraInfo(value);
                 }
             }
         }
@@ -545,6 +552,41 @@ namespace VMS.VisionSetup.ViewModels
         // false 면 선택 도구의 Tool Settings 표시 (마지막 선택이 이긴다)
         [ObservableProperty]
         private bool _showCameraSettings;
+
+        // 선택 스텝의 카메라가 3D(구조광)인지 — Camera Settings 패널의 3D 스캔 그룹 노출 여부.
+        // 2D 카메라(Basler/HIK 등)는 노출/게인만 표시.
+        [ObservableProperty]
+        private bool _isStep3DCamera;
+
+        // Camera Settings 패널 상단의 카메라 요약 (이름 · 제조사 · 타입)
+        [ObservableProperty]
+        private string _stepCameraSummary = string.Empty;
+
+        /// <summary>선택 스텝의 카메라를 찾아 3D 여부/요약 갱신 (제조사·타입별 파라미터 분기)</summary>
+        private void UpdateStepCameraInfo(InspectionStep? step)
+        {
+            var cam = step != null
+                ? Cameras.FirstOrDefault(c => c.Id == step.CameraId) ?? SelectedCamera
+                : null;
+
+            if (cam == null)
+            {
+                IsStep3DCamera = false;
+                StepCameraSummary = string.Empty;
+                return;
+            }
+
+            IsStep3DCamera = cam.CameraType is CameraType.AreaScan3D or CameraType.LineScan3D
+                || cam.Manufacturer.Replace("_", "").Contains("Mech", StringComparison.OrdinalIgnoreCase);
+            StepCameraSummary = $"카메라: {cam.Name} ({cam.Manufacturer} · {cam.CameraType})";
+        }
+
+        // Depth Map 탭 표시 색상 — 0 = 컬러(Jet), 1 = 그레이 (Mech-Eye Viewer UX)
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsDepthMapGray))]
+        private int _depthMapColorModeIndex;
+
+        public bool IsDepthMapGray => DepthMapColorModeIndex == 1;
 
         // 3D 후처리 프리셋 콤보 항목 (Mech-Eye Viewer 후처리 UX: 끄기/약/중/강)
         // 인스턴스 프로퍼티 — WPF Binding 경로는 정적 프로퍼티를 해석하지 못한다
@@ -3052,6 +3094,12 @@ namespace VMS.VisionSetup.ViewModels
 
         private void ApplyDepthRangeFilter()
         {
+            // Depth Map 탭의 범위 슬라이더 재색칠은 DepthMapViewer 가 자체 처리(RangeMin/Max).
+            // 여기서는 2D 탭이 Height Map 폴백을 표시 중일 때만 그 폴백을 갱신 —
+            // 카메라 2D 이미지가 표시 중이면 절대 덮어쓰지 않는다.
+            if (!_currentImageIsHeightMap)
+                return;
+
             var depthMap32F = _visionService.CurrentDepthMap32F;
             if (depthMap32F == null)
                 return;
@@ -3061,6 +3109,7 @@ namespace VMS.VisionSetup.ViewModels
             float filterMin = DepthRangeMin - HeightBaseline;
             float filterMax = DepthRangeMax - HeightBaseline;
             CurrentImage = PointCloudConverter.DepthMap32FTo8UFiltered(depthMap32F, filterMin, filterMax);
+            _currentImageIsHeightMap = true;
         }
 
         private void GenerateHeightMap()
@@ -3073,8 +3122,19 @@ namespace VMS.VisionSetup.ViewModels
                 var (heightMap8U, _, metadata) = _visionService.GenerateHeightMap(
                     CurrentPointCloud, HeightBaseline, HeightLowerLimit, HeightUpperLimit);
 
-                // 8-bit map은 표시 및 일반 2D 도구용
-                CurrentImage = heightMap8U;
+                // 2D 탭은 카메라의 진짜 2D 이미지를 유지 (Mech-Eye Viewer UX — 노출/게인
+                // 확인 가능). Height Map 8U 는 2D 이미지가 없는 경우(.vpc 로드 등)만
+                // 폴백으로 표시 — 이 폴백이 없으면 오프라인 워크플로에서 2D 도구
+                // 파이프라인이 입력 이미지 없음으로 실행 불가.
+                if (CurrentImage == null || _currentImageIsHeightMap)
+                {
+                    CurrentImage = heightMap8U;
+                    _currentImageIsHeightMap = true;
+                }
+                else
+                {
+                    heightMap8U.Dispose();
+                }
                 CurrentHeightMapMetadata = metadata;
                 // float map은 VisionService.CurrentDepthMap32F에 clone 저장됨
                 // metadata.DepthMap32F에도 원본 참조 보관됨 (GetInterpolatedZ용)

@@ -127,6 +127,56 @@ namespace VMS.Core.Controls
             set => SetValue(DataMaxProperty, value);
         }
 
+        public static readonly DependencyProperty UseGrayColormapProperty =
+            DependencyProperty.Register(
+                nameof(UseGrayColormap),
+                typeof(bool),
+                typeof(DepthMapViewer),
+                new PropertyMetadata(false, OnColormapChanged));
+
+        /// <summary>
+        /// true = 그레이스케일(가까울수록 밝음), false = Jet 컬러맵 (Mech-Eye Viewer 의
+        /// Depth Map 컬러/그레이 표시 선택과 동일 개념).
+        /// </summary>
+        public bool UseGrayColormap
+        {
+            get => (bool)GetValue(UseGrayColormapProperty);
+            set => SetValue(UseGrayColormapProperty, value);
+        }
+
+        private static void OnColormapChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is DepthMapViewer viewer)
+            {
+                viewer.UpdateGradientBar();
+                viewer.RenderDepthMapWithRange(resetView: false);
+            }
+        }
+
+        /// <summary>
+        /// 컬러바 그라데이션을 현재 컬러맵에 맞게 갱신.
+        /// 상단 = Max Z(원거리) — 기존 Jet 바(상단 파랑)와 동일 방향 유지:
+        /// 픽셀 매핑이 t = 1 - (z - zMin)/range 라 zMax → t=0(파랑/검정), zMin → t=1(빨강/흰색).
+        /// </summary>
+        private void UpdateGradientBar()
+        {
+            var brush = new LinearGradientBrush { StartPoint = new Point(0, 0), EndPoint = new Point(0, 1) };
+            if (UseGrayColormap)
+            {
+                brush.GradientStops.Add(new GradientStop(Colors.Black, 0.0));
+                brush.GradientStops.Add(new GradientStop(Colors.White, 1.0));
+            }
+            else
+            {
+                brush.GradientStops.Add(new GradientStop(Color.FromRgb(0x00, 0x00, 0xFF), 0.0));
+                brush.GradientStops.Add(new GradientStop(Color.FromRgb(0x00, 0xFF, 0xFF), 0.25));
+                brush.GradientStops.Add(new GradientStop(Color.FromRgb(0x00, 0xFF, 0x00), 0.5));
+                brush.GradientStops.Add(new GradientStop(Color.FromRgb(0xFF, 0xFF, 0x00), 0.75));
+                brush.GradientStops.Add(new GradientStop(Color.FromRgb(0xFF, 0x00, 0x00), 1.0));
+            }
+            GradientRect.Fill = brush;
+        }
+
         #endregion
 
         public DepthMapViewer()
@@ -205,6 +255,7 @@ namespace VMS.Core.Controls
             var bitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgr24, null);
             int stride = width * 3;
             byte[] pixels = new byte[stride * height];
+            bool useGray = UseGrayColormap;
 
             for (int row = 0; row < height; row++)
             {
@@ -243,7 +294,17 @@ namespace VMS.Core.Controls
                     }
 
                     float t = 1f - (p.Z - zMin) / range;
-                    JetColormapBgr(t, out byte b, out byte g, out byte r);
+                    byte b, g, r;
+                    if (useGray)
+                    {
+                        // 그레이: 가까울수록(t→1) 밝게 — Mech-Eye Viewer 그레이 표시와 동일
+                        byte v = (byte)(Math.Clamp(t, 0f, 1f) * 255f);
+                        b = g = r = v;
+                    }
+                    else
+                    {
+                        JetColormapBgr(t, out b, out g, out r);
+                    }
                     pixels[pixelOffset] = b;
                     pixels[pixelOffset + 1] = g;
                     pixels[pixelOffset + 2] = r;
