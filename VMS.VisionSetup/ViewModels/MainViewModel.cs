@@ -2957,7 +2957,9 @@ namespace VMS.VisionSetup.ViewModels
             }
         }
 
-        private bool CanGenerateHeightMap() => CurrentPointCloud?.IsOrganized == true;
+        // 정사투영 지원으로 비격자(unorganized) 점군도 허용 — Registration/Cluster
+        // 이후에도 Height Map 생성 가능. 자동 생성은 성능상 organized 전용 유지.
+        private bool CanGenerateHeightMap() => CurrentPointCloud is { PointCount: > 0 };
 
         private void SaveHeightSlicing()
         {

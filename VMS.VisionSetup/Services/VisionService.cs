@@ -1290,19 +1290,31 @@ namespace VMS.VisionSetup.Services
         public (Mat HeightMap8U, Mat DepthMap32F, HeightMapMetadata Metadata) GenerateHeightMap(
             PointCloudData pointCloud, float zRef, float zMin, float zMax)
         {
-            // PointCloudConverter로 위임 (Z축 사용, unsafe 최적화)
-            var depthMap32F = PointCloudConverter.ToDepthMap32F(pointCloud, zRef);
-            var heightMap8U = PointCloudConverter.DepthMap32FTo8U(depthMap32F, zMin, zMax);
+            Mat depthMap32F;
+            Vector3?[] pixelTo3D;
+            int w, h;
 
-            // Per-pixel 3D lookup 테이블 생성
-            int w = pointCloud.GridWidth;
-            int h = pointCloud.GridHeight;
-            var pixelTo3D = new Vector3?[w * h];
-            var positions = pointCloud.Positions;
-            for (int i = 0; i < w * h; i++)
+            if (pointCloud.IsOrganized)
             {
-                pixelTo3D[i] = positions[i];
+                // 격자 점군 — 픽셀 1:1 매핑 (기존 고속 경로)
+                depthMap32F = PointCloudConverter.ToDepthMap32F(pointCloud, zRef);
+                w = pointCloud.GridWidth;
+                h = pointCloud.GridHeight;
+                pixelTo3D = new Vector3?[w * h];
+                var positions = pointCloud.Positions;
+                for (int i = 0; i < w * h; i++)
+                {
+                    pixelTo3D[i] = positions[i];
+                }
             }
+            else
+            {
+                // 비격자 점군(Registration/Cluster 후 등) — 정사투영 비닝
+                (depthMap32F, pixelTo3D, w, h) =
+                    PointCloudConverter.OrthographicToDepthMap32F(pointCloud, zRef);
+            }
+
+            var heightMap8U = PointCloudConverter.DepthMap32FTo8U(depthMap32F, zMin, zMax);
 
             var metadata = new HeightMapMetadata
             {

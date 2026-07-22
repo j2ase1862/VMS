@@ -1,3 +1,4 @@
+using System.Numerics;
 using OpenCvSharp;
 using VMS.Camera.Models;
 
@@ -67,6 +68,80 @@ namespace VMS.Camera.Converters
             }
 
             return heightMap;
+        }
+
+        /// <summary>
+        /// unorganized(비격자) 점군 → 정사투영(orthographic) CV_32FC1 depth map.
+        /// Registration/Cluster 등을 거치면 격자 구조가 깨지는데, 그 점군도
+        /// 2D 검사 도구에서 쓸 수 있도록 XY 평면 격자에 비닝한다.
+        /// 셀당 최고 높이(pos.Z 최대 = 윗면) 채택, 빈 셀 = 0. 각 픽셀 값 = Z - zRef.
+        /// 셀 크기는 점 밀도 기반 자동(점당 평균 면적의 제곱근), 긴 변 64~2048px 클램프.
+        /// 픽셀↔3D 역참조 테이블(PixelTo3D)도 함께 생성해 2D 결과의 3D 복원 지원.
+        /// </summary>
+        public static (Mat DepthMap32F, Vector3?[] PixelTo3D, int Width, int Height)
+            OrthographicToDepthMap32F(PointCloudData pointCloud, float zRef)
+        {
+            int count = pointCloud.PointCount;
+            var positions = pointCloud.Positions;
+            if (count == 0)
+                throw new InvalidOperationException("Point cloud is empty.");
+
+            float minX = float.MaxValue, maxX = float.MinValue;
+            float minY = float.MaxValue, maxY = float.MinValue;
+            int valid = 0;
+            for (int i = 0; i < count; i++)
+            {
+                var p = positions[i];
+                if (float.IsNaN(p.X) || float.IsNaN(p.Y) || float.IsNaN(p.Z)) continue;
+                if (p.X < minX) minX = p.X;
+                if (p.X > maxX) maxX = p.X;
+                if (p.Y < minY) minY = p.Y;
+                if (p.Y > maxY) maxY = p.Y;
+                valid++;
+            }
+            if (valid < 4 || maxX <= minX || maxY <= minY)
+                throw new InvalidOperationException("Not enough valid points for orthographic projection.");
+
+            float extentX = maxX - minX;
+            float extentY = maxY - minY;
+
+            // 점 밀도 기반 셀 크기 → 해상도. 긴 변 64~2048 클램프
+            float cell = MathF.Sqrt(extentX * extentY / valid);
+            float longExtent = MathF.Max(extentX, extentY);
+            if (cell <= 0 || longExtent / cell > 2048f) cell = longExtent / 2048f;
+            if (longExtent / cell < 64f) cell = longExtent / 64f;
+
+            int w = Math.Max(1, (int)MathF.Ceiling(extentX / cell));
+            int h = Math.Max(1, (int)MathF.Ceiling(extentY / cell));
+
+            var depthMap = new Mat(h, w, MatType.CV_32FC1, Scalar.All(0));
+            var pixelTo3D = new Vector3?[w * h];
+            var bestZ = new float[w * h];
+            Array.Fill(bestZ, float.MinValue);
+
+            unsafe
+            {
+                float* ptr = (float*)depthMap.Data;
+                for (int i = 0; i < count; i++)
+                {
+                    var p = positions[i];
+                    if (float.IsNaN(p.X) || float.IsNaN(p.Y) || float.IsNaN(p.Z)) continue;
+
+                    int u = Math.Min(w - 1, (int)((p.X - minX) / cell));
+                    int v = Math.Min(h - 1, (int)((p.Y - minY) / cell));
+                    int idx = v * w + u;
+
+                    // 같은 셀에 여러 점 — 윗면(Z 최대) 우선
+                    if (p.Z > bestZ[idx])
+                    {
+                        bestZ[idx] = p.Z;
+                        ptr[idx] = p.Z - zRef;
+                        pixelTo3D[idx] = p;
+                    }
+                }
+            }
+
+            return (depthMap, pixelTo3D, w, h);
         }
 
         /// <summary>
