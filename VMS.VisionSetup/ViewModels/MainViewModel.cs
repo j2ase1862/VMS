@@ -636,10 +636,12 @@ namespace VMS.VisionSetup.ViewModels
             MoveStepDownCommand = new RelayCommand(MoveStepDown, () => SelectedStep != null);
             LoadSamplePointCloudCommand = new RelayCommand(LoadSamplePointCloud);
             ShowCameraInfoCommand = new RelayCommand(ShowCameraInfo);
-            AcquireImageCommand = new RelayCommand(async () => await AcquireImage(), () => SelectedCamera != null && !IsAcquiring && !IsCameraLive);
-            StartCameraLiveCommand = new RelayCommand(async () => await StartCameraLive(), () => SelectedCamera != null && !IsCameraLive && !IsAcquiring);
+            // 직접 연결/취득은 VMS 메인이 실행 중이면 차단 — 카메라 소유권은 항상
+            // 하나(VMS 우선). VMS 실행 중에는 Live Receive(공유메모리 수신)만 사용.
+            AcquireImageCommand = new RelayCommand(async () => await AcquireImage(), () => SelectedCamera != null && !IsAcquiring && !IsCameraLive && !IsVmsMainRunning);
+            StartCameraLiveCommand = new RelayCommand(async () => await StartCameraLive(), () => SelectedCamera != null && !IsCameraLive && !IsAcquiring && !IsVmsMainRunning);
             StopCameraLiveCommand = new RelayCommand(StopCameraLive, () => IsCameraLive);
-            ConnectCameraCommand = new RelayCommand(async () => await ConnectCamera(), () => SelectedCamera != null && !IsCameraConnected);
+            ConnectCameraCommand = new RelayCommand(async () => await ConnectCamera(), () => SelectedCamera != null && !IsCameraConnected && !IsVmsMainRunning);
             DisconnectCameraCommand = new RelayCommand(async () => await DisconnectCamera(), () => IsCameraConnected);
             GenerateHeightMapCommand = new RelayCommand(GenerateHeightMap, CanGenerateHeightMap);
             SaveRecipeCommand = new RelayCommand(SaveCurrentRecipe, () => _recipeService.CurrentRecipe != null);
@@ -667,6 +669,15 @@ namespace VMS.VisionSetup.ViewModels
             StartWaypointScanCommand = new RelayCommand(async () => await StartWaypointScan(),
                 () => NeedsRobot && IsRobotConnected && (IsCameraConnected || IsSimulatedRobot) && _waypointPlanner.Waypoints.Count > 0 && !_waypointPlanner.IsScanning);
             StopWaypointScanCommand = new RelayCommand(StopWaypointScan, () => _waypointPlanner.IsScanning);
+
+            // ── VMS 메인 실행 감지 (카메라 소유권 중재) — 2초 주기 폴링 ──
+            _vmsMainWatchTimer = new System.Windows.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(2)
+            };
+            _vmsMainWatchTimer.Tick += (_, _) => UpdateVmsMainRunning();
+            _vmsMainWatchTimer.Start();
+            UpdateVmsMainRunning();
 
             // 레시피 변경 이벤트 구독
             _recipeService.CurrentRecipeChanged += OnCurrentRecipeChanged;
@@ -805,6 +816,46 @@ namespace VMS.VisionSetup.ViewModels
             ToolTree.Add(surface);
         }
 
+        #region VMS 메인 실행 감지 — 카메라 소유권 중재
+
+        private System.Windows.Threading.DispatcherTimer? _vmsMainWatchTimer;
+
+        private bool _isVmsMainRunning;
+        /// <summary>
+        /// VMS 메인 앱 실행 여부. true 면 카메라 직접 연결/취득/라이브를 차단하고
+        /// Live Receive(공유메모리 수신)로 유도한다 — 카메라 소유권은 항상 하나(VMS 우선).
+        /// </summary>
+        public bool IsVmsMainRunning
+        {
+            get => _isVmsMainRunning;
+            private set => SetProperty(ref _isVmsMainRunning, value);
+        }
+
+        private void UpdateVmsMainRunning()
+        {
+            bool running = SharedFrameReader.IsVmsMainRunning();
+            if (running == IsVmsMainRunning) return;
+
+            IsVmsMainRunning = running;
+            ConnectCameraCommand.NotifyCanExecuteChanged();
+            AcquireImageCommand.NotifyCanExecuteChanged();
+            StartCameraLiveCommand.NotifyCanExecuteChanged();
+
+            if (running)
+            {
+                // VMS 기동 감지 — 보유 중인 직접 연결을 해제해 소유권을 넘긴다
+                try { if (IsCameraLive) StopCameraLive(); } catch { /* 전환 경로 — 실패해도 계속 */ }
+                if (IsCameraConnected) _ = DisconnectCamera();
+                StatusMessage = "VMS 실행 감지 — 카메라는 VMS가 소유합니다. 이미지는 'Live Receive (from VMS)'로 수신하세요.";
+            }
+            else
+            {
+                StatusMessage = "VMS 종료 감지 — 카메라 직접 연결을 사용할 수 있습니다.";
+            }
+        }
+
+        #endregion
+
         private void CloseApplication()
         {
             Cleanup();
@@ -818,6 +869,8 @@ namespace VMS.VisionSetup.ViewModels
         /// </summary>
         public void Cleanup()
         {
+            try { _vmsMainWatchTimer?.Stop(); } catch { }
+            _vmsMainWatchTimer = null;
             try { StopCameraLive(); } catch { /* 종료 경로 — 실패해도 계속 */ }
             try { StopLiveReceive(); } catch { }
             try { _sharedFrameReader?.Dispose(); } catch { }
