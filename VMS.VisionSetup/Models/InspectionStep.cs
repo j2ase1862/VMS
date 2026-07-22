@@ -103,6 +103,50 @@ namespace VMS.VisionSetup.Models
             set => SetProperty(ref _lightingIntensity, Math.Clamp(value, 0, 255));
         }
 
+        // ── 3D 스캔 카메라 파라미터 (Mech-Eye Viewer 의 '포인트 클라우드 후처리'와 동일 개념) ──
+        // 촬영 시점에 카메라(SDK)에 적용 — depth map/점군/후속 도구가 모두 정제된 데이터를 받는다.
+
+        private PointCloudPostProcessPreset _pointCloudPostProcess = PointCloudPostProcessPreset.CameraDefault;
+        /// <summary>
+        /// 3D 후처리 강도 (표면 스무딩/노이즈·이상점 제거). CameraDefault = 카메라 설정 유지.
+        /// </summary>
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public PointCloudPostProcessPreset PointCloudPostProcess
+        {
+            get => _pointCloudPostProcess;
+            set => SetProperty(ref _pointCloudPostProcess, value);
+        }
+
+        private bool _useDepthRange;
+        /// <summary>
+        /// 뎁스 범위 제한 사용 여부 — false 면 카메라 현재 범위 유지
+        /// </summary>
+        public bool UseDepthRange
+        {
+            get => _useDepthRange;
+            set => SetProperty(ref _useDepthRange, value);
+        }
+
+        private double _depthRangeMinMm;
+        /// <summary>
+        /// 뎁스 하한 (mm, 카메라 기준 거리)
+        /// </summary>
+        public double DepthRangeMinMm
+        {
+            get => _depthRangeMinMm;
+            set => SetProperty(ref _depthRangeMinMm, Math.Max(0, value));
+        }
+
+        private double _depthRangeMaxMm = 3000;
+        /// <summary>
+        /// 뎁스 상한 (mm, 카메라 기준 거리)
+        /// </summary>
+        public double DepthRangeMaxMm
+        {
+            get => _depthRangeMaxMm;
+            set => SetProperty(ref _depthRangeMaxMm, Math.Max(0, value));
+        }
+
         #endregion
 
         /// <summary>

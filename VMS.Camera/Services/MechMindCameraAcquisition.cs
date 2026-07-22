@@ -3,6 +3,8 @@ using MMind.Eye;
 using MechCamera = MMind.Eye.Camera;
 using MechCameraInfo = MMind.Eye.CameraInfo;
 using Scan2D = MMind.Eye.Scanning2DSetting;
+using Scan3D = MMind.Eye.Scanning3DSetting;
+using PcProc = MMind.Eye.PointCloudProcessingSetting;
 #endif
 using OpenCvSharp;
 using System.Numerics;
@@ -67,6 +69,7 @@ namespace VMS.Camera.Services
             // 재연결 시 이전 적용 캐시 무효화 — 카메라가 바뀌었거나 전원 재투입일 수 있음
             _appliedExposureUs = -1;
             _appliedGain = double.NaN;
+            _applied3D = null;
 
             try
             {
@@ -196,6 +199,102 @@ namespace VMS.Camera.Services
                 return Task.FromResult(false);
             }
         }
+
+        // 마지막으로 적용 성공한 3D 설정 — record 값 동등성으로 동일 설정 재적용 스킵
+        private Scan3DSettings? _applied3D;
+
+        /// <summary>
+        /// 3D 스캔 후처리·뎁스 범위 적용. Mech-Eye Viewer 의 '포인트 클라우드 후처리'
+        /// 그룹(표면 스무딩/노이즈 제거/이상점 제거)에 프리셋 강도를 일괄 적용하고,
+        /// 뎁스 범위는 Scanning3D DepthRange(mm)에 반영한다.
+        /// CameraDefault + 범위 미사용이면 카메라 현재 설정을 건드리지 않는다.
+        /// </summary>
+        public Task<bool> Apply3DSettingsAsync(Scan3DSettings settings)
+        {
+            if (!IsConnected || _mechCamera == null) return Task.FromResult(false);
+            if (settings.PostProcessPreset == PointCloudPostProcessPreset.CameraDefault &&
+                !settings.UseDepthRange)
+                return Task.FromResult(true);   // 유지 모드 — SDK 왕복 없음
+            if (settings == _applied3D) return Task.FromResult(true);
+
+            try
+            {
+                var userSet = _mechCamera.CurrentUserSet();
+                bool ok = true;
+
+                if (settings.PostProcessPreset != PointCloudPostProcessPreset.CameraDefault)
+                {
+                    ok &= SetEnum(userSet, PcProc.SurfaceSmoothing.Name,
+                        (int)MapSmoothing(settings.PostProcessPreset));
+                    ok &= SetEnum(userSet, PcProc.NoiseRemoval.Name,
+                        (int)MapNoise(settings.PostProcessPreset));
+                    ok &= SetEnum(userSet, PcProc.OutlierRemoval.Name,
+                        (int)MapOutlier(settings.PostProcessPreset));
+                }
+
+                if (settings.UseDepthRange && settings.DepthRangeMaxMm > settings.DepthRangeMinMm)
+                {
+                    var rangeStatus = userSet.SetRangeValue(
+                        Scan3D.DepthRange.Name,
+                        new IntRange((int)settings.DepthRangeMinMm, (int)settings.DepthRangeMaxMm));
+                    if (!rangeStatus.IsOK())
+                    {
+                        System.Diagnostics.Debug.WriteLine(
+                            $"[MechMind] DepthRange=[{settings.DepthRangeMinMm}, {settings.DepthRangeMaxMm}]mm 실패: {rangeStatus.ErrorDescription}");
+                        ok = false;
+                    }
+                }
+
+                if (ok)
+                {
+                    _applied3D = settings;
+                    System.Diagnostics.Debug.WriteLine(
+                        $"[MechMind] 3D 설정 적용: 후처리={settings.PostProcessPreset}" +
+                        (settings.UseDepthRange
+                            ? $", DepthRange=[{settings.DepthRangeMinMm}, {settings.DepthRangeMaxMm}]mm"
+                            : ""));
+                }
+                return Task.FromResult(ok);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MechMind] 3D 설정 적용 오류: {ex.Message}");
+                return Task.FromResult(false);
+            }
+        }
+
+        private static bool SetEnum(UserSet userSet, string name, int value)
+        {
+            var status = userSet.SetEnumValue(name, value);
+            if (!status.IsOK())
+                System.Diagnostics.Debug.WriteLine(
+                    $"[MechMind] {name}={value} 실패(모델 미지원 가능): {status.ErrorDescription}");
+            return status.IsOK();
+        }
+
+        private static PcProc.SurfaceSmoothing.Value MapSmoothing(PointCloudPostProcessPreset p) => p switch
+        {
+            PointCloudPostProcessPreset.Weak => PcProc.SurfaceSmoothing.Value.Weak,
+            PointCloudPostProcessPreset.Normal => PcProc.SurfaceSmoothing.Value.Normal,
+            PointCloudPostProcessPreset.Strong => PcProc.SurfaceSmoothing.Value.Strong,
+            _ => PcProc.SurfaceSmoothing.Value.Off
+        };
+
+        private static PcProc.NoiseRemoval.Value MapNoise(PointCloudPostProcessPreset p) => p switch
+        {
+            PointCloudPostProcessPreset.Weak => PcProc.NoiseRemoval.Value.Weak,
+            PointCloudPostProcessPreset.Normal => PcProc.NoiseRemoval.Value.Normal,
+            PointCloudPostProcessPreset.Strong => PcProc.NoiseRemoval.Value.Strong,
+            _ => PcProc.NoiseRemoval.Value.Off
+        };
+
+        private static PcProc.OutlierRemoval.Value MapOutlier(PointCloudPostProcessPreset p) => p switch
+        {
+            PointCloudPostProcessPreset.Weak => PcProc.OutlierRemoval.Value.Weak,
+            PointCloudPostProcessPreset.Normal => PcProc.OutlierRemoval.Value.Normal,
+            PointCloudPostProcessPreset.Strong => PcProc.OutlierRemoval.Value.Strong,
+            _ => PcProc.OutlierRemoval.Value.Off
+        };
 
         public async Task<AcquisitionResult> AcquireAsync(int timeoutMs = 5000)
         {
