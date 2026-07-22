@@ -837,16 +837,14 @@
                         </StackPanel>
                     </Grid>
 
-                    <!-- Row 4: Step DataGrid — 선택 행 아래로 노출/게인 즉시 편집 패널(RowDetails)이
-                         펼쳐진다. 칼럼 추가 대신 RowDetails 를 쓰는 이유: 패널 폭(~240px)에
-                         편집 가능한 숫자 칼럼 2개를 더 넣으면 기존 칼럼이 잘리기 때문 (UX 결정 2026-07-16).
-                         값 변경은 즉시 스텝에 저장되고 Acquire/Camera Live 가 바로 반영. -->
+                    <!-- Row 4: Step DataGrid — 스텝 선택 시 노출/게인 등 카메라 파라미터는
+                         우측 Camera Settings 패널에서 편집한다 (기존 RowDetails 는 패널로
+                         대체되어 제거, UX 결정 2026-07-22). -->
                     <DataGrid Grid.Row="4" ItemsSource="{Binding Steps}"
                               SelectedItem="{Binding SelectedStep}"
                               AutoGenerateColumns="False" IsReadOnly="True"
                               SelectionMode="Single" SelectionUnit="FullRow"
                               HeadersVisibility="Column" CanUserAddRows="False"
-                              RowDetailsVisibilityMode="VisibleWhenSelected"
                               Background="{StaticResource BrushBgCard}" Foreground="White"
                               BorderBrush="{StaticResource BrushBorderStrong}" BorderThickness="1"
                               RowBackground="{StaticResource BrushBgCard}" AlternatingRowBackground="#333337"
@@ -891,38 +889,6 @@
                             <DataGridTextColumn Header="Resolution" Binding="{Binding Resolution, StringFormat={}{0:F3}}" Width="70"/>
                             <DataGridTextColumn Header="Tools" Binding="{Binding Tools.Count}" Width="40"/>
                         </DataGrid.Columns>
-                        <DataGrid.RowDetailsTemplate>
-                            <DataTemplate>
-                                <Border Background="{StaticResource BrushBgSurface}"
-                                        BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="0,0,0,1"
-                                        Padding="8,6">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="Exp (µs)" FontSize="10"
-                                                   Foreground="{StaticResource BrushTextMuted}"
-                                                   VerticalAlignment="Center" Margin="0,0,4,0"
-                                                   ToolTip="노출 시간 (µs) — Acquire Image / Camera Live 에 즉시 적용"/>
-                                        <TextBox Grid.Column="1" Height="22" FontSize="11"
-                                                 Text="{Binding Exposure, UpdateSourceTrigger=PropertyChanged}"
-                                                 Style="{StaticResource WindowDarkTextBox}"
-                                                 VerticalContentAlignment="Center" Margin="0,0,8,0"/>
-                                        <TextBlock Grid.Column="2" Text="Gain" FontSize="10"
-                                                   Foreground="{StaticResource BrushTextMuted}"
-                                                   VerticalAlignment="Center" Margin="0,0,4,0"
-                                                   ToolTip="게인 — Acquire Image / Camera Live 에 즉시 적용"/>
-                                        <TextBox Grid.Column="3" Height="22" FontSize="11"
-                                                 Text="{Binding Gain, UpdateSourceTrigger=PropertyChanged}"
-                                                 Style="{StaticResource WindowDarkTextBox}"
-                                                 VerticalContentAlignment="Center"/>
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </DataGrid.RowDetailsTemplate>
                     </DataGrid>
 
                     <!-- Row 5: Tool Palette -->
@@ -1199,8 +1165,9 @@
                             </Style>
                         </TabControl.Resources>
 
-                        <!-- 2D View Tab -->
-                        <TabItem Header="2D Image (Depth Source)">
+                        <!-- 2D View Tab — 카메라의 진짜 2D 이미지 (Height Map 폴백은 .vpc 로드 등
+                             2D 이미지가 없을 때만). 노출/게인 튜닝 확인은 이 탭에서. -->
+                        <TabItem Header="2D Image">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -1349,31 +1316,50 @@
                         <TabItem Header="Depth Map">
                             <Border Background="{StaticResource BrushBgWindow}">
                                 <Grid>
-                                    <!-- Placeholder when no point cloud -->
-                                    <StackPanel VerticalAlignment="Center"
-                                                HorizontalAlignment="Center"
-                                                Visibility="{Binding CurrentPointCloud, Converter={StaticResource NullToCollapsedConverter}, ConverterParameter=Invert}">
-                                        <TextBlock Text="&#xE81C;"
-                                                   FontFamily="Segoe MDL2 Assets"
-                                                   FontSize="48"
-                                                   Foreground="#404040"
-                                                   HorizontalAlignment="Center"/>
-                                        <TextBlock Text="No Depth Data"
-                                                   Foreground="#606060"
-                                                   FontSize="12"
-                                                   HorizontalAlignment="Center"
-                                                   Margin="0,8,0,0"/>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Row 0: 표시 색상 선택 (Mech-Eye Viewer UX — 컬러/그레이) -->
+                                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,5">
+                                        <ComboBox SelectedIndex="{Binding DepthMapColorModeIndex}"
+                                                  Style="{StaticResource WindowDarkComboBox}"
+                                                  FontSize="12" Padding="8,3" MinWidth="150"
+                                                  ToolTip="Depth Map 표시 색상 — 컬러(Jet) 또는 그레이(가까울수록 밝음)">
+                                            <ComboBoxItem Content="컬러 (Jet)"/>
+                                            <ComboBoxItem Content="그레이"/>
+                                        </ComboBox>
                                     </StackPanel>
 
-                                    <!-- Depth Map Viewer with integrated ColorBar and range thumbs -->
-                                    <core:DepthMapViewer
-                                        PointCloud="{Binding CurrentPointCloud}"
-                                        ShowColorBar="True"
-                                        RangeMin="{Binding DepthRangeMin, Mode=TwoWay}"
-                                        RangeMax="{Binding DepthRangeMax, Mode=TwoWay}"
-                                        DataMin="{Binding PointCloudYMin}"
-                                        DataMax="{Binding PointCloudYMax}"
-                                        Visibility="{Binding CurrentPointCloud, Converter={StaticResource NullToCollapsedConverter}}"/>
+                                    <Grid Grid.Row="1">
+                                        <!-- Placeholder when no point cloud -->
+                                        <StackPanel VerticalAlignment="Center"
+                                                    HorizontalAlignment="Center"
+                                                    Visibility="{Binding CurrentPointCloud, Converter={StaticResource NullToCollapsedConverter}, ConverterParameter=Invert}">
+                                            <TextBlock Text="&#xE81C;"
+                                                       FontFamily="Segoe MDL2 Assets"
+                                                       FontSize="48"
+                                                       Foreground="#404040"
+                                                       HorizontalAlignment="Center"/>
+                                            <TextBlock Text="No Depth Data"
+                                                       Foreground="#606060"
+                                                       FontSize="12"
+                                                       HorizontalAlignment="Center"
+                                                       Margin="0,8,0,0"/>
+                                        </StackPanel>
+
+                                        <!-- Depth Map Viewer with integrated ColorBar and range thumbs -->
+                                        <core:DepthMapViewer
+                                            PointCloud="{Binding CurrentPointCloud}"
+                                            ShowColorBar="True"
+                                            UseGrayColormap="{Binding IsDepthMapGray}"
+                                            RangeMin="{Binding DepthRangeMin, Mode=TwoWay}"
+                                            RangeMax="{Binding DepthRangeMax, Mode=TwoWay}"
+                                            DataMin="{Binding PointCloudYMin}"
+                                            DataMax="{Binding PointCloudYMax}"
+                                            Visibility="{Binding CurrentPointCloud, Converter={StaticResource NullToCollapsedConverter}}"/>
+                                    </Grid>
                                 </Grid>
                             </Border>
                         </TabItem>
@@ -1425,17 +1411,20 @@
                         </ContentControl>
 
                         <!-- 카메라 파라미터 패널 — Mech-Eye Viewer 파라미터 패널과 동일 개념.
-                             값은 스텝(레시피)에 저장되고, Grab/Live 시 카메라에 적용된다. -->
+                             값은 스텝(레시피)에 저장되고, Grab/Live 시 카메라에 적용된다.
+                             스타일은 Tool Settings 파라미터와 동일 (SettingLabel/WindowDark 계열).
+                             3D 스캔 그룹은 구조광(3D) 카메라 스텝에서만 표시. -->
                         <ScrollViewer VerticalScrollBarVisibility="Auto"
                                       Visibility="{Binding ShowCameraSettings, Converter={StaticResource BoolToVisibility}}">
                             <StackPanel Margin="12,4,12,12">
-                                <TextBlock Foreground="{StaticResource BrushTextMuted}" FontSize="11"
-                                           TextWrapping="Wrap"
+                                <TextBlock Style="{StaticResource SettingLabelStyle}" FontSize="11" TextWrapping="Wrap"
                                            Text="{Binding SelectedStep.Name, StringFormat='스텝: {0} — Acquire/Live 시 적용, 레시피에 저장됩니다.'}"/>
+                                <TextBlock Style="{StaticResource SettingLabelStyle}" FontSize="11" Margin="0,2,0,0"
+                                           Text="{Binding StepCameraSummary}"
+                                           Visibility="{Binding StepCameraSummary, Converter={StaticResource NullToCollapsedConverter}}"/>
 
                                 <!-- 2D 이미지 -->
-                                <TextBlock Text="2D 이미지" Foreground="{StaticResource BrushTextPrimary}"
-                                           FontWeight="SemiBold" Margin="0,12,0,6"/>
+                                <TextBlock Text="2D 이미지" Style="{StaticResource SectionHeaderStyle}" Margin="0,14,0,6"/>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -1443,50 +1432,56 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0">
-                                        <TextBlock Text="노출 (µs)" Foreground="{StaticResource BrushTextMuted}" FontSize="11" Margin="0,0,0,2"/>
-                                        <TextBox Text="{Binding SelectedStep.Exposure, UpdateSourceTrigger=PropertyChanged}"/>
+                                        <TextBlock Text="노출 (µs)" Style="{StaticResource SettingLabelStyle}" Margin="0,0,0,3"/>
+                                        <TextBox Text="{Binding SelectedStep.Exposure, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource WindowDarkTextBox}"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="2">
-                                        <TextBlock Text="게인 (dB)" Foreground="{StaticResource BrushTextMuted}" FontSize="11" Margin="0,0,0,2"/>
-                                        <TextBox Text="{Binding SelectedStep.Gain, UpdateSourceTrigger=PropertyChanged}"/>
+                                        <TextBlock Text="게인 (dB)" Style="{StaticResource SettingLabelStyle}" Margin="0,0,0,3"/>
+                                        <TextBox Text="{Binding SelectedStep.Gain, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource WindowDarkTextBox}"/>
                                     </StackPanel>
                                 </Grid>
 
-                                <!-- 3D 스캔 (구조광 카메라) -->
-                                <TextBlock Text="3D 스캔" Foreground="{StaticResource BrushTextPrimary}"
-                                           FontWeight="SemiBold" Margin="0,16,0,2"/>
-                                <TextBlock Foreground="{StaticResource BrushTextMuted}" FontSize="11" TextWrapping="Wrap"
-                                           Text="촬영 시 카메라 내부에서 적용됩니다 (Mech-Mind 지원). 여기서 정제된 데이터가 Depth Map·점군·후속 툴에 그대로 전달됩니다."/>
+                                <!-- 3D 스캔 — 구조광(3D) 카메라 스텝에서만 표시 (2D 카메라는 노출/게인만) -->
+                                <StackPanel Visibility="{Binding IsStep3DCamera, Converter={StaticResource BoolToVisibility}}">
+                                    <TextBlock Text="3D 스캔" Style="{StaticResource SectionHeaderStyle}" Margin="0,18,0,2"/>
+                                    <TextBlock Style="{StaticResource SettingLabelStyle}" FontSize="11" TextWrapping="Wrap"
+                                               Text="촬영 시 카메라 내부에서 적용됩니다 (Mech-Mind 지원). 여기서 정제된 데이터가 Depth Map·점군·후속 툴에 그대로 전달됩니다."/>
 
-                                <TextBlock Text="포인트 클라우드 후처리 (스무딩·노이즈 제거)" Foreground="{StaticResource BrushTextMuted}"
-                                           FontSize="11" Margin="0,8,0,2"/>
-                                <ComboBox ItemsSource="{Binding PostProcessPresetItems}"
-                                          SelectedValuePath="Key" DisplayMemberPath="Value"
-                                          SelectedValue="{Binding SelectedStep.PointCloudPostProcess}"/>
+                                    <TextBlock Text="포인트 클라우드 후처리 (스무딩·노이즈 제거)"
+                                               Style="{StaticResource SettingLabelStyle}" Margin="0,10,0,3"/>
+                                    <ComboBox ItemsSource="{Binding PostProcessPresetItems}"
+                                              SelectedValuePath="Key" DisplayMemberPath="Value"
+                                              SelectedValue="{Binding SelectedStep.PointCloudPostProcess}"
+                                              Style="{StaticResource WindowDarkComboBox}"/>
 
-                                <CheckBox Content="뎁스 범위 제한 (mm)" Margin="0,12,0,4"
-                                          Foreground="{StaticResource BrushTextPrimary}"
-                                          IsChecked="{Binding SelectedStep.UseDepthRange}"
-                                          ToolTip="카메라 기준 거리(mm)로 유효 깊이 구간을 제한합니다. 범위 밖은 촬영 단계에서 제거되어 배경/바닥 제거에 유용합니다."/>
-                                <Grid IsEnabled="{Binding SelectedStep.UseDepthRange}">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="8"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="하한" Foreground="{StaticResource BrushTextMuted}" FontSize="11" Margin="0,0,0,2"/>
-                                        <TextBox Text="{Binding SelectedStep.DepthRangeMinMm, UpdateSourceTrigger=PropertyChanged}"/>
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="2">
-                                        <TextBlock Text="상한" Foreground="{StaticResource BrushTextMuted}" FontSize="11" Margin="0,0,0,2"/>
-                                        <TextBox Text="{Binding SelectedStep.DepthRangeMaxMm, UpdateSourceTrigger=PropertyChanged}"/>
-                                    </StackPanel>
-                                </Grid>
+                                    <CheckBox Content="뎁스 범위 제한 (mm)" Margin="0,12,0,4"
+                                              Style="{StaticResource WindowDarkCheckBox}"
+                                              IsChecked="{Binding SelectedStep.UseDepthRange}"
+                                              ToolTip="카메라 기준 거리(mm)로 유효 깊이 구간을 제한합니다. 범위 밖은 촬영 단계에서 제거되어 배경/바닥 제거에 유용합니다."/>
+                                    <Grid IsEnabled="{Binding SelectedStep.UseDepthRange}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="하한" Style="{StaticResource SettingLabelStyle}" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedStep.DepthRangeMinMm, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource WindowDarkTextBox}"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="상한" Style="{StaticResource SettingLabelStyle}" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedStep.DepthRangeMaxMm, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource WindowDarkTextBox}"/>
+                                        </StackPanel>
+                                    </Grid>
 
-                                <TextBlock Foreground="{StaticResource BrushTextMuted}" FontSize="11" TextWrapping="Wrap"
-                                           Margin="0,12,0,0"
-                                           Text="레시피 처리용 점군 다운샘플(VoxelGrid)은 툴 팔레트의 PointCloud Filter 를 사용하세요."/>
+                                    <TextBlock Style="{StaticResource SettingLabelStyle}" FontSize="11" TextWrapping="Wrap"
+                                               Margin="0,12,0,0"
+                                               Text="레시피 처리용 점군 다운샘플(VoxelGrid)은 툴 팔레트의 PointCloud Filter 를 사용하세요."/>
+                                </StackPanel>
                             </StackPanel>
                         </ScrollViewer>
                     </Grid>
