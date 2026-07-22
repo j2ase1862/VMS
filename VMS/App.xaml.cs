@@ -74,6 +74,11 @@ namespace VMS
             // ChromelessTitleBar (VMS.VisionSetup.Views.Common) 가 이 커맨드들을 호출함.
             RegisterChromelessWindowCommands();
 
+            // 잔존(창 없는) VisionSetup 프로세스 정리 — 카메라 SDK 스레드로 프로세스가
+            // 남으면 카메라를 점유해 VMS 카메라 연결이 실패한다 (현장 검증 2026-07-22).
+            // 창이 살아 있는 정상 인스턴스는 VMS 기동 감지로 스스로 카메라를 놓으므로 제외.
+            KillOrphanVisionSetupProcesses();
+
             // 최초 실행 감지 — system_config.json 부재 시 AppSetup 자동 실행 후 VMS 종료.
             // MSI 설치 직후 빈 AppData 환경 또는 사용자가 AppData 초기화 시 트리거.
             // AppSetup 완료(저장) → system_config.json 생성 → 사용자가 VMS 재실행 시 정상 시작.
@@ -876,6 +881,43 @@ namespace VMS
 #else
             return SecurityLoadPolicy.RequireExplicit;
 #endif
+        }
+
+        /// <summary>
+        /// 창 없이 잔존하는 VMS.VisionSetup 프로세스 강제 종료. VisionSetup 은 항상 메인
+        /// 윈도우를 가지므로 MainWindowHandle == 0 이면 종료 절차에서 멈춘 좀비다.
+        /// 방금 시작돼 아직 창이 안 뜬 인스턴스를 오인하지 않도록 시작 10초 경과분만 대상.
+        /// </summary>
+        private static void KillOrphanVisionSetupProcesses()
+        {
+            try
+            {
+                foreach (var p in Process.GetProcessesByName("VMS.VisionSetup"))
+                {
+                    try
+                    {
+                        if (p.MainWindowHandle == IntPtr.Zero &&
+                            (DateTime.Now - p.StartTime).TotalSeconds > 10)
+                        {
+                            p.Kill(entireProcessTree: true);
+                            p.WaitForExit(2000);
+                            Debug.WriteLine($"[App] 잔존 VisionSetup 프로세스 종료: PID {p.Id}");
+                        }
+                    }
+                    catch
+                    {
+                        // 이미 종료됨 / 접근 불가 — 시작 경로에서 실패는 무시
+                    }
+                    finally
+                    {
+                        try { p.Dispose(); } catch { }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] KillOrphanVisionSetupProcesses 실패: {ex.Message}");
+            }
         }
 
         private static void RegisterChromelessWindowCommands()

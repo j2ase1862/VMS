@@ -25,6 +25,13 @@ namespace VMS.VisionSetup
     /// </summary>
     public partial class App : Application
     {
+        // OnExit 정리 대상 — 창 X 버튼(Closing→ShutdownMode) 경로에서도 메뉴 Exit 경로와
+        // 동일하게 정리되도록 App 필드로 보관.
+        private MainViewModel? _mainViewModel;
+        private ISLMChatService? _slmChatService;
+        private IRobotService? _robotService;
+        private IParameterSyncService? _parameterSyncService;
+
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
@@ -158,18 +165,18 @@ namespace VMS.VisionSetup
                 recipeService,
                 cameraService,
                 dialogService,
-                () =>
-                {
-                    slmChatService?.Dispose();
-                    robotService?.Dispose();
-                    parameterSyncService?.Dispose();
-                    Shutdown();
-                },
+                () => Shutdown(),   // 서비스 정리는 OnExit 에서 일괄 수행
+
                 robotService,
                 slmChatService,
                 parameterApplyService,
                 imageAnalysisService,
                 recipeRetrievalService);
+
+            _mainViewModel = viewModel;
+            _slmChatService = slmChatService;
+            _robotService = robotService;
+            _parameterSyncService = parameterSyncService;
 
             // AppSetup 기본 로봇 설정을 ViewModel에 적용 (레시피 미로드 시 기본값)
             if (robotConfig.isEnabled)
@@ -244,6 +251,35 @@ namespace VMS.VisionSetup
                     }));
             }
 #endif
+        }
+
+        /// <summary>
+        /// 종료 시 프로세스 잔존 차단. ShutdownMode=OnMainWindowClose + MainView.Closing 의
+        /// Cleanup 만으로는 카메라 SDK 네이티브 스레드 등이 정상 종료(ExitProcess)를 붙잡아
+        /// 창을 닫아도 프로세스가 남는 사례가 재발 (현장 검증 2026-07-22, v1.4.18) —
+        /// VMS 본체 ForceShutdown 과 동일하게 정리 후 즉시 강제 종료한다.
+        /// </summary>
+        protected override void OnExit(ExitEventArgs e)
+        {
+            // ① 워치독: 아래 정리 코드가 블로킹돼도 3초 후 무조건 종료
+            new Thread(() =>
+            {
+                Thread.Sleep(3000);
+                try { Process.GetCurrentProcess().Kill(); } catch { }
+            })
+            { IsBackground = false, Name = "ExitWatchdog" }.Start();
+
+            // ② 어느 종료 경로(X 버튼 / 메뉴 Exit / Shutdown 직접 호출)로 와도 정리 보장 (idempotent)
+            try { _mainViewModel?.Cleanup(); } catch { }
+            try { _slmChatService?.Dispose(); } catch { }
+            try { _robotService?.Dispose(); } catch { }
+            try { _parameterSyncService?.Dispose(); } catch { }
+
+            base.OnExit(e);
+
+            // ③ 즉시 강제 종료 — TerminateProcess 는 CLR 의 포그라운드 스레드 대기와
+            // 네이티브 DLL detach 를 모두 건너뛰므로 SDK 스레드가 붙잡을 지점이 없다.
+            Process.GetCurrentProcess().Kill();
         }
 
 #if DEBUG

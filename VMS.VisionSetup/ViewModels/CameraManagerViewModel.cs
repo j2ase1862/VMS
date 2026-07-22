@@ -56,6 +56,9 @@ namespace VMS.VisionSetup.ViewModels
         {
             _cameraService = cameraService;
             _dialogService = dialogService;
+            // 열 때마다 파일에서 재로드 — VisionSetup 실행 중 AppSetup 이 갱신한
+            // 카메라 설정(IP 등)도 다이얼로그에 반영되도록.
+            _cameraService.LoadCameraRegistry();
             RefreshCameraList();
         }
 
