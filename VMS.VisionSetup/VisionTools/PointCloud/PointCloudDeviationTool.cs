@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using VMS.Camera.Converters;
 using VMS.Camera.Models;
 using VMS.Camera.Utils;
 using VMS.VisionSetup.Models;
@@ -124,7 +125,8 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                 PointCloudData reference;
                 try
                 {
-                    reference = PointCloudData.LoadFromFile(ReferencePath);
+                    // .vpc(양품 스캔) 또는 .stl(CAD 표면 샘플링) — 확장자 자동 분기
+                    reference = StlMeshLoader.LoadReferenceCloud(ReferencePath);
                 }
                 catch (Exception ex)
                 {
