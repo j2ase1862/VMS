@@ -387,12 +387,14 @@ namespace VMS.ViewModels
                 {
                     FrameAcquired?.Invoke(result);
 
+                    // Grab 은 보고 있던 탭을 바꾸지 않는다 — 2D+점군이 함께 오는 3D 카메라에서
+                    // 매번 Depth Map 탭으로 튕기던 문제(현장 보고). 데이터만 갱신하면
+                    // 현재 탭(2D/Depth Map/Point Cloud)이 알아서 새 내용을 표시한다.
                     if (result.Image2D != null)
                     {
                         var bmp = MatToBitmapSource(result.Image2D);
                         _originalImage = bmp;
                         CurrentImage = bmp;
-                        SelectedViewTab = 0;
                     }
 
                     if (result.PointCloud != null)
@@ -400,7 +402,6 @@ namespace VMS.ViewModels
                         var old = CurrentPointCloud;
                         CurrentPointCloud = result.PointCloud;
                         old?.Dispose();
-                        SelectedViewTab = 1;
                     }
 
                     ResultMessage = "Acquisition OK";
