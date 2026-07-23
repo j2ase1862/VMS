@@ -84,7 +84,22 @@ namespace VMS.VisionSetup.Models
         public double Exposure
         {
             get => _exposure;
-            set => SetProperty(ref _exposure, Math.Max(1, value));
+            set
+            {
+                if (SetProperty(ref _exposure, Math.Max(1, value)))
+                    OnPropertyChanged(nameof(ExposureMs));
+            }
+        }
+
+        /// <summary>
+        /// 노출 UI 입력용 ms 단위 — Mech-Eye Viewer 와 동일 단위 (200 입력 = 200ms).
+        /// 레시피 JSON 은 µs(Exposure) 그대로 저장 — 기존 레시피 호환.
+        /// </summary>
+        [JsonIgnore]
+        public double ExposureMs
+        {
+            get => Exposure / 1000.0;
+            set => Exposure = value * 1000.0;
         }
 
         private double _gain = 1.0;

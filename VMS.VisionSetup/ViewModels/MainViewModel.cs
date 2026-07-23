@@ -601,7 +601,7 @@ namespace VMS.VisionSetup.ViewModels
             var current = await acquisition.ReadSettingsAsync();
             StepCameraCurrentText = current == null
                 ? string.Empty
-                : $"카메라 현재값: 노출 {current.ExposureUs:N0} µs · 게인 {current.Gain:N1} dB";
+                : $"카메라 현재값: 노출 {current.ExposureUs / 1000.0:N1} ms · 게인 {current.Gain:N1} dB";
         }
 
         // Depth Map 탭 표시 색상 — 0 = 컬러(Jet), 1 = 그레이 (Mech-Eye Viewer UX)

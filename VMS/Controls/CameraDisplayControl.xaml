@@ -572,8 +572,8 @@
                         </TextBlock.Style>
                     </TextBlock>
 
-                    <!-- Exposure — 정밀 입력을 위해 TextBox (µs). Mech-Mind 는 ms 로 변환 적용
-                         (Scan2DExposureTime 0.1~999ms = 100~999,000µs) -->
+                    <!-- Exposure — Mech-Eye Viewer 와 동일한 ms 단위 입력 (200 = 200ms).
+                         내부 저장/적용은 µs 유지, UI 만 ms (Scan2DExposureTime 0.1~999ms) -->
                     <Grid Margin="0,0,0,6" IsEnabled="{Binding IsManualExposureEnabled}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="70"/>
@@ -582,11 +582,11 @@
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="Exposure:" Foreground="{StaticResource Brush.Text.Secondary}" VerticalAlignment="Center" FontSize="11"/>
                         <TextBox Grid.Column="1"
-                                 Text="{Binding Exposure, UpdateSourceTrigger=PropertyChanged}"
+                                 Text="{Binding ExposureMs, UpdateSourceTrigger=PropertyChanged}"
                                  FontSize="11" Padding="6,3"
                                  VerticalAlignment="Center"
-                                 ToolTip="노출 시간 (µs). Mech-Mind 2D 파라미터의 노출 시간(Scan2DExposureTime, 0.1~999ms)에 해당 — 예: 5000µs = 5ms"/>
-                        <TextBlock Grid.Column="2" Text="µs"
+                                 ToolTip="노출 시간 (ms) — Mech-Eye Viewer 2D 파라미터의 노출 시간(Scan2DExposureTime, 0.1~999ms)과 동일 단위. 예: 200 = 200ms"/>
+                        <TextBlock Grid.Column="2" Text="ms"
                                    Foreground="{StaticResource Brush.Text.Tertiary}" FontSize="11"
                                    VerticalAlignment="Center"
                                    HorizontalAlignment="Right"/>

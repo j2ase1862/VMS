@@ -1449,8 +1449,9 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0">
-                                        <TextBlock Text="노출 (µs)" Style="{StaticResource SettingLabelStyle}" Margin="0,0,0,3"/>
-                                        <TextBox Text="{Binding SelectedStep.Exposure, UpdateSourceTrigger=PropertyChanged}"
+                                        <TextBlock Text="노출 (ms)" Style="{StaticResource SettingLabelStyle}" Margin="0,0,0,3"
+                                                   ToolTip="Mech-Eye Viewer 2D 파라미터의 노출 시간과 동일 단위 (0.1~999ms). 예: 200 = 200ms"/>
+                                        <TextBox Text="{Binding SelectedStep.ExposureMs, UpdateSourceTrigger=PropertyChanged}"
                                                  Style="{StaticResource WindowDarkTextBox}"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="2">

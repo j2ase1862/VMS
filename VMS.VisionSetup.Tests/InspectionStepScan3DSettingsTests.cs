@@ -95,6 +95,20 @@ namespace VMS.VisionSetup.Tests
         }
 
         [Fact]
+        public void ExposureMs_IsUiUnitProxy_JsonStaysMicroseconds()
+        {
+            // UI 는 Mech-Eye Viewer 와 동일한 ms 단위, 레시피 JSON 은 µs 유지 (기존 호환)
+            var step = new InspectionStep { ExposureMs = 200 };   // 200ms 입력
+
+            Assert.Equal(200_000, step.Exposure);                 // 내부 µs
+            Assert.Equal(200, step.ExposureMs);
+
+            var json = JsonSerializer.Serialize(step, JsonOptions);
+            Assert.Contains("\"exposure\": 200000", json);        // µs 로 저장
+            Assert.DoesNotContain("exposureMs", json);            // UI 프록시는 직렬화 제외
+        }
+
+        [Fact]
         public void Scan3DSettings_RecordEquality_EnablesApplyCache()
         {
             // MechMindCameraAcquisition 이 동일 설정 재적용을 값 동등성으로 스킵하는 전제 검증
