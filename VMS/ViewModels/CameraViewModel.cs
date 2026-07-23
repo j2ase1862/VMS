@@ -164,8 +164,19 @@ namespace VMS.ViewModels
                 {
                     SelectedStep.Exposure = value;
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(ExposureMs));
                 }
             }
+        }
+
+        /// <summary>
+        /// 노출 UI 입력용 ms 단위 — Mech-Eye Viewer 와 동일 단위 (200 입력 = 200ms).
+        /// 저장/적용 경로는 µs 유지 (레시피·system_config 호환, ApplySettingsAsync 가 µs).
+        /// </summary>
+        public double ExposureMs
+        {
+            get => Exposure / 1000.0;
+            set => Exposure = value * 1000.0;
         }
 
         public double Gain
@@ -184,6 +195,7 @@ namespace VMS.ViewModels
         partial void OnSelectedStepChanged(StepViewModel? value)
         {
             OnPropertyChanged(nameof(Exposure));
+            OnPropertyChanged(nameof(ExposureMs));
             OnPropertyChanged(nameof(Gain));
             OnPropertyChanged(nameof(Use2DCameraDefault));
             OnPropertyChanged(nameof(IsManualExposureEnabled));
@@ -315,7 +327,7 @@ namespace VMS.ViewModels
             var current = await acquisition.ReadSettingsAsync();
             if (current != null)
                 CameraCurrentSettingsText =
-                    $"카메라 현재값: 노출 {current.ExposureUs:N0} µs · 게인 {current.Gain:N1} dB";
+                    $"카메라 현재값: 노출 {current.ExposureUs / 1000.0:N1} ms · 게인 {current.Gain:N1} dB";
         }
 
         [RelayCommand]
