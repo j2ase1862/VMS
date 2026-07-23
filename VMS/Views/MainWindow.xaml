@@ -835,7 +835,9 @@
                                    Foreground="White"
                                    Margin="0,0,0,16"/>
 
-                        <!-- Camera Control Section — 헤더에서 옮겨온 도구 액션 -->
+                        <!-- Roller Inspection Section — 라인스캔 전용 검사 실행 모드.
+                             Grab/Live 는 카메라 카드의 설정 창(컨트롤 박스)으로 이동 — 카메라
+                             단위 조작은 카메라 옆에서, 검사 모드는 여기서. -->
                         <Border Background="{StaticResource Brush.Surface.Overlay}"
                                 CornerRadius="8"
                                 Padding="12"
@@ -843,59 +845,7 @@
                             <StackPanel>
                                 <TextBlock FontWeight="SemiBold"
                                            Foreground="{StaticResource Brush.Primary}"
-                                           Margin="0,0,0,12"><Run Text="Camera Control"/><InlineUIContainer BaselineAlignment="Center"><vs:HelpIcon CustomTitle="Camera Control" CustomDescription="카메라 수동 조작입니다. 검사(AUTO RUN)가 멈춰 있을 때 사진 한 장 촬영(Grab), 실시간 영상(Live), 롤러 검사 모드를 사용할 수 있습니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
-
-                                <!-- Grab (single shot) — 순수 카메라 조작이라 WO 선택 불필요 (CanOperateCamera) -->
-                                <Button Command="{Binding GrabCommand}"
-                                        AutomationProperties.Name="Grab"
-                                        IsEnabled="{Binding CanOperateCamera}"
-                                        Visibility="{Binding IsLiveMode, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
-                                        Background="{StaticResource Brush.Surface.Overlay}" Foreground="White"
-                                        Style="{StaticResource ModernButton}"
-                                        HorizontalAlignment="Stretch"
-                                        Margin="0,0,0,6"
-                                        ToolTipService.ShowOnDisabled="True"
-                                        ToolTip="단일 이미지 캡처">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="&#xE722;" FontFamily="Segoe MDL2 Assets"
-                                                   Foreground="{StaticResource Brush.Primary}" Margin="0,0,8,0"/>
-                                        <TextBlock Text="Grab"/>
-                                    </StackPanel>
-                                </Button>
-
-                                <!-- Live Start — 순수 카메라 조작이라 WO 선택 불필요 (CanOperateCamera) -->
-                                <Button Command="{Binding StartLiveCommand}"
-                                        AutomationProperties.Name="Live Start"
-                                        IsEnabled="{Binding CanOperateCamera}"
-                                        Visibility="{Binding IsLiveMode, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
-                                        Background="{StaticResource Brush.Surface.Overlay}" Foreground="White"
-                                        Style="{StaticResource ModernButton}"
-                                        HorizontalAlignment="Stretch"
-                                        Margin="0,0,0,6"
-                                        ToolTipService.ShowOnDisabled="True"
-                                        ToolTip="연속 라이브 그랩 시작">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="&#xE714;" FontFamily="Segoe MDL2 Assets"
-                                                   Foreground="{StaticResource Brush.Success}" Margin="0,0,8,0"/>
-                                        <TextBlock Text="Live Start"/>
-                                    </StackPanel>
-                                </Button>
-
-                                <!-- Live Stop -->
-                                <Button Command="{Binding StopLiveCommand}"
-                                        AutomationProperties.Name="Live Stop"
-                                        Visibility="{Binding IsLiveMode, Converter={StaticResource BoolToVisibilityConverter}}"
-                                        Background="{StaticResource Brush.Surface.Overlay}" Foreground="White"
-                                        Style="{StaticResource ModernButton}"
-                                        HorizontalAlignment="Stretch"
-                                        Margin="0,0,0,6"
-                                        ToolTip="라이브 영상 표시를 중지합니다">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets"
-                                                   Foreground="{StaticResource Brush.Warning}" Margin="0,0,8,0"/>
-                                        <TextBlock Text="Live Stop"/>
-                                    </StackPanel>
-                                </Button>
+                                           Margin="0,0,0,12"><Run Text="Roller Inspection"/><InlineUIContainer BaselineAlignment="Center"><vs:HelpIcon CustomTitle="Roller Inspection" CustomDescription="라인스캔 카메라로 회전하는 롤러 표면을 연속 검사하는 모드입니다. 작업지시(WO) 선택 + 라인스캔 카메라 구성 시에만 켤 수 있습니다. 사진 촬영(Grab)과 실시간 영상(Live)은 각 카메라 화면의 설정(톱니바퀴) 창에 있습니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
 
                                 <!-- Roller Toggle — 검사 결과가 생기므로 WO 게이트 유지 + 라인스캔 카메라 구성 시에만 -->
                                 <Button Command="{Binding ToggleRollerInspectionCommand}"

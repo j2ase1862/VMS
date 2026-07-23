@@ -1095,18 +1095,8 @@ namespace VMS.ViewModels
 
         #endregion
 
-        [RelayCommand]
-        private async Task GrabAsync()
-        {
-            if (IsRunning || IsLiveMode) return;
-
-            SystemStatus = "Grabbing...";
-            foreach (var cam in Cameras.Where(c => c.IsEnabled))
-            {
-                await cam.GrabCommand.ExecuteAsync(null);
-            }
-            SystemStatus = "Ready";
-        }
+        // 전체 카메라 일괄 Grab 커맨드는 삭제 — 카메라 단위 Grab 은 각 카메라 카드의
+        // 설정 창(컨트롤 박스)에서 수행한다 (Camera Control 그룹 제거).
 
         [RelayCommand]
         private async Task StartLiveAsync()
