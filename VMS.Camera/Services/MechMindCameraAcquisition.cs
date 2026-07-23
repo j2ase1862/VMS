@@ -397,19 +397,14 @@ namespace VMS.Camera.Services
 
             var mat = new Mat(height, width, MatType.CV_8UC3);
             nint dataPtr = colorMap.Data();
-            int totalBytes = height * width * 3;
+            long totalBytes = (long)height * width * 3;
 
+            // SDK 의 Color2DImage 는 이미 BGR — 공식 C++ 샘플이 data() 를 변환 없이
+            // cv::Mat(CV_8UC3) 로 감싸 imwrite/imshow 한다. 기존의 RGB 가정 스왑이
+            // 주황↔파랑 색 반전을 만들었다 (v1.4.23 현장 보고). 그대로 복사한다.
             unsafe
             {
-                byte* src = (byte*)dataPtr;
-                byte* dst = (byte*)mat.Data;
-                for (int i = 0; i < height * width; i++)
-                {
-                    // SDK provides RGB, OpenCV expects BGR
-                    dst[i * 3 + 0] = src[i * 3 + 2]; // B
-                    dst[i * 3 + 1] = src[i * 3 + 1]; // G
-                    dst[i * 3 + 2] = src[i * 3 + 0]; // R
-                }
+                Buffer.MemoryCopy((void*)dataPtr, (void*)mat.Data, totalBytes, totalBytes);
             }
 
             return mat;
@@ -468,10 +463,11 @@ namespace VMS.Camera.Services
                             int cCol = srcCol * colorWidth / srcWidth;
                             int cRow = srcRow * colorHeight / srcHeight;
                             int ci = (cRow * colorWidth + cCol) * 3;
+                            // Color2DImage 는 BGR — 점군 텍스처도 R/B 순서를 맞춘다
                             colors[dstIdx] = WpfColor.FromRgb(
-                                colorData[ci],
+                                colorData[ci + 2],
                                 colorData[ci + 1],
-                                colorData[ci + 2]);
+                                colorData[ci]);
                         }
                         else
                         {
