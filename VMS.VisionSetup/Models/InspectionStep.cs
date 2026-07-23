@@ -63,6 +63,20 @@ namespace VMS.VisionSetup.Models
 
         #region Acquisition Settings
 
+        private bool _use2DCameraDefault = true;
+        /// <summary>
+        /// 2D 노출/게인 카메라 설정 유지 — true(기본)면 Grab/Live 때 카메라의 현재
+        /// 노출/게인을 건드리지 않는다 (Mech-Eye Viewer 등에서 튜닝한 값 보존).
+        /// false 면 아래 Exposure/Gain 을 촬영 전에 카메라에 적용한다.
+        /// 구버전 레시피(필드 없음)는 true 로 로드된다 — 3D 후처리의
+        /// PointCloudPostProcessPreset.CameraDefault 와 동일한 규칙.
+        /// </summary>
+        public bool Use2DCameraDefault
+        {
+            get => _use2DCameraDefault;
+            set => SetProperty(ref _use2DCameraDefault, value);
+        }
+
         private double _exposure = 1000;
         /// <summary>
         /// 노출 시간 (μs)

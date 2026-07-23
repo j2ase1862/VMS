@@ -22,6 +22,12 @@ namespace VMS.Camera.Interfaces
         Task<bool> ApplySettingsAsync(double exposureUs, double gain) => Task.FromResult(false);
 
         /// <summary>
+        /// 카메라의 현재 2D 노출(µs)/게인을 읽는다 (read-back) — UI 에 실기기 값을
+        /// 표시하기 위한 용도. 지원하는 구현체만 override — 기본은 null (미지원).
+        /// </summary>
+        Task<CameraSettings2D?> ReadSettingsAsync() => Task.FromResult<CameraSettings2D?>(null);
+
+        /// <summary>
         /// 3D 스캔 후처리(스무딩/노이즈 제거)·뎁스 범위를 카메라에 적용 — 촬영 시점
         /// 카메라 내부 처리라 depth map/점군/후속 도구가 모두 정제된 데이터를 받는다.
         /// 지원하는 구현체(Mech-Mind 등)만 override — 기본은 no-op.

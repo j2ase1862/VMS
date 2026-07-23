@@ -102,6 +102,14 @@ namespace VMS.Models
     {
         public int StepNumber { get; set; } = 1;
         public string Name { get; set; } = "Step 1";
+
+        /// <summary>
+        /// 2D 노출/게인 카메라 설정 유지 — true(기본)면 Grab/Live 때 카메라의 현재
+        /// 노출/게인을 건드리지 않는다 (Mech-Eye Viewer 등에서 튜닝한 값 보존).
+        /// 구버전 system_config.json(필드 없음)은 true 로 로드된다.
+        /// </summary>
+        public bool Use2DCameraDefault { get; set; } = true;
+
         public double Exposure { get; set; } = 5000;  // microseconds
         public double Gain { get; set; } = 1.0;
     }

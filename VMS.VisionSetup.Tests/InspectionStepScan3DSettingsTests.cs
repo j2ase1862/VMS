@@ -70,6 +70,28 @@ namespace VMS.VisionSetup.Tests
 
             Assert.Equal(PointCloudPostProcessPreset.CameraDefault, restored.PointCloudPostProcess);
             Assert.False(restored.UseDepthRange);
+            // 2D 노출/게인도 카메라 설정 유지가 기본 — 구레시피 로드 시 카메라 튜닝값 보존
+            Assert.True(restored.Use2DCameraDefault);
+        }
+
+        [Fact]
+        public void RoundTrip_PreservesManual2DExposureMode()
+        {
+            // 유지 모드를 해제하고 노출을 명시한 스텝 — 재로드 후에도 push 모드 유지
+            var step = new InspectionStep
+            {
+                Name = "Manual Exposure",
+                Use2DCameraDefault = false,
+                Exposure = 12000,
+                Gain = 2.5
+            };
+
+            var json = JsonSerializer.Serialize(step, JsonOptions);
+            var restored = JsonSerializer.Deserialize<InspectionStep>(json, JsonOptions)!;
+
+            Assert.False(restored.Use2DCameraDefault);
+            Assert.Equal(12000, restored.Exposure);
+            Assert.Equal(2.5, restored.Gain);
         }
 
         [Fact]
