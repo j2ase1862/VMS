@@ -202,6 +202,41 @@ namespace VMS.Camera.Services
             }
         }
 
+        /// <summary>
+        /// 카메라 현재 2D 노출/게인 읽기 (read-back). 노출 읽기 실패 시 null,
+        /// 게인은 모델별 미지원이 있어 실패해도 0 으로 대체하고 노출만이라도 반환한다.
+        /// </summary>
+        public Task<CameraSettings2D?> ReadSettingsAsync()
+        {
+            if (!IsConnected || _mechCamera == null) return Task.FromResult<CameraSettings2D?>(null);
+
+            try
+            {
+                var userSet = _mechCamera.CurrentUserSet();
+
+                double exposureMs = 0;
+                var expStatus = userSet.GetFloatValue(Scan2D.ExposureTime.Name, ref exposureMs);
+                if (!expStatus.IsOK())
+                {
+                    CameraLog.Write($"[MechMind] Scan2DExposureTime 읽기 실패: {expStatus.ErrorDescription}");
+                    return Task.FromResult<CameraSettings2D?>(null);
+                }
+
+                double gainDb = 0;
+                var gainStatus = userSet.GetFloatValue(Scan2D.Gain.Name, ref gainDb);
+                if (!gainStatus.IsOK())
+                    gainDb = 0;
+
+                return Task.FromResult<CameraSettings2D?>(
+                    new CameraSettings2D(exposureMs * 1000.0, gainDb));
+            }
+            catch (Exception ex)
+            {
+                CameraLog.Write($"[MechMind] 파라미터 읽기 오류: {ex.Message}");
+                return Task.FromResult<CameraSettings2D?>(null);
+            }
+        }
+
         // 마지막으로 적용 성공한 3D 설정 — record 값 동등성으로 동일 설정 재적용 스킵
         private Scan3DSettings? _applied3D;
 

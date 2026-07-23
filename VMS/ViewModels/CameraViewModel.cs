@@ -133,6 +133,28 @@ namespace VMS.ViewModels
         private bool _isControlBoxOpen;
 
         // Current step's camera settings (bound to selected step)
+        // 카메라 설정 유지 (기본): 촬영 시 카메라의 현재 노출/게인을 건드리지 않음
+        public bool Use2DCameraDefault
+        {
+            get => SelectedStep?.Use2DCameraDefault ?? true;
+            set
+            {
+                if (SelectedStep != null)
+                {
+                    SelectedStep.Use2DCameraDefault = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(IsManualExposureEnabled));
+                }
+            }
+        }
+
+        // 노출/게인 슬라이더 활성 조건 — 스텝 선택 + 유지 모드 해제
+        public bool IsManualExposureEnabled => SelectedStep != null && !Use2DCameraDefault;
+
+        // 카메라가 실제로 쓰는 현재 노출/게인 (read-back, 지원 카메라만) — 설정 창 열 때 갱신
+        [ObservableProperty]
+        private string? _cameraCurrentSettingsText;
+
         public double Exposure
         {
             get => SelectedStep?.Exposure ?? 5000;
@@ -163,6 +185,8 @@ namespace VMS.ViewModels
         {
             OnPropertyChanged(nameof(Exposure));
             OnPropertyChanged(nameof(Gain));
+            OnPropertyChanged(nameof(Use2DCameraDefault));
+            OnPropertyChanged(nameof(IsManualExposureEnabled));
         }
 
         // Inspection results
@@ -274,9 +298,24 @@ namespace VMS.ViewModels
         }
 
         [RelayCommand]
-        private void ToggleControlBox()
+        private async Task ToggleControlBox()
         {
             IsControlBoxOpen = !IsControlBoxOpen;
+            if (IsControlBoxOpen)
+                await RefreshCameraCurrentSettingsAsync();
+        }
+
+        /// <summary>연결된 카메라에서 현재 2D 노출/게인을 읽어 설정 창에 표시 (미지원/미연결이면 숨김)</summary>
+        private async Task RefreshCameraCurrentSettingsAsync()
+        {
+            CameraCurrentSettingsText = null;
+            var acquisition = _acquisition;
+            if (acquisition == null || !acquisition.IsConnected) return;
+
+            var current = await acquisition.ReadSettingsAsync();
+            if (current != null)
+                CameraCurrentSettingsText =
+                    $"카메라 현재값: 노출 {current.ExposureUs:N0} µs · 게인 {current.Gain:N1} dB";
         }
 
         [RelayCommand]
@@ -326,8 +365,9 @@ namespace VMS.ViewModels
 
                 // 선택 스텝의 노출/게인을 카메라에 반영 후 촬영.
                 // 미구현 제조사는 ICameraAcquisition 기본 no-op (#188).
+                // "카메라 설정 유지"(기본) 스텝은 push 하지 않는다 — 카메라 튜닝값 보존.
                 var step = SelectedStep;
-                if (step != null)
+                if (step != null && !step.Use2DCameraDefault)
                     await _acquisition.ApplySettingsAsync(step.Exposure, step.Gain);
 
                 var result = await _acquisition.AcquireAsync();
@@ -395,9 +435,10 @@ namespace VMS.ViewModels
                     while (!ct.IsCancellationRequested)
                     {
                         // 매 프레임 선택 스텝의 노출/게인 반영 — 라이브 중 슬라이더
-                        // 조작이 실시간 적용됨 (VisionSetup Camera Live 와 동일, #199)
+                        // 조작이 실시간 적용됨 (VisionSetup Camera Live 와 동일, #199).
+                        // "카메라 설정 유지"(기본) 스텝은 push 하지 않는다 — 카메라 튜닝값 보존.
                         var liveStep = SelectedStep;
-                        if (liveStep != null)
+                        if (liveStep != null && !liveStep.Use2DCameraDefault)
                             await _acquisition.ApplySettingsAsync(liveStep.Exposure, liveStep.Gain);
 
                         var result = await _acquisition.AcquireAsync();
@@ -690,6 +731,7 @@ namespace VMS.ViewModels
                     {
                         StepNumber = step.StepNumber,
                         Name = step.Name,
+                        Use2DCameraDefault = step.Use2DCameraDefault,
                         Exposure = step.Exposure,
                         Gain = step.Gain
                     });
@@ -771,6 +813,7 @@ namespace VMS.ViewModels
                     {
                         StepNumber = step.StepNumber,
                         Name = step.Name,
+                        Use2DCameraDefault = step.Use2DCameraDefault,
                         Exposure = step.Exposure,
                         Gain = step.Gain
                     });
@@ -832,6 +875,11 @@ namespace VMS.ViewModels
 
         [ObservableProperty]
         private string _name = "Step 1";
+
+        // 2D 노출/게인 카메라 설정 유지 — true(기본)면 Grab/Live 때 카메라의 현재
+        // 노출/게인을 건드리지 않는다 (Mech-Eye Viewer 등에서 튜닝한 값 보존)
+        [ObservableProperty]
+        private bool _use2DCameraDefault = true;
 
         [ObservableProperty]
         private double _exposure = 5000;

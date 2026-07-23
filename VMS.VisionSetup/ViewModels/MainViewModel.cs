@@ -562,6 +562,11 @@ namespace VMS.VisionSetup.ViewModels
         [ObservableProperty]
         private string _stepCameraSummary = string.Empty;
 
+        // 카메라가 실제로 쓰는 현재 노출/게인 (read-back, 지원 카메라만) — json 저장값과
+        // 다를 수 있어 "카메라 설정 유지" 모드에서 무엇이 적용되는지 보여준다
+        [ObservableProperty]
+        private string _stepCameraCurrentText = string.Empty;
+
         /// <summary>선택 스텝의 카메라를 찾아 3D 여부/요약 갱신 (제조사·타입별 파라미터 분기)</summary>
         private void UpdateStepCameraInfo(InspectionStep? step)
         {
@@ -573,12 +578,30 @@ namespace VMS.VisionSetup.ViewModels
             {
                 IsStep3DCamera = false;
                 StepCameraSummary = string.Empty;
+                StepCameraCurrentText = string.Empty;
                 return;
             }
 
             IsStep3DCamera = cam.CameraType is CameraType.AreaScan3D or CameraType.LineScan3D
                 || cam.Manufacturer.Replace("_", "").Contains("Mech", StringComparison.OrdinalIgnoreCase);
             StepCameraSummary = $"카메라: {cam.Name} ({cam.Manufacturer} · {cam.CameraType})";
+            _ = RefreshStepCameraCurrentTextAsync();
+        }
+
+        /// <summary>연결된 카메라에서 현재 2D 노출/게인을 읽어 패널에 표시 (미지원/미연결이면 숨김)</summary>
+        private async System.Threading.Tasks.Task RefreshStepCameraCurrentTextAsync()
+        {
+            var acquisition = _cameraAcquisition;
+            if (acquisition == null || !IsCameraConnected)
+            {
+                StepCameraCurrentText = string.Empty;
+                return;
+            }
+
+            var current = await acquisition.ReadSettingsAsync();
+            StepCameraCurrentText = current == null
+                ? string.Empty
+                : $"카메라 현재값: 노출 {current.ExposureUs:N0} µs · 게인 {current.Gain:N1} dB";
         }
 
         // Depth Map 탭 표시 색상 — 0 = 컬러(Jet), 1 = 그레이 (Mech-Eye Viewer UX)
@@ -2329,6 +2352,9 @@ namespace VMS.VisionSetup.ViewModels
                     ? $"카메라 연결됨: {SelectedCamera.Name}"
                     : $"카메라 연결 실패: {SelectedCamera.Name}";
 
+                if (success)
+                    _ = RefreshStepCameraCurrentTextAsync();
+
                 ConnectCameraCommand.NotifyCanExecuteChanged();
                 DisconnectCameraCommand.NotifyCanExecuteChanged();
                 MultiViewCaptureCommand.NotifyCanExecuteChanged();
@@ -2371,12 +2397,20 @@ namespace VMS.VisionSetup.ViewModels
         /// <summary>
         /// 선택 스텝의 카메라 파라미터(2D 노출/게인 + 3D 후처리/뎁스 범위)를 획득 전에 적용.
         /// Acquire / Camera Live 양쪽에서 호출 — 미지원 구현체는 no-op, 동일 값은 캐시 스킵.
+        /// 2D 는 "카메라 설정 유지"(Use2DCameraDefault, 기본)면 push 하지 않는다 —
+        /// Mech-Eye Viewer 등에서 튜닝한 카메라 값 보존.
         /// </summary>
         private async System.Threading.Tasks.Task ApplyStepCameraSettingsAsync()
         {
             if (SelectedStep == null || _cameraAcquisition == null) return;
 
-            await _cameraAcquisition.ApplySettingsAsync(SelectedStep.Exposure, SelectedStep.Gain);
+            if (!SelectedStep.Use2DCameraDefault)
+            {
+                var applied = await _cameraAcquisition.ApplySettingsAsync(SelectedStep.Exposure, SelectedStep.Gain);
+                // 지원 카메라(Mech 등 3D)인데 실패 → 침묵하지 않고 상태바로 알림 (camera.log 에 상세)
+                if (!applied && IsStep3DCamera)
+                    StatusMessage = "노출/게인 적용 실패 — logs\\camera.log 확인";
+            }
             await _cameraAcquisition.Apply3DSettingsAsync(new Scan3DSettings
             {
                 PostProcessPreset = SelectedStep.PointCloudPostProcess,

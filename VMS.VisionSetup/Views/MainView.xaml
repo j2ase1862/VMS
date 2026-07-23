@@ -34,6 +34,7 @@
         <converters:DisplayModeToStringConverter x:Key="DisplayModeToStringConverter"/>
         <converters:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisibility"/>
         <converters:NullToCollapsedConverter x:Key="NullToCollapsedConverter"/>
+        <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
         <converters:EnumToBoolConverter x:Key="EnumToBoolConverter"/>
 
@@ -1425,7 +1426,23 @@
 
                                 <!-- 2D 이미지 -->
                                 <TextBlock Text="2D 이미지" Style="{StaticResource SectionHeaderStyle}" Margin="0,14,0,6"/>
-                                <Grid>
+                                <CheckBox Content="카메라 설정 유지 (노출/게인)" Margin="0,0,0,4"
+                                          Style="{StaticResource WindowDarkCheckBox}"
+                                          IsChecked="{Binding SelectedStep.Use2DCameraDefault}"
+                                          ToolTip="체크(기본)하면 촬영 시 카메라에 저장된 노출/게인을 그대로 사용합니다 — Mech-Eye Viewer 등에서 튜닝한 값이 보존됩니다. 해제하면 아래 값을 촬영 전에 카메라에 적용합니다."/>
+                                <TextBlock FontSize="11" Margin="0,0,0,4"
+                                           Text="{Binding StepCameraCurrentText}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource SettingLabelStyle}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding StepCameraCurrentText}" Value="">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <Grid IsEnabled="{Binding SelectedStep.Use2DCameraDefault, Converter={StaticResource InverseBoolConverter}}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="8"/>
