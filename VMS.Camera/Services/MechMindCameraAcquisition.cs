@@ -82,9 +82,10 @@ namespace VMS.Camera.Services
                     if (status.IsOK())
                     {
                         IsConnected = true;
-                        System.Diagnostics.Debug.WriteLine($"Mech-Mind 카메라 연결 성공 (IP: {camera.ConnectionString})");
+                        CameraLog.Write($"[MechMind] 연결 성공 (IP: {camera.ConnectionString})");
                         return true;
                     }
+                    CameraLog.Write($"[MechMind] IP 연결 실패 (IP: {camera.ConnectionString}): {status.ErrorDescription}");
                 }
 
                 // Fallback: discover cameras and match by serial number
@@ -99,19 +100,20 @@ namespace VMS.Camera.Services
                             if (status.IsOK())
                             {
                                 IsConnected = true;
-                                System.Diagnostics.Debug.WriteLine($"Mech-Mind 카메라 연결 성공 (S/N: {camera.SerialNumber})");
+                                CameraLog.Write($"[MechMind] 연결 성공 (S/N: {camera.SerialNumber})");
                                 return true;
                             }
+                            CameraLog.Write($"[MechMind] S/N 연결 실패 (S/N: {camera.SerialNumber}): {status.ErrorDescription}");
                         }
                     }
                 }
 
-                System.Diagnostics.Debug.WriteLine("Mech-Mind 카메라 연결 실패: 일치하는 카메라를 찾을 수 없습니다.");
+                CameraLog.Write("[MechMind] 연결 실패: 일치하는 카메라를 찾을 수 없습니다.");
                 return false;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Mech-Mind 카메라 연결 오류: {ex.Message}");
+                CameraLog.Write($"[MechMind] 연결 오류: {ex.Message}");
                 return false;
             }
         }
@@ -160,8 +162,8 @@ namespace VMS.Camera.Services
                         (int)Scan2D.ExposureMode.Value.Timed);
                     if (!modeStatus.IsOK())
                     {
-                        System.Diagnostics.Debug.WriteLine(
-                            $"[MechMind] Scan2DExposureMode=Timed 실패: {modeStatus.ErrorDescription}");
+                        CameraLog.Write(
+                            $"[MechMind] Scan2DExposureMode=Timed 실패 (모델이 Timed 미지원이면 노출 수동 설정 불가): {modeStatus.ErrorDescription}");
                         ok = false;
                     }
 
@@ -170,7 +172,7 @@ namespace VMS.Camera.Services
                         Scan2D.ExposureTime.Name, exposureMs);
                     if (!expStatus.IsOK())
                     {
-                        System.Diagnostics.Debug.WriteLine(
+                        CameraLog.Write(
                             $"[MechMind] Scan2DExposureTime={exposureMs}ms 실패: {expStatus.ErrorDescription}");
                         ok = false;
                     }
@@ -180,7 +182,7 @@ namespace VMS.Camera.Services
                 {
                     var gainStatus = userSet.SetFloatValue(Scan2D.Gain.Name, gain);
                     if (!gainStatus.IsOK())
-                        System.Diagnostics.Debug.WriteLine(
+                        CameraLog.Write(
                             $"[MechMind] Scan2DGain={gain}dB 실패(모델 미지원 가능): {gainStatus.ErrorDescription}");
                 }
 
@@ -188,14 +190,14 @@ namespace VMS.Camera.Services
                 {
                     _appliedExposureUs = exposureUs;
                     _appliedGain = gain;
-                    System.Diagnostics.Debug.WriteLine(
+                    CameraLog.Write(
                         $"[MechMind] 2D 노출 {exposureUs}µs(→{Math.Clamp(exposureUs / 1000.0, 0.1, 999.0)}ms) / 게인 {gain}dB 적용");
                 }
                 return Task.FromResult(ok);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[MechMind] 파라미터 적용 오류: {ex.Message}");
+                CameraLog.Write($"[MechMind] 파라미터 적용 오류: {ex.Message}");
                 return Task.FromResult(false);
             }
         }
@@ -239,7 +241,7 @@ namespace VMS.Camera.Services
                         new IntRange((int)settings.DepthRangeMinMm, (int)settings.DepthRangeMaxMm));
                     if (!rangeStatus.IsOK())
                     {
-                        System.Diagnostics.Debug.WriteLine(
+                        CameraLog.Write(
                             $"[MechMind] DepthRange=[{settings.DepthRangeMinMm}, {settings.DepthRangeMaxMm}]mm 실패: {rangeStatus.ErrorDescription}");
                         ok = false;
                     }
@@ -248,7 +250,7 @@ namespace VMS.Camera.Services
                 if (ok)
                 {
                     _applied3D = settings;
-                    System.Diagnostics.Debug.WriteLine(
+                    CameraLog.Write(
                         $"[MechMind] 3D 설정 적용: 후처리={settings.PostProcessPreset}" +
                         (settings.UseDepthRange
                             ? $", DepthRange=[{settings.DepthRangeMinMm}, {settings.DepthRangeMaxMm}]mm"
@@ -258,7 +260,7 @@ namespace VMS.Camera.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[MechMind] 3D 설정 적용 오류: {ex.Message}");
+                CameraLog.Write($"[MechMind] 3D 설정 적용 오류: {ex.Message}");
                 return Task.FromResult(false);
             }
         }
@@ -267,7 +269,7 @@ namespace VMS.Camera.Services
         {
             var status = userSet.SetEnumValue(name, value);
             if (!status.IsOK())
-                System.Diagnostics.Debug.WriteLine(
+                CameraLog.Write(
                     $"[MechMind] {name}={value} 실패(모델 미지원 가능): {status.ErrorDescription}");
             return status.IsOK();
         }
@@ -314,6 +316,7 @@ namespace VMS.Camera.Services
                 var status = _mechCamera.Capture2DAnd3D(ref frame2DAnd3D);
                 if (!status.IsOK())
                 {
+                    CameraLog.Write($"[MechMind] Capture2DAnd3D 실패: {status.ErrorDescription}");
                     return new AcquisitionResult
                     {
                         Success = false,
