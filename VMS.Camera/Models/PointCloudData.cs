@@ -58,6 +58,18 @@ namespace VMS.Camera.Models
 
         public bool IsOrganized => GridWidth > 0 && GridHeight > 0 && GridWidth * GridHeight == PointCount;
 
+        private DepthIntrinsics? _intrinsics;
+        /// <summary>
+        /// 뎁스 카메라 내부 파라미터 — grab 시 설정 (.vpc 로드·공유 프레임 등은 null).
+        /// X/Y 픽셀 좌표를 mm로 환산하는 도구(PointCloudCluster 자동 치수 등)가 사용.
+        /// 좌표를 회전/변환하면 픽셀 공간이 깨지므로 정합(Registration) 결과에는 전달하지 않는다.
+        /// </summary>
+        public DepthIntrinsics? Intrinsics
+        {
+            get => _intrinsics;
+            set => SetProperty(ref _intrinsics, value);
+        }
+
         /// <summary>
         /// ArrayPool에서 배열을 빌려 생성 (GC 부하 최소화)
         /// </summary>

@@ -168,7 +168,8 @@ namespace VMS.Camera.Utils
                 Name = source.Name + "_filtered",
                 Positions = positions,
                 Colors = colors,
-                PointCount = resultCount
+                PointCount = resultCount,
+                Intrinsics = source.Intrinsics
             };
         }
 
@@ -265,7 +266,8 @@ namespace VMS.Camera.Utils
                 Name = source.Name + "_denoised",
                 Positions = positions,
                 Colors = colors,
-                PointCount = keepIndices.Count
+                PointCount = keepIndices.Count,
+                Intrinsics = source.Intrinsics
             };
         }
 
@@ -1052,7 +1054,8 @@ namespace VMS.Camera.Utils
                     Name = $"Cluster_{ci}",
                     Positions = clusterPositions,
                     Colors = clusterColors,
-                    PointCount = indices.Count
+                    PointCount = indices.Count,
+                    Intrinsics = source.Intrinsics
                 });
             }
             return result;
@@ -1088,7 +1091,8 @@ namespace VMS.Camera.Utils
                 Name = name,
                 Positions = positions,
                 Colors = colors,
-                PointCount = total
+                PointCount = total,
+                Intrinsics = clouds.Count > 0 ? clouds[0].Intrinsics : null
             };
         }
 

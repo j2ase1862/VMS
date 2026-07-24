@@ -39,11 +39,17 @@
                 <TextBlock Text="Dimensions" Style="{StaticResource ExpanderHeaderStyle}"/>
             </Expander.Header>
             <StackPanel Margin="5,0,0,0">
+                <controls:EnumComboBoxParameter Label="Scale Mode"
+                    ItemsSource="{conv:EnumValues {x:Type pc:PointCloudClusterTool+DimensionScaleMode}}"
+                    SelectedValue="{Binding ScaleMode}"
+                    ToolType="PointCloudClusterTool" ParameterName="ScaleMode"/>
+                <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,4"
+                           Text="AutoFromCamera(권장): 카메라 내부 파라미터와 덩어리의 실측 높이로 mm/px를 자동 계산 — 작동 거리가 바뀌어도 mm 치수가 정확합니다. 저장된 .vpc처럼 카메라 정보가 없으면 아래 수동값으로 자동 폴백(결과 메시지에 ⚠ 표시)."/>
                 <controls:TextBoxParameter Label="XY Scale (mm/px)"
                     Value="{Binding XyScale}"
                     ToolType="PointCloudClusterTool" ParameterName="XyScale"/>
                 <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,4"
-                           Text="덩어리별 치수(SizeX/Y, Length/Width)의 가로·세로 환산 배율. 3D 카메라 grab 점군은 가로·세로가 픽셀 단위라(높이 Z만 mm) 실측 mm가 필요하면 mm/pixel 값을 입력하세요. 1.0 = 원 단위 그대로."/>
+                           Text="Manual 모드의 가로·세로 환산 배율. 3D 카메라 grab 점군은 가로·세로가 픽셀 단위라(높이 Z만 mm) 실측 mm가 필요하면 mm/pixel 값을 입력하세요. 1.0 = 원 단위 그대로. 산출 절차는 docs/3d_dimension_calibration_guide.md 참조."/>
             </StackPanel>
         </Expander>
 

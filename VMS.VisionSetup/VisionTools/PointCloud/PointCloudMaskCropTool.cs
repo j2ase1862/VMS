@@ -135,7 +135,8 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                     Name = $"{src.Name}_MaskCrop",
                     Positions = outPositions,
                     Colors = outColors,
-                    PointCount = kept.Count
+                    PointCount = kept.Count,
+                    Intrinsics = src.Intrinsics
                 };
 
                 result.OutputImage = inputImage.Clone(); // 마스크 pass-through

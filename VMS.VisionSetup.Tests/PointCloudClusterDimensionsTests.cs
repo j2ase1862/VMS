@@ -1,5 +1,6 @@
 using OpenCvSharp;
 using VMS.Camera.Models;
+using VMS.Camera.Utils;
 using VMS.VisionSetup.Models;
 using VMS.VisionSetup.Services;
 using VMS.VisionSetup.VisionTools.PointCloud;
@@ -112,6 +113,73 @@ namespace VMS.VisionSetup.Tests
             Assert.Contains("Cluster0_Length", keys);
             Assert.Contains("Cluster0_Width", keys);
             Assert.Contains("Cluster0_Angle", keys);
+            Assert.Contains("Cluster0_MmPerPx", keys);
+        }
+
+        // ─── AutoFromCamera 자동 mm/px 환산 ───
+
+        [Fact]
+        public void Execute_AutoFromCamera_ScalesByDepthOverFocal()
+        {
+            // 핀홀 모델: mm/px = Z/fx. Z=500, fx=fy=1000 → 0.5 mm/px
+            var cloud = MakeBlock(10, 5, sz: 1, zBase: 500f);
+            cloud.Intrinsics = new DepthIntrinsics { Fx = 1000, Fy = 1000, Cx = 5, Cy = 2 };
+            VisionService.Instance.CurrentPointCloud = cloud;
+
+            var tool = new PointCloudClusterTool
+            {
+                Tolerance = 2f,
+                MinPoints = 10,
+                ScaleMode = PointCloudClusterTool.DimensionScaleMode.AutoFromCamera,
+                XyScale = 99f, // 수동값은 무시되어야 함
+                OutputMode = PointCloudClusterTool.ClusterOutputMode.KeepOriginal
+            };
+            var result = RunCluster(tool);
+
+            Assert.True(result.Success);
+            Assert.Equal(4.5f, (float)result.Data["Cluster0_SizeX"], 1); // 9px × 0.5
+            Assert.Equal(2f, (float)result.Data["Cluster0_SizeY"], 1);  // 4px × 0.5
+            Assert.Equal(0.5f, (float)result.Data["Cluster0_MmPerPx"], 2);
+            Assert.DoesNotContain("⚠", result.Message);
+        }
+
+        [Fact]
+        public void Execute_AutoFromCamera_NoIntrinsics_FallsBackToManualWithWarning()
+        {
+            VisionService.Instance.CurrentPointCloud = MakeBlock(10, 5); // Intrinsics 없음 (.vpc 로드 상황)
+
+            var tool = new PointCloudClusterTool
+            {
+                Tolerance = 2f,
+                MinPoints = 10,
+                ScaleMode = PointCloudClusterTool.DimensionScaleMode.AutoFromCamera,
+                XyScale = 2f,
+                OutputMode = PointCloudClusterTool.ClusterOutputMode.KeepOriginal
+            };
+            var result = RunCluster(tool);
+
+            Assert.True(result.Success);
+            Assert.Equal(18f, (float)result.Data["Cluster0_SizeX"], 1); // 수동 XyScale 폴백
+            Assert.Equal(2f, (float)result.Data["Cluster0_MmPerPx"], 2);
+            Assert.Contains("⚠", result.Message);
+        }
+
+        [Fact]
+        public void TransformUtils_FilterAndClustering_PreserveIntrinsics()
+        {
+            var cloud = MakeBlock(10, 5);
+            var intr = new DepthIntrinsics { Fx = 1000, Fy = 1000 };
+            cloud.Intrinsics = intr;
+
+            var filtered = TransformUtils.VoxelGridFilter(cloud, 2f);
+            Assert.Same(intr, filtered.Intrinsics);
+
+            var denoised = TransformUtils.StatisticalOutlierRemoval(cloud, 5, 3.0);
+            Assert.Same(intr, denoised.Intrinsics);
+
+            var clusters = TransformUtils.EuclideanClustering(cloud, 2f, 1, int.MaxValue);
+            Assert.NotEmpty(clusters);
+            Assert.All(clusters, c => Assert.Same(intr, c.Intrinsics));
         }
     }
 }
