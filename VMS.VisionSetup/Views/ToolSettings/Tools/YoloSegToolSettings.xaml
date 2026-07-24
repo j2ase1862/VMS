@@ -57,6 +57,19 @@
             </StackPanel>
         </Expander>
 
+        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Output" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:CheckBoxParameter Label="Output Mask Image"
+                    IsChecked="{Binding OutputMaskImage}"
+                    ToolType="YoloSegTool" ParameterName="OutputMaskImage"/>
+                <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,4"
+                           Text="켜면 다음 도구로 전달되는 출력 이미지가 인스턴스 합집합 이진 마스크(흰색=인스턴스)가 됩니다 — PointCloud Mask Crop 등 마스크 소비 도구와 Image 연결용. 화면 오버레이 표시는 그대로 유지됩니다."/>
+            </StackPanel>
+        </Expander>
+
         <TextBlock Text="Expected ONNX I/O: output0 = [1, 4+nc+32, N] (detect + mask coefs), output1 = [1, 32, mh, mw] (prototypes). Ultralytics YOLOv8/v11-seg 표준 export."
                    Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,8,0,0"/>
     </StackPanel>

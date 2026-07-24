@@ -461,6 +461,7 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["ShowOverlay"] = ys.ShowOverlay;
                     config.Parameters["OverlayOpacity"] = ys.OverlayOpacity;
                     config.Parameters["DrawBoxes"] = ys.DrawBoxes;
+                    config.Parameters["OutputMaskImage"] = ys.OutputMaskImage;
                     break;
 
                 case VisionTools.PointCloud.PointCloudFilterTool pcf:
@@ -494,6 +495,14 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["MaxPoints"] = pcc.MaxPoints;
                     config.Parameters["MaxReportedClusters"] = pcc.MaxReportedClusters;
                     config.Parameters["OutputMode"] = pcc.OutputMode.ToString();
+                    config.Parameters["XyScale"] = pcc.XyScale;
+                    break;
+
+                case VisionTools.PointCloud.PointCloudMaskCropTool pcm:
+                    config.Parameters["InvertMask"] = pcm.InvertMask;
+                    config.Parameters["MinMaskValue"] = pcm.MinMaskValue;
+                    config.Parameters["DilatePixels"] = pcm.DilatePixels;
+                    config.Parameters["SkipInvalidZ"] = pcm.SkipInvalidZ;
                     break;
 
                 case VisionTools.Calibration.ImageRectifyTool rectify:
@@ -627,6 +636,7 @@ namespace VMS.VisionSetup.Services
                 "PointCloudRegistrationTool" => DeserializePointCloudRegistrationTool(config),
                 "PointCloudClusterTool" => DeserializePointCloudClusterTool(config),
                 "PointCloudDeviationTool" => DeserializePointCloudDeviationTool(config),
+                "PointCloudMaskCropTool" => DeserializePointCloudMaskCropTool(config),
                 "ColorExtractTool" => DeserializeColorExtractTool(config),
                 "ColorMatchTool" => DeserializeColorMatchTool(config),
                 "PhotometricStereoTool" => DeserializePhotometricStereoTool(config),
@@ -1653,6 +1663,18 @@ namespace VMS.VisionSetup.Services
             if (p.TryGetValue("MaxReportedClusters", out var mrc)) tool.MaxReportedClusters = GetInt(mrc);
             if (p.TryGetValue("OutputMode", out var om))
                 tool.OutputMode = Enum.Parse<VisionTools.PointCloud.PointCloudClusterTool.ClusterOutputMode>(GetString(om));
+            if (p.TryGetValue("XyScale", out var xs)) tool.XyScale = (float)GetDouble(xs);
+            return tool;
+        }
+
+        private static VisionTools.PointCloud.PointCloudMaskCropTool DeserializePointCloudMaskCropTool(ToolConfig config)
+        {
+            var tool = new VisionTools.PointCloud.PointCloudMaskCropTool();
+            var p = config.Parameters;
+            if (p.TryGetValue("InvertMask", out var im)) tool.InvertMask = GetBool(im);
+            if (p.TryGetValue("MinMaskValue", out var mv)) tool.MinMaskValue = GetInt(mv);
+            if (p.TryGetValue("DilatePixels", out var dp)) tool.DilatePixels = GetInt(dp);
+            if (p.TryGetValue("SkipInvalidZ", out var sz)) tool.SkipInvalidZ = GetBool(sz);
             return tool;
         }
 

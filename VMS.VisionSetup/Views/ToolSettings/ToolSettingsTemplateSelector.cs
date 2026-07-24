@@ -41,6 +41,7 @@ namespace VMS.VisionSetup.Views.ToolSettings
         public DataTemplate? PointCloudRegistrationTemplate { get; set; }
         public DataTemplate? PointCloudClusterTemplate { get; set; }
         public DataTemplate? PointCloudDeviationTemplate { get; set; }
+        public DataTemplate? PointCloudMaskCropTemplate { get; set; }
         public DataTemplate? PhotometricStereoTemplate { get; set; }
 
         public override DataTemplate? SelectTemplate(object? item, DependencyObject container)
@@ -82,6 +83,7 @@ namespace VMS.VisionSetup.Views.ToolSettings
                 PointCloudRegistrationToolSettingsViewModel => PointCloudRegistrationTemplate,
                 PointCloudClusterToolSettingsViewModel => PointCloudClusterTemplate,
                 PointCloudDeviationToolSettingsViewModel => PointCloudDeviationTemplate,
+                PointCloudMaskCropToolSettingsViewModel => PointCloudMaskCropTemplate,
                 PhotometricStereoToolSettingsViewModel => PhotometricStereoTemplate,
                 _ => base.SelectTemplate(item, container)
             };

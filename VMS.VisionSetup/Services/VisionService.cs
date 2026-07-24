@@ -165,6 +165,12 @@ namespace VMS.VisionSetup.Services
             set => SetProperty(ref _currentCalibrationMetadata, value);
         }
 
+        // 3D 파이프라인 재실행 지원 — PointCloud 도구는 CurrentPointCloud를 교체(소비)하므로
+        // 재Grab 없이 재실행하면 직전 실행의 산출물 위에서 돌게 된다. ExecuteAll 시작 시
+        // '직전 실행 산출물이 그대로'면 직전 실행의 입력 점군으로 복원한다.
+        private VMS.Camera.Models.PointCloudData? _pipelineCloudInput;
+        private VMS.Camera.Models.PointCloudData? _pipelineCloudOutput;
+
         // 3D 점군 데이터 (PointCloudFilterTool 등 점군 처리 도구가 get/set, MainViewModel과 동기화)
         private VMS.Camera.Models.PointCloudData? _currentPointCloud;
         public VMS.Camera.Models.PointCloudData? CurrentPointCloud
@@ -810,6 +816,15 @@ namespace VMS.VisionSetup.Services
             IsRunning = true;
             var sw = Stopwatch.StartNew();
 
+            // 새 Grab/로드 없이 재실행: 직전 실행의 입력 점군으로 복원 (파괴적 갱신 보정)
+            if (_pipelineCloudInput != null
+                && ReferenceEquals(CurrentPointCloud, _pipelineCloudOutput)
+                && !ReferenceEquals(_pipelineCloudInput, _pipelineCloudOutput))
+            {
+                CurrentPointCloud = _pipelineCloudInput;
+            }
+            _pipelineCloudInput = CurrentPointCloud;
+
             // 각 도구의 실행 결과를 추적 (ID 기반, 연결 데이터 전달용)
             var resultMap = new Dictionary<string, VisionResult>();
             bool allSuccess = true;
@@ -1020,6 +1035,7 @@ namespace VMS.VisionSetup.Services
             LastRunSuccess = resultToolInstance != null
                 ? resultMap.TryGetValue(resultToolInstance.Id, out var rtResult) && rtResult.Success
                 : allSuccess;
+            _pipelineCloudOutput = CurrentPointCloud;
             IsRunning = false;
 
             return results;
@@ -1106,6 +1122,7 @@ namespace VMS.VisionSetup.Services
                 "PointCloudRegistrationTool" => new VisionTools.PointCloud.PointCloudRegistrationTool(),
                 "PointCloudClusterTool" => new VisionTools.PointCloud.PointCloudClusterTool(),
                 "PointCloudDeviationTool" => new VisionTools.PointCloud.PointCloudDeviationTool(),
+                "PointCloudMaskCropTool" => new VisionTools.PointCloud.PointCloudMaskCropTool(),
 
                 // Pattern Matching
                 "FeatureMatchTool" => new FeatureMatchTool(),
@@ -1179,6 +1196,7 @@ namespace VMS.VisionSetup.Services
                     "PointCloudFilterTool",
                     "PointCloudRegistrationTool",
                     "PointCloudClusterTool",
+                    "PointCloudMaskCropTool",
                     "HeightSlicerTool",
                     "PlaneFitTool",
                     "Geometry3DTool"
@@ -1263,6 +1281,7 @@ namespace VMS.VisionSetup.Services
                 "PointCloudFilterTool" => "PointCloud Filter",
                 "PointCloudRegistrationTool" => "PointCloud Registration",
                 "PointCloudClusterTool" => "PointCloud Cluster",
+                "PointCloudMaskCropTool" => "PointCloud Mask Crop",
                 "OCRTool" => "OCR",
                 "OCVTool" => "OCV",
                 "ImageEnhanceTool" => "Image Enhance",

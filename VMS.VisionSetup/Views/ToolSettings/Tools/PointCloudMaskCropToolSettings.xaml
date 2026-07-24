@@ -1,0 +1,45 @@
+<UserControl x:Class="VMS.VisionSetup.Views.ToolSettings.Tools.PointCloudMaskCropToolSettings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls">
+    <StackPanel>
+        <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,8"
+                   Text="2D 마스크로 3D 점군을 잘라냅니다 — 세그멘테이션(YOLOv8-seg의 Output Mask), Threshold, Height Slicer 등의 출력을 Image 연결로 받아, 마스크(0이 아닌 픽셀)에 해당하는 점만 남깁니다. 남은 점군은 후속 도구(Cluster, Registration 등)가 사용합니다."/>
+
+        <!-- Mask Interpretation -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Mask Interpretation" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:SliderParameter Label="Min Mask Value"
+                    Value="{Binding MinMaskValue}" Minimum="1" Maximum="255"
+                    TickFrequency="1" ValueFormat="F0"
+                    ToolType="PointCloudMaskCropTool" ParameterName="MinMaskValue"/>
+                <controls:SliderParameter Label="Dilate (px)"
+                    Value="{Binding DilatePixels}" Minimum="0" Maximum="50"
+                    TickFrequency="1" ValueFormat="F0"
+                    ToolType="PointCloudMaskCropTool" ParameterName="DilatePixels"/>
+                <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,4"
+                           Text="Dilate: 세그멘테이션 마스크가 객체 가장자리를 살짝 못 덮을 때 마스크를 바깥으로 넓혀 경계 점을 포함시킵니다."/>
+                <controls:CheckBoxParameter Label="Invert Mask"
+                    IsChecked="{Binding InvertMask}"
+                    ToolType="PointCloudMaskCropTool" ParameterName="InvertMask"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- Point Filtering -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Point Filtering" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:CheckBoxParameter Label="Skip Invalid Z (=0)"
+                    IsChecked="{Binding SkipInvalidZ}"
+                    ToolType="PointCloudMaskCropTool" ParameterName="SkipInvalidZ"/>
+                <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,4"
+                           Text="3D 카메라가 측정에 실패한 픽셀은 Z=0으로 저장됩니다 — 켜두면 이런 무효 점이 결과에 섞이지 않습니다."/>
+            </StackPanel>
+        </Expander>
+    </StackPanel>
+</UserControl>

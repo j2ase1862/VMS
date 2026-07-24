@@ -145,7 +145,8 @@ namespace VMS.VisionSetup.Models
                     ["MaskThreshold"] = "인스턴스 마스크 sigmoid 후 binary 임계값.\n• 0.3: 마스크가 객체보다 약간 크게\n• 0.5: 기본\n• 0.7: 마스크가 객체보다 약간 작게 (코어 영역만)",
                     ["ShowOverlay"] = "각 인스턴스 마스크를 컬러 반투명 오버레이로 표시.",
                     ["OverlayOpacity"] = "마스크 오버레이 투명도 (0~1).",
-                    ["DrawBoxes"] = "박스 + 클래스명 + 점수 라벨 표시 여부."
+                    ["DrawBoxes"] = "박스 + 클래스명 + 점수 라벨 표시 여부.",
+                    ["OutputMaskImage"] = "true: 다음 도구로 전달되는 출력 이미지를 인스턴스 합집합 이진 마스크(CV_8UC1, 255=인스턴스)로 교체.\nPointCloud Mask Crop 등 마스크 소비 도구와 Image 연결할 때 켭니다. 화면 오버레이 표시는 유지."
                 }
             },
 
@@ -216,7 +217,10 @@ namespace VMS.VisionSetup.Models
                     ["ClusterCount"] = "찾은 덩어리(물체) 개수. 부품 카운트가 목적이면 이 값을 판정에 사용.",
                     ["LargestPoints"] = "가장 큰 덩어리의 점 개수.",
                     ["Cluster{i}_Points"] = "i번째 덩어리의 점 개수 (큰 것부터 순서대로, MaxReportedClusters 개까지 표시).",
-                    ["Cluster{i}_CenterX/Y/Z"] = "i번째 덩어리의 중심 위치 (mm). 물체가 어디 있는지 좌표로 확인.",
+                    ["Cluster{i}_CenterX/Y/Z"] = "i번째 덩어리의 중심 위치. 3D 카메라 grab 점군은 X/Y가 픽셀, Z는 mm.",
+                    ["Cluster{i}_SizeX/Y/Z"] = "i번째 덩어리의 축 정렬 크기 (X/Y 폭·높이, Z 높이차). X/Y는 XyScale 적용, Z는 mm 그대로.",
+                    ["Cluster{i}_Length/Width"] = "XY 평면 최소 외접 사각형(OBB)의 긴 변/짧은 변 — 비스듬히 놓인 부품의 실제 길이·폭 (XyScale 적용).",
+                    ["Cluster{i}_Angle"] = "OBB 긴 변의 각도 (도, -90~90). 부품이 놓인 방향.",
                     ["TotalClusteredPoints"] = "모든 덩어리 점 수 합계 (노이즈로 걸러진 점 제외)."
                 },
                 Parameters = new Dictionary<string, string>
@@ -225,7 +229,30 @@ namespace VMS.VisionSetup.Models
                     ["MinPoints"] = "클러스터 최소 점 수. 이하면 노이즈로 간주하고 무시.\n• 20~50: 작은 객체 검출\n• 100: 기본\n• 500+: 큰 객체만",
                     ["MaxPoints"] = "클러스터 최대 점 수. 이상이면 배경/큰 덩어리로 간주하고 무시.\n• 점군 전체 크기 - 1 (큰 값): 사실상 제한 없음\n• 점군의 50%: 배경 제외",
                     ["MaxReportedClusters"] = "결과 Data에 노출할 상위 클러스터 수 (실제로는 모두 처리, 표시 제한만).",
-                    ["OutputMode"] = "결과 처리 모드:\n• LargestOnly: VisionService.CurrentPointCloud를 가장 큰 클러스터로 교체 (객체 분리용)\n• AllMerged: 활성 클러스터들을 모두 합산 (작은 노이즈 제거)\n• KeepOriginal: CurrentPointCloud 유지, 메트릭만"
+                    ["OutputMode"] = "결과 처리 모드:\n• LargestOnly: VisionService.CurrentPointCloud를 가장 큰 클러스터로 교체 (객체 분리용)\n• AllMerged: 활성 클러스터들을 모두 합산 (작은 노이즈 제거)\n• KeepOriginal: CurrentPointCloud 유지, 메트릭만",
+                    ["XyScale"] = "치수(SizeX/Y, Length/Width)의 X/Y 환산 배율 (mm/pixel). 3D 카메라 grab 점군은 X/Y가 픽셀 단위라(Z만 mm) 실측 mm 치수가 필요하면 카메라 캘리브레이션에서 얻은 mm/pixel을 입력.\n• 1.0: 원 단위 그대로 (기본)\n※ CenterX/Y에는 적용되지 않음 (기존 레시피 호환)."
+                }
+            },
+
+            ["PointCloudMaskCropTool"] = new ToolHelp
+            {
+                Name = "PointCloud Mask Crop (2D 마스크로 점군 잘라내기)",
+                Description = "2D 마스크 이미지로 3D 점군을 잘라내는 도구 — 2D 딥러닝 검출과 3D 분석을 잇는 다리입니다.\n\n[언제 쓰나요]\n• YOLOv8-seg가 찾은 객체의 점군만 남겨 개수/치수를 재고 싶을 때\n• Threshold/Height Slicer 마스크로 관심 영역의 점군만 추리고 싶을 때\n\n마스크에서 0이 아닌 픽셀 위치의 점만 남기고, 남은 점군은 후속 점군 도구(Cluster, Registration 등)가 사용합니다. 마스크와 점군의 해상도가 달라도 자동으로 비율을 맞춥니다.",
+                Usage = "1) 마스크를 만드는 도구(YOLOv8-seg의 Output Mask Image 켬, Threshold, Height Slicer 등)를 앞에 배치. 2) 그 도구 → 이 도구로 Image 연결. 3) Run → 마스크 안의 점만 남음. 4) 뒤에 PointCloud Cluster를 연결(Result 연결로 순서 보장)하면 객체 개수·치수 측정 완성.",
+                CognexEquivalent = "(Mech-Vision의 '마스크로 점군 추출' 스텝 대응)",
+                Results = new Dictionary<string, string>
+                {
+                    ["InputPoints"] = "잘라내기 전의 점 개수.",
+                    ["OutputPoints"] = "마스크 안에 남은 점 개수. 0이면 실패 처리되고 점군은 바뀌지 않음.",
+                    ["KeptRatio"] = "남은 비율 (0~1).",
+                    ["MaskCoveragePercent"] = "마스크에서 0이 아닌 픽셀의 비율 (%). 값이 100에 가까우면 마스크가 아니라 일반 이미지를 연결했을 가능성이 큼."
+                },
+                Parameters = new Dictionary<string, string>
+                {
+                    ["MinMaskValue"] = "포함 판정 최소 픽셀값 (1~255). 이진 마스크(0/255)는 기본값 1이면 충분. 그레이 마스크에서 확신 높은 영역만 쓰려면 올리세요.",
+                    ["DilatePixels"] = "마스크 팽창 (px). 세그멘테이션 마스크가 객체 가장자리를 살짝 못 덮을 때 2~5px 정도 넓혀 경계 점까지 포함.",
+                    ["InvertMask"] = "true: 마스크 바깥의 점을 남김 (객체를 제거하고 배경만 남길 때).",
+                    ["SkipInvalidZ"] = "Z=0 점 제외 (기본 켬). 3D 카메라가 측정 실패한 픽셀은 Z=0으로 저장되므로, 켜두면 무효 점이 후속 클러스터/치수에 섞이지 않습니다."
                 }
             },
 

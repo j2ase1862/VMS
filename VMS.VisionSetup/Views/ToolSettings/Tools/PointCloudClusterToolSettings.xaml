@@ -33,6 +33,20 @@
             </StackPanel>
         </Expander>
 
+        <!-- Dimensions -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Dimensions" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:TextBoxParameter Label="XY Scale (mm/px)"
+                    Value="{Binding XyScale}"
+                    ToolType="PointCloudClusterTool" ParameterName="XyScale"/>
+                <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,4"
+                           Text="덩어리별 치수(SizeX/Y, Length/Width)의 가로·세로 환산 배율. 3D 카메라 grab 점군은 가로·세로가 픽셀 단위라(높이 Z만 mm) 실측 mm가 필요하면 mm/pixel 값을 입력하세요. 1.0 = 원 단위 그대로."/>
+            </StackPanel>
+        </Expander>
+
         <!-- Output -->
         <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
             <Expander.Header>
