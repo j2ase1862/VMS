@@ -194,10 +194,11 @@ namespace VMS
             IUserService userService = UserService.Instance;
             ISystemLogService logService = SystemLogService.Instance;
 
-            // 업데이트 알림 체커(Phase B) — public repo j2ase1862/VMS 의 releases/latest 조회.
+            // 업데이트 알림 체커(Phase B) — 배포 전용 public repo j2ase1862/VMS-Releases 의 releases/latest 조회.
+            // 소스 repo(j2ase1862/VMS)는 private — 익명 API 호출이 필요하므로 반드시 배포 repo 를 바라봐야 함.
             // 시작 시 1회 best-effort 호출(아래) + 사이드 패널 "Check for updates" 버튼으로 수동 재호출.
             VMS.Core.Interfaces.IUpdateService updateService =
-                new VMS.Core.Services.GitHubUpdateService("j2ase1862", "VMS");
+                new VMS.Core.Services.GitHubUpdateService("j2ase1862", "VMS-Releases");
 
             await splash.FadeOutAsync();
             splash.Close();
