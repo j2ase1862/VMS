@@ -11,7 +11,7 @@ BODA.VMS.Web `docs/Production_Deploy_Runbook.md`
 
 ## 0. 사전 준비물
 
-- [ ] VMS MSI 설치 파일 — [GitHub Releases](https://github.com/j2ase1862/VMS/releases) 최신 버전 (v1.4.7 기준 작성; 릴리즈 미발행 버전은 USB 패키지의 `VMS-<버전>.msi` 사용)
+- [ ] VMS MSI 설치 파일 — [GitHub Releases](https://github.com/j2ase1862/VMS-Releases/releases) 최신 버전 (v1.5.2 부터 배포 전용 repo; 릴리즈 미발행 버전은 USB 패키지의 `VMS-<버전>.msi` 사용)
 - [ ] BODA.VMS.Web 게시본 (`dotnet publish -c Release -r win-x64 --self-contained true` 산출물)
 - [ ] 비밀번호 사전 준비 (모두 **서로 다르게**, 12자 이상 권장 — msi_build_guide §11.3):
   - [ ] Web admin 초기 비밀번호 (`Initial__AdminPassword`)

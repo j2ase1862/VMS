@@ -19,7 +19,13 @@
 | **Phase A — Release 발행** | `v*` 태그 push 시 MSI 빌드 + GitHub Release 자동 생성 + 자산(MSI/SHA-256) 첨부 | `.github/workflows/release.yml` |
 | **Phase B — In-app 알림 체커** | VMS 가 시작 시 GitHub Releases API 조회 → 새 버전 감지 시 사이드 패널 배지 + 다이얼로그 안내 | `VMS.Core/Services/GitHubUpdateService.cs` + `VMS\ViewModels\MainViewModel.cs` + `VMS\Views\MainWindow.xaml` |
 
-두 구성의 단일 진실 공급원은 **GitHub Releases**. 별도 매니페스트 서버 / CDN 불필요. Public 레포(`j2ase1862/VMS`)라 익명 호출 가능.
+두 구성의 단일 진실 공급원은 **GitHub Releases**. 별도 매니페스트 서버 / CDN 불필요.
+
+> **v1.5.2 부터 저장소 분리**: 소스 repo(`j2ase1862/VMS`)는 **private**, 릴리스 발행·업데이트 체크는
+> 배포 전용 public repo **`j2ase1862/VMS-Releases`** 를 사용 (익명 API 호출/다운로드 요건).
+> 이 문서의 `j2ase1862/VMS` URL 예시들은 v1.5.1 이전 기준 — 신규 발행은 모두 `VMS-Releases` 로.
+> Phase A 의 태그 push 자동 발행(release.yml)은 저장소 분리와 함께 폐지 — 수동 발행이 표준
+> (`gh release create --repo j2ase1862/VMS-Releases`, [msi_build_guide.md](msi_build_guide.md) 참조).
 
 ```
 ┌────────────────────────────┐
@@ -215,7 +221,7 @@ GitHubUpdateService.CheckAsync()          # best-effort, 10s 타임아웃
 | GitHub API 호출 + 비교 | `VMS.Core/Services/GitHubUpdateService.cs` |
 | ViewModel 통합 | `VMS\ViewModels\MainViewModel.cs` (`#region Update Notifier`) |
 | 사이드 패널 UI | `VMS\Views\MainWindow.xaml` (`Updates` 섹션) |
-| DI + 시작 시 트리거 | `VMS\App.xaml.cs` (`GitHubUpdateService("j2ase1862", "VMS")` 생성 + `CheckForUpdatesSilentAsync()` fire-and-forget) |
+| DI + 시작 시 트리거 | `VMS\App.xaml.cs` (`GitHubUpdateService("j2ase1862", "VMS-Releases")` 생성 + `CheckForUpdatesSilentAsync()` fire-and-forget) |
 | 단위 테스트 | `VMS.Core.Tests/Services/GitHubUpdateServiceTests.cs` (16 케이스) |
 
 ### 5.3 UI 노출 조건
