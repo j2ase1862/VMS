@@ -219,8 +219,9 @@ namespace VMS.VisionSetup.Models
                     ["Cluster{i}_Points"] = "i번째 덩어리의 점 개수 (큰 것부터 순서대로, MaxReportedClusters 개까지 표시).",
                     ["Cluster{i}_CenterX/Y/Z"] = "i번째 덩어리의 중심 위치. 3D 카메라 grab 점군은 X/Y가 픽셀, Z는 mm.",
                     ["Cluster{i}_SizeX/Y/Z"] = "i번째 덩어리의 축 정렬 크기 (X/Y 폭·높이, Z 높이차). X/Y는 XyScale 적용, Z는 mm 그대로.",
-                    ["Cluster{i}_Length/Width"] = "XY 평면 최소 외접 사각형(OBB)의 긴 변/짧은 변 — 비스듬히 놓인 부품의 실제 길이·폭 (XyScale 적용).",
+                    ["Cluster{i}_Length/Width"] = "XY 평면 최소 외접 사각형(OBB)의 긴 변/짧은 변 — 비스듬히 놓인 부품의 실제 길이·폭 (환산 배율 적용).",
                     ["Cluster{i}_Angle"] = "OBB 긴 변의 각도 (도, -90~90). 부품이 놓인 방향.",
+                    ["Cluster{i}_MmPerPx"] = "이 덩어리 치수에 실제 적용된 mm/px 배율. AutoFromCamera면 덩어리 높이에 따라 달라지고, Manual이면 XyScale 그대로.",
                     ["TotalClusteredPoints"] = "모든 덩어리 점 수 합계 (노이즈로 걸러진 점 제외)."
                 },
                 Parameters = new Dictionary<string, string>
@@ -230,7 +231,8 @@ namespace VMS.VisionSetup.Models
                     ["MaxPoints"] = "클러스터 최대 점 수. 이상이면 배경/큰 덩어리로 간주하고 무시.\n• 점군 전체 크기 - 1 (큰 값): 사실상 제한 없음\n• 점군의 50%: 배경 제외",
                     ["MaxReportedClusters"] = "결과 Data에 노출할 상위 클러스터 수 (실제로는 모두 처리, 표시 제한만).",
                     ["OutputMode"] = "결과 처리 모드:\n• LargestOnly: VisionService.CurrentPointCloud를 가장 큰 클러스터로 교체 (객체 분리용)\n• AllMerged: 활성 클러스터들을 모두 합산 (작은 노이즈 제거)\n• KeepOriginal: CurrentPointCloud 유지, 메트릭만",
-                    ["XyScale"] = "치수(SizeX/Y, Length/Width)의 X/Y 환산 배율 (mm/pixel). 3D 카메라 grab 점군은 X/Y가 픽셀 단위라(Z만 mm) 실측 mm 치수가 필요하면 카메라 캘리브레이션에서 얻은 mm/pixel을 입력.\n• 1.0: 원 단위 그대로 (기본)\n※ CenterX/Y에는 적용되지 않음 (기존 레시피 호환)."
+                    ["ScaleMode"] = "치수 환산 방식:\n• Manual: 아래 XyScale 값 사용 (기본, 기존 호환)\n• AutoFromCamera (권장): 카메라 depth 내부 파라미터(fx/fy)와 덩어리의 실측 높이 Z로 mm/px = Z/fx 를 자동 계산 — 작동 거리가 바뀌어도 정확. Mech-Mind grab 점군에서만 가능하며, .vpc 로드 등 카메라 정보가 없으면 XyScale로 폴백(메시지에 ⚠ 표시).",
+                    ["XyScale"] = "Manual 모드의 치수(SizeX/Y, Length/Width) X/Y 환산 배율 (mm/pixel). 3D 카메라 grab 점군은 X/Y가 픽셀 단위라(Z만 mm) 실측 mm 치수가 필요하면 mm/pixel을 입력.\n• 1.0: 원 단위 그대로 (기본)\n산출 절차: docs/3d_dimension_calibration_guide.md (기지 치수 물체 1회 측정).\n※ CenterX/Y에는 적용되지 않음 (기존 레시피 호환)."
                 }
             },
 

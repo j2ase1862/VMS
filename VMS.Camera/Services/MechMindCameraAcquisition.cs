@@ -70,6 +70,7 @@ namespace VMS.Camera.Services
             _appliedExposureUs = -1;
             _appliedGain = double.NaN;
             _applied3D = null;
+            _depthIntrinsics = null;
 
             try
             {
@@ -371,6 +372,9 @@ namespace VMS.Camera.Services
                     Message = "Mech-Mind 2D+3D 획득 완료"
                 };
 
+                if (result.PointCloud != null)
+                    result.PointCloud.Intrinsics = GetDepthIntrinsicsCached();
+
                 return result;
             }
             catch (Exception ex)
@@ -381,6 +385,39 @@ namespace VMS.Camera.Services
                     Message = $"획득 오류: {ex.Message}"
                 };
             }
+        }
+
+        // Depth intrinsics — 연결 단위로 1회 조회 후 캐시 (Grab 마다 SDK 왕복 방지)
+        private DepthIntrinsics? _depthIntrinsics;
+
+        /// <summary>
+        /// Depth 카메라 내부 파라미터 조회 (캐시). 실패해도 grab은 계속 —
+        /// 점군 치수 자동 mm 환산만 불가(도구가 수동 배율로 폴백).
+        /// </summary>
+        private DepthIntrinsics? GetDepthIntrinsicsCached()
+        {
+            if (_depthIntrinsics != null || _mechCamera == null) return _depthIntrinsics;
+
+            try
+            {
+                var intrinsics = new CameraIntrinsics();
+                var status = _mechCamera.GetCameraIntrinsics(ref intrinsics);
+                if (status.IsOK())
+                {
+                    var m = intrinsics.Depth.CameraMatrix;
+                    _depthIntrinsics = new DepthIntrinsics { Fx = m.Fx, Fy = m.Fy, Cx = m.Cx, Cy = m.Cy };
+                    CameraLog.Write($"[MechMind] Depth intrinsics: fx={m.Fx:F2}, fy={m.Fy:F2}, cx={m.Cx:F2}, cy={m.Cy:F2}");
+                }
+                else
+                {
+                    CameraLog.Write($"[MechMind] GetCameraIntrinsics 실패: {status.ErrorDescription}");
+                }
+            }
+            catch (Exception ex)
+            {
+                CameraLog.Write($"[MechMind] Intrinsics 조회 오류: {ex.Message}");
+            }
+            return _depthIntrinsics;
         }
 
         /// <summary>

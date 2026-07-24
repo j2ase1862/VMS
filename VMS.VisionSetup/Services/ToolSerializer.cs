@@ -495,6 +495,7 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["MaxPoints"] = pcc.MaxPoints;
                     config.Parameters["MaxReportedClusters"] = pcc.MaxReportedClusters;
                     config.Parameters["OutputMode"] = pcc.OutputMode.ToString();
+                    config.Parameters["ScaleMode"] = pcc.ScaleMode.ToString();
                     config.Parameters["XyScale"] = pcc.XyScale;
                     break;
 
@@ -1663,6 +1664,8 @@ namespace VMS.VisionSetup.Services
             if (p.TryGetValue("MaxReportedClusters", out var mrc)) tool.MaxReportedClusters = GetInt(mrc);
             if (p.TryGetValue("OutputMode", out var om))
                 tool.OutputMode = Enum.Parse<VisionTools.PointCloud.PointCloudClusterTool.ClusterOutputMode>(GetString(om));
+            if (p.TryGetValue("ScaleMode", out var sm))
+                tool.ScaleMode = Enum.Parse<VisionTools.PointCloud.PointCloudClusterTool.DimensionScaleMode>(GetString(sm));
             if (p.TryGetValue("XyScale", out var xs)) tool.XyScale = (float)GetDouble(xs);
             return tool;
         }

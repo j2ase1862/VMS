@@ -68,9 +68,29 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
             set => SetProperty(ref _outputMode, value);
         }
 
+        public enum DimensionScaleMode
+        {
+            /// <summary>XyScale(mm/px) 수동 입력값 사용.</summary>
+            Manual,
+            /// <summary>카메라 depth intrinsics + 클러스터 실측 Z로 mm/px 자동 계산 (Z/fx).</summary>
+            AutoFromCamera
+        }
+
+        private DimensionScaleMode _scaleMode = DimensionScaleMode.Manual;
+        /// <summary>
+        /// 치수 환산 방식. AutoFromCamera는 grab 점군에 실린 depth intrinsics로
+        /// 클러스터별 mm/px = Z/fx 를 자동 계산 — 작동 거리가 바뀌어도 정확.
+        /// intrinsics가 없으면(.vpc 로드 등) XyScale로 폴백.
+        /// </summary>
+        public DimensionScaleMode ScaleMode
+        {
+            get => _scaleMode;
+            set => SetProperty(ref _scaleMode, value);
+        }
+
         private float _xyScale = 1.0f;
         /// <summary>
-        /// X/Y 치수 환산 배율. Mech-Mind organized 점군은 X/Y가 뎁스맵 픽셀 인덱스이므로
+        /// X/Y 치수 환산 배율 (Manual 모드). Mech-Mind organized 점군은 X/Y가 뎁스맵 픽셀 인덱스이므로
         /// (Z만 mm) 실측 mm 치수가 필요하면 mm/pixel 값을 입력. 1.0 = 원 단위 그대로.
         /// SizeX/SizeY/Length/Width에만 적용 (CenterX/Y는 기존 호환을 위해 원 단위 유지).
         /// </summary>
@@ -133,6 +153,7 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                 result.Data["LargestPoints"] = clusters[0].PointCount;
                 long totalClustered = 0;
                 int reported = Math.Min(MaxReportedClusters, clusters.Count);
+                bool autoScaleUnavailable = false;
                 for (int i = 0; i < reported; i++)
                 {
                     var c = clusters[i];
@@ -142,20 +163,28 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                     result.Data[$"Cluster{i}_CenterY"] = center.Y;
                     result.Data[$"Cluster{i}_CenterZ"] = center.Z;
 
-                    var m = ComputeDimensions(c, XyScale);
+                    var (scaleX, scaleY, isAuto) = ResolveXyScale(src, center.Z);
+                    if (ScaleMode == DimensionScaleMode.AutoFromCamera && !isAuto)
+                        autoScaleUnavailable = true;
+
+                    var m = ComputeDimensions(c, scaleX, scaleY);
                     result.Data[$"Cluster{i}_SizeX"] = m.SizeX;
                     result.Data[$"Cluster{i}_SizeY"] = m.SizeY;
                     result.Data[$"Cluster{i}_SizeZ"] = m.SizeZ;
                     result.Data[$"Cluster{i}_Length"] = m.Length;
                     result.Data[$"Cluster{i}_Width"] = m.Width;
                     result.Data[$"Cluster{i}_Angle"] = m.Angle;
+                    result.Data[$"Cluster{i}_MmPerPx"] = (scaleX + scaleY) * 0.5f;
                     totalClustered += c.PointCount;
                 }
                 result.Data["TotalClusteredPoints"] = totalClustered;
 
                 result.OutputImage = inputImage.Clone();
                 result.Success = true;
-                result.Message = $"Found {clusters.Count} cluster(s), largest={clusters[0].PointCount} pts, mode={OutputMode}";
+                result.Message = $"Found {clusters.Count} cluster(s), largest={clusters[0].PointCount} pts, mode={OutputMode}"
+                    + (autoScaleUnavailable
+                        ? " ⚠ Auto scale unavailable (no camera intrinsics) — using manual XyScale"
+                        : "");
             }
             catch (Exception ex)
             {
@@ -172,11 +201,28 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
         }
 
         /// <summary>
+        /// 클러스터에 적용할 X/Y mm/px 배율.
+        /// AutoFromCamera: 핀홀 모델 — 깊이 Z에서 1px의 실제 폭 = Z/fx (가로), Z/fy (세로).
+        /// 클러스터 중심 Z를 대표 깊이로 사용 (평면 위 부품 가정).
+        /// </summary>
+        private (float scaleX, float scaleY, bool isAuto) ResolveXyScale(PointCloudData src, float clusterZ)
+        {
+            if (ScaleMode == DimensionScaleMode.AutoFromCamera)
+            {
+                var intr = src.Intrinsics;
+                if (intr != null && intr.IsValid && clusterZ > 0)
+                    return ((float)(clusterZ / intr.Fx), (float)(clusterZ / intr.Fy), true);
+            }
+            return (XyScale, XyScale, false);
+        }
+
+        /// <summary>
         /// 클러스터 치수: 축 정렬 크기(SizeX/Y/Z) + XY 평면 최소 외접 사각형(OBB) 길이/폭/각도.
-        /// OBB는 회전 놓인 부품의 실제 길이·폭 측정용. xyScale은 X/Y에만 적용 (Z는 원래 mm).
+        /// OBB는 회전 놓인 부품의 실제 길이·폭 측정용. 배율은 X/Y에만 적용 (Z는 원래 mm),
+        /// OBB Length/Width는 X/Y 배율 평균 사용 (fx≈fy인 일반 카메라에서 오차 미미).
         /// </summary>
         private static (float SizeX, float SizeY, float SizeZ, float Length, float Width, float Angle)
-            ComputeDimensions(PointCloudData c, float xyScale)
+            ComputeDimensions(PointCloudData c, float xyScaleX, float xyScaleY)
         {
             int n = c.PointCount;
             if (n == 0) return (0, 0, 0, 0, 0, 0);
@@ -196,15 +242,16 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                 pts2f[i] = new Point2f(p.X, p.Y);
             }
 
+            float obbScale = (xyScaleX + xyScaleY) * 0.5f;
             var obb = Cv2.MinAreaRect(pts2f);
-            float len = Math.Max(obb.Size.Width, obb.Size.Height) * xyScale;
-            float wid = Math.Min(obb.Size.Width, obb.Size.Height) * xyScale;
+            float len = Math.Max(obb.Size.Width, obb.Size.Height) * obbScale;
+            float wid = Math.Min(obb.Size.Width, obb.Size.Height) * obbScale;
             // MinAreaRect 각도는 Size.Width 축 기준 — 긴 변 기준 각도로 정규화
             float ang = obb.Size.Width >= obb.Size.Height ? obb.Angle : obb.Angle + 90f;
             if (ang > 90f) ang -= 180f;
             if (ang < -90f) ang += 180f;
 
-            return ((maxX - minX) * xyScale, (maxY - minY) * xyScale, maxZ - minZ, len, wid, ang);
+            return ((maxX - minX) * xyScaleX, (maxY - minY) * xyScaleY, maxZ - minZ, len, wid, ang);
         }
 
         private static Vector3 ComputeCentroid(PointCloudData c)
@@ -239,6 +286,7 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                 keys.Add($"Cluster{i}_Length");
                 keys.Add($"Cluster{i}_Width");
                 keys.Add($"Cluster{i}_Angle");
+                keys.Add($"Cluster{i}_MmPerPx");
             }
             return keys;
         }
@@ -255,6 +303,7 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                 MaxPoints = this.MaxPoints,
                 MaxReportedClusters = this.MaxReportedClusters,
                 OutputMode = this.OutputMode,
+                ScaleMode = this.ScaleMode,
                 XyScale = this.XyScale
             };
             CopyPlcMappingsTo(clone);

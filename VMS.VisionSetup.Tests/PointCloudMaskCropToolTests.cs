@@ -154,6 +154,22 @@ namespace VMS.VisionSetup.Tests
         }
 
         [Fact]
+        public void Execute_PreservesIntrinsics_ForDownstreamAutoScale()
+        {
+            var service = VisionService.Instance;
+            var cloud = MakeOrganized(4, 4);
+            var intr = new DepthIntrinsics { Fx = 1234, Fy = 1235, Cx = 2, Cy = 2 };
+            cloud.Intrinsics = intr;
+            service.CurrentPointCloud = cloud;
+            using var mask = MakeLeftMask(4, 4, 2);
+
+            var result = new PointCloudMaskCropTool().Execute(mask);
+
+            Assert.True(result.Success);
+            Assert.Same(intr, service.CurrentPointCloud!.Intrinsics);
+        }
+
+        [Fact]
         public void Execute_NoPointCloud_Fails()
         {
             VisionService.Instance.CurrentPointCloud = null;
