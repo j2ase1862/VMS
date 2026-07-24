@@ -544,6 +544,7 @@ namespace VMS.VisionSetup.ViewModels
                     // 우측 패널 전환: 스텝 선택 → 카메라 파라미터, 도구 선택 → 도구 파라미터
                     ShowCameraSettings = value != null;
                     UpdateStepCameraInfo(value);
+                    OpenTemplateGalleryCommand?.NotifyCanExecuteChanged();
                 }
             }
         }
@@ -644,6 +645,7 @@ namespace VMS.VisionSetup.ViewModels
         public RelayCommand DeleteStepCommand { get; }
         public RelayCommand MoveStepUpCommand { get; }
         public RelayCommand MoveStepDownCommand { get; }
+        public RelayCommand OpenTemplateGalleryCommand { get; }
         public RelayCommand LoadSamplePointCloudCommand { get; }
         public RelayCommand ShowCameraInfoCommand { get; }
         public RelayCommand AcquireImageCommand { get; }
@@ -722,6 +724,8 @@ namespace VMS.VisionSetup.ViewModels
             DeleteStepCommand = new RelayCommand(DeleteStep, () => SelectedStep != null);
             MoveStepUpCommand = new RelayCommand(MoveStepUp, () => SelectedStep != null);
             MoveStepDownCommand = new RelayCommand(MoveStepDown, () => SelectedStep != null);
+            // 템플릿은 스텝이 선택된 상태에서만 생성 — 생성 결과가 스텝에 저장되므로
+            OpenTemplateGalleryCommand = new RelayCommand(OpenTemplateGallery, () => SelectedStep != null);
             LoadSamplePointCloudCommand = new RelayCommand(LoadSamplePointCloud);
             ShowCameraInfoCommand = new RelayCommand(ShowCameraInfo);
             // 직접 연결/취득은 VMS 메인이 실행 중이면 차단 — 카메라 소유권은 항상
@@ -2289,6 +2293,53 @@ namespace VMS.VisionSetup.ViewModels
             StatusMessage = $"Step saved: {SelectedStep.Name} ({SelectedStep.Tools.Count} tools)";
         }
 
+        /// <summary>
+        /// 예제 템플릿 갤러리를 열고, 선택된 템플릿의 툴 체인을 현재 스텝 워크스페이스에 생성.
+        /// 스텝이 선택된 상태에서만 호출 가능 (CanExecute) — 생성 즉시 스텝에 저장된다.
+        /// </summary>
+        private void OpenTemplateGallery()
+        {
+            if (SelectedStep == null) return;
+
+            var template = _dialogService.ShowTemplateGalleryDialog();
+            if (template == null) return;
+
+            try
+            {
+                var tools = RecipeTemplateCatalog.CreateTools(template);
+
+                // 기존 툴과 겹치지 않도록 최하단 아래 새 행에 좌→우 배치
+                var positions = RecipeTemplateCatalog.ComputeInsertPositions(
+                    DroppedTools.Select(t => (t.X, t.Y)), tools.Count);
+
+                var items = new List<ToolItem>(tools.Count);
+                for (int i = 0; i < tools.Count; i++)
+                {
+                    var item = new ToolItem
+                    {
+                        Name = tools[i].Name,
+                        ToolType = tools[i].ToolType,
+                        X = positions[i].X,
+                        Y = positions[i].Y,
+                        VisionTool = tools[i]
+                    };
+                    DroppedTools.Add(item);
+                    _visionService.AddTool(tools[i]);
+                    items.Add(item);
+                }
+
+                foreach (var conn in template.Connections)
+                    AddConnection(items[conn.SourceIndex], items[conn.TargetIndex], conn.Type);
+
+                SaveWorkspaceToStep();
+                StatusMessage = $"템플릿 생성: {template.Title} — 이미지(또는 3D 데이터) 로드 후 Run(F5)으로 테스트하세요";
+            }
+            catch (Exception ex)
+            {
+                _dialogService.ShowError($"템플릿 생성 실패: {ex.Message}", "예제 템플릿");
+            }
+        }
+
         private int GetCameraDisplayIndex(string? cameraId)
         {
             if (string.IsNullOrEmpty(cameraId)) return 0;
@@ -3202,6 +3253,7 @@ namespace VMS.VisionSetup.ViewModels
             DeleteStepCommand.NotifyCanExecuteChanged();
             MoveStepUpCommand.NotifyCanExecuteChanged();
             MoveStepDownCommand.NotifyCanExecuteChanged();
+            OpenTemplateGalleryCommand.NotifyCanExecuteChanged();
         }
 
         /// <summary>

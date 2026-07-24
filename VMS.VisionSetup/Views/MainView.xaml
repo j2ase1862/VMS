@@ -299,6 +299,16 @@
                             </MenuItem>
                         </MenuItem>
 
+                        <!-- Example Templates — 스텝 선택 시에만 활성 (생성 결과가 스텝에 저장됨) -->
+                        <MenuItem Header="예제 _Template" Command="{Binding OpenTemplateGalleryCommand}"
+                                  ToolTip="자주 쓰는 툴 체인을 현재 스텝에 생성합니다 (스텝 선택 필요)">
+                            <MenuItem.Icon>
+                                <Path Data="M2,7 L7,7 L7,13 L2,13 Z M13,7 L18,7 L18,13 L13,13 Z M7,10 L13,10 M11,8 L13,10 L11,12"
+                                      Stroke="#00ADB5" StrokeThickness="1.2" Fill="Transparent"
+                                      Width="14" Height="11" Stretch="Uniform"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+
                         <!-- Sequence -->
                         <MenuItem Header="_Sequence" Click="SequenceEditor_Click">
                             <MenuItem.Icon>

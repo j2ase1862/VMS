@@ -138,6 +138,7 @@ namespace VMS.VisionSetup.Tests
             public Recipe? ShowRecipeManagerDialog() => null;
             public void ShowSequenceEditorDialog(IEnumerable<SequenceDeviceEntry>? extraDevices = null) { }
             public void ShowCalibrationManagerDialog() { }
+            public RecipeTemplate? ShowTemplateGalleryDialog() => null;
         }
 
         #endregion
