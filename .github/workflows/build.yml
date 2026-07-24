@@ -1,15 +1,14 @@
 name: Build & Test
 
 # WPF + 네이티브 비전(C++) 솔루션이므로 Windows runner 필수.
-# main / master 브랜치 push + 모든 PR 에 대해 빌드 + 테스트 실행.
+# private repo 전환(2026-07-24) 후 Actions 분당 과금(Windows 2배) 절약을 위해
+# feat/fix 브랜치 push 트리거 제거 — PR 이벤트 + master push 만 실행.
 
 on:
   push:
     branches:
       - main
       - master
-      - 'feat/**'
-      - 'fix/**'
   pull_request:
     branches:
       - main
