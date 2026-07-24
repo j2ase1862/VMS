@@ -66,6 +66,14 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         private bool _drawBoxes = true;
         public bool DrawBoxes { get => _drawBoxes; set => SetProperty(ref _drawBoxes, value); }
 
+        private bool _outputMaskImage;
+        /// <summary>
+        /// true면 OutputImage를 인스턴스 합집합 이진 마스크(CV_8UC1, 255=인스턴스)로 출력 —
+        /// PointCloudMaskCropTool 등 마스크 소비 도구와 Image 연결용.
+        /// 화면 오버레이(OverlayImage)는 그대로 유지.
+        /// </summary>
+        public bool OutputMaskImage { get => _outputMaskImage; set => SetProperty(ref _outputMaskImage, value); }
+
         private string[] _classNames = Array.Empty<string>();
         public string[] ClassNames
         {
@@ -127,7 +135,9 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
                     ? BuildOverlay(inputImage, instances)
                     : GetColorOverlayBase(inputImage);
 
-                result.OutputImage = overlay.Clone();
+                result.OutputImage = OutputMaskImage
+                    ? BuildUnionMask(inputImage, instances)
+                    : overlay.Clone();
                 result.OverlayImage = overlay;
                 result.Success = true;
                 result.Message = $"Detected {instances.Count} instance(s) (ConfThr={ConfidenceThreshold:F2}, IoU={IouThreshold:F2})";
@@ -194,6 +204,30 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
                 }
             }
             return overlay;
+        }
+
+        /// <summary>모든 인스턴스 마스크의 합집합을 원본 크기 CV_8UC1(0/255)로 생성.</summary>
+        private Mat BuildUnionMask(Mat inputImage, List<YoloSegInstance> instances)
+        {
+            var maskOut = new Mat(inputImage.Size(), MatType.CV_8UC1, Scalar.Black);
+            var adjROI = GetAdjustedROI(inputImage);
+            int dx = UseROI ? adjROI.X : 0;
+            int dy = UseROI ? adjROI.Y : 0;
+
+            foreach (var ins in instances)
+            {
+                if (ins.Mask == null || ins.Mask.Empty()) continue;
+                int x = dx + ins.Box.X, y = dy + ins.Box.Y;
+                if (x < 0 || y < 0) continue;
+                int w = Math.Min(ins.Mask.Width, maskOut.Width - x);
+                int h = Math.Min(ins.Mask.Height, maskOut.Height - y);
+                if (w <= 0 || h <= 0) continue;
+
+                using var slot = new Mat(maskOut, new Rect(x, y, w, h));
+                using var maskCrop = new Mat(ins.Mask, new Rect(0, 0, w, h));
+                slot.SetTo(255, maskCrop);
+            }
+            return maskOut;
         }
 
         private static (byte R, byte G, byte B)[] BuildPalette(int n)

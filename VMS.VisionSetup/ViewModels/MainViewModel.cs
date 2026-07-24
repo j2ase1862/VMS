@@ -3245,6 +3245,7 @@ namespace VMS.VisionSetup.ViewModels
                 VisionTools.PointCloud.PointCloudRegistrationTool t => new PointCloudRegistrationToolSettingsViewModel(t),
                 VisionTools.PointCloud.PointCloudClusterTool t => new PointCloudClusterToolSettingsViewModel(t),
                 VisionTools.PointCloud.PointCloudDeviationTool t => new PointCloudDeviationToolSettingsViewModel(t),
+                VisionTools.PointCloud.PointCloudMaskCropTool t => new PointCloudMaskCropToolSettingsViewModel(t),
                 VisionTools.SurfaceAnalysis.PhotometricStereoTool t => new PhotometricStereoToolSettingsViewModel(t),
                 _ => null
             };

@@ -19,5 +19,6 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         public bool ShowOverlay { get => TypedTool.ShowOverlay; set => TypedTool.ShowOverlay = value; }
         public double OverlayOpacity { get => TypedTool.OverlayOpacity; set => TypedTool.OverlayOpacity = value; }
         public bool DrawBoxes { get => TypedTool.DrawBoxes; set => TypedTool.DrawBoxes = value; }
+        public bool OutputMaskImage { get => TypedTool.OutputMaskImage; set => TypedTool.OutputMaskImage = value; }
     }
 }

@@ -68,6 +68,18 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
             set => SetProperty(ref _outputMode, value);
         }
 
+        private float _xyScale = 1.0f;
+        /// <summary>
+        /// X/Y 치수 환산 배율. Mech-Mind organized 점군은 X/Y가 뎁스맵 픽셀 인덱스이므로
+        /// (Z만 mm) 실측 mm 치수가 필요하면 mm/pixel 값을 입력. 1.0 = 원 단위 그대로.
+        /// SizeX/SizeY/Length/Width에만 적용 (CenterX/Y는 기존 호환을 위해 원 단위 유지).
+        /// </summary>
+        public float XyScale
+        {
+            get => _xyScale;
+            set => SetProperty(ref _xyScale, Math.Clamp(value, 0.0001f, 1000f));
+        }
+
         public PointCloudClusterTool()
         {
             Name = "PointCloud Cluster";
@@ -129,6 +141,14 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                     result.Data[$"Cluster{i}_CenterX"] = center.X;
                     result.Data[$"Cluster{i}_CenterY"] = center.Y;
                     result.Data[$"Cluster{i}_CenterZ"] = center.Z;
+
+                    var m = ComputeDimensions(c, XyScale);
+                    result.Data[$"Cluster{i}_SizeX"] = m.SizeX;
+                    result.Data[$"Cluster{i}_SizeY"] = m.SizeY;
+                    result.Data[$"Cluster{i}_SizeZ"] = m.SizeZ;
+                    result.Data[$"Cluster{i}_Length"] = m.Length;
+                    result.Data[$"Cluster{i}_Width"] = m.Width;
+                    result.Data[$"Cluster{i}_Angle"] = m.Angle;
                     totalClustered += c.PointCount;
                 }
                 result.Data["TotalClusteredPoints"] = totalClustered;
@@ -149,6 +169,42 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                 LastResult = result;
             }
             return result;
+        }
+
+        /// <summary>
+        /// 클러스터 치수: 축 정렬 크기(SizeX/Y/Z) + XY 평면 최소 외접 사각형(OBB) 길이/폭/각도.
+        /// OBB는 회전 놓인 부품의 실제 길이·폭 측정용. xyScale은 X/Y에만 적용 (Z는 원래 mm).
+        /// </summary>
+        private static (float SizeX, float SizeY, float SizeZ, float Length, float Width, float Angle)
+            ComputeDimensions(PointCloudData c, float xyScale)
+        {
+            int n = c.PointCount;
+            if (n == 0) return (0, 0, 0, 0, 0, 0);
+
+            float minX = float.MaxValue, minY = float.MaxValue, minZ = float.MaxValue;
+            float maxX = float.MinValue, maxY = float.MinValue, maxZ = float.MinValue;
+            var pts2f = new Point2f[n];
+            for (int i = 0; i < n; i++)
+            {
+                var p = c.Positions[i];
+                if (p.X < minX) minX = p.X;
+                if (p.X > maxX) maxX = p.X;
+                if (p.Y < minY) minY = p.Y;
+                if (p.Y > maxY) maxY = p.Y;
+                if (p.Z < minZ) minZ = p.Z;
+                if (p.Z > maxZ) maxZ = p.Z;
+                pts2f[i] = new Point2f(p.X, p.Y);
+            }
+
+            var obb = Cv2.MinAreaRect(pts2f);
+            float len = Math.Max(obb.Size.Width, obb.Size.Height) * xyScale;
+            float wid = Math.Min(obb.Size.Width, obb.Size.Height) * xyScale;
+            // MinAreaRect 각도는 Size.Width 축 기준 — 긴 변 기준 각도로 정규화
+            float ang = obb.Size.Width >= obb.Size.Height ? obb.Angle : obb.Angle + 90f;
+            if (ang > 90f) ang -= 180f;
+            if (ang < -90f) ang += 180f;
+
+            return ((maxX - minX) * xyScale, (maxY - minY) * xyScale, maxZ - minZ, len, wid, ang);
         }
 
         private static Vector3 ComputeCentroid(PointCloudData c)
@@ -177,6 +233,12 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                 keys.Add($"Cluster{i}_CenterX");
                 keys.Add($"Cluster{i}_CenterY");
                 keys.Add($"Cluster{i}_CenterZ");
+                keys.Add($"Cluster{i}_SizeX");
+                keys.Add($"Cluster{i}_SizeY");
+                keys.Add($"Cluster{i}_SizeZ");
+                keys.Add($"Cluster{i}_Length");
+                keys.Add($"Cluster{i}_Width");
+                keys.Add($"Cluster{i}_Angle");
             }
             return keys;
         }
@@ -192,7 +254,8 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                 MinPoints = this.MinPoints,
                 MaxPoints = this.MaxPoints,
                 MaxReportedClusters = this.MaxReportedClusters,
-                OutputMode = this.OutputMode
+                OutputMode = this.OutputMode,
+                XyScale = this.XyScale
             };
             CopyPlcMappingsTo(clone);
             return clone;

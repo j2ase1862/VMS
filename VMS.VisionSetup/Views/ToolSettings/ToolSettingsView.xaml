@@ -180,6 +180,9 @@
         <DataTemplate x:Key="PointCloudDeviationTemplate" DataType="{x:Type vm:PointCloudDeviationToolSettingsViewModel}">
             <tools:PointCloudDeviationToolSettings/>
         </DataTemplate>
+        <DataTemplate x:Key="PointCloudMaskCropTemplate" DataType="{x:Type vm:PointCloudMaskCropToolSettingsViewModel}">
+            <tools:PointCloudMaskCropToolSettings/>
+        </DataTemplate>
         <DataTemplate x:Key="PhotometricStereoTemplate" DataType="{x:Type vm:PhotometricStereoToolSettingsViewModel}">
             <tools:PhotometricStereoToolSettings/>
         </DataTemplate>
@@ -220,6 +223,7 @@
             PointCloudRegistrationTemplate="{StaticResource PointCloudRegistrationTemplate}"
             PointCloudClusterTemplate="{StaticResource PointCloudClusterTemplate}"
             PointCloudDeviationTemplate="{StaticResource PointCloudDeviationTemplate}"
+            PointCloudMaskCropTemplate="{StaticResource PointCloudMaskCropTemplate}"
             PhotometricStereoTemplate="{StaticResource PhotometricStereoTemplate}"/>
     </UserControl.Resources>
 
