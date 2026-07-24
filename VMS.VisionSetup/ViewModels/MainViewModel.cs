@@ -863,6 +863,7 @@ namespace VMS.VisionSetup.ViewModels
             var threeDProcessing = new ToolCategory { CategoryName = "3D Processing" };
             threeDProcessing.Tools.Add(new ToolItem { Name = "PointCloud Filter", ToolType = "PointCloudFilterTool" });
             threeDProcessing.Tools.Add(new ToolItem { Name = "PointCloud Registration", ToolType = "PointCloudRegistrationTool" });
+            threeDProcessing.Tools.Add(new ToolItem { Name = "PointCloud Mask Crop", ToolType = "PointCloudMaskCropTool" });
             threeDProcessing.Tools.Add(new ToolItem { Name = "PointCloud Cluster", ToolType = "PointCloudClusterTool" });
             ToolTree.Add(threeDProcessing);
 
