@@ -24,5 +24,7 @@ namespace VMS.VisionSetup.Interfaces
         /// </summary>
         void ShowSequenceEditorDialog(IEnumerable<SequenceDeviceEntry>? extraDevices = null);
         void ShowCalibrationManagerDialog();
+        /// <summary>예제 템플릿 갤러리 — 선택된 템플릿 반환 (취소 시 null).</summary>
+        RecipeTemplate? ShowTemplateGalleryDialog();
     }
 }

@@ -120,6 +120,15 @@ namespace VMS.VisionSetup.Services
             window.Owner = Application.Current.MainWindow;
             window.ShowDialog();
         }
+
+        public RecipeTemplate? ShowTemplateGalleryDialog()
+        {
+            var window = new Views.Templates.TemplateGalleryWindow
+            {
+                Owner = Application.Current.MainWindow
+            };
+            return window.ShowDialog() == true ? window.SelectedTemplate : null;
+        }
     }
 }
 

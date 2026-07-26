@@ -16,6 +16,9 @@
   <ItemGroup>
     <Resource Include="icon\VisionSetup.ico" />
     <Resource Include="icon\RecipeManager.ico" />
+    <!-- 예제 템플릿 다이어그램 (RecipeTemplateCatalog 기준 생성, 재생성은
+         dotnet test 의 TemplateDiagramGenerator 필터 사용) -->
+    <Resource Include="Resources\Templates\*.png" />
   </ItemGroup>
 
   <ItemGroup>
