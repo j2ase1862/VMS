@@ -36,6 +36,34 @@
             </Setter>
         </Style>
 
+        <Style x:Key="ViewerToolbarToggle" TargetType="ToggleButton">
+            <Setter Property="Background" Value="#444444"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="6,3"/>
+            <Setter Property="Margin" Value="0,0,3,0"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                CornerRadius="3" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#555555"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#2E6BD1"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </UserControl.Resources>
 
@@ -106,6 +134,32 @@
             <TextBlock x:Name="LodIndicator"
                        Foreground="#FF9800" FontSize="10"
                        VerticalAlignment="Center" Margin="6,0,0,0"/>
+        </StackPanel>
+
+        <!-- Measure Toolbar (top center, Mech-Eye style) -->
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Center" VerticalAlignment="Top"
+                    Margin="0,6,0,0">
+            <ToggleButton x:Name="BtnMeasureDistance" Content="Distance"
+                          ToolTip="거리 측정 — 점 2개를 클릭"
+                          Style="{StaticResource ViewerToolbarToggle}"
+                          Checked="BtnMeasureDistance_Checked"
+                          Unchecked="MeasureMode_Unchecked"/>
+            <ToggleButton x:Name="BtnMeasureAngle" Content="Angle"
+                          ToolTip="각도 측정 — 점 3개를 클릭 (두 번째 점이 꼭짓점)"
+                          Style="{StaticResource ViewerToolbarToggle}"
+                          Checked="BtnMeasureAngle_Checked"
+                          Unchecked="MeasureMode_Unchecked"/>
+            <Button x:Name="BtnMeasureClear" Content="Clear"
+                    ToolTip="측정 결과 모두 지우기"
+                    Style="{StaticResource ViewerToolbarButton}"
+                    Click="BtnMeasureClear_Click"/>
+            <Border x:Name="MeasureHintPanel" Background="#88000000" CornerRadius="3"
+                    Padding="6,2" Margin="6,0,0,0" Visibility="Collapsed">
+                <TextBlock x:Name="MeasureHintText"
+                           Foreground="#FFD54F" FontSize="10"
+                           VerticalAlignment="Center"/>
+            </Border>
         </StackPanel>
 
         <!-- View Toolbar (right vertical, Mech-Eye style) -->

@@ -44,6 +44,18 @@ namespace VMS.Core.Controls
         private Vector3D _cameraStartLook;
         private Vector3D _cameraStartUp;
 
+        // ── Measurement state ──
+        private enum MeasureMode { None, Distance, Angle }
+        private MeasureMode _measureMode = MeasureMode.None;
+        private readonly List<Vector3> _measurePicks = new();          // 진행 중 선택 (viewport 좌표)
+        private readonly List<Element3D> _pendingMeasureMarkers = new(); // 진행 중 마커 (취소 시 제거)
+        private const double MeasureClickMaxDragPx = 5.0;   // 이내면 팬이 아니라 클릭으로 간주
+        private const double MeasurePickRadiusPx = 12.0;
+        private const string MeasureTag = "Measure";
+        private static readonly Color4 MeasureColor = new(1f, 0.84f, 0.25f, 1f);
+        private static readonly System.Windows.Media.Color MeasureMediaColor =
+            System.Windows.Media.Color.FromRgb(255, 214, 64);
+
         #region Dependency Properties
 
         public static readonly DependencyProperty PointCloudProperty =
@@ -484,6 +496,17 @@ namespace VMS.Core.Controls
             {
                 _isPanning = false;
                 Viewport.ReleaseMouseCapture();
+
+                // 측정 모드에서 드래그 없이 뗀 좌클릭 = 점 선택 (드래그 팬은 그대로 동작)
+                if (_measureMode != MeasureMode.None)
+                {
+                    var pos = e.GetPosition(Viewport);
+                    double dx = pos.X - _mouseStart.X;
+                    double dy = pos.Y - _mouseStart.Y;
+                    if (dx * dx + dy * dy <= MeasureClickMaxDragPx * MeasureClickMaxDragPx)
+                        TryPickMeasurePoint(pos);
+                }
+
                 e.Handled = true;
             }
         }
@@ -589,6 +612,195 @@ namespace VMS.Core.Controls
 
         #endregion
 
+        #region Measurement (Distance / Angle)
+
+        private void BtnMeasureDistance_Checked(object sender, RoutedEventArgs e)
+        {
+            BtnMeasureAngle.IsChecked = false;
+            _measureMode = MeasureMode.Distance;
+            CancelPendingMeasurement();
+        }
+
+        private void BtnMeasureAngle_Checked(object sender, RoutedEventArgs e)
+        {
+            BtnMeasureDistance.IsChecked = false;
+            _measureMode = MeasureMode.Angle;
+            CancelPendingMeasurement();
+        }
+
+        private void MeasureMode_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (BtnMeasureDistance.IsChecked != true && BtnMeasureAngle.IsChecked != true)
+            {
+                _measureMode = MeasureMode.None;
+                CancelPendingMeasurement();
+            }
+        }
+
+        private void BtnMeasureClear_Click(object sender, RoutedEventArgs e)
+        {
+            ClearMeasurements();
+        }
+
+        /// <summary>완료된 측정 포함 모든 측정 오버레이 제거.</summary>
+        private void ClearMeasurements()
+        {
+            var toRemove = Viewport.Items
+                .OfType<Element3D>()
+                .Where(el => el.Tag is string tag && tag == MeasureTag)
+                .ToList();
+            foreach (var item in toRemove)
+                Viewport.Items.Remove(item);
+
+            _measurePicks.Clear();
+            _pendingMeasureMarkers.Clear();
+            UpdateMeasureHint();
+        }
+
+        /// <summary>진행 중(미완성) 선택만 취소 — 완료된 측정은 유지.</summary>
+        private void CancelPendingMeasurement()
+        {
+            foreach (var marker in _pendingMeasureMarkers)
+                Viewport.Items.Remove(marker);
+            _pendingMeasureMarkers.Clear();
+            _measurePicks.Clear();
+            UpdateMeasureHint();
+        }
+
+        private void TryPickMeasurePoint(Point mouse)
+        {
+            if (PointCloudModel.Geometry is not PointGeometry3D geo || geo.Positions is not { Count: > 0 })
+                return;
+            if (Viewport.ActualWidth < 1 || Viewport.ActualHeight < 1)
+                return;
+
+            var camPos = new Vector3(
+                (float)MainCamera.Position.X, (float)MainCamera.Position.Y, (float)MainCamera.Position.Z);
+            var look = new Vector3(
+                (float)MainCamera.LookDirection.X, (float)MainCamera.LookDirection.Y, (float)MainCamera.LookDirection.Z);
+            var up = new Vector3(
+                (float)MainCamera.UpDirection.X, (float)MainCamera.UpDirection.Y, (float)MainCamera.UpDirection.Z);
+
+            var viewProj = PointCloudMeasurement.BuildViewProjection(
+                camPos, look, up,
+                (float)MainCamera.FieldOfView,
+                (float)(Viewport.ActualWidth / Viewport.ActualHeight),
+                (float)MainCamera.NearPlaneDistance,
+                (float)MainCamera.FarPlaneDistance);
+
+            int idx = PointCloudMeasurement.FindNearestPointOnScreen(
+                geo.Positions, viewProj, camPos,
+                Viewport.ActualWidth, Viewport.ActualHeight,
+                mouse.X, mouse.Y, MeasurePickRadiusPx);
+            if (idx < 0) return;
+
+            var picked = geo.Positions[idx];
+            _measurePicks.Add(picked);
+            AddMeasureMarker(picked);
+
+            int needed = _measureMode == MeasureMode.Distance ? 2 : 3;
+            if (_measurePicks.Count >= needed)
+                CompleteMeasurement();
+
+            UpdateMeasureHint();
+        }
+
+        private void AddMeasureMarker(Vector3 viewportPos)
+        {
+            var markerGeo = new PointGeometry3D
+            {
+                Positions = new Vector3Collection(new[] { viewportPos })
+            };
+            var marker = new PointGeometryModel3D
+            {
+                Geometry = markerGeo,
+                Color = MeasureMediaColor,
+                Size = new System.Windows.Size(10, 10),
+                Tag = MeasureTag
+            };
+            Viewport.Items.Add(marker);
+            _pendingMeasureMarkers.Add(marker);
+        }
+
+        private void CompleteMeasurement()
+        {
+            var cloud = PointCloud;
+            var intrinsics = cloud?.Intrinsics;
+            bool metric = PointCloudMeasurement.IsMetric(cloud);
+
+            // viewport → data 좌표 복원 후 mm 공간에서 계산
+            var dataPts = _measurePicks.Select(ViewportToData).ToList();
+
+            var builder = new LineBuilder();
+            string label;
+            Vector3 labelPos;
+
+            if (_measureMode == MeasureMode.Distance)
+            {
+                builder.AddLine(_measurePicks[0], _measurePicks[1]);
+                float dist = PointCloudMeasurement.Distance(dataPts[0], dataPts[1], intrinsics);
+                label = metric ? $"{dist:F2} mm" : $"{dist:F2} (미보정)";
+                labelPos = (_measurePicks[0] + _measurePicks[1]) * 0.5f;
+            }
+            else
+            {
+                builder.AddLine(_measurePicks[0], _measurePicks[1]);
+                builder.AddLine(_measurePicks[1], _measurePicks[2]);
+                float deg = PointCloudMeasurement.AngleDeg(dataPts[0], dataPts[1], dataPts[2], intrinsics);
+                label = float.IsNaN(deg) ? "—"
+                    : metric ? $"{deg:F1}°" : $"{deg:F1}° (미보정)";
+                labelPos = _measurePicks[1];
+            }
+
+            var lineModel = new LineGeometryModel3D
+            {
+                Geometry = builder.ToLineGeometry3D(),
+                Color = MeasureMediaColor,
+                Thickness = 1.5,
+                Tag = MeasureTag
+            };
+            Viewport.Items.Add(lineModel);
+
+            var billboard = new BillboardSingleText3D
+            {
+                FontColor = MeasureColor,
+                BackgroundColor = new Color4(0f, 0f, 0f, 0.55f),
+                FontSize = 12,
+                FontWeight = SharpDX.DirectWrite.FontWeight.Bold,
+                TextInfo = new TextInfo(label, labelPos)
+            };
+            Viewport.Items.Add(new BillboardTextModel3D
+            {
+                Geometry = billboard,
+                FixedSize = true,
+                Tag = MeasureTag
+            });
+
+            // 완료 — 마커는 측정 결과의 일부로 유지, 다음 클릭부터 새 측정 시작
+            _pendingMeasureMarkers.Clear();
+            _measurePicks.Clear();
+        }
+
+        private void UpdateMeasureHint()
+        {
+            if (_measureMode == MeasureMode.None)
+            {
+                MeasureHintPanel.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            int needed = _measureMode == MeasureMode.Distance ? 2 : 3;
+            string what = _measureMode == MeasureMode.Distance ? "거리" : "각도 (두 번째 점 = 꼭짓점)";
+            MeasureHintText.Text = $"{what}: 점 {_measurePicks.Count}/{needed} 선택 — 클릭 = 점, 드래그 = 화면 이동";
+            MeasureHintPanel.Visibility = Visibility.Visible;
+        }
+
+        /// <summary>Viewport 좌표 → Data 좌표 (viewport Y = dataZ − zMax 역변환)</summary>
+        private Vector3 ViewportToData(Vector3 viewportPos) =>
+            new(viewportPos.X, viewportPos.Z, viewportPos.Y + _dataZMax);
+
+        #endregion
+
         #region Point Cloud Rendering
 
         private static void OnPointCloudChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -601,6 +813,9 @@ namespace VMS.Core.Controls
 
         private void UpdatePointCloud()
         {
+            // 새 데이터는 zMax 기준 viewport 좌표계가 달라지므로 기존 측정은 무효
+            ClearMeasurements();
+
             var data = PointCloud;
             if (data == null || data.PointCount == 0)
             {
