@@ -70,24 +70,21 @@ jobs:
           --results-directory ${{ github.workspace }}/TestResults
 
       - name: Upload test results
+        # 아티팩트 저장 쿼터 초과가 CI 실패로 번지지 않도록 실패 허용
+        # (2026-07-26 쿼터 소진으로 Build/Test 성공에도 잡이 fail 처리된 사고).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: ${{ github.workspace }}/TestResults/**/*.trx
           if-no-files-found: ignore
-          retention-days: 14
+          retention-days: 7
 
-      - name: Upload MSI installer
-        # WiX MSI 는 dotnet build VMS.sln 이 빌드 단계에서 자동 생성한다
-        # (VMS.MasterSetup.wixproj). 운영 배포 단위 신뢰성을 위해 30일 보관.
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: BODA-VMS-installer-${{ github.sha }}
-          path: VMS.MasterSetup/bin/${{ env.Configuration }}/*.msi
-          if-no-files-found: error
-          retention-days: 30
+      # MSI 아티팩트 업로드는 폐지 (2026-07-26): 실행당 ~500MB × 30일 보관이
+      # 저장 쿼터 소진(153GB)의 주범이었다. CI MSI 는 Mech-Eye SDK 미포함 빌드라
+      # 현장 배포에 사용 금지(v1.4.10 사고)이고, 실배포 MSI 는 dev PC 빌드를
+      # VMS-Releases 에 발행한다. MSI 가 빌드되는지는 Build 단계가 이미 검증한다.
 
       - name: Summarize build
         if: always()
@@ -100,5 +97,4 @@ jobs:
           Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Configuration**: ${{ env.Configuration }}"
           Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Runner**: windows-2025"
           Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **.NET**: $(dotnet --version)"
-          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **MSI installer**: $msiInfo"
-          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **MSI artifact**: ``BODA-VMS-installer-${{ github.sha }}`` (30 day retention)"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **MSI installer**: $msiInfo (빌드 검증만, 아티팩트 미보관 — 배포는 VMS-Releases)"
