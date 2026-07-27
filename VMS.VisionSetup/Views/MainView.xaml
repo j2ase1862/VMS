@@ -1182,8 +1182,9 @@
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
-                                    <RowDefinition Height="Auto" MaxHeight="250"/>
+                                    <RowDefinition Height="*" MinHeight="120"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="190" MinHeight="60" MaxHeight="700"/>
                                 </Grid.RowDefinitions>
 
                                 <!-- Row 0: Header - ComboBox Switcher + Clear Button -->
@@ -1229,8 +1230,14 @@
                                                       ROISelectionChanged="ImageCanvas_ROISelectionChanged"
                                                       Margin="5"/>
 
-                                <!-- Row 2: Tool Run Results DataGrid -->
-                                <Border Grid.Row="2" BorderBrush="#333333" BorderThickness="0,1,0,0"
+                                <!-- Row 2: 이미지/결과 영역 높이 조절 스플리터 -->
+                                <GridSplitter Grid.Row="2" Height="5" HorizontalAlignment="Stretch"
+                                              Background="#333337" ResizeDirection="Rows"
+                                              ResizeBehavior="PreviousAndNext"
+                                              Margin="5,0" Cursor="SizeNS"/>
+
+                                <!-- Row 3: Tool Run Results DataGrid -->
+                                <Border Grid.Row="3" BorderBrush="#333333" BorderThickness="0,1,0,0"
                                         Margin="5,0,5,5">
                                     <Grid>
                                         <Grid.RowDefinitions>
@@ -1243,6 +1250,8 @@
                                                    Margin="5,5,5,3"/>
 
                                         <DataGrid Grid.Row="1"
+                                                  x:Name="RunResultsGrid"
+                                                  PreviewMouseWheel="RunResultsGrid_PreviewMouseWheel"
                                                   ItemsSource="{Binding ToolRunResults}"
                                                   AutoGenerateColumns="False"
                                                   IsReadOnly="True"
@@ -1258,7 +1267,8 @@
                                                   BorderThickness="1"
                                                   RowBackground="#2D2D2D"
                                                   AlternatingRowBackground="#252526"
-                                                  Height="150"
+                                                  SelectionMode="Single"
+                                                  RowDetailsVisibilityMode="VisibleWhenSelected"
                                                   ScrollViewer.VerticalScrollBarVisibility="Auto"
                                                   ScrollViewer.CanContentScroll="True"
                                                   FontSize="12">
@@ -1272,7 +1282,78 @@
                                                     <Setter Property="BorderThickness" Value="0,0,1,1"/>
                                                 </Style>
                                             </DataGrid.ColumnHeaderStyle>
+                                            <DataGrid.RowStyle>
+                                                <Style TargetType="DataGridRow">
+                                                    <!-- 펼쳐진 행 재클릭 → 닫기 (토글) -->
+                                                    <EventSetter Event="PreviewMouseLeftButtonDown"
+                                                                 Handler="ResultRow_PreviewMouseLeftButtonDown"/>
+                                                    <!-- ContextMenu는 비주얼 트리 밖 — Tag로 메인 VM 참조 전달 -->
+                                                    <Setter Property="Tag"
+                                                            Value="{Binding DataContext, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                                    <Setter Property="ContextMenu">
+                                                        <Setter.Value>
+                                                            <ContextMenu>
+                                                                <MenuItem Header="결과 복사"
+                                                                          Command="{Binding PlacementTarget.Tag.CopyToolResultCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                          CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                            </ContextMenu>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Style>
+                                            </DataGrid.RowStyle>
+                                            <!-- 행 선택 시 전체 결과를 Key–Value 표로 펼침 -->
+                                            <DataGrid.RowDetailsTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="#1A1A1C" BorderBrush="#3F3F46"
+                                                            BorderThickness="0,1,0,1" Padding="14,6">
+                                                        <ScrollViewer MaxHeight="220" VerticalScrollBarVisibility="Auto">
+                                                            <ItemsControl ItemsSource="{Binding Entries}"
+                                                                          Grid.IsSharedSizeScope="True">
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <Grid Margin="0,1">
+                                                                            <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="Auto" SharedSizeGroup="ResultKey"/>
+                                                                                <ColumnDefinition Width="*"/>
+                                                                            </Grid.ColumnDefinitions>
+                                                                            <TextBlock Grid.Column="0" Text="{Binding Key}"
+                                                                                       Foreground="#9CDCFE" FontFamily="Consolas"
+                                                                                       FontSize="12" Margin="0,0,16,0"/>
+                                                                            <TextBlock Grid.Column="1" Text="{Binding Value}"
+                                                                                       Foreground="#E6E6E6" FontFamily="Consolas"
+                                                                                       FontSize="12" TextWrapping="Wrap"/>
+                                                                        </Grid>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                        </ScrollViewer>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </DataGrid.RowDetailsTemplate>
                                             <DataGrid.Columns>
+                                                <!-- 펼침 상태 표시: ▶ 닫힘 / ▼ 펼침 -->
+                                                <DataGridTemplateColumn Width="26" CanUserResize="False" IsReadOnly="True">
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                       FontSize="10">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Text" Value="▶"/>
+                                                                        <Setter Property="Foreground" Value="#888888"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=DataGridRow}}"
+                                                                                         Value="True">
+                                                                                <Setter Property="Text" Value="▼"/>
+                                                                                <Setter Property="Foreground" Value="White"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
                                                 <DataGridTextColumn Header="Tool Name"
                                                                     Binding="{Binding ToolName}"
                                                                     Width="*"
@@ -1313,6 +1394,17 @@
                                                             <Setter Property="Padding" Value="6,3"/>
                                                             <Setter Property="VerticalAlignment" Value="Center"/>
                                                             <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                                            <Setter Property="ToolTipService.ShowDuration" Value="60000"/>
+                                                            <Setter Property="ToolTip">
+                                                                <Setter.Value>
+                                                                    <ToolTip MaxWidth="640" Background="#2D2D30"
+                                                                             Foreground="#E6E6E6" BorderBrush="#555555">
+                                                                        <TextBlock Text="{Binding DetailText}"
+                                                                                   TextWrapping="Wrap"
+                                                                                   FontFamily="Consolas" FontSize="11"/>
+                                                                    </ToolTip>
+                                                                </Setter.Value>
+                                                            </Setter>
                                                         </Style>
                                                     </DataGridTextColumn.ElementStyle>
                                                 </DataGridTextColumn>

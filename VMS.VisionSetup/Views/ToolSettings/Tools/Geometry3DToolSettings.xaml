@@ -14,11 +14,21 @@
             SelectedValue="{Binding Operation}"
             ToolType="Geometry3DTool" ParameterName="Operation"/>
 
-        <controls:CheckBoxParameter Label="Use Manual Points"
-            IsChecked="{Binding UseManualPoints}"
-            ToolType="Geometry3DTool" ParameterName="UseManualPoints"/>
+        <!-- 포인트 소스 선택 (점을 쓰는 연산에서만 표시, 상호 배타) -->
+        <StackPanel Visibility="{Binding ShowPointSourceSelector, Converter={StaticResource BoolToVis}}">
+            <TextBlock Text="Point Source" Foreground="#AAAAAA" FontWeight="Bold"
+                       Margin="0,8,0,4" FontSize="11"/>
+            <StackPanel Orientation="Horizontal">
+                <RadioButton Content="수동 입력 (픽셀)" GroupName="PointSource"
+                             IsChecked="{Binding UseManualPoints}"
+                             Foreground="#DDDDDD" FontSize="11" Margin="0,0,16,0"/>
+                <RadioButton Content="연결 소스 (클러스터)" GroupName="PointSource"
+                             IsChecked="{Binding UseConnectedSource}"
+                             Foreground="#DDDDDD" FontSize="11"/>
+            </StackPanel>
+        </StackPanel>
 
-        <!-- Manual Point Input (visible when UseManualPoints and operation needs points) -->
+        <!-- 수동 입력: Point A/B 픽셀 좌표 -->
         <StackPanel Visibility="{Binding ShowManualPoints, Converter={StaticResource BoolToVis}}">
             <TextBlock Text="Point A (pixel)" Foreground="#AAAAAA" FontWeight="Bold"
                        Margin="0,8,0,4" FontSize="11"/>
@@ -56,6 +66,45 @@
                              Background="#2D2D30" Foreground="White" BorderBrush="#555" FontSize="11" Padding="4,3"/>
                 </Grid>
             </StackPanel>
+        </StackPanel>
+
+        <!-- 연결 소스: 클러스터 선택 콤보 (선택 시 2D 뷰어에 해당 클러스터 강조) -->
+        <StackPanel Visibility="{Binding ShowSourceSection, Converter={StaticResource BoolToVis}}">
+            <TextBlock Text="Cluster A" Foreground="#AAAAAA" FontWeight="Bold"
+                       Margin="0,8,0,4" FontSize="11"/>
+            <ComboBox ItemsSource="{Binding ClusterOptions}"
+                      SelectedValue="{Binding SelectedClusterA}"
+                      SelectedValuePath="Index" DisplayMemberPath="Label"
+                      DropDownOpened="ClusterCombo_DropDownOpened"
+                      DropDownClosed="ClusterComboA_DropDownClosed"
+                      FontSize="11"/>
+
+            <StackPanel Visibility="{Binding ShowSourceB, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="Cluster B" Foreground="#AAAAAA" FontWeight="Bold"
+                           Margin="0,8,0,4" FontSize="11"/>
+                <ComboBox ItemsSource="{Binding ClusterOptions}"
+                          SelectedValue="{Binding SelectedClusterB}"
+                          SelectedValuePath="Index" DisplayMemberPath="Label"
+                          DropDownOpened="ClusterCombo_DropDownOpened"
+                          DropDownClosed="ClusterComboB_DropDownClosed"
+                          FontSize="11"/>
+            </StackPanel>
+
+            <TextBlock Foreground="#D9A038" FontSize="10" TextWrapping="Wrap" Margin="0,6,0,0"
+                       Text="클러스터 목록이 비어 있습니다 — PointCloud Cluster를 Result로 연결하고 Run(F5)을 한 번 실행하면 검출된 덩어리 목록이 표시됩니다.">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasClusterOptions}" Value="False">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+            <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,4"
+                       Text="콤보에서 클러스터를 고르면 2D 뷰어에 해당 덩어리가 강조 표시됩니다. 클러스터 툴 하나만 연결해도 A/B 두 클러스터 중심 간 거리를 잽니다. mm 정확도는 Cluster의 Scale Mode(AutoFromCamera 권장)를 따릅니다."/>
         </StackPanel>
 
         <!-- Connected Source Geometries -->

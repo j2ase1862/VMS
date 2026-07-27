@@ -60,6 +60,20 @@ namespace VMS.VisionSetup.ViewModels
     }
 
     /// <summary>
+    /// Geometry3D 설정의 클러스터 콤보 선택 시 2D 뷰어에 해당 클러스터 강조 표시 요청.
+    /// </summary>
+    public class RequestHighlightClusterMessage
+    {
+        public string ClusterToolId { get; }
+        public int ClusterIndex { get; }
+        public RequestHighlightClusterMessage(string clusterToolId, int clusterIndex)
+        {
+            ClusterToolId = clusterToolId;
+            ClusterIndex = clusterIndex;
+        }
+    }
+
+    /// <summary>
     /// 외부(예: Batch Test 창)에서 특정 Step을 메인 워크스페이스에 로드해 달라고 요청.
     /// </summary>
     public class RequestLoadStepMessage
@@ -641,6 +655,7 @@ namespace VMS.VisionSetup.ViewModels
         public RelayCommand AutoTuneCommand { get; }
         public RelayCommand ClearResultImageCommand { get; }
         public RelayCommand SaveDisplayedImageCommand { get; }
+        public RelayCommand<ToolResultItem> CopyToolResultCommand { get; }
         public RelayCommand AddStepCommand { get; }
         public RelayCommand DeleteStepCommand { get; }
         public RelayCommand MoveStepUpCommand { get; }
@@ -720,6 +735,7 @@ namespace VMS.VisionSetup.ViewModels
             AutoTuneCommand = new RelayCommand(AutoTuneParameters, () => SelectedVisionTool is FeatureMatchTool);
             ClearResultImageCommand = new RelayCommand(ClearResultImage);
             SaveDisplayedImageCommand = new RelayCommand(SaveDisplayedImage);
+            CopyToolResultCommand = new RelayCommand<ToolResultItem>(CopyToolResult);
             AddStepCommand = new RelayCommand(AddStep, () => _recipeService.CurrentRecipe != null && SelectedCamera != null);
             DeleteStepCommand = new RelayCommand(DeleteStep, () => SelectedStep != null);
             MoveStepUpCommand = new RelayCommand(MoveStepUp, () => SelectedStep != null);
@@ -799,6 +815,12 @@ namespace VMS.VisionSetup.ViewModels
             WeakReferenceMessenger.Default.Register<RequestShowToolROIMessage>(this, (r, m) =>
             {
                 SelectedDisplayMode = ImageDisplayMode.OriginalImage;
+            });
+
+            // Geometry3D 설정에서 클러스터 선택 시 → 해당 클러스터 강조 오버레이 표시
+            WeakReferenceMessenger.Default.Register<RequestHighlightClusterMessage>(this, (r, m) =>
+            {
+                HighlightCluster(m.ClusterToolId, m.ClusterIndex);
             });
 
             // Batch Test 창에서 Step 선택 시 → 메인 워크스페이스에 그 Step의 도구 로드
@@ -1268,59 +1290,127 @@ namespace VMS.VisionSetup.ViewModels
 
                 var lastResult = visionTool.LastResult;
                 var resultValue = string.Empty;
+                var entries = new List<ResultEntry>();
 
                 if (lastResult != null)
                 {
-                    // Data 딕셔너리에서 주요 결과값을 문자열로 변환
-                    if (lastResult.Data != null && lastResult.Data.Count > 0)
+                    // 전체 Key–Value는 행 펼침(RowDetails)·툴팁·복사용으로 항상 수집
+                    if (lastResult.Data != null)
                     {
-                        if (visionTool is BlobTool)
-                        {
-                            // BlobTool: Count와 TotalArea만 표시
-                            var parts = new List<string>();
-                            if (lastResult.Data.TryGetValue("BlobCount", out var count))
-                                parts.Add($"Count={count}");
-                            if (lastResult.Data.TryGetValue("TotalArea", out var area))
-                            {
-                                var areaStr = area is double d ? d.ToString("F1") : area?.ToString() ?? "";
-                                parts.Add($"TotalArea={areaStr}");
-                            }
-                            resultValue = string.Join(", ", parts);
-                        }
-                        else if (visionTool is OCRTool)
-                        {
-                            // OCRTool: 인식된 문자만 표시
-                            if (lastResult.Data.TryGetValue("RecognizedText", out var text))
-                                resultValue = text?.ToString()?.Trim() ?? "";
-                        }
-                        else
-                        {
-                            var entries = lastResult.Data.Select(kv =>
-                            {
-                                var formatted = kv.Value switch
-                                {
-                                    double d => d.ToString("F3"),
-                                    float f => f.ToString("F3"),
-                                    decimal m => m.ToString("F3"),
-                                    _ => kv.Value?.ToString() ?? ""
-                                };
-                                return $"{kv.Key}={formatted}";
-                            });
-                            resultValue = string.Join(", ", entries);
-                        }
+                        foreach (var kv in lastResult.Data)
+                            entries.Add(new ResultEntry { Key = kv.Key, Value = FormatResultValue(kv.Value) });
                     }
-                    else
-                    {
-                        resultValue = lastResult.Message;
-                    }
+                    if (!string.IsNullOrWhiteSpace(lastResult.Message))
+                        entries.Add(new ResultEntry { Key = "Message", Value = lastResult.Message });
+
+                    resultValue = BuildResultSummary(visionTool, lastResult);
                 }
 
                 ToolRunResults.Add(new ToolResultItem
                 {
                     ToolName = toolItem.Name,
                     Result = lastResult?.Success ?? false,
-                    ResultValue = resultValue
+                    ResultValue = resultValue,
+                    Entries = entries,
+                    DetailText = string.Join(Environment.NewLine, entries.Select(e => $"{e.Key} = {e.Value}"))
                 });
+            }
+        }
+
+        private static string FormatResultValue(object? value) => value switch
+        {
+            double d => d.ToString("F3"),
+            float f => f.ToString("F3"),
+            decimal m => m.ToString("F3"),
+            _ => value?.ToString() ?? ""
+        };
+
+        /// <summary>
+        /// Run Results 요약 한 줄 — 툴별 핵심 값만 표시.
+        /// 전체 값(클러스터별 상세, 쌍별 거리 등 대량 키)은 행 펼침에서 확인.
+        /// </summary>
+        private static string BuildResultSummary(VisionToolBase tool, VisionResult result)
+        {
+            var data = result.Data;
+            if (data == null || data.Count == 0)
+                return result.Message;
+
+            switch (tool)
+            {
+                case BlobTool:
+                {
+                    var parts = new List<string>();
+                    if (data.TryGetValue("BlobCount", out var count))
+                        parts.Add($"Count={count}");
+                    if (data.TryGetValue("TotalArea", out var area))
+                        parts.Add($"TotalArea={FormatResultValue(area)}");
+                    return string.Join(", ", parts);
+                }
+
+                case OCRTool:
+                    return data.TryGetValue("RecognizedText", out var text)
+                        ? text?.ToString()?.Trim() ?? ""
+                        : result.Message;
+
+                case VisionTools.PointCloud.PointCloudClusterTool:
+                {
+                    var parts = new List<string>();
+                    if (data.TryGetValue("ClusterCount", out var cc))
+                        parts.Add($"ClusterCount={cc}");
+                    if (data.TryGetValue("LargestPoints", out var lp))
+                        parts.Add($"Largest={lp}pt");
+                    if (data.TryGetValue("Cluster0_1_DistanceMm", out var d01))
+                        parts.Add($"Dist(0-1)={FormatResultValue(d01)}");
+                    return string.Join(", ", parts);
+                }
+
+                case VisionTools.PointCloud.PointCloudMaskCropTool:
+                {
+                    var parts = new List<string>();
+                    if (data.TryGetValue("InputPoints", out var inp) && data.TryGetValue("OutputPoints", out var outp))
+                        parts.Add($"{inp} → {outp}pt");
+                    if (data.TryGetValue("KeptRatio", out var kr))
+                        parts.Add($"Kept={Convert.ToDouble(kr):P1}");
+                    return string.Join(", ", parts);
+                }
+
+                case Geometry3DTool:
+                {
+                    if (data.TryGetValue("Distance3D", out var dist))
+                        return $"Distance3D={FormatResultValue(dist)}";
+                    if (data.TryGetValue("AngleDeg", out var ang))
+                        return $"AngleDeg={FormatResultValue(ang)}";
+                    return result.Message;
+                }
+
+                default:
+                {
+                    // 일반 툴: 앞쪽 키 위주로 표시하고 나머지는 개수만 (행 펼침에서 전체 확인)
+                    const int maxEntries = 8;
+                    var shown = data.Take(maxEntries)
+                        .Select(kv => $"{kv.Key}={FormatResultValue(kv.Value)}");
+                    var summary = string.Join(", ", shown);
+                    if (data.Count > maxEntries)
+                        summary += $" … (+{data.Count - maxEntries}개)";
+                    return summary;
+                }
+            }
+        }
+
+        /// <summary>Run Results 행 우클릭 → 결과 전체(Key = Value)를 클립보드로 복사.</summary>
+        private void CopyToolResult(ToolResultItem? item)
+        {
+            if (item == null) return;
+            try
+            {
+                var text = $"{item.ToolName}  [{(item.Result ? "OK" : "FAIL")}]"
+                    + Environment.NewLine + item.DetailText;
+                System.Windows.Clipboard.SetText(text);
+                StatusMessage = $"'{item.ToolName}' 결과를 클립보드에 복사했습니다.";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"결과 복사 실패: {ex.Message}";
             }
         }
 
@@ -1439,6 +1529,63 @@ namespace VMS.VisionSetup.ViewModels
             OverlayImage = null;
             SelectedDisplayMode = ImageDisplayMode.OriginalImage;
             StatusMessage = "Result Image가 초기화되었습니다.";
+        }
+
+        /// <summary>
+        /// 클러스터 강조 표시 — 해당 Cluster 툴의 직전 오버레이 위에 선택 클러스터의
+        /// 외접 사각형·중심을 굵게 다시 그려 Result Image로 표시한다.
+        /// (Geometry3D 설정의 클러스터 콤보 선택에서 호출)
+        /// </summary>
+        private void HighlightCluster(string clusterToolId, int clusterIndex)
+        {
+            try
+            {
+                var clusterTool = _visionService.Tools.FirstOrDefault(t => t.Id == clusterToolId)
+                    as VisionTools.PointCloud.PointCloudClusterTool;
+                if (clusterTool == null)
+                {
+                    StatusMessage = "강조할 클러스터 툴을 찾을 수 없습니다.";
+                    return;
+                }
+
+                var shape = clusterTool.LastOverlayShapes.FirstOrDefault(s => s.Index == clusterIndex);
+                if (shape == null)
+                {
+                    StatusMessage = clusterTool.LastOverlayShapes.Count == 0
+                        ? "강조할 클러스터 오버레이가 없습니다 — Run(F5)을 먼저 실행하세요 (Draw Overlay 켬 필요)."
+                        : $"클러스터 #{clusterIndex}가 오버레이에 없습니다.";
+                    return;
+                }
+
+                // 베이스: 클러스터 오버레이 (해제됐으면 현재 이미지로 폴백)
+                var overlay = clusterTool.LastResult?.OverlayImage;
+                bool overlayUsable = overlay != null && !overlay.IsDisposed && !overlay.Empty();
+                var baseMat = overlayUsable ? overlay! : _visionService.CurrentImage;
+                if (baseMat == null || baseMat.Empty())
+                {
+                    StatusMessage = "강조 표시할 베이스 이미지가 없습니다.";
+                    return;
+                }
+
+                using var highlighted = baseMat.Channels() >= 3
+                    ? baseMat.Clone()
+                    : baseMat.CvtColor(ColorConversionCodes.GRAY2BGR);
+                var accent = new Scalar(0, 215, 255); // 주황-노랑 강조색 (BGR)
+                if (shape.ObbCorners.Length == 4)
+                    Cv2.Polylines(highlighted, new[] { shape.ObbCorners }, true, accent, 4);
+                Cv2.DrawMarker(highlighted, shape.Center, accent, MarkerTypes.Cross, 18, 3);
+
+                ResultImage = highlighted.ToWriteableBitmap();
+                ResultMat = highlighted.Clone();
+                OverlayImage = ResultImage;
+                SelectedDisplayMode = ImageDisplayMode.ResultImage;
+                StatusMessage = $"클러스터 #{clusterIndex} 강조 표시";
+            }
+            catch (Exception ex)
+            {
+                // 콤보 선택(바인딩 setter) 경로에서 호출되므로 예외를 밖으로 던지지 않는다
+                StatusMessage = $"클러스터 강조 표시 실패: {ex.Message}";
+            }
         }
 
         /// <summary>

@@ -106,6 +106,122 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             set => SetProperty(ref _useManualPoints, value);
         }
 
+        private int _sourceAClusterIndex;
+        /// <summary>첫 번째 클러스터 소스에서 쓸 클러스터 번호 (PointCloudClusterTool 연결 시).</summary>
+        public int SourceAClusterIndex
+        {
+            get => _sourceAClusterIndex;
+            set => SetProperty(ref _sourceAClusterIndex, Math.Clamp(value, 0, 99));
+        }
+
+        private int _sourceBClusterIndex = 1;
+        /// <summary>
+        /// 두 번째 점의 클러스터 번호. 클러스터 소스가 하나뿐이면 같은 소스에서
+        /// 이 번호의 클러스터를 두 번째 점으로 추출 — 클러스터 툴 하나로 두 객체 간 거리 측정.
+        /// </summary>
+        public int SourceBClusterIndex
+        {
+            get => _sourceBClusterIndex;
+            set => SetProperty(ref _sourceBClusterIndex, Math.Clamp(value, 0, 99));
+        }
+
+        // ── Result 연결 소스 수집 (VisionService가 Execute 전에 호출) ──
+        private int _clusterSourceCount;
+        private VisionResult? _lastClusterResult;
+        private string _lastClusterToolId = string.Empty;
+        private string _lastClusterToolName = string.Empty;
+
+        public void ClearSourceGeometries()
+        {
+            SourceGeometries.Clear();
+            _clusterSourceCount = 0;
+            _lastClusterResult = null;
+        }
+
+        /// <summary>
+        /// Result 연결 소스 하나에서 3D 기하 요소를 추출해 수집.
+        /// 클러스터 소스: 첫 번째는 SourceAClusterIndex, 두 번째는 SourceBClusterIndex의 중심점.
+        /// </summary>
+        public void CollectSourceGeometry(string toolId, string toolName, string toolType, VisionResult sourceResult)
+        {
+            int clusterIndex = 0;
+            if (toolType == "PointCloudClusterTool")
+            {
+                clusterIndex = _clusterSourceCount == 0 ? SourceAClusterIndex : SourceBClusterIndex;
+                _clusterSourceCount++;
+                _lastClusterResult = sourceResult;
+                _lastClusterToolId = toolId;
+                _lastClusterToolName = toolName;
+            }
+
+            var geo = ExtractGeometry3D(toolId, toolName, toolType, sourceResult, clusterIndex);
+            if (geo != null)
+                SourceGeometries.Add(geo);
+        }
+
+        /// <summary>
+        /// 수집 마무리: 클러스터 소스가 하나뿐이고 A/B 번호가 다르면 같은 소스에서
+        /// SourceBClusterIndex 중심점을 추가 추출 — 클러스터 툴 1개 연결로 두 객체 간 거리 측정 지원.
+        /// </summary>
+        public void FinalizeSourceGeometries()
+        {
+            if (_clusterSourceCount != 1 || _lastClusterResult == null
+                || SourceBClusterIndex == SourceAClusterIndex)
+                return;
+
+            var second = ExtractGeometry3D(_lastClusterToolId, _lastClusterToolName,
+                "PointCloudClusterTool", _lastClusterResult, SourceBClusterIndex);
+            if (second != null)
+                SourceGeometries.Add(second);
+        }
+
+        /// <summary>
+        /// 소스 도구 결과에서 3D 기하 요소 추출.
+        /// PlaneFitTool → 평면(ax+by+cz+d=0), PointCloudClusterTool → i번째 클러스터 중심점
+        /// (mm 환산 키 Cluster{i}_CenterXMm/YMm + CenterZ 사용 — AutoFromCamera 또는 XyScale 적용값).
+        /// </summary>
+        public static SourceGeometry3D? ExtractGeometry3D(string toolId, string toolName,
+            string toolType, VisionResult sourceResult, int clusterIndex = 0)
+        {
+            if (!sourceResult.Success) return null;
+
+            var data = sourceResult.Data;
+            var geo = new SourceGeometry3D { ToolId = toolId, ToolName = toolName };
+
+            switch (toolType)
+            {
+                case "PlaneFitTool":
+                    if (data.TryGetValue("PlaneA", out var pa) &&
+                        data.TryGetValue("PlaneB", out var pb) &&
+                        data.TryGetValue("PlaneC", out var pc) &&
+                        data.TryGetValue("PlaneD", out var pd))
+                    {
+                        geo.PlaneA = Convert.ToDouble(pa);
+                        geo.PlaneB = Convert.ToDouble(pb);
+                        geo.PlaneC = Convert.ToDouble(pc);
+                        geo.PlaneD = Convert.ToDouble(pd);
+                        geo.HasPlane = true;
+                        return geo;
+                    }
+                    break;
+
+                case "PointCloudClusterTool":
+                    if (data.TryGetValue($"Cluster{clusterIndex}_CenterXMm", out var cx) &&
+                        data.TryGetValue($"Cluster{clusterIndex}_CenterYMm", out var cy) &&
+                        data.TryGetValue($"Cluster{clusterIndex}_CenterZ", out var cz))
+                    {
+                        geo.Point = new Vector3(
+                            Convert.ToSingle(cx), Convert.ToSingle(cy), Convert.ToSingle(cz));
+                        geo.HasPoint = true;
+                        geo.ToolName = $"{toolName}[{clusterIndex}]";
+                        return geo;
+                    }
+                    break;
+            }
+
+            return null;
+        }
+
         public Geometry3DTool()
         {
             Name = "3D Geometry";
@@ -164,20 +280,24 @@ namespace VMS.VisionSetup.VisionTools.Measurement
         {
             Vector3? p1, p2;
 
+            var pointSources = SourceGeometries.Where(s => s.HasPoint).ToList();
             if (UseManualPoints && metadata != null)
             {
                 p1 = Get3DPointFromPixel(metadata, PointA);
                 p2 = Get3DPointFromPixel(metadata, PointB);
             }
-            else if (SourceGeometries.Count >= 2)
+            else if (pointSources.Count >= 2)
             {
-                p1 = SourceGeometries[0].HasPoint ? SourceGeometries[0].Point : null;
-                p2 = SourceGeometries[1].HasPoint ? SourceGeometries[1].Point : null;
+                p1 = pointSources[0].Point;
+                p2 = pointSources[1].Point;
+                result.Data["SourceA"] = pointSources[0].ToolName;
+                result.Data["SourceB"] = pointSources[1].ToolName;
             }
             else
             {
                 result.Success = false;
-                result.Message = "두 개의 3D 포인트가 필요합니다";
+                result.Message = "두 개의 3D 포인트가 필요합니다 "
+                    + "(Cluster/PlaneFit 등을 Result로 연결하거나 Use Manual Points 사용)";
                 return;
             }
 
@@ -218,9 +338,12 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             {
                 point = Get3DPointFromPixel(metadata, PointA);
             }
-            else if (SourceGeometries.Count >= 1 && SourceGeometries[0].HasPoint)
+            else
             {
-                point = SourceGeometries[0].Point;
+                // 연결 순서와 무관하게 첫 번째 '점' 소스 사용 (평면이 먼저 연결돼도 동작)
+                var ptSrc = SourceGeometries.FirstOrDefault(s => s.HasPoint);
+                if (ptSrc != null)
+                    point = ptSrc.Point;
             }
 
             // 평면 획득 (SourceGeometries에서)
@@ -331,8 +454,8 @@ namespace VMS.VisionSetup.VisionTools.Measurement
 
             if (UseManualPoints && metadata != null)
                 point = Get3DPointFromPixel(metadata, PointA);
-            else if (SourceGeometries.Count >= 1 && SourceGeometries[0].HasPoint)
-                point = SourceGeometries[0].Point;
+            else
+                point = SourceGeometries.FirstOrDefault(s => s.HasPoint)?.Point;
 
             SourceGeometry3D? lineSrc = SourceGeometries.FirstOrDefault(s => s.HasLine);
 
@@ -470,6 +593,8 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 PointA = this.PointA,
                 PointB = this.PointB,
                 UseManualPoints = this.UseManualPoints,
+                SourceAClusterIndex = this.SourceAClusterIndex,
+                SourceBClusterIndex = this.SourceBClusterIndex,
                 IsEnabled = this.IsEnabled,
                 UseROI = this.UseROI,
                 ROI = this.ROI

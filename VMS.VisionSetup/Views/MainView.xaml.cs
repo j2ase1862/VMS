@@ -690,6 +690,67 @@ namespace VMS.VisionSetup
             return FindParent<T>(parentObject);
         }
 
+        /// <summary>비주얼 트리에서 첫 번째 자식 컨트롤 찾기 (DataGrid 내부 ScrollViewer 등).</summary>
+        private static T? FindChild<T>(DependencyObject parent) where T : DependencyObject
+        {
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                if (child is T typed) return typed;
+                var deeper = FindChild<T>(child);
+                if (deeper != null) return deeper;
+            }
+            return null;
+        }
+
+        #region Run Results DataGrid (행 펼침 토글 · 휠 스크롤)
+
+        /// <summary>
+        /// 이미 펼쳐진(선택된) 행을 다시 클릭하면 닫기 — 선택 해제로 RowDetails 접힘.
+        /// 펼침 영역(RowDetails) 내부 클릭은 무시해 상세 스크롤 조작을 방해하지 않는다.
+        /// </summary>
+        private void ResultRow_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is not DataGridRow row || !row.IsSelected) return;
+            if (e.OriginalSource is DependencyObject src
+                && FindParent<System.Windows.Controls.Primitives.DataGridDetailsPresenter>(src) != null)
+                return;
+
+            RunResultsGrid.SelectedItem = null;
+            e.Handled = true;
+        }
+
+        /// <summary>
+        /// DataGrid 위 마우스 휠 스크롤 — 행 펼침(RowDetails) 위에서는 휠 이벤트가
+        /// 내부 요소에 먹혀 그리드가 스크롤되지 않는 문제 보정.
+        /// 상세 영역 내부 ScrollViewer가 더 스크롤할 수 있으면 그쪽을 우선한다.
+        /// </summary>
+        private void RunResultsGrid_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (sender is not DataGrid grid) return;
+
+            var mainScroll = FindChild<ScrollViewer>(grid);
+            if (mainScroll == null) return;
+
+            // 상세 영역 안의 내부 ScrollViewer가 해당 방향으로 스크롤 여지가 있으면 기본 동작 유지
+            if (e.OriginalSource is DependencyObject src)
+            {
+                var innerScroll = FindParent<ScrollViewer>(src);
+                if (innerScroll != null && !ReferenceEquals(innerScroll, mainScroll))
+                {
+                    bool innerCanScroll = e.Delta < 0
+                        ? innerScroll.VerticalOffset < innerScroll.ScrollableHeight
+                        : innerScroll.VerticalOffset > 0;
+                    if (innerCanScroll) return;
+                }
+            }
+
+            mainScroll.ScrollToVerticalOffset(mainScroll.VerticalOffset - e.Delta / 40.0);
+            e.Handled = true;
+        }
+
+        #endregion
+
         #region Recipe & Camera Management
 
         /// <summary>
