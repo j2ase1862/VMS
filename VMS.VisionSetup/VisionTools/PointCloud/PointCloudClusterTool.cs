@@ -96,6 +96,21 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
             set => SetProperty(ref _drawOverlay, value);
         }
 
+        /// <summary>오버레이에 그려진 클러스터 도형 (이미지 픽셀 좌표) — 선택 강조 재렌더용.</summary>
+        public sealed class ClusterOverlayShape
+        {
+            public int Index { get; init; }
+            public OpenCvSharp.Point[] ObbCorners { get; init; } = Array.Empty<OpenCvSharp.Point>();
+            public OpenCvSharp.Point Center { get; init; }
+        }
+
+        /// <summary>
+        /// 직전 Execute에서 오버레이에 실제로 그려진 클러스터 도형 목록.
+        /// Geometry3D 설정의 클러스터 콤보 선택 시 해당 클러스터 강조 표시에 사용.
+        /// (이미지 밖이라 그리지 않은 클러스터는 포함되지 않음)
+        /// </summary>
+        public List<ClusterOverlayShape> LastOverlayShapes { get; } = new();
+
         private float _xyScale = 1.0f;
         /// <summary>
         /// X/Y 치수 환산 배율 (Manual 모드). Mech-Mind organized 점군은 X/Y가 뎁스맵 픽셀 인덱스이므로
@@ -165,12 +180,14 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
 
                 Mat? overlay = null;
                 float imgScaleX = 1f, imgScaleY = 1f;
+                LastOverlayShapes.Clear();
                 if (DrawOverlay)
                 {
                     overlay = GetColorOverlayBase(inputImage);
                     (imgScaleX, imgScaleY) = ComputeImageScale(src, overlay.Width, overlay.Height);
                 }
 
+                var mmCenters = new List<Vector3>(reported);
                 for (int i = 0; i < reported; i++)
                 {
                     var c = clusters[i];
@@ -179,6 +196,12 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                     result.Data[$"Cluster{i}_CenterX"] = center.X;
                     result.Data[$"Cluster{i}_CenterY"] = center.Y;
                     result.Data[$"Cluster{i}_CenterZ"] = center.Z;
+
+                    // mm 환산 중심 — 클러스터 간 거리/Geometry3D 점 소스용
+                    var mmCenter = ToMetricCenter(src, center);
+                    mmCenters.Add(mmCenter);
+                    result.Data[$"Cluster{i}_CenterXMm"] = mmCenter.X;
+                    result.Data[$"Cluster{i}_CenterYMm"] = mmCenter.Y;
 
                     var (scaleX, scaleY, isAuto) = ResolveXyScale(src, center.Z);
                     if (ScaleMode == DimensionScaleMode.AutoFromCamera && !isAuto)
@@ -203,6 +226,11 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                 }
                 result.Data["TotalClusteredPoints"] = totalClustered;
 
+                // 클러스터 쌍별 중심 거리 (mm 환산 좌표 기준 3D 유클리드)
+                for (int i = 0; i < mmCenters.Count; i++)
+                    for (int j = i + 1; j < mmCenters.Count; j++)
+                        result.Data[$"Cluster{i}_{j}_DistanceMm"] = Vector3.Distance(mmCenters[i], mmCenters[j]);
+
                 if (overlay != null)
                     result.OverlayImage = overlay;
                 result.OutputImage = inputImage.Clone();
@@ -224,6 +252,25 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                 LastResult = result;
             }
             return result;
+        }
+
+        /// <summary>
+        /// 클러스터 중심(X/Y px, Z mm)을 mm 좌표로 환산.
+        /// AutoFromCamera + intrinsics: 핀홀 역투영 (주점 cx/cy 오프셋 포함 — 깊이가 다른
+        /// 두 중심 간 거리도 정확). 그 외: XyScale 배율 (1.0이면 px 그대로 — 혼합 단위 주의).
+        /// </summary>
+        private Vector3 ToMetricCenter(PointCloudData src, Vector3 center)
+        {
+            if (ScaleMode == DimensionScaleMode.AutoFromCamera)
+            {
+                var intr = src.Intrinsics;
+                if (intr != null && intr.IsValid && center.Z > 0)
+                    return new Vector3(
+                        (float)((center.X - intr.Cx) * center.Z / intr.Fx),
+                        (float)((center.Y - intr.Cy) * center.Z / intr.Fy),
+                        center.Z);
+            }
+            return new Vector3(center.X * XyScale, center.Y * XyScale, center.Z);
         }
 
         /// <summary>
@@ -276,7 +323,7 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
         /// 클러스터 하나를 2D 오버레이에 표시: 점(데시메이션) + 회전 외접 사각형 + 중심 십자 + 라벨.
         /// 점군이 픽셀 좌표계가 아니라(변환/mm 점군 등) 투영 점이 전부 이미지 밖이면 그리지 않음.
         /// </summary>
-        private static void DrawClusterOnOverlay(Mat overlay, PointCloudData c, int index,
+        private void DrawClusterOnOverlay(Mat overlay, PointCloudData c, int index,
             float scaleX, float scaleY, float length, float width, bool dimsInMm)
         {
             int n = c.PointCount;
@@ -314,6 +361,12 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
             Cv2.Polylines(overlay, new[] { corners }, true, color, 2);
 
             var centerPt = new OpenCvSharp.Point((int)obb.Center.X, (int)obb.Center.Y);
+            LastOverlayShapes.Add(new ClusterOverlayShape
+            {
+                Index = index,
+                ObbCorners = corners,
+                Center = centerPt
+            });
             Cv2.DrawMarker(overlay, centerPt, new Scalar(0, 0, 255), MarkerTypes.Cross, 12, 2);
 
             string unit = dimsInMm ? "mm" : "px";
@@ -391,6 +444,8 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                 keys.Add($"Cluster{i}_CenterX");
                 keys.Add($"Cluster{i}_CenterY");
                 keys.Add($"Cluster{i}_CenterZ");
+                keys.Add($"Cluster{i}_CenterXMm");
+                keys.Add($"Cluster{i}_CenterYMm");
                 keys.Add($"Cluster{i}_SizeX");
                 keys.Add($"Cluster{i}_SizeY");
                 keys.Add($"Cluster{i}_SizeZ");
@@ -399,6 +454,9 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                 keys.Add($"Cluster{i}_Angle");
                 keys.Add($"Cluster{i}_MmPerPx");
             }
+            for (int i = 0; i < slots; i++)
+                for (int j = i + 1; j < slots; j++)
+                    keys.Add($"Cluster{i}_{j}_DistanceMm");
             return keys;
         }
 

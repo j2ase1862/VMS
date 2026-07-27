@@ -1,4 +1,5 @@
 using OpenCvSharp;
+using System.Collections.Generic;
 using VMS.Camera.Models;
 using VMS.Camera.Utils;
 using VMS.VisionSetup.Models;
@@ -40,6 +41,58 @@ namespace VMS.VisionSetup.Tests
         }
 
         [Fact]
+        public void Execute_ReportsPairwiseClusterDistances()
+        {
+            // 블록 A: x 0..3 (중심 1.5, 1.5, 5) / 블록 B: x 20..23 (중심 21.5, 1.5, 5) → 거리 20
+            var xyz = new List<float>();
+            for (int y = 0; y < 4; y++)
+                for (int x = 0; x < 4; x++) { xyz.Add(x); xyz.Add(y); xyz.Add(5f); }
+            for (int y = 0; y < 4; y++)
+                for (int x = 20; x < 24; x++) { xyz.Add(x); xyz.Add(y); xyz.Add(5f); }
+            VisionService.Instance.CurrentPointCloud = PointCloudData.FromArrays(xyz.ToArray());
+
+            var tool = new PointCloudClusterTool
+            {
+                Tolerance = 2f,
+                MinPoints = 5,
+                DrawOverlay = false,
+                OutputMode = PointCloudClusterTool.ClusterOutputMode.KeepOriginal
+            };
+            var result = RunCluster(tool);
+
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data["ClusterCount"]);
+            // XyScale=1(기본) → mm 키는 원 단위 그대로
+            Assert.True(result.Data.ContainsKey("Cluster0_CenterXMm"));
+            Assert.True(result.Data.ContainsKey("Cluster1_CenterYMm"));
+            Assert.Equal(20f, (float)result.Data["Cluster0_1_DistanceMm"], 1);
+        }
+
+        [Fact]
+        public void Execute_PairwiseDistance_AppliesXyScale()
+        {
+            var xyz = new List<float>();
+            for (int y = 0; y < 4; y++)
+                for (int x = 0; x < 4; x++) { xyz.Add(x); xyz.Add(y); xyz.Add(5f); }
+            for (int y = 0; y < 4; y++)
+                for (int x = 20; x < 24; x++) { xyz.Add(x); xyz.Add(y); xyz.Add(5f); }
+            VisionService.Instance.CurrentPointCloud = PointCloudData.FromArrays(xyz.ToArray());
+
+            var tool = new PointCloudClusterTool
+            {
+                Tolerance = 2f,
+                MinPoints = 5,
+                DrawOverlay = false,
+                XyScale = 0.5f, // 0.5 mm/px → 20px 간격 = 10mm
+                OutputMode = PointCloudClusterTool.ClusterOutputMode.KeepOriginal
+            };
+            var result = RunCluster(tool);
+
+            Assert.True(result.Success);
+            Assert.Equal(10f, (float)result.Data["Cluster0_1_DistanceMm"], 1);
+        }
+
+        [Fact]
         public void Execute_DrawOverlay_ProducesOverlayImage()
         {
             VisionService.Instance.CurrentPointCloud = MakeBlock(10, 5);
@@ -62,6 +115,11 @@ namespace VMS.VisionSetup.Tests
             // 클러스터(X 0~9, Y 0~4)가 이미지 안 → 점/사각형/라벨이 실제로 그려져야 함
             using var gray = result.OverlayImage.CvtColor(ColorConversionCodes.BGR2GRAY);
             Assert.True(Cv2.CountNonZero(gray) > 0);
+
+            // 강조 표시용 도형(OBB 코너·중심)이 기록되어야 함
+            Assert.Single(tool.LastOverlayShapes);
+            Assert.Equal(0, tool.LastOverlayShapes[0].Index);
+            Assert.Equal(4, tool.LastOverlayShapes[0].ObbCorners.Length);
         }
 
         [Fact]

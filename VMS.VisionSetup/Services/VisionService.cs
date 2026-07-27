@@ -310,6 +310,22 @@ namespace VMS.VisionSetup.Services
         }
 
         /// <summary>
+        /// 대상 도구로 들어오는 지정 타입 연결의 소스 도구 목록 (연결 추가 순서 유지).
+        /// 설정 UI가 연결된 소스(예: Geometry3D의 클러스터 소스)를 표시할 때 사용.
+        /// </summary>
+        public List<VisionToolBase> GetConnectedSources(VisionToolBase target, ConnectionType type)
+        {
+            var sources = new List<VisionToolBase>();
+            foreach (var conn in _connections.Where(c => c.TargetId == target.Id && c.Type == type))
+            {
+                var src = Tools.FirstOrDefault(t => t.Id == conn.SourceId);
+                if (src != null)
+                    sources.Add(src);
+            }
+            return sources;
+        }
+
+        /// <summary>
         /// 특정 도구에 대한 입력 연결 가져오기 (해당 도구가 Target인 연결들)
         /// </summary>
         private List<ToolConnectionInfo> GetInputConnections(VisionToolBase tool)
@@ -778,6 +794,10 @@ namespace VMS.VisionSetup.Services
 
             try
             {
+                // Run Selected에서도 3D 기하 소스 주입 (업스트림 결과는 resultMap에 수집됨)
+                if (tool is Geometry3DTool g3)
+                    InjectGeometry3DSources(g3, resultMap, Tools);
+
                 tool.OverlayBaseImage = toolInput;
                 var result = tool.Execute(toolInput);
                 tool.LastResult = result;
@@ -792,6 +812,31 @@ namespace VMS.VisionSetup.Services
                 foreach (var ci in clonedInputs)
                     ci.Dispose();
             }
+        }
+
+        /// <summary>
+        /// Geometry3DTool의 Result 연결 소스에서 3D 기하 요소(평면/클러스터 중심점)를 수집.
+        /// 클러스터 소스가 하나뿐이면 FinalizeSourceGeometries가 SourceB 번호의 중심점을
+        /// 추가해 클러스터 툴 1개로도 두 객체 간 거리 측정이 가능하다.
+        /// </summary>
+        private void InjectGeometry3DSources(Geometry3DTool g3,
+            Dictionary<string, VisionResult> resultMap, IEnumerable<VisionToolBase> tools)
+        {
+            g3.ClearSourceGeometries();
+            foreach (var conn in _connections
+                .Where(c => c.TargetId == g3.Id && c.Type == ConnectionType.Result))
+            {
+                if (resultMap.TryGetValue(conn.SourceId, out var srcResult))
+                {
+                    var srcTool = tools.FirstOrDefault(t => t.Id == conn.SourceId);
+                    g3.CollectSourceGeometry(
+                        conn.SourceId,
+                        srcTool?.Name ?? conn.SourceId,
+                        srcTool?.ToolType ?? string.Empty,
+                        srcResult);
+                }
+            }
+            g3.FinalizeSourceGeometries();
         }
 
         /// <summary>
@@ -876,7 +921,7 @@ namespace VMS.VisionSetup.Services
 
                 // 1. Result 연결 확인: Source가 실패이면 건너뛰기
                 //    ResultTool / EnsembleTool은 실패 정보를 수집해야 하므로 스킵 우회
-                if (tool is not ResultTool and not GeometryTool and not EnsembleTool && ShouldSkipByResultConnection(tool, resultMap))
+                if (tool is not ResultTool and not GeometryTool and not Geometry3DTool and not EnsembleTool && ShouldSkipByResultConnection(tool, resultMap))
                 {
                     var skipResult = new VisionResult
                     {
@@ -993,6 +1038,11 @@ namespace VMS.VisionSetup.Services
                             }
                         }
                     }
+
+                    // Geometry3DTool: Execute 전에 연결된 소스의 3D 기하 요소 주입
+                    // (PlaneFitTool → 평면, PointCloudClusterTool → 클러스터 중심점 mm)
+                    if (tool is Geometry3DTool g3)
+                        InjectGeometry3DSources(g3, resultMap, sortedTools);
 
                     var result = tool.Execute(inputImage);
                     tool.LastResult = result;

@@ -218,6 +218,8 @@ namespace VMS.VisionSetup.Models
                     ["LargestPoints"] = "가장 큰 덩어리의 점 개수.",
                     ["Cluster{i}_Points"] = "i번째 덩어리의 점 개수 (큰 것부터 순서대로, MaxReportedClusters 개까지 표시).",
                     ["Cluster{i}_CenterX/Y/Z"] = "i번째 덩어리의 중심 위치. 3D 카메라 grab 점군은 X/Y가 픽셀, Z는 mm.",
+                    ["Cluster{i}_CenterXMm/YMm"] = "mm 환산 중심 (AutoFromCamera: 핀홀 역투영, Manual: XyScale 배율). Geometry 3D의 점 소스로 사용됨.",
+                    ["Cluster{i}_{j}_DistanceMm"] = "i번째-j번째 덩어리 중심 간 3D 거리 (mm 환산 좌표 기준). 예: Cluster0_1_DistanceMm = 가장 큰 두 덩어리 간 거리. XyScale=1(Manual)이면 픽셀 혼합 단위 주의.",
                     ["Cluster{i}_SizeX/Y/Z"] = "i번째 덩어리의 축 정렬 크기 (X/Y 폭·높이, Z 높이차). X/Y는 XyScale 적용, Z는 mm 그대로.",
                     ["Cluster{i}_Length/Width"] = "XY 평면 최소 외접 사각형(OBB)의 긴 변/짧은 변 — 비스듬히 놓인 부품의 실제 길이·폭 (환산 배율 적용).",
                     ["Cluster{i}_Angle"] = "OBB 긴 변의 각도 (도, -90~90). 부품이 놓인 방향.",
@@ -736,12 +738,15 @@ namespace VMS.VisionSetup.Models
             ["Geometry3DTool"] = new ToolHelp
             {
                 Name = "Geometry 3D (3D 기하 연산)",
-                Description = "PlaneFitTool / CaliperTool+HeightMap 등에서 추출한 3D 기하 요소(점/평면/직선) 간 관계를 계산합니다.\n점-점 거리, 점-평면 수직거리, 평면-평면 각도 등을 산출.",
-                Usage = "3D 측정 파이프라인의 마지막 단계 — 형상 추출 도구 둘의 결과를 연결해 정량 측정값 산출.\n예: PlaneFitTool(A) + PlaneFitTool(B) → Geometry3DTool(PlaneToPlaneAngle) → 두 평면 각도 측정.",
+                Description = "3D 기하 요소(점/평면/직선) 간 관계를 계산합니다 — 점-점 거리, 점-평면 수직거리, 평면-평면 각도 등.\n점 소스: 수동 픽셀 입력(높이맵에서 3D 복원) 또는 Result 연결(PointCloud Cluster의 클러스터 중심점 mm).\n평면 소스: PlaneFitTool Result 연결.",
+                Usage = "3D 측정 파이프라인의 마지막 단계 — 형상 추출 도구의 결과를 Result로 연결해 정량 측정값 산출.\n예1: PlaneFitTool(A) + PlaneFitTool(B) → PlaneToPlaneAngle → 두 평면 각도.\n예2: PointCloud Cluster → PointToPointDistance → 검출된 두 객체(Cluster A/B 번호) 중심 간 mm 거리. 연결 소스를 쓰려면 Use Manual Points를 끄세요.\n예3: PointCloud Cluster + PlaneFitTool → PointToPlaneDistance → 객체 중심에서 기준면까지 높이.",
                 CognexEquivalent = "Cognex 3D Result Analysis Tool",
                 Parameters = new Dictionary<string, string>
                 {
-                    ["Operation"] = "기하 연산 종류:\n• PointToPointDistance: 두 점 사이 유클리드 거리(mm)\n• PointToPlaneDistance: 점에서 평면까지 수직 거리\n• PlaneToPlaneAngle: 두 평면 사이 각도(도)\n• LineToLineAngle: 두 직선 사이 각도\n• PointToLineDistance: 점에서 직선까지 수직 거리",
+                    ["Operation"] = "기하 연산 종류:\n• PointToPointDistance: 두 점 사이 유클리드 거리(mm)\n• PointToPlaneDistance: 점에서 평면까지 수직 거리\n• PlaneToPlaneAngle: 두 평면 사이 각도(도)\n• PlaneToPlaneDistance: 평행 평면 간 거리\n• PointToLineDistance3D: 점에서 직선까지 수직 거리",
+                    ["UseManualPoints"] = "포인트 소스 선택 (라디오): 수동 입력 = PointA/B 픽셀을 높이맵에서 3D 복원 / 연결 소스 = Result 연결(클러스터 중심점 등) 사용. 점을 쓰는 연산에서만 표시됩니다.",
+                    ["SourceAClusterIndex"] = "첫 번째 클러스터 소스에서 쓸 클러스터 번호 (기본 0 = 가장 큰 덩어리). Run 후에는 콤보박스에서 '#번호 — 점수, 길이x폭'으로 선택 가능하고, 선택하면 2D 뷰어에 해당 덩어리가 강조 표시됩니다.",
+                    ["SourceBClusterIndex"] = "두 번째 점의 클러스터 번호 (기본 1). 클러스터 툴 하나만 연결해도 A/B 두 클러스터 중심 간 거리를 잽니다.\n※ mm 정확도는 Cluster의 Scale Mode를 따름 — AutoFromCamera(권장) 또는 XyScale 설정 필요. XyScale=1이면 픽셀 혼합 단위.",
                     ["ExpectedValue"] = "목표 측정값. 결과가 ExpectedValue ± Tolerance 범위 내면 OK.",
                     ["Tolerance"] = "허용 공차. 단위는 Operation 에 따라 mm 또는 도.",
                     ["EnableJudgment"] = "Pass/Fail 판정 활성화. 비활성 시 측정값만 반환."

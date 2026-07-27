@@ -289,6 +289,8 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["PointAY"] = geom3D.PointA.Y;
                     config.Parameters["PointBX"] = geom3D.PointB.X;
                     config.Parameters["PointBY"] = geom3D.PointB.Y;
+                    config.Parameters["SourceAClusterIndex"] = geom3D.SourceAClusterIndex;
+                    config.Parameters["SourceBClusterIndex"] = geom3D.SourceBClusterIndex;
                     break;
 
                 case OCRTool ocr:
@@ -1233,6 +1235,10 @@ namespace VMS.VisionSetup.Services
                 tool.PointA = new OpenCvSharp.Point2d(GetDouble(pax), GetDouble(pay));
             if (p.TryGetValue("PointBX", out var pbx) && p.TryGetValue("PointBY", out var pby))
                 tool.PointB = new OpenCvSharp.Point2d(GetDouble(pbx), GetDouble(pby));
+            if (p.TryGetValue("SourceAClusterIndex", out var sai))
+                tool.SourceAClusterIndex = GetInt(sai);
+            if (p.TryGetValue("SourceBClusterIndex", out var sbi))
+                tool.SourceBClusterIndex = GetInt(sbi);
 
             return tool;
         }
