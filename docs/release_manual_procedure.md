@@ -1,0 +1,155 @@
+# VMS 릴리즈 발행 절차 (수동 발행 표준)
+
+문서 버전: v1.0 (2026-07-27, v1.5.3 발행 기준)
+
+> 관련 문서:
+> - 릴리즈 파이프라인 배경·인앱 업데이트 알림: [release_and_update_guide_v1.0.md](release_and_update_guide_v1.0.md)
+> - MSI 빌드 상세: [msi_build_guide.md](msi_build_guide.md)
+>
+> 이 문서는 dev PC 운영자가 매 릴리즈마다 따라가는 **실행 절차서**다.
+> 사본이 dev PC `D:\VMS-Releases\릴리즈_발행_절차.md` 에도 있음 — 갱신 시 양쪽 동기화.
+
+## 개요
+
+| 항목 | 값 |
+|---|---|
+| 소스 저장소 | `j2ase1862/VMS` (private 전환 예정) — 코드 · bump PR · 태그 |
+| 배포 저장소 | `j2ase1862/VMS-Releases` (**public**) — 릴리즈 발행 · MSI 다운로드 · 인앱 업데이트 알림 조회 |
+| 버전 소스 | `Directory.Build.props` 단 한 곳 (Assembly + MSI ProductVersion 자동 동기화) |
+| 버전 규칙 | feat 포함 = MINOR (1.5.x → 1.6.0) / fix만 = PATCH / MAJOR는 수동 판단 |
+| 빌드 PC | **반드시 dev PC** — CI 빌드에는 Mech-Eye SDK가 없어 Mech-Mind 카메라 미지원 |
+| 로컬 보관 | dev PC `D:\VMS-Releases\VMS-<버전>\` (bin\Release는 clean 시 소실되므로 필수) |
+
+모든 명령은 리포지토리 루트에서 실행. 아래 예시는 v1.5.4 발행 기준 — 버전만 바꿔서 사용.
+
+---
+
+## ① 버전 bump PR
+
+```powershell
+git checkout -b chore/release-v1.5.4 origin/master
+```
+
+`Directory.Build.props` 를 열어 세 곳 수정:
+
+```xml
+<Version>1.5.4</Version>
+<AssemblyVersion>1.5.4.0</AssemblyVersion>
+<FileVersion>1.5.4.0</FileVersion>
+```
+
+```powershell
+git add Directory.Build.props
+git commit -m "chore(release): bump version to 1.5.4"
+git push -u origin chore/release-v1.5.4
+gh pr create --base master --title "chore(release): bump version to 1.5.4" --body "v1.5.4 릴리즈 버전 bump"
+```
+
+CI(Build & Test) 통과 확인 후 머지:
+
+```powershell
+gh pr checks <PR번호> --watch     # pass 될 때까지 대기 (약 10분)
+gh pr merge <PR번호> --merge
+git checkout master
+git pull --ff-only origin master
+```
+
+## ② MSI 빌드 + 체크섬 (dev PC)
+
+```powershell
+dotnet build VMS.sln -c Release
+dotnet build VMS.MasterSetup\VMS.MasterSetup.wixproj -c Release
+```
+
+산출물: `VMS.MasterSetup\bin\Release\VMS-1.5.4.msi` (약 1,055MB — 1GB 넘게 나와야 Mech-Mind 포함 정상. 538MB대면 CI 빌드거나 SDK 누락 의심)
+
+```powershell
+$h = (Get-FileHash VMS.MasterSetup\bin\Release\VMS-1.5.4.msi -Algorithm SHA256).Hash.ToLower()
+"$h  VMS-1.5.4.msi" | Out-File VMS.MasterSetup\bin\Release\VMS-1.5.4.msi.sha256 -Encoding ascii
+```
+
+## ③ 릴리즈 노트 작성
+
+이전 버전 노트(dev PC `D:\VMS-Releases\VMS-<이전버전>\릴리즈노트_*.md`) 형식 참고:
+
+- 제목: `# BODA VMS v1.5.4`
+- 한 줄 요약 → `## 새 기능`/`## 수정` (PR 번호 병기) → `## 설치 안내` (기존 v1.4.10 이상은 MSI 실행만으로 업그레이드, 레시피 호환)
+
+포함할 PR 목록 확인:
+
+```powershell
+git log v1.5.3..origin/master --oneline
+```
+
+## ④ VMS-Releases에 draft 생성 → 자산 확인 → publish
+
+⚠️ `--repo j2ase1862/VMS-Releases` 필수 — 소스 repo에 만들면 안 됨.
+
+```powershell
+gh release create v1.5.4 --repo j2ase1862/VMS-Releases --draft `
+  --title "BODA VMS v1.5.4" --notes-file 릴리즈노트_v1.5.4.md `
+  VMS.MasterSetup\bin\Release\VMS-1.5.4.msi `
+  VMS.MasterSetup\bin\Release\VMS-1.5.4.msi.sha256
+```
+
+(1GB 업로드 — 몇 분 소요)
+
+자산이 온전히 올라갔는지 확인 후 publish:
+
+```powershell
+gh release view v1.5.4 --repo j2ase1862/VMS-Releases --json assets
+# MSI size가 로컬 파일 크기(바이트)와 일치하는지 확인
+gh release edit v1.5.4 --repo j2ase1862/VMS-Releases --draft=false
+```
+
+**규칙: 자산 없는 릴리즈를 publish 하지 말 것** — 현장 VMS가 시작 시 latest를 조회하므로, 자산 없이 publish 되면 다운로드 불가한 업데이트 알림이 뜬다.
+
+## ⑤ 소스 repo에 태그 push
+
+**잊기 쉬운 단계.** 릴리즈는 VMS-Releases 쪽에 생기므로 소스 repo 태그는 별도로 만들어야 함 (다음 릴리즈 때 `git log v1.5.4..` 범위 계산과 주간 자동 루틴이 이 태그를 기준으로 함):
+
+```powershell
+git tag v1.5.4
+git push origin v1.5.4
+```
+
+태그 push로 CI가 돌지 않는 것이 정상 (release.yml 폐지됨 — PR #255).
+
+## ⑥ 로컬 보관 + 최종 확인
+
+```powershell
+New-Item -ItemType Directory -Force D:\VMS-Releases\VMS-1.5.4
+Copy-Item VMS.MasterSetup\bin\Release\VMS-1.5.4.msi* D:\VMS-Releases\VMS-1.5.4\
+# 릴리즈노트 md + 현장검증 체크리스트 md 도 같은 폴더에 저장
+Get-FileHash D:\VMS-Releases\VMS-1.5.4\VMS-1.5.4.msi -Algorithm SHA256   # 해시 재검증
+```
+
+최종 확인 — 인앱 알림이 보는 익명 API가 새 버전을 반환하는지:
+
+```powershell
+(Invoke-RestMethod "https://api.github.com/repos/j2ase1862/VMS-Releases/releases/latest").tag_name
+# → v1.5.4
+```
+
+---
+
+## 실수했을 때 (롤백)
+
+```powershell
+gh release delete v1.5.4 --repo j2ase1862/VMS-Releases --yes   # 릴리즈 삭제
+git push --delete origin v1.5.4; git tag -d v1.5.4             # 소스 태그 제거
+```
+
+인앱 체커는 캐시가 없어 삭제 즉시 반영됨. 버전을 다시 올릴 때는 같은 번호 재사용 가능.
+
+## 과거 사고에서 나온 규칙 (요약)
+
+- **v1.4.10 사고**: 태그 push CI가 수동 발행 MSI를 CI 빌드(Mech-Mind 없음)로 덮어씀 → release.yml 폐지로 근원 제거. 순서는 항상 *빌드 → draft(자산 포함) → publish → 태그*.
+- **CI 빌드 MSI는 현장 배포 금지** — Mech-Eye SDK 미포함 (538MB대가 그 증거).
+- 현장 배포는 VMS-Releases에서 직접 다운로드 (USB 교체 방식은 v1.5.2부터 폐지).
+
+## 변경 이력
+
+| 버전 | 일자 | 주요 변경 |
+|---|---|---|
+| v1.0 | 2026-07-27 | 최초 작성 — v1.5.3 발행 기준 수동 발행 6단계 + 롤백 + 사고 규칙 |
