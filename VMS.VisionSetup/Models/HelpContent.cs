@@ -232,7 +232,8 @@ namespace VMS.VisionSetup.Models
                     ["MaxReportedClusters"] = "결과 Data에 노출할 상위 클러스터 수 (실제로는 모두 처리, 표시 제한만).",
                     ["OutputMode"] = "결과 처리 모드:\n• LargestOnly: VisionService.CurrentPointCloud를 가장 큰 클러스터로 교체 (객체 분리용)\n• AllMerged: 활성 클러스터들을 모두 합산 (작은 노이즈 제거)\n• KeepOriginal: CurrentPointCloud 유지, 메트릭만",
                     ["ScaleMode"] = "치수 환산 방식:\n• Manual: 아래 XyScale 값 사용 (기본, 기존 호환)\n• AutoFromCamera (권장): 카메라 depth 내부 파라미터(fx/fy)와 덩어리의 실측 높이 Z로 mm/px = Z/fx 를 자동 계산 — 작동 거리가 바뀌어도 정확. Mech-Mind grab 점군에서만 가능하며, .vpc 로드 등 카메라 정보가 없으면 XyScale로 폴백(메시지에 ⚠ 표시).",
-                    ["XyScale"] = "Manual 모드의 치수(SizeX/Y, Length/Width) X/Y 환산 배율 (mm/pixel). 3D 카메라 grab 점군은 X/Y가 픽셀 단위라(Z만 mm) 실측 mm 치수가 필요하면 mm/pixel을 입력.\n• 1.0: 원 단위 그대로 (기본)\n산출 절차: docs/3d_dimension_calibration_guide.md (기지 치수 물체 1회 측정).\n※ CenterX/Y에는 적용되지 않음 (기존 레시피 호환)."
+                    ["XyScale"] = "Manual 모드의 치수(SizeX/Y, Length/Width) X/Y 환산 배율 (mm/pixel). 3D 카메라 grab 점군은 X/Y가 픽셀 단위라(Z만 mm) 실측 mm 치수가 필요하면 mm/pixel을 입력.\n• 1.0: 원 단위 그대로 (기본)\n산출 절차: docs/3d_dimension_calibration_guide.md (기지 치수 물체 1회 측정).\n※ CenterX/Y에는 적용되지 않음 (기존 레시피 호환).",
+                    ["DrawOverlay"] = "찾은 덩어리를 2D 이미지 뷰어에 표시 (기본 켬). 덩어리별 색상 점 + 외접 사각형 + 중심 십자 + 라벨(#번호, 점 수, 길이x폭). 라벨 단위는 mm 환산 적용 시 mm, 아니면 px. 점군이 픽셀 좌표계가 아니면(변환된 mm 점군 등) 해당 덩어리는 그리지 않습니다."
                 }
             },
 
@@ -240,21 +241,24 @@ namespace VMS.VisionSetup.Models
             {
                 Name = "PointCloud Mask Crop (2D 마스크로 점군 잘라내기)",
                 Description = "2D 마스크 이미지로 3D 점군을 잘라내는 도구 — 2D 딥러닝 검출과 3D 분석을 잇는 다리입니다.\n\n[언제 쓰나요]\n• YOLOv8-seg가 찾은 객체의 점군만 남겨 개수/치수를 재고 싶을 때\n• Threshold/Height Slicer 마스크로 관심 영역의 점군만 추리고 싶을 때\n\n마스크에서 0이 아닌 픽셀 위치의 점만 남기고, 남은 점군은 후속 점군 도구(Cluster, Registration 등)가 사용합니다. 마스크와 점군의 해상도가 달라도 자동으로 비율을 맞춥니다.",
-                Usage = "1) 마스크를 만드는 도구(YOLOv8-seg의 Output Mask Image 켬, Threshold, Height Slicer 등)를 앞에 배치. 2) 그 도구 → 이 도구로 Image 연결. 3) Run → 마스크 안의 점만 남음. 4) 뒤에 PointCloud Cluster를 연결(Result 연결로 순서 보장)하면 객체 개수·치수 측정 완성.",
+                Usage = "[자동 마스크] 1) 마스크를 만드는 도구(YOLOv8-seg의 Output Mask Image 켬, Threshold, Height Slicer 등)를 앞에 배치. 2) 그 도구 → 이 도구로 Image 연결. 3) Run → 마스크 안의 점만 남음. 4) 뒤에 PointCloud Cluster를 연결(Result 연결로 순서 보장)하면 객체 개수·치수 측정 완성.\n\n[수동 ROI] 마스크 도구 없이 2D 이미지를 그대로 연결하고, 이 도구를 선택한 뒤 이미지 뷰어에서 ROI(사각형·원·다각형)를 그리면 그 영역의 점군만 남습니다 — 결과는 3D 뷰어에서 확인.",
                 CognexEquivalent = "(Mech-Vision의 '마스크로 점군 추출' 스텝 대응)",
                 Results = new Dictionary<string, string>
                 {
                     ["InputPoints"] = "잘라내기 전의 점 개수.",
                     ["OutputPoints"] = "마스크 안에 남은 점 개수. 0이면 실패 처리되고 점군은 바뀌지 않음.",
                     ["KeptRatio"] = "남은 비율 (0~1).",
-                    ["MaskCoveragePercent"] = "마스크에서 0이 아닌 픽셀의 비율 (%). 값이 100에 가까우면 마스크가 아니라 일반 이미지를 연결했을 가능성이 큼."
+                    ["MaskCoveragePercent"] = "마스크에서 0이 아닌 픽셀의 비율 (%). 값이 100에 가까우면 마스크가 아니라 일반 이미지를 연결했을 가능성이 큼.",
+                    ["MergedPoints"] = "이 도구 실행 후 CurrentPointCloud의 총 점 수. Union 모드면 기존 점군 + 이번 크롭 합계."
                 },
                 Parameters = new Dictionary<string, string>
                 {
                     ["MinMaskValue"] = "포함 판정 최소 픽셀값 (1~255). 이진 마스크(0/255)는 기본값 1이면 충분. 그레이 마스크에서 확신 높은 영역만 쓰려면 올리세요.",
                     ["DilatePixels"] = "마스크 팽창 (px). 세그멘테이션 마스크가 객체 가장자리를 살짝 못 덮을 때 2~5px 정도 넓혀 경계 점까지 포함.",
                     ["InvertMask"] = "true: 마스크 바깥의 점을 남김 (객체를 제거하고 배경만 남길 때).",
-                    ["SkipInvalidZ"] = "Z=0 점 제외 (기본 켬). 3D 카메라가 측정 실패한 픽셀은 Z=0으로 저장되므로, 켜두면 무효 점이 후속 클러스터/치수에 섞이지 않습니다."
+                    ["SkipInvalidZ"] = "Z=0 점 제외 (기본 켬). 3D 카메라가 측정 실패한 픽셀은 Z=0으로 저장되므로, 켜두면 무효 점이 후속 클러스터/치수에 섞이지 않습니다.",
+                    ["(도구 ROI)"] = "이 도구에 ROI를 그리면 ROI 밖 픽셀은 마스크에서 제외됩니다. 마스크 이미지와 조합하면 'ROI 안에서 검출된 객체만' 크롭할 수도 있습니다.",
+                    ["CombineMode"] = "여러 Mask Crop을 함께 쓸 때의 합성 방식:\n• Replace (기본): 현재 남아 있는 점군에서 잘라 교체 — 크롭 하나만 쓰거나 직렬로 점점 좁힐 때\n• Union: Run 시작 시점 점군에서 잘라 기존 결과에 합침 — 같은 이미지에 ROI가 다른 Mask Crop을 나란히 연결할 때 두 번째부터 Union 선택. 전부 Replace면 첫 크롭이 점군을 이미 좁혀 두 번째가 'No point inside mask'로 실패합니다.\n※ ROI가 겹치면 겹친 점이 중복될 수 있음."
                 }
             },
 

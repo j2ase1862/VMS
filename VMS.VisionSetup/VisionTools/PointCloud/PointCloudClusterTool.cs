@@ -88,6 +88,14 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
             set => SetProperty(ref _scaleMode, value);
         }
 
+        private bool _drawOverlay = true;
+        /// <summary>2D 이미지 뷰어에 클러스터 결과(점·외접 사각형·라벨) 오버레이 표시.</summary>
+        public bool DrawOverlay
+        {
+            get => _drawOverlay;
+            set => SetProperty(ref _drawOverlay, value);
+        }
+
         private float _xyScale = 1.0f;
         /// <summary>
         /// X/Y 치수 환산 배율 (Manual 모드). Mech-Mind organized 점군은 X/Y가 뎁스맵 픽셀 인덱스이므로
@@ -154,6 +162,15 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                 long totalClustered = 0;
                 int reported = Math.Min(MaxReportedClusters, clusters.Count);
                 bool autoScaleUnavailable = false;
+
+                Mat? overlay = null;
+                float imgScaleX = 1f, imgScaleY = 1f;
+                if (DrawOverlay)
+                {
+                    overlay = GetColorOverlayBase(inputImage);
+                    (imgScaleX, imgScaleY) = ComputeImageScale(src, overlay.Width, overlay.Height);
+                }
+
                 for (int i = 0; i < reported; i++)
                 {
                     var c = clusters[i];
@@ -176,9 +193,18 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                     result.Data[$"Cluster{i}_Angle"] = m.Angle;
                     result.Data[$"Cluster{i}_MmPerPx"] = (scaleX + scaleY) * 0.5f;
                     totalClustered += c.PointCount;
+
+                    if (overlay != null)
+                    {
+                        bool dimsInMm = isAuto || XyScale != 1.0f;
+                        DrawClusterOnOverlay(overlay, c, i, imgScaleX, imgScaleY,
+                            m.Length, m.Width, dimsInMm);
+                    }
                 }
                 result.Data["TotalClusteredPoints"] = totalClustered;
 
+                if (overlay != null)
+                    result.OverlayImage = overlay;
                 result.OutputImage = inputImage.Clone();
                 result.Success = true;
                 result.Message = $"Found {clusters.Count} cluster(s), largest={clusters[0].PointCount} pts, mode={OutputMode}"
@@ -214,6 +240,91 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                     return ((float)(clusterZ / intr.Fx), (float)(clusterZ / intr.Fy), true);
             }
             return (XyScale, XyScale, false);
+        }
+
+        // 클러스터별 오버레이 색상 (BGR) — 어두운 배경/점군 이미지에서 잘 보이는 고채도 계열
+        private static readonly Scalar[] ClusterColors =
+        {
+            new(0, 255, 255),   // Yellow
+            new(0, 255, 0),     // Green
+            new(255, 128, 0),   // Blue-ish
+            new(255, 0, 255),   // Magenta
+            new(0, 128, 255),   // Orange
+            new(255, 255, 0),   // Cyan
+            new(128, 128, 255), // Light red
+            new(0, 0, 255)      // Red
+        };
+
+        /// <summary>
+        /// 점군 X/Y 좌표(뎁스맵 픽셀) → 표시 이미지 픽셀 배율.
+        /// organized면 인접 점 간격(stride)으로 뎁스맵 해상도를 복원해 비율을 맞추고
+        /// (PointCloudMaskCropTool.ComputeMaskScale과 동일 규약), unorganized면 동일 픽셀 공간 가정(1:1).
+        /// </summary>
+        private static (float scaleX, float scaleY) ComputeImageScale(PointCloudData src, int imgW, int imgH)
+        {
+            if (!src.IsOrganized || src.GridWidth <= 1 || src.GridHeight <= 1)
+                return (1f, 1f);
+
+            float strideX = Math.Max(1f, src.Positions[1].X - src.Positions[0].X);
+            float strideY = Math.Max(1f, src.Positions[src.GridWidth].Y - src.Positions[0].Y);
+            float srcW = src.GridWidth * strideX;
+            float srcH = src.GridHeight * strideY;
+            return (imgW / srcW, imgH / srcH);
+        }
+
+        /// <summary>
+        /// 클러스터 하나를 2D 오버레이에 표시: 점(데시메이션) + 회전 외접 사각형 + 중심 십자 + 라벨.
+        /// 점군이 픽셀 좌표계가 아니라(변환/mm 점군 등) 투영 점이 전부 이미지 밖이면 그리지 않음.
+        /// </summary>
+        private static void DrawClusterOnOverlay(Mat overlay, PointCloudData c, int index,
+            float scaleX, float scaleY, float length, float width, bool dimsInMm)
+        {
+            int n = c.PointCount;
+            if (n == 0) return;
+
+            // 점 표시는 클러스터당 최대 ~20k개로 데시메이션 (표시 비용 억제, OBB 정밀도 충분)
+            int step = Math.Max(1, n / 20_000);
+            var projected = new List<OpenCvSharp.Point2f>(Math.Min(n, 20_000) + 1);
+            int insideCount = 0;
+            for (int i = 0; i < n; i += step)
+            {
+                var p = c.Positions[i];
+                float x = p.X * scaleX, y = p.Y * scaleY;
+                projected.Add(new OpenCvSharp.Point2f(x, y));
+                if (x >= 0 && x < overlay.Width && y >= 0 && y < overlay.Height)
+                    insideCount++;
+            }
+            if (insideCount == 0) return;
+
+            var color = ClusterColors[index % ClusterColors.Length];
+
+            foreach (var pt in projected)
+            {
+                int px = (int)pt.X, py = (int)pt.Y;
+                if (px >= 0 && px < overlay.Width && py >= 0 && py < overlay.Height)
+                    Cv2.Circle(overlay, px, py, 1, color, -1);
+            }
+
+            // 회전 외접 사각형 (이미지 픽셀 공간의 OBB)
+            var obb = Cv2.MinAreaRect(projected);
+            var corners = new OpenCvSharp.Point[4];
+            var cornerPts = obb.Points();
+            for (int i = 0; i < 4; i++)
+                corners[i] = new OpenCvSharp.Point((int)cornerPts[i].X, (int)cornerPts[i].Y);
+            Cv2.Polylines(overlay, new[] { corners }, true, color, 2);
+
+            var centerPt = new OpenCvSharp.Point((int)obb.Center.X, (int)obb.Center.Y);
+            Cv2.DrawMarker(overlay, centerPt, new Scalar(0, 0, 255), MarkerTypes.Cross, 12, 2);
+
+            string unit = dimsInMm ? "mm" : "px";
+            string label = $"#{index} {n}pt {length:F1}x{width:F1}{unit}";
+            // Min/Max 조합 — 이미지가 라벨보다 작아도 (min > max) 예외 없이 동작
+            var labelPos = new OpenCvSharp.Point(
+                Math.Max(0, Math.Min(centerPt.X + 8, overlay.Width - 200)),
+                Math.Max(14, Math.Min(centerPt.Y - 8, overlay.Height - 4)));
+            // 검은 외곽선 + 흰 글자 — 배경 무관 가독성
+            Cv2.PutText(overlay, label, labelPos, HersheyFonts.HersheySimplex, 0.5, Scalar.Black, 3);
+            Cv2.PutText(overlay, label, labelPos, HersheyFonts.HersheySimplex, 0.5, Scalar.White, 1);
         }
 
         /// <summary>
@@ -304,7 +415,8 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                 MaxReportedClusters = this.MaxReportedClusters,
                 OutputMode = this.OutputMode,
                 ScaleMode = this.ScaleMode,
-                XyScale = this.XyScale
+                XyScale = this.XyScale,
+                DrawOverlay = this.DrawOverlay
             };
             CopyPlcMappingsTo(clone);
             return clone;

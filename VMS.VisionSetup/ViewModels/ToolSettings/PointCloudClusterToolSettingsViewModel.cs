@@ -16,6 +16,7 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         public int MaxPoints { get => TypedTool.MaxPoints; set => TypedTool.MaxPoints = value; }
         public int MaxReportedClusters { get => TypedTool.MaxReportedClusters; set => TypedTool.MaxReportedClusters = value; }
         public float XyScale { get => TypedTool.XyScale; set => TypedTool.XyScale = value; }
+        public bool DrawOverlay { get => TypedTool.DrawOverlay; set => TypedTool.DrawOverlay = value; }
         public PointCloudClusterTool.DimensionScaleMode ScaleMode
         {
             get => TypedTool.ScaleMode;

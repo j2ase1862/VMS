@@ -1,5 +1,6 @@
 using OpenCvSharp;
 using VMS.Camera.Models;
+using VMS.VisionSetup.Models;
 using VMS.VisionSetup.Services;
 using VMS.VisionSetup.VisionTools.PointCloud;
 using Xunit;
@@ -167,6 +168,175 @@ namespace VMS.VisionSetup.Tests
 
             Assert.True(result.Success);
             Assert.Same(intr, service.CurrentPointCloud!.Intrinsics);
+        }
+
+        [Fact]
+        public void Execute_UseROI_CropsToRoiRegionOnly()
+        {
+            var service = VisionService.Instance;
+            service.CurrentPointCloud = MakeOrganized(4, 4);
+            // 일반 이미지(전체 흰색)를 연결하고 ROI만 그린 시나리오
+            using var image = MakeLeftMask(4, 4, 4);
+
+            var tool = new PointCloudMaskCropTool { UseROI = true, ROI = new Rect(0, 0, 2, 4) };
+            var result = tool.Execute(image);
+
+            Assert.True(result.Success);
+            Assert.Equal(8, result.Data["OutputPoints"]);
+            for (int i = 0; i < service.CurrentPointCloud!.PointCount; i++)
+                Assert.True(service.CurrentPointCloud.Positions[i].X < 2f);
+        }
+
+        [Fact]
+        public void Execute_UseROI_OutsideImage_IsIgnored()
+        {
+            var service = VisionService.Instance;
+            service.CurrentPointCloud = MakeOrganized(4, 4);
+            using var image = MakeLeftMask(4, 4, 4);
+
+            // ROI가 이미지와 안 겹치면 no-op — 전체 마스크 그대로
+            var tool = new PointCloudMaskCropTool { UseROI = true, ROI = new Rect(100, 100, 10, 10) };
+            var result = tool.Execute(image);
+
+            Assert.True(result.Success);
+            Assert.Equal(16, result.Data["OutputPoints"]);
+        }
+
+        [Fact]
+        public void Execute_OutputImage_IsEffectiveKeptMask_AndOverlayProduced()
+        {
+            var service = VisionService.Instance;
+            service.CurrentPointCloud = MakeOrganized(4, 4);
+            using var image = MakeLeftMask(4, 4, 4); // 전체 흰색
+
+            var tool = new PointCloudMaskCropTool { UseROI = true, ROI = new Rect(0, 0, 2, 4) };
+            var result = tool.Execute(image);
+
+            Assert.True(result.Success);
+            // OutputImage = 유효 마스크(ROI 반영) — pass-through가 아니라 실제 크롭 범위
+            Assert.NotNull(result.OutputImage);
+            Assert.Equal(8, Cv2.CountNonZero(result.OutputImage!));
+            Assert.NotNull(result.OverlayImage);
+            Assert.Equal(3, result.OverlayImage!.Channels());
+        }
+
+        // ─── 병렬 브랜치 (ROI 다른 Mask Crop 2개 → Cluster) ───
+
+        [Fact]
+        public void ExecuteAll_TwoCropsDisjointRois_ReplaceOnly_SecondFailsWithHint()
+        {
+            var service = VisionService.Instance;
+            service.ClearTools();
+            using var image = new Mat(8, 8, MatType.CV_8UC3, new Scalar(255, 255, 255));
+            service.SetImage(image);
+            service.CurrentPointCloud = MakeOrganized(8, 8);
+
+            var crop1 = new PointCloudMaskCropTool { Name = "Crop1", UseROI = true, ROI = new Rect(0, 0, 2, 8) };
+            var crop2 = new PointCloudMaskCropTool { Name = "Crop2", UseROI = true, ROI = new Rect(6, 0, 2, 8) };
+            service.AddTool(crop1);
+            service.AddTool(crop2);
+
+            try
+            {
+                var results = service.ExecuteAll();
+                Assert.True(results[0].Success);
+                // 기존(전부 Replace) 동작: 첫 크롭이 점군을 좁혀 두 번째 ROI에 점이 없음
+                Assert.False(results[1].Success);
+                Assert.Contains("Union", results[1].Message);
+            }
+            finally
+            {
+                service.ClearTools();
+                service.CurrentPointCloud = null;
+            }
+        }
+
+        [Fact]
+        public void ExecuteAll_TwoCropsDisjointRois_SecondUnion_ClusterSeesBoth()
+        {
+            var service = VisionService.Instance;
+            service.ClearTools();
+            using var image = new Mat(8, 8, MatType.CV_8UC3, new Scalar(255, 255, 255));
+            service.SetImage(image);
+            service.CurrentPointCloud = MakeOrganized(8, 8);
+
+            var crop1 = new PointCloudMaskCropTool { Name = "Crop1", UseROI = true, ROI = new Rect(0, 0, 2, 8) };
+            var crop2 = new PointCloudMaskCropTool
+            {
+                Name = "Crop2",
+                UseROI = true,
+                ROI = new Rect(6, 0, 2, 8),
+                CombineMode = PointCloudMaskCropTool.CropCombineMode.Union
+            };
+            var cluster = new PointCloudClusterTool
+            {
+                Name = "Cluster",
+                Tolerance = 1.5f,
+                MinPoints = 5,
+                DrawOverlay = false,
+                OutputMode = PointCloudClusterTool.ClusterOutputMode.KeepOriginal
+            };
+            service.AddTool(crop1);
+            service.AddTool(crop2);
+            service.AddTool(cluster);
+            service.AddConnection(crop1, cluster, ConnectionType.Result);
+            service.AddConnection(crop2, cluster, ConnectionType.Result);
+
+            try
+            {
+                var results = service.ExecuteAll();
+                Assert.True(results[0].Success, results[0].Message);
+                Assert.True(results[1].Success, results[1].Message);
+                Assert.Equal(16, results[1].Data["OutputPoints"]);   // ROI-B에서 자른 점
+                Assert.Equal(32, results[1].Data["MergedPoints"]);   // 16 + 16 합집합
+                Assert.Equal(32, service.CurrentPointCloud!.PointCount);
+
+                // 두 ROI가 4px 떨어져 있으므로 클러스터 2개 (16점씩)
+                Assert.True(results[2].Success, results[2].Message);
+                Assert.Equal(2, results[2].Data["ClusterCount"]);
+
+                // 재실행: 점군 복원 후 동일 결과
+                var rerun = service.ExecuteAll();
+                Assert.Equal(32, rerun[1].Data["MergedPoints"]);
+                Assert.Equal(2, rerun[2].Data["ClusterCount"]);
+            }
+            finally
+            {
+                service.ClearTools();
+                service.CurrentPointCloud = null;
+            }
+        }
+
+        [Fact]
+        public void ExecuteTool_Rerun_RestoresOriginalPointCloud()
+        {
+            var service = VisionService.Instance;
+            service.ClearTools();
+            using var image = new Mat(4, 4, MatType.CV_8UC3, new Scalar(255, 255, 255));
+            service.SetImage(image);
+            service.CurrentPointCloud = MakeOrganized(4, 4);
+
+            var tool = new PointCloudMaskCropTool { UseROI = true, ROI = new Rect(0, 0, 2, 4) };
+            service.AddTool(tool);
+
+            try
+            {
+                var first = service.ExecuteTool(tool);
+                Assert.True(first.Success);
+                Assert.Equal(16, first.Data["InputPoints"]);
+                Assert.Equal(8, service.CurrentPointCloud!.PointCount);
+
+                // Run Selected 반복 — 점군이 계속 좁아지지 않고 원본에서 다시 시작해야 함
+                var second = service.ExecuteTool(tool);
+                Assert.True(second.Success);
+                Assert.Equal(16, second.Data["InputPoints"]);
+                Assert.Equal(8, service.CurrentPointCloud!.PointCount);
+            }
+            finally
+            {
+                service.ClearTools();
+                service.CurrentPointCloud = null;
+            }
         }
 
         [Fact]
