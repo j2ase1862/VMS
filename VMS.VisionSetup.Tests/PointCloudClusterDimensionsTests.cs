@@ -40,6 +40,49 @@ namespace VMS.VisionSetup.Tests
         }
 
         [Fact]
+        public void Execute_DrawOverlay_ProducesOverlayImage()
+        {
+            VisionService.Instance.CurrentPointCloud = MakeBlock(10, 5);
+
+            var tool = new PointCloudClusterTool
+            {
+                Tolerance = 2f,
+                MinPoints = 10,
+                OutputMode = PointCloudClusterTool.ClusterOutputMode.KeepOriginal
+            };
+            using var input = new Mat(20, 20, MatType.CV_8UC1, Scalar.Black);
+            var result = tool.Execute(input);
+
+            Assert.True(result.Success);
+            Assert.NotNull(result.OverlayImage);
+            Assert.Equal(input.Width, result.OverlayImage!.Width);
+            Assert.Equal(input.Height, result.OverlayImage.Height);
+            Assert.Equal(3, result.OverlayImage.Channels());
+
+            // 클러스터(X 0~9, Y 0~4)가 이미지 안 → 점/사각형/라벨이 실제로 그려져야 함
+            using var gray = result.OverlayImage.CvtColor(ColorConversionCodes.BGR2GRAY);
+            Assert.True(Cv2.CountNonZero(gray) > 0);
+        }
+
+        [Fact]
+        public void Execute_DrawOverlayOff_NoOverlayImage()
+        {
+            VisionService.Instance.CurrentPointCloud = MakeBlock(10, 5);
+
+            var tool = new PointCloudClusterTool
+            {
+                Tolerance = 2f,
+                MinPoints = 10,
+                DrawOverlay = false,
+                OutputMode = PointCloudClusterTool.ClusterOutputMode.KeepOriginal
+            };
+            var result = RunCluster(tool);
+
+            Assert.True(result.Success);
+            Assert.Null(result.OverlayImage);
+        }
+
+        [Fact]
         public void Execute_ReportsAxisAlignedSizes()
         {
             VisionService.Instance.CurrentPointCloud = MakeBlock(10, 5, 3);

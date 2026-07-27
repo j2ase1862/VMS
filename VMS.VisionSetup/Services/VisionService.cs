@@ -171,6 +171,13 @@ namespace VMS.VisionSetup.Services
         private VMS.Camera.Models.PointCloudData? _pipelineCloudInput;
         private VMS.Camera.Models.PointCloudData? _pipelineCloudOutput;
 
+        /// <summary>
+        /// 진행 중(또는 직전) 파이프라인 실행의 입력 점군.
+        /// 병렬 브랜치 도구(PointCloudMaskCropTool Union 모드 등)가 앞 도구의 파괴적 갱신과
+        /// 무관하게 '실행 시작 시점 점군'에서 자를 수 있도록 노출한다.
+        /// </summary>
+        public VMS.Camera.Models.PointCloudData? PipelineInputPointCloud => _pipelineCloudInput;
+
         // 3D 점군 데이터 (PointCloudFilterTool 등 점군 처리 도구가 get/set, MainViewModel과 동기화)
         private VMS.Camera.Models.PointCloudData? _currentPointCloud;
         public VMS.Camera.Models.PointCloudData? CurrentPointCloud
@@ -692,6 +699,17 @@ namespace VMS.VisionSetup.Services
                 };
             }
 
+            // 3D 파이프라인 복원 — ExecuteAll과 동일 규칙:
+            // 새 Grab/로드 없이 재실행하면 직전 실행의 입력 점군으로 되돌린 뒤 시작한다.
+            // (Run Selected를 반복해도 점군이 계속 좁아지지 않도록)
+            if (_pipelineCloudInput != null
+                && ReferenceEquals(CurrentPointCloud, _pipelineCloudOutput)
+                && !ReferenceEquals(_pipelineCloudInput, _pipelineCloudOutput))
+            {
+                CurrentPointCloud = _pipelineCloudInput;
+            }
+            _pipelineCloudInput = CurrentPointCloud;
+
             // Run upstream dependencies first so connected input is available
             var upstream = GetUpstreamDependencies(tool);
             var resultMap = new Dictionary<string, VisionResult>();
@@ -763,6 +781,7 @@ namespace VMS.VisionSetup.Services
                 tool.OverlayBaseImage = toolInput;
                 var result = tool.Execute(toolInput);
                 tool.LastResult = result;
+                _pipelineCloudOutput = CurrentPointCloud;
                 return result;
             }
             finally

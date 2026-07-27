@@ -15,5 +15,10 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         public int MinMaskValue { get => TypedTool.MinMaskValue; set => TypedTool.MinMaskValue = value; }
         public int DilatePixels { get => TypedTool.DilatePixels; set => TypedTool.DilatePixels = value; }
         public bool SkipInvalidZ { get => TypedTool.SkipInvalidZ; set => TypedTool.SkipInvalidZ = value; }
+        public PointCloudMaskCropTool.CropCombineMode CombineMode
+        {
+            get => TypedTool.CombineMode;
+            set => TypedTool.CombineMode = value;
+        }
     }
 }

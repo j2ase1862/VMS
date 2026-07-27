@@ -497,6 +497,7 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["OutputMode"] = pcc.OutputMode.ToString();
                     config.Parameters["ScaleMode"] = pcc.ScaleMode.ToString();
                     config.Parameters["XyScale"] = pcc.XyScale;
+                    config.Parameters["DrawOverlay"] = pcc.DrawOverlay;
                     break;
 
                 case VisionTools.PointCloud.PointCloudMaskCropTool pcm:
@@ -504,6 +505,7 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["MinMaskValue"] = pcm.MinMaskValue;
                     config.Parameters["DilatePixels"] = pcm.DilatePixels;
                     config.Parameters["SkipInvalidZ"] = pcm.SkipInvalidZ;
+                    config.Parameters["CombineMode"] = pcm.CombineMode.ToString();
                     break;
 
                 case VisionTools.Calibration.ImageRectifyTool rectify:
@@ -1667,6 +1669,7 @@ namespace VMS.VisionSetup.Services
             if (p.TryGetValue("ScaleMode", out var sm))
                 tool.ScaleMode = Enum.Parse<VisionTools.PointCloud.PointCloudClusterTool.DimensionScaleMode>(GetString(sm));
             if (p.TryGetValue("XyScale", out var xs)) tool.XyScale = (float)GetDouble(xs);
+            if (p.TryGetValue("DrawOverlay", out var dov)) tool.DrawOverlay = GetBool(dov);
             return tool;
         }
 
@@ -1678,6 +1681,8 @@ namespace VMS.VisionSetup.Services
             if (p.TryGetValue("MinMaskValue", out var mv)) tool.MinMaskValue = GetInt(mv);
             if (p.TryGetValue("DilatePixels", out var dp)) tool.DilatePixels = GetInt(dp);
             if (p.TryGetValue("SkipInvalidZ", out var sz)) tool.SkipInvalidZ = GetBool(sz);
+            if (p.TryGetValue("CombineMode", out var cm))
+                tool.CombineMode = Enum.Parse<VisionTools.PointCloud.PointCloudMaskCropTool.CropCombineMode>(GetString(cm));
             return tool;
         }
 

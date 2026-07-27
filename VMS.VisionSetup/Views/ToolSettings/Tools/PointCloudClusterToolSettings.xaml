@@ -63,6 +63,13 @@
                     ItemsSource="{conv:EnumValues {x:Type pc:PointCloudClusterTool+ClusterOutputMode}}"
                     SelectedValue="{Binding OutputMode}"
                     ToolType="PointCloudClusterTool" ParameterName="OutputMode"/>
+                <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,4"
+                           Text="LargestOnly: 가장 큰 덩어리만 남김(물체 하나 골라내기) · AllMerged: 작은 노이즈만 버리고 전부 유지 · KeepOriginal: 점군은 그대로 두고 개수·치수만 측정."/>
+                <controls:CheckBoxParameter Label="Draw Overlay"
+                    IsChecked="{Binding DrawOverlay}"
+                    ToolType="PointCloudClusterTool" ParameterName="DrawOverlay"/>
+                <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,4"
+                           Text="찾은 덩어리를 2D 이미지 뷰어에 표시합니다 — 덩어리별 색상 점, 외접 사각형, 중심 십자, 라벨(#번호 · 점 수 · 길이x폭). 라벨 단위는 mm 환산이 켜져 있으면 mm, 아니면 px."/>
             </StackPanel>
         </Expander>
     </StackPanel>
