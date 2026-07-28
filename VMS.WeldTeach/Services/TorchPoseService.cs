@@ -12,18 +12,23 @@ namespace VMS.WeldTeach.Services;
 /// </summary>
 public class TorchPoseService
 {
-    /// <summary>경로 위 각 점의 토치 방향과 6-DoF 포즈를 채운다. 이등분 벡터가 퇴화하면(평면 이음) 인접 면 법선 하나를 사용.</summary>
+    /// <summary>
+    /// 경로 위 각 점의 토치 방향과 6-DoF 포즈를 채운다.
+    /// 지점별 이등분 벡터(pcurve UV 법선 평가)를 사용해 곡면 심에서도 방향이 따라 돈다.
+    /// 지점 값이 퇴화하면 윤곽 전체 평균(글로벌) 이등분으로 대체.
+    /// </summary>
     public List<TorchPose> ComputePoses(WeldingPathContour contour, CadModelData model)
     {
-        // 윤곽을 구성한 엣지들의 인접 면 법선 평균으로 이등분 벡터 산출.
-        // (PoC: 평면 위주 시편 기준 — 곡면에서는 점별 UV 법선 평가로 고도화 필요)
-        var bisector = ComputeBisector(contour, model);
+        var globalBisector = ComputeBisector(contour, model);
 
         contour.TorchDirections.Clear();
         var poses = new List<TorchPose>(contour.PathPoints.Count);
         for (int i = 0; i < contour.PathPoints.Count; i++)
         {
             var z = contour.TangentVectors[i];
+            var bisector = i < contour.PointBisectors.Count && contour.PointBisectors[i].Length > 1e-9
+                ? contour.PointBisectors[i]
+                : globalBisector;
 
             // 이등분 벡터를 접선에 직교화 (그람-슈미트)
             var x = bisector - Vector3D.DotProduct(bisector, z) * z;

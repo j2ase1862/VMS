@@ -112,7 +112,7 @@ public class CadKernelService : ICadKernelService
             model.FaceMeshes.Add(mesh);
         }
 
-        // ---- 엣지 폴리라인 + 인접 면 ----
+        // ---- 엣지 폴리라인 + 인접 면 + 지점별 법선 이등분 ----
         for (int ei = 1; ei <= edgeMap.Extent; ei++)
         {
             var edgeShape = Keep(edgeMap.FindKey(ei));
@@ -137,7 +137,8 @@ public class CadKernelService : ICadKernelService
             };
             info.Points.AddRange(pts);
 
-            // 인접 면 Id (edgeFaceMap 의 키 순서는 edgeMap 과 다를 수 있어 FindFromKey 사용)
+            // 인접 면 (edgeFaceMap 의 키 순서는 edgeMap 과 다를 수 있어 FindFromKey 사용)
+            var adjFaces = new List<TopoDS_Face>();
             var faces = Keep(edgeFaceMap.FindFromKey(edgeShape));
             if (faces != null)
             {
@@ -146,12 +147,60 @@ public class CadKernelService : ICadKernelService
                     Keep(fs);
                     int fid = faceMap.FindIndex(fs);
                     if (fid > 0 && !info.AdjacentFaceIds.Contains(fid))
+                    {
                         info.AdjacentFaceIds.Add(fid);
+                        if (adjFaces.Count < 2)
+                            adjFaces.Add(Keep(TopoDS_Face.Cast(fs.NativeInstancePtr)));
+                    }
                 }
             }
+            FillPointBisectors(edge, adjFaces, n, info.PointBisectors);
             model.Edges.Add(info);
         }
         return model;
+    }
+
+    /// <summary>
+    /// 엣지 폴리라인 샘플(0..n)마다 인접 면들의 법선을 pcurve UV 로 평가해 이등분 벡터를 만든다.
+    /// 곡면(원통 등) 심에서 지점별로 회전하는 올바른 토치 방향의 원천이 된다.
+    /// pcurve 가 없거나 평가 실패 시 면 중심 법선으로 대체.
+    /// </summary>
+    private static void FillPointBisectors(TopoDS_Edge edge, List<TopoDS_Face> adjFaces, int n,
+        List<Vector3D> result)
+    {
+        var evaluators = new List<(Geom2d_Curve? Pcurve, double T0, double T1, BRepGProp_Face Gf, Vector3D Fallback)>();
+        foreach (var face in adjFaces)
+        {
+            Geom2d_Curve? pc = null;
+            double pt0 = 0, pt1 = 0;
+            try { pc = Keep(BRep_Tool.CurveOnSurface(edge, face, out pt0, out pt1)); }
+            catch { /* pcurve 없음 — fallback 사용 */ }
+            evaluators.Add((pc, pt0, pt1, Keep(new BRepGProp_Face(face)), FaceCenterNormal(face)));
+        }
+
+        for (int k = 0; k <= n; k++)
+        {
+            var sum = new Vector3D();
+            foreach (var (pc, pt0, pt1, gf, fallback) in evaluators)
+            {
+                var nv = fallback;
+                if (pc != null && !pc.IsNULL)
+                {
+                    try
+                    {
+                        var uv = Keep(pc.Value(pt0 + (pt1 - pt0) * k / n));
+                        gf.Normal(uv.X, uv.Y, out gp_Pnt p, out gp_Vec gn);
+                        Keep(p); Keep(gn);
+                        var v = new Vector3D(gn.X, gn.Y, gn.Z);
+                        if (v.Length > 1e-12) { v.Normalize(); nv = v; }
+                    }
+                    catch { /* 평가 실패 — fallback 유지 */ }
+                }
+                sum += nv;
+            }
+            if (sum.Length > 1e-9) sum.Normalize();
+            result.Add(sum);
+        }
     }
 
     private static double PolylineFill(BRepAdaptor_Curve curve, double t0, double t1, int n, out List<Point3D> pts)

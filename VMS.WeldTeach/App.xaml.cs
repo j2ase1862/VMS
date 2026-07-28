@@ -27,6 +27,16 @@ public partial class App : Application
             return;
         }
 
+        // 헤드리스 분석 모드: --analyze <step> [엣지Id] — 엣지 연결성/체이닝 진단 덤프
+        int anIdx = Array.IndexOf(e.Args, "--analyze");
+        if (anIdx >= 0 && anIdx + 1 < e.Args.Length)
+        {
+            int? seedId = anIdx + 2 < e.Args.Length && int.TryParse(e.Args[anIdx + 2], out var sid) ? sid : null;
+            RunAnalyze(cadKernel, chainService, e.Args[anIdx + 1], seedId);
+            Shutdown(0);
+            return;
+        }
+
         var window = new MainWindow(viewModel);
         window.Show();
 
@@ -47,6 +57,12 @@ public partial class App : Application
                 {
                     await viewModel.LoadForDiagnosticsAsync(stepPath);
                     T($"load returned, status={viewModel.StatusText}");
+                    int pickIdx = Array.IndexOf(e.Args, "--pick");
+                    if (pickIdx >= 0 && pickIdx + 1 < e.Args.Length && int.TryParse(e.Args[pickIdx + 1], out int pickEdgeId))
+                    {
+                        viewModel.SelectEdge(pickEdgeId);
+                        T($"picked #{pickEdgeId}, status={viewModel.StatusText}");
+                    }
                     if (capturePath != null)
                     {
                         await Task.Delay(1500);   // 렌더 안정화 대기
@@ -58,6 +74,55 @@ public partial class App : Application
                 }
                 catch (Exception ex) { T("diag error: " + ex); }
             });
+        }
+    }
+
+    private static void RunAnalyze(CadKernelService kernel, EdgeChainService chain, string stepPath, int? seedId)
+    {
+        var log = Path.Combine(Path.GetTempPath(), "weldteach_analyze.log");
+        try
+        {
+            var lines = new List<string>();
+            var model = kernel.LoadStep(stepPath);
+            lines.Add($"file: {stepPath}");
+            lines.Add($"model: solids={model.SolidCount} faces={model.FaceCount} edges={model.Edges.Count}");
+
+            // 엣지 간 최소 끝점 간격 분포 — 체이닝 JoinTolerance 적합성 진단
+            var gaps = new List<double>();
+            foreach (var a in model.Edges)
+            {
+                if (a.IsClosed) continue;
+                double best = double.MaxValue;
+                foreach (var b in model.Edges)
+                {
+                    if (b.EdgeId == a.EdgeId || b.IsClosed) continue;
+                    foreach (var pa in new[] { a.StartPoint, a.EndPoint })
+                        foreach (var pb in new[] { b.StartPoint, b.EndPoint })
+                            best = Math.Min(best, (pa - pb).Length);
+                }
+                if (best < double.MaxValue) gaps.Add(best);
+            }
+            gaps.Sort();
+            string Pct(double q) => gaps.Count == 0 ? "-" : gaps[(int)Math.Min(gaps.Count - 1, q * gaps.Count)].ToString("E2");
+            lines.Add($"endpoint gaps: n={gaps.Count} p50={Pct(0.5)} p90={Pct(0.9)} max={(gaps.Count > 0 ? gaps[^1].ToString("E2") : "-")}");
+            lines.Add($"closed edges: {model.Edges.Count(x => x.IsClosed)}");
+
+            // 체이닝 시험 — seedId 미지정 시 가장 긴 열린 엣지부터 상위 5개
+            var seeds = seedId.HasValue
+                ? model.Edges.Where(x => x.EdgeId == seedId.Value).ToList()
+                : model.Edges.OrderByDescending(x => x.Length).Take(5).ToList();
+            foreach (var s in seeds)
+            {
+                var c = chain.BuildChain(model, s.EdgeId);
+                lines.Add($"chain from #{s.EdgeId} (len={s.Length:F1} closed={s.IsClosed} adjFaces={s.AdjacentFaceIds.Count}): " +
+                          $"edges={c.EdgeIds.Count} [{string.Join(",", c.EdgeIds)}] totalLen={c.TotalLength:F1}");
+            }
+            lines.Add("ANALYZE OK");
+            File.WriteAllLines(log, lines);
+        }
+        catch (Exception ex)
+        {
+            File.WriteAllText(log, "ANALYZE FAIL: " + ex);
         }
     }
 

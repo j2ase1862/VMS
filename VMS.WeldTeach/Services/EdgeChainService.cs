@@ -83,8 +83,13 @@ public class EdgeChainService
         foreach (var (edge, forward) in chain)
         {
             var pts = forward ? edge.Points : Enumerable.Reverse(edge.Points).ToList();
-            foreach (var p in pts)
+            // 이등분 벡터는 Points 와 1:1 — 같은 순서로 뒤집어 함께 나른다
+            var bis = edge.PointBisectors.Count == edge.Points.Count
+                ? (forward ? edge.PointBisectors : Enumerable.Reverse(edge.PointBisectors).ToList())
+                : Enumerable.Repeat(default(Vector3D), pts.Count).ToList();
+            for (int i = 0; i < pts.Count; i++)
             {
+                var p = pts[i];
                 if (contour.PathPoints.Count > 0)
                 {
                     var d = (p - contour.PathPoints[^1]).Length;
@@ -92,6 +97,7 @@ public class EdgeChainService
                     total += d;
                 }
                 contour.PathPoints.Add(p);
+                contour.PointBisectors.Add(bis[i]);
             }
             contour.EdgeIds.Add(edge.EdgeId);
         }

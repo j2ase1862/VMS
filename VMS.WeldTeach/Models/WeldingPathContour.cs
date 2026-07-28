@@ -7,6 +7,8 @@ public class WeldingPathContour
 {
     public string PathId { get; set; } = string.Empty;
     public List<Point3D> PathPoints { get; set; } = new();
+    /// <summary>PathPoints 와 1:1 — 지점별 인접 면 법선 이등분 벡터 (토치 방향 원천).</summary>
+    public List<Vector3D> PointBisectors { get; set; } = new();
     public List<Vector3D> TangentVectors { get; set; } = new();
     public List<Vector3D> TorchDirections { get; set; } = new();
     public double TotalLength { get; set; }

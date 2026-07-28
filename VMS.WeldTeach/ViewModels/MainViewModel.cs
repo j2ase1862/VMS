@@ -133,9 +133,15 @@ public partial class MainViewModel : ObservableObject
             HighlightChanged?.Invoke(this, EventArgs.Empty);
             return;
         }
+        SelectEdge(hit.EdgeId);
+    }
 
+    /// <summary>엣지 Id 로 직접 선택 — 클릭과 동일 경로. 진단 모드(--pick)에서도 사용.</summary>
+    public void SelectEdge(int edgeId)
+    {
+        if (Model == null) return;
         _chainService.AngleToleranceDeg = ChainAngleToleranceDeg;
-        var contour = _chainService.BuildChain(Model, hit.EdgeId);
+        var contour = _chainService.BuildChain(Model, edgeId);
         var poses = _poseService.ComputePoses(contour, Model);
 
         SelectedContour = contour;

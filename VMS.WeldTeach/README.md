@@ -24,8 +24,10 @@
 (샘플 생성→로드→위상→메싱→심 체이닝→이등분 벡터→포즈→GC 해머 3라운드까지 자동 확인,
 마지막 줄 `SELFTEST OK`).
 
-GUI 진단 모드: `VMS.WeldTeach.exe --open <step경로> [--capture <png경로>] [--stay]`
-— GUI 와 동일한 로드 경로를 타고, 캡처 지정 시 렌더 결과 PNG 저장 후 종료(`--stay` 시 유지).
+GUI 진단 모드: `VMS.WeldTeach.exe --open <step경로> [--pick <엣지Id>] [--capture <png경로>] [--stay]`
+— GUI 와 동일한 로드 경로를 타고, `--pick` 은 클릭과 동일하게 엣지를 선택(체이닝+포즈),
+캡처 지정 시 렌더 결과 PNG 저장 후 종료(`--stay` 시 유지).
+연결성 분석: `--analyze <step경로> [엣지Id]` → `%TEMP%\weldteach_analyze.log` (끝점 간격 분포·체이닝 덤프).
 트레이스는 `%TEMP%\weldteach_diag.log`, 로드 실패 상세는 `%TEMP%\weldteach.log`.
 
 ## 검증 결과 (2026-07-28)
@@ -47,7 +49,8 @@ GUI 진단 모드: `VMS.WeldTeach.exe --open <step경로> [--capture <png경로>
     delete 를 호출해 **힙 손상(0xC0000374)·UI 행**이 발생한다 — 스택 덤프로 확인(2026-07-28).
     `OcctLifetime.Keep()` 으로 모든 OCCT 객체의 `DeleteOnFinalize` 를 꺼서 회피. 부작용으로
     로드당 소량(수백 KB~수 MB) 네이티브 누수 — PoC 허용, 자체 래퍼 교체 시 해소.
-- 곡면 이음의 토치 법선은 현재 면 중심 UV 의 법선 사용(평면 정확) — 점별 UV 투영 평가는 후속.
+- 토치 법선은 **지점별 pcurve UV 평가** — 원통 등 곡면 심에서도 경로를 따라 방향이 회전한다
+  (파이프 피팅 원형 심으로 검증, 2026-07-28). pcurve 가 없는 특수 면만 면 중심 법선으로 대체.
 - 진행각(push/drag)·작업각 오프셋 파라미터, 로봇 벤더별 오일러 규약 변환은 명세 보강 후 구현.
 
 ## 다음 단계 (PoC 통과 후)

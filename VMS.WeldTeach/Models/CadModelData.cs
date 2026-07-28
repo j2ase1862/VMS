@@ -27,6 +27,11 @@ public class CadEdgeInfo
 {
     public int EdgeId { get; init; }
     public List<Point3D> Points { get; init; } = new();
+    /// <summary>
+    /// Points 와 1:1 — 각 지점에서 인접 면 법선들의 이등분(합성·정규화) 벡터.
+    /// 곡면(원통 등) 심에서도 지점마다 올바른 토치 방향을 주기 위해 pcurve UV 로 평가한다.
+    /// </summary>
+    public List<Vector3D> PointBisectors { get; init; } = new();
     /// <summary>이 엣지를 공유하는 면 Id 목록 (보통 2개).</summary>
     public List<int> AdjacentFaceIds { get; init; } = new();
     public Point3D StartPoint { get; init; }
