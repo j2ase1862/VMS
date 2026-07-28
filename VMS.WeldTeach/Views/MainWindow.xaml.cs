@@ -106,6 +106,18 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>진단 모드 — 현재 창을 PNG 로 캡처한다.</summary>
+    public void CaptureToPng(string path)
+    {
+        var rtb = new System.Windows.Media.Imaging.RenderTargetBitmap(
+            (int)ActualWidth, (int)ActualHeight, 96, 96, PixelFormats.Pbgra32);
+        rtb.Render(this);
+        var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+        encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(rtb));
+        using var fs = System.IO.File.Create(path);
+        encoder.Save(fs);
+    }
+
     // ---- 마우스 → Ray 변환 (명세서 Step 1 의 Unproject) ----
 
     private void Viewport_MouseMove(object sender, MouseEventArgs e)

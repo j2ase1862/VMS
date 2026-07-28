@@ -75,6 +75,9 @@ public partial class MainViewModel : ObservableObject
         await LoadAsync(path);
     }
 
+    /// <summary>진단 모드(--open) 에서 GUI 와 동일한 로드 경로를 태우기 위한 공개 진입점.</summary>
+    public Task LoadForDiagnosticsAsync(string path) => LoadAsync(path);
+
     private async Task LoadAsync(string path)
     {
         IsBusy = true;
@@ -93,7 +96,14 @@ public partial class MainViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusText = $"로드 실패: {ex.Message}";
+            StatusText = $"로드 실패: {ex.Message} — 상세: %TEMP%\\weldteach.log";
+            try
+            {
+                File.AppendAllText(
+                    Path.Combine(Path.GetTempPath(), "weldteach.log"),
+                    $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] LoadStep 실패 path={path}{Environment.NewLine}{ex}{Environment.NewLine}");
+            }
+            catch { /* 로그 실패는 무시 */ }
         }
         finally { IsBusy = false; }
     }

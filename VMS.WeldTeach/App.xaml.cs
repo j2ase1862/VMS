@@ -29,6 +29,36 @@ public partial class App : Application
 
         var window = new MainWindow(viewModel);
         window.Show();
+
+        // 진단 모드: --open <step경로> [--capture <png경로>]
+        // GUI 와 동일한 로드 경로(LoadAsync)를 타고, 캡처 지정 시 렌더 결과를 저장 후 종료한다.
+        int openIdx = Array.IndexOf(e.Args, "--open");
+        if (openIdx >= 0 && openIdx + 1 < e.Args.Length)
+        {
+            string stepPath = e.Args[openIdx + 1];
+            int capIdx = Array.IndexOf(e.Args, "--capture");
+            string? capturePath = capIdx >= 0 && capIdx + 1 < e.Args.Length ? e.Args[capIdx + 1] : null;
+            var trace = Path.Combine(Path.GetTempPath(), "weldteach_diag.log");
+            void T(string m) { try { File.AppendAllText(trace, $"[{DateTime.Now:HH:mm:ss.fff}] {m}{Environment.NewLine}"); } catch { } }
+            _ = window.Dispatcher.InvokeAsync(async () =>
+            {
+                T("diag start");
+                try
+                {
+                    await viewModel.LoadForDiagnosticsAsync(stepPath);
+                    T($"load returned, status={viewModel.StatusText}");
+                    if (capturePath != null)
+                    {
+                        await Task.Delay(1500);   // 렌더 안정화 대기
+                        T("capturing");
+                        window.CaptureToPng(capturePath);
+                        T("captured");
+                        if (!e.Args.Contains("--stay")) Shutdown(0);
+                    }
+                }
+                catch (Exception ex) { T("diag error: " + ex); }
+            });
+        }
     }
 
     private static void RunSelfTest(CadKernelService kernel, EdgeChainService chain, TorchPoseService pose)
@@ -59,6 +89,16 @@ public partial class App : Application
                 var bis = pose.ComputeBisector(contour, model);
                 lines.Add($"bisector: ({bis.X:F3},{bis.Y:F3},{bis.Z:F3})");
                 lines.Add($"poses: {poses.Count} first=({poses[0].X:F1},{poses[0].Y:F1},{poses[0].Z:F1} R{poses[0].RollDeg:F1} P{poses[0].PitchDeg:F1} Y{poses[0].YawDeg:F1})");
+
+                // 파이널라이저 안정성 검증 — 래퍼 결함 회피(OcctLifetime)가 유효한지 강제 GC 로 확인
+                for (int round = 0; round < 3; round++)
+                {
+                    _ = kernel.LoadStep(stepPath);
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                    GC.Collect();
+                }
+                lines.Add("gc hammer: OK (3 rounds load+collect)");
                 lines.Add("SELFTEST OK");
             }
             File.WriteAllLines(log, lines);
