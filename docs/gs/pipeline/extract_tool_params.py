@@ -30,6 +30,7 @@ CORE = [
     ("Geometry 3D (3D 기하)", "3D Analysis", "Geometry3DToolSettings.xaml"),
     ("Plane Fit (평면 피팅)", "3D Analysis", "PlaneFitToolSettings.xaml"),
     ("Height Slicer (높이 슬라이스)", "3D Analysis", "HeightSlicerToolSettings.xaml"),
+    ("Point Cloud Mask Crop (마스크 점군 크롭)", "3D Analysis", "PointCloudMaskCropToolSettings.xaml"),
     ("Point Cloud Cluster (포인트클라우드 클러스터)", "3D Analysis", "PointCloudClusterToolSettings.xaml"),
     ("Point Cloud Filter (포인트클라우드 필터)", "3D Analysis", "PointCloudFilterToolSettings.xaml"),
     ("Point Cloud Registration (포인트클라우드 정합)", "3D Analysis", "PointCloudRegistrationToolSettings.xaml"),

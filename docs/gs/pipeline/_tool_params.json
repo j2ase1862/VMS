@@ -1725,14 +1725,6 @@
     "min": null,
     "max": null,
     "enum": "Geometry3DOperation"
-   },
-   {
-    "label": "Use Manual Points",
-    "param": "UseManualPoints",
-    "ctrl": "체크박스",
-    "min": null,
-    "max": null,
-    "enum": null
    }
   ]
  },
@@ -1799,6 +1791,53 @@
   ]
  },
  {
+  "tool": "Point Cloud Mask Crop (마스크 점군 크롭)",
+  "category": "3D Analysis",
+  "file": "PointCloudMaskCropToolSettings.xaml",
+  "params": [
+   {
+    "label": "Min Mask Value",
+    "param": "MinMaskValue",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "255",
+    "enum": null
+   },
+   {
+    "label": "Dilate (px)",
+    "param": "DilatePixels",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "50",
+    "enum": null
+   },
+   {
+    "label": "Invert Mask",
+    "param": "InvertMask",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Combine Mode",
+    "param": "CombineMode",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Skip Invalid Z (=0)",
+    "param": "SkipInvalidZ",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   }
+  ]
+ },
+ {
   "tool": "Point Cloud Cluster (포인트클라우드 클러스터)",
   "category": "3D Analysis",
   "file": "PointCloudClusterToolSettings.xaml",
@@ -1836,9 +1875,33 @@
     "enum": null
    },
    {
+    "label": "Scale Mode",
+    "param": "ScaleMode",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "XY Scale (mm/px)",
+    "param": "XyScale",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
     "label": "Output Mode",
     "param": "OutputMode",
     "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Draw Overlay",
+    "param": "DrawOverlay",
+    "ctrl": "체크박스",
     "min": null,
     "max": null,
     "enum": null
@@ -1898,11 +1961,19 @@
   "file": "PointCloudRegistrationToolSettings.xaml",
   "params": [
    {
+    "label": "Enable Coarse Alignment",
+    "param": "EnableCoarseAlignment",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
     "label": "Max Iterations",
     "param": "MaxIterations",
     "ctrl": "슬라이더",
     "min": "1",
-    "max": "200",
+    "max": "500",
     "enum": null
    },
    {
@@ -1911,6 +1982,14 @@
     "ctrl": "슬라이더",
     "min": "0.001",
     "max": "1.0",
+    "enum": null
+   },
+   {
+    "label": "Confidence Distance (mm)",
+    "param": "ConfidenceDistanceMm",
+    "ctrl": "슬라이더",
+    "min": "0.05",
+    "max": "10.0",
     "enum": null
    },
    {
@@ -2217,6 +2296,14 @@
    {
     "label": "Draw Boxes + Labels",
     "param": "DrawBoxes",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Output Mask Image",
+    "param": "OutputMaskImage",
     "ctrl": "체크박스",
     "min": null,
     "max": null,
