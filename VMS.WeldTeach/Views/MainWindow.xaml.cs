@@ -38,14 +38,21 @@ public partial class MainWindow : Window
 
     // ---- 렌더링 트리 구성 ----
 
+    // 주의: 보이는 LinesVisual3D 의 Points 에 Add 를 반복하면 HelixToolkit 이
+    // 점 하나마다 라인 메쉬 전체를 재생성해 O(N²) 로 UI 가 수십 초 멈춘다 (스택 덤프로 확인).
+    // 반드시 컬렉션을 오프라인으로 채워 한 번에 교체 할당한다.
+
     private void RebuildScene()
     {
         _modelRoot.Children.Clear();
-        _edgeLines.Points.Clear();
         UpdateHighlights();
 
         var model = _viewModel.Model;
-        if (model == null) return;
+        if (model == null)
+        {
+            _edgeLines.Points = new Point3DCollection();
+            return;
+        }
 
         // 면 메쉬 → 단일 MeshGeometry (양면 재질 — 면 방향 이슈 회피)
         var builder = new MeshBuilder(false, false);
@@ -62,39 +69,49 @@ public partial class MainWindow : Window
             Content = new GeometryModel3D(mesh, material) { BackMaterial = material },
         });
 
-        // 전체 엣지 폴리라인
+        // 전체 엣지 폴리라인 — 단일 교체 할당
+        var edgePts = new Point3DCollection(model.Edges.Sum(e => Math.Max(0, e.Points.Count - 1) * 2));
         foreach (var edge in model.Edges)
-            AppendPolyline(_edgeLines.Points, edge.Points);
+            AppendPolyline(edgePts, edge.Points);
+        edgePts.Freeze();
+        _edgeLines.Points = edgePts;
 
         Viewport.ZoomExtents(300);
     }
 
     private void UpdateHighlights()
     {
-        _hoverLines.Points.Clear();
-        _contourLines.Points.Clear();
-        _torchLines.Points.Clear();
-
         var model = _viewModel.Model;
-        if (model == null) return;
 
-        var hovered = model.Edges.FirstOrDefault(e => e.EdgeId == _viewModel.HoveredEdgeId);
-        if (hovered != null)
-            AppendPolyline(_hoverLines.Points, hovered.Points);
+        var hoverPts = new Point3DCollection();
+        var contourPts = new Point3DCollection();
+        var torchPts = new Point3DCollection();
 
-        var contour = _viewModel.SelectedContour;
-        if (contour != null)
+        if (model != null)
         {
-            AppendPolyline(_contourLines.Points, contour.PathPoints);
-            // 토치 방향 화살선 (8mm, 일정 간격)
-            int stride = Math.Max(1, contour.PathPoints.Count / 24);
-            for (int i = 0; i < contour.PathPoints.Count && i < contour.TorchDirections.Count; i += stride)
+            var hovered = model.Edges.FirstOrDefault(e => e.EdgeId == _viewModel.HoveredEdgeId);
+            if (hovered != null)
+                AppendPolyline(hoverPts, hovered.Points);
+
+            var contour = _viewModel.SelectedContour;
+            if (contour != null)
             {
-                var p = contour.PathPoints[i];
-                _torchLines.Points.Add(p);
-                _torchLines.Points.Add(p + contour.TorchDirections[i] * 8);
+                AppendPolyline(contourPts, contour.PathPoints);
+                // 토치 방향 화살선 (8mm, 일정 간격)
+                int stride = Math.Max(1, contour.PathPoints.Count / 24);
+                for (int i = 0; i < contour.PathPoints.Count && i < contour.TorchDirections.Count; i += stride)
+                {
+                    var p = contour.PathPoints[i];
+                    torchPts.Add(p);
+                    torchPts.Add(p + contour.TorchDirections[i] * 8);
+                }
             }
         }
+
+        hoverPts.Freeze(); contourPts.Freeze(); torchPts.Freeze();
+        _hoverLines.Points = hoverPts;
+        _contourLines.Points = contourPts;
+        _torchLines.Points = torchPts;
     }
 
     private static void AppendPolyline(Point3DCollection target, IList<Point3D> pts)

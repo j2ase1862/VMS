@@ -4,7 +4,8 @@
         xmlns:helix="http://helix-toolkit.org/wpf"
         Title="VMS WeldTeach — CAD 용접 경로 오프라인 티칭 (PoC)"
         Width="1280" Height="800" WindowStartupLocation="CenterScreen"
-        Background="#FF1E1E24">
+        Background="{StaticResource Brush.Surface.Deep}"
+        FontFamily="{StaticResource Font.Family}">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </Window.Resources>
@@ -16,67 +17,101 @@
         </Grid.RowDefinitions>
 
         <!-- 툴바 -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="8,8,8,4">
-            <Button Content="STEP 열기" Command="{Binding OpenStepCommand}" Padding="14,6" Margin="0,0,6,0"/>
-            <Button Content="샘플 시편 생성" Command="{Binding GenerateSampleCommand}" Padding="14,6" Margin="0,0,6,0"/>
-            <Button Content="경로 내보내기 (JSON)" Command="{Binding ExportPathCommand}" Padding="14,6" Margin="0,0,18,0"/>
-            <TextBlock Text="피킹 임계값(mm):" Foreground="#CCC" VerticalAlignment="Center" Margin="0,0,4,0"/>
-            <TextBox Text="{Binding PickThreshold, UpdateSourceTrigger=PropertyChanged}" Width="46"
-                     VerticalContentAlignment="Center" Margin="0,0,12,0"/>
-            <TextBlock Text="체이닝 각도 허용(°):" Foreground="#CCC" VerticalAlignment="Center" Margin="0,0,4,0"/>
-            <TextBox Text="{Binding ChainAngleToleranceDeg, UpdateSourceTrigger=PropertyChanged}" Width="46"
-                     VerticalContentAlignment="Center"/>
-            <ProgressBar IsIndeterminate="{Binding IsBusy}" Width="120" Height="8" Margin="18,0,0,0"
-                         VerticalAlignment="Center"
-                         Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
-        </StackPanel>
+        <Border Grid.Row="0" Background="{StaticResource Brush.Surface.Base}" Padding="12,10">
+            <StackPanel Orientation="Horizontal">
+                <Button Content="STEP 열기" Style="{StaticResource ModernButton}"
+                        Command="{Binding OpenStepCommand}" Margin="0,0,8,0"/>
+                <Button Content="샘플 시편 생성" Style="{StaticResource Button.Subtle}"
+                        Command="{Binding GenerateSampleCommand}" Margin="0,0,8,0"/>
+                <Button Content="경로 내보내기 (JSON)" Style="{StaticResource Button.Subtle}"
+                        Command="{Binding ExportPathCommand}" Margin="0,0,24,0"/>
+                <TextBlock Text="피킹 임계값(mm)" Style="{StaticResource Text.Caption}"
+                           VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <TextBox Text="{Binding PickThreshold, UpdateSourceTrigger=PropertyChanged}" Width="56"
+                         VerticalContentAlignment="Center" Margin="0,0,16,0"/>
+                <TextBlock Text="체이닝 각도 허용(°)" Style="{StaticResource Text.Caption}"
+                           VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <TextBox Text="{Binding ChainAngleToleranceDeg, UpdateSourceTrigger=PropertyChanged}" Width="56"
+                         VerticalContentAlignment="Center"/>
+                <ProgressBar IsIndeterminate="{Binding IsBusy}" Width="120" Height="6" Margin="20,0,0,0"
+                             VerticalAlignment="Center"
+                             Foreground="{StaticResource Brush.Primary}"
+                             Background="{StaticResource Brush.Surface.Overlay}"
+                             BorderThickness="0"
+                             Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
+            </StackPanel>
+        </Border>
 
-        <Grid Grid.Row="1" Margin="8,0,8,0">
+        <Grid Grid.Row="1" Margin="12,12,12,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="330"/>
+                <ColumnDefinition Width="340"/>
             </Grid.ColumnDefinitions>
 
             <!-- 3D 뷰포트: 마우스 훅업은 코드비하인드(뷰 전용 상호작용) -->
-            <helix:HelixViewport3D x:Name="Viewport"
-                                   Background="#FF26262E"
-                                   ShowCoordinateSystem="True"
-                                   ZoomExtentsWhenLoaded="True"
-                                   MouseMove="Viewport_MouseMove"
-                                   MouseLeftButtonDown="Viewport_MouseLeftButtonDown">
-                <helix:DefaultLights/>
-            </helix:HelixViewport3D>
+            <Border Background="{StaticResource Brush.Surface.Base}"
+                    CornerRadius="{StaticResource Radius.Md}">
+                <helix:HelixViewport3D x:Name="Viewport"
+                                       Background="Transparent"
+                                       ShowCoordinateSystem="True"
+                                       ZoomExtentsWhenLoaded="True"
+                                       MouseMove="Viewport_MouseMove"
+                                       MouseLeftButtonDown="Viewport_MouseLeftButtonDown">
+                    <helix:DefaultLights/>
+                </helix:HelixViewport3D>
+            </Border>
 
             <!-- 우측 패널: 경로/포즈 -->
-            <Grid Grid.Column="1" Margin="8,0,0,0">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-                <StackPanel Grid.Row="0" Margin="0,0,0,6">
-                    <TextBlock Text="용접 경로 (6-DoF 포즈)" Foreground="#EEE" FontSize="14" FontWeight="Bold"/>
-                    <TextBlock Foreground="#9AD" TextWrapping="Wrap" Margin="0,4,0,0"
-                               Text="모델의 모서리에 마우스를 올리면 주황색으로 강조되고, 클릭하면 연속 모서리가 자동 체이닝되어 토치 포즈가 계산됩니다."/>
-                </StackPanel>
-                <DataGrid Grid.Row="1" ItemsSource="{Binding Poses}" IsReadOnly="True"
-                          AutoGenerateColumns="False" HeadersVisibility="Column"
-                          Background="#FF2B2B33" Foreground="#DDD" GridLinesVisibility="None"
-                          RowBackground="#FF2B2B33" AlternatingRowBackground="#FF32323C">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="X" Binding="{Binding X, StringFormat=F2}" Width="*"/>
-                        <DataGridTextColumn Header="Y" Binding="{Binding Y, StringFormat=F2}" Width="*"/>
-                        <DataGridTextColumn Header="Z" Binding="{Binding Z, StringFormat=F2}" Width="*"/>
-                        <DataGridTextColumn Header="R°" Binding="{Binding RollDeg, StringFormat=F1}" Width="*"/>
-                        <DataGridTextColumn Header="P°" Binding="{Binding PitchDeg, StringFormat=F1}" Width="*"/>
-                        <DataGridTextColumn Header="Y°" Binding="{Binding YawDeg, StringFormat=F1}" Width="*"/>
-                    </DataGrid.Columns>
-                </DataGrid>
-            </Grid>
+            <Border Grid.Column="1" Margin="12,0,0,0"
+                    Background="{StaticResource Brush.Surface.Raised}"
+                    CornerRadius="{StaticResource Radius.Md}"
+                    Padding="16">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                        <TextBlock Text="용접 경로 (6-DoF 포즈)" Style="{StaticResource Text.SectionHeader}"
+                                   Margin="0,0,0,8"/>
+                        <TextBlock Style="{StaticResource Text.Body}"
+                                   Foreground="{StaticResource Brush.Text.Secondary}"
+                                   TextWrapping="Wrap"
+                                   Text="모델의 모서리에 마우스를 올리면 주황색으로 강조되고, 클릭하면 연속 모서리가 자동 체이닝되어 토치 포즈가 계산됩니다."/>
+                    </StackPanel>
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding Poses}" IsReadOnly="True">
+                        <DataGrid.Resources>
+                            <!-- 수치 열 — 우측 정렬로 자릿수 비교가 쉬워진다 -->
+                            <Style x:Key="NumCell" TargetType="TextBlock">
+                                <Setter Property="TextAlignment" Value="Right"/>
+                                <Setter Property="VerticalAlignment" Value="Center"/>
+                            </Style>
+                            <!-- 좁은 6열 패널에 맞춰 셀/헤더 패딩 축소 (테마 기본 12,8 → 6,6) -->
+                            <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}">
+                                <Setter Property="Padding" Value="6,6"/>
+                            </Style>
+                            <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                                <Setter Property="Padding" Value="6,10"/>
+                            </Style>
+                        </DataGrid.Resources>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="X" Binding="{Binding X, StringFormat=F1}" Width="*" ElementStyle="{StaticResource NumCell}"/>
+                            <DataGridTextColumn Header="Y" Binding="{Binding Y, StringFormat=F1}" Width="*" ElementStyle="{StaticResource NumCell}"/>
+                            <DataGridTextColumn Header="Z" Binding="{Binding Z, StringFormat=F1}" Width="*" ElementStyle="{StaticResource NumCell}"/>
+                            <DataGridTextColumn Header="R°" Binding="{Binding RollDeg, StringFormat=F1}" Width="*" ElementStyle="{StaticResource NumCell}"/>
+                            <DataGridTextColumn Header="P°" Binding="{Binding PitchDeg, StringFormat=F1}" Width="*" ElementStyle="{StaticResource NumCell}"/>
+                            <DataGridTextColumn Header="Y°" Binding="{Binding YawDeg, StringFormat=F1}" Width="*" ElementStyle="{StaticResource NumCell}"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
         </Grid>
 
         <!-- 상태 바 -->
-        <Border Grid.Row="2" Background="#FF2B2B33" Padding="10,6" Margin="8">
-            <TextBlock Text="{Binding StatusText}" Foreground="#BBB"/>
+        <Border Grid.Row="2" Background="{StaticResource Brush.Surface.Raised}"
+                CornerRadius="{StaticResource Radius.Sm}" Padding="12,8" Margin="12">
+            <TextBlock Text="{Binding StatusText}" Style="{StaticResource Text.Body}"
+                       Foreground="{StaticResource Brush.Text.Secondary}"/>
         </Border>
     </Grid>
 </Window>

@@ -49,8 +49,18 @@ GUI 진단 모드: `VMS.WeldTeach.exe --open <step경로> [--pick <엣지Id>] [-
     delete 를 호출해 **힙 손상(0xC0000374)·UI 행**이 발생한다 — 스택 덤프로 확인(2026-07-28).
     `OcctLifetime.Keep()` 으로 모든 OCCT 객체의 `DeleteOnFinalize` 를 꺼서 회피. 부작용으로
     로드당 소량(수백 KB~수 MB) 네이티브 누수 — PoC 허용, 자체 래퍼 교체 시 해소.
+  - **벤더 홍보 팝업**: STEP 리더/라이터 생성 시 배포사(北京腾雪科技) 홍보 팝업
+    (클래스 `Comet_PopupWindow`) 이 뜬다. 소유 스레드가 메시지를 펌프하지 않아 WM_CLOSE /
+    ShowWindow / SetWindowPos 가 전부 무효(실측) — 소유 스레드와 무관하게 동작하는
+    **DWM 클로킹**(`DwmSetWindowAttribute` + `DWMWA_CLOAK`, 자기 프로세스 창은 허용)으로
+    화면에서 제거한다 (`VendorPopupSuppressor`, 0.1s 감시 스레드).
 - 토치 법선은 **지점별 pcurve UV 평가** — 원통 등 곡면 심에서도 경로를 따라 방향이 회전한다
   (파이프 피팅 원형 심으로 검증, 2026-07-28). pcurve 가 없는 특수 면만 면 중심 법선으로 대체.
+- **Helix LinesVisual3D 함정**: 보이는 상태에서 `Points.Add` 반복 시 점마다 라인 메쉬 전체를
+  재생성해 O(N²) — 실파일(242엣지)에서 UI 가 14초+ 정지했다. 컬렉션을 채운 뒤
+  **한 번에 교체 할당**할 것 (MainWindow 렌더 코드 참조).
+- UI 는 VMS 본체 디자인 토큰(`Themes/` — Colors·Typography·Spacing·Controls)을 이식해
+  다른 VMS 앱과 동일한 룩(Indigo/Slate 다크, ModernButton/Button.Subtle, 다크 DataGrid).
 - 진행각(push/drag)·작업각 오프셋 파라미터, 로봇 벤더별 오일러 규약 변환은 명세 보강 후 구현.
 
 ## 다음 단계 (PoC 통과 후)

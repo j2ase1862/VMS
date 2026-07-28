@@ -12,6 +12,9 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        // Occt.NET 벤더 홍보 팝업 감시·클로킹 (STEP 리더/라이터 사용 시 출현)
+        VendorPopupSuppressor.Install();
+
         // 서비스 수동 구성 (VMS 관례 — DI 컨테이너 없이 App 에서 조립)
         var cadKernel = new CadKernelService();
         var dialogService = new DialogService();
