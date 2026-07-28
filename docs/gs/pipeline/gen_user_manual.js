@@ -329,7 +329,7 @@ const POST = {
 const ADMIN_BEFORE = "4. BODA.VMS.Web (관리자 / MES)";
 function adminDialogsSection() {
   const out = [];
-  out.push(new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("3.9 관리자 도구 다이얼로그 (Admin 전용)")] }));
+  out.push(new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("3.10 관리자 도구 다이얼로그 (Admin 전용)")] }));
   out.push(P("헤더의 User Management 아이콘과 Admin Tools(⋮) 드롭다운에서 실행되는 관리자 전용 다이얼로그다. (Admin 권한 로그인 시에만 표시) 각 그림 아래에 화면의 주요 컨트롤과 그 역할을 정리했다."));
   const dlgs = [
     ["23_dlg_usermgmt.png", "User Management — 사용자 계정·권한(UserGrade) 관리", [
@@ -789,7 +789,7 @@ front.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 52
   children: [new TextRun({ text: "설치 · 환경 설정 · UI 화면별 조작법 (스크린샷 포함)", size: 22, color: "595959" })] }));
 front.push(imgPara("05_vms_sidepanel.png", 460));
 front.push(new Paragraph({ spacing: { before: 520 }, alignment: AlignmentType.CENTER,
-  children: [new TextRun({ text: "GS 인증 제출용 · 버전 1.1 · 2026-07-07", size: 22 })] }));
+  children: [new TextRun({ text: "GS 인증 제출용 · 버전 1.1 · 2026-07-28", size: 22 })] }));
 front.push(new Paragraph({ children: [new PageBreak()] }));
 front.push(new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun("목차")] }));
 front.push(new TableOfContents("목차", { hyperlink: true, headingStyleRange: "1-3" }));
