@@ -7,7 +7,8 @@ namespace VMS.WeldTeach.Services;
 
 /// <summary>
 /// 점군 입출력 + CAD 표면 샘플링 + 합성 스캔 생성.
-/// 지원 포맷: ASCII/binary_little_endian PLY (x,y,z float/double), XYZ/TXT/CSV (공백·쉼표 구분).
+/// 지원 포맷: VPC(VMS 자체 바이너리 — VMS [Save 3D]/VisionSetup [Save 3D Data] 산출물),
+/// ASCII/binary_little_endian PLY (x,y,z float/double), XYZ/TXT/CSV (공백·쉼표 구분).
 /// </summary>
 public class PointCloudService
 {
@@ -18,9 +19,66 @@ public class PointCloudService
         var ext = Path.GetExtension(path).ToLowerInvariant();
         return ext switch
         {
+            ".vpc" => LoadVpc(path),
             ".ply" => LoadPly(path),
             _ => LoadXyz(path),
         };
+    }
+
+    /// <summary>
+    /// VMS .vpc 로드 — VMS.Camera.Models.PointCloudData.SaveToFile 과 동일 포맷.
+    /// "VPC1" 매직 + count + gridW + gridH + name(길이접두 문자열) + float×3 좌표 + byte×3 색상.
+    /// (참조 추가 없이 포맷을 직접 파싱해 프로젝트 독립성 유지)
+    /// </summary>
+    private static List<Point3D> LoadVpc(string path)
+    {
+        using var fs = File.OpenRead(path);
+        using var br = new BinaryReader(fs);
+
+        var sig = br.ReadBytes(4);
+        if (sig.Length != 4 || sig[0] != (byte)'V' || sig[1] != (byte)'P' || sig[2] != (byte)'C' || sig[3] != (byte)'1')
+            throw new InvalidOperationException("VPC 시그니처가 아닙니다 (VMS [Save 3D] 로 저장한 파일인지 확인).");
+
+        int count = br.ReadInt32();
+        _ = br.ReadInt32();   // gridWidth
+        _ = br.ReadInt32();   // gridHeight
+        _ = br.ReadString();  // name
+
+        if (count < 0 || count > 100_000_000)
+            throw new InvalidOperationException($"VPC 점 개수가 비정상입니다: {count}");
+
+        var pts = new List<Point3D>(count);
+        var buf = br.ReadBytes(count * 12);
+        if (buf.Length < count * 12)
+            throw new InvalidOperationException("VPC 좌표 데이터가 파일 길이보다 깁니다 (손상된 파일).");
+        for (int i = 0; i < count; i++)
+        {
+            float x = BitConverter.ToSingle(buf, i * 12);
+            float y = BitConverter.ToSingle(buf, i * 12 + 4);
+            float z = BitConverter.ToSingle(buf, i * 12 + 8);
+            pts.Add(new Point3D(x, y, z));
+        }
+        // 색상(byte×3)은 정합에 불필요 — 건너뜀
+        return pts;
+    }
+
+    /// <summary>WeldTeach 산출 점군을 .vpc 로 저장 (라운드트립 검증·VMS 왕복용).</summary>
+    public static void SaveVpc(string path, IReadOnlyList<Point3D> points, string name = "WeldTeach")
+    {
+        using var fs = File.Create(path);
+        using var bw = new BinaryWriter(fs);
+        bw.Write("VPC1"u8.ToArray());
+        bw.Write(points.Count);
+        bw.Write(0);   // gridWidth (unorganized)
+        bw.Write(0);   // gridHeight
+        bw.Write(name);
+        foreach (var p in points)
+        {
+            bw.Write((float)p.X); bw.Write((float)p.Y); bw.Write((float)p.Z);
+        }
+        var colors = new byte[points.Count * 3];
+        for (int i = 0; i < colors.Length; i++) colors[i] = 200;
+        bw.Write(colors);
     }
 
     private static List<Point3D> LoadXyz(string path)

@@ -253,6 +253,18 @@ public partial class App : Application
                 lines.Add($"icp: seam pose→robot ({moved.X:F2},{moved.Y:F2},{moved.Z:F2}) expect ({expect.X:F2},{expect.Y:F2},{expect.Z:F2})");
 
                 lines.Add(icp.RmseMm <= 0.2 && maxDev <= 0.3 ? "ICP OK" : "ICP FAIL");
+
+                // VPC 라운드트립 — VMS [Save 3D] 포맷과의 호환 검증
+                var vpcPath = Path.Combine(Path.GetTempPath(), "weldteach_selftest.vpc");
+                PointCloudService.SaveVpc(vpcPath, synthCloud);
+                var vpcLoaded = new PointCloudService().LoadCloud(vpcPath);
+                double vpcMax = 0;
+                for (int i = 0; i < Math.Min(100, vpcLoaded.Count); i++)
+                    vpcMax = Math.Max(vpcMax, (vpcLoaded[i] - synthCloud[i]).Length);
+                lines.Add(vpcLoaded.Count == synthCloud.Count && vpcMax < 1e-3
+                    ? $"vpc roundtrip: OK ({vpcLoaded.Count:N0}점, 편차 {vpcMax:E1})"
+                    : $"vpc roundtrip: FAIL ({vpcLoaded.Count}/{synthCloud.Count}, {vpcMax})");
+
                 lines.Add("SELFTEST OK");
             }
             File.WriteAllLines(log, lines);
