@@ -45,6 +45,14 @@
                                HelpTitle="체이닝 각도 허용 (°)"
                                HelpText="클릭한 모서리에 이어진 모서리를 자동으로 따라가 하나의 용접 경로로 묶을 때(체이닝), 두 모서리가 만나는 지점의 접선 방향 차이가 이 각도 이내면 같은 경로로 잇습니다.&#x0a;&#x0a;• 값을 키우면 꺾인 모서리까지 이어집니다.&#x0a;• 값을 줄이면 매끄럽게 이어지는 구간만 묶입니다. (기본 15° = C1 연속)"/>
                 <TextBox Text="{Binding ChainAngleToleranceDeg, UpdateSourceTrigger=PropertyChanged}" Width="56"
+                         VerticalContentAlignment="Center" Margin="0,0,16,0"/>
+
+                <TextBlock Text="포즈 간격(mm)" Style="{StaticResource Text.Caption}"
+                           VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <ctrl:HelpIcon VerticalAlignment="Center" Margin="0,0,6,0"
+                               HelpTitle="포즈 간격 (mm)"
+                               HelpText="용접 심을 따라 로봇에게 넘겨줄 목표점(포즈)들 사이의 거리입니다. 경로를 이 간격으로 균일하게 나눠 각 지점의 위치 + 토치 자세(6-DoF)를 만듭니다. 값을 바꾸면 이미 선택한 모든 경로의 포즈가 즉시 다시 계산됩니다.&#x0a;&#x0a;• 좁게: 곡선 구간을 더 정확히 따라감 (포인트 수 증가)&#x0a;• 넓게: 데이터가 가벼워짐 — 직선 구간은 넓어도 오차 없음&#x0a;&#x0a;선택한 경로의 포즈 위치는 화면에 노란 점으로 표시됩니다."/>
+                <TextBox Text="{Binding PoseSpacingMm, UpdateSourceTrigger=PropertyChanged}" Width="56"
                          VerticalContentAlignment="Center"/>
 
                 <ProgressBar IsIndeterminate="{Binding IsBusy}" Width="120" Height="6" Margin="20,0,0,0"

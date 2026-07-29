@@ -13,24 +13,64 @@ namespace VMS.WeldTeach.Services;
 public class TorchPoseService
 {
     /// <summary>
-    /// 경로 위 각 점의 토치 방향과 6-DoF 포즈를 채운다.
-    /// 지점별 이등분 벡터(pcurve UV 법선 평가)를 사용해 곡면 심에서도 방향이 따라 돈다.
-    /// 지점 값이 퇴화하면 윤곽 전체 평균(글로벌) 이등분으로 대체.
+    /// 경로를 포즈 간격(mm)으로 호 길이 기준 균일 재샘플링한 뒤, 각 포즈 점의 토치 방향과
+    /// 6-DoF 포즈를 채운다. 위치·이등분 벡터는 표시용 폴리라인 샘플에서 선형 보간하고,
+    /// 접선은 재샘플 점의 이웃 차분으로 계산한다. 이등분이 퇴화하면 글로벌 평균으로 대체.
     /// </summary>
-    public List<TorchPose> ComputePoses(WeldingPathContour contour, CadModelData model)
+    public List<TorchPose> ComputePoses(WeldingPathContour contour, CadModelData model, double spacingMm = 1.5)
     {
         var globalBisector = ComputeBisector(contour, model);
-
+        var src = contour.PathPoints;
+        contour.PosePoints.Clear();
         contour.TorchDirections.Clear();
-        var poses = new List<TorchPose>(contour.PathPoints.Count);
-        for (int i = 0; i < contour.PathPoints.Count; i++)
-        {
-            var z = contour.TangentVectors[i];
-            var bisector = i < contour.PointBisectors.Count && contour.PointBisectors[i].Length > 1e-9
-                ? contour.PointBisectors[i]
-                : globalBisector;
+        var poses = new List<TorchPose>();
+        if (src.Count < 2) return poses;
 
-            // 이등분 벡터를 접선에 직교화 (그람-슈미트)
+        spacingMm = Math.Clamp(spacingMm, 0.1, 100.0);
+
+        // 누적 호 길이
+        var cum = new double[src.Count];
+        for (int i = 1; i < src.Count; i++)
+            cum[i] = cum[i - 1] + (src[i] - src[i - 1]).Length;
+        double total = cum[^1];
+        if (total < 1e-9) return poses;
+
+        // 재샘플 호 길이 위치 — 0, d, 2d, ... 끝점은 항상 포함
+        // (마지막 조각이 간격의 30% 미만이면 직전 샘플을 끝점으로 당겨 붙인다)
+        var stations = new List<double>();
+        for (double s = 0; s < total; s += spacingMm) stations.Add(s);
+        if (stations.Count > 1 && total - stations[^1] < spacingMm * 0.3) stations[^1] = total;
+        else stations.Add(total);
+
+        // 위치·이등분 보간
+        bool hasBis = contour.PointBisectors.Count == src.Count;
+        var pts = new List<Point3D>(stations.Count);
+        var biss = new List<Vector3D>(stations.Count);
+        int seg = 0;
+        foreach (var s in stations)
+        {
+            while (seg < src.Count - 2 && cum[seg + 1] < s) seg++;
+            double segLen = cum[seg + 1] - cum[seg];
+            double t = segLen > 1e-12 ? (s - cum[seg]) / segLen : 0;
+            pts.Add(src[seg] + t * (src[seg + 1] - src[seg]));
+
+            var b = default(Vector3D);
+            if (hasBis)
+            {
+                b = contour.PointBisectors[seg] + t * (contour.PointBisectors[seg + 1] - contour.PointBisectors[seg]);
+                if (b.Length > 1e-9) b.Normalize();
+            }
+            biss.Add(b);
+        }
+
+        // 포즈 프레임 (Z=접선, X=이등분 직교화, Y=Z×X)
+        for (int i = 0; i < pts.Count; i++)
+        {
+            int a = Math.Max(0, i - 1), c = Math.Min(pts.Count - 1, i + 1);
+            var z = pts[c] - pts[a];
+            if (z.Length > 1e-12) z.Normalize();
+
+            var bisector = biss[i].Length > 1e-9 ? biss[i] : globalBisector;
             var x = bisector - Vector3D.DotProduct(bisector, z) * z;
             if (x.Length < 1e-9)
             {
@@ -41,10 +81,10 @@ public class TorchPoseService
             x.Normalize();
             var y = Vector3D.CrossProduct(z, x);
 
+            contour.PosePoints.Add(pts[i]);
             contour.TorchDirections.Add(x);
-            var p = contour.PathPoints[i];
             var (roll, pitch, yaw) = ToZyxEuler(x, y, z);
-            poses.Add(new TorchPose(p.X, p.Y, p.Z, roll, pitch, yaw));
+            poses.Add(new TorchPose(pts[i].X, pts[i].Y, pts[i].Z, roll, pitch, yaw));
         }
         return poses;
     }

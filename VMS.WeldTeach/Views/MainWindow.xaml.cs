@@ -21,6 +21,7 @@ public partial class MainWindow : Window
     private readonly LinesVisual3D _contourLines = new() { Color = Colors.IndianRed, Thickness = 2.5 };
     private readonly LinesVisual3D _selectedLines = new() { Color = Colors.Red, Thickness = 4.0 };
     private readonly LinesVisual3D _torchLines = new() { Color = Colors.Cyan, Thickness = 1.5 };
+    private readonly PointsVisual3D _posePoints = new() { Color = Colors.Yellow, Size = 5 };
 
     public MainWindow(MainViewModel viewModel)
     {
@@ -34,6 +35,7 @@ public partial class MainWindow : Window
         Viewport.Children.Add(_contourLines);
         Viewport.Children.Add(_selectedLines);
         Viewport.Children.Add(_torchLines);
+        Viewport.Children.Add(_posePoints);
         Viewport.Children.Add(_labelRoot);
 
         _viewModel.ModelChanged += (_, _) => RebuildScene();
@@ -91,6 +93,7 @@ public partial class MainWindow : Window
         var allPts = new Point3DCollection();
         var selectedPts = new Point3DCollection();
         var torchPts = new Point3DCollection();
+        var poseDots = new Point3DCollection();
         _labelRoot.Children.Clear();
 
         if (model != null)
@@ -120,23 +123,26 @@ public partial class MainWindow : Window
                     });
                 }
 
-                // 토치 방향 화살선은 선택된 경로에만 (8mm, 일정 간격)
+                // 선택된 경로에만: 포즈 포인트(노란 점) + 토치 방향 화살선(8mm)
+                // 포인트 = 실제 웨이포인트 그대로, 화살선은 화면 복잡도 제한(최대 ~80개)
                 if (!isSelected) continue;
-                int stride = Math.Max(1, c.PathPoints.Count / 24);
-                for (int i = 0; i < c.PathPoints.Count && i < c.TorchDirections.Count; i += stride)
+                foreach (var pp in c.PosePoints) poseDots.Add(pp);
+                int stride = Math.Max(1, c.PosePoints.Count / 80);
+                for (int i = 0; i < c.PosePoints.Count && i < c.TorchDirections.Count; i += stride)
                 {
-                    var p = c.PathPoints[i];
+                    var p = c.PosePoints[i];
                     torchPts.Add(p);
                     torchPts.Add(p + c.TorchDirections[i] * 8);
                 }
             }
         }
 
-        hoverPts.Freeze(); allPts.Freeze(); selectedPts.Freeze(); torchPts.Freeze();
+        hoverPts.Freeze(); allPts.Freeze(); selectedPts.Freeze(); torchPts.Freeze(); poseDots.Freeze();
         _hoverLines.Points = hoverPts;
         _contourLines.Points = allPts;
         _selectedLines.Points = selectedPts;
         _torchLines.Points = torchPts;
+        _posePoints.Points = poseDots;
     }
 
     private static void AppendPolyline(Point3DCollection target, IList<Point3D> pts)

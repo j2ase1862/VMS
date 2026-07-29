@@ -64,6 +64,13 @@ public partial class App : Application
                 {
                     await viewModel.LoadForDiagnosticsAsync(stepPath);
                     T($"load returned, status={viewModel.StatusText}");
+                    int spIdx = Array.IndexOf(e.Args, "--spacing");
+                    if (spIdx >= 0 && spIdx + 1 < e.Args.Length &&
+                        double.TryParse(e.Args[spIdx + 1], out double spacing))
+                    {
+                        viewModel.PoseSpacingMm = spacing;
+                        T($"spacing={spacing}");
+                    }
                     int pickIdx = Array.IndexOf(e.Args, "--pick");
                     if (pickIdx >= 0 && pickIdx + 1 < e.Args.Length)
                     {

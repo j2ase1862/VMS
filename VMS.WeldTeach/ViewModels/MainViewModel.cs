@@ -50,6 +50,30 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private double _chainAngleToleranceDeg = 15.0;
 
+    /// <summary>포즈(웨이포인트) 간격 mm — 변경 시 모든 경로의 포즈를 즉시 재계산.</summary>
+    [ObservableProperty]
+    private double _poseSpacingMm = 1.5;
+
+    partial void OnPoseSpacingMmChanged(double value) => RecomputeAllPoses();
+
+    private void RecomputeAllPoses()
+    {
+        if (Model == null || Contours.Count == 0) return;
+        foreach (var c in Contours)
+            c.Poses = _poseService.ComputePoses(c, Model, PoseSpacingMm);
+
+        // 목록 요약(포즈 수)과 포즈 표 갱신
+        System.Windows.Data.CollectionViewSource.GetDefaultView(Contours)?.Refresh();
+        var sel = SelectedContour;
+        Poses.Clear();
+        if (sel != null)
+            foreach (var p in sel.Poses) Poses.Add(p);
+
+        StatusText = $"포즈 간격 {PoseSpacingMm:F1} mm 적용 — 경로 {Contours.Count}개, " +
+                     $"총 포즈 {Contours.Sum(c => c.Poses.Count)}개";
+        HighlightChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     public ObservableCollection<TorchPose> Poses { get; } = new();
 
     partial void OnSelectedContourChanged(WeldingPathContour? value)
@@ -174,7 +198,7 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
-        contour.Poses = _poseService.ComputePoses(contour, Model);
+        contour.Poses = _poseService.ComputePoses(contour, Model, PoseSpacingMm);
         Contours.Add(contour);
         SelectedContour = contour;
 
