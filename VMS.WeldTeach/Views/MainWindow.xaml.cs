@@ -15,13 +15,15 @@ public partial class MainWindow : Window
 {
     private readonly MainViewModel _viewModel;
     private readonly ModelVisual3D _modelRoot = new();
-    private readonly ModelVisual3D _labelRoot = new();   // 경로 순번 3D 라벨
+    // 경로 순번 라벨 앵커(3D) — 카메라 이동 시 2D 오버레이로 재투영
+    private readonly List<(Point3D Pos, int Order, bool Selected)> _labelAnchors = new();
     private readonly LinesVisual3D _edgeLines = new() { Color = Colors.LightSteelBlue, Thickness = 1.2 };
     private readonly LinesVisual3D _hoverLines = new() { Color = Colors.Orange, Thickness = 3.0 };
     private readonly LinesVisual3D _contourLines = new() { Color = Colors.IndianRed, Thickness = 2.5 };
     private readonly LinesVisual3D _selectedLines = new() { Color = Colors.Red, Thickness = 4.0 };
     private readonly LinesVisual3D _torchLines = new() { Color = Colors.Cyan, Thickness = 1.5 };
     private readonly PointsVisual3D _posePoints = new() { Color = Colors.Yellow, Size = 5 };
+    private readonly LinesVisual3D _labelLeaders = new() { Color = Colors.Gainsboro, Thickness = 1.0 };
 
     public MainWindow(MainViewModel viewModel)
     {
@@ -36,7 +38,7 @@ public partial class MainWindow : Window
         Viewport.Children.Add(_selectedLines);
         Viewport.Children.Add(_torchLines);
         Viewport.Children.Add(_posePoints);
-        Viewport.Children.Add(_labelRoot);
+        Viewport.Children.Add(_labelLeaders);
 
         _viewModel.ModelChanged += (_, _) => RebuildScene();
         _viewModel.HighlightChanged += (_, _) => UpdateHighlights();
@@ -94,7 +96,8 @@ public partial class MainWindow : Window
         var selectedPts = new Point3DCollection();
         var torchPts = new Point3DCollection();
         var poseDots = new Point3DCollection();
-        _labelRoot.Children.Clear();
+        var leaderPts = new Point3DCollection();
+        _labelAnchors.Clear();
 
         if (model != null)
         {
@@ -111,16 +114,16 @@ public partial class MainWindow : Window
 
                 if (c.PathPoints.Count > 0)
                 {
-                    _labelRoot.Children.Add(new BillboardTextVisual3D
-                    {
-                        Text = $" {order + 1} ",
-                        Position = c.PathPoints[0],
-                        Foreground = Brushes.White,
-                        Background = isSelected ? Brushes.Red : Brushes.IndianRed,
-                        FontSize = 14,
-                        FontWeight = FontWeights.Bold,
-                        Padding = new Thickness(2),
-                    });
+                    // 순번 라벨 앵커: 경로 중간점에서 토치 방향으로 띄운 3D 점.
+                    // 라벨 자체는 2D 오버레이(항상 최상위)로 그리고, 3D 지시선으로 경로와 연결한다.
+                    var mid = c.PathPoints[c.PathPoints.Count / 2];
+                    var lift = c.TorchDirections.Count > 0
+                        ? c.TorchDirections[c.TorchDirections.Count / 2]
+                        : new Vector3D(0, 0, 1);
+                    var labelPos = mid + lift * 14;
+                    leaderPts.Add(mid);
+                    leaderPts.Add(labelPos);
+                    _labelAnchors.Add((labelPos, order + 1, isSelected));
                 }
 
                 // 포즈 포인트(노란 점) + 토치 방향 화살선(8mm) — 기본은 선택 경로만,
@@ -137,12 +140,14 @@ public partial class MainWindow : Window
             }
         }
 
-        hoverPts.Freeze(); allPts.Freeze(); selectedPts.Freeze(); torchPts.Freeze(); poseDots.Freeze();
+        hoverPts.Freeze(); allPts.Freeze(); selectedPts.Freeze(); torchPts.Freeze(); poseDots.Freeze(); leaderPts.Freeze();
         _hoverLines.Points = hoverPts;
         _contourLines.Points = allPts;
         _selectedLines.Points = selectedPts;
         _torchLines.Points = torchPts;
         _posePoints.Points = poseDots;
+        _labelLeaders.Points = leaderPts;
+        RebuildLabelOverlay();
     }
 
     private static void AppendPolyline(Point3DCollection target, IList<Point3D> pts)
@@ -153,6 +158,48 @@ public partial class MainWindow : Window
             target.Add(pts[i + 1]);
         }
     }
+
+    // ---- 경로 순번 2D 오버레이 (3D 앵커 → 화면 좌표 재투영) ----
+
+    private void RebuildLabelOverlay()
+    {
+        LabelOverlay.Children.Clear();
+        foreach (var (_, order, selected) in _labelAnchors)
+        {
+            var badge = new System.Windows.Controls.Border
+            {
+                Background = selected ? Brushes.Red : Brushes.IndianRed,
+                CornerRadius = new CornerRadius(10),
+                MinWidth = 20,
+                Height = 20,
+                Padding = new Thickness(5, 0, 5, 0),
+                Child = new System.Windows.Controls.TextBlock
+                {
+                    Text = order.ToString(),
+                    Foreground = Brushes.White,
+                    FontWeight = FontWeights.Bold,
+                    FontSize = 12,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                },
+            };
+            LabelOverlay.Children.Add(badge);
+        }
+        PositionLabelOverlay();
+    }
+
+    private void PositionLabelOverlay()
+    {
+        for (int i = 0; i < _labelAnchors.Count && i < LabelOverlay.Children.Count; i++)
+        {
+            var el = (FrameworkElement)LabelOverlay.Children[i];
+            var pt = Viewport.Viewport.Point3DtoPoint2D(_labelAnchors[i].Pos);
+            System.Windows.Controls.Canvas.SetLeft(el, pt.X - 10);
+            System.Windows.Controls.Canvas.SetTop(el, pt.Y - 10);
+        }
+    }
+
+    private void Viewport_CameraChanged(object sender, RoutedEventArgs e) => PositionLabelOverlay();
 
     /// <summary>진단 모드 — 현재 창을 PNG 로 캡처한다.</summary>
     public void CaptureToPng(string path)

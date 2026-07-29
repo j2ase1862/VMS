@@ -82,14 +82,19 @@
             <!-- 3D 뷰포트: 마우스 훅업은 코드비하인드(뷰 전용 상호작용) -->
             <Border Background="{StaticResource Brush.Surface.Base}"
                     CornerRadius="{StaticResource Radius.Md}">
-                <helix:HelixViewport3D x:Name="Viewport"
-                                       Background="Transparent"
-                                       ShowCoordinateSystem="True"
-                                       ZoomExtentsWhenLoaded="True"
-                                       MouseMove="Viewport_MouseMove"
-                                       MouseLeftButtonDown="Viewport_MouseLeftButtonDown">
-                    <helix:DefaultLights/>
-                </helix:HelixViewport3D>
+                <Grid>
+                    <helix:HelixViewport3D x:Name="Viewport"
+                                           Background="Transparent"
+                                           ShowCoordinateSystem="True"
+                                           ZoomExtentsWhenLoaded="True"
+                                           CameraChanged="Viewport_CameraChanged"
+                                           MouseMove="Viewport_MouseMove"
+                                           MouseLeftButtonDown="Viewport_MouseLeftButtonDown">
+                        <helix:DefaultLights/>
+                    </helix:HelixViewport3D>
+                    <!-- 경로 순번 2D 오버레이 — 3D 메쉬에 가려지지 않도록 항상 최상위 -->
+                    <Canvas x:Name="LabelOverlay" IsHitTestVisible="False" ClipToBounds="True"/>
+                </Grid>
             </Border>
 
             <!-- 우측 패널: 경로 목록(용접 순서) + 포즈 -->
