@@ -87,6 +87,10 @@
                 <Button Content="합성 점군 생성" Style="{StaticResource Button.Subtle}"
                         Padding="10,6" FontSize="11" Margin="0,0,6,0"
                         Command="{Binding GenerateSampleCloudCommand}"/>
+                <Button Content="점군 저장 (.vpc)" Style="{StaticResource Button.Subtle}"
+                        Padding="10,6" FontSize="11" Margin="0,0,6,0"
+                        ToolTip="현재 점군을 VMS 호환 .vpc 로 저장합니다 (합성 점군 배포용)"
+                        Command="{Binding SaveCloudCommand}"/>
                 <Button Content="CAD 정합 실행 (ICP)" Style="{StaticResource ModernButton}"
                         Padding="10,6" FontSize="11" Margin="0,0,12,0"
                         Command="{Binding RunIcpCommand}"/>

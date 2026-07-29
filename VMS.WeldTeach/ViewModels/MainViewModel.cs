@@ -139,6 +139,33 @@ public partial class MainViewModel : ObservableObject
         SetScanCloud(cloud, $"합성 점군 생성 — {cloud.Count:N0}점, 오프셋 (12,-7,3)mm + Z10°/X5° (미정합)");
     }
 
+    /// <summary>현재 점군(스캔 좌표계 원본)을 .vpc 로 저장 — CAD 대응 실물이 없을 때 합성 점군 배포용.</summary>
+    [RelayCommand]
+    private void SaveCloud()
+    {
+        if (_scanCloud == null)
+        {
+            _dialogService.ShowMessage("저장할 점군이 없습니다. 먼저 점군을 열거나 합성 점군을 생성하세요.", "점군 저장");
+            return;
+        }
+        var path = _dialogService.ShowSaveCloudDialog("synthetic_scan.vpc");
+        if (path == null) return;
+        PointCloudService.SaveVpc(path, _scanCloud);
+        StatusText = $"점군 저장 완료: {_scanCloud.Count:N0}점 → {path}";
+    }
+
+    /// <summary>진단 모드용 — 점군을 지정 경로에 저장 / 파일에서 로드.</summary>
+    public void SaveCloudForDiagnostics(string path)
+    {
+        if (_scanCloud != null) PointCloudService.SaveVpc(path, _scanCloud);
+    }
+
+    public void LoadCloudForDiagnostics(string path)
+    {
+        var cloud = _cloudService.LoadCloud(path);
+        SetScanCloud(cloud, $"점군 로드: {Path.GetFileName(path)} — {cloud.Count:N0}점 (미정합)");
+    }
+
     private void SetScanCloud(List<Point3D> cloud, string status)
     {
         _scanCloud = cloud;

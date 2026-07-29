@@ -27,6 +27,17 @@ public class DialogService : IDialogService
         return dlg.ShowDialog() == true ? dlg.FileName : null;
     }
 
+    public string? ShowSaveCloudDialog(string defaultName)
+    {
+        var dlg = new SaveFileDialog
+        {
+            Title = "점군 저장",
+            FileName = defaultName,
+            Filter = "VMS 점군 (*.vpc)|*.vpc",
+        };
+        return dlg.ShowDialog() == true ? dlg.FileName : null;
+    }
+
     public string? ShowSaveJsonDialog(string defaultName)
     {
         var dlg = new SaveFileDialog

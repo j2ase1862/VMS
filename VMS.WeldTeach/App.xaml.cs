@@ -91,6 +91,18 @@ public partial class App : Application
                         viewModel.GenerateSampleCloudCommand.Execute(null);
                         T($"synthcloud, status={viewModel.StatusText}");
                     }
+                    int cloudIdx = Array.IndexOf(e.Args, "--cloud");
+                    if (cloudIdx >= 0 && cloudIdx + 1 < e.Args.Length)
+                    {
+                        viewModel.LoadCloudForDiagnostics(e.Args[cloudIdx + 1]);
+                        T($"cloud loaded, status={viewModel.StatusText}");
+                    }
+                    int saveIdx = Array.IndexOf(e.Args, "--savecloud");
+                    if (saveIdx >= 0 && saveIdx + 1 < e.Args.Length)
+                    {
+                        viewModel.SaveCloudForDiagnostics(e.Args[saveIdx + 1]);
+                        T($"cloud saved: {e.Args[saveIdx + 1]}");
+                    }
                     if (e.Args.Contains("--icp"))
                     {
                         await viewModel.RunIcpCommand.ExecuteAsync(null);
