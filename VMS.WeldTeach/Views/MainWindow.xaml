@@ -57,8 +57,8 @@
                 <CheckBox Content="곡률 적응" IsChecked="{Binding AdaptiveSampling}"
                           VerticalAlignment="Center" Margin="0,0,4,0"/>
                 <ctrl:HelpIcon VerticalAlignment="Center" Margin="0,0,8,0"
-                               HelpTitle="곡률 적응 간격"
-                               HelpText="켜면 포즈 간격이 구간의 곡률에 따라 자동으로 조절됩니다 — 직선 구간은 설정한 간격(최대치)을 그대로 쓰고, 곡선 구간은 경로가 실제 곡선에서 벗어나는 오차(현 오차)가 0.05mm 를 넘지 않도록 자동으로 촘촘해집니다.&#x0a;&#x0a;직선과 곡선이 섞인 경로에서 포인트 수를 최소로 유지하면서 곡선 정밀도를 확보할 때 사용하세요. 새 경로에 적용되며, [전체 적용]으로 기존 경로에도 반영됩니다."/>
+                               HelpTitle="곡률 적응 간격 (기본값)"
+                               HelpText="켜면 포즈 간격이 구간의 곡률에 따라 자동으로 조절됩니다 — 직선 구간은 설정한 간격(최대치)을 그대로 쓰고, 곡선 구간은 경로가 실제 곡선에서 벗어나는 오차(현 오차)가 0.05mm 를 넘지 않도록 자동으로 촘촘해집니다.&#x0a;&#x0a;※ 이 체크박스는 '앞으로 추가할 경로의 기본값'입니다:&#x0a;• 체크 후 새로 클릭한 경로 → 적응 ON 으로 생성&#x0a;• 이미 만든 경로 → 영향 없음. [전체 적용]을 눌러야 모든 경로에 반영&#x0a;• 특정 경로만 다르게 하려면 → 목록에서 선택 후 '선택 경로 간격' 옆 체크박스 사용 (경로별 설정이 항상 우선)"/>
                 <Button Content="전체 적용" Style="{StaticResource Button.Subtle}"
                         Padding="10,6" FontSize="11"
                         ToolTip="기본 포즈 간격·곡률 적응 설정을 모든 경로에 일괄 적용합니다"
@@ -188,8 +188,8 @@
                                        Style="{StaticResource Text.Caption}"
                                        VerticalAlignment="Center" Margin="0,0,4,0"/>
                             <ctrl:HelpIcon DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,6,0"
-                                           HelpTitle="선택 경로 간격 (mm)"
-                                           HelpText="목록에서 선택한 경로에만 적용되는 개별 포즈 간격입니다. 값을 바꾸면 그 경로의 포즈만 즉시 다시 계산됩니다.&#x0a;&#x0a;• 직선 위주 경로 → 넓게 (예: 5~10mm)&#x0a;• 곡선(원형 심 등) 경로 → 좁게 (예: 1~2mm)&#x0a;&#x0a;각 경로의 현재 간격은 목록 요약의 @값으로 표시됩니다."/>
+                                           HelpTitle="선택 경로 간격 (mm) · 곡률 적응"
+                                           HelpText="목록에서 선택한 경로에만 적용되는 개별 설정입니다. 간격 값이나 옆의 '곡률 적응'을 바꾸면 그 경로의 포즈만 즉시 다시 계산됩니다. 경로를 선택하면 이 칸들은 그 경로에 저장된 값으로 자동 표시됩니다.&#x0a;&#x0a;• 직선 위주 경로 → 넓게 (예: 5~10mm)&#x0a;• 곡선(원형 심 등) 경로 → 좁게 or 곡률 적응 체크&#x0a;&#x0a;※ 툴바의 기본값 체크 상태와 무관하게 이 경로에는 여기의 설정이 항상 우선합니다. 예: 툴바 곡률 적응이 체크돼 있어도 여기서 해제하면 이 경로는 균일 간격으로 계산됩니다.&#x0a;&#x0a;각 경로의 현재 설정은 목록 요약의 '@값·적응' 으로 표시됩니다."/>
                             <TextBox DockPanel.Dock="Left" Width="56"
                                      Text="{Binding SelectedPathSpacingMm, UpdateSourceTrigger=PropertyChanged}"
                                      VerticalContentAlignment="Center" Margin="0,0,10,0"/>
