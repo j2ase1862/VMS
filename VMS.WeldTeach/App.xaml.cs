@@ -80,6 +80,8 @@ public partial class App : Application
                         viewModel.PoseSpacingMm = spacing;
                         T($"spacing={spacing}");
                     }
+                    if (e.Args.Contains("--adaptive")) { viewModel.AdaptiveSampling = true; T("adaptive=on"); }
+                    if (e.Args.Contains("--showall")) { viewModel.ShowAllPaths = true; T("showall=on"); }
                     int pickIdx = Array.IndexOf(e.Args, "--pick");
                     if (pickIdx >= 0 && pickIdx + 1 < e.Args.Length)
                     {

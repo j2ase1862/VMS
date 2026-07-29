@@ -123,9 +123,9 @@ public partial class MainWindow : Window
                     });
                 }
 
-                // 선택된 경로에만: 포즈 포인트(노란 점) + 토치 방향 화살선(8mm)
-                // 포인트 = 실제 웨이포인트 그대로, 화살선은 화면 복잡도 제한(최대 ~80개)
-                if (!isSelected) continue;
+                // 포즈 포인트(노란 점) + 토치 방향 화살선(8mm) — 기본은 선택 경로만,
+                // [전체 보기] 켜면 모든 경로에 표시. 화살선은 화면 복잡도 제한(경로당 최대 ~80개)
+                if (!isSelected && !_viewModel.ShowAllPaths) continue;
                 foreach (var pp in c.PosePoints) poseDots.Add(pp);
                 int stride = Math.Max(1, c.PosePoints.Count / 80);
                 for (int i = 0; i < c.PosePoints.Count && i < c.TorchDirections.Count; i += stride)

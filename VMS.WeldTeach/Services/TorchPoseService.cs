@@ -12,12 +12,18 @@ namespace VMS.WeldTeach.Services;
 /// </summary>
 public class TorchPoseService
 {
+    /// <summary>곡률 적응 모드의 최대 현 오차(mm) — 재샘플 현이 실제 곡선에서 벗어나는 허용치.</summary>
+    public const double ChordToleranceMm = 0.05;
+
     /// <summary>
-    /// 경로를 포즈 간격(mm)으로 호 길이 기준 균일 재샘플링한 뒤, 각 포즈 점의 토치 방향과
+    /// 경로를 포즈 간격(mm)으로 호 길이 기준 재샘플링한 뒤, 각 포즈 점의 토치 방향과
     /// 6-DoF 포즈를 채운다. 위치·이등분 벡터는 표시용 폴리라인 샘플에서 선형 보간하고,
     /// 접선은 재샘플 점의 이웃 차분으로 계산한다. 이등분이 퇴화하면 글로벌 평균으로 대체.
+    /// adaptive=true 면 spacingMm 은 최대 간격이 되고, 곡선 구간은 국소 곡률 반경 R 에서
+    /// 현 오차 e ≤ ChordToleranceMm 을 만족하는 간격 √(8·R·e) 로 좁아진다.
     /// </summary>
-    public List<TorchPose> ComputePoses(WeldingPathContour contour, CadModelData model, double spacingMm = 1.5)
+    public List<TorchPose> ComputePoses(WeldingPathContour contour, CadModelData model,
+        double spacingMm = 1.5, bool adaptive = false)
     {
         var globalBisector = ComputeBisector(contour, model);
         var src = contour.PathPoints;
@@ -35,12 +41,11 @@ public class TorchPoseService
         double total = cum[^1];
         if (total < 1e-9) return poses;
 
-        // 재샘플 호 길이 위치 — 0, d, 2d, ... 끝점은 항상 포함
-        // (마지막 조각이 간격의 30% 미만이면 직전 샘플을 끝점으로 당겨 붙인다)
-        var stations = new List<double>();
-        for (double s = 0; s < total; s += spacingMm) stations.Add(s);
-        if (stations.Count > 1 && total - stations[^1] < spacingMm * 0.3) stations[^1] = total;
-        else stations.Add(total);
+        // 재샘플 호 길이 위치 — 균일 또는 곡률 적응. 끝점은 항상 포함
+        // (마지막 조각이 국소 간격의 30% 미만이면 직전 샘플을 끝점으로 당겨 붙인다)
+        var stations = adaptive
+            ? BuildAdaptiveStations(src, cum, total, spacingMm)
+            : BuildUniformStations(total, spacingMm);
 
         // 위치·이등분 보간
         bool hasBis = contour.PointBisectors.Count == src.Count;
@@ -87,6 +92,62 @@ public class TorchPoseService
             poses.Add(new TorchPose(pts[i].X, pts[i].Y, pts[i].Z, roll, pitch, yaw));
         }
         return poses;
+    }
+
+    private static List<double> BuildUniformStations(double total, double spacingMm)
+    {
+        var stations = new List<double>();
+        for (double s = 0; s < total; s += spacingMm) stations.Add(s);
+        if (stations.Count > 1 && total - stations[^1] < spacingMm * 0.3) stations[^1] = total;
+        else stations.Add(total);
+        return stations;
+    }
+
+    /// <summary>
+    /// 곡률 적응 스테이션 — 폴리라인 연속 3점의 외접원 반경으로 국소 곡률을 추정하고,
+    /// 현 오차 한계에서 허용되는 간격 √(8·R·e) 로 전진한다 (직선 구간은 최대 간격).
+    /// </summary>
+    private static List<double> BuildAdaptiveStations(List<Point3D> src, double[] cum, double total, double maxSpacingMm)
+    {
+        double minStep = Math.Max(0.2, maxSpacingMm / 20.0);
+
+        // 각 폴리라인 점의 곡률 반경 (양 끝은 이웃 값 복사)
+        var radius = new double[src.Count];
+        for (int i = 1; i < src.Count - 1; i++)
+            radius[i] = CircumRadius(src[i - 1], src[i], src[i + 1]);
+        radius[0] = src.Count > 2 ? radius[1] : double.MaxValue;
+        radius[^1] = src.Count > 2 ? radius[^2] : double.MaxValue;
+
+        var stations = new List<double> { 0 };
+        double s = 0;
+        int seg = 0;
+        while (true)
+        {
+            while (seg < src.Count - 2 && cum[seg + 1] < s) seg++;
+            // 구간 양 끝 중 더 작은 반경(더 급한 곡률) 기준 — 안전측
+            double r = Math.Min(radius[seg], radius[seg + 1]);
+            double step = r >= double.MaxValue / 2
+                ? maxSpacingMm
+                : Math.Sqrt(8.0 * r * ChordToleranceMm);
+            step = Math.Clamp(step, minStep, maxSpacingMm);
+
+            if (s + step >= total - step * 0.3) break;
+            s += step;
+            stations.Add(s);
+        }
+        stations.Add(total);
+        return stations;
+    }
+
+    /// <summary>세 점의 외접원 반경 — 거의 일직선이면 double.MaxValue (직선 취급).</summary>
+    private static double CircumRadius(Point3D a, Point3D b, Point3D c)
+    {
+        var ab = b - a;
+        var ac = c - a;
+        var bc = c - b;
+        double area2 = Vector3D.CrossProduct(ab, ac).Length;   // 삼각형 넓이 × 2
+        if (area2 < 1e-9) return double.MaxValue;
+        return ab.Length * bc.Length * ac.Length / (2.0 * area2);
     }
 
     /// <summary>윤곽 엣지들의 인접 면(최다 2면) 법선 합성 → 토치 이등분 방향.</summary>
@@ -151,6 +212,7 @@ public class TorchPoseService
                 pathId = c.PathId,
                 totalLength = Math.Round(c.TotalLength, 3),
                 spacingMm = Math.Round(c.SpacingMm, 2),
+                adaptive = c.Adaptive,
                 pointCount = c.Poses.Count,
                 poses = c.Poses.Select(p => new
                 {

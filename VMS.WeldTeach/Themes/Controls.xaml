@@ -316,6 +316,57 @@
         </Style.Triggers>
     </Style>
 
+    <!-- ──────────────── CheckBox (default) ──────────────── -->
+    <Style TargetType="CheckBox">
+        <Setter Property="Foreground"    Value="{StaticResource Brush.Text.Primary}"/>
+        <Setter Property="Background"    Value="{StaticResource Brush.Surface.Overlay}"/>
+        <Setter Property="BorderBrush"   Value="{StaticResource Brush.Surface.Divider}"/>
+        <Setter Property="FontFamily"    Value="{StaticResource Font.Family}"/>
+        <Setter Property="FontSize"      Value="{StaticResource Font.Size.Body}"/>
+        <Setter Property="Cursor"        Value="Hand"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <StackPanel Orientation="Horizontal">
+                        <Border x:Name="box"
+                                Width="18" Height="18"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="1.5"
+                                CornerRadius="{StaticResource Radius.Sm}"
+                                VerticalAlignment="Center">
+                            <TextBlock x:Name="check"
+                                       Text="&#xE73E;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="11"
+                                       Foreground="{StaticResource Brush.Text.OnPrimary}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Opacity="0"/>
+                        </Border>
+                        <ContentPresenter Margin="10,0,0,0"
+                                          VerticalAlignment="Center"
+                                          RecognizesAccessKey="True"/>
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="box" Property="BorderBrush" Value="{StaticResource Brush.Primary}"/>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="box"   Property="Background"  Value="{StaticResource Brush.Primary}"/>
+                            <Setter TargetName="box"   Property="BorderBrush" Value="{StaticResource Brush.Primary}"/>
+                            <Setter TargetName="check" Property="Opacity"     Value="1"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ──────────────── ToolTip (default) ──────────────── -->
     <Style TargetType="ToolTip">
         <Setter Property="Background"      Value="{StaticResource Brush.Surface.Overlay}"/>

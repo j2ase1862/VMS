@@ -54,9 +54,23 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private double _poseSpacingMm = 1.5;
 
+    /// <summary>곡률 적응 간격 기본값 — 새 경로에 적용. 켜면 간격은 최대치가 되고 곡선은 자동으로 촘촘해진다.</summary>
+    [ObservableProperty]
+    private bool _adaptiveSampling;
+
     /// <summary>선택된 경로의 개별 포즈 간격 mm — 편집 시 그 경로만 재계산 (직선 넓게 / 곡선 좁게).</summary>
     [ObservableProperty]
     private double _selectedPathSpacingMm = 1.5;
+
+    /// <summary>선택된 경로의 곡률 적응 여부 — 변경 시 그 경로만 재계산.</summary>
+    [ObservableProperty]
+    private bool _selectedPathAdaptive;
+
+    /// <summary>전체 보기 — 모든 경로의 포즈 점·토치 화살선을 동시에 표시.</summary>
+    [ObservableProperty]
+    private bool _showAllPaths;
+
+    partial void OnShowAllPathsChanged(bool value) => HighlightChanged?.Invoke(this, EventArgs.Empty);
 
     private bool _syncingSpacing;   // 선택 변경으로 값을 동기화할 때 재계산 루프 방지
 
@@ -64,11 +78,24 @@ public partial class MainViewModel : ObservableObject
     {
         if (_syncingSpacing || Model == null || SelectedContour == null) return;
         SelectedContour.SpacingMm = Math.Clamp(value, 0.1, 100.0);
-        SelectedContour.Poses = _poseService.ComputePoses(SelectedContour, Model, SelectedContour.SpacingMm);
-        RefreshAfterPoseChange($"{SelectedContour.PathId} 간격 {SelectedContour.SpacingMm:0.#} mm → 포즈 {SelectedContour.Poses.Count}개");
+        RecomputeContour(SelectedContour);
     }
 
-    /// <summary>툴바 기본 간격을 모든 경로에 일괄 적용.</summary>
+    partial void OnSelectedPathAdaptiveChanged(bool value)
+    {
+        if (_syncingSpacing || Model == null || SelectedContour == null) return;
+        SelectedContour.Adaptive = value;
+        RecomputeContour(SelectedContour);
+    }
+
+    private void RecomputeContour(WeldingPathContour c)
+    {
+        c.Poses = _poseService.ComputePoses(c, Model!, c.SpacingMm, c.Adaptive);
+        RefreshAfterPoseChange($"{c.PathId} 간격 {c.SpacingMm:0.#} mm{(c.Adaptive ? " (곡률 적응)" : "")} " +
+                               $"→ 포즈 {c.Poses.Count}개");
+    }
+
+    /// <summary>툴바 기본 간격·적응 설정을 모든 경로에 일괄 적용.</summary>
     [RelayCommand]
     private void ApplySpacingToAll()
     {
@@ -76,17 +103,19 @@ public partial class MainViewModel : ObservableObject
         foreach (var c in Contours)
         {
             c.SpacingMm = Math.Clamp(PoseSpacingMm, 0.1, 100.0);
-            c.Poses = _poseService.ComputePoses(c, Model, c.SpacingMm);
+            c.Adaptive = AdaptiveSampling;
+            c.Poses = _poseService.ComputePoses(c, Model, c.SpacingMm, c.Adaptive);
         }
         SyncSelectedSpacing();
-        RefreshAfterPoseChange($"간격 {PoseSpacingMm:0.#} mm 전체 적용 — 경로 {Contours.Count}개, " +
-                               $"총 포즈 {Contours.Sum(c => c.Poses.Count)}개");
+        RefreshAfterPoseChange($"간격 {PoseSpacingMm:0.#} mm{(AdaptiveSampling ? " (곡률 적응)" : "")} 전체 적용 — " +
+                               $"경로 {Contours.Count}개, 총 포즈 {Contours.Sum(c => c.Poses.Count)}개");
     }
 
     private void SyncSelectedSpacing()
     {
         _syncingSpacing = true;
         SelectedPathSpacingMm = SelectedContour?.SpacingMm ?? PoseSpacingMm;
+        SelectedPathAdaptive = SelectedContour?.Adaptive ?? AdaptiveSampling;
         _syncingSpacing = false;
     }
 
@@ -227,7 +256,8 @@ public partial class MainViewModel : ObservableObject
         }
 
         contour.SpacingMm = Math.Clamp(PoseSpacingMm, 0.1, 100.0);
-        contour.Poses = _poseService.ComputePoses(contour, Model, contour.SpacingMm);
+        contour.Adaptive = AdaptiveSampling;
+        contour.Poses = _poseService.ComputePoses(contour, Model, contour.SpacingMm, contour.Adaptive);
         Contours.Add(contour);
         SelectedContour = contour;
 
