@@ -50,27 +50,54 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private double _chainAngleToleranceDeg = 15.0;
 
-    /// <summary>포즈(웨이포인트) 간격 mm — 변경 시 모든 경로의 포즈를 즉시 재계산.</summary>
+    /// <summary>기본 포즈 간격 mm — 새로 추가되는 경로에 적용된다 (기존 경로는 [전체 적용]으로).</summary>
     [ObservableProperty]
     private double _poseSpacingMm = 1.5;
 
-    partial void OnPoseSpacingMmChanged(double value) => RecomputeAllPoses();
+    /// <summary>선택된 경로의 개별 포즈 간격 mm — 편집 시 그 경로만 재계산 (직선 넓게 / 곡선 좁게).</summary>
+    [ObservableProperty]
+    private double _selectedPathSpacingMm = 1.5;
 
-    private void RecomputeAllPoses()
+    private bool _syncingSpacing;   // 선택 변경으로 값을 동기화할 때 재계산 루프 방지
+
+    partial void OnSelectedPathSpacingMmChanged(double value)
+    {
+        if (_syncingSpacing || Model == null || SelectedContour == null) return;
+        SelectedContour.SpacingMm = Math.Clamp(value, 0.1, 100.0);
+        SelectedContour.Poses = _poseService.ComputePoses(SelectedContour, Model, SelectedContour.SpacingMm);
+        RefreshAfterPoseChange($"{SelectedContour.PathId} 간격 {SelectedContour.SpacingMm:0.#} mm → 포즈 {SelectedContour.Poses.Count}개");
+    }
+
+    /// <summary>툴바 기본 간격을 모든 경로에 일괄 적용.</summary>
+    [RelayCommand]
+    private void ApplySpacingToAll()
     {
         if (Model == null || Contours.Count == 0) return;
         foreach (var c in Contours)
-            c.Poses = _poseService.ComputePoses(c, Model, PoseSpacingMm);
+        {
+            c.SpacingMm = Math.Clamp(PoseSpacingMm, 0.1, 100.0);
+            c.Poses = _poseService.ComputePoses(c, Model, c.SpacingMm);
+        }
+        SyncSelectedSpacing();
+        RefreshAfterPoseChange($"간격 {PoseSpacingMm:0.#} mm 전체 적용 — 경로 {Contours.Count}개, " +
+                               $"총 포즈 {Contours.Sum(c => c.Poses.Count)}개");
+    }
 
-        // 목록 요약(포즈 수)과 포즈 표 갱신
+    private void SyncSelectedSpacing()
+    {
+        _syncingSpacing = true;
+        SelectedPathSpacingMm = SelectedContour?.SpacingMm ?? PoseSpacingMm;
+        _syncingSpacing = false;
+    }
+
+    private void RefreshAfterPoseChange(string status)
+    {
         System.Windows.Data.CollectionViewSource.GetDefaultView(Contours)?.Refresh();
         var sel = SelectedContour;
         Poses.Clear();
         if (sel != null)
             foreach (var p in sel.Poses) Poses.Add(p);
-
-        StatusText = $"포즈 간격 {PoseSpacingMm:F1} mm 적용 — 경로 {Contours.Count}개, " +
-                     $"총 포즈 {Contours.Sum(c => c.Poses.Count)}개";
+        StatusText = status;
         HighlightChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -81,6 +108,7 @@ public partial class MainViewModel : ObservableObject
         Poses.Clear();
         if (value != null)
             foreach (var p in value.Poses) Poses.Add(p);
+        SyncSelectedSpacing();
         HighlightChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -198,7 +226,8 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
-        contour.Poses = _poseService.ComputePoses(contour, Model, PoseSpacingMm);
+        contour.SpacingMm = Math.Clamp(PoseSpacingMm, 0.1, 100.0);
+        contour.Poses = _poseService.ComputePoses(contour, Model, contour.SpacingMm);
         Contours.Add(contour);
         SelectedContour = contour;
 

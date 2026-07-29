@@ -21,6 +21,9 @@ public class WeldingPathContour
     /// <summary>이 윤곽의 6-DoF 토치 포즈 (생성 시 계산되어 보관).</summary>
     public List<TorchPose> Poses { get; set; } = new();
 
-    /// <summary>경로 목록 표시용 요약 (예: "엣지 2 · 314.1 mm · 포즈 135").</summary>
-    public string Summary => $"엣지 {EdgeIds.Count} · {TotalLength:F1} mm · 포즈 {Poses.Count}";
+    /// <summary>이 경로의 포즈 간격(mm) — 경로마다 다르게 설정 가능 (직선 넓게 / 곡선 좁게).</summary>
+    public double SpacingMm { get; set; } = 1.5;
+
+    /// <summary>경로 목록 표시용 요약 (예: "엣지 2 · 314.1 mm · 포즈 211 @1.5mm").</summary>
+    public string Summary => $"엣지 {EdgeIds.Count} · {TotalLength:F1} mm · 포즈 {Poses.Count} @{SpacingMm:0.#}mm";
 }

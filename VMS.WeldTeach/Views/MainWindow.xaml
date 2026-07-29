@@ -47,13 +47,17 @@
                 <TextBox Text="{Binding ChainAngleToleranceDeg, UpdateSourceTrigger=PropertyChanged}" Width="56"
                          VerticalContentAlignment="Center" Margin="0,0,16,0"/>
 
-                <TextBlock Text="포즈 간격(mm)" Style="{StaticResource Text.Caption}"
+                <TextBlock Text="기본 포즈 간격(mm)" Style="{StaticResource Text.Caption}"
                            VerticalAlignment="Center" Margin="0,0,4,0"/>
                 <ctrl:HelpIcon VerticalAlignment="Center" Margin="0,0,6,0"
-                               HelpTitle="포즈 간격 (mm)"
-                               HelpText="용접 심을 따라 로봇에게 넘겨줄 목표점(포즈)들 사이의 거리입니다. 경로를 이 간격으로 균일하게 나눠 각 지점의 위치 + 토치 자세(6-DoF)를 만듭니다. 값을 바꾸면 이미 선택한 모든 경로의 포즈가 즉시 다시 계산됩니다.&#x0a;&#x0a;• 좁게: 곡선 구간을 더 정확히 따라감 (포인트 수 증가)&#x0a;• 넓게: 데이터가 가벼워짐 — 직선 구간은 넓어도 오차 없음&#x0a;&#x0a;선택한 경로의 포즈 위치는 화면에 노란 점으로 표시됩니다."/>
+                               HelpTitle="기본 포즈 간격 (mm)"
+                               HelpText="용접 심을 따라 로봇에게 넘겨줄 목표점(포즈)들 사이의 거리 기본값입니다. 새로 추가하는 경로에 적용되며, [전체 적용]을 누르면 이미 선택한 모든 경로에도 반영됩니다.&#x0a;&#x0a;경로마다 다른 간격이 필요하면(직선은 넓게, 곡선은 좁게) 우측 경로 목록에서 경로를 선택한 뒤 '선택 경로 간격'에서 개별 조정하세요.&#x0a;&#x0a;선택한 경로의 포즈 위치는 화면에 노란 점으로 표시됩니다."/>
                 <TextBox Text="{Binding PoseSpacingMm, UpdateSourceTrigger=PropertyChanged}" Width="56"
-                         VerticalContentAlignment="Center"/>
+                         VerticalContentAlignment="Center" Margin="0,0,6,0"/>
+                <Button Content="전체 적용" Style="{StaticResource Button.Subtle}"
+                        Padding="10,6" FontSize="11"
+                        ToolTip="기본 포즈 간격을 모든 경로에 일괄 적용합니다"
+                        Command="{Binding ApplySpacingToAllCommand}"/>
 
                 <ProgressBar IsIndeterminate="{Binding IsBusy}" Width="120" Height="6" Margin="20,0,0,0"
                              VerticalAlignment="Center"
@@ -173,14 +177,27 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
 
-                    <DockPanel Grid.Row="2" Margin="0,0,0,10" LastChildFill="False">
-                        <Button DockPanel.Dock="Left" Content="전체 지우기" Style="{StaticResource Button.Subtle}"
-                                Padding="10,6" FontSize="11"
-                                Command="{Binding ClearContoursCommand}"/>
-                        <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center"
-                                   Style="{StaticResource Text.Caption}"
-                                   Text="{Binding Contours.Count, StringFormat=경로 {0}개}"/>
-                    </DockPanel>
+                    <StackPanel Grid.Row="2" Margin="0,0,0,10">
+                        <DockPanel LastChildFill="False" Margin="0,0,0,8">
+                            <TextBlock DockPanel.Dock="Left" Text="선택 경로 간격(mm)"
+                                       Style="{StaticResource Text.Caption}"
+                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <ctrl:HelpIcon DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,6,0"
+                                           HelpTitle="선택 경로 간격 (mm)"
+                                           HelpText="목록에서 선택한 경로에만 적용되는 개별 포즈 간격입니다. 값을 바꾸면 그 경로의 포즈만 즉시 다시 계산됩니다.&#x0a;&#x0a;• 직선 위주 경로 → 넓게 (예: 5~10mm)&#x0a;• 곡선(원형 심 등) 경로 → 좁게 (예: 1~2mm)&#x0a;&#x0a;각 경로의 현재 간격은 목록 요약의 @값으로 표시됩니다."/>
+                            <TextBox DockPanel.Dock="Left" Width="56"
+                                     Text="{Binding SelectedPathSpacingMm, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalContentAlignment="Center"/>
+                        </DockPanel>
+                        <DockPanel LastChildFill="False">
+                            <Button DockPanel.Dock="Left" Content="전체 지우기" Style="{StaticResource Button.Subtle}"
+                                    Padding="10,6" FontSize="11"
+                                    Command="{Binding ClearContoursCommand}"/>
+                            <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center"
+                                       Style="{StaticResource Text.Caption}"
+                                       Text="{Binding Contours.Count, StringFormat=경로 {0}개}"/>
+                        </DockPanel>
+                    </StackPanel>
 
                     <DataGrid Grid.Row="3" ItemsSource="{Binding Poses}" IsReadOnly="True">
                         <DataGrid.Resources>

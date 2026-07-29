@@ -150,6 +150,7 @@ public class TorchPoseService
                 order = i + 1,
                 pathId = c.PathId,
                 totalLength = Math.Round(c.TotalLength, 3),
+                spacingMm = Math.Round(c.SpacingMm, 2),
                 pointCount = c.Poses.Count,
                 poses = c.Poses.Select(p => new
                 {
