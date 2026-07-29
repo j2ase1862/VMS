@@ -24,6 +24,7 @@ public partial class MainWindow : Window
     private readonly LinesVisual3D _torchLines = new() { Color = Colors.Cyan, Thickness = 1.5 };
     private readonly PointsVisual3D _posePoints = new() { Color = Colors.Yellow, Size = 5 };
     private readonly LinesVisual3D _labelLeaders = new() { Color = Colors.Gainsboro, Thickness = 1.0 };
+    private readonly PointsVisual3D _scanCloud = new() { Color = Colors.Silver, Size = 2 };
 
     public MainWindow(MainViewModel viewModel)
     {
@@ -32,6 +33,7 @@ public partial class MainWindow : Window
         DataContext = viewModel;
 
         Viewport.Children.Add(_modelRoot);
+        Viewport.Children.Add(_scanCloud);
         Viewport.Children.Add(_edgeLines);
         Viewport.Children.Add(_hoverLines);
         Viewport.Children.Add(_contourLines);
@@ -147,6 +149,12 @@ public partial class MainWindow : Window
         _torchLines.Points = torchPts;
         _posePoints.Points = poseDots;
         _labelLeaders.Points = leaderPts;
+
+        // 스캔 점군 (정합 후에는 CAD 좌표계로 변환되어 모델 위에 겹침)
+        var cloudPts = new Point3DCollection(_viewModel.GetDisplayCloud());
+        cloudPts.Freeze();
+        _scanCloud.Points = cloudPts;
+
         RebuildLabelOverlay();
     }
 

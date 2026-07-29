@@ -198,13 +198,19 @@ public class TorchPoseService
         return (roll * toDeg, pitch * toDeg, yaw * toDeg);
     }
 
-    /// <summary>경로 목록을 용접 순서(목록 순서)대로 하나의 JSON 으로 내보낸다.</summary>
-    public void ExportJson(string path, List<WeldingPathContour> contours)
+    /// <summary>
+    /// 경로 목록을 용접 순서(목록 순서)대로 하나의 JSON 으로 내보낸다.
+    /// cadToScan(T_align) 이 주어지면 포즈를 스캔(로봇) 좌표계로 변환해 내보낸다.
+    /// </summary>
+    public void ExportJson(string path, List<WeldingPathContour> contours, Matrix3D? cadToScan = null)
     {
         var payload = new
         {
             eulerConvention = "ZYX(deg)",
-            frame = "CAD model coordinates (ICP 정합 전 — T_align 적용 필요)",
+            frame = cadToScan.HasValue
+                ? "scan/robot coordinates (T_align 적용됨)"
+                : "CAD model coordinates (ICP 정합 전 — T_align 적용 필요)",
+            tAlignRowMajor = cadToScan.HasValue ? MatrixRows(cadToScan.Value) : null,
             pathCount = contours.Count,
             paths = contours.Select((c, i) => new
             {
@@ -214,14 +220,52 @@ public class TorchPoseService
                 spacingMm = Math.Round(c.SpacingMm, 2),
                 adaptive = c.Adaptive,
                 pointCount = c.Poses.Count,
-                poses = c.Poses.Select(p => new
+                poses = c.Poses.Select(p =>
                 {
-                    x = Math.Round(p.X, 4), y = Math.Round(p.Y, 4), z = Math.Round(p.Z, 4),
-                    roll = Math.Round(p.RollDeg, 3), pitch = Math.Round(p.PitchDeg, 3), yaw = Math.Round(p.YawDeg, 3),
+                    var q = cadToScan.HasValue ? TransformPose(p, cadToScan.Value) : p;
+                    return new
+                    {
+                        x = Math.Round(q.X, 4), y = Math.Round(q.Y, 4), z = Math.Round(q.Z, 4),
+                        roll = Math.Round(q.RollDeg, 3), pitch = Math.Round(q.PitchDeg, 3), yaw = Math.Round(q.YawDeg, 3),
+                    };
                 }),
             }),
         };
         File.WriteAllText(path, JsonSerializer.Serialize(payload,
             new JsonSerializerOptions { WriteIndented = true }));
+    }
+
+    private static double[][] MatrixRows(Matrix3D m) => new[]
+    {
+        // 열 규약(p' = T·p) 기준 행 — WPF Matrix3D(행벡터 규약)의 전치
+        new[] { m.M11, m.M21, m.M31, m.OffsetX },
+        new[] { m.M12, m.M22, m.M32, m.OffsetY },
+        new[] { m.M13, m.M23, m.M33, m.OffsetZ },
+        new[] { 0.0, 0.0, 0.0, 1.0 },
+    };
+
+    /// <summary>포즈(위치+ZYX 오일러)에 강체 변환을 적용한다 — 자세는 프레임 축 회전 후 재추출.</summary>
+    public static TorchPose TransformPose(TorchPose p, Matrix3D t)
+    {
+        var (x, y, z) = EulerToAxes(p.RollDeg, p.PitchDeg, p.YawDeg);
+        var pos = t.Transform(new Point3D(p.X, p.Y, p.Z));
+        var xr = t.Transform(x); var yr = t.Transform(y); var zr = t.Transform(z);
+        xr.Normalize(); yr.Normalize(); zr.Normalize();
+        var (roll, pitch, yaw) = ToZyxEuler(xr, yr, zr);
+        return new TorchPose(pos.X, pos.Y, pos.Z, roll, pitch, yaw);
+    }
+
+    /// <summary>ZYX 오일러(deg) → 프레임 축 (ToZyxEuler 의 역변환).</summary>
+    private static (Vector3D X, Vector3D Y, Vector3D Z) EulerToAxes(double rollDeg, double pitchDeg, double yawDeg)
+    {
+        const double toRad = Math.PI / 180.0;
+        double cr = Math.Cos(rollDeg * toRad), sr = Math.Sin(rollDeg * toRad);
+        double cp = Math.Cos(pitchDeg * toRad), sp = Math.Sin(pitchDeg * toRad);
+        double cy = Math.Cos(yawDeg * toRad), sy = Math.Sin(yawDeg * toRad);
+        // R = Rz(yaw)·Ry(pitch)·Rx(roll), 열 = 프레임 축
+        var x = new Vector3D(cy * cp, sy * cp, -sp);
+        var y = new Vector3D(cy * sp * sr - sy * cr, sy * sp * sr + cy * cr, cp * sr);
+        var z = new Vector3D(cy * sp * cr + sy * sr, sy * sp * cr - cy * sr, cp * cr);
+        return (x, y, z);
     }
 }

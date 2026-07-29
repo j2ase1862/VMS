@@ -16,6 +16,16 @@ public class DialogService : IDialogService
         return dlg.ShowDialog() == true ? dlg.FileName : null;
     }
 
+    public string? ShowOpenCloudDialog()
+    {
+        var dlg = new OpenFileDialog
+        {
+            Title = "점군 파일 열기",
+            Filter = "점군 파일 (*.ply;*.xyz;*.txt;*.csv)|*.ply;*.xyz;*.txt;*.csv|모든 파일 (*.*)|*.*",
+        };
+        return dlg.ShowDialog() == true ? dlg.FileName : null;
+    }
+
     public string? ShowSaveJsonDialog(string defaultName)
     {
         var dlg = new SaveFileDialog

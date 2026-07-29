@@ -23,6 +23,7 @@
 
         <!-- 툴바 -->
         <Border Grid.Row="0" Background="{StaticResource Brush.Surface.Base}" Padding="12,10">
+            <StackPanel>
             <StackPanel Orientation="Horizontal">
                 <Button Content="STEP 열기" Style="{StaticResource ModernButton}"
                         Command="{Binding OpenStepCommand}" Margin="0,0,8,0"/>
@@ -70,6 +71,28 @@
                              Background="{StaticResource Brush.Surface.Overlay}"
                              BorderThickness="0"
                              Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
+            </StackPanel>
+
+            <!-- 2행: 점군 정합 (명세서 Step 3-2) -->
+            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                <TextBlock Text="점군 정합" Style="{StaticResource Text.Caption}"
+                           Foreground="{StaticResource Brush.Accent}" FontWeight="SemiBold"
+                           VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <ctrl:HelpIcon VerticalAlignment="Center" Margin="0,0,10,0"
+                               HelpTitle="점군 정합 (ICP → T_align)"
+                               HelpText="3D 카메라로 찍은 점군(스캔)을 CAD 와 정합해, CAD 에서 티칭한 용접 경로를 실물(로봇) 좌표계로 옮기는 변환 T_align 을 구합니다.&#x0a;&#x0a;① [점군 열기] — PLY/XYZ 파일 로드 (은색 점으로 표시)&#x0a;② [CAD 정합 실행] — ICP 로 T_align 계산. 완료되면 점군이 CAD 모델 위에 겹쳐 보이고 RMSE(평균 오차)가 표시됩니다.&#x0a;③ 이후 [경로 내보내기]는 모든 포즈를 로봇 좌표계로 변환해 저장합니다.&#x0a;&#x0a;[합성 점군 생성]은 실카메라 없이 흐름을 시험하는 기능 — 현재 모델에 기지 오프셋(12,-7,3mm + Z10°/X5°)과 0.05mm 노이즈를 준 가상 스캔을 만듭니다. 정합 후 RMSE 가 노이즈 수준(≈0.05mm)으로 나오면 정상입니다."/>
+                <Button Content="점군 열기" Style="{StaticResource Button.Subtle}"
+                        Padding="10,6" FontSize="11" Margin="0,0,6,0"
+                        Command="{Binding OpenCloudCommand}"/>
+                <Button Content="합성 점군 생성" Style="{StaticResource Button.Subtle}"
+                        Padding="10,6" FontSize="11" Margin="0,0,6,0"
+                        Command="{Binding GenerateSampleCloudCommand}"/>
+                <Button Content="CAD 정합 실행 (ICP)" Style="{StaticResource ModernButton}"
+                        Padding="10,6" FontSize="11" Margin="0,0,12,0"
+                        Command="{Binding RunIcpCommand}"/>
+                <TextBlock Text="{Binding RegistrationStatus}" Style="{StaticResource Text.Caption}"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
             </StackPanel>
         </Border>
 

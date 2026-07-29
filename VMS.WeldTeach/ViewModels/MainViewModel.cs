@@ -16,14 +16,19 @@ public partial class MainViewModel : ObservableObject
     private readonly IDialogService _dialogService;
     private readonly EdgeChainService _chainService;
     private readonly TorchPoseService _poseService;
+    private readonly PointCloudService _cloudService;
+    private readonly IcpService _icpService;
 
     public MainViewModel(ICadKernelService cadKernel, IDialogService dialogService,
-        EdgeChainService chainService, TorchPoseService poseService)
+        EdgeChainService chainService, TorchPoseService poseService,
+        PointCloudService cloudService, IcpService icpService)
     {
         _cadKernel = cadKernel;
         _dialogService = dialogService;
         _chainService = chainService;
         _poseService = poseService;
+        _cloudService = cloudService;
+        _icpService = icpService;
     }
 
     [ObservableProperty]
@@ -71,6 +76,110 @@ public partial class MainViewModel : ObservableObject
     private bool _showAllPaths;
 
     partial void OnShowAllPathsChanged(bool value) => HighlightChanged?.Invoke(this, EventArgs.Empty);
+
+    // ---- 점군 정합 (명세서 Step 3-2: ICP → T_align) ----
+
+    private List<Point3D>? _scanCloud;          // 스캔(로봇) 좌표계 원본
+    // ICP 대상 CAD 표면 샘플 + 원본 삼각형 (점-표면 RMSE 용, 모델당 1회)
+    private (List<Point3D> Points, List<int> TriIndex, List<(Point3D A, Point3D B, Point3D C)> Triangles)? _cadSamples;
+    private Matrix3D? _tAlign;                  // CAD → 스캔 변환
+
+    /// <summary>정합 완료 여부 — 내보내기 프레임 결정.</summary>
+    public Matrix3D? TAlign => _tAlign;
+
+    [ObservableProperty]
+    private string _registrationStatus = "점군 없음";
+
+    /// <summary>뷰포트 표시용 점군 — 정합 후에는 CAD 좌표계로 옮겨 모델 위에 겹쳐 보인다.</summary>
+    public IReadOnlyList<Point3D> GetDisplayCloud(int maxPoints = 40000)
+    {
+        if (_scanCloud == null) return Array.Empty<Point3D>();
+        var src = _scanCloud;
+        Matrix3D? inv = null;
+        if (_tAlign.HasValue)
+        {
+            var m = _tAlign.Value;
+            if (m.HasInverse) { m.Invert(); inv = m; }
+        }
+        int stride = Math.Max(1, src.Count / maxPoints);
+        var outPts = new List<Point3D>(Math.Min(src.Count, maxPoints) + 1);
+        for (int i = 0; i < src.Count; i += stride)
+            outPts.Add(inv.HasValue ? inv.Value.Transform(src[i]) : src[i]);
+        return outPts;
+    }
+
+    [RelayCommand]
+    private async Task OpenCloudAsync()
+    {
+        var path = _dialogService.ShowOpenCloudDialog();
+        if (path == null) return;
+        IsBusy = true;
+        try
+        {
+            var cloud = await Task.Run(() => _cloudService.LoadCloud(path));
+            SetScanCloud(cloud, $"점군 로드: {Path.GetFileName(path)} — {cloud.Count:N0}점 (미정합)");
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"점군 로드 실패: {ex.Message}";
+        }
+        finally { IsBusy = false; }
+    }
+
+    /// <summary>합성 점군 생성 — 실카메라 없이 정합 흐름을 시험 (기지 오프셋 + 0.05mm 노이즈).</summary>
+    [RelayCommand]
+    private void GenerateSampleCloud()
+    {
+        if (Model == null)
+        {
+            _dialogService.ShowMessage("먼저 STEP 을 로드하세요.", "합성 점군");
+            return;
+        }
+        var (cloud, _) = PointCloudService.GenerateSyntheticScan(Model, 0.05, keepAboveZ: null);
+        SetScanCloud(cloud, $"합성 점군 생성 — {cloud.Count:N0}점, 오프셋 (12,-7,3)mm + Z10°/X5° (미정합)");
+    }
+
+    private void SetScanCloud(List<Point3D> cloud, string status)
+    {
+        _scanCloud = cloud;
+        _tAlign = null;
+        RegistrationStatus = "미정합";
+        StatusText = status;
+        HighlightChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    [RelayCommand]
+    private async Task RunIcpAsync()
+    {
+        if (Model == null || _scanCloud == null)
+        {
+            _dialogService.ShowMessage("STEP 모델과 점군이 모두 필요합니다.", "정합");
+            return;
+        }
+        IsBusy = true;
+        StatusText = "ICP 정합 중...";
+        try
+        {
+            var model = Model;
+            var result = await Task.Run(() =>
+            {
+                _cadSamples ??= PointCloudService.SampleModelSurfaceDetailed(model, 15000);
+                var s = _cadSamples.Value;
+                return _icpService.Register(_scanCloud, s.Points,
+                    sampleTriIndex: s.TriIndex, triangles: s.Triangles);
+            });
+            _tAlign = result.CadToScan;
+            RegistrationStatus = $"RMSE {result.RmseMm:F3} mm · 인라이어 {result.InlierRatio:P0} · {result.Iterations}회";
+            StatusText = $"정합 완료 — RMSE {result.RmseMm:F3} mm, 인라이어 {result.InlierRatio:P0}, " +
+                         $"{result.Iterations}회 반복{(result.Converged ? "" : " (미수렴)")} — 내보내기는 로봇 좌표계로 변환됩니다";
+            HighlightChanged?.Invoke(this, EventArgs.Empty);
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"정합 실패: {ex.Message}";
+        }
+        finally { IsBusy = false; }
+    }
 
     private bool _syncingSpacing;   // 선택 변경으로 값을 동기화할 때 재계산 루프 방지
 
@@ -183,6 +292,9 @@ public partial class MainViewModel : ObservableObject
             Contours.Clear();
             SelectedContour = null;
             Poses.Clear();
+            _cadSamples = null;      // 새 모델 — CAD 샘플·기존 정합 무효화
+            _tAlign = null;
+            RegistrationStatus = _scanCloud == null ? "점군 없음" : "미정합";
             StatusText = $"{Path.GetFileName(path)} — 솔리드 {model.SolidCount} / 면 {model.FaceCount} / " +
                          $"엣지 {model.Edges.Count} ({sw.ElapsedMilliseconds} ms)";
             ModelChanged?.Invoke(this, EventArgs.Empty);
@@ -295,7 +407,9 @@ public partial class MainViewModel : ObservableObject
         }
         var path = _dialogService.ShowSaveJsonDialog("weld_paths.json");
         if (path == null) return;
-        _poseService.ExportJson(path, Contours.ToList());
-        StatusText = $"내보내기 완료: 경로 {Contours.Count}개 → {path}";
+        _poseService.ExportJson(path, Contours.ToList(), _tAlign);
+        StatusText = _tAlign.HasValue
+            ? $"내보내기 완료 (로봇 좌표계, T_align 적용): 경로 {Contours.Count}개 → {path}"
+            : $"내보내기 완료 (CAD 좌표계 — 정합 전): 경로 {Contours.Count}개 → {path}";
     }
 }

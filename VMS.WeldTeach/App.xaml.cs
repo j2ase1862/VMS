@@ -1,5 +1,6 @@
 using System.IO;
 using System.Windows;
+using System.Windows.Media.Media3D;
 using VMS.WeldTeach.Services;
 using VMS.WeldTeach.ViewModels;
 using VMS.WeldTeach.Views;
@@ -33,7 +34,10 @@ public partial class App : Application
         var dialogService = new DialogService();
         var chainService = new EdgeChainService();
         var poseService = new TorchPoseService();
-        var viewModel = new MainViewModel(cadKernel, dialogService, chainService, poseService);
+        var cloudService = new PointCloudService();
+        var icpService = new IcpService();
+        var viewModel = new MainViewModel(cadKernel, dialogService, chainService, poseService,
+            cloudService, icpService);
 
         // 헤드리스 자가 검증 모드: 커널 체인을 실행해 로그 파일에 결과를 남기고 종료
         if (e.Args.Contains("--selftest"))
@@ -82,6 +86,16 @@ public partial class App : Application
                     }
                     if (e.Args.Contains("--adaptive")) { viewModel.AdaptiveSampling = true; T("adaptive=on"); }
                     if (e.Args.Contains("--showall")) { viewModel.ShowAllPaths = true; T("showall=on"); }
+                    if (e.Args.Contains("--synthcloud"))
+                    {
+                        viewModel.GenerateSampleCloudCommand.Execute(null);
+                        T($"synthcloud, status={viewModel.StatusText}");
+                    }
+                    if (e.Args.Contains("--icp"))
+                    {
+                        await viewModel.RunIcpCommand.ExecuteAsync(null);
+                        T($"icp done, status={viewModel.StatusText}");
+                    }
                     int pickIdx = Array.IndexOf(e.Args, "--pick");
                     if (pickIdx >= 0 && pickIdx + 1 < e.Args.Length)
                     {
@@ -217,6 +231,28 @@ public partial class App : Application
                     GC.Collect();
                 }
                 lines.Add("gc hammer: OK (3 rounds load+collect)");
+
+                // ICP 정합 검증 — 기지 오프셋 합성 스캔(상면 부분 가시 + 0.05mm 노이즈)을
+                // CAD 샘플에 정합해 T_align 을 복원, 명세서 기준(RMSE ≤ 0.2mm) 확인
+                var (synthCloud, tTrue) = PointCloudService.GenerateSyntheticScan(model, 0.05, keepAboveZ: 6.0);
+                var samples = PointCloudService.SampleModelSurfaceDetailed(model, 15000);
+                var icp = new IcpService().Register(synthCloud, samples.Points,
+                    sampleTriIndex: samples.TriIndex, triangles: samples.Triangles);
+                lines.Add($"icp: rmse={icp.RmseMm:F4}mm inlier={icp.InlierRatio:P0} iters={icp.Iterations} converged={icp.Converged}");
+
+                // T_align ↔ 기지 변환 비교 — 시편 영역 점들을 양쪽으로 변환한 최대 편차
+                double maxDev = 0;
+                foreach (var tp in new[] { new Point3D(0,0,0), new Point3D(100,60,8), new Point3D(50,30,38), new Point3D(20,26,8) })
+                    maxDev = Math.Max(maxDev, (icp.CadToScan.Transform(tp) - tTrue.Transform(tp)).Length);
+                lines.Add($"icp: T_align max deviation vs ground truth = {maxDev:F4} mm");
+
+                // 포즈 변환 검증 — 심 시작 포즈를 로봇 좌표로 옮겨 기지 변환 결과와 비교
+                var pose0 = poses[0];
+                var moved = TorchPoseService.TransformPose(pose0, icp.CadToScan);
+                var expect = tTrue.Transform(new Point3D(pose0.X, pose0.Y, pose0.Z));
+                lines.Add($"icp: seam pose→robot ({moved.X:F2},{moved.Y:F2},{moved.Z:F2}) expect ({expect.X:F2},{expect.Y:F2},{expect.Z:F2})");
+
+                lines.Add(icp.RmseMm <= 0.2 && maxDev <= 0.3 ? "ICP OK" : "ICP FAIL");
                 lines.Add("SELFTEST OK");
             }
             File.WriteAllLines(log, lines);
