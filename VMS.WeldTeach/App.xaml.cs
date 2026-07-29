@@ -8,6 +8,15 @@ namespace VMS.WeldTeach;
 
 public partial class App : Application
 {
+    static App()
+    {
+        // double 바인딩 + UpdateSourceTrigger=PropertyChanged 인 TextBox 에서 "1." 같은
+        // 중간 입력이 즉시 재파싱-역기입되며 소수점이 지워지는 WPF 기본 동작을 끈다
+        // (포즈 간격/피킹 임계값 등 소수 입력 허용). 모든 TextBox 생성 전에 설정해야 한다.
+        System.Windows.FrameworkCompatibilityPreferences
+            .KeepTextBoxDisplaySynchronizedWithTextProperty = false;
+    }
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
