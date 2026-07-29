@@ -15,9 +15,11 @@ public partial class MainWindow : Window
 {
     private readonly MainViewModel _viewModel;
     private readonly ModelVisual3D _modelRoot = new();
+    private readonly ModelVisual3D _labelRoot = new();   // 경로 순번 3D 라벨
     private readonly LinesVisual3D _edgeLines = new() { Color = Colors.LightSteelBlue, Thickness = 1.2 };
     private readonly LinesVisual3D _hoverLines = new() { Color = Colors.Orange, Thickness = 3.0 };
-    private readonly LinesVisual3D _contourLines = new() { Color = Colors.Red, Thickness = 3.5 };
+    private readonly LinesVisual3D _contourLines = new() { Color = Colors.IndianRed, Thickness = 2.5 };
+    private readonly LinesVisual3D _selectedLines = new() { Color = Colors.Red, Thickness = 4.0 };
     private readonly LinesVisual3D _torchLines = new() { Color = Colors.Cyan, Thickness = 1.5 };
 
     public MainWindow(MainViewModel viewModel)
@@ -30,7 +32,9 @@ public partial class MainWindow : Window
         Viewport.Children.Add(_edgeLines);
         Viewport.Children.Add(_hoverLines);
         Viewport.Children.Add(_contourLines);
+        Viewport.Children.Add(_selectedLines);
         Viewport.Children.Add(_torchLines);
+        Viewport.Children.Add(_labelRoot);
 
         _viewModel.ModelChanged += (_, _) => RebuildScene();
         _viewModel.HighlightChanged += (_, _) => UpdateHighlights();
@@ -84,8 +88,10 @@ public partial class MainWindow : Window
         var model = _viewModel.Model;
 
         var hoverPts = new Point3DCollection();
-        var contourPts = new Point3DCollection();
+        var allPts = new Point3DCollection();
+        var selectedPts = new Point3DCollection();
         var torchPts = new Point3DCollection();
+        _labelRoot.Children.Clear();
 
         if (model != null)
         {
@@ -93,24 +99,43 @@ public partial class MainWindow : Window
             if (hovered != null)
                 AppendPolyline(hoverPts, hovered.Points);
 
-            var contour = _viewModel.SelectedContour;
-            if (contour != null)
+            // 모든 경로 (목록 순서 = 용접 순서) + 시작점에 순번 라벨
+            for (int order = 0; order < _viewModel.Contours.Count; order++)
             {
-                AppendPolyline(contourPts, contour.PathPoints);
-                // 토치 방향 화살선 (8mm, 일정 간격)
-                int stride = Math.Max(1, contour.PathPoints.Count / 24);
-                for (int i = 0; i < contour.PathPoints.Count && i < contour.TorchDirections.Count; i += stride)
+                var c = _viewModel.Contours[order];
+                bool isSelected = ReferenceEquals(c, _viewModel.SelectedContour);
+                AppendPolyline(isSelected ? selectedPts : allPts, c.PathPoints);
+
+                if (c.PathPoints.Count > 0)
                 {
-                    var p = contour.PathPoints[i];
+                    _labelRoot.Children.Add(new BillboardTextVisual3D
+                    {
+                        Text = $" {order + 1} ",
+                        Position = c.PathPoints[0],
+                        Foreground = Brushes.White,
+                        Background = isSelected ? Brushes.Red : Brushes.IndianRed,
+                        FontSize = 14,
+                        FontWeight = FontWeights.Bold,
+                        Padding = new Thickness(2),
+                    });
+                }
+
+                // 토치 방향 화살선은 선택된 경로에만 (8mm, 일정 간격)
+                if (!isSelected) continue;
+                int stride = Math.Max(1, c.PathPoints.Count / 24);
+                for (int i = 0; i < c.PathPoints.Count && i < c.TorchDirections.Count; i += stride)
+                {
+                    var p = c.PathPoints[i];
                     torchPts.Add(p);
-                    torchPts.Add(p + contour.TorchDirections[i] * 8);
+                    torchPts.Add(p + c.TorchDirections[i] * 8);
                 }
             }
         }
 
-        hoverPts.Freeze(); contourPts.Freeze(); torchPts.Freeze();
+        hoverPts.Freeze(); allPts.Freeze(); selectedPts.Freeze(); torchPts.Freeze();
         _hoverLines.Points = hoverPts;
-        _contourLines.Points = contourPts;
+        _contourLines.Points = allPts;
+        _selectedLines.Points = selectedPts;
         _torchLines.Points = torchPts;
     }
 

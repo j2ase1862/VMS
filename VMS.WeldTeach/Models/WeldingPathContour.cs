@@ -14,4 +14,9 @@ public class WeldingPathContour
     public double TotalLength { get; set; }
     /// <summary>이 윤곽을 구성한 엣지 Id 목록 (하이라이트용).</summary>
     public List<int> EdgeIds { get; set; } = new();
+    /// <summary>이 윤곽의 6-DoF 토치 포즈 (생성 시 계산되어 보관).</summary>
+    public List<TorchPose> Poses { get; set; } = new();
+
+    /// <summary>경로 목록 표시용 요약 (예: "엣지 2 · 314.1 mm · 포즈 135").</summary>
+    public string Summary => $"엣지 {EdgeIds.Count} · {TotalLength:F1} mm · 포즈 {Poses.Count}";
 }

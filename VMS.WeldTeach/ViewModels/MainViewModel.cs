@@ -38,6 +38,9 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private int _hoveredEdgeId;
 
+    /// <summary>선택된 용접 경로들 — 목록 순서가 곧 용접 순서다.</summary>
+    public ObservableCollection<WeldingPathContour> Contours { get; } = new();
+
     [ObservableProperty]
     private WeldingPathContour? _selectedContour;
 
@@ -48,6 +51,14 @@ public partial class MainViewModel : ObservableObject
     private double _chainAngleToleranceDeg = 15.0;
 
     public ObservableCollection<TorchPose> Poses { get; } = new();
+
+    partial void OnSelectedContourChanged(WeldingPathContour? value)
+    {
+        Poses.Clear();
+        if (value != null)
+            foreach (var p in value.Poses) Poses.Add(p);
+        HighlightChanged?.Invoke(this, EventArgs.Empty);
+    }
 
     /// <summary>뷰(뷰포트 렌더러)가 모델/하이라이트 변경을 반영하도록 하는 이벤트.</summary>
     public event EventHandler? ModelChanged;
@@ -88,6 +99,7 @@ public partial class MainViewModel : ObservableObject
             var model = await Task.Run(() => _cadKernel.LoadStep(path));
             sw.Stop();
             Model = model;
+            Contours.Clear();
             SelectedContour = null;
             Poses.Clear();
             StatusText = $"{Path.GetFileName(path)} — 솔리드 {model.SolidCount} / 면 {model.FaceCount} / " +
@@ -121,7 +133,12 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
-    /// <summary>뷰포트 클릭 — 엣지 선택 후 체이닝 + 토치 포즈 계산 (명세서 Step 2·3).</summary>
+    /// <summary>
+    /// 뷰포트 클릭 — 다중 경로 순차 선택 (명세서 Step 2·3).
+    /// 새 엣지 클릭 → 체이닝해 경로 목록에 추가 (목록 순서 = 용접 순서).
+    /// 이미 선택된 경로의 엣지를 다시 클릭 → 그 경로를 목록에서 제거 (토글).
+    /// 빈 공간 클릭 → 선택 강조만 해제 (목록 유지).
+    /// </summary>
     public void OnViewportClick(Point3D rayOrigin, Vector3D rayDirection)
     {
         if (Model == null) return;
@@ -129,41 +146,73 @@ public partial class MainViewModel : ObservableObject
         if (hit == null)
         {
             SelectedContour = null;
-            Poses.Clear();
-            HighlightChanged?.Invoke(this, EventArgs.Empty);
+            return;
+        }
+
+        var owner = Contours.FirstOrDefault(c => c.EdgeIds.Contains(hit.EdgeId));
+        if (owner != null)
+        {
+            RemoveContour(owner);
             return;
         }
         SelectEdge(hit.EdgeId);
     }
 
-    /// <summary>엣지 Id 로 직접 선택 — 클릭과 동일 경로. 진단 모드(--pick)에서도 사용.</summary>
+    /// <summary>엣지 Id 로 경로 추가 — 클릭과 동일 경로. 진단 모드(--pick)에서도 사용.</summary>
     public void SelectEdge(int edgeId)
     {
         if (Model == null) return;
         _chainService.AngleToleranceDeg = ChainAngleToleranceDeg;
         var contour = _chainService.BuildChain(Model, edgeId);
-        var poses = _poseService.ComputePoses(contour, Model);
 
+        // 새 경로가 기존 경로와 엣지를 공유하면 중복 — 추가하지 않고 기존 경로를 선택
+        var overlap = Contours.FirstOrDefault(c => c.EdgeIds.Intersect(contour.EdgeIds).Any());
+        if (overlap != null)
+        {
+            SelectedContour = overlap;
+            StatusText = $"{overlap.PathId} 는 이미 선택된 경로입니다 (같은 경로의 엣지를 다시 클릭하면 해제).";
+            return;
+        }
+
+        contour.Poses = _poseService.ComputePoses(contour, Model);
+        Contours.Add(contour);
         SelectedContour = contour;
-        Poses.Clear();
-        foreach (var p in poses) Poses.Add(p);
 
-        StatusText = $"{contour.PathId}: 엣지 {contour.EdgeIds.Count}개 체이닝, " +
-                     $"길이 {contour.TotalLength:F1} mm, 포즈 {poses.Count}개";
+        StatusText = $"[{Contours.Count}번] {contour.PathId} 추가: 엣지 {contour.EdgeIds.Count}개, " +
+                     $"길이 {contour.TotalLength:F1} mm, 포즈 {contour.Poses.Count}개 — 총 {Contours.Count}개 경로";
+        HighlightChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    [RelayCommand]
+    private void RemoveContour(WeldingPathContour? contour)
+    {
+        if (contour == null) return;
+        Contours.Remove(contour);
+        if (SelectedContour == contour) SelectedContour = Contours.LastOrDefault();
+        StatusText = $"{contour.PathId} 제거 — 남은 경로 {Contours.Count}개";
+        HighlightChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    [RelayCommand]
+    private void ClearContours()
+    {
+        Contours.Clear();
+        SelectedContour = null;
+        StatusText = "모든 경로를 지웠습니다.";
         HighlightChanged?.Invoke(this, EventArgs.Empty);
     }
 
     [RelayCommand]
     private void ExportPath()
     {
-        if (SelectedContour == null || Poses.Count == 0)
+        if (Contours.Count == 0)
         {
             _dialogService.ShowMessage("내보낼 경로가 없습니다. 먼저 용접 엣지를 클릭해 선택하세요.", "내보내기");
             return;
         }
-        var path = _dialogService.ShowSaveJsonDialog($"{SelectedContour.PathId}.json");
+        var path = _dialogService.ShowSaveJsonDialog("weld_paths.json");
         if (path == null) return;
-        _poseService.ExportJson(path, SelectedContour, Poses.ToList());
-        StatusText = $"내보내기 완료: {path}";
+        _poseService.ExportJson(path, Contours.ToList());
+        StatusText = $"내보내기 완료: 경로 {Contours.Count}개 → {path}";
     }
 }

@@ -1,0 +1,46 @@
+<UserControl x:Class="VMS.WeldTeach.Controls.HelpIcon"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Name="Root">
+    <Grid>
+        <!-- 파란 물음표 아이콘 — VisionSetup HelpIcon 과 동일한 관례 (호버 시 설명 팝업) -->
+        <Border x:Name="IconCircle"
+                Width="16" Height="16" CornerRadius="8"
+                Background="{StaticResource Brush.Primary}"
+                Cursor="Help"
+                MouseEnter="Icon_MouseEnter"
+                MouseLeave="Icon_MouseLeave">
+            <TextBlock Text="?" Foreground="White" FontWeight="Bold" FontSize="11"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0"/>
+        </Border>
+
+        <Popup x:Name="HelpPopup"
+               PlacementTarget="{Binding ElementName=IconCircle}"
+               Placement="Bottom"
+               VerticalOffset="6"
+               AllowsTransparency="True"
+               PopupAnimation="Fade"
+               StaysOpen="True">
+            <Border Background="{StaticResource Brush.Surface.Overlay}"
+                    BorderBrush="{StaticResource Brush.Primary}"
+                    BorderThickness="1"
+                    CornerRadius="{StaticResource Radius.Sm}"
+                    MaxWidth="340" Padding="14"
+                    Effect="{StaticResource Elevation.Dialog}"
+                    MouseEnter="Icon_MouseEnter"
+                    MouseLeave="Icon_MouseLeave">
+                <StackPanel>
+                    <TextBlock Text="{Binding HelpTitle, ElementName=Root}"
+                               Foreground="{StaticResource Brush.Primary}"
+                               FontWeight="SemiBold"
+                               FontSize="{StaticResource Font.Size.Body}"
+                               Margin="0,0,0,6"/>
+                    <TextBlock Text="{Binding HelpText, ElementName=Root}"
+                               Foreground="{StaticResource Brush.Text.Primary}"
+                               FontSize="{StaticResource Font.Size.Body}"
+                               TextWrapping="Wrap" LineHeight="19"/>
+                </StackPanel>
+            </Border>
+        </Popup>
+    </Grid>
+</UserControl>

@@ -15,6 +15,10 @@ public partial class App : Application
         // Occt.NET 벤더 홍보 팝업 감시·클로킹 (STEP 리더/라이터 사용 시 출현)
         VendorPopupSuppressor.Install();
 
+        // 커스텀 크롬(WindowStyle=None) 타이틀바의 min/max/close 버튼이 쓰는
+        // SystemCommands 를 모든 Window 에 클래스 수준으로 연결 (VMS 본체와 동일 방식)
+        RegisterWindowChromeCommandBindings();
+
         // 서비스 수동 구성 (VMS 관례 — DI 컨테이너 없이 App 에서 조립)
         var cadKernel = new CadKernelService();
         var dialogService = new DialogService();
@@ -61,10 +65,15 @@ public partial class App : Application
                     await viewModel.LoadForDiagnosticsAsync(stepPath);
                     T($"load returned, status={viewModel.StatusText}");
                     int pickIdx = Array.IndexOf(e.Args, "--pick");
-                    if (pickIdx >= 0 && pickIdx + 1 < e.Args.Length && int.TryParse(e.Args[pickIdx + 1], out int pickEdgeId))
+                    if (pickIdx >= 0 && pickIdx + 1 < e.Args.Length)
                     {
-                        viewModel.SelectEdge(pickEdgeId);
-                        T($"picked #{pickEdgeId}, status={viewModel.StatusText}");
+                        // 쉼표 구분 다중 지정 가능: --pick 227,229
+                        foreach (var tok in e.Args[pickIdx + 1].Split(','))
+                        {
+                            if (!int.TryParse(tok, out int pickEdgeId)) continue;
+                            viewModel.SelectEdge(pickEdgeId);
+                            T($"picked #{pickEdgeId}, status={viewModel.StatusText}");
+                        }
                     }
                     if (capturePath != null)
                     {
@@ -78,6 +87,29 @@ public partial class App : Application
                 catch (Exception ex) { T("diag error: " + ex); }
             });
         }
+    }
+
+    private static void RegisterWindowChromeCommandBindings()
+    {
+        System.Windows.Input.CommandManager.RegisterClassCommandBinding(typeof(Window),
+            new System.Windows.Input.CommandBinding(SystemCommands.MinimizeWindowCommand,
+                (s, e) => { if (s is Window w) SystemCommands.MinimizeWindow(w); }));
+        System.Windows.Input.CommandManager.RegisterClassCommandBinding(typeof(Window),
+            new System.Windows.Input.CommandBinding(SystemCommands.MaximizeWindowCommand,
+                (s, e) =>
+                {
+                    if (s is Window w)
+                    {
+                        if (w.WindowState == WindowState.Maximized) SystemCommands.RestoreWindow(w);
+                        else SystemCommands.MaximizeWindow(w);
+                    }
+                }));
+        System.Windows.Input.CommandManager.RegisterClassCommandBinding(typeof(Window),
+            new System.Windows.Input.CommandBinding(SystemCommands.RestoreWindowCommand,
+                (s, e) => { if (s is Window w) SystemCommands.RestoreWindow(w); }));
+        System.Windows.Input.CommandManager.RegisterClassCommandBinding(typeof(Window),
+            new System.Windows.Input.CommandBinding(SystemCommands.CloseWindowCommand,
+                (s, e) => { if (s is Window w) SystemCommands.CloseWindow(w); }));
     }
 
     private static void RunAnalyze(CadKernelService kernel, EdgeChainService chain, string stepPath, int? seedId)

@@ -97,19 +97,25 @@ public class TorchPoseService
         return (roll * toDeg, pitch * toDeg, yaw * toDeg);
     }
 
-    public void ExportJson(string path, WeldingPathContour contour, List<TorchPose> poses)
+    /// <summary>경로 목록을 용접 순서(목록 순서)대로 하나의 JSON 으로 내보낸다.</summary>
+    public void ExportJson(string path, List<WeldingPathContour> contours)
     {
         var payload = new
         {
-            pathId = contour.PathId,
-            totalLength = Math.Round(contour.TotalLength, 3),
-            pointCount = poses.Count,
             eulerConvention = "ZYX(deg)",
             frame = "CAD model coordinates (ICP 정합 전 — T_align 적용 필요)",
-            poses = poses.Select(p => new
+            pathCount = contours.Count,
+            paths = contours.Select((c, i) => new
             {
-                x = Math.Round(p.X, 4), y = Math.Round(p.Y, 4), z = Math.Round(p.Z, 4),
-                roll = Math.Round(p.RollDeg, 3), pitch = Math.Round(p.PitchDeg, 3), yaw = Math.Round(p.YawDeg, 3),
+                order = i + 1,
+                pathId = c.PathId,
+                totalLength = Math.Round(c.TotalLength, 3),
+                pointCount = c.Poses.Count,
+                poses = c.Poses.Select(p => new
+                {
+                    x = Math.Round(p.X, 4), y = Math.Round(p.Y, 4), z = Math.Round(p.Z, 4),
+                    roll = Math.Round(p.RollDeg, 3), pitch = Math.Round(p.PitchDeg, 3), yaw = Math.Round(p.YawDeg, 3),
+                }),
             }),
         };
         File.WriteAllText(path, JsonSerializer.Serialize(payload,
