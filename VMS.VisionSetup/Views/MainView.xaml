@@ -575,13 +575,17 @@
                     </Button>
                     <Border Width="1" Background="{StaticResource BrushBgHover}" Margin="5,4" CornerRadius="1"/>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <RadioButton Content="Navigate" Foreground="#AAA" FontSize="11" Margin="0,0,8,0"
+                        <!-- Foreground 는 모드별 의미색(회색=탐색만 / 초록=전체 실행 / 청록=선택 실행)이라 유지 -->
+                        <RadioButton Content="Navigate" Style="{StaticResource WindowDarkRadioButton}"
+                                     Foreground="{StaticResource BrushTextSecondary}" Margin="0,4,10,4"
                                      VerticalAlignment="Center" GroupName="FolderNavMode" ToolTip="Navigate Only"
                                      IsChecked="{Binding FolderNavigationMode, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=NavigateOnly}"/>
-                        <RadioButton Content="Run All" Foreground="{StaticResource BrushSuccess}" FontSize="11" Margin="0,0,8,0"
+                        <RadioButton Content="Run All" Style="{StaticResource WindowDarkRadioButton}"
+                                     Foreground="{StaticResource BrushSuccess}" Margin="0,4,10,4"
                                      VerticalAlignment="Center" GroupName="FolderNavMode" ToolTip="Auto Run All on navigate"
                                      IsChecked="{Binding FolderNavigationMode, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=AutoRunAll}"/>
-                        <RadioButton Content="Run Selected" Foreground="{StaticResource BrushAccent}" FontSize="11"
+                        <RadioButton Content="Run Selected" Style="{StaticResource WindowDarkRadioButton}"
+                                     Foreground="{StaticResource BrushAccent}" Margin="0,4"
                                      VerticalAlignment="Center" GroupName="FolderNavMode" ToolTip="Auto Run Selected on navigate"
                                      IsChecked="{Binding FolderNavigationMode, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=AutoRunSelected}"/>
                     </StackPanel>
