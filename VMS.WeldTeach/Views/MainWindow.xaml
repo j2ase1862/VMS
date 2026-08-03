@@ -13,6 +13,8 @@
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <helpers:IndexPlusOneConverter x:Key="IndexPlusOne"/>
+        <helpers:InverseBoolConverter x:Key="InvBool"/>
+        <helpers:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -24,7 +26,23 @@
         <!-- 툴바 -->
         <Border Grid.Row="0" Background="{StaticResource Brush.Surface.Base}" Padding="12,10">
             <StackPanel>
-            <StackPanel Orientation="Horizontal">
+            <!-- 0행: 공정 모드 (스캔 명세 §4 — 용접=CAD+엣지 / 그라인딩=점군+영역) -->
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <TextBlock Text="공정 모드" Style="{StaticResource Text.Caption}"
+                           Foreground="{StaticResource Brush.Accent}" FontWeight="SemiBold"
+                           VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <ctrl:HelpIcon VerticalAlignment="Center" Margin="0,0,10,0"
+                               HelpTitle="공정 모드"
+                               HelpText="용접: CAD(STEP)를 열고 모서리를 클릭해 용접 경로를 티칭합니다.&#x0a;그라인딩: CAD 없이 스캔 점군에서 직접 가공 영역을 선택해 커버리지 경로를 만듭니다.&#x0a;&#x0a;그라인딩 모드에서는 점군을 열면 자동으로 전처리(다운샘플·이상치 제거·법선 추정)가 실행되고, 뷰포트를 드래그해 영역을 선택할 수 있습니다."/>
+                <RadioButton Content="용접" GroupName="ProcessMode" VerticalAlignment="Center"
+                             Margin="0,0,10,0"
+                             IsChecked="{Binding IsGrindingMode, Converter={StaticResource InvBool}}"/>
+                <RadioButton Content="그라인딩" GroupName="ProcessMode" VerticalAlignment="Center"
+                             IsChecked="{Binding IsGrindingMode}"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal"
+                        Visibility="{Binding IsGrindingMode, Converter={StaticResource InvBoolToVis}}">
                 <Button Content="STEP 열기" Style="{StaticResource ModernButton}"
                         Command="{Binding OpenStepCommand}" Margin="0,0,8,0"/>
                 <Button Content="샘플 시편 생성" Style="{StaticResource Button.Subtle}"
@@ -73,8 +91,9 @@
                              Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
             </StackPanel>
 
-            <!-- 2행: 점군 정합 (명세서 Step 3-2) -->
-            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+            <!-- 2행: 점군 정합 (명세서 Step 3-2) — 용접 모드 전용 -->
+            <StackPanel Orientation="Horizontal" Margin="0,8,0,0"
+                        Visibility="{Binding IsGrindingMode, Converter={StaticResource InvBoolToVis}}">
                 <TextBlock Text="점군 정합" Style="{StaticResource Text.Caption}"
                            Foreground="{StaticResource Brush.Accent}" FontWeight="SemiBold"
                            VerticalAlignment="Center" Margin="0,0,4,0"/>
@@ -97,6 +116,53 @@
                 <TextBlock Text="{Binding RegistrationStatus}" Style="{StaticResource Text.Caption}"
                            VerticalAlignment="Center"/>
             </StackPanel>
+
+            <!-- 그라인딩 모드 툴바 (스캔 명세 Step S1·S2) -->
+            <StackPanel Orientation="Horizontal"
+                        Visibility="{Binding IsGrindingMode, Converter={StaticResource BoolToVis}}">
+                <Button Content="점군 열기" Style="{StaticResource ModernButton}"
+                        Command="{Binding OpenCloudCommand}" Margin="0,0,8,0"/>
+                <TextBlock Text="합성 표면" Style="{StaticResource Text.Caption}"
+                           VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <ctrl:HelpIcon VerticalAlignment="Center" Margin="0,0,6,0"
+                               HelpTitle="합성 표면 생성"
+                               HelpText="실스캔 없이 그라인딩 흐름을 시험하는 검증용 점군을 만듭니다 (노이즈 0.05mm 포함).&#x0a;&#x0a;• Plane: 평면 패널&#x0a;• InclinedPlane: 30° 경사 평면&#x0a;• CylinderShell: 원통 곡면(부분)&#x0a;• SineBump: 물결 곡면&#x0a;• HolePanel: 중앙에 구멍 뚫린 평면"/>
+                <ComboBox ItemsSource="{Binding SampleKinds}" SelectedItem="{Binding SelectedSampleKind}"
+                          Width="120" VerticalContentAlignment="Center" Margin="0,0,6,0"/>
+                <Button Content="생성" Style="{StaticResource Button.Subtle}"
+                        Padding="10,6" FontSize="11" Margin="0,0,6,0"
+                        Command="{Binding GenerateGrindingSampleCommand}"/>
+                <Button Content="점군 저장 (.vpc)" Style="{StaticResource Button.Subtle}"
+                        Padding="10,6" FontSize="11" Margin="0,0,16,0"
+                        Command="{Binding SaveCloudCommand}"/>
+
+                <TextBlock Text="도구" Style="{StaticResource Text.Caption}"
+                           VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <ctrl:HelpIcon VerticalAlignment="Center" Margin="0,0,6,0"
+                               HelpTitle="영역 선택 도구"
+                               HelpText="라쏘: 뷰포트를 드래그해 올가미를 그리면 안쪽 점들이 새 영역으로 선택됩니다.&#x0a;브러시: 드래그 궤적 반경 이내의 점을 선택한 영역에 칠하듯 추가합니다.&#x0a;&#x0a;• Shift+드래그 = 선택한 영역에 추가&#x0a;• Ctrl+드래그 = 영역에서 제거 (지우개)&#x0a;• 카메라 회전은 우클릭 드래그, 이동은 휠클릭 드래그입니다.&#x0a;&#x0a;깊이 밴드: 화면상 겹쳐 보이는 뒷면 점이 함께 잡히지 않도록, 앞쪽 표면에서 이 거리(mm) 이내의 점만 선택합니다 (0 = 끄기)."/>
+                <RadioButton Content="라쏘" GroupName="GrindTool" VerticalAlignment="Center" Margin="0,0,8,0"
+                             IsChecked="{Binding IsBrushMode, Converter={StaticResource InvBool}}"/>
+                <RadioButton Content="브러시" GroupName="GrindTool" VerticalAlignment="Center" Margin="0,0,8,0"
+                             IsChecked="{Binding IsBrushMode}"/>
+                <TextBlock Text="반경(px)" Style="{StaticResource Text.Caption}"
+                           VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <TextBox Text="{Binding BrushRadiusPx, UpdateSourceTrigger=PropertyChanged}" Width="44"
+                         VerticalContentAlignment="Center" Margin="0,0,10,0"/>
+                <TextBlock Text="깊이 밴드(mm)" Style="{StaticResource Text.Caption}"
+                           VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <TextBox Text="{Binding SelectionDepthBandMm, UpdateSourceTrigger=PropertyChanged}" Width="44"
+                         VerticalContentAlignment="Center" Margin="0,0,16,0"/>
+
+                <TextBlock Text="{Binding PrepStatus}" Style="{StaticResource Text.Caption}"
+                           VerticalAlignment="Center"/>
+                <ProgressBar IsIndeterminate="{Binding IsBusy}" Width="120" Height="6" Margin="20,0,0,0"
+                             VerticalAlignment="Center"
+                             Foreground="{StaticResource Brush.Primary}"
+                             Background="{StaticResource Brush.Surface.Overlay}"
+                             BorderThickness="0"
+                             Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
+            </StackPanel>
             </StackPanel>
         </Border>
 
@@ -116,19 +182,23 @@
                                            ZoomExtentsWhenLoaded="True"
                                            CameraChanged="Viewport_CameraChanged"
                                            MouseMove="Viewport_MouseMove"
-                                           MouseLeftButtonDown="Viewport_MouseLeftButtonDown">
+                                           MouseLeftButtonDown="Viewport_MouseLeftButtonDown"
+                                           MouseLeftButtonUp="Viewport_MouseLeftButtonUp">
                         <helix:DefaultLights/>
                     </helix:HelixViewport3D>
                     <!-- 경로 순번 2D 오버레이 — 3D 메쉬에 가려지지 않도록 항상 최상위 -->
                     <Canvas x:Name="LabelOverlay" IsHitTestVisible="False" ClipToBounds="True"/>
+                    <!-- 라쏘/브러시 드래그 궤적 오버레이 (그라인딩 모드) -->
+                    <Canvas x:Name="SelectionOverlay" IsHitTestVisible="False" ClipToBounds="True"/>
                 </Grid>
             </Border>
 
-            <!-- 우측 패널: 경로 목록(용접 순서) + 포즈 -->
+            <!-- 우측 패널: 경로 목록(용접 순서) + 포즈 — 용접 모드 전용 -->
             <Border Grid.Column="1" Margin="12,0,0,0"
                     Background="{StaticResource Brush.Surface.Raised}"
                     CornerRadius="{StaticResource Radius.Md}"
-                    Padding="16">
+                    Padding="16"
+                    Visibility="{Binding IsGrindingMode, Converter={StaticResource InvBoolToVis}}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -268,6 +338,106 @@
                             <DataGridTextColumn Header="Y°" Binding="{Binding YawDeg, StringFormat=F1}" Width="*" ElementStyle="{StaticResource NumCell}"/>
                         </DataGrid.Columns>
                     </DataGrid>
+                </Grid>
+            </Border>
+
+            <!-- 우측 패널: 그라인딩 영역 목록 (가공 순서) — 그라인딩 모드 전용 -->
+            <Border Grid.Column="1" Margin="12,0,0,0"
+                    Background="{StaticResource Brush.Surface.Raised}"
+                    CornerRadius="{StaticResource Radius.Md}"
+                    Padding="16"
+                    Visibility="{Binding IsGrindingMode, Converter={StaticResource BoolToVis}}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Margin="0,0,0,8">
+                        <DockPanel>
+                            <TextBlock Text="가공 영역" Style="{StaticResource Text.SectionHeader}" Margin="0,0,6,0"/>
+                            <ctrl:HelpIcon VerticalAlignment="Top" Margin="0,3,0,0"
+                                           HelpTitle="가공 영역 목록"
+                                           HelpText="뷰포트를 드래그(라쏘)할 때마다 영역이 목록에 추가되고, 목록의 순서가 곧 가공 순서입니다.&#x0a;&#x0a;• Shift+드래그: 선택한 영역에 점 추가&#x0a;• Ctrl+드래그: 영역에서 점 제거 (지우개)&#x0a;• 브러시 도구는 드래그 궤적 반경만큼 칠하듯 추가합니다.&#x0a;&#x0a;커버리지 경로 생성(다음 단계)은 이 영역 단위로 실행됩니다."/>
+                            <Border/>
+                        </DockPanel>
+                        <TextBlock Style="{StaticResource Text.Body}"
+                                   Foreground="{StaticResource Brush.Text.Secondary}"
+                                   TextWrapping="Wrap"
+                                   Text="뷰포트 드래그 → 영역 추가 (숫자 = 가공 순서). Shift=추가 · Ctrl=제거."/>
+                    </StackPanel>
+
+                    <ListBox Grid.Row="1" ItemsSource="{Binding Regions}"
+                             SelectedItem="{Binding SelectedRegion}"
+                             Margin="0,0,0,8"
+                             Background="Transparent" BorderThickness="0"
+                             AlternationCount="1000"
+                             HorizontalContentAlignment="Stretch"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Padding" Value="8,6"/>
+                                <Setter Property="Margin" Value="0,0,0,4"/>
+                                <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <Border x:Name="bg" Background="{StaticResource Brush.Surface.Base}"
+                                                    CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="bg" Property="Background" Value="{StaticResource Brush.Surface.Overlay}"/>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="bg" Property="Background" Value="{StaticResource Brush.Primary}"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <DockPanel LastChildFill="True">
+                                    <Border DockPanel.Dock="Left" Width="22" Height="22" CornerRadius="11"
+                                            Background="{StaticResource Brush.Accent}" Margin="0,0,8,0">
+                                        <TextBlock Foreground="White" FontWeight="Bold" FontSize="11"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   Text="{Binding (ItemsControl.AlternationIndex),
+                                                          RelativeSource={RelativeSource AncestorType=ListBoxItem},
+                                                          Converter={StaticResource IndexPlusOne}}"/>
+                                    </Border>
+                                    <Button DockPanel.Dock="Right" Width="20" Height="20"
+                                            Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                            ToolTip="이 영역 제거"
+                                            Command="{Binding DataContext.RemoveRegionCommand,
+                                                      RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}">
+                                        <TextBlock Text="✕" Foreground="{StaticResource Brush.Text.Tertiary}"
+                                                   FontSize="11" HorizontalAlignment="Center"/>
+                                    </Button>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding RegionId}" FontWeight="SemiBold" FontSize="12"/>
+                                        <TextBlock Text="{Binding Summary}" FontSize="11"
+                                                   Foreground="{StaticResource Brush.Text.Secondary}"/>
+                                    </StackPanel>
+                                </DockPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <DockPanel Grid.Row="2" LastChildFill="False">
+                        <Button DockPanel.Dock="Left" Content="전체 지우기" Style="{StaticResource Button.Subtle}"
+                                Padding="10,6" FontSize="11"
+                                Command="{Binding ClearRegionsCommand}"/>
+                        <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center"
+                                   Style="{StaticResource Text.Caption}"
+                                   Text="{Binding Regions.Count, StringFormat=영역 {0}개}"/>
+                    </DockPanel>
                 </Grid>
             </Border>
         </Grid>

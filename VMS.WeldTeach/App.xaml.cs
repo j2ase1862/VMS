@@ -37,7 +37,7 @@ public partial class App : Application
         var cloudService = new PointCloudService();
         var icpService = new IcpService();
         var viewModel = new MainViewModel(cadKernel, dialogService, chainService, poseService,
-            cloudService, icpService);
+            cloudService, icpService, new CloudPreprocessService());
 
         // 헤드리스 자가 검증 모드: 커널 체인을 실행해 로그 파일에 결과를 남기고 종료
         if (e.Args.Contains("--selftest"))
@@ -59,6 +59,40 @@ public partial class App : Application
 
         var window = new MainWindow(viewModel);
         window.Show();
+
+        // 진단 모드: --grindcap <png경로> — 그라인딩 모드 전환 → 합성 표면 생성·전처리 →
+        // 뷰포트 중앙 라쏘 선택 → 캡처. GUI 와 동일한 선택 경로(투영 델리게이트)를 검증한다.
+        int grindIdx = Array.IndexOf(e.Args, "--grindcap");
+        if (grindIdx >= 0 && grindIdx + 1 < e.Args.Length)
+        {
+            string grindPng = e.Args[grindIdx + 1];
+            _ = window.Dispatcher.InvokeAsync(async () =>
+            {
+                try
+                {
+                    viewModel.IsGrindingMode = true;
+                    viewModel.GenerateGrindingSampleCommand.Execute(null);
+                    // 전처리(백그라운드) 완료 대기
+                    for (int i = 0; i < 100 && viewModel.IsBusy; i++) await Task.Delay(100);
+                    window.ZoomExtentsForDiagnostics();
+                    await Task.Delay(800);   // 렌더 안정화
+                    window.DiagSelectCenterRegion();
+                    await Task.Delay(800);
+                    window.CaptureToPng(grindPng);
+                    if (!e.Args.Contains("--stay")) Shutdown(0);
+                }
+                catch (Exception ex)
+                {
+                    try
+                    {
+                        File.AppendAllText(Path.Combine(Path.GetTempPath(), "weldteach_diag.log"),
+                            $"[{DateTime.Now:HH:mm:ss.fff}] grindcap error: {ex}{Environment.NewLine}");
+                    }
+                    catch { }
+                }
+            });
+            return;
+        }
 
         // 진단 모드: --open <step경로> [--capture <png경로>]
         // GUI 와 동일한 로드 경로(LoadAsync)를 타고, 캡처 지정 시 렌더 결과를 저장 후 종료한다.
@@ -283,6 +317,9 @@ public partial class App : Application
             // 그라인딩 확장 M1 — 합성 점군 → 전처리·법선 추정 검증 (OCCT 불필요)
             RunGrindingM1SelfTest(lines);
 
+            // 그라인딩 확장 M2 — 라쏘/브러시 영역 선택 검증
+            RunGrindingM2SelfTest(lines);
+
             File.WriteAllLines(log, lines);
         }
         catch (Exception ex)
@@ -337,5 +374,85 @@ public partial class App : Application
         }
 
         lines.Add(allOk ? "GRINDING M1 OK" : "GRINDING M1 FAIL");
+    }
+
+    /// <summary>
+    /// 그라인딩 스캔 명세 §6.2 — 라쏘 다각형/브러시 선택 정확성, 첫 레이어 깊이 밴드,
+    /// 10만 점 선택 응답 시간을 정사영 프로젝터(화면 1px = 1mm, 상방 카메라)로 검증한다.
+    /// </summary>
+    private static void RunGrindingM2SelfTest(List<string> lines)
+    {
+        bool allOk = true;
+        // 정사영 프로젝터 — 화면 (x,y) = 월드 (X,Y), 깊이 = 500 − Z (카메라가 +Z 상방)
+        RegionSelectService.ProjectFunc proj =
+            p => new ProjectedPoint(p.X, p.Y, 500 - p.Z, true);
+
+        var sc = SampleCloudGenerator.Generate(SampleSurfaceKind.Plane);   // σ=0 평면
+        var rect = new[]
+        {
+            new Point(20, 15), new Point(80, 15), new Point(80, 45), new Point(20, 45),
+        };
+
+        // 1) 라쏘 사각형 — 내부 점 전부·외부 점 0 (좌표 판정과 다각형 판정의 일치)
+        {
+            var idx = RegionSelectService.SelectByPolygon(sc.Points, proj, rect, 20);
+            int expected = sc.Points.Count(p => p.X > 20 && p.X < 80 && p.Y > 15 && p.Y < 45);
+            bool inside = idx.All(i =>
+                sc.Points[i].X >= 20 && sc.Points[i].X <= 80 &&
+                sc.Points[i].Y >= 15 && sc.Points[i].Y <= 45);
+            bool ok = idx.Count == expected && idx.Count > 0 && inside;
+            allOk &= ok;
+            lines.Add($"m2 라쏘: 선택 {idx.Count:N0} / 기대 {expected:N0}, 내부만={inside} {(ok ? "OK" : "FAIL")}");
+        }
+
+        // 2) 깊이 밴드 — 상면(z=0) + 30mm 아래 복제 레이어 → 첫 레이어만 선택돼야 함
+        {
+            var doubled = sc.Points
+                .Concat(sc.Points.Select(p => new Point3D(p.X, p.Y, p.Z - 30)))
+                .ToList();
+            var idx = RegionSelectService.SelectByPolygon(doubled, proj, rect, 20);
+            int backLayer = idx.Count(i => doubled[i].Z < -1);
+            var idxNoBand = RegionSelectService.SelectByPolygon(doubled, proj, rect, 0);
+            bool ok = backLayer == 0 && idx.Count > 0 && idxNoBand.Count > idx.Count;
+            allOk &= ok;
+            lines.Add($"m2 깊이밴드: 상층 {idx.Count:N0} 선택, 하층 혼입 {backLayer} " +
+                      $"(밴드 없음 {idxNoBand.Count:N0}) {(ok ? "OK" : "FAIL")}");
+        }
+
+        // 3) 브러시 스트로크 — 궤적 반경 이내 점만
+        {
+            var stroke = new[] { new Point(40, 30), new Point(50, 30), new Point(60, 30) };
+            double r = 10;
+            var idx = RegionSelectService.SelectByStroke(sc.Points, proj, stroke, r, 20);
+            bool within = idx.All(i => stroke.Any(c =>
+            {
+                double dx = sc.Points[i].X - c.X, dy = sc.Points[i].Y - c.Y;
+                return dx * dx + dy * dy <= r * r + 1e-9;
+            }));
+            int expected = sc.Points.Count(p => stroke.Any(c =>
+            {
+                double dx = p.X - c.X, dy = p.Y - c.Y;
+                return dx * dx + dy * dy <= r * r;
+            }));
+            bool ok = within && idx.Count == expected && idx.Count > 0;
+            allOk &= ok;
+            lines.Add($"m2 브러시: 선택 {idx.Count:N0} / 기대 {expected:N0}, 반경내만={within} {(ok ? "OK" : "FAIL")}");
+        }
+
+        // 4) 성능 — 10만 점 라쏘 선택 (명세 목표 100ms, 한계 250ms)
+        {
+            var rng = new Random(42);
+            var big = new List<Point3D>(100_000);
+            for (int i = 0; i < 100_000; i++)
+                big.Add(new Point3D(rng.NextDouble() * 100, rng.NextDouble() * 60, rng.NextDouble() * 5));
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            var idx = RegionSelectService.SelectByPolygon(big, proj, rect, 20);
+            sw.Stop();
+            bool ok = sw.ElapsedMilliseconds <= 250;
+            allOk &= ok;
+            lines.Add($"m2 성능: 100k점 라쏘 {sw.ElapsedMilliseconds}ms (선택 {idx.Count:N0}) {(ok ? "OK" : "FAIL")}");
+        }
+
+        lines.Add(allOk ? "GRINDING M2 OK" : "GRINDING M2 FAIL");
     }
 }

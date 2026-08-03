@@ -18,10 +18,12 @@ public partial class MainViewModel : ObservableObject
     private readonly TorchPoseService _poseService;
     private readonly PointCloudService _cloudService;
     private readonly IcpService _icpService;
+    private readonly CloudPreprocessService _prepService;
 
     public MainViewModel(ICadKernelService cadKernel, IDialogService dialogService,
         EdgeChainService chainService, TorchPoseService poseService,
-        PointCloudService cloudService, IcpService icpService)
+        PointCloudService cloudService, IcpService icpService,
+        CloudPreprocessService prepService)
     {
         _cadKernel = cadKernel;
         _dialogService = dialogService;
@@ -29,6 +31,7 @@ public partial class MainViewModel : ObservableObject
         _poseService = poseService;
         _cloudService = cloudService;
         _icpService = icpService;
+        _prepService = prepService;
     }
 
     [ObservableProperty]
@@ -171,7 +174,202 @@ public partial class MainViewModel : ObservableObject
         _scanCloud = cloud;
         _tAlign = null;
         RegistrationStatus = "미정합";
+        // 그라인딩 전처리·영역은 점군에 종속 — 새 점군이면 무효화
+        _prepCloud = null;
+        PrepStatus = "전처리 대기";
+        Regions.Clear();
+        SelectedRegion = null;
         StatusText = status;
+        HighlightChanged?.Invoke(this, EventArgs.Empty);
+        if (IsGrindingMode) _ = PreprocessIfNeededAsync();
+    }
+
+    // ---- 그라인딩 모드 (스캔 명세 Step S1·S2: 전처리 + 영역 선택) ----
+
+    /// <summary>공정 모드 — false=용접(CAD+엣지), true=그라인딩(점군+영역).</summary>
+    [ObservableProperty]
+    private bool _isGrindingMode;
+
+    /// <summary>선택 도구 — false=라쏘(드래그로 다각형), true=브러시(드래그 궤적 원).</summary>
+    [ObservableProperty]
+    private bool _isBrushMode;
+
+    [ObservableProperty]
+    private double _brushRadiusPx = 25;
+
+    /// <summary>라쏘/브러시 깊이 밴드(mm) — 후보의 전방 깊이 + 이 값 이내만 선택 (0 = 필터 없음).</summary>
+    [ObservableProperty]
+    private double _selectionDepthBandMm = 20;
+
+    [ObservableProperty]
+    private string _prepStatus = "점군 없음";
+
+    [ObservableProperty]
+    private SampleSurfaceKind _selectedSampleKind = SampleSurfaceKind.SineBump;
+
+    public SampleSurfaceKind[] SampleKinds { get; } = Enum.GetValues<SampleSurfaceKind>();
+
+    /// <summary>선택된 가공 영역들 — 목록 순서가 곧 가공 순서다 (용접 경로 목록과 동일 규약).</summary>
+    public ObservableCollection<GrindingRegion> Regions { get; } = new();
+
+    [ObservableProperty]
+    private GrindingRegion? _selectedRegion;
+
+    private PreprocessedCloud? _prepCloud;
+    private int _regionSeq;
+
+    /// <summary>그라인딩 모드 표시·선택 대상 점군 (전처리 결과).</summary>
+    public IReadOnlyList<Point3D> GrindingPoints =>
+        _prepCloud?.Points ?? (IReadOnlyList<Point3D>)Array.Empty<Point3D>();
+
+    partial void OnIsGrindingModeChanged(bool value)
+    {
+        HoveredEdgeId = 0;
+        StatusText = value
+            ? "그라인딩 모드 — 점군을 열거나 합성 표면을 생성한 뒤, 뷰포트를 드래그해 영역을 선택하세요."
+            : "용접 모드 — STEP 파일을 열고 용접 모서리를 클릭하세요.";
+        if (value) _ = PreprocessIfNeededAsync();
+        HighlightChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    partial void OnSelectedRegionChanged(GrindingRegion? value)
+        => HighlightChanged?.Invoke(this, EventArgs.Empty);
+
+    /// <summary>합성 표면 점군 생성 — CAD·실물 없이 그라인딩 흐름을 시험 (σ=0.05mm 노이즈).</summary>
+    [RelayCommand]
+    private void GenerateGrindingSample()
+    {
+        var sc = SampleCloudGenerator.Generate(SelectedSampleKind, 0.05);
+        SetScanCloud(sc.Points, $"합성 표면 생성 — {sc.Name}, {sc.Points.Count:N0}점");
+    }
+
+    private async Task PreprocessIfNeededAsync()
+    {
+        if (_scanCloud == null || _prepCloud != null) return;
+        IsBusy = true;
+        PrepStatus = "전처리 중...";
+        try
+        {
+            var cloud = _scanCloud;
+            var prep = await Task.Run(() =>
+            {
+                // 법선 일관화 시점: 점군 상방 (VMS 구조광 상면 스캔 전제 — 스캔 좌표계 +Z 가 카메라 쪽)
+                double minX = double.MaxValue, minY = double.MaxValue, maxX = double.MinValue,
+                       maxY = double.MinValue, maxZ = double.MinValue;
+                foreach (var p in cloud)
+                {
+                    minX = Math.Min(minX, p.X); minY = Math.Min(minY, p.Y);
+                    maxX = Math.Max(maxX, p.X); maxY = Math.Max(maxY, p.Y);
+                    maxZ = Math.Max(maxZ, p.Z);
+                }
+                double extent = Math.Max(maxX - minX, maxY - minY);
+                var viewpoint = new Point3D((minX + maxX) / 2, (minY + maxY) / 2,
+                    maxZ + Math.Max(extent, 100) * 5);
+                return _prepService.Process(cloud, viewpoint);
+            });
+            _prepCloud = prep;
+            PrepStatus = prep.Summary;
+            StatusText = $"전처리 완료 — {prep.Summary}. 드래그로 영역을 선택하세요.";
+        }
+        catch (Exception ex)
+        {
+            PrepStatus = "전처리 실패";
+            StatusText = $"전처리 실패: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+            HighlightChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    /// <summary>선택 결과를 영역에 반영하는 방식 — 새 영역 / 선택 영역에 추가 / 모든 영역에서 제거.</summary>
+    public enum SelectionCombine { NewRegion, Add, Remove }
+
+    /// <summary>라쏘 완료 — 뷰가 화면 다각형과 투영 델리게이트를 넘긴다.</summary>
+    public void ApplyLassoSelection(IReadOnlyList<System.Windows.Point> polygon,
+        RegionSelectService.ProjectFunc project, SelectionCombine combine)
+    {
+        if (_prepCloud == null) { StatusText = "먼저 점군을 열거나 합성 표면을 생성하세요."; return; }
+        double band = combine == SelectionCombine.Remove ? 0 : SelectionDepthBandMm;
+        var idx = RegionSelectService.SelectByPolygon(_prepCloud.Points, project, polygon, band);
+        ApplySelection(idx, combine);
+    }
+
+    /// <summary>브러시 스트로크 완료 — 드래그 궤적(중심점들) 반경 이내 선택.</summary>
+    public void ApplyBrushSelection(IReadOnlyList<System.Windows.Point> strokeCenters,
+        RegionSelectService.ProjectFunc project, SelectionCombine combine)
+    {
+        if (_prepCloud == null) { StatusText = "먼저 점군을 열거나 합성 표면을 생성하세요."; return; }
+        double band = combine == SelectionCombine.Remove ? 0 : SelectionDepthBandMm;
+        var idx = RegionSelectService.SelectByStroke(_prepCloud.Points, project, strokeCenters,
+            Math.Max(1, BrushRadiusPx), band);
+        // 브러시는 수정 도구 — 조합 미지정(NewRegion)이면 선택 영역에 추가로 동작
+        if (combine == SelectionCombine.NewRegion && SelectedRegion != null)
+            combine = SelectionCombine.Add;
+        ApplySelection(idx, combine);
+    }
+
+    private void ApplySelection(List<int> indices, SelectionCombine combine)
+    {
+        switch (combine)
+        {
+            case SelectionCombine.NewRegion:
+                if (indices.Count == 0) { StatusText = "선택된 점이 없습니다 — 점군 위를 드래그하세요."; return; }
+                var region = new GrindingRegion { RegionId = $"Region{++_regionSeq}", PointIndices = indices };
+                Regions.Add(region);
+                SelectedRegion = region;
+                StatusText = $"[{Regions.Count}번] {region.RegionId} 추가: 점 {indices.Count:N0}개 — " +
+                             $"총 {Regions.Count}개 영역 (Shift 드래그=추가, Ctrl 드래그=제거)";
+                break;
+
+            case SelectionCombine.Add:
+                if (indices.Count == 0) { StatusText = "선택된 점이 없습니다."; return; }
+                if (SelectedRegion == null) { ApplySelection(indices, SelectionCombine.NewRegion); return; }
+                var set = new HashSet<int>(SelectedRegion.PointIndices);
+                set.UnionWith(indices);
+                SelectedRegion.PointIndices = set.ToList();
+                StatusText = $"{SelectedRegion.RegionId} 에 추가 → 점 {SelectedRegion.PointIndices.Count:N0}개";
+                break;
+
+            case SelectionCombine.Remove:
+                if (indices.Count == 0) { StatusText = "제거할 점이 없습니다."; return; }
+                var remove = new HashSet<int>(indices);
+                int removedTotal = 0;
+                foreach (var r in Regions.ToList())
+                {
+                    int before = r.PointIndices.Count;
+                    r.PointIndices = r.PointIndices.Where(i => !remove.Contains(i)).ToList();
+                    removedTotal += before - r.PointIndices.Count;
+                    if (r.PointIndices.Count == 0)
+                    {
+                        Regions.Remove(r);
+                        if (SelectedRegion == r) SelectedRegion = Regions.LastOrDefault();
+                    }
+                }
+                StatusText = $"영역에서 점 {removedTotal:N0}개 제거 — 남은 영역 {Regions.Count}개";
+                break;
+        }
+        System.Windows.Data.CollectionViewSource.GetDefaultView(Regions)?.Refresh();
+        HighlightChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    [RelayCommand]
+    private void RemoveRegion(GrindingRegion? region)
+    {
+        if (region == null) return;
+        Regions.Remove(region);
+        if (SelectedRegion == region) SelectedRegion = Regions.LastOrDefault();
+        StatusText = $"{region.RegionId} 제거 — 남은 영역 {Regions.Count}개";
+        HighlightChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    [RelayCommand]
+    private void ClearRegions()
+    {
+        Regions.Clear();
+        SelectedRegion = null;
+        StatusText = "모든 영역을 지웠습니다.";
         HighlightChanged?.Invoke(this, EventArgs.Empty);
     }
 
