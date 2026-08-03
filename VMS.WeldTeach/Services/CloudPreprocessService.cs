@@ -95,7 +95,10 @@ public class CloudPreprocessService
 
         double mu = meanDist.Average();
         double sigma = Math.Sqrt(meanDist.Sum(d => (d - mu) * (d - mu)) / meanDist.Length);
-        double limit = mu + stdRatio * sigma;
+        // 복셀 다운샘플 후에는 밀도가 균일해 σ→0 — 경계 점(이웃 거리 ~1.3μ)까지 잘려
+        // 커버리지 경계 라인이 사라진다. μ 비례 하한(+50%)으로 경계는 보존하고,
+        // 진짜 부유 이상치(수 배 μ)만 제거되게 한다.
+        double limit = mu + Math.Max(stdRatio * sigma, 0.5 * mu);
 
         var kept = new List<Point3D>(pts.Count);
         for (int i = 0; i < pts.Count; i++)

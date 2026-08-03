@@ -352,6 +352,7 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
                     <StackPanel Grid.Row="0" Margin="0,0,0,8">
@@ -430,7 +431,47 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
 
-                    <DockPanel Grid.Row="2" LastChildFill="False">
+                    <!-- 커버리지 파라미터 (스캔 명세 Step S3) -->
+                    <StackPanel Grid.Row="2" Margin="0,0,0,10">
+                        <DockPanel LastChildFill="False" Margin="0,0,0,6">
+                            <TextBlock DockPanel.Dock="Left" Text="공구 직경(mm)"
+                                       Style="{StaticResource Text.Caption}"
+                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <ctrl:HelpIcon DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,6,0"
+                                           HelpTitle="커버리지 파라미터"
+                                           HelpText="공구 직경 × (1 − 겹침률) = 스텝오버(인접 라인 간격)입니다.&#x0a;예: 직경 50mm · 겹침 30% → 라인 간격 35mm.&#x0a;&#x0a;• 겹침을 키우면 라인이 촘촘해져 가공 품질이 좋아지고 시간이 늘어납니다.&#x0a;• 마진: 영역 경계에서 안쪽으로 띄우는 거리 (공구 반경 보정용).&#x0a;• 지그재그: 홀수 라인을 역방향으로 왕복 가공합니다.&#x0a;&#x0a;[커버리지 생성]은 모든 영역에 현재 파라미터를 적용합니다."/>
+                            <TextBox DockPanel.Dock="Left" Width="48"
+                                     Text="{Binding ToolDiameterMm, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalContentAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock DockPanel.Dock="Left" Text="겹침(%)"
+                                       Style="{StaticResource Text.Caption}"
+                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBox DockPanel.Dock="Left" Width="40"
+                                     Text="{Binding OverlapPct, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalContentAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center"
+                                       Style="{StaticResource Text.Caption}"
+                                       Foreground="{StaticResource Brush.Accent}"
+                                       Text="{Binding StepoverMm, StringFormat=→ 스텝오버 {0:F1} mm}"/>
+                        </DockPanel>
+                        <DockPanel LastChildFill="False" Margin="0,0,0,8">
+                            <TextBlock DockPanel.Dock="Left" Text="마진(mm)"
+                                       Style="{StaticResource Text.Caption}"
+                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBox DockPanel.Dock="Left" Width="40"
+                                     Text="{Binding GrindMarginMm, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalContentAlignment="Center" Margin="0,0,10,0"/>
+                            <CheckBox DockPanel.Dock="Left" Content="지그재그" FontSize="11"
+                                      IsChecked="{Binding ZigzagPattern}"
+                                      VerticalAlignment="Center"
+                                      ToolTip="홀수 라인을 역방향으로 왕복합니다 (끄면 편도)"/>
+                        </DockPanel>
+                        <Button Content="커버리지 생성" Style="{StaticResource ModernButton}"
+                                HorizontalAlignment="Stretch"
+                                Command="{Binding GenerateCoverageCommand}"/>
+                    </StackPanel>
+
+                    <DockPanel Grid.Row="3" LastChildFill="False">
                         <Button DockPanel.Dock="Left" Content="전체 지우기" Style="{StaticResource Button.Subtle}"
                                 Padding="10,6" FontSize="11"
                                 Command="{Binding ClearRegionsCommand}"/>

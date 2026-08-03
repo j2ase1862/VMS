@@ -29,6 +29,9 @@ public partial class MainWindow : Window
     // 그라인딩 영역 하이라이트 (선택 영역은 더 크고 진하게)
     private readonly PointsVisual3D _regionPoints = new() { Color = Colors.Orange, Size = 3.5 };
     private readonly PointsVisual3D _selectedRegionPoints = new() { Color = Colors.OrangeRed, Size = 4.5 };
+    // 커버리지 스캔라인 (선택 영역은 밝게)
+    private readonly LinesVisual3D _scanlineLines = new() { Color = Colors.MediumSeaGreen, Thickness = 1.5 };
+    private readonly LinesVisual3D _selectedScanlineLines = new() { Color = Colors.Lime, Thickness = 2.5 };
 
     // 라쏘/브러시 드래그 상태 (뷰 전용 — 선택 판정은 ViewModel/Service)
     private readonly List<Point> _dragTrail = new();
@@ -58,6 +61,8 @@ public partial class MainWindow : Window
         Viewport.Children.Add(_labelLeaders);
         Viewport.Children.Add(_regionPoints);
         Viewport.Children.Add(_selectedRegionPoints);
+        Viewport.Children.Add(_scanlineLines);
+        Viewport.Children.Add(_selectedScanlineLines);
         SelectionOverlay.Children.Add(_dragVisual);
 
         _viewModel.ModelChanged += (_, _) => RebuildScene();
@@ -116,6 +121,8 @@ public partial class MainWindow : Window
         }
         _regionPoints.Points = new Point3DCollection();
         _selectedRegionPoints.Points = new Point3DCollection();
+        _scanlineLines.Points = new Point3DCollection();
+        _selectedScanlineLines.Points = new Point3DCollection();
 
         var model = _viewModel.Model;
 
@@ -205,6 +212,8 @@ public partial class MainWindow : Window
 
         var regionPts = new Point3DCollection();
         var selectedPts = new Point3DCollection();
+        var linePts = new Point3DCollection();
+        var selLinePts = new Point3DCollection();
         for (int order = 0; order < _viewModel.Regions.Count; order++)
         {
             var r = _viewModel.Regions[order];
@@ -225,10 +234,17 @@ public partial class MainWindow : Window
                 // 순번 라벨 앵커 — 영역 무게중심 상방 (스캔 좌표계 +Z 가 카메라 쪽 전제)
                 _labelAnchors.Add((new Point3D(cx / n, cy / n, cz / n + 10), order + 1, isSelected));
             }
+
+            // 커버리지 스캔라인 (세그먼트별 폴리라인)
+            var lineTarget = isSelected ? selLinePts : linePts;
+            foreach (var s in r.Scanlines)
+                AppendPolyline(lineTarget, s.PathPoints);
         }
-        regionPts.Freeze(); selectedPts.Freeze();
+        regionPts.Freeze(); selectedPts.Freeze(); linePts.Freeze(); selLinePts.Freeze();
         _regionPoints.Points = regionPts;
         _selectedRegionPoints.Points = selectedPts;
+        _scanlineLines.Points = linePts;
+        _selectedScanlineLines.Points = selLinePts;
 
         RebuildLabelOverlay();
     }

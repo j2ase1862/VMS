@@ -1,6 +1,7 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Media.Media3D;
+using VMS.WeldTeach.Models;
 using VMS.WeldTeach.Services;
 using VMS.WeldTeach.ViewModels;
 using VMS.WeldTeach.Views;
@@ -37,7 +38,7 @@ public partial class App : Application
         var cloudService = new PointCloudService();
         var icpService = new IcpService();
         var viewModel = new MainViewModel(cadKernel, dialogService, chainService, poseService,
-            cloudService, icpService, new CloudPreprocessService());
+            cloudService, icpService, new CloudPreprocessService(), new CoveragePathService());
 
         // 헤드리스 자가 검증 모드: 커널 체인을 실행해 로그 파일에 결과를 남기고 종료
         if (e.Args.Contains("--selftest"))
@@ -77,6 +78,8 @@ public partial class App : Application
                     window.ZoomExtentsForDiagnostics();
                     await Task.Delay(800);   // 렌더 안정화
                     window.DiagSelectCenterRegion();
+                    await Task.Delay(400);
+                    await viewModel.GenerateCoverageCommand.ExecuteAsync(null);
                     await Task.Delay(800);
                     window.CaptureToPng(grindPng);
                     if (!e.Args.Contains("--stay")) Shutdown(0);
@@ -320,6 +323,9 @@ public partial class App : Application
             // 그라인딩 확장 M2 — 라쏘/브러시 영역 선택 검증
             RunGrindingM2SelfTest(lines);
 
+            // 그라인딩 확장 M3 — 커버리지 스캔라인 생성 검증 (평면·경사면)
+            RunGrindingM3SelfTest(lines);
+
             File.WriteAllLines(log, lines);
         }
         catch (Exception ex)
@@ -454,5 +460,73 @@ public partial class App : Application
         }
 
         lines.Add(allOk ? "GRINDING M2 OK" : "GRINDING M2 FAIL");
+    }
+
+    /// <summary>
+    /// 그라인딩 스캔 명세 §6.3 — 평면·30° 경사면에서 커버리지 생성을 검증한다:
+    /// 라인 수(반 스텝 인셋 배치), 인접 라인 3D 간격 ≤ 스텝오버×1.31, 지그재그 방향 교대,
+    /// 커버리지(영역 점이 공구 반경 내) ≥ 99%, 2.5D 위반 0.
+    /// </summary>
+    private static void RunGrindingM3SelfTest(List<string> lines)
+    {
+        bool allOk = true;
+        var prepSvc = new CloudPreprocessService();
+        var covSvc = new CoveragePathService();
+        var prm = new GrindingParams { ToolDiameterMm = 50, OverlapPct = 30 };   // 스텝오버 35
+
+        foreach (var kind in new[] { SampleSurfaceKind.Plane, SampleSurfaceKind.InclinedPlane })
+        {
+            var sc = SampleCloudGenerator.Generate(kind, 0.05);
+            var prep = prepSvc.Process(sc.Points, sc.Viewpoint);
+            var all = Enumerable.Range(0, prep.Points.Count).ToList();
+            var res = covSvc.Generate(prep.Points, prep.Normals, all, prm);
+
+            // 라인 수 — 반 스텝 인셋 배치: 폭 60mm, 스텝오버 35mm → 17.5·42.5 두 줄
+            double s = prm.StepoverMm;
+            int expectLines = 60.0 <= s ? 1 : (int)Math.Ceiling((60.0 - s) / s - 1e-9) + 1;
+            bool linesOk = res.LineCount == expectLines;
+
+            // 인접 라인 3D 간격 — 각 라인 중앙점에서 이전 라인 폴리라인까지 최단 거리
+            var byLine = res.Scanlines.GroupBy(s => s.LineIndex).OrderBy(g => g.Key)
+                .Select(g => g.SelectMany(s => s.PathPoints).ToList()).ToList();
+            double maxGap = 0;
+            for (int li = 1; li < byLine.Count; li++)
+            {
+                var mid = byLine[li][byLine[li].Count / 2];
+                double best = double.MaxValue;
+                foreach (var p in byLine[li - 1]) best = Math.Min(best, (mid - p).Length);
+                maxGap = Math.Max(maxGap, best);
+            }
+            bool gapOk = maxGap <= prm.StepoverMm * 1.31 + 0.5;
+
+            // 지그재그 — 인접 라인 진행 방향이 반대
+            bool zigOk = true;
+            for (int li = 1; li < byLine.Count; li++)
+            {
+                var d0 = byLine[li - 1][^1] - byLine[li - 1][0];
+                var d1 = byLine[li][^1] - byLine[li][0];
+                if (Vector3D.DotProduct(d0, d1) >= 0) { zigOk = false; break; }
+            }
+
+            // 커버리지 — 영역 점이 스캔라인 점의 공구 반경(+여유) 이내
+            var lineTree = new KdTree3(res.Scanlines.SelectMany(s => s.PathPoints).ToList());
+            double radius = prm.ToolDiameterMm / 2 + 2;
+            int covered = 0;
+            foreach (var p in prep.Points)
+            {
+                lineTree.Nearest(p, out double d);
+                if (d <= radius) covered++;
+            }
+            double coverage = (double)covered / prep.Points.Count;
+            bool covOk = coverage >= 0.99;
+
+            bool ok = linesOk && gapOk && zigOk && covOk && res.Ambiguous25DCells == 0;
+            allOk &= ok;
+            lines.Add($"m3 {sc.Name}: 라인 {res.LineCount}/{expectLines} · 최대간격 {maxGap:F1}mm " +
+                      $"· 지그재그={zigOk} · 커버리지 {coverage:P1} · 길이 {res.TotalLengthMm:F0}mm " +
+                      $"· 2.5D위반 {res.Ambiguous25DCells} {(ok ? "OK" : "FAIL")}");
+        }
+
+        lines.Add(allOk ? "GRINDING M3 OK" : "GRINDING M3 FAIL");
     }
 }

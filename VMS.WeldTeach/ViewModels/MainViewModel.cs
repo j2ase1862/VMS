@@ -19,11 +19,12 @@ public partial class MainViewModel : ObservableObject
     private readonly PointCloudService _cloudService;
     private readonly IcpService _icpService;
     private readonly CloudPreprocessService _prepService;
+    private readonly CoveragePathService _coverageService;
 
     public MainViewModel(ICadKernelService cadKernel, IDialogService dialogService,
         EdgeChainService chainService, TorchPoseService poseService,
         PointCloudService cloudService, IcpService icpService,
-        CloudPreprocessService prepService)
+        CloudPreprocessService prepService, CoveragePathService coverageService)
     {
         _cadKernel = cadKernel;
         _dialogService = dialogService;
@@ -32,6 +33,7 @@ public partial class MainViewModel : ObservableObject
         _cloudService = cloudService;
         _icpService = icpService;
         _prepService = prepService;
+        _coverageService = coverageService;
     }
 
     [ObservableProperty]
@@ -371,6 +373,78 @@ public partial class MainViewModel : ObservableObject
         SelectedRegion = null;
         StatusText = "모든 영역을 지웠습니다.";
         HighlightChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    // ---- 커버리지 경로 생성 (스캔 명세 Step S3) ----
+
+    [ObservableProperty]
+    private double _toolDiameterMm = 50;
+
+    [ObservableProperty]
+    private double _overlapPct = 30;
+
+    [ObservableProperty]
+    private double _grindMarginMm;
+
+    [ObservableProperty]
+    private bool _zigzagPattern = true;
+
+    /// <summary>스텝오버 표시용 (파생) = 공구 직경 × (1 − 겹침률).</summary>
+    public double StepoverMm => Math.Max(0.5, ToolDiameterMm * (1 - OverlapPct / 100.0));
+
+    partial void OnToolDiameterMmChanged(double value) => OnPropertyChanged(nameof(StepoverMm));
+    partial void OnOverlapPctChanged(double value) => OnPropertyChanged(nameof(StepoverMm));
+
+    /// <summary>모든 영역에 커버리지 스캔라인 생성 (전역 파라미터를 영역별 복사).</summary>
+    [RelayCommand]
+    private async Task GenerateCoverageAsync()
+    {
+        if (_prepCloud == null || Regions.Count == 0)
+        {
+            StatusText = "커버리지를 생성할 영역이 없습니다 — 먼저 점군 위를 드래그해 영역을 선택하세요.";
+            return;
+        }
+        IsBusy = true;
+        StatusText = "커버리지 경로 생성 중...";
+        try
+        {
+            var prep = _prepCloud;
+            var regions = Regions.ToList();
+            var prm = new GrindingParams
+            {
+                ToolDiameterMm = Math.Clamp(ToolDiameterMm, 1, 500),
+                OverlapPct = Math.Clamp(OverlapPct, 0, 90),
+                MarginMm = Math.Max(0, GrindMarginMm),
+                Zigzag = ZigzagPattern,
+            };
+            int ambiguous = 0;
+            await Task.Run(() =>
+            {
+                foreach (var r in regions)
+                {
+                    var res = _coverageService.Generate(prep.Points, prep.Normals, r.PointIndices, prm);
+                    r.Params = prm.Clone();
+                    r.Scanlines = res.Scanlines;
+                    r.TotalLengthMm = res.TotalLengthMm;
+                    r.CoveredAreaMm2 = res.CoveredAreaMm2;
+                    ambiguous += res.Ambiguous25DCells;
+                }
+            });
+            int lines = regions.Sum(r => r.Scanlines.Select(s => s.LineIndex).Distinct().Count());
+            StatusText = $"커버리지 생성 완료 — 영역 {regions.Count}개, 라인 {lines}개, " +
+                         $"총 {regions.Sum(r => r.TotalLengthMm):F0} mm (스텝오버 {prm.StepoverMm:0.#} mm)" +
+                         (ambiguous > 0 ? $" ⚠ 2.5D 위반 의심 셀 {ambiguous}개 — 겹친 표면이 선택되지 않았는지 확인" : "");
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"커버리지 생성 실패: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+            System.Windows.Data.CollectionViewSource.GetDefaultView(Regions)?.Refresh();
+            HighlightChanged?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     [RelayCommand]
