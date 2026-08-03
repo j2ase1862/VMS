@@ -279,11 +279,63 @@ public partial class App : Application
 
                 lines.Add("SELFTEST OK");
             }
+
+            // 그라인딩 확장 M1 — 합성 점군 → 전처리·법선 추정 검증 (OCCT 불필요)
+            RunGrindingM1SelfTest(lines);
+
             File.WriteAllLines(log, lines);
         }
         catch (Exception ex)
         {
             File.WriteAllText(log, "SELFTEST FAIL: " + ex);
         }
+    }
+
+    /// <summary>
+    /// 그라인딩 스캔 명세 §6.1 — 5종 합성 표면 × 노이즈(σ=0 / 0.15mm)에서 전처리 후
+    /// 추정 법선 vs 해석 법선 각도 오차(평균 ≤2° / ≤5°)와 이상치 제거를 검증한다.
+    /// </summary>
+    private static void RunGrindingM1SelfTest(List<string> lines)
+    {
+        var prep = new CloudPreprocessService();
+        bool allOk = true;
+
+        foreach (var kind in Enum.GetValues<SampleSurfaceKind>())
+        {
+            foreach (double sigma in new[] { 0.0, 0.15 })
+            {
+                var sc = SampleCloudGenerator.Generate(kind, sigma);
+                var pc = prep.Process(sc.Points, sc.Viewpoint);
+
+                var errors = new double[pc.Points.Count];
+                for (int i = 0; i < pc.Points.Count; i++)
+                {
+                    double dot = Math.Clamp(Vector3D.DotProduct(
+                        pc.Normals[i], sc.TrueNormalAt(pc.Points[i])), -1.0, 1.0);
+                    errors[i] = Math.Acos(dot) * 180.0 / Math.PI;
+                }
+                double mean = errors.Average();
+                Array.Sort(errors);
+                double p95 = errors[(int)(errors.Length * 0.95)];
+
+                double limit = sigma == 0 ? 2.0 : 5.0;
+                bool ok = mean <= limit;
+                allOk &= ok;
+                lines.Add($"m1 {sc.Name} σ={sigma:0.00}: {pc.Summary} · " +
+                          $"법선오차 mean={mean:F2}° p95={p95:F2}° (한계 {limit}°) {(ok ? "OK" : "FAIL")}");
+            }
+        }
+
+        // 이상치 제거 — 평면 + 부유점 200개 주입 → 표면(z≈0)에서 1mm 이상 뜬 점이 남지 않아야 함
+        {
+            var sc = SampleCloudGenerator.Generate(SampleSurfaceKind.Plane, 0.05, outlierCount: 200);
+            var pc = prep.Process(sc.Points, sc.Viewpoint);
+            int floating = pc.Points.Count(p => Math.Abs(p.Z) > 1.0);
+            bool ok = floating == 0 && pc.OutlierRemovedCount >= 150;
+            allOk &= ok;
+            lines.Add($"m1 outlier: 주입 200 → 제거 {pc.OutlierRemovedCount}, 잔존 부유점 {floating} {(ok ? "OK" : "FAIL")}");
+        }
+
+        lines.Add(allOk ? "GRINDING M1 OK" : "GRINDING M1 FAIL");
     }
 }
