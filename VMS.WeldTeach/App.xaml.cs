@@ -99,6 +99,55 @@ public partial class App : Application
             return;
         }
 
+        // 진단 모드: --switchcap <png접두사> — 모드/데이터 전환 잔상 회귀 확인.
+        // ① 그라인딩 + 합성 점군 → ② 용접 전환 + STEP 로드 → ③ 그라인딩 복귀
+        // → ④ 용접 재복귀. 각 단계를 <접두사>_1.png ~ _4.png 로 캡처한다.
+        // ②에 점군이, ③에 CAD 가 남아 있으면 잔상 버그. ④에 CAD 가 없으면 복원 실패.
+        int swIdx = Array.IndexOf(e.Args, "--switchcap");
+        if (swIdx >= 0 && swIdx + 1 < e.Args.Length)
+        {
+            string prefix = e.Args[swIdx + 1];
+            _ = window.Dispatcher.InvokeAsync(async () =>
+            {
+                try
+                {
+                    viewModel.IsGrindingMode = true;
+                    viewModel.GenerateGrindingSampleCommand.Execute(null);
+                    for (int i = 0; i < 100 && viewModel.IsBusy; i++) await Task.Delay(100);
+                    window.ZoomExtentsForDiagnostics();
+                    await Task.Delay(700);
+                    window.CaptureToPng(prefix + "_1.png");
+
+                    viewModel.IsGrindingMode = false;
+                    await viewModel.GenerateSampleCommand.ExecuteAsync(null);
+                    for (int i = 0; i < 100 && viewModel.IsBusy; i++) await Task.Delay(100);
+                    window.ZoomExtentsForDiagnostics();
+                    await Task.Delay(700);
+                    window.CaptureToPng(prefix + "_2.png");
+
+                    viewModel.IsGrindingMode = true;
+                    await Task.Delay(700);
+                    window.CaptureToPng(prefix + "_3.png");
+
+                    // ④ 용접 복귀 — 숨겼던 CAD 가 재빌드 없이 그대로 돌아와야 한다
+                    viewModel.IsGrindingMode = false;
+                    await Task.Delay(700);
+                    window.CaptureToPng(prefix + "_4.png");
+                    if (!e.Args.Contains("--stay")) Shutdown(0);
+                }
+                catch (Exception ex)
+                {
+                    try
+                    {
+                        File.AppendAllText(Path.Combine(Path.GetTempPath(), "weldteach_diag.log"),
+                            $"[{DateTime.Now:HH:mm:ss.fff}] switchcap error: {ex}{Environment.NewLine}");
+                    }
+                    catch { }
+                }
+            });
+            return;
+        }
+
         // 진단 모드: --weldcap <png경로> — 용접 모드 샘플 시편 생성 → 캡처.
         // 용접 툴바가 가장 긴 행이라 폰트/여백 변경 시 넘침 확인용으로도 쓴다.
         int weldIdx = Array.IndexOf(e.Args, "--weldcap");

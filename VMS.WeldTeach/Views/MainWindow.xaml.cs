@@ -75,15 +75,34 @@ public partial class MainWindow : Window
     // 점 하나마다 라인 메쉬 전체를 재생성해 O(N²) 로 UI 가 수십 초 멈춘다 (스택 덤프로 확인).
     // 반드시 컬렉션을 오프라인으로 채워 한 번에 교체 할당한다.
 
+    // 빌드된 CAD 비주얼 캐시 — 모드 전환 때 재빌드 없이 표시만 토글한다.
+    private ModelVisual3D? _cadContent;
+    private Point3DCollection _cadEdgePoints = new();
+
+    /// <summary>
+    /// 현재 공정 모드에 속하지 않는 비주얼을 화면에서 내린다.
+    /// CAD 메쉬·엣지는 용접 전용이라 그라인딩 모드에 남아 있으면 점군 위에 겹쳐 보인다
+    /// (모드 전환·재로드 시 이전 그래픽이 지워지지 않던 원인). 데이터는 캐시에 유지하므로
+    /// 용접 모드로 돌아오면 재빌드 없이 즉시 복원된다.
+    /// </summary>
+    private void ApplyModeVisibility()
+    {
+        bool welding = !_viewModel.IsGrindingMode;
+        _modelRoot.Children.Clear();
+        if (welding && _cadContent != null) _modelRoot.Children.Add(_cadContent);
+        _edgeLines.Points = welding ? _cadEdgePoints : new Point3DCollection();
+    }
+
     private void RebuildScene()
     {
-        _modelRoot.Children.Clear();
-        UpdateHighlights();
+        _cadContent = null;
+        _cadEdgePoints = new Point3DCollection();
 
         var model = _viewModel.Model;
         if (model == null)
         {
-            _edgeLines.Points = new Point3DCollection();
+            ApplyModeVisibility();
+            UpdateHighlights();
             return;
         }
 
@@ -97,23 +116,28 @@ public partial class MainWindow : Window
         }
         var mesh = builder.ToMesh();
         var material = MaterialHelper.CreateMaterial(Color.FromRgb(150, 160, 175));
-        _modelRoot.Children.Add(new ModelVisual3D
+        _cadContent = new ModelVisual3D
         {
             Content = new GeometryModel3D(mesh, material) { BackMaterial = material },
-        });
+        };
 
         // 전체 엣지 폴리라인 — 단일 교체 할당
         var edgePts = new Point3DCollection(model.Edges.Sum(e => Math.Max(0, e.Points.Count - 1) * 2));
         foreach (var edge in model.Edges)
             AppendPolyline(edgePts, edge.Points);
         edgePts.Freeze();
-        _edgeLines.Points = edgePts;
+        _cadEdgePoints = edgePts;
 
+        ApplyModeVisibility();
+        UpdateHighlights();
         Viewport.ZoomExtents(300);
     }
 
     private void UpdateHighlights()
     {
+        // 모드가 바뀌었을 수 있다 — 매번 반대편 모드 비주얼을 내린다
+        ApplyModeVisibility();
+
         if (_viewModel.IsGrindingMode)
         {
             UpdateGrindingHighlights();

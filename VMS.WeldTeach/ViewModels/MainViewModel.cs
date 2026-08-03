@@ -619,7 +619,14 @@ public partial class MainViewModel : ObservableObject
             Poses.Clear();
             _cadSamples = null;      // 새 모델 — CAD 샘플·기존 정합 무효화
             _tAlign = null;
-            RegistrationStatus = _scanCloud == null ? "점군 없음" : "미정합";
+            // 새 워크피스 — 이전 스캔 점군과 그라인딩 전처리·영역은 이 모델에 대응하지
+            // 않는다. 남겨두면 뷰포트에 이전 점군이 그대로 겹쳐 보인다(모드 무관).
+            _scanCloud = null;
+            _prepCloud = null;
+            PrepStatus = "전처리 대기";
+            Regions.Clear();
+            SelectedRegion = null;
+            RegistrationStatus = "점군 없음";
             StatusText = $"{Path.GetFileName(path)} — 솔리드 {model.SolidCount} / 면 {model.FaceCount} / " +
                          $"엣지 {model.Edges.Count} ({sw.ElapsedMilliseconds} ms)";
             ModelChanged?.Invoke(this, EventArgs.Empty);
