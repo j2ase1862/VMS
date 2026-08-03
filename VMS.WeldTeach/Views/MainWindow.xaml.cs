@@ -199,8 +199,6 @@ public partial class MainWindow : Window
         _hoverLines.Points = empty;
         _contourLines.Points = new Point3DCollection();
         _selectedLines.Points = new Point3DCollection();
-        _torchLines.Points = new Point3DCollection();
-        _posePoints.Points = new Point3DCollection();
         _labelLeaders.Points = new Point3DCollection();
         _labelAnchors.Clear();
 
@@ -214,6 +212,8 @@ public partial class MainWindow : Window
         var selectedPts = new Point3DCollection();
         var linePts = new Point3DCollection();
         var selLinePts = new Point3DCollection();
+        var poseDots = new Point3DCollection();
+        var poseFrames = new List<(Point3D P, Vector3D A)>();
         for (int order = 0; order < _viewModel.Regions.Count; order++)
         {
             var r = _viewModel.Regions[order];
@@ -238,13 +238,36 @@ public partial class MainWindow : Window
             // 커버리지 스캔라인 (세그먼트별 폴리라인)
             var lineTarget = isSelected ? selLinePts : linePts;
             foreach (var s in r.Scanlines)
+            {
                 AppendPolyline(lineTarget, s.PathPoints);
+
+                // 공구 포즈 — 선택 영역만(미선택이면 전체). 표면 패스(0번) 기준.
+                if (_viewModel.SelectedRegion != null && !isSelected) continue;
+                for (int i = 0; i < s.PosePoints.Count && i < s.ToolAxes.Count; i++)
+                {
+                    poseDots.Add(s.PosePoints[i]);
+                    poseFrames.Add((s.PosePoints[i], s.ToolAxes[i]));
+                }
+            }
         }
+
+        // 공구 축 화살선(8mm) — 화면 복잡도 제한으로 최대 ~200개만
+        var axisPts = new Point3DCollection();
+        int stride = Math.Max(1, poseFrames.Count / 200);
+        for (int i = 0; i < poseFrames.Count; i += stride)
+        {
+            axisPts.Add(poseFrames[i].P);
+            axisPts.Add(poseFrames[i].P + poseFrames[i].A * 8);
+        }
+
         regionPts.Freeze(); selectedPts.Freeze(); linePts.Freeze(); selLinePts.Freeze();
+        poseDots.Freeze(); axisPts.Freeze();
         _regionPoints.Points = regionPts;
         _selectedRegionPoints.Points = selectedPts;
         _scanlineLines.Points = linePts;
         _selectedScanlineLines.Points = selLinePts;
+        _posePoints.Points = poseDots;
+        _torchLines.Points = axisPts;
 
         RebuildLabelOverlay();
     }

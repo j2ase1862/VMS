@@ -27,5 +27,33 @@ public class GrindingParams
     /// </summary>
     public double GridCellMm { get; set; } = 2.0;
 
+    // ──────────── Step S4: 공구 포즈 ────────────
+
+    /// <summary>리드각(°) — 표면 법선을 진행 방향으로 기울이는 각도.</summary>
+    public double LeadAngleDeg { get; set; } = 10;
+
+    /// <summary>틸트각(°) — 표면 법선을 측면(진행 축 둘레)으로 기울이는 각도.</summary>
+    public double TiltAngleDeg { get; set; }
+
+    /// <summary>다층 가공 패스 수 — 2 이상이면 패스마다 법선 반대로 파고든다.</summary>
+    public int PassCount { get; set; } = 1;
+
+    /// <summary>패스당 절입 깊이(mm) — 0 이면 모든 패스가 표면을 추종한다.</summary>
+    public double DepthPerPassMm { get; set; }
+
+    /// <summary>포즈 재샘플 간격(mm) — 스캔라인 호 길이 기준.</summary>
+    public double PoseSpacingMm { get; set; } = 2.0;
+
+    /// <summary>곡률 적응 재샘플 — 곡선 구간에서 간격을 자동으로 좁힌다.</summary>
+    public bool AdaptivePoseSpacing { get; set; } = true;
+
+    // ──────────── 실행 메타 (로봇단 전달용 — 경로 생성에는 쓰이지 않음) ────────────
+
+    /// <summary>이송 속도(mm/s).</summary>
+    public double FeedRateMmS { get; set; } = 20;
+
+    /// <summary>목표 접촉력(N) — 힘 제어는 로봇단 책임.</summary>
+    public double TargetForceN { get; set; } = 15;
+
     public GrindingParams Clone() => (GrindingParams)MemberwiseClone();
 }

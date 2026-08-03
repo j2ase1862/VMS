@@ -190,8 +190,14 @@ public class GrindingPathRegion
 2. **공구 축 (X-Axis):** 표면 법선 `N` 에 리드/틸트각을 적용한 벡터
    - 리드각 `leadAngleDeg` (기본 10°): 법선을 **진행 방향으로** 기울임 — 회전축 = 측면 벡터 `S = N × T`
    - 틸트각 `tiltAngleDeg` (기본 0°): 법선을 **측면으로** 기울임 — 회전축 = 진행 벡터 `T`
-   - `V_tool = Rot(T, tilt) · Rot(S, lead) · N`, 이후 접선에 직교화 (기존 이등분 처리와 동일)
-3. **Y-Axis:** `Y = Z × X`, **오일러:** ZYX(deg) — 기존 `ToZyxEuler` 재사용
+   - `V_tool = Rot(T, tilt) · Rot(S, lead) · N`
+3. **프레임 구성:** `X = V_tool`, `Y = normalize(T × X)`, `Z = X × Y`, **오일러:** ZYX(deg) —
+   기존 `ToZyxEuler` 재사용.
+   ※ 용접처럼 공구축을 접선에 **직교 투영하면 안 된다** — 리드 성분이 정확히 T 방향이라
+   투영으로 지워져 리드각이 0 이 되어버린다. 대신 공구축을 X 로 고정하고 진행 방향을
+   그 축에 직교하도록 재구성한다. 리드=0 이면 `Z = T` 로 같아지고, 리드가 있으면 프레임
+   전체가 측면축 S 둘레로 리드각만큼 회전한 자세가 된다(= 리드각의 물리적 의미).
+   퇴화(법선 ∥ 접선, 또는 `T × X ≈ 0`)면 축에 직교인 임의 벡터로 폴백한다.
 4. **다층 패스:** `passCount > 1` 이면 패스 k 위치를 `P − k·depthPerPassMm·N` 으로 오프셋 반복
 
 `TorchPose` 레코드(X, Y, Z, Roll, Pitch, Yaw)를 그대로 재사용한다

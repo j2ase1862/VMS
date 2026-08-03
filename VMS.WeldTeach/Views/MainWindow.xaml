@@ -472,9 +472,47 @@
                                       VerticalAlignment="Center"
                                       ToolTip="홀수 라인을 역방향으로 왕복합니다 (끄면 편도)"/>
                         </DockPanel>
+
+                        <!-- 공구 포즈 (스캔 명세 Step S4) -->
+                        <DockPanel LastChildFill="False" Margin="0,0,0,6">
+                            <TextBlock DockPanel.Dock="Left" Text="리드(°)"
+                                       Style="{StaticResource Text.Label}"
+                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <ctrl:HelpIcon DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,6,0"
+                                           HelpTitle="공구 포즈 (리드 · 틸트 · 다층 패스)"
+                                           HelpText="리드각: 공구를 진행 방향으로 기울이는 각도입니다. 표면 법선에서 진행 쪽으로 눕히면 연마재가 표면을 끌듯이 지나가 면이 매끄러워집니다 (기본 10°).&#x0a;&#x0a;틸트각: 공구를 진행 축 둘레로 옆으로 기울입니다. 모서리·구석 접근에 씁니다 (기본 0°).&#x0a;&#x0a;패스 수: 같은 경로를 몇 번 반복할지입니다. 1이면 표면을 한 번만 따라갑니다.&#x0a;패스당 깊이: 패스마다 표면 법선 반대로 파고드는 깊이입니다. 0이면 모든 패스가 표면을 그대로 추종합니다 (블레이드 복원처럼 살을 깎아내려면 값을 줍니다).&#x0a;&#x0a;포즈는 [커버리지 생성]을 누를 때 스캔라인과 함께 계산됩니다."/>
+                            <TextBox DockPanel.Dock="Left" Width="52"
+                                     Text="{Binding LeadAngleDeg, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalContentAlignment="Center" Margin="0,0,12,0"/>
+                            <TextBlock DockPanel.Dock="Left" Text="틸트(°)"
+                                       Style="{StaticResource Text.Label}"
+                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBox DockPanel.Dock="Left" Width="52"
+                                     Text="{Binding TiltAngleDeg, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalContentAlignment="Center"/>
+                        </DockPanel>
+                        <DockPanel LastChildFill="False" Margin="0,0,0,10">
+                            <TextBlock DockPanel.Dock="Left" Text="패스 수"
+                                       Style="{StaticResource Text.Label}"
+                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBox DockPanel.Dock="Left" Width="52"
+                                     Text="{Binding PassCount, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalContentAlignment="Center" Margin="0,0,12,0"/>
+                            <TextBlock DockPanel.Dock="Left" Text="패스당 깊이(mm)"
+                                       Style="{StaticResource Text.Label}"
+                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBox DockPanel.Dock="Left" Width="52"
+                                     Text="{Binding DepthPerPassMm, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalContentAlignment="Center"/>
+                        </DockPanel>
+
                         <Button Content="커버리지 생성" Style="{StaticResource ModernButton}"
-                                HorizontalAlignment="Stretch"
+                                HorizontalAlignment="Stretch" Margin="0,0,0,6"
                                 Command="{Binding GenerateCoverageCommand}"/>
+                        <Button Content="경로 내보내기 (JSON)" Style="{StaticResource Button.Subtle}"
+                                HorizontalAlignment="Stretch"
+                                ToolTip="가공 순서대로 스캔라인·포즈를 JSON 으로 저장합니다 (카메라 좌표계)"
+                                Command="{Binding ExportGrindingPathCommand}"/>
                     </StackPanel>
 
                     <DockPanel Grid.Row="3" LastChildFill="False">

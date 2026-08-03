@@ -20,11 +20,13 @@ public partial class MainViewModel : ObservableObject
     private readonly IcpService _icpService;
     private readonly CloudPreprocessService _prepService;
     private readonly CoveragePathService _coverageService;
+    private readonly CoveragePoseService _coveragePoseService;
 
     public MainViewModel(ICadKernelService cadKernel, IDialogService dialogService,
         EdgeChainService chainService, TorchPoseService poseService,
         PointCloudService cloudService, IcpService icpService,
-        CloudPreprocessService prepService, CoveragePathService coverageService)
+        CloudPreprocessService prepService, CoveragePathService coverageService,
+        CoveragePoseService coveragePoseService)
     {
         _cadKernel = cadKernel;
         _dialogService = dialogService;
@@ -34,6 +36,7 @@ public partial class MainViewModel : ObservableObject
         _icpService = icpService;
         _prepService = prepService;
         _coverageService = coverageService;
+        _coveragePoseService = coveragePoseService;
     }
 
     [ObservableProperty]
@@ -395,6 +398,20 @@ public partial class MainViewModel : ObservableObject
     partial void OnToolDiameterMmChanged(double value) => OnPropertyChanged(nameof(StepoverMm));
     partial void OnOverlapPctChanged(double value) => OnPropertyChanged(nameof(StepoverMm));
 
+    // ---- 공구 포즈 파라미터 (스캔 명세 Step S4) ----
+
+    [ObservableProperty]
+    private double _leadAngleDeg = 10;
+
+    [ObservableProperty]
+    private double _tiltAngleDeg;
+
+    [ObservableProperty]
+    private int _passCount = 1;
+
+    [ObservableProperty]
+    private double _depthPerPassMm;
+
     /// <summary>모든 영역에 커버리지 스캔라인 생성 (전역 파라미터를 영역별 복사).</summary>
     [RelayCommand]
     private async Task GenerateCoverageAsync()
@@ -416,8 +433,13 @@ public partial class MainViewModel : ObservableObject
                 OverlapPct = Math.Clamp(OverlapPct, 0, 90),
                 MarginMm = Math.Max(0, GrindMarginMm),
                 Zigzag = ZigzagPattern,
+                LeadAngleDeg = Math.Clamp(LeadAngleDeg, -60, 60),
+                TiltAngleDeg = Math.Clamp(TiltAngleDeg, -60, 60),
+                PassCount = Math.Clamp(PassCount, 1, 100),
+                DepthPerPassMm = Math.Max(0, DepthPerPassMm),
             };
             int ambiguous = 0;
+            int poseCount = 0;
             await Task.Run(() =>
             {
                 foreach (var r in regions)
@@ -428,11 +450,15 @@ public partial class MainViewModel : ObservableObject
                     r.TotalLengthMm = res.TotalLengthMm;
                     r.CoveredAreaMm2 = res.CoveredAreaMm2;
                     ambiguous += res.Ambiguous25DCells;
+                    // Step S4 — 스캔라인이 만들어진 즉시 공구 포즈까지 채운다
+                    poseCount += _coveragePoseService.ComputePoses(r.Scanlines, prm);
                 }
             });
             int lines = regions.Sum(r => r.Scanlines.Select(s => s.LineIndex).Distinct().Count());
             StatusText = $"커버리지 생성 완료 — 영역 {regions.Count}개, 라인 {lines}개, " +
-                         $"총 {regions.Sum(r => r.TotalLengthMm):F0} mm (스텝오버 {prm.StepoverMm:0.#} mm)" +
+                         $"총 {regions.Sum(r => r.TotalLengthMm):F0} mm (스텝오버 {prm.StepoverMm:0.#} mm) · " +
+                         $"포즈 {poseCount:N0}개 (리드 {prm.LeadAngleDeg:0.#}°" +
+                         (prm.PassCount > 1 ? $", {prm.PassCount}패스 ×{prm.DepthPerPassMm:0.##}mm" : "") + ")" +
                          (ambiguous > 0 ? $" ⚠ 2.5D 위반 의심 셀 {ambiguous}개 — 겹친 표면이 선택되지 않았는지 확인" : "");
         }
         catch (Exception ex)
@@ -710,5 +736,29 @@ public partial class MainViewModel : ObservableObject
         StatusText = _tAlign.HasValue
             ? $"내보내기 완료 (로봇 좌표계, T_align 적용): 경로 {Contours.Count}개 → {path}"
             : $"내보내기 완료 (CAD 좌표계 — 정합 전): 경로 {Contours.Count}개 → {path}";
+    }
+
+    /// <summary>
+    /// 그라인딩 커버리지 경로 내보내기 (스캔 명세 Step S4).
+    /// 경로는 스캔(카메라) 좌표계에서 만들어지므로 CAD 정합은 불필요하고,
+    /// 로봇 베이스 변환은 핸드-아이 행렬 T_cam2base 를 받아야 한다 (미지원 — 자리만 마련).
+    /// </summary>
+    [RelayCommand]
+    private void ExportGrindingPath()
+    {
+        var withPath = Regions.Where(r => r.Scanlines.Count > 0).ToList();
+        if (withPath.Count == 0)
+        {
+            _dialogService.ShowMessage(
+                "내보낼 경로가 없습니다. 영역을 선택한 뒤 [커버리지 생성]을 먼저 실행하세요.", "내보내기");
+            return;
+        }
+        var path = _dialogService.ShowSaveJsonDialog("grinding_paths.json");
+        if (path == null) return;
+
+        _coveragePoseService.ExportJson(path, withPath);
+        int poses = withPath.Sum(r => r.Scanlines.Sum(s => s.TotalPoseCount));
+        StatusText = $"내보내기 완료 (카메라 좌표계 — T_cam2base 미적용): " +
+                     $"영역 {withPath.Count}개 · 포즈 {poses:N0}개 → {path}";
     }
 }

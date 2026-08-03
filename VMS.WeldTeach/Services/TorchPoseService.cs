@@ -94,7 +94,8 @@ public class TorchPoseService
         return poses;
     }
 
-    private static List<double> BuildUniformStations(double total, double spacingMm)
+    /// <summary>균일 호길이 스테이션 — 그라인딩 커버리지 포즈(CoveragePoseService)와 공용.</summary>
+    internal static List<double> BuildUniformStations(double total, double spacingMm)
     {
         var stations = new List<double>();
         for (double s = 0; s < total; s += spacingMm) stations.Add(s);
@@ -107,7 +108,7 @@ public class TorchPoseService
     /// 곡률 적응 스테이션 — 폴리라인 연속 3점의 외접원 반경으로 국소 곡률을 추정하고,
     /// 현 오차 한계에서 허용되는 간격 √(8·R·e) 로 전진한다 (직선 구간은 최대 간격).
     /// </summary>
-    private static List<double> BuildAdaptiveStations(List<Point3D> src, double[] cum, double total, double maxSpacingMm)
+    internal static List<double> BuildAdaptiveStations(List<Point3D> src, double[] cum, double total, double maxSpacingMm)
     {
         double minStep = Math.Max(0.2, maxSpacingMm / 20.0);
 
@@ -174,7 +175,7 @@ public class TorchPoseService
     }
 
     /// <summary>회전 행렬 R=[X Y Z] (열벡터) → ZYX 오일러 (roll=X축, pitch=Y축, yaw=Z축 회전, deg).</summary>
-    private static (double Roll, double Pitch, double Yaw) ToZyxEuler(Vector3D x, Vector3D y, Vector3D z)
+    internal static (double Roll, double Pitch, double Yaw) ToZyxEuler(Vector3D x, Vector3D y, Vector3D z)
     {
         // R = | x.X  y.X  z.X |
         //     | x.Y  y.Y  z.Y |
@@ -256,7 +257,7 @@ public class TorchPoseService
     }
 
     /// <summary>ZYX 오일러(deg) → 프레임 축 (ToZyxEuler 의 역변환).</summary>
-    private static (Vector3D X, Vector3D Y, Vector3D Z) EulerToAxes(double rollDeg, double pitchDeg, double yawDeg)
+    internal static (Vector3D X, Vector3D Y, Vector3D Z) EulerToAxes(double rollDeg, double pitchDeg, double yawDeg)
     {
         const double toRad = Math.PI / 180.0;
         double cr = Math.Cos(rollDeg * toRad), sr = Math.Sin(rollDeg * toRad);

@@ -1,4 +1,5 @@
 using System.IO;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Media.Media3D;
 using VMS.WeldTeach.Models;
@@ -38,7 +39,8 @@ public partial class App : Application
         var cloudService = new PointCloudService();
         var icpService = new IcpService();
         var viewModel = new MainViewModel(cadKernel, dialogService, chainService, poseService,
-            cloudService, icpService, new CloudPreprocessService(), new CoveragePathService());
+            cloudService, icpService, new CloudPreprocessService(), new CoveragePathService(),
+            new CoveragePoseService());
 
         // 헤드리스 자가 검증 모드: 커널 체인을 실행해 로그 파일에 결과를 남기고 종료
         if (e.Args.Contains("--selftest"))
@@ -358,6 +360,9 @@ public partial class App : Application
 
             // 그라인딩 확장 M4 — 곡면 추종·구멍 분할·스텝오버 3D 보정 검증
             RunGrindingM4SelfTest(lines);
+
+            // 그라인딩 확장 M5 — 리드/틸트 포즈·다층 패스·JSON 내보내기 검증
+            RunGrindingM5SelfTest(lines);
 
             File.WriteAllLines(log, lines);
         }
@@ -727,6 +732,220 @@ public partial class App : Application
         }
 
         lines.Add(allOk ? "GRINDING M4 OK" : "GRINDING M4 FAIL");
+    }
+
+    /// <summary>
+    /// 그라인딩 스캔 명세 §6.3-4 (M5) — 리드/틸트 공구 포즈 · 프레임 정규직교 · 퇴화 폴백 ·
+    /// 다층 패스 절입 · T_cam2base 강체 변환 · 내보내기 JSON 스키마 완전성.
+    /// 포즈 수치를 격리 검증하기 위해 노이즈 없는(σ=0) 평면을 쓴다.
+    /// </summary>
+    private static void RunGrindingM5SelfTest(List<string> lines)
+    {
+        bool allOk = true;
+        var covSvc = new CoveragePathService();
+        var poseSvc = new CoveragePoseService();
+        var sc = SampleCloudGenerator.Generate(SampleSurfaceKind.Plane);   // σ=0 → 법선 = +Z
+        var prep = new CloudPreprocessService().Process(sc.Points, sc.Viewpoint);
+        var all = Enumerable.Range(0, prep.Points.Count).ToList();
+        var up = new Vector3D(0, 0, 1);
+
+        static double AngleDeg(Vector3D a, Vector3D b) =>
+            Math.Acos(Math.Clamp(Vector3D.DotProduct(a, b), -1, 1)) * 180 / Math.PI;
+
+        // 1) 리드/틸트 — 공구축과 표면 법선 사이 각 = acos(cos·lead × cos·tilt)
+        //    (V = N·cos l·cos t − S·cos l·sin t + T·sin l)
+        foreach (var (lead, tilt) in new[] { (10.0, 0.0), (0.0, 15.0), (10.0, 15.0) })
+        {
+            var prm = new GrindingParams { LeadAngleDeg = lead, TiltAngleDeg = tilt };
+            var res = covSvc.Generate(prep.Points, prep.Normals, all, prm);
+            int made = poseSvc.ComputePoses(res.Scanlines, prm);
+
+            double expect = Math.Acos(Math.Cos(lead * Math.PI / 180) * Math.Cos(tilt * Math.PI / 180))
+                            * 180 / Math.PI;
+            double maxErr = 0, maxUnit = 0;
+            foreach (var s in res.Scanlines)
+                foreach (var ax in s.ToolAxes)
+                {
+                    maxUnit = Math.Max(maxUnit, Math.Abs(ax.Length - 1));
+                    maxErr = Math.Max(maxErr, Math.Abs(AngleDeg(ax, up) - expect));
+                }
+            bool ok = made > 0 && maxErr <= 0.5 && maxUnit < 1e-9;
+            allOk &= ok;
+            lines.Add($"m5 리드{lead:0.#}°/틸트{tilt:0.#}°: 포즈 {made:N0} · 공구축-법선 " +
+                      $"기대 {expect:F2}° 최대오차 {maxErr:F3}° {(ok ? "OK" : "FAIL")}");
+        }
+
+        // 2) 프레임 — 오일러로 왕복해도 정규직교·우수좌표, X 축은 공구축과 일치
+        {
+            var prm = new GrindingParams { LeadAngleDeg = 12, TiltAngleDeg = 7 };
+            var res = covSvc.Generate(prep.Points, prep.Normals, all, prm);
+            poseSvc.ComputePoses(res.Scanlines, prm);
+
+            double maxOrtho = 0, maxUnit = 0, maxAxisErr = 0, minDet = 1;
+            foreach (var s in res.Scanlines)
+                for (int i = 0; i < s.PassPoses[0].Count; i++)
+                {
+                    var p = s.PassPoses[0][i];
+                    var (x, y, z) = TorchPoseService.EulerToAxes(p.RollDeg, p.PitchDeg, p.YawDeg);
+                    maxOrtho = Math.Max(maxOrtho, Math.Abs(Vector3D.DotProduct(x, y)));
+                    maxOrtho = Math.Max(maxOrtho, Math.Abs(Vector3D.DotProduct(y, z)));
+                    maxOrtho = Math.Max(maxOrtho, Math.Abs(Vector3D.DotProduct(z, x)));
+                    maxUnit = Math.Max(maxUnit, Math.Abs(x.Length - 1));
+                    minDet = Math.Min(minDet, Vector3D.DotProduct(Vector3D.CrossProduct(x, y), z));
+                    maxAxisErr = Math.Max(maxAxisErr, (x - s.ToolAxes[i]).Length);
+                }
+            bool ok = maxOrtho < 1e-9 && maxUnit < 1e-9 && minDet > 1 - 1e-9 && maxAxisErr < 1e-9;
+            allOk &= ok;
+            lines.Add($"m5 프레임: 직교오차 {maxOrtho:E1} · 단위오차 {maxUnit:E1} · det {minDet:F9} " +
+                      $"· 공구축 왕복오차 {maxAxisErr:E1} {(ok ? "OK" : "FAIL")}");
+        }
+
+        // 3) 퇴화 폴백 — 법선이 진행 방향과 평행하면 측면 벡터가 정의되지 않는다
+        {
+            var seg = new CoverageScanline();
+            for (int i = 0; i < 40; i++)
+            {
+                seg.PathPoints.Add(new Point3D(i * 1.0, 0, 0));
+                seg.PointNormals.Add(new Vector3D(1, 0, 0));   // 법선 ∥ 접선 (퇴화)
+            }
+            var prm = new GrindingParams { LeadAngleDeg = 10 };
+            int made = poseSvc.ComputePoses(new[] { seg }, prm);
+            bool finite = seg.PassPoses.Count == 1 && seg.PassPoses[0].All(p =>
+                double.IsFinite(p.X) && double.IsFinite(p.Y) && double.IsFinite(p.Z) &&
+                double.IsFinite(p.RollDeg) && double.IsFinite(p.PitchDeg) && double.IsFinite(p.YawDeg));
+            double maxOrtho = 0;
+            foreach (var p in seg.PassPoses[0])
+            {
+                var (x, y, z) = TorchPoseService.EulerToAxes(p.RollDeg, p.PitchDeg, p.YawDeg);
+                maxOrtho = Math.Max(maxOrtho, Math.Abs(Vector3D.DotProduct(x, y)));
+                maxOrtho = Math.Max(maxOrtho, Math.Abs(Vector3D.DotProduct(y, z)));
+            }
+            bool unit = seg.ToolAxes.All(a => Math.Abs(a.Length - 1) < 1e-9);
+            bool ok = made > 0 && finite && unit && maxOrtho < 1e-9;
+            allOk &= ok;
+            lines.Add($"m5 퇴화(법선∥접선): 포즈 {made} · 유한={finite} · 단위축={unit} " +
+                      $"· 직교오차 {maxOrtho:E1} {(ok ? "OK" : "FAIL")}");
+        }
+
+        // 4) 다층 패스 — 패스 k 는 표면에서 k·depth 만큼 법선 반대(−Z)로, 자세는 동일
+        {
+            var prm = new GrindingParams { LeadAngleDeg = 10, PassCount = 3, DepthPerPassMm = 0.5 };
+            var res = covSvc.Generate(prep.Points, prep.Normals, all, prm);
+            poseSvc.ComputePoses(res.Scanlines, prm);
+
+            double maxDepthErr = 0, maxLatErr = 0, maxOriErr = 0;
+            bool shapeOk = true;
+            foreach (var s in res.Scanlines)
+            {
+                if (s.PassPoses.Count != 3) { shapeOk = false; continue; }
+                for (int k = 1; k < 3; k++)
+                    for (int i = 0; i < s.PassPoses[0].Count; i++)
+                    {
+                        var a = s.PassPoses[0][i];
+                        var b = s.PassPoses[k][i];
+                        maxDepthErr = Math.Max(maxDepthErr, Math.Abs((a.Z - b.Z) - k * 0.5));
+                        maxLatErr = Math.Max(maxLatErr, Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y));
+                        maxOriErr = Math.Max(maxOriErr, Math.Abs(a.RollDeg - b.RollDeg)
+                                                        + Math.Abs(a.PitchDeg - b.PitchDeg)
+                                                        + Math.Abs(a.YawDeg - b.YawDeg));
+                    }
+            }
+            bool ok = shapeOk && maxDepthErr < 1e-9 && maxLatErr < 1e-9 && maxOriErr < 1e-9;
+            allOk &= ok;
+            lines.Add($"m5 다층 패스(3×0.5mm): 절입오차 {maxDepthErr:E1} · 횡오차 {maxLatErr:E1} " +
+                      $"· 자세오차 {maxOriErr:E1} {(ok ? "OK" : "FAIL")}");
+        }
+
+        // 5) T_cam2base 강체 변환 + JSON 스키마 완전성
+        {
+            var prm = new GrindingParams { LeadAngleDeg = 10, PassCount = 2, DepthPerPassMm = 0.3 };
+            var res = covSvc.Generate(prep.Points, prep.Normals, all, prm);
+            poseSvc.ComputePoses(res.Scanlines, prm);
+
+            // 기지 강체 변환 (Z축 30° 회전 + 평행이동)
+            var t = new Matrix3D();
+            t.Rotate(new System.Windows.Media.Media3D.Quaternion(new Vector3D(0, 0, 1), 30));
+            t.Translate(new Vector3D(100, -50, 20));
+
+            var src = res.Scanlines[0].PassPoses[0][0];
+            var dst = TorchPoseService.TransformPose(src, t);
+            double posErr = (t.Transform(new Point3D(src.X, src.Y, src.Z))
+                             - new Point3D(dst.X, dst.Y, dst.Z)).Length;
+            var (sx, sy, sz) = TorchPoseService.EulerToAxes(src.RollDeg, src.PitchDeg, src.YawDeg);
+            var (dx, dy, dz) = TorchPoseService.EulerToAxes(dst.RollDeg, dst.PitchDeg, dst.YawDeg);
+            double oriErr = Math.Max((t.Transform(sx) - dx).Length,
+                            Math.Max((t.Transform(sy) - dy).Length, (t.Transform(sz) - dz).Length));
+
+            var region = new GrindingRegion
+            {
+                RegionId = "Region1",
+                PointIndices = all,
+                Params = prm.Clone(),
+                Scanlines = res.Scanlines,
+                TotalLengthMm = res.TotalLengthMm,
+                CoveredAreaMm2 = res.CoveredAreaMm2,
+            };
+            string jsonPath = Path.Combine(Path.GetTempPath(), "weldteach_grinding_export.json");
+            poseSvc.ExportJson(jsonPath, new List<GrindingRegion> { region });
+
+            bool schemaOk;
+            int exported = 0;
+            string missing = "";
+            try
+            {
+                using var doc = JsonDocument.Parse(File.ReadAllText(jsonPath));
+                var root = doc.RootElement;
+                var p0 = root.GetProperty("paths")[0];
+                var prmEl = p0.GetProperty("parameters");
+                var line0 = p0.GetProperty("scanlines")[0];
+                var pass0 = line0.GetProperty("passes")[0];
+                var pose0 = pass0.GetProperty("poses")[0];
+
+                foreach (var key in new[] { "eulerConvention", "frame", "tCam2BaseRowMajor", "pathCount", "paths" })
+                    if (!root.TryGetProperty(key, out _)) missing += key + " ";
+                foreach (var key in new[] { "order", "processType", "regionId", "parameters",
+                                            "totalLengthMm", "coveredAreaMm2", "scanlineCount", "scanlines" })
+                    if (!p0.TryGetProperty(key, out _)) missing += "paths." + key + " ";
+                foreach (var key in new[] { "toolDiameterMm", "overlapPct", "stepoverMm", "marginMm", "pattern",
+                                            "rasterAngleDeg", "leadAngleDeg", "tiltAngleDeg", "passCount",
+                                            "depthPerPassMm", "poseSpacingMm", "adaptiveSpacing",
+                                            "feedRateMmS", "targetForceN" })
+                    if (!prmEl.TryGetProperty(key, out _)) missing += "parameters." + key + " ";
+                foreach (var key in new[] { "lineIndex", "segmentIndex", "reversed", "lengthMm", "passes" })
+                    if (!line0.TryGetProperty(key, out _)) missing += "scanlines." + key + " ";
+                foreach (var key in new[] { "passIndex", "depthMm", "pointCount", "poses" })
+                    if (!pass0.TryGetProperty(key, out _)) missing += "passes." + key + " ";
+                foreach (var key in new[] { "x", "y", "z", "roll", "pitch", "yaw" })
+                    if (!pose0.TryGetProperty(key, out _)) missing += "poses." + key + " ";
+
+                // T_cam2base 미적용이면 frame 에 명시되고 행렬은 null 이어야 한다
+                if (root.GetProperty("tCam2BaseRowMajor").ValueKind != JsonValueKind.Null)
+                    missing += "tCam2BaseRowMajor(≠null) ";
+                if (!root.GetProperty("frame").GetString()!.Contains("camera")) missing += "frame(카메라 표기) ";
+                if (p0.GetProperty("processType").GetString() != "grinding") missing += "processType ";
+                if (line0.GetProperty("passes").GetArrayLength() != 2) missing += "passes(2개) ";
+
+                foreach (var pathEl in root.GetProperty("paths").EnumerateArray())
+                    foreach (var l in pathEl.GetProperty("scanlines").EnumerateArray())
+                        foreach (var ps in l.GetProperty("passes").EnumerateArray())
+                            exported += ps.GetProperty("poses").GetArrayLength();
+                schemaOk = missing.Length == 0;
+            }
+            catch (Exception ex)
+            {
+                schemaOk = false;
+                missing = ex.Message;
+            }
+
+            int expectPoses = res.Scanlines.Sum(s => s.TotalPoseCount);
+            bool ok = posErr < 1e-9 && oriErr < 1e-9 && schemaOk && exported == expectPoses;
+            allOk &= ok;
+            lines.Add($"m5 변환·내보내기: 위치오차 {posErr:E1} · 자세오차 {oriErr:E1} · " +
+                      $"포즈 {exported:N0}/{expectPoses:N0} · 스키마={(schemaOk ? "완전" : "누락: " + missing)} " +
+                      $"{(ok ? "OK" : "FAIL")}");
+        }
+
+        lines.Add(allOk ? "GRINDING M5 OK" : "GRINDING M5 FAIL");
     }
 
     /// <summary>
