@@ -1,4 +1,4 @@
-using System.Windows.Media.Media3D;
+﻿using System.Windows.Media.Media3D;
 using VMS.WeldTeach.Models;
 
 namespace VMS.WeldTeach.Services;
@@ -173,20 +173,42 @@ public class CoveragePathService
             for (int ib = 0; ib < nb; ib++)
                 if (mask[ia, ib]) maskCells++;
 
-        // ---- 4) 스캔라인 배치 (b 방향 스텝오버) + 샘플링 → 세그먼트 분할 ----
-        // 반 스텝 인셋 배치 — 경계(b=min/max) 위 라인은 불규칙 영역에서 접선 슬리버만 남는다.
-        // 첫/끝 라인을 경계에서 s/2 안쪽에 두면 공구 반경(D/2 ≥ s/2, 겹침률>0)이 경계를 덮는다.
+        // ---- 4) 스캔라인 배치 (b 방향 스텝오버, 표면 호길이 기준) + 샘플링 → 세그먼트 분할 ----
+        // 스텝오버 3D 보정 — 주평면상 등간격은 경사·곡면에서 실제 표면 간격이 벌어져
+        // 미연마 띠가 남는다 (원통 셸 40° 가장자리에서 최대 1.31배). b 를 셀 간격으로
+        // 훑으며 각 밴드의 3D 신장률을 누적해 호길이 좌표를 만들고, 스텝오버를 그
+        // 좌표에서 등간격으로 배치한다 (평면이면 신장률 1 — 기존 동작과 동일).
+        // 밴드 신장률은 a 전체의 최대 높이차 기준 — 국부 급경사에서 과커버 쪽으로
+        // 치우치게 한다 (명세 §4: 누락 연마 방지가 과커버보다 우선).
+        int bSteps = Math.Max(1, (int)Math.Ceiling((dataMaxB - dataMinB) / cell));
+        double bStep = (dataMaxB - dataMinB) / bSteps;
+        var arc = new double[bSteps + 1];
+        for (int j = 0; j < bSteps; j++)
+        {
+            double b0 = dataMinB + j * bStep, b1 = b0 + bStep;
+            double maxDh = 0;
+            for (double a = dataMinA; a <= dataMaxA + 1e-9; a += cell)
+                if (TrySample(a, b0, out double h0, out _) && TrySample(a, b1, out double h1, out _))
+                    maxDh = Math.Max(maxDh, Math.Abs(h1 - h0));
+            arc[j + 1] = arc[j] + Math.Sqrt(bStep * bStep + maxDh * maxDh);
+        }
+        double arcTotal = arc[bSteps];
+
+        // 반 스텝 인셋 배치 — 경계(호길이 0/전체) 위 라인은 불규칙 영역에서 접선 슬리버만
+        // 남는다. 첫/끝 라인을 경계에서 s/2 안쪽에 두면 공구 반경(D/2 ≥ s/2, 겹침률>0)이
+        // 경계를 덮는다.
         double halfStep = stepover / 2;
-        var bStations = new List<double>();
-        if (dataMaxB - dataMinB <= stepover)
-            bStations.Add((dataMinB + dataMaxB) / 2);   // 좁은 영역 — 중앙 한 줄
+        var tStations = new List<double>();
+        if (arcTotal <= stepover)
+            tStations.Add(arcTotal / 2);   // 좁은 영역 — 중앙 한 줄
         else
         {
-            for (double b = dataMinB + halfStep; b <= dataMaxB - halfStep + 1e-9; b += stepover)
-                bStations.Add(b);
-            double lastPossible = dataMaxB - halfStep;
-            if (lastPossible - bStations[^1] >= stepover * 0.3) bStations.Add(lastPossible);
+            for (double t = halfStep; t <= arcTotal - halfStep + 1e-9; t += stepover)
+                tStations.Add(t);
+            double lastPossible = arcTotal - halfStep;
+            if (lastPossible - tStations[^1] >= stepover * 0.3) tStations.Add(lastPossible);
         }
+        var bStations = tStations.Select(BFromArc).ToList();
 
         var scanlines = new List<CoverageScanline>();
         double totalLen = 0;
@@ -231,6 +253,22 @@ public class CoveragePathService
         return new CoverageResult(scanlines, totalLen, maskCells * cell * cell, lineCount, ambiguous);
 
         // ---- 로컬 함수 ----
+
+        // 표면 호길이 t → b 좌표 (누적 배열 선형 역보간)
+        double BFromArc(double t)
+        {
+            if (t <= 0) return dataMinB;
+            if (t >= arcTotal) return dataMaxB;
+            int lo = 0, hi = bSteps;
+            while (lo + 1 < hi)
+            {
+                int mid = (lo + hi) / 2;
+                if (arc[mid] <= t) lo = mid; else hi = mid;
+            }
+            double seg = arc[lo + 1] - arc[lo];
+            double f = seg > 1e-12 ? (t - arc[lo]) / seg : 0;
+            return dataMinB + (lo + f) * bStep;
+        }
 
         // (a,b) 샘플 — 마스크 유효 셀에서 셀 중심 쌍선형 보간 (무효 이웃은 가중 제외)
         bool TrySample(double a, double b, out double h, out Vector3D nrm)
@@ -374,3 +412,4 @@ public class CoveragePathService
         return axes;
     }
 }
+

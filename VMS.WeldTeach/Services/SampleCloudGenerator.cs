@@ -18,14 +18,17 @@ public enum SampleSurfaceKind
 }
 
 /// <summary>
-/// 합성 점군 — 점 + 해석적 참값 법선 평가 함수. 전처리(다운샘플)로 점 위치가 바뀌어도
-/// TrueNormalAt 으로 임의 위치의 참값 법선을 얻어 오차를 수치화할 수 있다.
+/// 합성 점군 — 점 + 해석적 참값 법선/표면거리 평가 함수. 전처리(다운샘플)나 경로 생성으로
+/// 점 위치가 바뀌어도 임의 위치에서 참값과의 오차를 수치화할 수 있다.
 /// </summary>
+/// <param name="TrueDeviationAt">해당 위치에서 참값 표면까지의 최단 거리(mm) 근사 —
+/// 커버리지 경로의 표면 추종 편차 검증용.</param>
 public record SampleCloud(
     string Name,
     List<Point3D> Points,
     Point3D Viewpoint,
-    Func<Point3D, Vector3D> TrueNormalAt);
+    Func<Point3D, Vector3D> TrueNormalAt,
+    Func<Point3D, double> TrueDeviationAt);
 
 /// <summary>
 /// 그라인딩 스캔 명세 §6 — CAD·실물 없이 전 단계를 정량 검증하기 위한 합성 점군 생성기
@@ -34,13 +37,20 @@ public record SampleCloud(
 /// </summary>
 public static class SampleCloudGenerator
 {
-    private const double PanelW = 100.0;   // X 방향 (mm)
-    private const double PanelH = 60.0;    // Y 방향 (mm)
-    private const double CylRadius = 80.0;
-    private const double CylHalfAngleDeg = 40.0;
-    private const double BumpAmp = 5.0;
-    private const double BumpWaveLen = 50.0;
-    private const double HoleRadius = 15.0;
+    /// <summary>시편 패널 X 방향 크기 (mm).</summary>
+    public const double PanelW = 100.0;
+    /// <summary>시편 패널 Y 방향 크기 (mm).</summary>
+    public const double PanelH = 60.0;
+    /// <summary>원통 셸 반경 (mm) — 축은 X, 축선은 (y=0, z=−R).</summary>
+    public const double CylRadius = 80.0;
+    /// <summary>원통 셸 부분 뷰 반각 (°).</summary>
+    public const double CylHalfAngleDeg = 40.0;
+    /// <summary>사인 범프 진폭 (mm).</summary>
+    public const double BumpAmp = 5.0;
+    /// <summary>사인 범프 파장 (mm).</summary>
+    public const double BumpWaveLen = 50.0;
+    /// <summary>구멍 패널의 중앙 원형 구멍 반경 (mm).</summary>
+    public const double HoleRadius = 15.0;
 
     /// <summary>
     /// 합성 점군 생성 — spacing 격자 + 지터, 등방 가우시안 노이즈(σ mm),
@@ -58,6 +68,7 @@ public static class SampleCloudGenerator
 
         var pts = new List<Point3D>();
         Func<Point3D, Vector3D> normalAt;
+        Func<Point3D, double> deviationAt;
 
         switch (kind)
         {
@@ -72,6 +83,7 @@ public static class SampleCloudGenerator
                     pts.Add(new Point3D(x, y, 0));
                 });
                 normalAt = _ => new Vector3D(0, 0, 1);
+                deviationAt = p => Math.Abs(p.Z);
                 break;
             }
             case SampleSurfaceKind.InclinedPlane:
@@ -80,6 +92,7 @@ public static class SampleCloudGenerator
                 double c = Math.Cos(rad), s = Math.Sin(rad);
                 ForGrid(spacingMm, rng, (x, y) => pts.Add(new Point3D(x, y * c, y * s)));
                 normalAt = _ => new Vector3D(0, -s, c);
+                deviationAt = p => Math.Abs(-s * p.Y + c * p.Z);   // 평면 법선 방향 성분
                 break;
             }
             case SampleSurfaceKind.CylinderShell:
@@ -106,6 +119,8 @@ public static class SampleCloudGenerator
                     n.Normalize();
                     return n;
                 };
+                deviationAt = p => Math.Abs(
+                    Math.Sqrt(p.Y * p.Y + (p.Z + CylRadius) * (p.Z + CylRadius)) - CylRadius);
                 break;
             }
             case SampleSurfaceKind.SineBump:
@@ -118,6 +133,12 @@ public static class SampleCloudGenerator
                     var n = new Vector3D(-BumpAmp * k * Math.Cos(k * p.X), 0, 1);
                     n.Normalize();
                     return n;
+                };
+                // 수직 오차를 국부 경사로 나눠 최단 거리로 환산 (완만한 곡면 근사)
+                deviationAt = p =>
+                {
+                    double slope = BumpAmp * k * Math.Cos(k * p.X);
+                    return Math.Abs(p.Z - BumpAmp * Math.Sin(k * p.X)) / Math.Sqrt(1 + slope * slope);
                 };
                 break;
             }
@@ -141,7 +162,7 @@ public static class SampleCloudGenerator
                 5.0 + rng.NextDouble() * 15.0));
 
         return new SampleCloud(kind.ToString(), pts,
-            new Point3D(PanelW / 2, PanelH / 2, 500), normalAt);
+            new Point3D(PanelW / 2, PanelH / 2, 500), normalAt, deviationAt);
     }
 
     private static void ForGrid(double spacing, Random rng, Action<double, double> emit)

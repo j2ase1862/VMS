@@ -326,6 +326,9 @@ public partial class App : Application
             // 그라인딩 확장 M3 — 커버리지 스캔라인 생성 검증 (평면·경사면)
             RunGrindingM3SelfTest(lines);
 
+            // 그라인딩 확장 M4 — 곡면 추종·구멍 분할·스텝오버 3D 보정 검증
+            RunGrindingM4SelfTest(lines);
+
             File.WriteAllLines(log, lines);
         }
         catch (Exception ex)
@@ -528,5 +531,208 @@ public partial class App : Application
         }
 
         lines.Add(allOk ? "GRINDING M3 OK" : "GRINDING M3 FAIL");
+    }
+
+    /// <summary>
+    /// 그라인딩 스캔 명세 §6.3 (M4) — 곡면 추종 · 스텝오버 3D 보정 · 구멍 분할 · 노이즈 강건성.
+    /// 원통 셸은 래스터를 축 방향(90°)으로 돌려 스텝오버가 곡률을 가로지르게 두고,
+    /// 전개(unfold) 좌표에서 라인 간 표면 간격·커버리지를 잰다 — 주평면 등간격이면
+    /// 가장자리 밴드에서 표면 간격이 스텝오버의 1.10배까지 벌어진다.
+    /// </summary>
+    private static void RunGrindingM4SelfTest(List<string> lines)
+    {
+        bool allOk = true;
+        var prepSvc = new CloudPreprocessService();
+        var covSvc = new CoveragePathService();
+        const double R = SampleCloudGenerator.CylRadius;
+
+        // 1) 원통 셸 — 스텝오버 3D 보정 + 곡면 추종 + 법선 정확도
+        //    공구 30mm(스텝오버 21mm)로 잡아 라인이 급경사 밴드(φ≈30°)에 놓이게 한다.
+        {
+            var prm = new GrindingParams { ToolDiameterMm = 30, OverlapPct = 30, RasterAngleDeg = 90 };
+            var sc = SampleCloudGenerator.Generate(SampleSurfaceKind.CylinderShell, 0.05);
+            var prep = prepSvc.Process(sc.Points, sc.Viewpoint);
+            var all = Enumerable.Range(0, prep.Points.Count).ToList();
+            var res = covSvc.Generate(prep.Points, prep.Normals, all, prm);
+
+            // 원통 전개 — (축 x, 호길이 R·φ). 전개면 유클리드 거리 = 표면 거리.
+            static Point3D Unfold(Point3D p) => new(p.X, R * Math.Atan2(p.Y, p.Z + R), 0);
+
+            double maxGap = MaxLineGapMm(res, Unfold);
+            bool gapOk = maxGap <= prm.StepoverMm * 1.05;
+
+            // 표면 추종 — 경로점의 해석 원통면 편차 ≤ 복셀 크기(1mm)
+            double maxDev = 0;
+            foreach (var s in res.Scanlines)
+                foreach (var p in s.PathPoints)
+                    maxDev = Math.Max(maxDev, sc.TrueDeviationAt(p));
+            bool devOk = maxDev <= 1.0;
+
+            // 법선 — 해석 법선 대비 평균 각도 오차
+            double nErr = MeanNormalErrorDeg(res, sc);
+            bool nOk = nErr <= 5.0;
+
+            // 커버리지 — 전개면에서 공구 반경 이내 (여유 2mm = 경로 샘플 간격 보정)
+            var tree = new KdTree3(res.Scanlines.SelectMany(s => s.PathPoints).Select(Unfold).ToList());
+            double radius = prm.ToolDiameterMm / 2 + 2;
+            int covered = 0;
+            foreach (var p in prep.Points)
+            {
+                tree.Nearest(Unfold(p), out double d);
+                if (d <= radius) covered++;
+            }
+            double coverage = (double)covered / prep.Points.Count;
+            bool covOk = coverage >= 0.99;
+
+            bool ok = gapOk && devOk && nOk && covOk;
+            allOk &= ok;
+            lines.Add($"m4 원통(전개): 라인 {res.LineCount} · 표면간격 {maxGap:F2}/{prm.StepoverMm:F1}mm " +
+                      $"· 표면편차 {maxDev:F3}mm · 법선오차 {nErr:F2}° · 커버리지 {coverage:P1} " +
+                      $"{(ok ? "OK" : "FAIL")}");
+        }
+
+        // 2) 사인 범프 — 래스터를 파형 가로지르게(90°) 돌린 곡면 스텝오버 보정
+        {
+            var prm = new GrindingParams { ToolDiameterMm = 30, OverlapPct = 30, RasterAngleDeg = 90 };
+            var sc = SampleCloudGenerator.Generate(SampleSurfaceKind.SineBump, 0.05);
+            var prep = prepSvc.Process(sc.Points, sc.Viewpoint);
+            var all = Enumerable.Range(0, prep.Points.Count).ToList();
+            var res = covSvc.Generate(prep.Points, prep.Normals, all, prm);
+
+            // 파형 방향 전개 — u(x) = 표면 호길이(수치적분), v = y
+            double k = 2 * Math.PI / SampleCloudGenerator.BumpWaveLen;
+            const double du = 0.05;
+            int steps = (int)(SampleCloudGenerator.PanelW / du);
+            var arcTable = new double[steps + 1];
+            for (int i = 0; i < steps; i++)
+            {
+                double slope = SampleCloudGenerator.BumpAmp * k * Math.Cos(k * (i + 0.5) * du);
+                arcTable[i + 1] = arcTable[i] + du * Math.Sqrt(1 + slope * slope);
+            }
+            Point3D UnfoldBump(Point3D p)
+            {
+                double t = Math.Clamp(p.X / du, 0, steps - 1e-9);
+                int i = (int)t;
+                return new Point3D(arcTable[i] + (t - i) * (arcTable[i + 1] - arcTable[i]), p.Y, 0);
+            }
+
+            double maxGap = MaxLineGapMm(res, UnfoldBump);
+            bool gapOk = maxGap <= prm.StepoverMm * 1.05;
+            double maxDev = 0;
+            foreach (var s in res.Scanlines)
+                foreach (var p in s.PathPoints)
+                    maxDev = Math.Max(maxDev, sc.TrueDeviationAt(p));
+            double nErr = MeanNormalErrorDeg(res, sc);
+
+            bool ok = gapOk && maxDev <= 1.0 && nErr <= 5.0 && res.Ambiguous25DCells == 0;
+            allOk &= ok;
+            lines.Add($"m4 사인범프(전개): 라인 {res.LineCount} · 표면간격 {maxGap:F2}/{prm.StepoverMm:F1}mm " +
+                      $"· 표면편차 {maxDev:F3}mm · 법선오차 {nErr:F2}° " +
+                      $"· 2.5D위반 {res.Ambiguous25DCells} {(ok ? "OK" : "FAIL")}");
+        }
+
+        // 3) 구멍 패널 — 세그먼트 분할 · 구멍 침범 없음 · marginMm 이격
+        {
+            var sc = SampleCloudGenerator.Generate(SampleSurfaceKind.HolePanel, 0.05);
+            var prep = prepSvc.Process(sc.Points, sc.Viewpoint);
+            var all = Enumerable.Range(0, prep.Points.Count).ToList();
+            double cx = SampleCloudGenerator.PanelW / 2, cy = SampleCloudGenerator.PanelH / 2;
+
+            static IEnumerable<Point3D> Pts(CoverageResult r) => r.Scanlines.SelectMany(s => s.PathPoints);
+            double HoleDist(CoverageResult r) => Pts(r).Min(p =>
+                Math.Sqrt((p.X - cx) * (p.X - cx) + (p.Y - cy) * (p.Y - cy)));
+
+            var prm0 = new GrindingParams { ToolDiameterMm = 50, OverlapPct = 30 };
+            var res0 = covSvc.Generate(prep.Points, prep.Normals, all, prm0);
+
+            // 구멍을 가로지르는 라인은 2개 이상 세그먼트로 갈라진다
+            var segsPerLine = res0.Scanlines.GroupBy(s => s.LineIndex).Select(g => g.Count()).ToList();
+            bool splitOk = segsPerLine.Count == res0.LineCount && segsPerLine.All(c => c >= 2);
+            double d0 = HoleDist(res0);
+            // 셀 양자화(경계 셀은 점유로 집계) 여유 2셀 — 구멍 안쪽으로는 들어가지 않아야 한다
+            bool holeOk = d0 >= SampleCloudGenerator.HoleRadius - 2 * prm0.GridCellMm;
+
+            var prm4 = new GrindingParams { ToolDiameterMm = 50, OverlapPct = 30, MarginMm = 4 };
+            var res4 = covSvc.Generate(prep.Points, prep.Normals, all, prm4);
+            double d4 = HoleDist(res4);
+            // 마진은 구멍·외곽 양쪽에서 실제로 경로를 밀어내야 한다
+            bool marginOk = d4 - d0 >= prm4.MarginMm * 0.7
+                            && Pts(res4).Min(p => p.X) - Pts(res0).Min(p => p.X) >= prm4.MarginMm * 0.7
+                            && Pts(res0).Max(p => p.X) - Pts(res4).Max(p => p.X) >= prm4.MarginMm * 0.7;
+
+            bool ok = splitOk && holeOk && marginOk;
+            allOk &= ok;
+            lines.Add($"m4 구멍패널: 라인 {res0.LineCount} 세그먼트 {res0.Scanlines.Count} " +
+                      $"(라인당 {string.Join("/", segsPerLine)}) · 구멍거리 {d0:F1}mm " +
+                      $"→ 마진4 {d4:F1}mm · 분할={splitOk} 마진={marginOk} {(ok ? "OK" : "FAIL")}");
+        }
+
+        // 4) 노이즈 강건성 — σ=0.15 에서 이웃 지점 법선 각도 변화(경로 요동)가
+        //    무노이즈 대비 3° 이내로 늘어야 한다 (곡률 자체의 변화는 양쪽에 공통).
+        {
+            var prm = new GrindingParams { ToolDiameterMm = 50, OverlapPct = 30 };
+            double MeanTurn(double sigma)
+            {
+                var sc = SampleCloudGenerator.Generate(SampleSurfaceKind.SineBump, sigma);
+                var prep = prepSvc.Process(sc.Points, sc.Viewpoint);
+                var res = covSvc.Generate(prep.Points, prep.Normals,
+                    Enumerable.Range(0, prep.Points.Count).ToList(), prm);
+                double sum = 0;
+                int cnt = 0;
+                foreach (var s in res.Scanlines)
+                    for (int i = 1; i < s.PointNormals.Count; i++)
+                    {
+                        double dot = Math.Clamp(
+                            Vector3D.DotProduct(s.PointNormals[i - 1], s.PointNormals[i]), -1, 1);
+                        sum += Math.Acos(dot) * 180 / Math.PI;
+                        cnt++;
+                    }
+                return cnt > 0 ? sum / cnt : 0;
+            }
+            double clean = MeanTurn(0.0), noisy = MeanTurn(0.15);
+            bool ok = noisy - clean <= 3.0;
+            allOk &= ok;
+            lines.Add($"m4 노이즈 σ=0.15: 이웃 법선 변화 {clean:F2}° → {noisy:F2}° " +
+                      $"(요동 +{noisy - clean:F2}°) {(ok ? "OK" : "FAIL")}");
+        }
+
+        lines.Add(allOk ? "GRINDING M4 OK" : "GRINDING M4 FAIL");
+    }
+
+    /// <summary>
+    /// 전개 사상(곡면 → 평면, 거리 보존) 아래에서 잰 인접 스캔라인의 최대 표면 간격(mm).
+    /// 주평면상 직선 거리와 달리 실제 미연마 폭에 해당한다.
+    /// </summary>
+    private static double MaxLineGapMm(CoverageResult res, Func<Point3D, Point3D> unfold)
+    {
+        var byLine = res.Scanlines.GroupBy(s => s.LineIndex).OrderBy(g => g.Key)
+            .Select(g => g.SelectMany(s => s.PathPoints).Select(unfold).ToList()).ToList();
+        double maxGap = 0;
+        for (int li = 1; li < byLine.Count; li++)
+        {
+            var prevTree = new KdTree3(byLine[li - 1]);
+            foreach (var p in byLine[li])
+            {
+                prevTree.Nearest(p, out double d);
+                maxGap = Math.Max(maxGap, d);
+            }
+        }
+        return maxGap;
+    }
+
+    /// <summary>스캔라인 지점 법선 vs 합성 표면 해석 법선의 평균 각도 오차(°).</summary>
+    private static double MeanNormalErrorDeg(CoverageResult res, SampleCloud sc)
+    {
+        double sum = 0;
+        int cnt = 0;
+        foreach (var s in res.Scanlines)
+            for (int i = 0; i < s.PathPoints.Count && i < s.PointNormals.Count; i++)
+            {
+                double dot = Math.Clamp(
+                    Vector3D.DotProduct(sc.TrueNormalAt(s.PathPoints[i]), s.PointNormals[i]), -1, 1);
+                sum += Math.Acos(dot) * 180 / Math.PI;
+                cnt++;
+            }
+        return cnt > 0 ? sum / cnt : 0;
     }
 }
