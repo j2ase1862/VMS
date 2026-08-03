@@ -367,6 +367,178 @@
         </Setter>
     </Style>
 
+    <!-- ──────────────── RadioButton (default) ────────────────
+         WPF 기본(밝은 회색 Aero) 크롬은 다크 배경에서 선택 여부가 거의 안 읽힌다.
+         CheckBox 와 같은 크기(18px)·톤으로 재정의 — 선택 시 indigo 채움 + 흰 점. -->
+    <Style TargetType="RadioButton">
+        <Setter Property="Foreground"    Value="{StaticResource Brush.Text.Primary}"/>
+        <Setter Property="Background"    Value="{StaticResource Brush.Surface.Overlay}"/>
+        <Setter Property="BorderBrush"   Value="{StaticResource Brush.Surface.Divider}"/>
+        <Setter Property="FontFamily"    Value="{StaticResource Font.Family}"/>
+        <Setter Property="FontSize"      Value="{StaticResource Font.Size.Body}"/>
+        <Setter Property="Cursor"        Value="Hand"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <!-- Background=Transparent — 글자 영역까지 클릭 판정에 포함 -->
+                    <StackPanel Orientation="Horizontal" Background="Transparent">
+                        <Grid Width="18" Height="18" VerticalAlignment="Center">
+                            <Ellipse x:Name="box"
+                                     Fill="{TemplateBinding Background}"
+                                     Stroke="{TemplateBinding BorderBrush}"
+                                     StrokeThickness="1.5"/>
+                            <Ellipse x:Name="dot" Width="8" Height="8" Opacity="0"
+                                     Fill="{StaticResource Brush.Text.OnPrimary}"/>
+                        </Grid>
+                        <ContentPresenter Margin="8,0,0,0"
+                                          VerticalAlignment="Center"
+                                          RecognizesAccessKey="True"/>
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="box" Property="Stroke" Value="{StaticResource Brush.Primary}"/>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="box" Property="Fill"    Value="{StaticResource Brush.Primary}"/>
+                            <Setter TargetName="box" Property="Stroke"  Value="{StaticResource Brush.Primary}"/>
+                            <Setter TargetName="dot" Property="Opacity" Value="1"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ──────────────── ComboBox / ComboBoxItem (default) ────────────────
+         VMS 본체 테마와 동일 정의 — 기본 흰 배경 ComboBox 를 다크 톤으로 재정의.
+         Popup 은 카드 톤 + 그림자, ToggleButton 이 전체를 덮어 어디를 눌러도 열린다. -->
+    <Style TargetType="ComboBoxItem">
+        <Setter Property="Background"    Value="Transparent"/>
+        <Setter Property="Foreground"    Value="{StaticResource Brush.Text.Primary}"/>
+        <Setter Property="Padding"       Value="12,8"/>
+        <Setter Property="FontFamily"    Value="{StaticResource Font.Family}"/>
+        <Setter Property="FontSize"      Value="{StaticResource Font.Size.Body}"/>
+        <Setter Property="Cursor"        Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBoxItem">
+                    <Border x:Name="bg"
+                            Background="{TemplateBinding Background}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="bg" Property="Background" Value="{StaticResource Brush.Surface.Overlay}"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="bg" Property="Background" Value="{StaticResource Brush.Primary}"/>
+                            <Setter Property="Foreground" Value="{StaticResource Brush.Text.OnPrimary}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="ComboBox">
+        <Setter Property="Background"      Value="{StaticResource Brush.Surface.Overlay}"/>
+        <Setter Property="Foreground"      Value="{StaticResource Brush.Text.Primary}"/>
+        <Setter Property="BorderBrush"     Value="{StaticResource Brush.Surface.Divider}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding"         Value="10,7"/>
+        <Setter Property="FontFamily"      Value="{StaticResource Font.Family}"/>
+        <Setter Property="FontSize"        Value="{StaticResource Font.Size.Body}"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="VerticalContentAlignment"   Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid>
+                        <Border x:Name="MainBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="{StaticResource Radius.Sm}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <ContentPresenter Grid.Column="0"
+                                                  Content="{TemplateBinding SelectionBoxItem}"
+                                                  ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                  ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                                  ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}"
+                                                  Margin="{TemplateBinding Padding}"
+                                                  VerticalAlignment="Center"
+                                                  IsHitTestVisible="False"/>
+                                <TextBlock Grid.Column="1"
+                                           Text="&#xE70D;"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="10"
+                                           Foreground="{StaticResource Brush.Text.Secondary}"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,12,0"
+                                           IsHitTestVisible="False"/>
+                            </Grid>
+                        </Border>
+
+                        <ToggleButton x:Name="ToggleButton"
+                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                      Focusable="False"
+                                      ClickMode="Press"
+                                      Background="Transparent">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Border Background="Transparent"/>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                        </ToggleButton>
+
+                        <Popup x:Name="Popup"
+                               Placement="Bottom"
+                               IsOpen="{TemplateBinding IsDropDownOpen}"
+                               AllowsTransparency="True"
+                               Focusable="False"
+                               PopupAnimation="Fade">
+                            <Border Background="{StaticResource Brush.Surface.Raised}"
+                                    BorderBrush="{StaticResource Brush.Surface.Divider}"
+                                    BorderThickness="1"
+                                    CornerRadius="{StaticResource Radius.Md}"
+                                    MinWidth="{TemplateBinding ActualWidth}"
+                                    MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                                    Margin="0,4,0,8"
+                                    Effect="{StaticResource Elevation.Card}">
+                                <ScrollViewer>
+                                    <ItemsPresenter/>
+                                </ScrollViewer>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="MainBorder" Property="BorderBrush" Value="{StaticResource Brush.Surface.Overlay}"/>
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="MainBorder" Property="BorderBrush" Value="{StaticResource Brush.Primary}"/>
+                        </Trigger>
+                        <Trigger Property="IsDropDownOpen" Value="True">
+                            <Setter TargetName="MainBorder" Property="BorderBrush" Value="{StaticResource Brush.Primary}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ──────────────── ToolTip (default) ──────────────── -->
     <Style TargetType="ToolTip">
         <Setter Property="Background"      Value="{StaticResource Brush.Surface.Overlay}"/>

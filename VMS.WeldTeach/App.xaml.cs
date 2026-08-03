@@ -97,6 +97,36 @@ public partial class App : Application
             return;
         }
 
+        // 진단 모드: --weldcap <png경로> — 용접 모드 샘플 시편 생성 → 캡처.
+        // 용접 툴바가 가장 긴 행이라 폰트/여백 변경 시 넘침 확인용으로도 쓴다.
+        int weldIdx = Array.IndexOf(e.Args, "--weldcap");
+        if (weldIdx >= 0 && weldIdx + 1 < e.Args.Length)
+        {
+            string weldPng = e.Args[weldIdx + 1];
+            _ = window.Dispatcher.InvokeAsync(async () =>
+            {
+                try
+                {
+                    await viewModel.GenerateSampleCommand.ExecuteAsync(null);
+                    for (int i = 0; i < 100 && viewModel.IsBusy; i++) await Task.Delay(100);
+                    window.ZoomExtentsForDiagnostics();
+                    await Task.Delay(800);   // 렌더 안정화
+                    window.CaptureToPng(weldPng);
+                    if (!e.Args.Contains("--stay")) Shutdown(0);
+                }
+                catch (Exception ex)
+                {
+                    try
+                    {
+                        File.AppendAllText(Path.Combine(Path.GetTempPath(), "weldteach_diag.log"),
+                            $"[{DateTime.Now:HH:mm:ss.fff}] weldcap error: {ex}{Environment.NewLine}");
+                    }
+                    catch { }
+                }
+            });
+            return;
+        }
+
         // 진단 모드: --open <step경로> [--capture <png경로>]
         // GUI 와 동일한 로드 경로(LoadAsync)를 타고, 캡처 지정 시 렌더 결과를 저장 후 종료한다.
         int openIdx = Array.IndexOf(e.Args, "--open");

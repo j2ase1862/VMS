@@ -15,7 +15,9 @@
     <system:Double x:Key="Font.Size.Title"    xmlns:system="clr-namespace:System;assembly=mscorlib">20</system:Double>
     <system:Double x:Key="Font.Size.Subtitle" xmlns:system="clr-namespace:System;assembly=mscorlib">16</system:Double>
     <system:Double x:Key="Font.Size.Body"     xmlns:system="clr-namespace:System;assembly=mscorlib">13</system:Double>
-    <system:Double x:Key="Font.Size.Caption"  xmlns:system="clr-namespace:System;assembly=mscorlib">11</system:Double>
+    <!-- Caption 11 → 12 (2026-08-03): 11px 는 산업 현장 조명·거리에서 읽기 어렵다는
+         피드백 반영. 컨트롤 라벨은 아래 Text.Label(12 SemiBold + Primary)을 쓴다. -->
+    <system:Double x:Key="Font.Size.Caption"  xmlns:system="clr-namespace:System;assembly=mscorlib">12</system:Double>
 
     <!-- ──────────────── Styles ──────────────── -->
 
@@ -48,9 +50,19 @@
         <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}"/>
     </Style>
 
+    <!-- 보조 설명 · 상태 표시용 (읽지 않아도 되는 정보). -->
     <Style x:Key="Text.Caption" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource Font.Family}"/>
         <Setter Property="FontSize"   Value="{StaticResource Font.Size.Caption}"/>
         <Setter Property="Foreground" Value="{StaticResource Brush.Text.Secondary}"/>
+    </Style>
+
+    <!-- 입력 컨트롤(텍스트박스·콤보·라디오)에 붙는 라벨 — 무엇을 넣는 칸인지 즉시
+         읽혀야 하므로 Caption 보다 진하게(Primary + SemiBold) 쓴다. -->
+    <Style x:Key="Text.Label" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Family}"/>
+        <Setter Property="FontSize"   Value="{StaticResource Font.Size.Caption}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}"/>
     </Style>
 </ResourceDictionary>
