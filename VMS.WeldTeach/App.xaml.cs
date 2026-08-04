@@ -413,6 +413,9 @@ public partial class App : Application
             // 그라인딩 확장 M5 — 리드/틸트 포즈·다층 패스·JSON 내보내기 검증
             RunGrindingM5SelfTest(lines);
 
+            // 그라인딩 확장 M6 — .vpc 파일을 거치는 전체 체인 스모크
+            RunGrindingM6SelfTest(lines);
+
             File.WriteAllLines(log, lines);
         }
         catch (Exception ex)
@@ -995,6 +998,100 @@ public partial class App : Application
         }
 
         lines.Add(allOk ? "GRINDING M5 OK" : "GRINDING M5 FAIL");
+    }
+
+    /// <summary>
+    /// 그라인딩 스캔 명세 §6.5 (M6) — .vpc 파일을 실제로 거치는 전체 체인 스모크:
+    /// 합성 곡면(노이즈·이상치 포함) → .vpc 저장 → 파일 로드 → 전처리 → 라쏘 영역 선택
+    /// → 커버리지 → 포즈 → JSON 내보내기 → 재파싱. 각 단계의 산출물이 다음 단계로
+    /// 온전히 넘어가는지 확인한다.
+    /// ※ 실카메라 스캔 파일(.vpc) 로드 확인은 현장 장비가 필요해 별도 과제로 남는다 —
+    ///    여기서는 VMS [Save 3D] 와 동일한 포맷을 거치는 것까지 검증한다.
+    /// </summary>
+    private static void RunGrindingM6SelfTest(List<string> lines)
+    {
+        bool allOk = true;
+        string vpcPath = Path.Combine(Path.GetTempPath(), "weldteach_grinding_smoke.vpc");
+        string jsonPath = Path.Combine(Path.GetTempPath(), "weldteach_grinding_smoke.json");
+
+        // ① 합성 곡면(원통 셸 + 노이즈 + 부유 이상치) → .vpc 저장 → 파일에서 로드
+        var sc = SampleCloudGenerator.Generate(SampleSurfaceKind.CylinderShell, 0.05, outlierCount: 150);
+        PointCloudService.SaveVpc(vpcPath, sc.Points);
+        var loaded = new PointCloudService().LoadCloud(vpcPath);
+        double ioDev = 0;
+        for (int i = 0; i < Math.Min(500, loaded.Count); i++)
+            ioDev = Math.Max(ioDev, (loaded[i] - sc.Points[i]).Length);
+        bool ioOk = loaded.Count == sc.Points.Count && ioDev < 1e-3;
+
+        // ② 전처리 (이상치 제거 포함)
+        var prep = new CloudPreprocessService().Process(loaded, sc.Viewpoint);
+
+        // ③ 라쏘 영역 선택 — GUI 와 동일한 투영 델리게이트 경로 (상방 정사영)
+        RegionSelectService.ProjectFunc proj = p => new ProjectedPoint(p.X, p.Y, 500 - p.Z, true);
+        var poly = new[]
+        {
+            new Point(15, -35), new Point(85, -35), new Point(85, 35), new Point(15, 35),
+        };
+        var idx = RegionSelectService.SelectByPolygon(prep.Points, proj, poly, 20);
+
+        // ④ 커버리지 + ⑤ 포즈 (곡률을 가로지르는 래스터 + 2패스 절입)
+        var prm = new GrindingParams
+        {
+            ToolDiameterMm = 30, OverlapPct = 30, RasterAngleDeg = 90,
+            LeadAngleDeg = 10, PassCount = 2, DepthPerPassMm = 0.4,
+        };
+        var res = new CoveragePathService().Generate(prep.Points, prep.Normals, idx, prm);
+        var poseSvc = new CoveragePoseService();
+        int poses = poseSvc.ComputePoses(res.Scanlines, prm);
+
+        // 경로가 선택 영역(라쏘 사각형) 안에 머무는지 — 경계 침범 없음.
+        // 허용치는 그리드 셀 1개: 경계에 걸친 셀은 점이 하나라도 있으면 점유로 집계되므로
+        // 유효 마스크가 선택 경계보다 최대 1셀 바깥까지 나갈 수 있다(양자화 한계).
+        double outX = 0, outY = 0, surfDev = 0;
+        foreach (var s in res.Scanlines)
+            foreach (var p in s.PathPoints)
+            {
+                outX = Math.Max(outX, Math.Max(15 - p.X, p.X - 85));
+                outY = Math.Max(outY, Math.Max(-35 - p.Y, p.Y - 35));
+                surfDev = Math.Max(surfDev, sc.TrueDeviationAt(p));
+            }
+        bool insideOk = Math.Max(outX, outY) <= prm.GridCellMm;
+
+        // ⑥ 내보내기 → 재파싱으로 포즈 수 왕복 확인
+        var region = new GrindingRegion
+        {
+            RegionId = "Region1",
+            PointIndices = idx,
+            Params = prm.Clone(),
+            Scanlines = res.Scanlines,
+            TotalLengthMm = res.TotalLengthMm,
+            CoveredAreaMm2 = res.CoveredAreaMm2,
+        };
+        poseSvc.ExportJson(jsonPath, new List<GrindingRegion> { region });
+        int exported = 0;
+        bool jsonOk;
+        try
+        {
+            using var doc = JsonDocument.Parse(File.ReadAllText(jsonPath));
+            foreach (var p in doc.RootElement.GetProperty("paths").EnumerateArray())
+                foreach (var l in p.GetProperty("scanlines").EnumerateArray())
+                    foreach (var ps in l.GetProperty("passes").EnumerateArray())
+                        exported += ps.GetProperty("poses").GetArrayLength();
+            jsonOk = exported == poses && poses > 0;
+        }
+        catch { jsonOk = false; }
+
+        bool chainOk = ioOk && idx.Count > 1000 && res.LineCount >= 2 && poses > 0
+                       && insideOk && surfDev <= 1.0 && res.Ambiguous25DCells == 0 && jsonOk;
+        allOk &= chainOk;
+
+        lines.Add($"m6 .vpc 체인: 저장·로드 {loaded.Count:N0}점(편차 {ioDev:E1}) → 전처리 {prep.Points.Count:N0} " +
+                  $"→ 라쏘 {idx.Count:N0} → 라인 {res.LineCount} · {res.TotalLengthMm:F0}mm " +
+                  $"→ 포즈 {poses:N0}(2패스) → JSON {exported:N0}개 · " +
+                  $"영역이탈 {Math.Max(outX, outY):F2}/{prm.GridCellMm:0.#}mm · " +
+                  $"표면편차 {surfDev:F3}mm {(chainOk ? "OK" : "FAIL")}");
+
+        lines.Add(allOk ? "GRINDING M6 OK" : "GRINDING M6 FAIL");
     }
 
     /// <summary>
