@@ -46,7 +46,9 @@ node gen_user_manual.js   # → ../VMS_사용자매뉴얼_v1.1.docx
 
 | PR | 매뉴얼에 들어갈 내용 | 대상 절 |
 |----|--------------------|--------|
-| _(비어 있음)_ | | |
+| #264 | DeepLearning 체크박스·슬라이더가 다크 테마로 바뀜(파란 채움 체크, 파란 트랙 슬라이더) — 본문 서술 변경 없음, §3.8 스크린샷·컨트롤 이미지가 구식이 됨. `--capture-controls` 재캡처 필요 | §3.8 |
+| #264 | VisionSetup 라디오버튼 5곳 다크 테마 적용(이미지 폴더 탐색 모드 Navigate/Run All/Run Selected, Geometry3D Point Source) — 해당 컨트롤이 보이는 스크린샷 구식화. `--capture-controls` 재캡처 필요 | §3.9 (Geometry3D), §3.1~3.2 (탐색 모드 노출 시) |
+| #264 | VMS.WeldTeach 신규 앱(용접 경로 티칭 + 그라인딩 커버리지) — **PoC 라 매뉴얼 범위 외**, 수록 여부는 제품화 결정 후 판단 | (범위 외 — 결정 대기) |
 
 ## guides/ — 가이드 문서
 
