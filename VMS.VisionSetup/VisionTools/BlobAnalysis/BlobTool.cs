@@ -59,10 +59,12 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
             set => SetProperty(ref _minArea, Math.Max(0, value));
         }
 
-        private double _maxArea = double.MaxValue;
+        // 기본값은 "사실상 무제한"이되 읽을 수 있는 수로 — double.MaxValue 는 설정 UI 에
+        // 1.797E+308 로 표시돼 사용자를 당황시킨다 (1e8 px² = 10,000×10,000 이미지 전체).
+        private double _maxArea = 100_000_000;
         [TunableParam(
-            Description = "검출 객체 최대 면적(픽셀). 너무 큰 영역(배경 등) 제외용. 무제한이면 매우 큰 값 사용.",
-            Tier = TuningTier.DomainCommon, Min = 0)]
+            Description = "검출 객체 최대 면적(픽셀). 너무 큰 영역(배경 등) 제외용. 기본 1억 = 사실상 무제한.",
+            Tier = TuningTier.DomainCommon, Min = 0, DefaultHint = "100000000")]
         public double MaxArea
         {
             get => _maxArea;
@@ -77,7 +79,7 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
             set => SetProperty(ref _minPerimeter, Math.Max(0, value));
         }
 
-        private double _maxPerimeter = double.MaxValue;
+        private double _maxPerimeter = 1_000_000;   // 사실상 무제한 (E+308 표시 회피)
         public double MaxPerimeter
         {
             get => _maxPerimeter;
@@ -115,10 +117,10 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
             set => SetProperty(ref _minAspectRatio, Math.Max(0, value));
         }
 
-        private double _maxAspectRatio = double.MaxValue;
+        private double _maxAspectRatio = 1000;   // 사실상 무제한 (E+308 표시 회피)
         [TunableParam(
-            Description = "검출 객체 최대 종횡비. 매우 길쭉한 객체 제외용.",
-            Tier = TuningTier.DomainCommon, Min = 0)]
+            Description = "검출 객체 최대 종횡비. 매우 길쭉한 객체 제외용. 기본 1000 = 사실상 무제한.",
+            Tier = TuningTier.DomainCommon, Min = 0, DefaultHint = "1000")]
         public double MaxAspectRatio
         {
             get => _maxAspectRatio;

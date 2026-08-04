@@ -165,18 +165,21 @@ namespace VMS.VisionSetup.Services
                 Id = "2d-blob",
                 Title = "Blob 검출",
                 Category = Category2D,
-                Description = "그레이스케일 → 이진화 → Blob 검출. Threshold 값과 Blob 의 " +
-                              "면적 범위를 대상에 맞게 조정할 것.",
+                Description = "그레이스케일 → 이진화 → Blob 검출 → Result 판정. Threshold 값과 " +
+                              "Blob 의 면적 범위를 대상에 맞게 조정할 것. 기본 판정은 'Blob 1개 " +
+                              "이상 = OK' — 개수·면적 판정이 필요하면 Blob 설정의 Judgment 사용.",
                 Tools =
                 {
                     new TemplateToolSpec { ToolType = "GrayscaleTool" },
                     new TemplateToolSpec { ToolType = "ThresholdTool" },
                     new TemplateToolSpec { ToolType = "BlobTool" },
+                    new TemplateToolSpec { ToolType = "ResultTool" },
                 },
                 Connections =
                 {
                     new TemplateConnectionSpec { SourceIndex = 0, TargetIndex = 1, Type = ConnectionType.Image },
                     new TemplateConnectionSpec { SourceIndex = 1, TargetIndex = 2, Type = ConnectionType.Image },
+                    new TemplateConnectionSpec { SourceIndex = 2, TargetIndex = 3, Type = ConnectionType.Result },
                 },
             },
             new RecipeTemplate
@@ -236,16 +239,19 @@ namespace VMS.VisionSetup.Services
                 Title = "컬러 객체 검출",
                 Category = Category2D,
                 Description = "지정 색상 영역을 추출(Color Extract)해 Blob 으로 개수·위치를 " +
-                              "얻는다. Color Extract 설정에서 대상 색상 범위를 지정할 것.",
+                              "얻고 Result 로 판정한다. Color Extract 설정에서 대상 색상 범위를 " +
+                              "지정할 것. 기본 판정은 'Blob 1개 이상 = OK'.",
                 Prerequisites = new[] { BadgeColorImage },
                 Tools =
                 {
                     new TemplateToolSpec { ToolType = "ColorExtractTool" },
                     new TemplateToolSpec { ToolType = "BlobTool" },
+                    new TemplateToolSpec { ToolType = "ResultTool" },
                 },
                 Connections =
                 {
                     new TemplateConnectionSpec { SourceIndex = 0, TargetIndex = 1, Type = ConnectionType.Image },
+                    new TemplateConnectionSpec { SourceIndex = 1, TargetIndex = 2, Type = ConnectionType.Result },
                 },
             },
 
