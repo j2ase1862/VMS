@@ -27,6 +27,16 @@ public class GrindingParams
     /// </summary>
     public double GridCellMm { get; set; } = 2.0;
 
+    /// <summary>
+    /// 표면 모델 옵션 — true 면 높이·법선을 그리드 쌍선형 대신 <b>서브패치 다항식
+    /// 피팅</b>(SurfacePatchFitService)에서 얻는다. 해석적 매끄러운 법선(노이즈 저감).
+    /// 유효 마스크·2.5D 위반 판정은 여전히 높이맵 점유 기반(구멍 외삽 방지).
+    /// </summary>
+    public bool UseSurfaceFit { get; set; }
+
+    /// <summary>곡면 피팅 허용 RMSE(mm) — 패치 세분화 종료 임계.</summary>
+    public double FitRmseMm { get; set; } = 0.1;
+
     // ──────────── Step S4: 공구 포즈 ────────────
 
     /// <summary>리드각(°) — 표면 법선을 진행 방향으로 기울이는 각도.</summary>

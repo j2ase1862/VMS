@@ -498,6 +498,22 @@
                                       ToolTip="홀수 라인을 역방향으로 왕복합니다 (끄면 편도)"/>
                         </DockPanel>
 
+                        <!-- 표면 모델 옵션 — 서브패치 다항식 피팅 -->
+                        <DockPanel LastChildFill="False" Margin="0,0,0,10">
+                            <CheckBox DockPanel.Dock="Left" Content="곡면 피팅"
+                                      IsChecked="{Binding UseSurfaceFit}"
+                                      VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <ctrl:HelpIcon DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,10,0"
+                                           HelpTitle="곡면 피팅 (표면 모델 옵션)"
+                                           HelpText="켜면 경로의 높이·공구 방향을 격자 평균 대신 매끄러운 곡면(겹치는 서브패치 다항식 피팅)에서 계산합니다.&#x0a;&#x0a;• 장점: 스캔 노이즈가 공구 방향에 덜 타서 경로가 더 매끄럽습니다 (곡면·노이즈 많은 스캔에서 유리).&#x0a;• 허용 RMSE: 곡면이 점군을 이 오차(mm) 이내로 따라갈 때까지 패치를 잘게 나눕니다. 작을수록 정밀하고 패치가 많아집니다.&#x0a;• 구멍·경계 처리는 기존과 동일합니다 (곡면은 구멍 위로도 이어지지만, 유효 영역 판정이 막습니다).&#x0a;&#x0a;끄면 기존 높이맵 방식(기본)입니다."/>
+                            <TextBlock DockPanel.Dock="Left" Text="허용 RMSE(mm)"
+                                       Style="{StaticResource Text.Label}"
+                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBox DockPanel.Dock="Left" Width="52"
+                                     Text="{Binding FitRmseMm, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalContentAlignment="Center"/>
+                        </DockPanel>
+
                         <!-- 공구 포즈 (스캔 명세 Step S4) -->
                         <DockPanel LastChildFill="False" Margin="0,0,0,6">
                             <TextBlock DockPanel.Dock="Left" Text="리드(°)"
