@@ -1,0 +1,272 @@
+using System.IO;
+using System.Text.Json;
+using System.Windows.Media.Media3D;
+using VMS.WeldTeach.Models;
+
+namespace VMS.WeldTeach.Services;
+
+/// <summary>
+/// 명세서 Step 3 — 6-DoF 토치 포즈 계산.
+/// Z축 = 진행 접선, X축 = 인접 두 면 법선의 이등분 벡터(접선에 직교화), Y = Z × X.
+/// 오일러 각은 ZYX(yaw-pitch-roll) 규약, 도(deg) 단위.
+/// </summary>
+public class TorchPoseService
+{
+    /// <summary>곡률 적응 모드의 최대 현 오차(mm) — 재샘플 현이 실제 곡선에서 벗어나는 허용치.</summary>
+    public const double ChordToleranceMm = 0.05;
+
+    /// <summary>
+    /// 경로를 포즈 간격(mm)으로 호 길이 기준 재샘플링한 뒤, 각 포즈 점의 토치 방향과
+    /// 6-DoF 포즈를 채운다. 위치·이등분 벡터는 표시용 폴리라인 샘플에서 선형 보간하고,
+    /// 접선은 재샘플 점의 이웃 차분으로 계산한다. 이등분이 퇴화하면 글로벌 평균으로 대체.
+    /// adaptive=true 면 spacingMm 은 최대 간격이 되고, 곡선 구간은 국소 곡률 반경 R 에서
+    /// 현 오차 e ≤ ChordToleranceMm 을 만족하는 간격 √(8·R·e) 로 좁아진다.
+    /// </summary>
+    public List<TorchPose> ComputePoses(WeldingPathContour contour, CadModelData model,
+        double spacingMm = 1.5, bool adaptive = false)
+    {
+        var globalBisector = ComputeBisector(contour, model);
+        var src = contour.PathPoints;
+        contour.PosePoints.Clear();
+        contour.TorchDirections.Clear();
+        var poses = new List<TorchPose>();
+        if (src.Count < 2) return poses;
+
+        spacingMm = Math.Clamp(spacingMm, 0.1, 100.0);
+
+        // 누적 호 길이
+        var cum = new double[src.Count];
+        for (int i = 1; i < src.Count; i++)
+            cum[i] = cum[i - 1] + (src[i] - src[i - 1]).Length;
+        double total = cum[^1];
+        if (total < 1e-9) return poses;
+
+        // 재샘플 호 길이 위치 — 균일 또는 곡률 적응. 끝점은 항상 포함
+        // (마지막 조각이 국소 간격의 30% 미만이면 직전 샘플을 끝점으로 당겨 붙인다)
+        var stations = adaptive
+            ? BuildAdaptiveStations(src, cum, total, spacingMm)
+            : BuildUniformStations(total, spacingMm);
+
+        // 위치·이등분 보간
+        bool hasBis = contour.PointBisectors.Count == src.Count;
+        var pts = new List<Point3D>(stations.Count);
+        var biss = new List<Vector3D>(stations.Count);
+        int seg = 0;
+        foreach (var s in stations)
+        {
+            while (seg < src.Count - 2 && cum[seg + 1] < s) seg++;
+            double segLen = cum[seg + 1] - cum[seg];
+            double t = segLen > 1e-12 ? (s - cum[seg]) / segLen : 0;
+            pts.Add(src[seg] + t * (src[seg + 1] - src[seg]));
+
+            var b = default(Vector3D);
+            if (hasBis)
+            {
+                b = contour.PointBisectors[seg] + t * (contour.PointBisectors[seg + 1] - contour.PointBisectors[seg]);
+                if (b.Length > 1e-9) b.Normalize();
+            }
+            biss.Add(b);
+        }
+
+        // 포즈 프레임 (Z=접선, X=이등분 직교화, Y=Z×X)
+        for (int i = 0; i < pts.Count; i++)
+        {
+            int a = Math.Max(0, i - 1), c = Math.Min(pts.Count - 1, i + 1);
+            var z = pts[c] - pts[a];
+            if (z.Length > 1e-12) z.Normalize();
+
+            var bisector = biss[i].Length > 1e-9 ? biss[i] : globalBisector;
+            var x = bisector - Vector3D.DotProduct(bisector, z) * z;
+            if (x.Length < 1e-9)
+            {
+                // 퇴화: 접선과 평행 — 임의 직교 벡터 선택
+                x = Math.Abs(z.Z) < 0.9 ? new Vector3D(0, 0, 1) : new Vector3D(1, 0, 0);
+                x -= Vector3D.DotProduct(x, z) * z;
+            }
+            x.Normalize();
+            var y = Vector3D.CrossProduct(z, x);
+
+            contour.PosePoints.Add(pts[i]);
+            contour.TorchDirections.Add(x);
+            var (roll, pitch, yaw) = ToZyxEuler(x, y, z);
+            poses.Add(new TorchPose(pts[i].X, pts[i].Y, pts[i].Z, roll, pitch, yaw));
+        }
+        return poses;
+    }
+
+    /// <summary>균일 호길이 스테이션 — 그라인딩 커버리지 포즈(CoveragePoseService)와 공용.</summary>
+    internal static List<double> BuildUniformStations(double total, double spacingMm)
+    {
+        var stations = new List<double>();
+        for (double s = 0; s < total; s += spacingMm) stations.Add(s);
+        if (stations.Count > 1 && total - stations[^1] < spacingMm * 0.3) stations[^1] = total;
+        else stations.Add(total);
+        return stations;
+    }
+
+    /// <summary>
+    /// 곡률 적응 스테이션 — 폴리라인 연속 3점의 외접원 반경으로 국소 곡률을 추정하고,
+    /// 현 오차 한계에서 허용되는 간격 √(8·R·e) 로 전진한다 (직선 구간은 최대 간격).
+    /// </summary>
+    internal static List<double> BuildAdaptiveStations(List<Point3D> src, double[] cum, double total, double maxSpacingMm)
+    {
+        double minStep = Math.Max(0.2, maxSpacingMm / 20.0);
+
+        // 각 폴리라인 점의 곡률 반경 (양 끝은 이웃 값 복사)
+        var radius = new double[src.Count];
+        for (int i = 1; i < src.Count - 1; i++)
+            radius[i] = CircumRadius(src[i - 1], src[i], src[i + 1]);
+        radius[0] = src.Count > 2 ? radius[1] : double.MaxValue;
+        radius[^1] = src.Count > 2 ? radius[^2] : double.MaxValue;
+
+        var stations = new List<double> { 0 };
+        double s = 0;
+        int seg = 0;
+        while (true)
+        {
+            while (seg < src.Count - 2 && cum[seg + 1] < s) seg++;
+            // 구간 양 끝 중 더 작은 반경(더 급한 곡률) 기준 — 안전측
+            double r = Math.Min(radius[seg], radius[seg + 1]);
+            double step = r >= double.MaxValue / 2
+                ? maxSpacingMm
+                : Math.Sqrt(8.0 * r * ChordToleranceMm);
+            step = Math.Clamp(step, minStep, maxSpacingMm);
+
+            if (s + step >= total - step * 0.3) break;
+            s += step;
+            stations.Add(s);
+        }
+        stations.Add(total);
+        return stations;
+    }
+
+    /// <summary>세 점의 외접원 반경 — 거의 일직선이면 double.MaxValue (직선 취급).</summary>
+    private static double CircumRadius(Point3D a, Point3D b, Point3D c)
+    {
+        var ab = b - a;
+        var ac = c - a;
+        var bc = c - b;
+        double area2 = Vector3D.CrossProduct(ab, ac).Length;   // 삼각형 넓이 × 2
+        if (area2 < 1e-9) return double.MaxValue;
+        return ab.Length * bc.Length * ac.Length / (2.0 * area2);
+    }
+
+    /// <summary>윤곽 엣지들의 인접 면(최다 2면) 법선 합성 → 토치 이등분 방향.</summary>
+    public Vector3D ComputeBisector(WeldingPathContour contour, CadModelData model)
+    {
+        var faceIds = contour.EdgeIds
+            .SelectMany(id => model.Edges.First(e => e.EdgeId == id).AdjacentFaceIds)
+            .GroupBy(f => f)
+            .OrderByDescending(g => g.Count())
+            .Select(g => g.Key)
+            .Take(2)
+            .ToList();
+
+        var sum = new Vector3D();
+        foreach (var fid in faceIds)
+        {
+            var mesh = model.FaceMeshes.FirstOrDefault(m => m.FaceId == fid);
+            if (mesh != null) sum += mesh.CenterNormal;
+        }
+        if (sum.Length < 1e-9)
+            sum = new Vector3D(0, 0, 1);   // 퇴화(180° 평면 이음) — 기본 상향
+        sum.Normalize();
+        return sum;
+    }
+
+    /// <summary>회전 행렬 R=[X Y Z] (열벡터) → ZYX 오일러 (roll=X축, pitch=Y축, yaw=Z축 회전, deg).</summary>
+    internal static (double Roll, double Pitch, double Yaw) ToZyxEuler(Vector3D x, Vector3D y, Vector3D z)
+    {
+        // R = | x.X  y.X  z.X |
+        //     | x.Y  y.Y  z.Y |
+        //     | x.Z  y.Z  z.Z |
+        double r11 = x.X, r21 = x.Y, r31 = x.Z;
+        double r32 = y.Z, r33 = z.Z;
+        double pitch = Math.Atan2(-r31, Math.Sqrt(r32 * r32 + r33 * r33));
+        double yaw, roll;
+        if (Math.Abs(Math.Cos(pitch)) < 1e-9)
+        {
+            // 짐벌락: yaw 를 0 으로 고정
+            yaw = 0;
+            roll = Math.Atan2(-y.X, y.Y);
+        }
+        else
+        {
+            yaw = Math.Atan2(r21, r11);
+            roll = Math.Atan2(r32, r33);
+        }
+        const double toDeg = 180.0 / Math.PI;
+        return (roll * toDeg, pitch * toDeg, yaw * toDeg);
+    }
+
+    /// <summary>
+    /// 경로 목록을 용접 순서(목록 순서)대로 하나의 JSON 으로 내보낸다.
+    /// cadToScan(T_align) 이 주어지면 포즈를 스캔(로봇) 좌표계로 변환해 내보낸다.
+    /// </summary>
+    public void ExportJson(string path, List<WeldingPathContour> contours, Matrix3D? cadToScan = null)
+    {
+        var payload = new
+        {
+            eulerConvention = "ZYX(deg)",
+            frame = cadToScan.HasValue
+                ? "scan/robot coordinates (T_align 적용됨)"
+                : "CAD model coordinates (ICP 정합 전 — T_align 적용 필요)",
+            tAlignRowMajor = cadToScan.HasValue ? MatrixRows(cadToScan.Value) : null,
+            pathCount = contours.Count,
+            paths = contours.Select((c, i) => new
+            {
+                order = i + 1,
+                pathId = c.PathId,
+                totalLength = Math.Round(c.TotalLength, 3),
+                spacingMm = Math.Round(c.SpacingMm, 2),
+                adaptive = c.Adaptive,
+                pointCount = c.Poses.Count,
+                poses = c.Poses.Select(p =>
+                {
+                    var q = cadToScan.HasValue ? TransformPose(p, cadToScan.Value) : p;
+                    return new
+                    {
+                        x = Math.Round(q.X, 4), y = Math.Round(q.Y, 4), z = Math.Round(q.Z, 4),
+                        roll = Math.Round(q.RollDeg, 3), pitch = Math.Round(q.PitchDeg, 3), yaw = Math.Round(q.YawDeg, 3),
+                    };
+                }),
+            }),
+        };
+        File.WriteAllText(path, JsonSerializer.Serialize(payload,
+            new JsonSerializerOptions { WriteIndented = true }));
+    }
+
+    private static double[][] MatrixRows(Matrix3D m) => new[]
+    {
+        // 열 규약(p' = T·p) 기준 행 — WPF Matrix3D(행벡터 규약)의 전치
+        new[] { m.M11, m.M21, m.M31, m.OffsetX },
+        new[] { m.M12, m.M22, m.M32, m.OffsetY },
+        new[] { m.M13, m.M23, m.M33, m.OffsetZ },
+        new[] { 0.0, 0.0, 0.0, 1.0 },
+    };
+
+    /// <summary>포즈(위치+ZYX 오일러)에 강체 변환을 적용한다 — 자세는 프레임 축 회전 후 재추출.</summary>
+    public static TorchPose TransformPose(TorchPose p, Matrix3D t)
+    {
+        var (x, y, z) = EulerToAxes(p.RollDeg, p.PitchDeg, p.YawDeg);
+        var pos = t.Transform(new Point3D(p.X, p.Y, p.Z));
+        var xr = t.Transform(x); var yr = t.Transform(y); var zr = t.Transform(z);
+        xr.Normalize(); yr.Normalize(); zr.Normalize();
+        var (roll, pitch, yaw) = ToZyxEuler(xr, yr, zr);
+        return new TorchPose(pos.X, pos.Y, pos.Z, roll, pitch, yaw);
+    }
+
+    /// <summary>ZYX 오일러(deg) → 프레임 축 (ToZyxEuler 의 역변환).</summary>
+    internal static (Vector3D X, Vector3D Y, Vector3D Z) EulerToAxes(double rollDeg, double pitchDeg, double yawDeg)
+    {
+        const double toRad = Math.PI / 180.0;
+        double cr = Math.Cos(rollDeg * toRad), sr = Math.Sin(rollDeg * toRad);
+        double cp = Math.Cos(pitchDeg * toRad), sp = Math.Sin(pitchDeg * toRad);
+        double cy = Math.Cos(yawDeg * toRad), sy = Math.Sin(yawDeg * toRad);
+        // R = Rz(yaw)·Ry(pitch)·Rx(roll), 열 = 프레임 축
+        var x = new Vector3D(cy * cp, sy * cp, -sp);
+        var y = new Vector3D(cy * sp * sr - sy * cr, sy * sp * sr + cy * cr, cp * sr);
+        var z = new Vector3D(cy * sp * cr + sy * sr, sy * sp * cr - cy * sr, cp * cr);
+        return (x, y, z);
+    }
+}

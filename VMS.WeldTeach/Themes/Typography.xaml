@@ -1,0 +1,68 @@
+<!--
+  Design tokens — Typography (v1.1 / 2026-06-02 — refresh)
+
+  Segoe UI Variable (Windows 11) 우선, Segoe UI (Windows 10) 폴백.
+  헤더 폭을 키워(15→16, 18→20) 명확한 시각 위계.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Segoe UI Variable 우선, 미설치 시 Segoe UI 로 폴백. -->
+    <FontFamily x:Key="Font.Family">Segoe UI Variable, Segoe UI</FontFamily>
+
+    <!-- ──────────────── Size tokens ──────────────── -->
+    <system:Double x:Key="Font.Size.Display"  xmlns:system="clr-namespace:System;assembly=mscorlib">32</system:Double>
+    <system:Double x:Key="Font.Size.Title"    xmlns:system="clr-namespace:System;assembly=mscorlib">20</system:Double>
+    <system:Double x:Key="Font.Size.Subtitle" xmlns:system="clr-namespace:System;assembly=mscorlib">16</system:Double>
+    <system:Double x:Key="Font.Size.Body"     xmlns:system="clr-namespace:System;assembly=mscorlib">13</system:Double>
+    <!-- Caption 11 → 12 (2026-08-03): 11px 는 산업 현장 조명·거리에서 읽기 어렵다는
+         피드백 반영. 컨트롤 라벨은 아래 Text.Label(12 SemiBold + Primary)을 쓴다. -->
+    <system:Double x:Key="Font.Size.Caption"  xmlns:system="clr-namespace:System;assembly=mscorlib">12</system:Double>
+
+    <!-- ──────────────── Styles ──────────────── -->
+
+    <Style x:Key="Text.Display" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Family}"/>
+        <Setter Property="FontSize"   Value="{StaticResource Font.Size.Display}"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}"/>
+    </Style>
+
+    <Style x:Key="Text.Title" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Family}"/>
+        <Setter Property="FontSize"   Value="{StaticResource Font.Size.Title}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}"/>
+    </Style>
+
+    <!-- 사이드 패널 / 카드 헤더용. 16pt SemiBold + 강조색 적용 가능. -->
+    <Style x:Key="Text.SectionHeader" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Family}"/>
+        <Setter Property="FontSize"   Value="{StaticResource Font.Size.Subtitle}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.Primary}"/>
+        <Setter Property="Margin"     Value="0,0,0,14"/>
+    </Style>
+
+    <Style x:Key="Text.Body" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Family}"/>
+        <Setter Property="FontSize"   Value="{StaticResource Font.Size.Body}"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}"/>
+    </Style>
+
+    <!-- 보조 설명 · 상태 표시용 (읽지 않아도 되는 정보). -->
+    <Style x:Key="Text.Caption" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Family}"/>
+        <Setter Property="FontSize"   Value="{StaticResource Font.Size.Caption}"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Secondary}"/>
+    </Style>
+
+    <!-- 입력 컨트롤(텍스트박스·콤보·라디오)에 붙는 라벨 — 무엇을 넣는 칸인지 즉시
+         읽혀야 하므로 Caption 보다 진하게(Primary + SemiBold) 쓴다. -->
+    <Style x:Key="Text.Label" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Family}"/>
+        <Setter Property="FontSize"   Value="{StaticResource Font.Size.Caption}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}"/>
+    </Style>
+</ResourceDictionary>

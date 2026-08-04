@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows7.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- OCCT 네이티브(x64 전용) 종속 — AnyCPU 불가 -->
+    <PlatformTarget>x64</PlatformTarget>
+    <RootNamespace>VMS.WeldTeach</RootNamespace>
+    <AssemblyName>VMS.WeldTeach</AssemblyName>
+    <!-- Occt.NET 패키지가 주입하는 OcctConfiguration.cs 의 nullable 경고 억제 -->
+    <NoWarn>$(NoWarn);CS8600;CS8604;SYSLIB0044</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="HelixToolkit.Wpf" Version="2.24.0" />
+    <PackageReference Include="Occt.NET" Version="7.9.0" />
+  </ItemGroup>
+
+</Project>

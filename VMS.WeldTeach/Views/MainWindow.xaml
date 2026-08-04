@@ -1,0 +1,582 @@
+<Window x:Class="VMS.WeldTeach.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:helix="http://helix-toolkit.org/wpf"
+        xmlns:ctrl="clr-namespace:VMS.WeldTeach.Controls"
+        xmlns:helpers="clr-namespace:VMS.WeldTeach.Helpers"
+        Title="VMS WeldTeach — CAD 용접 경로 오프라인 티칭 (PoC)"
+        Width="1536" Height="864"
+        MinWidth="1200" MinHeight="700"
+        WindowStartupLocation="CenterScreen"
+        Style="{StaticResource {x:Type Window}}">
+    <!-- 윈도우 크롬(타이틀바/닫기 버튼)은 Themes/WindowStyles.xaml 의 기본 Window 스타일이 제공 -->
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <helpers:IndexPlusOneConverter x:Key="IndexPlusOne"/>
+        <helpers:InverseBoolConverter x:Key="InvBool"/>
+        <helpers:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 툴바 -->
+        <Border Grid.Row="0" Background="{StaticResource Brush.Surface.Base}" Padding="12,10">
+            <!-- 창을 최소 폭(1200)까지 줄이면 용접 툴바가 넘친다 — 잘려서 누를 수 없게
+                 되지 않도록 가로 스크롤을 둔다 (넘치지 않으면 스크롤바는 숨김). -->
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+            <StackPanel>
+            <!-- 0행: 공정 모드 (스캔 명세 §4 — 용접=CAD+엣지 / 그라인딩=점군+영역) -->
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <TextBlock Text="공정 모드" Style="{StaticResource Text.Caption}"
+                           Foreground="{StaticResource Brush.Accent}" FontWeight="SemiBold"
+                           VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <ctrl:HelpIcon VerticalAlignment="Center" Margin="0,0,10,0"
+                               HelpTitle="공정 모드"
+                               HelpText="용접: CAD(STEP)를 열고 모서리를 클릭해 용접 경로를 티칭합니다.&#x0a;그라인딩: CAD 없이 스캔 점군에서 직접 가공 영역을 선택해 커버리지 경로를 만듭니다.&#x0a;&#x0a;그라인딩 모드에서는 점군을 열면 자동으로 전처리(다운샘플·이상치 제거·법선 추정)가 실행되고, 뷰포트를 드래그해 영역을 선택할 수 있습니다."/>
+                <RadioButton Content="용접" GroupName="ProcessMode" VerticalAlignment="Center"
+                             Margin="0,0,10,0"
+                             IsChecked="{Binding IsGrindingMode, Converter={StaticResource InvBool}}"/>
+                <RadioButton Content="그라인딩" GroupName="ProcessMode" VerticalAlignment="Center"
+                             IsChecked="{Binding IsGrindingMode}"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal"
+                        Visibility="{Binding IsGrindingMode, Converter={StaticResource InvBoolToVis}}">
+                <Button Content="STEP 열기" Style="{StaticResource ModernButton}"
+                        Command="{Binding OpenStepCommand}" Margin="0,0,8,0"/>
+                <Button Content="샘플 시편 생성" Style="{StaticResource Button.Subtle}"
+                        Command="{Binding GenerateSampleCommand}" Margin="0,0,8,0"/>
+                <Button Content="경로 내보내기 (JSON)" Style="{StaticResource Button.Subtle}"
+                        Command="{Binding ExportPathCommand}" Margin="0,0,24,0"/>
+
+                <TextBlock Text="피킹 임계값(mm)" Style="{StaticResource Text.Label}"
+                           VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <ctrl:HelpIcon VerticalAlignment="Center" Margin="0,0,6,0"
+                               HelpTitle="피킹 임계값 (mm)"
+                               HelpText="마우스로 모서리를 잡는 허용 거리입니다. 클릭 위치와 모서리 사이 거리가 이 값(모델 단위 mm) 이내면 그 모서리가 선택됩니다.&#x0a;&#x0a;• 모서리가 잘 안 잡히면 값을 키우세요.&#x0a;• 가까운 다른 모서리가 자꾸 잡히면 값을 줄이세요."/>
+                <TextBox Text="{Binding PickThreshold, UpdateSourceTrigger=PropertyChanged}" Width="56"
+                         VerticalContentAlignment="Center" Margin="0,0,16,0"/>
+
+                <TextBlock Text="체이닝 각도 허용(°)" Style="{StaticResource Text.Label}"
+                           VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <ctrl:HelpIcon VerticalAlignment="Center" Margin="0,0,6,0"
+                               HelpTitle="체이닝 각도 허용 (°)"
+                               HelpText="클릭한 모서리에 이어진 모서리를 자동으로 따라가 하나의 용접 경로로 묶을 때(체이닝), 두 모서리가 만나는 지점의 접선 방향 차이가 이 각도 이내면 같은 경로로 잇습니다.&#x0a;&#x0a;• 값을 키우면 꺾인 모서리까지 이어집니다.&#x0a;• 값을 줄이면 매끄럽게 이어지는 구간만 묶입니다. (기본 15° = C1 연속)"/>
+                <TextBox Text="{Binding ChainAngleToleranceDeg, UpdateSourceTrigger=PropertyChanged}" Width="56"
+                         VerticalContentAlignment="Center" Margin="0,0,16,0"/>
+
+                <TextBlock Text="기본 포즈 간격(mm)" Style="{StaticResource Text.Label}"
+                           VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <ctrl:HelpIcon VerticalAlignment="Center" Margin="0,0,6,0"
+                               HelpTitle="기본 포즈 간격 (mm)"
+                               HelpText="용접 심을 따라 로봇에게 넘겨줄 목표점(포즈)들 사이의 거리 기본값입니다. 새로 추가하는 경로에 적용되며, [전체 적용]을 누르면 이미 선택한 모든 경로에도 반영됩니다.&#x0a;&#x0a;경로마다 다른 간격이 필요하면(직선은 넓게, 곡선은 좁게) 우측 경로 목록에서 경로를 선택한 뒤 '선택 경로 간격'에서 개별 조정하세요.&#x0a;&#x0a;선택한 경로의 포즈 위치는 화면에 노란 점으로 표시됩니다."/>
+                <TextBox Text="{Binding PoseSpacingMm, UpdateSourceTrigger=PropertyChanged}" Width="56"
+                         VerticalContentAlignment="Center" Margin="0,0,6,0"/>
+                <CheckBox Content="곡률 적응" IsChecked="{Binding AdaptiveSampling}"
+                          VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <ctrl:HelpIcon VerticalAlignment="Center" Margin="0,0,8,0"
+                               HelpTitle="곡률 적응 간격 (기본값)"
+                               HelpText="켜면 포즈 간격이 구간의 곡률에 따라 자동으로 조절됩니다 — 직선 구간은 설정한 간격(최대치)을 그대로 쓰고, 곡선 구간은 경로가 실제 곡선에서 벗어나는 오차(현 오차)가 0.05mm 를 넘지 않도록 자동으로 촘촘해집니다.&#x0a;&#x0a;※ 이 체크박스는 '앞으로 추가할 경로의 기본값'입니다:&#x0a;• 체크 후 새로 클릭한 경로 → 적응 ON 으로 생성&#x0a;• 이미 만든 경로 → 영향 없음. [전체 적용]을 눌러야 모든 경로에 반영&#x0a;• 특정 경로만 다르게 하려면 → 목록에서 선택 후 '선택 경로 간격' 옆 체크박스 사용 (경로별 설정이 항상 우선)"/>
+                <Button Content="전체 적용" Style="{StaticResource Button.Subtle}"
+                        Padding="12,7"
+                        ToolTip="기본 포즈 간격·곡률 적응 설정을 모든 경로에 일괄 적용합니다"
+                        Command="{Binding ApplySpacingToAllCommand}"/>
+
+                <ProgressBar IsIndeterminate="{Binding IsBusy}" Width="120" Height="6" Margin="20,0,0,0"
+                             VerticalAlignment="Center"
+                             Foreground="{StaticResource Brush.Primary}"
+                             Background="{StaticResource Brush.Surface.Overlay}"
+                             BorderThickness="0"
+                             Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
+            </StackPanel>
+
+            <!-- 2행: 점군 정합 (명세서 Step 3-2) — 용접 모드 전용 -->
+            <StackPanel Orientation="Horizontal" Margin="0,8,0,0"
+                        Visibility="{Binding IsGrindingMode, Converter={StaticResource InvBoolToVis}}">
+                <TextBlock Text="점군 정합" Style="{StaticResource Text.Caption}"
+                           Foreground="{StaticResource Brush.Accent}" FontWeight="SemiBold"
+                           VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <ctrl:HelpIcon VerticalAlignment="Center" Margin="0,0,10,0"
+                               HelpTitle="점군 정합 (ICP → T_align)"
+                               HelpText="3D 카메라로 찍은 점군(스캔)을 CAD 와 정합해, CAD 에서 티칭한 용접 경로를 실물(로봇) 좌표계로 옮기는 변환 T_align 을 구합니다.&#x0a;&#x0a;① [점군 열기] — PLY/XYZ 파일 로드 (은색 점으로 표시)&#x0a;② [CAD 정합 실행] — ICP 로 T_align 계산. 완료되면 점군이 CAD 모델 위에 겹쳐 보이고 RMSE(평균 오차)가 표시됩니다.&#x0a;③ 이후 [경로 내보내기]는 모든 포즈를 로봇 좌표계로 변환해 저장합니다.&#x0a;&#x0a;[합성 점군 생성]은 실카메라 없이 흐름을 시험하는 기능 — 현재 모델에 기지 오프셋(12,-7,3mm + Z10°/X5°)과 0.05mm 노이즈를 준 가상 스캔을 만듭니다. 정합 후 RMSE 가 노이즈 수준(≈0.05mm)으로 나오면 정상입니다."/>
+                <Button Content="점군 열기" Style="{StaticResource Button.Subtle}"
+                        Padding="12,7" Margin="0,0,6,0"
+                        Command="{Binding OpenCloudCommand}"/>
+                <Button Content="합성 점군 생성" Style="{StaticResource Button.Subtle}"
+                        Padding="12,7" Margin="0,0,6,0"
+                        Command="{Binding GenerateSampleCloudCommand}"/>
+                <Button Content="점군 저장 (.vpc)" Style="{StaticResource Button.Subtle}"
+                        Padding="12,7" Margin="0,0,6,0"
+                        ToolTip="현재 점군을 VMS 호환 .vpc 로 저장합니다 (합성 점군 배포용)"
+                        Command="{Binding SaveCloudCommand}"/>
+                <Button Content="CAD 정합 실행 (ICP)" Style="{StaticResource ModernButton}"
+                        Padding="12,7" Margin="0,0,12,0"
+                        Command="{Binding RunIcpCommand}"/>
+                <TextBlock Text="{Binding RegistrationStatus}" Style="{StaticResource Text.Caption}"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <!-- 그라인딩 모드 툴바 (스캔 명세 Step S1·S2) -->
+            <StackPanel Orientation="Horizontal"
+                        Visibility="{Binding IsGrindingMode, Converter={StaticResource BoolToVis}}">
+                <Button Content="점군 열기" Style="{StaticResource ModernButton}"
+                        Command="{Binding OpenCloudCommand}" Margin="0,0,8,0"/>
+                <TextBlock Text="합성 표면" Style="{StaticResource Text.Label}"
+                           VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <ctrl:HelpIcon VerticalAlignment="Center" Margin="0,0,6,0"
+                               HelpTitle="합성 표면 생성"
+                               HelpText="실스캔 없이 그라인딩 흐름을 시험하는 검증용 점군을 만듭니다 (노이즈 0.05mm 포함).&#x0a;&#x0a;• Plane: 평면 패널&#x0a;• InclinedPlane: 30° 경사 평면&#x0a;• CylinderShell: 원통 곡면(부분)&#x0a;• SineBump: 물결 곡면&#x0a;• HolePanel: 중앙에 구멍 뚫린 평면"/>
+                <ComboBox ItemsSource="{Binding SampleKinds}" SelectedItem="{Binding SelectedSampleKind}"
+                          Width="120" VerticalContentAlignment="Center" Margin="0,0,6,0"/>
+                <Button Content="생성" Style="{StaticResource Button.Subtle}"
+                        Padding="12,7" Margin="0,0,6,0"
+                        Command="{Binding GenerateGrindingSampleCommand}"/>
+                <Button Content="점군 저장 (.vpc)" Style="{StaticResource Button.Subtle}"
+                        Padding="12,7" Margin="0,0,16,0"
+                        Command="{Binding SaveCloudCommand}"/>
+
+                <TextBlock Text="도구" Style="{StaticResource Text.Label}"
+                           VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <ctrl:HelpIcon VerticalAlignment="Center" Margin="0,0,6,0"
+                               HelpTitle="영역 선택 도구"
+                               HelpText="라쏘: 뷰포트를 드래그해 올가미를 그리면 안쪽 점들이 새 영역으로 선택됩니다.&#x0a;브러시: 드래그 궤적 반경 이내의 점을 선택한 영역에 칠하듯 추가합니다.&#x0a;&#x0a;• Shift+드래그 = 선택한 영역에 추가&#x0a;• Ctrl+드래그 = 영역에서 제거 (지우개)&#x0a;• 카메라 회전은 우클릭 드래그, 이동은 휠클릭 드래그입니다.&#x0a;&#x0a;깊이 밴드: 화면상 겹쳐 보이는 뒷면 점이 함께 잡히지 않도록, 앞쪽 표면에서 이 거리(mm) 이내의 점만 선택합니다 (0 = 끄기)."/>
+                <RadioButton Content="라쏘" GroupName="GrindTool" VerticalAlignment="Center" Margin="0,0,8,0"
+                             IsChecked="{Binding IsBrushMode, Converter={StaticResource InvBool}}"/>
+                <RadioButton Content="브러시" GroupName="GrindTool" VerticalAlignment="Center" Margin="0,0,8,0"
+                             IsChecked="{Binding IsBrushMode}"/>
+                <TextBlock Text="반경(px)" Style="{StaticResource Text.Label}"
+                           VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <TextBox Text="{Binding BrushRadiusPx, UpdateSourceTrigger=PropertyChanged}" Width="52"
+                         VerticalContentAlignment="Center" Margin="0,0,10,0"/>
+                <TextBlock Text="깊이 밴드(mm)" Style="{StaticResource Text.Label}"
+                           VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <TextBox Text="{Binding SelectionDepthBandMm, UpdateSourceTrigger=PropertyChanged}" Width="52"
+                         VerticalContentAlignment="Center" Margin="0,0,16,0"/>
+
+                <TextBlock Text="{Binding PrepStatus}" Style="{StaticResource Text.Caption}"
+                           VerticalAlignment="Center"/>
+                <ProgressBar IsIndeterminate="{Binding IsBusy}" Width="120" Height="6" Margin="20,0,0,0"
+                             VerticalAlignment="Center"
+                             Foreground="{StaticResource Brush.Primary}"
+                             Background="{StaticResource Brush.Surface.Overlay}"
+                             BorderThickness="0"
+                             Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
+            </StackPanel>
+            </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <Grid Grid.Row="1" Margin="12,12,12,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="360"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 3D 뷰포트: 마우스 훅업은 코드비하인드(뷰 전용 상호작용) -->
+            <Border Background="{StaticResource Brush.Surface.Base}"
+                    CornerRadius="{StaticResource Radius.Md}">
+                <Grid>
+                    <!-- 카메라 조작 제스처를 명시 선언한다 (라이브러리 기본값에 의존하지 않음).
+                         왼쪽 버튼은 엣지 피킹·라쏘 선택에 쓰이므로 카메라에 배정하지 않는다.
+                         이동(Pan)은 Shift+우클릭과 휠클릭 양쪽으로 열어 둔다 — 휠 버튼이 없는
+                         마우스에서도 되도록. 조작법은 아래 좌하단 안내에 표시한다. -->
+                    <helix:HelixViewport3D x:Name="Viewport"
+                                           Background="Transparent"
+                                           ShowCoordinateSystem="True"
+                                           ZoomExtentsWhenLoaded="True"
+                                           IsPanEnabled="True"
+                                           IsRotationEnabled="True"
+                                           IsZoomEnabled="True"
+                                           RotateGesture="RightClick"
+                                           PanGesture="Shift+RightClick"
+                                           PanGesture2="MiddleClick"
+                                           ZoomGesture="Control+RightClick"
+                                           CameraChanged="Viewport_CameraChanged"
+                                           MouseMove="Viewport_MouseMove"
+                                           MouseLeftButtonDown="Viewport_MouseLeftButtonDown"
+                                           MouseLeftButtonUp="Viewport_MouseLeftButtonUp">
+                        <helix:DefaultLights/>
+                    </helix:HelixViewport3D>
+
+                    <!-- 카메라 조작 안내 — 이동이 Shift+우클릭인 것을 모르면 못 찾는다.
+                         좌하단은 좌표축 표시기(ShowCoordinateSystem)가 쓰므로 좌상단에 둔다. -->
+                    <Border HorizontalAlignment="Left" VerticalAlignment="Top"
+                            Margin="12,12,0,0" Padding="10,6"
+                            CornerRadius="{StaticResource Radius.Sm}"
+                            Background="{StaticResource Brush.Surface.Base}"
+                            Opacity="0.85" IsHitTestVisible="False">
+                        <StackPanel>
+                            <TextBlock Text="회전  우클릭 드래그" Style="{StaticResource Text.Caption}"/>
+                            <TextBlock Text="이동  Shift+우클릭 · 휠클릭 드래그" Style="{StaticResource Text.Caption}"/>
+                            <TextBlock Text="확대  휠 · Ctrl+우클릭 드래그" Style="{StaticResource Text.Caption}"/>
+                        </StackPanel>
+                    </Border>
+                    <!-- 경로 순번 2D 오버레이 — 3D 메쉬에 가려지지 않도록 항상 최상위 -->
+                    <Canvas x:Name="LabelOverlay" IsHitTestVisible="False" ClipToBounds="True"/>
+                    <!-- 라쏘/브러시 드래그 궤적 오버레이 (그라인딩 모드) -->
+                    <Canvas x:Name="SelectionOverlay" IsHitTestVisible="False" ClipToBounds="True"/>
+                </Grid>
+            </Border>
+
+            <!-- 우측 패널: 경로 목록(용접 순서) + 포즈 — 용접 모드 전용 -->
+            <Border Grid.Column="1" Margin="12,0,0,0"
+                    Background="{StaticResource Brush.Surface.Raised}"
+                    CornerRadius="{StaticResource Radius.Md}"
+                    Padding="16"
+                    Visibility="{Binding IsGrindingMode, Converter={StaticResource InvBoolToVis}}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Margin="0,0,0,8">
+                        <DockPanel>
+                            <TextBlock Text="용접 경로" Style="{StaticResource Text.SectionHeader}" Margin="0,0,6,0"/>
+                            <ctrl:HelpIcon VerticalAlignment="Top" Margin="0,3,0,0"
+                                           HelpTitle="용접 경로 목록"
+                                           HelpText="모서리를 클릭할 때마다 경로가 목록에 추가되고, 목록의 순서가 곧 용접 순서입니다.&#x0a;&#x0a;• 이미 선택한 경로의 모서리를 다시 클릭하면 그 경로가 해제됩니다.&#x0a;• 목록에서 경로를 클릭하면 그 경로의 포즈가 아래 표에 표시됩니다.&#x0a;• 내보내기(JSON)는 목록의 모든 경로를 순서대로 저장합니다."/>
+                            <Border/>
+                        </DockPanel>
+                        <TextBlock Style="{StaticResource Text.Body}"
+                                   Foreground="{StaticResource Brush.Text.Secondary}"
+                                   TextWrapping="Wrap"
+                                   Text="모서리 클릭 → 경로 추가 (숫자 = 용접 순서). 같은 경로를 다시 클릭하면 해제됩니다."/>
+                    </StackPanel>
+
+                    <ListBox Grid.Row="1" ItemsSource="{Binding Contours}"
+                             SelectedItem="{Binding SelectedContour}"
+                             MaxHeight="200" Margin="0,0,0,8"
+                             Background="Transparent" BorderThickness="0"
+                             AlternationCount="1000"
+                             HorizontalContentAlignment="Stretch"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Padding" Value="8,6"/>
+                                <Setter Property="Margin" Value="0,0,0,4"/>
+                                <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <Border x:Name="bg" Background="{StaticResource Brush.Surface.Base}"
+                                                    CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="bg" Property="Background" Value="{StaticResource Brush.Surface.Overlay}"/>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="bg" Property="Background" Value="{StaticResource Brush.Primary}"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <DockPanel LastChildFill="True">
+                                    <!-- 순번 뱃지 (목록 순서 = 용접 순서) -->
+                                    <Border DockPanel.Dock="Left" Width="22" Height="22" CornerRadius="11"
+                                            Background="{StaticResource Brush.Accent}" Margin="0,0,8,0">
+                                        <TextBlock Foreground="White" FontWeight="Bold" FontSize="12"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   Text="{Binding (ItemsControl.AlternationIndex),
+                                                          RelativeSource={RelativeSource AncestorType=ListBoxItem},
+                                                          Converter={StaticResource IndexPlusOne}}"/>
+                                    </Border>
+                                    <Button DockPanel.Dock="Right" Width="20" Height="20"
+                                            Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                            ToolTip="이 경로 제거"
+                                            Command="{Binding DataContext.RemoveContourCommand,
+                                                      RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}">
+                                        <TextBlock Text="✕" Foreground="{StaticResource Brush.Text.Tertiary}"
+                                                   FontSize="13" HorizontalAlignment="Center"/>
+                                    </Button>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding PathId}" FontWeight="SemiBold" FontSize="13"/>
+                                        <TextBlock Text="{Binding Summary}" FontSize="12"
+                                                   Foreground="{StaticResource Brush.Text.Secondary}"/>
+                                    </StackPanel>
+                                </DockPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <StackPanel Grid.Row="2" Margin="0,0,0,10">
+                        <DockPanel LastChildFill="False" Margin="0,0,0,8">
+                            <TextBlock DockPanel.Dock="Left" Text="선택 경로 간격(mm)"
+                                       Style="{StaticResource Text.Label}"
+                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <ctrl:HelpIcon DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,6,0"
+                                           HelpTitle="선택 경로 간격 (mm) · 곡률 적응"
+                                           HelpText="목록에서 선택한 경로에만 적용되는 개별 설정입니다. 간격 값이나 옆의 '곡률 적응'을 바꾸면 그 경로의 포즈만 즉시 다시 계산됩니다. 경로를 선택하면 이 칸들은 그 경로에 저장된 값으로 자동 표시됩니다.&#x0a;&#x0a;• 직선 위주 경로 → 넓게 (예: 5~10mm)&#x0a;• 곡선(원형 심 등) 경로 → 좁게 or 곡률 적응 체크&#x0a;&#x0a;※ 툴바의 기본값 체크 상태와 무관하게 이 경로에는 여기의 설정이 항상 우선합니다. 예: 툴바 곡률 적응이 체크돼 있어도 여기서 해제하면 이 경로는 균일 간격으로 계산됩니다.&#x0a;&#x0a;각 경로의 현재 설정은 목록 요약의 '@값·적응' 으로 표시됩니다."/>
+                            <TextBox DockPanel.Dock="Left" Width="56"
+                                     Text="{Binding SelectedPathSpacingMm, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalContentAlignment="Center" Margin="0,0,10,0"/>
+                            <CheckBox DockPanel.Dock="Left" Content="곡률 적응"
+                                      IsChecked="{Binding SelectedPathAdaptive}"
+                                      VerticalAlignment="Center"
+                                      ToolTip="선택한 경로만 곡률 적응 간격을 사용합니다"/>
+                        </DockPanel>
+                        <DockPanel LastChildFill="False">
+                            <Button DockPanel.Dock="Left" Content="전체 지우기" Style="{StaticResource Button.Subtle}"
+                                    Padding="12,7"
+                                    Command="{Binding ClearContoursCommand}"/>
+                            <CheckBox DockPanel.Dock="Left" Content="전체 보기"
+                                      IsChecked="{Binding ShowAllPaths}"
+                                      VerticalAlignment="Center" Margin="10,0,0,0"
+                                      ToolTip="모든 경로의 포즈 점과 토치 방향을 동시에 표시합니다"/>
+                            <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center"
+                                       Style="{StaticResource Text.Caption}"
+                                       Text="{Binding Contours.Count, StringFormat=경로 {0}개}"/>
+                        </DockPanel>
+                    </StackPanel>
+
+                    <DataGrid Grid.Row="3" ItemsSource="{Binding Poses}" IsReadOnly="True">
+                        <DataGrid.Resources>
+                            <!-- 수치 열 — 우측 정렬로 자릿수 비교가 쉬워진다 -->
+                            <Style x:Key="NumCell" TargetType="TextBlock">
+                                <Setter Property="TextAlignment" Value="Right"/>
+                                <Setter Property="VerticalAlignment" Value="Center"/>
+                            </Style>
+                            <!-- 좁은 6열 패널에 맞춰 셀/헤더 패딩 축소 (테마 기본 12,8 → 6,6) -->
+                            <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}">
+                                <Setter Property="Padding" Value="6,6"/>
+                            </Style>
+                            <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                                <Setter Property="Padding" Value="6,10"/>
+                            </Style>
+                        </DataGrid.Resources>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="X" Binding="{Binding X, StringFormat=F1}" Width="*" ElementStyle="{StaticResource NumCell}"/>
+                            <DataGridTextColumn Header="Y" Binding="{Binding Y, StringFormat=F1}" Width="*" ElementStyle="{StaticResource NumCell}"/>
+                            <DataGridTextColumn Header="Z" Binding="{Binding Z, StringFormat=F1}" Width="*" ElementStyle="{StaticResource NumCell}"/>
+                            <DataGridTextColumn Header="R°" Binding="{Binding RollDeg, StringFormat=F1}" Width="*" ElementStyle="{StaticResource NumCell}"/>
+                            <DataGridTextColumn Header="P°" Binding="{Binding PitchDeg, StringFormat=F1}" Width="*" ElementStyle="{StaticResource NumCell}"/>
+                            <DataGridTextColumn Header="Y°" Binding="{Binding YawDeg, StringFormat=F1}" Width="*" ElementStyle="{StaticResource NumCell}"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <!-- 우측 패널: 그라인딩 영역 목록 (가공 순서) — 그라인딩 모드 전용 -->
+            <Border Grid.Column="1" Margin="12,0,0,0"
+                    Background="{StaticResource Brush.Surface.Raised}"
+                    CornerRadius="{StaticResource Radius.Md}"
+                    Padding="16"
+                    Visibility="{Binding IsGrindingMode, Converter={StaticResource BoolToVis}}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Margin="0,0,0,8">
+                        <DockPanel>
+                            <TextBlock Text="가공 영역" Style="{StaticResource Text.SectionHeader}" Margin="0,0,6,0"/>
+                            <ctrl:HelpIcon VerticalAlignment="Top" Margin="0,3,0,0"
+                                           HelpTitle="가공 영역 목록"
+                                           HelpText="뷰포트를 드래그(라쏘)할 때마다 영역이 목록에 추가되고, 목록의 순서가 곧 가공 순서입니다.&#x0a;&#x0a;• Shift+드래그: 선택한 영역에 점 추가&#x0a;• Ctrl+드래그: 영역에서 점 제거 (지우개)&#x0a;• 브러시 도구는 드래그 궤적 반경만큼 칠하듯 추가합니다.&#x0a;&#x0a;커버리지 경로 생성(다음 단계)은 이 영역 단위로 실행됩니다."/>
+                            <Border/>
+                        </DockPanel>
+                        <TextBlock Style="{StaticResource Text.Body}"
+                                   Foreground="{StaticResource Brush.Text.Secondary}"
+                                   TextWrapping="Wrap"
+                                   Text="뷰포트 드래그 → 영역 추가 (숫자 = 가공 순서). Shift=추가 · Ctrl=제거."/>
+                    </StackPanel>
+
+                    <ListBox Grid.Row="1" ItemsSource="{Binding Regions}"
+                             SelectedItem="{Binding SelectedRegion}"
+                             Margin="0,0,0,8"
+                             Background="Transparent" BorderThickness="0"
+                             AlternationCount="1000"
+                             HorizontalContentAlignment="Stretch"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Padding" Value="8,6"/>
+                                <Setter Property="Margin" Value="0,0,0,4"/>
+                                <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <Border x:Name="bg" Background="{StaticResource Brush.Surface.Base}"
+                                                    CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="bg" Property="Background" Value="{StaticResource Brush.Surface.Overlay}"/>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="bg" Property="Background" Value="{StaticResource Brush.Primary}"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <DockPanel LastChildFill="True">
+                                    <Border DockPanel.Dock="Left" Width="22" Height="22" CornerRadius="11"
+                                            Background="{StaticResource Brush.Accent}" Margin="0,0,8,0">
+                                        <TextBlock Foreground="White" FontWeight="Bold" FontSize="12"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   Text="{Binding (ItemsControl.AlternationIndex),
+                                                          RelativeSource={RelativeSource AncestorType=ListBoxItem},
+                                                          Converter={StaticResource IndexPlusOne}}"/>
+                                    </Border>
+                                    <Button DockPanel.Dock="Right" Width="20" Height="20"
+                                            Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                            ToolTip="이 영역 제거"
+                                            Command="{Binding DataContext.RemoveRegionCommand,
+                                                      RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}">
+                                        <TextBlock Text="✕" Foreground="{StaticResource Brush.Text.Tertiary}"
+                                                   FontSize="13" HorizontalAlignment="Center"/>
+                                    </Button>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding RegionId}" FontWeight="SemiBold" FontSize="13"/>
+                                        <TextBlock Text="{Binding Summary}" FontSize="12"
+                                                   Foreground="{StaticResource Brush.Text.Secondary}"/>
+                                    </StackPanel>
+                                </DockPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <!-- 커버리지 파라미터 (스캔 명세 Step S3) -->
+                    <StackPanel Grid.Row="2" Margin="0,0,0,10">
+                        <DockPanel LastChildFill="False" Margin="0,0,0,6">
+                            <TextBlock DockPanel.Dock="Left" Text="공구 직경(mm)"
+                                       Style="{StaticResource Text.Label}"
+                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <ctrl:HelpIcon DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,6,0"
+                                           HelpTitle="커버리지 파라미터"
+                                           HelpText="공구 직경 × (1 − 겹침률) = 스텝오버(인접 라인 간격)입니다.&#x0a;예: 직경 50mm · 겹침 30% → 라인 간격 35mm.&#x0a;&#x0a;• 겹침을 키우면 라인이 촘촘해져 가공 품질이 좋아지고 시간이 늘어납니다.&#x0a;• 마진: 영역 경계에서 안쪽으로 띄우는 거리 (공구 반경 보정용).&#x0a;• 지그재그: 홀수 라인을 역방향으로 왕복 가공합니다.&#x0a;&#x0a;[커버리지 생성]은 모든 영역에 현재 파라미터를 적용합니다."/>
+                            <TextBox DockPanel.Dock="Left" Width="56"
+                                     Text="{Binding ToolDiameterMm, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalContentAlignment="Center" Margin="0,0,12,0"/>
+                            <TextBlock DockPanel.Dock="Left" Text="겹침(%)"
+                                       Style="{StaticResource Text.Label}"
+                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBox DockPanel.Dock="Left" Width="52"
+                                     Text="{Binding OverlapPct, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalContentAlignment="Center"/>
+                        </DockPanel>
+                        <!-- 파생값(스텝오버)은 입력 행에 끼워 넣으면 패널 폭(360)에서 잘린다 —
+                             한 줄을 통째로 주고 강조색으로 결과임을 구분한다. -->
+                        <TextBlock Margin="0,0,0,8"
+                                   Style="{StaticResource Text.Label}"
+                                   Foreground="{StaticResource Brush.Accent}"
+                                   Text="{Binding StepoverMm, StringFormat=→ 스텝오버(라인 간격) {0:F1} mm}"/>
+                        <DockPanel LastChildFill="False" Margin="0,0,0,10">
+                            <TextBlock DockPanel.Dock="Left" Text="마진(mm)"
+                                       Style="{StaticResource Text.Label}"
+                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBox DockPanel.Dock="Left" Width="52"
+                                     Text="{Binding GrindMarginMm, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalContentAlignment="Center" Margin="0,0,14,0"/>
+                            <CheckBox DockPanel.Dock="Left" Content="지그재그"
+                                      IsChecked="{Binding ZigzagPattern}"
+                                      VerticalAlignment="Center"
+                                      ToolTip="홀수 라인을 역방향으로 왕복합니다 (끄면 편도)"/>
+                        </DockPanel>
+
+                        <!-- 공구 포즈 (스캔 명세 Step S4) -->
+                        <DockPanel LastChildFill="False" Margin="0,0,0,6">
+                            <TextBlock DockPanel.Dock="Left" Text="리드(°)"
+                                       Style="{StaticResource Text.Label}"
+                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <ctrl:HelpIcon DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,6,0"
+                                           HelpTitle="공구 포즈 (리드 · 틸트 · 다층 패스)"
+                                           HelpText="리드각: 공구를 진행 방향으로 기울이는 각도입니다. 표면 법선에서 진행 쪽으로 눕히면 연마재가 표면을 끌듯이 지나가 면이 매끄러워집니다 (기본 10°).&#x0a;&#x0a;틸트각: 공구를 진행 축 둘레로 옆으로 기울입니다. 모서리·구석 접근에 씁니다 (기본 0°).&#x0a;&#x0a;패스 수: 같은 경로를 몇 번 반복할지입니다. 1이면 표면을 한 번만 따라갑니다.&#x0a;패스당 깊이: 패스마다 표면 법선 반대로 파고드는 깊이입니다. 0이면 모든 패스가 표면을 그대로 추종합니다 (블레이드 복원처럼 살을 깎아내려면 값을 줍니다).&#x0a;&#x0a;포즈는 [커버리지 생성]을 누를 때 스캔라인과 함께 계산됩니다."/>
+                            <TextBox DockPanel.Dock="Left" Width="52"
+                                     Text="{Binding LeadAngleDeg, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalContentAlignment="Center" Margin="0,0,12,0"/>
+                            <TextBlock DockPanel.Dock="Left" Text="틸트(°)"
+                                       Style="{StaticResource Text.Label}"
+                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBox DockPanel.Dock="Left" Width="52"
+                                     Text="{Binding TiltAngleDeg, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalContentAlignment="Center"/>
+                        </DockPanel>
+                        <DockPanel LastChildFill="False" Margin="0,0,0,10">
+                            <TextBlock DockPanel.Dock="Left" Text="패스 수"
+                                       Style="{StaticResource Text.Label}"
+                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBox DockPanel.Dock="Left" Width="52"
+                                     Text="{Binding PassCount, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalContentAlignment="Center" Margin="0,0,12,0"/>
+                            <TextBlock DockPanel.Dock="Left" Text="패스당 깊이(mm)"
+                                       Style="{StaticResource Text.Label}"
+                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBox DockPanel.Dock="Left" Width="52"
+                                     Text="{Binding DepthPerPassMm, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalContentAlignment="Center"/>
+                        </DockPanel>
+
+                        <Button Content="커버리지 생성" Style="{StaticResource ModernButton}"
+                                HorizontalAlignment="Stretch" Margin="0,0,0,10"
+                                Command="{Binding GenerateCoverageCommand}"/>
+
+                        <!-- 핸드-아이 행렬 (스캔 명세 §S4-2) -->
+                        <DockPanel LastChildFill="False" Margin="0,0,0,4">
+                            <TextBlock DockPanel.Dock="Left" Text="로봇 좌표 변환"
+                                       Style="{StaticResource Text.Label}"
+                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <ctrl:HelpIcon DockPanel.Dock="Left" VerticalAlignment="Center"
+                                           HelpTitle="T_cam2base (핸드-아이 행렬)"
+                                           HelpText="경로는 카메라(스캔)가 본 좌표계에서 만들어집니다. 로봇이 그대로 쓰려면 '카메라 좌표 → 로봇 베이스 좌표' 변환 행렬이 필요하고, 이 행렬은 핸드-아이 캘리브레이션으로 구합니다.&#x0a;&#x0a;캘리브레이션은 별도 도구/모듈에서 수행하고, 그 결과 4×4 행렬 파일만 여기서 불러오면 됩니다.&#x0a;&#x0a;허용 형식 (행 우선, 단위 mm):&#x0a;• JSON 2차원 배열 [[r,r,r,tx],[r,r,r,ty],[r,r,r,tz],[0,0,0,1]]&#x0a;• JSON 평탄 배열(숫자 16개 또는 12개)&#x0a;• tCam2BaseRowMajor 키를 가진 JSON (내보낸 경로 파일을 그대로 넣어도 됩니다)&#x0a;• 공백/쉼표로 구분된 숫자 12·16개 텍스트&#x0a;&#x0a;미입력이면 카메라 좌표계 그대로 내보내고, JSON 의 frame 필드에 그 사실이 적힙니다."/>
+                            <Button DockPanel.Dock="Right" Content="해제" Style="{StaticResource Button.Subtle}"
+                                    Padding="10,4" Margin="6,0,0,0"
+                                    ToolTip="행렬을 해제하고 카메라 좌표계로 되돌립니다"
+                                    Command="{Binding ClearCam2BaseCommand}"/>
+                            <Button DockPanel.Dock="Right" Content="행렬 불러오기"
+                                    Style="{StaticResource Button.Subtle}" Padding="10,4"
+                                    Command="{Binding LoadCam2BaseCommand}"/>
+                        </DockPanel>
+                        <TextBlock Text="{Binding Cam2BaseStatus}" Margin="0,0,0,10"
+                                   Style="{StaticResource Text.Caption}" TextWrapping="Wrap"/>
+
+                        <Button Content="경로 내보내기 (JSON)" Style="{StaticResource Button.Subtle}"
+                                HorizontalAlignment="Stretch"
+                                ToolTip="가공 순서대로 스캔라인·포즈를 JSON 으로 저장합니다"
+                                Command="{Binding ExportGrindingPathCommand}"/>
+                    </StackPanel>
+
+                    <DockPanel Grid.Row="3" LastChildFill="False">
+                        <Button DockPanel.Dock="Left" Content="전체 지우기" Style="{StaticResource Button.Subtle}"
+                                Padding="12,7"
+                                Command="{Binding ClearRegionsCommand}"/>
+                        <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center"
+                                   Style="{StaticResource Text.Caption}"
+                                   Text="{Binding Regions.Count, StringFormat=영역 {0}개}"/>
+                    </DockPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- 상태 바 -->
+        <Border Grid.Row="2" Background="{StaticResource Brush.Surface.Raised}"
+                CornerRadius="{StaticResource Radius.Sm}" Padding="12,8" Margin="12">
+            <TextBlock Text="{Binding StatusText}" Style="{StaticResource Text.Body}"
+                       Foreground="{StaticResource Brush.Text.Secondary}"/>
+        </Border>
+    </Grid>
+</Window>
