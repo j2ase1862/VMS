@@ -221,16 +221,20 @@ namespace VMS.VisionSetup.Services
                 Id = "2d-featurematch",
                 Title = "패턴 매칭 (Feature Match)",
                 Category = Category2D,
-                Description = "학습된 패턴을 이미지에서 찾아 위치·각도·스코어를 얻고 Result 로 " +
-                              "판정한다. Feature Match 설정에서 기준 패턴을 학습시킬 것.",
+                Description = "그레이 변환 후 학습된 패턴을 이미지에서 찾아 위치·각도·스코어를 " +
+                              "얻고 Result 로 판정한다. Feature Match 는 8-bit Gray 입력만 " +
+                              "받으므로 Grayscale 을 앞에 둔다 (이미 그레이면 통과). " +
+                              "Feature Match 설정에서 기준 패턴을 학습시킬 것.",
                 Tools =
                 {
+                    new TemplateToolSpec { ToolType = "GrayscaleTool" },
                     new TemplateToolSpec { ToolType = "FeatureMatchTool" },
                     new TemplateToolSpec { ToolType = "ResultTool" },
                 },
                 Connections =
                 {
-                    new TemplateConnectionSpec { SourceIndex = 0, TargetIndex = 1, Type = ConnectionType.Result },
+                    new TemplateConnectionSpec { SourceIndex = 0, TargetIndex = 1, Type = ConnectionType.Image },
+                    new TemplateConnectionSpec { SourceIndex = 1, TargetIndex = 2, Type = ConnectionType.Result },
                 },
             },
             new RecipeTemplate
