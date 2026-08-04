@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>로봇 샌딩·그라인딩 솔루션 자체 개발 타당성 검토 v0.2</title>
+<style>
+  :root {
+    --bg: #0e0f12; --panel: #1a1b1f; --card: #25272d; --border: #3a3d44;
+    --text: #e8e9ec; --muted: #9b9ea4; --accent: #14b8a6; --primary: #3d7de8;
+    --warn: #f59e0b; --danger: #e53935; --ok: #10b981;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.7 'Segoe UI', 'Malgun Gothic', system-ui, sans-serif; }
+  main { padding: 40px 56px 80px; max-width: 1000px; margin: 0 auto; }
+  .header-strip {
+    background: linear-gradient(90deg, var(--accent), var(--primary));
+    color: white; padding: 28px 32px; border-radius: 12px; margin-bottom: 12px;
+  }
+  .header-strip h1 { margin: 0 0 6px; font-size: 26px; }
+  .header-strip .sub { opacity: 0.92; font-size: 13px; }
+  h2 { color: var(--accent); border-bottom: 2px solid var(--border);
+    padding-bottom: 6px; margin: 48px 0 16px; font-size: 21px; }
+  h3 { color: var(--primary); margin: 26px 0 10px; font-size: 16px; }
+  p { margin: 8px 0 12px; }
+  ul, ol { padding-left: 22px; }
+  li { margin: 4px 0; }
+  code { background: #0a0a0a; padding: 1px 6px; border-radius: 3px;
+    font: 12.5px/1.5 'Consolas', monospace; color: #d4d4d4; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0 18px; font-size: 13px; }
+  th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--card); color: var(--accent); font-weight: 600; }
+  tr:nth-child(even) td { background: rgba(255,255,255,0.018); }
+  .callout { padding: 10px 14px; border-radius: 6px; margin: 14px 0;
+    border-left: 4px solid var(--accent); background: rgba(20,184,166,0.08); }
+  .callout.warn { border-left-color: var(--warn); background: rgba(245,158,11,0.08); }
+  .callout.danger { border-left-color: var(--danger); background: rgba(229,57,53,0.08); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .ok { color: var(--ok); font-weight: 600; }
+  .risk-h { color: var(--danger); font-weight: 600; }
+  .risk-m { color: var(--warn); font-weight: 600; }
+  .risk-l { color: var(--muted); }
+  @media print { main { padding: 20px; max-width: 100%; } table, .callout { page-break-inside: avoid; } }
+</style>
+</head>
+<body>
+<main>
+
+<div class="header-strip">
+  <h1>로봇 샌딩·그라인딩 솔루션 자체 개발 타당성 검토</h1>
+  <div class="sub">v0.2 (특허 1차 조사 반영) · 2026-08-04 · 연구소 · 내부 검토용</div>
+</div>
+
+<div class="callout warn"><strong>요약:</strong> MARI(캐나다) AARS 도입 대안으로서의 자체 개발은
+<strong>기술적으로 가능</strong>하다 — 핵심 파이프라인(스캔→커버리지 경로→공구 포즈)은 WeldTeach M1~M6 로
+이미 구현·정량 검증돼 있다. 두산 협동로봇 제한 + 자동 분할·노코드 UI 스코핑은 타당하며,
+최대 리스크는 기술이 아니라 <strong>공정 지식 축적 시간과 특허(FTO)</strong>다. MARI 의 한국 특허 출원이
+존재하나(미등록·심사 중) 청구 방식이 당사 방식과 달라 예비 판단으로는 회피 가능성이 높다 (부록 A).</div>
+
+<h2>1. 검토 배경과 목적</h2>
+<p>MARI(Maple Advanced Robotics Inc., 캐나다)의 CAD-free 로봇 샌딩·그라인딩 솔루션 <strong>AARS</strong>
+도입을 검토하였으나 단가가 높아, 연구소 자체 개발 타당성을 검토한다. 검토 시나리오는
+<strong>판매용 범용 제품 + 두산 협동로봇 제한 + 자동 곡면 분할·결함 기반 적응 가공(④)과
+노코드 플로차트 UI(⑤) 구현</strong>이다.</p>
+
+<h2>2. 대상 솔루션 — MARI AARS</h2>
+<table>
+  <tr><th>항목</th><th>내용</th></tr>
+  <tr><td>구조</td><td><strong>Perception</strong>(3D 스캔→점군) → <strong>Reasoning</strong>(지오메트리·결함·공정 분석) → <strong>Planning</strong>(CAD 없이 충돌 회피 경로 실시간 생성)</td></tr>
+  <tr><td>제품군</td><td>Scan&amp;Go · Drag&amp;Go(노코드) · Plug&amp;Play · Place&amp;Go(턴키 셀)</td></tr>
+  <tr><td>로봇</td><td>robot-agnostic 8사 (ABB·KUKA·Fanuc·Stäubli·Kawasaki·Yaskawa·Mitsubishi·두산)</td></tr>
+  <tr><td>공정/시장</td><td>샌딩·그라인딩·폴리싱 / 다품종 소량(HMLV) — 항공·자동차·조선·목공·금속</td></tr>
+  <tr><td>검증</td><td>2025 하노버메세 로보틱스 어워드 · CES 2026 Best of Innovation</td></tr>
+</table>
+<div class="callout"><strong>중요:</strong> 당사 WeldTeach 그라인딩 명세는 애초에 HYM 경유 AARS 소개서
+대응으로 작성되었고 핵심 루프는 M1~M6 으로 구현·검증 완료 상태다. 본 검토는 제로 베이스 가능성이 아니라
+<strong>"보유 파이프라인의 제품화 격차"</strong> 평가다.</div>
+
+<h2>3. 보유 자산과 격차</h2>
+<h3>3.1 보유 자산</h3>
+<table>
+  <tr><th>AARS 구성</th><th>당사 현황</th></tr>
+  <tr><td>3D 스캔 → 점군</td><td class="ok">Mech-Eye 스택 · .vpc · 로봇 멀티뷰 스캔 구현 완료</td></tr>
+  <tr><td>전처리·법선</td><td class="ok">M1 (정량 검증)</td></tr>
+  <tr><td>영역 지정</td><td class="ok">M2 라쏘/브러시 (수동)</td></tr>
+  <tr><td>CAD-free 커버리지 경로</td><td class="ok">M3~M4 — 곡면 표면호길이 스텝오버 보정 포함</td></tr>
+  <tr><td>공구 포즈·내보내기</td><td class="ok">M5 리드/틸트·다층 패스·JSON</td></tr>
+  <tr><td>핸드-아이 변환</td><td class="ok">T_cam2base UI + 캘리브레이션 매뉴얼</td></tr>
+  <tr><td>결함 검출 재료</td><td class="ok">YOLO-Seg · SAM · 포토메트릭 스테레오 · 마스크 크롭 체인</td></tr>
+</table>
+<h3>3.2 격차 (원 분석)</h3>
+<table>
+  <tr><th>#</th><th>격차</th><th>난이도</th></tr>
+  <tr><td>①</td><td>로봇 실기 연동/포스트프로세서</td><td class="risk-m">중</td></tr>
+  <tr><td>②</td><td>힘 제어</td><td class="risk-m">중 (구매 우회 가능)</td></tr>
+  <tr><td>③</td><td>충돌 회피·모션 플래닝</td><td class="risk-h">대</td></tr>
+  <tr><td>④</td><td>자동 곡면 분할·결함 기반 적응 가공</td><td class="risk-h">대</td></tr>
+  <tr><td>⑤</td><td>노코드 플로차트 UI</td><td class="risk-l">중소</td></tr>
+</table>
+
+<h2>4. 검토 시나리오 평가</h2>
+<h3>4.1 두산 협동로봇 제한 → 격차 ①·② 대부분 소멸</h3>
+<table>
+  <tr><th>격차</th><th>두산 제한 후</th></tr>
+  <tr><td>① 로봇 연동</td><td>포스트프로세서 = <strong>JSON→DRL</strong> 변환기 하나. 공식 SDK·ROS2·DART 시뮬레이터 존재</td></tr>
+  <tr><td>② 힘 제어</td><td><strong>M 시리즈 전 관절 토크센서 내장</strong> — task_compliance_ctrl / set_desired_force API. 당사 "힘 제어는 로봇단 책임" 설계와 정합. 고품질 요구 시 액티브 이펙터 추가 구매</td></tr>
+  <tr><td>판로</td><td>두산로보틱스 국내사 — 솔루션 파트너 생태계 등재 시 영업 채널</td></tr>
+</table>
+<div class="callout warn"><strong>트레이드오프:</strong> 협동로봇 강성·속도 한계로 중(重)연삭·대형 스톡 제거는
+제외 — 타깃은 목공 샌딩·용접비드 경연삭·폴리싱·소형 금속 피니싱 (국내 HMLV 중소 제조와 정합 = 집중).</div>
+
+<h3>4.2 격차 ④ — 3단계 분해</h3>
+<table>
+  <tr><th>층</th><th>내용</th><th>난이도</th><th>재료</th></tr>
+  <tr><td><strong>Lv1</strong> 자동 곡면 분할</td><td>법선·곡률 리전 그로잉 + RANSAC. 라쏘를 "분할 결과 승인/수정" UX 로 진화</td><td class="risk-m">중</td><td>M1 법선·KdTree 재사용</td></tr>
+  <tr><td><strong>Lv2</strong> 결함→영역 자동</td><td>결함 마스크 → 점군 영역 → 커버리지 배관 연결</td><td class="risk-m">중</td><td>DL·포토메트릭 자산 = <strong>차별화 강점</strong></td></tr>
+  <tr><td><strong>Lv3</strong> 파라미터 적응</td><td>재료·공구·힘·이송속도별 제거율 공정 지식 (MARI "physics-informed AI" 의 실체)</td><td class="risk-h">대 — 데이터 축적</td><td>M5 영역별 파라미터가 그릇. 프리셋 출시 → 현장 데이터로 고도화</td></tr>
+</table>
+
+<h3>4.3 격차 ⑤ 노코드 UI · 4.4 제외한 ③의 최소치</h3>
+<p><strong>⑤</strong>: VisionSetup 이 이미 도구 드래그·연결·실행 파이프라인 워크스페이스 — 중소 규모, 리스크 낮음.</p>
+<p><strong>③</strong>: 풀 모션 플래닝 생략은 협동로봇 안전정지로 감수 가능하나,
+<strong>IK 도달성·관절 한계·특이점 검사는 생략 불가</strong> — 없으면 내보낸 경로가 로봇에서 실패해
+제품 신뢰를 잃는다. 두산 기구학 공개 + DART 시뮬레이터로 최소치 구현 (풀 플래닝 대비 소규모).</p>
+
+<h2>5. 단계별 로드맵 (안)</h2>
+<div class="callout">기간은 소수 인원 + AI 보조 개발 전제의 개략 추정 — <strong>P0 결과로 재산정</strong>한다.</div>
+<table>
+  <tr><th>단계</th><th>내용</th><th>산출물 / 판정</th><th>개략 기간</th></tr>
+  <tr><td><strong>P0 실기 실증</strong></td><td>두산 M 1대 + JSON→DRL 스텁 + 내장 힘제어 시편 샌딩</td><td>실기 데모 영상(투자 설득·초기 영업 자료), 공정 성립 판정</td><td>1~2개월 (로봇 확보 후)</td></tr>
+  <tr><td>P1</td><td>IK 도달성 검사 + Lv1 자동 분할</td><td>분할 정량 검증, 경로 실기 성공률</td><td>2~3개월</td></tr>
+  <tr><td>P2</td><td>노코드 플로차트 UI</td><td>비개발자 셋업 시연 (AARS "10분" 대응)</td><td>2~3개월</td></tr>
+  <tr><td>P3</td><td>Lv2 결함→영역 자동화</td><td>결함 1~2종 자동 가공 데모</td><td>2~3개월</td></tr>
+  <tr><td>P4</td><td>Lv3 공정 프리셋 + 현장 파일럿</td><td>Ra 개선 정량, 파일럿 피드백</td><td>지속</td></tr>
+</table>
+<p><strong>필요 장비 (견적 필요):</strong> 두산 M 시리즈 1대(M1013급), 스핀들/샌더 이펙터, 재질별 시편,
+표면조도계(Ra), (옵션) 액티브 컴플라이언스 이펙터. 3D 카메라는 보유분 활용.</p>
+
+<h2>6. 리스크</h2>
+<table>
+  <tr><th>분류</th><th>리스크</th><th>심각도</th><th>대응</th></tr>
+  <tr><td>IP</td><td><strong>MARI 한국 출원 확인</strong> — KR10-2024-7041198 (미등록·심사 단계). 부록 A</td><td class="risk-m">중~높음 (판매 시)</td><td>청구 방식 상이로 예비 회피 가능성 높음. 등록 청구항 확정 시 변리사 FTO 필수 + 심사 모니터링</td></tr>
+  <tr><td>기술</td><td>Lv3 공정 지식 = 데이터 축적 문제</td><td class="risk-m">중</td><td>프리셋 출시 후 파일럿 데이터 고도화</td></tr>
+  <tr><td>기술</td><td>현장 강건성 (반사 재질·분진)</td><td class="risk-m">중</td><td>P0/P4 실증으로 조기 노출</td></tr>
+  <tr><td>사업</td><td>소수 인원 제품 품질·지원 부담</td><td class="risk-m">중</td><td>두산 파트너 생태계, 초기 공정 1~2종 한정</td></tr>
+  <tr><td>일정</td><td>로봇·이펙터 조달 리드타임</td><td class="risk-l">저</td><td>P0 착수 전 발주</td></tr>
+</table>
+
+<h2>7. 선행 과제</h2>
+<ol>
+  <li><s>KIPRIS 특허 조사</s> → <strong>1차 조사 완료 (부록 A)</strong> — 잔여: 심사 경과 확인 + 등록 시 변리사 검토</li>
+  <li>실카메라 스캔 .vpc 로드 확인 (기존 잔여 과제)</li>
+  <li>두산 M 시리즈 + 이펙터 견적 (구매/렌탈)</li>
+  <li>P0 시편·품질 판정 기준(Ra 목표) 정의</li>
+</ol>
+
+<h2>8. 결론</h2>
+<table>
+  <tr><th>질문</th><th>판단</th></tr>
+  <tr><td>자체 개발 가능한가</td><td class="ok">가능 — 핵심 파이프라인 구현·정량 검증 완료</td></tr>
+  <tr><td>두산 제한 + ④⑤ 스코핑</td><td class="ok">타당 — 최비용 격차(①②)를 로봇 선택으로 소멸. ③은 도달성 검사만 필수</td></tr>
+  <tr><td>최대 리스크</td><td>Lv3 공정 지식 축적 시간 + 특허(FTO)</td></tr>
+  <tr><td>특허 1차 조사</td><td>KR 출원 존재하나 <strong>미등록</strong> + 청구 방식 상이(곡면 방정식 피팅·Hertz 접촉 vs 당사 높이맵 래스터·힘제어 위임) → 예비 회피 가능성 높음</td></tr>
+  <tr><td>권고</td><td><strong>P0 실기 실증 착수 가능</strong> — 특허는 착수 차단 사유 아님. KR 심사 모니터링 병행, P0 결과로 투자 규모·일정 재산정</td></tr>
+</table>
+
+<h2>부록 A. MARI 특허 1차 조사 (2026-08-04)</h2>
+<div class="callout danger"><strong>주의:</strong> 공개 DB(Google Patents·USPTO) 기반 <strong>비법률 예비 조사</strong>다.
+판매 착수 결정 전 변리사의 정식 FTO 의견이 필요하다.</div>
+
+<h3>A.1 특허 패밀리</h3>
+<p>핵심 출원: <em>"Systems and methods for surface fitting of a surface of an object, for path planning,
+and for processing a surface of a part"</em> (출원인 Maple Advanced Robotics Inc., 우선일 2022-05-13)</p>
+<table>
+  <tr><th>관할</th><th>번호</th><th>상태 (조사 시점)</th></tr>
+  <tr><td>PCT</td><td>WO2023215962A1</td><td>공개</td></tr>
+  <tr><td>미국</td><td>US18/029,192 → US2024/0278432A1</td><td>미등록 (심사 중)</td></tr>
+  <tr><td><strong>한국</strong></td><td><strong>KR10-2024-7041198 → KR20250010648A</strong></td><td><strong>미등록 (심사 단계)</strong> — 국내단계 진입 확인</td></tr>
+  <tr><td>캐나다/유럽/중국/일본</td><td>CA3173119A / EP4522939A1 / CN118339426A / JP2025-518426A</td><td>계속 중</td></tr>
+</table>
+<p class="risk-l">※ 검색 중 발견된 US12528187 은 대만 NYCU 명의 MR 티칭 특허로 MARI 와 무관 (오인 주의).</p>
+
+<h3>A.2 청구 요지 · A.3 당사 방식 대비</h3>
+<table>
+  <tr><th>구성</th><th>MARI 청구 방식</th><th>당사 구현 (WeldTeach)</th></tr>
+  <tr><td>표면 표현</td><td>다항식 곡면 방정식 (겹치는 서브패치 재귀 RMSE 피팅)</td><td><strong>2.5D 높이맵 그리드 + 쌍선형 보간</strong> — 곡면 방정식 없음</td></tr>
+  <tr><td>경로 생성</td><td>피팅 곡면 방정식에 경로 형상 투영, 급회전 원호 치환</td><td>PCA 주평면 래스터 + 표면 호길이 스텝오버 보정, 세그먼트 분할·이동평균 평활</td></tr>
+  <tr><td>힘/접촉</td><td>주곡률 + <strong>Hertz 접촉 이론</strong>으로 힘/트랙폭 자체 산출</td><td><strong>로봇단 위임</strong> (두산 내장 힘제어) — 자체 산출 없음</td></tr>
+</table>
+<p>세 독립항 축 모두 당사 경로에 해당 구성요소가 없어 <strong>예비 판단으로는 회피 가능성이 높다.</strong>
+단, 심사 중 청구항 보정 가능성이 있으므로 KR 등록 청구항 확정 시 재대비 필요.</p>
+
+<h3>A.4 후속 조치</h3>
+<ol>
+  <li>KIPRIS 에서 KR10-2024-7041198 심사 경과 모니터링</li>
+  <li>KR 등록/거절 확정 시 변리사 FTO 의견서</li>
+  <li>개발 시 곡면 방정식 피팅·곡면 투영·Hertz 모델 도입 회피 — 현 설계 유지 시 자연 회피</li>
+</ol>
+
+<h2>출처</h2>
+<ul>
+  <li><a href="https://maplerobotics.com/">maplerobotics.com — AARS 플랫폼</a></li>
+  <li><a href="https://www.thefabricator.com/thefabricator/article/automationrobotics/robotic-sanding-and-polishing-no-cad-required">The Fabricator — Robotic sanding and polishing, no CAD required</a></li>
+  <li><a href="https://www.automationmag.com/maple-advanced-robotics-wins-2025-hannover-messe-robotics-award-for-ai-driven-automation/">Manufacturing Automation — 2025 Hannover Messe Robotics Award</a></li>
+  <li><a href="https://metrology.news/scan-go-ai-driven-robot-programming-platform-receives-robotics-2025-award/">Metrology News — Scan &amp; Go</a></li>
+  <li><a href="https://patents.google.com/patent/US20240278432A1/en">Google Patents — US2024/0278432A1</a></li>
+  <li><a href="https://patents.google.com/patent/WO2023215962A1/en">Google Patents — WO2023215962A1 (패밀리)</a></li>
+  <li><a href="https://patents.justia.com/assignee/maple-advanced-robotics-inc">Justia — MARI 특허 목록</a></li>
+  <li><a href="https://www.youtube.com/@MapleAdvancedRoboticsCA/videos">MARI 유튜브</a></li>
+</ul>
+
+</main>
+</body>
+</html>
