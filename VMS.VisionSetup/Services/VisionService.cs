@@ -165,6 +165,46 @@ namespace VMS.VisionSetup.Services
             set => SetProperty(ref _currentCalibrationMetadata, value);
         }
 
+        // ── 스텝 Resolution 폴백 (mm/px) ──
+        // InspectionStep.Resolution 은 스텝 그리드에서 편집되는 수동 mm/px 값인데,
+        // 그동안 어떤 측정도 이 값을 쓰지 않았다(죽은 속성). 캘리브레이션이 없을 때의
+        // 폴백으로 연결한다 — MainViewModel 이 스텝 로드/실행 시점에 갱신.
+        private double _currentStepResolutionMmPerPx;
+        private CalibrationMetadata? _stepResolutionFallback;
+
+        /// <summary>현재 워크스페이스 스텝의 Resolution (mm/px). 0 이면 폴백 없음.</summary>
+        public double CurrentStepResolutionMmPerPx
+        {
+            get => _currentStepResolutionMmPerPx;
+            set
+            {
+                if (SetProperty(ref _currentStepResolutionMmPerPx, Math.Max(0, value)))
+                    _stepResolutionFallback = null;   // 값이 바뀌면 합성 메타데이터 재생성
+            }
+        }
+
+        /// <summary>
+        /// 측정 도구가 mm 변환에 쓰는 실효 캘리브레이션.
+        /// 우선순위: 정식 캘리브레이션(CurrentCalibrationMetadata) &gt; 스텝 Resolution 폴백 &gt; 없음.
+        /// 폴백은 등방 스케일(SinglePointScale)로 합성 — 정식 캘리브레이션을 수동 입력값이
+        /// 덮지 않도록 정식 쪽이 항상 이긴다. 왜곡 보정(ImageRectifyTool)은 카메라 행렬이
+        /// 필요하므로 이 폴백을 쓰지 않고 CurrentCalibrationMetadata 를 직접 본다.
+        /// </summary>
+        public CalibrationMetadata? EffectiveCalibration
+        {
+            get
+            {
+                if (_currentCalibrationMetadata != null) return _currentCalibrationMetadata;
+                if (_currentStepResolutionMmPerPx <= 0) return null;
+                return _stepResolutionFallback ??= new CalibrationMetadata
+                {
+                    Mode = CalibrationMode.SinglePointScale,
+                    PixelSizeMm = _currentStepResolutionMmPerPx,
+                    SourceToolName = "Step Resolution",
+                };
+            }
+        }
+
         // 3D 파이프라인 재실행 지원 — PointCloud 도구는 CurrentPointCloud를 교체(소비)하므로
         // 재Grab 없이 재실행하면 직전 실행의 산출물 위에서 돌게 된다. ExecuteAll 시작 시
         // '직전 실행 산출물이 그대로'면 직전 실행의 입력 점군으로 복원한다.

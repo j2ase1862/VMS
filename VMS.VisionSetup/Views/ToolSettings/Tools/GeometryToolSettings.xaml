@@ -10,6 +10,33 @@
             SelectedValue="{Binding Operation}"
             ToolType="GeometryTool" ParameterName="Operation"/>
 
+        <!-- Judgment — 거리/각도를 기준값 ± 공차로 판정 (Success 반영 → ResultTool 집계) -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Judgment" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:CheckBoxParameter Label="Enable Judgment"
+                    IsChecked="{Binding EnableJudgment}"
+                    ToolType="GeometryTool" ParameterName="EnableJudgment"/>
+                <controls:EnumComboBoxParameter Label="Unit"
+                    ItemsSource="{conv:EnumValues {x:Type meas:GeometryJudgmentUnit}}"
+                    SelectedValue="{Binding JudgmentUnit}"
+                    ToolType="GeometryTool" ParameterName="JudgmentUnit"/>
+                <controls:TextBoxParameter Label="Expected Value"
+                    Value="{Binding ExpectedValue}"
+                    ToolType="GeometryTool" ParameterName="ExpectedValue"/>
+                <controls:TextBoxParameter Label="Tolerance (-)"
+                    Value="{Binding ToleranceMinus}"
+                    ToolType="GeometryTool" ParameterName="ToleranceMinus"/>
+                <controls:TextBoxParameter Label="Tolerance (+)"
+                    Value="{Binding TolerancePlus}"
+                    ToolType="GeometryTool" ParameterName="TolerancePlus"/>
+                <TextBlock Foreground="#999999" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,0"
+                           Text="Unit=Mm 은 캘리브레이션 또는 스텝 Resolution(mm/px)이 필요합니다. 각도 연산은 단위와 무관하게 °로 판정합니다."/>
+            </StackPanel>
+        </Expander>
+
         <!-- Connected Source Geometries -->
         <TextBlock Text="Source Geometries" Foreground="#AAAAAA" FontWeight="Bold"
                    Margin="0,10,0,5" FontSize="12"/>

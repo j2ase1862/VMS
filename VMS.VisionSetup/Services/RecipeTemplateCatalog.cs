@@ -165,18 +165,21 @@ namespace VMS.VisionSetup.Services
                 Id = "2d-blob",
                 Title = "Blob 검출",
                 Category = Category2D,
-                Description = "그레이스케일 → 이진화 → Blob 검출. Threshold 값과 Blob 의 " +
-                              "면적 범위를 대상에 맞게 조정할 것.",
+                Description = "그레이스케일 → 이진화 → Blob 검출 → Result 판정. Threshold 값과 " +
+                              "Blob 의 면적 범위를 대상에 맞게 조정할 것. 기본 판정은 'Blob 1개 " +
+                              "이상 = OK' — 개수·면적 판정이 필요하면 Blob 설정의 Judgment 사용.",
                 Tools =
                 {
                     new TemplateToolSpec { ToolType = "GrayscaleTool" },
                     new TemplateToolSpec { ToolType = "ThresholdTool" },
                     new TemplateToolSpec { ToolType = "BlobTool" },
+                    new TemplateToolSpec { ToolType = "ResultTool" },
                 },
                 Connections =
                 {
                     new TemplateConnectionSpec { SourceIndex = 0, TargetIndex = 1, Type = ConnectionType.Image },
                     new TemplateConnectionSpec { SourceIndex = 1, TargetIndex = 2, Type = ConnectionType.Image },
+                    new TemplateConnectionSpec { SourceIndex = 2, TargetIndex = 3, Type = ConnectionType.Result },
                 },
             },
             new RecipeTemplate
@@ -185,17 +188,32 @@ namespace VMS.VisionSetup.Services
                 Title = "엣지 간 거리 측정",
                 Category = Category2D,
                 Description = "Caliper 2개로 엣지를 검출하고 Geometry 가 두 점 사이 거리를 " +
-                              "계산한다. 각 Caliper 의 ROI 를 측정할 엣지 위에 배치할 것.",
+                              "계산해 기준값 ± 공차로 판정, Result 가 최종 OK/NG 를 낸다. " +
+                              "각 Caliper 의 ROI 를 측정할 엣지 위에 배치하고, Geometry 의 " +
+                              "Judgment 에 기준값(mm)·공차를 입력할 것. mm 판정에는 캘리브레이션 " +
+                              "또는 스텝 Resolution(mm/px) 설정이 필요하다.",
                 Tools =
                 {
                     new TemplateToolSpec { ToolType = "CaliperTool", DisplayName = "Caliper A" },
                     new TemplateToolSpec { ToolType = "CaliperTool", DisplayName = "Caliper B" },
-                    new TemplateToolSpec { ToolType = "GeometryTool" },
+                    new TemplateToolSpec
+                    {
+                        ToolType = "GeometryTool",
+                        // 판정 프리셋 — 기준값은 대상마다 다르므로 사용자가 설정 (기본 100mm ± 0.5)
+                        Configure = t =>
+                        {
+                            var g = (VisionTools.Measurement.GeometryTool)t;
+                            g.EnableJudgment = true;
+                            g.JudgmentUnit = VisionTools.Measurement.GeometryJudgmentUnit.Mm;
+                        },
+                    },
+                    new TemplateToolSpec { ToolType = "ResultTool" },
                 },
                 Connections =
                 {
                     new TemplateConnectionSpec { SourceIndex = 0, TargetIndex = 2, Type = ConnectionType.Result },
                     new TemplateConnectionSpec { SourceIndex = 1, TargetIndex = 2, Type = ConnectionType.Result },
+                    new TemplateConnectionSpec { SourceIndex = 2, TargetIndex = 3, Type = ConnectionType.Result },
                 },
             },
             new RecipeTemplate
@@ -203,16 +221,20 @@ namespace VMS.VisionSetup.Services
                 Id = "2d-featurematch",
                 Title = "패턴 매칭 (Feature Match)",
                 Category = Category2D,
-                Description = "학습된 패턴을 이미지에서 찾아 위치·각도·스코어를 얻고 Result 로 " +
-                              "판정한다. Feature Match 설정에서 기준 패턴을 학습시킬 것.",
+                Description = "그레이 변환 후 학습된 패턴을 이미지에서 찾아 위치·각도·스코어를 " +
+                              "얻고 Result 로 판정한다. Feature Match 는 8-bit Gray 입력만 " +
+                              "받으므로 Grayscale 을 앞에 둔다 (이미 그레이면 통과). " +
+                              "Feature Match 설정에서 기준 패턴을 학습시킬 것.",
                 Tools =
                 {
+                    new TemplateToolSpec { ToolType = "GrayscaleTool" },
                     new TemplateToolSpec { ToolType = "FeatureMatchTool" },
                     new TemplateToolSpec { ToolType = "ResultTool" },
                 },
                 Connections =
                 {
-                    new TemplateConnectionSpec { SourceIndex = 0, TargetIndex = 1, Type = ConnectionType.Result },
+                    new TemplateConnectionSpec { SourceIndex = 0, TargetIndex = 1, Type = ConnectionType.Image },
+                    new TemplateConnectionSpec { SourceIndex = 1, TargetIndex = 2, Type = ConnectionType.Result },
                 },
             },
             new RecipeTemplate
@@ -221,16 +243,19 @@ namespace VMS.VisionSetup.Services
                 Title = "컬러 객체 검출",
                 Category = Category2D,
                 Description = "지정 색상 영역을 추출(Color Extract)해 Blob 으로 개수·위치를 " +
-                              "얻는다. Color Extract 설정에서 대상 색상 범위를 지정할 것.",
+                              "얻고 Result 로 판정한다. Color Extract 설정에서 대상 색상 범위를 " +
+                              "지정할 것. 기본 판정은 'Blob 1개 이상 = OK'.",
                 Prerequisites = new[] { BadgeColorImage },
                 Tools =
                 {
                     new TemplateToolSpec { ToolType = "ColorExtractTool" },
                     new TemplateToolSpec { ToolType = "BlobTool" },
+                    new TemplateToolSpec { ToolType = "ResultTool" },
                 },
                 Connections =
                 {
                     new TemplateConnectionSpec { SourceIndex = 0, TargetIndex = 1, Type = ConnectionType.Image },
+                    new TemplateConnectionSpec { SourceIndex = 1, TargetIndex = 2, Type = ConnectionType.Result },
                 },
             },
 

@@ -1,4 +1,4 @@
-using VMS.VisionSetup.Models;
+﻿using VMS.VisionSetup.Models;
 using VMS.VisionSetup.Services;
 using OpenCvSharp;
 using System;
@@ -277,7 +277,7 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 result.OverlayImage = overlayImage;
 
                 // 캘리브레이션이 있으면 mm 키 추가
-                var cal = VisionService.Instance.CurrentCalibrationMetadata;
+                var cal = VisionService.Instance.EffectiveCalibration;
                 AddCoordMm(result, "CenterX", "CenterY", cal);
                 AddLengthMm(result, "Radius", cal);
                 AddLengthMm(result, "Diameter", cal);

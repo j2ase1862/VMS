@@ -1190,7 +1190,9 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*" MinHeight="120"/>
                                     <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="190" MinHeight="60" MaxHeight="700"/>
+                                    <!-- Run Results 기본 높이 — 결과 키가 늘어(측정 mm·judgment 등)
+                                         190 으로는 몇 행 못 보여 300 으로 상향 (스플리터로 조절 가능) -->
+                                    <RowDefinition Height="300" MinHeight="60" MaxHeight="700"/>
                                 </Grid.RowDefinitions>
 
                                 <!-- Row 0: Header - ComboBox Switcher + Clear Button -->
@@ -1236,11 +1238,22 @@
                                                       ROISelectionChanged="ImageCanvas_ROISelectionChanged"
                                                       Margin="5"/>
 
-                                <!-- Row 2: 이미지/결과 영역 높이 조절 스플리터 -->
-                                <GridSplitter Grid.Row="2" Height="5" HorizontalAlignment="Stretch"
-                                              Background="#333337" ResizeDirection="Rows"
+                                <!-- Row 2: 이미지/결과 영역 높이 조절 스플리터 —
+                                     그립 점 표시로 "잡아서 조절 가능"이 보이게 (발견성) -->
+                                <GridSplitter Grid.Row="2" Height="8" HorizontalAlignment="Stretch"
+                                              ResizeDirection="Rows"
                                               ResizeBehavior="PreviousAndNext"
-                                              Margin="5,0" Cursor="SizeNS"/>
+                                              Margin="5,0" Cursor="SizeNS"
+                                              ToolTip="드래그해서 Run Results 영역 높이 조절">
+                                    <GridSplitter.Template>
+                                        <ControlTemplate TargetType="GridSplitter">
+                                            <Border Background="#333337" CornerRadius="3">
+                                                <TextBlock Text="●  ●  ●" Foreground="#8A8A8E" FontSize="5"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </GridSplitter.Template>
+                                </GridSplitter>
 
                                 <!-- Row 3: Tool Run Results DataGrid -->
                                 <Border Grid.Row="3" BorderBrush="#333333" BorderThickness="0,1,0,0"
@@ -1276,7 +1289,7 @@
                                                   SelectionMode="Single"
                                                   RowDetailsVisibilityMode="VisibleWhenSelected"
                                                   ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                                  ScrollViewer.CanContentScroll="True"
+                                                  ScrollViewer.CanContentScroll="False"
                                                   FontSize="12">
                                             <DataGrid.ColumnHeaderStyle>
                                                 <Style TargetType="DataGridColumnHeader">
@@ -1308,11 +1321,15 @@
                                                 </Style>
                                             </DataGrid.RowStyle>
                                             <!-- 행 선택 시 전체 결과를 Key–Value 표로 펼침 -->
+                                            <!-- 상세는 캡 없이 전체 높이로 펼치고 스크롤은 그리드 하나로 통일한다.
+                                                 (이전: 행 단위 스크롤 + 상세 내부 220px 중첩 스크롤 — 행 단위 스크롤은
+                                                 뷰포트보다 긴 상세의 아랫부분에 도달할 수 없고, 중첩 스크롤은 어디를
+                                                 굴려야 할지 모호해 '스크롤해도 다 안 보이는' 결함. 그리드는
+                                                 CanContentScroll=False 픽셀 스크롤로 전환됨) -->
                                             <DataGrid.RowDetailsTemplate>
                                                 <DataTemplate>
                                                     <Border Background="#1A1A1C" BorderBrush="#3F3F46"
                                                             BorderThickness="0,1,0,1" Padding="14,6">
-                                                        <ScrollViewer MaxHeight="220" VerticalScrollBarVisibility="Auto">
                                                             <ItemsControl ItemsSource="{Binding Entries}"
                                                                           Grid.IsSharedSizeScope="True">
                                                                 <ItemsControl.ItemTemplate>
@@ -1332,7 +1349,6 @@
                                                                     </DataTemplate>
                                                                 </ItemsControl.ItemTemplate>
                                                             </ItemsControl>
-                                                        </ScrollViewer>
                                                     </Border>
                                                 </DataTemplate>
                                             </DataGrid.RowDetailsTemplate>

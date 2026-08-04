@@ -59,10 +59,12 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
             set => SetProperty(ref _minArea, Math.Max(0, value));
         }
 
-        private double _maxArea = double.MaxValue;
+        // 기본값은 "사실상 무제한"이되 읽을 수 있는 수로 — double.MaxValue 는 설정 UI 에
+        // 1.797E+308 로 표시돼 사용자를 당황시킨다 (1e8 px² = 10,000×10,000 이미지 전체).
+        private double _maxArea = 100_000_000;
         [TunableParam(
-            Description = "검출 객체 최대 면적(픽셀). 너무 큰 영역(배경 등) 제외용. 무제한이면 매우 큰 값 사용.",
-            Tier = TuningTier.DomainCommon, Min = 0)]
+            Description = "검출 객체 최대 면적(픽셀). 너무 큰 영역(배경 등) 제외용. 기본 1억 = 사실상 무제한.",
+            Tier = TuningTier.DomainCommon, Min = 0, DefaultHint = "100000000")]
         public double MaxArea
         {
             get => _maxArea;
@@ -77,7 +79,7 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
             set => SetProperty(ref _minPerimeter, Math.Max(0, value));
         }
 
-        private double _maxPerimeter = double.MaxValue;
+        private double _maxPerimeter = 1_000_000;   // 사실상 무제한 (E+308 표시 회피)
         public double MaxPerimeter
         {
             get => _maxPerimeter;
@@ -115,10 +117,10 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
             set => SetProperty(ref _minAspectRatio, Math.Max(0, value));
         }
 
-        private double _maxAspectRatio = double.MaxValue;
+        private double _maxAspectRatio = 1000;   // 사실상 무제한 (E+308 표시 회피)
         [TunableParam(
-            Description = "검출 객체 최대 종횡비. 매우 길쭉한 객체 제외용.",
-            Tier = TuningTier.DomainCommon, Min = 0)]
+            Description = "검출 객체 최대 종횡비. 매우 길쭉한 객체 제외용. 기본 1000 = 사실상 무제한.",
+            Tier = TuningTier.DomainCommon, Min = 0, DefaultHint = "1000")]
         public double MaxAspectRatio
         {
             get => _maxAspectRatio;
@@ -459,49 +461,7 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
                 }
                 result.Data["Blobs"] = blobs;
 
-                // 결과 오버레이 이미지 생성 (원본 컬러 이미지 기반)
-                overlayImage = GetColorOverlayBase(inputImage);
-
-                // Blob 그래픽 그리기
-                // blob 데이터는 이미 절대 좌표이므로 오프셋을 다시 적용하지 않음
-                for (int i = 0; i < blobs.Count; i++)
-                {
-                    var blob = blobs[i];
-                    var color = GetBlobColor(i);
-
-                    if (DrawContours)
-                    {
-                        Cv2.DrawContours(overlayImage, new[] { blob.Contour }, 0, color, 2);
-                    }
-
-                    if (DrawBoundingBox)
-                    {
-                        Cv2.Rectangle(overlayImage, blob.BoundingRect, new Scalar(255, 255, 0), 1);
-                    }
-
-                    if (DrawCenterPoint)
-                    {
-                        Cv2.DrawMarker(overlayImage,
-                            new Point((int)blob.CenterX, (int)blob.CenterY),
-                            new Scalar(0, 0, 255), MarkerTypes.Cross, 10, 2);
-                    }
-
-                    if (DrawLabels)
-                    {
-                        Cv2.PutText(overlayImage, $"#{i}",
-                            new Point((int)blob.CenterX + 5, (int)blob.CenterY - 5),
-                            HersheyFonts.HersheySimplex, 0.4, new Scalar(255, 255, 255), 1);
-                    }
-
-                    result.Graphics.Add(new GraphicOverlay
-                    {
-                        Type = GraphicType.Polygon,
-                        Points = blob.Contour.ToList(),
-                        Color = color
-                    });
-                }
-
-                // 판정 (Judgment)
+                // 판정 (Judgment) — 컨투어 색이 판정 결과를 따르므로 그리기 전에 계산
                 bool judgmentPass = true;
                 var judgmentDetails = new List<string>();
 
@@ -566,6 +526,51 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
                 {
                     result.Success = blobs.Count > 0;
                     result.Message = $"Blob 검출 완료: {blobs.Count}개";
+                }
+
+                // 결과 오버레이 이미지 생성 (원본 컬러 이미지 기반)
+                overlayImage = GetColorOverlayBase(inputImage);
+
+                // Blob 그래픽 그리기 — 컨투어 색은 인덱스별 무지개 대신 판정 결과로 통일
+                // (합격/무판정 검출 = Lime, 불합격 = Red — 화면만 봐도 OK/NG 가 읽힌다).
+                // blob 데이터는 이미 절대 좌표이므로 오프셋을 다시 적용하지 않음.
+                var contourColor = result.Success
+                    ? new Scalar(0, 255, 0)    // Lime
+                    : new Scalar(0, 0, 255);   // Red
+                for (int i = 0; i < blobs.Count; i++)
+                {
+                    var blob = blobs[i];
+
+                    if (DrawContours)
+                    {
+                        Cv2.DrawContours(overlayImage, new[] { blob.Contour }, 0, contourColor, 2);
+                    }
+
+                    if (DrawBoundingBox)
+                    {
+                        Cv2.Rectangle(overlayImage, blob.BoundingRect, new Scalar(255, 255, 0), 1);
+                    }
+
+                    if (DrawCenterPoint)
+                    {
+                        Cv2.DrawMarker(overlayImage,
+                            new Point((int)blob.CenterX, (int)blob.CenterY),
+                            new Scalar(0, 0, 255), MarkerTypes.Cross, 10, 2);
+                    }
+
+                    if (DrawLabels)
+                    {
+                        Cv2.PutText(overlayImage, $"#{i}",
+                            new Point((int)blob.CenterX + 5, (int)blob.CenterY - 5),
+                            HersheyFonts.HersheySimplex, 0.4, new Scalar(255, 255, 255), 1);
+                    }
+
+                    result.Graphics.Add(new GraphicOverlay
+                    {
+                        Type = GraphicType.Polygon,
+                        Points = blob.Contour.ToList(),
+                        Color = contourColor
+                    });
                 }
 
                 // 최종 결과 이미지 구성
@@ -786,24 +791,6 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
                 result[i] = new Point(points[i].X + offsetX, points[i].Y + offsetY);
             }
             return result;
-        }
-
-        private Scalar GetBlobColor(int index)
-        {
-            // 다양한 색상으로 Blob 구분
-            var colors = new Scalar[]
-            {
-                new Scalar(0, 255, 0),     // Green
-                new Scalar(255, 0, 0),     // Blue
-                new Scalar(0, 255, 255),   // Yellow
-                new Scalar(255, 0, 255),   // Magenta
-                new Scalar(255, 255, 0),   // Cyan
-                new Scalar(0, 128, 255),   // Orange
-                new Scalar(128, 0, 255),   // Pink
-                new Scalar(0, 255, 128),   // Spring Green
-            };
-
-            return colors[index % colors.Length];
         }
 
         public override List<string> GetAvailableResultKeys()

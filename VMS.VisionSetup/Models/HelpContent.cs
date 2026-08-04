@@ -568,7 +568,12 @@ namespace VMS.VisionSetup.Models
                 CognexEquivalent = "CogDistancePointLineTool, CogIntersectLineLineTool, CogAngleLineLineTool",
                 Parameters = new Dictionary<string, string>
                 {
-                    ["Operation"] = "기하 연산 종류:\n• PointPointDistance: 두 점 사이의 유클리드 거리\n• PointLineDistance: 점에서 직선까지의 수직 거리 (수선의 발 좌표도 출력)\n• LineLineDistance: 두 직선 사이의 수직 거리 (폭/갭 측정, 평행도 검사에 활용)\n• LineLineAngle: 두 직선 사이의 각도 (0°~90° 및 부호 있는 각도)\n• LineLineIntersection: 두 직선의 교차점 좌표\n• LineCircleIntersection: 직선과 원의 교차점 (접선인 경우 1개, 관통 시 2개)\n• CircleCircleDistance: 두 원의 중심 간 거리 및 엣지 간 거리"
+                    ["Operation"] = "기하 연산 종류:\n• PointPointDistance: 두 점 사이의 유클리드 거리\n• PointLineDistance: 점에서 직선까지의 수직 거리 (수선의 발 좌표도 출력)\n• LineLineDistance: 두 직선 사이의 수직 거리 (폭/갭 측정, 평행도 검사에 활용)\n• LineLineAngle: 두 직선 사이의 각도 (0°~90° 및 부호 있는 각도)\n• LineLineIntersection: 두 직선의 교차점 좌표\n• LineCircleIntersection: 직선과 원의 교차점 (접선인 경우 1개, 관통 시 2개)\n• CircleCircleDistance: 두 원의 중심 간 거리 및 엣지 간 거리",
+                    ["EnableJudgment"] = "측정값을 기준값 ± 공차와 비교해 합격/불합격을 판정합니다.\n\n• 판정 결과는 이 도구의 성공/실패(Success)에 반영되어, Result 도구를 연결하면 최종 OK/NG 로 집계됩니다.\n• 결과 이미지 좌상단에 OK(초록)/NG(빨강) 배지가 표시됩니다.\n• 끄면 기존처럼 측정만 하고 항상 성공으로 처리합니다.\n\n판정 대상: 거리 연산 = Distance(CircleCircle 은 중심 간 거리), 각도 연산 = Angle(°). 교차점 연산은 판정 대상 값이 없어 경고만 표시됩니다.",
+                    ["JudgmentUnit"] = "기준값과 공차를 해석할 단위입니다.\n\n• Mm: 실제 길이(mm)로 판정 — 캘리브레이션 또는 스텝의 Resolution(mm/px) 설정이 필요합니다. 변환할 수 없으면 픽셀 값으로 잘못 판정하는 대신 명확히 실패 처리됩니다.\n• Px: 픽셀 값 그대로 판정 — 캘리브레이션 없이 쓸 수 있지만, 카메라 거리·배율이 바뀌면 기준값도 다시 잡아야 합니다.\n\n각도 연산(LineLineAngle)은 이 설정과 무관하게 항상 도(°)로 판정합니다.",
+                    ["ExpectedValue"] = "판정 기준값(공칭 치수)입니다. 단위는 Unit 설정을 따릅니다 (거리 = mm 또는 px, 각도 = °).\n\n예: 두 엣지 간 거리가 도면상 100mm 라면 100 을 입력합니다. 합격 범위는 [기준값 − Tolerance(−)] ~ [기준값 + Tolerance(+)] 입니다.",
+                    ["ToleranceMinus"] = "하한 공차 — 측정값이 [기준값 − 이 값] 이상이어야 합격입니다.\n\n예: 기준 100, Tolerance(−) 0.5 → 99.5 미만이면 NG. 도면의 비대칭 공차(예: 100 +0.2/−0.5)를 그대로 넣을 수 있습니다.",
+                    ["TolerancePlus"] = "상한 공차 — 측정값이 [기준값 + 이 값] 이하여야 합격입니다.\n\n예: 기준 100, Tolerance(+) 0.5 → 100.5 초과면 NG. 도면의 비대칭 공차(예: 100 +0.2/−0.5)를 그대로 넣을 수 있습니다."
                 }
             },
 

@@ -1181,6 +1181,10 @@ namespace VMS.VisionSetup.ViewModels
 
             try
             {
+                // 실행 시점에 스텝 Resolution 재반영 — 스텝 그리드에서 값을 고친 직후에도 유효
+                if (SelectedStep != null)
+                    _visionService.CurrentStepResolutionMmPerPx = SelectedStep.Resolution;
+
                 var results = await _visionService.ExecuteAllAsync();
 
                 ExecutionTimeText = $"실행 시간: {_visionService.TotalExecutionTime:F2}ms";
@@ -2334,6 +2338,9 @@ namespace VMS.VisionSetup.ViewModels
         /// </summary>
         public void LoadStepToWorkspace(InspectionStep step)
         {
+            // 스텝 Resolution(mm/px) → 측정 도구 mm 폴백 (정식 캘리브레이션이 있으면 그쪽 우선)
+            _visionService.CurrentStepResolutionMmPerPx = step.Resolution;
+
             // 기존 워크스페이스 정리
             ClearAllConnections();
             DroppedTools.Clear();

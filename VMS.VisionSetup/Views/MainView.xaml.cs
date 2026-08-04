@@ -744,7 +744,8 @@ namespace VMS.VisionSetup
             var mainScroll = FindChild<ScrollViewer>(grid);
             if (mainScroll == null) return;
 
-            // 상세 영역 안의 내부 ScrollViewer가 해당 방향으로 스크롤 여지가 있으면 기본 동작 유지
+            // 상세 영역 안에 별도 ScrollViewer가 있는 경우(현재 기본 상세엔 없음 — 스크롤 면 통일)
+            // 그쪽에 스크롤 여지가 있으면 기본 동작 유지
             if (e.OriginalSource is DependencyObject src)
             {
                 var innerScroll = FindParent<ScrollViewer>(src);
@@ -757,7 +758,9 @@ namespace VMS.VisionSetup
                 }
             }
 
-            mainScroll.ScrollToVerticalOffset(mainScroll.VerticalOffset - e.Delta / 40.0);
+            // CanContentScroll=False(픽셀 스크롤) 기준 — 휠 1노치(delta 120) ≈ 40px.
+            // (행 단위 스크롤 시절의 delta/40 은 픽셀 모드에서 3px 로 사실상 멈춘 느낌이 된다)
+            mainScroll.ScrollToVerticalOffset(mainScroll.VerticalOffset - e.Delta / 3.0);
             e.Handled = true;
         }
 
