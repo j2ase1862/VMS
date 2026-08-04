@@ -1,4 +1,4 @@
-using OpenCvSharp;
+﻿using OpenCvSharp;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -61,6 +61,15 @@ namespace VMS.VisionSetup.VisionTools.Measurement
         public double Radius { get; set; }
     }
 
+    /// <summary>판정 단위 — 기준값·공차를 어느 단위로 해석할지 (암묵 전환 금지: 100mm ≠ 100px).</summary>
+    public enum GeometryJudgmentUnit
+    {
+        /// <summary>mm — 캘리브레이션 또는 스텝 Resolution 필요. 변환 불가 시 판정 실패.</summary>
+        Mm,
+        /// <summary>px — 픽셀 값 그대로 판정.</summary>
+        Px
+    }
+
     /// <summary>
     /// GeometryTool — 검출된 기하 요소(점, 직선, 원) 사이의 관계를 계산합니다.
     /// Cognex CogIntersectLineLineTool, CogDistancePointLineTool 등의 대체
@@ -72,6 +81,54 @@ namespace VMS.VisionSetup.VisionTools.Measurement
         {
             get => _operation;
             set => SetProperty(ref _operation, value);
+        }
+
+        // ── 판정 (Judgment) — BlobTool 컨벤션(Expected ± ToleranceMinus/Plus) ──
+        // 연산의 주 출력(거리/각도)을 기준값 ± 공차로 판정해 result.Success 에 반영한다.
+        // ResultTool 은 Success 를 집계하므로 별도 수정 없이 판정 체인이 완성된다.
+
+        private bool _enableJudgment;
+        /// <summary>판정 사용 — 꺼져 있으면 기존처럼 계산만 한다.</summary>
+        public bool EnableJudgment
+        {
+            get => _enableJudgment;
+            set => SetProperty(ref _enableJudgment, value);
+        }
+
+        private GeometryJudgmentUnit _judgmentUnit = GeometryJudgmentUnit.Mm;
+        /// <summary>
+        /// 판정 단위. Mm 는 캘리브레이션 또는 스텝 Resolution(mm/px)이 있어야 하며,
+        /// 없으면 단위 불명 값으로 오판하지 않도록 판정을 실패시킨다.
+        /// 각도 연산(LineLineAngle)은 단위와 무관하게 도(°)로 판정한다.
+        /// </summary>
+        public GeometryJudgmentUnit JudgmentUnit
+        {
+            get => _judgmentUnit;
+            set => SetProperty(ref _judgmentUnit, value);
+        }
+
+        private double _expectedValue = 100;
+        /// <summary>기준값 — 거리(mm 또는 px) / 각도(°).</summary>
+        public double ExpectedValue
+        {
+            get => _expectedValue;
+            set => SetProperty(ref _expectedValue, value);
+        }
+
+        private double _toleranceMinus = 0.5;
+        /// <summary>하한 공차 (기준값 − 이 값까지 합격).</summary>
+        public double ToleranceMinus
+        {
+            get => _toleranceMinus;
+            set => SetProperty(ref _toleranceMinus, Math.Max(0, value));
+        }
+
+        private double _tolerancePlus = 0.5;
+        /// <summary>상한 공차 (기준값 + 이 값까지 합격).</summary>
+        public double TolerancePlus
+        {
+            get => _tolerancePlus;
+            set => SetProperty(ref _tolerancePlus, Math.Max(0, value));
         }
 
         /// <summary>
@@ -135,6 +192,10 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                         break;
                 }
 
+                // 공차 판정 — 연산 결과가 유효할 때만 (계산 실패는 그 자체가 NG)
+                if (result.Success && EnableJudgment)
+                    ApplyJudgment(result, overlayImage);
+
                 result.OverlayImage = overlayImage;
                 result.OutputImage = inputImage.Clone();
             }
@@ -176,7 +237,7 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             result.Data["PointBX"] = ptB.Value.X;
             result.Data["PointBY"] = ptB.Value.Y;
 
-            var calPP = VisionService.Instance.CurrentCalibrationMetadata;
+            var calPP = VisionService.Instance.EffectiveCalibration;
             AddCoordMm(result, "PointAX", "PointAY", calPP);
             AddCoordMm(result, "PointBX", "PointBY", calPP);
             AddLengthMm(result, "Distance", calPP);
@@ -242,7 +303,7 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             result.Data["PointY"] = qy;
             result.Data["SignedDistance"] = cross;
 
-            var calPL = VisionService.Instance.CurrentCalibrationMetadata;
+            var calPL = VisionService.Instance.EffectiveCalibration;
             AddCoordMm(result, "FootX", "FootY", calPL);
             AddCoordMm(result, "PointX", "PointY", calPL);
             AddLengthMm(result, "Distance", calPL);
@@ -304,7 +365,7 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             result.Data["FootAY"] = footAY;
             result.Data["ParallelAngle"] = parallelAngle;
 
-            var calLL = VisionService.Instance.CurrentCalibrationMetadata;
+            var calLL = VisionService.Instance.EffectiveCalibration;
             AddCoordMm(result, "FootAX", "FootAY", calLL);
             AddLengthMm(result, "Distance", calLL);
             AddLengthMm(result, "SignedDistance", calLL);
@@ -395,7 +456,7 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             result.Data["CenterX"] = ix;
             result.Data["CenterY"] = iy;
 
-            var calLI = VisionService.Instance.CurrentCalibrationMetadata;
+            var calLI = VisionService.Instance.EffectiveCalibration;
             AddCoordMm(result, "IntersectionX", "IntersectionY", calLI);
             AddCoordMm(result, "CenterX", "CenterY", calLI);
 
@@ -466,7 +527,7 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 result.Data["Intersection2Y"] = iy2;
             }
 
-            var calCI = VisionService.Instance.CurrentCalibrationMetadata;
+            var calCI = VisionService.Instance.EffectiveCalibration;
             AddCoordMm(result, "Intersection1X", "Intersection1Y", calCI);
             if (intersectionCount == 2)
                 AddCoordMm(result, "Intersection2X", "Intersection2Y", calCI);
@@ -506,7 +567,7 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             result.Data["CenterBY"] = b.Y;
             result.Data["RadiusB"] = b.Radius;
 
-            var calCC = VisionService.Instance.CurrentCalibrationMetadata;
+            var calCC = VisionService.Instance.EffectiveCalibration;
             AddCoordMm(result, "CenterAX", "CenterAY", calCC);
             AddCoordMm(result, "CenterBX", "CenterBY", calCC);
             AddLengthMm(result, "CenterDistance", calCC);
@@ -526,6 +587,91 @@ namespace VMS.VisionSetup.VisionTools.Measurement
 
             result.Success = true;
             result.Message = $"중심 거리: {centerDistance:F2}px, 엣지 거리: {edgeDistance:F2}px";
+        }
+
+        #endregion
+
+        #region Judgment
+
+        /// <summary>
+        /// 연산의 주 출력을 기준값 ± 공차로 판정한다.
+        /// 거리 연산: Distance/CenterDistance (Mm 단위면 {key}Mm — 없으면 판정 실패),
+        /// 각도 연산: Angle(° — 단위 선택 무관), 교차점 연산: 판정 대상 없음(경고만).
+        /// </summary>
+        private void ApplyJudgment(VisionResult result, Mat overlay)
+        {
+            // 연산별 판정 키와 단위 표기
+            string? key;
+            bool isAngle = false;
+            switch (Operation)
+            {
+                case GeometryOperation.PointPointDistance:
+                case GeometryOperation.PointLineDistance:
+                case GeometryOperation.LineLineDistance:
+                    key = "Distance";
+                    break;
+                case GeometryOperation.CircleCircleDistance:
+                    key = "CenterDistance";
+                    break;
+                case GeometryOperation.LineLineAngle:
+                    key = "Angle";
+                    isAngle = true;
+                    break;
+                default:
+                    // 교차점 연산 — 스칼라 판정 대상이 없다. 설정 실수를 조용히 삼키지 않는다.
+                    result.Message += " · ⚠ 판정: 교차점 연산은 판정 대상 값이 없습니다";
+                    return;
+            }
+
+            string unitLabel;
+            double measured;
+            if (isAngle)
+            {
+                unitLabel = "°";
+                measured = Convert.ToDouble(result.Data[key]);
+            }
+            else if (JudgmentUnit == GeometryJudgmentUnit.Mm)
+            {
+                unitLabel = "mm";
+                if (!result.Data.TryGetValue(key + "Mm", out var mmObj))
+                {
+                    // 단위 불명 값(px)을 mm 기준과 비교해 오판하는 것보다 명확한 실패가 낫다
+                    result.Success = false;
+                    result.Message += " · 판정 NG: mm 변환 불가 — 캘리브레이션 또는 스텝 Resolution(mm/px)을 설정하세요";
+                    result.Data["JudgmentPass"] = false;
+                    DrawJudgmentBadge(overlay, false);
+                    return;
+                }
+                measured = Convert.ToDouble(mmObj);
+            }
+            else
+            {
+                unitLabel = "px";
+                measured = Convert.ToDouble(result.Data[key]);
+            }
+
+            double low = ExpectedValue - ToleranceMinus;
+            double high = ExpectedValue + TolerancePlus;
+            bool pass = measured >= low && measured <= high;
+
+            result.Data["JudgmentValue"] = measured;
+            result.Data["JudgmentLow"] = low;
+            result.Data["JudgmentHigh"] = high;
+            result.Data["JudgmentPass"] = pass;
+
+            result.Success = pass;
+            result.Message += pass
+                ? $" · 판정 OK ({measured:F3}{unitLabel} ∈ {low:F3}~{high:F3}{unitLabel})"
+                : $" · 판정 NG ({measured:F3}{unitLabel} ∉ {low:F3}~{high:F3}{unitLabel})";
+            DrawJudgmentBadge(overlay, pass);
+        }
+
+        private static void DrawJudgmentBadge(Mat overlay, bool pass)
+        {
+            var color = pass ? new Scalar(0, 200, 0) : new Scalar(0, 0, 230);
+            Cv2.Rectangle(overlay, new Rect(8, 8, 64, 30), color, -1);
+            Cv2.PutText(overlay, pass ? "OK" : "NG", new Point(18, 31),
+                HersheyFonts.HersheySimplex, 0.8, new Scalar(255, 255, 255), 2);
         }
 
         #endregion
@@ -716,6 +862,8 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 "CenterDistance", "EdgeDistance",
                 "IntersectionCount", "Intersection1X", "Intersection1Y",
                 "Intersection2X", "Intersection2Y",
+                // 판정 (EnableJudgment 시)
+                "JudgmentValue", "JudgmentLow", "JudgmentHigh", "JudgmentPass",
                 // 캘리브레이션 적용 시 채워지는 mm 키
                 "DistanceMm", "DeltaXMm", "DeltaYMm", "SignedDistanceMm",
                 "CenterDistanceMm", "EdgeDistanceMm",
@@ -736,7 +884,12 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 Name = this.Name,
                 ToolType = this.ToolType,
                 IsEnabled = this.IsEnabled,
-                Operation = this.Operation
+                Operation = this.Operation,
+                EnableJudgment = this.EnableJudgment,
+                JudgmentUnit = this.JudgmentUnit,
+                ExpectedValue = this.ExpectedValue,
+                ToleranceMinus = this.ToleranceMinus,
+                TolerancePlus = this.TolerancePlus
             };
             CopyPlcMappingsTo(clone);
             return clone;

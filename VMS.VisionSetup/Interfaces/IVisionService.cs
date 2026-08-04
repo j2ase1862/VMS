@@ -24,6 +24,12 @@ namespace VMS.VisionSetup.Interfaces
         /// <summary>마지막 ExecuteAll의 도구 ID → 결과 매핑 (topological sort 영향 없이 안전 lookup).</summary>
         Dictionary<string, VisionResult> LastExecutionResultsById { get; }
 
+        /// <summary>
+        /// 현재 워크스페이스 스텝의 Resolution (mm/px) — 캘리브레이션이 없을 때 측정 도구
+        /// mm 변환 폴백. MainViewModel 이 스텝 로드/실행 시점에 갱신. 0 = 폴백 없음.
+        /// </summary>
+        double CurrentStepResolutionMmPerPx { get; set; }
+
         void SetImage(Mat image);
         void AddTool(VisionToolBase tool);
         void RemoveTool(VisionToolBase tool);

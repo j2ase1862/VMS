@@ -273,6 +273,11 @@ namespace VMS.VisionSetup.Services
 
                 case GeometryTool geom:
                     config.Parameters["Operation"] = geom.Operation.ToString();
+                    config.Parameters["EnableJudgment"] = geom.EnableJudgment;
+                    config.Parameters["JudgmentUnit"] = geom.JudgmentUnit.ToString();
+                    config.Parameters["ExpectedValue"] = geom.ExpectedValue;
+                    config.Parameters["ToleranceMinus"] = geom.ToleranceMinus;
+                    config.Parameters["TolerancePlus"] = geom.TolerancePlus;
                     break;
 
                 case PlaneFitTool planeFit:
@@ -1201,6 +1206,16 @@ namespace VMS.VisionSetup.Services
 
             if (p.TryGetValue("Operation", out var op))
                 tool.Operation = Enum.Parse<GeometryOperation>(GetString(op));
+            if (p.TryGetValue("EnableJudgment", out var ej))
+                tool.EnableJudgment = GetBool(ej);
+            if (p.TryGetValue("JudgmentUnit", out var ju))
+                tool.JudgmentUnit = Enum.Parse<GeometryJudgmentUnit>(GetString(ju));
+            if (p.TryGetValue("ExpectedValue", out var ev))
+                tool.ExpectedValue = GetDouble(ev);
+            if (p.TryGetValue("ToleranceMinus", out var tm))
+                tool.ToleranceMinus = GetDouble(tm);
+            if (p.TryGetValue("TolerancePlus", out var tp))
+                tool.TolerancePlus = GetDouble(tp);
 
             return tool;
         }

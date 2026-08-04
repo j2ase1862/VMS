@@ -49,6 +49,7 @@ node gen_user_manual.js   # → ../VMS_사용자매뉴얼_v1.1.docx
 | #264 | DeepLearning 체크박스·슬라이더가 다크 테마로 바뀜(파란 채움 체크, 파란 트랙 슬라이더) — 본문 서술 변경 없음, §3.8 스크린샷·컨트롤 이미지가 구식이 됨. `--capture-controls` 재캡처 필요 | §3.8 |
 | #264 | VisionSetup 라디오버튼 5곳 다크 테마 적용(이미지 폴더 탐색 모드 Navigate/Run All/Run Selected, Geometry3D Point Source) — 해당 컨트롤이 보이는 스크린샷 구식화. `--capture-controls` 재캡처 필요 | §3.9 (Geometry3D), §3.1~3.2 (탐색 모드 노출 시) |
 | #264 | VMS.WeldTeach 신규 앱 — **GS 인증·사용자 매뉴얼 범위에서 제외 확정** (2026-08-04). 관리자 매뉴얼(`docs/manuals/BODA-VMS-Admin-Manual.html`) §9 에 수록 완료 — 사용자 매뉴얼에는 반영할 것 없음 | (완료 — 관리자 매뉴얼 §9) |
+| (신규) | 엣지 간 거리 측정 판정 체인 완성: ① 스텝 그리드의 **Resolution(mm/px)이 이제 실제로 동작** — 캘리브레이션 없을 때 측정 도구 mm 폴백 (기존엔 죽은 속성) ② Geometry 도구에 **Judgment**(기준값 ± 공차, mm/px 단위, OK/NG 오버레이) ③ "엣지 간 거리 측정" 템플릿에 Result 연결 추가. 도구 파라미터 표(extract_tool_params) 재생성 필요 | §3.9 (템플릿·Geometry 파라미터) |
 
 ## guides/ — 가이드 문서
 

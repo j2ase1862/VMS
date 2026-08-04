@@ -1,4 +1,4 @@
-using VMS.VisionSetup.Attributes;
+﻿using VMS.VisionSetup.Attributes;
 using VMS.VisionSetup.Models;
 using VMS.VisionSetup.Services;
 using OpenCvSharp;
@@ -474,7 +474,7 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 overlayImage = null;
 
                 // 캘리브레이션이 있으면 mm 키 추가 (없으면 no-op)
-                var cal = VisionService.Instance.CurrentCalibrationMetadata;
+                var cal = VisionService.Instance.EffectiveCalibration;
                 AddCoordMm(result, "EdgeX", "EdgeY", cal);
                 AddCoordMm(result, "Edge1X", "Edge1Y", cal);
                 AddCoordMm(result, "Edge2X", "Edge2Y", cal);
