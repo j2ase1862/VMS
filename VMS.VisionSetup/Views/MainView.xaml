@@ -1289,7 +1289,7 @@
                                                   SelectionMode="Single"
                                                   RowDetailsVisibilityMode="VisibleWhenSelected"
                                                   ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                                  ScrollViewer.CanContentScroll="True"
+                                                  ScrollViewer.CanContentScroll="False"
                                                   FontSize="12">
                                             <DataGrid.ColumnHeaderStyle>
                                                 <Style TargetType="DataGridColumnHeader">
@@ -1321,11 +1321,15 @@
                                                 </Style>
                                             </DataGrid.RowStyle>
                                             <!-- 행 선택 시 전체 결과를 Key–Value 표로 펼침 -->
+                                            <!-- 상세는 캡 없이 전체 높이로 펼치고 스크롤은 그리드 하나로 통일한다.
+                                                 (이전: 행 단위 스크롤 + 상세 내부 220px 중첩 스크롤 — 행 단위 스크롤은
+                                                 뷰포트보다 긴 상세의 아랫부분에 도달할 수 없고, 중첩 스크롤은 어디를
+                                                 굴려야 할지 모호해 '스크롤해도 다 안 보이는' 결함. 그리드는
+                                                 CanContentScroll=False 픽셀 스크롤로 전환됨) -->
                                             <DataGrid.RowDetailsTemplate>
                                                 <DataTemplate>
                                                     <Border Background="#1A1A1C" BorderBrush="#3F3F46"
                                                             BorderThickness="0,1,0,1" Padding="14,6">
-                                                        <ScrollViewer MaxHeight="220" VerticalScrollBarVisibility="Auto">
                                                             <ItemsControl ItemsSource="{Binding Entries}"
                                                                           Grid.IsSharedSizeScope="True">
                                                                 <ItemsControl.ItemTemplate>
@@ -1345,7 +1349,6 @@
                                                                     </DataTemplate>
                                                                 </ItemsControl.ItemTemplate>
                                                             </ItemsControl>
-                                                        </ScrollViewer>
                                                     </Border>
                                                 </DataTemplate>
                                             </DataGrid.RowDetailsTemplate>
