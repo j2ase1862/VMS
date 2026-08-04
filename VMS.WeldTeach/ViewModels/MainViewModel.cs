@@ -745,10 +745,56 @@ public partial class MainViewModel : ObservableObject
             : $"내보내기 완료 (CAD 좌표계 — 정합 전): 경로 {Contours.Count}개 → {path}";
     }
 
+    // ---- 핸드-아이 행렬 T_cam2base (스캔 명세 §S4-2) ----
+
+    private Matrix3D? _tCam2Base;
+
+    /// <summary>패널 표시용 상태 — 미입력이면 카메라 좌표계로 내보낸다.</summary>
+    [ObservableProperty]
+    private string _cam2BaseStatus = "미입력 (카메라 좌표계)";
+
+    /// <summary>
+    /// 핸드-아이 캘리브레이션 결과 4×4 행렬을 파일에서 읽는다.
+    /// 캘리브레이션 자체는 외부 도구 소관 — 여기서는 결과만 받아 내보내기에 적용한다.
+    /// </summary>
+    [RelayCommand]
+    private void LoadCam2Base()
+    {
+        var path = _dialogService.ShowOpenMatrixDialog();
+        if (path == null) return;
+        try
+        {
+            if (!HandEyeMatrix.TryParse(File.ReadAllText(path), out var m, out string error))
+            {
+                _dialogService.ShowMessage(
+                    $"행렬을 읽지 못했습니다.\n\n{error}\n\n" +
+                    "4×4 행 우선(row-major) JSON 배열 또는 숫자 12·16개 텍스트를 넣어주세요.",
+                    "T_cam2base");
+                return;
+            }
+            _tCam2Base = m;
+            Cam2BaseStatus = $"적용됨 — {HandEyeMatrix.Describe(m)}";
+            StatusText = $"T_cam2base 적용: {Path.GetFileName(path)} — 이후 내보내기는 로봇 베이스 좌표계로 변환됩니다.";
+        }
+        catch (Exception ex)
+        {
+            _dialogService.ShowMessage($"파일을 열지 못했습니다: {ex.Message}", "T_cam2base");
+        }
+    }
+
+    /// <summary>행렬 해제 — 다시 카메라 좌표계로 내보낸다.</summary>
+    [RelayCommand]
+    private void ClearCam2Base()
+    {
+        _tCam2Base = null;
+        Cam2BaseStatus = "미입력 (카메라 좌표계)";
+        StatusText = "T_cam2base 해제 — 내보내기는 카메라 좌표계로 저장됩니다.";
+    }
+
     /// <summary>
     /// 그라인딩 커버리지 경로 내보내기 (스캔 명세 Step S4).
     /// 경로는 스캔(카메라) 좌표계에서 만들어지므로 CAD 정합은 불필요하고,
-    /// 로봇 베이스 변환은 핸드-아이 행렬 T_cam2base 를 받아야 한다 (미지원 — 자리만 마련).
+    /// 로봇 베이스 변환은 핸드-아이 행렬 T_cam2base 가 입력됐을 때만 적용된다.
     /// </summary>
     [RelayCommand]
     private void ExportGrindingPath()
@@ -763,9 +809,11 @@ public partial class MainViewModel : ObservableObject
         var path = _dialogService.ShowSaveJsonDialog("grinding_paths.json");
         if (path == null) return;
 
-        _coveragePoseService.ExportJson(path, withPath);
+        _coveragePoseService.ExportJson(path, withPath, _tCam2Base);
         int poses = withPath.Sum(r => r.Scanlines.Sum(s => s.TotalPoseCount));
-        StatusText = $"내보내기 완료 (카메라 좌표계 — T_cam2base 미적용): " +
+        StatusText = (_tCam2Base.HasValue
+                         ? "내보내기 완료 (로봇 베이스 좌표계, T_cam2base 적용): "
+                         : "내보내기 완료 (카메라 좌표계 — T_cam2base 미적용): ") +
                      $"영역 {withPath.Count}개 · 포즈 {poses:N0}개 → {path}";
     }
 }

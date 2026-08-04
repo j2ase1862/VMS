@@ -1091,6 +1091,76 @@ public partial class App : Application
                   $"영역이탈 {Math.Max(outX, outY):F2}/{prm.GridCellMm:0.#}mm · " +
                   $"표면편차 {surfDev:F3}mm {(chainOk ? "OK" : "FAIL")}");
 
+        // ⑦ T_cam2base — 형식별 파싱 · 불량 입력 거부 · 적용 내보내기
+        {
+            // 기지 강체 변환: Z축 30° 회전 + 이동 (100, −50, 20)
+            var expect = new Matrix3D();
+            expect.Rotate(new System.Windows.Media.Media3D.Quaternion(new Vector3D(0, 0, 1), 30));
+            expect.Translate(new Vector3D(100, -50, 20));
+            var probes = new[] { new Point3D(0, 0, 0), new Point3D(37, -12, 5), new Point3D(-8, 60, -3) };
+
+            double Deviation(Matrix3D m) =>
+                probes.Max(p => (m.Transform(p) - expect.Transform(p)).Length);
+
+            const string rows = "[[0.8660254037844387,-0.5,0,100],[0.5,0.8660254037844387,0,-50]," +
+                                "[0,0,1,20],[0,0,0,1]]";
+            const string flat12 = "0.8660254037844387 -0.5 0 100  0.5 0.8660254037844387 0 -50  0 0 1 20";
+            string wrapped = "{\"eulerConvention\":\"ZYX(deg)\",\"tCam2BaseRowMajor\":" + rows + "}";
+
+            double devRows = 0, devFlat = 0, devWrapped = 0;
+            bool parseOk =
+                HandEyeMatrix.TryParse(rows, out var mRows, out _) &&
+                HandEyeMatrix.TryParse(flat12, out var mFlat, out _) &&
+                HandEyeMatrix.TryParse(wrapped, out var mWrap, out _);
+            if (parseOk)
+            {
+                devRows = Deviation(mRows);
+                devFlat = Deviation(mFlat);
+                devWrapped = Deviation(mWrap);
+                parseOk = devRows < 1e-6 && devFlat < 1e-6 && devWrapped < 1e-6;
+            }
+
+            // 불량 입력은 거부돼야 한다 (스케일 2배 / 거울 반전 / 개수 부족 / 마지막 행 오류)
+            var bad = new[]
+            {
+                "[[2,0,0,0],[0,2,0,0],[0,0,2,0],[0,0,0,1]]",          // 정규직교 아님
+                "[[-1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]]",          // det < 0 (거울)
+                "[1,2,3,4,5]",                                          // 개수 부족
+                "[[1,0,0,0],[0,1,0,0],[0,0,1,0],[1,2,3,4]]",           // 마지막 행 ≠ (0 0 0 1)
+            };
+            int rejected = bad.Count(b => !HandEyeMatrix.TryParse(b, out _, out _));
+
+            // 적용 내보내기 — frame 표기·행렬 기록·포즈 변환 일치
+            string robotJson = Path.Combine(Path.GetTempPath(), "weldteach_grinding_robot.json");
+            poseSvc.ExportJson(robotJson, new List<GrindingRegion> { region }, mRows);
+            bool applyOk;
+            double poseDev = 0;
+            try
+            {
+                using var doc = JsonDocument.Parse(File.ReadAllText(robotJson));
+                var root = doc.RootElement;
+                applyOk = root.GetProperty("frame").GetString()!.Contains("robot")
+                          && root.GetProperty("tCam2BaseRowMajor").ValueKind == JsonValueKind.Array;
+
+                var first = root.GetProperty("paths")[0].GetProperty("scanlines")[0]
+                    .GetProperty("passes")[0].GetProperty("poses")[0];
+                var srcPose = res.Scanlines[0].PassPoses[0][0];
+                var want = TorchPoseService.TransformPose(srcPose, mRows);
+                poseDev = (new Point3D(first.GetProperty("x").GetDouble(),
+                                       first.GetProperty("y").GetDouble(),
+                                       first.GetProperty("z").GetDouble())
+                           - new Point3D(want.X, want.Y, want.Z)).Length;
+                applyOk &= poseDev < 1e-3;   // 내보내기는 소수 4자리 반올림
+            }
+            catch { applyOk = false; }
+
+            bool ok = parseOk && rejected == bad.Length && applyOk;
+            allOk &= ok;
+            lines.Add($"m6 T_cam2base: 파싱 3형식 최대편차 {Math.Max(devRows, Math.Max(devFlat, devWrapped)):E1} " +
+                      $"· 불량거부 {rejected}/{bad.Length} · 적용 내보내기 포즈편차 {poseDev:E1} " +
+                      $"{(ok ? "OK" : "FAIL")}");
+        }
+
         lines.Add(allOk ? "GRINDING M6 OK" : "GRINDING M6 FAIL");
     }
 

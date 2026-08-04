@@ -180,16 +180,41 @@
             <Border Background="{StaticResource Brush.Surface.Base}"
                     CornerRadius="{StaticResource Radius.Md}">
                 <Grid>
+                    <!-- 카메라 조작 제스처를 명시 선언한다 (라이브러리 기본값에 의존하지 않음).
+                         왼쪽 버튼은 엣지 피킹·라쏘 선택에 쓰이므로 카메라에 배정하지 않는다.
+                         이동(Pan)은 Shift+우클릭과 휠클릭 양쪽으로 열어 둔다 — 휠 버튼이 없는
+                         마우스에서도 되도록. 조작법은 아래 좌하단 안내에 표시한다. -->
                     <helix:HelixViewport3D x:Name="Viewport"
                                            Background="Transparent"
                                            ShowCoordinateSystem="True"
                                            ZoomExtentsWhenLoaded="True"
+                                           IsPanEnabled="True"
+                                           IsRotationEnabled="True"
+                                           IsZoomEnabled="True"
+                                           RotateGesture="RightClick"
+                                           PanGesture="Shift+RightClick"
+                                           PanGesture2="MiddleClick"
+                                           ZoomGesture="Control+RightClick"
                                            CameraChanged="Viewport_CameraChanged"
                                            MouseMove="Viewport_MouseMove"
                                            MouseLeftButtonDown="Viewport_MouseLeftButtonDown"
                                            MouseLeftButtonUp="Viewport_MouseLeftButtonUp">
                         <helix:DefaultLights/>
                     </helix:HelixViewport3D>
+
+                    <!-- 카메라 조작 안내 — 이동이 Shift+우클릭인 것을 모르면 못 찾는다.
+                         좌하단은 좌표축 표시기(ShowCoordinateSystem)가 쓰므로 좌상단에 둔다. -->
+                    <Border HorizontalAlignment="Left" VerticalAlignment="Top"
+                            Margin="12,12,0,0" Padding="10,6"
+                            CornerRadius="{StaticResource Radius.Sm}"
+                            Background="{StaticResource Brush.Surface.Base}"
+                            Opacity="0.85" IsHitTestVisible="False">
+                        <StackPanel>
+                            <TextBlock Text="회전  우클릭 드래그" Style="{StaticResource Text.Caption}"/>
+                            <TextBlock Text="이동  Shift+우클릭 · 휠클릭 드래그" Style="{StaticResource Text.Caption}"/>
+                            <TextBlock Text="확대  휠 · Ctrl+우클릭 드래그" Style="{StaticResource Text.Caption}"/>
+                        </StackPanel>
+                    </Border>
                     <!-- 경로 순번 2D 오버레이 — 3D 메쉬에 가려지지 않도록 항상 최상위 -->
                     <Canvas x:Name="LabelOverlay" IsHitTestVisible="False" ClipToBounds="True"/>
                     <!-- 라쏘/브러시 드래그 궤적 오버레이 (그라인딩 모드) -->
@@ -507,11 +532,31 @@
                         </DockPanel>
 
                         <Button Content="커버리지 생성" Style="{StaticResource ModernButton}"
-                                HorizontalAlignment="Stretch" Margin="0,0,0,6"
+                                HorizontalAlignment="Stretch" Margin="0,0,0,10"
                                 Command="{Binding GenerateCoverageCommand}"/>
+
+                        <!-- 핸드-아이 행렬 (스캔 명세 §S4-2) -->
+                        <DockPanel LastChildFill="False" Margin="0,0,0,4">
+                            <TextBlock DockPanel.Dock="Left" Text="로봇 좌표 변환"
+                                       Style="{StaticResource Text.Label}"
+                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <ctrl:HelpIcon DockPanel.Dock="Left" VerticalAlignment="Center"
+                                           HelpTitle="T_cam2base (핸드-아이 행렬)"
+                                           HelpText="경로는 카메라(스캔)가 본 좌표계에서 만들어집니다. 로봇이 그대로 쓰려면 '카메라 좌표 → 로봇 베이스 좌표' 변환 행렬이 필요하고, 이 행렬은 핸드-아이 캘리브레이션으로 구합니다.&#x0a;&#x0a;캘리브레이션은 별도 도구/모듈에서 수행하고, 그 결과 4×4 행렬 파일만 여기서 불러오면 됩니다.&#x0a;&#x0a;허용 형식 (행 우선, 단위 mm):&#x0a;• JSON 2차원 배열 [[r,r,r,tx],[r,r,r,ty],[r,r,r,tz],[0,0,0,1]]&#x0a;• JSON 평탄 배열(숫자 16개 또는 12개)&#x0a;• tCam2BaseRowMajor 키를 가진 JSON (내보낸 경로 파일을 그대로 넣어도 됩니다)&#x0a;• 공백/쉼표로 구분된 숫자 12·16개 텍스트&#x0a;&#x0a;미입력이면 카메라 좌표계 그대로 내보내고, JSON 의 frame 필드에 그 사실이 적힙니다."/>
+                            <Button DockPanel.Dock="Right" Content="해제" Style="{StaticResource Button.Subtle}"
+                                    Padding="10,4" Margin="6,0,0,0"
+                                    ToolTip="행렬을 해제하고 카메라 좌표계로 되돌립니다"
+                                    Command="{Binding ClearCam2BaseCommand}"/>
+                            <Button DockPanel.Dock="Right" Content="행렬 불러오기"
+                                    Style="{StaticResource Button.Subtle}" Padding="10,4"
+                                    Command="{Binding LoadCam2BaseCommand}"/>
+                        </DockPanel>
+                        <TextBlock Text="{Binding Cam2BaseStatus}" Margin="0,0,0,10"
+                                   Style="{StaticResource Text.Caption}" TextWrapping="Wrap"/>
+
                         <Button Content="경로 내보내기 (JSON)" Style="{StaticResource Button.Subtle}"
                                 HorizontalAlignment="Stretch"
-                                ToolTip="가공 순서대로 스캔라인·포즈를 JSON 으로 저장합니다 (카메라 좌표계)"
+                                ToolTip="가공 순서대로 스캔라인·포즈를 JSON 으로 저장합니다"
                                 Command="{Binding ExportGrindingPathCommand}"/>
                     </StackPanel>
 

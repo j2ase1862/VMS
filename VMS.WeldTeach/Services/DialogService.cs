@@ -49,6 +49,16 @@ public class DialogService : IDialogService
         return dlg.ShowDialog() == true ? dlg.FileName : null;
     }
 
+    public string? ShowOpenMatrixDialog()
+    {
+        var dlg = new OpenFileDialog
+        {
+            Title = "핸드-아이 행렬 (T_cam2base) 열기",
+            Filter = "행렬 파일 (*.json;*.txt)|*.json;*.txt|모든 파일 (*.*)|*.*",
+        };
+        return dlg.ShowDialog() == true ? dlg.FileName : null;
+    }
+
     public void ShowMessage(string message, string title)
         => MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Information);
 }
