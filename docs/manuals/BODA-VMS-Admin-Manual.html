@@ -1266,8 +1266,11 @@ PowerShell 명령을 다룹니다.</div>
 <ol class="steps">
   <li>개발 PC 에서 저장소를 빌드합니다: <code>dotnet build VMS.WeldTeach\VMS.WeldTeach.csproj</code></li>
   <li><code>VMS.WeldTeach\bin\Debug\net8.0-windows7.0\VMS.WeldTeach.exe</code> 를 실행합니다.</li>
-  <li>또는 VisionSetup <strong>개발(Debug) 빌드</strong>의 실행 메뉴에서 열 수 있습니다 —
-      배포(Release) 빌드에는 이 메뉴가 아예 컴파일되지 않으므로 현장 설치본에서는 보이지 않습니다.</li>
+  <li>또는 VisionSetup 상단 메뉴의 <strong>[WeldTeach]</strong> 로 엽니다. 이 메뉴는
+      <strong>WeldTeach 실행 파일이 있는 PC 에서만 나타납니다</strong> — 배포 MSI 에는
+      WeldTeach 가 포함되지 않으므로 GS 인증 환경·현장 설치본에서는 메뉴 자체가 보이지 않고,
+      개발·테스트 PC 에서는 Release 실행본에서도 쓸 수 있습니다.
+      (VisionSetup 실행 중에 WeldTeach 를 새로 빌드했다면 VisionSetup 을 재시작해야 메뉴가 뜹니다.)</li>
 </ol>
 <div class="callout"><strong>참고:</strong> 첫 STEP 로드는 CAD 커널 초기화 때문에 몇 초 걸릴 수 있습니다.</div>
 

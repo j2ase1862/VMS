@@ -42,14 +42,17 @@ namespace VMS.VisionSetup
             // 프로세스 잔존 방지 (App.xaml ShutdownMode=OnMainWindowClose 와 한 쌍).
             Closing += (_, _) => (DataContext as MainViewModel)?.Cleanup();
 
-#if DEBUG
-            // WeldTeach(로봇 티칭 PoC) 실행 메뉴 — 개발 빌드 전용.
-            // PoC 는 GS 인증·배포 범위 외라 Release 에는 메뉴 항목·문자열·코드가
-            // 아예 컴파일되지 않는다 (XAML 정적 선언 대신 코드 주입을 쓰는 이유).
-            var weldTeachItem = new System.Windows.Controls.MenuItem { Header = "_WeldTeach (Dev)" };
-            weldTeachItem.Click += (_, _) => (DataContext as MainViewModel)?.LaunchWeldTeach();
-            MainMenu.Items.Add(weldTeachItem);
-#endif
+            // WeldTeach(로봇 티칭 PoC) 실행 메뉴 — exe 가 있는 PC 에서만 나타난다.
+            // 배포 MSI 에는 WeldTeach 가 없으므로 GS 인증·현장 설치본에서는 메뉴가 보이지
+            // 않고, 개발·테스트 PC 에서는 Release 실행본에서도 쓸 수 있다 (런타임 게이트 —
+            // 자세한 사유는 MainViewModel.FindWeldTeachExe 주석).
+            // 시작 시 1회 판정: 실행 중 WeldTeach 를 새로 빌드했다면 재시작해야 메뉴가 뜬다.
+            if (MainViewModel.FindWeldTeachExe() != null)
+            {
+                var weldTeachItem = new System.Windows.Controls.MenuItem { Header = "_WeldTeach" };
+                weldTeachItem.Click += (_, _) => (DataContext as MainViewModel)?.LaunchWeldTeach();
+                MainMenu.Items.Add(weldTeachItem);
+            }
         }
 
         private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
