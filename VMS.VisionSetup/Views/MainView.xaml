@@ -214,8 +214,10 @@
                 <!-- Menu Bar + Inline Actions -->
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
 
-                    <!-- ═══ Menu ═══ -->
-                    <Menu Background="Transparent" VerticalAlignment="Center" Margin="0,0,4,0">
+                    <!-- ═══ Menu ═══
+                         개발(Debug) 빌드에서는 코드비하인드가 WeldTeach(Dev) 항목을
+                         뒤에 주입한다 — Release 에는 코드·문자열 모두 컴파일되지 않음. -->
+                    <Menu x:Name="MainMenu" Background="Transparent" VerticalAlignment="Center" Margin="0,0,4,0">
                         <Menu.Resources>
                             <Style TargetType="MenuItem">
                                 <Setter Property="Foreground" Value="{StaticResource BrushBgWindow}"/>

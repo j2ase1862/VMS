@@ -3674,6 +3674,52 @@ namespace VMS.VisionSetup.ViewModels
             }
         }
 
+#if DEBUG
+        /// <summary>
+        /// 개발 빌드 전용 — WeldTeach(로봇 티칭 PoC) 실행. PoC 는 GS 인증·배포 범위 외라
+        /// Release 에는 이 메서드와 호출 메뉴가 컴파일되지 않는다 (MainView 코드비하인드 주입).
+        /// 배포 폴더에는 exe 가 없으므로 개발 트리의 빌드 출력도 함께 탐색한다.
+        /// </summary>
+        public void LaunchWeldTeach()
+        {
+            try
+            {
+                var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                var candidates = new[]
+                {
+                    System.IO.Path.Combine(baseDir, "VMS.WeldTeach.exe"),
+                    // 개발 트리: VMS.VisionSetup\bin\{cfg}\net8.0-windows7.0\ → 저장소 루트 → WeldTeach 출력
+                    System.IO.Path.GetFullPath(System.IO.Path.Combine(baseDir,
+                        @"..\..\..\..\VMS.WeldTeach\bin\Debug\net8.0-windows7.0\VMS.WeldTeach.exe")),
+                    System.IO.Path.GetFullPath(System.IO.Path.Combine(baseDir,
+                        @"..\..\..\..\VMS.WeldTeach\bin\Release\net8.0-windows7.0\VMS.WeldTeach.exe")),
+                };
+                var exePath = candidates.FirstOrDefault(System.IO.File.Exists);
+
+                if (exePath == null)
+                {
+                    _dialogService.ShowWarning(
+                        "VMS.WeldTeach 실행 파일을 찾을 수 없습니다.\n" +
+                        "dotnet build VMS.WeldTeach\\VMS.WeldTeach.csproj 로 먼저 빌드해 주세요.",
+                        "WeldTeach (Dev)");
+                    return;
+                }
+
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = exePath,
+                    // OCCT 네이티브 DLL 로드가 실행 파일 폴더 기준 — 작업 폴더를 맞춰 준다
+                    WorkingDirectory = System.IO.Path.GetDirectoryName(exePath)!,
+                    UseShellExecute = true,
+                });
+            }
+            catch (Exception ex)
+            {
+                _dialogService.ShowError($"VMS.WeldTeach 실행 실패: {ex.Message}", "Error");
+            }
+        }
+#endif
+
         public void RenameTool(ToolItem tool)
         {
             if (tool == null) return;

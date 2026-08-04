@@ -41,6 +41,15 @@ namespace VMS.VisionSetup
             // 창 닫힘 = 앱 종료 경로 — 카메라 SDK 스레드/공유 메모리/수신 루프를 정리해
             // 프로세스 잔존 방지 (App.xaml ShutdownMode=OnMainWindowClose 와 한 쌍).
             Closing += (_, _) => (DataContext as MainViewModel)?.Cleanup();
+
+#if DEBUG
+            // WeldTeach(로봇 티칭 PoC) 실행 메뉴 — 개발 빌드 전용.
+            // PoC 는 GS 인증·배포 범위 외라 Release 에는 메뉴 항목·문자열·코드가
+            // 아예 컴파일되지 않는다 (XAML 정적 선언 대신 코드 주입을 쓰는 이유).
+            var weldTeachItem = new System.Windows.Controls.MenuItem { Header = "_WeldTeach (Dev)" };
+            weldTeachItem.Click += (_, _) => (DataContext as MainViewModel)?.LaunchWeldTeach();
+            MainMenu.Items.Add(weldTeachItem);
+#endif
         }
 
         private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
