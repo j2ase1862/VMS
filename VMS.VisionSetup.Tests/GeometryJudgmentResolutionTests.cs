@@ -157,6 +157,33 @@ namespace VMS.VisionSetup.Tests
             Assert.False(result.Data.ContainsKey("JudgmentPass"));
         }
 
+        // ── 설정 ViewModel 래퍼 — 설정 UI 는 툴이 아니라 VM 에 바인딩된다.
+        // 래퍼가 빠지면 바인딩이 허공이라 화면은 공백, 입력은 저장 안 됨 (실사용 보고 결함).
+
+        [Fact]
+        public void SettingsViewModel_ExposesJudgmentProperties_WiredToTool()
+        {
+            var tool = new GeometryTool();
+            var vm = new ViewModels.ToolSettings.GeometryToolSettingsViewModel(tool);
+
+            vm.EnableJudgment = true;
+            vm.JudgmentUnit = GeometryJudgmentUnit.Px;
+            vm.ExpectedValue = 12.5;
+            vm.ToleranceMinus = 0.25;
+            vm.TolerancePlus = 0.75;
+
+            // VM 입력이 툴까지 도달해야 저장(SerializeTool)에 반영된다
+            Assert.True(tool.EnableJudgment);
+            Assert.Equal(GeometryJudgmentUnit.Px, tool.JudgmentUnit);
+            Assert.Equal(12.5, tool.ExpectedValue, 6);
+            Assert.Equal(0.25, tool.ToleranceMinus, 6);
+            Assert.Equal(0.75, tool.TolerancePlus, 6);
+
+            // 역방향 — 로드된 툴 값이 VM(화면)에 보여야 한다
+            tool.ExpectedValue = 99;
+            Assert.Equal(99, vm.ExpectedValue, 6);
+        }
+
         // ── 직렬화 왕복 ──
 
         [Fact]
