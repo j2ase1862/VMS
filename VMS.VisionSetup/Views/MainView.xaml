@@ -214,8 +214,10 @@
                 <!-- Menu Bar + Inline Actions -->
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
 
-                    <!-- ═══ Menu ═══ -->
-                    <Menu Background="Transparent" VerticalAlignment="Center" Margin="0,0,4,0">
+                    <!-- ═══ Menu ═══
+                         WeldTeach exe 가 존재하는 PC 에서만 코드비하인드가 WeldTeach 항목을
+                         뒤에 주입한다 (배포 MSI 미포함 → 인증·현장 설치본에는 안 나타남). -->
+                    <Menu x:Name="MainMenu" Background="Transparent" VerticalAlignment="Center" Margin="0,0,4,0">
                         <Menu.Resources>
                             <Style TargetType="MenuItem">
                                 <Setter Property="Foreground" Value="{StaticResource BrushBgWindow}"/>

@@ -3674,6 +3674,57 @@ namespace VMS.VisionSetup.ViewModels
             }
         }
 
+        /// <summary>
+        /// WeldTeach(로봇 티칭 PoC) 실행 파일 탐색 — 실행 메뉴 표시 여부의 게이트.
+        /// PoC 는 GS 인증·배포 범위 외지만 컴파일 게이트(#if DEBUG)를 쓰면 설치본(Release)
+        /// 에서 테스트할 수 없으므로, <b>exe 존재 기반 런타임 게이트</b>를 쓴다:
+        /// 배포 MSI 에는 WeldTeach 가 포함되지 않아 인증·현장 설치본에서는 메뉴가 나타나지
+        /// 않고, exe 가 있는 개발·테스트 PC 에서는 Release 실행본에서도 쓸 수 있다.
+        /// </summary>
+        public static string? FindWeldTeachExe()
+        {
+            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            var candidates = new[]
+            {
+                System.IO.Path.Combine(baseDir, "VMS.WeldTeach.exe"),
+                // 개발 트리: VMS.VisionSetup\bin\{cfg}\net8.0-windows7.0\ → 저장소 루트 → WeldTeach 출력
+                System.IO.Path.GetFullPath(System.IO.Path.Combine(baseDir,
+                    @"..\..\..\..\VMS.WeldTeach\bin\Debug\net8.0-windows7.0\VMS.WeldTeach.exe")),
+                System.IO.Path.GetFullPath(System.IO.Path.Combine(baseDir,
+                    @"..\..\..\..\VMS.WeldTeach\bin\Release\net8.0-windows7.0\VMS.WeldTeach.exe")),
+            };
+            return candidates.FirstOrDefault(System.IO.File.Exists);
+        }
+
+        /// <summary>WeldTeach 실행 (메뉴는 FindWeldTeachExe 성공 시에만 주입됨 — MainView).</summary>
+        public void LaunchWeldTeach()
+        {
+            try
+            {
+                var exePath = FindWeldTeachExe();
+                if (exePath == null)
+                {
+                    _dialogService.ShowWarning(
+                        "VMS.WeldTeach 실행 파일을 찾을 수 없습니다.\n" +
+                        "dotnet build VMS.WeldTeach\\VMS.WeldTeach.csproj 로 먼저 빌드해 주세요.",
+                        "WeldTeach");
+                    return;
+                }
+
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = exePath,
+                    // OCCT 네이티브 DLL 로드가 실행 파일 폴더 기준 — 작업 폴더를 맞춰 준다
+                    WorkingDirectory = System.IO.Path.GetDirectoryName(exePath)!,
+                    UseShellExecute = true,
+                });
+            }
+            catch (Exception ex)
+            {
+                _dialogService.ShowError($"VMS.WeldTeach 실행 실패: {ex.Message}", "Error");
+            }
+        }
+
         public void RenameTool(ToolItem tool)
         {
             if (tool == null) return;
