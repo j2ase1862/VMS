@@ -1190,7 +1190,9 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*" MinHeight="120"/>
                                     <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="190" MinHeight="60" MaxHeight="700"/>
+                                    <!-- Run Results 기본 높이 — 결과 키가 늘어(측정 mm·judgment 등)
+                                         190 으로는 몇 행 못 보여 300 으로 상향 (스플리터로 조절 가능) -->
+                                    <RowDefinition Height="300" MinHeight="60" MaxHeight="700"/>
                                 </Grid.RowDefinitions>
 
                                 <!-- Row 0: Header - ComboBox Switcher + Clear Button -->
@@ -1236,11 +1238,22 @@
                                                       ROISelectionChanged="ImageCanvas_ROISelectionChanged"
                                                       Margin="5"/>
 
-                                <!-- Row 2: 이미지/결과 영역 높이 조절 스플리터 -->
-                                <GridSplitter Grid.Row="2" Height="5" HorizontalAlignment="Stretch"
-                                              Background="#333337" ResizeDirection="Rows"
+                                <!-- Row 2: 이미지/결과 영역 높이 조절 스플리터 —
+                                     그립 점 표시로 "잡아서 조절 가능"이 보이게 (발견성) -->
+                                <GridSplitter Grid.Row="2" Height="8" HorizontalAlignment="Stretch"
+                                              ResizeDirection="Rows"
                                               ResizeBehavior="PreviousAndNext"
-                                              Margin="5,0" Cursor="SizeNS"/>
+                                              Margin="5,0" Cursor="SizeNS"
+                                              ToolTip="드래그해서 Run Results 영역 높이 조절">
+                                    <GridSplitter.Template>
+                                        <ControlTemplate TargetType="GridSplitter">
+                                            <Border Background="#333337" CornerRadius="3">
+                                                <TextBlock Text="●  ●  ●" Foreground="#8A8A8E" FontSize="5"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </GridSplitter.Template>
+                                </GridSplitter>
 
                                 <!-- Row 3: Tool Run Results DataGrid -->
                                 <Border Grid.Row="3" BorderBrush="#333333" BorderThickness="0,1,0,0"
