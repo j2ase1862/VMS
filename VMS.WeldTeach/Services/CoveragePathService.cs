@@ -4,12 +4,16 @@ using VMS.WeldTeach.Models;
 namespace VMS.WeldTeach.Services;
 
 /// <summary>커버리지 생성 결과 통계. Ambiguous25DCells &gt; 0 이면 2.5D 위반(높이 겹침) 경고.</summary>
+/// <param name="FitPatchCount">곡면 피팅 사용 시 리프 패치 수 (미사용 0).</param>
+/// <param name="FitRmseMm">곡면 피팅 사용 시 달성 최대 코어 RMSE(mm).</param>
 public record CoverageResult(
     List<CoverageScanline> Scanlines,
     double TotalLengthMm,
     double CoveredAreaMm2,
     int LineCount,
-    int Ambiguous25DCells);
+    int Ambiguous25DCells,
+    int FitPatchCount = 0,
+    double FitRmseMm = 0);
 
 /// <summary>
 /// 그라인딩 스캔 명세 Step S3 — 2.5D 높이맵 래스터 커버리지 경로 생성.
@@ -173,6 +177,15 @@ public class CoveragePathService
             for (int ib = 0; ib < nb; ib++)
                 if (mask[ia, ib]) maskCells++;
 
+        // ---- 3.5) 표면 모델 옵션 — 서브패치 다항식 피팅 ----
+        // 높이·법선 샘플 원천을 그리드 쌍선형 → 피팅 곡면(해석 기울기)으로 교체한다.
+        // 유효 마스크·2.5D 위반은 여전히 그리드 점유 기반 — 피팅은 구멍 위로도
+        // 매끄럽게 외삽하므로 마스크 없이 쓰면 구멍이 사라진다.
+        FittedSurface? fitted = null;
+        if (prm.UseSurfaceFit)
+            fitted = FittedSurface.Fit(pa, pb, ph,
+                new SurfaceFitOptions { RmseMm = Math.Clamp(prm.FitRmseMm, 0.005, 5.0) });
+
         // ---- 4) 스캔라인 배치 (b 방향 스텝오버, 표면 호길이 기준) + 샘플링 → 세그먼트 분할 ----
         // 스텝오버 3D 보정 — 주평면상 등간격은 경사·곡면에서 실제 표면 간격이 벌어져
         // 미연마 띠가 남는다 (원통 셸 40° 가장자리에서 최대 1.31배). b 를 셀 간격으로
@@ -250,7 +263,8 @@ public class CoveragePathService
             foreach (var s in lineSegs) { totalLen += s.LengthMm; scanlines.Add(s); }
         }
 
-        return new CoverageResult(scanlines, totalLen, maskCells * cell * cell, lineCount, ambiguous);
+        return new CoverageResult(scanlines, totalLen, maskCells * cell * cell, lineCount, ambiguous,
+            fitted?.PatchCount ?? 0, fitted?.MaxRmseMm ?? 0);
 
         // ---- 로컬 함수 ----
 
@@ -270,12 +284,23 @@ public class CoveragePathService
             return dataMinB + (lo + f) * bStep;
         }
 
-        // (a,b) 샘플 — 마스크 유효 셀에서 셀 중심 쌍선형 보간 (무효 이웃은 가중 제외)
+        // (a,b) 샘플 — 마스크 유효 셀에서 셀 중심 쌍선형 보간 (무효 이웃은 가중 제외).
+        // 곡면 피팅 모드면 높이·법선을 피팅 곡면에서 얻는다 (마스크 판정은 동일).
         bool TrySample(double a, double b, out double h, out Vector3D nrm)
         {
             h = 0; nrm = e3;
             int ia = (int)((a - minA) / cell), ib = (int)((b - minB) / cell);
             if (ia < 0 || ia >= na || ib < 0 || ib >= nb || !mask[ia, ib]) return false;
+
+            if (fitted != null && fitted.TryEvaluate(a, b, out double fh, out double fha, out double fhb))
+            {
+                // 곡면 S(a,b) = C + a·e1 + b·e2 + h·e3 의 법선 = −h_a·e1 − h_b·e2 + e3
+                h = fh;
+                var fn = -fha * e1 - fhb * e2 + e3;
+                fn.Normalize();
+                nrm = fn;
+                return true;
+            }
 
             double u = (a - minA) / cell - 0.5, v = (b - minB) / cell - 0.5;
             int i0 = (int)Math.Floor(u), j0 = (int)Math.Floor(v);

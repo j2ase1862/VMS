@@ -416,6 +416,9 @@ public partial class App : Application
             // 그라인딩 확장 M6 — .vpc 파일을 거치는 전체 체인 스모크
             RunGrindingM6SelfTest(lines);
 
+            // 그라인딩 확장 M7 — 서브패치 다항식 곡면 피팅 (표면 모델 옵션) 검증
+            RunGrindingM7SelfTest(lines);
+
             File.WriteAllLines(log, lines);
         }
         catch (Exception ex)
@@ -1162,6 +1165,99 @@ public partial class App : Application
         }
 
         lines.Add(allOk ? "GRINDING M6 OK" : "GRINDING M6 FAIL");
+    }
+
+    /// <summary>
+    /// 그라인딩 M7 — 표면 모델 옵션(서브패치 다항식 피팅) 검증. 같은 입력에서
+    /// 그리드(기본)와 피팅을 나란히 돌려 비교한다:
+    /// 표면 추종 편차 · 해석 법선 정확도(그리드 이상) · 경로 매끄러움(이웃 법선 요동
+    /// 그리드 이하 — 해석 곡면의 존재 이유) · 패치 세분화 동작(평면=1, 파형>1) ·
+    /// 구멍 마스크 유지(피팅은 구멍 위로 외삽하므로 마스크가 막아야 함).
+    /// </summary>
+    private static void RunGrindingM7SelfTest(List<string> lines)
+    {
+        bool allOk = true;
+        var prepSvc = new CloudPreprocessService();
+        var covSvc = new CoveragePathService();
+
+        double MeanTurn(CoverageResult r)
+        {
+            double sum = 0;
+            int cnt = 0;
+            foreach (var s in r.Scanlines)
+                for (int i = 1; i < s.PointNormals.Count; i++)
+                {
+                    double dot = Math.Clamp(
+                        Vector3D.DotProduct(s.PointNormals[i - 1], s.PointNormals[i]), -1, 1);
+                    sum += Math.Acos(dot) * 180 / Math.PI;
+                    cnt++;
+                }
+            return cnt > 0 ? sum / cnt : 0;
+        }
+
+        var cases = new (SampleSurfaceKind Kind, double Tool, double Raster, bool ExpectSubdiv)[]
+        {
+            (SampleSurfaceKind.Plane, 50, 0, false),
+            (SampleSurfaceKind.InclinedPlane, 50, 0, false),
+            (SampleSurfaceKind.CylinderShell, 30, 90, true),
+            (SampleSurfaceKind.SineBump, 30, 90, true),
+        };
+        foreach (var c in cases)
+        {
+            var sc = SampleCloudGenerator.Generate(c.Kind, 0.05);
+            var prep = prepSvc.Process(sc.Points, sc.Viewpoint);
+            var all = Enumerable.Range(0, prep.Points.Count).ToList();
+
+            var prmGrid = new GrindingParams { ToolDiameterMm = c.Tool, OverlapPct = 30, RasterAngleDeg = c.Raster };
+            var prmFit = new GrindingParams
+            {
+                ToolDiameterMm = c.Tool, OverlapPct = 30, RasterAngleDeg = c.Raster,
+                UseSurfaceFit = true, FitRmseMm = 0.1,
+            };
+            var resGrid = covSvc.Generate(prep.Points, prep.Normals, all, prmGrid);
+            var resFit = covSvc.Generate(prep.Points, prep.Normals, all, prmFit);
+
+            double devFit = 0;
+            foreach (var s in resFit.Scanlines)
+                foreach (var p in s.PathPoints)
+                    devFit = Math.Max(devFit, sc.TrueDeviationAt(p));
+            double nErrGrid = MeanNormalErrorDeg(resGrid, sc);
+            double nErrFit = MeanNormalErrorDeg(resFit, sc);
+            double turnGrid = MeanTurn(resGrid);
+            double turnFit = MeanTurn(resFit);
+
+            // 세분화 동작 — 평면류는 한 패치로 수렴, 곡면류는 임계 초과로 쪼개져야 한다
+            bool patchOk = c.ExpectSubdiv ? resFit.FitPatchCount > 1 : resFit.FitPatchCount == 1;
+            bool ok = devFit <= 1.0
+                      && nErrFit <= 2.0 && nErrFit <= nErrGrid + 0.1
+                      && turnFit <= turnGrid + 0.05
+                      && patchOk;
+            allOk &= ok;
+            lines.Add($"m7 {sc.Name}: 패치 {resFit.FitPatchCount}(RMSE {resFit.FitRmseMm:F3}) " +
+                      $"· 표면편차 {devFit:F3}mm · 법선오차 {nErrFit:F2}°(그리드 {nErrGrid:F2}°) " +
+                      $"· 요동 {turnFit:F2}°(그리드 {turnGrid:F2}°) {(ok ? "OK" : "FAIL")}");
+        }
+
+        // 구멍 패널 — 피팅이 구멍 위로 외삽해도 마스크가 경로를 막아야 한다
+        {
+            var sc = SampleCloudGenerator.Generate(SampleSurfaceKind.HolePanel, 0.05);
+            var prep = prepSvc.Process(sc.Points, sc.Viewpoint);
+            var all = Enumerable.Range(0, prep.Points.Count).ToList();
+            var prm = new GrindingParams { ToolDiameterMm = 50, OverlapPct = 30, UseSurfaceFit = true, FitRmseMm = 0.1 };
+            var res = covSvc.Generate(prep.Points, prep.Normals, all, prm);
+
+            double cx = SampleCloudGenerator.PanelW / 2, cy = SampleCloudGenerator.PanelH / 2;
+            double dHole = res.Scanlines.SelectMany(s => s.PathPoints)
+                .Min(p => Math.Sqrt((p.X - cx) * (p.X - cx) + (p.Y - cy) * (p.Y - cy)));
+            var segsPerLine = res.Scanlines.GroupBy(s => s.LineIndex).Select(g => g.Count()).ToList();
+            bool ok = dHole >= SampleCloudGenerator.HoleRadius - 2 * prm.GridCellMm
+                      && segsPerLine.All(v => v >= 2);
+            allOk &= ok;
+            lines.Add($"m7 구멍패널(피팅): 구멍거리 {dHole:F1}mm · 라인당 세그먼트 " +
+                      $"{string.Join("/", segsPerLine)} {(ok ? "OK" : "FAIL")}");
+        }
+
+        lines.Add(allOk ? "GRINDING M7 OK" : "GRINDING M7 FAIL");
     }
 
     /// <summary>

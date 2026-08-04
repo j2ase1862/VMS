@@ -398,6 +398,14 @@ public partial class MainViewModel : ObservableObject
     partial void OnToolDiameterMmChanged(double value) => OnPropertyChanged(nameof(StepoverMm));
     partial void OnOverlapPctChanged(double value) => OnPropertyChanged(nameof(StepoverMm));
 
+    /// <summary>표면 모델 — true 면 서브패치 다항식 피팅(해석 법선), false 면 높이맵 쌍선형.</summary>
+    [ObservableProperty]
+    private bool _useSurfaceFit;
+
+    /// <summary>곡면 피팅 허용 RMSE(mm) — 패치 세분화 종료 임계.</summary>
+    [ObservableProperty]
+    private double _fitRmseMm = 0.1;
+
     // ---- 공구 포즈 파라미터 (스캔 명세 Step S4) ----
 
     [ObservableProperty]
@@ -433,6 +441,8 @@ public partial class MainViewModel : ObservableObject
                 OverlapPct = Math.Clamp(OverlapPct, 0, 90),
                 MarginMm = Math.Max(0, GrindMarginMm),
                 Zigzag = ZigzagPattern,
+                UseSurfaceFit = UseSurfaceFit,
+                FitRmseMm = Math.Clamp(FitRmseMm, 0.005, 5.0),
                 LeadAngleDeg = Math.Clamp(LeadAngleDeg, -60, 60),
                 TiltAngleDeg = Math.Clamp(TiltAngleDeg, -60, 60),
                 PassCount = Math.Clamp(PassCount, 1, 100),
@@ -440,6 +450,7 @@ public partial class MainViewModel : ObservableObject
             };
             int ambiguous = 0;
             int poseCount = 0;
+            int fitPatches = 0;
             await Task.Run(() =>
             {
                 foreach (var r in regions)
@@ -450,6 +461,7 @@ public partial class MainViewModel : ObservableObject
                     r.TotalLengthMm = res.TotalLengthMm;
                     r.CoveredAreaMm2 = res.CoveredAreaMm2;
                     ambiguous += res.Ambiguous25DCells;
+                    fitPatches += res.FitPatchCount;
                     // Step S4 — 스캔라인이 만들어진 즉시 공구 포즈까지 채운다
                     poseCount += _coveragePoseService.ComputePoses(r.Scanlines, prm);
                 }
@@ -457,6 +469,7 @@ public partial class MainViewModel : ObservableObject
             int lines = regions.Sum(r => r.Scanlines.Select(s => s.LineIndex).Distinct().Count());
             StatusText = $"커버리지 생성 완료 — 영역 {regions.Count}개, 라인 {lines}개, " +
                          $"총 {regions.Sum(r => r.TotalLengthMm):F0} mm (스텝오버 {prm.StepoverMm:0.#} mm) · " +
+                         (prm.UseSurfaceFit ? $"곡면피팅 {fitPatches}패치 · " : "") +
                          $"포즈 {poseCount:N0}개 (리드 {prm.LeadAngleDeg:0.#}°" +
                          (prm.PassCount > 1 ? $", {prm.PassCount}패스 ×{prm.DepthPerPassMm:0.##}mm" : "") + ")" +
                          (ambiguous > 0 ? $" ⚠ 2.5D 위반 의심 셀 {ambiguous}개 — 겹친 표면이 선택되지 않았는지 확인" : "");
