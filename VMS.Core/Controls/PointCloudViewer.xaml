@@ -182,6 +182,9 @@
                     Click="BtnSideView_Click"/>
             <Button x:Name="BtnToggleGrid" Content="Grid" ToolTip="그리드/박스/눈금 표시 전환"
                     Click="BtnToggleGrid_Click"/>
+            <Button x:Name="BtnLodMode" Content="자동"
+                    ToolTip="표시 밀도 전환: 자동 → 전체 → 1/2 → 1/4 — 점군이 성기게 보이면 '전체', 화면이 느리면 1/2·1/4 를 선택하세요"
+                    Click="BtnLodMode_Click"/>
         </StackPanel>
 
         <!-- Depth Range + Color Bar (left side, Mech-Eye style) -->

@@ -385,7 +385,9 @@ namespace VMS.Core.Controls
         private void OnMouseWheel(object sender, MouseWheelEventArgs e)
         {
             var pos = e.GetPosition(DepthImage);
-            double zoom = e.Delta > 0 ? 1.2 : 1.0 / 1.2;
+            // 기본 ×1.02/노치, Ctrl+휠 = ×1.01 정밀 줌 (사용자 요청 2026-08-05)
+            double step = Keyboard.Modifiers.HasFlag(ModifierKeys.Control) ? 1.01 : 1.02;
+            double zoom = e.Delta > 0 ? step : 1.0 / step;
 
             double oldScale = ImageScale.ScaleX;
             double newScale = oldScale * zoom;
