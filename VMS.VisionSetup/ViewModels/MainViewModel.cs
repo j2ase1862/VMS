@@ -805,12 +805,11 @@ namespace VMS.VisionSetup.ViewModels
             // 카메라 목록 로드
             LoadCameras();
 
-            // 현재 레시피가 이미 로드되어 있으면 반영
-            var currentRecipe = _recipeService.CurrentRecipe;
-            if (currentRecipe != null)
+            // 현재 레시피가 이미 로드되어 있으면 반영 (CLI 인자 프리로드 등 구독 전 로드).
+            // 일반 로드와 동일하게 이름 재계산·카메라 자동 선택·미등록 카메라 경고를 적용한다.
+            if (_recipeService.CurrentRecipe != null)
             {
-                CurrentRecipeName = currentRecipe.Name;
-                RefreshSteps();
+                OnCurrentRecipeChanged(this, _recipeService.CurrentRecipe);
             }
 
             // Register for tool settings messages
