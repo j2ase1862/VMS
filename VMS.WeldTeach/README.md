@@ -52,6 +52,8 @@
 CAD 없이 3D 스캔 점군에서 직접 가공 영역을 잡아 커버리지 경로와 공구 포즈를 만든다.
 **OCCT 를 쓰지 않으므로** CAD 커널 라이선스 리스크가 용접 모드에만 국한된다.
 명세: `docs/design/weldteach-grinding-scan-coverage-spec.md`.
+기하 코드 규약(불변식): `VMS.WeldTeach/CLAUDE.md` ·
+리뷰 지시서: `docs/design/weldteach-grinding-review-2026-08.md` (P0 착수 전 ①~③ 필수).
 
 1. 툴바 **공정 모드**에서 [그라인딩] 선택 → [점군 열기](.vpc/PLY/XYZ) 또는
    [합성 표면] 콤보(평면 / 30° 경사 / 원통 셸 / 사인 범프 / 구멍 패널) + [생성].

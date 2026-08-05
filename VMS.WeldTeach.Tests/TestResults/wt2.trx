@@ -1,0 +1,209 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="fb6aac44-c73e-4ac2-93db-d584b175e398" name="vinos@VASIM-KIMGIDONG 2026-08-05 15:19:52" runUser="VASIM-KIMGIDONG\vinos" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-08-05T15:19:52.8546847+09:00" queuing="2026-08-05T15:19:52.8546849+09:00" start="2026-08-05T15:19:51.9861144+09:00" finish="2026-08-05T15:19:54.1890425+09:00" />
+  <TestSettings name="default" id="043303e2-eec3-43d0-94b0-0f74f7002899">
+    <Deployment runDeploymentRoot="vinos_VASIM-KIMGIDONG_2026-08-05_15_19_52" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="c13ae52f-ce4f-4485-90f4-4067db6087e3" testId="24ee9845-2d91-3b31-14ca-16f8baa208b5" testName="VMS.WeldTeach.Tests.SurfaceFitInteractionTests.Surface_fit_reduces_normal_jitter_on_cylinder" computerName="VASIM-KIMGIDONG" duration="00:00:00.3635206" startTime="2026-08-05T15:19:53.0877860+09:00" endTime="2026-08-05T15:19:53.0877866+09:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c13ae52f-ce4f-4485-90f4-4067db6087e3" />
+    <UnitTestResult executionId="13e31323-e6cd-437a-9d4b-6f27a98a189d" testId="c377b884-7d95-4560-a477-68e4ad498191" testName="VMS.WeldTeach.Tests.CoveragePathServiceTests.Inclined_plane_keeps_true_3d_stepover" computerName="VASIM-KIMGIDONG" duration="00:00:00.0940385" startTime="2026-08-05T15:19:53.3429991+09:00" endTime="2026-08-05T15:19:53.3429993+09:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="13e31323-e6cd-437a-9d4b-6f27a98a189d">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.InRange() Failure: Value not in range&#xD;
+Range:  (29.75 - 40.25)&#xD;
+Actual: 25.546524352663322</Message>
+          <StackTrace>   at VMS.WeldTeach.Tests.CoveragePathServiceTests.Inclined_plane_keeps_true_3d_stepover() in D:\Repo\VMS\VMS.WeldTeach.Tests\CoveragePathServiceTests.cs:line 96&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="33296157-e197-4daf-967c-668dc0d69323" testId="1b32137c-85ce-e017-e89b-f0ba7a3a4fd3" testName="VMS.WeldTeach.Tests.CoveragePathServiceTests.Standard_surfaces_generate_paths(kind: InclinedPlane)" computerName="VASIM-KIMGIDONG" duration="00:00:00.0944094" startTime="2026-08-05T15:19:53.0021948+09:00" endTime="2026-08-05T15:19:53.0021951+09:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="33296157-e197-4daf-967c-668dc0d69323" />
+    <UnitTestResult executionId="4db462c9-0fb1-4035-b788-186462fdea9b" testId="da9dcb5b-874d-7f56-5755-f13c6484fc92" testName="VMS.WeldTeach.Tests.PoseAndExportTests.Concave_multipass_depth_is_limited_by_curvature_radius" computerName="VASIM-KIMGIDONG" duration="00:00:00.0010000" startTime="2026-08-05T15:19:52.5769379+09:00" endTime="2026-08-05T15:19:52.5769380+09:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4db462c9-0fb1-4035-b788-186462fdea9b">
+      <Output>
+        <ErrorInfo>
+          <Message>지시서 항목 ④(오목면 오프셋 접힘 검사) 구현 전 사양 테스트 — 구현 PR에서 Skip 해제. docs/design/weldteach-grinding-review-2026-08.md</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="38c12a46-3d8c-4fb2-9612-cda2e5d7f560" testId="a1a16f8c-53d1-78f0-abff-ddf36e789d92" testName="VMS.WeldTeach.Tests.CoveragePathServiceTests.Standard_surfaces_generate_paths(kind: Plane)" computerName="VASIM-KIMGIDONG" duration="00:00:00.1286136" startTime="2026-08-05T15:19:53.2379061+09:00" endTime="2026-08-05T15:19:53.2379064+09:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="38c12a46-3d8c-4fb2-9612-cda2e5d7f560" />
+    <UnitTestResult executionId="28a88a05-4d71-4693-ace2-d96b61f43d6e" testId="f6fba458-eca3-e95b-016f-293a2deca219" testName="VMS.WeldTeach.Tests.SurfaceFitInteractionTests.Surface_fit_improves_deviation_on_cylinder" computerName="VASIM-KIMGIDONG" duration="00:00:00.3581924" startTime="2026-08-05T15:19:53.4461100+09:00" endTime="2026-08-05T15:19:53.4461102+09:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="28a88a05-4d71-4693-ace2-d96b61f43d6e" />
+    <UnitTestResult executionId="7a815672-2892-46fd-86ea-a9a1d4f7a9b7" testId="014200fe-1897-ef12-0ffc-c8a1e204acc4" testName="VMS.WeldTeach.Tests.PoseAndExportTests.Convex_surface_is_not_limited" computerName="VASIM-KIMGIDONG" duration="00:00:00.0562169" startTime="2026-08-05T15:19:52.5752971+09:00" endTime="2026-08-05T15:19:52.5752975+09:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7a815672-2892-46fd-86ea-a9a1d4f7a9b7" />
+    <UnitTestResult executionId="bc186c60-d861-40d4-a627-8c9286edbff9" testId="50e20034-0887-08e7-af1d-b4b1175b4741" testName="VMS.WeldTeach.Tests.CoveragePathServiceTests.Local_steep_feature_does_not_densify_whole_region" computerName="VASIM-KIMGIDONG" duration="00:00:00.2265272" startTime="2026-08-05T15:19:53.5646489+09:00" endTime="2026-08-05T15:19:53.5646493+09:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bc186c60-d861-40d4-a627-8c9286edbff9" />
+    <UnitTestResult executionId="b525259d-25c0-4008-b1ed-cfc9837bb381" testId="4b85a2d5-df72-2e28-f7cf-c660fc335584" testName="VMS.WeldTeach.Tests.PoseAndExportTests.Exported_json_declares_frame_conventions" computerName="VASIM-KIMGIDONG" duration="00:00:00.0010000" startTime="2026-08-05T15:19:52.5770513+09:00" endTime="2026-08-05T15:19:52.5770514+09:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b525259d-25c0-4008-b1ed-cfc9837bb381">
+      <Output>
+        <ErrorInfo>
+          <Message>지시서 항목 ②(JSON 프레임 계약) 구현 전 사양 테스트 — 구현 PR에서 Skip 해제. docs/design/weldteach-grinding-review-2026-08.md</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="17cc1205-6c7d-4406-b334-9a3c8478190b" testId="164668c0-28fd-ed8b-4cc8-44c574c4fac9" testName="VMS.WeldTeach.Tests.SurfaceFitInteractionTests.Plane_is_identical_in_both_modes" computerName="VASIM-KIMGIDONG" duration="00:00:00.2875341" startTime="2026-08-05T15:19:52.7241820+09:00" endTime="2026-08-05T15:19:52.7241824+09:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="17cc1205-6c7d-4406-b334-9a3c8478190b" />
+    <UnitTestResult executionId="737b5f9b-c724-42b8-a18f-9233d2b69c1c" testId="3eca75d4-8773-caa5-a882-1772ba42b214" testName="VMS.WeldTeach.Tests.CoveragePathServiceTests.Standard_surfaces_generate_paths(kind: CylinderShell)" computerName="VASIM-KIMGIDONG" duration="00:00:00.1785477" startTime="2026-08-05T15:19:52.8181011+09:00" endTime="2026-08-05T15:19:52.8181013+09:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="737b5f9b-c724-42b8-a18f-9233d2b69c1c" />
+    <UnitTestResult executionId="e14245db-9e4f-40eb-9026-1656785529e3" testId="0264fd46-0c71-e4a7-a6e7-ef1535ba5012" testName="VMS.WeldTeach.Tests.CoveragePathServiceTests.Standard_surfaces_generate_paths(kind: SineBump)" computerName="VASIM-KIMGIDONG" duration="00:00:00.0894790" startTime="2026-08-05T15:19:52.9076175+09:00" endTime="2026-08-05T15:19:52.9076178+09:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e14245db-9e4f-40eb-9026-1656785529e3" />
+    <UnitTestResult executionId="3fe7a88d-a24c-4036-97ab-2f3236f930c3" testId="8c224b75-63a9-f5cd-ca6d-beb67d96f89c" testName="VMS.WeldTeach.Tests.CoveragePathServiceTests.No_path_point_lies_inside_material_on_overhang" computerName="VASIM-KIMGIDONG" duration="00:00:00.0010000" startTime="2026-08-05T15:19:53.3432361+09:00" endTime="2026-08-05T15:19:53.3432362+09:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3fe7a88d-a24c-4036-97ab-2f3236f930c3">
+      <Output>
+        <ErrorInfo>
+          <Message>지시서 항목 ①(2.5D 위반 마스킹) 구현 전 사양 테스트 — 구현 PR에서 Skip 해제. docs/design/weldteach-grinding-review-2026-08.md</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="c669d968-5442-4153-8f8f-dac919b4a2c3" testId="9c40c628-8aa0-d5be-df85-94f40fbeb6d1" testName="VMS.WeldTeach.Tests.CoveragePathServiceTests.Standard_surfaces_generate_paths(kind: HolePanel)" computerName="VASIM-KIMGIDONG" duration="00:00:00.1068647" startTime="2026-08-05T15:19:53.1091961+09:00" endTime="2026-08-05T15:19:53.1091965+09:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c669d968-5442-4153-8f8f-dac919b4a2c3" />
+    <UnitTestResult executionId="2b4ecd8c-cdd7-4d8c-adbf-c760dc54d15d" testId="4db2c6cf-2078-c774-5543-7c30cec47082" testName="VMS.WeldTeach.Tests.CoveragePathServiceTests.Ambiguous_masking_does_not_regress_clean_surfaces" computerName="VASIM-KIMGIDONG" duration="00:00:00.4719816" startTime="2026-08-05T15:19:54.0367860+09:00" endTime="2026-08-05T15:19:54.0367865+09:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2b4ecd8c-cdd7-4d8c-adbf-c760dc54d15d" />
+    <UnitTestResult executionId="86c87a60-b40b-4dbb-aef6-23775f6c535b" testId="5f0b08c2-4607-ce72-0dba-54a198f95c15" testName="VMS.WeldTeach.Tests.PoseAndExportTests.Multipass_poses_do_not_self_intersect" computerName="VASIM-KIMGIDONG" duration="00:00:00.0811279" startTime="2026-08-05T15:19:52.5194442+09:00" endTime="2026-08-05T15:19:52.5194567+09:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="86c87a60-b40b-4dbb-aef6-23775f6c535b" />
+    <UnitTestResult executionId="0552fa8a-6c4a-4979-8904-9e38b9a3d40c" testId="f2f3c9d5-9472-cf90-e867-b9c0c6c5cd36" testName="VMS.WeldTeach.Tests.PoseAndExportTests.Exported_json_marks_robot_base_when_handeye_applied" computerName="VASIM-KIMGIDONG" duration="00:00:00.0010000" startTime="2026-08-05T15:19:52.5767048+09:00" endTime="2026-08-05T15:19:52.5767050+09:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0552fa8a-6c4a-4979-8904-9e38b9a3d40c">
+      <Output>
+        <ErrorInfo>
+          <Message>지시서 항목 ②(JSON 프레임 계약) 구현 전 사양 테스트 — 구현 PR에서 Skip 해제. docs/design/weldteach-grinding-review-2026-08.md</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="5994e74b-68db-4d8e-9890-5298ba53d680" testId="8854e2ca-9dde-9a45-9e31-4c0c3164a50d" testName="VMS.WeldTeach.Tests.CoveragePathServiceTests.Hole_panel_splits_scanlines_into_segments" computerName="VASIM-KIMGIDONG" duration="00:00:00.1039679" startTime="2026-08-05T15:19:54.1409070+09:00" endTime="2026-08-05T15:19:54.1409073+09:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5994e74b-68db-4d8e-9890-5298ba53d680" />
+    <UnitTestResult executionId="78025922-2f50-4d90-ab3b-4845596794a7" testId="3a6e7c82-4e23-3d3a-f7ae-f3aea1a682e8" testName="VMS.WeldTeach.Tests.CoveragePathServiceTests.Overhang_detected_as_ambiguous" computerName="VASIM-KIMGIDONG" duration="00:00:00.2028033" startTime="2026-08-05T15:19:52.6394053+09:00" endTime="2026-08-05T15:19:52.6394056+09:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="78025922-2f50-4d90-ab3b-4845596794a7" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="VMS.WeldTeach.Tests.CoveragePathServiceTests.Standard_surfaces_generate_paths(kind: CylinderShell)" storage="d:\repo\vms\vms.weldteach.tests\bin\debug\net8.0-windows7.0\vms.weldteach.tests.dll" id="3eca75d4-8773-caa5-a882-1772ba42b214">
+      <Execution id="737b5f9b-c724-42b8-a18f-9233d2b69c1c" />
+      <TestMethod codeBase="D:\Repo\VMS\VMS.WeldTeach.Tests\bin\Debug\net8.0-windows7.0\VMS.WeldTeach.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="VMS.WeldTeach.Tests.CoveragePathServiceTests" name="Standard_surfaces_generate_paths" />
+    </UnitTest>
+    <UnitTest name="VMS.WeldTeach.Tests.PoseAndExportTests.Exported_json_declares_frame_conventions" storage="d:\repo\vms\vms.weldteach.tests\bin\debug\net8.0-windows7.0\vms.weldteach.tests.dll" id="4b85a2d5-df72-2e28-f7cf-c660fc335584">
+      <Execution id="b525259d-25c0-4008-b1ed-cfc9837bb381" />
+      <TestMethod codeBase="D:\Repo\VMS\VMS.WeldTeach.Tests\bin\Debug\net8.0-windows7.0\VMS.WeldTeach.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="VMS.WeldTeach.Tests.PoseAndExportTests" name="Exported_json_declares_frame_conventions" />
+    </UnitTest>
+    <UnitTest name="VMS.WeldTeach.Tests.SurfaceFitInteractionTests.Plane_is_identical_in_both_modes" storage="d:\repo\vms\vms.weldteach.tests\bin\debug\net8.0-windows7.0\vms.weldteach.tests.dll" id="164668c0-28fd-ed8b-4cc8-44c574c4fac9">
+      <Execution id="17cc1205-6c7d-4406-b334-9a3c8478190b" />
+      <TestMethod codeBase="D:\Repo\VMS\VMS.WeldTeach.Tests\bin\Debug\net8.0-windows7.0\VMS.WeldTeach.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="VMS.WeldTeach.Tests.SurfaceFitInteractionTests" name="Plane_is_identical_in_both_modes" />
+    </UnitTest>
+    <UnitTest name="VMS.WeldTeach.Tests.SurfaceFitInteractionTests.Surface_fit_reduces_normal_jitter_on_cylinder" storage="d:\repo\vms\vms.weldteach.tests\bin\debug\net8.0-windows7.0\vms.weldteach.tests.dll" id="24ee9845-2d91-3b31-14ca-16f8baa208b5">
+      <Execution id="c13ae52f-ce4f-4485-90f4-4067db6087e3" />
+      <TestMethod codeBase="D:\Repo\VMS\VMS.WeldTeach.Tests\bin\Debug\net8.0-windows7.0\VMS.WeldTeach.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="VMS.WeldTeach.Tests.SurfaceFitInteractionTests" name="Surface_fit_reduces_normal_jitter_on_cylinder" />
+    </UnitTest>
+    <UnitTest name="VMS.WeldTeach.Tests.CoveragePathServiceTests.Standard_surfaces_generate_paths(kind: HolePanel)" storage="d:\repo\vms\vms.weldteach.tests\bin\debug\net8.0-windows7.0\vms.weldteach.tests.dll" id="9c40c628-8aa0-d5be-df85-94f40fbeb6d1">
+      <Execution id="c669d968-5442-4153-8f8f-dac919b4a2c3" />
+      <TestMethod codeBase="D:\Repo\VMS\VMS.WeldTeach.Tests\bin\Debug\net8.0-windows7.0\VMS.WeldTeach.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="VMS.WeldTeach.Tests.CoveragePathServiceTests" name="Standard_surfaces_generate_paths" />
+    </UnitTest>
+    <UnitTest name="VMS.WeldTeach.Tests.CoveragePathServiceTests.Standard_surfaces_generate_paths(kind: SineBump)" storage="d:\repo\vms\vms.weldteach.tests\bin\debug\net8.0-windows7.0\vms.weldteach.tests.dll" id="0264fd46-0c71-e4a7-a6e7-ef1535ba5012">
+      <Execution id="e14245db-9e4f-40eb-9026-1656785529e3" />
+      <TestMethod codeBase="D:\Repo\VMS\VMS.WeldTeach.Tests\bin\Debug\net8.0-windows7.0\VMS.WeldTeach.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="VMS.WeldTeach.Tests.CoveragePathServiceTests" name="Standard_surfaces_generate_paths" />
+    </UnitTest>
+    <UnitTest name="VMS.WeldTeach.Tests.PoseAndExportTests.Exported_json_marks_robot_base_when_handeye_applied" storage="d:\repo\vms\vms.weldteach.tests\bin\debug\net8.0-windows7.0\vms.weldteach.tests.dll" id="f2f3c9d5-9472-cf90-e867-b9c0c6c5cd36">
+      <Execution id="0552fa8a-6c4a-4979-8904-9e38b9a3d40c" />
+      <TestMethod codeBase="D:\Repo\VMS\VMS.WeldTeach.Tests\bin\Debug\net8.0-windows7.0\VMS.WeldTeach.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="VMS.WeldTeach.Tests.PoseAndExportTests" name="Exported_json_marks_robot_base_when_handeye_applied" />
+    </UnitTest>
+    <UnitTest name="VMS.WeldTeach.Tests.CoveragePathServiceTests.Local_steep_feature_does_not_densify_whole_region" storage="d:\repo\vms\vms.weldteach.tests\bin\debug\net8.0-windows7.0\vms.weldteach.tests.dll" id="50e20034-0887-08e7-af1d-b4b1175b4741">
+      <Execution id="bc186c60-d861-40d4-a627-8c9286edbff9" />
+      <TestMethod codeBase="D:\Repo\VMS\VMS.WeldTeach.Tests\bin\Debug\net8.0-windows7.0\VMS.WeldTeach.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="VMS.WeldTeach.Tests.CoveragePathServiceTests" name="Local_steep_feature_does_not_densify_whole_region" />
+    </UnitTest>
+    <UnitTest name="VMS.WeldTeach.Tests.SurfaceFitInteractionTests.Surface_fit_improves_deviation_on_cylinder" storage="d:\repo\vms\vms.weldteach.tests\bin\debug\net8.0-windows7.0\vms.weldteach.tests.dll" id="f6fba458-eca3-e95b-016f-293a2deca219">
+      <Execution id="28a88a05-4d71-4693-ace2-d96b61f43d6e" />
+      <TestMethod codeBase="D:\Repo\VMS\VMS.WeldTeach.Tests\bin\Debug\net8.0-windows7.0\VMS.WeldTeach.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="VMS.WeldTeach.Tests.SurfaceFitInteractionTests" name="Surface_fit_improves_deviation_on_cylinder" />
+    </UnitTest>
+    <UnitTest name="VMS.WeldTeach.Tests.CoveragePathServiceTests.Inclined_plane_keeps_true_3d_stepover" storage="d:\repo\vms\vms.weldteach.tests\bin\debug\net8.0-windows7.0\vms.weldteach.tests.dll" id="c377b884-7d95-4560-a477-68e4ad498191">
+      <Execution id="13e31323-e6cd-437a-9d4b-6f27a98a189d" />
+      <TestMethod codeBase="D:\Repo\VMS\VMS.WeldTeach.Tests\bin\Debug\net8.0-windows7.0\VMS.WeldTeach.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="VMS.WeldTeach.Tests.CoveragePathServiceTests" name="Inclined_plane_keeps_true_3d_stepover" />
+    </UnitTest>
+    <UnitTest name="VMS.WeldTeach.Tests.CoveragePathServiceTests.Standard_surfaces_generate_paths(kind: InclinedPlane)" storage="d:\repo\vms\vms.weldteach.tests\bin\debug\net8.0-windows7.0\vms.weldteach.tests.dll" id="1b32137c-85ce-e017-e89b-f0ba7a3a4fd3">
+      <Execution id="33296157-e197-4daf-967c-668dc0d69323" />
+      <TestMethod codeBase="D:\Repo\VMS\VMS.WeldTeach.Tests\bin\Debug\net8.0-windows7.0\VMS.WeldTeach.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="VMS.WeldTeach.Tests.CoveragePathServiceTests" name="Standard_surfaces_generate_paths" />
+    </UnitTest>
+    <UnitTest name="VMS.WeldTeach.Tests.PoseAndExportTests.Multipass_poses_do_not_self_intersect" storage="d:\repo\vms\vms.weldteach.tests\bin\debug\net8.0-windows7.0\vms.weldteach.tests.dll" id="5f0b08c2-4607-ce72-0dba-54a198f95c15">
+      <Execution id="86c87a60-b40b-4dbb-aef6-23775f6c535b" />
+      <TestMethod codeBase="D:\Repo\VMS\VMS.WeldTeach.Tests\bin\Debug\net8.0-windows7.0\VMS.WeldTeach.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="VMS.WeldTeach.Tests.PoseAndExportTests" name="Multipass_poses_do_not_self_intersect" />
+    </UnitTest>
+    <UnitTest name="VMS.WeldTeach.Tests.CoveragePathServiceTests.No_path_point_lies_inside_material_on_overhang" storage="d:\repo\vms\vms.weldteach.tests\bin\debug\net8.0-windows7.0\vms.weldteach.tests.dll" id="8c224b75-63a9-f5cd-ca6d-beb67d96f89c">
+      <Execution id="3fe7a88d-a24c-4036-97ab-2f3236f930c3" />
+      <TestMethod codeBase="D:\Repo\VMS\VMS.WeldTeach.Tests\bin\Debug\net8.0-windows7.0\VMS.WeldTeach.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="VMS.WeldTeach.Tests.CoveragePathServiceTests" name="No_path_point_lies_inside_material_on_overhang" />
+    </UnitTest>
+    <UnitTest name="VMS.WeldTeach.Tests.CoveragePathServiceTests.Ambiguous_masking_does_not_regress_clean_surfaces" storage="d:\repo\vms\vms.weldteach.tests\bin\debug\net8.0-windows7.0\vms.weldteach.tests.dll" id="4db2c6cf-2078-c774-5543-7c30cec47082">
+      <Execution id="2b4ecd8c-cdd7-4d8c-adbf-c760dc54d15d" />
+      <TestMethod codeBase="D:\Repo\VMS\VMS.WeldTeach.Tests\bin\Debug\net8.0-windows7.0\VMS.WeldTeach.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="VMS.WeldTeach.Tests.CoveragePathServiceTests" name="Ambiguous_masking_does_not_regress_clean_surfaces" />
+    </UnitTest>
+    <UnitTest name="VMS.WeldTeach.Tests.PoseAndExportTests.Concave_multipass_depth_is_limited_by_curvature_radius" storage="d:\repo\vms\vms.weldteach.tests\bin\debug\net8.0-windows7.0\vms.weldteach.tests.dll" id="da9dcb5b-874d-7f56-5755-f13c6484fc92">
+      <Execution id="4db462c9-0fb1-4035-b788-186462fdea9b" />
+      <TestMethod codeBase="D:\Repo\VMS\VMS.WeldTeach.Tests\bin\Debug\net8.0-windows7.0\VMS.WeldTeach.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="VMS.WeldTeach.Tests.PoseAndExportTests" name="Concave_multipass_depth_is_limited_by_curvature_radius" />
+    </UnitTest>
+    <UnitTest name="VMS.WeldTeach.Tests.PoseAndExportTests.Convex_surface_is_not_limited" storage="d:\repo\vms\vms.weldteach.tests\bin\debug\net8.0-windows7.0\vms.weldteach.tests.dll" id="014200fe-1897-ef12-0ffc-c8a1e204acc4">
+      <Execution id="7a815672-2892-46fd-86ea-a9a1d4f7a9b7" />
+      <TestMethod codeBase="D:\Repo\VMS\VMS.WeldTeach.Tests\bin\Debug\net8.0-windows7.0\VMS.WeldTeach.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="VMS.WeldTeach.Tests.PoseAndExportTests" name="Convex_surface_is_not_limited" />
+    </UnitTest>
+    <UnitTest name="VMS.WeldTeach.Tests.CoveragePathServiceTests.Overhang_detected_as_ambiguous" storage="d:\repo\vms\vms.weldteach.tests\bin\debug\net8.0-windows7.0\vms.weldteach.tests.dll" id="3a6e7c82-4e23-3d3a-f7ae-f3aea1a682e8">
+      <Execution id="78025922-2f50-4d90-ab3b-4845596794a7" />
+      <TestMethod codeBase="D:\Repo\VMS\VMS.WeldTeach.Tests\bin\Debug\net8.0-windows7.0\VMS.WeldTeach.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="VMS.WeldTeach.Tests.CoveragePathServiceTests" name="Overhang_detected_as_ambiguous" />
+    </UnitTest>
+    <UnitTest name="VMS.WeldTeach.Tests.CoveragePathServiceTests.Hole_panel_splits_scanlines_into_segments" storage="d:\repo\vms\vms.weldteach.tests\bin\debug\net8.0-windows7.0\vms.weldteach.tests.dll" id="8854e2ca-9dde-9a45-9e31-4c0c3164a50d">
+      <Execution id="5994e74b-68db-4d8e-9890-5298ba53d680" />
+      <TestMethod codeBase="D:\Repo\VMS\VMS.WeldTeach.Tests\bin\Debug\net8.0-windows7.0\VMS.WeldTeach.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="VMS.WeldTeach.Tests.CoveragePathServiceTests" name="Hole_panel_splits_scanlines_into_segments" />
+    </UnitTest>
+    <UnitTest name="VMS.WeldTeach.Tests.CoveragePathServiceTests.Standard_surfaces_generate_paths(kind: Plane)" storage="d:\repo\vms\vms.weldteach.tests\bin\debug\net8.0-windows7.0\vms.weldteach.tests.dll" id="a1a16f8c-53d1-78f0-abff-ddf36e789d92">
+      <Execution id="38c12a46-3d8c-4fb2-9612-cda2e5d7f560" />
+      <TestMethod codeBase="D:\Repo\VMS\VMS.WeldTeach.Tests\bin\Debug\net8.0-windows7.0\VMS.WeldTeach.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="VMS.WeldTeach.Tests.CoveragePathServiceTests" name="Standard_surfaces_generate_paths" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="24ee9845-2d91-3b31-14ca-16f8baa208b5" executionId="c13ae52f-ce4f-4485-90f4-4067db6087e3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c377b884-7d95-4560-a477-68e4ad498191" executionId="13e31323-e6cd-437a-9d4b-6f27a98a189d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1b32137c-85ce-e017-e89b-f0ba7a3a4fd3" executionId="33296157-e197-4daf-967c-668dc0d69323" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="da9dcb5b-874d-7f56-5755-f13c6484fc92" executionId="4db462c9-0fb1-4035-b788-186462fdea9b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a1a16f8c-53d1-78f0-abff-ddf36e789d92" executionId="38c12a46-3d8c-4fb2-9612-cda2e5d7f560" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f6fba458-eca3-e95b-016f-293a2deca219" executionId="28a88a05-4d71-4693-ace2-d96b61f43d6e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="014200fe-1897-ef12-0ffc-c8a1e204acc4" executionId="7a815672-2892-46fd-86ea-a9a1d4f7a9b7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="50e20034-0887-08e7-af1d-b4b1175b4741" executionId="bc186c60-d861-40d4-a627-8c9286edbff9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4b85a2d5-df72-2e28-f7cf-c660fc335584" executionId="b525259d-25c0-4008-b1ed-cfc9837bb381" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="164668c0-28fd-ed8b-4cc8-44c574c4fac9" executionId="17cc1205-6c7d-4406-b334-9a3c8478190b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3eca75d4-8773-caa5-a882-1772ba42b214" executionId="737b5f9b-c724-42b8-a18f-9233d2b69c1c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0264fd46-0c71-e4a7-a6e7-ef1535ba5012" executionId="e14245db-9e4f-40eb-9026-1656785529e3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8c224b75-63a9-f5cd-ca6d-beb67d96f89c" executionId="3fe7a88d-a24c-4036-97ab-2f3236f930c3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9c40c628-8aa0-d5be-df85-94f40fbeb6d1" executionId="c669d968-5442-4153-8f8f-dac919b4a2c3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4db2c6cf-2078-c774-5543-7c30cec47082" executionId="2b4ecd8c-cdd7-4d8c-adbf-c760dc54d15d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5f0b08c2-4607-ce72-0dba-54a198f95c15" executionId="86c87a60-b40b-4dbb-aef6-23775f6c535b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f2f3c9d5-9472-cf90-e867-b9c0c6c5cd36" executionId="0552fa8a-6c4a-4979-8904-9e38b9a3d40c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8854e2ca-9dde-9a45-9e31-4c0c3164a50d" executionId="5994e74b-68db-4d8e-9890-5298ba53d680" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3a6e7c82-4e23-3d3a-f7ae-f3aea1a682e8" executionId="78025922-2f50-4d90-ab3b-4845596794a7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="목록에 없는 결과" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="로드된 모든 결과" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="19" executed="15" passed="14" failed="1" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 8.0.29)&#xD;
+[xUnit.net 00:00:00.05]   Discovering: VMS.WeldTeach.Tests&#xD;
+[xUnit.net 00:00:00.09]   Discovered:  VMS.WeldTeach.Tests&#xD;
+[xUnit.net 00:00:00.09]   Starting:    VMS.WeldTeach.Tests&#xD;
+[xUnit.net 00:00:00.25]       지시서 항목 ②(JSON 프레임 계약) 구현 전 사양 테스트 — 구현 PR에서 Skip 해제. docs/design/weldteach-grinding-review-2026-08.md&#xD;
+[xUnit.net 00:00:00.25]       지시서 항목 ④(오목면 오프셋 접힘 검사) 구현 전 사양 테스트 — 구현 PR에서 Skip 해제. docs/design/weldteach-grinding-review-2026-08.md&#xD;
+[xUnit.net 00:00:00.25]       지시서 항목 ②(JSON 프레임 계약) 구현 전 사양 테스트 — 구현 PR에서 Skip 해제. docs/design/weldteach-grinding-review-2026-08.md&#xD;
+테스트 실행에서 ‘VMS.WeldTeach.Tests.PoseAndExportTests.Exported_json_marks_robot_base_when_handeye_applied’ 테스트를 건너뛰었습니다.&#xD;
+테스트 실행에서 ‘VMS.WeldTeach.Tests.PoseAndExportTests.Concave_multipass_depth_is_limited_by_curvature_radius’ 테스트를 건너뛰었습니다.&#xD;
+테스트 실행에서 ‘VMS.WeldTeach.Tests.PoseAndExportTests.Exported_json_declares_frame_conventions’ 테스트를 건너뛰었습니다.&#xD;
+[xUnit.net 00:00:01.02]       Assert.InRange() Failure: Value not in range&#xD;
+[xUnit.net 00:00:01.02]       Range:  (29.75 - 40.25)&#xD;
+[xUnit.net 00:00:01.02]       Actual: 25.546524352663322&#xD;
+[xUnit.net 00:00:01.02]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.02]         D:\Repo\VMS\VMS.WeldTeach.Tests\CoveragePathServiceTests.cs(96,0): at VMS.WeldTeach.Tests.CoveragePathServiceTests.Inclined_plane_keeps_true_3d_stepover()&#xD;
+[xUnit.net 00:00:01.02]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.02]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.02]       지시서 항목 ①(2.5D 위반 마스킹) 구현 전 사양 테스트 — 구현 PR에서 Skip 해제. docs/design/weldteach-grinding-review-2026-08.md&#xD;
+테스트 실행에서 ‘VMS.WeldTeach.Tests.CoveragePathServiceTests.No_path_point_lies_inside_material_on_overhang’ 테스트를 건너뛰었습니다.&#xD;
+[xUnit.net 00:00:01.82]   Finished:    VMS.WeldTeach.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="VASIM-KIMGIDONG" outcome="Warning" timestamp="2026-08-05T15:19:52.5765470+09:00">
+        <Text>[xUnit.net 00:00:00.25]     VMS.WeldTeach.Tests.PoseAndExportTests.Exported_json_marks_robot_base_when_handeye_applied [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="VASIM-KIMGIDONG" outcome="Warning" timestamp="2026-08-05T15:19:52.5770134+09:00">
+        <Text>[xUnit.net 00:00:00.25]     VMS.WeldTeach.Tests.PoseAndExportTests.Concave_multipass_depth_is_limited_by_curvature_radius [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="VASIM-KIMGIDONG" outcome="Warning" timestamp="2026-08-05T15:19:52.5771411+09:00">
+        <Text>[xUnit.net 00:00:00.25]     VMS.WeldTeach.Tests.PoseAndExportTests.Exported_json_declares_frame_conventions [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="VASIM-KIMGIDONG" outcome="Error" timestamp="2026-08-05T15:19:53.3416022+09:00">
+        <Text>[xUnit.net 00:00:01.02]     VMS.WeldTeach.Tests.CoveragePathServiceTests.Inclined_plane_keeps_true_3d_stepover [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="VASIM-KIMGIDONG" outcome="Warning" timestamp="2026-08-05T15:19:53.3433681+09:00">
+        <Text>[xUnit.net 00:00:01.02]     VMS.WeldTeach.Tests.CoveragePathServiceTests.No_path_point_lies_inside_material_on_overhang [SKIP]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>
