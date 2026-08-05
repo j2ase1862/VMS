@@ -40,6 +40,11 @@ namespace VMS.VisionSetup.Views.Recipe
         {
             _currentRecipe = recipe;
             _hasUnsavedChanges = false;
+
+            // 스텝 이름을 현재 카메라 레지스트리 기준으로 파생 (미등록 카메라 → "?-n")
+            if (CameraService != null)
+                Services.StepNaming.RecomputeNames(recipe, CameraService.GetAllCameras());
+
             RefreshTree();
             UpdateUI();
             UpdateStatus($"Loaded recipe: {recipe.Name}");
@@ -64,7 +69,7 @@ namespace VMS.VisionSetup.Views.Recipe
             {
                 var stepNode = new TreeViewItem
                 {
-                    Header = CreateTreeHeader(step.Name, $"Step {step.Sequence}"),
+                    Header = CreateTreeHeader(step.DisplayName, $"Step {step.Sequence}"),
                     Tag = new TreeNodeData(StepTag, step.Id),
                     IsExpanded = true
                 };
@@ -216,7 +221,7 @@ namespace VMS.VisionSetup.Views.Recipe
             StepPropertiesPanel.Visibility = Visibility.Visible;
             PropertiesTitle.Text = "Step Properties";
 
-            StepNameBox.Text = step.Name;
+            StepAliasBox.Text = step.Description;
             StepExposureBox.Text = step.Exposure.ToString();
             StepGainBox.Text = step.Gain.ToString();
             StepLightChannelBox.Text = step.LightingChannel.ToString();
@@ -315,7 +320,7 @@ namespace VMS.VisionSetup.Views.Recipe
             var step = _currentRecipe.Steps.FirstOrDefault(s => s.Id == nodeData.Id);
             if (step == null) return;
 
-            step.Name = StepNameBox.Text;
+            step.Description = StepAliasBox.Text;
             if (double.TryParse(StepExposureBox.Text, out double exposure)) step.Exposure = exposure;
             if (double.TryParse(StepGainBox.Text, out double gain)) step.Gain = gain;
             if (int.TryParse(StepLightChannelBox.Text, out int channel)) step.LightingChannel = channel;

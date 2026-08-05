@@ -99,6 +99,7 @@ namespace VMS.VisionSetup.Tests
             public void AddStep(Recipe recipe, InspectionStep step) { }
             public bool RemoveStep(Recipe? recipe, string stepId) => false;
             public bool MoveStep(Recipe? recipe, string stepId, int newSequence) => false;
+            public InspectionStep? FindStepByRobotNode(Recipe? recipe, int nodeIndex, string? cameraId = null) => null;
             public bool AddToolToStep(InspectionStep step, ToolConfig tool) => false;
             public bool AddToolToStep(Recipe recipe, string stepId, ToolConfig tool) => false;
             public bool AddToolToStep(InspectionStep step, VisionToolBase tool) => false;

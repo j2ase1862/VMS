@@ -816,7 +816,7 @@
 
                         <TextBlock Grid.Column="0" Foreground="{StaticResource BrushTextPrimary}" FontWeight="Bold" FontSize="12"
                                    VerticalAlignment="Center" Cursor="Help"
-                                   ToolTip="검사 스텝 목록입니다. 스텝은 위에서 아래 순서로 실행되며, 각 스텝이 자기 도구 파이프라인을 가집니다. 위/아래 버튼으로 순서를 바꿉니다."><Run Text="Steps"/><Run Text=" ⓘ" Foreground="{StaticResource BrushTextMuted}"/></TextBlock>
+                                   ToolTip="선택된 카메라의 검사 스텝 목록입니다. 스텝은 위에서 아래 순서로 실행되며, 각 스텝이 자기 도구 파이프라인을 가집니다. 위/아래 버튼으로 순서를 바꿉니다."><Run Text="Steps"/><Run Text="{Binding StepsCameraLabel, Mode=OneWay}" Foreground="{StaticResource BrushAccent}"/><Run Text=" ⓘ" Foreground="{StaticResource BrushTextMuted}"/></TextBlock>
 
                         <StackPanel Grid.Column="1" Orientation="Horizontal">
                             <!-- Add Step -->
@@ -902,11 +902,29 @@
                             </Style>
                         </DataGrid.RowStyle>
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="#" Binding="{Binding Name}" Width="50"/>
+                            <DataGridTextColumn Header="#" Binding="{Binding DisplayName}" Width="*" MinWidth="50"/>
                             <DataGridTextColumn Header="Resolution" Binding="{Binding Resolution, StringFormat={}{0:F3}}" Width="70"/>
                             <DataGridTextColumn Header="Tools" Binding="{Binding Tools.Count}" Width="40"/>
                         </DataGrid.Columns>
                     </DataGrid>
+
+                    <!-- Steps 그리드 빈 상태 안내 (카메라 미선택 / 해당 카메라 스텝 없음) -->
+                    <TextBlock Grid.Row="4" Text="{Binding StepsEmptyHint}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               Margin="16,28,16,4" IsHitTestVisible="False"
+                               Foreground="{StaticResource BrushTextMuted}" FontSize="12"
+                               TextWrapping="Wrap" TextAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding StepsEmptyHint}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
 
                     <!-- Row 5: Tool Palette -->
                     <Grid Grid.Row="5">
@@ -1543,10 +1561,34 @@
                                       Visibility="{Binding ShowCameraSettings, Converter={StaticResource BoolToVisibility}}">
                             <StackPanel Margin="12,4,12,12">
                                 <TextBlock Style="{StaticResource SettingLabelStyle}" FontSize="11" TextWrapping="Wrap"
-                                           Text="{Binding SelectedStep.Name, StringFormat='스텝: {0} — Acquire/Live 시 적용, 레시피에 저장됩니다.'}"/>
+                                           Text="{Binding SelectedStep.DisplayName, StringFormat='스텝: {0} — Acquire/Live 시 적용, 레시피에 저장됩니다.'}"/>
                                 <TextBlock Style="{StaticResource SettingLabelStyle}" FontSize="11" Margin="0,2,0,0"
                                            Text="{Binding StepCameraSummary}"
                                            Visibility="{Binding StepCameraSummary, Converter={StaticResource NullToCollapsedConverter}}"/>
+
+                                <!-- 스텝 정보 — 별칭(자유 라벨)과 로봇 노드 번호.
+                                     스텝 이름("1-3")은 카메라 등록 순서 기준 파생값이라 편집 불가;
+                                     의미 있는 라벨은 별칭에 입력한다 (그리드에 "1-3 — Node 3" 병기). -->
+                                <TextBlock Text="스텝 정보" Style="{StaticResource SectionHeaderStyle}" Margin="0,14,0,6"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="8"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="별칭" Style="{StaticResource SettingLabelStyle}" Margin="0,0,0,3"
+                                                   ToolTip="스텝에 붙이는 자유 라벨입니다 (예: Node 3). 스텝 이름 옆에 병기되며 레시피에 저장됩니다."/>
+                                        <TextBox Text="{Binding SelectedStep.Description, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource WindowDarkTextBox}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="로봇 노드 번호" Style="{StaticResource SettingLabelStyle}" Margin="0,0,0,3"
+                                                   ToolTip="로봇이 보내오는 노드 index 와 이 스텝을 매칭합니다. 비워두면 스텝 순번으로 매칭됩니다."/>
+                                        <TextBox Text="{Binding SelectedStep.RobotNodeIndex, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
+                                                 Style="{StaticResource WindowDarkTextBox}"/>
+                                    </StackPanel>
+                                </Grid>
 
                                 <!-- 2D 이미지 -->
                                 <TextBlock Text="2D 이미지" Style="{StaticResource SectionHeaderStyle}" Margin="0,14,0,6"/>

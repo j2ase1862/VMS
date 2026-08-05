@@ -22,6 +22,7 @@ namespace VMS.VisionSetup.Interfaces
         void AddStep(Recipe recipe, InspectionStep step);
         bool RemoveStep(Recipe? recipe, string stepId);
         bool MoveStep(Recipe? recipe, string stepId, int newSequence);
+        InspectionStep? FindStepByRobotNode(Recipe? recipe, int nodeIndex, string? cameraId = null);
         bool AddToolToStep(InspectionStep step, ToolConfig tool);
         bool AddToolToStep(Recipe recipe, string stepId, ToolConfig tool);
         bool AddToolToStep(InspectionStep step, VisionToolBase tool);

@@ -403,6 +403,7 @@ namespace VMS.VisionSetup.ViewModels
                     }
 
                     RefreshSteps();
+                    OnPropertyChanged(nameof(StepsCameraLabel));
                     AddStepCommand.NotifyCanExecuteChanged();
                     AcquireImageCommand.NotifyCanExecuteChanged();
                     ConnectCameraCommand.NotifyCanExecuteChanged();
@@ -542,6 +543,17 @@ namespace VMS.VisionSetup.ViewModels
 
         // 스텝 목록 (선택된 카메라 기준)
         public ObservableCollection<InspectionStep> Steps { get; } = new();
+
+        /// <summary>Steps 헤더에 붙는 현재 필터 카메라 표시 (" — Cam1" 형식, 미선택 시 빈 문자열)</summary>
+        public string StepsCameraLabel => SelectedCamera != null ? $" — {SelectedCamera.Name}" : string.Empty;
+
+        // Steps 그리드가 비어 있을 때 표시할 안내 문구 (비어 있지 않으면 빈 문자열)
+        private string _stepsEmptyHint = string.Empty;
+        public string StepsEmptyHint
+        {
+            get => _stepsEmptyHint;
+            set => SetProperty(ref _stepsEmptyHint, value);
+        }
 
         // 선택된 스텝
         private InspectionStep? _selectedStep;
@@ -2198,7 +2210,10 @@ namespace VMS.VisionSetup.ViewModels
             if (recipe != null)
             {
                 CurrentRecipeName = recipe.Name;
-                MigrateStepSequencing(recipe);
+
+                // 스텝 이름은 저장된 문자열을 쓰지 않고 현재 카메라 레지스트리 기준으로 파생
+                // (미등록 카메라 스텝 → "?-n", 이름 중복 방지)
+                StepNaming.RecomputeNames(recipe, Cameras);
 
                 // Height Slicing 설정 복원
                 if (recipe.HeightSlicing != null)
@@ -2219,6 +2234,33 @@ namespace VMS.VisionSetup.ViewModels
 
                 // MultiView 설정 복원
                 LoadRobotSettingsFromRecipe(recipe);
+
+                // 레시피가 참조하는 카메라를 자동 선택 — 로드 직후부터 Steps 그리드가
+                // "선택된 카메라의 스텝"이라는 일관된 의미를 갖도록 한다.
+                // 현재 선택된 카메라가 이미 이 레시피의 스텝을 갖고 있으면 유지한다.
+                bool currentCameraHasSteps = SelectedCamera != null &&
+                    recipe.Steps.Any(s => s.CameraId == SelectedCamera.Id);
+                if (!currentCameraHasSteps)
+                {
+                    var recipeCamera = recipe.Steps
+                        .OrderBy(s => s.Sequence)
+                        .Select(s => Cameras.FirstOrDefault(c => c.Id == s.CameraId))
+                        .FirstOrDefault(c => c != null);
+                    if (recipeCamera != null)
+                        SelectedCamera = recipeCamera;
+                }
+
+                // 이 PC에 등록되지 않은 카메라를 참조하는 스텝이 있으면 경고
+                var unregistered = StepNaming.GetUnregisteredCameraIds(recipe, Cameras);
+                if (unregistered.Count > 0)
+                {
+                    int orphanSteps = recipe.Steps.Count(s => unregistered.Contains(s.CameraId));
+                    _dialogService.ShowWarning(
+                        $"이 레시피는 이 PC에 등록되지 않은 카메라 {unregistered.Count}대를 참조합니다.\n" +
+                        $"해당 스텝 {orphanSteps}개는 '?-n' 이름으로 표시되며, 카메라를 등록하기 전에는 촬영에 사용할 수 없습니다.\n\n" +
+                        $"미등록 카메라 ID:\n{string.Join("\n", unregistered)}",
+                        "미등록 카메라 참조");
+                }
             }
             else
             {
@@ -2244,16 +2286,29 @@ namespace VMS.VisionSetup.ViewModels
         {
             Steps.Clear();
             var recipe = _recipeService.CurrentRecipe;
-            if (recipe == null) return;
-
-            foreach (var step in recipe.Steps.OrderBy(s => s.Sequence))
+            if (recipe == null)
             {
-                // 카메라 필터가 없거나 선택된 카메라와 일치하는 스텝만 표시
-                if (SelectedCamera == null || string.IsNullOrEmpty(step.CameraId) || step.CameraId == SelectedCamera.Id)
+                StepsEmptyHint = "Recipe를 로드하면 스텝이 표시됩니다.";
+                return;
+            }
+
+            if (SelectedCamera != null)
+            {
+                foreach (var step in recipe.Steps.OrderBy(s => s.Sequence))
                 {
-                    Steps.Add(step);
+                    // 선택된 카메라의 스텝만 표시 (CameraId 미지정 구버전 스텝은 항상 표시)
+                    if (string.IsNullOrEmpty(step.CameraId) || step.CameraId == SelectedCamera.Id)
+                    {
+                        Steps.Add(step);
+                    }
                 }
             }
+
+            StepsEmptyHint = SelectedCamera == null
+                ? "카메라를 선택하면 해당 카메라의 스텝이 표시됩니다."
+                : Steps.Count == 0
+                    ? "선택한 카메라의 스텝이 없습니다. + 버튼으로 스텝을 추가하세요."
+                    : string.Empty;
 
             // Step 구성 변경에 따라 로봇 관련 UI 갱신
             OnPropertyChanged(nameof(NeedsRobot));
@@ -2271,8 +2326,7 @@ namespace VMS.VisionSetup.ViewModels
             var step = _recipeService.AddStep(recipe, SelectedCamera.Id);
             if (step != null)
             {
-                int camIdx = GetCameraDisplayIndex(SelectedCamera.Id);
-                step.Name = $"{camIdx}-{step.Sequence}";
+                StepNaming.RecomputeNames(recipe, Cameras);
                 RefreshSteps();
                 SelectedStep = step;
                 StatusMessage = $"Step added: {step.Name}";
@@ -2290,9 +2344,8 @@ namespace VMS.VisionSetup.ViewModels
                 $"'{SelectedStep.Name}'을(를) 삭제하시겠습니까?",
                 "Delete Step"))
             {
-                var cameraId = SelectedStep.CameraId;
                 _recipeService.RemoveStep(recipe, SelectedStep.Id);
-                RenameStepsForCamera(recipe, cameraId);
+                StepNaming.RecomputeNames(recipe, Cameras);
                 SelectedStep = null;
                 ClearAllTools();
                 RefreshSteps();
@@ -2311,7 +2364,7 @@ namespace VMS.VisionSetup.ViewModels
 
             var stepToMove = SelectedStep;
             _recipeService.MoveStep(recipe, stepToMove.Id, stepToMove.Sequence - 1);
-            RenameStepsForCamera(recipe, stepToMove.CameraId);
+            StepNaming.RecomputeNames(recipe, Cameras);
             RefreshSteps();
             SelectedStep = stepToMove;
         }
@@ -2328,7 +2381,7 @@ namespace VMS.VisionSetup.ViewModels
 
             var stepToMove = SelectedStep;
             _recipeService.MoveStep(recipe, stepToMove.Id, stepToMove.Sequence + 1);
-            RenameStepsForCamera(recipe, stepToMove.CameraId);
+            StepNaming.RecomputeNames(recipe, Cameras);
             RefreshSteps();
             SelectedStep = stepToMove;
         }
@@ -2502,35 +2555,6 @@ namespace VMS.VisionSetup.ViewModels
                 if (Cameras[i].Id == cameraId) return i + 1;
             }
             return 0;
-        }
-
-        private void RenameStepsForCamera(Recipe recipe, string cameraId)
-        {
-            int camIdx = GetCameraDisplayIndex(cameraId);
-            var cameraSteps = recipe.Steps
-                .Where(s => s.CameraId == cameraId)
-                .OrderBy(s => s.Sequence)
-                .ToList();
-            for (int i = 0; i < cameraSteps.Count; i++)
-            {
-                cameraSteps[i].Name = camIdx > 0 ? $"{camIdx}-{i + 1}" : $"Step {i + 1}";
-            }
-        }
-
-        private void MigrateStepSequencing(Recipe recipe)
-        {
-            var groups = recipe.Steps.GroupBy(s => s.CameraId);
-            foreach (var group in groups)
-            {
-                var steps = group.OrderBy(s => s.Sequence).ToList();
-                int camIdx = GetCameraDisplayIndex(group.Key);
-                for (int i = 0; i < steps.Count; i++)
-                {
-                    steps[i].Sequence = i + 1;
-                    if (camIdx > 0)
-                        steps[i].Name = $"{camIdx}-{i + 1}";
-                }
-            }
         }
 
         #endregion
@@ -2772,6 +2796,14 @@ namespace VMS.VisionSetup.ViewModels
             if (selectedId != null)
             {
                 SelectedCamera = Cameras.FirstOrDefault(c => c.Id == selectedId);
+            }
+
+            // 레지스트리 변경으로 카메라 표시 순번이 바뀌었을 수 있으므로 스텝 이름 재계산
+            var recipe = _recipeService.CurrentRecipe;
+            if (recipe != null)
+            {
+                StepNaming.RecomputeNames(recipe, Cameras);
+                RefreshSteps();
             }
         }
 
