@@ -136,8 +136,9 @@ dotnet build VMS.MasterSetup/VMS.MasterSetup.wixproj -c Release
 | 비전 도구 운용 가이드 | [`docs/manuals/VMS_VisionTools_Operating_Manual.html`](docs/manuals/VMS_VisionTools_Operating_Manual.html) |
 | Hand-Eye 캘리브레이션 | [`docs/manuals/VMS_HandEye_Calibration_Manual.md`](docs/manuals/VMS_HandEye_Calibration_Manual.md) |
 | GS 인증 자료 | [`docs/gs/`](docs/gs/) (히스토리 + ISO/IEC 25051 매핑 + MSI 서명 + SIEM 가이드 + 배포 정책) |
+| WeldTeach 그라인딩 리뷰 지시서 | [`docs/design/weldteach-grinding-review-2026-08.md`](docs/design/weldteach-grinding-review-2026-08.md) (P0 착수 전 필수 항목 ①~③ 포함) |
 | 변경 이력 | [`CHANGELOG.md`](CHANGELOG.md) |
-| 아키텍처 가이드 | [`CLAUDE.md`](CLAUDE.md), [`VMS.VisionSetup/CLAUDE.md`](VMS.VisionSetup/CLAUDE.md) |
+| 아키텍처 가이드 | [`CLAUDE.md`](CLAUDE.md), [`VMS.VisionSetup/CLAUDE.md`](VMS.VisionSetup/CLAUDE.md), [`VMS.WeldTeach/CLAUDE.md`](VMS.WeldTeach/CLAUDE.md) (기하 불변식) |
 
 ---
 
