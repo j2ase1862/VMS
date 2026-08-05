@@ -23,12 +23,20 @@ namespace VMS.VisionSetup.Models
 
         private string _name = string.Empty;
         /// <summary>
-        /// 스텝 이름 (예: "Point A", "Top View")
+        /// 스텝 이름 — 저장값이 아니라 파생값. 현재 PC 카메라 레지스트리 기준으로
+        /// StepNaming.RecomputeNames 가 로드/변경 시마다 재계산한다 (미등록 카메라 → "?-n").
         /// </summary>
         public string Name
         {
             get => _name;
-            set => SetProperty(ref _name, value);
+            set
+            {
+                if (SetProperty(ref _name, value))
+                {
+                    OnPropertyChanged(nameof(DisplayName));
+                    OnPropertyChanged(nameof(DisplayInfo));
+                }
+            }
         }
 
         private int _sequence;
@@ -184,13 +192,32 @@ namespace VMS.VisionSetup.Models
         public List<ToolConfig> Tools { get; set; } = new();
 
         /// <summary>
-        /// 스텝 설명 (선택적)
+        /// 스텝 별칭 (선택적) — 사용자가 자유 입력하는 표시용 라벨 (예: "Node 3").
+        /// 파생 이름(Name)과 달리 저장·보존되며 식별에는 쓰이지 않으므로 중복 가능.
         /// </summary>
         private string _description = string.Empty;
         public string Description
         {
             get => _description;
-            set => SetProperty(ref _description, value);
+            set
+            {
+                if (SetProperty(ref _description, value))
+                {
+                    OnPropertyChanged(nameof(DisplayName));
+                    OnPropertyChanged(nameof(DisplayInfo));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 로봇 노드 번호 (선택적) — 로봇이 노드 index 를 보내오면 이 값이 일치하는
+        /// 스텝으로 매칭한다 (RecipeService.FindStepByRobotNode). null 이면 순번(Sequence) 매칭.
+        /// </summary>
+        private int? _robotNodeIndex;
+        public int? RobotNodeIndex
+        {
+            get => _robotNodeIndex;
+            set => SetProperty(ref _robotNodeIndex, value);
         }
 
         /// <summary>
@@ -224,10 +251,16 @@ namespace VMS.VisionSetup.Models
         }
 
         /// <summary>
+        /// 표시용 이름 — 파생 이름에 별칭을 병기 (예: "1-3 — Node 3")
+        /// </summary>
+        [JsonIgnore]
+        public string DisplayName => string.IsNullOrWhiteSpace(Description) ? Name : $"{Name} — {Description}";
+
+        /// <summary>
         /// 표시용 스텝 정보 문자열
         /// </summary>
         [JsonIgnore]
-        public string DisplayInfo => RobotWaypoint != null ? $"{Name} (Robot)" : Name;
+        public string DisplayInfo => RobotWaypoint != null ? $"{DisplayName} (Robot)" : DisplayName;
 
         public override string ToString() => DisplayInfo;
     }

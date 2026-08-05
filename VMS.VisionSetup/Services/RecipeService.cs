@@ -509,6 +509,32 @@ namespace VMS.VisionSetup.Services
             return true;
         }
 
+        /// <summary>
+        /// 로봇이 보내온 노드 번호에 해당하는 스텝을 찾는다.
+        /// RobotNodeIndex 가 명시된 스텝이 우선이고, 없으면 카메라별 순번(Sequence)으로
+        /// 폴백한다. cameraId 를 주면 해당 카메라의 스텝으로 한정한다.
+        /// </summary>
+        public InspectionStep? FindStepByRobotNode(Recipe? recipe, int nodeIndex, string? cameraId = null)
+        {
+            recipe ??= CurrentRecipe;
+            if (recipe == null) return null;
+
+            var candidates = (cameraId == null
+                ? recipe.Steps
+                : recipe.Steps.Where(s => s.CameraId == cameraId)).ToList();
+
+            var explicitMatch = candidates
+                .Where(s => s.RobotNodeIndex == nodeIndex)
+                .OrderBy(s => s.Sequence)
+                .FirstOrDefault();
+            if (explicitMatch != null) return explicitMatch;
+
+            return candidates
+                .Where(s => s.RobotNodeIndex == null && s.Sequence == nodeIndex)
+                .OrderBy(s => s.Sequence)
+                .FirstOrDefault();
+        }
+
         #endregion
 
         #region Tool Management
