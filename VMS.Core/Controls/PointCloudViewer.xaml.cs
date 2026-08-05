@@ -26,15 +26,24 @@ namespace VMS.Core.Controls
         private bool _hasInitialFit;
 
         // ── LOD thresholds ──
-        private const int LodThreshold4 = 2_000_000;
-        private const int LodThreshold2 = 500_000;
+        // Mech-Mind 풀해상도(2048×1536 = 3.1M)는 전체 표시가 기본이 되도록 상향
+        // (Mech-Eye Viewer 와 동일한 밀도로 보이게). 그 이상만 간축한다.
+        private const int LodThreshold4 = 8_000_000;
+        private const int LodThreshold2 = 4_000_000;
 
         // ── Current LOD stride (for external use) ──
         private int _currentLodStride = 1;
 
+        // ── 수동 LOD (0 = 자동, 1/2/4 = 고정 스트라이드) — 밀도 버튼으로 순환 ──
+        private int _lodOverride;
+
         // ── Current data bounds (Z-axis = depth/height) ──
         private float _dataZMin;
         private float _dataZMax;
+
+        // ── 오빗 피벗 (점군 robust bounds 중심, viewport 좌표) ──
+        private Point3D _orbitCenter;
+        private bool _hasOrbitCenter;
 
         // ── Mouse interaction state ──
         private bool _isPanning;
@@ -554,7 +563,9 @@ namespace VMS.Core.Controls
         {
             var look = MainCamera.LookDirection;
             double distance = look.Length;
-            double zoomStep = distance * (e.Delta > 0 ? 0.15 : -0.15);
+            // 기본 2%/노치, Ctrl+휠 = 1% 정밀 줌 (사용자 요청 2026-08-05)
+            double factor = Keyboard.Modifiers.HasFlag(ModifierKeys.Control) ? 0.01 : 0.02;
+            double zoomStep = distance * (e.Delta > 0 ? factor : -factor);
 
             var dir = look;
             dir.Normalize();
@@ -585,29 +596,56 @@ namespace VMS.Core.Controls
                 _cameraStartPos.Z + offset.Z);
         }
 
+        // 뷰포트 월드업 — 데이터가 그리드(Y=0) 아래(-Y)로 매달리므로 화면상 위쪽은 -Y
+        private static readonly Vector3D WorldUp = new(0, -1, 0);
+
+        /// <summary>
+        /// 턴테이블 오빗 (Mech-Eye 스타일) — 피벗은 점군 중심, 좌우 드래그는 월드
+        /// 수직축 회전, 상하 드래그는 고도 변경(±89° 클램프). 카메라 롤이 누적되지
+        /// 않아 수평이 항상 유지되고 회전이 예측 가능하다.
+        /// (기존: look 지점 피벗 + 자유 궤도 — 팬 이후 피벗이 데이터에서 멀어지고
+        ///  up 벡터가 함께 회전해 기울어진 채로 도는 문제)
+        /// </summary>
         private void DoOrbit(double dx, double dy)
         {
-            var target = _cameraStartPos + _cameraStartLook;
-            var offset = _cameraStartPos - target;
+            var pivot = _hasOrbitCenter ? _orbitCenter : _cameraStartPos + _cameraStartLook;
+            var offset = _cameraStartPos - pivot;
+            double radius = offset.Length;
+            if (radius < 1e-6) return;
 
             double yawDeg = -dx * 0.3;
             double pitchDeg = -dy * 0.3;
 
-            var yawRotation = new AxisAngleRotation3D(_cameraStartUp, yawDeg);
-            var yawTransform = new RotateTransform3D(yawRotation);
+            // 1) Yaw — 월드 수직축 기준 (턴테이블)
+            var yawTransform = new RotateTransform3D(new AxisAngleRotation3D(WorldUp, yawDeg));
             offset = yawTransform.Transform(offset);
 
-            var right = Vector3D.CrossProduct(_cameraStartLook, _cameraStartUp);
+            // 2) Pitch — yaw 후의 수평 right 축 기준, 고도 ±89° 클램프 (극점 뒤집힘 방지)
+            var lookDir = -offset;
+            lookDir.Normalize();
+            var right = Vector3D.CrossProduct(lookDir, WorldUp);
+            if (right.LengthSquared < 1e-9)
+                right = Vector3D.CrossProduct(lookDir, new Vector3D(1, 0, 0));
             right.Normalize();
-            var pitchRotation = new AxisAngleRotation3D(right, pitchDeg);
-            var pitchTransform = new RotateTransform3D(pitchRotation);
+
+            double elevationDeg = System.Math.Asin(
+                System.Math.Clamp(Vector3D.DotProduct(offset, WorldUp) / radius, -1.0, 1.0)) * 180.0 / System.Math.PI;
+            pitchDeg = System.Math.Clamp(pitchDeg, -89.0 - elevationDeg, 89.0 - elevationDeg);
+
+            var pitchTransform = new RotateTransform3D(new AxisAngleRotation3D(right, pitchDeg));
             offset = pitchTransform.Transform(offset);
 
-            var newUp = pitchTransform.Transform(yawTransform.Transform(_cameraStartUp));
+            // 3) 카메라 적용 — up 은 월드업을 look 에 수직 투영 (롤 제거, 수평 유지)
+            MainCamera.Position = pivot + offset;
+            var look = pivot - MainCamera.Position;
+            MainCamera.LookDirection = look;
 
-            MainCamera.Position = target + offset;
-            MainCamera.LookDirection = target - MainCamera.Position;
-            MainCamera.UpDirection = newUp;
+            look.Normalize();
+            var newRight = Vector3D.CrossProduct(look, WorldUp);
+            if (newRight.LengthSquared < 1e-9)
+                newRight = Vector3D.CrossProduct(look, new Vector3D(1, 0, 0));
+            newRight.Normalize();
+            MainCamera.UpDirection = Vector3D.CrossProduct(newRight, look);
         }
 
         #endregion
@@ -822,6 +860,7 @@ namespace VMS.Core.Controls
                 PointCloudModel.Geometry = null;
                 PointCountText.Text = "No points";
                 LodIndicator.Text = string.Empty;
+                _hasOrbitCenter = false;
                 if (ShowColorBar)
                     ColorBarPanel.Visibility = Visibility.Collapsed;
                 _hasInitialFit = false;
@@ -832,10 +871,13 @@ namespace VMS.Core.Controls
             int totalCount = data.PointCount;
 
             // ── Dynamic LOD ──
-            int lodStride = 1;
-            if (totalCount > LodThreshold4) lodStride = 4;
-            else if (totalCount > LodThreshold2) lodStride = 2;
+            int lodStride = SelectLodStride(totalCount, _lodOverride);
             _currentLodStride = lodStride;
+
+            // 밀도에 맞춰 포인트 크기 조정 — 전체 표시는 Mech-Eye 처럼 작은 점,
+            // 간축 시엔 빈틈을 메우도록 크게.
+            double pointPx = lodStride switch { 1 => 2.0, 2 => 3.5, _ => 5.0 };
+            PointCloudModel.Size = new Size(pointPx, pointPx);
 
             int displayCount = 0;
             for (int i = 0; i < totalCount; i += lodStride)
@@ -898,7 +940,15 @@ namespace VMS.Core.Controls
             }
 
             PointCountText.Text = $"{displayCount:N0} / {totalCount:N0} pts";
-            LodIndicator.Text = lodStride > 1 ? $"LOD x{lodStride}" : string.Empty;
+            LodIndicator.Text = _lodOverride > 0
+                ? (lodStride > 1 ? $"LOD x{lodStride} (수동)" : "전체 (수동)")
+                : lodStride > 1 ? $"LOD x{lodStride}" : string.Empty;
+
+            // 오빗 피벗 갱신 — 이상점에 흔들리지 않게 robust bounds 중심 사용
+            var (rbMin, rbMax) = ComputeRobustBounds(pointPositions);
+            var rbCenter = (rbMin + rbMax) * 0.5f;
+            _orbitCenter = new Point3D(rbCenter.X, rbCenter.Y, rbCenter.Z);
+            _hasOrbitCenter = true;
 
             if (!_hasInitialFit)
             {
@@ -1007,6 +1057,17 @@ namespace VMS.Core.Controls
         /// Get the current LOD stride value.
         /// </summary>
         public int GetCurrentLodStride() => _currentLodStride;
+
+        /// <summary>
+        /// 표시 간축(LOD) 스트라이드 결정. overrideStride 0 = 자동(포인트 수 기준), 그 외 고정.
+        /// </summary>
+        public static int SelectLodStride(int totalCount, int overrideStride)
+        {
+            if (overrideStride > 0) return overrideStride;
+            if (totalCount > LodThreshold4) return 4;
+            if (totalCount > LodThreshold2) return 2;
+            return 1;
+        }
 
         /// <summary>
         /// Jet colormap: maps [0,1] to blue→cyan→green→yellow→red.
@@ -1158,6 +1219,14 @@ namespace VMS.Core.Controls
             MinValueLabel.Text = _dataZMin.ToString("F1");
             MaxValueLabel.Text = _dataZMax.ToString("F1");
             RecolorWithRange(_dataZMin, _dataZMax);
+        }
+
+        private void BtnLodMode_Click(object sender, RoutedEventArgs e)
+        {
+            // 자동 → 전체 → 1/2 → 1/4 순환
+            _lodOverride = _lodOverride switch { 0 => 1, 1 => 2, 2 => 4, _ => 0 };
+            BtnLodMode.Content = _lodOverride switch { 0 => "자동", 1 => "전체", 2 => "1/2", _ => "1/4" };
+            UpdatePointCloud();
         }
 
         private void BtnToggleGrid_Click(object sender, RoutedEventArgs e)
