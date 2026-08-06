@@ -812,6 +812,10 @@ namespace VMS.VisionSetup.ViewModels
                 OnCurrentRecipeChanged(this, _recipeService.CurrentRecipe);
             }
 
+            // 카메라 자동 선택 (레시피가 이미 골랐으면 유지) — 카메라 패널을 열지 않아도
+            // 툴바 Grab/Live 가 바로 동작하게 (현장 피드백 2026-08-06)
+            SelectedCamera ??= Cameras.FirstOrDefault();
+
             // Register for tool settings messages
             WeakReferenceMessenger.Default.Register<RequestTrainPatternMessage>(this, (r, m) =>
             {
@@ -2736,26 +2740,39 @@ namespace VMS.VisionSetup.ViewModels
             var stopped = "카메라 라이브 중지";
             try
             {
-                while (!ct.IsCancellationRequested && _cameraAcquisition != null)
+                // 루프 전체를 스레드풀에서 수행 — AcquireAsync 가 동기 완료되는 구현체
+                // (Basler 등 SDK 블로킹 대기)여도 UI 스레드가 잠기지 않는다 (현장 프리즈
+                // 2026-08-06). CurrentImage/CurrentPointCloud 는 setter 가 WriteableBitmap
+                // 생성·커맨드 갱신 등 UI 작업을 하므로 디스패처로 마샬링.
+                await System.Threading.Tasks.Task.Run(async () =>
                 {
-                    // 선택 스텝의 노출/게인 + 3D 후처리를 매 프레임 적용 — 라이브 중 Camera
-                    // Settings 패널에서 값을 편집하면 실시간 반영 (노출/후처리 튜닝 워크플로).
-                    // 지원 구현체(Mech-Mind 등)는 동일 값 캐시로 no-op 이라 SDK 왕복 비용 없음.
-                    await ApplyStepCameraSettingsAsync();
-
-                    var result = await _cameraAcquisition.AcquireAsync();
-                    if (ct.IsCancellationRequested) break;
-
-                    if (!result.Success)
+                    while (!ct.IsCancellationRequested && _cameraAcquisition != null)
                     {
-                        // 연속 실패 스팸 방지 — 첫 실패에서 라이브 중단
-                        stopped = $"카메라 라이브 중단: {result.Message}";
-                        break;
-                    }
+                        // 선택 스텝의 노출/게인 + 3D 후처리를 매 프레임 적용 — 라이브 중 Camera
+                        // Settings 패널에서 값을 편집하면 실시간 반영 (노출/후처리 튜닝 워크플로).
+                        // 지원 구현체(Mech-Mind 등)는 동일 값 캐시로 no-op 이라 SDK 왕복 비용 없음.
+                        await ApplyStepCameraSettingsAsync();
 
-                    if (result.Image2D != null) CurrentImage = result.Image2D;
-                    if (result.PointCloud != null) CurrentPointCloud = result.PointCloud;
-                }
+                        var result = await _cameraAcquisition.AcquireAsync();
+                        if (ct.IsCancellationRequested) break;
+
+                        if (!result.Success)
+                        {
+                            // 연속 실패 스팸 방지 — 첫 실패에서 라이브 중단
+                            stopped = $"카메라 라이브 중단: {result.Message}";
+                            break;
+                        }
+
+                        if (result.Image2D != null || result.PointCloud != null)
+                        {
+                            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                            {
+                                if (result.Image2D != null) CurrentImage = result.Image2D;
+                                if (result.PointCloud != null) CurrentPointCloud = result.PointCloud;
+                            });
+                        }
+                    }
+                });
             }
             catch (Exception ex)
             {
@@ -2791,11 +2808,11 @@ namespace VMS.VisionSetup.ViewModels
             var selectedId = SelectedCamera?.Id;
             LoadCameras();
 
-            // 이전에 선택된 카메라 복원
-            if (selectedId != null)
-            {
-                SelectedCamera = Cameras.FirstOrDefault(c => c.Id == selectedId);
-            }
+            // 이전에 선택된 카메라 복원 — 없어졌거나 선택이 없었으면 첫 카메라 자동 선택
+            // (툴바 Grab/Live 가 카메라 패널 조작 없이 동작해야 함, 현장 피드백 2026-08-06)
+            SelectedCamera = (selectedId != null
+                ? Cameras.FirstOrDefault(c => c.Id == selectedId)
+                : null) ?? Cameras.FirstOrDefault();
 
             // 레지스트리 변경으로 카메라 표시 순번이 바뀌었을 수 있으므로 스텝 이름 재계산
             var recipe = _recipeService.CurrentRecipe;
