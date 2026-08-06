@@ -62,9 +62,9 @@ dotnet build VMS.sln -c Release
 dotnet build VMS.MasterSetup\VMS.MasterSetup.wixproj -c Release
 ```
 
-산출물: `VMS.MasterSetup\bin\Release\VMS-1.5.4.msi` (**약 1.26GB** — Web 서버 동봉 + Mech-Mind 포함 정상.
-1,055MB 대면 Web payload 누락(스테이징 스크립트 미실행), 538MB 대면 CI 빌드거나 SDK 누락 의심.
-Web 동봉 상세: [msi_build_guide.md §13](msi_build_guide.md))
+산출물: `VMS.MasterSetup\bin\Release\VMS-1.5.4.msi` (**약 1,130MB** — Web 서버 동봉 + Mech-Mind 포함 정상.
+1,055MB 대면 Web payload 누락(스테이징 스크립트 미실행 또는 증분 빌드가 재링크 생략 — `-t:Rebuild` 사용),
+538MB 대면 CI 빌드거나 SDK 누락 의심. Web 동봉 상세: [msi_build_guide.md §13](msi_build_guide.md))
 
 ```powershell
 $h = (Get-FileHash VMS.MasterSetup\bin\Release\VMS-1.5.4.msi -Algorithm SHA256).Hash.ToLower()

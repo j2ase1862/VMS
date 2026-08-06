@@ -463,10 +463,14 @@ Web 미포함 MSI 로 빌드된다** (경고만 출력 — CI 는 Web 리포 접
 
 ```powershell
 .\tools\stage-web-payload.ps1        # Web 리포 publish → WebPayload 스테이징 (동봉 버전 출력)
-dotnet build VMS.MasterSetup\VMS.MasterSetup.wixproj -c Release
+dotnet build VMS.MasterSetup\VMS.MasterSetup.wixproj -c Release -t:Rebuild
 ```
 
-크기 확인: Web 포함 시 **약 1.26GB** (Web 미포함 1,055MB — 1.2GB 미만이면 payload 누락 의심).
+`-t:Rebuild` 필수 — payload 파일은 MSBuild 증분 빌드 입력으로 추적되지 않아,
+스테이징 후 일반 빌드는 재링크를 건너뛰고 **이전 MSI 를 그대로 둘 수 있다** (크기로 검증).
+
+크기 확인: Web 포함 시 **약 1,130MB** (Web 미포함 1,055MB — 1,100MB 미만이면 payload 누락 의심.
+201MB 원본이 CAB 압축으로 약 +73MB 로 줄어든다).
 릴리즈 노트에 동봉 Web 버전을 병기한다 (스테이징 스크립트가 출력).
 
 ### 13.3 초기 구성 — AppSetup 마법사 (설치 후 필수)
