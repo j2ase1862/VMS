@@ -47,14 +47,28 @@
     </None>
   </ItemGroup>
 
-  <!-- Basler Pylon SDK: define BASLER_AVAILABLE when pylon SDK is installed -->
-  <PropertyGroup Condition="Exists('C:\Program Files\Basler\pylon 7\Development\Assemblies\Basler.Pylon\net6.0\Basler.Pylon.dll')">
+  <!-- Basler Pylon SDK: Developer 프로파일 설치 시 BASLER_AVAILABLE 정의.
+       pylon 26.07 부터 .NET 어셈블리 경로가 net8.0\x64 로 변경 (net6.0 은 구버전 스위트 폴백).
+       관리 어셈블리만 참조 — native 런타임은 pylon Runtime 설치 + PATH 로 해석되므로
+       현장 PC 에는 pylon Runtime(카메라·GigE 필터 드라이버 포함) 설치가 별도로 필요. -->
+  <PropertyGroup>
+    <BaslerPylonNet8Dll>C:\Program Files\Basler\pylon 7\Development\Assemblies\Basler.Pylon\net8.0\x64\Basler.Pylon.dll</BaslerPylonNet8Dll>
+    <BaslerPylonNet6Dll>C:\Program Files\Basler\pylon 7\Development\Assemblies\Basler.Pylon\net6.0\Basler.Pylon.dll</BaslerPylonNet6Dll>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="Exists('$(BaslerPylonNet8Dll)') Or Exists('$(BaslerPylonNet6Dll)')">
     <DefineConstants>$(DefineConstants);BASLER_AVAILABLE</DefineConstants>
   </PropertyGroup>
 
-  <ItemGroup Condition="Exists('C:\Program Files\Basler\pylon 7\Development\Assemblies\Basler.Pylon\net6.0\Basler.Pylon.dll')">
+  <ItemGroup Condition="Exists('$(BaslerPylonNet8Dll)')">
     <Reference Include="Basler.Pylon">
-      <HintPath>C:\Program Files\Basler\pylon 7\Development\Assemblies\Basler.Pylon\net6.0\Basler.Pylon.dll</HintPath>
+      <HintPath>$(BaslerPylonNet8Dll)</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup Condition="!Exists('$(BaslerPylonNet8Dll)') And Exists('$(BaslerPylonNet6Dll)')">
+    <Reference Include="Basler.Pylon">
+      <HintPath>$(BaslerPylonNet6Dll)</HintPath>
     </Reference>
   </ItemGroup>
 

@@ -117,26 +117,38 @@ namespace VMS.Camera.Services
                 };
             }
 
+            // 필드는 중간 메서드 호출로 null 흐름분석이 무효화됨 — 지역 캡처로 고정
+            var converter = _converter;
+            var grabber = _pylonCamera.StreamGrabber;
+            if (grabber == null)
+            {
+                return new AcquisitionResult
+                {
+                    Success = false,
+                    Message = "StreamGrabber 를 사용할 수 없습니다."
+                };
+            }
+
             try
             {
                 // Apply camera parameters if available
                 ApplyCameraParameters();
 
                 // Start grab (single frame)
-                _pylonCamera.StreamGrabber.Start(1, GrabStrategy.OneByOne, GrabLoop.ProvidedByUser);
+                grabber.Start(1, GrabStrategy.OneByOne, GrabLoop.ProvidedByUser);
 
                 // Retrieve grab result with timeout
-                using var grabResult = _pylonCamera.StreamGrabber.RetrieveResult(
+                using var grabResult = grabber.RetrieveResult(
                     timeoutMs, TimeoutHandling.ThrowException);
 
-                if (grabResult.GrabSucceeded)
+                if (grabResult is { GrabSucceeded: true })
                 {
                     int width = grabResult.Width;
                     int height = grabResult.Height;
 
                     // Convert pixel format to BGR8 for OpenCV
                     byte[] bgrBuffer = new byte[width * height * 3];
-                    _converter.Convert(bgrBuffer, grabResult);
+                    converter.Convert(bgrBuffer, grabResult);
 
                     // Create OpenCV Mat from BGR buffer
                     var mat = new Mat(height, width, MatType.CV_8UC3);
@@ -154,7 +166,7 @@ namespace VMS.Camera.Services
                     return new AcquisitionResult
                     {
                         Success = false,
-                        Message = $"Grab 실패: Error {grabResult.ErrorCode} - {grabResult.ErrorDescription}"
+                        Message = $"Grab 실패: Error {grabResult?.ErrorCode} - {grabResult?.ErrorDescription}"
                     };
                 }
             }
@@ -170,8 +182,8 @@ namespace VMS.Camera.Services
             {
                 try
                 {
-                    if (_pylonCamera.StreamGrabber.IsGrabbing)
-                        _pylonCamera.StreamGrabber.Stop();
+                    if (grabber.IsGrabbing)
+                        grabber.Stop();
                 }
                 catch { }
             }
@@ -222,8 +234,9 @@ namespace VMS.Camera.Services
                 {
                     if (_pylonCamera != null)
                     {
-                        if (_pylonCamera.StreamGrabber.IsGrabbing)
-                            _pylonCamera.StreamGrabber.Stop();
+                        var grabber = _pylonCamera.StreamGrabber;
+                        if (grabber != null && grabber.IsGrabbing)
+                            grabber.Stop();
 
                         if (_pylonCamera.IsOpen)
                             _pylonCamera.Close();
