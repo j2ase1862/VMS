@@ -20,6 +20,10 @@ BODA.VMS.Web `docs/Production_Deploy_Runbook.md`
   - [ ] JWT 서명 키 32자 이상 (`Jwt__Key`) — Web 서버 전용. AppSetup 에는 입력란 없음
   - [ ] (API Key enforcement 사용 시) `ClientApiKey__Value` — 각주 [1] 참고
 - [ ] 현장 PC 에서 관리자 PowerShell 실행 가능 확인
+- [ ] **(Basler 카메라 현장) pylon Runtime 설치** — 카메라 드라이버 + GigE 필터 드라이버 포함,
+      dev PC 빌드 버전과 동일 계열(26.07) 권장. 미설치 시 **카메라 탐색은 되지만 연결/획득이 실패**
+      (탐색은 SDK 무관 GVCP 브로드캐스트, 획득은 pylon 런타임 필요).
+      또한 VMS 는 v1.5.8 이상이어야 함 — 이전 MSI 는 Basler 실연동 미탑재(시뮬레이션 폴백)
 
 ---
 
