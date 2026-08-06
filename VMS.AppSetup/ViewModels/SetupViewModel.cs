@@ -23,6 +23,8 @@ namespace VMS.AppSetup.ViewModels
         private readonly IConfigurationService _configService;
         private readonly IDialogService _dialogService;
         private readonly Action _shutdownAction;
+        // null 허용: 테스트/캡처 경로에서 미주입 시 카드는 "미설치" 상태로만 동작
+        private readonly IWebServerSetupService? _webServerSetup;
 
         [ObservableProperty]
         private int _currentPage = 1;
@@ -70,6 +72,98 @@ namespace VMS.AppSetup.ViewModels
         partial void OnWebSsoEnabledChanged(bool value)
         {
             if (value) InitialAdminPassword = string.Empty;
+        }
+
+        // ── Page 2: Web 서버 초기 구성 (MSI 동봉 로컬 서버) ──
+        // MSI 는 파일 + 서비스(demand, 미시작)만 깔고, admin 시드·Jwt:Key 생성·서비스
+        // 기동은 이 카드가 담당 (msi_build_guide §13). 원격 Web 구성이면 카드는 안내만 표시.
+
+        [ObservableProperty]
+        private bool _isWebServerInstalled;
+
+        [ObservableProperty]
+        private bool _isWebServerConfigured;
+
+        [ObservableProperty]
+        private string _webServerServiceStatus = string.Empty;
+
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(ConfigureWebServerCommand))]
+        private bool _isConfiguringWebServer;
+
+        // PasswordBox 짝 (code-behind 가 PasswordChanged 로 전달) — 구성 직후 즉시 폐기
+        public string WebServerAdminPassword { get; set; } = string.Empty;
+        public string WebServerAdminPasswordConfirm { get; set; } = string.Empty;
+
+        [RelayCommand]
+        private void RefreshWebServerStatus()
+        {
+            var status = _webServerSetup?.GetStatus();
+            IsWebServerInstalled = status != null && status.State != WebServerInstallState.NotInstalled;
+            IsWebServerConfigured = status?.State == WebServerInstallState.Configured;
+            WebServerServiceStatus = status?.ServiceStatus switch
+            {
+                null when IsWebServerInstalled => "서비스 미등록 — MSI 재설치(복구)가 필요합니다.",
+                null => string.Empty,
+                "Running" => "서비스 실행 중 (Running)",
+                var s => $"서비스 상태: {s}",
+            };
+        }
+
+        private bool CanConfigureWebServer() => !IsConfiguringWebServer;
+
+        [RelayCommand(CanExecute = nameof(CanConfigureWebServer))]
+        private async Task ConfigureWebServerAsync()
+        {
+            if (_webServerSetup == null) return;
+
+            if (WebServerAdminPassword.Length < 8)
+            {
+                _dialogService.ShowError("Web admin 비밀번호는 8자 이상이어야 합니다 (12자 이상 권장).",
+                    "Web 서버 초기 구성");
+                return;
+            }
+            if (WebServerAdminPassword != WebServerAdminPasswordConfirm)
+            {
+                _dialogService.ShowError("비밀번호와 확인 입력이 일치하지 않습니다.", "Web 서버 초기 구성");
+                return;
+            }
+
+            IsConfiguringWebServer = true;
+            try
+            {
+                var result = await _webServerSetup.ConfigureAsync(WebServerAdminPassword);
+                if (!result.Success)
+                {
+                    _dialogService.ShowError($"구성을 적용하지 못했습니다.\n\n{result.Error}",
+                        "Web 서버 초기 구성");
+                    return;
+                }
+
+                WebServerAdminPassword = string.Empty;
+                WebServerAdminPasswordConfirm = string.Empty;
+
+                var healthy = await _webServerSetup.SmokeTestAsync();
+                RefreshWebServerStatus();
+                if (healthy)
+                {
+                    _dialogService.ShowInformation(
+                        "Web 서버 구성 완료 — 서비스가 시작되었고 /health 응답을 확인했습니다.\n" +
+                        "admin 비밀번호는 첫 로그인 후 Web 관리 화면에서 변경할 수 있습니다.",
+                        "Web 서버 초기 구성");
+                }
+                else
+                {
+                    _dialogService.ShowError(
+                        "구성은 적용됐지만 서비스가 응답하지 않습니다.\n" +
+                        "이벤트 뷰어 → Windows 로그 → Application 에서 '.NET Runtime' 소스를 확인하세요.",
+                        "Web 서버 초기 구성");
+                }
+            }
+            finally
+            {
+                IsConfiguringWebServer = false;
+            }
         }
 
         // Page 7: Security Mode — system_config.json:securityMode 로 저장.
@@ -209,14 +303,17 @@ namespace VMS.AppSetup.ViewModels
         public string InstanceName => VMS.Camera.Configuration.AppDataPaths.InstanceName;
         public bool IsNamedInstance => !VMS.Camera.Configuration.AppDataPaths.IsDefaultInstance;
 
-        public SetupViewModel(IConfigurationService configService, IDialogService dialogService, Action shutdownAction)
+        public SetupViewModel(IConfigurationService configService, IDialogService dialogService, Action shutdownAction,
+            IWebServerSetupService? webServerSetup = null)
         {
             _configService = configService;
             _dialogService = dialogService;
             _shutdownAction = shutdownAction;
+            _webServerSetup = webServerSetup;
 
             UpdatePageInfo();
             LoadExistingConfiguration();
+            RefreshWebServerStatus();
         }
 
         private void LoadExistingConfiguration()

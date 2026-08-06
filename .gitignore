@@ -113,3 +113,6 @@ VMS.DeepLearning/scripts/data.yaml
 docs/control-capture/
 
 TestResults/
+
+## MSI 동봉용 Web 서버 publish 산출물 (tools/stage-web-payload.ps1 이 생성 — 커밋 금지)
+VMS.MasterSetup/WebPayload/

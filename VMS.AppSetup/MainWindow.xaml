@@ -187,6 +187,104 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- Web 서버 초기 구성 (MSI 동봉 로컬 서버) — MSI 는 파일+서비스(demand)만
+                             설치, admin 시드·Jwt:Key·서비스 기동은 이 카드가 수행 (msi_build_guide §13) -->
+                        <Border Background="{StaticResource BrushBgCard}" CornerRadius="6" Padding="15" Margin="0,15,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Web 서버 초기 구성 (이 PC)" FontSize="14" FontWeight="SemiBold"
+                                           Foreground="#FFD700" Margin="0,0,0,12"/>
+
+                                <!-- 상태 1: 미설치 — 안내만 -->
+                                <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource BrushTextMuted}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsWebServerInstalled}" Value="False">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                    이 PC 에는 Web 서버가 설치되어 있지 않습니다. 함께 설치하려면 MSI 설치에서
+                                    "BODA VMS Web 서버" 기능을 포함하세요. 다른 PC 의 Web 서버를 쓰는 구성이면
+                                    위 Web Server URL 만 지정하면 됩니다.
+                                </TextBlock>
+
+                                <!-- 상태 2: 설치됨 + 미구성 — 비밀번호 입력 + 구성 실행 -->
+                                <StackPanel>
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding IsWebServerInstalled}" Value="True"/>
+                                                        <Condition Binding="{Binding IsWebServerConfigured}" Value="False"/>
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </MultiDataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
+
+                                    <TextBlock TextWrapping="Wrap" FontSize="11" Margin="0,0,0,12"
+                                               Foreground="{StaticResource BrushTextMuted}">
+                                        <Bold>구성 전에는 Web 서버가 시작되지 않습니다.</Bold>
+                                        admin 비밀번호를 정하면 보안 키(Jwt:Key)가 자동 생성되고 서비스가
+                                        부팅 자동시작으로 전환된 뒤 바로 시작됩니다 (관리자 권한 승인 필요).
+                                    </TextBlock>
+
+                                    <TextBlock Style="{StaticResource LabelStyle}"><Run Text="Web Admin 비밀번호"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Web Admin 비밀번호" CustomDescription="Web 서버 관리자(admin) 계정의 초기 비밀번호입니다. 최소 8자, 12자 이상을 권장합니다. 첫 로그인 후 Web 관리 화면에서 변경할 수 있습니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
+                                    <PasswordBox x:Name="WebAdminPasswordBox"
+                                                 PasswordChanged="WebAdminPasswordBox_PasswordChanged"
+                                                 IsVisibleChanged="WebAdminPasswordBox_IsVisibleChanged"
+                                                 Style="{StaticResource WindowDarkPasswordBox}" Margin="0,0,0,12"/>
+
+                                    <TextBlock Style="{StaticResource LabelStyle}"><Run Text="비밀번호 확인"/></TextBlock>
+                                    <PasswordBox x:Name="WebAdminPasswordConfirmBox"
+                                                 PasswordChanged="WebAdminPasswordConfirmBox_PasswordChanged"
+                                                 IsVisibleChanged="WebAdminPasswordBox_IsVisibleChanged"
+                                                 Style="{StaticResource WindowDarkPasswordBox}" Margin="0,0,0,12"/>
+
+                                    <Button Content="초기 구성 실행 (관리자 권한)"
+                                            Command="{Binding ConfigureWebServerCommand}"
+                                            Style="{StaticResource ModernPrimaryButton}"
+                                            HorizontalAlignment="Left"/>
+                                    <TextBlock Text="구성 적용 중... (관리자 승인 → 설정 작성 → 서비스 시작 → 응답 확인)"
+                                               FontSize="11" Foreground="#FFD700" Margin="0,8,0,0"
+                                               Visibility="{Binding IsConfiguringWebServer, Converter={StaticResource BoolToVisConverter}}"/>
+                                </StackPanel>
+
+                                <!-- 상태 3: 구성 완료 — 서비스 상태 표시 -->
+                                <StackPanel>
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsWebServerConfigured}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
+
+                                    <TextBlock Text="✔ 초기 구성 완료" FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{StaticResource BrushSuccess}" Margin="0,0,0,5"/>
+                                    <TextBlock Text="{Binding WebServerServiceStatus}" FontSize="11"
+                                               Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,0,10"/>
+                                    <Button Content="상태 새로고침"
+                                            Command="{Binding RefreshWebServerStatusCommand}"
+                                            Style="{StaticResource ModernSecondaryButton}"
+                                            HorizontalAlignment="Left"/>
+                                    <TextBlock TextWrapping="Wrap" FontSize="11" Margin="0,10,0,0"
+                                               Foreground="{StaticResource BrushTextMuted}">
+                                        admin 비밀번호 재설정은 Web 배포 폴더의 Reset-AdminPassword 도구를 사용하세요.
+                                    </TextBlock>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
                         <!-- Web SSO (단일 사용자 계정 통합) — SSO Migration Plan §2.2 / PR5 -->
                         <Border Background="{StaticResource BrushBgCard}" CornerRadius="6" Padding="15" Margin="0,15,0,0">
                             <StackPanel>

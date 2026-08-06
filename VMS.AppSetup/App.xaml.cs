@@ -14,6 +14,14 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        // Web 서버 구성 적용 모드 — WebServerSetupService 가 UAC 상승으로 자신을 재실행한
+        // 헤드리스 분기. UI 없이 적용 후 즉시 종료 (마법사 부팅 로직 진입 금지).
+        if (e.Args.Length >= 3 && e.Args[0] == WebServerConfigApplier.ArgName)
+        {
+            Shutdown(WebServerConfigApplier.Run(e.Args[1], e.Args[2]));
+            return;
+        }
+
         // 다중 인스턴스 해석 — "--instance <이름>" 인자 → BODA_VMS_INSTANCE 환경변수 → 기본.
         // VMS 에서 System Setup 으로 실행되면 환경변수로 인스턴스가 자동 상속된다.
         // ConfigurationService 가 경로를 잡기 전에 반드시 먼저 호출.
@@ -31,9 +39,10 @@ public partial class App : Application
 
         IConfigurationService configService = ConfigurationService.Instance;
         IDialogService dialogService = new DialogService();
+        IWebServerSetupService webServerSetupService = new WebServerSetupService();
 
         var mainWindow = new MainWindow();
-        var setupVm = new SetupViewModel(configService, dialogService, () => Shutdown());
+        var setupVm = new SetupViewModel(configService, dialogService, () => Shutdown(), webServerSetupService);
         mainWindow.DataContext = setupVm;
         mainWindow.Show();
 

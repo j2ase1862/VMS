@@ -25,6 +25,12 @@ BODA.VMS.Web `docs/Production_Deploy_Runbook.md`
 
 ## 1. BODA.VMS.Web 서버 설치 (먼저)
 
+> ✅ **v1.5.7 부터 MSI 가 Web 서버를 동봉** — MSI 설치 시 "BODA VMS Web 서버" Feature 를
+> 포함했다면 **이 §1 의 수동 절차 전체를 생략**하고, §2-2 마법사의 **"Web 서버 초기 구성
+> (이 PC)"** 카드에서 admin 비밀번호만 입력하면 된다 (Jwt:Key 자동 생성 + 서비스 자동 시작).
+> 아래 수동 절차는 구버전 MSI / Web 단독 서버 PC / Web 단독 업데이트에만 필요.
+> 기존 수동 설치 PC 에 새 MSI 를 올릴 때는 서비스 선제거 필요 — [msi_build_guide.md §13.4](msi_build_guide.md).
+
 ### 1-1. 환경변수 설정 (관리자 PowerShell, **서비스 첫 가동 전**)
 
 ```powershell
@@ -82,6 +88,8 @@ Start-Service BodaVmsWeb
       `system_config.json.invalid.bak` 파일을 수거해 보고. 그대로 저장하면 기존 설정이 기본값으로 덮어써짐
 - [ ] 기존 설정 PC 는 각 페이지 값이 이전 설정대로 복원되어 있는지 확인 (마법사 = 기존 설정 편집기)
 
+- [ ] (MSI 동봉 Web 사용 시) Page 2 "Web 서버 초기 구성 (이 PC)" 카드 — Web admin 비밀번호
+      입력 → [초기 구성 실행] → UAC 승인 → "구성 완료 + /health 응답 확인" 메시지 확인 (v1.5.7)
 - [ ] Page 2 "Web Server Integration" — Web URL 입력 (`http://<host>:5292`)
 - [ ] (선택) Page 2 "Web Client API Key" — enforcement 사용 시에만 입력, 각주 [1] 참고
 - [ ] (SSO 사용 시) Page 2 "Web SSO" 카드 — "Web SSO 활성" 체크
