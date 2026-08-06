@@ -45,6 +45,26 @@ public partial class MainWindow : Window
             vm.LocalFallbackAdminPassword = LocalAdminPasswordBox.Password;
     }
 
+    // Web 서버 초기 구성 카드 (MSI 동봉) — 동일한 PasswordBox 평문 전달 규약
+    private void WebAdminPasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is ViewModels.SetupViewModel vm)
+            vm.WebServerAdminPassword = WebAdminPasswordBox.Password;
+    }
+
+    private void WebAdminPasswordConfirmBox_PasswordChanged(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is ViewModels.SetupViewModel vm)
+            vm.WebServerAdminPasswordConfirm = WebAdminPasswordConfirmBox.Password;
+    }
+
+    // 구성 완료로 입력 블록이 숨겨지면 컨트롤에 남은 평문도 폐기 (두 박스 공용)
+    private void WebAdminPasswordBox_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (e.NewValue is false && sender is PasswordBox box && box.Password.Length > 0)
+            box.Password = string.Empty;
+    }
+
     private void BrowseDcfFile_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button button) return;

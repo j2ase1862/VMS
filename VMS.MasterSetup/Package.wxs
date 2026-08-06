@@ -1,5 +1,7 @@
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
-     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util"
+     xmlns:fw="http://wixtoolset.org/schemas/v4/wxs/firewall">
 
   <Package Name="BODA Vision System"
            Manufacturer="VASIM"
@@ -18,6 +20,19 @@
       <ComponentRef Id="StartMenuAppSetupShortcutComp" />
       <ComponentRef Id="StartMenuVisionSetupShortcutComp" />
     </Feature>
+
+<?ifdef WebPayloadDir ?>
+    <!-- BODA.VMS.Web 동봉 (릴리즈 빌드 전용 — tools/stage-web-payload.ps1 이
+         WebPayload/ 를 채웠을 때만 컴파일됨. CI 는 Web 리포 접근 불가라 이 Feature 없이 빌드).
+         서비스는 등록만 하고 시작하지 않는다 — 초기 구성(admin 비밀번호·Jwt:Key) 은
+         AppSetup 마법사가 담당하며, 구성 전에는 앱이 스스로 부팅을 거부한다.
+         제외 설치: msiexec /i VMS-x.y.z.msi INSTALLWEB=0 -->
+    <Feature Id="WebServer" Title="BODA VMS Web 서버" Level="1" AllowAbsent="yes">
+      <Level Value="0" Condition="INSTALLWEB=0" />
+      <ComponentGroupRef Id="WebFiles" />
+      <ComponentRef Id="WebServiceComp" />
+    </Feature>
+<?endif?>
 
     <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
 
@@ -104,5 +119,49 @@
       </Directory>
     </StandardDirectory>
   </Fragment>
+
+<?ifdef WebPayloadDir ?>
+  <!-- Web Server: 파일 + Windows Service + 방화벽.
+       서비스는 demand(수동) 로 등록 — 초기 구성 전 재부팅 시 크래시 루프 방지
+       (앱은 Jwt:Key/admin 시드 없으면 부팅 거부). AppSetup 마법사가 구성 완료 시
+       auto 전환 + 시작을 수행한다. 기존 스크립트 설치 현장(BodaVmsWeb 서비스 존재) 은
+       Uninstall-Web.ps1 로 선제거 필요 — msi_build_guide §13 참조. -->
+  <Fragment>
+    <DirectoryRef Id="INSTALLFOLDER">
+      <Directory Id="WebFolder" Name="Web" />
+    </DirectoryRef>
+
+    <ComponentGroup Id="WebFiles" Directory="WebFolder">
+      <Files Include="$(var.WebPayloadDir)**">
+        <Exclude Files="$(var.WebPayloadDir)BODA.VMS.Web.exe" />
+      </Files>
+    </ComponentGroup>
+
+    <Component Id="WebServiceComp" Directory="WebFolder">
+      <File Id="WebServerExe" Source="$(var.WebPayloadDir)BODA.VMS.Web.exe" KeyPath="yes" />
+      <ServiceInstall Id="WebSvcInstall"
+                      Name="BodaVmsWeb"
+                      DisplayName="BODA VMS Web Server"
+                      Description="BODA Vision Management System - Web Server"
+                      Type="ownProcess"
+                      Start="demand"
+                      ErrorControl="normal"
+                      Arguments="--environment Production --urls=http://0.0.0.0:5292">
+        <util:ServiceConfig FirstFailureActionType="restart"
+                            SecondFailureActionType="restart"
+                            ThirdFailureActionType="restart"
+                            RestartServiceDelayInSeconds="10"
+                            ResetPeriodInDays="1" />
+      </ServiceInstall>
+      <ServiceControl Id="WebSvcControl" Name="BodaVmsWeb" Stop="both" Remove="uninstall" Wait="yes" />
+      <fw:FirewallException Id="WebFirewallException"
+                            Name="BODA VMS Web (5292/TCP)"
+                            Port="5292"
+                            Protocol="tcp"
+                            Scope="any"
+                            Profile="all" />
+    </Component>
+  </Fragment>
+<?endif?>
 
 </Wix>

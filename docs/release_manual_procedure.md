@@ -57,11 +57,14 @@ git pull --ff-only origin master
 ## ② MSI 빌드 + 체크섬 (dev PC)
 
 ```powershell
+.\tools\stage-web-payload.ps1        # Web 서버 동봉 payload 스테이징 (동봉 Web 버전 출력 — ③에서 병기)
 dotnet build VMS.sln -c Release
 dotnet build VMS.MasterSetup\VMS.MasterSetup.wixproj -c Release
 ```
 
-산출물: `VMS.MasterSetup\bin\Release\VMS-1.5.4.msi` (약 1,055MB — 1GB 넘게 나와야 Mech-Mind 포함 정상. 538MB대면 CI 빌드거나 SDK 누락 의심)
+산출물: `VMS.MasterSetup\bin\Release\VMS-1.5.4.msi` (**약 1,130MB** — Web 서버 동봉 + Mech-Mind 포함 정상.
+1,055MB 대면 Web payload 누락(스테이징 스크립트 미실행 또는 증분 빌드가 재링크 생략 — `-t:Rebuild` 사용),
+538MB 대면 CI 빌드거나 SDK 누락 의심. Web 동봉 상세: [msi_build_guide.md §13](msi_build_guide.md))
 
 ```powershell
 $h = (Get-FileHash VMS.MasterSetup\bin\Release\VMS-1.5.4.msi -Algorithm SHA256).Hash.ToLower()
@@ -74,6 +77,7 @@ $h = (Get-FileHash VMS.MasterSetup\bin\Release\VMS-1.5.4.msi -Algorithm SHA256).
 
 - 제목: `# BODA VMS v1.5.4`
 - 한 줄 요약 → `## 새 기능`/`## 수정` (PR 번호 병기) → `## 설치 안내` (기존 v1.4.10 이상은 MSI 실행만으로 업그레이드, 레시피 호환)
+- 동봉 Web 서버 버전 병기 (② 스테이징 스크립트 출력값. 예: "동봉 BODA.VMS.Web v1.1.0")
 
 포함할 PR 목록 확인:
 

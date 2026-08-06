@@ -440,7 +440,86 @@ dotnet user-secrets set Initial:AdminPassword <비밀번호> --project BODA.VMS.
 
 ---
 
-## 13. 관련 문서
+## 13. Web 서버 동봉 (선택 Feature — v1.5.7)
+
+MSI 하나로 VMS + BODA.VMS.Web 서버를 함께 설치하는 구성. 기존 스크립트 설치
+(`Install-Web-Offline.ps1`)는 **Web 단독 업데이트** 경로로 계속 유지된다.
+
+### 13.1 구조
+
+| 항목 | 값 |
+|---|---|
+| Feature | `WebServer` ("BODA VMS Web 서버") — 기본 포함, `INSTALLWEB=0` 으로 제외 |
+| 설치 위치 | `C:\Program Files\VASIM\BODA Vision System\Web\` |
+| Windows Service | `BodaVmsWeb` — **demand(수동) 등록 + 미시작** (아래 13.3) |
+| 방화벽 | 인바운드 5292/TCP 규칙 (Firewall.wixext, 제거 시 자동 정리) |
+| 페이로드 | `VMS.MasterSetup\WebPayload\` (self-contained publish, .gitignore 대상) |
+
+payload 는 릴리즈 빌드 전 `tools/stage-web-payload.ps1` 이 채운다. **payload 가 없으면
+Web 미포함 MSI 로 빌드된다** (경고만 출력 — CI 는 Web 리포 접근 불가라 항상 이 모드).
+즉 CI artifact MSI 는 Mech-Eye SDK 에 이어 Web 서버도 없는 빌드다 — 현장 배포 금지 사유 추가.
+
+### 13.2 릴리즈 빌드 절차
+
+```powershell
+.\tools\stage-web-payload.ps1        # Web 리포 publish → WebPayload 스테이징 (동봉 버전 출력)
+dotnet build VMS.MasterSetup\VMS.MasterSetup.wixproj -c Release -t:Rebuild
+```
+
+`-t:Rebuild` 필수 — payload 파일은 MSBuild 증분 빌드 입력으로 추적되지 않아,
+스테이징 후 일반 빌드는 재링크를 건너뛰고 **이전 MSI 를 그대로 둘 수 있다** (크기로 검증).
+
+크기 확인: Web 포함 시 **약 1,130MB** (Web 미포함 1,055MB — 1,100MB 미만이면 payload 누락 의심.
+201MB 원본이 CAB 압축으로 약 +73MB 로 줄어든다).
+릴리즈 노트에 동봉 Web 버전을 병기한다 (스테이징 스크립트가 출력).
+
+### 13.3 초기 구성 — AppSetup 마법사 (설치 후 필수)
+
+MSI 는 파일 + 서비스 등록만 한다. Web 앱은 `Jwt:Key`/admin 시드 없이는 부팅을 거부하므로
+(Option C, §11) 서비스는 **demand 로 등록만** 되고 시작되지 않는다 — 구성 전 재부팅 크래시
+루프 방지. 구성은 마법사가 담당한다:
+
+1. 시작 메뉴 → "BODA VMS 설정 마법사 (AppSetup)" → Page 2 → **"Web 서버 초기 구성 (이 PC)"** 카드
+2. Web admin 비밀번호 입력 (8자 이상, 12자 권장) → **[초기 구성 실행]** → UAC 승인
+3. 마법사가 수행: `Jwt:Key` 무작위 생성 → `Web\appsettings.Production.json` 작성 →
+   데이터 폴더(`C:\ProgramData\BODA\VMS`) 생성 → 서비스 **auto 전환 + 시작** → `/health` 응답 확인
+4. 완료 후 `http://localhost:5292` 에서 admin 로그인 확인
+
+- 재구성(덮어쓰기)은 거부된다 — 발급된 토큰 무효화 방지. 비밀번호 재설정은 `Reset-AdminPassword` 도구 사용.
+- MSI 제거 시 서비스·파일은 제거되지만 **DB 와 appsettings.Production.json 은 보존**된다
+  (MSI 미관리 파일 — 재설치 시 그대로 이어받음).
+
+### 13.4 기존 스크립트 설치 현장 마이그레이션
+
+⚠ 서비스명이 같으므로(`BodaVmsWeb`) **기존 서비스를 지우지 않고 MSI 를 설치하면
+ServiceInstall 충돌로 설치가 실패/롤백된다.** 순서:
+
+1. 기존 설치 제거: `.\Uninstall-Web.ps1 -ServiceName BodaVmsWeb` (또는 `sc.exe delete BodaVmsWeb`)
+2. 계정·토큰 유지가 필요하면 기존 `appsettings.Production.json` 백업
+   (기본 `C:\Deploy\BodaVmsWeb\appsettings.Production.json`)
+3. MSI 설치 (WebServer Feature 포함)
+4. 백업한 설정을 `C:\Program Files\VASIM\BODA Vision System\Web\` 에 복사
+   → 마법사 카드가 "구성 완료" 로 표시됨 → 서비스 시작만 확인
+   (백업이 없으면 카드에서 새로 구성 — DB 가 이미 있으면 admin 시드는 무시되고 기존 계정 유지)
+
+DB(`C:\ProgramData\BODA\VMS\BodaVision.db`)는 양쪽 방식이 같은 경로를 쓰므로 그대로 유지된다.
+구버전 온라인 스크립트(`Install-Web.ps1`, 서비스명 `BODA-VMS-Web`, DB `%LocalAppData%`) 설치는
+드물지만, 같은 요령으로 제거 후 DB 를 `C:\ProgramData\BODA\VMS` 로 이동한다.
+
+### 13.5 Web 단독 업데이트
+
+Web 핫픽스마다 1.2GB MSI 를 재발행하지 않는다 — 기존 오프라인 스크립트로 파일만 교체:
+
+```powershell
+.\Install-Web-Offline.ps1 -SourcePath <새 publish> -InstallPath "C:\Program Files\VASIM\BODA Vision System\Web"
+```
+
+(스크립트는 설정/DB 를 보존하고 서비스 중지 → 동기화 → 재시작한다. 이때 스크립트가
+서비스를 재등록하므로 이후 MSI 업그레이드 전에는 다시 13.4 절차를 따른다.)
+
+---
+
+## 14. 관련 문서
 
 | 문서 | 내용 |
 |---|---|
@@ -463,3 +542,4 @@ dotnet user-secrets set Initial:AdminPassword <비밀번호> --project BODA.VMS.
 | v1.2 | 2026-06-04 | §10 Web SSO 통합 운영 절차 추가 (SSO PR1~5: 단일 사용자 계정 + local-admin 폴백) |
 | v1.3 | 2026-06-04 | §11 초기 admin 비밀번호 설정 절차 추가 (Option C: VMS/Web 양쪽 디폴트 시드 제거, 운영자 명시 입력 필수) |
 | v1.4 | 2026-07-09 | §12 다중 인스턴스 운용(한 PC 두 라인) 절차 추가 — --instance 바로가기 / AppSetup 인스턴스별 구성 / 주의사항 |
+| v1.5 | 2026-08-06 | §13 Web 서버 동봉 추가 — WebServer Feature(payload 스테이징·INSTALLWEB=0) / AppSetup 초기 구성 카드 / 스크립트 설치 마이그레이션 / Web 단독 업데이트 경로 |
