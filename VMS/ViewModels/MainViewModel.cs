@@ -228,6 +228,29 @@ namespace VMS.ViewModels
             && (_operatorAuthService == null || IsOperatorLoggedIn);
 
         /// <summary>
+        /// 단발 Grab 활성 조건 — CanOperateCamera 에서 연결 요건을 뺀 것. Grab 은
+        /// 미연결 시 자동 연결하므로 연결 여부로 막으면 최초 연결 진입점이 사라진다.
+        /// 권한/Operator 로그인 게이트는 Live 와 동일하게 적용 (현장 실증 2026-08-06:
+        /// Grab 만 게이트가 빠져 Live 와 비대칭이던 것을 정리).
+        /// </summary>
+        public bool CanGrabCamera =>
+            (_userService?.HasPermission(UserPermission.StartStop) ?? true)
+            && (_operatorAuthService == null || IsOperatorLoggedIn);
+
+        /// <summary>
+        /// 카메라 조작 버튼이 비활성일 때 툴팁으로 보여줄 사유 — 현장에서 "왜 안
+        /// 눌리는지" 확인할 방법이 없던 문제 해소. 조작 가능하면 null.
+        /// </summary>
+        public string? CameraOperateBlockReason =>
+            !(_userService?.HasPermission(UserPermission.StartStop) ?? true)
+                ? "현재 사용자에게 Start/Stop 권한이 없습니다"
+                : (_operatorAuthService != null && !IsOperatorLoggedIn)
+                    ? "Operator 로그인이 필요합니다"
+                    : !HasConnectedCamera
+                        ? "연결된 카메라가 없습니다 — Grab 을 누르면 자동 연결됩니다"
+                        : null;
+
+        /// <summary>
         /// Roller 검사 토글 활성 — 검사 결과가 생기므로 CanStartStop(WO 포함) 유지.
         /// 추가로 롤러 검사는 라인스캔 전용이므로, AppSetup 구성 카메라 중
         /// LineScan2D/LineScan3D 가 있을 때만 활성 (에어리어 전용 장비에서는 항상 비활성).
@@ -479,6 +502,8 @@ namespace VMS.ViewModels
             OnPropertyChanged(nameof(CanLaunchAppSetup));
             OnPropertyChanged(nameof(CanStartStop));
             OnPropertyChanged(nameof(CanOperateCamera));
+            OnPropertyChanged(nameof(CanGrabCamera));
+            OnPropertyChanged(nameof(CameraOperateBlockReason));
             OnPropertyChanged(nameof(CanToggleRollerInspection));
             // VMS 시스템 사용자 변경 시 Role-게이트 properties 도 재평가 (Admin 우회 통과 반영)
             OnPropertyChanged(nameof(CanLeadOrAbove));
@@ -603,6 +628,7 @@ namespace VMS.ViewModels
                     OnPropertyChanged(nameof(HasConnectedCamera));
                     OnPropertyChanged(nameof(CanStartStop));
                     OnPropertyChanged(nameof(CanOperateCamera));
+                    OnPropertyChanged(nameof(CameraOperateBlockReason));
                     OnPropertyChanged(nameof(CanToggleRollerInspection));
                     OnPropertyChanged(nameof(ConnectedCameraCount));
                     OnPropertyChanged(nameof(CameraConnectionStatus));
@@ -1521,6 +1547,8 @@ namespace VMS.ViewModels
             LogoutOperatorCommand.NotifyCanExecuteChanged();
             OnPropertyChanged(nameof(CanStartStop));
             OnPropertyChanged(nameof(CanOperateCamera));
+            OnPropertyChanged(nameof(CanGrabCamera));
+            OnPropertyChanged(nameof(CameraOperateBlockReason));
             OnPropertyChanged(nameof(CanToggleRollerInspection));
             OnPropertyChanged(nameof(CanLeadOrAbove));
             OnPropertyChanged(nameof(CanSupervisor));

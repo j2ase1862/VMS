@@ -550,6 +550,29 @@
                           Stroke="White" StrokeThickness="1.2" Fill="Transparent"
                           Width="15" Height="14" Stretch="Uniform"/>
                 </Button>
+                <!-- Camera Live 시작/정지 — 메뉴(Camera > Start/Stop Camera Live)와 동일
+                     커맨드. 활성/비활성은 커맨드 CanExecute 가 결정 (카메라 미선택·라이브
+                     중·VMS 실행 중 등). 미연결이면 시작 시 자동 연결. -->
+                <Button Command="{Binding StartCameraLiveCommand}"
+                        Style="{StaticResource ToolbarIconButtonStyle}"
+                        ToolTipService.ShowOnDisabled="True"
+                        ToolTip="Start Camera Live — 선택 카메라 연속 획득 (미연결 시 자동 연결)">
+                    <Canvas Width="17" Height="14">
+                        <Path Data="M1,4 L1,11 L11,11 L11,4 L9.5,4 L8.2,2.6 L4.3,2.6 L3,4 Z M6,5.4 A2,2 0 1 1 6,9.4 A2,2 0 1 1 6,5.4"
+                              Stroke="White" StrokeThickness="1.1" Fill="Transparent"/>
+                        <Path Data="M11.5,7 L17,10.5 L11.5,14 Z" Fill="#4CAF50"/>
+                    </Canvas>
+                </Button>
+                <Button Command="{Binding StopCameraLiveCommand}"
+                        Style="{StaticResource ToolbarIconButtonStyle}"
+                        ToolTipService.ShowOnDisabled="True"
+                        ToolTip="Stop Camera Live">
+                    <Canvas Width="17" Height="14">
+                        <Path Data="M1,4 L1,11 L11,11 L11,4 L9.5,4 L8.2,2.6 L4.3,2.6 L3,4 Z M6,5.4 A2,2 0 1 1 6,9.4 A2,2 0 1 1 6,5.4"
+                              Stroke="White" StrokeThickness="1.1" Fill="Transparent"/>
+                        <Path Data="M11.5,8 L17,8 L17,14 L11.5,14 Z" Fill="#F44336"/>
+                    </Canvas>
+                </Button>
 
                 <!-- SLM Chat Bot -->
                 <Border Width="1" Background="{StaticResource BrushBgHover}" Margin="5,4" CornerRadius="1"/>

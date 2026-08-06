@@ -621,13 +621,23 @@
                         </Grid.ColumnDefinitions>
                         <Button Grid.Column="0"
                                 Command="{Binding GrabCommand}"
+                                ToolTipService.ShowOnDisabled="True"
                                 Padding="6,4" Margin="0,0,2,0">
-                            <!-- Live 중 단발 Grab 은 획득 루프와 충돌 — 비활성 -->
+                            <!-- Live 중 단발 Grab 은 획득 루프와 충돌 — 비활성.
+                                 권한/Operator 게이트는 Live 와 동일 (CanGrabCamera —
+                                 연결 요건 제외: Grab 이 최초 자동 연결 진입점).
+                                 비활성 시 툴팁으로 사유 표시 (현장 피드백 2026-08-06). -->
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource ModernButton}">
+                                    <Setter Property="ToolTip" Value="단발 촬영 (미연결 시 자동 연결)"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding IsLiveGrabbing}" Value="True">
                                             <Setter Property="IsEnabled" Value="False"/>
+                                            <Setter Property="ToolTip" Value="라이브 중에는 단발 Grab 을 사용할 수 없습니다"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding DataContext.CanGrabCamera, RelativeSource={RelativeSource AncestorType=Window}}" Value="False">
+                                            <Setter Property="IsEnabled" Value="False"/>
+                                            <Setter Property="ToolTip" Value="{Binding DataContext.CameraOperateBlockReason, RelativeSource={RelativeSource AncestorType=Window}}"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -643,10 +653,20 @@
                                 Command="{Binding DataContext.StartLiveCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 IsEnabled="{Binding DataContext.CanOperateCamera, RelativeSource={RelativeSource AncestorType=Window}}"
                                 Visibility="{Binding DataContext.IsLiveMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
-                                Style="{StaticResource ModernButton}"
                                 ToolTipService.ShowOnDisabled="True"
-                                ToolTip="연속 라이브 그랩 시작 (활성 카메라 전체)"
                                 Padding="6,4" Margin="2,0,2,0">
+                            <!-- 비활성 시 사유를 툴팁으로 표시 — 미연결/권한/Operator 미로그인
+                                 구분 불가로 현장 원인 파악이 안 되던 문제 (2026-08-06) -->
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource ModernButton}">
+                                    <Setter Property="ToolTip" Value="연속 라이브 그랩 시작 (활성 카메라 전체)"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsEnabled" Value="False">
+                                            <Setter Property="ToolTip" Value="{Binding DataContext.CameraOperateBlockReason, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" FontSize="11" Margin="0,0,4,0"
                                            Foreground="#4CAF50"/>
