@@ -36,6 +36,9 @@ namespace VMS.VisionSetup.Views.Recipe
             // Wire up cross-communication
             _listViewModel.RecipeLoaded += OnRecipeLoaded;
             _editorViewModel.RecipeSaved += OnRecipeSaved;
+
+            // 폴링 서비스의 RecipeListChanged 구독 해제 — VM 은 창마다 새로 생성됨
+            Closed += (_, _) => _listViewModel.Detach();
         }
 
         private void OnRecipeLoaded(object? sender, Models.Recipe recipe)

@@ -846,17 +846,34 @@ namespace VMS.ViewModels
 
         private void RefreshRecipeList()
         {
-            RecipeList.Clear();
-            foreach (var info in _recipeService.GetRecipeList())
-            {
-                RecipeList.Add(info);
-            }
+            RebuildRecipeList();
 
             // Web에서 추가된 레시피를 로컬에 동기화
             if (_parameterSyncService != null)
             {
                 _ = SyncWebRecipesToLocalAsync();
             }
+        }
+
+        private void RebuildRecipeList()
+        {
+            RecipeList.Clear();
+            foreach (var info in _recipeService.GetRecipeList())
+            {
+                RecipeList.Add(info);
+            }
+        }
+
+        // Recipe 패널 새로고침 버튼 — 60초 폴링을 기다리지 않고 Web 레시피를 지금
+        // 끌어온 뒤 목록을 재구축한다 (Web 에서 방금 만든 레시피 즉시 확인용, 2026-08-10)
+        [RelayCommand]
+        private async Task RefreshRecipesAsync()
+        {
+            if (_parameterSyncService != null)
+            {
+                await SyncWebRecipesToLocalAsync();
+            }
+            RebuildRecipeList();
         }
 
         private async Task SyncWebRecipesToLocalAsync()
