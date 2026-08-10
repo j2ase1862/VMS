@@ -14,11 +14,16 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
-        // Web 서버 구성 적용 모드 — WebServerSetupService 가 UAC 상승으로 자신을 재실행한
-        // 헤드리스 분기. UI 없이 적용 후 즉시 종료 (마법사 부팅 로직 진입 금지).
+        // Web 서버 구성 적용 / 서비스 시작 모드 — WebServerSetupService 가 UAC 상승으로
+        // 자신을 재실행한 헤드리스 분기. UI 없이 적용 후 즉시 종료 (마법사 부팅 로직 진입 금지).
         if (e.Args.Length >= 3 && e.Args[0] == WebServerConfigApplier.ArgName)
         {
             Shutdown(WebServerConfigApplier.Run(e.Args[1], e.Args[2]));
+            return;
+        }
+        if (e.Args.Length >= 3 && e.Args[0] == WebServerConfigApplier.StartArgName)
+        {
+            Shutdown(WebServerConfigApplier.RunStart(e.Args[1], e.Args[2]));
             return;
         }
 
