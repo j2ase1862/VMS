@@ -595,7 +595,10 @@ namespace VMS.ViewModels
                 if (ok) TotalPass++;
                 else TotalFail++;
 
-                Dashboard.RecordInspectionResult(ok, cameraName, image);
+                // Tact 는 AUTO RUN 연속 운전 중에만 갱신 (수동 Inspect 는 대기 시간이
+                // Tact 로 오인됨 — 2026-08-10 현장). 처리 시간은 항상 표시.
+                Dashboard.RecordInspectionResult(ok, cameraName, image,
+                    processingTimeMs: cam.LastExecutionTimeMs, updateTact: IsRunning);
 
                 // 판정 이미지 저장 — 설정(imageSave) 의 폴더 구조/파일명 규칙으로 OK/NG 이미지 기록.
                 var imageContext = new InspectionImageContext

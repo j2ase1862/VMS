@@ -669,6 +669,11 @@
                             </TextBlock.Style>
                             <Run Text="{Binding Dashboard.TactTime, StringFormat={}{0:F2}}"/><Run Text="s" FontSize="12"/>
                         </TextBlock>
+                        <!-- 검사 처리 시간 실측 — Tact(검사 간 간격, AUTO RUN 전용)와 달리 수동 검사에서도 갱신 -->
+                        <TextBlock FontSize="10" Foreground="{StaticResource Brush.Text.Tertiary}" HorizontalAlignment="Center"
+                                   ToolTip="마지막 검사의 처리 시간 (Tact Time 은 AUTO RUN 중 검사 간 간격)">
+                            <Run Text="PROC "/><Run Text="{Binding Dashboard.ProcessingTimeMs, StringFormat={}{0:F0}}"/><Run Text=" ms"/>
+                        </TextBlock>
                     </StackPanel>
                 </Border>
 

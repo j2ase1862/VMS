@@ -33,17 +33,34 @@ namespace VMS.ViewModels
         [ObservableProperty]
         private bool _isTactTimeExceeded;
 
+        // 마지막 검사의 처리 시간 (스텝 실행 실측, ms) — Tact 와 달리 수동/자동 모두 유의미
+        [ObservableProperty]
+        private double _processingTimeMs;
+
         public ObservableCollection<NgImageItem> NgImageHistory { get; } = new();
 
-        public void RecordInspectionResult(bool ok, string cameraName, BitmapSource? image = null)
+        public void RecordInspectionResult(bool ok, string cameraName, BitmapSource? image = null,
+            double processingTimeMs = 0, bool updateTact = true)
         {
-            // Update tact time
-            if (_tactStopwatch.IsRunning)
+            // Tact = 직전 검사와의 간격 — 연속 운전(AUTO RUN) 중에만 의미가 있다.
+            // 수동 Grab+Inspect 는 조작 대기 시간이 통째로 잡혀 수백 초가 표시되던
+            // 현장 혼선(2026-08-10, 337.89s)이 있어 수동 검사는 측정 체인을 끊는다.
+            if (updateTact)
             {
-                TactTime = Math.Round(_tactStopwatch.Elapsed.TotalSeconds, 2);
-                IsTactTimeExceeded = TactTime > TargetTactTime;
+                if (_tactStopwatch.IsRunning)
+                {
+                    TactTime = Math.Round(_tactStopwatch.Elapsed.TotalSeconds, 2);
+                    IsTactTimeExceeded = TactTime > TargetTactTime;
+                }
+                _tactStopwatch.Restart();
             }
-            _tactStopwatch.Restart();
+            else
+            {
+                // 수동 검사 후 첫 자동 검사가 수동 시점과의 간격을 Tact 로 오인하지 않도록 중단
+                _tactStopwatch.Reset();
+            }
+
+            ProcessingTimeMs = Math.Round(processingTimeMs, 1);
 
             TotalCount++;
             if (ok)
@@ -87,6 +104,7 @@ namespace VMS.ViewModels
             Yield = 0;
             TactTime = 0;
             IsTactTimeExceeded = false;
+            ProcessingTimeMs = 0;
             NgImageHistory.Clear();
             _tactStopwatch.Reset();
         }
