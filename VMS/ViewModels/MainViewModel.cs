@@ -865,26 +865,60 @@ namespace VMS.ViewModels
         }
 
         // Recipe 패널 새로고침 버튼 — 60초 폴링을 기다리지 않고 Web 레시피를 지금
-        // 끌어온 뒤 목록을 재구축한다 (Web 에서 방금 만든 레시피 즉시 확인용, 2026-08-10)
+        // 끌어온 뒤 목록을 재구축한다 (Web 에서 방금 만든 레시피 즉시 확인용, 2026-08-10).
+        // 결과를 SystemStatus/로그로 알려 "만들었는데 안 보임"의 원인(ClientIndex 불일치,
+        // 이름 연결)을 화면에서 바로 판별할 수 있게 한다.
         [RelayCommand]
         private async Task RefreshRecipesAsync()
         {
-            if (_parameterSyncService != null)
+            if (_parameterSyncService == null)
             {
-                await SyncWebRecipesToLocalAsync();
+                RebuildRecipeList();
+                SystemStatus = "Recipe list refreshed (Web 연동 미구성)";
+                return;
             }
+
+            var result = await SyncWebRecipesToLocalAsync();
             RebuildRecipeList();
+
+            var clientIndex = _configService.LoadSystemConfiguration().ClientIndex;
+            if (!result.Success)
+            {
+                SystemStatus = $"Web 레시피 동기화 실패 — Web 서버 연결 또는 ClientIndex({clientIndex}) 등록 확인";
+                LogService?.Log(SystemStatus, LogLevel.Warning, "Recipe");
+                return;
+            }
+
+            SystemStatus = result.Total == 0
+                ? $"Web 레시피 0개 (ClientIndex {clientIndex}) — Web 에서 이 클라이언트용으로 만들었는지 확인"
+                : $"Web 레시피 {result.Total}개 동기화 (ClientIndex {clientIndex}) — 새 항목 {result.Added}" +
+                  (result.LinkedByName > 0 ? $", 이름 연결 {result.LinkedByName}" : string.Empty);
+            LogService?.Log(SystemStatus, LogLevel.Info, "Recipe");
+            if (result.LinkedByName > 0)
+            {
+                // 원인 B 가시화 — 같은 이름의 로컬 레시피가 있으면 Web 레시피는 별도 항목으로
+                // 표시되지 않고 그 로컬 레시피에 파라미터가 이름 매칭으로 연결된다 (의도된 동작)
+                LogService?.Log(
+                    $"이름 연결 {result.LinkedByName}건: 같은 이름의 로컬 레시피가 있어 별도 항목으로 표시하지 않습니다 " +
+                    "(파라미터는 해당 로컬 레시피에 이름 매칭으로 적용)", LogLevel.Info, "Recipe");
+            }
         }
 
-        private async Task SyncWebRecipesToLocalAsync()
+        /// <summary>Web 레시피 동기화 요약 — 새로고침 버튼이 상태 표시에 사용.</summary>
+        private readonly record struct WebRecipeSyncResult(bool Success, int Total, int Added, int LinkedByName);
+
+        private async Task<WebRecipeSyncResult> SyncWebRecipesToLocalAsync()
         {
             try
             {
-                await _parameterSyncService!.SyncRecipesAsync();
+                if (!await _parameterSyncService!.SyncRecipesAsync())
+                    return new WebRecipeSyncResult(false, 0, 0, 0);
+
                 var webRecipes = _parameterSyncService.Recipes;
                 var localRecipes = _recipeService.GetRecipeList();
                 var localNames = localRecipes.Select(r => r.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
                 bool anyNew = false;
+                int added = 0;
 
                 foreach (var web in webRecipes)
                 {
@@ -899,8 +933,10 @@ namespace VMS.ViewModels
                             CreatedAt = DateTime.UtcNow,
                             ModifiedAt = DateTime.UtcNow
                         };
-                        _recipeService.SaveRecipe(recipe, webFilePath);
+                        // 빈 stub 저장이 실행 중인 CurrentRecipe 를 교체하면 안 된다 (검사 중 유입 가능)
+                        _recipeService.SaveRecipe(recipe, webFilePath, setAsCurrent: false);
                         anyNew = true;
+                        added++;
                     }
                 }
 
@@ -940,10 +976,15 @@ namespace VMS.ViewModels
                         }
                     });
                 }
+
+                // 원인 B 가시화용 — 같은 이름의 로컬(비 web) 레시피와 연결되어 별도 표시되지 않는 수
+                var linkedByName = webRecipes.Count(w => nonWebLocalNames.Contains(w.Name));
+                return new WebRecipeSyncResult(true, webRecipes.Count, added, linkedByName);
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[MainViewModel] Web recipe sync failed: {ex.Message}");
+                return new WebRecipeSyncResult(false, 0, 0, 0);
             }
         }
 

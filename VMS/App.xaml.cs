@@ -324,9 +324,22 @@ namespace VMS
                 InspectionService.ParameterApplyService =
                     new VsParameterApplyService(parameterSyncService);
             }
+            catch (InvalidOperationException ex)
+            {
+                // InsecureUrlGuard 차단 (Production + 비-loopback HTTP webServerUrl) —
+                // 조용히 삼키면 레시피/파라미터/결과 업로드가 무증상으로 꺼진다 (2026-08-10).
+                // 앱은 로컬 검사 가능하므로 계속 부팅하되 반드시 통지.
+                Debug.WriteLine($"[App] ParameterSyncService init failed: {ex.Message}");
+                logService.Log($"Web 연동 비활성: {ex.Message}", LogLevel.Warning, "System");
+                MessageBox.Show(
+                    "Web 서버 연동이 비활성화되었습니다 — 레시피 동기화·검사 결과 업로드가 동작하지 않습니다.\n\n"
+                    + ex.Message,
+                    "BODA VMS — Web 연동 경고", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
             catch (Exception ex)
             {
                 Debug.WriteLine($"[App] ParameterSyncService init failed: {ex.Message}");
+                logService.Log($"Web 연동 초기화 실패: {ex.Message}", LogLevel.Warning, "System");
             }
 
             // ── Predictive Polling Service (Plan §5.3 — V5 위젯) ──

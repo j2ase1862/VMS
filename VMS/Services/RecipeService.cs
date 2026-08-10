@@ -88,9 +88,11 @@ namespace VMS.Services
         }
 
         /// <summary>
-        /// Save a recipe to file
+        /// Save a recipe to file.
+        /// <paramref name="setAsCurrent"/> false — Web stub 동기화처럼 백그라운드 저장이
+        /// 실행 중인 CurrentRecipe(검사가 참조)를 교체하면 안 되는 경로용 (2026-08-10).
         /// </summary>
-        public bool SaveRecipe(Recipe recipe, string? filePath = null)
+        public bool SaveRecipe(Recipe recipe, string? filePath = null, bool setAsCurrent = true)
         {
             try
             {
@@ -100,7 +102,8 @@ namespace VMS.Services
                 var json = JsonSerializer.Serialize(recipe, JsonOptions);
                 File.WriteAllText(path, json);
 
-                _currentRecipe = recipe;
+                if (setAsCurrent)
+                    _currentRecipe = recipe;
                 AuditLogger.Instance.Log(
                     AuditCategory.RecipeChange, "SaveRecipe", AuditOutcome.Success,
                     source: nameof(RecipeService),
