@@ -479,6 +479,11 @@ namespace VMS.ViewModels
                 };
             }
 
+            // VisionSetup 이 레시피를 저장하면 실행 중인 VMS 에 자동 반영 (2026-08-10 현장:
+            // 저장해도 VMS 는 구버전 사본으로 계속 검사 → 수동 재로드 전까지 미반영이었음)
+            _recipeService.ExternalRecipeFileChanged += OnExternalRecipeFileChanged;
+            _recipeService.StartWatchingRecipeFiles();
+
             LogService?.Log("Application started", LogLevel.Success, "System");
         }
 
@@ -907,6 +912,57 @@ namespace VMS.ViewModels
             }
         }
 
+        // ── 외부 레시피 변경 자동 반영 (VisionSetup 저장 감지) ──
+
+        // AUTO RUN 중에는 즉시 교체하지 않고 정지 시점에 적용 (검사 도중 파라미터 교체 방지)
+        private bool _pendingRecipeReload;
+
+        private void OnExternalRecipeFileChanged(string filePath)
+        {
+            var currentPath = _currentRecipeFilePath;
+            if (string.IsNullOrEmpty(currentPath)) return;
+            if (!string.Equals(Path.GetFullPath(filePath), Path.GetFullPath(currentPath),
+                    StringComparison.OrdinalIgnoreCase))
+                return;
+
+            // 워처 스레드에서 호출됨 — UI 스레드로 이동
+            Application.Current?.Dispatcher.BeginInvoke(async () =>
+            {
+                if (IsRunning)
+                {
+                    _pendingRecipeReload = true;
+                    SystemStatus = $"레시피 '{CurrentRecipeName}' 변경 감지 — 검사 정지 시 다시 불러옵니다";
+                    LogService?.Log(SystemStatus, LogLevel.Warning, "Recipe");
+                    return;
+                }
+
+                await Task.Delay(300); // 저장 직후 파일 잠금/부분 쓰기 여유
+                ReloadCurrentRecipe();
+            });
+        }
+
+        private void ReloadCurrentRecipe()
+        {
+            _pendingRecipeReload = false;
+            var path = _currentRecipeFilePath;
+            if (string.IsNullOrEmpty(path)) return;
+
+            var recipe = _recipeService.LoadRecipe(path);
+            if (recipe == null)
+            {
+                LogService?.Log($"레시피 재로드 실패 — 파일을 읽을 수 없습니다: {path}", LogLevel.Warning, "Recipe");
+                return;
+            }
+
+            CurrentRecipe = recipe;
+            CurrentRecipeName = recipe.Name;
+            foreach (var cam in Cameras)
+                cam.SetRecipe(recipe);   // 검사 캐시도 함께 초기화
+
+            SystemStatus = $"레시피 '{recipe.Name}' 외부 변경 반영 완료 (VisionSetup 저장 감지)";
+            LogService?.Log(SystemStatus, LogLevel.Success, "Recipe");
+        }
+
         /// <summary>Web 레시피 동기화 요약 — 새로고침 버튼이 상태 표시에 사용.</summary>
         private readonly record struct WebRecipeSyncResult(bool Success, int Total, int Added, int LinkedByName);
 
@@ -1323,6 +1379,10 @@ namespace VMS.ViewModels
 
             SystemStatus = "Stopped";
             LogService?.Log("Inspection stopped", LogLevel.Info, "System");
+
+            // AUTO RUN 중 감지된 레시피 외부 변경을 안전한 시점(정지 후)에 반영
+            if (_pendingRecipeReload)
+                ReloadCurrentRecipe();
         }
 
         [RelayCommand]
