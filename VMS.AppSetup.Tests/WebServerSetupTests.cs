@@ -110,6 +110,33 @@ namespace VMS.AppSetup.Tests
             Assert.Contains("8자", result.Error);
         }
 
+        // ── 서비스 시작 전 가드 (UAC 상승 없이 반환되어야 하는 경로) ──
+
+        [Fact]
+        public async Task StartServiceAsync_NotInstalled_FailsWithoutElevation()
+        {
+            var result = await CreateService(exe: false, config: false).StartServiceAsync();
+            Assert.False(result.Success);
+            Assert.Contains("설치되어 있지", result.Error);
+        }
+
+        [Fact]
+        public async Task StartServiceAsync_NotConfigured_RequiresConfigureFirst()
+        {
+            var result = await CreateService(exe: true, config: false).StartServiceAsync();
+            Assert.False(result.Success);
+            Assert.Contains("초기 구성", result.Error);
+        }
+
+        [Fact]
+        public async Task StartServiceAsync_ServiceUnregistered_ReportsMsiRepair()
+        {
+            // 파일·설정은 있으나 서비스명이 미등록 — MSI 복구 안내로 실패해야 한다
+            var result = await CreateService(exe: true, config: true).StartServiceAsync();
+            Assert.False(result.Success);
+            Assert.Contains("등록되어 있지", result.Error);
+        }
+
         // ── 상승 모드 본체 (WebServerConfigApplier.Apply) ──
 
         [Fact]
@@ -150,6 +177,15 @@ namespace VMS.AppSetup.Tests
             Assert.Equal("{\"cfg\":1}", File.ReadAllText(Path.Combine(webDir, WebServerSetupService.ConfigFileName)));
         }
 
+        [Fact]
+        public void EnsureAutoStartAndRun_UnknownService_Fails()
+        {
+            // 미등록 서비스 → sc config 단계 실패 (시작 모드 본체가 예외 없이 Result 로 보고)
+            var result = WebServerConfigApplier.EnsureAutoStartAndRun("NoSuchBodaSvc");
+            Assert.False(result.Ok);
+            Assert.Contains("자동시작 전환 실패", result.Error);
+        }
+
         // ── ViewModel 카드 흐름 ──
 
         private sealed class StubConfigService : IConfigurationService
@@ -176,8 +212,10 @@ namespace VMS.AppSetup.Tests
         {
             public WebServerStatus Status = new(WebServerInstallState.NotConfigured, "Stopped", @"test:\Web");
             public WebServerConfigureResult ConfigureResult = new(true, null);
+            public WebServerConfigureResult StartResult = new(true, null);
             public bool SmokeResult = true;
             public string? ConfiguredWith;
+            public bool StartCalled;
             public WebServerStatus GetStatus() => Status;
             public Task<WebServerConfigureResult> ConfigureAsync(string adminPassword)
             {
@@ -185,6 +223,13 @@ namespace VMS.AppSetup.Tests
                 if (ConfigureResult.Success)
                     Status = Status with { State = WebServerInstallState.Configured, ServiceStatus = "Running" };
                 return Task.FromResult(ConfigureResult);
+            }
+            public Task<WebServerConfigureResult> StartServiceAsync()
+            {
+                StartCalled = true;
+                if (StartResult.Success)
+                    Status = Status with { ServiceStatus = "Running" };
+                return Task.FromResult(StartResult);
             }
             public Task<bool> SmokeTestAsync() => Task.FromResult(SmokeResult);
         }
@@ -267,6 +312,61 @@ namespace VMS.AppSetup.Tests
             vm.WebServerAdminPasswordConfirm = "pw12345678";
 
             await vm.ConfigureWebServerCommand.ExecuteAsync(null);
+
+            Assert.Contains(dialog.Errors, e => e.Contains("이벤트 뷰어"));
+        }
+
+        // ── ViewModel 서비스 시작 버튼 흐름 (현장 사례 2026-08-10: 구성 완료 + Stopped) ──
+
+        private static StubWebServerSetupService ConfiguredButStopped() => new()
+        {
+            Status = new WebServerStatus(WebServerInstallState.Configured, "Stopped", @"test:\Web"),
+        };
+
+        [Fact]
+        public void Vm_ConfiguredButStopped_ExposesStartButtonState()
+        {
+            var (vm, _, _) = CreateVm(ConfiguredButStopped());
+            Assert.True(vm.IsWebServerConfigured);
+            Assert.False(vm.IsWebServerServiceRunning);   // → XAML 이 [서비스 시작] 버튼 노출
+            Assert.Contains("서비스 시작", vm.WebServerServiceStatus);
+        }
+
+        [Fact]
+        public async Task Vm_StartService_Success_UpdatesStatus_ShowsInfo()
+        {
+            var (vm, dialog, web) = CreateVm(ConfiguredButStopped());
+
+            await vm.StartWebServerCommand.ExecuteAsync(null);
+
+            Assert.True(web.StartCalled);
+            Assert.True(vm.IsWebServerServiceRunning);
+            Assert.Contains("Running", vm.WebServerServiceStatus);
+            Assert.Single(dialog.Infos);
+            Assert.Empty(dialog.Errors);
+        }
+
+        [Fact]
+        public async Task Vm_StartService_Fails_ErrorSurfaced()
+        {
+            var web = ConfiguredButStopped();
+            web.StartResult = new WebServerConfigureResult(false, "관리자 권한 승인이 거부되어 적용하지 못했습니다.");
+            var (vm, dialog, _) = CreateVm(web);
+
+            await vm.StartWebServerCommand.ExecuteAsync(null);
+
+            Assert.Contains(dialog.Errors, e => e.Contains("거부"));
+            Assert.False(vm.IsWebServerServiceRunning);
+        }
+
+        [Fact]
+        public async Task Vm_StartService_SmokeTestFails_ShowsEventViewerHint()
+        {
+            var web = ConfiguredButStopped();
+            web.SmokeResult = false;
+            var (vm, dialog, _) = CreateVm(web);
+
+            await vm.StartWebServerCommand.ExecuteAsync(null);
 
             Assert.Contains(dialog.Errors, e => e.Contains("이벤트 뷰어"));
         }

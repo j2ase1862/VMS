@@ -7,14 +7,15 @@ using System.Text.Json;
 namespace VMS.AppSetup.Services
 {
     /// <summary>
-    /// "--apply-web-config &lt;payload&gt; &lt;result&gt;" 상승 모드의 본체 — UI 없이
-    /// Web 서버 운영 설정을 쓰고 서비스를 auto 전환 + 시작한 뒤 결과 파일로 보고한다.
-    /// App.xaml.cs 가 일반 부팅 전에 이 모드를 분기하며, 호출측(WebServerSetupService)은
-    /// 결과 파일을 읽어 성공 여부를 판정한다.
+    /// "--apply-web-config &lt;payload&gt; &lt;result&gt;" / "--start-web-service &lt;서비스명&gt; &lt;result&gt;"
+    /// 상승 모드의 본체 — UI 없이 Web 서버 운영 설정 작성·서비스 auto 전환 + 시작을 수행한 뒤
+    /// 결과 파일로 보고한다. App.xaml.cs 가 일반 부팅 전에 이 모드를 분기하며,
+    /// 호출측(WebServerSetupService)은 결과 파일을 읽어 성공 여부를 판정한다.
     /// </summary>
     internal static class WebServerConfigApplier
     {
         public const string ArgName = "--apply-web-config";
+        public const string StartArgName = "--start-web-service";
 
         internal sealed record Payload(string WebDir, string DataDir, string ServiceName, string ConfigJson);
         internal sealed record Result(bool Ok, string? Error);
@@ -32,7 +33,26 @@ namespace VMS.AppSetup.Services
             {
                 result = new Result(false, ex.Message);
             }
+            return Report(result, resultPath);
+        }
 
+        /// <summary>구성 완료 후 서비스만 내려간 경우(마이그레이션 §13.4 / 수동 정지)의 재시작 모드.</summary>
+        public static int RunStart(string serviceName, string resultPath)
+        {
+            Result result;
+            try
+            {
+                result = EnsureAutoStartAndRun(serviceName);
+            }
+            catch (Exception ex)
+            {
+                result = new Result(false, ex.Message);
+            }
+            return Report(result, resultPath);
+        }
+
+        private static int Report(Result result, string resultPath)
+        {
             try
             {
                 File.WriteAllText(resultPath, JsonSerializer.Serialize(result), new UTF8Encoding(false));
@@ -57,11 +77,19 @@ namespace VMS.AppSetup.Services
             // BOM 없는 UTF-8 (ASP.NET Core 설정 로더 호환)
             File.WriteAllText(configPath, payload.ConfigJson, new UTF8Encoding(false));
 
-            // MSI 는 크래시 루프 방지를 위해 demand 로 등록 — 구성 완료 시점에 부팅 자동시작 전환
+            return EnsureAutoStartAndRun(payload.ServiceName);
+        }
+
+        /// <summary>
+        /// 서비스 부팅 자동시작 전환 + 시작 (관리자 권한 필요). MSI 는 크래시 루프 방지를 위해
+        /// demand 로 등록하므로, 구성 시점과 수동 재시작 시점 모두 auto 전환을 함께 보장한다.
+        /// </summary>
+        internal static Result EnsureAutoStartAndRun(string serviceName)
+        {
             var sc = Process.Start(new ProcessStartInfo
             {
                 FileName = "sc.exe",
-                Arguments = $"config {payload.ServiceName} start= auto",
+                Arguments = $"config {serviceName} start= auto",
                 UseShellExecute = false,
                 CreateNoWindow = true,
             });
@@ -69,7 +97,7 @@ namespace VMS.AppSetup.Services
             if (sc == null || sc.ExitCode != 0)
                 return new Result(false, $"서비스 자동시작 전환 실패 (sc config exit={sc?.ExitCode})");
 
-            using var controller = new ServiceController(payload.ServiceName);
+            using var controller = new ServiceController(serviceName);
             if (controller.Status != ServiceControllerStatus.Running)
             {
                 controller.Start();

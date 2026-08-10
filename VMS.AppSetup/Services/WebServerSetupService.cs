@@ -94,6 +94,47 @@ namespace VMS.AppSetup.Services
                 await File.WriteAllTextAsync(payloadPath,
                     JsonSerializer.Serialize(payload), new UTF8Encoding(false));
 
+                return await RunElevatedAsync(resultPath, WebServerConfigApplier.ArgName, payloadPath);
+            }
+            finally
+            {
+                TryDelete(payloadPath);
+                TryDelete(resultPath);
+            }
+        }
+
+        public async Task<WebServerConfigureResult> StartServiceAsync()
+        {
+            var status = GetStatus();
+            if (status.State == WebServerInstallState.NotInstalled)
+                return new WebServerConfigureResult(false, "이 PC 에 Web 서버가 설치되어 있지 않습니다.");
+            if (status.State == WebServerInstallState.NotConfigured)
+                return new WebServerConfigureResult(false, "초기 구성이 먼저 필요합니다 — 위의 [초기 구성 실행]을 사용하세요.");
+            if (status.ServiceStatus == null)
+                return new WebServerConfigureResult(false, "서비스가 등록되어 있지 않습니다 — MSI 재설치(복구)가 필요합니다.");
+            if (status.ServiceStatus == nameof(System.ServiceProcess.ServiceControllerStatus.Running))
+                return new WebServerConfigureResult(true, null);
+
+            var resultPath = Path.Combine(Path.GetTempPath(),
+                $"boda-web-start-{Guid.NewGuid():N}.result.json");
+            try
+            {
+                return await RunElevatedAsync(resultPath, WebServerConfigApplier.StartArgName, _serviceName);
+            }
+            finally
+            {
+                TryDelete(resultPath);
+            }
+        }
+
+        /// <summary>
+        /// AppSetup 자신을 UAC 상승으로 재실행해 상승 모드(<paramref name="args"/> + 결과 파일 경로)를
+        /// 수행하고 결과 파일로 성공 여부를 판정한다.
+        /// </summary>
+        private static async Task<WebServerConfigureResult> RunElevatedAsync(string resultPath, params string[] args)
+        {
+            try
+            {
                 var exePath = Environment.ProcessPath
                     ?? Path.Combine(AppContext.BaseDirectory, "VMS.AppSetup.exe");
                 var psi = new ProcessStartInfo
@@ -102,13 +143,13 @@ namespace VMS.AppSetup.Services
                     UseShellExecute = true,
                     Verb = "runas", // UAC 상승 — 거부 시 Win32Exception(1223)
                 };
-                psi.ArgumentList.Add(WebServerConfigApplier.ArgName);
-                psi.ArgumentList.Add(payloadPath);
+                foreach (var arg in args)
+                    psi.ArgumentList.Add(arg);
                 psi.ArgumentList.Add(resultPath);
 
                 using var proc = Process.Start(psi);
                 if (proc == null)
-                    return new WebServerConfigureResult(false, "구성 프로세스를 시작하지 못했습니다.");
+                    return new WebServerConfigureResult(false, "적용 프로세스를 시작하지 못했습니다.");
                 await proc.WaitForExitAsync();
 
                 if (File.Exists(resultPath))
@@ -118,16 +159,11 @@ namespace VMS.AppSetup.Services
                     if (result != null)
                         return new WebServerConfigureResult(result.Ok, result.Error);
                 }
-                return new WebServerConfigureResult(false, $"구성 결과를 확인하지 못했습니다 (exit={proc.ExitCode}).");
+                return new WebServerConfigureResult(false, $"적용 결과를 확인하지 못했습니다 (exit={proc.ExitCode}).");
             }
             catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == 1223)
             {
-                return new WebServerConfigureResult(false, "관리자 권한 승인이 거부되어 구성을 적용하지 못했습니다.");
-            }
-            finally
-            {
-                TryDelete(payloadPath);
-                TryDelete(resultPath);
+                return new WebServerConfigureResult(false, "관리자 권한 승인이 거부되어 적용하지 못했습니다.");
             }
         }
 
