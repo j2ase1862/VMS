@@ -96,6 +96,18 @@
                 <controls:TextBoxParameter Label="Expected Count Max"
                     Value="{Binding ExpectedCountMax}"
                     ToolType="BlobTool" ParameterName="ExpectedCountMax"/>
+                <controls:TextBoxParameter Label="Count Upper Tol"
+                    Value="{Binding CountUpperTol}"
+                    ToolType="BlobTool" ParameterName="CountUpperTol"/>
+                <controls:ParamCodeLink
+                    AvailableParamCodes="{Binding AvailableParamCodes}"
+                    SelectedItem="{Binding SelectedCountUpperTolCode}"/>
+                <controls:TextBoxParameter Label="Count Lower Tol"
+                    Value="{Binding CountLowerTol}"
+                    ToolType="BlobTool" ParameterName="CountLowerTol"/>
+                <controls:ParamCodeLink
+                    AvailableParamCodes="{Binding AvailableParamCodes}"
+                    SelectedItem="{Binding SelectedCountLowerTolCode}"/>
             </StackPanel>
         </Expander>
 

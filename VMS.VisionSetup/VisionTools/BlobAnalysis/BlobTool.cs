@@ -275,6 +275,23 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
             set => SetProperty(ref _expectedCountMax, Math.Max(ExpectedCount, value));
         }
 
+        // 개수 공차 (Tolerance 모드): ExpectedCount − CountLowerTol ~ ExpectedCount + CountUpperTol.
+        // Web 파라미터 연동(Blob Count Upper/Lower Tol)과 1:1 대응 — Web 쪽은 하한 공차를
+        // 음수(−2)로 등록하는 관례가 있어 부호를 흡수한다(공차는 크기로만 해석).
+        private int _countUpperTol = 0;
+        public int CountUpperTol
+        {
+            get => _countUpperTol;
+            set => SetProperty(ref _countUpperTol, Math.Abs(value));
+        }
+
+        private int _countLowerTol = 0;
+        public int CountLowerTol
+        {
+            get => _countLowerTol;
+            set => SetProperty(ref _countLowerTol, Math.Abs(value));
+        }
+
         public BlobTool()
         {
             Name = "Blob";
@@ -494,6 +511,8 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
                             CountJudgmentMode.GreaterOrEqual => blobs.Count >= ExpectedCount,
                             CountJudgmentMode.LessOrEqual => blobs.Count <= ExpectedCount,
                             CountJudgmentMode.Range => blobs.Count >= ExpectedCount && blobs.Count <= ExpectedCountMax,
+                            CountJudgmentMode.Tolerance => blobs.Count >= ExpectedCount - CountLowerTol
+                                                        && blobs.Count <= ExpectedCount + CountUpperTol,
                             _ => true
                         };
                         if (!countPass)
@@ -505,6 +524,7 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
                                 CountJudgmentMode.GreaterOrEqual => $">={ExpectedCount}",
                                 CountJudgmentMode.LessOrEqual => $"<={ExpectedCount}",
                                 CountJudgmentMode.Range => $"{ExpectedCount}~{ExpectedCountMax}",
+                                CountJudgmentMode.Tolerance => $"{ExpectedCount - CountLowerTol}~{ExpectedCount + CountUpperTol}",
                                 _ => ""
                             };
                             judgmentDetails.Add($"Count NG: {blobs.Count} (기준 {expected})");
@@ -844,7 +864,9 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
                 UseCountJudgment = this.UseCountJudgment,
                 CountMode = this.CountMode,
                 ExpectedCount = this.ExpectedCount,
-                ExpectedCountMax = this.ExpectedCountMax
+                ExpectedCountMax = this.ExpectedCountMax,
+                CountUpperTol = this.CountUpperTol,
+                CountLowerTol = this.CountLowerTol
             };
             CopyPlcMappingsTo(clone);
             return clone;
@@ -910,6 +932,8 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
         /// <summary>N개 이하</summary>
         LessOrEqual,
         /// <summary>Min ~ Max 범위</summary>
-        Range
+        Range,
+        /// <summary>기준 개수 ± 공차 (ExpectedCount − CountLowerTol ~ ExpectedCount + CountUpperTol)</summary>
+        Tolerance
     }
 }

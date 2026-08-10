@@ -47,6 +47,18 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
             set { SetLinkedParamCode(nameof(ExpectedCount), value); OnPropertyChanged(); }
         }
 
+        public ParamCodeItem? SelectedCountUpperTolCode
+        {
+            get => GetLinkedParamCodeItem(nameof(CountUpperTol));
+            set { SetLinkedParamCode(nameof(CountUpperTol), value); OnPropertyChanged(); }
+        }
+
+        public ParamCodeItem? SelectedCountLowerTolCode
+        {
+            get => GetLinkedParamCodeItem(nameof(CountLowerTol));
+            set { SetLinkedParamCode(nameof(CountLowerTol), value); OnPropertyChanged(); }
+        }
+
         // Segmentation
         public bool UseInternalThreshold { get => TypedTool.UseInternalThreshold; set => TypedTool.UseInternalThreshold = value; }
         public double ThresholdValue { get => TypedTool.ThresholdValue; set => TypedTool.ThresholdValue = value; }
@@ -90,6 +102,8 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         public CountJudgmentMode CountMode { get => TypedTool.CountMode; set => TypedTool.CountMode = value; }
         public int ExpectedCount { get => TypedTool.ExpectedCount; set => TypedTool.ExpectedCount = value; }
         public int ExpectedCountMax { get => TypedTool.ExpectedCountMax; set => TypedTool.ExpectedCountMax = value; }
+        public int CountUpperTol { get => TypedTool.CountUpperTol; set => TypedTool.CountUpperTol = value; }
+        public int CountLowerTol { get => TypedTool.CountLowerTol; set => TypedTool.CountLowerTol = value; }
 
         // Enum value arrays for ComboBox binding
         public Array SegmentationPolarities => Enum.GetValues(typeof(SegmentationPolarity));

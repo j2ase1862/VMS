@@ -398,9 +398,11 @@ namespace VMS.VisionSetup.Models
                     ["AreaTolerancePlus"] = "면적 상한 허용 오차 (픽셀²). 기준 면적(ExpectedArea)에 이 값을 더한 것이 허용 상한입니다.\n• 기준 1000, +200 → 상한 1200",
                     ["AreaToleranceMinus"] = "면적 하한 허용 오차 (픽셀²). 기준 면적(ExpectedArea)에서 이 값을 뺀 것이 허용 하한입니다.\n• 기준 1000, -200 → 하한 800",
                     ["UseCountJudgment"] = "개수 기반 판정 사용. 검출된 블롭 개수가 설정 조건을 만족하는지 판정합니다.",
-                    ["CountMode"] = "개수 판정 모드:\n• Equal: 정확히 N개일 때 합격\n• GreaterOrEqual: N개 이상일 때 합격\n• LessOrEqual: N개 이하일 때 합격\n• Range: Min~Max 범위 내일 때 합격",
-                    ["ExpectedCount"] = "기준 블롭 개수.\n• Equal 모드: 정확히 이 수와 일치해야 합격\n• GreaterOrEqual 모드: 이 수 이상이면 합격\n• LessOrEqual 모드: 이 수 이하면 합격\n• Range 모드: 최소값으로 사용",
+                    ["CountMode"] = "개수 판정 모드:\n• Equal: 정확히 N개일 때 합격\n• GreaterOrEqual: N개 이상일 때 합격\n• LessOrEqual: N개 이하일 때 합격\n• Range: Min~Max 범위 내일 때 합격\n• Tolerance: 기준 개수 ± 공차 범위 내일 때 합격 (Web 파라미터 연동 권장 모드)",
+                    ["ExpectedCount"] = "기준 블롭 개수.\n• Equal 모드: 정확히 이 수와 일치해야 합격\n• GreaterOrEqual 모드: 이 수 이상이면 합격\n• LessOrEqual 모드: 이 수 이하면 합격\n• Range 모드: 최소값으로 사용\n• Tolerance 모드: 기준값으로 사용",
                     ["ExpectedCountMax"] = "최대 블롭 개수 (Range 모드에서만 사용). 블롭 수가 ExpectedCount ~ ExpectedCountMax 범위 내에 있으면 합격.",
+                    ["CountUpperTol"] = "개수 상한 공차 (Tolerance 모드에서만 사용). 허용 상한 = ExpectedCount + CountUpperTol.\n• 기준 5, +2 → 상한 7",
+                    ["CountLowerTol"] = "개수 하한 공차 (Tolerance 모드에서만 사용). 허용 하한 = ExpectedCount − CountLowerTol.\n• 기준 5, 2 → 하한 3 (음수로 입력해도 크기로 해석)",
 
                     // Display
                     ["DrawContours"] = "블롭 외곽선(컨투어) 그리기. 각 블롭이 다른 색상으로 표시됩니다.",

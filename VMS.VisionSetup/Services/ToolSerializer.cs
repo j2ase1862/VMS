@@ -197,6 +197,8 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["CountMode"] = blob.CountMode.ToString();
                     config.Parameters["ExpectedCount"] = blob.ExpectedCount;
                     config.Parameters["ExpectedCountMax"] = blob.ExpectedCountMax;
+                    config.Parameters["CountUpperTol"] = blob.CountUpperTol;
+                    config.Parameters["CountLowerTol"] = blob.CountLowerTol;
                     break;
 
                 case CaliperTool caliper:
@@ -1045,6 +1047,10 @@ namespace VMS.VisionSetup.Services
                 tool.ExpectedCount = GetInt(ec);
             if (p.TryGetValue("ExpectedCountMax", out var ecm))
                 tool.ExpectedCountMax = GetInt(ecm);
+            if (p.TryGetValue("CountUpperTol", out var cut))
+                tool.CountUpperTol = GetInt(cut);
+            if (p.TryGetValue("CountLowerTol", out var clt))
+                tool.CountLowerTol = GetInt(clt);
 
             return tool;
         }
