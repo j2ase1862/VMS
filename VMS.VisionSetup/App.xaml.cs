@@ -102,6 +102,16 @@ namespace VMS.VisionSetup
                     }
                 });
             }
+            catch (InvalidOperationException ex)
+            {
+                // InsecureUrlGuard 차단 (Production + 비-loopback HTTP webServerUrl) —
+                // 조용히 삼키면 Web 레시피/파라미터 동기화가 무증상으로 꺼진다 (2026-08-10)
+                Debug.WriteLine($"[App] ParameterSyncService init failed: {ex.Message}");
+                MessageBox.Show(
+                    "Web 서버 연동이 비활성화되었습니다 — 레시피/파라미터 동기화가 동작하지 않습니다.\n\n"
+                    + ex.Message,
+                    "BODA VisionSetup — Web 연동 경고", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
             catch (Exception ex)
             {
                 Debug.WriteLine($"[App] ParameterSyncService init failed: {ex.Message}");

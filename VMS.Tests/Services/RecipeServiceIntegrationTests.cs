@@ -48,6 +48,33 @@ namespace VMS.Tests.Services
             };
         }
 
+        // ─── SaveRecipe setAsCurrent — Web stub 백그라운드 저장의 CurrentRecipe 보호 ───
+
+        [Fact]
+        public void SaveRecipe_SetAsCurrentFalse_DoesNotReplaceCurrentRecipe()
+        {
+            // 검사 중 Web 레시피가 동기화되면 빈 stub 저장이 CurrentRecipe 를
+            // 조용히 교체하던 버그 (2026-08-10) 회귀 테스트
+            var working = NewSampleRecipe("Working");
+            _service.SaveRecipe(working);
+            Assert.Same(working, _service.CurrentRecipe);
+
+            var webStub = NewSampleRecipe("WebStub");
+            var stubPath = Path.Combine(_tempDir, "web_5.json");
+            Assert.True(_service.SaveRecipe(webStub, stubPath, setAsCurrent: false));
+
+            Assert.True(File.Exists(stubPath));                 // 저장은 정상 수행
+            Assert.Same(working, _service.CurrentRecipe);       // 현재 레시피는 유지
+        }
+
+        [Fact]
+        public void SaveRecipe_Default_SetsCurrentRecipe()
+        {
+            var recipe = NewSampleRecipe();
+            _service.SaveRecipe(recipe);
+            Assert.Same(recipe, _service.CurrentRecipe);
+        }
+
         // ─── Constructor — 디렉토리 자동 생성 ────────────────────────
 
         [Fact]
