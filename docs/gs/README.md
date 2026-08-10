@@ -50,6 +50,7 @@ node gen_user_manual.js   # → ../VMS_사용자매뉴얼_v1.1.docx
 | #286 | 카메라 Save Parameter 가 결과 메시지를 표시(저장 완료/실패/카메라 미등록 시 AppSetup 실행 안내). 부수: Save Parameter·AppSetup 재저장이 서로의 설정(보안 모드·Web SSO ↔ 노출/게인)을 초기화하던 문제 해소 — 트러블슈팅 서술이 있다면 갱신 | 카메라 설정 절 (Save Parameter 언급 위치) |
 | #287 | VMS Recipe 패널에 새로고침 버튼 추가(Load/New 옆 아이콘) — Web 에서 만든 레시피를 60초 자동 동기화 전에 즉시 가져옴. VisionSetup Recipe Manager 는 창이 열려 있는 동안에도 Web 레시피 자동 반영 | VMS Recipe 절 + VisionSetup Recipe Manager 절 |
 | #288 | 새로고침 시 상태바에 동기화 요약 표시("Web 레시피 N개 (ClientIndex i) — 새 항목 M, 이름 연결 K") — 0개면 라인 확인 힌트. Production 에서 Web URL 이 비-loopback HTTP 면 시작 시 "Web 연동 비활성" 경고 대화상자 (VMS·VisionSetup). Web 쪽 짝: 레시피 생성 다이얼로그 대상 라인 경고 (BODA.VMS.Web #47) | VMS Recipe 절 + 트러블슈팅 (Web 연동) |
+| #290 | 대시보드 TACT TIME 은 AUTO RUN 중 검사 간 간격만 표시(수동 Inspect 는 미갱신 — 대기 시간 오인 방지), 카드에 "PROC N ms"(마지막 검사 처리 시간) 병기 | 대시보드/KPI 절 (Tact Time 설명 위치) |
 | #264 | DeepLearning 체크박스·슬라이더가 다크 테마로 바뀜(파란 채움 체크, 파란 트랙 슬라이더) — 본문 서술 변경 없음, §3.8 스크린샷·컨트롤 이미지가 구식이 됨. `--capture-controls` 재캡처 필요 | §3.8 |
 | #264 | VisionSetup 라디오버튼 5곳 다크 테마 적용(이미지 폴더 탐색 모드 Navigate/Run All/Run Selected, Geometry3D Point Source) — 해당 컨트롤이 보이는 스크린샷 구식화. `--capture-controls` 재캡처 필요 | §3.9 (Geometry3D), §3.1~3.2 (탐색 모드 노출 시) |
 | #264 | VMS.WeldTeach 신규 앱 — **GS 인증·사용자 매뉴얼 범위에서 제외 확정** (2026-08-04). 관리자 매뉴얼(`docs/manuals/BODA-VMS-Admin-Manual.html`) §9 에 수록 완료 — 사용자 매뉴얼에는 반영할 것 없음 | (완료 — 관리자 매뉴얼 §9) |

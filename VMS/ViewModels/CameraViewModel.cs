@@ -594,6 +594,7 @@ namespace VMS.ViewModels
         {
             if (_inspectionService == null || (_originalImage ?? CurrentImage) == null)
             {
+                LastExecutionTimeMs = 0;
                 SetInspectionResult(true);
                 return;
             }
@@ -602,6 +603,7 @@ namespace VMS.ViewModels
             var step = FindCurrentStep();
             if (step == null || step.Tools.Count == 0)
             {
+                LastExecutionTimeMs = 0;
                 SetInspectionResult(true);
                 return;
             }
@@ -611,6 +613,7 @@ namespace VMS.ViewModels
             var mat = BitmapSourceToMat(sourceImage);
             if (mat == null)
             {
+                LastExecutionTimeMs = 0;
                 SetInspectionResult(false);
                 ResultMessage = "Image conversion failed";
                 return;
@@ -632,13 +635,16 @@ namespace VMS.ViewModels
                     CurrentImage = _originalImage;
                 }
 
+                // InspectionCompleted(→ 대시보드 처리 시간 표시)가 SetInspectionResult 안에서
+                // 발생하므로 실행 시간을 먼저 반영해야 이번 검사 값이 전달된다
+                LastExecutionTimeMs = result.ExecutionTimeMs;
                 SetInspectionResult(result.Success, result.CorrelationKey);
                 ResultMessage = result.Success ? "OK" : "NG";
-                LastExecutionTimeMs = result.ExecutionTimeMs;
                 UpdateToolRunResults(result);
             }
             catch (Exception ex)
             {
+                LastExecutionTimeMs = 0;
                 SetInspectionResult(false);
                 ResultMessage = $"Inspection error: {ex.Message}";
             }
