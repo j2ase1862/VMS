@@ -87,9 +87,17 @@ namespace VMS.AppSetup.ViewModels
         [ObservableProperty]
         private string _webServerServiceStatus = string.Empty;
 
+        // 상태 3(구성 완료) 카드의 [서비스 시작] 버튼 노출 제어 — Running 이면 숨김
+        [ObservableProperty]
+        private bool _isWebServerServiceRunning;
+
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(ConfigureWebServerCommand))]
         private bool _isConfiguringWebServer;
+
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(StartWebServerCommand))]
+        private bool _isStartingWebServer;
 
         // PasswordBox 짝 (code-behind 가 PasswordChanged 로 전달) — 구성 직후 즉시 폐기
         public string WebServerAdminPassword { get; set; } = string.Empty;
@@ -101,12 +109,13 @@ namespace VMS.AppSetup.ViewModels
             var status = _webServerSetup?.GetStatus();
             IsWebServerInstalled = status != null && status.State != WebServerInstallState.NotInstalled;
             IsWebServerConfigured = status?.State == WebServerInstallState.Configured;
+            IsWebServerServiceRunning = status?.ServiceStatus == "Running";
             WebServerServiceStatus = status?.ServiceStatus switch
             {
                 null when IsWebServerInstalled => "서비스 미등록 — MSI 재설치(복구)가 필요합니다.",
                 null => string.Empty,
                 "Running" => "서비스 실행 중 (Running)",
-                var s => $"서비스 상태: {s}",
+                var s => $"서비스 상태: {s} — 아래 [서비스 시작]으로 시작할 수 있습니다.",
             };
         }
 
@@ -163,6 +172,51 @@ namespace VMS.AppSetup.ViewModels
             finally
             {
                 IsConfiguringWebServer = false;
+            }
+        }
+
+        private bool CanStartWebServer() => !IsStartingWebServer;
+
+        // 현장 사례(2026-08-10): 마이그레이션(§13.4)으로 설정 파일만 이어받았거나 구성 후
+        // 서비스가 내려간 PC — 카드가 "구성 완료 + Stopped" 로 남는다. 수동 sc 명령 없이
+        // 카드에서 바로 시작 (auto 전환 포함, UAC 승인 필요).
+        [RelayCommand(CanExecute = nameof(CanStartWebServer))]
+        private async Task StartWebServerAsync()
+        {
+            if (_webServerSetup == null) return;
+
+            IsStartingWebServer = true;
+            try
+            {
+                var result = await _webServerSetup.StartServiceAsync();
+                if (!result.Success)
+                {
+                    RefreshWebServerStatus();
+                    _dialogService.ShowError($"서비스를 시작하지 못했습니다.\n\n{result.Error}",
+                        "Web 서버 서비스 시작");
+                    return;
+                }
+
+                var healthy = await _webServerSetup.SmokeTestAsync();
+                RefreshWebServerStatus();
+                if (healthy)
+                {
+                    _dialogService.ShowInformation(
+                        "서비스가 시작되었고 /health 응답을 확인했습니다.\n" +
+                        $"브라우저에서 http://localhost:{WebServerSetupService.Port} 로 접속할 수 있습니다.",
+                        "Web 서버 서비스 시작");
+                }
+                else
+                {
+                    _dialogService.ShowError(
+                        "서비스는 시작됐지만 응답하지 않습니다.\n" +
+                        "이벤트 뷰어 → Windows 로그 → Application 에서 '.NET Runtime' 소스를 확인하세요.",
+                        "Web 서버 서비스 시작");
+                }
+            }
+            finally
+            {
+                IsStartingWebServer = false;
             }
         }
 

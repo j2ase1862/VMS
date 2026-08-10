@@ -32,6 +32,13 @@ namespace VMS.AppSetup.Interfaces
         /// <summary>초기 구성 적용 (UAC 프롬프트 발생). 이미 구성된 경우 실패를 반환한다.</summary>
         Task<WebServerConfigureResult> ConfigureAsync(string adminPassword);
 
+        /// <summary>
+        /// 구성은 완료됐지만 서비스가 내려간 경우(마이그레이션 §13.4 / 수동 정지)의
+        /// 서비스 시작 (UAC 프롬프트 발생). 자동시작(auto) 전환도 함께 보장한다.
+        /// 이미 Running 이면 상승 없이 성공을 반환한다.
+        /// </summary>
+        Task<WebServerConfigureResult> StartServiceAsync();
+
         /// <summary>로컬 /health 응답 확인 (첫 부팅 마이그레이션 고려해 일정 시간 재시도).</summary>
         Task<bool> SmokeTestAsync();
     }
