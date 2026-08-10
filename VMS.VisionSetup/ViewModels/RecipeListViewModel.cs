@@ -43,7 +43,27 @@ namespace VMS.VisionSetup.ViewModels
             _recipeService = recipeService;
             _dialogService = dialogService;
             _parameterSyncService = parameterSyncService;
+
+            // 60초 폴링이 Web 레시피 변경을 감지하면 창이 열려 있는 동안에도 자동 갱신.
+            // 기존에는 생성 시 1회만 동기화라 창을 닫았다 열어야 보였다 (2026-08-10).
+            if (_parameterSyncService != null)
+                _parameterSyncService.RecipeListChanged += OnWebRecipeListChanged;
+
             RefreshRecipeList();
+        }
+
+        // 폴링 타이머 스레드에서 호출됨 — UI 반영은 SyncWebRecipesToLocalAsync 내부에서 dispatch
+        private void OnWebRecipeListChanged(List<VMS.Core.Models.ParameterSync.RecipeSummaryDto> recipes)
+            => _ = SyncWebRecipesToLocalAsync();
+
+        /// <summary>
+        /// 창이 닫힐 때 호출 (RecipeManagerWindow.Closed). VM 은 창마다 새로 생성되므로
+        /// 구독을 해제하지 않으면 폴링 서비스에 죽은 구독이 누적된다.
+        /// </summary>
+        public void Detach()
+        {
+            if (_parameterSyncService != null)
+                _parameterSyncService.RecipeListChanged -= OnWebRecipeListChanged;
         }
 
         public void RefreshRecipeList()
@@ -115,11 +135,15 @@ namespace VMS.VisionSetup.ViewModels
 
                 if (anyNew)
                 {
-                    Application.Current.Dispatcher.Invoke(() =>
+                    void Reload()
                     {
                         _allRecipes = _recipeService.GetRecipeList();
                         ApplyFilter();
-                    });
+                    }
+                    // 헤드리스(테스트) 환경엔 Application 이 없다
+                    var dispatcher = Application.Current?.Dispatcher;
+                    if (dispatcher == null) Reload();
+                    else dispatcher.Invoke(Reload);
                 }
             }
             catch (Exception ex)
