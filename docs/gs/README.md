@@ -47,6 +47,7 @@ node gen_user_manual.js   # → ../VMS_사용자매뉴얼_v1.1.docx
 | PR | 매뉴얼에 들어갈 내용 | 대상 절 |
 |----|--------------------|--------|
 | #285 | AppSetup Web 서버 카드(구성 완료 상태)에 [서비스 시작 (관리자 권한)] 버튼 추가 — 서비스가 Stopped 일 때만 표시, 클릭 시 UAC 승인 → 자동시작 전환 + 시작 + 응답 확인. Stopped 상태 문구도 버튼 안내로 변경 | AppSetup Page 2 절 (§2.x) |
+| #286 | 카메라 Save Parameter 가 결과 메시지를 표시(저장 완료/실패/카메라 미등록 시 AppSetup 실행 안내). 부수: Save Parameter·AppSetup 재저장이 서로의 설정(보안 모드·Web SSO ↔ 노출/게인)을 초기화하던 문제 해소 — 트러블슈팅 서술이 있다면 갱신 | 카메라 설정 절 (Save Parameter 언급 위치) |
 | #264 | DeepLearning 체크박스·슬라이더가 다크 테마로 바뀜(파란 채움 체크, 파란 트랙 슬라이더) — 본문 서술 변경 없음, §3.8 스크린샷·컨트롤 이미지가 구식이 됨. `--capture-controls` 재캡처 필요 | §3.8 |
 | #264 | VisionSetup 라디오버튼 5곳 다크 테마 적용(이미지 폴더 탐색 모드 Navigate/Run All/Run Selected, Geometry3D Point Source) — 해당 컨트롤이 보이는 스크린샷 구식화. `--capture-controls` 재캡처 필요 | §3.9 (Geometry3D), §3.1~3.2 (탐색 모드 노출 시) |
 | #264 | VMS.WeldTeach 신규 앱 — **GS 인증·사용자 매뉴얼 범위에서 제외 확정** (2026-08-04). 관리자 매뉴얼(`docs/manuals/BODA-VMS-Admin-Manual.html`) §9 에 수록 완료 — 사용자 매뉴얼에는 반영할 것 없음 | (완료 — 관리자 매뉴얼 §9) |
