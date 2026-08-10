@@ -97,6 +97,14 @@ namespace VMS.Services
         private void MarkSelfWrite(string path) => _selfWrites[path] = DateTime.UtcNow;
 
         /// <summary>
+        /// 테스트 전용 — 워처 콜백을 직접 구동해 디바운스/자기 저장 억제 로직을
+        /// FileSystemWatcher 타이밍(CI 플레이크 원인)과 무관하게 결정적으로 검증한다.
+        /// </summary>
+        internal void SimulateRecipeFileEvent(string fullPath) =>
+            OnRecipeFileEvent(this, new FileSystemEventArgs(
+                WatcherChangeTypes.Changed, Path.GetDirectoryName(fullPath)!, Path.GetFileName(fullPath)));
+
+        /// <summary>
         /// Load a recipe from file
         /// </summary>
         public Recipe? LoadRecipe(string filePath)
