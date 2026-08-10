@@ -2,6 +2,7 @@ using VMS.Core.Security;
 using VMS.Interfaces;
 using VMS.Models;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
@@ -19,6 +20,16 @@ namespace VMS.Services
 
         private readonly string _recipesDirectory;
         private Recipe? _currentRecipe;
+
+        // 외부 프로세스(VisionSetup)의 레시피 저장 감지 — 현장 사례(2026-08-10):
+        // VisionSetup 에서 파라미터를 고쳐 저장해도 VMS 는 구버전 사본으로 계속 검사했다.
+        private FileSystemWatcher? _watcher;
+        private readonly ConcurrentDictionary<string, DateTime> _selfWrites = new(StringComparer.OrdinalIgnoreCase);
+        private readonly ConcurrentDictionary<string, DateTime> _lastRaised = new(StringComparer.OrdinalIgnoreCase);
+        private static readonly TimeSpan SelfWriteSuppressWindow = TimeSpan.FromSeconds(2);
+        private static readonly TimeSpan DebounceWindow = TimeSpan.FromMilliseconds(500);
+
+        public event Action<string>? ExternalRecipeFileChanged;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
@@ -48,6 +59,42 @@ namespace VMS.Services
                 Directory.CreateDirectory(_recipesDirectory);
             }
         }
+
+        /// <summary>
+        /// Recipes 폴더의 외부 변경 감시 시작 (idempotent). 자기 저장(SaveRecipe/DeleteRecipe)은
+        /// 무시하고, 한 저장이 만드는 다중 파일시스템 이벤트는 디바운스한다.
+        /// 이벤트는 워처 스레드에서 발생 — 구독측에서 UI 디스패치 필요.
+        /// </summary>
+        public void StartWatchingRecipeFiles()
+        {
+            if (_watcher != null) return;
+
+            _watcher = new FileSystemWatcher(_recipesDirectory, "*.json")
+            {
+                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName,
+            };
+            _watcher.Changed += OnRecipeFileEvent;
+            _watcher.Created += OnRecipeFileEvent;
+            _watcher.Renamed += (s, e) => OnRecipeFileEvent(s, e);
+            _watcher.EnableRaisingEvents = true;
+        }
+
+        private void OnRecipeFileEvent(object sender, FileSystemEventArgs e)
+        {
+            var now = DateTime.UtcNow;
+
+            // 자기 저장 무시 — SaveRecipe/Web stub 동기화가 워처를 되받아 재로드 루프가 되면 안 된다
+            if (_selfWrites.TryGetValue(e.FullPath, out var written) && now - written < SelfWriteSuppressWindow)
+                return;
+
+            if (_lastRaised.TryGetValue(e.FullPath, out var raised) && now - raised < DebounceWindow)
+                return;
+            _lastRaised[e.FullPath] = now;
+
+            ExternalRecipeFileChanged?.Invoke(e.FullPath);
+        }
+
+        private void MarkSelfWrite(string path) => _selfWrites[path] = DateTime.UtcNow;
 
         /// <summary>
         /// Load a recipe from file
@@ -100,6 +147,7 @@ namespace VMS.Services
 
                 var path = filePath ?? GetRecipeFilePath(recipe.Id);
                 var json = JsonSerializer.Serialize(recipe, JsonOptions);
+                MarkSelfWrite(path);
                 File.WriteAllText(path, json);
 
                 if (setAsCurrent)
@@ -191,6 +239,7 @@ namespace VMS.Services
                 var path = GetRecipeFilePath(id);
                 if (File.Exists(path))
                 {
+                    MarkSelfWrite(path);
                     File.Delete(path);
                     if (_currentRecipe?.Id == id)
                     {
@@ -207,6 +256,7 @@ namespace VMS.Services
                 var files = Directory.GetFiles(_recipesDirectory, $"*{id}*.json");
                 foreach (var file in files)
                 {
+                    MarkSelfWrite(file);
                     File.Delete(file);
                 }
                 if (files.Length > 0)
