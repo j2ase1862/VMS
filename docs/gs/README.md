@@ -64,6 +64,7 @@ node gen_user_manual.js   # → ../VMS_사용자매뉴얼_v1.1.docx
 | #282 | VisionSetup 툴바에 **Camera Live 시작/정지 버튼** 신설(카메라 아이콘 + ▶/■ 배지) — Camera 메뉴 진입 없이 Grab/Live/정지 가능. 앱 시작 시 **첫 카메라 자동 선택**(카메라 패널 조작 없이 툴바 바로 동작). 툴바 스크린샷 구식화 — 재캡처 필요 | §3.1~3.2 (VisionSetup 화면 구성·카메라 조작) |
 | #282 | VMS 카메라 카드 컨트롤 박스 — Grab/Live 버튼이 비활성일 때 **툴팁으로 사유 표시**(Start/Stop 권한 없음 / Operator 로그인 필요 / 카메라 미연결). Grab 도 Live 와 동일한 권한 게이트 적용 | VMS 운영 절 (카메라 조작), 트러블슈팅 절 있으면 해당 절 |
 | #282 | Basler 카메라 — 스텝 **노출/게인 설정이 실제 적용**되기 시작(기존 미지원), 연결 시 자동 노출/게인 Off (Grab 밝기 요동 해소). pylon Viewer 튜닝값을 쓰려면 "카메라 설정 유지" 체크(기본) 안내 | §3.2 (카메라 설정), Basler 연동 안내 절 있으면 해당 절 |
+| #293 | BlobTool Web 파라미터 연동 위치 변경 — Judgment 의 **Expected Area / Area Tolerance (+) / (-)** 에 Web 파라미터 연동 콤보 신설, Area Filter 의 Min/Max Area 연동 콤보는 **제거**(필터는 레시피 로컬 설정). 기존 레시피에 걸려 있던 Min/Max Area 연동은 로드 시 자동 해제 — 연동 설명·스크린샷이 있다면 갱신 | §3.9 (Blob 파라미터), Web 파라미터 연동 절 |
 
 ## guides/ — 가이드 문서
 
