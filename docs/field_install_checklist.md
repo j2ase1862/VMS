@@ -23,7 +23,9 @@ BODA.VMS.Web `docs/Production_Deploy_Runbook.md`
 - [ ] **(Basler 카메라 현장) pylon Runtime 설치** — 카메라 드라이버 + GigE 필터 드라이버 포함,
       dev PC 빌드 버전과 동일 계열(26.07) 권장. 미설치 시 **카메라 탐색은 되지만 연결/획득이 실패**
       (탐색은 SDK 무관 GVCP 브로드캐스트, 획득은 pylon 런타임 필요).
-      또한 VMS 는 v1.5.8 이상이어야 함 — 이전 MSI 는 Basler 실연동 미탑재(시뮬레이션 폴백)
+      또한 VMS 는 **v1.5.9 이상 권장** — v1.5.8 미만은 Basler 실연동 미탑재(시뮬레이션 폴백),
+      v1.5.8 은 현장 실증 3건(Grab 밝기 요동 / Live 시작 프리즈 / Live 버튼 비활성 원인 불명)
+      미수정 상태 (v1.5.9 = PR #282 에서 수정)
 
 ---
 
@@ -94,6 +96,20 @@ Start-Service BodaVmsWeb
 
 - [ ] (MSI 동봉 Web 사용 시) Page 2 "Web 서버 초기 구성 (이 PC)" 카드 — Web admin 비밀번호
       입력 → [초기 구성 실행] → UAC 승인 → "구성 완료 + /health 응답 확인" 메시지 확인 (v1.5.7)
+
+> ⚠ **현장 검증 사례 (2026-08-10)**: 카드가 "구성 완료"인데 서비스 상태가 **Stopped** 로
+> 보일 수 있다 — 설정 파일(`Web\appsettings.Production.json`)이 이미 있으면 카드는
+> "구성 완료"로 표시만 하고 서비스 시작은 하지 않는다 (마이그레이션 §13.4 경로,
+> 또는 구성 후 서비스가 내려간 경우). 카드에는 시작 버튼이 없으므로 수동 시작:
+>
+> ```powershell
+> Start-Service BodaVmsWeb
+> sc.exe config BodaVmsWeb start= auto   # 시작 유형이 '수동'으로 남아 있으면
+> ```
+>
+> 시작 후 `http://localhost:5292/health` → 200 확인 (첫 부팅은 DB 마이그레이션으로
+> 20~30초 소요 가능). 몇 초 내 다시 Stopped 로 떨어지면 이벤트 뷰어(응용 프로그램) +
+> 5292 포트 선점(`netstat -ano | findstr 5292`) 확인 — §1-3 실패 시 수거 항목과 동일.
 - [ ] Page 2 "Web Server Integration" — Web URL 입력 (`http://<host>:5292`)
 - [ ] (선택) Page 2 "Web Client API Key" — enforcement 사용 시에만 입력, 각주 [1] 참고
 - [ ] (SSO 사용 시) Page 2 "Web SSO" 카드 — "Web SSO 활성" 체크
@@ -117,6 +133,10 @@ Start-Service BodaVmsWeb
 - [ ] admin 로그인 성공 (SSO 활성 시 Web admin 계정으로)
 - [ ] 헬스 체크 UI → `Mode=Production, Source=ConfigFile` (또는 `Source=Environment`)
       — `Source=FallbackOnError` 면 보안 모드 명시 누락 (msi_build_guide §9)
+- [ ] (Basler 카메라 현장, v1.5.9 재검증 항목 — PR #282) 카메라 연결 후:
+  - [ ] 단발 Grab 반복 시 밝기 요동 없음 (노출/게인 UI 값이 실제 카메라에 반영되는지 포함)
+  - [ ] Live 시작 시 UI 프리즈 없음 (VisionSetup 툴바의 Camera Live 버튼으로 확인 가능)
+  - [ ] Live/Grab 버튼 비활성 시 사유 툴팁 표시 확인 (권한 없음 / Operator 미로그인 / 미연결)
 
 ---
 
@@ -164,3 +184,5 @@ Web 서버의 `ClientApiKey__Value` 와 정확히 일치시킬 것.
 | 2026-07-15 | 최초 작성 — v1.4.1 현장 검증 대비, Web→VMS 설치 순서 표준화 |
 | 2026-07-16 | v1.4.5 반영 — SSO 체크 시 admin 입력란 비활성(PR #190), 저장 메시지 분기(✓/⚠) 판독 기준, admin 미적용 재실행 안내 추가 |
 | 2026-07-16 | v1.4.7 반영 — 현장 검증 결과(업그레이드 후 보안 정책 오류 부팅 차단) 트러블슈팅 반영, 시작 메뉴 AppSetup 바로가기(#192), MSI 파일명 버전 명시(#193), 설정 로드 실패 경고·.invalid.bak 대응(#194) |
+| 2026-08-06 | v1.5.7~v1.5.8 반영 — MSI Web 동봉 시 §1 생략 안내(#278), 업데이트 체크 VMS-Releases 전환(#279), Basler pylon Runtime 사전 준비물(#280) |
+| 2026-08-10 | v1.5.9 반영 — Basler 권장 버전 v1.5.9 갱신 + 현장 재검증 3항목(#282), Web 카드 "구성 완료 + 서비스 Stopped" 수동 시작 절차 (2026-08-10 실증 PC 사례) |
