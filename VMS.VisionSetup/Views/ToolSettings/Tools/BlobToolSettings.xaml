@@ -40,15 +40,9 @@
                 <controls:TextBoxParameter Label="Min Area"
                     Value="{Binding MinArea}"
                     ToolType="BlobTool" ParameterName="MinArea"/>
-                <controls:ParamCodeLink
-                    AvailableParamCodes="{Binding AvailableParamCodes}"
-                    SelectedItem="{Binding SelectedMinAreaCode}"/>
                 <controls:TextBoxParameter Label="Max Area"
                     Value="{Binding MaxArea}"
                     ToolType="BlobTool" ParameterName="MaxArea"/>
-                <controls:ParamCodeLink
-                    AvailableParamCodes="{Binding AvailableParamCodes}"
-                    SelectedItem="{Binding SelectedMaxAreaCode}"/>
             </StackPanel>
         </Expander>
 
@@ -69,12 +63,21 @@
                 <controls:TextBoxParameter Label="Expected Area"
                     Value="{Binding ExpectedArea}"
                     ToolType="BlobTool" ParameterName="ExpectedArea"/>
+                <controls:ParamCodeLink
+                    AvailableParamCodes="{Binding AvailableParamCodes}"
+                    SelectedItem="{Binding SelectedExpectedAreaCode}"/>
                 <controls:TextBoxParameter Label="Area Tolerance (+)"
                     Value="{Binding AreaTolerancePlus}"
                     ToolType="BlobTool" ParameterName="AreaTolerancePlus"/>
+                <controls:ParamCodeLink
+                    AvailableParamCodes="{Binding AvailableParamCodes}"
+                    SelectedItem="{Binding SelectedAreaTolerancePlusCode}"/>
                 <controls:TextBoxParameter Label="Area Tolerance (-)"
                     Value="{Binding AreaToleranceMinus}"
                     ToolType="BlobTool" ParameterName="AreaToleranceMinus"/>
+                <controls:ParamCodeLink
+                    AvailableParamCodes="{Binding AvailableParamCodes}"
+                    SelectedItem="{Binding SelectedAreaToleranceMinusCode}"/>
 
                 <!-- Count Judgment -->
                 <controls:CheckBoxParameter Label="Use Count Judgment"

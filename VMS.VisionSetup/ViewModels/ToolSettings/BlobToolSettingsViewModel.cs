@@ -15,16 +15,24 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         }
 
         // ── Web Parameter Link (ParamCode) ──
-        public ParamCodeItem? SelectedMinAreaCode
+        // 연동 대상은 판정 기준값(ExpectedArea/Tolerance/ExpectedCount)과 임계값.
+        // 필터용 MinArea/MaxArea 는 레시피 로컬 설정 — 연동 대상 아님 (ToolSerializer 가 레거시 링크 제거).
+        public ParamCodeItem? SelectedExpectedAreaCode
         {
-            get => GetLinkedParamCodeItem(nameof(MinArea));
-            set { SetLinkedParamCode(nameof(MinArea), value); OnPropertyChanged(); }
+            get => GetLinkedParamCodeItem(nameof(ExpectedArea));
+            set { SetLinkedParamCode(nameof(ExpectedArea), value); OnPropertyChanged(); }
         }
 
-        public ParamCodeItem? SelectedMaxAreaCode
+        public ParamCodeItem? SelectedAreaTolerancePlusCode
         {
-            get => GetLinkedParamCodeItem(nameof(MaxArea));
-            set { SetLinkedParamCode(nameof(MaxArea), value); OnPropertyChanged(); }
+            get => GetLinkedParamCodeItem(nameof(AreaTolerancePlus));
+            set { SetLinkedParamCode(nameof(AreaTolerancePlus), value); OnPropertyChanged(); }
+        }
+
+        public ParamCodeItem? SelectedAreaToleranceMinusCode
+        {
+            get => GetLinkedParamCodeItem(nameof(AreaToleranceMinus));
+            set { SetLinkedParamCode(nameof(AreaToleranceMinus), value); OnPropertyChanged(); }
         }
 
         public ParamCodeItem? SelectedThresholdCode
