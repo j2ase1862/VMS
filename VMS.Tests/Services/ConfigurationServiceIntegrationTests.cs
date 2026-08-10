@@ -228,5 +228,102 @@ namespace VMS.Tests.Services
             _service.SaveSystemConfiguration(second);
             Assert.Equal("V2", _service.LoadSystemConfiguration().ApplicationName);
         }
+
+        // ─── 병합 저장 — 타 앱 소유 키 보존 (현장 검증 2026-08-10) ────────
+        // VMS 모델 전체 재직렬화가 AppSetup 의 securityMode/webSso/robot* 를 지워
+        // 다음 부팅이 보안 정책 오류로 차단되던 사고의 회귀 테스트.
+
+        private string SystemConfigPath => Path.Combine(_tempDir, "system_config.json");
+
+        [Fact]
+        public void SaveSystemConfiguration_PreservesKeysUnknownToVmsModel()
+        {
+            // AppSetup / 설정 화면들이 기록한, VMS 모델에 없는 키들
+            File.WriteAllText(SystemConfigPath, @"{
+              ""applicationName"": ""OP102"",
+              ""securityMode"": ""Production"",
+              ""webSso"": { ""enabled"": true, ""webServerUrl"": ""http://web:5292"" },
+              ""isRobotEnabled"": true,
+              ""robotIpAddress"": ""192.168.1.90"",
+              ""auditRetentionDays"": 90
+            }");
+
+            var ok = _service.SaveSystemConfiguration(
+                new SystemConfiguration { ApplicationName = "OP102-v2" });
+
+            Assert.True(ok);
+            using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(SystemConfigPath));
+            var root = doc.RootElement;
+            // 내 모델이 아는 키는 내 값으로
+            Assert.Equal("OP102-v2", root.GetProperty("applicationName").GetString());
+            // 모르는 키는 기존 값 보존
+            Assert.Equal("Production", root.GetProperty("securityMode").GetString());
+            Assert.True(root.GetProperty("webSso").GetProperty("enabled").GetBoolean());
+            Assert.True(root.GetProperty("isRobotEnabled").GetBoolean());
+            Assert.Equal("192.168.1.90", root.GetProperty("robotIpAddress").GetString());
+            Assert.Equal(90, root.GetProperty("auditRetentionDays").GetInt32());
+        }
+
+        [Fact]
+        public void SaveSystemConfiguration_WritesSteps_AndPreservesVisionSetupCameraFields()
+        {
+            // VisionSetup 이 기록한 카메라 부가 필드(model/serialNumber)는 VMS 모델에 없다
+            File.WriteAllText(SystemConfigPath, @"{
+              ""applicationName"": ""OP102"",
+              ""cameras"": [
+                { ""id"": ""cam-1"", ""name"": ""1"", ""model"": ""LOG-M"", ""serialNumber"": ""SN001"" }
+              ]
+            }");
+
+            var cfg = new SystemConfiguration();
+            cfg.Cameras.Add(new CameraConfiguration
+            {
+                Id = "cam-1",
+                Name = "1",
+                Steps =
+                {
+                    new StepConfiguration
+                    {
+                        StepNumber = 1, Use2DCameraDefault = false, Exposure = 12345, Gain = 2.5
+                    }
+                }
+            });
+            _service.SaveSystemConfiguration(cfg);
+
+            using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(SystemConfigPath));
+            var cam = doc.RootElement.GetProperty("cameras")[0];
+            var step = cam.GetProperty("steps")[0];
+            Assert.Equal(12345, step.GetProperty("exposure").GetDouble());
+            Assert.Equal(2.5, step.GetProperty("gain").GetDouble());
+            Assert.False(step.GetProperty("use2DCameraDefault").GetBoolean());
+            // entry 단위 병합 — 다른 앱의 부가 필드 보존
+            Assert.Equal("LOG-M", cam.GetProperty("model").GetString());
+            Assert.Equal("SN001", cam.GetProperty("serialNumber").GetString());
+        }
+
+        [Fact]
+        public void SaveSystemConfiguration_CorruptExistingFile_StillSavesWithoutMerge()
+        {
+            File.WriteAllText(SystemConfigPath, "{ not json");
+
+            var ok = _service.SaveSystemConfiguration(new SystemConfiguration { ApplicationName = "Fresh" });
+
+            Assert.True(ok);
+            Assert.Equal("Fresh", _service.LoadSystemConfiguration().ApplicationName);
+        }
+
+        [Fact]
+        public void SaveSystemConfiguration_RemovedCamera_StaysRemoved()
+        {
+            // cameras 키는 양쪽 모델이 모두 알므로 병합 대상이 아니다 — 삭제 의도 존중
+            File.WriteAllText(SystemConfigPath, @"{
+              ""applicationName"": ""OP102"",
+              ""cameras"": [ { ""id"": ""cam-old"", ""name"": ""old"" } ]
+            }");
+
+            _service.SaveSystemConfiguration(new SystemConfiguration());
+
+            Assert.Empty(_service.LoadSystemConfiguration().Cameras);
+        }
     }
 }

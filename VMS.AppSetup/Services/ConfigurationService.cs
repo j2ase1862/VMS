@@ -1,8 +1,10 @@
 using VMS.AppSetup.Interfaces;
 using VMS.AppSetup.Models;
+using VMS.Camera.Configuration;
 using System;
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
 namespace VMS.AppSetup.Services
@@ -63,8 +65,17 @@ namespace VMS.AppSetup.Services
             {
                 EnsureDirectoryExists();
                 config.CreatedAt = DateTime.UtcNow;
-                var json = JsonSerializer.Serialize(config, JsonOptions);
-                File.WriteAllText(_configFilePath, json);
+
+                // 이 모델에 없는 키(카메라별 steps/stepCount — VMS 의 노출/게인 저장,
+                // 보존정책·autoBackup·imageSave·onnx — 각 설정 화면 소유)를 지우지 않도록
+                // 기존 파일과 병합해 저장한다. 마법사 재실행이 카메라 설정을 초기화하는
+                // 사고 방지 (현장 검증 2026-08-10).
+                var newRoot = JsonSerializer.SerializeToNode(config, JsonOptions)!.AsObject();
+                if (TryParseExistingConfig() is JsonObject existing)
+                    SystemConfigMerge.PreserveUnknown(newRoot, existing);
+
+                File.WriteAllText(_configFilePath,
+                    newRoot.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
                 return true;
             }
             catch (Exception ex)
@@ -72,6 +83,19 @@ namespace VMS.AppSetup.Services
                 System.Diagnostics.Debug.WriteLine($"설정 저장 실패: {ex.Message}");
                 return false;
             }
+        }
+
+        /// <summary>기존 system_config.json 파싱 — 없거나 손상이면 null (병합 없이 새로 작성).</summary>
+        private JsonObject? TryParseExistingConfig()
+        {
+            try
+            {
+                if (File.Exists(_configFilePath))
+                    return JsonNode.Parse(File.ReadAllText(_configFilePath)) as JsonObject;
+            }
+            catch (JsonException) { }
+            catch (IOException) { }
+            return null;
         }
 
         /// <summary>

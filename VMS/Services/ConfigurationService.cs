@@ -1,3 +1,4 @@
+using VMS.Camera.Configuration;
 using VMS.Core.Security;
 using VMS.Interfaces;
 using VMS.Models;
@@ -5,6 +6,7 @@ using VMS.PLC.Models;
 using System;
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
 namespace VMS.Services
@@ -107,8 +109,16 @@ namespace VMS.Services
         {
             try
             {
-                var json = JsonSerializer.Serialize(config, JsonOptions);
-                File.WriteAllText(_systemConfigPath, json);
+                // 이 모델에 없는 키(securityMode/webSso/robot*/보존정책/onnx 등 — AppSetup·
+                // 다른 설정 화면 소유)를 지우지 않도록 기존 파일과 병합해 저장한다.
+                // 전체 재직렬화로 교체하면 다음 부팅이 보안 정책 오류로 차단된다
+                // (현장 검증 2026-08-10).
+                var newRoot = JsonSerializer.SerializeToNode(config, JsonOptions)!.AsObject();
+                if (TryParseExistingConfig() is JsonObject existing)
+                    SystemConfigMerge.PreserveUnknown(newRoot, existing);
+
+                File.WriteAllText(_systemConfigPath,
+                    newRoot.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
                 AuditLogger.Instance.Log(
                     AuditCategory.Configuration, "SaveSystemConfiguration", AuditOutcome.Success,
                     source: nameof(ConfigurationService),
@@ -124,6 +134,19 @@ namespace VMS.Services
                     details: $"{ex.GetType().Name}: {ex.Message}");
                 return false;
             }
+        }
+
+        /// <summary>기존 system_config.json 파싱 — 없거나 손상이면 null (병합 없이 새로 작성).</summary>
+        private JsonObject? TryParseExistingConfig()
+        {
+            try
+            {
+                if (File.Exists(_systemConfigPath))
+                    return JsonNode.Parse(File.ReadAllText(_systemConfigPath)) as JsonObject;
+            }
+            catch (JsonException) { }
+            catch (IOException) { }
+            return null;
         }
 
         /// <summary>

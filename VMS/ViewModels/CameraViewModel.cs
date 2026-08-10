@@ -735,22 +735,32 @@ namespace VMS.ViewModels
 
             var config = _configService.LoadSystemConfiguration();
             var camConfig = config.Cameras.FirstOrDefault(c => c.Id == Id);
-            if (camConfig != null)
+            if (camConfig == null)
             {
-                camConfig.Steps.Clear();
-                foreach (var step in Steps)
-                {
-                    camConfig.Steps.Add(new StepConfiguration
-                    {
-                        StepNumber = step.StepNumber,
-                        Name = step.Name,
-                        Use2DCameraDefault = step.Use2DCameraDefault,
-                        Exposure = step.Exposure,
-                        Gain = step.Gain
-                    });
-                }
-                _configService.SaveSystemConfiguration(config);
+                // 구성에 없는 카메라(기본 카메라 또는 AppSetup 에서 재등록되어 id 가 바뀐
+                // 카메라)는 저장 대상이 없다 — 무증상으로 버려지면 재시작 후 초기값으로
+                // 보이는 현장 미스터리가 된다 (2026-08-10). 반드시 통지.
+                ResultMessage = "Save failed: camera not found in system config — run AppSetup";
+                return;
             }
+
+            camConfig.Steps.Clear();
+            foreach (var step in Steps)
+            {
+                camConfig.Steps.Add(new StepConfiguration
+                {
+                    StepNumber = step.StepNumber,
+                    Name = step.Name,
+                    Use2DCameraDefault = step.Use2DCameraDefault,
+                    Exposure = step.Exposure,
+                    Gain = step.Gain
+                });
+            }
+            camConfig.StepCount = camConfig.Steps.Count;
+
+            ResultMessage = _configService.SaveSystemConfiguration(config)
+                ? "Camera settings saved"
+                : "Camera settings save failed";
         }
 
         private CameraInfo ToCameraInfo()
