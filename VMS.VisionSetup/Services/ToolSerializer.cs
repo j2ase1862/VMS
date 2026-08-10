@@ -703,7 +703,18 @@ namespace VMS.VisionSetup.Services
 
             // Web 파라미터 연동 복원 (LinkedParamCodes)
             if (config.LinkedParamCodes != null && config.LinkedParamCodes.Count > 0)
+            {
                 tool.LinkedParamCodes = new Dictionary<string, int>(config.LinkedParamCodes);
+
+                // 레거시 정리: BlobTool 의 MinArea/MaxArea 는 필터 파라미터라 Web 연동 대상이
+                // 아니다 — 연동 대상은 판정 기준값(ExpectedArea/Tolerance). 과거 UI 에서 걸어둔
+                // 링크가 레시피에 남아 있으면 매 동기화마다 필터값을 덮어쓰므로 로드 시 제거.
+                if (tool is VisionTools.BlobAnalysis.BlobTool)
+                {
+                    tool.LinkedParamCodes.Remove("MinArea");
+                    tool.LinkedParamCodes.Remove("MaxArea");
+                }
+            }
 
             // Fixture 기준 좌표 복원 (레시피에 저장된 경우)
             if (config.Parameters.TryGetValue("_FixtureRefX", out var frx))
