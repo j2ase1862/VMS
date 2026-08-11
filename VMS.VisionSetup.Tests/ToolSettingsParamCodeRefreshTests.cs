@@ -100,6 +100,9 @@ namespace VMS.VisionSetup.Tests
             Assert.Contains(vm.AvailableParamCodes, p => p.ParamCode == 10);
             // 재구성 후에도 기존 링크 선택 유지
             Assert.Equal(9, vm.SelectedExpectedAreaCode?.ParamCode);
+            // 재구성 중 WPF 가 밀어넣는 null 은 링크를 지우지 않아야 함 (2026-08-11 회귀)
+            vm.SelectedExpectedAreaCode = null;
+            Assert.Equal(9, tool.LinkedParamCodes["ExpectedArea"]);
         }
 
         [Fact]
