@@ -705,6 +705,22 @@
     "enum": null
    },
    {
+    "label": "Count Upper Tol",
+    "param": "CountUpperTol",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Count Lower Tol",
+    "param": "CountLowerTol",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
     "label": "Draw Contours",
     "param": "DrawContours",
     "ctrl": "체크박스",
@@ -1051,6 +1067,46 @@
     "min": null,
     "max": null,
     "enum": "GeometryOperation"
+   },
+   {
+    "label": "Enable Judgment",
+    "param": "EnableJudgment",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Unit",
+    "param": "JudgmentUnit",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "GeometryJudgmentUnit"
+   },
+   {
+    "label": "Expected Value",
+    "param": "ExpectedValue",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Tolerance (-)",
+    "param": "ToleranceMinus",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Tolerance (+)",
+    "param": "TolerancePlus",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
    }
   ]
  },
