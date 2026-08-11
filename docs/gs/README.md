@@ -67,6 +67,7 @@ node gen_user_manual.js   # → ../VMS_사용자매뉴얼_v1.1.docx
 | #293 | BlobTool Web 파라미터 연동 위치 변경 — Judgment 의 **Expected Area / Area Tolerance (+) / (-)** 에 Web 파라미터 연동 콤보 신설, Area Filter 의 Min/Max Area 연동 콤보는 **제거**(필터는 레시피 로컬 설정). 기존 레시피에 걸려 있던 Min/Max Area 연동은 로드 시 자동 해제 — 연동 설명·스크린샷이 있다면 갱신 | §3.9 (Blob 파라미터), Web 파라미터 연동 절 |
 | #294 | BlobTool 개수 판정에 **Tolerance 모드** 신설 (기준 개수 ± 공차, Web 연동 권장) — Count Mode 콤보에 Tolerance 추가, **Count Upper Tol / Count Lower Tol** 입력란 + Web 연동 콤보 신설. 기존 Equal/≥/≤/Range 모드는 불변. 하한 공차는 음수 입력해도 크기로 해석. 도구 파라미터 표(extract_tool_params) 재생성 필요 | §3.9 (Blob 파라미터), Web 파라미터 연동 절 |
 | #295 | GeometryTool Judgment 의 **Expected Value / Tolerance (+)(−)** 에 Web 파라미터 연동 콤보 신설 — Web Dimension Tool 프리셋(Reference Value / Upper·Lower Tolerance)과 1:1. mm/px 해석은 Judgment Unit 설정을 따름 | §3.9 (Geometry 파라미터), Web 파라미터 연동 절 |
+| #296 | ResultTool 설정에 **PLC Output 섹션 노출** — PassCount/FailCount/TotalCount 통계 키를 PLC 로 전송 가능. 최종 OK/NG 출력은 기존대로 시퀀스 에디터 Branch→OutputAction 담당(도움말에 안내 추가) — ResultTool 설정 화면 스크린샷 구식화 | §3.9 (Result 도구), 시퀀스/PLC 연동 절 |
 
 ## guides/ — 가이드 문서
 
