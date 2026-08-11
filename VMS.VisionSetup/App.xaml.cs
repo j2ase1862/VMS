@@ -33,6 +33,7 @@ namespace VMS.VisionSetup
         private ISLMChatService? _slmChatService;
         private IRobotService? _robotService;
         private IParameterSyncService? _parameterSyncService;
+        private VmsHubClient? _paramHubClient;
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -90,6 +91,18 @@ namespace VMS.VisionSetup
                     WeakReferenceMessenger.Default.Send(new WebParamCacheUpdatedMessage());
                 parameterSyncService.RecipeLoaded += (_, _, _) =>
                     WeakReferenceMessenger.Default.Send(new WebParamCacheUpdatedMessage());
+
+                // Web 파라미터 변경 즉시 푸시 — 공개 허브(RecipeParametersChanged) 구독.
+                // 현재 로드된 레시피면 캐시 재동기화 → 위 브리지가 콤보를 곧바로 갱신.
+                // 허브가 끊겨 있어도 60초 폴링이 안전망이라 기능 저하 없음.
+                var localSync = parameterSyncService;
+                _paramHubClient = new VmsHubClient(webUrl);
+                _paramHubClient.RecipeParametersChanged += recipeId =>
+                {
+                    if (localSync.CurrentRecipeId == recipeId)
+                        _ = localSync.SyncAsync();
+                };
+                _ = _paramHubClient.StartAsync();
 
                 // 시작 시 레시피 목록 + 첫 번째 레시피 파라미터 로드 (백그라운드)
                 _ = Task.Run(async () =>
@@ -293,6 +306,7 @@ namespace VMS.VisionSetup
             try { _slmChatService?.Dispose(); } catch { }
             try { _robotService?.Dispose(); } catch { }
             try { _parameterSyncService?.Dispose(); } catch { }
+            try { _paramHubClient?.DisposeAsync().AsTask().Wait(500); } catch { }
 
             base.OnExit(e);
 
