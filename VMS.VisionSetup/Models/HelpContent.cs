@@ -504,11 +504,12 @@ namespace VMS.VisionSetup.Models
             {
                 Name = "Result (결과 판정)",
                 Description = "연결된 도구들의 결과를 종합하여 최종 OK/NG 판정을 수행합니다.",
-                Usage = "검사 파이프라인의 마지막 단계에서 사용됩니다. 여러 도구의 성공/실패 결과를 논리 연산으로 결합하여 최종 판정을 내립니다.",
+                Usage = "검사 파이프라인의 마지막 단계에서 사용됩니다. 여러 도구의 성공/실패 결과를 논리 연산으로 결합하여 최종 판정을 내립니다.\n\n[PLC/IO 출력 위치 안내]\n• 최종 OK/NG 를 PLC·IO 보드로 내보내는 설정은 이 도구가 아니라 VMS의 시퀀스 에디터에서 합니다 — Branch(AllInspectionsOk) → OutputAction 노드가 BUSY→결과 비트→COMPLETE→클리어 핸드셰이크와 함께 출력합니다 (기본 시퀀스에 포함).\n• 이 도구의 PLC Output 섹션은 PassCount 등 통계 값을 보조로 전송할 때 사용합니다.",
                 CognexEquivalent = "CogResultAnalysisTool",
                 Parameters = new Dictionary<string, string>
                 {
-                    ["JudgmentMode"] = "판정 모드:\n• AllPass: 연결된 모든 도구가 성공해야 OK (AND 논리)\n• AnyPass: 연결된 도구 중 하나라도 성공하면 OK (OR 논리)"
+                    ["JudgmentMode"] = "판정 모드:\n• AllPass: 연결된 모든 도구가 성공해야 OK (AND 논리)\n• AnyPass: 연결된 도구 중 하나라도 성공하면 OK (OR 논리)",
+                    ["PlcMappings"] = "PLC Output — 통계 키(PassCount/FailCount/TotalCount)를 PLC 주소로 전송합니다.\n최종 OK/NG(Success) 출력은 시퀀스 에디터의 Branch → OutputAction 에서 설정하세요 (핸드셰이크 포함)."
                 }
             },
 
