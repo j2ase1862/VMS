@@ -26,12 +26,21 @@
                 <controls:TextBoxParameter Label="Expected Value"
                     Value="{Binding ExpectedValue}"
                     ToolType="GeometryTool" ParameterName="ExpectedValue"/>
+                <controls:ParamCodeLink
+                    AvailableParamCodes="{Binding AvailableParamCodes}"
+                    SelectedItem="{Binding SelectedExpectedValueCode}"/>
                 <controls:TextBoxParameter Label="Tolerance (-)"
                     Value="{Binding ToleranceMinus}"
                     ToolType="GeometryTool" ParameterName="ToleranceMinus"/>
+                <controls:ParamCodeLink
+                    AvailableParamCodes="{Binding AvailableParamCodes}"
+                    SelectedItem="{Binding SelectedToleranceMinusCode}"/>
                 <controls:TextBoxParameter Label="Tolerance (+)"
                     Value="{Binding TolerancePlus}"
                     ToolType="GeometryTool" ParameterName="TolerancePlus"/>
+                <controls:ParamCodeLink
+                    AvailableParamCodes="{Binding AvailableParamCodes}"
+                    SelectedItem="{Binding SelectedTolerancePlusCode}"/>
                 <TextBlock Foreground="#999999" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,0"
                            Text="Unit=Mm 은 캘리브레이션 또는 스텝 Resolution(mm/px)이 필요합니다. 각도 연산은 단위와 무관하게 °로 판정합니다."/>
             </StackPanel>
