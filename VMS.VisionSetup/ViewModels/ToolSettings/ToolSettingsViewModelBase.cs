@@ -206,7 +206,8 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         // View-state: FeatureMatchTool overrides to true (has its own ROI section)
         public virtual bool HasCustomROISection => false;
 
-        // View-state: ResultTool overrides to true (최종 판정은 시퀀스 에디터가 담당)
+        // View-state: PLC Output 섹션 숨김용. 현재 override 없음 — ResultTool 도
+        // 통계 키(PassCount 등) 전송을 위해 노출한다 (최종 OK/NG 는 시퀀스 에디터 담당).
         public virtual bool HidePlcSection => false;
 
         // ── Web Parameter Link (ParamCode) ──
