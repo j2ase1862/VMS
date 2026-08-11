@@ -69,6 +69,7 @@ node gen_user_manual.js   # → ../VMS_사용자매뉴얼_v1.1.docx
 | #295 | GeometryTool Judgment 의 **Expected Value / Tolerance (+)(−)** 에 Web 파라미터 연동 콤보 신설 — Web Dimension Tool 프리셋(Reference Value / Upper·Lower Tolerance)과 1:1. mm/px 해석은 Judgment Unit 설정을 따름 | §3.9 (Geometry 파라미터), Web 파라미터 연동 절 |
 | #296 | ResultTool 설정에 **PLC Output 섹션 노출** — PassCount/FailCount/TotalCount 통계 키를 PLC 로 전송 가능. 최종 OK/NG 출력은 기존대로 시퀀스 에디터 Branch→OutputAction 담당(도움말에 안내 추가) — ResultTool 설정 화면 스크린샷 구식화 | §3.9 (Result 도구), 시퀀스/PLC 연동 절 |
 | #297 | 툴 설정의 **ParamCode 연동 콤보가 Web 파라미터 변경을 자동 반영** — 설정을 열면 즉시 최신화 + 열려 있는 동안 60초 주기 갱신(기존 선택 유지). "파라미터 추가 후 VisionSetup 재시작" 류의 서술이 있다면 삭제 | Web 파라미터 연동 절 |
+| #298 | VisionSetup 생성 레시피가 **Web 원장에 자동 등록**(이름 기준 멱등, 오프라인 시 60초 동기화 때 재시도) — 동일 이름 Web 레시피는 ID 자동 연결. 레시피 로드 시 ParamCode 콤보가 **로드된 레시피의 코드**를 표시(기존: 첫 레시피 고정). Web 짝: BODA.VMS.Web #53 | VisionSetup Recipe 절 + Web 파라미터 연동 절 |
 
 ## guides/ — 가이드 문서
 

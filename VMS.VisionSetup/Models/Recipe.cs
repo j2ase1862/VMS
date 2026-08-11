@@ -82,6 +82,20 @@ namespace VMS.VisionSetup.Models
             set => SetProperty(ref _author, value);
         }
 
+        private int? _webRecipeId;
+        /// <summary>
+        /// Web(BODA.VMS.Web) 원장의 레시피 ID. Web 이 레시피의 단일 원장 —
+        /// Web 생성 레시피는 동기화 시, 로컬 생성 레시피는 자동 등록 시 채워진다.
+        /// null 이면 아직 Web 미등록 (오프라인 생성 등 — 다음 동기화 때 재시도).
+        /// 레시피 로드 시 이 ID 로 파라미터 캐시를 로드해 ParamCode 콤보가
+        /// 해당 레시피의 코드를 표시한다.
+        /// </summary>
+        public int? WebRecipeId
+        {
+            get => _webRecipeId;
+            set => SetProperty(ref _webRecipeId, value);
+        }
+
         /// <summary>
         /// 이 레시피에서 사용하는 카메라 ID 목록 (글로벌 레지스트리 참조)
         /// </summary>
@@ -280,6 +294,8 @@ namespace VMS.VisionSetup.Models
         public string FilePath { get; set; } = string.Empty;
         public int StepCount { get; set; }
         public int ToolCount { get; set; }
+        /// <summary>Web 원장 레시피 ID (null = 미등록 — 동기화 시 등록 재시도 대상)</summary>
+        public int? WebRecipeId { get; set; }
 
         public string ModifiedAtDisplay => ModifiedAt.ToString("yyyy-MM-dd HH:mm");
 

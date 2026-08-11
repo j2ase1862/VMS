@@ -42,6 +42,8 @@ namespace VMS.VisionSetup.Tests
             public int SyncAsyncCalls;
 
             public Task<bool> SyncRecipesAsync() => Task.FromResult(true);
+            public Task<int?> RegisterRecipeAsync(string name, string? description = null)
+                => Task.FromResult<int?>(null);
             public Task<bool> LoadRecipeAsync(int recipeId) => Task.FromResult(true);
             public Task<bool> SyncAsync() { SyncAsyncCalls++; return Task.FromResult(true); }
             public void StartPeriodicSync(int intervalSeconds = 60) { }

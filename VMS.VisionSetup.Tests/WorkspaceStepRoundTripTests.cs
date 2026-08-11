@@ -88,6 +88,7 @@ namespace VMS.VisionSetup.Tests
             public string RecipeFolderPath => string.Empty;
             public event EventHandler<Recipe?>? CurrentRecipeChanged { add { } remove { } }
             public Recipe? LoadRecipe(string filePath) => null;
+            public Recipe? ReadRecipeFile(string filePath) => null;
             public bool SaveRecipe(Recipe recipe, string? filePath = null) => true;
             public bool SaveCurrentRecipe(string? filePath = null) => true;
             public Recipe CreateNewRecipe(string? name = null) => new();
