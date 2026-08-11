@@ -128,7 +128,7 @@
     <li><a href="#install">설치 / 배포</a>
       <ol>
         <li><a href="#install-vms">VMS 클라이언트 (MSI)</a></li>
-        <li><a href="#install-web">Web 서버 (PowerShell)</a></li>
+        <li><a href="#install-web">Web 서버 (설치 / 구성)</a></li>
         <li><a href="#install-network">네트워크 / 방화벽</a></li>
         <li><a href="#install-checklist">첫 실행 전 체크리스트</a></li>
       </ol>
@@ -143,7 +143,7 @@
         <li><a href="#vms-roles">권한별 동선</a></li>
         <li><a href="#vms-usergrade">로컬 UserGrade 권한 매트릭스</a></li>
         <li><a href="#vms-deeplearning">딥러닝 라벨링·학습</a></li>
-        <li><a href="#vms-templates-3d">예제 템플릿 · 3D 객체 검출</a></li>
+        <li><a href="#vms-templates-3d">비전 설정 — 템플릿 · 3D · 스텝 관리</a></li>
       </ol>
     </li>
     <li><a href="#web">BODA.VMS.Web</a>
@@ -207,7 +207,7 @@
 
 <div class="header-strip">
   <h1>BODA VMS 사용자 매뉴얼</h1>
-  <div class="sub">버전 1.1.0 · 2026-07-28 · Vision Management System + Web MES 통합</div>
+  <div class="sub">버전 1.1.0 · 2026-08-11 · Vision Management System + Web MES 통합</div>
 </div>
 
 <!-- ============================================================ -->
@@ -276,6 +276,9 @@
 <ol class="steps">
   <li><code>BODA-VMS-1.1.0.msi</code> 더블 클릭.</li>
   <li>Welcome → License 동의 → Install Folder (기본 <code>C:\Program Files\BODA VMS\</code>) → Install.</li>
+  <li>설치 구성 선택 화면에 <strong>"BODA VMS Web 서버"</strong> 항목이 있습니다 (기본 포함).
+      이 PC 를 관리 서버로도 쓸 계획이 없으면 빼도 됩니다 — 포함해서 설치했다면
+      설치 후 §2.2 의 설정 마법사 방법으로 서버를 켤 수 있습니다.</li>
   <li>완료 시 시작 메뉴 + 데스크톱 바로가기 자동 생성.</li>
 </ol>
 
@@ -295,11 +298,26 @@
 사이트에서 <code>vc_redist.x64.exe</code> 다운로드 후 설치.
 </div>
 
-<h3 id="install-web">2.2 Web 서버 (PowerShell)</h3>
+<h3 id="install-web">2.2 Web 서버 (설치 / 구성)</h3>
 <p>Web 서버는 Windows 서비스로 설치되어 부팅 시 자동 시작됩니다.
-별도의 웹 서버 프로그램(IIS 등)은 필요 없습니다.</p>
+별도의 웹 서버 프로그램(IIS 등)은 필요 없습니다. 켜는 방법은 두 가지입니다 —
+VMS 와 같은 PC 에서 운영한다면 <strong>설정 마법사 방법</strong>이 가장 쉽습니다.</p>
 
-<h4>설치</h4>
+<h4>방법 A — 설정 마법사로 켜기 (VMS 와 같은 PC, 권장)</h4>
+<p>MSI 설치 때 "BODA VMS Web 서버"를 포함했다면(§2.1 기본값) 명령어 없이 화면에서 바로 구성할 수 있습니다:</p>
+<ol class="steps">
+  <li>System Setup(설정 마법사)을 실행하고 두 번째 페이지로 이동합니다.</li>
+  <li><strong>"Web 서버 초기 구성 (이 PC)"</strong> 카드에서 관리자(admin) 계정으로 쓸
+      비밀번호를 입력하고 구성 버튼을 누릅니다.</li>
+  <li>서버 구성과 서비스 시작이 자동으로 진행되고, 완료되면 카드에 "구성 완료" 상태가 표시됩니다.</li>
+</ol>
+<ul>
+  <li>구성은 끝났는데 서비스가 멈춰 있으면(Stopped) 카드에
+      <strong>[서비스 시작 (관리자 권한)]</strong> 버튼이 나타납니다. 누르면 Windows 권한 확인 창(UAC)이
+      뜨고, 승인하면 서비스가 부팅 시 자동 시작으로 바뀐 뒤 곧바로 시작되어 응답까지 확인해 줍니다.</li>
+</ul>
+
+<h4>방법 B — 배포 스크립트로 설치 (별도 서버 PC)</h4>
 <pre><code># 관리자 PowerShell 에서
 cd D:\Project\BODA.VMS.Web\deploy
 .\Install-Web.ps1</code></pre>
@@ -367,6 +385,13 @@ cd D:\Project\BODA.VMS.Web\deploy
   <li>시스템 사용자 로그인 창이 표시됩니다 (엔지니어·관리자용). <span class="chip muted">선택</span></li>
   <li>메인 화면이 표시됩니다: 헤더 + KPI 스트립(생산 현황 요약) + 카메라 화면 + 시스템 로그 + 사이드 패널(접힘).</li>
 </ol>
+
+<h4>KPI 스트립 — TACT TIME 카드 읽는 법</h4>
+<p>KPI 스트립의 <strong>TACT TIME</strong> 카드는 [AUTO RUN] 으로 연속 검사가 도는 동안
+"한 검사가 끝나고 다음 검사가 시작되기까지의 간격"을 보여줍니다.
+수동으로 한 건씩 검사할 때는 갱신되지 않습니다 — 사람이 기다린 시간이 섞여
+설비 속도로 오해할 수 있기 때문입니다. 카드에는 <strong>PROC N ms</strong> 가 함께 표시되는데,
+이것은 마지막 검사 1건을 처리하는 데 걸린 순수 시간입니다.</p>
 
 <h3 id="vms-header">3.2 헤더 — 운영 흐름</h3>
 <p>헤더의 버튼과 표시는 왼쪽에서 오른쪽으로 실제 작업 순서대로 배치되어 있습니다:
@@ -436,17 +461,27 @@ Web 서버에서 받아 온 뒤 다시 시도합니다.</p>
       촬영해도 지금 보고 있던 화면 탭(2D / Depth Map / Point Cloud)은 그대로 유지됩니다.</li>
   <li><strong>[Live Start] / [Live Stop]</strong> — 카메라 영상을 실시간으로 계속 표시하거나 멈춥니다.</li>
   <li><strong>[Roller]</strong> — 롤러 검사 모드를 켜고 끕니다 (지원 카메라에서만).</li>
+  <li>[Grab] / [Live] 버튼이 눌리지 않을 때는 마우스를 올리면 이유가 말풍선으로 표시됩니다
+      — 예: 검사 시작/정지 권한이 없음, 작업자 로그인이 필요함, 카메라가 연결되지 않음.
+      [Grab] 도 [Live] 와 같은 권한 기준을 따릅니다.</li>
 </ul>
 <p><strong>노출 · 게인 설정 (카메라 설정 창)</strong> — 카메라 화면의 설정 창에서 촬영 밝기를 조절합니다:</p>
 <ul>
   <li><strong>카메라 설정 유지</strong> 체크박스 (기본: 체크) — 체크되어 있으면 카메라에 저장된
-      노출/게인을 그대로 사용합니다. 카메라 제조사 프로그램(예: Mech-Eye Viewer)에서 튜닝해 둔
-      값이 보존됩니다. 해제하면 아래에 입력한 값을 촬영 전에 카메라에 적용합니다.</li>
+      노출/게인을 그대로 사용합니다. 카메라 제조사 프로그램(예: Mech-Eye Viewer, pylon Viewer)에서
+      튜닝해 둔 값이 보존됩니다. 해제하면 아래에 입력한 값을 촬영 전에 카메라에 적용합니다.</li>
   <li><strong>Exposure</strong> — 노출 시간을 숫자로 직접 입력합니다. 단위는 ms(밀리초)로,
       카메라 제조사 프로그램과 같은 단위입니다 (예: 200 = 200ms).</li>
   <li><strong>Gain</strong> — 게인(dB)을 숫자로 직접 입력합니다.</li>
   <li>설정 창에서도 [Live] 로 실시간 영상을 보면서 값을 맞출 수 있고, 스텝별 노출/게인
       설정을 저장할 수 있습니다.</li>
+  <li><strong>[Save Parameter]</strong> — 입력한 값을 저장합니다. 저장이 끝나면 완료/실패
+      결과 메시지가 표시되고, 카메라가 아직 등록되어 있지 않으면 System Setup(설정 마법사)을
+      먼저 실행하라는 안내가 표시됩니다.</li>
+  <li><strong>Basler 카메라</strong>도 여기서 설정한 스텝별 노출/게인이 그대로 적용됩니다.
+      연결할 때 카메라의 자동 노출/자동 게인이 꺼져서, 촬영할 때마다 밝기가 달라지는 현상이
+      생기지 않습니다. 제조사 프로그램(pylon Viewer)에서 맞춰 둔 값을 쓰려면
+      "카메라 설정 유지" 체크를 그대로 두면 됩니다.</li>
 </ul>
 
 <h4>Recipe 섹션</h4>
@@ -455,7 +490,19 @@ Web 서버에서 받아 온 뒤 다시 시도합니다.</p>
   <li>Available Recipes — 사용할 수 있는 레시피 목록 (Web 서버와 자동 동기화).</li>
   <li>[Load](불러오기) / [New](새로 만들기) / 저장 · 내보내기 · 가져오기 버튼.
       새로 만들기/저장/삭제에는 권한이 필요합니다.</li>
+  <li><strong>새로고침(⟳) 버튼</strong> — [Load] / [New] 옆의 아이콘입니다. Web 에서 방금 만든
+      레시피를 60초 자동 동기화를 기다리지 않고 즉시 가져옵니다. 새로고침이 끝나면 화면 아래
+      상태바에 결과 요약이 표시됩니다 (예: "Web 레시피 3개 — 새 항목 1, 이름 연결 1").
+      0개로 나오면 레시피가 이 라인 번호로 만들어졌는지 확인하라는 힌트가 함께 표시됩니다
+      (자세한 확인 순서는 §7.3 참고).</li>
 </ul>
+<div class="callout tip">
+<strong>비전 설정에서 저장하면 자동으로 반영됩니다:</strong> 비전 설정(VMS.VisionSetup)에서
+지금 사용 중인 레시피를 고쳐 저장하면, 실행 중인 VMS 가 자동으로 다시 불러옵니다 —
+상태바에 "외부 변경 반영 완료"가 표시되며 따로 할 일이 없습니다.
+검사(AUTO RUN)가 도는 중이라면 안전을 위해 바로 바꾸지 않고,
+검사를 멈추면 적용된다는 안내가 표시됩니다.
+</div>
 
 <h4>External Tools 섹션 <span class="chip role-sup">Supervisor 전용</span></h4>
 <ul>
@@ -640,7 +687,7 @@ SSO 를 켠 환경에서 Admin / Engineer 는 Web 으로 인증을 위임하며,
 <strong>2D 사진</strong>으로 합니다 — 그 3D 카메라가 함께 찍는 2D 이미지를 모아 라벨링하세요.
 </div>
 
-<h3 id="vms-templates-3d">3.9 예제 템플릿과 3D 객체 검출 (VMS.VisionSetup)</h3>
+<h3 id="vms-templates-3d">3.9 비전 설정 (VMS.VisionSetup) — 예제 템플릿 · 3D · 스텝 관리</h3>
 <div class="callout"><strong>⚙ 이 절은 검사 레시피를 만드는 엔지니어용입니다.</strong>
 현장에서 검사만 수행하는 작업자는 읽지 않아도 됩니다.</div>
 
@@ -705,10 +752,102 @@ SSO 를 켠 환경에서 Admin / Engineer 는 Web 으로 인증을 위임하며,
   <li><strong>[Clear]</strong> — 측정 결과를 모두 지웁니다.</li>
 </ul>
 
+<h4>점군 화면 조작 — 표시 밀도 · 회전 · 줌</h4>
+<ul>
+  <li><strong>표시 밀도</strong> — 고해상도 3D 카메라의 점군(수백만 점)도 기본으로 전부
+      표시됩니다. 화면이 무겁게 느껴지면 뷰 툴바의 <strong>밀도 버튼</strong>을 눌러
+      자동 → 전체 → 1/2 → 1/4 순서로 표시 밀도를 바꿀 수 있습니다.</li>
+  <li><strong>회전</strong> — 마우스 드래그로 회전하면 점군의 중심을 축으로 턴테이블처럼
+      돌아갑니다. 수평이 유지되어 화면이 뒤집히지 않습니다.</li>
+  <li><strong>줌</strong> — 마우스 휠 한 칸에 조금씩(2%) 확대/축소됩니다.
+      <strong>Ctrl 을 누른 채</strong> 휠을 돌리면 절반(1%)씩 움직여 더 정밀하게 맞출 수 있습니다.
+      Depth Map 화면도 같은 방식으로 동작합니다.</li>
+</ul>
+
 <h4>스텝별 카메라 설정 (Camera Settings 패널)</h4>
 <p>비전 설정에서 스텝을 선택하면 그 스텝이 사용할 카메라 파라미터(노출 등)를 바로
 편집할 수 있습니다. 2D 이미지 보존, Depth 표시 색상(컬러/그레이) 등 카메라 종류에 맞는
 항목이 표시됩니다.</p>
+<p>패널의 <strong>"스텝 정보"</strong> 그룹에서는 스텝에 붙일 정보를 입력합니다:</p>
+<ul>
+  <li><strong>별칭</strong> — 스텝을 알아보기 쉽게 붙이는 자유 이름입니다 (예: "Node 3").
+      입력하면 스텝 목록과 트리에 "1-3 — Node 3" 처럼 이름 옆에 함께 표시됩니다.</li>
+  <li><strong>로봇 노드 번호</strong> — 로봇이 촬영 위치마다 보내는 번호와 이 스텝을
+      짝지을 때 입력합니다. 비워 두면 스텝 순서대로 짝지어집니다.</li>
+</ul>
+
+<h4>스텝 관리 — 이름 · 별칭 · Steps 그리드</h4>
+<ul>
+  <li><strong>스텝 이름은 자동으로 매겨집니다</strong> — "1-1", "1-2" 같은 이름은
+      이 PC 에 등록된 카메라 순서를 기준으로 레시피를 불러올 때마다 자동 계산됩니다.
+      직접 바꿀 수 없으며, 부르기 쉬운 이름이 필요하면 위의 <strong>별칭</strong>을 쓰세요.</li>
+  <li><strong>다른 PC 에서 만든 레시피</strong> — 이 PC 에 등록되지 않은 카메라를 쓰는 스텝은
+      이름이 <strong>"?-1"</strong> 처럼 물음표로 표시되고, 레시피를 불러올 때 등록되지 않은
+      카메라가 있다는 경고 창이 뜹니다. 이 PC 의 카메라로 쓰려면 System Setup 에서
+      해당 카메라를 등록하세요.</li>
+  <li><strong>Steps 그리드는 선택한 카메라의 스텝만 보여줍니다</strong> — 그리드 제목에
+      현재 카메라 이름이 표시됩니다 (예: "Steps — Cam1"). 스텝이 안 보이면 카메라를
+      선택하지 않았거나 그 카메라에 스텝이 없는 것이며, 빈 화면에 어떤 경우인지 안내
+      문구가 표시됩니다. 레시피를 불러오면 레시피가 쓰는 카메라가 자동으로 선택됩니다.</li>
+  <li><strong>Recipe Manager 의 Step Alias 입력란</strong> — 레시피 관리 창에서도 스텝의
+      별칭을 고칠 수 있습니다. 자동으로 매겨지는 이름("1-1")은 여기서도 편집할 수 없습니다.</li>
+</ul>
+
+<h4>툴바에서 바로 촬영 (Grab · Live)</h4>
+<p>화면 위 툴바에 카메라 버튼(▶/■ 배지)이 있어, Camera 메뉴에 들어가지 않아도
+사진 한 장 촬영(Grab)과 실시간 보기(Live) 시작/정지를 바로 할 수 있습니다.
+앱을 켜면 첫 번째 카메라가 자동으로 선택되므로, 카메라 패널을 만지지 않아도
+툴바 버튼이 곧바로 동작합니다.</p>
+
+<h4>측정값 판정 (Judgment) — 기준값 ± 공차</h4>
+<p>엣지 간 거리 같은 측정 도구(Geometry)에 <strong>Judgment</strong> 설정이 있습니다.
+기준값과 공차(+/−)를 입력하면 측정값이 범위 안이면 OK, 벗어나면 NG 로 판정되고
+결과가 화면 위에 겹쳐 표시됩니다. 단위는 mm 또는 픽셀(px) 중에서 고를 수 있습니다.</p>
+<ul>
+  <li><strong>캘리브레이션 없이 mm 로 재기</strong> — 카메라 캘리브레이션을 하지 않았다면,
+      스텝 그리드의 <strong>Resolution (mm/px)</strong> 값을 입력해 두세요. 측정 도구가
+      이 값으로 픽셀을 mm 로 환산합니다.</li>
+  <li><strong>템플릿은 판정까지 연결되어 만들어집니다</strong> — 예제 템플릿의
+      엣지 간 거리 측정 · Blob 검출 · 컬러 객체 검출은 마지막 Result 판정까지
+      연결된 상태로 생성되어, 값만 조정하면 OK/NG 판정이 바로 동작합니다.</li>
+</ul>
+
+<h4>검사 기준값을 Web 에서 관리하기 (파라미터 연동)</h4>
+<p>도구 설정의 판정 기준 입력란 옆에는 <strong>Web 파라미터 연동 콤보</strong>가 있습니다.
+콤보에서 파라미터 코드를 고르면, 검사할 때 그 코드의 Web 기준값을 사용합니다 —
+이후 기준값을 바꿀 일이 있으면 현장에서 도구 설정을 다시 열 필요 없이
+Web 화면(§4.9)에서 값만 고치면 됩니다.</p>
+<ul>
+  <li><strong>연동할 수 있는 곳 (Blob 도구)</strong> — 판정(Judgment)의
+      기대 면적(Expected Area)과 면적 공차(+/−), 그리고 개수 판정의
+      기준 개수와 개수 공차(상/하)입니다.
+      영역 필터(Min/Max Area)는 연동 대상이 아닙니다 — 레시피에서 직접 설정하는 값입니다.
+      예전 레시피에 Min/Max Area 연동이 걸려 있었다면 불러올 때 자동으로 해제됩니다.</li>
+  <li><strong>개수 판정의 Tolerance 모드 (Blob 도구)</strong> — Count Mode 에서
+      <strong>Tolerance</strong> 를 고르면 "기준 개수 ± 공차"로 판정합니다 (Web 연동에 권장).
+      기존 Equal / 이상 / 이하 / Range 모드는 그대로 쓸 수 있습니다.
+      하한 공차에 음수를 넣어도 크기로 알아서 해석합니다.</li>
+  <li><strong>측정 도구 (Geometry)</strong> — Judgment 의 기준값(Expected Value)과
+      공차(+/−)를 연동할 수 있습니다. Web 의 Dimension Tool 프리셋
+      (Reference Value / Upper·Lower Tolerance)과 항목이 1:1 로 맞습니다.
+      mm/px 해석은 Judgment 의 단위 설정을 따릅니다.</li>
+  <li><strong>콤보 목록은 자동으로 최신 상태</strong> — Web 에서 파라미터를 추가/수정/삭제하면
+      열려 있는 연동 콤보에 곧바로(약 1초) 반영됩니다. 네트워크가 잠시 끊겨도 60초 안에
+      자동으로 따라잡습니다. 프로그램을 다시 시작할 필요가 없습니다.</li>
+  <li><strong>레시피는 Web 에 자동 등록</strong> — 비전 설정에서 만든 레시피는 같은 이름으로
+      Web 원장에 자동 등록됩니다 (이미 같은 이름이 있으면 그 항목에 자동 연결).
+      관리자는 Web 에서 파라미터만 추가하면 연동 준비가 끝납니다.
+      오프라인 상태였다면 연결이 돌아올 때 자동으로 다시 등록됩니다.
+      레시피를 불러오면 연동 콤보에는 그 레시피의 파라미터 코드 목록이 표시됩니다.
+      반대로 Web 에서 만든 레시피도 Recipe Manager 창이 열려 있는 동안 목록에
+      자동으로 나타납니다 — 창을 닫았다 다시 열 필요가 없습니다.</li>
+</ul>
+
+<h4>검사 통계를 PLC 로 보내기 (Result 도구)</h4>
+<p>Result 도구 설정에 <strong>PLC Output</strong> 항목이 있습니다. 합격 수(PassCount) ·
+불량 수(FailCount) · 전체 수(TotalCount) 통계를 PLC 주소에 실어 보낼 수 있습니다.
+검사 1건의 최종 OK/NG 신호는 지금까지처럼 시퀀스 에디터의 분기(Branch) → 출력(Output)
+단계가 담당합니다 — 도구 설정의 도움말에도 같은 안내가 있습니다.</p>
 </section>
 
 <!-- ============================================================ -->
@@ -732,17 +871,31 @@ SSO 를 켠 환경에서 Admin / Engineer 는 Web 으로 인증을 위임하며,
       다시 입력할 필요가 없습니다.</li>
 </ol>
 
+<h4>가입 승인과 사용자 관리 (관리자)</h4>
+<ul>
+  <li>새 가입 신청이 들어오면 관리자 화면의 알림 종에 알림이 표시되어 놓치지 않습니다.</li>
+  <li>승인하려면 사이드 메뉴 System 그룹의 <strong>사용자 승인</strong> 페이지를 열어
+      "승인 대기" 목록에서 승인 또는 거절합니다.</li>
+  <li>같은 페이지에서 기존 사용자의 <strong>역할 변경</strong>(예: User → Admin)과
+      <strong>사용자 삭제</strong>도 할 수 있습니다. 삭제는 되돌릴 수 없으니 확인 창에서
+      한 번 더 확인합니다.</li>
+</ul>
+
 <h3 id="web-nav">4.2 사이드 메뉴 구조</h3>
 <p>왼쪽 사이드 메뉴는 업무 성격별로 다음과 같이 묶여 있습니다:</p>
 <table>
   <tr><th>그룹</th><th>페이지</th></tr>
   <tr><td>Monitoring</td><td>Dashboard / Andon Board / Alarms / Production History</td></tr>
-  <tr><td>Production</td><td>Work Orders / Products / Inspection Items / Lots</td></tr>
-  <tr><td>Quality</td><td>Quality Analysis / SPC / Defect Codes</td></tr>
-  <tr><td>People</td><td>Operators / Shifts</td></tr>
-  <tr><td>Maintenance</td><td>Maintenance Schedules</td></tr>
-  <tr><td>Admin</td><td>Clients / Users / Audit Logs / Reports</td></tr>
+  <tr><td>Production</td><td>Work Orders / Products / Operators</td></tr>
+  <tr><td>Quality</td><td>Inspection Items(검사 항목) / Quality Analysis / SPC / Defect Codes / 교대 리포트 / PDF 리포트</td></tr>
+  <tr><td>Equipment</td><td>Clients(라인) / OEE / 설비 신뢰성 / Maintenance / 불량률 예측</td></tr>
+  <tr><td>System <span class="chip muted">관리자 전용</span></td><td>Shifts / 사용자 승인 / Audit Logs / 시스템 설정</td></tr>
 </table>
+<div class="callout">
+<strong>검사 항목(Inspection Items)은 Quality 그룹에 있습니다.</strong> 검사 기준값은 품질
+기준 정보이므로 일반 사용자(User)도 조회할 수 있고, 추가/수정/삭제는 관리자(Admin)만
+할 수 있습니다. 로그인하지 않은 사용자에게는 보이지 않습니다.
+</div>
 
 <h3 id="web-dashboard">4.3 Dashboard</h3>
 <p>공장 전체 현황을 한 화면에 보여주는 상황판입니다. 전체 라인 수, 합격률(Pass Rate),
@@ -792,13 +945,45 @@ Planned(예정) → InProgress(진행 중) → Completed(완료) → Closed(마�
 
 <h3 id="web-recipes">4.9 Inspection Items (Recipes + Parameters)</h3>
 <p>검사 레시피와 그 안의 파라미터(검사 기준값)를 관리하는 화면입니다.
-여기서 수정한 내용은 VMS 가 60초마다 자동으로 내려받아 사용합니다.</p>
+사이드 메뉴의 <strong>Quality</strong> 그룹에 있으며, 조회는 일반 사용자(User)도 할 수 있고
+추가/수정/삭제는 관리자(Admin)만 할 수 있습니다.
+여기서 수정한 값은 VMS 가 1분 안에 자동으로 내려받아 사용하고,
+비전 설정(VMS.VisionSetup)의 파라미터 연동 목록에는 곧바로(약 1초) 반영됩니다 (§3.9).</p>
 <ul>
+  <li>화면 위에서 라인을 먼저 고릅니다 — 레시피는 라인별로 관리됩니다.</li>
   <li>레시피는 Pattern / Blob / Dimension 세 갈래로 나뉘어 트리로 표시됩니다.</li>
   <li>파라미터마다 코드 번호(ParamCode), 기준값(ParamValue), 설명, 단위, 상한/하한, 사용 여부를 지정합니다.</li>
   <li>VMS 는 검사할 때 기준값(ParamValue)을 사용합니다. 상한/하한은 앞으로 제공될
       통계 기반 판정(SPC)에 쓰일 예정입니다.</li>
 </ul>
+
+<h4>레시피 만들기 · 지우기</h4>
+<ul>
+  <li>레시피를 만들 때 다이얼로그에 <strong>"대상 라인: ○○ — 이 레시피는 해당 라인의 VMS 에만
+      내려갑니다"</strong> 안내가 표시됩니다. 다른 라인용 레시피라면 취소하고 화면 위에서
+      라인을 먼저 바꾼 뒤 다시 만드세요.</li>
+  <li>비전 설정(VMS.VisionSetup)에서 만든 레시피는 이 화면에 <strong>자동으로 등록</strong>됩니다 —
+      관리자는 그 레시피에 파라미터만 추가하면 됩니다 (§3.9 파라미터 연동).</li>
+  <li><strong>삭제 보호</strong> — 작업지시가 참조하고 있는 레시피는 지울 수 없습니다.
+      삭제를 시도하면 "레시피를 참조하는 작업지시가 있어 삭제할 수 없습니다" 안내가 표시됩니다.
+      해당 작업지시를 먼저 정리한 뒤 지우세요.</li>
+</ul>
+
+<h4>파라미터 프리셋으로 한 번에 추가</h4>
+<p>파라미터를 하나씩 만들지 않고, 도구 유형별 프리셋으로 관련 파라미터를 한 번에 만들 수 있습니다:</p>
+<ol class="steps">
+  <li>레시피를 선택하고 <strong>[프리셋 일괄 추가]</strong> 메뉴를 엽니다.</li>
+  <li>도구 유형을 고릅니다 — Pattern Tool(점수·각도·배율·위치 등 7개) /
+      Blob Tool(임계값·면적 기준과 공차·개수 기준과 공차 7개) /
+      Dimension Tool(기준값·공차 3개).</li>
+  <li><strong>미리보기 창</strong>에 만들어질 파라미터 목록(코드 · 설명 · 단위)이 표시됩니다.
+      확인하고 [추가] 를 누릅니다.</li>
+  <li>값은 0 으로 만들어지므로, 추가한 뒤 각 행에서 실제 기준값을 입력합니다.</li>
+</ol>
+<div class="callout tip">
+Blob Tool 프리셋의 7개 항목은 비전 설정 Blob 도구의 연동 콤보(면적 기준/공차, 개수 기준/공차,
+임계값)와 1:1 로 맞춰져 있어, 프리셋으로 추가하면 바로 연동해 쓸 수 있습니다 (§3.9).
+</div>
 
 <h3 id="web-operators">4.10 Operators</h3>
 <p>현장 작업자를 관리하는 화면으로, 탭 3개로 나뉩니다:</p>
@@ -1119,6 +1304,20 @@ PowerShell 명령을 다룹니다.</div>
   <li>Web 서버의 이벤트 뷰어 로그에서 검사 결과 수신 기록이 있는지 확인합니다.</li>
   <li>레시피와 라인 번호(ClientIndex)가 VMS 와 Web 양쪽에서 일치하는지 확인합니다.</li>
 </ol>
+
+<h4>Web 에서 만든 레시피가 VMS 에 보이지 않음</h4>
+<ol>
+  <li>VMS 사이드 패널 Recipe 섹션의 <strong>새로고침(⟳)</strong> 버튼을 누르고,
+      상태바의 요약 메시지를 확인합니다 — "Web 레시피 N개 — 새 항목 M, 이름 연결 K"
+      형태로 방금 가져온 결과를 알려 줍니다 (§3.3).</li>
+  <li>요약이 <strong>0개</strong>로 나오면 레시피가 다른 라인으로 만들어진 경우가 대부분입니다.
+      Web 의 검사 항목 화면에서 레시피의 대상 라인과 이 VMS 의 라인 번호(ClientIndex)가
+      같은지 확인하세요 (§4.9).</li>
+  <li>VMS 나 비전 설정을 시작할 때 <strong>"Web 연동 비활성"</strong> 경고 창이 떴다면,
+      운영(Production) 보안 모드에서 서버 주소가 안전하지 않은 원격 http 주소로 설정되어
+      Web 연동이 꺼진 것입니다. System Setup 에서 서버 주소를 <code>https://...</code> 로
+      바꾸세요 (같은 PC 를 가리키는 localhost 주소는 http 여도 됩니다).</li>
+</ol>
 </section>
 
 <!-- ============================================================ -->
@@ -1203,6 +1402,34 @@ PowerShell 명령을 다룹니다.</div>
       (§3.3, §3.9).</li>
   <li><strong>업데이트 확인</strong>: 새 버전 확인을 배포 전용 저장소에서 받도록 개선
       (사용 방법 변화 없음, §6.5).</li>
+</ul>
+
+<p>SW v1.5.4 ~ v1.5.12 반영 (2026-08-11 갱신):</p>
+<ul>
+  <li><strong>설치 / 구성</strong>: 설치 파일(MSI)에 Web 서버 동봉 (구성 선택에서 포함/제외),
+      설정 마법사에 "Web 서버 초기 구성 (이 PC)" 카드 — 비밀번호 입력만으로 서버 구성 + 시작,
+      서비스가 멈춰 있으면 [서비스 시작 (관리자 권한)] 버튼 (§2.1~2.2).</li>
+  <li><strong>레시피 연동</strong>: Recipe 섹션 새로고침(⟳) 버튼 + 상태바 동기화 요약,
+      비전 설정에서 저장하면 실행 중인 VMS 에 자동 반영, 비전 설정 레시피의 Web 자동 등록,
+      레시피 만들 때 대상 라인 안내, "Web 연동 비활성" 경고와 해결 방법
+      (§3.3, §3.9, §4.9, §7.3).</li>
+  <li><strong>검사 기준값 Web 관리</strong>: Blob 면적/개수 공차 · Geometry 기준값/공차의
+      Web 파라미터 연동, Blob 개수 Tolerance 판정 모드, 파라미터 프리셋 일괄 추가 + 미리보기,
+      연동 콤보 즉시 반영 (§3.9, §4.9).</li>
+  <li><strong>판정 강화</strong>: 측정 도구 Judgment (기준값 ± 공차, OK/NG 오버레이),
+      캘리브레이션 없이 Resolution 값으로 mm 환산, 템플릿의 Result 판정 연결,
+      Result 도구의 PLC 통계 전송 (§3.9).</li>
+  <li><strong>카메라</strong>: 비전 설정 툴바 Grab/Live 버튼 + 첫 카메라 자동 선택,
+      VMS Grab/Live 비활성 사유 툴팁, Basler 스텝별 노출/게인 적용 + 자동 노출/게인 해제,
+      Save Parameter 결과 메시지 (§3.3, §3.9).</li>
+  <li><strong>3D 점군 뷰어</strong>: 표시 밀도 버튼(자동/전체/1/2/1/4), 점군 중심 턴테이블 회전,
+      휠 줌 + Ctrl 정밀 줌 (§3.9).</li>
+  <li><strong>스텝 관리</strong>: 스텝 별칭 · 로봇 노드 번호 입력, 스텝 이름 자동 계산과
+      미등록 카메라 "?-n" 표시 + 경고, Steps 그리드는 선택한 카메라 기준 표시 (§3.9).</li>
+  <li><strong>대시보드</strong>: TACT TIME 은 자동 검사 간격만 표시(수동 검사 미반영),
+      PROC ms(처리 시간) 병기 (§3.1).</li>
+  <li><strong>Web 화면</strong>: 검사 항목이 Quality 그룹으로 이동 (조회 User · 편집 Admin),
+      레시피 삭제 보호, 가입 신청 알림 · 역할 변경 · 사용자 삭제 (§4.1, §4.2, §4.9).</li>
 </ul>
 
 <p>전체 변경 사항은 양쪽 저장소의 <code>CHANGELOG.md</code> 참조.</p>
