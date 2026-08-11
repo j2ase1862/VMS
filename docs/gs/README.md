@@ -42,35 +42,11 @@ node gen_user_manual.js   # → ../VMS_사용자매뉴얼_v1.1.docx
 - 매뉴얼 갱신 시: HTML 본문(`docs/manuals/BODA-VMS-User-Manual.html`)에 반영하고
   §8.4 변경 이력에 요약 추가 → docx 재생성 → 아래 표 비우기 (반영 완료 기준선 갱신)
 
-**반영 완료 기준선: SW v1.5.3 (PR #262) — 2026-07-28 docx 재생성 완료**
+**반영 완료 기준선: SW v1.5.11 + v1.5.12 예정분(#293~#300) — 2026-08-11 docx 재생성 완료**
 
 | PR | 매뉴얼에 들어갈 내용 | 대상 절 |
 |----|--------------------|--------|
-| #285 | AppSetup Web 서버 카드(구성 완료 상태)에 [서비스 시작 (관리자 권한)] 버튼 추가 — 서비스가 Stopped 일 때만 표시, 클릭 시 UAC 승인 → 자동시작 전환 + 시작 + 응답 확인. Stopped 상태 문구도 버튼 안내로 변경 | AppSetup Page 2 절 (§2.x) |
-| #286 | 카메라 Save Parameter 가 결과 메시지를 표시(저장 완료/실패/카메라 미등록 시 AppSetup 실행 안내). 부수: Save Parameter·AppSetup 재저장이 서로의 설정(보안 모드·Web SSO ↔ 노출/게인)을 초기화하던 문제 해소 — 트러블슈팅 서술이 있다면 갱신 | 카메라 설정 절 (Save Parameter 언급 위치) |
-| #287 | VMS Recipe 패널에 새로고침 버튼 추가(Load/New 옆 아이콘) — Web 에서 만든 레시피를 60초 자동 동기화 전에 즉시 가져옴. VisionSetup Recipe Manager 는 창이 열려 있는 동안에도 Web 레시피 자동 반영 | VMS Recipe 절 + VisionSetup Recipe Manager 절 |
-| #288 | 새로고침 시 상태바에 동기화 요약 표시("Web 레시피 N개 (ClientIndex i) — 새 항목 M, 이름 연결 K") — 0개면 라인 확인 힌트. Production 에서 Web URL 이 비-loopback HTTP 면 시작 시 "Web 연동 비활성" 경고 대화상자 (VMS·VisionSetup). Web 쪽 짝: 레시피 생성 다이얼로그 대상 라인 경고 (BODA.VMS.Web #47) | VMS Recipe 절 + 트러블슈팅 (Web 연동) |
-| #290 | 대시보드 TACT TIME 은 AUTO RUN 중 검사 간 간격만 표시(수동 Inspect 는 미갱신 — 대기 시간 오인 방지), 카드에 "PROC N ms"(마지막 검사 처리 시간) 병기 | 대시보드/KPI 절 (Tact Time 설명 위치) |
-| #291 | VisionSetup 에서 레시피 저장 시 실행 중인 VMS 가 자동으로 다시 불러옴 (상태바 "외부 변경 반영 완료" 표시, AUTO RUN 중이면 정지 시 적용 안내) — "저장 후 VMS 재로드" 수동 절차 서술이 있다면 갱신 | VMS Recipe 절 + VisionSetup 연동 절 |
-| #264 | DeepLearning 체크박스·슬라이더가 다크 테마로 바뀜(파란 채움 체크, 파란 트랙 슬라이더) — 본문 서술 변경 없음, §3.8 스크린샷·컨트롤 이미지가 구식이 됨. `--capture-controls` 재캡처 필요 | §3.8 |
-| #264 | VisionSetup 라디오버튼 5곳 다크 테마 적용(이미지 폴더 탐색 모드 Navigate/Run All/Run Selected, Geometry3D Point Source) — 해당 컨트롤이 보이는 스크린샷 구식화. `--capture-controls` 재캡처 필요 | §3.9 (Geometry3D), §3.1~3.2 (탐색 모드 노출 시) |
-| #264 | VMS.WeldTeach 신규 앱 — **GS 인증·사용자 매뉴얼 범위에서 제외 확정** (2026-08-04). 관리자 매뉴얼(`docs/manuals/BODA-VMS-Admin-Manual.html`) §9 에 수록 완료 — 사용자 매뉴얼에는 반영할 것 없음 | (완료 — 관리자 매뉴얼 §9) |
-| #275 | 점군 뷰어 개선 3종 — ① **표시 밀도**: Mech-Mind 풀해상도(310만 점)가 기본 전체 표시(기존 1/4 간축), 뷰 툴바에 **밀도 버튼**(자동→전체→1/2→1/4) 신설 ② **회전**: 점군 중심 턴테이블 방식(수평 유지·뒤집힘 방지) ③ **휠 줌**: Point Cloud 2%/노치·Depth Map ×1.02, **Ctrl+휠 = 정밀 줌**(1%/×1.01). Point Cloud 탭 스크린샷·조작 설명 갱신 필요 | §3.4~3.5 (3D 뷰어 조작), VMS 본체 3D 화면 절 |
-| #272 | 스텝 별칭·로봇 노드 번호 — Camera Settings 패널에 **"스텝 정보"** 그룹 신설: **별칭**(자유 라벨, 예: "Node 3" — 그리드/트리에 "1-3 — Node 3" 병기)과 **로봇 노드 번호**(로봇이 보내는 노드 index 와 스텝 매칭, 비우면 순번 매칭) 입력란. Recipe Manager 의 Step Name 입력란은 **Step Alias**(별칭 편집)로 변경 — 파생 이름은 편집 불가 | §3.2 (스텝 관리), 로봇 연동 절 있으면 해당 절 |
-| (신규) | MSI 에 Web 서버 동봉 — 설치 옵션에 "BODA VMS Web 서버" Feature 추가(기본 포함), AppSetup Page 2 에 **"Web 서버 초기 구성 (이 PC)"** 카드 신설: admin 비밀번호 입력만으로 Web 서버 구성+시작 (수동 sc.exe 절차 대체). Page 2 스크린샷 구식화 — `--capture-fullpage` 재캡처 필요 | §2 (설치), §5.5 부근 (Web 연동 설정) |
-| #272 | 스텝 이름 파생화 — 스텝 이름("1-1")은 저장값이 아니라 **현재 PC 카메라 등록 순서 기준으로 로드 시마다 재계산**. 이 PC에 등록 안 된 카메라의 스텝은 **"?-n"**으로 표시(다른 PC에서 만든 레시피의 스텝과 새 스텝의 이름 중복 문제 해소). 미등록 카메라를 참조하는 레시피 로드 시 **경고 대화상자** 표시 | §3.2 (스텝 관리), §5 (레시피 이동/호환 안내 있으면 해당 절) |
-| #272 | VisionSetup Steps 그리드 의미 변경 — 항상 **"선택된 카메라의 스텝"만** 표시(기존: 카메라 미선택 시 전체 스텝 표시 → 선택 시 사라져 보이는 혼동). ① Recipe 로드 시 레시피가 참조하는 카메라 자동 선택 ② 그리드 빈 상태 안내 문구(카메라 미선택 / 해당 카메라 스텝 없음) ③ Steps 헤더에 현재 카메라 이름 표시("Steps — Cam1") | §3.2 (스텝 관리) |
-| #270 | 엣지 간 거리 측정 판정 체인 완성: ① 스텝 그리드의 **Resolution(mm/px)이 이제 실제로 동작** — 캘리브레이션 없을 때 측정 도구 mm 폴백 (기존엔 죽은 속성) ② Geometry 도구에 **Judgment**(기준값 ± 공차, mm/px 단위, OK/NG 오버레이) ③ 템플릿에 Result 판정 연결 추가 — 엣지 간 거리·**Blob 검출·컬러 객체 검출** ④ BlobTool Max Area/Perimeter/AspectRatio 기본값 E+308 → 읽을 수 있는 수(1e8/1e6/1000) ⑤ Run Results 그리드 높이 300·스크롤 통일. 도구 파라미터 표(extract_tool_params) 재생성 필요 | §3.9 (템플릿·Geometry/Blob 파라미터) |
-| #282 | VisionSetup 툴바에 **Camera Live 시작/정지 버튼** 신설(카메라 아이콘 + ▶/■ 배지) — Camera 메뉴 진입 없이 Grab/Live/정지 가능. 앱 시작 시 **첫 카메라 자동 선택**(카메라 패널 조작 없이 툴바 바로 동작). 툴바 스크린샷 구식화 — 재캡처 필요 | §3.1~3.2 (VisionSetup 화면 구성·카메라 조작) |
-| #282 | VMS 카메라 카드 컨트롤 박스 — Grab/Live 버튼이 비활성일 때 **툴팁으로 사유 표시**(Start/Stop 권한 없음 / Operator 로그인 필요 / 카메라 미연결). Grab 도 Live 와 동일한 권한 게이트 적용 | VMS 운영 절 (카메라 조작), 트러블슈팅 절 있으면 해당 절 |
-| #282 | Basler 카메라 — 스텝 **노출/게인 설정이 실제 적용**되기 시작(기존 미지원), 연결 시 자동 노출/게인 Off (Grab 밝기 요동 해소). pylon Viewer 튜닝값을 쓰려면 "카메라 설정 유지" 체크(기본) 안내 | §3.2 (카메라 설정), Basler 연동 안내 절 있으면 해당 절 |
-| #293 | BlobTool Web 파라미터 연동 위치 변경 — Judgment 의 **Expected Area / Area Tolerance (+) / (-)** 에 Web 파라미터 연동 콤보 신설, Area Filter 의 Min/Max Area 연동 콤보는 **제거**(필터는 레시피 로컬 설정). 기존 레시피에 걸려 있던 Min/Max Area 연동은 로드 시 자동 해제 — 연동 설명·스크린샷이 있다면 갱신 | §3.9 (Blob 파라미터), Web 파라미터 연동 절 |
-| #294 | BlobTool 개수 판정에 **Tolerance 모드** 신설 (기준 개수 ± 공차, Web 연동 권장) — Count Mode 콤보에 Tolerance 추가, **Count Upper Tol / Count Lower Tol** 입력란 + Web 연동 콤보 신설. 기존 Equal/≥/≤/Range 모드는 불변. 하한 공차는 음수 입력해도 크기로 해석. 도구 파라미터 표(extract_tool_params) 재생성 필요 | §3.9 (Blob 파라미터), Web 파라미터 연동 절 |
-| #295 | GeometryTool Judgment 의 **Expected Value / Tolerance (+)(−)** 에 Web 파라미터 연동 콤보 신설 — Web Dimension Tool 프리셋(Reference Value / Upper·Lower Tolerance)과 1:1. mm/px 해석은 Judgment Unit 설정을 따름 | §3.9 (Geometry 파라미터), Web 파라미터 연동 절 |
-| #296 | ResultTool 설정에 **PLC Output 섹션 노출** — PassCount/FailCount/TotalCount 통계 키를 PLC 로 전송 가능. 최종 OK/NG 출력은 기존대로 시퀀스 에디터 Branch→OutputAction 담당(도움말에 안내 추가) — ResultTool 설정 화면 스크린샷 구식화 | §3.9 (Result 도구), 시퀀스/PLC 연동 절 |
-| #297 | 툴 설정의 **ParamCode 연동 콤보가 Web 파라미터 변경을 자동 반영** — 설정을 열면 즉시 최신화 + 열려 있는 동안 60초 주기 갱신(기존 선택 유지). "파라미터 추가 후 VisionSetup 재시작" 류의 서술이 있다면 삭제 | Web 파라미터 연동 절 |
-| #298 | VisionSetup 생성 레시피가 **Web 원장에 자동 등록**(이름 기준 멱등, 오프라인 시 60초 동기화 때 재시도) — 동일 이름 Web 레시피는 ID 자동 연결. 레시피 로드 시 ParamCode 콤보가 **로드된 레시피의 코드**를 표시(기존: 첫 레시피 고정). Web 짝: BODA.VMS.Web #53 | VisionSetup Recipe 절 + Web 파라미터 연동 절 |
-| #300 | Web에서 파라미터 추가/수정/삭제 시 VisionSetup ParamCode 콤보가 **즉시(~1초) 반영** — SignalR 푸시 구독(끊기면 60초 폴링 안전망). #297의 "60초 주기" 서술을 "즉시 반영"으로 갱신. Web 짝: BODA.VMS.Web #54 | Web 파라미터 연동 절 |
+| (잔여) | 3D 점군 뷰어 조작 스크린샷 갱신 (#275 밀도 버튼·툴바) — **실점군 로드 상태에서 수동 캡처 필요** (자동 캡처 도구는 점군 화면 미포함). 본문 서술은 반영 완료 | §3.9 (점군 화면 조작) |
 
 ## guides/ — 가이드 문서
 
