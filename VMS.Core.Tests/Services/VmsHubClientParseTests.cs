@@ -1,0 +1,33 @@
+using System.Text.Json;
+using VMS.Core.Services;
+using Xunit;
+
+namespace VMS.Core.Tests.Services
+{
+    /// <summary>
+    /// RecipeParametersChanged 페이로드 파싱 — Web 은 camelCase({"recipeId":N})로
+    /// 브로드캐스트하지만 직렬화 설정 변화에 대비해 PascalCase 도 허용.
+    /// </summary>
+    public class VmsHubClientParseTests
+    {
+        private static JsonElement Parse(string json) => JsonDocument.Parse(json).RootElement;
+
+        [Theory]
+        [InlineData("{\"recipeId\": 7}", 7)]
+        [InlineData("{\"RecipeId\": 12}", 12)]
+        public void TryParseRecipeId_ValidPayload_ReturnsId(string json, int expected)
+        {
+            Assert.Equal(expected, VmsHubClient.TryParseRecipeId(Parse(json)));
+        }
+
+        [Theory]
+        [InlineData("{}")]
+        [InlineData("{\"recipeId\": \"abc\"}")]
+        [InlineData("[1,2]")]
+        [InlineData("5")]
+        public void TryParseRecipeId_InvalidPayload_ReturnsNull(string json)
+        {
+            Assert.Null(VmsHubClient.TryParseRecipeId(Parse(json)));
+        }
+    }
+}

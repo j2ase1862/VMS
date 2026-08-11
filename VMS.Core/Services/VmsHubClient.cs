@@ -28,6 +28,12 @@ namespace VMS.Core.Services
         /// <summary>WO 가 막 Completed 전이됨.</summary>
         public event Action<WorkOrderProgressDto>? WorkOrderCompleted;
 
+        /// <summary>
+        /// Web 에서 레시피 파라미터가 추가/수정/삭제됨 (recipeId) — 수신 측은 해당
+        /// 레시피가 로드돼 있으면 파라미터 캐시를 즉시 재동기화 (60초 폴링은 안전망).
+        /// </summary>
+        public event Action<int>? RecipeParametersChanged;
+
         /// <summary>연결 상태 변경 이벤트 (true=Connected).</summary>
         public event Action<bool>? ConnectionChanged;
 
@@ -86,6 +92,12 @@ namespace VMS.Core.Services
                 if (dto != null) WorkOrderCompleted?.Invoke(dto);
             });
 
+            _connection.On<JsonElement>("RecipeParametersChanged", elem =>
+            {
+                var recipeId = TryParseRecipeId(elem);
+                if (recipeId is int id) RecipeParametersChanged?.Invoke(id);
+            });
+
             _connection.Reconnected += _ =>
             {
                 ConnectionChanged?.Invoke(true);
@@ -114,6 +126,17 @@ namespace VMS.Core.Services
                 // 실패해도 _connection 은 살아있어서 다음 호출에서 재시도 가능. 운영 정책상
                 // 단순화를 위해 별도 backoff 는 안 둠 — 사용자 액션 (재로그인 등) 시 재시도.
             }
+        }
+
+        /// <summary>{"recipeId": N} 페이로드에서 recipeId 추출 (camelCase/PascalCase 허용).</summary>
+        internal static int? TryParseRecipeId(JsonElement elem)
+        {
+            if (elem.ValueKind != JsonValueKind.Object) return null;
+            if (elem.TryGetProperty("recipeId", out var v)
+                && v.ValueKind == JsonValueKind.Number && v.TryGetInt32(out var id)) return id;
+            if (elem.TryGetProperty("RecipeId", out var v2)
+                && v2.ValueKind == JsonValueKind.Number && v2.TryGetInt32(out var id2)) return id2;
+            return null;
         }
 
         /// <summary>
