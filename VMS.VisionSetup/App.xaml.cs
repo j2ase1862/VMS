@@ -6,9 +6,11 @@ using System.Text.Json;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Shell;
+using CommunityToolkit.Mvvm.Messaging;
 using VMS.Camera.Interfaces;
 using VMS.Camera.Models;
 using VMS.Camera.Services;
+using VMS.VisionSetup.Models;
 using VMS.Core.Interfaces;
 using VMS.Core.Services;
 using VMS.VisionSetup.Interfaces;
@@ -81,6 +83,13 @@ namespace VMS.VisionSetup
 
                 // ToolSettings ParamCode ComboBox 용 정적 참조 설정
                 ToolSettingsViewModelBase.SyncService = parameterSyncService;
+
+                // Web에서 파라미터를 추가/수정하면 열려 있는 툴 설정의 ParamCode 콤보도
+                // 따라 갱신되도록 서비스 이벤트를 Messenger 로 브리지 (60초 주기 동기화 포함)
+                parameterSyncService.SyncCompleted += (_, _) =>
+                    WeakReferenceMessenger.Default.Send(new WebParamCacheUpdatedMessage());
+                parameterSyncService.RecipeLoaded += (_, _, _) =>
+                    WeakReferenceMessenger.Default.Send(new WebParamCacheUpdatedMessage());
 
                 // 시작 시 레시피 목록 + 첫 번째 레시피 파라미터 로드 (백그라운드)
                 _ = Task.Run(async () =>

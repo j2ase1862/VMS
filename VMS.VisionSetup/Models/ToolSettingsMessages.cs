@@ -28,6 +28,12 @@ namespace VMS.VisionSetup.Models
     public sealed class RequestTrainPatternMessage { }
     public sealed class RequestAutoTuneMessage { }
 
+    /// <summary>
+    /// Web 파라미터 캐시 갱신 알림 (ParameterSyncService.SyncCompleted/RecipeLoaded →
+    /// App.xaml.cs 브리지가 발행). 열려 있는 툴 설정의 ParamCode 콤보가 이걸 받아 재구성.
+    /// </summary>
+    public sealed class WebParamCacheUpdatedMessage { }
+
     // Sequence editor messages
     public sealed class SequenceConfigChangedMessage
     {
