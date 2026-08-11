@@ -2576,13 +2576,27 @@ namespace VMS.VisionSetup.ViewModels
             try
             {
                 _cameraAcquisition?.Dispose();
-                _cameraAcquisition = CameraAcquisitionFactory.Create(SelectedCamera);
+                var creation = CameraAcquisitionFactory.CreateWithInfo(SelectedCamera);
+                _cameraAcquisition = creation.Acquisition;
+
+                // SDK 미탑재 폴백 — 조용히 시뮬레이션으로 넘어가면 현장에서 실카메라로
+                // 오인한다 (2026-08 Basler 실증 사태). 연결 전에 명시적으로 경고.
+                if (creation.IsSimulationFallback)
+                {
+                    _dialogService.ShowWarning(
+                        $"{SelectedCamera.Name}: {creation.FallbackReason}\n\n" +
+                        "이 빌드에는 해당 카메라 SDK가 포함되어 있지 않습니다. " +
+                        "화면에 표시되는 영상은 시뮬레이션이며 실제 카메라 영상이 아닙니다.",
+                        "SDK 미탑재 — 시뮬레이션 모드");
+                }
 
                 var success = await _cameraAcquisition.ConnectAsync(SelectedCamera);
                 IsCameraConnected = success;
 
                 StatusMessage = success
-                    ? $"카메라 연결됨: {SelectedCamera.Name}"
+                    ? (creation.IsSimulationFallback
+                        ? $"카메라 연결됨(시뮬레이션 — SDK 미탑재): {SelectedCamera.Name}"
+                        : $"카메라 연결됨: {SelectedCamera.Name}")
                     : $"카메라 연결 실패: {SelectedCamera.Name}";
 
                 if (success)

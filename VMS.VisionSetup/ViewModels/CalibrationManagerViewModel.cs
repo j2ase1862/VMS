@@ -289,7 +289,13 @@ namespace VMS.VisionSetup.ViewModels
                         _cameraAcquisition = null;
                     }
 
-                    _cameraAcquisition = CameraAcquisitionFactory.Create(SelectedCamera);
+                    var creation = CameraAcquisitionFactory.CreateWithInfo(SelectedCamera);
+                    _cameraAcquisition = creation.Acquisition;
+                    if (creation.IsSimulationFallback)
+                    {
+                        // 캘리브레이션은 실카메라가 전제 — 시뮬레이션 폴백을 명시 (mm 환산 무의미)
+                        StatusMessage = $"⚠ {creation.FallbackReason} — 캘리브레이션 결과를 신뢰할 수 없습니다";
+                    }
                     var connected = await _cameraAcquisition.ConnectAsync(SelectedCamera);
                     if (!connected)
                     {
