@@ -269,12 +269,7 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
 
                 var items = SyncService.GetAll();
                 if (items.Count > 0)
-                {
-                    // 헤드리스(테스트) 환경엔 Application 이 없다 — 직접 반영
-                    var dispatcher = System.Windows.Application.Current?.Dispatcher;
-                    if (dispatcher == null) PopulateFromCache(items);
-                    else dispatcher.BeginInvoke(() => PopulateFromCache(items));
-                }
+                    ApplyParamCodes(items);
             }
             catch (Exception ex)
             {
@@ -289,14 +284,22 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         private void RefreshParamCodesFromCache()
         {
             if (SyncService == null) return;
-            var items = SyncService.GetAll();
+            ApplyParamCodes(SyncService.GetAll());
+        }
 
+        /// <summary>
+        /// 콤보 재구성 + 전체 프로퍼티 통지 — 재구성 중 WPF 가 밀어넣는 SelectedItem=null 은
+        /// SetLinkedParamCode 가 무시하므로 기존 링크가 보존되고, 통지로 선택이 복원된다.
+        /// </summary>
+        private void ApplyParamCodes(List<Core.Models.ParameterSync.RecipeParameterDto> items)
+        {
             void Apply()
             {
                 PopulateFromCache(items);
                 OnPropertyChanged(string.Empty);
             }
 
+            // 헤드리스(테스트) 환경엔 Application 이 없다 — 직접 반영
             var dispatcher = System.Windows.Application.Current?.Dispatcher;
             if (dispatcher == null) Apply();
             else dispatcher.BeginInvoke(Apply);
@@ -353,7 +356,13 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         /// </summary>
         public void SetLinkedParamCode(string propertyName, ParamCodeItem? item)
         {
-            if (item == null || item.ParamCode == null)
+            // item == null 은 사용자 조작이 아니라 콤보 ItemsSource 재구성(Clear) 때
+            // WPF 가 SelectedItem=null 을 밀어넣는 노이즈 — 링크를 지우면 안 된다
+            // (Web 파라미터 추가 → 콤보 갱신 → 기존 링크 소실 사고, 2026-08-11).
+            // 명시적 해제는 "(None)" 항목(ParamCode == null 인 실제 항목) 선택으로만.
+            if (item == null) return;
+
+            if (item.ParamCode == null)
             {
                 // 연동 해제
                 Tool.LinkedParamCodes.Remove(propertyName);

@@ -33,6 +33,24 @@ namespace VMS.VisionSetup.Tests
         }
 
         [Fact]
+        public void ComboReset_NullPush_DoesNotWipeLinks()
+        {
+            // 콤보 ItemsSource 재구성(Clear) 시 WPF 가 SelectedItem=null 을 바인딩으로
+            // 밀어넣는다 — 이를 해제로 해석해 Web 파라미터 추가 때마다 기존 링크가
+            // 지워지던 사고(2026-08-11) 회귀 방지. null 은 no-op 이어야 한다.
+            var tool = new GeometryTool();
+            tool.LinkedParamCodes["ExpectedValue"] = 1;
+            tool.LinkedParamCodes["TolerancePlus"] = 3;
+            var vm = new GeometryToolSettingsViewModel(tool);
+
+            vm.SelectedExpectedValueCode = null;
+            vm.SelectedTolerancePlusCode = null;
+
+            Assert.Equal(1, tool.LinkedParamCodes["ExpectedValue"]);
+            Assert.Equal(3, tool.LinkedParamCodes["TolerancePlus"]);
+        }
+
+        [Fact]
         public void Serializer_RoundTrips_JudgmentLinks()
         {
             var original = new GeometryTool();
