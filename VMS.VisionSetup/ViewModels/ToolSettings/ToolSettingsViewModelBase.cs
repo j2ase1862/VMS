@@ -28,6 +28,11 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
             // Expert 모드 — 같은 ToolType 다른 인스턴스에서 토글해도 즉시 반영되도록 이벤트 구독.
             Services.ExpertModeService.Instance.ExpertModeChanged += OnExpertModeChanged;
 
+            // Web 파라미터 캐시 갱신 → ParamCode 콤보 재구성 (Messenger 는 약한 참조라
+            // 툴 재선택으로 VM 이 교체되어도 누수 없음. Dispose 에서 명시 해제도 수행.)
+            WeakReferenceMessenger.Default.Register<WebParamCacheUpdatedMessage>(this,
+                static (recipient, _) => ((ToolSettingsViewModelBase)recipient).RefreshParamCodesFromCache());
+
             DrawROICommand = new RelayCommand(() =>
             {
                 if (Tool is CircleFitTool)
@@ -231,7 +236,10 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
             var items = SyncService.GetAll();
             if (items.Count > 0)
             {
+                // 즉시 캐시로 채우고, 백그라운드로 최신화 — Web에서 방금 추가한
+                // 파라미터가 60초 주기를 기다리지 않고 곧바로 콤보에 반영되도록.
                 PopulateFromCache(items);
+                _ = LoadParamCodesAsync();
             }
             else
             {
@@ -254,18 +262,44 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
                 // 현재 로드된 레시피가 없으면 첫 번째 레시피 로드
                 if (SyncService.CurrentRecipeId <= 0 && SyncService.Recipes.Count > 0)
                     await SyncService.LoadRecipeAsync(SyncService.Recipes[0].Id);
+                else if (SyncService.CurrentRecipeId > 0)
+                    // 설정을 여는 시점에 캐시 강제 갱신 — Web에서 방금 추가한 파라미터가
+                    // 60초 주기를 기다리지 않고 바로 콤보에 나타나도록
+                    await SyncService.SyncAsync();
 
                 var items = SyncService.GetAll();
                 if (items.Count > 0)
                 {
-                    System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
-                        PopulateFromCache(items));
+                    // 헤드리스(테스트) 환경엔 Application 이 없다 — 직접 반영
+                    var dispatcher = System.Windows.Application.Current?.Dispatcher;
+                    if (dispatcher == null) PopulateFromCache(items);
+                    else dispatcher.BeginInvoke(() => PopulateFromCache(items));
                 }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"[ToolSettings] LoadParamCodesAsync failed: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Web 파라미터 캐시 변경(WebParamCacheUpdatedMessage) 시 콤보 재구성.
+        /// 재구성 후 전체 프로퍼티 변경 통지로 파생 VM 의 Selected*Code 선택을 복원한다.
+        /// </summary>
+        private void RefreshParamCodesFromCache()
+        {
+            if (SyncService == null) return;
+            var items = SyncService.GetAll();
+
+            void Apply()
+            {
+                PopulateFromCache(items);
+                OnPropertyChanged(string.Empty);
+            }
+
+            var dispatcher = System.Windows.Application.Current?.Dispatcher;
+            if (dispatcher == null) Apply();
+            else dispatcher.BeginInvoke(Apply);
         }
 
         private void PopulateFromCache(List<Core.Models.ParameterSync.RecipeParameterDto> items)
@@ -361,6 +395,7 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         {
             Tool.PropertyChanged -= OnModelPropertyChanged;
             Services.ExpertModeService.Instance.ExpertModeChanged -= OnExpertModeChanged;
+            WeakReferenceMessenger.Default.Unregister<WebParamCacheUpdatedMessage>(this);
         }
 
         // ────────────────────────────────────────────────────────────
