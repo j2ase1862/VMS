@@ -44,6 +44,13 @@ namespace VMS.Core.Interfaces
         /// <summary>서버에서 레시피 목록을 동기화</summary>
         Task<bool> SyncRecipesAsync();
 
+        /// <summary>
+        /// VisionSetup 로컬 생성 레시피를 Web 원장에 등록하고 발급된 ID를 반환.
+        /// 서버는 이름 기준 멱등(동일 이름 존재 시 그 ID 반환) — 재시도에 안전.
+        /// 실패(오프라인 등) 시 null.
+        /// </summary>
+        Task<int?> RegisterRecipeAsync(string name, string? description = null);
+
         /// <summary>특정 레시피의 파라미터를 로드하여 캐시</summary>
         Task<bool> LoadRecipeAsync(int recipeId);
 

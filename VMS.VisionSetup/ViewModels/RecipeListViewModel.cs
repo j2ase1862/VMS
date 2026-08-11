@@ -101,11 +101,34 @@ namespace VMS.VisionSetup.ViewModels
                             Description = web.Description,
                             CreatedAt = DateTime.UtcNow,
                             ModifiedAt = DateTime.UtcNow,
-                            Author = "Web"
+                            Author = "Web",
+                            WebRecipeId = web.Id
                         };
                         _recipeService.SaveRecipe(recipe, webFilePath);
                         anyNew = true;
                     }
+                }
+
+                // 로컬 생성 레시피의 Web 원장 연결 — WebRecipeId 없는 로컬 레시피는
+                // ① 동일 이름의 Web 레시피가 있으면 그 ID 채택 (기존 "이름 연결"의 실질화)
+                // ② 없으면 Web 에 등록 (생성 시 오프라인이었던 경우의 재시도).
+                // 서버가 이름 기준 멱등이라 ①/② 모두 중복 생성 없이 수렴한다.
+                var webIdByName = webRecipes
+                    .GroupBy(r => r.Name, StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(g => g.Key, g => g.First().Id, StringComparer.OrdinalIgnoreCase);
+                foreach (var local in localRecipes.Where(r =>
+                             r.WebRecipeId is null && !r.FilePath.Contains("web_")))
+                {
+                    int? webId = webIdByName.TryGetValue(local.Name, out var matched)
+                        ? matched
+                        : await _parameterSyncService.RegisterRecipeAsync(local.Name);
+                    if (webId is not int id || id <= 0) continue;
+
+                    var recipe = _recipeService.ReadRecipeFile(local.FilePath);
+                    if (recipe == null) continue;
+                    recipe.WebRecipeId = id;
+                    _recipeService.SaveRecipe(recipe, local.FilePath);
+                    anyNew = true;
                 }
 
                 // Web 파일 정리: 서버에서 삭제된 레시피 또는 로컬에 동일 이름이 있는 중복 파일 제거
@@ -206,6 +229,10 @@ namespace VMS.VisionSetup.ViewModels
                 _recipeService.SaveRecipe(recipe);
                 RefreshRecipeList();
 
+                // Web 이 레시피 원장 — 구성돼 있으면 생성 즉시 등록해 WebRecipeId 확보.
+                // 실패(오프라인)해도 로컬 생성은 유효하며 다음 동기화 때 재등록 시도.
+                _ = RegisterRecipeOnWebAsync(recipe);
+
                 RecipeLoaded?.Invoke(this, recipe);
             }
         }
@@ -218,11 +245,41 @@ namespace VMS.VisionSetup.ViewModels
             var recipe = _recipeService.LoadRecipe(SelectedRecipe.FilePath);
             if (recipe != null)
             {
+                // 로드한 레시피의 Web 파라미터 캐시로 전환 — ParamCode 콤보가
+                // "첫 번째 레시피 고정"이 아니라 이 레시피의 코드를 표시하도록.
+                // (RecipeLoaded 이벤트 → WebParamCacheUpdatedMessage 로 콤보 자동 갱신)
+                if (recipe.WebRecipeId is int webId && webId > 0 && _parameterSyncService != null)
+                    _ = _parameterSyncService.LoadRecipeAsync(webId);
+
                 RecipeLoaded?.Invoke(this, recipe);
             }
             else
             {
                 _dialogService.ShowError("레시피를 로드할 수 없습니다.", "Error");
+            }
+        }
+
+        /// <summary>
+        /// 로컬 생성 레시피를 Web 원장에 등록하고 WebRecipeId 를 저장.
+        /// 서버가 이름 기준 멱등이라 재시도·중복 호출에 안전.
+        /// </summary>
+        private async Task RegisterRecipeOnWebAsync(Recipe recipe)
+        {
+            if (_parameterSyncService == null || recipe.WebRecipeId is not null) return;
+
+            try
+            {
+                var webId = await _parameterSyncService.RegisterRecipeAsync(recipe.Name, recipe.Description);
+                if (webId is int id && id > 0)
+                {
+                    recipe.WebRecipeId = id;
+                    _recipeService.SaveRecipe(recipe);
+                    Debug.WriteLine($"[RecipeList] '{recipe.Name}' registered on Web (ID {id})");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[RecipeList] Web register failed for '{recipe.Name}': {ex.Message}");
             }
         }
 

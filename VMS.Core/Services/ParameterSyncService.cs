@@ -130,6 +130,38 @@ namespace VMS.Core.Services
             }
         }
 
+        public async Task<int?> RegisterRecipeAsync(string name, string? description = null)
+        {
+            try
+            {
+                var url = $"{_baseUrl}/api/parameters/sync/recipes/{_clientIndex}";
+                var payload = JsonSerializer.Serialize(new { name, description }, JsonOptions);
+                var content = new StringContent(payload, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PostAsync(url, content);
+                if (!response.IsSuccessStatusCode)
+                {
+                    Debug.WriteLine($"[ParameterSync] RegisterRecipe '{name}' failed: {response.StatusCode}");
+                    return null;
+                }
+
+                var body = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(body);
+                if (doc.RootElement.TryGetProperty("id", out var idElem)
+                    && idElem.TryGetInt32(out var id) && id > 0)
+                {
+                    Debug.WriteLine($"[ParameterSync] Registered recipe '{name}' → Web ID {id}");
+                    return id;
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[ParameterSync] RegisterRecipe '{name}' error: {ex.Message}");
+                return null;
+            }
+        }
+
         public async Task<bool> LoadRecipeAsync(int recipeId)
         {
             try

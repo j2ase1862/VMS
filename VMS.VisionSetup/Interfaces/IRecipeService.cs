@@ -11,6 +11,8 @@ namespace VMS.VisionSetup.Interfaces
         event EventHandler<Recipe?>? CurrentRecipeChanged;
 
         Recipe? LoadRecipe(string filePath);
+        /// <summary>파일에서 레시피를 읽기만 — CurrentRecipe 불변 (백그라운드 메타 갱신용).</summary>
+        Recipe? ReadRecipeFile(string filePath);
         bool SaveRecipe(Recipe recipe, string? filePath = null);
         bool SaveCurrentRecipe(string? filePath = null);
         Recipe CreateNewRecipe(string? name = null);

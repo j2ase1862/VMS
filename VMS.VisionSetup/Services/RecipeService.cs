@@ -188,6 +188,25 @@ namespace VMS.VisionSetup.Services
         }
 
         /// <summary>
+        /// 파일에서 레시피를 읽기만 한다 — CurrentRecipe 를 바꾸지 않음.
+        /// (Web 등록/이름 연결 등 백그라운드 메타 갱신용. LoadRecipe 는 로드 부작용 있음)
+        /// </summary>
+        public Recipe? ReadRecipeFile(string filePath)
+        {
+            try
+            {
+                if (!File.Exists(filePath)) return null;
+                var json = File.ReadAllText(filePath);
+                return JsonSerializer.Deserialize<Recipe>(json, JsonOptions);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"레시피 파일 읽기 실패: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
         /// 레시피를 파일에 저장
         /// </summary>
         public bool SaveRecipe(Recipe recipe, string? filePath = null)
@@ -316,7 +335,8 @@ namespace VMS.VisionSetup.Services
                                 Author = recipe.Author,
                                 FilePath = file,
                                 StepCount = recipe.Steps.Count,
-                                ToolCount = recipe.Steps.Sum(s => s.Tools.Count)
+                                ToolCount = recipe.Steps.Sum(s => s.Tools.Count),
+                                WebRecipeId = recipe.WebRecipeId
                             });
                         }
                     }
