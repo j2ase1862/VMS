@@ -336,6 +336,27 @@ namespace VMS.ViewModels
             IsControlBoxOpen = false;
         }
 
+        /// <summary>SDK 미탑재로 시뮬레이션 폴백된 연결인지 (UI 경고 표시용).</summary>
+        private bool _isSimulationFallback;
+
+        /// <summary>
+        /// 취득 구현체 생성 + SDK 미탑재 폴백 시 결과 메시지에 경고 표기.
+        /// 조용한 폴백은 현장에서 시뮬레이션 영상을 실카메라로 오인하게 한다 (2026-08 Basler 사태).
+        /// </summary>
+        private Camera.Interfaces.ICameraAcquisition CreateAcquisition()
+        {
+            var creation = CameraAcquisitionFactory.CreateWithInfo(ToCameraInfo());
+            _isSimulationFallback = creation.IsSimulationFallback;
+            if (creation.IsSimulationFallback)
+                ResultMessage = $"⚠ {creation.FallbackReason}";
+            return creation.Acquisition;
+        }
+
+        private string ConnectedLabel()
+            => _isSimulationFallback
+                ? $"Connected (SIMULATION — SDK 미탑재): {Name}"
+                : $"Connected: {Name}";
+
         /// <summary>
         /// 카메라 연결 초기화. 앱 시작 시 호출.
         /// </summary>
@@ -343,11 +364,11 @@ namespace VMS.ViewModels
         {
             try
             {
-                _acquisition = CameraAcquisitionFactory.Create(ToCameraInfo());
+                _acquisition = CreateAcquisition();
                 var connected = await _acquisition.ConnectAsync(ToCameraInfo());
                 IsConnected = connected;
                 ResultMessage = connected
-                    ? $"Connected: {Name}"
+                    ? ConnectedLabel()
                     : $"Connection failed: {Name}";
             }
             catch (Exception ex)
@@ -362,7 +383,7 @@ namespace VMS.ViewModels
         {
             try
             {
-                _acquisition ??= CameraAcquisitionFactory.Create(ToCameraInfo());
+                _acquisition ??= CreateAcquisition();
 
                 if (!_acquisition.IsConnected)
                 {
@@ -423,7 +444,7 @@ namespace VMS.ViewModels
 
             try
             {
-                _acquisition ??= CameraAcquisitionFactory.Create(ToCameraInfo());
+                _acquisition ??= CreateAcquisition();
 
                 if (!_acquisition.IsConnected)
                 {
