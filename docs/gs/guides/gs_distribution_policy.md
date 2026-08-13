@@ -210,7 +210,7 @@ Version: [버전] / 발효일: [날짜]
 - [ ] EULA (§3 템플릿) 법무 검토 → 정식 문서로 확정
 - [ ] MSI 패키지에 NOTICE / LICENSE / EULA 파일 포함
 - [ ] MSI 첫 화면에 EULA 동의 다이얼로그 추가 (WiX UI extension)
-- [ ] 코드 서명 — `docs/gs_msi_code_signing_guide.md` (PR24) 적용
+- [ ] 코드 서명 — `docs/gs/guides/gs_msi_code_signing_guide.md` (PR24) 적용
 
 ### 7.2 각 빌드 / PR 마다
 - [ ] NuGet 의존성 추가 / 갱신 시 라이선스 검증
@@ -221,7 +221,7 @@ Version: [버전] / 발효일: [날짜]
 - [ ] 통합사 → 고객 마스터 계약 + EULA 동의 (사이트 책임자)
 - [ ] 벤더 SDK 활성화 빌드일 경우 — 해당 벤더 EULA 동시 동의
 - [ ] 평가판 시한 / 라이선스 키 / ClientIndex 부여
-- [ ] 운영 회귀 가이드 (PR17) 통과 → 정식 가동
+- [ ] 현장 설치 체크리스트(`docs/field_install_checklist.md`) 통과 → 정식 가동
 
 ---
 

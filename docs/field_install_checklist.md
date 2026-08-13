@@ -29,7 +29,7 @@ BODA.VMS.Web `docs/Production_Deploy_Runbook.md`
 
 ---
 
-## 1. BODA.VMS.Web 서버 설치 (먼저)
+## 1. [부록/예외] BODA.VMS.Web 서버 수동 설치
 
 > ✅ **v1.5.7 부터 MSI 가 Web 서버를 동봉** — MSI 설치 시 "BODA VMS Web 서버" Feature 를
 > 포함했다면 **이 §1 의 수동 절차 전체를 생략**하고, §2-2 마법사의 **"Web 서버 초기 구성

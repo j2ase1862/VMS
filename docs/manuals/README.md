@@ -40,6 +40,7 @@ VMS 솔루션 (BODA Vision AI) 의 사용자 매뉴얼 및 도구별 운영 가�
 
 ## 관련 문서
 
-- **운영 환경 회귀 가이드**: 루트 `docs/manual_regression_v1.2.md` (체크리스트 형식)
+- **현장 설치·검증**: 루트 `docs/field_install_checklist.md` (구 `manual_regression_v1.2.md` 는 사문서 — 이력 참고용)
 - **GS 인증 관련**: 루트 `docs/gs/` 폴더
-- **MSI 빌드/배포**: 루트 `docs/msi_build_guide.md`, `docs/release_and_update_guide_v1.0.md`
+- **MSI 빌드/배포**: 루트 `docs/msi_build_guide.md`, `docs/release_manual_procedure.md`
+- **업데이트 알림/업그레이드 정책**: 루트 `docs/update_notifier_and_upgrade_policy.md`

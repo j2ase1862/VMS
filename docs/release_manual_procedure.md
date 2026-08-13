@@ -3,7 +3,7 @@
 문서 버전: v1.0 (2026-07-27, v1.5.3 발행 기준)
 
 > 관련 문서:
-> - 릴리즈 파이프라인 배경·인앱 업데이트 알림: [release_and_update_guide_v1.0.md](release_and_update_guide_v1.0.md)
+> - 인앱 업데이트 알림·업그레이드 정책: [update_notifier_and_upgrade_policy.md](update_notifier_and_upgrade_policy.md)
 > - MSI 빌드 상세: [msi_build_guide.md](msi_build_guide.md)
 >
 > 이 문서는 dev PC 운영자가 매 릴리즈마다 따라가는 **실행 절차서**다.
