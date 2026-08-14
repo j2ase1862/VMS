@@ -266,18 +266,57 @@ namespace VMS
             var ioBoardConnections = new List<VMS.PLC.Interfaces.IIoBoardConnection>();
             foreach (var ioConfig in systemConfig.IoBoards ?? new List<VMS.PLC.Models.IoDeviceConfig>())
             {
+                var boardLabel = $"{ioConfig.DeviceId} ({ioConfig.Vendor} {ioConfig.Model}, board={ioConfig.BoardId})";
                 try
                 {
                     var board = IoBoardConnectionFactory.Create(ioConfig);
-                    if (board is null) continue;
-                    // ConnectAsync 실패는 한 보드만 격리 — 다른 보드/PLC 는 계속 진행
-                    _ = board.ConnectAsync();
+                    if (board is null)
+                    {
+                        logService.Log($"IO 보드 '{boardLabel}' — 지원하지 않는 벤더이거나 비활성 설정입니다.",
+                            LogLevel.Warning, "IoBoard");
+                        continue;
+                    }
+
+                    // 연결 결과를 반드시 확인한다. 과거에는 fire-and-forget 이라 드라이버 미설치·
+                    // 카드번호 불일치로 연결이 실패해도 "등록된 보드" 로 남아, 시퀀스가 읽는 순간
+                    // InvalidOperationException 만 반복되고 사용자에겐 아무 단서도 없었다.
+                    // 네이티브 Register_Card 는 동기 호출이라 백그라운드 + 타임아웃으로 감싼다.
+                    bool connected;
+                    try
+                    {
+                        connected = await Task.Run(() => board.ConnectAsync())
+                            .WaitAsync(TimeSpan.FromSeconds(5));
+                    }
+                    catch (TimeoutException)
+                    {
+                        connected = false;
+                        logService.Log($"IO 보드 '{boardLabel}' 연결 시간 초과(5초) — 드라이버 응답 없음.",
+                            LogLevel.Error, "IoBoard");
+                    }
+
+                    // 실패해도 등록은 유지한다 — 등록을 건너뛰면 시퀀스의 DeviceId 가 해석되지 않아
+                    // 기본 PLC 경로로 조용히 폴백되고, 원인 없는 무한 대기가 된다.
+                    // 등록해 두면 읽기 시점에 명확한 예외가 나고 아래 로그로 원인이 남는다.
                     ioDeviceRegistry.Register(board);
                     ioBoardConnections.Add(board);
-                    Debug.WriteLine($"[App] IO board registered: {ioConfig.DeviceId} ({ioConfig.Vendor} {ioConfig.Model})");
+
+                    if (connected)
+                    {
+                        logService.Log($"IO 보드 연결됨 — {boardLabel}", LogLevel.Success, "IoBoard");
+                        Debug.WriteLine($"[App] IO board connected: {boardLabel}");
+                    }
+                    else
+                    {
+                        logService.Log(
+                            $"IO 보드 '{boardLabel}' 연결 실패 — 이 보드를 사용하는 시퀀스 노드는 동작하지 않습니다. " +
+                            "드라이버 설치 여부와 AppSetup 의 모델·보드 번호를 확인하세요.",
+                            LogLevel.Error, "IoBoard");
+                        Debug.WriteLine($"[App] IO board connect FAILED: {boardLabel}");
+                    }
                 }
                 catch (Exception ex)
                 {
+                    logService.Log($"IO 보드 '{boardLabel}' 초기화 오류 — {ex.Message}", LogLevel.Error, "IoBoard");
                     Debug.WriteLine($"[App] IO board init failed ({ioConfig.DeviceId}): {ex.Message}");
                 }
             }

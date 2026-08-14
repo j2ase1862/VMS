@@ -188,10 +188,30 @@ namespace VMS.Services
                 _recipeChangeByIndexFunc, _stepChangeFunc,
                 ioRegistry: _ioRegistry);
 
+            // 시퀀스가 비었으면 RunAsync 가 즉시 리턴해 아래 루프가 무한 스핀한다 —
+            // 시작 전에 한 번 검증하고 원인을 남긴 뒤 중단.
+            if (!config.Nodes.Any(n => n.NodeType == SequenceNodeType.Start))
+            {
+                _logService?.Log(
+                    "시퀀스에 Start 노드가 없어 자동 운전을 시작할 수 없습니다. " +
+                    "VisionSetup 의 시퀀스 편집기에서 시퀀스를 만들고 저장한 뒤 VMS 를 다시 시작하세요.",
+                    LogLevel.Error, "AutoProcess");
+                SetAllCameraStates(AutoProcessState.Error);
+                return;
+            }
+
             engine.NodeExecuting += (s, e) => MapNodeToState(e);
+
+            // 노드 실행 중 예외는 엔진이 내부에서 삼키고 RunAsync 는 정상 리턴한다.
+            // 따라서 아래 catch 로는 잡히지 않으므로, 플래그로 받아 재시도 전에 지연을 준다.
+            var sequenceFaulted = false;
             engine.SequenceError += (s, e) =>
             {
+                sequenceFaulted = true;
                 Debug.WriteLine($"[AutoProcess] Sequence error at '{e.NodeName}': {e.Error.Message}");
+                _logService?.Log(
+                    $"시퀀스 '{e.NodeName}' 노드 오류 — {e.Error.Message}",
+                    LogLevel.Error, "AutoProcess");
                 SetAllCameraStates(AutoProcessState.Error);
             };
 
@@ -199,8 +219,19 @@ namespace VMS.Services
             {
                 try
                 {
+                    sequenceFaulted = false;
                     SetAllCameraStates(AutoProcessState.WaitTrigger);
                     await engine.RunAsync(config, ct);
+
+                    // 노드 오류로 중단된 경우 — 즉시 재시도하면 초당 수천 회 실패를 반복(busy loop)하므로
+                    // 오류 복구 지연을 두고 다시 시도한다.
+                    if (sequenceFaulted)
+                    {
+                        _logService?.Log(
+                            $"시퀀스가 오류로 중단됨 — {ErrorRecoveryDelayMs / 1000}초 후 재시도합니다.",
+                            LogLevel.Warning, "AutoProcess");
+                        await Task.Delay(ErrorRecoveryDelayMs, ct);
+                    }
 
                     // Reset 신호에 의한 재시작
                     if (engine.WasReset)
