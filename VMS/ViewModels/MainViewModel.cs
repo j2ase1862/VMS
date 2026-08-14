@@ -204,9 +204,23 @@ namespace VMS.ViewModels
         public bool CanLaunchVisionSetup => _userService?.HasPermission(UserPermission.LaunchVisionSetup) ?? true;
         public bool CanLaunchAppSetup => _userService?.HasPermission(UserPermission.LaunchAppSetup) ?? true;
         public bool HasConnectedCamera => Cameras.Any(c => c.IsConnected);
+        /// <summary>
+        /// 검사 시작/정지 권한. **시스템 사용자가 로그인하지 않았으면 허용**하고, 로그인한
+        /// 경우에만 등급 권한을 적용한다 (사용자 매뉴얼 §3.5 "시스템 사용자 미로그인 시 기본 허용").
+        ///
+        /// 신원 체계가 둘로 나뉘어 있기 때문이다 — 시스템 사용자(Admin/Engineer/Operator 등급)는
+        /// 설정·레시피 편집용이고, 생산 신원은 <b>작업자 계정(사번+PIN 키오스크 로그인)</b> 이
+        /// 담당한다(검사 이력에 OperatorId 기록). AUTO RUN 에 시스템 사용자 로그인까지 요구하면
+        /// 현장이 이중 로그인을 해야 해 공용 계정 상시 로그인으로 우회되기 쉽다.
+        ///
+        /// 기존 코드의 <c>?? true</c> 는 "서비스 미주입" 만 커버해 운영 빌드에서는 사실상
+        /// 로그인이 필수였고, 매뉴얼·버튼 툴팁과 어긋나 있었다 (2026-08-14 정정).
+        /// </summary>
+        private bool HasStartStopPermission => Services.StartStopGate.Allows(_userService);
+
         public bool CanStartStop =>
             HasConnectedCamera
-            && (_userService?.HasPermission(UserPermission.StartStop) ?? true)
+            && HasStartStopPermission
             // Web 통합 환경 (OperatorAuthService 존재) 에서는 Operator 로그인 + WO 선택 필수.
             // OperatorAuthService 가 없으면 standalone — 기존 동작 유지.
             && (_operatorAuthService == null
@@ -224,7 +238,7 @@ namespace VMS.ViewModels
         /// </summary>
         public bool CanOperateCamera =>
             HasConnectedCamera
-            && (_userService?.HasPermission(UserPermission.StartStop) ?? true)
+            && HasStartStopPermission
             && (_operatorAuthService == null || IsOperatorLoggedIn);
 
         /// <summary>
@@ -234,7 +248,7 @@ namespace VMS.ViewModels
         /// Grab 만 게이트가 빠져 Live 와 비대칭이던 것을 정리).
         /// </summary>
         public bool CanGrabCamera =>
-            (_userService?.HasPermission(UserPermission.StartStop) ?? true)
+            HasStartStopPermission
             && (_operatorAuthService == null || IsOperatorLoggedIn);
 
         /// <summary>
@@ -242,8 +256,8 @@ namespace VMS.ViewModels
         /// 눌리는지" 확인할 방법이 없던 문제 해소. 조작 가능하면 null.
         /// </summary>
         public string? CameraOperateBlockReason =>
-            !(_userService?.HasPermission(UserPermission.StartStop) ?? true)
-                ? "현재 사용자에게 Start/Stop 권한이 없습니다"
+            !HasStartStopPermission
+                ? "로그인한 시스템 사용자에게 Start/Stop 권한이 없습니다 — 로그아웃하거나 권한 있는 계정으로 로그인하세요"
                 : (_operatorAuthService != null && !IsOperatorLoggedIn)
                     ? "Operator 로그인이 필요합니다"
                     : !HasConnectedCamera
