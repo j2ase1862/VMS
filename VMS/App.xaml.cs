@@ -307,9 +307,10 @@ namespace VMS
                     }
                     else
                     {
+                        var reason = (board as VMS.PLC.Interfaces.IIoBoardDiagnostics)?.LastError;
                         logService.Log(
                             $"IO 보드 '{boardLabel}' 연결 실패 — 이 보드를 사용하는 시퀀스 노드는 동작하지 않습니다. " +
-                            "드라이버 설치 여부와 AppSetup 의 모델·보드 번호를 확인하세요.",
+                            (reason ?? "드라이버 설치 여부와 AppSetup 의 모델·보드 번호를 확인하세요."),
                             LogLevel.Error, "IoBoard");
                         Debug.WriteLine($"[App] IO board connect FAILED: {boardLabel}");
                     }
