@@ -34,6 +34,13 @@ namespace VMS.Services
 
         // Single process sequence config (from Recipe or auto-generated)
         private readonly SequenceConfig? _processSequence;
+
+        /// <summary>
+        /// 운전 시작 때마다 시퀀스를 다시 읽는 provider. 과거에는 앱 시작 시 1회만 로드해
+        /// VisionSetup 에서 시퀀스를 고쳐도 VMS 를 재시작해야 반영됐다.
+        /// null 이면 생성자에서 받은 _processSequence 를 그대로 사용(기존 동작).
+        /// </summary>
+        private readonly Func<SequenceConfig?>? _sequenceProvider;
         private readonly ISystemLogService? _logService;
 
         // Phase 2 — PLC + IO 보드 동시 사용 시 SequenceEngine 의 multi-device dispatch.
@@ -64,8 +71,10 @@ namespace VMS.Services
             Action<int>? stepChangeFunc = null,
             SequenceConfig? processSequence = null,
             ISystemLogService? logService = null,
-            IIoDeviceRegistry? ioRegistry = null)
+            IIoDeviceRegistry? ioRegistry = null,
+            Func<SequenceConfig?>? sequenceProvider = null)
         {
+            _sequenceProvider = sequenceProvider;
             _plc = plc;
             _signalConfig = signalConfig;
             _vendor = vendor;
@@ -179,7 +188,14 @@ namespace VMS.Services
         /// </summary>
         private async Task RunProcessAsync(CancellationToken ct)
         {
-            var config = _processSequence
+            // 운전 시작 시점에 시퀀스를 다시 읽는다 — VisionSetup 에서 저장한 변경이 VMS 재시작
+            // 없이 반영되도록. provider 가 없거나 파일이 없으면 기존 경로(생성자 주입 → 기본 생성).
+            var reloaded = _sequenceProvider?.Invoke();
+            if (reloaded != null && _processSequence != null && !ReferenceEquals(reloaded, _processSequence))
+                _logService?.Log("시퀀스를 다시 불러왔습니다.", LogLevel.Info, "AutoProcess");
+
+            var config = reloaded
+                         ?? _processSequence
                          ?? DefaultSequenceBuilder.BuildFromSignalConfiguration(_signalConfig);
 
             var engine = new SequenceEngine(
