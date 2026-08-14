@@ -25,6 +25,13 @@ namespace VMS.VisionSetup.ViewModels
     /// </summary>
     public partial class SequenceEditorViewModel : ObservableObject
     {
+        /// <summary>
+        /// 연결된 IO 보드 (DeviceId → connection). PLC 벤더가 None 이어도 보드만으로
+        /// 무부하 테스트·모니터가 동작해야 하므로 편집기가 직접 보드를 연다.
+        /// 실행 엔진(SequenceEngine)의 DeviceId 분기 규약과 동일하게 사용.
+        /// </summary>
+        private readonly Dictionary<string, IIoBoardConnection> _boards = new();
+
         private readonly IRecipeService _recipeService;
         private readonly ICameraService _cameraService;
         private readonly IDialogService _dialogService;
@@ -795,20 +802,20 @@ namespace VMS.VisionSetup.ViewModels
         {
             if (!IsPlcConnected)
             {
-                StatusMessage = "PLC가 연결되어 있지 않습니다.";
+                StatusMessage = "연결된 장치가 없습니다. [연결] 을 먼저 눌러 주세요.";
                 return;
             }
 
             if (IsPlcMonitoring)
             {
                 StopMonitor();
-                StatusMessage = "PLC 모니터링 중지됨";
+                StatusMessage = "모니터링 중지됨";
             }
             else
             {
                 CollectMonitorAddresses();
                 StartMonitor();
-                StatusMessage = "PLC 모니터링 시작 (1초 주기)";
+                StatusMessage = "모니터링 시작 (1초 주기)";
             }
         }
 
@@ -826,31 +833,45 @@ namespace VMS.VisionSetup.ViewModels
                 PlcConnectionStatus = "연결 중...";
                 StatusMessage = "PLC 연결 중...";
 
+                // PLC 는 선택 사항 — 벤더가 None 이면 _plcConfig 가 null 이고 보드만으로 진행한다.
                 _plcConfig = PlcConfigLoader.LoadFromAppData();
-                if (_plcConfig == null)
+                var plcOk = false;
+
+                if (_plcConfig != null)
                 {
-                    PlcConnectionStatus = "설정 없음";
+                    _plcConnection = PlcConnectionFactory.Create(_plcConfig);
+                    plcOk = await _plcConnection.ConnectAsync(_plcConfig);
+                    if (!plcOk)
+                    {
+                        _plcConnection.Dispose();
+                        _plcConnection = null;
+                    }
+                }
+
+                // IO 보드 연결 — system_config.json 의 IoBoards (IsEnabled 만)
+                var boardOk = await ConnectBoardsAsync();
+
+                if (!plcOk && boardOk == 0)
+                {
+                    PlcConnectionStatus = _plcConfig == null ? "설정 없음" : "연결 실패";
+                    StatusMessage = _plcConfig == null
+                        ? "PLC 벤더가 None 이고 사용 가능한 IO 보드도 없습니다."
+                        : "PLC 연결 실패";
                     _dialogService.ShowWarning(
-                        "system_config.json에 PLC 설정이 없거나 PLC 벤더가 None입니다.\nBODA Setup에서 PLC를 설정해 주세요.",
-                        "PLC 연결");
+                        "연결할 장치가 없습니다.\n\nBODA Setup 에서 PLC 를 설정하거나 IO 보드를 등록/활성화해 주세요.\n" +
+                        "(IO 보드가 등록돼 있는데도 실패하면 드라이버 설치 여부와 모델·보드 번호를 확인하세요.)",
+                        "장치 연결");
                     return;
                 }
 
-                _plcConnection = PlcConnectionFactory.Create(_plcConfig);
-                var connected = await _plcConnection.ConnectAsync(_plcConfig);
+                IsPlcConnected = true;   // = 장치 1개 이상 연결됨 (UI 상태등/버튼 라벨 공용)
 
-                if (!connected)
-                {
-                    PlcConnectionStatus = "연결 실패";
-                    StatusMessage = "PLC 연결 실패";
-                    _plcConnection.Dispose();
-                    _plcConnection = null;
-                    return;
-                }
-
-                IsPlcConnected = true;
-                PlcConnectionStatus = $"연결됨 ({_plcConfig.Vendor} {_plcConfig.IpAddress})";
-                StatusMessage = $"PLC 연결 성공: {_plcConfig.Vendor} {_plcConfig.IpAddress}";
+                var parts = new List<string>();
+                if (plcOk) parts.Add($"{_plcConfig!.Vendor} {_plcConfig.IpAddress}");
+                if (boardOk > 0) parts.Add($"IO 보드 {boardOk}대");
+                var summary = string.Join(" + ", parts);
+                PlcConnectionStatus = $"연결됨 ({summary})";
+                StatusMessage = $"장치 연결 성공: {summary}";
 
                 CollectMonitorAddresses();
                 IsMonitorPanelVisible = true;
@@ -867,7 +888,62 @@ namespace VMS.VisionSetup.ViewModels
             }
         }
 
-        /// <summary>PLC 연결 해제 및 모니터링 중지</summary>
+        /// <summary>
+        /// system_config.json 의 IoBoards 를 연결해 _boards 에 채운다. 연결 성공 대수 반환.
+        /// 실패한 보드는 담지 않는다 — 편집기는 실행 엔진과 달리 "없는 장치" 로 취급해
+        /// 노드 실행 시 명확히 건너뛰고 사유를 상태줄에 남긴다.
+        /// </summary>
+        private async Task<int> ConnectBoardsAsync()
+        {
+            var ok = 0;
+            foreach (var cfg in IoBoardConfigLoader.LoadFromAppData())
+            {
+                if (_boards.ContainsKey(cfg.DeviceId)) continue;
+                try
+                {
+                    var board = IoBoardConnectionFactory.Create(cfg);
+                    if (board == null) continue;
+
+                    // 네이티브 드라이버 호출이 동기라 UI 를 막지 않도록 백그라운드 + 타임아웃.
+                    bool connected;
+                    try
+                    {
+                        connected = await Task.Run(() => board.ConnectAsync())
+                            .WaitAsync(TimeSpan.FromSeconds(5));
+                    }
+                    catch (TimeoutException) { connected = false; }
+
+                    if (connected)
+                    {
+                        _boards[cfg.DeviceId] = board;
+                        ok++;
+                    }
+                    else
+                    {
+                        StatusMessage = $"IO 보드 '{cfg.DeviceId}' 연결 실패 — 드라이버/보드 번호를 확인하세요.";
+                        board.Dispose();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    StatusMessage = $"IO 보드 '{cfg.DeviceId}' 초기화 오류: {ex.Message}";
+                    System.Diagnostics.Debug.WriteLine($"[SequenceEditor] board init failed ({cfg.DeviceId}): {ex}");
+                }
+            }
+            return ok;
+        }
+
+        /// <summary>노드가 가리키는 IO 보드를 찾는다. 보드 노드가 아니거나 미연결이면 false.</summary>
+        private bool TryGetBoard(SequenceNodeItem node, out IIoBoardConnection? board)
+        {
+            board = null;
+            var deviceId = node.DeviceId ?? node.Config?.DeviceId;
+            if (string.IsNullOrWhiteSpace(deviceId)) return false;
+            if (string.Equals(deviceId, "MainPLC", StringComparison.Ordinal)) return false;
+            return _boards.TryGetValue(deviceId, out board);
+        }
+
+        /// <summary>PLC/IO 보드 연결 해제 및 모니터링 중지</summary>
         [RelayCommand]
         public async Task DisconnectPlcAsync()
         {
@@ -890,10 +966,17 @@ namespace VMS.VisionSetup.ViewModels
                 }
             }
 
+            foreach (var b in _boards.Values)
+            {
+                try { await b.DisconnectAsync(); } catch { /* 개별 보드 실패는 무시 */ }
+                finally { b.Dispose(); }
+            }
+            _boards.Clear();
+
             IsPlcConnected = false;
             IsPlcMonitoring = false;
             PlcConnectionStatus = "미연결";
-            StatusMessage = "PLC 연결 해제됨";
+            StatusMessage = "장치 연결 해제됨";
 
             // 노드 조건 상태 초기화
             foreach (var node in Nodes)
@@ -1084,10 +1167,33 @@ namespace VMS.VisionSetup.ViewModels
             {
                 while (await timer.WaitForNextTickAsync(ct))
                 {
-                    if (_plcConnection == null || !_plcConnection.IsConnected) continue;
-
                     // 노드 속성 변경을 반영하기 위해 매 주기 주소 재수집
                     RefreshMonitorAddresses();
+
+                    // IO 보드 채널 폴링 — PLC 유무와 무관하게 동작해야 한다.
+                    foreach (var item in BoardMonitorItems)
+                    {
+                        if (!_boards.TryGetValue(item.DeviceId, out var board))
+                        {
+                            item.CurrentValue = "—";
+                            item.ErrorMessage = "미연결";
+                            continue;
+                        }
+                        try
+                        {
+                            var on = await board.ReadBitAsync(item.Channel);
+                            item.CurrentValue = on ? "ON" : "OFF";
+                            item.LastUpdated = DateTime.Now.ToString("HH:mm:ss");
+                            item.ErrorMessage = null;
+                        }
+                        catch (Exception ex)
+                        {
+                            item.CurrentValue = "ERR";
+                            item.ErrorMessage = ex.Message;
+                        }
+                    }
+
+                    if (_plcConnection == null || !_plcConnection.IsConnected) continue;
 
                     foreach (var item in MonitorItems)
                     {
@@ -1147,9 +1253,10 @@ namespace VMS.VisionSetup.ViewModels
         [RelayCommand]
         private async Task TestRunSequenceAsync()
         {
-            if (_plcConnection == null || !IsPlcConnected)
+            // PLC 또는 IO 보드 중 하나만 연결돼 있어도 진행 (PLC 없는 현장 구성 지원).
+            if (!IsPlcConnected)
             {
-                StatusMessage = "PLC가 연결되어 있지 않습니다.";
+                StatusMessage = "연결된 장치가 없습니다. [연결] 을 먼저 눌러 주세요.";
                 return;
             }
 
@@ -1350,9 +1457,20 @@ namespace VMS.VisionSetup.ViewModels
         private async Task<string?> ExecuteTestInputCheck(SequenceNodeItem node, CancellationToken ct)
         {
             var cfg = node.Config;
-            if (string.IsNullOrWhiteSpace(cfg.PlcAddress) || _plcConfig == null || _plcConnection == null)
+            if (string.IsNullOrWhiteSpace(cfg.PlcAddress))
             {
-                StatusMessage = $"[무부하] {node.Name} — PLC 주소 미설정, 건너뜀";
+                StatusMessage = $"[무부하] {node.Name} — 주소 미설정, 건너뜀";
+                await Task.Delay(200, ct);
+                return cfg.NextNodeId;
+            }
+
+            // IO 보드 노드 — 주소는 채널 번호. 실행 엔진과 동일 규약.
+            if (TryGetBoard(node, out var board))
+                return await ExecuteTestBoardInputCheck(node, board!, ct);
+
+            if (_plcConfig == null || _plcConnection == null)
+            {
+                StatusMessage = $"[무부하] {node.Name} — PLC 미연결, 건너뜀";
                 await Task.Delay(200, ct);
                 return cfg.NextNodeId;
             }
@@ -1425,13 +1543,88 @@ namespace VMS.VisionSetup.ViewModels
             return null; // cancelled
         }
 
+        /// <summary>InputCheck 노드(IO 보드) — 채널이 조건을 만족할 때까지 폴링.</summary>
+        private async Task<string?> ExecuteTestBoardInputCheck(
+            SequenceNodeItem node, IIoBoardConnection board, CancellationToken ct)
+        {
+            var cfg = node.Config;
+            if (!int.TryParse(cfg.PlcAddress!.Trim(), out var channel) || channel < 0)
+            {
+                node.ConditionStatus = false;
+                StatusMessage = $"[무부하] {node.Name} — 채널 번호가 올바르지 않습니다: '{cfg.PlcAddress}'";
+                await Task.Delay(200, ct);
+                return cfg.NextNodeId;
+            }
+
+            var wantOn = cfg.CheckMode != InputCheckMode.BitOff;   // 보드는 Bit 만 — 그 외는 BitOn 취급
+            var startTime = DateTime.UtcNow;
+
+            while (!ct.IsCancellationRequested)
+            {
+                if (cfg.TimeoutMs > 0
+                    && (DateTime.UtcNow - startTime).TotalMilliseconds >= cfg.TimeoutMs)
+                {
+                    node.ConditionStatus = false;
+                    StatusMessage = $"[무부하] {node.Name} — 타임아웃 ({cfg.TimeoutMs}ms)";
+                    return cfg.NextNodeId;
+                }
+
+                bool on;
+                try
+                {
+                    on = await board.ReadBitAsync(channel);
+                }
+                catch (Exception ex)
+                {
+                    node.ConditionStatus = false;
+                    StatusMessage = $"[무부하] {node.Name} — 보드 읽기 오류: {ex.Message}";
+                    return null;
+                }
+
+                var met = on == wantOn;
+                node.ConditionStatus = met;
+                StatusMessage = met
+                    ? $"[무부하] {node.Name} — 조건 충족 (ch{channel} = {(on ? "ON" : "OFF")})"
+                    : $"[무부하] {node.Name} — 신호 대기 (ch{channel} = {(wantOn ? "ON" : "OFF")}, 현재: {(on ? "ON" : "OFF")})";
+
+                if (met) return cfg.NextNodeId;
+                await Task.Delay(100, ct);
+            }
+
+            return null; // cancelled
+        }
+
         /// <summary>OutputAction 노드 — PLC에 값 쓰기</summary>
         private async Task ExecuteTestOutputAction(SequenceNodeItem node)
         {
             var cfg = node.Config;
-            if (string.IsNullOrWhiteSpace(cfg.PlcAddress) || _plcConfig == null || _plcConnection == null)
+            if (string.IsNullOrWhiteSpace(cfg.PlcAddress))
             {
-                StatusMessage = $"[무부하] {node.Name} — PLC 주소 미설정, 건너뜀";
+                StatusMessage = $"[무부하] {node.Name} — 주소 미설정, 건너뜀";
+                return;
+            }
+
+            // IO 보드 노드 — Bit 출력만 지원 (실행 엔진과 동일).
+            if (TryGetBoard(node, out var outBoard))
+            {
+                if (!int.TryParse(cfg.PlcAddress.Trim(), out var outCh))
+                {
+                    StatusMessage = $"[무부하] {node.Name} — 채널 번호가 올바르지 않습니다: '{cfg.PlcAddress}'";
+                    return;
+                }
+                if (cfg.OutputDataType != PlcDataType.Bit)
+                {
+                    StatusMessage = $"[무부하] {node.Name} — IO 보드는 Bit 출력만 지원, 건너뜀";
+                    return;
+                }
+                await outBoard!.WriteBitAsync(outCh, cfg.BitValue ?? false);
+                StatusMessage = $"[무부하] {node.Name} — ch{outCh} ← {(cfg.BitValue == true ? "ON" : "OFF")}";
+                return;
+            }
+
+            if (_plcConfig == null || _plcConnection == null)
+            {
+                StatusMessage = $"[무부하] {node.Name} — PLC 미연결, 건너뜀";
                 return;
             }
 

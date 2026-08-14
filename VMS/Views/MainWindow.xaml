@@ -1523,6 +1523,39 @@
                     <TextBlock Text="{Binding PlcIpAddress}" Foreground="{StaticResource Brush.Text.Tertiary}" FontSize="11"
                                VerticalAlignment="Center" Margin="6,0,0,0"
                                Visibility="{Binding IsPlcConfigured, Converter={StaticResource BoolToVisibilityConverter}}"/>
+
+                    <!-- IO 보드 상태 — 보드가 설정된 경우에만 노출. PLC 없이 보드만으로 운전하는
+                         구성에서 보드 연결 실패를 즉시 알 수 있게 한다 (자세한 사유는 로그 IoBoard). -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0"
+                                Visibility="{Binding HasIoBoards, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Rectangle Width="1" Fill="{StaticResource Brush.Surface.Overlay}" Margin="0,6,10,6"/>
+                        <Ellipse Width="8" Height="8" Margin="0,0,5,0">
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Setter Property="Fill" Value="{StaticResource Brush.Danger}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsIoBoardHealthy}" Value="True">
+                                            <Setter Property="Fill" Value="{StaticResource Brush.Success}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+                        <TextBlock Text="{Binding IoBoardStatusText}" FontSize="12" VerticalAlignment="Center">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{StaticResource Brush.Danger}"/>
+                                    <Setter Property="ToolTip" Value="IO 보드 연결 실패 — 로그(IoBoard)에서 사유를 확인하세요."/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsIoBoardHealthy}" Value="True">
+                                            <Setter Property="Foreground" Value="{StaticResource Brush.Text.Secondary}"/>
+                                            <Setter Property="ToolTip" Value="IO 보드 정상 연결"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
                 </StackPanel>
 
                 <!-- [5] Separator -->

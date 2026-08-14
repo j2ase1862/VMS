@@ -587,7 +587,9 @@ namespace VMS
                 },
                 processSequence: processSequence,
                 logService: logService,
-                ioRegistry: ioDeviceRegistry);
+                ioRegistry: ioDeviceRegistry,
+                // 운전 시작 때마다 재로드 — VisionSetup 에서 시퀀스를 고쳐 저장하면 VMS 재시작 없이 반영
+                sequenceProvider: LoadSystemSequence);
 
             // ── Roller Inspection Service ──
             IRollerInspectionService rollerInspectionService = new RollerInspectionService(logService);
@@ -639,7 +641,8 @@ namespace VMS
                 vmsHubClient: vmsHubClient,
                 predictionPollingService: predictionPollingService,
                 updateService: updateService,
-                imageUploadService: imageUploadService);
+                imageUploadService: imageUploadService,
+                ioBoards: ioBoardConnections);
 
             var mainWindow = new MainWindow();
             mainWindow.DataContext = mainViewModel;

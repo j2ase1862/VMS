@@ -266,6 +266,30 @@ namespace VMS.ViewModels
         public bool IsPlcConfigured => PlcVendorName != "None";
         public bool IsPlcConnected => _plcConnection?.IsConnected ?? false;
 
+        // ── IO 보드 상태 (PLC 없이 보드만으로 운전하는 구성에서 필수 단서) ──
+        // 과거에는 보드 연결 실패가 화면 어디에도 드러나지 않아, 벤더 None 일 때 시뮬레이션
+        // PLC 가 "연결됨" 으로 뜨는 것과 겹쳐 정상으로 오해되기 쉬웠다.
+        private readonly IReadOnlyList<VMS.PLC.Interfaces.IIoBoardConnection> _ioBoards;
+
+        /// <summary>IO 보드가 하나라도 설정돼 있는지 — 헤더 칩 표시 여부.</summary>
+        public bool HasIoBoards => _ioBoards.Count > 0;
+
+        public int TotalIoBoardCount => _ioBoards.Count;
+        public int ConnectedIoBoardCount => _ioBoards.Count(b => b.IsConnected);
+
+        /// <summary>전 보드 정상 연결 여부 — 하나라도 끊겨 있으면 false(적색 표시).</summary>
+        public bool IsIoBoardHealthy => HasIoBoards && ConnectedIoBoardCount == TotalIoBoardCount;
+
+        public string IoBoardStatusText => $"IO {ConnectedIoBoardCount}/{TotalIoBoardCount}";
+
+        /// <summary>보드는 상태 변경 이벤트가 없어 갱신 시점(운전 시작 등)에 명시적으로 호출.</summary>
+        public void RefreshIoBoardStatus()
+        {
+            OnPropertyChanged(nameof(ConnectedIoBoardCount));
+            OnPropertyChanged(nameof(IsIoBoardHealthy));
+            OnPropertyChanged(nameof(IoBoardStatusText));
+        }
+
         private bool _isWebConnected;
         public bool IsWebConnected
         {
@@ -362,8 +386,10 @@ namespace VMS.ViewModels
             VMS.Core.Services.VmsHubClient? vmsHubClient = null,
             IPredictionPollingService? predictionPollingService = null,
             IUpdateService? updateService = null,
-            VMS.Services.ImageUpload.IImageUploadService? imageUploadService = null)
+            VMS.Services.ImageUpload.IImageUploadService? imageUploadService = null,
+            IReadOnlyList<VMS.PLC.Interfaces.IIoBoardConnection>? ioBoards = null)
         {
+            _ioBoards = ioBoards ?? Array.Empty<VMS.PLC.Interfaces.IIoBoardConnection>();
             _configService = configService;
             _recipeService = recipeService;
             _dialogService = dialogService;
@@ -1337,6 +1363,7 @@ namespace VMS.ViewModels
             IsRunning = true;
             SystemStatus = "Starting...";
             LogService?.Log("Inspection starting...", LogLevel.Info, "System");
+            RefreshIoBoardStatus();   // 운전 직전 보드 상태를 헤더에 반영
 
             if (_autoProcessService != null)
             {
