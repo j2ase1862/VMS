@@ -920,7 +920,9 @@ namespace VMS.VisionSetup.ViewModels
                     }
                     else
                     {
-                        StatusMessage = $"IO 보드 '{cfg.DeviceId}' 연결 실패 — 드라이버/보드 번호를 확인하세요.";
+                        var reason = (board as IIoBoardDiagnostics)?.LastError;
+                        StatusMessage = $"IO 보드 '{cfg.DeviceId}' 연결 실패 — "
+                                        + (reason ?? "드라이버/보드 번호를 확인하세요.");
                         board.Dispose();
                     }
                 }

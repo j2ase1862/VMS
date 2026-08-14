@@ -11,4 +11,9 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- DASK 카드 타입·포트 상수 회귀 테스트용 (현장 실증으로 확정된 값 고정) -->
+    <InternalsVisibleTo Include="VMS.PLC.Tests" />
+  </ItemGroup>
+
 </Project>
