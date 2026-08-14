@@ -1,8 +1,8 @@
 # VMS 딥러닝 검출력 향상 개선 사항
 
-**버전**: 1.0
-**작성일**: 2026-04-20
-**브랜치**: `feat/handeye-calibration-and-robot-protocol`
+**문서 버전**: v1.1 (2026-08-14 — VMS v1.5.12 기준 검증·정정)
+**최초 작성**: 2026-04-20
+**작성 당시 브랜치**: `feat/handeye-calibration-and-robot-protocol` (이력 참고)
 **대상**: VMS VisionSetup / VMS.DeepLearning 개발자 · 오퍼레이터
 
 ---
@@ -69,6 +69,8 @@ public string ActiveProvider { get; private set; } = "CPU";
 | `VMS.DeepLearning` | `Microsoft.ML.OnnxRuntime.Gpu` ✅ | 1.21.0 |
 
 CUDA · TensorRT 런타임 DLL이 빌드 시 자동 배포됩니다 (`onnxruntime_providers_cuda.dll`, `onnxruntime_providers_tensorrt.dll`). CUDA 미설치 환경에서는 자동 CPU 폴백되므로 배포는 안전합니다.
+
+> **참고**: `VMS.DeepLearning` 앱은 `LoadAIConfig()` 를 적용하지 않아 EP 설정을 읽지 않습니다 — SAM 은 항상 CPU 로 동작합니다.
 
 **환경 설치 + 설정 파일 작성**은 별도 가이드 참조:
 👉 [VMS_TensorRT_Setup_Guide.md](VMS_TensorRT_Setup_Guide.md)
@@ -224,7 +226,9 @@ Ultralytics 학습의 증강 파라미터를 UI에서 직접 조정 가능하도
 #### 3.1.1. TensorRT Provider 옵션 주입
 
 ```csharp
-public static string TensorRTCachePath { get; set; } = string.Empty;
+// 기본값: %LocalAppData%\BODA VISION AI\trt_cache (자동 생성)
+public static string TensorRTCachePath { get; set; } =
+    VMS.Camera.Configuration.AppDataPaths.GetPath("trt_cache");
 public static bool TensorRTFp16 { get; set; } = true;
 ```
 
@@ -347,18 +351,23 @@ Sigma (k): [────●────] 3.0
 | `train_yolo.py` | `--mosaic/--mixup/--hsv_h/--hsv_s/--hsv_v` CLI + kwargs 패스스루 |
 | `train_anomaly.py` | `--backbone/--coreset_ratio` CLI · anomalib 파라미터 주입 · simple fallback 백본 선택 |
 
+### C# (VMS.DeepLearning)
+
+| 파일 | 변경 내용 |
+|---|---|
+| `ViewModels/LabelingMainViewModel.cs` | 4개 프리셋 `[RelayCommand]` |
+
 ### XAML (VMS.DeepLearning)
 
 | 파일 | 변경 내용 |
 |---|---|
 | `Views/MainWindow.xaml` | Anomaly/Augmentation Expander · 프리셋 버튼 |
-| `ViewModels/LabelingMainViewModel.cs` | 4개 프리셋 `[RelayCommand]` |
 
 ### Docs
 
 | 파일 | 변경 내용 |
 |---|---|
-| `docs/VMS_DeepLearning_Detection_Improvements.md` | **신규** (이 문서) |
+| `docs/manuals/VMS_DeepLearning_Detection_Improvements.md` | **신규** (이 문서) |
 
 ---
 
@@ -368,7 +377,7 @@ Sigma (k): [────●────] 3.0
 
 ### 6.1. GPU 가속
 
-1. `VMS.VisionSetup.csproj`의 `Microsoft.ML.OnnxRuntime` 패키지를 `.Gpu` 또는 `.DirectML`로 교체
+1. `VMS.VisionSetup.csproj` 패키지는 이미 `.Gpu` 1.21.0 으로 **적용 완료** — 교체 없이 확인만 하면 됩니다
 2. `%LocalAppData%\BODA VISION AI\system_config.json`에 추가:
    ```json
    "onnxExecutionProvider": "Cuda"
@@ -440,8 +449,9 @@ Sigma (k): [────●────] 3.0
 | **Knowledge Distillation** (큰 모델 → 작은 모델) | 낮 | 높 | 작은 모델이 큰 모델 성능의 95%↑ 달성 |
 | **Self-supervised pretraining** (라벨 없는 현장 데이터 활용) | 낮 | 높 | 소량 라벨로 고성능 달성 |
 | **EfficientAD UI 확장** (현재 백본 선택 제한적) | 낮 | 낮 | 빠른 이상 탐지 모델 지원 강화 |
-| **Segmentation 파이프라인** (픽셀 단위 결함 마스크) | 중 | 중 | 결함 면적 계측 가능 |
 | **OpenVINO EP** (Intel NPU 활용) | 낮 | 중 | 저전력 엣지 추론 |
+
+> **구현 완료로 이동**: Segmentation 파이프라인(픽셀 단위 결함 마스크)은 이후 구현 완료되었습니다 — SegmentationTool / YoloSegTool / 라벨링 Segmentation 타입.
 
 ---
 

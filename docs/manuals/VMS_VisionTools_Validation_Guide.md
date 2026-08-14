@@ -1,5 +1,7 @@
 # VMS VisionSetup — 신규 도구 검증 가이드
 
+**문서 버전**: v1.1 (2026-08-14 — VMS v1.5.12 기준 검증·정정)
+
 이 문서는 Cognex VisionPro/ViDi 대체 작업으로 추가된 도구들의 동작을 실제 이미지로 검증하기 위한 단계별 절차를 정리한다. 각 시나리오는 `docs/sample-recipes/` 의 JSON 레시피와 함께 사용한다.
 
 ## 0. 공통 준비
@@ -10,8 +12,8 @@
 
 ### 샘플 레시피 가져오기
 
-- VisionSetup 메뉴 → **Recipe → Import...** 에서 `docs/sample-recipes/*.json` 선택.
-- Import 시 새 GUID가 부여되며 `%AppData%/VMS/Recipes/` 로 복사된다.
+- VisionSetup 메뉴 → **Recipe → Recipe Manager** 창의 **Import** 버튼에서 `docs/sample-recipes/*.json` 선택.
+- Import 시 새 GUID가 부여되며 `%LocalAppData%\BODA VISION AI\Recipes\` 로 복사된다.
 - ShapeMatchTool은 템플릿 PNG가 포함되지 않은 샘플이므로 UI에서 **Train Template** 으로 학습 후 저장해야 실제 매칭이 동작한다.
 
 ---
@@ -37,13 +39,14 @@
 
 ### 1.3 성능 검증
 
-- NumPyramidLevels=3, AngleStep=2° 기준 1280×1024 이미지에서 **1.5–2.5초** 이내.
+- 예시 조건 NumPyramidLevels=3, AngleStep=2° 는 기본값(NumPyramidLevels=2, AngleStep=5°)과 다르다. 재현하려면 두 값을 먼저 변경할 것.
+- 위 조건 기준 1280×1024 이미지에서 **1.5–2.5초** 이내 (참고치 — 환경별 상이).
 - 회전 캐시(PR #8e) 효과로 동일 템플릿 반복 Run 시 첫 회 외 추가 단축.
 
 ### 1.4 전문가 모드 (PR #12b)
 
-- 우측 패널 **Expert Mode** 체크 → AngleStep, MinScale/MaxScale, NumPyramidLevels, TopCandidates 노출.
-- 체크 해제 → Score Threshold / Search Region 만 노출.
+- 우측 패널 **Expert Mode** 체크 → Expert 전용 항목인 **Search Range** 와 **Speed** 노출.
+- 체크 해제(OFF) 상태에서도 **Acceptance** / **Multi-Instance** Expander 는 항상 표시됨 — Max Instances · NMS Distance Factor 포함.
 
 ---
 
@@ -56,13 +59,13 @@
 | 단계 | 동작 | 기대 결과 |
 |---|---|---|
 | 1 | 컬러 이미지 로드 → Tool 추가 → Training ROI 영역 드래그 | ROI 노란 사각형 |
-| 2 | **Train from ROI** | ROI 내부 HSV 평균 ± 2.5σ 로 Model 자동 채움 |
+| 2 | **Train Selected Model** | ROI 내부 HSV 평균 ± 2.5σ 로 Model 자동 채움 |
 | 3 | (선택) Search Region 활성화 → 검사 영역 지정 | 시안 점선 표시 |
 | 4 | Run | 추출된 마스크 오버레이, "Pixel Count" 인라인 표시 |
 
 ### 2.2 다중 모델 (PR #10e/f)
 
-- **+ Add Model** 버튼으로 모델 추가 → 각 모델별 학습 가능.
+- **+ Add** 버튼으로 모델 추가 → 각 모델별 학습 가능.
 - ModelItem 우측에 학습 색상 미니 패치 + 마스크 픽셀 수 인라인 표시.
 - 각 모델 IsEnabled 체크박스로 ON/OFF, Run 시 활성 모델 OR 합집합.
 
@@ -85,14 +88,14 @@
 
 | 단계 | 동작 | 기대 결과 |
 |---|---|---|
-| 1 | Tool 추가 → **Pick Pixel** 클릭 | 캔버스 모드가 PickPoint로 전환, 십자 커서 |
+| 1 | Tool 추가 → **Pick from Image** 클릭 | 캔버스 모드가 PickPoint로 전환, 십자 커서 |
 | 2 | 이미지 상의 기준 색상 위치 클릭 | 해당 픽셀 BGR → Lab 변환 후 Selected Model 의 MeanL/A/B 갱신 |
 | 3 | ColorTolerance(ΔE) 조정 | 일반 산업 검사 8–15 권장 |
 | 4 | Run | ΔE ≤ Tolerance 인 픽셀이 마스크로, Pixel Count 결과 출력 |
 
 ### 3.2 ROI 평균 학습
 
-- Training ROI 드래그 후 **Train from ROI** → ROI 평균 Lab가 SelectedModel에 반영.
+- Training ROI 드래그 후 **Train Selected Model** → ROI 평균 Lab가 SelectedModel에 반영.
 
 ### 3.3 다중 모델
 
@@ -106,10 +109,10 @@
 
 ### 4.1 캘리브레이션 데이터 생성
 
-1. VisionSetup 메뉴 → **Calibration Manager** 창 열기.
+1. VisionSetup 메뉴 → **Camera** 메뉴 하위의 **Calibration Manager** 창 열기.
 2. **Image Source** 선택 (File / Camera / VMS Shared Frame).
-3. **Mode** = `Checkerboard` 선택, 패턴 크기(가로 x 세로) 입력, 패턴 1장당 mm 입력.
-4. 여러 각도에서 캡쳐/로드 → **Calibrate** 클릭.
+3. **Calibration Mode** = `Checkerboard` 선택, 패턴 크기(가로 x 세로) 입력, 패턴 1장당 mm 입력.
+4. 여러 각도에서 캡쳐/로드 → **Run Calibration** 클릭.
 5. 결과 패널에 RMS reprojection error 출력 → 1.0px 이하 권장.
 6. **Apply to Current Recipe** → Recipe.Calibration 슬롯에 저장.
 
@@ -121,8 +124,8 @@
 
 ### 4.3 N-Point 모드 + 픽 (PR #3)
 
-- Mode = `NPoint` 선택 → ImageCanvas에서 점 클릭 → World mm 좌표 입력.
-- 4점 이상 필요. **Calibrate** 시 Homography 행렬 계산.
+- Calibration Mode = `N-Point (planar)` 선택 → ImageCanvas에서 점 클릭 → World mm 좌표 입력.
+- 4점 이상 필요. **Run Calibration** 시 Homography 행렬 계산.
 
 ### 4.4 mm 변환 검증 (PR #5)
 
@@ -147,15 +150,15 @@
 
 ### 5.2 PointCloudRegistrationTool
 
-- **ReferencePath** 에 정답 클라우드 `.vpc` 경로 지정.
-- `MaxIterations=50`, `Tolerance=1e-5`.
+- **ReferencePath** 에 정답 클라우드 `.vpc` 경로 지정 (`.stl` CAD 파일도 지원 — 표면을 자동 샘플링).
+- `MaxIterations=50`, `Tolerance=0.01` (기본값). Tolerance 하한은 `0.0001` 이며 `1e-5` 처럼 더 작은 값은 하한으로 잘린다.
 - Run → ICP 수렴, 변환 행렬 출력, `ApplyTransformToSource=true` 면 정합된 클라우드가 VisionService.CurrentPointCloud 에 반영.
 
 ### 5.3 PointCloudClusterTool
 
 - `Tolerance=5mm`, `MinPoints=100`, `MaxPoints=100000`.
 - Run → 검출된 클러스터 수 + 클러스터별 포인트 수.
-- `OutputMode=LargestCluster` 면 가장 큰 클러스터를 CurrentPointCloud 로 출력.
+- `OutputMode=LargestOnly` 면 가장 큰 클러스터를 CurrentPointCloud 로 출력 (선택지: LargestOnly / AllMerged / KeepOriginal).
 
 ---
 

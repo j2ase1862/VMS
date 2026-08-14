@@ -1,7 +1,7 @@
 # VMS TensorRT GPU 가속 설정 가이드
 
-**버전**: 1.0
-**작성일**: 2026-04-20
+**문서 버전**: v1.1 (2026-08-14 — VMS v1.5.12 기준 검증·정정)
+**최초 작성**: 2026-04-20
 **대상**: VMS VisionSetup 운영자 / 배포 담당
 
 ---
@@ -20,7 +20,9 @@
 
 ## 1. 개요
 
-VMS의 ONNX 추론(Detection / Anomaly / Classify / SAM)을 NVIDIA GPU + TensorRT로 가속하는 절차입니다. 모든 코드 변경은 완료되어 있고, **환경 설치 + 설정 파일 한 줄**만 추가하면 작동합니다.
+VMS의 ONNX 추론(Detection / Anomaly / Classify)을 NVIDIA GPU + TensorRT로 가속하는 절차입니다. 모든 코드 변경은 완료되어 있고, **환경 설치 + 설정 파일 한 줄**만 추가하면 작동합니다.
+
+> **적용 범위 참고**: SAM(라벨링 앱의 클릭 세그멘테이션)은 이 가이드의 적용 대상이 **아닙니다**. VMS.DeepLearning 앱은 EP 설정을 읽지 않으므로, SAM은 EP 설정과 무관하게 항상 CPU로 동작합니다.
 
 ### 가속 단계
 
@@ -151,6 +153,18 @@ ls "C:\TensorRT-10.4.0\bin\nvinfer*.dll"      # TensorRT
 
 ## 4. VMS 설정 파일 작성
 
+### 권장: GUI에서 설정 (Inference Settings)
+
+VisionSetup 메뉴의 **Inference Settings...** 다이얼로그에서 아래 항목을 설정할 수 있습니다:
+
+- **Execution Provider** 콤보 — EP 선택
+- **TensorRT Engine Cache Folder** — 엔진 캐시 폴더
+- **Enable TensorRT FP16** — FP16 최적화 활성화
+
+이 다이얼로그가 아래 JSON과 **같은 키를 기록**하므로 GUI 사용을 권장합니다. 이어지는 JSON 직접 편집은 GUI를 쓸 수 없을 때의 대안입니다.
+
+### 대안: JSON 직접 편집
+
 VMS는 시작 시 다음 경로의 JSON에서 EP 설정을 읽습니다:
 
 ```
@@ -204,17 +218,25 @@ if (!(Test-Path $dir)) { New-Item -ItemType Directory -Path $dir }
 |---|---|
 | `"Auto"` | CUDA → DirectML → CPU 순서로 가능한 첫 번째 EP 사용 |
 | `"Cpu"` | CPU 강제 (디버깅용) |
-| `"Cuda"` | CUDA만 사용 (TensorRT 빌드 시간 절약) |
+| `"Cuda"` | CUDA 사용 (TensorRT 빌드 시간 절약), 실패 시 CPU 폴백 |
 | `"DirectML"` | DirectX 12 GPU (NVIDIA가 아닌 GPU도 지원) |
 | `"TensorRT"` | TensorRT 우선, 실패 시 CUDA → CPU 폴백 ← **권장** |
 
-### 4.4. TensorRT 캐시 폴더 준비
+### 4.4. TensorRT 캐시 폴더
+
+캐시 폴더는 기본값이 있고 **자동 생성**되므로 보통 따로 준비할 필요가 없습니다:
+
+```
+%LocalAppData%\BODA VISION AI\trt_cache
+```
+
+다른 위치를 쓰고 싶을 때만 폴더를 만들고 `tensorRTCachePath` 키(또는 GUI의 TensorRT Engine Cache Folder)로 지정합니다:
 
 ```powershell
 New-Item -ItemType Directory -Path "C:\VMS\trt_cache" -Force
 ```
 
-이 폴더에 모델별 `.engine` 파일이 캐시됩니다. **첫 추론은 1~5분 빌드 시간**이 걸리지만, 두 번째부터는 즉시 로드됩니다.
+캐시 폴더에는 모델별 `.engine` 파일이 캐시됩니다. **첫 추론은 1~5분 빌드 시간**이 걸리지만, 두 번째부터는 즉시 로드됩니다.
 
 > 모델을 변경하거나 InputSize/Tile Size를 바꾸면 새 엔진이 빌드됩니다 (자동 감지).
 
@@ -269,14 +291,9 @@ DetectionTool:
   - 100회 반복 평균
 ```
 
-### 기대 성능 (RTX 3060 기준)
+### 기대 성능
 
-| EP | FPS | Latency | 비고 |
-|---|---|---|---|
-| CPU (i7-12700) | 8 FPS | 125 ms | 기준선 |
-| CUDA | 80 FPS | 12 ms | 10× |
-| TensorRT FP32 | 110 FPS | 9 ms | 13.7× |
-| TensorRT FP16 | 180 FPS | 5.5 ms | 22.5× |
+리포에 표준 벤치마크가 없으므로 확정 수치 대신 **환경별 실측을 권장**합니다. GPU 모델·드라이버·모델 크기에 따라 편차가 큽니다. EP가 실제로 적용되었는지는 검출 결과 메시지의 `EP: …` 표기로 확인하세요.
 
 ### 측정 코드 예시 (PowerShell)
 
@@ -285,7 +302,7 @@ DetectionTool:
 # (VMS 시퀀스 에디터의 Pipeline ExecutionTime 활용)
 ```
 
-자세한 벤치마크는 [VMS_DeepLearning_Detection_Improvements.md](VMS_DeepLearning_Detection_Improvements.md) 6.2 참조.
+측정 항목은 [VMS_DeepLearning_Detection_Improvements.md](VMS_DeepLearning_Detection_Improvements.md)의 실 환경 테스트 체크리스트 참조.
 
 ---
 
@@ -346,7 +363,7 @@ TensorRT FP16은 미세한 수치 오차가 있어 결과가 약간 달라질 �
 □ 재부팅
 □ nvidia-smi / nvcc 검증
 □ %LocalAppData%\BODA VISION AI\system_config.json 작성
-□ trt_cache 폴더 생성
+□ (선택) 기본 캐시 폴더 대신 다른 위치를 쓸 경우에만 trt_cache 폴더 생성
 □ VMS 실행 → DetectionTool 결과에 (EP: TensorRT) 확인
 □ 첫 빌드 후 두 번째 실행이 즉시 시작되는지 확인
 ```
