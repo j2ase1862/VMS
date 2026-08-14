@@ -240,7 +240,7 @@ baseline PR1~44 이후 추가된 보안/품질 작업. 시간순 상세는 `GS_H
 - 결과 artifact 30일 보관
 
 ### 4.2 수동 회귀 검증 (운영 환경)
-`docs/manual_regression_v1.2.md` — 26 항목 체크리스트
+`docs/manual_regression_v1.2.md` — 26 항목 체크리스트 (v1.2 시점 기록 — 현행 절차는 `docs/field_install_checklist.md`)
 - 3.1 IO Device Integration (5)
 - 3.2 Expert Mode (4)
 - 3.3 Security Mode (3, GS critical)

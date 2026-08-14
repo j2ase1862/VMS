@@ -104,7 +104,7 @@ MSI 는 빌드 **후** 동일 명령으로 서명:
     /fd SHA256 /td SHA256 `
     /tr "http://timestamp.digicert.com" `
     /f "C:\codesign\vasim_codesign.pfx" /p $env:CODESIGN_PFX_PASSWORD `
-    "VMS.MasterSetup\bin\Release\BODA-VMS-Setup.msi"
+    "VMS.MasterSetup\bin\Release\VMS-<버전>.msi"   # 산출물명은 VMS-<버전>.msi (v1.4.6+)
 ```
 
 ### 3.4 순서 — VMS.exe → MSI
@@ -120,7 +120,7 @@ WiX 6 (`VMS.MasterSetup.wixproj`) 의 PostBuild target 에 서명 단계 추가:
 
 ```xml
 <Target Name="SignArtifacts" AfterTargets="Build" Condition="'$(EnableCodeSigning)'=='true'">
-  <Exec Command="signtool.exe sign /fd SHA256 /td SHA256 /tr http://timestamp.digicert.com /f &quot;$(CodeSignPfxPath)&quot; /p $(CodeSignPfxPassword) &quot;$(OutputPath)BODA-VMS-Setup.msi&quot;"
+  <Exec Command="signtool.exe sign /fd SHA256 /td SHA256 /tr http://timestamp.digicert.com /f &quot;$(CodeSignPfxPath)&quot; /p $(CodeSignPfxPassword) &quot;$(OutputPath)VMS-$(Version).msi&quot;"
         ContinueOnError="false" />
 </Target>
 ```
@@ -216,16 +216,16 @@ EV 인증서의 비공개 키는 HSM/토큰 강제라 PFX export 불가. Azure K
 
 ### 6.1 명령행 검증
 ```powershell
-& signtool.exe verify /pa /v "BODA-VMS-Setup.msi"
+& signtool.exe verify /pa /v "VMS-<버전>.msi"
 ```
 출력 예 (성공):
 ```
-File: BODA-VMS-Setup.msi
+File: VMS-<버전>.msi
 Index  Algorithm  Timestamp
 ========================================
 0      sha256     RFC3161
 
-Successfully verified: BODA-VMS-Setup.msi
+Successfully verified: VMS-<버전>.msi
 ```
 실패 시 일반 원인:
 - 타임스탬프 미부착 → 인증서 만료 후 검증 불가
@@ -238,7 +238,7 @@ Successfully verified: BODA-VMS-Setup.msi
 
 ### 6.3 PowerShell 검증
 ```powershell
-Get-AuthenticodeSignature "BODA-VMS-Setup.msi" | Format-List *
+Get-AuthenticodeSignature "VMS-<버전>.msi" | Format-List *
 ```
 `Status` 가 `Valid`, `SignerCertificate.Subject` 가 발급자 정보 확인.
 

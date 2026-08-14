@@ -4,7 +4,9 @@
 
 > 관련 문서: MSI 빌드·Web 동봉 상세 [msi_build_guide.md](msi_build_guide.md) §13 ·
 > 현장 설치 체크리스트 [field_install_checklist.md](field_install_checklist.md) ·
-> Web 운영 배포 런북 `BODA.VMS.Web/docs/Production_Deploy_Runbook.md`
+> Web 운영 배포 런북 — Web 리포(`D:\Project\BODA.VMS.Web`) `docs/Production_Deploy_Runbook.md` ·
+> 검사 이미지 전달 경로는 [design/image-archive-web-integration.md](design/image-archive-web-integration.md)
+> (⚠ 그 문서의 "모드 A/B" 는 이미지 전달 경로 축 — 본 문서의 시나리오 A/B 와 별개)
 
 ## 한눈에 보기
 

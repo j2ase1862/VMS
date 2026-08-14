@@ -80,7 +80,7 @@
     └─ Fail (Service 부팅 지연) → 재시도 또는 비상 폴백 안내
 ```
 
-### 운영 가이드 (`docs/msi_build_guide.md §10` 신규 예정)
+### 운영 가이드 (`docs/msi_build_guide.md §10` — 작성 완료)
 | 항목 | 설명 |
 |------|------|
 | Service 계정 | `LocalSystem` 또는 전용 service 계정 — `C:\ProgramData\BODA\VMS\` (DB) + Jwt__Key 접근 가능 |

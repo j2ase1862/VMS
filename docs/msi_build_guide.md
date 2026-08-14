@@ -1,7 +1,7 @@
 # MSI 빌드 가이드 (BODA Vision AI)
 
-문서 버전: v1.3
-대상 빌드: master @ 2026-06-04
+문서 버전: v1.6
+대상 빌드: master @ 2026-08-14 (v1.5.12)
 범위: `VMS.MasterSetup` 프로젝트로 BODA Vision System MSI 인스톨러 생성
 
 > 코드 서명 (Authenticode) 은 별도 문서 — [gs_msi_code_signing_guide.md](gs/guides/gs_msi_code_signing_guide.md) (PR24) 참고.
@@ -52,6 +52,9 @@ dotnet build VMS.sln -c Release
 dotnet build VMS.MasterSetup/VMS.MasterSetup.wixproj -c Release
 ```
 ProjectReference 가 VMS 본체 빌드를 트리거하므로 사실상 (3.1) 과 동일한 결과.
+
+> **주의**: Web payload 스테이징(§13.2) 직후에는 `-t:Rebuild` 필수 — payload 파일은
+> 증분 빌드 입력으로 추적되지 않아 일반 빌드가 이전 MSI 를 그대로 둘 수 있다.
 
 ### 3.3 빌드 산출물
 ```
@@ -120,8 +123,10 @@ WiX 정의 — 4 Fragment 구성:
 | Package (root) | 제품명 / Manufacturer / UpgradeCode / MajorUpgrade / Feature / UI |
 | Directory Structure | `ProgramFiles6432Folder\VASIM\BODA Vision System` |
 | AppFiles ComponentGroup | `<Files Include="$(var.VMS.TargetDir)**" />` — VMS 빌드 출력 자동 수집 |
+| WebServer Feature | 동봉 BODA.VMS.Web (`WebPayload\` + `BodaVmsWeb` 서비스 demand 등록 + 방화벽 5292/TCP — §13) |
 | DesktopShortcutComp | 데스크탑 "VMS 실행" 단축키 + HKCU 키 (KeyPath) |
 | StartMenuShortcutComp | 시작 메뉴 "VASIM\BODA Vision System" 단축키 + RemoveFolder on uninstall |
+| AppSetup/VisionSetup 시작 메뉴 | "BODA VMS 설정 마법사" / "Vision Setup" 시작 메뉴 단축키 |
 
 ### 5.3 파일 자동 수집
 ```xml
@@ -138,11 +143,10 @@ WiX 정의 — 4 Fragment 구성:
 ## 6. 커스터마이징
 
 ### 6.1 버전 변경
-`VMS.MasterSetup/Package.wxs` line 6:
-```xml
-Version="1.0.0.0"
-```
-master 머지 직전 hotfix 시 수동 변경. (현재 자동화 안 됨 — 후속 작업 후보)
+버전 소스는 **`Directory.Build.props` 의 `<Version>` 단 한 곳**이다. wixproj 가
+`$(Version)` 을 WiX preprocessor 변수 `BuildVersion` 으로 전달하고, `Package.wxs` 는
+`Version="$(var.BuildVersion)"` 으로 받는다 — Package.wxs 를 수동으로 고칠 일은 없다.
+절차는 [release_manual_procedure.md](release_manual_procedure.md) ① 참조.
 
 ### 6.2 제조사 / 제품명
 `Package.wxs` line 4-5:
@@ -525,7 +529,9 @@ Web 핫픽스마다 1.2GB MSI 를 재발행하지 않는다 — 기존 오프라
 |---|---|
 | [gs_msi_code_signing_guide.md](gs/guides/gs_msi_code_signing_guide.md) | Authenticode 코드 서명 운영 절차 |
 | [gs_distribution_policy.md](gs/guides/gs_distribution_policy.md) | 라이선스 / 배포 채널 / EULA |
-| [manual_regression_v1.2.md](manual_regression_v1.2.md) | MSI 다운로드 후 운영 환경 회귀 가이드 |
+| [field_install_checklist.md](field_install_checklist.md) | 현장 설치 실행 체크리스트 (현행) |
+| [deployment_scenario_guide.md](deployment_scenario_guide.md) | 올인원 vs 클라우드 분리 구성 선택 |
+| [manual_regression_v1.2.md](manual_regression_v1.2.md) | v1.2 시점 회귀 기록 (사문서 — 이력 참고용) |
 | [gs_compliance_overview_v1.0.md](gs/guides/gs_compliance_overview_v1.0.md) | GS 인증 보안 정책 종합 |
 | [SSO_Migration_Plan.md](gs/guides/SSO_Migration_Plan.md) | VMS ↔ Web SSO 통합 마이그레이션 설계 (PR1~5) |
 | [multi-instance-support.md](design/multi-instance-support.md) | 다중 인스턴스(한 PC 두 라인) 설계 |

@@ -1,5 +1,7 @@
 # 3D 치수 XY 캘리브레이션 가이드 (mm/px)
 
+문서 버전: v1.0 (2026-07-24 작성, v1.4.25 AutoFromCamera 기준 — 2026-08-14 헤더 추가)
+
 > 대상 독자: 현장 설정 담당자 · VisionSetup 사용자
 > 관련 도구: PointCloud Cluster (Dimensions), PointCloud Mask Crop
 

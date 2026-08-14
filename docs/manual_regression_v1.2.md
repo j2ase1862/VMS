@@ -1,5 +1,13 @@
 # 운영 환경 회귀 테스트 가이드 — v1.2
 
+> ⚠️ **사문서 (2026-08-14 판정)** — v1.2 마일스톤(2026-05-29) 시점 기록으로 보존하며,
+> 현행 절차로 사용하지 말 것. 주요 불일치: §1.1 CI artifact MSI 는 이제 **현장 배포 금지**
+> (Mech-Eye SDK·Web 미포함, [release_manual_procedure.md](release_manual_procedure.md) 사고 규칙)
+> · MSI 파일명 `VMS-<버전>.msi` · 설치 경로 `C:\Program Files\VASIM\...` · securityMode 누락 시
+> Development 폴백이 아니라 **부팅 차단** · 로그인은 username/password + Web SSO · 감사 9 카테고리.
+> **현행 설치·검증 절차: [field_install_checklist.md](field_install_checklist.md) +
+> [msi_build_guide.md](msi_build_guide.md) §9~§13.**
+
 본 가이드는 v1.1 → v1.2 마일스톤 (보안 PR1~3 / 감사 PR4~6,9 / 도움말 PR10~11 / 단위 테스트 PR7~8 / 통합 테스트 PR12~15 / MSI 자동화 PR16) 의 변경을 운영 환경에서 직접 검증하는 절차입니다.
 
 CI 가 영역별 207 → 282 테스트로 회귀를 자동 차단하지만, **UI / 외부 시스템 / Production 보안 모드 / 실제 PLC·IO 보드 연동**은 코드만으로 검증 불가능합니다. 본 문서의 항목은 모두 그러한 수동 검증 대상입니다.
