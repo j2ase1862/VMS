@@ -1,7 +1,7 @@
 # VMS SAM Auto-Segmentation 오퍼레이터 매뉴얼
 
-**버전**: 1.0
-**작성일**: 2026-04-03
+**문서 버전**: v1.1 (2026-08-14 — VMS v1.5.12 기준 검증·정정)
+**최초 작성**: 2026-04-03
 **대상**: VMS DeepLearning 오퍼레이터
 
 ---
@@ -16,8 +16,8 @@
 6. [세그멘테이션 라벨링](#6-세그멘테이션-라벨링)
 7. [데이터 내보내기 (Export)](#7-데이터-내보내기-export)
 8. [모델 학습 (Training)](#8-모델-학습-training)
-9. [전체 워크플로우 요약](#10-전체-워크플로우-요약)
-10. [문제 해결 (FAQ)](#11-문제-해결-faq)
+9. [전체 워크플로우 요약](#9-전체-워크플로우-요약)
+10. [문제 해결 (FAQ)](#10-문제-해결-faq)
 
 ---
 
@@ -46,69 +46,31 @@ SAM ONNX 준비 → 데이터셋 생성 (Segmentation) → 모델 로드 → 클
 
 ### 2.1 MobileSAM ONNX 모델 준비
 
-SAM 기능을 사용하려면 **2개의 ONNX 파일**이 필요합니다:
+SAM 기능을 사용하려면 **Encoder / Decoder ONNX 파일 한 쌍**이 필요합니다.
 
-| 파일 | 설명 | 크기 (참고) |
-|------|------|------------|
-| `mobile_sam_encoder.onnx` | 이미지 인코더 — 이미지를 임베딩 벡터로 변환 | ~20MB |
-| `mobile_sam_decoder.onnx` | 마스크 디코더 — 클릭 포인트로 마스크 생성 | ~16MB |
+#### 방법 1 — 동봉된 사전 변환 모델 사용 (권장)
 
-#### ONNX 모델 생성 방법
+사전 변환된 모델이 리포의 `VMS.DeepLearning\models\sam\` 폴더에 동봉되어 있습니다. 별도 변환 없이 바로 사용하면 됩니다:
 
-Python 환경에서 MobileSAM 공식 모델을 ONNX로 변환합니다:
+| 파일 | 설명 | 크기 |
+|------|------|------|
+| `mobile_sam_encoder.onnx` | 이미지 인코더 — 이미지를 임베딩 벡터로 변환 | 27.9MB |
+| `mobile_sam_encoder.onnx.data` | 인코더 외부 가중치 데이터 | 27.8MB |
+| `mobile_sam_decoder.onnx` | 마스크 디코더 — 클릭 포인트로 마스크 생성 | 16.5MB |
+| `mobile_sam_decoder.onnx.data` | 디코더 외부 가중치 데이터 | 16.3MB |
+
+> **중요**: 4개 파일이 한 세트입니다. `.onnx` 파일을 복사/이동할 때는 같은 이름의 `.onnx.data` 파일이 **반드시 같은 폴더에 함께** 있어야 합니다.
+
+#### 방법 2 — 직접 변환 (필요 시)
+
+직접 변환이 필요하면 동봉 스크립트 `VMS.DeepLearning\scripts\export_mobile_sam.py` 를 사용합니다:
 
 ```bash
 # 필수 패키지 설치
 pip install mobile-sam onnx onnxruntime torch
 
-# 변환 스크립트 실행
-python export_mobile_sam_onnx.py
-```
-
-변환 스크립트 예시 (`export_mobile_sam_onnx.py`):
-
-```python
-import torch
-from mobile_sam import sam_model_registry, SamOnnxModel
-
-# 1. 모델 로드 (mobile_sam.pt 체크포인트 필요)
-sam = sam_model_registry["vit_t"](checkpoint="mobile_sam.pt")
-
-# 2. Encoder 변환
-dummy_input = torch.randn(1, 3, 1024, 1024)
-torch.onnx.export(
-    sam.image_encoder,
-    dummy_input,
-    "mobile_sam_encoder.onnx",
-    input_names=["input_image"],
-    output_names=["image_embeddings"],
-    opset_version=17
-)
-
-# 3. Decoder 변환
-onnx_model = SamOnnxModel(sam, return_single_mask=True)
-embed_dim = sam.prompt_encoder.embed_dim
-embed_size = sam.prompt_encoder.image_embedding_size
-
-dummy_inputs = {
-    "image_embeddings": torch.randn(1, embed_dim, *embed_size),
-    "point_coords": torch.randint(0, 1024, (1, 2, 2), dtype=torch.float),
-    "point_labels": torch.randint(0, 2, (1, 2), dtype=torch.float),
-    "mask_input": torch.randn(1, 1, 256, 256),
-    "has_mask_input": torch.tensor([0.0]),
-    "orig_im_size": torch.tensor([512.0, 512.0]),
-}
-
-torch.onnx.export(
-    onnx_model,
-    tuple(dummy_inputs.values()),
-    "mobile_sam_decoder.onnx",
-    input_names=list(dummy_inputs.keys()),
-    output_names=["masks", "iou_predictions", "low_res_masks"],
-    opset_version=17
-)
-
-print("Export 완료: mobile_sam_encoder.onnx, mobile_sam_decoder.onnx")
+# 동봉 변환 스크립트 실행 (mobile_sam.pt 체크포인트 필요)
+python VMS.DeepLearning\scripts\export_mobile_sam.py
 ```
 
 > **참고**: `mobile_sam.pt` 체크포인트는 [MobileSAM 공식 리포지토리](https://github.com/ChaoningZhang/MobileSAM)에서 다운로드할 수 있습니다.
@@ -118,7 +80,7 @@ print("Export 완료: mobile_sam_encoder.onnx, mobile_sam_decoder.onnx")
 라벨링만 수행할 경우 Python은 불필요합니다. 학습까지 진행하려면:
 
 ```bash
-# Python 3.8 ~ 3.10 권장
+# Python 3.10 ~ 3.12 (앱이 3.12 → 3.11 → 3.10 순으로 자동 탐지)
 pip install ultralytics torch torchvision
 ```
 
@@ -128,28 +90,7 @@ pip install ultralytics torch torchvision
 
 ## 3. 화면 구성
 
-Segmentation 모드를 선택하면 기존 Detection/OCR 모드와 다른 화면 구성이 표시됩니다.
-
-```
-┌─────────────┬──────────────────────────┬──────────────┐
-│  좌측 패널   │       중앙 캔버스         │  우측 패널    │
-│             │ ┌──────────────────────┐ │              │
-│ [Dataset]   │ │ SAM Segment          │ │ [Classes]    │
-│  - 목록     │ │ 좌클릭=전경 우클릭=배경 │ │  - 클래스 목록│
-│  - 생성/삭제 │ │ [Confirm] [Clear]    │ │  - 추가      │
-│             │ └──────────────────────┘ │              │
-│ [Images]    │                          │ [Labels]     │
-│  - 이미지   │   이미지 + 폴리곤 오버레이  │  - 폴리곤 목록│
-│    목록     │   + 클릭 포인트 표시       │              │
-│  - 추가/삭제 │                          │ [SAM Model]  │
-│  - ◀ ▶ 탐색 │                          │  - Encoder   │
-│             │                          │  - Decoder   │
-│             │                          │  - Load 버튼  │
-│             │                          │              │
-│             │                          │ [Export &    │
-│             │                          │  Training]   │
-└─────────────┴──────────────────────────┴──────────────┘
-```
+기본 화면 골격(좌측 패널 / 중앙 캔버스 / 우측 패널)은 [Labeling 매뉴얼 §3](VMS_Labeling_Training_Manual.md#3-라벨링-화면-구성)과 동일합니다. Segmentation 모드를 선택하면 여기에 아래 SAM 전용 요소가 추가됩니다.
 
 ### Segmentation 모드 전용 UI 요소
 
@@ -178,9 +119,7 @@ Segmentation 모드를 선택하면 기존 Detection/OCR 모드와 다른 화면
 
 ### 이미지 추가
 
-1. **"+ Add"** 버튼 클릭 → 이미지 파일 선택
-   - 지원 포맷: BMP, JPG, JPEG, PNG, TIF, TIFF
-2. 실제 검사 환경 이미지를 충분히 수집합니다 (최소 50장 이상 권장)
+이미지 추가 방법은 [Labeling 매뉴얼 §5.1](VMS_Labeling_Training_Manual.md#51-이미지-추가)과 동일합니다. 실제 검사 환경 이미지를 최소 50장 이상 권장합니다.
 
 ---
 
@@ -202,12 +141,7 @@ Segmentation 모드를 선택하면 기존 Detection/OCR 모드와 다른 화면
 
 ### 6.1 클래스 등록
 
-라벨링 전에 분류할 객체 클래스를 등록합니다.
-
-1. 우측 패널 > **Classes** 섹션에서 클래스 이름을 입력합니다.
-   - 예: `bottle`, `cap`, `defect_area`
-2. **"+"** 버튼으로 추가합니다.
-3. 현재 사용할 클래스를 목록에서 **선택(클릭)** 합니다.
+라벨링 전에 분류할 객체 클래스를 등록합니다 (예: `bottle`, `cap`, `defect_area`). 등록 방법은 [Labeling 매뉴얼 §6.1](VMS_Labeling_Training_Manual.md#61-클래스-등록)과 동일합니다.
 
 ### 6.2 기본 조작 — 클릭으로 세그멘테이션
 
@@ -236,7 +170,7 @@ Step 3. 보정 (필요 시)
 
 Step 4. 확정
   └─ Enter 키 또는 툴바의 "Confirm (Enter)" 버튼 클릭
-  └─ 폴리곤이 라벨로 저장되고 좌측 Labels 목록에 추가됨
+  └─ 폴리곤이 라벨로 저장되고 우측 Labels 목록에 추가됨
 
 Step 5. 다음 객체
   └─ 같은 이미지의 다른 객체를 계속 클릭하여 라벨링
@@ -271,11 +205,11 @@ Step 6. 다음 이미지
 
 ### 6.6 라벨 관리
 
-확정된 라벨은 우측 **Labels** 섹션에서 관리합니다:
+확정된 라벨은 우측 **Labels** 섹션과 별도의 **Label Editor** 섹션에서 관리합니다:
 
-- 라벨 목록에서 **클릭** → 해당 폴리곤 선택
-- **Class** 드롭다운 → 클래스 변경 가능
-- **Delete** 버튼 → 선택된 라벨 삭제
+- Labels 목록에서 **클릭** → 해당 폴리곤 선택
+- **Label Editor** 섹션의 **Class** 드롭다운 → 클래스 변경 가능
+- Labels 헤더의 **Delete** 버튼 → 선택된 라벨 삭제
 
 ---
 
@@ -285,9 +219,7 @@ Step 6. 다음 이미지
 
 ### 7.1 자동 분할
 
-1. 우측 패널 하단 > **Export** Expander를 펼칩니다.
-2. **"Auto Split (Train/Val)"** 버튼을 클릭합니다.
-3. 라벨링된 이미지가 80:20 비율로 Train/Validation에 자동 분배됩니다.
+자동 분할(Train/Val 80:20) 절차는 [Labeling 매뉴얼 §7.1](VMS_Labeling_Training_Manual.md#71-자동-분할-trainvalidation)과 동일합니다.
 
 ### 7.2 YOLO-Seg 형식 내보내기
 
@@ -343,81 +275,51 @@ names: ['bottle', 'cap', 'defect_area']
 
 ### 8.1 학습 설정
 
-우측 패널의 **Training** Expander를 펼칩니다.
+우측 패널의 **Training** Expander를 펼칩니다. Python / Epochs / Batch Size 등 공통 학습 설정은 [Labeling 매뉴얼 §8.1](VMS_Labeling_Training_Manual.md#81-학습-설정)과 동일합니다. Segmentation 데이터셋에서 다른 점은 **Script** 항목입니다:
 
 | 항목 | 설명 | 기본값 |
 |------|------|--------|
-| **Python** | Python 실행 경로 | `python` |
-| **Script** | 학습 스크립트 경로 (자동 매칭: `train_yolo_seg.py`) | 자동 설정 |
-| **Epochs** | 학습 반복 횟수 | `100` |
-| **Batch Size** | 배치 크기 (GPU 메모리에 맞게 조절) | `8` |
+| **Script** | 학습 스크립트 경로 — Segmentation 데이터셋이면 `train_yolo_seg.py`로 자동 매칭 | 자동 설정 |
 
-> Segmentation 데이터셋을 선택하면 Script가 `train_yolo_seg.py`로 자동 매칭됩니다.
+> **경고**: 자동 매칭 대상인 `train_yolo_seg.py` 는 현재 리포에 동봉되어 있지 않습니다. 자동 매칭이 파일을 찾지 못하면 **Start Training 이 실패**합니다. Export 산출물(YOLO-Seg 형식)은 `ultralytics` 로 외부 학습이 가능합니다.
 
 ### 8.2 학습 실행
 
-1. Export를 **먼저 완료**합니다 (학습 데이터셋 경로가 자동 설정됨).
-2. 학습 설정을 확인합니다.
-3. **"Start Training"** 버튼을 클릭합니다.
-
-학습 중 표시되는 정보:
-
-| 항목 | 설명 |
-|------|------|
-| **Progress Bar** | 전체 학습 진행률 |
-| **Loss** | 손실값 — 낮을수록 좋음 |
-| **Acc** | 정확도 — 높을수록 좋음 |
-| **Log** | 실시간 학습 로그 |
+Export(YOLO-Seg)를 **먼저 완료**한 뒤 **"Start Training"** 을 실행합니다. 실행 절차와 학습 중 표시 정보는 [Labeling 매뉴얼 §8.3](VMS_Labeling_Training_Manual.md#83-학습-실행)과 동일합니다. 학습 중지·ONNX 완료 처리는 [Labeling 매뉴얼 §8.4~8.5](VMS_Labeling_Training_Manual.md#84-학습-중지)와 동일합니다.
 
 ### 8.3 학습 파라미터 조정
+
+GPU 메모리 부족·과적합 등 공통 조정은 [Labeling 매뉴얼 §8.6](VMS_Labeling_Training_Manual.md#86-학습-파라미터-조정-가이드)을 참조하세요. Segmentation 학습에서 추가로:
 
 | 상황 | 조치 |
 |------|------|
 | Loss가 줄지 않음 | Epochs 늘리기 (200~300), 데이터 더 수집 |
-| GPU 메모리 부족 | Batch Size 줄이기 (8 → 4 → 2) |
-| 과적합 | 데이터 더 수집, Epochs 줄이기 |
-| 학습이 너무 느림 | Batch Size 줄이기, 이미지 해상도 낮추기 |
 
 ---
 
 ## 9. 전체 워크플로우 요약
 
+공통 단계(데이터셋 생성 → 이미지 추가 → 클래스 등록 → 내보내기 → 학습 → 검증)의 흐름은 [Labeling 매뉴얼 §10](VMS_Labeling_Training_Manual.md#10-전체-워크플로우-요약)과 동일합니다 (데이터셋 생성 시 Task Type 을 **"Segmentation"** 으로 선택하는 점만 다름). SAM 고유 단계만 정리하면:
+
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│            VMS SAM 세그멘테이션 워크플로우                       │
+│            SAM 고유 단계                                       │
 ├──────────────────────────────────────────────────────────────┤
 │                                                              │
-│  Step 1. ONNX 모델 준비                                      │
-│    └─ mobile_sam_encoder.onnx + mobile_sam_decoder.onnx      │
+│  Step A. ONNX 모델 준비                                       │
+│    └─ mobile_sam_encoder.onnx(+.onnx.data)                   │
+│       + mobile_sam_decoder.onnx(+.onnx.data)                 │
+│       (동봉 위치: VMS.DeepLearning\models\sam\)               │
 │                                                              │
-│  Step 2. 데이터셋 생성                                        │
-│    └─ Task Type → "Segmentation" 선택 → "+" 클릭             │
-│                                                              │
-│  Step 3. 이미지 추가                                          │
-│    └─ "+ Add" → 검사 환경 이미지 선택 (50장 이상 권장)           │
-│                                                              │
-│  Step 4. SAM 모델 로드                                        │
+│  Step B. SAM 모델 로드                                        │
 │    └─ 우측 SAM Model > Encoder/Decoder 경로 지정 > Load       │
 │                                                              │
-│  Step 5. 클래스 등록                                          │
-│    └─ Classes → 객체 종류별 클래스명 입력 → "+" 클릭            │
+│  Step C. 클릭 라벨링                                          │
+│    └─ 클래스 선택 → 객체 위 좌클릭(폴리곤 자동 생성)            │
+│       → 필요 시 좌/우클릭 보정 → Enter로 확정                  │
 │                                                              │
-│  Step 6. 세그멘테이션 라벨링                                    │
-│    └─ 각 이미지에서:                                           │
-│       1) 클래스 선택                                           │
-│       2) 객체 위 좌클릭 → 폴리곤 자동 생성                      │
-│       3) 필요 시 추가 좌클릭/우클릭으로 보정                     │
-│       4) Enter로 확정                                         │
-│       5) ◀/▶ 로 다음 이미지                                   │
-│                                                              │
-│  Step 7. 내보내기                                             │
+│  Step D. YOLO-Seg 내보내기                                    │
 │    └─ "Auto Split" → "Export for Training" (YOLO-Seg)        │
-│                                                              │
-│  Step 8. 학습                                                 │
-│    └─ Epochs/Batch 설정 → "Start Training"                   │
-│                                                              │
-│  Step 9. 검증                                                 │
-│    └─ 학습된 ONNX 모델을 VisionSetup에서 적용 후 검사 실행      │
 │                                                              │
 └──────────────────────────────────────────────────────────────┘
 ```
@@ -467,7 +369,7 @@ names: ['bottle', 'cap', 'defect_area']
 **A**: 네. MobileSAM은 CPU에서도 동작합니다. 다만 첫 클릭 시 임베딩 생성이 CPU에서는 2~5초 정도 소요될 수 있습니다.
 
 ### Q: 데이터셋은 어디에 저장되나요?
-**A**: `%APPDATA%/VMS/Datasets/` 폴더에 데이터셋별 하위 폴더로 저장됩니다. 폴리곤 좌표는 `dataset.json` 파일 안의 각 이미지 라벨 `Points` 필드에 기록됩니다.
+**A**: [Labeling 매뉴얼 §11 FAQ](VMS_Labeling_Training_Manual.md#11-문제-해결-faq)의 같은 항목을 참조하세요. 폴리곤 좌표는 `dataset.json` 라벨의 `Points` 필드에 기록됩니다.
 
 ---
 

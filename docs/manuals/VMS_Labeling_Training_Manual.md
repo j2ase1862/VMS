@@ -1,7 +1,7 @@
 # VMS 딥러닝 라벨링 & 학습 오퍼레이터 매뉴얼
 
-**버전**: 1.0
-**작성일**: 2026-03-10
+**문서 버전**: v1.1 (2026-08-14 — VMS v1.5.12 기준 검증·정정)
+**최초 작성**: 2026-03-10
 **대상**: VMS VisionSetup 오퍼레이터
 
 ---
@@ -48,7 +48,7 @@ VMS Labeling 기능은 OCR 인식률 향상을 위해 **자체 학습 데이터�
 학습 기능을 사용하려면 Python 환경이 필요합니다. (라벨링만 사용할 경우 불필요)
 
 ```bash
-# Python 3.8 ~ 3.10 권장
+# Python 3.10 ~ 3.12 (앱이 3.12 → 3.11 → 3.10 순으로 자동 탐지)
 pip install paddlepaddle paddleocr paddle2onnx onnx
 ```
 
@@ -69,7 +69,7 @@ VMS.VisionSetup/scripts/train_ppocr.py
 
 ## 3. 라벨링 화면 구성
 
-VMS 메인 화면 상단의 **"Labeling"** 탭을 클릭하면 라벨링 화면으로 전환됩니다.
+라벨링 화면은 별도 앱인 **VMS.DeepLearning.exe** 입니다. VisionSetup 메뉴의 **Deep Learning** 항목으로 실행하거나, exe 를 직접 실행합니다.
 
 ```
 ┌─────────────┬──────────────────────────┬──────────────┐
@@ -83,8 +83,8 @@ VMS 메인 화면 상단의 **"Labeling"** 탭을 클릭하면 라벨링 화면�
 │  - 이미지   │                          │  - 라벨 목록  │
 │    목록     │                          │  - 편집기     │
 │  - 추가/삭제 │                          │              │
-│  - ◀ ▶ 탐색 │                          │ [Export &    │
-│             │                          │  Training]   │
+│  - ◀ ▶ 탐색 │                          │ [Export]     │
+│             │                          │ [Training]   │
 └─────────────┴──────────────────────────┴──────────────┘
 ```
 
@@ -102,7 +102,9 @@ VMS 메인 화면 상단의 **"Labeling"** 탭을 클릭하면 라벨링 화면�
 
 1. 좌측 패널의 **Dataset** 섹션에서 텍스트 입력란에 데이터셋 이름을 입력합니다.
    - 예: `VASIM_Label`, `ProductCode_2026`
-2. **"+"** 버튼을 클릭하면 데이터셋이 생성됩니다.
+2. **Task Type** 콤보박스에서 **OCR** 을 선택합니다 (선택지: OCR / Detection / Segmentation).
+   - **필수 단계**입니다. OCR 을 골라야 Export 와 학습 스크립트 자동 매칭이 OCR 기준으로 동작합니다.
+3. **"+"** 버튼을 클릭하면 데이터셋이 생성됩니다.
 
 > 데이터셋은 `%APPDATA%/VMS/Datasets/{데이터셋명}/` 폴더에 저장됩니다.
 
@@ -168,16 +170,15 @@ VMS 메인 화면 상단의 **"Labeling"** 탭을 클릭하면 라벨링 화면�
 ### 6.2 바운딩 박스 생성
 
 1. 우측 패널에서 사용할 **클래스를 선택**합니다.
-2. 중앙 캔버스의 **도구 모음(Toolbar)** 에서 사각형 ROI 도구를 선택합니다.
-3. 이미지 위에서 텍스트 영역을 **드래그하여 박스를 그립니다**.
-4. 박스가 생성되면 자동으로 선택한 클래스의 라벨이 생성됩니다.
+2. 캔버스에 상시 표시되는 **Draw Box** 안내에 따라, 이미지 위에서 텍스트 영역을 **드래그하여 박스를 그립니다** (별도 도구 선택 없이 바로 드래그).
+3. 박스가 생성되면 자동으로 선택한 클래스의 라벨이 생성됩니다.
 
 ### 6.3 텍스트 입력 (Transcription)
 
 **Recognition 학습에 필수적인 단계입니다.**
 
 1. 캔버스에서 바운딩 박스를 **클릭하여 선택**합니다.
-2. 우측 패널 하단의 **Selected Label** 편집기가 활성화됩니다.
+2. 우측 패널 하단의 **Label Editor** 가 활성화됩니다.
 3. **Transcription** 입력란에 해당 박스 안의 **실제 텍스트를 정확히 입력**합니다.
    - 예: 박스 안에 "ABC-1234"가 보이면 → `ABC-1234` 입력
 
@@ -209,11 +210,11 @@ VMS 메인 화면 상단의 **"Labeling"** 탭을 클릭하면 라벨링 화면�
 
 ## 7. 데이터 내보내기 (Export)
 
-라벨링이 완료되면 학습 데이터 형식으로 내보냅니다.
+라벨링이 완료되면 학습 데이터 형식으로 내보냅니다. 내보내기와 학습은 우측 패널 하단의 **Export** 와 **Training** 두 개의 Expander 로 나뉘어 있습니다.
 
 ### 7.1 자동 분할 (Train/Validation)
 
-1. 우측 패널 하단의 **Export & Training** 섹션을 펼칩니다.
+1. 우측 패널 하단의 **Export** Expander 를 펼칩니다.
 2. **"Auto Split (Train/Val)"** 버튼을 클릭합니다.
 3. 전체 이미지가 80:20 비율로 Train/Validation에 자동 분배됩니다.
 
@@ -223,7 +224,8 @@ VMS 메인 화면 상단의 **"Labeling"** 탭을 클릭하면 라벨링 화면�
 
 **PaddleOCR Fine-tuning에 사용할 포맷입니다.**
 
-1. **"Export PaddleOCR"** 버튼을 클릭합니다.
+1. **"Export for Training"** 버튼을 클릭합니다.
+   - 별도의 형식 선택 버튼은 없습니다. 데이터셋의 Task Type 에 따라 PaddleOCR / YOLO / YOLO-Seg 형식으로 자동 분기됩니다 (OCR 데이터셋 → PaddleOCR).
 2. 저장할 폴더를 지정합니다.
 3. 다음 파일들이 자동 생성됩니다:
 
@@ -237,16 +239,15 @@ VMS 메인 화면 상단의 **"Labeling"** 탭을 클릭하면 라벨링 화면�
 │   ├── img_0001.jpg
 │   ├── img_0002.jpg
 │   └── ...
-└── images/              # Detection용 원본 이미지
-    ├── train/
-    └── val/
+├── train_images/        # Detection용 학습 이미지 (평면 구조)
+└── val_images/          # Detection용 검증 이미지 (평면 구조)
 ```
 
 ### 7.3 YOLO 형식 내보내기
 
-객체 탐지 학습(YOLO 계열)에 사용할 포맷입니다.
+객체 탐지 학습(YOLO 계열)에 사용할 포맷입니다. 별도 버튼이 아니라, **Detection** Task Type 데이터셋에서 같은 **"Export for Training"** 버튼을 누르면 YOLO 형식으로 자동 분기됩니다 (Segmentation 데이터셋은 YOLO-Seg).
 
-1. **"Export YOLO"** 버튼을 클릭합니다.
+1. **"Export for Training"** 버튼을 클릭합니다.
 2. 저장할 폴더를 지정합니다.
 3. `data.yaml` 및 normalized xywh 라벨 파일이 생성됩니다.
 
@@ -256,23 +257,24 @@ VMS 메인 화면 상단의 **"Labeling"** 탭을 클릭하면 라벨링 화면�
 
 ### 8.1 학습 설정
 
-우측 패널의 **Export & Training** 섹션을 펼치면 Training 설정이 나타납니다.
+우측 패널의 **Training** Expander 를 펼치면 학습 설정이 나타납니다.
 
 | 항목 | 설명 | 기본값 |
 |------|------|--------|
 | **Python** | Python 실행 경로 | `python` |
-| **Script** | 학습 스크립트 파일 경로 | (수동 지정) |
+| **Script** | 학습 스크립트 경로 — 데이터셋 Task Type 에 따라 자동 매칭 (OCR → `train_ppocr.py`) | 자동 설정 |
 | **Epochs** | 학습 반복 횟수 | `100` |
-| **Batch** | 배치 크기 (GPU 메모리에 맞게 조절) | `8` |
+| **Batch Size:** | 배치 크기 (GPU 메모리에 맞게 조절) | `8` |
 
 ### 8.2 학습 스크립트 설정
 
-1. **Script** 항목 옆의 **"..."** 버튼을 클릭합니다.
-2. 파일 선택 대화 상자에서 학습 스크립트를 선택합니다:
+Script 는 수동 지정이 아니라 **Task Type 자동 매칭**이 기본입니다. OCR 데이터셋이면 다음 스크립트가 자동으로 잡히고, UI 의 Script 항목 옆에 **"(자동 매칭)"** 녹색 배지가 표시됩니다:
 
 ```
-D:\projects\VMS-Solution\VMS.VisionSetup\scripts\train_ppocr.py
+VMS.VisionSetup\scripts\train_ppocr.py   (리포 상대 경로, 자동 매칭됨)
 ```
+
+자동 매칭이 안 되는 예외 상황에서만 **"..."** 버튼으로 스크립트를 직접 선택합니다.
 
 > **참고**: Python 경로가 시스템 PATH에 없는 경우, 전체 경로를 입력합니다:
 > ```
@@ -340,7 +342,7 @@ D:\projects\VMS-Solution\VMS.VisionSetup\scripts\train_ppocr.py
 ### 9.1 모델 경로 설정
 
 1. VMS 메인 화면에서 **OCR Tool**을 선택합니다.
-2. 우측의 Tool Settings에서 Engine을 **PP-OCR ONNX**로 설정합니다.
+2. 우측의 Tool Settings에서 Engine을 **PPOcrOnnx**로 설정합니다.
 3. 다음 항목에 학습된 모델 경로를 입력합니다:
 
 | 항목 | 설명 | 예시 |
@@ -373,7 +375,9 @@ D:\projects\VMS-Solution\VMS.VisionSetup\scripts\train_ppocr.py
 ├──────────────────────────────────────────────────────────────┤
 │                                                              │
 │  Step 1. 데이터셋 생성                                        │
-│    └─ Labeling 탭 → Dataset → 이름 입력 → "+" 클릭            │
+│    └─ VisionSetup 메뉴 Deep Learning → VMS.DeepLearning.exe  │
+│       실행 (또는 exe 직접 실행)                                │
+│    └─ Dataset → Task Type "OCR" 선택 → 이름 입력 → "+" 클릭   │
 │                                                              │
 │  Step 2. 이미지 추가                                          │
 │    └─ "+ Add" → 검사 환경 이미지 선택 (50장 이상 권장)           │
@@ -389,10 +393,10 @@ D:\projects\VMS-Solution\VMS.VisionSetup\scripts\train_ppocr.py
 │       4) ◀/▶ 로 다음 이미지                                   │
 │                                                              │
 │  Step 5. 내보내기                                             │
-│    └─ "Auto Split" → "Export PaddleOCR"                      │
+│    └─ "Auto Split" → "Export for Training" (OCR→PaddleOCR)   │
 │                                                              │
 │  Step 6. 학습                                                 │
-│    └─ Script 경로 지정 → Epochs/Batch 설정 → "Start Training" │
+│    └─ Epochs/Batch 설정 → "Start Training" (Script 자동 매칭) │
 │                                                              │
 │  Step 7. 모델 적용                                            │
 │    └─ OCR Tool Settings → Custom Model Path에 ONNX 경로 입력  │
@@ -408,7 +412,7 @@ D:\projects\VMS-Solution\VMS.VisionSetup\scripts\train_ppocr.py
 ## 11. 문제 해결 (FAQ)
 
 ### Q: "학습 스크립트 경로를 지정하세요" 오류가 나옵니다.
-**A**: Script 항목에 `train_ppocr.py` 파일 경로를 지정해야 합니다. "..." 버튼으로 `VMS.VisionSetup/scripts/train_ppocr.py`를 선택하세요.
+**A**: Script 는 데이터셋 Task Type 에 따라 자동 매칭됩니다 (OCR → `train_ppocr.py`, "(자동 매칭)" 녹색 배지 표시). 이 오류는 자동 매칭이 실패한 예외 상황이므로, "..." 버튼으로 `VMS.VisionSetup/scripts/train_ppocr.py`를 직접 선택하세요.
 
 ### Q: 학습 시작 시 Python을 찾을 수 없다는 오류가 나옵니다.
 **A**: Python 항목에 전체 경로를 입력하세요. 예: `C:\Python310\python.exe`. 터미널에서 `python --version`으로 설치 여부를 확인하세요.
