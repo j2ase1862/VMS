@@ -75,13 +75,16 @@ namespace VMS.Core.Interfaces
         /// <summary>
         /// 검사 결과를 서버에 업로드.
         /// <paramref name="featureMetrics"/> 가 주어지면 Predictive_DefectRate_Plan §5.1 피처를 동봉.
-        /// 기존 호출자(피처 미전달)는 그대로 동작 — 서버는 nullable 컬럼으로 받음.
+        /// <paramref name="overallPass"/> 가 주어지면 사이클 판정 업로드 — results 가 비어 있어도
+        /// 서버가 접수해 WO 수량·검사 이력을 집계한다 (AUTO RUN "1사이클 = 1개").
+        /// 기존 호출자(피처/판정 미전달)는 그대로 동작 — 서버는 nullable 로 받음.
         /// </summary>
         Task<bool> UploadResultsAsync(
             int recipeId,
             List<ParameterResultDto> results,
             InspectionFeatureMetrics? featureMetrics = null,
-            string? correlationKey = null);
+            string? correlationKey = null,
+            bool? overallPass = null);
 
         // ─── Phase 3 추적성 컨텍스트 (UploadResultsAsync 호출 시 자동 첨부) ───
         /// <summary>업로드 시 첨부할 작업지시 ID. null이면 미선택.</summary>

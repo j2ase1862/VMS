@@ -52,7 +52,8 @@ namespace VMS.VisionSetup.Tests
             public (bool exists, bool synced) CheckCodeStatus(int paramCode, double v) => (false, false);
             public List<RecipeParameterDto> GetAll() => new(Cache);
             public Task<bool> UploadResultsAsync(int recipeId, List<ParameterResultDto> results,
-                InspectionFeatureMetrics? featureMetrics = null, string? correlationKey = null)
+                InspectionFeatureMetrics? featureMetrics = null, string? correlationKey = null,
+                bool? overallPass = null)
                 => Task.FromResult(true);
             public int? WorkOrderId { get; set; }
             public int? LotId { get; set; }

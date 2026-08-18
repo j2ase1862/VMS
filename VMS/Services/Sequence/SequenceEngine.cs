@@ -44,6 +44,9 @@ namespace VMS.Services.Sequence
         // Repeat 카운터 (노드 ID → 현재 반복 횟수)
         private readonly Dictionary<string, int> _repeatCounters = new();
 
+        // "1사이클 = 1개" 집계 — 이번 사이클(직전 Repeat 통과 이후)에 실행된 Inspection 수
+        private int _cycleInspectionCount;
+
         // Reset 신호 모니터링
         private CancellationTokenSource? _resetCts;
         private string? _resetAddress;
@@ -58,6 +61,13 @@ namespace VMS.Services.Sequence
         public event EventHandler<SequenceNodeEventArgs>? NodeCompleted;
         public event EventHandler<SequenceErrorEventArgs>? SequenceError;
         public event EventHandler? SequenceCompleted;
+
+        /// <summary>
+        /// 사이클 완료 — Repeat 노드 통과 시점(및 시퀀스 정상 종료 시점)에, 그 사이클에서
+        /// Inspection 이 1회 이상 실행됐으면 1회 발생. "1사이클 = 1개" WO 집계의 근거 이벤트.
+        /// 오류 중단·Reset 중단 시에는 미완성 사이클이므로 발생하지 않는다.
+        /// </summary>
+        public event EventHandler<SequenceCycleCompletedEventArgs>? CycleCompleted;
 
         public SequenceEngine(
             IPlcConnection plc,
@@ -93,6 +103,7 @@ namespace VMS.Services.Sequence
             _repeatCounters.Clear();
             _cameraResults.Clear();
             _lastInspectionOk = true;
+            _cycleInspectionCount = 0;
 
             VMS.Core.Security.AuditLogger.Instance.Log(
                 VMS.Core.Security.AuditCategory.SequenceControl, "SequenceStart",
@@ -175,6 +186,7 @@ namespace VMS.Services.Sequence
                 }
 
                 var currentNodeId = startNode.NextNodeId;
+                var faulted = false;
 
                 while (currentNodeId != null && !combinedCts.Token.IsCancellationRequested)
                 {
@@ -210,12 +222,19 @@ namespace VMS.Services.Sequence
                     {
                         Debug.WriteLine($"[SequenceEngine] Error at node '{node.Name}': {ex.Message}");
                         SequenceError?.Invoke(this, new SequenceErrorEventArgs(node.Id, node.Name, ex));
+                        faulted = true;
                         break;
                     }
                 }
 
                 // 외부 취소가 아닌지 확인 후 전파
                 ct.ThrowIfCancellationRequested();
+
+                // 시퀀스 정상 종료 = 마지막(또는 유일한) 사이클의 경계. Repeat 없이 End 로
+                // 끝나는 시퀀스도 여기서 사이클 1회로 집계된다. 오류/Reset 중단은 미완성
+                // 사이클이므로 세지 않는다.
+                if (!faulted && !WasReset)
+                    FireCycleCompletedIfInspected(resetForNextCycle: false);
 
                 CurrentNodeId = null;
                 SequenceCompleted?.Invoke(this, EventArgs.Empty);
@@ -494,6 +513,7 @@ namespace VMS.Services.Sequence
             }
 
             _resetFunc(cameraId);
+            _cycleInspectionCount++;
 
             var grabOk = await _grabFunc(cameraId);
             if (!grabOk)
@@ -534,9 +554,36 @@ namespace VMS.Services.Sequence
             return node.NextNodeId;
         }
 
+        /// <summary>
+        /// Repeat 통과(또는 시퀀스 정상 종료) 시점에 이번 사이클을 마감 — Inspection 이
+        /// 1회 이상 돌았으면 CycleCompleted 를 발생시키고 다음 사이클을 위해 결과를 비운다.
+        /// 구독자 예외는 시퀀스 운전을 멈추지 않도록 삼킨다.
+        /// </summary>
+        /// <param name="resetForNextCycle">Repeat 경계에서만 true — 다음 사이클 판정을 새로
+        /// 누적하도록 결과를 비운다. 시퀀스 종료 시점(false)에는 비우지 않아 종료 후에도
+        /// AllInspectionsOk 관측·감사 로그가 마지막 결과를 유지한다 (다음 RunAsync 가 초기화).</param>
+        private void FireCycleCompletedIfInspected(bool resetForNextCycle)
+        {
+            if (_cycleInspectionCount == 0) return;
+
+            var args = new SequenceCycleCompletedEventArgs(AllInspectionsOk, _cycleInspectionCount);
+            _cycleInspectionCount = 0;
+            if (resetForNextCycle)
+                _cameraResults.Clear();
+
+            try { CycleCompleted?.Invoke(this, args); }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[SequenceEngine] CycleCompleted handler error: {ex.Message}");
+            }
+        }
+
         // --- Repeat: 반복 제어 ---
         private string? ExecuteRepeat(SequenceNodeConfig node)
         {
+            // Repeat 노드 도달 = 사이클 경계 (무한/유한, 루프백/탈출 모두 동일)
+            FireCycleCompletedIfInspected(resetForNextCycle: true);
+
             if (node.RepeatCount == -1)
             {
                 // 무한 반복
