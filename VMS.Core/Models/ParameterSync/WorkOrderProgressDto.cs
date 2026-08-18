@@ -16,11 +16,20 @@ namespace VMS.Core.Models.ParameterSync
         public int NgQuantity { get; set; }
         public string Status { get; set; } = "";
 
-        /// <summary>이 업로드로 PlannedQuantity 에 도달해 막 Completed 전이된 경우 true.</summary>
+        /// <summary>이 업로드로 계획 수량에 도달해 막 Completed 전이된 경우 true.</summary>
         public bool Completed { get; set; }
 
+        /// <summary>
+        /// 완료 기준 — "Pass"(양품 수량 기준) / "Produced"(총 생산 수량 기준).
+        /// 구버전 Web 서버는 미전송 → 기본 Produced (기존 표시 유지).
+        /// </summary>
+        public string CompletionBasis { get; set; } = "Produced";
+
+        /// <summary>완료 기준에 따른 진행 수량</summary>
+        public int ProgressQuantity => CompletionBasis == "Pass" ? PassQuantity : ProducedQuantity;
+
         public double Progress => PlannedQuantity > 0
-            ? System.Math.Round((double)ProducedQuantity / PlannedQuantity * 100, 1)
+            ? System.Math.Round((double)ProgressQuantity / PlannedQuantity * 100, 1)
             : 0;
 
         public double PassRate => ProducedQuantity > 0
@@ -42,6 +51,7 @@ namespace VMS.Core.Models.ParameterSync
             NgQuantity = DtoValidator.ClampInt(NgQuantity, 0, 1_000_000, nameof(NgQuantity), ctx);
             OrderNo = DtoValidator.Truncate(OrderNo, 100, nameof(OrderNo), ctx) ?? "";
             Status = DtoValidator.Truncate(Status, 50, nameof(Status), ctx) ?? "";
+            CompletionBasis = DtoValidator.Truncate(CompletionBasis, 20, nameof(CompletionBasis), ctx) ?? "Produced";
             return this;
         }
     }
