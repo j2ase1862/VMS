@@ -590,7 +590,16 @@ namespace VMS
                 logService: logService,
                 ioRegistry: ioDeviceRegistry,
                 // 운전 시작 때마다 재로드 — VisionSetup 에서 시퀀스를 고쳐 저장하면 VMS 재시작 없이 반영
-                sequenceProvider: LoadSystemSequence);
+                sequenceProvider: LoadSystemSequence,
+                // "1사이클 = 1개" WO 집계 — AUTO RUN 동안 검사별 Web 업로드를 사이클 버퍼로
+                // 모았다가, 사이클 완료 시 판정 1건으로 업로드 (Web 연동 레시피 전제)
+                cycleAccumulationFunc: InspectionService.SetCycleAccumulation,
+                cycleUploadFunc: async allOk =>
+                {
+                    var uploaded = await InspectionService.FlushCycleResultAsync(allOk);
+                    if (!uploaded)
+                        Debug.WriteLine("[App] cycle result upload skipped/failed (Web 연동 레시피 확인)");
+                });
 
             // ── Roller Inspection Service ──
             IRollerInspectionService rollerInspectionService = new RollerInspectionService(logService);

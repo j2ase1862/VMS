@@ -439,6 +439,89 @@ namespace VMS.Tests.Services.Sequence
             Assert.Equal(3, counterRuns);
         }
 
+        // ─── CycleCompleted — "1사이클 = 1개" 집계 ────────────────
+
+        [Fact]
+        public async Task CycleCompleted_FiresOncePerRepeatPass_WithPerCycleResult()
+        {
+            // Start → Insp → Repeat(target=Insp, count=2) → End
+            // 첫 사이클 검사 NG, 둘째 사이클 검사 OK — 사이클마다 결과가 새로 누적돼야 한다.
+            var inspectResults = new Queue<bool>(new[] { false, true });
+            var events = new List<SequenceCycleCompletedEventArgs>();
+
+            var engine = MakeEngine(inspect: _ => Task.FromResult(inspectResults.Dequeue()));
+            engine.CycleCompleted += (_, e) => events.Add(e);
+
+            var config = MakeConfig("CyclePerRepeat",
+                Start("s", "insp"),
+                Inspection("insp", "CAM_A", next: "rep"),
+                Repeat("rep", target: "insp", count: 2, next: "e"),
+                End("e"));
+
+            await engine.RunAsync(config, CancellationToken.None);
+
+            Assert.Equal(2, events.Count);
+            Assert.False(events[0].AllInspectionsOk);   // 1사이클: NG
+            Assert.True(events[1].AllInspectionsOk);    // 2사이클: OK (NG 가 이월되면 안 됨)
+            Assert.All(events, e => Assert.Equal(1, e.InspectionCount));
+        }
+
+        [Fact]
+        public async Task CycleCompleted_SequenceWithoutRepeat_FiresOnceAtEnd()
+        {
+            var events = new List<SequenceCycleCompletedEventArgs>();
+            var engine = MakeEngine();
+            engine.CycleCompleted += (_, e) => events.Add(e);
+
+            var config = MakeConfig("CycleNoRepeat",
+                Start("s", "insp"),
+                Inspection("insp", "CAM_B", next: "e"),
+                End("e"));
+
+            await engine.RunAsync(config, CancellationToken.None);
+
+            Assert.Single(events);
+            Assert.True(events[0].AllInspectionsOk);
+            Assert.Equal(1, events[0].InspectionCount);
+        }
+
+        [Fact]
+        public async Task CycleCompleted_NoInspectionInSequence_DoesNotFire()
+        {
+            // 검사 없는 시퀀스(빈 Repeat 루프 포함)는 수량으로 세지 않는다.
+            var fired = 0;
+            var engine = MakeEngine();
+            engine.CycleCompleted += (_, _) => fired++;
+
+            var config = MakeConfig("CycleNoInsp",
+                Start("s", "out"),
+                OutputBit("out", "M600", true, next: "rep"),
+                Repeat("rep", target: "out", count: 2, next: "e"),
+                End("e"));
+
+            await engine.RunAsync(config, CancellationToken.None);
+
+            Assert.Equal(0, fired);
+        }
+
+        [Fact]
+        public async Task CycleCompleted_GrabFailure_CountsAsNgCycle()
+        {
+            var events = new List<SequenceCycleCompletedEventArgs>();
+            var engine = MakeEngine(grab: _ => Task.FromResult(false));
+            engine.CycleCompleted += (_, e) => events.Add(e);
+
+            var config = MakeConfig("CycleGrabFail",
+                Start("s", "insp"),
+                Inspection("insp", "CAM_C", next: "e"),
+                End("e"));
+
+            await engine.RunAsync(config, CancellationToken.None);
+
+            Assert.Single(events);
+            Assert.False(events[0].AllInspectionsOk);
+        }
+
         // ─── RecipeChange / StepChange — no callback path ────────
 
         [Fact]

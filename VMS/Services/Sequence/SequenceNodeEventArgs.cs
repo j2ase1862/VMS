@@ -24,6 +24,26 @@ namespace VMS.Services.Sequence
     }
 
     /// <summary>
+    /// 시퀀스 사이클 완료 이벤트 인자 — "1사이클 = 1개" 집계용.
+    /// 사이클 = Repeat 노드 통과(또는 시퀀스 정상 종료)까지의 구간이며,
+    /// 그 사이 Inspection 이 1회 이상 실행된 경우에만 발생한다.
+    /// </summary>
+    public class SequenceCycleCompletedEventArgs : EventArgs
+    {
+        /// <summary>사이클 동안 실행된 모든 Inspection 이 OK 였는지</summary>
+        public bool AllInspectionsOk { get; }
+
+        /// <summary>사이클 동안 실행된 Inspection 횟수 (grab 실패 포함)</summary>
+        public int InspectionCount { get; }
+
+        public SequenceCycleCompletedEventArgs(bool allInspectionsOk, int inspectionCount)
+        {
+            AllInspectionsOk = allInspectionsOk;
+            InspectionCount = inspectionCount;
+        }
+    }
+
+    /// <summary>
     /// 시퀀스 에러 이벤트 인자
     /// </summary>
     public class SequenceErrorEventArgs : EventArgs

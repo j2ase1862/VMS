@@ -39,6 +39,84 @@ namespace VMS.Services
         /// <summary>Web 파라미터 적용 서비스 (외부 주입, nullable)</summary>
         public static IParameterApplyService? ParameterApplyService { get; set; }
 
+        // ─── "1사이클 = 1개" 사이클 누적 (AUTO RUN, 2026-08-18) ───
+        // 활성 시 검사별 Web 업로드/로컬 이력 push 를 버퍼에 모았다가
+        // FlushCycleResultAsync 에서 사이클당 1건으로 업로드한다.
+        private static readonly object _cycleLock = new();
+        private static bool _cycleAccumulating;
+        private static readonly List<ParameterResultDto> _cycleParamResults = new();
+        private static InspectionFeatureMetrics? _cycleFeatureMetrics;
+        private static string? _cycleCorrelationKey;
+
+        /// <summary>AUTO RUN 시작/중지 시 AutoProcessService 가 토글. 전환 시 버퍼는 비운다.</summary>
+        public static void SetCycleAccumulation(bool enabled)
+        {
+            lock (_cycleLock)
+            {
+                _cycleAccumulating = enabled;
+                _cycleParamResults.Clear();
+                _cycleFeatureMetrics = null;
+                _cycleCorrelationKey = null;
+            }
+        }
+
+        /// <summary>
+        /// 사이클 완료 시 호출 — 버퍼에 쌓인 파라미터 결과(없으면 판정만)를 1건으로 업로드하고
+        /// 로컬 최근 검사 이력에도 사이클 1건을 남긴다. Web 미연동(CurrentRecipeId==0)이면
+        /// 버퍼만 비우고 false 반환 — WO 집계는 Web 연동 레시피 전제.
+        /// </summary>
+        public static async Task<bool> FlushCycleResultAsync(bool overallPass)
+        {
+            List<ParameterResultDto> results;
+            InspectionFeatureMetrics? metrics;
+            string? corrKey;
+            lock (_cycleLock)
+            {
+                results = new List<ParameterResultDto>(_cycleParamResults);
+                metrics = _cycleFeatureMetrics;
+                corrKey = _cycleCorrelationKey;
+                _cycleParamResults.Clear();
+                _cycleFeatureMetrics = null;
+                _cycleCorrelationKey = null;
+            }
+
+            var syncService = ParameterSyncService;
+            if (syncService == null || syncService.CurrentRecipeId <= 0)
+            {
+                Debug.WriteLine("[InspectionService] cycle flush skipped — Web 연동 레시피 아님");
+                return false;
+            }
+
+            var isPass = overallPass && results.All(r => r.Judgment == "OK");
+            var ngCodes = results.Where(r => r.Judgment == "NG")
+                                 .Select(r => r.ParamCode.ToString())
+                                 .Distinct()
+                                 .ToList();
+            var recipeName = syncService.Recipes
+                .FirstOrDefault(r => r.Id == syncService.CurrentRecipeId)?.Name;
+            RecentInspectionsService.Instance.Add(new InspectionRecord
+            {
+                IsPass = isPass,
+                NgCodes = ngCodes,
+                RecipeId = syncService.CurrentRecipeId,
+                RecipeName = recipeName,
+                WorkOrderId = syncService.WorkOrderId,
+                LotId = syncService.LotId,
+                SerialNumber = syncService.SerialNumber
+            });
+
+            try
+            {
+                return await syncService.UploadResultsAsync(
+                    syncService.CurrentRecipeId, results, metrics, corrKey, overallPass);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[InspectionService] cycle result upload error: {ex.Message}");
+                return false;
+            }
+        }
+
         /// <summary>
         /// internal — VMS.Tests 통합 테스트에서 격리된 인스턴스를 만들 때만 호출.
         /// 운영 코드는 반드시 <see cref="Instance"/> 싱글톤 사용.
@@ -495,6 +573,19 @@ namespace VMS.Services
                             // 숫자 변환 실패 시 스킵
                         }
                     }
+                }
+            }
+
+            // AUTO RUN 사이클 누적 모드 — 검사별 업로드/로컬 이력 push 대신 버퍼에 모은다.
+            // 사이클 완료 시 FlushCycleResultAsync 가 1건으로 처리 ("1사이클 = 1개").
+            lock (_cycleLock)
+            {
+                if (_cycleAccumulating)
+                {
+                    _cycleParamResults.AddRange(paramResults);
+                    if (featureMetrics != null) _cycleFeatureMetrics = featureMetrics;
+                    if (correlationKey != null) _cycleCorrelationKey = correlationKey;
+                    return;
                 }
             }
 

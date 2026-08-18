@@ -47,6 +47,12 @@ namespace VMS.Services
         // null 이면 기존 단일 PLC 모드 (후방호환).
         private readonly IIoDeviceRegistry? _ioRegistry;
 
+        // "1사이클 = 1개" WO 집계 (2026-08-18) — null 이면 비활성 (후방호환).
+        // cycleAccumulationFunc: 운전 시작/중지 시 검사별 Web 업로드를 사이클 버퍼로 전환.
+        // cycleUploadFunc: 사이클 완료(엔진 CycleCompleted) 시 판정 업로드 1건.
+        private readonly Action<bool>? _cycleAccumulationFunc;
+        private readonly Func<bool, Task>? _cycleUploadFunc;
+
         private readonly Dictionary<string, AutoProcessState> _cameraStates = new();
         private CancellationTokenSource? _cts;
         private Task? _processTask;
@@ -72,8 +78,12 @@ namespace VMS.Services
             SequenceConfig? processSequence = null,
             ISystemLogService? logService = null,
             IIoDeviceRegistry? ioRegistry = null,
-            Func<SequenceConfig?>? sequenceProvider = null)
+            Func<SequenceConfig?>? sequenceProvider = null,
+            Action<bool>? cycleAccumulationFunc = null,
+            Func<bool, Task>? cycleUploadFunc = null)
         {
+            _cycleAccumulationFunc = cycleAccumulationFunc;
+            _cycleUploadFunc = cycleUploadFunc;
             _sequenceProvider = sequenceProvider;
             _plc = plc;
             _signalConfig = signalConfig;
@@ -97,6 +107,10 @@ namespace VMS.Services
             _cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             IsRunning = true;
             _logService?.Log("AutoProcess started", LogLevel.Success, "AutoProcess");
+
+            // AUTO RUN 동안 검사별 Web 업로드를 사이클 버퍼로 전환 ("1사이클 = 1개")
+            try { _cycleAccumulationFunc?.Invoke(true); }
+            catch (Exception ex) { Debug.WriteLine($"[AutoProcess] cycle accumulation on failed: {ex.Message}"); }
 
             // Connect PLC if not already connected
             if (!_plc.IsConnected)
@@ -174,6 +188,11 @@ namespace VMS.Services
             _cts?.Dispose();
             _cts = null;
             IsRunning = false;
+
+            // 사이클 버퍼 모드 해제 (수동 검사는 기존처럼 검사별 즉시 업로드)
+            try { _cycleAccumulationFunc?.Invoke(false); }
+            catch (Exception ex) { Debug.WriteLine($"[AutoProcess] cycle accumulation off failed: {ex.Message}"); }
+
             _logService?.Log("AutoProcess stopped", LogLevel.Info, "AutoProcess");
         }
 
@@ -217,6 +236,24 @@ namespace VMS.Services
             }
 
             engine.NodeExecuting += (s, e) => MapNodeToState(e);
+
+            // 사이클 완료 → 판정 업로드 1건 (fire-and-forget — 업로드 지연이 다음 사이클의
+            // 트리거 대기를 막으면 안 된다. 실패는 로그만 남기고 운전은 계속.)
+            if (_cycleUploadFunc != null)
+            {
+                engine.CycleCompleted += (s, e) =>
+                {
+                    _ = Task.Run(async () =>
+                    {
+                        try { await _cycleUploadFunc(e.AllInspectionsOk); }
+                        catch (Exception ex)
+                        {
+                            _logService?.Log($"사이클 결과 업로드 실패: {ex.Message}",
+                                LogLevel.Warning, "AutoProcess");
+                        }
+                    });
+                };
+            }
 
             // 노드 실행 중 예외는 엔진이 내부에서 삼키고 RunAsync 는 정상 리턴한다.
             // 따라서 아래 catch 로는 잡히지 않으므로, 플래그로 받아 재시도 전에 지연을 준다.

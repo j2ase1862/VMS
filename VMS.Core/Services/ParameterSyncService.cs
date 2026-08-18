@@ -287,7 +287,8 @@ namespace VMS.Core.Services
             int recipeId,
             List<ParameterResultDto> results,
             InspectionFeatureMetrics? featureMetrics = null,
-            string? correlationKey = null)
+            string? correlationKey = null,
+            bool? overallPass = null)
         {
             var request = new ParameterResultUploadRequest
             {
@@ -298,7 +299,8 @@ namespace VMS.Core.Services
                 LotId = LotId,
                 OperatorId = OperatorId,
                 SerialNumber = SerialNumber,
-                CorrelationKey = correlationKey
+                CorrelationKey = correlationKey,
+                OverallPass = overallPass
             };
 
             if (featureMetrics != null)

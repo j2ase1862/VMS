@@ -96,6 +96,13 @@ namespace VMS.Core.Models.ParameterSync
         /// </summary>
         public string? CorrelationKey { get; set; }
 
+        /// <summary>
+        /// 사이클 전체 판정 (AUTO RUN "1사이클 = 1개" 집계, Web v1.1.1+).
+        /// 이 값이 있으면 Results 가 비어 있어도 판정 전용 업로드로 접수된다 —
+        /// 파라미터 연동 툴이 없는 레시피도 WO 수량·검사 이력이 집계되도록.
+        /// </summary>
+        public bool? OverallPass { get; set; }
+
         // ─── Predictive_DefectRate_Plan §5.1 (V1/V2/V3): 예측 모델용 피처 ───
         // 모두 nullable — Web 측 후방호환 유지(미지원 VMS 빌드 시 자연스럽게 NULL).
         /// <summary>V2: 검사 1회 소요 시간(ms). 가동 페이스 둔화 = 품질 저하 선행 신호.</summary>

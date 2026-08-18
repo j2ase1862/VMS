@@ -285,7 +285,8 @@ namespace VMS.VisionSetup.Tests
                 int recipeId,
                 List<ParameterResultDto> results,
                 InspectionFeatureMetrics? featureMetrics = null,
-                string? correlationKey = null) => Task.FromResult(true);
+                string? correlationKey = null,
+                bool? overallPass = null) => Task.FromResult(true);
             public void Dispose() { }
         }
     }
