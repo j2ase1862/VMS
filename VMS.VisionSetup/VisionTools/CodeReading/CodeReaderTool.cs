@@ -278,6 +278,13 @@ namespace VMS.VisionSetup.VisionTools.CodeReading
                     if (success && quality != null && (int)quality.OverallGrade < (int)MinPassGrade)
                         success = false;
 
+                    // 최소 등급을 요구(F 초과)했는데 등급 산출이 불가한 경우(비 DataMatrix
+                    // 코드, 좌표 정보 부족) — 게이트가 조용히 무력화되면 등급 미달 코드가
+                    // PASS 로 둔갑하므로 판정 불능은 NG (fail-closed).
+                    if (success && EnableQualityGrading
+                        && MinPassGrade > CodeQualityGrade.F && quality == null)
+                        success = false;
+
                     result.Data["Success"] = success;
                     result.Success = success;
                     result.Message = codes.Count > 0

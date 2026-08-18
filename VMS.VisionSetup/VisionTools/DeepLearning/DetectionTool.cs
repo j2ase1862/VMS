@@ -521,7 +521,8 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         }
 
         // Execute 내부 전용: 한 바운딩 박스의 dot 분석 결과.
-        private class ClusterAnalysis
+        // internal — 판정 fail-closed 회귀 테스트(DetectionToolDotJudgmentTests)에서 접근.
+        internal class ClusterAnalysis
         {
             public int DotCount;
             public double PatternAngle;
@@ -532,7 +533,7 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
             public List<Point2f> DotPositionsAbs = new();
         }
 
-        private ClusterAnalysis AnalyzeCluster(Mat fullImage, Rect absRect, int classId)
+        internal ClusterAnalysis AnalyzeCluster(Mat fullImage, Rect absRect, int classId)
         {
             var outcome = new ClusterAnalysis();
 
@@ -593,9 +594,15 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
             }
 
             // 각도 검사
-            if (!expectation.CheckAngle || !outcome.AngleComputed)
+            if (!expectation.CheckAngle)
             {
                 outcome.AngleOK = true;
+            }
+            else if (!outcome.AngleComputed)
+            {
+                // 각도 판정을 켰는데 dot 2개 미만으로 각도 계산 자체가 불가 —
+                // 판정 불능을 통과로 삼키면 미검출 불량이 PASS 가 된다 (fail-closed).
+                outcome.AngleOK = false;
             }
             else
             {

@@ -484,8 +484,11 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
 
                 if (EnableJudgment || UseAreaJudgment || UseCountJudgment)
                 {
-                    // 면적 판정
-                    if (UseAreaJudgment && blobs.Count > 0)
+                    // 면적 판정 — blob 0개도 TotalArea=0 으로 기준 범위와 비교한다.
+                    // 과거 `blobs.Count > 0` 가드는 "검출 0개 = 판정할 게 없음 = PASS" 가 되어
+                    // 미검출 불량이 합격 처리됐다 (2026-08-18 현장). 기준 범위가 0 을 포함하는
+                    // 설정(기대 0±X)이라면 0개 검출도 여전히 합법적으로 OK.
+                    if (UseAreaJudgment)
                     {
                         double areaLow = ExpectedArea - AreaToleranceMinus;
                         double areaHigh = ExpectedArea + AreaTolerancePlus;
@@ -534,6 +537,17 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
                             judgmentDetails.Add($"Count OK: {blobs.Count}");
                         }
                         result.Data["CountJudgment"] = countPass;
+                    }
+
+                    // EnableJudgment 만 켜고 세부 판정(면적/개수)이 모두 꺼져 있으면 위 검사가
+                    // 하나도 실행되지 않아 초기값(true)이 그대로 남는다 — 이 경우 판정 미사용
+                    // 경로와 동일하게 검출 유무로 판정한다 (fail-open 방지).
+                    if (!UseAreaJudgment && !UseCountJudgment)
+                    {
+                        judgmentPass = blobs.Count > 0;
+                        judgmentDetails.Add(judgmentPass
+                            ? $"검출 {blobs.Count}개"
+                            : "검출 0개 NG");
                     }
 
                     result.Data["JudgmentPass"] = judgmentPass;
