@@ -1775,10 +1775,11 @@ namespace VMS.ViewModels
             ? ""
             : $"{SelectedWorkOrder.OrderNo} · {SelectedWorkOrder.ProductName} ({SelectedWorkOrder.ProgressText})";
 
-        // B4: 헤더 WO 칩의 ProgressBar 시각화용 — 0~100 percent
+        // B4: 헤더 WO 칩의 ProgressBar 시각화용 — 0~100 percent.
+        // 완료 기준(CompletionBasis)에 따라 양품/총생산 진행 수량이 반영된다.
         public double SelectedWorkOrderProgressPercent =>
             SelectedWorkOrder?.PlannedQuantity > 0
-                ? System.Math.Min(100.0, (double)SelectedWorkOrder.ProducedQuantity / SelectedWorkOrder.PlannedQuantity * 100.0)
+                ? System.Math.Min(100.0, (double)SelectedWorkOrder.ProgressQuantity / SelectedWorkOrder.PlannedQuantity * 100.0)
                 : 0;
         public bool HasSelectedWorkOrderProgress =>
             SelectedWorkOrder != null && SelectedWorkOrder.PlannedQuantity > 0;
@@ -1934,6 +1935,8 @@ namespace VMS.ViewModels
                 SelectedWorkOrder.PassQuantity = progress.PassQuantity;
                 SelectedWorkOrder.NgQuantity = progress.NgQuantity;
                 SelectedWorkOrder.Status = progress.Status;
+                if (!string.IsNullOrEmpty(progress.CompletionBasis))
+                    SelectedWorkOrder.CompletionBasis = progress.CompletionBasis;
 
                 // DTO 필드 변경은 INPC 를 발생시키지 않으므로 수동 알림.
                 // CanStartStop 은 Status 도 보므로 함께 갱신.

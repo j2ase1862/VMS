@@ -27,6 +27,12 @@ namespace VMS.Core.Models.ParameterSync
 
         public string Status { get; set; } = "Planned";
 
+        /// <summary>
+        /// 완료 기준 — "Pass"(양품 수량 기준) / "Produced"(총 생산 수량 기준).
+        /// 구버전 Web 서버는 이 필드를 보내지 않으므로 기본 Produced (기존 표시 유지).
+        /// </summary>
+        public string CompletionBasis { get; set; } = "Produced";
+
         public DateTime? PlannedStartAt { get; set; }
         public DateTime? ActualStartAt { get; set; }
         public DateTime? ActualEndAt { get; set; }
@@ -41,11 +47,16 @@ namespace VMS.Core.Models.ParameterSync
             ? Math.Round((double)PassQuantity / ProducedQuantity * 100, 2)
             : 0;
 
+        /// <summary>완료 기준에 따른 진행 수량 — Pass 기준이면 양품, Produced 기준이면 총 생산</summary>
+        public int ProgressQuantity => CompletionBasis == "Pass" ? PassQuantity : ProducedQuantity;
+
         public double Progress => PlannedQuantity > 0
-            ? Math.Round((double)ProducedQuantity / PlannedQuantity * 100, 2)
+            ? Math.Round((double)ProgressQuantity / PlannedQuantity * 100, 2)
             : 0;
 
-        public string ProgressText => $"{ProducedQuantity} / {PlannedQuantity}";
+        public string ProgressText => CompletionBasis == "Pass"
+            ? $"양품 {PassQuantity} / {PlannedQuantity}"
+            : $"{ProducedQuantity} / {PlannedQuantity}";
 
         /// <summary>
         /// 외부 API 응답 sanitization — Phase 3c.
@@ -70,6 +81,7 @@ namespace VMS.Core.Models.ParameterSync
             ClientName = DtoValidator.Truncate(ClientName, 200, nameof(ClientName), ctx);
             RecipeName = DtoValidator.Truncate(RecipeName, 200, nameof(RecipeName), ctx);
             Status = DtoValidator.Truncate(Status, 50, nameof(Status), ctx) ?? "Planned";
+            CompletionBasis = DtoValidator.Truncate(CompletionBasis, 20, nameof(CompletionBasis), ctx) ?? "Produced";
             Note = DtoValidator.Truncate(Note, 500, nameof(Note), ctx);
             return this;
         }
