@@ -84,6 +84,33 @@ namespace VMS.VisionSetup.Tests
         }
 
         [Fact]
+        public void EnableJudgmentOnly_ZeroBlobs_Fails()
+        {
+            // EnableJudgment 만 켜고 면적/개수 세부 판정이 모두 꺼진 경우 — 과거에는 검사가
+            // 하나도 실행되지 않아 초기값(true)이 그대로 Success 가 됐다 (변종 B).
+            // 판정 미사용 경로와 동일하게 검출 유무로 판정해야 한다.
+            using var img = MakeEmptyImage();
+            var tool = new BlobTool { EnableJudgment = true };
+
+            var result = tool.Execute(img);
+
+            Assert.False(result.Success);
+            Assert.False((bool)result.Data["JudgmentPass"]);
+        }
+
+        [Fact]
+        public void EnableJudgmentOnly_WithBlob_Passes()
+        {
+            using var img = MakeSingleBlobImage();
+            var tool = new BlobTool { EnableJudgment = true };
+
+            var result = tool.Execute(img);
+
+            Assert.True(result.Success);
+            Assert.True((bool)result.Data["JudgmentPass"]);
+        }
+
+        [Fact]
         public void NoJudgment_ZeroBlobs_StillFails()
         {
             // 판정 미사용 시 기존 규칙 유지 — 검출 0개 = 실패 (Success = Count > 0).

@@ -539,6 +539,17 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
                         result.Data["CountJudgment"] = countPass;
                     }
 
+                    // EnableJudgment 만 켜고 세부 판정(면적/개수)이 모두 꺼져 있으면 위 검사가
+                    // 하나도 실행되지 않아 초기값(true)이 그대로 남는다 — 이 경우 판정 미사용
+                    // 경로와 동일하게 검출 유무로 판정한다 (fail-open 방지).
+                    if (!UseAreaJudgment && !UseCountJudgment)
+                    {
+                        judgmentPass = blobs.Count > 0;
+                        judgmentDetails.Add(judgmentPass
+                            ? $"검출 {blobs.Count}개"
+                            : "검출 0개 NG");
+                    }
+
                     result.Data["JudgmentPass"] = judgmentPass;
                     result.Success = judgmentPass;
                     string status = judgmentPass ? "PASS" : "FAIL";
