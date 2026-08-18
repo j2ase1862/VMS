@@ -86,23 +86,22 @@ namespace VMS.PLC.Services.Native
         }
 
         // ─── Card type 상수 ───
-        // PCI-7432 = 0x11 은 현장 검증된 PalletControl(Pci7432Device.cs)에서 확인한 값.
-        // 7433/7434 는 미검증 — 해당 모델 사용 시 로그로 경고하고, 실패하면 이 값을 먼저 의심할 것.
-        public const ushort PCI_7432 = 0x11;  // 32 isolated DI + 32 isolated DO (검증됨)
-        public const ushort PCI_7433 = 0x12;  // 32 isolated DI only (미검증)
-        public const ushort PCI_7434 = 0x13;  // 32 isolated DO only (미검증)
+        // 공식 PCIS-DASK 헤더(Dask64.h/Dask.h) 정의값. 과거 0x11(=17=PCI_7433!)을 쓰다가
+        // Register_Card 가 -13(ErrorOpenDriverFailed)으로 실패했다 (2026-08-18, PCI-7432 실증).
+        // 0x11 의 출처였던 PalletControl 은 DllNotFoundException 시 조용히 시뮬레이션 모드로
+        // 폴백하는 코드라 실기 검증 근거가 못 된다 — ADLink 값은 공식 헤더·샘플만 신뢰할 것.
+        public const ushort PCI_7432 = 16;  // 32 isolated DI + 32 isolated DO (2026-08-18 현장 샘플 검증)
+        public const ushort PCI_7433 = 17;  // 64 isolated DI only (미검증)
+        public const ushort PCI_7434 = 18;  // 64 isolated DO only (미검증)
 
-        // ─── 포트 번호 ───
-        // PCI-7432 는 DI 와 DO 가 서로 다른 포트다 (DI=0, DO=1). 과거 코드는 둘 다 0 을 써서
-        // 출력이 동작하지 않았다. 7433 은 DI 만, 7434 는 DO 만 있으므로 각각 포트 0.
-        public static ushort DiPortFor(ushort cardType) => 0;
+        // ─── 포트/라인 매핑 ───
+        // 743x 계열의 포트는 카드 종류가 아니라 채널 번호로 정해진다: 채널 0~31 = 포트 0
+        // (PORT_DI_LOW/PORT_DO_LOW), 채널 32~63 = 포트 1 (HIGH). 방향은 DI_/DO_ 함수가 구분.
+        // 공식 샘플 근거 — 7432·7434: DO_WritePort(h, PORT_DO_LOW, …) / 7433: DI 포트 LOW·HIGH.
+        // 과거 "7432 는 DO=포트 1" 은 PalletControl 발(發) 오답 — 실기에서 출력이 나가지 않는다.
+        public static ushort PortForChannel(int channel) => (ushort)(channel / 32);
 
-        public static ushort DoPortFor(ushort cardType) => cardType switch
-        {
-            PCI_7432 => 1,
-            PCI_7434 => 0,   // DO 전용 카드
-            _ => 1
-        };
+        public static ushort LineForChannel(int channel) => (ushort)(channel % 32);
 
         // ─── Lifecycle ───
 

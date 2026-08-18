@@ -4,34 +4,42 @@ using Xunit;
 namespace VMS.PLC.Tests
 {
     /// <summary>
-    /// ADLink DASK 상수·포트 매핑 고정.
+    /// ADLink DASK 상수·채널 매핑 고정.
     ///
-    /// 2026-08-14 현장 실증(PCI-7432)에서 드러난 값들이다. 검증된 레퍼런스
-    /// (PalletizingSystem/PalletControl · Pci7432Device.cs)와 대조해 확정했고,
-    /// 과거 값(cardType 0x37, DO 포트 0)으로 되돌아가면 보드가 조용히 죽으므로 테스트로 잠근다.
+    /// 값의 출처는 공식 PCIS-DASK 헤더(Dask64.h/Dask.h)와 공식 샘플이다. 2026-08-18 현장
+    /// 실증(PCI-7432)에서 과거 값(cardType 0x11 = 실제로는 PCI_7433)이 Register_Card -13
+    /// (ErrorOpenDriverFailed)을 일으켰고, 같은 PC 의 공식 x64 샘플(cardType 16)은 동작했다.
+    /// 0x11 의 출처였던 PalletControl 은 DLL 미존재 시 시뮬레이션 폴백이라 검증 근거가 아니다.
+    /// 이 값들로 되돌아가면 보드가 조용히 죽으므로 테스트로 잠근다.
     /// </summary>
     public class DaskNativeMethodsTests
     {
         [Fact]
-        public void Pci7432_CardType_MatchesFieldProvenValue()
+        public void CardTypes_MatchOfficialDaskHeader()
         {
-            // PalletControl Pci7432Device.cs: private const ushort PCI_7432 = 0x11;
-            Assert.Equal((ushort)0x11, DaskNativeMethods.PCI_7432);
-            Assert.Equal((ushort)0x11, DaskNativeMethods.ModelToCardType("PCI-7432"));
+            // Dask64.h: #define PCI_7432 16 / PCI_7433 17 / PCI_7434 18
+            Assert.Equal((ushort)16, DaskNativeMethods.PCI_7432);
+            Assert.Equal((ushort)17, DaskNativeMethods.PCI_7433);
+            Assert.Equal((ushort)18, DaskNativeMethods.PCI_7434);
+            Assert.Equal((ushort)16, DaskNativeMethods.ModelToCardType("PCI-7432"));
+            Assert.Equal((ushort)17, DaskNativeMethods.ModelToCardType("PCI-7433"));
+            Assert.Equal((ushort)18, DaskNativeMethods.ModelToCardType("PCI-7434"));
         }
 
         [Fact]
-        public void Pci7432_SeparatesInputAndOutputPorts()
+        public void ChannelMapping_Low32IsPort0_High32IsPort1()
         {
-            // PalletControl: DI_PORT = 0, DO_PORT = 1 — 둘 다 0 이면 출력이 나가지 않는다.
-            Assert.Equal((ushort)0, DaskNativeMethods.DiPortFor(DaskNativeMethods.PCI_7432));
-            Assert.Equal((ushort)1, DaskNativeMethods.DoPortFor(DaskNativeMethods.PCI_7432));
-        }
+            // 공식 샘플: 채널 0~31 = PORT_*_LOW(0), 채널 32~63 = PORT_*_HIGH(1), Line = 채널 % 32.
+            // 방향(DI/DO)은 함수 이름이 구분한다 — "7432 는 DO=포트 1" 은 오답이었다.
+            Assert.Equal((ushort)0, DaskNativeMethods.PortForChannel(0));
+            Assert.Equal((ushort)0, DaskNativeMethods.PortForChannel(31));
+            Assert.Equal((ushort)1, DaskNativeMethods.PortForChannel(32));
+            Assert.Equal((ushort)1, DaskNativeMethods.PortForChannel(63));
 
-        [Fact]
-        public void Pci7434_OutputOnlyCard_UsesPortZeroForOutput()
-        {
-            Assert.Equal((ushort)0, DaskNativeMethods.DoPortFor(DaskNativeMethods.PCI_7434));
+            Assert.Equal((ushort)0, DaskNativeMethods.LineForChannel(0));
+            Assert.Equal((ushort)31, DaskNativeMethods.LineForChannel(31));
+            Assert.Equal((ushort)0, DaskNativeMethods.LineForChannel(32));
+            Assert.Equal((ushort)31, DaskNativeMethods.LineForChannel(63));
         }
 
         [Fact]
@@ -43,7 +51,7 @@ namespace VMS.PLC.Tests
         [Fact]
         public void OnlyPci7432_IsMarkedFieldVerified()
         {
-            // 7433/7434 상수는 미검증 — 연결 실패 시 이 값을 먼저 의심하라는 신호가 유지돼야 한다.
+            // 7433/7434 는 헤더 값이라 신뢰도는 높지만 실기 미검증 — 연결 시 경고가 유지돼야 한다.
             Assert.True(DaskNativeMethods.IsCardTypeVerified(DaskNativeMethods.PCI_7432));
             Assert.False(DaskNativeMethods.IsCardTypeVerified(DaskNativeMethods.PCI_7433));
             Assert.False(DaskNativeMethods.IsCardTypeVerified(DaskNativeMethods.PCI_7434));
