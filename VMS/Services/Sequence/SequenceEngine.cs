@@ -507,7 +507,10 @@ namespace VMS.Services.Sequence
             var inspectOk = await _inspectFunc(cameraId);
             _lastInspectionOk = inspectOk;
             _cameraResults[cameraId] = inspectOk;
-            _setResultFunc(cameraId, inspectOk);
+            // _setResultFunc 호출 금지 — _inspectFunc(ManualInspect 경로)가 이미
+            // SetInspectionResult 를 호출해 InspectionCompleted 를 발생시켰다. 여기서 다시
+            // 부르면 트리거 1회에 카운트·이미지 저장·업로드가 2배가 된다 (2026-08-18 현장).
+            // grab 실패 경로(위)는 검사가 돌지 않아 이벤트가 없으므로 호출을 유지한다.
 
             // Write individual tool results to PLC
             await WriteToolResultsAsync(cameraId);

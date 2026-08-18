@@ -347,6 +347,52 @@ namespace VMS.Tests.Services.Sequence
         }
 
         [Fact]
+        public async Task Inspection_Success_DoesNotInvokeSetResult()
+        {
+            // 정상 검사 경로에서 setResultFunc 를 부르면 안 된다 — inspectFunc(ManualInspect)가
+            // 이미 SetInspectionResult 로 InspectionCompleted 를 발생시키므로, 여기서 또 부르면
+            // 트리거 1회에 대시보드 카운트·이미지 저장·업로드가 2배가 된다 (2026-08-18 현장).
+            var setResultCalls = 0;
+
+            var engine = MakeEngine(
+                grab: _ => Task.FromResult(true),
+                inspect: _ => Task.FromResult(true),
+                setResult: (_, _) => setResultCalls++);
+
+            var config = MakeConfig("InspNoDoubleCount",
+                Start("s", "insp"),
+                Inspection("insp", "CAM_C", next: "e"),
+                End("e"));
+
+            await engine.RunAsync(config, CancellationToken.None);
+
+            Assert.Equal(0, setResultCalls);
+            Assert.True(engine.AllInspectionsOk);
+        }
+
+        [Fact]
+        public async Task Inspection_GrabFails_InvokesSetResultExactlyOnce()
+        {
+            // grab 실패 경로는 검사가 돌지 않아 InspectionCompleted 가 없으므로
+            // setResultFunc 1회 호출이 유지돼야 한다 (0회도 2회도 아님).
+            var setResultCalls = 0;
+
+            var engine = MakeEngine(
+                grab: _ => Task.FromResult(false),
+                inspect: _ => Task.FromResult(true),
+                setResult: (_, _) => setResultCalls++);
+
+            var config = MakeConfig("InspGrabFailOnce",
+                Start("s", "insp"),
+                Inspection("insp", "CAM_D", next: "e"),
+                End("e"));
+
+            await engine.RunAsync(config, CancellationToken.None);
+
+            Assert.Equal(1, setResultCalls);
+        }
+
+        [Fact]
         public async Task Inspection_NoCameraId_SkipsAndContinues()
         {
             // CameraId 가 빈 문자열이면 lastInspectionOk=false 만 설정하고 진행.
