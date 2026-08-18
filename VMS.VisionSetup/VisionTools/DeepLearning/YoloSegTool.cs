@@ -139,7 +139,10 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
                     ? BuildUnionMask(inputImage, instances)
                     : overlay.Clone();
                 result.OverlayImage = overlay;
-                result.Success = true;
+                // 0건 검출 = 실패 — 자매 툴 DetectionTool(successBase = detections.Count > 0)과
+                // 판정 기준 통일 (2026-08-18 전수 검토). ResultTool 집계에서 "아무것도 못 찾음"이
+                // OK 로 전파되지 않는다.
+                result.Success = instances.Count > 0;
                 result.Message = $"Detected {instances.Count} instance(s) (ConfThr={ConfidenceThreshold:F2}, IoU={IouThreshold:F2})";
             }
             catch (Exception ex)
