@@ -13,15 +13,12 @@ namespace VMS.PLC.Services
     /// ADLink PCI-743x 시리즈 (PCI-7432/7433/7434) IIoBoardConnection 구현.
     /// DASK SDK 의 P/Invoke 함수 직접 호출.
     ///
-    /// 채널 매핑:
-    ///   • PCI-7432: 32 isolated DI + 32 isolated DO. <b>DI=Port 0, DO=Port 1</b>, Line=0~31.
-    ///   • PCI-7433: 32 isolated DI only. ReadBit 만 의미.
-    ///   • PCI-7434: 32 isolated DO only. WriteBit 만 의미.
-    /// 채널 번호는 Line 그대로 사용 (0~31).
+    /// 채널 매핑 (공식 PCIS-DASK 샘플 기준):
+    ///   • 채널 0~31 = Port 0, 채널 32~63 = Port 1, Line = 채널 % 32. 방향은 DI_/DO_ 함수가 구분.
+    ///   • PCI-7432: 32 DI + 32 DO (각 방향 채널 0~31) / 7433: 64 DI / 7434: 64 DO.
     ///
-    /// 2026-08-14 현장 실증(PCI-7432) 대조 수정 — 과거 DI/DO 모두 Port 0 을 써서 출력이
-    /// 동작하지 않았고, 후속 호출에 Register_Card 반환값을 썼다. 검증된 레퍼런스
-    /// (PalletizingSystem/PalletControl Pci7432Device)는 <b>설정한 카드 번호</b>를 그대로 쓴다.
+    /// 2026-08-18 현장 실증(PCI-7432) 대조 수정 — 후속 호출의 카드 핸들은 공식 샘플과 같이
+    /// <b>Register_Card 반환값</b>을 쓴다 (hCard=Register_Card(...) 후 DI_ReadPort(hCard, ...)).
     ///
     /// 모니터링: native event 없음 → polling Timer 로 BitChanged 발생.
     /// PLC 의 IPlcConnection 처럼 thread-safe.
@@ -30,8 +27,7 @@ namespace VMS.PLC.Services
     {
         private readonly ushort _cardType;
         private readonly ushort _boardNum;
-        private readonly ushort _diPort;
-        private readonly ushort _doPort;
+        private ushort _cardHandle;
         private bool _connected;
         private bool _disposed;
         private readonly object _ioLock = new();
@@ -44,8 +40,6 @@ namespace VMS.PLC.Services
             DeviceId = deviceId;
             _cardType = DaskNativeMethods.ModelToCardType(model);
             _boardNum = (ushort)boardId;
-            _diPort = DaskNativeMethods.DiPortFor(_cardType);
-            _doPort = DaskNativeMethods.DoPortFor(_cardType);
             InputChannelCount = inputChannelCount;
             OutputChannelCount = outputChannelCount;
         }
@@ -81,13 +75,13 @@ namespace VMS.PLC.Services
                     return Task.FromResult(false);
                 }
 
-                // 후속 호출의 카드 핸들은 반환값이 아니라 '설정한 카드 번호' 를 사용한다
-                // (현장 검증된 레퍼런스와 동일 — 반환값을 쓰면 board 번호가 1 이상일 때 어긋난다).
+                // 공식 샘플과 동일하게 Register_Card 반환값을 카드 핸들로 사용
+                _cardHandle = (ushort)result;
                 _connected = true;
                 LastError = null;
                 Debug.WriteLine(
-                    $"[ADLink:{DeviceId}] connected (board={_boardNum}, type=0x{_cardType:X}, " +
-                    $"DI port={_diPort}, DO port={_doPort}, {DaskNativeMethods.DiagnosticsText})");
+                    $"[ADLink:{DeviceId}] connected (board={_boardNum}, type={_cardType}, " +
+                    $"handle={_cardHandle}, {DaskNativeMethods.DiagnosticsText})");
                 return Task.FromResult(true);
             }
             catch (DllNotFoundException)
@@ -116,7 +110,7 @@ namespace VMS.PLC.Services
         {
             if (_connected)
             {
-                try { DaskNativeMethods.Release_Card(_boardNum); }
+                try { DaskNativeMethods.Release_Card(_cardHandle); }
                 catch (Exception ex) { Debug.WriteLine($"[ADLink:{DeviceId}] Release_Card: {ex.Message}"); }
             }
             _connected = false;
@@ -129,7 +123,8 @@ namespace VMS.PLC.Services
             ushort state = 0;
             lock (_ioLock)
             {
-                var ret = DaskNativeMethods.DI_ReadLine(_boardNum, _diPort, (ushort)channel, ref state);
+                var ret = DaskNativeMethods.DI_ReadLine(_cardHandle,
+                    DaskNativeMethods.PortForChannel(channel), DaskNativeMethods.LineForChannel(channel), ref state);
                 if (ret < 0) Debug.WriteLine($"[ADLink:{DeviceId}] DI_ReadLine ch={channel} ret={ret}");
             }
             return Task.FromResult(state != 0);
@@ -141,7 +136,7 @@ namespace VMS.PLC.Services
             uint value = 0;
             lock (_ioLock)
             {
-                var ret = DaskNativeMethods.DI_ReadPort(_boardNum, (ushort)portNo, ref value);
+                var ret = DaskNativeMethods.DI_ReadPort(_cardHandle, (ushort)portNo, ref value);
                 if (ret < 0) Debug.WriteLine($"[ADLink:{DeviceId}] DI_ReadPort port={portNo} ret={ret}");
             }
             return Task.FromResult(value);
@@ -152,7 +147,9 @@ namespace VMS.PLC.Services
             EnsureConnected();
             lock (_ioLock)
             {
-                var ret = DaskNativeMethods.DO_WriteLine(_boardNum, _doPort, (ushort)channel, (ushort)(value ? 1 : 0));
+                var ret = DaskNativeMethods.DO_WriteLine(_cardHandle,
+                    DaskNativeMethods.PortForChannel(channel), DaskNativeMethods.LineForChannel(channel),
+                    (ushort)(value ? 1 : 0));
                 if (ret < 0) Debug.WriteLine($"[ADLink:{DeviceId}] DO_WriteLine ch={channel} ret={ret}");
             }
             return Task.CompletedTask;
@@ -163,7 +160,7 @@ namespace VMS.PLC.Services
             EnsureConnected();
             lock (_ioLock)
             {
-                var ret = DaskNativeMethods.DO_WritePort(_boardNum, (ushort)portNo, value);
+                var ret = DaskNativeMethods.DO_WritePort(_cardHandle, (ushort)portNo, value);
                 if (ret < 0) Debug.WriteLine($"[ADLink:{DeviceId}] DO_WritePort port={portNo} ret={ret}");
             }
             return Task.CompletedTask;
