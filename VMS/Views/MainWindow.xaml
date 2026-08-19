@@ -247,7 +247,7 @@
                                        VerticalAlignment="Center"
                                        Text="{Binding SelectedWorkOrderText}"
                                        TextTrimming="CharacterEllipsis"
-                                       ToolTip="{Binding SelectedWorkOrderText}">
+                                       ToolTip="{Binding SelectedWorkOrderToolTip}">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
                                         <Style.Triggers>
