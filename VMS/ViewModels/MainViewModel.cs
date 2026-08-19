@@ -2015,6 +2015,22 @@ namespace VMS.ViewModels
                         LogLevel.Warning, "WorkOrder");
                 }
 
+                // 이미 완료/마감된 WO 로 업로드됨 (이번 검사는 수량 미집계) — Web 수동 완료를
+                // SignalR 로 못 받은 경우의 폴백. 완료 흐름(운전 정지 + 다이얼로그 + 선택 해제)을
+                // 그대로 태운다 — _lastCompletedNotifiedWoId 가드가 중복을 막으므로 SignalR 로
+                // 이미 처리됐으면 no-op. progress.Completed(이번 업로드로 막 완료 = 정상 집계)는
+                // ParameterSyncService 가 별도 WorkOrderCompleted 이벤트로 처리하므로 제외.
+                var stale = progress.StaleWorkOrder
+                    || (!progress.Completed && IsFinishedWorkOrderStatus(progress.Status));
+                if (stale)
+                {
+                    LogService?.Log(
+                        $"작업지시 {progress.OrderNo} 는 이미 완료/마감 상태입니다 — " +
+                        "이후 검사 수량은 집계되지 않습니다 (Web 에서 완료 처리됨).",
+                        LogLevel.Warning, "WorkOrder");
+                    OnWorkOrderCompletedFromServer(progress);
+                }
+
                 // DTO 필드 변경은 INPC 를 발생시키지 않으므로 수동 알림.
                 // CanStartStop 은 Status 도 보므로 함께 갱신.
                 OnPropertyChanged(nameof(SelectedWorkOrderText));
@@ -2025,7 +2041,12 @@ namespace VMS.ViewModels
             });
         }
 
-        // Stage 3 / B2 / C5: 계획 수량 도달 — 알람 + AUTO RUN 자동 정지 + 다음 WO 선택 흐름.
+        /// <summary>WO 가 더 이상 수량을 받지 않는 종결 상태인지 (Completed/Closed).</summary>
+        internal static bool IsFinishedWorkOrderStatus(string? status)
+            => status is "Completed" or "Closed";
+
+        // Stage 3 / B2 / C5: WO 완료 — 알람 + AUTO RUN 자동 정지 + 다음 WO 선택 흐름.
+        // 계획 수량 도달(자동)과 Web 수동 완료 모두 이 경로로 들어온다.
         // 응답 파싱과 SignalR 둘 다에서 같은 이벤트가 올 수 있으므로 _lastCompletedNotifiedWoId 가드.
         private void OnWorkOrderCompletedFromServer(VMS.Core.Models.ParameterSync.WorkOrderProgressDto progress)
         {
@@ -2035,8 +2056,9 @@ namespace VMS.ViewModels
                 if (_lastCompletedNotifiedWoId == progress.Id) return;
                 _lastCompletedNotifiedWoId = progress.Id;
 
+                // 계획 수량 도달(자동) 외에 Web 수동 완료도 이 경로로 온다 — 중립 표현.
                 LogService?.Log(
-                    $"WO {progress.OrderNo} 계획 수량 도달 — Completed ({progress.ProducedQuantity}/{progress.PlannedQuantity}, Pass {progress.PassQuantity} / NG {progress.NgQuantity})",
+                    $"WO {progress.OrderNo} 완료 ({progress.ProducedQuantity}/{progress.PlannedQuantity}, Pass {progress.PassQuantity} / NG {progress.NgQuantity})",
                     LogLevel.Success, "WorkOrder");
 
                 AuditLogger.Instance.Log(

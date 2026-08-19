@@ -34,6 +34,13 @@ namespace VMS.Core.Models.ParameterSync
         /// </summary>
         public bool UnmatchedRecipe { get; set; }
 
+        /// <summary>
+        /// 이미 완료/마감된 WO 로 업로드됨 — 수량 미집계 (Web 수동 완료 등).
+        /// SignalR 완료 알림을 놓친 경우의 폴백: VMS 는 완료 흐름(운전 정지 + 다이얼로그)을
+        /// 태운다. 구버전 Web 서버는 미전송 → false (Status 폴백이 이중 방어).
+        /// </summary>
+        public bool StaleWorkOrder { get; set; }
+
         /// <summary>레시피별 라인 스냅샷 (혼합 레시피 WO). 구버전 Web 은 미전송 → 빈 목록.</summary>
         public List<WorkOrderItemSnapshotDto> Items { get; set; } = new();
 
