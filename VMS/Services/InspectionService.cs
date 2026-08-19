@@ -61,6 +61,23 @@ namespace VMS.Services
         }
 
         /// <summary>
+        /// 검사 상관 키 발급. 사이클 누적 모드에서는 **사이클 내 모든 검사가 같은 키를 공유**
+        /// — Web 이력이 사이클당 1행이므로, 검사별 고유 키를 쓰면 마지막 검사 외의 이미지가
+        /// 전부 매칭 실패(409)로 폐기되고 "사이클 NG + 마지막 검사 OK" 조합에서 NG 이미지가
+        /// 구조적으로 소실됐다 (2026-08-19 현장). 키는 FlushCycleResultAsync 가 사이클
+        /// 경계에서 초기화하므로 사이클마다 새로 발급된다.
+        /// </summary>
+        internal static string CreateCorrelationKey()
+        {
+            lock (_cycleLock)
+            {
+                if (!_cycleAccumulating)
+                    return Guid.NewGuid().ToString("N");
+                return _cycleCorrelationKey ??= Guid.NewGuid().ToString("N");
+            }
+        }
+
+        /// <summary>
         /// 사이클 완료 시 호출 — 버퍼에 쌓인 파라미터 결과(없으면 판정만)를 1건으로 업로드하고
         /// 로컬 최근 검사 이력에도 사이클 1건을 남긴다. Web 미연동(CurrentRecipeId==0)이면
         /// 버퍼만 비우고 false 반환 — WO 집계는 Web 연동 레시피 전제.
@@ -195,8 +212,8 @@ namespace VMS.Services
             var sw = Stopwatch.StartNew();
             var result = new StepInspectionResult
             {
-                // 결과 업로드와 이미지 업로드가 공유할 상관 키 — 검사 1회당 1개.
-                CorrelationKey = Guid.NewGuid().ToString("N")
+                // 결과 업로드와 이미지 업로드가 공유할 상관 키.
+                CorrelationKey = CreateCorrelationKey()
             };
 
             try

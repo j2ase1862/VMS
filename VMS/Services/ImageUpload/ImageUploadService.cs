@@ -70,6 +70,15 @@ namespace VMS.Services.ImageUpload
             if (string.IsNullOrWhiteSpace(_baseUrl)) return;
             if (!ShouldUpload(context.Ok, options)) return;
 
+            // 상관 키 없는 결과(bypass 카메라, grab 실패 NG 등)는 Web 이력과 매칭될 수 없다
+            // — 업로드하면 409 재시도만 반복하다 큐 상한으로 폐기되며, 그 압박이 정상 NG
+            // 이미지까지 밀어냈다 (2026-08-19 현장). 로컬 저장은 별개 경로라 영향 없음.
+            if (string.IsNullOrWhiteSpace(context.CorrelationKey))
+            {
+                Debug.WriteLine("[ImageUploadService] 상관 키 없음 — 업로드 스킵 (로컬 저장만)");
+                return;
+            }
+
             // 크로스 스레드 인코딩 위해 frozen 보장.
             BitmapSource frozen = image;
             if (!frozen.IsFrozen)
@@ -94,31 +103,17 @@ namespace VMS.Services.ImageUpload
             });
         }
 
-        /// <summary>모드/토글 기준 전송 여부. SharedPath 또는 Auto+로컬호스트면 전송 안 함.</summary>
-        private bool ShouldUpload(bool ok, ImageSaveOptions opts)
+        /// <summary>
+        /// 모드/토글 기준 전송 여부. Auto = 항상 업로드 — 종전에는 Web 이 같은 머신이면
+        /// "무전송 + Web 이 로컬 경로 직접 참조" 를 전제로 업로드를 건너뛰었지만, 그 참조
+        /// 경로가 Web 쪽에 구현된 적이 없어 NG 이미지가 영원히 비어 있었다 (2026-08-19 현장).
+        /// localhost HTTP 업로드 비용은 미미 — 단순성을 택한다. SharedPath 는 여전히 미구현
+        /// 상태라 무전송 (선택 시 이미지가 Web 에 안 올라감 — 설정 UI 에서 안내).
+        /// </summary>
+        internal static bool ShouldUpload(bool ok, ImageSaveOptions opts)
         {
-            bool uploadMode = opts.DeliveryMode switch
-            {
-                ImageDeliveryMode.Upload => true,
-                ImageDeliveryMode.SharedPath => false,
-                _ => !WebHostIsLocal(),
-            };
-            if (!uploadMode) return false;
+            if (opts.DeliveryMode == ImageDeliveryMode.SharedPath) return false;
             return ok ? opts.WebSendOk : opts.WebSendNg;
-        }
-
-        private bool WebHostIsLocal()
-        {
-            try
-            {
-                var host = new Uri(_baseUrl).Host;
-                if (string.IsNullOrEmpty(host)) return false;
-                if (host.Equals("localhost", StringComparison.OrdinalIgnoreCase)
-                    || host == "127.0.0.1" || host == "::1") return true;
-                if (host.Equals(Environment.MachineName, StringComparison.OrdinalIgnoreCase)) return true;
-                return false;
-            }
-            catch { return false; }
         }
 
         private void PrepareAndQueue(BitmapSource image, InspectionImageContext ctx, ImageSaveOptions opts)

@@ -155,7 +155,7 @@
                                 </Grid>
 
                                 <TextBlock Style="{StaticResource WindowMutedText}" Margin="0,0,0,12" TextWrapping="Wrap"
-                                           Text="Auto: Web이 같은 머신이면 전송 안 함(로컬 경로 직접 참조), 다른 머신이면 업로드. SharedPath: 항상 전송 안 함. Upload: 항상 업로드. 아래 전송 옵션은 Upload(또는 Auto가 업로드로 판단)일 때만 적용됩니다."/>
+                                           Text="Auto/Upload: 아래 전송 옵션에 따라 Web으로 업로드합니다 (같은 머신이어도 업로드 — 권장 Auto). SharedPath: 전송 안 함 — Web 생산 이력에 이미지가 표시되지 않습니다."/>
 
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
                                     <CheckBox Content="OK 이미지 Web 전송"
