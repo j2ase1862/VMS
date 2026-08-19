@@ -46,6 +46,13 @@ namespace VMS.PLC.Models.Sequence
         /// <summary>타임아웃 (ms), -1 = 무제한</summary>
         public int TimeoutMs { get; set; } = -1;
 
+        /// <summary>
+        /// 에지 모드(BitRisingEdge/BitFallingEdge) 디바운스 (ms).
+        /// 전환 감지 후 이 시간이 지나도 레벨이 유지될 때만 통과 — 기계식 스위치의
+        /// 채터링(짧은 글리치)을 트리거로 오인하지 않기 위한 확인 지연. 0 = 미사용.
+        /// </summary>
+        public int DebounceMs { get; set; }
+
         // --- OutputAction 파라미터 ---
 
         /// <summary>출력 데이터 타입</summary>
