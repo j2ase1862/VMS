@@ -9,7 +9,8 @@
             ToolType="ThresholdTool" ParameterName="ThresholdValue"/>
         <controls:ParamCodeLink
             AvailableParamCodes="{Binding AvailableParamCodes}"
-            SelectedItem="{Binding SelectedThresholdValueCode}"/>
+            SelectedItem="{Binding SelectedThresholdValueCode}"
+            LocalValue="{Binding ThresholdValue}"/>
         <controls:SliderParameter Label="Max Value"
             Value="{Binding MaxValue}" Minimum="0" Maximum="255"
             TickFrequency="1" ValueFormat="F0"
