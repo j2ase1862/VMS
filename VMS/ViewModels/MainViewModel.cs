@@ -954,8 +954,18 @@ namespace VMS.ViewModels
 
         // ── 외부 레시피 변경 자동 반영 (VisionSetup 저장 감지) ──
 
-        // AUTO RUN 중에는 즉시 교체하지 않고 정지 시점에 적용 (검사 도중 파라미터 교체 방지)
-        private bool _pendingRecipeReload;
+        // AUTO RUN 중에는 즉시 교체하지 않고 정지 시점에 적용 (검사 도중 파라미터 교체 방지).
+        // 상태바 한 줄로는 현장에서 놓치므로 헤더 레시피 칩에 대기 배지로도 노출 (2026-08-19).
+        [ObservableProperty]
+        private bool _isRecipeReloadPending;
+
+        /// <summary>
+        /// 현재 레시피의 소스 파일 경로 갱신 — PLC RecipeChange 등 파일 로드 없이 레시피가
+        /// 바뀌는 경로에서 호출. 갱신하지 않으면 외부 변경 워처가 이전 레시피 파일과
+        /// 비교해 실행 중 레시피의 변경을 놓친다.
+        /// </summary>
+        public void SetCurrentRecipeFilePath(string filePath)
+            => _currentRecipeFilePath = filePath;
 
         private void OnExternalRecipeFileChanged(string filePath)
         {
@@ -963,14 +973,22 @@ namespace VMS.ViewModels
             if (string.IsNullOrEmpty(currentPath)) return;
             if (!string.Equals(Path.GetFullPath(filePath), Path.GetFullPath(currentPath),
                     StringComparison.OrdinalIgnoreCase))
-                return;
+            {
+                // 파일명이 달라도 내용의 id 가 현재 레시피와 같으면 같은 레시피의 다른 파일 —
+                // 과거 이름 기반 저장으로 생긴 중복(recipe_<이름>.json vs recipe_<GUID>.json)을
+                // 여기서 흡수한다. 그 파일을 현재 소스로 채택해 이후 저장도 추적.
+                if (!ChangedFileMatchesCurrentRecipeId(filePath)) return;
+                _currentRecipeFilePath = filePath;
+                LogService?.Log($"레시피 '{CurrentRecipeName}' 의 소스 파일을 '{Path.GetFileName(filePath)}' 로 전환 (id 일치)",
+                    LogLevel.Info, "Recipe");
+            }
 
             // 워처 스레드에서 호출됨 — UI 스레드로 이동
             Application.Current?.Dispatcher.BeginInvoke(async () =>
             {
                 if (IsRunning)
                 {
-                    _pendingRecipeReload = true;
+                    IsRecipeReloadPending = true;
                     SystemStatus = $"레시피 '{CurrentRecipeName}' 변경 감지 — 검사 정지 시 다시 불러옵니다";
                     LogService?.Log(SystemStatus, LogLevel.Warning, "Recipe");
                     return;
@@ -981,9 +999,32 @@ namespace VMS.ViewModels
             });
         }
 
+        /// <summary>변경된 레시피 파일의 id 가 현재 로드된 레시피와 같은지 (워처 스레드에서 호출).</summary>
+        private bool ChangedFileMatchesCurrentRecipeId(string filePath)
+            => RecipeFileMatchesId(filePath, CurrentRecipe?.Id);
+
+        /// <summary>레시피 JSON 파일의 id 필드가 주어진 id 와 일치하는지 (camelCase 직렬화 기준).</summary>
+        internal static bool RecipeFileMatchesId(string filePath, string? currentId)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(currentId)) return false;
+
+                using var stream = File.OpenRead(filePath);
+                using var doc = System.Text.Json.JsonDocument.Parse(stream);
+                return doc.RootElement.TryGetProperty("id", out var idProp)
+                    && string.Equals(idProp.GetString(), currentId, StringComparison.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                // 저장 직후 파일 잠금/부분 쓰기 등 — 판별 불가면 무시 (기존 경로 일치 동작 유지)
+                return false;
+            }
+        }
+
         private void ReloadCurrentRecipe()
         {
-            _pendingRecipeReload = false;
+            IsRecipeReloadPending = false;
             var path = _currentRecipeFilePath;
             if (string.IsNullOrEmpty(path)) return;
 
@@ -1422,7 +1463,7 @@ namespace VMS.ViewModels
             LogService?.Log("Inspection stopped", LogLevel.Info, "System");
 
             // AUTO RUN 중 감지된 레시피 외부 변경을 안전한 시점(정지 후)에 반영
-            if (_pendingRecipeReload)
+            if (IsRecipeReloadPending)
                 ReloadCurrentRecipe();
         }
 

@@ -315,6 +315,15 @@
                                     </Style>
                                 </TextBlock.Style>
                             </TextBlock>
+
+                            <!-- AUTO RUN 중 VisionSetup 저장 감지 — 정지 시 재로드 대기 배지.
+                                 상태바 한 줄로는 현장에서 놓쳐 미반영 파라미터로 검사한다 (2026-08-19). -->
+                            <Border Background="{StaticResource Brush.Warning}" CornerRadius="3"
+                                    Padding="6,2" Margin="8,0,0,0" VerticalAlignment="Center"
+                                    Visibility="{Binding IsRecipeReloadPending, Converter={StaticResource BoolToVisibilityConverter}}"
+                                    ToolTip="VisionSetup 에서 이 레시피가 수정되었습니다. 검사를 정지하면 자동으로 다시 불러옵니다 — 정지 전까지는 이전 파라미터로 검사합니다.">
+                                <TextBlock Text="변경 대기" Foreground="#1A1A1A" FontSize="10" FontWeight="SemiBold"/>
+                            </Border>
                         </StackPanel>
                     </Border>
 

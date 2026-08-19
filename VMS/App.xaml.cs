@@ -567,6 +567,9 @@ namespace VMS
                             recipeService.SetCurrentRecipe(recipe);
                             mainViewModel.CurrentRecipe = recipe;
                             mainViewModel.CurrentRecipeName = recipe.Name;
+                            // 소스 파일 경로 동기화 — 안 하면 외부 변경 워처가 이전 레시피
+                            // 파일과 비교해 실행 중 레시피의 VisionSetup 수정을 놓친다.
+                            mainViewModel.SetCurrentRecipeFilePath(target.FilePath);
                             foreach (var cam in mainViewModel.Cameras)
                                 cam.SetRecipe(recipe);
                             logService.Log($"Recipe changed to [{recipeIndex}] {recipe.Name}", LogLevel.Success, "RecipeChange");
