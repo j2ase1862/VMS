@@ -2579,6 +2579,19 @@ namespace VMS.VisionSetup.ViewModels
                 var creation = CameraAcquisitionFactory.CreateWithInfo(SelectedCamera);
                 _cameraAcquisition = creation.Acquisition;
 
+                // 런타임 끊김(케이블 분리 등) 통지 — 플래그를 내려야 다음 Grab/Live 의
+                // 자동 재연결 분기가 동작한다. 안 내리면 죽은 핸들로 영구 재시도 (2026-08-19 현장).
+                _cameraAcquisition.ConnectionLost += (_, reason) =>
+                {
+                    System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+                    {
+                        IsCameraConnected = false;
+                        StatusMessage = $"카메라 연결 끊김: {reason}";
+                        ConnectCameraCommand.NotifyCanExecuteChanged();
+                        DisconnectCameraCommand.NotifyCanExecuteChanged();
+                    });
+                };
+
                 // SDK 미탑재 폴백 — 조용히 시뮬레이션으로 넘어가면 현장에서 실카메라로
                 // 오인한다 (2026-08 Basler 실증 사태). 연결 전에 명시적으로 경고.
                 if (creation.IsSimulationFallback)
@@ -2772,8 +2785,15 @@ namespace VMS.VisionSetup.ViewModels
 
                         if (!result.Success)
                         {
-                            // 연속 실패 스팸 방지 — 첫 실패에서 라이브 중단
+                            // 연속 실패 스팸 방지 — 첫 실패에서 라이브 중단.
+                            // 획득 계층이 끊김을 감지했으면 연결 플래그도 함께 내린다 —
+                            // 플래그가 살아 있으면 다음 Live 가 죽은 핸들로 재시도한다.
                             stopped = $"카메라 라이브 중단: {result.Message}";
+                            if (!_cameraAcquisition.IsConnected)
+                            {
+                                await System.Windows.Application.Current.Dispatcher.InvokeAsync(
+                                    () => IsCameraConnected = false);
+                            }
                             break;
                         }
 
