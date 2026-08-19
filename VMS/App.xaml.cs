@@ -494,8 +494,11 @@ namespace VMS
                     {
                         var cam = mainViewModel.Cameras.FirstOrDefault(c => c.Id == cameraId);
                         if (cam == null) return false;
-                        await cam.GrabCommand.ExecuteAsync(null);
-                        return true;
+                        // GrabCommand(void) 대신 성공 여부를 반환하는 GrabOnceAsync 사용 —
+                        // 무조건 true 를 반환하면 SequenceEngine 의 grab 실패 처리
+                        // (검사 스킵 + NG)가 절대 발동하지 않고, 카메라가 끊겨도
+                        // 직전 프레임으로 검사가 계속된다 (2026-08-19 현장).
+                        return await cam.GrabOnceAsync();
                     });
                     return await innerTask;
                 },

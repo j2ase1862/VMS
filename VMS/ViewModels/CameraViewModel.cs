@@ -357,6 +357,10 @@ namespace VMS.ViewModels
                 ? $"Connected (SIMULATION — SDK 미탑재): {Name}"
                 : $"Connected: {Name}";
 
+        /// <summary>테스트 전용 — 취득 구현체 주입 (InternalsVisibleTo).</summary>
+        internal void SetAcquisitionForTest(Camera.Interfaces.ICameraAcquisition acquisition)
+            => _acquisition = acquisition;
+
         /// <summary>
         /// 카메라 연결 초기화. 앱 시작 시 호출.
         /// </summary>
@@ -381,6 +385,17 @@ namespace VMS.ViewModels
         [RelayCommand]
         private async Task GrabAsync()
         {
+            await GrabOnceAsync();
+        }
+
+        /// <summary>
+        /// 단발 grab 을 수행하고 실제 획득 성공 여부를 반환한다.
+        /// Auto Run 의 grabFunc 가 이 반환값으로 grab 실패를 판정한다 —
+        /// 실패가 은폐되면 SequenceEngine 이 직전 프레임(_originalImage)으로
+        /// 검사를 계속 진행한다 (2026-08-19 현장: 케이블 뽑힘 상태에서 검사 지속).
+        /// </summary>
+        public async Task<bool> GrabOnceAsync()
+        {
             try
             {
                 _acquisition ??= CreateAcquisition();
@@ -391,7 +406,7 @@ namespace VMS.ViewModels
                     if (!connected)
                     {
                         ResultMessage = "Camera connection failed";
-                        return;
+                        return false;
                     }
                     IsConnected = true;
                 }
@@ -426,15 +441,16 @@ namespace VMS.ViewModels
                     }
 
                     ResultMessage = "Acquisition OK";
+                    return true;
                 }
-                else
-                {
-                    ResultMessage = result.Message;
-                }
+
+                ResultMessage = result.Message;
+                return false;
             }
             catch (Exception ex)
             {
                 ResultMessage = $"Grab error: {ex.Message}";
+                return false;
             }
         }
 
@@ -613,10 +629,13 @@ namespace VMS.ViewModels
         [RelayCommand]
         private async Task ManualInspectAsync()
         {
+            // 이미지가 없으면 검사 불능 = NG. 과거에는 OK 를 반환해 카메라 미획득
+            // 상태에서도 양품 판정이 나갔다 (2026-08-19 현장).
             if (_inspectionService == null || (_originalImage ?? CurrentImage) == null)
             {
                 LastExecutionTimeMs = 0;
-                SetInspectionResult(true);
+                SetInspectionResult(false);
+                ResultMessage = "No image to inspect";
                 return;
             }
 
