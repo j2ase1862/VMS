@@ -87,7 +87,8 @@
                     ToolType="FeatureMatchTool" ParameterName="ScoreThreshold"/>
                 <controls:ParamCodeLink
                     AvailableParamCodes="{Binding AvailableParamCodes}"
-                    SelectedItem="{Binding SelectedScoreThresholdCode}"/>
+                    SelectedItem="{Binding SelectedScoreThresholdCode}"
+                    LocalValue="{Binding ScoreThreshold}"/>
                 <controls:CheckBoxParameter Label="Contrast Invariant"
                     IsChecked="{Binding UseContrastInvariant}"
                     ToolType="FeatureMatchTool" ParameterName="UseContrastInvariant"/>

@@ -23,7 +23,8 @@
                     ToolType="BlobTool" ParameterName="ThresholdValue"/>
                 <controls:ParamCodeLink
                     AvailableParamCodes="{Binding AvailableParamCodes}"
-                    SelectedItem="{Binding SelectedThresholdCode}"/>
+                    SelectedItem="{Binding SelectedThresholdCode}"
+                    LocalValue="{Binding ThresholdValue}"/>
                 <controls:EnumComboBoxParameter Label="Segmentation Polarity"
                     ItemsSource="{conv:EnumValues {x:Type blob:SegmentationPolarity}}"
                     SelectedValue="{Binding SegmentationPolarity}"
@@ -65,20 +66,22 @@
                     ToolType="BlobTool" ParameterName="ExpectedArea"/>
                 <controls:ParamCodeLink
                     AvailableParamCodes="{Binding AvailableParamCodes}"
-                    SelectedItem="{Binding SelectedExpectedAreaCode}"/>
+                    SelectedItem="{Binding SelectedExpectedAreaCode}"
+                    LocalValue="{Binding ExpectedArea}"/>
                 <controls:TextBoxParameter Label="Area Tolerance (+)"
                     Value="{Binding AreaTolerancePlus}"
                     ToolType="BlobTool" ParameterName="AreaTolerancePlus"/>
                 <controls:ParamCodeLink
                     AvailableParamCodes="{Binding AvailableParamCodes}"
-                    SelectedItem="{Binding SelectedAreaTolerancePlusCode}"/>
+                    SelectedItem="{Binding SelectedAreaTolerancePlusCode}"
+                    LocalValue="{Binding AreaTolerancePlus}"/>
                 <controls:TextBoxParameter Label="Area Tolerance (-)"
                     Value="{Binding AreaToleranceMinus}"
                     ToolType="BlobTool" ParameterName="AreaToleranceMinus"/>
                 <controls:ParamCodeLink
                     AvailableParamCodes="{Binding AvailableParamCodes}"
-                    SelectedItem="{Binding SelectedAreaToleranceMinusCode}"/>
-
+                    SelectedItem="{Binding SelectedAreaToleranceMinusCode}"
+                    LocalValue="{Binding AreaToleranceMinus}"/>
                 <!-- Count Judgment -->
                 <controls:CheckBoxParameter Label="Use Count Judgment"
                     IsChecked="{Binding UseCountJudgment}"
@@ -92,7 +95,8 @@
                     ToolType="BlobTool" ParameterName="ExpectedCount"/>
                 <controls:ParamCodeLink
                     AvailableParamCodes="{Binding AvailableParamCodes}"
-                    SelectedItem="{Binding SelectedExpectedCountCode}"/>
+                    SelectedItem="{Binding SelectedExpectedCountCode}"
+                    LocalValue="{Binding ExpectedCount}"/>
                 <controls:TextBoxParameter Label="Expected Count Max"
                     Value="{Binding ExpectedCountMax}"
                     ToolType="BlobTool" ParameterName="ExpectedCountMax"/>
@@ -101,13 +105,15 @@
                     ToolType="BlobTool" ParameterName="CountUpperTol"/>
                 <controls:ParamCodeLink
                     AvailableParamCodes="{Binding AvailableParamCodes}"
-                    SelectedItem="{Binding SelectedCountUpperTolCode}"/>
+                    SelectedItem="{Binding SelectedCountUpperTolCode}"
+                    LocalValue="{Binding CountUpperTol}"/>
                 <controls:TextBoxParameter Label="Count Lower Tol"
                     Value="{Binding CountLowerTol}"
                     ToolType="BlobTool" ParameterName="CountLowerTol"/>
                 <controls:ParamCodeLink
                     AvailableParamCodes="{Binding AvailableParamCodes}"
-                    SelectedItem="{Binding SelectedCountLowerTolCode}"/>
+                    SelectedItem="{Binding SelectedCountLowerTolCode}"
+                    LocalValue="{Binding CountLowerTol}"/>
             </StackPanel>
         </Expander>
 

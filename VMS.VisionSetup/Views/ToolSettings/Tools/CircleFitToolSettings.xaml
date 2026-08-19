@@ -20,7 +20,8 @@
             ToolType="CircleFitTool" ParameterName="ExpectedRadius"/>
         <controls:ParamCodeLink
             AvailableParamCodes="{Binding AvailableParamCodes}"
-            SelectedItem="{Binding SelectedExpectedRadiusCode}"/>
+            SelectedItem="{Binding SelectedExpectedRadiusCode}"
+            LocalValue="{Binding ExpectedRadius}"/>
         <controls:SliderParameter Label="Num Calipers"
             Value="{Binding NumCalipers}" Minimum="3" Maximum="64"
             TickFrequency="1" ValueFormat="F0"
@@ -58,7 +59,8 @@
             ToolType="CircleFitTool" ParameterName="EdgeThreshold"/>
         <controls:ParamCodeLink
             AvailableParamCodes="{Binding AvailableParamCodes}"
-            SelectedItem="{Binding SelectedEdgeThresholdCode}"/>
+            SelectedItem="{Binding SelectedEdgeThresholdCode}"
+            LocalValue="{Binding EdgeThreshold}"/>
         <!-- Expert: Fit 알고리즘 선택 — 통합 시점 결정. -->
         <controls:EnumComboBoxParameter Label="Fit Method"
             ItemsSource="{conv:EnumValues {x:Type meas:CircleFitMethod}}"

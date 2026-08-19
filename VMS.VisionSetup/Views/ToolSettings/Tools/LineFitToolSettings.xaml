@@ -18,7 +18,8 @@
             ToolType="LineFitTool" ParameterName="SearchLength"/>
         <controls:ParamCodeLink
             AvailableParamCodes="{Binding AvailableParamCodes}"
-            SelectedItem="{Binding SelectedSearchLengthCode}"/>
+            SelectedItem="{Binding SelectedSearchLengthCode}"
+            LocalValue="{Binding SearchLength}"/>
         <controls:SliderParameter Label="Search Width"
             Value="{Binding SearchWidth}" Minimum="1" Maximum="50"
             TickFrequency="1" ValueFormat="F0"
@@ -33,7 +34,8 @@
             ToolType="LineFitTool" ParameterName="EdgeThreshold"/>
         <controls:ParamCodeLink
             AvailableParamCodes="{Binding AvailableParamCodes}"
-            SelectedItem="{Binding SelectedEdgeThresholdCode}"/>
+            SelectedItem="{Binding SelectedEdgeThresholdCode}"
+            LocalValue="{Binding EdgeThreshold}"/>
         <controls:SliderParameter Label="Filter Half Width"
             Value="{Binding FilterHalfWidth}" Minimum="1" Maximum="10"
             TickFrequency="1" SnapToTick="True" ValueFormat="F0"

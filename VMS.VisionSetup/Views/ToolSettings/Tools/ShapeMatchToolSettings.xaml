@@ -118,7 +118,8 @@
                     ToolType="ShapeMatchTool" ParameterName="ScoreThreshold"/>
                 <controls:ParamCodeLink
                     AvailableParamCodes="{Binding AvailableParamCodes}"
-                    SelectedItem="{Binding SelectedScoreThresholdCode}"/>
+                    SelectedItem="{Binding SelectedScoreThresholdCode}"
+                    LocalValue="{Binding ScoreThreshold}"/>
                 <controls:SliderParameter Label="Max Instances"
                     Value="{Binding MaxInstances}" Minimum="1" Maximum="20"
                     TickFrequency="1" ValueFormat="F0"

@@ -168,7 +168,8 @@
                     ToolType="ColorMatchTool" ParameterName="ColorTolerance"/>
                 <controls:ParamCodeLink
                     AvailableParamCodes="{Binding AvailableParamCodes}"
-                    SelectedItem="{Binding SelectedColorToleranceCode}"/>
+                    SelectedItem="{Binding SelectedColorToleranceCode}"
+                    LocalValue="{Binding ColorTolerance}"/>
             </StackPanel>
         </Expander>
 
