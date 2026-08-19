@@ -315,6 +315,14 @@ namespace VMS.Services.Sequence
                     await WaitForBitValueAsync(addr, false, ct, node.TimeoutMs);
                     break;
 
+                case InputCheckMode.BitRisingEdge:
+                    await WaitForPlcBitEdgeAsync(addr, true, node, ct);
+                    break;
+
+                case InputCheckMode.BitFallingEdge:
+                    await WaitForPlcBitEdgeAsync(addr, false, node, ct);
+                    break;
+
                 case InputCheckMode.WordEquals:
                 case InputCheckMode.WordGreaterThan:
                 case InputCheckMode.WordLessThan:
@@ -451,13 +459,22 @@ namespace VMS.Services.Sequence
         {
             if (!int.TryParse(node.PlcAddress, out var channel))
             {
-                Debug.WriteLine($"[Sequence] Board '{node.DeviceId}' channel parse failed: '{node.PlcAddress}'");
-                return;
+                // 파싱 실패를 조용히 return 하면 InputCheck 가 무조건 통과 = Wait Trigger 가
+                // 스위치와 무관하게 최고속 무한 사이클을 돈다. SequenceError 로 표면화한다.
+                throw new InvalidOperationException(
+                    $"IO 보드 '{node.DeviceId}' InputCheck 채널이 숫자가 아닙니다: '{node.PlcAddress}' " +
+                    $"(노드 '{node.Name}') — 보드 노드의 주소는 채널 번호(예: 0, 5)여야 합니다.");
             }
 
             var deadline = node.TimeoutMs > 0
                 ? DateTime.UtcNow.AddMilliseconds(node.TimeoutMs)
                 : DateTime.MaxValue;
+
+            if (node.CheckMode is InputCheckMode.BitRisingEdge or InputCheckMode.BitFallingEdge)
+            {
+                await WaitForBoardEdgeAsync(board, channel, node, deadline, ct);
+                return;
+            }
 
             while (!ct.IsCancellationRequested && DateTime.UtcNow < deadline)
             {
@@ -476,6 +493,41 @@ namespace VMS.Services.Sequence
         }
 
         /// <summary>
+        /// IO 보드 채널의 에지 대기 — 비활성 레벨을 한 번 관측한 뒤(armed)에만 전환을 인정한다.
+        /// 노드 진입 시 신호가 이미 활성이면(스위치를 계속 누르고 있는 경우) 해제될 때까지
+        /// 통과하지 않으므로, 1회 누름 = 1회 트리거가 보장된다 (2026-08-19 현장).
+        /// DebounceMs > 0 이면 전환 감지 후 해당 시간 뒤 레벨 재확인 — 채터링 글리치 무시.
+        /// </summary>
+        private static async Task WaitForBoardEdgeAsync(
+            IIoBoardConnection board, int channel, SequenceNodeConfig node, DateTime deadline, CancellationToken ct)
+        {
+            var target = node.CheckMode == InputCheckMode.BitRisingEdge;
+            var armed = false;
+
+            while (!ct.IsCancellationRequested && DateTime.UtcNow < deadline)
+            {
+                var current = await board.ReadBitAsync(channel);
+
+                if (!armed)
+                {
+                    if (current != target) armed = true;
+                }
+                else if (current == target)
+                {
+                    if (node.DebounceMs > 0)
+                    {
+                        try { await Task.Delay(node.DebounceMs, ct); } catch (TaskCanceledException) { return; }
+                        if (await board.ReadBitAsync(channel) != target)
+                            continue;   // 글리치 — armed 유지, 다음 전환 대기
+                    }
+                    return;
+                }
+
+                try { await Task.Delay(50, ct); } catch (TaskCanceledException) { return; }
+            }
+        }
+
+        /// <summary>
         /// IO 보드의 디지털 출력. 보드는 Bit 만 지원 — Int16/Int32/Float 는 경고 후 skip.
         /// (Phase 3 SDK 통합 시 보드별로 word port write 가 가능할 수 있음 — 추후 확장.)
         /// </summary>
@@ -483,8 +535,10 @@ namespace VMS.Services.Sequence
         {
             if (!int.TryParse(node.PlcAddress, out var channel))
             {
-                Debug.WriteLine($"[Sequence] Board '{node.DeviceId}' channel parse failed: '{node.PlcAddress}'");
-                return;
+                // InputCheck 와 동일 — 조용한 skip 은 출력이 안 나가는 이유를 숨긴다.
+                throw new InvalidOperationException(
+                    $"IO 보드 '{node.DeviceId}' OutputAction 채널이 숫자가 아닙니다: '{node.PlcAddress}' " +
+                    $"(노드 '{node.Name}') — 보드 노드의 주소는 채널 번호(예: 0, 5)여야 합니다.");
             }
 
             switch (node.OutputDataType)
@@ -611,6 +665,15 @@ namespace VMS.Services.Sequence
         // 그 외(빈/MainPLC/미등록 ID) 는 기본 PLC 어드레스 경로.
         private async Task<bool> CheckSignalAsync(string? deviceId, string address, InputCheckMode checkMode, int? compareValue)
         {
+            // 순간 판정 함수라 에지를 표현할 수 없다 — Reset/Recipe/Step 신호에 에지 모드를
+            // 고르면 조용히 영원 미충족이 되는 것을 막기 위해 레벨 동치로 해석한다.
+            checkMode = checkMode switch
+            {
+                InputCheckMode.BitRisingEdge => InputCheckMode.BitOn,
+                InputCheckMode.BitFallingEdge => InputCheckMode.BitOff,
+                _ => checkMode
+            };
+
             if (TryGetBoardForMapping(deviceId, out var board) && board != null)
             {
                 if (!int.TryParse(address?.Trim(), out var ch) || ch < 0)
@@ -748,6 +811,31 @@ namespace VMS.Services.Sequence
                     tcs.TrySetResult(e.NewValue);
                     _bitWaiters.Remove(key);
                 }
+            }
+        }
+
+        /// <summary>
+        /// PLC 비트의 에지 대기 — 비활성 레벨을 먼저 확인한 뒤 활성 전환을 기다린다.
+        /// 신호가 이미 활성인 채 유지되면(입력 홀드) 해제될 때까지 통과하지 않는다.
+        /// 타임아웃은 기존 레벨 모드와 동일하게 각 대기 단계에 적용되고, 만료 시 통과한다.
+        /// </summary>
+        private async Task WaitForPlcBitEdgeAsync(PlcAddress address, bool risingTarget, SequenceNodeConfig node, CancellationToken ct)
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                if (!await WaitForBitValueAsync(address, !risingTarget, ct, node.TimeoutMs)) return;
+                if (!await WaitForBitValueAsync(address, risingTarget, ct, node.TimeoutMs)) return;
+
+                if (node.DebounceMs > 0)
+                {
+                    try { await Task.Delay(node.DebounceMs, ct); } catch (TaskCanceledException) { return; }
+                    bool held;
+                    try { held = await _plc.ReadBitAsync(address) == risingTarget; }
+                    catch { held = false; }
+                    if (!held) continue;    // 글리치 — 다시 비활성→활성 전환 대기
+                }
+
+                return;
             }
         }
 

@@ -247,6 +247,11 @@ namespace VMS.VisionSetup.ViewModels
             return type == IoDeviceType.AdLinkPci743x || type == IoDeviceType.AdvantechPci17xx;
         }
 
+        /// <summary>Bit 로 읽는 체크 모드 (레벨 + 에지) — Word 모드와 구분.</summary>
+        private static bool IsBitCheckMode(InputCheckMode mode)
+            => mode is InputCheckMode.BitOn or InputCheckMode.BitOff
+                    or InputCheckMode.BitRisingEdge or InputCheckMode.BitFallingEdge;
+
         private void InitializePalette()
         {
             PaletteItems.Add(new NodePaletteItem(SequenceNodeType.Start, "Start", "#4CAF50"));
@@ -1042,7 +1047,7 @@ namespace VMS.VisionSetup.ViewModels
                 if (cfg.NodeType == SequenceNodeType.InputCheck)
                 {
                     var addrStr = cfg.PlcAddress.Trim();
-                    var dataType = cfg.CheckMode is InputCheckMode.BitOn or InputCheckMode.BitOff
+                    var dataType = IsBitCheckMode(cfg.CheckMode)
                         ? PlcDataType.Bit : PlcDataType.Int16;
 
                     if (!addressMap.TryGetValue(addrStr, out var entry))
@@ -1482,12 +1487,15 @@ namespace VMS.VisionSetup.ViewModels
             {
                 InputCheckMode.BitOn => $"{cfg.PlcAddress} = ON",
                 InputCheckMode.BitOff => $"{cfg.PlcAddress} = OFF",
+                InputCheckMode.BitRisingEdge => $"{cfg.PlcAddress} ↑ (OFF→ON)",
+                InputCheckMode.BitFallingEdge => $"{cfg.PlcAddress} ↓ (ON→OFF)",
                 InputCheckMode.WordEquals => $"{cfg.PlcAddress} == {cfg.CompareValue ?? 0}",
                 InputCheckMode.WordGreaterThan => $"{cfg.PlcAddress} > {cfg.CompareValue ?? 0}",
                 InputCheckMode.WordLessThan => $"{cfg.PlcAddress} < {cfg.CompareValue ?? 0}",
                 _ => cfg.PlcAddress
             };
             var startTime = DateTime.UtcNow;
+            var edgeArmed = false;   // 에지 모드 — 비활성 레벨 관측 후에만 전환 인정
 
             while (!ct.IsCancellationRequested)
             {
@@ -1505,7 +1513,7 @@ namespace VMS.VisionSetup.ViewModels
 
                 // 현재값 읽기
                 string currentVal;
-                if (cfg.CheckMode is InputCheckMode.BitOn or InputCheckMode.BitOff)
+                if (IsBitCheckMode(cfg.CheckMode))
                 {
                     var bit = await _plcConnection.ReadBitAsync(addr);
                     currentVal = bit ? "ON" : "OFF";
@@ -1516,19 +1524,36 @@ namespace VMS.VisionSetup.ViewModels
                     currentVal = word.ToString();
                 }
 
-                // 조건 평가
-                bool met = cfg.CheckMode switch
+                // 조건 평가 — 에지 모드는 비활성 레벨을 한 번 본 뒤의 전환만 인정 (엔진과 동일)
+                bool met;
+                if (cfg.CheckMode is InputCheckMode.BitRisingEdge or InputCheckMode.BitFallingEdge)
                 {
-                    InputCheckMode.BitOn => currentVal == "ON",
-                    InputCheckMode.BitOff => currentVal == "OFF",
-                    InputCheckMode.WordEquals when int.TryParse(currentVal, out var v) =>
-                        v == (cfg.CompareValue ?? 0),
-                    InputCheckMode.WordGreaterThan when int.TryParse(currentVal, out var v) =>
-                        v > (cfg.CompareValue ?? 0),
-                    InputCheckMode.WordLessThan when int.TryParse(currentVal, out var v) =>
-                        v < (cfg.CompareValue ?? 0),
-                    _ => false
-                };
+                    var atTarget = currentVal == (cfg.CheckMode == InputCheckMode.BitRisingEdge ? "ON" : "OFF");
+                    if (!edgeArmed)
+                    {
+                        if (!atTarget) edgeArmed = true;
+                        met = false;
+                    }
+                    else
+                    {
+                        met = atTarget;
+                    }
+                }
+                else
+                {
+                    met = cfg.CheckMode switch
+                    {
+                        InputCheckMode.BitOn => currentVal == "ON",
+                        InputCheckMode.BitOff => currentVal == "OFF",
+                        InputCheckMode.WordEquals when int.TryParse(currentVal, out var v) =>
+                            v == (cfg.CompareValue ?? 0),
+                        InputCheckMode.WordGreaterThan when int.TryParse(currentVal, out var v) =>
+                            v > (cfg.CompareValue ?? 0),
+                        InputCheckMode.WordLessThan when int.TryParse(currentVal, out var v) =>
+                            v < (cfg.CompareValue ?? 0),
+                        _ => false
+                    };
+                }
 
                 node.ConditionStatus = met;
                 StatusMessage = $"[무부하] {node.Name} — 신호 대기 ({modeText}, 현재: {currentVal})";
@@ -1558,7 +1583,10 @@ namespace VMS.VisionSetup.ViewModels
                 return cfg.NextNodeId;
             }
 
-            var wantOn = cfg.CheckMode != InputCheckMode.BitOff;   // 보드는 Bit 만 — 그 외는 BitOn 취급
+            // 보드는 Bit 만 — Word 모드는 BitOn 취급. 에지 모드는 엔진과 동일한 armed 판정.
+            var isEdge = cfg.CheckMode is InputCheckMode.BitRisingEdge or InputCheckMode.BitFallingEdge;
+            var wantOn = cfg.CheckMode is not (InputCheckMode.BitOff or InputCheckMode.BitFallingEdge);
+            var edgeArmed = false;
             var startTime = DateTime.UtcNow;
 
             while (!ct.IsCancellationRequested)
@@ -1583,7 +1611,23 @@ namespace VMS.VisionSetup.ViewModels
                     return null;
                 }
 
-                var met = on == wantOn;
+                bool met;
+                if (isEdge)
+                {
+                    if (!edgeArmed)
+                    {
+                        if (on != wantOn) edgeArmed = true;
+                        met = false;
+                    }
+                    else
+                    {
+                        met = on == wantOn;
+                    }
+                }
+                else
+                {
+                    met = on == wantOn;
+                }
                 node.ConditionStatus = met;
                 StatusMessage = met
                     ? $"[무부하] {node.Name} — 조건 충족 (ch{channel} = {(on ? "ON" : "OFF")})"
@@ -1744,7 +1788,7 @@ namespace VMS.VisionSetup.ViewModels
                 var addr = PlcAddress.Parse(cfg.PlcAddress.Trim(), _plcConfig.Vendor);
                 string value;
 
-                if (cfg.CheckMode is InputCheckMode.BitOn or InputCheckMode.BitOff)
+                if (IsBitCheckMode(cfg.CheckMode))
                 {
                     var bit = await _plcConnection.ReadBitAsync(addr);
                     value = bit ? "ON" : "OFF";

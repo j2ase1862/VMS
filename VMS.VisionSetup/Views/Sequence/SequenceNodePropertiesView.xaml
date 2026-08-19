@@ -218,6 +218,11 @@
                 <TextBlock Text="타임아웃 (ms, -1=무제한)" Style="{StaticResource LabelStyle}"/>
                 <TextBox Text="{Binding SelectedNode.Config.TimeoutMs, UpdateSourceTrigger=PropertyChanged}"
                          Style="{StaticResource InputStyle}"/>
+                <TextBlock Text="디바운스 (ms, 에지 모드 전용, 0=미사용)" Style="{StaticResource LabelStyle}"/>
+                <TextBox Text="{Binding SelectedNode.Config.DebounceMs, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource InputStyle}"/>
+                <TextBlock Text="스위치/센서 트리거는 BitRisingEdge 권장 —&#x0a;BitOn 은 신호가 켜져 있는 동안 매 사이클 통과합니다."
+                           Foreground="{StaticResource BrushTextMuted}" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"/>
                 <!-- 테스트 읽기 버튼 -->
                 <Button Content="▶ 테스트 읽기" Command="{Binding TestReadInputCommand}"
                         Margin="0,10,0,0" Padding="10,6" Cursor="Hand"
