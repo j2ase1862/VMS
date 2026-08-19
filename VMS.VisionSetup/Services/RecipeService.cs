@@ -60,6 +60,11 @@ namespace VMS.VisionSetup.Services
             get => _currentRecipe;
             set
             {
+                // 다른 레시피로 교체되면 파일 경로 추적도 초기화 — LoadRecipe 가 로드 직후
+                // 다시 채운다. 새 레시피(파일 없음)는 첫 저장에서 이름 기반 경로가 기록됨.
+                if (!ReferenceEquals(_currentRecipe, value))
+                    CurrentRecipeFilePath = null;
+
                 _currentRecipe = value;
                 // 레시피 전환 시 캘리브레이션 메타데이터를 런타임 슬롯으로 동기화.
                 // null 레시피이거나 캘리브레이션이 없으면 슬롯도 클리어.
@@ -67,6 +72,14 @@ namespace VMS.VisionSetup.Services
                 CurrentRecipeChanged?.Invoke(this, value);
             }
         }
+
+        /// <summary>
+        /// 현재 레시피가 로드된(또는 마지막으로 저장된) 파일 경로.
+        /// 저장 시 이 경로로 되돌려 써야 VMS 의 파일 워처가 변경을 감지한다 —
+        /// 이름 기반 새 파일로 저장하면 VMS 가 로드한 원본(recipe_&lt;GUID&gt;.json 등)과
+        /// 파일명이 달라 수정이 영원히 반영되지 않고 중복 레시피만 늘어난다 (2026-08-19 현장).
+        /// </summary>
+        public string? CurrentRecipeFilePath { get; private set; }
 
         /// <summary>
         /// 레시피 폴더 경로
@@ -94,6 +107,7 @@ namespace VMS.VisionSetup.Services
                 if (recipe != null)
                 {
                     CurrentRecipe = recipe;
+                    CurrentRecipeFilePath = Path.GetFullPath(filePath);
                     // 레시피에 포함된 모든 DL 도구의 ONNX 모델을 Step Load 이전에 미리 백그라운드 워밍업.
                     // 사용자가 Step/Image/Run 조작을 하는 동안 엔진이 준비되므로 첫 Run 지연이 크게 줄어든다.
                     PrefetchDeepLearningModels(recipe);
@@ -217,15 +231,29 @@ namespace VMS.VisionSetup.Services
 
                 recipe.ModifiedAt = DateTime.UtcNow;
 
-                // 파일 경로가 없으면 기본 경로 사용
+                // 파일 경로가 없으면: 현재 레시피는 로드된 원본 경로로 되돌려 쓴다 —
+                // VMS 가 recipe_<GUID>.json / web_<id>.json 을 로드한 상태에서 이름 기반
+                // 새 파일로 저장하면 워처 경로 필터에 걸려 수정이 영원히 미반영 (2026-08-19 현장).
+                // 원본 경로가 없을 때만(새 레시피) 이름 기반 기본 경로.
                 if (string.IsNullOrEmpty(filePath))
                 {
-                    var safeFileName = GetSafeFileName(recipe.Name);
-                    filePath = Path.Combine(_recipeFolderPath, $"recipe_{safeFileName}.json");
+                    if (ReferenceEquals(recipe, _currentRecipe) && !string.IsNullOrEmpty(CurrentRecipeFilePath))
+                    {
+                        filePath = CurrentRecipeFilePath;
+                    }
+                    else
+                    {
+                        var safeFileName = GetSafeFileName(recipe.Name);
+                        filePath = Path.Combine(_recipeFolderPath, $"recipe_{safeFileName}.json");
+                    }
                 }
 
                 var json = JsonSerializer.Serialize(recipe, JsonOptions);
                 File.WriteAllText(filePath, json);
+
+                // 현재 레시피 저장이면 이후 저장도 같은 파일로 가도록 경로 기록
+                if (ReferenceEquals(recipe, _currentRecipe))
+                    CurrentRecipeFilePath = Path.GetFullPath(filePath);
 
                 return true;
             }
