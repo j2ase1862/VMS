@@ -63,15 +63,16 @@ namespace VMS.Core.Imaging
         // ── Web 연동 (BODA.VMS.Web) ──────────────────────────────
 
         /// <summary>
-        /// 이미지 전달 모드. Auto = Web 호스트가 자기 머신이면 SharedPath(무전송),
-        /// 아니면 Upload. SharedPath/Upload 로 수동 고정 가능.
+        /// 이미지 전달 모드. Auto = Upload 와 동일하게 항상 업로드 — 종전의 "같은 머신이면
+        /// 무전송(Web 이 로컬 경로 직접 참조)" 은 참조 측이 미구현이라 이미지가 영원히
+        /// 비었다 (2026-08-19 현장). SharedPath 는 여전히 무전송 (참조 미구현 — 선택 지양).
         /// </summary>
         public ImageDeliveryMode DeliveryMode { get; init; } = ImageDeliveryMode.Auto;
 
-        /// <summary>양품(OK) 이미지를 Web 으로 전송할지 여부 (Upload 모드에서만 의미).</summary>
+        /// <summary>양품(OK) 이미지를 Web 으로 전송할지 여부 (Auto/Upload 모드).</summary>
         public bool WebSendOk { get; init; }
 
-        /// <summary>불량(NG) 이미지를 Web 으로 전송할지 여부 (Upload 모드에서만 의미).</summary>
+        /// <summary>불량(NG) 이미지를 Web 으로 전송할지 여부 (Auto/Upload 모드).</summary>
         public bool WebSendNg { get; init; }
 
         /// <summary>Web 전송 화질 — 풀(원본) 또는 썸네일. 기본 썸네일(대역폭/저장 절감).</summary>
@@ -317,11 +318,11 @@ namespace VMS.Core.Imaging
     /// <summary>이미지 전달 모드 — Web 으로 보낼지/공유 경로로 둘지.</summary>
     public enum ImageDeliveryMode
     {
-        /// <summary>Web 호스트가 자기 머신이면 SharedPath, 아니면 Upload 로 자동 판단.</summary>
+        /// <summary>Upload 와 동일 (항상 업로드) — 기본값 권장. 과거의 "같은 머신 자동 무전송" 은 폐지.</summary>
         Auto,
-        /// <summary>같은 머신/공유 경로 — Web 이 로컬 경로를 직접 읽으므로 전송 안 함.</summary>
+        /// <summary>전송 안 함 — Web 측 로컬 경로 참조가 미구현이라 이미지가 표시되지 않음 (선택 지양).</summary>
         SharedPath,
-        /// <summary>다른 머신 — Web 으로 업로드.</summary>
+        /// <summary>Web 으로 업로드.</summary>
         Upload
     }
 
