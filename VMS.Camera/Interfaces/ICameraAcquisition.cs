@@ -9,6 +9,13 @@ namespace VMS.Camera.Interfaces
     {
         bool IsConnected { get; }
 
+        /// <summary>
+        /// 런타임 연결 끊김 통지 (케이블 분리·하트비트 타임아웃 등) — 인자는 사유 문자열.
+        /// 지원 구현체(Basler 등)만 발생시키고 IsConnected 도 함께 내린다.
+        /// 기본 구현은 이벤트 미발생 (no-op) — 끊김을 감지 못하는 SDK 는 grab 실패로만 드러난다.
+        /// </summary>
+        event EventHandler<string>? ConnectionLost { add { } remove { } }
+
         Task<bool> ConnectAsync(CameraInfo camera);
 
         Task DisconnectAsync();

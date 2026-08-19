@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using VMS.Camera.Interfaces;
@@ -46,9 +47,19 @@ namespace VMS.Tests.ViewModels
             public bool ConnectResult { get; set; }
             public AcquisitionResult AcquireResult { get; set; } = new() { Success = false };
             public int AcquireCallCount { get; private set; }
+            public int ConnectCallCount { get; private set; }
+
+            public event EventHandler<string>? ConnectionLost;
+
+            public void RaiseConnectionLost(string reason)
+            {
+                IsConnected = false;
+                ConnectionLost?.Invoke(this, reason);
+            }
 
             public Task<bool> ConnectAsync(CameraInfo camera)
             {
+                ConnectCallCount++;
                 IsConnected = ConnectResult;
                 return Task.FromResult(ConnectResult);
             }
@@ -119,6 +130,33 @@ namespace VMS.Tests.ViewModels
             var ok = await vm.GrabOnceAsync();
 
             Assert.True(ok);
+        }
+
+        [Fact]
+        public async Task ConnectionLost_DropsIsConnected_AndNextGrabReconnects()
+        {
+            // 현장 사고(2026-08-19) 회귀: 케이블이 뽑혀도 IsConnected 가 true 로 남아
+            // GrabAsync 의 재연결 분기(!IsConnected)에 영원히 진입하지 못했다.
+            var acq = new FakeAcquisition
+            {
+                IsConnected = true,
+                ConnectResult = true,
+                AcquireResult = new AcquisitionResult { Success = true }
+            };
+            var vm = MakeVm(acq);
+            vm.IsConnected = true;
+
+            acq.RaiseConnectionLost("케이블 분리");
+
+            Assert.False(vm.IsConnected);
+            Assert.Contains("연결 끊김", vm.ResultMessage);
+
+            // 케이블 재연결 후 다음 grab — 플래그가 내려가 있으므로 자동 재연결되어야 한다
+            var ok = await vm.GrabOnceAsync();
+
+            Assert.True(ok);
+            Assert.Equal(1, acq.ConnectCallCount);
+            Assert.True(vm.IsConnected);
         }
 
         [Fact]

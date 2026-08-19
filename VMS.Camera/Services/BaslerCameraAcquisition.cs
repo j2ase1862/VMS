@@ -22,6 +22,12 @@ namespace VMS.Camera.Services
 
         public bool IsConnected { get; private set; }
 
+        /// <summary>
+        /// 케이블 분리·하트비트 타임아웃 등 런타임 끊김 통지. pylon ConnectionLost 이벤트와
+        /// grab 중 디바이스 제거 감지 양쪽에서 발생한다 (2026-08-19 현장: 끊김 미감지).
+        /// </summary>
+        public event EventHandler<string>? ConnectionLost;
+
         public Task<bool> ConnectAsync(Models.CameraInfo camera)
         {
             _camera = camera;
@@ -38,6 +44,10 @@ namespace VMS.Camera.Services
         {
             try
             {
+                // 재연결 경로 — 이전 카메라 핸들이 살아 있으면(케이블 재연결 후 등)
+                // 죽은 핸들로는 절대 복구되지 않으므로 완전히 정리 후 새로 연다.
+                CleanupPylonCamera();
+
                 // Discover all available Basler cameras
                 var allCameras = CameraFinder.Enumerate();
 
@@ -79,7 +89,22 @@ namespace VMS.Camera.Services
                 targetCamera ??= allCameras[0];
 
                 _pylonCamera = new Basler.Pylon.Camera(targetCamera);
+
+                // 케이블 분리/네트워크 단절을 pylon 이 하트비트 만료로 알려준다 —
+                // 구독하지 않으면 IsConnected 가 영원히 true 로 남아 재연결 분기가 막힌다.
+                _pylonCamera.ConnectionLost += OnPylonConnectionLost;
+
                 _pylonCamera.Open();
+
+                // GigE 하트비트 타임아웃 명시 (기본값이 환경에 따라 수십 초일 수 있음) —
+                // 3초로 줄여 케이블 분리를 빠르게 감지. USB3 등 미지원 모델은 조용히 무시.
+                try
+                {
+                    if (_pylonCamera.Parameters.Contains(PLCamera.GevHeartbeatTimeout))
+                        _pylonCamera.Parameters[PLCamera.GevHeartbeatTimeout]
+                            .TrySetValue(3000, IntegerValueCorrection.Nearest);
+                }
+                catch { /* 하트비트 설정 실패는 연결 자체를 막지 않는다 */ }
 
                 // 자동 노출/게인 Off — 단발 Start/Stop grab 반복 구조에서는 AE 가 수렴하지
                 // 못해 프레임마다 밝기가 요동친다 (현장 실증 2026-08-06). 미지원 모델이면
@@ -106,14 +131,41 @@ namespace VMS.Camera.Services
             }
         }
 
+        private void OnPylonConnectionLost(object? sender, EventArgs e)
+        {
+            IsConnected = false;
+            CameraLog.Write("[Basler] 연결 끊김 감지 (pylon ConnectionLost) — 케이블/전원/네트워크 확인 필요");
+            ConnectionLost?.Invoke(this, "pylon ConnectionLost (하트비트 만료)");
+        }
+
+        /// <summary>이전 pylon 카메라 핸들 완전 정리 — 이벤트 해제 + Close + Dispose.</summary>
+        private void CleanupPylonCamera()
+        {
+            var old = _pylonCamera;
+            _pylonCamera = null;
+            if (old == null) return;
+
+            try
+            {
+                old.ConnectionLost -= OnPylonConnectionLost;
+                var grabber = old.StreamGrabber;
+                if (grabber != null && grabber.IsGrabbing)
+                    grabber.Stop();
+                if (old.IsOpen)
+                    old.Close();
+                old.Dispose();
+            }
+            catch (Exception ex)
+            {
+                CameraLog.Write($"[Basler] 이전 카메라 핸들 정리 오류 (무시): {ex.Message}");
+            }
+        }
+
         public async Task DisconnectAsync()
         {
             try
             {
-                if (_pylonCamera != null && _pylonCamera.IsOpen)
-                {
-                    _pylonCamera.Close();
-                }
+                CleanupPylonCamera();
             }
             catch (Exception ex)
             {
@@ -197,10 +249,28 @@ namespace VMS.Camera.Services
             }
             catch (Exception ex)
             {
+                // grab 예외를 문자열로만 삼키면 끊김이 상태에 반영되지 않는다 (2026-08-19 현장).
+                // 디바이스 제거가 확인되면 IsConnected 를 내리고 ConnectionLost 로 통지 —
+                // 이후 호출자의 lazy 재연결(!IsConnected 분기)이 실제로 동작하게 된다.
+                // pylon Camera.IsConnected 는 디바이스 제거/연결 상실 시 false 가 된다
+                var removed = false;
+                try { removed = !(_pylonCamera?.IsConnected ?? false); } catch { }
+
+                if (removed && IsConnected)
+                {
+                    IsConnected = false;
+                    CameraLog.Write($"[Basler] grab 중 카메라 제거 감지: {ex.Message}");
+                    ConnectionLost?.Invoke(this, "grab 중 디바이스 제거 감지");
+                }
+                else
+                {
+                    CameraLog.Write($"[Basler] 획득 오류: {ex.Message}");
+                }
+
                 return new AcquisitionResult
                 {
                     Success = false,
-                    Message = $"획득 오류: {ex.Message}"
+                    Message = removed ? $"카메라 연결 끊김: {ex.Message}" : $"획득 오류: {ex.Message}"
                 };
             }
             finally
@@ -328,17 +398,7 @@ namespace VMS.Camera.Services
                 _disposed = true;
                 try
                 {
-                    if (_pylonCamera != null)
-                    {
-                        var grabber = _pylonCamera.StreamGrabber;
-                        if (grabber != null && grabber.IsGrabbing)
-                            grabber.Stop();
-
-                        if (_pylonCamera.IsOpen)
-                            _pylonCamera.Close();
-
-                        _pylonCamera.Dispose();
-                    }
+                    CleanupPylonCamera();
                     _converter?.Dispose();
                 }
                 catch { }

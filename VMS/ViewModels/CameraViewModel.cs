@@ -349,7 +349,27 @@ namespace VMS.ViewModels
             _isSimulationFallback = creation.IsSimulationFallback;
             if (creation.IsSimulationFallback)
                 ResultMessage = $"⚠ {creation.FallbackReason}";
+            creation.Acquisition.ConnectionLost += OnAcquisitionConnectionLost;
             return creation.Acquisition;
+        }
+
+        /// <summary>
+        /// 런타임 연결 끊김(케이블 분리 등) — IsConnected 를 내려 UI 배지를 갱신하고,
+        /// 다음 Grab/Live 의 lazy 재연결 분기가 실제로 동작하게 한다 (2026-08-19 현장).
+        /// </summary>
+        private void OnAcquisitionConnectionLost(object? sender, string reason)
+        {
+            void Apply()
+            {
+                IsConnected = false;
+                ResultMessage = $"카메라 연결 끊김: {reason}";
+            }
+
+            var dispatcher = Application.Current?.Dispatcher;
+            if (dispatcher == null || dispatcher.CheckAccess())
+                Apply();
+            else
+                dispatcher.InvokeAsync(Apply);
         }
 
         private string ConnectedLabel()
@@ -359,7 +379,10 @@ namespace VMS.ViewModels
 
         /// <summary>테스트 전용 — 취득 구현체 주입 (InternalsVisibleTo).</summary>
         internal void SetAcquisitionForTest(Camera.Interfaces.ICameraAcquisition acquisition)
-            => _acquisition = acquisition;
+        {
+            _acquisition = acquisition;
+            acquisition.ConnectionLost += OnAcquisitionConnectionLost;
+        }
 
         /// <summary>
         /// 카메라 연결 초기화. 앱 시작 시 호출.
@@ -482,6 +505,12 @@ namespace VMS.ViewModels
 
                 _liveGrabTask = Task.Run(async () =>
                 {
+                    // 연속 실패 한계 — 실패 분기 없이 돌면 끊긴 카메라로 hot-spin 하며
+                    // 조용히 멈춰 있게 된다 (2026-08-19 현장). 끊김이 확인되거나
+                    // 실패가 누적되면 라이브를 스스로 중단한다.
+                    const int maxConsecutiveFailures = 5;
+                    var consecutiveFailures = 0;
+
                     while (!ct.IsCancellationRequested)
                     {
                         // 매 프레임 선택 스텝의 노출/게인 반영 — 라이브 중 슬라이더
@@ -492,6 +521,23 @@ namespace VMS.ViewModels
                             await _acquisition.ApplySettingsAsync(liveStep.Exposure, liveStep.Gain);
 
                         var result = await _acquisition.AcquireAsync();
+                        if (!result.Success)
+                        {
+                            consecutiveFailures++;
+                            if (!_acquisition.IsConnected || consecutiveFailures >= maxConsecutiveFailures)
+                            {
+                                await Application.Current.Dispatcher.InvokeAsync(() =>
+                                {
+                                    ResultMessage = $"라이브 중단: {result.Message}";
+                                    IsLiveGrabbing = false;
+                                });
+                                return;
+                            }
+                            await Task.Delay(200, CancellationToken.None);
+                            continue;
+                        }
+
+                        consecutiveFailures = 0;
                         if (result.Success)
                         {
                             FrameAcquired?.Invoke(result);
