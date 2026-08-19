@@ -1775,6 +1775,19 @@ namespace VMS.ViewModels
             ? ""
             : $"{SelectedWorkOrder.OrderNo} · {SelectedWorkOrder.ProductName} ({SelectedWorkOrder.ProgressText})";
 
+        /// <summary>칩 툴팁 — 혼합 레시피 WO 는 라인별 진행을 줄바꿈으로 병기.</summary>
+        public string SelectedWorkOrderToolTip
+        {
+            get
+            {
+                if (SelectedWorkOrder == null) return "";
+                var summary = SelectedWorkOrder.ItemsSummaryText;
+                return string.IsNullOrEmpty(summary)
+                    ? SelectedWorkOrderText
+                    : $"{SelectedWorkOrderText}\n{summary}";
+            }
+        }
+
         // B4: 헤더 WO 칩의 ProgressBar 시각화용 — 0~100 percent.
         // 완료 기준(CompletionBasis)에 따라 양품/총생산 진행 수량이 반영된다.
         public double SelectedWorkOrderProgressPercent =>
@@ -1797,6 +1810,7 @@ namespace VMS.ViewModels
         partial void OnSelectedWorkOrderChanged(VMS.Core.Models.ParameterSync.WorkOrderDto? value)
         {
             OnPropertyChanged(nameof(SelectedWorkOrderText));
+            OnPropertyChanged(nameof(SelectedWorkOrderToolTip));
             OnPropertyChanged(nameof(CanStartStop));
             OnPropertyChanged(nameof(CanToggleRollerInspection));
             OnPropertyChanged(nameof(SelectedWorkOrderProgressPercent));
@@ -1938,9 +1952,32 @@ namespace VMS.ViewModels
                 if (!string.IsNullOrEmpty(progress.CompletionBasis))
                     SelectedWorkOrder.CompletionBasis = progress.CompletionBasis;
 
+                // 혼합 레시피 WO — 라인 스냅샷 반영 (기존 RecipeName 은 목록 API 것 유지)
+                if (progress.Items.Count > 0)
+                {
+                    var names = SelectedWorkOrder.Items
+                        .Where(i => !string.IsNullOrEmpty(i.RecipeName))
+                        .ToDictionary(i => i.RecipeId, i => i.RecipeName);
+                    foreach (var item in progress.Items)
+                        if (item.RecipeName == null && names.TryGetValue(item.RecipeId, out var n))
+                            item.RecipeName = n;
+                    SelectedWorkOrder.Items = progress.Items;
+                }
+
+                // WO 에 없는 레시피로 검사됨 — 수량 미집계 (조용히 넘어가면 현장에서
+                // "왜 수량이 안 오르지" 가 된다. 시스템 로그로 원인을 표면화.)
+                if (progress.UnmatchedRecipe)
+                {
+                    LogService?.Log(
+                        $"작업지시 {progress.OrderNo} 에 등록되지 않은 레시피로 검사되어 " +
+                        "수량이 집계되지 않았습니다 — 작업지시의 레시피 라인을 확인하세요.",
+                        LogLevel.Warning, "WorkOrder");
+                }
+
                 // DTO 필드 변경은 INPC 를 발생시키지 않으므로 수동 알림.
                 // CanStartStop 은 Status 도 보므로 함께 갱신.
                 OnPropertyChanged(nameof(SelectedWorkOrderText));
+                OnPropertyChanged(nameof(SelectedWorkOrderToolTip));
                 OnPropertyChanged(nameof(CanStartStop));
                 OnPropertyChanged(nameof(CanToggleRollerInspection));
                 OnPropertyChanged(nameof(SelectedWorkOrderProgressPercent));

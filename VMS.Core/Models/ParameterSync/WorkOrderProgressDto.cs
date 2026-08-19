@@ -28,6 +28,15 @@ namespace VMS.Core.Models.ParameterSync
         /// <summary>완료 기준에 따른 진행 수량</summary>
         public int ProgressQuantity => CompletionBasis == "Pass" ? PassQuantity : ProducedQuantity;
 
+        /// <summary>
+        /// 이번 사이클의 레시피가 WO 에 없어 수량이 집계되지 않았음 (혼합 레시피 WO —
+        /// docs/design/wo-mixed-recipe-spec.md §4). VMS 는 경고 로그를 남긴다.
+        /// </summary>
+        public bool UnmatchedRecipe { get; set; }
+
+        /// <summary>레시피별 라인 스냅샷 (혼합 레시피 WO). 구버전 Web 은 미전송 → 빈 목록.</summary>
+        public List<WorkOrderItemSnapshotDto> Items { get; set; } = new();
+
         public double Progress => PlannedQuantity > 0
             ? System.Math.Round((double)ProgressQuantity / PlannedQuantity * 100, 1)
             : 0;
@@ -52,6 +61,32 @@ namespace VMS.Core.Models.ParameterSync
             OrderNo = DtoValidator.Truncate(OrderNo, 100, nameof(OrderNo), ctx) ?? "";
             Status = DtoValidator.Truncate(Status, 50, nameof(Status), ctx) ?? "";
             CompletionBasis = DtoValidator.Truncate(CompletionBasis, 20, nameof(CompletionBasis), ctx) ?? "Produced";
+            Items ??= new List<WorkOrderItemSnapshotDto>();
+            foreach (var item in Items)
+                item.Sanitize();
+            return this;
+        }
+    }
+
+    /// <summary>혼합 레시피 WO 의 레시피별 라인 스냅샷 (진행률 응답/브로드캐스트 동봉).</summary>
+    public class WorkOrderItemSnapshotDto
+    {
+        public int RecipeId { get; set; }
+        public string? RecipeName { get; set; }
+        public int PlannedQty { get; set; }
+        public int ProducedQty { get; set; }
+        public int PassQty { get; set; }
+        public int NgQty { get; set; }
+
+        public WorkOrderItemSnapshotDto Sanitize()
+        {
+            const string ctx = nameof(WorkOrderItemSnapshotDto);
+            RecipeId = DtoValidator.ClampInt(RecipeId, 0, 999_999_999, nameof(RecipeId), ctx);
+            PlannedQty = DtoValidator.ClampInt(PlannedQty, 0, 1_000_000, nameof(PlannedQty), ctx);
+            ProducedQty = DtoValidator.ClampInt(ProducedQty, 0, 1_000_000, nameof(ProducedQty), ctx);
+            PassQty = DtoValidator.ClampInt(PassQty, 0, 1_000_000, nameof(PassQty), ctx);
+            NgQty = DtoValidator.ClampInt(NgQty, 0, 1_000_000, nameof(NgQty), ctx);
+            RecipeName = DtoValidator.Truncate(RecipeName, 200, nameof(RecipeName), ctx);
             return this;
         }
     }

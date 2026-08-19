@@ -58,6 +58,20 @@ namespace VMS.Core.Models.ParameterSync
             ? $"양품 {PassQuantity} / {PlannedQuantity}"
             : $"{ProducedQuantity} / {PlannedQuantity}";
 
+        /// <summary>레시피별 라인 (혼합 레시피 WO). 구버전 Web 은 미전송 → 빈 목록.</summary>
+        public List<WorkOrderItemSnapshotDto> Items { get; set; } = new();
+
+        /// <summary>
+        /// 라인별 진행 요약 (칩 툴팁/사이드 패널용) — 라인이 2개 이상일 때만 의미.
+        /// 예: "R-A: 30/60 (NG 2)\nR-B: 10/40"
+        /// </summary>
+        public string ItemsSummaryText => Items.Count <= 1
+            ? string.Empty
+            : string.Join("\n", Items.Select(i =>
+                $"{i.RecipeName ?? $"Recipe#{i.RecipeId}"}: " +
+                (CompletionBasis == "Pass" ? i.PassQty : i.ProducedQty) + $"/{i.PlannedQty}" +
+                (i.NgQty > 0 ? $" (NG {i.NgQty})" : "")));
+
         /// <summary>
         /// 외부 API 응답 sanitization — Phase 3c.
         /// WO 드롭다운 / 헤더 칩에 직접 바인딩되므로 음수 / 오버플로우 / 과길이 텍스트를 정상화.
@@ -82,6 +96,9 @@ namespace VMS.Core.Models.ParameterSync
             RecipeName = DtoValidator.Truncate(RecipeName, 200, nameof(RecipeName), ctx);
             Status = DtoValidator.Truncate(Status, 50, nameof(Status), ctx) ?? "Planned";
             CompletionBasis = DtoValidator.Truncate(CompletionBasis, 20, nameof(CompletionBasis), ctx) ?? "Produced";
+            Items ??= new List<WorkOrderItemSnapshotDto>();
+            foreach (var item in Items)
+                item.Sanitize();
             Note = DtoValidator.Truncate(Note, 500, nameof(Note), ctx);
             return this;
         }
