@@ -267,9 +267,10 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
                     // 60초 주기를 기다리지 않고 바로 콤보에 나타나도록
                     await SyncService.SyncAsync();
 
-                var items = SyncService.GetAll();
-                if (items.Count > 0)
-                    ApplyParamCodes(items);
+                // 빈 목록도 그대로 반영 — 가드로 걸러내면 이전 레시피의 코드가 콤보에
+                // 남아 "다른 레시피의 파라미터"를 보여주는 혼동이 생긴다 (2026-08-20).
+                // 캐시가 비면 콤보는 (None)만 표시하는 것이 진실한 상태.
+                ApplyParamCodes(SyncService.GetAll());
             }
             catch (Exception ex)
             {
