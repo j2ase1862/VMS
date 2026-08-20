@@ -245,12 +245,8 @@ namespace VMS.VisionSetup.ViewModels
             var recipe = _recipeService.LoadRecipe(SelectedRecipe.FilePath);
             if (recipe != null)
             {
-                // 로드한 레시피의 Web 파라미터 캐시로 전환 — ParamCode 콤보가
-                // "첫 번째 레시피 고정"이 아니라 이 레시피의 코드를 표시하도록.
-                // (RecipeLoaded 이벤트 → WebParamCacheUpdatedMessage 로 콤보 자동 갱신)
-                if (recipe.WebRecipeId is int webId && webId > 0 && _parameterSyncService != null)
-                    _ = _parameterSyncService.LoadRecipeAsync(webId);
-
+                // Web 파라미터 캐시 전환은 RecipeService.CurrentRecipeChanged 구독
+                // (App.xaml.cs)이 모든 로드 경로에서 일괄 수행한다.
                 RecipeLoaded?.Invoke(this, recipe);
             }
             else
