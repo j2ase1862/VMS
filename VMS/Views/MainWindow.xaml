@@ -345,12 +345,15 @@
                                          VerticalContentAlignment="Center" Padding="4,0"
                                          ToolTip="WorkOrder ID (정수)"/>
                                 <TextBlock Text="Lot" Foreground="{StaticResource Brush.Text.Secondary}" FontSize="10" VerticalAlignment="Center" Margin="6,0,3,0"/>
-                                <TextBox Text="{Binding LotIdText, UpdateSourceTrigger=PropertyChanged}"
-                                         Width="50" Height="22" FontSize="11"
-                                         Background="{StaticResource Brush.Surface.Deep}" Foreground="White" BorderBrush="#555"
-                                         VerticalAlignment="Center"
-                                         VerticalContentAlignment="Center" Padding="4,0"
-                                         ToolTip="Lot ID (정수)"/>
+                                <!-- 멀티 Lot 병행 — WO 의 Open Lot 목록에서 선택 (발행/마감 시 실시간 갱신).
+                                     1개면 자동 선택, 여러 개면 작업자가 선택. 선택 → LotIdText → 업로드 LotId. -->
+                                <ComboBox ItemsSource="{Binding OpenLots}"
+                                          SelectedItem="{Binding SelectedOpenLot}"
+                                          DisplayMemberPath="DisplayText"
+                                          Width="150" Height="22" FontSize="11"
+                                          Padding="6,2"
+                                          VerticalAlignment="Center"
+                                          ToolTip="Open Lot 선택 — Web에서 발행된 Lot 목록 (여러 개 병행 시 직접 선택)"/>
                             </StackPanel>
                             <TextBlock Text="S/N" Foreground="{StaticResource Brush.Text.Secondary}" FontSize="10" VerticalAlignment="Center" Margin="6,0,3,0"/>
                             <TextBox Text="{Binding SerialNumberText, UpdateSourceTrigger=PropertyChanged}"

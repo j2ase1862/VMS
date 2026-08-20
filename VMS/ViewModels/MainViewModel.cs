@@ -458,6 +458,18 @@ namespace VMS.ViewModels
             {
                 _vmsHubClient.WorkOrderUpdated += OnWorkOrderProgressed;
                 _vmsHubClient.WorkOrderCompleted += OnWorkOrderCompletedFromServer;
+
+                // 멀티 Lot: Web 에서 Lot 발행/마감 시 선택 중인 WO 면 콤보 즉시 갱신
+                _vmsHubClient.LotIssued += woId =>
+                {
+                    if (SelectedWorkOrder?.Id == woId)
+                        _ = RefreshOpenLotsAsync(woId, "Lot 발행 수신");
+                };
+                _vmsHubClient.LotClosed += woId =>
+                {
+                    if (SelectedWorkOrder?.Id == woId)
+                        _ = RefreshOpenLotsAsync(woId, "Lot 마감 수신");
+                };
             }
 
             // Plan §5.3 V5 — 예측 폴링 결과를 UI 스레드로 marshall
@@ -2030,8 +2042,9 @@ namespace VMS.ViewModels
                 // WO 의 RecipeName 으로 레시피 자동 로드 (사이드 패널 로그인 우회)
                 _ = LoadRecipeFromWorkOrderAsync(value);
 
-                // B1: WO 의 활성 Lot 자동 채움
-                _ = LoadActiveLotForWorkOrderAsync(value.Id);
+                // 멀티 Lot: WO 의 Open Lot 목록 조회 → 콤보 채움 + 선택 정책 + 폴링 시작
+                _ = RefreshOpenLotsAsync(value.Id, "WO 선택");
+                StartLotPolling();
 
                 AuditLogger.Instance.Log(
                     AuditCategory.System, "WorkOrderSelected", AuditOutcome.Success,
@@ -2042,6 +2055,9 @@ namespace VMS.ViewModels
             else
             {
                 LotIdText = "";
+                SelectedOpenLot = null;
+                OpenLots.Clear();
+                StopLotPolling();
                 AuditLogger.Instance.Log(
                     AuditCategory.System, "WorkOrderCleared", AuditOutcome.Success,
                     userName: _userService?.CurrentUser?.Username,
@@ -2049,34 +2065,104 @@ namespace VMS.ViewModels
             }
         }
 
-        /// <summary>B1 — Web 에서 WO 의 활성(Open) Lot 1개를 가져와 LotIdText 채움. 없으면 비워둠.</summary>
-        private async Task LoadActiveLotForWorkOrderAsync(int workOrderId)
+        // ── 멀티 Lot 병행 운용 — Open Lot 목록 콤보 ──
+
+        /// <summary>선택된 WO 의 Open Lot 목록 — 헤더 Lot 콤보 ItemsSource.</summary>
+        public System.Collections.ObjectModel.ObservableCollection<LotComboItem> OpenLots { get; } = new();
+
+        [ObservableProperty]
+        private LotComboItem? _selectedOpenLot;
+
+        partial void OnSelectedOpenLotChanged(LotComboItem? value)
+        {
+            // 콤보 선택 → 업로드 LotId 경로(LotIdText → syncService.LotId)로 전파.
+            // null 은 목록 재구성 노이즈일 수 있으므로 지우지 않음 (해제는 목록 갱신 로직이 수행).
+            if (value != null)
+                LotIdText = value.Id.ToString();
+        }
+
+        /// <summary>
+        /// 선택 유지/자동 선택 정책: 현재 Lot 이 목록에 남아 있으면 유지,
+        /// 없고 목록이 1개면 자동 선택, 여러 개면 작업자 선택 대기(null).
+        /// </summary>
+        internal static int? ResolveLotSelection(int? currentLotId, IReadOnlyList<int> openLotIds)
+        {
+            if (currentLotId is int c && openLotIds.Contains(c)) return c;
+            return openLotIds.Count == 1 ? openLotIds[0] : null;
+        }
+
+        /// <summary>
+        /// WO 의 Open Lot 목록을 Web 에서 가져와 콤보 갱신 + 선택 정책 적용.
+        /// 호출: WO 선택 시 / LotIssued·LotClosed 푸시 수신 시 / 60초 폴링(안전망).
+        /// 통신 실패 시 기존 목록·선택 유지 (best-effort).
+        /// </summary>
+        private async Task RefreshOpenLotsAsync(int workOrderId, string reason)
         {
             if (_lotClient == null) return;
             try
             {
-                var lot = await _lotClient.GetActiveByWorkOrderAsync(workOrderId);
+                var lots = await _lotClient.GetOpenByWorkOrderAsync(workOrderId);
+                if (lots == null) return; // 통신 실패 — 기존 상태 유지
+
                 await Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     // 사용자가 그 사이 다른 WO 로 바꿨으면 무시
                     if (SelectedWorkOrder == null || SelectedWorkOrder.Id != workOrderId) return;
 
-                    if (lot != null)
+                    int? currentId = int.TryParse(LotIdText, out var cur) ? cur : (int?)null;
+
+                    OpenLots.Clear();
+                    foreach (var lot in lots)
+                        OpenLots.Add(new LotComboItem { Id = lot.Id, LotNumber = lot.LotNumber });
+
+                    var resolved = ResolveLotSelection(currentId, lots.Select(l => l.Id).ToList());
+                    if (resolved is int keep)
                     {
-                        LotIdText = lot.Id.ToString();
-                        LogService?.Log($"WO {SelectedWorkOrder.OrderNo} → 활성 Lot '{lot.LotNumber}' 자동 채움", LogLevel.Info, "WorkOrder");
+                        var item = OpenLots.First(l => l.Id == keep);
+                        bool changed = currentId != keep;
+                        SelectedOpenLot = item;
+                        LotIdText = keep.ToString(); // 유지 케이스에도 명시 재설정 (콤보 재구성 노이즈 방지)
+                        if (changed)
+                            LogService?.Log($"WO {SelectedWorkOrder.OrderNo} → Lot '{item.LotNumber}' 자동 선택 ({reason})", LogLevel.Info, "WorkOrder");
                     }
                     else
                     {
-                        LogService?.Log($"WO {SelectedWorkOrder.OrderNo} 활성 Lot 없음 — LotIdText 비움", LogLevel.Info, "WorkOrder");
+                        SelectedOpenLot = null;
+                        LotIdText = "";
+                        if (lots.Count == 0)
+                            LogService?.Log($"WO {SelectedWorkOrder.OrderNo} Open Lot 없음 — Lot 비움 ({reason})", LogLevel.Info, "WorkOrder");
+                        else
+                            LogService?.Log($"WO {SelectedWorkOrder.OrderNo} Open Lot {lots.Count}개 — 헤더 Lot 콤보에서 선택하세요 ({reason})", LogLevel.Warning, "WorkOrder");
                     }
                 });
             }
             catch (Exception ex)
             {
-                LogService?.Log($"활성 Lot 조회 실패: {ex.Message}", LogLevel.Warning, "WorkOrder");
+                LogService?.Log($"Open Lot 목록 조회 실패: {ex.Message}", LogLevel.Warning, "WorkOrder");
             }
         }
+
+        // Lot 폴링 안전망 — SignalR 미연결 대비, WO 선택 중에만 60초 주기.
+        private System.Windows.Threading.DispatcherTimer? _lotPollTimer;
+
+        private void StartLotPolling()
+        {
+            if (_lotPollTimer == null)
+            {
+                _lotPollTimer = new System.Windows.Threading.DispatcherTimer
+                {
+                    Interval = TimeSpan.FromSeconds(60)
+                };
+                _lotPollTimer.Tick += (_, _) =>
+                {
+                    if (SelectedWorkOrder != null)
+                        _ = RefreshOpenLotsAsync(SelectedWorkOrder.Id, "주기 동기화");
+                };
+            }
+            _lotPollTimer.Start();
+        }
+
+        private void StopLotPolling() => _lotPollTimer?.Stop();
 
         /// <summary>
         /// Web 파라미터 캐시(CurrentRecipeId)를 현재 로드된 레시피와 이름 매칭으로 일치시킨다.

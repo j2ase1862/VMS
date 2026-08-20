@@ -49,6 +49,28 @@ namespace VMS.Core.Services
             }
         }
 
+        /// <summary>WO 의 Open Lot 전체 목록 (발행 순서). 통신 실패 시 null — 호출 측이 기존 목록 유지 판단.</summary>
+        public async Task<System.Collections.Generic.List<LotDto>?> GetOpenByWorkOrderAsync(int workOrderId)
+        {
+            try
+            {
+                var url = $"{_webServerUrl}/api/lots/open-by-workorder/{workOrderId}";
+                var response = await _httpClient.GetAsync(url);
+                if (!response.IsSuccessStatusCode) return null;
+                var body = await response.Content.ReadAsStringAsync();
+                if (string.IsNullOrWhiteSpace(body)) return null;
+                var list = JsonSerializer.Deserialize<System.Collections.Generic.List<LotDto>>(body, JsonOptions);
+                if (list == null) return null;
+                foreach (var lot in list) lot.Sanitize();
+                return list;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[LotClient] GetOpenByWorkOrderAsync failed: {ex.Message}");
+                return null;
+            }
+        }
+
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
             PropertyNameCaseInsensitive = true

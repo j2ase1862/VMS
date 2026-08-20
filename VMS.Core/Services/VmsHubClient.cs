@@ -34,6 +34,12 @@ namespace VMS.Core.Services
         /// </summary>
         public event Action<int>? RecipeParametersChanged;
 
+        /// <summary>WO 에 새 Lot 발행됨 (workOrderId) — 수신 측은 선택 중인 WO 면 Open Lot 목록 갱신.</summary>
+        public event Action<int>? LotIssued;
+
+        /// <summary>Lot 마감됨 (workOrderId) — 수신 측은 목록 갱신 + 선택 중이던 Lot 이면 재선택.</summary>
+        public event Action<int>? LotClosed;
+
         /// <summary>연결 상태 변경 이벤트 (true=Connected).</summary>
         public event Action<bool>? ConnectionChanged;
 
@@ -98,6 +104,18 @@ namespace VMS.Core.Services
                 if (recipeId is int id) RecipeParametersChanged?.Invoke(id);
             });
 
+            _connection.On<JsonElement>("LotIssued", elem =>
+            {
+                var woId = TryParseWorkOrderId(elem);
+                if (woId is int id) LotIssued?.Invoke(id);
+            });
+
+            _connection.On<JsonElement>("LotClosed", elem =>
+            {
+                var woId = TryParseWorkOrderId(elem);
+                if (woId is int id) LotClosed?.Invoke(id);
+            });
+
             _connection.Reconnected += _ =>
             {
                 ConnectionChanged?.Invoke(true);
@@ -126,6 +144,17 @@ namespace VMS.Core.Services
                 // 실패해도 _connection 은 살아있어서 다음 호출에서 재시도 가능. 운영 정책상
                 // 단순화를 위해 별도 backoff 는 안 둠 — 사용자 액션 (재로그인 등) 시 재시도.
             }
+        }
+
+        /// <summary>{"workOrderId": N, ...} 페이로드에서 workOrderId 추출 (camelCase/PascalCase 허용).</summary>
+        internal static int? TryParseWorkOrderId(JsonElement elem)
+        {
+            if (elem.ValueKind != JsonValueKind.Object) return null;
+            if (elem.TryGetProperty("workOrderId", out var v)
+                && v.ValueKind == JsonValueKind.Number && v.TryGetInt32(out var id)) return id;
+            if (elem.TryGetProperty("WorkOrderId", out var v2)
+                && v2.ValueKind == JsonValueKind.Number && v2.TryGetInt32(out var id2)) return id2;
+            return null;
         }
 
         /// <summary>{"recipeId": N} 페이로드에서 recipeId 추출 (camelCase/PascalCase 허용).</summary>

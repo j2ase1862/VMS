@@ -29,5 +29,24 @@ namespace VMS.Core.Tests.Services
         {
             Assert.Null(VmsHubClient.TryParseRecipeId(Parse(json)));
         }
+
+        // LotIssued/LotClosed 페이로드 — {"workOrderId":N, "lotId":N, "lotNumber":"..."}
+
+        [Theory]
+        [InlineData("{\"workOrderId\": 3, \"lotId\": 9, \"lotNumber\": \"20260820-WO-001-002\"}", 3)]
+        [InlineData("{\"WorkOrderId\": 15}", 15)]
+        public void TryParseWorkOrderId_ValidPayload_ReturnsId(string json, int expected)
+        {
+            Assert.Equal(expected, VmsHubClient.TryParseWorkOrderId(Parse(json)));
+        }
+
+        [Theory]
+        [InlineData("{}")]
+        [InlineData("{\"workOrderId\": \"abc\"}")]
+        [InlineData("[3]")]
+        public void TryParseWorkOrderId_InvalidPayload_ReturnsNull(string json)
+        {
+            Assert.Null(VmsHubClient.TryParseWorkOrderId(Parse(json)));
+        }
     }
 }
