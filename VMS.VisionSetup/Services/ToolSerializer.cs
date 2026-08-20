@@ -132,6 +132,12 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["MaxScale"] = match.MaxScale;
                     config.Parameters["ScaleStep"] = match.ScaleStep;
                     config.Parameters["ScoreThreshold"] = match.ScoreThreshold;
+                    config.Parameters["UseAngleJudgment"] = match.UseAngleJudgment;
+                    config.Parameters["AngleLowerLimit"] = match.AngleLowerLimit;
+                    config.Parameters["AngleUpperLimit"] = match.AngleUpperLimit;
+                    config.Parameters["UseScaleJudgment"] = match.UseScaleJudgment;
+                    config.Parameters["ScaleLowerLimit"] = match.ScaleLowerLimit;
+                    config.Parameters["ScaleUpperLimit"] = match.ScaleUpperLimit;
                     config.Parameters["NumLevels"] = match.NumLevels;
                     config.Parameters["Greediness"] = match.Greediness;
                     config.Parameters["MaxModelPoints"] = match.MaxModelPoints;
@@ -439,6 +445,12 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["MaxScale"] = shape.MaxScale;
                     config.Parameters["ScaleStep"] = shape.ScaleStep;
                     config.Parameters["ScoreThreshold"] = shape.ScoreThreshold;
+                    config.Parameters["UseAngleJudgment"] = shape.UseAngleJudgment;
+                    config.Parameters["AngleLowerLimit"] = shape.AngleLowerLimit;
+                    config.Parameters["AngleUpperLimit"] = shape.AngleUpperLimit;
+                    config.Parameters["UseScaleJudgment"] = shape.UseScaleJudgment;
+                    config.Parameters["ScaleLowerLimit"] = shape.ScaleLowerLimit;
+                    config.Parameters["ScaleUpperLimit"] = shape.ScaleUpperLimit;
                     config.Parameters["NumPyramidLevels"] = shape.NumPyramidLevels;
                     config.Parameters["TopCandidates"] = shape.TopCandidates;
                     config.Parameters["MaxInstances"] = shape.MaxInstances;
@@ -909,6 +921,18 @@ namespace VMS.VisionSetup.Services
                 tool.ScaleStep = GetDouble(scaleStep);
             if (p.TryGetValue("ScoreThreshold", out var scoreThreshold))
                 tool.ScoreThreshold = GetDouble(scoreThreshold);
+            if (p.TryGetValue("UseAngleJudgment", out var uaj))
+                tool.UseAngleJudgment = GetBool(uaj);
+            if (p.TryGetValue("AngleLowerLimit", out var all2))
+                tool.AngleLowerLimit = GetDouble(all2);
+            if (p.TryGetValue("AngleUpperLimit", out var aul))
+                tool.AngleUpperLimit = GetDouble(aul);
+            if (p.TryGetValue("UseScaleJudgment", out var usj))
+                tool.UseScaleJudgment = GetBool(usj);
+            if (p.TryGetValue("ScaleLowerLimit", out var sll))
+                tool.ScaleLowerLimit = GetDouble(sll);
+            if (p.TryGetValue("ScaleUpperLimit", out var sul))
+                tool.ScaleUpperLimit = GetDouble(sul);
             if (p.TryGetValue("NumLevels", out var numLevels))
                 tool.NumLevels = GetInt(numLevels);
             if (p.TryGetValue("Greediness", out var greediness))
@@ -1595,6 +1619,12 @@ namespace VMS.VisionSetup.Services
             if (p.TryGetValue("MaxScale", out var mxs)) tool.MaxScale = GetDouble(mxs);
             if (p.TryGetValue("ScaleStep", out var sstep)) tool.ScaleStep = GetDouble(sstep);
             if (p.TryGetValue("ScoreThreshold", out var st)) tool.ScoreThreshold = GetDouble(st);
+            if (p.TryGetValue("UseAngleJudgment", out var uaj)) tool.UseAngleJudgment = GetBool(uaj);
+            if (p.TryGetValue("AngleLowerLimit", out var all2)) tool.AngleLowerLimit = GetDouble(all2);
+            if (p.TryGetValue("AngleUpperLimit", out var aul)) tool.AngleUpperLimit = GetDouble(aul);
+            if (p.TryGetValue("UseScaleJudgment", out var usj)) tool.UseScaleJudgment = GetBool(usj);
+            if (p.TryGetValue("ScaleLowerLimit", out var sll)) tool.ScaleLowerLimit = GetDouble(sll);
+            if (p.TryGetValue("ScaleUpperLimit", out var sul)) tool.ScaleUpperLimit = GetDouble(sul);
             if (p.TryGetValue("NumPyramidLevels", out var npl)) tool.NumPyramidLevels = GetInt(npl);
             if (p.TryGetValue("TopCandidates", out var tc)) tool.TopCandidates = GetInt(tc);
             if (p.TryGetValue("MaxInstances", out var mi)) tool.MaxInstances = GetInt(mi);

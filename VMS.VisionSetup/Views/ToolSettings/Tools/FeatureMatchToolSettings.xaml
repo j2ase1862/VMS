@@ -178,6 +178,57 @@
             </StackPanel>
         </Expander>
 
+        <!-- Pose Judgment — 찾은 매칭의 각도/스케일 허용 범위 판정 (Web 파라미터 연동 가능) -->
+        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Pose Judgment" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:CheckBoxParameter Label="Use Angle Judgment"
+                    IsChecked="{Binding UseAngleJudgment}"
+                    ToolType="FeatureMatchTool" ParameterName="UseAngleJudgment"/>
+                <StackPanel Visibility="{Binding UseAngleJudgment, Converter={StaticResource BoolToVis}}">
+                    <controls:SliderParameter Label="Angle Lower Limit"
+                        Value="{Binding AngleLowerLimit}" Minimum="-180" Maximum="180"
+                        TickFrequency="0.5" ValueFormat="F1"
+                        ToolType="FeatureMatchTool" ParameterName="AngleLowerLimit"/>
+                    <controls:ParamCodeLink
+                        AvailableParamCodes="{Binding AvailableParamCodes}"
+                        SelectedItem="{Binding SelectedAngleLowerLimitCode}"
+                        LocalValue="{Binding AngleLowerLimit}"/>
+                    <controls:SliderParameter Label="Angle Upper Limit"
+                        Value="{Binding AngleUpperLimit}" Minimum="-180" Maximum="180"
+                        TickFrequency="0.5" ValueFormat="F1"
+                        ToolType="FeatureMatchTool" ParameterName="AngleUpperLimit"/>
+                    <controls:ParamCodeLink
+                        AvailableParamCodes="{Binding AvailableParamCodes}"
+                        SelectedItem="{Binding SelectedAngleUpperLimitCode}"
+                        LocalValue="{Binding AngleUpperLimit}"/>
+                </StackPanel>
+                <controls:CheckBoxParameter Label="Use Scale Judgment"
+                    IsChecked="{Binding UseScaleJudgment}"
+                    ToolType="FeatureMatchTool" ParameterName="UseScaleJudgment"/>
+                <StackPanel Visibility="{Binding UseScaleJudgment, Converter={StaticResource BoolToVis}}">
+                    <controls:SliderParameter Label="Scale Lower Limit"
+                        Value="{Binding ScaleLowerLimit}" Minimum="0.1" Maximum="2"
+                        TickFrequency="0.01" ValueFormat="F2"
+                        ToolType="FeatureMatchTool" ParameterName="ScaleLowerLimit"/>
+                    <controls:ParamCodeLink
+                        AvailableParamCodes="{Binding AvailableParamCodes}"
+                        SelectedItem="{Binding SelectedScaleLowerLimitCode}"
+                        LocalValue="{Binding ScaleLowerLimit}"/>
+                    <controls:SliderParameter Label="Scale Upper Limit"
+                        Value="{Binding ScaleUpperLimit}" Minimum="0.1" Maximum="2"
+                        TickFrequency="0.01" ValueFormat="F2"
+                        ToolType="FeatureMatchTool" ParameterName="ScaleUpperLimit"/>
+                    <controls:ParamCodeLink
+                        AvailableParamCodes="{Binding AvailableParamCodes}"
+                        SelectedItem="{Binding SelectedScaleUpperLimitCode}"
+                        LocalValue="{Binding ScaleUpperLimit}"/>
+                </StackPanel>
+            </StackPanel>
+        </Expander>
+
         <!-- Expert: Search Range — 회전/스케일 검색 범위. 통합 시점 결정. -->
         <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}"
                   Visibility="{Binding IsExpertMode, Converter={StaticResource BoolToVis}}">
