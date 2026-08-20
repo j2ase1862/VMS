@@ -773,6 +773,9 @@ namespace VMS.ViewModels
                 // Propagate recipe to all cameras
                 foreach (var cam in Cameras)
                     cam.SetRecipe(recipe);
+
+                // Web 파라미터 캐시를 이 레시피로 전환 (백그라운드 best-effort)
+                _ = EnsureWebParamCacheAsync();
             }
             else
             {
@@ -1046,6 +1049,9 @@ namespace VMS.ViewModels
 
             SystemStatus = $"레시피 '{recipe.Name}' 외부 변경 반영 완료 (VisionSetup 저장 감지)";
             LogService?.Log(SystemStatus, LogLevel.Success, "Recipe");
+
+            // Web 파라미터 캐시 일치 보장 (레시피 이름이 바뀐 경우 대비, 백그라운드)
+            _ = EnsureWebParamCacheAsync();
         }
 
         /// <summary>Web 레시피 동기화 요약 — 새로고침 버튼이 상태 표시에 사용.</summary>
@@ -1555,6 +1561,19 @@ namespace VMS.ViewModels
                 await StopLiveAsync();
             }
 
+            // 운전 시작 전 최종 보장 — Web 파라미터 캐시가 현재 레시피와 일치해야
+            // 사이클 업로드(WO 수량·안돈·이력·NG 이미지)가 정상 귀속된다.
+            await EnsureWebParamCacheAsync();
+            bool webUnlinkedWithWo = SelectedWorkOrder != null && _parameterSyncService != null &&
+                _parameterSyncService.CurrentRecipeId <= 0;
+            if (webUnlinkedWithWo)
+            {
+                LogService?.Log(
+                    $"Web 미연동 상태로 운전 시작 — 작업지시 {SelectedWorkOrder!.OrderNo} 수량이 집계되지 않습니다. " +
+                    "레시피가 Web에 등록되어 있는지 확인하세요.",
+                    LogLevel.Warning, "WorkOrder");
+            }
+
             IsRunning = true;
             SystemStatus = "Starting...";
             LogService?.Log("Inspection starting...", LogLevel.Info, "System");
@@ -1566,7 +1585,9 @@ namespace VMS.ViewModels
                 {
                     // PLC 연결/모니터링 등 I/O를 백그라운드 스레드에서 실행하여 UI 블로킹 방지
                     await Task.Run(() => _autoProcessService.StartAsync());
-                    SystemStatus = "AutoProcess Running";
+                    SystemStatus = webUnlinkedWithWo
+                        ? "Running — 경고: Web 미연동 (작업지시 수량 미집계)"
+                        : "AutoProcess Running";
                     LogService?.Log("Inspection started", LogLevel.Success, "System");
                 }
                 catch (Exception ex)
@@ -2058,6 +2079,44 @@ namespace VMS.ViewModels
         }
 
         /// <summary>
+        /// Web 파라미터 캐시(CurrentRecipeId)를 현재 로드된 레시피와 이름 매칭으로 일치시킨다.
+        /// 레시피 로드·WO 선택·운전 시작 등 어느 경로로 와도 업로드의 RecipeId 가 실제 운전
+        /// 레시피를 가리키도록 보장 — 불일치(0 포함) 상태로 운전하면 사이클 업로드가 조용히
+        /// 스킵/미귀속되어 WO 수량·안돈·이력·NG 이미지가 전부 침묵한다 (2026-08-20 실증).
+        /// </summary>
+        private async Task EnsureWebParamCacheAsync()
+        {
+            if (_parameterSyncService == null || CurrentRecipe == null) return;
+            try
+            {
+                if (_parameterSyncService.Recipes.Count == 0)
+                    await _parameterSyncService.SyncRecipesAsync();
+
+                var web = _parameterSyncService.Recipes.FirstOrDefault(r =>
+                    string.Equals(r.Name, CurrentRecipe.Name, StringComparison.OrdinalIgnoreCase));
+                if (web == null)
+                {
+                    LogService?.Log(
+                        $"레시피 '{CurrentRecipe.Name}' 이 Web 레시피 목록에 없습니다 — 파라미터 연동/작업지시 집계가 동작하지 않습니다.",
+                        LogLevel.Warning, "ParameterSync");
+                    return;
+                }
+
+                if (_parameterSyncService.CurrentRecipeId != web.Id)
+                {
+                    await _parameterSyncService.LoadRecipeAsync(web.Id);
+                    LogService?.Log(
+                        $"Web 파라미터 캐시 전환: '{CurrentRecipe.Name}' (Web ID {web.Id}, 코드 {_parameterSyncService.CachedItemCount}개)",
+                        LogLevel.Info, "ParameterSync");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService?.Log($"Web 파라미터 캐시 전환 실패: {ex.Message}", LogLevel.Warning, "ParameterSync");
+            }
+        }
+
+        /// <summary>
         /// 선택된 WO 의 RecipeName 으로 로컬 레시피를 찾아 자동 로드.
         /// 로컬에 없으면 Web 레시피를 동기화 후 재시도. Web 파라미터도 매칭되면 함께 로드.
         /// 사이드 패널의 별도 사용자 로그인을 거치지 않는다 — Operator 로그인 만으로 충분.
@@ -2086,7 +2145,14 @@ namespace VMS.ViewModels
                     return;
                 }
 
-                if (CurrentRecipe?.Id == info.Id) return; // 이미 로드됨 — 스킵
+                if (CurrentRecipe?.Id == info.Id)
+                {
+                    // 레시피는 이미 로드됨 — 그래도 파라미터 캐시는 반드시 일치 보장.
+                    // 종전에는 여기서 그냥 반환해 캐시 전환까지 건너뛰었고, 그 결과
+                    // CurrentRecipeId=0 인 채 운전 → 사이클 업로드 전량 스킵 (2026-08-20 실증).
+                    await EnsureWebParamCacheAsync();
+                    return;
+                }
 
                 var recipe = _recipeService.LoadRecipe(info.FilePath);
                 if (recipe == null)
@@ -2104,14 +2170,8 @@ namespace VMS.ViewModels
                 SystemStatus = $"WO {wo.OrderNo} → Recipe '{recipe.Name}' loaded";
                 LogService?.Log($"WO {wo.OrderNo} auto-loaded recipe '{recipe.Name}'", LogLevel.Success, "WorkOrder");
 
-                // Web 파라미터 동기화 — 이름 매칭
-                if (_parameterSyncService != null)
-                {
-                    var webRecipe = _parameterSyncService.Recipes
-                        .FirstOrDefault(r => string.Equals(r.Name, wo.RecipeName, StringComparison.OrdinalIgnoreCase));
-                    if (webRecipe != null)
-                        await _parameterSyncService.LoadRecipeAsync(webRecipe.Id);
-                }
+                // Web 파라미터 동기화 — 이름 매칭 (목록 미동기화·불일치 로그 포함 공통 경로)
+                await EnsureWebParamCacheAsync();
             }
             catch (Exception ex)
             {
