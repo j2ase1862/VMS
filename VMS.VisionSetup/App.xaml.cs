@@ -97,14 +97,71 @@ namespace VMS.VisionSetup
                 // "지금 편집 중인 레시피"의 코드를 보여주도록. 종전에는 레시피 관리
                 // 다이얼로그의 로드 버튼 경로만 전환해서, 그 외 경로는 시작 시 로드된
                 // 첫 번째 Web 레시피에 고정되는 빈틈이 있었다 (2026-08-20 실증 보고).
+                //
+                // + 진단 가시화 (2026-08-20 실증 후속): 전환 결과가 전부 Debug 로그라
+                // 현장에서 "콤보에 코드가 안 보이는" 원인(미연결/로드 실패/빈 레시피)을
+                // 구분할 수 없었다 — 상태바에 결과를 표기한다. WebRecipeId 미기록
+                // 파일(웹 등록 전 생성·이름 연결 동기화 완료 전 로드)은 이름으로 폴백.
                 var syncForRecipeSwitch = parameterSyncService;
+
+                void SetSyncStatus(string message)
+                {
+                    Current?.Dispatcher.BeginInvoke(() =>
+                    {
+                        if (_mainViewModel != null) _mainViewModel.StatusMessage = message;
+                    });
+                }
+
+                async Task SwitchParamCacheAsync(Models.Recipe recipe)
+                {
+                    try
+                    {
+                        var webId = recipe.WebRecipeId;
+                        if (webId is not > 0)
+                        {
+                            if (syncForRecipeSwitch.Recipes.Count == 0)
+                                await syncForRecipeSwitch.SyncRecipesAsync();
+                            webId = syncForRecipeSwitch.Recipes.FirstOrDefault(r =>
+                                string.Equals(r.Name, recipe.Name, StringComparison.OrdinalIgnoreCase))?.Id;
+                        }
+
+                        if (webId is not int id || id <= 0)
+                        {
+                            SetSyncStatus(
+                                $"'{recipe.Name}' — Web 레시피 미연결: ParamCode 콤보는 이전 파라미터를 유지합니다 " +
+                                "(레시피 관리 창을 열어 동기화 후 다시 로드하세요)");
+                            return;
+                        }
+
+                        bool ok = syncForRecipeSwitch.CurrentRecipeId == id
+                            || await syncForRecipeSwitch.LoadRecipeAsync(id);
+
+                        if (!ok)
+                        {
+                            SetSyncStatus(
+                                $"Web 파라미터 로드 실패: '{recipe.Name}' (Web ID {id}) — Web 서버 연결을 확인하세요");
+                        }
+                        else if (syncForRecipeSwitch.CachedItemCount == 0)
+                        {
+                            SetSyncStatus(
+                                $"Web 파라미터: '{recipe.Name}' (Web ID {id}) 에 등록된 코드가 0개입니다 — " +
+                                "Web 레시피 파라미터 화면에서 같은 라인·같은 레시피에 등록했는지 확인하세요");
+                        }
+                        else
+                        {
+                            SetSyncStatus(
+                                $"Web 파라미터: '{recipe.Name}' 코드 {syncForRecipeSwitch.CachedItemCount}개 (Web ID {id})");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"[App] Param cache switch failed: {ex.Message}");
+                    }
+                }
+
                 recipeService.CurrentRecipeChanged += (_, recipe) =>
                 {
-                    if (recipe?.WebRecipeId is int webId && webId > 0 &&
-                        syncForRecipeSwitch.CurrentRecipeId != webId)
-                    {
-                        _ = syncForRecipeSwitch.LoadRecipeAsync(webId);
-                    }
+                    if (recipe != null) _ = SwitchParamCacheAsync(recipe);
                 };
 
                 // Web 파라미터 변경 즉시 푸시 — 공개 허브(RecipeParametersChanged) 구독.
