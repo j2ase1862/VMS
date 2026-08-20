@@ -176,18 +176,38 @@ namespace VMS.VisionSetup
                 };
                 _ = _paramHubClient.StartAsync();
 
-                // 시작 시 레시피 목록 + 첫 번째 레시피 파라미터 로드 (백그라운드)
+                // 시작 시 레시피 목록 + 초기 레시피 파라미터 로드 (백그라운드).
+                // 종전에는 무조건 첫 번째 레시피를 로드해서, VMS 가 레시피 경로를 넘겨
+                // 실행한 경우(현재 레시피 = B) CurrentRecipeChanged 핸들러가 전환해 둔
+                // B 캐시를 A 로 덮어쓰는 경합이 있었다 (2026-08-20 실증 재현:
+                // Now Recipe 는 B 인데 콤보는 A 코드만 표시, 재로드해야 복구).
                 _ = Task.Run(async () =>
                 {
                     try
                     {
                         await parameterSyncService.SyncRecipesAsync();
-                        var recipes = parameterSyncService.Recipes;
-                        if (recipes.Count > 0)
+
+                        // 다른 경로가 이미 캐시를 전환했으면 존중 — 덮어쓰지 않는다.
+                        if (parameterSyncService.CurrentRecipeId <= 0)
                         {
-                            await parameterSyncService.LoadRecipeAsync(recipes[0].Id);
-                            Debug.WriteLine($"[App] ParameterSync: Loaded {parameterSyncService.CachedItemCount} params from recipe '{recipes[0].Name}'");
+                            var current = recipeService.CurrentRecipe;
+                            var targetId = Services.WebRecipeResolver.Resolve(
+                                current?.Name, current?.WebRecipeId, parameterSyncService.Recipes);
+                            if (targetId is int id)
+                            {
+                                await parameterSyncService.LoadRecipeAsync(id);
+                                Debug.WriteLine($"[App] ParameterSync: initial recipe {id} — {parameterSyncService.CachedItemCount} params");
+                            }
                         }
+
+                        // 경합 마지막 안전망 — 그 사이 현재 레시피가 바뀌었으면 그쪽으로 재전환.
+                        var after = recipeService.CurrentRecipe;
+                        if (after?.WebRecipeId is int webId && webId > 0 &&
+                            parameterSyncService.CurrentRecipeId != webId)
+                        {
+                            await parameterSyncService.LoadRecipeAsync(webId);
+                        }
+
                         parameterSyncService.StartPeriodicSync(60);
                     }
                     catch (Exception ex)
