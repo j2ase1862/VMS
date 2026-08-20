@@ -96,6 +96,29 @@ namespace VMS.Core.Tests.Services
             Assert.Null(result);
         }
 
+        // ── NormalizeSha256Digest ──
+
+        [Theory]
+        [InlineData("sha256:085d6423f52467130d2ef358b4cd57d0e1c6796ab04ea13e63b114ca09a229c1",
+                    "085d6423f52467130d2ef358b4cd57d0e1c6796ab04ea13e63b114ca09a229c1")]
+        [InlineData("SHA256:ABCDEF0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+                    "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789")]
+        public void NormalizeSha256Digest_Valid_ReturnsLowerHex(string input, string expected)
+        {
+            Assert.Equal(expected, GitHubUpdateService.NormalizeSha256Digest(input));
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("md5:abcdef")]                 // sha256 아님
+        [InlineData("sha256:tooshort")]            // 64자 미만
+        [InlineData("sha256:zzzz6423f52467130d2ef358b4cd57d0e1c6796ab04ea13e63b114ca09a229c1")] // hex 아님
+        public void NormalizeSha256Digest_Invalid_ReturnsEmpty(string? input)
+        {
+            Assert.Equal(string.Empty, GitHubUpdateService.NormalizeSha256Digest(input));
+        }
+
         // ── CheckAsync 성공 + 비교 ──
 
         [Fact]
@@ -108,7 +131,9 @@ namespace VMS.Core.Tests.Services
                   "body": "Release notes here",
                   "published_at": "2026-06-01T00:00:00Z",
                   "assets": [
-                    { "name": "VMS-1.2.0.msi", "browser_download_url": "https://example.com/VMS-1.2.0.msi" },
+                    { "name": "VMS-1.2.0.msi", "browser_download_url": "https://example.com/VMS-1.2.0.msi",
+                      "size": 1189417252,
+                      "digest": "sha256:085d6423f52467130d2ef358b4cd57d0e1c6796ab04ea13e63b114ca09a229c1" },
                     { "name": "VMS-1.2.0.msi.sha256", "browser_download_url": "https://example.com/sha" }
                   ]
                 }
@@ -130,6 +155,9 @@ namespace VMS.Core.Tests.Services
             Assert.Equal(new Version(1, 2, 0), result.LatestVersion);
             Assert.Equal("v1.2.0", result.LatestTagName);
             Assert.Equal("https://example.com/VMS-1.2.0.msi", result.DownloadUrl);
+            Assert.Equal("VMS-1.2.0.msi", result.DownloadFileName);
+            Assert.Equal(1189417252L, result.DownloadSizeBytes);
+            Assert.Equal("085d6423f52467130d2ef358b4cd57d0e1c6796ab04ea13e63b114ca09a229c1", result.DownloadSha256);
             Assert.Equal("https://github.com/owner/repo/releases/tag/v1.2.0", result.ReleaseUrl);
             Assert.Equal("Release notes here", result.ReleaseNotes);
         }

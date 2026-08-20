@@ -200,6 +200,10 @@ namespace VMS
             VMS.Core.Interfaces.IUpdateService updateService =
                 new VMS.Core.Services.GitHubUpdateService("j2ase1862", "VMS-Releases");
 
+            // 인앱 업데이트 설치기 — MSI 다운로드 + 상승 부트스트래퍼 (Web 서비스 상태 복원 포함).
+            VMS.Core.Interfaces.IUpdateInstallService updateInstallService =
+                new VMS.Core.Services.UpdateInstallService();
+
             await splash.FadeOutAsync();
             splash.Close();
 
@@ -658,7 +662,8 @@ namespace VMS
                 predictionPollingService: predictionPollingService,
                 updateService: updateService,
                 imageUploadService: imageUploadService,
-                ioBoards: ioBoardConnections);
+                ioBoards: ioBoardConnections,
+                updateInstallService: updateInstallService);
 
             var mainWindow = new MainWindow();
             mainWindow.DataContext = mainViewModel;
@@ -672,6 +677,7 @@ namespace VMS
                 predictionPollingService?.Dispose();
                 sensorPollingService?.Dispose();
                 updateService?.Dispose();
+                updateInstallService?.Dispose();
                 imageUploadService?.Dispose();
                 foreach (var board in ioBoardConnections) board.Dispose();
                 ForceShutdown(mainViewModel, heartbeatService, parameterSyncService, sharedFrameWriter, plcConnection, autoProcessService, processService);

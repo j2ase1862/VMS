@@ -369,6 +369,8 @@ namespace VMS.ViewModels
         private readonly VMS.Core.Services.VmsHubClient? _vmsHubClient;
         private readonly IPredictionPollingService? _predictionPollingService;
         private readonly IUpdateService? _updateService;
+        private readonly IUpdateInstallService? _updateInstallService;
+        private System.Threading.CancellationTokenSource? _updateDownloadCts;
         private int? _lastCompletedNotifiedWoId; // C5: 중복 Completed 알림 가드
         private readonly Action _shutdownAction;
         private SystemConfiguration _systemConfig;
@@ -401,7 +403,8 @@ namespace VMS.ViewModels
             IPredictionPollingService? predictionPollingService = null,
             IUpdateService? updateService = null,
             VMS.Services.ImageUpload.IImageUploadService? imageUploadService = null,
-            IReadOnlyList<VMS.PLC.Interfaces.IIoBoardConnection>? ioBoards = null)
+            IReadOnlyList<VMS.PLC.Interfaces.IIoBoardConnection>? ioBoards = null,
+            IUpdateInstallService? updateInstallService = null)
         {
             _ioBoards = ioBoards ?? Array.Empty<VMS.PLC.Interfaces.IIoBoardConnection>();
             _configService = configService;
@@ -425,6 +428,7 @@ namespace VMS.ViewModels
             _vmsHubClient = vmsHubClient;
             _predictionPollingService = predictionPollingService;
             _updateService = updateService;
+            _updateInstallService = updateInstallService;
             _imageUploadService = imageUploadService;
             _shutdownAction = shutdownAction;
             _systemConfig = new SystemConfiguration();
@@ -1214,6 +1218,19 @@ namespace VMS.ViewModels
             OnPropertyChanged(nameof(UpdateBadgeText));
         }
 
+        /// <summary>인앱 업데이트 다운로드 진행 중 여부 — 사이드 패널 진행률 UI 표시 조건.</summary>
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(CheckForUpdatesCommand))]
+        private bool _isUpdateDownloading;
+
+        /// <summary>다운로드 진행률 (0~100).</summary>
+        [ObservableProperty]
+        private double _updateDownloadPercent;
+
+        /// <summary>다운로드 상태 문구 (예: "v1.9.0 다운로드 중... 42% (500/1189 MB)").</summary>
+        [ObservableProperty]
+        private string _updateDownloadStatusText = string.Empty;
+
         /// <summary>
         /// 앱 시작 시 best-effort 호출 — 결과만 LatestUpdate 에 저장. 다이얼로그 미표시.
         /// 실패해도 silent (배지가 안 뜰 뿐).
@@ -1241,7 +1258,7 @@ namespace VMS.ViewModels
         /// 사용자가 사이드 패널 "Check for updates" 버튼 클릭 시 호출.
         /// 결과를 다이얼로그로 명시적으로 안내(최신/새 버전/실패 모두).
         /// </summary>
-        [RelayCommand]
+        [RelayCommand(CanExecute = nameof(CanCheckForUpdates))]
         private async Task CheckForUpdatesAsync()
         {
             if (_updateService == null)
@@ -1293,16 +1310,139 @@ namespace VMS.ViewModels
                     ? info.ReleaseNotes
                     : info.ReleaseNotes.Substring(0, MaxNotesLength) + "...");
 
-            var message =
+            var header =
                 $"새 버전 {info.LatestTagName} 이 출시되었습니다.\n" +
                 $"현재 버전: v{info.CurrentVersion}\n" +
                 $"최신 버전: v{info.LatestVersion}" +
-                notes +
-                "\n\n다운로드 페이지를 열까요?";
+                notes;
 
-            if (!_dialogService.ShowConfirmation(message, "업데이트 가능"))
+            // 인앱 설치 가능(설치 서비스 + MSI 자산 존재) 시 인앱 플로우, 아니면 기존 브라우저 플로우.
+            var canInstallInApp = _updateInstallService != null && !string.IsNullOrEmpty(info.DownloadUrl);
+            if (!canInstallInApp)
+            {
+                if (_dialogService.ShowConfirmation(header + "\n\n다운로드 페이지를 열까요?", "업데이트 가능"))
+                    OpenReleasePageInBrowser(info);
                 return;
+            }
 
+            if (IsUpdateDownloading)
+            {
+                _dialogService.ShowInformation("업데이트 다운로드가 이미 진행 중입니다.", "업데이트");
+                return;
+            }
+
+            if (IsRunning)
+            {
+                _dialogService.ShowWarning(
+                    "자동 운전 중에는 업데이트할 수 없습니다.\n운전을 정지한 후 다시 시도해 주세요.",
+                    "업데이트");
+                return;
+            }
+
+            var sizeText = info.DownloadSizeBytes > 0
+                ? $" (약 {info.DownloadSizeBytes / (1024.0 * 1024.0):F0} MB)"
+                : string.Empty;
+            var message = header +
+                $"\n\n지금 다운로드하여 설치할까요?{sizeText}\n" +
+                "다운로드 후 설치가 시작되면 프로그램이 자동으로 종료·재시작됩니다.";
+
+            if (_dialogService.ShowConfirmation(message, "업데이트 가능"))
+                _ = StartInAppUpdateAsync(info);
+        }
+
+        /// <summary>
+        /// 인앱 업데이트 본체 — 다운로드(진행률 표시·취소 가능) → SHA-256 검증 →
+        /// 상승 부트스트래퍼 실행 → 앱 종료. 부트스트래퍼가 설치 + Web 서비스 복원 + 재실행 수행.
+        /// </summary>
+        private async Task StartInAppUpdateAsync(UpdateInfo info)
+        {
+            if (_updateInstallService == null) return;
+
+            _updateDownloadCts = new System.Threading.CancellationTokenSource();
+            IsUpdateDownloading = true;
+            UpdateDownloadPercent = 0;
+            UpdateDownloadStatusText = $"{info.LatestTagName} 다운로드 준비 중...";
+            LogService?.Log($"업데이트 다운로드 시작: {info.LatestTagName}", LogLevel.Info, "Update");
+
+            try
+            {
+                // Progress<T> 는 UI 스레드에서 생성 — 콜백이 UI 컨텍스트로 마샬링된다.
+                var progress = new Progress<UpdateDownloadProgress>(p =>
+                {
+                    UpdateDownloadPercent = p.Percent;
+                    UpdateDownloadStatusText = p.TotalBytes > 0
+                        ? $"{info.LatestTagName} 다운로드 중... {p.Percent:F0}% ({p.BytesReceived / (1024.0 * 1024.0):F0}/{p.TotalBytes / (1024.0 * 1024.0):F0} MB)"
+                        : $"{info.LatestTagName} 다운로드 중... {p.BytesReceived / (1024.0 * 1024.0):F0} MB";
+                });
+
+                var result = await _updateInstallService.DownloadAsync(info, progress, _updateDownloadCts.Token);
+
+                if (!result.Ok)
+                {
+                    LogService?.Log($"업데이트 다운로드 실패: {result.Error}", LogLevel.Error, "Update");
+                    if (_dialogService.ShowConfirmation(
+                        $"업데이트 다운로드에 실패했습니다.\n{result.Error}\n\n브라우저에서 수동으로 다운로드할까요?",
+                        "업데이트 실패"))
+                    {
+                        OpenReleasePageInBrowser(info);
+                    }
+                    return;
+                }
+
+                LogService?.Log($"업데이트 다운로드 완료: {result.FilePath}", LogLevel.Info, "Update");
+
+                if (!_dialogService.ShowConfirmation(
+                    $"다운로드가 완료되었습니다 ({info.LatestTagName}).\n\n" +
+                    "설치를 시작할까요? 프로그램이 종료되고 설치 완료 후 자동으로 다시 실행됩니다.\n" +
+                    "(다른 BODA 프로그램이 열려 있다면 먼저 닫아 주세요)",
+                    "업데이트 설치"))
+                {
+                    return; // 파일은 보관 — 다음 시도에서 재다운로드 없이 재사용
+                }
+
+                var launch = _updateInstallService.LaunchInstaller(result.FilePath!);
+                if (launch.Ok)
+                {
+                    LogService?.Log("업데이트 설치 시작 — 프로그램을 종료합니다.", LogLevel.Info, "Update");
+                    _shutdownAction();
+                }
+                else if (launch.UacDeclined)
+                {
+                    _dialogService.ShowInformation(
+                        "관리자 권한 승인이 거부되어 설치가 취소되었습니다.\n" +
+                        "다운로드한 파일은 보관되므로 다음에 다시 시도할 수 있습니다.",
+                        "업데이트 취소");
+                }
+                else
+                {
+                    LogService?.Log($"업데이트 설치 시작 실패: {launch.Error}", LogLevel.Error, "Update");
+                    _dialogService.ShowError(
+                        $"설치를 시작하지 못했습니다.\n{launch.Error}",
+                        "업데이트 실패");
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                LogService?.Log("업데이트 다운로드가 취소되었습니다.", LogLevel.Info, "Update");
+            }
+            finally
+            {
+                IsUpdateDownloading = false;
+                _updateDownloadCts?.Dispose();
+                _updateDownloadCts = null;
+            }
+        }
+
+        private bool CanCheckForUpdates() => !IsUpdateDownloading;
+
+        [RelayCommand]
+        private void CancelUpdateDownload()
+        {
+            _updateDownloadCts?.Cancel();
+        }
+
+        private void OpenReleasePageInBrowser(UpdateInfo info)
+        {
             try
             {
                 _processService.LaunchProcess(info.ReleaseUrl);

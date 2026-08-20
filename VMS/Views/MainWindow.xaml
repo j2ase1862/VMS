@@ -1116,7 +1116,31 @@
                                     </StackPanel>
                                 </Button>
 
-                                <!-- 수동 체크 버튼 — 항상 표시 -->
+                                <!-- 인앱 업데이트 다운로드 진행률 — 다운로드 중에만 표시 -->
+                                <StackPanel Visibility="{Binding IsUpdateDownloading, Converter={StaticResource BoolToVisibilityConverter}}"
+                                            Margin="0,0,0,8">
+                                    <TextBlock Style="{StaticResource Text.Caption}"
+                                               Text="{Binding UpdateDownloadStatusText}"
+                                               TextWrapping="Wrap"/>
+                                    <ProgressBar Height="8"
+                                                 Minimum="0" Maximum="100"
+                                                 Value="{Binding UpdateDownloadPercent, Mode=OneWay}"
+                                                 Margin="0,6,0,6"/>
+                                    <Button Command="{Binding CancelUpdateDownloadCommand}"
+                                            AutomationProperties.Name="Cancel update download"
+                                            Style="{StaticResource Button.Subtle}"
+                                            HorizontalAlignment="Stretch"
+                                            ToolTip="업데이트 다운로드를 취소합니다">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#xE711;"
+                                                       FontFamily="Segoe MDL2 Assets"
+                                                       Margin="0,0,8,0"/>
+                                            <TextBlock Text="다운로드 취소"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+
+                                <!-- 수동 체크 버튼 — 항상 표시 (다운로드 중에는 비활성) -->
                                 <Button Command="{Binding CheckForUpdatesCommand}"
                                         AutomationProperties.Name="Check for updates"
                                         Style="{StaticResource Button.Subtle}"
