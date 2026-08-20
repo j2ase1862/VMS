@@ -61,6 +61,35 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
             set { SetLinkedParamCode(nameof(ScoreThreshold), value); OnPropertyChanged(); }
         }
 
+        // ── 각도/스케일 판정 (Web ParamCode 연동) ──
+        public bool UseAngleJudgment { get => TypedTool.UseAngleJudgment; set => TypedTool.UseAngleJudgment = value; }
+        public double AngleLowerLimit { get => TypedTool.AngleLowerLimit; set => TypedTool.AngleLowerLimit = value; }
+        public double AngleUpperLimit { get => TypedTool.AngleUpperLimit; set => TypedTool.AngleUpperLimit = value; }
+        public bool UseScaleJudgment { get => TypedTool.UseScaleJudgment; set => TypedTool.UseScaleJudgment = value; }
+        public double ScaleLowerLimit { get => TypedTool.ScaleLowerLimit; set => TypedTool.ScaleLowerLimit = value; }
+        public double ScaleUpperLimit { get => TypedTool.ScaleUpperLimit; set => TypedTool.ScaleUpperLimit = value; }
+
+        public ParamCodeItem? SelectedAngleLowerLimitCode
+        {
+            get => GetLinkedParamCodeItem(nameof(AngleLowerLimit));
+            set { SetLinkedParamCode(nameof(AngleLowerLimit), value); OnPropertyChanged(); }
+        }
+        public ParamCodeItem? SelectedAngleUpperLimitCode
+        {
+            get => GetLinkedParamCodeItem(nameof(AngleUpperLimit));
+            set { SetLinkedParamCode(nameof(AngleUpperLimit), value); OnPropertyChanged(); }
+        }
+        public ParamCodeItem? SelectedScaleLowerLimitCode
+        {
+            get => GetLinkedParamCodeItem(nameof(ScaleLowerLimit));
+            set { SetLinkedParamCode(nameof(ScaleLowerLimit), value); OnPropertyChanged(); }
+        }
+        public ParamCodeItem? SelectedScaleUpperLimitCode
+        {
+            get => GetLinkedParamCodeItem(nameof(ScaleUpperLimit));
+            set { SetLinkedParamCode(nameof(ScaleUpperLimit), value); OnPropertyChanged(); }
+        }
+
         public IRelayCommand TrainTemplateCommand { get; }
         public IRelayCommand ClearTemplateCommand { get; }
         public IRelayCommand DrawSearchRegionCommand { get; }

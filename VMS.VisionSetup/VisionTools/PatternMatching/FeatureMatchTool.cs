@@ -175,6 +175,27 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
         private double _scoreThreshold = 0.5;
         public double ScoreThreshold { get => _scoreThreshold; set => SetProperty(ref _scoreThreshold, value); }
 
+        // ── 각도/스케일 판정 (Web ParamCode 연동 가능) ──
+        // 검색 범위(AngleStart/Extent, Min/MaxScale)와 별개로, 찾은 매칭의 자세가
+        // 허용 범위를 벗어나면 NG 처리하는 판정 기준. 기본 비활성 (기존 동작 유지).
+        private bool _useAngleJudgment;
+        public bool UseAngleJudgment { get => _useAngleJudgment; set => SetProperty(ref _useAngleJudgment, value); }
+
+        private double _angleLowerLimit = -180;
+        public double AngleLowerLimit { get => _angleLowerLimit; set => SetProperty(ref _angleLowerLimit, value); }
+
+        private double _angleUpperLimit = 180;
+        public double AngleUpperLimit { get => _angleUpperLimit; set => SetProperty(ref _angleUpperLimit, value); }
+
+        private bool _useScaleJudgment;
+        public bool UseScaleJudgment { get => _useScaleJudgment; set => SetProperty(ref _useScaleJudgment, value); }
+
+        private double _scaleLowerLimit = 0.9;
+        public double ScaleLowerLimit { get => _scaleLowerLimit; set => SetProperty(ref _scaleLowerLimit, value); }
+
+        private double _scaleUpperLimit = 1.1;
+        public double ScaleUpperLimit { get => _scaleUpperLimit; set => SetProperty(ref _scaleUpperLimit, value); }
+
         private int _numLevels = 3;
         public int NumLevels { get => _numLevels; set => SetProperty(ref _numLevels, value); }
 
@@ -761,6 +782,15 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                     result.Data["TrainedCenterY"] = bestModel.TrainedCenterY;
                     result.OverlayImage = DrawOverlay(inputImage, finalX, finalY, globalBestAngle, globalBestScale,
                         bestModel.TemplateWidth, bestModel.TemplateHeight, bestModel.ModelEdges);
+
+                    // 각도/스케일 판정 — 매칭은 찾았으나 자세가 허용 범위를 벗어나면 NG.
+                    // Data/오버레이는 그대로 남겨 측정값 확인·Web 업로드가 가능하게 한다.
+                    var poseNg = EvaluatePoseJudgment(globalBestAngle, globalBestScale);
+                    if (poseNg != null)
+                    {
+                        result.Success = false;
+                        result.Message += " — " + poseNg;
+                    }
                 }
                 else
                 {
@@ -791,6 +821,18 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// 매칭 자세(각도/스케일) 판정. 통과·비활성이면 null, NG면 사유 문자열.
+        /// </summary>
+        internal string? EvaluatePoseJudgment(double angle, double scale)
+        {
+            if (UseAngleJudgment && (angle < AngleLowerLimit || angle > AngleUpperLimit))
+                return $"각도 판정 NG: {angle:F2}° (허용 {AngleLowerLimit:F2}~{AngleUpperLimit:F2}°)";
+            if (UseScaleJudgment && (scale < ScaleLowerLimit || scale > ScaleUpperLimit))
+                return $"스케일 판정 NG: {scale:F3} (허용 {ScaleLowerLimit:F3}~{ScaleUpperLimit:F3})";
+            return null;
         }
 
         /// <summary>
@@ -1403,6 +1445,10 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                 AngleStart = this.AngleStart, AngleExtent = this.AngleExtent, AngleStep = this.AngleStep,
                 MinScale = this.MinScale, MaxScale = this.MaxScale, ScaleStep = this.ScaleStep,
                 ScoreThreshold = this.ScoreThreshold, NumLevels = this.NumLevels,
+                UseAngleJudgment = this.UseAngleJudgment,
+                AngleLowerLimit = this.AngleLowerLimit, AngleUpperLimit = this.AngleUpperLimit,
+                UseScaleJudgment = this.UseScaleJudgment,
+                ScaleLowerLimit = this.ScaleLowerLimit, ScaleUpperLimit = this.ScaleUpperLimit,
                 Greediness = this.Greediness, MaxModelPoints = this.MaxModelPoints,
                 SearchRegion = this.SearchRegion, UseSearchRegion = this.UseSearchRegion,
                 UseContrastInvariant = this.UseContrastInvariant,

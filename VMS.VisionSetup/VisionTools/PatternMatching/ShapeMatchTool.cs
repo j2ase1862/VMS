@@ -85,6 +85,27 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
             set => SetProperty(ref _scoreThreshold, Math.Clamp(value, 0.0, 1.0));
         }
 
+        // ── 각도/스케일 판정 (Web ParamCode 연동 가능) ──
+        // 검색 범위(AngleStep, Min/MaxScale)와 별개로, 1순위 매칭의 자세가
+        // 허용 범위를 벗어나면 NG 처리하는 판정 기준. 기본 비활성 (기존 동작 유지).
+        private bool _useAngleJudgment;
+        public bool UseAngleJudgment { get => _useAngleJudgment; set => SetProperty(ref _useAngleJudgment, value); }
+
+        private double _angleLowerLimit = -180;
+        public double AngleLowerLimit { get => _angleLowerLimit; set => SetProperty(ref _angleLowerLimit, value); }
+
+        private double _angleUpperLimit = 180;
+        public double AngleUpperLimit { get => _angleUpperLimit; set => SetProperty(ref _angleUpperLimit, value); }
+
+        private bool _useScaleJudgment;
+        public bool UseScaleJudgment { get => _useScaleJudgment; set => SetProperty(ref _useScaleJudgment, value); }
+
+        private double _scaleLowerLimit = 0.9;
+        public double ScaleLowerLimit { get => _scaleLowerLimit; set => SetProperty(ref _scaleLowerLimit, value); }
+
+        private double _scaleUpperLimit = 1.1;
+        public double ScaleUpperLimit { get => _scaleUpperLimit; set => SetProperty(ref _scaleUpperLimit, value); }
+
         // ── 다중 인스턴스 검출 (NMS) ──
         private int _maxInstances = 1;
         /// <summary>찾을 최대 인스턴스 수. 1이면 단일 매칭 (기존 동작), 2+면 NMS로 중복 제거 후 상위 N개.</summary>
@@ -356,11 +377,19 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
 
                 result.OutputImage = overlay.Clone();
                 result.OverlayImage = overlay;
-                result.Success = passed;
+
+                // 각도/스케일 판정 — 1순위 매칭 기준 (단일 판정과 동일 기준).
+                // 매칭은 찾았으나 자세가 허용 범위를 벗어나면 NG. Data/오버레이는 유지.
+                string? poseNg = passed
+                    ? EvaluatePoseJudgment(matches[0].Angle, matches[0].Scale)
+                    : null;
+
+                result.Success = passed && poseNg == null;
                 result.Message = passed
                     ? (matches.Count == 1
                         ? $"Match: score={matches[0].Score:F3}, angle={matches[0].Angle:F1}°, scale={matches[0].Scale:F2}"
                         : $"Found {matches.Count} instances (top score={matches[0].Score:F3})")
+                      + (poseNg != null ? " — " + poseNg : string.Empty)
                     : $"No match above threshold ({ScoreThreshold:F2}).";
             }
             catch (Exception ex)
@@ -756,6 +785,18 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
             return keys;
         }
 
+        /// <summary>
+        /// 매칭 자세(각도/스케일) 판정. 통과·비활성이면 null, NG면 사유 문자열.
+        /// </summary>
+        internal string? EvaluatePoseJudgment(double angle, double scale)
+        {
+            if (UseAngleJudgment && (angle < AngleLowerLimit || angle > AngleUpperLimit))
+                return $"각도 판정 NG: {angle:F2}° (허용 {AngleLowerLimit:F2}~{AngleUpperLimit:F2}°)";
+            if (UseScaleJudgment && (scale < ScaleLowerLimit || scale > ScaleUpperLimit))
+                return $"스케일 판정 NG: {scale:F3} (허용 {ScaleLowerLimit:F3}~{ScaleUpperLimit:F3})";
+            return null;
+        }
+
         public override VisionToolBase Clone()
         {
             var clone = new ShapeMatchTool
@@ -773,6 +814,10 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                 MaxScale = this.MaxScale,
                 ScaleStep = this.ScaleStep,
                 ScoreThreshold = this.ScoreThreshold,
+                UseAngleJudgment = this.UseAngleJudgment,
+                AngleLowerLimit = this.AngleLowerLimit, AngleUpperLimit = this.AngleUpperLimit,
+                UseScaleJudgment = this.UseScaleJudgment,
+                ScaleLowerLimit = this.ScaleLowerLimit, ScaleUpperLimit = this.ScaleUpperLimit,
                 NumPyramidLevels = this.NumPyramidLevels,
                 TopCandidates = this.TopCandidates,
                 MaxInstances = this.MaxInstances,
