@@ -92,6 +92,21 @@ namespace VMS.VisionSetup
                 parameterSyncService.RecipeLoaded += (_, _, _) =>
                     WeakReferenceMessenger.Default.Send(new WebParamCacheUpdatedMessage());
 
+                // 현재 레시피가 바뀌면(관리 다이얼로그 로드·새 레시피·메신저 전환 등 모든 경로)
+                // 그 레시피에 연결된 Web 파라미터 캐시로 전환 — ParamCode 콤보가 항상
+                // "지금 편집 중인 레시피"의 코드를 보여주도록. 종전에는 레시피 관리
+                // 다이얼로그의 로드 버튼 경로만 전환해서, 그 외 경로는 시작 시 로드된
+                // 첫 번째 Web 레시피에 고정되는 빈틈이 있었다 (2026-08-20 실증 보고).
+                var syncForRecipeSwitch = parameterSyncService;
+                recipeService.CurrentRecipeChanged += (_, recipe) =>
+                {
+                    if (recipe?.WebRecipeId is int webId && webId > 0 &&
+                        syncForRecipeSwitch.CurrentRecipeId != webId)
+                    {
+                        _ = syncForRecipeSwitch.LoadRecipeAsync(webId);
+                    }
+                };
+
                 // Web 파라미터 변경 즉시 푸시 — 공개 허브(RecipeParametersChanged) 구독.
                 // 현재 로드된 레시피면 캐시 재동기화 → 위 브리지가 콤보를 곧바로 갱신.
                 // 허브가 끊겨 있어도 60초 폴링이 안전망이라 기능 저하 없음.
