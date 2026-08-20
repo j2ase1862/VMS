@@ -24,6 +24,18 @@ namespace VMS.Core.Models.Updates
         /// <summary>MSI 자산 직접 다운로드 URL (없으면 string.Empty).</summary>
         public string DownloadUrl { get; init; } = string.Empty;
 
+        /// <summary>MSI 자산 파일명 (예: VMS-1.8.0.msi). 다운로드 저장 파일명으로 사용.</summary>
+        public string DownloadFileName { get; init; } = string.Empty;
+
+        /// <summary>MSI 자산 크기(바이트). 진행률 표시용 — API 미제공 시 0.</summary>
+        public long DownloadSizeBytes { get; init; }
+
+        /// <summary>
+        /// MSI 자산 SHA-256 (소문자 hex, "sha256:" 접두사 제거됨).
+        /// GitHub asset digest 필드 유래 — 미제공 시 string.Empty (검증 생략).
+        /// </summary>
+        public string DownloadSha256 { get; init; } = string.Empty;
+
         /// <summary>Release HTML 페이지 URL — 브라우저로 열어 사용자에게 보여줄 URL.</summary>
         public string ReleaseUrl { get; init; } = string.Empty;
 

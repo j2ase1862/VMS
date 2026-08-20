@@ -92,6 +92,9 @@ namespace VMS.Core.Services
                     LatestVersion = latestVersion,
                     LatestTagName = release.TagName ?? string.Empty,
                     DownloadUrl = msiAsset?.BrowserDownloadUrl ?? string.Empty,
+                    DownloadFileName = msiAsset?.Name ?? string.Empty,
+                    DownloadSizeBytes = msiAsset?.Size ?? 0,
+                    DownloadSha256 = NormalizeSha256Digest(msiAsset?.Digest),
                     ReleaseUrl = release.HtmlUrl ?? string.Empty,
                     ReleaseNotes = release.Body ?? string.Empty,
                     PublishedAt = release.PublishedAt ?? DateTime.MinValue,
@@ -147,6 +150,26 @@ namespace VMS.Core.Services
             return null;
         }
 
+        /// <summary>
+        /// GitHub asset digest("sha256:HEX")에서 hex 부분만 소문자로 추출.
+        /// sha256 이 아니거나 형식이 다르면 string.Empty (검증 생략 신호).
+        /// </summary>
+        internal static string NormalizeSha256Digest(string? digest)
+        {
+            if (string.IsNullOrWhiteSpace(digest)) return string.Empty;
+
+            const string prefix = "sha256:";
+            if (!digest.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) return string.Empty;
+
+            var hex = digest.Substring(prefix.Length).Trim().ToLowerInvariant();
+            if (hex.Length != 64) return string.Empty;
+            foreach (var c in hex)
+            {
+                if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))) return string.Empty;
+            }
+            return hex;
+        }
+
         private static Version ResolveCurrentVersion()
         {
             // EntryAssembly 의 InformationalVersion 우선(Directory.Build.props 의 Version 반영),
@@ -190,6 +213,12 @@ namespace VMS.Core.Services
 
             [JsonPropertyName("browser_download_url")]
             public string? BrowserDownloadUrl { get; set; }
+
+            [JsonPropertyName("size")]
+            public long? Size { get; set; }
+
+            [JsonPropertyName("digest")]
+            public string? Digest { get; set; }
         }
     }
 }
