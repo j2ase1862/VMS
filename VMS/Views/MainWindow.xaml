@@ -334,7 +334,7 @@
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="Ctx:" Foreground="{StaticResource Brush.Accent}" FontSize="10" FontWeight="SemiBold"
                                        VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <!-- WO/Lot 수동 입력 — 컴팩트에서는 숨김 (WO 선택 시 자동 첨부되는 값이라
+                            <!-- WO 수동 입력 — 컴팩트에서는 숨김 (WO 선택 시 자동 첨부되는 값이라
                                  수동 입력 빈도 낮음). S/N(바코드 스캔)은 어떤 폭에서도 항상 노출. -->
                             <StackPanel Orientation="Horizontal" Style="{StaticResource HideWhenCompact}">
                                 <TextBlock Text="WO" Foreground="{StaticResource Brush.Text.Secondary}" FontSize="10" VerticalAlignment="Center" Margin="0,0,3,0"/>
@@ -344,17 +344,30 @@
                                          VerticalAlignment="Center"
                                          VerticalContentAlignment="Center" Padding="4,0"
                                          ToolTip="WorkOrder ID (정수)"/>
-                                <TextBlock Text="Lot" Foreground="{StaticResource Brush.Text.Secondary}" FontSize="10" VerticalAlignment="Center" Margin="6,0,3,0"/>
-                                <!-- 멀티 Lot 병행 — WO 의 Open Lot 목록에서 선택 (발행/마감 시 실시간 갱신).
-                                     1개면 자동 선택, 여러 개면 작업자가 선택. 선택 → LotIdText → 업로드 LotId. -->
-                                <ComboBox ItemsSource="{Binding OpenLots}"
-                                          SelectedItem="{Binding SelectedOpenLot}"
-                                          DisplayMemberPath="DisplayText"
-                                          Width="150" Height="22" FontSize="11"
-                                          Padding="6,2"
-                                          VerticalAlignment="Center"
-                                          ToolTip="Open Lot 선택 — Web에서 발행된 Lot 목록 (여러 개 병행 시 직접 선택)"/>
                             </StackPanel>
+                            <TextBlock Text="Lot" Foreground="{StaticResource Brush.Text.Secondary}" FontSize="10" VerticalAlignment="Center" Margin="6,0,3,0"/>
+                            <!-- 멀티 Lot 병행 — WO 의 Open Lot 목록에서 선택 (발행/마감 시 실시간 갱신).
+                                 1개면 자동 선택, 여러 개면 작업자가 선택. 선택 → LotIdText → 업로드 LotId.
+                                 멀티 Lot 은 작업자 선택이 필수라 컴팩트(FHD)에서도 항상 노출 — 숨기면
+                                 Open Lot 여러 개일 때 선택 수단이 사라진다 (2026-08-21 현장). 폭만 축소. -->
+                            <ComboBox ItemsSource="{Binding OpenLots}"
+                                      SelectedItem="{Binding SelectedOpenLot}"
+                                      DisplayMemberPath="DisplayText"
+                                      Height="22" FontSize="11"
+                                      Padding="6,2"
+                                      VerticalAlignment="Center"
+                                      ToolTip="Open Lot 선택 — Web에서 발행된 Lot 목록 (여러 개 병행 시 직접 선택)">
+                                <ComboBox.Style>
+                                    <Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+                                        <Setter Property="Width" Value="150"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsCompactHeader, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                <Setter Property="Width" Value="110"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ComboBox.Style>
+                            </ComboBox>
                             <TextBlock Text="S/N" Foreground="{StaticResource Brush.Text.Secondary}" FontSize="10" VerticalAlignment="Center" Margin="6,0,3,0"/>
                             <TextBox Text="{Binding SerialNumberText, UpdateSourceTrigger=PropertyChanged}"
                                      Width="100" Height="22" FontSize="11"
