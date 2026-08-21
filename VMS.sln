@@ -33,6 +33,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VMS.WeldTeach", "VMS.WeldTe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VMS.WeldTeach.Tests", "VMS.WeldTeach.Tests\VMS.WeldTeach.Tests.csproj", "{E5740A45-D8EB-4A53-9EE7-E66AF7F47A6E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VMS.Updater", "VMS.Updater\VMS.Updater.csproj", "{3EFB7F84-B589-460D-B0A4-02F4EBAE92CC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -220,6 +222,18 @@ Global
 		{E5740A45-D8EB-4A53-9EE7-E66AF7F47A6E}.Release|x64.Build.0 = Release|Any CPU
 		{E5740A45-D8EB-4A53-9EE7-E66AF7F47A6E}.Release|x86.ActiveCfg = Release|Any CPU
 		{E5740A45-D8EB-4A53-9EE7-E66AF7F47A6E}.Release|x86.Build.0 = Release|Any CPU
+		{3EFB7F84-B589-460D-B0A4-02F4EBAE92CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3EFB7F84-B589-460D-B0A4-02F4EBAE92CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3EFB7F84-B589-460D-B0A4-02F4EBAE92CC}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3EFB7F84-B589-460D-B0A4-02F4EBAE92CC}.Debug|x64.Build.0 = Debug|Any CPU
+		{3EFB7F84-B589-460D-B0A4-02F4EBAE92CC}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{3EFB7F84-B589-460D-B0A4-02F4EBAE92CC}.Debug|x86.Build.0 = Debug|Any CPU
+		{3EFB7F84-B589-460D-B0A4-02F4EBAE92CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3EFB7F84-B589-460D-B0A4-02F4EBAE92CC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3EFB7F84-B589-460D-B0A4-02F4EBAE92CC}.Release|x64.ActiveCfg = Release|Any CPU
+		{3EFB7F84-B589-460D-B0A4-02F4EBAE92CC}.Release|x64.Build.0 = Release|Any CPU
+		{3EFB7F84-B589-460D-B0A4-02F4EBAE92CC}.Release|x86.ActiveCfg = Release|Any CPU
+		{3EFB7F84-B589-460D-B0A4-02F4EBAE92CC}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

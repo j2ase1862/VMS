@@ -1,0 +1,12 @@
+<!-- Firewall 확장(WixToolset.Firewall.wixext 6.0.2)은 en-US 문자열만 동봉되어
+     Cultures=ko-KR 링크 시 WIX0102 로 실패한다 (폴백 체인도 확장 wixlib 에는 미적용).
+     확장이 요구하는 7개 변수를 여기서 한국어로 직접 제공한다. -->
+<WixLocalization xmlns="http://wixtoolset.org/schemas/v4/wxl" Culture="ko-KR">
+  <String Id="WixSchedFirewallExceptionsInstall" Value="Windows 방화벽 예외를 구성하는 중" />
+  <String Id="WixSchedFirewallExceptionsUninstall" Value="Windows 방화벽 예외를 제거하는 중" />
+  <String Id="WixExecFirewallExceptionsInstall" Value="Windows 방화벽 예외를 구성하는 중" />
+  <String Id="WixExecFirewallExceptionsUninstall" Value="Windows 방화벽 예외를 제거하는 중" />
+  <String Id="WixRollbackFirewallExceptionsInstall" Value="Windows 방화벽 구성을 롤백하는 중" />
+  <String Id="WixRollbackFirewallExceptionsUninstall" Value="Windows 방화벽 구성을 롤백하는 중" />
+  <String Id="msierrFirewallCannotConnect" Value="Windows 방화벽 서비스에 연결할 수 없습니다. Windows 방화벽 서비스가 실행 중인지 확인한 후 다시 시도하세요." />
+</WixLocalization>

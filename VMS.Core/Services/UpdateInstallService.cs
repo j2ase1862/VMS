@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -20,7 +21,8 @@ namespace VMS.Core.Services
     /// 부트스트랩 스크립트가 하는 일 (관리자 권한, 앱 종료 후):
     ///   1. VMS 프로세스 종료 대기 (files-in-use 방지)
     ///   2. BodaVmsWeb 서비스 사전 상태 기록 (MajorUpgrade 가 서비스를 demand 로 재등록하므로)
-    ///   3. msiexec /i /passive /norestart 실행
+    ///   3. VMS.Updater(브랜딩 진행률 창)를 임시 폴더로 복사해 설치 실행
+    ///      — 업데이터가 없거나 복사 실패 시 msiexec /i /passive /norestart 폴백
     ///   4. 서비스가 이전에 auto/실행 중이었으면 auto 전환 + 시작 복원
     ///      (AppSetup 수동 시작 단계 자동화 — WebServerConfigApplier.EnsureAutoStartAndRun 과 동일 정책)
     ///   5. VMS 재실행 (explorer 경유 — 상승 권한 미상속)
@@ -170,7 +172,11 @@ namespace VMS.Core.Services
                     Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
                     "BODA", "VMS", "update-bootstrap.log");
 
-                var script = BuildBootstrapScript(msiPath, vmsExePath, Environment.ProcessId, logPath);
+                var currentVersion = Assembly.GetEntryAssembly()?.GetName().Version is { } v
+                    ? $"{v.Major}.{v.Minor}.{v.Build}"
+                    : null;
+                var script = BuildBootstrapScript(
+                    msiPath, vmsExePath, Environment.ProcessId, logPath, currentVersion);
                 var scriptPath = Path.Combine(_downloadDir, "update-bootstrap.ps1");
                 Directory.CreateDirectory(_downloadDir);
                 // BOM 있는 UTF-8 — Windows PowerShell 5.1 이 BOM 없으면 ANSI 로 해석.
@@ -210,7 +216,8 @@ namespace VMS.Core.Services
         /// 상승 모드에서 실행될 부트스트랩 스크립트 본문. Windows PowerShell 5.1 호환 문법만 사용.
         /// 로그 메시지는 인코딩 문제를 피하려 영문 고정.
         /// </summary>
-        internal static string BuildBootstrapScript(string msiPath, string vmsExePath, int vmsPid, string logPath)
+        internal static string BuildBootstrapScript(
+            string msiPath, string vmsExePath, int vmsPid, string logPath, string? currentVersion = null)
         {
             static string Quote(string s) => "'" + s.Replace("'", "''") + "'";
 
@@ -224,6 +231,7 @@ namespace VMS.Core.Services
             sb.AppendLine("Write-Log '=== update bootstrap start ==='");
 
             // 1) VMS 종료 대기 — msiexec files-in-use 방지
+            sb.AppendLine($"$vmsExe = {Quote(vmsExePath)}");
             sb.AppendLine($"$vmsPid = {vmsPid}");
             sb.AppendLine("$p = Get-Process -Id $vmsPid -ErrorAction SilentlyContinue");
             sb.AppendLine("if ($p) { Write-Log (\"waiting for VMS exit (pid={0})\" -f $vmsPid); $p.WaitForExit(60000) | Out-Null }");
@@ -236,12 +244,36 @@ namespace VMS.Core.Services
             sb.AppendLine("$wasAuto = ($null -ne $svc) -and ($svc.StartType -eq 'Automatic')");
             sb.AppendLine("Write-Log (\"web service pre-state: present={0} running={1} auto={2}\" -f ($null -ne $svc), $wasRunning, $wasAuto)");
 
-            // 3) MSI 설치 (/passive: 진행률만 표시, /norestart: 자동 재부팅 금지)
+            // 3) MSI 설치 — 브랜딩 진행률 창(VMS.Updater) 우선, 없으면 msiexec /passive 폴백.
+            //    업데이터는 자신도 MSI 로 교체되는 파일이므로 설치 폴더에서 직접 실행하지 않고
+            //    MSI 옆 임시 폴더로 복사해 실행한다 (files-in-use 방지).
+            //    복사 목록은 VMS.Updater.csproj 의 패키지 정책과 짝: VMS.Updater.* + CommunityToolkit.Mvvm.dll.
             sb.AppendLine($"$msi = {Quote(msiPath)}");
-            sb.AppendLine("Write-Log (\"installing: {0}\" -f $msi)");
-            sb.AppendLine("$proc = Start-Process -FilePath 'msiexec.exe' -ArgumentList '/i', ('\"{0}\"' -f $msi), '/passive', '/norestart' -Wait -PassThru");
+            sb.AppendLine("$updaterExe = ''");
+            sb.AppendLine("if ($vmsExe -ne '') {");
+            sb.AppendLine("  $vmsDir = Split-Path -Parent $vmsExe");
+            sb.AppendLine("  if (Test-Path -LiteralPath (Join-Path $vmsDir 'VMS.Updater.exe')) {");
+            sb.AppendLine("    $updDir = Join-Path (Split-Path -Parent $msi) 'updater'");
+            sb.AppendLine("    try {");
+            sb.AppendLine("      New-Item -ItemType Directory -Force -Path $updDir | Out-Null");
+            sb.AppendLine("      Copy-Item -Path (Join-Path $vmsDir 'VMS.Updater.*') -Destination $updDir -Force -ErrorAction Stop");
+            sb.AppendLine("      Copy-Item -Path (Join-Path $vmsDir 'CommunityToolkit.Mvvm.dll') -Destination $updDir -Force -ErrorAction Stop");
+            sb.AppendLine("      $updaterExe = Join-Path $updDir 'VMS.Updater.exe'");
+            sb.AppendLine("    } catch { Write-Log (\"updater staging FAILED, fallback to msiexec: {0}\" -f $_.Exception.Message); $updaterExe = '' }");
+            sb.AppendLine("  }");
+            sb.AppendLine("}");
+            sb.AppendLine("if (($updaterExe -ne '') -and (Test-Path -LiteralPath $updaterExe)) {");
+            sb.AppendLine("  Write-Log (\"installing via updater UI: {0}\" -f $msi)");
+            var updaterArgs = currentVersion is null
+                ? "('\"{0}\"' -f $msi)"
+                : $"('\"{{0}}\"' -f $msi), '--current', {Quote(currentVersion)}";
+            sb.AppendLine($"  $proc = Start-Process -FilePath $updaterExe -ArgumentList {updaterArgs} -Wait -PassThru");
+            sb.AppendLine("} else {");
+            sb.AppendLine("  Write-Log (\"installing via msiexec: {0}\" -f $msi)");
+            sb.AppendLine("  $proc = Start-Process -FilePath 'msiexec.exe' -ArgumentList '/i', ('\"{0}\"' -f $msi), '/passive', '/norestart' -Wait -PassThru");
+            sb.AppendLine("}");
             sb.AppendLine("$code = $proc.ExitCode");
-            sb.AppendLine("Write-Log (\"msiexec exit code: {0}\" -f $code)");
+            sb.AppendLine("Write-Log (\"install exit code: {0}\" -f $code)");
             sb.AppendLine("$installOk = ($code -eq 0) -or ($code -eq 3010)"); // 3010 = 재부팅 필요하나 성공
 
             // 4) Web 서비스 상태 복원 — AppSetup 수동 [서비스 시작] 단계 자동화
@@ -255,14 +287,14 @@ namespace VMS.Core.Services
             sb.AppendLine("if (-not $installOk) { Write-Log 'install FAILED - previous version remains' }");
 
             // 5) VMS 재실행 — explorer 경유로 상승 권한을 상속시키지 않음
-            sb.AppendLine($"$vmsExe = {Quote(vmsExePath)}");
             sb.AppendLine("if (($vmsExe -ne '') -and (Test-Path -LiteralPath $vmsExe)) {");
             sb.AppendLine("  Start-Process -FilePath 'explorer.exe' -ArgumentList ('\"{0}\"' -f $vmsExe)");
             sb.AppendLine("  Write-Log (\"relaunched: {0}\" -f $vmsExe)");
             sb.AppendLine("} else { Write-Log (\"VMS exe not found: {0}\" -f $vmsExe) }");
 
-            // 6) 성공 시 MSI 정리 (1 GB+ 임시 파일 방치 방지)
+            // 6) 성공 시 MSI + 업데이터 임시 사본 정리 (1 GB+ 임시 파일 방치 방지)
             sb.AppendLine("if ($installOk) { Remove-Item -LiteralPath $msi -Force -ErrorAction SilentlyContinue; Write-Log 'msi removed' }");
+            sb.AppendLine("if ($installOk -and ($updaterExe -ne '')) { Remove-Item -LiteralPath (Split-Path -Parent $updaterExe) -Recurse -Force -ErrorAction SilentlyContinue }");
             sb.AppendLine("Write-Log '=== update bootstrap end ==='");
             return sb.ToString();
         }

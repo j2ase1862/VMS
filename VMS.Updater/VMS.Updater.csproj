@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows7.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <ApplicationIcon>..\VMS\icon\Vasim.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="..\VMS\icon\Vasim.ico" Link="Resources\Vasim.ico" />
+  </ItemGroup>
+
+  <!-- 주의: 패키지는 CommunityToolkit.Mvvm 하나만 유지할 것.
+       업데이트 부트스트랩이 설치 폴더에서 임시 폴더로 VMS.Updater.* +
+       CommunityToolkit.Mvvm.dll 만 복사해 실행한다 (자기 자신이 MSI 로 교체되는
+       동안 잠긴 파일이 없도록). 패키지를 추가하면 그 복사 목록도 함께 늘려야 한다
+       — UpdateInstallService.BuildBootstrapScript 참조. -->
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+  </ItemGroup>
+
+  <!-- After build, copy output to VMS output directory (MSI 하베스트 대상) -->
+  <Target Name="CopyToVmsOutput" AfterTargets="Build">
+    <PropertyGroup>
+      <VmsOutputDir>..\VMS\bin\$(Configuration)\net8.0-windows7.0\</VmsOutputDir>
+    </PropertyGroup>
+    <ItemGroup>
+      <UpdaterOutputFiles Include="$(TargetDir)**\*.*" />
+    </ItemGroup>
+    <MakeDir Directories="$(VmsOutputDir)" Condition="!Exists('$(VmsOutputDir)')" />
+    <Copy SourceFiles="@(UpdaterOutputFiles)" DestinationFolder="$(VmsOutputDir)%(RecursiveDir)" SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>
