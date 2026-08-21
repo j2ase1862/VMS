@@ -1,0 +1,116 @@
+<Window x:Class="VMS.Updater.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:VMS.Updater.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=vm:UpdaterViewModel}"
+        Title="BODA Vision System 업데이트"
+        Icon="Resources/Vasim.ico"
+        Width="480" SizeToContent="Height"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        ResizeMode="NoResize" WindowStartupLocation="CenterScreen"
+        FontFamily="Segoe UI, Malgun Gothic">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+
+        <!-- 진행률 바: 트랙 슬레이트 + Indigo→Cyan 그라데이션 인디케이터 (VMS 다크 테마) -->
+        <Style x:Key="UpdateProgressBar" TargetType="ProgressBar">
+            <Setter Property="Height" Value="8" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ProgressBar">
+                        <Grid>
+                            <Border Background="#334155" CornerRadius="4" />
+                            <Border x:Name="PART_Track" />
+                            <Border x:Name="PART_Indicator"
+                                    HorizontalAlignment="Left" CornerRadius="4">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#6366F1" Offset="0" />
+                                        <GradientStop Color="#06B6D4" Offset="1" />
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                            </Border>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border CornerRadius="10" BorderThickness="1" BorderBrush="#334155"
+            MouseLeftButtonDown="OnDragWindow">
+        <Border.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="0.3,1">
+                <GradientStop Color="#1E293B" Offset="0" />
+                <GradientStop Color="#0F172A" Offset="0.7" />
+            </LinearGradientBrush>
+        </Border.Background>
+
+        <StackPanel Margin="26,22,26,26">
+            <!-- 헤더: 로고 칩 + 제목/버전 -->
+            <StackPanel Orientation="Horizontal">
+                <Border Width="40" Height="40" Background="White" CornerRadius="10">
+                    <Image Source="Resources/Vasim.ico" Width="26" Height="26"
+                           RenderOptions.BitmapScalingMode="HighQuality" />
+                </Border>
+                <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="BODA Vision System 업데이트"
+                               FontSize="15" FontWeight="Bold" Foreground="#F8FAFC" />
+                    <TextBlock Text="{Binding VersionText}"
+                               FontSize="11.5" Foreground="#94A3B8" />
+                </StackPanel>
+            </StackPanel>
+
+            <!-- 상태 + 퍼센트 -->
+            <Grid Margin="0,24,0,8">
+                <TextBlock Text="{Binding StatusText}" FontSize="12.5" Foreground="#CBD5E1"
+                           HorizontalAlignment="Left" TextTrimming="CharacterEllipsis"
+                           Margin="0,0,52,0" />
+                <TextBlock Text="{Binding Percent, StringFormat={}{0}%}"
+                           FontSize="12.5" FontWeight="Bold" Foreground="#06B6D4"
+                           HorizontalAlignment="Right" />
+            </Grid>
+
+            <ProgressBar Style="{StaticResource UpdateProgressBar}"
+                         Minimum="0" Maximum="100" Value="{Binding Percent, Mode=OneWay}" />
+
+            <TextBlock Margin="0,14,0,0" FontSize="11" Foreground="#64748B"
+                       Text="설치가 끝나면 VMS가 자동으로 다시 시작됩니다. 창을 닫지 마세요.">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Failed}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <!-- 실패 시에만: 닫기 버튼 -->
+            <Button Content="닫기" Command="{Binding CloseCommand}"
+                    Visibility="{Binding Failed, Converter={StaticResource BoolToVis}}"
+                    HorizontalAlignment="Right" Margin="0,16,0,0"
+                    Padding="22,6" FontSize="12.5" Foreground="#F8FAFC"
+                    BorderThickness="0" Cursor="Hand">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Background="#EF4444" CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#DC2626" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+        </StackPanel>
+    </Border>
+</Window>

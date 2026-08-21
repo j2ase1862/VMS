@@ -185,7 +185,9 @@ namespace VMS.Core.Tests.Services
             Assert.Contains("'BodaVmsWeb'", script);
             Assert.Contains("$wasRunning", script);
             Assert.Contains("$wasAuto", script);
-            // 3) msiexec 설치 (조용한 진행률 + 재부팅 금지)
+            // 3) 설치 — 업데이터 UI 우선 (임시 폴더 스테이징) + msiexec /passive 폴백
+            Assert.Contains("VMS.Updater.exe", script);
+            Assert.Contains("CommunityToolkit.Mvvm.dll", script); // 스테이징 복사 목록
             Assert.Contains("msiexec.exe", script);
             Assert.Contains("/passive", script);
             Assert.Contains("/norestart", script);
@@ -196,6 +198,31 @@ namespace VMS.Core.Tests.Services
             // 5) VMS 재실행 (explorer 경유 — 상승 권한 미상속)
             Assert.Contains("explorer.exe", script);
             Assert.Contains(@"C:\Program Files\BODA VMS\VMS.exe", script);
+        }
+
+        [Fact]
+        public void BuildBootstrapScript_WithCurrentVersion_PassesUpdaterVersionArg()
+        {
+            var script = UpdateInstallService.BuildBootstrapScript(
+                msiPath: @"C:\Temp\BODA-VMS-Update\VMS-1.12.0.msi",
+                vmsExePath: @"C:\Program Files\BODA VMS\VMS.exe",
+                vmsPid: 1,
+                logPath: @"C:\ProgramData\BODA\VMS\update-bootstrap.log",
+                currentVersion: "1.11.0");
+
+            Assert.Contains("'--current', '1.11.0'", script);
+        }
+
+        [Fact]
+        public void BuildBootstrapScript_WithoutCurrentVersion_OmitsVersionArg()
+        {
+            var script = UpdateInstallService.BuildBootstrapScript(
+                msiPath: @"C:\Temp\BODA-VMS-Update\VMS-1.12.0.msi",
+                vmsExePath: @"C:\Program Files\BODA VMS\VMS.exe",
+                vmsPid: 1,
+                logPath: @"C:\ProgramData\BODA\VMS\update-bootstrap.log");
+
+            Assert.DoesNotContain("--current", script);
         }
 
         [Fact]

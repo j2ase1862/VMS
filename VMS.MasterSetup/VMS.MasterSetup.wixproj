@@ -2,6 +2,13 @@
 
   <PropertyGroup>
     <!--
+      커스텀 UI(WixUI_VmsInstall)는 표준 다이얼로그 문자열을 UI.wixext 의
+      로컬라이제이션에서 가져온다 — Cultures 미지정 시 en-US 로 링크되므로
+      한국어(ko-KR)를 명시해야 설치 마법사 문구가 한글로 나온다.
+      Firewall 확장은 ko-KR 문자열이 없어 FirewallStrings.ko-KR.wxl 로 보충.
+    -->
+    <Cultures>ko-KR</Cultures>
+    <!--
       Directory.Build.props 의 $(Version) 을 WiX preprocessor 변수로 전달.
       Package.wxs 가 $(var.BuildVersion) 으로 참조 → MSI/Assembly 버전 동기화.
       MSI 는 4 부분(major.minor.build.revision) 형식 요구하므로 누락 시 .0 보강.
@@ -26,6 +33,16 @@
     <HasWebPayload Condition="Exists('$(WebPayloadDir)BODA.VMS.Web.exe')">true</HasWebPayload>
     <DefineConstants Condition="'$(HasWebPayload)' == 'true'">$(DefineConstants);WebPayloadDir=$(WebPayloadDir)</DefineConstants>
   </PropertyGroup>
+
+  <!-- Cultures 지정 시 WiX SDK 가 산출물을 bin\Release\ko-KR\ 하위로 내린다.
+       릴리즈 절차(release_manual_procedure)·CI(build.yml)가 bin\Release\*.msi 를
+       참조하므로 루트로 옮겨 기존 경로 계약을 유지한다. -->
+  <Target Name="FlattenCultureOutput" AfterTargets="Build">
+    <ItemGroup>
+      <CultureOutput Include="$(OutputPath)ko-KR\*.msi" />
+    </ItemGroup>
+    <Move SourceFiles="@(CultureOutput)" DestinationFolder="$(OutputPath)" Condition="'@(CultureOutput)' != ''" />
+  </Target>
 
   <Target Name="WarnNoWebPayload" BeforeTargets="CoreCompile" Condition="'$(HasWebPayload)' != 'true'">
     <Warning Text="WebPayload 없음 — Web 서버 미포함 MSI (CI/개발 빌드 전용). 릴리즈 빌드는 tools/stage-web-payload.ps1 을 먼저 실행하세요." />
