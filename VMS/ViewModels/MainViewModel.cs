@@ -2102,7 +2102,18 @@ namespace VMS.ViewModels
             try
             {
                 var lots = await _lotClient.GetOpenByWorkOrderAsync(workOrderId);
-                if (lots == null) return; // 통신 실패 — 기존 상태 유지
+                if (lots == null)
+                {
+                    // 통신 실패(HTTP 비정상/역직렬화 실패 포함) — 기존 상태 유지.
+                    // 콤보가 계속 비어 보이는 현장 진단용으로 1회만 기록 (폴링 스팸 방지, 성공 시 리셋).
+                    if (!_openLotFetchFailureLogged)
+                    {
+                        _openLotFetchFailureLogged = true;
+                        LogService?.Log($"WO {workOrderId} Open Lot 목록 조회 실패 — Web 서버 응답 없음/비정상 (콤보 갱신 보류, {reason})", LogLevel.Warning, "WorkOrder");
+                    }
+                    return;
+                }
+                _openLotFetchFailureLogged = false;
 
                 await Application.Current.Dispatcher.InvokeAsync(() =>
                 {
@@ -2141,6 +2152,9 @@ namespace VMS.ViewModels
                 LogService?.Log($"Open Lot 목록 조회 실패: {ex.Message}", LogLevel.Warning, "WorkOrder");
             }
         }
+
+        // Open Lot 조회 실패 로그 래치 — 폴링(60초) 반복 실패의 로그 스팸 방지.
+        private bool _openLotFetchFailureLogged;
 
         // Lot 폴링 안전망 — SignalR 미연결 대비, WO 선택 중에만 60초 주기.
         private System.Windows.Threading.DispatcherTimer? _lotPollTimer;
