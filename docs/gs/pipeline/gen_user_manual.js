@@ -100,12 +100,16 @@ function tableBlock(b) {
 
 // ---- screenshot injection anchors (normalized heading text) ----
 const POST = {
+  "2.1 VMS 클라이언트 (MSI)": [
+    () => imgPara("70_msi_welcome.png", 420),
+    () => caption("그림. 설치 마법사 시작 화면 — BODA 브랜드 배너, [다음]/[취소] (라이선스 동의 단계 없음)"),
+  ],
   "3.1 첫 실행 화면": [
     () => imgPara("01_vms_main.png", 600), () => caption("그림. VMS 첫 실행 화면 (로그인 전) — 헤더 / KPI 스트립 / 카메라 표시 영역"),
   ],
-  "Camera Control 섹션": [
-    () => ctlImg("sec_camera_control.png", 290),
-    () => caption("그림. Camera Control 섹션 — [Grab] / [Live Start] / [Roller] (카메라 연결 후 활성)"),
+  "Roller Inspection 섹션": [
+    () => ctlImg("sec_roller_inspection.png", 290),
+    () => caption("그림. Roller Inspection 섹션 — [Roller] 토글 (작업지시 선택 + 라인스캔 카메라 구성 시 활성)"),
   ],
   "Recipe 섹션": [
     () => ctlImg("sec_recipe.png", 290),
@@ -149,7 +153,7 @@ const POST = {
   ],
   "3.2.5 Ctx (Inspection Context)": [
     () => ctlImg("hdr_ctx_chip.png", 360),
-    () => caption("그림. Ctx 칩 — WO / Lot / S/N 입력(검사 결과 업로드 시 자동 첨부) + [✕] 전체 비우기"),
+    () => caption("그림. Ctx 칩 — WO / Lot 콤보(Open Lot 목록에서 선택, 멀티 Lot 병행) / S/N + [✕] 전체 비우기"),
   ],
   "3.2.6 AUTO RUN": [
     () => ctlImg("hdr_autorun_btn.png", 150),
@@ -163,7 +167,7 @@ const POST = {
     () => ctlImg("hdr_panel_toggle.png", 36),
     () => caption("그림. 헤더 우측 설정(⚙) 토글 — 사이드 패널 열기/닫기 (시스템 사용자 로그인 필요)"),
     () => imgPara("05_vms_sidepanel.png", 600),
-    () => caption("그림. 사이드 패널(Settings) 펼친 상태 — Camera Control / Recipe / External Tools / Updates / Web Parameters / Image Saving"),
+    () => caption("그림. 사이드 패널(Settings) 펼친 상태 — Roller Inspection / Recipe / External Tools / Updates / Web Parameters / Image Saving"),
     () => P("Updates 섹션 — 새 버전 감지 배지와 수동 체크 버튼(업그레이드 절차는 §6.5):"),
     () => ctlImg("sec_updates.png", 290),
     () => caption("그림. Updates 섹션 — [Check for updates], 새 버전 감지 시 배지 표시"),
@@ -307,8 +311,8 @@ const POST = {
     () => caption("그림. Dashboard — 현장 KPI(전체 클라이언트/금일 생산·합격/불량률) + 사이드 메뉴"),
   ],
   "4.5 Alarms": [() => imgPara("43_web_알람.png", 600), () => caption("그림. Alarms — 알람 목록")],
-  "4.6 Production History": [() => imgPara("44_web_생산_이력.png", 600), () => caption("그림. Production History — 라인/기간/결과 필터, 검사 이력(이미지 포함), Excel 내보내기")],
-  "4.7 Work Orders": [() => imgPara("45_web_작업_지시.png", 600), () => caption("그림. Work Orders — 작업지시 목록/관리")],
+  "4.6 Production History": [() => imgPara("44_web_생산_이력.png", 600), () => caption("그림. Production History — 라인/작업지시/LOT/기간(같은 날짜 = 하루치)/결과 필터, 요약 카드, WO/LOT 열, Excel 내보내기")],
+  "4.7 Work Orders": [() => imgPara("45_web_작업_지시.png", 600), () => caption("그림. Work Orders — 작업지시 목록(진척률·상태·[시작]/[완료]/[LOT] 버튼), 검사마다 실시간 갱신")],
   "4.8 Products": [() => imgPara("46_web_제품.png", 600), () => caption("그림. Products — 제품 관리")],
   "4.9 Inspection Items (Recipes + Parameters)": [() => imgPara("58_web_검사_항목.png", 600), () => caption("그림. Inspection Items — 검사 항목(레시피/파라미터)")],
   "4.10 Operators": [() => imgPara("47_web_작업자.png", 600), () => caption("그림. Operators — 작업자 관리")],
@@ -329,7 +333,7 @@ const POST = {
 const ADMIN_BEFORE = "4. BODA.VMS.Web (관리자 / MES)";
 function adminDialogsSection() {
   const out = [];
-  out.push(new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("3.10 관리자 도구 다이얼로그 (Admin 전용)")] }));
+  out.push(new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("3.11 관리자 도구 다이얼로그 (Admin 전용)")] }));
   out.push(P("헤더의 User Management 아이콘과 Admin Tools(⋮) 드롭다운에서 실행되는 관리자 전용 다이얼로그다. (Admin 권한 로그인 시에만 표시) 각 그림 아래에 화면의 주요 컨트롤과 그 역할을 정리했다."));
   const dlgs = [
     ["23_dlg_usermgmt.png", "User Management — 사용자 계정·권한(UserGrade) 관리", [
@@ -534,7 +538,7 @@ function wizardSection() {
         ["활성화", ["P6_withboard_17_CheckBox_활성화_체크_해제_시_시스템_부팅_시_인스턴스_생성_skip.png"], "해제 시 시스템 부팅 시 인스턴스 생성 skip", "사용"],
         ["설명", ["P6_withboard_19_TextBox_TextBox.png"], "보드에 대한 메모(선택 입력)", "—"],
       ]),
-      P("※ 현재 Mock 구현만 활성 — 실제 ADLink DASK / Advantech DAQNavi SDK 통합은 Phase 3 작업입니다.", { size: 18, color: "595959" }),
+      P("※ IO 보드를 실제로 쓰려면 제조사 드라이버(ADLink DASK / Advantech DAQNavi)를 64비트(x64)용으로 설치해야 합니다 — VMS 는 64비트 프로그램입니다 (§7.1 트러블슈팅 참고).", { size: 18, color: "595959" }),
     ]],
     ["10_appsetup_step7.png", 470, "7단계 — Security Mode: 운영(Production)/개발(Development) 선택, [Finish] 로 저장", [
       P("마지막 단계에서 이 PC 의 보안 모드를 선택한다. 여기서 선택한 값이 설정 파일에 함께 저장되며, 보안 모드가 저장되어 있지 않으면 VMS 가 시작 시 '보안 정책 오류' 를 표시하고 실행되지 않는다. 현장(운영) PC 는 반드시 Production 을 선택한다."),

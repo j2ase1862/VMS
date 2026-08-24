@@ -181,8 +181,12 @@ namespace VMS.Capture
             {
                 // Ctx 칩에 문서용 대표 값 — public 프로퍼티(부작용: ParameterSyncService 필드 설정뿐).
                 vm.WorkOrderIdText = "7144";
-                vm.LotIdText = "12";
                 vm.SerialNumberText = "SN-2026-0001";
+                // 멀티 Lot 병행 운용 상태 — Open Lot 콤보를 문서용 대표 값 2건으로 연출.
+                vm.OpenLots.Clear();
+                vm.OpenLots.Add(new Models.LotComboItem { Id = 12, LotNumber = "20260521-WO-20260521-001-001" });
+                vm.OpenLots.Add(new Models.LotComboItem { Id = 13, LotNumber = "20260521-WO-20260521-001-002" });
+                vm.SelectedOpenLot = vm.OpenLots[0];
             }, new (string, Func<FrameworkElement?>)[]
             {
                 ("hdr_operator_chip", OperatorChip),
@@ -239,7 +243,7 @@ namespace VMS.Capture
                 if (window.FindName("SidePanel") is System.Windows.Controls.Border p) p.Width = 340;
             }, new (string, Func<FrameworkElement?>)[]
             {
-                ("sec_camera_control", () => SectionCard("Camera Control")),
+                ("sec_roller_inspection", () => SectionCard("Roller Inspection")),
                 ("sec_recipe", () => SectionCard("Recipe")),
                 ("sec_external_tools", () => SectionCard("External Tools")),
                 ("sec_updates", () => SectionCard("Updates")),
