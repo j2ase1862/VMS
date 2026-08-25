@@ -112,6 +112,19 @@ namespace VMS
                 return;
             }
 
+            // 라이선스 검사 — 전환기 호환 모드 (docs/design/license-spec.md §9 1단계):
+            // 미설치/만료 등 어떤 상태여도 차단하지 않고 감사로그 + 헬스체크로 표면화만.
+            // 강제 모드 전환 시 result.IsBlocking 분기로 SecurityOptions 와 같은
+            // MessageBox + Shutdown(2) 패턴을 여기서 활성화한다.
+            try
+            {
+                VMS.Core.Security.Licensing.LicenseBootCheck.Run();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] LicenseBootCheck 실패 (best-effort): {ex.Message}");
+            }
+
             // 감사 로그 보존 정책 — system_config.json 의 "auditRetentionDays" 키 (기본 365).
             // 오늘 파일은 보존 기간 무관 유지. 정리 작업 자체도 AuditCategory.System 으로 기록.
             try

@@ -46,7 +46,7 @@ namespace VMS.Core.Tests.Health
 
             Assert.NotEmpty(report.Items);
             Assert.NotEqual(HealthCheckStatus.Fail, report.OverallStatus);
-            Assert.Equal(7, report.Items.Count);  // 7개 검사 항목 (P3a: WebServer, 다중 인스턴스: Instance 추가)
+            Assert.Equal(8, report.Items.Count);  // 8개 검사 항목 (P3a: WebServer, 다중 인스턴스: Instance, 라이선스: License 추가)
         }
 
         [Fact]
@@ -71,6 +71,17 @@ namespace VMS.Core.Tests.Health
 
             var sysCfg = report.Items.Single(i => i.Name == "SystemConfig");
             Assert.Equal(HealthCheckStatus.Pass, sysCfg.Status);
+        }
+
+        [Fact]
+        public void Run_Includes_License_item_never_Fail()
+        {
+            // 라이선스는 전환기 호환 모드 (spec §9) — 미설치 포함 어떤 상태여도 Warn 까지만.
+            var report = StartupHealthCheck.Run(_appDataDir, _auditDir, auditAfter: false);
+
+            var lic = report.Items.Single(i => i.Name == "License");
+            Assert.NotEqual(HealthCheckStatus.Fail, lic.Status);
+            Assert.False(string.IsNullOrWhiteSpace(lic.Message));
         }
 
         // ─── SystemConfig 누락 → Warn ─────────────────────────────
