@@ -49,6 +49,21 @@
     <Compile Include="..\VMS.VisionSetup\Models\HelpContent.cs" Link="Models\HelpContent.cs" />
   </ItemGroup>
 
+  <!-- VMS.Core 의 라이선스 검증 코드를 Linked Compile 로 재사용 (spec §8) —
+       VMS.Core ProjectReference 는 OpenCvSharp/HelixToolkit 을 끌고 오므로 회피.
+       tools/licgen 과 동일한 패턴: canonical JSON 정규화가 제품/도구 간 단일 구현이
+       되도록 파일 자체를 공유한다. LicenseBootCheck 는 AuditLogger 의존이라 제외. -->
+  <ItemGroup>
+    <Compile Include="..\VMS.Core\Security\Licensing\LicensePayload.cs" Link="Licensing\LicensePayload.cs" />
+    <Compile Include="..\VMS.Core\Security\Licensing\LicenseCanonicalJson.cs" Link="Licensing\LicenseCanonicalJson.cs" />
+    <Compile Include="..\VMS.Core\Security\Licensing\LicenseCrypto.cs" Link="Licensing\LicenseCrypto.cs" />
+    <Compile Include="..\VMS.Core\Security\Licensing\LicenseKeyring.cs" Link="Licensing\LicenseKeyring.cs" />
+    <Compile Include="..\VMS.Core\Security\Licensing\LicenseValidator.cs" Link="Licensing\LicenseValidator.cs" />
+    <Compile Include="..\VMS.Core\Security\Licensing\LicenseEvaluation.cs" Link="Licensing\LicenseEvaluation.cs" />
+    <Compile Include="..\VMS.Core\Security\Licensing\MachineFingerprint.cs" Link="Licensing\MachineFingerprint.cs" />
+    <Compile Include="..\VMS.Core\Security\Licensing\LicenseFileStore.cs" Link="Licensing\LicenseFileStore.cs" />
+  </ItemGroup>
+
   <!-- After build, copy output to VMS output directory -->
   <Target Name="CopyToVmsOutput" AfterTargets="Build">
     <PropertyGroup>

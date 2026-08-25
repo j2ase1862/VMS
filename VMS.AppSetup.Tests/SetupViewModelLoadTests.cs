@@ -38,6 +38,7 @@ namespace VMS.AppSetup.Tests
             public void ShowInformation(string message, string title) { }
             public void ShowError(string message, string title) => Errors.Add((message, title));
             public bool ShowConfirmation(string message, string title) => true;
+            public string? ShowOpenFileDialog(string title, string filter) => null;
         }
 
         private static (SetupViewModel vm, StubDialogService dialog) CreateVm(

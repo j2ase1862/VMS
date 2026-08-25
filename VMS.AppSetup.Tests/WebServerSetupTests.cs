@@ -206,6 +206,7 @@ namespace VMS.AppSetup.Tests
             public void ShowInformation(string message, string title) => Infos.Add(message);
             public void ShowError(string message, string title) => Errors.Add(message);
             public bool ShowConfirmation(string message, string title) => true;
+            public string? ShowOpenFileDialog(string title, string filter) => null;
         }
 
         private sealed class StubWebServerSetupService : IWebServerSetupService
