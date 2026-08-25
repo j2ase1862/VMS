@@ -43,6 +43,21 @@
     <Compile Include="..\VMS.VisionSetup\Models\HelpContent.cs" Link="Models\HelpContent.cs" />
   </ItemGroup>
 
+  <!-- 공용 다크 메시지 다이얼로그 (Phase B) — AppSetup 과 동일한 Linked Page 관례.
+       다이얼로그가 참조하는 WindowStyles.xaml 도 함께 링크하고, App.xaml 에서
+       DarkTheme 보다 먼저 merge (암시적 스타일 충돌 시 기존 DarkTheme 이 우선). -->
+  <ItemGroup>
+    <Page Include="..\VMS.VisionSetup\Styles\WindowStyles.xaml" Link="Styles\WindowStyles.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\VMS.VisionSetup\Views\Common\MessageDialog.xaml" Link="Views\Common\MessageDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Compile Include="..\VMS.VisionSetup\Views\Common\MessageDialog.xaml.cs" Link="Views\Common\MessageDialog.xaml.cs" />
+  </ItemGroup>
+
   <ItemGroup>
     <Content Include="scripts\*.py">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

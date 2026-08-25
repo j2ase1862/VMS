@@ -4,6 +4,9 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <!-- 공용 MessageDialog 용 토큰 (Linked Page). DarkTheme 보다 먼저 merge —
+                     겹치는 암시적 스타일(ToolTip 등)은 뒤의 DarkTheme 이 우선해 기존 룩 유지. -->
+                <ResourceDictionary Source="Styles/WindowStyles.xaml"/>
                 <ResourceDictionary Source="Themes/DarkTheme.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

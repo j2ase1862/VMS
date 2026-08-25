@@ -40,19 +40,21 @@ namespace VMS.Updater
 
             if (string.IsNullOrWhiteSpace(msiPath))
             {
-                MessageBox.Show(
+                VMS.VisionSetup.Views.Common.MessageDialog.Show(
+                    owner: null,
                     "사용법: VMS.Updater.exe <MSI 경로> [--current <현재 버전>]\n" +
                     "이 프로그램은 VMS 인앱 업데이트가 자동으로 실행합니다.",
-                    "BODA VMS Updater", MessageBoxButton.OK, MessageBoxImage.Information);
+                    "BODA VMS Updater", VMS.VisionSetup.Views.Common.MessageDialogKind.Info);
                 Shutdown(ExitCodeInvalidArgs);
                 return;
             }
 
             if (!File.Exists(msiPath))
             {
-                MessageBox.Show(
+                VMS.VisionSetup.Views.Common.MessageDialog.Show(
+                    owner: null,
                     $"MSI 파일을 찾을 수 없습니다:\n{msiPath}",
-                    "BODA VMS Updater", MessageBoxButton.OK, MessageBoxImage.Error);
+                    "BODA VMS Updater", VMS.VisionSetup.Views.Common.MessageDialogKind.Error);
                 Shutdown(ExitCodePackageMissing);
                 return;
             }
