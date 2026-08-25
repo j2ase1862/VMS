@@ -4,9 +4,9 @@
     릴리스마다 이 파일만 갱신하면 됨.
   -->
   <PropertyGroup>
-    <Version>1.15.0</Version>
-    <AssemblyVersion>1.15.0.0</AssemblyVersion>
-    <FileVersion>1.15.0.0</FileVersion>
+    <Version>1.16.0</Version>
+    <AssemblyVersion>1.16.0.0</AssemblyVersion>
+    <FileVersion>1.16.0.0</FileVersion>
     <Company>BODA Vision AI</Company>
     <Product>BODA VMS</Product>
     <Copyright>Copyright © BODA Vision AI 2026</Copyright>
