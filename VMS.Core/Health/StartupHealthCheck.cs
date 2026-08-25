@@ -70,6 +70,7 @@ namespace VMS.Core.Health
     /// 5. 디스크 여유 용량 ≥ 1 GB (운영 시 검사 결과 / 감사 로그 누적 여유)
     /// 6. Web 서버 도달성 (검토사항 P3a) — system_config.json:webServerUrl 의 /health 응답.
     ///    Web 통신 미설정이면 skip, URL 잘못/서버 미가동이면 Warn (운영자 조치 필요).
+    /// 7. 라이선스 상태 (spec §9 전환기) — 미설치/만료 임박 등 정상 외 상태는 전부 Warn.
     ///
     /// 결과는 단일 AuditCategory.System "StartupHealthCheck" 이벤트로 기록 —
     /// Overall=Pass/Warn/Fail + 각 항목 상태를 details 에 인라인.
@@ -113,7 +114,8 @@ namespace VMS.Core.Health
                 CheckSystemConfigPresent(appDataDir),
                 CheckSecurityOptionsLoaded(),
                 CheckDiskFreeSpace(appDataDir, MinFreeBytes),
-                CheckWebServerReachable(webServerUrl, httpClient)
+                CheckWebServerReachable(webServerUrl, httpClient),
+                CheckLicenseState()
             };
 
             var report = new HealthCheckReport { Items = items };
@@ -332,6 +334,39 @@ namespace VMS.Core.Health
             finally
             {
                 owned?.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// 라이선스 상태 표면화 — 전환기 호환 모드(spec §9)라 어떤 상태도 Fail 이 아닌 Warn.
+        /// LicenseBootCheck.Run() 이 먼저 실행됐으면 그 결과를 재사용 (파일 IO 중복 회피),
+        /// 아니면(BootCheck 를 안 부르는 앱) 여기서 직접 평가.
+        /// </summary>
+        private static HealthCheckItem CheckLicenseState()
+        {
+            try
+            {
+                var eval = Security.Licensing.LicenseBootCheck.Current
+                    ?? Security.Licensing.LicenseBootCheck.Evaluate(
+                        licensePath: null,
+                        machineFingerprint: Security.Licensing.MachineFingerprint.GetCode(),
+                        today: DateOnly.FromDateTime(DateTime.Now));
+
+                return new HealthCheckItem
+                {
+                    Name = "License",
+                    Status = eval.NeedsAttention ? HealthCheckStatus.Warn : HealthCheckStatus.Pass,
+                    Message = $"{eval.Status} — {eval.Message}"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new HealthCheckItem
+                {
+                    Name = "License",
+                    Status = HealthCheckStatus.Warn,
+                    Message = $"확인 실패: {ex.GetType().Name} {ex.Message}"
+                };
             }
         }
 

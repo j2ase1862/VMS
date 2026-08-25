@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows7.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Boda.LicGen</RootNamespace>
+    <AssemblyName>licgen</AssemblyName>
+    <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
+  </PropertyGroup>
+
+  <!-- 사내 발급 도구 — MSI 에 절대 동봉하지 않는다 (spec §7).
+       VMS.Core 의 라이선스 코드를 파일 링크로 공유 — canonical JSON 정규화가
+       제품/도구 간 단 하나의 구현이 되도록 (직렬화 불일치 = 현장 검증 실패 사고).
+       LicenseBootCheck 는 AuditLogger(VMS.Core 전체) 의존이라 링크하지 않음. -->
+  <ItemGroup>
+    <Compile Include="..\..\VMS.Core\Security\Licensing\LicensePayload.cs" Link="Shared\LicensePayload.cs" />
+    <Compile Include="..\..\VMS.Core\Security\Licensing\LicenseCanonicalJson.cs" Link="Shared\LicenseCanonicalJson.cs" />
+    <Compile Include="..\..\VMS.Core\Security\Licensing\LicenseCrypto.cs" Link="Shared\LicenseCrypto.cs" />
+    <Compile Include="..\..\VMS.Core\Security\Licensing\LicenseKeyring.cs" Link="Shared\LicenseKeyring.cs" />
+    <Compile Include="..\..\VMS.Core\Security\Licensing\LicenseValidator.cs" Link="Shared\LicenseValidator.cs" />
+    <Compile Include="..\..\VMS.Core\Security\Licensing\LicenseEvaluation.cs" Link="Shared\LicenseEvaluation.cs" />
+    <Compile Include="..\..\VMS.Core\Security\Licensing\MachineFingerprint.cs" Link="Shared\MachineFingerprint.cs" />
+    <Compile Include="..\..\VMS.Core\Security\Licensing\LicenseFileStore.cs" Link="Shared\LicenseFileStore.cs" />
+  </ItemGroup>
+
+</Project>

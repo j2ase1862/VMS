@@ -43,17 +43,19 @@
     "edition": "Standard",
     "features": [],                         // 예약: "deeplearning","3d","weldteach"
     "maxClients": 5,                        // 좌석 수 (단일 PC = 1)
-    "fingerprint": "A3F2-9K71-BC04-D8E1",   // 바인딩 대상 지문 (Internal은 "*" 허용)
+    "fingerprint": "A3F2K-9K71C-BC04D",     // 바인딩 대상 지문 (Internal은 "*" 허용)
     "issuedAt": "2026-08-25",
     "maintenanceUntil": "2027-08-25",       // 이후 업데이트 차단 (영구+유지보수 모델)
     "expiresAt": null,                      // null=영구. 값 있으면 구독형: 실행 차단
     "keyId": "boda-2026"                    // 서명 키 식별 (rotation 대비)
   },
-  "signature": "base64(Ed25519(canonical-json(payload)))"
+  "signature": "base64(ECDSA-P256-SHA256(canonical-json(payload)))"
 }
 ```
 
-- **서명**: Ed25519. 검증은 제품에 내장된 공개키 목록(`keyId` → 공개키)으로 오프라인 수행.
+- **서명**: ECDSA P-256 + SHA-256 (구현 시 확정 — 초안의 Ed25519는 .NET 8 표준 라이브러리에
+  없어, 외부 패키지 없이 가능한 P-256으로 변경). 검증은 제품에 내장된 공개키 목록
+  (`keyId` → 공개키, `LicenseKeyring`)으로 오프라인 수행.
   키 유출 시 새 `keyId`로 발급 전환(rotation) — 기존 발급분은 구 공개키로 계속 유효.
 - **canonical JSON**: 서명 대상은 payload의 정규화 직렬화(키 정렬·공백 없음). 직렬화 옵션 차이로
   검증이 깨지는 사고 방지 — 구현 시 VMS/Web/발급 도구가 **같은 정규화 코드를 공유**해야 한다
@@ -71,7 +73,9 @@
 - **2/3 일치 규칙**: 3요소 중 2요소가 맞으면 유효. 공장 PC의 NIC 추가/교체·보드 수리에 대한 관용.
   (구현: 요소별 해시 3개를 라이선스에 넣는 게 아니라, 지문 코드 자체를 요소별 세그먼트로 구성해
   세그먼트 단위 비교 — 상세는 구현 시 확정)
-- **표시 포맷**: `XXXX-XXXX-XXXX-XXXX` (16자, Crockford Base32 — 0/O·1/I 혼동 문자 제외).
+- **표시 포맷**: `XXXXX-XXXXX-XXXXX` (15자 3그룹, Crockford Base32 — 0/O·1/I 혼동 문자 제외).
+  그룹당 구성요소 1개(순서: MachineGuid·MAC·CPU)를 해시 25비트로 인코딩 — "2/3 일치"가
+  그룹 단위 문자열 비교로 직결된다 (구현: `MachineFingerprint`).
   **전화로 불러줄 수 있는 길이**가 요구사항이다 (§6 현장 발급 흐름).
 - 3요소 모두 바뀐 경우(=PC 교체)는 재발급이 정답이며, 발급 대장에 사유를 기록한다 (§7).
 
@@ -137,6 +141,8 @@ AppSetup 요구사항 (활성화 UI는 MSI가 아니라 AppSetup 담당 — 기�
 
 - **형태**: 소형 WPF 앱 (발급 담당자가 비개발자일 수 있음). 입력: 지문·고객·kind·에디션·
   maxClients·만료일 → 출력: `license.lic`.
+  1단계 구현은 콘솔 CLI(`tools/licgen` — keygen/fingerprint/issue/verify, JSONL 대장)로 선행 —
+  VMS.Core 라이선스 코드를 파일 링크로 공유해 canonical 정규화 단일 구현 보장. WPF+SQLite 대장은 후속.
 - **발급 대장 내장**: 모든 발급·재발급을 SQLite 한 파일에 자동 기록
   (licenseId·고객·조건·발급자·일시·재발급 사유). **라이선스의 본래 목적이 계약 관리이므로
   대장이 도구의 절반이다.** 재발급(PC 교체) 이력 추적 근거.
