@@ -1091,6 +1091,58 @@
                                 (docs/msi_build_guide.md §9 참고).
                             </TextBlock>
                         </Border>
+
+                        <!-- SW 라이선스 활성화 (docs/design/license-spec.md §6) — 지문 코드를 본사에
+                             전달해 발급받은 license.lic 를 USB 로 반입 후 여기서 설치 -->
+                        <Border Background="{StaticResource BrushBgCard}" CornerRadius="6" Padding="15" Margin="0,15,0,0">
+                            <StackPanel>
+                                <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="#FFD700" Margin="0,0,0,12"><Run Text="SW 라이선스"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="SW 라이선스" CustomDescription="이 PC 의 지문 코드를 본사에 전달하면 라이선스 파일(license.lic)이 발급됩니다. 발급받은 파일을 USB 등으로 가져와 [라이선스 파일 가져오기]로 설치하세요. 현재는 라이선스가 없어도 경고만 표시되고 동작에는 제한이 없습니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
+
+                                <TextBlock Style="{StaticResource LabelStyle}"><Run Text="이 PC 의 지문 코드 (발급 요청 시 본사에 전달)"/></TextBlock>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                    <TextBox Text="{Binding MachineFingerprintCode, Mode=OneWay}" IsReadOnly="True"
+                                             Style="{StaticResource WindowReadOnlyTextBox}" Width="200"
+                                             FontFamily="Consolas" VerticalContentAlignment="Center"/>
+                                    <Button Content="복사" Command="{Binding CopyFingerprintCommand}"
+                                            Style="{StaticResource ModernSecondaryButton}" Margin="8,0,0,0"/>
+                                </StackPanel>
+
+                                <TextBlock Style="{StaticResource LabelStyle}"><Run Text="현재 상태"/></TextBlock>
+                                <TextBlock Text="{Binding LicenseStatusText}" FontSize="12" TextWrapping="Wrap"
+                                           Margin="0,0,0,12">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{StaticResource BrushWarning}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LicenseStatusLevel}" Value="Ok">
+                                                    <Setter Property="Foreground" Value="{StaticResource BrushSuccess}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding LicenseStatusLevel}" Value="Error">
+                                                    <Setter Property="Foreground" Value="{StaticResource BrushDanger}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="라이선스 파일 가져오기..."
+                                            Command="{Binding ImportLicenseCommand}"
+                                            Style="{StaticResource ModernPrimaryButton}" Margin="0,0,10,0"/>
+                                    <Button Content="상태 새로고침"
+                                            Command="{Binding RefreshLicenseStatusCommand}"
+                                            Style="{StaticResource ModernSecondaryButton}"/>
+                                </StackPanel>
+                                <TextBlock Text="설치 중... (파일 검증 → 설치 경로 복사 — 권한이 필요하면 관리자 승인 창이 뜹니다)"
+                                           FontSize="11" Foreground="#FFD700" Margin="0,8,0,0"
+                                           Visibility="{Binding IsImportingLicense, Converter={StaticResource BoolToVisConverter}}"/>
+                                <TextBlock TextWrapping="Wrap" FontSize="11" Margin="0,10,0,0"
+                                           Foreground="{StaticResource BrushTextMuted}">
+                                    라이선스가 없어도 지금은 경고만 표시됩니다 (도입 전환기). PC 교체·재구성으로
+                                    지문이 바뀐 경우에는 위 지문 코드로 재발급을 요청하세요.
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                   </ScrollViewer>
                 </Grid>

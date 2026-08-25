@@ -1,6 +1,7 @@
 using VMS.AppSetup.Interfaces;
 using VMS.AppSetup.Models;
 using VMS.AppSetup.Services;
+using VMS.Core.Security.Licensing;
 using VMS.Camera.Models;
 using VMS.PLC.Models;
 using EulerConvention = VMS.Camera.Models.EulerConvention;
@@ -25,6 +26,8 @@ namespace VMS.AppSetup.ViewModels
         private readonly Action _shutdownAction;
         // null 허용: 테스트/캡처 경로에서 미주입 시 카드는 "미설치" 상태로만 동작
         private readonly IWebServerSetupService? _webServerSetup;
+        // null 허용: 미주입 시 라이선스 카드는 "확인 불가" 상태로만 동작
+        private readonly ILicenseSetupService? _licenseSetup;
 
         [ObservableProperty]
         private int _currentPage = 1;
@@ -220,6 +223,119 @@ namespace VMS.AppSetup.ViewModels
             }
         }
 
+        // ── Page 7: SW 라이선스 활성화 (docs/design/license-spec.md §6) ──
+        // 지문 코드를 본사에 전달해 발급받은 license.lic 를 USB 로 반입 → 여기서 가져오기.
+        // 전환기 호환 모드: 미설치여도 VMS 는 경고만 하고 동작한다 (spec §9).
+
+        [ObservableProperty]
+        private string _machineFingerprintCode = string.Empty;
+
+        [ObservableProperty]
+        private string _licenseStatusText = string.Empty;
+
+        // 상태색 트리거용: "Ok"(초록) / "Warn"(노랑) / "Error"(빨강)
+        [ObservableProperty]
+        private string _licenseStatusLevel = "Warn";
+
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(ImportLicenseCommand))]
+        private bool _isImportingLicense;
+
+        [RelayCommand]
+        private void RefreshLicenseStatus()
+        {
+            if (_licenseSetup == null)
+            {
+                LicenseStatusText = "확인 불가 (라이선스 서비스 미주입)";
+                LicenseStatusLevel = "Warn";
+                return;
+            }
+
+            MachineFingerprintCode = _licenseSetup.GetMachineFingerprint();
+            var eval = _licenseSetup.GetStatus();
+            LicenseStatusText = $"{StatusLabel(eval.Status)} — {eval.Message}";
+            LicenseStatusLevel = eval.Status switch
+            {
+                LicenseStatus.Valid => "Ok",
+                LicenseStatus.Invalid or LicenseStatus.FingerprintMismatch or LicenseStatus.Expired => "Error",
+                _ => "Warn",  // Missing / 만료 임박 / 유예 / 유지보수 만료
+            };
+        }
+
+        private static string StatusLabel(LicenseStatus status) => status switch
+        {
+            LicenseStatus.Valid => "정상",
+            LicenseStatus.Missing => "미설치",
+            LicenseStatus.Invalid => "유효하지 않음",
+            LicenseStatus.FingerprintMismatch => "지문 불일치",
+            LicenseStatus.Expiring => "만료 임박",
+            LicenseStatus.ExpiredGrace => "만료 (유예 중)",
+            LicenseStatus.Expired => "만료",
+            LicenseStatus.MaintenanceExpiring => "유지보수 만료 임박",
+            LicenseStatus.MaintenanceExpired => "유지보수 만료",
+            _ => status.ToString(),
+        };
+
+        [RelayCommand]
+        private void CopyFingerprint()
+        {
+            if (string.IsNullOrEmpty(MachineFingerprintCode)) return;
+            try
+            {
+                System.Windows.Clipboard.SetText(MachineFingerprintCode);
+            }
+            catch (Exception)
+            {
+                // 클립보드 점유 충돌 (다른 앱이 잠근 경우) — 코드는 화면에 보이므로 무해
+            }
+        }
+
+        private bool CanImportLicense() => !IsImportingLicense;
+
+        [RelayCommand(CanExecute = nameof(CanImportLicense))]
+        private async Task ImportLicenseAsync()
+        {
+            if (_licenseSetup == null) return;
+
+            var path = _dialogService.ShowOpenFileDialog(
+                "라이선스 파일 선택", "라이선스 파일 (*.lic)|*.lic|모든 파일 (*.*)|*.*");
+            if (path == null) return;
+
+            var eval = _licenseSetup.ValidateCandidate(path);
+            if (eval.Status == LicenseStatus.Invalid)
+            {
+                _dialogService.ShowError($"라이선스 파일이 유효하지 않습니다.\n\n{eval.Message}", "라이선스 설치");
+                return;
+            }
+            if (eval.Status == LicenseStatus.FingerprintMismatch)
+            {
+                _dialogService.ShowError(
+                    $"이 PC 용으로 발급된 라이선스가 아닙니다.\n\n{eval.Message}\n\n" +
+                    $"본사에 이 PC 의 지문 코드를 전달해 재발급을 요청하세요:\n{MachineFingerprintCode}",
+                    "라이선스 설치");
+                return;
+            }
+
+            IsImportingLicense = true;
+            try
+            {
+                var result = await _licenseSetup.ImportAsync(path);
+                RefreshLicenseStatus();
+                if (!result.Success)
+                {
+                    _dialogService.ShowError($"라이선스를 설치하지 못했습니다.\n\n{result.Error}", "라이선스 설치");
+                    return;
+                }
+
+                var caution = eval.NeedsAttention ? $"\n\n⚠ 상태 확인 필요: {eval.Message}" : string.Empty;
+                _dialogService.ShowInformation($"라이선스 설치 완료.\n\n{eval.Message}{caution}", "라이선스 설치");
+            }
+            finally
+            {
+                IsImportingLicense = false;
+            }
+        }
+
         // Page 7: Security Mode — system_config.json:securityMode 로 저장.
         // 기본 Production: 현장 PC 에서 미선택 저장 시에도 RELEASE VMS 가 부팅 가능 + 보안 다운그레이드 없음.
         [ObservableProperty]
@@ -358,16 +474,18 @@ namespace VMS.AppSetup.ViewModels
         public bool IsNamedInstance => !VMS.Camera.Configuration.AppDataPaths.IsDefaultInstance;
 
         public SetupViewModel(IConfigurationService configService, IDialogService dialogService, Action shutdownAction,
-            IWebServerSetupService? webServerSetup = null)
+            IWebServerSetupService? webServerSetup = null, ILicenseSetupService? licenseSetup = null)
         {
             _configService = configService;
             _dialogService = dialogService;
             _shutdownAction = shutdownAction;
             _webServerSetup = webServerSetup;
+            _licenseSetup = licenseSetup;
 
             UpdatePageInfo();
             LoadExistingConfiguration();
             RefreshWebServerStatus();
+            RefreshLicenseStatus();
         }
 
         private void LoadExistingConfiguration()
@@ -647,8 +765,9 @@ namespace VMS.AppSetup.ViewModels
                     PageDescription = "Configure digital IO boards (ADLink / Advantech) used alongside the PLC.";
                     break;
                 case 7:
-                    PageTitle = "Security Mode";
-                    PageDescription = "Choose the security mode written to system_config.json.\n" +
+                    PageTitle = "Security & License";
+                    PageDescription = "Choose the security mode written to system_config.json, " +
+                        "and install the SW license issued for this PC.\n" +
                         "Production is required on field PCs — VMS refuses to start without an explicit mode.";
                     break;
             }

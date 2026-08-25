@@ -26,6 +26,13 @@ public partial class App : Application
             Shutdown(WebServerConfigApplier.RunStart(e.Args[1], e.Args[2]));
             return;
         }
+        // 라이선스 설치 상승 모드 — 설치 경로(ProgramData) 쓰기가 거부된 경우에만
+        // LicenseSetupService 가 이 분기로 재실행한다 (docs/design/license-spec.md §6).
+        if (e.Args.Length >= 3 && e.Args[0] == LicenseImportApplier.ArgName)
+        {
+            Shutdown(LicenseImportApplier.Run(e.Args[1], e.Args[2]));
+            return;
+        }
 
         // 다중 인스턴스 해석 — "--instance <이름>" 인자 → BODA_VMS_INSTANCE 환경변수 → 기본.
         // VMS 에서 System Setup 으로 실행되면 환경변수로 인스턴스가 자동 상속된다.
@@ -45,9 +52,11 @@ public partial class App : Application
         IConfigurationService configService = ConfigurationService.Instance;
         IDialogService dialogService = new DialogService();
         IWebServerSetupService webServerSetupService = new WebServerSetupService();
+        ILicenseSetupService licenseSetupService = new LicenseSetupService();
 
         var mainWindow = new MainWindow();
-        var setupVm = new SetupViewModel(configService, dialogService, () => Shutdown(), webServerSetupService);
+        var setupVm = new SetupViewModel(configService, dialogService, () => Shutdown(), webServerSetupService,
+            licenseSetupService);
         mainWindow.DataContext = setupVm;
         mainWindow.Show();
 

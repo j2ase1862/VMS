@@ -19,5 +19,11 @@ namespace VMS.AppSetup.Services
         {
             return MessageBox.Show(message, title, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
         }
+
+        public string? ShowOpenFileDialog(string title, string filter)
+        {
+            var dialog = new Microsoft.Win32.OpenFileDialog { Title = title, Filter = filter };
+            return dialog.ShowDialog() == true ? dialog.FileName : null;
+        }
     }
 }
