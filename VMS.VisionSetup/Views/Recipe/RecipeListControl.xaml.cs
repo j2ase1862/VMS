@@ -255,8 +255,8 @@ namespace VMS.VisionSetup.Views.Recipe
         {
             if (string.IsNullOrWhiteSpace(_nameBox.Text))
             {
-                MessageBox.Show("Please enter a recipe name.", "Validation Error",
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                Common.MessageDialog.Show(Window.GetWindow(this), "Please enter a recipe name.", "Validation Error",
+                    Common.MessageDialogKind.Warning);
                 _nameBox.Focus();
                 return;
             }

@@ -50,11 +50,10 @@ namespace VMS.VisionSetup.Views
             }
             catch (System.Exception ex)
             {
-                MessageBox.Show(
+                Common.MessageDialog.Show(this,
                     $"설정 저장 실패: {ex.Message}",
                     "Inference Engine Settings",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    Common.MessageDialogKind.Error);
             }
         }
     }

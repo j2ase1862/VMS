@@ -637,8 +637,8 @@ namespace VMS.VisionSetup.Views.Recipe
             {
                 if (string.IsNullOrWhiteSpace(_nameBox.Text))
                 {
-                    MessageBox.Show("Please enter a tool name.", "Validation Error",
-                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    Common.MessageDialog.Show(Window.GetWindow(this), "Please enter a tool name.", "Validation Error",
+                        Common.MessageDialogKind.Warning);
                     return;
                 }
                 ToolName = _nameBox.Text.Trim();
