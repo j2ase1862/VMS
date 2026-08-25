@@ -23,6 +23,21 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
   </ItemGroup>
 
+  <!-- 공용 다크 메시지 다이얼로그 (Phase B) — Linked Page 라 BAML 이 VMS.Updater.dll 에
+       포함되므로 부트스트랩의 "VMS.Updater.* + CommunityToolkit.Mvvm.dll 만 복사" 제약을
+       위반하지 않는다 (추가 dll 불필요). -->
+  <ItemGroup>
+    <Page Include="..\VMS.VisionSetup\Styles\WindowStyles.xaml" Link="Styles\WindowStyles.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\VMS.VisionSetup\Views\Common\MessageDialog.xaml" Link="Views\Common\MessageDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Compile Include="..\VMS.VisionSetup\Views\Common\MessageDialog.xaml.cs" Link="Views\Common\MessageDialog.xaml.cs" />
+  </ItemGroup>
+
   <!-- After build, copy output to VMS output directory (MSI 하베스트 대상) -->
   <Target Name="CopyToVmsOutput" AfterTargets="Build">
     <PropertyGroup>

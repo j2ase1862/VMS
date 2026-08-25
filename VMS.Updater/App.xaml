@@ -3,4 +3,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              ShutdownMode="OnExplicitShutdown">
     <!-- StartupUri 없음 — OnStartup 에서 인자 검증 후 수동 기동 -->
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- 공용 MessageDialog 용 토큰 (Linked Page, Phase B) -->
+                <ResourceDictionary Source="Styles/WindowStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
 </Application>
