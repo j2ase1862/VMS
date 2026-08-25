@@ -15,8 +15,11 @@ namespace VMS.Core.Security.Licensing
         /// </summary>
         public static readonly IReadOnlyDictionary<string, string> Default = new Dictionary<string, string>
         {
-            // dev-2026: 사내 개발/테스트 발급용. 운영 키는 발급 절차 확정 시 별도 keyId 로 추가.
+            // 키 용도 구분과 개인키 보관·백업·rotation 절차는 docs/license_operations.md 가 진실.
+            // dev-2026: 사내 개발/테스트(Internal) 발급 전용.
             ["dev-2026"] = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEVZKMEOeoMzt1BJ+XUjT5HAa7LD1X7B2smRgOMBiiGVk4ffICrnWIkkDoANFPVEF8Dly2XCe4gWDcIerj7CGAcQ==",
+            // prod-2026: 고객(Production/Trial) 발급용 운영 키.
+            ["prod-2026"] = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEk7OHmhZOvIxrkt/Gf6jTpwxZUVgqKVuLtZVDGZf7AD4xadeu9lJ73yfVVUsHQt7ghMEvvPCHir0l7jE89MwsAw==",
         };
     }
 }
