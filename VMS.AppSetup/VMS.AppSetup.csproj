@@ -49,6 +49,16 @@
     <Compile Include="..\VMS.VisionSetup\Models\HelpContent.cs" Link="Models\HelpContent.cs" />
   </ItemGroup>
 
+  <!-- 공용 다크 메시지 다이얼로그 (WPF 기본 MessageBox 대체) — HelpIcon 과 동일한
+       Linked Page 방식. WindowStyles.xaml 토큰만 사용하므로 AppSetup 에서 그대로 렌더링. -->
+  <ItemGroup>
+    <Page Include="..\VMS.VisionSetup\Views\Common\MessageDialog.xaml" Link="Views\Common\MessageDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Compile Include="..\VMS.VisionSetup\Views\Common\MessageDialog.xaml.cs" Link="Views\Common\MessageDialog.xaml.cs" />
+  </ItemGroup>
+
   <!-- VMS.Core 의 라이선스 검증 코드를 Linked Compile 로 재사용 (spec §8) —
        VMS.Core ProjectReference 는 OpenCvSharp/HelixToolkit 을 끌고 오므로 회피.
        tools/licgen 과 동일한 패턴: canonical JSON 정규화가 제품/도구 간 단일 구현이

@@ -3,6 +3,7 @@ using Microsoft.Win32;
 using VMS.Interfaces;
 using VMS.ViewModels;
 using VMS.Views;
+using VMS.VisionSetup.Views.Common;
 
 namespace VMS.Services
 {

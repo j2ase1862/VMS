@@ -48,8 +48,9 @@ namespace VMS
             }
             catch (ArgumentException ex)
             {
-                MessageBox.Show(ex.Message, "BODA VMS — 인스턴스 이름 오류",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
+                VMS.VisionSetup.Views.Common.MessageDialog.Show(
+                    owner: null, ex.Message, "BODA VMS — 인스턴스 이름 오류",
+                    VMS.VisionSetup.Views.Common.MessageDialogKind.Error);
                 Shutdown(exitCode: 2);
                 return;
             }
@@ -106,11 +107,11 @@ namespace VMS
             {
                 // RequireExplicit 정책에서 config / env 모두 누락 → 운영자에게 명확한 메시지로 알리고 종료.
                 // 자동 다운그레이드보다 명시적 부팅 중단이 GS 보안성 항목에서 안전.
-                MessageBox.Show(
+                VMS.VisionSetup.Views.Common.MessageDialog.Show(
+                    owner: null,
                     "보안 모드가 명시되지 않아 앱을 시작할 수 없습니다.\n\n" + ex.Message,
                     "BODA VMS — 보안 정책 오류",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    VMS.VisionSetup.Views.Common.MessageDialogKind.Error);
                 Shutdown(exitCode: 2);
                 return;
             }
@@ -391,10 +392,11 @@ namespace VMS
                 // 앱은 로컬 검사 가능하므로 계속 부팅하되 반드시 통지.
                 Debug.WriteLine($"[App] ParameterSyncService init failed: {ex.Message}");
                 logService.Log($"Web 연동 비활성: {ex.Message}", LogLevel.Warning, "System");
-                MessageBox.Show(
+                VMS.VisionSetup.Views.Common.MessageDialog.Show(
+                    owner: null,
                     "Web 서버 연동이 비활성화되었습니다 — 레시피 동기화·검사 결과 업로드가 동작하지 않습니다.\n\n"
                     + ex.Message,
-                    "BODA VMS — Web 연동 경고", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    "BODA VMS — Web 연동 경고", VMS.VisionSetup.Views.Common.MessageDialogKind.Warning);
             }
             catch (Exception ex)
             {
@@ -953,11 +955,11 @@ namespace VMS
                 }
 
                 // 최초 실행 시점엔 MainWindow 가 아직 생성 전 — owner null.
-                VMS.Views.MessageDialog.Show(
+                VMS.VisionSetup.Views.Common.MessageDialog.Show(
                     owner: null,
                     "초기 시스템 설정이 필요합니다.\n시스템 설정 마법사를 실행합니다.\n\n설정 완료 후 VMS를 다시 실행해 주세요.",
                     "BODA Vision System - 최초 실행",
-                    VMS.Views.MessageDialogKind.Info);
+                    VMS.VisionSetup.Views.Common.MessageDialogKind.Info);
 
                 Process.Start(new ProcessStartInfo
                 {

@@ -17,15 +17,15 @@ namespace VMS.VisionSetup.Views
 
             if (mainVm.RobotService == null || !mainVm.RobotService.IsConnected)
             {
-                MessageBox.Show("로봇이 연결되어 있지 않습니다.\n먼저 로봇을 연결하세요.",
-                    "Hand-Eye Calibration", MessageBoxButton.OK, MessageBoxImage.Warning);
+                Common.MessageDialog.Show(this, "로봇이 연결되어 있지 않습니다.\n먼저 로봇을 연결하세요.",
+                    "Hand-Eye Calibration", Common.MessageDialogKind.Warning);
                 return;
             }
 
             if (mainVm.CameraAcquisition == null)
             {
-                MessageBox.Show("카메라가 연결되어 있지 않습니다.\n먼저 카메라를 연결하세요.",
-                    "Hand-Eye Calibration", MessageBoxButton.OK, MessageBoxImage.Warning);
+                Common.MessageDialog.Show(this, "카메라가 연결되어 있지 않습니다.\n먼저 카메라를 연결하세요.",
+                    "Hand-Eye Calibration", Common.MessageDialogKind.Warning);
                 return;
             }
 

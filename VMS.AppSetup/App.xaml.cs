@@ -43,8 +43,9 @@ public partial class App : Application
         }
         catch (System.ArgumentException ex)
         {
-            MessageBox.Show(ex.Message, "BODA Vision Setup — 인스턴스 이름 오류",
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            VMS.VisionSetup.Views.Common.MessageDialog.Show(
+                owner: null, ex.Message, "BODA Vision Setup — 인스턴스 이름 오류",
+                VMS.VisionSetup.Views.Common.MessageDialogKind.Error);
             Shutdown(exitCode: 2);
             return;
         }

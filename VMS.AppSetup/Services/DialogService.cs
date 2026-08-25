@@ -5,19 +5,24 @@ namespace VMS.AppSetup.Services
 {
     public class DialogService : IDialogService
     {
+        // 모든 메시지는 공용 다크 MessageDialog 로 통일 (WPF 기본 흰 MessageBox 대체, 2026-08-25)
+
         public void ShowInformation(string message, string title)
         {
-            MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Information);
+            VMS.VisionSetup.Views.Common.MessageDialog.Show(Application.Current.MainWindow, message, title,
+                VMS.VisionSetup.Views.Common.MessageDialogKind.Info);
         }
 
         public void ShowError(string message, string title)
         {
-            MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Error);
+            VMS.VisionSetup.Views.Common.MessageDialog.Show(Application.Current.MainWindow, message, title,
+                VMS.VisionSetup.Views.Common.MessageDialogKind.Error);
         }
 
         public bool ShowConfirmation(string message, string title)
         {
-            return MessageBox.Show(message, title, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
+            return VMS.VisionSetup.Views.Common.MessageDialog.Show(Application.Current.MainWindow, message, title,
+                VMS.VisionSetup.Views.Common.MessageDialogKind.Question, isConfirmation: true);
         }
 
         public string? ShowOpenFileDialog(string title, string filter)

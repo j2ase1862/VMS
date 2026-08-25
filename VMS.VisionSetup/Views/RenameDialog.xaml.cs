@@ -24,8 +24,8 @@ namespace VMS.VisionSetup.Views
         {
             if (string.IsNullOrWhiteSpace(NameTextBox.Text))
             {
-                MessageBox.Show("Tool name cannot be empty.", "Rename Tool",
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                Common.MessageDialog.Show(this, "Tool name cannot be empty.", "Rename Tool",
+                    Common.MessageDialogKind.Warning);
                 return;
             }
 
