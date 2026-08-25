@@ -26,5 +26,13 @@ namespace VMS.VisionSetup.Interfaces
         void ShowCalibrationManagerDialog();
         /// <summary>예제 템플릿 갤러리 — 선택된 템플릿 반환 (취소 시 null).</summary>
         RecipeTemplate? ShowTemplateGalleryDialog();
+
+        /// <summary>
+        /// 미등록 카메라 재연결 다이얼로그 — 다른 PC 레시피의 스텝 CameraId 를 이 PC 카메라로
+        /// 다시 연결. 반환: 구 CameraId → 새 CameraInfo.Id (건너뛰기 시 null, 전부 "매핑 안 함"이면 빈 dict).
+        /// </summary>
+        Dictionary<string, string>? ShowCameraRemapDialog(
+            IReadOnlyList<(string oldId, int stepCount)> unregistered,
+            IReadOnlyList<VMS.Camera.Models.CameraInfo> cameras);
     }
 }

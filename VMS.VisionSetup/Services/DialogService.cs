@@ -77,6 +77,17 @@ namespace VMS.VisionSetup.Services
             return dialog.ShowDialog() == true ? dialog.FileName : null;
         }
 
+        public System.Collections.Generic.Dictionary<string, string>? ShowCameraRemapDialog(
+            System.Collections.Generic.IReadOnlyList<(string oldId, int stepCount)> unregistered,
+            System.Collections.Generic.IReadOnlyList<VMS.Camera.Models.CameraInfo> cameras)
+        {
+            var dialog = new CameraRemapDialog(unregistered, cameras)
+            {
+                Owner = Application.Current.MainWindow,
+            };
+            return dialog.ShowDialog() == true ? dialog.Mapping : null;
+        }
+
         public string? ShowRenameDialog(string currentName)
         {
             var dialog = new RenameDialog
