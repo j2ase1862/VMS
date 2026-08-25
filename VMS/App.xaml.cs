@@ -32,6 +32,9 @@ namespace VMS
         // OnExit 에서 Dispose 로 타이머 종료.
         private AutoBackupScheduler? _autoBackupScheduler;
 
+        // Web 서버 좌석 임대 (spec §5b) — 로컬 license.lic 없는 클라이언트 PC 에서만 활성.
+        private VMS.Core.Services.LicenseClient? _licenseClient;
+
         protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
@@ -492,6 +495,28 @@ namespace VMS
             catch (Exception ex)
             {
                 Debug.WriteLine($"[App] HeartbeatService init failed: {ex.Message}");
+            }
+
+            // ── Web 좌석 임대 (spec §5b) ── 로컬 license.lic 없는 클라이언트 PC 는 서버
+            // 라이선스의 좌석을 주기 임대한다. 즉시 1회 + 8시간 갱신, 응답 캐시(72h 유예)가
+            // 다음 기동의 LicenseBootCheck 근거. 로컬 라이선스가 있으면 불필요 — 미기동.
+            try
+            {
+                var licStatus = VMS.Core.Security.Licensing.LicenseBootCheck.Current?.Status;
+                if ((licStatus is VMS.Core.Security.Licensing.LicenseStatus.Missing
+                                or VMS.Core.Security.Licensing.LicenseStatus.SeatLeased)
+                    && !string.IsNullOrWhiteSpace(systemConfig.WebServerUrl))
+                {
+                    _licenseClient = new VMS.Core.Services.LicenseClient(
+                        systemConfig.WebServerUrl,
+                        systemConfig.ClientIndex,
+                        systemConfig.ClientApiKey);
+                    _licenseClient.Start();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] LicenseClient init failed: {ex.Message}");
             }
 
 
@@ -1081,6 +1106,7 @@ namespace VMS
                 try { heartbeat?.Dispose(); } catch { }
                 try { paramSync?.Dispose(); } catch { }
                 try { frameWriter?.Dispose(); } catch { }
+                try { _licenseClient?.Dispose(); } catch { }
 
                 // 자동 백업 스케줄러 정지 — 타이머 콜백이 진행 중이면 미완료 백업 한 건 손실 가능,
                 // 다음 시작 시 last_backup_at.txt 기반으로 자동 재개.

@@ -6,8 +6,11 @@ namespace VMS.Core.Security.Licensing
     /// </summary>
     public enum LicenseStatus
     {
-        /// <summary>정상.</summary>
+        /// <summary>정상 (로컬 license.lic).</summary>
         Valid,
+        /// <summary>Web 서버 좌석 임대로 유효 (spec §5b) — 서버 라이선스의 좌석을 사용 중.
+        /// 서버 미도달 시 임대 캐시 만료 시각까지 유예 운전.</summary>
+        SeatLeased,
         /// <summary>유지보수 만료 30일 전 — 비차단 경고.</summary>
         MaintenanceExpiring,
         /// <summary>유지보수 만료 — 실행 유지, 업데이트만 차단 대상.</summary>
@@ -41,7 +44,7 @@ namespace VMS.Core.Security.Licensing
                                            or LicenseStatus.Invalid
                                            or LicenseStatus.Missing;
 
-        /// <summary>정상 외 모든 상태 — 운영자에게 표면화할 대상.</summary>
-        public bool NeedsAttention => Status != LicenseStatus.Valid;
+        /// <summary>정상(로컬 유효/좌석 임대) 외 모든 상태 — 운영자에게 표면화할 대상.</summary>
+        public bool NeedsAttention => Status is not (LicenseStatus.Valid or LicenseStatus.SeatLeased);
     }
 }
