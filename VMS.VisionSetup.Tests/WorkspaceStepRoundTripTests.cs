@@ -141,6 +141,9 @@ namespace VMS.VisionSetup.Tests
             public void ShowSequenceEditorDialog(IEnumerable<SequenceDeviceEntry>? extraDevices = null) { }
             public void ShowCalibrationManagerDialog() { }
             public RecipeTemplate? ShowTemplateGalleryDialog() => null;
+            public Dictionary<string, string>? ShowCameraRemapDialog(
+                IReadOnlyList<(string oldId, int stepCount)> unregistered,
+                IReadOnlyList<CameraInfo> cameras) => null;
         }
 
         #endregion

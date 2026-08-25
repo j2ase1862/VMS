@@ -2253,14 +2253,32 @@ namespace VMS.VisionSetup.ViewModels
                         SelectedCamera = recipeCamera;
                 }
 
-                // 이 PC에 등록되지 않은 카메라를 참조하는 스텝이 있으면 경고
+                // 이 PC에 등록되지 않은 카메라를 참조하는 스텝 처리 — 카메라 ID(GUID)는
+                // 등록 시 발급되므로 다른 PC 레시피는 카메라 재등록으로 해결되지 않는다
+                // (2026-08-25 현장 실증). 등록된 카메라가 있으면 재연결 다이얼로그를 먼저 제안.
                 var unregistered = StepNaming.GetUnregisteredCameraIds(recipe, Cameras);
+                if (unregistered.Count > 0 && Cameras.Count > 0)
+                {
+                    var entries = unregistered
+                        .Select(id => (oldId: id, stepCount: recipe.Steps.Count(s => s.CameraId == id)))
+                        .ToList();
+                    var mapping = _dialogService.ShowCameraRemapDialog(entries, Cameras.ToList());
+                    if (mapping is { Count: > 0 })
+                    {
+                        int remapped = StepNaming.RemapCameras(recipe, mapping);
+                        StepNaming.RecomputeNames(recipe, Cameras);
+                        _recipeService.SaveRecipe(recipe);
+                        StatusMessage = $"미등록 카메라 스텝 {remapped}개를 이 PC 카메라로 재연결하고 저장했습니다.";
+                        unregistered = StepNaming.GetUnregisteredCameraIds(recipe, Cameras);
+                    }
+                }
                 if (unregistered.Count > 0)
                 {
                     int orphanSteps = recipe.Steps.Count(s => unregistered.Contains(s.CameraId));
                     _dialogService.ShowWarning(
                         $"이 레시피는 이 PC에 등록되지 않은 카메라 {unregistered.Count}대를 참조합니다.\n" +
-                        $"해당 스텝 {orphanSteps}개는 '?-n' 이름으로 표시되며, 카메라를 등록하기 전에는 촬영에 사용할 수 없습니다.\n\n" +
+                        $"해당 스텝 {orphanSteps}개는 '?-n' 이름으로 표시되며, 카메라를 등록하기 전에는 촬영에 사용할 수 없습니다.\n" +
+                        $"카메라 등록 후 레시피를 다시 로드하면 재연결 창이 표시됩니다.\n\n" +
                         $"미등록 카메라 ID:\n{string.Join("\n", unregistered)}",
                         "미등록 카메라 참조");
                 }

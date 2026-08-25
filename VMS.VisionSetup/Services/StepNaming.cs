@@ -47,6 +47,28 @@ namespace VMS.VisionSetup.Services
         }
 
         /// <summary>
+        /// 미등록 카메라를 참조하는 스텝의 CameraId 를 이 PC 의 카메라로 일괄 교체한다
+        /// (다른 PC 에서 작성한 레시피 이식 — 재매핑 다이얼로그의 적용 본체).
+        /// mapping: 구 CameraId → 이 PC 의 CameraInfo.Id. 반환값은 교체된 스텝 수.
+        /// 서로 다른 구 카메라를 같은 카메라로 합쳐도 RecomputeNames 가 순번을 재부여한다.
+        /// </summary>
+        public static int RemapCameras(Recipe recipe, IReadOnlyDictionary<string, string> mapping)
+        {
+            int remapped = 0;
+            foreach (var step in recipe.Steps)
+            {
+                if (!string.IsNullOrEmpty(step.CameraId) &&
+                    mapping.TryGetValue(step.CameraId, out var newId) &&
+                    newId != step.CameraId)
+                {
+                    step.CameraId = newId;
+                    remapped++;
+                }
+            }
+            return remapped;
+        }
+
+        /// <summary>
         /// 레시피가 참조하지만 현재 카메라 레지스트리에 없는 카메라 ID 목록.
         /// </summary>
         public static List<string> GetUnregisteredCameraIds(Recipe recipe, IEnumerable<CameraInfo> cameras)
