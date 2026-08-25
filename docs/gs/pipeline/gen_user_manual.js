@@ -104,6 +104,10 @@ const POST = {
     () => imgPara("70_msi_welcome.png", 420),
     () => caption("그림. 설치 마법사 시작 화면 — BODA 브랜드 배너, [다음]/[취소] (라이선스 동의 단계 없음)"),
   ],
+  "4.18 SW 라이선스 (좌석 현황)": [
+    () => imgPara("62_web_SW_라이선스.png", 600),
+    () => caption("그림. SW 라이선스 좌석 현황 (System → SW 라이선스, Admin 전용) — 라이선스 정보 / 서버 지문 코드 / 점유 좌석 테이블"),
+  ],
   "3.1 첫 실행 화면": [
     () => imgPara("01_vms_main.png", 600), () => caption("그림. VMS 첫 실행 화면 (로그인 전) — 헤더 / KPI 스트립 / 카메라 표시 영역"),
   ],
@@ -394,8 +398,10 @@ function adminDialogsSection() {
   });
   return out;
 }
-// 챕터 3 시작 전에 AppSetup 마법사 섹션을 끼워넣음 (= 설치 챕터 말미)
-const WIZARD_BEFORE = "3. VMS 클라이언트 매뉴얼";
+// HTML §2.6(SW 라이선스) 직전에 AppSetup 마법사 §2.5 를 끼워넣음 — HTML 은 2.4 → 2.6 으로
+// 건너뛰며(주석 있음), 이 앵커 덕에 docx 에서는 2.4 → 2.5(생성) → 2.6 순서가 된다.
+// ⚠ HTML 의 §2.6 제목 문구를 바꾸면 이 앵커도 함께 바꿀 것 (불일치 시 마법사 절이 조용히 빠짐).
+const WIZARD_BEFORE = "2.6 SW 라이선스 설치·활성화";
 
 // 마법사 컨트롤 항목 표 — 컨트롤 이미지(appsetup_ctl/, --capture-controls 산출물) + 항목/설명/기본값
 const WIZ_COLW = [1600, 3000, 3100, 1326]; // 항목 / 컨트롤 / 설명 / 기본값 (합 = CONTENT_W)
@@ -540,12 +546,16 @@ function wizardSection() {
       ]),
       P("※ IO 보드를 실제로 쓰려면 제조사 드라이버(ADLink DASK / Advantech DAQNavi)를 64비트(x64)용으로 설치해야 합니다 — VMS 는 64비트 프로그램입니다 (§7.1 트러블슈팅 참고).", { size: 18, color: "595959" }),
     ]],
-    ["10_appsetup_step7.png", 470, "7단계 — Security Mode: 운영(Production)/개발(Development) 선택, [Finish] 로 저장", [
-      P("마지막 단계에서 이 PC 의 보안 모드를 선택한다. 여기서 선택한 값이 설정 파일에 함께 저장되며, 보안 모드가 저장되어 있지 않으면 VMS 가 시작 시 '보안 정책 오류' 를 표시하고 실행되지 않는다. 현장(운영) PC 는 반드시 Production 을 선택한다."),
+    ["10_appsetup_step7.png", 470, "7단계 — Security & License: 보안 모드 선택 + SW 라이선스 카드, [Finish] 로 저장", [
+      P("마지막 단계에서 이 PC 의 보안 모드를 선택한다. 여기서 선택한 값이 설정 파일에 함께 저장되며, 보안 모드가 저장되어 있지 않으면 VMS 가 시작 시 '보안 정책 오류' 를 표시하고 실행되지 않는다. 현장(운영) PC 는 반드시 Production 을 선택한다. 화면 아래의 SW 라이선스 카드에서 지문 코드 확인과 라이선스 파일 설치를 함께 처리한다 (§2.6 참고)."),
       P("■ 7단계 입력 항목 상세", { bold: true }),
       wizardTable([
         ["Production (운영 — 권장)", ["P7_default_03_RadioButton_Production_운영__권장.png"], "서버와의 통신에 HTTPS 를 강제하고 인증서를 엄격하게 검증한다. 현장에 설치하는 PC 는 반드시 이 모드를 사용", "선택됨"],
         ["Development (개발 — 사내 테스트 전용)", ["P7_default_05_RadioButton_Development_개발__사내_테스트_전용.png"], "HTTP 와 자체 서명 인증서를 허용한다. 사내 개발·테스트 환경에서만 사용하며, 운영 PC 에는 설정하지 않는다", "—"],
+        ["지문 코드 + [복사]", ["P7_default_10_TextBox_0X0Y9-MMS36-7540K.png", "P7_default_11_Button_복사.png"], "이 PC 의 라이선스 발급용 지문 코드(15자). [복사] 후 본사 담당자에게 전달하면 이 코드로 라이선스 파일이 발급된다", "자동 표시"],
+        ["현재 상태", ["P7_default_13_Label_미설치__라이선스가_설치되어_있지_않습니다.png"], "설치된 라이선스의 상태(정상 / 미설치 / 만료 임박 / 지문 불일치 등). 도입 전환기에는 미설치여도 경고만 표시된다", "미설치"],
+        ["[라이선스 파일 가져오기...]", ["P7_default_14_Button_라이선스_파일_가져오기.png"], "발급받은 license.lic 파일을 선택해 설치한다. 파일 검사 후 자동 설치되며, 권한이 필요하면 Windows 권한 확인 창(UAC)이 표시된다", "—"],
+        ["[상태 새로고침]", ["P7_default_15_Button_상태_새로고침.png"], "라이선스 상태 표시를 다시 읽는다", "—"],
       ]),
       P("※ 전산 담당자가 PC 에 보안 모드 환경변수(BODA_VMS_SECURITY_MODE)를 별도로 설정해 둔 경우에는 환경변수가 이 선택보다 우선 적용됩니다.", { size: 18, color: "595959" }),
     ]],

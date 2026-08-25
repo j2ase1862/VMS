@@ -131,6 +131,7 @@
         <li><a href="#install-web">Web 서버 (설치 / 구성)</a></li>
         <li><a href="#install-network">네트워크 / 방화벽</a></li>
         <li><a href="#install-checklist">첫 실행 전 체크리스트</a></li>
+        <li><a href="#install-license">SW 라이선스 설치·활성화</a></li>
       </ol>
     </li>
     <li><a href="#vms">VMS 클라이언트</a>
@@ -166,6 +167,7 @@
         <li><a href="#web-audit">Audit Logs</a></li>
         <li><a href="#web-reports">Reports</a></li>
         <li><a href="#web-notif">알림 (종 아이콘)</a></li>
+        <li><a href="#web-license">SW 라이선스 (좌석 현황)</a></li>
       </ol>
     </li>
     <li><a href="#workflow">통합 워크플로</a>
@@ -208,7 +210,7 @@
 
 <div class="header-strip">
   <h1>BODA VMS 사용자 매뉴얼</h1>
-  <div class="sub">버전 1.1.0 · 2026-08-24 · Vision Management System + Web MES 통합</div>
+  <div class="sub">버전 1.1.0 · 2026-08-25 · Vision Management System + Web MES 통합</div>
 </div>
 
 <!-- ============================================================ -->
@@ -357,11 +359,66 @@ cd D:\Project\BODA.VMS.Web\deploy
   <li>VMS 클라이언트 설치 후 첫 실행 → AppSetup 마법사에서
       WebServerUrl = <code>https://&lt;서버IP&gt;:7144</code>, ClientIndex = 1, 2, 3... 라인별 지정.
       입력란 라벨 옆의 파란 물음표(?)에 마우스를 올리면 각 항목의 설명이 표시됩니다.</li>
-  <li>마법사 마지막 Security Mode 단계에서 현장(운영) PC는 <strong>Production</strong>을
+  <li>마법사 마지막 Security &amp; License 단계에서 현장(운영) PC는 <strong>Production</strong>을
       그대로 두고 [Finish]로 저장합니다. 보안 모드가 저장되어 있지 않으면 VMS가
-      시작 시 "보안 정책 오류"를 표시하고 실행되지 않습니다.</li>
+      시작 시 "보안 정책 오류"를 표시하고 실행되지 않습니다. 같은 화면 아래의
+      SW 라이선스 카드 사용법은 §2.6을 참고하세요.</li>
   <li>VMS 실행 → 시작 화면 헤더에 Heartbeat 정상 표시 확인.</li>
 </ol>
+
+<!-- §2.5 (시스템 설정 마법사 7단계 상세)는 docx 생성 단계(gen_user_manual.js wizardSection)
+     에서 삽입됩니다 — HTML 절 번호가 2.4 → 2.6 으로 건너뛰는 것은 의도된 것입니다. -->
+<h3 id="install-license">2.6 SW 라이선스 설치·활성화</h3>
+<div class="callout"><strong>⚙ 이 절은 설치 담당자/관리자용입니다.</strong> 라이선스는
+설치할 때 한 번만 넣으면 되고, 일반 작업자는 신경 쓸 일이 없습니다.</div>
+
+<p>SW 라이선스는 "이 PC에서 BODA VMS를 사용해도 된다"는 사용권 파일
+(<code>license.lic</code>)입니다. 인터넷 연결 없이 파일 하나로 동작하므로,
+공장 내부망(폐쇄망)에서도 추가 설정이 필요 없습니다.</p>
+
+<div class="callout tip">
+<strong>지금은 라이선스가 없어도 사용에 제한이 없습니다 (도입 전환기).</strong>
+라이선스가 없으면 상태 표시와 기록에 "미설치" 경고만 남습니다. 향후 버전부터
+라이선스가 필수가 될 예정이니, 신규 설치 시 함께 활성화해 두는 것을 권장합니다.
+</div>
+
+<h4>라이선스는 어떻게 받나요 — 지문 코드</h4>
+<p>라이선스는 PC마다 발급됩니다. 발급에 필요한 것은 그 PC의
+<strong>지문 코드</strong> 하나뿐입니다 — <code>0X0Y9-MMS36-7540K</code> 처럼
+생긴 15자 코드로, 전화로 불러줄 수 있을 만큼 짧습니다. 지문 코드는
+System Setup(설정 마법사) 마지막 페이지의 <strong>"SW 라이선스"</strong> 카드에서
+확인하고 [복사]할 수 있습니다.</p>
+
+<h4>활성화 절차 (한 PC에서 쓰는 경우)</h4>
+<ol class="steps">
+  <li>System Setup(설정 마법사)을 실행하고 마지막 페이지(Security &amp; License)로 이동합니다.</li>
+  <li>"SW 라이선스" 카드의 <strong>지문 코드</strong>를 [복사] 버튼으로 복사해
+      본사 담당자에게 전달합니다 (전화·메신저·이메일 모두 가능).</li>
+  <li>본사에서 발급한 <code>license.lic</code> 파일을 받아 USB 등으로 이 PC에 옮깁니다.
+      라이선스 파일은 이 PC에서만 유효하므로, 옮기는 경로는 자유롭게 선택해도 됩니다.</li>
+  <li><strong>[라이선스 파일 가져오기...]</strong> 버튼을 누르고 받은 파일을 선택합니다.
+      파일 검사 후 자동으로 설치되며, 권한이 필요한 경우 Windows 권한 확인 창(UAC)이
+      뜨면 [예]를 누릅니다.</li>
+  <li>카드의 현재 상태가 <span class="chip ok">정상</span> 으로 바뀌면 완료입니다.</li>
+</ol>
+
+<h4>서버 1대 + 여러 클라이언트로 쓰는 경우</h4>
+<p>Web 서버가 있는 구성이라면 라이선스는 <strong>서버 PC에만</strong> 설치하면 됩니다.
+각 라인의 VMS 클라이언트는 서버에서 자동으로 사용권(좌석)을 받아 가므로 별도 작업이
+없고, 클라이언트 PC를 교체해도 라이선스를 다시 받을 필요가 없습니다.
+좌석이 몇 개 사용 중인지는 Web 관리 화면에서 확인합니다 (§4.18).</p>
+<div class="callout">서버가 꺼져 있어도 클라이언트는 마지막으로 좌석을 받은 시점부터
+<strong>72시간(3일)</strong> 동안 정상 동작합니다 — 서버 점검이나 일시 장애로
+생산이 멈추지 않도록 한 여유 시간입니다.</div>
+
+<h4>이런 경우에는 재발급이 필요합니다</h4>
+<ul>
+  <li><strong>"지문 불일치"</strong>가 표시되는 경우 — 라이선스가 다른 PC용으로
+      발급되었거나, PC 부품 교체·Windows 재설치로 지문이 크게 바뀐 경우입니다.
+      화면의 지문 코드를 본사에 전달하고 재발급을 요청하세요.</li>
+  <li><strong>"만료 임박" / "유지보수 만료"</strong>가 표시되는 경우 — 계약 갱신 후
+      새 라이선스 파일을 받아 같은 방법으로 가져오기 하면 됩니다 (덮어쓰기 설치).</li>
+</ul>
 </section>
 
 <!-- ============================================================ -->
@@ -1075,7 +1132,7 @@ PLC 가 없는 구성이라도 등록된 IO 보드만으로 동작합니다:</p>
   <tr><td>Production</td><td>Work Orders / Products / Operators</td></tr>
   <tr><td>Quality</td><td>Inspection Items(검사 항목) / Quality Analysis / SPC / Defect Codes / 교대 리포트 / PDF 리포트</td></tr>
   <tr><td>Equipment</td><td>Clients(라인) / OEE / 설비 신뢰성 / Maintenance / 불량률 예측</td></tr>
-  <tr><td>System <span class="chip muted">관리자 전용</span></td><td>Shifts / 사용자 승인 / Audit Logs / 시스템 설정</td></tr>
+  <tr><td>System <span class="chip muted">관리자 전용</span></td><td>Shifts / 사용자 승인 / Audit Logs / SW 라이선스 / 시스템 설정</td></tr>
 </table>
 <div class="callout">
 <strong>검사 항목(Inspection Items)은 Quality 그룹에 있습니다.</strong> 검사 기준값은 품질
@@ -1299,6 +1356,23 @@ Lot 단위 품질 추적이 불가능해집니다. 사용 중 Lot 이 여러 개
 </ul>
 <div class="callout">확인 처리는 알람을 지우는 것이 아닙니다 — 품질 기록 보존을 위해
 알람 이력은 삭제되지 않고 영구 보존됩니다.</div>
+
+<h3 id="web-license">4.18 SW 라이선스 (좌석 현황)</h3>
+<p>System 그룹의 <strong>SW 라이선스</strong> 메뉴입니다 <span class="chip muted">관리자 전용</span>.
+서버에 설치된 SW 라이선스와, 각 라인의 VMS 클라이언트가 사용 중인 좌석을 한눈에 봅니다.
+화면은 30초마다 자동으로 새로고침됩니다.</p>
+<ul>
+  <li><strong>라이선스 정보</strong> — 상태(정상 / 미설치 / 만료 등), 고객명, 라이선스 ID,
+      좌석 사용/계약 수. 상태가 초록이면 정상입니다.</li>
+  <li><strong>서버</strong> — 이 서버 PC의 지문 코드입니다. 라이선스 발급·재발급을 요청할 때
+      이 코드를 그대로 본사에 전달하면 됩니다 (§2.6).</li>
+  <li><strong>점유 좌석</strong> — 클라이언트 번호별로 호스트 이름 · 지문 코드 · 마지막 갱신
+      시각이 표시됩니다. 좌석은 클라이언트가 주기적으로 갱신하며, 72시간 동안 갱신이 없으면
+      (PC 철거 등) 자동으로 목록에서 사라집니다.</li>
+</ul>
+<div class="callout warn">좌석 사용 수가 계약 좌석 수를 넘으면 화면 위에 경고 배너가
+표시됩니다. 지금은 경고만 표시되고 운전은 제한되지 않지만, 계약 좌석 확인 또는
+라이선스 변경(좌석 추가)이 필요한 상태입니다.</div>
 </section>
 
 <!-- ============================================================ -->
@@ -1812,6 +1886,16 @@ PowerShell 명령을 다룹니다.</div>
       비전 설정 저장이 원본 파일로 반영 + 운전 중 "변경 대기" 배지 (§3.2.4, §3.3),
       판정 이미지 Web 전송 설정(전달 모드 · OK/NG 전송 · 화질)과 트러블슈팅
       (§3.3, §7.3).</li>
+</ul>
+
+<p>SW v1.13.0 이후 (2026-08-25 갱신):</p>
+<ul>
+  <li><strong>SW 라이선스 도입 (전환기)</strong>: 사용권 파일(license.lic) 기반 라이선스 체계 —
+      설정 마법사 마지막 페이지가 "Security &amp; License"로 바뀌고 SW 라이선스 카드
+      (지문 코드 확인·복사, 라이선스 파일 가져오기) 추가 (§2.6). 서버-다중 클라이언트
+      구성은 서버에만 설치하면 클라이언트가 자동으로 좌석을 받음. Web 시스템 관리에
+      "SW 라이선스" 좌석 현황 화면 신설 (§4.18). 현재는 라이선스가 없어도 경고만
+      표시되고 사용 제한 없음.</li>
 </ul>
 
 <p>전체 변경 사항은 양쪽 저장소의 <code>CHANGELOG.md</code> 참조.</p>
