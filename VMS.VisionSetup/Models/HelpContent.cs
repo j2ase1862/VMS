@@ -103,10 +103,11 @@ namespace VMS.VisionSetup.Models
             {
                 Name = "Feature Match (에지 기반 기하학적 패턴 매칭)",
                 Description = "에지 기반 Generalized Hough Voting과 그래디언트 내적 스코어링을 사용하여 학습된 패턴을 검출합니다.\n1단계: 검색 이미지의 에지 포인트가 후보 중심 위치에 투표 (Hough Voting)\n2단계: 투표 결과 주변에서 그래디언트 내적 점수로 정밀 보정",
-                Usage = "부품 위치 검출, 정렬, 회전/스케일 변화가 있는 패턴 검출에 사용됩니다. ROI로 패턴을 학습하고, Search Region으로 검색 범위를 제한하면 속도가 더욱 향상됩니다.",
+                Usage = "부품 위치 검출, 정렬, 회전/스케일 변화가 있는 패턴 검출에 사용됩니다. ROI로 패턴을 학습하고, Search Region으로 검색 범위를 제한하면 속도가 더욱 향상됩니다.\n객체와 함께 그림자·배경 무늬가 찍히는 경우 Train Mask로 해당 영역을 학습에서 제외하세요 — 제외하지 않으면 객체가 이동/회전할 때 중심 좌표가 그림자 쪽으로 끌려갈 수 있습니다.",
                 CognexEquivalent = "CogPMAlignTool (PatMax)",
                 Parameters = new Dictionary<string, string>
                 {
+                    ["TrainMaskRegions"] = "학습 마스크 (don't-care 영역) — VisionPro의 학습 마스크에 해당.\n[Draw Mask]로 학습 ROI 안에 제외할 사각형(그림자·배경 무늬·가변 텍스트 등)을 그린 뒤 [Train] 재학습하면 그 영역의 에지가 모델에서 빠집니다.\n• 적용 확인: 학습 후 특징 이미지에서 빨간 X 영역에 초록 점이 없어야 함\n• 좌표는 학습 ROI 기준 — ROI를 옮기거나 크기를 바꾸면 마스크를 다시 그려주세요\n• 여러 개 등록 가능, [Clear Masks]로 전체 해제",
                     ["CannyLow"] = "Canny 에지 검출의 낮은 임계값. 약한 에지 연결에 사용됩니다. 낮출수록 더 많은 에지가 검출됩니다.",
                     ["CannyHigh"] = "Canny 에지 검출의 높은 임계값. 강한 에지 판정에 사용됩니다. 높일수록 확실한 에지만 검출됩니다.",
                     ["MaxModelPoints"] = "학습 시 사용할 최대 모델 에지 포인트 수. 클수록 정확하지만 속도가 느려집니다.\n• 권장: 100~300",

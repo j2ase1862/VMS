@@ -2052,6 +2052,56 @@ namespace VMS.VisionSetup.ViewModels
         }
 
         /// <summary>
+        /// 학습 마스크(don't-care) 사각형 등록 (FeatureMatchTool 전용) — 그림자 등
+        /// 학습에서 제외할 영역. 캔버스 절대 좌표를 템플릿(학습 crop) 좌표로 변환해
+        /// 저장한다 (역직렬화 재학습과 좌표계 일치). 다음 재학습부터 적용.
+        /// </summary>
+        public void OnTrainMaskRegionCreated(ROIShape roi)
+        {
+            if (SelectedVisionTool is not FeatureMatchTool ft)
+            {
+                StatusMessage = "학습 마스크는 Feature Match 도구에서만 사용됩니다.";
+                return;
+            }
+
+            var abs = roi.GetBoundingRect();
+
+            // TrainPattern 의 crop 기준과 동일한 오프셋 (UseROI 시 max(0, ROI.X/Y))
+            int offX = 0, offY = 0, tplW = int.MaxValue, tplH = int.MaxValue;
+            if (ft.UseROI && ft.ROI.Width > 0 && ft.ROI.Height > 0)
+            {
+                offX = Math.Max(0, ft.ROI.X);
+                offY = Math.Max(0, ft.ROI.Y);
+                tplW = ft.ROI.Width;
+                tplH = ft.ROI.Height;
+            }
+            else if (CurrentImage != null)
+            {
+                tplW = CurrentImage.Width;
+                tplH = CurrentImage.Height;
+            }
+
+            int x = Math.Max(0, abs.X - offX);
+            int y = Math.Max(0, abs.Y - offY);
+            int w = Math.Min(abs.X + abs.Width - offX, tplW) - x;
+            int h = Math.Min(abs.Y + abs.Height - offY, tplH) - y;
+
+            // 마스크가 학습 영역과 겹치지 않으면 등록하지 않는다
+            if (w <= 0 || h <= 0)
+            {
+                StatusMessage = "학습 마스크가 학습 ROI 영역 밖입니다 — ROI 안쪽에 그려주세요.";
+                WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(ft.AssociatedROIShape));
+                return;
+            }
+
+            ft.AddTrainMaskRegion(new CvRect(x, y, w, h));
+
+            // 임시로 그려진 마스크 도형 제거 — 마스크는 학습 후 특징 이미지(빨간 표기)로 확인
+            WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(ft.AssociatedROIShape));
+            StatusMessage = $"학습 마스크 {ft.TrainMaskCount}개 등록 — [Train] 재학습 시 적용됩니다.";
+        }
+
+        /// <summary>
         /// Search Region 해제 (FeatureMatchTool용)
         /// </summary>
         public void ClearSearchRegion()

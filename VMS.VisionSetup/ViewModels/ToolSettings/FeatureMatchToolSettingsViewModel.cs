@@ -47,6 +47,13 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
             DeleteSelectedModelCommand = new RelayCommand(
                 () => { if (SelectedModel != null) TypedTool.RemoveModel(SelectedModel); },
                 () => SelectedModel != null);
+
+            DrawTrainMaskCommand = new RelayCommand(() =>
+                WeakReferenceMessenger.Default.Send(new RequestDrawTrainMaskMessage()));
+
+            ClearTrainMaskCommand = new RelayCommand(
+                () => TypedTool.ClearTrainMaskRegions(),
+                () => TypedTool.TrainMaskCount > 0);
         }
 
         public override bool HasCustomROISection => true;
@@ -60,6 +67,14 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         public IRelayCommand RequestAutoTuneCommand { get; }
         public IRelayCommand DrawSearchRegionCommand { get; }
         public IRelayCommand DeleteSelectedModelCommand { get; }
+        public IRelayCommand DrawTrainMaskCommand { get; }
+        public IRelayCommand ClearTrainMaskCommand { get; }
+
+        // 학습 마스크 (don't-care) — 재학습 시 적용, 특징 이미지의 빨간 영역으로 확인
+        public int TrainMaskCount => TypedTool.TrainMaskCount;
+        public string TrainMaskInfo => TrainMaskCount > 0
+            ? $"마스크 {TrainMaskCount}개 — 재학습(Train) 시 적용"
+            : "없음 — 그림자·배경 등 제외할 영역을 그려두면 학습에서 빠집니다";
 
         // Multi-model
         public ObservableCollection<FeatureMatchModel> Models => TypedTool.Models;
@@ -159,6 +174,12 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
                 OnPropertyChanged(nameof(HasPreviewImage));
                 OnPropertyChanged(nameof(PreviewPlaceholderText));
                 DeleteSelectedModelCommand.NotifyCanExecuteChanged();
+            }
+
+            if (propertyName == nameof(TrainMaskCount))
+            {
+                OnPropertyChanged(nameof(TrainMaskInfo));
+                ClearTrainMaskCommand.NotifyCanExecuteChanged();
             }
         }
     }

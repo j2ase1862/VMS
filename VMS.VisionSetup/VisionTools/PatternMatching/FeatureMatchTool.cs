@@ -233,6 +233,28 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
         private bool _hasSuggestions;
         public bool HasSuggestions { get => _hasSuggestions; set => SetProperty(ref _hasSuggestions, value); }
 
+        // ── 학습 마스크 (VisionPro PatMax train-time mask 대응) ──
+        // 학습 ROI 안의 don't-care 영역 — 객체와 함께 찍힌 그림자 윤곽이 모델에 포함되면
+        // 조명 고정·객체 이동/회전 시 그림자가 객체 대비 움직여 중심이 끌려간다
+        // (세연공장 실증 2026-08-26). 좌표계는 **템플릿(학습 crop) 기준** — 역직렬화가
+        // 템플릿 이미지로 재학습하는 구조라 절대 좌표로 저장하면 로드 후 어긋난다.
+        // 학습 ROI를 옮기거나 크기를 바꾼 뒤에는 마스크를 다시 그려야 한다.
+        public ObservableCollection<Rect> TrainMaskRegions { get; } = new();
+
+        public int TrainMaskCount => TrainMaskRegions.Count;
+
+        public void AddTrainMaskRegion(Rect templateRect)
+        {
+            TrainMaskRegions.Add(templateRect);
+            OnPropertyChanged(nameof(TrainMaskCount));
+        }
+
+        public void ClearTrainMaskRegions()
+        {
+            TrainMaskRegions.Clear();
+            OnPropertyChanged(nameof(TrainMaskCount));
+        }
+
         #endregion
 
         #region Search Region Properties
@@ -359,10 +381,14 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                 float cx = model.TemplateWidth / 2.0f;
                 float cy = model.TemplateHeight / 2.0f;
 
+                // 학습 마스크 — don't-care 영역(그림자 등)의 에지는 모델에서 제외
+                var maskRects = TrainMaskRegions.ToArray();
+
                 for (int y = 1; y < gray.Height - 1; y++)
                     for (int x = 1; x < gray.Width - 1; x++)
                     {
                         if (edges.At<byte>(y, x) == 0) continue;
+                        if (IsInAnyMask(x, y, maskRects)) continue;
                         float gx = sobelX.At<float>(y, x);
                         float gy = sobelY.At<float>(y, x);
                         float mag = MathF.Sqrt(gx * gx + gy * gy);
@@ -462,6 +488,14 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                 SelectedModel = Models.FirstOrDefault();
             if (LastMatchedModel == model)
                 LastMatchedModel = null;
+        }
+
+        private static bool IsInAnyMask(int x, int y, Rect[] maskRects)
+        {
+            foreach (var r in maskRects)
+                if (x >= r.X && x < r.X + r.Width && y >= r.Y && y < r.Y + r.Height)
+                    return true;
+            return false;
         }
 
         private static List<EdgePoint> SpatialSample(List<EdgePoint> allEdges, int maxPoints, int imgW, int imgH, double curvatureWeight = 0.0)
@@ -576,13 +610,23 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
             HasSuggestions = false;
         }
 
-        private static void BuildTrainedFeatureImage(FeatureMatchModel model, Mat patternImage)
+        private void BuildTrainedFeatureImage(FeatureMatchModel model, Mat patternImage)
         {
             model.TrainedFeatureImage?.Dispose();
 
             var vis = patternImage.Channels() == 1
                 ? patternImage.CvtColor(ColorConversionCodes.GRAY2BGR)
                 : patternImage.Clone();
+
+            // 마스크 영역을 빨강으로 표기 — 학습 직후 그림자 제외 여부를 눈으로 검증
+            foreach (var mask in TrainMaskRegions)
+            {
+                Cv2.Rectangle(vis, mask, new Scalar(0, 0, 255), 2);
+                Cv2.Line(vis, new Point(mask.X, mask.Y),
+                    new Point(mask.X + mask.Width, mask.Y + mask.Height), new Scalar(0, 0, 255), 1);
+                Cv2.Line(vis, new Point(mask.X + mask.Width, mask.Y),
+                    new Point(mask.X, mask.Y + mask.Height), new Scalar(0, 0, 255), 1);
+            }
 
             float cx = model.TemplateWidth / 2.0f;
             float cy = model.TemplateHeight / 2.0f;
@@ -1469,6 +1513,9 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                 CurvatureWeight = this.CurvatureWeight,
                 IsAutoTuneEnabled = this.IsAutoTuneEnabled
             };
+
+            foreach (var mask in TrainMaskRegions)
+                clone.TrainMaskRegions.Add(mask);
 
             // Deep-copy each model (clone Mat images, rebuild arrays; native buffers allocated on retrain)
             foreach (var model in Models)
