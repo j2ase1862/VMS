@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows7.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Boda.LicGen.App</RootNamespace>
+    <AssemblyName>LicGenApp</AssemblyName>
+    <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
+    <!-- 전용 아이콘 (인디고+골드 키 — 스크립트 생성, 본체 Vasim 과 구분) -->
+    <ApplicationIcon>icon\LicGen.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <!-- 사내 발급 담당자용 GUI — CLI(tools\licgen)와 마찬가지로 MSI 에 절대 동봉하지
+       않는다 (spec §7). 폴더가 tools\LicGen 이 아닌 이유: Windows 는 대소문자를
+       구분하지 않아 기존 tools\licgen(CLI)과 같은 경로가 되기 때문. -->
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+  </ItemGroup>
+
+  <!-- VMS.Core 라이선스 코드 Linked Compile — CLI 와 동일 패턴 (canonical JSON
+       정규화가 제품/도구 간 단일 구현이 되도록 파일 자체를 공유, spec §8). -->
+  <ItemGroup>
+    <Compile Include="..\..\VMS.Core\Security\Licensing\LicensePayload.cs" Link="Shared\LicensePayload.cs" />
+    <Compile Include="..\..\VMS.Core\Security\Licensing\LicenseCanonicalJson.cs" Link="Shared\LicenseCanonicalJson.cs" />
+    <Compile Include="..\..\VMS.Core\Security\Licensing\LicenseCrypto.cs" Link="Shared\LicenseCrypto.cs" />
+    <Compile Include="..\..\VMS.Core\Security\Licensing\LicenseKeyring.cs" Link="Shared\LicenseKeyring.cs" />
+    <Compile Include="..\..\VMS.Core\Security\Licensing\LicenseValidator.cs" Link="Shared\LicenseValidator.cs" />
+    <Compile Include="..\..\VMS.Core\Security\Licensing\LicenseEvaluation.cs" Link="Shared\LicenseEvaluation.cs" />
+    <Compile Include="..\..\VMS.Core\Security\Licensing\MachineFingerprint.cs" Link="Shared\MachineFingerprint.cs" />
+    <Compile Include="..\..\VMS.Core\Security\Licensing\LicenseFileStore.cs" Link="Shared\LicenseFileStore.cs" />
+  </ItemGroup>
+
+  <!-- 발급·대장·백업 코어는 CLI 와 공유 — 로직은 단 하나의 구현 (드리프트 방지). -->
+  <ItemGroup>
+    <Compile Include="..\licgen\LedgerStore.cs" Link="Core\LedgerStore.cs" />
+    <Compile Include="..\licgen\LicenseIssuer.cs" Link="Core\LicenseIssuer.cs" />
+    <Compile Include="..\licgen\BackupService.cs" Link="Core\BackupService.cs" />
+  </ItemGroup>
+
+  <!-- VisionSetup 다크 디자인 시스템 + 공용 메시지 다이얼로그 — AppSetup 과 동일한
+       Linked Page 관례 (무거운 어셈블리 의존 없이 XAML 소스 공유). -->
+  <ItemGroup>
+    <Page Include="..\..\VMS.VisionSetup\Styles\WindowStyles.xaml" Link="Styles\WindowStyles.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\..\VMS.VisionSetup\Views\Common\MessageDialog.xaml" Link="Views\Common\MessageDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Compile Include="..\..\VMS.VisionSetup\Views\Common\MessageDialog.xaml.cs" Link="Views\Common\MessageDialog.xaml.cs" />
+  </ItemGroup>
+
+</Project>
