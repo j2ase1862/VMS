@@ -1,0 +1,251 @@
+<Window x:Class="Boda.LicGen.App.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:Boda.LicGen.App.ViewModels"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
+        Title="BODA VMS 라이선스 발급 (LicGen — 사내 전용)"
+        Width="1060" Height="720" MinWidth="900" MinHeight="600"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BrushBgWindow}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- 상단 배너: 서명 키 + 백업 상태 (§1a 규칙을 화면이 상기) -->
+        <Border Grid.Row="0" Margin="16,16,16,8" Padding="16,12"
+                Background="{StaticResource BrushBgCard}"
+                BorderBrush="{StaticResource BrushBorderSubtle}"
+                BorderThickness="1" CornerRadius="8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding KeyStatusText}" FontSize="13">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasKeyWarning}" Value="True">
+                                        <Setter Property="Foreground" Value="{StaticResource BrushDanger}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Text="{Binding BackupStatusText}" FontSize="13" Margin="0,6,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasBackupWarning}" Value="True">
+                                        <Setter Property="Foreground" Value="{StaticResource BrushWarning}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="새로 고침" Style="{StaticResource ModernSecondaryButton}"
+                            MinWidth="96" Margin="0,0,8,0"
+                            Command="{Binding RefreshStatusCommand}"/>
+                    <Button Content="백업 실행" Style="{StaticResource ModernPrimaryButton}"
+                            MinWidth="110"
+                            Command="{Binding RunBackupCommand}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <TabControl Grid.Row="1" Margin="16,0,16,16"
+                    Style="{StaticResource WindowDarkTabControl}"
+                    ItemContainerStyle="{StaticResource WindowDarkTabItem}">
+
+            <!-- ══════════ 발급 탭 ══════════ -->
+            <TabItem Header="라이선스 발급">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Border MaxWidth="680" HorizontalAlignment="Left" Margin="8,12" Padding="20"
+                            Background="{StaticResource BrushBgCard}"
+                            BorderBrush="{StaticResource BrushBorderSubtle}"
+                            BorderThickness="1" CornerRadius="8"
+                            DataContext="{Binding Issue}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="130"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <Grid.Resources>
+                                <Style TargetType="TextBlock" x:Key="FieldLabel">
+                                    <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+                                    <Setter Property="FontSize" Value="13"/>
+                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                    <Setter Property="Margin" Value="0,0,12,0"/>
+                                </Style>
+                                <Style TargetType="TextBlock" x:Key="FieldHint">
+                                    <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}"/>
+                                    <Setter Property="FontSize" Value="12"/>
+                                    <Setter Property="Margin" Value="0,4,0,0"/>
+                                    <Setter Property="TextWrapping" Value="Wrap"/>
+                                </Style>
+                            </Grid.Resources>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="고객명" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" Margin="0,0,0,12"
+                                     Style="{StaticResource WindowDarkTextBox}"
+                                     Text="{Binding Customer, UpdateSourceTrigger=PropertyChanged}"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="종류" Style="{StaticResource FieldLabel}"/>
+                            <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,12">
+                                <ComboBox Style="{StaticResource WindowDarkComboBox}"
+                                          ItemContainerStyle="{StaticResource WindowDarkComboBoxItem}"
+                                          ItemsSource="{Binding Kinds}"
+                                          SelectedItem="{Binding SelectedKind}"/>
+                                <TextBlock Style="{StaticResource FieldHint}"
+                                           Text="Production=고객 납품 · Trial=데모/평가(만료 필수) · Internal=사내(만료 90일 상한)"/>
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="서명 키" Style="{StaticResource FieldLabel}"/>
+                            <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,12">
+                                <ComboBox Style="{StaticResource WindowDarkComboBox}"
+                                          ItemContainerStyle="{StaticResource WindowDarkComboBoxItem}"
+                                          ItemsSource="{Binding AvailableKeys}"
+                                          SelectedItem="{Binding SelectedKey}"
+                                          DisplayMemberPath="KeyId"/>
+                                <TextBlock Style="{StaticResource FieldHint}"
+                                           Text="고객 발급은 prod-*, 사내는 dev-* — 종류 선택 시 자동 지정 (운영 절차 §1)"/>
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="대상 PC 지문" Style="{StaticResource FieldLabel}"/>
+                            <StackPanel Grid.Row="3" Grid.Column="1" Margin="0,0,0,12">
+                                <TextBox Style="{StaticResource WindowDarkTextBox}"
+                                         FontFamily="Consolas" CharacterCasing="Upper"
+                                         Text="{Binding Fingerprint, UpdateSourceTrigger=PropertyChanged}"/>
+                                <TextBlock Style="{StaticResource FieldHint}"
+                                           Text="대상 PC 의 AppSetup 7페이지(Security &amp; License)에 표시되는 XXXXX-XXXXX-XXXXX 코드. Internal 만 * (와일드카드) 허용"/>
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="좌석 수" Style="{StaticResource FieldLabel}"/>
+                            <StackPanel Grid.Row="4" Grid.Column="1" Margin="0,0,0,12">
+                                <TextBox Style="{StaticResource WindowDarkTextBox}" Width="120" HorizontalAlignment="Left"
+                                         Text="{Binding SeatsText, UpdateSourceTrigger=PropertyChanged}"/>
+                                <TextBlock Style="{StaticResource FieldHint}"
+                                           Text="단일 PC=1 · 서버+다수 클라이언트 구성은 서버 지문으로 계약 좌석 수만큼"/>
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="유지보수 만료" Style="{StaticResource FieldLabel}"/>
+                            <StackPanel Grid.Row="5" Grid.Column="1" Margin="0,0,0,12">
+                                <DatePicker Style="{StaticResource WindowDarkDatePicker}" Width="180" HorizontalAlignment="Left"
+                                            SelectedDate="{Binding MaintenanceUntil}"/>
+                                <TextBlock Style="{StaticResource FieldHint}"
+                                           Text="지나면 업데이트만 차단, 실행은 유지 — 영구+유지보수 모델의 기본 축 (기본 1년)"/>
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="6" Grid.Column="0" Text="실행 만료" Style="{StaticResource FieldLabel}"/>
+                            <StackPanel Grid.Row="6" Grid.Column="1" Margin="0,0,0,12">
+                                <DatePicker Style="{StaticResource WindowDarkDatePicker}" Width="180" HorizontalAlignment="Left"
+                                            SelectedDate="{Binding ExpiresAt}"/>
+                                <TextBlock Style="{StaticResource FieldHint}"
+                                           Text="Trial/Internal 전용 (필수) — Production 은 비워서 영구로 발급. 날짜 텍스트를 지우면 해제"/>
+                            </StackPanel>
+
+                            <Separator Grid.Row="7" Grid.ColumnSpan="2" Margin="0,4,0,12"
+                                       Background="{StaticResource BrushBorderSubtle}"/>
+
+                            <Button Grid.Row="8" Grid.Column="1" Content="발급"
+                                    Style="{StaticResource ModernPrimaryButton}"
+                                    MinWidth="150" HorizontalAlignment="Left"
+                                    Command="{Binding IssueLicenseCommand}"/>
+                        </Grid>
+                    </Border>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ══════════ 대장 탭 ══════════ -->
+            <TabItem Header="발급 대장">
+                <Grid Margin="8,12" DataContext="{Binding Ledger}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="{Binding SummaryText}" Margin="2,0,0,8"
+                               FontSize="12" Foreground="{StaticResource BrushTextMuted}"/>
+
+                    <DataGrid Grid.Row="1"
+                              Style="{StaticResource WindowDarkDataGrid}"
+                              ColumnHeaderStyle="{StaticResource WindowDarkDataGridColumnHeader}"
+                              RowStyle="{StaticResource WindowDarkDataGridRow}"
+                              CellStyle="{StaticResource WindowDarkDataGridCell}"
+                              ItemsSource="{Binding Rows}"
+                              SelectedItem="{Binding SelectedRow}"
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              SelectionMode="Single" GridLinesVisibility="None"
+                              HeadersVisibility="Column">
+                        <DataGrid.Columns>
+                            <!-- 고객명은 * 폭 + MinWidth — 고정 폭 합이 뷰포트에 근접하면
+                                 * 컬럼이 0 으로 붕괴해 고객명이 사라진다 (실기 확인) -->
+                            <DataGridTextColumn Header="라이선스 ID" Binding="{Binding LicenseId}" Width="120"/>
+                            <DataGridTextColumn Header="고객명" Binding="{Binding Customer}" Width="*" MinWidth="150"/>
+                            <DataGridTextColumn Header="종류" Binding="{Binding Kind}" Width="85"/>
+                            <DataGridTextColumn Header="지문" Binding="{Binding Fingerprint}" Width="150"/>
+                            <DataGridTextColumn Header="좌석" Binding="{Binding MaxClients}" Width="50"/>
+                            <DataGridTextColumn Header="유지보수" Binding="{Binding MaintenanceUntil}" Width="90"/>
+                            <DataGridTextColumn Header="실행 만료" Binding="{Binding ExpiresAt}" Width="90"/>
+                            <DataGridTextColumn Header="발급 시각" Binding="{Binding IssuedAt}" Width="120"/>
+                            <DataGridTextColumn Header="발급자" Binding="{Binding Issuer}" Width="70"/>
+                            <DataGridTextColumn Header="비고" Binding="{Binding Note}" Width="130"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- 비고 편집 — 대장 파일은 append-only 라 비고는 별도 파일(ledger-notes.json) -->
+                    <Border Grid.Row="2" Margin="0,10,0,0" Padding="14,10"
+                            Background="{StaticResource BrushBgCard}"
+                            BorderBrush="{StaticResource BrushBorderSubtle}"
+                            BorderThickness="1" CornerRadius="8">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0"
+                                       FontSize="13" Foreground="{StaticResource BrushTextSecondary}">
+                                <Run Text="비고"/>
+                                <Run Text="{Binding SelectedRow.LicenseId, Mode=OneWay, FallbackValue=-}"
+                                     Foreground="{StaticResource BrushTextAccent}"/>
+                            </TextBlock>
+                            <TextBox Grid.Column="1" Style="{StaticResource WindowDarkTextBox}"
+                                     Text="{Binding NoteText, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalAlignment="Center"/>
+                            <Button Grid.Column="2" Content="비고 저장" Margin="10,0,0,0"
+                                    Style="{StaticResource ModernSecondaryButton}" MinWidth="100"
+                                    Command="{Binding SaveNoteCommand}"/>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>

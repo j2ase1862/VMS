@@ -1,6 +1,5 @@
 using System.Globalization;
-using System.Text.Json;
-using System.Text.Json.Nodes;
+using Boda.LicGen;
 using VMS.Core.Security.Licensing;
 
 // BODA VMS 라이선스 발급 도구 (사내 전용 — MSI 비동봉, spec §7).
@@ -17,8 +16,11 @@ using VMS.Core.Security.Licensing;
 // 기본 키 보관 위치: %USERPROFILE%\.boda-licgen (리포 밖 — 개인키는 절대 커밋 금지).
 // 발급 대장(ledger.jsonl)은 키 파일 옆에 자동 축적 — 계약 관리의 근거 (spec §7).
 // 백업 규칙(운영 절차 §1a): 발급이 있었던 주의 말일에 오프라인 USB 2부 갱신 —
-// backup 명령이 키 폴더 옆 backup-marker.json 에 매체별 시점을 기록하고,
-// issue 가 마커 이후 발급분을 감지해 경고한다 (담당자 교체에도 도구가 규칙을 상기).
+// backup 명령이 키 폴더 옆 backup-marker.json 에 매체(볼륨 라벨+시리얼)별 시점을
+// 기록하고, issue 가 마커 이후 발급분을 감지해 경고한다.
+//
+// 발급·대장·백업 코어는 LicenseIssuer/LedgerStore/BackupService — 비개발 담당자용
+// GUI(tools\LicGen.App)와 Linked Compile 로 공유하므로 로직 수정은 그 파일들에서.
 
 var positional = new List<string>();
 var options = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -95,120 +97,49 @@ int Fingerprint()
 
 int Issue()
 {
-    var keyPath = Require("key");
-    var keyId = Require("key-id");
-    var customer = Require("customer");
-    var fingerprint = Require("fingerprint");
-    var kind = Enum.Parse<LicenseKind>(options.GetValueOrDefault("kind", "Production"));
-    var maxClients = int.Parse(options.GetValueOrDefault("max-clients", "1"), CultureInfo.InvariantCulture);
-    var expires = options.GetValueOrDefault("expires");
-    var maintenance = options.GetValueOrDefault("maintenance-until");
-    var today = DateOnly.FromDateTime(DateTime.Now);
+    var request = new IssueRequest(
+        KeyPath: Require("key"),
+        KeyId: Require("key-id"),
+        Customer: Require("customer"),
+        Fingerprint: Require("fingerprint"),
+        Kind: Enum.Parse<LicenseKind>(options.GetValueOrDefault("kind", "Production")),
+        MaxClients: int.Parse(options.GetValueOrDefault("max-clients", "1"), CultureInfo.InvariantCulture),
+        MaintenanceUntil: options.GetValueOrDefault("maintenance-until"),
+        ExpiresAt: options.GetValueOrDefault("expires"),
+        Edition: options.GetValueOrDefault("edition", "Standard"));
 
-    // 발급 시점 규칙 검증 — 검증기(LicenseValidator)와 이중 방어
-    if (kind == LicenseKind.Production && fingerprint == MachineFingerprint.Wildcard)
-        throw new ArgumentException("Production 은 지문 와일드카드 불가 — 대상 PC 의 fingerprint 필요");
-    if (kind is LicenseKind.Internal or LicenseKind.Trial && expires == null)
-        throw new ArgumentException($"{kind} 은 --expires 필수");
-    if (kind == LicenseKind.Internal && expires != null)
-    {
-        var exp = DateOnly.ParseExact(expires, "yyyy-MM-dd", CultureInfo.InvariantCulture);
-        if (exp > today.AddDays(LicenseValidator.InternalMaxValidityDays))
-            throw new ArgumentException($"Internal 만료는 최대 {LicenseValidator.InternalMaxValidityDays}일 (유출 피해 최소화)");
-    }
-
-    // 발급 대장 — 키 파일 옆 ledger.jsonl, licenseId 는 연도별 순번
-    var ledgerPath = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(keyPath))!, "ledger.jsonl");
-    var seq = File.Exists(ledgerPath) ? File.ReadAllLines(ledgerPath).Length + 1 : 1;
-    var licenseId = $"LIC-{today.Year}-{seq:D4}";
-
-    var payload = new LicensePayload
-    {
-        LicenseId = licenseId,
-        Customer = customer,
-        Kind = kind.ToString(),
-        Edition = options.GetValueOrDefault("edition", "Standard"),
-        MaxClients = maxClients,
-        Fingerprint = fingerprint,
-        IssuedAt = today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-        MaintenanceUntil = maintenance,
-        ExpiresAt = expires,
-        KeyId = keyId
-    };
-
-    var payloadNode = JsonSerializer.SerializeToNode(payload)!;
-    var signature = LicenseCrypto.Sign(File.ReadAllText(keyPath), LicenseCanonicalJson.Serialize(payloadNode));
-    var file = new JsonObject { ["payload"] = payloadNode, ["signature"] = signature };
+    var result = LicenseIssuer.Issue(request, DateOnly.FromDateTime(DateTime.Now));
 
     var outPath = options.GetValueOrDefault("out", LicenseFileStore.FileName);
-    File.WriteAllText(outPath, file.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+    File.WriteAllText(outPath, result.LicenseJson);
 
-    File.AppendAllText(ledgerPath, JsonSerializer.Serialize(new
-    {
-        licenseId,
-        customer,
-        kind = kind.ToString(),
-        fingerprint,
-        maxClients,
-        maintenanceUntil = maintenance,
-        expiresAt = expires,
-        issuedAtUtc = DateTime.UtcNow.ToString("o"),
-        issuer = Environment.UserName
-    }) + Environment.NewLine);
-
-    Console.WriteLine($"발급 완료: {licenseId} → {Path.GetFullPath(outPath)}");
-    Console.WriteLine($"대장 기록: {ledgerPath}");
-    WarnIfBackupStale(Path.GetDirectoryName(ledgerPath)!, seq);
+    Console.WriteLine($"발급 완료: {result.LicenseId} → {Path.GetFullPath(outPath)}");
+    Console.WriteLine($"대장 기록: {result.LedgerPath}");
+    WarnIfBackupStale(Path.GetDirectoryName(result.LedgerPath)!);
     return 0;
 }
 
 int Backup()
 {
-    var to = Require("to");
-    var from = Path.GetFullPath(options.GetValueOrDefault("from", defaultKeyDir));
-    if (!Directory.Exists(from))
-        throw new DirectoryNotFoundException($"키 폴더 없음: {from}");
+    var result = BackupService.Run(
+        options.GetValueOrDefault("from", defaultKeyDir), Require("to"));
 
-    var targetDir = Path.Combine(Path.GetFullPath(to), "boda-licgen-backup");
-    Directory.CreateDirectory(targetDir);
-
-    var files = Directory.GetFiles(from);
-    foreach (var file in files)
-        File.Copy(file, Path.Combine(targetDir, Path.GetFileName(file)), overwrite: true);
-
-    // 반쪽 백업은 없느니만 못하다 — 계약 기록인 대장만큼은 복사본 크기를 대조
-    var ledgerPath = Path.Combine(from, "ledger.jsonl");
-    var ledgerLines = 0;
-    if (File.Exists(ledgerPath))
-    {
-        ledgerLines = File.ReadAllLines(ledgerPath).Length;
-        if (new FileInfo(Path.Combine(targetDir, "ledger.jsonl")).Length != new FileInfo(ledgerPath).Length)
-            throw new IOException($"대장 복사 크기 불일치 — 백업 매체 확인 필요: {targetDir}");
-    }
-
-    var marker = BackupMarker.Load(from);
-    marker.Targets[targetDir] = new BackupMarker.Entry(DateTime.UtcNow.ToString("o"), ledgerLines);
-    marker.Save(from);
-
-    Console.WriteLine($"백업 완료: {files.Length}개 파일 → {targetDir} (대장 {ledgerLines}건)");
-    if (marker.Targets.Count < 2)
+    Console.WriteLine($"백업 완료: {result.FileCount}개 파일 → {result.TargetDir} (매체 {result.MediaKey}, 대장 {result.LedgerLines}건)");
+    if (result.MediaCount < BackupService.RequiredCopies)
         Console.WriteLine("참고: 백업 규칙은 오프라인 매체 2부 — 다른 USB 에도 'backup --to' 실행 (docs/license_operations.md §1a)");
     return 0;
 }
 
-void WarnIfBackupStale(string keyDir, int ledgerLines)
+void WarnIfBackupStale(string keyDir)
 {
-    var marker = BackupMarker.Load(keyDir);
-    if (marker.Targets.Count == 0)
+    var status = BackupService.GetStatus(keyDir);
+    if (!status.HasRecord)
     {
         Console.WriteLine("⚠ 백업 기록 없음 — 'licgen backup --to <USB>' 로 오프라인 백업 2부를 만드세요 (docs/license_operations.md §1a)");
         return;
     }
-
-    var newest = marker.Targets.Values.MaxBy(e => e.LedgerLines)!;
-    var pending = ledgerLines - newest.LedgerLines;
-    if (pending > 0)
-        Console.WriteLine($"⚠ 백업 미반영 발급 {pending}건 (마지막 백업 {newest.Utc[..10]}) — 이번 주 말일까지 'licgen backup --to <USB>' 2부 갱신 (§1a)");
+    if (status.PendingIssues > 0)
+        Console.WriteLine($"⚠ 백업 미반영 발급 {status.PendingIssues}건 (마지막 백업 {status.NewestUtc![..10]}) — 이번 주 말일까지 'licgen backup --to <USB>' 2부 갱신 (§1a)");
 }
 
 int Verify()
@@ -233,26 +164,4 @@ int Verify()
     Console.WriteLine($"상태: {eval.Status}");
     Console.WriteLine($"내용: {eval.Message}");
     return eval.Status == LicenseStatus.Valid ? 0 : 1;
-}
-
-// 백업 마커 — 키 폴더의 backup-marker.json 에 매체별 마지막 백업 시점·대장 줄 수를 기록.
-// 백업 대상 폴더에도 함께 복사되므로 인수인계 시 매체만 봐도 이력을 알 수 있다.
-sealed class BackupMarker
-{
-    public const string FileName = "backup-marker.json";
-
-    public Dictionary<string, Entry> Targets { get; set; } = new(StringComparer.OrdinalIgnoreCase);
-
-    public sealed record Entry(string Utc, int LedgerLines);
-
-    public static BackupMarker Load(string dir)
-    {
-        var path = Path.Combine(dir, FileName);
-        if (!File.Exists(path)) return new BackupMarker();
-        return JsonSerializer.Deserialize<BackupMarker>(File.ReadAllText(path)) ?? new BackupMarker();
-    }
-
-    public void Save(string dir) =>
-        File.WriteAllText(Path.Combine(dir, FileName),
-            JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true }));
 }
