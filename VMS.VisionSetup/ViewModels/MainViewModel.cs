@@ -159,6 +159,31 @@ namespace VMS.VisionSetup.ViewModels
             }
         }
 
+        // 라이브(카메라 반복 Grab·VMS 공유메모리 수신) 중 최신 프레임 — CurrentImage 를
+        // 경유하지 않는 경량 표시 경로. CurrentImage setter 는 프레임마다 VisionService
+        // Clone + WriteableBitmap 2회 생성 + 커맨드 재평가를 일으켜 대형 할당이 GC 회수를
+        // 앞질러 몇 컷 뒤 앱이 느려지다 멈췄다 (Basler 현장 2026-08-26). 라이브 중에는
+        // DisplayMat 알림만으로 ImageCanvas 를 갱신하고, 정지 시 마지막 프레임 1장만
+        // 정식 CurrentImage 경로로 넘겨 ROI·툴 실행 워크플로 정합을 유지한다.
+        private Mat? _liveFrameMat;
+
+        internal void SetLiveFrame(Mat frame)   // internal: 테스트에서 라이브 경로 상태 검증
+        {
+            var old = _liveFrameMat;
+            _liveFrameMat = frame;
+            OnPropertyChanged(nameof(DisplayMat));   // 바인딩 갱신은 동일 디스패처 작업에서 동기 완료
+            old?.Dispose();
+        }
+
+        /// <summary>라이브 종료 시 마지막 프레임을 정식 경로로 이관 (UI 스레드에서 호출).</summary>
+        internal void CommitLiveFrame()
+        {
+            if (_liveFrameMat == null) return;
+            var last = _liveFrameMat;
+            _liveFrameMat = null;
+            CurrentImage = last;   // setter 가 소유권 인수 (VisionService 반영 + 표시 갱신)
+        }
+
         // 이미지 폴더 탐색
         private FolderNavigationMode _folderNavigationMode = FolderNavigationMode.NavigateOnly;
         public FolderNavigationMode FolderNavigationMode
@@ -226,7 +251,10 @@ namespace VMS.VisionSetup.ViewModels
             }
         }
 
-        public Mat? DisplayMat => _selectedDisplayMode == ImageDisplayMode.OriginalImage ? CurrentImage : _resultMat;
+        // 라이브 중에는 경량 경로의 최신 프레임이 우선 (CurrentImage 는 라이브 정지 시점에만 갱신)
+        public Mat? DisplayMat => _selectedDisplayMode == ImageDisplayMode.OriginalImage
+            ? (_liveFrameMat ?? CurrentImage)
+            : _resultMat;
 
         public bool IsOriginalImageMode => _selectedDisplayMode == ImageDisplayMode.OriginalImage;
 
@@ -2819,7 +2847,9 @@ namespace VMS.VisionSetup.ViewModels
                         {
                             await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                             {
-                                if (result.Image2D != null) CurrentImage = result.Image2D;
+                                // 라이브는 경량 경로 — CurrentImage 연쇄(Clone+비트맵 2회+커맨드
+                                // 재평가)를 프레임마다 타면 대형 할당 누적으로 앱이 멈춘다
+                                if (result.Image2D != null) SetLiveFrame(result.Image2D);
                                 if (result.PointCloud != null) CurrentPointCloud = result.PointCloud;
                             });
                         }
@@ -2835,6 +2865,7 @@ namespace VMS.VisionSetup.ViewModels
                 _cameraLiveCts?.Dispose();
                 _cameraLiveCts = null;
                 IsCameraLive = false;
+                CommitLiveFrame();   // 마지막 프레임을 정식 경로로 — ROI/툴 실행 정합
                 NotifyCameraLiveCommands();
                 StatusMessage = stopped;
             }
@@ -3654,6 +3685,7 @@ namespace VMS.VisionSetup.ViewModels
             _liveReceiveCts?.Dispose();
             _liveReceiveCts = null;
             IsReceivingFromVms = false;
+            CommitLiveFrame();   // 마지막 수신 프레임을 정식 경로로
             NotifyLiveReceiveCommands();
             StatusMessage = "VMS 라이브 수신 중지";
         }
@@ -3662,7 +3694,8 @@ namespace VMS.VisionSetup.ViewModels
         {
             if (frame.Image2D != null)
             {
-                CurrentImage = frame.Image2D;
+                // 카메라 라이브와 동일한 경량 경로 — 수신 프레임마다 CurrentImage 연쇄 금지
+                SetLiveFrame(frame.Image2D);
             }
 
             if (frame.PointCloud != null)
