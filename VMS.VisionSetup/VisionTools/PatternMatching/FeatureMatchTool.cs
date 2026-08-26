@@ -769,6 +769,11 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                     double finalX = globalBestX + offsetX;
                     double finalY = globalBestY + offsetY;
 
+                    // 정련이 코스 최적각 ±코스스텝을 탐색하므로 360° 검색(Start -180, Extent 360)
+                    // 경계에서 ±180 밖 각도(예: 183°)가 나올 수 있다 — 보고/판정 전 정규화.
+                    // 미정규화 시 각도 판정(허용 -180~180)이 경계 근처 정상품을 오탐 NG 처리.
+                    globalBestAngle = NormalizeAngle(globalBestAngle);
+
                     result.Success = true;
                     string modelInfo = Models.Count > 1 ? $", Model={bestModel.Name}" : "";
                     result.Message = $"Score={globalBestScore:F3}, Pos=({finalX:F1},{finalY:F1}), Angle={globalBestAngle:F2}, Scale={globalBestScale:F3}{modelInfo}";
@@ -823,8 +828,17 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
             return result;
         }
 
+        /// <summary>각도를 [-180, 180) 로 정규화 — 검색·정련은 주기 함수라 값 자체는 등가.</summary>
+        internal static double NormalizeAngle(double deg)
+        {
+            var norm = (deg + 180.0) % 360.0;
+            if (norm < 0) norm += 360.0;
+            return norm - 180.0;
+        }
+
         /// <summary>
         /// 매칭 자세(각도/스케일) 판정. 통과·비활성이면 null, NG면 사유 문자열.
+        /// 각도는 호출 전 정규화된 값을 받는다 (Execute 경로 보장).
         /// </summary>
         internal string? EvaluatePoseJudgment(double angle, double scale)
         {
