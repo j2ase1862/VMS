@@ -140,21 +140,21 @@
                                 Command="{Binding ClearROICommand}"/>
                     </StackPanel>
 
-                    <!-- 학습 마스크 (don't-care) — 그림자·배경 제외. 재학습 시 적용,
-                         특징 이미지의 빨간 X 영역으로 확인 -->
+                    <!-- 학습 마스크 (don't-care) — 그림자·가변 각인·반사 제외.
+                         선택 모델 템플릿 위에서 브러시/사각형으로 편집, 저장 시 즉시 재학습 -->
                     <StackPanel Orientation="Horizontal" Margin="0,6,0,2">
                         <TextBlock Text="Train Mask" VerticalAlignment="Center"
                                    Style="{StaticResource SettingLabelStyle}" Margin="0"/>
-                        <controls:HelpIcon ToolType="FeatureMatchTool" ParameterName="TrainMaskRegions"
+                        <controls:HelpIcon ToolType="FeatureMatchTool" ParameterName="TrainMask"
                                            Margin="4,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
                     <TextBlock Text="{Binding TrainMaskInfo}" TextWrapping="Wrap"
                                Foreground="#999999" FontSize="11" Margin="0,0,0,4"/>
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                        <Button Content="Draw Mask" Style="{StaticResource PrimaryButtonStyle}"
+                        <Button Content="Edit Mask..." Style="{StaticResource PrimaryButtonStyle}"
                                 Padding="8,4" Margin="0,0,5,0"
-                                Command="{Binding DrawTrainMaskCommand}"/>
-                        <Button Content="Clear Masks" Style="{StaticResource SecondaryButtonStyle}"
+                                Command="{Binding EditTrainMaskCommand}"/>
+                        <Button Content="Clear Mask" Style="{StaticResource SecondaryButtonStyle}"
                                 Padding="8,4"
                                 Command="{Binding ClearTrainMaskCommand}"/>
                     </StackPanel>

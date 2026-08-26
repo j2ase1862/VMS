@@ -25,7 +25,6 @@ namespace VMS.VisionSetup
         private bool _isDragging = false;
         private System.Windows.Point _mouseOffset;
         private bool _isDrawingSearchRegion = false;
-        private bool _isDrawingTrainMask = false;
 
         // 연결선 관련 필드
         private bool _isConnectionMode = false;
@@ -122,11 +121,6 @@ namespace VMS.VisionSetup
             {
                 _isDrawingSearchRegion = false;
                 vm.ClearSearchRegion();
-            });
-            WeakReferenceMessenger.Default.Register<RequestDrawTrainMaskMessage>(this, (r, msg) =>
-            {
-                _isDrawingTrainMask = true;
-                ImageCanvasControl.ActivateDrawingMode(EditMode.DrawRectangle);
             });
 
             // 이미지 한 픽셀 픽 (ColorMatchTool)
@@ -514,11 +508,6 @@ namespace VMS.VisionSetup
             {
                 _isDrawingSearchRegion = false;
                 vm.OnSearchRegionCreated(roi);
-            }
-            else if (_isDrawingTrainMask)
-            {
-                _isDrawingTrainMask = false;
-                vm.OnTrainMaskRegionCreated(roi);
             }
             else
             {

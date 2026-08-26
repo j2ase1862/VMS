@@ -40,6 +40,26 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
             set => SetProperty(ref _trainedFeatureImage, value);
         }
 
+        // 학습 마스크 (don't-care) — 템플릿과 같은 크기의 8UC1, 255=학습 제외.
+        // 그림자·가변 각인·정반사 등 제외 영역이 본체 윤곽에 붙는 경우까지 다루기 위해
+        // 셰이프 목록이 아닌 비트맵 — 마스크 편집기(브러시/사각형/지우개)로 칠한다.
+        private Mat? _trainMask;
+        public Mat? TrainMask
+        {
+            get => _trainMask;
+            set
+            {
+                var old = _trainMask;
+                if (SetProperty(ref _trainMask, value))
+                {
+                    old?.Dispose();
+                    OnPropertyChanged(nameof(HasTrainMask));
+                }
+            }
+        }
+
+        public bool HasTrainMask => _trainMask != null && !_trainMask.Empty();
+
         internal List<FeatureMatchTool.EdgePoint> ModelEdges { get; set; } = new();
         internal float[]? ModelXArray { get; set; }
         internal float[]? ModelYArray { get; set; }
@@ -105,6 +125,8 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
             _templateImage = null;
             _trainedFeatureImage?.Dispose();
             _trainedFeatureImage = null;
+            _trainMask?.Dispose();
+            _trainMask = null;
         }
     }
 }

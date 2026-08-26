@@ -150,11 +150,6 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["CurvatureWeight"] = match.CurvatureWeight;
                     config.Parameters["IsAutoTuneEnabled"] = match.IsAutoTuneEnabled;
 
-                    // 학습 마스크 — 템플릿 좌표계 "x,y,w,h;..." (재학습 시 적용되므로 모델보다 먼저 복원 필요)
-                    if (match.TrainMaskRegions.Count > 0)
-                        config.Parameters["TrainMaskRegions"] = string.Join(";",
-                            match.TrainMaskRegions.Select(r => $"{r.X},{r.Y},{r.Width},{r.Height}"));
-
                     // Serialize trained models (TemplateImage as base64 PNG)
                     var modelsList = new List<Dictionary<string, object>>();
                     foreach (var model in match.Models)
@@ -169,6 +164,13 @@ namespace VMS.VisionSetup.Services
                         {
                             Cv2.ImEncode(".png", model.TemplateImage, out var pngBytes);
                             modelData["TemplateImageBase64"] = Convert.ToBase64String(pngBytes);
+                        }
+
+                        // 학습 마스크 (8UC1 비트맵) — 복원 시 템플릿 재학습에 함께 적용
+                        if (model.TrainMask != null && !model.TrainMask.Empty())
+                        {
+                            Cv2.ImEncode(".png", model.TrainMask, out var maskBytes);
+                            modelData["TrainMaskBase64"] = Convert.ToBase64String(maskBytes);
                         }
 
                         modelsList.Add(modelData);
@@ -961,21 +963,6 @@ namespace VMS.VisionSetup.Services
             if (p.TryGetValue("IsAutoTuneEnabled", out var iate))
                 tool.IsAutoTuneEnabled = GetBool(iate);
 
-            // 학습 마스크를 모델 복원(재학습)보다 먼저 세팅 — 순서 바뀌면 마스크 미적용 학습
-            if (p.TryGetValue("TrainMaskRegions", out var maskVal))
-            {
-                foreach (var part in GetString(maskVal).Split(';', StringSplitOptions.RemoveEmptyEntries))
-                {
-                    var nums = part.Split(',');
-                    if (nums.Length == 4
-                        && int.TryParse(nums[0], out var mx) && int.TryParse(nums[1], out var my)
-                        && int.TryParse(nums[2], out var mw) && int.TryParse(nums[3], out var mh))
-                    {
-                        tool.AddTrainMaskRegion(new Rect(mx, my, mw, mh));
-                    }
-                }
-            }
-
             // Restore trained models from serialized data
             if (p.TryGetValue("Models", out var modelsObj))
             {
@@ -985,6 +972,7 @@ namespace VMS.VisionSetup.Services
                     string modelName = "";
                     bool modelEnabled = true;
                     Mat? templateImage = null;
+                    Mat? trainMask = null;
 
                     if (entry.TryGetValue("Name", out var nameVal))
                         modelName = GetString(nameVal);
@@ -1001,9 +989,20 @@ namespace VMS.VisionSetup.Services
                         }
                     }
 
+                    // 학습 마스크 — 재학습(TrainPattern)에 함께 넘겨야 마스크 적용 모델로 복원됨
+                    if (entry.TryGetValue("TrainMaskBase64", out var maskB64Val))
+                    {
+                        var maskB64 = GetString(maskB64Val);
+                        if (!string.IsNullOrEmpty(maskB64))
+                        {
+                            var maskBytes = Convert.FromBase64String(maskB64);
+                            trainMask = Cv2.ImDecode(maskBytes, ImreadModes.Grayscale);
+                        }
+                    }
+
                     if (templateImage != null && !templateImage.Empty())
                     {
-                        tool.TrainPattern(templateImage, null);
+                        tool.TrainPattern(templateImage, null, trainMask);
                         templateImage.Dispose();
                         var lastModel = tool.Models.LastOrDefault();
                         if (lastModel != null)
@@ -1012,6 +1011,7 @@ namespace VMS.VisionSetup.Services
                             lastModel.IsEnabled = modelEnabled;
                         }
                     }
+                    trainMask?.Dispose();
                 }
             }
 

@@ -822,6 +822,7 @@ namespace VMS.VisionSetup.ViewModels
                 if (TrainPatternCommand.CanExecute(null))
                     TrainPatternCommand.Execute(null);
             });
+            WeakReferenceMessenger.Default.Register<RequestEditTrainMaskMessage>(this, (r, m) => EditTrainMask());
             WeakReferenceMessenger.Default.Register<RequestAutoTuneMessage>(this, (r, m) =>
             {
                 if (AutoTuneCommand.CanExecute(null))
@@ -2052,11 +2053,11 @@ namespace VMS.VisionSetup.ViewModels
         }
 
         /// <summary>
-        /// 학습 마스크(don't-care) 사각형 등록 (FeatureMatchTool 전용) — 그림자 등
-        /// 학습에서 제외할 영역. 캔버스 절대 좌표를 템플릿(학습 crop) 좌표로 변환해
-        /// 저장한다 (역직렬화 재학습과 좌표계 일치). 다음 재학습부터 적용.
+        /// 학습 마스크(don't-care) 편집기 열기 (FeatureMatchTool 전용) — 선택 모델의
+        /// 템플릿 위에서 브러시/사각형/지우개로 제외 영역을 칠한다. 저장 시 마스크를
+        /// 모델에 반영하고 보관된 템플릿으로 즉시 재학습해 특징 이미지로 결과를 보여준다.
         /// </summary>
-        public void OnTrainMaskRegionCreated(ROIShape roi)
+        public void EditTrainMask()
         {
             if (SelectedVisionTool is not FeatureMatchTool ft)
             {
@@ -2064,41 +2065,24 @@ namespace VMS.VisionSetup.ViewModels
                 return;
             }
 
-            var abs = roi.GetBoundingRect();
-
-            // TrainPattern 의 crop 기준과 동일한 오프셋 (UseROI 시 max(0, ROI.X/Y))
-            int offX = 0, offY = 0, tplW = int.MaxValue, tplH = int.MaxValue;
-            if (ft.UseROI && ft.ROI.Width > 0 && ft.ROI.Height > 0)
+            var model = ft.SelectedModel;
+            if (model?.TemplateImage == null || model.TemplateImage.Empty())
             {
-                offX = Math.Max(0, ft.ROI.X);
-                offY = Math.Max(0, ft.ROI.Y);
-                tplW = ft.ROI.Width;
-                tplH = ft.ROI.Height;
-            }
-            else if (CurrentImage != null)
-            {
-                tplW = CurrentImage.Width;
-                tplH = CurrentImage.Height;
-            }
-
-            int x = Math.Max(0, abs.X - offX);
-            int y = Math.Max(0, abs.Y - offY);
-            int w = Math.Min(abs.X + abs.Width - offX, tplW) - x;
-            int h = Math.Min(abs.Y + abs.Height - offY, tplH) - y;
-
-            // 마스크가 학습 영역과 겹치지 않으면 등록하지 않는다
-            if (w <= 0 || h <= 0)
-            {
-                StatusMessage = "학습 마스크가 학습 ROI 영역 밖입니다 — ROI 안쪽에 그려주세요.";
-                WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(ft.AssociatedROIShape));
+                StatusMessage = "학습 마스크는 학습된 모델이 필요합니다 — 먼저 [Train]으로 학습하세요.";
                 return;
             }
 
-            ft.AddTrainMaskRegion(new CvRect(x, y, w, h));
+            var newMask = _dialogService.ShowTrainMaskEditorDialog(model.TemplateImage, model.TrainMask);
+            if (newMask == null) return;   // 취소
 
-            // 임시로 그려진 마스크 도형 제거 — 마스크는 학습 후 특징 이미지(빨간 표기)로 확인
-            WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(ft.AssociatedROIShape));
-            StatusMessage = $"학습 마스크 {ft.TrainMaskCount}개 등록 — [Train] 재학습 시 적용됩니다.";
+            // 재학습 중 원본 템플릿이 setter 에서 Dispose 되므로 사본으로 학습
+            using var template = model.TemplateImage.Clone();
+            var applied = ft.TrainPattern(template, model, newMask);
+            newMask.Dispose();
+
+            StatusMessage = applied
+                ? $"학습 마스크 적용 + '{model.Name}' 재학습 완료 — 특징 이미지의 빨간 영역이 제외됩니다."
+                : "마스크 적용 재학습 실패 — 마스크가 패턴 전체를 덮고 있지 않은지 확인하세요.";
         }
 
         /// <summary>
