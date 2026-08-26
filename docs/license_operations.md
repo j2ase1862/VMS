@@ -33,6 +33,15 @@
 2. `%USERPROFILE%\.boda-licgen\` 전체(개인키 2개 + `ledger.jsonl`)를
    **오프라인 매체(USB) 2부**에 백업해 서로 다른 장소에 보관한다.
    백업 갱신 주기: 발급이 있었던 주의 말일.
+
+   ```powershell
+   licgen backup --to E:\        # USB 1부째 — 폴더 전체를 <대상>\boda-licgen-backup 로 복사
+   licgen backup --to F:\        # USB 2부째
+   ```
+
+   `backup` 은 키 폴더 옆 `backup-marker.json` 에 매체별 백업 시점·대장 건수를 기록하고,
+   이후 `issue` 는 **마지막 백업에 없는 발급분이 있으면 경고를 출력**한다 — 경고가 보이면
+   그 주 말일까지 2부 모두 갱신하면 된다 (담당자가 바뀌어도 도구가 규칙을 상기시킨다).
 3. 개인키를 **리포/클라우드/메신저/이메일에 절대 올리지 않는다.**
    (`.boda-licgen` 은 리포 밖 사용자 프로필 경로라 실수 커밋이 구조적으로 어렵다.)
 4. 유실 시: 서명 능력만 잃고 기존 발급분은 계속 유효하다. §4 rotation 으로 새 keyId 를
