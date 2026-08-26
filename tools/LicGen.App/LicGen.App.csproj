@@ -9,6 +9,8 @@
     <RootNamespace>Boda.LicGen.App</RootNamespace>
     <AssemblyName>LicGenApp</AssemblyName>
     <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
+    <!-- 전용 아이콘 (인디고+골드 키 — 스크립트 생성, 본체 Vasim 과 구분) -->
+    <ApplicationIcon>icon\LicGen.ico</ApplicationIcon>
   </PropertyGroup>
 
   <!-- 사내 발급 담당자용 GUI — CLI(tools\licgen)와 마찬가지로 MSI 에 절대 동봉하지

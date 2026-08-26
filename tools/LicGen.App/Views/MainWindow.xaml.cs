@@ -8,6 +8,12 @@ namespace Boda.LicGen.App.Views
         public MainWindow()
         {
             InitializeComponent();
+
+            // chromeless 윈도우 — SystemCommands.MinimizeWindow / CloseWindow 활성화 (AppSetup 관례)
+            CommandBindings.Add(new System.Windows.Input.CommandBinding(SystemCommands.MinimizeWindowCommand,
+                (s, e) => SystemCommands.MinimizeWindow(this)));
+            CommandBindings.Add(new System.Windows.Input.CommandBinding(SystemCommands.CloseWindowCommand,
+                (s, e) => SystemCommands.CloseWindow(this)));
         }
     }
 }
