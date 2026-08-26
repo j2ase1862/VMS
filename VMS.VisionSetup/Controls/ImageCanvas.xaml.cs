@@ -194,11 +194,30 @@ namespace VMS.VisionSetup.Controls
 
         #region Image Display
 
+        // 표시 비트맵 재사용 — 매 갱신마다 ToBitmapSource() 로 새 비트맵을 만들면
+        // 라이브(프레임 반복)에서 대형 네이티브 할당이 GC 회수를 앞질러 앱이 느려지다
+        // 멈춘다 (Basler 현장 2026-08-26). 같은 크기/형식이면 픽셀만 덮어쓴다.
+        private System.Windows.Media.Imaging.WriteableBitmap? _displayBitmap;
+        private MatType _displayBitmapMatType;
+
         private void UpdateDisplayImage(Mat mat)
         {
             try
             {
-                DisplayImage.Source = mat.ToBitmapSource();
+                if (_displayBitmap == null
+                    || _displayBitmap.PixelWidth != mat.Width
+                    || _displayBitmap.PixelHeight != mat.Height
+                    || _displayBitmapMatType != mat.Type())
+                {
+                    _displayBitmap = mat.ToWriteableBitmap();
+                    _displayBitmapMatType = mat.Type();
+                    DisplayImage.Source = _displayBitmap;
+                }
+                else
+                {
+                    // 같은 인스턴스에 WritePixels — Source 교체 없이 화면 자동 무효화
+                    WriteableBitmapConverter.ToWriteableBitmap(mat, _displayBitmap);
+                }
             }
             catch (Exception ex)
             {
