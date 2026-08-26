@@ -9,11 +9,22 @@ on:
     branches:
       - main
       - master
+    # 문서/메모 전용 커밋은 Windows 풀빌드(과금 2배) 스킵 — private 전환(2026-08-26)
+    # 후 분당 과금 절약. 코드가 섞인 커밋은 정상 실행된다.
+    paths-ignore:
+      - "docs/**"
+      - "**.md"
+      - ".claude/**"
   pull_request:
     branches:
       - main
       - master
   workflow_dispatch:
+
+# 같은 브랜치/PR 의 이전 실행은 취소 — 커밋 연타 시 최신 커밋만 검증 (과금 절약)
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   DOTNET_NOLOGO: true
@@ -41,6 +52,13 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
 
       - name: Prepare local NuGet cache folder
         # nuget.config 의 `local-cache` 소스가 ./packages 로컬 폴더를 가리킨다.
