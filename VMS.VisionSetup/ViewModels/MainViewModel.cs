@@ -158,6 +158,12 @@ namespace VMS.VisionSetup.ViewModels
                 // Original 로 자동 복귀 — 이전 실행 결과가 새 이미지를 가리는 혼동 방지 (현장 요청 2026-08-27)
                 if (value != null && SelectedDisplayMode != ImageDisplayMode.OriginalImage)
                     SelectedDisplayMode = ImageDisplayMode.OriginalImage;
+                // 이전 실행의 결과·오버레이도 함께 소거 — 새 이미지와 무관한 그래픽이
+                // Result 뷰에 잔존하던 버그 (현장 실증 전 보고 2026-08-27). 도구 전환 시의
+                // 잔상 제거(SelectedTool setter)와 동일한 3종 세트.
+                ResultImage = null;
+                ResultMat = null;
+                OverlayImage = null;
                 UpdateDisplayImage();
                 NotifyCommandsCanExecuteChanged();
             }

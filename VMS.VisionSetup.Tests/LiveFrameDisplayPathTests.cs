@@ -99,6 +99,27 @@ namespace VMS.VisionSetup.Tests
         }
 
         [Fact]
+        public void CurrentImage_Set_ClearsPreviousRunResults()
+        {
+            // Grab/이미지 로드 후 Result 뷰에 이전 실행의 오버레이 그래픽이 잔존하던 버그
+            // (현장 실증 전 보고 2026-08-27) — 새 이미지 유입 시 결과 3종(ResultImage/
+            // ResultMat/OverlayImage)을 도구 전환 때와 동일하게 소거해야 한다.
+            var vm = CreateViewModel();
+            vm.CurrentImage = new Mat(8, 8, MatType.CV_8UC3, Scalar.Black);
+            vm.ResultMat = new Mat(8, 8, MatType.CV_8UC3, Scalar.Red);
+            vm.ResultImage = new System.Windows.Media.DrawingImage();
+            vm.OverlayImage = new System.Windows.Media.DrawingImage();
+            vm.SelectedDisplayMode = ImageDisplayMode.ResultImage;
+
+            vm.CurrentImage = new Mat(8, 8, MatType.CV_8UC3, Scalar.White);
+
+            Assert.Null(vm.ResultMat);
+            Assert.Null(vm.ResultImage);
+            Assert.Null(vm.OverlayImage);
+            Assert.Equal(ImageDisplayMode.OriginalImage, vm.SelectedDisplayMode);
+        }
+
+        [Fact]
         public void DisplayMat_ReturnsCurrentImage_WhenNotLive()
         {
             var vm = CreateViewModel();
