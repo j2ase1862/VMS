@@ -1,0 +1,139 @@
+<UserControl x:Class="VMS.VisionSetup.Views.ToolSettings.Tools.MultiStepAlignToolSettings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls">
+    <StackPanel>
+        <TextBlock Foreground="#999999" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,6"
+                   Text="두 스텝(카메라 이동)의 매칭 포즈를 하나의 좌표계로 합쳐 기준 대비 ΔX/ΔY/Δθ 를 계산합니다. 이 도구는 마지막(B) 스텝의 워크스페이스에 배치하세요."/>
+
+        <!-- 소스 지정 -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Sources (Step / Tool)" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <TextBlock Text="Point A" Foreground="#AAAAAA" FontWeight="Bold" FontSize="11" Margin="0,4,0,2"/>
+                <ComboBox ItemsSource="{Binding Steps}" SelectedItem="{Binding SelectedStepA}"
+                          Style="{StaticResource SettingComboBoxStyle}" Margin="0,0,0,4"/>
+                <ComboBox ItemsSource="{Binding ToolsA}" SelectedItem="{Binding SelectedToolA}"
+                          Style="{StaticResource SettingComboBoxStyle}"/>
+
+                <TextBlock Text="Point B" Foreground="#AAAAAA" FontWeight="Bold" FontSize="11" Margin="0,8,0,2"/>
+                <ComboBox ItemsSource="{Binding Steps}" SelectedItem="{Binding SelectedStepB}"
+                          Style="{StaticResource SettingComboBoxStyle}" Margin="0,0,0,4"/>
+                <ComboBox ItemsSource="{Binding ToolsB}" SelectedItem="{Binding SelectedToolB}"
+                          Style="{StaticResource SettingComboBoxStyle}"/>
+
+                <controls:CheckBoxParameter Label="Require Same Cycle"
+                    IsChecked="{Binding RequireSameCycle}"
+                    ToolType="MultiStepAlignTool" ParameterName="RequireSameCycle"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- FOV 간 기준 벡터 -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="FOV Baseline (B − A)" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:TextBoxParameter Label="Baseline X"
+                    Value="{Binding BaselineX}"
+                    ToolType="MultiStepAlignTool" ParameterName="BaselineX"/>
+                <controls:TextBoxParameter Label="Baseline Y"
+                    Value="{Binding BaselineY}"
+                    ToolType="MultiStepAlignTool" ParameterName="BaselineY"/>
+                <TextBlock Foreground="#999999" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,0"
+                           Text="B 촬영 위치의 A 대비 오프셋 (로봇/스테이지 이동량). 두 스텝 모두 캘리브레이션(또는 스텝 Resolution)이 있으면 mm, 없으면 px 로 해석됩니다 — mm 권장."/>
+            </StackPanel>
+        </Expander>
+
+        <!-- 기준(Origin) -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Reference (Origin)" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:TextBoxParameter Label="Ref A X"
+                    Value="{Binding RefAX}"
+                    ToolType="MultiStepAlignTool" ParameterName="RefAX"/>
+                <controls:TextBoxParameter Label="Ref A Y"
+                    Value="{Binding RefAY}"
+                    ToolType="MultiStepAlignTool" ParameterName="RefAY"/>
+                <controls:TextBoxParameter Label="Ref B X"
+                    Value="{Binding RefBX}"
+                    ToolType="MultiStepAlignTool" ParameterName="RefBX"/>
+                <controls:TextBoxParameter Label="Ref B Y"
+                    Value="{Binding RefBY}"
+                    ToolType="MultiStepAlignTool" ParameterName="RefBY"/>
+
+                <Button Content="현재 두 점을 기준으로 등록"
+                        Command="{Binding CaptureReferenceCommand}"
+                        Style="{StaticResource ModernSecondaryButton}"
+                        HorizontalAlignment="Left" Margin="0,6,0,0" Padding="10,4"/>
+                <TextBlock Text="{Binding CaptureStatus}" Foreground="#999999" FontSize="10"
+                           TextWrapping="Wrap" Margin="0,4,0,0"/>
+                <TextBlock Foreground="#999999" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,0"
+                           Text="기준 부품을 놓고 A 스텝 → B 스텝 순서로 Run 한 뒤 등록하세요. Baseline 을 먼저 입력해야 기준·현재가 같은 좌표계로 잡힙니다."/>
+            </StackPanel>
+        </Expander>
+
+        <!-- 판정 -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Judgment" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:CheckBoxParameter Label="Enable Judgment"
+                    IsChecked="{Binding EnableJudgment}"
+                    ToolType="MultiStepAlignTool" ParameterName="EnableJudgment"/>
+                <controls:TextBoxParameter Label="Max ΔXY (radial)"
+                    Value="{Binding MaxDeltaXY}"
+                    ToolType="MultiStepAlignTool" ParameterName="MaxDeltaXY"/>
+                <controls:TextBoxParameter Label="Max Δθ (°)"
+                    Value="{Binding MaxDeltaTheta}"
+                    ToolType="MultiStepAlignTool" ParameterName="MaxDeltaTheta"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- 로봇/스테이지 좌표 변환 -->
+        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Robot Transform (Hand-Eye)" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:CheckBoxParameter Label="Enable Robot Transform"
+                    IsChecked="{Binding EnableRobotTransform}"
+                    ToolType="MultiStepAlignTool" ParameterName="EnableRobotTransform"/>
+                <Grid IsEnabled="{Binding EnableRobotTransform}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Margin="0,0,4,0">
+                        <controls:TextBoxParameter Label="M11"
+                            Value="{Binding RobotM11}"
+                            ToolType="MultiStepAlignTool" ParameterName="RobotM11"/>
+                        <controls:TextBoxParameter Label="M21"
+                            Value="{Binding RobotM21}"
+                            ToolType="MultiStepAlignTool" ParameterName="RobotM21"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Margin="4,0,0,0">
+                        <controls:TextBoxParameter Label="M12"
+                            Value="{Binding RobotM12}"
+                            ToolType="MultiStepAlignTool" ParameterName="RobotM12"/>
+                        <controls:TextBoxParameter Label="M22"
+                            Value="{Binding RobotM22}"
+                            ToolType="MultiStepAlignTool" ParameterName="RobotM22"/>
+                    </StackPanel>
+                </Grid>
+                <controls:TextBoxParameter Label="θ Sign (+1/-1)"
+                    Value="{Binding RobotThetaSign}"
+                    ToolType="MultiStepAlignTool" ParameterName="RobotThetaSign"/>
+            </StackPanel>
+        </Expander>
+
+        <controls:CheckBoxParameter Label="Draw Overlay"
+            IsChecked="{Binding DrawOverlay}"
+            ToolType="MultiStepAlignTool" ParameterName="DrawOverlay"/>
+    </StackPanel>
+</UserControl>

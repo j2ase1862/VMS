@@ -58,11 +58,12 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
                     var model = SelectedModel;
                     if (model == null) return;
                     model.TrainMask = null;
-                    // 마스크 없이 즉시 재학습 — 특징 이미지가 원상태로 돌아오는 것을 바로 확인
+                    // 마스크 없이 즉시 재학습 — 특징 이미지가 원상태로 돌아오는 것을 바로 확인.
+                    // 옛 템플릿 재학습이므로 학습 중심 유지 (마스크 적용 경로와 동일 근거)
                     if (model.TemplateImage is { } tpl && !tpl.Empty())
                     {
                         using var copy = tpl.Clone();
-                        TypedTool.TrainPattern(copy, model);
+                        TypedTool.TrainPattern(copy, model, preserveTrainedCenter: true);
                     }
                     NotifyTrainMaskChanged();
                 },

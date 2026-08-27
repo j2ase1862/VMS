@@ -28,8 +28,22 @@ namespace VMS.VisionSetup.Models
     }
 
     /// <summary>
+    /// 다중 스텝 템플릿의 스텝 한 개 정의 — 스텝별 툴 체인 + 스텝 내부 연결.
+    /// </summary>
+    public class TemplateStepSpec
+    {
+        /// <summary>스텝 설명 (다이어그램·상태 메시지용, 예: "A 포인트 촬영").</summary>
+        public string Title { get; init; } = string.Empty;
+
+        public List<TemplateToolSpec> Tools { get; init; } = new();
+        public List<TemplateConnectionSpec> Connections { get; init; } = new();
+    }
+
+    /// <summary>
     /// 레시피 예제 템플릿 — 자주 쓰는 툴 체인(툴 + 파라미터 + 연결)의 사전 정의.
     /// 오퍼레이터가 갤러리에서 선택하면 현재 스텝의 워크스페이스에 체인이 생성된다.
+    /// Steps 가 비어있지 않으면 다중 스텝 템플릿 — 현재 워크스페이스 대신
+    /// 레시피에 새 스텝들을 생성한다 (2-스텝 얼라인 등).
     /// 카탈로그는 RecipeTemplateCatalog 참조.
     /// </summary>
     public class RecipeTemplate
@@ -47,6 +61,16 @@ namespace VMS.VisionSetup.Models
 
         public List<TemplateToolSpec> Tools { get; init; } = new();
         public List<TemplateConnectionSpec> Connections { get; init; } = new();
+
+        /// <summary>다중 스텝 템플릿 정의 — 비어있지 않으면 Tools/Connections 대신 사용.</summary>
+        public List<TemplateStepSpec> Steps { get; init; } = new();
+
+        /// <summary>
+        /// 다중 스텝 생성 직후(직렬화 전) 스텝 간 참조를 배선하는 훅 —
+        /// 예: MultiStepAlign 의 소스 스텝/툴 Id 를 생성된 실제 Id 로 설정.
+        /// 인자: (생성된 스텝들, 스텝별 툴 인스턴스들)
+        /// </summary>
+        public Action<IReadOnlyList<InspectionStep>, IReadOnlyList<IReadOnlyList<VisionToolBase>>>? ConfigureAcrossSteps { get; init; }
 
         /// <summary>체인 다이어그램 이미지 (어셈블리 리소스, 빌드 시 생성·동봉).</summary>
         public string DiagramUri => $"pack://application:,,,/Resources/Templates/{Id}.png";

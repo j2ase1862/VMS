@@ -298,13 +298,20 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
         /// If null, create a new model and add to Models collection.
         /// trainMask: 학습 마스크(8UC1, 255=제외) — 지정 시 모델에 저장, 미지정 시 모델의
         /// 기존 마스크 유지 (재학습·역직렬화 경로 공용). 템플릿과 크기가 다르면 무시.
+        /// preserveTrainedCenter: true 면 기존 모델의 학습 중심(TrainedCenterX/Y)을 유지 —
+        /// 마스크 적용/해제처럼 "저장된 옛 템플릿"으로 재학습하는 경로용. 기본(재계산)은
+        /// 현재 ROI 위치를 쓰므로, 원 학습 후 ROI 를 옮긴 상태에서 옛 템플릿을 재학습하면
+        /// 중심이 ROI 이동량만큼 어긋난다 (Match Align 기준·TrainedCenter 출력 오염).
         /// </summary>
-        public bool TrainPattern(Mat patternImage, FeatureMatchModel? targetModel = null, Mat? trainMask = null)
+        public bool TrainPattern(Mat patternImage, FeatureMatchModel? targetModel = null, Mat? trainMask = null,
+            bool preserveTrainedCenter = false)
         {
             try
             {
                 var model = targetModel;
                 bool isNew = model == null;
+                double prevCenterX = model?.TrainedCenterX ?? 0;
+                double prevCenterY = model?.TrainedCenterY ?? 0;
 
                 if (isNew)
                 {
@@ -331,7 +338,12 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                 model.TemplateWidth = patternImage.Width;
                 model.TemplateHeight = patternImage.Height;
 
-                if (UseROI && ROI.Width > 0 && ROI.Height > 0)
+                if (preserveTrainedCenter && !isNew)
+                {
+                    model.TrainedCenterX = prevCenterX;
+                    model.TrainedCenterY = prevCenterY;
+                }
+                else if (UseROI && ROI.Width > 0 && ROI.Height > 0)
                 {
                     model.TrainedCenterX = ROI.X + patternImage.Width / 2.0;
                     model.TrainedCenterY = ROI.Y + patternImage.Height / 2.0;

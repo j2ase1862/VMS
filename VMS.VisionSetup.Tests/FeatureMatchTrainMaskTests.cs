@@ -86,6 +86,41 @@ namespace VMS.VisionSetup.Tests
         }
 
         [Fact]
+        public void MaskRetrain_PreservesTrainedCenter_EvenAfterRoiMoved()
+        {
+            // 마스크 적용/해제는 "저장된 옛 템플릿" 재학습 — 원 학습 후 ROI 를 옮긴
+            // 상태였다면 중심을 현재 ROI 로 재계산하는 순간 기준이 이동량만큼 어긋난다
+            // (Match Align 학습 기준·TrainedCenterX/Y 출력 오염). preserveTrainedCenter
+            // 경로는 기존 중심을 유지해야 한다.
+            using var template = CreateTwoSquareTemplate();
+            using var mask = CreateShadowMask();
+
+            var tool = new FeatureMatchTool { UseROI = true, ROI = new Rect(10, 20, 120, 120) };
+            Assert.True(tool.TrainPattern(template));
+            var model = tool.Models.Last();
+            Assert.Equal(10 + 60, model.TrainedCenterX);   // ROI.X + w/2
+            Assert.Equal(20 + 60, model.TrainedCenterY);
+
+            // 원 학습 후 ROI 이동 → 마스크 적용 재학습 (EditTrainMask 경로)
+            tool.ROI = new Rect(300, 400, 120, 120);
+            Assert.True(tool.TrainPattern(template, model, mask, preserveTrainedCenter: true));
+            Assert.Equal(70, model.TrainedCenterX);        // 기준 유지 — ROI 이동 무관
+            Assert.Equal(80, model.TrainedCenterY);
+            Assert.False(HasEdgeInside(model, ShadowArea), "마스크는 정상 적용");
+
+            // 마스크 해제 재학습 (ClearTrainMask 경로)도 동일
+            model.TrainMask = null;
+            Assert.True(tool.TrainPattern(template, model, preserveTrainedCenter: true));
+            Assert.Equal(70, model.TrainedCenterX);
+            Assert.Equal(80, model.TrainedCenterY);
+
+            // 명시적 [Train] (preserve 미지정)은 종전대로 현재 ROI 기준 재계산
+            Assert.True(tool.TrainPattern(template, model));
+            Assert.Equal(300 + 60, model.TrainedCenterX);
+            Assert.Equal(400 + 60, model.TrainedCenterY);
+        }
+
+        [Fact]
         public void TrainPattern_SizeMismatchedMask_IsIgnored()
         {
             using var template = CreateTwoSquareTemplate();

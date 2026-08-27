@@ -158,6 +158,12 @@ namespace VMS.VisionSetup.ViewModels
                 // Original 로 자동 복귀 — 이전 실행 결과가 새 이미지를 가리는 혼동 방지 (현장 요청 2026-08-27)
                 if (value != null && SelectedDisplayMode != ImageDisplayMode.OriginalImage)
                     SelectedDisplayMode = ImageDisplayMode.OriginalImage;
+                // 이전 실행의 결과·오버레이도 함께 소거 — 새 이미지와 무관한 그래픽이
+                // Result 뷰에 잔존하던 버그 (현장 실증 전 보고 2026-08-27). 도구 전환 시의
+                // 잔상 제거(SelectedTool setter)와 동일한 3종 세트.
+                ResultImage = null;
+                ResultMat = null;
+                OverlayImage = null;
                 UpdateDisplayImage();
                 NotifyCommandsCanExecuteChanged();
             }
@@ -909,6 +915,8 @@ namespace VMS.VisionSetup.ViewModels
             var patternMatching = new ToolCategory { CategoryName = "Pattern Matching" };
             patternMatching.Tools.Add(new ToolItem { Name = "Feature Match", ToolType = "FeatureMatchTool" });
             patternMatching.Tools.Add(new ToolItem { Name = "Shape Match", ToolType = "ShapeMatchTool" });
+            patternMatching.Tools.Add(new ToolItem { Name = "Match Align", ToolType = "MatchAlignTool" });
+            patternMatching.Tools.Add(new ToolItem { Name = "Multi-Step Align", ToolType = "MultiStepAlignTool" });
             ToolTree.Add(patternMatching);
 
             // Blob Analysis 카테고리
@@ -2110,9 +2118,11 @@ namespace VMS.VisionSetup.ViewModels
             var newMask = _dialogService.ShowTrainMaskEditorDialog(model.TemplateImage, model.TrainMask);
             if (newMask == null) return;   // 취소
 
-            // 재학습 중 원본 템플릿이 setter 에서 Dispose 되므로 사본으로 학습
+            // 재학습 중 원본 템플릿이 setter 에서 Dispose 되므로 사본으로 학습.
+            // 옛 템플릿 재학습이므로 학습 중심 유지 — 현재 ROI 로 재계산하면 원 학습 후
+            // ROI 를 옮긴 경우 중심이 어긋난다 (Match Align 기준·TrainedCenter 출력 오염).
             using var template = model.TemplateImage.Clone();
-            var applied = ft.TrainPattern(template, model, newMask);
+            var applied = ft.TrainPattern(template, model, newMask, preserveTrainedCenter: true);
             newMask.Dispose();
 
             StatusMessage = applied
@@ -2483,6 +2493,8 @@ namespace VMS.VisionSetup.ViewModels
         {
             // 스텝 Resolution(mm/px) → 측정 도구 mm 폴백 (정식 캘리브레이션이 있으면 그쪽 우선)
             _visionService.CurrentStepResolutionMmPerPx = step.Resolution;
+            // 다중 스텝 얼라인 — 이 스텝에서 실행한 매칭 포즈가 StepPoseStore 에 이 키로 기록됨
+            _visionService.CurrentStepId = step.Id;
 
             // 기존 워크스페이스 정리
             ClearAllConnections();
@@ -2601,6 +2613,13 @@ namespace VMS.VisionSetup.ViewModels
             var template = _dialogService.ShowTemplateGalleryDialog();
             if (template == null) return;
 
+            // 다중 스텝 템플릿 — 현재 워크스페이스가 아니라 레시피에 새 스텝들을 생성
+            if (template.Steps.Count > 0)
+            {
+                ApplyMultiStepTemplate(template);
+                return;
+            }
+
             try
             {
                 var tools = RecipeTemplateCatalog.CreateTools(template);
@@ -2630,6 +2649,34 @@ namespace VMS.VisionSetup.ViewModels
 
                 SaveWorkspaceToStep();
                 StatusMessage = $"템플릿 생성: {template.Title} — 이미지(또는 3D 데이터) 로드 후 Run(F5)으로 테스트하세요";
+            }
+            catch (Exception ex)
+            {
+                _dialogService.ShowError($"템플릿 생성 실패: {ex.Message}", "예제 템플릿");
+            }
+        }
+
+        /// <summary>
+        /// 다중 스텝 템플릿 적용 — 현재 스텝과 같은 카메라로 레시피에 새 스텝들을 만들고,
+        /// 마지막 스텝을 선택해 워크스페이스에 로드한다 (배선된 툴 확인·튜닝 흐름).
+        /// </summary>
+        private void ApplyMultiStepTemplate(RecipeTemplate template)
+        {
+            var recipe = _recipeService.CurrentRecipe;
+            if (recipe == null || SelectedStep == null) return;
+
+            try
+            {
+                var built = RecipeTemplateCatalog.BuildSteps(template, SelectedStep.CameraId);
+                foreach (var (step, _) in built)
+                    _recipeService.AddStep(recipe, step);
+
+                StepNaming.RecomputeNames(recipe, Cameras);
+                RefreshSteps();
+                SelectedStep = built.Count > 0 ? built[^1].Step : SelectedStep;
+
+                StatusMessage = $"템플릿 생성: {template.Title} — 스텝 {built.Count}개 추가. " +
+                                "각 스텝의 Feature Match 에 패턴을 학습하고 Multi-Step Align 의 Baseline·기준을 설정하세요";
             }
             catch (Exception ex)
             {
@@ -3603,7 +3650,7 @@ namespace VMS.VisionSetup.ViewModels
         /// <summary>
         /// 도구에 맞는 ToolSettingsViewModel 생성
         /// </summary>
-        private static ToolSettingsViewModelBase? CreateToolSettingsViewModel(VisionToolBase tool)
+        private ToolSettingsViewModelBase? CreateToolSettingsViewModel(VisionToolBase tool)
         {
             return tool switch
             {
@@ -3622,6 +3669,8 @@ namespace VMS.VisionSetup.ViewModels
                 LineFitTool t => new LineFitToolSettingsViewModel(t),
                 CircleFitTool t => new CircleFitToolSettingsViewModel(t),
                 GeometryTool t => new GeometryToolSettingsViewModel(t),
+                MatchAlignTool t => new MatchAlignToolSettingsViewModel(t),
+                MultiStepAlignTool t => new MultiStepAlignToolSettingsViewModel(t, _recipeService),
                 HeightSlicerTool t => new HeightSlicerToolSettingsViewModel(t),
                 PlaneFitTool t => new PlaneFitToolSettingsViewModel(t),
                 Geometry3DTool t => new Geometry3DToolSettingsViewModel(t),

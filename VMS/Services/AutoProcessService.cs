@@ -274,6 +274,11 @@ namespace VMS.Services
                 {
                     sequenceFaulted = false;
                     SetAllCameraStates(AutoProcessState.WaitTrigger);
+
+                    // 다중 스텝 얼라인 — 사이클 시작 선언. 이전 사이클의 매칭 포즈가
+                    // 이번 사이클의 MultiStepAlign 계산에 섞이지 않게 한다.
+                    VMS.VisionSetup.Services.StepPoseStore.BeginCycle();
+
                     await engine.RunAsync(config, ct);
 
                     // 노드 오류로 중단된 경우 — 즉시 재시도하면 초당 수천 회 실패를 반복(busy loop)하므로

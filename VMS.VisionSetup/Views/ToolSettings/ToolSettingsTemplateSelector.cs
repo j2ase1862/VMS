@@ -13,6 +13,8 @@ namespace VMS.VisionSetup.Views.ToolSettings
         public DataTemplate? MorphologyTemplate { get; set; }
         public DataTemplate? HistogramTemplate { get; set; }
         public DataTemplate? FeatureMatchTemplate { get; set; }
+        public DataTemplate? MatchAlignTemplate { get; set; }
+        public DataTemplate? MultiStepAlignTemplate { get; set; }
         public DataTemplate? BlobTemplate { get; set; }
         public DataTemplate? CaliperTemplate { get; set; }
         public DataTemplate? LineFitTemplate { get; set; }
@@ -55,6 +57,8 @@ namespace VMS.VisionSetup.Views.ToolSettings
                 MorphologyToolSettingsViewModel => MorphologyTemplate,
                 HistogramToolSettingsViewModel => HistogramTemplate,
                 FeatureMatchToolSettingsViewModel => FeatureMatchTemplate,
+                MatchAlignToolSettingsViewModel => MatchAlignTemplate,
+                MultiStepAlignToolSettingsViewModel => MultiStepAlignTemplate,
                 BlobToolSettingsViewModel => BlobTemplate,
                 CaliperToolSettingsViewModel => CaliperTemplate,
                 LineFitToolSettingsViewModel => LineFitTemplate,
