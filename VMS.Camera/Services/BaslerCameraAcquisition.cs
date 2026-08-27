@@ -20,6 +20,14 @@ namespace VMS.Camera.Services
         private PixelDataConverter? _converter;
         private bool _disposed;
 
+        // pylon SDK 접근 직렬화 — grab(Start/Retrieve/Stop)과 파라미터 읽기/쓰기가 서로 다른
+        // 스레드에서 겹치면, USB 재열거·케이블 분리 등으로 grab 이 SDK 내부에서 블록된 상태일 때
+        // 파라미터 접근 스레드까지 같은 내부 잠금에 걸려 연쇄 정지한다 (세연공장 2026-08-28:
+        // 라이브 중 USB 삽입/해제 → 앱 전체 프리즈). 파라미터 쪽은 타임아웃으로 스킵해
+        // grab 이 행 상태여도 절대 따라 잠기지 않는다.
+        private readonly SemaphoreSlim _sdkLock = new(1, 1);
+        private const int ParamLockTimeoutMs = 2000;
+
         public bool IsConnected { get; private set; }
 
         /// <summary>
@@ -42,6 +50,13 @@ namespace VMS.Camera.Services
 
         private bool ConnectCore(Models.CameraInfo camera)
         {
+            // 행 상태의 grab 이 잠금을 영구 점유했을 수 있다 — 무한 대기 대신 포기하고 실패 보고
+            if (!_sdkLock.Wait(10000))
+            {
+                CameraLog.Write("[Basler] 연결 스킵 — SDK 사용 중 (이전 grab 행 의심, 앱 재시작 필요 가능)");
+                return false;
+            }
+
             try
             {
                 // 재연결 경로 — 이전 카메라 핸들이 살아 있으면(케이블 재연결 후 등)
@@ -129,6 +144,10 @@ namespace VMS.Camera.Services
                 CameraLog.Write($"[Basler] 연결 오류: {ex.Message}");
                 return false;
             }
+            finally
+            {
+                _sdkLock.Release();
+            }
         }
 
         private void OnPylonConnectionLost(object? sender, EventArgs e)
@@ -161,20 +180,26 @@ namespace VMS.Camera.Services
             }
         }
 
-        public async Task DisconnectAsync()
+        public Task DisconnectAsync()
         {
-            try
+            IsConnected = false;
+            // Close/Stop 은 죽은 전송 계층에서 블록될 수 있다 — 호출자(UI)를 절대 막지 않는다
+            return Task.Run(() =>
             {
-                CleanupPylonCamera();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Basler 카메라 연결 해제 오류: {ex.Message}");
-            }
-            finally
-            {
-                IsConnected = false;
-            }
+                bool locked = _sdkLock.Wait(ParamLockTimeoutMs);
+                try
+                {
+                    CleanupPylonCamera();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Basler 카메라 연결 해제 오류: {ex.Message}");
+                }
+                finally
+                {
+                    if (locked) _sdkLock.Release();
+                }
+            });
         }
 
         public Task<AcquisitionResult> AcquireAsync(int timeoutMs = 5000)
@@ -209,6 +234,7 @@ namespace VMS.Camera.Services
         private AcquisitionResult AcquireCore(
             PixelDataConverter converter, IStreamGrabber grabber, int timeoutMs)
         {
+            _sdkLock.Wait();
             try
             {
                 // Start grab (single frame)
@@ -277,10 +303,18 @@ namespace VMS.Camera.Services
             {
                 try
                 {
-                    if (grabber.IsGrabbing)
+                    // 장치가 이미 사라졌으면 Stop 을 시도하지 않는다 — 죽은 전송 계층에
+                    // 대한 Stop 은 무기한 블록될 수 있다 (USB 재열거/케이블 분리 중)
+                    bool stillConnected = false;
+                    try { stillConnected = _pylonCamera?.IsConnected ?? false; } catch { }
+                    if (stillConnected && grabber.IsGrabbing)
                         grabber.Stop();
                 }
                 catch { }
+                finally
+                {
+                    _sdkLock.Release();
+                }
             }
         }
 
@@ -299,9 +333,24 @@ namespace VMS.Camera.Services
             if (!IsConnected || _pylonCamera == null) return Task.FromResult(false);
             if (exposureUs == _appliedExposureUs && gain == _appliedGain) return Task.FromResult(true);
 
+            // 파라미터 접근도 SDK 왕복(GigE 네트워크 포함) — 호출 스레드(UI 포함)에서 실행하지
+            // 않는다. grab 이 SDK 내부에서 행 상태면 타임아웃으로 포기 (프리즈 전파 차단).
+            return Task.Run(() => ApplySettingsCore(exposureUs, gain));
+        }
+
+        private bool ApplySettingsCore(double exposureUs, double gain)
+        {
+            var cam = _pylonCamera;
+            if (cam == null) return false;
+            if (!_sdkLock.Wait(ParamLockTimeoutMs))
+            {
+                CameraLog.Write("[Basler] 파라미터 적용 스킵 — SDK 사용 중 (grab 지연/행 의심)");
+                return false;
+            }
+
             try
             {
-                var p = _pylonCamera.Parameters;
+                var p = cam.Parameters;
                 bool ok = true;
 
                 if (exposureUs > 0)
@@ -347,12 +396,16 @@ namespace VMS.Camera.Services
                     _appliedGain = gain;
                     CameraLog.Write($"[Basler] 노출 {exposureUs}µs / 게인 {gain} 적용 (게인 성공={gainOk})");
                 }
-                return Task.FromResult(ok);
+                return ok;
             }
             catch (Exception ex)
             {
                 CameraLog.Write($"[Basler] 파라미터 적용 오류: {ex.Message}");
-                return Task.FromResult(false);
+                return false;
+            }
+            finally
+            {
+                _sdkLock.Release();
             }
         }
 
@@ -364,9 +417,25 @@ namespace VMS.Camera.Services
         {
             if (!IsConnected || _pylonCamera == null) return Task.FromResult<CameraSettings2D?>(null);
 
+            // UI 스레드(설정 패널 read-back)가 직접 호출한다 — SDK 왕복을 호출 스레드에서
+            // 수행하면 grab 이 행 상태일 때 UI 가 같은 내부 잠금에 걸려 앱 전체가 멈춘다
+            // (세연공장 2026-08-28 라이브 중 USB 이벤트 프리즈). 반드시 스레드풀 + 타임아웃.
+            return Task.Run(() => ReadSettingsCore());
+        }
+
+        private CameraSettings2D? ReadSettingsCore()
+        {
+            var cam = _pylonCamera;
+            if (cam == null) return null;
+            if (!_sdkLock.Wait(ParamLockTimeoutMs))
+            {
+                CameraLog.Write("[Basler] 파라미터 읽기 스킵 — SDK 사용 중 (grab 지연/행 의심)");
+                return null;
+            }
+
             try
             {
-                var p = _pylonCamera.Parameters;
+                var p = cam.Parameters;
 
                 double exposureUs;
                 if (p.Contains(PLCamera.ExposureTimeAbs) && p[PLCamera.ExposureTimeAbs].IsReadable)
@@ -374,7 +443,7 @@ namespace VMS.Camera.Services
                 else if (p.Contains(PLCamera.ExposureTime) && p[PLCamera.ExposureTime].IsReadable)
                     exposureUs = p[PLCamera.ExposureTime].GetValue();
                 else
-                    return Task.FromResult<CameraSettings2D?>(null);
+                    return null;
 
                 double gain = 0;
                 if (p.Contains(PLCamera.Gain) && p[PLCamera.Gain].IsReadable)
@@ -382,28 +451,43 @@ namespace VMS.Camera.Services
                 else if (p.Contains(PLCamera.GainRaw) && p[PLCamera.GainRaw].IsReadable)
                     gain = p[PLCamera.GainRaw].GetValue();   // 장치 단위 (dB 아님)
 
-                return Task.FromResult<CameraSettings2D?>(new CameraSettings2D(exposureUs, gain));
+                return new CameraSettings2D(exposureUs, gain);
             }
             catch (Exception ex)
             {
                 CameraLog.Write($"[Basler] 파라미터 읽기 오류: {ex.Message}");
-                return Task.FromResult<CameraSettings2D?>(null);
+                return null;
+            }
+            finally
+            {
+                _sdkLock.Release();
             }
         }
 
         public void Dispose()
         {
-            if (!_disposed)
+            if (_disposed) return;
+            _disposed = true;
+            IsConnected = false;
+
+            // 카메라 전환 시 UI 스레드에서 호출된다 — SDK 정리(Close/Stop)가 죽은 전송
+            // 계층에서 블록될 수 있으므로 백그라운드로 위임 (fire-and-forget, 실패 무해)
+            var converter = _converter;
+            _converter = null;
+            _ = Task.Run(() =>
             {
-                _disposed = true;
+                bool locked = _sdkLock.Wait(ParamLockTimeoutMs);
                 try
                 {
                     CleanupPylonCamera();
-                    _converter?.Dispose();
+                    converter?.Dispose();
                 }
                 catch { }
-                IsConnected = false;
-            }
+                finally
+                {
+                    if (locked) _sdkLock.Release();
+                }
+            });
         }
     }
 #endif
