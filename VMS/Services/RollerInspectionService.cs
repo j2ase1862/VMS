@@ -42,6 +42,13 @@ namespace VMS.Services
         // 용지 이탈 확정에 필요한 연속 어두운 프레임 수
         private const int DarkFramesForExit = 3;
 
+        // 누적 상한 — 장면이 계속 밝으면(임계값 오설정·조명 변화) 풀해상도 클론이
+        // 상한 없이 쌓여 메모리 고갈 → 페이지파일 스래싱으로 PC 전체가 멈춘다.
+        // 초과 시 그 시점까지를 강제로 조합하고 쿨다운으로 전환한다.
+        private const int MaxAccumulatedFrames = 500;
+        private const long MaxAccumulatedBytes = 512L * 1024 * 1024; // 512 MB
+        private long _accumulatedBytes;
+
         public bool IsRunning { get; private set; }
         public double BrightnessThreshold { get; set; } = 120.0;
         public int MinConsecutiveFrames { get; set; } = 3;
@@ -112,8 +119,23 @@ namespace VMS.Services
                     if (isBright)
                     {
                         // 용지 영역 — 프레임 누적
-                        _accumulatedFrames.Add(frame.Clone());
+                        AccumulateFrame(frame);
                         _consecutiveDarkCount = 0;
+
+                        if (_accumulatedFrames.Count >= MaxAccumulatedFrames
+                            || _accumulatedBytes >= MaxAccumulatedBytes)
+                        {
+                            _logService?.Log(
+                                $"Paper capture limit reached ({_accumulatedFrames.Count} frames, " +
+                                $"{_accumulatedBytes / (1024 * 1024)}MB) — forcing completion. " +
+                                "밝기 임계값 설정을 확인하세요.",
+                                LogLevel.Warning, "Roller");
+                            _captureStopwatch?.Stop();
+                            CompletePaperCapture();
+                            _state = DetectionState.Cooldown;
+                            _cooldownCounter = 0;
+                            PaperExited?.Invoke();
+                        }
                     }
                     else
                     {
@@ -130,7 +152,7 @@ namespace VMS.Services
                         else
                         {
                             // 아직 이탈 미확정 — 경계 프레임도 누적
-                            _accumulatedFrames.Add(frame.Clone());
+                            AccumulateFrame(frame);
                         }
                     }
                     break;
@@ -261,11 +283,19 @@ namespace VMS.Services
             _captureStopwatch = null;
         }
 
+        private void AccumulateFrame(Mat frame)
+        {
+            var clone = frame.Clone();
+            _accumulatedFrames.Add(clone);
+            _accumulatedBytes += (long)clone.Step() * clone.Height;
+        }
+
         private void DisposeAccumulatedFrames()
         {
             foreach (var f in _accumulatedFrames)
                 f.Dispose();
             _accumulatedFrames.Clear();
+            _accumulatedBytes = 0;
         }
     }
 }

@@ -14,6 +14,7 @@ namespace VMS.Camera.Models
         public static string MutexName => AppDataPaths.QualifyIpcName("Local\\VMS_SharedFrame_Mutex");
         public static string FrameReadyEventName => AppDataPaths.QualifyIpcName("Local\\VMS_SharedFrame_FrameReady");
         public static string WriterAliveEventName => AppDataPaths.QualifyIpcName("Local\\VMS_SharedFrame_WriterAlive");
+        public static string ReaderAliveEventName => AppDataPaths.QualifyIpcName("Local\\VMS_SharedFrame_ReaderAlive");
 
         // ── MMF 용량 ──
         public const long MmfCapacity = 100 * 1024 * 1024; // 100 MB
