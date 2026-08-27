@@ -276,9 +276,14 @@ namespace VMS.Core.Services
             sb.AppendLine("Write-Log (\"install exit code: {0}\" -f $code)");
             sb.AppendLine("$installOk = ($code -eq 0) -or ($code -eq 3010)"); // 3010 = 재부팅 필요하나 성공
 
-            // 4) Web 서비스 상태 복원 — AppSetup 수동 [서비스 시작] 단계 자동화
+            // 4) Web 서비스 상태 복원 — AppSetup 수동 [서비스 시작] 단계 자동화.
+            //    운용 중이던 서비스(auto 였거나 실행 중)는 무조건 delayed-auto 로 전환 —
+            //    ① wasAuto 만 조건으로 걸면 과거 수동 MSI 업그레이드로 demand 가 된 PC 는
+            //       영영 자동 시작이 복원되지 않는다 (demand 고착)
+            //    ② 일반 auto 는 부팅 직후 경합으로 SCM 30초 타임아웃(7009)에 걸린 사례가
+            //       있어 delayed-auto 가 표준 (세연공장 2026-08-27)
             sb.AppendLine("if ($installOk -and ($wasAuto -or $wasRunning)) {");
-            sb.AppendLine("  if ($wasAuto) { & sc.exe config $svcName start= auto | Out-Null; Write-Log 'web service start type restored to auto' }");
+            sb.AppendLine("  & sc.exe config $svcName start= delayed-auto | Out-Null; Write-Log 'web service start type set to delayed-auto'");
             sb.AppendLine("  try {");
             sb.AppendLine("    Start-Service -Name $svcName -ErrorAction Stop");
             sb.AppendLine("    Write-Log 'web service started'");

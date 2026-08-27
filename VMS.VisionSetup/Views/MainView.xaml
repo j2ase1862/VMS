@@ -259,13 +259,15 @@
 
                         <!-- Run -->
                         <MenuItem Header="_Run">
-                            <MenuItem Header="Run All" Command="{Binding RunAllCommand}" InputGestureText="F5">
+                            <MenuItem Header="Run All" Command="{Binding RunAllCommand}" InputGestureText="F5"
+                                      ToolTip="{Binding RunAllToolTip}" ToolTipService.ShowOnDisabled="True">
                                 <MenuItem.Icon>
                                     <Path Data="M4,2 L16,10 L4,18 Z" Fill="#4CAF50"
                                           Width="11" Height="12" Stretch="Uniform"/>
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="Run Selected" Command="{Binding RunSelectedCommand}" InputGestureText="F6">
+                            <MenuItem Header="Run Selected" Command="{Binding RunSelectedCommand}" InputGestureText="F6"
+                                      ToolTip="{Binding RunSelectedToolTip}" ToolTipService.ShowOnDisabled="True">
                                 <MenuItem.Icon>
                                     <Canvas Width="13" Height="12">
                                         <Path Data="M1,1 L9,6 L1,11 Z" Fill="#00ADB5"/>
@@ -517,12 +519,16 @@
 
                 <!-- Execute -->
                 <Button Command="{Binding RunAllCommand}"
-                        Style="{StaticResource ToolbarIconButtonStyle}" ToolTip="Run All Tools (F5)">
+                        Style="{StaticResource ToolbarIconButtonStyle}"
+                        ToolTip="{Binding RunAllToolTip}"
+                        ToolTipService.ShowOnDisabled="True">
                     <Path Data="M4,2 L16,10 L4,18 Z" Fill="#4CAF50"
                           Width="12" Height="14" Stretch="Uniform"/>
                 </Button>
                 <Button Command="{Binding RunSelectedCommand}"
-                        Style="{StaticResource ToolbarIconButtonStyle}" ToolTip="Run Selected Tool (F6)">
+                        Style="{StaticResource ToolbarIconButtonStyle}"
+                        ToolTip="{Binding RunSelectedToolTip}"
+                        ToolTipService.ShowOnDisabled="True">
                     <Canvas Width="15" Height="14">
                         <Path Data="M1,1 L10,7 L1,13 Z" Fill="#00ADB5"/>
                         <Path Data="M13,1 L13,13" Stroke="#00ADB5" StrokeThickness="2.5"/>

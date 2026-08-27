@@ -15,6 +15,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using OpenCvSharp;
+using OpenCvSharp.WpfExtensions;
 using PointCloudData = VMS.Camera.Models.PointCloudData;
 
 namespace VMS.ViewModels
@@ -542,26 +543,26 @@ namespace VMS.ViewModels
                         {
                             FrameAcquired?.Invoke(result);
 
-                            BitmapSource? bmp = null;
+                            // Roller inspection: 원본 Mat을 Dispose 전에 전달
                             if (result.Image2D != null)
-                            {
-                                // Roller inspection: 원본 Mat을 Dispose 전에 전달
                                 LiveFrameReady?.Invoke(result.Image2D);
 
-                                if (!SuppressLiveDisplay)
-                                    bmp = MatToBitmapSource(result.Image2D);
-
-                                result.Image2D.Dispose();
-                            }
-
+                            var liveMat = !SuppressLiveDisplay ? result.Image2D : null;
                             var pointCloud = !SuppressLiveDisplay ? result.PointCloud : null;
 
-                            if (bmp != null || pointCloud != null)
+                            if (liveMat != null || pointCloud != null)
                             {
+                                // 프레임마다 새 BitmapSource 를 만들면 대형 할당이 GC 회수를
+                                // 앞질러 몇 분 뒤 앱이 느려지다 멈춘다 (세연공장 2026-08-27,
+                                // VisionSetup #371 과 동일 병리) — UI 스레드에서 표시 비트맵을
+                                // 재사용해 픽셀만 덮어쓴다. Mat 소유권은 디스패처 작업이 인수.
                                 await Application.Current.Dispatcher.InvokeAsync(() =>
                                 {
-                                    if (bmp != null)
-                                        CurrentImage = bmp;
+                                    if (liveMat != null)
+                                    {
+                                        UpdateLiveDisplayBitmap(liveMat);
+                                        liveMat.Dispose();
+                                    }
                                     if (pointCloud != null)
                                     {
                                         var old = CurrentPointCloud;
@@ -569,6 +570,11 @@ namespace VMS.ViewModels
                                         old?.Dispose();
                                     }
                                 });
+                            }
+                            else
+                            {
+                                result.Image2D?.Dispose();
+                                result.PointCloud?.Dispose();
                             }
                         }
                     }
@@ -873,6 +879,31 @@ namespace VMS.ViewModels
                 LineRate = LineRate,
                 TriggerSource = TriggerSource
             };
+        }
+
+        // 라이브 표시 비트맵 재사용 — 같은 크기/형식이면 WritePixels 로 덮어쓴다.
+        // WriteableBitmap 은 UI 스레드 소유이므로 반드시 디스패처에서 호출.
+        private WriteableBitmap? _liveDisplayBitmap;
+        private MatType _liveDisplayMatType;
+
+        private void UpdateLiveDisplayBitmap(Mat mat)
+        {
+            if (_liveDisplayBitmap == null
+                || _liveDisplayBitmap.PixelWidth != mat.Width
+                || _liveDisplayBitmap.PixelHeight != mat.Height
+                || _liveDisplayMatType != mat.Type())
+            {
+                _liveDisplayBitmap = mat.ToWriteableBitmap();
+                _liveDisplayMatType = mat.Type();
+                CurrentImage = _liveDisplayBitmap;
+            }
+            else
+            {
+                // 같은 인스턴스에 WritePixels — 바인딩 교체 없이 화면 자동 무효화
+                OpenCvSharp.WpfExtensions.WriteableBitmapConverter.ToWriteableBitmap(mat, _liveDisplayBitmap);
+                if (!ReferenceEquals(CurrentImage, _liveDisplayBitmap))
+                    CurrentImage = _liveDisplayBitmap;
+            }
         }
 
         private static BitmapSource? MatToBitmapSource(Mat mat)

@@ -69,6 +69,36 @@ namespace VMS.VisionSetup.Tests
         }
 
         [Fact]
+        public void CurrentImage_Set_ResetsDisplayModeToOriginal()
+        {
+            // Result 표시 중 새 이미지 유입(파일 열기·Grab·수신) 시 Original 로 자동 복귀 —
+            // 이전 실행 결과가 새 이미지를 가리는 혼동 방지 (현장 요청 2026-08-27)
+            var vm = CreateViewModel();
+            vm.CurrentImage = new Mat(8, 8, MatType.CV_8UC3, Scalar.Black);
+            vm.SelectedDisplayMode = ImageDisplayMode.ResultImage;
+
+            vm.CurrentImage = new Mat(8, 8, MatType.CV_8UC3, Scalar.White);
+
+            Assert.Equal(ImageDisplayMode.OriginalImage, vm.SelectedDisplayMode);
+        }
+
+        [Fact]
+        public void CommitLiveFrame_ResetsDisplayModeToOriginal()
+        {
+            // 단발 Receive from VMS 는 ApplySharedFrame → CommitLiveFrame 으로 정식 이미지에
+            // 이관된다 — 이관 시에도 Result 모드에 머물지 않아야 함 (F5/F6 활성화와 세트)
+            var vm = CreateViewModel();
+            vm.CurrentImage = new Mat(8, 8, MatType.CV_8UC3, Scalar.Black);
+            vm.SelectedDisplayMode = ImageDisplayMode.ResultImage;
+
+            vm.SetLiveFrame(new Mat(8, 8, MatType.CV_8UC3, Scalar.White));
+            vm.CommitLiveFrame();
+
+            Assert.Equal(ImageDisplayMode.OriginalImage, vm.SelectedDisplayMode);
+            Assert.NotNull(vm.CurrentImage);
+        }
+
+        [Fact]
         public void DisplayMat_ReturnsCurrentImage_WhenNotLive()
         {
             var vm = CreateViewModel();

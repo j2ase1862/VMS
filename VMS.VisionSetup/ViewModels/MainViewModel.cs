@@ -154,6 +154,10 @@ namespace VMS.VisionSetup.ViewModels
                 _currentImageIsHeightMap = false;
                 if (value != null)
                     _visionService.SetImage(value);
+                // 새 이미지 유입(파일 열기·Grab·라이브 이관·VMS 수신) 시 Result 표시에 머물지 않고
+                // Original 로 자동 복귀 — 이전 실행 결과가 새 이미지를 가리는 혼동 방지 (현장 요청 2026-08-27)
+                if (value != null && SelectedDisplayMode != ImageDisplayMode.OriginalImage)
+                    SelectedDisplayMode = ImageDisplayMode.OriginalImage;
                 UpdateDisplayImage();
                 NotifyCommandsCanExecuteChanged();
             }
@@ -332,6 +336,9 @@ namespace VMS.VisionSetup.ViewModels
         // 실행 중 여부
         [ObservableProperty]
         private bool _isRunning;
+
+        // 실행 시작/종료 시 Run 버튼 활성 상태·툴팁 즉시 갱신
+        partial void OnIsRunningChanged(bool value) => NotifyCommandsCanExecuteChanged();
 
         // 상태 메시지
         [ObservableProperty]
@@ -3562,10 +3569,28 @@ namespace VMS.VisionSetup.ViewModels
         /// <summary>
         /// 명령의 CanExecute 상태 갱신
         /// </summary>
+        /// <summary>Run All (F5) 비활성 사유 포함 툴팁 — Live/Grab 버튼과 동일 패턴 (#282).</summary>
+        public string RunAllToolTip => IsRunning
+            ? "Run All Tools (F5) — 실행 중입니다"
+            : CurrentImage == null
+                ? "Run All Tools (F5) — 작업 이미지가 없습니다: Grab, 이미지 열기 또는 Receive from VMS 후 실행하세요"
+                : "Run All Tools (F5)";
+
+        /// <summary>Run Selected (F6) 비활성 사유 포함 툴팁.</summary>
+        public string RunSelectedToolTip => IsRunning
+            ? "Run Selected Tool (F6) — 실행 중입니다"
+            : CurrentImage == null
+                ? "Run Selected Tool (F6) — 작업 이미지가 없습니다: Grab, 이미지 열기 또는 Receive from VMS 후 실행하세요"
+                : SelectedTool == null
+                    ? "Run Selected Tool (F6) — 실행할 도구를 선택하세요"
+                    : "Run Selected Tool (F6)";
+
         private void NotifyCommandsCanExecuteChanged()
         {
             RunAllCommand.NotifyCanExecuteChanged();
             RunSelectedCommand.NotifyCanExecuteChanged();
+            OnPropertyChanged(nameof(RunAllToolTip));
+            OnPropertyChanged(nameof(RunSelectedToolTip));
             TrainPatternCommand.NotifyCanExecuteChanged();
             AutoTuneCommand.NotifyCanExecuteChanged();
             AddStepCommand.NotifyCanExecuteChanged();
@@ -3655,6 +3680,10 @@ namespace VMS.VisionSetup.ViewModels
                 }
 
                 ApplySharedFrame(frame);
+                // 단발 수신은 즉시 정식 이미지로 이관 — 경량 표시(_liveFrameMat)에만 남기면
+                // 화면에는 보여도 CurrentImage 가 비어 F5/F6(Run) 이 비활성으로 남는다
+                // (세연공장 2026-08-27: VMS Grab → Receive 후 실행 불가)
+                CommitLiveFrame();
                 StatusMessage = $"VMS 프레임 수신 완료 (Frame #{frame.FrameCounter})";
             }
             catch (Exception ex)
