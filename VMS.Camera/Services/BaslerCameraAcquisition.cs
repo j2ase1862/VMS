@@ -28,6 +28,11 @@ namespace VMS.Camera.Services
         private readonly SemaphoreSlim _sdkLock = new(1, 1);
         private const int ParamLockTimeoutMs = 2000;
 
+        // BGR 변환 버퍼 재사용 — 라이브 중 매 프레임 수십 MB 할당이
+        // GC·커밋 압박(페이지파일 I/O)으로 번지는 것을 막는다. _sdkLock 보유
+        // 구간(AcquireCore)에서만 접근하므로 동기화 불필요.
+        private byte[] _bgrBuffer = Array.Empty<byte>();
+
         public bool IsConnected { get; private set; }
 
         /// <summary>
@@ -250,12 +255,16 @@ namespace VMS.Camera.Services
                     int height = grabResult.Height;
 
                     // Convert pixel format to BGR8 for OpenCV
-                    byte[] bgrBuffer = new byte[width * height * 3];
-                    converter.Convert(bgrBuffer, grabResult);
+                    // 크기 정확 일치 시에만 재사용 — PixelDataConverter 가 초과 크기
+                    // 버퍼를 거부할 수 있어 grow-only 가 아닌 exact-match 로 유지
+                    int totalBytes = width * height * 3;
+                    if (_bgrBuffer.Length != totalBytes)
+                        _bgrBuffer = new byte[totalBytes];
+                    converter.Convert(_bgrBuffer, grabResult);
 
                     // Create OpenCV Mat from BGR buffer
                     var mat = new Mat(height, width, MatType.CV_8UC3);
-                    Marshal.Copy(bgrBuffer, 0, mat.Data, bgrBuffer.Length);
+                    Marshal.Copy(_bgrBuffer, 0, mat.Data, totalBytes);
 
                     return new AcquisitionResult
                     {

@@ -17,6 +17,7 @@ namespace VMS.Camera.Services
         private Mutex? _mutex;
         private EventWaitHandle? _frameReadyEvent;
         private EventWaitHandle? _writerAliveEvent;
+        private EventWaitHandle? _readerAliveEvent;
         private long _lastFrameCounter;
         private bool _disposed;
 
@@ -32,6 +33,14 @@ namespace VMS.Camera.Services
                 _mutex = Mutex.OpenExisting(SharedFrameConstants.MutexName);
                 _frameReadyEvent = EventWaitHandle.OpenExisting(SharedFrameConstants.FrameReadyEventName);
                 _writerAliveEvent = EventWaitHandle.OpenExisting(SharedFrameConstants.WriterAliveEventName);
+
+                // Reader 존재를 Writer 에게 알린다 — Writer 는 이 이벤트가 없으면
+                // 프레임 직렬화를 통째로 건너뛴다 (메인 화면 단독 라이브 시 페이지파일
+                // I/O 제거). 이 프로세스가 죽으면 핸들이 닫히며 커널 객체도 소멸하므로
+                // 별도 해제 누락 걱정 없이 Writer 쪽에서 자동 감지된다.
+                _readerAliveEvent = new EventWaitHandle(
+                    true, EventResetMode.ManualReset, SharedFrameConstants.ReaderAliveEventName);
+                _readerAliveEvent.Set();
                 return true;
             }
             catch
@@ -233,6 +242,9 @@ namespace VMS.Camera.Services
 
         private void Disconnect()
         {
+            _readerAliveEvent?.Reset();
+            _readerAliveEvent?.Dispose();
+            _readerAliveEvent = null;
             _writerAliveEvent?.Dispose();
             _writerAliveEvent = null;
             _frameReadyEvent?.Dispose();
