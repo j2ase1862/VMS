@@ -34,6 +34,12 @@ namespace VMS.VisionSetup.Views.ToolSettings
 
         private bool _isPainting;
         private bool _strokeOutside;          // 버튼을 누른 채 캔버스 밖으로 나간 상태
+        private int _lastStrokeTick;          // 마지막 페인팅 시각 (Environment.TickCount)
+
+        /// <summary>마지막 페인팅 후 이 시간(ms)을 넘겨 도착한 이동은 같은 스트로크로 잇지 않는다 —
+        /// 터치 승격에서 MouseUp 유실 후 다음 탭이 "버튼 눌림 상태의 MouseMove"로 먼저 도착하는
+        /// 경로 차단 (실제 드래그의 이동 이벤트는 수십 ms 간격으로 연속됨).</summary>
+        private const int StrokeGapMs = 400;
         private System.Windows.Point _lastImagePt;
         private System.Windows.Point _rectStartImagePt;
         private Rectangle? _rubberBand;
@@ -152,6 +158,7 @@ namespace VMS.VisionSetup.Views.ToolSettings
             {
                 _lastImagePt = imgPt;
                 PaintStroke(imgPt, imgPt, PaintValue);
+                _lastStrokeTick = Environment.TickCount;
             }
         }
 
@@ -205,18 +212,21 @@ namespace VMS.VisionSetup.Views.ToolSettings
                     return;
                 }
 
-                // 한 이벤트에 비정상적으로 먼 점프는 선으로 잇지 않고 새 시작점으로 처리
+                // 비정상적으로 먼 점프 또는 시간 공백 후 도착한 이동은 선으로 잇지 않고 새 시작점 처리
                 double jump = (imgPt - _lastImagePt).Length;
-                if (_strokeOutside || jump > MaxStrokeJump)
+                bool gap = Environment.TickCount - _lastStrokeTick > StrokeGapMs;
+                if (_strokeOutside || gap || jump > MaxStrokeJump)
                 {
                     _strokeOutside = false;
                     _lastImagePt = imgPt;
                     PaintStroke(imgPt, imgPt, PaintValue);
+                    _lastStrokeTick = Environment.TickCount;
                     return;
                 }
 
                 PaintStroke(_lastImagePt, imgPt, PaintValue);
                 _lastImagePt = imgPt;
+                _lastStrokeTick = Environment.TickCount;
             }
         }
 
