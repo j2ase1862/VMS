@@ -144,6 +144,7 @@ namespace VMS.VisionSetup.Tests
             public Dictionary<string, string>? ShowCameraRemapDialog(
                 IReadOnlyList<(string oldId, int stepCount)> unregistered,
                 IReadOnlyList<CameraInfo> cameras) => null;
+            public OpenCvSharp.Mat? ShowTrainMaskEditorDialog(OpenCvSharp.Mat templateImage, OpenCvSharp.Mat? existingMask) => null;
         }
 
         #endregion

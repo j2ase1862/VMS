@@ -34,5 +34,12 @@ namespace VMS.VisionSetup.Interfaces
         Dictionary<string, string>? ShowCameraRemapDialog(
             IReadOnlyList<(string oldId, int stepCount)> unregistered,
             IReadOnlyList<VMS.Camera.Models.CameraInfo> cameras);
+
+        /// <summary>
+        /// FeatureMatch 학습 마스크 편집기 — 템플릿 위에 브러시/사각형/지우개로 don't-care
+        /// 영역을 칠한다. 반환: 새 마스크(8UC1, 템플릿 크기, 255=제외 — 소유권 호출자,
+        /// 전부 지웠으면 빈 마스크), 취소 시 null.
+        /// </summary>
+        OpenCvSharp.Mat? ShowTrainMaskEditorDialog(OpenCvSharp.Mat templateImage, OpenCvSharp.Mat? existingMask);
     }
 }

@@ -152,6 +152,7 @@ namespace VMS.VisionSetup.Tests
             public Dictionary<string, string>? ShowCameraRemapDialog(
                 IReadOnlyList<(string oldId, int stepCount)> unregistered,
                 IReadOnlyList<CameraInfo> cameras) => null;
+            public Mat? ShowTrainMaskEditorDialog(Mat templateImage, Mat? existingMask) => null;
         }
 
         #endregion

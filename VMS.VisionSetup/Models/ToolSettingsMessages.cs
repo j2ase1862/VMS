@@ -21,6 +21,8 @@ namespace VMS.VisionSetup.Models
     public sealed class RequestClearROIMessage { }
     public sealed class RequestDrawSearchRegionMessage { }
     public sealed class RequestClearSearchRegionMessage { }
+    /// <summary>FeatureMatch 학습 마스크(don't-care) 편집기 열기 요청 — 선택 모델의 템플릿 위에서 브러시/사각형으로 칠하고 재학습까지 수행 (MainViewModel 처리).</summary>
+    public sealed class RequestEditTrainMaskMessage { }
     /// <summary>이미지에서 한 픽셀 픽 모드 활성화 요청. MainView가 ImageCanvas의 EditMode.PickPoint 전환.</summary>
     public sealed class RequestPickColorMessage { }
 

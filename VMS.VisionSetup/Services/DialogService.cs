@@ -94,6 +94,15 @@ namespace VMS.VisionSetup.Services
             return dialog.ShowDialog() == true ? dialog.Mapping : null;
         }
 
+        public OpenCvSharp.Mat? ShowTrainMaskEditorDialog(OpenCvSharp.Mat templateImage, OpenCvSharp.Mat? existingMask)
+        {
+            var dialog = new Views.ToolSettings.TrainMaskEditorDialog(templateImage, existingMask)
+            {
+                Owner = Application.Current.MainWindow,
+            };
+            return dialog.ShowDialog() == true ? dialog.ResultMask : null;
+        }
+
         public string? ShowRenameDialog(string currentName)
         {
             var dialog = new RenameDialog

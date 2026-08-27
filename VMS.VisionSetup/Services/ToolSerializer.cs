@@ -166,6 +166,13 @@ namespace VMS.VisionSetup.Services
                             modelData["TemplateImageBase64"] = Convert.ToBase64String(pngBytes);
                         }
 
+                        // 학습 마스크 (8UC1 비트맵) — 복원 시 템플릿 재학습에 함께 적용
+                        if (model.TrainMask != null && !model.TrainMask.Empty())
+                        {
+                            Cv2.ImEncode(".png", model.TrainMask, out var maskBytes);
+                            modelData["TrainMaskBase64"] = Convert.ToBase64String(maskBytes);
+                        }
+
                         modelsList.Add(modelData);
                     }
                     if (modelsList.Count > 0)
@@ -965,6 +972,7 @@ namespace VMS.VisionSetup.Services
                     string modelName = "";
                     bool modelEnabled = true;
                     Mat? templateImage = null;
+                    Mat? trainMask = null;
 
                     if (entry.TryGetValue("Name", out var nameVal))
                         modelName = GetString(nameVal);
@@ -981,9 +989,20 @@ namespace VMS.VisionSetup.Services
                         }
                     }
 
+                    // 학습 마스크 — 재학습(TrainPattern)에 함께 넘겨야 마스크 적용 모델로 복원됨
+                    if (entry.TryGetValue("TrainMaskBase64", out var maskB64Val))
+                    {
+                        var maskB64 = GetString(maskB64Val);
+                        if (!string.IsNullOrEmpty(maskB64))
+                        {
+                            var maskBytes = Convert.FromBase64String(maskB64);
+                            trainMask = Cv2.ImDecode(maskBytes, ImreadModes.Grayscale);
+                        }
+                    }
+
                     if (templateImage != null && !templateImage.Empty())
                     {
-                        tool.TrainPattern(templateImage, null);
+                        tool.TrainPattern(templateImage, null, trainMask);
                         templateImage.Dispose();
                         var lastModel = tool.Models.LastOrDefault();
                         if (lastModel != null)
@@ -992,6 +1011,7 @@ namespace VMS.VisionSetup.Services
                             lastModel.IsEnabled = modelEnabled;
                         }
                     }
+                    trainMask?.Dispose();
                 }
             }
 

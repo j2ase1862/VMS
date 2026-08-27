@@ -850,6 +850,7 @@ namespace VMS.VisionSetup.ViewModels
                 if (TrainPatternCommand.CanExecute(null))
                     TrainPatternCommand.Execute(null);
             });
+            WeakReferenceMessenger.Default.Register<RequestEditTrainMaskMessage>(this, (r, m) => EditTrainMask());
             WeakReferenceMessenger.Default.Register<RequestAutoTuneMessage>(this, (r, m) =>
             {
                 if (AutoTuneCommand.CanExecute(null))
@@ -2077,6 +2078,39 @@ namespace VMS.VisionSetup.ViewModels
 
                 StatusMessage = $"Search Region 설정됨: ({ocv.SearchRegion.X}, {ocv.SearchRegion.Y}, {ocv.SearchRegion.Width}, {ocv.SearchRegion.Height})";
             }
+        }
+
+        /// <summary>
+        /// 학습 마스크(don't-care) 편집기 열기 (FeatureMatchTool 전용) — 선택 모델의
+        /// 템플릿 위에서 브러시/사각형/지우개로 제외 영역을 칠한다. 저장 시 마스크를
+        /// 모델에 반영하고 보관된 템플릿으로 즉시 재학습해 특징 이미지로 결과를 보여준다.
+        /// </summary>
+        public void EditTrainMask()
+        {
+            if (SelectedVisionTool is not FeatureMatchTool ft)
+            {
+                StatusMessage = "학습 마스크는 Feature Match 도구에서만 사용됩니다.";
+                return;
+            }
+
+            var model = ft.SelectedModel;
+            if (model?.TemplateImage == null || model.TemplateImage.Empty())
+            {
+                StatusMessage = "학습 마스크는 학습된 모델이 필요합니다 — 먼저 [Train]으로 학습하세요.";
+                return;
+            }
+
+            var newMask = _dialogService.ShowTrainMaskEditorDialog(model.TemplateImage, model.TrainMask);
+            if (newMask == null) return;   // 취소
+
+            // 재학습 중 원본 템플릿이 setter 에서 Dispose 되므로 사본으로 학습
+            using var template = model.TemplateImage.Clone();
+            var applied = ft.TrainPattern(template, model, newMask);
+            newMask.Dispose();
+
+            StatusMessage = applied
+                ? $"학습 마스크 적용 + '{model.Name}' 재학습 완료 — 특징 이미지의 빨간 영역이 제외됩니다."
+                : "마스크 적용 재학습 실패 — 마스크가 패턴 전체를 덮고 있지 않은지 확인하세요.";
         }
 
         /// <summary>
