@@ -117,6 +117,9 @@
         <DataTemplate x:Key="GeometryTemplate" DataType="{x:Type vm:GeometryToolSettingsViewModel}">
             <tools:GeometryToolSettings/>
         </DataTemplate>
+        <DataTemplate x:Key="MatchAlignTemplate" DataType="{x:Type vm:MatchAlignToolSettingsViewModel}">
+            <tools:MatchAlignToolSettings/>
+        </DataTemplate>
         <DataTemplate x:Key="OCRTemplate" DataType="{x:Type vm:OCRToolSettingsViewModel}">
             <tools:OCRToolSettings/>
         </DataTemplate>
@@ -195,6 +198,7 @@
             MorphologyTemplate="{StaticResource MorphologyTemplate}"
             HistogramTemplate="{StaticResource HistogramTemplate}"
             FeatureMatchTemplate="{StaticResource FeatureMatchTemplate}"
+            MatchAlignTemplate="{StaticResource MatchAlignTemplate}"
             BlobTemplate="{StaticResource BlobTemplate}"
             CaliperTemplate="{StaticResource CaliperTemplate}"
             LineFitTemplate="{StaticResource LineFitTemplate}"

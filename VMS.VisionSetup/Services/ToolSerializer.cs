@@ -286,6 +286,24 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["MinPassGrade"] = codeReader.MinPassGrade.ToString();
                     break;
 
+                case MatchAlignTool matchAlign:
+                    config.Parameters["UseTrainedReference"] = matchAlign.UseTrainedReference;
+                    config.Parameters["RefX"] = matchAlign.RefX;
+                    config.Parameters["RefY"] = matchAlign.RefY;
+                    config.Parameters["RefTheta"] = matchAlign.RefTheta;
+                    config.Parameters["EnableRobotTransform"] = matchAlign.EnableRobotTransform;
+                    config.Parameters["RobotM11"] = matchAlign.RobotM11;
+                    config.Parameters["RobotM12"] = matchAlign.RobotM12;
+                    config.Parameters["RobotM21"] = matchAlign.RobotM21;
+                    config.Parameters["RobotM22"] = matchAlign.RobotM22;
+                    config.Parameters["RobotThetaSign"] = matchAlign.RobotThetaSign;
+                    config.Parameters["EnableJudgment"] = matchAlign.EnableJudgment;
+                    config.Parameters["JudgmentUnit"] = matchAlign.JudgmentUnit.ToString();
+                    config.Parameters["MaxDeltaXY"] = matchAlign.MaxDeltaXY;
+                    config.Parameters["MaxDeltaTheta"] = matchAlign.MaxDeltaTheta;
+                    config.Parameters["DrawOverlay"] = matchAlign.DrawOverlay;
+                    break;
+
                 case GeometryTool geom:
                     config.Parameters["Operation"] = geom.Operation.ToString();
                     config.Parameters["EnableJudgment"] = geom.EnableJudgment;
@@ -647,6 +665,7 @@ namespace VMS.VisionSetup.Services
                 "CircleFitTool" => DeserializeCircleFitTool(config),
                 "HeightSlicerTool" => DeserializeHeightSlicerTool(config),
                 "CodeReaderTool" => DeserializeCodeReaderTool(config),
+                "MatchAlignTool" => DeserializeMatchAlignTool(config),
                 "GeometryTool" => DeserializeGeometryTool(config),
                 "PlaneFitTool" => DeserializePlaneFitTool(config),
                 "Geometry3DTool" => DeserializeGeometry3DTool(config),
@@ -1256,6 +1275,45 @@ namespace VMS.VisionSetup.Services
             if (p.TryGetValue("MinPassGrade", out var mpg) &&
                 Enum.TryParse<CodeQualityGrade>(GetString(mpg), true, out var grade))
                 tool.MinPassGrade = grade;
+
+            return tool;
+        }
+
+        private static MatchAlignTool DeserializeMatchAlignTool(ToolConfig config)
+        {
+            var tool = new MatchAlignTool();
+            var p = config.Parameters;
+
+            if (p.TryGetValue("UseTrainedReference", out var utr))
+                tool.UseTrainedReference = GetBool(utr);
+            if (p.TryGetValue("RefX", out var rx))
+                tool.RefX = GetDouble(rx);
+            if (p.TryGetValue("RefY", out var ry))
+                tool.RefY = GetDouble(ry);
+            if (p.TryGetValue("RefTheta", out var rt))
+                tool.RefTheta = GetDouble(rt);
+            if (p.TryGetValue("EnableRobotTransform", out var ert))
+                tool.EnableRobotTransform = GetBool(ert);
+            if (p.TryGetValue("RobotM11", out var m11))
+                tool.RobotM11 = GetDouble(m11);
+            if (p.TryGetValue("RobotM12", out var m12))
+                tool.RobotM12 = GetDouble(m12);
+            if (p.TryGetValue("RobotM21", out var m21))
+                tool.RobotM21 = GetDouble(m21);
+            if (p.TryGetValue("RobotM22", out var m22))
+                tool.RobotM22 = GetDouble(m22);
+            if (p.TryGetValue("RobotThetaSign", out var ts))
+                tool.RobotThetaSign = GetDouble(ts);
+            if (p.TryGetValue("EnableJudgment", out var ej))
+                tool.EnableJudgment = GetBool(ej);
+            if (p.TryGetValue("JudgmentUnit", out var ju))
+                tool.JudgmentUnit = Enum.Parse<GeometryJudgmentUnit>(GetString(ju));
+            if (p.TryGetValue("MaxDeltaXY", out var mdxy))
+                tool.MaxDeltaXY = GetDouble(mdxy);
+            if (p.TryGetValue("MaxDeltaTheta", out var mdt))
+                tool.MaxDeltaTheta = GetDouble(mdt);
+            if (p.TryGetValue("DrawOverlay", out var dov))
+                tool.DrawOverlay = GetBool(dov);
 
             return tool;
         }

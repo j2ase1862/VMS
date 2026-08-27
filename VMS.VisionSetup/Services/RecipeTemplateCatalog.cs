@@ -19,6 +19,7 @@ namespace VMS.VisionSetup.Services
         public const string CategoryDeepLearning = "Deep Learning";
         public const string Category2D = "2D 측정";
         public const string CategoryId = "식별";
+        public const string CategoryAlign = "얼라인";
 
         // 워크스페이스 캔버스 배치 상수 — 노드 MinWidth 150(+여백) 기준
         public const double NodeSpacingX = 190;
@@ -256,6 +257,34 @@ namespace VMS.VisionSetup.Services
                 {
                     new TemplateConnectionSpec { SourceIndex = 0, TargetIndex = 1, Type = ConnectionType.Image },
                     new TemplateConnectionSpec { SourceIndex = 1, TargetIndex = 2, Type = ConnectionType.Result },
+                },
+            },
+
+            // ── 얼라인 ──
+            new RecipeTemplate
+            {
+                Id = "2d-match-align",
+                Title = "표준 2D 매치 얼라인 (ΔX/ΔY/Δθ)",
+                Category = CategoryAlign,
+                Description = "카메라 1대로 부품을 보며 기준(Origin) 포즈 대비 현재 부품의 " +
+                              "변위량 ΔX/ΔY/Δθ 를 계산해 로봇/스테이지 보정에 쓰는 표준 얼라인 " +
+                              "구성이다. ① Feature Match 에서 기준 부품의 패턴을 학습 → " +
+                              "② Run 마다 Match Align 이 학습 중심 대비 Δ를 산출 → " +
+                              "③ mm 변위는 캘리브레이션(또는 스텝 Resolution) 설정 시 자동, " +
+                              "로봇 좌표 변위는 Match Align 의 Robot Transform(핸드아이 상위 " +
+                              "2x2)을 켜면 RobotDX/DY/DTheta 로 출력된다.",
+                Tools =
+                {
+                    new TemplateToolSpec { ToolType = "GrayscaleTool" },
+                    new TemplateToolSpec { ToolType = "FeatureMatchTool" },
+                    new TemplateToolSpec { ToolType = "MatchAlignTool" },
+                    new TemplateToolSpec { ToolType = "ResultTool" },
+                },
+                Connections =
+                {
+                    new TemplateConnectionSpec { SourceIndex = 0, TargetIndex = 1, Type = ConnectionType.Image },
+                    new TemplateConnectionSpec { SourceIndex = 1, TargetIndex = 2, Type = ConnectionType.Result },
+                    new TemplateConnectionSpec { SourceIndex = 2, TargetIndex = 3, Type = ConnectionType.Result },
                 },
             },
 

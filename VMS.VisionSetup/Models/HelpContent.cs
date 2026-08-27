@@ -341,6 +341,41 @@ namespace VMS.VisionSetup.Models
                 }
             },
 
+            ["MatchAlignTool"] = new ToolHelp
+            {
+                Name = "Match Align (2D 매치 기반 얼라인)",
+                Description = "Feature Match 가 찾은 현재 포즈(중심 X/Y, 각도)를 기준(Origin/Master) 포즈와 비교해 " +
+                              "변위량 ΔX/ΔY/Δθ 를 계산합니다.\n캘리브레이션(또는 스텝 Resolution)이 있으면 mm 변위도 함께 " +
+                              "산출하고, 핸드아이 행렬(상위 2x2)로 로봇/스테이지 좌표계 변위로 변환할 수 있습니다.\n" +
+                              "산출된 Delta 는 결과 데이터(DeltaX/DeltaY/DeltaTheta, RobotDX/DY/DTheta)로 노출되어 " +
+                              "로봇 피드백·보정에 사용합니다.",
+                Usage = "카메라 1대로 부품 전체(또는 대표 영역)를 보는 표준 2D 얼라인 구성입니다.\n" +
+                        "1) Feature Match 에서 기준 부품의 패턴을 학습합니다 (학습 중심 = 기준 포즈, θ=0).\n" +
+                        "2) Feature Match 를 이 도구에 Result 로 연결하고 Run 하면 Δ가 계산됩니다.\n" +
+                        "3) 기준을 학습 시점과 다르게 잡으려면 기준 부품을 놓고 Run 후 [현재 매칭을 기준으로 등록]을 누르세요.\n" +
+                        "4) 로봇 전송은 Robot Transform 을 켜고 핸드아이 캘리브레이션의 상위 2x2 행렬을 입력하면 " +
+                        "RobotDX/DY/DTheta 로 출력됩니다.",
+                CognexEquivalent = "CogPMAlignTool + CogFixtureTool (얼라인/픽스처 보정 흐름)",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["UseTrainedReference"] = "기준 포즈 선택.\n• 켬(기본): Feature Match 학습 시점의 패턴 중심을 기준(X_ref, Y_ref)으로, 기준 각도는 0°로 사용합니다 — 별도 등록 없이 학습만 하면 동작합니다.\n• 끔: 아래 Ref X/Y/θ 값(수동 입력 또는 [현재 매칭을 기준으로 등록]으로 캡처)을 기준으로 사용합니다.",
+                    ["RefX"] = "수동 기준 X 좌표 (px). [현재 매칭을 기준으로 등록] 버튼으로 자동 입력할 수 있습니다.",
+                    ["RefY"] = "수동 기준 Y 좌표 (px).",
+                    ["RefTheta"] = "수동 기준 각도 (°).",
+                    ["EnableJudgment"] = "변위가 허용 범위 이내인지 판정합니다.\n합격 조건: √(ΔX²+ΔY²) ≤ Max ΔXY 그리고 |Δθ| ≤ Max Δθ.\n판정 결과는 Success 에 반영되어 Result 도구로 집계됩니다.",
+                    ["JudgmentUnit"] = "위치 변위 판정 단위.\n• Mm: 캘리브레이션 또는 스텝 Resolution(mm/px) 필요 — 변환 불가 시 명확히 실패 처리됩니다.\n• Px: 픽셀 값 그대로 판정.\n각도는 단위와 무관하게 항상 °로 판정합니다.",
+                    ["MaxDeltaXY"] = "위치 변위 허용 반경 (단위는 Unit 설정). 기준 대비 √(ΔX²+ΔY²)가 이 값을 넘으면 NG.",
+                    ["MaxDeltaTheta"] = "각도 변위 허용값 (°). |Δθ|가 이 값을 넘으면 NG.",
+                    ["EnableRobotTransform"] = "켜면 Δ(mm 변위가 있으면 mm, 없으면 px)에 2x2 행렬을 적용해 로봇/스테이지 좌표계 변위(RobotDX/DY)를 출력합니다.",
+                    ["RobotM11"] = "핸드아이 행렬 상위 2x2 의 (1,1) 성분. 변위(Δ)는 벡터라 병진 성분이 소거되므로 회전·스케일·반전을 담은 선형부만 필요합니다.\n항등(1,0/0,1)이면 비전 좌표계 그대로 출력합니다.",
+                    ["RobotM12"] = "핸드아이 행렬 상위 2x2 의 (1,2) 성분.",
+                    ["RobotM21"] = "핸드아이 행렬 상위 2x2 의 (2,1) 성분.",
+                    ["RobotM22"] = "핸드아이 행렬 상위 2x2 의 (2,2) 성분.",
+                    ["RobotThetaSign"] = "로봇 좌표계의 회전 방향 부호 (+1 또는 −1).\n이미지 좌표(Y 아래 방향)와 로봇 좌표의 회전 방향이 반대면 −1 을 입력합니다.",
+                    ["DrawOverlay"] = "기준(노란 십자) → 현재(원) 변위 화살표와 수치를 이미지 위에 표시합니다.\n• 초록: 합격(또는 판정 꺼짐)\n• 빨강: 판정 NG"
+                }
+            },
+
             ["ShapeMatchTool"] = new ToolHelp
             {
                 Name = "Shape Match (NCC + 피라미드 형상 매칭)",

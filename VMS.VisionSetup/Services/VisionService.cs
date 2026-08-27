@@ -838,6 +838,10 @@ namespace VMS.VisionSetup.Services
                 if (tool is Geometry3DTool g3)
                     InjectGeometry3DSources(g3, resultMap, Tools);
 
+                // Run Selected에서도 매칭 소스 주입 (업스트림 실행 결과 사용)
+                if (tool is MatchAlignTool mat)
+                    InjectMatchAlignSource(mat, resultMap);
+
                 tool.OverlayBaseImage = toolInput;
                 var result = tool.Execute(toolInput);
                 tool.LastResult = result;
@@ -851,6 +855,29 @@ namespace VMS.VisionSetup.Services
                     toolInput.Dispose();
                 foreach (var ci in clonedInputs)
                     ci.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// MatchAlignTool의 Result 연결 소스에서 매칭 포즈(CenterX/Y/Angle 보유 결과)를 주입.
+        /// 첫 번째로 포즈 데이터를 가진 소스를 사용한다 (FeatureMatch 등).
+        /// </summary>
+        private void InjectMatchAlignSource(MatchAlignTool mat, Dictionary<string, VisionResult> resultMap)
+        {
+            mat.SourceMatchResult = null;
+            mat.SourceToolName = string.Empty;
+            foreach (var conn in _connections
+                .Where(c => c.TargetId == mat.Id && c.Type == ConnectionType.Result))
+            {
+                if (resultMap.TryGetValue(conn.SourceId, out var srcResult)
+                    && srcResult.Data.ContainsKey("CenterX")
+                    && srcResult.Data.ContainsKey("CenterY"))
+                {
+                    var srcTool = Tools.FirstOrDefault(t => t.Id == conn.SourceId);
+                    mat.SourceMatchResult = srcResult;
+                    mat.SourceToolName = srcTool?.Name ?? conn.SourceId;
+                    return;
+                }
             }
         }
 
@@ -1084,6 +1111,10 @@ namespace VMS.VisionSetup.Services
                     if (tool is Geometry3DTool g3)
                         InjectGeometry3DSources(g3, resultMap, sortedTools);
 
+                    // MatchAlignTool: Execute 전에 연결된 매칭 소스(CenterX/Y/Angle) 주입
+                    if (tool is MatchAlignTool mat)
+                        InjectMatchAlignSource(mat, resultMap);
+
                     var result = tool.Execute(inputImage);
                     tool.LastResult = result;
                     results.Add(result);
@@ -1236,6 +1267,7 @@ namespace VMS.VisionSetup.Services
                 // Pattern Matching
                 "FeatureMatchTool" => new FeatureMatchTool(),
                 "ShapeMatchTool" => new ShapeMatchTool(),
+                "MatchAlignTool" => new MatchAlignTool(),
 
                 // Blob Analysis
                 "BlobTool" => new BlobTool(),
@@ -1313,7 +1345,8 @@ namespace VMS.VisionSetup.Services
                 ["Pattern Matching"] = new[]
                 {
                     "FeatureMatchTool",
-                    "ShapeMatchTool"
+                    "ShapeMatchTool",
+                    "MatchAlignTool"
                 },
                 ["Blob Analysis"] = new[]
                 {
@@ -1379,6 +1412,7 @@ namespace VMS.VisionSetup.Services
                 "HistogramTool" => "Histogram",
                 "FeatureMatchTool" => "Feature Match",
                 "ShapeMatchTool" => "Shape Match",
+                "MatchAlignTool" => "Match Align",
                 "BlobTool" => "Blob Analysis",
                 "CaliperTool" => "Caliper",
                 "LineFitTool" => "Line Fit",

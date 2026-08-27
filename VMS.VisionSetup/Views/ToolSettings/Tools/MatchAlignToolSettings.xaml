@@ -1,0 +1,107 @@
+<UserControl x:Class="VMS.VisionSetup.Views.ToolSettings.Tools.MatchAlignToolSettings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls"
+             xmlns:conv="clr-namespace:VMS.VisionSetup.Converters"
+             xmlns:meas="clr-namespace:VMS.VisionSetup.VisionTools.Measurement">
+    <StackPanel>
+        <!-- 기준(Origin/Master) 포즈 -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Reference (Origin)" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:CheckBoxParameter Label="Use Trained Reference"
+                    IsChecked="{Binding UseTrainedReference}"
+                    ToolType="MatchAlignTool" ParameterName="UseTrainedReference"/>
+
+                <StackPanel IsEnabled="{Binding IsManualReference}">
+                    <controls:TextBoxParameter Label="Ref X (px)"
+                        Value="{Binding RefX}"
+                        ToolType="MatchAlignTool" ParameterName="RefX"/>
+                    <controls:TextBoxParameter Label="Ref Y (px)"
+                        Value="{Binding RefY}"
+                        ToolType="MatchAlignTool" ParameterName="RefY"/>
+                    <controls:TextBoxParameter Label="Ref θ (°)"
+                        Value="{Binding RefTheta}"
+                        ToolType="MatchAlignTool" ParameterName="RefTheta"/>
+                </StackPanel>
+
+                <Button Content="현재 매칭을 기준으로 등록"
+                        Command="{Binding CaptureReferenceCommand}"
+                        Style="{StaticResource ModernSecondaryButton}"
+                        HorizontalAlignment="Left" Margin="0,6,0,0" Padding="10,4"/>
+                <TextBlock Text="{Binding CaptureStatus}" Foreground="#999999" FontSize="10"
+                           TextWrapping="Wrap" Margin="0,4,0,0"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- 판정 -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Judgment" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:CheckBoxParameter Label="Enable Judgment"
+                    IsChecked="{Binding EnableJudgment}"
+                    ToolType="MatchAlignTool" ParameterName="EnableJudgment"/>
+                <controls:EnumComboBoxParameter Label="Unit"
+                    ItemsSource="{conv:EnumValues {x:Type meas:GeometryJudgmentUnit}}"
+                    SelectedValue="{Binding JudgmentUnit}"
+                    ToolType="MatchAlignTool" ParameterName="JudgmentUnit"/>
+                <controls:TextBoxParameter Label="Max ΔXY (radial)"
+                    Value="{Binding MaxDeltaXY}"
+                    ToolType="MatchAlignTool" ParameterName="MaxDeltaXY"/>
+                <controls:TextBoxParameter Label="Max Δθ (°)"
+                    Value="{Binding MaxDeltaTheta}"
+                    ToolType="MatchAlignTool" ParameterName="MaxDeltaTheta"/>
+                <TextBlock Foreground="#999999" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,0"
+                           Text="Unit=Mm 은 캘리브레이션 또는 스텝 Resolution(mm/px)이 필요합니다. 각도는 항상 °로 판정합니다."/>
+            </StackPanel>
+        </Expander>
+
+        <!-- 로봇/스테이지 좌표 변환 -->
+        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Robot Transform (Hand-Eye)" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:CheckBoxParameter Label="Enable Robot Transform"
+                    IsChecked="{Binding EnableRobotTransform}"
+                    ToolType="MatchAlignTool" ParameterName="EnableRobotTransform"/>
+                <Grid IsEnabled="{Binding EnableRobotTransform}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Margin="0,0,4,0">
+                        <controls:TextBoxParameter Label="M11"
+                            Value="{Binding RobotM11}"
+                            ToolType="MatchAlignTool" ParameterName="RobotM11"/>
+                        <controls:TextBoxParameter Label="M21"
+                            Value="{Binding RobotM21}"
+                            ToolType="MatchAlignTool" ParameterName="RobotM21"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Margin="4,0,0,0">
+                        <controls:TextBoxParameter Label="M12"
+                            Value="{Binding RobotM12}"
+                            ToolType="MatchAlignTool" ParameterName="RobotM12"/>
+                        <controls:TextBoxParameter Label="M22"
+                            Value="{Binding RobotM22}"
+                            ToolType="MatchAlignTool" ParameterName="RobotM22"/>
+                    </StackPanel>
+                </Grid>
+                <controls:TextBoxParameter Label="θ Sign (+1/-1)"
+                    Value="{Binding RobotThetaSign}"
+                    ToolType="MatchAlignTool" ParameterName="RobotThetaSign"/>
+                <TextBlock Foreground="#999999" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,0"
+                           Text="핸드아이 행렬의 상위 2x2 (회전·스케일·반전). Δ는 벡터라 병진 성분은 필요 없습니다. mm 변위가 있으면 mm 에, 없으면 px 에 적용됩니다."/>
+            </StackPanel>
+        </Expander>
+
+        <!-- 표시 -->
+        <controls:CheckBoxParameter Label="Draw Overlay"
+            IsChecked="{Binding DrawOverlay}"
+            ToolType="MatchAlignTool" ParameterName="DrawOverlay"/>
+    </StackPanel>
+</UserControl>

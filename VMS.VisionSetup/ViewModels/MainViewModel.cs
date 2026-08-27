@@ -915,6 +915,7 @@ namespace VMS.VisionSetup.ViewModels
             var patternMatching = new ToolCategory { CategoryName = "Pattern Matching" };
             patternMatching.Tools.Add(new ToolItem { Name = "Feature Match", ToolType = "FeatureMatchTool" });
             patternMatching.Tools.Add(new ToolItem { Name = "Shape Match", ToolType = "ShapeMatchTool" });
+            patternMatching.Tools.Add(new ToolItem { Name = "Match Align", ToolType = "MatchAlignTool" });
             ToolTree.Add(patternMatching);
 
             // Blob Analysis 카테고리
@@ -3628,6 +3629,7 @@ namespace VMS.VisionSetup.ViewModels
                 LineFitTool t => new LineFitToolSettingsViewModel(t),
                 CircleFitTool t => new CircleFitToolSettingsViewModel(t),
                 GeometryTool t => new GeometryToolSettingsViewModel(t),
+                MatchAlignTool t => new MatchAlignToolSettingsViewModel(t),
                 HeightSlicerTool t => new HeightSlicerToolSettingsViewModel(t),
                 PlaneFitTool t => new PlaneFitToolSettingsViewModel(t),
                 Geometry3DTool t => new Geometry3DToolSettingsViewModel(t),
