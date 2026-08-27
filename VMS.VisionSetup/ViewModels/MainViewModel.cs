@@ -2117,9 +2117,11 @@ namespace VMS.VisionSetup.ViewModels
             var newMask = _dialogService.ShowTrainMaskEditorDialog(model.TemplateImage, model.TrainMask);
             if (newMask == null) return;   // 취소
 
-            // 재학습 중 원본 템플릿이 setter 에서 Dispose 되므로 사본으로 학습
+            // 재학습 중 원본 템플릿이 setter 에서 Dispose 되므로 사본으로 학습.
+            // 옛 템플릿 재학습이므로 학습 중심 유지 — 현재 ROI 로 재계산하면 원 학습 후
+            // ROI 를 옮긴 경우 중심이 어긋난다 (Match Align 기준·TrainedCenter 출력 오염).
             using var template = model.TemplateImage.Clone();
-            var applied = ft.TrainPattern(template, model, newMask);
+            var applied = ft.TrainPattern(template, model, newMask, preserveTrainedCenter: true);
             newMask.Dispose();
 
             StatusMessage = applied
