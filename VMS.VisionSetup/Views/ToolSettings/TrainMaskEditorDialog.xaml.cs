@@ -33,9 +33,16 @@ namespace VMS.VisionSetup.Views.ToolSettings
         private double _zoom = 1.0;
 
         private bool _isPainting;
+        private bool _strokeOutside;          // 버튼을 누른 채 캔버스 밖으로 나간 상태
         private System.Windows.Point _lastImagePt;
         private System.Windows.Point _rectStartImagePt;
         private Rectangle? _rubberBand;
+
+        /// <summary>한 이벤트에 이 거리(이미지 px)를 넘는 점프는 이전 점과 선으로 잇지 않는다 —
+        /// 이벤트 유실·터치 승격 좌표 이상 등 어떤 경로로든 "이어 그리기"가 생기는 것을 물리적으로 차단.
+        /// 실제 브러시 드래그의 이벤트 간 이동량은 이미지 대각선의 수 % 수준이라 오탐 없음.</summary>
+        private double MaxStrokeJump =>
+            0.4 * Math.Sqrt(_templateBgr.Width * _templateBgr.Width + _templateBgr.Height * _templateBgr.Height);
 
         // 다각형 도구: 이미지 좌표 꼭지점 누적 + 커서 추종 미리보기
         private readonly List<System.Windows.Point> _polyImagePts = new();
@@ -125,6 +132,7 @@ namespace VMS.VisionSetup.Views.ToolSettings
             CancelDrag();
 
             _isPainting = true;
+            _strokeOutside = false;
             EditArea.CaptureMouse();
 
             if (RectModeBtn.IsChecked == true)
@@ -167,6 +175,14 @@ namespace VMS.VisionSetup.Views.ToolSettings
                 return;
             }
 
+            // 우리 MouseDown 이 잡은 캡처가 살아있을 때만 페인팅 — MouseDown 이 유실된 채
+            // 잔여 상태로 진입한 이동(유령 스트로크)을 원천 차단
+            if (!EditArea.IsMouseCaptured)
+            {
+                CancelDrag();
+                return;
+            }
+
             var imgPt = ToImagePoint(viewPt);
 
             if (_rubberBand != null)
@@ -179,6 +195,26 @@ namespace VMS.VisionSetup.Views.ToolSettings
             }
             else
             {
+                // 캔버스 밖에서는 칠하지 않는다 — 밖으로 나갔다 돌아오면 재진입 지점부터 새 시작
+                // (기존에는 가장자리로 클램프되어 이탈 경로가 테두리를 따라 칠해졌음)
+                bool inside = viewPt.X >= 0 && viewPt.Y >= 0
+                    && viewPt.X < EditArea.Width && viewPt.Y < EditArea.Height;
+                if (!inside)
+                {
+                    _strokeOutside = true;
+                    return;
+                }
+
+                // 한 이벤트에 비정상적으로 먼 점프는 선으로 잇지 않고 새 시작점으로 처리
+                double jump = (imgPt - _lastImagePt).Length;
+                if (_strokeOutside || jump > MaxStrokeJump)
+                {
+                    _strokeOutside = false;
+                    _lastImagePt = imgPt;
+                    PaintStroke(imgPt, imgPt, PaintValue);
+                    return;
+                }
+
                 PaintStroke(_lastImagePt, imgPt, PaintValue);
                 _lastImagePt = imgPt;
             }
