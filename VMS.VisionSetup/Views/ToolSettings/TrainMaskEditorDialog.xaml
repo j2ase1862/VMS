@@ -10,6 +10,7 @@
         WindowStyle="None"
         Background="{StaticResource BrushBgWindow}"
         ShowInTaskbar="False"
+        PreviewKeyDown="Window_PreviewKeyDown"
         TextOptions.TextFormattingMode="Display">
 
     <shell:WindowChrome.WindowChrome>
@@ -26,72 +27,115 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <c:ChromelessTitleBar Grid.Row="0"
                                   TitleText="학습 마스크 편집 (don't-care 영역)"
                                   ShowMinMaxButtons="False"/>
 
-            <!-- 도구 바 -->
-            <Grid Grid.Row="1" Margin="18,12,18,8">
+            <!-- 도구 바 1행: 도구 모양 × 마스크/해제 동작 -->
+            <Grid Grid.Row="1" Margin="18,12,18,4">
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <RadioButton x:Name="BrushModeBtn" Content="브러시" GroupName="MaskTool"
+                                 Style="{StaticResource WindowDarkRadioButton}"
+                                 IsChecked="True" Margin="0,0,14,0" VerticalAlignment="Center"
+                                 Checked="OnToolModeChanged"/>
+                    <RadioButton x:Name="RectModeBtn" Content="사각형" GroupName="MaskTool"
+                                 Style="{StaticResource WindowDarkRadioButton}"
+                                 Margin="0,0,14,0" VerticalAlignment="Center"
+                                 Checked="OnToolModeChanged"/>
+                    <RadioButton x:Name="PolyModeBtn" Content="다각형" GroupName="MaskTool"
+                                 Style="{StaticResource WindowDarkRadioButton}"
+                                 Margin="0,0,14,0" VerticalAlignment="Center"
+                                 Checked="OnToolModeChanged"/>
+
+                    <Border Width="1" Margin="4,2,18,2"
+                            Background="{StaticResource BrushBorderSubtle}"/>
+
+                    <RadioButton x:Name="MaskActionBtn" Content="마스크" GroupName="MaskAction"
+                                 Style="{StaticResource WindowDarkRadioButton}"
+                                 IsChecked="True" Margin="0,0,14,0" VerticalAlignment="Center"
+                                 Checked="OnToolModeChanged"/>
+                    <RadioButton x:Name="UnmaskActionBtn" Content="해제 (UnMask)" GroupName="MaskAction"
+                                 Style="{StaticResource WindowDarkRadioButton}"
+                                 VerticalAlignment="Center"
+                                 Checked="OnToolModeChanged"/>
+                </StackPanel>
+
+                <Button Grid.Column="1" Content="모두 지우기" Style="{StaticResource ModernGhostButton}"
+                        Padding="10,4" Click="OnClearAllClick"/>
+            </Grid>
+
+            <!-- 도구 바 2행: 브러시 크기 + 줌 -->
+            <Grid Grid.Row="2" Margin="18,4,18,8">
+                <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <RadioButton x:Name="BrushModeBtn" Grid.Column="0" Content="브러시"
-                             Style="{StaticResource WindowDarkRadioButton}"
-                             IsChecked="True" Margin="0,0,14,0" VerticalAlignment="Center"/>
-                <RadioButton x:Name="RectModeBtn" Grid.Column="1" Content="사각형"
-                             Style="{StaticResource WindowDarkRadioButton}"
-                             Margin="0,0,14,0" VerticalAlignment="Center"/>
-                <RadioButton x:Name="EraserModeBtn" Grid.Column="2" Content="지우개"
-                             Style="{StaticResource WindowDarkRadioButton}"
-                             Margin="0,0,18,0" VerticalAlignment="Center"/>
-
-                <TextBlock Grid.Column="3" Text="크기" VerticalAlignment="Center" Margin="0,0,6,0"
+                <TextBlock Grid.Column="0" Text="크기" VerticalAlignment="Center" Margin="0,0,6,0"
                            FontSize="12" Foreground="{StaticResource BrushTextSecondary}"/>
-                <Slider x:Name="BrushSizeSlider" Grid.Column="4" Width="120" Minimum="4" Maximum="80"
+                <Slider x:Name="BrushSizeSlider" Grid.Column="1" Width="120" Minimum="4" Maximum="80"
                         Value="18" VerticalAlignment="Center"
                         ValueChanged="BrushSizeSlider_ValueChanged"/>
 
-                <Button Grid.Column="6" Content="모두 지우기" Style="{StaticResource ModernGhostButton}"
-                        Padding="10,4" Click="OnClearAllClick"/>
+                <StackPanel Grid.Column="3" Orientation="Horizontal">
+                    <TextBlock Text="줌" VerticalAlignment="Center" Margin="0,0,8,0"
+                               FontSize="12" Foreground="{StaticResource BrushTextSecondary}"/>
+                    <Button x:Name="ZoomOutBtn" Content="−" Style="{StaticResource ModernGhostButton}"
+                            MinWidth="30" Padding="6,2" Click="OnZoomOutClick"/>
+                    <TextBlock x:Name="ZoomLabel" Text="100%" VerticalAlignment="Center"
+                               MinWidth="44" TextAlignment="Center" Margin="4,0"
+                               FontSize="12" Foreground="{StaticResource BrushTextSecondary}"/>
+                    <Button x:Name="ZoomInBtn" Content="+" Style="{StaticResource ModernGhostButton}"
+                            MinWidth="30" Padding="6,2" Click="OnZoomInClick"/>
+                </StackPanel>
             </Grid>
 
-            <!-- 편집 캔버스: 템플릿 + 마스크 오버레이(반투명 빨강) + 사각형 러버밴드 -->
-            <Border Grid.Row="2" Margin="18,0,18,8" Padding="8"
+            <!-- 편집 캔버스: 템플릿 + 마스크 오버레이(반투명 빨강) + 러버밴드/다각형 미리보기.
+                 줌은 EditArea LayoutTransform — ScrollViewer 가 넘치는 부분을 스크롤로 노출 -->
+            <Border Grid.Row="3" Margin="18,0,18,8" Padding="8"
                     Background="{StaticResource BrushBgCard}"
                     BorderBrush="{StaticResource BrushBorderSubtle}"
                     BorderThickness="1" CornerRadius="6">
-                <Grid x:Name="EditArea" Cursor="Cross"
-                      MouseLeftButtonDown="EditArea_MouseDown"
-                      MouseMove="EditArea_MouseMove"
-                      MouseLeftButtonUp="EditArea_MouseUp"
-                      Background="Transparent">
-                    <Image x:Name="TemplateView" Stretch="Fill"
-                           HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                    <Image x:Name="OverlayView" Stretch="Fill"
-                           HorizontalAlignment="Left" VerticalAlignment="Top"
-                           IsHitTestVisible="False"/>
-                    <Canvas x:Name="RubberBandCanvas" IsHitTestVisible="False"/>
-                </Grid>
+                <ScrollViewer x:Name="EditScroll"
+                              HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Auto"
+                              PreviewMouseWheel="EditScroll_PreviewMouseWheel">
+                    <Grid x:Name="EditArea" Cursor="Cross"
+                          MouseLeftButtonDown="EditArea_MouseDown"
+                          MouseMove="EditArea_MouseMove"
+                          MouseLeftButtonUp="EditArea_MouseUp"
+                          MouseRightButtonDown="EditArea_MouseRightDown"
+                          LostMouseCapture="EditArea_LostMouseCapture"
+                          Background="Transparent">
+                        <Image x:Name="TemplateView" Stretch="Fill"
+                               HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                        <Image x:Name="OverlayView" Stretch="Fill"
+                               HorizontalAlignment="Left" VerticalAlignment="Top"
+                               IsHitTestVisible="False"/>
+                        <Canvas x:Name="RubberBandCanvas" IsHitTestVisible="False"/>
+                    </Grid>
+                </ScrollViewer>
             </Border>
 
             <!-- 하단: 안내 + 저장/취소 -->
-            <Grid Grid.Row="3" Margin="18,0,18,14">
+            <Grid Grid.Row="4" Margin="18,0,18,14">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0" VerticalAlignment="Center" TextWrapping="Wrap"
                            FontSize="12" Foreground="{StaticResource BrushTextMuted}"
-                           Text="빨간 영역이 학습에서 제외됩니다 (그림자·가변 각인·반사 등). 저장 시 즉시 재학습되어 특징 이미지로 확인할 수 있습니다."/>
+                           Text="빨간 영역이 학습에서 제외됩니다. 해제(UnMask)를 선택하면 같은 도구로 마스크를 되돌립니다. 다각형: 좌클릭 꼭지점 추가 → 우클릭/더블클릭 완성, Esc 취소. 줌: Ctrl+휠 또는 +/− 버튼."/>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="14,0,0,0">
                     <Button Content="저장" Style="{StaticResource ModernPrimaryButton}"
                             MinWidth="96" Margin="0,0,8,0" Click="OnSaveClick"/>
