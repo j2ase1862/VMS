@@ -137,10 +137,6 @@ namespace VMS.VisionSetup.Views.ToolSettings
             // 이전 스트로크 끝점에서 새 클릭 지점까지 이어 그려지는 현상 방지
             CancelDrag();
 
-            _isPainting = true;
-            _strokeOutside = false;
-            EditArea.CaptureMouse();
-
             if (RectModeBtn.IsChecked == true)
             {
                 _rectStartImagePt = imgPt;
@@ -157,9 +153,20 @@ namespace VMS.VisionSetup.Views.ToolSettings
             else
             {
                 _lastImagePt = imgPt;
-                PaintStroke(imgPt, imgPt, PaintValue);
                 _lastStrokeTick = Environment.TickCount;
             }
+
+            _isPainting = true;
+            _strokeOutside = false;
+
+            // ⚠ CaptureMouse 는 반드시 스트로크 상태를 전부 설정한 뒤 마지막에 호출 —
+            // 캡처 획득이 Mouse.Synchronize 를 통해 MouseMove 를 동기 재진입시킬 수 있어,
+            // 이전 스트로크의 _lastImagePt 가 남은 채 호출하면 "이전 끝점 → 새 클릭 지점"
+            // 선이 즉시 그려진다 (실증 PC 이어 그리기 재현의 근본 원인).
+            EditArea.CaptureMouse();
+
+            if (_rubberBand == null)
+                PaintStroke(imgPt, imgPt, PaintValue);   // 브러시 시작 점
         }
 
         private void EditArea_MouseMove(object sender, MouseEventArgs e)
