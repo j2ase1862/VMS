@@ -28,6 +28,27 @@ namespace VMS.VisionSetup.Tests
                 Assert.False(string.IsNullOrWhiteSpace(template.Id));
                 Assert.False(string.IsNullOrWhiteSpace(template.Title));
                 Assert.False(string.IsNullOrWhiteSpace(template.Category));
+
+                if (template.Steps.Count > 0)
+                {
+                    // 다중 스텝 템플릿 — 스텝별로 검증 (단일 체인 Tools 는 비어 있어야 함)
+                    Assert.Empty(template.Tools);
+                    foreach (var stepSpec in template.Steps)
+                    {
+                        Assert.NotEmpty(stepSpec.Tools);
+                        var stepTools = RecipeTemplateCatalog.CreateTools(stepSpec, template.Id);
+                        Assert.Equal(stepSpec.Tools.Count, stepTools.Count);
+
+                        foreach (var conn in stepSpec.Connections)
+                        {
+                            Assert.InRange(conn.SourceIndex, 0, stepTools.Count - 1);
+                            Assert.InRange(conn.TargetIndex, 0, stepTools.Count - 1);
+                            Assert.NotEqual(conn.SourceIndex, conn.TargetIndex);
+                        }
+                    }
+                    continue;
+                }
+
                 Assert.NotEmpty(template.Tools);
 
                 var tools = RecipeTemplateCatalog.CreateTools(template);
@@ -54,7 +75,11 @@ namespace VMS.VisionSetup.Tests
         {
             foreach (var template in RecipeTemplateCatalog.Templates)
             {
-                foreach (var tool in RecipeTemplateCatalog.CreateTools(template))
+                var allTools = template.Steps.Count > 0
+                    ? template.Steps.SelectMany(s => RecipeTemplateCatalog.CreateTools(s, template.Id))
+                    : RecipeTemplateCatalog.CreateTools(template).AsEnumerable();
+
+                foreach (var tool in allTools)
                 {
                     var config = ToolSerializer.SerializeTool(tool);
                     var restored = ToolSerializer.DeserializeTool(config);
@@ -63,6 +88,31 @@ namespace VMS.VisionSetup.Tests
                     Assert.Equal(tool.Name, restored.Name);
                 }
             }
+        }
+
+        [Fact]
+        public void BuildSteps_MultiStepAlignTemplate_WiresCrossStepIds()
+        {
+            var template = RecipeTemplateCatalog.Templates.First(t => t.Id == "2d-multistep-align");
+
+            var built = RecipeTemplateCatalog.BuildSteps(template, cameraId: "cam-1");
+
+            Assert.Equal(2, built.Count);
+            Assert.All(built, b => Assert.Equal("cam-1", b.Step.CameraId));
+
+            // 스텝 B 의 MultiStepAlign 이 생성된 실제 스텝/툴 Id 로 배선되어 직렬화됨
+            var alignConfig = built[1].Step.Tools.First(t => t.ToolType == "MultiStepAlignTool");
+            var restored = Assert.IsType<VMS.VisionSetup.VisionTools.PatternMatching.MultiStepAlignTool>(
+                ToolSerializer.DeserializeTool(alignConfig));
+
+            Assert.Equal(built[0].Step.Id, restored.SourceStepIdA);
+            Assert.Equal(built[0].Step.Tools.First(t => t.ToolType == "FeatureMatchTool").Id, restored.SourceToolIdA);
+            Assert.Equal(built[1].Step.Id, restored.SourceStepIdB);
+            Assert.Equal(built[1].Step.Tools.First(t => t.ToolType == "FeatureMatchTool").Id, restored.SourceToolIdB);
+
+            // 스텝 내부 연결 직렬화 확인 (Grayscale → FM 은 Image, FM → Align 은 Result)
+            var fmB = built[1].Step.Tools.First(t => t.ToolType == "FeatureMatchTool");
+            Assert.Contains(alignConfig.Connections, c => c.SourceToolId == fmB.Id && c.ConnectionType == "Result");
         }
 
         [Fact]

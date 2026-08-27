@@ -30,6 +30,9 @@ namespace VMS.VisionSetup.Interfaces
         /// </summary>
         double CurrentStepResolutionMmPerPx { get; set; }
 
+        /// <summary>현재 워크스페이스 스텝 Id — StepPoseStore 기록 키 (다중 스텝 얼라인).</summary>
+        string? CurrentStepId { get; set; }
+
         void SetImage(Mat image);
         void AddTool(VisionToolBase tool);
         void RemoveTool(VisionToolBase tool);

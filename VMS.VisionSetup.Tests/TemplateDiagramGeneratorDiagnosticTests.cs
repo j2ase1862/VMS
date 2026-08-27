@@ -57,7 +57,40 @@ namespace VMS.VisionSetup.Tests
 
         private static Mat Render(RecipeTemplate template)
         {
-            var tools = RecipeTemplateCatalog.CreateTools(template);
+            // 다중 스텝 템플릿 — 스텝 체인을 좌→우로 이어 붙여 하나의 도식으로 렌더.
+            // 스텝 경계는 인덱스/레벨 오프셋으로 분리하고 상단에 STEP 라벨을 단다.
+            List<VMS.VisionSetup.Models.VisionToolBase> tools;
+            List<TemplateConnectionSpec> connections;
+            var stepLabelAtIndex = new Dictionary<int, string>();   // 스텝 첫 툴 인덱스 → 라벨
+
+            if (template.Steps.Count > 0)
+            {
+                tools = new List<VMS.VisionSetup.Models.VisionToolBase>();
+                connections = new List<TemplateConnectionSpec>();
+                int offset = 0;
+                for (int s = 0; s < template.Steps.Count; s++)
+                {
+                    var stepSpec = template.Steps[s];
+                    stepLabelAtIndex[offset] = $"STEP {s + 1}";
+                    tools.AddRange(RecipeTemplateCatalog.CreateTools(stepSpec, template.Id));
+                    foreach (var c in stepSpec.Connections)
+                        connections.Add(new TemplateConnectionSpec
+                        {
+                            SourceIndex = c.SourceIndex + offset,
+                            TargetIndex = c.TargetIndex + offset,
+                            Type = c.Type
+                        });
+                    // 다음 스텝은 이전 스텝 뒤 레벨에서 시작하도록 가짜 순서 연결이 아닌
+                    // 레벨 오프셋으로 처리 — 아래 레벨 계산 후 보정한다.
+                    offset = tools.Count;
+                }
+            }
+            else
+            {
+                tools = RecipeTemplateCatalog.CreateTools(template);
+                connections = template.Connections;
+            }
+
             int n = tools.Count;
 
             // 레벨 = 소스로부터의 최장 경로 (연결 없는 툴은 0). 같은 레벨은 세로로 쌓음.
@@ -66,7 +99,7 @@ namespace VMS.VisionSetup.Tests
             while (changed)
             {
                 changed = false;
-                foreach (var c in template.Connections)
+                foreach (var c in connections)
                 {
                     int want = levels[c.SourceIndex] + 1;
                     if (levels[c.TargetIndex] < want)
@@ -74,6 +107,25 @@ namespace VMS.VisionSetup.Tests
                         levels[c.TargetIndex] = want;
                         changed = true;
                     }
+                }
+            }
+
+            // 다중 스텝 — 각 스텝 블록을 이전 스텝의 최대 레벨 뒤로 밀어 좌→우 배치
+            if (stepLabelAtIndex.Count > 0)
+            {
+                var starts = stepLabelAtIndex.Keys.OrderBy(i => i).ToList();
+                int levelBase = 0;
+                for (int s = 0; s < starts.Count; s++)
+                {
+                    int from = starts[s];
+                    int to = s + 1 < starts.Count ? starts[s + 1] : n;
+                    int localMax = 0;
+                    for (int i = from; i < to; i++)
+                    {
+                        levels[i] += levelBase;
+                        localMax = Math.Max(localMax, levels[i]);
+                    }
+                    levelBase = localMax + 1;
                 }
             }
 
@@ -88,8 +140,9 @@ namespace VMS.VisionSetup.Tests
 
             int cols = levels.Max() + 1;
             int rows = levelCounts.Values.Max();
+            int topExtra = stepLabelAtIndex.Count > 0 ? 26 : 0;   // STEP 라벨 공간
             int width = Margin * 2 + cols * BoxW + (cols - 1) * ColGap;
-            int height = Margin * 2 + rows * BoxH + (rows - 1) * RowGap;
+            int height = Margin * 2 + topExtra + rows * BoxH + (rows - 1) * RowGap;
 
             var img = new Mat(new Size(width, height), MatType.CV_8UC3, Bg);
 
@@ -98,12 +151,19 @@ namespace VMS.VisionSetup.Tests
             for (int i = 0; i < n; i++)
             {
                 int x = Margin + levels[i] * (BoxW + ColGap);
-                int y = Margin + rowInLevel[i] * (BoxH + RowGap);
+                int y = Margin + topExtra + rowInLevel[i] * (BoxH + RowGap);
                 rects[i] = new Rect(x, y, BoxW, BoxH);
             }
 
+            // STEP 라벨 (스텝 첫 툴 위)
+            foreach (var (idx, label) in stepLabelAtIndex)
+            {
+                Cv2.PutText(img, label, new Point(rects[idx].X, Margin + 14),
+                    HersheyFonts.HersheySimplex, 0.55, new Scalar(160, 200, 255), 1, LineTypes.AntiAlias);
+            }
+
             // 연결선 (박스보다 먼저 그려 선이 박스 아래로)
-            foreach (var c in template.Connections)
+            foreach (var c in connections)
             {
                 var s = rects[c.SourceIndex];
                 var t = rects[c.TargetIndex];

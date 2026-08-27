@@ -158,6 +158,87 @@ namespace VMS.VisionSetup.Tests
         }
 
         [Fact]
+        public void Execute_TwoPoint_PureTranslation()
+        {
+            var tool = new MatchAlignTool
+            {
+                DrawOverlay = false,
+                Mode = MatchAlignMode.TwoPoint,
+                UseTrainedReference = false,
+                RefX = 0, RefY = 0,
+                RefX2 = 10, RefY2 = 0
+            };
+            tool.SourceMatchResult = MatchResult(3, 4, 0);
+            tool.SourceMatchResult2 = MatchResult(13, 4, 0);
+
+            using var img = TestImage();
+            var result = tool.Execute(img);
+
+            Assert.True(result.Success);
+            Assert.Equal(3.0, (double)result.Data["DeltaX"], 6);
+            Assert.Equal(4.0, (double)result.Data["DeltaY"], 6);
+            Assert.Equal(0.0, (double)result.Data["DeltaTheta"], 6);
+            Assert.Equal(1.0, (double)result.Data["ScaleRatio"], 6);
+            result.ReleaseMats();
+        }
+
+        [Fact]
+        public void Execute_TwoPoint_Rotation90_ComputesThetaAndCentroidShift()
+        {
+            var tool = new MatchAlignTool
+            {
+                DrawOverlay = false,
+                Mode = MatchAlignMode.TwoPoint,
+                UseTrainedReference = false,
+                RefX = 0, RefY = 0,
+                RefX2 = 10, RefY2 = 0
+            };
+            // 기준 벡터 (1,0) → 현재 벡터 (0,1): Δθ = +90°
+            tool.SourceMatchResult = MatchResult(0, 0, 0);
+            tool.SourceMatchResult2 = MatchResult(0, 10, 0);
+
+            using var img = TestImage();
+            var result = tool.Execute(img);
+
+            Assert.True(result.Success);
+            Assert.Equal(90.0, (double)result.Data["DeltaTheta"], 6);
+            // 중심 이동: Oc=(5,0) → Pc=(0,5)
+            Assert.Equal(-5.0, (double)result.Data["DeltaX"], 6);
+            Assert.Equal(5.0, (double)result.Data["DeltaY"], 6);
+            result.ReleaseMats();
+        }
+
+        [Fact]
+        public void Execute_TwoPoint_TrainedReference_UsesBothTrainedCenters()
+        {
+            var tool = new MatchAlignTool { DrawOverlay = false, Mode = MatchAlignMode.TwoPoint };
+            tool.SourceMatchResult = MatchResult(12, 20, 0, trainedX: 10, trainedY: 20);
+            tool.SourceMatchResult2 = MatchResult(112, 20, 0, trainedX: 110, trainedY: 20);
+
+            using var img = TestImage();
+            var result = tool.Execute(img);
+
+            Assert.True(result.Success);
+            Assert.Equal(2.0, (double)result.Data["DeltaX"], 6);   // 두 점 모두 +2 이동
+            Assert.Equal(0.0, (double)result.Data["DeltaY"], 6);
+            Assert.Equal(0.0, (double)result.Data["DeltaTheta"], 6);
+            result.ReleaseMats();
+        }
+
+        [Fact]
+        public void Execute_TwoPoint_WithoutSecondSource_FailsWithGuide()
+        {
+            var tool = new MatchAlignTool { DrawOverlay = false, Mode = MatchAlignMode.TwoPoint };
+            tool.SourceMatchResult = MatchResult(1, 1, 0);
+
+            using var img = TestImage();
+            var result = tool.Execute(img);
+
+            Assert.False(result.Success);
+            Assert.Contains("2개", result.Message);
+        }
+
+        [Fact]
         public void Execute_WithoutSource_FailsWithGuide()
         {
             var tool = new MatchAlignTool { DrawOverlay = false };
@@ -176,10 +257,13 @@ namespace VMS.VisionSetup.Tests
             var tool = new MatchAlignTool();
             var vm = new MatchAlignToolSettingsViewModel(tool)
             {
+                Mode = MatchAlignMode.TwoPoint,
                 UseTrainedReference = false,
                 RefX = 12.5,
                 RefY = 34.5,
                 RefTheta = -7.25,
+                RefX2 = 56.5,
+                RefY2 = 78.25,
                 EnableRobotTransform = true,
                 RobotM11 = 0.5,
                 RobotM12 = -0.5,
@@ -200,10 +284,13 @@ namespace VMS.VisionSetup.Tests
             var configFromJson = JsonSerializer.Deserialize<ToolConfig>(json, jsonOpts)!;
 
             var restored = Assert.IsType<MatchAlignTool>(ToolSerializer.DeserializeTool(configFromJson));
+            Assert.Equal(MatchAlignMode.TwoPoint, restored.Mode);
             Assert.False(restored.UseTrainedReference);
             Assert.Equal(12.5, restored.RefX);
             Assert.Equal(34.5, restored.RefY);
             Assert.Equal(-7.25, restored.RefTheta);
+            Assert.Equal(56.5, restored.RefX2);
+            Assert.Equal(78.25, restored.RefY2);
             Assert.True(restored.EnableRobotTransform);
             Assert.Equal(0.5, restored.RobotM11);
             Assert.Equal(-0.5, restored.RobotM12);

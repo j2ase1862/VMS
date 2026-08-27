@@ -916,6 +916,7 @@ namespace VMS.VisionSetup.ViewModels
             patternMatching.Tools.Add(new ToolItem { Name = "Feature Match", ToolType = "FeatureMatchTool" });
             patternMatching.Tools.Add(new ToolItem { Name = "Shape Match", ToolType = "ShapeMatchTool" });
             patternMatching.Tools.Add(new ToolItem { Name = "Match Align", ToolType = "MatchAlignTool" });
+            patternMatching.Tools.Add(new ToolItem { Name = "Multi-Step Align", ToolType = "MultiStepAlignTool" });
             ToolTree.Add(patternMatching);
 
             // Blob Analysis 카테고리
@@ -2492,6 +2493,8 @@ namespace VMS.VisionSetup.ViewModels
         {
             // 스텝 Resolution(mm/px) → 측정 도구 mm 폴백 (정식 캘리브레이션이 있으면 그쪽 우선)
             _visionService.CurrentStepResolutionMmPerPx = step.Resolution;
+            // 다중 스텝 얼라인 — 이 스텝에서 실행한 매칭 포즈가 StepPoseStore 에 이 키로 기록됨
+            _visionService.CurrentStepId = step.Id;
 
             // 기존 워크스페이스 정리
             ClearAllConnections();
@@ -2610,6 +2613,13 @@ namespace VMS.VisionSetup.ViewModels
             var template = _dialogService.ShowTemplateGalleryDialog();
             if (template == null) return;
 
+            // 다중 스텝 템플릿 — 현재 워크스페이스가 아니라 레시피에 새 스텝들을 생성
+            if (template.Steps.Count > 0)
+            {
+                ApplyMultiStepTemplate(template);
+                return;
+            }
+
             try
             {
                 var tools = RecipeTemplateCatalog.CreateTools(template);
@@ -2639,6 +2649,34 @@ namespace VMS.VisionSetup.ViewModels
 
                 SaveWorkspaceToStep();
                 StatusMessage = $"템플릿 생성: {template.Title} — 이미지(또는 3D 데이터) 로드 후 Run(F5)으로 테스트하세요";
+            }
+            catch (Exception ex)
+            {
+                _dialogService.ShowError($"템플릿 생성 실패: {ex.Message}", "예제 템플릿");
+            }
+        }
+
+        /// <summary>
+        /// 다중 스텝 템플릿 적용 — 현재 스텝과 같은 카메라로 레시피에 새 스텝들을 만들고,
+        /// 마지막 스텝을 선택해 워크스페이스에 로드한다 (배선된 툴 확인·튜닝 흐름).
+        /// </summary>
+        private void ApplyMultiStepTemplate(RecipeTemplate template)
+        {
+            var recipe = _recipeService.CurrentRecipe;
+            if (recipe == null || SelectedStep == null) return;
+
+            try
+            {
+                var built = RecipeTemplateCatalog.BuildSteps(template, SelectedStep.CameraId);
+                foreach (var (step, _) in built)
+                    _recipeService.AddStep(recipe, step);
+
+                StepNaming.RecomputeNames(recipe, Cameras);
+                RefreshSteps();
+                SelectedStep = built.Count > 0 ? built[^1].Step : SelectedStep;
+
+                StatusMessage = $"템플릿 생성: {template.Title} — 스텝 {built.Count}개 추가. " +
+                                "각 스텝의 Feature Match 에 패턴을 학습하고 Multi-Step Align 의 Baseline·기준을 설정하세요";
             }
             catch (Exception ex)
             {
@@ -3612,7 +3650,7 @@ namespace VMS.VisionSetup.ViewModels
         /// <summary>
         /// 도구에 맞는 ToolSettingsViewModel 생성
         /// </summary>
-        private static ToolSettingsViewModelBase? CreateToolSettingsViewModel(VisionToolBase tool)
+        private ToolSettingsViewModelBase? CreateToolSettingsViewModel(VisionToolBase tool)
         {
             return tool switch
             {
@@ -3632,6 +3670,7 @@ namespace VMS.VisionSetup.ViewModels
                 CircleFitTool t => new CircleFitToolSettingsViewModel(t),
                 GeometryTool t => new GeometryToolSettingsViewModel(t),
                 MatchAlignTool t => new MatchAlignToolSettingsViewModel(t),
+                MultiStepAlignTool t => new MultiStepAlignToolSettingsViewModel(t, _recipeService),
                 HeightSlicerTool t => new HeightSlicerToolSettingsViewModel(t),
                 PlaneFitTool t => new PlaneFitToolSettingsViewModel(t),
                 Geometry3DTool t => new Geometry3DToolSettingsViewModel(t),

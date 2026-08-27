@@ -172,6 +172,9 @@ namespace VMS.VisionSetup.Services
         private double _currentStepResolutionMmPerPx;
         private CalibrationMetadata? _stepResolutionFallback;
 
+        /// <summary>현재 워크스페이스가 편집 중인 스텝 Id — StepPoseStore 기록 키 (다중 스텝 얼라인).</summary>
+        public string? CurrentStepId { get; set; }
+
         /// <summary>현재 워크스페이스 스텝의 Resolution (mm/px). 0 이면 폴백 없음.</summary>
         public double CurrentStepResolutionMmPerPx
         {
@@ -798,6 +801,7 @@ namespace VMS.VisionSetup.Services
                     var depResult = dep.Execute(depInput);
                     dep.LastResult = depResult;
                     resultMap[dep.Id] = depResult;
+                    StepPoseStore.Record(CurrentStepId, dep, depResult);
                 }
                 finally
                 {
@@ -845,6 +849,7 @@ namespace VMS.VisionSetup.Services
                 tool.OverlayBaseImage = toolInput;
                 var result = tool.Execute(toolInput);
                 tool.LastResult = result;
+                StepPoseStore.Record(CurrentStepId, tool, result);
                 _pipelineCloudOutput = CurrentPointCloud;
                 return result;
             }
@@ -859,24 +864,27 @@ namespace VMS.VisionSetup.Services
         }
 
         /// <summary>
-        /// MatchAlignTool의 Result 연결 소스에서 매칭 포즈(CenterX/Y/Angle 보유 결과)를 주입.
-        /// 첫 번째로 포즈 데이터를 가진 소스를 사용한다 (FeatureMatch 등).
+        /// MatchAlignTool의 Result 연결 소스에서 매칭 포즈(CenterX/Y 보유 결과)를 주입 —
+        /// 연결 순서대로 1번/2번 포인트 (공용 로직은 ToolSourceInjector, VMS 메인과 공유).
         /// </summary>
         private void InjectMatchAlignSource(MatchAlignTool mat, Dictionary<string, VisionResult> resultMap)
         {
-            mat.SourceMatchResult = null;
-            mat.SourceToolName = string.Empty;
+            ToolSourceInjector.InjectMatchAlign(mat, EnumerateResultSources(mat.Id, resultMap));
+        }
+
+        /// <summary>대상 도구를 향한 Result 연결 소스를 연결 생성 순서대로 열거.</summary>
+        private IEnumerable<ToolSourceInjector.ResultSource> EnumerateResultSources(
+            string targetId, Dictionary<string, VisionResult> resultMap)
+        {
             foreach (var conn in _connections
-                .Where(c => c.TargetId == mat.Id && c.Type == ConnectionType.Result))
+                .Where(c => c.TargetId == targetId && c.Type == ConnectionType.Result))
             {
-                if (resultMap.TryGetValue(conn.SourceId, out var srcResult)
-                    && srcResult.Data.ContainsKey("CenterX")
-                    && srcResult.Data.ContainsKey("CenterY"))
+                if (resultMap.TryGetValue(conn.SourceId, out var srcResult))
                 {
                     var srcTool = Tools.FirstOrDefault(t => t.Id == conn.SourceId);
-                    mat.SourceMatchResult = srcResult;
-                    mat.SourceToolName = srcTool?.Name ?? conn.SourceId;
-                    return;
+                    yield return new ToolSourceInjector.ResultSource(
+                        conn.SourceId, srcResult,
+                        srcTool?.Name ?? conn.SourceId, srcTool?.ToolType ?? string.Empty);
                 }
             }
         }
@@ -1120,6 +1128,9 @@ namespace VMS.VisionSetup.Services
                     results.Add(result);
                     resultMap[tool.Id] = result;
 
+                    // 다중 스텝 얼라인용 포즈 기록 (CenterX/Y 보유 결과만)
+                    StepPoseStore.Record(CurrentStepId, tool, result);
+
                     if (!result.Success)
                     {
                         allSuccess = false;
@@ -1268,6 +1279,7 @@ namespace VMS.VisionSetup.Services
                 "FeatureMatchTool" => new FeatureMatchTool(),
                 "ShapeMatchTool" => new ShapeMatchTool(),
                 "MatchAlignTool" => new MatchAlignTool(),
+                "MultiStepAlignTool" => new MultiStepAlignTool(),
 
                 // Blob Analysis
                 "BlobTool" => new BlobTool(),
@@ -1346,7 +1358,8 @@ namespace VMS.VisionSetup.Services
                 {
                     "FeatureMatchTool",
                     "ShapeMatchTool",
-                    "MatchAlignTool"
+                    "MatchAlignTool",
+                    "MultiStepAlignTool"
                 },
                 ["Blob Analysis"] = new[]
                 {
@@ -1413,6 +1426,7 @@ namespace VMS.VisionSetup.Services
                 "FeatureMatchTool" => "Feature Match",
                 "ShapeMatchTool" => "Shape Match",
                 "MatchAlignTool" => "Match Align",
+                "MultiStepAlignTool" => "Multi-Step Align",
                 "BlobTool" => "Blob Analysis",
                 "CaliperTool" => "Caliper",
                 "LineFitTool" => "Line Fit",

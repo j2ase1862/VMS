@@ -287,10 +287,13 @@ namespace VMS.VisionSetup.Services
                     break;
 
                 case MatchAlignTool matchAlign:
+                    config.Parameters["Mode"] = matchAlign.Mode.ToString();
                     config.Parameters["UseTrainedReference"] = matchAlign.UseTrainedReference;
                     config.Parameters["RefX"] = matchAlign.RefX;
                     config.Parameters["RefY"] = matchAlign.RefY;
                     config.Parameters["RefTheta"] = matchAlign.RefTheta;
+                    config.Parameters["RefX2"] = matchAlign.RefX2;
+                    config.Parameters["RefY2"] = matchAlign.RefY2;
                     config.Parameters["EnableRobotTransform"] = matchAlign.EnableRobotTransform;
                     config.Parameters["RobotM11"] = matchAlign.RobotM11;
                     config.Parameters["RobotM12"] = matchAlign.RobotM12;
@@ -302,6 +305,31 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["MaxDeltaXY"] = matchAlign.MaxDeltaXY;
                     config.Parameters["MaxDeltaTheta"] = matchAlign.MaxDeltaTheta;
                     config.Parameters["DrawOverlay"] = matchAlign.DrawOverlay;
+                    break;
+
+                case MultiStepAlignTool msAlign:
+                    config.Parameters["SourceStepIdA"] = msAlign.SourceStepIdA;
+                    config.Parameters["SourceToolIdA"] = msAlign.SourceToolIdA;
+                    config.Parameters["SourceStepIdB"] = msAlign.SourceStepIdB;
+                    config.Parameters["SourceToolIdB"] = msAlign.SourceToolIdB;
+                    config.Parameters["BaselineX"] = msAlign.BaselineX;
+                    config.Parameters["BaselineY"] = msAlign.BaselineY;
+                    config.Parameters["RefAX"] = msAlign.RefAX;
+                    config.Parameters["RefAY"] = msAlign.RefAY;
+                    config.Parameters["RefBX"] = msAlign.RefBX;
+                    config.Parameters["RefBY"] = msAlign.RefBY;
+                    config.Parameters["HasReference"] = msAlign.HasReference;
+                    config.Parameters["RequireSameCycle"] = msAlign.RequireSameCycle;
+                    config.Parameters["EnableRobotTransform"] = msAlign.EnableRobotTransform;
+                    config.Parameters["RobotM11"] = msAlign.RobotM11;
+                    config.Parameters["RobotM12"] = msAlign.RobotM12;
+                    config.Parameters["RobotM21"] = msAlign.RobotM21;
+                    config.Parameters["RobotM22"] = msAlign.RobotM22;
+                    config.Parameters["RobotThetaSign"] = msAlign.RobotThetaSign;
+                    config.Parameters["EnableJudgment"] = msAlign.EnableJudgment;
+                    config.Parameters["MaxDeltaXY"] = msAlign.MaxDeltaXY;
+                    config.Parameters["MaxDeltaTheta"] = msAlign.MaxDeltaTheta;
+                    config.Parameters["DrawOverlay"] = msAlign.DrawOverlay;
                     break;
 
                 case GeometryTool geom:
@@ -666,6 +694,7 @@ namespace VMS.VisionSetup.Services
                 "HeightSlicerTool" => DeserializeHeightSlicerTool(config),
                 "CodeReaderTool" => DeserializeCodeReaderTool(config),
                 "MatchAlignTool" => DeserializeMatchAlignTool(config),
+                "MultiStepAlignTool" => DeserializeMultiStepAlignTool(config),
                 "GeometryTool" => DeserializeGeometryTool(config),
                 "PlaneFitTool" => DeserializePlaneFitTool(config),
                 "Geometry3DTool" => DeserializeGeometry3DTool(config),
@@ -1284,6 +1313,8 @@ namespace VMS.VisionSetup.Services
             var tool = new MatchAlignTool();
             var p = config.Parameters;
 
+            if (p.TryGetValue("Mode", out var mode))
+                tool.Mode = Enum.Parse<MatchAlignMode>(GetString(mode));
             if (p.TryGetValue("UseTrainedReference", out var utr))
                 tool.UseTrainedReference = GetBool(utr);
             if (p.TryGetValue("RefX", out var rx))
@@ -1292,6 +1323,10 @@ namespace VMS.VisionSetup.Services
                 tool.RefY = GetDouble(ry);
             if (p.TryGetValue("RefTheta", out var rt))
                 tool.RefTheta = GetDouble(rt);
+            if (p.TryGetValue("RefX2", out var rx2))
+                tool.RefX2 = GetDouble(rx2);
+            if (p.TryGetValue("RefY2", out var ry2))
+                tool.RefY2 = GetDouble(ry2);
             if (p.TryGetValue("EnableRobotTransform", out var ert))
                 tool.EnableRobotTransform = GetBool(ert);
             if (p.TryGetValue("RobotM11", out var m11))
@@ -1314,6 +1349,37 @@ namespace VMS.VisionSetup.Services
                 tool.MaxDeltaTheta = GetDouble(mdt);
             if (p.TryGetValue("DrawOverlay", out var dov))
                 tool.DrawOverlay = GetBool(dov);
+
+            return tool;
+        }
+
+        private static MultiStepAlignTool DeserializeMultiStepAlignTool(ToolConfig config)
+        {
+            var tool = new MultiStepAlignTool();
+            var p = config.Parameters;
+
+            if (p.TryGetValue("SourceStepIdA", out var ssa)) tool.SourceStepIdA = GetString(ssa);
+            if (p.TryGetValue("SourceToolIdA", out var sta)) tool.SourceToolIdA = GetString(sta);
+            if (p.TryGetValue("SourceStepIdB", out var ssb)) tool.SourceStepIdB = GetString(ssb);
+            if (p.TryGetValue("SourceToolIdB", out var stb)) tool.SourceToolIdB = GetString(stb);
+            if (p.TryGetValue("BaselineX", out var blx)) tool.BaselineX = GetDouble(blx);
+            if (p.TryGetValue("BaselineY", out var bly)) tool.BaselineY = GetDouble(bly);
+            if (p.TryGetValue("RefAX", out var rax)) tool.RefAX = GetDouble(rax);
+            if (p.TryGetValue("RefAY", out var ray)) tool.RefAY = GetDouble(ray);
+            if (p.TryGetValue("RefBX", out var rbx)) tool.RefBX = GetDouble(rbx);
+            if (p.TryGetValue("RefBY", out var rby)) tool.RefBY = GetDouble(rby);
+            if (p.TryGetValue("HasReference", out var hr)) tool.HasReference = GetBool(hr);
+            if (p.TryGetValue("RequireSameCycle", out var rsc)) tool.RequireSameCycle = GetBool(rsc);
+            if (p.TryGetValue("EnableRobotTransform", out var ert)) tool.EnableRobotTransform = GetBool(ert);
+            if (p.TryGetValue("RobotM11", out var m11)) tool.RobotM11 = GetDouble(m11);
+            if (p.TryGetValue("RobotM12", out var m12)) tool.RobotM12 = GetDouble(m12);
+            if (p.TryGetValue("RobotM21", out var m21)) tool.RobotM21 = GetDouble(m21);
+            if (p.TryGetValue("RobotM22", out var m22)) tool.RobotM22 = GetDouble(m22);
+            if (p.TryGetValue("RobotThetaSign", out var ts)) tool.RobotThetaSign = GetDouble(ts);
+            if (p.TryGetValue("EnableJudgment", out var ej)) tool.EnableJudgment = GetBool(ej);
+            if (p.TryGetValue("MaxDeltaXY", out var mdxy)) tool.MaxDeltaXY = GetDouble(mdxy);
+            if (p.TryGetValue("MaxDeltaTheta", out var mdt)) tool.MaxDeltaTheta = GetDouble(mdt);
+            if (p.TryGetValue("DrawOverlay", out var dov)) tool.DrawOverlay = GetBool(dov);
 
             return tool;
         }

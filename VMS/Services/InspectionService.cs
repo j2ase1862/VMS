@@ -17,6 +17,9 @@ using VsConnectionType = VMS.VisionSetup.Models.ConnectionType;
 using VisionToolBase = VMS.VisionSetup.Models.VisionToolBase;
 using VisionResult = VMS.VisionSetup.Models.VisionResult;
 using VMS.VisionSetup.VisionTools.Result;
+using VMS.VisionSetup.Services;
+using VMS.VisionSetup.VisionTools.Measurement;
+using VMS.VisionSetup.VisionTools.PatternMatching;
 
 namespace VMS.Services
 {
@@ -322,9 +325,23 @@ namespace VMS.Services
                             }
                         }
 
+                        // 소스 소비 도구 주입 — VisionSetup(VisionService.ExecuteAll)과 동일 규칙.
+                        // 이 엔진에는 ResultTool 주입만 있었고 Geometry/MatchAlign 이 누락돼
+                        // AUTO RUN 에서 소스가 비는 채로 실행됐다 (2026-08-27 발견).
+                        if (tool is GeometryTool geometryTool)
+                            ToolSourceInjector.InjectGeometry(
+                                geometryTool, EnumerateResultSources(tool, ctx, resultMap));
+                        if (tool is MatchAlignTool matchAlignTool)
+                            ToolSourceInjector.InjectMatchAlign(
+                                matchAlignTool, EnumerateResultSources(tool, ctx, resultMap));
+
                         var toolResult = tool.Execute(toolInput);
                         tool.LastResult = toolResult;
                         resultMap[tool.Id] = toolResult;
+
+                        // 다중 스텝 얼라인용 포즈 기록 — MultiStepAlignTool 이
+                        // (스텝 Id, 툴 Id) 키로 다른 스텝의 매칭 포즈를 참조한다
+                        StepPoseStore.Record(step.Id, tool, toolResult);
 
                         if (!toolResult.Success)
                             allSuccess = false;
@@ -699,6 +716,23 @@ namespace VMS.Services
             public string SourceId { get; set; } = string.Empty;
             public string TargetId { get; set; } = string.Empty;
             public VsConnectionType Type { get; set; }
+        }
+
+        /// <summary>대상 도구를 향한 Result 연결 소스를 연결 순서대로 열거 (주입 공용 로직용).</summary>
+        private static IEnumerable<ToolSourceInjector.ResultSource> EnumerateResultSources(
+            VisionToolBase tool, StepExecutionContext ctx, Dictionary<string, VisionResult> resultMap)
+        {
+            foreach (var conn in ctx.Connections
+                .Where(c => c.TargetId == tool.Id && c.Type == VsConnectionType.Result))
+            {
+                if (resultMap.TryGetValue(conn.SourceId, out var srcResult))
+                {
+                    ctx.ToolById.TryGetValue(conn.SourceId, out var srcTool);
+                    yield return new ToolSourceInjector.ResultSource(
+                        conn.SourceId, srcResult,
+                        srcTool?.Name ?? conn.SourceId, srcTool?.ToolType ?? string.Empty);
+                }
+            }
         }
 
         private static List<ConnectionInfo> BuildConnections(

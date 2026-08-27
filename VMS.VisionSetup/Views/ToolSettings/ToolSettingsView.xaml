@@ -120,6 +120,9 @@
         <DataTemplate x:Key="MatchAlignTemplate" DataType="{x:Type vm:MatchAlignToolSettingsViewModel}">
             <tools:MatchAlignToolSettings/>
         </DataTemplate>
+        <DataTemplate x:Key="MultiStepAlignTemplate" DataType="{x:Type vm:MultiStepAlignToolSettingsViewModel}">
+            <tools:MultiStepAlignToolSettings/>
+        </DataTemplate>
         <DataTemplate x:Key="OCRTemplate" DataType="{x:Type vm:OCRToolSettingsViewModel}">
             <tools:OCRToolSettings/>
         </DataTemplate>
@@ -199,6 +202,7 @@
             HistogramTemplate="{StaticResource HistogramTemplate}"
             FeatureMatchTemplate="{StaticResource FeatureMatchTemplate}"
             MatchAlignTemplate="{StaticResource MatchAlignTemplate}"
+            MultiStepAlignTemplate="{StaticResource MultiStepAlignTemplate}"
             BlobTemplate="{StaticResource BlobTemplate}"
             CaliperTemplate="{StaticResource CaliperTemplate}"
             LineFitTemplate="{StaticResource LineFitTemplate}"

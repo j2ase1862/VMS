@@ -3,8 +3,16 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:VMS.VisionSetup.Controls"
              xmlns:conv="clr-namespace:VMS.VisionSetup.Converters"
-             xmlns:meas="clr-namespace:VMS.VisionSetup.VisionTools.Measurement">
+             xmlns:meas="clr-namespace:VMS.VisionSetup.VisionTools.Measurement"
+             xmlns:pm="clr-namespace:VMS.VisionSetup.VisionTools.PatternMatching">
     <StackPanel>
+        <controls:EnumComboBoxParameter Label="Mode"
+            ItemsSource="{conv:EnumValues {x:Type pm:MatchAlignMode}}"
+            SelectedValue="{Binding Mode}"
+            ToolType="MatchAlignTool" ParameterName="Mode"/>
+        <TextBlock Foreground="#999999" FontSize="10" TextWrapping="Wrap" Margin="0,2,0,6"
+                   Text="TwoPoint 는 Feature Match 2개를 Result 로 연결 — 연결한 순서가 1번/2번 포인트가 되고, 각도는 두 점을 잇는 벡터에서 계산됩니다."/>
+
         <!-- 기준(Origin/Master) 포즈 -->
         <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
             <Expander.Header>
@@ -22,9 +30,39 @@
                     <controls:TextBoxParameter Label="Ref Y (px)"
                         Value="{Binding RefY}"
                         ToolType="MatchAlignTool" ParameterName="RefY"/>
-                    <controls:TextBoxParameter Label="Ref θ (°)"
-                        Value="{Binding RefTheta}"
-                        ToolType="MatchAlignTool" ParameterName="RefTheta"/>
+                    <StackPanel>
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsTwoPoint}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <controls:TextBoxParameter Label="Ref θ (°)"
+                            Value="{Binding RefTheta}"
+                            ToolType="MatchAlignTool" ParameterName="RefTheta"/>
+                    </StackPanel>
+                    <StackPanel>
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsTwoPoint}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <controls:TextBoxParameter Label="Ref X2 (px)"
+                            Value="{Binding RefX2}"
+                            ToolType="MatchAlignTool" ParameterName="RefX2"/>
+                        <controls:TextBoxParameter Label="Ref Y2 (px)"
+                            Value="{Binding RefY2}"
+                            ToolType="MatchAlignTool" ParameterName="RefY2"/>
+                    </StackPanel>
                 </StackPanel>
 
                 <Button Content="현재 매칭을 기준으로 등록"

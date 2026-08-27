@@ -8,6 +8,16 @@ using VMS.VisionSetup.VisionTools.Measurement;
 
 namespace VMS.VisionSetup.VisionTools.PatternMatching
 {
+    /// <summary>얼라인 계산 방식.</summary>
+    public enum MatchAlignMode
+    {
+        /// <summary>1점 — 매칭 1개의 중심·각도를 기준 포즈와 비교 (Δθ = 매칭 각도 차).</summary>
+        SinglePoint,
+        /// <summary>2점 — 매칭 2개의 중심으로 회전·이동을 유도 (Δθ = 두 점을 잇는 벡터의 회전).
+        /// 부품 양단의 특징 2개가 한 FOV 에 함께 보일 때 사용 — 각도 정밀도가 1점보다 높다.</summary>
+        TwoPoint
+    }
+
     /// <summary>
     /// MatchAlignTool — 표준 2D 매치 기반 얼라인 (Standard 2D Match-based Align).
     ///
@@ -24,6 +34,14 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
     /// </summary>
     public class MatchAlignTool : VisionToolBase
     {
+        private MatchAlignMode _mode = MatchAlignMode.SinglePoint;
+        /// <summary>얼라인 계산 방식 (1점 / 2점).</summary>
+        public MatchAlignMode Mode
+        {
+            get => _mode;
+            set => SetProperty(ref _mode, value);
+        }
+
         // ── 기준(Origin/Master) 포즈 ──
 
         private bool _useTrainedReference = true;
@@ -51,11 +69,27 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
         }
 
         private double _refTheta;
-        /// <summary>수동 기준 각도 (°).</summary>
+        /// <summary>수동 기준 각도 (°). 1점 모드 전용 — 2점 모드는 두 점의 벡터가 각도를 정의.</summary>
         public double RefTheta
         {
             get => _refTheta;
             set => SetProperty(ref _refTheta, value);
+        }
+
+        private double _refX2;
+        /// <summary>수동 기준 X — 2번 포인트 (px, 2점 모드 전용).</summary>
+        public double RefX2
+        {
+            get => _refX2;
+            set => SetProperty(ref _refX2, value);
+        }
+
+        private double _refY2;
+        /// <summary>수동 기준 Y — 2번 포인트 (px, 2점 모드 전용).</summary>
+        public double RefY2
+        {
+            get => _refY2;
+            set => SetProperty(ref _refY2, value);
         }
 
         // ── 로봇/스테이지 좌표 변환 (핸드아이 행렬 상위 2x2) ──
@@ -140,6 +174,12 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
         /// <summary>소스 도구 이름 (메시지·설정 패널 표시용).</summary>
         public string SourceToolName { get; set; } = string.Empty;
 
+        /// <summary>2점 모드의 두 번째 소스 매칭 결과 (Result 연결의 두 번째 소스 — 연결 순서).</summary>
+        public VisionResult? SourceMatchResult2 { get; set; }
+
+        /// <summary>두 번째 소스 도구 이름.</summary>
+        public string SourceToolName2 { get; set; } = string.Empty;
+
         public MatchAlignTool()
         {
             Name = "Match Align";
@@ -153,6 +193,13 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
 
             try
             {
+                // ── 모드별 포즈 취득 + Δ 계산 (px / °) ──
+                double dxPx, dyPx, dTheta;
+                double refX, refY, curX, curY;                 // 대표점 (1점: 그 점, 2점: 중심)
+                double refX2 = 0, refY2 = 0, curX2 = 0, curY2 = 0;   // 2점 모드 보조점
+                double? dxMm = null, dyMm = null;
+                var cal = VisionService.Instance.EffectiveCalibration;
+
                 var src = SourceMatchResult;
                 if (src == null)
                 {
@@ -161,60 +208,141 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                     return result;
                 }
                 if (!src.Success
-                    || !TryGet(src, "CenterX", out var curX)
-                    || !TryGet(src, "CenterY", out var curY))
+                    || !TryGet(src, "CenterX", out var p1x)
+                    || !TryGet(src, "CenterY", out var p1y))
                 {
                     result.Success = false;
                     result.Message = $"소스 매칭 실패({SourceToolName}) — 변위를 계산할 수 없습니다.";
                     return result;
                 }
-                double curTheta = TryGet(src, "Angle", out var a) ? a : 0;
 
-                // ── 기준 포즈 결정 ──
-                double refX, refY, refTheta;
-                if (UseTrainedReference)
+                if (Mode == MatchAlignMode.TwoPoint)
                 {
-                    if (!TryGet(src, "TrainedCenterX", out refX) ||
-                        !TryGet(src, "TrainedCenterY", out refY))
+                    var src2 = SourceMatchResult2;
+                    if (src2 == null)
                     {
                         result.Success = false;
-                        result.Message = "학습 기준을 찾을 수 없습니다 — 소스에서 패턴을 학습하거나 수동 기준을 사용하세요.";
+                        result.Message = "2점 모드는 매칭 소스 2개가 필요합니다 — Feature Match 2개를 Result 로 연결하세요.";
                         return result;
                     }
-                    refTheta = 0;
+                    if (!src2.Success
+                        || !TryGet(src2, "CenterX", out var p2x)
+                        || !TryGet(src2, "CenterY", out var p2y))
+                    {
+                        result.Success = false;
+                        result.Message = $"2번 포인트 매칭 실패({SourceToolName2}) — 변위를 계산할 수 없습니다.";
+                        return result;
+                    }
+
+                    // 기준 2점
+                    double o1x, o1y, o2x, o2y;
+                    if (UseTrainedReference)
+                    {
+                        if (!TryGet(src, "TrainedCenterX", out o1x) || !TryGet(src, "TrainedCenterY", out o1y) ||
+                            !TryGet(src2, "TrainedCenterX", out o2x) || !TryGet(src2, "TrainedCenterY", out o2y))
+                        {
+                            result.Success = false;
+                            result.Message = "학습 기준을 찾을 수 없습니다 — 두 소스 모두 패턴을 학습하거나 수동 기준을 사용하세요.";
+                            return result;
+                        }
+                    }
+                    else
+                    {
+                        o1x = RefX; o1y = RefY; o2x = RefX2; o2y = RefY2;
+                    }
+
+                    double baseLen = Math.Sqrt((o2x - o1x) * (o2x - o1x) + (o2y - o1y) * (o2y - o1y));
+                    if (baseLen < 1e-6)
+                    {
+                        result.Success = false;
+                        result.Message = "기준 두 점이 동일합니다 — 서로 다른 두 특징을 기준으로 잡으세요.";
+                        return result;
+                    }
+
+                    // Δθ = 두 점을 잇는 벡터의 회전 (매칭 각도보다 장기 기저선이라 정밀)
+                    double angO = Math.Atan2(o2y - o1y, o2x - o1x) * 180.0 / Math.PI;
+                    double angP = Math.Atan2(p2y - p1y, p2x - p1x) * 180.0 / Math.PI;
+                    dTheta = FeatureMatchTool.NormalizeAngle(angP - angO);
+
+                    // ΔX/ΔY = 중심점(centroid) 이동
+                    double ocx = (o1x + o2x) / 2.0, ocy = (o1y + o2y) / 2.0;
+                    double pcx = (p1x + p2x) / 2.0, pcy = (p1y + p2y) / 2.0;
+                    dxPx = pcx - ocx;
+                    dyPx = pcy - ocy;
+
+                    double curLen = Math.Sqrt((p2x - p1x) * (p2x - p1x) + (p2y - p1y) * (p2y - p1y));
+                    result.Data["ScaleRatio"] = curLen / baseLen;   // 1.0 근처가 정상 — 이탈 시 오검/배율 변화 의심
+                    result.Data["Point1X"] = p1x; result.Data["Point1Y"] = p1y;
+                    result.Data["Point2X"] = p2x; result.Data["Point2Y"] = p2y;
+                    result.Data["Ref1X"] = o1x; result.Data["Ref1Y"] = o1y;
+                    result.Data["Ref2X"] = o2x; result.Data["Ref2Y"] = o2y;
+
+                    refX = ocx; refY = ocy; curX = pcx; curY = pcy;
+                    refX2 = o2x; refY2 = o2y; curX2 = p2x; curY2 = p2y;
+                    result.Data["RefTheta"] = angO;
+                    result.Data["CurrentTheta"] = angP;
+
+                    if (cal != null)
+                    {
+                        // 각 점을 mm 로 변환 후 중심 차분 (호모그래피에서도 정확)
+                        var (p1mx, p1my) = cal.PixelToMm(p1x, p1y);
+                        var (p2mx, p2my) = cal.PixelToMm(p2x, p2y);
+                        var (o1mx, o1my) = cal.PixelToMm(o1x, o1y);
+                        var (o2mx, o2my) = cal.PixelToMm(o2x, o2y);
+                        dxMm = (p1mx + p2mx) / 2.0 - (o1mx + o2mx) / 2.0;
+                        dyMm = (p1my + p2my) / 2.0 - (o1my + o2my) / 2.0;
+                    }
                 }
                 else
                 {
-                    refX = RefX; refY = RefY; refTheta = RefTheta;
-                }
+                    double curTheta = TryGet(src, "Angle", out var a) ? a : 0;
 
-                // ── Δ 계산 (px / °) ──
-                double dxPx = curX - refX;
-                double dyPx = curY - refY;
-                double dTheta = FeatureMatchTool.NormalizeAngle(curTheta - refTheta);
+                    // 기준 포즈 결정
+                    double refTheta;
+                    if (UseTrainedReference)
+                    {
+                        if (!TryGet(src, "TrainedCenterX", out refX) ||
+                            !TryGet(src, "TrainedCenterY", out refY))
+                        {
+                            result.Success = false;
+                            result.Message = "학습 기준을 찾을 수 없습니다 — 소스에서 패턴을 학습하거나 수동 기준을 사용하세요.";
+                            return result;
+                        }
+                        refTheta = 0;
+                    }
+                    else
+                    {
+                        refX = RefX; refY = RefY; refTheta = RefTheta;
+                    }
+
+                    curX = p1x; curY = p1y;
+                    dxPx = curX - refX;
+                    dyPx = curY - refY;
+                    dTheta = FeatureMatchTool.NormalizeAngle(curTheta - refTheta);
+                    result.Data["RefTheta"] = refTheta;
+                    result.Data["CurrentTheta"] = curTheta;
+
+                    if (cal != null)
+                    {
+                        // 두 점을 각각 변환 후 차분 (호모그래피 캘리브레이션에서도 정확)
+                        var (cxMm, cyMm) = cal.PixelToMm(curX, curY);
+                        var (rxMm, ryMm) = cal.PixelToMm(refX, refY);
+                        dxMm = cxMm - rxMm;
+                        dyMm = cyMm - ryMm;
+                    }
+                }
 
                 result.Data["RefX"] = refX;
                 result.Data["RefY"] = refY;
-                result.Data["RefTheta"] = refTheta;
                 result.Data["CurrentX"] = curX;
                 result.Data["CurrentY"] = curY;
-                result.Data["CurrentTheta"] = curTheta;
                 result.Data["DeltaX"] = dxPx;
                 result.Data["DeltaY"] = dyPx;
                 result.Data["DeltaTheta"] = dTheta;
-
-                // ── mm 변환 (캘리브레이션/스텝 Resolution) — 두 점을 각각 변환 후 차분
-                //    (호모그래피 캘리브레이션에서도 정확) ──
-                double? dxMm = null, dyMm = null;
-                var cal = VisionService.Instance.EffectiveCalibration;
-                if (cal != null)
+                if (dxMm.HasValue)
                 {
-                    var (cxMm, cyMm) = cal.PixelToMm(curX, curY);
-                    var (rxMm, ryMm) = cal.PixelToMm(refX, refY);
-                    dxMm = cxMm - rxMm;
-                    dyMm = cyMm - ryMm;
                     result.Data["DeltaXMm"] = dxMm.Value;
-                    result.Data["DeltaYMm"] = dyMm.Value;
+                    result.Data["DeltaYMm"] = dyMm!.Value;
                 }
 
                 // ── 로봇/스테이지 좌표 변환 ──
@@ -278,6 +406,20 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                     var curPt = new Point((int)curX, (int)curY);
                     var color = result.Success ? new Scalar(0, 255, 0) : new Scalar(0, 0, 255);
 
+                    if (Mode == MatchAlignMode.TwoPoint)
+                    {
+                        // 두 포인트 쌍 + 기저선 (대표점 = 중심)
+                        var o2Pt = new Point((int)refX2, (int)refY2);
+                        var p2Pt = new Point((int)curX2, (int)curY2);
+                        var o1Pt = new Point((int)(refX * 2 - refX2), (int)(refY * 2 - refY2));
+                        var p1Pt = new Point((int)(curX * 2 - curX2), (int)(curY * 2 - curY2));
+                        Cv2.Line(overlay, p1Pt, p2Pt, color, 1, LineTypes.AntiAlias);
+                        Cv2.DrawMarker(overlay, o1Pt, new Scalar(0, 255, 255), MarkerTypes.Cross, 20, 2);
+                        Cv2.DrawMarker(overlay, o2Pt, new Scalar(0, 255, 255), MarkerTypes.Cross, 20, 2);
+                        Cv2.Circle(overlay, p1Pt, 5, color, 2);
+                        Cv2.Circle(overlay, p2Pt, 5, color, 2);
+                    }
+
                     Cv2.DrawMarker(overlay, refPt, new Scalar(0, 255, 255),
                         MarkerTypes.Cross, 24, 2);
                     Cv2.ArrowedLine(overlay, refPt, curPt, color, 2, tipLength: 0.15);
@@ -328,7 +470,10 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                 "DeltaX", "DeltaY", "DeltaTheta",
                 "DeltaXMm", "DeltaYMm",
                 "RobotDX", "RobotDY", "RobotDTheta",
-                "JudgmentRadial", "JudgmentPass"
+                "JudgmentRadial", "JudgmentPass",
+                // 2점 모드
+                "Point1X", "Point1Y", "Point2X", "Point2Y",
+                "Ref1X", "Ref1Y", "Ref2X", "Ref2Y", "ScaleRatio"
             };
         }
 
@@ -339,10 +484,13 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                 Name = this.Name,
                 ToolType = this.ToolType,
                 IsEnabled = this.IsEnabled,
+                Mode = this.Mode,
                 UseTrainedReference = this.UseTrainedReference,
                 RefX = this.RefX,
                 RefY = this.RefY,
                 RefTheta = this.RefTheta,
+                RefX2 = this.RefX2,
+                RefY2 = this.RefY2,
                 EnableRobotTransform = this.EnableRobotTransform,
                 RobotM11 = this.RobotM11,
                 RobotM12 = this.RobotM12,

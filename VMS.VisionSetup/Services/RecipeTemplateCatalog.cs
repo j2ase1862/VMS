@@ -288,6 +288,95 @@ namespace VMS.VisionSetup.Services
                 },
             },
 
+            new RecipeTemplate
+            {
+                Id = "2d-match-align-2pt",
+                Title = "2점 매치 얼라인 (회전 정밀)",
+                Category = CategoryAlign,
+                Description = "부품 양단의 특징 2개(예: 두 모서리·두 홀)를 각각 Feature Match 로 " +
+                              "찾아, 두 점을 잇는 벡터의 회전으로 Δθ 를, 두 점 중심의 이동으로 " +
+                              "ΔX/ΔY 를 계산한다. 기저선이 길수록 1점 방식보다 각도 정밀도가 " +
+                              "높다. Feature Match A/B 에 각각 패턴을 학습시킬 것 — 연결 순서가 " +
+                              "1번/2번 포인트. ScaleRatio 가 1.0 에서 벗어나면 오검출 의심.",
+                Tools =
+                {
+                    new TemplateToolSpec { ToolType = "GrayscaleTool" },
+                    new TemplateToolSpec { ToolType = "FeatureMatchTool", DisplayName = "Feature Match A" },
+                    new TemplateToolSpec { ToolType = "FeatureMatchTool", DisplayName = "Feature Match B" },
+                    new TemplateToolSpec
+                    {
+                        ToolType = "MatchAlignTool",
+                        Configure = t => ((VisionTools.PatternMatching.MatchAlignTool)t).Mode =
+                            VisionTools.PatternMatching.MatchAlignMode.TwoPoint,
+                    },
+                    new TemplateToolSpec { ToolType = "ResultTool" },
+                },
+                Connections =
+                {
+                    new TemplateConnectionSpec { SourceIndex = 0, TargetIndex = 1, Type = ConnectionType.Image },
+                    new TemplateConnectionSpec { SourceIndex = 0, TargetIndex = 2, Type = ConnectionType.Image },
+                    new TemplateConnectionSpec { SourceIndex = 1, TargetIndex = 3, Type = ConnectionType.Result },
+                    new TemplateConnectionSpec { SourceIndex = 2, TargetIndex = 3, Type = ConnectionType.Result },
+                    new TemplateConnectionSpec { SourceIndex = 3, TargetIndex = 4, Type = ConnectionType.Result },
+                },
+            },
+
+            new RecipeTemplate
+            {
+                Id = "2d-multistep-align",
+                Title = "2-스텝 얼라인 (카메라 이동, 대형 부품)",
+                Category = CategoryAlign,
+                Description = "부품이 한 FOV 에 다 들어오지 않을 때 — 카메라(로봇/스테이지)가 " +
+                              "이동하며 스텝 A/B 에서 부품 양단의 특징을 하나씩 매칭하고, " +
+                              "Multi-Step Align 이 두 포즈를 합쳐 ΔX/ΔY/Δθ 를 계산한다. " +
+                              "선택 시 레시피에 스텝 2개가 새로 생성된다. 적용 후: ① 각 스텝 " +
+                              "Feature Match 에 패턴 학습 ② Multi-Step Align 의 Baseline(두 촬영 " +
+                              "위치 간 오프셋, mm 권장) 입력 ③ 기준 부품으로 A→B Run 후 " +
+                              "[현재 두 점을 기준으로 등록].",
+                Steps =
+                {
+                    new TemplateStepSpec
+                    {
+                        Title = "Align A",
+                        Tools =
+                        {
+                            new TemplateToolSpec { ToolType = "GrayscaleTool" },
+                            new TemplateToolSpec { ToolType = "FeatureMatchTool", DisplayName = "Feature Match A" },
+                        },
+                        Connections =
+                        {
+                            new TemplateConnectionSpec { SourceIndex = 0, TargetIndex = 1, Type = ConnectionType.Image },
+                        },
+                    },
+                    new TemplateStepSpec
+                    {
+                        Title = "Align B + 합산",
+                        Tools =
+                        {
+                            new TemplateToolSpec { ToolType = "GrayscaleTool" },
+                            new TemplateToolSpec { ToolType = "FeatureMatchTool", DisplayName = "Feature Match B" },
+                            new TemplateToolSpec { ToolType = "MultiStepAlignTool" },
+                            new TemplateToolSpec { ToolType = "ResultTool" },
+                        },
+                        Connections =
+                        {
+                            new TemplateConnectionSpec { SourceIndex = 0, TargetIndex = 1, Type = ConnectionType.Image },
+                            new TemplateConnectionSpec { SourceIndex = 1, TargetIndex = 2, Type = ConnectionType.Result },
+                            new TemplateConnectionSpec { SourceIndex = 2, TargetIndex = 3, Type = ConnectionType.Result },
+                        },
+                    },
+                },
+                // 생성된 실제 스텝/툴 Id 를 Multi-Step Align 소스로 배선
+                ConfigureAcrossSteps = (steps, tools) =>
+                {
+                    var align = (VisionTools.PatternMatching.MultiStepAlignTool)tools[1][2];
+                    align.SourceStepIdA = steps[0].Id;
+                    align.SourceToolIdA = tools[0][1].Id;   // Feature Match A
+                    align.SourceStepIdB = steps[1].Id;
+                    align.SourceToolIdB = tools[1][1].Id;   // Feature Match B
+                },
+            },
+
             // ── 식별 ──
             new RecipeTemplate
             {
@@ -313,18 +402,91 @@ namespace VMS.VisionSetup.Services
         /// 알 수 없는 ToolType 이 있으면 예외 — 카탈로그 무결성 테스트가 전수 검증한다.
         /// </summary>
         public static List<VisionToolBase> CreateTools(RecipeTemplate template)
+            => CreateTools(template.Tools, template.Id);
+
+        /// <summary>스텝 스펙의 툴 인스턴스 생성 (다중 스텝 템플릿용).</summary>
+        public static List<VisionToolBase> CreateTools(TemplateStepSpec step, string templateId)
+            => CreateTools(step.Tools, templateId);
+
+        private static List<VisionToolBase> CreateTools(List<TemplateToolSpec> specs, string templateId)
         {
-            var tools = new List<VisionToolBase>(template.Tools.Count);
-            foreach (var spec in template.Tools)
+            var tools = new List<VisionToolBase>(specs.Count);
+            foreach (var spec in specs)
             {
                 var tool = VisionService.CreateTool(spec.ToolType)
-                    ?? throw new InvalidOperationException($"알 수 없는 ToolType: {spec.ToolType} (템플릿 {template.Id})");
+                    ?? throw new InvalidOperationException($"알 수 없는 ToolType: {spec.ToolType} (템플릿 {templateId})");
                 if (!string.IsNullOrEmpty(spec.DisplayName))
                     tool.Name = spec.DisplayName;
                 spec.Configure?.Invoke(tool);
                 tools.Add(tool);
             }
             return tools;
+        }
+
+        /// <summary>
+        /// 다중 스텝 템플릿으로부터 레시피에 추가할 스텝들을 생성.
+        /// 각 스텝의 툴을 배치·연결·직렬화해 InspectionStep.Tools 에 담는다.
+        /// ConfigureAcrossSteps 훅은 직렬화 **전에** 호출 — 스텝 간 참조(예: MultiStepAlign
+        /// 의 소스 스텝/툴 Id)를 생성된 실제 Id 로 배선할 수 있다.
+        /// CameraId 는 호출자가 지정 (보통 현재 선택 스텝과 같은 카메라).
+        /// </summary>
+        public static List<(InspectionStep Step, List<VisionToolBase> Tools)> BuildSteps(
+            RecipeTemplate template, string cameraId)
+        {
+            var built = new List<(InspectionStep, List<VisionToolBase>)>(template.Steps.Count);
+
+            foreach (var stepSpec in template.Steps)
+            {
+                var step = new InspectionStep
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = stepSpec.Title,
+                    CameraId = cameraId,
+                    Exposure = 1000,
+                    Gain = 1.0,
+                    LightingChannel = 0,
+                    LightingIntensity = 100,
+                    Tools = new List<ToolConfig>(),
+                    IsEnabled = true
+                };
+
+                var tools = CreateTools(stepSpec, template.Id);
+                var positions = ComputeInsertPositions(Array.Empty<(double, double)>(), tools.Count);
+                for (int i = 0; i < tools.Count; i++)
+                {
+                    tools[i].X = positions[i].X;
+                    tools[i].Y = positions[i].Y;
+                }
+
+                built.Add((step, tools));
+            }
+
+            // 스텝 간 참조 배선 (직렬화 전 — 이후 직렬화가 배선된 값을 담는다)
+            template.ConfigureAcrossSteps?.Invoke(
+                built.Select(b => b.Item1).ToList(),
+                built.Select(b => (IReadOnlyList<VisionToolBase>)b.Item2).ToList());
+
+            // 직렬화 + 스텝 내부 연결 저장 (SaveWorkspaceToStep 과 동일 포맷)
+            for (int s = 0; s < built.Count; s++)
+            {
+                var (step, tools) = built[s];
+                var stepSpec = template.Steps[s];
+
+                foreach (var tool in tools)
+                    step.Tools.Add(ToolSerializer.SerializeTool(tool));
+
+                foreach (var conn in stepSpec.Connections)
+                {
+                    var targetConfig = step.Tools[conn.TargetIndex];
+                    targetConfig.Connections.Add(new ToolConnectionConfig
+                    {
+                        SourceToolId = step.Tools[conn.SourceIndex].Id,
+                        ConnectionType = conn.Type.ToString()
+                    });
+                }
+            }
+
+            return built;
         }
 
         /// <summary>
