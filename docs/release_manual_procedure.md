@@ -24,13 +24,14 @@
 
 ---
 
-## ① 버전 bump PR
+## ① 버전 bump — 릴리즈에 포함될 마지막 수정 PR 에 함께 태운다 (2026-08-28 개정)
 
-```powershell
-git checkout -b chore/release-v1.5.4 origin/master
-```
+> 과거에는 bump 전용 PR(chore/release-vX.Y.Z)을 따로 만들어 CI 를 릴리즈당 2회
+> 기다렸다. bump 는 `Directory.Build.props` 세 줄이라 CI 가 따로 검증할 것이 없으므로,
+> **릴리즈에 들어갈 마지막 수정 PR 의 브랜치에 bump 커밋을 추가**해 CI 1회로 끝낸다.
+> (수정 없이 버전만 올리는 릴리즈라면 종전처럼 bump 전용 PR 을 만든다)
 
-`Directory.Build.props` 를 열어 세 곳 수정:
+릴리즈 대상 수정 PR 브랜치에서 `Directory.Build.props` 세 곳 수정:
 
 ```xml
 <Version>1.5.4</Version>
@@ -41,11 +42,11 @@ git checkout -b chore/release-v1.5.4 origin/master
 ```powershell
 git add Directory.Build.props
 git commit -m "chore(release): bump version to 1.5.4"
-git push -u origin chore/release-v1.5.4
-gh pr create --base master --title "chore(release): bump version to 1.5.4" --body "v1.5.4 릴리즈 버전 bump"
+git push
 ```
 
-CI(Build & Test) 통과 확인 후 머지:
+CI(Build & Test) 통과 확인 후 머지 — CI 러너에는 카메라 SDK 가 없어 dev PC 가
+검증 못 하는 **SDK 미탑재 컴파일 경로**를 CI 만 확인하므로 그린 확인은 생략하지 않는다:
 
 ```powershell
 gh pr checks <PR번호> --watch     # pass 될 때까지 대기 (약 10분)
