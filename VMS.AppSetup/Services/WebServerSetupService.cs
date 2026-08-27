@@ -67,6 +67,20 @@ namespace VMS.AppSetup.Services
             }
         }
 
+        /// <summary>시작 유형이 자동인지 (Automatic 은 delayed-auto 포함 — SCM 이 구분값을 노출하지 않음).</summary>
+        private bool IsAutoStartType()
+        {
+            try
+            {
+                using var sc = new ServiceController(_serviceName);
+                return sc.StartType == ServiceStartMode.Automatic;
+            }
+            catch (InvalidOperationException)
+            {
+                return false;
+            }
+        }
+
         public async Task<WebServerConfigureResult> ConfigureAsync(string adminPassword)
         {
             var status = GetStatus();
@@ -112,7 +126,10 @@ namespace VMS.AppSetup.Services
                 return new WebServerConfigureResult(false, "초기 구성이 먼저 필요합니다 — 위의 [초기 구성 실행]을 사용하세요.");
             if (status.ServiceStatus == null)
                 return new WebServerConfigureResult(false, "서비스가 등록되어 있지 않습니다 — MSI 재설치(복구)가 필요합니다.");
-            if (status.ServiceStatus == nameof(System.ServiceProcess.ServiceControllerStatus.Running))
+            // 실행 중이어도 시작 유형이 수동(demand)이면 자동 전환까지 수행 — 수동 MSI 업그레이드가
+            // 서비스를 demand 로 재등록한 뒤 여기서 조기 성공 반환하면 다음 부팅에 서비스가 안 뜬다
+            if (status.ServiceStatus == nameof(System.ServiceProcess.ServiceControllerStatus.Running)
+                && IsAutoStartType())
                 return new WebServerConfigureResult(true, null);
 
             var resultPath = Path.Combine(Path.GetTempPath(),

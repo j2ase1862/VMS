@@ -192,8 +192,9 @@ namespace VMS.Core.Tests.Services
             Assert.Contains("/passive", script);
             Assert.Contains("/norestart", script);
             Assert.Contains("3010", script); // 재부팅 필요도 성공으로 간주
-            // 4) 서비스 복원 — MajorUpgrade 가 demand 로 재등록하므로 auto 전환 + 시작
-            Assert.Contains("sc.exe config $svcName start= auto", script);
+            // 4) 서비스 복원 — MajorUpgrade 가 demand 로 재등록하므로 자동 전환 + 시작.
+            //    delayed-auto 표준 (일반 auto 는 부팅 경합 SCM 7009 타임아웃 사례 — 2026-08-27)
+            Assert.Contains("sc.exe config $svcName start= delayed-auto", script);
             Assert.Contains("Start-Service", script);
             // 5) VMS 재실행 (explorer 경유 — 상승 권한 미상속)
             Assert.Contains("explorer.exe", script);

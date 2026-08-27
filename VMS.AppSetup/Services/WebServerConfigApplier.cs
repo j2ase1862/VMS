@@ -82,14 +82,16 @@ namespace VMS.AppSetup.Services
 
         /// <summary>
         /// 서비스 부팅 자동시작 전환 + 시작 (관리자 권한 필요). MSI 는 크래시 루프 방지를 위해
-        /// demand 로 등록하므로, 구성 시점과 수동 재시작 시점 모두 auto 전환을 함께 보장한다.
+        /// demand 로 등록하므로, 구성 시점과 수동 재시작 시점 모두 자동 전환을 함께 보장한다.
+        /// 시작 유형은 delayed-auto — 일반 auto 는 부팅 직후 디스크·백신 경합으로 30초 SCM
+        /// 타임아웃(이벤트 7009)에 걸려 서비스가 안 뜨는 사례가 있었다 (세연공장 2026-08-27).
         /// </summary>
         internal static Result EnsureAutoStartAndRun(string serviceName)
         {
             var sc = Process.Start(new ProcessStartInfo
             {
                 FileName = "sc.exe",
-                Arguments = $"config {serviceName} start= auto",
+                Arguments = $"config {serviceName} start= delayed-auto",
                 UseShellExecute = false,
                 CreateNoWindow = true,
             });

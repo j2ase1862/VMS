@@ -56,7 +56,7 @@ $dir = "C:\Deploy\BodaVmsWeb"
 New-Item -ItemType Directory -Force -Path $dir | Out-Null
 robocopy <게시본 폴더> $dir /E
 
-sc.exe create BodaVmsWeb binPath= "`"$dir\BODA.VMS.Web.exe`" --environment Production" start= auto DisplayName= "BODA VMS Web Server"
+sc.exe create BodaVmsWeb binPath= "`"$dir\BODA.VMS.Web.exe`" --environment Production" start= delayed-auto DisplayName= "BODA VMS Web Server"
 sc.exe description BodaVmsWeb "BODA Vision Management System - Web Server"
 sc.exe failure BodaVmsWeb reset= 86400 actions= restart/10000/restart/30000/restart/60000
 Start-Service BodaVmsWeb
@@ -105,8 +105,12 @@ Start-Service BodaVmsWeb
 >
 > ```powershell
 > Start-Service BodaVmsWeb
-> sc.exe config BodaVmsWeb start= auto   # 시작 유형이 '수동'으로 남아 있으면
+> sc.exe config BodaVmsWeb start= delayed-auto   # 시작 유형이 '수동'으로 남아 있으면
 > ```
+>
+> ℹ 시작 유형 표준은 **지연 자동 시작(delayed-auto)** — 일반 auto 는 부팅 직후 디스크·백신
+> 경합으로 SCM 30초 타임아웃(이벤트 7000/7009)에 걸려 서비스가 안 뜨는 사례가 있었다
+> (세연공장 2026-08-27, v1.18.2 부터 AppSetup·인앱 업데이트가 delayed-auto 로 전환).
 >
 > 시작 후 `http://localhost:5292/health` → 200 확인 (첫 부팅은 DB 마이그레이션으로
 > 20~30초 소요 가능). 몇 초 내 다시 Stopped 로 떨어지면 이벤트 뷰어(응용 프로그램) +
