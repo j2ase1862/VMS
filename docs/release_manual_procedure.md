@@ -24,6 +24,28 @@
 
 ---
 
+## ⓪ 원커맨드 발행 — scripts/release.ps1 (2026-08-29 도입)
+
+②~⑥단계는 스크립트 하나로 대체할 수 있다 (① bump+CI+머지와 ③ 노트 작성은 종전대로):
+
+```powershell
+.\scripts\release.ps1 -Version 1.18.4 -NotesFile 릴리즈노트_v1.18.4.md
+.\scripts\release.ps1 -Version 1.18.4 -NotesFile 노트.md -SkipBuild   # 프리빌드 재사용
+```
+
+- 단계 사이 사람 개입(확인·다음 명령 입력) 대기를 제거한 것 — 각 단계의 검증
+  (버전 일치·MSI 크기 하한·자산 크기 일치·태그 중복)은 스크립트가 수행하고,
+  검증 실패 시 publish 전에 중단한다.
+- `-SkipBuild`: CI 대기 중 릴리즈 브랜치에서 MSI 를 미리 빌드해 두고 머지 후
+  재사용 (브랜치 내용 = 머지 후 master 일 때만).
+- 태그 push 트리거 자동 빌드는 의도적으로 도입하지 않았다 (하단 v1.4.10 사고 규칙).
+- Claude Code 세션에서는 `/release <버전>` 슬래시 커맨드가 이 흐름 전체(프리빌드
+  병렬화 포함)를 안내한다 (.claude/commands/release.md).
+
+수동 단계별 실행이 필요할 때(부분 재시도·검증 실습)는 아래 ②~⑥을 따른다.
+
+---
+
 ## ① 버전 bump — 릴리즈에 포함될 마지막 수정 PR 에 함께 태운다 (2026-08-28 개정)
 
 > 과거에는 bump 전용 PR(chore/release-vX.Y.Z)을 따로 만들어 CI 를 릴리즈당 2회
@@ -157,4 +179,5 @@ git push --delete origin v1.5.4; git tag -d v1.5.4             # 소스 태그 �
 
 | 버전 | 일자 | 주요 변경 |
 |---|---|---|
+| v1.1 | 2026-08-29 | ⓪ 원커맨드 발행(scripts/release.ps1) + /release 커맨드 도입 — ②~⑥ 자동화, 검증 후 publish |
 | v1.0 | 2026-07-27 | 최초 작성 — v1.5.3 발행 기준 수동 발행 6단계 + 롤백 + 사고 규칙 |
