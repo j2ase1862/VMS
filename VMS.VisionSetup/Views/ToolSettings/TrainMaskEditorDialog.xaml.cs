@@ -33,9 +33,22 @@ namespace VMS.VisionSetup.Views.ToolSettings
         private double _zoom = 1.0;
 
         private bool _isPainting;
+        private bool _strokeOutside;          // 버튼을 누른 채 캔버스 밖으로 나간 상태
+        private int _lastStrokeTick;          // 마지막 페인팅 시각 (Environment.TickCount)
+
+        /// <summary>마지막 페인팅 후 이 시간(ms)을 넘겨 도착한 이동은 같은 스트로크로 잇지 않는다 —
+        /// 터치 승격에서 MouseUp 유실 후 다음 탭이 "버튼 눌림 상태의 MouseMove"로 먼저 도착하는
+        /// 경로 차단 (실제 드래그의 이동 이벤트는 수십 ms 간격으로 연속됨).</summary>
+        private const int StrokeGapMs = 400;
         private System.Windows.Point _lastImagePt;
         private System.Windows.Point _rectStartImagePt;
         private Rectangle? _rubberBand;
+
+        /// <summary>한 이벤트에 이 거리(이미지 px)를 넘는 점프는 이전 점과 선으로 잇지 않는다 —
+        /// 이벤트 유실·터치 승격 좌표 이상 등 어떤 경로로든 "이어 그리기"가 생기는 것을 물리적으로 차단.
+        /// 실제 브러시 드래그의 이벤트 간 이동량은 이미지 대각선의 수 % 수준이라 오탐 없음.</summary>
+        private double MaxStrokeJump =>
+            0.4 * Math.Sqrt(_templateBgr.Width * _templateBgr.Width + _templateBgr.Height * _templateBgr.Height);
 
         // 다각형 도구: 이미지 좌표 꼭지점 누적 + 커서 추종 미리보기
         private readonly List<System.Windows.Point> _polyImagePts = new();
@@ -124,9 +137,6 @@ namespace VMS.VisionSetup.Views.ToolSettings
             // 이전 스트로크 끝점에서 새 클릭 지점까지 이어 그려지는 현상 방지
             CancelDrag();
 
-            _isPainting = true;
-            EditArea.CaptureMouse();
-
             if (RectModeBtn.IsChecked == true)
             {
                 _rectStartImagePt = imgPt;
@@ -143,8 +153,20 @@ namespace VMS.VisionSetup.Views.ToolSettings
             else
             {
                 _lastImagePt = imgPt;
-                PaintStroke(imgPt, imgPt, PaintValue);
+                _lastStrokeTick = Environment.TickCount;
             }
+
+            _isPainting = true;
+            _strokeOutside = false;
+
+            // ⚠ CaptureMouse 는 반드시 스트로크 상태를 전부 설정한 뒤 마지막에 호출 —
+            // 캡처 획득이 Mouse.Synchronize 를 통해 MouseMove 를 동기 재진입시킬 수 있어,
+            // 이전 스트로크의 _lastImagePt 가 남은 채 호출하면 "이전 끝점 → 새 클릭 지점"
+            // 선이 즉시 그려진다 (실증 PC 이어 그리기 재현의 근본 원인).
+            EditArea.CaptureMouse();
+
+            if (_rubberBand == null)
+                PaintStroke(imgPt, imgPt, PaintValue);   // 브러시 시작 점
         }
 
         private void EditArea_MouseMove(object sender, MouseEventArgs e)
@@ -167,6 +189,14 @@ namespace VMS.VisionSetup.Views.ToolSettings
                 return;
             }
 
+            // 우리 MouseDown 이 잡은 캡처가 살아있을 때만 페인팅 — MouseDown 이 유실된 채
+            // 잔여 상태로 진입한 이동(유령 스트로크)을 원천 차단
+            if (!EditArea.IsMouseCaptured)
+            {
+                CancelDrag();
+                return;
+            }
+
             var imgPt = ToImagePoint(viewPt);
 
             if (_rubberBand != null)
@@ -179,8 +209,31 @@ namespace VMS.VisionSetup.Views.ToolSettings
             }
             else
             {
+                // 캔버스 밖에서는 칠하지 않는다 — 밖으로 나갔다 돌아오면 재진입 지점부터 새 시작
+                // (기존에는 가장자리로 클램프되어 이탈 경로가 테두리를 따라 칠해졌음)
+                bool inside = viewPt.X >= 0 && viewPt.Y >= 0
+                    && viewPt.X < EditArea.Width && viewPt.Y < EditArea.Height;
+                if (!inside)
+                {
+                    _strokeOutside = true;
+                    return;
+                }
+
+                // 비정상적으로 먼 점프 또는 시간 공백 후 도착한 이동은 선으로 잇지 않고 새 시작점 처리
+                double jump = (imgPt - _lastImagePt).Length;
+                bool gap = Environment.TickCount - _lastStrokeTick > StrokeGapMs;
+                if (_strokeOutside || gap || jump > MaxStrokeJump)
+                {
+                    _strokeOutside = false;
+                    _lastImagePt = imgPt;
+                    PaintStroke(imgPt, imgPt, PaintValue);
+                    _lastStrokeTick = Environment.TickCount;
+                    return;
+                }
+
                 PaintStroke(_lastImagePt, imgPt, PaintValue);
                 _lastImagePt = imgPt;
+                _lastStrokeTick = Environment.TickCount;
             }
         }
 
