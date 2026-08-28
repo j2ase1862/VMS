@@ -209,6 +209,42 @@ namespace VMS.Tests.Services
             Assert.Contains("1/1", rt.Message);
         }
 
+        // ─── Image chain + 사이클 Mat 해제 회귀 ────────────────────
+
+        [Fact]
+        public async Task ExecuteStepAsync_ImageChain_WorksAndRepeats()
+        {
+            // Gray --(Image)--> Threshold 체인. 사이클 종료 시 ReleaseMats 가
+            // 결과 Mat 을 해제하는데(메모리 톱니 수정, 2026-08-29), 해제가
+            // 루프 도중으로 앞당겨지면 하류 도구가 죽은 Mat 을 받아 실패하고,
+            // LastResult 이미지 무효화가 다음 사이클을 깨면 2회차가 실패한다.
+            var gray = MakeGrayscaleToolConfig("ChainGray");
+            var threshold = new ToolConfig
+            {
+                Id = Guid.NewGuid().ToString(),
+                ToolType = "ThresholdTool",
+                Name = "ChainThreshold",
+                IsEnabled = true
+            };
+            threshold.Connections.Add(new ToolConnectionConfig
+            {
+                SourceToolId = gray.Id,
+                ConnectionType = "Image"
+            });
+
+            var step = StepWithTools(gray, threshold);
+            var img = MakeTestImage();
+
+            var first = await _service.ExecuteStepAsync(step, img);
+            Assert.True(first.Success);
+            Assert.Equal(2, first.ToolResults.Count);
+            Assert.All(first.ToolResults, t => Assert.True(t.Success));
+
+            var second = await _service.ExecuteStepAsync(step, img);
+            Assert.True(second.Success);
+            Assert.All(second.ToolResults, t => Assert.True(t.Success));
+        }
+
         // ─── Topological order ────────────────────────────────────
 
         [Fact]

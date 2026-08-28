@@ -76,7 +76,11 @@ namespace VMS.ViewModels
                 {
                     var item = new NgImageItem
                     {
-                        Thumbnail = image,
+                        // 원본 BitmapSource(5MP≈15MB)를 그대로 보관하면 이력 10장이
+                        // 최대 150MB 를 상시 점유한다 (실증 PC 2026-08-29 AUTO RUN
+                        // 기준선 상승 원인 중 하나) — 축소 실체화본만 보관한다.
+                        // 픽셀 단위 정밀 확인은 저장 파일/Web NG 이미지가 원본 경로.
+                        Thumbnail = CreateThumbnail(image),
                         CameraName = cameraName,
                         Timestamp = DateTime.Now
                     };
@@ -93,6 +97,27 @@ namespace VMS.ViewModels
             Yield = TotalCount > 0
                 ? Math.Round((double)OkCount / TotalCount * 100, 1)
                 : 0;
+        }
+
+        // 갤러리 셀과 클릭 확대 보기(카메라 타일 표시) 양쪽에 충분한 크기.
+        private const int ThumbnailMaxEdge = 960;
+
+        /// <summary>
+        /// 긴 변 기준 ThumbnailMaxEdge 로 축소한 실체화 사본을 반환.
+        /// TransformedBitmap 을 그대로 보관하면 원본 BitmapSource 를 계속 참조해
+        /// 축소 의미가 없다 — WriteableBitmap 으로 픽셀을 복사해 원본과 분리한다.
+        /// </summary>
+        internal static BitmapSource CreateThumbnail(BitmapSource source)
+        {
+            int maxEdge = Math.Max(source.PixelWidth, source.PixelHeight);
+            if (maxEdge <= ThumbnailMaxEdge) return source;
+
+            double scale = ThumbnailMaxEdge / (double)maxEdge;
+            var scaled = new TransformedBitmap(source,
+                new System.Windows.Media.ScaleTransform(scale, scale));
+            var thumb = new WriteableBitmap(scaled);
+            thumb.Freeze();
+            return thumb;
         }
 
         [RelayCommand]
