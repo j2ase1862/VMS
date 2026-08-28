@@ -334,8 +334,9 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
 
                     var center = new Point2f((float)roiCenterX, (float)roiCenterY);
 
-                    // 역회전 행렬로 이미지를 회전하여 ROI를 축 정렬
-                    var rotMatInv = Cv2.GetRotationMatrix2D(center, -effectiveAngle, 1.0);
+                    // 역회전 행렬로 이미지를 회전하여 ROI를 축 정렬.
+                    // 캔버스 각도는 화면 시계방향(+), OpenCV는 반시계방향(+)이라 +angle이 역회전이다.
+                    var rotMatInv = Cv2.GetRotationMatrix2D(center, effectiveAngle, 1.0);
                     using var rotatedImage = new Mat();
                     Cv2.WarpAffine(inputImage, rotatedImage, rotMatInv, inputImage.Size(),
                         InterpolationFlags.Linear, BorderTypes.Reflect101);
@@ -359,8 +360,8 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
                         offsetY = cropY;
                     }
 
-                    // 정회전 행렬 (좌표 복원용)
-                    rotationMatrixFwd = Cv2.GetRotationMatrix2D(center, effectiveAngle, 1.0);
+                    // 정회전 행렬 (좌표 복원용) — 역회전(+angle)의 역변환
+                    rotationMatrixFwd = Cv2.GetRotationMatrix2D(center, -effectiveAngle, 1.0);
                     rotMatInv.Dispose();
                 }
                 else
@@ -643,7 +644,7 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
 
                     // 역회전 → 이진화 결과를 정회전 → 마스크 적용
                     var center2f = new Point2f((float)roiCenterX, (float)roiCenterY);
-                    using var rotMatFwd = Cv2.GetRotationMatrix2D(center2f, effectiveAngle, 1.0);
+                    using var rotMatFwd = Cv2.GetRotationMatrix2D(center2f, -effectiveAngle, 1.0);
                     using var binaryFull = new Mat(inputImage.Size(), binaryImage.Type(), Scalar.Black);
 
                     // binaryImage를 역회전된 전체 이미지 위 올바른 위치에 복원
