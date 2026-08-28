@@ -114,8 +114,12 @@ Step '소스 repo 태그 push' {
 Step '로컬 보관 (D:\VMS-Releases)' {
     $dir = "D:\VMS-Releases\VMS-$Version"
     New-Item -ItemType Directory -Force $dir | Out-Null
-    Copy-Item "$msiPath*" $dir\
-    Copy-Item $NotesFile $dir\
+    Copy-Item "$msiPath*" $dir\ -Force
+    # 노트를 보관 폴더에서 직접 작성한 경우 자기 복사가 IOException — 스킵
+    $notesResolved = (Resolve-Path $NotesFile).Path
+    if ((Split-Path $notesResolved -Parent) -ne $dir) {
+        Copy-Item $notesResolved $dir\ -Force
+    }
     $archived = (Get-FileHash "$dir\VMS-$Version.msi" -Algorithm SHA256).Hash.ToLower()
     $expected = ((Get-Content "$msiPath.sha256") -split '\s+')[0]
     if ($archived -ne $expected) { throw '보관본 해시 불일치' }
