@@ -21,6 +21,9 @@ namespace VMS.Camera.Services
         private long _frameCounter;
         private bool _disposed;
 
+        /// <summary>마지막으로 기록한 프레임 번호. Grab 요청 응답에 실어 수신 측이 새 프레임인지 대조한다.</summary>
+        public long LastFrameCounter => Interlocked.Read(ref _frameCounter);
+
         // Reader 존재 프로브 캐시 — 커널 객체 조회를 프레임마다 하지 않는다.
         // 초기값은 long.MinValue 가 아니라 -Interval — MinValue 는 (now - tick)
         // 뺄셈이 오버플로해 음수가 되어 첫 프로브가 영원히 스킵된다.
@@ -99,7 +102,12 @@ namespace VMS.Camera.Services
         /// <summary>테스트 전용 — Reader 프로브 캐시 무효화 (1초 캐시 대기 제거).</summary>
         internal void ResetReaderProbeCacheForTests() => _lastReaderProbeTick = -ReaderProbeIntervalMs;
 
-        public void WriteFrame(AcquisitionResult result)
+        /// <summary>
+        /// AcquisitionResult 를 MMF 에 직렬화. cameraId 는 이 프레임을 만든 카메라의 식별자
+        /// (VisionSetup CameraInfo.Id 와 동일 체계) — 수신 측이 요청한 카메라의 프레임인지
+        /// 대조하는 데 쓴다. 비우면 수신 측은 "어느 카메라인지 모름"으로 처리한다.
+        /// </summary>
+        public void WriteFrame(AcquisitionResult result, string? cameraId = null)
         {
             if (_disposed || _mmf == null || _mutex == null) return;
             if (!HasReader()) return;
@@ -171,7 +179,19 @@ namespace VMS.Camera.Services
                 accessor.Write(SharedFrameConstants.OffsetGridWidth, gridW);
                 accessor.Write(SharedFrameConstants.OffsetGridHeight, gridH);
                 accessor.Write(SharedFrameConstants.OffsetNameLengthBytes, nameBytes.Length);
-                accessor.Write(SharedFrameConstants.OffsetReserved, 0);
+
+                // ── 카메라 식별자 (헤더 고정 슬롯) ──
+                // 슬롯을 넘는 ID 는 담지 않는다 — 잘라서 쓰면 다른 카메라와 앞부분이 같을 때
+                // 잘못 일치할 수 있어, 차라리 "모름"(길이 0)으로 두는 편이 안전하다.
+                var cameraIdBytes = string.IsNullOrEmpty(cameraId)
+                    ? Array.Empty<byte>()
+                    : Encoding.UTF8.GetBytes(cameraId);
+                if (cameraIdBytes.Length > SharedFrameConstants.CameraIdMaxBytes)
+                    cameraIdBytes = Array.Empty<byte>();
+
+                accessor.Write(SharedFrameConstants.OffsetCameraIdLengthBytes, cameraIdBytes.Length);
+                if (cameraIdBytes.Length > 0)
+                    accessor.WriteArray(SharedFrameConstants.OffsetCameraId, cameraIdBytes, 0, cameraIdBytes.Length);
 
                 offset = SharedFrameConstants.HeaderSize;
 

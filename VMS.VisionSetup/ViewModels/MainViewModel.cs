@@ -448,9 +448,47 @@ namespace VMS.VisionSetup.ViewModels
                     AddStepCommand.NotifyCanExecuteChanged();
                     AcquireImageCommand.NotifyCanExecuteChanged();
                     ConnectCameraCommand.NotifyCanExecuteChanged();
+                    NotifyCameraConnectionUi();
                 }
             }
         }
+
+        /// <summary>
+        /// 툴바 연결 토글의 활성 상태 + 툴팁을 한 번에 갱신.
+        /// 상태(연결·VMS 실행·카메라 선택)가 바뀌는 모든 지점에서 호출 — 커맨드만 갱신하면
+        /// 툴팁이 이전 사유를 그대로 달고 남는다.
+        /// </summary>
+        private void NotifyCameraConnectionUi()
+        {
+            ToggleCameraConnectionCommand.NotifyCanExecuteChanged();
+            OnPropertyChanged(nameof(CameraConnectionToggleHint));
+        }
+
+        /// <summary>
+        /// 툴바 카메라 연결 토글의 상태별 안내. 비활성 사유(VMS 소유·카메라 미선택)를
+        /// 툴팁으로 알려주지 않으면 "눌러도 초록이 안 된다"로 오해한다.
+        /// </summary>
+        public string CameraConnectionToggleHint
+        {
+            get
+            {
+                if (IsCameraConnected)
+                    return $"카메라 연결됨: {SelectedCamera?.Name} — 클릭하면 연결 해제";
+                if (IsVmsMainRunning)
+                    return "VMS 실행 중 — 카메라는 VMS가 소유합니다 (이미지는 VMS에서 수신)";
+                if (SelectedCamera == null)
+                    return "카메라를 먼저 선택하세요 (Camera Manager)";
+                return $"카메라 연결: {SelectedCamera.Name}";
+            }
+        }
+
+        /// <summary>
+        /// Acquire 버튼 툴팁 — VMS 실행 중이면 동작이 "VMS 에 Grab 요청"으로 바뀌므로
+        /// 무엇이 일어나는지 문구로 알려준다.
+        /// </summary>
+        public string AcquireImageHint => IsVmsMainRunning
+            ? "VMS에 Grab 요청 — VMS가 촬영한 이미지를 받아옵니다 (운전/라이브 중에는 거절됨)"
+            : "Acquire Image — 선택 카메라로 촬영";
 
         /// <summary>로봇 웨이포인트가 있는 스텝이 존재하는지 (UI Visibility 바인딩용)</summary>
         public bool NeedsRobot => Steps.Any(s => s.RobotWaypoint != null);
@@ -721,6 +759,7 @@ namespace VMS.VisionSetup.ViewModels
         public RelayCommand StopCameraLiveCommand { get; }
         public RelayCommand ConnectCameraCommand { get; }
         public RelayCommand DisconnectCameraCommand { get; }
+        public RelayCommand ToggleCameraConnectionCommand { get; }
         public RelayCommand GenerateHeightMapCommand { get; }
         public RelayCommand SaveRecipeCommand { get; }
         public RelayCommand ReceiveFromVmsCommand { get; }
@@ -797,13 +836,23 @@ namespace VMS.VisionSetup.ViewModels
             OpenTemplateGalleryCommand = new RelayCommand(OpenTemplateGallery, () => SelectedStep != null);
             LoadSamplePointCloudCommand = new RelayCommand(LoadSamplePointCloud);
             ShowCameraInfoCommand = new RelayCommand(ShowCameraInfo);
-            // 직접 연결/취득은 VMS 메인이 실행 중이면 차단 — 카메라 소유권은 항상
-            // 하나(VMS 우선). VMS 실행 중에는 Live Receive(공유메모리 수신)만 사용.
-            AcquireImageCommand = new RelayCommand(async () => await AcquireImage(), () => SelectedCamera != null && !IsAcquiring && !IsCameraLive && !IsVmsMainRunning);
+            // 직접 연결/라이브는 VMS 메인이 실행 중이면 차단 — 카메라 소유권은 항상
+            // 하나(VMS 우선). 단 Acquire 는 막지 않고 "VMS 에 Grab 요청"으로 우회한다:
+            // 버튼을 비활성으로 두면 VMS 창으로 가서 Grab 하고 돌아오는 왕복이 강제된다.
+            AcquireImageCommand = new RelayCommand(
+                async () =>
+                {
+                    if (IsVmsMainRunning) await RequestGrabFromVms();
+                    else await AcquireImage();
+                },
+                () => !IsAcquiring && !IsCameraLive && (IsVmsMainRunning || SelectedCamera != null));
             StartCameraLiveCommand = new RelayCommand(async () => await StartCameraLive(), () => SelectedCamera != null && !IsCameraLive && !IsAcquiring && !IsVmsMainRunning);
             StopCameraLiveCommand = new RelayCommand(StopCameraLive, () => IsCameraLive);
             ConnectCameraCommand = new RelayCommand(async () => await ConnectCamera(), () => SelectedCamera != null && !IsCameraConnected && !IsVmsMainRunning);
             DisconnectCameraCommand = new RelayCommand(async () => await DisconnectCamera(), () => IsCameraConnected);
+            ToggleCameraConnectionCommand = new RelayCommand(
+                async () => await ToggleCameraConnection(),
+                () => IsCameraConnected || (SelectedCamera != null && !IsVmsMainRunning));
             GenerateHeightMapCommand = new RelayCommand(GenerateHeightMap, CanGenerateHeightMap);
             SaveRecipeCommand = new RelayCommand(SaveCurrentRecipe, () => _recipeService.CurrentRecipe != null);
             ReceiveFromVmsCommand = new RelayCommand(async () => await ReceiveFromVms(), () => !IsReceivingFromVms);
@@ -1013,7 +1062,9 @@ namespace VMS.VisionSetup.ViewModels
 
             IsVmsMainRunning = running;
             ConnectCameraCommand.NotifyCanExecuteChanged();
+            NotifyCameraConnectionUi();
             AcquireImageCommand.NotifyCanExecuteChanged();
+            OnPropertyChanged(nameof(AcquireImageHint));
             StartCameraLiveCommand.NotifyCanExecuteChanged();
 
             if (running)
@@ -1050,6 +1101,8 @@ namespace VMS.VisionSetup.ViewModels
             try { StopLiveReceive(); } catch { }
             try { _sharedFrameReader?.Dispose(); } catch { }
             _sharedFrameReader = null;
+            try { _grabRequestChannel?.Dispose(); } catch { }
+            _grabRequestChannel = null;
             try { _cameraAcquisition?.Dispose(); } catch { }
             _cameraAcquisition = null;
             try { _chatService?.Dispose(); } catch { }
@@ -2756,6 +2809,23 @@ namespace VMS.VisionSetup.ViewModels
             IsCameraInfoPopupOpen = !IsCameraInfoPopupOpen;
         }
 
+        /// <summary>
+        /// 툴바 연결 토글 — 연결 중이면 해제, 아니면 연결.
+        /// 마지막에 IsCameraConnected 변경 통지를 강제한다: 연결에 실패하면 값이 false 그대로라
+        /// SetProperty 가 통지를 내지 않고, ToggleButton 이 클릭으로 켜둔 IsChecked 가
+        /// 되돌아오지 않아 "연결 안 됐는데 초록"으로 남는다.
+        /// </summary>
+        private async System.Threading.Tasks.Task ToggleCameraConnection()
+        {
+            if (IsCameraConnected)
+                await DisconnectCamera();
+            else
+                await ConnectCamera();
+
+            OnPropertyChanged(nameof(IsCameraConnected));
+            NotifyCameraConnectionUi();
+        }
+
         private async System.Threading.Tasks.Task ConnectCamera()
         {
             if (SelectedCamera == null) return;
@@ -2776,6 +2846,7 @@ namespace VMS.VisionSetup.ViewModels
                         StatusMessage = $"카메라 연결 끊김: {reason}";
                         ConnectCameraCommand.NotifyCanExecuteChanged();
                         DisconnectCameraCommand.NotifyCanExecuteChanged();
+                        NotifyCameraConnectionUi();
                     });
                 };
 
@@ -2804,6 +2875,7 @@ namespace VMS.VisionSetup.ViewModels
 
                 ConnectCameraCommand.NotifyCanExecuteChanged();
                 DisconnectCameraCommand.NotifyCanExecuteChanged();
+                NotifyCameraConnectionUi();
                 MultiViewCaptureCommand.NotifyCanExecuteChanged();
                 StartWaypointScanCommand.NotifyCanExecuteChanged();
             }
@@ -2832,6 +2904,7 @@ namespace VMS.VisionSetup.ViewModels
 
                 ConnectCameraCommand.NotifyCanExecuteChanged();
                 DisconnectCameraCommand.NotifyCanExecuteChanged();
+                NotifyCameraConnectionUi();
                 MultiViewCaptureCommand.NotifyCanExecuteChanged();
                 StartWaypointScanCommand.NotifyCanExecuteChanged();
             }
@@ -3754,6 +3827,73 @@ namespace VMS.VisionSetup.ViewModels
 
         #region VMS Frame Receive
 
+        private GrabRequestChannel? _grabRequestChannel;
+
+        /// <summary>
+        /// VMS 에 Grab 을 요청하고 그 프레임을 받아온다 — VMS 창으로 넘어가 Grab 을 누르고
+        /// 돌아오던 왕복을 없앤다. VMS 가 운전/라이브 중이면 거절 사유를 그대로 표시한다.
+        ///
+        /// 받은 프레임의 카메라 식별자를 요청한 카메라와 대조한다: 다르면 다른 카메라의
+        /// 프레임(라이브가 끼어들었거나 VMS 가 다른 카메라를 잡은 경우)이므로, 조용히
+        /// 엉뚱한 이미지로 툴을 세팅하지 않도록 경고한다.
+        /// </summary>
+        private async System.Threading.Tasks.Task RequestGrabFromVms()
+        {
+            var targetCamera = SelectedStep != null
+                ? Cameras.FirstOrDefault(c => c.Id == SelectedStep.CameraId) ?? SelectedCamera
+                : SelectedCamera;
+            string cameraId = targetCamera?.Id ?? string.Empty;
+
+            try
+            {
+                _grabRequestChannel ??= new GrabRequestChannel();
+                if (!_grabRequestChannel.TryConnectAsRequester())
+                {
+                    _grabRequestChannel.Dispose();
+                    _grabRequestChannel = null;
+                    StatusMessage = "VMS에 Grab을 요청할 수 없습니다 (VMS가 실행 중인지 확인)";
+                    return;
+                }
+
+                StatusMessage = targetCamera != null
+                    ? $"VMS에 Grab 요청 중... ({targetCamera.Name})"
+                    : "VMS에 Grab 요청 중...";
+
+                var response = await System.Threading.Tasks.Task.Run(
+                    () => _grabRequestChannel.RequestGrab(cameraId));
+
+                if (response == null)
+                {
+                    StatusMessage = "VMS가 Grab 요청에 응답하지 않았습니다 (시간 초과)";
+                    return;
+                }
+
+                if (!response.IsSuccess)
+                {
+                    StatusMessage = $"VMS Grab 거절: {response.Message}";
+                    return;
+                }
+
+                // Grab 성공 — 방금 기록된 프레임을 읽는다
+                await ReceiveFromVms();
+
+                if (!string.IsNullOrEmpty(cameraId)
+                    && !string.IsNullOrEmpty(_lastReceivedCameraId)
+                    && _lastReceivedCameraId != cameraId)
+                {
+                    StatusMessage = $"경고: 수신한 프레임이 요청한 카메라({targetCamera?.Name})의 것이 아닙니다 "
+                                  + $"— VMS에서 다른 카메라가 촬영 중일 수 있습니다.";
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"VMS Grab 요청 오류: {ex.Message}";
+            }
+        }
+
+        /// <summary>마지막으로 수신한 프레임의 카메라 식별자 (요청 카메라 대조용).</summary>
+        private string _lastReceivedCameraId = string.Empty;
+
         private async System.Threading.Tasks.Task ReceiveFromVms()
         {
             try
@@ -3857,6 +3997,8 @@ namespace VMS.VisionSetup.ViewModels
 
         private void ApplySharedFrame(SharedFrameData frame)
         {
+            _lastReceivedCameraId = frame.CameraId;
+
             if (frame.Image2D != null)
             {
                 // 카메라 라이브와 동일한 경량 경로 — 수신 프레임마다 CurrentImage 연쇄 금지

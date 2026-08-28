@@ -161,6 +161,59 @@
             <Setter Property="Foreground" Value="{StaticResource BrushDanger}"/>
         </Style>
 
+        <!-- Icon-only toolbar toggle (연결 상태 표시등 겸용).
+             기본 WPF ToggleButton 크롬은 밝은 배경이라 다크 툴바에서 아이콘이 묻는다 —
+             ToolbarIconButtonStyle 과 같은 모양으로 템플릿을 직접 정의하고,
+             Checked 상태만 초록 계열로 구분한다. 세 상태: 초록=연결됨 /
+             무색=미연결 / 흐림+화살표 커서=비활성(VMS 가 카메라 소유). -->
+        <Style x:Key="ToolbarIconToggleButtonStyle" TargetType="ToggleButton">
+            <Setter Property="Background" Value="#3A3A3C"/>
+            <Setter Property="Foreground" Value="#D0D0D0"/>
+            <Setter Property="Padding" Value="8,7"/>
+            <Setter Property="Margin" Value="1,0"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="ToolTipService.InitialShowDelay" Value="200"/>
+            <Setter Property="ToolTipService.ShowDuration" Value="10000"/>
+            <Setter Property="ToolTipService.ShowOnDisabled" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="ButtonBorder" CornerRadius="6"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="#48FFFFFF" BorderThickness="1"
+                                SnapsToDevicePixels="True">
+                            <Border x:Name="HoverOverlay" CornerRadius="5" Background="Transparent"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter x:Name="Content"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <!-- 연결됨 — 초록 배경/테두리로 상시 상태 표시 -->
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="ButtonBorder" Property="Background" Value="#1B5E20"/>
+                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#4CAF50"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="HoverOverlay" Property="Background" Value="#18FFFFFF"/>
+                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#70FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="HoverOverlay" Property="Background" Value="#15000000"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="ButtonBorder" Property="Background" Value="#2A2A2C"/>
+                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#10FFFFFF"/>
+                                <Setter TargetName="Content" Property="Opacity" Value="0.3"/>
+                                <Setter Property="Cursor" Value="Arrow"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Toolbar group container -->
         <Style x:Key="ToolbarGroupStyle" TargetType="Border">
             <Setter Property="Background" Value="#28FFFFFF"/>
@@ -550,8 +603,27 @@
                           Stroke="White" StrokeThickness="1.2" Fill="Transparent"
                           Width="15" Height="12" Stretch="Uniform"/>
                 </Button>
+                <!-- 카메라 연결 토글 — 연결 상태를 툴바에서 상시 확인(초록)하고 한 번에 연결/해제.
+                     IsChecked 는 OneWay: 실제 상태(IsCameraConnected)만이 색을 결정하므로
+                     연결에 실패해도 초록으로 남지 않는다 (VM 이 토글 후 통지를 강제). -->
+                <ToggleButton Command="{Binding ToggleCameraConnectionCommand}"
+                              IsChecked="{Binding IsCameraConnected, Mode=OneWay}"
+                              ToolTip="{Binding CameraConnectionToggleHint}"
+                              Style="{StaticResource ToolbarIconToggleButtonStyle}">
+                    <!-- 플러그 아이콘 — 연결 시 버튼 자체가 초록으로 바뀌어 상태를 표시한다 -->
+                    <Canvas Width="13" Height="14">
+                        <Path Data="M4,2 L4,6 M9,2 L9,6"
+                              Stroke="White" StrokeThickness="1.4" StrokeStartLineCap="Round"/>
+                        <Path Data="M1.5,6 L11.5,6 L11.5,8.5 A5,5 0 0 1 1.5,8.5 Z"
+                              Stroke="White" StrokeThickness="1.2" Fill="Transparent"/>
+                        <Path Data="M6.5,13.5 L6.5,11" Stroke="White" StrokeThickness="1.4"/>
+                    </Canvas>
+                </ToggleButton>
+                <!-- VMS 실행 중에는 동작이 "VMS 에 Grab 요청"으로 바뀐다 (툴팁이 안내) -->
                 <Button Command="{Binding AcquireImageCommand}"
-                        Style="{StaticResource ToolbarIconButtonStyle}" ToolTip="Acquire Image">
+                        Style="{StaticResource ToolbarIconButtonStyle}"
+                        ToolTipService.ShowOnDisabled="True"
+                        ToolTip="{Binding AcquireImageHint}">
                     <Path Data="M2,6 L2,15 L18,15 L18,6 L15,6 L13,4 L7,4 L5,6 Z M10,7.5 A2.5,2.5 0 1 1 10,12.5 A2.5,2.5 0 1 1 10,7.5 M3,17 L3,19 L17,19 L17,17"
                           Stroke="White" StrokeThickness="1.2" Fill="Transparent"
                           Width="15" Height="14" Stretch="Uniform"/>
