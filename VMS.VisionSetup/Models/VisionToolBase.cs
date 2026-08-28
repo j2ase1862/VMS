@@ -341,6 +341,42 @@ namespace VMS.VisionSetup.Models
             return new Mat(inputImage, adjustedROI);
         }
 
+        /// <summary>
+        /// 회전 ROI(RectangleAffineROI)를 존중하는 ROI 추출.
+        /// 각도가 있으면 회전 정렬 워프(CodeReaderTool.ExtractAffineROI와 동일 규약) 후
+        /// 축 정렬 크롭 — 결과는 ROI 내용이 수평으로 펴진 이미지.
+        /// 각도가 없으면 GetROIImage()와 동일. 호출자가 반환 Mat을 소유(Dispose 책임).
+        /// 캔버스 각도는 화면 시계방향(+), OpenCV는 반시계방향(+)이라 +angle 워프가 정렬이다.
+        /// </summary>
+        public Mat GetAlignedROIImage(Mat inputImage)
+        {
+            double angle = AssociatedROIShape is RectangleAffineROI liveROI ? liveROI.Angle : ROIAngle;
+
+            if (!UseROI || ROI.Width <= 0 || ROI.Height <= 0 || Math.Abs(angle) <= 0.001)
+                return GetROIImage(inputImage);
+
+            double cx = ROICenterX != 0 ? ROICenterX : ROI.X + ROI.Width / 2.0;
+            double cy = ROICenterY != 0 ? ROICenterY : ROI.Y + ROI.Height / 2.0;
+            var center = new Point2f((float)cx, (float)cy);
+
+            using var rotMat = Cv2.GetRotationMatrix2D(center, angle, 1.0);
+            using var rotated = new Mat();
+            Cv2.WarpAffine(inputImage, rotated, rotMat, inputImage.Size(),
+                InterpolationFlags.Linear, BorderTypes.Replicate);
+
+            int x = (int)(cx - ROI.Width / 2.0);
+            int y = (int)(cy - ROI.Height / 2.0);
+            int x1 = Math.Clamp(x, 0, rotated.Width);
+            int y1 = Math.Clamp(y, 0, rotated.Height);
+            int x2 = Math.Clamp(x + ROI.Width, 0, rotated.Width);
+            int y2 = Math.Clamp(y + ROI.Height, 0, rotated.Height);
+
+            if (x2 - x1 <= 0 || y2 - y1 <= 0)
+                return inputImage.Clone();
+
+            return new Mat(rotated, new Rect(x1, y1, x2 - x1, y2 - y1)).Clone();
+        }
+
         protected Rect GetAdjustedROI(Mat inputImage)
         {
             // 1. 역방향 드래그 등으로 인한 음수 Width/Height 보정 (Normalization)

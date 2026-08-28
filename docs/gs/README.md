@@ -54,6 +54,7 @@ node gen_user_manual.js   # → ../VMS_사용자매뉴얼_v1.1.docx
 | #371 | **카메라 Live 장시간 구동 안정화** — VisionSetup Live/Live Receive 가 몇 컷 뒤 느려지다 멈추던 문제 해결 (메모리 누적 제거). 사용자 절차 변화 없음 — Live 관련 서술에 "장시간 구동 가능" 문구 검토만 | VisionSetup 매뉴얼 Live 절 |
 | #372 #373 | **Feature Match 학습 마스크(Train Mask) + 360° 각도 표기 정규화** — [Edit Mask...] 편집기(브러시/사각형/지우개)로 그림자·가변 각인·반사 영역을 학습에서 제외, 특징 이미지의 빨간 영역으로 확인. 360° 검색은 Angle Start=-180 + Extent=360 안내 필요. 도구 파라미터 표(§ Feature Match)·설정 화면 스크린샷 갱신 | VisionSetup 매뉴얼 Feature Match 절 |
 | #375 | **학습 마스크 편집기 개편 (v1.18.0)** — 도구 바가 도구(브러시/사각형/다각형)×동작(마스크/해제 UnMask) 구성으로 변경 ("지우개" 명칭 삭제 — 브러시+해제로 대체). 다각형: 좌클릭 꼭지점 추가→우클릭/더블클릭 완성, Esc 취소. 줌 1~8배: Ctrl+휠 또는 [+]/[−]. 위 #373 행과 같은 절에 함께 반영 — #373 기준 편집기 스크린샷은 이 UI 로 재캡처 | VisionSetup 매뉴얼 Feature Match 절 |
+| (이번 PR) | **회전 ROI(RectAffine) 실행 반영** — Blob: 회전 ROI가 그린 영역 그대로 분석되도록 수정(기존엔 각도가 거울 반전된 영역 분석). Feature Match: 학습(Train) 시 회전 ROI 각도를 존중해 회전 정렬된 패턴으로 학습(SearchRegion 은 여전히 축 정렬 — 추후). 매뉴얼의 ROI 종류 설명에 "RectAffine 은 Blob·Feature Match 학습에 적용" 명시 검토 | VisionSetup 매뉴얼 ROI·Blob·Feature Match 절 |
 | #369 #370 | **라이선스 발급 GUI LicGen.App + 백업 자동화** — ⚠ 사내 전용(MSI 비동봉·고객 비노출)이라 **사용자 매뉴얼 대상 아님, Admin 매뉴얼만**: 발급 담당자 절차를 CLI 예시에서 LicGen.App 화면 기준으로 교체(발급 탭·발급 대장 탭 비고·백업 배너/[백업 실행] 스크린샷), `licgen backup` USB 2부 규칙·issue 백업 경고 소개. 상세 절차 원본은 docs/license_operations.md (반영 완료) | Admin 매뉴얼 라이선스 절 (§2.6 발급 측 상대편) |
 
 ## guides/ — 가이드 문서

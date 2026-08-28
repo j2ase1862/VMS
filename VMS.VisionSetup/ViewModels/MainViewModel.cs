@@ -1744,41 +1744,44 @@ namespace VMS.VisionSetup.ViewModels
                 return;
             }
 
-            // 도구에 UseROI가 설정되어 있으면 ROI 영역만 학습, 아니면 전체 이미지
+            // 도구에 UseROI가 설정되어 있으면 ROI 영역만 학습, 아니면 전체 이미지.
+            // RectangleAffineROI 각도가 있으면 회전 정렬된 영역이 추출된다.
             Mat trainingImage = CurrentImage;
+            Mat? croppedImage = null;
 
             if (SelectedVisionTool != null && SelectedVisionTool.UseROI
                 && SelectedVisionTool.ROI.Width > 0 && SelectedVisionTool.ROI.Height > 0)
             {
-                var roi = SelectedVisionTool.ROI;
-                // 이미지 범위 내로 클리핑
-                int x = Math.Max(0, roi.X);
-                int y = Math.Max(0, roi.Y);
-                int w = Math.Min(roi.Width, CurrentImage.Width - x);
-                int h = Math.Min(roi.Height, CurrentImage.Height - y);
-                var rect = new CvRect(x, y, w, h);
-
-                if (rect.Width > 10 && rect.Height > 10)
+                croppedImage = SelectedVisionTool.GetAlignedROIImage(CurrentImage);
+                if (croppedImage.Width > 10 && croppedImage.Height > 10
+                    && (croppedImage.Width < CurrentImage.Width || croppedImage.Height < CurrentImage.Height))
                 {
-                    trainingImage = new Mat(CurrentImage, rect);
-                    StatusMessage = $"ROI 영역으로 학습 중... ({rect.Width}x{rect.Height})";
+                    trainingImage = croppedImage;
+                    StatusMessage = $"ROI 영역으로 학습 중... ({croppedImage.Width}x{croppedImage.Height})";
                 }
             }
 
-            if (SelectedVisionTool is FeatureMatchTool featureTool)
+            try
             {
-                var targetModel = featureTool.SelectedModel;
-                if (featureTool.TrainPattern(trainingImage, targetModel))
+                if (SelectedVisionTool is FeatureMatchTool featureTool)
                 {
-                    if (targetModel != null)
-                        StatusMessage = $"Model '{targetModel.Name}' 학습 완료";
+                    var targetModel = featureTool.SelectedModel;
+                    if (featureTool.TrainPattern(trainingImage, targetModel))
+                    {
+                        if (targetModel != null)
+                            StatusMessage = $"Model '{targetModel.Name}' 학습 완료";
+                        else
+                            StatusMessage = $"새 Model 학습 완료 (총 {featureTool.Models.Count}개)";
+                    }
                     else
-                        StatusMessage = $"새 Model 학습 완료 (총 {featureTool.Models.Count}개)";
+                    {
+                        StatusMessage = "Feature 학습 실패";
+                    }
                 }
-                else
-                {
-                    StatusMessage = "Feature 학습 실패";
-                }
+            }
+            finally
+            {
+                croppedImage?.Dispose();
             }
         }
 
@@ -1794,25 +1797,28 @@ namespace VMS.VisionSetup.ViewModels
             }
 
             Mat tuningImage = CurrentImage;
+            Mat? croppedImage = null;
 
             if (SelectedVisionTool != null && SelectedVisionTool.UseROI
                 && SelectedVisionTool.ROI.Width > 0 && SelectedVisionTool.ROI.Height > 0)
             {
-                var roi = SelectedVisionTool.ROI;
-                int x = Math.Max(0, roi.X);
-                int y = Math.Max(0, roi.Y);
-                int w = Math.Min(roi.Width, CurrentImage.Width - x);
-                int h = Math.Min(roi.Height, CurrentImage.Height - y);
-                var rect = new CvRect(x, y, w, h);
-
-                if (rect.Width > 10 && rect.Height > 10)
-                    tuningImage = new Mat(CurrentImage, rect);
+                // 학습(TrainPattern)과 동일하게 회전 ROI 각도를 존중해 같은 영역으로 튜닝
+                croppedImage = SelectedVisionTool.GetAlignedROIImage(CurrentImage);
+                if (croppedImage.Width > 10 && croppedImage.Height > 10)
+                    tuningImage = croppedImage;
             }
 
-            if (SelectedVisionTool is FeatureMatchTool featureTool)
+            try
             {
-                featureTool.AutoTuneParameters(tuningImage);
-                StatusMessage = "파라미터 자동 튜닝 완료";
+                if (SelectedVisionTool is FeatureMatchTool featureTool)
+                {
+                    featureTool.AutoTuneParameters(tuningImage);
+                    StatusMessage = "파라미터 자동 튜닝 완료";
+                }
+            }
+            finally
+            {
+                croppedImage?.Dispose();
             }
         }
 
