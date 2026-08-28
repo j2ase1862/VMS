@@ -33,6 +33,19 @@ namespace VMS.Camera.Services
         // 구간(AcquireCore)에서만 접근하므로 동기화 불필요.
         private byte[] _bgrBuffer = Array.Empty<byte>();
 
+        // 스트리밍 유지 grab — 프레임마다 Start(1)/자동정지를 반복하면 grab 세션마다
+        // pylon 네이티브 버퍼가 잡히고 회수되지 않아 라이브에서 프레임 크기만큼
+        // 계속 누수된다 (실증 PC 2026-08-28: 15MB/s(BGR)·10MB/s(YUV422 원시) 반복,
+        // 라이브 중지 후에도 미회수, VisionSetup 단독 라이브 동일 → 이 계층 확정.
+        // 관리 소비 경로는 20fps×45s 하니스로 무결 증명). 연속 획득 중에는 grabber 를
+        // 계속 가동 상태로 두고 LatestImageOnly 로 최신 프레임만 꺼내며, 마지막 획득
+        // 후 IdleStopMs 가 지나면 타이머가 스트림을 내린다 (단발 Grab 도 잠시 스트림
+        // 유지 — 연이은 AUTO RUN 사이클에서 세션 재생성 비용이 사라지는 부수 효과).
+        private System.Threading.Timer? _idleStopTimer;
+        private long _lastAcquireTick;
+        private const int IdleStopMs = 2000;
+        private const int FreshFrameThresholdMs = 500;
+
         public bool IsConnected { get; private set; }
 
         /// <summary>
@@ -134,11 +147,18 @@ namespace VMS.Camera.Services
                 var gainAutoOff = _pylonCamera.Parameters[PLCamera.GainAuto]
                     .TrySetValue(PLCamera.GainAuto.Off);
 
+                // 스트리밍 유지 grab 의 최신 프레임 전용 큐 — LatestImages 전략에서
+                // 출력 큐를 1로 잡아 오래된 프레임이 쌓이지 않게 한다 (grab 시작 전 설정)
+                try { _pylonCamera.Parameters[PLCameraInstance.OutputQueueSize].SetValue(1); }
+                catch { /* 미지원이어도 grab 자체는 동작 — 기본 큐로 진행 */ }
+
                 // Initialize pixel data converter (BGR8 for OpenCV compatibility)
                 _converter = new PixelDataConverter();
                 _converter.OutputPixelFormat = PixelType.BGR8packed;
 
                 IsConnected = true;
+                _idleStopTimer ??= new System.Threading.Timer(
+                    IdleStopCheck, null, IdleStopMs, IdleStopMs);
                 CameraLog.Write(
                     $"[Basler] 연결 성공: {targetCamera[CameraInfoKey.FriendlyName]} " +
                     $"(ExposureAuto Off={expAutoOff}, GainAuto Off={gainAutoOff})");
@@ -242,8 +262,25 @@ namespace VMS.Camera.Services
             _sdkLock.Wait();
             try
             {
-                // Start grab (single frame)
-                grabber.Start(1, GrabStrategy.OneByOne, GrabLoop.ProvidedByUser);
+                // 스트리밍 유지: 이미 가동 중이면 그대로 최신 프레임만 꺼낸다.
+                // LatestImages + OutputQueueSize=1(연결 시 설정) — 소비가 프레임률을
+                // 못 따라가도 큐가 자라지 않고 항상 최신 영상을 반환.
+                if (!grabber.IsGrabbing)
+                {
+                    grabber.Start(GrabStrategy.LatestImages, GrabLoop.ProvidedByUser);
+                }
+                else if (Environment.TickCount64 - Volatile.Read(ref _lastAcquireTick)
+                         > FreshFrameThresholdMs)
+                {
+                    // 단발 검사 grab(직전 획득에서 시간이 지난 호출)은 트리거 이후
+                    // 프레임을 써야 한다 — 큐에 남아 있던 직전 프레임 1장을 버리고
+                    // 다음 프레임을 기다린다. 라이브(연속 호출)는 해당 없음.
+                    try
+                    {
+                        using var stale = grabber.RetrieveResult(0, TimeoutHandling.Return);
+                    }
+                    catch { }
+                }
 
                 // Retrieve grab result with timeout
                 using var grabResult = grabber.RetrieveResult(
@@ -302,6 +339,16 @@ namespace VMS.Camera.Services
                     CameraLog.Write($"[Basler] 획득 오류: {ex.Message}");
                 }
 
+                // 실패한 스트림은 유지하지 않는다 — 타임아웃/오류 상태의 세션을 물고
+                // 있으면 다음 획득도 같은 상태를 상속한다. 장치가 사라졌으면 Stop 이
+                // 무기한 블록될 수 있으므로(USB 재열거/케이블 분리) 시도하지 않는다.
+                try
+                {
+                    if (!removed && grabber.IsGrabbing)
+                        grabber.Stop();
+                }
+                catch { }
+
                 return new AcquisitionResult
                 {
                     Success = false,
@@ -310,20 +357,40 @@ namespace VMS.Camera.Services
             }
             finally
             {
-                try
-                {
-                    // 장치가 이미 사라졌으면 Stop 을 시도하지 않는다 — 죽은 전송 계층에
-                    // 대한 Stop 은 무기한 블록될 수 있다 (USB 재열거/케이블 분리 중)
-                    bool stillConnected = false;
-                    try { stillConnected = _pylonCamera?.IsConnected ?? false; } catch { }
-                    if (stillConnected && grabber.IsGrabbing)
-                        grabber.Stop();
-                }
-                catch { }
-                finally
-                {
-                    _sdkLock.Release();
-                }
+                // 성공 시 스트림은 가동 상태로 유지 — IdleStopMs 무획득 시 타이머가 내린다
+                Volatile.Write(ref _lastAcquireTick, Environment.TickCount64);
+                _sdkLock.Release();
+            }
+        }
+
+        /// <summary>
+        /// 유휴 스트림 정지 — 마지막 획득 후 IdleStopMs 지나면 스트림을 내린다.
+        /// grab 진행 중이면(_sdkLock 점유) 손대지 않고 다음 틱으로 미룬다.
+        /// </summary>
+        private void IdleStopCheck(object? state)
+        {
+            if (Environment.TickCount64 - Volatile.Read(ref _lastAcquireTick) < IdleStopMs)
+                return;
+
+            var cam = _pylonCamera;
+            var grabber = cam?.StreamGrabber;
+            if (grabber == null) return;
+            if (!_sdkLock.Wait(0)) return;
+
+            try
+            {
+                // 장치가 사라진 전송 계층에 Stop 하면 무기한 블록될 수 있다
+                bool connected = false;
+                try { connected = cam!.IsConnected; } catch { }
+
+                if (connected && grabber.IsGrabbing
+                    && Environment.TickCount64 - Volatile.Read(ref _lastAcquireTick) >= IdleStopMs)
+                    grabber.Stop();
+            }
+            catch { }
+            finally
+            {
+                _sdkLock.Release();
             }
         }
 
@@ -362,39 +429,69 @@ namespace VMS.Camera.Services
                 var p = cam.Parameters;
                 bool ok = true;
 
+                // 스트리밍 유지 grab 도입으로 파라미터 쓰기가 grab 중에 올 수 있다.
+                // 대부분의 Basler 모델은 노출/게인 on-the-fly 쓰기를 지원하지만,
+                // 거부하는 모델이면 스트림을 내리고 1회 재시도 (다음 획득에서 자동 재가동).
+                bool StopStreamForParamRetry()
+                {
+                    try
+                    {
+                        var grabber = cam.StreamGrabber;
+                        if (grabber is { IsGrabbing: true })
+                        {
+                            grabber.Stop();
+                            return true;
+                        }
+                    }
+                    catch { }
+                    return false;
+                }
+
                 if (exposureUs > 0)
                 {
                     // 자동 노출이 켜져 있으면 수동 값이 무시/거부됨 — 항상 Off 를 먼저 시도
                     p[PLCamera.ExposureAuto].TrySetValue(PLCamera.ExposureAuto.Off);
 
-                    if (p.Contains(PLCamera.ExposureTimeAbs))
-                        ok = p[PLCamera.ExposureTimeAbs].TrySetValue(exposureUs, FloatValueCorrection.ClipToRange);
-                    else if (p.Contains(PLCamera.ExposureTime))
-                        ok = p[PLCamera.ExposureTime].TrySetValue(exposureUs, FloatValueCorrection.ClipToRange);
-                    else
-                        ok = false;
+                    bool TrySetExposure()
+                    {
+                        if (p.Contains(PLCamera.ExposureTimeAbs))
+                            return p[PLCamera.ExposureTimeAbs].TrySetValue(exposureUs, FloatValueCorrection.ClipToRange);
+                        if (p.Contains(PLCamera.ExposureTime))
+                            return p[PLCamera.ExposureTime].TrySetValue(exposureUs, FloatValueCorrection.ClipToRange);
+                        return false;
+                    }
+
+                    ok = TrySetExposure();
+                    if (!ok && StopStreamForParamRetry())
+                        ok = TrySetExposure();
 
                     if (!ok)
                         CameraLog.Write($"[Basler] 노출 {exposureUs}µs 적용 실패");
                 }
 
                 p[PLCamera.GainAuto].TrySetValue(PLCamera.GainAuto.Off);
-                bool gainOk = false;
-                if (p.Contains(PLCamera.Gain))
+
+                bool TrySetGain()
                 {
-                    gainOk = p[PLCamera.Gain].TrySetValue(gain, FloatValueCorrection.ClipToRange);
-                }
-                else if (p.Contains(PLCamera.GainRaw))
-                {
-                    // 정수 파라미터에는 TrySetValue 확장이 없음 — 범위 클램프 후 SetValue
-                    try
+                    if (p.Contains(PLCamera.Gain))
+                        return p[PLCamera.Gain].TrySetValue(gain, FloatValueCorrection.ClipToRange);
+                    if (p.Contains(PLCamera.GainRaw))
                     {
-                        var raw = p[PLCamera.GainRaw];
-                        raw.SetValue(Math.Clamp((long)Math.Round(gain), raw.GetMinimum(), raw.GetMaximum()));
-                        gainOk = true;
+                        // 정수 파라미터에는 TrySetValue 확장이 없음 — 범위 클램프 후 SetValue
+                        try
+                        {
+                            var raw = p[PLCamera.GainRaw];
+                            raw.SetValue(Math.Clamp((long)Math.Round(gain), raw.GetMinimum(), raw.GetMaximum()));
+                            return true;
+                        }
+                        catch { return false; }
                     }
-                    catch { gainOk = false; }
+                    return false;
                 }
+
+                bool gainOk = TrySetGain();
+                if (!gainOk && StopStreamForParamRetry())
+                    gainOk = TrySetGain();
 
                 if (!gainOk)
                     CameraLog.Write($"[Basler] 게인 {gain} 적용 실패 (모델별 미지원 가능) — 노출만 반영");
@@ -478,6 +575,9 @@ namespace VMS.Camera.Services
             if (_disposed) return;
             _disposed = true;
             IsConnected = false;
+
+            _idleStopTimer?.Dispose();
+            _idleStopTimer = null;
 
             // 카메라 전환 시 UI 스레드에서 호출된다 — SDK 정리(Close/Stop)가 죽은 전송
             // 계층에서 블록될 수 있으므로 백그라운드로 위임 (fire-and-forget, 실패 무해)
