@@ -400,7 +400,9 @@ namespace VMS.VisionSetup.Models
             }
             else
             {
-                // 크기 조정 (회전 고려)
+                // 크기 조정 (회전 고려) — 잡은 꼭짓점만 이동하고 반대편 꼭짓점은 고정.
+                // (중심 대칭 확장은 반대쪽 모서리도 같이 움직여 의도한 영역을 잡기 어렵다
+                //  — 2026-08-28 실증 피드백. RectangleROI의 엣지 고정 방식과 컨셉 통일)
                 double radians = -Angle * Math.PI / 180.0;
                 double cos = Math.Cos(radians);
                 double sin = Math.Sin(radians);
@@ -408,22 +410,37 @@ namespace VMS.VisionSetup.Models
                 double dx = newPosition.X - CenterX;
                 double dy = newPosition.Y - CenterY;
 
+                // 드래그 지점의 로컬 좌표 (회전 제거, 현재 중심 기준)
                 double localX = dx * cos - dy * sin;
                 double localY = dx * sin + dy * cos;
 
+                // 반대편(고정) 꼭짓점의 로컬 좌표
+                double anchorX, anchorY;
                 switch (handle)
                 {
-                    case HandleType.TopLeft:
-                    case HandleType.BottomRight:
-                        Width = Math.Abs(localX) * 2;
-                        Height = Math.Abs(localY) * 2;
-                        break;
-                    case HandleType.TopRight:
-                    case HandleType.BottomLeft:
-                        Width = Math.Abs(localX) * 2;
-                        Height = Math.Abs(localY) * 2;
-                        break;
+                    case HandleType.TopLeft: anchorX = Width / 2; anchorY = Height / 2; break;
+                    case HandleType.TopRight: anchorX = -Width / 2; anchorY = Height / 2; break;
+                    case HandleType.BottomRight: anchorX = -Width / 2; anchorY = -Height / 2; break;
+                    case HandleType.BottomLeft: anchorX = Width / 2; anchorY = -Height / 2; break;
+                    default: return;
                 }
+
+                // 앵커→드래그 지점이 새 사각형의 대각선. 최소 10px은 앵커에서 드래그 방향으로 보장.
+                double sx = localX >= anchorX ? 1 : -1;
+                double sy = localY >= anchorY ? 1 : -1;
+                double newWidth = Math.Max(10, Math.Abs(localX - anchorX));
+                double newHeight = Math.Max(10, Math.Abs(localY - anchorY));
+                double newLocalCx = anchorX + sx * newWidth / 2;
+                double newLocalCy = anchorY + sy * newHeight / 2;
+
+                // 새 로컬 중심을 월드 좌표로 복귀 (정회전) — 앵커 꼭짓점은 월드에서 불변
+                double fwdRad = Angle * Math.PI / 180.0;
+                double fwdCos = Math.Cos(fwdRad);
+                double fwdSin = Math.Sin(fwdRad);
+                CenterX += newLocalCx * fwdCos - newLocalCy * fwdSin;
+                CenterY += newLocalCx * fwdSin + newLocalCy * fwdCos;
+                Width = newWidth;
+                Height = newHeight;
             }
 
             if (Width < 10) Width = 10;
