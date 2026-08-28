@@ -382,14 +382,12 @@ namespace VMS.VisionSetup.Services
                 Id = "3d-registration-align",
                 Title = "표준 3D 얼라인 (6DOF, 기준 형상 정합)",
                 Category = CategoryAlign,
-                Description = "2D 매치 얼라인의 3D 판 — 기준 형상(.vpc 스캔 또는 .stl CAD) 대비 " +
-                              "현재 부품의 6축 변위 ΔX/ΔY/ΔZ(mm) + 회전 RX/RY/RZ(도)를 산출해 " +
-                              "로봇 보정에 쓴다. Filter 로 배경·노이즈를 걷어낸 뒤 Registration 이 " +
-                              "정합한다. 적용 후: ① 기준 부품을 촬영해 Registration 설정의 " +
-                              "[현재 점군을 Reference 로 저장] (또는 CAD .stl 지정) ② Run 마다 " +
-                              "Translation*/Rotation* 이 변위로 출력된다. 얼라인 용도라 점군을 " +
-                              "덮어쓰지 않도록 Apply Transform 은 꺼둔 프리셋 — 정합된 점군을 " +
-                              "후속 툴에 넘기려면 켤 것. 정합 품질은 Confidence·MeanError 로 확인.",
+                Description = "2D 매치 얼라인의 3D 판 — 기준 형상 대비 6축 변위 ΔX/ΔY/ΔZ(mm)·" +
+                              "회전 RX/RY/RZ(도)를 산출해 로봇 보정에 쓴다. 적용 후: ① 기준 부품을 " +
+                              "촬영해 Registration 설정의 [현재 점군을 Reference 로 저장] (또는 " +
+                              "CAD .stl 지정) ② Run 마다 Translation*/Rotation* 이 변위로 나온다. " +
+                              "정합 품질은 Confidence·MeanError 로 확인. 변위 측정용이라 Apply " +
+                              "Transform 은 꺼둔 프리셋 — 정합 점군을 후속 툴에 넘기려면 켤 것.",
                 Prerequisites = new[] { Badge3DCamera },
                 Tools =
                 {
@@ -414,13 +412,12 @@ namespace VMS.VisionSetup.Services
                 Id = "3d-plane-tilt-align",
                 Title = "평면 틸트 얼라인 (기울기 보정)",
                 Category = CategoryAlign,
-                Description = "기준면(지그·정반)과 대상면(부품)에 각각 Plane Fit 의 ROI 를 올려 " +
-                              "두 평면의 법선 사이각을 재고, 그 각도로 스테이지·척의 기울기를 " +
-                              "보정한다. 전체 형상 정합이 필요 없는 레벨링·평행도 맞춤에 쓴다. " +
-                              "적용 후: ① Plane Fit 기준/대상의 ROI 를 각 면 위에 배치 " +
-                              "② 3D Geometry 가 AngleDeg(도)로 기울기를 출력 — 0°가 평행. " +
-                              "3D Geometry 에는 공차 판정이 없으므로, 합불 판정이 필요하면 " +
-                              "AngleDeg 를 PLC 매핑하거나 시퀀스에서 비교할 것. 면이 거칠면 " +
+                Description = "기준면(지그·정반)과 대상면(부품)에 Plane Fit 의 ROI 를 각각 올려 " +
+                              "두 법선의 사이각을 재고, 그 각도로 스테이지·척의 기울기를 보정한다. " +
+                              "전체 형상 정합이 필요 없는 레벨링·평행도 맞춤용. 적용 후: " +
+                              "① 두 Plane Fit 의 ROI 를 각 면 위에 배치 ② 3D Geometry 가 " +
+                              "AngleDeg(도)를 출력 — 0°가 평행. 3D Geometry 에는 공차 판정이 " +
+                              "없으니 합불이 필요하면 AngleDeg 를 PLC 매핑할 것. 면이 거칠면 " +
                               "Plane Fit 의 RANSAC 임계값을 키운다.",
                 Prerequisites = new[] { Badge3DCamera },
                 Tools =
@@ -453,11 +450,10 @@ namespace VMS.VisionSetup.Services
                 Id = "3d-hybrid-align",
                 Title = "2D+3D 하이브리드 얼라인 (XYθ + 기울기)",
                 Category = CategoryAlign,
-                Description = "평면 내 위치·회전은 2D 매치 얼라인이 정밀하고, 높이·기울기는 3D 가 " +
-                              "정확한 점을 합친 구성이다. Feature Match → Match Align 이 " +
-                              "ΔX/ΔY/Δθ 를, Plane Fit 이 대상면의 법선(기울기)과 평면식 계수 " +
-                              "PlaneD(높이 오프셋)를 낸다. 형상 정합(6DOF)보다 가볍고 빠르며, " +
-                              "부품에 뚜렷한 2D 특징이 있고 안착면이 평면일 때 적합하다. " +
+                Description = "평면 내 위치·회전은 2D 가 정밀하고 높이·기울기는 3D 가 정확한 " +
+                              "점을 합친 구성. Match Align 이 ΔX/ΔY/Δθ 를, Plane Fit 이 대상면의 " +
+                              "법선(기울기)과 PlaneD(높이 오프셋)를 낸다. 6DOF 형상 정합보다 " +
+                              "가볍고, 부품에 뚜렷한 2D 특징이 있고 안착면이 평면일 때 적합. " +
                               "적용 후: ① Feature Match 에 기준 부품 패턴 학습 ② Plane Fit 의 " +
                               "ROI 를 안착면 위에 배치 ③ mm 변위는 캘리브레이션(또는 스텝 " +
                               "Resolution) 설정 시 자동.",
