@@ -133,6 +133,28 @@ namespace VMS.Tests.ViewModels
         }
 
         [Fact]
+        public async Task GrabOnce_DisposesAcquiredMat()
+        {
+            // 메모리 누수 회귀 (실증 PC 2026-08-28): 표시용 BitmapSource 변환 후 Mat 을
+            // Dispose 하지 않아 AUTO RUN 사이클마다 5MP BGR 15MB 네이티브 메모리가
+            // 누적됐다 — GC 는 이 메모리를 보지 못해 회수가 영영 일어나지 않는다.
+            var mat = new OpenCvSharp.Mat(8, 8, OpenCvSharp.MatType.CV_8UC3,
+                OpenCvSharp.Scalar.All(0));
+            var acq = new FakeAcquisition
+            {
+                IsConnected = true,
+                AcquireResult = new AcquisitionResult { Success = true, Image2D = mat }
+            };
+            var vm = MakeVm(acq);
+
+            var ok = await vm.GrabOnceAsync();
+
+            Assert.True(ok);
+            Assert.True(mat.IsDisposed);
+            Assert.NotNull(vm.CurrentImage);
+        }
+
+        [Fact]
         public async Task ConnectionLost_DropsIsConnected_AndNextGrabReconnects()
         {
             // 현장 사고(2026-08-19) 회귀: 케이블이 뽑혀도 IsConnected 가 true 로 남아

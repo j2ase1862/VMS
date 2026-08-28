@@ -455,6 +455,12 @@ namespace VMS.ViewModels
                         var bmp = MatToBitmapSource(result.Image2D);
                         _originalImage = bmp;
                         CurrentImage = bmp;
+
+                        // BitmapSource.Create 가 픽셀을 복사하므로 Mat 은 여기서 소유 종료.
+                        // Dispose 없이 두면 네이티브 15MB(5MP BGR)가 grab 마다 누적되는데
+                        // GC 는 이 메모리를 보지 못해 회수가 영영 안 된다 — AUTO RUN 이
+                        // 사이클당 1프레임씩 새서 수 GB 까지 자랐다 (실증 PC 2026-08-28).
+                        result.Image2D.Dispose();
                     }
 
                     if (result.PointCloud != null)
