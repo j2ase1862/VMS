@@ -1,12 +1,24 @@
 <Window x:Class="VMS.VisionSetup.Views.Templates.TemplateGalleryWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        xmlns:c="clr-namespace:VMS.VisionSetup.Views.Common"
         xmlns:vm="clr-namespace:VMS.VisionSetup.ViewModels"
         Title="예제 템플릿"
         Width="860" Height="620"
         MinWidth="720" MinHeight="480"
         WindowStartupLocation="CenterOwner"
-        Background="#1E1E1E">
+        WindowStyle="None"
+        Background="{StaticResource BrushBgWindow}"
+        TextOptions.TextFormattingMode="Display">
+
+    <!-- 앱 공통 다크 크롬 — 기본 OS 타이틀바(밝은 창틀)로 떠서 테마와 어긋나던 현장 보고 2026-08-28 -->
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="42" CornerRadius="0"
+                            GlassFrameThickness="0" ResizeBorderThickness="6"
+                            UseAeroCaptionButtons="False"/>
+    </shell:WindowChrome.WindowChrome>
+
     <Window.Resources>
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="#E6E6E6"/>
@@ -48,7 +60,17 @@
         </Style>
     </Window.Resources>
 
-    <Grid Margin="12">
+    <Border Background="{StaticResource BrushBgWindow}"
+            BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="42"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <c:ChromelessTitleBar Grid.Row="0" TitleText="예제 템플릿"/>
+
+            <Grid Grid.Row="1" Margin="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -57,7 +79,7 @@
 
         <TextBlock Grid.Row="0" Margin="2,0,2,10" TextWrapping="Wrap"
                    Foreground="#C8C8C8" FontSize="12"
-                   Text="템플릿을 선택하고 [생성]을 누르면 현재 스텝의 워크스페이스에 툴 체인이 만들어집니다. 생성 후 이미지(또는 3D 데이터)를 로드하고 Run(F5)으로 테스트하세요."/>
+                   Text="템플릿을 선택하고 [생성]을 누르면 현재 스텝의 워크스페이스에 툴 체인이 만들어집니다 (다중 스텝 템플릿은 레시피에 스텝이 새로 생성됩니다). 생성 후 이미지(또는 3D 데이터)를 로드하고 Run(F5)으로 테스트하세요."/>
 
         <TabControl Grid.Row="1"
                     ItemsSource="{Binding Categories}"
@@ -150,5 +172,7 @@
             <Button Content="취소" Style="{StaticResource DialogButton}"
                     Command="{Binding CancelCommand}" IsCancel="True"/>
         </StackPanel>
-    </Grid>
+            </Grid>
+        </Grid>
+    </Border>
 </Window>
