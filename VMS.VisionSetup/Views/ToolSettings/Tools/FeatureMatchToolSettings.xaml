@@ -158,6 +158,12 @@
                                 Padding="8,4"
                                 Command="{Binding ClearTrainMaskCommand}"/>
                     </StackPanel>
+                    <!-- 안정 특징 정제 — 샘플 이미지 여러 장에서 흔들리는 엣지(그림자
+                         외곽·반사·가변 각인)를 자동으로 마스크에 반영하고 재학습 -->
+                    <Button Content="안정 특징 정제 (샘플 이미지)..." Style="{StaticResource SuccessButtonStyle}"
+                            Padding="8,4" Margin="0,0,0,5" HorizontalAlignment="Left"
+                            ToolTip="현장 샘플 이미지 여러 장을 선택하면, 이미지마다 흔들리는 특징을 자동으로 학습 마스크에 반영합니다."
+                            Command="{Binding RefineStableFeaturesCommand}"/>
                 </StackPanel>
 
                 <!-- Auto Tune -->

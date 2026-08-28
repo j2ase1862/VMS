@@ -52,6 +52,10 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
                 () => WeakReferenceMessenger.Default.Send(new RequestEditTrainMaskMessage()),
                 () => SelectedModel?.IsTrained == true);
 
+            RefineStableFeaturesCommand = new RelayCommand(
+                () => WeakReferenceMessenger.Default.Send(new RequestRefineStableFeaturesMessage()),
+                () => SelectedModel?.IsTrained == true);
+
             ClearTrainMaskCommand = new RelayCommand(
                 () =>
                 {
@@ -83,6 +87,7 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         public IRelayCommand DeleteSelectedModelCommand { get; }
         public IRelayCommand EditTrainMaskCommand { get; }
         public IRelayCommand ClearTrainMaskCommand { get; }
+        public IRelayCommand RefineStableFeaturesCommand { get; }
 
         // 학습 마스크 (don't-care) — 선택 모델의 템플릿 위에서 브러시/사각형으로 편집,
         // 저장 시 즉시 재학습되어 특징 이미지의 반투명 빨간 영역으로 확인
@@ -95,6 +100,7 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
             OnPropertyChanged(nameof(TrainMaskInfo));
             EditTrainMaskCommand.NotifyCanExecuteChanged();
             ClearTrainMaskCommand.NotifyCanExecuteChanged();
+            RefineStableFeaturesCommand.NotifyCanExecuteChanged();
         }
 
         // Multi-model

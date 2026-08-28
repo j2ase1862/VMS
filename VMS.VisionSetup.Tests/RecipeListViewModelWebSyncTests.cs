@@ -234,6 +234,7 @@ namespace VMS.VisionSetup.Tests
             public void ShowError(string message, string title) { }
             public bool ShowConfirmation(string message, string title) => false;
             public string? ShowOpenFileDialog(string title, string filter) => null;
+            public string[]? ShowOpenFilesDialog(string title, string filter) => null;
             public string? ShowFolderBrowserDialog(string description) => null;
             public string? ShowSaveFileDialog(string filter, string defaultExt, string? fileName = null) => null;
             public string? ShowRenameDialog(string currentName) => null;
@@ -245,7 +246,8 @@ namespace VMS.VisionSetup.Tests
             public Dictionary<string, string>? ShowCameraRemapDialog(
                 IReadOnlyList<(string oldId, int stepCount)> unregistered,
                 IReadOnlyList<VMS.Camera.Models.CameraInfo> cameras) => null;
-            public OpenCvSharp.Mat? ShowTrainMaskEditorDialog(OpenCvSharp.Mat templateImage, OpenCvSharp.Mat? existingMask) => null;
+            public OpenCvSharp.Mat? ShowTrainMaskEditorDialog(OpenCvSharp.Mat templateImage, OpenCvSharp.Mat? existingMask,
+                double cannyLow = 50, double cannyHigh = 150) => null;
         }
 
         private sealed class FakeSyncService : IParameterSyncService

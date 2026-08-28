@@ -12,6 +12,8 @@ namespace VMS.VisionSetup.Interfaces
         void ShowError(string message, string title);
         bool ShowConfirmation(string message, string title);
         string? ShowOpenFileDialog(string title, string filter);
+        /// <summary>다중 선택 파일 열기 — 취소 시 null (안정 특징 정제 샘플 이미지 등).</summary>
+        string[]? ShowOpenFilesDialog(string title, string filter);
         string? ShowFolderBrowserDialog(string description);
         string? ShowSaveFileDialog(string filter, string defaultExt, string? fileName = null);
         string? ShowRenameDialog(string currentName);
@@ -37,9 +39,11 @@ namespace VMS.VisionSetup.Interfaces
 
         /// <summary>
         /// FeatureMatch 학습 마스크 편집기 — 템플릿 위에 브러시/사각형/지우개로 don't-care
-        /// 영역을 칠한다. 반환: 새 마스크(8UC1, 템플릿 크기, 255=제외 — 소유권 호출자,
-        /// 전부 지웠으면 빈 마스크), 취소 시 null.
+        /// 영역을 칠한다. cannyLow/cannyHigh 는 엣지 미리보기용 — 도구의 학습 임계와 같은
+        /// 값을 넘겨야 미리보기가 실제 학습 후보 엣지와 일치한다. 반환: 새 마스크(8UC1,
+        /// 템플릿 크기, 255=제외 — 소유권 호출자, 전부 지웠으면 빈 마스크), 취소 시 null.
         /// </summary>
-        OpenCvSharp.Mat? ShowTrainMaskEditorDialog(OpenCvSharp.Mat templateImage, OpenCvSharp.Mat? existingMask);
+        OpenCvSharp.Mat? ShowTrainMaskEditorDialog(OpenCvSharp.Mat templateImage, OpenCvSharp.Mat? existingMask,
+            double cannyLow = 50, double cannyHigh = 150);
     }
 }

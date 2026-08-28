@@ -62,6 +62,17 @@ namespace VMS.VisionSetup.Services
             return dialog.ShowDialog() == true ? dialog.FileName : null;
         }
 
+        public string[]? ShowOpenFilesDialog(string title, string filter)
+        {
+            var dialog = new OpenFileDialog
+            {
+                Title = title,
+                Filter = filter,
+                Multiselect = true
+            };
+            return dialog.ShowDialog() == true ? dialog.FileNames : null;
+        }
+
         public string? ShowFolderBrowserDialog(string description)
         {
             var dialog = new OpenFolderDialog
@@ -94,9 +105,10 @@ namespace VMS.VisionSetup.Services
             return dialog.ShowDialog() == true ? dialog.Mapping : null;
         }
 
-        public OpenCvSharp.Mat? ShowTrainMaskEditorDialog(OpenCvSharp.Mat templateImage, OpenCvSharp.Mat? existingMask)
+        public OpenCvSharp.Mat? ShowTrainMaskEditorDialog(OpenCvSharp.Mat templateImage, OpenCvSharp.Mat? existingMask,
+            double cannyLow = 50, double cannyHigh = 150)
         {
-            var dialog = new Views.ToolSettings.TrainMaskEditorDialog(templateImage, existingMask)
+            var dialog = new Views.ToolSettings.TrainMaskEditorDialog(templateImage, existingMask, cannyLow, cannyHigh)
             {
                 Owner = Application.Current.MainWindow,
             };

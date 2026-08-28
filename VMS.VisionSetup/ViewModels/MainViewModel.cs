@@ -864,6 +864,7 @@ namespace VMS.VisionSetup.ViewModels
                     TrainPatternCommand.Execute(null);
             });
             WeakReferenceMessenger.Default.Register<RequestEditTrainMaskMessage>(this, (r, m) => EditTrainMask());
+            WeakReferenceMessenger.Default.Register<RequestRefineStableFeaturesMessage>(this, (r, m) => RefineStableFeatures());
             WeakReferenceMessenger.Default.Register<RequestAutoTuneMessage>(this, (r, m) =>
             {
                 if (AutoTuneCommand.CanExecute(null))
@@ -2115,7 +2116,9 @@ namespace VMS.VisionSetup.ViewModels
                 return;
             }
 
-            var newMask = _dialogService.ShowTrainMaskEditorDialog(model.TemplateImage, model.TrainMask);
+            // Canny 임계를 함께 전달 — 편집기의 엣지 미리보기가 재학습 시 실제 후보 엣지와 일치
+            var newMask = _dialogService.ShowTrainMaskEditorDialog(
+                model.TemplateImage, model.TrainMask, ft.CannyLow, ft.CannyHigh);
             if (newMask == null) return;   // 취소
 
             // 재학습 중 원본 템플릿이 setter 에서 Dispose 되므로 사본으로 학습.
@@ -2128,6 +2131,50 @@ namespace VMS.VisionSetup.ViewModels
             StatusMessage = applied
                 ? $"학습 마스크 적용 + '{model.Name}' 재학습 완료 — 특징 이미지의 빨간 영역이 제외됩니다."
                 : "마스크 적용 재학습 실패 — 마스크가 패턴 전체를 덮고 있지 않은지 확인하세요.";
+        }
+
+        /// <summary>
+        /// 안정 특징 정제 (FeatureMatchTool 전용) — 현장 샘플 이미지 여러 장을 골라
+        /// 이미지마다 흔들리는 특징(그림자 외곽·반사·가변 각인)을 자동으로 학습 마스크에
+        /// 반영하고 재학습한다. 수작업 마스킹 없이 안정 엣지만 남기는 경로.
+        /// </summary>
+        public void RefineStableFeatures()
+        {
+            if (SelectedVisionTool is not FeatureMatchTool ft)
+            {
+                StatusMessage = "안정 특징 정제는 Feature Match 도구에서만 사용됩니다.";
+                return;
+            }
+
+            var model = ft.SelectedModel;
+            if (model?.TemplateImage == null || model.TemplateImage.Empty())
+            {
+                StatusMessage = "안정 특징 정제는 학습된 모델이 필요합니다 — 먼저 [Train]으로 학습하세요.";
+                return;
+            }
+
+            var paths = _dialogService.ShowOpenFilesDialog(
+                "안정 특징 정제 — 같은 대상이 찍힌 샘플 이미지들을 선택 (2장 이상 권장)",
+                "이미지 파일|*.png;*.bmp;*.jpg;*.jpeg;*.tif;*.tiff|모든 파일|*.*");
+            if (paths == null || paths.Length == 0) return;   // 취소
+
+            var images = new List<OpenCvSharp.Mat>(paths.Length);
+            try
+            {
+                foreach (var p in paths)
+                {
+                    var m = OpenCvSharp.Cv2.ImRead(p, OpenCvSharp.ImreadModes.Grayscale);
+                    if (!m.Empty()) images.Add(m);
+                    else m.Dispose();
+                }
+
+                var result = ft.RefineStableFeatures(model, images);
+                StatusMessage = result.Message;
+            }
+            finally
+            {
+                foreach (var m in images) m.Dispose();
+            }
         }
 
         /// <summary>

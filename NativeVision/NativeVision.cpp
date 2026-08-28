@@ -287,7 +287,16 @@ EXPORT double __cdecl EvaluateBatchNative(
 
 // ─── Native Hough Voting with OpenMP (Phase 1) ──────────────────────────────
 
-EXPORT void __cdecl HoughVotingNative(
+// Candidate for Hough voting passes (file scope so multiple exports share it)
+struct HoughCandidate {
+    double angle, cx, cy;
+    int votes;
+};
+
+// ── Shared voting core: coarse sweep → thread-local topK merge → fine sweep ──
+// Fills *outFine (fine results, count = return value) and *outCoarse (topK,
+// vote-desc). Caller must _aligned_free both.
+static int HoughVoteCollect(
     const float* modelX, const float* modelY, int modelCount,
     const int* binOffsets, const int* binIndices,
     int numGradBins,
@@ -298,7 +307,7 @@ EXPORT void __cdecl HoughVotingNative(
     int topK,
     double invScale,
     int binShiftBits,
-    double* outBestCx, double* outBestCy, double* outBestAngle, int* outBestVotes)
+    HoughCandidate** outFine, HoughCandidate** outCoarse)
 {
     const double PI = 3.14159265358979323846;
     const double DEG2RAD = PI / 180.0;
@@ -312,12 +321,7 @@ EXPORT void __cdecl HoughVotingNative(
     int numCoarseAngles = (int)(angleExtent / coarseAngleStep) + 1;
     if (numCoarseAngles < 1) numCoarseAngles = 1;
 
-    // Storage for top K candidates from coarse pass
-    // Each candidate: angle, cx, cy, voteCount
-    struct Candidate {
-        double angle, cx, cy;
-        int votes;
-    };
+    typedef HoughCandidate Candidate;
 
     Candidate* candidates = (Candidate*)_aligned_malloc(topK * sizeof(Candidate), 64);
     for (int i = 0; i < topK; i++) {
@@ -532,6 +536,33 @@ EXPORT void __cdecl HoughVotingNative(
         fineOffset += numFine;
     }
 
+    *outFine = fineResults;
+    *outCoarse = candidates;
+    return fineResultCount;
+}
+
+EXPORT void __cdecl HoughVotingNative(
+    const float* modelX, const float* modelY, int modelCount,
+    const int* binOffsets, const int* binIndices,
+    int numGradBins,
+    const int* searchX, const int* searchY, const int* searchBin, int searchEdgeCount,
+    int voteWidth, int voteHeight,
+    double angleStart, double angleExtent,
+    double coarseAngleStep, double fineAngleStep,
+    int topK,
+    double invScale,
+    int binShiftBits,
+    double* outBestCx, double* outBestCy, double* outBestAngle, int* outBestVotes)
+{
+    HoughCandidate* fineResults = nullptr;
+    HoughCandidate* candidates = nullptr;
+    int fineResultCount = HoughVoteCollect(
+        modelX, modelY, modelCount, binOffsets, binIndices, numGradBins,
+        searchX, searchY, searchBin, searchEdgeCount,
+        voteWidth, voteHeight, angleStart, angleExtent,
+        coarseAngleStep, fineAngleStep, topK, invScale, binShiftBits,
+        &fineResults, &candidates);
+
     // Find overall best from fine results
     int bestIdx = 0;
     for (int i = 1; i < fineResultCount; i++)
@@ -540,7 +571,7 @@ EXPORT void __cdecl HoughVotingNative(
             bestIdx = i;
     }
 
-    if (fineResults[bestIdx].votes > 0)
+    if (fineResultCount > 0 && fineResults[bestIdx].votes > 0)
     {
         *outBestCx = fineResults[bestIdx].cx;
         *outBestCy = fineResults[bestIdx].cy;
@@ -558,6 +589,83 @@ EXPORT void __cdecl HoughVotingNative(
 
     _aligned_free(fineResults);
     _aligned_free(candidates);
+}
+
+// ── Top-K spatially distinct vote peaks (NMS) ──────────────────────────────
+// The single best vote peak can belong to a distractor (background structure,
+// neighboring part, shadow cluster); the true instance then never reaches the
+// gradient-scoring stage. Returning K spatially separated peaks lets the C#
+// refinement score each one and pick the true match. minSeparation is in
+// vote-image (coarse pyramid) pixels. Returns the number of peaks filled.
+EXPORT int __cdecl HoughVotingTopKNative(
+    const float* modelX, const float* modelY, int modelCount,
+    const int* binOffsets, const int* binIndices,
+    int numGradBins,
+    const int* searchX, const int* searchY, const int* searchBin, int searchEdgeCount,
+    int voteWidth, int voteHeight,
+    double angleStart, double angleExtent,
+    double coarseAngleStep, double fineAngleStep,
+    int topK,
+    double invScale,
+    int binShiftBits,
+    double minSeparation, int outK,
+    double* outCx, double* outCy, double* outAngle, int* outVotes)
+{
+    HoughCandidate* fineResults = nullptr;
+    HoughCandidate* candidates = nullptr;
+    int n = HoughVoteCollect(
+        modelX, modelY, modelCount, binOffsets, binIndices, numGradBins,
+        searchX, searchY, searchBin, searchEdgeCount,
+        voteWidth, voteHeight, angleStart, angleExtent,
+        coarseAngleStep, fineAngleStep, topK, invScale, binShiftBits,
+        &fineResults, &candidates);
+
+    bool* used = (bool*)_aligned_malloc((n > 0 ? n : 1) * sizeof(bool), 16);
+    memset(used, 0, (n > 0 ? n : 1) * sizeof(bool));
+    double minSepSq = minSeparation * minSeparation;
+
+    int filled = 0;
+    while (filled < outK)
+    {
+        int best = -1;
+        for (int i = 0; i < n; i++)
+        {
+            if (used[i] || fineResults[i].votes <= 0) continue;
+            if (best < 0 || fineResults[i].votes > fineResults[best].votes) best = i;
+        }
+        if (best < 0) break;
+        used[best] = true;
+
+        // Nearby peak = same instance seen at another angle → keep best only
+        bool dup = false;
+        for (int k = 0; k < filled; k++)
+        {
+            double dx = fineResults[best].cx - outCx[k];
+            double dy = fineResults[best].cy - outCy[k];
+            if (dx * dx + dy * dy < minSepSq) { dup = true; break; }
+        }
+        if (dup) continue;
+
+        outCx[filled] = fineResults[best].cx;
+        outCy[filled] = fineResults[best].cy;
+        outAngle[filled] = fineResults[best].angle;
+        outVotes[filled] = fineResults[best].votes;
+        filled++;
+    }
+
+    if (filled == 0)   // fine pass empty → coarse best (same as single-peak path)
+    {
+        outCx[0] = candidates[0].cx;
+        outCy[0] = candidates[0].cy;
+        outAngle[0] = candidates[0].angle;
+        outVotes[0] = candidates[0].votes;
+        filled = 1;
+    }
+
+    _aligned_free(used);
+    _aligned_free(fineResults);
+    _aligned_free(candidates);
+    return filled;
 }
 
 // ─── Batch: score ALL poses × entire refinement grid in one call ─────────────
