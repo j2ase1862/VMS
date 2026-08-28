@@ -147,11 +147,22 @@ namespace VMS.Camera.Services
                 int gridH = accessor.ReadInt32(SharedFrameConstants.OffsetGridHeight);
                 int nameLenBytes = accessor.ReadInt32(SharedFrameConstants.OffsetNameLengthBytes);
 
+                // 카메라 식별자 (v2 헤더 고정 슬롯) — 범위를 벗어난 길이는 손상으로 보고 버린다
+                int cameraIdLen = accessor.ReadInt32(SharedFrameConstants.OffsetCameraIdLengthBytes);
+                string cameraId = string.Empty;
+                if (cameraIdLen > 0 && cameraIdLen <= SharedFrameConstants.CameraIdMaxBytes)
+                {
+                    var cameraIdBytes = new byte[cameraIdLen];
+                    accessor.ReadArray(SharedFrameConstants.OffsetCameraId, cameraIdBytes, 0, cameraIdLen);
+                    cameraId = Encoding.UTF8.GetString(cameraIdBytes);
+                }
+
                 long offset = SharedFrameConstants.HeaderSize;
                 var data = new SharedFrameData
                 {
                     FrameCounter = frameCounter,
-                    TimestampTicks = timestamp
+                    TimestampTicks = timestamp,
+                    CameraId = cameraId
                 };
 
                 // ── 2D 이미지 복원 ──

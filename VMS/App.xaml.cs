@@ -705,6 +705,10 @@ namespace VMS
                 ioBoards: ioBoardConnections,
                 updateInstallService: updateInstallService);
 
+            // VisionSetup 의 Grab 요청 수신 시작 — VisionSetup 이 VMS 창을 거치지 않고
+            // 이 PC 의 카메라 이미지를 받아갈 수 있게 한다 (운전/라이브 중 요청은 거절).
+            mainViewModel.StartGrabRequestListener();
+
             var mainWindow = new MainWindow();
             mainWindow.DataContext = mainViewModel;
             MainWindow = mainWindow;
@@ -1088,6 +1092,9 @@ namespace VMS
                 // 자식 프로세스(VisionSetup/AppSetup) 정리 — 창이 있으면 정상 닫기 요청만,
                 // 창 없는 잔존 프로세스는 강제 종료. Kill 타이머(3초) 안에 끝나도록 짧은 대기.
                 try { processService?.ShutdownLaunchedProcesses(gracefulTimeoutMs: 1500); } catch { }
+
+                // Grab 요청 수신 루프 정지 — 카메라 정리보다 먼저 (요청 처리 중 Grab 방지)
+                try { viewModel?.StopGrabRequestListener(); } catch { }
 
                 // 카메라 Live 중지 + 연결 해제
                 if (viewModel != null)

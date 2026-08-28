@@ -65,5 +65,43 @@ namespace VMS.Core.Tests.Services
                 reader.Dispose();
             }
         }
+
+        /// <summary>
+        /// 프레임에 실린 카메라 식별자가 왕복해야 한다 — 수신 측(VisionSetup)이 "요청한
+        /// 카메라의 프레임인지" 대조하는 유일한 근거다. 없으면 다른 카메라 프레임을
+        /// 받고도 모른 채 엉뚱한 이미지로 툴을 세팅하게 된다.
+        /// 식별자를 싣지 않은 프레임은 빈 문자열("모름")로 읽혀야 하며, 이를 일치로
+        /// 오인하지 않도록 수신 측이 구분할 수 있어야 한다.
+        /// </summary>
+        [Fact]
+        public void WriteFrame_RoundTripsCameraId()
+        {
+            using var writer = new SharedFrameWriter();
+            writer.Initialize();
+
+            using var frame = new Mat(4, 4, MatType.CV_8UC3, new Scalar(1, 2, 3));
+            var result = new AcquisitionResult { Success = true, Image2D = frame };
+
+            using var reader = new SharedFrameReader();
+            Assert.True(reader.TryConnect());
+
+            // ── 식별자 있음 → 그대로 읽힌다 ──
+            writer.ResetReaderProbeCacheForTests();
+            writer.WriteFrame(result, "cam-line2");
+
+            var withId = reader.TryReadFrame(skipIfSameFrame: false);
+            Assert.NotNull(withId);
+            Assert.Equal("cam-line2", withId!.CameraId);
+            withId.Image2D?.Dispose();
+
+            // ── 식별자 없음 → 빈 문자열("모름") ──
+            writer.ResetReaderProbeCacheForTests();
+            writer.WriteFrame(result);
+
+            var withoutId = reader.TryReadFrame(skipIfSameFrame: false);
+            Assert.NotNull(withoutId);
+            Assert.Equal(string.Empty, withoutId!.CameraId);
+            withoutId.Image2D?.Dispose();
+        }
     }
 }

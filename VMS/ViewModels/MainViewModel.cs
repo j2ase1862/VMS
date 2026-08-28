@@ -359,6 +359,7 @@ namespace VMS.ViewModels
         private readonly IAutoProcessService? _autoProcessService;
         private readonly IUserService? _userService;
         private readonly SharedFrameWriter? _sharedFrameWriter;
+        private GrabRequestListener? _grabRequestListener;
         private readonly IPlcConnection? _plcConnection;
         private readonly IRollerInspectionService? _rollerInspectionService;
         private readonly HeartbeatService? _heartbeatService;
@@ -646,9 +647,51 @@ namespace VMS.ViewModels
             UpdateCanvasSize();
         }
 
+        /// <summary>
+        /// VisionSetup 의 Grab 요청 수신 시작 — VisionSetup 이 VMS 창으로 넘어와 Grab 을
+        /// 누르고 돌아가는 왕복을 없앤다. 운전/라이브 중 요청은 리스너가 거절한다.
+        /// 공유 메모리 Writer 가 없으면(초기화 실패) 프레임을 돌려줄 수 없으므로 시작하지 않는다.
+        /// </summary>
+        public void StartGrabRequestListener()
+        {
+            if (_grabRequestListener != null || _sharedFrameWriter == null) return;
+
+            _grabRequestListener = new GrabRequestListener(() =>
+                new GrabRequestListener.GrabRequestContext
+                {
+                    IsAutoRunning = IsRunning,
+                    IsLiveMode = IsLiveMode || Cameras.Any(c => c.IsLiveGrabbing),
+                    DefaultCameraId = (Cameras.FirstOrDefault(c => c.IsConnected)
+                                       ?? Cameras.FirstOrDefault(c => c.IsEnabled)
+                                       ?? Cameras.FirstOrDefault())?.Id ?? string.Empty,
+                    CameraExists = id => Cameras.Any(c => c.Id == id),
+                    CurrentFrameCounter = () => _sharedFrameWriter.LastFrameCounter,
+                    GrabAsync = async id =>
+                    {
+                        var cam = Cameras.FirstOrDefault(c => c.Id == id);
+                        if (cam == null) return false;
+                        // UI 스레드에서 실행 — CameraViewModel 은 바인딩 속성을 갱신한다
+                        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+                        if (dispatcher == null) return await cam.GrabOnceAsync();
+                        return await dispatcher.InvokeAsync(async () => await cam.GrabOnceAsync()).Task.Unwrap();
+                    }
+                });
+
+            _grabRequestListener.Start();
+        }
+
+        /// <summary>종료 시 수신 루프 정리 (App.ForceShutdown 에서 호출).</summary>
+        public void StopGrabRequestListener()
+        {
+            try { _grabRequestListener?.Dispose(); } catch { /* 종료 경로 */ }
+            _grabRequestListener = null;
+        }
+
         private void WireCameraEvents(CameraViewModel cam)
         {
-            cam.FrameAcquired += result => _sharedFrameWriter?.WriteFrame(result);
+            // 프레임에 카메라 식별자를 함께 실어 보낸다 — VisionSetup 이 "요청한 카메라의
+            // 프레임인지" 대조할 수 있어야 한다 (다른 카메라 Grab·라이브가 끼어드는 경우).
+            cam.FrameAcquired += result => _sharedFrameWriter?.WriteFrame(result, cam.Id);
 
             cam.InspectionCompleted += (cameraName, ok, image, stepNumber, correlationKey) =>
             {
