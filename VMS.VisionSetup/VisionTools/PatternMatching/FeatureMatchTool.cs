@@ -81,15 +81,44 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                 double invScale, int binShiftBits,
                 double* outBestCx, double* outBestCy, double* outBestAngle, int* outBestVotes);
 
+            [DllImport(DllName, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+            public static extern int HoughVotingTopKNative(
+                float* modelX, float* modelY, int modelCount,
+                int* binOffsets, int* binIndices, int numGradBins,
+                int* searchX, int* searchY, int* searchBin, int searchEdgeCount,
+                int voteWidth, int voteHeight,
+                double angleStart, double angleExtent,
+                double coarseAngleStep, double fineAngleStep, int topK,
+                double invScale, int binShiftBits,
+                double minSeparation, int outK,
+                double* outCx, double* outCy, double* outAngle, int* outVotes);
+
             private static readonly bool _isAvailable = ProbeNative();
+            private static readonly bool _hasTopKExport = ProbeExport("HoughVotingTopKNative");
 
             public static bool IsAvailable => _isAvailable;
+
+            /// <summary>구버전 DLL(단일 피크 export만)과의 호환 — 없으면 단일 경로 폴백.</summary>
+            public static bool HasTopKExport => _hasTopKExport;
 
             private static bool ProbeNative()
             {
                 try
                 {
                     return NativeLibrary.TryLoad(DllName, typeof(NativeVision).Assembly, null, out _);
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
+            private static bool ProbeExport(string name)
+            {
+                try
+                {
+                    return NativeLibrary.TryLoad(DllName, typeof(NativeVision).Assembly, null, out var handle)
+                        && NativeLibrary.TryGetExport(handle, name, out _);
                 }
                 catch
                 {
@@ -646,6 +675,272 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
 
         #endregion
 
+        #region Stability Refinement
+
+        /// <summary>안정 특징 정제 결과 요약 (UI 상태 표시용).</summary>
+        public readonly record struct StableRefineResult(
+            bool Success, string Message, int ImagesMatched, int ImagesTotal, int EdgesTotal, int EdgesMasked);
+
+        /// <summary>
+        /// 다중 샘플 이미지로 학습 특징의 안정성을 검증해, 이미지마다 흔들리는 특징
+        /// (그림자 외곽·정반사·가변 각인 등)을 TrainMask 에 자동 반영하고 재학습한다 —
+        /// 수작업 마스킹 없이 "매칭된 샘플 중 minStableRatio 이상에서 일관된" 엣지만 남긴다.
+        /// 각 샘플에서 현재 모델로 자세를 찾고, 템플릿의 학습 후보 엣지 픽셀 전부
+        /// (MaxModelPoints 샘플링 이전 전체 집합)를 그 자세로 투영해 그래디언트 방향
+        /// 일치(minPointScore)를 판정한다. 불안정 픽셀은 기존 TrainMask 와의 합집합으로
+        /// 칠해 재학습하므로 직렬화(레시피 저장→재학습)·Clone·마스크 편집기 경로와
+        /// 그대로 호환된다. 객체 자신의 실루엣(예: 그림자와 맞닿은 윤곽)은 자세와 함께
+        /// 움직여 매 샘플 일치하므로 남고, 그림자 외곽·반사는 흔들려서 탈락한다.
+        /// </summary>
+        public StableRefineResult RefineStableFeatures(FeatureMatchModel model, IReadOnlyList<Mat> sampleImages,
+            double minPointScore = 0.5, double minStableRatio = 0.8)
+        {
+            if (model.TemplateImage == null || model.TemplateImage.Empty() || !model.IsTrained
+                || model.BinOffsets == null || model.BinIndices == null)
+                return new StableRefineResult(false, "학습된 모델이 아닙니다 — 먼저 [Train]으로 학습하세요.", 0, sampleImages.Count, 0, 0);
+            if (sampleImages.Count == 0)
+                return new StableRefineResult(false, "샘플 이미지가 없습니다.", 0, 0, 0, 0);
+
+            try
+            {
+                // 1) 템플릿의 학습 후보 엣지 전체 — 기존 마스크로 제외된 픽셀은 대상 밖
+                using var tGray = model.TemplateImage.Channels() > 1
+                    ? model.TemplateImage.CvtColor(ColorConversionCodes.BGR2GRAY)
+                    : model.TemplateImage.Clone();
+                using var tSobelX = new Mat();
+                using var tSobelY = new Mat();
+                Cv2.Sobel(tGray, tSobelX, MatType.CV_32F, 1, 0, 3);
+                Cv2.Sobel(tGray, tSobelY, MatType.CV_32F, 0, 1, 3);
+                using var tEdges = tGray.Canny(CannyLow, CannyHigh);
+
+                var mask = model.TrainMask;
+                bool useMask = mask != null && !mask.Empty()
+                    && mask.Width == tGray.Width && mask.Height == tGray.Height;
+
+                var candX = new List<int>();
+                var candY = new List<int>();
+                var candDx = new List<float>();
+                var candDy = new List<float>();
+                for (int y = 1; y < tGray.Height - 1; y++)
+                    for (int x = 1; x < tGray.Width - 1; x++)
+                    {
+                        if (tEdges.At<byte>(y, x) == 0) continue;
+                        if (useMask && mask!.At<byte>(y, x) > 0) continue;
+                        float gx = tSobelX.At<float>(y, x);
+                        float gy = tSobelY.At<float>(y, x);
+                        float mag = MathF.Sqrt(gx * gx + gy * gy);
+                        if (mag < 1e-6f) continue;
+                        candX.Add(x); candY.Add(y);
+                        candDx.Add(gx / mag); candDy.Add(gy / mag);
+                    }
+
+                int total = candX.Count;
+                if (total == 0)
+                    return new StableRefineResult(false, "템플릿에서 학습 후보 엣지를 찾지 못했습니다.", 0, sampleImages.Count, 0, 0);
+
+                double cxT = model.TemplateWidth / 2.0;
+                double cyT = model.TemplateHeight / 2.0;
+
+                // 2) 샘플별 자세 추정 + 후보 픽셀별 그래디언트 방향 일치 판정
+                var okCount = new int[total];
+                int matched = 0;
+                foreach (var img in sampleImages)
+                {
+                    if (img == null || img.Empty()) continue;
+                    using var gray = img.Channels() > 1
+                        ? img.CvtColor(ColorConversionCodes.BGR2GRAY)
+                        : img.Clone();
+
+                    if (!TryLocateModel(model, gray, out double px, out double py,
+                        out double ang, out double sc, out double score)
+                        || score < ScoreThreshold)
+                        continue;
+                    matched++;
+
+                    using var sx = new Mat();
+                    using var sy = new Mat();
+                    Cv2.Sobel(gray, sx, MatType.CV_32F, 1, 0, 3);
+                    Cv2.Sobel(gray, sy, MatType.CV_32F, 0, 1, 3);
+
+                    double rad = ang * Math.PI / 180.0;
+                    double cosA = Math.Cos(rad), sinA = Math.Sin(rad);
+                    int W = gray.Width, H = gray.Height;
+                    bool ci = UseContrastInvariant;
+
+                    for (int i = 0; i < total; i++)
+                    {
+                        double rx = candX[i] - cxT, ry = candY[i] - cyT;
+                        int ix = (int)Math.Round((rx * cosA - ry * sinA) * sc + px);
+                        int iy = (int)Math.Round((rx * sinA + ry * cosA) * sc + py);
+                        if (ix < 1 || iy < 1 || ix >= W - 1 || iy >= H - 1) continue;
+
+                        double rdx = candDx[i] * cosA - candDy[i] * sinA;
+                        double rdy = candDx[i] * sinA + candDy[i] * cosA;
+
+                        // 자세 추정의 서브픽셀 오차(반올림 ±1px)에 관대하도록 3×3 이웃의
+                        // 최대 일치를 취한다 — 이동한 그림자는 평탄 영역(그래디언트 없음)
+                        // 이라 여전히 탈락하고, 실제 안정 엣지만 구제된다.
+                        double best = double.MinValue;
+                        for (int wy = -1; wy <= 1; wy++)
+                            for (int wx = -1; wx <= 1; wx++)
+                            {
+                                float gx2 = sx.At<float>(iy + wy, ix + wx);
+                                float gy2 = sy.At<float>(iy + wy, ix + wx);
+                                double m = Math.Sqrt(gx2 * gx2 + gy2 * gy2);
+                                if (m < 1e-3) continue;
+                                double contrib = (rdx * gx2 + rdy * gy2) / m;
+                                if (ci) contrib = Math.Abs(contrib);
+                                if (contrib > best) best = contrib;
+                            }
+                        if (best >= minPointScore) okCount[i]++;
+                    }
+                }
+
+                if (matched == 0)
+                    return new StableRefineResult(false,
+                        $"샘플 {sampleImages.Count}장 모두 매칭 실패 (Score < {ScoreThreshold:F2}) — 정제를 적용하지 않았습니다.",
+                        0, sampleImages.Count, total, 0);
+
+                // 3) 불안정 픽셀 → 마스크 합집합 (단일 픽셀 단위 — 이웃 안정 엣지 보존)
+                int required = (int)Math.Ceiling(minStableRatio * matched);
+                var newMask = useMask ? mask!.Clone()
+                    : new Mat(tGray.Height, tGray.Width, MatType.CV_8UC1, Scalar.Black);
+                int maskedCnt = 0;
+                for (int i = 0; i < total; i++)
+                {
+                    if (okCount[i] >= required) continue;
+                    newMask.Set(candY[i], candX[i], (byte)255);
+                    maskedCnt++;
+                }
+
+                if (maskedCnt == 0)
+                {
+                    newMask.Dispose();
+                    return new StableRefineResult(true,
+                        $"모든 후보 엣지가 안정적입니다 — 변경 없음 (샘플 {matched}/{sampleImages.Count}장 매칭).",
+                        matched, sampleImages.Count, total, 0);
+                }
+
+                // 4) 합집합 마스크로 재학습 — 저장된 옛 템플릿이므로 학습 중심 유지
+                using var template = model.TemplateImage.Clone();
+                bool retrained = TrainPattern(template, model, newMask, preserveTrainedCenter: true);
+                newMask.Dispose();
+
+                return retrained
+                    ? new StableRefineResult(true,
+                        $"안정 특징 정제 완료 — 불안정 엣지 {maskedCnt}/{total}px 자동 마스크 (샘플 {matched}/{sampleImages.Count}장 매칭).",
+                        matched, sampleImages.Count, total, maskedCnt)
+                    : new StableRefineResult(false,
+                        "정제 후 남은 특징이 너무 적어 재학습에 실패했습니다 — 샘플 품질/ScoreThreshold 를 확인하세요.",
+                        matched, sampleImages.Count, total, maskedCnt);
+            }
+            catch (Exception ex)
+            {
+                return new StableRefineResult(false, $"안정 특징 정제 오류: {ex.Message}", 0, sampleImages.Count, 0, 0);
+            }
+        }
+
+        /// <summary>
+        /// 단일 모델을 그레이 이미지 전체에서 탐색 (Execute 의 모델별 매칭 경로를 검색
+        /// 영역 없이 축약한 내부용 — 오버레이/판정 없음).
+        /// </summary>
+        private bool TryLocateModel(FeatureMatchModel model, Mat gray,
+            out double x, out double y, out double angle, out double scale, out double score)
+        {
+            x = y = angle = 0; scale = 1.0; score = 0;
+            int W = gray.Cols, H = gray.Rows;
+            if (W < 8 || H < 8) return false;
+
+            using var sSobelX = new Mat(H, W, MatType.CV_32F);
+            using var sSobelY = new Mat(H, W, MatType.CV_32F);
+            using var sMag = new Mat(H, W, MatType.CV_32F);
+            float* dxPtr = (float*)sSobelX.Data;
+            float* dyPtr = (float*)sSobelY.Data;
+            float* magPtr = (float*)sMag.Data;
+
+            if (NativeVision.IsAvailable)
+            {
+                NativeVision.ComputeGradientNative((byte*)gray.Data, W, H, (int)gray.Step(), dxPtr, dyPtr, magPtr);
+            }
+            else
+            {
+                Cv2.Sobel(gray, sSobelX, MatType.CV_32F, 1, 0, 3);
+                Cv2.Sobel(gray, sSobelY, MatType.CV_32F, 0, 1, 3);
+                Cv2.Magnitude(sSobelX, sSobelY, sMag);
+            }
+
+            int actualLevels = Math.Max(1, Math.Min(NumLevels, 5));
+            Mat? coarseImg = null;
+            double pyramidScale = 1.0;
+            if (actualLevels > 1)
+            {
+                coarseImg = gray;
+                for (int lvl = 0; lvl < actualLevels - 1; lvl++)
+                {
+                    var temp = new Mat();
+                    Cv2.PyrDown(coarseImg, temp);
+                    if (coarseImg != gray) coarseImg.Dispose();
+                    coarseImg = temp;
+                }
+                pyramidScale = Math.Pow(2, actualLevels - 1);
+            }
+
+            var voteImg = coarseImg ?? gray;
+            int vW = voteImg.Cols, vH = voteImg.Rows;
+
+            // Execute 와 동일한 피라미드 임계 보정
+            double voteCannyLow = Math.Max(1, CannyLow / pyramidScale);
+            double voteCannyHigh = Math.Max(2, CannyHigh / pyramidScale);
+            using var voteEdges = voteImg.Canny(voteCannyLow, voteCannyHigh);
+            using var votePhase = new Mat();
+            {
+                using var vsx = new Mat();
+                using var vsy = new Mat();
+                Cv2.Sobel(voteImg, vsx, MatType.CV_32F, 1, 0, 3);
+                Cv2.Sobel(voteImg, vsy, MatType.CV_32F, 0, 1, 3);
+                Cv2.Phase(vsx, vsy, votePhase, true);
+            }
+
+            byte* vEdgePtr = (byte*)voteEdges.Data;
+            float* vPhasePtr = (float*)votePhase.Data;
+            int vtotalPx = vW * vH;
+            int vEdgeCount = 0;
+            for (int i = 0; i < vtotalPx; i++)
+                if (vEdgePtr[i] > 0) vEdgeCount++;
+
+            var pool = ArrayPool<int>.Shared;
+            int[] seX = pool.Rent(Math.Max(1, vEdgeCount));
+            int[] seY = pool.Rent(Math.Max(1, vEdgeCount));
+            int[] seBin = pool.Rent(Math.Max(1, vEdgeCount));
+            int sei = 0;
+            for (int idx = 0; idx < vtotalPx; idx++)
+            {
+                if (vEdgePtr[idx] > 0)
+                {
+                    seX[sei] = idx % vW;
+                    seY[sei] = idx / vW;
+                    int b = (int)(vPhasePtr[idx] / BIN_WIDTH_DEG);
+                    if (b < 0) b += NUM_GRAD_BINS;
+                    if (b >= NUM_GRAD_BINS) b = NUM_GRAD_BINS - 1;
+                    seBin[sei] = b;
+                    sei++;
+                }
+            }
+
+            var (s, mx, my, ma, ms, _) = MatchSingleModel(model, gray, dxPtr, dyPtr, magPtr,
+                W, H, 0, 0, pyramidScale, actualLevels, vW, vH, seX, seY, seBin, sei, pool);
+
+            pool.Return(seX);
+            pool.Return(seY);
+            pool.Return(seBin);
+            if (coarseImg != null && coarseImg != gray) coarseImg.Dispose();
+
+            score = s; x = mx; y = my; angle = NormalizeAngle(ma); scale = ms;
+            return s > 0;
+        }
+
+        #endregion
+
         #region Execute
 
         public override VisionResult Execute(Mat inputImage)
@@ -724,7 +1019,12 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                 var voteImg = coarseImg ?? searchGray;
                 int vW = voteImg.Cols, vH = voteImg.Rows;
 
-                using var voteEdges = voteImg.Canny(CannyLow, CannyHigh);
+                // 피라미드 축소는 블러+데시메이션이라 그래디언트가 레벨마다 절반 수준으로
+                // 약해진다 — 풀해상도 기준 Canny 임계를 그대로 쓰면 저대비 윤곽(그림자 경계
+                // 등)이 투표 단계에서 통째로 소실. 임계를 배율만큼 낮춰 보정한다.
+                double voteCannyLow = Math.Max(1, CannyLow / pyramidScale);
+                double voteCannyHigh = Math.Max(2, CannyHigh / pyramidScale);
+                using var voteEdges = voteImg.Canny(voteCannyLow, voteCannyHigh);
                 using var votePhase = new Mat();
                 {
                     using var vsx = new Mat();
@@ -862,6 +1162,30 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
             return result;
         }
 
+        /// <summary>
+        /// 투표 결과에서 공간적으로 분리된 상위 K개 후보 선별 (그리디 NMS).
+        /// minSeparation(투표 이미지 px) 안의 피크는 같은 인스턴스의 다른 각도 응답으로
+        /// 보고 최고 득표만 남긴다. votes ≤ 0 항목은 무시.
+        /// </summary>
+        internal static List<(double cx, double cy, double angle, int votes)> SelectTopKCandidates(
+            List<(double cx, double cy, double angle, int votes)> all, int k, double minSeparation)
+        {
+            var result = new List<(double cx, double cy, double angle, int votes)>(k);
+            double sepSq = minSeparation * minSeparation;
+            foreach (var c in all.Where(c => c.votes > 0).OrderByDescending(c => c.votes))
+            {
+                if (result.Count >= k) break;
+                bool dup = false;
+                foreach (var r in result)
+                {
+                    double dx = r.cx - c.cx, dy = r.cy - c.cy;
+                    if (dx * dx + dy * dy < sepSq) { dup = true; break; }
+                }
+                if (!dup) result.Add(c);
+            }
+            return result;
+        }
+
         /// <summary>각도를 [-180, 180) 로 정규화 — 검색·정련은 주기 함수라 값 자체는 등가.</summary>
         internal static double NormalizeAngle(double deg)
         {
@@ -899,7 +1223,6 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
             int N = model.ModelEdges.Count;
             double coarseAngleStep = Math.Max(AngleStep, 4.0);
             double fineVoteAngleStep = Math.Max(AngleStep, 1.0);
-            double bestVoteVal = 0, bestVoteCx = 0, bestVoteCy = 0, bestVoteAngle = 0;
 
             int[] binOffsets = model.BinOffsets!;
             int[] binIndices = model.BinIndices!;
@@ -907,27 +1230,55 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
             const int BIN_SHIFT = 1;
             double invScale = 1.0 / pyramidScale;
 
+            // 투표 피크를 1개가 아니라 공간적으로 분리된 상위 K개로 받는다 — 배경
+            // 구조물·이웃 부품·그림자 덩어리가 최다 득표해도 진짜 위치가 후보에 남아
+            // 정련(점수) 단계에서 판가름 난다. 분리 반경은 템플릿 절반 크기(투표 px).
+            const int TOP_CANDIDATES = 3;
+            var voteCands = new List<(double cx, double cy, double angle, int votes)>(TOP_CANDIDATES);
+            double minSeparation = Math.Max(4.0,
+                Math.Min(model.TemplateWidth, model.TemplateHeight) * 0.5 * invScale);
+
             if (NativeVision.IsAvailable && model.ModelXArray != null && model.ModelYArray != null)
             {
                 fixed (float* pModelX = model.ModelXArray, pModelY = model.ModelYArray)
                 fixed (int* pBinOffsets = binOffsets, pBinIndices = binIndices)
                 fixed (int* pSeX = seX, pSeY = seY, pSeBin = seBin)
                 {
-                    double outCx, outCy, outAngle;
-                    int outVotes;
-                    NativeVision.HoughVotingNative(
-                        pModelX, pModelY, N,
-                        pBinOffsets, pBinIndices, NUM_GRAD_BINS,
-                        pSeX, pSeY, pSeBin, searchEdgeCount,
-                        vW, vH,
-                        AngleStart, AngleExtent,
-                        coarseAngleStep, fineVoteAngleStep, 5,
-                        invScale, BIN_SHIFT,
-                        &outCx, &outCy, &outAngle, &outVotes);
-                    bestVoteCx = outCx;
-                    bestVoteCy = outCy;
-                    bestVoteAngle = outAngle;
-                    bestVoteVal = outVotes;
+                    if (NativeVision.HasTopKExport)
+                    {
+                        double* oCx = stackalloc double[TOP_CANDIDATES];
+                        double* oCy = stackalloc double[TOP_CANDIDATES];
+                        double* oAng = stackalloc double[TOP_CANDIDATES];
+                        int* oVotes = stackalloc int[TOP_CANDIDATES];
+                        int filled = NativeVision.HoughVotingTopKNative(
+                            pModelX, pModelY, N,
+                            pBinOffsets, pBinIndices, NUM_GRAD_BINS,
+                            pSeX, pSeY, pSeBin, searchEdgeCount,
+                            vW, vH,
+                            AngleStart, AngleExtent,
+                            coarseAngleStep, fineVoteAngleStep, 5,
+                            invScale, BIN_SHIFT,
+                            minSeparation, TOP_CANDIDATES,
+                            oCx, oCy, oAng, oVotes);
+                        for (int i = 0; i < filled; i++)
+                            voteCands.Add((oCx[i], oCy[i], oAng[i], oVotes[i]));
+                    }
+                    else
+                    {
+                        // 구버전 DLL — 단일 최고 피크 경로 유지
+                        double outCx, outCy, outAngle;
+                        int outVotes;
+                        NativeVision.HoughVotingNative(
+                            pModelX, pModelY, N,
+                            pBinOffsets, pBinIndices, NUM_GRAD_BINS,
+                            pSeX, pSeY, pSeBin, searchEdgeCount,
+                            vW, vH,
+                            AngleStart, AngleExtent,
+                            coarseAngleStep, fineVoteAngleStep, 5,
+                            invScale, BIN_SHIFT,
+                            &outCx, &outCy, &outAngle, &outVotes);
+                        voteCands.Add((outCx, outCy, outAngle, outVotes));
+                    }
                 }
             }
             else
@@ -1007,7 +1358,8 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                     }
                 });
 
-                // Fine pass
+                // Fine pass — 모든 파인 결과를 모아 두었다가 NMS 로 상위 K개 선별
+                var fineAll = new List<(double cx, double cy, double angle, int votes)>();
                 foreach (var cand in coarseCandidates)
                 {
                     if (cand.votes == 0) continue;
@@ -1072,93 +1424,111 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
 
                         lock (lockObj)
                         {
-                            if (maxVote > bestVoteVal)
-                            {
-                                bestVoteVal = maxVote;
-                                bestVoteCx = peakCx;
-                                bestVoteCy = peakCy;
-                                bestVoteAngle = angle;
-                            }
+                            fineAll.Add((peakCx, peakCy, angle, maxVote));
                         }
                     });
                 }
+
+                voteCands.AddRange(SelectTopKCandidates(fineAll, TOP_CANDIDATES, minSeparation));
+                if (voteCands.Count == 0)
+                    voteCands.Add((coarseCandidates[0].cx, coarseCandidates[0].cy,
+                        coarseCandidates[0].angle, coarseCandidates[0].votes));
             }
 
-            // Map coarse-level coordinates back to full resolution
-            bestVoteCx *= pyramidScale;
-            bestVoteCy *= pyramidScale;
+            double bestVoteVal = 0;
+            foreach (var vc in voteCands)
+                if (vc.votes > bestVoteVal) bestVoteVal = vc.votes;
 
-            // ── Phase 2: SIMD gradient dot-product refinement ──
+            // ── Phase 2: 후보별 SIMD gradient dot-product refinement — 최고 점수 채택 ──
             double fineAngleStep = Math.Max(0.1, AngleStep / 2.0);
             double fineScaleStep = Math.Max(0.001, ScaleStep);
             double scaleCenter = (MinScale + MaxScale) / 2.0;
             double scaleRange = (MaxScale - MinScale) / 2.0;
 
-            int poseCount;
-            PrecomputeFinePosesNative(
-                model,
-                bestVoteAngle, coarseAngleStep, fineAngleStep,
-                scaleCenter, scaleRange, fineScaleStep,
-                out poseCount);
+            double bestScore = 0, bestX = 0, bestY = 0, bestAngle = 0, bestScale = 1.0;
+            if (voteCands.Count > 0)
+            {
+                bestX = voteCands[0].cx * pyramidScale;
+                bestY = voteCands[0].cy * pyramidScale;
+                bestAngle = voteCands[0].angle;
+            }
 
-            double bestScore = 0, bestX = bestVoteCx, bestY = bestVoteCy;
-            double bestAngle = bestVoteAngle, bestScale = 1.0;
+            // 투표는 코스 레벨에서 (1<<BIN_SHIFT)px 빈으로 양자화되므로 풀해상도 환산
+            // 위치 오차가 최대 pyramidScale×(1<<BIN_SHIFT)px — 정련 반경이 이보다 작으면
+            // 정답이 탐색 창 밖에 있어 점수가 깎이거나 미검출된다 (레벨 3에서 8px 오차
+            // vs 기존 반경 6px).
             int refRadius = actualLevels > 1
-                ? Math.Max(4, (int)pyramidScale + 2)
+                ? Math.Max(4, (int)(pyramidScale * (1 << BIN_SHIFT)))
                 : 4;
             float thresh = (float)ScoreThreshold;
             float greedy = (float)Greediness;
             bool ciFlag = UseContrastInvariant;
 
-            if (NativeVision.IsAvailable && poseCount > 0)
+            foreach (var vc in voteCands)
             {
-                int bestDx, bestDy, bestPoseIdx;
-                double score = NativeVision.EvaluateAllPosesNative(
-                    (int)bestVoteCx, (int)bestVoteCy, refRadius,
-                    model.NativeRxBuf, model.NativeRyBuf,
-                    model.NativeRdxBuf, model.NativeRdyBuf,
-                    model.NativeMarginBuf,
-                    poseCount, N,
-                    dxPtr, dyPtr, magPtr,
-                    W, H, thresh, greedy,
-                    &bestDx, &bestDy, &bestPoseIdx,
-                    ciFlag ? 1 : 0);
-                if (score > bestScore)
-                {
-                    bestScore = score;
-                    bestX = (int)bestVoteCx + bestDx;
-                    bestY = (int)bestVoteCy + bestDy;
-                    bestAngle = model.NativeAngleBuf[bestPoseIdx];
-                    bestScale = model.NativeScaleBuf[bestPoseIdx];
-                }
-            }
-            else if (poseCount > 0)
-            {
-                for (int pi = 0; pi < poseCount; pi++)
-                {
-                    int fm = model.NativeMarginBuf[pi];
-                    int* pRx = model.NativeRxBuf + pi * N;
-                    int* pRy = model.NativeRyBuf + pi * N;
-                    float* pRdx = model.NativeRdxBuf + pi * N;
-                    float* pRdy = model.NativeRdyBuf + pi * N;
-                    for (int dy = -refRadius; dy <= refRadius; dy++)
-                    {
-                        int py = (int)bestVoteCy + dy;
-                        if (py < fm || py >= H - fm) continue;
-                        for (int dx = -refRadius; dx <= refRadius; dx++)
-                        {
-                            int px = (int)bestVoteCx + dx;
-                            if (px < fm || px >= W - fm) continue;
+                // 최고 득표 대비 미미한 후보는 정련 생략 (비용 절약)
+                if (vc.votes < bestVoteVal * 0.25) continue;
 
-                            double score = EvaluateSimd(
-                                px, py, pRx, pRy, pRdx, pRdy,
-                                dxPtr, dyPtr, magPtr, W, N, thresh, greedy, ciFlag);
-                            if (score > bestScore)
+                double candCx = vc.cx * pyramidScale;
+                double candCy = vc.cy * pyramidScale;
+
+                int poseCount;
+                PrecomputeFinePosesNative(
+                    model,
+                    vc.angle, coarseAngleStep, fineAngleStep,
+                    scaleCenter, scaleRange, fineScaleStep,
+                    out poseCount);
+
+                if (NativeVision.IsAvailable && poseCount > 0)
+                {
+                    int bestDx, bestDy, bestPoseIdx;
+                    double score = NativeVision.EvaluateAllPosesNative(
+                        (int)candCx, (int)candCy, refRadius,
+                        model.NativeRxBuf, model.NativeRyBuf,
+                        model.NativeRdxBuf, model.NativeRdyBuf,
+                        model.NativeMarginBuf,
+                        poseCount, N,
+                        dxPtr, dyPtr, magPtr,
+                        W, H, thresh, greedy,
+                        &bestDx, &bestDy, &bestPoseIdx,
+                        ciFlag ? 1 : 0);
+                    if (score > bestScore)
+                    {
+                        bestScore = score;
+                        bestX = (int)candCx + bestDx;
+                        bestY = (int)candCy + bestDy;
+                        bestAngle = model.NativeAngleBuf[bestPoseIdx];
+                        bestScale = model.NativeScaleBuf[bestPoseIdx];
+                    }
+                }
+                else if (poseCount > 0)
+                {
+                    for (int pi = 0; pi < poseCount; pi++)
+                    {
+                        int fm = model.NativeMarginBuf[pi];
+                        int* pRx = model.NativeRxBuf + pi * N;
+                        int* pRy = model.NativeRyBuf + pi * N;
+                        float* pRdx = model.NativeRdxBuf + pi * N;
+                        float* pRdy = model.NativeRdyBuf + pi * N;
+                        for (int dy = -refRadius; dy <= refRadius; dy++)
+                        {
+                            int py = (int)candCy + dy;
+                            if (py < fm || py >= H - fm) continue;
+                            for (int dx = -refRadius; dx <= refRadius; dx++)
                             {
-                                bestScore = score;
-                                bestX = px; bestY = py;
-                                bestAngle = model.NativeAngleBuf[pi];
-                                bestScale = model.NativeScaleBuf[pi];
+                                int px = (int)candCx + dx;
+                                if (px < fm || px >= W - fm) continue;
+
+                                double score = EvaluateSimd(
+                                    px, py, pRx, pRy, pRdx, pRdy,
+                                    dxPtr, dyPtr, magPtr, W, N, thresh, greedy, ciFlag);
+                                if (score > bestScore)
+                                {
+                                    bestScore = score;
+                                    bestX = px; bestY = py;
+                                    bestAngle = model.NativeAngleBuf[pi];
+                                    bestScale = model.NativeScaleBuf[pi];
+                                }
                             }
                         }
                     }

@@ -87,6 +87,11 @@
                         Value="18" VerticalAlignment="Center"
                         ValueChanged="BrushSizeSlider_ValueChanged"/>
 
+                <CheckBox x:Name="ShowEdgesToggle" Grid.Column="2" Content="엣지 미리보기"
+                          Style="{StaticResource WindowDarkCheckBox}"
+                          IsChecked="True" VerticalAlignment="Center" Margin="18,0,0,0"
+                          Checked="OnShowEdgesToggled" Unchecked="OnShowEdgesToggled"/>
+
                 <StackPanel Grid.Column="3" Orientation="Horizontal">
                     <TextBlock Text="줌" VerticalAlignment="Center" Margin="0,0,8,0"
                                FontSize="12" Foreground="{StaticResource BrushTextSecondary}"/>
@@ -135,7 +140,7 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0" VerticalAlignment="Center" TextWrapping="Wrap"
                            FontSize="12" Foreground="{StaticResource BrushTextMuted}"
-                           Text="빨간 영역이 학습에서 제외됩니다. 해제(UnMask)를 선택하면 같은 도구로 마스크를 되돌립니다. 다각형: 좌클릭 꼭지점 추가 → 우클릭/더블클릭 완성, Esc 취소. 줌: Ctrl+휠 또는 +/− 버튼."/>
+                           Text="빨간 영역이 학습에서 제외됩니다. 엣지 미리보기: 초록=학습에 남는 엣지, 주황=마스크로 제외되는 엣지 — 객체 윤곽(경계)의 초록 선이 주황으로 바뀌면 과칠이니 해제(UnMask) 브러시로 되돌리세요. 다각형: 좌클릭 꼭지점 추가 → 우클릭/더블클릭 완성, Esc 취소. 줌: Ctrl+휠 또는 +/− 버튼."/>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="14,0,0,0">
                     <Button Content="저장" Style="{StaticResource ModernPrimaryButton}"
                             MinWidth="96" Margin="0,0,8,0" Click="OnSaveClick"/>

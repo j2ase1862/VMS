@@ -16,6 +16,10 @@ namespace VMS.VisionSetup.Views.ToolSettings
     /// (VisionPro PatMax 마스크 페인팅 대응). 그림자처럼 넓은 영역은 사각형/다각형,
     /// 본체 윤곽에 붙는 반사·가변 각인은 브러시로 정밀 지정. 정밀 작업은 Ctrl+휠 줌.
     /// 마스크는 템플릿과 같은 크기의 8UC1 (255=학습 제외).
+    /// 엣지 미리보기: 학습과 같은 Canny 임계로 검출한 엣지를 겹쳐 그려, 칠하는 즉시
+    /// 어떤 엣지가 모델에 남고(초록) 어떤 엣지가 제외되는지(주황) 보여준다 —
+    /// 그림자를 덮다가 객체 윤곽 엣지까지 지워버리는 과칠을 눈으로 잡는 용도
+    /// (실증 이슈: 마스크가 경계 엣지 1px 선을 덮으면 객체-그림자 경계가 통째로 소실).
     /// 코드 비하인드는 마우스 페인팅·줌(직접 UI 상호작용) 전담 — 비즈니스 로직 없음.
     /// </summary>
     public partial class TrainMaskEditorDialog : System.Windows.Window
@@ -28,6 +32,7 @@ namespace VMS.VisionSetup.Views.ToolSettings
 
         private readonly Mat _templateBgr;
         private readonly Mat _mask;          // 8UC1, 255 = 제외
+        private readonly Mat _edges;         // 8UC1, 학습과 같은 Canny 임계의 엣지 (표시용)
         private readonly double _scale;      // 화면 px / 이미지 px (줌 1배 기준)
         private readonly ScaleTransform _zoomTransform = new(1, 1);
         private double _zoom = 1.0;
@@ -57,7 +62,8 @@ namespace VMS.VisionSetup.Views.ToolSettings
         /// <summary>저장 시 결과 마스크 (소유권 호출자) — 취소면 null 유지.</summary>
         public Mat? ResultMask { get; private set; }
 
-        public TrainMaskEditorDialog(Mat templateImage, Mat? existingMask)
+        public TrainMaskEditorDialog(Mat templateImage, Mat? existingMask,
+            double cannyLow = 50, double cannyHigh = 150)
         {
             InitializeComponent();
 
@@ -69,6 +75,19 @@ namespace VMS.VisionSetup.Views.ToolSettings
                 && existingMask.Width == _templateBgr.Width && existingMask.Height == _templateBgr.Height
                 ? existingMask.Clone()
                 : new Mat(_templateBgr.Height, _templateBgr.Width, MatType.CV_8UC1, Scalar.Black);
+
+            // 학습(TrainPattern)과 동일한 그레이 변환 + Canny 임계로 엣지 계산 — 미리보기가
+            // 실제 학습 후보와 일치해야 의미가 있다. 큰 템플릿은 축소 표시에서 1px 엣지가
+            // 보간으로 흐려지므로 표시용으로만 1회 팽창.
+            using (var gray = templateImage.Channels() > 1
+                ? templateImage.CvtColor(ColorConversionCodes.BGR2GRAY)
+                : templateImage.Clone())
+            using (var rawEdges = gray.Canny(cannyLow, cannyHigh))
+            {
+                _edges = MaxViewWidth / templateImage.Width < 1.0 || MaxViewHeight / templateImage.Height < 1.0
+                    ? rawEdges.Dilate(Cv2.GetStructuringElement(MorphShapes.Rect, new OpenCvSharp.Size(3, 3)))
+                    : rawEdges.Clone();
+            }
 
             // 템플릿을 편집 영역에 맞춰 확대/축소 — 작은 템플릿은 키워서 칠하기 쉽게
             _scale = Math.Min(Math.Min(MaxViewWidth / _templateBgr.Width, MaxViewHeight / _templateBgr.Height), 6.0);
@@ -85,14 +104,34 @@ namespace VMS.VisionSetup.Views.ToolSettings
             TemplateView.Source = _templateBgr.ToBitmapSource();
             RenderOverlay();
 
-            Closed += (_, _) => { _templateBgr.Dispose(); _mask.Dispose(); };
+            Closed += (_, _) => { _templateBgr.Dispose(); _mask.Dispose(); _edges.Dispose(); };
         }
 
         private void RenderOverlay()
         {
             using var overlay = new Mat(_mask.Height, _mask.Width, MatType.CV_8UC4, new Scalar(0, 0, 0, 0));
             overlay.SetTo(new Scalar(0, 0, 255, 110), _mask);
+
+            // 엣지 미리보기 — 마스크 밖(학습에 남음)은 초록, 마스크 안(제외됨)은 주황.
+            // 페인팅 스트로크마다 갱신되어 경계 엣지가 지워지는 순간을 바로 볼 수 있다.
+            if (ShowEdgesToggle.IsChecked == true)
+            {
+                using var excluded = new Mat();
+                using var kept = new Mat();
+                Cv2.BitwiseAnd(_edges, _mask, excluded);
+                Cv2.Subtract(_edges, excluded, kept);
+                overlay.SetTo(new Scalar(80, 255, 0, 245), kept);      // 초록: 학습 후보로 유지
+                overlay.SetTo(new Scalar(0, 165, 255, 255), excluded); // 주황: 마스크로 제외
+            }
+
             OverlayView.Source = overlay.ToBitmapSource();
+        }
+
+        /// <summary>엣지 미리보기 토글 — InitializeComponent 중 기본 체크 발화는 무시.</summary>
+        private void OnShowEdgesToggled(object sender, RoutedEventArgs e)
+        {
+            if (!IsInitialized || _mask == null) return;
+            RenderOverlay();
         }
 
         private int BrushRadius => Math.Max(2, (int)(BrushSizeSlider.Value / 2));
