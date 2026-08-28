@@ -433,6 +433,18 @@ namespace VMS.Services
 
                 // Web 파라미터 결과 수집 및 업로드 (피처 + 이미지와 공유할 상관 키 동봉)
                 CollectAndUploadParameterResults(ctx, resultMap, featureMetrics, result.CorrelationKey);
+
+                // 사이클 임시 Mat 즉시 해제 — 툴 결과의 OutputImage/OverlayImage 는 프레임
+                // 크기 네이티브 메모리라 GC 통계에 잡히지 않고 파이널라이저까지 떠 있는다.
+                // 방치하면 AUTO RUN 사이클마다 수십 MB 씩 쌓였다 지연 회수되는 톱니형
+                // 증가가 되고(실증 PC 2026-08-29), LastResult 로 캐시 툴에 남는 직전
+                // 사이클 1세트는 상시 상주했다. 표시용 오버레이는 위에서 합성본
+                // (compositeOverlay 클론)으로 분리됐고, 이 엔진은 사이클 간에 결과
+                // 이미지를 참조하지 않으므로(판정/Data 만 사용) 여기서 안전하다.
+                // ReleaseMats 는 idempotent 이며 Data/Message 는 보존한다.
+                foreach (var vr in resultMap.Values)
+                    vr.ReleaseMats();
+
                 return result;
             }
             catch (Exception ex)
