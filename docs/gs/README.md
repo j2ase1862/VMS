@@ -56,6 +56,7 @@ node gen_user_manual.js   # → ../VMS_사용자매뉴얼_v1.1.docx
 | #375 | **학습 마스크 편집기 개편 (v1.18.0)** — 도구 바가 도구(브러시/사각형/다각형)×동작(마스크/해제 UnMask) 구성으로 변경 ("지우개" 명칭 삭제 — 브러시+해제로 대체). 다각형: 좌클릭 꼭지점 추가→우클릭/더블클릭 완성, Esc 취소. 줌 1~8배: Ctrl+휠 또는 [+]/[−]. 위 #373 행과 같은 절에 함께 반영 — #373 기준 편집기 스크린샷은 이 UI 로 재캡처 | VisionSetup 매뉴얼 Feature Match 절 |
 | #393 | **회전 ROI(RectAffine) 실행 반영** — Blob: 회전 ROI가 그린 영역 그대로 분석되도록 수정(기존엔 각도가 거울 반전된 영역 분석). Feature Match: 학습(Train) 시 회전 ROI 각도를 존중해 회전 정렬된 패턴으로 학습(SearchRegion 은 여전히 축 정렬 — 추후). 매뉴얼의 ROI 종류 설명에 "RectAffine 은 Blob·Feature Match 학습에 적용" 명시 검토 | VisionSetup 매뉴얼 ROI·Blob·Feature Match 절 |
 | #394 | **RectAffine ROI 크기 조절 방식 변경** — 꼭짓점을 끌면 잡은 꼭짓점만 이동하고 대각 반대편은 고정(기존: 중심 대칭으로 양쪽이 같이 늘어남). ROI 편집 조작 설명·스크린샷에 언급이 있으면 갱신 | VisionSetup 매뉴얼 ROI 절 |
+| (이번 PR) | **예제 템플릿 갤러리 "얼라인" 탭에 3D 얼라인 3종 추가** — ① 표준 3D 얼라인(6DOF, 기준 형상 정합: 기준 .vpc/.stl 대비 ΔX/ΔY/ΔZ·RX/RY/RZ) ② 평면 틸트 얼라인(기준면/대상면 Plane Fit 2개 → 법선 사이각으로 기울기 보정) ③ 2D+3D 하이브리드 얼라인(XYθ는 Match Align, 기울기·높이는 Plane Fit). 전부 "3D 카메라 필요" 배지. 매뉴얼 예제 템플릿 절의 템플릿 목록·갤러리 스크린샷 갱신 | VisionSetup 매뉴얼 예제 템플릿 절 |
 | #369 #370 | **라이선스 발급 GUI LicGen.App + 백업 자동화** — ⚠ 사내 전용(MSI 비동봉·고객 비노출)이라 **사용자 매뉴얼 대상 아님, Admin 매뉴얼만**: 발급 담당자 절차를 CLI 예시에서 LicGen.App 화면 기준으로 교체(발급 탭·발급 대장 탭 비고·백업 배너/[백업 실행] 스크린샷), `licgen backup` USB 2부 규칙·issue 백업 경고 소개. 상세 절차 원본은 docs/license_operations.md (반영 완료) | Admin 매뉴얼 라이선스 절 (§2.6 발급 측 상대편) |
 
 ## guides/ — 가이드 문서

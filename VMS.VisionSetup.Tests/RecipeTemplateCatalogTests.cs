@@ -116,6 +116,55 @@ namespace VMS.VisionSetup.Tests
         }
 
         [Fact]
+        public void AlignCategory_Covers2DAnd3D()
+        {
+            var align = RecipeTemplateCatalog.Templates
+                .Where(t => t.Category == RecipeTemplateCatalog.CategoryAlign)
+                .ToList();
+
+            // 2D 얼라인 3종 + 3D 얼라인 3종 — 갤러리 "얼라인" 탭이 두 축을 모두 제공
+            Assert.Contains(align, t => t.Id == "2d-match-align");
+            Assert.Contains(align, t => t.Id == "3d-registration-align");
+            Assert.Contains(align, t => t.Id == "3d-plane-tilt-align");
+            Assert.Contains(align, t => t.Id == "3d-hybrid-align");
+
+            // 3D 얼라인은 전부 3D 카메라 배지를 달아야 한다 (2D 는 달지 않음)
+            foreach (var t in align.Where(t => t.Id.StartsWith("3d-")))
+                Assert.Contains("3D 카메라 필요", t.Prerequisites);
+            foreach (var t in align.Where(t => t.Id.StartsWith("2d-")))
+                Assert.DoesNotContain("3D 카메라 필요", t.Prerequisites);
+        }
+
+        [Fact]
+        public void AlignTemplates_ParameterPresets_SurviveRoundTrip()
+        {
+            // 프리셋이 직렬화에서 유실되면 갤러리로 만든 체인이 기본값으로 되돌아간다
+            // (레시피 저장/로드 후 조용히 동작이 달라지는 사고 방지).
+            var reg = RoundTripFirst<VMS.VisionSetup.VisionTools.PointCloud.PointCloudRegistrationTool>(
+                "3d-registration-align");
+            Assert.False(reg.ApplyTransformToSource);   // 얼라인 = 변위 측정, 점군 덮어쓰기 안 함
+
+            var geo = RoundTripFirst<VMS.VisionSetup.VisionTools.Measurement.Geometry3DTool>(
+                "3d-plane-tilt-align");
+            Assert.Equal(VMS.VisionSetup.VisionTools.Measurement.Geometry3DOperation.PlaneToPlaneAngle,
+                geo.Operation);
+            Assert.False(geo.UseManualPoints);          // 연결된 Plane Fit 2개를 소스로 사용
+
+            var match = RoundTripFirst<VMS.VisionSetup.VisionTools.PatternMatching.MatchAlignTool>(
+                "2d-match-align-2pt");
+            Assert.Equal(VMS.VisionSetup.VisionTools.PatternMatching.MatchAlignMode.TwoPoint, match.Mode);
+        }
+
+        /// <summary>템플릿의 첫 번째 T 툴을 직렬화 왕복시켜 반환.</summary>
+        private static T RoundTripFirst<T>(string templateId) where T : VisionToolBase
+        {
+            var template = RecipeTemplateCatalog.Templates.First(t => t.Id == templateId);
+            var tool = RecipeTemplateCatalog.CreateTools(template).OfType<T>().First();
+            var restored = ToolSerializer.DeserializeTool(ToolSerializer.SerializeTool(tool));
+            return Assert.IsType<T>(restored);
+        }
+
+        [Fact]
         public void AllTemplates_DiagramPng_Exists()
         {
             var resourceDir = Path.GetFullPath(Path.Combine(
