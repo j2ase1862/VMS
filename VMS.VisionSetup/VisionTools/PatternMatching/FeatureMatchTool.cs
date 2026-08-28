@@ -1452,9 +1452,17 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
             for (int i = 0; i < 4; i++)
                 Cv2.Line(overlay, pts[i], pts[(i + 1) % 4], new Scalar(0, 255, 0), 2);
 
+            // 중심 십자 — 매칭 각도에 맞춰 회전 (축 정렬 고정이라 검출 각도가 십자에
+            // 반영되지 않던 현장 보고 2026-08-28). +X 화살표로 방향까지 명시
+            // (십자만으로는 90° 배수가 구분되지 않는다).
             int cs = 15;
-            Cv2.Line(overlay, new Point((int)cx - cs, (int)cy), new Point((int)cx + cs, (int)cy), new Scalar(0, 0, 255), 2);
-            Cv2.Line(overlay, new Point((int)cx, (int)cy - cs), new Point((int)cx, (int)cy + cs), new Scalar(0, 0, 255), 2);
+            var red = new Scalar(0, 0, 255);
+            Point Rot(double lx, double ly) => new(
+                (int)Math.Round(lx * cosA - ly * sinA + cx),
+                (int)Math.Round(lx * sinA + ly * cosA + cy));
+            Cv2.Line(overlay, Rot(-cs, 0), Rot(cs, 0), red, 2);
+            Cv2.Line(overlay, Rot(0, -cs), Rot(0, cs), red, 2);
+            Cv2.ArrowedLine(overlay, Rot(0, 0), Rot(cs * 2.2, 0), red, 2, tipLength: 0.3);
 
             foreach (var edge in modelEdges)
             {
