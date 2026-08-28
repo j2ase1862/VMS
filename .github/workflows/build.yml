@@ -71,7 +71,15 @@ jobs:
       - name: Restore
         run: dotnet restore VMS.sln
 
-      - name: Build
+      # PR 는 WiX MSI 하베스트·링크(빌드 6분의 절반가량)를 생략 — 검증 목적(SDK 미탑재
+      # 컴파일 경로 + 테스트)은 그대로. MSI 빌드 가능성 검증은 머지 직후 master push
+      # 전체 빌드로 이동한다 (실배포 MSI 는 어차피 dev PC 빌드 — v1.4.10 규칙 유지).
+      - name: Build (PR — 인스톨러 제외)
+        if: github.event_name == 'pull_request'
+        run: dotnet build VMS.NoInstaller.slnf --configuration ${{ env.Configuration }} --no-restore /p:TreatWarningsAsErrors=false
+
+      - name: Build (master push — MSI 포함 전체)
+        if: github.event_name != 'pull_request'
         run: dotnet build VMS.sln --configuration ${{ env.Configuration }} --no-restore /p:TreatWarningsAsErrors=false
 
       - name: Test
@@ -109,7 +117,8 @@ jobs:
         shell: pwsh
         run: |
           $msi = Get-ChildItem -Path "VMS.MasterSetup/bin/${{ env.Configuration }}/*.msi" -ErrorAction SilentlyContinue | Select-Object -First 1
-          $msiInfo = if ($msi) { "$($msi.Name) ($([math]::Round($msi.Length / 1MB, 2)) MB)" } else { "MSI 빌드 실패 또는 누락" }
+          $isPr = "${{ github.event_name }}" -eq "pull_request"
+          $msiInfo = if ($isPr) { "PR 빌드 — MSI 생략 (master push 에서 전체 검증)" } elseif ($msi) { "$($msi.Name) ($([math]::Round($msi.Length / 1MB, 2)) MB)" } else { "MSI 빌드 실패 또는 누락" }
           Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "### Build Summary"
           Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
           Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Configuration**: ${{ env.Configuration }}"

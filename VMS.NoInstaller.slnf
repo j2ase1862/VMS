@@ -1,0 +1,23 @@
+{
+  "solution": {
+    "path": "VMS.sln",
+    "projects": [
+      "tools\\licgen\\LicGen.csproj",
+      "VMS.AppSetup.Tests\\VMS.AppSetup.Tests.csproj",
+      "VMS.AppSetup\\VMS.AppSetup.csproj",
+      "VMS.Camera\\VMS.Camera.csproj",
+      "VMS.Core.Tests\\VMS.Core.Tests.csproj",
+      "VMS.Core\\VMS.Core.csproj",
+      "VMS.DeepLearning\\VMS.DeepLearning.csproj",
+      "VMS.PLC.Tests\\VMS.PLC.Tests.csproj",
+      "VMS.PLC\\VMS.PLC.csproj",
+      "VMS.Tests\\VMS.Tests.csproj",
+      "VMS.Updater\\VMS.Updater.csproj",
+      "VMS.VisionSetup.Tests\\VMS.VisionSetup.Tests.csproj",
+      "VMS.VisionSetup\\VMS.VisionSetup.csproj",
+      "VMS.WeldTeach.Tests\\VMS.WeldTeach.Tests.csproj",
+      "VMS.WeldTeach\\VMS.WeldTeach.csproj",
+      "VMS\\VMS.csproj"
+    ]
+  }
+}
