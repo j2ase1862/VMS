@@ -97,6 +97,7 @@ namespace VMS.VisionSetup.Tests
             public bool ExportRecipe(Recipe recipe, string exportPath) => true;
             public Recipe? ImportRecipe(string importPath) => null;
             public Recipe? DuplicateRecipe(string filePath) => null;
+            public bool RenameRecipe(string filePath, string newName) => false;
             public InspectionStep? AddStep(Recipe? recipe = null, string? cameraId = null) => null;
             public void AddStep(Recipe recipe, InspectionStep step) { }
             public bool RemoveStep(Recipe? recipe, string stepId) => false;

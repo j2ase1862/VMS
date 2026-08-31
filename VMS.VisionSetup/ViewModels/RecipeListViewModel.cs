@@ -89,10 +89,19 @@ namespace VMS.VisionSetup.ViewModels
                 var localNames = localRecipes.Select(r => r.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
                 bool anyNew = false;
 
+                // 이름뿐 아니라 WebRecipeId 링크로도 로컬 존재를 판단 — 이름만 보면
+                // 로컬에서 이름을 바꾼 Web 연동 레시피가 "없는 레시피"로 오판되어
+                // 옛 이름의 web_*.json 스텁이 되살아난다 (Rename 기능의 전제)
+                var linkedWebIds = localRecipes
+                    .Where(r => r.WebRecipeId is not null)
+                    .Select(r => r.WebRecipeId!.Value)
+                    .ToHashSet();
+
                 foreach (var web in webRecipes)
                 {
                     var webFilePath = Path.Combine(recipeFolderPath, $"web_{web.Id}.json");
-                    if (!File.Exists(webFilePath) && !localNames.Contains(web.Name))
+                    if (!File.Exists(webFilePath) && !localNames.Contains(web.Name)
+                        && !linkedWebIds.Contains(web.Id))
                     {
                         var recipe = new Recipe
                         {
@@ -276,6 +285,44 @@ namespace VMS.VisionSetup.ViewModels
             catch (Exception ex)
             {
                 Debug.WriteLine($"[RecipeList] Web register failed for '{recipe.Name}': {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 선택 레시피 이름 변경 — 파일명은 그대로 두고 내용의 이름만 바꾼다.
+        /// Web 연동(WebRecipeId 보유) 레시피는 Web 원장의 이름이 함께 바뀌지 않으므로 안내한다.
+        /// </summary>
+        [RelayCommand]
+        private void RenameRecipe()
+        {
+            if (SelectedRecipe == null) return;
+
+            var target = SelectedRecipe;
+            var newName = _dialogService.ShowRenameDialog(target.Name);
+            if (string.IsNullOrWhiteSpace(newName) || newName.Trim() == target.Name) return;
+            newName = newName.Trim();
+
+            if (_allRecipes.Any(r => r.FilePath != target.FilePath
+                && r.Name.Equals(newName, StringComparison.OrdinalIgnoreCase)))
+            {
+                _dialogService.ShowError($"'{newName}' 이름의 레시피가 이미 있습니다.", "Rename Recipe");
+                return;
+            }
+
+            if (!_recipeService.RenameRecipe(target.FilePath, newName))
+            {
+                _dialogService.ShowError("레시피 이름 변경에 실패했습니다.", "Rename Recipe");
+                return;
+            }
+
+            RefreshRecipeList();
+            SelectedRecipe = Recipes.FirstOrDefault(r => r.FilePath == target.FilePath);
+
+            if (target.WebRecipeId is not null && _parameterSyncService != null)
+            {
+                _dialogService.ShowInformation(
+                    "로컬 레시피 이름이 변경되었습니다.\nWeb 서버의 레시피 이름은 함께 바뀌지 않으니, 필요하면 Web 화면에서 변경하세요.",
+                    "Rename Recipe");
             }
         }
 

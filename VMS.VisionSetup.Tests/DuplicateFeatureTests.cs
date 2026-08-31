@@ -111,6 +111,37 @@ namespace VMS.VisionSetup.Tests
         }
 
         [Fact]
+        public void RenameRecipe_RewritesSameFile_KeepsIdAndWebLink()
+        {
+            var path = System.IO.Path.Combine(
+                System.IO.Path.GetTempPath(), $"vms_rename_{System.Guid.NewGuid():N}.json");
+            try
+            {
+                var recipe = new Recipe { Id = "rid-1", Name = "Old Name", WebRecipeId = 7 };
+                Assert.True(RecipeService.Instance.SaveRecipe(recipe, path));
+
+                Assert.True(RecipeService.Instance.RenameRecipe(path, "New Name"));
+
+                // 같은 파일에 되돌려 씀 — 파일명 불변(VMS 워처 호환), ID·Web 링크 유지
+                var reloaded = RecipeService.Instance.ReadRecipeFile(path);
+                Assert.NotNull(reloaded);
+                Assert.Equal("New Name", reloaded!.Name);
+                Assert.Equal("rid-1", reloaded.Id);
+                Assert.Equal(7, reloaded.WebRecipeId);
+            }
+            finally
+            {
+                System.IO.File.Delete(path);
+            }
+        }
+
+        [Fact]
+        public void RenameRecipe_EmptyName_Fails()
+        {
+            Assert.False(RecipeService.Instance.RenameRecipe("unused.json", "  "));
+        }
+
+        [Fact]
         public void ToolDuplication_SerializerRoundTrip_CopiesTrainedModelAsSeparateInstance()
         {
             // MainViewModel.DuplicateTool 의 핵심 경로: Serialize → Deserialize → 새 ID

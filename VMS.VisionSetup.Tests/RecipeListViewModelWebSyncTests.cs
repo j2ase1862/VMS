@@ -154,6 +154,25 @@ namespace VMS.VisionSetup.Tests
             Assert.Null(recipeSvc.ReadRecipeFile(localPath)?.WebRecipeId);   // 다음 동기화 때 재시도
         }
 
+        [Fact]
+        public async Task RenamedLinkedRecipe_DoesNotRecreateWebStub()
+        {
+            // 로컬에서 이름을 바꾼 Web 연동 레시피(WebRecipeId 보유, Web 은 옛 이름 유지) —
+            // 이름만으로 존재를 판단하면 옛 이름의 web_*.json 스텁이 되살아나 중복이 생긴다.
+            var sync = new FakeSyncService();
+            var recipeSvc = new FakeRecipeService(_dir);
+            var localPath = Path.Combine(_dir, "recipe_old.json");
+            recipeSvc.SaveRecipe(new Recipe { Name = "NewName", Author = "user", WebRecipeId = 9 }, localPath);
+
+            sync.Recipes.Add(new RecipeSummaryDto { Id = 9, Name = "OldName" });
+
+            var vm = new RecipeListViewModel(recipeSvc, new FakeDialogService(), sync);
+            await Task.Delay(500);   // 초기 동기화 완료 대기 (부정 조건이라 고정 대기)
+
+            Assert.False(File.Exists(Path.Combine(_dir, "web_9.json")),
+                "WebRecipeId 링크가 있으면 옛 이름 스텁을 다시 만들면 안 된다");
+        }
+
         private static async Task WaitForAsync(Func<bool> condition, int timeoutMs = 3000)
         {
             var sw = Stopwatch.StartNew();
@@ -212,6 +231,7 @@ namespace VMS.VisionSetup.Tests
             public bool ExportRecipe(Recipe recipe, string exportPath) => true;
             public Recipe? ImportRecipe(string importPath) => null;
             public Recipe? DuplicateRecipe(string filePath) => null;
+            public bool RenameRecipe(string filePath, string newName) => false;
             public InspectionStep? AddStep(Recipe? recipe = null, string? cameraId = null) => null;
             public void AddStep(Recipe recipe, InspectionStep step) { }
             public bool RemoveStep(Recipe? recipe, string stepId) => false;

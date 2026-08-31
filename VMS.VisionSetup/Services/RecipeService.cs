@@ -468,6 +468,39 @@ namespace VMS.VisionSetup.Services
             }
         }
 
+        /// <summary>
+        /// 레시피 이름 변경 — 같은 파일에 되돌려 쓴다. 파일명은 바꾸지 않는다:
+        /// VMS 워처와 로드 경로가 파일명 기준이라 새 파일로 저장하면 수정이 영원히
+        /// 미반영되고 중복만 늘어난다 (2026-08-19 현장과 같은 함정).
+        /// 열려 있는 CurrentRecipe 가 같은 레시피면 메모리 인스턴스의 이름도 함께 갱신.
+        /// </summary>
+        public bool RenameRecipe(string filePath, string newName)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(newName)) return false;
+
+                var recipe = LoadRecipeFromPath(filePath);
+                if (recipe == null) return false;
+
+                recipe.Name = newName.Trim();
+                recipe.ModifiedAt = DateTime.UtcNow;
+
+                var json = JsonSerializer.Serialize(recipe, JsonOptions);
+                File.WriteAllText(filePath, json);
+
+                if (_currentRecipe != null && _currentRecipe.Id == recipe.Id)
+                    _currentRecipe.Name = recipe.Name;
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"레시피 이름 변경 실패: {ex.Message}");
+                return false;
+            }
+        }
+
         private static string MakeUniqueName(string baseName, ISet<string> existingNames)
         {
             if (!existingNames.Contains(baseName)) return baseName;
