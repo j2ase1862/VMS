@@ -20,10 +20,16 @@ namespace VMS.VisionSetup.Interfaces
         List<RecipeInfo> GetRecipeList();
         bool ExportRecipe(Recipe recipe, string exportPath);
         Recipe? ImportRecipe(string importPath);
+        /// <summary>레시피 복제 — 새 ID·이름의 별도 파일로 저장 (WebRecipeId 는 비움).</summary>
+        Recipe? DuplicateRecipe(string filePath);
+        /// <summary>레시피 이름 변경 — 같은 파일에 되돌려 씀 (파일명 불변, VMS 워처 호환).</summary>
+        bool RenameRecipe(string filePath, string newName);
         InspectionStep? AddStep(Recipe? recipe = null, string? cameraId = null);
         void AddStep(Recipe recipe, InspectionStep step);
         bool RemoveStep(Recipe? recipe, string stepId);
         bool MoveStep(Recipe? recipe, string stepId, int newSequence);
+        /// <summary>스텝 복제 — 깊은 복사 + ID 재발급, 원본 바로 뒤에 삽입.</summary>
+        InspectionStep? DuplicateStep(Recipe recipe, string stepId);
         InspectionStep? FindStepByRobotNode(Recipe? recipe, int nodeIndex, string? cameraId = null);
         bool AddToolToStep(InspectionStep step, ToolConfig tool);
         bool AddToolToStep(Recipe recipe, string stepId, ToolConfig tool);

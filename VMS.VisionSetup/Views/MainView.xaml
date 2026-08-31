@@ -933,6 +933,13 @@
                                       Stroke="#F44336" StrokeThickness="1.5"
                                       Width="14" Height="14" Stretch="Uniform"/>
                             </Button>
+                            <!-- Duplicate Step -->
+                            <Button Command="{Binding DuplicateStepCommand}" ToolTip="Duplicate Step — 선택 스텝의 카메라 설정과 도구 파이프라인을 복사해 바로 뒤에 추가"
+                                    Style="{StaticResource StepControlButtonStyle}">
+                                <Path Data="M8,8 L8,2 L22,2 L22,16 L16,16 M2,8 L16,8 L16,22 L2,22 Z"
+                                      Stroke="#9C27B0" StrokeThickness="1.5"
+                                      Width="14" Height="14" Stretch="Uniform"/>
+                            </Button>
                             <!-- Generate Robot Waypoint Steps -->
                             <Button Command="{Binding GenerateWaypointsCommand}" ToolTip="Generate Robot Waypoint Steps"
                                     Style="{StaticResource StepControlButtonStyle}">
@@ -1167,6 +1174,9 @@
                                                     </ContextMenu.Style>
                                                     <MenuItem Header="Rename Tool"
                                                               Click="RenameToolMenuItem_Click"/>
+                                                    <MenuItem Header="Duplicate Tool"
+                                                              ToolTip="파라미터·ROI·학습 데이터까지 복사한 사본을 옆에 만듭니다 (연결은 복사되지 않음)"
+                                                              Click="DuplicateToolMenuItem_Click"/>
                                                     <Separator Background="{StaticResource BrushBorderStrong}"/>
                                                     <MenuItem Header="Connect Image"
                                                               Tag="Image"

@@ -162,6 +162,10 @@
         <WrapPanel Grid.Row="3" Orientation="Horizontal" Margin="0,10,0,0">
             <Button Content="New" Command="{Binding NewRecipeCommand}" Style="{StaticResource RecipeButtonStyle}" Width="60"/>
             <Button Content="Load" Command="{Binding LoadRecipeCommand}" Style="{StaticResource RecipeButtonStyle}" Width="60" IsEnabled="{Binding HasSelection}"/>
+            <Button Content="Duplicate" Command="{Binding DuplicateRecipeCommand}" Style="{StaticResource RecipeButtonStyle}" Width="70" IsEnabled="{Binding HasSelection}"
+                    ToolTip="선택 레시피를 스텝·도구·학습 데이터까지 통째로 복사해 새 레시피로 만듭니다"/>
+            <Button Content="Rename" Command="{Binding RenameRecipeCommand}" Style="{StaticResource RecipeButtonStyle}" Width="65" IsEnabled="{Binding HasSelection}"
+                    ToolTip="선택 레시피의 이름을 변경합니다 (Web 연동 레시피는 Web 원장 이름은 그대로)"/>
             <Button Content="Delete" Command="{Binding DeleteRecipeCommand}" Style="{StaticResource DangerButtonStyle}" Width="60" IsEnabled="{Binding HasSelection}"/>
         </WrapPanel>
 
