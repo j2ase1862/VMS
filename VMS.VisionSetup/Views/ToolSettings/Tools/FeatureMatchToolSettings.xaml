@@ -49,6 +49,17 @@
                             Command="{Binding DeleteSelectedModelCommand}"/>
                 </StackPanel>
 
+                <!-- 기준(원본) 이미지 — Train 시 전체 장면이 자동 저장되며, 버튼으로 되불러온다 -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                    <Button Content="기준 이미지 불러오기" Style="{StaticResource SecondaryButtonStyle}"
+                            Padding="8,4" Margin="0,0,6,0"
+                            ToolTip="학습(Train) 당시 자동 저장된 전체 원본 이미지를 메인 화면으로 다시 불러옵니다. ROI 조정·재학습 시 사용하세요."
+                            Command="{Binding LoadReferenceImageCommand}"/>
+                    <TextBlock Text="{Binding ReferenceImageInfo}" VerticalAlignment="Center"
+                               Foreground="#999999" FontSize="11" TextTrimming="CharacterEllipsis"
+                               ToolTip="{Binding ReferenceImagePath}"/>
+                </StackPanel>
+
                 <!-- Preview (data-bound via converter) -->
                 <Border Background="#1E1E1E" BorderBrush="#555555" BorderThickness="1"
                         Margin="0,0,0,5" MinHeight="150">

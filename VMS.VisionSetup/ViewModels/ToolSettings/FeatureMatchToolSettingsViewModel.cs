@@ -41,6 +41,10 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
             RequestAutoTuneCommand = new RelayCommand(() =>
                 WeakReferenceMessenger.Default.Send(new RequestAutoTuneMessage()));
 
+            LoadReferenceImageCommand = new RelayCommand(
+                () => WeakReferenceMessenger.Default.Send(new RequestLoadReferenceImageMessage()),
+                () => !string.IsNullOrEmpty(TypedTool.ReferenceImagePath));
+
             DrawSearchRegionCommand = new RelayCommand(() =>
                 WeakReferenceMessenger.Default.Send(new RequestDrawSearchRegionMessage()));
 
@@ -83,6 +87,7 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         public IRelayCommand AddAndTrainModelCommand { get; }
         public IRelayCommand TrainSelectedModelCommand { get; }
         public IRelayCommand RequestAutoTuneCommand { get; }
+        public IRelayCommand LoadReferenceImageCommand { get; }
         public IRelayCommand DrawSearchRegionCommand { get; }
         public IRelayCommand DeleteSelectedModelCommand { get; }
         public IRelayCommand EditTrainMaskCommand { get; }
@@ -94,6 +99,12 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         public string TrainMaskInfo => SelectedModel?.HasTrainMask == true
             ? "마스크 적용됨 — 특징 이미지의 빨간 영역이 학습에서 제외"
             : "없음 — 그림자·가변 각인·반사 등 제외할 영역을 칠해두면 학습에서 빠집니다";
+
+        // 기준(원본) 이미지 — Train 성공 시 전체 장면 PNG가 자동 저장되고, 버튼으로 다시 불러온다
+        public string? ReferenceImagePath => TypedTool.ReferenceImagePath;
+        public string ReferenceImageInfo => string.IsNullOrEmpty(TypedTool.ReferenceImagePath)
+            ? "없음 — [Train] 성공 시 전체 원본 이미지가 자동 저장됩니다"
+            : System.IO.Path.GetFileName(TypedTool.ReferenceImagePath);
 
         internal void NotifyTrainMaskChanged()
         {
@@ -202,6 +213,13 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
                 OnPropertyChanged(nameof(PreviewPlaceholderText));
                 DeleteSelectedModelCommand.NotifyCanExecuteChanged();
                 NotifyTrainMaskChanged();   // 모델 전환/재학습 시 마스크 상태·버튼 활성화 갱신
+            }
+
+            if (propertyName == nameof(ReferenceImagePath))
+            {
+                OnPropertyChanged(nameof(ReferenceImagePath));
+                OnPropertyChanged(nameof(ReferenceImageInfo));
+                LoadReferenceImageCommand.NotifyCanExecuteChanged();
             }
         }
     }
