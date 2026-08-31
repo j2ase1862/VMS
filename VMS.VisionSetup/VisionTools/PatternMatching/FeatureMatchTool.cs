@@ -247,6 +247,14 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
         private bool _isAutoTuneEnabled = true;
         public bool IsAutoTuneEnabled { get => _isAutoTuneEnabled; set => SetProperty(ref _isAutoTuneEnabled, value); }
 
+        /// <summary>
+        /// 학습(Train) 당시 전체 원본 이미지가 저장된 PNG 경로.
+        /// 템플릿은 ROI 크롭만 레시피에 들어가므로, 재학습·ROI 조정 시 원래 장면을
+        /// 다시 불러올 수 있도록 Train 성공 시 MainViewModel 이 자동 기록한다.
+        /// </summary>
+        private string? _referenceImagePath;
+        public string? ReferenceImagePath { get => _referenceImagePath; set => SetProperty(ref _referenceImagePath, value); }
+
         private double _suggestedCannyLow;
         public double SuggestedCannyLow { get => _suggestedCannyLow; set => SetProperty(ref _suggestedCannyLow, value); }
 
@@ -1879,7 +1887,8 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                 SearchRegion = this.SearchRegion, UseSearchRegion = this.UseSearchRegion,
                 UseContrastInvariant = this.UseContrastInvariant,
                 CurvatureWeight = this.CurvatureWeight,
-                IsAutoTuneEnabled = this.IsAutoTuneEnabled
+                IsAutoTuneEnabled = this.IsAutoTuneEnabled,
+                ReferenceImagePath = this.ReferenceImagePath
             };
 
             // Deep-copy each model (clone Mat images, rebuild arrays; native buffers allocated on retrain)

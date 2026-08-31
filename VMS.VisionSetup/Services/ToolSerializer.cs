@@ -149,6 +149,8 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["UseContrastInvariant"] = match.UseContrastInvariant;
                     config.Parameters["CurvatureWeight"] = match.CurvatureWeight;
                     config.Parameters["IsAutoTuneEnabled"] = match.IsAutoTuneEnabled;
+                    if (!string.IsNullOrEmpty(match.ReferenceImagePath))
+                        config.Parameters["ReferenceImagePath"] = match.ReferenceImagePath;
 
                     // Serialize trained models (TemplateImage as base64 PNG)
                     var modelsList = new List<Dictionary<string, object>>();
@@ -1010,6 +1012,12 @@ namespace VMS.VisionSetup.Services
                 tool.CurvatureWeight = GetDouble(cw);
             if (p.TryGetValue("IsAutoTuneEnabled", out var iate))
                 tool.IsAutoTuneEnabled = GetBool(iate);
+            if (p.TryGetValue("ReferenceImagePath", out var rip))
+            {
+                var refPath = GetString(rip);
+                if (!string.IsNullOrEmpty(refPath))
+                    tool.ReferenceImagePath = refPath;
+            }
 
             // Restore trained models from serialized data
             if (p.TryGetValue("Models", out var modelsObj))

@@ -32,6 +32,8 @@ namespace VMS.VisionSetup.Models
     // ViewModel-level messages (handled by MainViewModel)
     public sealed class RequestTrainPatternMessage { }
     public sealed class RequestAutoTuneMessage { }
+    /// <summary>학습 당시 자동 저장된 전체 원본(기준) 이미지를 메인 화면으로 다시 불러오기 (FeatureMatch).</summary>
+    public sealed class RequestLoadReferenceImageMessage { }
 
     /// <summary>
     /// Web 파라미터 캐시 갱신 알림 (ParameterSyncService.SyncCompleted/RecipeLoaded →

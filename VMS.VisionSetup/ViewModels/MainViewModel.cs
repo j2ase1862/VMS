@@ -913,6 +913,7 @@ namespace VMS.VisionSetup.ViewModels
                     TrainPatternCommand.Execute(null);
             });
             WeakReferenceMessenger.Default.Register<RequestEditTrainMaskMessage>(this, (r, m) => EditTrainMask());
+            WeakReferenceMessenger.Default.Register<RequestLoadReferenceImageMessage>(this, (r, m) => LoadReferenceImage());
             WeakReferenceMessenger.Default.Register<RequestRefineStableFeaturesMessage>(this, (r, m) => RefineStableFeatures());
             WeakReferenceMessenger.Default.Register<RequestAutoTuneMessage>(this, (r, m) =>
             {
@@ -1821,6 +1822,10 @@ namespace VMS.VisionSetup.ViewModels
                     var targetModel = featureTool.SelectedModel;
                     if (featureTool.TrainPattern(trainingImage, targetModel))
                     {
+                        // 학습에 쓴 전체 원본 장면을 PNG로 자동 보관 — 레시피에는 ROI 크롭만
+                        // 남으므로, 나중에 ROI 조정/재학습 시 이 파일로 장면을 되불러온다
+                        SaveReferenceImage(featureTool);
+
                         if (targetModel != null)
                             StatusMessage = $"Model '{targetModel.Name}' 학습 완료";
                         else
@@ -1835,6 +1840,77 @@ namespace VMS.VisionSetup.ViewModels
             finally
             {
                 croppedImage?.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// 학습 성공 직후 전체 원본 장면을 레시피 폴더 옆 RefImages/에 PNG로 저장하고
+        /// 경로를 툴에 기록한다. 저장 실패는 학습 결과에 영향 없이 로그만 남긴다.
+        /// </summary>
+        private void SaveReferenceImage(FeatureMatchTool featureTool)
+        {
+            if (CurrentImage == null || CurrentImage.Empty()) return;
+
+            try
+            {
+                var refFolder = System.IO.Path.Combine(_recipeService.RecipeFolderPath, "RefImages");
+                System.IO.Directory.CreateDirectory(refFolder);
+
+                // 툴 ID 기반 파일명 — 재학습 시 같은 파일을 덮어써 파일이 늘어나지 않는다
+                var refPath = System.IO.Path.Combine(refFolder, $"featurematch_{featureTool.Id}.png");
+                Cv2.ImWrite(refPath, CurrentImage);
+                featureTool.ReferenceImagePath = refPath;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"기준 이미지 저장 실패: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 학습 당시 자동 저장된 전체 원본(기준) 이미지를 메인 화면으로 다시 불러온다.
+        /// 절대 경로가 깨졌으면(레시피 이관 등) 현재 PC의 RefImages 폴더에서 파일명으로 재탐색.
+        /// </summary>
+        private void LoadReferenceImage()
+        {
+            if (SelectedVisionTool is not FeatureMatchTool featureTool ||
+                string.IsNullOrEmpty(featureTool.ReferenceImagePath))
+            {
+                StatusMessage = "저장된 기준 이미지가 없습니다 — [Train] 시 자동 저장됩니다.";
+                return;
+            }
+
+            var path = featureTool.ReferenceImagePath;
+            if (!System.IO.File.Exists(path))
+            {
+                var fallback = System.IO.Path.Combine(
+                    _recipeService.RecipeFolderPath, "RefImages", System.IO.Path.GetFileName(path));
+                if (System.IO.File.Exists(fallback))
+                    path = fallback;
+                else
+                {
+                    StatusMessage = $"기준 이미지 파일을 찾을 수 없습니다: {path}";
+                    return;
+                }
+            }
+
+            try
+            {
+                var mat = Cv2.ImRead(path);
+                if (mat.Empty())
+                {
+                    mat.Dispose();
+                    StatusMessage = $"기준 이미지를 읽을 수 없습니다: {System.IO.Path.GetFileName(path)}";
+                    return;
+                }
+
+                CurrentImage = mat;   // setter 가 소유권 인수
+                SelectedDisplayMode = ImageDisplayMode.OriginalImage;
+                StatusMessage = $"기준 이미지 로드 완료: {System.IO.Path.GetFileName(path)}";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"기준 이미지 로드 실패: {ex.Message}";
             }
         }
 
