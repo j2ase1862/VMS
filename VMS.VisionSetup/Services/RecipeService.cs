@@ -428,6 +428,55 @@ namespace VMS.VisionSetup.Services
         }
 
         /// <summary>
+        /// 레시피 복제 — 파일을 읽어 새 ID·이름의 별도 파일로 저장한다 (CurrentRecipe 불변).
+        /// WebRecipeId 는 비운다: Web 원장은 이름 기준 멱등이라 복사본은 새 이름으로
+        /// 별도 등록되어야 하며, ID 를 물려받으면 두 로컬 레시피가 같은 Web 레시피에 얽힌다.
+        /// 스텝/툴 ID 도 재발급해 StepPoseStore 등 ID 기반 런타임 상태가 원본과 섞이지 않게 한다.
+        /// </summary>
+        public Recipe? DuplicateRecipe(string filePath)
+        {
+            try
+            {
+                var recipe = LoadRecipeFromPath(filePath);
+                if (recipe == null) return null;
+
+                var existingNames = GetRecipeList()
+                    .Select(r => r.Name)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                recipe.Id = Guid.NewGuid().ToString();
+                recipe.Name = MakeUniqueName($"{recipe.Name} - 복사본", existingNames);
+                recipe.WebRecipeId = null;
+                recipe.CreatedAt = DateTime.UtcNow;
+                recipe.ModifiedAt = DateTime.UtcNow;
+
+                foreach (var step in recipe.Steps)
+                    RegenerateStepIds(step);
+
+                var safeFileName = GetSafeFileName(recipe.Name);
+                var newPath = Path.Combine(_recipeFolderPath, $"recipe_{safeFileName}.json");
+                int n = 2;
+                while (File.Exists(newPath))
+                    newPath = Path.Combine(_recipeFolderPath, $"recipe_{safeFileName}_{n++}.json");
+
+                return SaveRecipe(recipe, newPath) ? recipe : null;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"레시피 복제 실패: {ex.Message}");
+                return null;
+            }
+        }
+
+        private static string MakeUniqueName(string baseName, ISet<string> existingNames)
+        {
+            if (!existingNames.Contains(baseName)) return baseName;
+            int n = 2;
+            while (existingNames.Contains($"{baseName} ({n})")) n++;
+            return $"{baseName} ({n})";
+        }
+
+        /// <summary>
         /// 경로에서 레시피 로드 (CurrentRecipe 설정 없이)
         /// </summary>
         private Recipe? LoadRecipeFromPath(string filePath)
@@ -555,6 +604,47 @@ namespace VMS.VisionSetup.Services
 
             recipe.ModifiedAt = DateTime.UtcNow;
             return true;
+        }
+
+        /// <summary>
+        /// 스텝 복제 — JSON 왕복 깊은 복사 후 스텝/툴 ID 재발급, 원본 바로 뒤 순번으로 삽입.
+        /// 이름·순번 표시는 호출자가 StepNaming.RecomputeNames 로 재계산한다.
+        /// </summary>
+        public InspectionStep? DuplicateStep(Recipe recipe, string stepId)
+        {
+            if (recipe == null) return null;
+            var source = recipe.Steps.FirstOrDefault(s => s.Id == stepId);
+            if (source == null) return null;
+
+            // JSON 왕복 깊은 복사 — 레시피 저장/로드와 동일 경로라 직렬화 대상 전부가 복사되고,
+            // [JsonIgnore] 런타임 계산 속성만 제외된다
+            var json = JsonSerializer.Serialize(source, JsonOptions);
+            var copy = JsonSerializer.Deserialize<InspectionStep>(json, JsonOptions);
+            if (copy == null) return null;
+
+            RegenerateStepIds(copy);
+            AddStep(recipe, copy);                            // 같은 카메라 그룹 끝에 추가
+            MoveStep(recipe, copy.Id, source.Sequence + 1);   // 원본 바로 뒤로 이동
+            return copy;
+        }
+
+        /// <summary>스텝·툴 ID 재발급 + 툴 연결(SourceToolId) 재매핑 — 복제 공용.</summary>
+        private static void RegenerateStepIds(InspectionStep step)
+        {
+            step.Id = Guid.NewGuid().ToString();
+
+            var idMap = new Dictionary<string, string>();
+            foreach (var tool in step.Tools)
+            {
+                var newId = Guid.NewGuid().ToString();
+                idMap[tool.Id] = newId;
+                tool.Id = newId;
+            }
+
+            foreach (var tool in step.Tools)
+                foreach (var conn in tool.Connections)
+                    if (idMap.TryGetValue(conn.SourceToolId, out var mapped))
+                        conn.SourceToolId = mapped;
         }
 
         /// <summary>

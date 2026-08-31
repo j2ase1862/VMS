@@ -155,10 +155,12 @@ namespace VMS.VisionSetup.Tests
             public List<RecipeInfo> GetRecipeList() => new();
             public bool ExportRecipe(Recipe recipe, string exportPath) => true;
             public Recipe? ImportRecipe(string importPath) => null;
+            public Recipe? DuplicateRecipe(string filePath) => null;
             public InspectionStep? AddStep(Recipe? recipe = null, string? cameraId = null) => null;
             public void AddStep(Recipe recipe, InspectionStep step) { }
             public bool RemoveStep(Recipe? recipe, string stepId) => false;
             public bool MoveStep(Recipe? recipe, string stepId, int newSequence) => false;
+            public InspectionStep? DuplicateStep(Recipe recipe, string stepId) => null;
             public InspectionStep? FindStepByRobotNode(Recipe? recipe, int nodeIndex, string? cameraId = null) => null;
             public bool AddToolToStep(InspectionStep step, ToolConfig tool) => false;
             public bool AddToolToStep(Recipe recipe, string stepId, ToolConfig tool) => false;

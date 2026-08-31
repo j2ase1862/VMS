@@ -403,6 +403,21 @@ namespace VMS.VisionSetup
             }
         }
 
+        private void DuplicateToolMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuItem menuItem)
+            {
+                var contextMenu = menuItem.Parent as ContextMenu;
+                var border = contextMenu?.PlacementTarget as Border;
+                var tool = border?.DataContext as ToolItem;
+
+                if (tool == null) return;
+
+                var vm = DataContext as MainViewModel;
+                vm?.DuplicateTool(tool);
+            }
+        }
+
         /// <summary>
         /// 연결 모드에서 마우스 이동 - 임시 베지어 연결선 그리기
         /// </summary>

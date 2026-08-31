@@ -279,6 +279,30 @@ namespace VMS.VisionSetup.ViewModels
             }
         }
 
+        /// <summary>
+        /// 선택 레시피 복제 — 스텝·툴·학습 데이터까지 담긴 파일을 새 ID·이름으로 저장한다.
+        /// 비슷한 제품의 레시피를 변형해 만들 때 사용. Web 원장에는 새 이름으로 별도 등록.
+        /// </summary>
+        [RelayCommand]
+        private void DuplicateRecipe()
+        {
+            if (SelectedRecipe == null) return;
+
+            var copy = _recipeService.DuplicateRecipe(SelectedRecipe.FilePath);
+            if (copy == null)
+            {
+                _dialogService.ShowError("레시피 복제에 실패했습니다.", "Duplicate Recipe");
+                return;
+            }
+
+            RefreshRecipeList();
+            SelectedRecipe = Recipes.FirstOrDefault(r => r.Id == copy.Id);
+
+            // Web 이 레시피 원장 — 복사본을 새 이름으로 등록해 WebRecipeId 확보.
+            // 실패(오프라인)해도 로컬 복제는 유효하며 다음 동기화 때 재등록 시도.
+            _ = RegisterRecipeOnWebAsync(copy);
+        }
+
         [RelayCommand]
         private void DeleteRecipe()
         {

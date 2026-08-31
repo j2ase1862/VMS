@@ -749,6 +749,7 @@ namespace VMS.VisionSetup.ViewModels
         public RelayCommand<ToolResultItem> CopyToolResultCommand { get; }
         public RelayCommand AddStepCommand { get; }
         public RelayCommand DeleteStepCommand { get; }
+        public RelayCommand DuplicateStepCommand { get; }
         public RelayCommand MoveStepUpCommand { get; }
         public RelayCommand MoveStepDownCommand { get; }
         public RelayCommand OpenTemplateGalleryCommand { get; }
@@ -830,6 +831,7 @@ namespace VMS.VisionSetup.ViewModels
             CopyToolResultCommand = new RelayCommand<ToolResultItem>(CopyToolResult);
             AddStepCommand = new RelayCommand(AddStep, () => _recipeService.CurrentRecipe != null && SelectedCamera != null);
             DeleteStepCommand = new RelayCommand(DeleteStep, () => SelectedStep != null);
+            DuplicateStepCommand = new RelayCommand(DuplicateStep, () => SelectedStep != null);
             MoveStepUpCommand = new RelayCommand(MoveStepUp, () => SelectedStep != null);
             MoveStepDownCommand = new RelayCommand(MoveStepDown, () => SelectedStep != null);
             // 템플릿은 스텝이 선택된 상태에서만 생성 — 생성 결과가 스텝에 저장되므로
@@ -1276,6 +1278,50 @@ namespace VMS.VisionSetup.ViewModels
             _visionService.AddTool(visionTool);
 
             return newTool;
+        }
+
+        /// <summary>
+        /// 워크스페이스 도구 복제 — 파라미터·ROI·학습 데이터(FeatureMatch 템플릿/마스크)·
+        /// PLC 매핑까지 통째로 복사한다. 레시피 저장/로드와 같은 직렬화 왕복을 쓰므로
+        /// 저장되는 모든 상태가 복제된다 (Clone()은 팔레트 드롭용이라 ROI 등 base 속성 미복사).
+        /// 도구 간 연결은 복사하지 않는다 — 입력 배선은 사용자가 새로 지정.
+        /// </summary>
+        public ToolItem? DuplicateTool(ToolItem source)
+        {
+            if (source.VisionTool == null) return null;
+
+            var config = ToolSerializer.SerializeTool(source.VisionTool);
+            var copy = ToolSerializer.DeserializeTool(config);
+            if (copy == null)
+            {
+                StatusMessage = $"'{source.Name}' 복제에 실패했습니다.";
+                return null;
+            }
+
+            copy.Id = Guid.NewGuid().ToString();   // 직렬화 왕복은 원본 ID 유지 — 반드시 재발급
+
+            // 이름 중복 회피: "이름 (2)", "이름 (3)" ...
+            var baseName = source.Name;
+            var name = $"{baseName} (2)";
+            int n = 3;
+            while (DroppedTools.Any(t => t.Name == name))
+                name = $"{baseName} ({n++})";
+            copy.Name = name;
+
+            var newItem = new ToolItem
+            {
+                Name = name,
+                ToolType = source.ToolType,
+                X = source.X + 30,
+                Y = source.Y + 30,
+                VisionTool = copy
+            };
+
+            DroppedTools.Add(newItem);
+            _visionService.AddTool(copy);
+            StatusMessage = $"도구 복제: {source.Name} → {name} (연결은 복사되지 않음)";
+
+            return newItem;
         }
 
         /// <summary>
@@ -2559,6 +2605,33 @@ namespace VMS.VisionSetup.ViewModels
             }
         }
 
+        /// <summary>
+        /// 선택 스텝 복제 — 카메라/조명 설정과 툴 파이프라인(연결 포함)을 통째로 복사해
+        /// 원본 바로 뒤에 삽입하고 선택한다. 비슷한 검사 스텝을 변형해 만들 때 사용.
+        /// </summary>
+        private void DuplicateStep()
+        {
+            if (SelectedStep == null) return;
+
+            var recipe = _recipeService.CurrentRecipe;
+            if (recipe == null) return;
+
+            // 워크스페이스의 최신 편집 상태를 원본 스텝에 먼저 반영 — 화면에 보이는 그대로 복제
+            SaveWorkspaceToStep();
+
+            var copy = _recipeService.DuplicateStep(recipe, SelectedStep.Id);
+            if (copy == null)
+            {
+                StatusMessage = "스텝 복제에 실패했습니다.";
+                return;
+            }
+
+            StepNaming.RecomputeNames(recipe, Cameras);
+            RefreshSteps();
+            SelectedStep = copy;   // setter 가 복제 스텝을 워크스페이스에 로드
+            StatusMessage = $"Step duplicated: {copy.Name} ({copy.Tools.Count} tools)";
+        }
+
         private void MoveStepUp()
         {
             if (SelectedStep == null) return;
@@ -3768,6 +3841,7 @@ namespace VMS.VisionSetup.ViewModels
             AutoTuneCommand.NotifyCanExecuteChanged();
             AddStepCommand.NotifyCanExecuteChanged();
             DeleteStepCommand.NotifyCanExecuteChanged();
+            DuplicateStepCommand.NotifyCanExecuteChanged();
             MoveStepUpCommand.NotifyCanExecuteChanged();
             MoveStepDownCommand.NotifyCanExecuteChanged();
             OpenTemplateGalleryCommand.NotifyCanExecuteChanged();
