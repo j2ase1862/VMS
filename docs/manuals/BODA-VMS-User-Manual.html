@@ -230,7 +230,9 @@
   <tr><td>검사 결과</td><td>검사 즉시 서버로 자동 업로드 (네트워크가 끊기면 보관했다가 재전송)</td><td>영구 저장 + 통계 + 알람</td></tr>
   <tr><td>인증</td><td>시스템 사용자 로그인(비밀번호 암호화 저장) + 작업자 로그인(사번 + PIN, 서버 대조)</td><td>웹 로그인 (관리자 / 작업자)</td></tr>
   <tr><td>데이터 저장</td><td>PC 안에 저장 (시스템 사용자 정보만)</td><td>서버 DB <code>C:\ProgramData\BODA\VMS\BodaVision.db</code></td></tr>
-  <tr><td>별도 설치물</td><td>없음 — 카메라 SDK · PLC 드라이버 포함</td><td>없음 — 단독 실행</td></tr>
+  <tr><td>별도 설치물</td><td>.NET · VC++ 런타임은 동봉 (설치 불필요).
+      카메라/보드 벤더 소프트웨어만 해당 시 별도 설치: Basler 카메라 = pylon Runtime,
+      ADLink IO 보드 = DASK x64 드라이버 (§2.4). PLC 는 드라이버 불필요(TCP 직접 통신)</td><td>없음 — 단독 실행</td></tr>
 </table>
 
 <h3 id="overview-flow">1.2 운영 흐름 한눈에</h3>
@@ -272,8 +274,10 @@
 작업자는 3장(VMS 클라이언트 매뉴얼)부터 읽으면 됩니다.</div>
 
 <h3 id="install-vms">2.1 VMS 클라이언트 (MSI)</h3>
-<p>설치 파일(MSI, 약 220MB) 하나만 실행하면 설치가 끝납니다. 실행에 필요한 구성 요소(.NET 8)가
-모두 포함되어 있어 다른 프로그램을 먼저 설치할 필요가 없습니다.</p>
+<p>설치 파일(MSI, 약 850MB) 하나만 실행하면 설치가 끝납니다. 실행에 필요한 구성 요소
+(.NET 8 런타임 · Visual C++ 런타임)가 모두 동봉되어 있어, 인터넷이 안 되는 PC 에서도
+다른 프로그램을 먼저 설치할 필요가 없습니다. 카메라/IO 보드 벤더 소프트웨어만
+예외입니다 (아래 요구사항).</p>
 
 <h4>설치</h4>
 <ol class="steps">
@@ -297,9 +301,16 @@
 로컬 설정 파일과 카메라 보정 등은 <code>%LocalAppData%</code> 에 저장되어 보존됩니다.</p>
 
 <div class="callout warn">
-<strong>요구사항:</strong> Windows 10/11 x64. Visual C++ Redistributable (OpenCvSharp
-네이티브 DLL 의존). 일반 Windows 에 보통 설치되어 있으나 누락 시 Microsoft 공식
-사이트에서 <code>vc_redist.x64.exe</code> 다운로드 후 설치.
+<strong>요구사항:</strong> Windows 11 x64. .NET 8 런타임과 Visual C++ 런타임은 MSI 에
+동봉되어 별도 설치가 필요 없습니다. 사용하는 장비에 따라 다음만 별도 설치하세요:
+<ul>
+  <li><strong>Basler 카메라</strong> — pylon Camera Software Suite(Runtime). 미설치 시
+      카메라 검색은 되지만 연결/촬영이 실패합니다.</li>
+  <li><strong>ADLink IO 보드</strong> — DASK <strong>x64</strong> 드라이버 (32-bit 만
+      설치된 PC 에서는 보드 인식 불가).</li>
+  <li>PLC(Mitsubishi · Siemens · LS · Omron · Modbus)는 TCP 직접 통신이라 드라이버가
+      필요 없습니다. Mech-Eye 3D 카메라 구동 파일은 MSI 에 동봉됩니다.</li>
+</ul>
 </div>
 
 <h3 id="install-web">2.2 Web 서버 (설치 / 구성)</h3>

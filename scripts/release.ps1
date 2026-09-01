@@ -17,7 +17,7 @@ param(
     [Parameter(Mandatory = $true)][string]$Version,
     [Parameter(Mandatory = $true)][string]$NotesFile,
     [switch]$SkipBuild,
-    [int]$MinMsiMB = 1100
+    [int]$MinMsiMB = 800    # self-contained 전환 후 정상 ~846MB (RID 지정으로 리눅스용 onnx 자산 제거 — 이전 1,135MB보다 작은 것이 정상). 780대=런타임 누락, 630대=Web payload 누락 의심
 )
 
 $ErrorActionPreference = 'Stop'
