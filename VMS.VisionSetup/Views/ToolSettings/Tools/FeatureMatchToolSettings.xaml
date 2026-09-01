@@ -100,6 +100,14 @@
                     AvailableParamCodes="{Binding AvailableParamCodes}"
                     SelectedItem="{Binding SelectedScoreThresholdCode}"
                     LocalValue="{Binding ScoreThreshold}"/>
+                <controls:SliderParameter Label="Max Instances"
+                    Value="{Binding MaxInstances}" Minimum="1" Maximum="50"
+                    TickFrequency="1" ValueFormat="F0"
+                    ToolType="FeatureMatchTool" ParameterName="MaxInstances"/>
+                <controls:SliderParameter Label="Min Coverage"
+                    Value="{Binding MinCoverage}" Minimum="0" Maximum="1"
+                    TickFrequency="0.05" ValueFormat="F2"
+                    ToolType="FeatureMatchTool" ParameterName="MinCoverage"/>
                 <controls:CheckBoxParameter Label="Contrast Invariant"
                     IsChecked="{Binding UseContrastInvariant}"
                     ToolType="FeatureMatchTool" ParameterName="UseContrastInvariant"/>
@@ -314,6 +322,10 @@
                     Value="{Binding NumLevels}" Minimum="1" Maximum="6"
                     TickFrequency="1" ValueFormat="F0"
                     ToolType="FeatureMatchTool" ParameterName="NumLevels"/>
+                <controls:SliderParameter Label="NMS Distance"
+                    Value="{Binding NmsDistanceFactor}" Minimum="0.1" Maximum="3"
+                    TickFrequency="0.05" ValueFormat="F2"
+                    ToolType="FeatureMatchTool" ParameterName="NmsDistanceFactor"/>
             </StackPanel>
         </Expander>
 

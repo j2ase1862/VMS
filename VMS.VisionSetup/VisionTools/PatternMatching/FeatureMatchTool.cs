@@ -93,13 +93,30 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                 double minSeparation, int outK,
                 double* outCx, double* outCy, double* outAngle, int* outVotes);
 
+            [DllImport(DllName, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+            public static extern int HoughVotingTopKMultiNative(
+                float* modelX, float* modelY, int modelCount,
+                int* binOffsets, int* binIndices, int numGradBins,
+                int* searchX, int* searchY, int* searchBin, int searchEdgeCount,
+                int voteWidth, int voteHeight,
+                double angleStart, double angleExtent,
+                double coarseAngleStep, double fineAngleStep, int topK,
+                double invScale, int binShiftBits,
+                int peaksPerAngle,
+                double minSeparation, int outK,
+                double* outCx, double* outCy, double* outAngle, int* outVotes);
+
             private static readonly bool _isAvailable = ProbeNative();
             private static readonly bool _hasTopKExport = ProbeExport("HoughVotingTopKNative");
+            private static readonly bool _hasTopKMultiExport = ProbeExport("HoughVotingTopKMultiNative");
 
             public static bool IsAvailable => _isAvailable;
 
             /// <summary>구버전 DLL(단일 피크 export만)과의 호환 — 없으면 단일 경로 폴백.</summary>
             public static bool HasTopKExport => _hasTopKExport;
+
+            /// <summary>각도당 다중 피크 export — 없으면(구 DLL) 다중 인스턴스는 managed 투표로 폴백.</summary>
+            public static bool HasTopKMultiExport => _hasTopKMultiExport;
 
             private static bool ProbeNative()
             {
@@ -204,6 +221,36 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
         private double _scoreThreshold = 0.5;
         public double ScoreThreshold { get => _scoreThreshold; set => SetProperty(ref _scoreThreshold, value); }
 
+        // ── 다중 인스턴스 검출 (ShapeMatchTool과 동일 파라미터/결과 키 체계) ──
+        private int _maxInstances = 1;
+        /// <summary>찾을 최대 인스턴스 수. 1이면 단일 매칭(기존 동작), 2+면 투표 다중 피크 + NMS로 상위 N개.</summary>
+        public int MaxInstances
+        {
+            get => _maxInstances;
+            set => SetProperty(ref _maxInstances, Math.Clamp(value, 1, 50));
+        }
+
+        private double _nmsDistanceFactor = 0.5;
+        /// <summary>인스턴스 분리 거리 = 템플릿 짧은 변 × 이 값. 이보다 가까운 매칭은
+        /// 같은 인스턴스로 보고 낮은 점수를 억제한다 (투표 후보 NMS·최종 NMS 공용).</summary>
+        public double NmsDistanceFactor
+        {
+            get => _nmsDistanceFactor;
+            set => SetProperty(ref _nmsDistanceFactor, Math.Clamp(value, 0.1, 3.0));
+        }
+
+        // ── 커버리지 판정 — 부분(반쪽) 매칭 기각 ──
+        // 스코어(그래디언트 내적 평균)는 모델 절반만 정합해도 ~0.5가 나와, 임계가
+        // 낮거나 특징점이 적으면 중심이 어긋난 반쪽 매칭이 통과한다(실증 PC 보고).
+        // 커버리지 = "점별로 실제 일치한 모델 점의 비율"이라 반쪽 매칭은 ~0.5에 묶인다.
+        private double _minCoverage;
+        /// <summary>최소 커버리지(0~1). 0이면 비활성. 매칭 커버리지가 이 값 미만이면 기각. 권장 0.6~0.75.</summary>
+        public double MinCoverage
+        {
+            get => _minCoverage;
+            set => SetProperty(ref _minCoverage, Math.Clamp(value, 0, 1));
+        }
+
         // ── 각도/스케일 판정 (Web ParamCode 연동 가능) ──
         // 검색 범위(AngleStart/Extent, Min/MaxScale)와 별개로, 찾은 매칭의 자세가
         // 허용 범위를 벗어나면 NG 처리하는 판정 기준. 기본 비활성 (기존 동작 유지).
@@ -269,6 +316,10 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
 
         private bool _hasSuggestions;
         public bool HasSuggestions { get => _hasSuggestions; set => SetProperty(ref _hasSuggestions, value); }
+
+        private string? _lastTrainWarning;
+        /// <summary>직전 학습의 경고(특징점 부족 등). 없으면 null — UI 상태 표시용.</summary>
+        public string? LastTrainWarning { get => _lastTrainWarning; set => SetProperty(ref _lastTrainWarning, value); }
 
         #endregion
 
@@ -487,7 +538,8 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
 
                 // Pre-allocate native pose buffers based on worst-case pose count
                 {
-                    double coarseA = Math.Max(AngleStep, 4.0);
+                    // 정련 각도 창 = 코스 스텝 + 그래디언트 빈 폭 (MatchSingleModel 과 동일식)
+                    double coarseA = Math.Max(AngleStep, 4.0) + BIN_WIDTH_DEG;
                     double fineA = Math.Max(0.1, AngleStep / 2.0);
                     double sRange = (MaxScale - MinScale) / 2.0;
                     double sStep = Math.Max(0.001, ScaleStep);
@@ -506,6 +558,13 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                 OnPropertyChanged(nameof(TrainedFeatureImage));
                 OnPropertyChanged(nameof(SelectedModelTemplateImage));
                 OnPropertyChanged(nameof(SelectedModelFeatureImage));
+
+                // 특징점이 적으면 스코어 분산이 커져 부분(반쪽) 매칭·중심 이탈이 빈발한다
+                // (실증 PC 보고, 2026-08-31) — 학습 시점에 바로 경고해 원인 파악을 돕는다.
+                LastTrainWarning = model.ModelEdges.Count is >= 10 and < 60
+                    ? $"학습 특징점이 {model.ModelEdges.Count}개로 적습니다 — 부분 매칭으로 중심이 어긋날 수 있습니다. " +
+                      "Canny 임계를 낮추거나 학습 영역을 넓히고, Min Coverage 판정 사용을 권장합니다."
+                    : null;
 
                 return model.ModelEdges.Count >= 10;
             }
@@ -935,7 +994,7 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                 }
             }
 
-            var (s, mx, my, ma, ms, _) = MatchSingleModel(model, gray, dxPtr, dyPtr, magPtr,
+            var (locMatches, _) = MatchSingleModel(model, gray, dxPtr, dyPtr, magPtr,
                 W, H, 0, 0, pyramidScale, actualLevels, vW, vH, seX, seY, seBin, sei, pool);
 
             pool.Return(seX);
@@ -943,8 +1002,13 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
             pool.Return(seBin);
             if (coarseImg != null && coarseImg != gray) coarseImg.Dispose();
 
-            score = s; x = mx; y = my; angle = NormalizeAngle(ma); scale = ms;
-            return s > 0;
+            var best = (score: 0.0, x: 0.0, y: 0.0, angle: 0.0, scale: 1.0);
+            foreach (var m in locMatches)
+                if (m.score > best.score) best = (m.score, m.x, m.y, m.angle, m.scale);
+
+            score = best.score; x = best.x; y = best.y;
+            angle = NormalizeAngle(best.angle); scale = best.scale;
+            return best.score > 0;
         }
 
         #endregion
@@ -1070,28 +1134,24 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                 }
                 int searchEdgeCount = sei;
 
-                // ── 4. Iterate all enabled models ──
+                // ── 4. Iterate all enabled models — 모델별 정련 후보 전부 수집 ──
+                var allMatches = new List<(double score, double x, double y, double angle, double scale,
+                    double coverage, FeatureMatchModel model)>();
                 double globalBestScore = 0;
-                double globalBestX = 0, globalBestY = 0, globalBestAngle = 0, globalBestScale = 1.0;
-                FeatureMatchModel? bestModel = null;
                 double globalBestVoteVal = 0;
 
                 foreach (var model in enabledModels)
                 {
-                    var (modelScore, modelX, modelY, modelAngle, modelScale, modelVoteVal) =
+                    var (modelMatches, modelVoteVal) =
                         MatchSingleModel(model, searchGray, dxPtr, dyPtr, magPtr,
                             W, H, offsetX, offsetY, pyramidScale, actualLevels,
                             vW, vH, seX, seY, seBin, searchEdgeCount, pool);
 
-                    if (modelScore > globalBestScore)
+                    if (modelVoteVal > globalBestVoteVal) globalBestVoteVal = modelVoteVal;
+                    foreach (var m in modelMatches)
                     {
-                        globalBestScore = modelScore;
-                        globalBestX = modelX;
-                        globalBestY = modelY;
-                        globalBestAngle = modelAngle;
-                        globalBestScale = modelScale;
-                        bestModel = model;
-                        globalBestVoteVal = modelVoteVal;
+                        if (m.score > globalBestScore) globalBestScore = m.score;
+                        allMatches.Add((m.score, m.x, m.y, m.angle, m.scale, m.coverage, model));
                     }
                 }
 
@@ -1101,38 +1161,87 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                 if (coarseImg != null && coarseImg != searchGray)
                     coarseImg.Dispose();
 
-                // ── 5. Build result ──
+                // ── 5. Build result — 임계/커버리지 통과 → 점수순 → 전역 NMS → 상위 N ──
                 sw.Stop();
                 ExecutionTime = sw.Elapsed.TotalMilliseconds;
-                LastMatchedModel = bestModel;
 
-                if (globalBestScore >= ScoreThreshold && bestModel != null)
+                var accepted = allMatches
+                    .Where(m => m.score >= ScoreThreshold && (MinCoverage <= 0 || m.coverage >= MinCoverage))
+                    .OrderByDescending(m => m.score)
+                    .ToList();
+
+                // 전역 NMS — 모델이 여럿이면 서로 다른 모델이 같은 위치를 두 번 잡는
+                // 것도 여기서 걸러진다. 분리 거리는 템플릿 짧은 변 × NmsDistanceFactor.
+                var kept = new List<(double score, double x, double y, double angle, double scale,
+                    double coverage, FeatureMatchModel model)>();
+                foreach (var c in accepted)
                 {
-                    double finalX = globalBestX + offsetX;
-                    double finalY = globalBestY + offsetY;
+                    if (kept.Count >= MaxInstances) break;
+                    double minSide = Math.Min(c.model.TemplateWidth, c.model.TemplateHeight)
+                        * c.scale * NmsDistanceFactor;
+                    bool dup = false;
+                    foreach (var kInst in kept)
+                    {
+                        double dx = c.x - kInst.x, dy = c.y - kInst.y;
+                        if (dx * dx + dy * dy < minSide * minSide) { dup = true; break; }
+                    }
+                    if (!dup) kept.Add(c);
+                }
+
+                LastMatchedModel = kept.Count > 0 ? kept[0].model : null;
+                result.Data["MatchCount"] = kept.Count;
+
+                if (kept.Count > 0)
+                {
+                    var rep = kept[0];
+                    double finalX = rep.x + offsetX;
+                    double finalY = rep.y + offsetY;
 
                     // 정련이 코스 최적각 ±코스스텝을 탐색하므로 360° 검색(Start -180, Extent 360)
                     // 경계에서 ±180 밖 각도(예: 183°)가 나올 수 있다 — 보고/판정 전 정규화.
                     // 미정규화 시 각도 판정(허용 -180~180)이 경계 근처 정상품을 오탐 NG 처리.
-                    globalBestAngle = NormalizeAngle(globalBestAngle);
+                    double repAngle = NormalizeAngle(rep.angle);
 
                     result.Success = true;
-                    string modelInfo = Models.Count > 1 ? $", Model={bestModel.Name}" : "";
-                    result.Message = $"Score={globalBestScore:F3}, Pos=({finalX:F1},{finalY:F1}), Angle={globalBestAngle:F2}, Scale={globalBestScale:F3}{modelInfo}";
-                    result.Data["Score"] = globalBestScore;
+                    string modelInfo = Models.Count > 1 ? $", Model={rep.model.Name}" : "";
+                    string countInfo = kept.Count > 1 ? $", Instances={kept.Count}" : "";
+                    result.Message = $"Score={rep.score:F3}, Pos=({finalX:F1},{finalY:F1}), Angle={repAngle:F2}, Scale={rep.scale:F3}, Coverage={rep.coverage:F2}{countInfo}{modelInfo}";
+                    result.Data["Score"] = rep.score;
                     result.Data["CenterX"] = finalX;
                     result.Data["CenterY"] = finalY;
-                    result.Data["Angle"] = globalBestAngle;
-                    result.Data["Scale"] = globalBestScale;
-                    result.Data["MatchedModel"] = bestModel.Name;
-                    result.Data["TrainedCenterX"] = bestModel.TrainedCenterX;
-                    result.Data["TrainedCenterY"] = bestModel.TrainedCenterY;
-                    result.OverlayImage = DrawOverlay(inputImage, finalX, finalY, globalBestAngle, globalBestScale,
-                        bestModel.TemplateWidth, bestModel.TemplateHeight, bestModel.ModelEdges);
+                    result.Data["Angle"] = repAngle;
+                    result.Data["Scale"] = rep.scale;
+                    result.Data["Coverage"] = rep.coverage;
+                    result.Data["MatchedModel"] = rep.model.Name;
+                    result.Data["TrainedCenterX"] = rep.model.TrainedCenterX;
+                    result.Data["TrainedCenterY"] = rep.model.TrainedCenterY;
+
+                    // 다중 인스턴스 키 — ShapeMatchTool 과 동일 체계. 대표(최고 점수)는
+                    // 위의 기존 키에 그대로 실려 Fixture/Align 등 단일 소비처와 호환.
+                    if (MaxInstances > 1)
+                    {
+                        for (int i = 0; i < kept.Count; i++)
+                        {
+                            var m = kept[i];
+                            result.Data[$"Match{i}_Score"] = m.score;
+                            result.Data[$"Match{i}_CenterX"] = m.x + offsetX;
+                            result.Data[$"Match{i}_CenterY"] = m.y + offsetY;
+                            result.Data[$"Match{i}_Angle"] = NormalizeAngle(m.angle);
+                            result.Data[$"Match{i}_Scale"] = m.scale;
+                            result.Data[$"Match{i}_Coverage"] = m.coverage;
+                        }
+                    }
+
+                    var overlayInstances = new List<(double x, double y, double angle, double scale,
+                        double score, FeatureMatchModel model)>(kept.Count);
+                    foreach (var m in kept)
+                        overlayInstances.Add((m.x + offsetX, m.y + offsetY, NormalizeAngle(m.angle), m.scale, m.score, m.model));
+                    result.OverlayImage = DrawOverlay(inputImage, overlayInstances);
 
                     // 각도/스케일 판정 — 매칭은 찾았으나 자세가 허용 범위를 벗어나면 NG.
                     // Data/오버레이는 그대로 남겨 측정값 확인·Web 업로드가 가능하게 한다.
-                    var poseNg = EvaluatePoseJudgment(globalBestAngle, globalBestScale);
+                    // 다중 인스턴스에서도 대표(최고 점수) 기준 (ShapeMatch 와 동일).
+                    var poseNg = EvaluatePoseJudgment(repAngle, rep.scale);
                     if (poseNg != null)
                     {
                         result.Success = false;
@@ -1142,7 +1251,21 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                 else
                 {
                     result.Success = false;
-                    result.Message = $"패턴을 찾지 못했습니다. (최대 Score={globalBestScore:F3}, Votes={globalBestVoteVal})";
+
+                    // 임계는 넘었으나 커버리지 판정으로 전량 기각된 경우 — 부분(반쪽)
+                    // 매칭이 의심되는 상황이므로 진단 메시지를 구체적으로 남긴다.
+                    double covRejScore = 0, covRejVal = 0;
+                    if (MinCoverage > 0)
+                        foreach (var m in allMatches)
+                            if (m.score >= ScoreThreshold && m.coverage < MinCoverage && m.score > covRejScore)
+                            {
+                                covRejScore = m.score;
+                                covRejVal = m.coverage;
+                            }
+
+                    result.Message = covRejScore > 0
+                        ? $"커버리지 부족으로 기각: Score={covRejScore:F3}, Coverage={covRejVal:F2} < {MinCoverage:F2} — 부분(반쪽) 매칭 의심. 학습 특징점 수와 Canny 임계를 확인하세요."
+                        : $"패턴을 찾지 못했습니다. (최대 Score={globalBestScore:F3}, Votes={globalBestVoteVal})";
                     if (UseSearchRegion && SearchRegion.Width > 0 && SearchRegion.Height > 0)
                     {
                         var overlay = GetColorOverlayBase(inputImage);
@@ -1216,9 +1339,10 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
         }
 
         /// <summary>
-        /// Run matching for a single model and return its best result.
+        /// Run matching for a single model. 정련까지 마친 후보 목록(점수 미필터)과
+        /// 최대 득표수를 반환한다 — 채택(임계/커버리지/NMS/상위 N)은 Execute 가 수행.
         /// </summary>
-        private (double score, double x, double y, double angle, double scale, double voteVal)
+        private (List<(double score, double x, double y, double angle, double scale, double coverage)> matches, double voteVal)
             MatchSingleModel(
                 FeatureMatchModel model, Mat searchGray,
                 float* dxPtr, float* dyPtr, float* magPtr,
@@ -1240,146 +1364,122 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
 
             // 투표 피크를 1개가 아니라 공간적으로 분리된 상위 K개로 받는다 — 배경
             // 구조물·이웃 부품·그림자 덩어리가 최다 득표해도 진짜 위치가 후보에 남아
-            // 정련(점수) 단계에서 판가름 난다. 분리 반경은 템플릿 절반 크기(투표 px).
-            const int TOP_CANDIDATES = 3;
-            var voteCands = new List<(double cx, double cy, double angle, int votes)>(TOP_CANDIDATES);
+            // 정련(점수) 단계에서 판가름 난다. 다중 인스턴스면 후보 수와 각도당 피크
+            // 수를 함께 늘려, 같은 각도로 놓인 동일 객체 여러 개도 후보에 들게 한다.
+            int topCandidates = Math.Max(3, Math.Min(MaxInstances * 2, 60));
+            int peaksPerAngle = MaxInstances > 1 ? Math.Min(MaxInstances, 16) : 1;
+            int coarseTopK = Math.Max(5, Math.Min(MaxInstances + 2, 12));
             double minSeparation = Math.Max(4.0,
-                Math.Min(model.TemplateWidth, model.TemplateHeight) * 0.5 * invScale);
+                Math.Min(model.TemplateWidth, model.TemplateHeight) * NmsDistanceFactor * invScale);
 
-            if (NativeVision.IsAvailable && model.ModelXArray != null && model.ModelYArray != null)
+            // 투표 스케일 축 — 투표는 원래 학습 스케일 고정이라, 실물 스케일이 중심에서
+            // 멀면(넓은 Min/MaxScale 설정) 투표 피크가 번져 진짜 위치가 후보에 못 든다.
+            // 스케일 범위가 ±0.15 를 넘으면 코스 스케일 몇 개로 나눠 투표하고 후보를
+            // 합친다 (기본 0.9~1.1 은 중심 1회 → 기존과 동일 비용).
+            double scaleCenter = (MinScale + MaxScale) / 2.0;
+            double scaleRange = (MaxScale - MinScale) / 2.0;
+            const double VOTE_SCALE_STEP = 0.15;
+            var voteScales = new List<double> { scaleCenter };
+            for (int k = 1; voteScales.Count < 5 && k * VOTE_SCALE_STEP <= scaleRange + 1e-9; k++)
             {
+                voteScales.Add(scaleCenter - k * VOTE_SCALE_STEP);
+                if (voteScales.Count < 5) voteScales.Add(scaleCenter + k * VOTE_SCALE_STEP);
+            }
+
+            var rawCands = new List<(double cx, double cy, double angle, int votes)>();
+
+            // 각도당 다중 피크가 필요한데 구 DLL(Multi export 없음)이면 managed 투표로
+            // 폴백 — 네이티브 TopK 는 각도당 피크 1개라 같은 각도의 인스턴스를 못 나눈다.
+            bool nativeVoting = NativeVision.IsAvailable && model.ModelXArray != null && model.ModelYArray != null
+                && (peaksPerAngle == 1 || NativeVision.HasTopKMultiExport);
+
+            if (nativeVoting)
+            {
+                double* oCx = stackalloc double[topCandidates];
+                double* oCy = stackalloc double[topCandidates];
+                double* oAng = stackalloc double[topCandidates];
+                int* oVotes = stackalloc int[topCandidates];
+
                 fixed (float* pModelX = model.ModelXArray, pModelY = model.ModelYArray)
                 fixed (int* pBinOffsets = binOffsets, pBinIndices = binIndices)
                 fixed (int* pSeX = seX, pSeY = seY, pSeBin = seBin)
                 {
-                    if (NativeVision.HasTopKExport)
+                    foreach (var voteScale in voteScales)
                     {
-                        double* oCx = stackalloc double[TOP_CANDIDATES];
-                        double* oCy = stackalloc double[TOP_CANDIDATES];
-                        double* oAng = stackalloc double[TOP_CANDIDATES];
-                        int* oVotes = stackalloc int[TOP_CANDIDATES];
-                        int filled = NativeVision.HoughVotingTopKNative(
-                            pModelX, pModelY, N,
-                            pBinOffsets, pBinIndices, NUM_GRAD_BINS,
-                            pSeX, pSeY, pSeBin, searchEdgeCount,
-                            vW, vH,
-                            AngleStart, AngleExtent,
-                            coarseAngleStep, fineVoteAngleStep, 5,
-                            invScale, BIN_SHIFT,
-                            minSeparation, TOP_CANDIDATES,
-                            oCx, oCy, oAng, oVotes);
-                        for (int i = 0; i < filled; i++)
-                            voteCands.Add((oCx[i], oCy[i], oAng[i], oVotes[i]));
-                    }
-                    else
-                    {
-                        // 구버전 DLL — 단일 최고 피크 경로 유지
-                        double outCx, outCy, outAngle;
-                        int outVotes;
-                        NativeVision.HoughVotingNative(
-                            pModelX, pModelY, N,
-                            pBinOffsets, pBinIndices, NUM_GRAD_BINS,
-                            pSeX, pSeY, pSeBin, searchEdgeCount,
-                            vW, vH,
-                            AngleStart, AngleExtent,
-                            coarseAngleStep, fineVoteAngleStep, 5,
-                            invScale, BIN_SHIFT,
-                            &outCx, &outCy, &outAngle, &outVotes);
-                        voteCands.Add((outCx, outCy, outAngle, outVotes));
+                        double effInvScale = invScale * voteScale;
+
+                        if (NativeVision.HasTopKMultiExport)
+                        {
+                            int filled = NativeVision.HoughVotingTopKMultiNative(
+                                pModelX, pModelY, N,
+                                pBinOffsets, pBinIndices, NUM_GRAD_BINS,
+                                pSeX, pSeY, pSeBin, searchEdgeCount,
+                                vW, vH,
+                                AngleStart, AngleExtent,
+                                coarseAngleStep, fineVoteAngleStep, coarseTopK,
+                                effInvScale, BIN_SHIFT,
+                                peaksPerAngle,
+                                minSeparation, topCandidates,
+                                oCx, oCy, oAng, oVotes);
+                            for (int i = 0; i < filled; i++)
+                                rawCands.Add((oCx[i], oCy[i], oAng[i], oVotes[i]));
+                        }
+                        else if (NativeVision.HasTopKExport)
+                        {
+                            int filled = NativeVision.HoughVotingTopKNative(
+                                pModelX, pModelY, N,
+                                pBinOffsets, pBinIndices, NUM_GRAD_BINS,
+                                pSeX, pSeY, pSeBin, searchEdgeCount,
+                                vW, vH,
+                                AngleStart, AngleExtent,
+                                coarseAngleStep, fineVoteAngleStep, coarseTopK,
+                                effInvScale, BIN_SHIFT,
+                                minSeparation, topCandidates,
+                                oCx, oCy, oAng, oVotes);
+                            for (int i = 0; i < filled; i++)
+                                rawCands.Add((oCx[i], oCy[i], oAng[i], oVotes[i]));
+                        }
+                        else
+                        {
+                            // 구버전 DLL — 단일 최고 피크 경로 유지
+                            double outCx, outCy, outAngle;
+                            int outVotes;
+                            NativeVision.HoughVotingNative(
+                                pModelX, pModelY, N,
+                                pBinOffsets, pBinIndices, NUM_GRAD_BINS,
+                                pSeX, pSeY, pSeBin, searchEdgeCount,
+                                vW, vH,
+                                AngleStart, AngleExtent,
+                                coarseAngleStep, fineVoteAngleStep, 5,
+                                effInvScale, BIN_SHIFT,
+                                &outCx, &outCy, &outAngle, &outVotes);
+                            rawCands.Add((outCx, outCy, outAngle, outVotes));
+                        }
                     }
                 }
             }
             else
             {
-                // C# fallback with multi-resolution angle search
+                // C# fallback with multi-resolution angle search (+ 다중 피크·다중 스케일)
                 int bW = (vW >> BIN_SHIFT) + 1;
                 int bH = (vH >> BIN_SHIFT) + 1;
                 int accLen = bW * bH;
                 int numCoarseAngles = Math.Max(1, (int)(AngleExtent / coarseAngleStep) + 1);
-                const int TopK = 5;
+                int sepBins = Math.Max(1, (int)(minSeparation / (1 << BIN_SHIFT)));
 
-                var coarseCandidates = new (double angle, double cx, double cy, int votes)[TopK];
                 object lockObj = new();
                 var modelEdges = model.ModelEdges;
-
-                Parallel.For(0, numCoarseAngles, ai =>
-                {
-                    double angle = AngleStart + ai * coarseAngleStep;
-                    double rad = angle * (Math.PI / 180.0);
-                    double cosA = Math.Cos(rad);
-                    double sinA = Math.Sin(rad);
-
-                    int[] rotX = pool.Rent(N);
-                    int[] rotY = pool.Rent(N);
-                    int[] acc = pool.Rent(accLen);
-                    Array.Clear(acc, 0, accLen);
-
-                    for (int i = 0; i < N; i++)
-                    {
-                        var mp = modelEdges[i];
-                        rotX[i] = (int)Math.Round((mp.X * cosA - mp.Y * sinA) * invScale);
-                        rotY[i] = (int)Math.Round((mp.X * sinA + mp.Y * cosA) * invScale);
-                    }
-
-                    int binShift = (int)Math.Round(angle / BIN_WIDTH_DEG);
-
-                    for (int si = 0; si < searchEdgeCount; si++)
-                    {
-                        int ex = seX[si], ey = seY[si], sb = seBin[si];
-                        for (int db = -1; db <= 1; db++)
-                        {
-                            int modelBin = ((sb - binShift + db) % NUM_GRAD_BINS + NUM_GRAD_BINS) % NUM_GRAD_BINS;
-                            int bStart = binOffsets[modelBin];
-                            int bEnd = binOffsets[modelBin + 1];
-                            for (int bi = bStart; bi < bEnd; bi++)
-                            {
-                                int j = binIndices[bi];
-                                int cx = (ex - rotX[j]) >> BIN_SHIFT;
-                                int cy = (ey - rotY[j]) >> BIN_SHIFT;
-                                if ((uint)cx < (uint)bW && (uint)cy < (uint)bH)
-                                    acc[cy * bW + cx]++;
-                            }
-                        }
-                    }
-
-                    int maxVote = 0, maxIdx = 0;
-                    for (int i = 0; i < accLen; i++)
-                    {
-                        if (acc[i] > maxVote) { maxVote = acc[i]; maxIdx = i; }
-                    }
-
-                    pool.Return(rotX);
-                    pool.Return(rotY);
-                    pool.Return(acc);
-
-                    double peakCx = (maxIdx % bW) * (1 << BIN_SHIFT) + (1 << BIN_SHIFT) / 2;
-                    double peakCy = (maxIdx / bW) * (1 << BIN_SHIFT) + (1 << BIN_SHIFT) / 2;
-
-                    lock (lockObj)
-                    {
-                        if (maxVote > coarseCandidates[TopK - 1].votes)
-                        {
-                            coarseCandidates[TopK - 1] = (angle, peakCx, peakCy, maxVote);
-                            for (int k = TopK - 1; k > 0 && coarseCandidates[k].votes > coarseCandidates[k - 1].votes; k--)
-                                (coarseCandidates[k], coarseCandidates[k - 1]) = (coarseCandidates[k - 1], coarseCandidates[k]);
-                        }
-                    }
-                });
-
-                // Fine pass — 모든 파인 결과를 모아 두었다가 NMS 로 상위 K개 선별
                 var fineAll = new List<(double cx, double cy, double angle, int votes)>();
-                foreach (var cand in coarseCandidates)
+                (double angle, double cx, double cy, int votes) coarseFallback = default;
+
+                foreach (var voteScale in voteScales)
                 {
-                    if (cand.votes == 0) continue;
-                    double fineStart = cand.angle - coarseAngleStep;
-                    double fineEnd = cand.angle + coarseAngleStep;
-                    int numFine = Math.Max(1, (int)((fineEnd - fineStart) / fineVoteAngleStep) + 1);
+                    double effInvScale = invScale * voteScale;
+                    var coarseCandidates = new (double angle, double cx, double cy, int votes)[coarseTopK];
 
-                    Parallel.For(0, numFine, fi =>
+                    Parallel.For(0, numCoarseAngles, ai =>
                     {
-                        double angle = fineStart + fi * fineVoteAngleStep;
-                        if (angle < AngleStart || angle > AngleStart + AngleExtent) return;
-
+                        double angle = AngleStart + ai * coarseAngleStep;
                         double rad = angle * (Math.PI / 180.0);
                         double cosA = Math.Cos(rad);
                         double sinA = Math.Sin(rad);
@@ -1392,8 +1492,8 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                         for (int i = 0; i < N; i++)
                         {
                             var mp = modelEdges[i];
-                            rotX[i] = (int)Math.Round((mp.X * cosA - mp.Y * sinA) * invScale);
-                            rotY[i] = (int)Math.Round((mp.X * sinA + mp.Y * cosA) * invScale);
+                            rotX[i] = (int)Math.Round((mp.X * cosA - mp.Y * sinA) * effInvScale);
+                            rotY[i] = (int)Math.Round((mp.X * sinA + mp.Y * cosA) * effInvScale);
                         }
 
                         int binShift = (int)Math.Round(angle / BIN_WIDTH_DEG);
@@ -1417,49 +1517,121 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                             }
                         }
 
-                        int maxVote = 0, maxIdx = 0;
-                        for (int i = 0; i < accLen; i++)
-                        {
-                            if (acc[i] > maxVote) { maxVote = acc[i]; maxIdx = i; }
-                        }
+                        var peaks = ExtractAccumulatorPeaks(acc, bW, bH, accLen, peaksPerAngle, sepBins);
 
                         pool.Return(rotX);
                         pool.Return(rotY);
                         pool.Return(acc);
 
-                        double peakCx = (maxIdx % bW) * (1 << BIN_SHIFT) + (1 << BIN_SHIFT) / 2;
-                        double peakCy = (maxIdx / bW) * (1 << BIN_SHIFT) + (1 << BIN_SHIFT) / 2;
-
                         lock (lockObj)
                         {
-                            fineAll.Add((peakCx, peakCy, angle, maxVote));
+                            foreach (var (votes, idx) in peaks)
+                            {
+                                if (votes <= coarseCandidates[coarseTopK - 1].votes) continue;
+                                double peakCx = (idx % bW) * (1 << BIN_SHIFT) + (1 << BIN_SHIFT) / 2;
+                                double peakCy = (idx / bW) * (1 << BIN_SHIFT) + (1 << BIN_SHIFT) / 2;
+                                coarseCandidates[coarseTopK - 1] = (angle, peakCx, peakCy, votes);
+                                for (int k = coarseTopK - 1; k > 0 && coarseCandidates[k].votes > coarseCandidates[k - 1].votes; k--)
+                                    (coarseCandidates[k], coarseCandidates[k - 1]) = (coarseCandidates[k - 1], coarseCandidates[k]);
+                            }
                         }
                     });
+
+                    if (coarseCandidates[0].votes >= coarseFallback.votes)
+                        coarseFallback = coarseCandidates[0];
+
+                    // Fine pass — 모든 파인 결과를 모아 두었다가 NMS 로 상위 K개 선별.
+                    // 다중 피크에서는 같은 각도의 코스 후보가 위치만 달리해 여러 개
+                    // 들어오는데, 파인 스윕은 위치 무관이므로 각도당 1회면 충분하다.
+                    var sweptAngles = new List<double>();
+                    foreach (var cand in coarseCandidates)
+                    {
+                        if (cand.votes == 0) continue;
+                        if (sweptAngles.Contains(cand.angle)) continue;
+                        sweptAngles.Add(cand.angle);
+
+                        double fineStart = cand.angle - coarseAngleStep;
+                        double fineEnd = cand.angle + coarseAngleStep;
+                        int numFine = Math.Max(1, (int)((fineEnd - fineStart) / fineVoteAngleStep) + 1);
+
+                        Parallel.For(0, numFine, fi =>
+                        {
+                            double angle = fineStart + fi * fineVoteAngleStep;
+                            if (angle < AngleStart || angle > AngleStart + AngleExtent) return;
+
+                            double rad = angle * (Math.PI / 180.0);
+                            double cosA = Math.Cos(rad);
+                            double sinA = Math.Sin(rad);
+
+                            int[] rotX = pool.Rent(N);
+                            int[] rotY = pool.Rent(N);
+                            int[] acc = pool.Rent(accLen);
+                            Array.Clear(acc, 0, accLen);
+
+                            for (int i = 0; i < N; i++)
+                            {
+                                var mp = modelEdges[i];
+                                rotX[i] = (int)Math.Round((mp.X * cosA - mp.Y * sinA) * effInvScale);
+                                rotY[i] = (int)Math.Round((mp.X * sinA + mp.Y * cosA) * effInvScale);
+                            }
+
+                            int binShift = (int)Math.Round(angle / BIN_WIDTH_DEG);
+
+                            for (int si = 0; si < searchEdgeCount; si++)
+                            {
+                                int ex = seX[si], ey = seY[si], sb = seBin[si];
+                                for (int db = -1; db <= 1; db++)
+                                {
+                                    int modelBin = ((sb - binShift + db) % NUM_GRAD_BINS + NUM_GRAD_BINS) % NUM_GRAD_BINS;
+                                    int bStart = binOffsets[modelBin];
+                                    int bEnd = binOffsets[modelBin + 1];
+                                    for (int bi = bStart; bi < bEnd; bi++)
+                                    {
+                                        int j = binIndices[bi];
+                                        int cx = (ex - rotX[j]) >> BIN_SHIFT;
+                                        int cy = (ey - rotY[j]) >> BIN_SHIFT;
+                                        if ((uint)cx < (uint)bW && (uint)cy < (uint)bH)
+                                            acc[cy * bW + cx]++;
+                                    }
+                                }
+                            }
+
+                            var peaks = ExtractAccumulatorPeaks(acc, bW, bH, accLen, peaksPerAngle, sepBins);
+
+                            pool.Return(rotX);
+                            pool.Return(rotY);
+                            pool.Return(acc);
+
+                            lock (lockObj)
+                            {
+                                foreach (var (votes, idx) in peaks)
+                                {
+                                    double peakCx = (idx % bW) * (1 << BIN_SHIFT) + (1 << BIN_SHIFT) / 2;
+                                    double peakCy = (idx / bW) * (1 << BIN_SHIFT) + (1 << BIN_SHIFT) / 2;
+                                    fineAll.Add((peakCx, peakCy, angle, votes));
+                                }
+                            }
+                        });
+                    }
                 }
 
-                voteCands.AddRange(SelectTopKCandidates(fineAll, TOP_CANDIDATES, minSeparation));
-                if (voteCands.Count == 0)
-                    voteCands.Add((coarseCandidates[0].cx, coarseCandidates[0].cy,
-                        coarseCandidates[0].angle, coarseCandidates[0].votes));
+                rawCands.AddRange(fineAll);
+                if (rawCands.Count == 0)
+                    rawCands.Add((coarseFallback.cx, coarseFallback.cy,
+                        coarseFallback.angle, coarseFallback.votes));
             }
+
+            var voteCands = SelectTopKCandidates(rawCands, topCandidates, minSeparation);
+            if (voteCands.Count == 0 && rawCands.Count > 0)
+                voteCands.Add(rawCands[0]);
 
             double bestVoteVal = 0;
             foreach (var vc in voteCands)
                 if (vc.votes > bestVoteVal) bestVoteVal = vc.votes;
 
-            // ── Phase 2: 후보별 SIMD gradient dot-product refinement — 최고 점수 채택 ──
+            // ── Phase 2: 후보별 SIMD gradient dot-product refinement — 후보 전부 보존 ──
             double fineAngleStep = Math.Max(0.1, AngleStep / 2.0);
             double fineScaleStep = Math.Max(0.001, ScaleStep);
-            double scaleCenter = (MinScale + MaxScale) / 2.0;
-            double scaleRange = (MaxScale - MinScale) / 2.0;
-
-            double bestScore = 0, bestX = 0, bestY = 0, bestAngle = 0, bestScale = 1.0;
-            if (voteCands.Count > 0)
-            {
-                bestX = voteCands[0].cx * pyramidScale;
-                bestY = voteCands[0].cy * pyramidScale;
-                bestAngle = voteCands[0].angle;
-            }
 
             // 투표는 코스 레벨에서 (1<<BIN_SHIFT)px 빈으로 양자화되므로 풀해상도 환산
             // 위치 오차가 최대 pyramidScale×(1<<BIN_SHIFT)px — 정련 반경이 이보다 작으면
@@ -1472,18 +1644,31 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
             float greedy = (float)Greediness;
             bool ciFlag = UseContrastInvariant;
 
+            // 다중 인스턴스에서는 2·3번째 인스턴스의 득표가 원래 낮으므로 컷 완화
+            double voteCut = MaxInstances > 1 ? 0.10 : 0.25;
+
+            // 정련 각도 창 — 투표는 그래디언트 방향 빈 ±1칸(±10°)을 허용하므로 직선
+            // 위주 형상은 ±15° 안에서 득표가 거의 같고, 최다 득표 각도가 진짜 각도에서
+            // 빈 폭만큼 어긋날 수 있다. 창을 코스 스텝만 잡으면 진짜 각도가 정련 밖에
+            // 남아 저점수 미검출·오검출이 된다 (다중 인스턴스 진단에서 실측 -12° 오프).
+            double refineAngleRange = coarseAngleStep + BIN_WIDTH_DEG;
+
+            var matches = new List<(double score, double x, double y, double angle, double scale, double coverage)>();
+
             foreach (var vc in voteCands)
             {
                 // 최고 득표 대비 미미한 후보는 정련 생략 (비용 절약)
-                if (vc.votes < bestVoteVal * 0.25) continue;
+                if (vc.votes < bestVoteVal * voteCut) continue;
 
                 double candCx = vc.cx * pyramidScale;
                 double candCy = vc.cy * pyramidScale;
 
+                double cScore = 0, cX = candCx, cY = candCy, cAngle = vc.angle, cScale = 1.0;
+
                 int poseCount;
                 PrecomputeFinePosesNative(
                     model,
-                    vc.angle, coarseAngleStep, fineAngleStep,
+                    vc.angle, refineAngleRange, fineAngleStep,
                     scaleCenter, scaleRange, fineScaleStep,
                     out poseCount);
 
@@ -1500,13 +1685,13 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                         W, H, thresh, greedy,
                         &bestDx, &bestDy, &bestPoseIdx,
                         ciFlag ? 1 : 0);
-                    if (score > bestScore)
+                    if (score > cScore)
                     {
-                        bestScore = score;
-                        bestX = (int)candCx + bestDx;
-                        bestY = (int)candCy + bestDy;
-                        bestAngle = model.NativeAngleBuf[bestPoseIdx];
-                        bestScale = model.NativeScaleBuf[bestPoseIdx];
+                        cScore = score;
+                        cX = (int)candCx + bestDx;
+                        cY = (int)candCy + bestDy;
+                        cAngle = model.NativeAngleBuf[bestPoseIdx];
+                        cScale = model.NativeScaleBuf[bestPoseIdx];
                     }
                 }
                 else if (poseCount > 0)
@@ -1530,42 +1715,125 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                                 double score = EvaluateSimd(
                                     px, py, pRx, pRy, pRdx, pRdy,
                                     dxPtr, dyPtr, magPtr, W, N, thresh, greedy, ciFlag);
-                                if (score > bestScore)
+                                if (score > cScore)
                                 {
-                                    bestScore = score;
-                                    bestX = px; bestY = py;
-                                    bestAngle = model.NativeAngleBuf[pi];
-                                    bestScale = model.NativeScaleBuf[pi];
+                                    cScore = score;
+                                    cX = px; cY = py;
+                                    cAngle = model.NativeAngleBuf[pi];
+                                    cScale = model.NativeScaleBuf[pi];
                                 }
                             }
                         }
                     }
                 }
+
+                if (cScore <= 0) continue;
+
+                // Sub-pixel parabolic refinement (인스턴스별)
+                if (cScore >= ScoreThreshold)
+                {
+                    int bxi = (int)cX, byi = (int)cY;
+
+                    double sxm = EvaluateSinglePose(model.ModelEdges, cAngle, cScale, bxi - 1, byi, dxPtr, dyPtr, magPtr, W, N, thresh, greedy, ciFlag);
+                    double sxp = EvaluateSinglePose(model.ModelEdges, cAngle, cScale, bxi + 1, byi, dxPtr, dyPtr, magPtr, W, N, thresh, greedy, ciFlag);
+                    cX = bxi + ParabolicPeak(sxm, cScore, sxp);
+
+                    double sym = EvaluateSinglePose(model.ModelEdges, cAngle, cScale, bxi, byi - 1, dxPtr, dyPtr, magPtr, W, N, thresh, greedy, ciFlag);
+                    double syp = EvaluateSinglePose(model.ModelEdges, cAngle, cScale, bxi, byi + 1, dxPtr, dyPtr, magPtr, W, N, thresh, greedy, ciFlag);
+                    cY = byi + ParabolicPeak(sym, cScore, syp);
+
+                    double sam = EvaluateSinglePose(model.ModelEdges, cAngle - fineAngleStep, cScale, bxi, byi, dxPtr, dyPtr, magPtr, W, N, thresh, greedy, ciFlag);
+                    double sap = EvaluateSinglePose(model.ModelEdges, cAngle + fineAngleStep, cScale, bxi, byi, dxPtr, dyPtr, magPtr, W, N, thresh, greedy, ciFlag);
+                    cAngle += ParabolicPeak(sam, cScore, sap) * fineAngleStep;
+
+                    double ssm = EvaluateSinglePose(model.ModelEdges, cAngle, cScale - fineScaleStep, bxi, byi, dxPtr, dyPtr, magPtr, W, N, thresh, greedy, ciFlag);
+                    double ssp = EvaluateSinglePose(model.ModelEdges, cAngle, cScale + fineScaleStep, bxi, byi, dxPtr, dyPtr, magPtr, W, N, thresh, greedy, ciFlag);
+                    cScale += ParabolicPeak(ssm, cScore, ssp) * fineScaleStep;
+                }
+
+                // 커버리지 — 점별 실제 일치 비율. 부분(반쪽) 매칭은 정합된 절반의
+                // 점만 통과해 ~0.5 에 묶인다 (스코어 평균과 달리 부분 정합을 식별).
+                double coverage = ComputeCoverage(model, cX, cY, cAngle, cScale,
+                    dxPtr, dyPtr, magPtr, W, H, ciFlag);
+
+                matches.Add((cScore, cX, cY, cAngle, cScale, coverage));
             }
 
-            // Sub-pixel parabolic refinement
-            if (bestScore >= ScoreThreshold)
+            return (matches, bestVoteVal);
+        }
+
+        /// <summary>
+        /// Accumulator 에서 공간 분리된 상위 피크를 최대 maxPeaks 개 추출 — 피크 채택 후
+        /// 주변 (2·sepBins+1)² 빈을 지워 같은 인스턴스의 중복 채택을 막는다.
+        /// acc 를 파괴하므로 호출 후 재사용 금지 (각도별로 새로 클리어됨).
+        /// </summary>
+        internal static List<(int votes, int idx)> ExtractAccumulatorPeaks(
+            int[] acc, int bW, int bH, int accLen, int maxPeaks, int sepBins)
+        {
+            var peaks = new List<(int votes, int idx)>(maxPeaks);
+            while (peaks.Count < maxPeaks)
             {
-                int bxi = (int)bestX, byi = (int)bestY;
+                int maxVote = 0, maxIdx = 0;
+                for (int i = 0; i < accLen; i++)
+                    if (acc[i] > maxVote) { maxVote = acc[i]; maxIdx = i; }
+                if (maxVote <= 0) break;
+                peaks.Add((maxVote, maxIdx));
+                if (peaks.Count >= maxPeaks) break;
 
-                double sxm = EvaluateSinglePose(model.ModelEdges, bestAngle, bestScale, bxi - 1, byi, dxPtr, dyPtr, magPtr, W, N, thresh, greedy, ciFlag);
-                double sxp = EvaluateSinglePose(model.ModelEdges, bestAngle, bestScale, bxi + 1, byi, dxPtr, dyPtr, magPtr, W, N, thresh, greedy, ciFlag);
-                bestX = bxi + ParabolicPeak(sxm, bestScore, sxp);
-
-                double sym = EvaluateSinglePose(model.ModelEdges, bestAngle, bestScale, bxi, byi - 1, dxPtr, dyPtr, magPtr, W, N, thresh, greedy, ciFlag);
-                double syp = EvaluateSinglePose(model.ModelEdges, bestAngle, bestScale, bxi, byi + 1, dxPtr, dyPtr, magPtr, W, N, thresh, greedy, ciFlag);
-                bestY = byi + ParabolicPeak(sym, bestScore, syp);
-
-                double sam = EvaluateSinglePose(model.ModelEdges, bestAngle - fineAngleStep, bestScale, bxi, byi, dxPtr, dyPtr, magPtr, W, N, thresh, greedy, ciFlag);
-                double sap = EvaluateSinglePose(model.ModelEdges, bestAngle + fineAngleStep, bestScale, bxi, byi, dxPtr, dyPtr, magPtr, W, N, thresh, greedy, ciFlag);
-                bestAngle += ParabolicPeak(sam, bestScore, sap) * fineAngleStep;
-
-                double ssm = EvaluateSinglePose(model.ModelEdges, bestAngle, bestScale - fineScaleStep, bxi, byi, dxPtr, dyPtr, magPtr, W, N, thresh, greedy, ciFlag);
-                double ssp = EvaluateSinglePose(model.ModelEdges, bestAngle, bestScale + fineScaleStep, bxi, byi, dxPtr, dyPtr, magPtr, W, N, thresh, greedy, ciFlag);
-                bestScale += ParabolicPeak(ssm, bestScore, ssp) * fineScaleStep;
+                int px = maxIdx % bW, py = maxIdx / bW;
+                int x0 = Math.Max(0, px - sepBins), y0 = Math.Max(0, py - sepBins);
+                int x1 = Math.Min(bW - 1, px + sepBins), y1 = Math.Min(bH - 1, py + sepBins);
+                for (int yy = y0; yy <= y1; yy++)
+                    Array.Clear(acc, yy * bW + x0, x1 - x0 + 1);
             }
+            return peaks;
+        }
 
-            return (bestScore, bestX, bestY, bestAngle, bestScale, bestVoteVal);
+        /// <summary>
+        /// 최종 자세에서 모델 점별로 그래디언트 방향 일치(내적 ≥ 0.5)를 판정해 일치
+        /// 비율을 반환한다. 분모는 전체 모델 점 — 이미지 밖·평탄 영역에 떨어진 점은
+        /// 불일치로 세어, 모델 절반만 정합한 반쪽 매칭이 높은 커버리지를 받지 못한다.
+        /// 서브픽셀 자세의 반올림 오차(±1px)에 관대하도록 3×3 이웃의 최대 일치를
+        /// 취한다 (RefineStableFeatures 와 동일 근거) — 객체가 없는 평탄 영역은
+        /// 이웃에도 그래디언트가 없어 여전히 탈락한다.
+        /// </summary>
+        private static double ComputeCoverage(FeatureMatchModel model,
+            double cx, double cy, double angle, double scale,
+            float* dxPtr, float* dyPtr, float* magPtr, int W, int H, bool contrastInvariant)
+        {
+            var edges = model.ModelEdges;
+            int n = edges.Count;
+            if (n == 0) return 0;
+
+            double rad = angle * Math.PI / 180.0;
+            double cosA = Math.Cos(rad), sinA = Math.Sin(rad);
+            const double POINT_PASS = 0.5;
+
+            int ok = 0;
+            for (int i = 0; i < n; i++)
+            {
+                var p = edges[i];
+                int px = (int)Math.Round((p.X * cosA - p.Y * sinA) * scale + cx);
+                int py = (int)Math.Round((p.X * sinA + p.Y * cosA) * scale + cy);
+                if (px < 1 || py < 1 || px >= W - 1 || py >= H - 1) continue;
+
+                double rdx = p.Dx * cosA - p.Dy * sinA;
+                double rdy = p.Dx * sinA + p.Dy * cosA;
+
+                double best = double.MinValue;
+                for (int wy = -1; wy <= 1; wy++)
+                    for (int wx = -1; wx <= 1; wx++)
+                    {
+                        int idx = (py + wy) * W + (px + wx);
+                        float m = magPtr[idx];
+                        if (m < 1e-3f) continue;
+                        double contrib = (rdx * dxPtr[idx] + rdy * dyPtr[idx]) / m;
+                        if (contrastInvariant) contrib = Math.Abs(contrib);
+                        if (contrib > best) best = contrib;
+                    }
+                if (best >= POINT_PASS) ok++;
+            }
+            return (double)ok / n;
         }
 
         #endregion
@@ -1809,45 +2077,56 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
             return new Mat(input, new Rect(0, 0, input.Width, input.Height));
         }
 
-        private Mat DrawOverlay(Mat inputImage, double cx, double cy, double angle, double scale,
-            int templateWidth, int templateHeight, List<EdgePoint> modelEdges)
+        private Mat DrawOverlay(Mat inputImage,
+            IReadOnlyList<(double x, double y, double angle, double scale, double score, FeatureMatchModel model)> instances)
         {
             var overlay = GetColorOverlayBase(inputImage);
-            double cosA = Math.Cos(angle * Math.PI / 180.0);
-            double sinA = Math.Sin(angle * Math.PI / 180.0);
-            double hw = templateWidth / 2.0 * scale;
-            double hh = templateHeight / 2.0 * scale;
+            bool multi = instances.Count > 1;
 
-            Point2d[] corners = { new(-hw, -hh), new(hw, -hh), new(hw, hh), new(-hw, hh) };
-            var pts = new Point[4];
-            for (int i = 0; i < 4; i++)
+            for (int idx = 0; idx < instances.Count; idx++)
             {
-                double rx = corners[i].X * cosA - corners[i].Y * sinA + cx;
-                double ry = corners[i].X * sinA + corners[i].Y * cosA + cy;
-                pts[i] = new Point((int)Math.Round(rx), (int)Math.Round(ry));
-            }
+                var (cx, cy, angle, scale, score, model) = instances[idx];
+                double cosA = Math.Cos(angle * Math.PI / 180.0);
+                double sinA = Math.Sin(angle * Math.PI / 180.0);
+                double hw = model.TemplateWidth / 2.0 * scale;
+                double hh = model.TemplateHeight / 2.0 * scale;
 
-            for (int i = 0; i < 4; i++)
-                Cv2.Line(overlay, pts[i], pts[(i + 1) % 4], new Scalar(0, 255, 0), 2);
+                Point2d[] corners = { new(-hw, -hh), new(hw, -hh), new(hw, hh), new(-hw, hh) };
+                var pts = new Point[4];
+                for (int i = 0; i < 4; i++)
+                {
+                    double rx = corners[i].X * cosA - corners[i].Y * sinA + cx;
+                    double ry = corners[i].X * sinA + corners[i].Y * cosA + cy;
+                    pts[i] = new Point((int)Math.Round(rx), (int)Math.Round(ry));
+                }
 
-            // 중심 십자 — 매칭 각도에 맞춰 회전 (축 정렬 고정이라 검출 각도가 십자에
-            // 반영되지 않던 현장 보고 2026-08-28). +X 화살표로 방향까지 명시
-            // (십자만으로는 90° 배수가 구분되지 않는다).
-            int cs = 15;
-            var red = new Scalar(0, 0, 255);
-            Point Rot(double lx, double ly) => new(
-                (int)Math.Round(lx * cosA - ly * sinA + cx),
-                (int)Math.Round(lx * sinA + ly * cosA + cy));
-            Cv2.Line(overlay, Rot(-cs, 0), Rot(cs, 0), red, 2);
-            Cv2.Line(overlay, Rot(0, -cs), Rot(0, cs), red, 2);
-            Cv2.ArrowedLine(overlay, Rot(0, 0), Rot(cs * 2.2, 0), red, 2, tipLength: 0.3);
+                for (int i = 0; i < 4; i++)
+                    Cv2.Line(overlay, pts[i], pts[(i + 1) % 4], new Scalar(0, 255, 0), 2);
 
-            foreach (var edge in modelEdges)
-            {
-                double rx = (edge.X * cosA - edge.Y * sinA) * scale + cx;
-                double ry = (edge.X * sinA + edge.Y * cosA) * scale + cy;
-                Cv2.Circle(overlay, new Point((int)Math.Round(rx), (int)Math.Round(ry)),
-                    2, new Scalar(0, 255, 0), -1);
+                // 중심 십자 — 매칭 각도에 맞춰 회전 (축 정렬 고정이라 검출 각도가 십자에
+                // 반영되지 않던 현장 보고 2026-08-28). +X 화살표로 방향까지 명시
+                // (십자만으로는 90° 배수가 구분되지 않는다).
+                int cs = 15;
+                var red = new Scalar(0, 0, 255);
+                Point Rot(double lx, double ly) => new(
+                    (int)Math.Round(lx * cosA - ly * sinA + cx),
+                    (int)Math.Round(lx * sinA + ly * cosA + cy));
+                Cv2.Line(overlay, Rot(-cs, 0), Rot(cs, 0), red, 2);
+                Cv2.Line(overlay, Rot(0, -cs), Rot(0, cs), red, 2);
+                Cv2.ArrowedLine(overlay, Rot(0, 0), Rot(cs * 2.2, 0), red, 2, tipLength: 0.3);
+
+                foreach (var edge in model.ModelEdges)
+                {
+                    double rx = (edge.X * cosA - edge.Y * sinA) * scale + cx;
+                    double ry = (edge.X * sinA + edge.Y * cosA) * scale + cy;
+                    Cv2.Circle(overlay, new Point((int)Math.Round(rx), (int)Math.Round(ry)),
+                        2, new Scalar(0, 255, 0), -1);
+                }
+
+                if (multi)
+                    Cv2.PutText(overlay, $"#{idx + 1} S={score:F2}",
+                        new Point((int)cx + 10, (int)cy - 10),
+                        HersheyFonts.HersheySimplex, 0.5, new Scalar(0, 255, 0), 1);
             }
 
             if (UseSearchRegion && SearchRegion.Width > 0 && SearchRegion.Height > 0)
@@ -1867,7 +2146,21 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
 
         public override List<string> GetAvailableResultKeys()
         {
-            return new List<string> { "Success", "Score", "CenterX", "CenterY", "Angle", "Scale" };
+            var keys = new List<string> { "Success", "Score", "CenterX", "CenterY", "Angle", "Scale", "Coverage", "MatchCount" };
+            if (MaxInstances > 1)
+            {
+                int slots = Math.Max(MaxInstances, 4);
+                for (int i = 0; i < slots; i++)
+                {
+                    keys.Add($"Match{i}_Score");
+                    keys.Add($"Match{i}_CenterX");
+                    keys.Add($"Match{i}_CenterY");
+                    keys.Add($"Match{i}_Angle");
+                    keys.Add($"Match{i}_Scale");
+                    keys.Add($"Match{i}_Coverage");
+                }
+            }
+            return keys;
         }
 
         public override VisionToolBase Clone()
@@ -1879,6 +2172,8 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                 AngleStart = this.AngleStart, AngleExtent = this.AngleExtent, AngleStep = this.AngleStep,
                 MinScale = this.MinScale, MaxScale = this.MaxScale, ScaleStep = this.ScaleStep,
                 ScoreThreshold = this.ScoreThreshold, NumLevels = this.NumLevels,
+                MaxInstances = this.MaxInstances, NmsDistanceFactor = this.NmsDistanceFactor,
+                MinCoverage = this.MinCoverage,
                 UseAngleJudgment = this.UseAngleJudgment,
                 AngleLowerLimit = this.AngleLowerLimit, AngleUpperLimit = this.AngleUpperLimit,
                 UseScaleJudgment = this.UseScaleJudgment,

@@ -132,6 +132,9 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["MaxScale"] = match.MaxScale;
                     config.Parameters["ScaleStep"] = match.ScaleStep;
                     config.Parameters["ScoreThreshold"] = match.ScoreThreshold;
+                    config.Parameters["MaxInstances"] = match.MaxInstances;
+                    config.Parameters["NmsDistanceFactor"] = match.NmsDistanceFactor;
+                    config.Parameters["MinCoverage"] = match.MinCoverage;
                     config.Parameters["UseAngleJudgment"] = match.UseAngleJudgment;
                     config.Parameters["AngleLowerLimit"] = match.AngleLowerLimit;
                     config.Parameters["AngleUpperLimit"] = match.AngleUpperLimit;
@@ -978,6 +981,12 @@ namespace VMS.VisionSetup.Services
                 tool.ScaleStep = GetDouble(scaleStep);
             if (p.TryGetValue("ScoreThreshold", out var scoreThreshold))
                 tool.ScoreThreshold = GetDouble(scoreThreshold);
+            if (p.TryGetValue("MaxInstances", out var maxInst))
+                tool.MaxInstances = GetInt(maxInst);
+            if (p.TryGetValue("NmsDistanceFactor", out var nmsDist))
+                tool.NmsDistanceFactor = GetDouble(nmsDist);
+            if (p.TryGetValue("MinCoverage", out var minCov))
+                tool.MinCoverage = GetDouble(minCov);
             if (p.TryGetValue("UseAngleJudgment", out var uaj))
                 tool.UseAngleJudgment = GetBool(uaj);
             if (p.TryGetValue("AngleLowerLimit", out var all2))

@@ -1876,6 +1876,10 @@ namespace VMS.VisionSetup.ViewModels
                             StatusMessage = $"Model '{targetModel.Name}' 학습 완료";
                         else
                             StatusMessage = $"새 Model 학습 완료 (총 {featureTool.Models.Count}개)";
+
+                        // 특징점 부족 등 학습 품질 경고 — 반쪽 매칭·중심 이탈의 조기 신호
+                        if (featureTool.LastTrainWarning is { } trainWarn)
+                            StatusMessage += " ⚠ " + trainWarn;
                     }
                     else
                     {
