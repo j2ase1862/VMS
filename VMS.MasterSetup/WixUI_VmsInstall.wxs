@@ -36,15 +36,19 @@
       <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" />
       <Publish Dialog="InstallDirDlg" Control="Next" Event="CheckTargetPath" Value="[WIXUI_INSTALLDIR]" Order="1" />
       <Publish Dialog="InstallDirDlg" Control="Next" Event="SetTargetPath" Value="[WIXUI_INSTALLDIR]" Order="3" />
-      <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Order="4" />
+      <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog" Value="WebOptionDlg" Order="4" />
       <Publish Dialog="InstallDirDlg" Control="ChangeFolder" Property="_BrowseProperty" Value="[WIXUI_INSTALLDIR]" Order="1" />
       <Publish Dialog="InstallDirDlg" Control="ChangeFolder" Event="SpawnDialog" Value="BrowseDlg" Order="2" />
+
+      <Publish Dialog="WebOptionDlg" Control="Back" Event="NewDialog" Value="InstallDirDlg" />
+      <Publish Dialog="WebOptionDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" />
+      <Publish Dialog="WebOptionDlg" Control="Cancel" Event="SpawnDialog" Value="CancelDlg" />
 
       <Publish Dialog="BrowseDlg" Control="OK" Event="CheckTargetPath" Value="[WIXUI_INSTALLDIR]" Order="1" />
       <Publish Dialog="BrowseDlg" Control="OK" Event="SetTargetPath" Value="[_BrowseProperty]" Order="3" />
       <Publish Dialog="BrowseDlg" Control="OK" Event="EndDialog" Value="Return" Order="4" />
 
-      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="InstallDirDlg" Order="1" Condition="NOT Installed" />
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="WebOptionDlg" Order="1" Condition="NOT Installed" />
       <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="MaintenanceTypeDlg" Order="2" Condition="Installed AND NOT PATCH" />
       <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="2" Condition="Installed AND PATCH" />
 
@@ -55,6 +59,40 @@
       <Publish Dialog="MaintenanceTypeDlg" Control="Back" Event="NewDialog" Value="MaintenanceWelcomeDlg" />
 
       <Property Id="ARPNOMODIFY" Value="1" />
+    </UI>
+
+    <!-- Web 서버 포함 선택 화면 — Package.wxs 의 WebServer Feature(INSTALLWEB 조건)와 연결.
+         체크(기본) = INSTALLWEB=1 → 설치, 해제 = 속성 제거 → Feature Level 0 (미설치).
+         명령줄 무인 설치의 INSTALLWEB=0 제외 경로와 같은 속성을 공유한다.
+         Web payload 가 없는 빌드(CI)에서는 체크가 동작에 영향을 주지 않는다. -->
+    <UI>
+      <Dialog Id="WebOptionDlg" Width="370" Height="270" Title="[ProductName] 설치">
+        <Control Id="BannerBitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="44"
+                 TabSkip="no" Text="WixUI_Bmp_Banner" />
+        <Control Id="Title" Type="Text" X="15" Y="6" Width="280" Height="15"
+                 Transparent="yes" NoPrefix="yes"
+                 Text="{\WixUI_Font_Title}설치 구성 선택" />
+        <Control Id="Description" Type="Text" X="25" Y="23" Width="320" Height="15"
+                 Transparent="yes" NoPrefix="yes"
+                 Text="관리 기능(BODA VMS Web 서버) 설치 여부를 선택하세요." />
+        <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
+
+        <Control Id="WebCheck" Type="CheckBox" X="25" Y="70" Width="330" Height="17"
+                 Property="INSTALLWEB" CheckBoxValue="1"
+                 Text="BODA VMS Web 서버 포함 (권장, 기본값)" />
+        <Control Id="WebDesc1" Type="Text" X="40" Y="92" Width="315" Height="30" NoPrefix="yes"
+                 Text="생산 이력·작업지시·품질 통계를 브라우저로 관리하는 웹 서버입니다. 설치해도 자동 실행되지 않으며, 이 PC를 관리 서버로 쓸 때만 설정 마법사에서 켭니다." />
+        <Control Id="WebDesc2" Type="Text" X="40" Y="126" Width="315" Height="30" NoPrefix="yes"
+                 Text="체크를 해제하면 웹 서버 파일이 설치되지 않습니다 (디스크 절약). 나중에 필요해지면 설치 파일을 다시 실행해 포함 설치할 수 있습니다." />
+
+        <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+        <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17"
+                 Text="!(loc.WixUIBack)" />
+        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17"
+                 Default="yes" Text="!(loc.WixUINext)" />
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17"
+                 Cancel="yes" Text="!(loc.WixUICancel)" />
+      </Dialog>
     </UI>
 
     <UIRef Id="WixUI_Common" />
