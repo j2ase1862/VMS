@@ -694,8 +694,25 @@ VMS 를 다시 시작하면 이 목록은 비워집니다. 전체 검사 이력�
   <li>(Web 연동 환경) 작업자가 로그인되어 있어야 합니다.</li>
   <li>(Web 연동 환경) 작업지시가 선택되어 있고, 상태가 Planned 또는 InProgress 여야 합니다.</li>
 </ol>
-<p>버튼이 꺼져 있을 때 마우스를 올리면 이유가 말풍선으로 표시됩니다.
-Web 을 사용하지 않는 단독(Standalone) 환경에서는 3 · 4번 조건이 적용되지 않습니다.</p>
+<p>버튼이 꺼져 있을 때 마우스를 올리면 이유가 말풍선으로 표시됩니다.</p>
+
+<h4>Web 없이 단독으로 운전하기 (Standalone 모드)</h4>
+<p>생산 이력 관리 없이 검사만 필요한 현장은 Web 서버 없이 VMS 를 단독으로 쓸 수 있습니다:</p>
+<ol class="steps">
+  <li>System Setup(설정 마법사)의 <strong>Web Server Integration</strong> 카드에서
+      <strong>"Web 서버 미사용 — 단독(Standalone) 모드"</strong> 를 체크하고 저장합니다.</li>
+  <li>VMS 를 다시 시작하면 헤더의 작업자 로그인 칩과 [Work Orders] 버튼이 사라지고,
+      위 3 · 4번 조건(작업자 로그인 · 작업지시 선택) 없이 AUTO RUN 을 시작할 수 있습니다.</li>
+  <li>하단 상태바의 Web 칩은 "단독 모드 (Web 미사용)" 으로 표시됩니다 — 고장이 아닙니다.</li>
+</ol>
+<div class="callout">
+<strong>단독 모드의 검사 이력:</strong> 검사 결과는 Web 에 업로드되지 않으므로,
+최근 결과는 VMS 화면의 <strong>Recent Inspections</strong>(최대 200건, 프로그램 재시작 시
+비워짐)와 대시보드의 NG 이력에서 확인합니다. 이미지 파일로 남기려면 사이드 패널의
+<strong>Image Saving</strong>(OK/NG 이미지 저장, §3.3)을 켜 두세요.
+생산 수량 · 이력의 영구 보관이 필요해지면 언제든 설정 마법사에서 체크를 해제하고
+Web 서버 주소를 입력해 연동 모드로 전환할 수 있습니다.
+</div>
 <div class="callout warn">
 <strong>운전 중 이미지 획득에 실패하면 그 사이클은 NG 입니다:</strong> 케이블 분리 등으로
 카메라에서 이미지를 받지 못한 사이클은 검사 없이 불합격(NG)으로 집계됩니다 —
