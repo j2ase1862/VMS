@@ -1,6 +1,6 @@
 // GS 제출용 사용자 취급 설명서(매뉴얼) 생성기
 // 입력: _manual_blocks.json (parse_manual.py 출력) + screenshots/
-// 출력: VMS_사용자매뉴얼_v1.1.docx
+// 출력: VMS_사용자매뉴얼_v2.0.docx
 const path = require("path");
 const fs = require("fs");
 const GLOBAL = "C:/Users/vinos/AppData/Roaming/npm/node_modules";
@@ -15,7 +15,7 @@ const GS = path.join(DIR, "..");          // docs/gs — 제출물(docx)·screen
 const SHOT = path.join(GS, "screenshots");
 const blocks = JSON.parse(fs.readFileSync(path.join(DIR, "_manual_blocks.json"), "utf-8"));
 const tools = JSON.parse(fs.readFileSync(path.join(DIR, "_tool_params.json"), "utf-8"));
-const OUT = path.join(GS, "VMS_사용자매뉴얼_v1.1.docx");
+const OUT = path.join(GS, "VMS_사용자매뉴얼_v2.0.docx");
 
 const PAGE_W = 11906, PAGE_H = 16838, MARGIN = 1440;
 const CONTENT_W = PAGE_W - 2 * MARGIN; // 9026
@@ -43,7 +43,7 @@ function bullet(text) {
 }
 function imgPara(file, wPx) {
   const full = path.join(SHOT, file);
-  if (!fs.existsSync(full)) return P(`[스크린샷 자리: ${file}]`, { color: "C00000", bold: true });
+  if (!fs.existsSync(full)) { console.warn(`⚠ 스크린샷 누락: ${file}`); return P(`[스크린샷 자리: ${file}]`, { color: "C00000", bold: true }); }
   const buf = fs.readFileSync(full);
   const iw = buf.readUInt32BE(16), ih = buf.readUInt32BE(20);
   const hPx = Math.round(wPx * ih / iw);
@@ -58,7 +58,7 @@ function caption(text) {
 // VMS 메인 화면 컨트롤 캡처(vms_ctl/, 2x DPI) — 1/2 스케일(원래 크기), capW 초과 시 축소.
 function ctlImg(file, capW, dir = "vms_ctl") {
   const full = path.join(SHOT, dir, file);
-  if (!fs.existsSync(full)) return P(`[스크린샷 자리: ${file}]`, { color: "C00000", bold: true });
+  if (!fs.existsSync(full)) { console.warn(`⚠ 스크린샷 누락: ${dir}/${file}`); return P(`[스크린샷 자리: ${file}]`, { color: "C00000", bold: true }); }
   const buf = fs.readFileSync(full);
   const iw = buf.readUInt32BE(16), ih = buf.readUInt32BE(20);
   const wPx = Math.min(Math.round(iw / 2), capW);
@@ -104,11 +104,11 @@ const POST = {
     () => imgPara("70_msi_welcome.png", 420),
     () => caption("그림. 설치 마법사 시작 화면 — BODA 브랜드 배너, [다음]/[취소] (라이선스 동의 단계 없음)"),
   ],
-  "4.18 SW 라이선스 (좌석 현황)": [
+  "7.18 SW 라이선스 (좌석 현황)": [
     () => imgPara("62_web_SW_라이선스.png", 600),
     () => caption("그림. SW 라이선스 좌석 현황 (System → SW 라이선스, Admin 전용) — 라이선스 정보 / 서버 지문 코드 / 점유 좌석 테이블"),
   ],
-  "3.1 첫 실행 화면": [
+  "4.1 첫 실행 화면": [
     () => imgPara("01_vms_main.png", 600), () => caption("그림. VMS 첫 실행 화면 (로그인 전) — 헤더 / KPI 스트립 / 카메라 표시 영역"),
   ],
   "Roller Inspection 섹션": [
@@ -127,6 +127,12 @@ const POST = {
     () => ctlImg("sec_web_parameters.png", 290),
     () => caption("그림. Web Parameters 섹션 — [Sync Parameters]"),
   ],
+  "Image Saving 섹션 Admin 전용": [
+    () => ctlImg("sec_image_saving.png", 290),
+    () => caption("그림. Image Saving 섹션 — [Image Save Settings] 버튼 (Admin 전용)"),
+    () => imgPara("21_dlg_imagesave.png", 520),
+    () => caption("그림. Image Save Settings 창 — OK/NG 저장 · 보존 기간 · Web 전송(전달 모드/판정별 전송/화질)"),
+  ],
   "Recent Inspections 섹션": [
     () => ctlImg("sec_recent.png", 290),
     () => caption("그림. Recent Inspections 섹션 — Total / Pass / NG + Pass rate, [Clear]"),
@@ -135,39 +141,39 @@ const POST = {
     () => ctlImg("sec_statistics.png", 290),
     () => caption("그림. Statistics 섹션 — 세션 누적 Total / Pass / Fail / Pass Rate"),
   ],
-  "3.2.1 Operator 로그인": [
+  "4.2.1 Operator 로그인": [
     () => ctlImg("hdr_operator_chip.png", 200),
     () => caption("그림. Operator 칩 — 로그인 전([Login...] 버튼)"),
     () => ctlImg("hdr_operator_chip_in.png", 300),
     () => caption("그림. Operator 칩 — 로그인 후(이름·사번 + Role 뱃지 + [Logout])"),
   ],
-  "3.2.2 Work Orders 버튼": [
+  "4.2.2 Work Orders 버튼": [
     () => ctlImg("hdr_workorders_btn.png", 180),
     () => caption("그림. [Work Orders] 버튼 — 작업자 로그인 후 활성"),
     () => imgPara("20_dlg_workorders.png", 560),
     () => caption("그림. Work Orders 다이얼로그 — 상태 필터 / Refresh / 목록(Order No·Product·Recipe·Progress·Status·Planned Start) / Select·Cancel"),
   ],
-  "3.2.3 WO 칩 (진행률 표시)": [
+  "4.2.3 WO 칩 (진행률 표시)": [
     () => ctlImg("hdr_wo_chip.png", 340),
     () => caption("그림. WO 칩 — 작업지시 번호 · 제품 · 진행(생산/계획) + 실시간 진행률 바"),
   ],
-  "3.2.4 Recipe 칩": [
+  "4.2.4 Recipe 칩": [
     () => ctlImg("hdr_recipe_chip.png", 160),
     () => caption("그림. Recipe 칩 — 작업지시 선택 시 자동 로드된 레시피 이름"),
   ],
-  "3.2.5 Ctx (Inspection Context)": [
+  "4.2.5 Ctx (Inspection Context)": [
     () => ctlImg("hdr_ctx_chip.png", 360),
     () => caption("그림. Ctx 칩 — WO / Lot 콤보(Open Lot 목록에서 선택, 멀티 Lot 병행) / S/N + [✕] 전체 비우기"),
   ],
-  "3.2.6 AUTO RUN": [
+  "4.2.6 AUTO RUN": [
     () => ctlImg("hdr_autorun_btn.png", 150),
     () => caption("그림. [AUTO RUN] — 운영 흐름의 단일 실행 버튼(활성화 조건은 §3.5)"),
   ],
-  "3.2.7 Role 뱃지": [
+  "4.2.7 Role 뱃지": [
     () => ctlImg("hdr_operator_chip_in.png", 300),
     () => caption("그림. Role 뱃지 — Supervisor(빨강) / Lead(보라) 일 때만 표시, Operator 는 뱃지 없음"),
   ],
-  "3.3 사이드 패널 (Settings)": [
+  "4.3 사이드 패널 (Settings)": [
     () => ctlImg("hdr_panel_toggle.png", 36),
     () => caption("그림. 헤더 우측 설정(⚙) 토글 — 사이드 패널 열기/닫기 (시스템 사용자 로그인 필요)"),
     () => imgPara("05_vms_sidepanel.png", 600),
@@ -265,7 +271,7 @@ const POST = {
     () => bullet("Enable TensorRT FP16 — RTX 계열에서 2~3배 속도 향상."),
     () => bullet("[Save] / [Cancel] — 저장(다음 모델 로드/세션 재생성 시점부터 적용) / 취소."),
   ],
-  "3.8 딥러닝 라벨링·학습 (VMS.DeepLearning)": [
+  "6. 딥러닝 모델 학습 (VMS.DeepLearning)": [
     () => imgPara("06_deeplearning_full.png", 620),
     () => caption("그림. VMS.DeepLearning — 데이터셋·이미지 목록(좌) / 라벨링 캔버스(중) / 클래스·라벨·학습(우)  [Detection 데이터셋 예시]"),
   ],
@@ -305,26 +311,26 @@ const POST = {
     () => ctlImg("bar_sam_toolbar.png", 340, "deeplearning_ctl"),
     () => caption("그림. SAM 라벨링 도구모음 — 좌클릭 전경 / 우클릭 배경, [Confirm (Enter)]·[Clear (Esc)]"),
   ],
-  "4. BODA.VMS.Web (관리자 / MES)": [
+  "7. 생산 관리 웹 (BODA.VMS.Web)": [
     () => P("아래 그림은 BODA.VMS.Web 관리 화면입니다(관리자 로그인 기준)."),
     () => imgPara("40_web_login.png", 360),
     () => caption("그림 4-0. Web 로그인"),
   ],
-  "4.3 Dashboard": [
+  "7.3 Dashboard": [
     () => imgPara("41_web_dashboard.png", 600),
     () => caption("그림. Dashboard — 현장 KPI(전체 클라이언트/금일 생산·합격/불량률) + 사이드 메뉴"),
   ],
-  "4.5 Alarms": [() => imgPara("43_web_알람.png", 600), () => caption("그림. Alarms — 알람 목록")],
-  "4.6 Production History": [() => imgPara("44_web_생산_이력.png", 600), () => caption("그림. Production History — 라인/작업지시/LOT/기간(같은 날짜 = 하루치)/결과 필터, 요약 카드, WO/LOT 열, Excel 내보내기")],
-  "4.7 Work Orders": [() => imgPara("45_web_작업_지시.png", 600), () => caption("그림. Work Orders — 작업지시 목록(진척률·상태·[시작]/[완료]/[LOT] 버튼), 검사마다 실시간 갱신")],
-  "4.8 Products": [() => imgPara("46_web_제품.png", 600), () => caption("그림. Products — 제품 관리")],
-  "4.9 Inspection Items (Recipes + Parameters)": [() => imgPara("58_web_검사_항목.png", 600), () => caption("그림. Inspection Items — 검사 항목(레시피/파라미터)")],
-  "4.10 Operators": [() => imgPara("47_web_작업자.png", 600), () => caption("그림. Operators — 작업자 관리")],
-  "4.12 Maintenance": [() => imgPara("56_web_예방_보전.png", 600), () => caption("그림. Maintenance — 예방 보전")],
-  "4.13 Defect Codes": [() => imgPara("50_web_불량_코드.png", 600), () => caption("그림. Defect Codes — 불량 코드 관리")],
-  "4.14 Shifts": [() => imgPara("59_web_교대_마스터.png", 600), () => caption("그림. Shifts — 교대 마스터")],
-  "4.15 Audit Logs": [() => imgPara("61_web_감사_로그.png", 600), () => caption("그림. Audit Logs — 감사 로그")],
-  "4.16 Reports / Quality Analysis": [
+  "7.5 Alarms": [() => imgPara("43_web_알람.png", 600), () => caption("그림. Alarms — 알람 목록")],
+  "7.6 Production History": [() => imgPara("44_web_생산_이력.png", 600), () => caption("그림. Production History — 라인/작업지시/LOT/기간(같은 날짜 = 하루치)/결과 필터, 요약 카드, WO/LOT 열, Excel 내보내기")],
+  "7.7 Work Orders": [() => imgPara("45_web_작업_지시.png", 600), () => caption("그림. Work Orders — 작업지시 목록(진척률·상태·[시작]/[완료]/[LOT] 버튼), 검사마다 실시간 갱신")],
+  "7.8 Products": [() => imgPara("46_web_제품.png", 600), () => caption("그림. Products — 제품 관리")],
+  "7.9 Inspection Items (Recipes + Parameters)": [() => imgPara("58_web_검사_항목.png", 600), () => caption("그림. Inspection Items — 검사 항목(레시피/파라미터)")],
+  "7.10 Operators": [() => imgPara("47_web_작업자.png", 600), () => caption("그림. Operators — 작업자 관리")],
+  "7.12 Maintenance": [() => imgPara("56_web_예방_보전.png", 600), () => caption("그림. Maintenance — 예방 보전")],
+  "7.13 Defect Codes": [() => imgPara("50_web_불량_코드.png", 600), () => caption("그림. Defect Codes — 불량 코드 관리")],
+  "7.14 Shifts": [() => imgPara("59_web_교대_마스터.png", 600), () => caption("그림. Shifts — 교대 마스터")],
+  "7.15 Audit Logs": [() => imgPara("61_web_감사_로그.png", 600), () => caption("그림. Audit Logs — 감사 로그")],
+  "7.16 Reports / Quality Analysis": [
     () => imgPara("52_web_PDF_리포트.png", 600), () => caption("그림. PDF 리포트"),
     () => imgPara("48_web_파레토_분석.png", 560), () => caption("그림. 파레토 분석"),
     () => imgPara("49_web_SPC_관리도.png", 560), () => caption("그림. SPC 관리도"),
@@ -333,12 +339,12 @@ const POST = {
     () => imgPara("57_web_불량률_예측.png", 560), () => caption("그림. 불량률 예측"),
   ],
 };
-// 챕터 3 말미(4장 직전)에 관리자 도구 다이얼로그 섹션 삽입
-const ADMIN_BEFORE = "4. BODA.VMS.Web (관리자 / MES)";
+// 검사 운전 장 말미(5장 직전)에 관리자 도구 다이얼로그 섹션 삽입
+const ADMIN_BEFORE = "7. 생산 관리 웹 (BODA.VMS.Web)";
 function adminDialogsSection() {
   const out = [];
-  out.push(new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("3.11 관리자 도구 다이얼로그 (Admin 전용)")] }));
-  out.push(P("헤더의 User Management 아이콘과 Admin Tools(⋮) 드롭다운에서 실행되는 관리자 전용 다이얼로그다. (Admin 권한 로그인 시에만 표시) 각 그림 아래에 화면의 주요 컨트롤과 그 역할을 정리했다."));
+  out.push(new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("4.9 관리자 도구 다이얼로그 (Admin 전용)")] }));
+  out.push(P("헤더의 User Management 아이콘과 Admin Tools(⋮) 드롭다운에서 실행되는 관리자 전용 다이얼로그입니다 (Admin 권한 로그인 시에만 표시). 각 그림 아래에 화면의 주요 컨트롤과 역할을 정리했습니다."));
   const dlgs = [
     ["23_dlg_usermgmt.png", "User Management — 사용자 계정·권한(UserGrade) 관리", [
       "Users 목록 — 등록된 계정을 표로 표시(Username / Display Name / Grade / Last Login). 행을 선택하면 우측 [Edit Selected User] 패널에 값이 채워진다.",
@@ -398,10 +404,9 @@ function adminDialogsSection() {
   });
   return out;
 }
-// HTML §2.6(SW 라이선스) 직전에 AppSetup 마법사 §2.5 를 끼워넣음 — HTML 은 2.4 → 2.6 으로
-// 건너뛰며(주석 있음), 이 앵커 덕에 docx 에서는 2.4 → 2.5(생성) → 2.6 순서가 된다.
-// ⚠ HTML 의 §2.6 제목 문구를 바꾸면 이 앵커도 함께 바꿀 것 (불일치 시 마법사 절이 조용히 빠짐).
-const WIZARD_BEFORE = "2.6 SW 라이선스 설치·활성화";
+// HTML 3장(시스템 구성) 말미 = "4. 검사 운전" 제목 직전에 마법사 상세(§3.2)를 끼워넣음.
+// ⚠ HTML 의 4장 h2 제목 문구를 바꾸면 이 앵커도 함께 바꿀 것 (불일치 시 마법사 절이 조용히 빠짐).
+const WIZARD_BEFORE = "4. 검사 운전 (VMS 메인)";  // 3장(시스템 구성) 말미 = 4장 직전에 삽입
 
 // 마법사 컨트롤 항목 표 — 컨트롤 이미지(appsetup_ctl/, --capture-controls 산출물) + 항목/설명/기본값
 const WIZ_COLW = [1600, 3000, 3100, 1326]; // 항목 / 컨트롤 / 설명 / 기본값 (합 = CONTENT_W)
@@ -462,13 +467,13 @@ function wizardTable(rows) {
 
 function wizardSection() {
   const out = [];
-  out.push(new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("2.5 최초 실행 — 시스템 설정 마법사 (VMS.AppSetup)")] }));
+  out.push(new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("3.2 시스템 설정 마법사 — 7단계 페이지별 컨트롤")] }));
   out.push(P("⚙ 이 절은 설치 담당자용입니다. 마법사는 설치 후 최초 1회(또는 설정 파일이 없을 때)만 나타나며, 일반 작업자는 볼 일이 없습니다.", { size: 18, color: "595959" }));
-  out.push(P("VMS 설치 후 최초 실행 시(또는 system_config.json 부재 시) 시스템 설정 마법사가 자동 실행된다. 총 7단계로 애플리케이션·네트워크·카메라·PLC·로봇/IO·보안 모드 및 초기 관리자 계정을 구성한 뒤 [Finish] 로 저장한다. 카메라가 없는 환경에서는 3단계에서 [Virtual Mode (Manual Setup)] 를 선택해 가상 구성으로 진행할 수 있다. 각 단계의 그림 아래에 입력 항목별 컨트롤 이미지와 설명을 표로 정리했다."));
-  out.push(P("입력란 라벨 옆의 ⓘ 아이콘에 마우스를 올리면 그 항목의 쉬운 설명이 말풍선으로 표시된다 — 이 표의 설명과 같은 내용이므로, 설정 중에 매뉴얼을 뒤지지 않아도 된다."));
+  out.push(P("VMS 설치 후 최초 실행 시(또는 설정 파일이 없을 때) 시스템 설정 마법사가 자동 실행됩니다. 총 7단계로 애플리케이션·네트워크·카메라·PLC·로봇/IO·보안 모드와 초기 관리자 계정을 구성한 뒤 [Finish] 로 저장합니다. 카메라가 없는 환경에서는 3단계에서 [Virtual Mode (Manual Setup)] 를 선택해 가상 구성으로 진행할 수 있습니다. 각 단계의 그림 아래에 입력 항목별 컨트롤 이미지와 설명을 표로 정리했습니다."));
+  out.push(P("입력란 라벨 옆의 ⓘ 아이콘에 마우스를 올리면 그 항목의 쉬운 설명이 말풍선으로 표시됩니다 — 이 표의 설명과 같은 내용이므로, 설정 중에 매뉴얼을 뒤지지 않아도 됩니다."));
   const steps = [
     ["10_appsetup_step1.png", 470, "1단계 — 시작(Welcome)", [
-      P("1단계는 마법사 시작 화면으로 입력 항목이 없다. [Next] 를 눌러 진행하며, 이후 애플리케이션·네트워크 → 카메라 → PLC → 로봇 → IO 보드 → 보안 모드 순으로 구성한다."),
+      P("1단계는 마법사 시작 화면으로 입력 항목이 없습니다. [Next] 를 눌러 진행하며, 이후 애플리케이션·네트워크 → 카메라 → PLC → 로봇 → IO 보드 → 보안 모드 순으로 구성합니다."),
       wizardTable([
         ["[← Back] / [Next]", ["P1_default_11_Button__Back.png", "P1_default_12_Button_Next.png"], "이전 / 다음 단계로 이동. 모든 단계 하단에 공통 표시되며, 마지막 7단계에서는 [Next] 대신 [Finish] 가 표시된다", "—"],
       ]),
@@ -582,19 +587,32 @@ function numbered(text, group) {
 // drop everything before H1 title
 let start = blocks.findIndex(b => b.t === "h" && b.level === 1);
 if (start < 0) start = 0;
+// 스크린샷은 소제목 "직후"가 아니라 그 절의 "첫 문단 뒤"에 삽입한다 —
+// 제목→캡처→설명 순서가 되어 캡처가 맥락 없이 등장하지 않는다 (2026-09-01 개편).
+// 문단 없이 다음 제목/표가 오면 그 앞에서 플러시.
+let pendingPost = null;
+let stats = { wizard: false, admin: false, post: 0 };
+function flushPost() {
+  if (!pendingPost) return;
+  pendingPost.forEach(fn => body.push(fn()));
+  stats.post++;
+  pendingPost = null;
+}
 for (let i = start + 1; i < blocks.length; i++) {
   const b = blocks[i];
   const isOrderedLi = b.t === "li" && !!b.ordered;
   if (b.t === "h") {
+    flushPost();
     const txt = norm(b.text);
-    if (txt === WIZARD_BEFORE) wizardSection().forEach(x => body.push(x));
-    if (txt === ADMIN_BEFORE) adminDialogsSection().forEach(x => body.push(x));
+    if (txt === WIZARD_BEFORE) { wizardSection().forEach(x => body.push(x)); stats.wizard = true; }
+    if (txt === ADMIN_BEFORE) { adminDialogsSection().forEach(x => body.push(x)); stats.admin = true; }
     // html H2->docx H1, H3->H2, H4->H3
     const lvl = b.level === 2 ? HeadingLevel.HEADING_1 : b.level === 3 ? HeadingLevel.HEADING_2 : HeadingLevel.HEADING_3;
     body.push(new Paragraph({ heading: lvl, children: [new TextRun(b.text)] }));
-    if (POST[txt]) POST[txt].forEach(fn => body.push(fn()));
+    if (POST[txt]) pendingPost = POST[txt];
   } else if (b.t === "p") {
     body.push(P(b.text));
+    flushPost();
   } else if (b.t === "li") {
     if (isOrderedLi) {
       if (!prevOrderedLi) olGroups++;
@@ -603,11 +621,16 @@ for (let i = start + 1; i < blocks.length; i++) {
       body.push(bullet(b.text));
     }
   } else if (b.t === "table") {
+    flushPost();
     body.push(tableBlock(b));
     body.push(new Paragraph({ spacing: { after: 120 }, children: [] }));
   }
   prevOrderedLi = isOrderedLi;
 }
+flushPost();
+console.log(`inserted: wizard=${stats.wizard} admin=${stats.admin} postGroups=${stats.post}`);
+if (!stats.wizard) console.warn("⚠ 마법사 절이 삽입되지 않음 — WIZARD_BEFORE 앵커가 HTML 제목과 불일치");
+if (!stats.admin) console.warn("⚠ 관리자 다이얼로그 절이 삽입되지 않음 — ADMIN_BEFORE 앵커 불일치");
 
 // ---- #4: 비전 도구 파라미터 (핵심 툴) — 코드(ToolSettings XAML)에서 전수 추출 ----
 const DESC = {
@@ -736,10 +759,10 @@ const DESC = {
 };
 {
   body.push(new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun("9. 비전 도구 파라미터 (핵심 툴)")] }));
-  body.push(P("VisionSetup의 Tool Palette에서 도구를 Tool Workspace로 드래그한 뒤 선택하면, 우측 파라미터 패널에 아래 항목이 표시된다. 파라미터 라벨은 실제 UI 표기와 동일하며, 본 장은 Tool Palette의 전체 도구를 카테고리 순으로 다룬다. (딥러닝/3D 도구는 모델·프리셋 선택 기반이라 수치 파라미터가 적을 수 있다. 파라미터 패널 스크린샷은 후속 캡처 예정.)"));
+  body.push(P("VisionSetup의 Tool Palette에서 도구를 Tool Workspace로 드래그한 뒤 선택하면, 우측 파라미터 패널에 아래 항목이 표시됩니다. 파라미터 라벨은 실제 UI 표기와 동일하며, 이 장은 Tool Palette의 전체 도구를 카테고리 순으로 다룹니다. (딥러닝/3D 도구는 모델·프리셋 선택 기반이라 수치 파라미터가 적을 수 있다. 파라미터 패널 스크린샷은 후속 캡처 예정.)"));
   // 9.1 팔레트 카테고리 개요
   body.push(new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("9.1 툴 팔레트 카테고리 개요")] }));
-  body.push(P("Tool Palette는 카테고리로 묶여 있으며, 각 카테고리의 주요 도구는 다음과 같다. (상세 파라미터는 9.2 이하 참조)"));
+  body.push(P("Tool Palette는 카테고리로 묶여 있으며, 각 카테고리의 주요 도구는 다음과 같습니다. (상세 파라미터는 9.2 이하 참조)"));
   const CATDESC = {
     "Conversion": "그레이 변환·이진화 — 후속 처리를 위한 기본 변환",
     "Preprocessing": "블러·모폴로지·에지·히스토그램·보정 등 영상 전처리",
@@ -766,7 +789,7 @@ const DESC = {
     }
     body.push(new Table({ width: { size: CONTENT_W, type: WidthType.DXA }, columnWidths: [1700, 3700, CONTENT_W - 1700 - 3700], rows }));
   }
-  body.push(P("※ Calibration 카테고리(카메라/핸드아이 보정)는 별도 캘리브레이션 도구로 제공된다.", { size: 18, color: "595959" }));
+  body.push(P("※ Calibration 카테고리(카메라/핸드아이 보정)는 별도 캘리브레이션 도구로 제공됩니다.", { size: 18, color: "595959" }));
   body.push(new Paragraph({ spacing: { after: 120 }, children: [] }));
   let n = 1;
   for (const t of tools) {
@@ -775,7 +798,7 @@ const DESC = {
     body.push(P(`카테고리: ${t.category}`, { size: 18, color: "595959" }));
     body.push(placeholder(`${t.tool} 파라미터 패널 스크린샷 — Tool Palette에서 드래그 → 선택 시 우측 패널`));
     if (!t.params || !t.params.length) {
-      body.push(P("이 도구는 별도 수치 파라미터 없이 ROI/입력 연결만으로 동작한다."));
+      body.push(P("이 도구는 별도 수치 파라미터 없이 ROI/입력 연결만으로 동작합니다."));
       continue;
     }
     const c1 = 2500, c2 = 2100, c3 = CONTENT_W - c1 - c2;
@@ -807,7 +830,7 @@ front.push(new Paragraph({ spacing: { before: 520 }, alignment: AlignmentType.CE
 front.push(new Paragraph({ children: [new PageBreak()] }));
 front.push(new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun("목차")] }));
 front.push(new TableOfContents("목차", { hyperlink: true, headingStyleRange: "1-3" }));
-front.push(P("※ 본 매뉴얼은 docs/manuals/BODA-VMS-User-Manual.html 본문을 기준으로 작성되었으며, 화면 스크린샷을 추가하였다. [📷 …] 표식은 추가 캡처가 필요한 화면이다.", { size: 18, color: "595959", italics: true }));
+front.push(P("※ 본 매뉴얼은 docs/manuals/BODA-VMS-User-Manual.html 본문을 기준으로 작성되었으며, 화면 스크린샷을 함께 실었습니다. [📷 …] 표식은 추가 캡처가 필요한 화면입니다.", { size: 18, color: "595959", italics: true }));
 front.push(new Paragraph({ children: [new PageBreak()] }));
 
 const children = [...front, ...body];

@@ -17,7 +17,7 @@ docs/gs/
 
 | 파일 | 생성기 |
 |------|--------|
-| `VMS_사용자매뉴얼_v1.1.docx` (+ 동명 `.pdf` 내보내기본) | `pipeline/parse_manual.py` → `pipeline/gen_user_manual.js` |
+| `VMS_사용자매뉴얼_v2.0.docx` (+ 동명 `.pdf` 내보내기본) | `pipeline/parse_manual.py` → `pipeline/gen_user_manual.js` |
 | `VMS_제품설명서_v1.0.docx` | `pipeline/gen_product_description.js` |
 | `VMS_OSS_라이선스_확인서_v1.0.docx` `VMS_GS_신청서_템플릿_v1.0.docx` `VMS_GS_신청_체크리스트_v1.0.docx` | `pipeline/gen_gs_supporting_docs.js` |
 
@@ -29,7 +29,7 @@ docs/gs/
 ```powershell
 cd docs/gs/pipeline
 python parse_manual.py    # 매뉴얼 HTML → _manual_blocks.json
-node gen_user_manual.js   # → ../VMS_사용자매뉴얼_v1.1.docx
+node gen_user_manual.js   # → ../VMS_사용자매뉴얼_v2.0.docx
 ```
 
 ## 매뉴얼 반영 대기 — SW 업데이트 로그
@@ -42,7 +42,7 @@ node gen_user_manual.js   # → ../VMS_사용자매뉴얼_v1.1.docx
 - 매뉴얼 갱신 시: HTML 본문(`docs/manuals/BODA-VMS-User-Manual.html`)에 반영하고
   §8.4 변경 이력에 요약 추가 → docx 재생성 → 아래 표 비우기 (반영 완료 기준선 갱신)
 
-**반영 완료 기준선: SW v1.24.0 / Web v1.7.0 (VMS #363~#403 + Web #94) — 2026-09-01 본문 + docx 재생성 완료** (§3.2.9 예측 칩·§3.9 Feature Match 학습/다중 인스턴스·복사 3종·얼라인 템플릿·재연결 창·§4.9 Web 복사·§8.4 이력 반영. ⚠ gen_user_manual.js 의 WIZARD_BEFORE 앵커가 HTML §2.6 제목 문자열 — 제목 변경 시 앵커도 함께)
+**반영 완료 기준선: SW v1.24.0 / Web v1.7.0 — 2026-09-01 매뉴얼 v2.0 전면 개편** (앱별 11장 구성: 개요→설치→AppSetup→VMS 운전→VisionSetup→DeepLearning→Web→워크플로→관리자→트러블슈팅(5절 확장)→부록. 산출물 `VMS_사용자매뉴얼_v2.0.docx`. 생성기: 캡처는 '첫 문단 뒤' 삽입 규칙 + 삽입/누락 검증 로그 + 마법사 §3.2·관리자 다이얼로그 §4.9 앵커 이동 — ⚠ 앵커 = 4장/5장 h2 제목 문자열, 제목 변경 시 gen_user_manual.js 동기화 필수) (§3.2.9 예측 칩·§3.9 Feature Match 학습/다중 인스턴스·복사 3종·얼라인 템플릿·재연결 창·§4.9 Web 복사·§8.4 이력 반영. ⚠ gen_user_manual.js 의 WIZARD_BEFORE 앵커가 HTML §2.6 제목 문자열 — 제목 변경 시 앵커도 함께)
 (직전 기준선 v1.13.0 의 스크린샷 안내는 이력에서 유지 — 데모 캡처 절차 web_capture_partial.js/seed_demo.js, 운영 DB 무접촉)
 
 | PR | 매뉴얼에 들어갈 내용 | 대상 절 |
