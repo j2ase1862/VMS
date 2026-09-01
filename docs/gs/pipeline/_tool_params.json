@@ -1172,6 +1172,54 @@
     "enum": null
    },
    {
+    "label": "Use Angle Judgment",
+    "param": "UseAngleJudgment",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Angle Lower Limit",
+    "param": "AngleLowerLimit",
+    "ctrl": "슬라이더",
+    "min": "-180",
+    "max": "180",
+    "enum": null
+   },
+   {
+    "label": "Angle Upper Limit",
+    "param": "AngleUpperLimit",
+    "ctrl": "슬라이더",
+    "min": "-180",
+    "max": "180",
+    "enum": null
+   },
+   {
+    "label": "Use Scale Judgment",
+    "param": "UseScaleJudgment",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Scale Lower Limit",
+    "param": "ScaleLowerLimit",
+    "ctrl": "슬라이더",
+    "min": "0.1",
+    "max": "2",
+    "enum": null
+   },
+   {
+    "label": "Scale Upper Limit",
+    "param": "ScaleUpperLimit",
+    "ctrl": "슬라이더",
+    "min": "0.1",
+    "max": "2",
+    "enum": null
+   },
+   {
     "label": "Pyramid Levels",
     "param": "NumPyramidLevels",
     "ctrl": "슬라이더",
@@ -1243,6 +1291,22 @@
     "enum": null
    },
    {
+    "label": "Max Instances",
+    "param": "MaxInstances",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "50",
+    "enum": null
+   },
+   {
+    "label": "Min Coverage",
+    "param": "MinCoverage",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "1",
+    "enum": null
+   },
+   {
     "label": "Contrast Invariant",
     "param": "UseContrastInvariant",
     "ctrl": "체크박스",
@@ -1256,6 +1320,54 @@
     "ctrl": "체크박스",
     "min": null,
     "max": null,
+    "enum": null
+   },
+   {
+    "label": "Use Angle Judgment",
+    "param": "UseAngleJudgment",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Angle Lower Limit",
+    "param": "AngleLowerLimit",
+    "ctrl": "슬라이더",
+    "min": "-180",
+    "max": "180",
+    "enum": null
+   },
+   {
+    "label": "Angle Upper Limit",
+    "param": "AngleUpperLimit",
+    "ctrl": "슬라이더",
+    "min": "-180",
+    "max": "180",
+    "enum": null
+   },
+   {
+    "label": "Use Scale Judgment",
+    "param": "UseScaleJudgment",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Scale Lower Limit",
+    "param": "ScaleLowerLimit",
+    "ctrl": "슬라이더",
+    "min": "0.1",
+    "max": "2",
+    "enum": null
+   },
+   {
+    "label": "Scale Upper Limit",
+    "param": "ScaleUpperLimit",
+    "ctrl": "슬라이더",
+    "min": "0.1",
+    "max": "2",
     "enum": null
    },
    {
@@ -1320,6 +1432,14 @@
     "ctrl": "슬라이더",
     "min": "1",
     "max": "6",
+    "enum": null
+   },
+   {
+    "label": "NMS Distance",
+    "param": "NmsDistanceFactor",
+    "ctrl": "슬라이더",
+    "min": "0.1",
+    "max": "3",
     "enum": null
    },
    {

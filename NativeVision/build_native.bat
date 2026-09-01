@@ -4,9 +4,9 @@ setlocal
 REM ── NativeVision build script ──
 REM Compiles NativeVision.cpp → NativeVision.dll using MSVC cl.exe with AVX2+FMA
 
-set "CL_EXE=C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.50.35717\bin\Hostx64\x64\cl.exe"
-set "MSVC_INC=C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.50.35717\include"
-set "MSVC_LIB=C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.50.35717\lib\x64"
+set "CL_EXE=C:\Program Files\Microsoft Visual Studio\18\Professional\VC\Tools\MSVC\14.51.36231\bin\Hostx64\x64\cl.exe"
+set "MSVC_INC=C:\Program Files\Microsoft Visual Studio\18\Professional\VC\Tools\MSVC\14.51.36231\include"
+set "MSVC_LIB=C:\Program Files\Microsoft Visual Studio\18\Professional\VC\Tools\MSVC\14.51.36231\lib\x64"
 
 set "SDK_VER=10.0.26100.0"
 set "SDK_INC=C:\Program Files (x86)\Windows Kits\10\Include\%SDK_VER%"

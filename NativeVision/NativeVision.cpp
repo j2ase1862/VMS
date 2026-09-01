@@ -293,9 +293,46 @@ struct HoughCandidate {
     int votes;
 };
 
+// ── Multi-peak accumulator extraction ───────────────────────────────────────
+// Up to maxPeaks spatially separated peaks per accumulator: repeated max-scan,
+// zeroing a (2*sepBins+1)² neighborhood after each pick so the same instance
+// is not reported twice. Destroys acc (caller clears it per angle anyway).
+// Needed for multi-instance: one accumulator holds one peak per object, but
+// the single-max scan only ever surfaced the strongest instance per angle.
+#define NV_MAX_PEAKS_PER_ANGLE 32
+
+static int ExtractAccPeaks(int* acc, int bW, int bH, int maxPeaks, int sepBins,
+                           int* outVotes, int* outIdx)
+{
+    int accLen = bW * bH;
+    int found = 0;
+    while (found < maxPeaks)
+    {
+        int maxVote = 0, maxIdx = 0;
+        for (int i = 0; i < accLen; i++)
+            if (acc[i] > maxVote) { maxVote = acc[i]; maxIdx = i; }
+        if (maxVote <= 0) break;
+        outVotes[found] = maxVote;
+        outIdx[found] = maxIdx;
+        found++;
+        if (found >= maxPeaks) break;
+
+        int px = maxIdx % bW, py = maxIdx / bW;
+        int x0 = px - sepBins; if (x0 < 0) x0 = 0;
+        int y0 = py - sepBins; if (y0 < 0) y0 = 0;
+        int x1 = px + sepBins; if (x1 >= bW) x1 = bW - 1;
+        int y1 = py + sepBins; if (y1 >= bH) y1 = bH - 1;
+        for (int yy = y0; yy <= y1; yy++)
+            memset(acc + yy * bW + x0, 0, (size_t)(x1 - x0 + 1) * sizeof(int));
+    }
+    return found;
+}
+
 // ── Shared voting core: coarse sweep → thread-local topK merge → fine sweep ──
 // Fills *outFine (fine results, count = return value) and *outCoarse (topK,
 // vote-desc). Caller must _aligned_free both.
+// peaksPerAngle: how many spatially separated peaks to keep per accumulator
+// (1 = legacy single-peak behavior). sepBins (accumulator bins) separates them.
 static int HoughVoteCollect(
     const float* modelX, const float* modelY, int modelCount,
     const int* binOffsets, const int* binIndices,
@@ -307,8 +344,12 @@ static int HoughVoteCollect(
     int topK,
     double invScale,
     int binShiftBits,
+    int peaksPerAngle, int sepBins,
     HoughCandidate** outFine, HoughCandidate** outCoarse)
 {
+    if (peaksPerAngle < 1) peaksPerAngle = 1;
+    if (peaksPerAngle > NV_MAX_PEAKS_PER_ANGLE) peaksPerAngle = NV_MAX_PEAKS_PER_ANGLE;
+    if (sepBins < 1) sepBins = 1;
     const double PI = 3.14159265358979323846;
     const double DEG2RAD = PI / 180.0;
     double binWidthDeg = 360.0 / numGradBins;
@@ -388,29 +429,31 @@ static int HoughVoteCollect(
                 }
             }
 
-            // Find peak in accumulator
-            int maxVote = 0, maxIdx = 0;
-            for (int i = 0; i < accLen; i++)
-            {
-                if (acc[i] > maxVote) { maxVote = acc[i]; maxIdx = i; }
-            }
+            // Extract peak(s) in accumulator — multi-instance keeps several
+            // spatially separated peaks per angle instead of just the max.
+            int pkVotes[NV_MAX_PEAKS_PER_ANGLE];
+            int pkIdx[NV_MAX_PEAKS_PER_ANGLE];
+            int nPk = ExtractAccPeaks(acc, bW, bH, peaksPerAngle, sepBins, pkVotes, pkIdx);
 
-            double peakCx = (maxIdx % bW) * (1 << binShiftBits) + (1 << binShiftBits) / 2;
-            double peakCy = (maxIdx / bW) * (1 << binShiftBits) + (1 << binShiftBits) / 2;
-
-            // Insertion sort into thread-local top K
-            if (maxVote > myBest[topK - 1].votes)
+            for (int pk = 0; pk < nPk; pk++)
             {
-                myBest[topK - 1].angle = angle;
-                myBest[topK - 1].cx = peakCx;
-                myBest[topK - 1].cy = peakCy;
-                myBest[topK - 1].votes = maxVote;
-                // Bubble up
-                for (int k = topK - 1; k > 0 && myBest[k].votes > myBest[k-1].votes; k--)
+                double peakCx = (pkIdx[pk] % bW) * (1 << binShiftBits) + (1 << binShiftBits) / 2;
+                double peakCy = (pkIdx[pk] / bW) * (1 << binShiftBits) + (1 << binShiftBits) / 2;
+
+                // Insertion sort into thread-local top K
+                if (pkVotes[pk] > myBest[topK - 1].votes)
                 {
-                    Candidate tmp = myBest[k];
-                    myBest[k] = myBest[k-1];
-                    myBest[k-1] = tmp;
+                    myBest[topK - 1].angle = angle;
+                    myBest[topK - 1].cx = peakCx;
+                    myBest[topK - 1].cy = peakCy;
+                    myBest[topK - 1].votes = pkVotes[pk];
+                    // Bubble up
+                    for (int k = topK - 1; k > 0 && myBest[k].votes > myBest[k-1].votes; k--)
+                    {
+                        Candidate tmp = myBest[k];
+                        myBest[k] = myBest[k-1];
+                        myBest[k-1] = tmp;
+                    }
                 }
             }
         }
@@ -447,12 +490,8 @@ static int HoughVoteCollect(
     if (validK == 0) validK = 1;
 
     // ── Pass 2: Fine refinement around each candidate ──
-    int fineResultCount = 0;
-    for (int ci = 0; ci < validK; ci++)
-    {
-        int numFine = (int)(2.0 * coarseAngleStep / fineAngleStep) + 1;
-        fineResultCount += numFine;
-    }
+    int numFinePerCand = (int)(2.0 * coarseAngleStep / fineAngleStep) + 1;
+    int fineResultCount = validK * numFinePerCand * peaksPerAngle;
 
     Candidate* fineResults = (Candidate*)_aligned_malloc(fineResultCount * sizeof(Candidate), 64);
     for (int i = 0; i < fineResultCount; i++) {
@@ -463,9 +502,18 @@ static int HoughVoteCollect(
     for (int ci = 0; ci < validK; ci++)
     {
         double centerAngle = candidates[ci].angle;
+
+        // peaksPerAngle > 1이면 같은 각도의 코스 후보가 위치만 달리해 여러 개
+        // 들어온다 — 파인 스윕은 위치 무관 전체 누산기라 각도가 같으면 결과도
+        // 동일하므로 중복 스윕을 건너뛴다 (해당 슬롯은 votes=0 유지).
+        bool dupAngle = false;
+        for (int cj = 0; cj < ci; cj++)
+            if (candidates[cj].votes > 0 && candidates[cj].angle == centerAngle) { dupAngle = true; break; }
+        if (dupAngle) { fineOffset += numFinePerCand * peaksPerAngle; continue; }
+
         double fineStart = centerAngle - coarseAngleStep;
         double fineEnd   = centerAngle + coarseAngleStep;
-        int numFine = (int)(2.0 * coarseAngleStep / fineAngleStep) + 1;
+        int numFine = numFinePerCand;
 
         #pragma omp parallel
         {
@@ -478,7 +526,7 @@ static int HoughVoteCollect(
             {
                 double angle = fineStart + fi * fineAngleStep;
                 if (angle < angleStart || angle > angleStart + angleExtent) {
-                    fineResults[fineOffset + fi].votes = 0;
+                    fineResults[fineOffset + fi * peaksPerAngle].votes = 0;
                     continue;
                 }
 
@@ -514,26 +562,25 @@ static int HoughVoteCollect(
                     }
                 }
 
-                int maxVote = 0, maxIdx = 0;
-                for (int i = 0; i < accLen; i++)
+                int pkVotes[NV_MAX_PEAKS_PER_ANGLE];
+                int pkIdx[NV_MAX_PEAKS_PER_ANGLE];
+                int nPk = ExtractAccPeaks(acc, bW, bH, peaksPerAngle, sepBins, pkVotes, pkIdx);
+
+                for (int pk = 0; pk < nPk; pk++)
                 {
-                    if (acc[i] > maxVote) { maxVote = acc[i]; maxIdx = i; }
+                    Candidate& fr = fineResults[fineOffset + fi * peaksPerAngle + pk];
+                    fr.angle = angle;
+                    fr.cx = (pkIdx[pk] % bW) * (1 << binShiftBits) + (1 << binShiftBits) / 2;
+                    fr.cy = (pkIdx[pk] / bW) * (1 << binShiftBits) + (1 << binShiftBits) / 2;
+                    fr.votes = pkVotes[pk];
                 }
-
-                double peakCx = (maxIdx % bW) * (1 << binShiftBits) + (1 << binShiftBits) / 2;
-                double peakCy = (maxIdx / bW) * (1 << binShiftBits) + (1 << binShiftBits) / 2;
-
-                fineResults[fineOffset + fi].angle = angle;
-                fineResults[fineOffset + fi].cx = peakCx;
-                fineResults[fineOffset + fi].cy = peakCy;
-                fineResults[fineOffset + fi].votes = maxVote;
             }
 
             _aligned_free(acc);
             _aligned_free(rotXBuf);
             _aligned_free(rotYBuf);
         }
-        fineOffset += numFine;
+        fineOffset += numFine * peaksPerAngle;
     }
 
     *outFine = fineResults;
@@ -561,6 +608,7 @@ EXPORT void __cdecl HoughVotingNative(
         searchX, searchY, searchBin, searchEdgeCount,
         voteWidth, voteHeight, angleStart, angleExtent,
         coarseAngleStep, fineAngleStep, topK, invScale, binShiftBits,
+        1, 1,
         &fineResults, &candidates);
 
     // Find overall best from fine results
@@ -591,35 +639,14 @@ EXPORT void __cdecl HoughVotingNative(
     _aligned_free(candidates);
 }
 
-// ── Top-K spatially distinct vote peaks (NMS) ──────────────────────────────
-// The single best vote peak can belong to a distractor (background structure,
-// neighboring part, shadow cluster); the true instance then never reaches the
-// gradient-scoring stage. Returning K spatially separated peaks lets the C#
-// refinement score each one and pick the true match. minSeparation is in
-// vote-image (coarse pyramid) pixels. Returns the number of peaks filled.
-EXPORT int __cdecl HoughVotingTopKNative(
-    const float* modelX, const float* modelY, int modelCount,
-    const int* binOffsets, const int* binIndices,
-    int numGradBins,
-    const int* searchX, const int* searchY, const int* searchBin, int searchEdgeCount,
-    int voteWidth, int voteHeight,
-    double angleStart, double angleExtent,
-    double coarseAngleStep, double fineAngleStep,
-    int topK,
-    double invScale,
-    int binShiftBits,
+// ── Greedy NMS over fine results: votes-desc, minSeparation apart ──────────
+// Falls back to the coarse best when the fine pass produced nothing (same as
+// the single-peak path). Returns the number of peaks written to out arrays.
+static int SelectSeparatedPeaks(
+    const HoughCandidate* fineResults, int n, const HoughCandidate* coarse,
     double minSeparation, int outK,
     double* outCx, double* outCy, double* outAngle, int* outVotes)
 {
-    HoughCandidate* fineResults = nullptr;
-    HoughCandidate* candidates = nullptr;
-    int n = HoughVoteCollect(
-        modelX, modelY, modelCount, binOffsets, binIndices, numGradBins,
-        searchX, searchY, searchBin, searchEdgeCount,
-        voteWidth, voteHeight, angleStart, angleExtent,
-        coarseAngleStep, fineAngleStep, topK, invScale, binShiftBits,
-        &fineResults, &candidates);
-
     bool* used = (bool*)_aligned_malloc((n > 0 ? n : 1) * sizeof(bool), 16);
     memset(used, 0, (n > 0 ? n : 1) * sizeof(bool));
     double minSepSq = minSeparation * minSeparation;
@@ -653,16 +680,94 @@ EXPORT int __cdecl HoughVotingTopKNative(
         filled++;
     }
 
-    if (filled == 0)   // fine pass empty → coarse best (same as single-peak path)
+    if (filled == 0)   // fine pass empty → coarse best
     {
-        outCx[0] = candidates[0].cx;
-        outCy[0] = candidates[0].cy;
-        outAngle[0] = candidates[0].angle;
-        outVotes[0] = candidates[0].votes;
+        outCx[0] = coarse[0].cx;
+        outCy[0] = coarse[0].cy;
+        outAngle[0] = coarse[0].angle;
+        outVotes[0] = coarse[0].votes;
         filled = 1;
     }
 
     _aligned_free(used);
+    return filled;
+}
+
+// ── Top-K spatially distinct vote peaks (NMS) ──────────────────────────────
+// The single best vote peak can belong to a distractor (background structure,
+// neighboring part, shadow cluster); the true instance then never reaches the
+// gradient-scoring stage. Returning K spatially separated peaks lets the C#
+// refinement score each one and pick the true match. minSeparation is in
+// vote-image (coarse pyramid) pixels. Returns the number of peaks filled.
+EXPORT int __cdecl HoughVotingTopKNative(
+    const float* modelX, const float* modelY, int modelCount,
+    const int* binOffsets, const int* binIndices,
+    int numGradBins,
+    const int* searchX, const int* searchY, const int* searchBin, int searchEdgeCount,
+    int voteWidth, int voteHeight,
+    double angleStart, double angleExtent,
+    double coarseAngleStep, double fineAngleStep,
+    int topK,
+    double invScale,
+    int binShiftBits,
+    double minSeparation, int outK,
+    double* outCx, double* outCy, double* outAngle, int* outVotes)
+{
+    HoughCandidate* fineResults = nullptr;
+    HoughCandidate* candidates = nullptr;
+    int n = HoughVoteCollect(
+        modelX, modelY, modelCount, binOffsets, binIndices, numGradBins,
+        searchX, searchY, searchBin, searchEdgeCount,
+        voteWidth, voteHeight, angleStart, angleExtent,
+        coarseAngleStep, fineAngleStep, topK, invScale, binShiftBits,
+        1, 1,
+        &fineResults, &candidates);
+
+    int filled = SelectSeparatedPeaks(fineResults, n, candidates, minSeparation, outK,
+                                      outCx, outCy, outAngle, outVotes);
+
+    _aligned_free(fineResults);
+    _aligned_free(candidates);
+    return filled;
+}
+
+// ── Multi-instance voting: Top-K NMS + multiple peaks per angle accumulator ──
+// HoughVotingTopKNative only surfaces the strongest peak of each angle's
+// accumulator, so several identical objects at the same orientation collapse
+// into a single candidate. peaksPerAngle keeps up to that many spatially
+// separated peaks per angle (separation derived from minSeparation), letting
+// every instance reach the C# refinement stage.
+EXPORT int __cdecl HoughVotingTopKMultiNative(
+    const float* modelX, const float* modelY, int modelCount,
+    const int* binOffsets, const int* binIndices,
+    int numGradBins,
+    const int* searchX, const int* searchY, const int* searchBin, int searchEdgeCount,
+    int voteWidth, int voteHeight,
+    double angleStart, double angleExtent,
+    double coarseAngleStep, double fineAngleStep,
+    int topK,
+    double invScale,
+    int binShiftBits,
+    int peaksPerAngle,
+    double minSeparation, int outK,
+    double* outCx, double* outCy, double* outAngle, int* outVotes)
+{
+    int sepBins = (int)(minSeparation / (double)(1 << binShiftBits));
+    if (sepBins < 1) sepBins = 1;
+
+    HoughCandidate* fineResults = nullptr;
+    HoughCandidate* candidates = nullptr;
+    int n = HoughVoteCollect(
+        modelX, modelY, modelCount, binOffsets, binIndices, numGradBins,
+        searchX, searchY, searchBin, searchEdgeCount,
+        voteWidth, voteHeight, angleStart, angleExtent,
+        coarseAngleStep, fineAngleStep, topK, invScale, binShiftBits,
+        peaksPerAngle, sepBins,
+        &fineResults, &candidates);
+
+    int filled = SelectSeparatedPeaks(fineResults, n, candidates, minSeparation, outK,
+                                      outCx, outCy, outAngle, outVotes);
+
     _aligned_free(fineResults);
     _aligned_free(candidates);
     return filled;

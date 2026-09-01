@@ -141,6 +141,11 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         public double ScaleStep { get => TypedTool.ScaleStep; set => TypedTool.ScaleStep = value; }
         public double ScoreThreshold { get => TypedTool.ScoreThreshold; set => TypedTool.ScoreThreshold = value; }
 
+        // 다중 인스턴스 + 커버리지 판정
+        public int MaxInstances { get => TypedTool.MaxInstances; set => TypedTool.MaxInstances = value; }
+        public double NmsDistanceFactor { get => TypedTool.NmsDistanceFactor; set => TypedTool.NmsDistanceFactor = value; }
+        public double MinCoverage { get => TypedTool.MinCoverage; set => TypedTool.MinCoverage = value; }
+
         // Web ParamCode Link
         public ParamCodeItem? SelectedScoreThresholdCode
         {
