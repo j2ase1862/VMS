@@ -9,6 +9,16 @@
     <ApplicationIcon>icon\Vasim.ico</ApplicationIcon>
   </PropertyGroup>
 
+  <!-- 릴리즈(Release) 배포는 self-contained(.NET 런타임 동봉) — 현장 PC에 .NET 설치 불필요.
+       AppendRuntimeIdentifierToOutputPath=false 로 출력 경로를 기존과 동일하게 유지
+       (VMS 출력으로의 post-build 복사·MSI harvest 경로가 RID 세그먼트를 모름). -->
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+  </PropertyGroup>
+
+
   <ItemGroup>
     <Resource Include="icon\Vasim.ico" />
     <Resource Include="icon\Vasim.png" />
@@ -50,6 +60,16 @@
   <ItemGroup>
     <!-- 통합 테스트가 internal RecipeService ctor 등에 접근 — 운영 코드는 영향 없음. -->
     <InternalsVisibleTo Include="VMS.Tests" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <!-- VC++ 런타임 app-local 동봉(tools/vcredist) — OpenCvSharpExtern·NativeVision(OpenMP)·
+         onnxruntime 이 요구. 현장 PC에 vc_redist 설치 불필요. -->
+    <None Include="../tools/vcredist/x64/*.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>%(Filename)%(Extension)</Link>
+    </None>
   </ItemGroup>
 
 </Project>

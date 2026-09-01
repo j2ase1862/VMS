@@ -13,6 +13,16 @@
     <ApplicationIcon>icon\VisionSetup.ico</ApplicationIcon>
   </PropertyGroup>
 
+  <!-- 릴리즈(Release) 배포는 self-contained(.NET 런타임 동봉) — 현장 PC에 .NET 설치 불필요.
+       AppendRuntimeIdentifierToOutputPath=false 로 출력 경로를 기존과 동일하게 유지
+       (VMS 출력으로의 post-build 복사·MSI harvest 경로가 RID 세그먼트를 모름). -->
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+  </PropertyGroup>
+
+
   <ItemGroup>
     <Resource Include="icon\VisionSetup.ico" />
     <Resource Include="icon\RecipeManager.ico" />
