@@ -663,11 +663,13 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
 
             using var autoEdges = gray.Canny(cannyLow, cannyHigh);
             int edgePixels = Cv2.CountNonZero(autoEdges);
-            double density = (double)edgePixels / (gray.Width * gray.Height);
 
-            int maxModelPoints = density < 0.02 ? 100 :
-                                 density < 0.05 ? 150 :
-                                 density < 0.10 ? 200 : 300;
+            // 특징점 상한은 엣지 "밀도"가 아니라 실제 엣지 픽셀 수 기준 — 밀도 기준은
+            // 대형 템플릿 + 가는 윤곽(면적 대비 윤곽 비율이 낮음)에서 항상 최저 등급이
+            // 나와, 수천 픽셀 윤곽을 100점으로 솎아내 인식이 불안정해진다 (실증 T-피팅
+            // 483×355: 엣지 3,311px·밀도 0.019 → 100점 배정). 윤곽 8px당 1점이면
+            // 투표·스코어링에 충분히 조밀하고, 상한 500은 AVX2 스코어링에 부담 없다.
+            int maxModelPoints = Math.Clamp(edgePixels / 8, 100, 500);
 
             if (IsAutoTuneEnabled)
             {
