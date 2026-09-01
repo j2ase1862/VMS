@@ -77,9 +77,18 @@ namespace VMS.VisionSetup
             // ── Web Parameter Sync Service ──
             IParameterSyncService? parameterSyncService = null;
             IParameterApplyService? parameterApplyService = null;
+
+            // 단독(Standalone) 모드 — system_config 의 webServerUrl 이 비어 있으면
+            // Web 파라미터 동기화·허브를 만들지 않는다. 빈 URL 로 생성하면 60초
+            // 폴링·허브 재접속이 조용히 헛돌기만 한다 (VMS 메인과 동일 규약).
+            var (webUrl, clientIdx, apiKey) = LoadWebSyncConfig();
+            if (string.IsNullOrWhiteSpace(webUrl))
+            {
+                Debug.WriteLine("[App] standalone mode — web sync disabled (empty webServerUrl)");
+            }
+            else
             try
             {
-                var (webUrl, clientIdx, apiKey) = LoadWebSyncConfig();
                 parameterSyncService = new ParameterSyncService(webUrl, clientIdx, apiKey);
                 parameterApplyService = new ParameterApplyService(parameterSyncService);
 

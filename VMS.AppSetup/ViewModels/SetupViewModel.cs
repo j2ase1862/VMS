@@ -52,6 +52,15 @@ namespace VMS.AppSetup.ViewModels
         [ObservableProperty]
         private string _webServerUrl = "http://localhost:5292";
 
+        // ── 단독(Standalone) 모드 — Web 서버 미사용 ──
+        // 체크 시 webServerUrl 을 빈 값으로 저장한다 (빈 URL = VMS/VisionSetup 이 웹
+        // 연동 서비스를 만들지 않는 규약). 해제 시 마지막 입력 URL(비면 기본값) 복원.
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsWebFieldsEnabled))]
+        private bool _isStandaloneMode;
+
+        public bool IsWebFieldsEnabled => !IsStandaloneMode;
+
         [ObservableProperty]
         private string _visionServerUrl = "http://localhost:5000";
 
@@ -510,7 +519,10 @@ namespace VMS.AppSetup.ViewModels
                 ApplicationName = config.ApplicationName;
                 SystemIpAddress = config.SystemIpAddress;
                 ClientIndex = config.ClientIndex;
-                WebServerUrl = config.WebServerUrl;
+                // 빈 URL = 단독 모드로 저장된 구성 — 체크박스 상태로 복원하고,
+                // 입력란에는 기본값을 남겨 해제 시 바로 재사용할 수 있게 한다.
+                IsStandaloneMode = string.IsNullOrWhiteSpace(config.WebServerUrl);
+                WebServerUrl = IsStandaloneMode ? WebServerUrl : config.WebServerUrl;
                 VisionServerUrl = config.VisionServerUrl;
                 ClientApiKey = config.ClientApiKey;
                 WebSsoEnabled = config.WebSso?.Enabled ?? false;
@@ -925,13 +937,14 @@ namespace VMS.AppSetup.ViewModels
                 ApplicationName = ApplicationName,
                 SystemIpAddress = SystemIpAddress,
                 ClientIndex = ClientIndex,
-                WebServerUrl = WebServerUrl,
+                // 단독 모드 = 빈 URL 저장 (VMS/VisionSetup 이 웹 연동 서비스를 만들지 않음)
+                WebServerUrl = IsStandaloneMode ? string.Empty : WebServerUrl,
                 VisionServerUrl = VisionServerUrl,
                 ClientApiKey = ClientApiKey,
                 WebSso = new WebSsoSettings
                 {
-                    Enabled = WebSsoEnabled,
-                    WebServerUrl = WebSsoEnabled ? WebServerUrl : string.Empty
+                    Enabled = WebSsoEnabled && !IsStandaloneMode,
+                    WebServerUrl = WebSsoEnabled && !IsStandaloneMode ? WebServerUrl : string.Empty
                 },
                 SecurityMode = SecurityMode,
                 CameraMode = CameraMode,

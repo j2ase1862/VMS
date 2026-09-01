@@ -369,9 +369,18 @@ namespace VMS
                 userService: userService,
                 logService: logService);
 
+            // ── 단독(Standalone) 모드 — Web 서버 주소가 비어 있으면 웹 연동 서비스를
+            // 아예 만들지 않는다. 각 서비스는 null 이어도 MainViewModel/InspectionService 가
+            // 안전하며(_operatorAuthService == null 분기), 작업자 로그인·작업지시 없이
+            // AUTO RUN 이 가능해진다. 빈 URL 로 서비스를 만들면 하트비트·동기화 타이머가
+            // 계속 헛돌므로 생성 자체를 건너뛰는 것이 맞다.
+            bool webIntegrated = !string.IsNullOrWhiteSpace(systemConfig.WebServerUrl);
+            if (!webIntegrated)
+                logService.Log("단독 모드 — Web 서버 미구성 (작업자 로그인·작업지시·결과 업로드 비활성)", LogLevel.Info, "System");
+
             // ── Web Parameter Sync Service ──
             IParameterSyncService? parameterSyncService = null;
-            try
+            if (webIntegrated) try
             {
                 parameterSyncService = new ParameterSyncService(
                     systemConfig.WebServerUrl, systemConfig.ClientIndex, systemConfig.ClientApiKey);
@@ -406,7 +415,7 @@ namespace VMS
 
             // ── Predictive Polling Service (Plan §5.3 — V5 위젯) ──
             IPredictionPollingService? predictionPollingService = null;
-            try
+            if (webIntegrated) try
             {
                 predictionPollingService = new PredictionPollingService(
                     systemConfig.WebServerUrl, systemConfig.ClientIndex);
@@ -422,7 +431,7 @@ namespace VMS
             // 준비되면 IEnvironmentSensorReader 구현을 교체하기만 하면 즉시 송신 시작.
             // Reader 가 모든 null 반환 시 SensorPollingService 가 송신 자체를 skip → 무부하.
             ISensorPollingService? sensorPollingService = null;
-            try
+            if (webIntegrated) try
             {
                 IEnvironmentSensorReader sensorReader = new MockEnvironmentSensorReader();
                 sensorPollingService = new SensorPollingService(
@@ -436,7 +445,7 @@ namespace VMS
 
             // ── Operator Auth Service (Stage 1: 작업자 로그인) ──
             VMS.Core.Services.OperatorAuthService? operatorAuthService = null;
-            try
+            if (webIntegrated) try
             {
                 operatorAuthService = new VMS.Core.Services.OperatorAuthService(
                     systemConfig.WebServerUrl, systemConfig.ClientIndex);
@@ -448,7 +457,7 @@ namespace VMS
 
             // ── Work Order Client (Stage 2: 작업지시 목록) ──
             VMS.Core.Services.WorkOrderClient? workOrderClient = null;
-            try
+            if (webIntegrated) try
             {
                 workOrderClient = new VMS.Core.Services.WorkOrderClient(
                     systemConfig.WebServerUrl, systemConfig.ClientIndex);
@@ -460,7 +469,7 @@ namespace VMS
 
             // ── Lot Client (B1: WO 선택 시 활성 Lot 자동 채움) ──
             VMS.Core.Services.LotClient? lotClient = null;
-            try
+            if (webIntegrated) try
             {
                 lotClient = new VMS.Core.Services.LotClient(systemConfig.WebServerUrl);
             }
@@ -471,7 +480,7 @@ namespace VMS
 
             // ── VMS Hub Client (C5: SignalR 실시간 푸시) ──
             VMS.Core.Services.VmsHubClient? vmsHubClient = null;
-            try
+            if (webIntegrated) try
             {
                 vmsHubClient = new VMS.Core.Services.VmsHubClient(systemConfig.WebServerUrl);
                 _ = vmsHubClient.StartAsync(); // fire & forget — 실패해도 응답 기반 fallback 으로 동작
@@ -483,7 +492,7 @@ namespace VMS
 
             // ── Web Heartbeat Service ──
             HeartbeatService? heartbeatService = null;
-            try
+            if (webIntegrated) try
             {
                 heartbeatService = new HeartbeatService(
                     systemConfig.WebServerUrl,
@@ -656,7 +665,7 @@ namespace VMS
 
             // ── Image Upload Service (검사 이미지 → BODA.VMS.Web, Upload 모드) ──
             VMS.Services.ImageUpload.IImageUploadService? imageUploadService = null;
-            try
+            if (webIntegrated) try
             {
                 imageUploadService = new VMS.Services.ImageUpload.ImageUploadService(
                     systemConfig.WebServerUrl, systemConfig.ClientIndex, systemConfig.ClientApiKey);

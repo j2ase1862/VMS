@@ -322,6 +322,16 @@ namespace VMS.ViewModels
             set => SetProperty(ref _webStatusText, value);
         }
 
+        /// <summary>
+        /// Web 연동 여부 — Web 서버 주소가 비어 있으면 App 이 웹 서비스들을 만들지 않아
+        /// 단독(Standalone) 모드가 된다. 헤더의 작업자 로그인 칩·작업지시 버튼 표시와
+        /// 상태바 Web 칩(단독 모드 표기)이 이 값을 따른다.
+        /// </summary>
+        public bool IsWebIntegrated => _operatorAuthService != null;
+
+        /// <summary>단독 모드 여부 — 상태바 Web 칩의 3-상태(연결/끊김/단독) 트리거용.</summary>
+        public bool IsStandaloneMode => _operatorAuthService == null;
+
 
         public int ConnectedCameraCount => Cameras.Count(c => c.IsConnected);
         public int TotalCameraCount => Cameras.Count;
@@ -439,6 +449,11 @@ namespace VMS.ViewModels
             {
                 _heartbeatService.ConnectionStatusChanged += OnWebConnectionStatusChanged;
             }
+
+            // 단독 모드 — 하트비트가 없어 기본값 "Web Disconnected"(빨간 점)가 고정되므로
+            // 상태바 칩을 단독 모드 표기로 바꿔 오해(고장으로 인식)를 막는다.
+            if (_operatorAuthService == null && _heartbeatService == null)
+                WebStatusText = "단독 모드 (Web 미사용)";
 
             // Stage 1: 작업자 세션 변경 시 ViewModel + SyncService 동기화
             if (_operatorAuthService != null)

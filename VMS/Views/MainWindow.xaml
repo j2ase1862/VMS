@@ -133,10 +133,12 @@
                 <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Center">
 
-                    <!-- ═══ Stage 1: 작업자 chip (Web 인증 — VMS LoginWindow의 시스템 사용자와 별개) ═══ -->
+                    <!-- ═══ Stage 1: 작업자 chip (Web 인증 — VMS LoginWindow의 시스템 사용자와 별개) ═══
+                         단독 모드(Web 미구성)에서는 작업자 로그인 개념이 없으므로 칩 자체를 숨긴다 -->
                     <Border Background="{StaticResource Brush.Surface.Overlay}" CornerRadius="4" Padding="10,0" Height="32"
                             BorderBrush="{StaticResource Brush.Accent}" BorderThickness="1"
-                            VerticalAlignment="Center">
+                            VerticalAlignment="Center"
+                            Visibility="{Binding IsWebIntegrated, Converter={StaticResource BoolToVisibilityConverter}}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="Operator:" Foreground="{StaticResource Brush.Accent}" FontSize="10" FontWeight="SemiBold"
                                        VerticalAlignment="Center" Margin="0,0,8,0"/>
@@ -216,9 +218,10 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Work Orders 버튼 (로그인 후만 활성) -->
+                    <!-- Work Orders 버튼 (로그인 후만 활성, 단독 모드에서는 숨김) -->
                     <Button Command="{Binding OpenWorkOrderListCommand}"
                             AutomationProperties.Name="Work Orders"
+                            Visibility="{Binding IsWebIntegrated, Converter={StaticResource BoolToVisibilityConverter}}"
                             Margin="6,0,0,0" Height="32" Padding="12,0"
                             FontSize="11" FontWeight="SemiBold"
                             Background="{StaticResource Brush.Surface.Deep}" Foreground="{StaticResource Brush.Accent}"
@@ -1625,6 +1628,10 @@
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding IsWebConnected}" Value="False">
                                         <Setter Property="Fill" Value="{StaticResource Brush.Danger}"/>
+                                    </DataTrigger>
+                                    <!-- 단독 모드 — 끊김(빨강)이 아니라 의도된 미사용(중립 회색) -->
+                                    <DataTrigger Binding="{Binding IsStandaloneMode}" Value="True">
+                                        <Setter Property="Fill" Value="{StaticResource Brush.Surface.Overlay}"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>

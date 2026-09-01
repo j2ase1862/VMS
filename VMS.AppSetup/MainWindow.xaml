@@ -161,6 +161,13 @@
                                 <TextBlock Text="Web Server Integration" FontSize="14" FontWeight="SemiBold"
                                            Foreground="#FFD700" Margin="0,0,0,12"/>
 
+                                <CheckBox Content="Web 서버 미사용 — 단독(Standalone) 모드"
+                                          IsChecked="{Binding IsStandaloneMode}"
+                                          Style="{StaticResource WindowDarkCheckBox}" Margin="0,0,0,5"/>
+                                <TextBlock Text="체크하면 Web 서버 주소를 비운 채 저장되어, VMS가 작업자 로그인·작업지시 없이 단독으로 검사를 운전합니다 (생산 이력·기준값의 Web 관리 비활성). 최근 검사 결과는 VMS 화면의 Recent Inspections에서 확인합니다."
+                                           Foreground="{StaticResource BrushTextMuted}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,15"/>
+
+                                <StackPanel IsEnabled="{Binding IsWebFieldsEnabled}">
                                 <TextBlock Style="{StaticResource LabelStyle}"><Run Text="Client Index"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Client Index" CustomDescription="Web 서버가 이 장비를 구분하는 라인 번호입니다. 라인마다 1, 2, 3… 처럼 겹치지 않게 지정하세요." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                                 <TextBox Text="{Binding ClientIndex, UpdateSourceTrigger=PropertyChanged}"
                                          Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,5"/>
@@ -184,6 +191,7 @@
                                          Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,5"/>
                                 <TextBlock Text="X-API-Key 헤더 비밀 (Web 서버 ClientApiKey:Value 와 동일). 비워두면 헤더 미송신 (서버 호환 모드에서만 통과)."
                                            Foreground="{StaticResource BrushTextMuted}" FontSize="11" TextWrapping="Wrap"/>
+                                </StackPanel>
                             </StackPanel>
                         </Border>
 
