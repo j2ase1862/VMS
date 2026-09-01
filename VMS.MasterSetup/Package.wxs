@@ -25,9 +25,13 @@
          WebPayload/ 를 채웠을 때만 컴파일됨. CI 는 Web 리포 접근 불가라 이 Feature 없이 빌드).
          서비스는 등록만 하고 시작하지 않는다 — 초기 구성(admin 비밀번호·Jwt:Key) 은
          AppSetup 마법사가 담당하며, 구성 전에는 앱이 스스로 부팅을 거부한다.
-         제외 설치: msiexec /i VMS-x.y.z.msi INSTALLWEB=0 -->
+         제외 경로 2가지 — 같은 INSTALLWEB 속성 공유:
+           · 설치 마법사 "설치 구성 선택" 화면의 체크 해제 (WebOptionDlg — 해제 시 속성 제거)
+           · 무인 설치: msiexec /i VMS-x.y.z.msi INSTALLWEB=0
+         기본값 1(Property) 이라 UI 없는 설치도 기본은 포함. -->
+    <Property Id="INSTALLWEB" Value="1" Secure="yes" />
     <Feature Id="WebServer" Title="BODA VMS Web 서버" Level="1" AllowAbsent="yes">
-      <Level Value="0" Condition="INSTALLWEB=0" />
+      <Level Value="0" Condition="INSTALLWEB=0 OR NOT INSTALLWEB" />
       <ComponentGroupRef Id="WebFiles" />
       <ComponentRef Id="WebServiceComp" />
     </Feature>
