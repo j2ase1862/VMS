@@ -103,6 +103,8 @@ const POST = {
   "2.1 VMS 클라이언트 (MSI)": [
     () => imgPara("70_msi_welcome.png", 420),
     () => caption("그림. 설치 마법사 시작 화면 — BODA 브랜드 배너, [다음]/[취소] (라이선스 동의 단계 없음)"),
+    () => imgPara("71_msi_weboption.png", 420),
+    () => caption("그림. 설치 구성 선택 화면 — \"BODA VMS Web 서버 포함\" 체크박스 (기본 켬, 해제 시 웹 서버 파일 미설치)"),
   ],
   "7.18 SW 라이선스 (좌석 현황)": [
     () => imgPara("62_web_SW_라이선스.png", 600),
