@@ -68,6 +68,11 @@ namespace VMS.AppSetup.ViewModels
         [ObservableProperty]
         private string _clientApiKey = string.Empty;
 
+        // "고급 설정" 접이식 노출 — 일반 현장은 API Key 를 비워 두므로 기본은 접힘.
+        // 저장된 키가 있으면 LoadConfiguration 이 펼쳐서 기존 값을 바로 확인할 수 있게 한다.
+        [ObservableProperty]
+        private bool _isAdvancedWebSettingsVisible;
+
         // SSO Migration Plan §2.2 (SSO PR4 모델 + PR5 UI):
         // Web SSO 활성 여부. true 면 LoginViewModel 이 Admin/Manager 인증을 Web 으로 위임.
         [ObservableProperty]
@@ -525,6 +530,7 @@ namespace VMS.AppSetup.ViewModels
                 WebServerUrl = IsStandaloneMode ? WebServerUrl : config.WebServerUrl;
                 VisionServerUrl = config.VisionServerUrl;
                 ClientApiKey = config.ClientApiKey;
+                IsAdvancedWebSettingsVisible = !string.IsNullOrWhiteSpace(config.ClientApiKey);
                 WebSsoEnabled = config.WebSso?.Enabled ?? false;
                 SecurityMode = config.SecurityMode;
                 CameraMode = config.CameraMode;
