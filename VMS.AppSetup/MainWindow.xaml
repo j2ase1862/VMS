@@ -547,26 +547,12 @@
                                                             ToolTip="Remove Camera"/>
                                                 </Grid>
 
-                                                <!-- Row 2: Area Scan Parameters -->
-                                                <Border Background="{StaticResource BrushBgCard}" CornerRadius="4" Padding="10,8" Margin="0,8,0,0"
-                                                        Visibility="{Binding IsAreaScan, Converter={StaticResource BoolToVisConverter}}">
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="8"/>
-                                                            <ColumnDefinition Width="*"/>
-                                                        </Grid.ColumnDefinitions>
-                                                        <StackPanel Grid.Column="0">
-                                                            <TextBlock Foreground="{StaticResource BrushTextSecondary}" FontSize="11" Margin="0,0,0,3"><Run Text="Exposure (μs)"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Exposure (μs)" CustomDescription="노출 시간(마이크로초)입니다. 길수록 이미지가 밝아지지만, 움직이는 대상은 흐려질 수 있습니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
-                                                            <TextBox Text="{Binding Exposure, UpdateSourceTrigger=PropertyChanged}"
-                                                                     Style="{StaticResource WindowDarkTextBox}"/>
-                                                        </StackPanel>
-                                                        <StackPanel Grid.Column="2">
-                                                            <TextBlock Foreground="{StaticResource BrushTextSecondary}" FontSize="11" Margin="0,0,0,3"><Run Text="Gain"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Gain" CustomDescription="신호 증폭(감도)입니다. 높이면 밝아지지만 노이즈도 함께 커집니다. 노출로 먼저 맞추고 부족할 때만 올리세요." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
-                                                            <TextBox Text="{Binding Gain, UpdateSourceTrigger=PropertyChanged}"
-                                                                     Style="{StaticResource WindowDarkTextBox}"/>
-                                                        </StackPanel>
-                                                    </Grid>
+                                                <!-- Row 2: 안내 — 노출/게인(Area Scan)·3D 취득 옵션(Capture Mode/Filter/Z 범위)·Encoder Res 입력란은 제거됨.
+                                                     이 값들은 런타임(VMS 스텝 설정 / VisionSetup 레시피 스텝)이 소유하며
+                                                     마법사에 저장된 카메라 단위 값은 어디에서도 읽히지 않았다 (모델 필드는 json 호환용 유지). -->
+                                                <Border Background="{StaticResource BrushBgCard}" CornerRadius="4" Padding="10,8" Margin="0,8,0,0">
+                                                    <TextBlock Foreground="{StaticResource BrushTextMuted}" FontSize="11" TextWrapping="Wrap"
+                                                               Text="노출(Exposure)·게인(Gain)과 3D 취득 옵션(점군 후처리 필터, 깊이 Z 범위)은 여기서 설정하지 않습니다. VMS 메인 화면의 카메라 스텝 설정 또는 VisionSetup 레시피 스텝에서 조정하며, 기본은 카메라에 저장된 현재 값을 그대로 사용합니다."/>
                                                 </Border>
 
                                                 <!-- Row 3: Line Scan Parameters -->
@@ -574,8 +560,6 @@
                                                         Visibility="{Binding IsLineScan, Converter={StaticResource BoolToVisConverter}}">
                                                     <Grid>
                                                         <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="8"/>
                                                             <ColumnDefinition Width="*"/>
                                                             <ColumnDefinition Width="8"/>
                                                             <ColumnDefinition Width="*"/>
@@ -596,49 +580,6 @@
                                                         <StackPanel Grid.Column="4">
                                                             <TextBlock Foreground="{StaticResource BrushTextSecondary}" FontSize="11" Margin="0,0,0,3"><Run Text="Scan Length"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Scan Length" CustomDescription="라인 몇 줄을 모아 이미지 한 장으로 만들지(이미지 세로 크기)입니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                                                             <TextBox Text="{Binding ScanLength, UpdateSourceTrigger=PropertyChanged}"
-                                                                     Style="{StaticResource WindowDarkTextBox}"/>
-                                                        </StackPanel>
-                                                        <StackPanel Grid.Column="6"
-                                                                    Visibility="{Binding ShowEncoderResolution, Converter={StaticResource BoolToVisConverter}}">
-                                                            <TextBlock Foreground="{StaticResource BrushTextSecondary}" FontSize="11" Margin="0,0,0,3"><Run Text="Encoder Res (P/mm)"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Encoder Res (P/mm)" CustomDescription="엔코더 분해능 — 1mm 이동할 때 나오는 펄스 수입니다. Trigger 가 Encoder 일 때 사용합니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
-                                                            <TextBox Text="{Binding EncoderResolution, UpdateSourceTrigger=PropertyChanged}"
-                                                                     Style="{StaticResource WindowDarkTextBox}"/>
-                                                        </StackPanel>
-                                                    </Grid>
-                                                </Border>
-
-                                                <!-- Row 4: 3D Camera Parameters -->
-                                                <Border Background="{StaticResource BrushBgCard}" CornerRadius="4" Padding="10,8" Margin="0,8,0,0"
-                                                        Visibility="{Binding Is3DCamera, Converter={StaticResource BoolToVisConverter}}">
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="8"/>
-                                                            <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="8"/>
-                                                            <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="8"/>
-                                                            <ColumnDefinition Width="*"/>
-                                                        </Grid.ColumnDefinitions>
-                                                        <StackPanel Grid.Column="0">
-                                                            <TextBlock Foreground="{StaticResource BrushTextSecondary}" FontSize="11" Margin="0,0,0,3"><Run Text="Capture Mode"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Capture Mode" CustomDescription="3D 카메라가 무엇을 취득할지입니다 — Mode2D(밝기 이미지만) / Mode3D(높이 데이터만) / Both(둘 다)." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
-                                                            <ComboBox ItemsSource="{Binding DataContext.CaptureModes3D, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                                      SelectedItem="{Binding CaptureMode}"
-                                                                      Style="{StaticResource WindowDarkComboBox}"/>
-                                                        </StackPanel>
-                                                        <StackPanel Grid.Column="2">
-                                                            <TextBlock Foreground="{StaticResource BrushTextSecondary}" FontSize="11" Margin="0,0,0,3"><Run Text="Filter Strength"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Filter Strength" CustomDescription="3D 높이 데이터의 노이즈 제거 강도입니다. 값이 클수록 표면이 매끈해지지만 미세한 요철도 함께 지워질 수 있습니다. (3D 카메라 연동 구성에서 사용)" Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
-                                                            <TextBox Text="{Binding FilterStrength, UpdateSourceTrigger=PropertyChanged}"
-                                                                     Style="{StaticResource WindowDarkTextBox}"/>
-                                                        </StackPanel>
-                                                        <StackPanel Grid.Column="4">
-                                                            <TextBlock Foreground="{StaticResource BrushTextSecondary}" FontSize="11" Margin="0,0,0,3"><Run Text="Z Min (mm)"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Z Min (mm)" CustomDescription="측정할 높이 범위의 아래 한계(mm)입니다. 이보다 낮은 데이터는 버려집니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
-                                                            <TextBox Text="{Binding ZRangeMin, UpdateSourceTrigger=PropertyChanged}"
-                                                                     Style="{StaticResource WindowDarkTextBox}"/>
-                                                        </StackPanel>
-                                                        <StackPanel Grid.Column="6">
-                                                            <TextBlock Foreground="{StaticResource BrushTextSecondary}" FontSize="11" Margin="0,0,0,3"><Run Text="Z Max (mm)"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Z Max (mm)" CustomDescription="측정할 높이 범위의 위 한계(mm)입니다. 이보다 높은 데이터는 버려집니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
-                                                            <TextBox Text="{Binding ZRangeMax, UpdateSourceTrigger=PropertyChanged}"
                                                                      Style="{StaticResource WindowDarkTextBox}"/>
                                                         </StackPanel>
                                                     </Grid>
