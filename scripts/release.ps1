@@ -33,6 +33,34 @@ function Step([string]$name, [scriptblock]$body) {
     Write-Host "    완료 ($([math]::Round($sw.Elapsed.TotalSeconds, 1))s)" -ForegroundColor DarkGray
 }
 
+# 네이티브 실행 파일(git/gh/dotnet) 호출 래퍼 — 성공 여부는 종료 코드로만 판정한다.
+#
+# PowerShell 5.1 은 호출자가 stderr 를 리다이렉트(`2>&1`, `*>&1`, 백그라운드 잡 캡처 등)하면
+# 네이티브 stderr 한 줄마다 ErrorRecord(NativeCommandError) 를 만들고, 스크립트의
+# $ErrorActionPreference='Stop' 아래에서는 그것이 종료 예외가 된다. git push 는 성공해도
+# "To github.com:…" 진행 메시지를 stderr 로 내므로 (v1.27.0 발행 시 태그 push 직후 중단 사고)
+# 호출 구간만 EAP 를 Continue 로 낮춰 stderr 를 출력으로만 흘리고, 종료 코드로 실패를 판정한다.
+# 기본은 stdout/stderr 를 그대로 화면에 흘리고(빌드 로그 실시간), -Capture 면 stdout 줄을
+# 모아 반환한다 (JSON 파싱 등) — 이때도 stderr 는 화면으로만 보낸다.
+function Invoke-Native([string]$failMessage, [scriptblock]$body, [switch]$Capture) {
+    $prevEAP = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    $global:LASTEXITCODE = 0
+    $captured = New-Object System.Collections.Generic.List[string]
+    try {
+        & $body 2>&1 | ForEach-Object {
+            if ($_ -is [System.Management.Automation.ErrorRecord]) { Write-Host $_.ToString() }
+            elseif ($Capture) { $captured.Add([string]$_) }
+            else { Write-Host ([string]$_) }
+        }
+    }
+    finally {
+        $ErrorActionPreference = $prevEAP
+    }
+    if ($LASTEXITCODE -ne 0) { throw "$failMessage (exit $LASTEXITCODE)" }
+    if ($Capture) { return ($captured -join "`n") }
+}
+
 # ── 0. 사전 검증 ──
 Step '사전 검증' {
     if (-not (Test-Path $NotesFile)) { throw "릴리즈 노트 없음: $NotesFile" }
@@ -62,10 +90,9 @@ Step '사전 검증' {
 # ── 1. 빌드 (-SkipBuild 시 생략: CI 대기 중 프리빌드 재사용) ──
 if (-not $SkipBuild) {
     Step 'Web payload 스테이징' { .\tools\stage-web-payload.ps1 }
-    Step '솔루션 빌드' { dotnet build VMS.sln -c Release; if ($LASTEXITCODE -ne 0) { throw '솔루션 빌드 실패' } }
+    Step '솔루션 빌드' { Invoke-Native '솔루션 빌드 실패' { dotnet build VMS.sln -c Release } }
     Step 'MSI 빌드 (Rebuild)' {
-        dotnet build VMS.MasterSetup\VMS.MasterSetup.wixproj -c Release -t:Rebuild
-        if ($LASTEXITCODE -ne 0) { throw 'MSI 빌드 실패' }
+        Invoke-Native 'MSI 빌드 실패' { dotnet build VMS.MasterSetup\VMS.MasterSetup.wixproj -c Release -t:Rebuild }
     }
 }
 
@@ -85,29 +112,29 @@ Step 'MSI 검증 + SHA256' {
 
 # ── 3. draft 생성 + 자산 업로드 (1GB — 몇 분 소요) ──
 Step "draft 생성 + 자산 업로드 ($repo)" {
-    gh release create $tag --repo $repo --draft `
-        --title "BODA VMS v$Version" --notes-file $NotesFile `
-        $msiPath "$msiPath.sha256"
-    if ($LASTEXITCODE -ne 0) { throw 'draft 생성/업로드 실패' }
+    Invoke-Native 'draft 생성/업로드 실패' {
+        gh release create $tag --repo $repo --draft `
+            --title "BODA VMS v$Version" --notes-file $NotesFile `
+            $msiPath "$msiPath.sha256"
+    }
 }
 
 # ── 4. 자산 크기 일치 확인 → publish ──
 Step '자산 검증 + publish' {
-    $assets = gh release view $tag --repo $repo --json assets | ConvertFrom-Json
+    $assets = Invoke-Native '릴리즈 자산 조회 실패' { gh release view $tag --repo $repo --json assets } -Capture | ConvertFrom-Json
     $remote = $assets.assets | Where-Object { $_.name -eq "VMS-$Version.msi" }
     if ($null -eq $remote) { throw '업로드된 MSI 자산이 없음 — publish 중단' }
     if ($remote.size -ne $script:msiBytes) {
         throw "자산 크기 불일치 (원격 $($remote.size) ≠ 로컬 $script:msiBytes) — 업로드 불완전, publish 중단"
     }
-    gh release edit $tag --repo $repo --draft=false
-    if ($LASTEXITCODE -ne 0) { throw 'publish 실패' }
+    Invoke-Native 'publish 실패' { gh release edit $tag --repo $repo --draft=false }
 }
 
 # ── 5. 소스 repo 태그 ──
 Step '소스 repo 태그 push' {
-    git tag $tag
-    git push origin $tag
-    if ($LASTEXITCODE -ne 0) { throw '태그 push 실패' }
+    Invoke-Native '태그 생성 실패' { git tag $tag }
+    # git push 는 성공 시에도 진행 메시지를 stderr 로 낸다 — Invoke-Native 가 종료 코드로만 판정
+    Invoke-Native '태그 push 실패' { git push origin $tag }
 }
 
 # ── 6. 로컬 보관 + 최종 확인 ──
