@@ -142,11 +142,26 @@ MSI 는 `INSTALLFOLDER`(Program Files) 만 교체. `%LocalAppData%` 는 미터�
 - `Package.wxs` 의 `UpgradeCode` 가 변경됐을 가능성 — §2.1 참고.
 - WiX log: `msiexec /i VMS-1.x.y.msi /L*v upgrade.log` 후 `RemoveExistingProducts` 시퀀스 확인.
 
+### 3.4 인앱 설치 중 ".NET Desktop Runtime 을 다운로드하시겠습니까?" 대화상자 → 이전 버전이 그대로 실행됨
+
+- 증상: 다운로드는 끝났는데 런타임 다운로드 대화상자가 뜨고, 예/아니오와 무관하게 곧바로
+  **이전 버전** VMS 가 다시 실행된다. `%ProgramData%\BODA\VMS\update-bootstrap.log` 에
+  `install exit code: -2147450749` (0x80008083 = hostfxr 부재) + `install FAILED - previous version remains`.
+- 원인: v1.25.0 부터 VMS.Updater 가 self-contained 인데, 부트스트랩이 임시 폴더로 `VMS.Updater.*` 와
+  CommunityToolkit.Mvvm.dll 만 복사해 실행했다. self-contained 호스트는 자기 옆 폴더에서만 런타임을
+  찾으므로(전역 .NET 설치 여부와 무관) 대화상자를 띄우고 종료했고, MSI 는 실행조차 되지 않았다.
+- 수정 (v1.28.0, `UpdateInstallService`): ① 설치 폴더의 `VMS.Updater.deps.json` 에서 런타임 팩 파일
+  목록(약 238개·151MB)을 읽어 함께 복사 + 설치본에 hostfxr.dll 이 있는데 복사되지 않았으면 업데이터
+  대신 msiexec 로 진행, ② 업데이터 종료 코드가 MSI 결과 범위(0~3010) 밖이면 msiexec /passive 로 재시도.
+- **주의**: 부트스트랩 스크립트는 *실행 중인 구버전* VMS 가 만들므로, **v1.25.0~v1.27.0 이 설치된 PC 는
+  한 번은 MSI 를 직접 받아 설치**해야 한다. 그 뒤부터 인앱 업데이트가 정상 동작한다.
+
 ---
 
 ## 4. 변경 이력
 
 | 버전 | 일자 | 주요 변경 |
 |---|---|---|
+| v1.2 | 2026-09-02 | §3.4 self-contained 업데이터 스테이징 사고(런타임 대화상자 → 이전 버전 재실행) 원인·수정·수동 설치 1회 필요 안내 |
 | v1.1 | 2026-08-14 | `release_and_update_guide_v1.0.md` 에서 유효 내용(Phase B·업그레이드 정책·트러블슈팅)만 분리. 폐지된 Phase A(release.yml)·구 repo URL 예시 제거, 엔드포인트를 VMS-Releases 로 갱신 |
 | v1.0 | 2026-06-01 | (전신) release_and_update_guide 최초 작성 |

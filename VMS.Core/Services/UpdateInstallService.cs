@@ -5,7 +5,9 @@ using System.IO;
 using System.Net.Http;
 using System.Reflection;
 using System.Security.Cryptography;
+using System.Collections.Generic;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using VMS.Core.Interfaces;
@@ -21,8 +23,9 @@ namespace VMS.Core.Services
     /// 부트스트랩 스크립트가 하는 일 (관리자 권한, 앱 종료 후):
     ///   1. VMS 프로세스 종료 대기 (files-in-use 방지)
     ///   2. BodaVmsWeb 서비스 사전 상태 기록 (MajorUpgrade 가 서비스를 demand 로 재등록하므로)
-    ///   3. VMS.Updater(브랜딩 진행률 창)를 임시 폴더로 복사해 설치 실행
-    ///      — 업데이터가 없거나 복사 실패 시 msiexec /i /passive /norestart 폴백
+    ///   3. VMS.Updater(브랜딩 진행률 창)를 self-contained 런타임 파일과 함께 임시 폴더로 복사해 설치 실행
+    ///      — 업데이터가 없거나 복사 실패 시, 또는 업데이터 종료 코드가 MSI 결과(0~3010)가 아니면
+    ///        msiexec /i /passive /norestart 폴백
     ///   4. 서비스가 이전에 auto/실행 중이었으면 auto 전환 + 시작 복원
     ///      (AppSetup 수동 시작 단계 자동화 — WebServerConfigApplier.EnsureAutoStartAndRun 과 동일 정책)
     ///   5. VMS 재실행 (explorer 경유 — 상승 권한 미상속)
@@ -175,8 +178,15 @@ namespace VMS.Core.Services
                 var currentVersion = Assembly.GetEntryAssembly()?.GetName().Version is { } v
                     ? $"{v.Major}.{v.Minor}.{v.Build}"
                     : null;
+                // self-contained 업데이터(v1.25.0+)는 옆에 런타임 파일이 있어야 뜬다 — 설치 폴더의
+                // deps.json 에서 런타임 팩 파일 목록을 읽어 스테이징 복사 목록에 포함시킨다.
+                var vmsDir = string.IsNullOrEmpty(vmsExePath) ? null : Path.GetDirectoryName(vmsExePath);
+                var runtimeFiles = vmsDir is null
+                    ? Array.Empty<string>()
+                    : ReadUpdaterRuntimeFiles(Path.Combine(vmsDir, "VMS.Updater.deps.json"));
+
                 var script = BuildBootstrapScript(
-                    msiPath, vmsExePath, Environment.ProcessId, logPath, currentVersion);
+                    msiPath, vmsExePath, Environment.ProcessId, logPath, currentVersion, runtimeFiles);
                 var scriptPath = Path.Combine(_downloadDir, "update-bootstrap.ps1");
                 Directory.CreateDirectory(_downloadDir);
                 // BOM 있는 UTF-8 — Windows PowerShell 5.1 이 BOM 없으면 ANSI 로 해석.
@@ -217,9 +227,11 @@ namespace VMS.Core.Services
         /// 로그 메시지는 인코딩 문제를 피하려 영문 고정.
         /// </summary>
         internal static string BuildBootstrapScript(
-            string msiPath, string vmsExePath, int vmsPid, string logPath, string? currentVersion = null)
+            string msiPath, string vmsExePath, int vmsPid, string logPath, string? currentVersion = null,
+            IReadOnlyList<string>? updaterRuntimeFiles = null)
         {
             static string Quote(string s) => "'" + s.Replace("'", "''") + "'";
+            updaterRuntimeFiles ??= Array.Empty<string>();
 
             var sb = new StringBuilder();
             sb.AppendLine("$ErrorActionPreference = 'Continue'");
@@ -247,9 +259,16 @@ namespace VMS.Core.Services
             // 3) MSI 설치 — 브랜딩 진행률 창(VMS.Updater) 우선, 없으면 msiexec /passive 폴백.
             //    업데이터는 자신도 MSI 로 교체되는 파일이므로 설치 폴더에서 직접 실행하지 않고
             //    MSI 옆 임시 폴더로 복사해 실행한다 (files-in-use 방지).
-            //    복사 목록은 VMS.Updater.csproj 의 패키지 정책과 짝: VMS.Updater.* + CommunityToolkit.Mvvm.dll.
+            //    복사 목록 = VMS.Updater.* + CommunityToolkit.Mvvm.dll (VMS.Updater.csproj 패키지 정책과 짝)
+            //    + self-contained 런타임 팩 파일(VMS.Updater.deps.json 에서 추출, ReadUpdaterRuntimeFiles).
+            //    v1.25.0 부터 업데이터가 self-contained 라 옆에 hostfxr.dll 등 런타임이 없으면 .NET 호스트가
+            //    "런타임 다운로드" 대화상자를 띄우고 0x80008083 으로 종료한다 (v1.27.0 dev PC 사고).
             sb.AppendLine($"$msi = {Quote(msiPath)}");
             sb.AppendLine("$updaterExe = ''");
+            sb.AppendLine("$updaterRuntimeFiles = @(");
+            foreach (var f in updaterRuntimeFiles)
+                sb.AppendLine($"  {Quote(f)},");
+            sb.AppendLine("  $null) | Where-Object { $_ }");
             sb.AppendLine("if ($vmsExe -ne '') {");
             sb.AppendLine("  $vmsDir = Split-Path -Parent $vmsExe");
             sb.AppendLine("  if (Test-Path -LiteralPath (Join-Path $vmsDir 'VMS.Updater.exe')) {");
@@ -258,9 +277,23 @@ namespace VMS.Core.Services
             sb.AppendLine("      New-Item -ItemType Directory -Force -Path $updDir | Out-Null");
             sb.AppendLine("      Copy-Item -Path (Join-Path $vmsDir 'VMS.Updater.*') -Destination $updDir -Force -ErrorAction Stop");
             sb.AppendLine("      Copy-Item -Path (Join-Path $vmsDir 'CommunityToolkit.Mvvm.dll') -Destination $updDir -Force -ErrorAction Stop");
+            sb.AppendLine("      foreach ($rf in $updaterRuntimeFiles) {");
+            sb.AppendLine("        Copy-Item -LiteralPath (Join-Path $vmsDir $rf) -Destination $updDir -Force -ErrorAction Stop");
+            sb.AppendLine("      }");
+            sb.AppendLine("      Write-Log (\"updater staged with {0} runtime files\" -f @($updaterRuntimeFiles).Count)");
+            // self-contained 설치본(hostfxr.dll 존재)인데 임시 폴더에 hostfxr.dll 이 없으면 업데이터는 뜰 수 없다
+            // (구버전 deps.json 누락 등) — 대화상자 없이 msiexec 로 간다.
+            sb.AppendLine("      if ((Test-Path -LiteralPath (Join-Path $vmsDir 'hostfxr.dll')) -and -not (Test-Path -LiteralPath (Join-Path $updDir 'hostfxr.dll'))) {");
+            sb.AppendLine("        throw 'self-contained updater needs hostfxr.dll next to it but it was not staged'");
+            sb.AppendLine("      }");
             sb.AppendLine("      $updaterExe = Join-Path $updDir 'VMS.Updater.exe'");
             sb.AppendLine("    } catch { Write-Log (\"updater staging FAILED, fallback to msiexec: {0}\" -f $_.Exception.Message); $updaterExe = '' }");
             sb.AppendLine("  }");
+            sb.AppendLine("}");
+            sb.AppendLine("function Install-ViaMsiexec {");
+            sb.AppendLine("  Write-Log (\"installing via msiexec: {0}\" -f $msi)");
+            sb.AppendLine("  $p = Start-Process -FilePath 'msiexec.exe' -ArgumentList '/i', ('\"{0}\"' -f $msi), '/passive', '/norestart' -Wait -PassThru");
+            sb.AppendLine("  return $p.ExitCode");
             sb.AppendLine("}");
             sb.AppendLine("if (($updaterExe -ne '') -and (Test-Path -LiteralPath $updaterExe)) {");
             sb.AppendLine("  Write-Log (\"installing via updater UI: {0}\" -f $msi)");
@@ -268,11 +301,16 @@ namespace VMS.Core.Services
                 ? "('\"{0}\"' -f $msi)"
                 : $"('\"{{0}}\"' -f $msi), '--current', {Quote(currentVersion)}";
             sb.AppendLine($"  $proc = Start-Process -FilePath $updaterExe -ArgumentList {updaterArgs} -Wait -PassThru");
+            sb.AppendLine("  $code = $proc.ExitCode");
+            // Windows Installer 결과 코드는 0~3010 범위. 음수(HRESULT — .NET 호스트/런타임 오류, 처리되지 않은 예외)
+            // 또는 그 밖의 값이면 MSI 가 실행조차 안 된 것이므로 msiexec 로 다시 시도한다.
+            sb.AppendLine("  if (($code -lt 0) -or ($code -gt 3010)) {");
+            sb.AppendLine("    Write-Log (\"updater exit code {0} is not an MSI result - retrying via msiexec\" -f $code)");
+            sb.AppendLine("    $code = Install-ViaMsiexec");
+            sb.AppendLine("  }");
             sb.AppendLine("} else {");
-            sb.AppendLine("  Write-Log (\"installing via msiexec: {0}\" -f $msi)");
-            sb.AppendLine("  $proc = Start-Process -FilePath 'msiexec.exe' -ArgumentList '/i', ('\"{0}\"' -f $msi), '/passive', '/norestart' -Wait -PassThru");
+            sb.AppendLine("  $code = Install-ViaMsiexec");
             sb.AppendLine("}");
-            sb.AppendLine("$code = $proc.ExitCode");
             sb.AppendLine("Write-Log (\"install exit code: {0}\" -f $code)");
             sb.AppendLine("$installOk = ($code -eq 0) -or ($code -eq 3010)"); // 3010 = 재부팅 필요하나 성공
 
@@ -302,6 +340,48 @@ namespace VMS.Core.Services
             sb.AppendLine("if ($installOk -and ($updaterExe -ne '')) { Remove-Item -LiteralPath (Split-Path -Parent $updaterExe) -Recurse -Force -ErrorAction SilentlyContinue }");
             sb.AppendLine("Write-Log '=== update bootstrap end ==='");
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// VMS.Updater.deps.json 에서 self-contained 런타임 팩(runtimepack.*) 이 배치한 파일 이름을 추출한다
+        /// — RID 별 타겟(".NETCoreApp,Version=v8.0/win-x64")의 runtime/native 항목. framework-dependent
+        /// 빌드(런타임 팩 없음)나 파일 부재·파싱 실패 시 빈 목록 (부트스트랩은 종전처럼 동작).
+        /// </summary>
+        internal static IReadOnlyList<string> ReadUpdaterRuntimeFiles(string depsJsonPath)
+        {
+            try
+            {
+                if (!File.Exists(depsJsonPath)) return Array.Empty<string>();
+                using var doc = JsonDocument.Parse(File.ReadAllText(depsJsonPath));
+                if (!doc.RootElement.TryGetProperty("targets", out var targets)) return Array.Empty<string>();
+
+                var files = new List<string>();
+                var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var target in targets.EnumerateObject())
+                {
+                    if (!target.Name.Contains('/')) continue; // RID 없는 타겟은 비어 있다
+                    foreach (var lib in target.Value.EnumerateObject())
+                    {
+                        if (!lib.Name.StartsWith("runtimepack.", StringComparison.OrdinalIgnoreCase)) continue;
+                        foreach (var section in new[] { "runtime", "native" })
+                        {
+                            if (!lib.Value.TryGetProperty(section, out var entries)) continue;
+                            foreach (var entry in entries.EnumerateObject())
+                            {
+                                var name = entry.Name.Replace('/', '\\');
+                                if (name.Contains("..") || Path.IsPathRooted(name)) continue; // 방어
+                                if (seen.Add(name)) files.Add(name);
+                            }
+                        }
+                    }
+                }
+                return files;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+            {
+                Debug.WriteLine($"[UpdateInstall] deps.json read failed: {ex.Message}");
+                return Array.Empty<string>();
+            }
         }
 
         /// <summary>기존 파일이 크기·해시 모두 일치하면 재사용. 해시 미제공 시 재사용 안 함 (보수적).</summary>

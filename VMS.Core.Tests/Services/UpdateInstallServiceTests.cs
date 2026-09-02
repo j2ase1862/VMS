@@ -239,6 +239,114 @@ namespace VMS.Core.Tests.Services
             Assert.Contains(@"'C:\O''Brien\VMS.exe'", script);
         }
 
+        [Fact]
+        public void BuildBootstrapScript_WithRuntimeFiles_StagesThemAndGuardsHostfxr()
+        {
+            var script = UpdateInstallService.BuildBootstrapScript(
+                msiPath: @"C:\Temp\BODA-VMS-Update\VMS-1.28.0.msi",
+                vmsExePath: @"C:\Program Files\BODA VMS\VMS.exe",
+                vmsPid: 1,
+                logPath: @"C:\ProgramData\BODA\VMS\update-bootstrap.log",
+                currentVersion: "1.27.0",
+                updaterRuntimeFiles: new[] { "hostfxr.dll", "coreclr.dll", "System.Runtime.dll" });
+
+            // self-contained 업데이터 스테이징 — 런타임 팩 파일을 함께 복사
+            Assert.Contains("'hostfxr.dll',", script);
+            Assert.Contains("'coreclr.dll',", script);
+            Assert.Contains("'System.Runtime.dll',", script);
+            Assert.Contains("foreach ($rf in $updaterRuntimeFiles)", script);
+            Assert.Contains("Copy-Item -LiteralPath (Join-Path $vmsDir $rf)", script);
+            // 설치본이 self-contained(hostfxr.dll 존재)인데 스테이징에 빠졌으면 업데이터 대신 msiexec
+            Assert.Contains("(Join-Path $updDir 'hostfxr.dll')", script);
+            Assert.Contains("needs hostfxr.dll", script);
+        }
+
+        [Fact]
+        public void BuildBootstrapScript_UpdaterNonMsiExitCode_FallsBackToMsiexec()
+        {
+            var script = UpdateInstallService.BuildBootstrapScript(
+                msiPath: @"C:\Temp\BODA-VMS-Update\VMS-1.28.0.msi",
+                vmsExePath: @"C:\Program Files\BODA VMS\VMS.exe",
+                vmsPid: 1,
+                logPath: @"C:\ProgramData\BODA\VMS\update-bootstrap.log");
+
+            // 0x80008083(-2147450749, hostfxr 부재) 같은 음수/범위 밖 종료 코드는 MSI 가 실행되지 않은 것 → 재시도
+            Assert.Contains("if (($code -lt 0) -or ($code -gt 3010))", script);
+            Assert.Contains("retrying via msiexec", script);
+            Assert.Contains("function Install-ViaMsiexec", script);
+            // 런타임 목록이 없어도 스크립트는 유효 (빈 배열)
+            Assert.Contains("$updaterRuntimeFiles = @(", script);
+        }
+
+        // ── ReadUpdaterRuntimeFiles ──
+
+        [Fact]
+        public void ReadUpdaterRuntimeFiles_SelfContainedDepsJson_ReturnsRuntimePackFiles()
+        {
+            Directory.CreateDirectory(_tempDir);
+            var path = Path.Combine(_tempDir, "VMS.Updater.deps.json");
+            File.WriteAllText(path, """
+                {
+                  "runtimeTarget": { "name": ".NETCoreApp,Version=v8.0/win-x64" },
+                  "targets": {
+                    ".NETCoreApp,Version=v8.0": {},
+                    ".NETCoreApp,Version=v8.0/win-x64": {
+                      "VMS.Updater/1.0.0": { "runtime": { "VMS.Updater.dll": {} } },
+                      "CommunityToolkit.Mvvm/8.4.0": { "runtime": { "lib/net8.0/CommunityToolkit.Mvvm.dll": {} } },
+                      "runtimepack.Microsoft.NETCore.App.Runtime.win-x64/8.0.28": {
+                        "runtime": { "System.Runtime.dll": {}, "System.Private.CoreLib.dll": {} },
+                        "native": { "hostfxr.dll": {}, "coreclr.dll": {}, "System.Runtime.dll": {} }
+                      },
+                      "runtimepack.Microsoft.WindowsDesktop.App.Runtime.win-x64/8.0.28": {
+                        "runtime": { "PresentationCore.dll": {} },
+                        "native": { "wpfgfx_cor3.dll": {} }
+                      }
+                    }
+                  }
+                }
+                """);
+
+            var files = UpdateInstallService.ReadUpdaterRuntimeFiles(path);
+
+            Assert.Equal(
+                new[] { "System.Runtime.dll", "System.Private.CoreLib.dll", "hostfxr.dll", "coreclr.dll", "PresentationCore.dll", "wpfgfx_cor3.dll" },
+                files);
+            Assert.DoesNotContain("VMS.Updater.dll", files);                    // 앱 자체는 VMS.Updater.* 복사로 처리
+            Assert.DoesNotContain(files, f => f.Contains("CommunityToolkit"));   // 패키지 dll 은 별도 복사
+        }
+
+        [Fact]
+        public void ReadUpdaterRuntimeFiles_FrameworkDependentOrMissing_ReturnsEmpty()
+        {
+            Directory.CreateDirectory(_tempDir);
+            var fdd = Path.Combine(_tempDir, "fdd.deps.json");
+            File.WriteAllText(fdd, """
+                { "targets": { ".NETCoreApp,Version=v8.0": { "VMS.Updater/1.0.0": { "runtime": { "VMS.Updater.dll": {} } } } } }
+                """);
+            var broken = Path.Combine(_tempDir, "broken.deps.json");
+            File.WriteAllText(broken, "{ not json");
+
+            Assert.Empty(UpdateInstallService.ReadUpdaterRuntimeFiles(fdd));
+            Assert.Empty(UpdateInstallService.ReadUpdaterRuntimeFiles(broken));
+            Assert.Empty(UpdateInstallService.ReadUpdaterRuntimeFiles(Path.Combine(_tempDir, "missing.deps.json")));
+        }
+
+        [Fact]
+        public void ReadUpdaterRuntimeFiles_RealReleaseDepsJson_IncludesHostfxr()
+        {
+            // 실제 빌드 산출물이 있을 때만 (dev PC) — 런타임 팩 목록에 hostfxr.dll 이 포함되는지 확인
+            var real = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..",
+                "VMS", "bin", "Release", "net8.0-windows7.0", "VMS.Updater.deps.json");
+            if (!File.Exists(real)) return;
+
+            var files = UpdateInstallService.ReadUpdaterRuntimeFiles(real);
+
+            Assert.Contains("hostfxr.dll", files);
+            Assert.Contains("hostpolicy.dll", files);
+            Assert.Contains("coreclr.dll", files);
+            Assert.Contains("PresentationFramework.dll", files);
+        }
+
         // ── LaunchInstaller ──
 
         [Fact]
