@@ -14,7 +14,7 @@
 
 | 항목 | 내용 |
 |------|------|
-| PR | (머지 후 기입) `fix/appsetup-remove-exposure-gain` |
+| PR | #416 (`fix/appsetup-remove-exposure-gain`) |
 | 날짜 | 2026-09-02 |
 | 앱 · 화면 | VMS.AppSetup 설정 마법사 3단계 "Camera Configuration", 카메라 카드의 〈Area Scan〉 패널 |
 | 변경 종류 | UI 제거 + 안내 문구 대체 (동작 변경 없음) |

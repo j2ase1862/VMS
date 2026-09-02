@@ -55,7 +55,7 @@ node gen_user_manual.js   # → ../VMS_사용자매뉴얼_v2.0.docx
 | (잔여·스크린샷) | Recipe Manager [Duplicate]/[Rename]·Steps 패널 복제 버튼·도구 우클릭 메뉴(#400), VisionSetup 툴바 [Acquire]·연결 토글(#397), 갤러리 얼라인 탭(#395) | §3.9 |
 | (잔여·스크린샷) | Web 검사항목 툴바 [레시피 복사]/[이름 변경] (Web #94) | §4.9 |
 | (반영 완료 2026-09-02) | AppSetup 2단계 재캡처 — 단독 모드 체크박스(#407) + "고급 설정 — Web Client API Key" 접이식 전환 + 설정 마법사 전용 아이콘. 본문·§3.2 표·§11.4 이력·docx 재생성 완료 (capture 도구에 ToggleButton 추가, HelpIcon ? 토글은 제외) | §3.2 |
-| (머지 후 #) | **AppSetup 3단계 〈Area Scan〉 Exposure/Gain 입력란 제거** — 런타임 미사용 설정 정리, 안내 문구로 대체. 입력 항목 표 행 삭제 + 3단계 풀페이지 재캡처. 상세: manual_change_history.md §1 | §3.2 (+§5.3 상호 참조·§11.4 이력) |
+| #416 | **AppSetup 3단계 〈Area Scan〉 Exposure/Gain 입력란 제거** — 런타임 미사용 설정 정리, 안내 문구로 대체. 입력 항목 표 행 삭제 + 3단계 풀페이지 재캡처. 상세: manual_change_history.md §1 | §3.2 (+§5.3 상호 참조·§11.4 이력) |
 | #369 #370 | **라이선스 발급 GUI LicGen.App + 백업 자동화** — ⚠ 사내 전용(MSI 비동봉·고객 비노출)이라 **사용자 매뉴얼 대상 아님, Admin 매뉴얼만**: 발급 담당자 절차를 CLI 예시에서 LicGen.App 화면 기준으로 교체(발급 탭·발급 대장 탭 비고·백업 배너/[백업 실행] 스크린샷), `licgen backup` USB 2부 규칙·issue 백업 경고 소개. 상세 절차 원본은 docs/license_operations.md (반영 완료) | Admin 매뉴얼 라이선스 절 (§2.6 발급 측 상대편) |
 
 ## guides/ — 가이드 문서
