@@ -264,7 +264,7 @@ namespace VMS.AppSetup.Capture
             {
                 vm.CameraMode = CameraMode.Virtual;
                 vm.Cameras.Clear();
-                // Area Scan 2D — Exposure/Gain 패널
+                // Area Scan 2D — 노출/게인 안내 문구만 표시 (입력란은 제거됨, 런타임 스텝 설정으로 이관)
                 vm.Cameras.Add(new CameraConfiguration
                 {
                     Name = "AreaCam", IpAddress = "192.168.0.101",

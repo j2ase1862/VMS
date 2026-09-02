@@ -147,7 +147,9 @@ namespace VMS.AppSetup.Models
         [ObservableProperty]
         private CameraType _cameraType = CameraType.AreaScan2D;
 
-        // Area Scan parameters
+        // Area Scan parameters — 마법사 UI 에서는 더 이상 노출하지 않는다.
+        // 런타임(VMS 스텝 / VisionSetup 레시피 스텝)이 카메라 단위 값을 읽지 않으므로
+        // 기존 system_config.json 호환(역직렬화)용으로만 필드를 유지한다.
         [ObservableProperty]
         private double _exposure = 5000;
 

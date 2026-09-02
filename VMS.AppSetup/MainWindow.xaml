@@ -547,26 +547,13 @@
                                                             ToolTip="Remove Camera"/>
                                                 </Grid>
 
-                                                <!-- Row 2: Area Scan Parameters -->
+                                                <!-- Row 2: Area Scan 안내 — 노출/게인 입력란은 제거됨.
+                                                     이 값은 런타임(VMS 스텝 설정 / VisionSetup 레시피 스텝)에서만 소비되며
+                                                     마법사에 저장된 카메라 단위 값은 어디에서도 읽히지 않았다. -->
                                                 <Border Background="{StaticResource BrushBgCard}" CornerRadius="4" Padding="10,8" Margin="0,8,0,0"
                                                         Visibility="{Binding IsAreaScan, Converter={StaticResource BoolToVisConverter}}">
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="8"/>
-                                                            <ColumnDefinition Width="*"/>
-                                                        </Grid.ColumnDefinitions>
-                                                        <StackPanel Grid.Column="0">
-                                                            <TextBlock Foreground="{StaticResource BrushTextSecondary}" FontSize="11" Margin="0,0,0,3"><Run Text="Exposure (μs)"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Exposure (μs)" CustomDescription="노출 시간(마이크로초)입니다. 길수록 이미지가 밝아지지만, 움직이는 대상은 흐려질 수 있습니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
-                                                            <TextBox Text="{Binding Exposure, UpdateSourceTrigger=PropertyChanged}"
-                                                                     Style="{StaticResource WindowDarkTextBox}"/>
-                                                        </StackPanel>
-                                                        <StackPanel Grid.Column="2">
-                                                            <TextBlock Foreground="{StaticResource BrushTextSecondary}" FontSize="11" Margin="0,0,0,3"><Run Text="Gain"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Gain" CustomDescription="신호 증폭(감도)입니다. 높이면 밝아지지만 노이즈도 함께 커집니다. 노출로 먼저 맞추고 부족할 때만 올리세요." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
-                                                            <TextBox Text="{Binding Gain, UpdateSourceTrigger=PropertyChanged}"
-                                                                     Style="{StaticResource WindowDarkTextBox}"/>
-                                                        </StackPanel>
-                                                    </Grid>
+                                                    <TextBlock Foreground="{StaticResource BrushTextMuted}" FontSize="11" TextWrapping="Wrap"
+                                                               Text="노출(Exposure)·게인(Gain)은 여기서 설정하지 않습니다. VMS 메인 화면의 카메라 스텝 설정 또는 VisionSetup 레시피 스텝에서 조정하며, 기본은 카메라에 저장된 현재 값을 그대로 사용합니다."/>
                                                 </Border>
 
                                                 <!-- Row 3: Line Scan Parameters -->
