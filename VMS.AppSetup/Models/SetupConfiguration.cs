@@ -163,13 +163,15 @@ namespace VMS.AppSetup.Models
         [ObservableProperty]
         private double _lineRate = 10000;
 
+        /// <summary>마법사 UI 에서 제거됨(런타임 미사용) — json 호환용 유지.</summary>
         [ObservableProperty]
         private double _encoderResolution = 10.0;
 
         [ObservableProperty]
         private int _scanLength = 4096;
 
-        // 3D Camera parameters
+        // 3D Camera parameters — 마법사 UI 에서 제거됨. 런타임 3D 옵션(점군 후처리·깊이 범위)은
+        // VisionSetup 레시피 스텝이 소유하므로 카메라 단위 값은 json 호환용으로만 유지한다.
         [ObservableProperty]
         private CaptureMode3D _captureMode = CaptureMode3D.Both;
 
@@ -213,9 +215,6 @@ namespace VMS.AppSetup.Models
         public bool IsFrameGrabber => Manufacturer == CameraManufacturer.Matrox || Manufacturer == CameraManufacturer.Dalsa;
 
         [JsonIgnore]
-        public bool ShowEncoderResolution => IsLineScan && TriggerSource == TriggerSource.Encoder;
-
-        [JsonIgnore]
         public string DisplayInfo => $"{Manufacturer} - {IpAddress}";
 
         partial void OnCameraTypeChanged(CameraType value)
@@ -223,12 +222,6 @@ namespace VMS.AppSetup.Models
             OnPropertyChanged(nameof(IsAreaScan));
             OnPropertyChanged(nameof(IsLineScan));
             OnPropertyChanged(nameof(Is3DCamera));
-            OnPropertyChanged(nameof(ShowEncoderResolution));
-        }
-
-        partial void OnTriggerSourceChanged(TriggerSource value)
-        {
-            OnPropertyChanged(nameof(ShowEncoderResolution));
         }
 
         partial void OnManufacturerChanged(CameraManufacturer value)

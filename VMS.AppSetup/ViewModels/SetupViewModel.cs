@@ -468,7 +468,6 @@ namespace VMS.AppSetup.ViewModels
         public Array CameraManufacturers => Enum.GetValues(typeof(CameraManufacturer));
         public Array CameraTypes => Enum.GetValues(typeof(CameraType));
         public Array TriggerSources => Enum.GetValues(typeof(TriggerSource));
-        public Array CaptureModes3D => Enum.GetValues(typeof(CaptureMode3D));
         public Array PlcVendors => Enum.GetValues(typeof(PlcVendor));
         public Array CommunicationTypes => Enum.GetValues(typeof(PlcCommunicationType));
         public Array CameraModes => Enum.GetValues(typeof(CameraMode));

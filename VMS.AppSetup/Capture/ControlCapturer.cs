@@ -264,20 +264,20 @@ namespace VMS.AppSetup.Capture
             {
                 vm.CameraMode = CameraMode.Virtual;
                 vm.Cameras.Clear();
-                // Area Scan 2D — 노출/게인 안내 문구만 표시 (입력란은 제거됨, 런타임 스텝 설정으로 이관)
+                // Area Scan 2D — 카메라 기본 항목만 (노출/게인 입력란은 제거됨 → 안내 문구, 런타임 스텝 설정으로 이관)
                 vm.Cameras.Add(new CameraConfiguration
                 {
                     Name = "AreaCam", IpAddress = "192.168.0.101",
                     Manufacturer = CameraManufacturer.HIK, CameraType = CameraType.AreaScan2D
                 });
-                // Line Scan 2D + Encoder — Trigger/LineRate/ScanLength + Encoder Res 패널
+                // Line Scan 2D + Encoder — Trigger/LineRate/ScanLength 패널 (Encoder Res 입력란은 제거됨)
                 vm.Cameras.Add(new CameraConfiguration
                 {
                     Name = "LineCam", IpAddress = "192.168.0.102",
                     Manufacturer = CameraManufacturer.Basler, CameraType = CameraType.LineScan2D,
                     TriggerSource = TriggerSource.Encoder
                 });
-                // Area Scan 3D — 3D(Capture Mode/Filter/Z-range) 패널
+                // Area Scan 3D — 카메라 기본 항목만 (Capture Mode/Filter/Z-range 입력란은 제거됨, VisionSetup 스텝으로 이관)
                 vm.Cameras.Add(new CameraConfiguration
                 {
                     Name = "Cam3D", IpAddress = "192.168.0.103",
