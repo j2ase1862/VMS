@@ -6,6 +6,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <!-- 전용 앱 아이콘 (icon\generate_appsetup_icon.py 로 재생성) — exe·시작 메뉴 바로가기·
+         작업 표시줄에 공통 반영. 본체 Vasim / VisionSetup 아이콘과 구분되는 설정 마법사 표식. -->
+    <ApplicationIcon>icon\AppSetup.ico</ApplicationIcon>
   </PropertyGroup>
 
   <!-- 릴리즈(Release) 배포는 self-contained(.NET 런타임 동봉) — 현장 PC에 .NET 설치 불필요.
@@ -26,6 +29,11 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.*" />
     <PackageReference Include="System.ServiceProcess.ServiceController" Version="8.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 창 타이틀바/작업 표시줄용 (MainWindow Icon="/icon/AppSetup.ico") -->
+    <Resource Include="icon\AppSetup.ico" />
   </ItemGroup>
 
   <ItemGroup>

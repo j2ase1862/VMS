@@ -252,9 +252,11 @@ namespace VMS.AppSetup.Capture
         /// </summary>
         private static IEnumerable<Scene> BuildScenes()
         {
-            // ── Page 1~2: 조건부 패널 없음 ──
+            // ── Page 1~2 ──
             yield return new Scene(1, "default", _ => { });
             yield return new Scene(2, "default", _ => { });
+            // 접힌 "고급 설정"(Web Client API Key) 을 펼쳐 입력란 캡처
+            yield return new Scene(2, "advanced", v => v.IsAdvancedWebSettingsVisible = true);
 
             // ── Page 3 (Camera): 카메라 타입별 파라미터 패널(AreaScan/LineScan/3D/FrameGrabber) ──
             yield return new Scene(3, "default", _ => { });
@@ -366,6 +368,9 @@ namespace VMS.AppSetup.Capture
         {
             RadioButton => "RadioButton",
             CheckBox => "CheckBox",
+            // 접이식 "고급 설정" 링크 (CheckBox/RadioButton 뒤에 두어야 함).
+            // HelpIcon 내부의 ? 토글(HelpButton)은 라벨 장식이라 제외 — 번호 매김 오염 방지.
+            ToggleButton tb when tb.Name != "HelpButton" => "ToggleButton",
             Button => "Button",
             ComboBox => "ComboBox",
             ListBox => "ListBox",

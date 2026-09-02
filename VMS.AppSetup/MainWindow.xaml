@@ -9,6 +9,7 @@
         xmlns:controls="clr-namespace:VMS.VisionSetup.Controls"
         mc:Ignorable="d"
         Title="BODA Vision System Setup"
+        Icon="/icon/AppSetup.ico"
         Width="960" Height="820"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
@@ -36,6 +37,38 @@
             <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+
+        <!-- 접이식 "고급 설정" 토글 — 텍스트 링크 + 화살표(▸/▾). 다크 카드 위에서
+             기본 ToggleButton 크롬(밝은 버튼면)이 튀지 않도록 크롬 없는 템플릿. -->
+        <Style x:Key="WizardDisclosureToggle" TargetType="ToggleButton">
+            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="Padding" Value="0,4"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock x:Name="Chevron" Text="▸" FontSize="13" Margin="0,0,6,0"
+                                           Foreground="{StaticResource BrushAccent}" VerticalAlignment="Center"/>
+                                <ContentPresenter VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Chevron" Property="Text" Value="▾"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <!-- 어두운 테마 툴팁 — 윈도우 버튼·라디오·콤보 등 컨트롤 자체 ToolTip 용.
@@ -186,11 +219,22 @@
                                 <TextBlock Text="VisionServer API 주소 (클라이언트 자동 등록)"
                                            Foreground="{StaticResource BrushTextMuted}" FontSize="11" Margin="0,0,0,15"/>
 
-                                <TextBlock Style="{StaticResource LabelStyle}"><Run Text="Web Client API Key"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Web Client API Key" CustomDescription="Web 서버와 통신할 때 신원 확인용으로 붙이는 비밀 키입니다. Web 서버에 설정된 값과 똑같이 입력하세요." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
-                                <TextBox Text="{Binding ClientApiKey, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,5"/>
-                                <TextBlock Text="X-API-Key 헤더 비밀 (Web 서버 ClientApiKey:Value 와 동일). 비워두면 헤더 미송신 (서버 호환 모드에서만 통과)."
-                                           Foreground="{StaticResource BrushTextMuted}" FontSize="11" TextWrapping="Wrap"/>
+                                <!-- 고급 설정 — Web Client API Key.
+                                     일반 현장은 비워 두는 항목(Web 서버 기본 = 호환 모드)이라 접어서 노출.
+                                     값을 틀리게 넣으면 Web 연동이 401 로 끊기므로 고객 관리자가 무심코
+                                     건드리지 않도록 "필요할 때만 펼치는" 형태로 둔다. 저장된 키가 있으면
+                                     VM 이 자동으로 펼친다(기존 설정 확인 가능). -->
+                                <ToggleButton IsChecked="{Binding IsAdvancedWebSettingsVisible}"
+                                              Style="{StaticResource WizardDisclosureToggle}"
+                                              Content="고급 설정 — Web Client API Key (관리자가 Web 서버에 API 키 강제를 켠 경우에만)"/>
+                                <StackPanel Margin="0,10,0,0"
+                                            Visibility="{Binding IsAdvancedWebSettingsVisible, Converter={StaticResource BoolToVisConverter}}">
+                                    <TextBlock Style="{StaticResource LabelStyle}"><Run Text="Web Client API Key"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Web Client API Key" CustomDescription="일반적으로 비워 둡니다. Web 서버 관리자가 'API 키 강제' 를 켠 경우에만, 관리자에게 받은 키를 그대로 입력하세요. 틀리게 입력하면 Web 연동이 끊깁니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
+                                    <TextBox Text="{Binding ClientApiKey, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,5"/>
+                                    <TextBlock Text="일반적으로 비워 둡니다. Web 서버 관리자가 API 키 강제를 켠 경우에만 관리자에게 받은 키를 그대로 입력하세요. 값이 다르면 Web 연동(작업지시·이력 업로드)이 끊깁니다."
+                                               Foreground="{StaticResource BrushTextMuted}" FontSize="11" TextWrapping="Wrap"/>
+                                </StackPanel>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
