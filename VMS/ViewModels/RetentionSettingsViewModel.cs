@@ -78,6 +78,10 @@ namespace VMS.ViewModels
         [ObservableProperty] private int _autoBackupRetentionDays = AutoBackupOptions.DefaultRetentionDays;
         [ObservableProperty] private int _uploadQueueRetentionDays = UploadQueueRetention.DefaultRetentionDays;
 
+        // 로컬 검사 이력 (inspection_history.db) — 저장 on/off + 보존일 (2026-09-04)
+        [ObservableProperty] private bool _inspectionHistoryEnabled = InspectionHistoryOptions.DefaultEnabled;
+        [ObservableProperty] private int _inspectionHistoryRetentionDays = InspectionHistoryOptions.DefaultRetentionDays;
+
         // ─── 바인딩 — 카테고리별 ─────────────────────────────────
 
         public ObservableCollection<CategoryRetentionItem> CategoryRetentions { get; }
@@ -92,6 +96,7 @@ namespace VMS.ViewModels
         [ObservableProperty] private string _previewAuditSummary = string.Empty;
         [ObservableProperty] private string _previewAutoBackupSummary = string.Empty;
         [ObservableProperty] private string _previewUploadQueueSummary = string.Empty;
+        [ObservableProperty] private string _previewInspectionHistorySummary = string.Empty;
         [ObservableProperty] private string _previewCategorySummary = string.Empty;
         [ObservableProperty] private bool _hasPreview;
 
@@ -99,6 +104,7 @@ namespace VMS.ViewModels
         public string AuditRange => $"[{AuditLogRetention.MinRetentionDays}, {AuditLogRetention.MaxRetentionDays}]";
         public string AutoBackupRange => $"[{AutoBackupOptions.MinRetentionDays}, {AutoBackupOptions.MaxRetentionDays}]";
         public string UploadQueueRange => $"[{UploadQueueRetention.MinRetentionDays}, {UploadQueueRetention.MaxRetentionDays}]";
+        public string InspectionHistoryRange => $"[{InspectionHistoryOptions.MinRetentionDays}, {InspectionHistoryOptions.MaxRetentionDays}]";
 
         // ─── 프리셋 ──────────────────────────────────────────────
         // 단일 진실 공급원: VMS.Core.Retention.RetentionPresets.
@@ -117,6 +123,7 @@ namespace VMS.ViewModels
             AuditRetentionDays = preset.Audit;
             AutoBackupRetentionDays = preset.AutoBackup;
             UploadQueueRetentionDays = preset.UploadQueue;
+            InspectionHistoryRetentionDays = preset.InspectionHistory;
             foreach (var item in CategoryRetentions)
             {
                 if (preset.Categories.TryGetValue(item.Category, out var d))
@@ -138,6 +145,9 @@ namespace VMS.ViewModels
                 var autoBackup = AutoBackupOptions.LoadFromAppData();
                 AutoBackupRetentionDays = autoBackup.RetentionDays;
                 UploadQueueRetentionDays = UploadQueueRetention.LoadRetentionDaysFromAppData();
+                var hist = InspectionHistoryOptions.LoadFromFile(_configPath);
+                InspectionHistoryEnabled = hist.Enabled;
+                InspectionHistoryRetentionDays = hist.RetentionDays;
 
                 var perCat = AuditCategoryRetention.LoadDaysFromAppData();
                 foreach (var item in CategoryRetentions)
@@ -180,6 +190,7 @@ namespace VMS.ViewModels
                 var ab = AutoBackupOptions.ClampRetention(AutoBackupRetentionDays);
                 var queue = ClampInRange(UploadQueueRetentionDays,
                     UploadQueueRetention.MinRetentionDays, UploadQueueRetention.MaxRetentionDays);
+                var hist = InspectionHistoryOptions.ClampRetention(InspectionHistoryRetentionDays);
 
                 var perCat = new Dictionary<AuditCategory, int>();
                 foreach (var item in CategoryRetentions)
@@ -188,22 +199,26 @@ namespace VMS.ViewModels
                 var auditSum = RetentionPreviewService.PreviewAuditLogCleanup(auditDir, audit);
                 var abSum = RetentionPreviewService.PreviewAutoBackupCleanup(backupDir, ab);
                 var queueSum = RetentionPreviewService.PreviewUploadQueueCleanup(queueDir, queue);
+                var histSum = VMS.Services.LocalHistory.LocalInspectionHistoryStore.PreviewCleanup(appData, hist);
                 var catSum = RetentionPreviewService.PreviewAuditCategoryFilter(auditDir, perCat);
 
                 PreviewAuditSummary = FormatSummary(auditSum);
                 PreviewAutoBackupSummary = FormatSummary(abSum);
                 PreviewUploadQueueSummary = FormatSummary(queueSum);
+                PreviewInspectionHistorySummary = FormatSummary(histSum, unit: "건");
                 PreviewCategorySummary = FormatCategoryPreview(catSum);
                 HasPreview = true;
 
                 // Export 가 같은 결과를 쓸 수 있도록 캐시.
-                _lastPreviewSummaries = new List<RetentionPreviewSummary> { auditSum, abSum, queueSum };
+                _lastPreviewSummaries = new List<RetentionPreviewSummary> { auditSum, abSum, queueSum, histSum };
                 _lastPreviewCategory = catSum;
                 _lastPreviewSettings = new Dictionary<string, int>
                 {
                     ["AuditRetentionDays"] = audit,
                     ["AutoBackupRetentionDays"] = ab,
-                    ["UploadQueueRetentionDays"] = queue
+                    ["UploadQueueRetentionDays"] = queue,
+                    ["InspectionHistoryRetentionDays"] = hist,
+                    ["InspectionHistoryEnabled"] = InspectionHistoryEnabled ? 1 : 0
                 };
                 foreach (var item in CategoryRetentions)
                     _lastPreviewSettings[$"Category.{item.Category}"] = item.Days;
@@ -263,12 +278,12 @@ namespace VMS.ViewModels
             }
         }
 
-        private static string FormatSummary(RetentionPreviewSummary s)
+        private static string FormatSummary(RetentionPreviewSummary s, string unit = "파일")
         {
             if (!string.IsNullOrEmpty(s.Note)) return s.Note;
             var mb = s.BytesAffected / 1024.0 / 1024.0;
             var sb = new System.Text.StringBuilder();
-            sb.Append($"삭제 예정 {s.FilesAffected} 파일");
+            sb.Append($"삭제 예정 {s.FilesAffected} {unit}");
             if (s.BytesAffected > 0) sb.Append($" · {mb:F2} MB");
             sb.Append($" (유지 {s.FilesRemaining})");
             if (s.OldestRemainingUtc.HasValue)
@@ -302,6 +317,8 @@ namespace VMS.ViewModels
                 if (audit != AuditRetentionDays) AuditRetentionDays = audit;
                 if (ab != AutoBackupRetentionDays) AutoBackupRetentionDays = ab;
                 if (queue != UploadQueueRetentionDays) UploadQueueRetentionDays = queue;
+                var hist = InspectionHistoryOptions.ClampRetention(InspectionHistoryRetentionDays);
+                if (hist != InspectionHistoryRetentionDays) InspectionHistoryRetentionDays = hist;
 
                 Directory.CreateDirectory(Path.GetDirectoryName(_configPath)!);
 
@@ -326,6 +343,12 @@ namespace VMS.ViewModels
                 abObj["retentionDays"] = ab;
                 root["autoBackup"] = abObj;
 
+                // Nested: inspectionHistory.{enabled, retentionDays} — 객체 보존
+                var histObj = root[InspectionHistoryOptions.SectionKey] as JsonObject ?? new JsonObject();
+                histObj["enabled"] = InspectionHistoryEnabled;
+                histObj["retentionDays"] = hist;
+                root[InspectionHistoryOptions.SectionKey] = histObj;
+
                 // 카테고리별 — auditCategoryRetentionDays 객체 보존 + 9 키 갱신.
                 var catObj = root["auditCategoryRetentionDays"] as JsonObject ?? new JsonObject();
                 foreach (var item in CategoryRetentions)
@@ -343,6 +366,7 @@ namespace VMS.ViewModels
                     AuditCategory.Configuration, "RetentionConfigSaved", AuditOutcome.Success,
                     source: nameof(RetentionSettingsViewModel),
                     details: $"Audit={audit}d, AutoBackup={ab}d, UploadQueue={queue}d, " +
+                             $"InspectionHistory={(InspectionHistoryEnabled ? hist + "d" : "off")}, " +
                              $"CategoryKeys={CategoryRetentions.Count}");
 
                 StatusMessage = "저장됨 — VMS 재시작 후 적용됩니다.";

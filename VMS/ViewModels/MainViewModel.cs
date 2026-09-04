@@ -368,6 +368,8 @@ namespace VMS.ViewModels
         private readonly IInspectionService _inspectionService;
         private readonly IAutoProcessService? _autoProcessService;
         private readonly IUserService? _userService;
+        // 로컬 검사 이력 저장소 — inspectionHistory.enabled=false 면 null (조회 버튼 비활성).
+        private readonly VMS.Services.LocalHistory.ILocalInspectionHistoryStore? _localHistoryStore;
         private readonly SharedFrameWriter? _sharedFrameWriter;
         private GrabRequestListener? _grabRequestListener;
         private readonly IPlcConnection? _plcConnection;
@@ -415,7 +417,8 @@ namespace VMS.ViewModels
             IUpdateService? updateService = null,
             VMS.Services.ImageUpload.IImageUploadService? imageUploadService = null,
             IReadOnlyList<VMS.PLC.Interfaces.IIoBoardConnection>? ioBoards = null,
-            IUpdateInstallService? updateInstallService = null)
+            IUpdateInstallService? updateInstallService = null,
+            VMS.Services.LocalHistory.ILocalInspectionHistoryStore? localHistoryStore = null)
         {
             _ioBoards = ioBoards ?? Array.Empty<VMS.PLC.Interfaces.IIoBoardConnection>();
             _configService = configService;
@@ -440,6 +443,7 @@ namespace VMS.ViewModels
             _predictionPollingService = predictionPollingService;
             _updateService = updateService;
             _updateInstallService = updateInstallService;
+            _localHistoryStore = localHistoryStore;
             _imageUploadService = imageUploadService;
             _shutdownAction = shutdownAction;
             _systemConfig = new SystemConfiguration();
@@ -1796,6 +1800,30 @@ namespace VMS.ViewModels
         /// 보존 정책 통합 설정 — Admin 권한 전용. 3개 보존 키 (audit / autoBackup /
         /// uploadQueue) 를 한 화면에서 편집. 다른 system_config.json 키는 보존.
         /// </summary>
+        /// <summary>로컬 이력 저장소가 켜져 있어 "전체 이력" 조회 창을 열 수 있는지.</summary>
+        public bool IsLocalHistoryAvailable => _localHistoryStore != null;
+
+        /// <summary>
+        /// 로컬 생산(검사) 이력 조회 창 — 모든 사용자. inspection_history.db 를 기간·판정·레시피·
+        /// NG 코드로 조회, 일별 집계·NG 파레토·CSV. 단독 모드의 생산 이력 화면.
+        /// </summary>
+        [RelayCommand]
+        private void OpenInspectionHistory()
+        {
+            if (_localHistoryStore == null)
+            {
+                LogService?.Log("로컬 검사 이력 저장이 꺼져 있습니다 — Retention Settings 에서 켜고 VMS 를 재시작하세요.", LogLevel.Warning, "History");
+                return;
+            }
+            var vm = new InspectionHistoryViewModel(_localHistoryStore, IsWebIntegrated);
+            var window = new InspectionHistoryWindow
+            {
+                DataContext = vm,
+                Owner = System.Windows.Application.Current.MainWindow
+            };
+            window.ShowDialog();
+        }
+
         [RelayCommand]
         private void OpenRetentionSettings()
         {

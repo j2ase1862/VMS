@@ -91,3 +91,126 @@
 - `VMS.AppSetup/MainWindow.xaml` — Row 2 안내 카드(항상 표시), Row 3 Line Scan 그리드 5열
 - `VMS.AppSetup/Models/SetupConfiguration.cs` — `CaptureMode`/`FilterStrength`/`ZRangeMin`/`ZRangeMax`/`EncoderResolution` 필드 호환용 유지, `ShowEncoderResolution` 제거
 - 런타임 3D 소유자: `VMS.VisionSetup/Models/InspectionStep.cs`, `VMS.VisionSetup/ViewModels/MainViewModel.cs` `ApplyStepCameraSettingsAsync`
+
+---
+
+## 3. VMS 메인 — 단독 모드에서도 Recent Inspections(최근 검사) 패널에 기록
+
+| 항목 | 내용 |
+|------|------|
+| PR | #417 (`fix/standalone-recent-inspections`) |
+| 날짜 | 2026-09-04 |
+| 앱 · 화면 | VMS 메인 화면 우측 슬라이딩 패널 "Recent Inspections" (Total/Pass/NG 셀 + 최근 200건 목록) |
+| 변경 종류 | 동작 수정 (단독 모드 공백) + 도움말 문구 수정 |
+
+### 무엇이 바뀌었나
+- **단독 모드(Web 서버 미구성)** 에서 AUTO RUN·수동 검사를 해도 Recent Inspections 패널이 항상 0건이던 문제를 고쳤다. 이제 Web 연동 여부와 무관하게 사이클(또는 수동 검사) 1건마다 기록된다.
+- 목록의 **NG 코드 자리**: Web 연동 레시피면 종전대로 Web 파라미터 코드, 단독 모드·파라미터 미연결 레시피면 **실패한 도구 이름**(예: `Blob 1,Edge 2`)이 표시된다.
+- 목록의 **레시피 이름**: 단독 모드에서도 현재 로컬 레시피 이름이 표시된다 (종전엔 "Recipe#0").
+- 패널 도움말(?) 문구: "단독 모드나 Web 연결이 끊긴 상태에서도 기록되며, VMS 를 다시 시작하면 비워집니다 (Web 연동 시 전체 이력은 Web 의 Production History)".
+- Web 연동 모드 부수 효과: 수동 검사에서 파라미터는 전부 OK 인데 최종 판정이 NG 인 경우 종전엔 PASS 로 기록되던 것이 NG(실패 도구 이름 포함)로 바로잡힘. 파라미터 미연결 레시피의 수동 검사도 이제 목록에 남는다.
+
+### 왜 바꿨나
+- 로컬 이력 push 코드가 "Web 동기화 서비스 + Web 레시피 ID" 가드 안쪽에 있어 단독 모드에서는 실행되지 않았다. 단독 모드(#407) 도입 후 드러난 공백.
+- 영구 로컬 생산이력(SQLite 저장소 + 조회 창)은 후속 PR 로 별도 진행 — 본 건은 그 1단계.
+
+### 매뉴얼 반영 지점
+| 위치 | 해야 할 일 |
+|------|-----------|
+| §3.5 단독 모드 절차 | "검사 결과는 화면 우측 Recent Inspections 패널에서 최근 200건까지 확인(재시작 시 비워짐)" 한 문장 추가. NG 코드 자리에 실패 도구 이름이 표시됨을 명시 |
+| §4 VMS 운전 · Recent Inspections 설명 | 도움말 문구 갱신에 맞춰 "Web 연동 시 전체 이력은 Web" 으로 서술 조정 |
+| §11.4 변경 이력 | "단독 모드에서도 최근 검사 패널에 기록 (실패 도구 이름 표시)" 한 줄 |
+
+### 스크린샷
+| 파일 | 조치 |
+|------|------|
+| Recent Inspections 패널 (단독 모드, NG 행에 도구 이름 표시 상태) | 신규 캡처 권장 — 기존 스크린샷이 Web 연동 기준이면 교체 |
+
+### 코드 참조 (검증용)
+- `VMS/Services/InspectionService.cs` — `RecordLocalInspection` / `RecordInspectionOutcome` / `FlushCycleResultAsync` (로컬 기록이 Web 가드 바깥으로 이동), `CurrentRecipeNameProvider`
+- `VMS/App.xaml.cs` — `CurrentRecipeNameProvider` 배선 (단독 모드 분기 직후)
+- `VMS.Core/Models/InspectionRecord.cs` — `DisplayLabel` 의 "Recipe#0" 대체
+- 테스트: `VMS.Tests/Services/StandaloneRecentInspectionsTests.cs`
+
+---
+
+## 4. VMS 메인 — 로컬 검사 이력 영구 저장 (inspection_history.db) + 보존 설정
+
+| 항목 | 내용 |
+|------|------|
+| PR | #417 (§3 과 같은 PR — 2단계) |
+| 날짜 | 2026-09-04 |
+| 앱 · 화면 | VMS 메인 (백그라운드 기록, 화면 없음) + 관리자 〈Retention Settings〉 창 전역 카드 4번째 행 |
+| 변경 종류 | 기능 추가 (조회 화면은 후속 3단계) |
+
+### 무엇이 바뀌었나
+- 검사 결과가 **PC 로컬 SQLite 파일**(`%LocalAppData%\BODA VISION AI\inspection_history.db`)에 사이클 1건(AUTO RUN) 또는 수동 검사 1건당 1행으로 영구 저장된다. 단독 모드에서 VMS 를 다시 켜도 이력이 남는 첫 기능이며, Web 연동 모드에서도 항상 기록되어 오프라인 백업이 된다.
+- 저장 내용: 검사 시각, 판정, 레시피 이름, NG 코드(단독 모드는 실패 도구 이름), 도구별 판정/소요 시간, 저장된 이미지 파일 경로(이미지 저장 옵션이 켜져 있을 때, NG 이미지 우선), 작업지시/Lot/시리얼(연동 시), 사이클 시간.
+- 〈Retention Settings〉(관리자 → Admin Tools) 전역 카드에 **"검사 이력 (inspection_history.db)"** 행 추가: 보존일 입력(기본 90일, [1, 3650]) + **"검사 결과를 로컬 이력 DB 에 저장"** 체크박스(기본 켜짐). 미리보기(Preview)에 "검사 이력 DB — 삭제 예정 N 건" 행 추가, CSV 내보내기에도 포함. 프리셋: Conservative 365 / Standard 90 / Minimal 30.
+- 오래된 행은 VMS 시작 시 자동 삭제(보존일 기준). 백업/복원(Backup & Restore)에 이 파일이 포함된다. 지원 패키지에는 포함되지 않는다.
+
+### 왜 바꿨나
+- 단독 모드(Web 서버 없음)에서는 생산 이력이 어디에도 남지 않았다 (Recent Inspections 는 재시작 시 소멸, 감사 로그는 NG 만).
+
+### 매뉴얼 반영 지점
+| 위치 | 해야 할 일 |
+|------|-----------|
+| §3.5 단독 모드 | "검사 이력은 PC 에 자동 저장되며(기본 90일) 관리자 보존 설정에서 기간/저장 여부를 바꿀 수 있다" 문단. 조회 화면은 3단계 반영 시 함께 |
+| §4.9 관리자 · Retention Settings | 전역 행 4개로 갱신(검사 이력 행 + 체크박스), 미리보기 행, 프리셋 표에 InspHistory 열 |
+| §4.x 백업/복원 | 백업 대상 파일 목록에 `inspection_history.db` 추가 |
+| §11.4 변경 이력 | "검사 결과 로컬 영구 저장(inspection_history.db) + 보존 설정" 한 줄 |
+
+### 스크린샷
+| 파일 | 조치 |
+|------|------|
+| Retention Settings 창 (전역 카드) | 재캡처 — `VMS.exe --capture-dialogs` |
+
+### 코드 참조 (검증용)
+- `VMS/Services/LocalHistory/LocalInspectionHistoryStore.cs` (저장소·큐·보존), `LocalInspectionEntry.cs`, `ILocalInspectionHistoryStore.cs`
+- `VMS.Core/Retention/InspectionHistoryOptions.cs` — `inspectionHistory.{enabled, retentionDays}`
+- `VMS/Services/InspectionService.cs` `RecordLocalInspection` — 기록 지점, `VMS/Services/InspectionImageSaver.cs` `ImageSaved` — 이미지 경로 연결
+- `VMS/ViewModels/RetentionSettingsViewModel.cs` + `Views/RetentionSettingsWindow.xaml`, `VMS.Core/Retention/RetentionPresets.cs`
+- `VMS.Core/Backup/BackupRestoreService.cs` 화이트리스트, GS 개요 `docs/gs/guides/gs_compliance_overview_v1.0.md` §5.11
+- 테스트: `VMS.Tests/Services/LocalInspectionHistoryStoreTests.cs`, `InspectionServiceLocalHistoryTests.cs`
+
+---
+
+## 5. VMS 메인 — 생산 이력 조회 창 (Inspection History) 신설
+
+| 항목 | 내용 |
+|------|------|
+| PR | #417 (§3·§4 와 같은 PR — 3단계) |
+| 날짜 | 2026-09-04 |
+| 앱 · 화면 | VMS 메인 우측 〈Recent Inspections〉 패널 헤더의 **[전체 이력]** 버튼 → 새 창 "생산 이력 조회 — Inspection History" |
+| 변경 종류 | 화면 신설 (모든 사용자 등급 진입 가능) |
+
+### 무엇이 바뀌었나
+- 〈Recent Inspections〉 헤더에 **[전체 이력]** 버튼 추가(기존 [Clear] 왼쪽). 로컬 이력 저장이 꺼져 있으면 비활성.
+- 새 창 구성:
+  - **필터 바**: From/To 날짜, 판정(전체/PASS/NG), 레시피(기간 내 목록 콤보), NG 코드/실패 도구 포함 검색, [조회]·[필터 초기화]·[CSV 내보내기]. Web 연동 모드에서는 "전체 이력은 Web 의 Production History" 안내 문구.
+  - **탭 ① 이력 목록**: 검사 시각·판정(색)·레시피·NG 코드/실패 도구·구분(사이클/수동)·ms·추적(Serial/WO/Lot)·IMG 체크. 행 선택 시 오른쪽 **상세** — 도구별 결과 표(도구·종류·결과·ms·메시지) + 저장된 검사 이미지(NG 우선) + [폴더 열기]. 이미지가 없으면 안내 문구.
+  - **탭 ② 일별 집계**: 총 검사/PASS/NG/수율 카드 + 날짜별 표.
+  - **탭 ③ NG 파레토**: NG 코드(단독 모드는 도구 이름)별 건수·비율·누적 비율 상위 30.
+  - **하단**: DB 파일 위치·크기, 페이지 이동(200건 단위).
+- CSV 는 현재 필터의 **전체** 결과(페이지 무관)를 UTF-8 BOM 으로 저장 — Excel 에서 바로 열림. 열: InspectedAt, Verdict, Recipe, NgCodes, Mode, CycleTimeMs, SerialNumber, WorkOrderId, LotId, ImagePath, CorrelationKey, ToolResults.
+
+### 매뉴얼 반영 지점
+| 위치 | 해야 할 일 |
+|------|-----------|
+| §3.5 단독 모드 | "생산 이력 조회" 소절 신설: [전체 이력] 버튼 → 필터·탭 3개·CSV 절차. 기본 조회 기간 최근 7일 |
+| §4 VMS 운전 · Recent Inspections | [전체 이력] 버튼 설명 한 줄 + 새 창 상호 참조 |
+| §7 Web(Production History) | "단독 모드에서는 VMS 의 생산 이력 조회 창을 사용" 상호 참조 |
+| §11.4 변경 이력 | "생산 이력 조회 창(로컬 DB) 신설 — 목록/상세 이미지/일별 집계/NG 파레토/CSV" |
+
+### 스크린샷
+| 파일 | 조치 |
+|------|------|
+| 생산 이력 조회 창 (이력 목록 탭, NG 행 선택 + 이미지) | 신규 캡처 — `VMS.exe --capture-dialogs` 에 "InspectionHistory" 항목 추가됨(이력 없으면 문서용 대표 6행 표시) |
+| 일별 집계 탭 · NG 파레토 탭 | 수동 캡처 (탭 전환) |
+| Recent Inspections 패널 헤더 ([전체 이력] 버튼) | `--capture-controls` 사이드 패널 장면 재캡처 |
+
+### 코드 참조 (검증용)
+- `VMS/Views/InspectionHistoryWindow.xaml(.cs)`, `VMS/ViewModels/InspectionHistoryViewModel.cs`
+- `VMS/Services/LocalHistory/InspectionHistoryCsvExporter.cs`, 저장소 `GetRecipeNames`
+- `VMS/ViewModels/MainViewModel.cs` `OpenInspectionHistory` / `IsLocalHistoryAvailable`, `VMS/Views/MainWindow.xaml` Recent Inspections 헤더
+- 테스트: `VMS.Tests/ViewModels/InspectionHistoryViewModelTests.cs` 7건

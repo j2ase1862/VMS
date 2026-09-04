@@ -291,11 +291,25 @@ VMS 자체 라이선스 → 루트 `LICENSE` (DRAFT, 법무 검토 필요).
 | 감사 로그 SIEM 외부 전송 | 통합 모니터링 도입 시 | 운영 절차 문서화 완료 — `docs/gs/gs_audit_siem_integration_guide.md` (PR25) |
 | 침입 탐지 — 비정상 로그인 패턴 알림 | 사이트 규모 확대 시 | SIEM 알람 룰로 대체 가능 (PR25 §6.2) |
 
+### 5.11 로컬 검사 이력 — inspection_history.db 보존 (2026-09-04)
+
+| 항목 | 값 / 동작 |
+|---|---|
+| 대상 | `%LocalAppData%\BODA VISION AI\inspection_history.db` — 검사 사이클(AUTO RUN "1사이클 = 1개") 또는 수동 검사 1건당 1행. 단독 모드의 유일한 영구 생산 이력, Web 연동 모드에서는 오프라인 백업 |
+| 기록 내용 | 시각(UTC) · 판정 · 레시피(로컬 이름 + Web ID) · NG 코드(Web 파라미터 코드, 없으면 실패 도구 이름) · 도구별 판정/소요 ms(JSON) · 상관 키 · 저장 이미지 경로(NG 우선) · WO/Lot/Serial · 사이클 ms |
+| 구성 키 | `system_config.json` 의 `inspectionHistory` 객체 — `enabled`(bool, 기본 true) / `retentionDays`(int, 기본 90) |
+| 안전 범위 | retentionDays [1, 3650] 자동 clamp |
+| 저장 방식 | 검사 스레드는 큐 push 만 — 단일 백그라운드 writer 가 배치 트랜잭션으로 기록 (택트 임계경로 무관). 기본 저널 모드(사이드카 없음) + busy_timeout 5s |
+| 정리 | VMS 시작 시 1회 (`App.xaml.cs:OnStartup`, upload_queue 정리 직후) — `DELETE WHERE InspectedAtUtc < now - retentionDays`. `System · InspectionHistoryRetention` 감사 (Deleted/Remaining) |
+| 백업 | `BackupRestoreService` 화이트리스트 포함 (`inspection_history.db`). 지원 패키지에는 **미포함** (생산 데이터) |
+| UI | 보존 정책 통합 UI(§5.10) 전역 카드 4번째 행 — 저장 on/off 체크박스 + 보존일, dry-run 미리보기(삭제 예정 행 수) 포함. 프리셋 열 InspHistory |
+| 코드 | `VMS.Core/Retention/InspectionHistoryOptions.cs`, `VMS/Services/LocalHistory/LocalInspectionHistoryStore.cs`, 기록 지점 `VMS/Services/InspectionService.cs` `RecordLocalInspection` |
+
 ### 5.10 보존 정책 통합 UI (PR38 + PR40 카테고리별 차등 + PR41 프리셋 + PR42 dry-run 미리보기)
 | 항목 | 값 / 동작 |
 |---|---|
 | 진입 | 메인 헤더 Admin Tools 드롭다운 → Retention Settings... — Admin 전용 |
-| 전역 편집 키 | `auditRetentionDays` (§5.4) / `autoBackup.retentionDays` (§5.7) / `uploadQueueRetentionDays` (§5.9) |
+| 전역 편집 키 | `auditRetentionDays` (§5.4) / `autoBackup.retentionDays` (§5.7) / `uploadQueueRetentionDays` (§5.9) / `inspectionHistory.enabled`·`retentionDays` (§5.11, 로컬 검사 이력) |
 | 카테고리별 편집 (PR40) | `auditCategoryRetentionDays` 의 9 카테고리 키 — ObservableCollection 일괄 편집 |
 | 빠른 프리셋 (PR41) | Conservative / Standard / Minimal — 3 버튼 클릭 시 12 키 동시 채움, Save 전엔 디스크 미반영 |
 | Dry-run 미리보기 (PR42) | Preview 버튼 → `VMS.Core.Retention.RetentionPreviewService` 호출, 4 정책별 영향 (삭제 예정 파일 수 / MB / 가장 오래된 남는 날짜 / 카테고리별 라인 제거 수) 표시. **파일을 절대 수정하지 않음** (read-only) |
@@ -308,11 +322,11 @@ VMS 자체 라이선스 → 루트 `LICENSE` (DRAFT, 법무 검토 필요).
 | 코드 경로 | `VMS/Views/RetentionSettingsWindow.xaml`, `VMS/ViewModels/RetentionSettingsViewModel.cs`, `VMS/ViewModels/CategoryRetentionItem.cs` |
 
 **프리셋 값 (PR41)**:
-| Preset | Audit | AutoBackup | UploadQueue | Sec/User/Cfg | Auth/Authz/Recipe | Seq/Insp | System |
-|---|---|---|---|---|---|---|---|
-| Conservative (규제) | 730 | 90 | 60 | 1825 | 1095 | 730 | 180 |
-| Standard (GS 권장) | 365 | 30 | 30 | 1095 | 730 | 365 | 90 |
-| Minimal (소형) | 90 | 7 | 14 | 365 | 180 | 90 | 30 |
+| Preset | Audit | AutoBackup | UploadQueue | Sec/User/Cfg | Auth/Authz/Recipe | Seq/Insp | System | InspHistory |
+|---|---|---|---|---|---|---|---|---|
+| Conservative (규제) | 730 | 90 | 60 | 1825 | 1095 | 730 | 180 | 365 |
+| Standard (GS 권장) | 365 | 30 | 30 | 1095 | 730 | 365 | 90 | 90 |
+| Minimal (소형) | 90 | 7 | 14 | 365 | 180 | 90 | 30 | 30 |
 
 ### 5.9 검사 결과 — upload_queue 보존 (PR37)
 | 항목 | 값 / 동작 |

@@ -11,6 +11,8 @@ namespace VMS.Core.Retention
         public int Audit { get; init; }
         public int AutoBackup { get; init; }
         public int UploadQueue { get; init; }
+        /// <summary>로컬 검사 이력 (inspection_history.db) 보존일 — §5.11.</summary>
+        public int InspectionHistory { get; init; } = InspectionHistoryOptions.DefaultRetentionDays;
         public IReadOnlyDictionary<AuditCategory, int> Categories { get; init; }
             = new Dictionary<AuditCategory, int>();
     }
@@ -43,6 +45,7 @@ namespace VMS.Core.Retention
                     Audit = 730,
                     AutoBackup = 90,
                     UploadQueue = 60,
+                    InspectionHistory = 365,
                     Categories = new Dictionary<AuditCategory, int>
                     {
                         [AuditCategory.Security]        = 1825,
@@ -62,6 +65,7 @@ namespace VMS.Core.Retention
                     Audit = AuditLogRetention.DefaultRetentionDays,
                     AutoBackup = AutoBackupOptions.DefaultRetentionDays,
                     UploadQueue = UploadQueueRetention.DefaultRetentionDays,
+                    InspectionHistory = InspectionHistoryOptions.DefaultRetentionDays,
                     Categories = AuditCategoryRetention.Defaults,
                 },
                 [Minimal] = new RetentionPreset
@@ -70,6 +74,7 @@ namespace VMS.Core.Retention
                     Audit = 90,
                     AutoBackup = 7,
                     UploadQueue = 14,
+                    InspectionHistory = 30,
                     Categories = new Dictionary<AuditCategory, int>
                     {
                         [AuditCategory.Security]        = 365,

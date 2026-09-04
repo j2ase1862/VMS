@@ -100,7 +100,9 @@ namespace VMS.Core.Backup
             "system_config.json",
             "layout_config.json",
             "plc_signals.json",
-            "BodaVision.db"
+            "BodaVision.db",
+            // 로컬 검사 이력 (기본 저널 모드 — 사이드카 없이 .db 하나로 일관)
+            "inspection_history.db"
         };
 
         private static readonly string[] _alwaysSubdirs = new[]

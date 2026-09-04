@@ -13,6 +13,7 @@ namespace VMS.Tests.Services
     /// ② 사이클 누적 모드에서 검사별 고유 키 vs Web 이력 1행(마지막 키) 불일치로
     ///    이미지가 409 폐기되던 문제 — 사이클 내 모든 검사가 키를 공유해야 한다.
     /// </summary>
+    [Collection(InspectionServiceStaticsCollection.Name)]
     public class NgImageUploadPolicyTests
     {
         // ─── ① ShouldUpload — Auto = 항상 업로드 ───

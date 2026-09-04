@@ -1232,16 +1232,24 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0"
                                                FontWeight="SemiBold" Foreground="{StaticResource Brush.Accent}"
-                                               VerticalAlignment="Center"><Run Text="Recent Inspections"/><InlineUIContainer BaselineAlignment="Center"><vs:HelpIcon CustomTitle="Recent Inspections" CustomDescription="최근 검사 결과를 VMS 안에 최대 200건까지 보관해 보여줍니다. Web 연결이 끊겨도 확인할 수 있고, VMS 를 다시 시작하면 비워집니다 (전체 이력은 Web 의 Production History)." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
-                                    <Button Grid.Column="1"
-                                            Content="Clear"
-                                            Command="{Binding ClearRecentInspectionsCommand}"
-                                            Height="22" Padding="8,0" FontSize="10"
-                                            Background="Transparent" Foreground="{StaticResource Brush.Text.Secondary}"
-                                            BorderBrush="#555" BorderThickness="1"
-                                            Cursor="Hand"
-                                            VerticalAlignment="Center"
-                                            ToolTip="목록을 비웁니다 (Web 에 저장된 검사 이력은 지워지지 않습니다)"/>
+                                               VerticalAlignment="Center"><Run Text="Recent Inspections"/><InlineUIContainer BaselineAlignment="Center"><vs:HelpIcon CustomTitle="Recent Inspections" CustomDescription="최근 검사 결과를 VMS 안에 최대 200건까지 보관해 보여줍니다. 단독 모드나 Web 연결이 끊긴 상태에서도 기록되며, VMS 를 다시 시작하면 비워집니다. 재시작 후에도 남는 전체 이력은 [전체 이력] 버튼(이 PC 의 로컬 이력 DB)에서, Web 연동 시에는 Web 의 Production History 에서 조회합니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Button Content="전체 이력"
+                                                Command="{Binding OpenInspectionHistoryCommand}"
+                                                IsEnabled="{Binding IsLocalHistoryAvailable}"
+                                                Height="22" Padding="8,0" FontSize="10"
+                                                Background="Transparent" Foreground="{StaticResource Brush.Accent}"
+                                                BorderBrush="{StaticResource Brush.Accent}" BorderThickness="1"
+                                                Cursor="Hand" Margin="0,0,6,0"
+                                                ToolTip="이 PC 에 저장된 검사 이력 조회 (기간·판정·레시피 필터, 일별 집계, NG 파레토, CSV). 로컬 이력 저장이 꺼져 있으면 비활성"/>
+                                        <Button Content="Clear"
+                                                Command="{Binding ClearRecentInspectionsCommand}"
+                                                Height="22" Padding="8,0" FontSize="10"
+                                                Background="Transparent" Foreground="{StaticResource Brush.Text.Secondary}"
+                                                BorderBrush="#555" BorderThickness="1"
+                                                Cursor="Hand"
+                                                ToolTip="목록을 비웁니다 (로컬 이력 DB·Web 에 저장된 검사 이력은 지워지지 않습니다)"/>
+                                    </StackPanel>
                                 </Grid>
 
                                 <!-- 3-cell stats: Total / Pass / NG -->

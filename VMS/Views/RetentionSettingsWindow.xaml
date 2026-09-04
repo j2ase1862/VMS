@@ -134,6 +134,27 @@
                                                Style="{StaticResource WindowMutedText}"
                                                VerticalAlignment="Center" Margin="10,0,0,0"/>
                                 </Grid>
+
+                                <!-- 로컬 검사 이력 (inspection_history.db) — 저장 on/off + 보존일 -->
+                                <Grid Margin="0,12,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="180"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="검사 이력 (inspection_history.db)"
+                                               Style="{StaticResource WindowFieldLabel}" TextWrapping="Wrap"/>
+                                    <TextBox Grid.Column="1" Text="{Binding InspectionHistoryRetentionDays}"
+                                             Style="{StaticResource WindowDarkTextBox}"
+                                             IsEnabled="{Binding InspectionHistoryEnabled}"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding InspectionHistoryRange}"
+                                               Style="{StaticResource WindowMutedText}"
+                                               VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                </Grid>
+                                <CheckBox Content="검사 결과를 로컬 이력 DB 에 저장 (단독 모드 생산 이력 · Web 연동 시 오프라인 백업)"
+                                          IsChecked="{Binding InspectionHistoryEnabled}"
+                                          Style="{StaticResource WindowDarkCheckBox}"
+                                          Margin="180,6,0,0"/>
                             </StackPanel>
                         </Border>
 
@@ -174,6 +195,17 @@
                                     <TextBlock Grid.Column="0" Text="업로드 큐"
                                                Style="{StaticResource WindowFieldLabel}"/>
                                     <TextBlock Grid.Column="1" Text="{Binding PreviewUploadQueueSummary}"
+                                               Style="{StaticResource WindowBodyText}"/>
+                                </Grid>
+
+                                <Grid Margin="0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="180"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="검사 이력 DB"
+                                               Style="{StaticResource WindowFieldLabel}"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding PreviewInspectionHistorySummary}"
                                                Style="{StaticResource WindowBodyText}"/>
                                 </Grid>
 

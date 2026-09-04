@@ -42,12 +42,28 @@ namespace VMS.Services
         /// <summary>Web 파라미터 적용 서비스 (외부 주입, nullable)</summary>
         public static IParameterApplyService? ParameterApplyService { get; set; }
 
+        /// <summary>
+        /// 현재 로컬 레시피 이름 공급자 (외부 주입, nullable). 단독 모드나 Web 미연동
+        /// 레시피에서도 Recent Inspections 에 레시피 이름을 남기기 위해 사용 —
+        /// Web 연동 레시피면 Web 레시피 이름이 우선한다.
+        /// </summary>
+        public static Func<string?>? CurrentRecipeNameProvider { get; set; }
+
+        /// <summary>
+        /// 로컬 검사 이력 영구 저장소 (외부 주입, nullable — inspectionHistory.enabled=false 면 null).
+        /// Recent Inspections 와 같은 지점에서 사이클/검사 1건씩 기록. 큐 push 만 하므로 택트 무관.
+        /// </summary>
+        public static VMS.Services.LocalHistory.ILocalInspectionHistoryStore? HistoryStore { get; set; }
+
         // ─── "1사이클 = 1개" 사이클 누적 (AUTO RUN, 2026-08-18) ───
         // 활성 시 검사별 Web 업로드/로컬 이력 push 를 버퍼에 모았다가
         // FlushCycleResultAsync 에서 사이클당 1건으로 업로드한다.
         private static readonly object _cycleLock = new();
         private static bool _cycleAccumulating;
         private static readonly List<ParameterResultDto> _cycleParamResults = new();
+        private static readonly List<string> _cycleFailedTools = new();
+        private static readonly List<VMS.Services.LocalHistory.LocalToolResult> _cycleToolResults = new();
+        private static double _cycleTotalMs;
         private static InspectionFeatureMetrics? _cycleFeatureMetrics;
         private static string? _cycleCorrelationKey;
 
@@ -58,6 +74,9 @@ namespace VMS.Services
             {
                 _cycleAccumulating = enabled;
                 _cycleParamResults.Clear();
+                _cycleFailedTools.Clear();
+                _cycleToolResults.Clear();
+                _cycleTotalMs = 0;
                 _cycleFeatureMetrics = null;
                 _cycleCorrelationKey = null;
             }
@@ -81,49 +100,50 @@ namespace VMS.Services
         }
 
         /// <summary>
-        /// 사이클 완료 시 호출 — 버퍼에 쌓인 파라미터 결과(없으면 판정만)를 1건으로 업로드하고
-        /// 로컬 최근 검사 이력에도 사이클 1건을 남긴다. Web 미연동(CurrentRecipeId==0)이면
-        /// 버퍼만 비우고 false 반환 — WO 집계는 Web 연동 레시피 전제.
+        /// 사이클 완료 시 호출 — 로컬 최근 검사 이력에 사이클 1건을 **항상** 남기고,
+        /// 버퍼에 쌓인 파라미터 결과(없으면 판정만)를 Web 에 1건으로 업로드한다.
+        /// Web 미연동(단독 모드 또는 CurrentRecipeId==0)이면 로컬 이력만 남기고 false 반환
+        /// — WO 집계는 Web 연동 레시피 전제.
+        /// 로컬 이력 push 가 Web 가드 안쪽에 있어 단독 모드에서 Recent Inspections 가
+        /// 항상 비어 있던 문제 수정 (2026-09-04).
         /// </summary>
         public static async Task<bool> FlushCycleResultAsync(bool overallPass)
         {
             List<ParameterResultDto> results;
+            List<string> failedTools;
+            List<VMS.Services.LocalHistory.LocalToolResult> toolResults;
+            double totalMs;
             InspectionFeatureMetrics? metrics;
             string? corrKey;
             lock (_cycleLock)
             {
                 results = new List<ParameterResultDto>(_cycleParamResults);
+                failedTools = new List<string>(_cycleFailedTools);
+                toolResults = new List<VMS.Services.LocalHistory.LocalToolResult>(_cycleToolResults);
+                totalMs = _cycleTotalMs;
                 metrics = _cycleFeatureMetrics;
                 corrKey = _cycleCorrelationKey;
                 _cycleParamResults.Clear();
+                _cycleFailedTools.Clear();
+                _cycleToolResults.Clear();
+                _cycleTotalMs = 0;
                 _cycleFeatureMetrics = null;
                 _cycleCorrelationKey = null;
             }
 
+            var isPass = overallPass && results.All(r => r.Judgment == "OK");
+            RecordLocalInspection(isPass, results, failedTools,
+                correlationKey: corrKey,
+                toolResults: toolResults,
+                cycleTimeMs: totalMs > 0 ? (int)Math.Round(totalMs) : null,
+                mode: VMS.Services.LocalHistory.LocalInspectionMode.Cycle);
+
             var syncService = ParameterSyncService;
             if (syncService == null || syncService.CurrentRecipeId <= 0)
             {
-                Debug.WriteLine("[InspectionService] cycle flush skipped — Web 연동 레시피 아님");
+                Debug.WriteLine("[InspectionService] cycle upload skipped — Web 연동 레시피 아님 (로컬 이력만 기록)");
                 return false;
             }
-
-            var isPass = overallPass && results.All(r => r.Judgment == "OK");
-            var ngCodes = results.Where(r => r.Judgment == "NG")
-                                 .Select(r => r.ParamCode.ToString())
-                                 .Distinct()
-                                 .ToList();
-            var recipeName = syncService.Recipes
-                .FirstOrDefault(r => r.Id == syncService.CurrentRecipeId)?.Name;
-            RecentInspectionsService.Instance.Add(new InspectionRecord
-            {
-                IsPass = isPass,
-                NgCodes = ngCodes,
-                RecipeId = syncService.CurrentRecipeId,
-                RecipeName = recipeName,
-                WorkOrderId = syncService.WorkOrderId,
-                LotId = syncService.LotId,
-                SerialNumber = syncService.SerialNumber
-            });
 
             try
             {
@@ -135,6 +155,103 @@ namespace VMS.Services
                 Debug.WriteLine($"[InspectionService] cycle result upload error: {ex.Message}");
                 return false;
             }
+        }
+
+        /// <summary>
+        /// D8: VMS 자체 히스토리(Recent Inspections) 1건 push — Web 연동 여부와 무관하게
+        /// 항상 기록. NG 코드는 Web 파라미터 NG 코드가 있으면 그것을, 없으면(단독 모드·
+        /// 파라미터 미연결 레시피) 실패한 도구 이름을 남긴다. 레시피 이름은 Web 레시피 →
+        /// 로컬 레시피(<see cref="CurrentRecipeNameProvider"/>) 순으로 보강.
+        /// </summary>
+        internal static InspectionRecord RecordLocalInspection(
+            bool isPass,
+            IReadOnlyList<ParameterResultDto> paramResults,
+            IReadOnlyList<string> failedTools,
+            string? correlationKey = null,
+            IReadOnlyList<VMS.Services.LocalHistory.LocalToolResult>? toolResults = null,
+            int? cycleTimeMs = null,
+            VMS.Services.LocalHistory.LocalInspectionMode mode = VMS.Services.LocalHistory.LocalInspectionMode.Manual)
+        {
+            var ngCodes = paramResults.Where(r => r.Judgment == "NG")
+                                      .Select(r => r.ParamCode.ToString())
+                                      .Distinct()
+                                      .ToList();
+            if (ngCodes.Count == 0 && !isPass)
+                ngCodes = failedTools.Distinct().ToList();
+
+            var syncService = ParameterSyncService;
+            var webLinked = syncService != null && syncService.CurrentRecipeId > 0;
+            string? recipeName = null;
+            if (webLinked)
+                recipeName = syncService!.Recipes
+                    .FirstOrDefault(r => r.Id == syncService.CurrentRecipeId)?.Name;
+            if (string.IsNullOrEmpty(recipeName))
+            {
+                try { recipeName = CurrentRecipeNameProvider?.Invoke(); }
+                catch (Exception ex) { Debug.WriteLine($"[InspectionService] recipe name provider error: {ex.Message}"); }
+            }
+
+            var record = new InspectionRecord
+            {
+                IsPass = isPass,
+                NgCodes = ngCodes,
+                RecipeId = webLinked ? syncService!.CurrentRecipeId : 0,
+                RecipeName = recipeName,
+                WorkOrderId = webLinked ? syncService!.WorkOrderId : null,
+                LotId = webLinked ? syncService!.LotId : null,
+                SerialNumber = webLinked ? syncService!.SerialNumber : null
+            };
+            RecentInspectionsService.Instance.Add(record);
+
+            // 영구 로컬 이력 — 큐 push 만 (택트 무관). 실패는 검사 흐름과 무관하게 삼킨다.
+            var store = HistoryStore;
+            if (store != null)
+            {
+                try
+                {
+                    store.Record(new VMS.Services.LocalHistory.LocalInspectionEntry
+                    {
+                        InspectedAtUtc = record.Timestamp.ToUniversalTime(),
+                        IsPass = record.IsPass,
+                        RecipeId = record.RecipeId,
+                        RecipeName = record.RecipeName,
+                        NgCodes = new List<string>(record.NgCodes),
+                        ToolResults = toolResults != null
+                            ? new List<VMS.Services.LocalHistory.LocalToolResult>(toolResults)
+                            : new List<VMS.Services.LocalHistory.LocalToolResult>(),
+                        CorrelationKey = correlationKey,
+                        WorkOrderId = record.WorkOrderId,
+                        LotId = record.LotId,
+                        SerialNumber = record.SerialNumber,
+                        CycleTimeMs = cycleTimeMs,
+                        Mode = mode
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[InspectionService] local history record error: {ex.Message}");
+                }
+            }
+            return record;
+        }
+
+        /// <summary>도구 결과 → 로컬 이력용 요약 (Data 사전은 제외, 실패 시에만 메시지 보존).</summary>
+        private static List<VMS.Services.LocalHistory.LocalToolResult> ToLocalToolResults(
+            IEnumerable<ToolInspectionResult> toolResults)
+        {
+            var list = new List<VMS.Services.LocalHistory.LocalToolResult>();
+            foreach (var t in toolResults)
+            {
+                list.Add(new VMS.Services.LocalHistory.LocalToolResult
+                {
+                    ToolName = t.ToolName,
+                    ToolType = t.ToolType,
+                    Success = t.Success,
+                    ExecutionTimeMs = Math.Round(t.ExecutionTimeMs, 1),
+                    Message = t.Success || string.IsNullOrEmpty(t.Message) ? null : t.Message
+                });
+            }
+            return list;
         }
 
         /// <summary>
@@ -397,14 +514,16 @@ namespace VMS.Services
                 result.Message = finalSuccess ? "All tools passed" : "One or more tools failed";
                 result.OverlayImage = compositeOverlay;
 
+                // 실패한 도구 이름 — 감사 로그 + 로컬 이력(NG 코드 대체)에 사용.
+                var failedTools = result.ToolResults
+                    .Where(t => !t.Success)
+                    .Select(t => t.ToolName)
+                    .ToArray();
+
                 // 감사 로그 — NG (검사 실패) 만 기록. OK 는 빈도가 높아 jsonl 폭증을 막기 위해 제외.
                 // 실패한 도구 이름을 함께 기록하여 사후 추적 가능.
                 if (!finalSuccess)
                 {
-                    var failedTools = result.ToolResults
-                        .Where(t => !t.Success)
-                        .Select(t => t.ToolName)
-                        .ToArray();
                     AuditLogger.Instance.Log(
                         AuditCategory.Inspection, "InspectionNG", AuditOutcome.Failure,
                         source: nameof(InspectionService),
@@ -431,8 +550,10 @@ namespace VMS.Services
                     DlModelVersion = dlModelVersion
                 };
 
-                // Web 파라미터 결과 수집 및 업로드 (피처 + 이미지와 공유할 상관 키 동봉)
-                CollectAndUploadParameterResults(ctx, resultMap, featureMetrics, result.CorrelationKey);
+                // 로컬 이력 기록 + Web 파라미터 결과 수집·업로드 (피처 + 이미지와 공유할 상관 키 동봉)
+                var paramResults = CollectParameterResults(ctx, resultMap);
+                RecordInspectionOutcome(finalSuccess, failedTools, paramResults, featureMetrics, result.CorrelationKey,
+                    ToLocalToolResults(result.ToolResults));
 
                 // 사이클 임시 Mat 즉시 해제 — 툴 결과의 OutputImage/OverlayImage 는 프레임
                 // 크기 네이티브 메모리라 GC 통계에 잡히지 않고 파이널라이저까지 떠 있는다.
@@ -578,17 +699,20 @@ namespace VMS.Services
 
         #region Web Parameter Result Collection
 
-        private static void CollectAndUploadParameterResults(
+        /// <summary>
+        /// Web 파라미터에 연결된 도구 결과를 측정값 목록으로 수집. Web 미연동(단독 모드 또는
+        /// CurrentRecipeId==0)이면 빈 목록 — 로컬 이력은 그래도 남아야 하므로 호출자가
+        /// <see cref="RecordInspectionOutcome"/> 로 이어간다.
+        /// </summary>
+        private static List<ParameterResultDto> CollectParameterResults(
             StepExecutionContext ctx,
-            Dictionary<string, VisionResult> resultMap,
-            InspectionFeatureMetrics? featureMetrics = null,
-            string? correlationKey = null)
+            Dictionary<string, VisionResult> resultMap)
         {
+            var paramResults = new List<ParameterResultDto>();
+
             var syncService = ParameterSyncService;
             if (syncService == null || syncService.CurrentRecipeId <= 0)
-                return;
-
-            var paramResults = new List<ParameterResultDto>();
+                return paramResults;
 
             foreach (var tool in ctx.SortedTools)
             {
@@ -622,53 +746,60 @@ namespace VMS.Services
                 }
             }
 
-            // AUTO RUN 사이클 누적 모드 — 검사별 업로드/로컬 이력 push 대신 버퍼에 모은다.
-            // 사이클 완료 시 FlushCycleResultAsync 가 1건으로 처리 ("1사이클 = 1개").
+            return paramResults;
+        }
+
+        /// <summary>
+        /// 검사 1건의 판정을 처리 — 사이클 누적 모드면 버퍼에 모으고(사이클 완료 시
+        /// <see cref="FlushCycleResultAsync"/> 가 1건으로 처리, "1사이클 = 1개"), 아니면
+        /// 로컬 이력에 즉시 push 하고 Web 연동 레시피면 파라미터 결과를 업로드한다.
+        /// 로컬 이력은 단독 모드에서도 남는다 (D8: Web 끊겨도 사이드 패널에서 즉시 확인).
+        /// </summary>
+        internal static void RecordInspectionOutcome(
+            bool finalSuccess,
+            IReadOnlyList<string> failedTools,
+            List<ParameterResultDto> paramResults,
+            InspectionFeatureMetrics? featureMetrics = null,
+            string? correlationKey = null,
+            IReadOnlyList<VMS.Services.LocalHistory.LocalToolResult>? toolResults = null)
+        {
             lock (_cycleLock)
             {
                 if (_cycleAccumulating)
                 {
                     _cycleParamResults.AddRange(paramResults);
+                    _cycleFailedTools.AddRange(failedTools);
+                    if (toolResults != null) _cycleToolResults.AddRange(toolResults);
+                    if (featureMetrics?.CycleTimeMs is int stepMs) _cycleTotalMs += stepMs;
                     if (featureMetrics != null) _cycleFeatureMetrics = featureMetrics;
                     if (correlationKey != null) _cycleCorrelationKey = correlationKey;
                     return;
                 }
             }
 
-            if (paramResults.Count > 0)
-            {
-                // D8: VMS 자체 히스토리 — Web 끊겨도 작업자가 사이드 패널에서 즉시 확인.
-                // 업로드 전에 푸시 — 네트워크 상태와 무관하게 항상 기록.
-                var isPass = paramResults.All(r => r.Judgment == "OK");
-                var ngCodes = paramResults.Where(r => r.Judgment == "NG")
-                                          .Select(r => r.ParamCode.ToString())
-                                          .Distinct()
-                                          .ToList();
-                var recipeName = syncService.Recipes
-                    .FirstOrDefault(r => r.Id == syncService.CurrentRecipeId)?.Name;
-                RecentInspectionsService.Instance.Add(new InspectionRecord
-                {
-                    IsPass = isPass,
-                    NgCodes = ngCodes,
-                    RecipeId = syncService.CurrentRecipeId,
-                    RecipeName = recipeName,
-                    WorkOrderId = syncService.WorkOrderId,
-                    LotId = syncService.LotId,
-                    SerialNumber = syncService.SerialNumber
-                });
+            // 업로드 전에 푸시 — 네트워크 상태와 무관하게 항상 기록.
+            var isPass = finalSuccess && paramResults.All(r => r.Judgment == "OK");
+            RecordLocalInspection(isPass, paramResults, failedTools,
+                correlationKey: correlationKey,
+                toolResults: toolResults,
+                cycleTimeMs: featureMetrics?.CycleTimeMs,
+                mode: VMS.Services.LocalHistory.LocalInspectionMode.Manual);
 
-                _ = Task.Run(async () =>
+            var syncService = ParameterSyncService;
+            if (syncService == null || syncService.CurrentRecipeId <= 0 || paramResults.Count == 0)
+                return;
+
+            _ = Task.Run(async () =>
+            {
+                try
                 {
-                    try
-                    {
-                        await syncService.UploadResultsAsync(syncService.CurrentRecipeId, paramResults, featureMetrics, correlationKey);
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine($"[InspectionService] Parameter result upload error: {ex.Message}");
-                    }
-                });
-            }
+                    await syncService.UploadResultsAsync(syncService.CurrentRecipeId, paramResults, featureMetrics, correlationKey);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[InspectionService] Parameter result upload error: {ex.Message}");
+                }
+            });
         }
 
         #endregion
