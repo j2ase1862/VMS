@@ -48,6 +48,11 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
             {
                 UseROI = false;
                 ROI = new Rect();
+                // 회전 상태도 함께 초기화 — 남겨두면 다음에 그린 일반 사각형 ROI 가 옛 각도·중심으로
+                // 워프 크롭된다 (GetAlignedROIImage 는 ROIAngle/ROICenter 를 그대로 신뢰).
+                Tool.ROIAngle = 0;
+                Tool.ROICenterX = 0;
+                Tool.ROICenterY = 0;
                 AssociatedROIShape = null;
                 WeakReferenceMessenger.Default.Send(new RequestClearROIMessage());
             });
@@ -56,15 +61,20 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
             {
                 if (!UseROI || ROIWidth <= 0 || ROIHeight <= 0) return;
 
-                bool isAffineTool = Tool is LineFitTool or CaliperTool or BlobTool;
+                // 회전 ROI(RectangleAffine)로 그려 저장한 툴은 종류와 무관하게 회전 도형으로 복원한다.
+                // 레시피 재로드 후 AssociatedROIShape 는 null 이라 여기서 도형을 다시 만드는데, 종전에는
+                // 측정 3종만 Affine 으로 취급해 FeatureMatch 등은 각도가 있어도 축 정렬 RectangleROI 로
+                // 되살아났다 (실증 보고 2026-09-04: 회전 ROI 로 학습한 FeatureMatch 가 재실행 후 Rect 로 표시).
+                bool hasRotation = Math.Abs(Tool.ROIAngle) > 0.001;
+                bool isAffineTool = Tool is LineFitTool or CaliperTool or BlobTool || hasRotation;
                 bool isCircleFitTool = Tool is CircleFitTool;
 
                 // Affine 도구인데 기존 ROI가 RectangleROI면 → RectangleAffineROI로 변환
                 if (isAffineTool && AssociatedROIShape is RectangleROI oldRect)
                 {
                     AssociatedROIShape = new RectangleAffineROI(
-                        oldRect.X + oldRect.Width / 2.0,
-                        oldRect.Y + oldRect.Height / 2.0,
+                        Tool.ROICenterX != 0 ? Tool.ROICenterX : oldRect.X + oldRect.Width / 2.0,
+                        Tool.ROICenterY != 0 ? Tool.ROICenterY : oldRect.Y + oldRect.Height / 2.0,
                         oldRect.Width,
                         oldRect.Height,
                         Tool.ROIAngle)
