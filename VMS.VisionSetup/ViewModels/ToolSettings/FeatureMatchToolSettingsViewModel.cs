@@ -143,6 +143,7 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
 
         // 다중 인스턴스 + 커버리지 판정
         public int MaxInstances { get => TypedTool.MaxInstances; set => TypedTool.MaxInstances = value; }
+        public RetrainOriginMode RetrainOriginMode { get => TypedTool.RetrainOriginMode; set => TypedTool.RetrainOriginMode = value; }
         public double NmsDistanceFactor { get => TypedTool.NmsDistanceFactor; set => TypedTool.NmsDistanceFactor = value; }
         public double MinCoverage { get => TypedTool.MinCoverage; set => TypedTool.MinCoverage = value; }
 

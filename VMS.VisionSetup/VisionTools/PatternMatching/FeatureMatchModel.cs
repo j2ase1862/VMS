@@ -68,6 +68,19 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
         internal double TrainedCenterX { get; set; }
         internal double TrainedCenterY { get; set; }
 
+        /// <summary>
+        /// 학습 ROI 각도(°, 캔버스 규약). 회전 ROI 는 정렬 워프 후 학습되므로 같은 장면을
+        /// 매칭하면 Angle 이 이 값으로 나온다 — Match Align 학습 기준의 기준 각도 (2026-09-04).
+        /// 축 정렬 ROI / 전체 이미지 학습이면 0.
+        /// </summary>
+        internal double TrainedAngle { get; set; }
+
+        /// <summary>
+        /// 구 레시피(학습 원점 미저장) 복원 표식 — 역직렬화 시 템플릿 재학습이 기본 속성(ROI) 적용보다
+        /// 먼저 돌아 원점이 템플릿 중심(w/2,h/2)으로 남는다. ApplyBaseProperties 뒤에 ROI 기준으로 재계산.
+        /// </summary>
+        internal bool NeedsLegacyOriginFix { get; set; }
+
         internal const int NUM_GRAD_BINS = 36;
         internal List<int>[]? GradBinTable { get; set; }
         internal int[]? BinOffsets { get; set; }

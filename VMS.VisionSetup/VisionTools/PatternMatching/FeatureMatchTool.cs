@@ -15,6 +15,15 @@ using System.Threading.Tasks;
 
 namespace VMS.VisionSetup.VisionTools.PatternMatching
 {
+    /// <summary>기존 모델 재학습 시 원점(학습 중심·기준 각도·기준 이미지) 처리 방식 (2026-09-04).</summary>
+    public enum RetrainOriginMode
+    {
+        /// <summary>현재 이미지 기준 — 원점을 현재 ROI 중심·각도로 재계산하고 기준 이미지도 교체 (기본, 종전 동작).</summary>
+        UseCurrentImage,
+        /// <summary>기준 이미지 유지 — 원 학습의 원점·기준 각도·기준 이미지를 그대로 두고 템플릿 특징만 갱신.</summary>
+        KeepReference
+    }
+
     /// <summary>
     /// Edge-based geometric pattern matching: Generalized Hough Voting + gradient refinement.
     /// Supports multiple trained pattern models — best match is selected at runtime.
@@ -302,6 +311,18 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
         private string? _referenceImagePath;
         public string? ReferenceImagePath { get => _referenceImagePath; set => SetProperty(ref _referenceImagePath, value); }
 
+        private RetrainOriginMode _retrainOriginMode = RetrainOriginMode.UseCurrentImage;
+        /// <summary>
+        /// 기존 모델 재학습([Train Selected]) 시 원점(학습 중심·기준 각도·기준 이미지) 처리 (2026-09-04).
+        /// UseCurrentImage(기본): 현재 ROI 기준으로 재계산 + 기준 이미지 교체. KeepReference: 원 학습의
+        /// 원점·각도·기준 이미지를 유지하고 템플릿 특징만 갱신 — 얼라인 마스터 포즈 보존용.
+        /// </summary>
+        public RetrainOriginMode RetrainOriginMode
+        {
+            get => _retrainOriginMode;
+            set => SetProperty(ref _retrainOriginMode, value);
+        }
+
         private double _suggestedCannyLow;
         public double SuggestedCannyLow { get => _suggestedCannyLow; set => SetProperty(ref _suggestedCannyLow, value); }
 
@@ -381,6 +402,39 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
 
         #region Train
 
+        /// <summary>학습에 적용되는 ROI 각도 — GetAlignedROIImage 와 같은 판단(라이브 도형 우선, 미세 각도 무시).</summary>
+        private double CurrentTrainAngle()
+        {
+            double angle = AssociatedROIShape is RectangleAffineROI live ? live.Angle : ROIAngle;
+            return Math.Abs(angle) <= 0.001 ? 0 : angle;
+        }
+
+        /// <summary>
+        /// 구 레시피 복원 보정 (2026-09-04): 학습 원점이 저장되지 않은 모델은 역직렬화 재학습 시점에 ROI 가
+        /// 아직 없어 원점이 템플릿 중심으로 남는다 — 기본 속성(ROI) 적용 후 이 메서드로 종전 규약
+        /// (ROI 좌상단 + 템플릿 반폭, 각도 = ROI 각도)대로 재계산한다. 명시 저장된 모델은 건드리지 않는다.
+        /// </summary>
+        internal void FixLegacyTrainedOrigins()
+        {
+            foreach (var model in Models)
+            {
+                if (!model.NeedsLegacyOriginFix) continue;
+                model.NeedsLegacyOriginFix = false;
+                if (UseROI && ROI.Width > 0 && ROI.Height > 0)
+                {
+                    model.TrainedCenterX = ROI.X + model.TemplateWidth / 2.0;
+                    model.TrainedCenterY = ROI.Y + model.TemplateHeight / 2.0;
+                    model.TrainedAngle = CurrentTrainAngle();
+                }
+                else
+                {
+                    model.TrainedCenterX = model.TemplateWidth / 2.0;
+                    model.TrainedCenterY = model.TemplateHeight / 2.0;
+                    model.TrainedAngle = 0;
+                }
+            }
+        }
+
         /// <summary>
         /// Train a pattern model. If targetModel is provided, retrain that model.
         /// If null, create a new model and add to Models collection.
@@ -400,6 +454,7 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                 bool isNew = model == null;
                 double prevCenterX = model?.TrainedCenterX ?? 0;
                 double prevCenterY = model?.TrainedCenterY ?? 0;
+                double prevAngle = model?.TrainedAngle ?? 0;
 
                 if (isNew)
                 {
@@ -430,16 +485,21 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                 {
                     model.TrainedCenterX = prevCenterX;
                     model.TrainedCenterY = prevCenterY;
+                    model.TrainedAngle = prevAngle;
                 }
                 else if (UseROI && ROI.Width > 0 && ROI.Height > 0)
                 {
                     model.TrainedCenterX = ROI.X + patternImage.Width / 2.0;
                     model.TrainedCenterY = ROI.Y + patternImage.Height / 2.0;
+                    // 회전 ROI 는 GetAlignedROIImage 가 정렬 워프해 넘기므로 매칭 각도 = ROI 각도.
+                    // 기준 각도를 0 으로 두면 같은 장면에서도 Δθ = ROI 각도가 되어 얼라인이 어긋난다.
+                    model.TrainedAngle = CurrentTrainAngle();
                 }
                 else
                 {
                     model.TrainedCenterX = patternImage.Width / 2.0;
                     model.TrainedCenterY = patternImage.Height / 2.0;
+                    model.TrainedAngle = 0;
                 }
 
                 using var gray = patternImage.Channels() > 1
@@ -1217,6 +1277,7 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                     result.Data["MatchedModel"] = rep.model.Name;
                     result.Data["TrainedCenterX"] = rep.model.TrainedCenterX;
                     result.Data["TrainedCenterY"] = rep.model.TrainedCenterY;
+                    result.Data["TrainedAngle"] = rep.model.TrainedAngle;
 
                     // 다중 인스턴스 키 — ShapeMatchTool 과 동일 체계. 대표(최고 점수)는
                     // 위의 기존 키에 그대로 실려 Fixture/Align 등 단일 소비처와 호환.
@@ -2185,7 +2246,8 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                 UseContrastInvariant = this.UseContrastInvariant,
                 CurvatureWeight = this.CurvatureWeight,
                 IsAutoTuneEnabled = this.IsAutoTuneEnabled,
-                ReferenceImagePath = this.ReferenceImagePath
+                ReferenceImagePath = this.ReferenceImagePath,
+                RetrainOriginMode = this.RetrainOriginMode
             };
 
             // Deep-copy each model (clone Mat images, rebuild arrays; native buffers allocated on retrain)
@@ -2200,6 +2262,9 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                     TrainMask = model.TrainMask?.Clone(),
                     TemplateWidth = model.TemplateWidth,
                     TemplateHeight = model.TemplateHeight,
+                    TrainedCenterX = model.TrainedCenterX,
+                    TrainedCenterY = model.TrainedCenterY,
+                    TrainedAngle = model.TrainedAngle,
                     ModelEdges = new List<EdgePoint>(model.ModelEdges),
                     ModelXArray = model.ModelXArray != null ? (float[])model.ModelXArray.Clone() : null,
                     ModelYArray = model.ModelYArray != null ? (float[])model.ModelYArray.Clone() : null,

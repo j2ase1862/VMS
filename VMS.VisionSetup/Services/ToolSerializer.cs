@@ -154,6 +154,7 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["IsAutoTuneEnabled"] = match.IsAutoTuneEnabled;
                     if (!string.IsNullOrEmpty(match.ReferenceImagePath))
                         config.Parameters["ReferenceImagePath"] = match.ReferenceImagePath;
+                    config.Parameters["RetrainOriginMode"] = match.RetrainOriginMode.ToString();
 
                     // Serialize trained models (TemplateImage as base64 PNG)
                     var modelsList = new List<Dictionary<string, object>>();
@@ -162,7 +163,12 @@ namespace VMS.VisionSetup.Services
                         var modelData = new Dictionary<string, object>
                         {
                             ["Name"] = model.Name,
-                            ["IsEnabled"] = model.IsEnabled
+                            ["IsEnabled"] = model.IsEnabled,
+                            // 학습 원점 — 복원 시 템플릿 재학습이 "현재 ROI" 로 중심을 재계산하므로
+                            // 학습 후 ROI 를 옮겨 저장한 레시피는 원점이 밀린다. 명시 저장으로 고정 (2026-09-04).
+                            ["TrainedCenterX"] = model.TrainedCenterX,
+                            ["TrainedCenterY"] = model.TrainedCenterY,
+                            ["TrainedAngle"] = model.TrainedAngle
                         };
 
                         if (model.TemplateImage != null && !model.TemplateImage.Empty())
@@ -748,6 +754,10 @@ namespace VMS.VisionSetup.Services
             tool.ROICenterX = config.ROICenterX;
             tool.ROICenterY = config.ROICenterY;
 
+            // FeatureMatch 구 레시피: 학습 원점이 없던 모델을 이제 확정된 ROI 로 재계산 (2026-09-04)
+            if (tool is FeatureMatchTool legacyFm)
+                legacyFm.FixLegacyTrainedOrigins();
+
             // PLC 매핑 복원 (1:N)
             if (config.PlcMappings != null && config.PlcMappings.Count > 0)
             {
@@ -1028,6 +1038,10 @@ namespace VMS.VisionSetup.Services
                     tool.ReferenceImagePath = refPath;
             }
 
+            if (p.TryGetValue("RetrainOriginMode", out var rom) &&
+                Enum.TryParse<VisionTools.PatternMatching.RetrainOriginMode>(GetString(rom), out var romVal))
+                tool.RetrainOriginMode = romVal;
+
             // Restore trained models from serialized data
             if (p.TryGetValue("Models", out var modelsObj))
             {
@@ -1074,6 +1088,20 @@ namespace VMS.VisionSetup.Services
                         {
                             lastModel.Name = modelName;
                             lastModel.IsEnabled = modelEnabled;
+                            // 저장된 학습 원점이 있으면 재학습이 재계산한 값 대신 그대로 복원
+                            if (entry.TryGetValue("TrainedCenterX", out var tcx) &&
+                                entry.TryGetValue("TrainedCenterY", out var tcy))
+                            {
+                                lastModel.TrainedCenterX = GetDouble(tcx);
+                                lastModel.TrainedCenterY = GetDouble(tcy);
+                            }
+                            else
+                            {
+                                // 구 레시피 — ROI 는 ApplyBaseProperties 에서 나중에 들어오므로 그때 재계산
+                                lastModel.NeedsLegacyOriginFix = true;
+                            }
+                            if (entry.TryGetValue("TrainedAngle", out var tang))
+                                lastModel.TrainedAngle = GetDouble(tang);
                         }
                     }
                     trainMask?.Dispose();
