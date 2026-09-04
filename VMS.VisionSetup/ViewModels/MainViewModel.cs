@@ -2148,6 +2148,12 @@ namespace VMS.VisionSetup.ViewModels
                 {
                     var rect = roi.GetBoundingRect();
                     tool.ROI = rect;
+                    // 회전 없는 도형으로 갈아탔으면 이전 RectangleAffine 의 각도·중심을 지운다 —
+                    // 남겨두면 GetAlignedROIImage 가 옛 각도·중심으로 워프 크롭해 새 ROI 와 무관한
+                    // 영역이 학습된다 (회전 ROI → 일반 사각형 재드로우 시).
+                    tool.ROIAngle = 0;
+                    tool.ROICenterX = 0;
+                    tool.ROICenterY = 0;
                 }
 
                 tool.UseROI = true;
@@ -2511,6 +2517,13 @@ namespace VMS.VisionSetup.ViewModels
                     rectROI.Width = Math.Max(1, tool.ROIWidth);
                     rectROI.Height = Math.Max(1, tool.ROIHeight);
                     WeakReferenceMessenger.Default.Send(new RequestRefreshROIMessage(rectROI));
+                }
+                else if (tool.AssociatedROIShape == null && (tool.ROICenterX != 0 || tool.ROICenterY != 0))
+                {
+                    // 레시피 재로드 직후(도형 미표시) 텍스트 필드로 회전 ROI 를 옮기는 경우 —
+                    // 회전 중심을 같이 옮겨야 GetAlignedROIImage 가 새 위치를 크롭한다.
+                    tool.ROICenterX = tool.ROIX + tool.ROIWidth / 2.0;
+                    tool.ROICenterY = tool.ROIY + tool.ROIHeight / 2.0;
                 }
             }
 
