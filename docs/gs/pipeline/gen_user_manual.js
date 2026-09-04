@@ -321,10 +321,14 @@ const POST = {
     () => ctlImg("bar_sam_toolbar.png", 340, "deeplearning_ctl"),
     () => caption("그림. SAM 라벨링 도구모음 — 좌클릭 전경 / 우클릭 배경, [Confirm (Enter)]·[Clear (Esc)]"),
   ],
+  "재학습 원점 — 기준 이미지 유지 / 현재 이미지": [
+    () => imgPara("50_fm_retrain_origin.png", 300),
+    () => caption("그림. Feature Match 설정 Models 영역 — [Add Model] / [Train Selected] 아래의 재학습 원점 콤보(UseCurrentImage / KeepReference)와 [기준 이미지 불러오기]"),
+  ],
   "7. 생산 관리 웹 (BODA.VMS.Web)": [
     () => P("아래 그림은 BODA.VMS.Web 관리 화면입니다(관리자 로그인 기준)."),
     () => imgPara("40_web_login.png", 360),
-    () => caption("그림 4-0. Web 로그인"),
+    () => caption("그림 4-0. Web 로그인 — 아이디 / 비밀번호 / 로그인 유지 체크박스(기본 해제)"),
   ],
   "7.3 Dashboard": [
     () => imgPara("41_web_dashboard.png", 600),
