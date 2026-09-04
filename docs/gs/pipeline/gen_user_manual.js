@@ -506,7 +506,7 @@ function wizardSection() {
       ]),
       P("※ 신규 설치 시 두 비밀번호는 필수 입력입니다(디폴트 비밀번호 자동 시드는 보안상 제거됨). 기존 설치에 이미 계정이 존재하면 비워 두어 변경하지 않을 수 있습니다. Web Client API Key 는 Web 서버 관리자가 별도로 안내한 경우가 아니면 건드리지 마세요.", { size: 18, color: "595959" }),
     ]],
-    ["10_appsetup_step3.png", 470, "3단계 — Camera Configuration: Live/Virtual 모드, [+ Add Camera], [Scan Network], 노출/게인/캡처모드", [
+    ["10_appsetup_step3.png", 470, "3단계 — Camera Configuration: Live/Virtual 모드, [+ Add Camera], [Scan Network], 카메라 타입·제조사별 패널 + 안내 카드", [
       P("■ 3단계 입력 항목 상세", { bold: true }),
       wizardTable([
         ["카메라 모드", ["P3_default_01_RadioButton_Live_Mode_Scan_Network.png", "P3_default_02_RadioButton_Virtual_Mode_Manual_Setup.png"], "Live: 네트워크 스캔으로 연결 카메라 자동 검출 / Virtual: 카메라 없이 수동 구성", "Virtual"],
@@ -514,14 +514,12 @@ function wizardSection() {
         ["[Scan Network]", ["P3_default_04_Button_Scan_Network.png"], "GigE Vision 표준(UDP 3956 브로드캐스트)으로 네트워크 카메라 검색", "—"],
         ["Name / IP", ["P3_camtypes_03_TextBox_AreaCam.png", "P3_camtypes_05_TextBox_1921680101.png"], "카메라 식별 이름 / IP 주소", "Camera 1 / 192.168.0.101"],
         ["Camera Type", ["P3_camtypes_06_ComboBox_AreaScan2D.png"], "스캔 방식(AreaScan2D·3D / LineScan2D·3D). 선택에 따라 하단 파라미터 패널 전환", "AreaScan2D"],
-        ["Manufacturer", ["P3_camtypes_07_ComboBox_HIK.png"], "제조사. Matrox·Dalsa 선택 시 Frame Grabber(MIL) 패널 표시", "HIK"],
-        ["〈Area Scan〉 Exposure(μs) / Gain", ["P3_camtypes_10_TextBox_5000.png", "P3_camtypes_12_TextBox_1.png"], "노출 시간 / 게인", "5000 / 1.0"],
-        ["〈Line Scan〉 Trigger / Line Rate / Scan Length", ["P3_camtypes_22_ComboBox_Encoder.png", "P3_camtypes_24_TextBox_10000.png"], "트리거 소스(Internal·Encoder) / 라인 레이트(Hz) / 스캔 길이", "Internal / 10000 / 4096"],
-        ["〈Line Scan·Encoder〉 Encoder Res(P/mm)", ["P3_camtypes_28_TextBox_10.png"], "트리거가 Encoder일 때 표시 — 엔코더 해상도", "10.0"],
-        ["〈3D〉 Capture Mode / Filter / Z Min·Max(mm)", ["P3_camtypes_42_ComboBox_Both.png", "P3_camtypes_44_TextBox_3.png"], "2D·3D 캡처 모드 / 필터 강도 / Z 범위", "Both / 3 / 0·1000"],
-        ["〈Frame Grabber〉 Board Type / Board# / Digitizer# / DCF", ["P3_camtypes_63_ComboBox_ComboBox.png", "P3_camtypes_70_Button_unnamed.png"], "MIL 보드 타입 / 보드·디지타이저 번호 / Camera Link DCF 파일", "SOLIOS / 0 / 0 / —"],
+        ["Manufacturer", ["P3_camtypes_08_ComboBox_HIK.png"], "제조사. Matrox·Dalsa 선택 시 Frame Grabber(MIL) 패널 표시", "HIK"],
+        ["안내 카드 (카메라 카드 하단)", ["P3_camtypes_11_Label_노출Exposure게인Gain과_3D_취득_옵션점군_후처리_필터_깊이_Z.png"], "노출(Exposure)·게인(Gain)과 3D 취득 옵션(점군 후처리 필터, 깊이 Z 범위)은 이 단계에서 설정하지 않음 — VMS 메인의 카메라 스텝 설정 또는 VisionSetup 레시피 스텝(§5.3)에서 조정하며 기본은 카메라에 저장된 현재 값", "—"],
+        ["〈Line Scan〉 Trigger / Line Rate / Scan Length", ["P3_camtypes_24_ComboBox_Encoder.png", "P3_camtypes_27_TextBox_10000.png", "P3_camtypes_29_TextBox_4096.png"], "트리거 소스(Internal·Encoder) / 라인 레이트(Hz) / 스캔 길이", "Internal / 10000 / 4096"],
+        ["〈Frame Grabber〉 Board Type / Board# / Digitizer# / DCF", ["P3_camtypes_54_ComboBox_ComboBox.png", "P3_camtypes_62_Button_unnamed.png"], "MIL 보드 타입 / 보드·디지타이저 번호 / Camera Link DCF 파일", "SOLIOS / 0 / 0 / —"],
       ]),
-      P("※ 〈 〉 표시 항목은 선택한 카메라 타입·제조사에 해당하는 패널이 나타날 때만 표시됩니다.", { size: 18, color: "595959" }),
+      P("※ 〈 〉 표시 항목은 선택한 카메라 타입·제조사에 해당하는 패널이 나타날 때만 표시됩니다. 노출·게인·3D 옵션·Encoder Res 입력란은 운전에서 읽지 않던 항목이라 제거되었습니다(§3.1 안내).", { size: 18, color: "595959" }),
     ]],
     ["10_appsetup_step4.png", 470, "4단계 — PLC Communication: 벤더 / 통신 타입 / IP·Port / 폴링·하트비트 / Write·Endian", [
       P("■ 4단계 입력 항목 상세", { bold: true }),
