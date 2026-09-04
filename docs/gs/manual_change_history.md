@@ -98,7 +98,7 @@
 
 | 항목 | 내용 |
 |------|------|
-| PR | (머지 후 기입) `fix/standalone-recent-inspections` |
+| PR | #417 (`fix/standalone-recent-inspections`) |
 | 날짜 | 2026-09-04 |
 | 앱 · 화면 | VMS 메인 화면 우측 슬라이딩 패널 "Recent Inspections" (Total/Pass/NG 셀 + 최근 200건 목록) |
 | 변경 종류 | 동작 수정 (단독 모드 공백) + 도움말 문구 수정 |
