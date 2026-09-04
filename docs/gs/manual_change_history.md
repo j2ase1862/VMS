@@ -234,3 +234,39 @@
 |------|-----------|
 | 본문 | 변경 없음 |
 | 스크린샷 | `vms_ctl/sec_*.png` 사이드 패널 섹션 캡처 전부 교체(`VMS.exe --capture-controls`) — 완료 |
+
+---
+
+## 7. Web — 로그인 화면 "로그인 유지" 체크박스 + 세션 절대 만료 30일 — **반영 대기**
+
+| 항목 | 내용 |
+|------|------|
+| PR | Web #96 (`feat/login-remember-me-absolute-expiry`) |
+| 날짜 | 2026-09-04 |
+| 앱 · 화면 | BODA.VMS.Web 로그인 화면 (아이디·비밀번호 아래, [로그인] 버튼 위) |
+| 변경 종류 | UI 추가 + 세션 유지 정책 변경 |
+
+### 무엇이 바뀌었나
+- 로그인 화면에 **"로그인 유지"** 체크박스가 생겼다 (기본 해제). 아래 힌트 문구가 함께 표시된다:
+  > 체크하지 않으면 브라우저를 닫거나 8시간이 지나면 다시 로그인합니다. 공용 PC에서는 체크하지 마세요.
+- **체크 안 함(기본)**: 브라우저(탭)를 닫거나 로그인 후 8시간이 지나면 다시 로그인해야 한다.
+- **체크함**: 브라우저를 닫아도 로그인이 유지되고 8시간마다 자동으로 연장된다. 단 **처음 로그인한 날로부터 30일**이 지나면 무조건 다시 로그인한다.
+- [로그아웃]은 종전과 같다 (즉시 끊김).
+
+### 왜 바꿨나 (매뉴얼에 넣을 설명의 근거)
+- 종전에는 로그인 상태가 자동으로 계속 연장되어 공장 공용 PC 에 관리자 계정이 사실상 무기한 남아 있었다 (실증 PC 에서 발견). GS 심사의 세션 관리 항목 대비.
+- 관리자가 서버 설정으로 기간을 바꿀 수 있다: 8시간 = `Jwt:ExpireMinutes`, 30일 = `RefreshToken:AbsoluteExpireDays` (0 이면 상한 없음), 자동 연장 단위 7일 = `RefreshToken:ExpireDays`.
+
+### 매뉴얼 반영 지점
+| 위치 | 해야 할 일 |
+|------|-----------|
+| §7.1 로그인 / 회원가입 3번 항목 ("한 번 로그인하면 브라우저가 로그인 상태를 기억하므로…") | 문장 교체: "로그인 유지를 체크하면 브라우저를 닫아도 로그인이 유지됩니다(최대 30일). 체크하지 않으면 브라우저를 닫거나 8시간이 지나면 다시 로그인합니다. 여러 사람이 쓰는 PC 에서는 체크하지 마세요." |
+| §7.1 그림 4-0 `40_web_login.png` | 체크박스가 보이도록 재캡처 (Web 배포 후 데모 캡처 절차, 운영 DB 무접촉) |
+| §9 관리자 매뉴얼 (Web 서버 설정) | 세 설정 키와 기본값 한 줄 (선택) |
+| §11.4 변경 이력 | Web v1.8.0 한 줄 |
+
+### 코드 참조 (검증용)
+- Web `BODA.VMS.Web.Client/Pages/Login.razor`, `Services/AuthStateProvider.cs`(localStorage ↔ sessionStorage)
+- Web `Services/AuthService.cs` `IssueTokensAsync`, `Services/RefreshTokenOptions.cs`, `Data/Entities/RefreshToken.cs` `AbsoluteExpiresAt`
+- 테스트: `AuthServiceRefreshTests`(+6), `AuthRefreshEndpointTests`(+1)
+
