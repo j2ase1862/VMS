@@ -142,6 +142,10 @@ const POST = {
   "생산 이력 조회 창 — [전체 이력]": [
     () => imgPara("36_dlg_inspection_history.png", 600),
     () => caption("그림. 생산 이력 조회 창 — 필터 바(기간/판정/레시피/NG 코드) · 이력 목록 탭 · 상세(도구별 결과 + 검사 사진) · 하단 페이지 이동"),
+    () => imgPara("37_dlg_inspection_history_summary.png", 600),
+    () => caption("그림. 일별 집계 탭 — 기간 전체 총 검사 / PASS / NG / 수율 카드 + 날짜별 표"),
+    () => imgPara("38_dlg_inspection_history_pareto.png", 600),
+    () => caption("그림. NG 파레토 탭 — NG 원인(NG 코드 또는 실패 도구)별 건수 · 비율 · 누적 비율"),
   ],
   "Statistics 섹션": [
     () => ctlImg("sec_statistics.png", 290),

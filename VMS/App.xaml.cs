@@ -878,11 +878,22 @@ namespace VMS
                                     return new Views.UserManagementWindow { DataContext = vm };
                                 });
                                 if (historyStore != null)
-                                    Add("InspectionHistory", () =>
+                                {
+                                    // 조회 창 3장면(목록 / 일별 집계 / NG 파레토) — 로컬 이력이 없을 때만 문서용 대표 데이터를
+                                    // VM 컬렉션에 주입한다 (DB 에는 기록하지 않음). 탭 전환은 x:Name HistoryTabs 로.
+                                    InspectionHistoryViewModel BuildHistoryVm()
                                     {
                                         var vm = new InspectionHistoryViewModel(historyStore, mainViewModel.IsWebIntegrated);
                                         if (vm.Entries.Count == 0)
                                         {
+                                            var today = DateOnly.FromDateTime(DateTime.Today);
+                                            void D(int back, int total, int pass) => vm.DailySummaries.Add(new VMS.Services.LocalHistory.LocalInspectionDailySummary
+                                                { Date = today.AddDays(-back), Total = total, Pass = pass, Ng = total - pass });
+                                            D(6, 1180, 1162); D(5, 1215, 1190); D(4, 1198, 1181); D(3, 1240, 1207); D(2, 1176, 1160); D(1, 1233, 1214); D(0, 642, 631);
+                                            vm.SummaryTotal = 7884; vm.SummaryPass = 7745; vm.SummaryNg = 139; vm.SummaryPassRate = 98.2;
+                                            void Ng(int rank, string code, int count, double pct, double cum) => vm.NgCodeRows.Add(new NgCodeRow
+                                                { Rank = rank, Code = code, Count = count, Percent = pct, CumulativePercent = cum });
+                                            Ng(1, "Blob 1", 71, 51.1, 51.1); Ng(2, "Feature Match 1", 34, 24.5, 75.5); Ng(3, "Edge 2", 19, 13.7, 89.2); Ng(4, "Caliper 1", 15, 10.8, 100.0);
                                             // 로컬 이력이 아직 없을 때만 문서용 대표 행 표시 (DB 에는 기록하지 않음).
                                             var now = DateTime.UtcNow;
                                             void R(int m, bool ok, params string[] ng) => vm.Entries.Add(new VMS.Services.LocalHistory.LocalInspectionEntry
@@ -900,8 +911,22 @@ namespace VMS
                                             vm.SelectedEntry = vm.Entries[1];
                                             vm.StatusMessage = "6건";
                                         }
-                                        return new Views.InspectionHistoryWindow { DataContext = vm };
+                                        return vm;
+                                    }
+                                    Add("InspectionHistory", () => new Views.InspectionHistoryWindow { DataContext = BuildHistoryVm() });
+                                    Add("InspectionHistory_Summary", () =>
+                                    {
+                                        var w = new Views.InspectionHistoryWindow { DataContext = BuildHistoryVm() };
+                                        w.HistoryTabs.SelectedIndex = 1;
+                                        return w;
                                     });
+                                    Add("InspectionHistory_Pareto", () =>
+                                    {
+                                        var w = new Views.InspectionHistoryWindow { DataContext = BuildHistoryVm() };
+                                        w.HistoryTabs.SelectedIndex = 2;
+                                        return w;
+                                    });
+                                }
                                 Add("AuditLog", () =>
                                 {
                                     var vm = new AuditLogViewerViewModel();

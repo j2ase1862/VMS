@@ -149,7 +149,7 @@
                 </Border>
 
                 <!-- Tabs -->
-                <TabControl Grid.Row="1" Style="{StaticResource WindowDarkTabControl}">
+                <TabControl x:Name="HistoryTabs" Grid.Row="1" Style="{StaticResource WindowDarkTabControl}">
                     <!-- ① 이력 목록 + 상세 -->
                     <TabItem Header="이력 목록" Style="{StaticResource WindowDarkTabItem}">
                         <Grid Margin="0,8,0,0">
