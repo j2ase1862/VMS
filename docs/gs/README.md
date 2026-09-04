@@ -49,7 +49,7 @@ node gen_user_manual.js   # → ../VMS_사용자매뉴얼_v2.0.docx
 
 | PR | 매뉴얼에 들어갈 내용 | 대상 절 |
 |----|--------------------|--------|
-| (머지 후 기입) | VisionSetup Feature Match "재학습 원점"(UseCurrentImage/KeepReference) 옵션 + 회전 ROI 학습 시 Match Align 기준 각도 = ROI 각도 수정 + 레시피 재열기 시 학습 원점 복원 수정 + 재학습 후 연결 Match Align 알림(상태줄/경고 창). 상세: manual_change_history.md §8 | §5 (Feature Match·Match Align·얼라인 워크플로) §11.4 |
+| #424 | VisionSetup Feature Match "재학습 원점"(UseCurrentImage/KeepReference) 옵션 + 회전 ROI 학습 시 Match Align 기준 각도 = ROI 각도 수정 + 레시피 재열기 시 학습 원점 복원 수정 + 재학습 후 연결 Match Align 알림(상태줄/경고 창). 상세: manual_change_history.md §8 | §5 (Feature Match·Match Align·얼라인 워크플로) §11.4 |
 | Web #96 | 로그인 화면 "로그인 유지" 체크박스(기본 해제 = 브라우저 닫거나 8시간 후 재로그인, 체크 = 유지·최대 30일) — §7.1 3번 항목 문장 교체 + `40_web_login.png` 재캡처. 상세: manual_change_history.md §7 | §7.1 §11.4 |
 | (잔여·스크린샷) | 3D 점군 뷰어 조작 스크린샷 갱신 (#275 밀도 버튼·툴바) — **실점군 로드 상태에서 수동 캡처 필요** (자동 캡처 도구는 점군 화면 미포함, 시뮬레이션 점군은 부적합 판단). 본문 서술은 반영 완료 | §3.9 (점군 화면 조작) |
 | (잔여·스크린샷) | 안내 창 다크 디자인(#364 #366) — 매뉴얼 내 안내 창 스크린샷 재캡처 (동작 동일, 본문 변경 없음) | 전반 |

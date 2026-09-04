@@ -276,7 +276,7 @@
 
 | 항목 | 내용 |
 |------|------|
-| PR | (머지 후 기입) `fix/matchalign-trained-angle-retrain-origin` |
+| PR | #424 (`fix/matchalign-trained-angle-retrain-origin`) |
 | 날짜 | 2026-09-04 |
 | 앱 · 화면 | VMS.VisionSetup — Feature Match 도구 설정(Models 영역), Match Align 도구, 학습(Train) 후 상태 표시줄/경고 창 |
 | 변경 종류 | 결함 수정 2 + UI 옵션 추가 1 + 알림 추가 1 |
