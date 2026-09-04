@@ -205,9 +205,9 @@
 ### 스크린샷
 | 파일 | 조치 |
 |------|------|
-| 생산 이력 조회 창 (이력 목록 탭, NG 행 선택 + 이미지) | 신규 캡처 — `VMS.exe --capture-dialogs` 에 "InspectionHistory" 항목 추가됨(이력 없으면 문서용 대표 6행 표시) |
-| 일별 집계 탭 · NG 파레토 탭 | 수동 캡처 (탭 전환) |
-| Recent Inspections 패널 헤더 ([전체 이력] 버튼) | `--capture-controls` 사이드 패널 장면 재캡처 |
+| 생산 이력 조회 창 (이력 목록 탭, NG 행 선택 + 이미지) | ✅ `36_dlg_inspection_history.png` — `VMS.exe --capture-dialogs` "InspectionHistory"(이력 없으면 문서용 대표 6행) |
+| 일별 집계 탭 · NG 파레토 탭 | ✅ `37_dlg_inspection_history_summary.png` · `38_dlg_inspection_history_pareto.png` — `--capture-dialogs` "InspectionHistory_Summary/_Pareto" 장면(HistoryTabs.SelectedIndex, 대표 집계 데이터 VM 주입) |
+| Recent Inspections 패널 헤더 ([전체 이력] 버튼) | ✅ `vms_ctl/sec_recent.png` 재캡처 (`--capture-controls`) |
 
 ### 코드 참조 (검증용)
 - `VMS/Views/InspectionHistoryWindow.xaml(.cs)`, `VMS/ViewModels/InspectionHistoryViewModel.cs`
