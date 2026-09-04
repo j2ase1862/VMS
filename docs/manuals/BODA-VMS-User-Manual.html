@@ -723,11 +723,50 @@ Web 연결이 끊겨 있어도 작업자가 바로 확인할 수 있습니다.</
   <li>요약 통계 — Total / Pass / NG 건수와 합격률(Pass rate).</li>
   <li>최근 목록 — 시각, <span class="chip ok">OK</span> / <span class="chip ng">NG</span> 판정,
       시리얼 · 작업지시 · 레시피, NG 코드.</li>
-  <li>[Clear] 버튼으로 목록을 비웁니다.</li>
+  <li>[전체 이력] 버튼 — 이 PC 에 저장된 검사 이력 전체를 조회하는 창을 엽니다 (아래 설명).</li>
+  <li>[Clear] 버튼으로 목록을 비웁니다 (저장된 이력은 지워지지 않습니다).</li>
 </ul>
 <div class="callout tip">
-VMS 를 다시 시작하면 이 목록은 비워집니다. 전체 검사 이력은 Web 의 Production History
-화면에서 언제든 조회할 수 있습니다.
+VMS 를 다시 시작하면 이 목록은 비워집니다. 재시작 후에도 남는 전체 이력은 [전체 이력] 버튼으로
+여는 <strong>생산 이력 조회 창</strong>에서, Web 연동 현장이라면 Web 의 Production History(§7.6)
+화면에서도 조회할 수 있습니다.
+</div>
+
+<h4 id="vms-local-history">생산 이력 조회 창 — [전체 이력]</h4>
+<p>검사 결과는 사이클(AUTO RUN) 또는 수동 검사 1건마다 이 PC 의 검사 이력 파일
+(<code>%LocalAppData%\BODA VISION AI\inspection_history.db</code>)에 자동으로 저장됩니다.
+Web 서버 없이 운전하는 단독 모드(§4.5)에서도 남는 영구 이력이며, Web 연동 현장에서는 오프라인
+백업 역할을 합니다. 저장은 백그라운드에서 이루어져 검사 속도에 영향이 없습니다.</p>
+<ol class="steps">
+  <li>Recent Inspections 섹션의 <strong>[전체 이력]</strong> 버튼을 누릅니다.
+      (버튼이 비활성이면 관리자 Retention Settings 에서 검사 이력 저장이 꺼진 상태입니다 — §9.4)</li>
+  <li>필터를 고르고 [조회]를 누릅니다 — <strong>From / To</strong> 날짜(기본 최근 7일),
+      <strong>판정</strong>(전체 / PASS / NG), <strong>레시피</strong>(기간 안에 검사한 레시피 목록),
+      <strong>NG 코드</strong>(NG 코드 또는 실패한 도구 이름 포함 검색). [필터 초기화]로 되돌립니다.</li>
+  <li>탭에서 원하는 보기를 고릅니다.
+    <ul>
+      <li><strong>이력 목록</strong> — 검사 시각, 판정, 레시피, NG 코드/실패 도구, 구분(사이클/수동),
+          소요 ms, 추적(시리얼 · 작업지시 · Lot), IMG(이미지 있음). 행을 클릭하면 오른쪽 상세에
+          <strong>도구별 결과 표</strong>(도구 · 종류 · 결과 · ms · 메시지)와 <strong>저장된 검사 사진</strong>이
+          표시되고 [폴더 열기]로 파일 위치를 열 수 있습니다.</li>
+      <li><strong>일별 집계</strong> — 기간 전체의 총 검사 · PASS · NG · 수율 카드와 날짜별 표.</li>
+      <li><strong>NG 파레토</strong> — NG 원인(NG 코드 또는 도구 이름)별 건수 · 비율 · 누적 비율 순위.</li>
+    </ul>
+  </li>
+  <li>목록이 200건을 넘으면 하단의 [◀ 이전] / [다음 ▶] 으로 페이지를 넘깁니다.</li>
+  <li>[CSV 내보내기] — 현재 필터의 <strong>전체 결과</strong>(화면에 보이는 페이지만이 아님)를
+      CSV 로 저장합니다. Excel 에서 바로 열리며 한글이 깨지지 않습니다.</li>
+</ol>
+<div class="callout">
+<strong>검사 사진이 함께 보이려면</strong> 사이드 패널의 <strong>Image Saving</strong>(OK/NG 이미지 저장)이
+켜져 있어야 합니다. 저장 옵션이 꺼져 있던 기간의 이력은 "저장된 이미지 없음"으로 표시됩니다.
+NG 사이클은 그 사이클에서 찍힌 NG 사진을 우선해서 연결합니다. 이미지 파일이 보존 정리로
+삭제된 뒤에는 경로만 남습니다.
+</div>
+<div class="callout tip">
+<strong>보존 기간</strong>은 기본 90일이며 VMS 를 시작할 때 오래된 이력이 자동으로 정리됩니다.
+기간 변경과 저장 켜기/끄기는 관리자 → Admin Tools → Retention Settings 의 "검사 이력" 행에서
+합니다(§9.4). 이 파일은 Backup / Restore 에 포함됩니다.
 </div>
 
 <h4>Statistics 섹션</h4>
@@ -763,12 +802,15 @@ VMS 를 다시 시작하면 이 목록은 비워집니다. 전체 검사 이력�
   <li>하단 상태바의 Web 칩은 "단독 모드 (Web 미사용)" 으로 표시됩니다 — 고장이 아닙니다.</li>
 </ol>
 <div class="callout">
-<strong>단독 모드의 검사 이력:</strong> 검사 결과는 Web 에 업로드되지 않으므로,
-최근 결과는 VMS 화면의 <strong>Recent Inspections</strong>(최대 200건, 프로그램 재시작 시
-비워짐)와 대시보드의 NG 이력에서 확인합니다. 이미지 파일로 남기려면 사이드 패널의
+<strong>단독 모드의 검사 이력:</strong> 검사 결과는 Web 에 업로드되지 않는 대신
+이 PC 의 검사 이력 파일에 사이클마다 자동 저장됩니다(기본 90일 보존). 최근 결과는 VMS 화면의
+<strong>Recent Inspections</strong>(최대 200건, 프로그램 재시작 시 비워짐)와 대시보드의 NG 이력에서,
+재시작 후에도 남는 전체 이력은 같은 섹션의 <strong>[전체 이력]</strong> 버튼으로 여는
+생산 이력 조회 창(§4.3)에서 기간 · 판정 · 레시피별 조회, 일별 집계, NG 파레토, CSV 내보내기를 할 수
+있습니다. NG 행에는 실패한 도구 이름이 NG 코드 대신 표시됩니다. 검사 사진까지 함께 보려면 사이드 패널의
 <strong>Image Saving</strong>(OK/NG 이미지 저장, §4.3)을 켜 두세요.
-생산 수량 · 이력의 영구 보관이 필요해지면 언제든 설정 마법사에서 체크를 해제하고
-Web 서버 주소를 입력해 연동 모드로 전환할 수 있습니다.
+작업지시 · Lot 단위 생산 관리와 여러 PC 의 이력 통합이 필요해지면 언제든 설정 마법사에서 체크를
+해제하고 Web 서버 주소를 입력해 연동 모드로 전환할 수 있습니다.
 </div>
 <div class="callout warn">
 <strong>운전 중 이미지 획득에 실패하면 그 사이클은 NG 입니다:</strong> 케이블 분리 등으로
@@ -1385,6 +1427,11 @@ Web 화면(§7.9)에서 값만 고치면 됩니다.</p>
       Work Order / Lot 열도 함께 저장됩니다.</li>
   <li>검사 이력은 <strong>읽기 전용</strong>입니다 — 품질 기록의 신뢰성을 위해 수정하거나 지울 수 없습니다.</li>
 </ul>
+<div class="callout tip">
+Web 서버 없이 운전하는 <strong>단독 모드</strong>(§4.5)에서는 이 화면 대신 VMS 메인의
+<strong>생산 이력 조회 창</strong>([전체 이력] 버튼, §4.3)을 사용합니다. Web 연동 현장에서도 그 창으로
+해당 PC 에 남은 로컬 이력을 볼 수 있지만, 작업지시 · Lot 기준의 전체 이력은 이 화면이 기준입니다.
+</div>
 
 <h3 id="web-workorders">7.7 Work Orders</h3>
 <p>작업지시를 만들고 관리하는 화면입니다. 작업지시는
@@ -1733,7 +1780,8 @@ PIN 분실 시 Operator 편집 다이얼로그에서 새 PIN 입력 → 기존 P
 <table>
   <tr><th>DB</th><th>위치</th><th>백업 방법</th></tr>
   <tr><td>Web SQLite</td><td><code>C:\ProgramData\BODA\VMS\BodaVision.db</code></td><td>서비스 중지 후 파일 복사</td></tr>
-  <tr><td>VMS 로컬 SQLite</td><td><code>%LocalAppData%\BODA VISION AI\</code></td><td>시스템 사용자 계정과 설정만 저장 — 잃어도 영향이 적습니다</td></tr>
+  <tr><td>VMS 로컬 SQLite</td><td><code>%LocalAppData%\BODA VISION AI\BodaVision.db</code></td><td>시스템 사용자 계정 — 잃어도 영향이 적습니다</td></tr>
+  <tr><td>VMS 검사 이력</td><td><code>%LocalAppData%\BODA VISION AI\inspection_history.db</code></td><td>이 PC 의 검사 이력(단독 모드의 생산 이력, §4.3). 관리자 Backup / Restore 에 자동 포함되며, 보존 기간(기본 90일)과 저장 켜기/끄기는 Retention Settings 의 "검사 이력" 행에서 설정</td></tr>
   <tr><td>VMS 업로드 큐</td><td><code>%LocalAppData%\BODA VISION AI\upload_queue\</code></td><td>전송 대기 중인 검사 결과 — 자동으로 비워지므로 백업이 필요 없습니다</td></tr>
 </table>
 
@@ -1991,6 +2039,7 @@ PowerShell 명령을 다룹니다.</div>
   <tr><td>업데이트 로그</td><td><code>C:\ProgramData\BODA\VMS\update-bootstrap.log</code></td><td>인앱 업데이트 설치 과정</td></tr>
   <tr><td>Web 서비스 로그</td><td>Windows Event Viewer → Application → "BODA-VMS-Web"</td><td>Web 서비스 시작 실패 등</td></tr>
   <tr><td>Web DB</td><td><code>C:\ProgramData\BODA\VMS\BodaVision.db</code></td><td>생산 이력 · 기준 정보 (백업 §9.4)</td></tr>
+  <tr><td>VMS 검사 이력 DB</td><td><code>%LocalAppData%\BODA VISION AI\inspection_history.db</code></td><td>이 PC 의 검사 이력 — [전체 이력] 창(§4.3)으로 조회, 백업 §9.4</td></tr>
 </table>
 </section>
 
@@ -2193,6 +2242,18 @@ PowerShell 명령을 다룹니다.</div>
   <li><strong>시스템 설정 마법사</strong>: 2단계 "Web 서버 미사용 — 단독(Standalone) 모드"
       체크박스 (§3.2, §4.5); "Web Client API Key" 는 <strong>고급 설정</strong> 으로 접힘 —
       일반 현장은 펼칠 필요 없음 (§3.2); 설정 마법사 전용 아이콘.</li>
+</ul>
+
+<p>SW v1.28.0 반영 (2026-09-04 갱신):</p>
+<ul>
+  <li><strong>검사 이력 로컬 저장</strong>: 검사 결과가 사이클마다 이 PC 의 검사 이력 파일에
+      자동 저장됨(기본 90일) — 단독 모드에서도 재시작 후 이력이 남고, Web 연동 시 오프라인 백업 (§4.3, §4.5).</li>
+  <li><strong>생산 이력 조회 창</strong>: Recent Inspections 의 [전체 이력] 버튼 — 기간 · 판정 ·
+      레시피 · NG 코드 필터, 목록/상세(도구별 결과 + 검사 사진), 일별 집계, NG 파레토, CSV 내보내기 (§4.3).</li>
+  <li><strong>Recent Inspections</strong>: 단독 모드에서도 사이클 1건씩 기록되며 NG 행에 실패한 도구
+      이름 표시 (§4.3, §4.5).</li>
+  <li><strong>Retention Settings</strong>: "검사 이력" 행(보존일 + 저장 켜기/끄기 체크박스, 미리보기,
+      프리셋) 추가; Backup / Restore 에 검사 이력 파일 포함 (§4.9, §9.4).</li>
 </ul>
 
 <p>전체 변경 사항은 양쪽 저장소의 <code>CHANGELOG.md</code> 참조.</p>

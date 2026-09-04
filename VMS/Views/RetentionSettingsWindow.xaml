@@ -39,7 +39,7 @@
                 <!-- Intro -->
                 <Border Grid.Row="0" Style="{StaticResource WindowSurface}" Margin="0,0,0,12">
                     <TextBlock Style="{StaticResource WindowBodyText}" TextWrapping="Wrap">
-                        <Run Text="전역 보존 (Audit / AutoBackup / UploadQueue) 과 카테고리별 차등 보존 (9 audit 카테고리) 을 한 화면에서 편집합니다. 다른 system_config.json 키는 보존됩니다. 변경은 "/>
+                        <Run Text="전역 보존 (Audit / AutoBackup / UploadQueue / 검사 이력 DB) 과 카테고리별 차등 보존 (9 audit 카테고리) 을 한 화면에서 편집합니다. 다른 system_config.json 키는 보존됩니다. 변경은 "/>
                         <Run FontWeight="SemiBold" Text="VMS 재시작 후 적용"/>
                         <Run Text="됩니다."/>
                     </TextBlock>
@@ -151,10 +151,12 @@
                                                Style="{StaticResource WindowMutedText}"
                                                VerticalAlignment="Center" Margin="10,0,0,0"/>
                                 </Grid>
-                                <CheckBox Content="검사 결과를 로컬 이력 DB 에 저장 (단독 모드 생산 이력 · Web 연동 시 오프라인 백업)"
-                                          IsChecked="{Binding InspectionHistoryEnabled}"
+                                <CheckBox IsChecked="{Binding InspectionHistoryEnabled}"
                                           Style="{StaticResource WindowDarkCheckBox}"
-                                          Margin="180,6,0,0"/>
+                                          Margin="180,6,0,0"
+                                          ToolTip="끄면 검사 결과가 로컬 DB 에 저장되지 않고 메인 화면 [전체 이력] 버튼이 비활성됩니다. 변경은 VMS 재시작 후 적용.">
+                                    <TextBlock Text="검사 결과를 로컬 이력 DB 에 저장 (단독 모드의 생산 이력)"/>
+                                </CheckBox>
                             </StackPanel>
                         </Border>
 

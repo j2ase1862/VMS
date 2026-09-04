@@ -137,7 +137,11 @@ const POST = {
   ],
   "Recent Inspections 섹션": [
     () => ctlImg("sec_recent.png", 290),
-    () => caption("그림. Recent Inspections 섹션 — Total / Pass / NG + Pass rate, [Clear]"),
+    () => caption("그림. Recent Inspections 섹션 — Total / Pass / NG + Pass rate, [전체 이력] / [Clear]"),
+  ],
+  "생산 이력 조회 창 — [전체 이력]": [
+    () => imgPara("36_dlg_inspection_history.png", 600),
+    () => caption("그림. 생산 이력 조회 창 — 필터 바(기간/판정/레시피/NG 코드) · 이력 목록 탭 · 상세(도구별 결과 + 검사 사진) · 하단 페이지 이동"),
   ],
   "Statistics 섹션": [
     () => ctlImg("sec_statistics.png", 290),
@@ -383,11 +387,12 @@ function adminDialogsSection() {
       "ProductVersion(manifest) — 백업 manifest 에 기록할 제품 버전.",
       "하단 상태 표시줄 · [Reload](디스크 저장값 다시 읽기) · [Save](변경 저장).",
     ]],
-    ["28_dlg_retention.png", "Retention Settings — 데이터 보존 정책(감사/백업/업로드 큐 + 카테고리별)", [
-      "빠른 프리셋 — [Conservative](규제 사이트) / [Standard](GS 권장 기본) / [Minimal](디스크 제한 사이트) 로 값을 일괄 채운다(적용 후 Save 필요).",
-      "전역 보존(일) — 감사 로그(audit/) · 자동 백업(backups/) · 업로드 큐(upload_queue/) 각각의 보존 기간. 입력란 옆에 허용 범위를 표시한다.",
+    ["28_dlg_retention.png", "Retention Settings — 데이터 보존 정책(감사/백업/업로드 큐/검사 이력 + 카테고리별)", [
+      "빠른 프리셋 — [Conservative](규제 사이트) / [Standard](GS 권장 기본) / [Minimal](디스크 제한 사이트) 로 값을 일괄 채운다(적용 후 Save 필요). 검사 이력 보존일도 함께 채워진다(365 / 90 / 30).",
+      "전역 보존(일) — 감사 로그(audit/) · 자동 백업(backups/) · 업로드 큐(upload_queue/) · 검사 이력(inspection_history.db) 각각의 보존 기간. 입력란 옆에 허용 범위를 표시한다.",
+      "[검사 결과를 로컬 이력 DB 에 저장] — 검사 이력 파일 저장 켜기/끄기(기본 켜짐). 끄면 메인 화면 [전체 이력] 버튼이 비활성이 되며, 변경은 VMS 재시작 후 적용된다.",
       "카테고리별 차등 보존(일) — 9개 audit 카테고리별로 보존 기간을 별도 지정(전역 정리 후 재필터). 기본값은 GS 권장(보안/사용자/설정 1095일, 인증/권한/레시피 730일, 시퀀스/검사 365일, 시스템 90일).",
-      "적용 미리보기 — [Preview] 를 누르면 dry-run(실제 삭제 없음) 결과 요약이 표시되고 [Export Preview...] 로 CSV 저장이 가능하다.",
+      "적용 미리보기 — [Preview] 를 누르면 dry-run(실제 삭제 없음) 결과 요약이 표시되고(검사 이력은 삭제 예정 건수) [Export Preview...] 로 CSV 저장이 가능하다.",
       "하단 — 상태 표시줄 · [Reload] · [Preview] · [Export Preview...] · [Save]. 변경은 VMS 재시작 후 적용된다.",
     ]],
     ["29_dlg_support.png", "Support Package — 원격 지원용 진단 패키지 생성", [

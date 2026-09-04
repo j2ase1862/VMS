@@ -4,8 +4,8 @@
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         xmlns:c="clr-namespace:VMS.VisionSetup.Views.Common;assembly=VMS.VisionSetup"
         Title="Inspection History"
-        Width="1320" Height="780"
-        MinWidth="1000" MinHeight="600"
+        Width="1480" Height="800"
+        MinWidth="1100" MinHeight="620"
         Style="{x:Null}"
         WindowStyle="None"
         WindowStartupLocation="CenterOwner"
@@ -166,19 +166,21 @@
                                           SelectionMode="Single"
                                           Style="{StaticResource WindowDarkDataGrid}"
                                           VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled"
                                           FontFamily="Consolas">
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="검사 시각"
                                                             Binding="{Binding InspectedAtLocal, StringFormat='yyyy-MM-dd HH:mm:ss'}"
-                                                            Width="150"/>
-                                        <DataGridTextColumn Header="판정" Binding="{Binding VerdictText}" Width="64"
+                                                            Width="140"/>
+                                        <DataGridTextColumn Header="판정" Binding="{Binding VerdictText}" Width="58"
                                                             ElementStyle="{StaticResource VerdictCellText}"/>
-                                        <DataGridTextColumn Header="레시피" Binding="{Binding RecipeName}" Width="150"/>
-                                        <DataGridTextColumn Header="NG 코드 / 실패 도구" Binding="{Binding NgCodesText}" Width="*"/>
-                                        <DataGridTextColumn Header="구분" Binding="{Binding ModeText}" Width="60"/>
-                                        <DataGridTextColumn Header="ms" Binding="{Binding CycleTimeMs}" Width="60"/>
-                                        <DataGridTextColumn Header="추적" Binding="{Binding TraceText}" Width="140"/>
-                                        <DataGridCheckBoxColumn Header="IMG" Binding="{Binding HasImage}" Width="46"/>
+                                        <DataGridTextColumn Header="레시피" Binding="{Binding RecipeName}" Width="120"/>
+                                        <DataGridTextColumn Header="NG 코드 / 도구" Binding="{Binding NgCodesText}" Width="*" MinWidth="120"/>
+                                        <DataGridTextColumn Header="구분" Binding="{Binding ModeText}" Width="66"/>
+                                        <DataGridTextColumn Header="ms" Binding="{Binding CycleTimeMs}" Width="54"/>
+                                        <DataGridTextColumn Header="추적" Binding="{Binding TraceText}" Width="120"/>
+                                        <!-- 읽기 전용 계산 속성 — CheckBox 열 기본 TwoWay 바인딩이면 창 열 때 InvalidOperationException (v1.28.0 결함) -->
+                                        <DataGridCheckBoxColumn Header="IMG" Binding="{Binding HasImage, Mode=OneWay}" Width="46"/>
                                     </DataGrid.Columns>
                                 </DataGrid>
                             </Border>
@@ -191,7 +193,7 @@
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto" MaxHeight="220"/>
+                                        <RowDefinition Height="190"/>
                                         <RowDefinition Height="*"/>
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
@@ -208,15 +210,21 @@
                                               Style="{StaticResource WindowDarkDataGrid}"
                                               HeadersVisibility="Column"
                                               VerticalScrollBarVisibility="Auto"
+                                              HorizontalScrollBarVisibility="Disabled"
+                                              CanUserResizeRows="False"
+                                              EnableRowVirtualization="False"
+                                              EnableColumnVirtualization="False"
+                                              FontFamily="Consolas"
+                                              RowHeight="30"
                                               Margin="0,8,0,8"
                                               Visibility="{Binding HasDetail, Converter={StaticResource BoolToVisibilityConverter}}">
                                         <DataGrid.Columns>
-                                            <DataGridTextColumn Header="도구" Binding="{Binding ToolName}" Width="*"/>
-                                            <DataGridTextColumn Header="종류" Binding="{Binding ToolType}" Width="110"/>
-                                            <DataGridTextColumn Header="결과" Binding="{Binding ResultText}" Width="56"
+                                            <DataGridTextColumn Header="도구" Binding="{Binding ToolName}" Width="*" MinWidth="90"/>
+                                            <DataGridTextColumn Header="종류" Binding="{Binding ToolType}" Width="100"/>
+                                            <DataGridTextColumn Header="결과" Binding="{Binding ResultText}" Width="52"
                                                                 ElementStyle="{StaticResource ToolResultCellText}"/>
-                                            <DataGridTextColumn Header="ms" Binding="{Binding ExecutionTimeMs, StringFormat='0.0'}" Width="64"/>
-                                            <DataGridTextColumn Header="메시지" Binding="{Binding Message}" Width="1.2*"/>
+                                            <DataGridTextColumn Header="ms" Binding="{Binding ExecutionTimeMs, StringFormat='0.0'}" Width="56"/>
+                                            <DataGridTextColumn Header="메시지" Binding="{Binding Message}" Width="*" MinWidth="90"/>
                                         </DataGrid.Columns>
                                     </DataGrid>
 
