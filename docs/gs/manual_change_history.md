@@ -214,3 +214,23 @@
 - `VMS/Services/LocalHistory/InspectionHistoryCsvExporter.cs`, 저장소 `GetRecipeNames`
 - `VMS/ViewModels/MainViewModel.cs` `OpenInspectionHistory` / `IsLocalHistoryAvailable`, `VMS/Views/MainWindow.xaml` Recent Inspections 헤더
 - 테스트: `VMS.Tests/ViewModels/InspectionHistoryViewModelTests.cs` 7건
+
+---
+
+## 6. VMS 메인 — Settings 사이드 패널 버튼 아이콘 세로 정렬 — **반영 완료 (2026-09-04, 캡처 교체 + docx 재생성)**
+
+| 항목 | 내용 |
+|------|------|
+| PR | `fix/sidepanel-icon-valign` (머지 후 번호 기입) |
+| 날짜 | 2026-09-04 |
+| 앱 · 화면 | VMS 메인 우측 Settings 사이드 패널의 아이콘+텍스트 버튼 전부 (Recipe Load/New · External Tools · Updates · Web Parameters · Image Saving · Roller) |
+| 변경 종류 | 시각 수정 (동작 변경 없음) |
+
+### 무엇이 바뀌었나
+- 버튼 안 아이콘(Segoe MDL2 글리프)이 텍스트보다 위로 떠 있던 것을 텍스트와 세로 중앙에 맞췼다. 원인은 가로 StackPanel 안의 TextBlock 두 개가 세로 정렬 없이 늘어나 위에서부터 그려지던 것 — 22개 TextBlock 에 VerticalAlignment=Center.
+
+### 매뉴얼 반영 지점
+| 위치 | 해야 할 일 |
+|------|-----------|
+| 본문 | 변경 없음 |
+| 스크린샷 | `vms_ctl/sec_*.png` 사이드 패널 섹션 캡처 전부 교체(`VMS.exe --capture-controls`) — 완료 |
