@@ -56,6 +56,7 @@ node gen_user_manual.js   # → ../VMS_사용자매뉴얼_v2.0.docx
 | (잔여·스크린샷) | Web 검사항목 툴바 [레시피 복사]/[이름 변경] (Web #94) | §4.9 |
 | (반영 완료 2026-09-04) | #417 단독 모드 로컬 생산이력 1~3단계 — HTML §4.3(생산 이력 조회 창 소절 신설)·§4.5·§7.6·§9.4·§11.3·§11.4 + docx 재생성 + 캡처 `36_dlg_inspection_history.png`(신규)·`28_dlg_retention.png`(교체)·`37_dlg_inspection_history_summary.png`·`38_dlg_inspection_history_pareto.png`(탭 장면, `--capture-dialogs` 자동)·`vms_ctl/sec_recent.png`([전체 이력] 버튼, 재캡처) — 스크린샷 잔여 없음 | §4.3 §4.5 §4.9 §7.6 §9.4 §11.3 §11.4 |
 | (반영 완료 2026-09-02) | AppSetup 2단계 재캡처 — 단독 모드 체크박스(#407) + "고급 설정 — Web Client API Key" 접이식 전환 + 설정 마법사 전용 아이콘. 본문·§3.2 표·§11.4 이력·docx 재생성 완료 (capture 도구에 ToggleButton 추가, HelpIcon ? 토글은 제외) | §3.2 |
+| (반영 완료 2026-09-04) | 사이드 패널 버튼 아이콘 세로 정렬 수정(시각만) — `vms_ctl/sec_*.png` 전부 재캡처·docx 재생성. 상세: manual_change_history.md §6 | §4.3 (스크린샷) |
 | (반영 완료 2026-09-04) | #416 AppSetup 3단계 카메라 카드 입력란 제거 — §3.1 콜아웃 + 생성기 §3.2 표 3행 삭제·안내 카드 행 + §5.3 상호 참조 + §11.4 한 줄, `10_appsetup_step3.png` 재캡처 + `appsetup_ctl/P3_*` 전부 재캡처·재대조(번호 이동), docx 재생성. 상세: manual_change_history.md §1·§2 | §3.1 §3.2 §5.3 §11.4 |
 | #369 #370 | **라이선스 발급 GUI LicGen.App + 백업 자동화** — ⚠ 사내 전용(MSI 비동봉·고객 비노출)이라 **사용자 매뉴얼 대상 아님, Admin 매뉴얼만**: 발급 담당자 절차를 CLI 예시에서 LicGen.App 화면 기준으로 교체(발급 탭·발급 대장 탭 비고·백업 배너/[백업 실행] 스크린샷), `licgen backup` USB 2부 규칙·issue 백업 경고 소개. 상세 절차 원본은 docs/license_operations.md (반영 완료) | Admin 매뉴얼 라이선스 절 (§2.6 발급 측 상대편) |
 

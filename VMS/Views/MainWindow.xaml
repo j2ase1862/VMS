@@ -899,7 +899,7 @@
                                         </Style>
                                     </Button.Style>
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0">
+                                        <TextBlock VerticalAlignment="Center" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="Text" Value="&#xE8B0;"/>
@@ -912,7 +912,7 @@
                                                 </Style>
                                             </TextBlock.Style>
                                         </TextBlock>
-                                        <TextBlock>
+                                        <TextBlock VerticalAlignment="Center">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="Text" Value="Roller"/>
@@ -990,11 +990,11 @@
                                             Margin="0,0,4,0"
                                             ToolTip="목록에서 선택한 레시피를 불러옵니다">
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="&#xE8E5;"
+                                            <TextBlock VerticalAlignment="Center" Text="&#xE8E5;"
                                                        FontFamily="Segoe MDL2 Assets"
                                                        FontSize="12"
                                                        Margin="0,0,4,0"/>
-                                            <TextBlock Text="Load"/>
+                                            <TextBlock VerticalAlignment="Center" Text="Load"/>
                                         </StackPanel>
                                     </Button>
                                     <Button Grid.Column="1"
@@ -1006,11 +1006,11 @@
                                             ToolTipService.ShowOnDisabled="True"
                                             ToolTip="새 레시피를 만듭니다 (레시피 편집 권한 필요)">
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="&#xE710;"
+                                            <TextBlock VerticalAlignment="Center" Text="&#xE710;"
                                                        FontFamily="Segoe MDL2 Assets"
                                                        FontSize="12"
                                                        Margin="0,0,4,0"/>
-                                            <TextBlock Text="New"/>
+                                            <TextBlock VerticalAlignment="Center" Text="New"/>
                                         </StackPanel>
                                     </Button>
                                     <Button Grid.Column="2"
@@ -1080,10 +1080,10 @@
                                         Margin="0,0,0,8"
                                         ToolTip="비전 설정(VMS.VisionSetup)을 실행합니다 — 비전 도구 파이프라인 구성">
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="&#xE7AC;"
+                                        <TextBlock VerticalAlignment="Center" Text="&#xE7AC;"
                                                    FontFamily="Segoe MDL2 Assets"
                                                    Margin="0,0,8,0"/>
-                                        <TextBlock Text="Vision Tool Setup"/>
+                                        <TextBlock VerticalAlignment="Center" Text="Vision Tool Setup"/>
                                     </StackPanel>
                                 </Button>
 
@@ -1094,10 +1094,10 @@
                                         HorizontalAlignment="Stretch"
                                         ToolTip="시스템 설정 마법사(VMS.AppSetup)를 실행합니다 — 카메라/PLC/네트워크">
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="&#xE713;"
+                                        <TextBlock VerticalAlignment="Center" Text="&#xE713;"
                                                    FontFamily="Segoe MDL2 Assets"
                                                    Margin="0,0,8,0"/>
-                                        <TextBlock Text="System Setup"/>
+                                        <TextBlock VerticalAlignment="Center" Text="System Setup"/>
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
@@ -1128,10 +1128,10 @@
                                         Margin="0,0,0,8"
                                         ToolTip="클릭하여 릴리스 노트 확인 + 다운로드 페이지 열기">
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="&#xE7C3;"
+                                        <TextBlock VerticalAlignment="Center" Text="&#xE7C3;"
                                                    FontFamily="Segoe MDL2 Assets"
                                                    Margin="0,0,8,0"/>
-                                        <TextBlock Text="{Binding UpdateBadgeText}"/>
+                                        <TextBlock VerticalAlignment="Center" Text="{Binding UpdateBadgeText}"/>
                                     </StackPanel>
                                 </Button>
 
@@ -1151,10 +1151,10 @@
                                             HorizontalAlignment="Stretch"
                                             ToolTip="업데이트 다운로드를 취소합니다">
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="&#xE711;"
+                                            <TextBlock VerticalAlignment="Center" Text="&#xE711;"
                                                        FontFamily="Segoe MDL2 Assets"
                                                        Margin="0,0,8,0"/>
-                                            <TextBlock Text="다운로드 취소"/>
+                                            <TextBlock VerticalAlignment="Center" Text="다운로드 취소"/>
                                         </StackPanel>
                                     </Button>
                                 </StackPanel>
@@ -1166,10 +1166,10 @@
                                         HorizontalAlignment="Stretch"
                                         ToolTip="지금 새 버전이 있는지 확인합니다">
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="&#xE895;"
+                                        <TextBlock VerticalAlignment="Center" Text="&#xE895;"
                                                    FontFamily="Segoe MDL2 Assets"
                                                    Margin="0,0,8,0"/>
-                                        <TextBlock Text="Check for updates"/>
+                                        <TextBlock VerticalAlignment="Center" Text="Check for updates"/>
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
@@ -1187,10 +1187,10 @@
                                         HorizontalAlignment="Stretch"
                                         ToolTip="Web 서버의 레시피 파라미터를 지금 즉시 가져옵니다">
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="&#xE895;"
+                                        <TextBlock VerticalAlignment="Center" Text="&#xE895;"
                                                    FontFamily="Segoe MDL2 Assets"
                                                    Margin="0,0,8,0"/>
-                                        <TextBlock Text="Sync Parameters"/>
+                                        <TextBlock VerticalAlignment="Center" Text="Sync Parameters"/>
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
@@ -1209,11 +1209,11 @@
                                         HorizontalAlignment="Stretch"
                                         ToolTip="양품/불량 이미지 저장 폴더 및 품질 설정">
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="&#xEB9F;"
+                                        <TextBlock VerticalAlignment="Center" Text="&#xEB9F;"
                                                    FontFamily="Segoe MDL2 Assets"
                                                    Margin="0,0,8,0"
                                                    ToolTip="이미지 저장"/>
-                                        <TextBlock Text="Image Save Settings"/>
+                                        <TextBlock VerticalAlignment="Center" Text="Image Save Settings"/>
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
