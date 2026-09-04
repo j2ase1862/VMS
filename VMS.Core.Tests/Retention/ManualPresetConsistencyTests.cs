@@ -75,6 +75,11 @@ namespace VMS.Core.Tests.Retention
             Assert.Equal(preset.AutoBackup,  autoBackup);
             Assert.Equal(preset.UploadQueue, uploadQueue);
 
+            // 로컬 검사 이력 (inspection_history.db) — 표 마지막 열 (2026-09-04 추가)
+            Assert.True(cells.Length >= 11,
+                "매뉴얼 §5.10 프리셋 표에 InspHistory 열이 없음 — RetentionPresets.InspectionHistory 와 함께 갱신 필요.");
+            Assert.Equal(preset.InspectionHistory, ParseInt(cells[9]));
+
             // 카테고리 그룹별 일치 (매뉴얼 표는 그룹화 — 동일 그룹의 모든 카테고리가 같은 값)
             AssertCategoryGroup(preset, secUserCfg,
                 AuditCategory.Security, AuditCategory.UserManagement, AuditCategory.Configuration);

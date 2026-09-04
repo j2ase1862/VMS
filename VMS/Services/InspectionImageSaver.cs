@@ -17,6 +17,12 @@ namespace VMS.Services
     public static class InspectionImageSaver
     {
         /// <summary>
+        /// 이미지가 디스크에 기록된 뒤 백그라운드 스레드에서 발생 — (컨텍스트, 저장된 전체 경로).
+        /// 로컬 검사 이력이 상관 키로 이미지 경로를 연결하는 데 사용. 핸들러 예외는 삼킨다.
+        /// </summary>
+        public static event Action<InspectionImageContext, string>? ImageSaved;
+
+        /// <summary>
         /// 판정(ctx.Ok)에 해당하는 저장이 활성화되어 있고 BaseDir 가 지정된 경우에만
         /// 이미지를 비동기로 디스크에 저장. 그 외에는 즉시 반환.
         /// </summary>
@@ -65,8 +71,17 @@ namespace VMS.Services
                 };
                 encoder.Frames.Add(BitmapFrame.Create(image));
 
-                using var stream = new FileStream(fullPath, FileMode.Create, FileAccess.Write);
-                encoder.Save(stream);
+                using (var stream = new FileStream(fullPath, FileMode.Create, FileAccess.Write))
+                {
+                    encoder.Save(stream);
+                }
+
+                var handler = ImageSaved;
+                if (handler != null)
+                {
+                    try { handler(ctx, fullPath); }
+                    catch (Exception hex) { Debug.WriteLine($"[InspectionImageSaver] ImageSaved 핸들러 오류: {hex.Message}"); }
+                }
             }
             catch (Exception ex)
             {

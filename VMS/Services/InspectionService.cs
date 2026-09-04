@@ -49,6 +49,12 @@ namespace VMS.Services
         /// </summary>
         public static Func<string?>? CurrentRecipeNameProvider { get; set; }
 
+        /// <summary>
+        /// 로컬 검사 이력 영구 저장소 (외부 주입, nullable — inspectionHistory.enabled=false 면 null).
+        /// Recent Inspections 와 같은 지점에서 사이클/검사 1건씩 기록. 큐 push 만 하므로 택트 무관.
+        /// </summary>
+        public static VMS.Services.LocalHistory.ILocalInspectionHistoryStore? HistoryStore { get; set; }
+
         // ─── "1사이클 = 1개" 사이클 누적 (AUTO RUN, 2026-08-18) ───
         // 활성 시 검사별 Web 업로드/로컬 이력 push 를 버퍼에 모았다가
         // FlushCycleResultAsync 에서 사이클당 1건으로 업로드한다.
@@ -56,6 +62,8 @@ namespace VMS.Services
         private static bool _cycleAccumulating;
         private static readonly List<ParameterResultDto> _cycleParamResults = new();
         private static readonly List<string> _cycleFailedTools = new();
+        private static readonly List<VMS.Services.LocalHistory.LocalToolResult> _cycleToolResults = new();
+        private static double _cycleTotalMs;
         private static InspectionFeatureMetrics? _cycleFeatureMetrics;
         private static string? _cycleCorrelationKey;
 
@@ -67,6 +75,8 @@ namespace VMS.Services
                 _cycleAccumulating = enabled;
                 _cycleParamResults.Clear();
                 _cycleFailedTools.Clear();
+                _cycleToolResults.Clear();
+                _cycleTotalMs = 0;
                 _cycleFeatureMetrics = null;
                 _cycleCorrelationKey = null;
             }
@@ -101,22 +111,32 @@ namespace VMS.Services
         {
             List<ParameterResultDto> results;
             List<string> failedTools;
+            List<VMS.Services.LocalHistory.LocalToolResult> toolResults;
+            double totalMs;
             InspectionFeatureMetrics? metrics;
             string? corrKey;
             lock (_cycleLock)
             {
                 results = new List<ParameterResultDto>(_cycleParamResults);
                 failedTools = new List<string>(_cycleFailedTools);
+                toolResults = new List<VMS.Services.LocalHistory.LocalToolResult>(_cycleToolResults);
+                totalMs = _cycleTotalMs;
                 metrics = _cycleFeatureMetrics;
                 corrKey = _cycleCorrelationKey;
                 _cycleParamResults.Clear();
                 _cycleFailedTools.Clear();
+                _cycleToolResults.Clear();
+                _cycleTotalMs = 0;
                 _cycleFeatureMetrics = null;
                 _cycleCorrelationKey = null;
             }
 
             var isPass = overallPass && results.All(r => r.Judgment == "OK");
-            RecordLocalInspection(isPass, results, failedTools);
+            RecordLocalInspection(isPass, results, failedTools,
+                correlationKey: corrKey,
+                toolResults: toolResults,
+                cycleTimeMs: totalMs > 0 ? (int)Math.Round(totalMs) : null,
+                mode: VMS.Services.LocalHistory.LocalInspectionMode.Cycle);
 
             var syncService = ParameterSyncService;
             if (syncService == null || syncService.CurrentRecipeId <= 0)
@@ -146,7 +166,11 @@ namespace VMS.Services
         internal static InspectionRecord RecordLocalInspection(
             bool isPass,
             IReadOnlyList<ParameterResultDto> paramResults,
-            IReadOnlyList<string> failedTools)
+            IReadOnlyList<string> failedTools,
+            string? correlationKey = null,
+            IReadOnlyList<VMS.Services.LocalHistory.LocalToolResult>? toolResults = null,
+            int? cycleTimeMs = null,
+            VMS.Services.LocalHistory.LocalInspectionMode mode = VMS.Services.LocalHistory.LocalInspectionMode.Manual)
         {
             var ngCodes = paramResults.Where(r => r.Judgment == "NG")
                                       .Select(r => r.ParamCode.ToString())
@@ -178,7 +202,56 @@ namespace VMS.Services
                 SerialNumber = webLinked ? syncService!.SerialNumber : null
             };
             RecentInspectionsService.Instance.Add(record);
+
+            // 영구 로컬 이력 — 큐 push 만 (택트 무관). 실패는 검사 흐름과 무관하게 삼킨다.
+            var store = HistoryStore;
+            if (store != null)
+            {
+                try
+                {
+                    store.Record(new VMS.Services.LocalHistory.LocalInspectionEntry
+                    {
+                        InspectedAtUtc = record.Timestamp.ToUniversalTime(),
+                        IsPass = record.IsPass,
+                        RecipeId = record.RecipeId,
+                        RecipeName = record.RecipeName,
+                        NgCodes = new List<string>(record.NgCodes),
+                        ToolResults = toolResults != null
+                            ? new List<VMS.Services.LocalHistory.LocalToolResult>(toolResults)
+                            : new List<VMS.Services.LocalHistory.LocalToolResult>(),
+                        CorrelationKey = correlationKey,
+                        WorkOrderId = record.WorkOrderId,
+                        LotId = record.LotId,
+                        SerialNumber = record.SerialNumber,
+                        CycleTimeMs = cycleTimeMs,
+                        Mode = mode
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[InspectionService] local history record error: {ex.Message}");
+                }
+            }
             return record;
+        }
+
+        /// <summary>도구 결과 → 로컬 이력용 요약 (Data 사전은 제외, 실패 시에만 메시지 보존).</summary>
+        private static List<VMS.Services.LocalHistory.LocalToolResult> ToLocalToolResults(
+            IEnumerable<ToolInspectionResult> toolResults)
+        {
+            var list = new List<VMS.Services.LocalHistory.LocalToolResult>();
+            foreach (var t in toolResults)
+            {
+                list.Add(new VMS.Services.LocalHistory.LocalToolResult
+                {
+                    ToolName = t.ToolName,
+                    ToolType = t.ToolType,
+                    Success = t.Success,
+                    ExecutionTimeMs = Math.Round(t.ExecutionTimeMs, 1),
+                    Message = t.Success || string.IsNullOrEmpty(t.Message) ? null : t.Message
+                });
+            }
+            return list;
         }
 
         /// <summary>
@@ -479,7 +552,8 @@ namespace VMS.Services
 
                 // 로컬 이력 기록 + Web 파라미터 결과 수집·업로드 (피처 + 이미지와 공유할 상관 키 동봉)
                 var paramResults = CollectParameterResults(ctx, resultMap);
-                RecordInspectionOutcome(finalSuccess, failedTools, paramResults, featureMetrics, result.CorrelationKey);
+                RecordInspectionOutcome(finalSuccess, failedTools, paramResults, featureMetrics, result.CorrelationKey,
+                    ToLocalToolResults(result.ToolResults));
 
                 // 사이클 임시 Mat 즉시 해제 — 툴 결과의 OutputImage/OverlayImage 는 프레임
                 // 크기 네이티브 메모리라 GC 통계에 잡히지 않고 파이널라이저까지 떠 있는다.
@@ -686,7 +760,8 @@ namespace VMS.Services
             IReadOnlyList<string> failedTools,
             List<ParameterResultDto> paramResults,
             InspectionFeatureMetrics? featureMetrics = null,
-            string? correlationKey = null)
+            string? correlationKey = null,
+            IReadOnlyList<VMS.Services.LocalHistory.LocalToolResult>? toolResults = null)
         {
             lock (_cycleLock)
             {
@@ -694,6 +769,8 @@ namespace VMS.Services
                 {
                     _cycleParamResults.AddRange(paramResults);
                     _cycleFailedTools.AddRange(failedTools);
+                    if (toolResults != null) _cycleToolResults.AddRange(toolResults);
+                    if (featureMetrics?.CycleTimeMs is int stepMs) _cycleTotalMs += stepMs;
                     if (featureMetrics != null) _cycleFeatureMetrics = featureMetrics;
                     if (correlationKey != null) _cycleCorrelationKey = correlationKey;
                     return;
@@ -702,7 +779,11 @@ namespace VMS.Services
 
             // 업로드 전에 푸시 — 네트워크 상태와 무관하게 항상 기록.
             var isPass = finalSuccess && paramResults.All(r => r.Judgment == "OK");
-            RecordLocalInspection(isPass, paramResults, failedTools);
+            RecordLocalInspection(isPass, paramResults, failedTools,
+                correlationKey: correlationKey,
+                toolResults: toolResults,
+                cycleTimeMs: featureMetrics?.CycleTimeMs,
+                mode: VMS.Services.LocalHistory.LocalInspectionMode.Manual);
 
             var syncService = ParameterSyncService;
             if (syncService == null || syncService.CurrentRecipeId <= 0 || paramResults.Count == 0)

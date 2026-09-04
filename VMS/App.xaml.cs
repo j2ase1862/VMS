@@ -179,6 +179,19 @@ namespace VMS
                 Debug.WriteLine($"[App] UploadQueueRetention 실패 (best-effort): {ex.Message}");
             }
 
+            // 로컬 검사 이력(inspection_history.db) 보존 정책 — inspectionHistory.retentionDays
+            // (기본 90, clamp [1, 3650]) 보다 오래된 행 삭제. enabled=false 면 DB 를 열지 않는다.
+            try
+            {
+                var histOptions = InspectionHistoryOptions.LoadFromAppData();
+                if (histOptions.Enabled)
+                    VMS.Services.LocalHistory.LocalInspectionHistoryStore.Instance.PurgeOlderThan(histOptions.RetentionDays);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] InspectionHistoryRetention 실패 (best-effort): {ex.Message}");
+            }
+
             // 자동 백업 스케줄러 — autoBackup.enabled=true 일 때만 시작.
             // last_backup_at.txt 기반으로 잔여 시간 계산 → 즉시 또는 잔여 시간 후 첫 백업.
             // 운영 시작을 막지 않도록 best-effort.
@@ -381,6 +394,34 @@ namespace VMS
             // Recent Inspections 레시피 이름 — Web 연동 여부와 무관하게 로컬 레시피 이름을 공급
             // (단독 모드·Web 미연동 레시피에서 "Recipe#0" 으로 보이던 문제).
             InspectionService.CurrentRecipeNameProvider = () => recipeService.CurrentRecipe?.Name;
+
+            // 로컬 검사 이력 영구 저장소 — Web 연동 여부와 무관하게 사이클 1건씩 SQLite 에 기록
+            // (단독 모드의 유일한 영구 이력, 연동 모드에서는 오프라인 백업). 이미지 저장 완료
+            // 이벤트를 상관 키로 이어 붙여 이력 행에 이미지 경로를 남긴다.
+            VMS.Services.LocalHistory.ILocalInspectionHistoryStore? historyStore = null;
+            try
+            {
+                if (InspectionHistoryOptions.LoadFromAppData().Enabled)
+                {
+                    historyStore = VMS.Services.LocalHistory.LocalInspectionHistoryStore.Instance;
+                    InspectionService.HistoryStore = historyStore;
+                    var storeForImages = historyStore;
+                    VMS.Services.InspectionImageSaver.ImageSaved += (ctx, path) =>
+                    {
+                        if (!string.IsNullOrEmpty(ctx.CorrelationKey))
+                            storeForImages.SetImagePath(ctx.CorrelationKey!, path, isNg: !ctx.Ok);
+                    };
+                }
+                else
+                {
+                    logService.Log("로컬 검사 이력 저장 꺼짐 (inspectionHistory.enabled=false)", LogLevel.Info, "System");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] LocalInspectionHistoryStore init failed: {ex.Message}");
+                logService.Log($"로컬 검사 이력 저장소 초기화 실패: {ex.Message}", LogLevel.Warning, "System");
+            }
 
             // ── Web Parameter Sync Service ──
             IParameterSyncService? parameterSyncService = null;
@@ -737,6 +778,9 @@ namespace VMS
                 updateInstallService?.Dispose();
                 imageUploadService?.Dispose();
                 foreach (var board in ioBoardConnections) board.Dispose();
+                // 큐에 남은 이력 배치를 디스크에 반영하고 writer 종료 (최대 5초).
+                InspectionService.HistoryStore = null;
+                historyStore?.Dispose();
                 ForceShutdown(mainViewModel, heartbeatService, parameterSyncService, sharedFrameWriter, plcConnection, autoProcessService, processService);
             };
             mainWindow.Show();

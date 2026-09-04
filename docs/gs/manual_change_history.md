@@ -131,3 +131,44 @@
 - `VMS/App.xaml.cs` — `CurrentRecipeNameProvider` 배선 (단독 모드 분기 직후)
 - `VMS.Core/Models/InspectionRecord.cs` — `DisplayLabel` 의 "Recipe#0" 대체
 - 테스트: `VMS.Tests/Services/StandaloneRecentInspectionsTests.cs`
+
+---
+
+## 4. VMS 메인 — 로컬 검사 이력 영구 저장 (inspection_history.db) + 보존 설정
+
+| 항목 | 내용 |
+|------|------|
+| PR | #417 (§3 과 같은 PR — 2단계) |
+| 날짜 | 2026-09-04 |
+| 앱 · 화면 | VMS 메인 (백그라운드 기록, 화면 없음) + 관리자 〈Retention Settings〉 창 전역 카드 4번째 행 |
+| 변경 종류 | 기능 추가 (조회 화면은 후속 3단계) |
+
+### 무엇이 바뀌었나
+- 검사 결과가 **PC 로컬 SQLite 파일**(`%LocalAppData%\BODA VISION AI\inspection_history.db`)에 사이클 1건(AUTO RUN) 또는 수동 검사 1건당 1행으로 영구 저장된다. 단독 모드에서 VMS 를 다시 켜도 이력이 남는 첫 기능이며, Web 연동 모드에서도 항상 기록되어 오프라인 백업이 된다.
+- 저장 내용: 검사 시각, 판정, 레시피 이름, NG 코드(단독 모드는 실패 도구 이름), 도구별 판정/소요 시간, 저장된 이미지 파일 경로(이미지 저장 옵션이 켜져 있을 때, NG 이미지 우선), 작업지시/Lot/시리얼(연동 시), 사이클 시간.
+- 〈Retention Settings〉(관리자 → Admin Tools) 전역 카드에 **"검사 이력 (inspection_history.db)"** 행 추가: 보존일 입력(기본 90일, [1, 3650]) + **"검사 결과를 로컬 이력 DB 에 저장"** 체크박스(기본 켜짐). 미리보기(Preview)에 "검사 이력 DB — 삭제 예정 N 건" 행 추가, CSV 내보내기에도 포함. 프리셋: Conservative 365 / Standard 90 / Minimal 30.
+- 오래된 행은 VMS 시작 시 자동 삭제(보존일 기준). 백업/복원(Backup & Restore)에 이 파일이 포함된다. 지원 패키지에는 포함되지 않는다.
+
+### 왜 바꿨나
+- 단독 모드(Web 서버 없음)에서는 생산 이력이 어디에도 남지 않았다 (Recent Inspections 는 재시작 시 소멸, 감사 로그는 NG 만).
+
+### 매뉴얼 반영 지점
+| 위치 | 해야 할 일 |
+|------|-----------|
+| §3.5 단독 모드 | "검사 이력은 PC 에 자동 저장되며(기본 90일) 관리자 보존 설정에서 기간/저장 여부를 바꿀 수 있다" 문단. 조회 화면은 3단계 반영 시 함께 |
+| §4.9 관리자 · Retention Settings | 전역 행 4개로 갱신(검사 이력 행 + 체크박스), 미리보기 행, 프리셋 표에 InspHistory 열 |
+| §4.x 백업/복원 | 백업 대상 파일 목록에 `inspection_history.db` 추가 |
+| §11.4 변경 이력 | "검사 결과 로컬 영구 저장(inspection_history.db) + 보존 설정" 한 줄 |
+
+### 스크린샷
+| 파일 | 조치 |
+|------|------|
+| Retention Settings 창 (전역 카드) | 재캡처 — `VMS.exe --capture-dialogs` |
+
+### 코드 참조 (검증용)
+- `VMS/Services/LocalHistory/LocalInspectionHistoryStore.cs` (저장소·큐·보존), `LocalInspectionEntry.cs`, `ILocalInspectionHistoryStore.cs`
+- `VMS.Core/Retention/InspectionHistoryOptions.cs` — `inspectionHistory.{enabled, retentionDays}`
+- `VMS/Services/InspectionService.cs` `RecordLocalInspection` — 기록 지점, `VMS/Services/InspectionImageSaver.cs` `ImageSaved` — 이미지 경로 연결
+- `VMS/ViewModels/RetentionSettingsViewModel.cs` + `Views/RetentionSettingsWindow.xaml`, `VMS.Core/Retention/RetentionPresets.cs`
+- `VMS.Core/Backup/BackupRestoreService.cs` 화이트리스트, GS 개요 `docs/gs/guides/gs_compliance_overview_v1.0.md` §5.11
+- 테스트: `VMS.Tests/Services/LocalInspectionHistoryStoreTests.cs`, `InspectionServiceLocalHistoryTests.cs`
