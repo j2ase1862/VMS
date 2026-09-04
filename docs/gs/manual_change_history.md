@@ -221,7 +221,7 @@
 
 | 항목 | 내용 |
 |------|------|
-| PR | `fix/sidepanel-icon-valign` (머지 후 번호 기입) |
+| PR | #421 (`fix/sidepanel-icon-valign`) |
 | 날짜 | 2026-09-04 |
 | 앱 · 화면 | VMS 메인 우측 Settings 사이드 패널의 아이콘+텍스트 버튼 전부 (Recipe Load/New · External Tools · Updates · Web Parameters · Image Saving · Roller) |
 | 변경 종류 | 시각 수정 (동작 변경 없음) |
