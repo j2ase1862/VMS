@@ -91,3 +91,43 @@
 - `VMS.AppSetup/MainWindow.xaml` — Row 2 안내 카드(항상 표시), Row 3 Line Scan 그리드 5열
 - `VMS.AppSetup/Models/SetupConfiguration.cs` — `CaptureMode`/`FilterStrength`/`ZRangeMin`/`ZRangeMax`/`EncoderResolution` 필드 호환용 유지, `ShowEncoderResolution` 제거
 - 런타임 3D 소유자: `VMS.VisionSetup/Models/InspectionStep.cs`, `VMS.VisionSetup/ViewModels/MainViewModel.cs` `ApplyStepCameraSettingsAsync`
+
+---
+
+## 3. VMS 메인 — 단독 모드에서도 Recent Inspections(최근 검사) 패널에 기록
+
+| 항목 | 내용 |
+|------|------|
+| PR | (머지 후 기입) `fix/standalone-recent-inspections` |
+| 날짜 | 2026-09-04 |
+| 앱 · 화면 | VMS 메인 화면 우측 슬라이딩 패널 "Recent Inspections" (Total/Pass/NG 셀 + 최근 200건 목록) |
+| 변경 종류 | 동작 수정 (단독 모드 공백) + 도움말 문구 수정 |
+
+### 무엇이 바뀌었나
+- **단독 모드(Web 서버 미구성)** 에서 AUTO RUN·수동 검사를 해도 Recent Inspections 패널이 항상 0건이던 문제를 고쳤다. 이제 Web 연동 여부와 무관하게 사이클(또는 수동 검사) 1건마다 기록된다.
+- 목록의 **NG 코드 자리**: Web 연동 레시피면 종전대로 Web 파라미터 코드, 단독 모드·파라미터 미연결 레시피면 **실패한 도구 이름**(예: `Blob 1,Edge 2`)이 표시된다.
+- 목록의 **레시피 이름**: 단독 모드에서도 현재 로컬 레시피 이름이 표시된다 (종전엔 "Recipe#0").
+- 패널 도움말(?) 문구: "단독 모드나 Web 연결이 끊긴 상태에서도 기록되며, VMS 를 다시 시작하면 비워집니다 (Web 연동 시 전체 이력은 Web 의 Production History)".
+- Web 연동 모드 부수 효과: 수동 검사에서 파라미터는 전부 OK 인데 최종 판정이 NG 인 경우 종전엔 PASS 로 기록되던 것이 NG(실패 도구 이름 포함)로 바로잡힘. 파라미터 미연결 레시피의 수동 검사도 이제 목록에 남는다.
+
+### 왜 바꿨나
+- 로컬 이력 push 코드가 "Web 동기화 서비스 + Web 레시피 ID" 가드 안쪽에 있어 단독 모드에서는 실행되지 않았다. 단독 모드(#407) 도입 후 드러난 공백.
+- 영구 로컬 생산이력(SQLite 저장소 + 조회 창)은 후속 PR 로 별도 진행 — 본 건은 그 1단계.
+
+### 매뉴얼 반영 지점
+| 위치 | 해야 할 일 |
+|------|-----------|
+| §3.5 단독 모드 절차 | "검사 결과는 화면 우측 Recent Inspections 패널에서 최근 200건까지 확인(재시작 시 비워짐)" 한 문장 추가. NG 코드 자리에 실패 도구 이름이 표시됨을 명시 |
+| §4 VMS 운전 · Recent Inspections 설명 | 도움말 문구 갱신에 맞춰 "Web 연동 시 전체 이력은 Web" 으로 서술 조정 |
+| §11.4 변경 이력 | "단독 모드에서도 최근 검사 패널에 기록 (실패 도구 이름 표시)" 한 줄 |
+
+### 스크린샷
+| 파일 | 조치 |
+|------|------|
+| Recent Inspections 패널 (단독 모드, NG 행에 도구 이름 표시 상태) | 신규 캡처 권장 — 기존 스크린샷이 Web 연동 기준이면 교체 |
+
+### 코드 참조 (검증용)
+- `VMS/Services/InspectionService.cs` — `RecordLocalInspection` / `RecordInspectionOutcome` / `FlushCycleResultAsync` (로컬 기록이 Web 가드 바깥으로 이동), `CurrentRecipeNameProvider`
+- `VMS/App.xaml.cs` — `CurrentRecipeNameProvider` 배선 (단독 모드 분기 직후)
+- `VMS.Core/Models/InspectionRecord.cs` — `DisplayLabel` 의 "Recipe#0" 대체
+- 테스트: `VMS.Tests/Services/StandaloneRecentInspectionsTests.cs`

@@ -378,6 +378,10 @@ namespace VMS
             if (!webIntegrated)
                 logService.Log("단독 모드 — Web 서버 미구성 (작업자 로그인·작업지시·결과 업로드 비활성)", LogLevel.Info, "System");
 
+            // Recent Inspections 레시피 이름 — Web 연동 여부와 무관하게 로컬 레시피 이름을 공급
+            // (단독 모드·Web 미연동 레시피에서 "Recipe#0" 으로 보이던 문제).
+            InspectionService.CurrentRecipeNameProvider = () => recipeService.CurrentRecipe?.Name;
+
             // ── Web Parameter Sync Service ──
             IParameterSyncService? parameterSyncService = null;
             if (webIntegrated) try

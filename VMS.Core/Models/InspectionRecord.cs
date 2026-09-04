@@ -31,7 +31,9 @@ namespace VMS.Core.Models
                 if (!string.IsNullOrEmpty(WorkOrderNo)) parts.Add(WorkOrderNo);
                 else if (WorkOrderId.HasValue) parts.Add($"WO#{WorkOrderId}");
                 if (!string.IsNullOrEmpty(RecipeName)) parts.Add(RecipeName!);
-                return parts.Count == 0 ? $"Recipe#{RecipeId}" : string.Join(" · ", parts);
+                if (parts.Count > 0) return string.Join(" · ", parts);
+                // RecipeId 0 = 단독 모드/Web 미연동 레시피 — "Recipe#0" 은 오해를 준다.
+                return RecipeId > 0 ? $"Recipe#{RecipeId}" : "(레시피 이름 없음)";
             }
         }
     }
