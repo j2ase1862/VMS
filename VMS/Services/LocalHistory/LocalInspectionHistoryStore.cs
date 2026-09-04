@@ -396,6 +396,30 @@ namespace VMS.Services.LocalHistory
             return list;
         }
 
+        public IReadOnlyList<string> GetRecipeNames(DateTime fromLocal, DateTime toLocalExclusive)
+        {
+            var list = new List<string>();
+            try
+            {
+                using var conn = Open();
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = @"
+                    SELECT DISTINCT RecipeName FROM InspectionHistory
+                     WHERE RecipeName IS NOT NULL AND RecipeName <> ''
+                       AND InspectedAtUtc >= @from AND InspectedAtUtc < @to
+                     ORDER BY RecipeName";
+                cmd.Parameters.AddWithValue("@from", FormatUtc(fromLocal.ToUniversalTime()));
+                cmd.Parameters.AddWithValue("@to", FormatUtc(toLocalExclusive.ToUniversalTime()));
+                using var r = cmd.ExecuteReader();
+                while (r.Read()) list.Add(r.GetString(0));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[InspectionHistory] RecipeNames 실패: {ex.Message}");
+            }
+            return list;
+        }
+
         // ─── 보존 ───────────────────────────────────────────────
 
         public long CountOlderThan(int retentionDays)

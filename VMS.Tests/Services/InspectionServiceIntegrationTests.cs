@@ -16,6 +16,9 @@ namespace VMS.Tests.Services
     ///
     /// 각 테스트는 IDisposable 의 Dispose 에서 Mat 핸들 해제 + 캐시 초기화.
     /// </summary>
+    // ExecuteStep 이 InspectionService 정적 사이클 버퍼·RecentInspections·HistoryStore 에 기록하므로
+    // 같은 정적 상태를 검증하는 테스트들과 직렬 실행 (병렬 시 상대 테스트의 저장소에 행이 섞인다).
+    [Collection(InspectionServiceStaticsCollection.Name)]
     public class InspectionServiceIntegrationTests : IDisposable
     {
         private readonly InspectionService _service;

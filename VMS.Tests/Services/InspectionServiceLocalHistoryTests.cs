@@ -64,7 +64,7 @@ namespace VMS.Tests.Services
             await InspectionService.FlushCycleResultAsync(overallPass: false);
             Assert.True(_store.Flush(TimeSpan.FromSeconds(10)));
 
-            var row = Assert.Single(_store.Query(new LocalInspectionQuery()));
+            var row = Assert.Single(_store.Query(new LocalInspectionQuery()), r => r.CorrelationKey == key);
             Assert.False(row.IsPass);
             Assert.Equal(LocalInspectionMode.Cycle, row.Mode);
             Assert.Equal(key, row.CorrelationKey);
@@ -83,7 +83,7 @@ namespace VMS.Tests.Services
                 new InspectionFeatureMetrics { CycleTimeMs = 12 }, "manual-key", Tools(("Blob 1", true)));
             Assert.True(_store.Flush(TimeSpan.FromSeconds(10)));
 
-            var row = Assert.Single(_store.Query(new LocalInspectionQuery()));
+            var row = Assert.Single(_store.Query(new LocalInspectionQuery()), r => r.CorrelationKey == "manual-key");
             Assert.True(row.IsPass);
             Assert.Equal(LocalInspectionMode.Manual, row.Mode);
             Assert.Equal("manual-key", row.CorrelationKey);

@@ -1,0 +1,346 @@
+<Window x:Class="VMS.Views.InspectionHistoryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        xmlns:c="clr-namespace:VMS.VisionSetup.Views.Common;assembly=VMS.VisionSetup"
+        Title="Inspection History"
+        Width="1320" Height="780"
+        MinWidth="1000" MinHeight="600"
+        Style="{x:Null}"
+        WindowStyle="None"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource BrushBgWindow}"
+        TextOptions.TextFormattingMode="Display">
+
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="42" CornerRadius="0"
+                            GlassFrameThickness="0" ResizeBorderThickness="6"
+                            UseAeroCaptionButtons="False"/>
+    </shell:WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <!-- 판정 셀 색상 -->
+        <Style x:Key="VerdictCellText" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushSuccess}"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsPass}" Value="False">
+                    <Setter Property="Foreground" Value="{StaticResource BrushDanger}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="ToolResultCellText" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushSuccess}"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Success}" Value="False">
+                    <Setter Property="Foreground" Value="{StaticResource BrushDanger}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="NullableComboText" TargetType="TextBlock">
+            <Setter Property="Text" Value="{Binding}"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding}" Value="{x:Null}">
+                    <Setter Property="Text" Value="(전체)"/>
+                    <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Border Background="{StaticResource BrushBgWindow}"
+            BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="42"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <c:ChromelessTitleBar Grid.Row="0"
+                                  TitleText="생산 이력 조회 — Inspection History"
+                                  StatusText="{Binding StatusMessage}"/>
+
+            <Grid Grid.Row="1" Margin="22,16,22,16">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Filter Bar -->
+                <Border Grid.Row="0" Style="{StaticResource WindowCard}" Margin="0,0,0,10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="From"
+                                   Style="{StaticResource WindowFieldLabel}" Margin="0,0,8,0"/>
+                        <DatePicker Grid.Row="0" Grid.Column="1" SelectedDate="{Binding FromDate}"
+                                    Style="{StaticResource WindowDarkDatePicker}" Width="140"
+                                    Margin="0,0,14,0"/>
+
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="To"
+                                   Style="{StaticResource WindowFieldLabel}" Margin="0,0,8,0"/>
+                        <DatePicker Grid.Row="0" Grid.Column="3" SelectedDate="{Binding ToDate}"
+                                    Style="{StaticResource WindowDarkDatePicker}" Width="140"
+                                    Margin="0,0,14,0"/>
+
+                        <TextBlock Grid.Row="0" Grid.Column="4" Text="판정"
+                                   Style="{StaticResource WindowFieldLabel}" Margin="0,0,8,0"/>
+                        <ComboBox Grid.Row="0" Grid.Column="5"
+                                  ItemsSource="{Binding VerdictOptions}"
+                                  SelectedItem="{Binding SelectedVerdict}"
+                                  Style="{StaticResource WindowDarkComboBox}" Width="110"
+                                  Margin="0,0,14,0"/>
+
+                        <TextBlock Grid.Row="0" Grid.Column="6" Text="레시피"
+                                   Style="{StaticResource WindowFieldLabel}" Margin="0,0,8,0"/>
+                        <ComboBox Grid.Row="0" Grid.Column="7"
+                                  ItemsSource="{Binding RecipeOptions}"
+                                  SelectedItem="{Binding SelectedRecipe}"
+                                  Style="{StaticResource WindowDarkComboBox}" MinWidth="160"
+                                  Margin="0,0,14,0">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Style="{StaticResource NullableComboText}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+
+                        <TextBlock Grid.Row="0" Grid.Column="8" Text="NG 코드"
+                                   Style="{StaticResource WindowFieldLabel}" Margin="0,0,8,0"/>
+                        <TextBox Grid.Row="0" Grid.Column="9"
+                                 Text="{Binding NgCodeText, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource WindowDarkTextBox}"
+                                 MinWidth="160"
+                                 ToolTip="NG 코드 또는 실패한 도구 이름 포함 검색"/>
+
+                        <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="10"
+                                    Orientation="Horizontal" Margin="0,12,0,0">
+                            <Button Content="조회" Command="{Binding SearchCommand}"
+                                    Style="{StaticResource ModernPrimaryButton}"
+                                    Margin="0,0,8,0"/>
+                            <Button Content="필터 초기화" Command="{Binding ResetFiltersCommand}"
+                                    Style="{StaticResource ModernSecondaryButton}"
+                                    Margin="0,0,8,0"/>
+                            <Button Content="CSV 내보내기" Command="{Binding ExportCsvCommand}"
+                                    Style="{StaticResource ModernSuccessButton}"
+                                    ToolTip="현재 필터의 전체 결과를 CSV(UTF-8, Excel 호환)로 저장"/>
+                            <TextBlock Style="{StaticResource WindowMutedText}" VerticalAlignment="Center" Margin="18,0,0,0"
+                                       Visibility="{Binding IsWebIntegrated, Converter={StaticResource BoolToVisibilityConverter}}"
+                                       Text="Web 연동 중 — 작업지시·Lot 기준 전체 이력은 Web 의 Production History 에서 조회하세요. 이 화면은 이 PC 에 남은 로컬 이력입니다."/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Tabs -->
+                <TabControl Grid.Row="1" Style="{StaticResource WindowDarkTabControl}">
+                    <!-- ① 이력 목록 + 상세 -->
+                    <TabItem Header="이력 목록" Style="{StaticResource WindowDarkTabItem}">
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="3*" MinWidth="480"/>
+                                <ColumnDefinition Width="6"/>
+                                <ColumnDefinition Width="2*" MinWidth="320"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Border Grid.Column="0" Style="{StaticResource WindowCard}" Padding="2">
+                                <DataGrid ItemsSource="{Binding Entries}"
+                                          SelectedItem="{Binding SelectedEntry}"
+                                          AutoGenerateColumns="False" IsReadOnly="True"
+                                          SelectionMode="Single"
+                                          Style="{StaticResource WindowDarkDataGrid}"
+                                          VerticalScrollBarVisibility="Auto"
+                                          FontFamily="Consolas">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="검사 시각"
+                                                            Binding="{Binding InspectedAtLocal, StringFormat='yyyy-MM-dd HH:mm:ss'}"
+                                                            Width="150"/>
+                                        <DataGridTextColumn Header="판정" Binding="{Binding VerdictText}" Width="64"
+                                                            ElementStyle="{StaticResource VerdictCellText}"/>
+                                        <DataGridTextColumn Header="레시피" Binding="{Binding RecipeName}" Width="150"/>
+                                        <DataGridTextColumn Header="NG 코드 / 실패 도구" Binding="{Binding NgCodesText}" Width="*"/>
+                                        <DataGridTextColumn Header="구분" Binding="{Binding ModeText}" Width="60"/>
+                                        <DataGridTextColumn Header="ms" Binding="{Binding CycleTimeMs}" Width="60"/>
+                                        <DataGridTextColumn Header="추적" Binding="{Binding TraceText}" Width="140"/>
+                                        <DataGridCheckBoxColumn Header="IMG" Binding="{Binding HasImage}" Width="46"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Border>
+
+                            <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Stretch"
+                                          Background="Transparent"/>
+
+                            <!-- 상세 -->
+                            <Border Grid.Column="2" Style="{StaticResource WindowCard}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto" MaxHeight="220"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Style="{StaticResource WindowSectionHeaderFirst}" Text="상세"/>
+
+                                    <TextBlock Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                               Style="{StaticResource WindowMutedText}"
+                                               Text="행을 선택하면 도구별 결과와 이미지가 표시됩니다"
+                                               Visibility="{Binding ShowNoDetailHint, Converter={StaticResource BoolToVisibilityConverter}}"/>
+
+                                    <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedEntry.ToolResults}"
+                                              AutoGenerateColumns="False" IsReadOnly="True"
+                                              Style="{StaticResource WindowDarkDataGrid}"
+                                              HeadersVisibility="Column"
+                                              VerticalScrollBarVisibility="Auto"
+                                              Margin="0,8,0,8"
+                                              Visibility="{Binding HasDetail, Converter={StaticResource BoolToVisibilityConverter}}">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="도구" Binding="{Binding ToolName}" Width="*"/>
+                                            <DataGridTextColumn Header="종류" Binding="{Binding ToolType}" Width="110"/>
+                                            <DataGridTextColumn Header="결과" Binding="{Binding ResultText}" Width="56"
+                                                                ElementStyle="{StaticResource ToolResultCellText}"/>
+                                            <DataGridTextColumn Header="ms" Binding="{Binding ExecutionTimeMs, StringFormat='0.0'}" Width="64"/>
+                                            <DataGridTextColumn Header="메시지" Binding="{Binding Message}" Width="1.2*"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+
+                                    <Border Grid.Row="2" Style="{StaticResource WindowSurface}" Padding="4"
+                                            Visibility="{Binding HasDetail, Converter={StaticResource BoolToVisibilityConverter}}">
+                                        <Grid>
+                                            <Image Source="{Binding DetailImage}" Stretch="Uniform"
+                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+                                            <TextBlock Style="{StaticResource WindowMutedText}"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       TextWrapping="Wrap" TextAlignment="Center" Margin="16"
+                                                       Text="{Binding DetailImageStatus}"
+                                                       Visibility="{Binding ShowImageStatusOverlay, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                        </Grid>
+                                    </Border>
+
+                                    <Grid Grid.Row="3" Margin="0,8,0,0"
+                                          Visibility="{Binding HasDetail, Converter={StaticResource BoolToVisibilityConverter}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Style="{StaticResource WindowMutedText}"
+                                                   Text="{Binding DetailImageStatus}" TextTrimming="CharacterEllipsis"
+                                                   VerticalAlignment="Center"
+                                                   Visibility="{Binding HasDetailImage, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                        <Button Grid.Column="1" Content="폴더 열기" Command="{Binding OpenImageFolderCommand}"
+                                                Style="{StaticResource ModernGhostButton}" Margin="8,0,0,0"
+                                                Visibility="{Binding HasDetailImage, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </TabItem>
+
+                    <!-- ② 일별 집계 -->
+                    <TabItem Header="일별 집계" Style="{StaticResource WindowDarkTabItem}">
+                        <Grid Margin="0,8,0,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Border Grid.Row="0" Style="{StaticResource WindowCard}" Margin="0,0,0,10">
+                                <UniformGrid Columns="4">
+                                    <StackPanel>
+                                        <TextBlock Text="총 검사" Style="{StaticResource WindowMetricLabel}"/>
+                                        <TextBlock Text="{Binding SummaryTotal, StringFormat='{}{0:N0}'}" Style="{StaticResource WindowMetricValue}"/>
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Text="PASS" Style="{StaticResource WindowMetricLabel}"/>
+                                        <TextBlock Text="{Binding SummaryPass, StringFormat='{}{0:N0}'}" Style="{StaticResource WindowMetricValue}"
+                                                   Foreground="{StaticResource BrushSuccess}"/>
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Text="NG" Style="{StaticResource WindowMetricLabel}"/>
+                                        <TextBlock Text="{Binding SummaryNg, StringFormat='{}{0:N0}'}" Style="{StaticResource WindowMetricValue}"
+                                                   Foreground="{StaticResource BrushDanger}"/>
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Text="수율" Style="{StaticResource WindowMetricLabel}"/>
+                                        <TextBlock Text="{Binding SummaryPassRate, StringFormat='{}{0:F1} %'}" Style="{StaticResource WindowMetricValue}"/>
+                                    </StackPanel>
+                                </UniformGrid>
+                            </Border>
+                            <Border Grid.Row="1" Style="{StaticResource WindowCard}" Padding="2">
+                                <DataGrid ItemsSource="{Binding DailySummaries}"
+                                          AutoGenerateColumns="False" IsReadOnly="True"
+                                          Style="{StaticResource WindowDarkDataGrid}"
+                                          FontFamily="Consolas">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="날짜" Binding="{Binding Date, StringFormat='yyyy-MM-dd'}" Width="140"/>
+                                        <DataGridTextColumn Header="총 검사" Binding="{Binding Total}" Width="110"/>
+                                        <DataGridTextColumn Header="PASS" Binding="{Binding Pass}" Width="110"/>
+                                        <DataGridTextColumn Header="NG" Binding="{Binding Ng}" Width="110"/>
+                                        <DataGridTextColumn Header="수율 (%)" Binding="{Binding PassRate, StringFormat='0.0'}" Width="110"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Border>
+                        </Grid>
+                    </TabItem>
+
+                    <!-- ③ NG 파레토 -->
+                    <TabItem Header="NG 파레토" Style="{StaticResource WindowDarkTabItem}">
+                        <Border Style="{StaticResource WindowCard}" Padding="2" Margin="0,8,0,0">
+                            <DataGrid ItemsSource="{Binding NgCodeRows}"
+                                      AutoGenerateColumns="False" IsReadOnly="True"
+                                      Style="{StaticResource WindowDarkDataGrid}"
+                                      FontFamily="Consolas">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="#" Binding="{Binding Rank}" Width="50"/>
+                                    <DataGridTextColumn Header="NG 코드 / 실패 도구" Binding="{Binding Code}" Width="*"/>
+                                    <DataGridTextColumn Header="건수" Binding="{Binding Count}" Width="100"/>
+                                    <DataGridTextColumn Header="비율 (%)" Binding="{Binding Percent, StringFormat='0.0'}" Width="100"/>
+                                    <DataGridTextColumn Header="누적 (%)" Binding="{Binding CumulativePercent, StringFormat='0.0'}" Width="100"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
+                    </TabItem>
+                </TabControl>
+
+                <!-- Status Bar: DB 정보 + 페이징 -->
+                <Border Grid.Row="2" Style="{StaticResource WindowSurface}" Margin="0,10,0,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Style="{StaticResource WindowMutedText}" VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis">
+                            <Run Text="저장 위치: "/>
+                            <Run Text="{Binding DbInfo, Mode=OneWay}" FontFamily="Consolas"
+                                 Foreground="{StaticResource BrushTextSecondary}"/>
+                        </TextBlock>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <Button Content="◀ 이전" Command="{Binding PrevPageCommand}" IsEnabled="{Binding CanGoPrev}"
+                                    Style="{StaticResource ModernGhostButton}" Margin="0,0,6,0"/>
+                            <TextBlock Text="{Binding PageText}" Style="{StaticResource WindowBodyText}"
+                                       VerticalAlignment="Center" Margin="4,0"/>
+                            <Button Content="다음 ▶" Command="{Binding NextPageCommand}" IsEnabled="{Binding CanGoNext}"
+                                    Style="{StaticResource ModernGhostButton}" Margin="6,0,0,0"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

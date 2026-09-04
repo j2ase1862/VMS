@@ -757,7 +757,8 @@ namespace VMS
                 updateService: updateService,
                 imageUploadService: imageUploadService,
                 ioBoards: ioBoardConnections,
-                updateInstallService: updateInstallService);
+                updateInstallService: updateInstallService,
+                localHistoryStore: historyStore);
 
             // VisionSetup 의 Grab 요청 수신 시작 — VisionSetup 이 VMS 창을 거치지 않고
             // 이 PC 의 카메라 이미지를 받아갈 수 있게 한다 (운전/라이브 중 요청은 거절).
@@ -876,6 +877,31 @@ namespace VMS
                                     }
                                     return new Views.UserManagementWindow { DataContext = vm };
                                 });
+                                if (historyStore != null)
+                                    Add("InspectionHistory", () =>
+                                    {
+                                        var vm = new InspectionHistoryViewModel(historyStore, mainViewModel.IsWebIntegrated);
+                                        if (vm.Entries.Count == 0)
+                                        {
+                                            // 로컬 이력이 아직 없을 때만 문서용 대표 행 표시 (DB 에는 기록하지 않음).
+                                            var now = DateTime.UtcNow;
+                                            void R(int m, bool ok, params string[] ng) => vm.Entries.Add(new VMS.Services.LocalHistory.LocalInspectionEntry
+                                            {
+                                                InspectedAtUtc = now.AddMinutes(-m), IsPass = ok, RecipeName = "A1",
+                                                NgCodes = new System.Collections.Generic.List<string>(ng), CycleTimeMs = 412 + m,
+                                                Mode = VMS.Services.LocalHistory.LocalInspectionMode.Cycle,
+                                                ToolResults = new System.Collections.Generic.List<VMS.Services.LocalHistory.LocalToolResult>
+                                                {
+                                                    new() { ToolName = "Blob 1", ToolType = "Blob", Success = ok || ng.Length == 0 || ng[0] != "Blob 1", ExecutionTimeMs = 18.4, Message = ok ? null : "area < min" },
+                                                    new() { ToolName = "Feature Match 1", ToolType = "FeatureMatch", Success = true, ExecutionTimeMs = 95.2 }
+                                                }
+                                            });
+                                            R(1, true); R(2, false, "Blob 1"); R(3, true); R(5, true); R(8, false, "Blob 1"); R(13, true);
+                                            vm.SelectedEntry = vm.Entries[1];
+                                            vm.StatusMessage = "6건";
+                                        }
+                                        return new Views.InspectionHistoryWindow { DataContext = vm };
+                                    });
                                 Add("AuditLog", () =>
                                 {
                                     var vm = new AuditLogViewerViewModel();

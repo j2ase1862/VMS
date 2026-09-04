@@ -1,6 +1,6 @@
 # 설계 문서 — 단독 모드 로컬 생산이력 (inspection_history.db)
 
-> 상태: **1·2단계 구현 (PR #417, 2026-09-04)** · 3단계(조회 창) 후속 · 대상 레포: `VMS`
+> 상태: **1·2·3단계 구현 (PR #417, 2026-09-04)** · 대상 레포: `VMS`
 
 ## 1. 배경
 
@@ -14,7 +14,7 @@
 |---|---|---|
 | A | Recent Inspections 단독 모드 공백 수정 — 로컬 이력 push 를 Web 가드 밖으로, 실패 도구 이름을 NG 코드 대체, 로컬 레시피 이름 | PR #417 |
 | B | SQLite 저장소 + 기록 + 이미지 경로 연결 + 보존 설정(Retention Settings) + 백업 포함 | PR #417 |
-| C | 생산 이력 조회 창 (목록·상세 도구 결과·이미지·일별 집계·NG 파레토·CSV/Excel) | 후속 |
+| C | 생산 이력 조회 창 (목록·상세 도구 결과·이미지·일별 집계·NG 파레토·CSV) | PR #417 |
 
 ## 3. 저장소
 
@@ -64,7 +64,16 @@ NG 코드 규약: Web 파라미터 NG 코드가 있으면 그것, 없으면 실�
 - 지원 패키지: **미포함** (생산 데이터). 요약 통계만 필요 시 health snapshot 에 추가 후보.
 - 종료: `mainWindow.Closed` 에서 `Dispose` — 잔여 배치 반영 후 writer 종료(최대 5초).
 
-## 7. 3단계(조회 창) 메모
+## 7. 3단계 — 조회 창 (구현)
+
+- 진입: Recent Inspections 헤더 **[전체 이력]** (모든 등급, 저장소 off 면 비활성). `MainViewModel.OpenInspectionHistory` → `InspectionHistoryWindow` + `InspectionHistoryViewModel(store, isWebIntegrated)`.
+- 필터: From/To(포함, 배타 상한 = To+1일 00:00 로컬) · 판정 · 레시피(기간 내 DISTINCT, `GetRecipeNames`) · NG 코드 LIKE. 페이지 200건, `Count` + `Query(Offset/Limit)`.
+- 탭: 이력 목록(+상세: 도구 결과 표, 이미지 `BitmapImage` OnLoad/DecodePixelWidth 1280, 파일 없음 안내, 폴더 열기) · 일별 집계(`GetDailySummary`) · NG 파레토(`GetNgCodeCounts` top 30, 비율·누적).
+- CSV: 현재 필터 **전량**을 5000건 청크로 스트리밍(`ExportAllToCsv`), UTF-8 BOM, RFC 4180 인용(`InspectionHistoryCsvExporter`).
+- 문서 캡처: `--capture-dialogs` "InspectionHistory" (DB 비어 있으면 대표 6행을 VM 에만 주입).
+- 테스트 격리: `ExecuteStep` 을 도는 `InspectionServiceIntegrationTests` 도 정적 상태 컬렉션에 편입 — 병렬 시 상대 저장소에 행이 섞였다.
+
+## 8. 원래 3단계 메모 (참고)
 
 - `AuditLogViewerWindow` 패턴 재사용: 기간·판정·레시피·NG 코드 필터, 페이징, CSV 내보내기, 상세(도구 결과 표 + 이미지 열람), 일별 집계 탭, NG 파레토.
 - 이미지가 없을 때(저장 옵션 off) 안내 문구. 이미지 파일이 보존 정리로 삭제됐을 수 있으므로 존재 여부 확인 후 표시.

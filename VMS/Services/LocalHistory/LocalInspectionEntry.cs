@@ -19,6 +19,9 @@ namespace VMS.Services.LocalHistory
         public double ExecutionTimeMs { get; set; }
         /// <summary>실패 시 도구 메시지 (성공이면 null 로 두어 JSON 을 작게 유지).</summary>
         public string? Message { get; set; }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string ResultText => Success ? "OK" : "NG";
     }
 
     /// <summary>
@@ -50,6 +53,23 @@ namespace VMS.Services.LocalHistory
 
         public DateTime InspectedAtLocal => InspectedAtUtc.ToLocalTime();
         public string NgCodesText => NgCodes.Count == 0 ? string.Empty : string.Join(",", NgCodes);
+
+        // ─── 표시용 (조회 창 DataGrid 바인딩) ───
+        public string VerdictText => IsPass ? "PASS" : "NG";
+        public string ModeText => Mode == LocalInspectionMode.Cycle ? "사이클" : "수동";
+        public bool HasImage => !string.IsNullOrEmpty(ImagePath);
+        /// <summary>WO/Lot/Serial 을 한 칸에 — 단독 모드에서는 비어 있다.</summary>
+        public string TraceText
+        {
+            get
+            {
+                var parts = new List<string>(3);
+                if (!string.IsNullOrEmpty(SerialNumber)) parts.Add(SerialNumber!);
+                if (WorkOrderId.HasValue) parts.Add($"WO#{WorkOrderId}");
+                if (LotId.HasValue) parts.Add($"Lot#{LotId}");
+                return string.Join(" · ", parts);
+            }
+        }
     }
 
     /// <summary>조회 필터 — 모든 조건은 AND. 시각은 로컬 시간(화면 입력값) 기준.</summary>

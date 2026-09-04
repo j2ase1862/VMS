@@ -28,6 +28,8 @@ namespace VMS.Services.LocalHistory
         long Count(LocalInspectionQuery query);
         IReadOnlyList<LocalInspectionDailySummary> GetDailySummary(DateTime fromLocal, DateTime toLocalExclusive);
         IReadOnlyList<LocalNgCodeCount> GetNgCodeCounts(DateTime fromLocal, DateTime toLocalExclusive, int top);
+        /// <summary>기간 내 레시피 이름 목록 (필터 콤보용, 이름순).</summary>
+        IReadOnlyList<string> GetRecipeNames(DateTime fromLocal, DateTime toLocalExclusive);
 
         /// <summary>보존 일수보다 오래된 행 삭제. 결과를 AuditCategory.System 으로 기록.</summary>
         int PurgeOlderThan(int retentionDays);

@@ -172,3 +172,45 @@
 - `VMS/ViewModels/RetentionSettingsViewModel.cs` + `Views/RetentionSettingsWindow.xaml`, `VMS.Core/Retention/RetentionPresets.cs`
 - `VMS.Core/Backup/BackupRestoreService.cs` 화이트리스트, GS 개요 `docs/gs/guides/gs_compliance_overview_v1.0.md` §5.11
 - 테스트: `VMS.Tests/Services/LocalInspectionHistoryStoreTests.cs`, `InspectionServiceLocalHistoryTests.cs`
+
+---
+
+## 5. VMS 메인 — 생산 이력 조회 창 (Inspection History) 신설
+
+| 항목 | 내용 |
+|------|------|
+| PR | #417 (§3·§4 와 같은 PR — 3단계) |
+| 날짜 | 2026-09-04 |
+| 앱 · 화면 | VMS 메인 우측 〈Recent Inspections〉 패널 헤더의 **[전체 이력]** 버튼 → 새 창 "생산 이력 조회 — Inspection History" |
+| 변경 종류 | 화면 신설 (모든 사용자 등급 진입 가능) |
+
+### 무엇이 바뀌었나
+- 〈Recent Inspections〉 헤더에 **[전체 이력]** 버튼 추가(기존 [Clear] 왼쪽). 로컬 이력 저장이 꺼져 있으면 비활성.
+- 새 창 구성:
+  - **필터 바**: From/To 날짜, 판정(전체/PASS/NG), 레시피(기간 내 목록 콤보), NG 코드/실패 도구 포함 검색, [조회]·[필터 초기화]·[CSV 내보내기]. Web 연동 모드에서는 "전체 이력은 Web 의 Production History" 안내 문구.
+  - **탭 ① 이력 목록**: 검사 시각·판정(색)·레시피·NG 코드/실패 도구·구분(사이클/수동)·ms·추적(Serial/WO/Lot)·IMG 체크. 행 선택 시 오른쪽 **상세** — 도구별 결과 표(도구·종류·결과·ms·메시지) + 저장된 검사 이미지(NG 우선) + [폴더 열기]. 이미지가 없으면 안내 문구.
+  - **탭 ② 일별 집계**: 총 검사/PASS/NG/수율 카드 + 날짜별 표.
+  - **탭 ③ NG 파레토**: NG 코드(단독 모드는 도구 이름)별 건수·비율·누적 비율 상위 30.
+  - **하단**: DB 파일 위치·크기, 페이지 이동(200건 단위).
+- CSV 는 현재 필터의 **전체** 결과(페이지 무관)를 UTF-8 BOM 으로 저장 — Excel 에서 바로 열림. 열: InspectedAt, Verdict, Recipe, NgCodes, Mode, CycleTimeMs, SerialNumber, WorkOrderId, LotId, ImagePath, CorrelationKey, ToolResults.
+
+### 매뉴얼 반영 지점
+| 위치 | 해야 할 일 |
+|------|-----------|
+| §3.5 단독 모드 | "생산 이력 조회" 소절 신설: [전체 이력] 버튼 → 필터·탭 3개·CSV 절차. 기본 조회 기간 최근 7일 |
+| §4 VMS 운전 · Recent Inspections | [전체 이력] 버튼 설명 한 줄 + 새 창 상호 참조 |
+| §7 Web(Production History) | "단독 모드에서는 VMS 의 생산 이력 조회 창을 사용" 상호 참조 |
+| §11.4 변경 이력 | "생산 이력 조회 창(로컬 DB) 신설 — 목록/상세 이미지/일별 집계/NG 파레토/CSV" |
+
+### 스크린샷
+| 파일 | 조치 |
+|------|------|
+| 생산 이력 조회 창 (이력 목록 탭, NG 행 선택 + 이미지) | 신규 캡처 — `VMS.exe --capture-dialogs` 에 "InspectionHistory" 항목 추가됨(이력 없으면 문서용 대표 6행 표시) |
+| 일별 집계 탭 · NG 파레토 탭 | 수동 캡처 (탭 전환) |
+| Recent Inspections 패널 헤더 ([전체 이력] 버튼) | `--capture-controls` 사이드 패널 장면 재캡처 |
+
+### 코드 참조 (검증용)
+- `VMS/Views/InspectionHistoryWindow.xaml(.cs)`, `VMS/ViewModels/InspectionHistoryViewModel.cs`
+- `VMS/Services/LocalHistory/InspectionHistoryCsvExporter.cs`, 저장소 `GetRecipeNames`
+- `VMS/ViewModels/MainViewModel.cs` `OpenInspectionHistory` / `IsLocalHistoryAvailable`, `VMS/Views/MainWindow.xaml` Recent Inspections 헤더
+- 테스트: `VMS.Tests/ViewModels/InspectionHistoryViewModelTests.cs` 7건
