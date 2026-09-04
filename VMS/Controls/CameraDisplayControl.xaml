@@ -643,8 +643,8 @@
                                 </Style>
                             </Button.Style>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE714;" FontFamily="Segoe MDL2 Assets" FontSize="11" Margin="0,0,4,0"/>
-                                <TextBlock Text="Grab" FontSize="11"/>
+                                <TextBlock Text="&#xE714;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center" FontSize="11" Margin="0,0,4,0"/>
+                                <TextBlock Text="Grab" VerticalAlignment="Center" FontSize="11"/>
                             </StackPanel>
                         </Button>
                         <!-- Live 토글 — 시작/정지는 MainViewModel 이 조정 (AutoRun 상호 배타,
@@ -668,9 +668,9 @@
                                 </Style>
                             </Button.Style>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" FontSize="11" Margin="0,0,4,0"
+                                <TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center" FontSize="11" Margin="0,0,4,0"
                                            Foreground="#4CAF50"/>
-                                <TextBlock Text="Live" FontSize="11"/>
+                                <TextBlock Text="Live" VerticalAlignment="Center" FontSize="11"/>
                             </StackPanel>
                         </Button>
                         <Button Grid.Column="1"
@@ -680,9 +680,9 @@
                                 ToolTip="라이브 영상 표시를 중지합니다"
                                 Padding="6,4" Margin="2,0,2,0">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" FontSize="11" Margin="0,0,4,0"
+                                <TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center" FontSize="11" Margin="0,0,4,0"
                                            Foreground="#FF9800"/>
-                                <TextBlock Text="Stop" FontSize="11"/>
+                                <TextBlock Text="Stop" VerticalAlignment="Center" FontSize="11"/>
                             </StackPanel>
                         </Button>
                         <Button Grid.Column="2"
@@ -690,8 +690,8 @@
                                 Style="{StaticResource ModernButton}"
                                 Padding="6,4" Margin="2,0,2,0">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE8E5;" FontFamily="Segoe MDL2 Assets" FontSize="11" Margin="0,0,4,0"/>
-                                <TextBlock Text="Open" FontSize="11"/>
+                                <TextBlock Text="&#xE8E5;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center" FontSize="11" Margin="0,0,4,0"/>
+                                <TextBlock Text="Open" VerticalAlignment="Center" FontSize="11"/>
                             </StackPanel>
                         </Button>
                         <Button Grid.Column="3"
@@ -699,8 +699,8 @@
                                 Style="{StaticResource ModernButton}"
                                 Padding="6,4" Margin="2,0,0,0">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE9D5;" FontFamily="Segoe MDL2 Assets" FontSize="11" Margin="0,0,4,0"/>
-                                <TextBlock Text="Inspect" FontSize="11"/>
+                                <TextBlock Text="&#xE9D5;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center" FontSize="11" Margin="0,0,4,0"/>
+                                <TextBlock Text="Inspect" VerticalAlignment="Center" FontSize="11"/>
                             </StackPanel>
                         </Button>
                     </Grid>
@@ -719,8 +719,8 @@
                                 ToolTip="스텝별 노출/게인 설정을 저장합니다"
                                 Padding="6,4" Margin="0,0,2,0">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="11" Margin="0,0,4,0"/>
-                                <TextBlock Text="Save Parameter" FontSize="11"/>
+                                <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center" FontSize="11" Margin="0,0,4,0"/>
+                                <TextBlock Text="Save Parameter" VerticalAlignment="Center" FontSize="11"/>
                             </StackPanel>
                         </Button>
                         <Button Grid.Column="1"
@@ -729,8 +729,8 @@
                                 ToolTip="Grab한 3D 데이터를 .vpc 파일로 저장합니다 — VisionSetup에서 열 수 있습니다"
                                 Padding="6,4" Margin="2,0,2,0">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="11" Margin="0,0,4,0"/>
-                                <TextBlock Text="Save 3D" FontSize="11"/>
+                                <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center" FontSize="11" Margin="0,0,4,0"/>
+                                <TextBlock Text="Save 3D" VerticalAlignment="Center" FontSize="11"/>
                             </StackPanel>
                         </Button>
                         <Button Grid.Column="2"
