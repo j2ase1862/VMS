@@ -270,3 +270,43 @@
 - Web `Services/AuthService.cs` `IssueTokensAsync`, `Services/RefreshTokenOptions.cs`, `Data/Entities/RefreshToken.cs` `AbsoluteExpiresAt`
 - 테스트: `AuthServiceRefreshTests`(+6), `AuthRefreshEndpointTests`(+1)
 
+---
+
+## 8. VisionSetup — Feature Match 재학습 원점 선택 + 회전 ROI 얼라인 기준 각도 + 재학습 알림 — **반영 대기**
+
+| 항목 | 내용 |
+|------|------|
+| PR | #424 (`fix/matchalign-trained-angle-retrain-origin`) |
+| 날짜 | 2026-09-04 |
+| 앱 · 화면 | VMS.VisionSetup — Feature Match 도구 설정(Models 영역), Match Align 도구, 학습(Train) 후 상태 표시줄/경고 창 |
+| 변경 종류 | 결함 수정 2 + UI 옵션 추가 1 + 알림 추가 1 |
+
+### 무엇이 바뀌었나
+1. **회전 ROI로 학습한 뒤 Match Align Δθ 가 ROI 각도만큼 나오던 결함 수정.** 학습 기준 각도가 항상 0° 였는데, 이제 학습 당시 ROI 각도를 기준 각도로 씁니다. 같은 장면을 다시 Run 하면 Δθ ≈ 0.
+2. **레시피를 다시 열면 학습 원점이 ROI 위치가 아닌 템플릿 중심으로 복원되던 결함 수정.** 이제 학습 원점(중심 X/Y·각도)이 레시피에 저장되고 그대로 복원됩니다. 이전 레시피는 열 때 ROI 기준으로 자동 재계산합니다.
+3. Feature Match 설정 Models 영역에 **"재학습 원점"** 선택이 생겼습니다.
+   - **UseCurrentImage(기본)**: [Train Selected] 로 다시 학습하면 원점을 현재 ROI 의 위치·각도로 옮기고 기준 이미지도 현재 장면으로 바꿉니다. (종전 동작)
+   - **KeepReference**: 원점·기준 각도·기준 이미지는 그대로 두고 템플릿 특징만 새로 학습합니다. Match Align 마스터 포즈를 유지한 채 다른 장면으로 특징을 보강할 때 씁니다.
+   - [Add Model] 로 만드는 새 모델은 항상 현재 이미지 기준입니다.
+4. **재학습 후 알림.** Feature Match 에 Match Align 이 Result 로 연결돼 있으면 학습 완료 상태줄에 "기준 원점이 현재 이미지 학습 위치로 갱신됨 / 기준 이미지 그대로 유지됨"이 붙습니다. Match Align 이 **수동 기준**(학습 기준 사용 해제)을 쓰고 있으면 경고 창이 뜹니다:
+   > 연결된 Match Align '…' 은(는) 수동 기준(Ref X/Y/θ)을 사용 중입니다. … 기준 부품을 놓고 Run 한 뒤 Match Align 설정의 [현재 매칭을 기준으로 등록]으로 원점을 다시 등록하세요.
+
+### 왜 바꿨나 (매뉴얼에 넣을 설명의 근거)
+- 실증 PC(2026-09-04): 표준 2D 매치 얼라인 템플릿에서 부품과 Train ROI(회전)를 옮겨 재학습했더니 같은 장면인데 Δ 가 0 이 아니었다. 회전 ROI 는 정렬 워프 후 학습되므로 매칭 각도가 ROI 각도로 나오는데 기준 각도가 0° 로 고정돼 있었다.
+- 재학습이 얼라인 기준을 조용히 바꾸는 구조라서, 의도(기준 유지 vs 새 기준)를 사용자가 고를 수 있어야 하고 연결된 얼라인에 영향을 알려야 한다.
+
+### 매뉴얼 반영 지점
+| 위치 | 해야 할 일 |
+|------|-----------|
+| §5 VisionSetup — Feature Match 도구 설정 (Models 영역) | "재학습 원점" 항목 추가: 두 값의 뜻과 기본값, 새 모델은 항상 현재 이미지 기준. 스크린샷 재캡처 (`--capture-controls` FeatureMatch 설정) |
+| §5 VisionSetup — Match Align 도구 | "학습 기준 사용" 설명에서 기준 각도 = 학습 ROI 각도(축 정렬이면 0°) 로 문구 수정. 재학습 후 상태줄/경고 창 안내 한 단락 |
+| §5 얼라인 워크플로 (템플릿 갤러리 얼라인 3종) | "부품을 옮기고 재학습하면 기준이 새 위치로 바뀐다(기본). 마스터 포즈를 유지하려면 재학습 원점을 KeepReference 로" 주의 문장 |
+| §11.4 변경 이력 | 한 줄 |
+
+### 코드 참조 (검증용)
+- `VMS.VisionSetup/VisionTools/PatternMatching/FeatureMatchTool.cs` `RetrainOriginMode`, `TrainPattern`(TrainedAngle), `FixLegacyTrainedOrigins`
+- `VMS.VisionSetup/VisionTools/PatternMatching/MatchAlignTool.cs` 학습 기준 refTheta
+- `VMS.VisionSetup/Services/ToolSerializer.cs` 모델 TrainedCenterX/Y/TrainedAngle 저장·복원, `VMS.VisionSetup/Services/MatchAlignRetrainAdvisor.cs`
+- `VMS.VisionSetup/ViewModels/MainViewModel.cs` `TrainPattern`
+- 테스트: `FeatureMatchRetrainOriginTests`(8), `MatchAlignToolTests`(+2), `MatchAlignRetrainAdvisorTests`(3)
+

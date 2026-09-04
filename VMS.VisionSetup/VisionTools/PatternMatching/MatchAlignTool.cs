@@ -28,7 +28,7 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
     ///
     /// 기준 포즈:
     /// - 학습 기준(기본): Feature Match 학습 시점의 패턴 중심(TrainedCenterX/Y)을 기준으로,
-    ///   기준 각도는 0° — 별도 등록 없이 학습만 하면 동작한다.
+    ///   기준 각도는 학습 ROI 각도(TrainedAngle, 축 정렬이면 0°) — 별도 등록 없이 학습만 하면 동작한다.
     /// - 수동 기준: 설정 패널의 [현재 매칭을 기준으로 등록]으로 현재 포즈를 캡처하거나
     ///   RefX/RefY/RefTheta 를 직접 입력한다.
     /// </summary>
@@ -45,7 +45,7 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
         // ── 기준(Origin/Master) 포즈 ──
 
         private bool _useTrainedReference = true;
-        /// <summary>true 면 소스 매칭의 학습 중심(TrainedCenterX/Y, θ=0)을 기준으로 사용.</summary>
+        /// <summary>true 면 소스 매칭의 학습 중심(TrainedCenterX/Y, θ=TrainedAngle)을 기준으로 사용.</summary>
         public bool UseTrainedReference
         {
             get => _useTrainedReference;
@@ -308,7 +308,9 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                             result.Message = "학습 기준을 찾을 수 없습니다 — 소스에서 패턴을 학습하거나 수동 기준을 사용하세요.";
                             return result;
                         }
-                        refTheta = 0;
+                        // 기준 각도 = 학습 ROI 각도 (회전 ROI 학습 시 매칭 각도가 그 값으로 나옴).
+                        // 구 레시피/키 없음 → 0° (2026-09-04 실증: 회전 ROI 학습 후 Δθ = ROI 각도 결함 수정)
+                        refTheta = TryGet(src, "TrainedAngle", out var trainedAngle) ? trainedAngle : 0;
                     }
                     else
                     {

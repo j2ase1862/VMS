@@ -49,6 +49,15 @@
                             Command="{Binding DeleteSelectedModelCommand}"/>
                 </StackPanel>
 
+                <!-- 재학습 원점 (2026-09-04) — 기존 모델을 Train Selected 로 다시 학습할 때 얼라인 기준(원점·각도·기준 이미지)을
+                     현재 이미지로 옮길지, 원 학습 그대로 둘지 선택. 새 모델(Add Model)은 항상 현재 이미지 기준. -->
+                <controls:EnumComboBoxParameter Label="재학습 원점"
+                    ItemsSource="{conv:EnumValues {x:Type pm:RetrainOriginMode}}"
+                    SelectedValue="{Binding RetrainOriginMode}"
+                    ToolType="FeatureMatchTool" ParameterName="RetrainOriginMode"/>
+                <TextBlock Foreground="#999999" FontSize="10" TextWrapping="Wrap" Margin="0,2,0,6"
+                           Text="UseCurrentImage: 재학습 시 원점을 현재 ROI 위치·각도로 옮기고 기준 이미지도 교체 (기본). KeepReference: 원점·기준 이미지는 그대로 두고 템플릿 특징만 갱신 — 얼라인 마스터 유지."/>
+
                 <!-- 기준(원본) 이미지 — Train 시 전체 장면이 자동 저장되며, 버튼으로 되불러온다 -->
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                     <Button Content="기준 이미지 불러오기" Style="{StaticResource SecondaryButtonStyle}"

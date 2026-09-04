@@ -1866,20 +1866,42 @@ namespace VMS.VisionSetup.ViewModels
                 if (SelectedVisionTool is FeatureMatchTool featureTool)
                 {
                     var targetModel = featureTool.SelectedModel;
-                    if (featureTool.TrainPattern(trainingImage, targetModel))
+
+                    // 재학습 원점 처리 (2026-09-04): "기준 이미지 유지" 면 원 학습의 중심·각도·기준 PNG 를
+                    // 그대로 두고 템플릿 특징만 갱신 — 얼라인 마스터 포즈 보존. 새 모델은 항상 현재 이미지 기준.
+                    bool keepOrigin = featureTool.RetrainOriginMode == RetrainOriginMode.KeepReference
+                                      && targetModel != null && targetModel.IsTrained;
+
+                    if (featureTool.TrainPattern(trainingImage, targetModel, preserveTrainedCenter: keepOrigin))
                     {
                         // 학습에 쓴 전체 원본 장면을 PNG로 자동 보관 — 레시피에는 ROI 크롭만
                         // 남으므로, 나중에 ROI 조정/재학습 시 이 파일로 장면을 되불러온다
-                        SaveReferenceImage(featureTool);
+                        if (!keepOrigin)
+                            SaveReferenceImage(featureTool);
 
                         if (targetModel != null)
-                            StatusMessage = $"Model '{targetModel.Name}' 학습 완료";
+                            StatusMessage = keepOrigin
+                                ? $"Model '{targetModel.Name}' 재학습 완료 — 원점·기준 이미지는 유지"
+                                : $"Model '{targetModel.Name}' 학습 완료";
                         else
                             StatusMessage = $"새 Model 학습 완료 (총 {featureTool.Models.Count}개)";
 
                         // 특징점 부족 등 학습 품질 경고 — 반쪽 매칭·중심 이탈의 조기 신호
                         if (featureTool.LastTrainWarning is { } trainWarn)
                             StatusMessage += " ⚠ " + trainWarn;
+
+                        // 연결된 Match Align 의 기준 포즈 영향 안내 — 학습 기준은 상태줄, 수동 기준은 경고 창
+                        var (alignNote, alignWarning) = MatchAlignRetrainAdvisor.Advise(
+                            featureTool, keepOrigin,
+                            Connections.Select(c => (
+                                c.SourceToolItem?.VisionTool?.Id ?? string.Empty,
+                                c.TargetToolItem?.VisionTool?.Id ?? string.Empty,
+                                c.Type)),
+                            _visionService.Tools);
+                        if (alignNote != null)
+                            StatusMessage += " · " + alignNote;
+                        if (alignWarning != null)
+                            _dialogService.ShowWarning(alignWarning, "Match Align 기준 재등록 필요");
                     }
                     else
                     {

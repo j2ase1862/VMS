@@ -48,6 +48,37 @@ namespace VMS.VisionSetup.Tests
         }
 
         [Fact]
+        public void Execute_TrainedReference_UsesTrainedAngleAsReferenceTheta()
+        {
+            // 회전 ROI 학습(TrainedAngle=20) → 같은 장면 매칭 각도 20 → Δθ 는 0 이어야 한다 (2026-09-04 실증 결함)
+            var tool = new MatchAlignTool { DrawOverlay = false };
+            var src = MatchResult(100, 100, 20, trainedX: 100, trainedY: 100);
+            src.Data["TrainedAngle"] = 20.0;
+            tool.SourceMatchResult = src;
+
+            using var img = TestImage();
+            var result = tool.Execute(img);
+
+            Assert.True(result.Success);
+            Assert.Equal(0.0, (double)result.Data["DeltaTheta"], 6);
+            Assert.Equal(20.0, (double)result.Data["RefTheta"], 6);
+            result.ReleaseMats();
+        }
+
+        [Fact]
+        public void Execute_TrainedReference_WithoutTrainedAngleKey_UsesZero()
+        {
+            var tool = new MatchAlignTool { DrawOverlay = false };
+            tool.SourceMatchResult = MatchResult(100, 100, 3.5, trainedX: 100, trainedY: 100);   // 구 레시피 결과 (키 없음)
+
+            using var img = TestImage();
+            var result = tool.Execute(img);
+
+            Assert.Equal(3.5, (double)result.Data["DeltaTheta"], 6);
+            result.ReleaseMats();
+        }
+
+        [Fact]
         public void Execute_ManualReference_ComputesDelta_AndNormalizesAngle()
         {
             var tool = new MatchAlignTool
