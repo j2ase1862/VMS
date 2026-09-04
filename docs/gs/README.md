@@ -44,7 +44,7 @@ node gen_user_manual.js   # → ../VMS_사용자매뉴얼_v2.0.docx
 - **상세 기록은 [`manual_change_history.md`](manual_change_history.md)** — 매뉴얼 검토 기간(2026-09-02~) 동안의
   변경을 화면·문구·스크린샷·대상 절 단위로 풀어 쓴 장부. 아래 표는 요지, 상세는 그 문서 (한꺼번에 반영용)
 
-**반영 완료 기준선: SW v1.24.0 / Web v1.7.0 — 2026-09-01 매뉴얼 v2.0 전면 개편** (앱별 11장 구성: 개요→설치→AppSetup→VMS 운전→VisionSetup→DeepLearning→Web→워크플로→관리자→트러블슈팅(5절 확장)→부록. 산출물 `VMS_사용자매뉴얼_v2.0.docx`. 생성기: 캡처는 '첫 문단 뒤' 삽입 규칙 + 삽입/누락 검증 로그 + 마법사 §3.2·관리자 다이얼로그 §4.9 앵커 이동 — ⚠ 앵커 = 4장/5장 h2 제목 문자열, 제목 변경 시 gen_user_manual.js 동기화 필수) (§3.2.9 예측 칩·§3.9 Feature Match 학습/다중 인스턴스·복사 3종·얼라인 템플릿·재연결 창·§4.9 Web 복사·§8.4 이력 반영. ⚠ gen_user_manual.js 의 WIZARD_BEFORE 앵커가 HTML §2.6 제목 문자열 — 제목 변경 시 앵커도 함께)
+**반영 완료 기준선: SW v1.28.1 / Web v1.7.0 — 2026-09-04 단독 모드 로컬 생산이력(#417) 반영** (직전 기준선 v1.24.0 / 2026-09-01 매뉴얼 v2.0 전면 개편 (앱별 11장 구성: 개요→설치→AppSetup→VMS 운전→VisionSetup→DeepLearning→Web→워크플로→관리자→트러블슈팅(5절 확장)→부록. 산출물 `VMS_사용자매뉴얼_v2.0.docx`. 생성기: 캡처는 '첫 문단 뒤' 삽입 규칙 + 삽입/누락 검증 로그 + 마법사 §3.2·관리자 다이얼로그 §4.9 앵커 이동 — ⚠ 앵커 = 4장/5장 h2 제목 문자열, 제목 변경 시 gen_user_manual.js 동기화 필수) (§3.2.9 예측 칩·§3.9 Feature Match 학습/다중 인스턴스·복사 3종·얼라인 템플릿·재연결 창·§4.9 Web 복사·§8.4 이력 반영. ⚠ gen_user_manual.js 의 WIZARD_BEFORE 앵커가 HTML §2.6 제목 문자열 — 제목 변경 시 앵커도 함께)
 (직전 기준선 v1.13.0 의 스크린샷 안내는 이력에서 유지 — 데모 캡처 절차 web_capture_partial.js/seed_demo.js, 운영 DB 무접촉)
 
 | PR | 매뉴얼에 들어갈 내용 | 대상 절 |
@@ -54,7 +54,7 @@ node gen_user_manual.js   # → ../VMS_사용자매뉴얼_v2.0.docx
 | (잔여·스크린샷) | Feature Match 설정 화면 재캡처 — Basic 신규 파라미터(Max Instances·Min Coverage)·[기준 이미지 불러오기] 버튼·마스크 편집기 신 UI(#375)·다중 인스턴스 오버레이(#번호) | §3.9 (Feature Match) |
 | (잔여·스크린샷) | Recipe Manager [Duplicate]/[Rename]·Steps 패널 복제 버튼·도구 우클릭 메뉴(#400), VisionSetup 툴바 [Acquire]·연결 토글(#397), 갤러리 얼라인 탭(#395) | §3.9 |
 | (잔여·스크린샷) | Web 검사항목 툴바 [레시피 복사]/[이름 변경] (Web #94) | §4.9 |
-| #417 | **단독 모드 로컬 생산이력 1~3단계** — ① Recent Inspections 패널이 단독 모드에서도 기록(NG 코드 자리에 실패 도구 이름, 로컬 레시피명, 도움말 문구) ② 검사 결과 로컬 SQLite 영구 저장(`inspection_history.db`, 기본 90일) + Retention Settings 전역 행·체크박스·미리보기·프리셋 InspHistory 열 + 백업 포함 ③ **생산 이력 조회 창 신설** — Recent Inspections [전체 이력] 버튼 → 필터(기간·판정·레시피·NG 코드)·목록/상세(도구 결과+이미지)·일별 집계·NG 파레토·CSV. 상세: manual_change_history.md §3·§4·§5 | §3.5 단독 모드 (+§4 Recent Inspections·§4.9 Retention Settings·백업/복원·§7 상호참조·§11.4 이력) |
+| (반영 완료 2026-09-04) | #417 단독 모드 로컬 생산이력 1~3단계 — HTML §4.3(생산 이력 조회 창 소절 신설)·§4.5·§7.6·§9.4·§11.3·§11.4 + docx 재생성 + 캡처 `36_dlg_inspection_history.png`(신규)·`28_dlg_retention.png`(교체). **잔여 스크린샷**: Recent Inspections 패널 `vms_ctl/sec_recent.png` 재캡처([전체 이력] 버튼 — `--capture-controls`), 일별 집계·NG 파레토 탭(수동) | §4.3 §4.5 §4.9 §7.6 §9.4 §11.3 §11.4 |
 | (반영 완료 2026-09-02) | AppSetup 2단계 재캡처 — 단독 모드 체크박스(#407) + "고급 설정 — Web Client API Key" 접이식 전환 + 설정 마법사 전용 아이콘. 본문·§3.2 표·§11.4 이력·docx 재생성 완료 (capture 도구에 ToggleButton 추가, HelpIcon ? 토글은 제외) | §3.2 |
 | #416 | **AppSetup 3단계 카메라 카드 입력란 제거 — 〈Area Scan〉 Exposure/Gain · 〈3D〉 Capture Mode/Filter/Z Min·Max · 〈Encoder〉 Encoder Res** (런타임 미사용 설정 정리, 안내 카드 1장으로 대체). 입력 항목 표 3행 삭제 + 3단계 풀페이지 재캡처. 상세: manual_change_history.md §1·§2 | §3.2 (+§5.3 상호 참조·§11.4 이력) |
 | #369 #370 | **라이선스 발급 GUI LicGen.App + 백업 자동화** — ⚠ 사내 전용(MSI 비동봉·고객 비노출)이라 **사용자 매뉴얼 대상 아님, Admin 매뉴얼만**: 발급 담당자 절차를 CLI 예시에서 LicGen.App 화면 기준으로 교체(발급 탭·발급 대장 탭 비고·백업 배너/[백업 실행] 스크린샷), `licgen backup` USB 2부 규칙·issue 백업 경고 소개. 상세 절차 원본은 docs/license_operations.md (반영 완료) | Admin 매뉴얼 라이선스 절 (§2.6 발급 측 상대편) |
