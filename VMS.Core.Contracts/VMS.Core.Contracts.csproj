@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    VMS.Core.Contracts — VMS 런타임과 MLOps 플랫폼(BODA.VMS.Web 모델 레지스트리 · VMS.TrainWorker)이 공유하는
+    "규약" 계층. Windows/WPF/OpenCV/ONNX Runtime 의존이 없어 net8.0 (크로스플랫폼) 으로 빌드되고 NuGet 으로 배포된다.
+      · VMS.Core.DeepLearning      — OnnxMetadataReader(metadata_props·그래프 입출력 이름), DetectionModelFormatProbe(규약 판별)
+      · VMS.Core.Services          — TrainingOutputParser(stdout 프로토콜), TrainingArgumentBuilder(스크립트 인자 조립)
+      · VMS.Core.Models.Annotation — TrainingConfig · TrainingTarget · TrainingStatus · TrainingState
+    VMS.Core 는 이 프로젝트를 ProjectReference 로 참조하므로 기존 네임스페이스·타입 이름은 그대로다.
+    패키징: tools\pack-contracts.ps1 (→ D:\Repo\nuget-local) · 사용법: docs\mlops_contracts_package.md
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>VMS.Core</RootNamespace>
+    <AssemblyName>VMS.Core.Contracts</AssemblyName>
+
+    <!-- NuGet -->
+    <IsPackable>true</IsPackable>
+    <PackageId>VMS.Core.Contracts</PackageId>
+    <Authors>VASIM</Authors>
+    <Description>BODA VMS 규약 계층 — ONNX 검출 모델 규약 판별, 학습 스크립트 stdout 프로토콜 파서·인자 조립, 학습 설정/상태 모델. VMS 런타임과 MLOps 플랫폼(Web 모델 레지스트리·학습 워커) 공용.</Description>
+    <PackageTags>boda;vms;mlops;onnx;training</PackageTags>
+    <RepositoryUrl>https://github.com/j2ase1862/VMS</RepositoryUrl>
+    <PackageLicenseExpression></PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <!-- 로컬 피드 (MLOps 솔루션의 nuget.config 가 같은 경로를 가리킨다). -p:PackageOutputPath=… 로 덮어쓰기 가능 -->
+    <PackageOutputPath Condition="'$(PackageOutputPath)' == ''">D:\Repo\nuget-local\</PackageOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+  </ItemGroup>
+
+</Project>
