@@ -336,3 +336,25 @@
 - §6 DeepLearning: "사전 준비" pip 목록, "학습 시작" 절의 스크립트 이름·학습률 권장값, 증강 절의 mosaic/mixup 주석, 스크린샷(학습 패널 안내 문구 변경).
 - §5 Detection 도구: 도움말 문구 "D-FINE 또는 YOLO ONNX 자동 판별" 한 줄.
 - §11.4 변경 이력 한 줄 + 부록 라이선스 표(`gs_distribution_policy.md` §2.6 과 동일하게 D-FINE Apache 2.0 / YOLO 옵션·AGPL).
+
+---
+
+## 10. AI 학습 도구 GS 인증 범위 제외 — 매뉴얼 6장 별책 분리 · 인스톨러 선택 구성 — **반영 완료 (2026-09-08)**
+
+| 항목 | 내용 |
+|------|------|
+| PR | (대기) `feat/aitools-installer-feature` (코드) + `docs/gs-scope-ai-tools` (문서) |
+| 날짜 | 2026-09-08 |
+| 앱 · 화면 | 설치 마법사 "설치 구성 선택" 화면 · VisionSetup Tools 메뉴 · OCR Synth Data 창 |
+| 변경 종류 | 설치 옵션 추가 + 매뉴얼 구성 변경 (인증 범위 정의: `guides/gs_scope_ai_tools.md`) |
+
+### 무엇이 바뀌었나
+- 설치 구성 선택 화면에 **"AI 학습 도구 포함 (VMS.DeepLearning: 라벨링·모델 학습)"** 체크박스가 Web 서버 체크박스 아래에 추가됐다(기본 켬). 해제하면 VMS.DeepLearning 과 `scripts\*.py` 가 설치되지 않는다. 무인 설치는 `INSTALLAITOOLS=0`.
+- 미설치 PC 에서는 VisionSetup Tools 메뉴의 **Deep Learning 항목이 보이지 않는다**. OCR Synth Data 창은 학습 카드와 [Generate & Train] 이 숨겨지고 합성 데이터 생성만 남는다.
+- GS 인증 제출 빌드(`VMS-x.y.z-cert.msi`)에는 이 구성 요소가 아예 없다.
+- 매뉴얼: 본편 6장을 **별책 `BODA-VMS-AI-Tools-Manual.html`** 로 옮기고, 본편 6장은 "AI 학습 도구 (별책 · 선택 구성 요소)" 안내 절로 축약. 별책 §2 에 #429(D-FINE) 사전 준비·학습률·증강 안내, §3 에 라이선스 안내 수록.
+
+### 매뉴얼 반영 포인트
+- §2.1 설치: 설치 구성 선택 화면 캡처 `71_msi_weboption.png` 재캡처 필요 (체크박스 2개).
+- §6·§11.4·목차: 반영 완료 (HTML). docx 재생성 필요.
+- 제품설명서 생성기(`gen_product_description.js`) 적용 범위 문장·구성표 갱신 → docx 재생성 필요.

@@ -2,7 +2,7 @@
 
 **문서 버전**: 1.1
 **작성일**: 2026-06-04 (v1.0) / **개정**: 2026-06-10 (v1.1 — SSO / Option C / 매뉴얼 매트릭스 반영)
-**대상**: VMS 솔루션 (WPF 데스크탑) — `VMS / VMS.AppSetup / VMS.VisionSetup / VMS.DeepLearning / VMS.Core / VMS.PLC / VMS.Camera / VMS.MasterSetup`
+**대상**: VMS 솔루션 (WPF 데스크탑) — `VMS / VMS.AppSetup / VMS.VisionSetup / VMS.Core / VMS.PLC / VMS.Camera / VMS.MasterSetup` (※ `VMS.DeepLearning` 은 2026-09-08 부로 선택 구성 요소·인증 범위 외 — [gs_scope_ai_tools.md](gs_scope_ai_tools.md))
 **기준**: 한국 TTA GS(Good Software) 인증, ISO/IEC 25051 (소비자용 소프트웨어 품질 요구사항)
 
 > 본 문서는 VMS 솔루션이 GS 인증 신청 가능 상태에 도달하기까지 수행한 모든 PR 의 **시간순 히스토리** 입니다.
