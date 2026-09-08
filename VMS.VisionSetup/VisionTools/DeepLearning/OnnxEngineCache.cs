@@ -29,6 +29,41 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         private static readonly ConcurrentDictionary<string, Task<AnomalyOnnxEngine>> _anom = new();
         private static readonly ConcurrentDictionary<string, Task<SegmentationOnnxEngine>> _seg = new();
         private static readonly ConcurrentDictionary<string, Task<YoloSegOnnxEngine>> _yoloSeg = new();
+        private static readonly ConcurrentDictionary<string, Task<IDetectionEngine>> _det = new();
+
+        // ── Detector (DetectionTool — YOLO / D-FINE 규약 자동 판별) ──
+
+        public static void PrefetchDetector(string modelPath, int inputSize = 640)
+        {
+            if (!IsValidPath(modelPath)) return;
+            _det.GetOrAdd(modelPath, p => Task.Run(() => CreateDetector(p, inputSize)));
+        }
+
+        public static IDetectionEngine GetDetector(string modelPath, int inputSize = 640)
+        {
+            if (!IsValidPath(modelPath))
+                return new YoloOnnxEngine(modelPath); // 캐시 못 쓰면 직접 생성 (FileNotFound 예외는 기존과 동일)
+
+            var task = _det.GetOrAdd(modelPath, p => Task.Run(() => CreateDetector(p, inputSize)));
+            return task.GetAwaiter().GetResult();
+        }
+
+        private static IDetectionEngine CreateDetector(string modelPath, int inputSize)
+        {
+            var sw = Stopwatch.StartNew();
+            var format = DetectionModelFormatProbe.Probe(modelPath);
+            IDetectionEngine engine = format == DetectionModelFormat.DFine
+                ? new DFineOnnxEngine(modelPath)
+                : new YoloOnnxEngine(modelPath);
+            try
+            {
+                using var dummy = new Mat(inputSize, inputSize, MatType.CV_8UC3, Scalar.All(0));
+                engine.Detect(dummy, inputSize, 0.25f, 0.45f, null);
+            }
+            catch (Exception ex) { Debug.WriteLine($"[OnnxCache] {format} warmup failed: {ex.Message}"); }
+            Debug.WriteLine($"[OnnxCache] {format} loaded {Path.GetFileName(modelPath)} in {sw.ElapsedMilliseconds}ms (EP: {engine.ActiveProvider})");
+            return engine;
+        }
 
         // ── YOLO (DetectionTool) ──
 
@@ -196,6 +231,7 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         public static void Clear()
         {
             DisposeAll(_yolo);
+            DisposeAll(_det);
             DisposeAll(_cls);
             DisposeAll(_anom);
             DisposeAll(_seg);

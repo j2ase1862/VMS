@@ -24,6 +24,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\VMS\VMS.csproj" />
+    <!-- DeepLearning 앱 추론 서비스 테스트 — VisionSetup 은 빌드 순서 참조만 하므로 명시 필요 -->
+    <ProjectReference Include="..\VMS.DeepLearning\VMS.DeepLearning.csproj" />
   </ItemGroup>
 
 </Project>

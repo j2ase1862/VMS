@@ -22,6 +22,12 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         private const int EntryKeyField = 1;
         private const int EntryValueField = 2;
 
+        // GraphProto (ModelProto field 7) — 입력/출력 ValueInfoProto 의 name 만 읽는다
+        private const int ModelProtoGraphField = 7;
+        private const int GraphInputField = 11;
+        private const int GraphOutputField = 12;
+        private const int ValueInfoNameField = 1;
+
         private const int WireVarint = 0;
         private const int WireFixed64 = 1;
         private const int WireLengthDelimited = 2;
@@ -67,6 +73,100 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// InferenceSession 없이 그래프 입력/출력 텐서 이름을 읽는다 — 검출 모델 규약(YOLO / D-FINE) 판별용.
+        /// GraphProto 안의 initializer(가중치)·node 는 길이만 읽고 Seek 으로 건너뛰므로 대용량 모델에서도 빠르다.
+        /// 실패하면 빈 목록 (호출 측은 YOLO 로 폴백).
+        /// </summary>
+        public static (List<string> Inputs, List<string> Outputs) ReadGraphIoNames(string modelPath)
+        {
+            var inputs = new List<string>();
+            var outputs = new List<string>();
+            if (!File.Exists(modelPath)) return (inputs, outputs);
+
+            try
+            {
+                using var fs = new FileStream(modelPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                long fileLen = fs.Length;
+
+                while (fs.Position < fileLen)
+                {
+                    if (!TryReadVarint(fs, out ulong tag)) break;
+                    int fieldNumber = (int)(tag >> 3);
+                    int wireType = (int)(tag & 0x7);
+
+                    if (fieldNumber == ModelProtoGraphField && wireType == WireLengthDelimited)
+                    {
+                        if (!TryReadVarint(fs, out ulong graphLen)) break;
+                        long graphEnd = fs.Position + (long)graphLen;
+                        if (graphEnd > fileLen) break;
+
+                        ParseGraphIo(fs, graphEnd, inputs, outputs);
+                        fs.Position = graphEnd;
+                        break; // ModelProto 에 graph 는 하나
+                    }
+                    else if (!SkipField(fs, wireType, fileLen))
+                    {
+                        break;
+                    }
+                }
+            }
+            catch
+            {
+                // 파싱 실패 시 지금까지 읽은 것만 반환
+            }
+
+            return (inputs, outputs);
+        }
+
+        private static void ParseGraphIo(Stream s, long graphEnd, List<string> inputs, List<string> outputs)
+        {
+            while (s.Position < graphEnd)
+            {
+                if (!TryReadVarint(s, out ulong tag)) return;
+                int fieldNumber = (int)(tag >> 3);
+                int wireType = (int)(tag & 0x7);
+
+                if (wireType == WireLengthDelimited &&
+                    (fieldNumber == GraphInputField || fieldNumber == GraphOutputField))
+                {
+                    if (!TryReadVarint(s, out ulong len)) return;
+                    long valueEnd = s.Position + (long)len;
+                    if (valueEnd > graphEnd) return;
+
+                    var name = ReadValueInfoName(s, valueEnd);
+                    if (name != null)
+                        (fieldNumber == GraphInputField ? inputs : outputs).Add(name);
+                    s.Position = valueEnd;
+                }
+                else if (!SkipField(s, wireType, graphEnd))
+                {
+                    return;
+                }
+            }
+        }
+
+        private static string? ReadValueInfoName(Stream s, long valueEnd)
+        {
+            while (s.Position < valueEnd)
+            {
+                if (!TryReadVarint(s, out ulong tag)) return null;
+                int fieldNumber = (int)(tag >> 3);
+                int wireType = (int)(tag & 0x7);
+
+                if (fieldNumber == ValueInfoNameField && wireType == WireLengthDelimited)
+                {
+                    if (!TryReadVarint(s, out ulong len)) return null;
+                    if (s.Position + (long)len > valueEnd) return null;
+                    var buf = new byte[len];
+                    ReadExactly(s, buf);
+                    return Encoding.UTF8.GetString(buf);
+                }
+                if (!SkipField(s, wireType, valueEnd)) return null;
+            }
+            return null;
         }
 
         private static void ParseEntry(Stream s, long entryEnd, Dictionary<string, string> result)

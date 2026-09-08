@@ -19,7 +19,7 @@
                 <controls:SliderParameter Label="Inference Size (px)"
                     Value="{Binding InputSize}" Minimum="320" Maximum="1280"
                     TickFrequency="32" ValueFormat="F0"
-                    ToolTip="YOLO 추론 시 이미지를 리사이즈하는 정사각형 크기 (NxN).&#x0a;학습 시 사용한 imgsz와 동일하게 설정하세요.&#x0a;기본값: 640 (YOLOv8 기본 학습 크기)&#x0a;큰 값 = 정밀도↑ 속도↓ / 작은 값 = 속도↑ 정밀도↓"
+                    ToolTip="추론 시 이미지를 리사이즈하는 정사각형 크기 (NxN).&#x0a;학습 시 사용한 imgsz와 동일하게 설정하세요.&#x0a;기본값: 640 (D-FINE / YOLOv8 기본 학습 크기)&#x0a;큰 값 = 정밀도↑ 속도↓ / 작은 값 = 속도↑ 정밀도↓"
                     ToolType="DetectionTool" ParameterName="InputSize"/>
             </StackPanel>
         </Expander>

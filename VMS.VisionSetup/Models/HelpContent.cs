@@ -682,13 +682,13 @@ namespace VMS.VisionSetup.Models
             ["DetectionTool"] = new ToolHelp
             {
                 Name = "Detection (객체 검출)",
-                Description = "YOLO ONNX 기반 객체 검출 도구입니다.\nYOLOv8/v11 모델을 로드하여 이미지에서 객체의 위치와 클래스를 검출합니다.",
-                Usage = "부품 유무 검사, 다종 객체 검출, 결함 검출에 사용됩니다.\n• VMS.DeepLearning 앱에서 데이터셋을 라벨링하고 YOLO 형식으로 학습한 ONNX 모델을 사용합니다.\n• Class Names에 학습 시 사용한 클래스 이름을 콤마로 구분하여 입력하세요.",
+                Description = "ONNX 기반 객체 검출 도구입니다.\nVMS.DeepLearning 에서 학습한 D-FINE(기본, Apache-2.0) 또는 YOLOv8/v11 ONNX 모델을 로드하여 이미지에서 객체의 위치와 클래스를 검출합니다. 모델 종류는 파일에서 자동 판별됩니다.",
+                Usage = "부품 유무 검사, 다종 객체 검출, 결함 검출에 사용됩니다.\n• VMS.DeepLearning 앱에서 데이터셋을 라벨링하고 Detection 으로 학습한 best.onnx 를 지정합니다 (D-FINE 기본).\n• Class Names 는 모델 메타데이터에서 자동으로 채워지며, 없으면 학습 시 사용한 클래스 이름을 콤마로 구분하여 입력하세요.",
                 CognexEquivalent = "Cognex ViDi Blue Locate",
                 Parameters = new Dictionary<string, string>
                 {
-                    ["ModelPath"] = "YOLO ONNX 모델 파일 경로 (.onnx).\nVMS.DeepLearning에서 학습한 best.onnx 파일을 지정합니다.",
-                    ["InputSize"] = "모델 입력 이미지 크기 (픽셀).\n학습 시 설정한 imgsz와 동일하게 설정하세요.\n• YOLOv8 기본: 640",
+                    ["ModelPath"] = "검출 ONNX 모델 파일 경로 (.onnx).\nVMS.DeepLearning에서 학습한 best.onnx 파일을 지정합니다.\n• D-FINE(train_dfine.py) / YOLOv8·v11 규약 자동 판별",
+                    ["InputSize"] = "모델 입력 이미지 크기 (픽셀).\n학습 시 설정한 imgsz와 동일하게 설정하세요.\n• D-FINE / YOLOv8 기본: 640",
                     ["ConfidenceThreshold"] = "검출 신뢰도 임계값 (0~1). 이 값 이상의 신뢰도를 가진 객체만 검출됩니다.\n• 낮은 값 (0.25): 많은 객체 검출, 오검출 증가\n• 높은 값 (0.7): 확실한 객체만 검출",
                     ["IouThreshold"] = "NMS IoU 임계값 (0~1). 겹치는 검출 박스를 제거하는 기준입니다.\n• 낮은 값 (0.3): 강한 중복 제거\n• 높은 값 (0.7): 약한 중복 제거 (밀집 객체에 적합)",
                     ["ClassNamesText"] = "클래스 이름 목록 (콤마 구분).\n학습 시 사용한 클래스 순서대로 입력합니다.\n예: good,defect,crack",

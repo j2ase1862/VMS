@@ -249,8 +249,8 @@ namespace VMS.Core.Services
 
             var inv = CultureInfo.InvariantCulture;
 
-            // Augmentation (YOLO 학습 스크립트에만 의미 있음)
-            if (scriptName.Contains("yolo"))
+            // Augmentation (YOLO·D-FINE 학습 스크립트 — train_dfine.py 는 hsv_* 만 사용, mosaic/mixup 무시)
+            if (scriptName.Contains("yolo") || scriptName.Contains("dfine"))
             {
                 sb.Append($" --mosaic {config.Mosaic.ToString(inv)}");
                 sb.Append($" --mixup {config.Mixup.ToString(inv)}");
