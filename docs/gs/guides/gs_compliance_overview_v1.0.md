@@ -21,7 +21,7 @@
 | `VMS/` | 메인 런처 + 운영 UI (Auto Process / Recipe / WO 진행) |
 | `VMS.AppSetup/` | 시스템 구성 마법사 (PLC / 카메라 / IO 보드) |
 | `VMS.VisionSetup/` | 비전 도구 워크스페이스 + Sequence Editor |
-| `VMS.DeepLearning/` | DL 라벨링 / 학습 / Inference |
+| `VMS.DeepLearning/` | DL 라벨링 / 학습 (**선택 구성 요소 — GS 인증 범위 외**, 인스톨러 `AiTools` Feature, 인증 제출 빌드 미포함 — [gs_scope_ai_tools.md](gs_scope_ai_tools.md)) |
 | `VMS.Core/` | 보안 헬퍼, 외부 API 클라이언트, 감사 로깅 |
 | `VMS.PLC/` | PLC 프로토콜 (Modbus / Mitsubishi / Siemens / LS / Omron) |
 | `VMS.Camera/` | 카메라 추상화 (Hikrobot / Matrox / GigE) |

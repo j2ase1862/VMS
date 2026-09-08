@@ -18,6 +18,7 @@ docs/gs/
 | 파일 | 생성기 |
 |------|--------|
 | `VMS_사용자매뉴얼_v2.0.docx` (+ 동명 `.pdf` 내보내기본) | `pipeline/parse_manual.py` → `pipeline/gen_user_manual.js` |
+| `../manuals/BODA-VMS-AI-Tools-Manual.html` (별책 — AI 학습 도구, 인증 범위 외) | 수동 편집 HTML (본편 6장 분리, 2026-09-08). docx 생성기 없음 — 필요 시 브라우저 인쇄로 PDF |
 | `VMS_제품설명서_v1.0.docx` | `pipeline/gen_product_description.js` |
 | `VMS_OSS_라이선스_확인서_v1.0.docx` `VMS_GS_신청서_템플릿_v1.0.docx` `VMS_GS_신청_체크리스트_v1.0.docx` | `pipeline/gen_gs_supporting_docs.js` |
 
@@ -49,6 +50,7 @@ node gen_user_manual.js   # → ../VMS_사용자매뉴얼_v2.0.docx
 
 | PR | 매뉴얼에 들어갈 내용 | 대상 절 |
 |----|--------------------|--------|
+| (반영 완료 2026-09-08) | AI 학습 도구 GS 범위 제외 — 본편 6장을 별책 `BODA-VMS-AI-Tools-Manual.html` 로 분리(§2 학습 환경 준비에 #429 D-FINE 사전 준비·학습률·증강 반영), 본편 §6 안내 절·§11.4·목차 갱신. ⚠ 잔여: `71_msi_weboption.png` 재캡처(AI 학습 도구 체크박스 추가) | §6 §11.4 별책 |
 | #429 | Detection 학습 기본 백본을 D-FINE(Apache 2.0) 으로 전환 — DeepLearning 앱에서 Detection 데이터셋을 열면 자동 스크립트가 `train_dfine.py`(이전 `train_yolo.py`), 사전 준비 pip 목록이 `torch torchvision transformers onnx` 로 바뀜 (ultralytics 불필요). 증강 패널 안내 문구 변경 (mosaic/mixup 은 YOLO 전용). VisionSetup Detection 도구는 D-FINE / YOLO ONNX 를 자동 판별 — 사용자 조작 동일. 상세: manual_change_history.md §9 | §6 (DeepLearning 학습·사전 준비) §5 (Detection 도구) §11.4 |
 | #427 | (버그 수정·본문 변경 없음) 회전 ROI(RectangleAffine)로 학습한 Feature Match 가 레시피 재로드 후 [Show ROI] 에서 축 정렬 Rect 로 표시되던 결함 수정 — 이제 각도 그대로 복원. §11.4 변경 이력 한 줄만 | §11.4 |
 | (반영 완료 2026-09-04) | #424 Feature Match 재학습 원점 + Match Align 기준 각도 + 재열기 원점 복원 + 재학습 알림 — HTML §5.1 콜아웃 · §5.7 소절 신설 · §11.4 + 신규 그림 `50_fm_retrain_origin.png`(툴 패널 캡처 크롭) + docx 재생성. 상세: manual_change_history.md §8 | §5.1 §5.7 §11.4 |

@@ -114,15 +114,13 @@ SECTIONS = [
         ("사용성", "패널 ⓘ·툴 도움말", "Camera/Steps/Tool Palette/Tool Settings ⓘ 및 툴별 HelpIcon",
          "설명 말풍선 표시", "§3.3"),
     ]),
-    ("F. DeepLearning (라벨링·학습)", GRP[4], [
-        ("기능적합성", "실행 진입", "VisionSetup 상단 [Deep Learning] 버튼",
-         "라벨링 앱 정상 기동", "§3.8"),
-        ("기능적합성", "데이터셋·라벨링", "Detection 데이터셋 생성 → 이미지 추가 → 상자 라벨링 → 저장",
-         "라벨 완료 이미지 초록 점, 재로드 시 라벨 유지", "§3.8"),
-        ("기능적합성", "Export·학습 UI", "Auto Split → Export 실행, Training 섹션 입력 확인",
-         "작업 유형에 맞는 형식으로 내보내기, 스크립트 자동 매칭 표시", "§3.8"),
-        ("사용성", "섹션·필드 ⓘ 도움말", "Dataset/Classes/Training 등 헤더와 Epochs 등 필드 ⓘ",
-         "설명 말풍선 표시, 매뉴얼 §3.8 기조와 일치", "§3.8"),
+    # F. DeepLearning(라벨링·학습) 그룹은 GS 인증 범위 외로 제외 (2026-09-08, gs_scope_ai_tools.md).
+    #    추론 도구(Detection 등)는 E 그룹(VisionSetup)에서 샘플 ONNX 로 검증한다.
+    ("F. 딥러닝 추론 도구 (샘플 모델)", GRP[4], [
+        ("기능적합성", "Detection 도구", "샘플 D-FINE ONNX 지정 → Class Names 자동 채움 → Run",
+         "기대 박스(expected.csv)와 클래스·위치 일치, 인증 빌드에는 학습 도구 미포함", "§5"),
+        ("신뢰성", "손상 모델 격리", "잘못된 .onnx 지정 후 Run",
+         "OnnxLoadException 으로 도구만 실패, 시퀀스 엔진 계속 동작", "§5"),
     ]),
     ("G. VMS.Web 화면", GRP[6], [
         ("보안성", "회원가입·승인", "신규 가입 → 관리자 승인 전 로그인 시도 → 승인 후 재시도",

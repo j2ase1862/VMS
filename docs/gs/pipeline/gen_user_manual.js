@@ -104,7 +104,7 @@ const POST = {
     () => imgPara("70_msi_welcome.png", 420),
     () => caption("그림. 설치 마법사 시작 화면 — BODA 브랜드 배너, [다음]/[취소] (라이선스 동의 단계 없음)"),
     () => imgPara("71_msi_weboption.png", 420),
-    () => caption("그림. 설치 구성 선택 화면 — \"BODA VMS Web 서버 포함\" 체크박스 (기본 켬, 해제 시 웹 서버 파일 미설치)"),
+    () => caption("그림. 설치 구성 선택 화면 — \"BODA VMS Web 서버 포함\" · \"AI 학습 도구 포함\" 체크박스 (기본 켬, 해제 시 해당 파일 미설치) ※ v1.31.0 재캡처 예정"),
   ],
   "7.18 SW 라이선스 (좌석 현황)": [
     () => imgPara("62_web_SW_라이선스.png", 600),
@@ -281,45 +281,9 @@ const POST = {
     () => bullet("Enable TensorRT FP16 — RTX 계열에서 2~3배 속도 향상."),
     () => bullet("[Save] / [Cancel] — 저장(다음 모델 로드/세션 재생성 시점부터 적용) / 취소."),
   ],
-  "6. 딥러닝 모델 학습 (VMS.DeepLearning)": [
+  "6. AI 학습 도구 (별책 · 선택 구성 요소)": [
     () => imgPara("06_deeplearning_full.png", 620),
-    () => caption("그림. VMS.DeepLearning — 데이터셋·이미지 목록(좌) / 라벨링 캔버스(중) / 클래스·라벨·학습(우)  [Detection 데이터셋 예시]"),
-  ],
-  "화면 구성": [
-    () => ctlImg("bar_toolbar.png", 460, "deeplearning_ctl"),
-    () => caption("그림. 상단 툴바 — [New Dataset] / [Save] / [Add Images] / [Auto Split] / [Export]"),
-    () => ctlImg("sec_dataset.png", 250, "deeplearning_ctl"),
-    () => caption("그림. Dataset 섹션 — 데이터셋 목록, 새 이름 + 작업 유형 선택, [Load]·[Save]·[Delete]"),
-    () => ctlImg("sec_images.png", 250, "deeplearning_ctl"),
-    () => caption("그림. Images 섹션 — [+ Add]·[- Del], 이미지 이동(◀/▶), 라벨·학습 현황 요약"),
-    () => ctlImg("sec_classes.png", 250, "deeplearning_ctl"),
-    () => caption("그림. Classes 섹션 — 클래스 목록과 추가([+])"),
-    () => ctlImg("sec_labels.png", 250, "deeplearning_ctl"),
-    () => caption("그림. Labels 섹션 — 현재 이미지의 라벨 목록, [Delete]"),
-    () => ctlImg("sec_label_editor.png", 250, "deeplearning_ctl"),
-    () => caption("그림. Label Editor — 선택한 라벨의 클래스 / 텍스트(Transcription) / 검증 여부 편집"),
-    () => ctlImg("sec_export.png", 250, "deeplearning_ctl"),
-    () => caption("그림. Export 섹션 — [Auto Split (Train/Val)] / [Export for Training] + 작업 유형별 내보내기 형식 안내"),
-    () => ctlImg("sec_training.png", 250, "deeplearning_ctl"),
-    () => caption("그림. Training 섹션 — Python·스크립트·출력 경로, Epochs/Batch Size, [Start Training]·[Stop], 진행률·로그"),
-  ],
-  "작업 유형 — 데이터셋을 만들 때 선택": [
-    () => ctlImg("sec_classes_anomaly.png", 250, "deeplearning_ctl"),
-    () => caption("그림. Anomaly(이상 탐지) 유형의 분류 버튼 — [GOOD (정상)] / [DEFECT (불량)]"),
-  ],
-  "학습 결과 바로 확인 (Inference Mode)": [
-    () => ctlImg("sec_inference.png", 250, "deeplearning_ctl"),
-    () => caption("그림. Inference Mode — 모델 선택, Conf(신뢰도)·IoU(중복 제거) 슬라이더"),
-  ],
-  "부족한 데이터 보강 (Active Learning)": [
-    () => ctlImg("sec_active_learning.png", 250, "deeplearning_ctl"),
-    () => caption("그림. Active Learning — 테스트 폴더 / 실패 기준 / [▶ 일괄 추론 실행] / [✚ 데이터셋에 추가]"),
-  ],
-  "클릭 한 번으로 윤곽 라벨링 (SAM)": [
-    () => ctlImg("sec_sam_model.png", 250, "deeplearning_ctl"),
-    () => caption("그림. SAM Model 섹션 — Encoder/Decoder 파일 지정, [Load SAM Model]"),
-    () => ctlImg("bar_sam_toolbar.png", 340, "deeplearning_ctl"),
-    () => caption("그림. SAM 라벨링 도구모음 — 좌클릭 전경 / 우클릭 배경, [Confirm (Enter)]·[Clear (Esc)]"),
+    () => caption("그림. AI 학습 도구(VMS.DeepLearning) 화면 — 사용 방법은 별책 「BODA VMS AI 학습 도구 매뉴얼」 참조"),
   ],
   "재학습 원점 — 기준 이미지 유지 / 현재 이미지": [
     () => imgPara("50_fm_retrain_origin.png", 300),

@@ -144,7 +144,7 @@ children.push(H1("2. 목적 및 적용 범위"));
 children.push(H2("2.1 목적"));
 children.push(P("본 제품설명서는 VMS의 제품 개요, 동작 환경(하드웨어/소프트웨어 요구사항), 그리고 구현·검증된 기능 명세(Function List)를 정의한다. 본 문서에 기술된 기능 목록은 GS 인증 시험 시나리오의 기준이 된다."));
 children.push(H2("2.2 적용 범위"));
-children.push(P("적용 범위는 VMS 데스크톱 제품군(운영 클라이언트 VMS, 시스템 설정 VMS.AppSetup, 비전 설정 VMS.VisionSetup, 딥러닝 VMS.DeepLearning)과 이와 연동되는 BODA.VMS.Web(관리/MES) 서버를 포함한다."));
+children.push(P("적용 범위는 VMS 데스크톱 제품군(운영 클라이언트 VMS, 시스템 설정 VMS.AppSetup, 비전 설정 VMS.VisionSetup)과 이와 연동되는 BODA.VMS.Web(관리/MES) 서버를 포함한다. 딥러닝 모델을 만드는 AI 학습 도구(VMS.DeepLearning)는 선택 설치 구성 요소로서 본 인증 범위에 포함하지 않으며, 제품은 학습된 ONNX 모델을 사용한 추론 검사 기능만 포함한다."));
 children.push(P("※ 본 문서에는 현재 정식 구현·동작이 확인된 기능만 기술하였다.", { italics: true, size: 18, color: "595959" }));
 
 // ---- 3. 제품 구성 ----
@@ -158,7 +158,7 @@ children.push(P("VMS는 다음 모듈로 구성된다."));
       ["VMS (운영 클라이언트)", "생산 현장 운영 화면. 카메라 제어/검사 실행(AUTO RUN)·판정·통계·작업지시·이미지 저장·관리자 도구."],
       ["VMS.AppSetup (시스템 설정)", "최초 1회 시스템 구성 마법사. 애플리케이션·네트워크·카메라·PLC·로봇·초기 관리자 계정 설정."],
       ["VMS.VisionSetup (비전 설정)", "비전 도구 워크스페이스. 카메라 취득·ROI 지정·도구 조합·레시피/시퀀스 편집·배치 테스트·캘리브레이션."],
-      ["VMS.DeepLearning (딥러닝)", "딥러닝 데이터셋 라벨링·학습·추론 보조 도구(선택)."],
+      ["(선택 구성) VMS.DeepLearning", "딥러닝 데이터셋 라벨링·학습 도구 — 선택 설치 구성 요소, 인증 범위 외 (인증 제출 빌드 미포함)."],
       ["NativeVision (C++ 가속)", "AVX2/FMA 기반 영상처리 가속 네이티브 라이브러리."],
       ["BODA.VMS.Web (관리/MES)", "ASP.NET Core 8 + Blazor 웹. 대시보드·작업지시·생산이력·검사이미지 조회·알람·감사로그 등(선택 연동)."],
     ].map(([a, b], i) => new TableRow({ children: [
