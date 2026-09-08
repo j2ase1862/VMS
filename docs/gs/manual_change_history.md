@@ -317,7 +317,7 @@
 
 | 항목 | 내용 |
 |------|------|
-| PR | (대기) `feat/dfine-detection-backbone` |
+| PR | #429 (`feat/dfine-detection-backbone`, 2026-09-08 머지) |
 | 날짜 | 2026-09-08 |
 | 앱 · 화면 | VMS.DeepLearning 학습 패널(Training) · VMS.VisionSetup Detection 도구 설정 |
 | 변경 종류 | 학습 백본 교체(라이선스 대응) + 안내 문구 · 사전 준비 절차 변경 (도구 조작 동일) |
