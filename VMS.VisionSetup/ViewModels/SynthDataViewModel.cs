@@ -209,6 +209,15 @@ namespace VMS.VisionSetup.ViewModels
         partial void OnIsGeneratingChanged(bool value) { OnPropertyChanged(nameof(IsBusy)); RefreshCommands(); }
         partial void OnIsTrainingChanged(bool value) { OnPropertyChanged(nameof(IsBusy)); RefreshCommands(); }
 
+        /// <summary>
+        /// PP-OCR 학습 스크립트(train_ppocr.py)가 있는 PC 에서만 학습 카드·[Generate &amp; Train] 을 표시한다.
+        /// 스크립트는 인스톨러 "AI 학습 도구" 옵션으로만 설치되므로, 검사 전용 PC·GS 인증 빌드에서는
+        /// 합성 데이터 생성(C#)만 남는다. 사용자가 경로를 직접 지정하면 다시 나타난다.
+        /// </summary>
+        public bool IsTrainingAvailable => !string.IsNullOrEmpty(TrainScriptPath) && File.Exists(TrainScriptPath);
+
+        partial void OnTrainScriptPathChanged(string value) => OnPropertyChanged(nameof(IsTrainingAvailable));
+
         private void RefreshCommands()
         {
             GenerateCommand.NotifyCanExecuteChanged();

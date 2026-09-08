@@ -1,10 +1,10 @@
 <!-- WixUI_InstallDir(WiX 6.0.2 원본) 기반 커스텀 다이얼로그 세트.
      변경점:
-       1. LicenseAgreementDlg 제거 — Welcome → InstallDir 직행
+       1. LicenseAgreementDlg 제거 - Welcome → InstallDir 직행
           (동봉되던 영문 견본 license.rtf 가 그대로 노출되던 문제 해소).
        2. 폰트 서체 Tahoma → Segoe UI (한글은 GDI 폰트 링크로 맑은 고딕 대체).
-          크기는 원본 유지 — 컨트롤 크기가 고정이라 키우면 긴 문장이 잘린다.
-     경로 검증은 원본의 기본형(CheckTargetPath)과 동일 — 아키텍처별
+          크기는 원본 유지 - 컨트롤 크기가 고정이라 키우면 긴 문장이 잘린다.
+     경로 검증은 원본의 기본형(CheckTargetPath)과 동일 - 아키텍처별
      WixUIValidatePath CA 를 쓰지 않으므로 단일 Fragment 로 충분하다.
      배너/배경 비트맵 교체는 Package.wxs 의 WixVariable 에서. -->
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
@@ -61,7 +61,7 @@
       <Property Id="ARPNOMODIFY" Value="1" />
     </UI>
 
-    <!-- Web 서버 포함 선택 화면 — Package.wxs 의 WebServer Feature(INSTALLWEB 조건)와 연결.
+    <!-- Web 서버 포함 선택 화면 - Package.wxs 의 WebServer Feature(INSTALLWEB 조건)와 연결.
          체크(기본) = INSTALLWEB=1 → 설치, 해제 = 속성 제거 → Feature Level 0 (미설치).
          명령줄 무인 설치의 INSTALLWEB=0 제외 경로와 같은 속성을 공유한다.
          Web payload 가 없는 빌드(CI)에서는 체크가 동작에 영향을 주지 않는다. -->
@@ -74,7 +74,7 @@
                  Text="{\WixUI_Font_Title}설치 구성 선택" />
         <Control Id="Description" Type="Text" X="25" Y="23" Width="320" Height="15"
                  Transparent="yes" NoPrefix="yes"
-                 Text="관리 기능(BODA VMS Web 서버) 설치 여부를 선택하세요." />
+                 Text="함께 설치할 선택 구성 요소를 고르세요. (검사 프로그램은 항상 설치됩니다)" />
         <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
 
         <Control Id="WebCheck" Type="CheckBox" X="25" Y="70" Width="330" Height="17"
@@ -82,8 +82,17 @@
                  Text="BODA VMS Web 서버 포함 (권장, 기본값)" />
         <Control Id="WebDesc1" Type="Text" X="40" Y="92" Width="315" Height="30" NoPrefix="yes"
                  Text="생산 이력·작업지시·품질 통계를 브라우저로 관리하는 웹 서버입니다. 설치해도 자동 실행되지 않으며, 이 PC를 관리 서버로 쓸 때만 설정 마법사에서 켭니다." />
-        <Control Id="WebDesc2" Type="Text" X="40" Y="126" Width="315" Height="30" NoPrefix="yes"
-                 Text="체크를 해제하면 웹 서버 파일이 설치되지 않습니다 (디스크 절약). 나중에 필요해지면 설치 파일을 다시 실행해 포함 설치할 수 있습니다." />
+        <Control Id="WebDesc2" Type="Text" X="40" Y="126" Width="315" Height="22" NoPrefix="yes"
+                 Text="체크를 해제하면 웹 서버 파일이 설치되지 않습니다. 나중에 설치 파일을 다시 실행해 포함할 수 있습니다." />
+
+<?ifndef ExcludeAiTools ?>
+        <!-- AI 학습 도구 - Package.wxs 의 AiTools Feature(INSTALLAITOOLS 조건). GS 인증 빌드(ExcludeAiTools)에서는 컨트롤 자체가 없다. -->
+        <Control Id="AiCheck" Type="CheckBox" X="25" Y="156" Width="330" Height="17"
+                 Property="INSTALLAITOOLS" CheckBoxValue="1"
+                 Text="AI 학습 도구 포함 (VMS.DeepLearning: 라벨링·모델 학습)" />
+        <Control Id="AiDesc1" Type="Text" X="40" Y="178" Width="315" Height="48" NoPrefix="yes"
+                 Text="딥러닝 검사 모델을 만드는 라벨링·학습 프로그램과 파이썬 학습 스크립트입니다. GPU 와 파이썬 환경이 있는 학습 PC 에만 필요하며, 검사만 하는 PC 는 해제해도 됩니다. Detection 등 검사 도구는 이 옵션과 무관하게 설치됩니다." />
+<?endif?>
 
         <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
         <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17"

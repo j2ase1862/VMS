@@ -91,9 +91,11 @@ dotnet build VMS.sln -c Release
 dotnet build VMS.MasterSetup\VMS.MasterSetup.wixproj -c Release
 ```
 
-산출물: `VMS.MasterSetup\bin\Release\VMS-1.5.4.msi` (**약 1,130MB** — Web 서버 동봉 + Mech-Mind 포함 정상.
-1,055MB 대면 Web payload 누락(스테이징 스크립트 미실행 또는 증분 빌드가 재링크 생략 — `-t:Rebuild` 사용),
-538MB 대면 CI 빌드거나 SDK 누락 의심. Web 동봉 상세: [msi_build_guide.md §13](msi_build_guide.md))
+산출물: `VMS.MasterSetup\bin\Release\VMS-<버전>.msi` (**v1.31.0 기준 약 340MB** — self-contained 런타임 + Web 서버 동봉 + Mech-Mind 포함 정상.
+`release.ps1` 의 하한 `-MinMsiMB 300` 미만이면 Web payload 누락(스테이징 미실행 또는 증분 빌드 — `-t:Rebuild` 사용) 또는 런타임 누락 의심.
+※ v1.25.0~v1.30.0 의 "정상 846MB" 는 개발 PC 빌드 출력에 남아 있던 stale `win-x64\` 폴더(1.3GB, 2026-06-01 잔재)가 함께 수확된
+결과였다 — Package.wxs 의 `<Exclude>` 로 차단(v1.31.0). Web 동봉 상세: [msi_build_guide.md §13](msi_build_guide.md),
+AI 학습 도구 Feature·인증 빌드(`-p:ExcludeAiTools=true` → `VMS-<버전>-cert.msi`): [msi_build_guide.md §14](msi_build_guide.md))
 
 ```powershell
 $h = (Get-FileHash VMS.MasterSetup\bin\Release\VMS-1.5.4.msi -Algorithm SHA256).Hash.ToLower()
