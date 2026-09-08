@@ -6,6 +6,7 @@
       "VMS.AppSetup.Tests\\VMS.AppSetup.Tests.csproj",
       "VMS.AppSetup\\VMS.AppSetup.csproj",
       "VMS.Camera\\VMS.Camera.csproj",
+      "VMS.Core.Contracts\\VMS.Core.Contracts.csproj",
       "VMS.Core.Tests\\VMS.Core.Tests.csproj",
       "VMS.Core\\VMS.Core.csproj",
       "VMS.DeepLearning\\VMS.DeepLearning.csproj",

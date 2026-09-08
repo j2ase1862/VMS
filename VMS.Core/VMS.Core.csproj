@@ -18,6 +18,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\VMS.Camera\VMS.Camera.csproj" />
+    <!-- 규약 계층(net8.0, NuGet 배포) — ONNX 규약 판별·학습 프로토콜·학습 모델. MLOps 플랫폼과 공유 (docs/mlops_contracts_package.md) -->
+    <ProjectReference Include="..\VMS.Core.Contracts\VMS.Core.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>
