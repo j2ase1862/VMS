@@ -885,14 +885,14 @@
                                     <StackPanel Margin="0,6,0,0">
                                         <TextBlock Foreground="#888" FontSize="10" TextWrapping="Wrap"
                                                    Margin="0,0,0,6"
-                                                   Text="Ultralytics 증강 파라미터. 조명/색감 변동이 큰 공장 환경에서는 hsv_v를 0.5~0.7로 높이세요."/>
+                                                   Text="증강 파라미터. hsv_h/s/v 는 D-FINE·YOLO 공통, mosaic/mixup 은 YOLO 학습에만 적용됩니다. 조명/색감 변동이 큰 공장 환경에서는 hsv_v를 0.5~0.7로 높이세요."/>
 
                                         <!-- Preset Buttons -->
                                         <TextBlock Text="Presets" Foreground="#999" FontSize="10" Margin="0,0,0,4"/>
                                         <WrapPanel Margin="0,0,0,8">
                                             <Button Content="Default" Command="{Binding PresetAugDefaultCommand}"
                                                     Padding="8,3" FontSize="10" Margin="0,0,4,4"
-                                                    ToolTip="Ultralytics 기본값"/>
+                                                    ToolTip="기본값"/>
                                             <Button Content="Factory Lighting" Command="{Binding PresetAugFactoryLightingCommand}"
                                                     Padding="8,3" FontSize="10" Margin="0,0,4,4"
                                                     ToolTip="공장 조명 변동 강건화 (HSV-V=0.7)"/>

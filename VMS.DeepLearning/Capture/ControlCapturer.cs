@@ -153,7 +153,7 @@ namespace VMS.DeepLearning.Capture
                 // Training 경로 — 개발 PC 로컬 경로가 스샷에 노출되지 않게 문서용 대표 값으로.
                 // (CurrentDataset 주입 뒤에 설정 — AutoMatchTrainingScript 가 덮어쓴 값을 교체)
                 vm.TrainingConfig.PythonPath = @"C:\Python312\python.exe";
-                vm.TrainingConfig.TrainingScriptPath = @"scripts\train_yolo.py";
+                vm.TrainingConfig.TrainingScriptPath = @"scripts\train_dfine.py";
                 vm.TrainingConfig.OutputDir = @"D:\Models\gear_defects";
 
                 vm.StatusMessage = "데이터셋 'gear_defects' 로드됨 — 이미지 1/3";

@@ -41,12 +41,13 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
     }
 
     /// <summary>
-    /// Cognex ViDi Blue Locate 대응 — YOLO ONNX 기반 객체 검출 도구.
-    /// YOLOv8/v11 ONNX 모델을 로드하여 이미지에서 객체를 검출합니다.
+    /// Cognex ViDi Blue Locate 대응 — ONNX 기반 객체 검출 도구.
+    /// D-FINE(Apache-2.0, 기본 백본 — train_dfine.py) 또는 YOLOv8/v11 ONNX 모델을 로드하여
+    /// 이미지에서 객체를 검출합니다. 모델 규약은 OnnxEngineCache 가 파일에서 자동 판별한다.
     /// </summary>
     public partial class DetectionTool : VisionToolBase
     {
-        private YoloOnnxEngine? _engine;
+        private IDetectionEngine? _engine;
         private readonly object _engineLock = new();
 
         // ── Parameters ──
@@ -184,19 +185,19 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
             }
             LoadModelMetadata(value);
             // Recipe Load에서 이미 프리페치됐다면 NoOp. 새로 고른 경우엔 지금 워밍업 시작.
-            OnnxEngineCache.PrefetchYolo(value, InputSize);
+            OnnxEngineCache.PrefetchDetector(value, InputSize);
         }
 
         // Execute 진입 시 호출. 캐시가 완료된 엔진을 반환하거나, 진행 중이면 완료를 대기한다.
         // 캐시 경로가 실패하면 (파일 없음 등) 기존 방식으로 폴백.
-        private YoloOnnxEngine EnsureEngine()
+        private IDetectionEngine EnsureEngine()
         {
             lock (_engineLock)
             {
                 if (_engine != null) return _engine;
             }
 
-            var engine = OnnxEngineCache.GetYolo(ModelPath, InputSize);
+            var engine = OnnxEngineCache.GetDetector(ModelPath, InputSize);
 
             lock (_engineLock)
             {
@@ -458,7 +459,7 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         /// 고해상도(예: 4K+) 영상에서 작은 결함이 InputSize 리사이즈로 사라지는 문제를 완화합니다.
         /// </summary>
         private static List<DetectionResult> RunSahiDetection(
-            YoloOnnxEngine engine, Mat image, int tileSize, double overlapRatio,
+            IDetectionEngine engine, Mat image, int tileSize, double overlapRatio,
             float confThreshold, float iouThreshold, float[]? perClassConf)
         {
             var all = new List<DetectionResult>();
@@ -708,7 +709,7 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
     /// <summary>
     /// YOLOv8/v11 ONNX 추론 엔진
     /// </summary>
-    public class YoloOnnxEngine : OnnxModelBase
+    public class YoloOnnxEngine : OnnxModelBase, IDetectionEngine
     {
         public YoloOnnxEngine(string modelPath)
         {

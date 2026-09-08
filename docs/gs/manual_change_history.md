@@ -310,3 +310,29 @@
 - `VMS.VisionSetup/ViewModels/MainViewModel.cs` `TrainPattern`
 - 테스트: `FeatureMatchRetrainOriginTests`(8), `MatchAlignToolTests`(+2), `MatchAlignRetrainAdvisorTests`(3)
 
+
+---
+
+## 9. Detection 학습 기본 백본 D-FINE(Apache 2.0) 전환 — **반영 대기**
+
+| 항목 | 내용 |
+|------|------|
+| PR | (대기) `feat/dfine-detection-backbone` |
+| 날짜 | 2026-09-08 |
+| 앱 · 화면 | VMS.DeepLearning 학습 패널(Training) · VMS.VisionSetup Detection 도구 설정 |
+| 변경 종류 | 학습 백본 교체(라이선스 대응) + 안내 문구 · 사전 준비 절차 변경 (도구 조작 동일) |
+
+### 무엇이 바뀌었나
+- Detection 데이터셋을 열면 자동으로 잡히는 학습 스크립트가 `train_yolo.py` → **`train_dfine.py`** 로 바뀐다. Ultralytics YOLO(AGPL-3.0) 대신 D-FINE(Apache 2.0, HuggingFace transformers 구현) 으로 학습한다.
+- 사전 준비(pip) 안내: `pip install ultralytics onnx` → **`pip install torch torchvision "transformers>=4.52" onnx onnxruntime pyyaml`** (선택 `torchmetrics` 설치 시 학습 패널에 mAP50 표시).
+- 사전학습 모델 입력란을 비우면 `ustc-community/dfine-small-obj2coco` 를 자동 내려받는다 (첫 실행 인터넷 필요). 로컬 폴더 경로도 가능.
+- 학습률 기본 권장값이 0.001(YOLO) → **0.00025**(D-FINE, AdamW). 큰 값이면 로그에 경고.
+- 증강 패널 안내 문구: hsv_h/s/v 는 D-FINE·YOLO 공통, **mosaic/mixup 은 YOLO 학습에만 적용** (D-FINE 에서는 무시된다는 경고 로그).
+- 라벨링 형식(YOLO txt + data.yaml)은 그대로. 세그멘테이션 폴리곤 라벨은 외접 박스로 자동 변환.
+- 출력은 동일하게 `best.onnx`. VisionSetup Detection 도구는 파일을 열 때 D-FINE / YOLO 규약을 자동 판별하므로 **도구 조작·파라미터는 이전과 동일** (Model Path, Input Size 640, Confidence, IoU, SAHI, Dot 분석 전부 그대로).
+- `train_yolo.py` 는 남아 있으며 학습 스크립트 경로를 수동으로 바꾸면 계속 쓸 수 있다 — Ultralytics Enterprise License 보유 사이트 전용이라는 주의 문구를 매뉴얼에 넣는다.
+
+### 매뉴얼 반영 포인트
+- §6 DeepLearning: "사전 준비" pip 목록, "학습 시작" 절의 스크립트 이름·학습률 권장값, 증강 절의 mosaic/mixup 주석, 스크린샷(학습 패널 안내 문구 변경).
+- §5 Detection 도구: 도움말 문구 "D-FINE 또는 YOLO ONNX 자동 판별" 한 줄.
+- §11.4 변경 이력 한 줄 + 부록 라이선스 표(`gs_distribution_policy.md` §2.6 과 동일하게 D-FINE Apache 2.0 / YOLO 옵션·AGPL).

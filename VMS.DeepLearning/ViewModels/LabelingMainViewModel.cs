@@ -265,7 +265,7 @@ namespace VMS.DeepLearning.ViewModels
 
             var scriptName = CurrentDataset.DatasetTaskType switch
             {
-                DatasetTaskType.Detection => "train_yolo.py",
+                DatasetTaskType.Detection => "train_dfine.py",   // Apache-2.0 백본 (train_yolo.py 는 Ultralytics 라이선스 보유 시 수동 선택)
                 DatasetTaskType.Classification => "train_classifier.py",
                 DatasetTaskType.AnomalyDetection => "train_anomaly.py",
                 DatasetTaskType.OCR => "train_ppocr.py",
@@ -1383,7 +1383,7 @@ namespace VMS.DeepLearning.ViewModels
 
         // ── Augmentation 프리셋 ──
 
-        /// <summary>Ultralytics 기본값 (균형잡힌 일반 학습).</summary>
+        /// <summary>기본값 (균형잡힌 일반 학습 — hsv_* 는 D-FINE·YOLO 공통, mosaic/mixup 은 YOLO 전용).</summary>
         [RelayCommand]
         private void PresetAugDefault()
         {

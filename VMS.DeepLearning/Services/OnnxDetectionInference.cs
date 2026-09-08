@@ -28,8 +28,10 @@ namespace VMS.DeepLearning.Services
     }
 
     /// <summary>
-    /// YOLOv8/v11 ONNX 추론 — VMS.VisionSetup의 YoloOnnxEngine과 동일 로직 미니멀 버전.
-    /// Letterbox 전처리 + [1,84,8400]/[1,8400,84] 자동 감지 + NMS.
+    /// 검출 ONNX 추론 — VMS.VisionSetup의 YoloOnnxEngine / DFineOnnxEngine 과 동일 로직 미니멀 버전.
+    /// YOLO: Letterbox 전처리 + [1,84,8400]/[1,8400,84] 자동 감지 + NMS.
+    /// D-FINE(train_dfine.py, Apache-2.0): stretch 리사이즈 + images/orig_target_sizes → labels/boxes/scores
+    /// (또는 HF 원본 logits/pred_boxes). 세션 입출력 이름으로 자동 판별.
     /// 학습 직후 best.onnx를 데이터셋 이미지에 바로 적용해 시각 검증할 때 사용.
     /// </summary>
     public class OnnxDetectionInference : IInferenceService
@@ -40,6 +42,15 @@ namespace VMS.DeepLearning.Services
         private int _inputSize = 640;
 
         private int _numClasses;
+
+        // D-FINE 규약 (세션 입출력 이름으로 판별)
+        private bool _isDFine;
+        private bool _dfineDeployLayout;
+        private string _imagesInput = "images";
+        private string? _sizesInput;
+
+        /// <summary>현재 모델이 D-FINE(DETR) 규약이면 true (YOLO 면 false)</summary>
+        public bool IsDFineModel => _isDFine;
 
         public bool IsLoaded => _session != null;
         public string CurrentModelPath => _modelPath;
@@ -69,8 +80,12 @@ namespace VMS.DeepLearning.Services
                 _classNames = ReadClassNamesFromMetadata(_session);
                 _inputSize = ReadInputSizeFromMetadata(_session);
 
+                DetectLayout(_session);
+
                 // 출력 차원에서 클래스 수 추출
-                _numClasses = ReadNumClassesFromOutput(_session);
+                _numClasses = _isDFine
+                    ? (_classNames?.Length ?? ReadNumClassesFromDFineOutput(_session))
+                    : ReadNumClassesFromOutput(_session);
             }
             catch (Exception ex) when (ex is not FileNotFoundException && ex is not OnnxLoadException)
             {
@@ -95,6 +110,10 @@ namespace VMS.DeepLearning.Services
             _modelPath = string.Empty;
             _classNames = null;
             _numClasses = 0;
+            _isDFine = false;
+            _dfineDeployLayout = false;
+            _imagesInput = "images";
+            _sizesInput = null;
         }
 
         public InferenceResult Predict(Mat image, float confThreshold = 0.10f, float iouThreshold = 0.45f)
@@ -108,6 +127,9 @@ namespace VMS.DeepLearning.Services
 
             if (_session == null || image.Empty())
                 return result;
+
+            if (_isDFine)
+                return PredictDFine(image, confThreshold, iouThreshold, result);
 
             int inputSize = _inputSize;
 
@@ -145,6 +167,146 @@ namespace VMS.DeepLearning.Services
         }
 
         public void Dispose() => UnloadModel();
+
+        // ─────────────── D-FINE ───────────────
+
+        private void DetectLayout(InferenceSession session)
+        {
+            var inputs = session.InputNames.ToList();
+            var outputs = session.OutputNames.ToList();
+
+            bool deploy = outputs.Contains("scores") && outputs.Contains("boxes");
+            bool raw = outputs.Contains("logits") && outputs.Contains("pred_boxes");
+            _isDFine = inputs.Contains("orig_target_sizes") || deploy || raw;
+            if (!_isDFine) return;
+
+            _dfineDeployLayout = deploy || !raw;
+            _sizesInput = inputs.FirstOrDefault(n => n == "orig_target_sizes")
+                ?? inputs.FirstOrDefault(n => session.InputMetadata[n].ElementType == typeof(long));
+            _imagesInput = inputs.FirstOrDefault(n => n != _sizesInput) ?? "images";
+        }
+
+        private static int ReadNumClassesFromDFineOutput(InferenceSession session)
+        {
+            try
+            {
+                if (session.OutputMetadata.TryGetValue("logits", out var logits) && logits.Dimensions.Length == 3)
+                    return Math.Max(0, logits.Dimensions[2]);
+                if (session.ModelMetadata.CustomMetadataMap.TryGetValue("nc", out var nc) && int.TryParse(nc, out int n))
+                    return n;
+            }
+            catch { /* ignore */ }
+            return 0;
+        }
+
+        private InferenceResult PredictDFine(Mat image, float confThreshold, float iouThreshold, InferenceResult result)
+        {
+            int inputSize = _inputSize;
+
+            // stretch 리사이즈 (letterbox 없음) + RGB 0~1
+            using var resized = new Mat();
+            Cv2.Resize(image, resized, new Size(inputSize, inputSize));
+            using var bgr = resized.Channels() == 3
+                ? resized.Clone()
+                : resized.CvtColor(resized.Channels() == 1 ? ColorConversionCodes.GRAY2BGR : ColorConversionCodes.BGRA2BGR);
+            var tensor = PreprocessToCHW(bgr, inputSize);
+
+            var inputs = new List<NamedOnnxValue> { NamedOnnxValue.CreateFromTensor(_imagesInput, tensor) };
+            if (_sizesInput != null)
+            {
+                var sizes = new DenseTensor<long>(new[] { 1, 2 });
+                sizes[0, 0] = image.Height;
+                sizes[0, 1] = image.Width;
+                inputs.Add(NamedOnnxValue.CreateFromTensor(_sizesInput, sizes));
+            }
+
+            using var outputs = _session!.Run(inputs);
+            var byName = outputs.ToDictionary(o => o.Name, o => o);
+
+            var raw = new List<DetectionPrediction>();
+            float maxRaw = 0f;
+            int above = 0;
+            int imgW = image.Width, imgH = image.Height;
+
+            if (_dfineDeployLayout)
+            {
+                var outList = outputs.ToList();
+                var boxesV = byName.TryGetValue("boxes", out var b) ? b : (outList.Count > 1 ? outList[1] : null);
+                var scoresV = byName.TryGetValue("scores", out var s) ? s : (outList.Count > 2 ? outList[2] : null);
+                var labelsV = byName.TryGetValue("labels", out var l) ? l : (outList.Count > 0 ? outList[0] : null);
+                if (boxesV == null || scoresV == null) return result;
+
+                var boxes = boxesV.AsTensor<float>().ToArray();
+                var scores = scoresV.AsTensor<float>().ToArray();
+                long[] labels = Array.Empty<long>();
+                if (labelsV != null)
+                {
+                    try { labels = labelsV.AsTensor<long>().ToArray(); }
+                    catch { try { labels = labelsV.AsTensor<int>().ToArray().Select(x => (long)x).ToArray(); } catch { } }
+                }
+
+                int q = scores.Length;
+                bool normalized = _sizesInput == null && boxes.Take(q * 4).All(v => v <= 1.0001f);
+                float sx = normalized ? imgW : 1f, sy = normalized ? imgH : 1f;
+                for (int i = 0; i < q && i * 4 + 3 < boxes.Length; i++)
+                {
+                    float score = scores[i];
+                    if (score > maxRaw) maxRaw = score;
+                    if (score > 0f) above++;
+                    if (score < confThreshold) continue;
+                    int cls = i < labels.Length ? (int)labels[i] : 0;
+                    AddPrediction(raw, cls, score,
+                        boxes[i * 4] * sx, boxes[i * 4 + 1] * sy, boxes[i * 4 + 2] * sx, boxes[i * 4 + 3] * sy, imgW, imgH);
+                }
+            }
+            else
+            {
+                if (!byName.TryGetValue("logits", out var logitsV) || !byName.TryGetValue("pred_boxes", out var boxesV))
+                    return result;
+                var logits = logitsV.AsTensor<float>();
+                var boxes = boxesV.AsTensor<float>().ToArray();
+                int q = logits.Dimensions[1], nc = logits.Dimensions[2];
+                var lbuf = logits.ToArray();
+                for (int i = 0; i < q; i++)
+                {
+                    int best = 0; float bestLogit = float.NegativeInfinity;
+                    for (int c = 0; c < nc; c++)
+                    {
+                        float v = lbuf[i * nc + c];
+                        if (v > bestLogit) { bestLogit = v; best = c; }
+                    }
+                    float score = 1f / (1f + (float)Math.Exp(-bestLogit));
+                    if (score > maxRaw) maxRaw = score;
+                    if (score > 0f) above++;
+                    if (score < confThreshold) continue;
+                    float cx = boxes[i * 4] * imgW, cy = boxes[i * 4 + 1] * imgH;
+                    float w = boxes[i * 4 + 2] * imgW, h = boxes[i * 4 + 3] * imgH;
+                    AddPrediction(raw, best, score, cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2, imgW, imgH);
+                }
+            }
+
+            result.MaxRawConfidence = maxRaw;
+            result.CandidatesAboveZero = above;
+            result.Predictions = NonMaxSuppression(raw, iouThreshold);
+            return result;
+        }
+
+        private void AddPrediction(List<DetectionPrediction> list, int cls, float score,
+            float x1f, float y1f, float x2f, float y2f, int imgW, int imgH)
+        {
+            int x1 = Math.Clamp((int)Math.Round(x1f), 0, imgW);
+            int y1 = Math.Clamp((int)Math.Round(y1f), 0, imgH);
+            int x2 = Math.Clamp((int)Math.Round(x2f), 0, imgW);
+            int y2 = Math.Clamp((int)Math.Round(y2f), 0, imgH);
+            if (x2 <= x1 || y2 <= y1) return;
+            list.Add(new DetectionPrediction
+            {
+                X = x1, Y = y1, Width = x2 - x1, Height = y2 - y1,
+                ClassId = cls,
+                ClassName = _classNames != null && cls >= 0 && cls < _classNames.Length ? _classNames[cls] : cls.ToString(),
+                Confidence = score
+            });
+        }
 
         // ─────────────── 내부 ───────────────
 

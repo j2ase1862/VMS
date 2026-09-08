@@ -74,11 +74,15 @@ PR1~25 시점 기준. 라이선스 분류는 자체 코드(GROUP A) → 제3자 
 | 항목 | 책임 |
 |---|---|
 | ONNX 모델 파일 (`*.onnx`) | 운영자 / 통합사 — repo 미포함 (`.gitignore`), 모델 출처별 라이선스 확인 의무 |
-| YOLOv8 사전학습 가중치 | Ultralytics — **AGPL-3.0** (상업적 사용 시 별도 라이선스 필요) — 자세한 사항은 https://www.ultralytics.com/license |
+| **D-FINE 사전학습 가중치** (`ustc-community/dfine-*`, HGNetV2 백본) | Apache 2.0 — **Detection 기본 백본** (`train_dfine.py`, 학습 시 HuggingFace `transformers` Apache 2.0 사용, 배포본에는 미포함) |
+| MobileSAM 가중치 (라벨링 보조) | Apache 2.0 (ChaoningZhang/MobileSAM) |
+| anomalib · torchvision (Anomaly / Classification 학습) | Apache 2.0 · BSD-3 |
+| YOLOv8 사전학습 가중치 (`train_yolo.py`, **옵션 — 기본 아님**) | Ultralytics — **AGPL-3.0**. Ultralytics 는 fine-tuning 한 가중치와 ONNX 변환본까지 AGPL 파생물로 본다. **Ultralytics Enterprise License 를 보유한 사이트에서만 선택 사용** — https://www.ultralytics.com/license |
 | PP-OCRv4 가중치 | Apache 2.0 (PaddleOCR) |
 | 학습 데이터셋 | 사이트별 — VASIM 책임 영역 밖 |
 
-> AGPL-3.0 모델 사용 시 — VMS 가 SaaS 형태로 운영되면 소스 공개 의무 발생 가능. **사이트 배포 (온프레미스)** 형태는 AGPL 의무 trigger 안 됨 (배포가 아닌 사용에 한정). 그러나 고객 측에서 외부 사용자에게 서비스 제공하면 의무 발생 — 통합사가 책임지고 검토.
+> **AGPL-3.0 (Ultralytics YOLO) 해석 — 2026-09-08 정정.** Ultralytics 는 사전학습 가중치로 fine-tuning 한 모델(.pt) 과 그 ONNX 변환본까지 AGPL 파생물로 본다. VASIM 이 학습한 모델을 고객에게 전달하는 것은 '배포'에 해당하므로 **온프레미스 납품이라도 AGPL 의무가 면제되지 않는다** (이전 판 "온프레미스는 trigger 안 됨" 서술은 모델을 우리가 전달하는 경우에 맞지 않아 폐기). 고객이 자기 PC 에서 직접 학습해 자체 사용만 하는 경우는 배포가 아니므로 의무가 발생하지 않는다.
+> 대응: **Detection 기본 백본을 D-FINE (Apache 2.0) 으로 전환** (`train_dfine.py`, VisionSetup Detection 도구는 D-FINE / YOLO ONNX 규약을 자동 판별). `train_yolo.py` 는 Ultralytics Enterprise License 를 보유한 사이트에서만 선택 사용하며, 그 외에는 YOLO 로 학습한 모델을 납품하지 않는다. 최종 해석은 법무 검토 필요.
 
 ---
 

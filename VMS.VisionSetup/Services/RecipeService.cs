@@ -140,7 +140,7 @@ namespace VMS.VisionSetup.Services
                     switch (tool.ToolType)
                     {
                         case "DetectionTool":
-                            OnnxEngineCache.PrefetchYolo(modelPath,
+                            OnnxEngineCache.PrefetchDetector(modelPath,
                                 CoerceInt(tool.Parameters, "InputSize", 640));
                             break;
                         case "ClassifyTool":
