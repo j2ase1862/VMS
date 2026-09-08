@@ -5,6 +5,7 @@ using System.Linq;
 using OpenCvSharp;
 using VMS.VisionSetup.VisionTools.DeepLearning;
 using Xunit;
+using VMS.Core.DeepLearning;
 
 namespace VMS.VisionSetup.Tests
 {
@@ -48,69 +49,7 @@ namespace VMS.VisionSetup.Tests
         // 800(w) × 400(h) BGR 이미지 — stretch 규약이라 비율이 달라도 좌표 환산이 맞아야 한다
         private static Mat MakeImage() => new Mat(400, 800, MatType.CV_8UC3, Scalar.All(30));
 
-        // ───────── OnnxMetadataReader.ReadGraphIoNames ─────────
-
-        [Fact]
-        public void ReadGraphIoNames_returns_inputs_and_outputs_without_session()
-        {
-            using var m = new TempModel(DeployNoMeta, "deploy");
-            var (inputs, outputs) = OnnxMetadataReader.ReadGraphIoNames(m.Path);
-
-            Assert.Equal(new[] { "images", "orig_target_sizes" }, inputs);
-            Assert.Equal(new[] { "labels", "boxes", "scores" }, outputs);
-        }
-
-        [Fact]
-        public void ReadGraphIoNames_missing_file_returns_empty()
-        {
-            var (inputs, outputs) = OnnxMetadataReader.ReadGraphIoNames(
-                Path.Combine(Path.GetTempPath(), "nope-" + Guid.NewGuid() + ".onnx"));
-            Assert.Empty(inputs);
-            Assert.Empty(outputs);
-        }
-
-        // ───────── DetectionModelFormatProbe ─────────
-
-        [Fact]
-        public void Probe_uses_model_format_metadata_first()
-        {
-            using var m = new TempModel(DeployWithMeta, "meta");
-            Assert.Equal(DetectionModelFormat.DFine, DetectionModelFormatProbe.Probe(m.Path));
-        }
-
-        [Fact]
-        public void Probe_falls_back_to_graph_io_structure_for_official_export_without_metadata()
-        {
-            using var m = new TempModel(DeployNoMeta, "nometa");
-            Assert.Equal(DetectionModelFormat.DFine, DetectionModelFormatProbe.Probe(m.Path));
-        }
-
-        [Fact]
-        public void Probe_recognizes_hf_raw_layout()
-        {
-            using var m = new TempModel(RawHf, "raw");
-            Assert.Equal(DetectionModelFormat.DFine, DetectionModelFormatProbe.Probe(m.Path));
-        }
-
-        [Fact]
-        public void Probe_keeps_yolo_for_single_output_models_and_missing_files()
-        {
-            using var m = new TempModel(YoloStub, "yolo");
-            Assert.Equal(DetectionModelFormat.Yolo, DetectionModelFormatProbe.Probe(m.Path));
-            Assert.Equal(DetectionModelFormat.Yolo,
-                DetectionModelFormatProbe.Probe(Path.Combine(Path.GetTempPath(), "nope-" + Guid.NewGuid() + ".onnx")));
-        }
-
-        [Theory]
-        [InlineData(new[] { "images", "orig_target_sizes" }, new[] { "labels", "boxes", "scores" }, true)]
-        [InlineData(new[] { "images" }, new[] { "labels", "boxes", "scores" }, true)]
-        [InlineData(new[] { "pixel_values" }, new[] { "logits", "pred_boxes" }, true)]
-        [InlineData(new[] { "images" }, new[] { "output0" }, false)]
-        [InlineData(new[] { "images" }, new[] { "output0", "output1" }, false)] // YOLOv8-seg
-        public void IsDFineLayout_by_io_names(string[] inputs, string[] outputs, bool expected)
-        {
-            Assert.Equal(expected, DetectionModelFormatProbe.IsDFineLayout(inputs, outputs));
-        }
+        // 규약 판별·메타데이터 리더 테스트는 VMS.Core.Tests/DeepLearning/DetectionModelFormatProbeTests.cs 로 이동 (VMS.Core 승격)
 
         // ───────── DFineOnnxEngine — deploy 규약 ─────────
 

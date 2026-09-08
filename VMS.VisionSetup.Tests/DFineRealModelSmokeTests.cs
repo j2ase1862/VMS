@@ -3,6 +3,7 @@ using System.IO;
 using OpenCvSharp;
 using VMS.VisionSetup.VisionTools.DeepLearning;
 using Xunit;
+using VMS.Core.DeepLearning;
 
 namespace VMS.VisionSetup.Tests
 {

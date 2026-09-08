@@ -1,8 +1,6 @@
 using System;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using VMS.Core.Interfaces;
@@ -20,13 +18,6 @@ namespace VMS.Core.Services
 
         public event EventHandler<string>? LogReceived;
         public event EventHandler<TrainingStatus>? StatusChanged;
-
-        private static readonly Regex EpochPattern = new(@"\[EPOCH\]\s*(\d+)\s*/\s*(\d+)", RegexOptions.Compiled);
-        private static readonly Regex LossPattern = new(@"\[LOSS\]\s*([\d.]+)", RegexOptions.Compiled);
-        private static readonly Regex AccPattern = new(@"\[ACC\]\s*([\d.]+)", RegexOptions.Compiled);
-        private static readonly Regex ProgressPattern = new(@"\[PROGRESS\]\s*([\d.]+)", RegexOptions.Compiled);
-        private static readonly Regex OnnxPattern = new(@"\[ONNX\]\s*(.+)", RegexOptions.Compiled);
-        private static readonly Regex ErrorPattern = new(@"\[ERROR\]\s*(.+)", RegexOptions.Compiled);
 
         public async Task StartTrainingAsync(TrainingConfig config, CancellationToken cancellationToken = default)
         {
@@ -49,7 +40,7 @@ namespace VMS.Core.Services
 
             try
             {
-                string arguments = BuildArguments(config);
+                string arguments = TrainingArgumentBuilder.Build(config);
                 Log($"실행: {config.PythonPath} {arguments}");
 
                 var startInfo = new ProcessStartInfo
@@ -161,127 +152,25 @@ namespace VMS.Core.Services
 
         private void ParseOutputLine(string line)
         {
-            Match m;
-
-            m = EpochPattern.Match(line);
-            if (m.Success)
+            // stdout 프로토콜 해석은 TrainingOutputParser(학습 워커와 공용) — 여기서는 이벤트 발행만
+            var kind = TrainingOutputParser.Apply(line, Status);
+            switch (kind)
             {
-                Status.CurrentEpoch = int.Parse(m.Groups[1].Value);
-                Status.TotalEpochs = int.Parse(m.Groups[2].Value);
-                if (Status.TotalEpochs > 0)
-                    Status.Progress = (double)Status.CurrentEpoch / Status.TotalEpochs * 100;
-                Status.Message = $"Epoch {Status.CurrentEpoch}/{Status.TotalEpochs}";
-                StatusChanged?.Invoke(this, Status);
-                return;
+                case TrainingOutputKind.Epoch:
+                case TrainingOutputKind.Loss:
+                case TrainingOutputKind.Accuracy:
+                case TrainingOutputKind.Progress:
+                    StatusChanged?.Invoke(this, Status);
+                    break;
+                case TrainingOutputKind.Onnx:
+                    Log($"ONNX 모델 생성: {Status.OnnxOutputPath}");
+                    StatusChanged?.Invoke(this, Status);
+                    break;
+                case TrainingOutputKind.Done:
+                case TrainingOutputKind.Error:
+                case TrainingOutputKind.None:
+                    break;
             }
-
-            m = LossPattern.Match(line);
-            if (m.Success)
-            {
-                Status.Loss = double.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture);
-                StatusChanged?.Invoke(this, Status);
-                return;
-            }
-
-            m = AccPattern.Match(line);
-            if (m.Success)
-            {
-                Status.Accuracy = double.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture);
-                StatusChanged?.Invoke(this, Status);
-                return;
-            }
-
-            m = ProgressPattern.Match(line);
-            if (m.Success)
-            {
-                Status.Progress = double.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture);
-                StatusChanged?.Invoke(this, Status);
-                return;
-            }
-
-            m = OnnxPattern.Match(line);
-            if (m.Success)
-            {
-                Status.OnnxOutputPath = m.Groups[1].Value.Trim();
-                Log($"ONNX 모델 생성: {Status.OnnxOutputPath}");
-                StatusChanged?.Invoke(this, Status);
-                return;
-            }
-
-            if (line.Contains("[DONE]"))
-            {
-                Status.Progress = 100;
-                return;
-            }
-
-            m = ErrorPattern.Match(line);
-            if (m.Success)
-            {
-                Status.Message = m.Groups[1].Value.Trim();
-                return;
-            }
-        }
-
-        private static string BuildArguments(TrainingConfig config)
-        {
-            var sb = new System.Text.StringBuilder();
-            sb.Append($"\"{config.TrainingScriptPath}\"");
-
-            // --target は train_ppocr.py のみ使用 (detection/recognition)
-            // train_yolo.py, train_classifier.py, train_anomaly.py は --target 不要
-            var scriptName = Path.GetFileName(config.TrainingScriptPath).ToLowerInvariant();
-            if (scriptName.Contains("ppocr"))
-            {
-                sb.Append($" --target {config.Target.ToString().ToLower()}");
-            }
-
-            sb.Append($" --dataset \"{NormalizeDir(config.DatasetPath)}\"");
-            sb.Append($" --output \"{NormalizeDir(config.OutputDir)}\"");
-            sb.Append($" --epochs {config.Epochs}");
-            sb.Append($" --lr {config.LearningRate.ToString(CultureInfo.InvariantCulture)}");
-            sb.Append($" --batch_size {config.BatchSize}");
-
-            if (!string.IsNullOrEmpty(config.PretrainedModelPath))
-                sb.Append($" --pretrained \"{config.PretrainedModelPath}\"");
-
-            if (config.ExportOnnx)
-                sb.Append(" --export_onnx");
-
-            var inv = CultureInfo.InvariantCulture;
-
-            // Augmentation (YOLO·D-FINE 학습 스크립트 — train_dfine.py 는 hsv_* 만 사용, mosaic/mixup 무시)
-            if (scriptName.Contains("yolo") || scriptName.Contains("dfine"))
-            {
-                sb.Append($" --mosaic {config.Mosaic.ToString(inv)}");
-                sb.Append($" --mixup {config.Mixup.ToString(inv)}");
-                sb.Append($" --hsv_h {config.HsvH.ToString(inv)}");
-                sb.Append($" --hsv_s {config.HsvS.ToString(inv)}");
-                sb.Append($" --hsv_v {config.HsvV.ToString(inv)}");
-            }
-
-            // PatchCore/Anomaly 튜닝
-            if (scriptName.Contains("anomaly"))
-            {
-                if (!string.IsNullOrWhiteSpace(config.AnomalyMethod))
-                    sb.Append($" --method {config.AnomalyMethod}");
-                if (!string.IsNullOrWhiteSpace(config.AnomalyBackbone))
-                    sb.Append($" --backbone {config.AnomalyBackbone}");
-                sb.Append($" --coreset_ratio {config.CoresetRatio.ToString(inv)}");
-            }
-
-            return sb.ToString();
-        }
-
-        // 드라이브 루트(D:\)를 --dataset/--output으로 전달할 때 발생하는 두 가지 문제를 회피한다:
-        //  1) TrimEnd('\\') 적용 시 "D:"가 되어, Python의 os.path.join("D:", "x")가 드라이브-상대 경로 "D:x"를 반환해 파일을 찾지 못함.
-        //  2) 반대로 "D:\" 그대로 넘기면 Windows 커맨드라인에서 "D:\"가 이스케이프된 쿼트로 파싱되어 인자 경계가 깨짐.
-        // 드라이브 루트는 "D:\." 형태로 치환해 두 문제를 동시에 해결한다. 그 외 경로는 후행 구분자만 제거.
-        private static string NormalizeDir(string path)
-        {
-            if (string.IsNullOrEmpty(path)) return path;
-            if (path.Length == 3 && path[1] == ':' && (path[2] == '\\' || path[2] == '/'))
-                return path[0] + ":\\.";
-            return path.TrimEnd('\\', '/');
         }
 
         private static void ValidateConfig(TrainingConfig config)

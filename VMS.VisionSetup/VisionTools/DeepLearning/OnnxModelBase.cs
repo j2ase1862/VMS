@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using VMS.Core.Security;
+using VMS.Core.DeepLearning;
 
 namespace VMS.VisionSetup.VisionTools.DeepLearning
 {

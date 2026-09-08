@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace VMS.VisionSetup.VisionTools.DeepLearning
+namespace VMS.Core.DeepLearning
 {
     /// <summary>
-    /// InferenceSession 생성 없이 ONNX 파일에서 metadata_props(key/value)만 꺼내는 경량 리더.
+    /// InferenceSession 생성 없이 ONNX 파일에서 metadata_props(key/value)와 그래프 입출력 이름만 꺼내는 경량 리더.
+    /// OpenCV·ONNX Runtime 의존이 없어 VisionSetup·DeepLearning 앱·Web 모델 레지스트리·학습 워커가 공유한다 (VMS.Core 로 승격, 2026-09-08).
     /// 전체 모델 가중치가 들어있는 GraphProto(field 7)와 그 외 관심 없는 필드는
     /// Protobuf 태그/길이만 읽고 FileStream.Seek으로 건너뛰므로 대용량 모델에서도 수~수십 ms에 끝난다.
     ///

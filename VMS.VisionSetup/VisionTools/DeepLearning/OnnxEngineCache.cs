@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
+using VMS.Core.DeepLearning;
 
 namespace VMS.VisionSetup.VisionTools.DeepLearning
 {
