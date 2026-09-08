@@ -24,6 +24,7 @@ VMS 는 Database 에 직접 접근하지 않는다. 모든 Web 연동(SSO 로그
 | webServerUrl | `http://localhost:5292` | `https://boda-vms.com` |
 | http/https | loopback 은 http 허용 (Production 포함) | **원격은 https 필수** (`InsecureUrlGuard` 가 http+원격을 차단) |
 | MSI 설치 | 기본 설치 (WebServer Feature 포함) | 기본 설치 후 Web 서비스 안 켬, 또는 `INSTALLWEB=0` |
+| AI 학습 도구 | 학습 PC 에만 포함 (설치 마법사 체크 또는 기본값) | 검사 전용 PC 는 `INSTALLAITOOLS=0` 또는 체크 해제 (msi_build_guide §14) |
 
 두 시나리오 모두 **같은 MSI 하나**로 커버된다. 동봉 Web 서비스(`BodaVmsWeb`)는
 demand(수동) 등록 + 미시작이 기본이라, AppSetup 에서 명시적으로 초기 구성을 실행하기

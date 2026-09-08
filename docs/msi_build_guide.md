@@ -1,7 +1,7 @@
 # MSI 빌드 가이드 (BODA Vision AI)
 
-문서 버전: v1.6
-대상 빌드: master @ 2026-08-14 (v1.5.12)
+문서 버전: v1.7
+대상 빌드: master @ 2026-09-08 (v1.30.0+)
 범위: `VMS.MasterSetup` 프로젝트로 BODA Vision System MSI 인스톨러 생성
 
 > 코드 서명 (Authenticode) 은 별도 문서 — [gs_msi_code_signing_guide.md](gs/guides/gs_msi_code_signing_guide.md) (PR24) 참고.
@@ -523,7 +523,48 @@ Web 핫픽스마다 1.2GB MSI 를 재발행하지 않는다 — 기존 오프라
 
 ---
 
-## 14. 관련 문서
+## 14. AI 학습 도구 Feature 와 GS 인증 제출 빌드 (v1.31.0)
+
+VMS.DeepLearning(라벨링·모델 학습 앱)과 `scripts\*.py`(train_dfine / train_yolo / train_classifier /
+train_anomaly / train_ppocr / export_mobile_sam) 는 **"모델을 만드는" 기능**으로, 파이썬·GPU 환경에
+의존하고 학습 결과가 비결정적이라 GS 인증 범위에서 제외한다. 검사 런타임(VMS·VisionSetup 의
+Detection / Classify / Anomaly / YOLO-seg / OCR **추론** 도구)은 ONNX 모델만 있으면 동작하므로 범위에 남는다.
+
+### 14.1 구조
+
+| 항목 | 값 |
+|---|---|
+| Feature | `AiTools` ("AI 학습 도구 (VMS.DeepLearning)") — 기본 포함, `INSTALLAITOOLS=0` 으로 제외 |
+| 포함 파일 | `VMS.DeepLearning.exe/.dll/.deps.json/.runtimeconfig.json`, `scripts\*.py` |
+| Main 에서 제외 | `AppFiles` 의 `<Exclude>` 로 위 파일을 빼고 `AiToolsAppFiles`/`AiToolsScriptFiles` 로 분리 |
+| 설치 마법사 | "설치 구성 선택" 화면의 두 번째 체크박스 (Web 서버 체크박스 아래) |
+| 앱 동작 | VisionSetup Tools › Deep Learning 메뉴는 exe 가 없으면 숨김. OCR Synth Data 창은 `train_ppocr.py` 가 없으면 학습 카드·[Generate & Train] 을 숨기고 합성 데이터 생성만 남김 |
+
+### 14.2 GS 인증 제출 빌드
+
+```powershell
+.\tools\stage-web-payload.ps1
+dotnet build VMS.sln -c Release
+dotnet build VMS.MasterSetup\VMS.MasterSetup.wixproj -c Release -t:Rebuild -p:ExcludeAiTools=true
+# → VMS.MasterSetup\bin\Release\VMS-<버전>-cert.msi
+```
+
+`ExcludeAiTools=true` 는 WiX 전처리 상수로 `AiTools` Feature·속성·설치 마법사 체크박스를 **컴파일 자체에서
+제거**한다. 따라서 인증 MSI 에는 VMS.DeepLearning 과 scripts 폴더가 존재하지 않으며 `INSTALLAITOOLS` 속성도
+없다. 일반 릴리즈 MSI(`VMS-<버전>.msi`)는 그대로 Feature 를 포함한다 — 두 산출물은 파일명으로 구분.
+
+검증: 설치 후 `C:\Program Files\VASIM\BODA Vision System\` 에 `VMS.DeepLearning.exe` 와 `scripts\` 가 없어야
+하고, VisionSetup Tools 메뉴에 Deep Learning 항목이 보이지 않아야 한다. 심사용 샘플 ONNX 는
+`docs/gs/guides/gs_scope_ai_tools.md` 참조.
+
+### 14.3 무인 설치
+
+```
+msiexec /i VMS-<버전>.msi INSTALLAITOOLS=0            # AI 학습 도구 제외
+msiexec /i VMS-<버전>.msi INSTALLWEB=0 INSTALLAITOOLS=0  # Web 서버·AI 학습 도구 모두 제외 (검사 전용 PC)
+```
+
+## 15. 관련 문서
 
 | 문서 | 내용 |
 |---|---|
@@ -549,3 +590,4 @@ Web 핫픽스마다 1.2GB MSI 를 재발행하지 않는다 — 기존 오프라
 | v1.3 | 2026-06-04 | §11 초기 admin 비밀번호 설정 절차 추가 (Option C: VMS/Web 양쪽 디폴트 시드 제거, 운영자 명시 입력 필수) |
 | v1.4 | 2026-07-09 | §12 다중 인스턴스 운용(한 PC 두 라인) 절차 추가 — --instance 바로가기 / AppSetup 인스턴스별 구성 / 주의사항 |
 | v1.5 | 2026-08-06 | §13 Web 서버 동봉 추가 — WebServer Feature(payload 스테이징·INSTALLWEB=0) / AppSetup 초기 구성 카드 / 스크립트 설치 마이그레이션 / Web 단독 업데이트 경로 |
+| v1.7 | 2026-09-08 | §14 AI 학습 도구 Feature(AiTools·INSTALLAITOOLS=0) + GS 인증 제출 빌드(-p:ExcludeAiTools=true → VMS-x.y.z-cert.msi) / 관련 문서는 §15 로 |

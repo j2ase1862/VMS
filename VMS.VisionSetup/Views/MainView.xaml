@@ -375,8 +375,9 @@
                             </MenuItem.Icon>
                         </MenuItem>
 
-                        <!-- Deep Learning -->
-                        <MenuItem Header="_Deep Learning" Click="DeepLearning_Click">
+                        <!-- Deep Learning — AI 학습 도구 미설치(인스톨러 옵션 해제·GS 인증 빌드) 시 숨김 -->
+                        <MenuItem Header="_Deep Learning" Click="DeepLearning_Click"
+                                  Visibility="{Binding IsDeepLearningAvailable, Converter={StaticResource BoolToVisibility}}">
                             <MenuItem.Icon>
                                 <Path Data="M10,2 C5.6,2 2,5.6 2,10 C2,14.4 5.6,18 10,18 C14.4,18 18,14.4 18,10 C18,5.6 14.4,2 10,2 Z M10,5 L12,8 L10,7 L8,8 Z M6,10 L8,8 L7,10 L8,12 Z M10,15 L8,12 L10,13 L12,12 Z M14,10 L12,12 L13,10 L12,8 Z"
                                       Stroke="#4CAF50" StrokeThickness="1.1" Fill="Transparent"

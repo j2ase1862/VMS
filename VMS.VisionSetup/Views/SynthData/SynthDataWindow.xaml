@@ -261,8 +261,9 @@
                     </StackPanel>
                 </Border>
 
-                <!-- ============= Training Card ============= -->
-                <Border Style="{StaticResource WindowCard}" Margin="0,0,0,10">
+                <!-- ============= Training Card (AI 학습 도구 미설치 시 숨김) ============= -->
+                <Border Style="{StaticResource WindowCard}" Margin="0,0,0,10"
+                        Visibility="{Binding IsTrainingAvailable, Converter={StaticResource BoolToVis}}">
                     <StackPanel>
                         <TextBlock Text="Training — PP-OCR Fine-tuning"
                                    Style="{StaticResource WindowSectionHeaderFirst}"/>
@@ -347,8 +348,9 @@
                     </StackPanel>
                 </Border>
 
-                <!-- ============= Training Progress Card ============= -->
-                <Border Style="{StaticResource WindowCard}" Margin="0,0,0,10">
+                <!-- ============= Training Progress Card (AI 학습 도구 미설치 시 숨김) ============= -->
+                <Border Style="{StaticResource WindowCard}" Margin="0,0,0,10"
+                        Visibility="{Binding IsTrainingAvailable, Converter={StaticResource BoolToVis}}">
                     <StackPanel>
                         <TextBlock Text="Training Progress" Style="{StaticResource WindowSectionHeaderFirst}"/>
 
@@ -438,11 +440,13 @@
                            VerticalAlignment="Center" FontSize="12"/>
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                     <Button Content="Cancel Train" Command="{Binding CancelTrainCommand}"
-                            Style="{StaticResource ModernDangerButton}" Margin="0,0,8,0"/>
+                            Style="{StaticResource ModernDangerButton}" Margin="0,0,8,0"
+                            Visibility="{Binding IsTrainingAvailable, Converter={StaticResource BoolToVis}}"/>
                     <Button Content="Generate" Command="{Binding GenerateCommand}"
                             Style="{StaticResource ModernSecondaryButton}" Margin="0,0,8,0"/>
                     <Button Content="Generate &amp; Train" Command="{Binding GenerateAndTrainCommand}"
-                            Style="{StaticResource ModernPrimaryButton}" Padding="20,7" Margin="0,0,8,0"/>
+                            Style="{StaticResource ModernPrimaryButton}" Padding="20,7" Margin="0,0,8,0"
+                            Visibility="{Binding IsTrainingAvailable, Converter={StaticResource BoolToVis}}"/>
                     <Button Content="Close"
                             Command="{x:Static SystemCommands.CloseWindowCommand}"
                             Style="{StaticResource ModernGhostButton}"/>

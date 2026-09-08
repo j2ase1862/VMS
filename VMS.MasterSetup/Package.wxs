@@ -20,6 +20,23 @@
       <ComponentRef Id="StartMenuVisionSetupShortcutComp" />
     </Feature>
 
+<?ifndef ExcludeAiTools ?>
+    <!-- AI 학습 도구 (VMS.DeepLearning 라벨링·학습 앱 + scripts\ 파이썬 학습 스크립트) — 선택 Feature.
+         검사 런타임(VMS·VisionSetup 의 Detection/Classify/Anomaly/OCR 추론 도구)은 Main 에 남고,
+         "모델을 만드는" 기능만 여기로 분리한다. 파이썬·GPU 환경이 있는 학습 PC 에서만 필요.
+         제외 경로 — INSTALLWEB 과 같은 3가지:
+           · 설치 마법사 "설치 구성 선택" 화면의 체크 해제 (INSTALLAITOOLS 속성 제거)
+           · 무인 설치: msiexec /i VMS-x.y.z.msi INSTALLAITOOLS=0
+           · GS 인증 제출 빌드: dotnet build VMS.MasterSetup.wixproj -p:ExcludeAiTools=true
+             → 이 Feature 자체가 컴파일되지 않아 MSI 에 파일이 아예 없다 (산출물 VMS-x.y.z-cert.msi). -->
+    <Property Id="INSTALLAITOOLS" Value="1" Secure="yes" />
+    <Feature Id="AiTools" Title="AI 학습 도구 (VMS.DeepLearning)" Level="1" AllowAbsent="yes">
+      <Level Value="0" Condition="INSTALLAITOOLS=0 OR NOT INSTALLAITOOLS" />
+      <ComponentGroupRef Id="AiToolsAppFiles" />
+      <ComponentGroupRef Id="AiToolsScriptFiles" />
+    </Feature>
+<?endif?>
+
 <?ifdef WebPayloadDir ?>
     <!-- BODA.VMS.Web 동봉 (릴리즈 빌드 전용 — tools/stage-web-payload.ps1 이
          WebPayload/ 를 채웠을 때만 컴파일됨. CI 는 Web 리포 접근 불가라 이 Feature 없이 빌드).
@@ -56,9 +73,33 @@
   <!-- Application Files: harvest all files from VMS build output -->
   <Fragment>
     <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
-      <Files Include="$(var.VMS.TargetDir)**" />
+      <Files Include="$(var.VMS.TargetDir)**">
+        <!-- AI 학습 도구는 AiTools Feature 로 분리 (ExcludeAiTools 빌드에서는 어디에도 포함되지 않음) -->
+        <Exclude Files="$(var.VMS.TargetDir)VMS.DeepLearning.*" />
+        <Exclude Files="$(var.VMS.TargetDir)scripts\**" />
+        <!-- 개발 PC 빌드 출력에 남은 stale publish 산출물(win-x64\, 2026-06-01 self-contained 실험 잔재 1.3GB)이
+             MSI 에 수확되던 사고 방어 (v1.25.0~v1.30.0 MSI 에 포함돼 있었음). RID 출력은 루트로 오므로 win-x64\ 는 항상 잔재. -->
+        <Exclude Files="$(var.VMS.TargetDir)win-x64\**" />
+      </Files>
     </ComponentGroup>
   </Fragment>
+
+<?ifndef ExcludeAiTools ?>
+  <!-- AI 학습 도구 파일: 앱 4개 파일(exe/dll/deps/runtimeconfig) + scripts\*.py (train_dfine/yolo/classifier/anomaly/ppocr, export_mobile_sam) -->
+  <Fragment>
+    <DirectoryRef Id="INSTALLFOLDER">
+      <Directory Id="ScriptsFolder" Name="scripts" />
+    </DirectoryRef>
+
+    <ComponentGroup Id="AiToolsAppFiles" Directory="INSTALLFOLDER">
+      <Files Include="$(var.VMS.TargetDir)VMS.DeepLearning.*" />
+    </ComponentGroup>
+
+    <ComponentGroup Id="AiToolsScriptFiles" Directory="ScriptsFolder">
+      <Files Include="$(var.VMS.TargetDir)scripts\**" />
+    </ComponentGroup>
+  </Fragment>
+<?endif?>
 
   <!-- Desktop Shortcut -->
   <Fragment>

@@ -17,7 +17,7 @@ param(
     [Parameter(Mandatory = $true)][string]$Version,
     [Parameter(Mandatory = $true)][string]$NotesFile,
     [switch]$SkipBuild,
-    [int]$MinMsiMB = 800    # self-contained 전환 후 정상 ~846MB (RID 지정으로 리눅스용 onnx 자산 제거 — 이전 1,135MB보다 작은 것이 정상). 780대=런타임 누락, 630대=Web payload 누락 의심
+    [int]$MinMsiMB = 300    # v1.31.0 부터 정상 ~340MB — 개발 PC 빌드 출력의 stale win-x64\ 폴더(1.3GB, 2026-06-01 잔재)가 v1.25.0~v1.30.0 MSI 에 함께 수확돼 846MB 로 부풀어 있었음 (Package.wxs Exclude 로 차단). 300 미만이면 런타임(self-contained) 또는 Web payload 누락 의심
 )
 
 $ErrorActionPreference = 'Stop'
@@ -103,7 +103,7 @@ Step 'MSI 검증 + SHA256' {
     $script:msiBytes = (Get-Item $msiPath).Length
     $mb = [math]::Round($msiBytes / 1MB)
     if ($mb -lt $MinMsiMB) {
-        throw "MSI ${mb}MB < 하한 ${MinMsiMB}MB — 1,055MB대=Web payload 누락(-t:Rebuild 필요), 538MB대=SDK 누락 의심"
+        throw "MSI ${mb}MB < 하한 ${MinMsiMB}MB — Web payload 누락(-t:Rebuild 필요) 또는 self-contained 런타임 누락 의심 (v1.31.0 기준 정상 ~340MB)"
     }
     Write-Host "    VMS-$Version.msi = ${mb}MB"
     $h = (Get-FileHash $msiPath -Algorithm SHA256).Hash.ToLower()

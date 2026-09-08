@@ -32,6 +32,14 @@
     <WebPayloadDir>$(MSBuildProjectDirectory)\WebPayload\</WebPayloadDir>
     <HasWebPayload Condition="Exists('$(WebPayloadDir)BODA.VMS.Web.exe')">true</HasWebPayload>
     <DefineConstants Condition="'$(HasWebPayload)' == 'true'">$(DefineConstants);WebPayloadDir=$(WebPayloadDir)</DefineConstants>
+    <!--
+      GS 인증 제출 빌드: AI 학습 도구(VMS.DeepLearning + scripts\*.py) 를 MSI 에서 완전히 제외.
+        dotnet build VMS.MasterSetup\VMS.MasterSetup.wixproj -c Release -t:Rebuild -p:ExcludeAiTools=true
+      산출물 이름을 VMS-x.y.z-cert.msi 로 구분해 일반 릴리즈 MSI 와 섞이지 않게 한다.
+      일반 릴리즈는 AiTools Feature 가 포함되며 설치 마법사/INSTALLAITOOLS=0 으로 선택 제외.
+    -->
+    <DefineConstants Condition="'$(ExcludeAiTools)' == 'true'">$(DefineConstants);ExcludeAiTools=1</DefineConstants>
+    <OutputName Condition="'$(ExcludeAiTools)' == 'true'">VMS-$(Version)-cert</OutputName>
   </PropertyGroup>
 
   <!-- Cultures 지정 시 WiX SDK 가 산출물을 bin\Release\ko-KR\ 하위로 내린다.
