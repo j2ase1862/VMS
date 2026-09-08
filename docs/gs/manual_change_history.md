@@ -343,7 +343,7 @@
 
 | 항목 | 내용 |
 |------|------|
-| PR | (대기) `feat/aitools-installer-feature` (코드) + `docs/gs-scope-ai-tools` (문서) |
+| PR | #431 (`feat/aitools-installer-feature`, 코드) + #432 (`docs/gs-scope-ai-tools`, 문서) — 2026-09-08 머지, v1.31.0 |
 | 날짜 | 2026-09-08 |
 | 앱 · 화면 | 설치 마법사 "설치 구성 선택" 화면 · VisionSetup Tools 메뉴 · OCR Synth Data 창 |
 | 변경 종류 | 설치 옵션 추가 + 매뉴얼 구성 변경 (인증 범위 정의: `guides/gs_scope_ai_tools.md`) |
