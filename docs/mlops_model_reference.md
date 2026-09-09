@@ -117,6 +117,29 @@ VisionSetup 의 도구 설정에서 모델 경로 칸 옆 **[레지스트리…]
 서버 주소는 `system_config.json` 의 `MlopsServerUrl`·`WebServerUrl` 에서 읽습니다.
 둘 중 하나라도 없으면 창을 띄우지 않고 무엇이 빠졌는지 말해 줍니다.
 
+## 받는 쪽 — AI 학습 도구의 [웹 데이터셋 내려받기]
+
+모델만 오가는 것이 아닙니다. 웹에서 라벨링한 데이터셋도 학습 도구로 내려옵니다.
+학습 도구의 Export 구역에서 **[웹 데이터셋 내려받기]** 를 누릅니다.
+
+받는 것은 **내보내기 폴더**입니다 — 학습 스크립트가 그대로 읽는 형식(yolo·imagefolder·mvtec·
+ppocr·coco)으로 서버가 굽습니다. 라벨을 학습 도구의 데이터셋 형식으로 되돌리지 **않습니다**.
+두 형식을 오가며 옮겨 적는 길을 열면 어느 쪽이 정본인지 흐려지고, 조용히 어긋난 라벨이
+다음 학습에 들어갑니다. 웹에서 라벨링한 것은 웹이 정본이고, 학습 도구는 그것으로 학습만 합니다.
+그래서 이 창이 끝내 놓는 것은 Export 버튼들과 같은 것 하나입니다 — **학습 데이터셋 경로**.
+
+| 무엇 | 어떻게 |
+|---|---|
+| 판(버전) | 데이터셋은 계속 바뀌므로 학습은 "그때 그 판" 을 받아야 재현됩니다. 이미 뜬 판을 고르거나 지금 상태로 새로 뜹니다. |
+| 미라벨 포함 | 기본은 라벨이 붙은 것만 담습니다. 검출에서 배경 샘플이 필요할 때만 켭니다 — 분류·이상탐지에서 켜면 라벨 없는 이미지가 학습에 섞입니다. |
+| 폴더 이름 | `{판 이름}-{매니페스트 해시 앞 8자리}`. 어느 학습이 어느 판으로 돌았는지 폴더 이름만 봐도 압니다. |
+| 다시 받으면 | 대상 폴더를 비우고 새로 풉니다. 이전 판의 라벨 파일이 남아 섞이면 지운 라벨이 학습에 되살아납니다. |
+| 다 받았는지 | `Content-Length` 와 받은 바이트 수를 대조합니다. 끊긴 연결로 반쯤 받은 zip 을 풀면 이미지 몇 장이 빠진 채 학습이 돌고, 그건 아무 데도 남지 않습니다. |
+
+**`X-Content-Sha256` 은 zip 바이트의 해시가 아닙니다.** 매니페스트(이미지·라벨·분할 목록) JSON 의
+해시라 같은 내용이면 언제 구워도 같은 값이고, zip 자체는 구울 때마다 바이트가 달라집니다.
+그래서 이 값으로 받은 바이트를 검증할 수 없습니다 — **내가 요청한 판이 맞는지** 보는 데 씁니다.
+
 ## 관련 코드
 
 | 무엇 | 어디 |
@@ -132,6 +155,9 @@ VisionSetup 의 도구 설정에서 모델 경로 칸 옆 **[레지스트리…]
 | 올리는 창의 상태 | `VMS.Core/ViewModels/ModelUploadViewModel.cs` |
 | 작업 유형 이름 대응 | `VMS.Core/Services/RegistryTaskType.cs` |
 | 서버 주소 읽기 | `VMS.Core/Services/SystemConfigReader.cs` |
+| 데이터셋 받기 | `VMS.Core/Services/DatasetRegistryClient.cs` |
+| 받는 창 | `VMS.DeepLearning/Views/DatasetDownloadWindow.xaml` |
+| 받는 창의 상태 | `VMS.Core/ViewModels/DatasetDownloadViewModel.cs` |
 
 ## 시험
 
@@ -154,4 +180,10 @@ dotnet test VMS.Core.Tests --filter MlopsRegistryIntegrationTests
 set MLOPS_JWT=<엔지니어 이상 계정의 토큰>
 set MLOPS_ONNX=D:\Repo\VMS\VMS.DeepLearning\best.onnx
 set MLOPS_ONNX_CLASSES=object,logo
+```
+
+데이터셋 받기도 같은 JWT 로 확인합니다. 라벨이 붙은 이미지가 한 장은 있어야 판이 떠집니다.
+
+```bash
+set MLOPS_DATASET_ID=<웹에서 라벨링한 검출 데이터셋 ID>
 ```

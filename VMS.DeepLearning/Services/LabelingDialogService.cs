@@ -50,6 +50,14 @@ namespace VMS.DeepLearning.Services
             window.ShowDialog();
         }
 
+        public void ShowDatasetDownload(VMS.Core.ViewModels.DatasetDownloadViewModel viewModel)
+        {
+            var owner = Application.Current?.MainWindow;
+            var window = new Views.DatasetDownloadWindow(viewModel);
+            if (owner is not null && owner.IsLoaded) window.Owner = owner;
+            window.ShowDialog();
+        }
+
         public string? ShowFolderDialog(string title)
         {
             var dialog = new OpenFolderDialog { Title = title };

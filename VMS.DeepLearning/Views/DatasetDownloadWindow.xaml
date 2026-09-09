@@ -1,0 +1,147 @@
+<Window x:Class="VMS.DeepLearning.Views.DatasetDownloadWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="웹 데이터셋 내려받기"
+        Width="620" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        UseLayoutRounding="True">
+    <!-- 색·서체는 DarkTheme.xaml 의 암시적 스타일을 받는다.
+         PasswordBox 는 암시적 스타일이 없어 여기서만 직접 칠한다. -->
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <Style TargetType="PasswordBox">
+            <Setter Property="Background" Value="{StaticResource BgLightBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource FgPrimaryBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="CaretBrush" Value="{StaticResource FgPrimaryBrush}"/>
+        </Style>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource FgSecondaryBrush}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Margin" Value="0,0,0,3"/>
+        </Style>
+        <DataTemplate x:Key="TwoLineItem">
+            <StackPanel>
+                <TextBlock Text="{Binding Name}"/>
+                <TextBlock Text="{Binding Summary}" FontSize="11"
+                           Foreground="{StaticResource FgSecondaryBrush}"
+                           TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+        </DataTemplate>
+    </Window.Resources>
+
+    <StackPanel Margin="20">
+        <!-- 무엇을 받는지 -->
+        <TextBlock Style="{StaticResource FieldLabel}" TextWrapping="Wrap"
+                   Text="웹에서 라벨링한 데이터셋을 학습 스크립트가 읽는 형식으로 받습니다. 받고 나면 학습 데이터셋 경로가 그 폴더로 설정됩니다."/>
+        <TextBlock Margin="0,0,0,14" Foreground="{StaticResource AccentGoldBrush}" FontSize="12"
+                   Text="{Binding TaskTypeText, StringFormat={}작업 유형: {0}}"/>
+
+        <!-- 로그인 -->
+        <StackPanel Visibility="{Binding ShowSignIn, Converter={StaticResource BoolToVis}}">
+            <TextBlock Style="{StaticResource SectionHeader}" Text="계정"/>
+            <TextBlock Style="{StaticResource FieldLabel}" Text="{Binding ServerUrl}"
+                       TextTrimming="CharacterEllipsis"/>
+            <Grid Margin="0,4,0,14">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox Grid.Column="0" Margin="0,0,8,0"
+                         Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"/>
+                <PasswordBox x:Name="PasswordInput" Grid.Column="1" Margin="0,0,8,0"
+                             PasswordChanged="OnPasswordChanged"/>
+                <Button Grid.Column="2" Content="로그인" MinWidth="90"
+                        Style="{StaticResource PrimaryButton}" IsDefault="True"
+                        Command="{Binding SignInCommand}"/>
+            </Grid>
+        </StackPanel>
+
+        <!-- 무엇을 받을지 -->
+        <StackPanel Visibility="{Binding SignedIn, Converter={StaticResource BoolToVis}}">
+            <TextBlock Style="{StaticResource SectionHeader}" Text="데이터셋"/>
+            <ComboBox Margin="0,4,0,12"
+                      ItemsSource="{Binding Datasets}"
+                      SelectedItem="{Binding SelectedDataset}"
+                      ItemTemplate="{StaticResource TwoLineItem}"/>
+
+            <TextBlock Style="{StaticResource SectionHeader}" Text="판 (버전)"/>
+            <TextBlock Style="{StaticResource FieldLabel}" TextWrapping="Wrap"
+                       Text="학습은 그때 그 판으로 돌아야 재현됩니다. 이미 뜬 판을 고르거나, 지금 상태로 새로 뜨세요."/>
+            <ComboBox Margin="0,4,0,8"
+                      ItemsSource="{Binding Versions}"
+                      SelectedItem="{Binding SelectedVersion}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+                            <TextBlock Text="{Binding Label}"/>
+                            <TextBlock Text="{Binding Summary}" FontSize="11"
+                                       Foreground="{StaticResource FgSecondaryBrush}"
+                                       TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                <Button Content="새 판 뜨기" MinWidth="100" Margin="0,0,12,0"
+                        Command="{Binding CreateSnapshotCommand}"/>
+                <CheckBox Content="미라벨 이미지 포함" IsChecked="{Binding IncludeUnlabeled}"
+                          VerticalAlignment="Center" Margin="0,0,12,0"
+                          ToolTip="검출에서 배경 샘플이 필요할 때만 켜세요. 분류·이상탐지에서 켜면 라벨 없는 이미지가 학습에 섞입니다."/>
+                <CheckBox Content="검토 완료만" IsChecked="{Binding ReviewedOnly}"
+                          VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <TextBlock Style="{StaticResource FieldLabel}" Text="풀어 넣을 폴더"/>
+            <Grid Margin="0,0,0,14">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox Grid.Column="0" Margin="0,0,8,0"
+                         Text="{Binding TargetDirectory, UpdateSourceTrigger=PropertyChanged}"/>
+                <Button Grid.Column="1" Content="찾아보기…" MinWidth="90" Click="OnBrowseClick"/>
+            </Grid>
+        </StackPanel>
+
+        <!-- 진행 -->
+        <StackPanel Visibility="{Binding HasStatus, Converter={StaticResource BoolToVis}}" Margin="0,0,0,10">
+            <TextBlock Text="{Binding Status}" TextWrapping="Wrap"
+                       Foreground="{StaticResource FgSecondaryBrush}"/>
+            <ProgressBar Value="{Binding ProgressPercent, Mode=OneWay}" Minimum="0" Maximum="100"
+                         Height="6" Margin="0,6,0,0"
+                         Visibility="{Binding Busy, Converter={StaticResource BoolToVis}}"/>
+        </StackPanel>
+
+        <Border Margin="0,0,0,12" Padding="10"
+                Background="#2A1F1F" BorderBrush="{StaticResource AccentRedBrush}" BorderThickness="1"
+                Visibility="{Binding HasError, Converter={StaticResource BoolToVis}}">
+            <TextBlock Text="{Binding Error}" TextWrapping="Wrap"
+                       Foreground="{StaticResource FgPrimaryBrush}"/>
+        </Border>
+
+        <Border Margin="0,0,0,12" Padding="10"
+                Background="#1F2A1F" BorderBrush="{StaticResource AccentGreenBrush}" BorderThickness="1"
+                Visibility="{Binding HasResult, Converter={StaticResource BoolToVis}}">
+            <StackPanel>
+                <TextBlock Text="받았습니다. 학습 데이터셋 경로로 설정됩니다." TextWrapping="Wrap"
+                           Foreground="{StaticResource FgPrimaryBrush}"/>
+                <TextBlock Text="{Binding DownloadedPath}" TextWrapping="Wrap" FontSize="11" Margin="0,4,0,0"
+                           Foreground="{StaticResource FgSecondaryBrush}"/>
+            </StackPanel>
+        </Border>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="닫기" MinWidth="90" Margin="0,0,8,0" IsCancel="True" Click="OnCloseClick"/>
+            <Button Content="받기" MinWidth="110"
+                    Style="{StaticResource SuccessButton}"
+                    Command="{Binding DownloadCommand}"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

@@ -1381,6 +1381,47 @@ namespace VMS.DeepLearning.ViewModels
         }
 
         /// <summary>
+        /// 웹에서 라벨링한 데이터셋을 받아 학습 데이터셋 경로로 삼는다 (개발 문서 §4).
+        ///
+        /// <para>
+        /// 받는 것은 학습 스크립트가 그대로 읽는 내보내기 폴더다. 학습 도구의 데이터셋으로
+        /// 되돌리지 않는다 — 두 형식을 오가면 어느 쪽이 정본인지 흐려지고, 조용히 어긋난 라벨이
+        /// 다음 학습에 들어간다. 웹에서 라벨링한 것은 웹이 정본이고, 여기서는 학습만 한다.
+        /// 그래서 Export 버튼들과 끝이 같다 — <c>TrainingConfig.DatasetPath</c> 를 채워 놓는다.
+        /// </para>
+        /// </summary>
+        [RelayCommand]
+        private void DownloadWebDataset()
+        {
+            var servers = SystemConfigReader.ReadServerSettings();
+
+            // 받을 곳의 기본값: 지금 데이터셋 폴더 옆. 없으면 사람이 고른다.
+            var target = CurrentDataset is not null
+                ? Path.Combine(_annotationService.DatasetFolderPath, "web_datasets")
+                : "";
+
+            var viewModel = new DatasetDownloadViewModel(
+                servers.MlopsServerUrl, servers.WebServerUrl,
+                CurrentDataset?.DatasetTaskType ?? DatasetTaskType.Detection,
+                target);
+
+            if (!viewModel.IsConfigured)
+            {
+                _dialogService.ShowWarning(viewModel.ConfigurationHint, "웹 데이터셋");
+                return;
+            }
+
+            _dialogService.ShowDatasetDownload(viewModel);
+
+            if (string.IsNullOrEmpty(viewModel.DownloadedPath)) return;
+
+            TrainingConfig.DatasetPath = viewModel.DownloadedPath;
+            _dialogService.ShowInformation(
+                $"웹 데이터셋을 받았습니다.\n{viewModel.DownloadedPath}\n\n학습 데이터셋 경로가 자동 설정되었습니다.",
+                "웹 데이터셋");
+        }
+
+        /// <summary>
         /// 학습 결과가 있어야 올릴 수 있다. 학습 직후의 산출물이 우선이고,
         /// 없으면 데이터셋에 남아 있는 마지막 산출물을 쓴다 — 앱을 다시 켠 뒤에도 올릴 수 있어야 한다.
         /// </summary>
