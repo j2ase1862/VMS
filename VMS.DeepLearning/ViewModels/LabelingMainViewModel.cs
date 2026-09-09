@@ -10,6 +10,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using VMS.Core.Interfaces;
 using VMS.Core.Models.Annotation;
+using VMS.Core.Services;
+using VMS.Core.ViewModels;
 using VMS.DeepLearning.Interfaces;
 using VMS.DeepLearning.Models;
 using VMS.DeepLearning.Services;
@@ -77,6 +79,7 @@ namespace VMS.DeepLearning.ViewModels
                 System.Windows.Application.Current?.Dispatcher.Invoke(() =>
                 {
                     OnPropertyChanged(nameof(IsTraining));
+                    UploadModelCommand.NotifyCanExecuteChanged();
                     OnPropertyChanged(nameof(TrainingStatus));
                 });
             };
@@ -226,6 +229,7 @@ namespace VMS.DeepLearning.ViewModels
             OnPropertyChanged(nameof(CurrentImageClass));
             AutoMatchTrainingScript();
             RestoreInferenceModelFromDataset(value);
+            UploadModelCommand.NotifyCanExecuteChanged();   // 데이터셋마다 마지막 산출물이 다르다
         }
 
         /// <summary>
@@ -1312,6 +1316,7 @@ namespace VMS.DeepLearning.ViewModels
             TrainingLog.Clear();
             _trainingCts = new CancellationTokenSource();
             OnPropertyChanged(nameof(IsTraining));
+            UploadModelCommand.NotifyCanExecuteChanged();
 
             try
             {
@@ -1323,6 +1328,7 @@ namespace VMS.DeepLearning.ViewModels
             }
 
             OnPropertyChanged(nameof(IsTraining));
+            UploadModelCommand.NotifyCanExecuteChanged();
 
             if (TrainingStatus.State == TrainingState.Completed &&
                 !string.IsNullOrEmpty(TrainingStatus.OnnxOutputPath))
@@ -1338,6 +1344,7 @@ namespace VMS.DeepLearning.ViewModels
 
                 // 영속화: 다음 세션에서 데이터셋 로드 시 InferenceModelPath 자동 복원
                 CurrentDataset.LastOnnxModelPath = TrainingStatus.OnnxOutputPath;
+                UploadModelCommand.NotifyCanExecuteChanged();
 
                 // 학습 스냅샷: 라벨이 있어 실제 학습에 들어간 이미지 ID 기록.
                 // 이후 추가/삭제된 이미지를 "미학습"으로 식별하기 위함.
@@ -1373,12 +1380,66 @@ namespace VMS.DeepLearning.ViewModels
             }
         }
 
+        /// <summary>
+        /// 학습 결과가 있어야 올릴 수 있다. 학습 직후의 산출물이 우선이고,
+        /// 없으면 데이터셋에 남아 있는 마지막 산출물을 쓴다 — 앱을 다시 켠 뒤에도 올릴 수 있어야 한다.
+        /// </summary>
+        private string? UploadableModelPath
+        {
+            get
+            {
+                var fresh = TrainingStatus.OnnxOutputPath;
+                if (!string.IsNullOrEmpty(fresh) && File.Exists(fresh)) return fresh;
+                var last = CurrentDataset?.LastOnnxModelPath;
+                return !string.IsNullOrEmpty(last) && File.Exists(last) ? last : null;
+            }
+        }
+
+        public bool CanUploadModel => !IsTraining && UploadableModelPath is not null;
+
+        /// <summary>
+        /// 학습한 모델을 MLOps 레지스트리에 올린다 (개발 문서 §5.5).
+        ///
+        /// <para>
+        /// 지금까지는 ONNX 파일을 사람이 라인 PC 로 복사했다. 레지스트리에 올리면 버전이 남고,
+        /// 라인은 <c>model://</c> 참조로 알아서 받아 간다. 올린 버전은 Candidate 로 들어가
+        /// 사람이 승격하기 전에는 라인에 나가지 않는다.
+        /// </para>
+        /// </summary>
+        [RelayCommand(CanExecute = nameof(CanUploadModel))]
+        private void UploadModel()
+        {
+            var path = UploadableModelPath;
+            if (path is null || CurrentDataset is null)
+            {
+                _dialogService.ShowWarning(
+                    "올릴 학습 결과가 없습니다. 먼저 학습을 끝내세요.", "모델 등록");
+                return;
+            }
+
+            var servers = SystemConfigReader.ReadServerSettings();
+            var viewModel = new ModelUploadViewModel(
+                servers.MlopsServerUrl, servers.WebServerUrl, path,
+                CurrentDataset.DatasetTaskType,
+                CurrentDataset.Classes.ToList(),
+                suggestedName: CurrentDataset.Name);
+
+            if (!viewModel.IsConfigured)
+            {
+                _dialogService.ShowWarning(viewModel.ConfigurationHint, "모델 등록");
+                return;
+            }
+
+            _dialogService.ShowModelUpload(viewModel);
+        }
+
         [RelayCommand]
         private void StopTraining()
         {
             _trainingCts?.Cancel();
             _trainingService.StopTraining();
             OnPropertyChanged(nameof(IsTraining));
+            UploadModelCommand.NotifyCanExecuteChanged();
         }
 
         // ── Augmentation 프리셋 ──
