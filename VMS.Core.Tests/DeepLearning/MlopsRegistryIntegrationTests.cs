@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using VMS.Core.DeepLearning;
 using VMS.Core.Services;
@@ -296,6 +297,12 @@ namespace VMS.Core.Tests.DeepLearning
                 version, folder, new Progress<DatasetDownloadProgress>(reported.Add));
 
             Assert.Equal(Path.GetFullPath(folder), path);
+
+            // 서버가 zip 바이트의 해시를 준다 — 이게 비어 있으면 클라이언트가 대조를 건너뛴다.
+            // (한동안 서버가 매니페스트 해시를 실어 워커 다운로드가 늘 실패했다. MLOps cd5ed15)
+            var baked = (await client.ListVersionsAsync(target)).First(v => v.Id == version.Id);
+            Assert.False(string.IsNullOrWhiteSpace(baked.ExportSha256), "내보내기 zip 의 해시가 있어야 대조가 산다");
+            Assert.NotEqual(baked.ManifestHash, baked.ExportSha256);
             // 학습 스크립트가 읽는 모양이어야 한다
             Assert.True(File.Exists(Path.Combine(path, "data.yaml")), "data.yaml 이 없으면 학습이 시작되지 않는다");
             Assert.True(Directory.Exists(Path.Combine(path, "images")));

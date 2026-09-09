@@ -101,6 +101,22 @@ namespace VMS.Core.Models.Annotation
             set => SetProperty(ref _lastTrainedImageIds, value);
         }
 
+        private List<string> _lastTrainedClasses = new();
+        /// <summary>
+        /// 마지막 학습에 실제로 들어간 클래스 이름 (순서 포함).
+        ///
+        /// <para>
+        /// 이 데이터셋의 <see cref="Classes"/> 와 다를 수 있다 — 웹에서 받은 데이터셋으로 학습하면
+        /// 클래스는 그 내보내기가 정본이다. 학습한 모델을 레지스트리에 올릴 때 보내는 값이라,
+        /// 여기가 비어 있으면 그때만 <see cref="Classes"/> 로 되돌아간다.
+        /// </para>
+        /// </summary>
+        public List<string> LastTrainedClasses
+        {
+            get => _lastTrainedClasses;
+            set => SetProperty(ref _lastTrainedClasses, value);
+        }
+
         private DateTime? _lastTrainedAt;
         /// <summary>마지막 학습 완료 시각. null 이면 한 번도 학습 안 됨.</summary>
         public DateTime? LastTrainedAt

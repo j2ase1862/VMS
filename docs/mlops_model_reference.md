@@ -134,11 +134,35 @@ ppocr·coco)으로 서버가 굽습니다. 라벨을 학습 도구의 데이터�
 | 미라벨 포함 | 기본은 라벨이 붙은 것만 담습니다. 검출에서 배경 샘플이 필요할 때만 켭니다 — 분류·이상탐지에서 켜면 라벨 없는 이미지가 학습에 섞입니다. |
 | 폴더 이름 | `{판 이름}-{매니페스트 해시 앞 8자리}`. 어느 학습이 어느 판으로 돌았는지 폴더 이름만 봐도 압니다. |
 | 다시 받으면 | 대상 폴더를 비우고 새로 풉니다. 이전 판의 라벨 파일이 남아 섞이면 지운 라벨이 학습에 되살아납니다. |
-| 다 받았는지 | `Content-Length` 와 받은 바이트 수를 대조합니다. 끊긴 연결로 반쯤 받은 zip 을 풀면 이미지 몇 장이 빠진 채 학습이 돌고, 그건 아무 데도 남지 않습니다. |
+| 다 받았는지 | 받으면서 SHA-256 을 계산해 서버가 준 값과 대조하고, `Content-Length` 로 길이도 봅니다. 끊긴 연결로 반쯤 받은 zip 을 풀면 이미지 몇 장이 빠진 채 학습이 돌고, 그건 아무 데도 남지 않습니다. |
 
-**`X-Content-Sha256` 은 zip 바이트의 해시가 아닙니다.** 매니페스트(이미지·라벨·분할 목록) JSON 의
-해시라 같은 내용이면 언제 구워도 같은 값이고, zip 자체는 구울 때마다 바이트가 달라집니다.
-그래서 이 값으로 받은 바이트를 검증할 수 없습니다 — **내가 요청한 판이 맞는지** 보는 데 씁니다.
+**`X-Content-Sha256` 은 내보내기 zip 파일의 SHA-256 입니다** (MLOps `DatasetVersion.ExportSha256`).
+한동안 서버가 여기에 **매니페스트 해시**를 실었습니다 — 그것은 이미지·라벨·분할 목록 JSON 의 해시,
+즉 내용의 신원이라 zip 바이트와 무관하고, 같은 내용이라도 zip 은 구울 때마다 바이트가 달라집니다.
+그래서 이 헤더로 파일을 검증하던 워커는 스냅샷으로 만든 판을 받을 때마다 실패했습니다
+(MLOps main `cd5ed15` 에서 고쳤습니다). 옛 서버에 붙으면 헤더 값이 `manifestHash` 와 같게 오므로,
+그때는 대조를 건너뛰고 길이만 봅니다.
+
+## 세그멘테이션 — RF-DETR 규약
+
+세그멘테이션 모델은 `rfdetrseg` 규약입니다. 검출에서 D-FINE 을 고른 것과 같은 이유로,
+Ultralytics(AGPL-3.0) 없이 상용 배포를 하기 위해서입니다. 학습은 MLOps 의
+`scripts/train_rfdetr_seg.py`(원본은 `VMS.DeepLearning/scripts/`)가 하고,
+라인에서는 `RfdetrSegTool` 이 읽습니다.
+
+| 이름 | 모양 | 뜻 |
+|---|---|---|
+| `input` | `[N,3,H,W]` float32 | RGB, ImageNet 정규화. **레터박스가 아니라 늘려 맞춘 리사이즈**입니다. H·W 는 `patch_size × num_windows` 의 배수여야 합니다 (nano 12, preview 56). |
+| `dets` | `[N,Q,4]` float32 | 정규화 cxcywh. 늘려 맞춘 리사이즈라 원본 크기를 그대로 곱하면 픽셀 좌표입니다. |
+| `labels` | `[N,Q,C]` float32 | 클래스 로짓 — **시그모이드**(소프트맥스 아님). `C = 클래스 수 + 1` 이고 **마지막 열이 배경**입니다. |
+| `masks` | `[N,Q,mh,mw]` float32 | 마스크 로짓, 압축 해상도(입력의 1/4). 이중선형으로 키운 뒤 **0 에서** 자릅니다. |
+
+**배경 열을 빼세요.** 안 빼면 배경이 최고 점수인 질의가 물체로 나옵니다.
+학습 스크립트가 ONNX 메타데이터에 `background_class_id` 를 새기고, 없으면 마지막 열로 봅니다.
+
+**질의마다 최고 클래스 하나만 고르지 마세요.** 한 질의가 두 클래스에서 문턱을 넘을 때 하나가
+조용히 사라집니다. (질의 × 클래스) 쌍을 점수로 줄 세우고 상위 몇 개만 남깁니다.
+DETR 계열은 집합 예측이라 NMS 는 쓰지 않습니다.
 
 ## 관련 코드
 
@@ -158,6 +182,8 @@ ppocr·coco)으로 서버가 굽습니다. 라벨을 학습 도구의 데이터�
 | 데이터셋 받기 | `VMS.Core/Services/DatasetRegistryClient.cs` |
 | 받는 창 | `VMS.DeepLearning/Views/DatasetDownloadWindow.xaml` |
 | 받는 창의 상태 | `VMS.Core/ViewModels/DatasetDownloadViewModel.cs` |
+| 학습에 쓴 클래스 되읽기 | `VMS.Core/Services/TrainingExportClasses.cs` |
+| 세그멘테이션 런타임 도구 | `VMS.VisionSetup/VisionTools/DeepLearning/RfdetrSegTool.cs` |
 
 ## 시험
 

@@ -31,6 +31,7 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         private static readonly ConcurrentDictionary<string, Task<AnomalyOnnxEngine>> _anom = new();
         private static readonly ConcurrentDictionary<string, Task<SegmentationOnnxEngine>> _seg = new();
         private static readonly ConcurrentDictionary<string, Task<YoloSegOnnxEngine>> _yoloSeg = new();
+        private static readonly ConcurrentDictionary<string, Task<RfdetrSegOnnxEngine>> _rfdetrSeg = new();
         private static readonly ConcurrentDictionary<string, Task<IDetectionEngine>> _det = new();
 
         // ── Detector (DetectionTool — YOLO / D-FINE 규약 자동 판별) ──
@@ -236,6 +237,39 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
             return engine;
         }
 
+        // ── RfdetrSeg (RfdetrSegTool) ──
+
+        public static void PrefetchRfdetrSeg(string modelPath, int inputSize = 560)
+        {
+            modelPath = Resolve(modelPath);
+            if (!IsValidPath(modelPath)) return;
+            _rfdetrSeg.GetOrAdd(modelPath, p => Task.Run(() => CreateRfdetrSeg(p, inputSize)));
+        }
+
+        public static RfdetrSegOnnxEngine GetRfdetrSeg(string modelPath, int inputSize = 560)
+        {
+            modelPath = Resolve(modelPath);
+            if (!IsValidPath(modelPath))
+                return new RfdetrSegOnnxEngine(modelPath);
+
+            var task = _rfdetrSeg.GetOrAdd(modelPath, p => Task.Run(() => CreateRfdetrSeg(p, inputSize)));
+            return task.GetAwaiter().GetResult();
+        }
+
+        private static RfdetrSegOnnxEngine CreateRfdetrSeg(string modelPath, int inputSize)
+        {
+            var sw = Stopwatch.StartNew();
+            var engine = new RfdetrSegOnnxEngine(modelPath);
+            try
+            {
+                using var dummy = new Mat(inputSize, inputSize, MatType.CV_8UC3, Scalar.All(0));
+                engine.Segment(dummy, inputSize, 0.5f, 100);
+            }
+            catch (Exception ex) { Debug.WriteLine($"[OnnxCache] RfdetrSeg warmup failed: {ex.Message}"); }
+            Debug.WriteLine($"[OnnxCache] RfdetrSeg loaded {Path.GetFileName(modelPath)} in {sw.ElapsedMilliseconds}ms (EP: {engine.ActiveProvider})");
+            return engine;
+        }
+
         // ── 공통 ──
 
         private static bool IsValidPath(string? modelPath)
@@ -267,6 +301,7 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
             DisposeAll(_anom);
             DisposeAll(_seg);
             DisposeAll(_yoloSeg);
+            DisposeAll(_rfdetrSeg);
         }
 
         private static void DisposeAll<T>(ConcurrentDictionary<string, Task<T>> dict) where T : IDisposable

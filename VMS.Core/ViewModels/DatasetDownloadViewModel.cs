@@ -116,8 +116,19 @@ namespace VMS.Core.ViewModels
         public bool CanDownload => SignedIn && !Busy && DownloadedPath is null
                                    && SelectedVersion is not null && TargetDirectory.Trim().Length > 0;
 
-        /// <summary>새 판은 데이터셋을 고른 뒤에 뜬다.</summary>
-        public bool CanSnapshot => SignedIn && !Busy && DownloadedPath is null && SelectedDataset is not null;
+        /// <summary>
+        /// 새 판은 데이터셋을 고른 뒤에 뜬다. 목록을 받는 중에는 막는다 —
+        /// 그 사이에 판을 뜨면 늦게 도착한 목록이 <see cref="Versions"/> 를 갈아 끼우면서
+        /// 방금 뜬 판을 목록에서도 선택에서도 지운다.
+        /// </summary>
+        public bool CanSnapshot => SignedIn && !Busy && !LoadingVersions
+                                   && DownloadedPath is null && SelectedDataset is not null;
+
+        /// <summary>버전 목록을 받는 중. 속성 설정자에서 시작하는 일이라 <see cref="Busy"/> 를 쓰지 않는다 —
+        /// Busy 는 사람이 누른 동작에만 켠다.</summary>
+        [ObservableProperty] private bool _loadingVersions;
+
+        partial void OnLoadingVersionsChanged(bool value) => NotifyCommands();
 
         partial void OnSignedInChanged(bool value)
         {
@@ -228,6 +239,7 @@ namespace VMS.Core.ViewModels
             // 토큰이 없으면 물어볼 것이 없다. 로그인 전에 목록을 부르면 401 만 돌아온다.
             if (!SignedIn || _token.Length == 0) return;
 
+            LoadingVersions = true;
             try
             {
                 using var client = _clientFactory(_serverUrl, _token);
@@ -246,6 +258,11 @@ namespace VMS.Core.ViewModels
             catch (Exception ex)
             {
                 Error = ex.Message;
+            }
+            finally
+            {
+                // 사람이 그새 다른 데이터셋을 골랐으면 그쪽 조회가 아직 돌고 있다 — 그때는 끄지 않는다.
+                if (SelectedDataset?.Id == datasetId) LoadingVersions = false;
             }
         }
 
