@@ -5,6 +5,7 @@ using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -50,6 +51,13 @@ namespace VMS.Core.Services
         [JsonPropertyName("createdBy")] public string CreatedBy { get; set; } = string.Empty;
         [JsonPropertyName("createdAt")] public DateTime CreatedAt { get; set; }
         [JsonPropertyName("datasetId")] public Guid? DatasetId { get; set; }
+
+        /// <summary>
+        /// 내보내기 zip <b>파일</b>의 SHA-256. <see cref="ManifestHash"/> 와 다르다 —
+        /// 그쪽은 내용의 신원(이미지·라벨·분할 목록의 해시)이라 zip 바이트와 무관하다.
+        /// zip 을 아직 굽지 않았으면 비어 있다.
+        /// </summary>
+        [JsonPropertyName("exportSha256")] public string ExportSha256 { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -74,15 +82,16 @@ namespace VMS.Core.Services
         };
 
         /// <summary>
-        /// 서버가 이 판의 <b>매니페스트 해시</b>를 이 헤더로 알려 준다.
+        /// 서버가 내보내기 zip <b>파일</b>의 SHA-256 을 이 헤더로 알려 준다.
         ///
         /// <para>
-        /// zip 바이트의 해시가 <b>아니다</b>. 매니페스트(이미지·라벨·분할 목록) JSON 의 해시라
-        /// 같은 내용이면 언제 구워도 같은 값이고, zip 자체는 구울 때마다 바이트가 달라진다.
-        /// 그래서 이 값으로 받은 바이트를 검증할 수 없다 — 내가 요청한 판이 맞는지 보는 데 쓴다.
+        /// 한동안 서버가 여기에 매니페스트 해시를 실었다 — 내용의 신원이라 zip 바이트와 무관해서,
+        /// 이 값으로 받은 파일을 검증하면 스냅샷으로 만든 판은 늘 어긋났다 (MLOps main cd5ed15 에서 고쳤다).
+        /// 옛 서버에 붙으면 헤더 값이 <see cref="RegistryDatasetVersion.ManifestHash"/> 와 같게 오므로,
+        /// 그때는 대조를 건너뛰고 길이만 본다.
         /// </para>
         /// </summary>
-        public const string ManifestHashHeader = "X-Content-Sha256";
+        public const string ContentHashHeader = "X-Content-Sha256";
 
         private readonly HttpClient _http;
         private readonly string _baseUrl;
@@ -146,11 +155,9 @@ namespace VMS.Core.Services
         /// 내보내기 zip 을 받아 <paramref name="targetDirectory"/> 에 푼다. 푼 폴더 경로를 돌려준다.
         ///
         /// <para>
-        /// 다 받았는지는 Content-Length 와 받은 바이트 수로 본다. 끊긴 연결로 반쯤 받은 zip 을 풀면
-        /// 이미지 몇 장이 빠진 채 학습이 돌고, 그건 아무 데도 남지 않는다.
-        /// zip 바이트의 해시로는 대조하지 않는다 — 서버가 주는 것은 <see cref="ManifestHashHeader"/>,
-        /// 즉 매니페스트의 해시이고 zip 자체는 구울 때마다 바이트가 달라진다.
-        /// 그 값은 <b>내가 요청한 판이 맞는지</b> 보는 데 쓴다.
+        /// 받으면서 SHA-256 을 계산해 서버가 준 값과 대조한다. 다르면 아무것도 풀지 않는다 —
+        /// 반쯤 받은 zip 을 풀면 이미지 몇 장이 빠진 채 학습이 돌고, 그건 아무 데도 남지 않는다.
+        /// 서버가 해시를 주지 않거나 옛 서버라 매니페스트 해시를 주면 길이(Content-Length)만 본다.
         /// </para>
         /// <para>
         /// 대상 폴더가 이미 있으면 지우고 새로 만든다. 이전 판의 라벨 파일이 남아 섞이면
@@ -181,6 +188,8 @@ namespace VMS.Core.Services
             {
                 long declared;
                 long received;
+                string? expected;
+                string? actual;
                 using (response)
                 {
                     if (!response.IsSuccessStatusCode)
@@ -189,22 +198,22 @@ namespace VMS.Core.Services
                         throw Translate(response.StatusCode, "데이터셋 받기", body);
                     }
 
-                    // 내가 요청한 판이 맞는지 본다. 다른 판이 오면 라벨이 통째로 다른 데이터로 학습이 돈다.
-                    var served = response.Headers.TryGetValues(ManifestHashHeader, out var values)
+                    var served = response.Headers.TryGetValues(ContentHashHeader, out var values)
                         ? FirstOf(values) : null;
-                    if (!string.IsNullOrWhiteSpace(served) && !string.IsNullOrWhiteSpace(version.ManifestHash)
-                        && !string.Equals(served, version.ManifestHash, StringComparison.OrdinalIgnoreCase))
-                    {
-                        throw new ModelRegistryException(
-                            "서버가 다른 판을 보냈습니다. 목록을 새로 받아 다시 고르세요." +
-                            $" 요청 {Short(version.ManifestHash)}, 받은 {Short(served!)}");
-                    }
+
+                    // 옛 서버는 여기에 매니페스트 해시를 실었다. 그 값으로 바이트를 대조하면 늘 어긋나므로
+                    // 같으면 대조를 접는다 — 잘못된 실패보다 검증을 안 하는 편이 낫다.
+                    expected = !string.IsNullOrWhiteSpace(served)
+                               && !string.Equals(served, version.ManifestHash, StringComparison.OrdinalIgnoreCase)
+                        ? served
+                        : null;
 
                     declared = response.Content.Headers.ContentLength ?? 0;
                     var total = declared > 0 ? declared : version.SizeBytes;
 
                     await using var source = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
-                    received = await CopyAsync(source, zipPath, total, progress, ct).ConfigureAwait(false);
+                    (received, actual) = await CopyAsync(source, zipPath, total, expected is not null, progress, ct)
+                        .ConfigureAwait(false);
                 }
 
                 // 끊긴 연결을 잡는다. 반쯤 받은 zip 을 풀면 이미지 몇 장이 빠진 채 학습이 돌고,
@@ -213,6 +222,13 @@ namespace VMS.Core.Services
                 {
                     throw new ModelRegistryException(
                         $"데이터셋을 끝까지 받지 못했습니다 ({received:N0} / {declared:N0} 바이트). 다시 받아 주세요.");
+                }
+
+                if (expected is not null && !string.Equals(expected, actual, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new ModelRegistryException(
+                        "받은 데이터셋이 서버의 것과 다릅니다 (해시 불일치). 다시 받아 주세요." +
+                        $" 기대 {Short(expected)}, 받은 {Short(actual ?? "")}");
                 }
 
                 progress?.Report(new DatasetDownloadProgress(received, received, "푸는 중…"));
@@ -226,11 +242,15 @@ namespace VMS.Core.Services
             }
         }
 
-        /// <summary>받은 바이트 수를 돌려준다. 그 수가 곧 다 받았는지의 근거다.</summary>
-        private static async Task<long> CopyAsync(
-            Stream source, string zipPath, long total,
+        /// <summary>
+        /// 받은 바이트 수와 (요청했다면) 그 바이트의 SHA-256 을 돌려준다.
+        /// 받으면서 함께 계산한다 — 다 받고 파일을 한 번 더 읽지 않으려는 것이다.
+        /// </summary>
+        private static async Task<(long Received, string? Sha256)> CopyAsync(
+            Stream source, string zipPath, long total, bool hash,
             IProgress<DatasetDownloadProgress>? progress, CancellationToken ct)
         {
+            using var sha = hash ? SHA256.Create() : null;
             var buffer = new byte[81920];
             long received = 0;
             long lastReported = 0;
@@ -240,6 +260,7 @@ namespace VMS.Core.Services
                 int read;
                 while ((read = await source.ReadAsync(buffer.AsMemory(0, buffer.Length), ct).ConfigureAwait(false)) > 0)
                 {
+                    sha?.TransformBlock(buffer, 0, read, null, 0);
                     await file.WriteAsync(buffer.AsMemory(0, read), ct).ConfigureAwait(false);
                     received += read;
 
@@ -250,10 +271,11 @@ namespace VMS.Core.Services
                         progress.Report(new DatasetDownloadProgress(received, total, "받는 중…"));
                     }
                 }
+                sha?.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
             }
 
             progress?.Report(new DatasetDownloadProgress(received, total == 0 ? received : total, "받는 중…"));
-            return received;
+            return (received, sha?.Hash is { } digest ? Convert.ToHexString(digest).ToLowerInvariant() : null);
         }
 
         /// <summary>

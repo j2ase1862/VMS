@@ -1353,6 +1353,14 @@ namespace VMS.DeepLearning.ViewModels
                     .Select(i => i.Id)
                     .ToList();
                 CurrentDataset.LastTrainedAt = DateTime.Now;
+
+                // 학습이 실제로 읽은 내보내기에서 클래스를 되읽는다. 웹에서 받은 데이터셋으로
+                // 학습했다면 이 목록이 로컬 데이터셋의 것과 다를 수 있고, 레지스트리에 올릴 때
+                // 보내야 하는 값은 이쪽이다. 못 읽으면 로컬 목록을 그대로 쓴다.
+                var trainedClasses = TrainingExportClasses.Read(TrainingConfig.DatasetPath);
+                CurrentDataset.LastTrainedClasses = trainedClasses.Count > 0
+                    ? trainedClasses.ToList()
+                    : CurrentDataset.Classes.ToList();
                 CurrentDataset.RefreshStatistics();
 
                 try { _annotationService.SaveDataset(CurrentDataset); }
@@ -1459,10 +1467,18 @@ namespace VMS.DeepLearning.ViewModels
             }
 
             var servers = SystemConfigReader.ReadServerSettings();
+
+            // 올릴 때 보내는 클래스는 "마지막 학습에 쓴 것" 이다. 웹에서 받은 데이터셋으로
+            // 학습했다면 로컬 데이터셋의 목록과 다를 수 있는데, 그대로 보내면 서버가 ONNX 안의
+            // 이름과 대조하지 못하는 규약에서 이름이 밀린 모델이 조용히 등록된다.
+            var classes = CurrentDataset.LastTrainedClasses.Count > 0
+                ? CurrentDataset.LastTrainedClasses.ToList()
+                : CurrentDataset.Classes.ToList();
+
             var viewModel = new ModelUploadViewModel(
                 servers.MlopsServerUrl, servers.WebServerUrl, path,
                 CurrentDataset.DatasetTaskType,
-                CurrentDataset.Classes.ToList(),
+                classes,
                 suggestedName: CurrentDataset.Name);
 
             if (!viewModel.IsConfigured)

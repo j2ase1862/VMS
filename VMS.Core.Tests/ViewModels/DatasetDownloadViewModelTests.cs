@@ -136,6 +136,26 @@ namespace VMS.Core.Tests.ViewModels
             Assert.False(vm.CanDownload);
         }
 
+        /// <summary>
+        /// 목록을 받는 중에는 새 판을 뜨지 못한다. 그 사이에 뜨면 늦게 도착한 목록이
+        /// Versions 를 갈아 끼우면서 방금 뜬 판을 목록에서도 선택에서도 지운다.
+        /// </summary>
+        [Fact]
+        public void CanSnapshot_IsFalseWhileTheVersionListIsLoading()
+        {
+            var vm = Create();
+            vm.SignedIn = true;
+            vm.SelectedDataset = new DatasetDownloadViewModel.DatasetChoice(
+                Guid.NewGuid(), "로고 데이터셋", "object, logo", "detection");
+            Assert.True(vm.CanSnapshot);
+
+            vm.LoadingVersions = true;
+            Assert.False(vm.CanSnapshot);
+
+            vm.LoadingVersions = false;
+            Assert.True(vm.CanSnapshot);
+        }
+
         [Fact]
         public void Commands_AreDisabledWhileBusy()
         {
