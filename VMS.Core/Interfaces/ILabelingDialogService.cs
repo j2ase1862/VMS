@@ -25,5 +25,11 @@ namespace VMS.Core.Interfaces
         /// </para>
         /// </summary>
         void ShowModelUpload(ViewModels.ModelUploadViewModel viewModel);
+
+        /// <summary>
+        /// 웹에서 라벨링한 데이터셋을 받는 창을 띄운다.
+        /// 창이 닫힌 뒤 뷰모델의 <c>DownloadedPath</c> 를 보면 받았는지 알 수 있다.
+        /// </summary>
+        void ShowDatasetDownload(ViewModels.DatasetDownloadViewModel viewModel);
     }
 }

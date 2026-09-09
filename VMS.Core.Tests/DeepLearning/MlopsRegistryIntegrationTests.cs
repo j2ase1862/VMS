@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using VMS.Core.DeepLearning;
@@ -251,6 +252,94 @@ namespace VMS.Core.Tests.DeepLearning
                 () => client.CreateModelAsync("ln-should-not-create", "detection", new[] { "logo" }));
 
             Assert.Contains("권한이 없습니다", ex.Message);
+        }
+
+        // ───────────── 받는 쪽 (웹 데이터셋) ─────────────
+
+        /// <summary>웹에서 라벨링한 데이터셋. 라벨이 붙은 이미지가 한 장은 있어야 스냅샷이 만들어진다.</summary>
+        private static string? DatasetId => Environment.GetEnvironmentVariable("MLOPS_DATASET_ID");
+        private static bool CanDownloadDataset =>
+            !string.IsNullOrWhiteSpace(Url) && !string.IsNullOrWhiteSpace(Jwt)
+            && !string.IsNullOrWhiteSpace(DatasetId);
+
+        /// <summary>
+        /// 학습 도구가 하는 그대로 — 데이터셋을 찾고, 지금 상태로 판을 뜨고, 그 판을 받아 푼다.
+        /// 푼 폴더는 학습 스크립트가 그대로 읽을 수 있어야 한다 (검출이면 data.yaml + images/ + labels/).
+        /// </summary>
+        [Fact]
+        public async Task 웹_데이터셋의_판을_떠서_받아_푼다()
+        {
+            if (!CanDownloadDataset) return;
+
+            using var client = new DatasetRegistryClient(Url!, Jwt!);
+            var target = Guid.Parse(DatasetId!);
+
+            // 고르는 화면이 쓰는 목록에 그 데이터셋이 보인다
+            var datasets = await client.ListDatasetsAsync("detection");
+            Assert.Contains(datasets, d => d.Id == target);
+            Assert.All(datasets, d => Assert.Equal("detection", d.TaskType, ignoreCase: true));
+
+            var version = await client.CreateSnapshotAsync(target, name: "it-" + DateTime.Now.ToString("HHmmss"));
+            Assert.NotEqual(Guid.Empty, version.Id);
+            Assert.Equal(target, version.DatasetId);
+            Assert.False(string.IsNullOrWhiteSpace(version.ManifestHash));
+            Assert.True(version.ImageCount > 0, "라벨이 붙은 이미지가 없으면 학습할 것이 없다");
+            Assert.Equal("yolo", version.ExportFormat, ignoreCase: true);
+
+            // 방금 뜬 판이 목록에 보인다
+            var versions = await client.ListVersionsAsync(target);
+            Assert.Contains(versions, v => v.Id == version.Id);
+
+            var folder = Path.Combine(_cacheRoot, "download");
+            var reported = new List<DatasetDownloadProgress>();
+            var path = await client.DownloadExportAsync(
+                version, folder, new Progress<DatasetDownloadProgress>(reported.Add));
+
+            Assert.Equal(Path.GetFullPath(folder), path);
+            // 학습 스크립트가 읽는 모양이어야 한다
+            Assert.True(File.Exists(Path.Combine(path, "data.yaml")), "data.yaml 이 없으면 학습이 시작되지 않는다");
+            Assert.True(Directory.Exists(Path.Combine(path, "images")));
+            Assert.True(Directory.Exists(Path.Combine(path, "labels")));
+            Assert.NotEmpty(Directory.GetFiles(path, "*", SearchOption.AllDirectories));
+        }
+
+        /// <summary>
+        /// 두 번째로 받으면 폴더를 비우고 다시 푼다. 이전 판의 라벨 파일이 남아 섞이면
+        /// 지운 라벨이 학습에 되살아난다.
+        /// </summary>
+        [Fact]
+        public async Task 다시_받으면_이전_내용을_남기지_않는다()
+        {
+            if (!CanDownloadDataset) return;
+
+            using var client = new DatasetRegistryClient(Url!, Jwt!);
+            var version = await client.CreateSnapshotAsync(Guid.Parse(DatasetId!));
+            var folder = Path.Combine(_cacheRoot, "reuse");
+
+            await client.DownloadExportAsync(version, folder);
+            var stray = Path.Combine(folder, "labels", "예전라벨.txt");
+            Directory.CreateDirectory(Path.GetDirectoryName(stray)!);
+            File.WriteAllText(stray, "0 0.5 0.5 0.2 0.2");
+
+            await client.DownloadExportAsync(version, folder);
+
+            Assert.False(File.Exists(stray));
+            Assert.True(File.Exists(Path.Combine(folder, "data.yaml")));
+        }
+
+        /// <summary>없는 판을 받으려 하면 이유를 말한다.</summary>
+        [Fact]
+        public async Task 없는_판은_이유를_말한다()
+        {
+            if (!CanDownloadDataset) return;
+
+            using var client = new DatasetRegistryClient(Url!, Jwt!);
+            var missing = new RegistryDatasetVersion { Id = Guid.NewGuid(), Name = "없음" };
+
+            var ex = await Assert.ThrowsAsync<ModelRegistryException>(
+                () => client.DownloadExportAsync(missing, Path.Combine(_cacheRoot, "missing")));
+
+            Assert.Contains("서버에 없습니다", ex.Message);
         }
 
         public void Dispose()

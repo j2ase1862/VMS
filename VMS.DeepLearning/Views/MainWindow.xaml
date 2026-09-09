@@ -776,6 +776,12 @@
                                 <Button Content="Export for Training" Command="{Binding ExportForCurrentTaskCommand}"
                                         Style="{StaticResource SuccessButton}"
                                         Padding="8,6" FontSize="12" Margin="0,0,0,4"/>
+                                <!-- 웹에서 라벨링한 데이터셋을 받아 학습 데이터셋 경로로 삼는다.
+                                     받는 것은 학습 스크립트가 그대로 읽는 내보내기 폴더다. -->
+                                <Button Content="웹 데이터셋 내려받기" Command="{Binding DownloadWebDatasetCommand}"
+                                        Style="{StaticResource PrimaryButton}"
+                                        Padding="8,6" FontSize="12" Margin="0,0,0,4"
+                                        ToolTip="웹(MLOps)에서 라벨링한 데이터셋의 한 판을 받아 학습 데이터셋 경로로 설정합니다."/>
                                 <TextBlock Foreground="#888" FontSize="10" Margin="0,2,0,0" TextWrapping="Wrap">
                                     <Run Text="Detection → YOLO format"/>
                                     <LineBreak/>
