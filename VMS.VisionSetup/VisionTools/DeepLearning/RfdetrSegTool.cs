@@ -338,10 +338,6 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
     /// </summary>
     public class RfdetrSegOnnxEngine : OnnxModelBase
     {
-        // ImageNet 통계 — RF-DETR 학습·추론이 쓰는 값
-        private static readonly float[] Mean = [0.485f, 0.456f, 0.406f];
-        private static readonly float[] Std = [0.229f, 0.224f, 0.225f];
-
         public string[]? LastClassNames { get; private set; }
 
         /// <summary>
@@ -377,7 +373,9 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
             var results = new List<RfdetrSegInstance>();
             if (_session == null) return results;
 
-            var tensor = Preprocess(image, inputSize);
+            // 늘려 맞추는 리사이즈 + ImageNet 정규화 (레터박스 없음). 학습이 그렇게 했으므로 여기서도 그렇게 한다.
+            // 베이스의 PreprocessImageNet 이 정확히 이 일을 하고, 픽셀 인덱서 대신 버퍼에 직접 써서 빠르다.
+            var tensor = PreprocessImageNet(image, inputSize, inputSize);
             var inputs = CreateInput(GetInputName(), tensor);
 
             using var outputs = _session.Run(inputs);
@@ -476,35 +474,6 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
             }
 
             return results;
-        }
-
-        /// <summary>
-        /// 늘려 맞추는 리사이즈 + ImageNet 정규화. 레터박스가 아니라서 가로세로 비율이 바뀌는데,
-        /// 학습이 그렇게 했으므로 여기서도 그렇게 해야 한다.
-        /// </summary>
-        private static DenseTensor<float> Preprocess(Mat image, int inputSize)
-        {
-            using var rgb = image.Channels() == 1
-                ? image.CvtColor(ColorConversionCodes.GRAY2RGB)
-                : image.CvtColor(ColorConversionCodes.BGR2RGB);
-            using var resized = new Mat();
-            Cv2.Resize(rgb, resized, new Size(inputSize, inputSize), 0, 0, InterpolationFlags.Linear);
-
-            var tensor = new DenseTensor<float>([1, 3, inputSize, inputSize]);
-            var span = tensor.Buffer.Span;
-            int plane = inputSize * inputSize;
-
-            for (int y = 0; y < inputSize; y++)
-            {
-                for (int x = 0; x < inputSize; x++)
-                {
-                    var pixel = resized.At<Vec3b>(y, x);
-                    int offset = y * inputSize + x;
-                    for (int c = 0; c < 3; c++)
-                        span[c * plane + offset] = (pixel[c] / 255f - Mean[c]) / Std[c];
-                }
-            }
-            return tensor;
         }
 
         private static float Sigmoid(float x) => 1f / (1f + (float)Math.Exp(-x));
