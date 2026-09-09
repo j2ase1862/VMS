@@ -744,6 +744,22 @@ namespace VMS
                 Debug.WriteLine($"[App] ImageUploadService init failed: {ex.Message}");
             }
 
+            // ── MLOps 학습 데이터 수집 (NG 이미지 + 양품 샘플 → BODA.VMS.MLOps, 라인 토큰) ──
+            // Web 연동과 무관하게 서버 주소·토큰만 있으면 켠다 — 단독 모드 라인도 학습 데이터는 모을 수 있다.
+            // 실제 전송 여부는 이미지 저장 설정의 "MLOps 전송" 토글이 정한다.
+            VMS.Services.ImageUpload.ILineNgImageUploader? lineNgUploader = null;
+            if (!string.IsNullOrWhiteSpace(systemConfig.MlopsServerUrl)
+                && !string.IsNullOrWhiteSpace(systemConfig.MlopsLineToken)) try
+            {
+                lineNgUploader = new VMS.Services.ImageUpload.LineNgImageUploader(
+                    systemConfig.MlopsServerUrl, systemConfig.MlopsLineToken);
+                lineNgUploader.Start();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] LineNgImageUploader init failed: {ex.Message}");
+            }
+
             // Re-create MainViewModel with AutoProcessService injected
             mainViewModel = new MainViewModel(
                 configService,
@@ -779,6 +795,7 @@ namespace VMS
                 predictionPollingService: predictionPollingService,
                 updateService: updateService,
                 imageUploadService: imageUploadService,
+                lineNgUploader: lineNgUploader,
                 ioBoards: ioBoardConnections,
                 updateInstallService: updateInstallService,
                 localHistoryStore: historyStore);
@@ -801,6 +818,7 @@ namespace VMS
                 updateService?.Dispose();
                 updateInstallService?.Dispose();
                 imageUploadService?.Dispose();
+                lineNgUploader?.Dispose();
                 foreach (var board in ioBoardConnections) board.Dispose();
                 // 큐에 남은 이력 배치를 디스크에 반영하고 writer 종료 (최대 5초).
                 InspectionService.HistoryStore = null;

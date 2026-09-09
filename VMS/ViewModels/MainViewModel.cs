@@ -391,6 +391,8 @@ namespace VMS.ViewModels
         private ImageSaveOptions _imageSaveOptions = ImageSaveOptions.LoadFromAppData();
         // 검사 이미지 Web 업로드(Upload 모드) — 없으면 미전송.
         private readonly VMS.Services.ImageUpload.IImageUploadService? _imageUploadService;
+        // 검사 이미지 MLOps 학습 데이터 수집(NG + 양품 샘플) — 서버 주소·라인 토큰이 없으면 null.
+        private readonly VMS.Services.ImageUpload.ILineNgImageUploader? _lineNgUploader;
 
         public MainViewModel(
             IConfigurationService configService,
@@ -417,6 +419,7 @@ namespace VMS.ViewModels
             IUpdateService? updateService = null,
             VMS.Services.ImageUpload.IImageUploadService? imageUploadService = null,
             IReadOnlyList<VMS.PLC.Interfaces.IIoBoardConnection>? ioBoards = null,
+            VMS.Services.ImageUpload.ILineNgImageUploader? lineNgUploader = null,
             IUpdateInstallService? updateInstallService = null,
             VMS.Services.LocalHistory.ILocalInspectionHistoryStore? localHistoryStore = null)
         {
@@ -445,6 +448,7 @@ namespace VMS.ViewModels
             _updateInstallService = updateInstallService;
             _localHistoryStore = localHistoryStore;
             _imageUploadService = imageUploadService;
+            _lineNgUploader = lineNgUploader;
             _shutdownAction = shutdownAction;
             _systemConfig = new SystemConfiguration();
 
@@ -740,6 +744,9 @@ namespace VMS.ViewModels
 
                 // Web 업로드 큐 적재(Upload 모드 + OK/NG 전송 토글 시) — 택트와 분리된 비동기.
                 _imageUploadService?.Enqueue(image, imageContext, _imageSaveOptions);
+
+                // MLOps 데이터 풀 적재(NG 전송 토글 + 양품 1/N 샘플) — 별도 큐, 원본 해상도.
+                _lineNgUploader?.Enqueue(image, imageContext, _imageSaveOptions);
 
                 LogService?.Log(
                     $"Inspection {(ok ? "OK" : "NG")} - {cameraName}",

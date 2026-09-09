@@ -164,6 +164,29 @@ Ultralytics(AGPL-3.0) 없이 상용 배포를 하기 위해서입니다. 학습�
 조용히 사라집니다. (질의 × 클래스) 쌍을 점수로 줄 세우고 상위 몇 개만 남깁니다.
 DETR 계열은 집합 예측이라 NMS 는 쓰지 않습니다.
 
+## 라인 NG 이미지 수집 — 학습 데이터가 라인에서 올라온다
+
+모델이 라인에 내려가는 길의 반대 방향입니다. 라인 PC 가 불량으로 판정한 사진을 원본 해상도 그대로
+MLOps 데이터 풀(`POST /api/images/line-ng`)에 올리고, 웹에서 그것을 라벨링해 다음 모델을 학습합니다.
+Web 생산 이력으로 가는 NG 썸네일 전송과는 별개의 길입니다 — 그쪽은 사람이 보는 용도라 썸네일이고,
+이쪽은 학습 재료라 원본이어야 합니다.
+
+| 항목 | 값 |
+|---|---|
+| 켜는 곳 | VMS 메인 → 이미지 저장 설정 창 → "MLOps 학습 데이터 수집" 카드 → [NG 이미지 MLOps 전송] |
+| 양품 샘플 | 같은 카드의 "양품 샘플 비율" — N 장에 1 장 (기본 200, 0 = 양품 안 보냄). 첫 장은 바로 보내고 그 뒤로 N 장마다 |
+| 전제 | `system_config.json` 의 `mlopsServerUrl` · `mlopsLineToken` (설정 마법사 2단계 고급 설정). 없으면 토글을 켜도 나가지 않고 카드가 그 사실을 알려 준다 |
+| 형식 | 로컬 저장 포맷 그대로(기본 PNG). 서버가 받지 않는 TIFF 만 PNG 로 바꾼다 |
+| 보내는 것 | 파일 + `inspectionId`(결과 업로드와 같은 상관 키 — 생산 이력과 이어 붙이는 열쇠) + `capturedAt`(UTC) + `tags`(`verdict:ng|ok` · `recipe:` · `camera:` · `step:`) |
+| 보내지 않는 것 | `lineId` — 라인 토큰이 그 라인에 발급된 것이라 서버가 토큰에서 읽는다. 라인 PC 가 다른 라인 이름을 댈 수 없다 |
+| 큐 | `%LocalAppData%\BODA VISION AI\mlops_line_ng_queue` — 디스크 큐라 재시작해도 남고, 2000 장 / 4 GB 를 넘으면 양품 샘플부터 오래된 순으로 버린다 |
+| 재시도 | 네트워크 오류·5xx·401·403·408·429 는 지수 백오프(5초 → 최대 5분). 한 번에 한 장만 보내 라인 네트워크를 독점하지 않는다 |
+| 거절 | 그 밖의 4xx 와 "200 인데 errors 만 있는 응답"(서버가 파일 하나를 받지 않은 것)은 다시 보내지 않고 `rejected/` 에 사유와 함께 둔다 — 큐 맨 앞에 박혀 뒤를 막지 않게(#444 와 같은 규칙, 최대 200 쌍) |
+| 검사 택트 | 영향 없음 — 판정 직후 frozen 클론만 넘기고 인코딩·기록·전송은 전부 뒤에서 |
+
+같은 사이클의 여러 카메라·스텝은 상관 키를 공유하므로 큐 파일 이름은 `{상관 키}|{카메라}|{스텝}|{판정}` 입니다.
+서버는 같은 사진(해시)을 다시 받으면 새로 만들지 않고 태그만 합치고 200 을 주므로, 재시도로 두 번 올라가도 데이터가 겹치지 않습니다.
+
 ## 관련 코드
 
 | 무엇 | 어디 |
@@ -184,11 +207,15 @@ DETR 계열은 집합 예측이라 NMS 는 쓰지 않습니다.
 | 받는 창의 상태 | `VMS.Core/ViewModels/DatasetDownloadViewModel.cs` |
 | 학습에 쓴 클래스 되읽기 | `VMS.Core/Services/TrainingExportClasses.cs` |
 | 세그멘테이션 런타임 도구 | `VMS.VisionSetup/VisionTools/DeepLearning/RfdetrSegTool.cs` |
+| 라인 NG 이미지 송신 | `VMS/Services/ImageUpload/LineNgImageUploader.cs` (큐·샘플링·거절 보관) |
+| 송신 토글·샘플 비율 | `VMS.Core/Imaging/ImageSaveOptions.cs` (`mlopsSendNg` · `mlopsOkSampleRate`), 설정 창 `VMS/ViewModels/ImageSaveSettingsViewModel.cs` |
+| 판정 → 송신 배선 | `VMS/ViewModels/MainViewModel.cs` (`InspectionCompleted`), 생성은 `VMS/App.xaml.cs` |
 
 ## 시험
 
 ```bash
 dotnet test VMS.Core.Tests --filter ModelReference
+dotnet test VMS.Tests --filter LineNgImageUploaderTests     # 라인 NG 송신부 — 가짜 서버로 큐 한 바퀴
 ```
 
 살아 있는 MLOps 서버에 붙는 통합 시험은 환경 변수가 있을 때만 돕니다.
