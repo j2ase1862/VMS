@@ -380,7 +380,7 @@
 
 ### 매뉴얼 반영 포인트
 - 별책 `BODA-VMS-AI-Tools-Manual.html`: 학습 패널 절에 [레지스트리에 등록] 소절(창 캡처 4상태 중 로그인·등록 대상 2장), Export 절에 [웹 데이터셋 내려받기] 소절(창 캡처 1장), §2 학습 환경 준비에 세그멘테이션 스크립트·pip 한 줄, 라이선스 표에 RF-DETR Apache 2.0 한 줄.
-- 본편 §5 Deep Learning 도구 표에 RF-DETR-seg 행 + 소절(툴 패널 캡처 `--capture-toolpanels` → `32_RF-DETR-seg.png`, 임시 캡처 `D:\Temp	oolpanels_RF-DETR-seg.png` 참고), YOLOv8-seg 소절에 "라이선스 회피 대안 RF-DETR-seg" 상호 참조 한 줄.
+- 본편 §5 Deep Learning 도구 표에 RF-DETR-seg 행 + 소절(툴 패널 캡처 `--capture-toolpanels` → `32_RF-DETR-seg.png`, 임시 캡처 `D:/Temp/toolpanels/32_RF-DETR-seg.png` 참고), YOLOv8-seg 소절에 "라이선스 회피 대안 RF-DETR-seg" 상호 참조 한 줄.
 - 본편 §3.2 설정 마법사 2단계 고급 설정 표: MLOps 서버 주소·웹 서버 주소가 학습 도구의 등록·내려받기에도 쓰인다는 한 줄.
 - §11.4 변경 이력 3줄 (등록·내려받기·RF-DETR-seg) + 부록 라이선스 표(RF-DETR Apache 2.0).
 - 6장 별책은 GS 인증 범위 외이므로 인증 제출본에는 본편 §5 도구 행만 들어간다.
