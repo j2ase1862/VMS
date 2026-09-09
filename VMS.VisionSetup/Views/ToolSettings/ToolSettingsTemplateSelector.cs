@@ -36,6 +36,7 @@ namespace VMS.VisionSetup.Views.ToolSettings
         public DataTemplate? ImageRectifyTemplate { get; set; }
         public DataTemplate? SegmentationTemplate { get; set; }
         public DataTemplate? YoloSegTemplate { get; set; }
+        public DataTemplate? RfdetrSegTemplate { get; set; }
         public DataTemplate? ShapeMatchTemplate { get; set; }
         public DataTemplate? ColorExtractTemplate { get; set; }
         public DataTemplate? ColorMatchTemplate { get; set; }
@@ -80,6 +81,7 @@ namespace VMS.VisionSetup.Views.ToolSettings
                 ImageRectifyToolSettingsViewModel => ImageRectifyTemplate,
                 SegmentationToolSettingsViewModel => SegmentationTemplate,
                 YoloSegToolSettingsViewModel => YoloSegTemplate,
+                RfdetrSegToolSettingsViewModel => RfdetrSegTemplate,
                 ShapeMatchToolSettingsViewModel => ShapeMatchTemplate,
                 ColorExtractToolSettingsViewModel => ColorExtractTemplate,
                 ColorMatchToolSettingsViewModel => ColorMatchTemplate,

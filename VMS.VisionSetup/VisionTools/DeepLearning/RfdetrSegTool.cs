@@ -42,18 +42,44 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         public string ModelPath
         {
             get => _modelPath;
-            set => SetProperty(ref _modelPath, value ?? string.Empty);
+            set
+            {
+                if (!SetProperty(ref _modelPath, value ?? string.Empty)) return;
+
+                // 모델 경로가 바뀌면 들고 있던 엔진을 버린다. 안 버리면 새 모델을 골라도 옛 모델이
+                // 계속 추론한다 — 화면에는 새 경로가 보이므로 아무도 눈치채지 못한다.
+                // Dispose 하지 않는 것은 캐시가 생명주기를 쥐고 있어서다 (같은 경로를 다른 도구가 쓸 수 있다).
+                _engine = null;
+                InputSizeFromModel = false;   // 새 모델이 말해 줄 때까지는 모르는 상태다
+            }
         }
 
         private int _inputSize = 560;
         /// <summary>
-        /// 모델이 받는 변의 길이. RF-DETR 은 블록 크기의 배수만 받으므로 학습 때 쓴 값을 그대로 넣습니다
-        /// (ONNX metadata 의 imgsz).
+        /// 모델이 받는 변의 길이.
+        ///
+        /// <para>
+        /// 모델을 열면 <b>ONNX 가 말해 주는 값으로 덮어씁니다</b> — RF-DETR 의 export 는 고정 shape 이고,
+        /// 받는 변은 모델마다 다른 배수여야 합니다(patch_size × num_windows: nano 12, preview 56).
+        /// 사람이 손으로 맞추면 틀린 값을 넣어도 오류 없이 점수만 조용히 낮아집니다.
+        /// 그래프가 동적 축이라 말해 주지 않을 때만 여기 값이 그대로 쓰입니다.
+        /// </para>
         /// </summary>
         public int InputSize
         {
             get => _inputSize;
             set => SetProperty(ref _inputSize, Math.Clamp(value, 64, 2048));
+        }
+
+        private bool _inputSizeFromModel;
+        /// <summary>
+        /// <see cref="InputSize"/> 가 모델에서 온 값인지. 설정 화면은 이때 그 칸을 잠급니다 —
+        /// 바꿔 봐야 다음 추론에서 모델 값으로 되돌아가므로, 고칠 수 있는 것처럼 보이면 안 됩니다.
+        /// </summary>
+        public bool InputSizeFromModel
+        {
+            get => _inputSizeFromModel;
+            private set => SetProperty(ref _inputSizeFromModel, value);
         }
 
         private float _confidenceThreshold = 0.5f;
@@ -111,6 +137,17 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         private void EnsureEngine()
         {
             _engine ??= OnnxEngineCache.GetRfdetrSeg(ModelPath, InputSize);
+
+            // 모델이 말해 주면 그 값이 정본이다.
+            if (_engine.ModelInputSize > 0)
+            {
+                InputSize = _engine.ModelInputSize;
+                InputSizeFromModel = true;
+            }
+            else
+            {
+                InputSizeFromModel = false;
+            }
         }
 
         public override VisionResult Execute(Mat inputImage)
@@ -348,11 +385,51 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         /// </summary>
         public int BackgroundClassId { get; private set; } = int.MinValue;
 
+        /// <summary>
+        /// 모델이 받는 변의 길이. 0 이면 알아내지 못한 것이다.
+        ///
+        /// <para>
+        /// RF-DETR 의 export 는 고정 shape 이라 그래프가 직접 말해 준다. 사람에게 맞추게 하면
+        /// 함정이다 — 모델마다 배수가 다르고(patch_size × num_windows: nano 12, preview 56),
+        /// 틀린 값을 넣어도 오류 없이 점수만 조용히 낮아진다.
+        /// </para>
+        /// </summary>
+        public int ModelInputSize { get; private set; }
+
         public RfdetrSegOnnxEngine(string modelPath)
         {
             LoadModel(modelPath);
             LastClassNames = ReadClassNamesFromMetadata();
             BackgroundClassId = ReadBackgroundClassId();
+            ModelInputSize = ReadModelInputSize();
+        }
+
+        /// <summary>
+        /// 입력 텐서 <c>[N,3,H,W]</c> 에서 변의 길이를 읽는다. 동적 축(-1)이면 그래프가 말해 주지
+        /// 않는 것이므로 메타데이터 <c>imgsz</c> 로 물러난다. H 와 W 가 다르면 짧은 쪽을 쓴다 —
+        /// 정사각으로만 넣기 때문이다.
+        /// </summary>
+        private int ReadModelInputSize()
+        {
+            try
+            {
+                if (_session?.InputMetadata is { } inputs && inputs.TryGetValue(GetInputName(), out var meta))
+                {
+                    var dims = meta.Dimensions;
+                    if (dims is { Length: 4 } && dims[2] > 0 && dims[3] > 0)
+                        return Math.Min(dims[2], dims[3]);
+                }
+
+                // "[560, 560]" 이나 "560" — 첫 숫자만 본다
+                var custom = _session?.ModelMetadata.CustomMetadataMap;
+                if (custom != null && custom.TryGetValue("imgsz", out var raw) && raw is not null)
+                {
+                    var first = new string(raw.SkipWhile(c => !char.IsDigit(c)).TakeWhile(char.IsDigit).ToArray());
+                    if (int.TryParse(first, out var parsed) && parsed > 0) return parsed;
+                }
+            }
+            catch (Exception ex) { Debug.WriteLine($"[RfdetrSeg] 입력 크기를 읽지 못했습니다: {ex.Message}"); }
+            return 0;
         }
 
         private int ReadBackgroundClassId()

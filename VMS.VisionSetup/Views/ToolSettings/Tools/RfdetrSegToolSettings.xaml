@@ -1,0 +1,79 @@
+<UserControl x:Class="VMS.VisionSetup.Views.ToolSettings.Tools.RfdetrSegToolSettings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls">
+    <StackPanel>
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Model" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:TextBoxParameter Label="Model Path (.onnx)"
+                    Value="{Binding ModelPath}"
+                              ShowRegistryPicker="True" RegistryTaskType="segmentation"
+                    BrowseFilter="ONNX Models (*.onnx)|*.onnx|All Files (*.*)|*.*"
+                    ToolType="RfdetrSegTool" ParameterName="ModelPath"/>
+                <!-- 모델을 열면 ONNX 가 말해 주는 값으로 덮이고 이 칸은 잠깁니다.
+                     RF-DETR 은 받는 변이 모델마다 다른 배수여야 해서(patch_size × num_windows:
+                     nano 12, preview 56), 손으로 맞추면 틀린 값에도 오류 없이 점수만 낮아집니다. -->
+                <controls:SliderParameter Label="Input Size (모델이 정합니다)"
+                    Value="{Binding InputSize}" Minimum="64" Maximum="1280"
+                    TickFrequency="12" ValueFormat="F0"
+                    IsEnabled="{Binding InputSizeEditable}"
+                    ToolType="RfdetrSegTool" ParameterName="InputSize"/>
+            </StackPanel>
+        </Expander>
+
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Detection" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:SliderParameter Label="Confidence Threshold"
+                    Value="{Binding ConfidenceThreshold}" Minimum="0.01" Maximum="1.0"
+                    TickFrequency="0.05" ValueFormat="F2"
+                    ToolType="RfdetrSegTool" ParameterName="ConfidenceThreshold"/>
+                <controls:SliderParameter Label="Max Instances"
+                    Value="{Binding MaxInstances}" Minimum="1" Maximum="1000"
+                    TickFrequency="10" ValueFormat="F0"
+                    ToolType="RfdetrSegTool" ParameterName="MaxInstances"/>
+                <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,4"
+                           Text="IoU·마스크 임계가 없습니다. DETR 계열은 집합 예측이라 NMS 를 쓰지 않고, 마스크는 로짓이라 0 에서 자릅니다. 질의 수가 수천인 모델도 있어 상한으로 자릅니다."/>
+            </StackPanel>
+        </Expander>
+
+        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Display" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:CheckBoxParameter Label="Show Mask Overlay"
+                    IsChecked="{Binding ShowOverlay}"
+                    ToolType="RfdetrSegTool" ParameterName="ShowOverlay"/>
+                <controls:SliderParameter Label="Overlay Opacity"
+                    Value="{Binding OverlayOpacity}" Minimum="0.0" Maximum="1.0"
+                    TickFrequency="0.05" ValueFormat="F2"
+                    ToolType="RfdetrSegTool" ParameterName="OverlayOpacity"/>
+                <controls:CheckBoxParameter Label="Draw Boxes + Labels"
+                    IsChecked="{Binding DrawBoxes}"
+                    ToolType="RfdetrSegTool" ParameterName="DrawBoxes"/>
+            </StackPanel>
+        </Expander>
+
+        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Output" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:CheckBoxParameter Label="Output Mask Image"
+                    IsChecked="{Binding OutputMaskImage}"
+                    ToolType="RfdetrSegTool" ParameterName="OutputMaskImage"/>
+                <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,4"
+                           Text="켜면 다음 도구로 전달되는 출력 이미지가 인스턴스 합집합 이진 마스크(흰색=인스턴스)가 됩니다 — PointCloud Mask Crop 등 마스크 소비 도구와 Image 연결용. 화면 오버레이 표시는 그대로 유지됩니다."/>
+            </StackPanel>
+        </Expander>
+
+        <TextBlock Text="Expected ONNX I/O: dets = [1, Q, 4] (정규화 cxcywh), labels = [1, Q, C] (로짓, 마지막 열이 배경), masks = [1, Q, mh, mw] (마스크 로짓). RF-DETR(Apache-2.0) 표준 export — scripts/train_rfdetr_seg.py 로 학습합니다."
+                   Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,8,0,0"/>
+    </StackPanel>
+</UserControl>

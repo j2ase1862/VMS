@@ -163,6 +163,35 @@ namespace VMS.VisionSetup.Models
                 }
             },
 
+            ["RfdetrSegTool"] = new ToolHelp
+            {
+                Name = "RF-DETR-seg (인스턴스 분할, Apache-2.0)",
+                Description = "RF-DETR 인스턴스 분할 ONNX 추론. 한 이미지에서 객체마다 박스 + 클래스 + 픽셀 마스크를 동시 출력.\n"
+                            + "YOLOv8-seg 와 하는 일은 같고 라이선스가 다릅니다 — Ultralytics(AGPL-3.0) 의존이 없어 상용 배포 시 소스 공개 의무가 발생하지 않습니다.\n"
+                            + "출력 세 텐서: dets(정규화 cxcywh) + labels(클래스 로짓, 마지막 열이 배경) + masks(질의마다 온전한 마스크 로짓).\n"
+                            + "후처리: 시그모이드 → 배경 열 제외 → (질의×클래스) 상위 선택 → 마스크 확대 → 0 에서 자름. NMS 를 쓰지 않습니다.",
+                Usage = "1) MLOps 웹에서 세그멘테이션 데이터셋으로 학습(scripts/train_rfdetr_seg.py)하거나, 학습 도구에서 학습 후 레지스트리에 등록. "
+                      + "2) Model Path 에 .onnx 지정 — [레지스트리…] 로 model:// 참조를 고를 수도 있습니다. "
+                      + "3) Confidence 조정. 4) Run → 결과 Data 의 Inst{i}_* 키로 각 인스턴스 확인.",
+                CognexEquivalent = "ViDi Blue Locate (인스턴스 모드) / Red Supervised",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["ModelPath"] = "RF-DETR-seg ONNX 모델 파일 경로 (.onnx). model:// 참조도 됩니다.",
+                    ["InputSize"] = "추론 입력 크기. 모델을 열면 ONNX 가 말해 주는 값으로 덮이고 이 칸은 잠깁니다.\n"
+                                  + "RF-DETR 은 받는 변이 모델마다 다른 배수여야 합니다(patch_size × num_windows: nano 12, preview 56). "
+                                  + "손으로 맞추면 틀린 값에도 오류 없이 점수만 조용히 낮아지므로 모델에게 맡깁니다.",
+                    ["ConfidenceThreshold"] = "클래스 점수(시그모이드) 임계값. 이하 인스턴스는 버립니다.\n"
+                                            + "• 0.3: 많이 검출 (오탐 ↑)\n• 0.5: 기본\n• 0.7+: 보수적 (놓침 ↑)",
+                    ["MaxInstances"] = "점수 순으로 남길 인스턴스 개수 상한. 질의 수가 수천인 모델도 있어 상한이 없으면 그 수만큼 마스크를 키우게 됩니다.\n"
+                                     + "• 10~50: 검사 대상이 몇 개뿐일 때\n• 100: 기본\n• 300+: 작은 객체가 많을 때",
+                    ["ShowOverlay"] = "각 인스턴스 마스크를 컬러 반투명 오버레이로 표시.",
+                    ["OverlayOpacity"] = "마스크 오버레이 투명도 (0~1).",
+                    ["DrawBoxes"] = "박스 + 클래스명 + 점수 라벨 표시 여부.",
+                    ["OutputMaskImage"] = "true: 다음 도구로 전달되는 출력 이미지를 인스턴스 합집합 이진 마스크(CV_8UC1, 255=인스턴스)로 교체.\n"
+                                        + "PointCloud Mask Crop 등 마스크 소비 도구와 Image 연결할 때 켭니다. 화면 오버레이 표시는 유지."
+                }
+            },
+
             ["ColorExtractTool"] = new ToolHelp
             {
                 Name = "Color Extract (HSV 다중 모델 추출)",
