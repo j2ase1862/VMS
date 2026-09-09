@@ -43,7 +43,7 @@ namespace VMS.VisionSetup.ViewModels
             "production" => "운영",
             "staging" => "테스트",
             "candidate" => "후보",
-            "archived" => "보관",
+            "retired" => "폐기",
             _ => stage ?? "",
         };
     }

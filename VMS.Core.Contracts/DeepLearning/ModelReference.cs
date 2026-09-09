@@ -98,7 +98,20 @@ namespace VMS.Core.DeepLearning
             return true;
         }
 
-        /// <summary>레지스트리가 쓰는 소문자 단계 이름으로 맞춘다. 모르는 값이면 null.</summary>
+        /// <summary>
+        /// 레지스트리가 쓰는 소문자 단계 이름으로 맞춘다. 모르는 값이면 null.
+        ///
+        /// <para>
+        /// 레지스트리의 단계는 candidate · staging · production · retired 네 가지지만,
+        /// 레시피가 가리킬 수 있는 것은 앞의 셋뿐이다. retired 는 "이제 쓰지 말라" 는 뜻이라
+        /// 라인이 그것을 가리키는 것 자체가 사고다. 여기서 막으면 레시피를 저장할 때 걸리고,
+        /// 통과시키면 라인에서 검사가 시작될 때야 드러난다.
+        /// </para>
+        /// <para>
+        /// 예전에 archived 를 받아 줬는데 레지스트리에 없는 이름이라 서버가 400 으로 거절했다.
+        /// 클라이언트가 서버에 없는 단계를 만들어 내면 안 된다.
+        /// </para>
+        /// </summary>
         private static string? NormalizeStage(string? stage)
         {
             if (string.IsNullOrWhiteSpace(stage)) return null;
@@ -107,7 +120,6 @@ namespace VMS.Core.DeepLearning
                 case "production": return "production";
                 case "staging": return "staging";
                 case "candidate": return "candidate";
-                case "archived": return "archived";
                 default: return null;
             }
         }
