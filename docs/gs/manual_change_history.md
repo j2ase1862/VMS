@@ -358,3 +358,29 @@
 - §2.1 설치: 설치 구성 선택 화면 캡처 `71_msi_weboption.png` 재캡처 필요 (체크박스 2개).
 - §6·§11.4·목차: 반영 완료 (HTML). docx 재생성 필요.
 - 제품설명서 생성기(`gen_product_description.js`) 적용 범위 문장·구성표 갱신 → docx 재생성 필요.
+
+---
+
+## 11. AI 학습 도구 ↔ MLOps 레지스트리 연동 + RF-DETR-seg 도구 신설 — **반영 대기**
+
+| 항목 | 내용 |
+|------|------|
+| PR | #439 (`feature/wpf-registry-upload`) · #440 (`feature/wpf-dataset-download`) · #441 (`feature/rfdetr-segmentation`) · #442 (`feature/rfdetr-seg-wiring`) — 2026-09-09 머지, 릴리즈 미발행 |
+| 날짜 | 2026-09-09 |
+| 앱 · 화면 | VMS.DeepLearning 학습 패널(Training)·Export 구역 · VMS.VisionSetup Deep Learning 도구 팔레트·RF-DETR-seg 도구 설정 |
+| 변경 종류 | 기능 추가 (버튼 2개 + 창 2개, 도구 1종) + 결함 수정 1건 |
+
+### 무엇이 바뀌었나
+- **[레지스트리에 등록]** (학습 패널, #439): 학습이 끝난 ONNX 를 MLOps 모델 레지스트리에 새 버전으로 올린다. 창에서 웹 계정으로 로그인 → 새 모델 계열 또는 기존 계열 선택 → 라이선스(YOLO 계열은 AGPL-3.0 필수)·메모 → [올리기]. 올린 버전은 **Candidate** 라 라인에 바로 나가지 않고, 레지스트리에서 승격해야 라인 PC 가 `model://` 참조로 받아 간다. 등록 권한은 현재 **Web Admin 계정만** 통과한다(MLOps Engineer 정책, Web 역할에 Engineer 없음 — 운영 정책 확정 시 문구 재검토).
+- **[웹 데이터셋 내려받기]** (Export 구역, #440): 웹에서 라벨링한 데이터셋의 **판(스냅샷)** 을 골라 받으면 학습 스크립트가 읽는 내보내기 폴더로 풀리고 학습 데이터셋 경로가 그 폴더로 설정된다. 이미 뜬 판을 고르거나 [새 판 뜨기] 로 지금 상태를 굳힌다. 옵션: 미라벨 포함(검출 배경 샘플용)·검토 완료만. 폴더 이름 `{판 이름}-{해시 8자리}`, 다시 받으면 폴더를 비우고 새로 푼다.
+- 두 창 모두 `system_config.json` 의 MLOps 서버 주소·웹 서버 주소가 없으면 열리지 않고 무엇이 빠졌는지 알려 준다 (설정 마법사 2단계 고급 설정).
+- **RF-DETR-seg 도구** (#441 #442): Deep Learning 팔레트에 YOLOv8-seg 옆 [RF-DETR-seg]. 하는 일은 같고 Ultralytics(AGPL-3.0) 의존이 없다. 파라미터: Model Path(.onnx, [레지스트리…] 가능) · Input Size(**모델을 열면 ONNX 가 정하는 값으로 덮이고 칸이 잠김** — RF-DETR 은 모델마다 배수가 달라 손으로 맞추면 안 됨) · Confidence Threshold · Max Instances(점수 순 상한) · Show Mask Overlay·Overlay Opacity·Draw Boxes · Output Mask Image. **IoU·마스크 임계 없음**(집합 예측이라 NMS 미사용). 결과 키 `Inst{i}_Class/ClassName/Score/X/Y/Width/Height/MaskPixels`, 0건 검출 = NG(자매 도구와 동일).
+- 세그멘테이션 데이터셋을 열면 학습 스크립트가 `train_rfdetr_seg.py` 로 자동 매칭된다. 사전 준비: `pip install "rfdetr[train]>=1.10,<2" onnx onnxruntime` (COCO 형식 내보내기 사용).
+- 결함 수정: YOLOv8-seg 도구의 Output Mask Image 가 레시피를 다시 열면 꺼져 있던 문제 — 이제 저장한 대로 복원.
+
+### 매뉴얼 반영 포인트
+- 별책 `BODA-VMS-AI-Tools-Manual.html`: 학습 패널 절에 [레지스트리에 등록] 소절(창 캡처 4상태 중 로그인·등록 대상 2장), Export 절에 [웹 데이터셋 내려받기] 소절(창 캡처 1장), §2 학습 환경 준비에 세그멘테이션 스크립트·pip 한 줄, 라이선스 표에 RF-DETR Apache 2.0 한 줄.
+- 본편 §5 Deep Learning 도구 표에 RF-DETR-seg 행 + 소절(툴 패널 캡처 `--capture-toolpanels` → `32_RF-DETR-seg.png`, 임시 캡처 `D:\Temp	oolpanels_RF-DETR-seg.png` 참고), YOLOv8-seg 소절에 "라이선스 회피 대안 RF-DETR-seg" 상호 참조 한 줄.
+- 본편 §3.2 설정 마법사 2단계 고급 설정 표: MLOps 서버 주소·웹 서버 주소가 학습 도구의 등록·내려받기에도 쓰인다는 한 줄.
+- §11.4 변경 이력 3줄 (등록·내려받기·RF-DETR-seg) + 부록 라이선스 표(RF-DETR Apache 2.0).
+- 6장 별책은 GS 인증 범위 외이므로 인증 제출본에는 본편 §5 도구 행만 들어간다.
