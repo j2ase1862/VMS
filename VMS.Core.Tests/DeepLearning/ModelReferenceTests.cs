@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using VMS.Core.DeepLearning;
 using VMS.Core.Services;
@@ -187,6 +188,74 @@ namespace VMS.Core.Tests.DeepLearning
 
             Assert.Equal(first, second);
             Assert.Equal(written, File.GetLastWriteTimeUtc(second));
+        }
+
+        /// <summary>
+        /// VMS 메인과 VisionSetup 이 같은 레시피를 같은 시점에 열면 같은 sha 를 둘이 동시에 받는다.
+        /// 종전에는 Exists 와 Move 사이에서 진 쪽의 Move 가 IOException 으로 터져 "아직 내려받지 못했습니다" 가 됐다
+        /// — 파일은 이미 제자리에 있는데도. 진 쪽은 이긴 파일을 그대로 써야 한다.
+        /// 스트림이 마지막 바이트를 넘긴 뒤 둘이 만나는 지점(Barrier)을 두어 커밋이 정확히 겹치게 한다.
+        /// </summary>
+        [Fact]
+        public async Task 같은_파일을_동시에_받아도_진_쪽이_터지지_않는다()
+        {
+            var cache = new ModelArtifactCache(_root);
+            var (bytes, sha) = Payload("onnx-bytes-race");
+
+            for (int round = 0; round < 10; round++)
+            {
+                var dest = cache.PathFor(sha);
+                if (File.Exists(dest)) File.Delete(dest);
+
+                using var meet = new Barrier(2);
+                var a = Task.Run(() => cache.PutAsync(sha, new MeetAtEndStream(bytes, () => meet.SignalAndWait(5000))));
+                var b = Task.Run(() => cache.PutAsync(sha, new MeetAtEndStream(bytes, () => meet.SignalAndWait(5000))));
+
+                var paths = await Task.WhenAll(a, b);   // 둘 다 예외 없이 돌아와야 한다
+
+                Assert.Equal(dest, paths[0]);
+                Assert.Equal(dest, paths[1]);
+                Assert.Equal(bytes, await File.ReadAllBytesAsync(dest));
+                Assert.Empty(Directory.GetFiles(Path.GetDirectoryName(dest)!, "*.part"));   // 찌꺼기 없음
+            }
+        }
+
+        /// <summary>
+        /// 결정적 재현: Exists 검사와 Move 사이에 남이 먼저 제자리에 옮겨 둔 상황.
+        /// Move 는 반드시 실패하지만, 다음 회전의 Exists 가 받아 주어 이긴 파일을 돌려줘야 한다.
+        /// </summary>
+        [Fact]
+        public async Task 커밋_직전에_남이_먼저_옮겨_두었으면_그_파일을_쓴다()
+        {
+            var cache = new ModelArtifactCache(_root);
+            var (bytes, sha) = Payload("onnx-bytes-lost");
+            var dest = cache.PathFor(sha);
+
+            // Exists 검사는 통과했는데 Move 직전에 "이긴 쪽" 이 완전한 파일을 제자리에 두는 순간
+            // (캐시의 불변식: destination 은 완전한 파일만). 보강 전에는 여기서 IOException 이 올라갔다.
+            cache.BeforeMoveForTests = () => File.WriteAllBytes(dest, bytes);
+
+            var path = await cache.PutAsync(sha, new MemoryStream(bytes));
+
+            Assert.Equal(dest, path);
+            Assert.Equal(bytes, await File.ReadAllBytesAsync(dest));
+            Assert.Empty(Directory.GetFiles(Path.GetDirectoryName(dest)!, "*.part"));
+        }
+
+        /// <summary>마지막 바이트를 넘긴 뒤(EOF 직전) 한 번 콜백을 부르는 스트림 — 커밋 시점을 맞추는 데 쓴다.</summary>
+        private sealed class MeetAtEndStream : MemoryStream
+        {
+            private readonly Action _atEnd;
+            private bool _fired;
+
+            public MeetAtEndStream(byte[] bytes, Action atEnd) : base(bytes, writable: false) => _atEnd = atEnd;
+
+            public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken ct)
+            {
+                var n = await base.ReadAsync(buffer, offset, count, ct);
+                if (n == 0 && !_fired) { _fired = true; _atEnd(); }
+                return n;
+            }
         }
 
         [Fact]
