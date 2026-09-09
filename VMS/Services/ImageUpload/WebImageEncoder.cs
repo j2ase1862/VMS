@@ -23,10 +23,16 @@ namespace VMS.Services.ImageUpload
             }
 
             // 풀(원본) — 로컬 저장과 동일 포맷/품질.
-            var ext = ImageSaveOptions.ExtensionFor(opts.Format);
-            BitmapEncoder encoder = opts.Format switch
+            return EncodeFull(image, opts.Format, opts.JpegQuality);
+        }
+
+        /// <summary>원본 해상도 그대로 지정 포맷으로 인코딩 — Web 풀 전송과 MLOps 학습 데이터 전송이 공유.</summary>
+        public static (byte[] bytes, string ext) EncodeFull(BitmapSource image, ImageSaveFormat format, int jpegQuality)
+        {
+            var ext = ImageSaveOptions.ExtensionFor(format);
+            BitmapEncoder encoder = format switch
             {
-                ImageSaveFormat.Jpeg => new JpegBitmapEncoder { QualityLevel = ImageSaveOptions.ClampQuality(opts.JpegQuality) },
+                ImageSaveFormat.Jpeg => new JpegBitmapEncoder { QualityLevel = ImageSaveOptions.ClampQuality(jpegQuality) },
                 ImageSaveFormat.Bmp => new BmpBitmapEncoder(),
                 ImageSaveFormat.Tiff => new TiffBitmapEncoder { Compression = TiffCompressOption.Zip },
                 _ => new PngBitmapEncoder(),

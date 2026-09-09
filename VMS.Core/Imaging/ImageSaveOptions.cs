@@ -29,6 +29,8 @@ namespace VMS.Core.Imaging
         public const int DefaultThumbnailMaxEdge = 1024;  // 장변 px — Web 전송 썸네일
         public const int MinThumbnailMaxEdge = 128;
         public const int MaxThumbnailMaxEdge = 8192;
+        public const int DefaultMlopsOkSampleRate = 200;  // 양품 N장에 1장 — MLOps 데이터 풀 정상 샘플
+        public const int MaxMlopsOkSampleRate = 100000;
 
         /// <summary>양품(OK) 이미지를 디스크에 저장할지 여부.</summary>
         public bool SaveOkImages { get; init; }
@@ -80,6 +82,20 @@ namespace VMS.Core.Imaging
 
         /// <summary>썸네일 장변 px (Web 전송용). 기본 1024.</summary>
         public int ThumbnailMaxEdge { get; init; } = DefaultThumbnailMaxEdge;
+
+        // ── MLOps 학습 데이터 수집 (BODA.VMS.MLOps) ─────────────────
+
+        /// <summary>
+        /// 불량(NG) 이미지를 MLOps 데이터 풀로 보낼지 여부. Web 전송과 별개의 길이며 원본 해상도로 나간다.
+        /// system_config.json 의 mlopsServerUrl·mlopsLineToken 이 있어야 실제로 전송된다.
+        /// </summary>
+        public bool MlopsSendNg { get; init; }
+
+        /// <summary>
+        /// 양품(OK) 이미지 샘플링 — N 장에 1 장을 NG 와 함께 보낸다(개발 문서 §5.2 "1/200").
+        /// 0 = 양품은 보내지 않음. <see cref="MlopsSendNg"/> 가 켜져 있을 때만 의미가 있다.
+        /// </summary>
+        public int MlopsOkSampleRate { get; init; } = DefaultMlopsOkSampleRate;
 
         /// <summary>파일명 규칙 — 토큰 순서 + on/off.</summary>
         public List<FileNameTokenSetting> FileNameTokens { get; init; } = DefaultTokens();
@@ -160,6 +176,11 @@ namespace VMS.Core.Imaging
                 if (elem.TryGetProperty("thumbnailMaxEdge", out var teProp) && teProp.TryGetInt32(out var teVal))
                     thumbEdge = ClampThumbnailEdge(teVal);
 
+                bool mlopsSendNg = elem.TryGetProperty("mlopsSendNg", out var msnProp) && msnProp.ValueKind == JsonValueKind.True;
+                int mlopsOkSampleRate = DefaultMlopsOkSampleRate;
+                if (elem.TryGetProperty("mlopsOkSampleRate", out var msrProp) && msrProp.TryGetInt32(out var msrVal))
+                    mlopsOkSampleRate = ClampMlopsOkSampleRate(msrVal);
+
                 var tokens = ParseTokens(elem);
 
                 return new ImageSaveOptions
@@ -177,6 +198,8 @@ namespace VMS.Core.Imaging
                     WebSendNg = webSendNg,
                     WebImageVariant = webVariant,
                     ThumbnailMaxEdge = thumbEdge,
+                    MlopsSendNg = mlopsSendNg,
+                    MlopsOkSampleRate = mlopsOkSampleRate,
                     FileNameTokens = tokens
                 };
             }
@@ -255,6 +278,10 @@ namespace VMS.Core.Imaging
             if (days > MaxRetentionDays) return MaxRetentionDays;
             return days;
         }
+
+        /// <summary>양품 샘플 비율 1/N 의 N — 0(안 보냄) ~ <see cref="MaxMlopsOkSampleRate"/>.</summary>
+        public static int ClampMlopsOkSampleRate(int n)
+            => n < 0 ? 0 : (n > MaxMlopsOkSampleRate ? MaxMlopsOkSampleRate : n);
 
         public static int ClampThumbnailEdge(int px)
         {

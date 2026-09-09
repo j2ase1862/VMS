@@ -26,6 +26,9 @@ namespace VMS.ViewModels
         public ImageSaveSettingsViewModel()
         {
             _configPath = VMS.Camera.Configuration.AppDataPaths.SystemConfigFile;
+            var server = VMS.Core.Services.SystemConfigReader.ReadServerSettings();
+            MlopsConfigured = !string.IsNullOrWhiteSpace(server.MlopsServerUrl)
+                              && !string.IsNullOrWhiteSpace(server.MlopsLineToken);
             Tokens.CollectionChanged += (_, _) => UpdatePreview();
             Load();
         }
@@ -46,6 +49,16 @@ namespace VMS.ViewModels
         [ObservableProperty] private bool _webSendNg;
         [ObservableProperty] private WebImageVariant _webImageVariant = WebImageVariant.Thumbnail;
         [ObservableProperty] private int _thumbnailMaxEdge = ImageSaveOptions.DefaultThumbnailMaxEdge;
+
+        // MLOps 학습 데이터 수집
+        [ObservableProperty] private bool _mlopsSendNg;
+        [ObservableProperty] private int _mlopsOkSampleRate = ImageSaveOptions.DefaultMlopsOkSampleRate;
+
+        /// <summary>MLOps 서버 주소·라인 토큰이 설정돼 있는지 — 없으면 토글을 켜도 나가지 않으므로 화면에서 알려 준다.</summary>
+        public bool MlopsConfigured { get; }
+        public string MlopsConfiguredHint => MlopsConfigured
+            ? "MLOps 서버 주소와 라인 토큰이 설정되어 있습니다."
+            : "MLOps 서버 주소 또는 라인 토큰이 없습니다 — 설정 마법사(AppSetup) 2단계 고급 설정에서 입력해야 전송됩니다.";
 
         [ObservableProperty] private string _previewFileName = string.Empty;
         [ObservableProperty] private string _previewPath = string.Empty;
@@ -92,6 +105,8 @@ namespace VMS.ViewModels
                 WebSendNg = loaded.WebSendNg;
                 WebImageVariant = loaded.WebImageVariant;
                 ThumbnailMaxEdge = loaded.ThumbnailMaxEdge;
+                MlopsSendNg = loaded.MlopsSendNg;
+                MlopsOkSampleRate = loaded.MlopsOkSampleRate;
 
                 RebuildTokens(loaded.FileNameTokens);
 
@@ -142,6 +157,8 @@ namespace VMS.ViewModels
                 if (rd != RetentionDays) RetentionDays = rd;
                 var te = ImageSaveOptions.ClampThumbnailEdge(ThumbnailMaxEdge);
                 if (te != ThumbnailMaxEdge) ThumbnailMaxEdge = te;
+                var sr = ImageSaveOptions.ClampMlopsOkSampleRate(MlopsOkSampleRate);
+                if (sr != MlopsOkSampleRate) MlopsOkSampleRate = sr;
 
                 // 다른 키 보존을 위해 JsonNode 로 read-modify-write.
                 Directory.CreateDirectory(Path.GetDirectoryName(_configPath)!);
@@ -170,6 +187,8 @@ namespace VMS.ViewModels
                 imageSave["webSendNg"] = WebSendNg;
                 imageSave["webImageVariant"] = WebImageVariant.ToString();
                 imageSave["thumbnailMaxEdge"] = ThumbnailMaxEdge;
+                imageSave["mlopsSendNg"] = MlopsSendNg;
+                imageSave["mlopsOkSampleRate"] = MlopsOkSampleRate;
                 if (!string.IsNullOrWhiteSpace(BaseDir))
                     imageSave["baseDir"] = BaseDir;
                 else
@@ -195,6 +214,7 @@ namespace VMS.ViewModels
                     source: nameof(ImageSaveSettingsViewModel),
                     details: $"OK={SaveOkImages}, NG={SaveNgImages}, Base={(string.IsNullOrEmpty(BaseDir) ? "-" : BaseDir)}, " +
                              $"Format={SelectedFormat}, JpegQuality={JpegQuality}, Retention={RetentionDays}d, " +
+                             $"MlopsNG={MlopsSendNg}, MlopsOk=1/{MlopsOkSampleRate}, " +
                              $"Rule={string.Join("|", Tokens.Where(t => t.Enabled).Select(t => t.Token))}");
 
                 StatusMessage = "저장됨 — 검사 이미지 저장 설정이 적용됩니다.";
@@ -247,6 +267,8 @@ namespace VMS.ViewModels
             WebSendNg = WebSendNg,
             WebImageVariant = WebImageVariant,
             ThumbnailMaxEdge = ThumbnailMaxEdge,
+            MlopsSendNg = MlopsSendNg,
+            MlopsOkSampleRate = MlopsOkSampleRate,
             FileNameTokens = Tokens
                 .Select(t => new FileNameTokenSetting { Token = t.Token, Enabled = t.Enabled })
                 .ToList()
