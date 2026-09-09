@@ -68,25 +68,11 @@ namespace VMS.VisionSetup.Services
             return new OnnxSettings(ep, cache, fp16);
         }
 
-        private static string? GetStringIgnoreCase(JsonElement root, string name)
-        {
-            foreach (var prop in root.EnumerateObject())
-            {
-                if (string.Equals(prop.Name, name, StringComparison.OrdinalIgnoreCase))
-                    return prop.Value.ValueKind == JsonValueKind.String ? prop.Value.GetString() : null;
-            }
-            return null;
-        }
-
         /// <summary>MLOps 레지스트리 접속 정보 — 같은 system_config.json 에서 읽는다.</summary>
         public readonly record struct MlopsSettings(string ServerUrl, string LineToken);
 
         /// <summary>
-        /// 레지스트리 주소와 라인 토큰. VisionSetup 은 VMS 런타임의 SystemConfiguration 형식을
-        /// 직접 참조하지 않으므로 필요한 두 키만 읽는다. 없으면 빈 문자열이고,
-        /// 그때는 [레지스트리…] 창이 설정하라고 알린다.
-        /// </summary>
-        /// <summary>
+        /// 레지스트리 주소와 라인 토큰. 없으면 빈 문자열이고, 그때는 [레지스트리…] 창이 설정하라고 알린다.
         /// 같은 파일을 AI 학습 도구도 읽으므로 읽는 방법은 <see cref="VMS.Core.Services.SystemConfigReader"/>
         /// 한 곳에 둔다. 앱마다 키 표기를 달리 다루면 "설정했는데 안 붙는다" 가 생긴다.
         /// </summary>

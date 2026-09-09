@@ -79,7 +79,6 @@ namespace VMS.DeepLearning.ViewModels
                 System.Windows.Application.Current?.Dispatcher.Invoke(() =>
                 {
                     OnPropertyChanged(nameof(IsTraining));
-            UploadModelCommand.NotifyCanExecuteChanged();
                     UploadModelCommand.NotifyCanExecuteChanged();
                     OnPropertyChanged(nameof(TrainingStatus));
                 });
