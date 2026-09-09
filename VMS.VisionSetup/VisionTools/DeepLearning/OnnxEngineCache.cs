@@ -260,10 +260,13 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         {
             var sw = Stopwatch.StartNew();
             var engine = new RfdetrSegOnnxEngine(modelPath);
+            // 예열은 모델이 실제로 받는 크기로 한다. 도구의 InputSize 는 모델을 열기 전 값이라
+            // 배수가 안 맞으면 예열이 헛돌고 첫 실제 추론이 콜드 스타트를 그대로 치른다.
+            int warm = engine.ModelInputSize > 0 ? engine.ModelInputSize : inputSize;
             try
             {
-                using var dummy = new Mat(inputSize, inputSize, MatType.CV_8UC3, Scalar.All(0));
-                engine.Segment(dummy, inputSize, 0.5f, 100);
+                using var dummy = new Mat(warm, warm, MatType.CV_8UC3, Scalar.All(0));
+                engine.Segment(dummy, warm, 0.5f, 100);
             }
             catch (Exception ex) { Debug.WriteLine($"[OnnxCache] RfdetrSeg warmup failed: {ex.Message}"); }
             Debug.WriteLine($"[OnnxCache] RfdetrSeg loaded {Path.GetFileName(modelPath)} in {sw.ElapsedMilliseconds}ms (EP: {engine.ActiveProvider})");
