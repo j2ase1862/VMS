@@ -49,6 +49,12 @@ namespace VMS.Core.Services
             return Path.Combine(_root, normalized.Substring(0, 2), normalized + ".onnx");
         }
 
+        /// <summary>
+        /// 시험 전용 — Exists 검사 뒤, Move 직전에 한 번 불린다. "남이 그 사이에 먼저 옮겨 둔" 경합을
+        /// 결정적으로 재현하기 위한 자리다. 운영 코드는 절대 설정하지 않는다.
+        /// </summary>
+        internal Action? BeforeMoveForTests { get; set; }
+
         /// <summary>이미 받아 둔 파일이 있으면 그 경로, 없으면 null.</summary>
         public string? TryGet(string sha256)
         {
@@ -91,15 +97,53 @@ namespace VMS.Core.Services
                         $"내려받은 모델의 해시가 다릅니다. 기대 {sha256}, 실제 {actual}");
                 }
 
-                // 같은 파일을 동시에 받은 다른 스레드가 이미 옮겼을 수 있다 — 그러면 그 파일을 쓴다.
-                if (File.Exists(destination)) { TryDelete(temp); return destination; }
-                File.Move(temp, destination);
-                return destination;
+                return await CommitAsync(temp, destination, ct).ConfigureAwait(false);
             }
             catch
             {
                 TryDelete(temp);
                 throw;
+            }
+        }
+
+        /// <summary>
+        /// 다 받고 해시까지 맞춘 temp 를 제자리로 옮긴다.
+        ///
+        /// <para>
+        /// 같은 파일을 동시에 받는 쪽이 있다 — VMS 메인과 VisionSetup 은 레시피를 열 때 둘 다 프리페치하므로
+        /// 같은 레시피를 같은 시점에 열면 같은 sha 를 두 프로세스가 받는다. Exists 와 Move 사이가 비어 있어
+        /// 둘 다 통과하면 진 쪽의 Move 가 IOException 으로 터지고, 종전에는 그것이 그대로 올라가
+        /// "모델 참조를 아직 내려받지 못했습니다" 가 됐다 — 파일은 이미 제자리에 있는데도.
+        /// 그래서 실패하면 <b>다음 회전의 Exists 가 받아 준다</b>. 재시도 횟수보다 이 순서가 핵심이다.
+        /// (MLOps 서버의 LocalDiskArtifactStorage.CommitTempAsync 와 같은 모양.)
+        /// </para>
+        /// <para>
+        /// 진 쪽이 해시를 다시 재지 않는 근거: destination 은 오직 이 경로 — "다 받고 해시까지 맞춘 temp 를
+        /// 옮기는" — 로만 생기므로, 존재하면 완전한 파일이다. 누군가 destination 에 직접 쓰기 시작하면 이
+        /// 불변식이 깨지고 여기서 반쪽 파일을 조용히 내주게 된다. <b>캐시 폴더에 직접 쓰는 코드를 만들지 말 것.</b>
+        /// </para>
+        /// <para>
+        /// 덮어쓰지 않는다 — 이긴 파일을 덮으면 그 파일을 이미 매핑해 읽고 있는 엔진이 끊긴다.
+        /// 재시도 대기는 백신이 갓 쓴 temp 를 잠깐 쥐는 경우를 위한 것이고, 그 창은 좁아 복사 우회까지는 두지 않았다.
+        /// </para>
+        /// </summary>
+        private async Task<string> CommitAsync(string temp, string destination, CancellationToken ct)
+        {
+            const int MaxAttempts = 6;
+            for (int attempt = 0; ; attempt++)
+            {
+                if (File.Exists(destination)) { TryDelete(temp); return destination; }
+                try
+                {
+                    if (attempt == 0) BeforeMoveForTests?.Invoke();
+                    File.Move(temp, destination);
+                    return destination;
+                }
+                catch (IOException) when (attempt < MaxAttempts - 1)
+                {
+                    // 남이 먼저 옮겼거나(다음 회전의 Exists 가 받는다) temp 가 잠깐 잠겨 있다.
+                    await Task.Delay(30 * (attempt + 1), ct).ConfigureAwait(false);
+                }
             }
         }
 
