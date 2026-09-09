@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using VMS.Core.DeepLearning;
+using VMS.Core.Services;
 
 namespace VMS.VisionSetup.VisionTools.DeepLearning
 {
@@ -36,12 +37,14 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
 
         public static void PrefetchDetector(string modelPath, int inputSize = 640)
         {
+            modelPath = Resolve(modelPath);
             if (!IsValidPath(modelPath)) return;
             _det.GetOrAdd(modelPath, p => Task.Run(() => CreateDetector(p, inputSize)));
         }
 
         public static IDetectionEngine GetDetector(string modelPath, int inputSize = 640)
         {
+            modelPath = Resolve(modelPath);
             if (!IsValidPath(modelPath))
                 return new YoloOnnxEngine(modelPath); // 캐시 못 쓰면 직접 생성 (FileNotFound 예외는 기존과 동일)
 
@@ -70,12 +73,14 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
 
         public static void PrefetchYolo(string modelPath, int inputSize = 640)
         {
+            modelPath = Resolve(modelPath);
             if (!IsValidPath(modelPath)) return;
             _yolo.GetOrAdd(modelPath, p => Task.Run(() => CreateYolo(p, inputSize)));
         }
 
         public static YoloOnnxEngine GetYolo(string modelPath, int inputSize = 640)
         {
+            modelPath = Resolve(modelPath);
             if (!IsValidPath(modelPath))
                 return new YoloOnnxEngine(modelPath); // 캐시 못 쓰면 직접 생성 (File.Exists 실패 등)
 
@@ -102,6 +107,7 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         public static void PrefetchClassifier(string modelPath, int inputWidth = 224, int inputHeight = 224,
             bool useImageNet = true)
         {
+            modelPath = Resolve(modelPath);
             if (!IsValidPath(modelPath)) return;
             _cls.GetOrAdd(modelPath, p => Task.Run(() => CreateClassifier(p, inputWidth, inputHeight, useImageNet)));
         }
@@ -109,6 +115,7 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         public static ClassifierOnnxEngine GetClassifier(string modelPath, int inputWidth = 224, int inputHeight = 224,
             bool useImageNet = true)
         {
+            modelPath = Resolve(modelPath);
             if (!IsValidPath(modelPath))
                 return new ClassifierOnnxEngine(modelPath);
 
@@ -134,12 +141,14 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
 
         public static void PrefetchAnomaly(string modelPath, int inputSize = 224)
         {
+            modelPath = Resolve(modelPath);
             if (!IsValidPath(modelPath)) return;
             _anom.GetOrAdd(modelPath, p => Task.Run(() => CreateAnomaly(p, inputSize)));
         }
 
         public static AnomalyOnnxEngine GetAnomaly(string modelPath, int inputSize = 224)
         {
+            modelPath = Resolve(modelPath);
             if (!IsValidPath(modelPath))
                 return new AnomalyOnnxEngine(modelPath);
 
@@ -165,12 +174,14 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
 
         public static void PrefetchSegmentation(string modelPath, int inputSize = 512, bool useImageNet = true)
         {
+            modelPath = Resolve(modelPath);
             if (!IsValidPath(modelPath)) return;
             _seg.GetOrAdd(modelPath, p => Task.Run(() => CreateSegmentation(p, inputSize, useImageNet)));
         }
 
         public static SegmentationOnnxEngine GetSegmentation(string modelPath, int inputSize = 512, bool useImageNet = true)
         {
+            modelPath = Resolve(modelPath);
             if (!IsValidPath(modelPath))
                 return new SegmentationOnnxEngine(modelPath);
 
@@ -196,12 +207,14 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
 
         public static void PrefetchYoloSeg(string modelPath, int inputSize = 640)
         {
+            modelPath = Resolve(modelPath);
             if (!IsValidPath(modelPath)) return;
             _yoloSeg.GetOrAdd(modelPath, p => Task.Run(() => CreateYoloSeg(p, inputSize)));
         }
 
         public static YoloSegOnnxEngine GetYoloSeg(string modelPath, int inputSize = 640)
         {
+            modelPath = Resolve(modelPath);
             if (!IsValidPath(modelPath))
                 return new YoloSegOnnxEngine(modelPath);
 
@@ -227,6 +240,23 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
 
         private static bool IsValidPath(string? modelPath)
             => !string.IsNullOrEmpty(modelPath) && File.Exists(modelPath);
+
+        /// <summary>
+        /// 레시피가 담은 값이 model:// 참조면 이미 받아 둔 로컬 파일로 바꾼다.
+        /// 참조가 아니면(= 예전처럼 절대 경로면) 그대로 돌려준다.
+        ///
+        /// <para>
+        /// 여기서 네트워크를 쓰지 않는 것이 중요하다 — 검사 한 장 도는 사이에 HTTP 를 기다릴 수 없다.
+        /// 아직 안 받은 참조는 원문 그대로 돌려보내 IsValidPath 에서 걸리게 한다.
+        /// 그래야 "model://… 를 찾을 수 없습니다" 라고 무엇이 없는지가 오류에 남는다.
+        /// 실제 내려받기는 레시피를 열 때 RecipeService 가 먼저 해 둔다.
+        /// </para>
+        /// </summary>
+        private static string Resolve(string modelPath)
+        {
+            if (!ModelReference.IsReference(modelPath)) return modelPath;
+            return ModelReferenceResolver.Current?.ToLocalPath(modelPath) ?? modelPath;
+        }
 
         /// <summary>모든 엔진을 Dispose하고 캐시를 비운다. 앱 종료나 전체 리셋 시 호출.</summary>
         public static void Clear()

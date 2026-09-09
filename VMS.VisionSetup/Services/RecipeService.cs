@@ -1,13 +1,17 @@
 using VMS.Camera.Models;
+using VMS.Core.DeepLearning;
+using VMS.Core.Services;
 using VMS.VisionSetup.Interfaces;
 using VMS.VisionSetup.Models;
 using VMS.VisionSetup.VisionTools.DeepLearning;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 
 namespace VMS.VisionSetup.Services
 {
@@ -110,6 +114,7 @@ namespace VMS.VisionSetup.Services
                     CurrentRecipeFilePath = Path.GetFullPath(filePath);
                     // 레시피에 포함된 모든 DL 도구의 ONNX 모델을 Step Load 이전에 미리 백그라운드 워밍업.
                     // 사용자가 Step/Image/Run 조작을 하는 동안 엔진이 준비되므로 첫 Run 지연이 크게 줄어든다.
+                    // model:// 참조는 여기서 먼저 내려받아 캐시에 넣는다 — 검사 중에는 네트워크를 기다릴 수 없다.
                     PrefetchDeepLearningModels(recipe);
                 }
 
@@ -125,8 +130,44 @@ namespace VMS.VisionSetup.Services
         /// <summary>
         /// 레시피 내 모든 InspectionStep → Tool 중 DetectionTool/ClassifyTool/AnomalyTool의
         /// ModelPath를 추출해 OnnxEngineCache에 비동기 프리페치 요청.
+        ///
+        /// <para>
+        /// ModelPath 가 <c>model://…</c> 참조면 레지스트리에서 아티팩트를 먼저 받아 캐시에 넣는다.
+        /// 이 준비를 여기서 하는 이유는 검사 도중에는 HTTP 를 기다릴 수 없기 때문이다 —
+        /// 검사 경로(OnnxEngineCache)는 캐시에 있는 것만 꺼내 쓴다.
+        /// 레지스트리에 닿지 못해도 캐시에 이미 있으면 그 파일로 이어 간다.
+        /// </para>
         /// </summary>
         private static void PrefetchDeepLearningModels(Recipe recipe)
+        {
+            var references = new List<string>();
+            foreach (var step in recipe.Steps)
+            {
+                foreach (var tool in step.Tools)
+                {
+                    if (!tool.Parameters.TryGetValue("ModelPath", out var refObj)) continue;
+                    var value = CoerceString(refObj);
+                    if (!string.IsNullOrEmpty(value) && ModelReference.IsReference(value)) references.Add(value!);
+                }
+            }
+
+            if (references.Count > 0 && ModelReferenceResolver.Current is { } resolver)
+            {
+                // 내려받기는 백그라운드로 두고, 끝난 뒤에 엔진 워밍업을 이어 간다.
+                // 레시피 로드가 네트워크 때문에 멈춰 서면 안 된다.
+                _ = Task.Run(async () =>
+                {
+                    try { await resolver.PrepareManyAsync(references).ConfigureAwait(false); }
+                    catch (Exception ex) { Debug.WriteLine($"[Recipe] 모델 참조 준비 실패: {ex.Message}"); }
+                    WarmEngines(recipe);
+                });
+                return;
+            }
+
+            WarmEngines(recipe);
+        }
+
+        private static void WarmEngines(Recipe recipe)
         {
             foreach (var step in recipe.Steps)
             {

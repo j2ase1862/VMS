@@ -72,7 +72,14 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         protected void LoadModel(string modelPath, OnnxExecutionProvider preferred)
         {
             if (!File.Exists(modelPath))
+            {
+                // 아직 안 받은 model:// 참조와 그냥 없는 파일은 사람이 할 조치가 다르다.
+                // "파일이 없다" 고만 하면 라인에서 파일을 찾아 헤매게 된다.
+                if (VMS.Core.DeepLearning.ModelReference.IsReference(modelPath))
+                    throw new FileNotFoundException(
+                        VMS.Core.Services.ModelReferenceResolver.NotPreparedMessage(modelPath));
                 throw new FileNotFoundException($"ONNX 모델을 찾을 수 없습니다: {modelPath}");
+            }
 
             var options = new SessionOptions
             {
