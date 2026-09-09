@@ -22,7 +22,7 @@
 
 ```powershell
 .\tools\pack-contracts.ps1                 # → D:\Repo\nuget-local\VMS.Core.Contracts.<버전>.nupkg (+ .snupkg)
-.\tools\pack-contracts.ps1 -Suffix dev     # 개발 중 반복 pack: 1.31.0-dev.<타임스탬프>
+.\tools\pack-contracts.ps1 -Suffix dev     # 개발 중 반복 pack: 1.33.0-dev.<타임스탬프>
 ```
 
 버전은 `Directory.Build.props` 의 `<Version>` 을 그대로 쓴다(릴리즈와 동기화). 규약이 바뀌는 PR 은 VMS 릴리즈(MINOR)와
@@ -45,7 +45,7 @@
 프로젝트:
 
 ```xml
-<PackageReference Include="VMS.Core.Contracts" Version="1.31.*" />
+<PackageReference Include="VMS.Core.Contracts" Version="1.33.*" />
 ```
 
 사용 예:
