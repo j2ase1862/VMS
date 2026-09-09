@@ -69,12 +69,25 @@ namespace VMS.Core.Tests.DeepLearning
         [InlineData("model://3f2c1a9e-0000-4000-8000-000000000001@0")]
         [InlineData("model://3f2c1a9e-0000-4000-8000-000000000001@-3")]
         [InlineData("model://3f2c1a9e-0000-4000-8000-000000000001@알수없는단계")]
+        // 레지스트리에 없는 이름. 통과시키면 라인에서 서버가 400 으로 거절한다.
+        [InlineData("model://3f2c1a9e-0000-4000-8000-000000000001@archived")]
+        // 레지스트리에는 있지만 "이제 쓰지 말라" 는 뜻이라 레시피가 가리키면 안 된다.
+        [InlineData("model://3f2c1a9e-0000-4000-8000-000000000001@retired")]
         [InlineData("model://3f2c1a9e-0000-4000-8000-000000000001")]
         public void 잘못된_참조는_예외_대신_false_다(string text)
         {
             // 레시피에는 사람이 손으로 넣은 값도 들어온다. 던지면 레시피 로드 전체가 죽는다.
             Assert.False(ModelReference.TryParse(text, out var reference));
             Assert.Null(reference);
+        }
+
+        [Theory]
+        [InlineData("archived")]
+        [InlineData("retired")]
+        public void 레시피가_가리킬_수_없는_단계는_만들_수도_없다(string stage)
+        {
+            // ForStage 로 만들 수 있으면 고르는 창이 그것을 내놓을 수 있다는 뜻이다
+            Assert.ThrowsAny<ArgumentException>(() => ModelReference.ForStage(Id, stage));
         }
 
         [Fact]
