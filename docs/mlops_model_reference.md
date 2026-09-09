@@ -96,6 +96,27 @@ VisionSetup 의 도구 설정에서 모델 경로 칸 옆 **[레지스트리…]
 
 `ModelCacheMaxGB` 를 넘으면 앱 시작 때 오래 안 쓴 파일부터 지웁니다. 지금 레시피가 쓰는 파일은 지우지 않습니다.
 
+## 올리는 쪽 — AI 학습 도구의 [레지스트리에 등록]
+
+여기까지가 "받아 쓰는" 이야기였고, 그 앞에 "올리는" 자리가 있습니다.
+학습이 끝나면 AI 학습 도구(`VMS.DeepLearning`)의 학습 패널에서 **[레지스트리에 등록]** 을 누릅니다.
+지금까지는 ONNX 파일을 사람이 라인 PC 로 복사했고, 그래서 어느 PC 가 어느 모델을 쓰는지 아무도 몰랐습니다.
+
+| 무엇 | 어떻게 |
+|---|---|
+| 누가 올리나 | **사람의 계정**. BODA.VMS.Web 에 로그인해 받은 JWT 를 MLOps 가 그대로 받습니다 (같은 키·발급자). |
+| 왜 라인 토큰이 아닌가 | `ln_` 토큰은 받아 가는 쪽 자격입니다. 등록·승격은 엔지니어의 일이라 서비스 계정에 열지 않습니다. |
+| 권한이 모자라면 | 서버가 403 으로 답하고, 창이 "모델 등록은 엔지니어 이상 계정이어야 합니다" 로 옮겨 보여 줍니다. |
+| 어디로 들어가나 | **Candidate**. 바로 라인에 나가지 않습니다. 사람이 레지스트리에서 확인하고 승격해야 합니다. |
+| 클래스는 | 학습에 쓴 이름을 그대로 보냅니다. 서버가 ONNX 안의 이름과 대조해 어긋나면 거절합니다. |
+| 라이선스는 | YOLO 계열은 라이선스 없이는 등록도 Production 승격도 되지 않습니다 (`AGPL-3.0`). |
+
+올릴 파일은 방금 학습한 산출물이 우선이고, 없으면 데이터셋에 남아 있는 마지막 산출물을 씁니다 —
+앱을 다시 켠 뒤에도 올릴 수 있어야 하기 때문입니다.
+
+서버 주소는 `system_config.json` 의 `MlopsServerUrl`·`WebServerUrl` 에서 읽습니다.
+둘 중 하나라도 없으면 창을 띄우지 않고 무엇이 빠졌는지 말해 줍니다.
+
 ## 관련 코드
 
 | 무엇 | 어디 |
@@ -107,6 +128,10 @@ VisionSetup 의 도구 설정에서 모델 경로 칸 옆 **[레지스트리…]
 | 엔진 적재 연결 | `VMS.VisionSetup/VisionTools/DeepLearning/OnnxEngineCache.cs` |
 | 레시피 로드 시 준비 | `VMS.VisionSetup/Services/RecipeService.cs` |
 | 고르는 창 | `VMS.VisionSetup/Views/Dialogs/ModelRegistryPickerWindow.xaml` |
+| 올리는 창 | `VMS.DeepLearning/Views/ModelUploadWindow.xaml` |
+| 올리는 창의 상태 | `VMS.Core/ViewModels/ModelUploadViewModel.cs` |
+| 작업 유형 이름 대응 | `VMS.Core/Services/RegistryTaskType.cs` |
+| 서버 주소 읽기 | `VMS.Core/Services/SystemConfigReader.cs` |
 
 ## 시험
 
@@ -121,4 +146,12 @@ set MLOPS_URL=http://localhost:5310
 set MLOPS_LINE_TOKEN=ln_...
 set MLOPS_MODEL_ID=<운영 단계로 승격된 모델 ID>
 dotnet test VMS.Core.Tests --filter MlopsRegistryIntegrationTests
+```
+
+올리는 쪽은 사람의 JWT 가 필요해 따로 켭니다. 서버에 진짜 계열과 버전을 남기므로 개발 서버에서만 돌리세요.
+
+```bash
+set MLOPS_JWT=<엔지니어 이상 계정의 토큰>
+set MLOPS_ONNX=D:\Repo\VMS\VMS.DeepLearning\best.onnx
+set MLOPS_ONNX_CLASSES=object,logo
 ```

@@ -966,6 +966,13 @@
                                             Padding="8,6" FontSize="12" Margin="4,0,0,0"/>
                                 </Grid>
 
+                                <!-- 학습 결과를 MLOps 레지스트리에 올린다. 올린 버전은 Candidate 라
+                                     사람이 승격하기 전에는 라인에 나가지 않는다. -->
+                                <Button Content="레지스트리에 등록" Command="{Binding UploadModelCommand}"
+                                        Style="{StaticResource PrimaryButton}"
+                                        Padding="8,6" FontSize="12" Margin="0,6,0,0"
+                                        ToolTip="학습한 ONNX 를 MLOps 모델 레지스트리에 새 버전으로 올립니다. 라인 PC 는 model:// 참조로 받아 갑니다."/>
+
                                 <!-- Progress -->
                                 <ProgressBar Value="{Binding TrainingStatus.Progress, Mode=OneWay}"
                                              Minimum="0" Maximum="100"

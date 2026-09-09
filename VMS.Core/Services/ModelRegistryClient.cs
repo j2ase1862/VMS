@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -46,6 +48,19 @@ namespace VMS.Core.Services
         [JsonPropertyName("createdAt")] public DateTime CreatedAt { get; set; }
     }
 
+    /// <summary>업로드로 새로 생긴 모델 버전.</summary>
+    public sealed class UploadedModelVersion
+    {
+        [JsonPropertyName("id")] public Guid Id { get; set; }
+        [JsonPropertyName("modelId")] public Guid ModelId { get; set; }
+        [JsonPropertyName("number")] public int Number { get; set; }
+        [JsonPropertyName("stage")] public string Stage { get; set; } = string.Empty;
+        [JsonPropertyName("sha256")] public string Sha256 { get; set; } = string.Empty;
+        [JsonPropertyName("sizeBytes")] public long SizeBytes { get; set; }
+        [JsonPropertyName("format")] public string Format { get; set; } = string.Empty;
+        [JsonPropertyName("warnings")] public string[] Warnings { get; set; } = Array.Empty<string>();
+    }
+
     /// <summary>레지스트리에 닿지 못했거나 참조를 풀 수 없을 때.</summary>
     public sealed class ModelRegistryException : Exception
     {
@@ -56,8 +71,11 @@ namespace VMS.Core.Services
     /// MLOps 모델 레지스트리 클라이언트 (개발 문서 §5.1 배포).
     ///
     /// <para>
-    /// 라인 PC 는 <c>ln_</c> 로 시작하는 서비스 계정 토큰으로 붙는다. 그 토큰이 할 수 있는 일은
-    /// 참조를 푸는 것과 아티팩트를 받는 것뿐이라, 이 클라이언트가 하는 일도 그 둘이다.
+    /// Bearer 토큰 하나로 붙는다. 라인 PC 는 <c>ln_</c> 로 시작하는 서비스 계정 토큰을 쓰고,
+    /// 그 토큰이 할 수 있는 일은 참조를 풀고 아티팩트를 받는 것뿐이다.
+    /// 학습 도구가 모델을 <b>올릴</b> 때는 사람의 JWT 를 쓴다 (BODA.VMS.Web 로그인으로 받는다) —
+    /// 등록·승격은 엔지니어의 일이라 서비스 계정에 열어 두지 않는다.
+    /// 권한이 모자라면 서버가 403 으로 답하고 이 클라이언트는 그 이유를 그대로 전한다.
     /// </para>
     /// <para>
     /// 서버 주소가 비어 있으면 단독 모드로 본다. 그때는 참조를 풀지 못하고, 캐시에 이미 있는 모델만 쓴다.
@@ -81,17 +99,17 @@ namespace VMS.Core.Services
         private readonly HttpClient _http;
         private readonly string _baseUrl;
 
-        public ModelRegistryClient(string baseUrl, string lineToken)
+        public ModelRegistryClient(string baseUrl, string bearerToken)
         {
             _baseUrl = (baseUrl ?? string.Empty).TrimEnd('/');
             if (_baseUrl.Length == 0) throw new ArgumentException("레지스트리 주소가 필요합니다.", nameof(baseUrl));
             InsecureUrlGuard.Check(_baseUrl, nameof(ModelRegistryClient));
 
             _http = HttpClientPolicy.Build(TimeSpan.FromMinutes(10), maxResponseBytes: MaxBufferedResponseBytes);
-            if (!string.IsNullOrWhiteSpace(lineToken))
+            if (!string.IsNullOrWhiteSpace(bearerToken))
             {
                 _http.DefaultRequestHeaders.Authorization =
-                    new AuthenticationHeaderValue("Bearer", lineToken.Trim());
+                    new AuthenticationHeaderValue("Bearer", bearerToken.Trim());
             }
         }
 
@@ -205,6 +223,133 @@ namespace VMS.Core.Services
                 return JsonSerializer.Deserialize<List<T>>(json, JsonOptions) ?? new List<T>();
             }
         }
+
+        /// <summary>
+        /// 모델 계열을 새로 만든다. 작업 유형과 클래스는 뒤에 바꿀 수 없으므로
+        /// 부르는 쪽이 학습에 쓴 값을 그대로 넘긴다.
+        /// </summary>
+        public async Task<RegistryModel> CreateModelAsync(
+            string name, string taskType, IReadOnlyList<string> classes, string? description = null,
+            CancellationToken ct = default)
+        {
+            var payload = JsonSerializer.Serialize(new
+            {
+                name,
+                taskType,
+                classes = classes.ToArray(),
+                description,
+            }, JsonOptions);
+
+            using var content = new StringContent(payload, System.Text.Encoding.UTF8, "application/json");
+            using var response = await SendAsync(HttpMethod.Post, _baseUrl + "/api/models", content, "모델 만들기", ct)
+                .ConfigureAwait(false);
+
+            var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+            return JsonSerializer.Deserialize<RegistryModel>(json, JsonOptions)
+                   ?? throw new ModelRegistryException("모델 생성 응답을 읽지 못했습니다.");
+        }
+
+        /// <summary>
+        /// 학습 결과 ONNX 를 그 계열의 새 버전으로 올린다.
+        ///
+        /// <para>
+        /// 올라간 버전은 Candidate 로 들어간다 — 바로 라인에 나가지 않는다.
+        /// 사람이 레지스트리에서 확인하고 Staging·Production 으로 승격해야 라인이 가져간다.
+        /// </para>
+        /// <para>
+        /// 클래스 이름은 학습에 쓴 것을 그대로 넘긴다. 서버가 모델 계열의 클래스와 대조해
+        /// 어긋나면 거절한다 — 이름이 밀린 모델이 라인에 나가는 것을 막기 위해서다.
+        /// </para>
+        /// </summary>
+        public async Task<UploadedModelVersion> UploadVersionAsync(
+            Guid modelId, string onnxPath, IReadOnlyList<string> classes,
+            string? license = null, string? notes = null, CancellationToken ct = default)
+        {
+            if (!File.Exists(onnxPath))
+                throw new ModelRegistryException("올릴 모델 파일이 없습니다: " + onnxPath);
+
+            var meta = JsonSerializer.Serialize(new
+            {
+                classes = classes.ToArray(),
+                license,
+                notes,
+            }, JsonOptions);
+
+            using var form = new MultipartFormDataContent();
+            var stream = File.OpenRead(onnxPath);
+            var file = new StreamContent(stream);
+            file.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+            form.Add(file, "file", Path.GetFileName(onnxPath));
+            form.Add(new StringContent(meta, System.Text.Encoding.UTF8, "application/json"), "meta");
+
+            using var response = await SendAsync(HttpMethod.Post,
+                _baseUrl + "/api/models/" + modelId.ToString("D") + "/versions",
+                form, "모델 올리기", ct).ConfigureAwait(false);
+
+            var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+            return JsonSerializer.Deserialize<UploadedModelVersion>(json, JsonOptions)
+                   ?? throw new ModelRegistryException("업로드 응답을 읽지 못했습니다.");
+        }
+
+        /// <summary>
+        /// 보내고, 실패하면 사람이 읽을 수 있는 문장으로 바꾼다.
+        /// 서버가 code·message 로 이유를 주므로 그것을 그대로 전한다 —
+        /// "400 Bad Request" 만 보여 주면 무엇을 고쳐야 할지 알 수 없다.
+        /// </summary>
+        private async Task<HttpResponseMessage> SendAsync(
+            HttpMethod method, string url, HttpContent content, string what, CancellationToken ct)
+        {
+            HttpResponseMessage response;
+            try
+            {
+                using var request = new HttpRequestMessage(method, url) { Content = content };
+                response = await _http.SendAsync(request, ct).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+            {
+                throw new ModelRegistryException(what + " 실패 — 서버에 닿지 못했습니다: " + _baseUrl, ex);
+            }
+
+            if (response.IsSuccessStatusCode) return response;
+
+            using (response)
+            {
+                var body = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+                if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+                    throw new ModelRegistryException(
+                        what + " 권한이 없습니다. 모델 등록은 엔지니어 이상 계정이어야 합니다. (" + DescribeError(body) + ")");
+                throw new ModelRegistryException(
+                    what + " 실패 (" + (int)response.StatusCode + "): " + DescribeError(body));
+            }
+        }
+
+        /// <summary>서버가 준 ApiError 를 한 줄로 편다. JSON 이 아니면 앞부분을 그대로 보여 준다.</summary>
+        private static string DescribeError(string body)
+        {
+            if (string.IsNullOrWhiteSpace(body)) return "서버가 이유를 주지 않았습니다";
+            try
+            {
+                using var document = JsonDocument.Parse(body);
+                var root = document.RootElement;
+                var message = root.TryGetProperty("message", out var m) ? m.GetString() : null;
+                if (string.IsNullOrWhiteSpace(message)) return Shorten(body);
+
+                if (root.TryGetProperty("details", out var details)
+                    && details.ValueKind == JsonValueKind.Array && details.GetArrayLength() > 0)
+                {
+                    var lines = details.EnumerateArray().Select(d => d.GetString()).Where(d => d is not null);
+                    return message + " — " + string.Join("; ", lines);
+                }
+                return message!;
+            }
+            catch (JsonException)
+            {
+                return Shorten(body);
+            }
+        }
+
+        private static string Shorten(string text) =>
+            text.Length > 300 ? text.Substring(0, 300) : text;
 
         /// <summary>서버가 살아 있고 토큰이 통하는지. 설정 화면의 [연결 확인] 이 쓴다.</summary>
         public async Task<(bool Ok, string Message)> CheckAsync(CancellationToken ct = default)

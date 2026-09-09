@@ -42,6 +42,14 @@ namespace VMS.DeepLearning.Services
             return dialog.ShowDialog() == true ? dialog.FileName : null;
         }
 
+        public void ShowModelUpload(VMS.Core.ViewModels.ModelUploadViewModel viewModel)
+        {
+            var owner = Application.Current?.MainWindow;
+            var window = new Views.ModelUploadWindow(viewModel);
+            if (owner is not null && owner.IsLoaded) window.Owner = owner;
+            window.ShowDialog();
+        }
+
         public string? ShowFolderDialog(string title)
         {
             var dialog = new OpenFolderDialog { Title = title };

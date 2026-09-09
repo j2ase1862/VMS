@@ -86,22 +86,14 @@ namespace VMS.VisionSetup.Services
         /// 직접 참조하지 않으므로 필요한 두 키만 읽는다. 없으면 빈 문자열이고,
         /// 그때는 [레지스트리…] 창이 설정하라고 알린다.
         /// </summary>
+        /// <summary>
+        /// 같은 파일을 AI 학습 도구도 읽으므로 읽는 방법은 <see cref="VMS.Core.Services.SystemConfigReader"/>
+        /// 한 곳에 둔다. 앱마다 키 표기를 달리 다루면 "설정했는데 안 붙는다" 가 생긴다.
+        /// </summary>
         public static MlopsSettings ReadMlopsSettings()
         {
-            try
-            {
-                if (!File.Exists(ConfigPath)) return new MlopsSettings("", "");
-                using var doc = JsonDocument.Parse(File.ReadAllText(ConfigPath));
-                var root = doc.RootElement;
-                // AppSetup 은 camelCase(mlopsServerUrl) 로 쓰고, 손으로 넣은 파일은 PascalCase 일 수 있다 — 둘 다 받는다
-                return new MlopsSettings(GetStringIgnoreCase(root, "mlopsServerUrl") ?? "",
-                                         GetStringIgnoreCase(root, "mlopsLineToken") ?? "");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[OnnxSettings] MLOps 설정을 읽지 못했습니다: {ex.Message}");
-                return new MlopsSettings("", "");
-            }
+            var settings = VMS.Core.Services.SystemConfigReader.ReadServerSettings();
+            return new MlopsSettings(settings.MlopsServerUrl, settings.MlopsLineToken);
         }
 
         /// <summary>
