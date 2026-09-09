@@ -317,7 +317,9 @@ namespace VMS.Core.Services
 
             var outcome = await TrySendAsync(request);
             // 거절된 요청은 큐에 넣지 않는다. 넣으면 큐 맨 앞에 박혀 뒤의 모든 결과를 막는다.
+            // 대신 rejected/ 에 남긴다 — 드레인 경로와 같다. 그 사이클의 측정값이 거기에만 남는다.
             if (outcome == SendOutcome.Retry) EnqueueFailed(request);
+            else if (outcome == SendOutcome.Rejected) EnqueueFailed(request, RejectedSubdir);
             return outcome == SendOutcome.Sent;
         }
 
@@ -431,12 +433,18 @@ namespace VMS.Core.Services
         }
 
         /// <summary>실패한 요청을 디스크 큐에 보존. 파일명 = timestamp+guid → 정렬 시 시간 순.</summary>
-        private void EnqueueFailed(ParameterResultUploadRequest request)
+        /// <summary>거절된 업로드를 두는 하위 폴더. 드레인 대상이 아니다 — 사람이 보고 되살린다.</summary>
+        private const string RejectedSubdir = "rejected";
+
+        /// <param name="subdir">null 이면 재시도 큐, <see cref="RejectedSubdir"/> 면 거절 보관함</param>
+        private void EnqueueFailed(ParameterResultUploadRequest request, string? subdir = null)
         {
             try
             {
+                var dir = subdir is null ? _queueDir : Path.Combine(_queueDir, subdir);
+                Directory.CreateDirectory(dir);
                 var filename = $"{DateTime.UtcNow:yyyyMMddHHmmssfff}_{Guid.NewGuid():N}.json";
-                var path = Path.Combine(_queueDir, filename);
+                var path = Path.Combine(dir, filename);
                 var json = JsonSerializer.Serialize(request, JsonOptions);
                 File.WriteAllText(path, json, Encoding.UTF8);
                 Debug.WriteLine($"[ParameterSync] Queued failed upload → {filename} (pending: {PendingUploadCount})");
@@ -517,7 +525,7 @@ namespace VMS.Core.Services
         {
             try
             {
-                var dir = Path.Combine(_queueDir, "rejected");
+                var dir = Path.Combine(_queueDir, RejectedSubdir);
                 Directory.CreateDirectory(dir);
                 File.Move(file, Path.Combine(dir, Path.GetFileName(file)), overwrite: true);
                 Debug.WriteLine($"[ParameterSync] 거절된 업로드를 rejected/ 로 옮겼습니다: {Path.GetFileName(file)}");
