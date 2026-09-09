@@ -16,9 +16,21 @@ namespace VMS.Core.DeepLearning
     /// StringStringEntryProto:
     ///   optional string key   = 1;  // wire_type 2
     ///   optional string value = 2;  // wire_type 2
+    ///
+    /// <b>입력은 신뢰하지 않는다.</b> VisionSetup 은 현장에서 임의 경로의 ONNX 를 열고, 레지스트리 캐시 파일도
+    /// 네트워크를 거쳐 온다. 모든 길이 필드는 <see cref="TryReadLength"/> 로 읽어 남은 바이트 수와
+    /// <c>ulong</c> 상태로 대조한다 — varint 는 2^64-1 까지 가능해 <c>(long)</c> 로 먼저 캐스팅하면 음수가 되고,
+    /// 그 값으로 만든 끝 오프셋을 <c>Stream.Position</c> 에 대입하면 스트림이 뒤로 감겨 파싱이 영원히 반복된다
+    /// (15바이트짜리 파일 하나로 스레드를 영구 점유하는 DoS). MLOps 서버의 OnnxSafeReader 와 같은 규칙이다.
     /// </summary>
     public static class OnnxMetadataReader
     {
+        /// <summary>
+        /// metadata 문자열·텐서 이름 한 개의 최대 바이트. 길이가 파일 안에 들어맞아도 수 GB 모델 파일에서
+        /// 조작된 길이로 거대한 배열을 할당하지 않도록 상한을 둔다. 정상 모델의 names JSON 은 수 KB 수준이다.
+        /// </summary>
+        private const int MaxStringBytes = 16 * 1024 * 1024;
+
         private const int ModelProtoMetadataPropsField = 14;
         private const int EntryKeyField = 1;
         private const int EntryValueField = 2;
@@ -55,9 +67,8 @@ namespace VMS.Core.DeepLearning
 
                     if (fieldNumber == ModelProtoMetadataPropsField && wireType == WireLengthDelimited)
                     {
-                        if (!TryReadVarint(fs, out ulong entryLen)) break;
-                        long entryEnd = fs.Position + (long)entryLen;
-                        if (entryEnd > fileLen) break;
+                        if (!TryReadLength(fs, fileLen, out long entryLen)) break;
+                        long entryEnd = fs.Position + entryLen;
 
                         ParseEntry(fs, entryEnd, result);
                         fs.Position = entryEnd;
@@ -100,9 +111,8 @@ namespace VMS.Core.DeepLearning
 
                     if (fieldNumber == ModelProtoGraphField && wireType == WireLengthDelimited)
                     {
-                        if (!TryReadVarint(fs, out ulong graphLen)) break;
-                        long graphEnd = fs.Position + (long)graphLen;
-                        if (graphEnd > fileLen) break;
+                        if (!TryReadLength(fs, fileLen, out long graphLen)) break;
+                        long graphEnd = fs.Position + graphLen;
 
                         ParseGraphIo(fs, graphEnd, inputs, outputs);
                         fs.Position = graphEnd;
@@ -133,9 +143,8 @@ namespace VMS.Core.DeepLearning
                 if (wireType == WireLengthDelimited &&
                     (fieldNumber == GraphInputField || fieldNumber == GraphOutputField))
                 {
-                    if (!TryReadVarint(s, out ulong len)) return;
-                    long valueEnd = s.Position + (long)len;
-                    if (valueEnd > graphEnd) return;
+                    if (!TryReadLength(s, graphEnd, out long len)) return;
+                    long valueEnd = s.Position + len;
 
                     var name = ReadValueInfoName(s, valueEnd);
                     if (name != null)
@@ -159,8 +168,8 @@ namespace VMS.Core.DeepLearning
 
                 if (fieldNumber == ValueInfoNameField && wireType == WireLengthDelimited)
                 {
-                    if (!TryReadVarint(s, out ulong len)) return null;
-                    if (s.Position + (long)len > valueEnd) return null;
+                    if (!TryReadLength(s, valueEnd, out long len)) return null;
+                    if (len > MaxStringBytes) return null;
                     var buf = new byte[len];
                     ReadExactly(s, buf);
                     return Encoding.UTF8.GetString(buf);
@@ -184,8 +193,8 @@ namespace VMS.Core.DeepLearning
                 if (wireType == WireLengthDelimited &&
                     (fieldNumber == EntryKeyField || fieldNumber == EntryValueField))
                 {
-                    if (!TryReadVarint(s, out ulong len)) return;
-                    if (s.Position + (long)len > entryEnd) return;
+                    if (!TryReadLength(s, entryEnd, out long len)) return;
+                    if (len > MaxStringBytes) return;
 
                     var buf = new byte[len];
                     ReadExactly(s, buf);
@@ -214,9 +223,8 @@ namespace VMS.Core.DeepLearning
                     s.Position += 8;
                     return true;
                 case WireLengthDelimited:
-                    if (!TryReadVarint(s, out ulong len)) return false;
-                    if (s.Position + (long)len > boundary) return false;
-                    s.Position += (long)len;
+                    if (!TryReadLength(s, boundary, out long len)) return false;
+                    s.Position += len;
                     return true;
                 case WireFixed32:
                     if (s.Position + 4 > boundary) return false;
@@ -225,6 +233,21 @@ namespace VMS.Core.DeepLearning
                 default:
                     return false; // SGROUP/EGROUP은 ONNX에서 쓰지 않음
             }
+        }
+
+        /// <summary>
+        /// 길이 필드를 읽되 <paramref name="boundary"/> 까지 남은 바이트 수를 넘으면 실패로 처리한다.
+        /// 비교를 <c>ulong</c> 상태로 하므로 2^63 이상 값이 음수 long 으로 바뀌어 스트림을 되감는 일이 없다.
+        /// 성공하면 <paramref name="length"/> 는 항상 0 이상이고 <c>Position + length &lt;= boundary</c> 다.
+        /// </summary>
+        private static bool TryReadLength(Stream s, long boundary, out long length)
+        {
+            length = 0;
+            if (!TryReadVarint(s, out ulong raw)) return false;
+            long remaining = boundary - s.Position;
+            if (remaining < 0 || raw > (ulong)remaining) return false;
+            length = (long)raw;
+            return true;
         }
 
         private static bool TryReadVarint(Stream s, out ulong value)
