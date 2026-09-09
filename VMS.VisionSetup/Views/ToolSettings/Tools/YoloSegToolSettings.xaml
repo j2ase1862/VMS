@@ -10,6 +10,7 @@
             <StackPanel Margin="5,0,0,0">
                 <controls:TextBoxParameter Label="Model Path (.onnx)"
                     Value="{Binding ModelPath}"
+                              ShowRegistryPicker="True" RegistryTaskType="segmentation"
                     BrowseFilter="ONNX Models (*.onnx)|*.onnx|All Files (*.*)|*.*"
                     ToolType="YoloSegTool" ParameterName="ModelPath"/>
                 <controls:SliderParameter Label="Input Size"

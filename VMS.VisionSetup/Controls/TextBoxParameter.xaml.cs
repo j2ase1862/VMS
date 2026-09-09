@@ -36,6 +36,12 @@ namespace VMS.VisionSetup.Controls
         public static readonly DependencyProperty BrowseFolderProperty =
             DependencyProperty.Register(nameof(BrowseFolder), typeof(bool), typeof(TextBoxParameter), new PropertyMetadata(false));
 
+        public static readonly DependencyProperty ShowRegistryPickerProperty =
+            DependencyProperty.Register(nameof(ShowRegistryPicker), typeof(bool), typeof(TextBoxParameter), new PropertyMetadata(false));
+
+        public static readonly DependencyProperty RegistryTaskTypeProperty =
+            DependencyProperty.Register(nameof(RegistryTaskType), typeof(string), typeof(TextBoxParameter), new PropertyMetadata(null));
+
         public string Label { get => (string)GetValue(LabelProperty); set => SetValue(LabelProperty, value); }
         public object? Value { get => GetValue(ValueProperty); set => SetValue(ValueProperty, value); }
         public string? ToolType { get => (string?)GetValue(ToolTypeProperty); set => SetValue(ToolTypeProperty, value); }
@@ -52,9 +58,30 @@ namespace VMS.VisionSetup.Controls
         /// </summary>
         public bool BrowseFolder { get => (bool)GetValue(BrowseFolderProperty); set => SetValue(BrowseFolderProperty, value); }
 
+        /// <summary>
+        /// true 면 [레지스트리…] 버튼이 함께 뜬다. 모델 경로 칸에만 켠다.
+        /// 고르면 파일 경로가 아니라 model://… 참조가 저장된다.
+        /// </summary>
+        public bool ShowRegistryPicker { get => (bool)GetValue(ShowRegistryPickerProperty); set => SetValue(ShowRegistryPickerProperty, value); }
+
+        /// <summary>레지스트리 목록을 이 작업 유형으로 걸러 보여 준다 (detection·classification·anomaly·segmentation·ocr).</summary>
+        public string? RegistryTaskType { get => (string?)GetValue(RegistryTaskTypeProperty); set => SetValue(RegistryTaskTypeProperty, value); }
+
         public TextBoxParameter()
         {
             InitializeComponent();
+        }
+
+        /// <summary>
+        /// 레지스트리에서 모델을 골라 참조를 넣는다. 사람이 GUID 를 타이핑하지 않게 하려는 것이다.
+        /// 서버 주소와 라인 토큰은 시스템 설정에서 읽는다 — 없으면 창이 이유를 알린다.
+        /// </summary>
+        private void RegistryButton_Click(object sender, RoutedEventArgs e)
+        {
+            var settings = Services.OnnxSettingsService.ReadMlopsSettings();
+            var picked = Views.Dialogs.ModelRegistryPickerWindow.PickReference(
+                Window.GetWindow(this), settings.ServerUrl, settings.LineToken, RegistryTaskType);
+            if (picked is not null) SetCurrentValue(ValueProperty, (object)picked);
         }
 
         private void BrowseButton_Click(object sender, RoutedEventArgs e)

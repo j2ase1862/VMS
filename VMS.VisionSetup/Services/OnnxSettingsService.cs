@@ -68,6 +68,32 @@ namespace VMS.VisionSetup.Services
             return new OnnxSettings(ep, cache, fp16);
         }
 
+        /// <summary>MLOps 레지스트리 접속 정보 — 같은 system_config.json 에서 읽는다.</summary>
+        public readonly record struct MlopsSettings(string ServerUrl, string LineToken);
+
+        /// <summary>
+        /// 레지스트리 주소와 라인 토큰. VisionSetup 은 VMS 런타임의 SystemConfiguration 형식을
+        /// 직접 참조하지 않으므로 필요한 두 키만 읽는다. 없으면 빈 문자열이고,
+        /// 그때는 [레지스트리…] 창이 설정하라고 알린다.
+        /// </summary>
+        public static MlopsSettings ReadMlopsSettings()
+        {
+            try
+            {
+                if (!File.Exists(ConfigPath)) return new MlopsSettings("", "");
+                using var doc = JsonDocument.Parse(File.ReadAllText(ConfigPath));
+                var root = doc.RootElement;
+                var url = root.TryGetProperty("MlopsServerUrl", out var u) ? u.GetString() : null;
+                var token = root.TryGetProperty("MlopsLineToken", out var t) ? t.GetString() : null;
+                return new MlopsSettings(url ?? "", token ?? "");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[OnnxSettings] MLOps 설정을 읽지 못했습니다: {ex.Message}");
+                return new MlopsSettings("", "");
+            }
+        }
+
         /// <summary>
         /// system_config.json의 다른 키는 보존하면서 ONNX 관련 3개 키만 갱신한 뒤,
         /// OnnxModelBase 정적 속성에도 즉시 반영한다.

@@ -25,6 +25,27 @@ namespace VMS.Core.Services
         [JsonPropertyName("artifactUrl")] public string ArtifactUrl { get; set; } = string.Empty;
     }
 
+    /// <summary>레지스트리의 모델 계열 한 줄 (고르는 화면이 쓴다).</summary>
+    public sealed class RegistryModel
+    {
+        [JsonPropertyName("id")] public Guid Id { get; set; }
+        [JsonPropertyName("name")] public string Name { get; set; } = string.Empty;
+        [JsonPropertyName("taskType")] public string TaskType { get; set; } = string.Empty;
+        [JsonPropertyName("classes")] public string[] Classes { get; set; } = Array.Empty<string>();
+        [JsonPropertyName("description")] public string? Description { get; set; }
+    }
+
+    /// <summary>모델 한 계열의 버전 한 줄.</summary>
+    public sealed class RegistryModelVersion
+    {
+        [JsonPropertyName("id")] public Guid Id { get; set; }
+        [JsonPropertyName("number")] public int Number { get; set; }
+        [JsonPropertyName("stage")] public string Stage { get; set; } = string.Empty;
+        [JsonPropertyName("sha256")] public string Sha256 { get; set; } = string.Empty;
+        [JsonPropertyName("sizeBytes")] public long SizeBytes { get; set; }
+        [JsonPropertyName("createdAt")] public DateTime CreatedAt { get; set; }
+    }
+
     /// <summary>레지스트리에 닿지 못했거나 참조를 풀 수 없을 때.</summary>
     public sealed class ModelRegistryException : Exception
     {
@@ -145,6 +166,43 @@ namespace VMS.Core.Services
                 Debug.WriteLine($"[ModelRegistry] {resolved.Sha256[..12]} {resolved.SizeBytes / 1024 / 1024}MB " +
                                 $"{started.ElapsedMilliseconds}ms → {path}");
                 return path;
+            }
+        }
+
+        /// <summary>모델 계열 목록. 참조를 고르는 화면이 쓴다.</summary>
+        public async Task<IReadOnlyList<RegistryModel>> ListModelsAsync(string? taskType = null, CancellationToken ct = default)
+        {
+            var url = $"{_baseUrl}/api/models?archived=false";
+            if (!string.IsNullOrWhiteSpace(taskType)) url += "&taskType=" + Uri.EscapeDataString(taskType!);
+            return await GetListAsync<RegistryModel>(url, "모델 목록", ct).ConfigureAwait(false);
+        }
+
+        /// <summary>한 계열의 버전 목록. 어느 버전을 못 박을지 고를 때 쓴다.</summary>
+        public async Task<IReadOnlyList<RegistryModelVersion>> ListVersionsAsync(Guid modelId, CancellationToken ct = default) =>
+            await GetListAsync<RegistryModelVersion>(
+                $"{_baseUrl}/api/models/{modelId:D}/versions", "버전 목록", ct).ConfigureAwait(false);
+
+        private async Task<IReadOnlyList<T>> GetListAsync<T>(string url, string what, CancellationToken ct)
+        {
+            HttpResponseMessage response;
+            try
+            {
+                response = await _http.GetAsync(url, ct).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+            {
+                throw new ModelRegistryException($"{what}을(를) 받지 못했습니다: {_baseUrl}", ex);
+            }
+
+            using (response)
+            {
+                if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+                    throw new ModelRegistryException("라인 계정 토큰이 없거나 거부되었습니다.");
+                if (!response.IsSuccessStatusCode)
+                    throw new ModelRegistryException($"{what} 조회 실패 ({(int)response.StatusCode})");
+
+                var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+                return JsonSerializer.Deserialize<List<T>>(json, JsonOptions) ?? new List<T>();
             }
         }
 

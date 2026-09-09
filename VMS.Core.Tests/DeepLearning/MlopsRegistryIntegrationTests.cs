@@ -86,6 +86,40 @@ namespace VMS.Core.Tests.DeepLearning
         }
 
         [Fact]
+        public async Task 고르는_화면이_쓸_목록을_받는다()
+        {
+            // VisionSetup 의 [레지스트리…] 창이 이 두 호출로 목록을 채운다
+            if (!Configured) return;
+
+            using var client = new ModelRegistryClient(Url!, Token!);
+
+            var models = await client.ListModelsAsync();
+            Assert.NotEmpty(models);
+            Assert.All(models, m => Assert.NotEqual(Guid.Empty, m.Id));
+            Assert.All(models, m => Assert.False(string.IsNullOrWhiteSpace(m.Name)));
+
+            var target = Guid.Parse(ModelId!);
+            var versions = await client.ListVersionsAsync(target);
+            Assert.NotEmpty(versions);
+            Assert.Contains(versions, v => v.Number > 0 && !string.IsNullOrWhiteSpace(v.Sha256));
+            // 창은 운영 단계를 기본으로 고르므로 그 버전이 보여야 한다
+            Assert.Contains(versions, v => string.Equals(v.Stage, "production", StringComparison.OrdinalIgnoreCase));
+        }
+
+        [Fact]
+        public async Task 작업_유형으로_목록을_걸러_준다()
+        {
+            // 검출 도구 설정에서 분류 모델이 보이면 잘못 고르기 쉽다
+            if (!Configured) return;
+
+            using var client = new ModelRegistryClient(Url!, Token!);
+            var detection = await client.ListModelsAsync("detection");
+
+            Assert.All(detection, m =>
+                Assert.Equal("detection", m.TaskType, ignoreCase: true));
+        }
+
+        [Fact]
         public async Task 없는_모델은_이유를_말한다()
         {
             if (!Configured) return;

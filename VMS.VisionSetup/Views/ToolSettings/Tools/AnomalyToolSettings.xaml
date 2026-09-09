@@ -11,6 +11,7 @@
             <StackPanel Margin="5,0,0,0">
                 <controls:TextBoxParameter Label="Model Path (.onnx)"
                     Value="{Binding ModelPath}"
+                              ShowRegistryPicker="True" RegistryTaskType="anomaly"
                     BrowseFilter="ONNX Models (*.onnx)|*.onnx|All Files (*.*)|*.*"
                     ToolType="AnomalyTool" ParameterName="ModelPath"/>
                 <controls:SliderParameter Label="Input Size"
