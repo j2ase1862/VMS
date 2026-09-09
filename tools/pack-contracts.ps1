@@ -3,10 +3,10 @@
 # 사용:
 #   .\tools\pack-contracts.ps1                       # Directory.Build.props 의 버전으로 pack
 #   .\tools\pack-contracts.ps1 -Feed D:\nuget        # 다른 피드 폴더
-#   .\tools\pack-contracts.ps1 -Suffix dev           # 1.31.0-dev.20260908T1530 같은 프리릴리즈 (개발 중 반복 pack)
+#   .\tools\pack-contracts.ps1 -Suffix dev           # 1.33.0-dev.20260910T0845 같은 프리릴리즈 (개발 중 반복 pack)
 #
 # MLOps 솔루션(BODA.VMS.MLOps 등)은 nuget.config 에 이 피드를 추가하고
-#   <PackageReference Include="VMS.Core.Contracts" Version="1.31.*" />
+#   <PackageReference Include="VMS.Core.Contracts" Version="1.33.*" />
 # 로 참조한다. 상세: docs\mlops_contracts_package.md
 param(
     [string]$Feed = "D:\Repo\nuget-local",
