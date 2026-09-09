@@ -315,17 +315,60 @@ namespace VMS.Core.Services
                 request.DlModelVersion = featureMetrics.DlModelVersion;
             }
 
-            var ok = await TrySendAsync(request);
-            if (!ok)
-            {
-                // C6: 실패한 결과는 디스크에 보존 → retry timer 가 자동 재전송
-                EnqueueFailed(request);
-            }
-            return ok;
+            var outcome = await TrySendAsync(request);
+            // 거절된 요청은 큐에 넣지 않는다. 넣으면 큐 맨 앞에 박혀 뒤의 모든 결과를 막는다.
+            if (outcome == SendOutcome.Retry) EnqueueFailed(request);
+            return outcome == SendOutcome.Sent;
         }
 
-        /// <summary>실제 HTTP POST + 응답에서 WO 진행률 이벤트 발생. 성공 = true.</summary>
-        private async Task<bool> TrySendAsync(ParameterResultUploadRequest request)
+        /// <summary>
+        /// 다시 보내도 같은 답이 올 상태 코드인가. 요청이 서버 규칙에 맞지 않는 경우다.
+        ///
+        /// <para>
+        /// 408(타임아웃)과 429(너무 잦음)는 4xx 이지만 시간이 지나면 통하므로 제외한다.
+        /// 401·403 은 토큰 문제라 재발급하면 통할 수 있어 역시 제외한다 — 여기서 버리면
+        /// 인증이 잠깐 흔들린 사이의 검사 결과가 사라진다.
+        /// </para>
+        /// </summary>
+        internal static bool IsPermanentRejection(System.Net.HttpStatusCode code) =>
+            (int)code >= 400 && (int)code < 500
+            && code is not (System.Net.HttpStatusCode.RequestTimeout
+                or System.Net.HttpStatusCode.TooManyRequests
+                or System.Net.HttpStatusCode.Unauthorized
+                or System.Net.HttpStatusCode.Forbidden);
+
+        /// <summary>거절 이유를 로그에 남기기 위해 본문을 읽는다. 못 읽어도 흐름을 멈추지 않는다.</summary>
+        private static async Task<string> SafeReadAsync(HttpResponseMessage response)
+        {
+            try
+            {
+                var body = await response.Content.ReadAsStringAsync();
+                return body.Length > 300 ? body[..300] : body;
+            }
+            catch (Exception ex) { return "(본문을 읽지 못했습니다: " + ex.Message + ")"; }
+        }
+
+        /// <summary>업로드 한 번의 결말.</summary>
+        private enum SendOutcome
+        {
+            /// <summary>올라갔다.</summary>
+            Sent,
+            /// <summary>지금은 안 되지만 나중에 될 수 있다 — 서버가 죽었거나 네트워크가 끊겼다.</summary>
+            Retry,
+            /// <summary>
+            /// 다시 보내도 같은 답이 온다. 요청 자체가 서버 규칙에 맞지 않는다.
+            ///
+            /// <para>
+            /// 이 갈래가 없으면 그런 요청 하나가 큐 맨 앞에 박혀 <b>그 뒤의 모든 검사 결과가
+            /// 영원히 올라가지 못한다</b> (드레인이 첫 실패에서 멈추기 때문이다).
+            /// 실제로 그런 일이 있었다 — DlModelVersion 이 50자를 넘겨 400 을 받았다.
+            /// </para>
+            /// </summary>
+            Rejected,
+        }
+
+        /// <summary>실제 HTTP POST + 응답에서 WO 진행률 이벤트 발생.</summary>
+        private async Task<SendOutcome> TrySendAsync(ParameterResultUploadRequest request)
         {
             try
             {
@@ -337,8 +380,15 @@ namespace VMS.Core.Services
 
                 if (!response.IsSuccessStatusCode)
                 {
+                    if (IsPermanentRejection(response.StatusCode))
+                    {
+                        var body = await SafeReadAsync(response);
+                        Debug.WriteLine($"[ParameterSync] CRITICAL: 서버가 이 요청을 거절했습니다 " +
+                                        $"({(int)response.StatusCode}). 다시 보내지 않습니다 — {body}");
+                        return SendOutcome.Rejected;
+                    }
                     Debug.WriteLine($"[ParameterSync] UploadResults failed: {response.StatusCode}");
-                    return false;
+                    return SendOutcome.Retry;
                 }
 
                 Debug.WriteLine($"[ParameterSync] Uploaded {request.Results.Count} results for recipe {request.RecipeId}");
@@ -370,12 +420,13 @@ namespace VMS.Core.Services
                     Debug.WriteLine($"[ParameterSync] WO progress parse skip: {ex.Message}");
                 }
 
-                return true;
+                return SendOutcome.Sent;
             }
             catch (Exception ex)
             {
+                // 네트워크·직렬화 문제. 다음에 될 수 있으므로 재시도로 본다.
                 Debug.WriteLine($"[ParameterSync] UploadResults error: {ex.Message}");
-                return false;
+                return SendOutcome.Retry;
             }
         }
 
@@ -434,10 +485,16 @@ namespace VMS.Core.Services
                         continue;
                     }
 
-                    var ok = await TrySendAsync(request);
-                    if (ok)
+                    var outcome = await TrySendAsync(request);
+                    if (outcome == SendOutcome.Sent)
                     {
                         try { File.Delete(file); } catch (Exception ex) { Debug.WriteLine($"[ParameterSync] queue file delete failed: {ex.Message}"); }
+                    }
+                    else if (outcome == SendOutcome.Rejected)
+                    {
+                        // 다시 보내도 같은 답이 온다. 큐에 두면 맨 앞에 박혀 뒤의 모든 결과를 막으므로
+                        // 옆으로 치운다 — 지우지는 않는다. 왜 거절됐는지 나중에 볼 수 있어야 한다.
+                        MoveAside(file);
                     }
                     else
                     {
@@ -449,6 +506,27 @@ namespace VMS.Core.Services
             finally
             {
                 _retryLock.Release();
+            }
+        }
+
+        /// <summary>
+        /// 거절된 큐 파일을 <c>rejected/</c> 로 옮긴다. 지우지 않는 이유는 그 사이클의 측정값이
+        /// 거기에만 남아 있기 때문이다 — 왜 거절됐는지 보고 사람이 되살릴 수 있어야 한다.
+        /// </summary>
+        private void MoveAside(string file)
+        {
+            try
+            {
+                var dir = Path.Combine(_queueDir, "rejected");
+                Directory.CreateDirectory(dir);
+                File.Move(file, Path.Combine(dir, Path.GetFileName(file)), overwrite: true);
+                Debug.WriteLine($"[ParameterSync] 거절된 업로드를 rejected/ 로 옮겼습니다: {Path.GetFileName(file)}");
+            }
+            catch (Exception ex)
+            {
+                // 옮기지 못하면 큐가 막힌다. 그때는 지운다 — 한 건을 잃더라도 나머지는 올라가야 한다.
+                Debug.WriteLine($"[ParameterSync] CRITICAL: 거절된 파일을 옮기지 못해 지웁니다: {ex.Message}");
+                try { File.Delete(file); } catch { }
             }
         }
 

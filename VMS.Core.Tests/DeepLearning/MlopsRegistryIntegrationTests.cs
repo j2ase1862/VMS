@@ -349,6 +349,51 @@ namespace VMS.Core.Tests.DeepLearning
             Assert.Contains("서버에 없습니다", ex.Message);
         }
 
+        /// <summary>
+        /// 참조를 풀면 그 버전 id 를 기억해야 한다. 검사 결과에 실어 보낼 값이고,
+        /// MLOps 가 그것으로 모델별 불량률을 집계한다 — 기억하지 않으면 집계가 통째로 빈다.
+        /// </summary>
+        [Fact]
+        public async Task 참조를_푼_뒤에는_그_버전_id_를_알려_준다()
+        {
+            if (!Configured) return;
+
+            var reference = ModelReference.ForStage(Guid.Parse(ModelId!), "production").ToString();
+            var cache = new ModelArtifactCache(_cacheRoot);
+            using var resolver = new ModelReferenceResolver(cache, () => new ModelRegistryClient(Url!, Token!));
+
+            // 풀기 전에는 모른다 — 네트워크를 쓰지 않기 때문이다
+            Assert.Null(resolver.TryGetModelVersionId(reference));
+
+            await resolver.PrepareAsync(reference);
+            var versionId = resolver.TryGetModelVersionId(reference);
+
+            Assert.NotNull(versionId);
+            Assert.NotEqual(Guid.Empty, versionId!.Value);
+
+            // 서버가 말하는 그 버전이어야 한다
+            using var client = new ModelRegistryClient(Url!, Token!);
+            var resolved = await client.ResolveAsync(ModelReference.ForStage(Guid.Parse(ModelId!), "production"));
+            Assert.Equal(resolved.ModelVersionId, versionId.Value);
+
+            // 그리고 그 값으로 만든 식별자가 운영 웹의 50자 한도에 들어가야 한다 —
+            // 넘치면 검사 결과 업로드가 통째로 400 으로 거절된다
+            var identity = DlModelIdentity.ForVersion(versionId.Value);
+            Assert.True(identity.Length <= DlModelIdentity.MaxLength);
+            Assert.Equal(versionId.Value, DlModelIdentity.TryReadVersionId(identity));
+        }
+
+        /// <summary>참조가 아닌 절대 경로에는 버전 id 가 없다 — 그 파일이 어느 버전인지 알 길이 없다.</summary>
+        [Fact]
+        public void 절대_경로에는_버전_id_가_없다()
+        {
+            var cache = new ModelArtifactCache(_cacheRoot);
+            using var resolver = new ModelReferenceResolver(cache, () => null);
+
+            Assert.Null(resolver.TryGetModelVersionId(@"D:\models\best.onnx"));
+            Assert.Null(resolver.TryGetModelVersionId(null));
+        }
+
         public void Dispose()
         {
             try { if (Directory.Exists(_cacheRoot)) Directory.Delete(_cacheRoot, true); } catch (IOException) { }

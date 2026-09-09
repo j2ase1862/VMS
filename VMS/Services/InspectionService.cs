@@ -682,6 +682,11 @@ namespace VMS.Services
         /// (전용 interface 신설은 V3 범위 밖 — 추후 IDlTool 도입 시 교체.)
         /// 반환 형식: "ToolType:파일명.onnx" — 학습-운영 간 모델 분포 추적 키로 충분.
         /// </summary>
+        /// <summary>
+        /// 이 판정을 한 모델의 식별자. 운영 웹의 DlModelVersion 은 50자까지만 받고,
+        /// 넘기면 업로드 전체가 400 으로 거절돼 그 사이클의 측정값이 통째로 사라진다.
+        /// 규칙은 <see cref="VMS.Core.Services.DlModelIdentity"/> 한 곳에 있다.
+        /// </summary>
         private static string? TryGetModelVersion(VisionToolBase tool)
         {
             try
@@ -689,7 +694,13 @@ namespace VMS.Services
                 var prop = tool.GetType().GetProperty("ModelPath");
                 var path = prop?.GetValue(tool) as string;
                 if (string.IsNullOrWhiteSpace(path)) return null;
-                return $"{tool.ToolType}:{System.IO.Path.GetFileName(path)}";
+
+                // 참조를 실제로 푼 뒤라면 그 버전 id 가 답이다 — MLOps 가 이 값으로 모델별
+                // 불량률을 집계한다. 파일 경로로는 어느 버전인지 이을 수 없다.
+                var versionId = VMS.Core.Services.ModelReferenceResolver.Current?.TryGetModelVersionId(path);
+                if (versionId is { } id) return VMS.Core.Services.DlModelIdentity.ForVersion(id);
+
+                return VMS.Core.Services.DlModelIdentity.ForPath(tool.ToolType, path);
             }
             catch
             {

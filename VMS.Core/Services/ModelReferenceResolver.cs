@@ -39,6 +39,18 @@ namespace VMS.Core.Services
         private readonly ModelArtifactCache _cache;
         private readonly Func<ModelRegistryClient?> _clientFactory;
         private readonly ConcurrentDictionary<string, string> _referenceToSha = new(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// 참조 → 그 참조가 실제로 가리킨 모델 버전 id.
+        ///
+        /// <para>
+        /// 검사 결과를 운영 웹에 올릴 때 "어느 모델이 이 판정을 했는가" 를 적어야 하고,
+        /// MLOps 가 그 값으로 모델별 불량률을 집계한다. 파일 경로로는 이을 수 없다 —
+        /// 캐시 파일 이름은 내용 해시라 사람이 못 읽고, 참조 문자열은 단계를 따라가면
+        /// 가리키는 대상이 바뀐다. 실제로 푼 버전 id 만이 그 순간의 답이다.
+        /// </para>
+        /// </summary>
+        private readonly ConcurrentDictionary<string, Guid> _referenceToVersionId = new(StringComparer.OrdinalIgnoreCase);
         private readonly SemaphoreSlim _downloadGate = new(2, 2);
         private ModelRegistryClient? _client;
 
@@ -91,8 +103,26 @@ namespace VMS.Core.Services
                 if (cached is not null) return cached;
                 // 캐시에서 사라졌다면 기억도 지운다 — 다음 준비 때 다시 받는다
                 _referenceToSha.TryRemove(reference.ToString(), out _);
+                _referenceToVersionId.TryRemove(reference.ToString(), out _);
             }
             return null;
+        }
+
+        /// <summary>
+        /// 이 참조가 실제로 가리킨 모델 버전 id. 아직 풀지 않았으면 null.
+        ///
+        /// <para>
+        /// 참조가 아닌 절대 경로에는 답이 없다 — 그 파일이 레지스트리의 어느 버전인지 알 수 없다.
+        /// 그때도 null 이다.
+        /// </para>
+        /// </summary>
+        public Guid? TryGetModelVersionId(string? modelPathOrReference)
+        {
+            if (string.IsNullOrWhiteSpace(modelPathOrReference)) return null;
+            if (!ModelReference.IsReference(modelPathOrReference)) return null;
+            if (!ModelReference.TryParse(modelPathOrReference, out var reference) || reference is null) return null;
+
+            return _referenceToVersionId.TryGetValue(reference.ToString(), out var id) ? id : null;
         }
 
         /// <summary>
@@ -133,6 +163,7 @@ namespace VMS.Core.Services
 
                 var path = await client.DownloadAsync(resolved, _cache, ct).ConfigureAwait(false);
                 _referenceToSha[reference.ToString()] = resolved.Sha256;
+                _referenceToVersionId[reference.ToString()] = resolved.ModelVersionId;
                 return path;
             }
             finally { _downloadGate.Release(); }
