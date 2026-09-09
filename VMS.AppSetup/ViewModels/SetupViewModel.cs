@@ -68,6 +68,13 @@ namespace VMS.AppSetup.ViewModels
         [ObservableProperty]
         private string _clientApiKey = string.Empty;
 
+        // MLOps 모델 레지스트리 주소·라인 토큰 (Phase 1 §6). 고급 설정 안에 둔다 — 레지스트리를 쓰는 현장만 채운다.
+        [ObservableProperty]
+        private string _mlopsServerUrl = string.Empty;
+
+        [ObservableProperty]
+        private string _mlopsLineToken = string.Empty;
+
         // "고급 설정" 접이식 노출 — 일반 현장은 API Key 를 비워 두므로 기본은 접힘.
         // 저장된 키가 있으면 LoadConfiguration 이 펼쳐서 기존 값을 바로 확인할 수 있게 한다.
         [ObservableProperty]
@@ -529,7 +536,11 @@ namespace VMS.AppSetup.ViewModels
                 WebServerUrl = IsStandaloneMode ? WebServerUrl : config.WebServerUrl;
                 VisionServerUrl = config.VisionServerUrl;
                 ClientApiKey = config.ClientApiKey;
-                IsAdvancedWebSettingsVisible = !string.IsNullOrWhiteSpace(config.ClientApiKey);
+                MlopsServerUrl = config.MlopsServerUrl ?? string.Empty;
+                MlopsLineToken = config.MlopsLineToken ?? string.Empty;
+                IsAdvancedWebSettingsVisible = !string.IsNullOrWhiteSpace(config.ClientApiKey)
+                    || !string.IsNullOrWhiteSpace(config.MlopsServerUrl)
+                    || !string.IsNullOrWhiteSpace(config.MlopsLineToken);
                 WebSsoEnabled = config.WebSso?.Enabled ?? false;
                 SecurityMode = config.SecurityMode;
                 CameraMode = config.CameraMode;
@@ -946,6 +957,8 @@ namespace VMS.AppSetup.ViewModels
                 WebServerUrl = IsStandaloneMode ? string.Empty : WebServerUrl,
                 VisionServerUrl = VisionServerUrl,
                 ClientApiKey = ClientApiKey,
+                MlopsServerUrl = (MlopsServerUrl ?? string.Empty).Trim(),
+                MlopsLineToken = (MlopsLineToken ?? string.Empty).Trim(),
                 WebSso = new WebSsoSettings
                 {
                     Enabled = WebSsoEnabled && !IsStandaloneMode,

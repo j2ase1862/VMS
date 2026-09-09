@@ -423,6 +423,29 @@ namespace VMS
                 logService.Log($"로컬 검사 이력 저장소 초기화 실패: {ex.Message}", LogLevel.Warning, "System");
             }
 
+            // ── MLOps 모델 레지스트리 (개발 문서 §5.1 배포) ──
+            // 레시피가 model://{modelId}@{stage} 로 모델을 가리키면, 이 해석기가 라인 PC 의
+            // 로컬 캐시(%LocalAppData%\…\models)에서 실제 파일을 찾아 준다. 없으면 레지스트리에서 받는다.
+            // 서버 주소나 토큰이 없으면 해석기는 캐시만 보는 상태로 남고, 절대 경로로 지정한 도구는 그대로 돈다.
+            try
+            {
+                ModelReferenceResolver.Current = ModelReferenceResolver.CreateDefault(
+                    systemConfig.MlopsServerUrl, systemConfig.MlopsLineToken);
+
+                // 캐시가 무한정 커지지 않게 시작할 때 한 번 정리한다. 쓰고 있는 파일은 건드리지 않는다.
+                var maxBytes = Math.Max(1, systemConfig.ModelCacheMaxGB) * 1024L * 1024L * 1024L;
+                var trimmed = ModelReferenceResolver.Current.Cache.Trim(
+                    maxBytes, ModelReferenceResolver.Current.InUsePaths());
+                if (trimmed > 0)
+                    logService.Log($"모델 캐시 정리: {trimmed}개 삭제", LogLevel.Info, "System");
+            }
+            catch (Exception ex)
+            {
+                // 모델 참조를 못 쓰더라도 절대 경로로 지정한 검사는 계속돼야 한다
+                Debug.WriteLine($"[App] ModelReferenceResolver init failed: {ex.Message}");
+                logService.Log($"모델 레지스트리 초기화 실패: {ex.Message}", LogLevel.Warning, "System");
+            }
+
             // ── Web Parameter Sync Service ──
             IParameterSyncService? parameterSyncService = null;
             if (webIntegrated) try

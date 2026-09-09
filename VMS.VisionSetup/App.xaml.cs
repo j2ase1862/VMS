@@ -63,6 +63,7 @@ namespace VMS.VisionSetup
 
             // ── ONNX Execution Provider 설정 로드 ──
             LoadAIConfig();
+            InitModelReferenceResolver();
 
             // ── SequenceEditor 디바이스 콤보 자동 채움 (standalone / 별도 프로세스 경로) ──
             // host(VMS App.xaml.cs) 가 띄운 경우 host 측이 이 holder 를 set 하지만, VMS.VisionSetup
@@ -283,6 +284,7 @@ namespace VMS.VisionSetup
 
             // DialogService에 parameterSyncService 주입 (Web 레시피 동기화용)
             IDialogService dialogService = new DialogService(cameraService, recipeService, parameterSyncService);
+            Dialogs = dialogService;   // 재사용 컨트롤(TextBoxParameter 등)이 DI 없이 다이얼로그를 열 때 쓰는 접근점
 
             // If recipe file path is passed as argument, pre-load it
             if (e.Args.Length > 0)
@@ -557,6 +559,34 @@ namespace VMS.VisionSetup
         ///   "tensorRTCachePath": "C:/trt_cache"
         ///   "tensorRTFp16": true
         /// </summary>
+        /// <summary>
+        /// 재사용 UserControl 이 DI 를 타지 못해 다이얼로그를 열 때 쓰는 접근점 (MessageBox·파일 대화상자를
+        /// 코드 비하인드에 두지 않기 위한 것). ViewModel 은 이 정적 속성이 아니라 생성자 주입을 쓴다.
+        /// </summary>
+        public static IDialogService? Dialogs { get; private set; }
+
+        /// <summary>
+        /// 레시피의 model:// 참조를 라인 PC 로컬 파일로 바꾸는 해석기 (MLOps Phase 1 §6.1).
+        /// VMS 메인과 같은 system_config.json(mlopsServerUrl · mlopsLineToken)을 읽는다 — VisionSetup 이
+        /// 참조를 고르는 앱이므로 여기서도 풀 수 있어야 한다. 설정이 비어 있으면 캐시에 있는 모델만 쓴다.
+        /// 캐시 용량 정리는 VMS 메인이 시작할 때 한 번 하므로 여기서는 하지 않는다.
+        /// </summary>
+        private static void InitModelReferenceResolver()
+        {
+            try
+            {
+                var settings = OnnxSettingsService.ReadMlopsSettings();
+                VMS.Core.Services.ModelReferenceResolver.Current =
+                    VMS.Core.Services.ModelReferenceResolver.CreateDefault(settings.ServerUrl, settings.LineToken);
+                Debug.WriteLine($"[App] ModelReferenceResolver: registry={(string.IsNullOrWhiteSpace(settings.ServerUrl) ? "(없음 — 캐시만)" : settings.ServerUrl)}");
+            }
+            catch (Exception ex)
+            {
+                // 참조를 못 풀어도 절대 경로 모델은 그대로 동작해야 한다
+                Debug.WriteLine($"[App] ModelReferenceResolver init failed: {ex.Message}");
+            }
+        }
+
         private static void LoadAIConfig()
         {
             try

@@ -15,11 +15,27 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <TextBox Text="{Binding Value, ElementName=Root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      Style="{StaticResource WindowDarkTextBox}"
                      Margin="0,0,0,5"/>
-            <Button x:Name="BrowseBtn" Grid.Column="1" Content="📂" FontSize="13"
+            <Button x:Name="RegistryBtn" Grid.Column="1" Content="레지스트리…" FontSize="11"
+                    Click="RegistryButton_Click"
+                    Margin="3,0,0,5" Padding="6,2"
+                    ToolTip="MLOps 레지스트리에서 모델을 고릅니다 (파일 대신 참조를 저장)">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource ModernGhostButton}">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ShowRegistryPicker, ElementName=Root}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+            <Button x:Name="BrowseBtn" Grid.Column="2" Content="📂" FontSize="13"
                     Click="BrowseButton_Click"
                     Width="28" Margin="3,0,0,5"
                     ToolTip="파일 탐색기에서 선택">

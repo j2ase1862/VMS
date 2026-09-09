@@ -226,13 +226,26 @@
                                      VM 이 자동으로 펼친다(기존 설정 확인 가능). -->
                                 <ToggleButton IsChecked="{Binding IsAdvancedWebSettingsVisible}"
                                               Style="{StaticResource WizardDisclosureToggle}"
-                                              Content="고급 설정 — Web Client API Key (관리자가 Web 서버에 API 키 강제를 켠 경우에만)"/>
+                                              Content="고급 설정 — Web Client API Key · MLOps 모델 레지스트리 (해당 현장만)"/>
                                 <StackPanel Margin="0,10,0,0"
                                             Visibility="{Binding IsAdvancedWebSettingsVisible, Converter={StaticResource BoolToVisConverter}}">
                                     <TextBlock Style="{StaticResource LabelStyle}"><Run Text="Web Client API Key"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Web Client API Key" CustomDescription="일반적으로 비워 둡니다. Web 서버 관리자가 'API 키 강제' 를 켠 경우에만, 관리자에게 받은 키를 그대로 입력하세요. 틀리게 입력하면 Web 연동이 끊깁니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                                     <TextBox Text="{Binding ClientApiKey, UpdateSourceTrigger=PropertyChanged}"
                                              Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,5"/>
                                     <TextBlock Text="일반적으로 비워 둡니다. Web 서버 관리자가 API 키 강제를 켠 경우에만 관리자에게 받은 키를 그대로 입력하세요. 값이 다르면 Web 연동(작업지시·이력 업로드)이 끊깁니다."
+                                               Foreground="{StaticResource BrushTextMuted}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,15"/>
+
+                                    <!-- MLOps 모델 레지스트리 (Phase 1 §6) — 레시피가 model:// 참조로 모델을 가리킬 때만 필요 -->
+                                    <TextBlock Style="{StaticResource LabelStyle}"><Run Text="MLOps 서버 주소"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="MLOps 서버 주소" CustomDescription="모델 레지스트리(MLOps 플랫폼) 주소입니다. 예: https://mlops.example.local:5310 — 비전 설정에서 [레지스트리…]로 고른 모델(model:// 참조)을 이 서버에서 내려받습니다. 레지스트리를 쓰지 않으면 비워 둡니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
+                                    <TextBox Text="{Binding MlopsServerUrl, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,5"/>
+                                    <TextBlock Text="모델 레지스트리 주소. 레시피의 model:// 참조를 이 서버에서 내려받습니다. 쓰지 않으면 비워 둡니다."
+                                               Foreground="{StaticResource BrushTextMuted}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,15"/>
+
+                                    <TextBlock Style="{StaticResource LabelStyle}"><Run Text="MLOps 라인 토큰"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="MLOps 라인 토큰" CustomDescription="MLOps 관리 화면에서 이 라인용으로 발급한 서비스 계정 토큰(ln_…)입니다. 모델 내려받기 권한만 있습니다. 관리자에게 받은 값을 그대로 붙여 넣으세요." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
+                                    <TextBox Text="{Binding MlopsLineToken, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,5"/>
+                                    <TextBlock Text="MLOps 관리 화면에서 라인마다 발급한 토큰(ln_…)을 그대로 붙여 넣습니다. 토큰이 없으면 참조 모델을 내려받지 못합니다."
                                                Foreground="{StaticResource BrushTextMuted}" FontSize="11" TextWrapping="Wrap"/>
                                 </StackPanel>
                                 </StackPanel>

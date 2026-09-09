@@ -56,6 +56,26 @@ namespace VMS.Models
         /// </summary>
         public string ClientApiKey { get; set; } = string.Empty;
 
+        // ─── MLOps 모델 레지스트리 (개발 문서 §5.1 배포) ───
+
+        /// <summary>
+        /// MLOps 서버 주소. 비어 있으면 모델 참조(model://…)를 풀지 못하고,
+        /// 이미 캐시에 있는 모델만 쓴다. 기존처럼 절대 경로로 지정한 도구는 그대로 동작한다.
+        /// </summary>
+        public string MlopsServerUrl { get; set; } = string.Empty;
+
+        /// <summary>
+        /// 라인 PC 서비스 계정 토큰 (ln_…). MLOps 관리 화면에서 라인마다 발급한다.
+        /// 이 토큰으로 하는 일은 둘뿐이다 — 모델 참조를 풀어 아티팩트를 받고, NG 사진을 올리는 것.
+        /// </summary>
+        public string MlopsLineToken { get; set; } = string.Empty;
+
+        /// <summary>
+        /// 모델 캐시가 차지할 최대 용량(GB). 넘으면 오래 안 쓴 파일부터 지운다.
+        /// 지금 레시피가 쓰는 파일은 지우지 않는다.
+        /// </summary>
+        public int ModelCacheMaxGB { get; set; } = 20;
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string Version { get; set; } = "1.0.0";
     }

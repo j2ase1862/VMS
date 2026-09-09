@@ -14,6 +14,7 @@
             <StackPanel Margin="5,0,0,0">
                 <controls:TextBoxParameter Label="Model Path (.onnx)"
                     Value="{Binding ModelPath}"
+                              ShowRegistryPicker="True" RegistryTaskType="detection"
                     BrowseFilter="ONNX Models (*.onnx)|*.onnx|All Files (*.*)|*.*"
                     ToolType="DetectionTool" ParameterName="ModelPath"/>
                 <controls:SliderParameter Label="Inference Size (px)"

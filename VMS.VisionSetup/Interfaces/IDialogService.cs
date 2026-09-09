@@ -45,5 +45,11 @@ namespace VMS.VisionSetup.Interfaces
         /// </summary>
         OpenCvSharp.Mat? ShowTrainMaskEditorDialog(OpenCvSharp.Mat templateImage, OpenCvSharp.Mat? existingMask,
             double cannyLow = 50, double cannyHigh = 150);
+        /// <summary>
+        /// MLOps 모델 레지스트리에서 모델을 골라 참조(model://…)를 돌려준다 — 취소·설정 없음이면 null.
+        /// taskType 은 목록 필터(detection·classification·anomaly·segmentation·ocr). 서버 주소·라인 토큰은
+        /// 구현이 system_config.json 에서 읽고, 비어 있으면 안내 창을 띄운다.
+        /// </summary>
+        string? ShowModelRegistryPickerDialog(string? taskType) => null;
     }
 }
