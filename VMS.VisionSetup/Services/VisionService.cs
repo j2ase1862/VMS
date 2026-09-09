@@ -1308,6 +1308,7 @@ namespace VMS.VisionSetup.Services
                 "EnsembleTool" => new EnsembleTool(),
                 "SegmentationTool" => new SegmentationTool(),
                 "YoloSegTool" => new YoloSegTool(),
+                "RfdetrSegTool" => new RfdetrSegTool(),
 
                 // Judgment
                 "ResultTool" => new ResultTool(),
@@ -1388,7 +1389,8 @@ namespace VMS.VisionSetup.Services
                     "AnomalyTool",
                     "EnsembleTool",
                     "SegmentationTool",
-                    "YoloSegTool"
+                    "YoloSegTool",
+                    "RfdetrSegTool"
                 },
                 ["Judgment"] = new[]
                 {
@@ -1450,6 +1452,7 @@ namespace VMS.VisionSetup.Services
                 "EnsembleTool" => "Ensemble",
                 "SegmentationTool" => "Segmentation",
                 "YoloSegTool" => "YOLOv8-seg",
+                "RfdetrSegTool" => "RF-DETR-seg",
                 "ResultTool" => "Result",
                 "ImageRectifyTool" => "Image Rectify",
                 "ColorExtractTool" => "Color Extract",

@@ -203,6 +203,10 @@ namespace VMS.VisionSetup.Services
                             OnnxEngineCache.PrefetchYoloSeg(modelPath,
                                 CoerceInt(tool.Parameters, "InputSize", 640));
                             break;
+                        case "RfdetrSegTool":
+                            OnnxEngineCache.PrefetchRfdetrSeg(modelPath,
+                                CoerceInt(tool.Parameters, "InputSize", 560));
+                            break;
                     }
                 }
             }

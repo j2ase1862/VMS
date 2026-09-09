@@ -549,6 +549,19 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["OutputMaskImage"] = ys.OutputMaskImage;
                     break;
 
+                case RfdetrSegTool rs:
+                    config.Parameters["ModelPath"] = rs.ModelPath;
+                    // InputSize 도 담는다. 모델을 열면 ONNX 값으로 덮이지만, 레시피 로드의
+                    // Prefetch 는 모델을 열기 전에 이 값으로 예열한다.
+                    config.Parameters["InputSize"] = rs.InputSize;
+                    config.Parameters["ConfidenceThreshold"] = rs.ConfidenceThreshold;
+                    config.Parameters["MaxInstances"] = rs.MaxInstances;
+                    config.Parameters["ShowOverlay"] = rs.ShowOverlay;
+                    config.Parameters["OverlayOpacity"] = rs.OverlayOpacity;
+                    config.Parameters["DrawBoxes"] = rs.DrawBoxes;
+                    config.Parameters["OutputMaskImage"] = rs.OutputMaskImage;
+                    break;
+
                 case VisionTools.PointCloud.PointCloudFilterTool pcf:
                     config.Parameters["EnableVoxelGrid"] = pcf.EnableVoxelGrid;
                     config.Parameters["VoxelSize"] = pcf.VoxelSize;
@@ -721,6 +734,7 @@ namespace VMS.VisionSetup.Services
                 "ShapeMatchTool" => DeserializeShapeMatchTool(config),
                 "SegmentationTool" => DeserializeSegmentationTool(config),
                 "YoloSegTool" => DeserializeYoloSegTool(config),
+                "RfdetrSegTool" => DeserializeRfdetrSegTool(config),
                 "ImageRectifyTool" => DeserializeImageRectifyTool(config),
                 "PointCloudFilterTool" => DeserializePointCloudFilterTool(config),
                 "PointCloudRegistrationTool" => DeserializePointCloudRegistrationTool(config),
@@ -1850,6 +1864,23 @@ namespace VMS.VisionSetup.Services
             if (p.TryGetValue("ShowOverlay", out var sho)) tool.ShowOverlay = GetBool(sho);
             if (p.TryGetValue("OverlayOpacity", out var oo)) tool.OverlayOpacity = GetDouble(oo);
             if (p.TryGetValue("DrawBoxes", out var db)) tool.DrawBoxes = GetBool(db);
+            // 직렬화는 담는데 여기서 되읽지 않아, 레시피를 다시 열면 마스크 출력이 꺼져 있었다.
+            if (p.TryGetValue("OutputMaskImage", out var omi)) tool.OutputMaskImage = GetBool(omi);
+            return tool;
+        }
+
+        private static RfdetrSegTool DeserializeRfdetrSegTool(ToolConfig config)
+        {
+            var tool = new RfdetrSegTool();
+            var p = config.Parameters;
+            if (p.TryGetValue("ModelPath", out var mp)) tool.ModelPath = GetString(mp);
+            if (p.TryGetValue("InputSize", out var ins)) tool.InputSize = GetInt(ins);
+            if (p.TryGetValue("ConfidenceThreshold", out var ct)) tool.ConfidenceThreshold = (float)GetDouble(ct);
+            if (p.TryGetValue("MaxInstances", out var mi)) tool.MaxInstances = GetInt(mi);
+            if (p.TryGetValue("ShowOverlay", out var sho)) tool.ShowOverlay = GetBool(sho);
+            if (p.TryGetValue("OverlayOpacity", out var oo)) tool.OverlayOpacity = GetDouble(oo);
+            if (p.TryGetValue("DrawBoxes", out var db)) tool.DrawBoxes = GetBool(db);
+            if (p.TryGetValue("OutputMaskImage", out var omi)) tool.OutputMaskImage = GetBool(omi);
             return tool;
         }
 

@@ -23,8 +23,12 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
             get => _modelPath;
             set
             {
-                if (SetProperty(ref _modelPath, value))
-                    EnsureMetadataLoaded();
+                if (!SetProperty(ref _modelPath, value)) return;
+            // 모델 경로가 바뀌면 들고 있던 엔진을 버린다. 안 버리면 새 모델을 골라도 옛 모델이
+            // 계속 추론한다 — 화면에는 새 경로가 보이므로 아무도 눈치채지 못한다.
+            // Dispose 하지 않는 것은 캐시가 생명주기를 쥐고 있어서다 (같은 경로를 다른 도구가 쓸 수 있다).
+                _engine = null;
+                EnsureMetadataLoaded();
             }
         }
 

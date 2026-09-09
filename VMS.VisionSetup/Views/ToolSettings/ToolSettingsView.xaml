@@ -165,6 +165,9 @@
         <DataTemplate x:Key="YoloSegTemplate" DataType="{x:Type vm:YoloSegToolSettingsViewModel}">
             <tools:YoloSegToolSettings/>
         </DataTemplate>
+        <DataTemplate x:Key="RfdetrSegTemplate" DataType="{x:Type vm:RfdetrSegToolSettingsViewModel}">
+            <tools:RfdetrSegToolSettings/>
+        </DataTemplate>
         <DataTemplate x:Key="ShapeMatchTemplate" DataType="{x:Type vm:ShapeMatchToolSettingsViewModel}">
             <tools:ShapeMatchToolSettings/>
         </DataTemplate>
@@ -224,6 +227,7 @@
             ImageRectifyTemplate="{StaticResource ImageRectifyTemplate}"
             SegmentationTemplate="{StaticResource SegmentationTemplate}"
             YoloSegTemplate="{StaticResource YoloSegTemplate}"
+            RfdetrSegTemplate="{StaticResource RfdetrSegTemplate}"
             ShapeMatchTemplate="{StaticResource ShapeMatchTemplate}"
             ColorExtractTemplate="{StaticResource ColorExtractTemplate}"
             ColorMatchTemplate="{StaticResource ColorMatchTemplate}"

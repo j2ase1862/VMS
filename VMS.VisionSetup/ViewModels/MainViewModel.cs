@@ -1017,6 +1017,7 @@ namespace VMS.VisionSetup.ViewModels
             deepLearning.Tools.Add(new ToolItem { Name = "Detection (YOLO)", ToolType = "DetectionTool" });
             deepLearning.Tools.Add(new ToolItem { Name = "Segmentation", ToolType = "SegmentationTool" });
             deepLearning.Tools.Add(new ToolItem { Name = "YOLOv8-seg", ToolType = "YoloSegTool" });
+            deepLearning.Tools.Add(new ToolItem { Name = "RF-DETR-seg", ToolType = "RfdetrSegTool" });
             deepLearning.Tools.Add(new ToolItem { Name = "Classify", ToolType = "ClassifyTool" });
             deepLearning.Tools.Add(new ToolItem { Name = "Anomaly", ToolType = "AnomalyTool" });
             ToolTree.Add(deepLearning);
@@ -3999,6 +4000,7 @@ namespace VMS.VisionSetup.ViewModels
                 EnsembleTool t => new EnsembleToolSettingsViewModel(t),
                 SegmentationTool t => new SegmentationToolSettingsViewModel(t),
                 YoloSegTool t => new YoloSegToolSettingsViewModel(t),
+                RfdetrSegTool t => new RfdetrSegToolSettingsViewModel(t),
                 VisionTools.Calibration.ImageRectifyTool t => new ImageRectifyToolSettingsViewModel(t),
                 VisionTools.Color.ColorExtractTool t => new ColorExtractToolSettingsViewModel(t),
                 VisionTools.Color.ColorMatchTool t => new ColorMatchToolSettingsViewModel(t),
