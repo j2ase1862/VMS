@@ -115,6 +115,27 @@ namespace VMS.VisionSetup.Services
             return dialog.ShowDialog() == true ? dialog.ResultMask : null;
         }
 
+        public string? ShowModelRegistryPickerDialog(string? taskType)
+        {
+            var settings = OnnxSettingsService.ReadMlopsSettings();
+            if (string.IsNullOrWhiteSpace(settings.ServerUrl) || string.IsNullOrWhiteSpace(settings.LineToken))
+            {
+                ShowInformation(
+                    "MLOps 서버 주소와 라인 토큰이 설정되지 않았습니다.\n" +
+                    "설정 마법사(AppSetup) 2단계 › 고급 설정에서 MLOps 서버 주소와 라인 토큰을 먼저 지정하세요.",
+                    "레지스트리 설정 없음");
+                return null;
+            }
+
+            var viewModel = ViewModels.ModelRegistryPickerViewModel.ForClient(
+                () => new VMS.Core.Services.ModelRegistryClient(settings.ServerUrl, settings.LineToken), taskType);
+            var window = new Views.Dialogs.ModelRegistryPickerWindow(viewModel)
+            {
+                Owner = Application.Current.MainWindow
+            };
+            return window.ShowDialog() == true ? viewModel.SelectedReference : null;
+        }
+
         public string? ShowRenameDialog(string currentName)
         {
             var dialog = new RenameDialog

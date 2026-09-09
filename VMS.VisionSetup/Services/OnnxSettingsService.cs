@@ -68,6 +68,16 @@ namespace VMS.VisionSetup.Services
             return new OnnxSettings(ep, cache, fp16);
         }
 
+        private static string? GetStringIgnoreCase(JsonElement root, string name)
+        {
+            foreach (var prop in root.EnumerateObject())
+            {
+                if (string.Equals(prop.Name, name, StringComparison.OrdinalIgnoreCase))
+                    return prop.Value.ValueKind == JsonValueKind.String ? prop.Value.GetString() : null;
+            }
+            return null;
+        }
+
         /// <summary>MLOps 레지스트리 접속 정보 — 같은 system_config.json 에서 읽는다.</summary>
         public readonly record struct MlopsSettings(string ServerUrl, string LineToken);
 
@@ -83,9 +93,9 @@ namespace VMS.VisionSetup.Services
                 if (!File.Exists(ConfigPath)) return new MlopsSettings("", "");
                 using var doc = JsonDocument.Parse(File.ReadAllText(ConfigPath));
                 var root = doc.RootElement;
-                var url = root.TryGetProperty("MlopsServerUrl", out var u) ? u.GetString() : null;
-                var token = root.TryGetProperty("MlopsLineToken", out var t) ? t.GetString() : null;
-                return new MlopsSettings(url ?? "", token ?? "");
+                // AppSetup 은 camelCase(mlopsServerUrl) 로 쓰고, 손으로 넣은 파일은 PascalCase 일 수 있다 — 둘 다 받는다
+                return new MlopsSettings(GetStringIgnoreCase(root, "mlopsServerUrl") ?? "",
+                                         GetStringIgnoreCase(root, "mlopsLineToken") ?? "");
             }
             catch (Exception ex)
             {

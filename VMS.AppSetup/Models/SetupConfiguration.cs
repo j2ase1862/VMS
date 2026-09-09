@@ -58,6 +58,12 @@ namespace VMS.AppSetup.Models
         // Web 서버의 ClientApiKey:Value (user-secrets / 환경변수 ClientApiKey__Value) 와 동일하게 설정.
         public string ClientApiKey { get; set; } = string.Empty;
 
+        // MLOps 모델 레지스트리 (Phase 1 §6) — 레시피의 model:// 참조를 라인 PC 가 풀 때 쓴다.
+        // 비어 있으면 참조를 풀지 못하고 캐시에 있는 모델만 쓴다(절대 경로 모델은 무관).
+        // JSON 키는 camelCase(mlopsServerUrl · mlopsLineToken) — VMS/VisionSetup 이 대소문자 무시로 읽는다.
+        public string MlopsServerUrl { get; set; } = string.Empty;
+        public string MlopsLineToken { get; set; } = string.Empty;
+
         // SSO Migration Plan §2.2 (SSO PR4) — Web SSO 통합 옵션.
         // JSON 으로 "webSso" : { "enabled": true, "webServerUrl": "..." } 객체로 직렬화.
         // VMS.Core.Security.WebSsoConfig.LoadFromAppData 가 본 스키마 그대로 파싱.

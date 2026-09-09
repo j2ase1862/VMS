@@ -36,7 +36,10 @@
 
 ## 설정
 
-`%LocalAppData%\BODA VISION AI\system_config.json` 에 두 값을 넣습니다.
+설정 마법사(AppSetup) 2단계 › **고급 설정 — Web Client API Key · MLOps 모델 레지스트리** 에서
+**MLOps 서버 주소**와 **MLOps 라인 토큰**을 입력하고 저장합니다. 저장되면 `%LocalAppData%\BODA VISION AI\system_config.json` 에
+아래 두 값이 camelCase 키로 기록됩니다(손으로 넣을 때는 PascalCase 도 읽힙니다). VMS 메인과 VisionSetup 이 시작할 때
+같은 파일을 읽어 참조 해석기를 만듭니다.
 
 ```json
 {

@@ -74,13 +74,11 @@ namespace VMS.VisionSetup.Controls
 
         /// <summary>
         /// 레지스트리에서 모델을 골라 참조를 넣는다. 사람이 GUID 를 타이핑하지 않게 하려는 것이다.
-        /// 서버 주소와 라인 토큰은 시스템 설정에서 읽는다 — 없으면 창이 이유를 알린다.
+        /// 설정 확인·안내·창 열기는 DialogService 가 한다 (코드 비하인드에는 다이얼로그 로직을 두지 않는다).
         /// </summary>
         private void RegistryButton_Click(object sender, RoutedEventArgs e)
         {
-            var settings = Services.OnnxSettingsService.ReadMlopsSettings();
-            var picked = Views.Dialogs.ModelRegistryPickerWindow.PickReference(
-                Window.GetWindow(this), settings.ServerUrl, settings.LineToken, RegistryTaskType);
+            var picked = App.Dialogs?.ShowModelRegistryPickerDialog(RegistryTaskType);
             if (picked is not null) SetCurrentValue(ValueProperty, (object)picked);
         }
 
