@@ -590,5 +590,5 @@ msiexec /i VMS-<버전>.msi INSTALLWEB=0                  # Web 서버 제외 (�
 | v1.3 | 2026-06-04 | §11 초기 admin 비밀번호 설정 절차 추가 (Option C: VMS/Web 양쪽 디폴트 시드 제거, 운영자 명시 입력 필수) |
 | v1.4 | 2026-07-09 | §12 다중 인스턴스 운용(한 PC 두 라인) 절차 추가 — --instance 바로가기 / AppSetup 인스턴스별 구성 / 주의사항 |
 | v1.5 | 2026-08-06 | §13 Web 서버 동봉 추가 — WebServer Feature(payload 스테이징·INSTALLWEB=0) / AppSetup 초기 구성 카드 / 스크립트 설치 마이그레이션 / Web 단독 업데이트 경로 |
-| v1.8 | 2026-09-10 | §14 AI 학습 도구 기본 제외 전환(INSTALLAITOOLS 기본값 제거 + 업그레이드 선택 기억 레지스트리 마커 AiToolsMarkerComp) |
+| v1.8 | 2026-09-10 | §14 AI 학습 도구 기본 제외 전환(INSTALLAITOOLS 기본값 제거 + 업그레이드 선택 기억 레지스트리 마커 AiToolsMarkerComp + 마커 없던 v1.33 이하 첫 업그레이드용 파일 폴백 AITOOLS_PREVFILE→SetProperty) |
 | v1.7 | 2026-09-08 | §14 AI 학습 도구 Feature(AiTools·INSTALLAITOOLS=0) + GS 인증 제출 빌드(-p:ExcludeAiTools=true → VMS-x.y.z-cert.msi) / 관련 문서는 §15 로 |
