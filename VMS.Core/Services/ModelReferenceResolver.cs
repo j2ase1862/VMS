@@ -67,10 +67,17 @@ namespace VMS.Core.Services
             return new ModelReferenceResolver(cache, () =>
             {
                 if (string.IsNullOrWhiteSpace(registryUrl) || string.IsNullOrWhiteSpace(lineToken)) return null;
-                try { return new ModelRegistryClient(registryUrl!, lineToken!); }
+                try
+                {
+                    var client = new ModelRegistryClient(registryUrl!, lineToken!);
+                    MlopsClientStatus.ReportEnabled(MlopsClientStatus.ModelRegistry);
+                    return client;
+                }
                 catch (Exception ex)
                 {
+                    // 같은 InsecureUrlGuard 에 걸리면 model:// 참조가 캐시 전용으로 조용히 내려앉는다 — 사유를 남긴다.
                     Debug.WriteLine($"[ModelReference] 레지스트리 클라이언트를 만들지 못했습니다: {ex.Message}");
+                    MlopsClientStatus.ReportDisabled(MlopsClientStatus.ModelRegistry, ex);
                     return null;
                 }
             });

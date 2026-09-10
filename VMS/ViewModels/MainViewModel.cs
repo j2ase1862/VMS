@@ -296,6 +296,13 @@ namespace VMS.ViewModels
 
         public string IoBoardStatusText => $"IO {ConnectedIoBoardCount}/{TotalIoBoardCount}";
 
+        // ── MLOps 연동 상태 (헤더 칩) ──
+        // 송신부·레지스트리 클라이언트가 시작 시 만들어지지 못하면(보안 정책이 http:// 를 거부하는 등) 기능만 조용히 빠졌다.
+        // 설정이 있는데 비활성인 경우에만 칩을 띄운다 — 설정 자체가 없는 단독 라인은 조용한 것이 맞다.
+        public bool HasMlopsIssue => VMS.Core.Services.MlopsClientStatus.HasDisabled;
+        public string MlopsIssueText => "MLOps 비활성";
+        public string MlopsIssueTooltip => VMS.Core.Services.MlopsClientStatus.Summary ?? string.Empty;
+
         /// <summary>보드는 상태 변경 이벤트가 없어 갱신 시점(운전 시작 등)에 명시적으로 호출.</summary>
         public void RefreshIoBoardStatus()
         {

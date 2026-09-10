@@ -56,9 +56,13 @@ namespace VMS.ViewModels
 
         /// <summary>MLOps 서버 주소·라인 토큰이 설정돼 있는지 — 없으면 토글을 켜도 나가지 않으므로 화면에서 알려 준다.</summary>
         public bool MlopsConfigured { get; }
-        public string MlopsConfiguredHint => MlopsConfigured
-            ? "MLOps 서버 주소와 라인 토큰이 설정되어 있습니다."
-            : "MLOps 서버 주소 또는 라인 토큰이 없습니다 — 설정 마법사(AppSetup) 2단계 고급 설정에서 입력해야 전송됩니다.";
+        /// <summary>설정은 있는데 시작 시 송신부가 만들어지지 못한 경우(보안 정책 등) — 힌트를 빨간 계열로 보이는 근거.</summary>
+        public bool MlopsDisabledByError => MlopsConfigured && VMS.Core.Services.MlopsClientStatus.HasDisabled;
+        public string MlopsConfiguredHint => !MlopsConfigured
+            ? "MLOps 서버 주소 또는 라인 토큰이 없습니다 — 설정 마법사(AppSetup) 2단계 고급 설정에서 입력해야 전송됩니다."
+            : VMS.Core.Services.MlopsClientStatus.Summary is { } why
+                ? "MLOps 전송이 비활성입니다 — " + why
+                : "MLOps 서버 주소와 라인 토큰이 설정되어 있습니다.";
 
         [ObservableProperty] private string _previewFileName = string.Empty;
         [ObservableProperty] private string _previewPath = string.Empty;
