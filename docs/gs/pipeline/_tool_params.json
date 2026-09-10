@@ -1283,6 +1283,14 @@
   "file": "FeatureMatchToolSettings.xaml",
   "params": [
    {
+    "label": "재학습 원점",
+    "param": "RetrainOriginMode",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "RetrainOriginMode"
+   },
+   {
     "label": "Score Threshold",
     "param": "ScoreThreshold",
     "ctrl": "슬라이더",
@@ -2451,6 +2459,77 @@
     "ctrl": "슬라이더",
     "min": "0.1",
     "max": "0.99",
+    "enum": null
+   },
+   {
+    "label": "Show Mask Overlay",
+    "param": "ShowOverlay",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Overlay Opacity",
+    "param": "OverlayOpacity",
+    "ctrl": "슬라이더",
+    "min": "0.0",
+    "max": "1.0",
+    "enum": null
+   },
+   {
+    "label": "Draw Boxes + Labels",
+    "param": "DrawBoxes",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Output Mask Image",
+    "param": "OutputMaskImage",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "RF-DETR-seg (인스턴스 분할)",
+  "category": "Deep Learning",
+  "file": "RfdetrSegToolSettings.xaml",
+  "params": [
+   {
+    "label": "Model Path (.onnx)",
+    "param": "ModelPath",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Input Size (모델이 정합니다)",
+    "param": "InputSize",
+    "ctrl": "슬라이더",
+    "min": "64",
+    "max": "1280",
+    "enum": null
+   },
+   {
+    "label": "Confidence Threshold",
+    "param": "ConfidenceThreshold",
+    "ctrl": "슬라이더",
+    "min": "0.01",
+    "max": "1.0",
+    "enum": null
+   },
+   {
+    "label": "Max Instances",
+    "param": "MaxInstances",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "1000",
     "enum": null
    },
    {

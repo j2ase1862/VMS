@@ -133,7 +133,7 @@ const POST = {
     () => ctlImg("sec_image_saving.png", 290),
     () => caption("그림. Image Saving 섹션 — [Image Save Settings] 버튼 (Admin 전용)"),
     () => imgPara("21_dlg_imagesave.png", 520),
-    () => caption("그림. Image Save Settings 창 — OK/NG 저장 · 보존 기간 · Web 전송(전달 모드/판정별 전송/화질)"),
+    () => caption("그림. Image Save Settings 창 — OK/NG 저장 · 보존 기간 · Web 전송(전달 모드/판정별 전송/화질) · MLOps 학습 데이터 수집(NG 전송 · 양품 샘플 비율)"),
   ],
   "Recent Inspections 섹션": [
     () => ctlImg("sec_recent.png", 290),
@@ -195,7 +195,7 @@ const POST = {
     () => ctlImg("sec_image_saving.png", 290),
     () => caption("그림. Image Saving 섹션 — [Image Save Settings] (Admin 전용)"),
     () => imgPara("21_dlg_imagesave.png", 460),
-    () => caption("그림. Image Save Settings — 저장(경로/보존) / 포맷·품질 / 파일명 규칙 / Web 연동"),
+    () => caption("그림. Image Save Settings — 저장(경로/보존) / 포맷·품질 / Web 연동 / MLOps 학습 데이터 수집 / 파일명 규칙"),
     () => P("[Sync Parameters] 버튼 — Web 서버와 레시피 파라미터 동기화 다이얼로그:"),
     () => imgPara("22_dlg_syncparams.png", 460),
     () => caption("그림. Sync Parameters — Web 파라미터 동기화"),
@@ -284,6 +284,10 @@ const POST = {
   "6. AI 학습 도구 (별책 · 선택 구성 요소)": [
     () => imgPara("06_deeplearning_full.png", 620),
     () => caption("그림. AI 학습 도구(VMS.DeepLearning) 화면 — 사용 방법은 별책 「BODA VMS AI 학습 도구 매뉴얼」 참조"),
+  ],
+  "5.10 딥러닝 도구 — 모델 파일과 레지스트리": [
+    () => imgPara("51_rfdetr_seg_panel.png", 300),
+    () => caption("그림. RF-DETR-seg 도구 설정 — Model Path 의 [레지스트리…] 버튼 · Input Size(모델이 정함) · Confidence Threshold · Max Instances (IoU·마스크 임계 없음)"),
   ],
   "재학습 원점 — 기준 이미지 유지 / 현재 이미지": [
     () => imgPara("50_fm_retrain_origin.png", 300),
@@ -457,7 +461,7 @@ function wizardSection() {
         ["[← Back] / [Next]", ["P1_default_11_Button__Back.png", "P1_default_12_Button_Next.png"], "이전 / 다음 단계로 이동. 모든 단계 하단에 공통 표시되며, 마지막 7단계에서는 [Next] 대신 [Finish] 가 표시된다", "—"],
       ]),
     ]],
-    ["10_appsetup_step2_full.png", 460, "2단계 — Application Settings: 애플리케이션명 / System IP / Web Server 연동(단독 모드·Client Index·Web Server URL·고급 설정) / SSO  [전체 화면 — 스크롤 콘텐츠 포함]", [
+    ["10_appsetup_step2_full.png", 460, "2단계 — Application Settings: 애플리케이션명 / System IP / Web Server 연동(단독 모드·Client Index·Web Server URL·고급 설정: API Key·MLOps) / SSO  [전체 화면 — 스크롤 콘텐츠 포함]", [
       P("■ 2단계 입력 항목 상세", { bold: true }),
       wizardTable([
         ["Application Name", ["P2_default_02_TextBox_OP102.png"], "시스템을 식별하는 애플리케이션 표시 이름", "BODA Vision System"],
@@ -466,8 +470,10 @@ function wizardSection() {
         ["Client Index", ["P2_default_10_TextBox_2.png"], "BODA.VMS.Web에서 이 클라이언트를 식별하는 고유 번호(설치 라인별 1, 2, 3…)", "1"],
         ["Web Server URL", ["P2_default_13_TextBox_httplocalhost5292.png"], "BODA.VMS.Web 서버 주소 — Heartbeat 전송·파라미터 동기화에 사용", "http://localhost:5292"],
         ["Vision Server URL", ["P2_default_16_TextBox_httplocalhost5000.png"], "VisionServer API 주소 — 클라이언트 자동 등록에 사용. 쓰지 않으면 그대로 둠", "http://localhost:5000"],
-        ["고급 설정 (접기/펼치기)", ["P2_default_18_ToggleButton_고급_설정__Web_Client_API_Key_관리자가_Web_서버에_A.png"], "클릭하면 아래 Web Client API Key 입력란이 나타남. 일반 현장은 펼칠 필요 없음. 이미 키가 저장된 PC 에서는 자동으로 펼쳐짐", "접힘"],
+        ["고급 설정 (접기/펼치기)", ["P2_default_18_ToggleButton_고급_설정__Web_Client_API_Key__MLOps_모델_레지스트.png"], "클릭하면 아래 Web Client API Key · MLOps 서버 주소 · MLOps 라인 토큰 입력란이 나타남. 해당 현장(API 키 강제 또는 MLOps 운영)만 펼침. 이미 값이 저장된 PC 에서는 자동으로 펼쳐짐", "접힘"],
         ["Web Client API Key (고급)", ["P2_advanced_02_TextBox_TextBox.png"], "일반적으로 비워 둠. Web 서버 관리자가 'API 키 강제'를 켠 경우에만 관리자에게 받은 키를 그대로 입력. 값이 다르면 Web 연동(작업지시·이력 업로드)이 끊김", "(빈 값)"],
+        ["MLOps 서버 주소 (고급)", ["P2_advanced_05_TextBox_TextBox.png"], "MLOps 모델 레지스트리 주소(예: http://서버:5310). 레시피의 model:// 참조 모델을 이 서버에서 내려받고, AI 학습 도구의 [레지스트리에 등록]·[웹 데이터셋 내려받기], 불량 사진 수집(§4.3)도 이 주소를 씀. MLOps 를 운영하지 않는 현장은 비워 둠", "(빈 값)"],
+        ["MLOps 라인 토큰 (고급)", ["P2_advanced_08_TextBox_TextBox.png"], "MLOps 관리 화면(라인 PC 관리)에서 이 라인에 발급한 토큰(ln_…)을 그대로 붙여 넣음. 토큰이 없으면 참조 모델을 내려받지 못하고 불량 사진도 올라가지 않음", "(빈 값)"],
         ["Web SSO 활성", ["P2_default_22_CheckBox_Web_SSO_활성__AdminManager_인증을_BODAVMSWeb_.png"], "체크 시 Admin/Manager 인증을 BODA.VMS.Web으로 위임(단일 계정 관리). Web 도달 불가 시 비상 계정 'local-admin'만 제한 권한으로 진입", "해제"],
         ["VMS Admin 비밀번호", ["P2_default_27_PasswordBox_InitialAdminPasswordBox.png"], "사용자 인증용 정규 admin 계정 비밀번호. VMS 단독 운영 또는 SSO 비활성 환경에서 사용. 최소 8자, 12자 이상 권장", "신규 설치 시 필수"],
         ["Local Fallback Admin 비밀번호", ["P2_default_30_PasswordBox_LocalAdminPasswordBox.png"], "'local-admin' 비상 계정 비밀번호. Web 도달 불가 시에만 제한 권한으로 사용하며 안전한 곳에 별도 보관", "신규 설치 시 필수"],

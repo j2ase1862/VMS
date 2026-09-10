@@ -162,6 +162,7 @@
         <li><a href="#vs-featurematch">패턴 매칭 (Feature Match)</a></li>
         <li><a href="#vs-webparams">Web 파라미터 연동</a></li>
         <li><a href="#vs-plc">PLC 통계 출력</a></li>
+        <li><a href="#vs-dl-models">딥러닝 도구 — 모델 파일과 레지스트리</a></li>
       </ol>
     </li>
     <li><a href="#deeplearning">AI 학습 도구 (별책 · 선택 구성 요소)</a></li>
@@ -482,9 +483,12 @@ System Setup(설정 마법사)은 카메라 · PLC · IO 보드 · Web 연동 ·
 <div class="callout tip"><strong>Web 서버 없이 쓰는 현장:</strong> 2단계 Web Server Integration
 카드의 <strong>"Web 서버 미사용 — 단독(Standalone) 모드"</strong> 를 체크하면 작업자 로그인 ·
 작업지시 없이 검사를 운전할 수 있습니다 (§4.5).</div>
-<div class="callout tip"><strong>"고급 설정" 은 펼치지 않아도 됩니다:</strong> 2단계 Web Server Integration
-카드 아래의 <strong>고급 설정 — Web Client API Key</strong> 는 Web 서버 관리자가 API 키 강제를 켠
-경우에만 쓰는 항목입니다. 일반 현장은 접힌 채로 두세요 (값을 틀리게 넣으면 Web 연동이 끊깁니다).</div>
+<div class="callout tip"><strong>"고급 설정" 은 해당 현장만 펼칩니다:</strong> 2단계 Web Server Integration
+카드 아래의 <strong>고급 설정 — Web Client API Key · MLOps 모델 레지스트리</strong> 는 두 종류 현장에서만 씁니다.
+<strong>Web Client API Key</strong> 는 Web 서버 관리자가 API 키 강제를 켠 경우(값을 틀리게 넣으면 Web 연동이 끊깁니다),
+<strong>MLOps 서버 주소 · MLOps 라인 토큰</strong> 은 MLOps 서버를 운영해 모델을 레지스트리에서 내려받거나(§5.10)
+불량 사진을 학습 데이터로 모으는(§4.3 Image Saving) 현장입니다. 라인 토큰(<code>ln_…</code>)은 MLOps 관리 화면에서
+라인마다 발급해 그대로 붙여 넣습니다. 그 밖의 현장은 접힌 채로 두세요.</div>
 <div class="callout tip"><strong>3단계에서 노출·게인·3D 옵션은 설정하지 않습니다:</strong> 3단계 카메라 카드는
 이름 · IP · 카메라 타입 · 제조사(와 라인 스캔 · 프레임 그래버 항목)만 다룹니다. 노출(Exposure) · 게인(Gain)과
 3D 취득 옵션(점군 후처리 필터, 깊이 Z 범위)은 <strong>VMS 메인의 카메라 스텝 설정</strong> 또는
@@ -717,6 +721,22 @@ Web 서버에서 받아 온 뒤 다시 시도합니다.</p>
           "NG 이미지 Web 전송"을 켜야 합니다.</li>
       <li><strong>전송 화질</strong> — 기본 Thumbnail(썸네일)은 대역폭과 서버 용량을 아낍니다.
           원본이 필요하면 Full 로 바꿉니다.</li>
+    </ul>
+  </li>
+  <li><strong>MLOps 학습 데이터 수집</strong> — 불량으로 판정된 사진을 <strong>원본 해상도 그대로</strong>
+      MLOps 데이터 풀에 올려, 웹에서 라벨링해 다음 모델을 학습하는 재료로 씁니다. 위의 Web 전송(사람이 보는 썸네일)과는
+      별개의 스위치이며 검사 속도에는 영향이 없습니다:
+    <ul>
+      <li><strong>NG 이미지 MLOps 전송</strong> — 기본은 꺼짐입니다. 켜면 NG 사진이 MLOps 의 데이터 관리 화면에
+          출처 "라인 NG" 로 쌓입니다.</li>
+      <li><strong>양품 샘플 비율</strong> — 양품 N 장에 1 장을 함께 보냅니다(기본 200). 모델이 "정상" 도 배우려면
+          정상 사진이 조금은 있어야 합니다. 0 이면 양품은 보내지 않습니다.</li>
+      <li>카드 아래 안내 문구를 확인하세요 — MLOps 서버 주소와 라인 토큰이 설정 마법사 2단계 고급 설정(§3)에
+          없으면 체크해도 전송되지 않으며, 화면이 그 사실을 먼저 알려 줍니다.</li>
+      <li>서버가 꺼져 있으면 사진은 이 PC 에 쌓였다가(재시작해도 유지) 서버가 켜지면 순서대로 올라갑니다.
+          서버가 파일을 받지 않은 사진은 다시 보내지 않고 <code>%LocalAppData%\BODA VISION AI\mlops_line_ng_queue
+ejected</code>
+          에 사유 파일과 함께 남습니다.</li>
     </ul>
   </li>
 </ul>
@@ -1281,6 +1301,29 @@ Web 화면(§7.9)에서 값만 고치면 됩니다.</p>
 불량 수(FailCount) · 전체 수(TotalCount) 통계를 PLC 주소에 실어 보낼 수 있습니다.
 검사 1건의 최종 OK/NG 신호는 지금까지처럼 시퀀스 에디터의 분기(Branch) → 출력(Output)
 단계가 담당합니다 — 도구 설정의 도움말에도 같은 안내가 있습니다.</p>
+
+<h3 id="vs-dl-models">5.10 딥러닝 도구 — 모델 파일과 레지스트리</h3>
+<p>Deep Learning 카테고리의 도구(Detection · Classify · Anomaly · Segmentation · YOLO Segmentation · RF-DETR-seg 등)는
+<strong>Model Path</strong> 에 모델 파일(ONNX)을 지정해 씁니다. 파일은 AI 학습 도구(별책)로 만들거나 MLOps
+모델 레지스트리에서 받습니다.</p>
+<ul>
+<li><strong>파일 직접 지정</strong> — 폴더 아이콘으로 이 PC 의 <code>.onnx</code> 파일을 고릅니다. 모델을 바꾸려면
+파일을 PC 마다 복사해야 합니다.</li>
+<li><strong>[레지스트리…] 로 참조 지정</strong> — MLOps 모델 레지스트리에서 모델 계열과 단계(운영 · 스테이징 · 특정 버전)를
+고르면 Model Path 에 <code>model://…</code> 참조가 들어갑니다. 레시피는 "이 모델의 운영 버전" 이라고만 적고, 실제 파일은
+레시피를 열 때 이 PC 가 레지스트리에서 받아 캐시에 둡니다. MLOps 쪽에서 새 버전을 승격하거나 되돌리면 라인 PC 는
+다음 레시피 로드 때 따라옵니다 — 파일을 복사할 일이 없습니다. 검사 중에는 네트워크를 쓰지 않으며, 서버에 닿지 못해도
+캐시에 있는 파일로 계속 검사합니다. 설정 마법사 2단계 고급 설정의 MLOps 서버 주소 · 라인 토큰(§3)이 필요합니다.</li>
+<li><strong>Detection 도구</strong> — D-FINE(기본 학습 백본) 과 YOLO 모델 파일을 열 때 자동으로 판별합니다. 파라미터와
+조작은 두 형식이 같습니다.</li>
+<li><strong>RF-DETR-seg 도구</strong> — 인스턴스 분할 도구로, YOLO Segmentation 과 같은 일을 하지만 Ultralytics(AGPL-3.0)
+의존이 없는 대안입니다. <strong>Input Size 는 모델을 열면 ONNX 가 정한 값으로 자동 설정되고 칸이 잠깁니다</strong>
+(모델마다 배수가 달라 손으로 맞추면 안 됩니다). Confidence Threshold 와 Max Instances(점수 순 상한)만 조정하며,
+IoU · 마스크 임계는 없습니다(집합 예측이라 NMS 를 쓰지 않음). 결과는 인스턴스별 클래스 · 점수 · 박스 · 마스크 픽셀 수이고,
+0 건 검출은 NG 입니다(§5.6 판정 규칙과 동일). 학습은 별책 §2 의 <code>train_rfdetr_seg.py</code> 로 합니다.</li>
+</ul>
+<div class="callout tip"><strong>모델 참조와 검사 이력:</strong> 참조로 지정한 모델은 검사 결과와 함께 "어느 모델 버전이
+판정했는지" 가 Web 생산 이력에 기록되어, MLOps 라인 모니터링이 모델 버전별 불량률을 집계합니다.</div>
 
 </section>
 
@@ -2244,6 +2287,22 @@ PowerShell 명령을 다룹니다.</div>
       VMS.DeepLearning 과 학습 스크립트가 설치되지 않고 Tools 메뉴의 Deep Learning 항목이 숨겨짐 (§2.1, §6).
       OCR Synth Data 창은 학습 스크립트가 없으면 합성 데이터 생성만 표시.</li>
   <li><strong>매뉴얼 구성</strong>: 6장 "딥러닝 모델 학습"을 별책 「BODA VMS AI 학습 도구 매뉴얼」로 분리.</li>
+</ul>
+
+<p>SW v1.32.0 · v1.32.1 · v1.33.0 / Web v1.9.0 반영 (2026-09-10 갱신):</p>
+<ul>
+<li><strong>모델 레지스트리 참조</strong>: 딥러닝 도구 Model Path 의 [레지스트리…] 버튼 — MLOps 레지스트리의 모델을
+<code>model://</code> 참조로 지정하면 레시피를 열 때 이 PC 가 자동으로 내려받아 캐시 (§5.10, 설정 마법사 2단계 고급 설정 §3).</li>
+<li><strong>RF-DETR-seg 도구 신설</strong>: Ultralytics(AGPL) 의존 없는 인스턴스 분할 도구 — Input Size 자동 설정 · IoU 없음 (§5.10).
+덤: YOLO Segmentation 의 Output Mask Image 가 레시피 재열기 시 꺼지던 문제 수정.</li>
+<li><strong>AI 학습 도구 ↔ 레지스트리</strong>: 학습 패널 [레지스트리에 등록] · Export 구역 [웹 데이터셋 내려받기] (별책 §1).</li>
+<li><strong>불량 이미지 MLOps 학습 데이터 수집</strong>: Image Save Settings 창의 "MLOps 학습 데이터 수집" 카드 — NG 사진
+원본 전송 + 양품 N 장에 1 장 샘플(기본 200, 기본 꺼짐) (§4.3).</li>
+<li><strong>검사 결과 업로드 큐 보호</strong>: 서버가 거절한 요청은 재시도하지 않고 <code>upload_queue\rejected\</code> 로 옮겨
+뒤 결과가 막히지 않도록 함 (v1.32.1).</li>
+<li><strong>수정</strong>: 회전 ROI 로 학습한 Feature Match 가 레시피 재로드 후 [Show ROI] 에서 축 정렬 사각형으로 보이던 문제(v1.29.1) ·
+손상된 ONNX 파일을 열 때 프로그램이 멈추던 문제 · 같은 모델을 VMS 메인과 VisionSetup 이 동시에 내려받으면 한쪽이 실패하던 문제(v1.33.0).</li>
+<li><strong>Web v1.9.0</strong>: 모델 버전별 검사 결과 집계 API(MLOps 라인 모니터링용) — 화면 변화 없음.</li>
 </ul>
 
 <p>전체 변경 사항은 양쪽 저장소의 <code>CHANGELOG.md</code> 참조.</p>
