@@ -36,7 +36,8 @@
       GS 인증 제출 빌드: AI 학습 도구(VMS.DeepLearning + scripts\*.py) 를 MSI 에서 완전히 제외.
         dotnet build VMS.MasterSetup\VMS.MasterSetup.wixproj -c Release -t:Rebuild -p:ExcludeAiTools=true
       산출물 이름을 VMS-x.y.z-cert.msi 로 구분해 일반 릴리즈 MSI 와 섞이지 않게 한다.
-      일반 릴리즈는 AiTools Feature 가 포함되며 설치 마법사/INSTALLAITOOLS=0 으로 선택 제외.
+      일반 릴리즈는 AiTools Feature 가 MSI 에 들어 있되 기본은 제외 — 설치 마법사 체크 또는 INSTALLAITOOLS=1 로 포함
+      (업그레이드는 이전 선택을 레지스트리 마커로 기억).
     -->
     <DefineConstants Condition="'$(ExcludeAiTools)' == 'true'">$(DefineConstants);ExcludeAiTools=1</DefineConstants>
     <OutputName Condition="'$(ExcludeAiTools)' == 'true'">VMS-$(Version)-cert</OutputName>

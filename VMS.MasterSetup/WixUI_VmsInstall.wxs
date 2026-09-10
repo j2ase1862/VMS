@@ -89,7 +89,7 @@
         <!-- AI 학습 도구 - Package.wxs 의 AiTools Feature(INSTALLAITOOLS 조건). GS 인증 빌드(ExcludeAiTools)에서는 컨트롤 자체가 없다. -->
         <Control Id="AiCheck" Type="CheckBox" X="25" Y="156" Width="330" Height="17"
                  Property="INSTALLAITOOLS" CheckBoxValue="1"
-                 Text="AI 학습 도구 포함 (VMS.DeepLearning: 라벨링·모델 학습)" />
+                 Text="AI 학습 도구 포함 (VMS.DeepLearning: 라벨링·모델 학습, 기본 해제)" />
         <Control Id="AiDesc1" Type="Text" X="40" Y="178" Width="315" Height="48" NoPrefix="yes"
                  Text="딥러닝 검사 모델을 만드는 라벨링·학습 프로그램과 파이썬 학습 스크립트입니다. GPU 와 파이썬 환경이 있는 학습 PC 에만 필요하며, 검사만 하는 PC 는 해제해도 됩니다. Detection 등 검사 도구는 이 옵션과 무관하게 설치됩니다." />
 <?endif?>
