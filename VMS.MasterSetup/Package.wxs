@@ -38,6 +38,16 @@
       <RegistrySearch Id="AiToolsPrevChoice" Root="HKLM" Key="Software\VASIM\BODA Vision System"
                       Name="AiToolsInstalled" Type="raw" />
     </Property>
+    <!-- 마커가 없던 옛 버전(v1.33 이하)에서 올라오는 첫 업그레이드 폴백: 기본 설치 폴더에 VMS.DeepLearning.exe 가
+         이미 있으면 "이전에 포함했던 PC" 로 보고 INSTALLAITOOLS=1 로 채운다. 이것이 없으면 학습 PC 의 인앱(무인) 업데이트가
+         도구를 조용히 지운다. 사용자 지정 폴더에 설치한 PC 는 이 폴백이 닿지 않으므로 첫 업그레이드는 MSI 수동 실행으로 체크 확인. -->
+    <Property Id="AITOOLS_PREVFILE" Secure="yes">
+      <DirectorySearch Id="AiToolsPrevDir" Path="[ProgramFilesFolder]VASIM\BODA Vision System" Depth="0">
+        <FileSearch Id="AiToolsPrevExe" Name="VMS.DeepLearning.exe" />
+      </DirectorySearch>
+    </Property>
+    <SetProperty Id="INSTALLAITOOLS" Value="1" After="AppSearch" Sequence="both"
+                 Condition="AITOOLS_PREVFILE AND NOT INSTALLAITOOLS" />
     <Feature Id="AiTools" Title="AI 학습 도구 (VMS.DeepLearning)" Level="1" AllowAbsent="yes">
       <Level Value="0" Condition="INSTALLAITOOLS=0 OR NOT INSTALLAITOOLS" />
       <ComponentGroupRef Id="AiToolsAppFiles" />
