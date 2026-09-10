@@ -234,11 +234,14 @@ namespace VMS.ViewModels
 
         /// <summary>
         /// Raised after an inspection result is recorded (ok/ng).
-        /// Provides (cameraName, ok, currentImage, stepNumber, correlationKey) for dashboard
-        /// tracking and image saving/upload. stepNumber is the inspected step's Sequence (0 if none);
-        /// correlationKey ties the Web results upload to the image upload (null if none).
+        /// Provides (cameraName, ok, displayImage, originalImage, stepNumber, correlationKey).
+        /// displayImage 는 결과 그래픽(오버레이)이 그려진 화면용, originalImage 는 검사에 넣은 오버레이 전 원본.
+        /// 학습 데이터(MLOps 수집)는 반드시 originalImage 를 써야 한다 — 오버레이가 찍힌 사진으로 학습하면 모델이
+        /// 그림을 배운다 (2026-09-10 실증: 라인에서 올라온 사진에 결과 그래픽이 들어 있었다).
+        /// stepNumber is the inspected step's Sequence (0 if none); correlationKey ties the Web results upload
+        /// to the image upload (null if none).
         /// </summary>
-        public event Action<string, bool, BitmapSource?, int, string?>? InspectionCompleted;
+        public event Action<string, bool, BitmapSource?, BitmapSource?, int, string?>? InspectionCompleted;
 
         /// <summary>
         /// 마지막 검사의 개별 도구 결과 (AutoProcessService PLC 전송용)
@@ -298,7 +301,8 @@ namespace VMS.ViewModels
 
             // 방금 검사한 스텝 번호(Sequence) — 이미지 파일명 규칙의 Step 토큰용. 없으면 0.
             int stepNumber = FindCurrentStep()?.Sequence ?? 0;
-            InspectionCompleted?.Invoke(Name, ok, CurrentImage, stepNumber, correlationKey);
+            // CurrentImage 는 검사 직후 OverlayImage 로 바뀌어 있다. 원본은 _originalImage (없으면 화면 이미지가 곧 원본).
+            InspectionCompleted?.Invoke(Name, ok, CurrentImage, _originalImage ?? CurrentImage, stepNumber, correlationKey);
         }
 
         /// <summary>
