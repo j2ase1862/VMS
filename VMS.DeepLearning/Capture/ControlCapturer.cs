@@ -383,6 +383,163 @@ namespace VMS.DeepLearning.Capture
             catch { return false; }
         }
 
+        // ───────────────────── 레지스트리 창 캡처 (--capture-dialogs) ─────────────────────
+
+        /// <summary>
+        /// MLOps 레지스트리 연동 창 2종을 문서용 상태로 띄워 전체 렌더한다 (VMS 의 RunWindowsFullAsync 와 같은 원리).
+        /// 서버 없이 캡처한다 — 로그인·목록·판은 VM 의 backing field 에 직접 넣고, 네트워크를 타는 훅
+        /// (DatasetDownload 의 SelectedDataset → 판 목록 조회)은 SetField + Notify 로 우회한다.
+        /// 장면: ModelUpload_login(로그인 전) · ModelUpload_ready(계열 선택·올리기 직전) · DatasetDownload_ready(판 선택·받기 직전).
+        /// </summary>
+        public static async Task RunDialogsAsync(Window owner, string outputDir)
+        {
+            Directory.CreateDirectory(outputDir);
+            string logp = Path.Combine(outputDir, "_dialogs.log");
+
+            foreach (var (name, make) in BuildDialogScenes())
+            {
+                Window? win = null;
+                try
+                {
+                    win = make();
+                    win.Owner = owner;
+                    win.ShowInTaskbar = false;
+                    win.WindowStartupLocation = WindowStartupLocation.Manual;
+                    win.Left = -32000; win.Top = -32000;   // 사용자 화면에 깜빡이지 않게 오프스크린
+
+                    double w = double.IsNaN(win.Width) || win.Width < 1 ? 560 : win.Width;
+                    double h = double.IsNaN(win.Height) || win.Height < 1 ? 600 : win.Height;
+                    win.SizeToContent = SizeToContent.Height;   // 표준 창 — 콘텐츠 높이에 맞춘다
+                    win.Show();
+
+                    for (int i = 0; i < 3; i++)
+                    {
+                        win.Measure(new Size(w, double.PositiveInfinity));
+                        win.Arrange(new Rect(new Point(0, 0), new Size(w, win.DesiredSize.Height)));
+                        win.UpdateLayout();
+                        await win.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Background);
+                    }
+                    await Task.Delay(200);
+
+                    var root = win.Content as FrameworkElement ?? (FrameworkElement)win;
+                    Brush backdrop = win.Background ?? new SolidColorBrush(Color.FromRgb(0x1E, 0x1E, 0x1E));
+                    if (backdrop.CanFreeze) backdrop.Freeze();
+                    double rw = root.ActualWidth > 1 ? root.ActualWidth : w;
+                    double rh = root.ActualHeight > 1 ? root.ActualHeight : h;
+                    RenderRootToFile(root, backdrop, rw, rh, Path.Combine(outputDir, name + ".png"));
+                    File.AppendAllText(logp, $"{name}: {rw:0}x{rh:0}\n");
+                }
+                catch (Exception ex)
+                {
+                    File.AppendAllText(logp, name + ": " + ex + "\n");
+                }
+                finally { try { win?.Close(); } catch { } }
+            }
+        }
+
+        private static IEnumerable<(string name, Func<Window> make)> BuildDialogScenes()
+        {
+            const string registry = "http://mlops-server:5310";
+            const string web = "http://localhost:5292";
+
+            // [레지스트리에 등록] — 로그인 전. 파일 정보(이름·작업 유형·클래스)만 채워진 첫 화면.
+            yield return ("ModelUpload_login", () =>
+            {
+                var vm = new VMS.Core.ViewModels.ModelUploadViewModel(
+                    registry, web, @"D:\Models\gear_defects\best.onnx", DatasetTaskType.Detection,
+                    new[] { "scratch", "dent", "burr" }, "gear_defects");
+                SetField(vm, "<FileSizeText>k__BackingField", "12.4 MB");   // 파일 없이 캡처 — 문서용 대표 크기
+                vm.Username = "admin";
+                return new Views.ModelUploadWindow(vm);
+            });
+
+            // [레지스트리에 등록] — 로그인 뒤 기존 계열을 골라 올리기 직전.
+            yield return ("ModelUpload_ready", () =>
+            {
+                var vm = new VMS.Core.ViewModels.ModelUploadViewModel(
+                    registry, web, @"D:\Models\gear_defects\best.onnx", DatasetTaskType.Detection,
+                    new[] { "scratch", "dent", "burr" }, "gear_defects");
+                SetField(vm, "<FileSizeText>k__BackingField", "12.4 MB");
+                vm.Models.Add(new VMS.Core.ViewModels.ModelUploadViewModel.ModelChoice(
+                    Guid.NewGuid(), "gear_defects", "Detection · 3 클래스 · 버전 4개 · 운영 v3"));
+                vm.Models.Add(new VMS.Core.ViewModels.ModelUploadViewModel.ModelChoice(
+                    Guid.NewGuid(), "gear_defects_line2", "Detection · 3 클래스 · 버전 1개"));
+                SetField(vm, "_signedIn", true);
+                SetField(vm, "_signedInAs", "admin (Admin)");
+                Notify(vm, nameof(VMS.Core.ViewModels.ModelUploadViewModel.SignedIn));
+                Notify(vm, nameof(VMS.Core.ViewModels.ModelUploadViewModel.SignedInAs));
+                Notify(vm, nameof(VMS.Core.ViewModels.ModelUploadViewModel.ShowSignIn));
+                vm.CreateNew = false;
+                vm.SelectedModel = vm.Models[0];
+                vm.License = "Apache-2.0";
+                vm.Notes = "lot42 불량 120장 추가 학습, mAP50 0.91";
+                vm.Status = "레지스트리 연결됨 — 계열 2개";
+                return new Views.ModelUploadWindow(vm);
+            });
+
+            // [웹 데이터셋 내려받기] — 로그인 뒤 데이터셋·판을 골라 받기 직전.
+            yield return ("DatasetDownload_ready", () =>
+            {
+                var vm = new VMS.Core.ViewModels.DatasetDownloadViewModel(
+                    registry, web, DatasetTaskType.Detection, @"D:\Datasets\export");
+                var dsId = Guid.NewGuid();
+                vm.Datasets.Add(new VMS.Core.ViewModels.DatasetDownloadViewModel.DatasetChoice(
+                    dsId, "gear_defects", "이미지 1,240장 · 라벨 3,812개 · 판 2개", "Detection"));
+                vm.Datasets.Add(new VMS.Core.ViewModels.DatasetDownloadViewModel.DatasetChoice(
+                    Guid.NewGuid(), "connector_pins", "이미지 380장 · 라벨 1,102개 · 판 1개", "Detection"));
+                SetField(vm, "_signedIn", true);
+                SetField(vm, "_signedInAs", "admin (Admin)");
+                Notify(vm, nameof(VMS.Core.ViewModels.DatasetDownloadViewModel.SignedIn));
+                Notify(vm, nameof(VMS.Core.ViewModels.DatasetDownloadViewModel.SignedInAs));
+                Notify(vm, nameof(VMS.Core.ViewModels.DatasetDownloadViewModel.ShowSignIn));
+                // SelectedDataset 은 setter 훅이 판 목록을 서버에서 조회하므로 field 로 넣는다.
+                SetField(vm, "_selectedDataset", vm.Datasets[0]);
+                Notify(vm, nameof(VMS.Core.ViewModels.DatasetDownloadViewModel.SelectedDataset));
+                var v2 = new VMS.Core.Services.RegistryDatasetVersion
+                {
+                    Id = Guid.NewGuid(), Name = "v2-lot42", TaskType = "Detection", ExportFormat = "yolo",
+                    SizeBytes = 812L * 1024 * 1024, ImageCount = 1240, AnnotationCount = 3812,
+                    Classes = new[] { "scratch", "dent", "burr" }
+                };
+                var v1 = new VMS.Core.Services.RegistryDatasetVersion
+                {
+                    Id = Guid.NewGuid(), Name = "v1-initial", TaskType = "Detection", ExportFormat = "yolo",
+                    SizeBytes = 610L * 1024 * 1024, ImageCount = 960, AnnotationCount = 2901,
+                    Classes = new[] { "scratch", "dent", "burr" }
+                };
+                vm.Versions.Add(new VMS.Core.ViewModels.DatasetDownloadViewModel.VersionChoice(
+                    v2, "v2-lot42 (2026-09-09)", "이미지 1,240장 · 라벨 3,812개 · 812 MB"));
+                vm.Versions.Add(new VMS.Core.ViewModels.DatasetDownloadViewModel.VersionChoice(
+                    v1, "v1-initial (2026-08-20)", "이미지 960장 · 라벨 2,901개 · 610 MB"));
+                vm.SelectedVersion = vm.Versions[0];
+                vm.ReviewedOnly = true;
+                vm.Status = "판 2개 — 최신 판을 선택했습니다";
+                return new Views.DatasetDownloadWindow(vm);
+            });
+        }
+
+        private static void RenderRootToFile(FrameworkElement root, Brush backdrop, double rw, double rh, string path)
+        {
+            // 표준 창은 OS 제목표시줄이 비클라이언트라 콘텐츠만 렌더된다 — 문서 그림이 답답하지 않게 창 여백만큼 테두리를 둔다.
+            const double pad = 12;
+            var outer = new Rect(new Point(0, 0), new Size(rw + pad * 2, rh + pad * 2));
+            var inner = new Rect(new Point(pad, pad), new Size(rw, rh));
+            var dv = new DrawingVisual();
+            using (var ctx = dv.RenderOpen())
+            {
+                ctx.DrawRectangle(backdrop, null, outer);
+                ctx.DrawRectangle(new VisualBrush(root)
+                { Stretch = Stretch.None, AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Top }, null, inner);
+            }
+            var rtb = new RenderTargetBitmap(
+                (int)(outer.Width * Scale), (int)(outer.Height * Scale), 96 * Scale, 96 * Scale, PixelFormats.Pbgra32);
+            rtb.Render(dv);
+            var enc = new PngBitmapEncoder();
+            enc.Frames.Add(BitmapFrame.Create(rtb));
+            using var fs = File.Create(path);
+            enc.Save(fs);
+        }
+
         private static void RenderRootToFile(FrameworkElement root, Brush backdrop, string path)
         {
             double rw = root.ActualWidth > 1 ? root.ActualWidth : 1400;
