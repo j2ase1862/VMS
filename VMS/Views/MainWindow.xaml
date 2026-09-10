@@ -1616,6 +1616,17 @@
                             </TextBlock.Style>
                         </TextBlock>
                     </StackPanel>
+
+                    <!-- MLOps 연동 비활성 — 서버 주소·토큰은 있는데 시작 시 클라이언트가 만들어지지 못한 경우만 노출.
+                         (2026-09-10: Production 보안 모드가 http:// 주소를 거부해 NG 수집이 조용히 빠졌던 사고) 사유는 툴팁. -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0"
+                                ToolTip="{Binding MlopsIssueTooltip}"
+                                Visibility="{Binding HasMlopsIssue, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Rectangle Width="1" Fill="{StaticResource Brush.Surface.Overlay}" Margin="0,6,10,6"/>
+                        <Ellipse Width="8" Height="8" Margin="0,0,5,0" Fill="{StaticResource Brush.Danger}"/>
+                        <TextBlock Text="{Binding MlopsIssueText}" FontSize="12" VerticalAlignment="Center"
+                                   Foreground="{StaticResource Brush.Danger}"/>
+                    </StackPanel>
                 </StackPanel>
 
                 <!-- [5] Separator -->

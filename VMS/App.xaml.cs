@@ -754,10 +754,14 @@ namespace VMS
                 lineNgUploader = new VMS.Services.ImageUpload.LineNgImageUploader(
                     systemConfig.MlopsServerUrl, systemConfig.MlopsLineToken);
                 lineNgUploader.Start();
+                VMS.Core.Services.MlopsClientStatus.ReportEnabled(VMS.Core.Services.MlopsClientStatus.NgCollector);
             }
             catch (Exception ex)
             {
+                // 조용히 빠지면 현장에서 원인을 찾을 수 없다 (2026-09-10: Production 보안 모드가 http:// MLOps 주소를 거부해
+                // 큐 폴더조차 안 생겼다). 사유를 기록해 설정 창 힌트·헤더 칩이 보이게 한다.
                 Debug.WriteLine($"[App] LineNgImageUploader init failed: {ex.Message}");
+                VMS.Core.Services.MlopsClientStatus.ReportDisabled(VMS.Core.Services.MlopsClientStatus.NgCollector, ex);
             }
 
             // Re-create MainViewModel with AutoProcessService injected
