@@ -77,6 +77,32 @@ namespace VMS.DeepLearning
                         }));
                     return;
                 }
+                if (TryGetDir(e.Args, "--capture-dialogs", out string dlgDir))
+                {
+                    // 매뉴얼용 레지스트리 창 캡처 — [레지스트리에 등록]·[웹 데이터셋 내려받기] 를 문서용 상태로 렌더.
+                    mainWindow.WindowState = WindowState.Normal;
+                    mainWindow.WindowStartupLocation = WindowStartupLocation.Manual;
+                    mainWindow.ShowInTaskbar = false;
+                    mainWindow.Left = -32000; mainWindow.Top = -32000;
+                    mainWindow.Width = 1400; mainWindow.Height = 900;
+                    mainWindow.Show();
+                    _ = mainWindow.Dispatcher.BeginInvoke(
+                        System.Windows.Threading.DispatcherPriority.ApplicationIdle,
+                        new Action(async () =>
+                        {
+                            try
+                            {
+                                await Capture.ControlCapturer.RunDialogsAsync(mainWindow, dlgDir);
+                            }
+                            catch (Exception ex)
+                            {
+                                Directory.CreateDirectory(dlgDir);
+                                File.AppendAllText(Path.Combine(dlgDir, "_capture.log"), ex.ToString());
+                            }
+                            Shutdown();
+                        }));
+                    return;
+                }
             }
 #endif
 
