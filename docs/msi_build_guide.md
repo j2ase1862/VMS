@@ -534,7 +534,7 @@ Detection / Classify / Anomaly / YOLO-seg / OCR **추론** 도구)은 ONNX 모�
 
 | 항목 | 값 |
 |---|---|
-| Feature | `AiTools` ("AI 학습 도구 (VMS.DeepLearning)") — 기본 포함, `INSTALLAITOOLS=0` 으로 제외 |
+| Feature | `AiTools` ("AI 학습 도구 (VMS.DeepLearning)") — **기본 제외**(2026-09-10 전환), 마법사 체크 또는 `INSTALLAITOOLS=1` 로 포함. 업그레이드는 `HKLM\Software\VASIM\BODA Vision System\AiToolsInstalled` 마커로 이전 선택 유지 |
 | 포함 파일 | `VMS.DeepLearning.exe/.dll/.deps.json/.runtimeconfig.json`, `scripts\*.py` |
 | Main 에서 제외 | `AppFiles` 의 `<Exclude>` 로 위 파일을 빼고 `AiToolsAppFiles`/`AiToolsScriptFiles` 로 분리 |
 | 설치 마법사 | "설치 구성 선택" 화면의 두 번째 체크박스 (Web 서버 체크박스 아래) |
@@ -560,8 +560,8 @@ dotnet build VMS.MasterSetup\VMS.MasterSetup.wixproj -c Release -t:Rebuild -p:Ex
 ### 14.3 무인 설치
 
 ```
-msiexec /i VMS-<버전>.msi INSTALLAITOOLS=0            # AI 학습 도구 제외
-msiexec /i VMS-<버전>.msi INSTALLWEB=0 INSTALLAITOOLS=0  # Web 서버·AI 학습 도구 모두 제외 (검사 전용 PC)
+msiexec /i VMS-<버전>.msi INSTALLAITOOLS=1            # AI 학습 도구 포함 (기본은 제외)
+msiexec /i VMS-<버전>.msi INSTALLWEB=0                  # Web 서버 제외 (검사 전용 PC — AI 학습 도구는 기본 제외)
 ```
 
 ## 15. 관련 문서
@@ -590,4 +590,5 @@ msiexec /i VMS-<버전>.msi INSTALLWEB=0 INSTALLAITOOLS=0  # Web 서버·AI 학�
 | v1.3 | 2026-06-04 | §11 초기 admin 비밀번호 설정 절차 추가 (Option C: VMS/Web 양쪽 디폴트 시드 제거, 운영자 명시 입력 필수) |
 | v1.4 | 2026-07-09 | §12 다중 인스턴스 운용(한 PC 두 라인) 절차 추가 — --instance 바로가기 / AppSetup 인스턴스별 구성 / 주의사항 |
 | v1.5 | 2026-08-06 | §13 Web 서버 동봉 추가 — WebServer Feature(payload 스테이징·INSTALLWEB=0) / AppSetup 초기 구성 카드 / 스크립트 설치 마이그레이션 / Web 단독 업데이트 경로 |
+| v1.8 | 2026-09-10 | §14 AI 학습 도구 기본 제외 전환(INSTALLAITOOLS 기본값 제거 + 업그레이드 선택 기억 레지스트리 마커 AiToolsMarkerComp) |
 | v1.7 | 2026-09-08 | §14 AI 학습 도구 Feature(AiTools·INSTALLAITOOLS=0) + GS 인증 제출 빌드(-p:ExcludeAiTools=true → VMS-x.y.z-cert.msi) / 관련 문서는 §15 로 |

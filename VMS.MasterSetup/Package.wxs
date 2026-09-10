@@ -24,16 +24,25 @@
     <!-- AI 학습 도구 (VMS.DeepLearning 라벨링·학습 앱 + scripts\ 파이썬 학습 스크립트) — 선택 Feature.
          검사 런타임(VMS·VisionSetup 의 Detection/Classify/Anomaly/OCR 추론 도구)은 Main 에 남고,
          "모델을 만드는" 기능만 여기로 분리한다. 파이썬·GPU 환경이 있는 학습 PC 에서만 필요.
-         제외 경로 — INSTALLWEB 과 같은 3가지:
-           · 설치 마법사 "설치 구성 선택" 화면의 체크 해제 (INSTALLAITOOLS 속성 제거)
-           · 무인 설치: msiexec /i VMS-x.y.z.msi INSTALLAITOOLS=0
-           · GS 인증 제출 빌드: dotnet build VMS.MasterSetup.wixproj -p:ExcludeAiTools=true
+         기본값은 "제외" (2026-09-10, 라벨링·학습이 MLOps 플랫폼으로 옮겨 가면서 전환) — INSTALLWEB 과 반대다.
+         포함 경로:
+           · 설치 마법사 "설치 구성 선택" 화면의 체크 (INSTALLAITOOLS=1)
+           · 무인 설치: msiexec /i VMS-x.y.z.msi INSTALLAITOOLS=1
+         업그레이드: 이전 설치가 AiTools 를 포함했으면 그 선택을 기억한다 — Feature 안의 레지스트리 마커
+         (HKLM\Software\VASIM\BODA Vision System\AiToolsInstalled=1) 를 AppSearch 로 읽어 속성을 미리 채우므로,
+         인앱 업데이트/무인 업그레이드에서 학습 PC 의 도구가 조용히 사라지지 않는다. 체크를 해제하고 업그레이드하면
+         마커 컴포넌트가 함께 제거되어 다음부터는 기억하지 않는다.
+         GS 인증 제출 빌드: dotnet build VMS.MasterSetup.wixproj -p:ExcludeAiTools=true
              → 이 Feature 자체가 컴파일되지 않아 MSI 에 파일이 아예 없다 (산출물 VMS-x.y.z-cert.msi). -->
-    <Property Id="INSTALLAITOOLS" Value="1" Secure="yes" />
+    <Property Id="INSTALLAITOOLS" Secure="yes">
+      <RegistrySearch Id="AiToolsPrevChoice" Root="HKLM" Key="Software\VASIM\BODA Vision System"
+                      Name="AiToolsInstalled" Type="raw" />
+    </Property>
     <Feature Id="AiTools" Title="AI 학습 도구 (VMS.DeepLearning)" Level="1" AllowAbsent="yes">
       <Level Value="0" Condition="INSTALLAITOOLS=0 OR NOT INSTALLAITOOLS" />
       <ComponentGroupRef Id="AiToolsAppFiles" />
       <ComponentGroupRef Id="AiToolsScriptFiles" />
+      <ComponentRef Id="AiToolsMarkerComp" />
     </Feature>
 <?endif?>
 
@@ -85,6 +94,15 @@
   </Fragment>
 
 <?ifndef ExcludeAiTools ?>
+  <!-- AI 학습 도구 설치 마커 — 업그레이드 때 "이전에 포함했었는지" 를 기억하는 값 (Package 의 INSTALLAITOOLS RegistrySearch 가 읽음).
+       Feature 와 함께 설치/제거되므로 값이 있다는 것 = 지금 도구가 설치돼 있다는 뜻. -->
+  <Fragment>
+    <Component Id="AiToolsMarkerComp" Directory="INSTALLFOLDER" Guid="6B1F1E2A-3C4D-4E5F-9A0B-1C2D3E4F5A61">
+      <RegistryValue Root="HKLM" Key="Software\VASIM\BODA Vision System"
+                     Name="AiToolsInstalled" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+  </Fragment>
+
   <!-- AI 학습 도구 파일: 앱 4개 파일(exe/dll/deps/runtimeconfig) + scripts\*.py (train_dfine/yolo/classifier/anomaly/ppocr, export_mobile_sam) -->
   <Fragment>
     <DirectoryRef Id="INSTALLFOLDER">
