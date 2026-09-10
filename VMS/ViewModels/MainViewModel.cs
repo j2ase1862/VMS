@@ -723,7 +723,7 @@ namespace VMS.ViewModels
             // 프레임인지" 대조할 수 있어야 한다 (다른 카메라 Grab·라이브가 끼어드는 경우).
             cam.FrameAcquired += result => _sharedFrameWriter?.WriteFrame(result, cam.Id);
 
-            cam.InspectionCompleted += (cameraName, ok, image, stepNumber, correlationKey) =>
+            cam.InspectionCompleted += (cameraName, ok, image, originalImage, stepNumber, correlationKey) =>
             {
                 TotalInspections++;
                 if (ok) TotalPass++;
@@ -753,7 +753,9 @@ namespace VMS.ViewModels
                 _imageUploadService?.Enqueue(image, imageContext, _imageSaveOptions);
 
                 // MLOps 데이터 풀 적재(NG 전송 토글 + 양품 1/N 샘플) — 별도 큐, 원본 해상도.
-                _lineNgUploader?.Enqueue(image, imageContext, _imageSaveOptions);
+                // 학습 데이터이므로 오버레이가 그려진 화면 이미지(image)가 아니라 검사 입력 원본(originalImage)을 보낸다.
+                // 로컬 저장·Web 업로드는 사람이 보는 용도라 종전대로 결과 그래픽이 있는 이미지를 유지한다.
+                _lineNgUploader?.Enqueue(originalImage ?? image, imageContext, _imageSaveOptions);
 
                 LogService?.Log(
                     $"Inspection {(ok ? "OK" : "NG")} - {cameraName}",
