@@ -316,6 +316,12 @@ namespace VMS.Services
         /// - "User"    → Engineer (일반 운영자, 키오스크보다 높음)
         /// - 미지원    → Operator (안전 디폴트, 키오스크 권한만)
         /// 운영 정책 변경 시 본 매퍼만 수정.
+        ///
+        /// ⚠ MLOps 동기 제약 (2026-09-11): BODA.VMS.MLOps 는 같은 Web JWT 로 로그인하며
+        /// Web Role 을 자체 역할로 옮기는 규칙(Core/Auth/WebRoleMapping.cs)을 이 매퍼에
+        /// 맞춰 두었다 — Admin→Admin, User→Engineer, Guest→Viewer.
+        /// 여기서 Web User 의 등급을 바꾸면(예: Engineer → Operator) 같은 사람이 두 제품에서
+        /// 다른 권한 수준을 갖게 되므로 MLOps 쪽 매핑도 반드시 함께 수정할 것.
         /// </summary>
         internal static UserGrade MapWebRoleToGrade(string? webRole) => webRole switch
         {
