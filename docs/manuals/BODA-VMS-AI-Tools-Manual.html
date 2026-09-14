@@ -288,7 +288,12 @@ Export 섹션의 <strong>[웹 데이터셋 내려받기]</strong> 를 누르면 
   <li><strong>학습 워커 설치</strong> — 학습 PC 에서 <code>BODA-VMS-TrainWorker-&lt;버전&gt;.msi</code> 를 실행합니다.
       설치 마법사에서 <strong>관리 서버 주소</strong>와 <strong>워커 토큰</strong>을 입력하면 서비스가 바로 시작되고,
       파이썬 환경을 스스로 준비합니다(온라인 기준 10~40분, 약 6GB). 폐쇄망은 <code>-offline.msi</code> 를 씁니다.</li>
-  <li><strong>워커 토큰 발급</strong> — 관리 화면 ▸ 워커 에서 학습 PC 마다 하나씩 발급해 위 마법사에 붙여 넣습니다.</li>
+  <li><strong>워커 토큰 발급</strong> — 관리 화면 ▸ 워커 ▸ [+ 워커 등록] 에서 학습 PC 마다 하나씩 발급해
+      위 마법사에 붙여 넣습니다. 발급된 토큰은 그 자리에서 한 번만 보여 주므로 바로 복사해 둡니다.</li>
+</ol>
+<figure style="text-align:center;margin:12px 0"><img src="../gs/screenshots/mlops/worker_register_dialog.png" alt="워커 등록 — 학습 PC 이름을 넣고 [발급] 하면 워커 토큰이 나온다" style="max-width:520px;width:100%"><figcaption style="font-size:0.9em;color:#595959;font-style:italic">그림. 워커 등록 — 학습 PC 이름을 넣고 [발급] 하면 워커 토큰이 나온다</figcaption></figure>
+<figure style="text-align:center;margin:12px 0"><img src="../gs/screenshots/mlops/worker_card.png" alt="관리 화면 ▸ 워커 — 등록된 학습 PC 카드(GPU·CUDA·파이썬·torch·디스크 여유, 마지막 하트비트, 상태)" style="max-width:720px;width:100%"><figcaption style="font-size:0.9em;color:#595959;font-style:italic">그림. 관리 화면 ▸ 워커 — 등록된 학습 PC 카드(GPU·CUDA·파이썬·torch·디스크 여유, 마지막 하트비트, 상태)</figcaption></figure>
+<ol class="steps" start="3">
   <li><strong>학습 작업 제출</strong> — 웹에서 데이터셋과 <strong>사전학습 자산</strong>을 고르고 작업을 제출하면
       워커가 받아 학습합니다. 사전학습 자산을 고르지 않으면 워커가 학습을 시작하지 못합니다.</li>
   <li><strong>결과 확인·승격</strong> — 작업 상세에서 학습 곡선과 지표를 보고, 쓸 만하면 모델 버전을 승격합니다.
@@ -356,7 +361,7 @@ Ultralytics Enterprise License 를 보유한 사이트에서만 하세요. 그 �
 <h2>4. 변경 이력</h2>
 <ul>
   <li><strong>v1.2 (2026-09-14)</strong> — 웹에서 학습하기(학습 워커 설치·토큰 발급·작업 제출·승격) 절 신설(§2) ·
-      학습 결과 파일 <code>metrics.json</code>·<code>curves.png</code> 안내(§2). (SW v1.35.0~v1.37.0)</li>
+      학습 결과 파일 <code>metrics.json</code>·<code>curves.png</code> 안내(§2) · 그림 2장(워커 등록 · 워커 카드). (SW v1.35.0~v1.37.0)</li>
   <li><strong>v1.1 (2026-09-10)</strong> — MLOps 레지스트리 연동: Training 섹션 [레지스트리에 등록] · Export 섹션
       [웹 데이터셋 내려받기] 소절(§1). 세그멘테이션 학습(RF-DETR-seg, <code>train_rfdetr_seg.py</code>) 사전 준비(§2.1) ·
       라이선스 표에 RF-DETR(Apache 2.0) 추가(§3). 라인 불량 사진 수집(본편 §4.3) 상호 참조. 두 창의 그림 3장. (SW v1.32.0~v1.33.0)</li>
