@@ -76,8 +76,41 @@ namespace VMS.AppSetup.Services
             Directory.CreateDirectory(payload.DataDir);
             // BOM 없는 UTF-8 (ASP.NET Core 설정 로더 호환)
             File.WriteAllText(configPath, payload.ConfigJson, new UTF8Encoding(false));
+            ProtectSecretFile(configPath);
 
             return EnsureAutoStartAndRun(payload.ServiceName);
+        }
+
+        /// <summary>
+        /// 운영 설정 파일의 접근 권한을 SYSTEM(서비스 계정)·Administrators 로 좁힌다.
+        ///
+        /// <para>이 파일에는 JWT 서명 키와 초기 admin 비밀번호가 평문으로 들어간다. 키가 새면
+        /// 임의의 Admin 토큰을 위조할 수 있어 계정 잠금·rate limit·감사 로그가 한꺼번에
+        /// 무력화되는데, 기본 상속 권한으로는 그 PC 의 모든 사용자가 읽을 수 있었다.</para>
+        ///
+        /// <para>실패해도 설치를 멈추지는 않는다 — 권한이 좁혀지지 않은 것이 서버가 아예 뜨지
+        /// 않는 것보다 낫다. 대신 호출부가 볼 수 있도록 false 를 돌려준다.</para>
+        /// </summary>
+        internal static bool ProtectSecretFile(string path)
+        {
+            try
+            {
+                // *S-1-5-18 = SYSTEM, *S-1-5-32-544 = Administrators (언어 무관 SID 사용)
+                var icacls = Process.Start(new ProcessStartInfo
+                {
+                    FileName = "icacls.exe",
+                    Arguments = $"\"{path}\" /inheritance:r /grant \"*S-1-5-18:(R)\" \"*S-1-5-32-544:(F)\"",
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                });
+                icacls?.WaitForExit();
+                return icacls != null && icacls.ExitCode == 0;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[WebServerConfigApplier] 설정 파일 권한 제한 실패: {ex.Message}");
+                return false;
+            }
         }
 
         /// <summary>
