@@ -179,6 +179,14 @@ const POST = {
     () => ctlImg("hdr_autorun_btn.png", 150),
     () => caption("그림. [AUTO RUN] — 운영 흐름의 단일 실행 버튼(활성화 조건은 §3.5)"),
   ],
+  "4.2.10 MLOps 비활성 칩 (하단 상태바)": [
+    () => ctlImg("status_mlops_issue_chip.png", 150),
+    () => caption("그림. MLOps 비활성 칩 — 연동 설정은 있는데 시작 시 막힌 상태(사유는 툴팁)"),
+  ],
+  "검사는 되는데 작업지시 수량이 올라가지 않음": [
+    () => ctlImg("sec_system_log_wo_warning.png", 560),
+    () => caption("그림. System Log — 다른 라인에 배정된 작업지시 / 다른 작업지시 소속 Lot 경고"),
+  ],
   "4.2.7 Role 뱃지": [
     () => ctlImg("hdr_operator_chip_in.png", 300),
     () => caption("그림. Role 뱃지 — Supervisor(빨강) / Lead(보라) 일 때만 표시, Operator 는 뱃지 없음"),
@@ -472,7 +480,7 @@ function wizardSection() {
         ["Vision Server URL", ["P2_default_16_TextBox_httplocalhost5000.png"], "VisionServer API 주소 — 클라이언트 자동 등록에 사용. 쓰지 않으면 그대로 둠", "http://localhost:5000"],
         ["고급 설정 (접기/펼치기)", ["P2_default_18_ToggleButton_고급_설정__Web_Client_API_Key__MLOps_모델_레지스트.png"], "클릭하면 아래 Web Client API Key · MLOps 서버 주소 · MLOps 라인 토큰 입력란이 나타남. 해당 현장(API 키 강제 또는 MLOps 운영)만 펼침. 이미 값이 저장된 PC 에서는 자동으로 펼쳐짐", "접힘"],
         ["Web Client API Key (고급)", ["P2_advanced_02_TextBox_TextBox.png"], "일반적으로 비워 둠. Web 서버 관리자가 'API 키 강제'를 켠 경우에만 관리자에게 받은 키를 그대로 입력하며, 모든 라인이 같은 키를 쓴다. 값이 다르거나 비어 있으면 Web 연동(작업지시·이력 업로드·작업자 로그인·종료 통지)이 끊김 — 서버 전환은 전 라인 배포가 끝난 뒤에 한다", "(빈 값)"],
-        ["MLOps 서버 주소 (고급)", ["P2_advanced_05_TextBox_TextBox.png"], "MLOps 모델 레지스트리 주소(예: http://서버:5310). 레시피의 model:// 참조 모델을 이 서버에서 내려받고, AI 학습 도구의 [레지스트리에 등록]·[웹 데이터셋 내려받기], 불량 사진 수집(§4.3)도 이 주소를 씀. 학습 PC(워커)도 같은 주소를 쓴다. 보안 모드가 Production 인 PC 는 http:// 주소를 거부하므로 https:// 로 열거나(사내 실증이면) 보안 모드를 Development 로 둔다 — 막히면 헤더에 빨간 \"MLOps 비활성\" 칩이 뜬다(§4.2). MLOps 를 운영하지 않는 현장은 비워 둠", "(빈 값)"],
+        ["MLOps 서버 주소 (고급)", ["P2_advanced_05_TextBox_TextBox.png"], "MLOps 모델 레지스트리 주소(예: http://서버:5310). 레시피의 model:// 참조 모델을 이 서버에서 내려받고, AI 학습 도구의 [레지스트리에 등록]·[웹 데이터셋 내려받기], 불량 사진 수집(§4.3)도 이 주소를 씀. 학습 PC(워커)도 같은 주소를 쓴다. 보안 모드가 Production 인 PC 는 http:// 주소를 거부하므로 https:// 로 열거나(사내 실증이면) 보안 모드를 Development 로 둔다 — 막히면 하단 상태바에 빨간 \"MLOps 비활성\" 칩이 뜬다(§4.2.10). MLOps 를 운영하지 않는 현장은 비워 둠", "(빈 값)"],
         ["MLOps 라인 토큰 (고급)", ["P2_advanced_08_TextBox_TextBox.png"], "MLOps 관리 화면(라인 PC 관리)에서 이 라인에 발급한 토큰(ln_…)을 그대로 붙여 넣음. 토큰이 없으면 참조 모델을 내려받지 못하고 불량 사진도 올라가지 않음", "(빈 값)"],
         ["Web SSO 활성", ["P2_default_22_CheckBox_Web_SSO_활성__AdminManager_인증을_BODAVMSWeb_.png"], "체크 시 Admin/Manager 인증을 BODA.VMS.Web으로 위임(단일 계정 관리). Web 도달 불가 시 비상 계정 'local-admin'만 제한 권한으로 진입", "해제"],
         ["VMS Admin 비밀번호", ["P2_default_27_PasswordBox_InitialAdminPasswordBox.png"], "사용자 인증용 정규 admin 계정 비밀번호. VMS 단독 운영 또는 SSO 비활성 환경에서 사용. 최소 8자, 12자 이상 권장", "신규 설치 시 필수"],
