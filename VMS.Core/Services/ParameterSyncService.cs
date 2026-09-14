@@ -36,7 +36,8 @@ namespace VMS.Core.Services
         private readonly string _queueDir;
         private bool _disposed;
 
-        private static readonly JsonSerializerOptions JsonOptions = new()
+        /// <summary>전송·큐 저장에 같은 규칙을 쓴다 — 테스트도 이 옵션으로 계약을 확인한다.</summary>
+        internal static readonly JsonSerializerOptions JsonOptions = new()
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             PropertyNameCaseInsensitive = true,
@@ -307,17 +308,51 @@ namespace VMS.Core.Services
             string? correlationKey = null,
             bool? overallPass = null)
         {
+            var request = BuildUploadRequest(
+                _clientIndex, recipeId, results, featureMetrics, correlationKey, overallPass,
+                WorkOrderId, LotId, OperatorId, SerialNumber, DateTimeOffset.Now);
+
+            var outcome = await TrySendAsync(request);
+            // 거절된 요청은 큐에 넣지 않는다. 넣으면 큐 맨 앞에 박혀 뒤의 모든 결과를 막는다.
+            // 대신 rejected/ 에 남긴다 — 드레인 경로와 같다. 그 사이클의 측정값이 거기에만 남는다.
+            if (outcome is SendOutcome.Retry or SendOutcome.NotRegistered) EnqueueFailed(request);
+            else if (outcome == SendOutcome.Rejected) EnqueueFailed(request, RejectedSubdir);
+            return outcome == SendOutcome.Sent;
+        }
+
+        /// <summary>
+        /// 업로드 요청 한 건을 만든다.
+        ///
+        /// <para><paramref name="inspectedAt"/> 는 <b>호출 시점</b>, 즉 검사한 시각이다. 전송이
+        /// 실패하면 이 요청은 디스크 큐에 담겼다가 복구된 뒤에야 올라가므로, 시각을 보내는
+        /// 순간에 찍으면 몇 시간치가 전부 '지금' 으로 기록된다(교대·일별 집계·예측 창이
+        /// 어긋난다).</para>
+        /// </summary>
+        internal static ParameterResultUploadRequest BuildUploadRequest(
+            int clientIndex,
+            int recipeId,
+            List<ParameterResultDto> results,
+            InspectionFeatureMetrics? featureMetrics,
+            string? correlationKey,
+            bool? overallPass,
+            int? workOrderId,
+            int? lotId,
+            int? operatorId,
+            string? serialNumber,
+            DateTimeOffset inspectedAt)
+        {
             var request = new ParameterResultUploadRequest
             {
-                ClientIndex = _clientIndex,
+                ClientIndex = clientIndex,
                 RecipeId = recipeId,
                 Results = results,
-                WorkOrderId = WorkOrderId,
-                LotId = LotId,
-                OperatorId = OperatorId,
-                SerialNumber = SerialNumber,
+                WorkOrderId = workOrderId,
+                LotId = lotId,
+                OperatorId = operatorId,
+                SerialNumber = serialNumber,
                 CorrelationKey = correlationKey,
-                OverallPass = overallPass
+                OverallPass = overallPass,
+                InspectedAt = inspectedAt
             };
 
             if (featureMetrics != null)
@@ -332,12 +367,7 @@ namespace VMS.Core.Services
                 request.DlModelVersion = featureMetrics.DlModelVersion;
             }
 
-            var outcome = await TrySendAsync(request);
-            // 거절된 요청은 큐에 넣지 않는다. 넣으면 큐 맨 앞에 박혀 뒤의 모든 결과를 막는다.
-            // 대신 rejected/ 에 남긴다 — 드레인 경로와 같다. 그 사이클의 측정값이 거기에만 남는다.
-            if (outcome is SendOutcome.Retry or SendOutcome.NotRegistered) EnqueueFailed(request);
-            else if (outcome == SendOutcome.Rejected) EnqueueFailed(request, RejectedSubdir);
-            return outcome == SendOutcome.Sent;
+            return request;
         }
 
         /// <summary>

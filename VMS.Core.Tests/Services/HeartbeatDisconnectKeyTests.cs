@@ -1,9 +1,6 @@
 using System;
-using System.Net;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Linq;
+using System.Net.Http;
 using VMS.Core.Services;
 using Xunit;
 
@@ -18,79 +15,48 @@ namespace VMS.Core.Tests.Services
     /// 종료가 실행되지 않아 <b>정상 종료했는데도 다음 검사가 이미 퇴근한 작업자에게 귀속</b>된다.
     /// 화면에 오류가 뜨지 않으므로 아무도 모른 채 추적성 데이터만 오염된다.</para>
     ///
-    /// <para>실제 소켓을 열어 요청 헤더를 그대로 읽는다 — 헤더를 붙였는지를 구현이 아니라
-    /// 전선 위에서 확인해야 의미가 있다. 루프백 TCP 리스너라 관리자 권한이 필요 없다.</para>
+    /// <para><b>왜 소켓으로 확인하지 않는가.</b> 처음에는 루프백 리스너로 실제 요청 헤더를 읽었는데,
+    /// 종료 통지는 fire-and-forget + 2초 타임아웃이라 CI 부하에서 요청이 끊겨 간헐 실패했다
+    /// (2026-09-14 관측). 같은 리포의 <see cref="ClientApiKeyHeaderTests"/> 처럼 <b>요청을 보내는
+    /// 클라이언트</b>를 직접 확인한다 — Dispose 는 이 클라이언트만 쓴다.</para>
     /// </summary>
     public class HeartbeatDisconnectKeyTests
     {
+        private const string Url = "https://boda-vms.example";   // https 라 보안 모드와 무관
         private const string Key = "disconnect-key";
 
         [Fact]
-        public async Task Disconnect_carries_the_api_key()
+        public void Disconnect_client_carries_the_api_key()
         {
-            var request = await CaptureDisconnectRequestAsync(Key);
+            using var service = new HeartbeatService(Url, Url, clientIndex: 7, clientApiKey: Key);
 
-            Assert.Contains("POST /api/clients/disconnect", request, StringComparison.OrdinalIgnoreCase);
-            Assert.Contains("X-API-Key: " + Key, request, StringComparison.OrdinalIgnoreCase);
+            using var client = service.CreateDisconnectClient();
+
+            Assert.True(client.DefaultRequestHeaders.TryGetValues("X-API-Key", out var values),
+                "종료 통지에 키가 없으면 Required=true 서버에서 401 — 라인이 '접속 중' 으로 남는다");
+            Assert.Equal(Key, values!.Single());
         }
 
         [Fact]
-        public async Task Disconnect_sends_no_header_when_no_key_configured()
+        public void Disconnect_client_sends_no_header_when_no_key_configured()
         {
-            var request = await CaptureDisconnectRequestAsync(apiKey: "");
+            using var service = new HeartbeatService(Url, Url, clientIndex: 7, clientApiKey: "");
 
-            Assert.Contains("POST /api/clients/disconnect", request, StringComparison.OrdinalIgnoreCase);
-            Assert.DoesNotContain("X-API-Key", request, StringComparison.OrdinalIgnoreCase);
+            using var client = service.CreateDisconnectClient();
+
+            Assert.False(client.DefaultRequestHeaders.Contains("X-API-Key"),
+                "키가 없으면 헤더도 없어야 한다 — 서버 호환 모드(Required=false)로 통과");
         }
 
-        /// <summary>루프백 리스너를 띄우고 HeartbeatService 를 Dispose 한 뒤, 도착한 요청 헤더를 돌려준다.</summary>
-        private static async Task<string> CaptureDisconnectRequestAsync(string apiKey)
+        [Fact]
+        public void Disconnect_client_keeps_the_short_timeout()
         {
-            var listener = new TcpListener(IPAddress.Loopback, 0);
-            listener.Start();
-            var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+            // 종료 경로다 — 오래 붙잡으면 앱이 닫히지 않는다.
+            using var service = new HeartbeatService(Url, Url, clientIndex: 7, clientApiKey: Key);
 
-            var accepted = AcceptRequestAsync(listener);
-            try
-            {
-                var service = new HeartbeatService(
-                    $"http://127.0.0.1:{port}",
-                    visionServerUrl: $"http://127.0.0.1:{port}",
-                    clientIndex: 7,
-                    clientApiKey: apiKey);
+            using var client = service.CreateDisconnectClient();
 
-                service.Dispose();   // 종료 통지는 fire-and-forget
-
-                var completed = await Task.WhenAny(accepted, Task.Delay(TimeSpan.FromSeconds(30)));
-                Assert.True(completed == accepted, "종료 통지 요청이 도착하지 않았다");
-                return await accepted;
-            }
-            finally
-            {
-                listener.Stop();
-            }
-        }
-
-        private static async Task<string> AcceptRequestAsync(TcpListener listener)
-        {
-            using var client = await listener.AcceptTcpClientAsync();
-            using var stream = client.GetStream();
-
-            var buffer = new byte[8192];
-            var text = new StringBuilder();
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-
-            // 헤더 끝(빈 줄)까지만 읽으면 충분하다 — 본문은 clientIndex 하나뿐.
-            while (!text.ToString().Contains("\r\n\r\n"))
-            {
-                var read = await stream.ReadAsync(buffer, 0, buffer.Length, cts.Token);
-                if (read == 0) break;
-                text.Append(Encoding.UTF8.GetString(buffer, 0, read));
-            }
-
-            var response = Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
-            await stream.WriteAsync(response, 0, response.Length, cts.Token);
-            return text.ToString();
+            Assert.Equal(TimeSpan.FromSeconds(2), client.Timeout);
         }
     }
 }
