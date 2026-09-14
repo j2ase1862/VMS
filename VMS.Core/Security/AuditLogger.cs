@@ -159,7 +159,13 @@ namespace VMS.Core.Security
             {
                 var json = JsonSerializer.Serialize(entry, JsonOptions);
                 var line = json + Environment.NewLine;
-                var path = Path.Combine(_auditDir, $"{entry.TimestampUtc:yyyy-MM-dd}.jsonl");
+
+                // 파일 이름은 로컬 날짜로 짓는다. 기록은 UTC 로 남기지만(TimestampUtc), 읽는 쪽
+                // (ReadDay·ReadRange)은 사람이 말하는 날짜 — 즉 로컬 날짜 — 로 파일을 찾는다.
+                // 예전에는 UTC 날짜로 파일을 만들어서, KST 00~09시에 남긴 감사 기록이 전날 파일로
+                // 들어가고 "오늘 감사 로그" 조회에는 한 건도 나오지 않았다.
+                var path = Path.Combine(
+                    _auditDir, $"{entry.TimestampUtc.ToLocalTime():yyyy-MM-dd}.jsonl");
 
                 lock (_writeLock)
                 {

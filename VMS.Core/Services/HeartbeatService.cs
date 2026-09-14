@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using VMS.Core.Security;
@@ -58,8 +59,8 @@ namespace VMS.Core.Services
             _visionServerUrl = visionServerUrl.TrimEnd('/');
             _clientIndex = clientIndex;
             _ipAddress = ipAddress;
-            _hostName = EscapeJson(Environment.MachineName);
-            _swName = EscapeJson(swName);
+            _hostName = Environment.MachineName;
+            _swName = swName;
             _heartbeatIntervalSeconds = 5;
 
             InsecureUrlGuard.Check(_webServerUrl, nameof(HeartbeatService));
@@ -73,7 +74,17 @@ namespace VMS.Core.Services
                 _httpClient.DefaultRequestHeaders.Add("X-API-Key", clientApiKey);
             }
 
-            _heartbeatJson = $"{{\"clientIndex\":{_clientIndex},\"hostName\":\"{_hostName}\",\"swName\":\"{_swName}\"}}";
+            // 직렬화기에 맡긴다. 예전에는 문자열을 이어 붙이면서 역슬래시와 큰따옴표만
+            // 바꿨는데, JSON 문자열 안의 제어문자(줄바꿈·탭 등)는 규격 위반이라 서버가 400 으로
+            // 거절한다. swName 의 출처는 AppSetup 에서 사람이 편집하는 값이고, 이 문자열은
+            // 생성자에서 한 번 만들어 계속 재사용되므로 — 한 번 잘못 들어가면 5초마다 400 이
+            // 영원히 반복되고 화면에는 "Web 연결 끊김" 만 뜬다.
+            _heartbeatJson = JsonSerializer.Serialize(new
+            {
+                clientIndex = _clientIndex,
+                hostName = _hostName,
+                swName = _swName
+            });
         }
 
         public void Start()
@@ -110,6 +121,23 @@ namespace VMS.Core.Services
                     }
                     else
                     {
+                        // 4xx 는 "서버가 못 알아들었다" 는 뜻이라 다시 보내도 같은 결과다.
+                        // 예전에는 상태 코드조차 남기지 않아, 화면에 "Web 연결 끊김" 만 뜨고
+                        // 왜 끊겼는지 알 방법이 없었다. 본문 앞부분까지 남긴다.
+                        if ((int)response.StatusCode >= 400 && (int)response.StatusCode < 500)
+                        {
+                            var body = string.Empty;
+                            try
+                            {
+                                body = await response.Content.ReadAsStringAsync();
+                                if (body.Length > 200) body = body.Substring(0, 200);
+                            }
+                            catch { /* 본문을 못 읽어도 상태 코드는 남긴다 */ }
+
+                            Debug.WriteLine(
+                                $"[Heartbeat] 서버가 요청을 거절했습니다({(int)response.StatusCode}) — {body}");
+                        }
+
                         _consecutiveFailures++;
                         if (_consecutiveFailures >= 3)
                             SetConnected(false);
@@ -183,7 +211,12 @@ namespace VMS.Core.Services
                 //    VisionServer가 공유 DB에 INSERT하면 Web에서 자동 인식
                 Debug.WriteLine($"[Heartbeat] Registering Client Index={_clientIndex} on VisionServer...");
 
-                var registerJson = $"{{\"Name\":\"{_swName}\",\"IpAddress\":\"{EscapeJson(_ipAddress)}\",\"Index\":{_clientIndex}}}";
+                var registerJson = JsonSerializer.Serialize(new
+                {
+                    Name = _swName,
+                    IpAddress = _ipAddress,
+                    Index = _clientIndex
+                });
                 bool visionServerOk = false;
                 try
                 {
@@ -208,7 +241,12 @@ namespace VMS.Core.Services
                     Debug.WriteLine($"[Heartbeat] Falling back to Web /api/clients/register...");
                     try
                     {
-                        var webRegisterJson = $"{{\"clientIndex\":{_clientIndex},\"name\":\"{_swName}\",\"ipAddress\":\"{EscapeJson(_ipAddress)}\"}}";
+                        var webRegisterJson = JsonSerializer.Serialize(new
+                        {
+                            clientIndex = _clientIndex,
+                            name = _swName,
+                            ipAddress = _ipAddress
+                        });
                         var webRegisterResponse = await _httpClient.PostAsync(
                             $"{_webServerUrl}/api/clients/register",
                             new StringContent(webRegisterJson, Encoding.UTF8, "application/json"),
@@ -301,6 +339,12 @@ namespace VMS.Core.Services
         ///
         /// <para>Dispose 는 취소된 토큰에 묶인 <c>_httpClient</c> 대신 이 새 클라이언트를 쓴다.</para>
         /// </summary>
+        /// <summary>
+        /// 5초마다 그대로 다시 보내는 heartbeat 본문 — 생성자에서 한 번 만들어 재사용한다.
+        /// 테스트가 "규격에 맞는 JSON 인가" 를 직접 확인할 수 있게 열어 둔다.
+        /// </summary>
+        internal string HeartbeatPayload => _heartbeatJson;
+
         internal HttpClient CreateDisconnectClient()
         {
             var client = HttpClientPolicy.Build(TimeSpan.FromSeconds(2));
@@ -309,11 +353,6 @@ namespace VMS.Core.Services
                 client.DefaultRequestHeaders.Add("X-API-Key", _clientApiKey);
             }
             return client;
-        }
-
-        private static string EscapeJson(string value)
-        {
-            return value.Replace("\\", "\\\\").Replace("\"", "\\\"");
         }
 
         public void Dispose()
