@@ -139,13 +139,29 @@ namespace VMS.Core.Services
                   + "서버가 키를 요구하도록 바뀌었다면 같은 증상이 납니다)";
         }
 
+        /// <summary>
+        /// 로그아웃 요청 조립 — <b>내 세션임을 밝힌다</b>.
+        ///
+        /// <para>예전에는 라인 번호만 담았고, 서버는 그것만 보고 해당 라인의 작업자 세션을
+        /// 끝냈다. 라인 번호 0~99 를 훑는 것만으로 전 라인의 작업자를 반복 로그아웃시킬 수
+        /// 있었고, 그 뒤 올라오는 검사 이력의 작업자가 비어 추적성이 끊겼다. 서버는 이제
+        /// 세션 id·사번을 현재 열린 세션과 대조한다(BODA.VMS.Web W-005).</para>
+        /// </summary>
+        internal static KioskLogoutRequest BuildLogoutRequest(int clientIndex, OperatorSessionDto? session) =>
+            new()
+            {
+                ClientIndex = clientIndex,
+                SessionId = session?.Id,
+                EmployeeNumber = session?.EmployeeNumber
+            };
+
         /// <summary>현재 세션 로그아웃.</summary>
         public async Task<bool> LogoutAsync()
         {
             var loggedOutUser = CurrentSession?.EmployeeNumber;
             try
             {
-                var req = new KioskLogoutRequest { ClientIndex = _clientIndex };
+                var req = BuildLogoutRequest(_clientIndex, CurrentSession);
                 var resp = await _httpClient.PostAsJsonAsync($"{_webServerUrl}/api/kiosk/logout", req);
                 CurrentSession = null;
                 SessionChanged?.Invoke(null);
