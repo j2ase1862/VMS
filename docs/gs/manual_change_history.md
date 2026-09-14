@@ -430,7 +430,7 @@
 
 ---
 
-## 14. MLOps 학습 워커 설치 패키지 (Phase 3 마무리) — **반영 완료 (2026-09-14, 별책 §2 '웹에서 학습하기' + 그림 2장 `mlops/worker_register_dialog.png`·`mlops/worker_card.png`)** · ⏳ **워커 설치 마법사 그림 1장만 잔여** — dev PC 에 워커가 이미 설치돼 있어 MSI 재실행 시 유지보수 화면만 뜬다(제거→재설치 또는 워커 없는 PC 필요)
+## 14. MLOps 학습 워커 설치 패키지 (Phase 3 마무리) — **반영 완료 (2026-09-14, 별책 §2 '웹에서 학습하기' + 그림 3장 `mlops/worker_install_wizard.png`·`mlops/worker_register_dialog.png`·`mlops/worker_card.png`)** — 스크린샷 잔여 없음. 설치 마법사 그림은 dev PC 에서 제거→마법사 캡처→재설치로 얻었다(worker.json·venv 는 %ProgramData% 에 남아 그대로 복구, 같은 workerId 로 재등록 확인)
 
 | 항목 | 내용 |
 |------|------|
