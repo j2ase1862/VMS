@@ -21,11 +21,18 @@ namespace VMS.Core.Services
         private readonly string _webServerUrl;
         private bool _disposed;
 
-        public LotClient(string webServerUrl)
+        public LotClient(string webServerUrl, string clientApiKey = "")
         {
             _webServerUrl = webServerUrl.TrimEnd('/');
             InsecureUrlGuard.Check(_webServerUrl, nameof(LotClient));
             _httpClient = HttpClientPolicy.Build(TimeSpan.FromSeconds(8));
+
+            // GS 인증: Web 서버 X-API-Key 인증 (BODA.VMS.Web PR #10). 키가 있으면 모든
+            // 요청에 헤더 자동 송신. 빈 키면 서버의 호환 모드(Required=false)에서만 통과.
+            if (!string.IsNullOrWhiteSpace(clientApiKey))
+            {
+                _httpClient.DefaultRequestHeaders.Add("X-API-Key", clientApiKey);
+            }
         }
 
         /// <summary>WO 의 활성(Open) Lot 1개. 없으면 null. 통신 실패 시도 null.</summary>

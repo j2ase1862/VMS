@@ -486,7 +486,7 @@ namespace VMS
             if (webIntegrated) try
             {
                 predictionPollingService = new PredictionPollingService(
-                    systemConfig.WebServerUrl, systemConfig.ClientIndex);
+                    systemConfig.WebServerUrl, systemConfig.ClientIndex, systemConfig.ClientApiKey);
                 predictionPollingService.StartPeriodicPolling(60);
             }
             catch (Exception ex)
@@ -516,7 +516,7 @@ namespace VMS
             if (webIntegrated) try
             {
                 operatorAuthService = new VMS.Core.Services.OperatorAuthService(
-                    systemConfig.WebServerUrl, systemConfig.ClientIndex);
+                    systemConfig.WebServerUrl, systemConfig.ClientIndex, systemConfig.ClientApiKey);
             }
             catch (Exception ex)
             {
@@ -528,7 +528,7 @@ namespace VMS
             if (webIntegrated) try
             {
                 workOrderClient = new VMS.Core.Services.WorkOrderClient(
-                    systemConfig.WebServerUrl, systemConfig.ClientIndex);
+                    systemConfig.WebServerUrl, systemConfig.ClientIndex, systemConfig.ClientApiKey);
             }
             catch (Exception ex)
             {
@@ -539,7 +539,7 @@ namespace VMS
             VMS.Core.Services.LotClient? lotClient = null;
             if (webIntegrated) try
             {
-                lotClient = new VMS.Core.Services.LotClient(systemConfig.WebServerUrl);
+                lotClient = new VMS.Core.Services.LotClient(systemConfig.WebServerUrl, systemConfig.ClientApiKey);
             }
             catch (Exception ex)
             {
@@ -741,7 +741,10 @@ namespace VMS
             }
             catch (Exception ex)
             {
+                // 보안 정책 위반(Production + 원격 http)도 여기로 온다 — 조용히 꺼지면
+                // "이미지만 안 올라간다" 를 현장에서 추적할 수 없으므로 로그에 남긴다.
                 Debug.WriteLine($"[App] ImageUploadService init failed: {ex.Message}");
+                logService.Log($"검사 이미지 업로드 비활성화: {ex.Message}", LogLevel.Warning, "System");
             }
 
             // ── MLOps 학습 데이터 수집 (NG 이미지 + 양품 샘플 → BODA.VMS.MLOps, 라인 토큰) ──

@@ -90,6 +90,23 @@ namespace VMS.Core.Services
             }
         }
 
+        /// <summary>
+        /// 서버가 거절해 <c>rejected/</c> 로 치워진 건수 — 이 결과들은 Web 에 올라가지 않는다.
+        /// <see cref="PendingUploadCount"/> 는 최상위 폴더만 세므로 여기 것이 빠진다.
+        /// </summary>
+        public int RejectedUploadCount
+        {
+            get
+            {
+                try
+                {
+                    var dir = Path.Combine(_queueDir, RejectedSubdir);
+                    return Directory.Exists(dir) ? Directory.GetFiles(dir, "*.json").Length : 0;
+                }
+                catch { return 0; }
+            }
+        }
+
         public async Task<bool> SyncRecipesAsync()
         {
             try
@@ -318,7 +335,7 @@ namespace VMS.Core.Services
             var outcome = await TrySendAsync(request);
             // 거절된 요청은 큐에 넣지 않는다. 넣으면 큐 맨 앞에 박혀 뒤의 모든 결과를 막는다.
             // 대신 rejected/ 에 남긴다 — 드레인 경로와 같다. 그 사이클의 측정값이 거기에만 남는다.
-            if (outcome == SendOutcome.Retry) EnqueueFailed(request);
+            if (outcome is SendOutcome.Retry or SendOutcome.NotRegistered) EnqueueFailed(request);
             else if (outcome == SendOutcome.Rejected) EnqueueFailed(request, RejectedSubdir);
             return outcome == SendOutcome.Sent;
         }
@@ -330,6 +347,9 @@ namespace VMS.Core.Services
         /// 408(타임아웃)과 429(너무 잦음)는 4xx 이지만 시간이 지나면 통하므로 제외한다.
         /// 401·403 은 토큰 문제라 재발급하면 통할 수 있어 역시 제외한다 — 여기서 버리면
         /// 인증이 잠깐 흔들린 사이의 검사 결과가 사라진다.
+        /// 404 도 제외한다 — Web 이 "Client with index N not found" 로 쓰는 코드라
+        /// 재등록되면 통한다. 대신 <see cref="SendOutcome.NotRegistered"/> 로 따로 다뤄
+        /// 유예 시간까지만 재시도한다.
         /// </para>
         /// </summary>
         internal static bool IsPermanentRejection(System.Net.HttpStatusCode code) =>
@@ -337,7 +357,15 @@ namespace VMS.Core.Services
             && code is not (System.Net.HttpStatusCode.RequestTimeout
                 or System.Net.HttpStatusCode.TooManyRequests
                 or System.Net.HttpStatusCode.Unauthorized
-                or System.Net.HttpStatusCode.Forbidden);
+                or System.Net.HttpStatusCode.Forbidden
+                or System.Net.HttpStatusCode.NotFound);
+
+        /// <summary>
+        /// 큐에 남긴 404 를 언제까지 재시도할지. heartbeat 재등록(5초)으로 대개 수십 초 안에
+        /// 풀리므로 넉넉하다. 이 시간이 지나도 404 면 사람이 봐야 하는 상태라, 큐 맨 앞을
+        /// 막지 않도록 rejected/ 로 옮긴다(지우지는 않는다).
+        /// </summary>
+        internal static readonly TimeSpan NotRegisteredGrace = TimeSpan.FromMinutes(30);
 
         /// <summary>거절 이유를 로그에 남기기 위해 본문을 읽는다. 못 읽어도 흐름을 멈추지 않는다.</summary>
         private static async Task<string> SafeReadAsync(HttpResponseMessage response)
@@ -367,6 +395,18 @@ namespace VMS.Core.Services
             /// </para>
             /// </summary>
             Rejected,
+            /// <summary>
+            /// 서버가 이 라인(ClientIndex)을 모른다 — 404. 요청 자체는 멀쩡하다.
+            ///
+            /// <para>
+            /// Web DB 복원·라인 삭제 후 재등록·ClientIndex 오설정처럼 <b>풀릴 수 있는</b> 상태다.
+            /// HeartbeatService 가 5초마다 재등록하므로 대개 수십 초 안에 해소된다.
+            /// 그래서 즉시 버리지 않고 재시도 큐에 남긴다 — 예전에는 이걸 영구 거절로 보고
+            /// rejected/ 로 치워서, 그 사이 생산분의 검사 이력·WO 수량이 조용히 사라졌다.
+            /// 다만 유예 시간이 지나도 계속 404 면 큐 맨 앞을 막으므로 그때는 옆으로 치운다.
+            /// </para>
+            /// </summary>
+            NotRegistered,
         }
 
         /// <summary>실제 HTTP POST + 응답에서 WO 진행률 이벤트 발생.</summary>
@@ -382,6 +422,13 @@ namespace VMS.Core.Services
 
                 if (!response.IsSuccessStatusCode)
                 {
+                    if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    {
+                        var body = await SafeReadAsync(response);
+                        Debug.WriteLine($"[ParameterSync] 서버가 라인 {_clientIndex} 를 모릅니다(404). " +
+                                        $"재등록될 때까지 큐에 보관합니다 — {body}");
+                        return SendOutcome.NotRegistered;
+                    }
                     if (IsPermanentRejection(response.StatusCode))
                     {
                         var body = await SafeReadAsync(response);
@@ -504,6 +551,22 @@ namespace VMS.Core.Services
                         // 옆으로 치운다 — 지우지는 않는다. 왜 거절됐는지 나중에 볼 수 있어야 한다.
                         MoveAside(file);
                     }
+                    else if (outcome == SendOutcome.NotRegistered)
+                    {
+                        // 라인이 재등록되면 그대로 올라간다. 유예 시간 안에는 큐에 두고 기다린다.
+                        var age = QueuedAge(file);
+                        if (age > NotRegisteredGrace)
+                        {
+                            Debug.WriteLine($"[ParameterSync] 라인 미등록 상태가 {age.TotalMinutes:F0}분 넘게 " +
+                                            $"이어져 큐를 막고 있습니다. 옆으로 치웁니다: {Path.GetFileName(file)}");
+                            MoveAside(file);
+                        }
+                        else
+                        {
+                            // 순서 보존 — 이 건이 올라가기 전에는 뒤를 보내지 않는다.
+                            break;
+                        }
+                    }
                     else
                     {
                         // 서버가 아직 안 살아남 — 멈춤. 다음 tick 에 다시 시도.
@@ -518,6 +581,34 @@ namespace VMS.Core.Services
         }
 
         /// <summary>
+        /// 큐 파일이 만들어진 뒤 흐른 시간. 파일명 앞부분이 UTC timestamp 라 그것으로 센다
+        /// (파일 복사·백업으로 파일시스템 시각이 바뀌어도 요청이 생긴 시각은 그대로다).
+        /// 파일명을 못 읽으면 마지막 쓰기 시각으로, 그것도 실패하면 0 으로 본다.
+        /// </summary>
+        internal static TimeSpan QueuedAge(string file, DateTime? nowUtc = null)
+        {
+            var now = nowUtc ?? DateTime.UtcNow;
+            var name = Path.GetFileNameWithoutExtension(file);
+            var stamp = name.Split('_')[0];
+            if (DateTime.TryParseExact(stamp, "yyyyMMddHHmmssfff",
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.AssumeUniversal
+                        | System.Globalization.DateTimeStyles.AdjustToUniversal,
+                    out var created))
+            {
+                var age = now - created;
+                return age > TimeSpan.Zero ? age : TimeSpan.Zero;
+            }
+
+            try
+            {
+                var age = now - File.GetLastWriteTimeUtc(file);
+                return age > TimeSpan.Zero ? age : TimeSpan.Zero;
+            }
+            catch { return TimeSpan.Zero; }
+        }
+
+        /// <summary>
         /// 거절된 큐 파일을 <c>rejected/</c> 로 옮긴다. 지우지 않는 이유는 그 사이클의 측정값이
         /// 거기에만 남아 있기 때문이다 — 왜 거절됐는지 보고 사람이 되살릴 수 있어야 한다.
         /// </summary>
@@ -529,6 +620,13 @@ namespace VMS.Core.Services
                 Directory.CreateDirectory(dir);
                 File.Move(file, Path.Combine(dir, Path.GetFileName(file)), overwrite: true);
                 Debug.WriteLine($"[ParameterSync] 거절된 업로드를 rejected/ 로 옮겼습니다: {Path.GetFileName(file)}");
+                // 이 한 건은 Web 에 영영 올라가지 않는다 — 검사 이력·WO 수량이 그만큼 비므로
+                // 감사 로그에 흔적을 남긴다(디버그 로그는 배포본에서 보이지 않는다).
+                AuditLogger.Instance.Log(
+                    AuditCategory.System, "InspectionUploadRejected", AuditOutcome.Failure,
+                    source: nameof(ParameterSyncService),
+                    details: $"파일={Path.GetFileName(file)}, 보관 위치=upload_queue/{RejectedSubdir}, " +
+                             $"누적 거절={RejectedUploadCount}건");
             }
             catch (Exception ex)
             {
