@@ -97,6 +97,19 @@ namespace VMS.Core.Models.ParameterSync
         public string? CorrelationKey { get; set; }
 
         /// <summary>
+        /// 이 검사가 <b>실제로 일어난</b> 시각(오프셋 포함). 업로드를 만드는 순간 찍는다.
+        ///
+        /// <para><b>왜 필요한가.</b> 전송이 실패하면 요청은 디스크 큐에 담겼다가 복구된 뒤에야
+        /// 올라간다. Web 은 예전에 첫 측정값의 Timestamp 로 시각을 잡고, 그것이 없으면
+        /// (판정 전용 사이클 업로드 — Results 가 비어 있다) <b>도착 시각</b>을 썼다. 그래서
+        /// 네트워크가 몇 시간 끊겼다 복구되면 그 시간치가 전부 '지금' 으로 기록돼 교대 배정·
+        /// 일별 집계·예측 모델의 시간 창이 통째로 어긋났다.</para>
+        ///
+        /// <para>구버전 Web 은 이 필드를 모르지만 JSON 여분 필드는 무시되므로 안전하다.</para>
+        /// </summary>
+        public DateTimeOffset? InspectedAt { get; set; }
+
+        /// <summary>
         /// 사이클 전체 판정 (AUTO RUN "1사이클 = 1개" 집계, Web v1.1.1+).
         /// 이 값이 있으면 Results 가 비어 있어도 판정 전용 업로드로 접수된다 —
         /// 파라미터 연동 툴이 없는 레시피도 WO 수량·검사 이력이 집계되도록.
