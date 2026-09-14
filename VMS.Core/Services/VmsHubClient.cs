@@ -19,6 +19,7 @@ namespace VMS.Core.Services
     public class VmsHubClient : IAsyncDisposable
     {
         private readonly string _hubUrl;
+        private readonly int? _clientIndex;
         private HubConnection? _connection;
         private bool _disposed;
 
@@ -45,10 +46,40 @@ namespace VMS.Core.Services
 
         public bool IsConnected => _connection?.State == HubConnectionState.Connected;
 
-        public VmsHubClient(string webServerUrl)
+        /// <param name="clientIndex">
+        /// 이 설비의 라인 번호. 주면 연결·재연결마다 <c>JoinLine</c> 을 불러 <b>자기 라인</b>
+        /// 그룹에 든다.
+        ///
+        /// <para><b>왜.</b> 공개 허브는 익명이라 붙기만 하면 누구나 받는다. 예전 서버는 모든
+        /// 이벤트를 전체 발신해서 공장 전체의 작업지시 번호·수량이 아무에게나 흘러갔다.
+        /// 서버가 라인 그룹으로 좁힌 뒤에는(BODA.VMS.Web W-009) 이 호출을 해야 자기 라인
+        /// 이벤트를 받는다. 구버전 서버에는 이 메서드가 없지만, 실패해도 전체 발신으로
+        /// 받으므로 동작에 지장이 없다.</para>
+        /// </param>
+        public VmsHubClient(string webServerUrl, int? clientIndex = null)
         {
             _hubUrl = $"{webServerUrl.TrimEnd('/')}/hubs/vms-public";
+            _clientIndex = clientIndex;
             InsecureUrlGuard.Check(webServerUrl, nameof(VmsHubClient));
+        }
+
+        /// <summary>
+        /// 자기 라인 그룹에 든다. 그룹 소속은 <b>연결</b>에 붙으므로 재연결마다 다시 불러야 한다.
+        /// 구버전 서버(메서드 없음)에서는 조용히 지나간다 — 그쪽은 전체 발신이라 어차피 받는다.
+        /// </summary>
+        internal async Task JoinLineAsync()
+        {
+            if (_clientIndex is not int idx || _connection is null) return;
+            try
+            {
+                await _connection.InvokeAsync("JoinLine", idx);
+                Debug.WriteLine($"[VmsHubClient] 라인 {idx} 그룹 참가");
+            }
+            catch (Exception ex)
+            {
+                // 구버전 서버이거나 일시적 실패 — 전체 발신 호환 모드가 안전망이다.
+                Debug.WriteLine($"[VmsHubClient] JoinLine 실패(무시): {ex.Message}");
+            }
         }
 
         public async Task StartAsync()
@@ -116,10 +147,10 @@ namespace VMS.Core.Services
                 if (woId is int id) LotClosed?.Invoke(id);
             });
 
-            _connection.Reconnected += _ =>
+            _connection.Reconnected += async _ =>
             {
                 ConnectionChanged?.Invoke(true);
-                return Task.CompletedTask;
+                await JoinLineAsync();   // 재연결하면 그룹 소속이 사라진다
             };
             _connection.Closed += _ =>
             {
@@ -135,6 +166,7 @@ namespace VMS.Core.Services
             try
             {
                 await _connection.StartAsync();
+                await JoinLineAsync();
                 ConnectionChanged?.Invoke(true);
                 Debug.WriteLine($"[VmsHubClient] Connected → {_hubUrl}");
             }

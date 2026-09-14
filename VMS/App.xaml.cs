@@ -550,7 +550,10 @@ namespace VMS
             VMS.Core.Services.VmsHubClient? vmsHubClient = null;
             if (webIntegrated) try
             {
-                vmsHubClient = new VMS.Core.Services.VmsHubClient(systemConfig.WebServerUrl);
+                // 라인 번호를 함께 넘긴다 — 서버가 라인 그룹으로 좁혀 보내므로(W-009)
+                // 자기 라인 이벤트를 받으려면 JoinLine 이 필요하다.
+                vmsHubClient = new VMS.Core.Services.VmsHubClient(
+                    systemConfig.WebServerUrl, systemConfig.ClientIndex);
                 _ = vmsHubClient.StartAsync(); // fire & forget — 실패해도 응답 기반 fallback 으로 동작
             }
             catch (Exception ex)

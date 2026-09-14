@@ -179,7 +179,7 @@ namespace VMS.VisionSetup
                 // 현재 로드된 레시피면 캐시 재동기화 → 위 브리지가 콤보를 곧바로 갱신.
                 // 허브가 끊겨 있어도 60초 폴링이 안전망이라 기능 저하 없음.
                 var localSync = parameterSyncService;
-                _paramHubClient = new VmsHubClient(webUrl);
+                _paramHubClient = new VmsHubClient(webUrl, clientIdx);
                 _paramHubClient.RecipeParametersChanged += recipeId =>
                 {
                     if (localSync.CurrentRecipeId == recipeId)
