@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -21,7 +22,13 @@ namespace VMS.AppSetup.Tests
         private readonly string _dir = Path.Combine(Path.GetTempPath(), "vms-websetup-" + Guid.NewGuid().ToString("N"));
 
         public WebServerSetupTests() => Directory.CreateDirectory(_dir);
-        public void Dispose() { try { Directory.Delete(_dir, recursive: true); } catch (IOException) { } }
+        public void Dispose()
+        {
+            // 권한을 좁힌 파일이 남아 있으면 삭제가 막힐 수 있다 — 임시 폴더라 그대로 둔다.
+            try { Directory.Delete(_dir, recursive: true); }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+        }
 
         private string WebDir(bool exe, bool config)
         {
@@ -174,7 +181,36 @@ namespace VMS.AppSetup.Tests
 
             Assert.False(result.Ok);
             Assert.True(Directory.Exists(dataDir));
-            Assert.Equal("{\"cfg\":1}", File.ReadAllText(Path.Combine(webDir, WebServerSetupService.ConfigFileName)));
+            Assert.Equal("{\"cfg\":1}", ReadProtected(Path.Combine(webDir, WebServerSetupService.ConfigFileName)));
+        }
+
+        /// <summary>
+        /// 작성 직후 권한이 SYSTEM·Administrators 로 좁혀진 파일을 읽는다.
+        ///
+        /// <para>운영에서 AppSetup 은 상승된 상태로 돌기 때문에 문제가 없지만, 테스트는 보통
+        /// 일반 사용자로 실행된다 — 그대로 읽으면 <c>UnauthorizedAccessException</c> 이다
+        /// (관리자 계정으로 도는 CI 에서는 통과하고 개발 PC 에서만 깨진다). 파일 소유자는
+        /// 권한을 되돌릴 수 있으므로, 막혔을 때만 읽기 권한을 복구하고 다시 읽는다.</para>
+        /// </summary>
+        private static string ReadProtected(string path)
+        {
+            try
+            {
+                return File.ReadAllText(path);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // *S-1-1-0 = Everyone (임시 폴더의 테스트 파일 — Dispose 에서 폴더째 지운다)
+                var icacls = Process.Start(new ProcessStartInfo
+                {
+                    FileName = "icacls.exe",
+                    Arguments = $"\"{path}\" /grant \"*S-1-1-0:(R)\"",
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                });
+                icacls?.WaitForExit();
+                return File.ReadAllText(path);
+            }
         }
 
         [Fact]
