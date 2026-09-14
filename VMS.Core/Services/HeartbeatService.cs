@@ -291,6 +291,26 @@ namespace VMS.Core.Services
             }
         }
 
+        /// <summary>
+        /// 종료 통지 전용 HttpClient. 정상 경로와 <b>같은 X-API-Key</b> 를 달아 준다.
+        ///
+        /// <para>예전에는 이 요청만 키가 없어서, 서버가 키 강제(<c>ClientApiKey:Required=true</c>)로
+        /// 전환되면 401 로 거부됐다. 그러면 ① 대시보드에 라인이 한동안 '접속 중' 으로 남고
+        /// ② 서버가 하는 작업자 세션 자동 종료가 실행되지 않아, 정상 종료했는데도 다음 검사가
+        /// 이미 퇴근한 작업자에게 귀속된다.</para>
+        ///
+        /// <para>Dispose 는 취소된 토큰에 묶인 <c>_httpClient</c> 대신 이 새 클라이언트를 쓴다.</para>
+        /// </summary>
+        internal HttpClient CreateDisconnectClient()
+        {
+            var client = HttpClientPolicy.Build(TimeSpan.FromSeconds(2));
+            if (!string.IsNullOrWhiteSpace(_clientApiKey))
+            {
+                client.DefaultRequestHeaders.Add("X-API-Key", _clientApiKey);
+            }
+            return client;
+        }
+
         private static string EscapeJson(string value)
         {
             return value.Replace("\\", "\\\\").Replace("\"", "\\\"");
@@ -313,17 +333,7 @@ namespace VMS.Core.Services
             {
                 try
                 {
-                    using var client = HttpClientPolicy.Build(TimeSpan.FromSeconds(2));
-
-                    // 종료 통지에도 X-API-Key 를 붙인다. 예전에는 이 요청만 키가 없어서,
-                    // 서버가 키 강제(ClientApiKey:Required=true)로 전환되면 401 로 거부됐다.
-                    // 그러면 ① 대시보드에 라인이 한동안 '접속 중' 으로 남고 ② 서버가 하는
-                    // 작업자 세션 자동 종료가 실행되지 않아, 정상 종료했는데도 다음 검사가
-                    // 이미 퇴근한 작업자에게 귀속된다.
-                    if (!string.IsNullOrWhiteSpace(_clientApiKey))
-                    {
-                        client.DefaultRequestHeaders.Add("X-API-Key", _clientApiKey);
-                    }
+                    using var client = CreateDisconnectClient();
 
                     var json = $"{{\"clientIndex\":{_clientIndex}}}";
                     var content = new StringContent(json, Encoding.UTF8, "application/json");
