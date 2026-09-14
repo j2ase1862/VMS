@@ -21,12 +21,19 @@ namespace VMS.Core.Services
         private readonly int _clientIndex;
         private bool _disposed;
 
-        public WorkOrderClient(string webServerUrl, int clientIndex)
+        public WorkOrderClient(string webServerUrl, int clientIndex, string clientApiKey = "")
         {
             _webServerUrl = webServerUrl.TrimEnd('/');
             _clientIndex = clientIndex;
             InsecureUrlGuard.Check(_webServerUrl, nameof(WorkOrderClient));
             _httpClient = HttpClientPolicy.Build(TimeSpan.FromSeconds(8));
+
+            // GS 인증: Web 서버 X-API-Key 인증 (BODA.VMS.Web PR #10). 키가 있으면 모든
+            // 요청에 헤더 자동 송신. 빈 키면 서버의 호환 모드(Required=false)에서만 통과.
+            if (!string.IsNullOrWhiteSpace(clientApiKey))
+            {
+                _httpClient.DefaultRequestHeaders.Add("X-API-Key", clientApiKey);
+            }
         }
 
         /// <summary>옵션 status — "Planned" / "InProgress" / "Completed" 등. null이면 전체.</summary>

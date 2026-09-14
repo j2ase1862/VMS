@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 using VMS.Core.Imaging;
+using VMS.Core.Security;
 
 namespace VMS.Services.ImageUpload
 {
@@ -51,7 +52,13 @@ namespace VMS.Services.ImageUpload
         {
             _baseUrl = (baseUrl ?? string.Empty).TrimEnd('/');
             _clientIndex = clientIndex;
-            _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
+
+            // 이 채널은 검사 이미지 전체와 X-API-Key 를 실어 나른다 — Web 연동 다른 채널
+            // (ParameterSync/Heartbeat/LineNg…)과 같은 보안 정책을 태운다. 예전에는 이 하나만
+            // 맨 HttpClient 를 써서, Production 모드에서 원격 http:// 가 다른 채널은 전부
+            // 차단되는데 이미지 업로드만 조용히 평문으로 나갔다.
+            InsecureUrlGuard.Check(_baseUrl, nameof(ImageUploadService));
+            _httpClient = HttpClientPolicy.Build(TimeSpan.FromSeconds(60));
             if (!string.IsNullOrWhiteSpace(clientApiKey))
                 _httpClient.DefaultRequestHeaders.Add("X-API-Key", clientApiKey);
 

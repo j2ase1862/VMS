@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using System.Net;
 using VMS.Core.Services;
 using Xunit;
@@ -22,7 +24,6 @@ namespace VMS.Core.Tests.Services
         /// <summary>요청 자체가 서버 규칙에 맞지 않는다 — 다시 보내도 같은 답이 온다.</summary>
         [Theory]
         [InlineData(HttpStatusCode.BadRequest)]            // 400 — 검증 실패 (길이 초과가 여기였다)
-        [InlineData(HttpStatusCode.NotFound)]              // 404 — 없는 레시피·클라이언트
         [InlineData(HttpStatusCode.Conflict)]              // 409
         [InlineData(HttpStatusCode.RequestEntityTooLarge)] // 413
         [InlineData(HttpStatusCode.UnsupportedMediaType)]  // 415
@@ -36,12 +37,51 @@ namespace VMS.Core.Tests.Services
         [InlineData(HttpStatusCode.TooManyRequests)]       // 429 — 잠시 뒤에 다시
         [InlineData(HttpStatusCode.Unauthorized)]          // 401 — 토큰 재발급하면 통한다
         [InlineData(HttpStatusCode.Forbidden)]             // 403 — 권한 설정이 바뀔 수 있다
+        [InlineData(HttpStatusCode.NotFound)]              // 404 — 라인 재등록되면 통한다 (유예 시간까지 재시도)
         [InlineData(HttpStatusCode.InternalServerError)]   // 500 — 서버 문제
         [InlineData(HttpStatusCode.BadGateway)]            // 502
         [InlineData(HttpStatusCode.ServiceUnavailable)]    // 503 — 배포 중
         [InlineData(HttpStatusCode.GatewayTimeout)]        // 504
         public void Recoverable_failures_are_retried(HttpStatusCode code)
             => Assert.False(ParameterSyncService.IsPermanentRejection(code));
+
+        /// <summary>
+        /// 404 는 "이 라인을 모른다" 다. Web DB 를 복원했거나 라인을 지웠다 다시 만드는 중이면
+        /// heartbeat(5초)가 재등록해 곧 통한다 — 여기서 버리면 그 사이 생산분의 검사 이력과
+        /// WO 수량이 <b>경고 한 줄 없이</b> 사라진다. 그래서 영구 거절에서 뺐다.
+        /// </summary>
+        [Fact]
+        public void Unknown_line_is_not_a_permanent_rejection()
+            => Assert.False(ParameterSyncService.IsPermanentRejection(HttpStatusCode.NotFound));
+
+        /// <summary>
+        /// 다만 무한정 기다리면 그 한 건이 큐 맨 앞을 막아 뒤의 모든 결과가 멈춘다.
+        /// 유예 시간을 넘기면 옆으로 치우는데, 그 판단 근거가 큐 파일 이름의 UTC timestamp 다.
+        /// </summary>
+        [Fact]
+        public void Queued_age_is_read_from_the_file_name()
+        {
+            var now = new DateTime(2026, 9, 14, 12, 0, 0, DateTimeKind.Utc);
+            var file = Path.Combine("q", "20260914114500123_" + Guid.NewGuid().ToString("N") + ".json");
+
+            var age = ParameterSyncService.QueuedAge(file, now);
+            Assert.InRange(age, TimeSpan.FromMinutes(14.9), TimeSpan.FromMinutes(15));
+        }
+
+        /// <summary>미래 시각·이상한 이름이어도 음수 나이가 나오면 안 된다 (즉시 폐기 방지).</summary>
+        [Theory]
+        [InlineData("20260914130000000_abc.json")]  // 파일명이 미래
+        [InlineData("garbage-name.json")]           // timestamp 아님
+        public void Queued_age_never_goes_negative(string name)
+        {
+            var now = new DateTime(2026, 9, 14, 12, 0, 0, DateTimeKind.Utc);
+            Assert.True(ParameterSyncService.QueuedAge(Path.Combine("q", name), now) >= TimeSpan.Zero);
+        }
+
+        /// <summary>유예 시간은 heartbeat 재등록(5초)보다 충분히 길어야 의미가 있다.</summary>
+        [Fact]
+        public void Grace_is_long_enough_for_reregistration()
+            => Assert.True(ParameterSyncService.NotRegisteredGrace >= TimeSpan.FromMinutes(5));
 
         /// <summary>성공은 애초에 실패가 아니다.</summary>
         [Theory]
