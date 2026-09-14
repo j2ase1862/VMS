@@ -12,6 +12,10 @@ namespace VMS.Core.Tests.Services
     /// 뺏으면 검사 사이클이 깨지므로 거절해야 하고, 요청 측이 이유를 모른 채 타임아웃까지
     /// 기다리면 안 된다. 커널 객체를 만들지 않는 HandleAsync 만 직접 검증한다.
     /// </summary>
+    // IPC 이름은 AppDataPaths 의 인스턴스 정적 상태에서 파생된다(QualifyIpcName).
+    // AppDataPathsTests 가 그 상태를 바꾸는 동안 이 테스트가 병렬로 돌면 Writer 와 Reader 가
+    // 서로 다른 이름을 보게 되어 연결이 실패한다 — 같은 컬렉션으로 묶어 직렬화한다.
+    [Collection("AppDataPathsState")]
     public class GrabRequestListenerTests
     {
         private static GrabRequestListener.GrabRequestContext Context(

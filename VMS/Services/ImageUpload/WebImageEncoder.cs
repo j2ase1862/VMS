@@ -17,13 +17,17 @@ namespace VMS.Services.ImageUpload
         public static (byte[] bytes, string ext) Encode(BitmapSource image, ImageSaveOptions opts)
         {
             if (opts.WebImageVariant == WebImageVariant.Thumbnail)
-            {
-                var thumb = Resize(image, opts.ThumbnailMaxEdge);
-                return (EncodeWith(new JpegBitmapEncoder { QualityLevel = ThumbnailJpegQuality }, thumb), "jpg");
-            }
+                return EncodeThumbnail(image, opts.ThumbnailMaxEdge);
 
             // 풀(원본) — 로컬 저장과 동일 포맷/품질.
             return EncodeFull(image, opts.Format, opts.JpegQuality);
+        }
+
+        /// <summary>장변을 maxEdge 로 줄인 JPEG. 전송 크기가 서버 상한을 넘을 때의 마지막 폴백이기도 하다.</summary>
+        public static (byte[] bytes, string ext) EncodeThumbnail(BitmapSource image, int maxEdge)
+        {
+            var thumb = Resize(image, maxEdge);
+            return (EncodeWith(new JpegBitmapEncoder { QualityLevel = ThumbnailJpegQuality }, thumb), "jpg");
         }
 
         /// <summary>원본 해상도 그대로 지정 포맷으로 인코딩 — Web 풀 전송과 MLOps 학습 데이터 전송이 공유.</summary>
