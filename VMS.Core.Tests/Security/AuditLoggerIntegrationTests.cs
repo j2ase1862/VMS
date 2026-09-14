@@ -210,8 +210,10 @@ namespace VMS.Core.Tests.Security
         {
             _logger.Log(AuditCategory.System, "Today", AuditOutcome.Success);
 
-            // 오늘 일자 파일이 생겼는지 확인.
-            var today = DateTime.UtcNow.Date;
+            // 오늘 일자 파일이 생겼는지 확인. 파일 이름은 사람이 말하는 날짜(로컬) 기준이다 —
+            // 읽는 쪽(ReadDay·ReadRange)이 로컬 날짜로 찾기 때문이다. UTC 로 지으면 KST
+            // 00~09시 기록이 전날 파일로 들어가 "오늘 조회" 에서 사라진다.
+            var today = DateTime.Today;
             var path = Path.Combine(_tempDir, $"{today:yyyy-MM-dd}.jsonl");
             Assert.True(File.Exists(path));
 
@@ -227,7 +229,7 @@ namespace VMS.Core.Tests.Security
             _logger.Log(AuditCategory.System, "First", AuditOutcome.Success);
             _logger.Log(AuditCategory.System, "Second", AuditOutcome.Success);
 
-            var today = DateTime.UtcNow.Date;
+            var today = DateTime.Today;
             var path = Path.Combine(_tempDir, $"{today:yyyy-MM-dd}.jsonl");
             var lines = File.ReadAllLines(path);
             Assert.Equal(2, lines.Length);
