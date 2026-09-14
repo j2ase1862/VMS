@@ -14,6 +14,10 @@ namespace VMS.Core.Tests.Services
     /// 명명된 커널 객체(MMF/Mutex/Event)를 공유하므로 한 메서드에서 순서대로
     /// 검증한다 (테스트 간 병렬 실행 시 이름 충돌 방지).
     /// </summary>
+    // IPC 이름은 AppDataPaths 의 인스턴스 정적 상태에서 파생된다(QualifyIpcName).
+    // AppDataPathsTests 가 그 상태를 바꾸는 동안 이 테스트가 병렬로 돌면 Writer 와 Reader 가
+    // 서로 다른 이름을 보게 되어 연결이 실패한다 — 같은 컬렉션으로 묶어 직렬화한다.
+    [Collection("AppDataPathsState")]
     public class SharedFrameWriterTests
     {
         [Fact]

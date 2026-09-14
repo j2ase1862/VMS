@@ -145,6 +145,8 @@ namespace VMS.Services
                 return false;
             }
 
+            metrics = WithCycleTotal(metrics, totalMs);
+
             try
             {
                 return await syncService.UploadResultsAsync(
@@ -155,6 +157,34 @@ namespace VMS.Services
                 Debug.WriteLine($"[InspectionService] cycle result upload error: {ex.Message}");
                 return false;
             }
+        }
+
+        /// <summary>
+        /// 업로드 피처의 <c>CycleTimeMs</c> 를 <b>사이클 합계</b>로 바꾼 사본을 돌려준다.
+        ///
+        /// <para><b>왜.</b> 누적 중에는 스텝마다 <c>_cycleFeatureMetrics</c> 를 마지막 스텝 값으로
+        /// 덮어쓴다. 그대로 보내면 Web 이력의 검사 시간과 예측 모델의 "검사 1회 소요 시간" 피처가
+        /// 마지막 스텝 시간만 갖게 되어, 같은 사이클의 로컬 이력(택트)과 숫자가 어긋난다.
+        /// 택트 분석·OEE·학습 데이터가 전부 이 값을 쓴다.</para>
+        ///
+        /// <para>이미지 품질 피처(Brightness/Focus 등)는 대표 1장 기준이 맞으므로 그대로 둔다.
+        /// 마지막 스텝의 객체를 직접 고치면 다른 소비자(로컬 기록·MLOps 수집)까지 바뀌므로 사본을 만든다.</para>
+        /// </summary>
+        internal static InspectionFeatureMetrics? WithCycleTotal(InspectionFeatureMetrics? metrics, double totalMs)
+        {
+            if (metrics == null || totalMs <= 0) return metrics;
+
+            return new InspectionFeatureMetrics
+            {
+                CycleTimeMs = (int)Math.Round(totalMs),
+                Brightness = metrics.Brightness,
+                ContrastStd = metrics.ContrastStd,
+                FocusScore = metrics.FocusScore,
+                BlobCount = metrics.BlobCount,
+                MaxBlobAreaPx = metrics.MaxBlobAreaPx,
+                DlConfidence = metrics.DlConfidence,
+                DlModelVersion = metrics.DlModelVersion,
+            };
         }
 
         /// <summary>

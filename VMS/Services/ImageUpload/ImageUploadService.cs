@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -37,6 +38,25 @@ namespace VMS.Services.ImageUpload
         private const int DrainIntervalMs = 5000;
         private const int BaseBackoffSec = 5;
         private const int MaxBackoffSec = 300;
+
+        /// <summary>
+        /// 한 항목을 언제까지 재시도할지. 이 시간이 지나도 못 보냈으면 큐 앞을 막지 않도록
+        /// <see cref="RejectedSubdir"/> 로 옮긴다(지우지는 않는다 — 사람이 볼 수 있게).
+        ///
+        /// <para>409(결과 레코드 미도착)는 결과 업로드 큐가 풀리면 통하므로 넉넉히 잡는다.
+        /// 결과 쪽 유예(30분)보다 길게 둬서, 결과가 늦게 올라온 뒤에도 이미지가 붙을 여지를 준다.</para>
+        /// </summary>
+        private static readonly TimeSpan RetryGrace = TimeSpan.FromHours(6);
+
+        /// <summary>보낼 수 없다고 판정된 항목을 모아 두는 하위 폴더. 드레인 대상이 아니다.</summary>
+        private const string RejectedSubdir = "rejected";
+
+        /// <summary>
+        /// 한 번에 보낼 수 있는 최대 바이트. 서버(Kestrel)의 요청 본문 상한 30MB 보다 낮게 잡아
+        /// multipart 오버헤드 여유를 둔다. 넘으면 413 이 오고, 그 항목은 몇 번을 다시 보내도
+        /// 같은 답이라 큐에 영구히 남는다 — 다MP 산업 카메라의 무압축 BMP 는 쉽게 이 선을 넘는다.
+        /// </summary>
+        private const long MaxUploadBytes = 28L * 1024 * 1024;
 
         private readonly string _baseUrl;
         private readonly int _clientIndex;
@@ -127,7 +147,7 @@ namespace VMS.Services.ImageUpload
         {
             Directory.CreateDirectory(_queueDir);
 
-            var (bytes, ext) = WebImageEncoder.Encode(image, opts);
+            var (bytes, ext) = EncodeWithinLimit(image, opts);
             var key = BuildCorrelationKey(ctx);
             var safe = Sanitize(key);
 
@@ -251,6 +271,11 @@ namespace VMS.Services.ImageUpload
                 {
                     DeletePair(metaPath); // 멱등이므로 2xx = 완료
                 }
+                else if (IsPermanentRejection(resp.StatusCode))
+                {
+                    // 다시 보내도 같은 답이다 — 큐에 두면 정상 이미지를 밀어낸다.
+                    MoveToRejected(metaPath, $"HTTP {(int)resp.StatusCode}");
+                }
                 else
                 {
                     Backoff(metaPath, meta, $"HTTP {(int)resp.StatusCode}");
@@ -262,8 +287,89 @@ namespace VMS.Services.ImageUpload
             }
         }
 
+        /// <summary>
+        /// 다시 보내도 같은 답이 올 상태 코드인가 — <c>ParameterSyncService.IsPermanentRejection</c>
+        /// 과 같은 규칙을 쓴다(두 채널의 판정이 갈리면 현장에서 설명할 수 없다).
+        ///
+        /// <para>408·429 는 시간이 지나면 통하고, 401·403 은 키/토큰이 고쳐지면 통하며,
+        /// 409 는 결과 레코드가 아직 도착하지 않았다는 뜻이라 전부 재시도 대상이다.
+        /// 이들도 영원히 붙잡지는 않는다 — <see cref="RetryGrace"/> 가 지나면 rejected/ 로 간다.</para>
+        /// </summary>
+        internal static bool IsPermanentRejection(HttpStatusCode code) =>
+            (int)code >= 400 && (int)code < 500
+            && code is not (HttpStatusCode.RequestTimeout
+                or HttpStatusCode.TooManyRequests
+                or HttpStatusCode.Unauthorized
+                or HttpStatusCode.Forbidden
+                or HttpStatusCode.Conflict);
+
+        /// <summary>유예 시간을 넘겼는가 — 촬영 시각 기준(없으면 파일 기록 시각).</summary>
+        internal static bool IsPastRetryGrace(string? capturedAtIso, DateTime fallbackUtc, DateTime nowUtc)
+        {
+            var start = DateTime.TryParse(capturedAtIso, null,
+                System.Globalization.DateTimeStyles.RoundtripKind, out var parsed)
+                ? parsed.ToUniversalTime()
+                : fallbackUtc;
+            return nowUtc - start > RetryGrace;
+        }
+
+        /// <summary>
+        /// 보낼 수 없는 항목을 rejected/ 로 옮긴다. 큐에 남겨 두면 상한(5000파일/2GB)을 채워
+        /// <see cref="EnforceCap"/> 이 정상 NG 이미지부터 밀어낸다 — 2026-08-19 현장에서
+        /// 409 무한 재시도로 실제로 일어난 일이다.
+        /// </summary>
+        private void MoveToRejected(string metaPath, string reason)
+        {
+            try
+            {
+                var dir = Path.Combine(_queueDir, RejectedSubdir);
+                Directory.CreateDirectory(dir);
+                foreach (var src in new[] { metaPath, Path.ChangeExtension(metaPath, ".img") })
+                {
+                    if (!File.Exists(src)) continue;
+                    var dest = Path.Combine(dir, Path.GetFileName(src));
+                    try { if (File.Exists(dest)) File.Delete(dest); } catch { }
+                    File.Move(src, dest);
+                }
+                Debug.WriteLine($"[ImageUploadService] 업로드 포기 — rejected/ 로 이동({reason}): {Path.GetFileName(metaPath)}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[ImageUploadService] rejected 이동 실패: {ex.Message}");
+                DeletePair(metaPath);   // 옮기지 못하면 큐를 막지 않도록 비운다
+            }
+        }
+
+        /// <summary>
+        /// 서버가 받을 수 있는 크기로 낮춰서 인코딩한다. 원본 포맷이 상한을 넘으면 JPEG →
+        /// 그래도 넘으면 썸네일 순으로 내린다. Web 이미지는 "화면에서 확인"이 목적이라
+        /// 못 보내는 원본보다 보이는 축소본이 낫다(로컬 저장본은 별개 경로라 영향 없음).
+        /// </summary>
+        private static (byte[] bytes, string ext) EncodeWithinLimit(BitmapSource image, ImageSaveOptions opts)
+        {
+            var encoded = WebImageEncoder.Encode(image, opts);
+            if (encoded.bytes.LongLength <= MaxUploadBytes) return encoded;
+
+            var jpeg = WebImageEncoder.EncodeFull(image, ImageSaveFormat.Jpeg, opts.JpegQuality);
+            if (jpeg.bytes.LongLength <= MaxUploadBytes)
+            {
+                Debug.WriteLine($"[ImageUploadService] 전송 상한 초과({encoded.bytes.LongLength:N0}B) — JPEG 로 낮춰 전송");
+                return jpeg;
+            }
+
+            var thumb = WebImageEncoder.EncodeThumbnail(image, opts.ThumbnailMaxEdge);
+            Debug.WriteLine($"[ImageUploadService] 전송 상한 초과({jpeg.bytes.LongLength:N0}B) — 썸네일로 낮춰 전송");
+            return thumb;
+        }
+
         private void Backoff(string metaPath, ImageUploadMeta meta, string reason)
         {
+            if (IsPastRetryGrace(meta.CapturedAt, SafeWriteTimeUtc(metaPath), DateTime.UtcNow))
+            {
+                MoveToRejected(metaPath, $"{reason} — 유예({RetryGrace.TotalHours:N0}시간) 초과");
+                return;
+            }
+
             meta.Attempts++;
             var delay = Math.Min(MaxBackoffSec, BaseBackoffSec * (int)Math.Pow(2, Math.Min(meta.Attempts, 12)));
             meta.NextAttemptAtUtc = DateTime.UtcNow.AddSeconds(delay).ToString("o");
@@ -301,6 +407,12 @@ namespace VMS.Services.ImageUpload
         }
 
         private static string ReadVerdict(string metaPath) => ReadMeta(metaPath)?.Verdict ?? "NG";
+
+        private static DateTime SafeWriteTimeUtc(string metaPath)
+        {
+            try { return File.GetLastWriteTimeUtc(metaPath); }
+            catch { return DateTime.UtcNow; }
+        }
 
         private static long SafePairBytes(string metaPath)
         {

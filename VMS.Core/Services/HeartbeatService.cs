@@ -20,6 +20,8 @@ namespace VMS.Core.Services
     {
         private readonly HttpClient _httpClient;
         private readonly string _webServerUrl;
+        /// <summary>종료 통지처럼 별도 HttpClient 를 쓰는 경로에서도 같은 키를 붙이기 위해 보관한다.</summary>
+        private readonly string _clientApiKey;
         private readonly string _visionServerUrl;
         private readonly int _clientIndex;
         private readonly string _ipAddress;
@@ -62,6 +64,7 @@ namespace VMS.Core.Services
 
             InsecureUrlGuard.Check(_webServerUrl, nameof(HeartbeatService));
             _httpClient = HttpClientPolicy.Build(TimeSpan.FromSeconds(5));
+            _clientApiKey = clientApiKey ?? string.Empty;
 
             // GS 인증: Web 서버 X-API-Key 인증 (BODA.VMS.Web PR #10). 키가 있으면 모든
             // 요청에 헤더 자동 송신. 빈 키면 서버의 호환 모드(Required=false)에서만 통과.
@@ -311,6 +314,17 @@ namespace VMS.Core.Services
                 try
                 {
                     using var client = HttpClientPolicy.Build(TimeSpan.FromSeconds(2));
+
+                    // 종료 통지에도 X-API-Key 를 붙인다. 예전에는 이 요청만 키가 없어서,
+                    // 서버가 키 강제(ClientApiKey:Required=true)로 전환되면 401 로 거부됐다.
+                    // 그러면 ① 대시보드에 라인이 한동안 '접속 중' 으로 남고 ② 서버가 하는
+                    // 작업자 세션 자동 종료가 실행되지 않아, 정상 종료했는데도 다음 검사가
+                    // 이미 퇴근한 작업자에게 귀속된다.
+                    if (!string.IsNullOrWhiteSpace(_clientApiKey))
+                    {
+                        client.DefaultRequestHeaders.Add("X-API-Key", _clientApiKey);
+                    }
+
                     var json = $"{{\"clientIndex\":{_clientIndex}}}";
                     var content = new StringContent(json, Encoding.UTF8, "application/json");
                     client.PostAsync($"{_webServerUrl}/api/clients/disconnect", content)
