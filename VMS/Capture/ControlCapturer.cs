@@ -252,6 +252,50 @@ namespace VMS.Capture
                 ("sec_recent", () => SectionCard("Recent Inspections")),
                 ("sec_statistics", () => SectionCard("Statistics")),
             });
+
+            // 매뉴얼 §4.2.10 — MLOps 연동을 설정했는데 보안 정책에 막혀 꺼진 상태.
+            // 실제로 만들려면 Production 보안 모드 + http:// MLOps 주소가 필요하므로
+            // 상태 저장소에 같은 사유를 넣어 칩을 그대로 띄운다(문구·모양은 운영과 동일).
+            yield return ("S4_mlops_issue", () =>
+            {
+                VMS.Core.Services.MlopsClientStatus.ReportDisabled(
+                    VMS.Core.Services.MlopsClientStatus.NgCollector,
+                    new InvalidOperationException(
+                        "보안 정책: Production 모드에서는 원격 http:// 주소를 쓸 수 없습니다 (MLOps 서버 주소)"));
+                RaisePropertyChanged(vm, nameof(ViewModels.MainViewModel.HasMlopsIssue));
+                RaisePropertyChanged(vm, nameof(ViewModels.MainViewModel.MlopsIssueTooltip));
+            }, new (string, Func<FrameworkElement?>)[]
+            {
+                ("status_mlops_issue_chip", () =>
+                    FindAncestor<StackPanel>(FindByExactText(window, "MLOps 비활성"))),
+            });
+
+            // 매뉴얼 §10.1 — 다른 라인에 배정된 작업지시·다른 WO 소속 Lot 으로 검사가 올라갔을 때의 경고.
+            // 현장에서 재현하려면 운영 Web 의 작업지시를 재배정해야 하므로, 같은 문구를 로그에 넣어 담는다.
+            yield return ("S5_wo_warning", () =>
+            {
+                // 문서용 장면 — 부팅 중 쌓인 환경별 로그(카메라·IO 보드)를 비우고 대상 경고만 남긴다.
+                vm.LogService?.Clear();
+                vm.LogService?.Log("검사 완료 — OK (WO-20260521-001)", Interfaces.LogLevel.Success, "Inspection");
+                vm.LogService?.Log(
+                    "작업지시 WO-20260521-001 는 다른 라인에 배정되어 있습니다 — 이 PC 의 검사 수량이 "
+                    + "집계되지 않습니다. Web 에서 배정 라인을 확인하거나 작업지시를 다시 선택하세요.",
+                    Interfaces.LogLevel.Warning, "WorkOrder");
+                vm.LogService?.Log(
+                    "선택한 Lot 이 작업지시 WO-20260521-001 소속이 아닙니다 — Lot 수량이 집계되지 않습니다. "
+                    + "Lot 을 다시 선택하세요.",
+                    Interfaces.LogLevel.Warning, "WorkOrder");
+            }, new (string, Func<FrameworkElement?>)[]
+            {
+                ("sec_system_log", () =>
+                {
+                    // 로그 목록(ListBox)을 감싼 바깥 Border = 로그 패널 전체(헤더 + 목록).
+                    foreach (var d in EnumerateVisibleTree(window))
+                        if (d is ListBox lb && ReferenceEquals(lb.ItemsSource, vm.LogService?.LogEntries))
+                            return FindAncestor<System.Windows.Controls.Border>(lb);
+                    return null;
+                }),
+            });
         }
 
         private static int CaptureVisibleControls(
