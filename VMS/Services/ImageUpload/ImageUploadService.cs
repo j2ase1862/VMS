@@ -52,6 +52,14 @@ namespace VMS.Services.ImageUpload
         private const string RejectedSubdir = "rejected";
 
         /// <summary>
+        /// 보관함 상한 — 이미지는 한 장이 수 MB 라 무한히 쌓이면 디스크가 찬다. 디스크가 차면
+        /// SQLite 쓰기가 실패해 <b>검사 결과 기록이 멈춘다</b> — 원인 분석용 사본을 남기려다
+        /// 생산을 세우는 일은 없어야 하므로, 최근 것만 남기고 오래된 것부터 지운다.
+        /// </summary>
+        private const int MaxRejectedFiles = 200;
+        private const long MaxRejectedBytes = 200L * 1024 * 1024;
+
+        /// <summary>
         /// 한 번에 보낼 수 있는 최대 바이트. 서버(Kestrel)의 요청 본문 상한 30MB 보다 낮게 잡아
         /// multipart 오버헤드 여유를 둔다. 넘으면 413 이 오고, 그 항목은 몇 번을 다시 보내도
         /// 같은 답이라 큐에 영구히 남는다 — 다MP 산업 카메라의 무압축 BMP 는 쉽게 이 선을 넘는다.
@@ -332,6 +340,7 @@ namespace VMS.Services.ImageUpload
                     File.Move(src, dest);
                 }
                 Debug.WriteLine($"[ImageUploadService] 업로드 포기 — rejected/ 로 이동({reason}): {Path.GetFileName(metaPath)}");
+                PruneRejected(dir);
             }
             catch (Exception ex)
             {
@@ -407,6 +416,40 @@ namespace VMS.Services.ImageUpload
         }
 
         private static string ReadVerdict(string metaPath) => ReadMeta(metaPath)?.Verdict ?? "NG";
+
+        /// <summary>보관함을 상한 안으로 유지 — 오래된 것부터 지운다. 개수와 용량 둘 다 본다.</summary>
+        internal static int PruneRejected(string dir, int maxFiles = MaxRejectedFiles, long maxBytes = MaxRejectedBytes)
+        {
+            try
+            {
+                if (!Directory.Exists(dir)) return 0;
+
+                var metas = new DirectoryInfo(dir).GetFiles("*.json")
+                    .OrderByDescending(f => f.LastWriteTimeUtc)
+                    .Select(f => f.FullName)
+                    .ToList();
+
+                long total = metas.Sum(SafePairBytes);
+                int removed = 0;
+
+                for (int i = metas.Count - 1; i >= 0; i--)
+                {
+                    if (metas.Count - removed <= maxFiles && total <= maxBytes) break;
+                    total -= SafePairBytes(metas[i]);
+                    DeletePair(metas[i]);
+                    removed++;
+                }
+
+                if (removed > 0)
+                    Debug.WriteLine($"[ImageUploadService] rejected/ 상한 정리 — {removed}건 삭제");
+                return removed;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[ImageUploadService] rejected/ 정리 실패: {ex.Message}");
+                return 0;
+            }
+        }
 
         private static DateTime SafeWriteTimeUtc(string metaPath)
         {

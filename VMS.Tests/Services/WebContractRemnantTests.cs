@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Net;
 using VMS.Core.Models.ParameterSync;
 using VMS.Services;
@@ -61,6 +62,37 @@ namespace VMS.Tests.Services
                 "(깨진 값)", fallbackUtc: now.AddHours(-8), nowUtc: now));
             Assert.False(ImageUploadService.IsPastRetryGrace(
                 null, fallbackUtc: now.AddMinutes(-5), nowUtc: now));
+        }
+
+        [Fact]
+        public void RejectedFolder_StaysBounded_SoTheDiskDoesNotFill()
+        {
+            // 이미지는 한 장이 수 MB 다. 보관함이 무한히 쌓여 디스크가 차면 SQLite 쓰기가
+            // 실패해 검사 결과 기록이 멈춘다 — 원인 분석용 사본이 생산을 세워서는 안 된다.
+            var dir = Path.Combine(Path.GetTempPath(), "boda-rejected-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(dir);
+            try
+            {
+                for (var i = 0; i < 10; i++)
+                {
+                    var stem = Path.Combine(dir, $"item-{i:00}");
+                    File.WriteAllText(stem + ".json", "{}");
+                    File.WriteAllBytes(stem + ".img", new byte[16]);
+                    File.SetLastWriteTimeUtc(stem + ".json", new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc).AddMinutes(i));
+                }
+
+                var removed = ImageUploadService.PruneRejected(dir, maxFiles: 4, maxBytes: long.MaxValue);
+
+                Assert.Equal(6, removed);
+                Assert.Equal(4, Directory.GetFiles(dir, "*.json").Length);
+                Assert.Equal(4, Directory.GetFiles(dir, "*.img").Length);   // 데이터 파일도 함께 지운다
+                Assert.True(File.Exists(Path.Combine(dir, "item-09.json")), "최근 것이 남아야 한다");
+                Assert.False(File.Exists(Path.Combine(dir, "item-00.json")), "오래된 것부터 지운다");
+            }
+            finally
+            {
+                try { Directory.Delete(dir, recursive: true); } catch { }
+            }
         }
 
         // ── W-137: 사이클 업로드의 CycleTimeMs 는 합계 ─────────────────────
