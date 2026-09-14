@@ -41,6 +41,20 @@ namespace VMS.Core.Models.ParameterSync
         /// </summary>
         public bool StaleWorkOrder { get; set; }
 
+        /// <summary>
+        /// 이 작업지시가 <b>다른 라인</b>에 배정돼 있어 수량이 집계되지 않았음.
+        /// Web 에서 WO 를 다른 라인으로 재배정했는데 이 PC 가 예전 선택을 그대로 들고 있는
+        /// 경우다 — 그냥 올리면 그 라인 실적이 이 라인 생산분으로 부풀고 조기 완료까지 간다.
+        /// 구버전 Web 서버는 미전송 → false.
+        /// </summary>
+        public bool UnmatchedLine { get; set; }
+
+        /// <summary>
+        /// 보낸 Lot 이 이 작업지시 소속이 아니어서 Lot 카운터가 집계되지 않았음.
+        /// 구버전 Web 서버는 미전송 → false.
+        /// </summary>
+        public bool MismatchedLot { get; set; }
+
         /// <summary>레시피별 라인 스냅샷 (혼합 레시피 WO). 구버전 Web 은 미전송 → 빈 목록.</summary>
         public List<WorkOrderItemSnapshotDto> Items { get; set; } = new();
 

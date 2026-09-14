@@ -2417,6 +2417,27 @@ namespace VMS.ViewModels
                         LogLevel.Warning, "WorkOrder");
                 }
 
+                // 이 WO 가 다른 라인에 배정돼 있어 수량이 집계되지 않음. 조용히 두면 현장에서
+                // "검사는 되는데 수량이 안 오른다" 로만 보이고, 원인(Web 에서 라인 재배정)은
+                // 이 PC 어디에도 드러나지 않는다.
+                if (progress.UnmatchedLine)
+                {
+                    LogService?.Log(
+                        $"작업지시 {progress.OrderNo} 는 다른 라인에 배정되어 있습니다 — " +
+                        "이 PC 의 검사 수량이 집계되지 않습니다. Web 에서 배정 라인을 확인하거나 " +
+                        "작업지시를 다시 선택하세요.",
+                        LogLevel.Warning, "WorkOrder");
+                }
+
+                // 보낸 Lot 이 이 작업지시 소속이 아니어서 Lot 카운터만 집계되지 않음.
+                if (progress.MismatchedLot)
+                {
+                    LogService?.Log(
+                        $"선택한 Lot 이 작업지시 {progress.OrderNo} 소속이 아닙니다 — " +
+                        "Lot 수량이 집계되지 않습니다. Lot 을 다시 선택하세요.",
+                        LogLevel.Warning, "WorkOrder");
+                }
+
                 // 이미 완료/마감된 WO 로 업로드됨 (이번 검사는 수량 미집계) — Web 수동 완료를
                 // SignalR 로 못 받은 경우의 폴백. 완료 흐름(운전 정지 + 다이얼로그 + 선택 해제)을
                 // 그대로 태운다 — _lastCompletedNotifiedWoId 가드가 중복을 막으므로 SignalR 로
