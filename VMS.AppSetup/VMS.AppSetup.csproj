@@ -85,6 +85,9 @@
        tools/licgen 과 동일한 패턴: canonical JSON 정규화가 제품/도구 간 단일 구현이
        되도록 파일 자체를 공유한다. LicenseBootCheck 는 AuditLogger 의존이라 제외. -->
   <ItemGroup>
+    <!-- 라인 번호 허용 범위 — Web 검증기와 같은 값을 쓰기 위해 파일을 공유한다.
+         (의존성 없는 상수 클래스라 링크만으로 충분) -->
+    <Compile Include="..\VMS.Core\Services\WebClientIndex.cs" Link="Services\WebClientIndex.cs" />
     <Compile Include="..\VMS.Core\Security\Licensing\LicensePayload.cs" Link="Licensing\LicensePayload.cs" />
     <Compile Include="..\VMS.Core\Security\Licensing\LicenseCanonicalJson.cs" Link="Licensing\LicenseCanonicalJson.cs" />
     <Compile Include="..\VMS.Core\Security\Licensing\LicenseCrypto.cs" Link="Licensing\LicenseCrypto.cs" />

@@ -2,6 +2,7 @@ using VMS.AppSetup.Interfaces;
 using VMS.AppSetup.Models;
 using VMS.AppSetup.Services;
 using VMS.Core.Security.Licensing;
+using VMS.Core.Services;
 using VMS.Camera.Models;
 using VMS.PLC.Models;
 using EulerConvention = VMS.Camera.Models.EulerConvention;
@@ -813,6 +814,8 @@ namespace VMS.AppSetup.ViewModels
         [RelayCommand]
         private void GoNext()
         {
+            if (!ValidateCurrentPage()) return;
+
             if (IsLastPage)
             {
                 SaveConfiguration();
@@ -821,6 +824,28 @@ namespace VMS.AppSetup.ViewModels
             {
                 CurrentPage++;
             }
+        }
+
+        /// <summary>
+        /// 다음 단계로 넘어가기 전에 이 페이지의 값이 Web 계약을 만족하는지 본다.
+        ///
+        /// <para>라인 번호가 범위를 벗어나면 Web 자가 등록이 <b>영구히 400</b> 이 된다. 그런데
+        /// 하트비트는 통과하므로 현장에서는 "Web 연결 끊김" 으로만 보이고, 등록되지 않는 동안
+        /// 올라간 검사 결과는 전부 폐기된다. 저장하기 전에 여기서 막는 편이 훨씬 싸다.</para>
+        /// </summary>
+        private bool ValidateCurrentPage()
+        {
+            // 2페이지 = Application Settings (Web 연동: 라인 번호·서버 주소)
+            if (CurrentPage == 2 && !IsStandaloneMode && !WebClientIndex.IsValid(ClientIndex))
+            {
+                _dialogService.ShowError(
+                    $"{WebClientIndex.RangeMessage}\n\n" +
+                    "이 범위를 벗어나면 Web 서버가 이 라인을 등록하지 못해, 검사 결과가 Web 에 쌓이지 않습니다.",
+                    "라인 번호 확인");
+                return false;
+            }
+
+            return true;
         }
 
         [RelayCommand]

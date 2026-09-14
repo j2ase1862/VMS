@@ -138,6 +138,22 @@ namespace VMS.Core.Services
         /// Web API에 Client가 등록되어 있는지 확인하고, 없으면 VisionServer에 자동 생성.
         /// VisionServer에 등록하면 공유 DB에 즉시 반영되므로, 이후 Web의 heartbeat도 성공.
         /// </summary>
+        /// <summary>응답 본문을 짧게 읽는다 — 실패해도 등록 흐름을 막지 않는다.</summary>
+        private static async Task<string> SafeReadAsync(HttpResponseMessage response, CancellationToken ct)
+        {
+            try
+            {
+                var body = await response.Content.ReadAsStringAsync(ct);
+                return string.IsNullOrWhiteSpace(body)
+                    ? response.StatusCode.ToString()
+                    : body.Trim().Substring(0, Math.Min(200, body.Trim().Length));
+            }
+            catch
+            {
+                return response.StatusCode.ToString();
+            }
+        }
+
         private async Task EnsureClientRegisteredAsync(CancellationToken ct)
         {
             if (_clientRegistered) return;
@@ -202,6 +218,21 @@ namespace VMS.Core.Services
                         else
                         {
                             Debug.WriteLine($"[Heartbeat] Web self-register failed: {webRegisterResponse.StatusCode}");
+
+                            // 400 은 재시도해도 영원히 실패하는 구성 오류다(대표적으로 라인 번호가
+                            // 허용 범위 0~99 밖). 그런데 화면에는 "Web 연결 끊김" 만 보이고, 그 사이
+                            // 올라가는 검사 결과는 전부 404 를 받아 rejected/ 로 폐기된다.
+                            // 디버그 로그는 배포본에서 보이지 않으므로 감사 로그에 남긴다.
+                            if (webRegisterResponse.StatusCode == HttpStatusCode.BadRequest)
+                            {
+                                var reason = await SafeReadAsync(webRegisterResponse, ct);
+                                AuditLogger.Instance.Log(
+                                    AuditCategory.System, "ClientRegisterRejected", AuditOutcome.Failure,
+                                    source: nameof(HeartbeatService),
+                                    details: $"라인 번호={_clientIndex}, 서버 응답={reason} — " +
+                                             "설정 마법사에서 라인 번호를 확인하세요(허용 0~99). " +
+                                             "등록되지 않는 동안 검사 결과는 Web 에 쌓이지 않습니다.");
+                            }
                         }
                     }
                     catch (OperationCanceledException) { throw; }

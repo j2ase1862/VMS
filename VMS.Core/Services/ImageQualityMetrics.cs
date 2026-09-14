@@ -43,6 +43,25 @@ namespace VMS.Core.Services
                     grayOwned = true;
                 }
 
+                // 8bit 기준(0~255)으로 한 번 맞춘 뒤 모든 지표를 계산한다.
+                //
+                // 예전에는 입력 깊이를 그대로 썼다. 그래서 16bit·실수 이미지에서는
+                // (a) Otsu 이진화가 8bit 만 지원해 예외 → catch 로 떨어지며 <b>지표 5종이 전부 0</b>
+                //     이 되거나,
+                // (b) 밝기 평균이 0~255 범위를 벗어나 Web 업로드 검증에 걸렸다. Web 은 400 을
+                //     돌려주고 VMS 는 400 을 영구 거절로 분류하므로, 그 사이클의 측정값·판정·
+                //     작업지시 수량까지 통째로 사라졌다 — 부가 지표 하나 때문에 생산 기록을 잃는다.
+                //
+                // 한 축으로 맞춰 두면 카메라가 바뀌어도 예측 피처가 같은 의미를 갖는다.
+                if (gray.Depth() != MatType.CV_8U)
+                {
+                    var converted = new Mat();
+                    gray.ConvertTo(converted, MatType.CV_8U, DepthScaleTo8Bit(gray));
+                    if (grayOwned) gray.Dispose();
+                    gray = converted;
+                    grayOwned = true;
+                }
+
                 // Brightness + ContrastStd: 한 번의 MeanStdDev 호출로 동시 산출
                 Cv2.MeanStdDev(gray, out var meanScalar, out var stdScalar);
                 double brightness = meanScalar.Val0;
@@ -72,6 +91,20 @@ namespace VMS.Core.Services
             {
                 if (grayOwned) gray?.Dispose();
             }
+        }
+
+        /// <summary>
+        /// 입력 깊이를 8bit(0~255) 기준으로 옮기는 배율.
+        /// 16bit 는 255/65535, 32/64bit 실수(0~1 규약)는 255 배, 그 외(8bit)는 그대로.
+        /// </summary>
+        private static double DepthScaleTo8Bit(Mat gray)
+        {
+            return gray.Depth() switch
+            {
+                MatType.CV_16U or MatType.CV_16S => 255.0 / 65535.0,
+                MatType.CV_32F or MatType.CV_64F => 255.0,
+                _ => 1.0
+            };
         }
 
         private static double ComputeLaplacianVariance(Mat gray)
