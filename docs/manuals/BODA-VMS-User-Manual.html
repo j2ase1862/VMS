@@ -1163,7 +1163,9 @@ System Setup 3단계(§3)에는 이 항목이 없으며, "카메라 설정 유�
       스텝 그리드의 <strong>Resolution (mm/px)</strong> 값을 입력해 두세요. 측정 도구가
       이 값으로 픽셀을 mm 로 환산합니다.
       <br>다만 이 방법은 렌즈 왜곡을 보정하지 못하고 화면 위치에 따른 오차도 그대로 남습니다.
-      정밀 측정이 목적이면 <a href="#vs-calibration">§5.11 카메라 캘리브레이션</a>을 하세요.</li>
+      정밀 측정이 목적이면 <a href="#vs-calibration">§5.11 카메라 캘리브레이션</a>을 하세요.
+      <br>캘리브레이션을 해서 레시피에 적용하면 <strong>이 Resolution 값이 자동으로 채워집니다</strong> —
+      직접 입력한 값은 그때 덮어써집니다(§5.11 5단계).</li>
   <li><strong>템플릿은 판정까지 연결되어 만들어집니다</strong> — 예제 템플릿의
       엣지 간 거리 측정 · Blob 검출 · 컬러 객체 검출은 마지막 Result 판정까지
       연결된 상태로 생성되어, 값만 조정하면 OK/NG 판정이 바로 동작합니다.</li>
@@ -1452,10 +1454,56 @@ Single Scale 방식은 길이를 아는 구간의 양 끝을 클릭하고 그 �
 
 <h4>5단계 — 레시피에 적용</h4>
 <p><strong>[Apply to Current Recipe]</strong> 를 눌러야 실제로 쓰입니다. 계산만 하고 닫으면 아무것도
-반영되지 않습니다. 캘리브레이션은 <strong>레시피마다 따로</strong> 보관되므로, 카메라·렌즈·설치 높이가
-다른 레시피는 각각 해야 합니다.</p>
-<p><strong>[Clear Calibration from Recipe]</strong> 는 적용을 취소합니다. 지우면 측정 도구는 픽셀 단위로
-돌아가고 Image Rectify 는 이미지를 그대로 통과시킵니다.</p>
+반영되지 않습니다. 이 버튼 하나로 <strong>세 가지가 함께</strong> 일어나며, 창의 Apply 구역에도 같은
+내용이 적혀 있습니다.</p>
+<ol>
+  <li><strong>결과가 현재 레시피에 저장됩니다</strong> — 이때부터 측정 도구가 mm 로 판정하고,
+      Image Rectify 가 왜곡·기울어짐을 바로잡을 수 있습니다.</li>
+  <li><strong>고른 스텝의 Resolution (mm/px) 이 이 값으로 바뀝니다</strong> — 어느 스텝을 바꿀지는
+      바로 아래 목록에서 체크로 고릅니다.</li>
+  <li><strong>레시피 파일이 바로 저장됩니다</strong> — 따로 [Save] 를 누를 필요가 없습니다.</li>
+</ol>
+
+<h4>적용됐는지 확인하는 법</h4>
+<p>두 군데를 보면 됩니다.</p>
+<ul>
+  <li><strong>창 안의 요약 줄</strong> — Apply 구역에 <strong>지금 레시피에 저장돼 있는 캘리브레이션</strong>이
+      한 줄로 표시됩니다(방식 · 픽셀 크기 · 재투영 오차 · 캘리브레이션한 시각). 누르기 전과 후를 비교하면
+      바뀐 것이 보입니다. 아직 한 번도 하지 않은 레시피는 "없음" 으로 나옵니다.</li>
+  <li><strong>화면 왼쪽 Steps 표의 Resolution</strong> — 체크한 스텝의 값이 곧바로 바뀝니다.
+      <strong>값이 그대로라면 그 스텝이 목록에서 체크되지 않은 것입니다.</strong></li>
+</ul>
+
+<h4>어느 스텝의 Resolution 을 바꿀지 고르기</h4>
+<p>Apply 구역의 <strong>[Resolution 을 갱신할 스텝]</strong> 목록에 레시피의 스텝이 모두 나오고,
+스텝마다 <strong>현재값 → 적용값</strong> 이 미리 보입니다. 체크한 스텝만 바뀝니다
+([모두 선택] · [모두 해제] 로 한 번에 바꿀 수 있습니다).</p>
+<p>기본으로 체크되는 범위는 이미지를 어디서 가져왔는지에 따라 다릅니다.</p>
+<ul>
+  <li><strong>카메라로 직접 촬영</strong>했다면 — <strong>그 카메라의 스텝만</strong> 체크됩니다.</li>
+  <li><strong>파일이나 VMS 화면</strong>으로 했다면 — 어느 카메라의 사진인지 알 수 없으므로
+      <strong>전체가 체크</strong>됩니다. 카메라가 여러 대인 레시피라면 직접 확인하고 해제하세요.</li>
+</ul>
+
+<div class="callout warn">
+<strong>한 레시피에 카메라가 여러 대라면 반드시 확인하세요.</strong> 캘리브레이션은 레시피에
+<strong>한 벌</strong>만 저장되지만, Resolution 은 <strong>스텝마다</strong> 따로 있습니다.
+렌즈나 작동 거리가 다른 카메라의 스텝에 같은 mm/px 를 넣으면 <strong>그쪽 측정이 조용히 틀어집니다</strong> —
+화면상으로는 아무 문제가 없어 보입니다. 카메라마다 각각 캘리브레이션하고, 그때마다 해당 카메라의
+스텝만 체크하세요.
+</div>
+
+<p>캘리브레이션은 <strong>레시피마다 따로</strong> 보관되므로, 카메라·렌즈·설치 높이가 다른 레시피는
+각각 해야 합니다.</p>
+
+<h4>적용 취소 — [Clear Calibration from Recipe]</h4>
+<p><strong>[Clear Calibration from Recipe]</strong> 는 레시피에서 캘리브레이션을 지웁니다.
+지우면 Image Rectify 는 이미지를 그대로 통과시킵니다.</p>
+<div class="callout warn">
+<strong>지워도 스텝의 Resolution 값은 남습니다.</strong> 측정 도구는 그 값으로 <strong>계속 mm 로
+환산</strong>합니다 — 픽셀 단위로 돌아가지 않습니다. 완전히 픽셀 단위로 돌리려면
+<strong>Steps 표의 Resolution 도 0 으로</strong> 바꾸세요.
+</div>
 
 <div class="callout warn">
 <strong>카메라 · 렌즈 · 설치 높이를 바꿨다면 다시 하세요.</strong> 옛 캘리브레이션 값이 남아 있는 것이
@@ -2291,9 +2339,22 @@ v1.37.0 에서 고쳐졌으므로 버전을 올리세요 — 값이 0 인 구간
       않았는지 봅니다.</li>
 </ol>
 
+<h4>캘리브레이션을 적용했는데 Steps 표의 Resolution 이 그대로임</h4>
+<ol>
+  <li>Apply 구역의 <strong>[Resolution 을 갱신할 스텝]</strong> 목록에서 <strong>그 스텝이 체크되어
+      있었는지</strong> 확인하세요 — 체크한 스텝만 바뀝니다. 파일이나 VMS 화면으로 캘리브레이션하면
+      전체가 체크되지만, 카메라로 직접 촬영했다면 <strong>그 카메라의 스텝만</strong> 체크됩니다 (§5.11).</li>
+  <li>Steps 표는 <strong>선택한 카메라의 스텝만</strong> 보여 줍니다 — 바꾼 스텝이 다른 카메라의
+      것이라면 위쪽에서 그 카메라를 선택해야 보입니다.</li>
+  <li>창 안의 <strong>요약 줄</strong>이 방금 계산한 값으로 바뀌었는지 보세요. 그대로라면 [Apply to
+      Current Recipe] 가 눌리지 않은 것입니다(계산 전에는 버튼이 비활성입니다).</li>
+</ol>
+<p>반대로 <strong>값은 바뀌었는데 측정이 여전히 픽셀로 나온다면</strong>, 측정 도구의 판정 단위가
+<strong>Px</strong> 로 되어 있는지 확인하세요 (§5.6).</p>
+
 <h4>Image Rectify 를 켰는데 이미지가 그대로임</h4>
-<p>체크박스가 캘리브레이션 방식과 맞지 않는 경우입니다. <strong>Undistort 는 Checkerboard 방식,
-Apply Homography 는 N-Point 방식</strong>에서만 동작합니다 (§5.11 표 참고).
+<p>체크박스가 캘리브레이션 방식과 맞지 않는 경우입니다. <strong>Undistort 는 Checkerboard ·
+Circles Grid 방식, Apply Homography 는 N-Point 방식</strong>에서만 동작합니다 (§5.11 표 참고).
 캘리브레이션을 레시피에 <strong>[Apply to Current Recipe] 로 적용했는지</strong>도 확인하세요 —
 적용하지 않으면 이 도구는 이미지를 그대로 통과시킵니다(오류가 아닙니다).</p>
 
@@ -2305,6 +2366,10 @@ Apply Homography 는 N-Point 방식</strong>에서만 동작합니다 (§5.11 �
       맞는지 대조합니다.</li>
   <li>카메라·렌즈·설치 높이를 바꾼 뒤 <strong>캘리브레이션을 다시 하지 않은 경우</strong>가 많습니다.
       옛 값이 남아 있으면 화면상 아무 문제 없이 값만 틀리게 나옵니다.</li>
+  <li>캘리브레이션을 <strong>지웠는데도 mm 로 나온다면</strong> 스텝의 Resolution 값이 남아 있는
+      것입니다 — 지우기는 캘리브레이션만 지우고 그 값은 그대로 둡니다 (§5.11).</li>
+  <li>카메라가 여러 대인 레시피에서 <strong>다른 카메라의 스텝에 엉뚱한 Resolution 이 들어간</strong>
+      경우입니다. Steps 표에서 카메라를 바꿔 가며 값을 대조하세요 (§5.11).</li>
 </ol>
 
 <h4>레시피 새로고침을 눌러도 "Web 레시피 0개"</h4>
@@ -2782,6 +2847,15 @@ mm 값이 실제와 다른 경우.</li>
 해야 할 일을 알려 줍니다(예전에는 창이 그대로 닫혔습니다).</li>
 <li><strong>도구 도움말(물음표) 보강</strong> — Image Rectify 의 설명이 실제 설정과 달랐던 것을 바로잡고,
 Calibration Manager 창에 없던 도움말을 추가했습니다.</li>
+<li><strong>캘리브레이션 적용 절차를 눈에 보이게</strong> (v1.38.1, §5.11 5단계 개정) — [Apply to Current
+Recipe] 가 무엇을 바꾸는지 창에 적고, <strong>어느 스텝의 Resolution 을 갱신할지 고르는 목록</strong>을
+추가했습니다. 예전에는 적용해도 <strong>Steps 표의 Resolution 이 갱신되지 않아</strong> 적용 여부를
+확인할 수 없었습니다. 표의 표시 자릿수도 늘려 고배율 렌즈의 작은 값이 <code>0.000</code> 으로
+뭉개지지 않습니다. 트러블슈팅 1건 신설(§10.2).</li>
+<li><strong>안내 문구 정정</strong> — [Clear Calibration from Recipe] 를 눌러도 <strong>스텝의 Resolution
+값은 남아 측정이 계속 mm 로 환산</strong>됩니다. 예전 안내("픽셀 단위로 돌아간다")는 사실과 달랐습니다 (§5.11).</li>
+<li><strong>산업용 카메라의 원형 타겟 검출</strong> (v1.38.1) — 고해상도로 타겟을 크게 담아 찍으면
+원을 하나도 찾지 못하던 문제를 고쳤습니다 (§5.11, §10.2).</li>
 </ul>
 
 <p>전체 변경 사항은 양쪽 저장소의 <code>CHANGELOG.md</code> 참조.</p>

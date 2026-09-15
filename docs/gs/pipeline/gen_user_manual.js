@@ -106,6 +106,12 @@ const POST = {
     () => imgPara("71_msi_weboption.png", 420),
     () => caption("그림. 설치 구성 선택 화면 — \"BODA VMS Web 서버 포함\" · \"AI 학습 도구 포함\" 체크박스 (기본 켬, 해제 시 해당 파일 미설치) ※ v1.31.0 재캡처 예정"),
   ],
+  "5.11 카메라 캘리브레이션 — mm 로 재기 위한 준비": [
+    () => imgPara("53_calib_apply.png", 600),
+    () => caption("그림. Camera Calibration 창 — 원형(도트) 타겟 Circles Grid 실행 결과(20점 검출 오버레이)와 "
+      + "Apply 구역. 적용 절차 3단계 안내 · 레시피에 저장된 캘리브레이션 요약 · "
+      + "Resolution 을 갱신할 스텝 목록(현재값 → 적용값)"),
+  ],
   "7.18 SW 라이선스 (좌석 현황)": [
     () => imgPara("62_web_SW_라이선스.png", 600),
     () => caption("그림. SW 라이선스 좌석 현황 (System → SW 라이선스, Admin 전용) — 라이선스 정보 / 서버 지문 코드 / 점유 좌석 테이블"),
