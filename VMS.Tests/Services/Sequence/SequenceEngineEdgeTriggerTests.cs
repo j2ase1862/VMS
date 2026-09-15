@@ -62,7 +62,18 @@ namespace VMS.Tests.Services.Sequence
             };
         }
 
-        private static SequenceNodeConfig EdgeCheck(int channel, InputCheckMode mode, int timeoutMs = 5000, int debounceMs = 0) => new()
+        /// <summary>
+        /// 기본 타임아웃을 넉넉히 둔다(60초). 이 시험들이 보는 것은 <b>읽은 횟수와 통과 여부</b>이지
+        /// 타임아웃이 아니다 — 스크립트를 다 도는 데 실제로 드는 시간은 0.2초 남짓이다.
+        ///
+        /// <para>예전 기본값 5초는 CI 러너가 잠깐 멈추면(GC·디스크·러너 경합) 대기 루프 한가운데서
+        /// 기한이 지나 버렸다. 그러면 읽기가 중간에 끊겨 횟수가 모자란 채 끝난다 —
+        /// 2026-09-16 실제 실패: 6회 기대에 <b>4회</b>, 소요 5초(=기한). 다시 돌리면 통과하는
+        /// 전형적인 간헐 실패였다.</para>
+        ///
+        /// <para>타임아웃 자체를 보는 시험은 <c>timeoutMs</c> 를 직접 넘긴다.</para>
+        /// </summary>
+        private static SequenceNodeConfig EdgeCheck(int channel, InputCheckMode mode, int timeoutMs = 60_000, int debounceMs = 0) => new()
         {
             NodeType = SequenceNodeType.InputCheck,
             Name = "Wait Trigger",
