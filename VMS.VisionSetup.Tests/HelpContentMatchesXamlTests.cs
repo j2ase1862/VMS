@@ -85,15 +85,8 @@ namespace VMS.VisionSetup.Tests
         /// </summary>
         private static readonly HashSet<string> KnownEmptyHelp = new(StringComparer.Ordinal)
         {
-            "AnomalyTool.CalibrationSigma",
-            "DetectionTool.UseSahi", "DetectionTool.SahiTileSize", "DetectionTool.SahiOverlapRatio",
-            "DetectionTool.UseClahe", "DetectionTool.ClaheClipLimit", "DetectionTool.ClaheTileGridSize",
-            "DetectionTool.UsePerClassThresholds", "DetectionTool.UseDotAnalysis",
-            "DetectionTool.MinDotArea", "DetectionTool.MaxDotArea", "DetectionTool.DotCircularityThreshold",
-            "DetectionTool.MinDotDistance", "DetectionTool.DotClaheClipLimit", "DetectionTool.DotMorphKernelSize",
-            "DetectionTool.DotAdaptiveBlockSize", "DetectionTool.DotAdaptiveC",
-            "PhotometricStereoTool.OutputType", "PhotometricStereoTool.CurvatureGain",
-            "PhotometricStereoTool.ShadowThreshold", "PhotometricStereoTool.HighlightThreshold",
+            // 2026-09-15: 21곳 전부 채웠다 (AnomalyTool · DetectionTool CLAHE/SAHI/Dot · PhotometricStereo).
+            // 새 도구를 만들면서 도움말을 빼먹으면 여기 없는 항목이 생겨 테스트가 깨진다.
         };
 
         [Fact]
