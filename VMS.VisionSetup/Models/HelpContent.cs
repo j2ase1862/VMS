@@ -888,18 +888,33 @@ namespace VMS.VisionSetup.Models
                 }
             },
 
+            // ⚠ 파라미터 키는 ImageRectifyToolSettings.xaml 의 ParameterName 과 1:1 이어야 한다.
+            //   예전에는 존재하지 않는 항목 3개(UseCalibrationFile·CalibrationFilePath·InterpolationMode)를
+            //   설명하고 정작 있는 ApplyHomography 는 비어 있었다 — 물음표를 눌러도 아무것도 안 떴다.
             ["ImageRectifyTool"] = new ToolHelp
             {
                 Name = "Image Rectify (이미지 보정)",
-                Description = "캘리브레이션 결과를 사용해 렌즈 왜곡 제거 / 이미지 정렬을 수행합니다.\n캘리브레이션이 로드되지 않으면 입력 이미지를 그대로 통과 (pass-through, 실패가 아님).",
-                Usage = "광각 렌즈로 촬영한 영상의 핀쿠션/배럴 왜곡 제거, Hand-Eye 캘리브레이션 기반 픽셀→월드 좌표 정렬 전처리에 사용. 측정 파이프라인 최상단에 배치 권장.",
+                Description = "캘리브레이션 결과로 렌즈 왜곡을 펴거나, 비스듬히 본 평면을 정면에서 본 것처럼 바로잡습니다.\n\n" +
+                              "쓰는 값은 현재 레시피에 적용된 캘리브레이션입니다 (Camera → Calibration Manager 에서 [Apply to Current Recipe]).\n" +
+                              "캘리브레이션이 없으면 이미지를 그대로 통과시킵니다 — 실패가 아니라 '할 일이 없음' 입니다.",
+                Usage = "측정 파이프라인 맨 앞에 두어, 뒤따르는 도구들이 왜곡 없는 이미지를 보게 합니다.\n\n" +
+                        "두 체크박스는 캘리브레이션 방식에 따라 동작 여부가 갈립니다:\n" +
+                        "• Checkerboard 로 캘리브레이션 → Undistort 만 동작\n" +
+                        "• N-Point 로 캘리브레이션 → Apply Homography 만 동작\n" +
+                        "• Single Scale 로 캘리브레이션 → 둘 다 동작하지 않음 (mm 환산 비율만 나오는 방식)\n\n" +
+                        "켰는데 화면이 그대로면 대개 방식이 맞지 않는 경우입니다. 상태 메시지에 실제로 무엇이 적용됐는지 표시됩니다.",
                 CognexEquivalent = "CogIPOneImageTool (Calibration Apply), Cognex Calibration Wizard",
                 Parameters = new Dictionary<string, string>
                 {
-                    ["Undistort"] = "렌즈 왜곡 제거 활성화. 캘리브레이션 시 측정된 distortion coefficient (k1, k2, p1, p2, k3) 사용.",
-                    ["UseCalibrationFile"] = "외부 캘리브레이션 파일 사용 여부. 비활성 시 시스템 전역 캘리브레이션(AppSetup) 사용.",
-                    ["CalibrationFilePath"] = "캘리브레이션 결과 파일 경로(.json). HandEye / 카메라 내부파라미터 포함.",
-                    ["InterpolationMode"] = "보정 시 픽셀 보간:\n• Nearest: 가장 빠름, 픽셀화 발생\n• Linear: 기본 균형\n• Cubic: 가장 부드러움, 느림"
+                    ["Undistort"] = "렌즈 왜곡(배럴·핀쿠션)을 폅니다. 직선이어야 할 제품 모서리가 화면 가장자리에서 휘어 보일 때 켭니다.\n\n" +
+                                    "• 필요한 것: Checkerboard 방식 캘리브레이션 (카메라 내부 파라미터 + 왜곡 계수)\n" +
+                                    "• N-Point · Single Scale 로만 캘리브레이션했다면 켜도 아무 일도 일어나지 않습니다\n" +
+                                    "• 광각 렌즈 · 짧은 작동거리일수록 효과가 큽니다. 망원에 가까우면 차이가 거의 없습니다",
+                    ["ApplyHomography"] = "비스듬히 내려다본 평면을 정면에서 본 것처럼 폅니다. 사다리꼴로 찍힌 사각 제품이 직사각형이 됩니다.\n\n" +
+                                          "• 필요한 것: N-Point 방식 캘리브레이션 (평면 호모그래피)\n" +
+                                          "• Checkerboard · Single Scale 로만 캘리브레이션했다면 켜도 아무 일도 일어나지 않습니다\n" +
+                                          "• 카메라를 제품 면에 수직으로 세울 수 없는 설비에서 씁니다\n" +
+                                          "• 펴는 과정에서 가장자리가 잘리거나 늘어날 수 있습니다 — ROI 는 편 뒤의 화면 기준으로 잡으세요"
                 }
             },
 
@@ -933,6 +948,81 @@ namespace VMS.VisionSetup.Models
                     ["AnomalyWeight"] = "Weighted 모드 — Anomaly 점수에 곱할 가중치 (0~1).",
                     ["WeightedThreshold"] = "Weighted 모드 — 가중 합산 점수가 이 값 초과 시 NG 판정. 기본 0.5.",
                     ["DrawOverlay"] = "각 소스 모델의 판정 결과를 색상별 영역으로 시각화."
+                }
+            },
+
+            // ─── Calibration Manager 창 (Camera → Calibration Manager…) ───
+            // 도구가 아니라 창이지만 HelpIcon 은 ToolType 키로 조회하므로 같은 사전을 쓴다.
+            // CalibrationManagerWindow.xaml 의 ToolType="CalibrationManager" 와 짝.
+            ["CalibrationManager"] = new ToolHelp
+            {
+                Name = "Calibration Manager (카메라 캘리브레이션)",
+                Description = "화면의 픽셀이 실제로 몇 mm 인지 카메라에게 가르치는 창입니다.\n\n" +
+                              "여기서 만든 결과를 레시피에 적용하면 ① 측정 도구가 mm 로 판정하고 " +
+                              "② Image Rectify 도구가 렌즈 왜곡·기울어짐을 바로잡을 수 있습니다.",
+                Usage = "순서: 이미지 준비 → 방식 선택 → 값 입력 → [Run Calibration] → 결과 확인 → [Apply to Current Recipe].\n\n" +
+                        "이미지는 세 가지로 가져옵니다 — 파일 열기 / 카메라로 직접 촬영 / 실행 중인 VMS 화면 받기.",
+                Parameters = new Dictionary<string, string>
+                {
+                    ["CalibrationMode"] =
+                        "무엇을 알아낼지에 따라 방식을 고릅니다. 방식마다 나오는 결과가 다릅니다.\n\n" +
+                        "• Checkerboard — 체커보드 사진으로 렌즈 왜곡까지 알아냅니다. 가장 정확하고, " +
+                        "Image Rectify 의 Undistort 를 쓰려면 이 방식이어야 합니다.\n\n" +
+                        "• N-Point (planar) — 이미지에서 점 4개 이상을 찍고 각 점의 실제 mm 좌표를 입력합니다. " +
+                        "카메라가 제품 면을 비스듬히 볼 때 쓰며, Image Rectify 의 Apply Homography 가 이 결과를 씁니다.\n\n" +
+                        "• Single Scale (2 points) — 길이를 아는 구간의 양 끝을 찍고 그 길이를 입력합니다. " +
+                        "가장 간단하고 픽셀당 mm 비율만 나옵니다. 왜곡 보정은 못 합니다.",
+
+                    ["PatternCols"] =
+                        "체커보드의 가로 방향 **안쪽 교차점 수**입니다. 칸 수가 아닙니다.\n\n" +
+                        "검은칸·흰칸이 가로로 10칸이면 안쪽 교차점은 9개이므로 9 를 넣습니다. " +
+                        "가장 자주 틀리는 값이며, 틀리면 패턴을 못 찾았다는 메시지가 나옵니다.",
+                    ["PatternRows"] =
+                        "체커보드의 세로 방향 **안쪽 교차점 수**입니다. 칸 수가 아닙니다.\n\n" +
+                        "가로·세로 수가 서로 달라야 방향을 구분할 수 있으므로, 정사각 패턴(예: 9×9)은 피하세요.",
+                    ["SquareSizeMm"] =
+                        "체커보드 한 칸의 실제 한 변 길이(mm)입니다. 인쇄물이면 자로 재서 넣으세요 — " +
+                        "인쇄 배율이 100% 가 아닌 경우가 흔합니다.\n\n" +
+                        "이 값이 틀리면 왜곡 보정은 맞게 되지만 mm 환산이 통째로 어긋납니다.",
+                    ["AccumulateMultiView"] =
+                        "여러 장을 모아 한 번에 계산합니다. 체커보드를 각도·위치를 바꿔 가며 찍은 사진을 " +
+                        "차례로 불러와 [Run Calibration] 을 반복하면 누적됩니다.\n\n" +
+                        "• 한 장만으로도 계산되지만, 보통 **10~20장**을 모아야 왜곡 계수가 안정됩니다\n" +
+                        "• 화면의 서로 다른 구석을 채우도록 찍는 것이 중요합니다 — 가운데에서만 찍으면 " +
+                        "가장자리 왜곡을 알아낼 수 없습니다\n" +
+                        "• 다시 시작하려면 [Reset] 을 누릅니다",
+
+                    ["KnownLengthMm"] =
+                        "Single Scale 방식에서, 이미지에 찍은 두 점 사이의 실제 길이(mm)입니다.\n\n" +
+                        "제품의 알려진 치수나 자를 함께 놓고 촬영해 쓰면 됩니다. " +
+                        "길게 잡을수록 오차가 줍니다 — 화면을 가로지르는 길이를 권합니다.",
+
+                    ["ReprojectionError"] =
+                        "캘리브레이션이 얼마나 잘 맞았는지 보여주는 값입니다. **작을수록 좋습니다.**\n\n" +
+                        "• Checkerboard — 단위는 픽셀. 보통 **1 픽셀 미만**이면 양호, 2 를 넘으면 " +
+                        "패턴 값이 틀렸거나 사진이 흔들렸을 가능성이 큽니다\n" +
+                        "• N-Point — 단위는 mm. 입력한 좌표와 계산 결과의 차이입니다\n" +
+                        "• Single Scale — 항상 0 입니다. 검증할 여분의 점이 없는 방식이라 값의 의미가 없습니다",
+                    ["PixelSizeMm"] =
+                        "픽셀 하나가 실제로 몇 mm 인지입니다. 측정 도구가 픽셀을 mm 로 바꿀 때 이 값을 씁니다.\n\n" +
+                        "알고 있는 치수를 화면에서 재 보고 값이 맞는지 한 번 확인하세요 — " +
+                        "체커보드 칸 크기를 잘못 넣으면 이 값만 어긋납니다.",
+
+                    ["ApplyToRecipe"] =
+                        "계산 결과를 **현재 레시피에 저장**합니다. 이걸 눌러야 측정 도구와 Image Rectify 가 씁니다.\n\n" +
+                        "레시피마다 따로 보관되므로, 카메라나 렌즈·작동거리가 다른 레시피는 각각 캘리브레이션해야 합니다.",
+                    ["ClearRecipeCalibration"] =
+                        "현재 레시피에서 캘리브레이션을 지웁니다. 지운 뒤에는 측정 도구가 픽셀 단위로 돌아가고 " +
+                        "Image Rectify 는 이미지를 그대로 통과시킵니다.\n\n" +
+                        "카메라·렌즈·설치 높이를 바꿨다면 지우고 다시 캘리브레이션하세요 — 옛 값이 더 위험합니다.",
+
+                    ["ImageSource"] =
+                        "캘리브레이션에 쓸 이미지를 가져오는 방법입니다.\n\n" +
+                        "• Load Image… — 저장해 둔 사진 파일을 엽니다\n" +
+                        "• Capture from Camera — 연결된 카메라로 지금 한 장 찍습니다\n" +
+                        "• Receive Frame from VMS — VMS 가 실행 중이면 그 화면의 프레임을 그대로 받아옵니다. " +
+                        "VMS 가 카메라를 쓰고 있어 직접 촬영이 안 될 때 씁니다\n\n" +
+                        "버튼이 비활성이면 [Refresh Source Availability] 를 눌러 상태를 다시 확인하세요."
                 }
             },
 
