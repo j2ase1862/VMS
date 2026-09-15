@@ -121,7 +121,15 @@ namespace VMS.Core.SupportPackage
                         fileCount++;
                     }
 
-                    // 6) Manifest
+                    // 6) MLOps 학습 이미지 전송 큐
+                    {
+                        var entry = archive.CreateEntry("mlops_upload_queue.txt", CompressionLevel.Optimal);
+                        using var w = new StreamWriter(entry.Open(), Encoding.UTF8);
+                        WriteMlopsQueueStatus(w, appDataDir);
+                        fileCount++;
+                    }
+
+                    // 7) Manifest
                     var manifest = new SupportPackageManifest
                     {
                         ProductVersion = options.ProductVersion,
@@ -246,6 +254,100 @@ namespace VMS.Core.SupportPackage
             catch (Exception ex)
             {
                 w.WriteLine($"backups 열거 실패: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// MLOps 학습 이미지 전송 큐의 현재 상태.
+        ///
+        /// <para>현장에서 "NG 사진이 MLOps 에 안 올라간다" 는 말이 나왔을 때 먼저 볼 것들이다 —
+        /// 큐에 쌓여만 있는지(네트워크·서버 문제), 거절되고 있는지(서버가 받지 않는 상태),
+        /// 아니면 애초에 큐가 비어 있는지(전송 토글이 꺼져 있거나 NG 가 없었다).</para>
+        ///
+        /// <para>보낸 장수는 성공하면 파일이 지워져 큐를 세어서는 알 수 없으므로 업로더가
+        /// <c>stats.json</c> 에 누적해 둔다. 여기서는 그 파일을 그대로 싣는다.</para>
+        /// </summary>
+        private static void WriteMlopsQueueStatus(StreamWriter w, string appDataDir)
+        {
+            w.WriteLine("# MLOps 학습 이미지 전송 큐");
+            w.WriteLine($"GeneratedAtUtc:    {DateTime.UtcNow:o}");
+            w.WriteLine();
+
+            // 업로더의 LineNgImageUploader.QueueDirName 과 같은 이름 (VMS.Core 는 VMS 를 참조하지 않는다)
+            var queueDir = Path.Combine(appDataDir, "mlops_line_ng_queue");
+            if (!Directory.Exists(queueDir))
+            {
+                w.WriteLine("큐 폴더가 없습니다 — [NG 이미지 MLOps 전송] 이 한 번도 켜지지 않았거나,");
+                w.WriteLine("켠 뒤 보낼 이미지가 아직 없었습니다.");
+                w.WriteLine($"(찾은 경로: {queueDir})");
+                return;
+            }
+
+            try
+            {
+                // 드레인이 큐 폴더의 *.json 을 모두 큐 항목으로 보므로, 통계는 state\ 하위에 따로 있다
+                var pending = Directory.GetFiles(queueDir, "*.json", SearchOption.TopDirectoryOnly).ToList();
+                long pendingBytes = 0;
+                DateTime? oldest = null;
+                foreach (var f in pending)
+                {
+                    var img = Path.ChangeExtension(f, ".img");
+                    try
+                    {
+                        if (File.Exists(img)) pendingBytes += new FileInfo(img).Length;
+                        var at = File.GetLastWriteTimeUtc(f);
+                        if (oldest is null || at < oldest) oldest = at;
+                    }
+                    catch { /* 드레인이 지우는 중일 수 있다 */ }
+                }
+
+                var rejectedDir = Path.Combine(queueDir, "rejected");
+                var rejected = Directory.Exists(rejectedDir)
+                    ? Directory.GetFiles(rejectedDir, "*.json").Length
+                    : 0;
+
+                w.WriteLine($"대기 중:           {pending.Count} 장 ({pendingBytes / 1024.0 / 1024.0:F1} MB)");
+                w.WriteLine($"거절됨(보관):      {rejected} 장");
+                w.WriteLine(oldest is { } o
+                    ? $"가장 오래된 대기:  {o:o} ({(DateTime.UtcNow - o).TotalHours:F1} 시간 전)"
+                    : "가장 오래된 대기:  (없음)");
+                w.WriteLine();
+
+                var statsPath = Path.Combine(queueDir, "state", "stats.json");
+                if (File.Exists(statsPath))
+                {
+                    w.WriteLine("## 누적 통계 (stats.json)");
+                    try { w.WriteLine(File.ReadAllText(statsPath)); }
+                    catch (Exception ex) { w.WriteLine($"(읽기 실패: {ex.Message})"); }
+                }
+                else
+                {
+                    w.WriteLine("## 누적 통계");
+                    w.WriteLine("아직 없습니다 — 한 장도 보내거나 거절되지 않았습니다.");
+                }
+
+                if (rejected > 0)
+                {
+                    w.WriteLine();
+                    w.WriteLine("## 거절 사유 (최근 20건)");
+                    try
+                    {
+                        var reasons = Directory.GetFiles(rejectedDir, "*.reason.txt")
+                            .OrderByDescending(File.GetLastWriteTimeUtc).Take(20);
+                        foreach (var r in reasons)
+                        {
+                            string text;
+                            try { text = File.ReadAllText(r).Trim(); }
+                            catch { continue; }
+                            w.WriteLine($"- {File.GetLastWriteTimeUtc(r):o}  {text}");
+                        }
+                    }
+                    catch (Exception ex) { w.WriteLine($"(읽기 실패: {ex.Message})"); }
+                }
+            }
+            catch (Exception ex)
+            {
+                w.WriteLine($"큐 상태를 읽지 못했습니다: {ex.GetType().Name}: {ex.Message}");
             }
         }
 

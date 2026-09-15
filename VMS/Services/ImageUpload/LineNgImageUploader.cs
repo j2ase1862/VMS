@@ -26,6 +26,27 @@ namespace VMS.Services.ImageUpload
     }
 
     /// <summary>
+    /// 큐 폴더에 함께 두는 송신 통계(<c>stats.json</c>).
+    ///
+    /// <para><b>왜 파일인가.</b> 보낸 장수는 성공하면 파일을 지우므로 큐를 세어서는 알 수 없고,
+    /// 메모리에만 두면 VMS 를 다시 켜는 순간 사라진다. 현장에서 "어제부터 몇 장이나 올라갔나 ·
+    /// 거절된 게 있나" 를 묻는 시점은 대개 다시 켠 뒤다. Support Package 가 이 파일을 담아 간다.</para>
+    ///
+    /// <para>기록 실패는 무시한다 — 통계 때문에 이미지 전송이 멈추면 안 된다.</para>
+    /// </summary>
+    public sealed class LineNgUploadStats
+    {
+        public long Sent { get; set; }
+        public long Rejected { get; set; }
+        /// <summary>큐 상한에 걸려 버린 장수 — 네트워크가 오래 끊겨 있었다는 뜻이다.</summary>
+        public long DroppedOverCap { get; set; }
+        public string? LastSentUtc { get; set; }
+        public string? LastRejectedUtc { get; set; }
+        /// <summary>마지막 거절 사유 — 같은 이유가 반복되면 서버 설정 문제일 때가 많다.</summary>
+        public string? LastRejectReason { get; set; }
+    }
+
+    /// <summary>
     /// MLOps 큐 사이드카(.json). 전송 필드와 재시도 상태를 함께 담는다.
     /// </summary>
     public sealed class LineNgUploadMeta
@@ -92,6 +113,9 @@ namespace VMS.Services.ImageUpload
         private readonly OkSampler _okSampler = new();
         private readonly SemaphoreSlim _slots = new(MaxConcurrentUploads, MaxConcurrentUploads);
         private readonly object _capLock = new();
+        private readonly object _statsLock = new();
+        // 거절 경고는 드레인마다 다시 뜨면 감사 로그를 덮으므로 한 번만 남긴다 (다음 성공에서 되살아난다)
+        private bool _rejectWarned;
         private Timer? _drainTimer;
         private int _draining;
         private bool _disposed;
@@ -275,6 +299,7 @@ namespace VMS.Services.ImageUpload
                 count--;
                 if (e.Verdict != "OK")
                     Debug.WriteLine($"[LineNgImageUploader] 큐 상한 — NG 항목 폐기: {Path.GetFileName(e.Meta)}");
+                    UpdateStats(st => st.DroppedOverCap++);
             }
         }
 
@@ -363,7 +388,11 @@ namespace VMS.Services.ImageUpload
                     if (IsRejectedInBody(body, out var reason))
                         Reject(metaPath, $"서버가 파일을 받지 않음: {reason}");
                     else
+                    {
                         DeletePair(metaPath); // 중복(같은 해시)도 서버가 200 으로 답한다 — 완료
+                        UpdateStats(st => { st.Sent++; st.LastSentUtc = DateTime.UtcNow.ToString("o"); });
+                        _rejectWarned = false;   // 길이 다시 열렸다 — 다음 거절은 새 사건이다
+                    }
                 }
                 else if (IsDeterministicReject(resp.StatusCode))
                 {
@@ -380,6 +409,45 @@ namespace VMS.Services.ImageUpload
             }
         }
 
+        /// <summary>
+        /// 통계 파일 이름. <b>큐 폴더 바로 아래 두면 안 된다</b> — 드레인이 그 폴더의 <c>*.json</c> 을
+        /// 모두 큐 항목으로 읽어 meta 파싱에 실패한 파일을 지운다(PendingCount 도 같이 센다).
+        /// 그래서 하위 폴더에 둔다. Support Package 도 같은 경로 규칙으로 찾는다.
+        /// </summary>
+        public const string StatsFileName = "stats.json";
+
+        /// <summary>통계·기타 부수 파일을 두는 하위 폴더 — 드레인 대상 밖.</summary>
+        public const string StatsSubdir = "state";
+
+        private string StatsPath => Path.Combine(_queueDir, StatsSubdir, StatsFileName);
+
+        /// <summary>통계를 읽어 고치고 되쓴다. 실패는 삼킨다 — 전송을 막을 이유가 없다.</summary>
+        private void UpdateStats(Action<LineNgUploadStats> change)
+        {
+            lock (_statsLock)
+            {
+                try
+                {
+                    LineNgUploadStats stats;
+                    try
+                    {
+                        stats = File.Exists(StatsPath)
+                            ? JsonSerializer.Deserialize<LineNgUploadStats>(File.ReadAllText(StatsPath)) ?? new()
+                            : new();
+                    }
+                    catch { stats = new(); }   // 깨진 파일은 새로 시작한다
+
+                    change(stats);
+                    Directory.CreateDirectory(Path.Combine(_queueDir, StatsSubdir));
+                    File.WriteAllText(StatsPath, JsonSerializer.Serialize(stats));
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[LineNgImageUploader] 통계 기록 실패(무시): {ex.Message}");
+                }
+            }
+        }
+
         private void Backoff(string metaPath, LineNgUploadMeta meta, string reason)
         {
             meta.Attempts++;
@@ -393,6 +461,29 @@ namespace VMS.Services.ImageUpload
         private void Reject(string metaPath, string reason)
         {
             Debug.WriteLine($"[LineNgImageUploader] CRITICAL: 서버가 이 이미지를 거절했습니다. 다시 보내지 않습니다 — {reason}");
+
+            UpdateStats(st =>
+            {
+                st.Rejected++;
+                st.LastRejectedUtc = DateTime.UtcNow.ToString("o");
+                st.LastRejectReason = Truncate(reason, 300);
+            });
+
+            // 거절은 재시도해도 소용없는 상태라 사람이 봐야 한다. 예전에는 Debug.WriteLine 뿐이라
+            // Release 빌드에서는 아무 데도 남지 않았다 — 현장에서 "왜 사진이 안 올라가지" 의 답이
+            // 어디에도 없었다. 감사 로그에 남기면 Support Package 에 함께 실려 나간다.
+            if (!_rejectWarned)
+            {
+                _rejectWarned = true;
+                try
+                {
+                    AuditLogger.Instance.Log(
+                        AuditCategory.System, "MlopsImageRejected", AuditOutcome.Failure,
+                        source: nameof(LineNgImageUploader),
+                        details: $"서버가 학습용 이미지를 거절했습니다. 재시도하지 않습니다 — {Truncate(reason, 300)}");
+                }
+                catch { /* 감사 실패가 전송을 막지 않는다 */ }
+            }
             try
             {
                 var dir = Path.Combine(_queueDir, RejectedSubdir);
