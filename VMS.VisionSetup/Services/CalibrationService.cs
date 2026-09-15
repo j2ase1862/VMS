@@ -136,12 +136,14 @@ namespace VMS.VisionSetup.Services
             // 밝은 배경의 검은 원이 기본. 반대(어두운 배경의 밝은 원)면 반전해 한 번 더 시도한다 —
             // 현장 타겟은 둘 다 쓰이고, 사용자가 그 차이를 알 이유가 없다.
             int expected = patternCols * patternRows;
-            var centers = TryFindCircles(gray, patternSize, flags, expected);
+            using var blobDetector = CreateCircleDetector(gray.Width, gray.Height);
+
+            var centers = TryFindCircles(gray, patternSize, flags, expected, blobDetector);
             if (centers == null)
             {
                 using var inverted = new Mat();
                 Cv2.BitwiseNot(gray, inverted);
-                centers = TryFindCircles(inverted, patternSize, flags, expected);
+                centers = TryFindCircles(inverted, patternSize, flags, expected, blobDetector);
             }
 
             if (centers == null)
@@ -344,19 +346,63 @@ namespace VMS.VisionSetup.Services
             {
                 rms = Cv2.CalibrateCamera(
                     objectPoints, imagePoints, imageSize, cameraMatrix, distCoeffs, out _, out _);
+
+                // 같은 원인(평면 한 장 = 미결정)이라도 예외가 아니라 **말도 안 되는 값**으로 끝나는
+                // 경우가 있다 — 실제로 RMS 가 159억 px 로 나왔다. 그대로 두면 화면에 그 숫자가 뜨고
+                // 사용자는 무슨 뜻인지 알 수 없다. 물리적으로 불가능한 값이면 같은 안내로 돌린다.
+                if (double.IsNaN(rms) || double.IsInfinity(rms) || rms > ImplausibleRmsPx)
+                {
+                    error = AdviceFor(imagePoints.Count);
+                    return false;
+                }
                 return true;
             }
             catch (OpenCVException)
             {
                 rms = 0;
-                error = imagePoints.Count < 2
-                    ? "한 장만으로는 계산할 수 없습니다 — 평면 타겟을 정면에서 한 장 찍으면 " +
-                      "렌즈 값이 수학적으로 정해지지 않습니다. [Accumulate Multi-View] 를 켜고 " +
-                      "타겟의 각도·위치를 바꿔 가며 10~20장을 모은 뒤 다시 실행하세요."
-                    : "계산에 실패했습니다 — 모은 사진들이 서로 너무 비슷하면(같은 각도·같은 위치) " +
-                      "렌즈 값을 정할 수 없습니다. 타겟을 기울이고 화면의 여러 구석으로 옮겨 가며 다시 모으세요.";
+                error = AdviceFor(imagePoints.Count);
                 return false;
             }
+        }
+
+        /// <summary>정상적인 캘리브레이션이 넘을 수 없는 재투영 오차(px). 넘으면 계산이 발산한 것.</summary>
+        private const double ImplausibleRmsPx = 50.0;
+
+        private static string AdviceFor(int viewCount) => viewCount < 2
+            ? "한 장만으로는 계산할 수 없습니다 — 평면 타겟을 정면에서 한 장 찍으면 " +
+              "렌즈 값이 수학적으로 정해지지 않습니다. [Accumulate Multi-View] 를 켜고 " +
+              "타겟의 각도·위치를 바꿔 가며 10~20장을 모은 뒤 다시 실행하세요."
+            : "계산이 수렴하지 않았습니다 — 모은 사진들이 서로 너무 비슷하면(같은 각도·같은 위치) " +
+              "렌즈 값을 정할 수 없습니다. 타겟을 기울이고 화면의 여러 구석으로 옮겨 가며 다시 모으세요.";
+
+        /// <summary>
+        /// 원형 그리드용 blob 검출기. 면적 상·하한을 <b>화면 크기에 비례</b>시킨다.
+        ///
+        /// <para><b>왜 기본 검출기를 못 쓰는가 (2026-09-15 실증 PC).</b> OpenCV 기본 SimpleBlobDetector 는
+        /// 면적 <c>25~5000 px²</c> 만 blob 으로 본다. 그런데 산업용 카메라(2448×2048)로 타겟을 화면에
+        /// 크게 담아 찍으면 원 하나가 <b>1만 px² 을 훌쩍 넘어</b> 전부 걸러진다 — 사람 눈에는 아주
+        /// 또렷한 원인데 "원을 못 찾았다" 가 된다. 실촬영에서 기본 검출기는 큰 원 20개를 하나도 잡지
+        /// 못했다(작은 표식만 9~12개).</para>
+        ///
+        /// <para>상한을 화면의 2% 로 둔다 — 지름이 화면 폭의 16% 쯤 되는 원까지 받으면서, 배경(종이·
+        /// 보드 전체)이 통째로 blob 으로 잡히는 것은 막는다. 원형도·관성비는 비스듬히 찍혀 타원이 된
+        /// 원을 받아들일 만큼 느슨하게 두되, 잡음을 거를 정도는 유지한다.</para>
+        /// </summary>
+        private static SimpleBlobDetector CreateCircleDetector(int width, int height)
+        {
+            double area = (double)width * height;
+            return SimpleBlobDetector.Create(new SimpleBlobDetector.Params
+            {
+                FilterByArea = true,
+                MinArea = (float)Math.Max(30.0, area * 5e-6),
+                MaxArea = (float)(area * 0.02),
+                FilterByCircularity = true,
+                MinCircularity = 0.6f,
+                FilterByConvexity = true,
+                MinConvexity = 0.8f,
+                FilterByInertia = true,
+                MinInertiaRatio = 0.25f,
+            });
         }
 
         /// <summary>
@@ -368,11 +414,12 @@ namespace VMS.VisionSetup.Services
         /// 개수가 기대와 다른 경우도 여기서 걸러낸다 — 그대로 넘기면 CalibrateCamera 가
         /// <c>"m.dims >= 2"</c> 로 터진다.</para>
         /// </summary>
-        private static Point2f[]? TryFindCircles(Mat image, Size patternSize, FindCirclesGridFlags flags, int expected)
+        private static Point2f[]? TryFindCircles(
+            Mat image, Size patternSize, FindCirclesGridFlags flags, int expected, Feature2D blobDetector)
         {
             try
             {
-                if (!Cv2.FindCirclesGrid(image, patternSize, out var centers, flags))
+                if (!Cv2.FindCirclesGrid(image, patternSize, out var centers, flags, blobDetector))
                     return null;
                 if (centers == null || centers.Length != expected)
                     return null;

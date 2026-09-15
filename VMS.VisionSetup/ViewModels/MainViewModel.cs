@@ -1,4 +1,4 @@
-using VMS.Camera.Converters;
+﻿using VMS.Camera.Converters;
 using VMS.Camera.Interfaces;
 using VMS.Camera.Models;
 using VMS.Camera.Services;
@@ -4282,6 +4282,17 @@ namespace VMS.VisionSetup.ViewModels
         public void OpenCalibrationManager()
         {
             _dialogService.ShowCalibrationManagerDialog();
+
+            // 창에서 [Apply to Current Recipe] 를 눌렀다면 레시피의 캘리브레이션과 스텝의
+            // Resolution 이 바뀌어 있다. Steps 그리드는 같은 InspectionStep 인스턴스를 보고
+            // 있어 알아서 갱신되지만, 워크스페이스의 mm 폴백 값은 여기서 다시 맞춰 준다.
+            if (SelectedStep != null)
+                _visionService.CurrentStepResolutionMmPerPx = SelectedStep.Resolution;
+
+            var calib = _recipeService.CurrentRecipe?.Calibration;
+            StatusMessage = calib != null
+                ? $"캘리브레이션 적용됨: {calib.PixelSizeMm:F5} mm/px ({calib.Mode})"
+                : "캘리브레이션 없음 — 측정은 스텝 Resolution(mm/px) 또는 픽셀 단위로 판정됩니다.";
         }
 
         /// <summary>

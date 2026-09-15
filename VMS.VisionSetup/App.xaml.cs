@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -372,6 +372,9 @@ namespace VMS.VisionSetup
                                 try { wins.Add(("RecipeManager", new Views.Recipe.RecipeManagerWindow(
                                     recipeService, cameraService, dialogService, parameterSyncService), true)); }
                                 catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "RecipeManager ctor: " + ex + "\n"); }
+                                try { wins.Add(("Calibration", new Views.Calibration.CalibrationManagerWindow(
+                                    recipeService, dialogService), true)); }
+                                catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "Calibration ctor: " + ex + "\n"); }
                                 try { wins.Add(("InferenceSettings", new Views.OnnxSettingsDialog(), false)); }
                                 catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "InferenceSettings ctor: " + ex + "\n"); }
                                 try { wins.Add(("SynthData", new Views.SynthData.SynthDataWindow(), true)); }

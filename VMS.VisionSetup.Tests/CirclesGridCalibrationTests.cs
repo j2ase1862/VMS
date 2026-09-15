@@ -194,6 +194,31 @@ namespace VMS.VisionSetup.Tests
             Assert.Contains("대칭", result.Message);
         }
 
+        /// <summary>
+        /// 2026-09-15 실증 PC: 산업용 카메라(2448×2048)로 타겟을 크게 담아 찍으니 원 하나가
+        /// 1만 px² 을 넘어, OpenCV 기본 blob 검출기의 상한(5000 px²)에 전부 걸러졌다 —
+        /// 사람 눈에는 또렷한 원인데 "원을 못 찾았다" 가 났다. 면적 상한을 화면 크기에 비례시켜 해결.
+        ///
+        /// <para>여기서는 <b>기본 검출기라면 확실히 걸러질 크기</b>(반지름 60px → 약 11,300 px²)로
+        /// 만들어, 검출기 설정이 되돌아가면 바로 깨지게 한다.</para>
+        /// </summary>
+        [Fact]
+        public void Large_circles_beyond_default_detector_limit_are_found()
+        {
+            const int radius = 60;                       // 면적 ≈ 11,300 px² (기본 상한 5000 초과)
+            using var img = MakeAsymmetricGrid(
+                cols: 4, rows: 5, spacingMm: 20.0, pxPerMm: 12.0, radiusPx: radius, marginPx: 160);
+
+            var svc = new CalibrationService();
+            var result = svc.RunCirclesGrid(img, 4, 5, 20.0, asymmetric: true, accumulate: false);
+
+            // 한 장이라 계산 단계에서는 막힌다 — 여기서 보려는 것은 그 **앞 단계**인 검출이다.
+            // "못 찾았습니다" 가 아니라 "여러 장을 모으라" 는 안내가 나와야 원을 찾았다는 뜻이다.
+            Assert.False(result.Success);
+            Assert.DoesNotContain("찾지 못했습니다", result.Message);
+            Assert.Contains("Accumulate Multi-View", result.Message);
+        }
+
         [Fact]
         public void Empty_image_is_rejected()
         {
