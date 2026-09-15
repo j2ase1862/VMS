@@ -85,7 +85,8 @@
             <StackPanel>
                 <controls:EnumComboBoxParameter Label="Image Source"
                     ItemsSource="{Binding AvailableSources}"
-                    SelectedValue="{Binding SelectedSourceOption}"/>
+                    SelectedValue="{Binding SelectedSourceOption}"
+                    ToolType="CalibrationManager" ParameterName="ImageSource"/>
 
                 <!-- VMS Writer 활성 시 안내 -->
                 <Border Background="{StaticResource BrushWarningSoft}" BorderBrush="#AA7A00" BorderThickness="1"
@@ -142,24 +143,25 @@
 
                 <controls:EnumComboBoxParameter Label="Calibration Mode"
                     ItemsSource="{Binding AvailableModes}"
-                    SelectedValue="{Binding SelectedModeOption}"/>
+                    SelectedValue="{Binding SelectedModeOption}"
+                    ToolType="CalibrationManager" ParameterName="CalibrationMode"/>
 
                 <!-- ── Checkerboard 패널 ── -->
                 <StackPanel Visibility="{Binding IsCheckerboardMode, Converter={StaticResource BoolToVis}}">
                     <TextBlock Text="Checkerboard Pattern" Style="{StaticResource SectionHeader}"/>
-                    <TextBlock Style="{StaticResource FieldLabel}" Text="Pattern Cols (inner corners)"/>
-                    <TextBox Text="{Binding PatternCols, UpdateSourceTrigger=PropertyChanged}"
-                             Style="{StaticResource DarkTextBox}"/>
-                    <TextBlock Style="{StaticResource FieldLabel}" Text="Pattern Rows (inner corners)"/>
-                    <TextBox Text="{Binding PatternRows, UpdateSourceTrigger=PropertyChanged}"
-                             Style="{StaticResource DarkTextBox}"/>
-                    <TextBlock Style="{StaticResource FieldLabel}" Text="Square Size (mm)"/>
-                    <TextBox Text="{Binding SquareSizeMm, UpdateSourceTrigger=PropertyChanged}"
-                             Style="{StaticResource DarkTextBox}"/>
+                    <controls:TextBoxParameter Label="Pattern Cols (inner corners)"
+                        Value="{Binding PatternCols}"
+                        ToolType="CalibrationManager" ParameterName="PatternCols"/>
+                    <controls:TextBoxParameter Label="Pattern Rows (inner corners)"
+                        Value="{Binding PatternRows}"
+                        ToolType="CalibrationManager" ParameterName="PatternRows"/>
+                    <controls:TextBoxParameter Label="Square Size (mm)"
+                        Value="{Binding SquareSizeMm}"
+                        ToolType="CalibrationManager" ParameterName="SquareSizeMm"/>
 
-                    <CheckBox Content="Accumulate Multi-View"
-                              IsChecked="{Binding AccumulateMultiView}"
-                              Style="{StaticResource WindowDarkCheckBox}" Margin="0,8,0,4"/>
+                    <controls:CheckBoxParameter Label="Accumulate Multi-View"
+                        IsChecked="{Binding AccumulateMultiView}"
+                        ToolType="CalibrationManager" ParameterName="AccumulateMultiView"/>
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                         <TextBlock Foreground="{StaticResource BrushTextMuted}" FontSize="11" VerticalAlignment="Center">
                             <Run Text="Accumulated: "/>
@@ -207,9 +209,9 @@
                         <Run Text="Point 2: "/>
                         <Run Text="{Binding ScalePoint2Display, Mode=OneWay}" Foreground="{StaticResource BrushTextAccent}" FontWeight="Bold"/>
                     </TextBlock>
-                    <TextBlock Style="{StaticResource FieldLabel}" Text="Known Length (mm)"/>
-                    <TextBox Text="{Binding KnownLengthMm, UpdateSourceTrigger=PropertyChanged}"
-                             Style="{StaticResource DarkTextBox}"/>
+                    <controls:TextBoxParameter Label="Known Length (mm)"
+                        Value="{Binding KnownLengthMm}"
+                        ToolType="CalibrationManager" ParameterName="KnownLengthMm"/>
                     <Button Content="Clear Picked Points" Command="{Binding ClearPickedPointsCommand}"
                             Style="{StaticResource ActionButton}" Background="{StaticResource BrushBorderStrong}" Padding="8,2"/>
                 </StackPanel>
@@ -219,25 +221,41 @@
                         Style="{StaticResource ActionButton}" Background="{StaticResource BrushSuccess}"/>
 
                 <TextBlock Text="Result" Style="{StaticResource SectionHeader}"/>
-                <TextBlock Foreground="{StaticResource BrushTextMuted}" FontSize="11">
-                    <Run Text="Reprojection Error: "/>
-                    <Run Text="{Binding ReprojectionError, Mode=OneWay, StringFormat='{}{0:F4} px', FallbackValue='-'}"
-                         Foreground="{StaticResource BrushTextAccent}" FontWeight="Bold"/>
-                </TextBlock>
-                <TextBlock Foreground="{StaticResource BrushTextMuted}" FontSize="11" Margin="0,2,0,8">
-                    <Run Text="Pixel Size: "/>
-                    <Run Text="{Binding PixelSizeMm, Mode=OneWay, StringFormat='{}{0:F5} mm/px', FallbackValue='-'}"
-                         Foreground="{StaticResource BrushTextAccent}" FontWeight="Bold"/>
-                </TextBlock>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Foreground="{StaticResource BrushTextMuted}" FontSize="11" VerticalAlignment="Center">
+                        <Run Text="Reprojection Error: "/>
+                        <Run Text="{Binding ReprojectionError, Mode=OneWay, StringFormat='{}{0:F4}', FallbackValue='-'}"
+                             Foreground="{StaticResource BrushTextAccent}" FontWeight="Bold"/>
+                    </TextBlock>
+                    <controls:HelpIcon ToolType="CalibrationManager" ParameterName="ReprojectionError"
+                                       Margin="5,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,2,0,8">
+                    <TextBlock Foreground="{StaticResource BrushTextMuted}" FontSize="11" VerticalAlignment="Center">
+                        <Run Text="Pixel Size: "/>
+                        <Run Text="{Binding PixelSizeMm, Mode=OneWay, StringFormat='{}{0:F5} mm/px', FallbackValue='-'}"
+                             Foreground="{StaticResource BrushTextAccent}" FontWeight="Bold"/>
+                    </TextBlock>
+                    <controls:HelpIcon ToolType="CalibrationManager" ParameterName="PixelSizeMm"
+                                       Margin="5,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
 
                 <TextBlock Text="Apply" Style="{StaticResource SectionHeader}"/>
-                <Button Content="Apply to Current Recipe"
-                        Command="{Binding ApplyToRecipeCommand}"
-                        IsEnabled="{Binding HasResult}"
-                        Style="{StaticResource ActionButton}" Background="{StaticResource BrushAccent}"/>
-                <Button Content="Clear Calibration from Recipe"
-                        Command="{Binding ClearRecipeCalibrationCommand}"
-                        Style="{StaticResource ActionButton}" Background="{StaticResource BrushDanger}"/>
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="Apply to Current Recipe"
+                            Command="{Binding ApplyToRecipeCommand}"
+                            IsEnabled="{Binding HasResult}"
+                            Style="{StaticResource ActionButton}" Background="{StaticResource BrushAccent}"/>
+                    <controls:HelpIcon ToolType="CalibrationManager" ParameterName="ApplyToRecipe"
+                                       Margin="5,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="Clear Calibration from Recipe"
+                            Command="{Binding ClearRecipeCalibrationCommand}"
+                            Style="{StaticResource ActionButton}" Background="{StaticResource BrushDanger}"/>
+                    <controls:HelpIcon ToolType="CalibrationManager" ParameterName="ClearRecipeCalibration"
+                                       Margin="5,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
 
                 <TextBlock Text="Status" Style="{StaticResource SectionHeader}"/>
                 <Border Background="{StaticResource BrushBgCard}" CornerRadius="3" Padding="8" Margin="0,0,0,8">

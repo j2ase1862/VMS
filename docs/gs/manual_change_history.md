@@ -717,3 +717,59 @@ Web 접속이 되지 않았고, 설정 마법사의 [Web 서버 서비스 시작
   서버마다 15좌석씩 45대까지 올라가도 초과로 안 잡힘). 지금은 전환기 정책이라 항상 허용이지만,
   **좌석 강제 모드를 켜기 전에 셈 방식을 정해야 한다**.
 - 전사 통합 화면은 별도 설계 필요(각 서버가 상위로 올려보내는 구조).
+
+---
+
+## 23. 카메라 캘리브레이션 — 도구 도움말 정정 · 창 도움말 신설 · 매뉴얼 절 신설 — **반영 완료 (2026-09-15: 본편 §5.11·§10.2·§11.4)**
+
+**사용자 제기 (2026-09-15).** ① Image Rectify 파라미터 도움말이 부실 ② Camera → Calibration Manager
+창에 도움말이 하나도 없음 ③ 카메라 캘리브레이션 사용법이 매뉴얼에 없음.
+
+**확인한 사실 — ①은 부실이 아니라 틀린 것이었다.** `HelpContent["ImageRectifyTool"]` 이 문서화한
+파라미터 4개 중 **3개는 도구에 존재하지 않고**(UseCalibrationFile · CalibrationFilePath ·
+InterpolationMode), 화면에 실제로 있는 `ApplyHomography` 는 **설명이 비어 있었다**(눌러도 아무것도 안 뜸).
+②는 그 창이 도움말을 실어 나르는 래퍼 컨트롤 대신 날 TextBox/CheckBox 를 써서 HelpIcon 이 0개였다.
+
+**조치**
+- `HelpContent["ImageRectifyTool"]` 을 실제 2개 항목으로 교체. **어떤 캘리브레이션 방식에서만
+  동작하는지**를 명시 — Undistort 는 Checkerboard, ApplyHomography 는 N-Point 에서만 동작하고
+  Single Scale 로는 둘 다 안 된다. 이걸 몰라서 "켰는데 아무 일도 안 일어난다" 가 된다.
+- `HelpContent["CalibrationManager"]` 신설(11항목) + 창의 컨트롤을 래퍼로 교체해 물음표 배선.
+  결과 표시의 `Reprojection Error` 단위 표기도 정정 — **방식마다 단위가 다르다**(Checkerboard=px,
+  N-Point=mm, Single Scale=0). 예전에는 항상 "px" 로 찍혀 N-Point 에서 틀린 표기였다.
+- 본편 **§5.11 카메라 캘리브레이션** 신설 — 창 여는 법 · 이미지 소스 3종 · 방식 3종 선택 표 ·
+  체커보드 절차(안쪽 교차점 수·칸 크기 실측·10~20장 누적) · 결과 읽는 법 · 레시피 적용 ·
+  Image Rectify 와의 관계 표 · Resolution 직접 입력(§5.6)과의 비교.
+- 본편 **§10.2** 트러블슈팅 3건 신설 — 패턴을 못 찾는 경우 · Image Rectify 가 안 먹는 경우 ·
+  mm 값이 실제와 다른 경우.
+
+**⚠ 절 번호 주의.** 기존 절을 밀지 않고 **§5.11 로 덧붙였다** — `gen_user_manual.js` 가
+`"5.10 딥러닝 도구 — 모델 파일과 레지스트리"` 제목 문자열을 키로 스크린샷을 꽂기 때문에,
+번호를 밀면 그 매핑이 조용히 깨진다.
+
+### 재발 방지 테스트 — 그리고 드러난 같은 결함 3건
+
+`HelpContentMatchesXamlTests` 신설: XAML 의 (ToolType, ParameterName) 쌍과 도구 클래스의 실제 속성을
+대조해 ① 물음표가 있는데 설명이 빈 자리 ② 도구에 없는 설정을 설명하는 자리를 잡는다.
+
+이 스캔으로 **같은 유형의 결함이 3개 도구에 더** 있는 것이 드러났다(기준선으로 고정, `KnownStaleHelp`):
+
+| 도구 | 설명은 이렇게 돼 있는데 | 실제 항목은 |
+|---|---|---|
+| PlaneFitTool | InlierThresholdMm · MaxIterations · MinInlierRatio | RansacIterations · RansacThreshold · SampleStride |
+| SegmentationTool | ConfidenceThreshold · TargetClassIndex · DrawOverlay | UseImageNetNormalization · BackgroundClass · ShowOverlay |
+| Geometry3DTool | ExpectedValue · Tolerance · EnableJudgment | (해당 속성 없음) |
+
+**셋 다 문서화된 항목이 전부 옛 이름이고, 실제 항목은 설명이 비어 있었다** — Image Rectify 와 같다.
+**같은 세션에서 3건 모두 정정 완료** — 실제 항목 이름으로 교체하고 설명을 새로 썼다
+(PlaneFit 의 RANSAC 3항목 · Segmentation 의 정규화/배경 클래스/오버레이 · Geometry3D 는 존재하지 않는
+판정 3항목 제거 + 이미 쓰여 있던 설명이 화면에 뜨도록 물음표 배선). `KnownStaleHelp` 는 **비었다**.
+
+남은 것은 **물음표는 있는데 설명이 빈 자리 21곳**(DetectionTool 의 SAHI·CLAHE·Dot 계열,
+PhotometricStereo, AnomalyTool)이며 `KnownEmptyHelp` 기준선에 올라 있다. 목록은 늘면 테스트가 깨지고,
+채우면 목록에서 지우게 되어 자연히 줄어든다.
+
+### 매뉴얼 반영 포인트 (완료)
+
+- §5.11 신설 · §5.6 에서 §5.11 로 연결 · §10.2 트러블슈팅 3건 · §11.4 문서 보강 항목 · 목차 1줄.
+- 스크린샷 없음 — 창 캡처를 넣으려면 실제 체커보드 이미지를 띄운 상태가 필요하다(잔여).

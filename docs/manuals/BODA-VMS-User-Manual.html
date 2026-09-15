@@ -163,6 +163,7 @@
         <li><a href="#vs-webparams">Web 파라미터 연동</a></li>
         <li><a href="#vs-plc">PLC 통계 출력</a></li>
         <li><a href="#vs-dl-models">딥러닝 도구 — 모델 파일과 레지스트리</a></li>
+        <li><a href="#vs-calibration">카메라 캘리브레이션 — mm 로 재기 위한 준비</a></li>
       </ol>
     </li>
     <li><a href="#deeplearning">AI 학습 도구 (별책 · 선택 구성 요소)</a></li>
@@ -1160,7 +1161,9 @@ System Setup 3단계(§3)에는 이 항목이 없으며, "카메라 설정 유�
 <ul>
   <li><strong>캘리브레이션 없이 mm 로 재기</strong> — 카메라 캘리브레이션을 하지 않았다면,
       스텝 그리드의 <strong>Resolution (mm/px)</strong> 값을 입력해 두세요. 측정 도구가
-      이 값으로 픽셀을 mm 로 환산합니다.</li>
+      이 값으로 픽셀을 mm 로 환산합니다.
+      <br>다만 이 방법은 렌즈 왜곡을 보정하지 못하고 화면 위치에 따른 오차도 그대로 남습니다.
+      정밀 측정이 목적이면 <a href="#vs-calibration">§5.11 카메라 캘리브레이션</a>을 하세요.</li>
   <li><strong>템플릿은 판정까지 연결되어 만들어집니다</strong> — 예제 템플릿의
       엣지 간 거리 측정 · Blob 검출 · 컬러 객체 검출은 마지막 Result 판정까지
       연결된 상태로 생성되어, 값만 조정하면 OK/NG 판정이 바로 동작합니다.</li>
@@ -1345,6 +1348,108 @@ IoU · 마스크 임계는 없습니다(집합 예측이라 NMS 를 쓰지 않�
 </ul>
 <div class="callout tip"><strong>모델 참조와 검사 이력:</strong> 참조로 지정한 모델은 검사 결과와 함께 "어느 모델 버전이
 판정했는지" 가 Web 생산 이력에 기록되어, MLOps 라인 모니터링이 모델 버전별 불량률을 집계합니다.</div>
+
+<h3 id="vs-calibration">5.11 카메라 캘리브레이션 — mm 로 재기 위한 준비</h3>
+<p>화면의 픽셀이 실제로 몇 mm 인지 카메라에게 가르치는 과정입니다. 이걸 해 두면
+<strong>측정 도구가 mm 로 판정</strong>하고, 렌즈 때문에 휘어 보이거나 비스듬해 보이는 이미지를
+<strong>Image Rectify 도구가 바로잡을</strong> 수 있습니다.</p>
+<p>여는 곳은 비전 설정 상단 메뉴 <strong>Camera → Calibration Manager…</strong> 입니다.</p>
+
+<h4>1단계 — 캘리브레이션에 쓸 이미지 가져오기</h4>
+<p>오른쪽 위 <strong>Image Source</strong> 에서 셋 중 하나를 고릅니다.</p>
+<ul>
+  <li><strong>파일 열기</strong> — 미리 찍어 둔 사진을 엽니다.</li>
+  <li><strong>카메라로 촬영</strong> — 연결된 카메라로 지금 한 장 찍습니다.</li>
+  <li><strong>VMS 화면 받기</strong> — VMS 가 실행 중이면 그 화면의 영상을 그대로 받아옵니다.
+      VMS 가 카메라를 쓰고 있어 직접 촬영이 안 될 때 씁니다.</li>
+</ul>
+<p>버튼이 눌리지 않으면 <strong>[Refresh Source Availability]</strong> 로 상태를 다시 확인하세요.</p>
+
+<h4>2단계 — 방식 고르기</h4>
+<p><strong>Calibration Mode</strong> 에서 고릅니다. 방식마다 <strong>알아내는 것이 다르고</strong>,
+그에 따라 나중에 Image Rectify 에서 쓸 수 있는 기능도 달라집니다.</p>
+<table>
+  <tr><th>방식</th><th>준비물</th><th>알아내는 것</th><th>이럴 때 씁니다</th></tr>
+  <tr>
+    <td><strong>Checkerboard</strong></td>
+    <td>체커보드(격자무늬) 인쇄물</td>
+    <td>렌즈 왜곡 + 픽셀당 mm</td>
+    <td>가장 정확합니다. 광각 렌즈처럼 화면 가장자리가 휘는 경우 <strong>반드시 이 방식</strong></td>
+  </tr>
+  <tr>
+    <td><strong>N-Point (planar)</strong></td>
+    <td>실제 mm 좌표를 아는 점 4개 이상</td>
+    <td>기울어진 평면을 펴는 값 + 픽셀당 mm</td>
+    <td>카메라를 제품 면에 수직으로 세울 수 없어 사다리꼴로 찍힐 때</td>
+  </tr>
+  <tr>
+    <td><strong>Single Scale</strong></td>
+    <td>길이를 아는 구간 하나</td>
+    <td>픽셀당 mm 만</td>
+    <td>가장 간단합니다. 왜곡이 거의 없고 mm 환산만 필요할 때</td>
+  </tr>
+</table>
+
+<h4>3단계 — 값 입력하고 실행</h4>
+<p><strong>Checkerboard</strong> 방식 기준입니다(가장 많이 씁니다).</p>
+<ol>
+  <li><strong>Pattern Cols / Rows</strong> — <strong>안쪽 교차점 수</strong>를 넣습니다. 칸 수가 아닙니다.
+      가로로 10칸이면 안쪽 교차점은 9개이므로 <strong>9</strong> 입니다.
+      <strong>가장 자주 틀리는 값</strong>이며, 틀리면 "패턴을 찾지 못했다" 는 메시지가 나옵니다.
+      가로·세로 수는 서로 달라야 합니다(정사각 패턴은 방향을 구분할 수 없습니다).</li>
+  <li><strong>Square Size (mm)</strong> — 한 칸의 실제 한 변 길이입니다. <strong>인쇄물이면 자로 재서</strong>
+      넣으세요. 인쇄 배율이 100% 가 아닌 경우가 흔하고, 이 값이 틀리면 mm 환산이 통째로 어긋납니다.</li>
+  <li><strong>Accumulate Multi-View</strong> — 여러 장을 모아 계산합니다. 체커보드의 각도와 위치를
+      바꿔 가며 찍은 사진을 차례로 불러와 [Run Calibration] 을 반복하면 누적됩니다.
+      한 장으로도 계산되지만 <strong>보통 10~20장</strong>을 모아야 왜곡 값이 안정됩니다.
+      <strong>화면의 네 구석을 골고루 채우도록</strong> 찍는 것이 중요합니다 — 가운데에서만 찍으면
+      가장자리 왜곡을 알아낼 수 없습니다. 다시 시작하려면 [Reset] 을 누릅니다.</li>
+  <li><strong>[Run Calibration]</strong> 을 누릅니다.</li>
+</ol>
+<p>N-Point 방식은 이미지를 클릭해 점을 찍고 각 점의 실제 mm 좌표를 표에 입력합니다(4점 이상).
+Single Scale 방식은 길이를 아는 구간의 양 끝을 클릭하고 그 길이를 입력합니다 —
+<strong>화면을 가로지를 만큼 길게</strong> 잡을수록 오차가 줍니다.</p>
+
+<h4>4단계 — 결과 읽기</h4>
+<ul>
+  <li><strong>Reprojection Error</strong> — 얼마나 잘 맞았는지입니다. <strong>작을수록 좋습니다.</strong>
+      단위가 방식마다 다릅니다: Checkerboard 는 픽셀(보통 <strong>1 미만이면 양호</strong>,
+      2 를 넘으면 패턴 값이 틀렸거나 사진이 흔들린 것), N-Point 는 mm,
+      Single Scale 은 검증할 여분의 점이 없어 항상 0 입니다.</li>
+  <li><strong>Pixel Size</strong> — 픽셀 하나가 몇 mm 인지입니다. <strong>알고 있는 치수를 화면에서
+      재 보고</strong> 값이 맞는지 한 번 확인하세요.</li>
+</ul>
+
+<h4>5단계 — 레시피에 적용</h4>
+<p><strong>[Apply to Current Recipe]</strong> 를 눌러야 실제로 쓰입니다. 계산만 하고 닫으면 아무것도
+반영되지 않습니다. 캘리브레이션은 <strong>레시피마다 따로</strong> 보관되므로, 카메라·렌즈·설치 높이가
+다른 레시피는 각각 해야 합니다.</p>
+<p><strong>[Clear Calibration from Recipe]</strong> 는 적용을 취소합니다. 지우면 측정 도구는 픽셀 단위로
+돌아가고 Image Rectify 는 이미지를 그대로 통과시킵니다.</p>
+
+<div class="callout warn">
+<strong>카메라 · 렌즈 · 설치 높이를 바꿨다면 다시 하세요.</strong> 옛 캘리브레이션 값이 남아 있는 것이
+없는 것보다 위험합니다 — 측정값이 조용히 틀리게 나오고, 화면상으로는 아무 문제가 없어 보입니다.
+</div>
+
+<h4>Image Rectify 도구와의 관계</h4>
+<p>검사 도구 중 <strong>Image Rectify</strong> 는 여기서 만든 값으로 이미지를 바로잡습니다.
+체크박스 두 개가 있는데, <strong>어떤 방식으로 캘리브레이션했느냐에 따라 동작 여부가 갈립니다.</strong></p>
+<table>
+  <tr><th>캘리브레이션 방식</th><th>Undistort (렌즈 왜곡 펴기)</th><th>Apply Homography (기울기 펴기)</th></tr>
+  <tr><td>Checkerboard</td><td>동작</td><td>동작 안 함</td></tr>
+  <tr><td>N-Point</td><td>동작 안 함</td><td>동작</td></tr>
+  <tr><td>Single Scale</td><td>동작 안 함</td><td>동작 안 함</td></tr>
+</table>
+<p>체크했는데 화면이 그대로면 대개 방식이 맞지 않는 경우입니다. 도구의 상태 메시지에 실제로 무엇이
+적용됐는지 표시됩니다. 캘리브레이션이 아예 없으면 이 도구는 이미지를 그대로 통과시킵니다 —
+오류가 아니라 "할 일이 없음" 입니다.</p>
+
+<div class="callout">
+<strong>캘리브레이션 없이 mm 로 재는 방법도 있습니다.</strong> 스텝 그리드의 <strong>Resolution (mm/px)</strong>
+값을 직접 넣는 방식입니다(<a href="#vs-judgment">§5.6</a>). 간단하지만 렌즈 왜곡은 보정되지 않고
+화면 위치에 따른 오차도 그대로 남습니다. <strong>정밀 측정이 목적이면 캘리브레이션을 권합니다.</strong>
+</div>
 
 </section>
 
@@ -2139,6 +2244,31 @@ v1.37.0 에서 고쳐졌으므로 버전을 올리세요 — 값이 0 인 구간
 
 <h3 id="trouble-visionsetup">10.2 비전 설정(레시피 편집) 측</h3>
 
+<h4>캘리브레이션에서 "패턴을 찾지 못했다" 고 나옴</h4>
+<ol>
+  <li><strong>Pattern Cols / Rows 가 칸 수로 들어가 있지 않은지</strong> 확인하세요 — 넣어야 하는 값은
+      <strong>안쪽 교차점 수</strong>입니다(가로 10칸 → 9). 가장 흔한 원인입니다 (§5.11).</li>
+  <li>가로·세로 수가 <strong>같지 않은지</strong> 확인하세요. 정사각 패턴(9×9)은 방향을 구분할 수 없습니다.</li>
+  <li>체커보드가 화면 안에 <strong>전부 들어왔는지</strong>, 초점이 맞았는지, 반사로 칸 경계가 날아가지
+      않았는지 봅니다.</li>
+</ol>
+
+<h4>Image Rectify 를 켰는데 이미지가 그대로임</h4>
+<p>체크박스가 캘리브레이션 방식과 맞지 않는 경우입니다. <strong>Undistort 는 Checkerboard 방식,
+Apply Homography 는 N-Point 방식</strong>에서만 동작합니다 (§5.11 표 참고).
+캘리브레이션을 레시피에 <strong>[Apply to Current Recipe] 로 적용했는지</strong>도 확인하세요 —
+적용하지 않으면 이 도구는 이미지를 그대로 통과시킵니다(오류가 아닙니다).</p>
+
+<h4>측정값이 mm 로 나오는데 실제 치수와 다름</h4>
+<ol>
+  <li>캘리브레이션의 <strong>Square Size (mm)</strong> 를 확인하세요. 인쇄물의 실제 칸 크기를 자로 재서
+      넣어야 합니다 — 인쇄 배율이 100% 가 아닌 경우가 흔합니다 (§5.11).</li>
+  <li>Calibration Manager 의 <strong>Pixel Size</strong> 값으로, 알고 있는 치수를 화면에서 재 보고
+      맞는지 대조합니다.</li>
+  <li>카메라·렌즈·설치 높이를 바꾼 뒤 <strong>캘리브레이션을 다시 하지 않은 경우</strong>가 많습니다.
+      옛 값이 남아 있으면 화면상 아무 문제 없이 값만 틀리게 나옵니다.</li>
+</ol>
+
 <h4>레시피 새로고침을 눌러도 "Web 레시피 0개"</h4>
 <ol>
   <li>레시피가 <strong>이 라인 번호(ClientIndex)</strong> 로 만들어졌는지 Web 검사항목
@@ -2600,6 +2730,16 @@ DB 백업이 재시작에도 밀리지 않고, 배포해도 운영 로그·사�
 최근 30일·최대 366일 (§7.16).</li>
 <li><strong>작업자 세션 정리</strong>: 라인 PC 가 정전·강제 종료로 사라지면 마지막 생존 신호 시각으로
 세션을 닫고, 작업자를 사용 안 함으로 바꿔도 열린 세션을 닫습니다 (§7.10, §10.3).</li>
+</ul>
+
+<p>문서 보강 (2026-09-15 갱신):</p>
+<ul>
+<li><strong>카메라 캘리브레이션 사용법 신설</strong> (§5.11) — Camera → Calibration Manager 창을 여는 법부터
+방식 3종 선택 기준, 체커보드 절차, 결과(재투영 오차·픽셀 크기) 읽는 법, 레시피 적용, Image Rectify 도구와의
+관계까지. 트러블슈팅 3건도 함께 신설(§10.2) — 패턴을 못 찾는 경우 · Image Rectify 가 안 먹는 경우 ·
+mm 값이 실제와 다른 경우.</li>
+<li><strong>도구 도움말(물음표) 보강</strong> — Image Rectify 의 설명이 실제 설정과 달랐던 것을 바로잡고,
+Calibration Manager 창에 없던 도움말을 추가했습니다.</li>
 </ul>
 
 <p>전체 변경 사항은 양쪽 저장소의 <code>CHANGELOG.md</code> 참조.</p>
