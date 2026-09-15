@@ -259,6 +259,49 @@ namespace VMS.Core.Services
             sb.AppendLine("$wasAuto = ($null -ne $svc) -and ($svc.StartType -eq 'Automatic')");
             sb.AppendLine("Write-Log (\"web service pre-state: present={0} running={1} auto={2}\" -f ($null -ne $svc), $wasRunning, $wasAuto)");
 
+            // 2-b) 설치 전에 Web 서비스를 우리가 먼저 멈추고 프로세스가 실제로 끝날 때까지 기다린다.
+            //
+            // <para><b>왜.</b> 2026-09-15 실증 PC: 업그레이드 뒤 BODA.VMS.Web.exe 가
+            // "Could not load file or assembly 'Microsoft.Extensions.DependencyInjection.Abstractions'"
+            // 로 즉사했다(이벤트 1026). MSI 안에는 그 DLL 이 멀쩡히 들어 있고 RemoveExistingProducts
+            // 도 1401(afterInstallValidate) 로 안전하게 걸려 있다 — 즉 <b>파일 거래 중에 Web 폴더가
+            // 반쪽으로 남은 것</b>이다. MSI 는 자기 ServiceControl(Stop="both") 로 서비스를 멈추지만
+            // 그건 파일을 지우고 쓰는 것과 같은 트랜잭션 안이라, 프로세스가 아직 살아 있는 순간의
+            // 파일은 잠겨 있어 지우지도 덮어쓰지도 못한다. 게다가 설치는 /norestart 라 재부팅
+            // 대기로 미뤄진 교체는 영영 적용되지 않는다. VMS.exe 는 이미 종료를 기다리면서
+            // (1단계) Web 프로세스는 기다리지 않았던 것이 구멍이었다.
+            //
+            // 운영자가 Disabled 로 내려 둔 서비스는 애초에 돌지 않으므로 건드릴 것이 없다.
+            // 어떤 프로세스를 기다려야 하는지는 서비스 자신에게 묻는다(sc queryex 의 PID).
+            // 이름으로 찾으면 같은 PC 에서 따로 배포해 돌리는 Web 서버까지 집어 남의 서비스를
+            // 죽일 수 있고(dev PC: C:\Deploy 운영본 + MSI 동봉본), 경로로 거르려 해도
+            // LocalSystem 프로세스의 Path 는 못 읽는 경우가 있다. PID 는 둘 다 피한다.
+            // ("PID" 라벨은 한글 Windows 의 sc.exe 에서도 영문이다.)
+            sb.AppendLine("if ($wasRunning) {");
+            sb.AppendLine("  $webPid = 0");
+            sb.AppendLine("  foreach ($ln in (& sc.exe queryex $svcName)) {");
+            sb.AppendLine("    if ($ln -match 'PID\\s*:\\s*(\\d+)') { $webPid = [int]$Matches[1] }");
+            sb.AppendLine("  }");
+            sb.AppendLine("  Write-Log (\"stopping web service before install (pid={0}) - file-lock 방지\""
+                          + " -f $webPid)");
+            sb.AppendLine("  try { Stop-Service -Name $svcName -Force -ErrorAction Stop }");
+            sb.AppendLine("  catch { Write-Log (\"web service stop failed: {0}\" -f $_.Exception.Message) }");
+            // SCM 이 STOPPED 라고 해도 프로세스는 잠시 더 살아 있다 — 파일 핸들이 닫히는 건 그때다
+            sb.AppendLine("  if ($webPid -gt 0) {");
+            sb.AppendLine("    $waitUntil = (Get-Date).AddSeconds(30)");
+            sb.AppendLine("    while ((Get-Date) -lt $waitUntil) {");
+            sb.AppendLine("      if ($null -eq (Get-Process -Id $webPid -ErrorAction SilentlyContinue)) { break }");
+            sb.AppendLine("      Start-Sleep -Milliseconds 500");
+            sb.AppendLine("    }");
+            sb.AppendLine("    if ($null -ne (Get-Process -Id $webPid -ErrorAction SilentlyContinue)) {");
+            sb.AppendLine("      Write-Log 'web process still alive after 30s - killing to avoid a half-written Web folder'");
+            sb.AppendLine("      try { Stop-Process -Id $webPid -Force -ErrorAction Stop }");
+            sb.AppendLine("      catch { Write-Log (\"web process kill failed: {0}\" -f $_.Exception.Message) }");
+            sb.AppendLine("      Start-Sleep -Seconds 2");
+            sb.AppendLine("    } else { Write-Log 'web process exited - files are free' }");
+            sb.AppendLine("  }");
+            sb.AppendLine("}");
+
             // 3) MSI 설치 — 브랜딩 진행률 창(VMS.Updater) 우선, 없으면 msiexec /passive 폴백.
             //    업데이터는 자신도 MSI 로 교체되는 파일이므로 설치 폴더에서 직접 실행하지 않고
             //    MSI 옆 임시 폴더로 복사해 실행한다 (files-in-use 방지).
@@ -417,8 +460,39 @@ namespace VMS.Core.Services
             sb.AppendLine("        }");
             sb.AppendLine("      }");
             sb.AppendLine("    }");
-            sb.AppendLine("    Write-Log 'recovery: AppSetup 의 [서비스 시작] 또는 MSI 재설치로 복구할 수 있습니다'");
+            // 반쪽으로 남은 Web 폴더는 시작을 아무리 다시 해도 낫지 않는다 — 파일을 다시 깔아야
+            // 한다. /fa 는 버전 비교 없이 모든 파일을 재설치하므로 빠진 DLL 이 채워진다.
+            // 여기까지 왔다는 건 이미 Web 이 죽어 있다는 뜻이라, 한 번은 시도할 값이 있다.
+            sb.AppendLine("    if (Test-Path -LiteralPath $msi) {");
+            sb.AppendLine("      Write-Log 'repairing installation (msiexec /fa) - Web 파일이 빠졌을 때의 복구 경로'");
+            sb.AppendLine("      $rp = Start-Process -FilePath 'msiexec.exe' -ArgumentList '/fa',"
+                          + " ('\"{0}\"' -f $msi), '/qn', '/norestart' -Wait -PassThru");
+            sb.AppendLine("      Write-Log (\"repair exit code: {0}\" -f $rp.ExitCode)");
+            sb.AppendLine("      if (($rp.ExitCode -eq 0) -or ($rp.ExitCode -eq 3010)) {");
+            sb.AppendLine("        & sc.exe config $svcName start= delayed-auto | Out-Null");
+            sb.AppendLine("        try {");
+            sb.AppendLine("          Start-Service -Name $svcName -ErrorAction Stop");
+            sb.AppendLine("          Write-Log 'web service started after repair'");
+            sb.AppendLine("          $hDeadline2 = (Get-Date).AddSeconds(45)");
+            sb.AppendLine("          while (-not $started -and (Get-Date) -lt $hDeadline2) {");
+            sb.AppendLine("            try {");
+            sb.AppendLine($"              $resp = Invoke-WebRequest -Uri 'http://localhost:{WebServicePort}/health'"
+                          + " -UseBasicParsing -TimeoutSec 5");
+            sb.AppendLine("              if ($resp.StatusCode -eq 200) { $started = $true; break }");
+            sb.AppendLine("            } catch { }");
+            sb.AppendLine("            Start-Sleep -Seconds 3");
+            sb.AppendLine("          }");
+            sb.AppendLine("          if ($started) { Write-Log 'web health check OK after repair' }");
+            sb.AppendLine("          else { Write-Log 'web still not serving after repair' }");
+            sb.AppendLine("        } catch { Write-Log (\"web service start after repair FAILED: {0}\""
+                          + " -f $_.Exception.Message) }");
+            sb.AppendLine("      }");
+            sb.AppendLine("    }");
+            sb.AppendLine("    if (-not $started) {");
+            sb.AppendLine("      Write-Log 'recovery: AppSetup 의 [서비스 시작] 또는 MSI 재설치로 복구할 수 있습니다'");
+            sb.AppendLine("    }");
             sb.AppendLine("  }");
+            sb.AppendLine("  $webHealthy = $started");
             sb.AppendLine("}");
             sb.AppendLine("if (-not $installOk) { Write-Log 'install FAILED - previous version remains' }");
 
@@ -429,7 +503,16 @@ namespace VMS.Core.Services
             sb.AppendLine("} else { Write-Log (\"VMS exe not found: {0}\" -f $vmsExe) }");
 
             // 6) 성공 시 MSI + 업데이터 임시 사본 정리 (1 GB+ 임시 파일 방치 방지)
-            sb.AppendLine("if ($installOk) { Remove-Item -LiteralPath $msi -Force -ErrorAction SilentlyContinue; Write-Log 'msi removed' }");
+            // Web 을 끝내 못 살렸으면 MSI 를 남긴다 — 현장에서 그 파일로 바로 복구(재설치/수리)할
+            // 수 있어야 한다. 예전에는 설치가 성공하기만 하면 지워 버려서, Web 이 죽어 있는데
+            // 복구 수단은 다시 내려받는 것뿐이었다.
+            sb.AppendLine("$keepMsi = ($null -ne $webHealthy) -and (-not $webHealthy)");
+            sb.AppendLine("if ($installOk -and (-not $keepMsi)) {");
+            sb.AppendLine("  Remove-Item -LiteralPath $msi -Force -ErrorAction SilentlyContinue");
+            sb.AppendLine("  Write-Log 'msi removed'");
+            sb.AppendLine("} elseif ($keepMsi) {");
+            sb.AppendLine("  Write-Log (\"msi kept for recovery: {0}\" -f $msi)");
+            sb.AppendLine("}");
             sb.AppendLine("if ($installOk -and ($updaterExe -ne '')) { Remove-Item -LiteralPath (Split-Path -Parent $updaterExe) -Recurse -Force -ErrorAction SilentlyContinue }");
             sb.AppendLine("Write-Log '=== update bootstrap end ==='");
             return sb.ToString();
