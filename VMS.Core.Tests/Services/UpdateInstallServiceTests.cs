@@ -196,6 +196,8 @@ namespace VMS.Core.Tests.Services
             //    delayed-auto 표준 (일반 auto 는 부팅 경합 SCM 7009 타임아웃 사례 — 2026-08-27)
             Assert.Contains("sc.exe config $svcName start= delayed-auto", script);
             Assert.Contains("Start-Service", script);
+            // sc config 결과를 실제로 확인한다 — 예전에는 성공했다는 줄만 무조건 찍었다
+            Assert.Contains("$LASTEXITCODE -eq 0", script);
             // 5) VMS 재실행 (explorer 경유 — 상승 권한 미상속)
             Assert.Contains("explorer.exe", script);
             Assert.Contains(@"C:\Program Files\BODA VMS\VMS.exe", script);
@@ -276,6 +278,101 @@ namespace VMS.Core.Tests.Services
             Assert.Contains("function Install-ViaMsiexec", script);
             // 런타임 목록이 없어도 스크립트는 유효 (빈 배열)
             Assert.Contains("$updaterRuntimeFiles = @(", script);
+        }
+
+        /// <summary>
+        /// 2026-09-15 실증 PC 근본 원인: 업그레이드 뒤 BODA.VMS.Web.exe 가 즉사했다
+        /// (이벤트 1026 — Microsoft.Extensions.DependencyInjection.Abstractions 를 못 찾음).
+        /// MSI 에는 그 DLL 이 들어 있고 RemoveExistingProducts 도 1401 로 안전하게 걸려 있으니,
+        /// 설치 중 Web 프로세스가 살아 있어 파일이 잠긴 채 반쪽으로 남은 것이다. VMS.exe 는
+        /// 기다리면서 Web 프로세스는 기다리지 않은 것이 구멍 — 설치 전에 먼저 멈춰야 한다.
+        /// </summary>
+        [Fact]
+        public void BuildBootstrapScript_StopsWebProcessBeforeInstall()
+        {
+            var script = UpdateInstallService.BuildBootstrapScript(
+                msiPath: @"C:\Temp\BODA-VMS-Update\VMS-1.37.2.msi",
+                vmsExePath: @"C:\Program Files\BODA VMS\VMS.exe",
+                vmsPid: 1,
+                logPath: @"C:\ProgramData\BODA\VMS\update-bootstrap.log");
+
+            var stopAt = script.IndexOf("stopping web service before install", System.StringComparison.Ordinal);
+            var installAt = script.IndexOf("installing via updater UI", System.StringComparison.Ordinal);
+            Assert.True(stopAt >= 0, "설치 전 Web 서비스 정지 단계가 없다");
+            Assert.True(installAt > stopAt, "Web 정지는 설치보다 먼저여야 한다");
+
+            // SCM 이 STOPPED 라고 해도 프로세스 핸들이 닫힐 때까지 기다려야 파일 잠금이 풀린다
+            Assert.Contains("Get-Process -Id $webPid", script);
+            Assert.Contains("Stop-Process -Id $webPid -Force", script);
+            // 대상은 서비스가 알려주는 PID — 이름으로 찾으면 같은 PC 의 다른 Web 서버를 죽인다
+            Assert.Contains("sc.exe queryex $svcName", script);
+            Assert.Contains(@"'PID\s*:\s*(\d+)'", script);
+        }
+
+        /// <summary>
+        /// 반쪽으로 남은 Web 폴더는 시작을 다시 해도 낫지 않는다 — 파일을 다시 깔아야 한다.
+        /// </summary>
+        [Fact]
+        public void BuildBootstrapScript_WhenWebNeverServes_RepairsAndKeepsMsi()
+        {
+            var script = UpdateInstallService.BuildBootstrapScript(
+                msiPath: @"C:\Temp\BODA-VMS-Update\VMS-1.37.2.msi",
+                vmsExePath: @"C:\Program Files\BODA VMS\VMS.exe",
+                vmsPid: 1,
+                logPath: @"C:\ProgramData\BODA\VMS\update-bootstrap.log");
+
+            // /fa = 버전 비교 없이 전 파일 재설치 → 빠진 DLL 이 채워진다
+            Assert.Contains("'/fa',", script);
+            Assert.Contains("repair exit code", script);
+            Assert.Contains("web health check OK after repair", script);
+            // 복구에 실패하면 MSI 를 남겨 현장이 그 파일로 바로 재설치할 수 있게 한다
+            Assert.Contains("msi kept for recovery", script);
+        }
+
+        /// <summary>
+        /// 설치 직후의 시작 실패가 곧 포기가 되어서는 안 된다 — 재시도하고 /health 까지 본다.
+        /// </summary>
+        [Fact]
+        public void BuildBootstrapScript_ServiceStart_RetriesUntilDeadlineAndVerifiesHealth()
+        {
+            var script = UpdateInstallService.BuildBootstrapScript(
+                msiPath: @"C:\Temp\BODA-VMS-Update\VMS-1.37.2.msi",
+                vmsExePath: @"C:\Program Files\BODA VMS\VMS.exe",
+                vmsPid: 1,
+                logPath: @"C:\ProgramData\BODA\VMS\update-bootstrap.log");
+
+            // 시작은 마감 시각까지 반복한다 (단발 금지)
+            Assert.Contains("$deadline = (Get-Date).AddSeconds(90)", script);
+            Assert.Contains("while (-not $started -and (Get-Date) -lt $deadline)", script);
+            // 전이 중이면 밀어 넣지 않고 기다린다 — 그 순간의 시작 요청은 1061 로 거부된다
+            Assert.Contains("StartPending", script);
+            Assert.Contains("StopPending", script);
+            // 실패 사유는 InnerException 의 Win32 코드까지 남긴다 (바깥 메시지는 사유가 없다)
+            Assert.Contains("InnerException", script);
+            Assert.Contains("NativeErrorCode", script);
+            // 시작 = 서비스 중이 아니다 — /health 로 확인한다
+            Assert.Contains($"http://localhost:{UpdateInstallService.WebServicePort}/health", script);
+            Assert.Contains("web health check OK", script);
+            // 끝내 실패하면 현장이 그대로 보낼 수 있는 단서를 남긴다
+            Assert.Contains("sc.exe queryex $svcName", script);
+            Assert.Contains("web log tail", script);
+        }
+
+        /// <summary>
+        /// 운영자가 일부러 Disabled 로 내려 둔 서비스(포트 충돌 회피 등)는 업데이트가
+        /// 되살리면 안 된다 — dev PC 에서 5292 를 두고 크래시 루프가 재발했던 경로.
+        /// </summary>
+        [Fact]
+        public void BuildBootstrapScript_DisabledService_IsLeftAlone()
+        {
+            var script = UpdateInstallService.BuildBootstrapScript(
+                msiPath: @"C:\Temp\BODA-VMS-Update\VMS-1.37.2.msi",
+                vmsExePath: @"C:\Program Files\BODA VMS\VMS.exe",
+                vmsPid: 1,
+                logPath: @"C:\ProgramData\BODA\VMS\update-bootstrap.log");
+
+            Assert.Contains("$svc.StartType -eq 'Disabled'", script);
+            Assert.Contains("leaving it alone", script);
         }
 
         // ── ReadUpdaterRuntimeFiles ──
