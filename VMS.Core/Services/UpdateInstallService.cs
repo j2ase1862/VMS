@@ -27,14 +27,17 @@ namespace VMS.Core.Services
     ///      — 업데이터가 없거나 복사 실패 시, 또는 업데이터 종료 코드가 MSI 결과(0~3010)가 아니면
     ///        msiexec /i /passive /norestart 폴백
     ///   4. 서비스가 이전에 auto/실행 중이었으면 auto 전환 + 시작 복원
-    ///      (AppSetup 수동 시작 단계 자동화 — WebServerConfigApplier.EnsureAutoStartAndRun 과 동일 정책)
+    ///      (AppSetup 수동 시작 단계 자동화 — WebServerConfigApplier.EnsureAutoStartAndRun 과 동일 정책).
+    ///      시작은 최대 90초 동안 재시도하고 /health 까지 확인하며, 실패하면 사유(Win32 코드)와
+    ///      진단 단서를 같은 로그에 남긴다. 운영자가 Disabled 로 내려 둔 서비스는 건드리지 않는다.
     ///   5. VMS 재실행 (explorer 경유 — 상승 권한 미상속)
     ///   6. 성공 시 MSI 삭제, 전 과정 로그를 ProgramData\BODA\VMS\update-bootstrap.log 에 기록
     /// </summary>
     public sealed class UpdateInstallService : IUpdateInstallService
     {
-        // VMS.MasterSetup/Package.wxs WebSvcInstall · AppSetup WebServerSetupService 와 동일 이름.
+        // VMS.MasterSetup/Package.wxs WebSvcInstall · AppSetup WebServerSetupService 와 동일 이름·포트.
         internal const string WebServiceName = "BodaVmsWeb";
+        internal const int WebServicePort = 5292;
 
         private const int BufferSize = 81920;
         private const long ProgressReportChunk = 2 * 1024 * 1024; // 2 MB 마다 진행률 보고
@@ -320,12 +323,102 @@ namespace VMS.Core.Services
             //       영영 자동 시작이 복원되지 않는다 (demand 고착)
             //    ② 일반 auto 는 부팅 직후 경합으로 SCM 30초 타임아웃(7009)에 걸린 사례가
             //       있어 delayed-auto 가 표준 (세연공장 2026-08-27)
-            sb.AppendLine("if ($installOk -and ($wasAuto -or $wasRunning)) {");
-            sb.AppendLine("  & sc.exe config $svcName start= delayed-auto | Out-Null; Write-Log 'web service start type set to delayed-auto'");
-            sb.AppendLine("  try {");
-            sb.AppendLine("    Start-Service -Name $svcName -ErrorAction Stop");
-            sb.AppendLine("    Write-Log 'web service started'");
-            sb.AppendLine("  } catch { Write-Log (\"web service start FAILED: {0}\" -f $_.Exception.Message) }");
+            //    ③ 시작은 한 번으로 끝내지 않는다. MSI 는 설치할 때도 서비스를 멈추므로
+            //       (Package.wxs WebSvcControl Stop="both") 설치 직후 몇 초는 SCM 이 아직 정지
+            //       전이 중일 수 있고, 그 순간의 시작 요청은 그대로 거부된다. 한 번 실패하면
+            //       서비스는 MSI 가 걸어 둔 실패 복구 정책(10초 재시작)으로 전이 상태를 오가고,
+            //       그 상태에서는 AppSetup 의 수동 [서비스 시작] 마저 실패한다 — 현장에서
+            //       "업데이트 후 Web 접속 불가 + 버튼도 안 먹음" 으로 나타났다 (2026-09-15 실증 PC:
+            //       같은 MSI 를 다시 설치하니 같은 자리에서 성공 → 설치물이 아니라 타이밍 경합).
+            sb.AppendLine("if ($null -ne $svc -and $svc.StartType -eq 'Disabled') {");
+            sb.AppendLine("  Write-Log 'web service is Disabled - leaving it alone (operator choice)'");
+            sb.AppendLine("} elseif ($installOk -and ($wasAuto -or $wasRunning)) {");
+            sb.AppendLine("  $cfg = & sc.exe config $svcName start= delayed-auto");
+            sb.AppendLine("  if ($LASTEXITCODE -eq 0) { Write-Log 'web service start type set to delayed-auto' }");
+            sb.AppendLine("  else { Write-Log (\"web service start type change FAILED (sc config exit={0}): {1}\""
+                          + " -f $LASTEXITCODE, (($cfg | Out-String).Trim())) }");
+            sb.AppendLine("  $started = $false");
+            sb.AppendLine("  $attempt = 0");
+            sb.AppendLine("  $deadline = (Get-Date).AddSeconds(90)");
+            sb.AppendLine("  while (-not $started -and (Get-Date) -lt $deadline) {");
+            sb.AppendLine("    $attempt++");
+            sb.AppendLine("    $svcNow = Get-Service -Name $svcName -ErrorAction SilentlyContinue");
+            sb.AppendLine("    if ($null -eq $svcNow) { Write-Log 'web service is not registered - cannot start'; break }");
+            sb.AppendLine("    if ($svcNow.Status -eq 'Running') {");
+            sb.AppendLine("      $started = $true; Write-Log (\"web service started (attempt {0})\" -f $attempt); break");
+            sb.AppendLine("    }");
+            // 전이 중(StartPending/StopPending)에 시작을 밀어 넣으면 1061 로 거부된다 — 기다렸다 다시 본다
+            sb.AppendLine("    if ($svcNow.Status -eq 'StartPending' -or $svcNow.Status -eq 'StopPending') {");
+            sb.AppendLine("      Write-Log (\"web service in transition ({0}) - waiting (attempt {1})\""
+                          + " -f $svcNow.Status, $attempt)");
+            sb.AppendLine("      Start-Sleep -Seconds 5; continue");
+            sb.AppendLine("    }");
+            sb.AppendLine("    try {");
+            sb.AppendLine("      Start-Service -Name $svcName -ErrorAction Stop");
+            sb.AppendLine("      $started = $true");
+            sb.AppendLine("      Write-Log (\"web service started (attempt {0})\" -f $attempt)");
+            sb.AppendLine("    } catch {");
+            // PowerShell 바깥 메시지는 "서비스를 시작할 수 없습니다" 뿐이다. 진짜 사유인 Win32 코드는
+            // ServiceCommandException → InvalidOperationException → Win32Exception 처럼 두세 겹
+            // 안쪽에 있어서, 한 겹만 벗기면 여전히 사유 없는 문장만 남는다. 체인을 훑는다.
+            sb.AppendLine("      $ex = $_.Exception");
+            sb.AppendLine("      $parts = @()");
+            sb.AppendLine("      $win32 = ''");
+            sb.AppendLine("      $depth = 0");
+            sb.AppendLine("      while ($null -ne $ex -and $depth -lt 4) {");
+            sb.AppendLine("        $parts += $ex.Message");
+            sb.AppendLine("        if (($ex -is [System.ComponentModel.Win32Exception]) -and ($win32 -eq '')) {");
+            sb.AppendLine("          $win32 = (' win32={0}' -f $ex.NativeErrorCode)");
+            sb.AppendLine("        }");
+            sb.AppendLine("        $ex = $ex.InnerException");
+            sb.AppendLine("        $depth++");
+            sb.AppendLine("      }");
+            sb.AppendLine("      Write-Log (\"web service start attempt {0} FAILED: {1}{2}\""
+                          + " -f $attempt, ($parts -join ' | '), $win32)");
+            sb.AppendLine("      Start-Sleep -Seconds 5");
+            sb.AppendLine("    }");
+            sb.AppendLine("  }");
+            // 시작됐다고 서비스 중인 것은 아니다 — AppSetup 은 이미 /health 를 확인하는데
+            // (WebServerSetupService.SmokeTestAsync) 업데이트 경로에는 그게 없었다.
+            sb.AppendLine("  if ($started) {");
+            sb.AppendLine("    $healthy = $false");
+            sb.AppendLine("    $hDeadline = (Get-Date).AddSeconds(45)");
+            sb.AppendLine("    while (-not $healthy -and (Get-Date) -lt $hDeadline) {");
+            sb.AppendLine("      try {");
+            sb.AppendLine($"        $resp = Invoke-WebRequest -Uri 'http://localhost:{WebServicePort}/health'"
+                          + " -UseBasicParsing -TimeoutSec 5");
+            sb.AppendLine("        if ($resp.StatusCode -eq 200) { $healthy = $true; break }");
+            sb.AppendLine("      } catch { }");
+            sb.AppendLine("      Start-Sleep -Seconds 3");
+            sb.AppendLine("    }");
+            sb.AppendLine("    if ($healthy) { Write-Log 'web health check OK' }");
+            sb.AppendLine("    else { Write-Log 'web service started but /health did not respond'; $started = $false }");
+            sb.AppendLine("  }");
+            // 끝내 못 살렸으면 현장이 그대로 보낼 수 있는 단서를 같은 로그에 남긴다
+            sb.AppendLine("  if (-not $started) {");
+            sb.AppendLine("    Write-Log 'web service is not serving - collecting diagnostics'");
+            sb.AppendLine("    $q = & sc.exe queryex $svcName");
+            sb.AppendLine("    foreach ($ln in $q) {");
+            sb.AppendLine("      if ($ln -match 'STATE|EXIT_CODE') { Write-Log ('  sc: ' + $ln.Trim()) }");
+            sb.AppendLine("    }");
+            sb.AppendLine("    if ($vmsExe -ne '') {");
+            sb.AppendLine("      $webLogDir = Join-Path (Split-Path -Parent $vmsExe) 'Web\\Logs'");
+            sb.AppendLine("      if (Test-Path -LiteralPath $webLogDir) {");
+            sb.AppendLine("        $lastLog = Get-ChildItem -LiteralPath $webLogDir -Filter '*.json'"
+                          + " -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending"
+                          + " | Select-Object -First 1");
+            sb.AppendLine("        if ($null -ne $lastLog) {");
+            sb.AppendLine("          Write-Log ('  web log tail: ' + $lastLog.Name)");
+            sb.AppendLine("          $tail = Get-Content -LiteralPath $lastLog.FullName -Tail 5 -ErrorAction SilentlyContinue");
+            sb.AppendLine("          foreach ($ln in $tail) {");
+            sb.AppendLine("            if ($ln.Length -gt 400) { $ln = $ln.Substring(0, 400) + '...' }");
+            sb.AppendLine("            Write-Log ('    ' + $ln)");
+            sb.AppendLine("          }");
+            sb.AppendLine("        }");
+            sb.AppendLine("      }");
+            sb.AppendLine("    }");
+            sb.AppendLine("    Write-Log 'recovery: AppSetup 의 [서비스 시작] 또는 MSI 재설치로 복구할 수 있습니다'");
+            sb.AppendLine("  }");
             sb.AppendLine("}");
             sb.AppendLine("if (-not $installOk) { Write-Log 'install FAILED - previous version remains' }");
 

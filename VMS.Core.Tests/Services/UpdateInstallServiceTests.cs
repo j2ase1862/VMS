@@ -196,6 +196,8 @@ namespace VMS.Core.Tests.Services
             //    delayed-auto 표준 (일반 auto 는 부팅 경합 SCM 7009 타임아웃 사례 — 2026-08-27)
             Assert.Contains("sc.exe config $svcName start= delayed-auto", script);
             Assert.Contains("Start-Service", script);
+            // sc config 결과를 실제로 확인한다 — 예전에는 성공했다는 줄만 무조건 찍었다
+            Assert.Contains("$LASTEXITCODE -eq 0", script);
             // 5) VMS 재실행 (explorer 경유 — 상승 권한 미상속)
             Assert.Contains("explorer.exe", script);
             Assert.Contains(@"C:\Program Files\BODA VMS\VMS.exe", script);
@@ -276,6 +278,54 @@ namespace VMS.Core.Tests.Services
             Assert.Contains("function Install-ViaMsiexec", script);
             // 런타임 목록이 없어도 스크립트는 유효 (빈 배열)
             Assert.Contains("$updaterRuntimeFiles = @(", script);
+        }
+
+        /// <summary>
+        /// 2026-09-15 실증 PC: 설치는 성공(exit 0)했는데 3초 뒤 서비스 시작이 한 번 실패하자
+        /// Web 이 그대로 죽어 있었다. 같은 MSI 를 다시 설치하니 같은 자리에서 성공 —
+        /// 설치물이 아니라 SCM 전이 타이밍 경합이었다. 그래서 단발 시작은 금지다.
+        /// </summary>
+        [Fact]
+        public void BuildBootstrapScript_ServiceStart_RetriesUntilDeadlineAndVerifiesHealth()
+        {
+            var script = UpdateInstallService.BuildBootstrapScript(
+                msiPath: @"C:\Temp\BODA-VMS-Update\VMS-1.37.2.msi",
+                vmsExePath: @"C:\Program Files\BODA VMS\VMS.exe",
+                vmsPid: 1,
+                logPath: @"C:\ProgramData\BODA\VMS\update-bootstrap.log");
+
+            // 시작은 마감 시각까지 반복한다 (단발 금지)
+            Assert.Contains("$deadline = (Get-Date).AddSeconds(90)", script);
+            Assert.Contains("while (-not $started -and (Get-Date) -lt $deadline)", script);
+            // 전이 중이면 밀어 넣지 않고 기다린다 — 그 순간의 시작 요청은 1061 로 거부된다
+            Assert.Contains("StartPending", script);
+            Assert.Contains("StopPending", script);
+            // 실패 사유는 InnerException 의 Win32 코드까지 남긴다 (바깥 메시지는 사유가 없다)
+            Assert.Contains("InnerException", script);
+            Assert.Contains("NativeErrorCode", script);
+            // 시작 = 서비스 중이 아니다 — /health 로 확인한다
+            Assert.Contains($"http://localhost:{UpdateInstallService.WebServicePort}/health", script);
+            Assert.Contains("web health check OK", script);
+            // 끝내 실패하면 현장이 그대로 보낼 수 있는 단서를 남긴다
+            Assert.Contains("sc.exe queryex $svcName", script);
+            Assert.Contains("web log tail", script);
+        }
+
+        /// <summary>
+        /// 운영자가 일부러 Disabled 로 내려 둔 서비스(포트 충돌 회피 등)는 업데이트가
+        /// 되살리면 안 된다 — dev PC 에서 5292 를 두고 크래시 루프가 재발했던 경로.
+        /// </summary>
+        [Fact]
+        public void BuildBootstrapScript_DisabledService_IsLeftAlone()
+        {
+            var script = UpdateInstallService.BuildBootstrapScript(
+                msiPath: @"C:\Temp\BODA-VMS-Update\VMS-1.37.2.msi",
+                vmsExePath: @"C:\Program Files\BODA VMS\VMS.exe",
+                vmsPid: 1,
+                logPath: @"C:\ProgramData\BODA\VMS\update-bootstrap.log");
+
+            Assert.Contains("$svc.StartType -eq 'Disabled'", script);
+            Assert.Contains("leaving it alone", script);
         }
 
         // ── ReadUpdaterRuntimeFiles ──
