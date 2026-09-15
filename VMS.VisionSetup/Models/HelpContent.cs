@@ -864,9 +864,23 @@ namespace VMS.VisionSetup.Models
                 Parameters = new Dictionary<string, string>
                 {
                     ["FitMethod"] = "피팅 알고리즘:\n• LeastSquares: 최소자승법 — 빠르지만 outlier 에 민감\n• RANSAC: 무작위 표본 합의 — outlier 강건 (기본 권장)",
-                    ["InlierThresholdMm"] = "RANSAC inlier 판정 임계값(mm). 평면에서 이 거리 이내 점을 inlier 로 분류.\n• 0.1: 정밀 (가공면 평탄도)\n• 0.5: 일반 (보드/케이스)\n• 2.0: 거친 표면",
-                    ["MaxIterations"] = "RANSAC 최대 반복. 클수록 정확하지만 느림. 기본 200~500 권장.",
-                    ["MinInlierRatio"] = "최소 inlier 비율 (0~1). 이 비율 미만이면 피팅 실패 처리. 데이터 노이즈 많을 때 낮춤."
+                    // ⚠ 키는 PlaneFitToolSettings.xaml 의 ParameterName 과 1:1.
+                    //   예전에는 InlierThresholdMm·MaxIterations·MinInlierRatio 라는 **옛 이름**을 설명하고
+                    //   실제 항목 3개는 비어 있었다 (2026-09-15 소스 스캔으로 발견).
+                    ["RansacThreshold"] =
+                        "평면에서 이 거리(mm) 안에 있는 점을 \"평면 위의 점\" 으로 봅니다. 나머지는 잡음으로 버립니다.\n\n" +
+                        "• 0.1 — 정밀 (가공면 평탄도)\n" +
+                        "• 0.5 — 일반 (보드 · 케이스)\n" +
+                        "• 2.0 — 거친 표면\n\n" +
+                        "너무 작으면 정상 점까지 버려 피팅이 실패하고, 너무 크면 튀어나온 부분까지 평면에 포함돼 결과가 기웁니다.",
+                    ["RansacIterations"] =
+                        "후보 평면을 몇 번 시도해 볼지입니다. 클수록 정확하지만 느려집니다. 보통 200~500 이면 충분합니다.\n\n" +
+                        "점군이 지저분하거나 평면이 화면의 일부만 차지할수록 값을 올립니다.",
+                    ["SampleStride"] =
+                        "점을 몇 개 건너뛰며 쓸지입니다. 2 면 가로·세로 두 칸에 하나씩만 씁니다.\n\n" +
+                        "• 값을 올리면 빨라지지만 작은 굴곡을 놓칠 수 있습니다\n" +
+                        "• 점이 아주 많은 3D 카메라에서 속도가 문제될 때 올립니다\n" +
+                        "• 1 이면 모든 점을 씁니다"
                 }
             },
 
@@ -881,10 +895,11 @@ namespace VMS.VisionSetup.Models
                     ["Operation"] = "기하 연산 종류:\n• PointToPointDistance: 두 점 사이 유클리드 거리(mm)\n• PointToPlaneDistance: 점에서 평면까지 수직 거리\n• PlaneToPlaneAngle: 두 평면 사이 각도(도)\n• PlaneToPlaneDistance: 평행 평면 간 거리\n• PointToLineDistance3D: 점에서 직선까지 수직 거리",
                     ["UseManualPoints"] = "포인트 소스 선택 (라디오): 수동 입력 = PointA/B 픽셀을 높이맵에서 3D 복원 / 연결 소스 = Result 연결(클러스터 중심점 등) 사용. 점을 쓰는 연산에서만 표시됩니다.",
                     ["SourceAClusterIndex"] = "첫 번째 클러스터 소스에서 쓸 클러스터 번호 (기본 0 = 가장 큰 덩어리). Run 후에는 콤보박스에서 '#번호 — 점수, 길이x폭'으로 선택 가능하고, 선택하면 2D 뷰어에 해당 덩어리가 강조 표시됩니다.",
-                    ["SourceBClusterIndex"] = "두 번째 점의 클러스터 번호 (기본 1). 클러스터 툴 하나만 연결해도 A/B 두 클러스터 중심 간 거리를 잽니다.\n※ mm 정확도는 Cluster의 Scale Mode를 따름 — AutoFromCamera(권장) 또는 XyScale 설정 필요. XyScale=1이면 픽셀 혼합 단위.",
-                    ["ExpectedValue"] = "목표 측정값. 결과가 ExpectedValue ± Tolerance 범위 내면 OK.",
-                    ["Tolerance"] = "허용 공차. 단위는 Operation 에 따라 mm 또는 도.",
-                    ["EnableJudgment"] = "Pass/Fail 판정 활성화. 비활성 시 측정값만 반환."
+                    // ⚠ 이 도구에는 판정(ExpectedValue·Tolerance·EnableJudgment) 설정이 없다.
+                    //   예전에는 그 3개를 설명하고 있었는데 도구·설정 화면 어디에도 존재하지 않는 항목이었다
+                    //   (다른 측정 도구에서 복사된 것으로 보임 — 2026-09-15 소스 스캔으로 발견).
+                    //   판정이 필요하면 뒤에 Result 도구를 연결한다.
+                    ["SourceBClusterIndex"] = "두 번째 점의 클러스터 번호 (기본 1). 클러스터 툴 하나만 연결해도 A/B 두 클러스터 중심 간 거리를 잽니다.\n※ mm 정확도는 Cluster의 Scale Mode를 따름 — AutoFromCamera(권장) 또는 XyScale 설정 필요. XyScale=1이면 픽셀 혼합 단위."
                 }
             },
 
@@ -926,12 +941,22 @@ namespace VMS.VisionSetup.Models
                 CognexEquivalent = "ViDi Red Analyze, Cognex Deep Learning Segmentation",
                 Parameters = new Dictionary<string, string>
                 {
+                    // ⚠ 키는 SegmentationToolSettings.xaml 의 ParameterName 과 1:1.
+                    //   예전에는 ConfidenceThreshold·TargetClassIndex·DrawOverlay 라는 **옛 이름**을 설명하고
+                    //   실제 항목(UseImageNetNormalization·BackgroundClass·ShowOverlay)은 비어 있었다
+                    //   (2026-09-15 소스 스캔으로 발견).
                     ["ModelPath"] = "ONNX 모델 파일 경로(.onnx). U-Net 등 출력이 [B, C, H, W] 형식의 픽셀별 클래스 확률.",
-                    ["InputSize"] = "추론 입력 크기(px). 학습 시 사용한 크기와 일치 권장. 256/512/1024 등.",
-                    ["ConfidenceThreshold"] = "픽셀별 클래스 확률 임계값. 이하 픽셀은 배경 처리. 기본 0.5.",
-                    ["TargetClassIndex"] = "관심 클래스 인덱스. 다중 클래스 모델에서 특정 클래스만 마스크로 출력.",
-                    ["DrawOverlay"] = "예측 마스크를 컬러 반투명 오버레이로 표시.",
-                    ["OverlayOpacity"] = "오버레이 투명도 (0~1)."
+                    ["InputSize"] = "추론 입력 크기(px). 학습 시 쓴 크기와 같아야 합니다 (256 · 512 · 1024 등).\n\n" +
+                                    "다르게 넣으면 오류는 안 나지만 정확도가 조용히 떨어집니다.",
+                    ["UseImageNetNormalization"] =
+                        "입력 이미지를 ImageNet 기준(평균·표준편차)으로 정규화한 뒤 모델에 넣습니다.\n\n" +
+                        "**학습할 때 쓴 방식과 같아야 합니다.** 사전학습 백본(ResNet 등)을 쓴 모델은 대개 켭니다.\n" +
+                        "맞지 않으면 마스크가 엉뚱하게 나오거나 아무것도 못 찾습니다 — 결과가 이상하면 여기부터 확인하세요.",
+                    ["BackgroundClass"] =
+                        "배경으로 취급할 클래스 번호입니다(보통 0). 이 클래스로 분류된 픽셀은 마스크에서 제외됩니다.\n\n" +
+                        "학습 데이터의 클래스 순서를 따릅니다. 배경이 0 이 아닌 모델이면 그 번호를 넣으세요.",
+                    ["ShowOverlay"] = "예측 마스크를 컬러 반투명으로 이미지 위에 겹쳐 보여 줍니다. 판정에는 영향이 없습니다.",
+                    ["OverlayOpacity"] = "겹쳐 보여 줄 때의 투명도 (0~1). 0 에 가까울수록 원본이 잘 보입니다."
                 }
             },
 

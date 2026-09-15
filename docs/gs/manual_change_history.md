@@ -760,10 +760,14 @@ InterpolationMode), 화면에 실제로 있는 `ApplyHomography` 는 **설명이
 | SegmentationTool | ConfidenceThreshold · TargetClassIndex · DrawOverlay | UseImageNetNormalization · BackgroundClass · ShowOverlay |
 | Geometry3DTool | ExpectedValue · Tolerance · EnableJudgment | (해당 속성 없음) |
 
-**셋 다 문서화된 항목이 전부 옛 이름이고, 실제 항목은 설명이 비어 있다** — Image Rectify 와 같다.
-추가로 **물음표는 있는데 설명이 빈 자리 27곳**(DetectionTool 의 SAHI·CLAHE·Dot 계열, PhotometricStereo,
-AnomalyTool 등)이 `KnownEmptyHelp` 기준선에 올라 있다. 목록은 늘면 테스트가 깨지고, 채우면 목록에서
-지우게 되어 자연히 줄어든다.
+**셋 다 문서화된 항목이 전부 옛 이름이고, 실제 항목은 설명이 비어 있었다** — Image Rectify 와 같다.
+**같은 세션에서 3건 모두 정정 완료** — 실제 항목 이름으로 교체하고 설명을 새로 썼다
+(PlaneFit 의 RANSAC 3항목 · Segmentation 의 정규화/배경 클래스/오버레이 · Geometry3D 는 존재하지 않는
+판정 3항목 제거 + 이미 쓰여 있던 설명이 화면에 뜨도록 물음표 배선). `KnownStaleHelp` 는 **비었다**.
+
+남은 것은 **물음표는 있는데 설명이 빈 자리 21곳**(DetectionTool 의 SAHI·CLAHE·Dot 계열,
+PhotometricStereo, AnomalyTool)이며 `KnownEmptyHelp` 기준선에 올라 있다. 목록은 늘면 테스트가 깨지고,
+채우면 목록에서 지우게 되어 자연히 줄어든다.
 
 ### 매뉴얼 반영 포인트 (완료)
 

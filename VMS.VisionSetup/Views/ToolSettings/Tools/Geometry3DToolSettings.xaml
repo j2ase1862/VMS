@@ -16,8 +16,12 @@
 
         <!-- 포인트 소스 선택 (점을 쓰는 연산에서만 표시, 상호 배타) -->
         <StackPanel Visibility="{Binding ShowPointSourceSelector, Converter={StaticResource BoolToVis}}">
-            <TextBlock Text="Point Source" Foreground="#AAAAAA" FontWeight="Bold"
-                       Margin="0,8,0,4" FontSize="11"/>
+            <StackPanel Orientation="Horizontal" Margin="0,8,0,4">
+                <TextBlock Text="Point Source" Foreground="#AAAAAA" FontWeight="Bold"
+                           FontSize="11" VerticalAlignment="Center"/>
+                <controls:HelpIcon ToolType="Geometry3DTool" ParameterName="UseManualPoints"
+                                   Margin="5,0,0,0" VerticalAlignment="Center"/>
+            </StackPanel>
             <StackPanel Orientation="Horizontal">
                 <RadioButton Content="수동 입력 (픽셀)" GroupName="PointSource"
                              Style="{StaticResource WindowDarkRadioButton}"
@@ -71,8 +75,12 @@
 
         <!-- 연결 소스: 클러스터 선택 콤보 (선택 시 2D 뷰어에 해당 클러스터 강조) -->
         <StackPanel Visibility="{Binding ShowSourceSection, Converter={StaticResource BoolToVis}}">
-            <TextBlock Text="Cluster A" Foreground="#AAAAAA" FontWeight="Bold"
-                       Margin="0,8,0,4" FontSize="11"/>
+            <StackPanel Orientation="Horizontal" Margin="0,8,0,4">
+                <TextBlock Text="Cluster A" Foreground="#AAAAAA" FontWeight="Bold"
+                           FontSize="11" VerticalAlignment="Center"/>
+                <controls:HelpIcon ToolType="Geometry3DTool" ParameterName="SourceAClusterIndex"
+                                   Margin="5,0,0,0" VerticalAlignment="Center"/>
+            </StackPanel>
             <ComboBox ItemsSource="{Binding ClusterOptions}"
                       SelectedValue="{Binding SelectedClusterA}"
                       SelectedValuePath="Index" DisplayMemberPath="Label"
@@ -81,8 +89,12 @@
                       FontSize="11"/>
 
             <StackPanel Visibility="{Binding ShowSourceB, Converter={StaticResource BoolToVis}}">
-                <TextBlock Text="Cluster B" Foreground="#AAAAAA" FontWeight="Bold"
-                           Margin="0,8,0,4" FontSize="11"/>
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,4">
+                    <TextBlock Text="Cluster B" Foreground="#AAAAAA" FontWeight="Bold"
+                               FontSize="11" VerticalAlignment="Center"/>
+                    <controls:HelpIcon ToolType="Geometry3DTool" ParameterName="SourceBClusterIndex"
+                                       Margin="5,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
                 <ComboBox ItemsSource="{Binding ClusterOptions}"
                           SelectedValue="{Binding SelectedClusterB}"
                           SelectedValuePath="Index" DisplayMemberPath="Label"

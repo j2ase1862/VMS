@@ -94,9 +94,6 @@ namespace VMS.VisionSetup.Tests
             "DetectionTool.DotAdaptiveBlockSize", "DetectionTool.DotAdaptiveC",
             "PhotometricStereoTool.OutputType", "PhotometricStereoTool.CurvatureGain",
             "PhotometricStereoTool.ShadowThreshold", "PhotometricStereoTool.HighlightThreshold",
-            "PlaneFitTool.RansacIterations", "PlaneFitTool.RansacThreshold", "PlaneFitTool.SampleStride",
-            "SegmentationTool.UseImageNetNormalization", "SegmentationTool.BackgroundClass",
-            "SegmentationTool.ShowOverlay",
         };
 
         [Fact]
@@ -152,10 +149,8 @@ namespace VMS.VisionSetup.Tests
         /// </summary>
         private static readonly HashSet<string> KnownStaleHelp = new(StringComparer.Ordinal)
         {
-            "Geometry3DTool.ExpectedValue", "Geometry3DTool.Tolerance", "Geometry3DTool.EnableJudgment",
-            "PlaneFitTool.InlierThresholdMm", "PlaneFitTool.MaxIterations", "PlaneFitTool.MinInlierRatio",
-            "SegmentationTool.ConfidenceThreshold", "SegmentationTool.TargetClassIndex",
-            "SegmentationTool.DrawOverlay",
+            // 2026-09-15: PlaneFitTool · SegmentationTool · Geometry3DTool 의 낡은 설명은 전부 정정됐다.
+            // 새로 발견되면 여기 등록하고 백로그에 올린다.
         };
 
         /// <summary>
@@ -199,14 +194,15 @@ namespace VMS.VisionSetup.Tests
         {
             var help = HelpContent.GetToolHelp("ImageRectifyTool");
             Assert.NotNull(help);
+            Assert.NotNull(help!.Parameters);
             Assert.Equal(
                 new[] { "ApplyHomography", "Undistort" },
-                help!.Parameters.Keys.OrderBy(k => k, StringComparer.Ordinal).ToArray());
+                help.Parameters!.Keys.OrderBy(k => k, StringComparer.Ordinal).ToArray());
 
             // 어떤 캘리브레이션 방식에서만 동작하는지가 설명에 있어야 한다 —
             // 이걸 몰라서 "켰는데 아무 일도 안 일어난다" 가 된다.
-            Assert.Contains("Checkerboard", help.Parameters["Undistort"]);
-            Assert.Contains("N-Point", help.Parameters["ApplyHomography"]);
+            Assert.Contains("Checkerboard", help.Parameters!["Undistort"]);
+            Assert.Contains("N-Point", help.Parameters!["ApplyHomography"]);
         }
 
         [Fact]
@@ -214,9 +210,10 @@ namespace VMS.VisionSetup.Tests
         {
             var help = HelpContent.GetToolHelp("CalibrationManager");
             Assert.NotNull(help);
+            Assert.NotNull(help!.Parameters);
             // 이 창에서 가장 자주 틀리는 값 — 칸 수가 아니라 안쪽 교차점 수
-            Assert.Contains("교차점", help!.Parameters["PatternCols"]);
-            Assert.Contains("교차점", help.Parameters["PatternRows"]);
+            Assert.Contains("교차점", help.Parameters!["PatternCols"]);
+            Assert.Contains("교차점", help.Parameters!["PatternRows"]);
         }
     }
 }
