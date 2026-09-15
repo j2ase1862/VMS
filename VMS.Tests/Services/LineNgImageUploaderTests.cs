@@ -168,6 +168,50 @@ namespace VMS.Tests.Services
             Assert.Equal(1, handler.Requests.Count);   // 거절 보관함은 다시 보내지 않는다
         }
 
+        /// <summary>
+        /// 보낸 장수·거절 장수는 큐를 세어서는 알 수 없다 — 성공하면 파일이 지워지고, 메모리에만
+        /// 두면 VMS 를 다시 켜는 순간 사라진다. 현장에서 "어제부터 몇 장 올라갔나" 를 묻는 시점은
+        /// 대개 다시 켠 뒤라, 큐 폴더 밑 state\stats.json 에 누적한다 (Support Package 가 담아 간다).
+        /// </summary>
+        [Fact]
+        public async Task Sent_and_rejected_counts_survive_in_stats_file()
+        {
+            var reject = false;
+            var handler = new FakeHandler(_ => reject
+                ? Json(HttpStatusCode.BadRequest, "{\"message\":\"거절\"}")
+                : Json(HttpStatusCode.OK, "{\"results\":[{\"created\":true}],\"created\":1,\"duplicates\":0,\"errors\":[]}"));
+            using var up = NewUploader(handler);
+
+            // Enqueue 는 적재 직후 스스로 드레인하므로 큐 길이로 기다리면 경합한다 — 결과로 기다린다
+            up.Enqueue(MakeImage(), NgContext("S-1"), new ImageSaveOptions { MlopsSendNg = true });
+            await WaitUntilAsync(() => ReadStats()?.Sent == 1);
+
+            reject = true;
+            up.Enqueue(MakeImage(), NgContext("S-2"), new ImageSaveOptions { MlopsSendNg = true });
+            await WaitUntilAsync(() => up.RejectedCount == 1);
+            await WaitUntilAsync(() => ReadStats()?.Rejected == 1);
+
+            var stats = ReadStats()!;
+            Assert.Equal(1, stats.Sent);
+            Assert.Equal(1, stats.Rejected);
+            Assert.False(string.IsNullOrWhiteSpace(stats.LastSentUtc));
+            Assert.False(string.IsNullOrWhiteSpace(stats.LastRejectedUtc));
+            Assert.Contains("400", stats.LastRejectReason);
+        }
+
+        /// <summary>통계 파일은 드레인 대상 밖(하위 폴더)에 둔다 — 큐 폴더의 *.json 은 전부 큐 항목으로 읽힌다.</summary>
+        private LineNgUploadStats? ReadStats()
+        {
+            var path = Path.Combine(_queueDir, LineNgImageUploader.StatsSubdir, LineNgImageUploader.StatsFileName);
+            if (!File.Exists(path)) return null;
+            try
+            {
+                return JsonSerializer.Deserialize<LineNgUploadStats>(File.ReadAllText(path),
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+            catch { return null; }   // 쓰는 중에 읽으면 반쪽일 수 있다
+        }
+
         [Fact]
         public async Task Ok_200_with_only_errors_is_treated_as_rejected()
         {

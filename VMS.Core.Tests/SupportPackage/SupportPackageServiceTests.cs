@@ -276,7 +276,55 @@ namespace VMS.Core.Tests.SupportPackage
             Assert.Contains("auto-backup-20260101-120000.zip", text);
         }
 
+        // ─── MLOps 전송 큐 ────────────────────────────────────────
+
+        /// <summary>
+        /// 현장에서 "NG 사진이 MLOps 에 안 올라간다" 는 말이 나왔을 때 답을 여기서 찾는다 —
+        /// 큐에 쌓여만 있는지 · 거절되고 있는지 · 애초에 큐가 비어 있는지.
+        /// </summary>
+        [Fact]
+        public void Export_IncludesMlopsQueueStatus_WithPendingRejectedAndStats()
+        {
+            Seed("system_config.json", "{}");
+            var q = "mlops_line_ng_queue";
+            Seed($"{q}/a.json", "{}");
+            Seed($"{q}/a.img", "0123456789");
+            Seed($"{q}/b.json", "{}");
+            Seed($"{q}/state/stats.json", """{"sent":42,"rejected":3,"lastRejectReason":"HTTP 413 too large"}""");
+            Seed($"{q}/rejected/c.json", "{}");
+            Seed($"{q}/rejected/c.reason.txt", "HTTP 413 서버가 받지 않음");
+
+            SupportPackageService.Export(_appDataDir, _outputZip);
+
+            var text = ReadEntry("mlops_upload_queue.txt");
+            Assert.Contains("대기 중:", text);
+            Assert.Contains("2 장", text);                       // 통계는 state\ 하위라 대기 항목에 안 섞인다
+            Assert.Contains("거절됨(보관):      1 장", text);
+            Assert.Contains("\"sent\":42", text);                // 누적 통계를 그대로 싣는다
+            Assert.Contains("HTTP 413 서버가 받지 않음", text);    // 거절 사유까지 보인다
+        }
+
+        [Fact]
+        public void Export_MlopsQueueStatus_SaysSoWhenQueueNeverUsed()
+        {
+            Seed("system_config.json", "{}");
+
+            SupportPackageService.Export(_appDataDir, _outputZip);
+
+            var text = ReadEntry("mlops_upload_queue.txt");
+            Assert.Contains("큐 폴더가 없습니다", text);
+        }
+
         // ─── Helper ───────────────────────────────────────────────
+
+        private string ReadEntry(string entryName)
+        {
+            using var zip = ZipFile.OpenRead(_outputZip);
+            var entry = zip.GetEntry(entryName);
+            Assert.NotNull(entry);
+            using var sr = new StreamReader(entry!.Open());
+            return sr.ReadToEnd();
+        }
 
         private static SupportPackageManifest? ReadManifest(ZipArchive zip)
         {
