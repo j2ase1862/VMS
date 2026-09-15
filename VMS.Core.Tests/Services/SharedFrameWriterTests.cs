@@ -1,7 +1,9 @@
 using System;
 using OpenCvSharp;
+using VMS.Camera.Configuration;
 using VMS.Camera.Models;
 using VMS.Camera.Services;
+using VMS.Core.Tests.Configuration;
 using Xunit;
 
 namespace VMS.Core.Tests.Services
@@ -17,12 +19,17 @@ namespace VMS.Core.Tests.Services
     // IPC 이름은 AppDataPaths 의 인스턴스 정적 상태에서 파생된다(QualifyIpcName).
     // AppDataPathsTests 가 그 상태를 바꾸는 동안 이 테스트가 병렬로 돌면 Writer 와 Reader 가
     // 서로 다른 이름을 보게 되어 연결이 실패한다 — 같은 컬렉션으로 묶어 직렬화한다.
+    //
+    // 컬렉션만으로는 부족하다. 기본 인스턴스의 IPC 이름은 접미사가 없어 이 PC 에서 전역이므로,
+    // 개발 PC 에 실제 VMS 가 떠 있거나 dotnet test 가 겹쳐 돌면 프로세스 밖에서 이름이 부딪힌다
+    // ("다시 돌리면 통과" 하는 간헐 실패). IpcInstanceScope 로 이 실행에만 있는 이름을 씌운다.
     [Collection("AppDataPathsState")]
     public class SharedFrameWriterTests
     {
         [Fact]
         public void WriteFrame_SkipsWithoutReader_WritesWithReader()
         {
+            using var ipc = new IpcInstanceScope();
             using var writer = new SharedFrameWriter();
             writer.Initialize();
 
@@ -80,6 +87,7 @@ namespace VMS.Core.Tests.Services
         [Fact]
         public void WriteFrame_RoundTripsCameraId()
         {
+            using var ipc = new IpcInstanceScope();
             using var writer = new SharedFrameWriter();
             writer.Initialize();
 
@@ -106,6 +114,43 @@ namespace VMS.Core.Tests.Services
             Assert.NotNull(withoutId);
             Assert.Equal(string.Empty, withoutId!.CameraId);
             withoutId.Image2D?.Dispose();
+        }
+
+        /// <summary>
+        /// 위 두 시험이 기대는 격리 장치 자체를 검증한다.
+        ///
+        /// <para>IpcInstanceScope 가 실제로 이름을 갈라 주지 않으면, 두 시험은 기본 인스턴스의
+        /// 전역 이름(<c>Local\VMS_SharedFrame_*</c>)을 그대로 쓰게 된다 — 개발 PC 에 실제 VMS 가
+        /// 떠 있거나 dotnet test 가 겹쳐 돌 때 프로세스 밖에서 부딪히는 그 상태로 조용히 되돌아간다.
+        /// 그러면 "다시 돌리면 통과" 하는 간헐 실패가 다시 시작되므로, 갈라짐을 못 박아 둔다.</para>
+        /// </summary>
+        [Fact]
+        public void IpcInstanceScope_gives_each_run_its_own_kernel_object_names()
+        {
+            AppDataPaths.ResetForTests();
+            var shared = SharedFrameConstants.MmfName;
+
+            string inside;
+            using (var ipc = new IpcInstanceScope())
+            {
+                inside = SharedFrameConstants.MmfName;
+
+                Assert.NotEqual(shared, inside);
+                Assert.EndsWith("." + ipc.InstanceName, inside);
+                // Grab 요청 채널도 같은 규칙을 따라야 한다 (같은 PC 의 다른 실행과 안 부딪히도록)
+                Assert.EndsWith("." + ipc.InstanceName, SharedFrameConstants.GrabRequestMmfName);
+            }
+
+            // 범위를 벗어나면 원래 이름으로 돌아온다 — 다른 시험에 상태를 흘리지 않는다
+            AppDataPaths.ResetForTests();
+            Assert.Equal(shared, SharedFrameConstants.MmfName);
+
+            // 범위가 겹치지 않아도 실행마다 이름이 달라야 한다
+            using var a = new IpcInstanceScope();
+            var first = SharedFrameConstants.MmfName;
+            a.Dispose();
+            using var b = new IpcInstanceScope();
+            Assert.NotEqual(first, SharedFrameConstants.MmfName);
         }
     }
 }
