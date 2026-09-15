@@ -1374,7 +1374,14 @@ IoU · 마스크 임계는 없습니다(집합 예측이라 NMS 를 쓰지 않�
     <td><strong>Checkerboard</strong></td>
     <td>체커보드(격자무늬) 인쇄물</td>
     <td>렌즈 왜곡 + 픽셀당 mm</td>
-    <td>가장 정확합니다. 광각 렌즈처럼 화면 가장자리가 휘는 경우 <strong>반드시 이 방식</strong></td>
+    <td>광각 렌즈처럼 화면 가장자리가 휘는 경우에 씁니다</td>
+  </tr>
+  <tr>
+    <td><strong>Circles Grid</strong></td>
+    <td>원형(도트) 타겟</td>
+    <td>렌즈 왜곡 + 픽셀당 mm</td>
+    <td>Checkerboard 와 같은 결과. 산업용 타겟이 대부분 이 형태이고,
+        <strong>초점이 약간 흐려도 잘 잡혀</strong> 현장에서 더 잘 맞습니다</td>
   </tr>
   <tr>
     <td><strong>N-Point (planar)</strong></td>
@@ -1406,9 +1413,32 @@ IoU · 마스크 임계는 없습니다(집합 예측이라 NMS 를 쓰지 않�
       가장자리 왜곡을 알아낼 수 없습니다. 다시 시작하려면 [Reset] 을 누릅니다.</li>
   <li><strong>[Run Calibration]</strong> 을 누릅니다.</li>
 </ol>
+<p><strong>Circles Grid</strong> 방식은 넣는 값이 조금 다릅니다.</p>
+<ul>
+  <li><strong>Pattern Cols / Rows</strong> — 교차점이 아니라 <strong>원의 개수</strong>를 셉니다.</li>
+  <li><strong>Circle Spacing (mm)</strong> — 원 중심에서 이웃 원 중심까지의 거리입니다.
+      타겟에 대개 적혀 있습니다(예: <code>CGB-020 5x4-20mm</code> → 20).</li>
+  <li><strong>Asymmetric (staggered rows)</strong> — 원의 행이 반 칸씩 엇갈려 있으면 켭니다(벌집 모양).
+      산업용 타겟은 대부분 엇갈린 배열이라 <strong>기본이 켜짐</strong>입니다.
+      배열 종류가 틀리면 개수가 맞아도 패턴을 찾지 못하니, 못 찾으면 이것부터 바꿔 보세요.</li>
+</ul>
+<div class="callout warn">
+<strong>엇갈린 배열에서는 행·열 세는 법과 간격의 뜻이 달라집니다.</strong> 위아래 두 행을 합쳐 한 행으로
+세고, 간격은 <strong>엇갈린 이웃 행까지의 가로 거리</strong>를 뜻합니다(같은 행에서 옆 원까지는 그 2배).
+타겟에 <code>5x4</code> 로 적혀 있어도 넣어야 하는 값은 <code>4</code>와 <code>5</code>일 수 있습니다 —
+찾지 못하면 <strong>두 값을 서로 바꿔서</strong> 한 번 더 해 보세요.
+</div>
+
 <p>N-Point 방식은 이미지를 클릭해 점을 찍고 각 점의 실제 mm 좌표를 표에 입력합니다(4점 이상).
 Single Scale 방식은 길이를 아는 구간의 양 끝을 클릭하고 그 길이를 입력합니다 —
 <strong>화면을 가로지를 만큼 길게</strong> 잡을수록 오차가 줍니다.</p>
+
+<div class="callout warn">
+<strong>Checkerboard · Circles Grid 는 한 장으로는 안 됩니다.</strong> 타겟을 카메라와 나란히 놓고
+한 장만 찍으면 렌즈 값이 수학적으로 정해지지 않아 계산이 실패합니다. <strong>[Accumulate Multi-View]</strong>
+를 켜고 <strong>타겟의 각도와 위치를 바꿔 가며</strong> 여러 장을 모으세요. 실패하면 그 이유를 화면에
+알려 줍니다.
+</div>
 
 <h4>4단계 — 결과 읽기</h4>
 <ul>
@@ -1438,6 +1468,7 @@ Single Scale 방식은 길이를 아는 구간의 양 끝을 클릭하고 그 �
 <table>
   <tr><th>캘리브레이션 방식</th><th>Undistort (렌즈 왜곡 펴기)</th><th>Apply Homography (기울기 펴기)</th></tr>
   <tr><td>Checkerboard</td><td>동작</td><td>동작 안 함</td></tr>
+  <tr><td>Circles Grid</td><td>동작</td><td>동작 안 함</td></tr>
   <tr><td>N-Point</td><td>동작 안 함</td><td>동작</td></tr>
   <tr><td>Single Scale</td><td>동작 안 함</td><td>동작 안 함</td></tr>
 </table>
@@ -2245,6 +2276,13 @@ v1.37.0 에서 고쳐졌으므로 버전을 올리세요 — 값이 0 인 구간
 <h3 id="trouble-visionsetup">10.2 비전 설정(레시피 편집) 측</h3>
 
 <h4>캘리브레이션에서 "패턴을 찾지 못했다" 고 나옴</h4>
+<p><strong>원형(도트) 타겟</strong>이면 먼저 이것부터 확인하세요 (§5.11):</p>
+<ol>
+  <li>모드가 <strong>Circles Grid</strong> 인지 — 체커보드 모드로는 원형 타겟을 찾지 못합니다.</li>
+  <li><strong>Asymmetric</strong> 체크 상태 — 배열 종류가 틀리면 개수가 맞아도 못 찾습니다.</li>
+  <li>행·열 수를 <strong>서로 바꿔서</strong> 한 번 더 — 엇갈린 배열은 세는 법이 헷갈립니다.</li>
+</ol>
+<p>체커보드라면:</p>
 <ol>
   <li><strong>Pattern Cols / Rows 가 칸 수로 들어가 있지 않은지</strong> 확인하세요 — 넣어야 하는 값은
       <strong>안쪽 교차점 수</strong>입니다(가로 10칸 → 9). 가장 흔한 원인입니다 (§5.11).</li>
@@ -2738,6 +2776,10 @@ DB 백업이 재시작에도 밀리지 않고, 배포해도 운영 로그·사�
 방식 3종 선택 기준, 체커보드 절차, 결과(재투영 오차·픽셀 크기) 읽는 법, 레시피 적용, Image Rectify 도구와의
 관계까지. 트러블슈팅 3건도 함께 신설(§10.2) — 패턴을 못 찾는 경우 · Image Rectify 가 안 먹는 경우 ·
 mm 값이 실제와 다른 경우.</li>
+<li><strong>원형(도트) 캘리브레이션 타겟 지원</strong> — 산업용 타겟에 흔한 원형 그리드로도
+캘리브레이션할 수 있습니다(대칭 · 엇갈린 배열 모두). 체커보드와 같은 결과를 내며, 초점이 약간
+흐려도 잘 잡힙니다 (§5.11). 평면 타겟을 한 장만 찍어 계산이 안 되는 경우에도 이제 이유와
+해야 할 일을 알려 줍니다(예전에는 창이 그대로 닫혔습니다).</li>
 <li><strong>도구 도움말(물음표) 보강</strong> — Image Rectify 의 설명이 실제 설정과 달랐던 것을 바로잡고,
 Calibration Manager 창에 없던 도움말을 추가했습니다.</li>
 </ul>
