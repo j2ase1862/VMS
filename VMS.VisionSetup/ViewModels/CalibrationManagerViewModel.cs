@@ -155,6 +155,7 @@ namespace VMS.VisionSetup.ViewModels
         public IReadOnlyList<CalibrationModeOption> AvailableModes { get; } = new[]
         {
             new CalibrationModeOption(CalibrationMode.Checkerboard, "Checkerboard"),
+            new CalibrationModeOption(CalibrationMode.CirclesGrid, "Circles Grid (dots)"),
             new CalibrationModeOption(CalibrationMode.NPointToNPoint, "N-Point (planar)"),
             new CalibrationModeOption(CalibrationMode.SinglePointScale, "Single Scale (2 points)")
         };
@@ -169,6 +170,7 @@ namespace VMS.VisionSetup.ViewModels
                 {
                     OnPropertyChanged(nameof(SelectedMode));
                     OnPropertyChanged(nameof(IsCheckerboardMode));
+                    OnPropertyChanged(nameof(IsCirclesGridMode));
                     OnPropertyChanged(nameof(IsNPointMode));
                     OnPropertyChanged(nameof(IsSingleScaleMode));
                     RedrawOverlay();
@@ -180,8 +182,15 @@ namespace VMS.VisionSetup.ViewModels
             SelectedModeOption?.Value ?? CalibrationMode.Checkerboard;
 
         public bool IsCheckerboardMode => SelectedMode == CalibrationMode.Checkerboard;
+        public bool IsCirclesGridMode => SelectedMode == CalibrationMode.CirclesGrid;
         public bool IsNPointMode => SelectedMode == CalibrationMode.NPointToNPoint;
         public bool IsSingleScaleMode => SelectedMode == CalibrationMode.SinglePointScale;
+
+        // ── 파라미터 (Circles Grid) ──
+        // 행·열은 체커보드와 공유한다 (같은 "몇 개짜리 패턴인가" 질문이라, 따로 두면 모드를 오갈 때
+        // 값을 두 번 맞춰야 한다). 간격과 배열 종류만 이 모드 전용이다.
+        [ObservableProperty] private double _circleSpacingMm = 20.0;
+        [ObservableProperty] private bool _asymmetricCircles = true;
 
         // ── 파라미터 (Checkerboard) ──
         [ObservableProperty] private int _patternCols = 9;
@@ -384,6 +393,9 @@ namespace VMS.VisionSetup.ViewModels
             {
                 CalibrationMode.Checkerboard => _calibrationService.RunCheckerboard(
                     _sourceImage, PatternCols, PatternRows, SquareSizeMm, AccumulateMultiView),
+                CalibrationMode.CirclesGrid => _calibrationService.RunCirclesGrid(
+                    _sourceImage, PatternCols, PatternRows, CircleSpacingMm,
+                    AsymmetricCircles, AccumulateMultiView),
                 CalibrationMode.NPointToNPoint => RunNPointMode(),
                 CalibrationMode.SinglePointScale => RunSingleScaleMode(),
                 _ => new CalibrationResult { Success = false, Message = "Unknown mode" }

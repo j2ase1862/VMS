@@ -10,6 +10,11 @@ namespace VMS.VisionSetup.Models
     {
         /// <summary>체커보드 패턴 → 내부 파라미터 + 왜곡 계수 + 픽셀 크기</summary>
         Checkerboard,
+        /// <summary>
+        /// 원형 그리드(도트) 패턴 → 체커보드와 같은 결과(내부 파라미터 + 왜곡 계수 + 픽셀 크기).
+        /// 산업용 캘리브레이션 타겟에서 흔하며, 초점이 약간 흐려도 중심을 잘 잡아 현장에 유리하다.
+        /// </summary>
+        CirclesGrid,
         /// <summary>픽셀 좌표 ↔ 실측 mm 좌표 N개 매칭 → 평면 호모그래피</summary>
         NPointToNPoint,
         /// <summary>알려진 길이의 직선 1개 → 픽셀당 mm 비율만</summary>

@@ -69,13 +69,10 @@ namespace VMS.VisionSetup.Services
 
             var cameraMatrix = new double[3, 3];
             var distCoeffs = new double[5];
-            double rms = Cv2.CalibrateCamera(
-                objectPointsList,
-                imagePoints,
-                gray.Size(),
-                cameraMatrix,
-                distCoeffs,
-                out _, out _);
+            // 평면 타겟 한 장은 수학적으로 풀리지 않아 OpenCV 가 예외를 던진다 — TryCalibrateCamera 참조.
+            if (!TryCalibrateCamera(objectPointsList, imagePoints, gray.Size(),
+                    cameraMatrix, distCoeffs, out double rms, out var calibError))
+                return Fail(calibError!);
 
             double pixelSizeMm = EstimatePixelSizeMm(refined, patternSize, squareSizeMm);
 
@@ -93,6 +90,110 @@ namespace VMS.VisionSetup.Services
             };
 
             var overlay = DrawCornersOverlay(image, refined, patternSize);
+
+            return new CalibrationResult
+            {
+                Success = rms < 1.0,
+                Message = $"RMS={rms:F3}px, PixelSize={pixelSizeMm:F4}mm/px, Views={imagePoints.Count}",
+                Metadata = meta,
+                Overlay = overlay,
+                ViewCount = imagePoints.Count
+            };
+        }
+
+        /// <summary>
+        /// 원형 그리드(도트) 캘리브레이션 — 체커보드와 같은 결과를 낸다(내부 파라미터 + 왜곡 계수).
+        ///
+        /// <para><b>왜 필요한가.</b> 산업용 캘리브레이션 타겟은 원형 그리드인 경우가 많고
+        /// (예: CGB-020 5×4-20mm), 초점이 약간 흐려도 원의 무게중심은 안정적으로 잡혀 현장에서
+        /// 유리하다. 예전에는 체커보드만 지원해 그런 타겟으로는 아예 캘리브레이션을 할 수 없었다.</para>
+        ///
+        /// <para><b>간격(spacing)의 뜻이 배치에 따라 다르다.</b>
+        /// 대칭 배열은 이웃한 원의 <b>중심 간 거리</b> 그대로지만, 비대칭(엇갈린) 배열은 OpenCV 관례상
+        /// 같은 행에서 한 칸 건너뛴 원까지가 2×spacing 이 되도록 좌표를 만든다 —
+        /// 즉 <b>엇갈린 이웃 행까지의 가로 방향 거리</b>가 spacing 이다. 타겟 사양서의 값이
+        /// 어느 쪽인지 확인해야 mm 환산이 맞는다.</para>
+        /// </summary>
+        /// <param name="patternCols">한 행의 원 개수 (비대칭이면 OpenCV 관례에 따라 두 행을 합친 열 수).</param>
+        /// <param name="patternRows">행 개수.</param>
+        /// <param name="spacingMm">원 중심 간 간격(mm) — 위 설명 참조.</param>
+        /// <param name="asymmetric">행이 서로 엇갈린 배열이면 true.</param>
+        public CalibrationResult RunCirclesGrid(
+            Mat image, int patternCols, int patternRows, double spacingMm, bool asymmetric, bool accumulate)
+        {
+            if (image == null || image.Empty())
+                return Fail("Input image is empty");
+
+            using var gray = image.Channels() > 1
+                ? image.CvtColor(ColorConversionCodes.BGR2GRAY)
+                : image.Clone();
+
+            var patternSize = new Size(patternCols, patternRows);
+            var flags = asymmetric
+                ? FindCirclesGridFlags.AsymmetricGrid
+                : FindCirclesGridFlags.SymmetricGrid;
+
+            // 밝은 배경의 검은 원이 기본. 반대(어두운 배경의 밝은 원)면 반전해 한 번 더 시도한다 —
+            // 현장 타겟은 둘 다 쓰이고, 사용자가 그 차이를 알 이유가 없다.
+            int expected = patternCols * patternRows;
+            var centers = TryFindCircles(gray, patternSize, flags, expected);
+            if (centers == null)
+            {
+                using var inverted = new Mat();
+                Cv2.BitwiseNot(gray, inverted);
+                centers = TryFindCircles(inverted, patternSize, flags, expected);
+            }
+
+            if (centers == null)
+            {
+                var layout = asymmetric ? "비대칭(엇갈린)" : "대칭";
+                return Fail(
+                    $"원형 그리드를 찾지 못했습니다 ({patternCols}×{patternRows}, {layout}). " +
+                    "행·열 개수와 배열 종류(대칭/비대칭)를 확인하세요. " +
+                    "비대칭 배열은 열 개수를 두 행 합쳐 세는 것이 OpenCV 관례입니다.");
+            }
+
+            if (accumulate)
+            {
+                if (_accumulatedCorners.Count == 0)
+                    _accumulatedImageSize = gray.Size();
+                else if (gray.Size() != _accumulatedImageSize)
+                    return Fail($"Image size mismatch (accumulated {_accumulatedImageSize.Width}x{_accumulatedImageSize.Height}). Reset before adding different resolution.");
+
+                _accumulatedCorners.Add(centers);
+            }
+
+            var imagePoints = accumulate
+                ? _accumulatedCorners
+                : new List<Point2f[]> { centers };
+
+            var objectPoints = asymmetric
+                ? BuildAsymmetricCircleObjectPoints(patternSize, (float)spacingMm)
+                : BuildObjectPoints(patternSize, (float)spacingMm);
+            var objectPointsList = Enumerable.Repeat(objectPoints, imagePoints.Count).ToList();
+
+            var cameraMatrix = new double[3, 3];
+            var distCoeffs = new double[5];
+            if (!TryCalibrateCamera(objectPointsList, imagePoints, gray.Size(),
+                    cameraMatrix, distCoeffs, out double rms, out var calibError))
+                return Fail(calibError!);
+
+            double pixelSizeMm = EstimateCirclePixelSizeMm(centers, patternSize, spacingMm, asymmetric);
+
+            var meta = new CalibrationMetadata
+            {
+                Mode = CalibrationMode.CirclesGrid,
+                CameraMatrix = CalibrationMetadata.To2DJagged(cameraMatrix),
+                DistortionCoeffs = distCoeffs,
+                PixelSizeMm = pixelSizeMm,
+                ReprojectionError = rms,
+                ImageWidth = image.Width,
+                ImageHeight = image.Height,
+                CalibratedAt = DateTime.UtcNow,
+                SourceToolName = "CalibrationManager"
+            };
+
+            var overlay = DrawCornersOverlay(image, centers, patternSize);
 
             return new CalibrationResult
             {
@@ -223,6 +324,103 @@ namespace VMS.VisionSetup.Services
                 for (int c = 0; c < patternSize.Width; c++)
                     pts[i++] = new Point3f(c * squareSizeMm, r * squareSizeMm, 0f);
             return pts;
+        }
+
+        /// <summary>
+        /// <c>CalibrateCamera</c> 호출을 감싼다. 실패하면 예외 대신 <c>CalibrationResult</c> 실패를 돌려준다.
+        ///
+        /// <para><b>왜 감싸는가.</b> 평면 타겟을 <b>정면에서 한 장만</b> 찍으면 내부 파라미터가
+        /// 수학적으로 결정되지 않아 OpenCV 가 <c>"m.dims >= 2"</c> 같은 내부 단언으로 <b>예외를 던진다</b>
+        /// (순수 OpenCV 에서도 동일 — 라이브러리 한계다). 현장에서 타겟을 카메라와 나란히 놓고
+        /// 한 장 찍는 것은 아주 자연스러운 행동이라, 그대로 두면 [Run Calibration] 한 번에 창이 죽는다.
+        /// 이제 무엇을 해야 하는지 알려 주고 멈춘다.</para>
+        /// </summary>
+        private static bool TryCalibrateCamera(
+            IReadOnlyList<Point3f[]> objectPoints, IReadOnlyList<Point2f[]> imagePoints, Size imageSize,
+            double[,] cameraMatrix, double[] distCoeffs, out double rms, out string? error)
+        {
+            error = null;
+            try
+            {
+                rms = Cv2.CalibrateCamera(
+                    objectPoints, imagePoints, imageSize, cameraMatrix, distCoeffs, out _, out _);
+                return true;
+            }
+            catch (OpenCVException)
+            {
+                rms = 0;
+                error = imagePoints.Count < 2
+                    ? "한 장만으로는 계산할 수 없습니다 — 평면 타겟을 정면에서 한 장 찍으면 " +
+                      "렌즈 값이 수학적으로 정해지지 않습니다. [Accumulate Multi-View] 를 켜고 " +
+                      "타겟의 각도·위치를 바꿔 가며 10~20장을 모은 뒤 다시 실행하세요."
+                    : "계산에 실패했습니다 — 모은 사진들이 서로 너무 비슷하면(같은 각도·같은 위치) " +
+                      "렌즈 값을 정할 수 없습니다. 타겟을 기울이고 화면의 여러 구석으로 옮겨 가며 다시 모으세요.";
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 원형 그리드 검출 1회. 찾으면 중심 배열을, 못 찾으면 null 을 돌려준다.
+        ///
+        /// <para><b>왜 감싸는가.</b> <c>FindCirclesGrid</c> 는 원을 하나도 못 찾으면 false 를
+        /// 돌려주는 대신 <c>"samples is empty"</c> 예외를 던진다 — 빈 이미지나 배열 종류를 잘못
+        /// 고른 경우에 그렇다. 그대로 두면 [Run Calibration] 한 번에 창이 죽는다.
+        /// 개수가 기대와 다른 경우도 여기서 걸러낸다 — 그대로 넘기면 CalibrateCamera 가
+        /// <c>"m.dims >= 2"</c> 로 터진다.</para>
+        /// </summary>
+        private static Point2f[]? TryFindCircles(Mat image, Size patternSize, FindCirclesGridFlags flags, int expected)
+        {
+            try
+            {
+                if (!Cv2.FindCirclesGrid(image, patternSize, out var centers, flags))
+                    return null;
+                if (centers == null || centers.Length != expected)
+                    return null;
+                return centers;
+            }
+            catch (OpenCVException)
+            {
+                // 검출 실패의 한 형태 — 호출부가 "못 찾았다" 로 처리한다.
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 비대칭(엇갈린) 원형 그리드의 3D 좌표. OpenCV 관례 — 행마다 반 칸씩 밀리므로
+        /// x = (2·열 + 행%2)·spacing, y = 행·spacing 이 된다.
+        /// </summary>
+        private static Point3f[] BuildAsymmetricCircleObjectPoints(Size patternSize, float spacingMm)
+        {
+            var pts = new Point3f[patternSize.Width * patternSize.Height];
+            int i = 0;
+            for (int r = 0; r < patternSize.Height; r++)
+                for (int c = 0; c < patternSize.Width; c++)
+                    pts[i++] = new Point3f((2 * c + r % 2) * spacingMm, r * spacingMm, 0f);
+            return pts;
+        }
+
+        /// <summary>
+        /// 원형 그리드의 픽셀당 mm. 한 행 안에서 이웃 중심 간 평균 픽셀 거리를 쓰되,
+        /// 비대칭 배열은 그 거리가 2×spacing 에 해당하므로 그만큼 나눈다.
+        /// </summary>
+        private static double EstimateCirclePixelSizeMm(
+            Point2f[] centers, Size patternSize, double spacingMm, bool asymmetric)
+        {
+            int cols = patternSize.Width;
+            if (centers.Length < cols || cols < 2) return 0.0;
+
+            double sumPx = 0;
+            for (int c = 0; c < cols - 1; c++)
+            {
+                var dx = centers[c + 1].X - centers[c].X;
+                var dy = centers[c + 1].Y - centers[c].Y;
+                sumPx += Math.Sqrt(dx * dx + dy * dy);
+            }
+            double avgPx = sumPx / (cols - 1);
+            if (avgPx <= 1e-6) return 0.0;
+
+            double mmPerStep = asymmetric ? spacingMm * 2.0 : spacingMm;
+            return mmPerStep / avgPx;
         }
 
         private static double EstimatePixelSizeMm(Point2f[] corners, Size patternSize, double squareSizeMm)
