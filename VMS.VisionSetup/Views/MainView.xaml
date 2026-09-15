@@ -1,4 +1,4 @@
-<Window x:Class="VMS.VisionSetup.MainView"
+﻿<Window x:Class="VMS.VisionSetup.MainView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -1012,7 +1012,16 @@
                         </DataGrid.RowStyle>
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="#" Binding="{Binding DisplayName}" Width="*" MinWidth="50"/>
-                            <DataGridTextColumn Header="Resolution" Binding="{Binding Resolution, StringFormat={}{0:F3}}" Width="70"/>
+                            <!-- mm/px. 캘리브레이션 매니저의 [Apply to Current Recipe] 가 이 값을 갱신한다.
+                                 F3 으로는 고배율(0.0004 mm/px 등)이 전부 "0.000" 으로 뭉개져 적용 여부를
+                                 확인할 수 없었다 (dev PC 검증 2026-09-15) → F5. -->
+                            <DataGridTextColumn Header="Resolution" Binding="{Binding Resolution, StringFormat={}{0:F5}}" Width="70">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="ToolTip" Value="mm/px — 캘리브레이션을 레시피에 적용하면 이 값이 갱신됩니다."/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
                             <DataGridTextColumn Header="Tools" Binding="{Binding Tools.Count}" Width="40"/>
                         </DataGrid.Columns>
                     </DataGrid>

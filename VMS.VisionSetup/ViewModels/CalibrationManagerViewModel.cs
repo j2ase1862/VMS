@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpenCvSharp;
 using OpenCvSharp.WpfExtensions;
@@ -56,6 +56,50 @@ namespace VMS.VisionSetup.ViewModels
     }
 
     /// <summary>
+    /// [Apply to Current Recipe] 가 건드릴 스텝 한 줄.
+    ///
+    /// <para>캘리브레이션 결과는 레시피 한 개에 한 벌만 저장되지만, 스텝의 Resolution(mm/px)은
+    /// 스텝마다 따로 있다 — 한 레시피에 카메라가 여러 대면 렌즈·작동거리가 달라 같은 값을
+    /// 모든 스텝에 밀어 넣으면 틀린다. 그래서 어느 스텝을 갱신할지 누르기 전에 고르게 하고,
+    /// 무엇이 어떤 값으로 바뀌는지 미리 보여준다.</para>
+    /// </summary>
+    public partial class StepApplyTarget : ObservableObject
+    {
+        public StepApplyTarget(InspectionStep step, string cameraName)
+        {
+            Step = step;
+            CameraName = cameraName;
+        }
+
+        /// <summary>레시피가 들고 있는 그 인스턴스 그대로 — 여기에 쓰면 왼쪽 Steps 표가 바로 바뀐다.</summary>
+        public InspectionStep Step { get; }
+
+        public string StepName => Step.DisplayName;
+        public string CameraName { get; }
+
+        /// <summary>지금 스텝에 들어 있는 값 (적용 후 Refresh 로 다시 읽는다).</summary>
+        public double CurrentResolution => Step.Resolution;
+
+        [ObservableProperty] private bool _isSelected;
+
+        /// <summary>적용하면 들어갈 값 = 이번 계산의 Pixel Size.</summary>
+        [ObservableProperty] private double _newResolution;
+
+        public string ChangeText => NewResolution > 0
+            ? $"{CurrentResolution:F5} → {NewResolution:F5}"
+            : $"{CurrentResolution:F5} → (계산 전)";
+
+        partial void OnNewResolutionChanged(double value) => OnPropertyChanged(nameof(ChangeText));
+
+        /// <summary>적용 후 "현재 값" 표시를 다시 읽는다.</summary>
+        public void Refresh()
+        {
+            OnPropertyChanged(nameof(CurrentResolution));
+            OnPropertyChanged(nameof(ChangeText));
+        }
+    }
+
+    /// <summary>
     /// Camera Calibration Manager 윈도우의 ViewModel.
     /// 이미지 소스 3종(파일/카메라 직접/VMS Shared Frame) → 매개변수 설정 → Run → Apply to Recipe.
     /// VMS가 카메라를 점유 중일 때 카메라 직접 소스는 자동 비활성화.
@@ -104,10 +148,14 @@ namespace VMS.VisionSetup.ViewModels
             {
                 ReprojectionError = existing.ReprojectionError;
                 PixelSizeMm = existing.PixelSizeMm;
-                StatusMessage = $"Loaded existing calibration from recipe ({existing.CalibratedAt:yyyy-MM-dd HH:mm}).";
+                StatusMessage = $"Loaded existing calibration from recipe ({existing.CalibratedAt.ToLocalTime():yyyy-MM-dd HH:mm}).";
                 _lastResultMetadata = existing;
                 HasResult = true;
             }
+
+            // 적용하면 무엇이 바뀌는지 미리 보여준다 — 창을 연 시점의 레시피 스텝 목록.
+            RebuildApplyTargets();
+            RefreshAppliedSummary();
         }
 
         // ── 이미지 소스 ──
@@ -220,6 +268,104 @@ namespace VMS.VisionSetup.ViewModels
 
         public int AccumulatedViewCount => _calibrationService.AccumulatedViewCount;
 
+        // ── 적용 (Apply) ──
+        // 이 창이 [Apply to Current Recipe] 로 실제로 바꾸는 것은 두 곳이다.
+        //   ① recipe.Calibration  — 측정 도구의 mm 판정 + Image Rectify 의 왜곡 보정이 쓴다
+        //   ② 고른 스텝의 Resolution(mm/px) — VisionSetup 왼쪽 Steps 표에 보이는 그 값
+        // ②를 안 건드리면 표의 Resolution 은 기본값(0.05) 그대로라 "적용한 게 어디에도 안 보인다"
+        // 가 된다 (2026-09-15 dev PC 검증). 어느 스텝을 건드릴지는 아래 목록에서 고른다.
+
+        /// <summary>Resolution 을 갱신할 후보 스텝들 (현재 레시피 전체).</summary>
+        public System.Collections.ObjectModel.ObservableCollection<StepApplyTarget> ApplyTargets { get; } = new();
+
+        /// <summary>대상 목록이 비어 있을 때 표시할 안내 (비어 있지 않으면 빈 문자열).</summary>
+        [ObservableProperty] private string _applyTargetsHint = string.Empty;
+
+        /// <summary>지금 레시피에 실제로 저장돼 있는 캘리브레이션 요약 — 적용 전/후 확인용.</summary>
+        [ObservableProperty] private string _appliedSummary = string.Empty;
+
+        /// <summary>
+        /// 이미지를 어느 카메라에서 가져왔는지 (카메라 직접 촬영일 때만 확실). 기본 체크 대상을
+        /// 그 카메라의 스텝으로 좁히는 데 쓴다 — 파일/VMS 프레임은 알 수 없어 전체를 고른다.
+        /// </summary>
+        private string? _sourceCameraId;
+
+        /// <summary>현재 레시피의 스텝으로 적용 대상 목록을 다시 만든다 (기본 선택까지).</summary>
+        private void RebuildApplyTargets()
+        {
+            ApplyTargets.Clear();
+
+            var recipe = _recipeService.CurrentRecipe;
+            if (recipe == null)
+            {
+                ApplyTargetsHint = "로드된 레시피가 없습니다 — 결과는 이번 세션에만 적용됩니다.";
+                return;
+            }
+
+            var cameras = CameraService.Instance.GetAllCameras();
+            foreach (var step in recipe.Steps.OrderBy(s => s.Sequence))
+            {
+                var camName = cameras.FirstOrDefault(c => c.Id == step.CameraId)?.Name ?? "(미지정)";
+                ApplyTargets.Add(new StepApplyTarget(step, camName) { NewResolution = PixelSizeMm });
+            }
+
+            ApplyTargetsHint = ApplyTargets.Count == 0
+                ? "이 레시피에는 스텝이 없습니다 — 캘리브레이션만 저장됩니다."
+                : string.Empty;
+
+            ApplyDefaultSelection();
+        }
+
+        /// <summary>
+        /// 기본 체크 — 촬영한 카메라를 아는 경우 그 카메라의 스텝만, 모르면 전체.
+        /// 사용자가 손으로 고친 뒤에는 호출하지 않는다 (촬영/레시피 교체 시점에만).
+        /// </summary>
+        private void ApplyDefaultSelection()
+        {
+            foreach (var t in ApplyTargets)
+            {
+                t.IsSelected = string.IsNullOrEmpty(_sourceCameraId)
+                    || string.IsNullOrEmpty(t.Step.CameraId)
+                    || t.Step.CameraId == _sourceCameraId;
+            }
+        }
+
+        /// <summary>계산 결과가 바뀌면 "적용 후 값" 미리보기도 따라간다.</summary>
+        partial void OnPixelSizeMmChanged(double value)
+        {
+            foreach (var t in ApplyTargets)
+                t.NewResolution = value;
+        }
+
+        /// <summary>레시피에 지금 저장돼 있는 캘리브레이션을 한 줄로 요약.</summary>
+        private void RefreshAppliedSummary()
+        {
+            var recipe = _recipeService.CurrentRecipe;
+            if (recipe == null)
+            {
+                AppliedSummary = "레시피 없음 — 적용해도 파일에는 남지 않습니다.";
+                return;
+            }
+
+            var c = recipe.Calibration;
+            AppliedSummary = c == null
+                ? $"'{recipe.Name}' 에 저장된 캘리브레이션: 없음"
+                : $"'{recipe.Name}' 에 저장됨: {c.Mode} · {c.PixelSizeMm:F5} mm/px · "
+                  + $"오차 {c.ReprojectionError:F4} · {c.CalibratedAt.ToLocalTime():yyyy-MM-dd HH:mm}";
+        }
+
+        [RelayCommand]
+        private void SelectAllApplyTargets()
+        {
+            foreach (var t in ApplyTargets) t.IsSelected = true;
+        }
+
+        [RelayCommand]
+        private void SelectNoApplyTargets()
+        {
+            foreach (var t in ApplyTargets) t.IsSelected = false;
+        }
+
         partial void OnPatternColsChanged(int value) { if (value < 2) PatternCols = 2; }
         partial void OnPatternRowsChanged(int value) { if (value < 2) PatternRows = 2; }
         partial void OnSquareSizeMmChanged(double value) { if (value < 0.001) SquareSizeMm = 0.001; }
@@ -323,6 +469,10 @@ namespace VMS.VisionSetup.ViewModels
                     StatusMessage = $"Capture failed: {result.Message}";
                     return;
                 }
+
+                // 이 카메라의 스텝만 기본 체크되도록 소스를 기억 (다중 카메라 레시피 오적용 방지)
+                _sourceCameraId = SelectedCamera.Id;
+                ApplyDefaultSelection();
 
                 ReplaceSourceImage(result.Image2D, $"[Camera: {SelectedCamera.Name}]",
                     $"Captured from {SelectedCamera.Name} ({result.Image2D.Width}x{result.Image2D.Height})");
@@ -535,6 +685,13 @@ namespace VMS.VisionSetup.ViewModels
             StatusMessage = "Accumulated views cleared.";
         }
 
+        /// <summary>
+        /// 계산 결과를 실제로 쓰이는 자리에 넣는다. 세 가지가 한 번에 일어난다.
+        ///   ① 레시피의 캘리브레이션 슬롯 교체 (+ 런타임 슬롯 동기화)
+        ///   ② 위 목록에서 고른 스텝의 Resolution(mm/px) 갱신 — 왼쪽 Steps 표에 보이는 값
+        ///   ③ 레시피 파일 저장
+        /// 무엇이 바뀌었는지는 상태 메시지와 요약 줄에 그대로 남는다.
+        /// </summary>
         [RelayCommand]
         private void ApplyToRecipe()
         {
@@ -544,6 +701,7 @@ namespace VMS.VisionSetup.ViewModels
                 return;
             }
 
+            // ① 런타임 슬롯 — 레시피가 없어도 이번 세션의 측정은 mm 로 나온다
             VisionService.Instance.CurrentCalibrationMetadata = _lastResultMetadata;
 
             var recipe = _recipeService.CurrentRecipe;
@@ -553,12 +711,40 @@ namespace VMS.VisionSetup.ViewModels
                     "No active recipe. Calibration applied to current session only.",
                     "No Recipe");
                 StatusMessage = "Applied to session (no recipe to persist into).";
+                RefreshAppliedSummary();
                 return;
             }
 
             recipe.Calibration = _lastResultMetadata;
-            _recipeService.SaveRecipe(recipe);
-            StatusMessage = $"Saved to recipe '{recipe.Name}'.";
+
+            // ② 고른 스텝의 Resolution — 레시피가 들고 있는 인스턴스라 Steps 표가 즉시 따라온다
+            double mmPerPx = _lastResultMetadata.PixelSizeMm;
+            var chosen = ApplyTargets.Where(t => t.IsSelected).ToList();
+            foreach (var t in chosen)
+                t.Step.Resolution = mmPerPx;
+
+            // 워크스페이스가 편집 중인 스텝을 건드렸으면 mm 폴백 값도 즉시 맞춘다
+            // (정식 캘리브레이션이 우선이지만, 나중에 지웠을 때 남는 값이 이것이다)
+            if (chosen.Any(t => t.Step.Id == VisionService.Instance.CurrentStepId))
+                VisionService.Instance.CurrentStepResolutionMmPerPx = mmPerPx;
+
+            // ③ 파일 저장
+            if (!_recipeService.SaveRecipe(recipe))
+            {
+                StatusMessage = $"⚠ 레시피 '{recipe.Name}' 저장에 실패했습니다 — 값은 메모리에만 반영됐습니다.";
+                _dialogService.ShowError(
+                    $"Failed to save recipe '{recipe.Name}'. The calibration is applied to this session only.",
+                    "Save Failed");
+                return;
+            }
+
+            foreach (var t in ApplyTargets) t.Refresh();
+            RefreshAppliedSummary();
+
+            StatusMessage = chosen.Count > 0
+                ? $"'{recipe.Name}' 저장 완료 · 스텝 {chosen.Count}개의 Resolution → {mmPerPx:F5} mm/px "
+                  + $"({string.Join(", ", chosen.Take(4).Select(t => t.StepName))}{(chosen.Count > 4 ? " …" : "")})"
+                : $"'{recipe.Name}' 저장 완료 · 캘리브레이션만 적용 (스텝 Resolution 은 그대로)";
         }
 
         [RelayCommand]
@@ -567,7 +753,10 @@ namespace VMS.VisionSetup.ViewModels
             var recipe = _recipeService.CurrentRecipe;
             if (recipe == null) return;
             if (!_dialogService.ShowConfirmation(
-                "Remove calibration from current recipe? Measurements will revert to pixel-only units.",
+                "현재 레시피에서 캘리브레이션을 지울까요?\n\n"
+                + "왜곡 보정(Image Rectify)은 즉시 통과 상태가 됩니다.\n"
+                + "스텝의 Resolution(mm/px) 값은 그대로 남아 측정 도구의 mm 환산에 계속 쓰입니다 — "
+                + "픽셀 단위로 되돌리려면 스텝의 Resolution 도 0 으로 바꾸세요.",
                 "Clear Calibration")) return;
 
             recipe.Calibration = null;
@@ -575,7 +764,8 @@ namespace VMS.VisionSetup.ViewModels
             _recipeService.SaveRecipe(recipe);
             HasResult = false;
             _lastResultMetadata = null;
-            StatusMessage = "Calibration removed from recipe.";
+            RefreshAppliedSummary();
+            StatusMessage = "레시피에서 캘리브레이션을 지웠습니다 (스텝 Resolution 은 유지).";
         }
 
         /// <summary>

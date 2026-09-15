@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using OpenCvSharp;
 
 namespace VMS.VisionSetup.Models
@@ -149,7 +149,9 @@ namespace VMS.VisionSetup.Models
             if (PixelSizeMm <= 0 || double.IsNaN(PixelSizeMm)) return false;
             return Mode switch
             {
-                CalibrationMode.Checkerboard =>
+                // CirclesGrid 는 Checkerboard 와 같은 산출물(내부 파라미터 + 왜곡 계수)이라 같은 조건.
+                // 빠져 있어 원형 타겟 결과가 항상 무효로 떨어졌다 (2026-09-15).
+                CalibrationMode.Checkerboard or CalibrationMode.CirclesGrid =>
                     CameraMatrix != null && CameraMatrix.Length == 3 && DistortionCoeffs != null,
                 CalibrationMode.NPointToNPoint =>
                     HomographyPx2Mm != null && HomographyPx2Mm.Length == 3,
