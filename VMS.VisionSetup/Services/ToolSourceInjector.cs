@@ -157,11 +157,13 @@ namespace VMS.VisionSetup.Services
             {
                 // 상자도 부품과 같이 기운다 — 이게 빠져 있어서 "각도 전달이 안 된다" 였다.
                 // 회전 중심을 함께 실어야 GetAlignedROIImage/Blob/Caliper 가 같은 축으로 편다.
+                // 플래그를 먼저 세운다 — ROIAngle 대입이 PropertyChanged 를 내고, 그걸 받는
+                // 화면 동기화가 "Fixture 가 준 각도인가"를 이 플래그로 판단하기 때문이다.
+                // 뒤에 세우면 첫 실행의 알림이 플래그를 못 보고 지나간다.
+                tool.HasFixtureAngle = true;
                 tool.ROIAngle = tool.FixtureBaseROIAngle + deltaAngle;
                 tool.ROICenterX = newCX;
                 tool.ROICenterY = newCY;
-                // 이 뒤로 실행은 캔버스 도형이 아니라 이 각도를 본다 (EffectiveROIAngle).
-                tool.HasFixtureAngle = true;
 
                 // 캔버스 도형(AssociatedROIShape)은 여기서 건드리지 않는다 — ROIShape 는
                 // UI 에 바인딩된 ObservableObject 인데 이 코드는 AUTO RUN 백그라운드
