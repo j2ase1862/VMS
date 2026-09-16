@@ -7,7 +7,6 @@ VMS 솔루션 (BODA Vision AI) 의 사용자 매뉴얼 및 도구별 운영 가�
 | 파일 | 대상 |
 |------|------|
 | [`BODA-VMS-User-Manual.html`](BODA-VMS-User-Manual.html) | 전체 사용자 매뉴얼 v3.0 (GS 제출물의 원본) — **생성물: 직접 편집 금지.** 본문은 `src/NN_*.html` 장별 조각, `python build_manual.py` 로 합성(6장은 `gen_tools_chapter.py` + `tools_prose.json`, 13장 부록은 `gen_appendix.py`). docx/PDF 재생성은 `docs/gs/README.md` 참조 |
-| [`BODA-VMS-Admin-Manual.html`](BODA-VMS-Admin-Manual.html) | **관리자판 (내부 전용, 생성물 — 직접 편집 금지)** — `gen_admin_manual.py` 가 사용자 매뉴얼 §1~8 + `_admin_weldteach_section.html`(§9 WeldTeach) 로 자동 합성. 사용자 매뉴얼 갱신 시 스크립트 재실행. ⚠ 2026-09-17 v3.0 개편(13장 구조) 이후 §1~8 앵커가 달라져 **재실행 전 gen_admin_manual.py 의 절 범위를 손봐야 함** |
 | [`VMS-VisionSetup-Manual.html`](VMS-VisionSetup-Manual.html) | VisionSetup 워크스페이스 매뉴얼 |
 | [`VMS-DeepLearning-Manual.html`](VMS-DeepLearning-Manual.html) | DeepLearning 도구 매뉴얼 |
 | [`VMS_VisionTools_Operating_Manual.html`](VMS_VisionTools_Operating_Manual.html) | 비전 도구 운용 가이드 |
@@ -35,7 +34,6 @@ VMS 솔루션 (BODA Vision AI) 의 사용자 매뉴얼 및 도구별 운영 가�
 
 | 파일 | 용도 |
 |------|------|
-| [`gen_admin_manual.py`](gen_admin_manual.py) | 관리자 매뉴얼 합성 (사용자 매뉴얼 + `_admin_weldteach_section.html` — 2026-08-14 수동 복사 대체) |
 | [`generate_dl_manual.js`](generate_dl_manual.js) | DL 매뉴얼 HTML 생성 |
 | [`generate_manual.py`](generate_manual.py) | 일반 매뉴얼 HTML 생성 |
 
