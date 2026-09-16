@@ -1,0 +1,566 @@
+<section id="appendix">
+<h2>13. 부록</h2>
+<div class="callout"><strong>⚙ 부록은 관리자와 기술 지원 담당자용 참고 자료입니다.</strong></div>
+<h3 id="appx-keys">13.1 단축키 · 마우스 조작 (VisionSetup)</h3>
+<table class="cols-2-3-4">
+  <tr><th>키 / 조작</th><th>범위</th><th>동작</th></tr>
+  <tr><td>← / →</td><td>메인 창 (폴더 열기 후)</td><td>이전 / 다음 이미지. 툴바의 Navigate · Run All · Run Selected 모드에 따라 이동 시 자동 실행</td></tr>
+  <tr><td>Esc / 우클릭</td><td>Tool Workspace</td><td>도구 연결 모드 취소</td></tr>
+  <tr><td>마우스 휠</td><td>이미지 뷰</td><td>커서 기준 확대 · 축소 (10%~500%)</td></tr>
+  <tr><td>우클릭</td><td>이미지 뷰</td><td>다각형 ROI 완성(점 3 개 이상) / 그 외 선택 해제</td></tr>
+  <tr><td>드래그 (흰 원 핸들 / 금색 원 핸들)</td><td>ROI</td><td>크기 조절 / 회전 (회전 사각형 ROI)</td></tr>
+  <tr><td>← / → · Esc</td><td>Batch Test 실패 케이스 창</td><td>이전 / 다음 실패 케이스 · 창 닫기</td></tr>
+  <tr><td>Ctrl + 휠 · Esc</td><td>학습 마스크 편집기</td><td>확대 · 축소 / 진행 중 다각형 취소</td></tr>
+  <tr><td>Enter</td><td>SLM Recipe Bot 입력창 · 작업자 로그인 PIN</td><td>전송 / 로그인</td></tr>
+</table>
+<p>메뉴에 표시된 Ctrl+O · Ctrl+S · F5 · F6 는 관례 표기이며, 실제 실행은 메뉴 또는 툴바 버튼으로 합니다.</p>
+<h3 id="appx-params">13.2 비전 도구 파라미터 전체표</h3>
+<p>Tool Settings 패널에 표시되는 파라미터를 도구별로 정리했습니다. 라벨은 화면 표기와 같으며, 각 도구의 용도와 사용 요령은 6장을 참고하세요.</p>
+<h4>Conversion</h4>
+<h5>Grayscale (그레이 변환)</h5>
+<p>이 도구는 별도 수치 파라미터 없이 ROI · 입력 연결만으로 동작합니다.</p>
+<h5>Threshold (이진화)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Threshold Value</td><td>슬라이더 [0~255]</td><td>이진화 임계값. 픽셀값이 이 값보다 크면 전경(흰색)으로 처리</td></tr>
+<tr><td>Max Value</td><td>슬라이더 [0~255]</td><td>이진화 시 전경에 적용할 값(보통 255)</td></tr>
+<tr><td>Use Otsu</td><td>체크박스</td><td>Otsu 자동 임계값 사용(체크 시 Threshold Value 무시)</td></tr>
+<tr><td>Use Adaptive</td><td>체크박스</td><td>적응형 이진화(국소 영역별 임계값 — 조명 불균일에 강함)</td></tr>
+<tr><td>Block Size</td><td>슬라이더 [3~51]</td><td>적응형 이진화 국소 블록 크기(홀수)</td></tr>
+<tr><td>Constant C</td><td>슬라이더 [-20~20]</td><td>적응형 이진화 보정 상수(클수록 전경 감소)</td></tr>
+</table>
+<h4>Preprocessing</h4>
+<h5>Blur (블러)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Blur Type</td><td>선택(목록) (BlurType)</td><td>블러 종류(Gaussian · Median · Box 등)</td></tr>
+<tr><td>Kernel Size</td><td>슬라이더 [1~31]</td><td>커널 크기(홀수). 클수록 강한 평활화</td></tr>
+<tr><td>Sigma X</td><td>슬라이더 [0~10]</td><td>가우시안 X 표준편차(0 이면 커널에서 자동)</td></tr>
+<tr><td>Sigma Y</td><td>슬라이더 [0~10]</td><td>가우시안 Y 표준편차(0 이면 SigmaX 사용)</td></tr>
+</table>
+<h5>Morphology (형태학 연산)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Operation</td><td>선택(목록) (MorphologyOperation)</td><td>연산 종류</td></tr>
+<tr><td>Kernel Width</td><td>슬라이더 [1~21]</td><td>구조 요소(커널) 너비</td></tr>
+<tr><td>Kernel Height</td><td>슬라이더 [1~21]</td><td>구조 요소(커널) 높이</td></tr>
+<tr><td>Iterations</td><td>슬라이더 [1~10]</td><td>연산 반복 횟수</td></tr>
+</table>
+<h5>Edge Detection (에지 검출)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Method</td><td>선택(목록) (EdgeDetectionMethod)</td><td>에지 검출 방법(Canny · Sobel · Laplacian 등)</td></tr>
+<tr><td>Canny Threshold 1</td><td>슬라이더 [0~255]</td><td>Canny 하위(연결) 임계값</td></tr>
+<tr><td>Canny Threshold 2</td><td>슬라이더 [0~255]</td><td>Canny 상위(강한 에지) 임계값</td></tr>
+<tr><td>Aperture Size</td><td>슬라이더 [3~7]</td><td>Sobel 커널 크기(홀수)</td></tr>
+<tr><td>L2 Gradient</td><td>체크박스</td><td>정확한 L2 그래디언트 사용(정밀도↑ 속도↓)</td></tr>
+</table>
+<h5>Histogram (히스토그램)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Operation</td><td>선택(목록) (HistogramOperation)</td><td>연산 종류</td></tr>
+<tr><td>Clip Limit</td><td>슬라이더 [1~10]</td><td>CLAHE 대비 제한값</td></tr>
+<tr><td>Tile Grid Width</td><td>슬라이더 [1~16]</td><td>CLAHE 타일 격자 가로 분할 수</td></tr>
+<tr><td>Tile Grid Height</td><td>슬라이더 [1~16]</td><td>CLAHE 타일 격자 세로 분할 수</td></tr>
+</table>
+<h5>Image Enhance (이미지 보정)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Mode</td><td>선택(목록) (ImageEnhanceMode)</td><td>동작 모드</td></tr>
+<tr><td>Amount</td><td>슬라이더 [0.1~3.0]</td><td></td></tr>
+<tr><td>Blur Kernel</td><td>슬라이더 [3~31]</td><td></td></tr>
+<tr><td>Threshold (0=off)</td><td>슬라이더 [0~64]</td><td></td></tr>
+</table>
+<h5>Image Rectify (이미지 정류)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Undistort (lens distortion)</td><td>체크박스</td><td></td></tr>
+<tr><td>Apply Homography (NPoint planar)</td><td>체크박스</td><td></td></tr>
+</table>
+<h5>Polar Unwrap (극좌표 펼치기)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Center X (px)</td><td>입력</td><td></td></tr>
+<tr><td>Center Y (px)</td><td>입력</td><td></td></tr>
+<tr><td>Inner Radius (px)</td><td>입력</td><td></td></tr>
+<tr><td>Outer Radius (px)</td><td>입력</td><td></td></tr>
+<tr><td>Start Angle (°)</td><td>슬라이더 [0~360]</td><td></td></tr>
+<tr><td>Direction</td><td>선택(목록) (PolarUnwrapDirection)</td><td></td></tr>
+<tr><td>Output Width (0=auto)</td><td>입력</td><td></td></tr>
+<tr><td>Output Height (0=auto)</td><td>입력</td><td></td></tr>
+</table>
+<h5>Photometric Stereo (포토메트릭 스테레오)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Output Type</td><td>선택(목록) (PsOutputType)</td><td></td></tr>
+<tr><td>Curvature Gain</td><td>슬라이더 [1~30]</td><td></td></tr>
+<tr><td>Shadow Threshold</td><td>슬라이더 [0~100]</td><td></td></tr>
+<tr><td>Highlight Threshold</td><td>슬라이더 [155~255]</td><td></td></tr>
+<tr><td>Image</td><td>입력</td><td></td></tr>
+</table>
+<h4>Color</h4>
+<h5>Color Extract (색 추출)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Hue Min (0-179)</td><td>슬라이더 [0~179]</td><td></td></tr>
+<tr><td>Hue Max (0-179)</td><td>슬라이더 [0~179]</td><td></td></tr>
+<tr><td>Saturation Min</td><td>슬라이더 [0~255]</td><td></td></tr>
+<tr><td>Saturation Max</td><td>슬라이더 [0~255]</td><td></td></tr>
+<tr><td>Value Min</td><td>슬라이더 [0~255]</td><td></td></tr>
+<tr><td>Value Max</td><td>슬라이더 [0~255]</td><td></td></tr>
+<tr><td>Morphology Kernel</td><td>슬라이더 [0~15]</td><td></td></tr>
+<tr><td>Invert Mask</td><td>체크박스</td><td></td></tr>
+<tr><td>Show Overlay</td><td>체크박스</td><td></td></tr>
+<tr><td>Overlay Opacity</td><td>슬라이더 [0.0~1.0]</td><td></td></tr>
+<tr><td>Use Search Region</td><td>체크박스</td><td>탐색 영역 제한 사용</td></tr>
+<tr><td>X</td><td>입력</td><td>탐색 영역 X</td></tr>
+<tr><td>Y</td><td>입력</td><td>탐색 영역 Y</td></tr>
+<tr><td>Width</td><td>입력</td><td>탐색 영역 너비</td></tr>
+<tr><td>Height</td><td>입력</td><td>탐색 영역 높이</td></tr>
+</table>
+<h5>Color Match (색 매칭)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Mean L (0-255)</td><td>슬라이더 [0~255]</td><td></td></tr>
+<tr><td>Mean a (0-255)</td><td>슬라이더 [0~255]</td><td></td></tr>
+<tr><td>Mean b (0-255)</td><td>슬라이더 [0~255]</td><td></td></tr>
+<tr><td>Color Tolerance (ΔE76)</td><td>슬라이더 [0~100]</td><td></td></tr>
+<tr><td>Morphology Kernel</td><td>슬라이더 [0~15]</td><td></td></tr>
+<tr><td>Show Overlay</td><td>체크박스</td><td></td></tr>
+<tr><td>Overlay Opacity</td><td>슬라이더 [0.0~1.0]</td><td></td></tr>
+<tr><td>Use Search Region</td><td>체크박스</td><td>탐색 영역 제한 사용</td></tr>
+<tr><td>X</td><td>입력</td><td>탐색 영역 X</td></tr>
+<tr><td>Y</td><td>입력</td><td>탐색 영역 Y</td></tr>
+<tr><td>Width</td><td>입력</td><td>탐색 영역 너비</td></tr>
+<tr><td>Height</td><td>입력</td><td>탐색 영역 높이</td></tr>
+</table>
+<h4>Blob</h4>
+<h5>Blob Analysis (블롭 분석)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Use Internal Threshold</td><td>체크박스</td><td>도구 안에서 이진화를 수행(외부 전처리 불필요)</td></tr>
+<tr><td>Threshold Value</td><td>슬라이더 [0~255]</td><td>이진화 임계값. 픽셀값이 이 값보다 크면 전경(흰색)으로 처리</td></tr>
+<tr><td>Segmentation Polarity</td><td>선택(목록) (SegmentationPolarity)</td><td>전경 극성(밝은 블롭 / 어두운 블롭)</td></tr>
+<tr><td>Min Area</td><td>입력</td><td>검출 최소 면적(px)</td></tr>
+<tr><td>Max Area</td><td>입력</td><td>검출 최대 면적(px)</td></tr>
+<tr><td>Enable Judgment</td><td>체크박스</td><td>이 도구의 OK/NG 판정 사용</td></tr>
+<tr><td>Use Area Judgment</td><td>체크박스</td><td>면적 기준 판정 사용</td></tr>
+<tr><td>Expected Area</td><td>입력</td><td>기준(목표) 면적</td></tr>
+<tr><td>Area Tolerance (+)</td><td>입력</td><td>면적 상한 허용오차(+)</td></tr>
+<tr><td>Area Tolerance (-)</td><td>입력</td><td>면적 하한 허용오차(−)</td></tr>
+<tr><td>Use Count Judgment</td><td>체크박스</td><td>블롭 개수 기준 판정 사용</td></tr>
+<tr><td>Count Mode</td><td>선택(목록) (CountJudgmentMode)</td><td>개수 판정 모드(정확히 · 이상 · 범위 · 공차)</td></tr>
+<tr><td>Expected Count</td><td>입력</td><td>기준 개수</td></tr>
+<tr><td>Expected Count Max</td><td>입력</td><td>개수 상한(범위 모드)</td></tr>
+<tr><td>Count Upper Tol</td><td>입력</td><td></td></tr>
+<tr><td>Count Lower Tol</td><td>입력</td><td></td></tr>
+<tr><td>Draw Contours</td><td>체크박스</td><td>윤곽선 오버레이</td></tr>
+<tr><td>Draw Bounding Box</td><td>체크박스</td><td>외접 사각형 표시</td></tr>
+<tr><td>Draw Center Point</td><td>체크박스</td><td>중심점 표시</td></tr>
+<tr><td>Draw Labels</td><td>체크박스</td><td>번호/라벨 표시</td></tr>
+</table>
+<h4>Measurement</h4>
+<h5>Caliper (캘리퍼 측정)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Projection Width</td><td>슬라이더 [1~200]</td><td>탐색(투영) 폭</td></tr>
+<tr><td>Search Axis</td><td>선택(목록) (CaliperSearchAxis)</td><td>탐색 축 방향</td></tr>
+<tr><td>Polarity</td><td>선택(목록) (EdgePolarity)</td><td>에지 극성(밝→어두 · 어두→밝 · 모두)</td></tr>
+<tr><td>Edge Threshold</td><td>슬라이더 [1~100]</td><td>에지로 인정할 최소 강도</td></tr>
+<tr><td>Filter Half Width</td><td>슬라이더 [1~10]</td><td>에지 필터 반폭(노이즈 평활)</td></tr>
+<tr><td>Mode</td><td>선택(목록) (CaliperMode)</td><td>동작 모드</td></tr>
+<tr><td>Max Edges</td><td>슬라이더 [1~50]</td><td>검출할 최대 에지 수</td></tr>
+<tr><td>Scorer Mode</td><td>선택(목록) (ScorerMode)</td><td>에지 점수 산정 방식</td></tr>
+<tr><td>Edge Selection</td><td>선택(목록) (EdgeSelectionMode)</td><td>사용할 에지 선택 방식(첫 · 최강 · 마지막 등)</td></tr>
+<tr><td>Projection Mode</td><td>선택(목록) (ProjectionMode)</td><td>프로파일 투영 방식</td></tr>
+<tr><td>Gaussian Filter</td><td>BoolParameter</td><td>가우시안 필터 적용</td></tr>
+<tr><td>Gaussian Sigma</td><td>슬라이더 [0.3~5.0]</td><td>가우시안 시그마</td></tr>
+<tr><td>Normalized Contrast</td><td>BoolParameter</td><td>대비 정규화</td></tr>
+<tr><td>Sub-Pixel Method</td><td>선택(목록) (SubPixelMethod)</td><td>서브픽셀 보간 방식</td></tr>
+</table>
+<h5>Line Fit (직선 피팅)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Num Calipers</td><td>슬라이더 [2~50]</td><td>캘리퍼 개수(많을수록 정밀 · 느림)</td></tr>
+<tr><td>Search Length</td><td>슬라이더 [10~200]</td><td>캘리퍼 탐색 길이</td></tr>
+<tr><td>Search Width</td><td>슬라이더 [1~50]</td><td>탐색(투영) 폭</td></tr>
+<tr><td>Polarity</td><td>선택(목록) (EdgePolarity)</td><td>에지 극성(밝→어두 · 어두→밝 · 모두)</td></tr>
+<tr><td>Edge Threshold</td><td>슬라이더 [1~100]</td><td>에지로 인정할 최소 강도</td></tr>
+<tr><td>Filter Half Width</td><td>슬라이더 [1~10]</td><td>에지 필터 반폭(노이즈 평활)</td></tr>
+<tr><td>Fit Method</td><td>선택(목록) (LineFitMethod)</td><td>피팅 방법(최소제곱 · RANSAC)</td></tr>
+<tr><td>RANSAC Threshold</td><td>슬라이더 [0.1~20]</td><td>RANSAC 인라이어 허용오차</td></tr>
+<tr><td>Min Found Calipers</td><td>슬라이더 [2~20]</td><td>유효로 인정할 최소 캘리퍼 수</td></tr>
+</table>
+<h5>Circle Fit (원 피팅)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Center X</td><td>입력</td><td>예상 중심 X</td></tr>
+<tr><td>Center Y</td><td>입력</td><td>예상 중심 Y</td></tr>
+<tr><td>Expected Radius</td><td>슬라이더 [10~500]</td><td>예상 반지름</td></tr>
+<tr><td>Num Calipers</td><td>슬라이더 [3~64]</td><td>캘리퍼 개수(많을수록 정밀 · 느림)</td></tr>
+<tr><td>Search Length</td><td>슬라이더 [10~200]</td><td>캘리퍼 탐색 길이</td></tr>
+<tr><td>Search Width</td><td>슬라이더 [1~50]</td><td>탐색(투영) 폭</td></tr>
+<tr><td>Start Angle</td><td>슬라이더 [0~360]</td><td>탐색 시작 각도</td></tr>
+<tr><td>End Angle</td><td>슬라이더 [0~360]</td><td>탐색 종료 각도</td></tr>
+<tr><td>Search Direction</td><td>선택(목록) (CircleSearchDirection)</td><td>에지 탐색 방향(내→외 · 외→내)</td></tr>
+<tr><td>Polarity</td><td>선택(목록) (EdgePolarity)</td><td>에지 극성(밝→어두 · 어두→밝 · 모두)</td></tr>
+<tr><td>Edge Threshold</td><td>슬라이더 [1~100]</td><td>에지로 인정할 최소 강도</td></tr>
+<tr><td>Fit Method</td><td>선택(목록) (CircleFitMethod)</td><td>피팅 방법(최소제곱 · RANSAC)</td></tr>
+</table>
+<h5>Geometry (기하 측정)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Operation</td><td>선택(목록) (GeometryOperation)</td><td>연산 종류</td></tr>
+<tr><td>Enable Judgment</td><td>체크박스</td><td>이 도구의 OK/NG 판정 사용</td></tr>
+<tr><td>Unit</td><td>선택(목록) (GeometryJudgmentUnit)</td><td></td></tr>
+<tr><td>Expected Value</td><td>입력</td><td></td></tr>
+<tr><td>Tolerance (-)</td><td>입력</td><td></td></tr>
+<tr><td>Tolerance (+)</td><td>입력</td><td></td></tr>
+</table>
+<h4>Pattern Matching</h4>
+<h5>Shape Match (형상 매칭)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Angle Step (°)</td><td>슬라이더 [0.5~30]</td><td>각도 탐색 간격</td></tr>
+<tr><td>Min Scale</td><td>슬라이더 [0.2~2.0]</td><td>최소 스케일</td></tr>
+<tr><td>Max Scale</td><td>슬라이더 [0.2~3.0]</td><td>최대 스케일</td></tr>
+<tr><td>Scale Step</td><td>슬라이더 [0.01~0.5]</td><td>스케일 탐색 간격</td></tr>
+<tr><td>Score Threshold</td><td>슬라이더 [0.0~1.0]</td><td>매칭 점수 임계값(이상이면 검출)</td></tr>
+<tr><td>Max Instances</td><td>슬라이더 [1~20]</td><td>최대 검출 개수</td></tr>
+<tr><td>NMS Distance Factor</td><td>슬라이더 [0.1~2.0]</td><td>중복 검출 억제 거리 계수</td></tr>
+<tr><td>Use Angle Judgment</td><td>체크박스</td><td></td></tr>
+<tr><td>Angle Lower Limit</td><td>슬라이더 [-180~180]</td><td></td></tr>
+<tr><td>Angle Upper Limit</td><td>슬라이더 [-180~180]</td><td></td></tr>
+<tr><td>Use Scale Judgment</td><td>체크박스</td><td></td></tr>
+<tr><td>Scale Lower Limit</td><td>슬라이더 [0.1~2]</td><td></td></tr>
+<tr><td>Scale Upper Limit</td><td>슬라이더 [0.1~2]</td><td></td></tr>
+<tr><td>Pyramid Levels</td><td>슬라이더 [1~4]</td><td>이미지 피라미드 레벨 수</td></tr>
+<tr><td>Top Candidates to Refine</td><td>슬라이더 [1~10]</td><td>정밀화할 상위 후보 수</td></tr>
+<tr><td>Use Search Region</td><td>체크박스</td><td>탐색 영역 제한 사용</td></tr>
+<tr><td>X</td><td>입력</td><td>탐색 영역 X</td></tr>
+<tr><td>Y</td><td>입력</td><td>탐색 영역 Y</td></tr>
+<tr><td>Width</td><td>입력</td><td>탐색 영역 너비</td></tr>
+<tr><td>Height</td><td>입력</td><td>탐색 영역 높이</td></tr>
+</table>
+<h5>Feature Match (특징 매칭)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>재학습 원점</td><td>선택(목록) (RetrainOriginMode)</td><td></td></tr>
+<tr><td>Score Threshold</td><td>슬라이더 [0.1~1]</td><td>매칭 점수 임계값(이상이면 검출)</td></tr>
+<tr><td>Max Instances</td><td>슬라이더 [1~50]</td><td>최대 검출 개수</td></tr>
+<tr><td>Min Coverage</td><td>슬라이더 [0~1]</td><td>특징점 일치 비율 하한(반쪽 매칭 차단, 0 = 끔)</td></tr>
+<tr><td>Contrast Invariant</td><td>체크박스</td><td>명암 반전에도 매칭</td></tr>
+<tr><td>Auto Apply Tune</td><td>체크박스</td><td>파라미터 자동 튜닝</td></tr>
+<tr><td>Use Angle Judgment</td><td>체크박스</td><td></td></tr>
+<tr><td>Angle Lower Limit</td><td>슬라이더 [-180~180]</td><td></td></tr>
+<tr><td>Angle Upper Limit</td><td>슬라이더 [-180~180]</td><td></td></tr>
+<tr><td>Use Scale Judgment</td><td>체크박스</td><td></td></tr>
+<tr><td>Scale Lower Limit</td><td>슬라이더 [0.1~2]</td><td></td></tr>
+<tr><td>Scale Upper Limit</td><td>슬라이더 [0.1~2]</td><td></td></tr>
+<tr><td>Angle Start</td><td>슬라이더 [-180~180]</td><td>각도 탐색 시작</td></tr>
+<tr><td>Angle Extent</td><td>슬라이더 [0~360]</td><td>각도 탐색 범위</td></tr>
+<tr><td>Min Scale</td><td>슬라이더 [0.5~1]</td><td>최소 스케일</td></tr>
+<tr><td>Max Scale</td><td>슬라이더 [1~2]</td><td>최대 스케일</td></tr>
+<tr><td>Angle Step</td><td>슬라이더 [0.1~10]</td><td>각도 탐색 간격</td></tr>
+<tr><td>Scale Step</td><td>슬라이더 [0.01~0.5]</td><td>스케일 탐색 간격</td></tr>
+<tr><td>Greediness</td><td>슬라이더 [0~1]</td><td>탐욕도(높을수록 빠르나 정확도↓)</td></tr>
+<tr><td>Num Levels</td><td>슬라이더 [1~6]</td><td>피라미드 레벨 수</td></tr>
+<tr><td>NMS Distance</td><td>슬라이더 [0.1~3]</td><td>중복 검출 억제 거리 계수</td></tr>
+<tr><td>Canny Low</td><td>슬라이더 [10~200]</td><td>모델 에지 추출 하위 임계값</td></tr>
+<tr><td>Canny High</td><td>슬라이더 [50~400]</td><td>모델 에지 추출 상위 임계값</td></tr>
+<tr><td>Max Model Points</td><td>슬라이더 [50~1000]</td><td>모델 특징점 최대 수</td></tr>
+<tr><td>Curvature Weight</td><td>슬라이더 [0~1]</td><td>곡률 가중치</td></tr>
+<tr><td>Use Search Region</td><td>체크박스</td><td>탐색 영역 제한 사용</td></tr>
+<tr><td>X</td><td>입력</td><td>탐색 영역 X</td></tr>
+<tr><td>Y</td><td>입력</td><td>탐색 영역 Y</td></tr>
+<tr><td>Width</td><td>입력</td><td>탐색 영역 너비</td></tr>
+<tr><td>Height</td><td>입력</td><td>탐색 영역 높이</td></tr>
+</table>
+<h5>Match Align (매치 얼라인)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Mode</td><td>선택(목록) (MatchAlignMode)</td><td>동작 모드</td></tr>
+<tr><td>Use Trained Reference</td><td>체크박스</td><td></td></tr>
+<tr><td>Ref X (px)</td><td>입력</td><td></td></tr>
+<tr><td>Ref Y (px)</td><td>입력</td><td></td></tr>
+<tr><td>Ref θ (°)</td><td>입력</td><td></td></tr>
+<tr><td>Ref X2 (px)</td><td>입력</td><td></td></tr>
+<tr><td>Ref Y2 (px)</td><td>입력</td><td></td></tr>
+<tr><td>Enable Judgment</td><td>체크박스</td><td>이 도구의 OK/NG 판정 사용</td></tr>
+<tr><td>Unit</td><td>선택(목록) (GeometryJudgmentUnit)</td><td></td></tr>
+<tr><td>Max ΔXY (radial)</td><td>입력</td><td></td></tr>
+<tr><td>Max Δθ (°)</td><td>입력</td><td></td></tr>
+<tr><td>Enable Robot Transform</td><td>체크박스</td><td></td></tr>
+<tr><td>M11</td><td>입력</td><td></td></tr>
+<tr><td>M21</td><td>입력</td><td></td></tr>
+<tr><td>M12</td><td>입력</td><td></td></tr>
+<tr><td>M22</td><td>입력</td><td></td></tr>
+<tr><td>θ Sign (+1/-1)</td><td>입력</td><td></td></tr>
+<tr><td>Draw Overlay</td><td>체크박스</td><td>결과 오버레이 표시</td></tr>
+</table>
+<h5>Multi-Step Align (다중 스텝 얼라인)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Require Same Cycle</td><td>체크박스</td><td></td></tr>
+<tr><td>Baseline X</td><td>입력</td><td></td></tr>
+<tr><td>Baseline Y</td><td>입력</td><td></td></tr>
+<tr><td>Ref A X</td><td>입력</td><td></td></tr>
+<tr><td>Ref A Y</td><td>입력</td><td></td></tr>
+<tr><td>Ref B X</td><td>입력</td><td></td></tr>
+<tr><td>Ref B Y</td><td>입력</td><td></td></tr>
+<tr><td>Enable Judgment</td><td>체크박스</td><td>이 도구의 OK/NG 판정 사용</td></tr>
+<tr><td>Max ΔXY (radial)</td><td>입력</td><td></td></tr>
+<tr><td>Max Δθ (°)</td><td>입력</td><td></td></tr>
+<tr><td>Enable Robot Transform</td><td>체크박스</td><td></td></tr>
+<tr><td>M11</td><td>입력</td><td></td></tr>
+<tr><td>M21</td><td>입력</td><td></td></tr>
+<tr><td>M12</td><td>입력</td><td></td></tr>
+<tr><td>M22</td><td>입력</td><td></td></tr>
+<tr><td>θ Sign (+1/-1)</td><td>입력</td><td></td></tr>
+<tr><td>Draw Overlay</td><td>체크박스</td><td>결과 오버레이 표시</td></tr>
+</table>
+<h4>Identification</h4>
+<h5>OCR (문자 인식)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>OCR Engine</td><td>선택(목록) (OcrEngineType)</td><td>OCR 엔진(Tesseract · PaddleOCR)</td></tr>
+<tr><td>Language</td><td>선택(목록) (OcrLanguage)</td><td>인식 언어</td></tr>
+<tr><td>Page Seg Mode</td><td>선택(목록) (OcrPageSegMode)</td><td>페이지 분할 모드</td></tr>
+<tr><td>Engine Mode</td><td>선택(목록) (OcrEngineMode)</td><td>엔진 모드</td></tr>
+<tr><td>Char Whitelist</td><td>입력</td><td>허용 문자 집합</td></tr>
+<tr><td>Max Side Length</td><td>슬라이더 [320~4096]</td><td>입력 이미지 최대 변 길이</td></tr>
+<tr><td>Custom Det Model</td><td>입력</td><td>커스텀 검출 모델 경로</td></tr>
+<tr><td>Custom Rec Model</td><td>입력</td><td>커스텀 인식 모델 경로</td></tr>
+<tr><td>Custom Dict File</td><td>입력</td><td>커스텀 문자 사전 경로</td></tr>
+<tr><td>Confidence Threshold</td><td>슬라이더 [0~100]</td><td>신뢰도 임계값</td></tr>
+<tr><td>Auto Preprocess</td><td>체크박스</td><td>자동 전처리</td></tr>
+<tr><td>Invert Image</td><td>체크박스</td><td>명암 반전 후 인식</td></tr>
+<tr><td>Target Text Height</td><td>슬라이더 [0~200]</td><td>목표 글자 높이(0 = 자동)</td></tr>
+<tr><td>Denoise Level</td><td>슬라이더 [0~3]</td><td>노이즈 제거 강도</td></tr>
+<tr><td>Dot Matrix Mode</td><td>체크박스</td><td>도트매트릭스(각인) 문자 모드</td></tr>
+<tr><td>Enable Verification</td><td>체크박스</td><td>판독 결과 검증(기대값 비교)</td></tr>
+<tr><td>Expected Text</td><td>입력</td><td>기대 문자열</td></tr>
+<tr><td>Use Regex Match</td><td>체크박스</td><td>정규식으로 검증</td></tr>
+<tr><td>Draw Overlay</td><td>체크박스</td><td>결과 오버레이 표시</td></tr>
+<tr><td>Tessdata Path</td><td>입력</td><td>Tesseract tessdata 경로</td></tr>
+</table>
+<h5>OCV (문자 검증)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Known String</td><td>입력</td><td></td></tr>
+<tr><td>Invert Image</td><td>체크박스</td><td>명암 반전 후 인식</td></tr>
+<tr><td>Min Char Height</td><td>슬라이더 [2~200]</td><td></td></tr>
+<tr><td>Max Char Height</td><td>슬라이더 [10~500]</td><td></td></tr>
+<tr><td>Min Char Width</td><td>슬라이더 [1~100]</td><td></td></tr>
+<tr><td>Match Threshold</td><td>슬라이더 [0~1]</td><td></td></tr>
+<tr><td>Expected Text (optional)</td><td>입력</td><td>기대 문자열</td></tr>
+<tr><td>Use Search Region</td><td>체크박스</td><td>탐색 영역 제한 사용</td></tr>
+<tr><td>X</td><td>입력</td><td>탐색 영역 X</td></tr>
+<tr><td>Y</td><td>입력</td><td>탐색 영역 Y</td></tr>
+<tr><td>Width</td><td>입력</td><td>탐색 영역 너비</td></tr>
+<tr><td>Height</td><td>입력</td><td>탐색 영역 높이</td></tr>
+<tr><td>Draw Overlay</td><td>체크박스</td><td>결과 오버레이 표시</td></tr>
+</table>
+<h4>Code Reading</h4>
+<h5>Code Reader (코드 판독)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Code Reader Mode</td><td>선택(목록) (CodeReaderMode)</td><td>판독 모드(1D · 2D · 자동)</td></tr>
+<tr><td>Max Code Count</td><td>슬라이더 [1~50]</td><td>한 화면에서 판독할 최대 코드 수</td></tr>
+<tr><td>Try Harder</td><td>체크박스</td><td>저품질 코드 정밀 탐색</td></tr>
+<tr><td>DM Candidate Localization</td><td>체크박스</td><td>DataMatrix 후보 지역화</td></tr>
+<tr><td>Enable Verification</td><td>체크박스</td><td>판독 결과 검증(기대값 비교)</td></tr>
+<tr><td>Expected Text</td><td>입력</td><td>기대 문자열</td></tr>
+<tr><td>Use Regex Match</td><td>체크박스</td><td>정규식으로 검증</td></tr>
+<tr><td>Parse GS1 AIs</td><td>체크박스</td><td>GS1 AI 파싱</td></tr>
+<tr><td>Enable Grading</td><td>체크박스</td><td>인쇄 품질 등급화</td></tr>
+<tr><td>Min Pass Grade</td><td>선택(목록) (CodeQualityGrade)</td><td>합격 최소 품질 등급</td></tr>
+<tr><td>Draw Overlay</td><td>체크박스</td><td>결과 오버레이 표시</td></tr>
+</table>
+<h4>3D Analysis</h4>
+<h5>Geometry 3D (3D 기하)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Operation</td><td>선택(목록) (Geometry3DOperation)</td><td>연산 종류</td></tr>
+</table>
+<h5>Plane Fit (평면 피팅)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Fit Method</td><td>선택(목록) (PlaneFitMethod)</td><td>피팅 방법(최소제곱 · RANSAC)</td></tr>
+<tr><td>RANSAC Iterations</td><td>슬라이더 [10~5000]</td><td></td></tr>
+<tr><td>RANSAC Threshold (mm)</td><td>슬라이더 [0.01~5.0]</td><td>RANSAC 인라이어 허용오차</td></tr>
+<tr><td>Sample Stride</td><td>슬라이더 [1~16]</td><td></td></tr>
+</table>
+<h5>Height Slicer (높이 슬라이스)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Min Z (mm)</td><td>슬라이더 [-10000~10000]</td><td></td></tr>
+<tr><td>Max Z (mm)</td><td>슬라이더 [-10000~10000]</td><td></td></tr>
+</table>
+<h5>Point Cloud Mask Crop (마스크 점군 크롭)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Min Mask Value</td><td>슬라이더 [1~255]</td><td></td></tr>
+<tr><td>Dilate (px)</td><td>슬라이더 [0~50]</td><td></td></tr>
+<tr><td>Invert Mask</td><td>체크박스</td><td></td></tr>
+<tr><td>Combine Mode</td><td>선택(목록)</td><td></td></tr>
+<tr><td>Skip Invalid Z (=0)</td><td>체크박스</td><td></td></tr>
+</table>
+<h5>Point Cloud Cluster (포인트클라우드 클러스터)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Tolerance (mm)</td><td>슬라이더 [0.1~50.0]</td><td></td></tr>
+<tr><td>Min Points</td><td>입력</td><td></td></tr>
+<tr><td>Max Points</td><td>입력</td><td></td></tr>
+<tr><td>Max Reported Clusters</td><td>슬라이더 [1~50]</td><td></td></tr>
+<tr><td>Scale Mode</td><td>선택(목록)</td><td></td></tr>
+<tr><td>XY Scale (mm/px)</td><td>입력</td><td></td></tr>
+<tr><td>Output Mode</td><td>선택(목록)</td><td></td></tr>
+<tr><td>Draw Overlay</td><td>체크박스</td><td>결과 오버레이 표시</td></tr>
+</table>
+<h5>Point Cloud Filter (포인트클라우드 필터)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Enable Voxel Grid</td><td>체크박스</td><td></td></tr>
+<tr><td>Voxel Size (mm)</td><td>슬라이더 [0.05~20.0]</td><td></td></tr>
+<tr><td>Enable SOR</td><td>체크박스</td><td></td></tr>
+<tr><td>Neighbor Count (K)</td><td>슬라이더 [5~100]</td><td></td></tr>
+<tr><td>Stddev Multiplier</td><td>슬라이더 [0.5~5.0]</td><td></td></tr>
+</table>
+<h5>Point Cloud Registration (포인트클라우드 정합)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Enable Coarse Alignment</td><td>체크박스</td><td></td></tr>
+<tr><td>Max Iterations</td><td>슬라이더 [1~500]</td><td></td></tr>
+<tr><td>Tolerance (mm)</td><td>슬라이더 [0.001~1.0]</td><td></td></tr>
+<tr><td>Confidence Distance (mm)</td><td>슬라이더 [0.05~10.0]</td><td></td></tr>
+<tr><td>Apply Transform to Source</td><td>체크박스</td><td></td></tr>
+</table>
+<h5>Point Cloud Deviation (기준 형상 편차)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Tolerance (mm)</td><td>슬라이더 [0.01~10.0]</td><td></td></tr>
+<tr><td>Heatmap Range (mm)</td><td>슬라이더 [0.05~10.0]</td><td></td></tr>
+<tr><td>Max Defect Ratio (%)</td><td>슬라이더 [0~100]</td><td></td></tr>
+<tr><td>Output Mode</td><td>선택(목록)</td><td></td></tr>
+</table>
+<h4>Deep Learning</h4>
+<h5>Detection (딥러닝 검출)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Model Path (.onnx)</td><td>입력</td><td>모델 파일(.onnx) 경로 또는 model:// 참조</td></tr>
+<tr><td>Inference Size (px)</td><td>슬라이더 [320~1280]</td><td>모델 입력 크기(px)</td></tr>
+<tr><td>Use SAHI</td><td>체크박스</td><td></td></tr>
+<tr><td>Tile Size (px)</td><td>슬라이더 [320~1536]</td><td></td></tr>
+<tr><td>Overlap Ratio</td><td>슬라이더 [0.0~0.5]</td><td></td></tr>
+<tr><td>Use CLAHE</td><td>체크박스</td><td></td></tr>
+<tr><td>Clip Limit</td><td>슬라이더 [1.0~10.0]</td><td></td></tr>
+<tr><td>Tile Grid Size</td><td>슬라이더 [2~16]</td><td></td></tr>
+<tr><td>Confidence Threshold</td><td>슬라이더 [0.1~1.0]</td><td>신뢰도 임계값</td></tr>
+<tr><td>IoU Threshold</td><td>슬라이더 [0.1~1.0]</td><td>박스 중복 제거 IoU 임계값</td></tr>
+<tr><td>Use Per-Class Thresholds</td><td>체크박스</td><td></td></tr>
+<tr><td>Use Dot Analysis</td><td>체크박스</td><td></td></tr>
+<tr><td>Min Dot Area (px²)</td><td>슬라이더 [1~1000]</td><td></td></tr>
+<tr><td>Max Dot Area (px²)</td><td>슬라이더 [10~5000]</td><td></td></tr>
+<tr><td>Circularity (0~1)</td><td>슬라이더 [0.0~1.0]</td><td></td></tr>
+<tr><td>Min Dot Distance (px)</td><td>슬라이더 [0~100]</td><td></td></tr>
+<tr><td>CLAHE Clip Limit</td><td>슬라이더 [1.0~10.0]</td><td></td></tr>
+<tr><td>Morph Kernel Size (px)</td><td>슬라이더 [3~51]</td><td></td></tr>
+<tr><td>Adaptive Block Size</td><td>슬라이더 [3~101]</td><td></td></tr>
+<tr><td>Adaptive C</td><td>슬라이더 [-10.0~30.0]</td><td></td></tr>
+<tr><td>Draw Overlay</td><td>체크박스</td><td>결과 오버레이 표시</td></tr>
+</table>
+<h5>Segmentation (분할)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Model Path (.onnx)</td><td>입력</td><td>모델 파일(.onnx) 경로 또는 model:// 참조</td></tr>
+<tr><td>Input Size</td><td>슬라이더 [64~1024]</td><td>모델 입력 크기(px)</td></tr>
+<tr><td>ImageNet Normalization</td><td>체크박스</td><td></td></tr>
+<tr><td>Background Class Index</td><td>슬라이더 [0~32]</td><td></td></tr>
+<tr><td>Show Overlay</td><td>체크박스</td><td></td></tr>
+<tr><td>Overlay Opacity</td><td>슬라이더 [0.0~1.0]</td><td></td></tr>
+</table>
+<h5>YOLO Segmentation</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Model Path (.onnx)</td><td>입력</td><td>모델 파일(.onnx) 경로 또는 model:// 참조</td></tr>
+<tr><td>Input Size</td><td>슬라이더 [64~1280]</td><td>모델 입력 크기(px)</td></tr>
+<tr><td>Confidence Threshold</td><td>슬라이더 [0.01~1.0]</td><td>신뢰도 임계값</td></tr>
+<tr><td>IoU Threshold (NMS)</td><td>슬라이더 [0.1~1.0]</td><td>박스 중복 제거 IoU 임계값</td></tr>
+<tr><td>Mask Threshold</td><td>슬라이더 [0.1~0.99]</td><td></td></tr>
+<tr><td>Show Mask Overlay</td><td>체크박스</td><td></td></tr>
+<tr><td>Overlay Opacity</td><td>슬라이더 [0.0~1.0]</td><td></td></tr>
+<tr><td>Draw Boxes + Labels</td><td>체크박스</td><td></td></tr>
+<tr><td>Output Mask Image</td><td>체크박스</td><td></td></tr>
+</table>
+<h5>RF-DETR-seg (인스턴스 분할)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Model Path (.onnx)</td><td>입력</td><td>모델 파일(.onnx) 경로 또는 model:// 참조</td></tr>
+<tr><td>Input Size (모델이 정합니다)</td><td>슬라이더 [64~1280]</td><td>모델 입력 크기(px)</td></tr>
+<tr><td>Confidence Threshold</td><td>슬라이더 [0.01~1.0]</td><td>신뢰도 임계값</td></tr>
+<tr><td>Max Instances</td><td>슬라이더 [1~1000]</td><td>최대 검출 개수</td></tr>
+<tr><td>Show Mask Overlay</td><td>체크박스</td><td></td></tr>
+<tr><td>Overlay Opacity</td><td>슬라이더 [0.0~1.0]</td><td></td></tr>
+<tr><td>Draw Boxes + Labels</td><td>체크박스</td><td></td></tr>
+<tr><td>Output Mask Image</td><td>체크박스</td><td></td></tr>
+</table>
+<h5>Anomaly (이상 탐지)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Model Path (.onnx)</td><td>입력</td><td>모델 파일(.onnx) 경로 또는 model:// 참조</td></tr>
+<tr><td>Input Size</td><td>슬라이더 [64~512]</td><td>모델 입력 크기(px)</td></tr>
+<tr><td>Anomaly Threshold</td><td>슬라이더 [0.0~1.0]</td><td></td></tr>
+<tr><td>Sigma (k)</td><td>슬라이더 [1.0~6.0]</td><td></td></tr>
+<tr><td>Draw Overlay</td><td>체크박스</td><td>결과 오버레이 표시</td></tr>
+<tr><td>Show Heatmap</td><td>체크박스</td><td></td></tr>
+<tr><td>Heatmap Opacity</td><td>슬라이더 [0.0~1.0]</td><td></td></tr>
+</table>
+<h5>Classify (분류)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Model Path (.onnx)</td><td>입력</td><td>모델 파일(.onnx) 경로 또는 model:// 참조</td></tr>
+<tr><td>Input Width</td><td>슬라이더 [32~640]</td><td></td></tr>
+<tr><td>Input Height</td><td>슬라이더 [32~640]</td><td></td></tr>
+<tr><td>Confidence Threshold</td><td>슬라이더 [0.1~1.0]</td><td>신뢰도 임계값</td></tr>
+<tr><td>Use ImageNet Normalization</td><td>체크박스</td><td></td></tr>
+<tr><td>Draw Overlay</td><td>체크박스</td><td>결과 오버레이 표시</td></tr>
+</table>
+<h4>Judgment</h4>
+<h5>Ensemble (앙상블)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Ensemble Mode</td><td>선택(목록) (EnsembleMode)</td><td>동작 모드</td></tr>
+<tr><td>Detection Weight</td><td>슬라이더 [0.0~1.0]</td><td></td></tr>
+<tr><td>Anomaly Weight</td><td>슬라이더 [0.0~1.0]</td><td></td></tr>
+<tr><td>NG Threshold</td><td>슬라이더 [0.0~1.0]</td><td></td></tr>
+<tr><td>Draw Overlay</td><td>체크박스</td><td>결과 오버레이 표시</td></tr>
+</table>
+<h5>Result (결과/판정)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Judgment Mode</td><td>선택(목록) (ResultJudgmentMode)</td><td></td></tr>
+</table>
+<h3 id="appx-results">13.3 검사 결과 값 이름 (PLC 매핑 · Web 이력)</h3>
+<p>도구 설정의 PLC Output 에서 고르는 결과 키(Key)는 도구가 내보내는 값 이름입니다. 자주 쓰는 이름은 다음과 같습니다.</p>
+<table class="cols-3-6">
+  <tr><th>도구</th><th>대표 결과 값</th></tr>
+  <tr><td>Blob</td><td>BlobCount · TotalArea · Blob{n}_Area · Blob{n}_CenterX/Y · JudgmentPass</td></tr>
+  <tr><td>Caliper · Line Fit · Circle Fit</td><td>EdgeX/Y · Angle · CenterX/Y · Radius · Score</td></tr>
+  <tr><td>Geometry</td><td>Distance · DistanceMm · Angle · IntersectionX/Y · JudgmentValue · JudgmentPass</td></tr>
+  <tr><td>Feature Match · Shape Match</td><td>MatchCount · Score · CenterX/Y · Angle · Scale · Match{n}_X/Y/Angle/Score</td></tr>
+  <tr><td>Match Align · Multi-Step Align</td><td>DeltaX · DeltaY · DeltaTheta · RobotDX/DY/DTheta · JudgmentPass</td></tr>
+  <tr><td>Code Reader · OCR · OCV</td><td>Text · Count · Verified · Grade · Confidence</td></tr>
+  <tr><td>Detection · Segmentation 계열</td><td>Count · Class{n} · Score{n} · Box{n}_X/Y/W/H · MaskPixels</td></tr>
+  <tr><td>PointCloud Cluster · 3D Geometry</td><td>ClusterCount · Cluster{i}_SizeX/Y/Z · Cluster{i}_Length/Width · Distance3D · AngleDeg</td></tr>
+  <tr><td>Result</td><td>PassCount · FailCount · TotalCount</td></tr>
+</table>
+<h3 id="appx-version">13.4 문서 정보</h3>
+<table class="cols-3-6">
+  <tr><th>항목</th><th>값</th></tr>
+  <tr><td>문서 버전</td><td>3.0 (2026-09-17)</td></tr>
+  <tr><td>대상 소프트웨어</td><td>VMS 1.39.2 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.1</td></tr>
+  <tr><td>구성</td><td>VMS · VMS.VisionSetup · VMS.AppSetup (검사 런타임) / BODA.VMS.Web (생산 관리) / BODA.VMS.MLOps · VMS.DeepLearning (선택 구성 요소, 인증 범위 외)</td></tr>
+  <tr><td>발행</td><td>BODA Vision AI</td></tr>
+</table>
+</section>

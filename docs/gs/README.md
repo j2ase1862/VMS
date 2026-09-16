@@ -23,15 +23,24 @@ docs/gs/
 | `VMS_OSS_라이선스_확인서_v1.0.docx` `VMS_GS_신청서_템플릿_v1.0.docx` `VMS_GS_신청_체크리스트_v1.0.docx` | `pipeline/gen_gs_supporting_docs.js` |
 
 **docx 를 직접 편집하지 말 것** — 재생성 시 유실된다. 매뉴얼 본문은
-`docs/manuals/BODA-VMS-User-Manual.html`, 그림·표는 생성기 스크립트가 진실이다.
+`docs/manuals/src/NN_*.html` (장별 조각) 이 진실이며, 그림(`<figure>`)·표·콜아웃도 HTML 본문 안에 그대로 둔다
+(생성기가 따로 끼워 넣는 절·그림은 없다 — v3.0 개편, 2026-09-17).
 
-재생성:
+재생성 (v3.0 파이프라인):
 
 ```powershell
-cd docs/gs/pipeline
-python parse_manual.py    # 매뉴얼 HTML → _manual_blocks.json
-node gen_user_manual.js   # → ../VMS_사용자매뉴얼_v2.0.docx
+python docs/manuals/gen_tools_chapter.py     # 6장 도구 레퍼런스 (tools_prose.json + _tool_params.json + 패널 캡처)
+python docs/manuals/gen_appendix.py          # 13장 부록 (파라미터 전체표)
+python docs/manuals/build_manual.py          # src/*.html 합치기 + 사이드 목차 → docs/manuals/BODA-VMS-User-Manual.html
+python docs/gs/pipeline/parse_manual.py      # HTML → _manual_blocks.json
+node docs/gs/pipeline/gen_user_manual.js     # → docs/gs/VMS_사용자매뉴얼_v2.0.docx
+docs/gs/pipeline/docx2pdf_render.ps1 -Docx <docx> -Pdf <pdf> -OutDir <png폴더>   # Word COM → PDF + 페이지 PNG(검수용)
 ```
+
+스크린샷(`screenshots/v3/`): WPF 4앱은 `pipeline/capture_wpf_apps.ps1`(DEBUG 빌드 `--capture-*`, `--instance mancap` 격리),
+VisionSetup 실사용 장면은 `pipeline/capture_visionsetup_scene.ps1`(환경변수 `VMS_CAPTURE_RECIPE/STEP/IMAGE/TOOL`),
+Web 은 임시 서버(운영 DB 스냅샷 + `tools/demo-seed`, 포트 5599) + `tools/webcap/cap_manual_v3_*.mjs`,
+MLOps 는 `D:\Repo\BODA.VMS.MLOps\docs\manual\screenshots` 재사용, 구성도는 `screenshots/v3/diagrams/system_overview.html` → `tools/webcap/render_html_png.mjs`.
 
 ## 매뉴얼 반영 대기 — SW 업데이트 로그
 
@@ -45,7 +54,7 @@ node gen_user_manual.js   # → ../VMS_사용자매뉴얼_v2.0.docx
 - **상세 기록은 [`manual_change_history.md`](manual_change_history.md)** — 매뉴얼 검토 기간(2026-09-02~) 동안의
   변경을 화면·문구·스크린샷·대상 절 단위로 풀어 쓴 장부. 아래 표는 요지, 상세는 그 문서 (한꺼번에 반영용)
 
-**반영 완료 기준선: SW v1.37.3 / Web v1.10.2 — 2026-09-15 반영(§7.1 로그인 유지 운용 기준·§7.2 화면 공통 동작·§7.4 안돈 보드 여는 방법·§7.7 생산 시작 후 제품·라인 잠금·§7.10 키오스크 안내/세션 종료·§7.13 불량 코드 잠금·§7.15 감사 로그 야간 조회·§7.16 PDF 보고서/파레토 기간·§10.1 업데이트 후 Web 접속 불가 신설·§10.3 안돈 로그인 화면 신설·§10.3 포트 5292 정정·§10.4 연결 신호 거부·§11.4 v1.37.1~v1.37.3 + Web v1.10.1·v1.10.2 · §8.5 라인 번호 대역(다중 서버) · §5.11 카메라 캘리브레이션 신설 · §10.2 캘리브레이션 트러블슈팅 3건 · docx 재생성)** (직전 기준선 SW v1.37.0 / Web v1.10.0 — 2026-09-14 반영(§4.2.10 MLOps 비활성 칩 신설·§4.3 MLOps 카드(원본·비활성 사유)·§7.6 검사 사진 열람 권한·§8.3 업로드 큐(검사 시각·보관함·사진 자동 축소)·§8.5 라인 번호 0~99·§9.4 백업 동작·§10.1 트러블슈팅 4건 신설·§11.4 v1.35~v1.37 + Web v1.10.0 · 별책 §2 웹에서 학습하기·학습 결과 파일 · 설정 마법사 표 3행(Client Index·MLOps 주소·API Key) · 신규 캡처 2장(`vms_ctl/status_mlops_issue_chip.png`·`vms_ctl/sec_system_log_wo_warning.png`, ControlCapturer 장면 S4·S5 추가) · docx/PDF 재생성)**) (직전 기준선 SW v1.33.0 / Web v1.9.0 — 2026-09-10 §9~§12 반영(#429 D-FINE·#437 레지스트리 참조·#439/#440 등록·내려받기·#441/#442 RF-DETR-seg·#446 MLOps 수집·#427/#445/#447 수정, 본편 §3 고급 설정·§4.3·§5.10 신설·§11.4 + 별책 §1·§2.1·§3·§4 v1.1 + 스크린샷 21_dlg_imagesave·51_rfdetr_seg_panel·AppSetup 2단계 MLOps 컨트롤) (직전 기준선 v1.29.0 / 2026-09-04 Match Align 원점·각도(#424) + Web 로그인 유지(Web #96)) (직전 기준선 v1.28.1 / 2026-09-04 단독 모드 로컬 생산이력(#417) 반영) (직전 기준선 v1.24.0 / 2026-09-01 매뉴얼 v2.0 전면 개편 (앱별 11장 구성: 개요→설치→AppSetup→VMS 운전→VisionSetup→DeepLearning→Web→워크플로→관리자→트러블슈팅(5절 확장)→부록. 산출물 `VMS_사용자매뉴얼_v2.0.docx`. 생성기: 캡처는 '첫 문단 뒤' 삽입 규칙 + 삽입/누락 검증 로그 + 마법사 §3.2·관리자 다이얼로그 §4.9 앵커 이동 — ⚠ 앵커 = 4장/5장 h2 제목 문자열, 제목 변경 시 gen_user_manual.js 동기화 필수) (§3.2.9 예측 칩·§3.9 Feature Match 학습/다중 인스턴스·복사 3종·얼라인 템플릿·재연결 창·§4.9 Web 복사·§8.4 이력 반영. ⚠ gen_user_manual.js 의 WIZARD_BEFORE 앵커가 HTML §2.6 제목 문자열 — 제목 변경 시 앵커도 함께))
+**반영 완료 기준선: SW v1.39.2 / Web v1.10.3 / MLOps v0.1.1 — 2026-09-17 매뉴얼 v3.0 전면 개편(13장 구성: 개요→설치→설정 마법사→VMS 운전→VisionSetup→비전 도구 40종→검사 설정 예제→Web→MLOps→AI 학습 도구→유지보수→문제 조치→부록, 그림 154장, 변경 이력 절 폐지 — 아래 표의 #495~#500 항목 반영 완료)** (직전 기준선 SW v1.37.3 / Web v1.10.2 — 2026-09-15 반영(§7.1 로그인 유지 운용 기준·§7.2 화면 공통 동작·§7.4 안돈 보드 여는 방법·§7.7 생산 시작 후 제품·라인 잠금·§7.10 키오스크 안내/세션 종료·§7.13 불량 코드 잠금·§7.15 감사 로그 야간 조회·§7.16 PDF 보고서/파레토 기간·§10.1 업데이트 후 Web 접속 불가 신설·§10.3 안돈 로그인 화면 신설·§10.3 포트 5292 정정·§10.4 연결 신호 거부·§11.4 v1.37.1~v1.37.3 + Web v1.10.1·v1.10.2 · §8.5 라인 번호 대역(다중 서버) · §5.11 카메라 캘리브레이션 신설 · §10.2 캘리브레이션 트러블슈팅 3건 · docx 재생성)** (직전 기준선 SW v1.37.0 / Web v1.10.0 — 2026-09-14 반영(§4.2.10 MLOps 비활성 칩 신설·§4.3 MLOps 카드(원본·비활성 사유)·§7.6 검사 사진 열람 권한·§8.3 업로드 큐(검사 시각·보관함·사진 자동 축소)·§8.5 라인 번호 0~99·§9.4 백업 동작·§10.1 트러블슈팅 4건 신설·§11.4 v1.35~v1.37 + Web v1.10.0 · 별책 §2 웹에서 학습하기·학습 결과 파일 · 설정 마법사 표 3행(Client Index·MLOps 주소·API Key) · 신규 캡처 2장(`vms_ctl/status_mlops_issue_chip.png`·`vms_ctl/sec_system_log_wo_warning.png`, ControlCapturer 장면 S4·S5 추가) · docx/PDF 재생성)**) (직전 기준선 SW v1.33.0 / Web v1.9.0 — 2026-09-10 §9~§12 반영(#429 D-FINE·#437 레지스트리 참조·#439/#440 등록·내려받기·#441/#442 RF-DETR-seg·#446 MLOps 수집·#427/#445/#447 수정, 본편 §3 고급 설정·§4.3·§5.10 신설·§11.4 + 별책 §1·§2.1·§3·§4 v1.1 + 스크린샷 21_dlg_imagesave·51_rfdetr_seg_panel·AppSetup 2단계 MLOps 컨트롤) (직전 기준선 v1.29.0 / 2026-09-04 Match Align 원점·각도(#424) + Web 로그인 유지(Web #96)) (직전 기준선 v1.28.1 / 2026-09-04 단독 모드 로컬 생산이력(#417) 반영) (직전 기준선 v1.24.0 / 2026-09-01 매뉴얼 v2.0 전면 개편 (앱별 11장 구성: 개요→설치→AppSetup→VMS 운전→VisionSetup→DeepLearning→Web→워크플로→관리자→트러블슈팅(5절 확장)→부록. 산출물 `VMS_사용자매뉴얼_v2.0.docx`. 생성기: 캡처는 '첫 문단 뒤' 삽입 규칙 + 삽입/누락 검증 로그 + 마법사 §3.2·관리자 다이얼로그 §4.9 앵커 이동 — ⚠ 앵커 = 4장/5장 h2 제목 문자열, 제목 변경 시 gen_user_manual.js 동기화 필수) (§3.2.9 예측 칩·§3.9 Feature Match 학습/다중 인스턴스·복사 3종·얼라인 템플릿·재연결 창·§4.9 Web 복사·§8.4 이력 반영. ⚠ gen_user_manual.js 의 WIZARD_BEFORE 앵커가 HTML §2.6 제목 문자열 — 제목 변경 시 앵커도 함께))
 (직전 기준선 v1.13.0 의 스크린샷 안내는 이력에서 유지 — 데모 캡처 절차 web_capture_partial.js/seed_demo.js, 운영 DB 무접촉)
 
 | PR | 매뉴얼에 들어갈 내용 | 대상 절 |

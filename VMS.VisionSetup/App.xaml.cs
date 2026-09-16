@@ -379,6 +379,9 @@ namespace VMS.VisionSetup
                                 catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "InferenceSettings ctor: " + ex + "\n"); }
                                 try { wins.Add(("SynthData", new Views.SynthData.SynthDataWindow(), true)); }
                                 catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "SynthData ctor: " + ex + "\n"); }
+                                // 매뉴얼용: 예제 템플릿 갤러리(스텝 선택 없이 창만 렌더) — 2026-09-16
+                                try { wins.Add(("TemplateGallery", new Views.Templates.TemplateGalleryWindow(), false)); }
+                                catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "TemplateGallery ctor: " + ex + "\n"); }
                                 await Capture.ControlCapturer.RunWindowsFullAsync(wins, dialogsDir, mainView);
                             }
                         }

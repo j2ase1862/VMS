@@ -1,0 +1,80 @@
+<section id="maintenance">
+<h2>11. 유지보수</h2>
+<div class="callout"><strong>⚙ 이 장은 관리자 · 설치 담당자용입니다.</strong> 백업, 데이터 보존, 카메라 교체, 라이선스 재발급, 다중 인스턴스 운용을 다룹니다.</div>
+
+<h3 id="mt-backup">11.1 백업과 복원</h3>
+<h4>라인 PC (VMS)</h4>
+<ul>
+  <li><strong>수동 백업</strong> — Admin Tools → Backup / Restore → [Run Backup...] 로 ZIP 을 만듭니다(§4.11). 설정 파일 · 레이아웃 · PLC 신호 맵 · 사용자 DB · 검사 이력 DB · 레시피 전체가 들어가며 감사 로그는 선택입니다. 레시피를 크게 바꾸기 전, 프로그램을 업그레이드하기 전, PC 를 교체하기 전에 받아 두세요.</li>
+  <li><strong>자동 백업</strong> — Admin Tools → Auto Backup Settings 에서 활성화 · 주기(시간) · 보존(일) · 위치를 정합니다. 기본 위치는 <code>%LocalAppData%\BODA VISION AI\backups</code> 이며 다른 드라이브나 네트워크 폴더를 권장합니다.</li>
+  <li><strong>복원</strong> — Backup / Restore 의 백업 복원에서 파일을 고르고 [기존 파일 덮어쓰기] 를 켠 뒤 [Run Restore]. 복원 후 VMS 를 재시작합니다. 다른 PC 에 복원하면 카메라 구성이 다를 수 있으므로 설정 마법사 3 단계를 확인하세요.</li>
+</ul>
+<h4>Web 서버</h4>
+<ul>
+  <li>서버는 <strong>하루 한 번 자동으로</strong> DB 사본(<code>boda-vision-YYYYMMDD-HHmmss.db</code>)을 <code>C:\ProgramData\BODA\VMS\backups\</code> 에 만들고 14 벌을 보관합니다. 운영 중에도 멈추지 않습니다. 마지막 백업 시각을 기준으로 다음 시점을 잡으므로 재시작이 잦아도 밀리지 않습니다.</li>
+  <li>백업 폴더를 다른 드라이브로 바꾸려면 <code>appsettings.Production.json</code> 의 <code>DatabaseBackup:Destination</code> 에 절대 경로를 넣습니다.</li>
+  <li>수동 사본이 필요하면 서비스를 멈추고 <code>BodaVision.db</code> · <code>BodaVision.db-wal</code> · <code>BodaVision.db-shm</code> 세 파일을 함께 복사합니다. 검사 사진은 <code>C:\ProgramData\BODA\VMS\images\</code> 에 있습니다.</li>
+  <li>서명 키가 든 <code>appsettings.Production.json</code> 도 함께 백업합니다(§2.3).</li>
+</ul>
+<h4>MLOps 서버 · 워커</h4>
+<p>MLOps 데이터 폴더(<code>D:\BODA-MLOps</code> 등 설치 시 지정한 <code>-DataDir</code>)에 DB · 사진 · 모델이 모두 있습니다. 이 폴더를 백업하면 됩니다. 워커의 파이썬 환경(<code>%ProgramData%\BODA VMS TrainWorker</code>)은 재설치로 복구되므로 백업하지 않아도 됩니다.</p>
+
+<h3 id="mt-retention">11.2 데이터 보존과 디스크 관리</h3>
+<table class="cols-3-3-3">
+  <tr><th>데이터</th><th>기본 보존</th><th>설정 위치</th></tr>
+  <tr><td>VMS 검사 이미지 (OK/NG 파일)</td><td>Image Save Settings 의 보존 기간(일)</td><td>§4.6 — 시작 시 오래된 날짜 폴더 삭제. 야간 예약 작업으로 <code>VMS.exe --cleanup-images</code> 를 돌려도 됩니다</td></tr>
+  <tr><td>VMS 검사 이력 DB</td><td>90 일</td><td>Retention Settings "검사 이력" 행</td></tr>
+  <tr><td>VMS 감사 로그 · 자동 백업 · 업로드 큐</td><td>프리셋 Standard 기준</td><td>Retention Settings 전역 · 카테고리별</td></tr>
+  <tr><td>Web 검사 이력 · 측정값 · 알람 · 상태 로그</td><td><strong>무제한</strong>(기본 꺼짐)</td><td><code>DataRetention</code> 설정을 켜고 항목별 일수를 지정. 감사 로그는 법적 보존 기간이 따로 있으므로 기본 무제한</td></tr>
+  <tr><td>Web 검사 사진</td><td>90 일</td><td><code>ImageStore:RetentionDays</code></td></tr>
+  <tr><td>Web DB 백업</td><td>14 벌</td><td><code>DatabaseBackup:RetainCount</code></td></tr>
+</table>
+<p>Web DB 는 행을 지워도 파일 크기가 줄지 않습니다. 파일을 줄이려면 정지 시간을 잡고 SQLite <code>VACUUM</code> 을 수동으로 실행합니다.</p>
+
+<h3 id="mt-camera">11.3 카메라 교체 · IP 변경</h3>
+<ol>
+  <li>새 카메라를 같은 네트워크 카드에 연결하고, 제조사 프로그램(pylon Viewer · MVS · Mech-Eye Viewer)으로 카메라에 <strong>기존과 같은 고정 IP</strong> 를 부여합니다. IP 가 같으면 VMS 설정을 바꿀 필요가 없습니다.</li>
+  <li>IP 나 제조사가 바뀌면 시스템 설정 마법사 3 단계에서 해당 카메라 카드의 IP · 제조사 · 타입을 고치고 [Finish] 로 저장한 뒤 VMS 를 재시작합니다(§3.4). 카메라 순서(카드 순서)가 바뀌면 레시피 스텝 이름("1-1")의 번호도 바뀌므로 순서는 유지하세요.</li>
+  <li>VMS 를 실행해 상태바 CAM 이 초록인지, 카메라 톱니바퀴 → [Grab] 으로 영상이 들어오는지 확인합니다. 노출 · 게인은 "카메라 설정 유지" 가 켜져 있으면 카메라에 저장된 값을 쓰므로 제조사 프로그램에서 이전 값과 같게 맞춥니다.</li>
+  <li>렌즈 · 설치 높이가 바뀌었다면 측정값이 조용히 틀어지므로 <strong>캘리브레이션을 다시</strong> 하고(§5.9) 대표 부품으로 판정을 재확인합니다.</li>
+  <li>다른 PC 에서 만든 레시피를 열 때 이 PC 에 없는 카메라를 쓰면 <strong>카메라 재연결 창</strong>이 떠서 스텝별로 이 PC 의 카메라를 짝지을 수 있습니다(§5.3).</li>
+</ol>
+
+<h3 id="mt-license">11.4 라이선스 · 좌석 관리</h3>
+<ul>
+  <li>라이선스 상태는 설정 마법사 7 단계 카드, VMS Health Check 의 License 항목, Web 시스템 관리 → SW 라이선스에서 봅니다.</li>
+  <li>PC 교체 · Windows 재설치 후 "지문 불일치" 가 뜨면 새 지문 코드로 재발급을 요청합니다(§2.6). 서버-라인 구성에서는 서버 PC 만 해당합니다.</li>
+  <li>라인 PC 를 철거하면 그 좌석은 72 시간 후 자동으로 반환됩니다. 계약 좌석이 모자라면 Web 화면에 경고 배너가 뜹니다.</li>
+</ul>
+
+<h3 id="mt-instance">11.5 한 PC 에서 두 라인 운용 (다중 인스턴스)</h3>
+<p>PC 한 대에 카메라가 여러 대 있으면 VMS 를 두 개 띄워 각각 다른 라인으로 운용할 수 있습니다.</p>
+<ol>
+  <li>바탕화면에 VMS 바로가기를 하나 더 만들고 대상 끝에 <code>--instance line2</code> 를 붙입니다(영문 · 숫자 · 하이픈 · 밑줄 1~32 자).</li>
+  <li>설정 마법사도 같은 이름으로 실행합니다: <code>VMS.AppSetup.exe --instance line2</code>. 2 번 라인이 쓸 카메라와 라인 번호를 등록하고 저장합니다. <strong>같은 카메라를 두 인스턴스에 겹쳐 등록하면 안 됩니다</strong> — 카메라는 한 번에 한 프로그램만 연결할 수 있습니다.</li>
+  <li>두 바로가기로 VMS 를 각각 실행합니다. 인스턴스마다 설정 · 레시피 · 계정 · 검사 이력이 <code>%LocalAppData%\BODA VISION AI\instances\line2\</code> 아래에 완전히 분리되어 보관되며, VMS 에서 실행한 VisionSetup · AppSetup 도 같은 인스턴스를 자동으로 씁니다.</li>
+</ol>
+
+<h3 id="mt-logs">11.6 로그 · 데이터 위치</h3>
+<table class="cols-3-4-2">
+  <tr><th>항목</th><th>위치</th><th>용도</th></tr>
+  <tr><td>VMS 설정 · 레시피 · 사용자 DB</td><td><code>%LocalAppData%\BODA VISION AI\</code> (system_config.json · recipes\ · BodaVision.db · layout_config.json · process_sequence.json)</td><td>백업 대상</td></tr>
+  <tr><td>VMS 검사 이력 DB</td><td><code>…\inspection_history.db</code></td><td>[전체 이력] 창</td></tr>
+  <tr><td>VMS 감사 로그</td><td><code>…\audit\YYYY-MM-DD.jsonl</code></td><td>Audit Log Viewer</td></tr>
+  <tr><td>VMS 업로드 큐</td><td><code>…\upload_queue\</code> · <code>…\image_upload_queue\</code> · <code>…\mlops_line_ng_queue\</code> (각 <code>rejected\</code> 보관함)</td><td>파일 수가 줄면 전송 중</td></tr>
+  <tr><td>VMS 모델 캐시</td><td><code>…\models\</code></td><td>model:// 참조로 받은 ONNX</td></tr>
+  <tr><td>카메라 로그</td><td><code>…\logs\camera.log</code></td><td>카메라 SDK 로그</td></tr>
+  <tr><td>업데이트 로그</td><td><code>C:\ProgramData\BODA\VMS\update-bootstrap.log</code></td><td>인앱 업데이트 과정</td></tr>
+  <tr><td>Web DB · 백업 · 사진</td><td><code>C:\ProgramData\BODA\VMS\</code> (BodaVision.db · backups\ · images\)</td><td>서버 데이터</td></tr>
+  <tr><td>Web 서비스 로그</td><td><code>{설치 폴더}\Logs\boda-vms-YYYYMMDD.json</code> (14 일 보관) · Windows 이벤트 뷰어 → Application</td><td>서비스 시작 실패 등</td></tr>
+  <tr><td>MLOps 데이터 · 로그</td><td>설치 시 지정한 데이터 폴더 (mlops.db · storage\ · logs\)</td><td></td></tr>
+  <tr><td>학습 워커</td><td><code>%ProgramData%\BODA VMS TrainWorker\</code> (worker.json · venv\ · logs\)</td><td></td></tr>
+</table>
+
+<h3 id="mt-support">11.7 문제 보고 방법</h3>
+<ol>
+  <li>VMS Admin Tools → Support Package... 로 진단 ZIP 을 만듭니다(설정 · 감사 로그 · 환경 정보 · 헬스 스냅샷 · MLOps 전송 큐 상태 포함, 레시피 · 사용자 DB 는 미포함).</li>
+  <li>증상이 난 시각과 System Log 의 관련 줄, 화면 캡처를 함께 준비합니다.</li>
+  <li>Web 문제는 <code>{설치 폴더}\Logs\</code> 의 해당 날짜 로그와 <code>/health</code> 응답을, MLOps 문제는 학습 작업 상세의 로그를 첨부합니다.</li>
+</ol>
+</section>

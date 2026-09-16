@@ -1,0 +1,146 @@
+<section id="mlops">
+<h2>9. AI 학습 플랫폼 (BODA.VMS.MLOps)</h2>
+<div class="callout"><strong>⚙ 이 장은 딥러닝 검사 도구의 모델을 만들고 배포하는 엔지니어 · 관리자용이며, MLOps 는 인증 범위 밖의 선택 구성 요소입니다.</strong>
+MLOps 서버 없이 검사만 운영하는 현장은 건너뛰어도 됩니다.</div>
+<p>MLOps 는 브라우저로 접속하는 웹 프로그램(<code>http://서버주소:5310</code>)입니다. 라인에서 올라온 불량 사진을 모아 라벨링하고,
+GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단계별(후보 → 스테이징 → 운영)로 관리하며, 라인 PC 는 레시피에 적힌 참조로 운영 모델을 자동으로 내려받습니다.
+설치는 §2.4, 라인 PC 쪽 설정은 §3.3(고급 설정)과 §4.6(Image Saving) 을 참고하세요.</p>
+
+<h3 id="mlops-login">9.1 로그인과 역할</h3>
+<ul>
+  <li>MLOps 는 별도 계정이 없고 <strong>BODA.VMS.Web 의 계정</strong>으로 들어갑니다. 로그인 화면에 Web 에서 로그인해 받은 액세스 토큰(JWT)을 붙여 넣는 방식이며, 두 서버가 같은 서명 키를 쓰기 때문에 그대로 통합니다.</li>
+  <li>현재는 <strong>Web 의 Admin 계정만</strong> 모든 기능을 쓸 수 있습니다. MLOps 안에는 Viewer(조회) · Labeler(라벨링) · Engineer(학습 · 스테이징 승격) · Admin(운영 승격 · 워커 · 라인 PC 관리) 역할 체계가 있지만, Web 의 User · Guest 계정으로는 화면이 "역할 없음" 으로 표시되고 기능이 열리지 않습니다.</li>
+  <li>라인 PC 와 학습 워커는 사람이 로그인하지 않고 <strong>토큰</strong>(<code>ln_…</code> · <code>wk_…</code>)으로 붙습니다. 토큰은 발급 시 한 번만 표시되며 서버에는 해시만 남습니다.</li>
+</ul>
+
+<h3 id="mlops-nav">9.2 메뉴 구조</h3>
+<figure><img src="../gs/screenshots/v3/mlops/01_dashboard.png" data-width="620" alt="MLOps 대시보드"><figcaption>MLOps 대시보드 — 모델 계열 · 워커 · 진행 중인 학습 · 데이터셋 버전 카드, 경고 블록, 최근 학습 작업 · 운영 중인 모델</figcaption></figure>
+<table class="cols-2-3-4">
+  <tr><th>그룹</th><th>메뉴</th><th>용도</th></tr>
+  <tr><td>—</td><td>대시보드</td><td>모델 · 워커 · 학습 · 데이터셋 현황과 경고(작업을 못 받는 워커, 라인에서 달라진 모델)</td></tr>
+  <tr><td>데이터</td><td>수집 사진</td><td>라인 PC 가 올린 NG 사진 · 양품 샘플, 사람이 올린 사진 → 데이터셋에 담기</td></tr>
+  <tr><td>데이터</td><td>데이터셋 · 라벨링</td><td>데이터셋 만들기 · 이미지 올리기 · 라벨링 캔버스 · 판(스냅샷) 뜨기</td></tr>
+  <tr><td>학습</td><td>학습 작업</td><td>학습 제출 · 진행률 · 로그 · 학습 곡선 · 재실행</td></tr>
+  <tr><td>학습</td><td>데이터셋 버전</td><td>학습 대상으로 고정된 판 목록 · 외부 zip 업로드</td></tr>
+  <tr><td>학습</td><td>워커</td><td>GPU 학습 PC 등록 · 상태 · 토큰 재발급 · 비활성화</td></tr>
+  <tr><td>학습</td><td>사전학습 미러</td><td>워커가 인터넷 대신 받아 가는 사전학습 가중치 저장소</td></tr>
+  <tr><td>배포</td><td>모델</td><td>모델 계열 · 버전 · 단계(후보 · 스테이징 · 운영 · 폐기) · ONNX 업로드 · 라인 배포 이력</td></tr>
+  <tr><td>배포</td><td>레시피 바인딩</td><td>레시피의 도구가 어느 모델 버전을 쓰는지 · 롤백</td></tr>
+  <tr><td>배포</td><td>라인 PC</td><td>라인 PC 등록 · 토큰 발급 · 중지 · 삭제</td></tr>
+  <tr><td>배포</td><td>라인 모니터링</td><td>운영 웹의 검사 이력을 모델 버전별로 비교 · 재학습 권고</td></tr>
+</table>
+
+<h3 id="mlops-workflow">9.3 전체 흐름 — 수집에서 배포까지</h3>
+<ol>
+  <li><strong>라인 NG 수집</strong> — 라인 PC 의 Image Save Settings 에서 [NG 이미지 MLOps 전송] 을 켜고 양품 샘플 비율(N 장에 1 장)을 정합니다(§4.6). 사진이 결과 그래픽 없는 원본으로 <strong>수집 사진</strong> 화면에 쌓입니다.</li>
+  <li><strong>데이터셋에 담기</strong> — 수집 사진에서 출처 "라인 NG", "데이터셋에 안 담긴 것만" 으로 걸러 고른 뒤 [데이터셋에 담기](데이터셋 + 학습/검증/시험 분할).</li>
+  <li><strong>라벨링</strong> — 데이터셋 상세에서 [라벨링 시작]. 사각형 · 폴리곤 · SAM 클릭으로 라벨을 붙이고 [저장하고 다음]. Engineer 가 [검토 승인].</li>
+  <li><strong>판 뜨기</strong> — [버전 만들기] 로 지금의 이미지와 라벨을 굳혀 학습 대상 버전을 만듭니다.</li>
+  <li><strong>학습 제출</strong> — 학습 작업 → [작업 제출]: 데이터셋 버전 · 모델 계열 · 스크립트 · 사전학습 가중치 · 하이퍼파라미터.</li>
+  <li><strong>워커 실행</strong> — GPU 워커가 작업을 가져가 학습하고 진행률 · 로그 · 학습 곡선을 실시간으로 올립니다. 끝나면 모델이 <strong>후보(Candidate)</strong> 버전으로 자동 등록됩니다.</li>
+  <li><strong>승격</strong> — 모델 상세에서 버전의 [스테이지] 로 후보 → 스테이징(Engineer) → 운영(Admin). 라인으로 나가는 결정은 항상 사람이 합니다.</li>
+  <li><strong>레시피 연결</strong> — VisionSetup 딥러닝 도구의 Model Path 옆 [레지스트리…] 로 모델을 고르면 <code>model://{모델ID}@production</code> 참조가 저장됩니다(§6). 라인 PC 는 레시피를 열 때 운영 버전을 내려받아 캐시하고, 검사 중에는 네트워크를 쓰지 않습니다.</li>
+  <li><strong>모니터링</strong> — 라인 모니터링에서 모델 버전별 불량률 · 신뢰도를 비교하고, 권고가 붙으면 [재학습] 으로 5 단계부터 다시 돕니다.</li>
+</ol>
+<div class="callout tip">자동으로 되는 것은 수집 · 사전 라벨 · 판 뜨기 · 후보 등록 · 재학습 권고까지입니다. <strong>스테이징 · 운영 승격과 롤백은 항상 사람</strong>이 결정하며, 데이터가 쌓였다고 사람 없이 재학습이 도는 일은 없습니다.</div>
+
+<h3 id="mlops-images">9.4 수집 사진</h3>
+<figure><img src="../gs/screenshots/v3/mlops/15_image_pool.png" data-width="620" alt="수집 사진"><figcaption>수집 사진 — 출처 · 데이터셋에 안 담긴 것만 · 태그 · 파일명 필터, 격자(NG/OK 칩 · 라인 ID · 파일명 · 시각), [데이터셋에 담기]</figcaption></figure>
+<ul>
+  <li>필터: 출처(라인 NG · 양품 샘플 / 직접 올림, 기본 라인 NG), "데이터셋에 안 담긴 것만"(기본 켜짐), 태그(예: <code>verdict:ng</code>, <code>recipe:PUT-10</code>), 파일명 검색.</li>
+  <li>카드를 클릭해 선택하고 [데이터셋에 담기] → 데이터셋과 분할(학습 · 검증 · 시험)을 고릅니다. 사진은 복제되지 않고 참조로 담깁니다.</li>
+  <li>사진이 올라오지 않으면 라인 PC 의 [NG 이미지 MLOps 전송] 스위치와 라인 PC 등록 · 토큰(§9.11)을 확인하세요.</li>
+</ul>
+
+<h3 id="mlops-datasets">9.5 데이터셋 · 라벨링</h3>
+<figure><img src="../gs/screenshots/v3/mlops/02_datasets.png" data-width="620" alt="데이터셋 목록"><figcaption>데이터셋 — 카드(작업 유형 · 클래스 · 라벨 진척 · 분할) · [열기] [라벨링] · [새 데이터셋]</figcaption></figure>
+<ul>
+  <li><strong>[새 데이터셋]</strong> — 이름 · 작업 유형(검출 · 분류 · 이상탐지 · 세그멘테이션 · OCR) · 클래스(쉼표 구분, 순서가 클래스 번호) · 설명. 작업 유형과 클래스는 만든 뒤 바꿀 수 없습니다. 이상탐지는 정상 클래스(good · normal · ok · 정상)가 필요합니다.</li>
+</ul>
+<figure><img src="../gs/screenshots/v3/mlops/03_dataset_detail.png" data-width="620" alt="데이터셋 상세"><figcaption>데이터셋 상세 — [라벨링 시작] [이미지 올리기] [모델로 미리 채우기] [버전 만들기], 통계 카드, 이미지 격자(라벨 오버레이 · 상태 · 분할)</figcaption></figure>
+<table class="cols-3-6">
+  <tr><th>버튼</th><th>동작</th></tr>
+  <tr><td>[이미지 올리기]</td><td>jpg · png · bmp · webp 최대 500 장, 태그 · 라인 ID(선택), "올린 뒤 이 데이터셋에 담기"(기본 켜짐). 10 장씩 나눠 전송합니다.</td></tr>
+  <tr><td>[모델로 미리 채우기]</td><td>같은 작업 유형 · 클래스의 검출 모델로 미라벨 이미지에 초기 라벨을 붙이고 불확실도를 기록합니다(확신도 문턱 기본 0.25, 한 번에 200 장). 붙은 라벨은 "작업 중" 상태이므로 사람이 확인 · 수정 후 완료로 표시합니다. 검출 데이터셋에서만 지원합니다.</td></tr>
+  <tr><td>[자동 분할 8:2] · [분할 지정]</td><td>학습 · 검증 · 시험 분할을 자동 또는 선택 지정.</td></tr>
+  <tr><td>[버전 만들기]</td><td>지금의 이미지와 라벨을 굳혀 학습 대상 판을 만듭니다. "검토를 마친 이미지만 담기" · "라벨 없는 이미지도 담기(배경 샘플)" 옵션.</td></tr>
+</table>
+<h4>라벨링 캔버스</h4>
+<figure><img src="../gs/screenshots/v3/mlops/11_labeling_detection.png" data-width="620" alt="라벨링 캔버스 (검출)"><figcaption>라벨링 캔버스(검출) — 모드 토글(사각형 · 폴리곤 · SAM 클릭) · 확대/축소/맞춤 · 원본 해상도, 오른쪽 클래스 · 라벨 · 진행 패널, [이전] [저장하고 다음]</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/mlops/12_labeling_classification.png" data-width="620" alt="라벨링 캔버스 (분류)"><figcaption>라벨링 캔버스(분류) — 이미지당 클래스 하나를 고릅니다</figcaption></figure>
+<ul>
+  <li>작업 유형별 도형 — 검출: 사각형 · 폴리곤 / 세그멘테이션: 폴리곤 / 분류 · 이상탐지: 이미지당 클래스 하나 / OCR: 사각형 + 문자열.</li>
+  <li>단축키 — ←/→ 이전 · 다음 이미지, 끌어서 그리기, 휠 확대, Alt+끌기 이동, 숫자키로 클래스 선택, Delete 삭제, Esc 선택 해제. 폴리곤은 클릭으로 점을 찍고 오른쪽 클릭 또는 Enter 로 닫습니다.</li>
+  <li><strong>SAM 클릭</strong> — 객체를 클릭하면 경계를 자동으로 만들어 줍니다. Shift+클릭(또는 오른쪽 클릭)은 빼고 싶은 곳, Tab 으로 더 크게 · 작게 후보 순회, Backspace 로 마지막 점 취소, <strong>Enter 로 확정</strong>해야 라벨이 됩니다. 서버에 SAM 모델이 없으면 이 모드는 나타나지 않습니다.</li>
+  <li>클래스 선택은 "다음에 그릴 것"만 정합니다. 이미 붙은 라벨의 클래스는 라벨 목록의 팔레트 메뉴로 바꿉니다. 이미지 1 장은 한 사람만 작업할 수 있으며(잠금 10 분, 저장 시 연장) 남이 잡고 있으면 읽기 전용입니다.</li>
+  <li>진행 패널의 [검토 승인] / [반려] 는 Engineer 이상이 누릅니다.</li>
+</ul>
+
+<h3 id="mlops-training">9.6 학습 작업</h3>
+<figure><img src="../gs/screenshots/v3/mlops/04_training.png" data-width="620" alt="학습 작업"><figcaption>학습 작업 — 상태 필터, 목록(상태 · 스크립트 · 진행 · 에폭 · 손실 · 지표 · 우선순위 · 경과 · 제출), [작업 제출]</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/mlops/14_retrain.png" data-width="560" alt="학습 작업 제출"><figcaption>학습 작업 제출(재학습) 창 — 데이터셋 버전 · 모델 계열 · 스크립트 · 사전학습 가중치 · 백본 · Seed · 우선순위 · 하이퍼파라미터</figcaption></figure>
+<table class="cols-3-6">
+  <tr><th>항목</th><th>설명</th></tr>
+  <tr><td>데이터셋 버전</td><td>작업 유형과 내보내기 형식이 스크립트와 맞아야 합니다(검출 yolo · 분류 imagefolder · 이상탐지 mvtec · OCR ppocr · 세그멘테이션 coco).</td></tr>
+  <tr><td>결과를 등록할 모델 계열</td><td>학습이 끝나면 여기에 후보 버전이 생깁니다.</td></tr>
+  <tr><td>스크립트</td><td>train_dfine.py(검출, D-FINE) · train_rfdetr_seg.py(세그멘테이션) · train_classifier.py(분류) · train_anomaly.py(이상탐지) · train_ppocr.py(OCR). 서버가 허용한 목록만 나옵니다.</td></tr>
+  <tr><td>사전학습 가중치</td><td>train_dfine · train_rfdetr_seg 는 <strong>필수</strong> — 워커는 인터넷에서 받지 않으므로 사전학습 미러(§9.8)에 먼저 올려야 합니다. 분류 · 이상탐지는 쓰지 않습니다.</td></tr>
+  <tr><td>하이퍼파라미터</td><td>epochs · lr · batch_size · imgsz 와 증강(mosaic · mixup · hsv) 등 서버 허용 목록. 비우면 스크립트 기본값.</td></tr>
+</table>
+<p>작업은 대기 → 배정됨 → 준비 중 → 학습 중 → 내보내는 중 → 업로드 중 → 성공(또는 실패 · 취소됨) 순으로 진행됩니다. 상세 화면에서 진행률 · 로그 · 학습 곡선(손실 · mAP50) · 아티팩트(ONNX · 지표 · 곡선 · 로그) · 재현성 정보(데이터셋 해시 · 스크립트 해시 · GPU · 패키지)를 보고, 끝난 작업은 [같은 설정으로 재실행] 할 수 있습니다.</p>
+
+<h3 id="mlops-versions">9.7 데이터셋 버전</h3>
+<figure><img src="../gs/screenshots/v3/mlops/05_dataset_versions.png" data-width="620" alt="데이터셋 버전"><figcaption>데이터셋 버전 — 이름 · 작업 유형 · 형식 · 이미지 · 클래스 · 크기 · 매니페스트 해시 · 등록 · [다운로드], [버전 업로드]</figcaption></figure>
+<p>학습은 항상 버전에 대해 실행됩니다. 데이터셋에서 뜬 판이 여기에 쌓이고, 외부에서 만든 내보내기 zip 도 [버전 업로드] 로 올려 고정할 수 있습니다(이름 · 작업 유형 · 형식 · 이미지 수 · 클래스).</p>
+
+<h3 id="mlops-workers">9.8 워커 · 사전학습 미러</h3>
+<figure><img src="../gs/screenshots/v3/mlops/06_workers.png" data-width="620" alt="워커"><figcaption>워커 — 카드(상태 · GPU · CUDA · 파이썬 · torch · 디스크 · 지원 작업 · 마지막 하트비트), [토큰 재발급] [비활성화], [워커 등록]</figcaption></figure>
+<ul>
+  <li>[워커 등록] 에서 이름을 넣고 [발급] 하면 <code>wk_…</code> 토큰과 GPU PC 에서 실행할 명령이 표시됩니다. 워커 설치 마법사(§2.4)에 이 값을 넣습니다.</li>
+  <li>상태 — 대기 중(초록) · 학습 중(파랑) · 연결 끊김(회색) · 비활성(빨강). 진단에 실패한 워커(예: CUDA 사용 불가)는 비활성으로 작업을 받지 않으며 사유가 카드에 표시됩니다.</li>
+  <li>[토큰 재발급] 하면 옛 토큰은 즉시 무효가 되므로 워커 설정을 갱신해야 합니다.</li>
+</ul>
+<figure><img src="../gs/screenshots/v3/mlops/07_pretrained.png" data-width="620" alt="사전학습 미러"><figcaption>사전학습 미러 — 자산(ref · 파일 · 라이선스 · 출처) 목록, [자산 추가] [파일 추가]</figcaption></figure>
+<p>워커는 인터넷 대신 여기서만 사전학습 가중치를 받습니다(폐쇄망 · SSL 검사 환경 대응). [자산 추가] 로 ref(예: <code>dfine-small-obj2coco</code>) · 라이선스 · 출처를 등록하고 [파일 추가] 로 <code>config.json</code> · <code>model.safetensors</code> 를 올립니다.</p>
+
+<h3 id="mlops-models">9.9 모델 레지스트리</h3>
+<figure><img src="../gs/screenshots/v3/mlops/08_models.png" data-width="620" alt="모델"><figcaption>모델 — 계열 카드(운영 버전 · 작업 유형 · 클래스 · 버전 수 · 바인딩), [새 모델]</figcaption></figure>
+<ul>
+  <li><strong>[새 모델]</strong> — 이름 · 작업 유형 · 클래스(순서가 ONNX 의 names 와 같아야 업로드가 통과) · 설명. 작업 유형은 만든 뒤 바꿀 수 없습니다.</li>
+  <li><strong>모델 상세</strong> — 버전 표(버전 · 스테이지 · 규약 · 입력 · 지표 · 크기 · SHA-256 · 출처 · 등록)와 [상세] [다운로드] [스테이지]. [버전 업로드] 로 외부 ONNX 를 직접 올릴 수도 있습니다(YOLO 파생 모델은 라이선스 확인 문구 필수).</li>
+  <li><strong>스테이지</strong> — 후보(Candidate) → 스테이징(Staging) → 운영(Production) → 폐기(Retired). 운영은 모델 계열당 하나뿐이라 새 버전을 승격하면 이전 운영 버전은 스테이징으로 내려갑니다. 사유는 감사 기록에 남습니다.</li>
+  <li>버전 상세 드로어에서 아티팩트 정보 · 지표 · ONNX 메타데이터 · 스테이지 이력 · <strong>라인 배포 이력</strong>(어느 라인이 언제 받아 갔는지)을 확인합니다.</li>
+</ul>
+
+<h3 id="mlops-bindings">9.10 레시피 바인딩</h3>
+<figure><img src="../gs/screenshots/v3/mlops/09_bindings.png" data-width="620" alt="레시피 바인딩"><figcaption>레시피 바인딩 — 레시피 ID 조회, 활성 바인딩(도구 · 모델 · 모드 · 해석된 버전 · 참조), 이력, [롤백]</figcaption></figure>
+<p>레시피의 검사 도구가 어느 모델 버전을 쓰는지 정하는 화면입니다. 보통은 VisionSetup 의 [레지스트리…] 로 "운영 추종"(<code>@production</code>) 참조를 저장하면 되고, 특정 버전을 고정하거나 이전 버전으로 되돌릴 때 이 화면의 [도구에 모델 연결] · [롤백] 을 씁니다.
+"해석 불가" 로 표시되면 운영으로 승격된 버전이 없어 라인 PC 가 모델을 받지 못하는 상태입니다.</p>
+<table class="cols-3-6">
+  <tr><th>참조 형식</th><th>의미</th></tr>
+  <tr><td><code>model://{모델ID}@production</code></td><td>지금 운영 단계인 버전 (권장)</td></tr>
+  <tr><td><code>model://{모델ID}@staging</code> · <code>@candidate</code></td><td>스테이징 · 후보 단계의 최신 버전</td></tr>
+  <tr><td><code>model://{모델ID}@7</code></td><td>7 번 버전 고정</td></tr>
+</table>
+
+<h3 id="mlops-lines">9.11 라인 PC</h3>
+<figure><img src="../gs/screenshots/v3/mlops/10_line_clients.png" data-width="620" alt="라인 PC"><figcaption>라인 PC — 이름 · 라인 · 상태 · 마지막 접속 · 발급, [⋮] 토큰 재발급 · 중지 · 삭제, [라인 PC 등록]</figcaption></figure>
+<ol>
+  <li>[라인 PC 등록] 에서 이름(예: 라인A 1호기)과 라인 ID(예: LINE-A)를 넣고 [발급] 을 누릅니다. <code>ln_…</code> 토큰이 한 번만 표시됩니다.</li>
+  <li>그 라인 PC 의 설정 마법사 2 단계 고급 설정에 <strong>MLOps 서버 주소</strong>와 <strong>MLOps 라인 토큰</strong>을 넣고 저장한 뒤 VMS 를 재시작합니다(§3.3).</li>
+  <li>라인 PC 가 모델을 받거나 사진을 올리면 "마지막 접속" 이 갱신됩니다. [중지] 하면 그 PC 는 새 모델을 받지도 사진을 올리지도 못하지만 이미 캐시된 모델로 검사는 계속됩니다.</li>
+</ol>
+
+<h3 id="mlops-monitoring">9.12 라인 모니터링</h3>
+<figure><img src="../gs/screenshots/v3/mlops/13_monitoring.png" data-width="620" alt="라인 모니터링"><figcaption>라인 모니터링 — 모델 · 단계 · 신호 · 기준 불량률 · 최근 불량률 · 우연일 확률 · 판단 · [재학습]</figcaption></figure>
+<p>운영 웹의 검사 이력을 모델 버전별로 최근 7 일과 기준 21 일로 비교합니다. 여기서 모델을 자동으로 내리지는 않습니다.</p>
+<table class="cols-2-5-2">
+  <tr><th>신호</th><th>의미</th><th>재학습 권고</th></tr>
+  <tr><td>이상 없음</td><td>변화 없음</td><td>—</td></tr>
+  <tr><td>판단 보류</td><td>어느 구간이든 100 건 미만 — "괜찮다"가 아니라 "아직 모른다"</td><td>—</td></tr>
+  <tr><td>입력 변화</td><td>밝기 · 선명도가 20% 넘게 달라짐 — 조명 · 초점 · 렌즈를 먼저 확인</td><td>—</td></tr>
+  <tr><td>불량률 상승</td><td>2%p 넘게 올랐고 통계적으로 유의(p &lt; 0.01)</td><td>예</td></tr>
+  <tr><td>신뢰도 하락</td><td>딥러닝 신뢰도 평균이 10% 넘게 하락</td><td>예</td></tr>
+</table>
+<p>불량률이 올랐다고 곧 모델이 나빠진 것은 아닙니다 — 실제로 불량이 늘었을 수도 있습니다. 입력 변화로 나온 신호는 재학습해도 낫지 않으니 조명 · 초점 · 렌즈를 먼저 보세요.</p>
+</section>

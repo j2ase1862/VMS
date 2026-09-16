@@ -1,0 +1,211 @@
+<section id="visionsetup">
+<h2>5. 검사 레시피 편집 (VMS.VisionSetup)</h2>
+<div class="callout"><strong>⚙ 이 장은 검사 레시피를 만드는 비전 엔지니어용입니다.</strong> 현장에서 검사만 수행하는 작업자는 읽지 않아도 됩니다.</div>
+<p>VMS.VisionSetup 은 검사 레시피를 만드는 작업 공간입니다. 왼쪽 Tool Palette 에서 도구를 골라 가운데 Tool Workspace 에 놓고 연결한 뒤,
+이미지를 열어 실행해 보면서 오른쪽 Tool Settings 에서 파라미터와 판정 기준을 조정합니다. 완성한 레시피를 저장하면 VMS 메인이 그대로 불러와 검사합니다.
+VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴로 실행합니다.</p>
+
+<h3 id="vs-layout">5.1 화면 구성</h3>
+<figure><img src="../gs/screenshots/v3/vs/full_main_scene.png" data-width="620" alt="VisionSetup 메인 화면"><figcaption>VisionSetup 메인 화면 (레시피 로드 · 이미지 실행 상태) — ① 메뉴 바 ② 아이콘 툴바 ③ 레시피 · 카메라 · Steps · Tool Palette(좌) ④ Tool Workspace(중) ⑤ 이미지 뷰 + Run Results ⑥ Tool Settings / Camera Settings(우) ⑦ 상태바</figcaption></figure>
+<table class="cols-2-7">
+  <tr><th>영역</th><th>내용</th></tr>
+  <tr><td>① 메뉴 바</td><td>File · Run · Recipe · 예제 Template · Sequence · Deep Learning · Batch Test... · OCR Synth Data... · Inference Settings... · Camera · 3D (WeldTeach 는 설치 시에만). 오른쪽 끝 X 는 프로그램 종료</td></tr>
+  <tr><td>② 아이콘 툴바</td><td>이미지 열기 · 폴더 열기 · Recipe Manager · 저장 · Run All · Run Selected · Clear All Tools · Camera Manager · 카메라 연결 토글 · Acquire · Live 시작/정지 · SLM Recipe Bot. 폴더를 열면 ◀ ▶ 와 Navigate / Run All / Run Selected 모드 라디오가 나타납니다</td></tr>
+  <tr><td>③ 왼쪽 패널</td><td>현재 레시피 배지(Now Recipe) · Camera 콤보 · Steps 표(# · Resolution · Tools)와 스텝 버튼 · Tool Palette(14 카테고리 39 도구, [Expand All]/[Collapse All])</td></tr>
+  <tr><td>④ Tool Workspace</td><td>도구 노드를 놓고 연결하는 캔버스. 노드를 드래그해 배치하고 우클릭 메뉴로 이름 변경 · 복제 · 연결 · 삭제</td></tr>
+  <tr><td>⑤ 이미지 뷰</td><td>2D Image · Depth Map · Point Cloud 탭. 2D 탭에는 이미지 소스(Original/Result) 콤보 · [Save Image] · ROI 도형 툴바 · 줌 · 아래 Run Results 표</td></tr>
+  <tr><td>⑥ 오른쪽 패널</td><td>도구를 선택하면 Tool Settings, 스텝만 선택하면 Camera Settings 로 바뀝니다</td></tr>
+  <tr><td>⑦ 상태바</td><td>진행 메시지 · 실행 시간 · 도구 수. 실행 결과 요약 · 오류 · 연동 진단이 여기에 표시됩니다</td></tr>
+</table>
+
+<h3 id="vs-toolbar">5.2 메뉴와 툴바</h3>
+<table class="cols-3-6">
+  <tr><th>메뉴 / 버튼</th><th>동작</th></tr>
+  <tr><td>File → Open Image / Open Folder</td><td>이미지 파일 하나를 열거나, 폴더를 열어 ◀ ▶ 로 넘겨 봅니다. 폴더 모드에서 Run All · Run Selected 라디오를 고르면 이미지를 넘길 때마다 자동으로 실행됩니다.</td></tr>
+  <tr><td>Run → Run All / Run Selected / Clear All Tools</td><td>현재 스텝의 도구 전체 실행 / 선택한 도구만 실행 / 작업 공간의 도구를 모두 삭제. 툴바의 ▶ · ▶| 버튼과 같습니다. 이미지가 없으면 실행되지 않습니다.</td></tr>
+  <tr><td>Recipe → Recipe Manager / Save Recipe</td><td>레시피 관리 창(§5.3) / 현재 레시피 저장. 저장하면 실행 중인 VMS 가 자동으로 다시 불러옵니다.</td></tr>
+  <tr><td>예제 Template</td><td>템플릿 갤러리(§5.8). 스텝을 먼저 선택해야 활성화됩니다.</td></tr>
+  <tr><td>Sequence</td><td>시퀀스 편집기(§5.10).</td></tr>
+  <tr><td>Deep Learning</td><td>AI 학습 도구(10장)를 실행합니다. 설치되지 않은 PC 에서는 메뉴가 보이지 않습니다.</td></tr>
+  <tr><td>Batch Test... / OCR Synth Data... / Inference Settings...</td><td>배치 테스트(§5.11) / OCR 합성 데이터 생성(§5.12) / ONNX 추론 엔진 설정(§5.12).</td></tr>
+  <tr><td>Camera → Camera Manager / Calibration Manager... / Camera Info / Acquire Image / Start · Stop Camera Live / Receive from VMS / Start · Stop Live Receive (from VMS)</td><td>카메라 등록 창 / 캘리브레이션 창(§5.9) / 선택 카메라 정보 팝업 / 촬영 · 라이브 · VMS 프레임 수신(§5.4).</td></tr>
+  <tr><td>3D → Save · Load 3D Data / Generate Height Map / Save · Clear Height Slicing</td><td>점군(.vpc) 저장 · 불러오기, 높이 맵 생성, 높이 슬라이스 저장 · 지우기.</td></tr>
+  <tr><td>툴바 카메라 연결 토글</td><td>선택 카메라의 연결/해제. 초록이면 연결됨. VMS 가 실행 중이면 카메라 소유권이 VMS 에 있어 비활성이며 툴팁에 사유가 표시됩니다.</td></tr>
+  <tr><td>툴바 SLM Recipe Bot</td><td>AI 챗봇에게 원하는 검사를 말로 설명하면 레시피 구성을 제안하고 [Apply Recipe] 로 작업 공간에 만들어 줍니다.</td></tr>
+</table>
+
+<h3 id="vs-recipe">5.3 레시피 · 스텝 · 카메라</h3>
+<h4>레시피 만들기와 관리 — Recipe Manager</h4>
+<figure><img src="../gs/screenshots/v3/vs/dlg_RecipeManager.png" data-width="600" alt="Recipe Manager"><figcaption>Recipe Manager — 왼쪽 레시피 목록(검색 · New · Load · Duplicate · Rename · Delete · Import · Export · Open Folder), 오른쪽 편집기(스텝/도구 트리 · Properties · Save/Discard)</figcaption></figure>
+<ol>
+  <li>[New] 로 레시피를 만들고 오른쪽 Properties 에서 Recipe Name · Description · Version · Author 를 입력한 뒤 [Save] 합니다.</li>
+  <li>[Add Step] 으로 스텝을 추가하고 스텝의 Camera 를 고릅니다. 스텝 이름("1-1", "1-2")은 카메라 등록 순서 기준으로 자동 계산되며 바꿀 수 없습니다. 부르기 쉬운 이름이 필요하면 <strong>Step Alias</strong>(별칭)를 넣습니다.</li>
+  <li>[Load] 로 레시피를 메인 화면에 불러옵니다. 왼쪽 배지가 "Now Recipe: 이름" 으로 바뀌고 Steps 표에 스텝이 나타납니다.</li>
+  <li><strong>[Duplicate]</strong> 는 스텝 · 도구 · 학습 데이터까지 통째로 복사해 "이름 - 복사본" 을 만들고, <strong>[Rename]</strong> 은 이름을 바꿉니다(Web 원장 이름은 별도). [Import] / [Export] 로 JSON 파일을 주고받으며 [Open Folder] 는 저장 폴더를 엽니다.</li>
+</ol>
+<p>레시피는 <code>%LocalAppData%\BODA VISION AI\Recipes\</code> 에 JSON 으로 저장되며, Web 연동 현장에서는 같은 이름으로 Web 레시피 원장에 자동 등록됩니다.</p>
+<h4>스텝과 카메라 설정</h4>
+<ul>
+  <li>Camera 콤보에서 카메라를 고르면 Steps 표에 <strong>그 카메라의 스텝만</strong> 표시됩니다(제목에 "Steps — 카메라명"). 레시피를 불러오면 레시피가 쓰는 카메라가 자동 선택됩니다.</li>
+  <li>스텝 버튼: Add Step · Delete Step · <strong>Duplicate Step</strong>(카메라 설정과 도구 파이프라인을 복사해 바로 뒤에 추가) · Generate Robot Waypoint Steps(로봇 멀티뷰용) · Move Up / Move Down.</li>
+  <li>Steps 표의 <strong>Resolution</strong>(mm/px)은 측정 도구가 픽셀을 mm 로 바꾸는 값입니다. 캘리브레이션을 적용하면 자동으로 채워지고(§5.9), 간단한 현장은 직접 입력해도 됩니다.</li>
+  <li>스텝만 선택하면 오른쪽 패널이 <strong>Camera Settings</strong> 로 바뀝니다 — 스텝 정보(별칭 · 로봇 노드 번호), 2D 이미지(카메라 설정 유지 체크 · 노출 ms · 게인 dB), 3D 카메라면 3D 스캔(점군 후처리 끄기/약/중/강 · 뎁스 범위 제한 mm). 여기 값은 Acquire · Live 때 카메라에 적용되고 레시피에 저장됩니다.</li>
+</ul>
+<h4>다른 PC 에서 만든 레시피 — 카메라 재연결</h4>
+<p>이 PC 에 없는 카메라를 쓰는 레시피를 열면 <strong>미등록 카메라 재연결</strong> 창이 뜹니다. 스텝별로 이 PC 의 카메라를 골라 [적용 및 저장] 을 누르면 도구 · 학습 데이터를 그대로 두고 카메라만 바꿔 쓸 수 있습니다. [건너뛰기] 하면 스텝 이름이 "?-1" 로 표시됩니다.</p>
+
+<h3 id="vs-image">5.4 이미지 가져오기 — 파일 · 카메라 · VMS</h3>
+<table class="cols-3-6">
+  <tr><th>방법</th><th>절차</th></tr>
+  <tr><td>파일</td><td>File → Open Image(또는 툴바 첫 버튼)로 jpg · png · bmp · tif 를 엽니다. 폴더를 열면 ◀ ▶ 로 넘기며 여러 장을 검증할 수 있습니다. 3D 는 3D → Load 3D Data 로 .vpc 파일을 엽니다.</td></tr>
+  <tr><td>카메라 직접 촬영</td><td>Camera Manager 에 카메라를 등록하고 왼쪽 Camera 콤보에서 고른 뒤 툴바 [Acquire](한 장) 또는 [Start Camera Live](연속). 선택한 스텝의 노출 · 게인이 적용됩니다.</td></tr>
+  <tr><td>VMS 실행 중</td><td>VMS 메인이 카메라를 쥐고 있으면 툴바에 "VMS 실행 감지" 가 표시되고 직접 연결이 잠깁니다. 이때 [Acquire] 를 누르면 <strong>VMS 에 촬영을 요청</strong>해 그 사진을 받아옵니다(운전 · 라이브 중이면 거절). Camera → Receive from VMS 는 VMS 가 마지막으로 찍은 프레임을, Start Live Receive 는 VMS 의 라이브 영상을 이어서 받습니다.</td></tr>
+</table>
+<p>받은 이미지는 2D Image 탭에 표시되고 상태바에 "이미지 로드 완료" 가 나옵니다. 이후 Run All 이 활성화됩니다.</p>
+
+<h3 id="vs-tools">5.5 도구 배치 · 연결 · ROI</h3>
+<ol>
+  <li><strong>도구 놓기</strong> — Tool Palette 의 도구를 Tool Workspace 로 끌어다 놓습니다. 놓는 즉시 선택되어 오른쪽에 Tool Settings 가 나타납니다. 도구 이름 옆 물음표(?)에 마우스를 올리면 그 도구의 용도 · 사용법 · 결과 값 설명이 뜹니다.</li>
+  <li><strong>연결하기</strong> — 앞 도구 노드를 우클릭 → Connect Image(초록 실선) / Connect Coordinates(파랑 점선) / Connect Result(주황 점선) 를 고른 뒤 뒤 도구를 클릭합니다. Esc 또는 우클릭으로 취소합니다.
+    <ul>
+      <li><strong>Image</strong> — 앞 도구의 결과 이미지를 뒤 도구의 입력으로 넘깁니다(예: Grayscale → Threshold → Blob).</li>
+      <li><strong>Coordinates (Fixture)</strong> — 패턴 매칭이 찾은 위치 · 각도만큼 뒤 도구의 ROI 를 옮기고 기울입니다. 부품이 틀어져 놓여도 같은 자리를 검사합니다.</li>
+      <li><strong>Result</strong> — 앞 도구의 결과 값을 뒤 도구가 참조합니다(예: Caliper 두 개 → Geometry, 여러 도구 → Result).</li>
+    </ul></li>
+  <li><strong>ROI 그리기</strong> — 도구를 선택하고 Tool Settings 의 Use ROI 를 켠 뒤, 이미지 뷰 툴바에서 Rectangle · RectAffine(회전 사각형) · Circle · Ellipse · Polygon 을 골라 이미지 위에 그립니다. 흰 원 핸들로 크기, 금색 원 핸들로 회전을 조정하고 [Delete] / [Clear All] 로 지웁니다. [Show ROI] · [Draw ROI] · [Clear ROI] 버튼은 Tool Settings 의 ROI Settings 에 있습니다.</li>
+  <li><strong>이름 · 복제</strong> — 노드 우클릭 → Rename Tool 로 이름을 바꾸고, Duplicate Tool 로 파라미터 · ROI · 학습 데이터까지 복사한 사본을 만듭니다(연결은 복사되지 않음).</li>
+</ol>
+<div class="callout tip">각 도구 설정 상단의 <strong>Expert Mode</strong> 토글을 켜면 고급 파라미터가 나타납니다. 같은 종류의 모든 도구에 적용되고 다음 실행에도 유지됩니다. 처음에는 끈 채로 기본 파라미터만으로 시작하세요.</div>
+
+<h3 id="vs-run">5.6 실행과 결과 보기 · 판정</h3>
+<figure><img src="../gs/screenshots/v3/vs/scene_workspace.png" data-width="420" alt="Tool Workspace 연결 예"><figcaption>Tool Workspace — Grayscale →(Image, 초록) Feature Match →(Result, 주황) Result 로 연결한 예</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/vs/scene_results.png" data-width="620" alt="실행 결과 화면"><figcaption>Run All 실행 후 — 이미지 뷰와 Run Results 표(도구별 Pass/Fail · 결과 값). 상태바에 "실행 완료: 3/3 성공" 과 실행 시간이 표시됩니다</figcaption></figure>
+<ul>
+  <li>툴바 ▶ (Run All) 을 누르면 현재 스텝의 도구가 연결 순서대로 실행되고 상태바에 "실행 완료: n/m 성공" 이 표시됩니다. 도구 하나만 시험하려면 그 도구를 선택하고 ▶| (Run Selected).</li>
+  <li>이미지 뷰에 결과가 겹쳐 그려지고(검출 윤곽 · 에지 · 매칭 위치 · OK/NG 배지), 아래 <strong>Run Results</strong> 표에 도구별 Pass/Fail 과 결과 값이 나옵니다. 행을 누르면 상세가 펼쳐지고 우클릭으로 복사할 수 있습니다. 이미지 소스 콤보를 Result Image 로 바꾸면 도구가 만든 결과 이미지 자체를 봅니다.</li>
+  <li>[Save Image] 로 현재 표시 중인 이미지를 PNG · JPG · BMP · TIFF 로 저장할 수 있습니다.</li>
+</ul>
+<h4>판정 규칙</h4>
+<table class="cols-3-6">
+  <tr><th>도구</th><th>NG 로 처리되는 경우</th></tr>
+  <tr><td>Blob</td><td>판정을 켰을 때 면적 · 개수가 기준 범위를 벗어난 경우. 덩어리가 하나도 없으면 NG</td></tr>
+  <tr><td>Feature Match · Shape Match</td><td>패턴을 찾지 못했거나, 커버리지 판정 · 각도/크기 판정에 걸린 경우</td></tr>
+  <tr><td>Geometry · Match Align · Multi-Step Align</td><td>측정값(거리 · 각도 · Δ)이 기준값 ± 공차를 벗어난 경우</td></tr>
+  <tr><td>Detection · Segmentation · YOLOv8-seg · RF-DETR-seg</td><td>객체가 0 건 검출된 경우(또는 각도 판정을 켰는데 계산 불가)</td></tr>
+  <tr><td>Code Reader · OCR · OCV</td><td>판독 실패, 기대 문자열 불일치, 품질 등급 미달</td></tr>
+  <tr><td>Result</td><td>연결된 도구 중 하나라도 Fail 이면 최종 NG</td></tr>
+  <tr><td>운전 공통</td><td>카메라에서 이미지를 받지 못한 사이클</td></tr>
+</table>
+<p>"찾아야 할 것을 하나도 찾지 못한 검사" 는 합격이 아니라 NG 입니다. 예상과 다른 NG 가 나오면 결과 화면에서 무엇이 검출되지 않았는지 먼저 확인하세요.</p>
+<h4>Result 도구 — 최종 판정과 PLC 통계</h4>
+<p>스텝의 마지막에 <strong>Result</strong> 도구를 두고 판정에 넣을 도구들을 Result 연결하면, 모두 Pass 일 때만 OK 가 됩니다. Result 도구의 PLC Output 에는 PassCount · FailCount · TotalCount 통계를 PLC 주소에 매핑할 수 있습니다.
+검사 1 건의 최종 OK/NG 신호는 시퀀스 편집기의 Branch → Output Action 이 담당합니다(§5.10).</p>
+<h4>PLC Output — 결과 값을 PLC 로 보내기</h4>
+<p>도구 설정 아래의 PLC Output 에서 [+ Add PLC Mapping] 을 누르고 Key(결과 값 이름) · Device(MainPLC 또는 IO 보드) · Address(PLC 주소 또는 IO 채널) · Type 을 정하면 실행 때마다 그 값이 PLC 에 기록됩니다.</p>
+
+<h3 id="vs-webparam">5.7 검사 기준값을 Web 에서 관리하기 (파라미터 연동)</h3>
+<p>Blob · Caliper · Line Fit · Circle Fit · Geometry · Feature Match · Shape Match · Threshold · Color Match · Height Slicer 의 판정 기준 입력란 옆에는 <strong>Web 파라미터 연동 콤보</strong>가 있습니다.
+콤보에서 파라미터 코드를 고르면 운전(AUTO RUN) 때 그 코드의 Web 값을 씁니다 — 이후 기준값은 현장에서 도구 설정을 열지 않고 Web 레시피 파라미터 화면(§8.10)에서 바꿉니다.</p>
+<ul>
+  <li>연동을 걸면 입력란 아래에 "Web 연동 중 (#코드: 값) — 운전 값은 Web 에서 변경" 배지가 붙고, 화면의 로컬 값이 Web 값과 다르면 "⚠ 로컬 값 ≠ Web 값 — 운전은 Web 값을 사용합니다" 로 바뀝니다. 화면 값은 이 창의 테스트 실행에만 쓰입니다.</li>
+  <li>콤보 목록은 지금 편집 중인 레시피의 파라미터이며 Web 에서 추가 · 수정하면 곧바로 반영됩니다. 레시피를 불러올 때 상태바에 "Web 파라미터: '레시피명' 코드 N개" 진단이 표시되고, 0 개면 확인할 것을 안내합니다.</li>
+  <li>Web 의 Blob Tool · Dimension Tool 프리셋 항목은 이 도구들의 연동 콤보와 1:1 로 맞춰져 있습니다.</li>
+</ul>
+
+<h3 id="vs-templates">5.8 예제 템플릿 갤러리</h3>
+<figure><img src="../gs/screenshots/v3/vs/dlg_TemplateGallery.png" data-width="600" alt="예제 템플릿 갤러리"><figcaption>예제 템플릿 — 카테고리 탭(3D · Deep Learning · 2D 측정 · 식별 · 얼라인)과 템플릿 카드(다이어그램 · 제목 · 전제 조건 · 설명), [생성] / [취소]</figcaption></figure>
+<p>자주 쓰는 도구 조합을 클릭 몇 번으로 현재 스텝에 만들어 줍니다. 빈 화면에서 시작하지 않고 완성된 예제에서 값만 바꾸면 되므로 처음 레시피를 만들 때 권장합니다.</p>
+<ol>
+  <li>Steps 표에서 도구를 넣을 <strong>스텝을 먼저 선택</strong>합니다(선택하지 않으면 메뉴가 비활성).</li>
+  <li>메뉴 <strong>예제 Template</strong> 을 누르고 카테고리 탭에서 카드를 고른 뒤 [생성](또는 더블 클릭).</li>
+  <li>도구 체인이 작업 공간에 만들어집니다. 다중 스텝 템플릿은 레시피에 스텝이 새로 생깁니다.</li>
+  <li>이미지(또는 3D 데이터)를 열고 Run All 로 시험한 뒤, 각 도구를 선택해 ROI · 임계값 · 모델 파일을 우리 제품에 맞게 조정합니다.</li>
+</ol>
+<table class="cols-2-3-4">
+  <tr><th>분류</th><th>템플릿</th><th>도구 체인 · 용도</th></tr>
+  <tr><td>2D 측정</td><td>Blob 검출</td><td>Grayscale → Threshold → Blob → Result. 이진화 후 덩어리 개수 · 크기 검사(기본 판정 Blob 1 개 이상 = OK)</td></tr>
+  <tr><td>2D 측정</td><td>엣지 간 거리 측정</td><td>Caliper A · Caliper B → Geometry(mm 판정) → Result. 두 에지 사이 거리 측정</td></tr>
+  <tr><td>2D 측정</td><td>패턴 매칭 (Feature Match)</td><td>Grayscale → Feature Match → Result. 학습한 패턴의 위치 · 각도 · 점수 검사</td></tr>
+  <tr><td>2D 측정</td><td>컬러 객체 검출</td><td>Color Extract → Blob → Result. 지정 색 영역의 개수 · 위치 (컬러 이미지 필요)</td></tr>
+  <tr><td>식별</td><td>코드 판독</td><td>Code Reader → Result. 바코드 · QR · DataMatrix</td></tr>
+  <tr><td>Deep Learning</td><td>DL 객체 검출 판정 / DL 이상 탐지 판정</td><td>Detection → Result / Anomaly → Result (ONNX 모델 필요)</td></tr>
+  <tr><td>3D</td><td>3D 객체 카운트 · 치수 (기본)</td><td>Height Slicer → PointCloud Mask Crop → PointCloud Cluster. 높이 범위로 잘라 개수 · 치수 (3D 카메라 필요)</td></tr>
+  <tr><td>3D</td><td>DL 세그 기반 3D 객체 검출</td><td>YOLOv8-seg(마스크 출력) → Mask Crop → Cluster. 딥러닝 윤곽으로 점군을 잘라 객체별 치수</td></tr>
+  <tr><td>3D</td><td>3D 기준 형상 편차 검사</td><td>PointCloud Filter → Registration → Deviation. 기준 형상에 정합한 뒤 편차(들뜸 · 눌림) 검사</td></tr>
+  <tr><td>얼라인</td><td>표준 2D 매치 얼라인 / 2점 매치 얼라인</td><td>Grayscale → Feature Match(1 개 또는 A · B) → Match Align → Result. ΔX / ΔY / Δθ 산출 · 판정 · 로봇 변환</td></tr>
+  <tr><td>얼라인</td><td>2-스텝 얼라인</td><td>스텝 Align A / Align B + 합산 (Multi-Step Align). 카메라가 이동하는 대형 부품</td></tr>
+  <tr><td>얼라인</td><td>표준 3D 얼라인 / 평면 틸트 얼라인 / 2D+3D 하이브리드 얼라인</td><td>Registration(6 축) / Plane Fit 2 개 → 3D Geometry(평면 각) / Match Align + Plane Fit (3D 카메라 필요)</td></tr>
+</table>
+<div class="callout warn"><strong>얼라인 템플릿의 기준(원점)은 Feature Match 의 학습 위치입니다.</strong> 부품을 옮겨 놓고 다시 학습하면 기준도 새 위치로 바뀝니다(기본). 마스터 포즈를 유지한 채 특징만 보강하려면 Feature Match 설정의 재학습 원점을 KeepReference 로 두세요(§6.3).</div>
+
+<h3 id="vs-calibration">5.9 카메라 캘리브레이션 — mm 로 재기 위한 준비</h3>
+<figure><img src="../gs/screenshots/v3/vs/dlg_Calibration.png" data-width="520" alt="Camera Calibration 창"><figcaption>Camera Calibration 창 — Image Source · Calibration Mode · 패턴 값 · [Run Calibration] · Result · Apply(갱신할 스텝 목록 · [Apply to Current Recipe] · [Clear Calibration from Recipe])</figcaption></figure>
+<p>화면의 픽셀이 실제로 몇 mm 인지 카메라에 가르치는 과정입니다. 해 두면 측정 도구가 mm 로 판정하고, Image Rectify 도구가 렌즈 왜곡 · 기울어짐을 바로잡을 수 있습니다. Camera → Calibration Manager... 로 엽니다.</p>
+<ol>
+  <li><strong>이미지 가져오기</strong> — Image Source 에서 File(저장 사진) · Camera (direct)(직접 촬영) · VMS Shared Frame([Grab from VMS] — VMS 가 지금 한 장 찍어 보내 줌, 운전 · 라이브 중엔 거절) 중 고릅니다. 버튼이 눌리지 않으면 [Refresh Source Availability].</li>
+  <li><strong>방식 고르기</strong> — Calibration Mode:
+    <table class="cols-2-2-2-3">
+      <tr><th>방식</th><th>준비물</th><th>알아내는 것</th><th>이럴 때</th></tr>
+      <tr><td>Checkerboard</td><td>체커보드 인쇄물</td><td>렌즈 왜곡 + mm/px</td><td>화면 가장자리가 휘는 광각 렌즈</td></tr>
+      <tr><td>Circles Grid (dots)</td><td>원형(도트) 타겟</td><td>렌즈 왜곡 + mm/px</td><td>산업용 타겟 대부분. 초점이 약간 흐려도 잘 잡힘</td></tr>
+      <tr><td>N-Point (planar)</td><td>mm 좌표를 아는 점 4 개 이상</td><td>기울어진 평면 펴기 + mm/px</td><td>카메라를 수직으로 세울 수 없어 사다리꼴로 찍힐 때</td></tr>
+      <tr><td>Single Scale (2 points)</td><td>길이를 아는 구간 하나</td><td>mm/px 만</td><td>왜곡이 거의 없고 mm 환산만 필요할 때</td></tr>
+    </table></li>
+  <li><strong>값 입력</strong> — Checkerboard 는 Pattern Cols/Rows 에 <strong>안쪽 교차점 수</strong>(10 칸 → 9, 가로 · 세로가 달라야 함)와 Square Size(자로 잰 칸 크기 mm). Circles Grid 는 원의 개수와 Circle Spacing(이웃 원 중심 거리, 타겟에 적힌 값), 엇갈린 배열이면 Asymmetric 체크(기본 켬). N-Point 는 이미지를 클릭해 점을 찍고 표에 mm 좌표 입력, Single Scale 은 두 점을 클릭하고 Known Length 입력.</li>
+  <li><strong>여러 장 모으기</strong> — Checkerboard · Circles Grid 는 한 장으로는 렌즈 값이 정해지지 않습니다. Accumulate Multi-View 를 켜고 타겟의 각도 · 위치를 바꿔 가며(화면 네 구석을 골고루) 10~20 장을 [Run Calibration] 으로 누적합니다. 다시 시작하려면 [Reset].</li>
+  <li><strong>결과 읽기</strong> — Reprojection Error 는 작을수록 좋습니다(체커보드 1 px 미만 양호, 2 넘으면 값 오류 의심). Pixel Size 는 알고 있는 치수를 화면에서 재 보고 맞는지 확인합니다.</li>
+  <li><strong>레시피에 적용</strong> — Apply 구역의 "Resolution 을 갱신할 스텝" 목록에서 스텝을 체크하고 <strong>[Apply to Current Recipe]</strong>. 결과가 레시피에 저장되고, 체크한 스텝의 Resolution 이 바뀌며, 레시피 파일이 바로 저장됩니다. 카메라로 직접 촬영했으면 그 카메라의 스텝만 기본 체크되고, 파일이면 전체가 체크되니 카메라가 여러 대인 레시피는 확인 후 해제하세요.</li>
+</ol>
+<ul>
+  <li>캘리브레이션은 레시피마다 따로 보관됩니다. 카메라 · 렌즈 · 설치 높이를 바꿨다면 반드시 다시 하세요 — 옛 값이 남으면 측정값이 조용히 틀립니다.</li>
+  <li>[Clear Calibration from Recipe] 는 캘리브레이션만 지우고 <strong>스텝의 Resolution 은 남깁니다</strong>. 완전히 픽셀 단위로 돌리려면 Steps 표의 Resolution 도 0 으로 바꿉니다.</li>
+  <li>Image Rectify 도구의 Undistort 는 Checkerboard · Circles Grid 결과로, Apply Homography 는 N-Point 결과로만 동작합니다(§6.1).</li>
+</ul>
+
+<h3 id="vs-sequence">5.10 시퀀스 편집기 — PLC · IO 보드 운전 흐름</h3>
+<figure><img src="../gs/screenshots/v3/vs/dlg_Sequence.png" data-width="620" alt="Sequence Editor"><figcaption>Sequence Editor — 상단(프로세스 시퀀스 이름 · Reset 신호 · [디폴트 생성] [저장] [가져오기] [내보내기] [PLC Monitor] [▶ 무부하 테스트]), 왼쪽 노드 팔레트, 가운데 캔버스, 오른쪽 노드 속성</figcaption></figure>
+<p>AUTO RUN 의 "트리거 대기 → 촬영 → 검사 → 결과 출력 → 반복" 흐름을 노드로 정의합니다. 메뉴 Sequence 로 엽니다. 저장한 시퀀스는 <code>process_sequence.json</code> 에 기록되며 VMS 는 재시작 없이 다음 AUTO RUN 부터 새 시퀀스를 읽습니다.</p>
+<h4>노드</h4>
+<table class="cols-2-7">
+  <tr><th>노드</th><th>역할 · 속성</th></tr>
+  <tr><td>Start / End</td><td>시작점(정확히 1 개 필요) / 사이클 종료점. OK · NG 를 구분하려면 Branch 의 각 가지 끝에 End 를 둡니다</td></tr>
+  <tr><td>Input Check</td><td>PLC 입력(비트/워드) 또는 IO 보드 채널 조건을 기다립니다 — 디바이스 · 주소(또는 채널 번호) · 체크 모드 · 비교값 · 타임아웃(ms, −1 무제한) · 디바운스(ms). 스위치 · 센서 트리거는 <strong>BitRisingEdge</strong>(꺼짐→켜짐 순간) 권장 — BitOn 은 신호가 켜져 있는 동안 매 사이클 통과합니다. [▶ 테스트 읽기] 로 현재 값을 읽어 봅니다</td></tr>
+  <tr><td>Inspection</td><td>카메라 촬영 → 레시피 도구 실행 → 판정 한 사이클. 카메라 ID 지정</td></tr>
+  <tr><td>Branch</td><td>직전 검사 결과(PASS/FAIL)로 True/False 분기. "전체 카메라 결과로 판정" 체크 시 모든 카메라 OK 일 때 True</td></tr>
+  <tr><td>Output Action</td><td>PLC 출력(비트 ON/OFF · 워드 · Float) 또는 IO 보드 채널에 기록 — OK/NG 램프, 액추에이터, 컨베이어. [▶ 테스트 출력] 으로 바로 써 봅니다</td></tr>
+  <tr><td>Delay / Repeat</td><td>지연(ms) / 반복(횟수, −1 무한)</td></tr>
+  <tr><td>Recipe Change / Step Change</td><td>PLC 신호 조건 충족 시 Index 를 읽어 레시피 · 스텝을 전환합니다. Recipe Change 는 도구를 다시 초기화(Fixture 기준도 새로), Step Change 는 레시피를 유지한 채 스텝만 바꿉니다</td></tr>
+</table>
+<h4>절차</h4>
+<ol>
+  <li>[디폴트 생성] 으로 기본 흐름(Start → Input Check → Inspection → Branch → Output Action → End)을 만들거나, 팔레트에서 노드를 끌어 놓고 노드 우클릭 → 연결 시작 → 대상 노드 클릭으로 잇습니다.</li>
+  <li>각 노드를 선택해 오른쪽 노드 속성에서 디바이스(MainPLC 또는 등록한 IO 보드 Device ID) · 주소 · 값을 입력합니다. IO 보드는 주소 대신 <strong>채널 번호(0~N-1)</strong> 를 넣고 ON/OFF 신호만 다룹니다.</li>
+  <li>Reset 신호 주소를 두면 어느 노드에서든 그 조건이 충족될 때 즉시 Start 로 돌아갑니다.</li>
+  <li>[PLC Monitor] 로 참조 주소의 현재값을 보면서, <strong>[▶ 무부하 테스트]</strong> 로 카메라 검사만 항상 합격으로 시뮬레이션한 채 트리거 · 분기 · 출력 신호가 설비와 실제로 오가는지 확인합니다. 노드가 진행에 따라 초록/빨강으로 표시되고 Cycle 수가 올라갑니다.</li>
+  <li>[저장]. 필요하면 [내보내기] 로 파일로 보관하고 다른 PC 에서 [가져오기] 합니다.</li>
+</ol>
+
+<h3 id="vs-batch">5.11 배치 테스트 — 이미지 폴더로 레시피 검증</h3>
+<figure><img src="../gs/screenshots/v3/vs/dlg_BatchTest.png" data-width="620" alt="Batch Test Runner"><figcaption>Batch Test Runner — ACTIVE PIPELINE(Recipe · Camera · Step, [Auto-tune...] [Edit Thresholds...]) · INPUT · OUTPUT · 통계 · ACTIVITY(골든셋 · Browse Failures) · Live Log / Results</figcaption></figure>
+<ol>
+  <li>메뉴 Batch Test... 를 열고 RECIPE → CAMERA → STEP 을 고릅니다.</li>
+  <li>INPUT 에 이미지 폴더(하위 폴더 재귀 가능), OUTPUT 에 CSV 리포트 경로와 실패 케이스 오버레이 저장 여부를 정합니다.</li>
+  <li>[Run Batch] — PROCESSED · PASS · FAIL · AVG TIME 이 실시간으로 집계되고 Results 탭에 파일별 결과가 쌓입니다. 실패 행을 더블 클릭하면 <strong>Failure Browser</strong>(원본 · 오버레이 좌우 비교, ← → 이동)가 열립니다.</li>
+  <li><strong>[Edit Thresholds...]</strong> — 도구별 Must Succeed(실패 시 즉시 FAIL)와 결과 값의 Min..Max 범위 임계치를 정해 판정 기준을 검증합니다.</li>
+  <li><strong>[Auto-tune...]</strong> — 도구 파라미터를 From · To · Step 으로 훑으며(또는 Random search) 폴더 전체 PASS 율이 가장 높은 조합을 찾고 [Apply Best] 로 도구에 적용 · 저장합니다.</li>
+  <li><strong>골든셋</strong> — [Save as Golden] 으로 지금 결과를 정답으로 저장하면 이후 배치 결과가 자동 비교되어 달라진 케이스를 알려 줍니다. 레시피를 고친 뒤 회귀 확인에 씁니다.</li>
+</ol>
+
+<h3 id="vs-misc">5.12 기타 설정 창</h3>
+<h4>Camera Manager</h4>
+<figure><img src="../gs/screenshots/v3/vs/dlg_CameraManager.png" data-width="520" alt="Camera Manager"><figcaption>Camera Manager — Cameras 목록 · [Add] [Remove] · Camera Properties(Name · Manufacturer · Model · Serial · Width · Height · Connection String · Enabled) · [Save] [Cancel]</figcaption></figure>
+<p>VisionSetup 에서 직접 촬영할 카메라를 등록합니다. 운전용 카메라 구성은 시스템 설정 마법사(3장)가 기준이며, 여기서는 편집 작업에 쓸 카메라를 관리합니다.</p>
+<h4>Inference Settings — 딥러닝 추론 엔진</h4>
+<figure><img src="../gs/screenshots/v3/vs/dlg_InferenceSettings.png" data-width="420" alt="Inference Engine Settings"><figcaption>Inference Engine Settings — Execution Provider · TensorRT Engine Cache Folder · Enable TensorRT FP16</figcaption></figure>
+<p>ONNX Runtime 의 실행 백엔드(Auto · CPU · CUDA · TensorRT)를 고릅니다. GPU 가 없으면 CPU 로 자동 동작합니다. TensorRT 캐시 폴더를 두면 두 번째 실행부터 엔진 재빌드를 건너뛰고, FP16 은 RTX 계열에서 속도를 높입니다. 변경은 다음 모델 로드부터 적용됩니다.</p>
+<h4>OCR Synth Data — 합성 문자 데이터</h4>
+<figure><img src="../gs/screenshots/v3/vs/dlg_SynthData.png" data-width="520" alt="Synthetic Data Generator"><figcaption>Synthetic Data Generator — Font · Patterns · Dataset · Background · Augmentation · Training(PP-OCR fine-tuning, AI 학습 도구 설치 시)</figcaption></figure>
+<p>날짜 · 로트 번호처럼 형식이 정해진 문자열을 폰트 · 배경 · 증강을 조합해 대량 생성합니다. OCR 도구의 인식 모델을 다듬을 학습 데이터로 쓰며, PP-OCR 학습 카드는 AI 학습 도구가 설치된 PC 에서만 표시됩니다.</p>
+<h4>SLM Recipe Bot</h4>
+<p>툴바의 말풍선 버튼으로 엽니다. 모델에 [Connect] 한 뒤 "원형 부품의 지름을 재고 싶어" 처럼 입력하면 레시피 구성을 제안하고, [Apply Recipe] 로 작업 공간에 만들어 줍니다. "자동 실행" 을 켜면 적용 직후 실행 결과까지 알려 줍니다.</p>
+</section>
