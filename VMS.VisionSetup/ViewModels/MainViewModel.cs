@@ -2511,11 +2511,34 @@ namespace VMS.VisionSetup.ViewModels
         /// <summary>
         /// 선택된 도구의 ROI 프록시 속성 변경 시 캔버스 ROI 동기화
         /// (텍스트 필드 편집 → 캔버스 업데이트)
+        ///
+        /// <para><b>스레드</b> — 이 알림은 UI 스레드에서만 오지 않는다. Run 은
+        /// <see cref="VisionService.ExecuteAllAsync"/> 가 Task.Run 으로 돌리므로, Fixture 연결이
+        /// ROI 를 옮기면 그 PropertyChanged 는 백그라운드 스레드에서 온다. 여기서 만지는
+        /// ROIShape 는 캔버스에 바인딩된 ObservableObject 라 UI 스레드 것이어야 한다
+        /// (지금까지 위치 동기화가 그대로 백그라운드에서 돌고 있었다). 그래서 실제 동기화는
+        /// 디스패처로 넘긴다 — 이미 UI 스레드면 예전처럼 그 자리에서 처리하므로
+        /// 텍스트 편집 경로의 동작·순서는 그대로다.</para>
         /// </summary>
         private void OnSelectedToolPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             if (_isSyncingROI) return;
             if (sender is not VisionToolBase tool) return;
+
+            var dispatcher = System.Windows.Application.Current?.Dispatcher;
+            if (dispatcher == null || dispatcher.CheckAccess())
+                SyncCanvasShapesFromTool(tool, e.PropertyName);
+            else
+                dispatcher.BeginInvoke(new Action(() => SyncCanvasShapesFromTool(tool, e.PropertyName)));
+        }
+
+        /// <summary>
+        /// 도구의 값 변경을 캔버스 도형에 반영한다 — 항상 UI 스레드에서 호출된다
+        /// (<see cref="OnSelectedToolPropertyChanged"/> 가 보장).
+        /// </summary>
+        private void SyncCanvasShapesFromTool(VisionToolBase tool, string? propertyName)
+        {
+            var e = new PropertyChangedEventArgs(propertyName);
 
             // CircleFitTool 속성 변경 → CircleROI 동기화
             if (tool is CircleFitTool cft &&
@@ -2543,33 +2566,66 @@ namespace VMS.VisionSetup.ViewModels
                 }
             }
 
+            // Fixture 연결이 전달한 자세(각도·회전 중심) → 캔버스 도형에 반영.
+            // 이걸 안 하면 화면 사각형은 제자리로 옮겨 가면서 기울기만 예전 각도로 남아,
+            // 실행이 보는 영역과 눈에 보이는 영역이 어긋난다 — "각도가 안 먹었다" 로 읽힌다.
+            // 중심은 툴이 정밀값(double)을 들고 있으므로 정수 사각형이 아니라 그쪽에서 가져온다.
+            // 사용자가 직접 ROI 를 편집한 경우에는 HasFixtureAngle 이 false 라 여기 안 걸리고,
+            // 아래 좌표 동기화가 예전처럼 각도를 그대로 둔다.
+            if (e.PropertyName is nameof(VisionToolBase.ROIAngle)
+                    or nameof(VisionToolBase.ROICenterX) or nameof(VisionToolBase.ROICenterY)
+                && tool.HasFixtureAngle
+                && tool.AssociatedROIShape is RectangleAffineROI fixtureShape)
+            {
+                fixtureShape.Angle = tool.ROIAngle;
+                fixtureShape.CenterX = tool.ROICenterX;
+                fixtureShape.CenterY = tool.ROICenterY;
+                WeakReferenceMessenger.Default.Send(new RequestRefreshROIMessage(fixtureShape));
+            }
+
             // ROI 프록시 속성 변경 시 AssociatedROIShape 좌표 동기화
             if (e.PropertyName is nameof(VisionToolBase.ROIX) or nameof(VisionToolBase.ROIY)
                 or nameof(VisionToolBase.ROIWidth) or nameof(VisionToolBase.ROIHeight))
             {
                 if (tool.AssociatedROIShape is RectangleAffineROI affineROI)
                 {
-                    // Affine ROI: CenterX/Y와 Width/Height 업데이트 (Angle 유지)
+                    // Affine ROI: CenterX/Y와 Width/Height 업데이트.
+                    // Angle 은 사용자가 그려 둔 기울기라 건드리지 않는다 — 단, Fixture 가
+                    // 각도를 전달한 상태면 그 각도가 진짜이므로 함께 맞춘다.
                     affineROI.CenterX = tool.ROIX + tool.ROIWidth / 2.0;
                     affineROI.CenterY = tool.ROIY + tool.ROIHeight / 2.0;
                     affineROI.Width = Math.Max(1, tool.ROIWidth);
                     affineROI.Height = Math.Max(1, tool.ROIHeight);
-                    tool.ROICenterX = affineROI.CenterX;
-                    tool.ROICenterY = affineROI.CenterY;
+                    if (tool.HasFixtureAngle)
+                    {
+                        affineROI.Angle = tool.ROIAngle;
+                        // 회전 중심은 Fixture 가 정밀값으로 들고 있다 — 정수 사각형에서
+                        // 되계산한 값으로 덮으면 매 실행 반픽셀씩 어긋난다.
+                    }
+                    else
+                    {
+                        tool.ROICenterX = affineROI.CenterX;
+                        tool.ROICenterY = affineROI.CenterY;
+                    }
                     WeakReferenceMessenger.Default.Send(new RequestRefreshROIMessage(affineROI));
                 }
                 else if (tool.AssociatedROIShape is RectangleROI rectROI)
                 {
+                    // 축 정렬 도형이라 기울기를 표현할 수 없다 — Fixture 가 각도를 준
+                    // 경우 실행은 기운 영역을 보지만 화면 사각형은 수평 그대로다.
+                    // (회전 ROI 로 그려 두면 화면도 같이 기운다.)
                     rectROI.X = tool.ROIX;
                     rectROI.Y = tool.ROIY;
                     rectROI.Width = Math.Max(1, tool.ROIWidth);
                     rectROI.Height = Math.Max(1, tool.ROIHeight);
                     WeakReferenceMessenger.Default.Send(new RequestRefreshROIMessage(rectROI));
                 }
-                else if (tool.AssociatedROIShape == null && (tool.ROICenterX != 0 || tool.ROICenterY != 0))
+                else if (tool.AssociatedROIShape == null && !tool.HasFixtureAngle
+                         && (tool.ROICenterX != 0 || tool.ROICenterY != 0))
                 {
                     // 레시피 재로드 직후(도형 미표시) 텍스트 필드로 회전 ROI 를 옮기는 경우 —
                     // 회전 중심을 같이 옮겨야 GetAlignedROIImage 가 새 위치를 크롭한다.
+                    // Fixture 가 각도를 준 상태면 중심은 그쪽이 정밀값으로 들고 있으므로 건드리지 않는다.
                     tool.ROICenterX = tool.ROIX + tool.ROIWidth / 2.0;
                     tool.ROICenterY = tool.ROIY + tool.ROIHeight / 2.0;
                 }
