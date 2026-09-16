@@ -1,0 +1,132 @@
+<section id="troubleshoot">
+<h2>12. 문제점 및 조치 방법</h2>
+<p>자주 겪는 증상과 확인 순서입니다. 대부분의 원인은 VMS 하단 <strong>상태바</strong>와 <strong>System Log</strong>(§4.7)에 먼저 나타나므로 그 두 곳부터 보세요.
+⚙ 표시가 있는 항목은 관리자 · 설치 담당자용입니다.</p>
+
+<h3 id="ts-camera">12.1 카메라 · 촬영</h3>
+<table class="cols-3-6">
+  <tr><th>증상</th><th>확인 · 조치</th></tr>
+  <tr><td>상태바 CAM 이 0/n (빨강), 카메라 화면 "No Image"</td>
+      <td>① 카메라 전원 · 케이블 · 네트워크 카드 링크 램프를 확인합니다. ② 제조사 프로그램(pylon Viewer · MVS · Mech-Eye Viewer)에서 카메라가 보이는지 확인합니다 — 보이지 않으면 IP 대역 · 방화벽(UDP 3956) 문제입니다. ③ 제조사 프로그램은 닫습니다(카메라는 한 프로그램만 열 수 있습니다). ④ 설정 마법사 3 단계의 IP · 제조사 · 타입이 맞는지 봅니다. ⑤ 케이블을 다시 꽂으면 다음 촬영에서 자동 재연결됩니다.</td></tr>
+  <tr><td>영상이 실제 제품과 다르게 보임 (시뮬레이션 영상)</td>
+      <td>제조사 SDK 가 없는 빌드이거나 지원하지 않는 제조사를 선택한 것입니다. VisionSetup 연결 시 "SDK 미탑재 — 시뮬레이션 모드" 경고가 뜹니다. 설정 마법사의 제조사를 HIK · Basler · Mech_Mind · Matrox 중 실제 장비로 바꾸고, 해당 런타임(§2.1)이 설치되었는지 확인합니다.</td></tr>
+  <tr><td>촬영마다 밝기가 달라짐</td>
+      <td>카메라 조작 상자의 "카메라 설정 유지" 를 끄고 Exposure · Gain 을 고정값으로 넣은 뒤 [Save Parameter] 합니다. 제조사 프로그램에서 자동 노출을 끄는 것도 방법입니다.</td></tr>
+  <tr><td>[Grab] · [Live] 버튼이 눌리지 않음</td>
+      <td>버튼에 마우스를 올려 사유를 봅니다 — 시스템 사용자에게 시작/정지 권한 없음(다른 계정으로 로그인), 작업자 로그인 필요, 라이브 중(먼저 [Stop]).</td></tr>
+  <tr><td>VisionSetup 에서 [Acquire] 를 눌러도 이미지가 안 옴</td>
+      <td>VMS 가 실행 중이면 카메라는 VMS 소유이며 VisionSetup 은 VMS 에 촬영을 요청합니다. VMS 가 AUTO RUN · 라이브 중이면 거절됩니다("VMS Grab 거절: …") — 검사를 멈춘 뒤 다시 누릅니다. "VMS 가 새 프레임을 기록하지 않았습니다" 면 한 번 더 시도합니다.</td></tr>
+  <tr><td>NG 가 연속으로 나오고 검사 사진이 비어 있음</td>
+      <td>운전 중 이미지를 받지 못한 사이클은 검사 없이 NG 로 집계됩니다. 카메라 연결 표시등이 빨간지 확인하고 케이블 · 전원 · 네트워크를 점검합니다.</td></tr>
+</table>
+
+<h3 id="ts-run">12.2 검사 운전 · 작업지시</h3>
+<table class="cols-3-6">
+  <tr><th>증상</th><th>확인 · 조치</th></tr>
+  <tr><td>[AUTO RUN] 이 켜지지 않음</td>
+      <td>① 카메라 연결(CAM n/m) ② 작업자 로그인(Operator 칩에 이름) ③ 작업지시 선택(WO 칩) ④ 작업지시 상태가 Planned 또는 InProgress 인지 — 완료된 작업지시로는 시작할 수 없습니다. ⑤ 시스템 사용자로 로그인했다면 그 계정에 시작/정지 권한이 있는지(§4.12).</td></tr>
+  <tr><td>작업자 로그인 실패</td>
+      <td>"사번/PIN 오류" 면 Web 작업자 마스터의 사번 · PIN · 사용 여부를 확인합니다. "서버가 이 PC 의 키를 거부" 면 설정 마법사 고급 설정의 Web Client API Key 가 서버와 다른 것입니다(⚙). 1 분에 5 회 넘게 실패하면 잠시 막힙니다.</td></tr>
+  <tr><td>검사는 되는데 작업지시 수량이 올라가지 않음</td>
+      <td>① 상태바가 "Running — 경고: Web 미연동" 이면 결과가 서버에 집계되지 않는 상태입니다. ② 사용 중인 레시피가 Web 에 등록된 레시피인지, 혼합 레시피 작업지시라면 그 작업지시에 등록된 레시피인지 확인합니다. ③ 작업지시가 완료/마감 상태가 아닌지, 다른 라인에 배정되지 않았는지 봅니다 — System Log 에 "다른 라인에 배정되어 있습니다" 경고가 남습니다. ④ Lot 수량만 안 오르면 선택한 Lot 이 그 작업지시 소속인지 확인합니다.</td></tr>
+  <tr><td>Web 에서 만든 레시피가 VMS 에 안 보임</td>
+      <td>사이드 패널 Recipe 의 ↻ 를 누르고 상태바 요약을 봅니다. "0개" 면 레시피가 다른 라인 번호로 만들어진 경우가 대부분입니다 — Web 레시피 파라미터 화면의 라인과 이 PC 의 라인 번호를 대조합니다. 단독 모드로 저장된 PC 는 동기화 자체가 꺼져 있습니다.</td></tr>
+  <tr><td>스위치를 한 번 눌렀는데 검사가 여러 번 반복됨</td>
+      <td>시퀀스의 트리거 노드가 BitOn(레벨) 이면 누르고 있는 동안 계속 성립합니다. 시퀀스 편집기에서 체크 모드를 <strong>BitRisingEdge</strong> 로 바꾸고 디바운스(ms)를 넣습니다(§5.10).</td></tr>
+  <tr><td>시퀀스가 시작되지 않음 / "Start 노드가 없어…"</td>
+      <td>VisionSetup 시퀀스 편집기에서 시퀀스를 만들고 [저장] 합니다. Start 노드가 반드시 있어야 하며, 저장 후 다음 AUTO RUN 부터 자동으로 읽힙니다.</td></tr>
+  <tr><td>시퀀스 노드 오류가 반복됨</td>
+      <td>System Log 의 "[AutoProcess] 시퀀스 '노드' 노드 오류 — 사유" 를 봅니다. 5 초 후 자동 재시도합니다. PLC 주소 오타, 연결 끊김, IO 보드 채널 번호 범위 초과가 흔한 원인입니다.</td></tr>
+  <tr><td>정상 종료했는데 작업자가 Web 에 계속 근무 중으로 남음</td>
+      <td>종료 통지가 서버에서 거부된 경우입니다(API 키 불일치 ⚙). 다시 로그인하면 교체되며, Web 작업자 → 출근 이력에서 관리자가 종료할 수도 있습니다. 라인 PC 가 15 초 이상 응답이 없으면 서버가 자동으로 세션을 닫습니다.</td></tr>
+</table>
+
+<h3 id="ts-plc">12.3 PLC · IO 보드 ⚙</h3>
+<table class="cols-3-6">
+  <tr><th>증상</th><th>확인 · 조치</th></tr>
+  <tr><td>상태바 PLC 칩이 빨강</td>
+      <td>① PLC IP 로 ping 이 되는지 ② 설정 마법사 4 단계의 벤더 · 포트 · 통신 방식이 PLC 설정과 같은지 ③ PLC 쪽 이더넷 모듈의 접속 허용 수(Mitsubishi 는 포트 생존 확인 필요)를 확인합니다. Auto Reconnect 가 켜져 있으면 연결이 돌아올 때 자동 복구됩니다.</td></tr>
+  <tr><td>상태바 IO 칩이 빨강 / "IO 보드 연결 실패"</td>
+      <td>System Log 의 <code>[IoBoard]</code> 항목에 사유가 있습니다. "라이브러리를 찾을 수 없습니다" → 드라이버(ADLink DASK · Advantech DAQNavi)를 <strong>64비트용</strong>으로 설치합니다. "Register_Card 실패" → 마법사 6 단계의 모델 · Board ID 가 실제 카드와 맞는지 확인합니다. "연결 시간 초과(5초)" → 카드 장착과 드라이버를 확인하고 재부팅합니다. 보드가 실패해도 검사는 되지만 그 보드를 쓰는 시퀀스 노드는 동작하지 않습니다.</td></tr>
+  <tr><td>판정 신호가 PLC 에 안 들어감</td>
+      <td>시퀀스의 Output Action 노드 주소 · 값, Write Mode(Handshake) 규약, Endian 을 PLC 프로그램과 대조합니다. 시퀀스 편집기의 [PLC Monitor] 로 실제 값을 보면서 [무부하 테스트] 로 신호만 주고받아 확인합니다(§5.10).</td></tr>
+</table>
+
+<h3 id="ts-recipe">12.4 레시피 편집 · 판정</h3>
+<table class="cols-3-6">
+  <tr><th>증상</th><th>확인 · 조치</th></tr>
+  <tr><td>학습한 패턴을 못 찾거나 중심이 어긋남 (Feature Match)</td>
+      <td>① 특징 이미지의 초록 점이 제품 윤곽을 따라 촘촘한지 — 듬성하면 [Train] 재학습 또는 Max Model Points 를 올립니다. ② 반쪽 매칭이 의심되면 Min Coverage(0.6~0.75)를 켭니다. ③ 그림자 · 반사가 함께 학습됐으면 학습 마스크 또는 [안정 특징 정제] 를 씁니다. ④ 제품이 아무 방향으로 놓이면 Angle Start −180 · Extent 360.</td></tr>
+  <tr><td>부품이 돌아 놓이면 뒤 도구가 엉뚱한 곳을 봄</td>
+      <td>패턴 매칭 도구에서 뒤 도구로 <strong>Coordinates(Fixture)</strong> 연결이 되어 있는지 확인합니다. 연결되면 ROI 가 위치와 각도를 모두 따라갑니다(§5.5).</td></tr>
+  <tr><td>검출이 0 건인데 NG 로 나옴</td>
+      <td>"찾아야 할 것을 하나도 찾지 못한 검사" 는 설계상 NG 입니다(Blob · 패턴 매칭 · 딥러닝 · 코드 판독 공통). 결과 화면에서 무엇이 검출되지 않았는지 먼저 확인합니다(§5.6).</td></tr>
+  <tr><td>측정값이 mm 로 나오는데 실제 치수와 다름</td>
+      <td>① 캘리브레이션의 Square Size(칸 크기)를 자로 잰 값으로 넣었는지 ② 카메라 · 렌즈 · 높이를 바꾼 뒤 캘리브레이션을 다시 했는지 ③ Steps 표의 Resolution 이 다른 카메라 값으로 들어가지 않았는지 확인합니다(§5.9).</td></tr>
+  <tr><td>캘리브레이션에서 "패턴을 찾지 못했다"</td>
+      <td>체커보드는 Pattern Cols/Rows 에 <strong>안쪽 교차점 수</strong>(10 칸 → 9)를 넣고 가로 · 세로가 달라야 합니다. 원형 타겟은 Circles Grid 모드 · Asymmetric 체크 · 행/열 바꿔 재시도. 타겟이 화면 안에 다 들어오고 초점이 맞아야 합니다.</td></tr>
+  <tr><td>캘리브레이션을 적용했는데 Steps 의 Resolution 이 그대로</td>
+      <td>Apply 구역의 "Resolution 을 갱신할 스텝" 목록에서 그 스텝이 체크됐는지 확인합니다. Steps 표는 선택한 카메라의 스텝만 보여 줍니다.</td></tr>
+  <tr><td>Image Rectify 를 켰는데 이미지가 그대로</td>
+      <td>Undistort 는 Checkerboard · Circles Grid, Apply Homography 는 N-Point 방식에서만 동작합니다. 레시피에 [Apply to Current Recipe] 로 적용했는지 확인합니다.</td></tr>
+  <tr><td>도구 설정의 Web 파라미터 연동 콤보에 코드가 안 보임</td>
+      <td>레시피를 불러올 때 상태바에 연동 진단이 표시됩니다. Web 레시피와 이름이 연결되지 않았거나 파라미터가 등록되지 않은 경우입니다(§5.7, §8.10).</td></tr>
+  <tr><td>딥러닝 도구가 "모델을 찾을 수 없음"</td>
+      <td>파일 경로 모델은 파일이 그 PC 에 있는지, model:// 참조 모델은 상태바 "MLOps 비활성" 칩이 없는지와 라인 PC 토큰(§9.11) · 운영 승격 버전이 있는지(§9.10 "해석 불가") 확인합니다.</td></tr>
+</table>
+
+<h3 id="ts-web">12.5 Web · 네트워크 ⚙</h3>
+<table class="cols-3-6">
+  <tr><th>증상</th><th>확인 · 조치</th></tr>
+  <tr><td>VMS 상태바 Web 이 빨강 (Web Disconnected)</td>
+      <td>① 라인 PC 브라우저에서 Web 주소가 열리는지 ② 설정 마법사 2 단계의 Web Server URL(포트 5292)이 맞는지 ③ Production 모드에서 원격 http 주소를 쓰고 있지 않은지 — 시작 시 "Web 연동 경고" 창이 떴다면 이 경우입니다(https 로 바꾸거나 Development 모드) ④ 서버 방화벽 5292 ⑤ 애플리케이션 이름에 줄바꿈 같은 특수 문자가 들어가지 않았는지.</td></tr>
+  <tr><td>검사 결과가 서버로 안 올라가고 계속 쌓임</td>
+      <td>결과는 <code>upload_queue\</code> 에 보관되었다가 연결이 돌아오면 자동 전송됩니다. 폴더의 파일 수가 줄어드는지 봅니다. <code>rejected\</code> 에 파일이 쌓이면 서버가 받지 않은 건(사유 파일 동봉)이며, 라인이 서버에 등록되지 않은 경우가 흔합니다.</td></tr>
+  <tr><td>NG 사진이 Web · MLOps 에 안 보임</td>
+      <td>Image Save Settings 에서 Web 전송(NG 이미지 Web 전송)과 MLOps 수집은 <strong>별개 스위치</strong>입니다. 전달 모드가 SharedPath 면 전송되지 않으니 Auto 로 둡니다. <code>image_upload_queue\</code> · <code>mlops_line_ng_queue\</code> 의 파일 수와 <code>rejected\</code> 를 확인하고, MLOps 는 상태바 "MLOps 비활성" 칩의 사유를 봅니다.</td></tr>
+  <tr><td>Web 서비스가 시작되지 않음</td>
+      <td>Windows 이벤트 뷰어 → Application 과 <code>{설치 폴더}\Logs\</code> 의 로그를 봅니다. 흔한 원인: 포트 5292 충돌(<code>netstat -ano | findstr 5292</code>), 서명 키(Jwt:Key) 32 자 미만, 초기 관리자 비밀번호 8 자 미만. 동봉 서버는 설정 마법사 2 단계의 [서비스 시작 (관리자 권한)] 으로 다시 시작합니다.</td></tr>
+  <tr><td>업데이트한 뒤 Web 에 접속되지 않음</td>
+      <td>설정 마법사 2 단계 카드가 Running 인지 보고, 멈춰 있으면 [서비스 시작]. <code>update-bootstrap.log</code> 에 "web health check OK" 가 있으면 정상, "FAILED" 면 그 사유를 설치 담당자에게 전달합니다. "msi kept for recovery" 경로의 설치 파일을 한 번 더 실행하면 복구됩니다.</td></tr>
+  <tr><td>Web 로그인이 안 됨 (admin)</td>
+      <td>승인 대기 · 잘못된 비밀번호 · 없는 계정을 구분하지 않습니다. 5 회 실패 시 15 분 잠깁니다. 비밀번호를 잊었으면 서버의 <code>Reset-AdminPassword.ps1</code>(설정의 <code>Initial:ForceAdminPasswordReset</code>)로 초기화하고 <strong>적용 후 플래그를 제거</strong>합니다.</td></tr>
+  <tr><td>안돈 보드를 열면 로그인 화면이 뜸</td>
+      <td>메뉴에서 열면 로그인이 이어집니다. 즐겨찾기 · 주소 직접 입력으로 들어오면 로그인 후 안돈 보드로 복귀합니다. 상시 표시 PC 는 "로그인 유지" 를 켭니다.</td></tr>
+  <tr><td>화면이 예전 모양이거나 배지가 안 보임</td>
+      <td>브라우저 캐시입니다. Ctrl+Shift+R 로 강력 새로 고침합니다.</td></tr>
+  <tr><td>다른 라인의 검사가 내 Web 화면에 반영되지 않음</td>
+      <td>실시간 연결이 잠시 끊긴 경우로 몇 초 후 자동 복구됩니다. 오래가면 서버 상태(<code>/health</code>)와 네트워크를 확인합니다.</td></tr>
+</table>
+
+<h3 id="ts-mlops">12.6 MLOps · 학습 워커 ⚙</h3>
+<table class="cols-3-6">
+  <tr><th>증상</th><th>확인 · 조치</th></tr>
+  <tr><td>MLOps 로그인 후 "역할 없음" · 모든 화면이 403</td>
+      <td>Web 의 Admin 계정으로 받은 토큰이어야 합니다. User · Guest 계정은 쓸 수 없습니다(§9.1).</td></tr>
+  <tr><td>수집 사진이 올라오지 않음</td>
+      <td>라인 PC: Image Save Settings 의 [NG 이미지 MLOps 전송] 체크, 설정 마법사 고급 설정의 서버 주소 · 라인 토큰, 상태바 "MLOps 비활성" 칩(Production 모드 + http 주소가 대표 사유). 서버: 배포 → 라인 PC 에서 그 라인이 "사용 중" 인지.</td></tr>
+  <tr><td>워커가 "비활성 (진단 실패)" · CUDA 사용 불가</td>
+      <td>GPU PC 에서 <code>nvidia-smi</code> 로 드라이버(550 이상)를 확인하고, Python 3.12 가 "모든 사용자용" 으로 설치됐는지 봅니다. 서비스 계정이 파이썬을 찾지 못하면 관리자 명령 프롬프트에서 <code>BODA.VMS.MLOps.TrainWorker.exe diag</code> 를 한 번 실행합니다. 로그: <code>%ProgramData%\BODA VMS TrainWorker\logs</code>.</td></tr>
+  <tr><td>학습 작업이 제출되지 않음 — 사전학습 가중치 필수</td>
+      <td>train_dfine · train_rfdetr_seg 는 사전학습 미러에 자산이 있어야 합니다(§9.8). 워커는 인터넷에서 받지 않습니다.</td></tr>
+  <tr><td>라인 모니터링 "볼 수 없습니다"</td>
+      <td>MLOps 설정의 운영 웹 주소(<code>Monitoring:ProductionWebUrl</code>)와 API 키(<code>Monitoring__ApiKey</code>)를 확인합니다. 401 이면 키가 다른 것입니다.</td></tr>
+  <tr><td>레시피 바인딩이 "해석 불가"</td>
+      <td>그 모델 계열에 운영(Production)으로 승격된 버전이 없습니다. 모델 상세에서 승격하거나 버전 고정 참조를 씁니다.</td></tr>
+</table>
+
+<h3 id="ts-pc">12.7 PC · 프로그램 실행</h3>
+<table class="cols-3-6">
+  <tr><th>증상</th><th>확인 · 조치</th></tr>
+  <tr><td>실행하자마자 "보안 정책 오류"</td>
+      <td>보안 모드가 저장되지 않은 것입니다. 설정 마법사를 7 단계까지 진행해 [Finish] 로 저장합니다(§3.8).</td></tr>
+  <tr><td>실행하자마자 DLL 오류</td>
+      <td>정상 설치본에서는 나지 않습니다. 백신이 설치 폴더의 파일을 격리하지 않았는지 확인하고, 설치 파일을 다시 실행해 복구 설치합니다.</td></tr>
+  <tr><td>VMS 를 닫았는데 프로세스가 남음</td>
+      <td>VMS 는 종료 시 정리를 마치고 3 초 안에 강제 종료됩니다. 작업 관리자에 남아 있으면 카메라 SDK 가 응답하지 않는 상태이므로 프로세스를 끝내고 카메라 연결을 점검합니다.</td></tr>
+  <tr><td>PC 가 켜지지 않음 · 부팅 후 프로그램이 자동 실행되지 않음</td>
+      <td>전원 · 모니터 신호를 확인합니다. 자동 실행은 Windows 시작 프로그램에 VMS 바로가기를 등록해 둡니다. Web 서비스(BodaVmsWeb)는 부팅 시 자동 시작으로 등록되어 있습니다.</td></tr>
+  <tr><td>디스크가 가득 참</td>
+      <td>Image Save Settings 의 보존 기간, Retention Settings, Web 의 ImageStore · DataRetention 설정을 줄입니다(§11.2). <code>rejected\</code> 보관함은 200 건 · 200MB 상한으로 자동 관리됩니다.</td></tr>
+</table>
+</section>

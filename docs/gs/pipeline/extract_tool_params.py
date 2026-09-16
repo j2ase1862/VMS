@@ -40,6 +40,10 @@ CORE = [
     ("RF-DETR-seg (인스턴스 분할)", "Deep Learning", "RfdetrSegToolSettings.xaml"),
     ("Anomaly (이상 탐지)", "Deep Learning", "AnomalyToolSettings.xaml"),
     ("Classify (분류)", "Deep Learning", "ClassifyToolSettings.xaml"),
+    ("Match Align (매치 얼라인)", "Pattern Matching", "MatchAlignToolSettings.xaml"),
+    ("Multi-Step Align (다중 스텝 얼라인)", "Pattern Matching", "MultiStepAlignToolSettings.xaml"),
+    ("Point Cloud Deviation (기준 형상 편차)", "3D Analysis", "PointCloudDeviationToolSettings.xaml"),
+    ("Photometric Stereo (포토메트릭 스테레오)", "Preprocessing", "PhotometricStereoToolSettings.xaml"),
     ("Ensemble (앙상블)", "Judgment", "EnsembleToolSettings.xaml"),
     ("Result (결과/판정)", "Judgment", "ResultToolSettings.xaml"),
 ]

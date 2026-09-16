@@ -1,0 +1,334 @@
+<section id="vms">
+<h2>4. 검사 운전 (VMS 메인)</h2>
+<p>VMS 는 현장에서 매일 쓰는 메인 프로그램입니다. 이 장은 화면 구성을 먼저 익힌 뒤, 작업자가 검사를 시작하는 절차,
+관리자가 쓰는 설정 · 이력 · 관리 도구 순서로 설명합니다.</p>
+<div class="callout tip"><strong>빠른 시작 — 검사를 시작하는 가장 짧은 길</strong>
+<ol>
+  <li>헤더의 Operator <strong>[Login...]</strong> 을 누르고 사번과 PIN 을 입력합니다.</li>
+  <li><strong>[Work Orders]</strong> 를 눌러 오늘 작업할 작업지시를 더블 클릭합니다.</li>
+  <li>레시피가 자동으로 불러와지고 <strong>[AUTO RUN]</strong> 이 켜집니다. 누르면 검사가 시작됩니다.</li>
+  <li>멈추려면 같은 자리의 빨간 <strong>[STOP]</strong> 을 누릅니다. 진행 상황은 헤더의 WO 칩(예: 5/100)과 KPI 카드에서 봅니다.</li>
+</ol></div>
+
+<h3 id="vms-start">4.1 실행과 시작 화면</h3>
+<ol>
+  <li>바탕화면의 <strong>BODA Vision System</strong> 바로가기를 실행합니다. 시작 화면(Splash)이 표시되는 동안 설정과 레시피를 읽고 카메라를 자동으로 연결합니다.</li>
+  <li>설정 파일이 없으면 "초기 시스템 설정이 필요합니다" 안내와 함께 시스템 설정 마법사(3장)가 열리고 VMS 는 종료됩니다. 마법사를 저장한 뒤 다시 실행하세요.</li>
+  <li>메인 화면이 뜹니다. 시스템 사용자 로그인 창은 시작 시 뜨지 않으며, <strong>사이드 패널(⚙)을 열거나 헤더의 사용자 칩을 누를 때</strong> 표시됩니다(§4.12).</li>
+  <li>새 버전이 있으면 "업데이트 가능" 안내가 뜹니다(§2.7). 지금 검사를 해야 하면 닫고 나중에 진행해도 됩니다.</li>
+</ol>
+
+<h3 id="vms-layout">4.2 화면 구성</h3>
+<figure><img src="../gs/screenshots/05_vms_sidepanel.png" data-width="620" alt="VMS 메인 화면">
+<figcaption>VMS 메인 화면 (작업자 로그인 · 작업지시 선택 · 사이드 패널 펼침 상태) — ① 헤더 ② KPI 스트립 ③ 카메라 화면 ④ NG History ⑤ 사이드 패널(Settings) ⑥ System Log ⑦ 상태바</figcaption></figure>
+<table class="cols-2-7">
+  <tr><th>영역</th><th>내용</th></tr>
+  <tr><td>① 헤더</td><td>왼쪽부터 로고 · 애플리케이션 이름, 운영 흐름 순서의 칩(작업자 → 작업지시 → 레시피 → 추적 정보 → 예측), 오른쪽에 [AUTO RUN] · 사용자 칩 · 관리 아이콘 · 창 조작 버튼. 4.3 절 참고</td></tr>
+  <tr><td>② KPI 스트립</td><td>TACT TIME · YIELD · TOTAL · OK · NG 카드와 통계 초기화 버튼. 4.4 절</td></tr>
+  <tr><td>③ 카메라 화면</td><td>카메라마다 타일 하나. 2D / Depth Map / Point Cloud 탭, 판정 배지(WAIT · OK · NG), Run Results 표, 설정(톱니바퀴) 창. 타일은 드래그로 옮기고 가장자리를 끌어 크기를 바꿀 수 있으며 헤더의 [Save Layout] 으로 배치를 저장합니다. 4.5 절</td></tr>
+  <tr><td>④ NG History</td><td>최근 불량 이미지 썸네일(카메라 이름 · 시각). 항목을 누르면 그 카메라 화면에 크게 표시됩니다</td></tr>
+  <tr><td>⑤ 사이드 패널 (Settings)</td><td>헤더 오른쪽 ⚙ 로 열고 닫습니다. 레시피 · 외부 도구 · 업데이트 · Web 파라미터 · 이미지 저장 · 최근 검사 · 통계 섹션. 4.6 절</td></tr>
+  <tr><td>⑥ System Log</td><td><code>[시각] [출처] 메시지</code> 형식의 실시간 로그. 카메라 · PLC · IO 보드 · 시퀀스 · Web 연동 상태가 여기에 남습니다. 오른쪽 위 아이콘으로 비웁니다</td></tr>
+  <tr><td>⑦ 상태바</td><td>시스템 상태 · CAM · PLC · IO · MLOps · Web · ROBOT 연결 표시. 4.7 절</td></tr>
+</table>
+<p>창 폭이 1980px 보다 좁은 모니터(FHD 등)에서는 헤더가 <strong>컴팩트 모드</strong>로 바뀌어 사번 · 등급 뱃지 · 진행률 막대가 숨겨지고 레시피 · 작업지시 이름이 줄여 표시됩니다. 기능은 같습니다.</p>
+
+<h3 id="vms-header">4.3 헤더 — 운영 흐름</h3>
+<p>헤더의 칩은 실제 작업 순서대로 왼쪽에서 오른쪽으로 배치되어 있습니다: <strong>작업자 로그인 → 작업지시 선택 → 레시피 확인 → 검사 시작</strong>.</p>
+
+<h4>Operator 칩 — 작업자 로그인</h4>
+<figure><img src="../gs/screenshots/v3/vms_ctl/S1_header_00_hdr_operator_chip.png" data-width="200" alt="Operator 칩 로그인 전"><figcaption>Operator 칩 — 로그인 전 ([Login...] 버튼)</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/vms_ctl/S2_loggedin_00_hdr_operator_chip_in.png" data-width="300" alt="Operator 칩 로그인 후"><figcaption>Operator 칩 — 로그인 후 (이름 · 사번 · 등급 뱃지 · [Logout])</figcaption></figure>
+<ol>
+  <li>[Login...] 을 누르면 <strong>작업자 로그인</strong> 창이 열립니다. 사번과 PIN 을 넣고 [Login] (또는 Enter) 을 누릅니다.</li>
+  <li>입력값은 Web 서버의 작업자 명단과 대조됩니다. 성공하면 칩이 "이름 (사번)" 으로 바뀌고, 등급이 Lead(파랑) · Supervisor(빨강)면 뱃지가 붙습니다. Operator 등급은 뱃지가 없습니다.</li>
+  <li>실패 메시지가 "사번/PIN 오류" 가 아니라 "서버가 이 PC 의 키를 거부" 라면 설정 마법사의 Web Client API Key 를 확인합니다(§3.3).</li>
+  <li>교대 시에는 [Logout] 후 다음 작업자가 로그인합니다. VMS 를 정상 종료하면 서버의 작업자 세션도 함께 종료됩니다.</li>
+</ol>
+
+<h4>[Work Orders] — 작업지시 선택</h4>
+<figure><img src="../gs/screenshots/v3/vms/dlg_WorkOrders.png" data-width="560" alt="Work Orders 창">
+<figcaption>Work Orders 창 — 상태 필터 · [Refresh] · 목록(Order No · Product · Recipe · Progress · Status · Planned Start) · [Cancel] / [Select]</figcaption></figure>
+<ul>
+  <li>작업자 로그인 후 활성화됩니다. 누르면 Web 서버에서 <strong>이 라인에 배정된</strong> 작업지시 목록을 가져옵니다.</li>
+  <li>상태 필터: 활성(Planned + InProgress, 기본) / 전체 / Planned / InProgress / Completed.</li>
+  <li>행을 더블 클릭하거나 선택 후 [Select] 를 누릅니다. 선택하면 그 작업지시의 레시피가 자동으로 불러와지고, 열려 있는 Lot 이 하나면 Ctx 의 Lot 도 자동으로 채워집니다.</li>
+</ul>
+
+<h4>WO 칩 — 진행률</h4>
+<figure><img src="../gs/screenshots/v3/vms_ctl/S2_loggedin_00_hdr_wo_chip.png" data-width="340" alt="WO 칩"><figcaption>WO 칩 — 작업지시 번호 · 제품 · 진행(생산/계획) + 진행률 막대</figcaption></figure>
+<ul>
+  <li>검사 1 사이클이 끝날 때마다 진행 수량이 올라갑니다. 한 제품을 여러 스텝(카메라)으로 검사해도 <strong>1 사이클 = 제품 1 개</strong>로 집계됩니다.</li>
+  <li>완료 기준이 "양품" 인 작업지시는 "양품 80 / 100" 처럼 합격 수량으로 표시됩니다(§8.7).</li>
+  <li>여러 레시피가 섞인 작업지시는 칩에 마우스를 올리면 레시피별 진행이 줄 단위로 보입니다.</li>
+  <li>계획 수량에 도달하면 검사가 자동으로 멈추고 <strong>작업지시 완료</strong> 창이 뜹니다 — 완료된 번호, 계획 · 검사 · Pass · NG 카드, 합격률이 표시되고 알림음이 울립니다.
+      [다음 작업지시 선택] (Enter) 을 누르면 바로 Work Orders 창이 열립니다. Web 에서 관리자가 수동으로 완료해도 같은 창이 뜨며 검사가 즉시 멈춥니다.</li>
+</ul>
+
+<h4>Recipe 칩</h4>
+<figure><img src="../gs/screenshots/v3/vms_ctl/S2_loggedin_00_hdr_recipe_chip.png" data-width="160" alt="Recipe 칩"><figcaption>Recipe 칩 — 현재 로드된 레시피</figcaption></figure>
+<p>현재 사용 중인 레시피 이름입니다. 작업지시를 선택하면 자동으로 바뀌며, PC 에 없는 레시피는 Web 서버에서 받아 온 뒤 다시 시도합니다.
+검사가 도는 중에 VisionSetup 에서 이 레시피를 고쳐 저장하면 주황색 <strong>변경 대기</strong> 뱃지가 나타나고, 검사를 멈추는 순간 자동으로 다시 불러옵니다.
+멈추기 전까지는 이전 설정으로 계속 검사합니다.</p>
+
+<h4>Ctx 칩 — 추적 정보</h4>
+<figure><img src="../gs/screenshots/v3/vms_ctl/S1_header_00_hdr_ctx_chip.png" data-width="360" alt="Ctx 칩"><figcaption>Ctx 칩 — WO · Lot 콤보 · S/N · [✕]</figcaption></figure>
+<table class="cols-2-4-3">
+  <tr><th>필드</th><th>채워지는 방법</th><th>비고</th></tr>
+  <tr><td>WO</td><td>작업지시 선택 시 자동</td><td>직접 수정 가능 (컴팩트 헤더에서는 숨김)</td></tr>
+  <tr><td>Lot</td><td>열린 Lot 이 1 개면 자동. 여러 개면 <strong>작업자가 콤보에서 선택</strong></td><td>Web 에서 발행 · 마감하면 수 초 안에 목록이 따라옵니다. 고르지 않으면 검사가 어느 Lot 에도 귀속되지 않습니다(§8.7)</td></tr>
+  <tr><td>S/N</td><td>바코드 스캐너로 입력</td><td>제품 시리얼 — 검사 1 회당 1 개. 비어 있어도 됩니다</td></tr>
+  <tr><td>Op ID</td><td>작업자 로그인 시 자동</td><td>검사 결과에 작업자로 기록</td></tr>
+</table>
+<p>[✕] 를 누르면 필드가 모두 지워집니다. 네 값은 검사 결과와 함께 서버에 저장되어 나중에 "누가 · 어떤 작업지시 · 어떤 묶음으로" 검사했는지 역추적하는 근거가 됩니다.</p>
+
+<h4>예측 칩 — "다음 1시간: …"</h4>
+<p>Web 서버의 예측 모델이 계산한 다음 1 시간 예상 불량률입니다. 5% 미만 초록, 10% 이상 빨강으로 표시됩니다. 모델이 등록되지 않은 현장은 "모델 미등록" 으로 표시되며 고장이 아닙니다(§8.20).</p>
+
+<h4>[AUTO RUN] / [STOP]</h4>
+<figure><img src="../gs/screenshots/v3/vms_ctl/S1_header_00_hdr_autorun_btn.png" data-width="150" alt="AUTO RUN 버튼"><figcaption>[AUTO RUN] — 운영 흐름의 단일 실행 버튼. 실행 중에는 같은 자리가 빨간 [STOP] 이 됩니다</figcaption></figure>
+<p>다음 조건을 모두 만족해야 켜집니다. 버튼이 꺼져 있으면 마우스를 올려 툴팁을 확인하세요.</p>
+<ol>
+  <li>카메라가 1 대 이상 연결되어 있음 (상태바 CAM 이 0/n 이 아님).</li>
+  <li>시스템 사용자로 로그인했다면 그 계정에 검사 시작/정지 권한이 있음 (로그인하지 않은 상태는 허용).</li>
+  <li>(Web 연동 현장) 작업자가 로그인되어 있고, 작업지시가 선택되어 있으며 상태가 Planned 또는 InProgress 임.</li>
+</ol>
+<p>AUTO RUN 을 시작하면 라이브 영상은 자동으로 멈추고, 시퀀스에 따라 트리거 대기 → 촬영 → 검사 → 판정 신호 출력이 반복됩니다.
+카메라에서 이미지를 받지 못한 사이클은 검사 없이 <strong>NG</strong> 로 집계되므로 NG 가 연속으로 나오면 카메라 연결부터 확인하세요.</p>
+
+<h4>오른쪽 아이콘</h4>
+<table class="cols-2-2-5">
+  <tr><th>아이콘</th><th>표시 조건</th><th>동작</th></tr>
+  <tr><td>사용자 칩 <code>[등급] 이름</code></td><td>시스템 사용자 로그인 후</td><td>클릭하면 로그아웃 후 다른 계정으로 로그인하는 창이 뜹니다</td></tr>
+  <tr><td>User Management</td><td>Admin</td><td>시스템 사용자 계정 관리 창 (§4.11)</td></tr>
+  <tr><td>Admin Tools (⋮)</td><td>Admin</td><td>Audit Log Viewer · Health Check · Backup / Restore · Auto Backup Settings · Retention Settings... · Support Package... 메뉴 (§4.11)</td></tr>
+  <tr><td>Save Layout</td><td>항상</td><td>카메라 타일 배치를 저장합니다</td></tr>
+  <tr><td>⚙ Settings Panel</td><td>항상</td><td>사이드 패널을 엽니다. 시스템 사용자 로그인이 필요합니다</td></tr>
+  <tr><td>최소화 · 최대화 · 닫기</td><td>항상</td><td>닫기는 "프로그램을 종료하시겠습니까?" 확인 후 종료합니다. 헤더 빈 곳을 더블 클릭하면 최대화/복원됩니다</td></tr>
+</table>
+
+<h3 id="vms-kpi">4.4 KPI 스트립</h3>
+<table class="cols-2-7">
+  <tr><th>카드</th><th>의미</th></tr>
+  <tr><td>TACT TIME</td><td>AUTO RUN 중 "한 검사가 끝나고 다음 검사가 시작되기까지의 간격"(초)입니다. 수동 검사에서는 갱신되지 않습니다. 아래 <strong>PROC n ms</strong> 는 마지막 검사 1 건의 순수 처리 시간입니다.</td></tr>
+  <tr><td>YIELD</td><td>세션 합격률(%)</td></tr>
+  <tr><td>TOTAL / OK / NG</td><td>세션 누적 검사 · 합격 · 불량 수</td></tr>
+  <tr><td>↻ (Reset Statistics)</td><td>KPI 와 세션 통계를 0 으로 되돌립니다. 서버나 로컬 이력에 저장된 검사 기록은 지워지지 않습니다.</td></tr>
+</table>
+
+<h3 id="vms-camera">4.5 카메라 화면과 설정 창</h3>
+<p>카메라 타일의 헤더에는 연결 표시등(초록 Connected / 빨강 Disconnected), 카메라 이름, <strong>설정(톱니바퀴)</strong> 버튼, 판정 배지가 있습니다.
+본문은 2D · Depth Map · Point Cloud 탭이며 아래에 Run Results(도구별 Pass/Fail · 결과값 · 처리 ms) 표와 IP · Count 가 표시됩니다.</p>
+<p>톱니바퀴를 누르면 타일 오른쪽에 <strong>카메라 조작 상자</strong>가 펼쳐집니다.</p>
+<table class="cols-2-7">
+  <tr><th>컨트롤</th><th>설명</th></tr>
+  <tr><td>Step 콤보</td><td>이 카메라가 쓰는 레시피 스텝을 고릅니다. 노출 · 게인은 스텝 단위로 저장됩니다.</td></tr>
+  <tr><td>카메라 설정 유지 (체크박스)</td><td>기본 켬. 켜져 있으면 카메라에 저장된 노출/게인을 그대로 씁니다(제조사 프로그램에서 튜닝한 값 보존). 끄면 아래 값을 촬영 전에 카메라에 적용합니다.</td></tr>
+  <tr><td>Exposure (ms) / Gain (dB)</td><td>노출 시간과 게인을 숫자로 입력합니다. "카메라 설정 유지"를 끄고 스텝을 고른 상태에서만 입력할 수 있습니다.</td></tr>
+  <tr><td>[Grab]</td><td>사진을 한 장 촬영합니다. 카메라가 연결되어 있지 않으면 자동으로 연결합니다. 라이브 중에는 누를 수 없습니다.</td></tr>
+  <tr><td>[Live] / [Stop]</td><td>모든 활성 카메라의 실시간 영상을 켜고 끕니다. AUTO RUN 을 시작하면 자동으로 꺼집니다.</td></tr>
+  <tr><td>[Open]</td><td>이미지 파일을 열어 카메라 대신 표시합니다(카메라 없는 시험용).</td></tr>
+  <tr><td>[Inspect]</td><td>현재 이미지로 검사를 1 회 실행합니다.</td></tr>
+  <tr><td>[Save Parameter]</td><td>입력한 노출/게인을 스텝에 저장합니다. 완료/실패 메시지가 표시되며, 카메라가 등록되지 않았으면 설정 마법사를 먼저 실행하라는 안내가 뜹니다.</td></tr>
+  <tr><td>[Save 3D]</td><td>촬영한 3D 데이터를 <code>.vpc</code> 파일로 저장합니다. VisionSetup 에서 열어 레시피를 만들 수 있습니다.</td></tr>
+  <tr><td>[Close]</td><td>조작 상자를 닫습니다.</td></tr>
+</table>
+<ul>
+  <li>[Grab] · [Live] 가 눌리지 않으면 툴팁에 사유가 표시됩니다 — 시스템 사용자에게 시작/정지 권한이 없음, 작업자 로그인이 필요함, 연결된 카메라가 없음.</li>
+  <li>운전이나 대기 중에 카메라 케이블이 빠지면 몇 초 안에 연결 표시등이 빨간색으로 바뀌고 상태바 CAM 수가 줄어듭니다. 다시 꽂으면 <strong>다음 촬영에서 자동으로 재연결</strong>됩니다. 라이브 표시는 연결이 끊기면 스스로 멈춥니다.</li>
+  <li>Basler 카메라도 스텝별 노출/게인이 그대로 적용되며, 연결 시 자동 노출/게인이 꺼져 촬영마다 밝기가 달라지지 않습니다.</li>
+</ul>
+
+<h3 id="vms-sidepanel">4.6 사이드 패널 (Settings)</h3>
+<figure><img src="../gs/screenshots/v3/vms_ctl/S3_full_sidepanel.png" data-width="620" alt="사이드 패널 펼침"><figcaption>사이드 패널(Settings)을 펼친 상태</figcaption></figure>
+<p>헤더 오른쪽 ⚙ 로 열고 닫습니다. 열 때 시스템 사용자 로그인이 필요하며, 패널 밖을 클릭하면 닫힙니다. 각 섹션 제목 옆의 물음표(?)를 누르면 설명이 표시됩니다.</p>
+
+<h4>Roller Inspection</h4>
+<figure><img src="../gs/screenshots/v3/vms_ctl/S3_sidepanel_00_sec_roller_inspection.png" data-width="290" alt="Roller Inspection 섹션"><figcaption>Roller Inspection — [Roller] 토글</figcaption></figure>
+<p>라인 스캔 카메라로 회전하는 롤러 표면을 연속 검사하는 모드를 켜고 끕니다. AUTO RUN 조건을 만족하고 라인 스캔 카메라가 구성된 경우에만 켤 수 있습니다.</p>
+
+<h4>Recipe</h4>
+<figure><img src="../gs/screenshots/v3/vms_ctl/S3_sidepanel_00_sec_recipe.png" data-width="290" alt="Recipe 섹션"><figcaption>Recipe — 현재 레시피 · Available Recipes · [Load] [New] ↻ · 저장 · 내보내기 · 가져오기</figcaption></figure>
+<ul>
+  <li>현재 레시피 이름과 버전, 사용할 수 있는 레시피 목록(수정일 포함)이 표시됩니다.</li>
+  <li><strong>[Load]</strong> — 목록에서 고른 레시피를 불러옵니다. 단독 모드에서는 이 버튼으로 검사할 레시피를 정합니다.</li>
+  <li><strong>[New]</strong> — "New Recipe" 이름의 빈 레시피를 만듭니다(레시피 편집 권한 필요). 도구 구성은 VisionSetup 에서 합니다.</li>
+  <li><strong>↻</strong> — Web 서버의 레시피를 지금 가져옵니다(평소 60 초 주기 자동). 결과는 상태바에 "Web 레시피 3개 — 새 항목 1, 이름 연결 1" 처럼 요약되며, 0 개면 라인 번호가 맞는지 확인하라는 힌트가 붙습니다.</li>
+  <li>저장 · 내보내기(JSON) · 가져오기 아이콘. 저장과 가져오기에는 레시피 편집 권한이 필요합니다.</li>
+</ul>
+<div class="callout tip">VisionSetup 에서 지금 사용 중인 레시피를 고쳐 저장하면 실행 중인 VMS 가 자동으로 다시 불러옵니다(상태바 "외부 변경 반영 완료"). 검사 중이면 헤더 레시피 칩에 "변경 대기" 뱃지가 뜨고 정지 시점에 반영됩니다.</div>
+
+<h4>External Tools (Supervisor · Admin 전용)</h4>
+<figure><img src="../gs/screenshots/v3/vms_ctl/S3_sidepanel_00_sec_external_tools.png" data-width="290" alt="External Tools 섹션"><figcaption>External Tools — [Vision Tool Setup] · [System Setup]</figcaption></figure>
+<ul>
+  <li><strong>[Vision Tool Setup]</strong> — 레시피 편집 프로그램(VMS.VisionSetup, 5장)을 실행합니다.</li>
+  <li><strong>[System Setup]</strong> — 시스템 설정 마법사(3장)를 실행합니다.</li>
+  <li>작업자 등급이 Operator · Lead 이면 이 섹션이 보이지 않습니다. 시스템 Admin 계정으로 로그인했거나 단독 모드에서는 항상 보입니다.</li>
+</ul>
+
+<h4>Updates</h4>
+<figure><img src="../gs/screenshots/v3/vms_ctl/S3_sidepanel_00_sec_updates.png" data-width="290" alt="Updates 섹션"><figcaption>Updates — [Check for updates], 새 버전 감지 시 배지와 다운로드 진행률</figcaption></figure>
+<p>새 버전이 있으면 "새 버전 vX.Y.Z" 배지가 나타나고, 다운로드 중에는 진행률과 [다운로드 취소] 가 표시됩니다. 절차는 §2.7 을 참고하세요.</p>
+
+<h4>Web Parameters</h4>
+<figure><img src="../gs/screenshots/v3/vms_ctl/S3_sidepanel_00_sec_web_parameters.png" data-width="290" alt="Web Parameters 섹션"><figcaption>Web Parameters — [Sync Parameters]</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/vms/dlg_SyncParameters.png" data-width="480" alt="Inspection Parameters 창"><figcaption>Inspection Parameters 창 — 레시피 콤보 · [Sync] · 코드 / 값 / 설명 / 분류 / 단위</figcaption></figure>
+<p>Web 의 레시피 파라미터(검사 기준값)를 지금 즉시 가져와 표로 보여 줍니다. 평소에는 60 초마다 자동 동기화되므로 기다리지 않고 바로 반영하고 싶을 때만 씁니다. 단독 모드에서는 "Parameter Sync Service is not available" 안내가 뜹니다.</p>
+
+<h4>Image Saving (Admin 전용)</h4>
+<figure><img src="../gs/screenshots/v3/vms_ctl/S3_sidepanel_00_sec_image_saving.png" data-width="290" alt="Image Saving 섹션"><figcaption>Image Saving — [Image Save Settings]</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/vms/dlg_ImageSave.png" data-width="360" alt="Image Save Settings 창"><figcaption>Image Save Settings 창 — 저장 · 포맷/품질 · Web 연동 · MLOps 학습 데이터 수집 · 파일명 규칙 · 예시</figcaption></figure>
+<p>검사 판정 이미지의 저장과 전송을 설정합니다. 설정은 [Save] 즉시 다음 검사부터 적용됩니다(재시작 불필요).</p>
+<table class="cols-2-7">
+  <tr><th>카드</th><th>설정 항목</th></tr>
+  <tr><td>저장</td><td>양품(OK) / 불량(NG) 이미지 저장 체크, 저장 경로, 보존 기간(일, 0 = 무제한). 경로 아래에 <code>{날짜}\OK</code> · <code>{날짜}\NG</code> 폴더가 자동으로 만들어지고 오래된 폴더는 시작 시 정리됩니다. <strong>저장 경로가 비어 있으면 저장되지 않습니다.</strong></td></tr>
+  <tr><td>포맷 / 품질</td><td>파일 포맷(PNG · JPEG · BMP · TIFF)과 JPEG 품질(1~100).</td></tr>
+  <tr><td>Web 연동 (생산 이력)</td><td>전달 모드는 <strong>Auto</strong>(권장). OK / NG 이미지 Web 전송 체크(로컬 저장과 별개), 전송 화질(썸네일 권장 · Full), 썸네일 장변(px). Web 생산 이력의 상세 창에서 사진을 보려면 여기서 NG 전송을 켜야 합니다. SharedPath 모드는 전송하지 않습니다.</td></tr>
+  <tr><td>MLOps 학습 데이터 수집</td><td><strong>NG 이미지 MLOps 전송</strong> 체크와 <strong>양품 샘플 비율</strong>(N 장에 1 장, 기본 200, 0 = 양품 안 보냄). 켜면 NG 사진이 결과 그래픽 없는 원본으로 MLOps 수집 사진 화면에 쌓입니다(9장). 카드 아래 안내가 빨간색이면 설정은 있는데 보안 정책 등으로 막힌 상태이며 사유가 함께 표시됩니다.</td></tr>
+  <tr><td>파일명 규칙</td><td>파일명에 넣을 토큰(시각 · 카메라 · 판정 · 시리얼 등)을 체크하고 ▲▼ 로 순서를 정합니다. 구분자 기본 <code>_</code>. 아래 예시 카드에서 결과를 미리 봅니다.</td></tr>
+</table>
+
+<h4>Recent Inspections</h4>
+<figure><img src="../gs/screenshots/v3/vms_ctl/S3_sidepanel_00_sec_recent.png" data-width="290" alt="Recent Inspections 섹션"><figcaption>Recent Inspections — Total / Pass / NG · Pass rate · [전체 이력] · [Clear] · 최근 목록</figcaption></figure>
+<p>최근 검사 결과를 VMS 안에 최대 200 건까지 보관해 보여 줍니다(재시작 시 비워짐). 시각 · OK/NG · 시리얼 · 작업지시 · 레시피 · NG 코드(또는 실패한 도구 이름)가 표시됩니다.
+<strong>[전체 이력]</strong> 은 이 PC 에 영구 저장된 검사 이력 조회 창(§4.10)을 열고, [Clear] 는 화면 목록만 비웁니다.</p>
+
+<h4>Statistics</h4>
+<p>세션 누적 Total / Pass / Fail / Pass Rate 입니다. KPI 스트립의 ↻ 로 초기화됩니다.</p>
+
+<h3 id="vms-statusbar">4.7 상태바와 System Log</h3>
+<table class="cols-2-7">
+  <tr><th>칩</th><th>읽는 법</th></tr>
+  <tr><td>시스템 상태</td><td>Ready · Starting... · AutoProcess Running · Stopped · Roller Inspecting · <strong>Running — 경고: Web 미연동 (작업지시 수량 미집계)</strong> · ✓ WO 완료 등</td></tr>
+  <tr><td>CAM n/m</td><td>등록된 카메라 m 대 중 연결된 n 대. 전부 초록 / 일부 주황 / 전부 끊김 빨강</td></tr>
+  <tr><td>PLC</td><td>PLC 미구성이면 "PLC N/A". 구성 시 벤더명 · IP, 연결 초록 / 끊김 빨강. 벤더 None 이면 시뮬레이션 PLC 라 항상 연결로 보이므로 IO 보드 구성에서는 IO 칩을 보세요</td></tr>
+  <tr><td>IO n/m</td><td>IO 보드를 등록한 구성에서만 표시. 하나라도 연결 실패면 빨강 — 사유는 System Log 의 <code>[IoBoard]</code> 항목에 있습니다. 상태는 AUTO RUN 시작 시점에 갱신됩니다</td></tr>
+  <tr><td>MLOps 비활성</td><td>MLOps 주소 · 토큰을 설정했는데 시작 시 연결 준비가 실패한 경우에만 빨간 칩이 나타납니다. 툴팁에 사유(대표적으로 Production 모드가 http 주소를 거부)가 표시되며, 이 상태에서는 NG 사진 수집과 모델 내려받기가 동작하지 않습니다</td></tr>
+  <tr><td>Web</td><td>Web Connected(초록) · Web Disconnected(빨강) · <strong>단독 모드 (Web 미사용)</strong>(회색 — 고장 아님)</td></tr>
+  <tr><td>ROBOT</td><td>표시 자리(현재 N/A 고정)</td></tr>
+</table>
+<figure><img src="../gs/screenshots/v3/vms_ctl/S4_mlops_issue_00_status_mlops_issue_chip.png" data-width="150" alt="MLOps 비활성 칩"><figcaption>상태바의 "MLOps 비활성" 칩</figcaption></figure>
+<p><strong>System Log</strong> 는 문제의 원인을 가장 먼저 알려 주는 곳입니다. 출처 태그별로 뜻은 다음과 같습니다.</p>
+<table class="cols-2-7">
+  <tr><th>출처</th><th>내용</th></tr>
+  <tr><td>[System]</td><td>시작 · 카메라 자동 연결 결과 · 단독 모드 안내 · 모델 캐시 정리</td></tr>
+  <tr><td>[IoBoard]</td><td>IO 보드 연결 성공/실패와 실패 사유(드라이버 파일 · 오류 번호 · 모델 · 보드 번호)</td></tr>
+  <tr><td>[AutoProcess]</td><td>시퀀스 노드 오류("시퀀스 '노드' 노드 오류 — 사유", 5 초 후 자동 재시도), Reset 신호 감지, 시퀀스 재로드</td></tr>
+  <tr><td>[Update]</td><td>새 버전 감지</td></tr>
+  <tr><td>작업지시 경고</td><td>"작업지시 … 는 다른 라인에 배정되어 있습니다" · "선택한 Lot 이 작업지시 … 소속이 아닙니다" · "이미 완료/마감 상태입니다" — 수량이 안 오르는 원인</td></tr>
+</table>
+<figure><img src="../gs/screenshots/v3/vms_ctl/S5_wo_warning_00_sec_system_log.png" data-width="560" alt="System Log 작업지시 경고"><figcaption>System Log — 다른 라인에 배정된 작업지시 · 다른 작업지시 소속 Lot 경고</figcaption></figure>
+
+<h3 id="vms-procedure">4.8 작업 절차 — 작업지시 선택부터 완료까지</h3>
+<ol>
+  <li><strong>출근</strong> — [Login...] 에 사번 · PIN 을 입력합니다. 등급 뱃지가 맞는지 확인합니다.</li>
+  <li><strong>작업지시 선택</strong> — [Work Orders] 에서 오늘 지시를 더블 클릭합니다. 레시피 칩이 바뀌고 Ctx 의 WO 가 채워집니다.</li>
+  <li><strong>Lot 확인</strong> — 열린 Lot 이 여러 개면 Ctx 의 Lot 콤보에서 지금 생산하는 묶음을 고릅니다. 묶음이 바뀔 때마다 바꿔 줍니다.</li>
+  <li><strong>카메라 확인</strong> — 필요하면 카메라 톱니바퀴 → [Grab] 으로 한 장 찍어 초점 · 밝기를 봅니다. 조정이 필요하면 "카메라 설정 유지"를 끄고 노출을 바꾼 뒤 [Save Parameter].</li>
+  <li><strong>검사 시작</strong> — [AUTO RUN]. 트리거(PLC/IO 신호)가 들어올 때마다 검사가 돌고 판정 배지 · KPI · WO 진행률이 갱신됩니다.</li>
+  <li><strong>불량 확인</strong> — NG History 썸네일을 눌러 어느 부위가 불량인지 봅니다. Run Results 표에서 어떤 도구가 Fail 인지 확인합니다.</li>
+  <li><strong>완료</strong> — 계획 수량에 도달하면 자동으로 멈추고 완료 창이 뜹니다. [다음 작업지시 선택] 으로 이어 갑니다.</li>
+  <li><strong>퇴근</strong> — [STOP] 후 [Logout]. VMS 를 끄면 서버의 세션도 정리됩니다.</li>
+</ol>
+
+<h3 id="vms-standalone">4.9 단독 모드 — Web 서버 없이 운전</h3>
+<p>생산 이력 관리 없이 검사만 필요한 현장은 설정 마법사 2 단계에서 <strong>"Web 서버 미사용 — 단독(Standalone) 모드"</strong>를 체크합니다(§3.3). 단독 모드에서는 다음이 달라집니다.</p>
+<ul>
+  <li>헤더의 Operator 칩 · [Work Orders] · WO 칩 · 예측 칩이 사라지고, 상태바 Web 칩이 "단독 모드 (Web 미사용)" 으로 표시됩니다.</li>
+  <li>검사할 레시피는 사이드 패널 Recipe 섹션의 [Load] 로 고르고, 작업자 로그인 · 작업지시 없이 [AUTO RUN] 을 시작할 수 있습니다.</li>
+  <li>검사 결과는 서버 대신 이 PC 의 검사 이력 파일에 사이클마다 저장됩니다(기본 90 일 보존). 최근 결과는 Recent Inspections 에서, 전체는 [전체 이력] 창(§4.10)에서 봅니다.</li>
+  <li>MLOps 주소 · 토큰을 넣어 두면 단독 모드에서도 NG 사진 수집과 모델 내려받기는 동작합니다.</li>
+  <li>External Tools 섹션은 등급과 무관하게 항상 보입니다.</li>
+</ul>
+<p>나중에 서버를 두게 되면 마법사에서 체크를 해제하고 Web 서버 주소를 넣어 연동 모드로 바꿀 수 있습니다.</p>
+
+<h3 id="vms-history">4.10 생산 이력 조회 창 — [전체 이력]</h3>
+<figure><img src="../gs/screenshots/v3/vms/dlg_InspectionHistory.png" data-width="620" alt="생산 이력 조회 창"><figcaption>생산 이력 조회 창 — 필터 바 · 이력 목록 탭 · 상세(도구별 결과 + 검사 사진) · 하단 페이지 이동</figcaption></figure>
+<p>검사 결과는 사이클 또는 수동 검사 1 건마다 이 PC 의 검사 이력 파일(<code>%LocalAppData%\BODA VISION AI\inspection_history.db</code>)에 저장됩니다.
+단독 모드의 영구 이력이며, Web 연동 현장에서는 오프라인 백업 역할을 합니다. 사이드 패널 Recent Inspections 의 [전체 이력] 로 엽니다.</p>
+<ol>
+  <li>필터를 고르고 [조회] 를 누릅니다 — From / To(기본 최근 7 일), 판정(전체 · PASS · NG), 레시피, NG 코드(실패 도구 이름 포함 검색). [필터 초기화] 로 되돌립니다.</li>
+  <li><strong>이력 목록</strong> 탭 — 검사 시각 · 판정 · 레시피 · NG 코드/도구 · 구분(사이클/수동) · ms · 추적(시리얼 · 작업지시 · Lot) · IMG. 행을 누르면 오른쪽에 <strong>도구별 결과 표</strong>와 <strong>저장된 검사 사진</strong>이 표시되고 [폴더 열기] 로 파일 위치를 엽니다.</li>
+  <li><strong>일별 집계</strong> 탭 — 기간 전체의 총 검사 · PASS · NG · 수율 카드와 날짜별 표.</li>
+  <li><strong>NG 파레토</strong> 탭 — NG 원인(NG 코드 또는 실패 도구)별 건수 · 비율 · 누적 비율.</li>
+  <li>200 건이 넘으면 하단 [◀ 이전] / [다음 ▶] 로 넘기고, [CSV 내보내기] 는 현재 필터의 <strong>전체 결과</strong>를 Excel 호환 CSV 로 저장합니다.</li>
+</ol>
+<figure><img src="../gs/screenshots/v3/vms/dlg_InspectionHistory_Summary.png" data-width="560" alt="일별 집계 탭"><figcaption>일별 집계 탭</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/vms/dlg_InspectionHistory_Pareto.png" data-width="560" alt="NG 파레토 탭"><figcaption>NG 파레토 탭</figcaption></figure>
+<ul>
+  <li>검사 사진이 함께 보이려면 Image Saving 의 OK/NG 이미지 저장이 켜져 있어야 합니다. 보존 정리로 파일이 지워진 뒤에는 경로만 남습니다.</li>
+  <li>보존 기간(기본 90 일)과 저장 켜기/끄기는 Admin Tools → Retention Settings 의 "검사 이력" 행에서 바꿉니다. 저장을 끄면 [전체 이력] 버튼이 비활성이 됩니다.</li>
+  <li>Web 연동 현장의 작업지시 · Lot 기준 전체 이력은 Web 의 생산 이력 화면(§8.6)이 기준입니다.</li>
+</ul>
+
+<h3 id="vms-admin">4.11 관리자 도구 (Admin 전용)</h3>
+<p>헤더의 User Management 아이콘과 Admin Tools(⋮) 메뉴에서 여는 창입니다. 시스템 Admin 계정으로 로그인했을 때만 보입니다.</p>
+
+<h4>User Management — 시스템 사용자 관리</h4>
+<figure><img src="../gs/screenshots/v3/vms/dlg_UserManagement.png" data-width="520" alt="User Management 창"><figcaption>User Management — Users 목록 · Add New User · Edit Selected User</figcaption></figure>
+<ul>
+  <li>Users 목록 — Username · Display Name · Grade · Last Login. 행을 선택하면 오른쪽 편집 패널에 값이 채워집니다.</li>
+  <li>Add New User — Username · Display Name · Password · Grade(Operator / Engineer / Admin) → [Add User].</li>
+  <li>Edit Selected User — Display Name · Grade 수정 → [Save Changes]. New Password → [Change Password]. [Delete User] 로 삭제.</li>
+</ul>
+
+<h4>Audit Log Viewer — 감사 로그</h4>
+<figure><img src="../gs/screenshots/v3/vms/dlg_AuditLog.png" data-width="600" alt="Audit Log Viewer"><figcaption>Audit Log Viewer — From/To · Category · Outcome · Search · [조회] [필터 초기화] [CSV 내보내기]</figcaption></figure>
+<p>로그인 · 권한 거부 · 설정 변경 · 백업 등 관리 행위가 <code>%LocalAppData%\BODA VISION AI\audit\YYYY-MM-DD.jsonl</code> 에 기록됩니다. Outcome 은 Success(초록) · Failure(빨강) · Denied(주황)로 구분됩니다.</p>
+
+<h4>Health Check — 시스템 상태 점검</h4>
+<figure><img src="../gs/screenshots/v3/vms/dlg_HealthCheck.png" data-width="520" alt="Health Check"><figcaption>Health Check — OVERALL 배지 · 항목별 Pass / Warn / Fail</figcaption></figure>
+<p>인스턴스 · 설정 파일 · 보안 옵션 · Web 서버 · 라이선스 · 디스크 여유 공간을 점검합니다. [Refresh] 로 다시 점검하고 [Copy] 로 결과를 복사해 지원 요청에 붙일 수 있습니다.</p>
+
+<h4>Backup / Restore — 백업과 복원</h4>
+<figure><img src="../gs/screenshots/v3/vms/dlg_BackupRestore.png" data-width="520" alt="Backup / Restore"><figcaption>Backup / Restore — 백업 생성 · 백업 복원 · 복원된 manifest</figcaption></figure>
+<p>설정 파일 · 레이아웃 · PLC 신호 맵 · 사용자 DB · 검사 이력 DB · 레시피 전체(선택 시 감사 로그)를 ZIP 하나로 만듭니다. 복원 시 [기존 파일 덮어쓰기] 를 켜고 [Run Restore] 한 뒤 VMS 를 재시작합니다. 자세한 운영 요령은 §11.1 을 참고하세요.</p>
+
+<h4>Auto Backup Settings — 자동 백업</h4>
+<figure><img src="../gs/screenshots/v3/vms/dlg_AutoBackup.png" data-width="480" alt="Auto Backup Settings"><figcaption>Auto Backup Settings — 활성화 · 주기(시간) · 보존(일) · 위치</figcaption></figure>
+<p>주기(1~720 시간)와 보존 기간(1~365 일), 저장 위치(비우면 <code>backups</code> 폴더)를 정합니다. 변경은 VMS 재시작 후 적용됩니다.</p>
+
+<h4>Retention Settings — 데이터 보존 정책</h4>
+<figure><img src="../gs/screenshots/v3/vms/dlg_Retention.png" data-width="520" alt="Retention Settings"><figcaption>Retention Settings — 프리셋 · 전역 보존 · 카테고리별 보존 · 미리보기</figcaption></figure>
+<ul>
+  <li>빠른 프리셋 — Conservative(규제 사이트) / Standard(권장 기본) / Minimal(디스크 제한 사이트). 적용 후 [Save] 가 필요합니다.</li>
+  <li>전역 보존(일) — 감사 로그 · 자동 백업 · 업로드 큐 · 검사 이력. "검사 결과를 로컬 이력 DB 에 저장" 체크로 로컬 이력 저장을 켜고 끕니다.</li>
+  <li>카테고리별 차등 보존 — 9 개 감사 카테고리를 따로 지정합니다(기본: 보안/사용자/설정 1095 일, 인증/권한/레시피 730 일, 시퀀스/검사 365 일, 시스템 90 일).</li>
+  <li>[Preview] 는 실제 삭제 없이 정리 예정 건수를 보여 주고 [Export Preview...] 로 CSV 저장이 가능합니다. 변경은 VMS 재시작 후 적용됩니다.</li>
+</ul>
+
+<h4>Support Package — 원격 지원용 진단 패키지</h4>
+<figure><img src="../gs/screenshots/v3/vms/dlg_SupportPackage.png" data-width="480" alt="Support Package"><figcaption>Support Package Export — 감사 로그 일수 · 환경 정보 · 백업 인덱스 · 사이트 식별 정보 포함 여부</figcaption></figure>
+<p>문제 보고 시 공급사에 보낼 ZIP 을 만듭니다. 설정 파일 · 감사 로그(1~90 일) · 환경 정보 · 헬스 스냅샷 · MLOps 전송 큐 상태가 들어가며, 사용자 DB 와 레시피는 <strong>포함되지 않습니다</strong>.</p>
+
+<h3 id="vms-permissions">4.12 계정과 권한</h3>
+<p>VMS 에는 두 종류의 신원이 있습니다. <strong>작업자</strong>(Web 에 등록된 사번 + PIN)는 "누가 생산했는가"를 기록하는 신원이고,
+<strong>시스템 사용자</strong>(이 PC 의 계정)는 "설정 · 레시피 · 관리 도구를 만질 수 있는가"를 정하는 신원입니다.</p>
+<h4 id="vms-usergrade">시스템 사용자 등급별 권한</h4>
+<table>
+  <tr><th>권한 (기능)</th><th>Operator</th><th>Engineer</th><th>Admin</th><th>local-admin<br>(비상 폴백)</th></tr>
+  <tr><td>StartStop (검사 시작/정지 · Grab · Live)</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+  <tr><td>ViewStatistics (통계 · 이력 조회)</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+  <tr><td>EditRecipe (레시피 편집 · 저장 · 가져오기)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
+  <tr><td>DeleteRecipe (레시피 삭제)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
+  <tr><td>CameraSettings (카메라 설정)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
+  <tr><td>LaunchVisionSetup (Vision Tool Setup 실행)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
+  <tr><td>LaunchAppSetup (System Setup 실행)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
+  <tr><td>SystemConfiguration (시스템 구성 변경)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
+  <tr><td>RestartWebService (Web 서비스 재시작)</td><td>—</td><td>✓</td><td>✓</td><td>✓</td></tr>
+  <tr><td>ManageUsers (사용자 관리 · Admin Tools · Image Saving)</td><td>—</td><td>—</td><td>✓</td><td>—</td></tr>
+</table>
+<ul>
+  <li>시스템 사용자로 로그인하지 않은 상태에서도 AUTO RUN · Grab · Live 는 허용됩니다(작업자 로그인이 생산 신원이므로 이중 로그인을 요구하지 않습니다).</li>
+  <li>Web SSO 를 켠 현장에서는 Admin/Engineer 로그인을 Web 계정으로 대조합니다(Web Admin → Admin, User → Engineer). 서버에 닿지 못할 때는 비상 계정 <code>local-admin</code> 만 검사 시작/정지 · 통계 · Web 서비스 재시작 권한으로 진입합니다.</li>
+  <li>권한이 거부된 시도는 감사 로그에 사용자 · 등급 · 요청 권한과 함께 기록됩니다.</li>
+</ul>
+<h4>작업자 등급이 VMS 화면에 미치는 영향</h4>
+<table class="cols-3-2-2-2">
+  <tr><th>항목</th><th>Operator</th><th>Lead</th><th>Supervisor</th></tr>
+  <tr><td>AUTO RUN · 작업지시 선택 · Grab / Live</td><td>✓</td><td>✓</td><td>✓</td></tr>
+  <tr><td>헤더 등급 뱃지</td><td>없음</td><td>Lead (파랑)</td><td>Supervisor (빨강)</td></tr>
+  <tr><td>External Tools 섹션 (Vision Tool Setup · System Setup)</td><td>—</td><td>—</td><td>✓</td></tr>
+</table>
+<p>시스템 Admin 계정으로 로그인했거나 단독 모드이면 작업자 등급과 무관하게 External Tools 가 보입니다.</p>
+</section>

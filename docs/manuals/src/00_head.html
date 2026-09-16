@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>BODA VMS 사용자 매뉴얼 v3.0</title>
+<style>
+  :root { --bg:#0e0f12; --panel:#1a1b1f; --card:#25272d; --border:#3a3d44; --text:#e8e9ec; --muted:#9b9ea4;
+          --accent:#14b8a6; --primary:#3d7de8; --warn:#f59e0b; --danger:#e53935; --ok:#10b981; --code-bg:#0a0a0a; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; padding:0; background:var(--bg); color:var(--text); font:14px/1.65 'Segoe UI','Malgun Gothic',system-ui,sans-serif; }
+  a { color:var(--accent); text-decoration:none; } a:hover { text-decoration:underline; }
+  .layout { display:grid; grid-template-columns:300px 1fr; min-height:100vh; }
+  nav.toc { background:var(--panel); border-right:1px solid var(--border); padding:24px 16px; position:sticky; top:0; height:100vh; overflow-y:auto; font-size:13px; }
+  nav.toc h2 { color:var(--accent); font-size:14px; margin:0 0 12px; text-transform:uppercase; letter-spacing:1px; }
+  nav.toc ol { list-style:none; padding-left:0; margin:0; counter-reset:l1; }
+  nav.toc > ol > li { counter-increment:l1; margin:8px 0; }
+  nav.toc > ol > li > a { display:block; padding:4px 8px; border-radius:4px; color:var(--text); font-weight:600; }
+  nav.toc > ol > li > a::before { content:counter(l1) ". "; color:var(--muted); }
+  nav.toc ol ol { padding-left:12px; counter-reset:l2; }
+  nav.toc ol ol > li { counter-increment:l2; margin:2px 0; }
+  nav.toc ol ol > li > a { display:block; padding:2px 8px; border-radius:4px; color:var(--muted); font-weight:400; font-size:12px; }
+  nav.toc ol ol > li > a::before { content:counter(l1) "." counter(l2) " "; }
+  nav.toc a:hover { background:var(--card); text-decoration:none; color:var(--text); }
+  main { padding:40px 56px 80px; max-width:1100px; }
+  .header-strip { background:linear-gradient(90deg,var(--accent),var(--primary)); color:white; padding:28px 32px; border-radius:12px; margin-bottom:36px; }
+  .header-strip h1 { margin:0 0 6px; font-size:28px; } .header-strip .sub { opacity:.92; font-size:14px; }
+  h2 { color:var(--accent); border-bottom:2px solid var(--border); padding-bottom:6px; margin:56px 0 18px; font-size:22px; }
+  h3 { color:var(--primary); margin:28px 0 10px; font-size:17px; }
+  h4 { color:var(--text); margin:18px 0 8px; font-size:14px; }
+  h5 { color:var(--muted); margin:14px 0 6px; font-size:13px; }
+  p { margin:8px 0 12px; } ul, ol { padding-left:22px; } li { margin:4px 0; }
+  code { background:var(--code-bg); padding:1px 6px; border-radius:3px; font:12.5px/1.5 Consolas,'Cascadia Mono',monospace; color:#d4d4d4; }
+  pre { background:var(--code-bg); padding:14px 16px; border-radius:6px; overflow-x:auto; border-left:3px solid var(--accent); margin:10px 0; }
+  pre code { background:none; padding:0; }
+  table { border-collapse:collapse; width:100%; margin:10px 0 18px; font-size:13px; }
+  th, td { border:1px solid var(--border); padding:6px 10px; text-align:left; vertical-align:top; }
+  th { background:var(--card); color:var(--accent); font-weight:600; }
+  td img { max-width:100%; max-height:120px; }
+  .callout { padding:10px 14px; border-radius:6px; margin:14px 0; border-left:4px solid var(--accent); background:rgba(20,184,166,.08); }
+  .callout.warn { border-left-color:var(--warn); background:rgba(245,158,11,.08); }
+  .callout.danger { border-left-color:var(--danger); background:rgba(229,57,53,.08); }
+  .callout.tip { border-left-color:var(--primary); background:rgba(61,125,232,.08); }
+  figure { text-align:center; margin:14px 0 18px; } figure img { max-width:100%; border:1px solid var(--border); border-radius:4px; }
+  figcaption { font-size:12.5px; color:var(--muted); font-style:italic; margin-top:6px; }
+  .chip { display:inline-block; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:600; margin:0 2px; background:var(--card); border:1px solid var(--border); }
+  section { scroll-margin-top:12px; }
+  @media print { .layout { grid-template-columns:1fr; } nav.toc { display:none; } main { padding:20px; max-width:100%; } pre,.callout,figure { page-break-inside:avoid; } }
+</style>
+</head>
+<body>
+<div class="layout">
+<!--NAV-->
+<main>
+<div class="header-strip">
+  <h1>BODA VMS 사용자 매뉴얼</h1>
+  <div class="sub">버전 3.0 · 2026-09-17 · VMS v1.39.2 · BODA.VMS.Web v1.10.3 · BODA.VMS.MLOps v0.1.1 — 시스템 구성 → 설치 → 프로그램별 조작 → 검사 설정 → 웹 관리 → 유지보수</div>
+</div>
+<!--BODY-->
+</main>
+</div>
+</body>
+</html>

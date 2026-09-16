@@ -138,6 +138,38 @@ namespace VMS.VisionSetup.Capture
         {
             Directory.CreateDirectory(outputDir);
 
+            // 매뉴얼용 "실제 작업 중" 장면 (2026-09-16): 환경변수로 레시피·스텝·이미지를 지정하면
+            // 레시피를 로드하고 이미지를 연 뒤 Run All 까지 수행한 상태로 캡처한다.
+            //   VMS_CAPTURE_RECIPE = 레시피 JSON 경로, VMS_CAPTURE_STEP = 스텝 인덱스(0부터),
+            //   VMS_CAPTURE_IMAGE = 이미지 파일, VMS_CAPTURE_TOOL = 선택할 도구 인덱스(0부터, 선택)
+            try
+            {
+                var recipePath = Environment.GetEnvironmentVariable("VMS_CAPTURE_RECIPE");
+                var imagePath = Environment.GetEnvironmentVariable("VMS_CAPTURE_IMAGE");
+                if (window.DataContext is ViewModels.MainViewModel cvm && !string.IsNullOrEmpty(recipePath) && File.Exists(recipePath))
+                {
+                    var recipe = Services.RecipeService.Instance.LoadRecipe(recipePath);
+                    if (recipe != null)
+                    {
+                        Services.RecipeService.Instance.SetCurrentRecipe(recipe);
+                        int stepIdx = int.TryParse(Environment.GetEnvironmentVariable("VMS_CAPTURE_STEP"), out var si) ? si : 0;
+                        if (stepIdx >= 0 && stepIdx < recipe.Steps.Count) cvm.SelectedStep = recipe.Steps[stepIdx];
+                        await LayoutPass(window, new Size(window.Width, window.Height));
+                        if (!string.IsNullOrEmpty(imagePath) && File.Exists(imagePath))
+                        {
+                            var mat = OpenCvSharp.Cv2.ImRead(imagePath);
+                            if (!mat.Empty()) cvm.CurrentImage = mat;
+                            await LayoutPass(window, new Size(window.Width, window.Height));
+                            try { await cvm.RunAllToolsAsync(); } catch (Exception ex) { File.AppendAllText(Path.Combine(outputDir, "_capture.log"), "RunAll: " + ex + "\n"); }
+                        }
+                        int toolIdx = int.TryParse(Environment.GetEnvironmentVariable("VMS_CAPTURE_TOOL"), out var ti) ? ti : -1;
+                        if (toolIdx >= 0 && toolIdx < cvm.DroppedTools.Count) cvm.SelectedTool = cvm.DroppedTools[toolIdx];
+                        await LayoutPass(window, new Size(window.Width, window.Height));
+                    }
+                }
+            }
+            catch (Exception ex) { File.AppendAllText(Path.Combine(outputDir, "_capture.log"), "scene: " + ex + "\n"); }
+
             double w = window.Width;
             double h = window.Height;
             if (double.IsNaN(w) || w < 1) w = 1920;

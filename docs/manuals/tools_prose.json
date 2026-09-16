@@ -1,0 +1,1400 @@
+{
+ "Blur (블러)": {
+  "title": "Blur — 블러(흐림)",
+  "purpose": "이미지에 블러를 적용해 노이즈를 줄입니다. 엣지 검출이나 이진화 앞에 두면 작은 잡음이 검출에 섞이는 것을 막을 수 있습니다. 컬러 이미지는 컬러 그대로, 그레이 이미지는 그레이 그대로 나옵니다.",
+  "params": [
+   [
+    "Blur Type",
+    "Gaussian (Average · Gaussian · Median · Bilateral)",
+    "블러 종류. Gaussian 이 범용, Median 은 점 노이즈(소금-후추) 제거에, Bilateral 은 엣지를 살리며 평활화할 때 씁니다"
+   ],
+   [
+    "Kernel Size",
+    "5 [1~31, 홀수]",
+    "커널 크기. 클수록 강하게 흐려집니다"
+   ],
+   [
+    "Sigma X / Sigma Y",
+    "0 [0~10]",
+    "가우시안 표준편차. 0 이면 커널 크기에서 자동 계산(Y 가 0 이면 X 와 같음)"
+   ]
+  ],
+  "outputs": "BlurType · KernelSize · ROI (판정 없음, 항상 성공)",
+  "tips": [
+   "Kernel Size 는 3~7 에서 시작해 잡음이 사라질 때까지만 키우세요. 너무 크면 검사 대상의 엣지까지 흐려집니다.",
+   "Use ROI 를 켜면 ROI 안쪽만 흐리게 하고 바깥은 그대로 둡니다."
+  ]
+ },
+ "Morphology (형태학 연산)": {
+  "title": "Morphology — 형태학 연산",
+  "purpose": "이진화(또는 그레이) 이미지에 침식 · 팽창 등 형태학 연산을 적용합니다. Blob 검출 전에 작은 잡음을 지우거나, 끊어진 영역을 잇거나, 구멍을 메울 때 씁니다.",
+  "params": [
+   [
+    "Operation",
+    "Dilate (Erode · Dilate · Open · Close · Gradient · TopHat · BlackHat)",
+    "Erode 축소 · 잡음 제거 / Dilate 확대 · 구멍 채움 / Open 침식→팽창(작은 점 제거) / Close 팽창→침식(작은 구멍 메움) / Gradient 윤곽 / TopHat 밝은 작은 영역 / BlackHat 어두운 작은 영역"
+   ],
+   [
+    "Kernel Width / Height",
+    "3 / 3 [1~21]",
+    "구조 요소 크기. 클수록 효과가 강합니다"
+   ],
+   [
+    "Iterations",
+    "1 [1~10]",
+    "연산 반복 횟수"
+   ]
+  ],
+  "outputs": "Operation · KernelSize · Iterations (판정 없음)",
+  "tips": [
+   "점 모양 잡음을 지우려면 Open, 글자나 마킹의 끊김을 이으려면 Close 를 먼저 시도하세요.",
+   "Threshold → Morphology → Blob 순서가 기본 구성입니다."
+  ]
+ },
+ "Image Enhance (이미지 보정)": {
+  "title": "Image Enhance — 선명도 보정",
+  "purpose": "Sharpen 또는 Unsharp Mask 로 이미지 선명도를 높입니다. 흐릿한 마킹이나 작은 글자를 OCR · Code Reader 로 읽기 전에 두면 인식률이 올라갑니다.",
+  "params": [
+   [
+    "Mode",
+    "UnsharpMask (Sharpen · UnsharpMask)",
+    "Sharpen 은 3×3 라플라시안(빠르지만 잡음도 함께 강조), UnsharpMask 가 권장"
+   ],
+   [
+    "Amount",
+    "1.0 [0.1~3.0]",
+    "강조 정도. 0.5~2.0 이 일반적이며 과하면 테두리에 후광(halo)이 생깁니다"
+   ],
+   [
+    "Blur Kernel",
+    "5 [3~31, 홀수]",
+    "Unsharp Mask 의 블러 커널"
+   ],
+   [
+    "Threshold (0=off)",
+    "0 [0~64]",
+    "0 이면 모든 픽셀 강화, 5~15 는 잡음 억제와 글자 강화의 균형, 30 이상은 강한 엣지만"
+   ]
+  ],
+  "outputs": "Success (판정 없음)",
+  "tips": [
+   "인쇄 글자가 번져 보이는 라벨은 Image Enhance → OCR 로 연결해 보세요."
+  ]
+ },
+ "Polar Unwrap (극좌표 펼치기)": {
+  "title": "Polar Unwrap — 극좌표 펼치기",
+  "purpose": "캡 · 약병 · 파이프처럼 둥근 표면에 둘러 인쇄된 라벨을 극좌표 변환으로 직사각형 띠로 펼칩니다. 펼친 이미지를 OCR 이나 Code Reader 에 연결하면 곡면 글자를 읽을 수 있습니다.",
+  "params": [
+   [
+    "Center X / Center Y (px)",
+    "0 / 0",
+    "원의 중심. Circle Fit 을 Coordinates 로 연결하면 자동으로 채워집니다"
+   ],
+   [
+    "Inner Radius / Outer Radius (px)",
+    "50 / 200",
+    "라벨 안쪽 · 바깥쪽 경계 반지름. Circle Fit 연결 시 반지름의 0.6 배 · 1.1 배가 자동 설정됩니다"
+   ],
+   [
+    "Start Angle (°)",
+    "0 [0~360]",
+    "펼치기 시작 각도. 0 = 오른쪽(3 시), 90 = 위, 180 = 왼쪽, 270 = 아래"
+   ],
+   [
+    "Direction",
+    "Counterclockwise (Clockwise · Counterclockwise)",
+    "펼치는 방향"
+   ],
+   [
+    "Output Width / Height (0=auto)",
+    "0 / 0",
+    "출력 크기. 0 이면 둘레 · 반지름 차이에서 자동"
+   ]
+  ],
+  "outputs": "CenterX · CenterY · InnerRadius · OuterRadius · OutputWidth · OutputHeight (판정 없음)",
+  "tips": [
+   "전형 구성: Circle Fit →(Coordinates) Polar Unwrap →(Image) OCR. Circle Fit 이 찾은 중심 · 반지름이 그대로 넘어와 부품이 조금 움직여도 따라갑니다."
+  ]
+ },
+ "Grayscale (그레이 변환)": {
+  "title": "Grayscale — 그레이 변환",
+  "purpose": "컬러 이미지를 흑백(8-bit 그레이)으로 바꿉니다. 대부분의 비전 도구는 그레이에서 더 빠르고 안정적으로 동작하며, Feature Match 는 그레이 입력만 받으므로 컬러 카메라 레시피에서는 맨 앞에 둡니다. 이미 그레이면 그대로 통과합니다.",
+  "outputs": "Width · Height · Channels (판정 없음, 파라미터 없음)",
+  "tips": [
+   "컬러 정보로 검사해야 하는 도구(Color Extract · Color Match)는 이 도구 앞에서 원본 이미지를 연결하세요."
+  ]
+ },
+ "Threshold (이진화)": {
+  "title": "Threshold — 이진화",
+  "purpose": "임계값을 기준으로 이미지를 흰색(255)과 검은색(0)으로 나눕니다. 밝기 차이로 대상과 배경을 분리해 Blob 검출로 넘기는 가장 기본적인 전처리입니다. 출력 마스크는 PointCloud Mask Crop 에 연결해 3D 점군을 자를 때도 씁니다.",
+  "params": [
+   [
+    "Threshold Value",
+    "128 [0~255] (Web 연동 가능)",
+    "이 값보다 밝은 픽셀이 흰색이 됩니다"
+   ],
+   [
+    "Max Value",
+    "255 [0~255]",
+    "흰색으로 칠할 값(보통 255)"
+   ],
+   [
+    "Use Otsu",
+    "해제",
+    "히스토그램에서 임계값을 자동으로 정합니다. 밝기 분포가 두 봉우리인 이미지에 효과적"
+   ],
+   [
+    "Use Adaptive",
+    "해제",
+    "국소 영역마다 임계값을 정합니다. 조명이 고르지 않은 이미지에 효과적"
+   ],
+   [
+    "Block Size / Constant C",
+    "11 / 2",
+    "Adaptive 전용 — 국소 블록 크기(홀수)와 평균에서 뺄 상수"
+   ]
+  ],
+  "outputs": "ThresholdValue · WhitePixelCount · WhitePixelRatio (판정 없음)",
+  "tips": [
+   "실행 후 이미지 소스를 Result Image 로 바꾸면 이진화 결과를 바로 볼 수 있습니다. 대상이 하얗게, 배경이 검게 나오도록 값을 맞추세요.",
+   "조명이 가장자리에서 어두워지면 Use Adaptive 를 켜 보세요."
+  ]
+ },
+ "Edge Detection (에지 검출)": {
+  "title": "Edge Detection — 에지 검출",
+  "purpose": "이미지에서 경계선(에지)만 남깁니다. 윤곽 형상 분석이나 직선 · 원 피팅의 전처리로 씁니다.",
+  "params": [
+   [
+    "Method",
+    "Canny (Canny · Sobel · Scharr · Laplacian)",
+    "Canny 가 가장 범용. Sobel · Scharr 는 방향성 1 차 미분, Laplacian 은 2 차 미분"
+   ],
+   [
+    "Canny Threshold 1 / 2",
+    "50 / 150 [0~255]",
+    "낮은 임계(에지 연결) / 높은 임계(강한 에지 판정)"
+   ],
+   [
+    "Aperture Size",
+    "3 [3~7]",
+    "Sobel 커널 크기"
+   ],
+   [
+    "L2 Gradient",
+    "해제",
+    "더 정확한 L2 노름 사용(느림)"
+   ]
+  ],
+  "outputs": "EdgePixelCount · EdgePixelRatio (판정 없음)",
+  "tips": [
+   "Threshold 2 를 올리면 약한 에지가 사라지고, Threshold 1 을 내리면 끊긴 에지가 이어집니다. 보통 1:2~1:3 비율로 둡니다."
+  ]
+ },
+ "Histogram (히스토그램)": {
+  "title": "Histogram — 히스토그램 분석 · 평활화",
+  "purpose": "이미지 밝기 분포를 분석하거나 대비를 개선합니다. 조명이 약해 대비가 낮은 이미지에 Equalize · CLAHE 를 적용하면 후속 검출이 안정됩니다. 분석 모드의 평균 · 표준편차는 조명 상태 감시에 쓸 수 있습니다.",
+  "params": [
+   [
+    "Operation",
+    "Analyze (Analyze · Equalize · CLAHE)",
+    "분석만 / 전체 평활화 / 적응형 평활화(국소 대비)"
+   ],
+   [
+    "Clip Limit",
+    "2.0 [1~10]",
+    "CLAHE 대비 제한. 클수록 대비가 강해집니다"
+   ],
+   [
+    "Tile Grid Width / Height",
+    "8 / 8 [1~16]",
+    "CLAHE 타일 격자 분할 수"
+   ]
+  ],
+  "outputs": "MinValue · MaxValue · MeanValue · StdDev (판정 없음)",
+  "tips": [
+   "MeanValue 를 PLC 에 매핑하면 조명이 어두워지는 추세를 PLC 에서 감시할 수 있습니다."
+  ]
+ },
+ "Blob Analysis (블롭 분석)": {
+  "title": "Blob — 블롭(덩어리) 분석",
+  "purpose": "이진화된 이미지에서 연결된 영역(블롭)을 찾아 개수 · 면적 · 위치를 구하고 판정합니다. 부품 유무, 개수 세기, 이물 · 결함 검출에 가장 많이 쓰는 도구입니다. 내부 이진화를 켜면 Threshold 없이 그레이 이미지를 바로 받을 수 있습니다.",
+  "params": [
+   [
+    "Use Internal Threshold / Threshold Value",
+    "켬 / 128 (Web 연동 가능)",
+    "도구 안에서 이진화. 끄면 입력이 이미 이진 이미지여야 합니다"
+   ],
+   [
+    "Segmentation Polarity",
+    "LightOnDark (LightOnDark · DarkOnLight)",
+    "어두운 배경의 밝은 대상 / 밝은 배경의 어두운 대상"
+   ],
+   [
+    "Min Area / Max Area",
+    "100 / 100000000 (px²)",
+    "이 범위 밖의 덩어리는 버립니다 — 잡음 제거와 큰 배경 제외"
+   ],
+   [
+    "Enable Judgment",
+    "해제",
+    "판정 사용. 아래 면적 · 개수 판정이 함께 적용됩니다"
+   ],
+   [
+    "Use Area Judgment / Expected Area / Tolerance ±",
+    "해제 / 1000 / 200 (Web 연동 가능)",
+    "전체 블롭 총 면적이 기준 ± 공차 안이면 OK"
+   ],
+   [
+    "Use Count Judgment / Count Mode / Expected Count",
+    "해제 / Equal / 1 (Web 연동 가능)",
+    "개수 판정. Count Mode 는 Equal · GreaterOrEqual · LessOrEqual · Range(Max 까지) · Tolerance(기준 ± 상/하 공차, Web 연동 권장)"
+   ],
+   [
+    "Draw Contours / Bounding Box / Center Point / Labels",
+    "모두 켬",
+    "결과 오버레이 — 색상 윤곽 · 노란 외접 사각형 · 빨간 십자 · #번호"
+   ],
+   [
+    "(Expert) Circularity · Perimeter · AspectRatio · Convexity 필터, SortBy · MaxBlobCount",
+    "—",
+    "원형도(1.0 = 완전한 원) · 둘레 · 종횡비 · 볼록도로 모양을 거르고, 정렬 기준과 상위 N 개만 남기기"
+   ]
+  ],
+  "outputs": "BlobCount · TotalArea · CenterX · CenterY · Area · Perimeter · Circularity · Angle · AreaJudgment · CountJudgment · JudgmentPass",
+  "judgment": "Enable Judgment 를 켜면 면적 판정 AND 개수 판정이 모두 통과해야 OK. 끄면 블롭이 1 개 이상 검출되면 OK, 0 개면 NG.",
+  "tips": [
+   "실행 후 Run Results 의 Area 값을 보고 Min/Max Area 를 대상 크기의 절반~두 배로 잡으면 잡음이 대부분 걸러집니다.",
+   "Angle 을 내보내므로 Blob 을 Coordinates 로 연결하면 뒤 도구의 ROI 가 블롭의 위치 · 기울기를 따라갑니다.",
+   "Web 에서 기준값을 관리하려면 Count Mode 를 Tolerance 로 두고 Expected Count · 상/하 공차를 Web 파라미터에 연동합니다(§5.7)."
+  ]
+ },
+ "Feature Match (특징 매칭)": {
+  "title": "Feature Match — 특징(에지) 기반 패턴 매칭",
+  "purpose": "제품의 윤곽(에지)을 학습해 두었다가 검사 이미지에서 같은 패턴의 위치 · 각도 · 크기를 찾습니다. 부품 유무 확인, 위치 검출, 뒤 도구의 ROI 를 따라가게 하는 기준(Fixture), 얼라인의 기준으로 가장 많이 쓰는 도구입니다. 8-bit 그레이 이미지만 받으므로 컬러 카메라에서는 앞에 Grayscale 을 둡니다.",
+  "params": [
+   [
+    "Models · [Add Model] [Train Selected] [Delete Model]",
+    "—",
+    "학습 모델 목록. 학습 영역(ROI)을 그린 뒤 [Train Selected] 로 학습합니다. 오른쪽에 학습된 특징 이미지가 표시됩니다"
+   ],
+   [
+    "재학습 원점",
+    "UseCurrentImage (UseCurrentImage · KeepReference)",
+    "재학습 시 원점(패턴 중심 · 각도)을 현재 ROI 로 옮길지(기본), 기준 이미지 · 원점을 유지하고 특징만 갱신할지(얼라인 마스터 유지)"
+   ],
+   [
+    "Score Threshold",
+    "0.50 [0.1~1]",
+    "이 점수 이상이면 검출. 0.5 느슨 · 0.7 일반 · 0.85 엄격"
+   ],
+   [
+    "Max Instances",
+    "1 [1~50]",
+    "같은 패턴을 여러 개 찾을 때 개수 상한. 결과에 #1, #2… 번호와 Match{n}_ 값이 나옵니다"
+   ],
+   [
+    "Min Coverage",
+    "0 [0~1]",
+    "특징점 일치 비율 하한. 반쪽만 맞은 매칭(중심이 어긋남)을 걸러냅니다. 0.6~0.75 권장, 0 = 끔"
+   ],
+   [
+    "Contrast Invariant / Auto Apply Tune",
+    "해제 / 켬",
+    "명암 반전에도 매칭 / 특징점 수 · 피라미드 레벨을 자동 설정"
+   ],
+   [
+    "Use Training Region · [Show ROI] [Draw ROI] [Clear]",
+    "—",
+    "학습 영역. 제품이 기울어 놓였으면 RectAffine(회전 사각형)으로 그리면 그 각도가 기준 각도가 됩니다"
+   ],
+   [
+    "[기준 이미지 불러오기]",
+    "—",
+    "[Train] 때 자동 저장된 전체 장면을 다시 띄웁니다(ROI 조정 · 재학습용)"
+   ],
+   [
+    "Train Mask · [Edit Mask...] [Clear Mask]",
+    "—",
+    "그림자 · 날짜 각인 · 반사처럼 이미지마다 달라지는 영역을 학습에서 제외(빨간 영역)"
+   ],
+   [
+    "[안정 특징 정제 (샘플 이미지)...]",
+    "—",
+    "현장 이미지 2 장 이상을 골라 흔들리는 에지를 자동으로 마스크에 추가하고 재학습"
+   ],
+   [
+    "Pose Judgment — Use Angle / Scale Judgment · Lower/Upper Limit",
+    "해제 / −180~180° / 0.9~1.1 (Web 연동 가능)",
+    "찾긴 했는데 기울었거나 크기가 다르면 NG 로 걸러냅니다"
+   ],
+   [
+    "Search Range — Angle Start / Extent · Min / Max Scale",
+    "−45 / 90° · 0.9 / 1.1",
+    "탐색할 회전 · 크기 범위. 아무 방향으로나 놓이면 Start −180 · Extent 360"
+   ],
+   [
+    "Accuracy / Speed — Angle Step · Scale Step · Greediness · Num Levels · NMS Distance",
+    "1° · 0.05 · 0.8 · 3 · 0.5",
+    "탐색 간격(작을수록 정밀 · 느림), 탐욕도(1 에 가까울수록 빠르나 놓칠 수 있음), 피라미드 레벨, 중복 검출 억제 거리"
+   ],
+   [
+    "Edge Config — Canny Low / High · Max Points · Curvature Weight",
+    "50 / 150 · 200 · 0.4",
+    "학습 에지 추출 임계, 특징점 상한(Auto Tune 시 자동), 곡률 가중"
+   ],
+   [
+    "Search Region · [Draw Search Region] [Clear] · X Y W H",
+    "해제",
+    "탐색 영역 제한 — 속도 향상"
+   ]
+  ],
+  "outputs": "Score · CenterX · CenterY · Angle · Scale · Coverage · MatchCount · Match{i}_Score/CenterX/CenterY/Angle/Scale/Coverage. 1 순위 매칭이 CenterX/Y · Angle 에 실려 Fixture · Match Align 연결에 쓰입니다",
+  "judgment": "점수가 Score Threshold 미만, Coverage 가 Min Coverage 미만, 각도 · 크기 판정 위반이면 NG. 패턴을 하나도 찾지 못하면 NG.",
+  "tips": [
+   "<strong>학습 절차</strong> — ① 기준 부품 이미지를 열고 ② [Draw ROI] 로 제품 윤곽을 감싸는 학습 영역을 그린 뒤 ③ [Train Selected]. 특징 이미지의 초록 점이 제품 윤곽을 따라 촘촘해야 정상이며 60 개 미만이면 상태바에 경고가 뜹니다(Canny 임계를 낮추거나 영역을 넓히세요).",
+   "그림자 · 반사가 함께 학습되면 중심 좌표가 끌려갑니다 — [Edit Mask...] 로 제외하거나 [안정 특징 정제] 를 쓰세요. 마스크 편집기에서 초록 = 남는 에지, 주황 = 제외되는 에지입니다.",
+   "반쪽 매칭으로 중심이 어긋나면 Min Coverage 를 0.6~0.75 로 켜세요. 기각 사유가 결과 메시지에 표시됩니다.",
+   "이 도구를 Coordinates 로 뒤 도구에 연결하면 뒤 도구의 ROI 가 위치와 각도를 모두 따라갑니다. 단, 이 도구 자신의 Search Region 은 Fixture 로 옮겨지지 않습니다."
+  ],
+  "callout": "<strong>얼라인 기준</strong> — Match Align 은 이 도구의 학습 위치 · 학습 ROI 각도를 기준 포즈로 씁니다. 부품을 옮겨 놓고 재학습하면 기준도 새 위치로 바뀌므로, 마스터 포즈를 유지하려면 재학습 원점을 KeepReference 로 두세요.",
+  "panel": "vs/scene_fm_settings.png"
+ },
+ "Shape Match (형상 매칭)": {
+  "title": "Shape Match — 템플릿(NCC) 형상 매칭",
+  "purpose": "정규화 상관(NCC)으로 학습한 형상을 찾습니다. 로고 · 인쇄 마크 · 단색 형상처럼 에지가 적은 대상에 안정적이며 조명 변화에 강합니다. 부분 가림에는 Feature Match 보다 약합니다. 회전 범위는 ±180° 고정이고 Angle Step 으로 정밀도와 속도를 절충합니다.",
+  "params": [
+   [
+    "Template · [Train Template] [Clear Template]",
+    "—",
+    "이미지를 열고 Training Region 을 그린 뒤 [Train Template] 으로 학습. Status 에 학습 상태 표시"
+   ],
+   [
+    "Angle Step (°)",
+    "5 [0.5~30]",
+    "회전 탐색 간격. 2° 정밀 · 5° 균형 · 10° 이상 빠름"
+   ],
+   [
+    "Min / Max Scale · Scale Step",
+    "0.8 / 1.2 · 0.1",
+    "크기 탐색 범위와 간격. 1.0/1.0 이면 크기 탐색 없이 가장 빠름"
+   ],
+   [
+    "Score Threshold",
+    "0.7 [0~1]",
+    "이 점수 이상이면 검출"
+   ],
+   [
+    "Max Instances · NMS Distance Factor",
+    "1 · 0.5",
+    "다중 검출 개수 상한과 중복 억제 거리"
+   ],
+   [
+    "Pose Judgment — Angle / Scale Limit",
+    "해제 (Web 연동 가능)",
+    "각도 · 크기 판정"
+   ],
+   [
+    "Pyramid Levels · Top Candidates to Refine",
+    "2 · 3",
+    "피라미드 단계(높을수록 빠름, 작은 객체 위험)와 정밀화할 상위 후보 수"
+   ],
+   [
+    "Search Region · X Y W H",
+    "해제",
+    "탐색 영역 제한. Fixture 연결 시 이 영역도 함께 옮겨집니다"
+   ]
+  ],
+  "outputs": "Score · CenterX · CenterY · Angle · Scale · MatchWidth · MatchHeight · MatchCount · Match{i}_…",
+  "judgment": "점수가 Score Threshold 미만이거나 각도 · 크기 판정을 벗어나면 NG. 다중 검출 모드의 판정은 1 순위 매칭 기준.",
+  "tips": [
+   "Feature Match 가 잘 안 잡히는 단색 로고 · 마킹에 먼저 시도해 보세요.",
+   "속도가 필요하면 Search Region 을 제한하고 Min/Max Scale 을 1.0 으로 고정합니다."
+  ]
+ },
+ "Match Align (매치 얼라인)": {
+  "title": "Match Align — 2D 얼라인 (ΔX / ΔY / Δθ)",
+  "purpose": "Feature Match 가 찾은 현재 포즈(중심 · 각도)를 기준(마스터) 포즈와 비교해 변위 ΔX · ΔY · Δθ 를 계산합니다. 캘리브레이션(또는 스텝 Resolution)이 있으면 mm 로도 내고, 핸드아이 행렬로 로봇 · 스테이지 좌표 변위(RobotDX · RobotDY · RobotDTheta)까지 만들어 PLC 로 보낼 수 있습니다. 카메라 1 대로 부품을 보는 표준 2D 얼라인 구성입니다.",
+  "params": [
+   [
+    "Mode",
+    "SinglePoint (SinglePoint · TwoPoint)",
+    "1 점: 매칭 1 개의 중심 · 각도 / 2 점: Feature Match 2 개를 Result 로 연결(연결 순서 = 1 번 · 2 번 점), 각도는 두 점을 잇는 벡터에서 계산 — 기저선이 길수록 각도 정밀"
+   ],
+   [
+    "Use Trained Reference",
+    "켬",
+    "Feature Match 학습 시점의 패턴 중심 · 학습 ROI 각도를 기준으로 씁니다. 끄면 아래 Ref 값 사용"
+   ],
+   [
+    "Ref X / Ref Y (px) · Ref θ (°) · Ref X2 / Y2",
+    "0",
+    "수동 기준. [현재 매칭을 기준으로 등록] 으로 지금 매칭 위치를 기준으로 캡처"
+   ],
+   [
+    "Enable Judgment · Unit · Max ΔXY (radial) · Max Δθ (°)",
+    "해제 · Mm · 1.0 · 1.0",
+    "√(ΔX²+ΔY²) 와 |Δθ| 가 모두 한계 이내면 OK. Unit=Mm 은 캘리브레이션 또는 스텝 Resolution 필요"
+   ],
+   [
+    "Enable Robot Transform · M11 M21 M12 M22 · θ Sign",
+    "해제 · 1 0 0 1 · 1",
+    "핸드아이 행렬의 상위 2×2(회전 · 스케일 · 반전)와 각도 부호. Δ 는 벡터라 병진 성분은 필요 없습니다"
+   ],
+   [
+    "Draw Overlay",
+    "켬",
+    "기준(노란 십자) → 현재(원) 변위 화살표와 수치. 초록 = 합격, 빨강 = NG"
+   ]
+  ],
+  "outputs": "RefX/Y/Theta · CurrentX/Y/Theta · DeltaX · DeltaY · DeltaTheta · DeltaXMm · DeltaYMm · RobotDX · RobotDY · RobotDTheta · ScaleRatio · JudgmentRadial · JudgmentPass",
+  "judgment": "Enable Judgment 를 켜면 위치(반경)와 각도가 모두 한계 이내여야 OK. Unit=Mm 인데 mm 변환이 불가능하면 픽셀로 잘못 판정하지 않고 실패 처리합니다.",
+  "tips": [
+   "<strong>절차</strong> — ① Feature Match 로 기준 부품의 패턴을 학습 ② Feature Match 를 이 도구에 Result 로 연결하고 Run → Δ 계산 ③ 기준을 학습 시점과 다르게 잡으려면 기준 부품을 놓고 Run 후 [현재 매칭을 기준으로 등록] ④ 로봇 전송은 Robot Transform 을 켜고 핸드아이 상위 2×2 입력.",
+   "2 점 모드에서 ScaleRatio 가 1.0 에서 벗어나면 오검출이나 배율 변화를 의심하세요.",
+   "Feature Match 를 재학습하면 기준도 함께 바뀌거나(UseCurrentImage) 유지되므로(KeepReference) 재학습 원점 설정을 확인하세요."
+  ]
+ },
+ "Multi-Step Align (다중 스텝 얼라인)": {
+  "title": "Multi-Step Align — 2-스텝 얼라인 (카메라 이동, 대형 부품)",
+  "purpose": "카메라 1 대가 로봇 · 스테이지로 이동하며 두 스텝에서 부품 양단의 특징을 하나씩 매칭할 때, 두 스텝의 포즈를 한 좌표계로 합쳐 기준 대비 ΔX · ΔY · Δθ 를 계산합니다. 부품이 한 화면에 다 들어오지 않는 패널 · 프레임 얼라인에 씁니다. 이 도구는 마지막(B) 스텝의 작업 공간에 놓습니다.",
+  "params": [
+   [
+    "Sources — Point A / Point B (스텝 + 도구)",
+    "—",
+    "A · B 스텝의 Feature Match 를 콤보로 지정합니다(Result 연결이 아니라 스텝 간 포즈 저장소를 읽음)"
+   ],
+   [
+    "Require Same Cycle",
+    "켬",
+    "이번 사이클에 기록된 포즈만 인정. 끄면 편집은 편하지만 운전 중 A 매칭 실패 시 이전 값으로 잘못 계산될 수 있음"
+   ],
+   [
+    "Baseline X / Y (B − A)",
+    "0 / 0",
+    "B 촬영 위치의 A 대비 오프셋(로봇 · 스테이지 이동량). 두 스텝 모두 캘리브레이션이 있으면 mm, 없으면 px — mm 권장"
+   ],
+   [
+    "Ref A X/Y · Ref B X/Y · [현재 두 점을 기준으로 등록]",
+    "0",
+    "기준 부품을 놓고 A → B 순서로 Run 한 뒤 등록. Baseline 을 먼저 넣어야 같은 좌표계로 잡힙니다"
+   ],
+   [
+    "Enable Judgment · Max ΔXY · Max Δθ",
+    "해제 · 1.0 · 1.0",
+    "Match Align 과 같은 규칙"
+   ],
+   [
+    "Enable Robot Transform · M11~M22 · θ Sign",
+    "해제 · 항등 · 1",
+    "핸드아이 2×2 변환"
+   ],
+   [
+    "Draw Overlay",
+    "켬",
+    "두 점이 서로 다른 화면에 있으므로 좌상단에 Δ 수치 패널만 표시"
+   ]
+  ],
+  "outputs": "Unit · PointAX/AY · PointBX/BY · RefAX/AY · RefBX/BY · DeltaX · DeltaY · DeltaTheta · ScaleRatio · RobotDX/DY/DTheta · JudgmentRadial · JudgmentPass",
+  "judgment": "Match Align 과 동일 — 위치(반경)와 각도가 모두 한계 이내면 OK.",
+  "tips": [
+   "예제 템플릿 '2-스텝 얼라인' 을 쓰면 Align A · Align B 스텝과 소스 연결이 자동으로 만들어집니다. 이후 각 스텝의 Feature Match 학습 → Baseline 입력 → 기준 등록 순서로 진행하세요.",
+   "카메라 이동이 반복 정밀해야 정확합니다. Baseline 은 실제 이동량을 mm 로 넣으세요."
+  ]
+ },
+ "Caliper (캘리퍼 측정)": {
+  "title": "Caliper — 엣지 검출 · 캘리퍼 측정",
+  "purpose": "ROI 를 가로지르는 방향으로 밝기 변화를 스캔해 엣지(경계선)의 위치를 서브픽셀 정밀도로 찾습니다. 폭 측정, 엣지 간 거리, 위치 검출의 기본 도구이며, 찾은 점을 Geometry 에 Result 로 연결해 거리 · 각도를 계산하고 판정합니다.",
+  "params": [
+   [
+    "Projection Width",
+    "20 [1~200]",
+    "스캔 라인에 수직인 방향의 폭. 클수록 잡음에 강하지만 가는 엣지를 놓칠 수 있습니다"
+   ],
+   [
+    "Search Axis",
+    "AlongWidth (AlongWidth · AlongHeight)",
+    "ROI 의 어느 축을 따라 탐색할지. 화면의 화살표가 실제 탐색 방향입니다"
+   ],
+   [
+    "Polarity",
+    "DarkToLight (DarkToLight · LightToDark · Any)",
+    "탐색 방향 기준 밝기 변화 극성"
+   ],
+   [
+    "Edge Threshold",
+    "30 [1~100] (Web 연동 가능)",
+    "엣지로 인정할 최소 대비. 5~20 약한 엣지, 30~60 일반, 70 이상 강한 엣지만"
+   ],
+   [
+    "Filter Half Width",
+    "2 [1~10]",
+    "평활 필터 반폭. 1~2 날카로운 엣지, 4~10 잡음 많은 이미지"
+   ],
+   [
+    "Mode",
+    "SingleEdge (SingleEdge · EdgePair)",
+    "엣지 1 개 / 반대 극성의 엣지 쌍 사이 폭(Width) 측정"
+   ],
+   [
+    "Max Edges · Scorer Mode · Edge Selection",
+    "10 · MaxContrast · Best",
+    "후보 엣지 수 상한, 점수 방식(대비 우선 · 중앙 근접 · 종합 · 사용자 가중), 선택 기준(최고 점수 · 첫 · 마지막)"
+   ],
+   [
+    "Projection Mode · Gaussian Filter · Sigma · Normalized Contrast · Sub-Pixel Method",
+    "Uniform · 켬 · 1.0 · 해제 · Parabolic",
+    "투영 방식, 가우시안 평활(고정밀 권장), 조명 불균일 보정, 서브픽셀 보간 방법(Parabolic · Gaussian · Quartic5Point)"
+   ]
+  ],
+  "outputs": "EdgeX · EdgeY · EdgeScore · Width · Edge1X/Y · Edge2X/Y · CenterX/Y · EdgeCount 와 mm 환산 키(EdgeXMm · WidthMm …)",
+  "judgment": "자체 공차 판정은 없습니다. 엣지를 찾지 못하면 실패. 치수 판정은 Geometry 에서 합니다.",
+  "tips": [
+   "ROI 를 엣지에 직각으로, 엣지가 ROI 가운데쯤 오도록 그리세요. 화살표 방향과 Polarity 를 맞추는 것이 첫 번째 확인 사항입니다.",
+   "엣지가 흔들리면 Projection Width 와 Filter Half Width 를 키우거나 Gaussian Filter 를 켭니다.",
+   "Fixture 연결로 각도가 넘어오면 스캔 축도 함께 기울어집니다."
+  ]
+ },
+ "Line Fit (직선 피팅)": {
+  "title": "Line Fit — 직선 피팅",
+  "purpose": "기준선을 따라 여러 개의 캘리퍼를 배치해 엣지 점들을 찾고 직선을 피팅합니다. 직선 엣지의 위치 · 각도 측정, 정렬 검사, Geometry 의 직선 입력에 씁니다.",
+  "params": [
+   [
+    "Num Calipers",
+    "10 [2~50]",
+    "기준선을 따라 균등 배치할 캘리퍼 수. 5~20 권장"
+   ],
+   [
+    "Search Length · Search Width",
+    "50 · 5",
+    "기준선에 수직인 탐색 거리 / 기준선 방향 투영 폭"
+   ],
+   [
+    "Polarity · Edge Threshold · Filter Half Width",
+    "DarkToLight · 30 (Web 연동 가능) · 2",
+    "Caliper 와 동일"
+   ],
+   [
+    "Fit Method · RANSAC Threshold",
+    "LeastSquares (LeastSquares · RANSAC) · 5.0 px",
+    "최소제곱(빠름) / RANSAC(이상치 · 부분 가림에 강함)과 이상치 거리"
+   ],
+   [
+    "Min Found Calipers",
+    "3 [2~20]",
+    "유효 엣지가 이보다 적으면 피팅 실패"
+   ]
+  ],
+  "outputs": "FoundCount · LineAngle · LinePointX/Y · FitError · InlierCount",
+  "judgment": "유효 캘리퍼가 Min Found Calipers 미만이면 실패. 각도 · 거리 판정은 Geometry(LineLineAngle · LineLineDistance)에서.",
+  "tips": [
+   "엣지 일부가 가려지거나 이물이 있으면 Fit Method 를 RANSAC 으로 바꾸세요."
+  ]
+ },
+ "Circle Fit (원 피팅)": {
+  "title": "Circle Fit — 원 피팅",
+  "purpose": "예상 원주를 따라 방사형으로 캘리퍼를 배치해 엣지를 찾고 원을 피팅합니다. 구멍 · 원형 부품의 중심 · 반지름 · 지름 측정, 동심도 검사, Polar Unwrap 의 중심 소스로 씁니다.",
+  "params": [
+   [
+    "Center X / Y · Expected Radius",
+    "200 / 200 · 100 (Web 연동 가능)",
+    "예상 중심과 반지름. ROI(원)를 그리면 자동으로 채워집니다"
+   ],
+   [
+    "Num Calipers · Search Length · Search Width",
+    "16 · 50 · 5",
+    "원주를 따라 배치할 캘리퍼 수(8~36 권장)와 반경 방향 탐색 거리 · 접선 방향 폭"
+   ],
+   [
+    "Start Angle · End Angle",
+    "0 · 360",
+    "부분 원호만 볼 때 범위 지정"
+   ],
+   [
+    "Search Direction · Polarity · Edge Threshold",
+    "InwardToOutward · DarkToLight · 30",
+    "중심→바깥 / 바깥→중심 탐색 방향, 극성, 대비 임계"
+   ],
+   [
+    "Fit Method",
+    "LeastSquares (LeastSquares · RANSAC)",
+    "부분 가림에는 RANSAC"
+   ]
+  ],
+  "outputs": "FoundCount · CenterX · CenterY · Radius · Diameter · FitError · InlierCount 와 mm 키(CenterXMm · RadiusMm · DiameterMm)",
+  "judgment": "유효 캘리퍼가 부족하면 실패. 지름 공차 판정은 Geometry(CircleCircleDistance 등)나 Batch Test 의 Edit Thresholds 로.",
+  "tips": [
+   "Circle Fit →(Coordinates) Polar Unwrap 으로 연결하면 곡면 라벨 펼치기의 중심이 자동으로 따라갑니다."
+  ]
+ },
+ "Geometry (기하 측정)": {
+  "title": "Geometry — 기하 계산과 공차 판정",
+  "purpose": "Caliper(점) · Line Fit(직선) · Circle Fit(원)을 Result 로 연결해 두 요소 사이의 거리 · 각도 · 교차점을 계산하고, 기준값 ± 공차로 OK/NG 를 판정합니다. 측정 검사의 마지막 계산 · 판정 도구입니다. 소스가 2 개 이상 연결되어야 합니다.",
+  "params": [
+   [
+    "Operation",
+    "PointPointDistance",
+    "PointPointDistance(두 점 거리) · PointLineDistance(점→직선 수직 거리) · LineLineDistance(두 직선 거리, 평행도) · LineLineAngle(두 직선 각도) · LineLineIntersection(교차점) · LineCircleIntersection(직선-원 교차점) · CircleCircleDistance(두 원 중심 · 엣지 거리)"
+   ],
+   [
+    "Enable Judgment · Unit",
+    "해제 · Mm (Mm · Px)",
+    "판정 사용과 단위. Mm 은 캘리브레이션 또는 스텝 Resolution 필요"
+   ],
+   [
+    "Expected Value · Tolerance (−) · Tolerance (+)",
+    "100 · 0.5 · 0.5 (Web 연동 가능)",
+    "기준 치수와 하한 · 상한 공차. 도면의 100 +0.2/−0.5 를 그대로 넣습니다"
+   ]
+  ],
+  "outputs": "Distance · DeltaX · DeltaY · Angle · SignedAngle · IntersectionX/Y · FootX/Y · SignedDistance · ParallelAngle · CenterDistance · EdgeDistance · IntersectionCount · JudgmentValue · JudgmentLow · JudgmentHigh · JudgmentPass 와 mm 키(DistanceMm 등)",
+  "judgment": "Enable Judgment 를 켜면 거리(또는 각도)가 [기준 − 공차(−), 기준 + 공차(+)] 안이면 OK. 교차점 연산은 판정 값이 없어 경고만 표시. Unit=Mm 인데 변환이 불가능하면 실패 처리.",
+  "tips": [
+   "결과 이미지 좌상단에 OK(초록) / NG(빨강) 배지가 그려집니다.",
+   "각도 연산은 Unit 과 무관하게 항상 도(°)로 판정합니다.",
+   "Web 에서 기준값을 관리하려면 Dimension Tool 프리셋(Reference Value · Lower/Upper Tolerance)을 연동하세요."
+  ]
+ },
+ "OCR (문자 인식)": {
+  "title": "OCR — 문자 인식",
+  "purpose": "유통기한 · 시리얼 · 로트 번호 같은 산업용 문자를 폰트 학습 없이 읽습니다. 엔진은 Tesseract 와 PP-OCR(ONNX) 두 가지이며, 텍스트 영역을 스스로 찾고 회전 · 저대비 · 도트 문자에 강한 PP-OCR 을 대부분의 현장에 권장합니다. 읽은 문자열을 기대값(또는 정규식)과 비교해 판정할 수 있습니다.",
+  "params": [
+   [
+    "OCR Engine · Language",
+    "Tesseract (Tesseract · PPOcrOnnx) · English",
+    "엔진과 언어(영 · 한 · 일 · 중 · 영+한). PP-OCR 은 자체 전처리를 하므로 Auto Preprocess · Invert · Denoise · Target Height 설정을 무시합니다"
+   ],
+   [
+    "Page Seg Mode · Engine Mode",
+    "SingleLine · LstmOnly",
+    "Tesseract 전용 — 한 줄 · 한 단어 · 한 글자 · 블록 등 레이아웃 가정과 엔진 모드"
+   ],
+   [
+    "Char Whitelist",
+    "(빈 값)",
+    "허용 문자 집합(예: 0123456789-/). O↔0, l↔1 같은 혼동을 막습니다"
+   ],
+   [
+    "Max Side Length · Custom Det/Rec Model · Custom Dict",
+    "960 · (빈 값)",
+    "PP-OCR 전용 — 입력 최대 변(작은 글씨는 1600~2000)과 직접 학습한 모델 · 사전 파일"
+   ],
+   [
+    "Confidence Threshold",
+    "40 [0~100 %]",
+    "이 신뢰도 미만이면 실패"
+   ],
+   [
+    "Auto Preprocess · Invert Image · Target Text Height · Denoise Level · Dot Matrix Mode",
+    "켬 · 해제 · 40 · 1 · 해제",
+    "Tesseract 전용 전처리 — 자동 대비 · 이진화, 흑배경 백글자 반전, 글자 높이 확대, 잡음 제거, 도트 프린트 연결"
+   ],
+   [
+    "Format Preset · Custom Patterns",
+    "None",
+    "출력 형식 강제 — DD/MM/YYYY, YYYY-MM-DD, LOT 6~8 자리, 직접 입력. 토큰 D/M/Y/H/S/f=숫자, L=영문, A=영숫자, ?=임의, 그 외 문자는 리터럴로 치환(‘/’↔‘7’ 오인식 보정)"
+   ],
+   [
+    "Enable Verification · Expected Text · Use Regex Match",
+    "해제 · (빈 값) · 해제",
+    "기대 문자열(또는 정규식)과 비교해 판정"
+   ],
+   [
+    "Draw Overlay · Tessdata Path",
+    "켬 · (빈 값)",
+    "단어별 박스 · 신뢰도 표시 / Tesseract 데이터 폴더(비우면 자동)"
+   ]
+  ],
+  "outputs": "RecognizedText · RawText · FormatMatched · MatchedPattern · Confidence · WordCount · Words · WordConfidences · VerificationPass",
+  "judgment": "검증을 켜면 신뢰도 통과 AND 문자열 일치, 끄면 신뢰도 통과 AND 인식 문자열이 비어 있지 않으면 OK.",
+  "tips": [
+   "기울어진 문자는 RectAffine(회전 사각형) ROI 로 그리면 자동으로 바로 세워 인식합니다.",
+   "정해진 형식의 문자열은 Format Preset 을 지정하면 오인식이 형식에 맞게 보정됩니다.",
+   "깨끗한 흑백 문서 · 큰 영문 단어는 Tesseract, 그 외 대부분은 PPOcrOnnx 를 쓰세요. 정해진 폰트의 PASS/FAIL 검증이 목적이면 OCV 가 더 엄격합니다."
+  ]
+ },
+ "OCV (문자 검증)": {
+  "title": "OCV — 문자 검증 (Optical Character Verification)",
+  "purpose": "미리 학습한 폰트 템플릿과 각 문자를 대조해 인쇄가 제대로 되었는지 문자 단위로 검증합니다. OCR 이 ‘읽기’ 라면 OCV 는 ‘대조’ — 찍힘 · 번짐 · 누락 같은 인쇄 결함을 잡습니다. 같은 글자에 여러 폰트 · 스타일을 등록할 수 있습니다.",
+  "params": [
+   [
+    "Font Library Training — Known String · [Train] · [Clear Library]",
+    "—",
+    "학습 영역(ROI)을 정답 문자열에 맞추고 Known String 에 정답(예: ABC123)을 넣은 뒤 [Train]. 분할된 글자 수와 정답 길이가 같아야 학습됩니다"
+   ],
+   [
+    "Invert Image · Min/Max Char Height · Min Char Width",
+    "해제 · 12 / 200 · 4 (px)",
+    "이진화 극성과 글자 크기 필터(잡음 · 배경 제외)"
+   ],
+   [
+    "Match Threshold",
+    "0.65 [0~1]",
+    "문자별 NCC 점수 하한. 0.65 산업 기본, 0.80 이상 엄격, 0.50 이하 관대"
+   ],
+   [
+    "Expected Text (optional)",
+    "(빈 값)",
+    "지정하면 위치별 문자 비교와 길이 일치까지 판정"
+   ],
+   [
+    "Use Search Region · X Y W H",
+    "해제",
+    "학습 위치와 다른 곳에서 검증할 때 탐색 영역 지정. Fixture 연결 시 함께 이동"
+   ],
+   [
+    "Draw Overlay",
+    "켬",
+    "분할 박스 · 인식 문자 · 점수(초록 PASS · 빨강 BadChar)"
+   ]
+  ],
+  "outputs": "ReadString · CharCount · GoodCharCount · BadCharCount · MeanScore · MinScore · AllCharsPass · LengthMatch",
+  "judgment": "문자 하나라도 점수가 Match Threshold 미만이면 NG. Expected Text 를 지정하면 문자 · 길이 불일치도 NG.",
+  "tips": [
+   "컨베이어 위에서 라벨 위치가 바뀌면 Feature Match → Coordinates 연결로 Search Region 을 따라가게 하세요."
+  ]
+ },
+ "Code Reader (코드 판독)": {
+  "title": "Code Reader — 바코드 · QR · DataMatrix 판독",
+  "purpose": "QR · 1D 바코드(CODE 128/39, EAN 등) · DataMatrix · PDF417 을 인식해 문자열로 디코딩합니다. 저대비 레이저 마킹은 자동 대비 보정(CLAHE)으로 읽고, 회전 사각형 ROI 를 쓰면 기울어진 코드도 바로 세워 읽습니다. 기대 문자열 검증, GS1 파싱, DataMatrix 인쇄 품질 등급까지 지원합니다.",
+  "params": [
+   [
+    "Code Reader Mode",
+    "Auto (Auto · QRCode · Barcode1D · DataMatrix · PDF417)",
+    "코드 종류를 지정하면 빠르고 정확합니다"
+   ],
+   [
+    "Max Code Count · Try Harder · DM Candidate Localization",
+    "10 · 켬 · 켬",
+    "한 화면 판독 개수 상한, 정밀 탐색, DataMatrix 후보 영역 선탐색"
+   ],
+   [
+    "Enable Verification · Expected Text · Use Regex Match",
+    "해제 · (빈 값) · 해제",
+    "판독 문자열 검증(예: ^LOT-\\d{6}$)"
+   ],
+   [
+    "Parse GS1 AIs",
+    "해제",
+    "GS1 코드를 (01)GTIN · (10)Batch · (17)Expiry · (21)Serial 로 분리해 Gs1_01 같은 결과 키로 노출"
+   ],
+   [
+    "Enable Grading · Min Pass Grade",
+    "해제 · F",
+    "DataMatrix 인쇄 품질 등급(ISO/IEC 15415 간소화). C 가 산업 표준 최저"
+   ],
+   [
+    "Draw Overlay",
+    "켬",
+    "코드 위치 폴리곤 + 문자열(초록 PASS · 빨강 FAIL), 등급 · GS1 배지"
+   ]
+  ],
+  "outputs": "DecodedText · CodeFormat · CodeCount · Gs1Formatted · Gs1_xx · OverallGrade · SymbolContrast · Modulation · PixelsPerModule · SymbolSize",
+  "judgment": "검증을 켜면 문자열 불일치 NG, 등급을 켜면 Min Pass Grade 미만 NG. 둘 다 끄면 코드가 1 개 이상 읽히면 OK.",
+  "tips": [
+   "곡면 라벨은 Circle Fit → Polar Unwrap 으로 펼친 뒤 읽습니다.",
+   "DataMatrix 가 안 읽히면 Image Enhance 로 선명도를 올리거나 ROI 를 코드에 가깝게 잡아 보세요."
+  ]
+ },
+ "Color Extract (색 추출)": {
+  "title": "Color Extract — 색 추출 (HSV)",
+  "purpose": "컬러 이미지에서 학습한 색 범위(HSV)에 해당하는 픽셀만 마스크로 뽑습니다. 여러 색 모델을 등록하면 OR 로 합쳐집니다. 뽑은 마스크를 Blob 에 연결해 색 부품의 유무 · 개수 · 위치를 검사합니다.",
+  "params": [
+   [
+    "Models · [+ Add] [− Remove] · [Train Selected Model]",
+    "—",
+    "모델을 고르고 Use Training Region 을 켠 뒤 대상 색 위에 ROI 를 그려 [Train Selected Model]. 조명 · 그라데이션으로 색이 조금씩 다르면 모델을 나눠 학습"
+   ],
+   [
+    "Hue Min / Max",
+    "0 / 179",
+    "색상 범위(OpenCV 0~179). 빨강 0~10 · 160~179, 주황 10~20, 노랑 20~30, 초록 35~85, 파랑 100~130, 보라 130~160. Min > Max 면 빨강처럼 순환 구간으로 처리"
+   ],
+   [
+    "Saturation Min / Max · Value Min / Max",
+    "50 / 255 · 50 / 255",
+    "채도 · 명도 범위. 회색 · 어두운 영역 · 반사를 제외할 때 하한 · 상한을 조정"
+   ],
+   [
+    "Morphology Kernel · Invert Mask",
+    "3 · 해제",
+    "마스크 잡음 제거 · 구멍 채움 / 범위 밖 픽셀 추출"
+   ],
+   [
+    "Show Overlay · Overlay Opacity",
+    "켬 · 0.4",
+    "자홍색 반투명 오버레이"
+   ],
+   [
+    "Use Search Region · X Y W H",
+    "해제",
+    "실행 시 탐색 영역(학습 ROI 와 별개). Fixture 연결 시 함께 이동"
+   ]
+  ],
+  "outputs": "MatchedPixels · TotalPixels · AreaRatio · EnabledModelCount · Model{i}_Pixels · Model{i}_AreaRatio",
+  "judgment": "자체 판정 없음 — 뒤에 Blob · Result 를 연결해 판정합니다.",
+  "tips": [
+   "Grayscale 앞의 원본 컬러 이미지를 입력으로 연결해야 합니다."
+  ]
+ },
+ "Color Match (색 매칭)": {
+  "title": "Color Match — 색 매칭 (Lab ΔE)",
+  "purpose": "학습한 색 패치의 평균 Lab 값과 각 픽셀의 색 차이(ΔE76)를 계산해 허용치 이내인 영역을 표시합니다. Lab 은 사람이 느끼는 색 차이에 가까운 색 공간이라 조명 변화에 Color Extract 보다 강합니다. 파라미터가 허용치 하나뿐이라 조정이 쉽습니다.",
+  "params": [
+   [
+    "Models · [Train Selected Model] · [Pick from Image]",
+    "—",
+    "ROI 를 색 패치에 그려 학습하거나, 이미지의 한 점을 찍어 색을 가져옵니다"
+   ],
+   [
+    "Mean L / a / b",
+    "— / 128 / 128",
+    "학습된 평균 Lab 값(직접 수정 가능). L 밝기, a 적-녹, b 황-청(중성 128)"
+   ],
+   [
+    "Color Tolerance (ΔE76)",
+    "25 [0~100] (Web 연동 가능)",
+    "허용 색 차이. 5~10 매우 엄격, 15~25 일반, 30~50 느슨"
+   ],
+   [
+    "Morphology Kernel · Show Overlay · Overlay Opacity",
+    "3 · 켬 · 0.4",
+    "후처리와 초록 반투명 오버레이"
+   ],
+   [
+    "Use Search Region · X Y W H",
+    "해제",
+    "실행 탐색 영역. Fixture 연결 시 함께 이동"
+   ]
+  ],
+  "outputs": "MatchedPixels · TotalPixels · AreaRatio · EnabledModelCount · ColorTolerance · Model{i}_…",
+  "judgment": "자체 판정 없음 — Blob · Result 연결로 판정합니다. 색이 ‘맞는지’ 는 AreaRatio 를 Result 나 Batch Test 임계로 봅니다.",
+  "tips": [
+   "색 차이를 Web 에서 관리하려면 Color Tolerance 를 파라미터 연동 콤보에 연결하세요."
+  ]
+ },
+ "Point Cloud Mask Crop (마스크 점군 크롭)": {
+  "title": "PointCloud Mask Crop — 마스크로 점군 잘라내기",
+  "purpose": "2D 마스크 이미지(Threshold · Height Slicer · YOLOv8-seg 의 마스크 출력)에 해당하는 영역만 3D 점군에서 남깁니다. 2D 딥러닝 검출과 3D 측정을 잇는 다리 역할이며, 마스크와 점군 해상도가 달라도 자동으로 비율을 맞춥니다. 마스크 없이 ROI 만 그려 잘라낼 수도 있습니다.",
+  "params": [
+   [
+    "Min Mask Value",
+    "1 [1~255]",
+    "이 값 이상인 마스크 픽셀을 유효로 봅니다"
+   ],
+   [
+    "Dilate (px)",
+    "0 [0~50]",
+    "마스크를 바깥으로 넓혀 경계 점을 더 포함"
+   ],
+   [
+    "Invert Mask",
+    "해제",
+    "마스크 밖을 남깁니다"
+   ],
+   [
+    "Combine Mode",
+    "Replace (Replace · Union)",
+    "같은 점군에 Mask Crop 을 여러 개 나란히 쓸 때 두 번째부터 Union 으로 두어야 합칩니다(모두 Replace 면 첫 크롭이 점군을 이미 좁혀 두 번째가 실패)"
+   ],
+   [
+    "Skip Invalid Z (=0)",
+    "켬",
+    "깊이 0 인 무효 점 제외"
+   ]
+  ],
+  "outputs": "InputPoints · OutputPoints · KeptRatio · MaskCoveragePercent · MergedPoints",
+  "judgment": "남은 점이 0 이면 실패(점군은 바뀌지 않음). MaskCoveragePercent 가 100 에 가까우면 마스크가 아니라 일반 이미지를 연결한 것입니다.",
+  "tips": [
+   "자동 마스크 흐름: YOLOv8-seg(Output Mask Image 켬) 또는 Threshold · Height Slicer → Image 연결 → Mask Crop → Result 연결 → PointCloud Cluster.",
+   "수동 흐름: 2D 이미지를 연결하고 이 도구를 선택한 뒤 이미지 뷰에서 ROI(사각형 · 원 · 다각형)를 그립니다. 결과는 Point Cloud 탭에서 확인합니다."
+  ]
+ },
+ "Point Cloud Cluster (포인트클라우드 클러스터)": {
+  "title": "PointCloud Cluster — 덩어리 분리 · 개수 · 치수",
+  "purpose": "점군을 거리 기준으로 덩어리(클러스터)로 나눠 물체 개수를 세고 덩어리마다 크기(가로 · 세로 · 높이) · 중심 · 방향을 잽니다. 부품 개수 세기, 가장 큰 물체만 남기기, 부스러기 제거에 씁니다. 카메라 정보로 mm 환산이 가능합니다.",
+  "params": [
+   [
+    "Tolerance (mm)",
+    "5.0 [0.1~50]",
+    "이 거리 안의 점은 같은 덩어리. 부품 사이 간격보다 작게"
+   ],
+   [
+    "Min Points · Max Points",
+    "100 · 1000000",
+    "덩어리로 인정할 점 수 범위(잡음 제외)"
+   ],
+   [
+    "Max Reported Clusters",
+    "10 [1~50]",
+    "결과에 보고할 덩어리 수 상한"
+   ],
+   [
+    "Scale Mode · XY Scale (mm/px)",
+    "Manual (Manual · AutoFromCamera) · 1.0",
+    "AutoFromCamera 는 Mech-Mind 촬영 점군에서 카메라 내부 정보와 실측 높이로 mm/px 를 자동 계산(권장). 파일 점군 등 정보가 없으면 XY Scale 로 폴백"
+   ],
+   [
+    "Output Mode",
+    "LargestOnly (LargestOnly · AllMerged · KeepOriginal)",
+    "가장 큰 덩어리만 남김 / 유효 덩어리 전부 합침(잡음 제거) / 점군 유지하고 측정만"
+   ],
+   [
+    "Draw Overlay",
+    "켬",
+    "2D 이미지에 덩어리별 색 점 · 외접 사각형 · 중심 · 라벨(#번호, 점 수, 길이×폭)"
+   ]
+  ],
+  "outputs": "ClusterCount · LargestPoints · Cluster{i}_Points · Cluster{i}_CenterX/Y/Z(+Mm) · Cluster{i}_SizeX/Y/Z · Cluster{i}_Length · Cluster{i}_Width · Cluster{i}_Angle · Cluster{i}_{j}_DistanceMm",
+  "judgment": "자체 공차 판정 없음 — 개수 · 치수는 Result 도구 또는 Batch Test 임계로 판정하고, 덩어리 간 거리 · 각도는 3D Geometry 로 계산합니다.",
+  "tips": [
+   "템플릿 ‘3D 객체 카운트 · 치수 (기본)’ · ‘DL 세그 기반 3D 객체 검출’ 이 이 도구까지 연결된 체인을 만들어 줍니다.",
+   "3D Geometry 의 클러스터 콤보에서 덩어리를 고르면 2D 뷰에 강조 표시됩니다."
+  ]
+ },
+ "Point Cloud Registration (포인트클라우드 정합)": {
+  "title": "PointCloud Registration — 기준 형상 정합 (3D 얼라인)",
+  "purpose": "기준 3D 데이터(.vpc 점군 또는 .stl CAD)와 현재 점군을 겹쳐 맞춥니다. PCA 로 거칠게 맞춘 뒤 ICP 로 정밀 정합해 이동 · 회전량(6 축)을 구하며, 부품이 매번 조금씩 다르게 놓일 때 자세를 재거나 편차 검사 앞단에서 자세를 맞출 때 씁니다.",
+  "params": [
+   [
+    "Reference Point Cloud · [Save Current as Reference] [Load...] [Clear]",
+    "(없음)",
+    "현재 점군을 기준으로 저장하거나 .vpc / .stl 파일을 불러옵니다(STL 은 표면을 약 20만 점으로 샘플링)"
+   ],
+   [
+    "Enable Coarse Alignment",
+    "켬",
+    "PCA 거친 정렬. 구 · 정육면체처럼 완전 대칭인 물체에는 효과가 없습니다"
+   ],
+   [
+    "Max Iterations · Tolerance (mm)",
+    "50 · 0.01",
+    "ICP 반복 횟수와 수렴 기준"
+   ],
+   [
+    "Confidence Distance (mm)",
+    "1.0",
+    "신뢰도 계산에 쓰는 대응 거리"
+   ],
+   [
+    "Apply Transform to Source",
+    "켬",
+    "구한 변환을 현재 점군에 적용(뒤 도구가 정렬된 점군을 봄). 변위만 필요하면 끕니다"
+   ]
+  ],
+  "outputs": "MeanError · Iterations · Converged · Confidence · CoarseApplied · TranslationX/Y/Z · TranslationNorm · RotationX/Y/Z · M11~M44",
+  "judgment": "MeanError(mm)가 작고 Converged = True 면 성공. Confidence 0.9 이상이면 잘 맞은 것, 0.5 이하면 다른 부품이거나 정합 실패 의심.",
+  "tips": [
+   "템플릿 ‘표준 3D 얼라인’ 은 Filter → Registration(변환 미적용) → Result 로 6 축 변위를 내고, ‘3D 기준 형상 편차 검사’ 는 Registration → Deviation 순서입니다."
+  ]
+ },
+ "Point Cloud Deviation (기준 형상 편차)": {
+  "title": "PointCloud Deviation — 기준 형상 대비 편차 히트맵",
+  "purpose": "기준(양품) 점군과 현재 점군을 점 단위로 비교해 어느 부위가 얼마나 어긋났는지 히트맵(초록 = 일치, 노랑 = 어긋나기 시작, 빨강 = 범위 초과)으로 보여 주고, 허용 오차를 벗어난 점의 비율로 OK/NG 를 판정합니다. 들뜸 · 눌림 · 변형 검사에 씁니다.",
+  "params": [
+   [
+    "Reference Point Cloud · [Save Current as Reference] [Load...] [Clear]",
+    "(없음)",
+    "기준 점군(.vpc) 또는 CAD(.stl)"
+   ],
+   [
+    "Tolerance (mm)",
+    "0.5 [0.01~10]",
+    "이 거리 이내면 일치"
+   ],
+   [
+    "Heatmap Range (mm)",
+    "1.0 [0.05~10]",
+    "이 값 이상이면 빨강"
+   ],
+   [
+    "Max Defect Ratio (%)",
+    "0.5 [0~100]",
+    "초과 점 비율이 이 값을 넘으면 NG"
+   ],
+   [
+    "Output Mode",
+    "ColorizeAll (ColorizeAll · DefectsOnly · KeepOriginal)",
+    "전체 색칠 / 초과 점만 남김(뒤에 Cluster 를 붙이면 불량 영역의 개수 · 크기 · 위치 측정) / 원본 유지"
+   ]
+  ],
+  "outputs": "MeanDeviation · MaxDeviation · DefectPoints · DefectRatio · CheckedPoints",
+  "judgment": "DefectRatio × 100 ≤ Max Defect Ratio 면 OK.",
+  "tips": [
+   "자세가 맞지 않은 채 실행하면 전체가 빨갛게 나옵니다 — 반드시 Registration(Coarse Alignment 켬)을 앞에 두세요."
+  ]
+ },
+ "Geometry 3D (3D 기하)": {
+  "title": "3D Geometry — 점 · 평면 사이 거리 · 각도",
+  "purpose": "3D 점 · 평면 사이의 거리와 각도를 계산합니다. 클러스터 중심 두 개 사이 거리, 점에서 평면까지 높이, 두 평면 사이 각도(기울기) · 거리(단차)를 구합니다. 평면 틸트 얼라인 템플릿의 핵심 도구입니다.",
+  "params": [
+   [
+    "Operation",
+    "PointToPointDistance (PointToPointDistance · PointToPlaneDistance · PlaneToPlaneAngle · PlaneToPlaneDistance · PointToLineDistance3D)",
+    "계산 종류"
+   ],
+   [
+    "Point Source",
+    "수동 입력 (픽셀) (수동 · 연결 소스(클러스터))",
+    "Point A/B 의 픽셀 좌표를 직접 넣거나, Result 로 연결한 PointCloud Cluster 의 덩어리(Cluster A / Cluster B 콤보)를 고릅니다. 클러스터 도구 하나만 연결해도 A/B 두 덩어리 중심 간 거리를 잽니다"
+   ],
+   [
+    "Source Geometries",
+    "—",
+    "Result 로 연결된 Plane Fit · Cluster 목록"
+   ]
+  ],
+  "outputs": "Distance3D · SignedDistance · DeltaX/Y/Z · AngleDeg · AngleRad · Point1X/Y/Z · Point2X/Y/Z · IsParallel",
+  "judgment": "이 도구에는 공차 판정이 없습니다. 합불이 필요하면 뒤에 Result 도구를 연결하거나 AngleDeg · Distance3D 를 PLC 로 매핑해 PLC 에서 판정합니다.",
+  "tips": [
+   "클러스터 콤보에서 덩어리를 고르면 2D 뷰에 해당 덩어리가 강조됩니다. 목록이 비어 있으면 PointCloud Cluster 를 Result 로 연결하고 Run 을 한 번 실행하세요.",
+   "mm 정확도는 Cluster 의 Scale Mode(AutoFromCamera 권장)를 따릅니다."
+  ]
+ },
+ "Image Rectify (이미지 정류)": {
+  "title": "Image Rectify — 렌즈 왜곡 · 기울기 보정",
+  "purpose": "캘리브레이션(§5.9) 결과로 이미지의 렌즈 왜곡을 펴고(Undistort), N-Point 방식이면 기울어진 평면을 정면으로 펴서(Apply Homography) 뒤따르는 측정 도구가 왜곡 없는 이미지를 보게 합니다. 측정 파이프라인 맨 앞에 둡니다.",
+  "params": [
+   [
+    "Undistort (lens distortion)",
+    "켬",
+    "렌즈 왜곡 보정 — Checkerboard · Circles Grid 캘리브레이션 결과로만 동작"
+   ],
+   [
+    "Apply Homography (NPoint planar)",
+    "해제",
+    "기울어진 평면 펴기 — N-Point 캘리브레이션 결과로만 동작"
+   ]
+  ],
+  "outputs": "DidUndistort · DidHomography · PixelSizeMm",
+  "judgment": "판정 없음. 캘리브레이션이 레시피에 없으면 이미지를 그대로 통과시킵니다(오류 아님).",
+  "tips": [
+   "켰는데 화면이 그대로면 캘리브레이션 방식이 맞지 않는 경우입니다 — 상태 메시지에 실제로 무엇이 적용됐는지 표시됩니다.",
+   "펴는 과정에서 가장자리가 잘리거나 늘어날 수 있으므로 뒤 도구의 ROI 는 편 뒤의 화면 기준으로 잡으세요."
+  ]
+ },
+ "Point Cloud Filter (포인트클라우드 필터)": {
+  "title": "PointCloud Filter — 점군 솎아내기 · 이상점 제거",
+  "purpose": "점군의 점 수를 줄이고(VoxelGrid 다운샘플) 표면에서 튄 점을 지웁니다(통계적 이상점 제거, SOR). Registration · Deviation 앞에 두어 처리 속도를 높이는 것이 주된 용도입니다. 촬영 자체의 노이즈는 이 도구가 아니라 스텝의 Camera Settings 에 있는 ‘포인트 클라우드 후처리’(끄기 · 약 · 중 · 강)로 카메라 안에서 정리합니다.",
+  "params": [
+   [
+    "Enable Voxel Grid · Voxel Size (mm)",
+    "켬 · 1.0 [0.05~20]",
+    "같은 격자 안의 점을 하나로 합칩니다. 0.1~0.5 정밀(작은 부품), 1.0 일반, 2~5 속도 우선"
+   ],
+   [
+    "Enable SOR · Neighbor Count (K) · Stddev Multiplier",
+    "해제 · 30 · 2.0",
+    "통계적 이상점 제거. 큰 점군에서는 시간이 오래 걸리므로 VoxelGrid 로 먼저 솎아낸 뒤 켭니다"
+   ]
+  ],
+  "outputs": "InputPoints · OutputPoints · ReductionRatio · AppliedVoxel · AppliedSor",
+  "judgment": "판정 없음. ReductionRatio 가 0.9 이상이면 Voxel Size 가 과한지 확인하세요.",
+  "tips": [
+   "가공된 점군은 뒤의 점군 도구(Registration · Deviation · Cluster · Plane Fit)가 그대로 쓰지만, 촬영 시 만들어진 Depth Map(Height Slicer 입력)에는 반영되지 않습니다."
+  ]
+ },
+ "Height Slicer (높이 슬라이스)": {
+  "title": "Height Slicer — 높이 범위로 2D 마스크 만들기",
+  "purpose": "깊이 맵에서 지정한 높이(Z) 범위에 드는 영역만 2D 이미지로 만듭니다. 바닥을 빼고 부품이 있는 높이만 남겨 PointCloud Mask Crop 에 넘기는 3D 검사의 출발점입니다. Image 연결이 없으면 현재 스텝의 깊이 맵을 자동으로 입력으로 씁니다.",
+  "params": [
+   [
+    "Min Z (mm)",
+    "0 (Web 연동 가능)",
+    "이보다 낮은 점 제외 — 바닥면보다 약간 높게"
+   ],
+   [
+    "Max Z (mm)",
+    "1000 (Web 연동 가능)",
+    "이보다 높은 점 제외"
+   ]
+  ],
+  "outputs": "MinZ · MaxZ (출력은 슬라이스된 2D 이미지)",
+  "judgment": "판정 없음.",
+  "tips": [
+   "3D 뷰에 슬라이스 경계가 표시됩니다. 3D → Save Height Slicing 으로 설정을 저장할 수 있습니다.",
+   "템플릿 ‘3D 객체 카운트 · 치수 (기본)’ 에서 MinZ/MaxZ 를 부품 높이 범위에 맞추는 것이 첫 조정 항목입니다."
+  ]
+ },
+ "Plane Fit (평면 피팅)": {
+  "title": "Plane Fit — 평면 피팅 (평탄도 · 기울기 · 단차 기준면)",
+  "purpose": "ROI 안의 3D 점들에서 평면 방정식을 구합니다. 평탄도, 기울기(두 평면 각도), 단차(점-평면 거리)의 기준면을 만들며, 결과를 3D Geometry 에 Result 로 연결해 씁니다.",
+  "params": [
+   [
+    "Fit Method",
+    "RANSAC (LeastSquares · RANSAC)",
+    "RANSAC 이 이상점에 강해 기본 권장"
+   ],
+   [
+    "RANSAC Iterations",
+    "1000 [10~5000]",
+    "보통 200~500 이면 충분. 점군이 지저분할수록 올립니다"
+   ],
+   [
+    "RANSAC Threshold (mm)",
+    "0.5 [0.01~5]",
+    "평면에서 이 거리 안의 점을 평면 위 점으로 봅니다. 0.1 가공면, 0.5 일반, 2.0 거친 표면. 너무 작으면 실패, 너무 크면 결과가 기웁니다"
+   ],
+   [
+    "Sample Stride",
+    "2 [1~16]",
+    "점 표본 간격. 올리면 빨라지지만 작은 굴곡을 놓칠 수 있음"
+   ]
+  ],
+  "outputs": "PlaneA/B/C/D · NormalX/Y/Z · Flatness · AvgError · InlierCount · TotalPoints",
+  "judgment": "자체 판정 없음 — 3D Geometry 로 각도 · 거리를 구한 뒤 Result 또는 PLC 에서 판정합니다.",
+  "tips": [
+   "템플릿 ‘평면 틸트 얼라인’ 은 Plane Fit Ref · Plane Fit Target → 3D Geometry(PlaneToPlaneAngle) 로 구성되며 AngleDeg 0° 가 평행입니다."
+  ]
+ },
+ "Result (결과/판정)": {
+  "title": "Result — 최종 OK / NG 판정",
+  "purpose": "Result 로 연결된 도구들의 성공 · 실패를 모아 스텝의 최종 판정을 냅니다. 검사 파이프라인의 마지막에 두며, Result 도구가 있으면 그 결과가 스텝 전체의 판정이 됩니다. 소스 도구가 실패해도 이 도구는 건너뛰지 않고 실패 정보를 수집합니다.",
+  "params": [
+   [
+    "Judgment Mode",
+    "AllPass (AllPass · AnyPass)",
+    "AllPass: 연결된 도구가 모두 성공해야 OK(소스가 하나도 없으면 NG). AnyPass: 하나라도 성공하면 OK"
+   ],
+   [
+    "Source Results",
+    "—",
+    "Result 로 연결된 도구 목록(빈 상태 ‘No source tools connected’)"
+   ]
+  ],
+  "outputs": "PassCount · FailCount · TotalCount (메시지 ‘OK (n/m passed)’ · ‘NG (n/m failed)’)",
+  "judgment": "판정 모드에 따라 OK/NG. 이 결과가 Run Results 의 Pass/Fail 과 VMS 의 판정 배지가 됩니다.",
+  "tips": [
+   "최종 OK/NG 신호를 PLC · IO 보드로 내보내는 것은 이 도구가 아니라 시퀀스 편집기의 Branch → Output Action 이 담당합니다(§5.10). 이 도구의 PLC Output 은 PassCount 같은 통계 값 보조 전송용입니다."
+  ]
+ },
+ "Photometric Stereo (포토메트릭 스테레오)": {
+  "title": "Photometric Stereo — 조명 방향별 사진 합성 (표면 요철 강조)",
+  "purpose": "같은 자리에서 조명 방향만 바꿔 찍은 사진 3 장 이상(보통 4 장)을 합쳐 눌린 자국 · 얕은 긁힘 · 각인 누락처럼 밝기 차이로는 안 보이는 표면 요철을 드러냅니다. 결함 강조 이미지(DefectEnhanced)를 Blob · Threshold 로 넘겨 판정합니다.",
+  "params": [
+   [
+    "Output Type · Curvature Gain",
+    "DefectEnhanced (NormalMap · Albedo · DefectEnhanced) · 8 [1~30]",
+    "결함 검사용은 DefectEnhanced. Gain 을 올리면 얕은 결함이 드러나지만 표면 거칠기도 도드라짐. NormalMap 은 확인용, Albedo 는 인쇄 · 오염 검사용"
+   ],
+   [
+    "Shadow Threshold · Highlight Threshold",
+    "10 [0~100] · 245 [155~255]",
+    "이보다 어두운 픽셀(그림자) · 밝은 픽셀(정반사 포화)은 계산 신뢰도를 낮춥니다. 광택 금속면은 Highlight 를 조금 낮춥니다"
+   ],
+   [
+    "Light Sources (≥3) · [+ Add Light]",
+    "—",
+    "조명마다 방향 벡터(Lx · Ly · Lz)와 그 조명에서 찍은 이미지 경로를 등록합니다. 방향이 실제 배치와 다르면 결과가 통째로 어긋납니다"
+   ]
+  ],
+  "outputs": "LightCount · OutputType (출력은 합성 이미지)",
+  "judgment": "자체 판정 없음 — DefectEnhanced → Blob 또는 Threshold → Result 로 판정합니다.",
+  "tips": [
+   "조명 4 개를 제품 둘레에 배치하고 하나씩 켜 가며 같은 장면을 찍는 구성이 표준입니다."
+  ]
+ },
+ "Detection (딥러닝 검출)": {
+  "title": "Detection — 딥러닝 객체 검출 (D-FINE · YOLO)",
+  "purpose": "학습된 ONNX 모델로 객체의 위치(박스)와 클래스를 검출합니다. 기본 학습 백본은 D-FINE(Apache 2.0)이며 YOLOv8/v11 형식도 자동 판별합니다. 부품 유무 · 다종 부품 검출 · 외관 결함 검출에 씁니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+  "params": [
+   [
+    "Model Path (.onnx) · [레지스트리…]",
+    "(빈 값)",
+    "ONNX 파일 또는 MLOps 레지스트리 참조(model://…). Class Names 는 모델 메타데이터에서 자동으로 채워집니다"
+   ],
+   [
+    "Inference Size (px)",
+    "640 [320~1280]",
+    "학습 imgsz 와 같게"
+   ],
+   [
+    "Use SAHI · Tile Size · Overlap Ratio",
+    "해제 · 640 · 0.2",
+    "큰 이미지를 타일로 나눠 추론(작은 결함). 타일 수만큼 느려집니다"
+   ],
+   [
+    "Use CLAHE · Clip Limit · Tile Grid Size",
+    "해제 · 2.0 · 8",
+    "추론 전 국소 대비 향상(어두운 이미지). 조명이 고르면 끕니다"
+   ],
+   [
+    "Confidence Threshold · IoU Threshold",
+    "0.25 · 0.45",
+    "검출 신뢰도 하한(0.25 많이, 0.7 확실한 것만) / 중복 박스 제거 기준"
+   ],
+   [
+    "Use Per-Class Thresholds · Class Names",
+    "해제 · (자동)",
+    "클래스별로 임계값을 다르게(크랙 0.3, 스크래치 0.6 등). 메타데이터가 없으면 클래스 이름을 쉼표로 입력"
+   ],
+   [
+    "Use Dot Analysis (+ Min/Max Dot Area · Circularity · Min Dot Distance · Preprocess/Threshold Mode · Pattern Angle Metric · Per-Class Dot Expectations)",
+    "해제",
+    "검출 박스 안의 점(dot) 군락 개수 · 배치 · 정렬 각도를 재서 기대 개수 ± 공차 · 각도 ± 공차로 판정하는 특수 기능"
+   ],
+   [
+    "Draw Overlay",
+    "켬",
+    "박스 · 클래스 · 신뢰도"
+   ]
+  ],
+  "outputs": "DetectionCount 와 검출별 클래스 · 신뢰도 · 박스",
+  "judgment": "객체가 0 건이면 NG(§5.6). Dot Analysis 를 켜면 모든 군락이 기대치 안이어야 OK.",
+  "tips": [
+   "‘결함이 없으면 OK’ 인 검사는 결함 클래스 검출 = NG 로 해석해야 하므로 Result 도구 또는 Per-Class 설정으로 판정 방향을 맞추세요.",
+   "템플릿 ‘DL 객체 검출 판정’ 이 Detection → Result 체인을 만들어 줍니다."
+  ]
+ },
+ "Segmentation (분할)": {
+  "title": "Segmentation — 픽셀 단위 분할 (semantic)",
+  "purpose": "U-Net 같은 픽셀 분류 모델로 이미지를 클래스별 마스크로 나눕니다. 결함 영역의 면적을 재거나 배경 · 전경을 분리할 때 쓰며, 같은 클래스의 개체를 따로 세야 하면 YOLOv8-seg · RF-DETR-seg 를 씁니다. 뒤에 Blob 을 붙여 개수 · 크기를 분석합니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+  "params": [
+   [
+    "Model Path (.onnx) · Input Size",
+    "(빈 값) · 512 [64~1024]",
+    "입력 [1,3,H,W] · 출력 [1,C,H,W] 로짓 모델. 입력 크기는 학습 크기와 같아야 합니다(다르면 오류 없이 정확도만 떨어짐)"
+   ],
+   [
+    "ImageNet Normalization",
+    "켬",
+    "학습 때와 같아야 합니다. 마스크가 엉뚱하면 이 설정부터 확인"
+   ],
+   [
+    "Background Class Index",
+    "0 [0~32]",
+    "이 클래스는 마스크에서 제외"
+   ],
+   [
+    "Show Overlay · Overlay Opacity",
+    "켬 · 0.4",
+    "클래스별 컬러 반투명 오버레이"
+   ]
+  ],
+  "outputs": "NumClasses · ForegroundPixels · ForegroundRatio · Class{i}_Name · Class{i}_Pixels · Class{i}_AreaRatio",
+  "judgment": "자체 판정 없음 — Blob · Result 로 판정합니다.",
+  "tips": []
+ },
+ "YOLO Segmentation": {
+  "title": "YOLOv8-seg — 인스턴스 분할 (Ultralytics)",
+  "purpose": "YOLOv8/v11 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 픽셀 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). Ultralytics 는 AGPL-3.0 이므로 상용 배포 라이선스를 확인하고, 대안으로 RF-DETR-seg 를 권장합니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+  "params": [
+   [
+    "Model Path (.onnx) · Input Size",
+    "(빈 값) · 640",
+    "Ultralytics 표준 export(output0 + output1 프로토타입)"
+   ],
+   [
+    "Confidence Threshold · IoU Threshold (NMS) · Mask Threshold",
+    "0.25 · 0.45 · 0.5",
+    "검출 신뢰도 / 중복 제거 / 마스크 이진화 기준(0.3 크게 · 0.7 코어만)"
+   ],
+   [
+    "Show Mask Overlay · Overlay Opacity · Draw Boxes + Labels",
+    "켬 · 0.4 · 켬",
+    "표시 옵션"
+   ],
+   [
+    "Output Mask Image",
+    "해제",
+    "켜면 출력 이미지가 인스턴스 이진 마스크(흰색 = 인스턴스)가 되어 Mask Crop 등에 Image 연결"
+   ]
+  ],
+  "outputs": "InstanceCount · Inst{i}_Class · Inst{i}_ClassName · Inst{i}_Score · Inst{i}_X/Y/Width/Height · Inst{i}_MaskPixels",
+  "judgment": "인스턴스가 0 건이면 NG.",
+  "tips": [
+   "템플릿 ‘DL 세그 기반 3D 객체 검출’ 이 YOLOv8-seg(마스크 출력) → Mask Crop → Cluster 체인을 만듭니다."
+  ]
+ },
+ "RF-DETR-seg (인스턴스 분할)": {
+  "title": "RF-DETR-seg — 인스턴스 분할 (Apache 2.0)",
+  "purpose": "RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. YOLOv8-seg 와 하는 일은 같지만 Ultralytics(AGPL) 의존이 없어 상용 배포 시 소스 공개 의무가 없습니다. 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+  "params": [
+   [
+    "Model Path (.onnx) · [레지스트리…]",
+    "(빈 값)",
+    "파일 또는 model:// 참조"
+   ],
+   [
+    "Input Size (모델이 정합니다)",
+    "560 (잠김)",
+    "모델을 열면 ONNX 가 정한 값으로 자동 설정되고 칸이 잠깁니다 — 모델마다 배수가 달라 손으로 맞추면 안 됩니다"
+   ],
+   [
+    "Confidence Threshold · Max Instances",
+    "0.5 · 100 [1~1000]",
+    "검출 신뢰도 / 점수 순 상한"
+   ],
+   [
+    "Show Mask Overlay · Overlay Opacity · Draw Boxes + Labels · Output Mask Image",
+    "켬 · 0.4 · 켬 · 해제",
+    "YOLOv8-seg 와 같은 표시 · 마스크 출력 옵션"
+   ]
+  ],
+  "outputs": "YOLOv8-seg 와 동일(InstanceCount · Inst{i}_…)",
+  "judgment": "인스턴스가 0 건이면 NG.",
+  "tips": [
+   "학습은 MLOps 의 train_rfdetr_seg.py(세그멘테이션 데이터셋, coco 형식)로 합니다(§9.6)."
+  ]
+ },
+ "Classify (분류)": {
+  "title": "Classify — 이미지 분류",
+  "purpose": "ResNet · MobileNet 같은 분류 모델(ONNX)로 이미지(또는 ROI) 전체를 한 클래스로 판정합니다. 양품/불량 판정, 부품 종류 구분, 외관 등급에 씁니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+  "params": [
+   [
+    "Model Path (.onnx) · Input Width / Height",
+    "(빈 값) · 224 / 224",
+    "학습 입력 크기와 같게"
+   ],
+   [
+    "Confidence Threshold",
+    "0.5 [0.1~1]",
+    "Top-1 신뢰도가 이 값 이상이면 PASS"
+   ],
+   [
+    "Use ImageNet Normalization",
+    "켬",
+    "torchvision 사전학습 모델이면 켬"
+   ],
+   [
+    "Class Names · Draw Overlay",
+    "(자동) · 켬",
+    "학습 폴더 순서대로 쉼표 구분 / 클래스 · 신뢰도 표시(PASS 초록 · FAIL 빨강 테두리)"
+   ]
+  ],
+  "outputs": "ClassName · ClassId · Confidence",
+  "judgment": "Top-1 신뢰도가 Confidence Threshold 이상이면 OK. 클래스에 따른 OK/NG 는 Result 또는 Batch Test 임계로 정합니다.",
+  "tips": []
+ },
+ "Anomaly (이상 탐지)": {
+  "title": "Anomaly — 이상 탐지 (정상 이미지만으로 학습)",
+  "purpose": "PatchCore · FastFlow · EfficientAD 같은 anomalib 호환 모델로 정상 대비 이상 점수를 계산하고 히트맵으로 이상 부위를 표시합니다. 불량 샘플이 거의 없는 공정에서 정상 이미지만으로 학습해 쓰는 방식입니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+  "params": [
+   [
+    "Model Path (.onnx) · Input Size",
+    "(빈 값) · 224 [64~512]",
+    "학습 image_size 와 같게"
+   ],
+   [
+    "Anomaly Threshold",
+    "0.5 [0~1]",
+    "이 점수 이상이면 이상. 0.3 엄격(약한 이상도), 0.7 느슨"
+   ],
+   [
+    "Auto Threshold Calibration — Normal Images Folder · Sigma (k) · [Calibrate Threshold]",
+    "— · 3.0",
+    "정상 이미지 폴더의 점수 분포로 임계값을 제안(평균 + k × 표준편차). 제안값을 Anomaly Threshold 에 직접 반영해야 합니다"
+   ],
+   [
+    "Draw Overlay · Show Heatmap · Heatmap Opacity",
+    "켬 · 켬 · 0.4",
+    "NORMAL/ANOMALY 표시와 Jet 히트맵"
+   ]
+  ],
+  "outputs": "AnomalyScore · IsNormal",
+  "judgment": "AnomalyScore 가 Anomaly Threshold 미만이면 정상(OK).",
+  "tips": [
+   "정상 샘플 폴더에 결함품이 섞이면 보정 임계값이 통째로 느슨해지니 폴더 내용을 먼저 확인하세요.",
+   "템플릿 ‘DL 이상 탐지 판정’ 이 Anomaly → Result 체인을 만듭니다."
+  ]
+ }
+}

@@ -1,0 +1,267 @@
+<section id="web">
+<h2>8. 생산 관리 웹 (BODA.VMS.Web)</h2>
+<div class="callout"><strong>⚙ 이 장은 관리 화면을 사용하는 관리자 · 반장 · 사무실 담당자용입니다.</strong> 현장에서 검사만 수행하는 작업자는 읽지 않아도 됩니다.</div>
+<p>BODA.VMS.Web 은 별도 프로그램 설치 없이 <strong>브라우저(Chrome)</strong>로 접속합니다. 주소창에 <code>http://서버주소:5292</code> 를 입력하세요
+(라인 PC 안의 동봉 서버라면 <code>http://localhost:5292</code>). 화면 위쪽에 메뉴 막대가 있고, 각 메뉴를 누르면 하위 항목이 펼쳐집니다.
+좁은 화면(태블릿)에서는 왼쪽 위 ☰ 로 메뉴를 엽니다.</p>
+
+<h3 id="web-login">8.1 로그인 · 회원가입 · 비밀번호</h3>
+<figure><img src="../gs/screenshots/v3/web/w00_login.png" data-width="520" alt="로그인 화면"><figcaption>로그인 — 아이디 · 비밀번호 · "로그인 유지" 체크박스</figcaption></figure>
+<ol>
+  <li>아이디와 비밀번호를 입력하고 [로그인] 을 누릅니다. 처음 설치한 서버의 관리자 계정은 <code>admin</code> 입니다(비밀번호는 설치 시 지정, §2.3).</li>
+  <li><strong>로그인 유지</strong>(기본 해제)를 켜면 브라우저를 닫아도 최대 30 일 동안 로그인이 유지됩니다. 끄면 브라우저를 닫거나 8 시간이 지나면 다시 로그인합니다.
+      벽걸이 모니터에 안돈 보드를 상시 띄우는 PC 는 켜고, 여러 사람이 쓰는 PC 는 끕니다.</li>
+  <li>"아이디 또는 비밀번호가 잘못되었거나 승인 대기 중입니다" 는 세 경우를 구분하지 않는 안내입니다. 가입 직후라면 관리자 승인을 기다리세요. 5 회 연속 실패하면 15 분 동안 잠깁니다.</li>
+</ol>
+<h4>회원가입과 승인</h4>
+<figure><img src="../gs/screenshots/v3/web/w01_register.png" data-width="520" alt="회원가입 화면"><figcaption>회원가입 — 아이디 · 표시 이름 · 비밀번호(강도 표시)</figcaption></figure>
+<ul>
+  <li>로그인 화면의 "회원가입" 으로 계정을 신청합니다. 비밀번호는 8 자 이상 + 대/소문자 · 숫자 · 특수문자 중 3 종, 또는 10 자 이상 + 2 종이어야 합니다.</li>
+  <li>신청한 계정은 <strong>승인 대기</strong> 상태이며, 관리자가 시스템 관리 → 사용자 승인에서 역할(Guest / User / Admin)을 정해 승인해야 로그인할 수 있습니다(§8.22). 신청이 들어오면 관리자에게 알람이 생깁니다.</li>
+</ul>
+<h4>비밀번호 변경</h4>
+<p>관리자가 비밀번호를 초기화하면 임시 비밀번호가 발급됩니다. 임시 비밀번호로 로그인하면 <strong>비밀번호 변경</strong> 화면으로 자동 이동하며, 바꾸기 전에는 다른 화면을 쓸 수 없습니다.
+현재 비밀번호 · 새 비밀번호 · 확인을 입력하고 [비밀번호 변경] 을 누릅니다.</p>
+
+<figure><img src="../gs/screenshots/v3/web/d32_mobile_drawer.png" data-width="260" alt="좁은 화면(태블릿 · 스마트폰)에서는 ☰ 로 여는 드로어 메뉴"><figcaption>좁은 화면(태블릿 · 스마트폰)에서는 ☰ 로 여는 드로어 메뉴</figcaption></figure>
+<h3 id="web-nav">8.2 메뉴 구조와 공통 동작</h3>
+<figure><img src="../gs/screenshots/v3/web/w10_dashboard.png" data-width="620" alt="대시보드"><figcaption>상단 메뉴 막대(대시보드 · 현장 모니터링 · 생산 관리 · 품질 관리 · 설비 관리 · 시스템 관리)와 대시보드 화면</figcaption></figure>
+<table class="cols-2-5-2">
+  <tr><th>메뉴</th><th>항목</th><th>볼 수 있는 사람</th></tr>
+  <tr><td>대시보드</td><td>공장 전체 현황 (독립 버튼)</td><td>로그인 사용자</td></tr>
+  <tr><td>현장 모니터링</td><td>안돈 보드(새 탭) · 알람 · 생산 이력</td><td>로그인 사용자</td></tr>
+  <tr><td>생산 관리</td><td>작업 지시 · 제품 · 작업자</td><td>로그인 사용자</td></tr>
+  <tr><td>품질 관리</td><td>레시피 파라미터 · 파레토 분석 · SPC 관리도 · 불량 코드 · 교대 리포트 · PDF 리포트</td><td>로그인 사용자 (레시피 파라미터는 Admin · User)</td></tr>
+  <tr><td>설비 관리</td><td>비전 클라이언트 · OEE 설비종합효율 · 설비 신뢰성(MTBF/MTTR) · 예방 보전 · 불량률 예측</td><td>로그인 사용자</td></tr>
+  <tr><td>시스템 관리</td><td>교대 마스터 · 사용자 승인 · 감사 로그 · SW 라이선스 · 시스템 설정</td><td>Admin 만</td></tr>
+</table>
+<p>메뉴 막대 오른쪽에는 현재 시각, 다크 모드 토글(🌙), 언어 전환(🌐 한국어 / English), 미확인 알람 수 <strong>ALM 배지</strong>(0 건이면 표시되지 않음, 누르면 알람 화면), 사용자 칩(누르면 로그아웃)이 있습니다.</p>
+<h4>역할</h4>
+<table class="cols-2-7">
+  <tr><th>역할</th><th>할 수 있는 일</th></tr>
+  <tr><td>Guest</td><td>조회만. 레시피 파라미터 화면은 보이지 않고, 등록 · 수정 · 삭제 · 알람 처리 · Excel 내보내기는 할 수 없습니다.</td></tr>
+  <tr><td>User</td><td>Guest + 기준 정보 등록 · 수정, 작업지시 시작 · 완료 · 마감, Lot 발행 · 마감, 알람 확인 · 해제, 생산 이력 Excel 내보내기. <strong>삭제는 할 수 없습니다.</strong></td></tr>
+  <tr><td>Admin</td><td>전부. 유일하게 삭제할 수 있고, 레시피 · 파라미터 편집과 시스템 관리 메뉴를 씁니다.</td></tr>
+</table>
+<h4>모든 화면에 공통</h4>
+<ul>
+  <li>권한이 없는 화면에 들어가면 "이 화면에 접근할 권한이 없습니다" 안내와 [대시보드로 돌아가기] 가 표시됩니다(로그인 상태는 유지).</li>
+  <li>삭제는 항상 확인 창을 거치며 되돌릴 수 없습니다. 이력이 참조하는 항목(작업지시가 있는 제품, 출근 이력이 있는 작업자 등)은 삭제 대신 <strong>비활성화</strong>하도록 안내합니다.</li>
+  <li>이름 · 코드 중복은 "무엇이 겹쳤는지" 사유와 함께 거절됩니다. 목록이 200 건에서 잘리면 그 사실을 화면에 표시합니다.</li>
+  <li>Ctrl + 마우스 휠로 화면을 확대할 수 있습니다. 다크 모드는 브라우저별로 기억됩니다.</li>
+</ul>
+
+<h3 id="web-dashboard">8.3 대시보드</h3>
+<p>공장 전체 현황을 한 화면에 보여 줍니다. 검사 결과나 라인 상태가 바뀌면 새로 고침 없이 갱신됩니다.</p>
+<table class="cols-2-7">
+  <tr><th>카드</th><th>내용</th></tr>
+  <tr><td>금일 성과</td><td>양품률 · 가동률 · 가동 클라이언트 비율 · 불량률 도넛 4 개. 데이터가 없으면 0% 대신 "—" 로 표시됩니다.</td></tr>
+  <tr><td>최근 7일 생산 추세</td><td>전체 · 합격 · 불량 꺾은선(데이터 2 일 이상일 때).</td></tr>
+  <tr><td>클라이언트 상태</td><td>라인별 ID · 이름 · IP · 상태(온라인/오프라인) · 최근 응답. [전체 보기 →] 는 비전 클라이언트 화면으로.</td></tr>
+  <tr><td>금일 라인별 검사 실적</td><td>NG율 높은 순 상위 5 라인. [전체 보기 →] 는 안돈 보드를 새 탭으로 엽니다.</td></tr>
+  <tr><td>최근 알람</td><td>미확인 알람 5 건과 미확인 건수. [전체 보기 →] 는 알람 화면으로.</td></tr>
+  <tr><td>예정 보전 작업</td><td>7 일 내 예정된 예방 보전 5 건(지연 · 오늘 · D-n).</td></tr>
+</table>
+
+<h3 id="web-andon">8.4 안돈 보드</h3>
+<figure><img src="../gs/screenshots/v3/web/w11_andon.png" data-width="620" alt="안돈 보드"><figcaption>안돈 보드 — 라인 카드(상태 · 작업지시 · 진척률 · Total/Pass/NG) · 오늘 KPI · 활성 알람 · 예측 사전 경보</figcaption></figure>
+<p>벽걸이 모니터용 전체 화면 현황판입니다. 현장 모니터링 → 안돈 보드를 누르면 <strong>새 탭</strong>으로 열리며 로그인이 그대로 이어집니다.
+30 초마다 자동 갱신되고 알람 · 라인 상태 변화는 즉시 반영됩니다.</p>
+<ul>
+  <li>라인 카드 — <code>#번호</code> · 상태(RUNNING / IDLE / DOWN) · 라인 이름 · 진행 중 작업지시와 진척률(없으면 "활성 작업지시 없음") · Total / Pass / NG / NG%. 미해제 알람이 있으면 ⚠ 띠, Critical 은 점멸합니다.</li>
+  <li>오른쪽 패널 — TODAY 검사 수 · Pass · NG · NG Rate, 활성 알람 목록, 예측 사전 경보(예측 NG율 10% 이상 "위험", 5~10% "주의"), 마지막 갱신 시각과 실시간 연결 상태(Live / Offline).</li>
+</ul>
+<div class="callout tip">상시 표시 PC 는 로그인할 때 "로그인 유지" 를 켜 두세요. 브라우저를 껐다 켜도 로그인 화면 대신 현황판이 뜹니다.</div>
+
+<h3 id="web-alarms">8.5 알람</h3>
+<figure><img src="../gs/screenshots/v3/web/w12_alarms.png" data-width="620" alt="알람 화면"><figcaption>알람 — 요약 카드(미확인 · 확인됨 · 치명) · 필터(처리 상태 · 심각도 · 유형) · 목록 · [모두 확인]</figcaption></figure>
+<ul>
+  <li>불량(NG)이 올라오면 검사마다 <strong>Major</strong> 알람이 자동으로 생깁니다("NG @ 라인 — Recipe …", 메시지에 NG 코드 · Lot · 시리얼). 라인의 생존 신호가 끊기면 Offline 알람이 생기고 복구되면 자동으로 해제됩니다. 회원가입 신청도 Info 알람으로 올라옵니다.</li>
+  <li>기본 필터는 <strong>미확인</strong>입니다. 처리 상태(미확인 · 확인됨 · 해제됨) · 심각도(치명 · 중대 · 경미) · 유형(NG 발생 · 오프라인 · 기타)으로 추립니다.</li>
+  <li><strong>확인</strong> — "봤다"는 표시입니다. 미확인 건수(ALM 배지)에서 빠집니다. NG 알람은 자동 해제가 없어 쌓이므로 헤더의 <strong>[모두 확인]</strong> 으로 한 번에 처리할 수 있습니다.</li>
+  <li><strong>해제</strong> — 조치 내용(원인 · 조치 · 재발 방지)을 입력해야 종결됩니다. 해제자 · 시각 · 조치 내용이 목록에 남습니다.</li>
+  <li>확인 · 해제는 User 이상만 할 수 있습니다. 알람은 품질 기록이라 삭제되지 않습니다.</li>
+</ul>
+
+<figure><img src="../gs/screenshots/v3/web/d23_alarm_resolve.png" data-width="440" alt="알람 해제 창 — 조치 내용 입력 후 [해제]"><figcaption>알람 해제 창 — 조치 내용 입력 후 [해제]</figcaption></figure>
+<h3 id="web-history">8.6 생산 이력</h3>
+<figure><img src="../gs/screenshots/v3/web/w13_history.png" data-width="620" alt="생산 이력"><figcaption>생산 이력 — 라인 · 작업지시 · LOT · 기간 · 결과 필터, 요약 카드, 목록, [Excel 내보내기]</figcaption></figure>
+<ol>
+  <li>라인 · 작업지시 · LOT(작업지시를 먼저 고르면 활성) · 시작일 · 종료일(기본 최근 7 일) · 결과(합격 / 불량)를 고르고 [조회].</li>
+  <li>요약 카드에 기간 총 검사 · 양품 · NG · 평균 불량률이 표시되고, 목록에는 번호 · 라인 · 레시피 · WO / LOT · 결과 · NG 코드 · 검사 시각이 나옵니다. 시작일과 종료일을 같은 날로 두면 하루치만 봅니다.</li>
+  <li>NG 행(또는 사진이 있는 OK 행)의 [상세] 를 누르면 <strong>불량 상세</strong> 창이 열립니다 — 라인 · 레시피 · NG 코드 · 검사 시각, NG 사진, 도구별 측정값(도구 · 유형 · 측정값 · 최소 · 최대 · 결과).</li>
+  <li>[Excel 내보내기] 는 현재 필터의 결과를 xlsx 로 저장합니다(User 이상).</li>
+</ol>
+<ul>
+  <li>검사 사진이 보이려면 라인 PC 의 Image Save Settings 에서 "NG 이미지 Web 전송" 이 켜져 있어야 합니다(§4.6). 사진 열람은 로그인한 사용자만 가능합니다.</li>
+  <li>네트워크가 끊겼다가 복구되어 몇 시간치가 한꺼번에 올라와도 <strong>검사한 시각</strong>으로 기록됩니다.</li>
+  <li>검사 이력은 읽기 전용입니다 — 수정하거나 지울 수 없습니다.</li>
+</ul>
+
+<h3 id="web-workorders">8.7 작업 지시</h3>
+<figure><img src="../gs/screenshots/v3/web/w20_workorders.png" data-width="620" alt="작업 지시"><figcaption>작업 지시 — 상태 · 라인 필터, 목록(지시 번호 · 제품 · 라인 · 레시피 · 계획/생산 수량 · 합격/불량 · 진척률 · 상태), 행 버튼(시작 · 완료 · 종료 · LOT · 수정 · 삭제)</figcaption></figure>
+<p>작업지시는 <strong>계획됨 → 진행 중 → 완료 → 종료</strong> 순서로만 진행되며 되돌릴 수 없습니다. 라인 PC 에서 첫 검사 결과가 도착하면 자동으로 진행 중이 되고, 계획 수량에 도달하면 자동으로 완료됩니다.</p>
+<h4>작업지시 등록</h4>
+<ol>
+  <li>[작업 지시 등록] 을 누릅니다(User 이상). 지시 번호는 <code>WO-YYYYMMDD-NNN</code> 으로 자동 채번됩니다.</li>
+  <li><strong>제품</strong>과 <strong>생산 라인</strong>을 고릅니다. 제품에 기본 레시피가 있으면 첫 레시피 줄이 자동으로 채워집니다.</li>
+  <li><strong>레시피</strong> 줄에 레시피와 계획 수량을 넣습니다. 여러 제품이 섞여 흐르는 라인은 [레시피 추가] 로 줄을 더해 레시피별 계획 수량을 따로 둘 수 있습니다(혼합 레시피 작업지시). 같은 레시피를 두 줄에 넣을 수는 없습니다.</li>
+  <li><strong>완료 기준</strong> — "총 생산 수량"(기본)은 판정과 무관하게 검사한 개수, "양품 수량"은 합격 수량이 계획에 도달할 때 완료됩니다. 계획 시작일 · 비고는 선택입니다.</li>
+</ol>
+<figure><img src="../gs/screenshots/v3/web/d10_wo_form.png" data-width="520" alt="작업 지시 등록 창 — 지시 번호(자동) · 제품 · 생산 라인 · 레시피 줄(+ 계획 수량) · 완료 기준 · 계획 시작일 · 비고"><figcaption>작업 지시 등록 창 — 지시 번호(자동) · 제품 · 생산 라인 · 레시피 줄(+ 계획 수량) · 완료 기준 · 계획 시작일 · 비고</figcaption></figure>
+<h4>행 버튼</h4>
+<table class="cols-2-2-5">
+  <tr><th>버튼</th><th>표시 조건</th><th>동작</th></tr>
+  <tr><td>시작</td><td>계획됨</td><td>진행 중으로 바꿉니다(라인에서 첫 결과가 오면 자동으로도 바뀜).</td></tr>
+  <tr><td>완료</td><td>진행 중</td><td>수동 완료. 그 라인의 VMS 도 즉시 검사를 멈추고 완료 창을 띄웁니다.</td></tr>
+  <tr><td>종료</td><td>완료</td><td>영구 마감. 이후 검사 결과를 받지 않습니다.</td></tr>
+  <tr><td>LOT</td><td>항상</td><td>이 작업지시의 Lot 목록 창(아래).</td></tr>
+  <tr><td>수정 / 삭제</td><td>계획됨</td><td>수정은 User 이상, 삭제는 Admin. 생산이 시작된 뒤에는 제품 · 라인을 바꿀 수 없고 수량 · 비고만 고칠 수 있습니다. Lot 이나 검사 이력이 있으면 삭제 대신 종료 처리합니다.</td></tr>
+</table>
+<h4>Lot 발행과 마감</h4>
+<ul>
+  <li>[LOT] → <strong>로트</strong> 창에서 [로트 발행] 을 누르면 <code>{날짜}-{지시번호}-{순번}</code> 번호의 Lot 이 "진행중" 으로 만들어집니다. 한 작업지시에 여러 Lot 을 동시에 열어 둘 수 있습니다.</li>
+  <li>묶음 생산이 끝나면 행의 자물쇠 아이콘으로 마감합니다. 마감한 Lot 은 VMS 의 Lot 콤보에서 수 초 안에 사라집니다. 종료된 작업지시에는 Lot 을 추가할 수 없습니다.</li>
+  <li>VMS 에서는 열린 Lot 이 1 개면 자동 선택되고, 여러 개면 작업자가 Ctx 의 Lot 콤보에서 골라야 검사가 그 Lot 에 귀속됩니다(§4.3).</li>
+</ul>
+<figure><img src="../gs/screenshots/v3/web/d11_wo_lot.png" data-width="520" alt="로트 창 — 로트 번호 · 수량 · 합격 · 불량 · 불량률 · 상태 · [로트 발행] · 마감(자물쇠)"><figcaption>로트 창 — 로트 번호 · 수량 · 합격 · 불량 · 불량률 · 상태 · [로트 발행] · 마감(자물쇠)</figcaption></figure>
+<h4>수량이 올라가지 않는 경우</h4>
+<p>완료 · 종료된 작업지시, 다른 라인에 배정된 작업지시, 작업지시에 없는 레시피, 다른 작업지시의 Lot 으로 올라온 검사는 이력에는 남지만 수량에는 집계되지 않으며 라인 PC 의 System Log 에 경고가 남습니다(§4.7).</p>
+
+<h3 id="web-products">8.8 제품</h3>
+<figure><img src="../gs/screenshots/v3/web/w21_products.png" data-width="620" alt="제품"><figcaption>제품 — 검색 · 비활성 포함 · [제품 등록], 목록(제품 코드 · 제품명 · 사양 · 기본 레시피 · 상태)</figcaption></figure>
+<p>제품 코드(고유, 예: PRD-A001) · 제품명 · 사양 · 기본 레시피를 등록합니다. 작업지시를 만들 때 여기 등록된 제품 중에서 고르며, 기본 레시피는 작업지시 등록 시 자동으로 채워집니다.
+작업지시가 참조하는 제품은 삭제할 수 없고 "비활성화" 로 목록과 신규 작업지시에서 숨깁니다(이력은 유지).</p>
+
+<figure><img src="../gs/screenshots/v3/web/d13_product_form.png" data-width="440" alt="제품 등록 창 — 제품 코드 · 제품명 · 사양 · 기본 레시피 · 활성"><figcaption>제품 등록 창 — 제품 코드 · 제품명 · 사양 · 기본 레시피 · 활성</figcaption></figure>
+<h3 id="web-operators">8.9 작업자</h3>
+<figure><img src="../gs/screenshots/v3/web/w22_operators.png" data-width="620" alt="작업자"><figcaption>작업자 — 작업자 마스터 · 출근 이력 · 키오스크 링크 3 탭</figcaption></figure>
+<ul>
+  <li><strong>작업자 마스터</strong> — 사번 · 이름 · 부서 · 등급(Operator 일반 작업자 / Lead 반장 / Supervisor 관리자) · PIN(4~8 자리 숫자). 등급은 VMS 화면에서 무엇을 볼 수 있는지를 정합니다(§4.12). 수정 시 PIN 을 비워 두면 기존 PIN 이 유지됩니다. 출근 이력이 있는 작업자는 삭제할 수 없으며 "사용 안 함" 으로 바꾸면 열린 세션도 함께 닫힙니다.</li>
+  <li><strong>출근 이력</strong> — 라인 · 기간으로 조회. 출근 · 퇴근(근무 중이면 "근무중") · 근무 시간 · 종료 사유(로그아웃 · 교대 변경 · 자동 종료). 라인 PC 가 정전 등으로 사라지면 마지막 생존 신호 시각으로 자동 종료됩니다. 최신 200 건까지 표시됩니다.</li>
+  <li><strong>키오스크 링크</strong> — 라인별 키오스크 주소(<code>/kiosk/라인번호</code>). 라인 단말기 브라우저에 전체 화면으로 띄워 두면 작업자가 사번 · PIN 으로 출근 · 교대 · 퇴근을 할 수 있습니다(로그인 불필요).</li>
+</ul>
+<figure><img src="../gs/screenshots/v3/web/w60_kiosk.png" data-width="520" alt="키오스크"><figcaption>키오스크 화면 — 라인 번호 · 사번 · PIN · [로그인] (출근 중이면 작업자 정보와 [퇴근 / 로그아웃])</figcaption></figure>
+
+<figure><img src="../gs/screenshots/v3/web/d14_operator_form.png" data-width="440" alt="작업자 등록 창 — 사번 · 이름 · 부서 · 등급 · PIN · 활성"><figcaption>작업자 등록 창 — 사번 · 이름 · 부서 · 등급 · PIN · 활성</figcaption></figure>
+<h3 id="web-recipes">8.10 레시피 파라미터 (검사 기준값)</h3>
+<figure><img src="../gs/screenshots/v3/web/w30_inspection_items.png" data-width="620" alt="레시피 파라미터"><figcaption>레시피 파라미터 — 라인 선택 → 레시피 선택 → 분류별 파라미터 표 · 툴바(프리셋 추가 · 항목 추가 · 레시피 복사 · 이름 변경 · 레시피 삭제)</figcaption></figure>
+<p>레시피의 검사 기준값(파라미터)을 Web 에서 관리하는 화면입니다. VisionSetup 의 도구 설정에서 파라미터 코드를 연동해 두면(§5.7),
+현장에서 도구 설정을 열지 않고 여기서 값만 고쳐도 라인 PC 가 1 분 안에 받아 씁니다. 조회는 User 이상, 편집은 Admin 만 할 수 있습니다.</p>
+<ol>
+  <li>화면 위에서 <strong>라인</strong>을 고른 뒤 <strong>레시피</strong>를 고릅니다. 레시피는 라인별로 관리됩니다.</li>
+  <li>VisionSetup 에서 만든 레시피는 같은 이름으로 자동 등록되어 목록에 나타납니다. Web 에서 먼저 만들 때는 [레시피 등록] 으로 이름 · 설명을 넣습니다(대상 라인이 안내됩니다).</li>
+  <li><strong>[프리셋 추가]</strong> — Pattern Tool(점수 · 각도 · 배율 · 위치, 7 개) / Blob Tool(임계값 · 면적 기준과 공차 · 개수 기준과 공차, 7 개) / Dimension Tool(기준값 · 공차, 3 개)을 한 번에 만듭니다. 미리보기에서 코드 범위를 확인하고 [n개 추가] 를 누른 뒤 각 행의 값을 입력합니다.</li>
+  <li><strong>[항목 추가]</strong> — 분류(Pattern / Blob / Dimension) · 파라미터 코드(레시피 안에서 고유한 숫자) · 값 · 설명 · 단위 · 규격 하한(LSL) · 규격 상한(USL) · 활성. LSL/USL 을 둘 다 넣으면 SPC 관리도에서 Cp/Cpk 를 계산할 수 있습니다.</li>
+  <li><strong>[레시피 복사]</strong> 는 파라미터까지 통째로 "이름 - 복사본" 을 만들고, <strong>[이름 변경]</strong> 은 이름을 바꿉니다. 작업지시가 참조하는 레시피는 삭제할 수 없습니다.</li>
+</ol>
+<div class="callout tip">Blob Tool 프리셋의 7 개 항목은 VisionSetup Blob 도구의 연동 콤보와 1:1 로 맞춰져 있어, 프리셋으로 추가하면 바로 연동할 수 있습니다.</div>
+
+<h3 id="web-pareto">8.11 파레토 분석</h3>
+<figure><img src="../gs/screenshots/v3/web/w31_quality_analysis.png" data-width="620" alt="파레토 분석"><figcaption>파레토 분석 — 기간 · 라인 · 상위 N, 요약 카드, 막대(빈도) + 누적선 + 80% 기준선, 순위 표</figcaption></figure>
+<p>"불량의 대부분은 소수의 원인에서 나온다"는 원리로 개선 우선순위를 찾는 화면입니다. 기간(기본 최근 7 일, 최대 366 일) · 라인 · 상위 N(5~50)을 고르고 [실행] 을 누르면
+NG 코드별 건수 · 비중 · 누적이 표로 나오고, 누적선이 80% 에 닿기 전까지의 코드가 개선 우선 대상입니다. 마스터에 없는 코드는 "(미등록 — 불량 코드에 추가 필요)" 로 표시됩니다.</p>
+
+<h3 id="web-spc">8.12 SPC 관리도</h3>
+<figure><img src="../gs/screenshots/v3/web/w32_spc.png" data-width="620" alt="SPC 관리도"><figcaption>SPC 관리도 — 라인 → 레시피 → 파라미터 코드 · 부분군 크기 n, 요약 카드(측정값 수 · X̄ · σ · Cp/Cpk · Pp/Ppk), X̄ 관리도 · R 관리도, 부분군 표</figcaption></figure>
+<ol>
+  <li>라인 → 레시피 → 파라미터 코드를 차례로 고릅니다. 규격 상하한이 설정된 파라미터에는 "규격 설정됨" 표시가 붙습니다.</li>
+  <li>부분군 크기 n(2~10, 기본 5)을 정하고 [계산] 을 누릅니다. 측정값은 검사 결과와 함께 라인 PC 가 올린 값입니다.</li>
+  <li>X̄ 관리도와 R 관리도에서 가운데 실선은 중심선(평균), 위아래 점선은 관리 한계선(UCL/LCL)입니다. 점이 한계선을 벗어나면 설비 · 자재 · 조건 변화 같은 특별 원인이 생긴 신호이므로 원인을 확인합니다.</li>
+  <li>Cp/Cpk 는 규격 상하한(USL/LSL)이 있어야 계산되며 1.67 이상 우수, 1.33 이상 양호, 1.00 미만은 즉시 조치가 필요합니다.</li>
+</ol>
+
+<h3 id="web-defects">8.13 불량 코드</h3>
+<figure><img src="../gs/screenshots/v3/web/w33_defect_codes.png" data-width="620" alt="불량 코드"><figcaption>불량 코드 — 미등록 NG 코드 패널(있을 때) · 목록(코드 · 설명 · 분류 · 심각도 · 상태)</figcaption></figure>
+<ul>
+  <li>코드 · 설명 · 분류(패턴 매칭 · 블롭 분석 · 치수 · 표면 · 기계 · 기타) · 심각도(치명 · 중대 · 경미)를 등록합니다.</li>
+  <li>라인에서 올라온 NG 코드가 마스터에 없으면 화면 위에 <strong>미등록 NG 코드</strong> 카드가 나타나며, 카드를 누르면 값이 채워진 등록 창이 열립니다(최근 7 · 30 · 90 일).</li>
+  <li>한 번 만든 코드 값은 바꿀 수 없고, 이력이 참조하면 지울 수 없습니다. 더 쓰지 않을 코드는 "사용 안 함" 으로 바꿉니다.</li>
+</ul>
+
+<figure><img src="../gs/screenshots/v3/web/d24_defect_form.png" data-width="440" alt="불량 코드 등록 창 — 코드(레시피 · 발생 이력 후보 제시) · 설명 · 분류 · 심각도"><figcaption>불량 코드 등록 창 — 코드(레시피 · 발생 이력 후보 제시) · 설명 · 분류 · 심각도</figcaption></figure>
+<h3 id="web-shiftreport">8.14 교대 리포트</h3>
+<figure><img src="../gs/screenshots/v3/web/w34_shift_report.png" data-width="620" alt="교대 리포트"><figcaption>교대 리포트 — 교대별 집계 카드와 일자 × 교대 매트릭스</figcaption></figure>
+<p>기간 · 라인을 고르고 [실행] 하면 교대별 총 검사 · 합격 · 불량 · 불량률 카드와 일자 × 교대 표가 나옵니다. 교대는 시스템 관리 → 교대 마스터(§8.21)에 정의된 시간대로 자동 배정됩니다.</p>
+
+<h3 id="web-reports">8.15 PDF 리포트</h3>
+<figure><img src="../gs/screenshots/v3/web/w35_reports.png" data-width="620" alt="PDF 리포트"><figcaption>PDF 리포트 — 종류(일간 · 주간 · 월간) · 기준일 · 라인 · [PDF 생성], 리포트 범위와 미리보기</figcaption></figure>
+<p>일간(1 일) · 주간(월~일) · 월간 리포트를 A4 PDF 로 내려받습니다. 전체 KPI, 라인별 OEE 표, 파레토 상위 10 개 불량 코드, 교대조별 집계(교대 데이터가 있을 때)가 들어갑니다. 파일명은 <code>BODA_VMS_Daily_YYYYMMDD.pdf</code> 형식입니다.</p>
+
+<h3 id="web-clients">8.16 비전 클라이언트 (라인)</h3>
+<figure><img src="../gs/screenshots/v3/web/w40_clients.png" data-width="620" alt="비전 클라이언트"><figcaption>비전 클라이언트 — 라인 목록(인덱스 · 이름 · IP · 마지막 통신 · 레시피 수)과 오른쪽 레시피 구성 트리</figcaption></figure>
+<ul>
+  <li>라인 PC 가 처음 연결되면 자동으로 등록됩니다. [클라이언트 등록] 으로 미리 만들 수도 있습니다 — 라인 이름 · IP 주소 · 라인 인덱스(0~99). 한 서버에 최대 100 대까지 등록됩니다.</li>
+  <li>행의 [보기] 를 누르면 오른쪽에 그 라인의 레시피 → 스텝 → 도구 트리가 표시됩니다. 온라인 여부는 라인 PC 의 생존 신호로 실시간 갱신됩니다.</li>
+  <li>검사 이력이 있는 라인은 삭제할 수 없습니다.</li>
+</ul>
+
+<figure><img src="../gs/screenshots/v3/web/d29_client_form.png" data-width="440" alt="클라이언트 등록 창 — 라인 이름 · IP 주소 · 라인 인덱스(0~99)"><figcaption>클라이언트 등록 창 — 라인 이름 · IP 주소 · 라인 인덱스(0~99)</figcaption></figure>
+<h3 id="web-oee">8.17 OEE 설비종합효율</h3>
+<figure><img src="../gs/screenshots/v3/web/w41_oee.png" data-width="620" alt="OEE"><figcaption>OEE — 라인 카드(OEE · 가용성 · 성능 · 품질 · 상태 분포)</figcaption></figure>
+<p>OEE = 가용성 × 성능 × 품질입니다. 가용성 = (가동 + 대기) / 기간, 성능 = 가동 / (가동 + 대기), 품질 = 합격 / 전체. 상태 로그가 없는 시간은 정지로 봅니다. 기간 · 라인을 고르고 [계산] 을 누르면 라인별 카드가 나오며, 85% 이상이 세계적 수준입니다.
+라인이 13 대 이상이면 카드 대신 표 모드(정렬 · 목표 미달만 · Excel(CSV) 저장)가 기본입니다.</p>
+
+<h3 id="web-reliability">8.18 설비 신뢰성 (MTBF / MTTR)</h3>
+<figure><img src="../gs/screenshots/v3/web/w42_reliability.png" data-width="620" alt="설비 신뢰성"><figcaption>설비 신뢰성 — 라인별 고장 횟수 · MTBF · MTTR · 가용성</figcaption></figure>
+<p>설비 상태 로그에서 정지(Down) 전이를 고장으로 세어 MTBF(평균 고장 간격) = Σ가동시간 / 고장 횟수, MTTR(평균 수리 시간) = Σ정지시간 / 고장 횟수, 가용성 = MTBF / (MTBF + MTTR) 을 계산합니다. MTBF 는 길수록, MTTR 은 짧을수록 좋습니다.</p>
+
+<h3 id="web-maintenance">8.19 예방 보전</h3>
+<figure><img src="../gs/screenshots/v3/web/w43_maintenance.png" data-width="620" alt="예방 보전"><figcaption>예방 보전 — PM 일정 · 임박 · 수행 이력 3 탭</figcaption></figure>
+<ul>
+  <li><strong>PM 일정</strong> — [일정 등록]: 일정 이름 · 설명 · 라인(비우면 전체 공통) · 주기(일) · 예상 소요(분) · 다음 수행 예정. 상태는 지연 · 오늘 예정 · 임박 · 정상으로 표시됩니다.</li>
+  <li><strong>임박</strong> — 7 일 이내 예정 카드. [수행 기록] 으로 바로 기록합니다.</li>
+  <li><strong>수행 이력</strong> — 기간 조회. 수행 시각 · 일정 · 라인 · 수행자 · 소요 · 비고. 수행 기록 창에서는 공통 일정일 때 수행 라인을 고르고 실제 소요 시간과 비고를 적습니다.</li>
+</ul>
+
+<figure><img src="../gs/screenshots/v3/web/d26_pm_form.png" data-width="440" alt="PM 일정 등록 창 — 일정 이름 · 설명 · 라인 · 주기 · 예상 소요 · 다음 예정 · 활성"><figcaption>PM 일정 등록 창 — 일정 이름 · 설명 · 라인 · 주기 · 예상 소요 · 다음 예정 · 활성</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/web/d27_pm_perform.png" data-width="440" alt="수행 기록 창 — 실제 소요 시간 · 비고"><figcaption>수행 기록 창 — 실제 소요 시간 · 비고</figcaption></figure>
+<h3 id="web-forecast">8.20 불량률 예측</h3>
+<figure><img src="../gs/screenshots/v3/web/w44_forecast.png" data-width="620" alt="불량률 예측"><figcaption>불량률 예측 — 라인별 예측 NG율 카드와 최근 24 시간 실측 · 예측 잔차 SPC 차트</figcaption></figure>
+<p>최근 검사 흐름을 학습한 예측 모델이 다음 1 시간의 불량률을 추정합니다. 60 초마다 자동 갱신되며, 예측값은 VMS 헤더의 예측 칩과 안돈 보드의 사전 경보에도 표시됩니다.
+모델이 등록되지 않은 서버는 "활성 ML 모델이 등록되지 않았습니다" 배너가 뜨고 예측이 표시되지 않습니다(모델 등록과 재학습은 서버 관리 도구 <code>tools/register_model.py</code> · <code>tools/retrain_pipeline.py</code> 로 합니다).</p>
+
+<h3 id="web-shifts">8.21 교대 마스터 (Admin)</h3>
+<figure><img src="../gs/screenshots/v3/web/w50_shifts.png" data-width="620" alt="교대 마스터"><figcaption>교대 마스터 — 교대명 · 시각 · 소요 시간 · 상태</figcaption></figure>
+<p>교대 이름 · 시작 시각 · 종료 시각(0~23 시)을 등록합니다. 종료가 시작보다 앞서면 야간 교대로 자정을 넘깁니다. 활성 교대끼리 시간대가 겹칠 수 없고, 검사 이력이 있는 교대는 삭제할 수 없습니다.</p>
+
+<figure><img src="../gs/screenshots/v3/web/d30_shift_form.png" data-width="440" alt="교대 등록 창 — 교대 이름 · 시작 · 종료 시간, 야간 교대 미리보기"><figcaption>교대 등록 창 — 교대 이름 · 시작 · 종료 시간, 야간 교대 미리보기</figcaption></figure>
+<h3 id="web-approvals">8.22 사용자 승인 (Admin)</h3>
+<figure><img src="../gs/screenshots/v3/web/w51_admin_approvals.png" data-width="620" alt="사용자 승인"><figcaption>사용자 승인 — 승인 대기 · 전체 사용자 탭</figcaption></figure>
+<ul>
+  <li><strong>승인 대기</strong> — 가입 신청 목록. [Guest 승인] · [User 승인] · [Admin 승인] 중 하나로 역할을 정해 승인하거나 [거부] 합니다(거부 시 계정 삭제).</li>
+  <li><strong>전체 사용자</strong> — 역할 칩을 눌러 역할을 바꾸고, [비밀번호 초기화](임시 비밀번호가 한 번만 표시) · [삭제] 를 할 수 있습니다. 자기 자신과 마지막 Admin 은 강등 · 삭제할 수 없습니다.</li>
+</ul>
+
+<h3 id="web-audit">8.23 감사 로그 (Admin)</h3>
+<figure><img src="../gs/screenshots/v3/web/w52_audit_logs.png" data-width="620" alt="감사 로그"><figcaption>감사 로그 — 대상 · 작업 · 기간 필터, 시각 · 사용자 · 작업 · 대상 · 식별자 · 변경 내용</figcaption></figure>
+<p>기준 정보(작업지시 · 제품 · 작업자 · 레시피 · 불량 코드 · 교대 · 사용자 · 라인 등)를 누가 언제 만들고 고치고 지웠는지, 로그인 · 로그아웃 · 잠금 같은 인증 사건과 함께 남깁니다. 비밀번호 · PIN 은 마스킹되며 기록은 수정 · 삭제할 수 없습니다.</p>
+
+<h3 id="web-license">8.24 SW 라이선스 (Admin)</h3>
+<figure><img src="../gs/screenshots/v3/web/w53_admin_license.png" data-width="620" alt="SW 라이선스"><figcaption>SW 라이선스 — 라이선스 정보 · 서버 지문 코드 · 점유 좌석</figcaption></figure>
+<p>서버에 설치된 라이선스(상태 · 고객 · 라이선스 ID · 좌석 사용/계약)와 각 라인 PC 가 점유한 좌석(클라이언트 번호 · 호스트 · 지문 · 마지막 갱신)을 30 초마다 갱신해 보여 줍니다.
+좌석은 72 시간 동안 갱신이 없으면 자동 해제됩니다. 계약 좌석을 초과하면 경고 배너가 뜹니다(현재는 운전 제한 없음). 서버 지문 코드는 라이선스 발급 요청에 씁니다(§2.6).</p>
+
+<h3 id="web-settings">8.25 시스템 설정 (Admin)</h3>
+<figure><img src="../gs/screenshots/v3/web/w54_settings.png" data-width="620" alt="시스템 설정"><figcaption>시스템 설정 — 시스템 정보 · 모니터링 설정 · VisionServer 연결</figcaption></figure>
+<p>애플리케이션 버전 · 플랫폼 · DB 종류를 확인하고, VisionServer 연동(사용 여부 · 기본 URL)을 저장합니다. VisionServer 를 쓰지 않는 일반 현장은 "단독 모드: 모든 변경이 로컬 DB 에 직접 저장" 상태로 둡니다.</p>
+
+<h3 id="web-workflow">8.26 라인 PC 와 서버가 맞물리는 방식</h3>
+<table class="cols-2-7">
+  <tr><th>단계</th><th>무슨 일이 일어나는지</th></tr>
+  <tr><td>작업자 로그인</td><td>VMS 가 사번 · PIN 을 서버로 보내면 서버가 작업자 명단과 대조해 세션을 만듭니다. 세션은 작업자 → 출근 이력 탭에 즉시 나타납니다.</td></tr>
+  <tr><td>작업지시 선택</td><td>VMS 가 이 라인의 작업지시 목록을 받아 옵니다. 선택하면 레시피가 자동 로드되고 열린 Lot 이 채워집니다.</td></tr>
+  <tr><td>검사 결과 업로드</td><td>사이클마다 결과(판정 · 측정값 · 추적 4 필드 · 검사 시각)가 올라가고, 서버는 작업지시 · Lot 수량을 올려 응답합니다. 헤더 진행률과 Web 작업 지시 화면이 즉시 갱신됩니다.</td></tr>
+  <tr><td>오프라인 복구</td><td>서버에 닿지 못한 결과는 라인 PC 의 업로드 큐에 파일로 보관되었다가 연결이 돌아오면 순서대로 재전송됩니다. 재시작해도 남습니다. 같은 사이클이 두 번 도착해도 수량은 한 번만 오릅니다.</td></tr>
+  <tr><td>완료</td><td>계획 수량 도달 시 서버가 완료 처리하고 라인 PC 에 알려 검사가 멈춥니다. Web 에서 수동 완료해도 같습니다.</td></tr>
+  <tr><td>생존 신호</td><td>VMS 가 주기적으로 신호를 보냅니다. 15 초 이상 끊기면 라인이 오프라인으로 바뀌고 Offline 알람이 생기며 열린 작업자 세션이 자동 종료됩니다. 복구되면 알람은 자동 해제됩니다.</td></tr>
+</table>
+
+<h3 id="web-multiline">8.27 여러 라인 · 여러 서버 운영</h3>
+<ul>
+  <li>라인 PC 는 설정 마법사의 라인 번호(0~99)로 구분되며, 같은 서버 안에서 번호가 겹치면 안 됩니다. 작업지시 · 레시피 · 작업자 세션은 라인별로 분리됩니다.</li>
+  <li>공장 네트워크 사정으로 서버를 여러 대 두고 라인을 나누어 붙일 수도 있습니다. 이때 라인 번호는 <strong>십의 자리를 서버 번호</strong>로 쓰기를 권장합니다 — 0~9 시험 · 예비, 10~19 1 번 서버, 20~29 2 번 서버 … 90~99 9 번 서버. 나중에 서버를 합치거나 보고서를 모을 때 어느 라인인지 구분됩니다.</li>
+  <li>서버를 나누면 대시보드 · 작업지시 · 품질 분석 · 백업 · 관리자 계정 · 기준 정보도 서버마다 따로입니다. 네트워크가 허락하면 서버 1 대 구성이 운영이 가장 단순합니다.</li>
+  <li>한 PC 에 카메라가 여러 대 있으면 VMS 를 인스턴스 이름으로 두 개 띄워 두 라인으로 운용할 수 있습니다(§11.5).</li>
+</ul>
+</section>

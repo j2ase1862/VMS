@@ -2685,6 +2685,386 @@
   ]
  },
  {
+  "tool": "Match Align (매치 얼라인)",
+  "category": "Pattern Matching",
+  "file": "MatchAlignToolSettings.xaml",
+  "params": [
+   {
+    "label": "Mode",
+    "param": "Mode",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "MatchAlignMode"
+   },
+   {
+    "label": "Use Trained Reference",
+    "param": "UseTrainedReference",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Ref X (px)",
+    "param": "RefX",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Ref Y (px)",
+    "param": "RefY",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Ref θ (°)",
+    "param": "RefTheta",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Ref X2 (px)",
+    "param": "RefX2",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Ref Y2 (px)",
+    "param": "RefY2",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Enable Judgment",
+    "param": "EnableJudgment",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Unit",
+    "param": "JudgmentUnit",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "GeometryJudgmentUnit"
+   },
+   {
+    "label": "Max ΔXY (radial)",
+    "param": "MaxDeltaXY",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Max Δθ (°)",
+    "param": "MaxDeltaTheta",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Enable Robot Transform",
+    "param": "EnableRobotTransform",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "M11",
+    "param": "RobotM11",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "M21",
+    "param": "RobotM21",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "M12",
+    "param": "RobotM12",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "M22",
+    "param": "RobotM22",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "θ Sign (+1/-1)",
+    "param": "RobotThetaSign",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Draw Overlay",
+    "param": "DrawOverlay",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Multi-Step Align (다중 스텝 얼라인)",
+  "category": "Pattern Matching",
+  "file": "MultiStepAlignToolSettings.xaml",
+  "params": [
+   {
+    "label": "Require Same Cycle",
+    "param": "RequireSameCycle",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Baseline X",
+    "param": "BaselineX",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Baseline Y",
+    "param": "BaselineY",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Ref A X",
+    "param": "RefAX",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Ref A Y",
+    "param": "RefAY",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Ref B X",
+    "param": "RefBX",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Ref B Y",
+    "param": "RefBY",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Enable Judgment",
+    "param": "EnableJudgment",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Max ΔXY (radial)",
+    "param": "MaxDeltaXY",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Max Δθ (°)",
+    "param": "MaxDeltaTheta",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Enable Robot Transform",
+    "param": "EnableRobotTransform",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "M11",
+    "param": "RobotM11",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "M21",
+    "param": "RobotM21",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "M12",
+    "param": "RobotM12",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "M22",
+    "param": "RobotM22",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "θ Sign (+1/-1)",
+    "param": "RobotThetaSign",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Draw Overlay",
+    "param": "DrawOverlay",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Point Cloud Deviation (기준 형상 편차)",
+  "category": "3D Analysis",
+  "file": "PointCloudDeviationToolSettings.xaml",
+  "params": [
+   {
+    "label": "Tolerance (mm)",
+    "param": "ToleranceMm",
+    "ctrl": "슬라이더",
+    "min": "0.01",
+    "max": "10.0",
+    "enum": null
+   },
+   {
+    "label": "Heatmap Range (mm)",
+    "param": "HeatmapRangeMm",
+    "ctrl": "슬라이더",
+    "min": "0.05",
+    "max": "10.0",
+    "enum": null
+   },
+   {
+    "label": "Max Defect Ratio (%)",
+    "param": "MaxDefectRatioPercent",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "100",
+    "enum": null
+   },
+   {
+    "label": "Output Mode",
+    "param": "OutputMode",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Photometric Stereo (포토메트릭 스테레오)",
+  "category": "Preprocessing",
+  "file": "PhotometricStereoToolSettings.xaml",
+  "params": [
+   {
+    "label": "Output Type",
+    "param": "OutputType",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "PsOutputType"
+   },
+   {
+    "label": "Curvature Gain",
+    "param": "CurvatureGain",
+    "ctrl": "슬라이더",
+    "min": "1",
+    "max": "30",
+    "enum": null
+   },
+   {
+    "label": "Shadow Threshold",
+    "param": "ShadowThreshold",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "100",
+    "enum": null
+   },
+   {
+    "label": "Highlight Threshold",
+    "param": "HighlightThreshold",
+    "ctrl": "슬라이더",
+    "min": "155",
+    "max": "255",
+    "enum": null
+   },
+   {
+    "label": "Image",
+    "param": "",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   }
+  ]
+ },
+ {
   "tool": "Ensemble (앙상블)",
   "category": "Judgment",
   "file": "EnsembleToolSettings.xaml",

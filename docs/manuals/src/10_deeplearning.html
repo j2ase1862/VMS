@@ -1,0 +1,18 @@
+<section id="deeplearning">
+<h2>10. AI 학습 도구 (VMS.DeepLearning, 선택 설치)</h2>
+<div class="callout"><strong>선택 구성 요소 · 인증 범위 외.</strong> 설치 파일의 "설치 구성 선택" 화면에서 <strong>AI 학습 도구 포함</strong>을 체크한 PC 에만 설치됩니다(기본 해제).
+라벨링과 학습은 MLOps 플랫폼(9장)에서 하는 것이 기본이며, MLOps 서버 없이 이 PC 에서 직접 학습해야 하는 현장만 씁니다.</div>
+<figure><img src="../gs/screenshots/06_deeplearning_full.png" data-width="620" alt="AI 학습 도구 화면"><figcaption>AI 학습 도구(VMS.DeepLearning) — 데이터셋 · 이미지 목록(좌) / 라벨링 캔버스(중) / 클래스 · 라벨 · 학습(우)</figcaption></figure>
+<p>딥러닝 검사 도구(§6)에 쓰는 모델 파일(ONNX)을 이 PC 에서 만드는 별도 프로그램입니다. VisionSetup 의 Deep Learning 메뉴에서 실행하며, 설치되지 않은 PC 에서는 그 메뉴가 표시되지 않습니다.
+학습에는 파이썬과 NVIDIA GPU 가 필요합니다.</p>
+<ol>
+  <li><strong>데이터셋 만들기</strong> — [New Dataset] 으로 이름과 작업 유형(Detection · Segmentation · Classification · Anomaly)을 정하고 [Add Images] 로 사진을 넣습니다.</li>
+  <li><strong>라벨링</strong> — 클래스를 정의하고 사각형 · 폴리곤을 그립니다. SAM 을 쓰면 클릭만으로 윤곽이 그려집니다. [Auto Split] 으로 학습/검증을 나눕니다.</li>
+  <li><strong>학습</strong> — Training 패널에서 스크립트(Detection 은 D-FINE 기본) · 에폭 · 배치 등을 정하고 학습을 시작합니다. 끝나면 출력 폴더에 ONNX · 지표 요약(<code>metrics.json</code>) · 학습 곡선(<code>curves.png</code>)이 생깁니다.</li>
+  <li><strong>내보내기</strong> — 만들어진 ONNX 를 VisionSetup 의 Detection · Classify · Anomaly · YOLOv8-seg · RF-DETR-seg 도구 Model Path 에 지정합니다.</li>
+  <li><strong>MLOps 와 함께 쓰기</strong> — Training 패널의 <strong>[레지스트리에 등록]</strong> 은 학습한 ONNX 를 MLOps 모델 계열의 후보 버전으로 올리고(Web 관리자 계정 로그인 필요), Export 구역의 <strong>[웹 데이터셋 내려받기]</strong> 는 MLOps 에서 라벨링한 데이터셋 판을 받아 학습 경로로 자동 설정합니다.</li>
+</ol>
+<figure><img src="../gs/screenshots/v3/dl/dlg_ModelUpload_ready.png" data-width="420" alt="레지스트리에 등록 창"><figcaption>[레지스트리에 등록] 창 — 파일 정보 · 등록 대상 계열 · 라이선스 · 메모 · [올리기]</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/dl/dlg_DatasetDownload_ready.png" data-width="480" alt="웹 데이터셋 내려받기 창"><figcaption>[웹 데이터셋 내려받기] 창 — 데이터셋 · 판(버전) 선택 · 풀어 넣을 폴더 · [받기]</figcaption></figure>
+<p>화면별 상세 조작, 파이썬 환경 준비, 학습 스크립트별 유의사항은 별책 <strong>「BODA VMS AI 학습 도구 매뉴얼」</strong>(<code>BODA-VMS-AI-Tools-Manual.html</code>)을 참고하세요.</p>
+</section>
