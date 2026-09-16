@@ -10880,13 +10880,13 @@
   "t": "h",
   "segs": [
    {
-    "s": "시스템 사용자 등급",
+    "s": "시스템 사용자 등급별 권한",
     "b": false,
     "m": false
    }
   ],
   "level": 4,
-  "text": "시스템 사용자 등급"
+  "text": "시스템 사용자 등급별 권한"
  },
  {
   "t": "table",
@@ -10895,14 +10895,14 @@
     {
      "segs": [
       {
-       "s": "권한",
+       "s": "권한 (기능)",
        "b": false,
        "m": false
       }
      ],
      "header": true,
      "imgs": [],
-     "text": "권한"
+     "text": "권한 (기능)"
     },
     {
      "segs": [
@@ -10939,20 +10939,32 @@
      "header": true,
      "imgs": [],
      "text": "Admin"
+    },
+    {
+     "segs": [
+      {
+       "s": "local-admin\n(비상 폴백)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": true,
+     "imgs": [],
+     "text": "local-admin\n(비상 폴백)"
     }
    ],
    [
     {
      "segs": [
       {
-       "s": "검사 시작/정지 · Grab · Live",
+       "s": "StartStop (검사 시작/정지 · Grab · Live)",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "검사 시작/정지 · Grab · Live"
+     "text": "StartStop (검사 시작/정지 · Grab · Live)"
     },
     {
      "segs": [
@@ -10965,44 +10977,6 @@
      "header": false,
      "imgs": [],
      "text": "✓"
-    },
-    {
-     "segs": [
-      {
-       "s": "✓",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "✓"
-    },
-    {
-     "segs": [
-      {
-       "s": "✓",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "✓"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "통계 · 이력 조회",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "통계 · 이력 조회"
     },
     {
      "segs": [
@@ -11045,14 +11019,76 @@
     {
      "segs": [
       {
-       "s": "레시피 편집 · 삭제 · 가져오기",
+       "s": "ViewStatistics (통계 · 이력 조회)",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "레시피 편집 · 삭제 · 가져오기"
+     "text": "ViewStatistics (통계 · 이력 조회)"
+    },
+    {
+     "segs": [
+      {
+       "s": "✓",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "✓"
+    },
+    {
+     "segs": [
+      {
+       "s": "✓",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "✓"
+    },
+    {
+     "segs": [
+      {
+       "s": "✓",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "✓"
+    },
+    {
+     "segs": [
+      {
+       "s": "✓",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "✓"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "EditRecipe (레시피 편집 · 저장 · 가져오기)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "EditRecipe (레시피 편집 · 저장 · 가져오기)"
     },
     {
      "segs": [
@@ -11089,20 +11125,32 @@
      "header": false,
      "imgs": [],
      "text": "✓"
+    },
+    {
+     "segs": [
+      {
+       "s": "—",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "—"
     }
    ],
    [
     {
      "segs": [
       {
-       "s": "카메라 설정 · 시스템 구성 변경",
+       "s": "DeleteRecipe (레시피 삭제)",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "카메라 설정 · 시스템 구성 변경"
+     "text": "DeleteRecipe (레시피 삭제)"
     },
     {
      "segs": [
@@ -11115,6 +11163,328 @@
      "header": false,
      "imgs": [],
      "text": "—"
+    },
+    {
+     "segs": [
+      {
+       "s": "✓",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "✓"
+    },
+    {
+     "segs": [
+      {
+       "s": "✓",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "✓"
+    },
+    {
+     "segs": [
+      {
+       "s": "—",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "—"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "CameraSettings (카메라 설정)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "CameraSettings (카메라 설정)"
+    },
+    {
+     "segs": [
+      {
+       "s": "—",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "—"
+    },
+    {
+     "segs": [
+      {
+       "s": "✓",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "✓"
+    },
+    {
+     "segs": [
+      {
+       "s": "✓",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "✓"
+    },
+    {
+     "segs": [
+      {
+       "s": "—",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "—"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "LaunchVisionSetup (Vision Tool Setup 실행)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "LaunchVisionSetup (Vision Tool Setup 실행)"
+    },
+    {
+     "segs": [
+      {
+       "s": "—",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "—"
+    },
+    {
+     "segs": [
+      {
+       "s": "✓",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "✓"
+    },
+    {
+     "segs": [
+      {
+       "s": "✓",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "✓"
+    },
+    {
+     "segs": [
+      {
+       "s": "—",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "—"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "LaunchAppSetup (System Setup 실행)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "LaunchAppSetup (System Setup 실행)"
+    },
+    {
+     "segs": [
+      {
+       "s": "—",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "—"
+    },
+    {
+     "segs": [
+      {
+       "s": "✓",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "✓"
+    },
+    {
+     "segs": [
+      {
+       "s": "✓",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "✓"
+    },
+    {
+     "segs": [
+      {
+       "s": "—",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "—"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "SystemConfiguration (시스템 구성 변경)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "SystemConfiguration (시스템 구성 변경)"
+    },
+    {
+     "segs": [
+      {
+       "s": "—",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "—"
+    },
+    {
+     "segs": [
+      {
+       "s": "✓",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "✓"
+    },
+    {
+     "segs": [
+      {
+       "s": "✓",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "✓"
+    },
+    {
+     "segs": [
+      {
+       "s": "—",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "—"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "RestartWebService (Web 서비스 재시작)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "RestartWebService (Web 서비스 재시작)"
+    },
+    {
+     "segs": [
+      {
+       "s": "—",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "—"
+    },
+    {
+     "segs": [
+      {
+       "s": "✓",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "✓"
     },
     {
      "segs": [
@@ -11145,114 +11515,14 @@
     {
      "segs": [
       {
-       "s": "Vision Tool Setup · System Setup 실행",
+       "s": "ManageUsers (사용자 관리 · Admin Tools · Image Saving)",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "Vision Tool Setup · System Setup 실행"
-    },
-    {
-     "segs": [
-      {
-       "s": "—",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "—"
-    },
-    {
-     "segs": [
-      {
-       "s": "✓",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "✓"
-    },
-    {
-     "segs": [
-      {
-       "s": "✓",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "✓"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "Web 서비스 재시작",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Web 서비스 재시작"
-    },
-    {
-     "segs": [
-      {
-       "s": "—",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "—"
-    },
-    {
-     "segs": [
-      {
-       "s": "✓",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "✓"
-    },
-    {
-     "segs": [
-      {
-       "s": "✓",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "✓"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "사용자 관리 · Admin Tools · Image Saving",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "사용자 관리 · Admin Tools · Image Saving"
+     "text": "ManageUsers (사용자 관리 · Admin Tools · Image Saving)"
     },
     {
      "segs": [
@@ -11289,10 +11559,22 @@
      "header": false,
      "imgs": [],
      "text": "✓"
+    },
+    {
+     "segs": [
+      {
+       "s": "—",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "—"
     }
    ]
   ],
-  "cls": "cols-4-1-1-1"
+  "cls": ""
  },
  {
   "t": "li",

@@ -304,16 +304,19 @@
 <h3 id="vms-permissions">4.12 계정과 권한</h3>
 <p>VMS 에는 두 종류의 신원이 있습니다. <strong>작업자</strong>(Web 에 등록된 사번 + PIN)는 "누가 생산했는가"를 기록하는 신원이고,
 <strong>시스템 사용자</strong>(이 PC 의 계정)는 "설정 · 레시피 · 관리 도구를 만질 수 있는가"를 정하는 신원입니다.</p>
-<h4>시스템 사용자 등급</h4>
-<table class="cols-4-1-1-1">
-  <tr><th>권한</th><th>Operator</th><th>Engineer</th><th>Admin</th></tr>
-  <tr><td>검사 시작/정지 · Grab · Live</td><td>✓</td><td>✓</td><td>✓</td></tr>
-  <tr><td>통계 · 이력 조회</td><td>✓</td><td>✓</td><td>✓</td></tr>
-  <tr><td>레시피 편집 · 삭제 · 가져오기</td><td>—</td><td>✓</td><td>✓</td></tr>
-  <tr><td>카메라 설정 · 시스템 구성 변경</td><td>—</td><td>✓</td><td>✓</td></tr>
-  <tr><td>Vision Tool Setup · System Setup 실행</td><td>—</td><td>✓</td><td>✓</td></tr>
-  <tr><td>Web 서비스 재시작</td><td>—</td><td>✓</td><td>✓</td></tr>
-  <tr><td>사용자 관리 · Admin Tools · Image Saving</td><td>—</td><td>—</td><td>✓</td></tr>
+<h4 id="vms-usergrade">시스템 사용자 등급별 권한</h4>
+<table>
+  <tr><th>권한 (기능)</th><th>Operator</th><th>Engineer</th><th>Admin</th><th>local-admin<br>(비상 폴백)</th></tr>
+  <tr><td>StartStop (검사 시작/정지 · Grab · Live)</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+  <tr><td>ViewStatistics (통계 · 이력 조회)</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+  <tr><td>EditRecipe (레시피 편집 · 저장 · 가져오기)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
+  <tr><td>DeleteRecipe (레시피 삭제)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
+  <tr><td>CameraSettings (카메라 설정)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
+  <tr><td>LaunchVisionSetup (Vision Tool Setup 실행)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
+  <tr><td>LaunchAppSetup (System Setup 실행)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
+  <tr><td>SystemConfiguration (시스템 구성 변경)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
+  <tr><td>RestartWebService (Web 서비스 재시작)</td><td>—</td><td>✓</td><td>✓</td><td>✓</td></tr>
+  <tr><td>ManageUsers (사용자 관리 · Admin Tools · Image Saving)</td><td>—</td><td>—</td><td>✓</td><td>—</td></tr>
 </table>
 <ul>
   <li>시스템 사용자로 로그인하지 않은 상태에서도 AUTO RUN · Grab · Live 는 허용됩니다(작업자 로그인이 생산 신원이므로 이중 로그인을 요구하지 않습니다).</li>
