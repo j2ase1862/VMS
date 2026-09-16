@@ -16,8 +16,6 @@
       "VMS.Updater\\VMS.Updater.csproj",
       "VMS.VisionSetup.Tests\\VMS.VisionSetup.Tests.csproj",
       "VMS.VisionSetup\\VMS.VisionSetup.csproj",
-      "VMS.WeldTeach.Tests\\VMS.WeldTeach.Tests.csproj",
-      "VMS.WeldTeach\\VMS.WeldTeach.csproj",
       "VMS\\VMS.csproj"
     ]
   }
