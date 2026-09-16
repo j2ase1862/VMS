@@ -426,8 +426,9 @@ namespace VMS.VisionSetup.Services
         }
 
         /// <summary>
-        /// Coordinates 연결: Source 도구의 좌표 데이터를 Target 도구에 적용
-        /// FeatureMatchTool이 소스인 경우 Fixture 변환 (학습 위치 대비 델타 적용)
+        /// Coordinates 연결: Source 도구의 좌표 데이터를 Target 도구에 적용.
+        /// 실제 변환(이동·회전·SearchRegion)은 ToolSourceInjector 한 곳에 있다 —
+        /// VMS 메인 InspectionService 도 같은 것을 부른다.
         /// </summary>
         private void ApplyCoordinatesConnection(VisionToolBase tool, Dictionary<string, VisionResult> resultMap)
         {
@@ -465,123 +466,7 @@ namespace VMS.VisionSetup.Services
                         continue; // fixture 경로 스킵
                     }
 
-                    // Fixture transform: CenterX/CenterY available → apply delta
-                    if (sourceResult.Data.TryGetValue("CenterX", out var cx) &&
-                        sourceResult.Data.TryGetValue("CenterY", out var cy))
-                    {
-                        // Save user-configured ROI and initial FeatureMatch result on first fixture application
-                        if (!tool.HasFixtureBaseROI)
-                        {
-                            double refCX = Convert.ToDouble(cx);
-                            double refCY = Convert.ToDouble(cy);
-
-                            if (tool.UseROI && tool.ROI.Width > 0 && tool.ROI.Height > 0)
-                            {
-                                // User has drawn a ROI — use it as fixture base
-                                tool.FixtureBaseROI = tool.ROI;
-                            }
-                            else
-                            {
-                                // No user-defined ROI — create a default fixture base centered on
-                                // the reference pattern position so the ROI follows the pattern.
-                                int defaultW = tool.ROI.Width > 0 ? tool.ROI.Width : 200;
-                                int defaultH = tool.ROI.Height > 0 ? tool.ROI.Height : 200;
-                                tool.FixtureBaseROI = new Rect(
-                                    (int)(refCX - defaultW / 2.0),
-                                    (int)(refCY - defaultH / 2.0),
-                                    defaultW, defaultH);
-                            }
-
-                            tool.HasFixtureBaseROI = true;
-                            tool.FixtureRefX = refCX;
-                            tool.FixtureRefY = refCY;
-                            tool.FixtureRefAngle = sourceResult.Data.TryGetValue("Angle", out var initAngle)
-                                ? Convert.ToDouble(initAngle) : 0;
-                        }
-
-                        double foundX = Convert.ToDouble(cx);
-                        double foundY = Convert.ToDouble(cy);
-                        double refX = tool.FixtureRefX;
-                        double refY = tool.FixtureRefY;
-
-                        double baseCX = tool.FixtureBaseROI.X + tool.FixtureBaseROI.Width / 2.0;
-                        double baseCY = tool.FixtureBaseROI.Y + tool.FixtureBaseROI.Height / 2.0;
-
-                        double currentAngle = 0;
-                        if (sourceResult.Data.TryGetValue("Angle", out var angleObj))
-                            currentAngle = Convert.ToDouble(angleObj);
-                        double deltaAngle = currentAngle - tool.FixtureRefAngle;
-
-                        double newCX, newCY;
-                        if (Math.Abs(deltaAngle) > 0.01)
-                        {
-                            // Rotate ROI center around reference center, then translate by delta
-                            double relX = baseCX - refX;
-                            double relY = baseCY - refY;
-                            double rad = deltaAngle * Math.PI / 180.0;
-                            newCX = foundX + relX * Math.Cos(rad) - relY * Math.Sin(rad);
-                            newCY = foundY + relX * Math.Sin(rad) + relY * Math.Cos(rad);
-                        }
-                        else
-                        {
-                            // Translation only
-                            newCX = baseCX + (foundX - refX);
-                            newCY = baseCY + (foundY - refY);
-                        }
-
-                        int w = tool.FixtureBaseROI.Width > 0 ? tool.FixtureBaseROI.Width : 100;
-                        int h = tool.FixtureBaseROI.Height > 0 ? tool.FixtureBaseROI.Height : 100;
-                        tool.ROI = new Rect((int)(newCX - w / 2.0), (int)(newCY - h / 2.0), w, h);
-                        tool.UseROI = true;
-
-                        // SearchRegion(Execute용)도 같은 delta로 시프트.
-                        // ShapeMatch/Color*/OCV처럼 Training Region과 별도 Search Region을 갖는 도구에 적용.
-                        if (tool is ISearchRegionTool srt && srt.UseSearchRegion
-                            && srt.SearchRegion.Width > 0 && srt.SearchRegion.Height > 0)
-                        {
-                            if (!tool.HasFixtureBaseSearchRegion)
-                            {
-                                tool.FixtureBaseSearchRegion = srt.SearchRegion;
-                                tool.HasFixtureBaseSearchRegion = true;
-                            }
-
-                            double srBaseCX = tool.FixtureBaseSearchRegion.X + tool.FixtureBaseSearchRegion.Width / 2.0;
-                            double srBaseCY = tool.FixtureBaseSearchRegion.Y + tool.FixtureBaseSearchRegion.Height / 2.0;
-
-                            double newSrCX, newSrCY;
-                            if (Math.Abs(deltaAngle) > 0.01)
-                            {
-                                double srRelX = srBaseCX - refX;
-                                double srRelY = srBaseCY - refY;
-                                double rad2 = deltaAngle * Math.PI / 180.0;
-                                newSrCX = foundX + srRelX * Math.Cos(rad2) - srRelY * Math.Sin(rad2);
-                                newSrCY = foundY + srRelX * Math.Sin(rad2) + srRelY * Math.Cos(rad2);
-                            }
-                            else
-                            {
-                                newSrCX = srBaseCX + (foundX - refX);
-                                newSrCY = srBaseCY + (foundY - refY);
-                            }
-
-                            int sw = tool.FixtureBaseSearchRegion.Width;
-                            int sh = tool.FixtureBaseSearchRegion.Height;
-                            srt.SearchRegion = new Rect(
-                                (int)(newSrCX - sw / 2.0), (int)(newSrCY - sh / 2.0), sw, sh);
-                        }
-                    }
-                    // Fallback: BoundingRect (CenterX/CenterY가 없는 소스용)
-                    else if (sourceResult.Data.TryGetValue("BoundingRect", out var rectObj) && rectObj is Rect boundingRect)
-                    {
-                        tool.ROI = boundingRect;
-                        tool.UseROI = true;
-                    }
-                    // NOTE: 과거 여기 있던 "center-based (non-fixture sources)" 폴백 분기는 제거됨.
-                    // 초기 구현에서는 첫 분기가 TrainedCenterX/Y(FeatureMatch 전용 키)를 요구해
-                    // CenterX/CenterY만 가진 비-Fixture 소스(Blob 등)가 이 폴백으로 처리됐으나,
-                    // 32e75f0에서 첫 분기가 "첫 적용 시점 스냅샷(FixtureRef*)" 방식으로 일반화되며
-                    // CenterX/CenterY만 있어도 첫 분기가 처리하게 됨 (사용자 ROI 미지정 시
-                    // FixtureBaseROI가 기준 좌표 중심으로 생성되어 폴백과 동일한 배치 결과).
-                    // → 조건이 첫 분기와 동일해져 도달 불가한 죽은 코드였음.
+                    ToolSourceInjector.ApplyFixtureTransform(tool, sourceResult.Data);
                 }
             }
             finally

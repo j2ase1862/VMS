@@ -18,6 +18,8 @@ namespace VMS.VisionSetup.Tests
     /// 기본값 0.05 그대로였고, 사용자 입장에서는 "적용했는데 어디에도 안 보인다" 가 됐다.
     /// 여기서는 ① 캘리브레이션 저장 ② 고른 스텝만 Resolution 갱신 ③ 레시피 저장 세 가지를 못 박는다.</para>
     /// </summary>
+    // VisionService.Instance 상태를 건드린다 — 싱글턴 시험 컬렉션에 묶어 직렬화.
+    [Collection("VisionServiceSingleton")]
     public class CalibrationApplyToRecipeTests : IDisposable
     {
         // VisionService 는 싱글턴이라 Apply 가 남긴 캘리브레이션이 같은 어셈블리의 다른 테스트
