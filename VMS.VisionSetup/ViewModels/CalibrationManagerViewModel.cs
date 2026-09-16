@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using OpenCvSharp;
 using OpenCvSharp.WpfExtensions;
 using System;
@@ -377,23 +378,42 @@ namespace VMS.VisionSetup.ViewModels
         [RelayCommand]
         public void RefreshSourceAvailability()
         {
-            bool writerAlive = false;
+            // 생존 확인은 정적 프로브로만 한다 — 예전처럼 임시 Reader 를 만들었다 버리면
+            // 그 Dispose 가 공유 ReaderAlive 신호를 내려, 아직 살아 있는 메인 화면의
+            // VMS 프레임 수신까지 함께 끊겼다 (창을 열거나 Refresh 를 누를 때마다).
+            IsVmsWriterAlive = SharedFrameReader.IsVmsMainRunning();
+
             try
             {
-                using var probe = new SharedFrameReader();
-                if (probe.TryConnect())
-                    writerAlive = probe.IsWriterAlive;
+                var ownership = WeakReferenceMessenger.Default.Send<MainCameraOwnershipRequestMessage>();
+                IsMainWindowHoldingCamera = ownership.HasReceivedResponse && ownership.Response.IsConnected;
             }
             catch
             {
-                writerAlive = false;
+                IsMainWindowHoldingCamera = false;
             }
 
-            IsVmsWriterAlive = writerAlive;
-            AvailabilityMessage = writerAlive
-                ? "VMS is running — direct camera connection may conflict. Use 'VMS Shared Frame' if available."
-                : string.Empty;
+            var conflicts = new List<string>();
+            if (IsVmsWriterAlive)
+                conflicts.Add("VMS가 실행 중입니다 — 카메라 소유권은 VMS에 있습니다. 'VMS Shared Frame' 소스를 쓰세요.");
+            if (IsMainWindowHoldingCamera)
+                conflicts.Add("VisionSetup 메인 화면이 카메라에 연결되어 있습니다 — 촬영 전 메인 화면의 카메라 연결을 끊으세요.");
+
+            AvailabilityMessage = string.Join("\n", conflicts);
+            HasSourceConflict = conflicts.Count > 0;
         }
+
+        /// <summary>
+        /// VisionSetup 메인 화면이 지금 카메라를 붙들고 있는지.
+        ///
+        /// <para>산업용 카메라 SDK 는 장치를 배타 점유로 연다(Basler pylon 의 Camera.Open 은
+        /// Control|Stream 기본). 메인 화면이 이미 열어 둔 카메라를 이 창이 두 번째로 열면
+        /// 연결이 실패해 "눌러도 아무 일이 없는" 것처럼 보인다 — 2026-09-16 현장 보고.</para>
+        /// </summary>
+        [ObservableProperty] private bool _isMainWindowHoldingCamera;
+
+        /// <summary>선택한 소스로 지금 촬영하면 충돌할 수 있는 상태인지 (안내 배너 표시용).</summary>
+        [ObservableProperty] private bool _hasSourceConflict;
 
         [RelayCommand]
         private void LoadImage()
@@ -429,9 +449,26 @@ namespace VMS.VisionSetup.ViewModels
                 return;
             }
 
+            if (SharedFrameReader.IsVmsMainRunning())
+            {
+                // VMS 가 떠 있으면 카메라 소유권은 VMS 에 있다 — 직접 연결은 실패한다.
+                StatusMessage = "VMS가 실행 중입니다 — 이미지 소스를 'VMS Shared Frame'으로 바꾸세요.";
+                _dialogService.ShowWarning(
+                    "VMS 메인 앱이 실행 중이라 카메라를 직접 열 수 없습니다.\n\n" +
+                    "이미지 소스를 'VMS Shared Frame' 으로 바꾸고 [Receive Frame from VMS] 를 쓰세요.",
+                    "카메라 사용 중");
+                RefreshSourceAvailability();
+                return;
+            }
+
             IsCapturing = true;
             try
             {
+                // ① 메인 화면이 같은 카메라를 이미 쥐고 있으면 그쪽에 촬영을 부탁한다.
+                //    두 번째 연결을 만들면 SDK 배타 점유에 걸려 조용히 실패한다.
+                if (await TryCaptureViaMainWindowAsync())
+                    return;
+
                 // 카메라가 바뀌었거나 미연결이면 새로 연결
                 if (_cameraAcquisition == null
                     || !_cameraAcquisition.IsConnected
@@ -454,8 +491,19 @@ namespace VMS.VisionSetup.ViewModels
                     var connected = await _cameraAcquisition.ConnectAsync(SelectedCamera);
                     if (!connected)
                     {
-                        StatusMessage = $"Connect failed: {SelectedCamera.Name}. " +
-                            (IsVmsWriterAlive ? "VMS may be holding the camera." : "Check connection/cable.");
+                        // 실패 사유를 짚어 준다 — 예전에는 "Connect failed" 한 줄이 우측 패널
+                        // 맨 아래에만 떠서, 현장에서는 "눌러도 아무 반응이 없다"로 보였다.
+                        RefreshSourceAvailability();
+                        string hint =
+                            IsMainWindowHoldingCamera
+                                ? "VisionSetup 메인 화면이 이 카메라를 쓰고 있습니다 — 메인 화면의 카메라 연결을 끊고 다시 시도하세요."
+                            : IsVmsWriterAlive
+                                ? "VMS가 카메라를 쓰고 있을 수 있습니다 — 이미지 소스를 'VMS Shared Frame'으로 바꾸세요."
+                                : "카메라 연결·케이블·전원을 확인하세요.";
+                        StatusMessage = $"카메라 연결 실패: {SelectedCamera.Name} — {hint}";
+                        _dialogService.ShowWarning(
+                            $"{SelectedCamera.Name} 에 연결하지 못했습니다.\n\n{hint}",
+                            "카메라 연결 실패");
                         _cameraAcquisition.Dispose();
                         _cameraAcquisition = null;
                         return;
@@ -485,6 +533,46 @@ namespace VMS.VisionSetup.ViewModels
             {
                 IsCapturing = false;
             }
+        }
+
+        /// <summary>
+        /// 메인 화면이 같은 카메라를 쥐고 있으면 그쪽에 촬영을 부탁해 결과를 받는다.
+        /// 처리했으면 true — 호출자는 직접 연결을 시도하지 않는다.
+        /// </summary>
+        private async Task<bool> TryCaptureViaMainWindowAsync()
+        {
+            if (SelectedCamera == null) return false;
+
+            var ownership = WeakReferenceMessenger.Default.Send<MainCameraOwnershipRequestMessage>();
+            if (!ownership.HasReceivedResponse) return false;
+
+            var owner = ownership.Response;
+            IsMainWindowHoldingCamera = owner.IsConnected;
+            if (!owner.IsConnected || owner.CameraId != SelectedCamera.Id) return false;
+
+            StatusMessage = $"메인 화면의 카메라로 촬영 중... ({owner.CameraName})";
+
+            // AsyncRequestMessage 는 그 자체가 awaitable 이라, Send 결과를 변수로 받아야
+            // "await 를 빠뜨렸다"(CS4014)는 경고가 나지 않는다.
+            var sent = WeakReferenceMessenger.Default.Send(new MainCameraCaptureRequestMessage(SelectedCamera.Id));
+            if (!sent.HasReceivedResponse) return false;
+
+            var reply = await sent.Response;
+            if (!reply.Success || reply.Image == null || reply.Image.Empty())
+            {
+                reply.Image?.Dispose();
+                StatusMessage = $"촬영 실패: {reply.Message}";
+                _dialogService.ShowWarning(reply.Message, "촬영 실패");
+                return true;   // 메인 화면이 처리했고 실패했다 — 직접 연결을 또 시도하지 않는다
+            }
+
+            // 이 카메라의 스텝만 기본 체크되도록 소스를 기억 (다중 카메라 레시피 오적용 방지)
+            _sourceCameraId = SelectedCamera.Id;
+            ApplyDefaultSelection();
+
+            ReplaceSourceImage(reply.Image, $"[Camera: {owner.CameraName}]",
+                $"Captured from {owner.CameraName} ({reply.Image.Width}x{reply.Image.Height}) — 메인 화면 카메라 공유");
+            return true;
         }
 
         [RelayCommand]

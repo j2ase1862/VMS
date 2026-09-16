@@ -99,8 +99,18 @@ namespace VMS.Camera.Services
             return _lastReaderProbeResult;
         }
 
+        /// <summary>
+        /// Reader 프로브 캐시를 즉시 무효화한다.
+        ///
+        /// <para>캐시는 라이브 중 프레임마다 커널 객체를 조회하지 않으려고 둔 것인데, 단발
+        /// Grab 요청 경로에서는 해가 된다: VisionSetup 이 방금 Reader 를 붙였어도 최대 1초간
+        /// "Reader 없음"으로 캐시돼 있어 WriteFrame 이 스킵되고, 요청자는 새 프레임 대신
+        /// 직전 프레임을 받는다. Grab 요청을 처리하기 직전에 불러 캐시를 비운다.</para>
+        /// </summary>
+        public void InvalidateReaderProbeCache() => _lastReaderProbeTick = -ReaderProbeIntervalMs;
+
         /// <summary>테스트 전용 — Reader 프로브 캐시 무효화 (1초 캐시 대기 제거).</summary>
-        internal void ResetReaderProbeCacheForTests() => _lastReaderProbeTick = -ReaderProbeIntervalMs;
+        internal void ResetReaderProbeCacheForTests() => InvalidateReaderProbeCache();
 
         /// <summary>
         /// AcquisitionResult 를 MMF 에 직렬화. cameraId 는 이 프레임을 만든 카메라의 식별자

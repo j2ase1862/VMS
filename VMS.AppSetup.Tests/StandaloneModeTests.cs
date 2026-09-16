@@ -101,5 +101,48 @@ namespace VMS.AppSetup.Tests
             Assert.False(string.IsNullOrWhiteSpace(svc.Saved!.WebServerUrl));
             Assert.Equal(vm.WebServerUrl, svc.Saved.WebServerUrl);
         }
+
+        /// <summary>
+        /// 단독 모드에서도 MLOps 모델 레지스트리는 쓸 수 있어야 한다.
+        ///
+        /// <para>MLOps 는 BODA.VMS.Web 과 <b>별개 서버</b>다 — Web 을 안 쓰는 라인도 레시피의
+        /// <c>model://</c> 참조 모델은 MLOps 에서 내려받는다. 화면에서 MLOps 칸이 Web 입력
+        /// 블록 안에 있어 단독 모드를 켜면 함께 잠겼고, 현장에서는 "다시 넣으려면 MSI 를
+        /// 재설치해야 한다"로 읽혔다 (2026-09-16 현장 보고). 저장 규약은 그때도 값을 보존하고
+        /// 있었으므로, 그 규약을 못 박아 둔다 — 화면만 고치고 저장이 지우면 되돌아간다.</para>
+        /// </summary>
+        [Fact]
+        public void Save_StandaloneChecked_KeepsMlopsRegistrySettings()
+        {
+            var (vm, svc) = CreateVm(new SetupConfiguration { WebServerUrl = "http://192.168.0.10:7144" });
+
+            vm.IsStandaloneMode = true;
+            vm.MlopsServerUrl = "http://mlops.local:5310";
+            vm.MlopsLineToken = "ln_line11_token";
+            SaveViaWizard(vm);
+
+            Assert.NotNull(svc.Saved);
+            Assert.Equal(string.Empty, svc.Saved!.WebServerUrl);          // 단독 모드 규약은 그대로
+            Assert.Equal("http://mlops.local:5310", svc.Saved.MlopsServerUrl);
+            Assert.Equal("ln_line11_token", svc.Saved.MlopsLineToken);
+        }
+
+        /// <summary>
+        /// 저장된 MLOps 값이 있으면 고급 설정이 자동으로 펼쳐져야 한다 —
+        /// 접힌 채면 "칸이 어디 있는지 못 찾는" 같은 보고로 이어진다.
+        /// </summary>
+        [Fact]
+        public void Load_ExistingMlopsSettings_ExpandsAdvancedSection()
+        {
+            var (vm, _) = CreateVm(new SetupConfiguration
+            {
+                WebServerUrl = "",
+                MlopsServerUrl = "http://mlops.local:5310"
+            });
+
+            Assert.True(vm.IsStandaloneMode);
+            Assert.True(vm.IsAdvancedWebSettingsVisible);
+            Assert.Equal("http://mlops.local:5310", vm.MlopsServerUrl);
+        }
     }
 }

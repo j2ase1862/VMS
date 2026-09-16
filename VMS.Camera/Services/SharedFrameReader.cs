@@ -1,4 +1,4 @@
-using System.IO.MemoryMappedFiles;
+﻿using System.IO.MemoryMappedFiles;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -27,6 +27,9 @@ namespace VMS.Camera.Services
         /// </summary>
         public bool TryConnect()
         {
+            // 이미 붙어 있으면 이전 핸들을 먼저 놓는다 — 단발 수신은 매번 TryConnect 를
+            // 부르므로, 놓지 않으면 Grab 한 번에 커널 핸들이 하나씩 샌다.
+            Disconnect();
             try
             {
                 _mmf = MemoryMappedFile.OpenExisting(SharedFrameConstants.MmfName);
@@ -253,7 +256,13 @@ namespace VMS.Camera.Services
 
         private void Disconnect()
         {
-            _readerAliveEvent?.Reset();
+            // ReaderAlive 는 이름 있는 커널 객체라 이 프로세스의 모든 Reader 가 같은 것을
+            // 공유한다. 여기서 Reset() 을 부르면 "나 하나 떠난다"가 아니라 "이 PC 의 Reader 가
+            // 전부 없어졌다"가 되어, 아직 살아 있는 다른 Reader(메인 화면)의 프레임 수신까지
+            // 함께 꺼진다 — Writer 의 HasReader() 가 false 로 떨어져 WriteFrame 이 통째로
+            // 스킵되고, VisionSetup 은 Grab 을 요청해도 새 프레임을 못 받는다
+            // (캘리브레이션 창의 가용성 프로브가 이 경로로 메인 화면을 죽였다).
+            // 마지막 핸들이 닫히면 커널 객체가 스스로 사라지므로 Reset 없이 Dispose 만 한다.
             _readerAliveEvent?.Dispose();
             _readerAliveEvent = null;
             _writerAliveEvent?.Dispose();

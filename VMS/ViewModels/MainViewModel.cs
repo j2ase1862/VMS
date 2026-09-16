@@ -700,6 +700,10 @@ namespace VMS.ViewModels
                     {
                         var cam = Cameras.FirstOrDefault(c => c.Id == id);
                         if (cam == null) return false;
+                        // 요청자가 방금 Reader 를 붙였을 수 있다 — Writer 의 "Reader 없음"
+                        // 캐시(최대 1초)가 남아 있으면 이번 프레임이 통째로 스킵되어
+                        // 요청자가 직전 프레임을 받는다. 촬영 직전에 캐시를 비운다.
+                        _sharedFrameWriter?.InvalidateReaderProbeCache();
                         // UI 스레드에서 실행 — CameraViewModel 은 바인딩 속성을 갱신한다
                         var dispatcher = System.Windows.Application.Current?.Dispatcher;
                         if (dispatcher == null) return await cam.GrabOnceAsync();

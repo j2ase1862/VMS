@@ -152,5 +152,70 @@ namespace VMS.Core.Tests.Services
             using var b = new IpcInstanceScope();
             Assert.NotEqual(first, SharedFrameConstants.MmfName);
         }
+
+        /// <summary>
+        /// Reader 가 둘일 때, 하나가 떠나도 남은 쪽의 프레임 수신은 살아 있어야 한다.
+        ///
+        /// <para>ReaderAlive 는 이름 있는 커널 객체라 한 프로세스의 모든 Reader 가 같은 것을
+        /// 공유한다. 예전 Disconnect 는 여기에 Reset() 을 걸어, 임시 Reader 하나가 사라질 때
+        /// "이 PC 의 Reader 가 전부 없어졌다"로 만들었다 — Writer 의 HasReader() 가 false 로
+        /// 떨어져 WriteFrame 이 통째로 스킵되고, 살아 있는 메인 화면은 Grab 을 요청해도
+        /// 새 프레임을 못 받는다. 캘리브레이션 창의 가용성 프로브가 정확히 이 경로였다
+        /// (2026-09-16 현장 보고: 이미지를 한 번에 못 받고 주기적으로 반복).</para>
+        /// </summary>
+        [Fact]
+        public void WriteFrame_KeepsWorking_AfterOneOfTwoReadersDisconnects()
+        {
+            using var ipc = new IpcInstanceScope();
+            using var writer = new SharedFrameWriter();
+            writer.Initialize();
+
+            using var frame = new Mat(4, 4, MatType.CV_8UC3, new Scalar(7, 8, 9));
+            var result = new AcquisitionResult { Success = true, Image2D = frame };
+
+            using var keeper = new SharedFrameReader();
+            Assert.True(keeper.TryConnect());
+
+            // 임시 프로브(캘리브레이션 창의 가용성 확인과 같은 수명)를 붙였다 뗀다
+            var probe = new SharedFrameReader();
+            Assert.True(probe.TryConnect());
+            probe.Dispose();
+
+            writer.ResetReaderProbeCacheForTests();
+            writer.WriteFrame(result, "cam-1");
+
+            var read = keeper.TryReadFrame(skipIfSameFrame: false);
+            Assert.NotNull(read);
+            Assert.Equal(1, read!.FrameCounter);   // 스킵되지 않았다
+            Assert.Equal("cam-1", read.CameraId);
+            read.Image2D?.Dispose();
+        }
+
+        /// <summary>
+        /// 같은 Reader 에 TryConnect 를 거듭 불러도 (단발 수신은 Grab 마다 부른다) 동작이
+        /// 그대로여야 하고, 이전 핸들을 붙든 채 새 핸들을 얹지 않아야 한다.
+        /// </summary>
+        [Fact]
+        public void TryConnect_IsIdempotent_AndKeepsReaderRegistered()
+        {
+            using var ipc = new IpcInstanceScope();
+            using var writer = new SharedFrameWriter();
+            writer.Initialize();
+
+            using var frame = new Mat(4, 4, MatType.CV_8UC3, new Scalar(4, 5, 6));
+            var result = new AcquisitionResult { Success = true, Image2D = frame };
+
+            using var reader = new SharedFrameReader();
+            for (int i = 0; i < 5; i++)
+                Assert.True(reader.TryConnect());
+
+            writer.ResetReaderProbeCacheForTests();
+            writer.WriteFrame(result, "cam-1");
+
+            var read = reader.TryReadFrame(skipIfSameFrame: false);
+            Assert.NotNull(read);
+            Assert.Equal(1, read!.FrameCounter);
+            read.Image2D?.Dispose();
+        }
     }
 }
