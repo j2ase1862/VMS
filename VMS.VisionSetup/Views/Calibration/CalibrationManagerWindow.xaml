@@ -116,10 +116,16 @@
 
                 <!-- VMS Shared Frame 소스 -->
                 <StackPanel Visibility="{Binding IsVmsSharedFrameSource, Converter={StaticResource BoolToVis}}">
-                    <Button Content="Receive Frame from VMS"
+                    <!-- 이 버튼은 이제 VMS 에 "지금 찍어 달라" 고 요청한다 (예전에는 공유 메모리를
+                         읽기만 해서, VMS 창으로 가 Grab 을 누르고 돌아와야 했다). 라벨을 Grab 으로
+                         바꿔 실제 촬영이 일어난다는 것을 드러낸다. -->
+                    <Button Content="Grab from VMS"
                             Command="{Binding ReceiveFromVmsCommand}"
                             IsEnabled="{Binding IsVmsWriterAlive}"
                             Style="{StaticResource ActionButton}" Background="{StaticResource BrushAccent}"/>
+                    <TextBlock Text="VMS 가 지금 한 장 찍어 이 창으로 보냅니다. 운전(AUTO RUN)·라이브 중에는 거절됩니다."
+                               Foreground="{StaticResource BrushTextMuted}" FontSize="10" Margin="0,0,0,4"
+                               TextWrapping="Wrap"/>
                     <TextBlock Text="VMS not detected. Start VMS and click Refresh."
                                Foreground="{StaticResource BrushTextMuted}" FontSize="10" Margin="0,0,0,4"
                                TextWrapping="Wrap">
