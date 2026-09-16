@@ -942,6 +942,53 @@ namespace VMS.VisionSetup.ViewModels
                 }
                 SelectedStep = m.Step;
             });
+
+            // 캘리브레이션 창 등 별도 창이 "메인 화면이 카메라를 쥐고 있나" 를 묻는다.
+            WeakReferenceMessenger.Default.Register<MainCameraOwnershipRequestMessage>(this, (r, m) =>
+            {
+                m.Reply(IsCameraConnected && SelectedCamera != null
+                    ? new MainCameraOwnership(true, SelectedCamera.Id, SelectedCamera.Name)
+                    : MainCameraOwnership.None);
+            });
+
+            // 같은 카메라를 두 번 열면 SDK 가 배타 점유라 실패한다 — 이미 연 쪽이 대신 찍어
+            // 이미지만 건네준다. 반환한 Mat 의 소유권은 요청자에게 넘어간다.
+            WeakReferenceMessenger.Default.Register<MainCameraCaptureRequestMessage>(this, (r, m) =>
+            {
+                m.Reply(CaptureForExternalRequestAsync(m.CameraId));
+            });
+        }
+
+        /// <summary>
+        /// 별도 창의 요청으로 메인 화면이 쥔 카메라를 한 장 찍는다.
+        /// 메인 화면이 그 카메라를 쥐고 있지 않으면 촬영하지 않고 사유만 돌려준다
+        /// (요청자가 직접 연결로 넘어갈 수 있도록).
+        /// </summary>
+        private async System.Threading.Tasks.Task<MainCameraCaptureReply> CaptureForExternalRequestAsync(string cameraId)
+        {
+            if (!IsCameraConnected || _cameraAcquisition == null || SelectedCamera == null)
+                return new MainCameraCaptureReply(false, null, "메인 화면이 카메라에 연결되어 있지 않습니다.");
+
+            if (!string.IsNullOrEmpty(cameraId) && SelectedCamera.Id != cameraId)
+                return new MainCameraCaptureReply(false, null,
+                    $"메인 화면은 다른 카메라({SelectedCamera.Name})에 연결되어 있습니다.");
+
+            if (IsCameraLive)
+                return new MainCameraCaptureReply(false, null, "메인 화면이 라이브 구동 중입니다 — 라이브를 멈추고 다시 시도하세요.");
+
+            try
+            {
+                var result = await _cameraAcquisition.AcquireAsync();
+                if (!result.Success || result.Image2D == null || result.Image2D.Empty())
+                    return new MainCameraCaptureReply(false, null,
+                        string.IsNullOrEmpty(result.Message) ? "촬영에 실패했습니다." : result.Message);
+
+                return new MainCameraCaptureReply(true, result.Image2D, $"{SelectedCamera.Name} 촬영 완료");
+            }
+            catch (Exception ex)
+            {
+                return new MainCameraCaptureReply(false, null, ex.Message);
+            }
         }
         #endregion
 
@@ -4046,6 +4093,16 @@ namespace VMS.VisionSetup.ViewModels
                     return;
                 }
 
+                // ★ 요청을 보내기 전에 Reader 를 먼저 붙인다. VMS 의 Writer 는 Reader 가
+                // 없으면 프레임 직렬화를 통째로 건너뛰므로(라이브 페이지파일 I/O 방지),
+                // 요청 뒤에 붙으면 이번 Grab 은 공유 메모리에 기록되지 않는다 — 요청은
+                // 성공했는데 화면은 그대로인 "한 번에 안 들어오는" 증상의 원인.
+                if (!EnsureSharedFrameReaderConnected())
+                {
+                    StatusMessage = "VMS 공유 프레임에 연결할 수 없습니다 (VMS가 실행 중인지 확인)";
+                    return;
+                }
+
                 StatusMessage = targetCamera != null
                     ? $"VMS에 Grab 요청 중... ({targetCamera.Name})"
                     : "VMS에 Grab 요청 중...";
@@ -4065,8 +4122,10 @@ namespace VMS.VisionSetup.ViewModels
                     return;
                 }
 
-                // Grab 성공 — 방금 기록된 프레임을 읽는다
-                await ReceiveFromVms();
+                // Grab 성공 — 방금 기록된 프레임을 읽는다.
+                // 응답에 실려 온 프레임 번호와 대조해, 기록이 스킵되어 직전 프레임을
+                // 그대로 읽는 경우를 조용히 넘기지 않는다.
+                await ReceiveFromVms(response.FrameCounter);
 
                 if (!string.IsNullOrEmpty(cameraId)
                     && !string.IsNullOrEmpty(_lastReceivedCameraId)
@@ -4085,21 +4144,39 @@ namespace VMS.VisionSetup.ViewModels
         /// <summary>마지막으로 수신한 프레임의 카메라 식별자 (요청 카메라 대조용).</summary>
         private string _lastReceivedCameraId = string.Empty;
 
-        private async System.Threading.Tasks.Task ReceiveFromVms()
+        /// <summary>
+        /// 공유 프레임 Reader 를 붙인다 (이미 붙어 있으면 그대로 유지).
+        ///
+        /// <para>Reader 가 붙어 있어야 VMS 의 Writer 가 프레임을 기록한다 — Grab 을 요청하기
+        /// <b>전에</b> 불러야 이번 촬영분이 공유 메모리에 실린다.</para>
+        /// </summary>
+        private bool EnsureSharedFrameReaderConnected()
+        {
+            _sharedFrameReader ??= new SharedFrameReader();
+            if (_sharedFrameReader.TryConnect())
+                return true;
+
+            _sharedFrameReader.Dispose();
+            _sharedFrameReader = null;
+            return false;
+        }
+
+        /// <param name="expectedFrameCounter">
+        /// VMS 가 Grab 응답에 실어 보낸 프레임 번호. 읽어 온 프레임이 이보다 오래된 것이면
+        /// 이번 촬영분이 공유 메모리에 실리지 않은 것이므로 조용히 옛 이미지를 쓰지 않는다.
+        /// 메뉴에서 직접 수신할 때는 기준이 없으므로 null.
+        /// </param>
+        private async System.Threading.Tasks.Task ReceiveFromVms(long? expectedFrameCounter = null)
         {
             try
             {
-                _sharedFrameReader ??= new SharedFrameReader();
-
-                if (!_sharedFrameReader.TryConnect())
+                if (!EnsureSharedFrameReaderConnected())
                 {
                     StatusMessage = "VMS에 연결할 수 없습니다 (VMS가 실행 중인지 확인)";
-                    _sharedFrameReader.Dispose();
-                    _sharedFrameReader = null;
                     return;
                 }
 
-                if (!_sharedFrameReader.IsWriterAlive)
+                if (!_sharedFrameReader!.IsWriterAlive)
                 {
                     StatusMessage = "VMS가 비활성 상태입니다";
                     return;
@@ -4109,6 +4186,16 @@ namespace VMS.VisionSetup.ViewModels
                 if (frame == null)
                 {
                     StatusMessage = "프레임 읽기 실패 (VMS에서 Grab을 먼저 실행하세요)";
+                    return;
+                }
+
+                if (expectedFrameCounter is long expected && frame.FrameCounter < expected)
+                {
+                    // 새 프레임이 기록되지 않았다 — 옛 이미지를 새 것인 양 넘기면 엉뚱한
+                    // 이미지로 툴을 세팅하게 된다. 버리고 사유를 알린다.
+                    frame.Image2D?.Dispose();
+                    StatusMessage = $"VMS가 새 프레임을 기록하지 않았습니다 "
+                                  + $"(기대 #{expected}, 수신 #{frame.FrameCounter}) — 다시 시도하세요";
                     return;
                 }
 
@@ -4129,15 +4216,13 @@ namespace VMS.VisionSetup.ViewModels
 
         private async System.Threading.Tasks.Task StartLiveReceive()
         {
-            _sharedFrameReader ??= new SharedFrameReader();
-
-            if (!_sharedFrameReader.TryConnect())
+            if (!EnsureSharedFrameReaderConnected())
             {
                 StatusMessage = "VMS에 연결할 수 없습니다 (VMS가 실행 중인지 확인)";
-                _sharedFrameReader.Dispose();
-                _sharedFrameReader = null;
                 return;
             }
+
+            var reader = _sharedFrameReader!;
 
             IsReceivingFromVms = true;
             NotifyLiveReceiveCommands();
@@ -4150,7 +4235,7 @@ namespace VMS.VisionSetup.ViewModels
             {
                 while (!ct.IsCancellationRequested)
                 {
-                    if (!_sharedFrameReader.IsWriterAlive)
+                    if (!reader.IsWriterAlive)
                     {
                         await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                         {
@@ -4160,9 +4245,9 @@ namespace VMS.VisionSetup.ViewModels
                         break;
                     }
 
-                    if (_sharedFrameReader.WaitForFrame(500))
+                    if (reader.WaitForFrame(500))
                     {
-                        var frame = _sharedFrameReader.TryReadFrame();
+                        var frame = reader.TryReadFrame();
                         if (frame != null)
                         {
                             await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>

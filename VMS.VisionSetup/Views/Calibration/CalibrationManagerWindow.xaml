@@ -88,10 +88,10 @@
                     SelectedValue="{Binding SelectedSourceOption}"
                     ToolType="CalibrationManager" ParameterName="ImageSource"/>
 
-                <!-- VMS Writer 활성 시 안내 -->
+                <!-- 카메라 점유 충돌 안내 — VMS 또는 VisionSetup 메인 화면이 카메라를 쥐고 있을 때 -->
                 <Border Background="{StaticResource BrushWarningSoft}" BorderBrush="#AA7A00" BorderThickness="1"
                         CornerRadius="3" Padding="6" Margin="0,0,0,6"
-                        Visibility="{Binding IsVmsWriterAlive, Converter={StaticResource BoolToVis}}">
+                        Visibility="{Binding HasSourceConflict, Converter={StaticResource BoolToVis}}">
                     <TextBlock Text="{Binding AvailabilityMessage}"
                                Foreground="{StaticResource BrushWarning}" FontSize="10" TextWrapping="Wrap"/>
                 </Border>
