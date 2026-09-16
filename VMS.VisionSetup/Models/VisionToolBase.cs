@@ -70,7 +70,12 @@ namespace VMS.VisionSetup.Models
                     // 사용자가 ROI를 변경한 경우 Fixture 기준점 리셋
                     // (Fixture Transform 적용 중에는 리셋하지 않음)
                     if (!IsFixtureTransformActive)
+                    {
                         HasFixtureBaseROI = false;
+                        // 전달받은 각도도 함께 버린다 — 사용자가 ROI 를 다시 그렸으면
+                        // 기준 자세부터 다시 잡아야 한다.
+                        HasFixtureAngle = false;
+                    }
 
                     OnPropertyChanged(nameof(ROIX));
                     OnPropertyChanged(nameof(ROIY));
@@ -143,7 +148,10 @@ namespace VMS.VisionSetup.Models
             set
             {
                 if (SetProperty(ref _useROI, value) && !IsFixtureTransformActive)
+                {
                     HasFixtureBaseROI = false;
+                    HasFixtureAngle = false;
+                }
             }
         }
 
@@ -158,6 +166,33 @@ namespace VMS.VisionSetup.Models
         public double FixtureRefX { get; set; }      // 최초 실행 시 FeatureMatch foundX
         public double FixtureRefY { get; set; }      // 최초 실행 시 FeatureMatch foundY
         public double FixtureRefAngle { get; set; }  // 최초 실행 시 FeatureMatch angle
+
+        /// <summary>
+        /// 최초 실행 시점의 ROI 기울기 — 사용자가 회전 ROI(RectangleAffineROI)를 그려 두었으면
+        /// 그 각도다. Fixture 각도 전달은 이 값 <b>위에</b> 델타를 더한다: 기준을 0 으로 보면
+        /// 학습 자세에서부터 ROI 가 수평으로 펴져 버린다.
+        /// </summary>
+        public double FixtureBaseROIAngle { get; set; }
+
+        /// <summary>
+        /// Fixture 연결이 <see cref="ROIAngle"/> 을 채워 넣은 상태인지.
+        ///
+        /// <para>true 면 <see cref="EffectiveROIAngle"/> 이 캔버스 도형 대신 ROIAngle 을 쓴다 —
+        /// 화면의 도형은 사용자가 그린 자세 그대로 남아 있고, 실행이 봐야 하는 것은
+        /// 소스가 알려 준 현재 자세이기 때문이다. 이걸 구분하지 않으면 VisionSetup 에서는
+        /// 전달된 각도가 캔버스 도형에 가려 그대로 무시된다.</para>
+        /// </summary>
+        public bool HasFixtureAngle { get; set; }
+
+        /// <summary>
+        /// 실행이 써야 할 ROI 기울기. Fixture 가 각도를 전달했으면 그 값, 아니면 캔버스에
+        /// 떠 있는 회전 ROI 의 각도, 그것도 없으면 저장된 <see cref="ROIAngle"/>.
+        /// 회전 ROI 를 지원하는 도구는 각자 판단하지 말고 이것을 쓸 것.
+        /// </summary>
+        public double EffectiveROIAngle =>
+            HasFixtureAngle
+                ? ROIAngle
+                : AssociatedROIShape is RectangleAffineROI liveROI ? liveROI.Angle : ROIAngle;
 
         // SearchRegion(Execute용)도 동일한 Fixture 변환을 받기 위한 base.
         // ISearchRegionTool 구현 도구가 사용. ROI(Training Region)와 별개로 관리.
@@ -350,7 +385,7 @@ namespace VMS.VisionSetup.Models
         /// </summary>
         public Mat GetAlignedROIImage(Mat inputImage)
         {
-            double angle = AssociatedROIShape is RectangleAffineROI liveROI ? liveROI.Angle : ROIAngle;
+            double angle = EffectiveROIAngle;
 
             if (!UseROI || ROI.Width <= 0 || ROI.Height <= 0 || Math.Abs(angle) <= 0.001)
                 return GetROIImage(inputImage);

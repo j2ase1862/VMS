@@ -313,8 +313,7 @@ namespace VMS.VisionSetup.VisionTools.BlobAnalysis
             try
             {
                 // 회전 각도 결정: 라이브 ROI shape 또는 저장된 ROIAngle 사용
-                double effectiveAngle = AssociatedROIShape is RectangleAffineROI liveROI
-                    ? liveROI.Angle : ROIAngle;
+                double effectiveAngle = EffectiveROIAngle;
 
                 bool useRotatedROI = UseROI && ROI.Width > 0 && ROI.Height > 0
                     && Math.Abs(effectiveAngle) > 0.001;

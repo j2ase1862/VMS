@@ -984,6 +984,13 @@ namespace VMS.Services
             return false;
         }
 
+        /// <summary>
+        /// Coordinates 연결(Fixture) 적용 — 변환 계산은 ToolSourceInjector 한 곳에만 둔다.
+        ///
+        /// <para>예전에는 이 메서드가 VisionService 의 계산을 복사해 들고 있었고, 그 사이
+        /// SearchRegion 시프트가 VisionSetup 에만 들어가 AUTO RUN 에서는 ShapeMatch/Color/OCV 의
+        /// 탐색 영역이 안 따라가는 상태로 갈라져 있었다. 공용 호출로 바꿔 재발을 막는다.</para>
+        /// </summary>
         private static void ApplyCoordinatesConnection(
             VisionToolBase tool, List<ConnectionInfo> connections, Dictionary<string, VisionResult> resultMap)
         {
@@ -999,73 +1006,7 @@ namespace VMS.Services
                     if (!resultMap.TryGetValue(conn.SourceId, out var sourceResult) || sourceResult.Data == null)
                         continue;
 
-                    if (sourceResult.Data.TryGetValue("CenterX", out var cx) &&
-                        sourceResult.Data.TryGetValue("CenterY", out var cy))
-                    {
-                        if (!tool.HasFixtureBaseROI)
-                        {
-                            double refCX = Convert.ToDouble(cx);
-                            double refCY = Convert.ToDouble(cy);
-
-                            if (tool.UseROI && tool.ROI.Width > 0 && tool.ROI.Height > 0)
-                            {
-                                tool.FixtureBaseROI = tool.ROI;
-                            }
-                            else
-                            {
-                                int defaultW = tool.ROI.Width > 0 ? tool.ROI.Width : 200;
-                                int defaultH = tool.ROI.Height > 0 ? tool.ROI.Height : 200;
-                                tool.FixtureBaseROI = new Rect(
-                                    (int)(refCX - defaultW / 2.0),
-                                    (int)(refCY - defaultH / 2.0),
-                                    defaultW, defaultH);
-                            }
-
-                            tool.HasFixtureBaseROI = true;
-                            tool.FixtureRefX = refCX;
-                            tool.FixtureRefY = refCY;
-                            tool.FixtureRefAngle = sourceResult.Data.TryGetValue("Angle", out var initAngle)
-                                ? Convert.ToDouble(initAngle) : 0;
-                        }
-
-                        double foundX = Convert.ToDouble(cx);
-                        double foundY = Convert.ToDouble(cy);
-                        double refX = tool.FixtureRefX;
-                        double refY = tool.FixtureRefY;
-
-                        double baseCX = tool.FixtureBaseROI.X + tool.FixtureBaseROI.Width / 2.0;
-                        double baseCY = tool.FixtureBaseROI.Y + tool.FixtureBaseROI.Height / 2.0;
-
-                        double currentAngle = 0;
-                        if (sourceResult.Data.TryGetValue("Angle", out var angleObj))
-                            currentAngle = Convert.ToDouble(angleObj);
-                        double deltaAngle = currentAngle - tool.FixtureRefAngle;
-
-                        double newCX, newCY;
-                        if (Math.Abs(deltaAngle) > 0.01)
-                        {
-                            double relX = baseCX - refX;
-                            double relY = baseCY - refY;
-                            double rad = deltaAngle * Math.PI / 180.0;
-                            newCX = foundX + relX * Math.Cos(rad) - relY * Math.Sin(rad);
-                            newCY = foundY + relX * Math.Sin(rad) + relY * Math.Cos(rad);
-                        }
-                        else
-                        {
-                            newCX = baseCX + (foundX - refX);
-                            newCY = baseCY + (foundY - refY);
-                        }
-
-                        int w = tool.FixtureBaseROI.Width > 0 ? tool.FixtureBaseROI.Width : 100;
-                        int h = tool.FixtureBaseROI.Height > 0 ? tool.FixtureBaseROI.Height : 100;
-                        tool.ROI = new Rect((int)(newCX - w / 2.0), (int)(newCY - h / 2.0), w, h);
-                        tool.UseROI = true;
-                    }
-                    else if (sourceResult.Data.TryGetValue("BoundingRect", out var rectObj) && rectObj is Rect boundingRect)
-                    {
-                        tool.ROI = boundingRect;
-                        tool.UseROI = true;
-                    }
+                    ToolSourceInjector.ApplyFixtureTransform(tool, sourceResult.Data);
                 }
             }
             finally

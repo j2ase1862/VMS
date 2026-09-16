@@ -14,6 +14,10 @@ namespace VMS.VisionSetup.Tests
     /// 연결해도 "계산되면 무조건 OK"였다.
     /// VisionService 는 싱글턴이므로 각 테스트가 상태를 세팅/복원한다.
     /// </summary>
+    // VisionService.Instance 의 CurrentStepResolutionMmPerPx / CurrentCalibrationMetadata 를
+    // 세팅·복원하므로, 같은 싱글턴을 쓰는 다른 시험들과 반드시 직렬 실행해야 한다.
+    // 이 특성이 없어 MultiStepAlign 등과 병렬로 돌며 간헐 실패했다 (2026-09-16).
+    [Collection("VisionServiceSingleton")]
     public class GeometryJudgmentResolutionTests : IDisposable
     {
         private readonly CalibrationMetadata? _savedCal;
