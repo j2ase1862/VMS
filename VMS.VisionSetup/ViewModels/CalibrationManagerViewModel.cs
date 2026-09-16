@@ -112,6 +112,7 @@ namespace VMS.VisionSetup.ViewModels
         private readonly IDialogService _dialogService;
         private Mat? _sourceImage;
         private SharedFrameReader? _sharedFrameReader;
+        private GrabRequestChannel? _grabRequestChannel;
         private ICameraAcquisition? _cameraAcquisition;
         private CameraInfo? _connectedCameraInfo;
 
@@ -575,32 +576,69 @@ namespace VMS.VisionSetup.ViewModels
             return true;
         }
 
+        /// <summary>
+        /// VMS 에 촬영을 요청하고 그 프레임을 받아온다.
+        ///
+        /// <para><b>요청까지 해야 하는 이유.</b> 예전에는 공유 메모리를 <b>읽기만</b> 했다. 그런데
+        /// VMS 의 Writer 는 받는 쪽이 붙어 있을 때만 프레임을 기록하고(라이브 페이지파일 I/O 방지),
+        /// 이 창의 Reader 는 버튼을 누르는 그 순간에야 붙는다 — 그 전에 VMS 가 찍어 둔 사진은
+        /// 애초에 기록되지 않았다. 그래서 <b>창을 열고 처음 누르면 늘 빈손</b>이었고, VMS 창으로 가서
+        /// Grab 을 누르고 돌아와 다시 눌러야 했다 (2026-09-16 현장 보고 — 메인 화면은 #495 에서
+        /// 고쳤는데 이 창만 남아 있었다).</para>
+        ///
+        /// <para>순서가 중요하다: <b>Reader 를 먼저 붙이고</b> 요청해야 이번 촬영분이 기록된다.</para>
+        /// </summary>
         [RelayCommand]
-        private void ReceiveFromVms()
+        private async Task ReceiveFromVms()
         {
             IsCapturing = true;
             try
             {
+                // ① Reader 를 먼저 붙인다 (요청보다 먼저여야 한다)
                 _sharedFrameReader ??= new SharedFrameReader();
-
                 if (!_sharedFrameReader.TryConnect())
                 {
-                    StatusMessage = "VMS shared frame not available (VMS not running).";
+                    StatusMessage = "VMS 공유 프레임에 연결할 수 없습니다 (VMS 가 실행 중인지 확인).";
+                    _sharedFrameReader.Dispose();
+                    _sharedFrameReader = null;
                     RefreshSourceAvailability();
                     return;
                 }
                 if (!_sharedFrameReader.IsWriterAlive)
                 {
-                    StatusMessage = "VMS writer is not active.";
+                    StatusMessage = "VMS 가 비활성 상태입니다.";
                     RefreshSourceAvailability();
                     return;
                 }
 
+                // ② VMS 에 촬영을 요청한다. 운전·라이브 중이면 사유를 그대로 돌려준다.
+                long? expectedFrame = await RequestGrabFromVmsAsync();
+
+                // ③ 방금 기록된 프레임을 읽는다
                 var frame = _sharedFrameReader.TryReadFrame(skipIfSameFrame: false);
                 if (frame?.Image2D == null || frame.Image2D.Empty())
                 {
-                    StatusMessage = "No frame received from VMS.";
+                    frame?.Image2D?.Dispose();
+                    StatusMessage = "VMS 로부터 받은 프레임이 없습니다 — VMS 에서 Grab 을 한 번 실행한 뒤 다시 시도하세요.";
                     return;
+                }
+
+                if (expectedFrame is long expected && frame.FrameCounter < expected)
+                {
+                    // 이번 촬영분이 공유 메모리에 안 실렸다 — 옛 이미지를 새 것인 양 쓰면
+                    // 엉뚱한 사진으로 캘리브레이션하게 된다.
+                    frame.Image2D.Dispose();
+                    StatusMessage = $"VMS 가 새 프레임을 기록하지 않았습니다 "
+                                  + $"(기대 #{expected}, 수신 #{frame.FrameCounter}) — 다시 시도하세요.";
+                    return;
+                }
+
+                // 프레임에 실린 카메라 식별자를 기억해 그 카메라의 스텝만 기본 체크되게 한다
+                // (v2 헤더 — 없으면 예전처럼 "모름" 이라 전체 체크).
+                if (!string.IsNullOrEmpty(frame.CameraId))
+                {
+                    _sourceCameraId = frame.CameraId;
+                    ApplyDefaultSelection();
                 }
 
                 // SharedFrameData가 자체적으로 deep-copied Mat을 들고 있으므로 그대로 양도.
@@ -615,6 +653,48 @@ namespace VMS.VisionSetup.ViewModels
             finally
             {
                 IsCapturing = false;
+            }
+        }
+
+        /// <summary>
+        /// VMS 에 Grab 을 요청한다. 성공하면 VMS 가 알려 준 프레임 번호(대조용),
+        /// 요청 채널이 없거나 거절되면 null — 이 경우에도 공유 메모리에 남아 있는
+        /// 마지막 프레임은 읽어 본다(예전 동작 보존).
+        /// </summary>
+        private async Task<long?> RequestGrabFromVmsAsync()
+        {
+            try
+            {
+                _grabRequestChannel ??= new GrabRequestChannel();
+                if (!_grabRequestChannel.TryConnectAsRequester())
+                {
+                    _grabRequestChannel.Dispose();
+                    _grabRequestChannel = null;
+                    return null;   // 구버전 VMS 등 — 읽기만 시도
+                }
+
+                StatusMessage = "VMS 에 촬영을 요청하는 중...";
+
+                // 요청한 카메라가 지정돼 있으면 그 카메라로, 없으면 VMS 의 기본 카메라로.
+                string cameraId = SelectedCamera?.Id ?? string.Empty;
+                var response = await Task.Run(() => _grabRequestChannel.RequestGrab(cameraId));
+
+                if (response == null)
+                {
+                    StatusMessage = "VMS 가 촬영 요청에 응답하지 않았습니다 (시간 초과).";
+                    return null;
+                }
+                if (!response.IsSuccess)
+                {
+                    StatusMessage = $"VMS 가 촬영을 거절했습니다: {response.Message}";
+                    return null;
+                }
+                return response.FrameCounter;
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"VMS 촬영 요청 오류: {ex.Message}";
+                return null;
             }
         }
 
@@ -898,6 +978,8 @@ namespace VMS.VisionSetup.ViewModels
             }
             _sharedFrameReader?.Dispose();
             _sharedFrameReader = null;
+            _grabRequestChannel?.Dispose();
+            _grabRequestChannel = null;
             _sourceImage?.Dispose();
             _sourceImage = null;
         }

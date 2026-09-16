@@ -1209,9 +1209,11 @@ namespace VMS.VisionSetup.Models
                     ["ImageSource"] =
                         "캘리브레이션에 쓸 이미지를 가져오는 방법입니다.\n\n" +
                         "• Load Image… — 저장해 둔 사진 파일을 엽니다\n" +
-                        "• Capture from Camera — 연결된 카메라로 지금 한 장 찍습니다\n" +
-                        "• Receive Frame from VMS — VMS 가 실행 중이면 그 화면의 프레임을 그대로 받아옵니다. " +
-                        "VMS 가 카메라를 쓰고 있어 직접 촬영이 안 될 때 씁니다\n\n" +
+                        "• Capture from Camera — 연결된 카메라로 지금 한 장 찍습니다. " +
+                        "VisionSetup 메인 화면이 그 카메라를 쓰고 있으면 그쪽에 부탁해 받아오므로 연결을 끊을 필요가 없습니다\n" +
+                        "• Grab from VMS — VMS 에 \"지금 한 장 찍어 달라\" 고 요청해 그 사진을 받아옵니다. " +
+                        "VMS 가 실행 중이면 카메라 소유권이 VMS 에 있으므로 이 방법을 씁니다. " +
+                        "운전(AUTO RUN)·라이브 중에는 카메라를 뺏지 않도록 거절되며, 그 사유가 표시됩니다\n\n" +
                         "버튼이 비활성이면 [Refresh Source Availability] 를 눌러 상태를 다시 확인하세요."
                 }
             },
