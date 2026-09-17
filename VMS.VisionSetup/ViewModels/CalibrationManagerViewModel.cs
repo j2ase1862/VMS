@@ -612,7 +612,16 @@ namespace VMS.VisionSetup.ViewModels
                 }
 
                 // ② VMS 에 촬영을 요청한다. 운전·라이브 중이면 사유를 그대로 돌려준다.
-                long? expectedFrame = await RequestGrabFromVmsAsync();
+                var request = await RequestGrabFromVmsAsync();
+                if (!ShouldReadSharedFrame(request.Outcome))
+                {
+                    // 거절·무응답·오류 — 공유 메모리에 남은 프레임을 읽지 않는다.
+                    // 운전 중에는 VMS 가 사이클마다 프레임을 기록하므로, 여기서 읽으면
+                    // 검사 중인 부품 사진이 캘리브레이션 원본으로 올라가고 거절 사유는
+                    // "Received frame" 메시지에 덮여 사라진다 (2026-09-17 v1.40.0 현장 E1).
+                    return;
+                }
+                long? expectedFrame = request.FrameCounter;
 
                 // ③ 방금 기록된 프레임을 읽는다
                 var frame = _sharedFrameReader.TryReadFrame(skipIfSameFrame: false);
@@ -656,12 +665,38 @@ namespace VMS.VisionSetup.ViewModels
             }
         }
 
+        /// <summary>VMS 촬영 요청의 결과 구분 — 공유 메모리를 읽어도 되는지의 근거.</summary>
+        public enum VmsGrabRequestOutcome
+        {
+            /// <summary>요청 채널이 없다(구버전 VMS 등) — 예전처럼 공유 메모리의 마지막 프레임을 읽어 본다.</summary>
+            NoChannel,
+            /// <summary>VMS 가 촬영했고 프레임 번호를 알려 줌 — 그 번호와 대조해 읽는다.</summary>
+            Success,
+            /// <summary>운전·라이브 중 등 VMS 가 거절 — 사유를 남기고 프레임은 읽지 않는다.</summary>
+            Rejected,
+            /// <summary>시간 초과 — 읽지 않는다 (직전 프레임을 새 것인 양 쓰지 않기 위해).</summary>
+            NoResponse,
+            /// <summary>요청 중 예외 — 읽지 않는다.</summary>
+            Error,
+        }
+
+        public readonly record struct VmsGrabRequestResult(VmsGrabRequestOutcome Outcome, long? FrameCounter);
+
         /// <summary>
-        /// VMS 에 Grab 을 요청한다. 성공하면 VMS 가 알려 준 프레임 번호(대조용),
-        /// 요청 채널이 없거나 거절되면 null — 이 경우에도 공유 메모리에 남아 있는
-        /// 마지막 프레임은 읽어 본다(예전 동작 보존).
+        /// 요청 결과에 따라 공유 메모리 프레임을 읽을지 결정한다. 거절·무응답·오류면 읽지 않는다 —
+        /// 운전 중에는 VMS 가 사이클마다 프레임을 기록하므로, 거절됐는데도 읽으면 검사 중인 부품
+        /// 사진이 캘리브레이션 원본이 되고 거절 사유는 수신 메시지에 덮인다. 채널이 없는 구버전
+        /// VMS 만 예전 읽기 동작을 유지한다.
         /// </summary>
-        private async Task<long?> RequestGrabFromVmsAsync()
+        internal static bool ShouldReadSharedFrame(VmsGrabRequestOutcome outcome)
+            => outcome is VmsGrabRequestOutcome.NoChannel or VmsGrabRequestOutcome.Success;
+
+        /// <summary>
+        /// VMS 에 Grab 을 요청한다. 성공하면 VMS 가 알려 준 프레임 번호(대조용)를 함께 돌려주고,
+        /// 거절·무응답·오류는 사유를 상태줄에 남긴 채 그 구분을 돌려준다 — 호출부는
+        /// <see cref="ShouldReadSharedFrame"/> 로 읽기 여부를 정한다.
+        /// </summary>
+        private async Task<VmsGrabRequestResult> RequestGrabFromVmsAsync()
         {
             try
             {
@@ -670,7 +705,8 @@ namespace VMS.VisionSetup.ViewModels
                 {
                     _grabRequestChannel.Dispose();
                     _grabRequestChannel = null;
-                    return null;   // 구버전 VMS 등 — 읽기만 시도
+                    // 구버전 VMS 등 — 읽기만 시도
+                    return new(VmsGrabRequestOutcome.NoChannel, null);
                 }
 
                 StatusMessage = "VMS 에 촬영을 요청하는 중...";
@@ -681,20 +717,20 @@ namespace VMS.VisionSetup.ViewModels
 
                 if (response == null)
                 {
-                    StatusMessage = "VMS 가 촬영 요청에 응답하지 않았습니다 (시간 초과).";
-                    return null;
+                    StatusMessage = "VMS 가 촬영 요청에 응답하지 않았습니다 (시간 초과) — 프레임을 받지 않았습니다.";
+                    return new(VmsGrabRequestOutcome.NoResponse, null);
                 }
                 if (!response.IsSuccess)
                 {
-                    StatusMessage = $"VMS 가 촬영을 거절했습니다: {response.Message}";
-                    return null;
+                    StatusMessage = $"VMS 가 촬영을 거절했습니다: {response.Message} — 프레임을 받지 않았습니다.";
+                    return new(VmsGrabRequestOutcome.Rejected, null);
                 }
-                return response.FrameCounter;
+                return new(VmsGrabRequestOutcome.Success, response.FrameCounter);
             }
             catch (Exception ex)
             {
                 StatusMessage = $"VMS 촬영 요청 오류: {ex.Message}";
-                return null;
+                return new(VmsGrabRequestOutcome.Error, null);
             }
         }
 
