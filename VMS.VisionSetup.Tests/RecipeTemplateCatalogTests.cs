@@ -122,8 +122,16 @@ namespace VMS.VisionSetup.Tests
                 .Where(t => t.Category == RecipeTemplateCatalog.CategoryAlign)
                 .ToList();
 
-            // 2D 얼라인 3종 + 3D 얼라인 3종 — 갤러리 "얼라인" 탭이 두 축을 모두 제공
+            // 2D 얼라인 2종(Match Align / Multi-Step Align) + 3D 얼라인 3종 — 갤러리 "얼라인" 탭이 두 축을 모두 제공.
+            // 2점 매치 얼라인은 Match Align 의 Mode 전환과 같아 템플릿에서 뺐다 (2026-09-17).
             Assert.Contains(align, t => t.Id == "2d-match-align");
+            Assert.Contains(align, t => t.Id == "2d-multistep-align");
+            Assert.DoesNotContain(align, t => t.Id == "2d-match-align-2pt");
+            Assert.Equal(5, align.Count);
+
+            // 갤러리 항목과 툴 팔레트 항목이 같은 물건임을 제목에서 알 수 있어야 한다
+            Assert.StartsWith("Match Align", align.First(t => t.Id == "2d-match-align").Title);
+            Assert.StartsWith("Multi-Step Align", align.First(t => t.Id == "2d-multistep-align").Title);
             Assert.Contains(align, t => t.Id == "3d-registration-align");
             Assert.Contains(align, t => t.Id == "3d-plane-tilt-align");
             Assert.Contains(align, t => t.Id == "3d-hybrid-align");
@@ -150,9 +158,13 @@ namespace VMS.VisionSetup.Tests
                 geo.Operation);
             Assert.False(geo.UseManualPoints);          // 연결된 Plane Fit 2개를 소스로 사용
 
+            // 2D 매치 얼라인은 1점(기본) 구성 — 2점은 사용자가 Mode 로 전환한다 (설명문에 안내)
+            var matchTemplate = RecipeTemplateCatalog.Templates.First(t => t.Id == "2d-match-align");
+            Assert.Single(matchTemplate.Tools, s => s.ToolType == "FeatureMatchTool");
+            Assert.Contains("TwoPoint", matchTemplate.Description);
             var match = RoundTripFirst<VMS.VisionSetup.VisionTools.PatternMatching.MatchAlignTool>(
-                "2d-match-align-2pt");
-            Assert.Equal(VMS.VisionSetup.VisionTools.PatternMatching.MatchAlignMode.TwoPoint, match.Mode);
+                "2d-match-align");
+            Assert.Equal(VMS.VisionSetup.VisionTools.PatternMatching.MatchAlignMode.SinglePoint, match.Mode);
         }
 
         /// <summary>템플릿의 첫 번째 T 툴을 직렬화 왕복시켜 반환.</summary>

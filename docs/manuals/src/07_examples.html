@@ -85,7 +85,7 @@
 <figure><img src="../gs/screenshots/v3/templates/2d-match-align.png" data-width="520" alt="2D 매치 얼라인 체인"><figcaption>Grayscale → Feature Match → Match Align → Result</figcaption></figure>
 <p><strong>상황</strong> — TMED 의 "로봇 얼라인" 처럼, 부품이 기준 위치에서 얼마나 이동 · 회전했는지 재서 로봇이나 서보에 보정량을 보냅니다.</p>
 <ol>
-  <li>템플릿 얼라인 → <strong>표준 2D 매치 얼라인</strong> 을 생성합니다. 각도 정밀도가 필요하면 <strong>2점 매치 얼라인</strong>(부품 양단 특징 2 개)을 씁니다.</li>
+  <li>템플릿 얼라인 → <strong>Match Align — 2D 매치 얼라인</strong> 을 생성합니다. 각도 정밀도가 더 필요하면 부품 양단의 특징을 찾는 Feature Match 를 하나 더 붙여 Match Align 에 Result 로 연결하고 Mode 를 <strong>TwoPoint</strong> 로 바꿉니다(연결 순서 = 1 번 · 2 번 점).</li>
   <li>기준(마스터) 부품을 놓고 Feature Match 를 학습합니다. 학습 위치가 곧 기준 포즈입니다.</li>
   <li><strong>Match Align</strong> 에서 Unit=Mm(캘리브레이션 필요) · Max ΔXY · Max Δθ 를 정하고 Enable Judgment 를 켭니다. 로봇으로 보내려면 Enable Robot Transform 을 켜고 핸드아이 행렬 상위 2×2 를 넣습니다.</li>
   <li>부품을 옮긴 이미지로 Run All → DeltaX · DeltaY · DeltaTheta(RobotDX · DY · DTheta)를 확인합니다. Match Align 의 PLC Output 에서 이 값들을 PLC 주소에 매핑하면 시퀀스가 돌 때마다 PLC 로 전달됩니다.</li>
