@@ -2900,49 +2900,6 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <tr><td>Width</td><td>입력</td><td>탐색 영역 너비</td></tr>
 <tr><td>Height</td><td>입력</td><td>탐색 영역 높이</td></tr>
 </table>
-<h5>Match Align (매치 얼라인)</h5>
-<table class="cols-3-3-4">
-<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
-<tr><td>Mode</td><td>선택(목록) (MatchAlignMode)</td><td>동작 모드</td></tr>
-<tr><td>Use Trained Reference</td><td>체크박스</td><td></td></tr>
-<tr><td>Ref X (px)</td><td>입력</td><td></td></tr>
-<tr><td>Ref Y (px)</td><td>입력</td><td></td></tr>
-<tr><td>Ref θ (°)</td><td>입력</td><td></td></tr>
-<tr><td>Ref X2 (px)</td><td>입력</td><td></td></tr>
-<tr><td>Ref Y2 (px)</td><td>입력</td><td></td></tr>
-<tr><td>Enable Judgment</td><td>체크박스</td><td>이 도구의 OK/NG 판정 사용</td></tr>
-<tr><td>Unit</td><td>선택(목록) (GeometryJudgmentUnit)</td><td></td></tr>
-<tr><td>Max ΔXY (radial)</td><td>입력</td><td></td></tr>
-<tr><td>Max Δθ (°)</td><td>입력</td><td></td></tr>
-<tr><td>Enable Robot Transform</td><td>체크박스</td><td></td></tr>
-<tr><td>M11</td><td>입력</td><td></td></tr>
-<tr><td>M21</td><td>입력</td><td></td></tr>
-<tr><td>M12</td><td>입력</td><td></td></tr>
-<tr><td>M22</td><td>입력</td><td></td></tr>
-<tr><td>θ Sign (+1/-1)</td><td>입력</td><td></td></tr>
-<tr><td>Draw Overlay</td><td>체크박스</td><td>결과 오버레이 표시</td></tr>
-</table>
-<h5>Multi-Step Align (다중 스텝 얼라인)</h5>
-<table class="cols-3-3-4">
-<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
-<tr><td>Require Same Cycle</td><td>체크박스</td><td></td></tr>
-<tr><td>Baseline X</td><td>입력</td><td></td></tr>
-<tr><td>Baseline Y</td><td>입력</td><td></td></tr>
-<tr><td>Ref A X</td><td>입력</td><td></td></tr>
-<tr><td>Ref A Y</td><td>입력</td><td></td></tr>
-<tr><td>Ref B X</td><td>입력</td><td></td></tr>
-<tr><td>Ref B Y</td><td>입력</td><td></td></tr>
-<tr><td>Enable Judgment</td><td>체크박스</td><td>이 도구의 OK/NG 판정 사용</td></tr>
-<tr><td>Max ΔXY (radial)</td><td>입력</td><td></td></tr>
-<tr><td>Max Δθ (°)</td><td>입력</td><td></td></tr>
-<tr><td>Enable Robot Transform</td><td>체크박스</td><td></td></tr>
-<tr><td>M11</td><td>입력</td><td></td></tr>
-<tr><td>M21</td><td>입력</td><td></td></tr>
-<tr><td>M12</td><td>입력</td><td></td></tr>
-<tr><td>M22</td><td>입력</td><td></td></tr>
-<tr><td>θ Sign (+1/-1)</td><td>입력</td><td></td></tr>
-<tr><td>Draw Overlay</td><td>체크박스</td><td>결과 오버레이 표시</td></tr>
-</table>
 <h4>Identification</h4>
 <h5>OCR (문자 인식)</h5>
 <table class="cols-3-3-4">
@@ -3148,6 +3105,50 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <tr><td>Input Height</td><td>슬라이더 [32~640]</td><td></td></tr>
 <tr><td>Confidence Threshold</td><td>슬라이더 [0.1~1.0]</td><td>신뢰도 임계값</td></tr>
 <tr><td>Use ImageNet Normalization</td><td>체크박스</td><td></td></tr>
+<tr><td>Draw Overlay</td><td>체크박스</td><td>결과 오버레이 표시</td></tr>
+</table>
+<h4>Alignment</h4>
+<h5>Match Align (매치 얼라인)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Mode</td><td>선택(목록) (MatchAlignMode)</td><td>동작 모드</td></tr>
+<tr><td>Use Trained Reference</td><td>체크박스</td><td></td></tr>
+<tr><td>Ref X (px)</td><td>입력</td><td></td></tr>
+<tr><td>Ref Y (px)</td><td>입력</td><td></td></tr>
+<tr><td>Ref θ (°)</td><td>입력</td><td></td></tr>
+<tr><td>Ref X2 (px)</td><td>입력</td><td></td></tr>
+<tr><td>Ref Y2 (px)</td><td>입력</td><td></td></tr>
+<tr><td>Enable Judgment</td><td>체크박스</td><td>이 도구의 OK/NG 판정 사용</td></tr>
+<tr><td>Unit</td><td>선택(목록) (GeometryJudgmentUnit)</td><td></td></tr>
+<tr><td>Max ΔXY (radial)</td><td>입력</td><td></td></tr>
+<tr><td>Max Δθ (°)</td><td>입력</td><td></td></tr>
+<tr><td>Enable Robot Transform</td><td>체크박스</td><td></td></tr>
+<tr><td>M11</td><td>입력</td><td></td></tr>
+<tr><td>M21</td><td>입력</td><td></td></tr>
+<tr><td>M12</td><td>입력</td><td></td></tr>
+<tr><td>M22</td><td>입력</td><td></td></tr>
+<tr><td>θ Sign (+1/-1)</td><td>입력</td><td></td></tr>
+<tr><td>Draw Overlay</td><td>체크박스</td><td>결과 오버레이 표시</td></tr>
+</table>
+<h5>Multi-Step Align (다중 스텝 얼라인)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Require Same Cycle</td><td>체크박스</td><td></td></tr>
+<tr><td>Baseline X</td><td>입력</td><td></td></tr>
+<tr><td>Baseline Y</td><td>입력</td><td></td></tr>
+<tr><td>Ref A X</td><td>입력</td><td></td></tr>
+<tr><td>Ref A Y</td><td>입력</td><td></td></tr>
+<tr><td>Ref B X</td><td>입력</td><td></td></tr>
+<tr><td>Ref B Y</td><td>입력</td><td></td></tr>
+<tr><td>Enable Judgment</td><td>체크박스</td><td>이 도구의 OK/NG 판정 사용</td></tr>
+<tr><td>Max ΔXY (radial)</td><td>입력</td><td></td></tr>
+<tr><td>Max Δθ (°)</td><td>입력</td><td></td></tr>
+<tr><td>Enable Robot Transform</td><td>체크박스</td><td></td></tr>
+<tr><td>M11</td><td>입력</td><td></td></tr>
+<tr><td>M21</td><td>입력</td><td></td></tr>
+<tr><td>M12</td><td>입력</td><td></td></tr>
+<tr><td>M22</td><td>입력</td><td></td></tr>
+<tr><td>θ Sign (+1/-1)</td><td>입력</td><td></td></tr>
 <tr><td>Draw Overlay</td><td>체크박스</td><td>결과 오버레이 표시</td></tr>
 </table>
 <h4>Judgment</h4>
