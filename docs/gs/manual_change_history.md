@@ -982,3 +982,40 @@ Mode 를 TwoPoint 로 바꾼 것과 같은 구성이라, 갤러리에서 고른 
   추가 + Mode=TwoPoint" 로 변경.
 - 스크린샷: `vs/dlg_TemplateGallery.png` 은 3D 탭이 열린 그림이라 **재캡처 불필요.**
   다이어그램 `templates/2d-match-align-2pt.png` 삭제(고아).
+
+## 28. 툴 팔레트 Alignment 카테고리 분리 (PR #506) — **매뉴얼 반영 완료 (같은 PR), 스크린샷 1장 재캡처 대기**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-09-17 |
+| PR | #506 (#505 후속) |
+| 화면 | VisionSetup → 왼쪽 Tool Palette |
+| 변경 종류 | 팔레트 카테고리 신설(툴 2종 이동) |
+
+### 무엇이 문제였나
+
+#505 로 갤러리 얼라인 템플릿을 정리한 뒤에도 Match Align · Multi-Step Align 이 팔레트의
+**Pattern Matching** 아래 있어, 갤러리 '얼라인' 탭에서 고른 것과 팔레트의 툴이 같은 물건인지
+드러나지 않았다. "템플릿에 있는 툴을 팔레트에서 빼자"는 안은 툴 삭제 후 재추가·기존 레시피에
+얼라인 추가·2D+3D 하이브리드 조합이 막혀 채택하지 않았다.
+
+### 무엇이 바뀌었나
+
+- 팔레트에 **Alignment** 카테고리 신설(Pattern Matching 바로 뒤). Match Align · Multi-Step Align 이동.
+  팔레트는 15 카테고리 39 도구.
+- 레시피 직렬화와 무관(카테고리는 표시 전용) — 기존 레시피 영향 없음.
+
+### 매뉴얼 반영 (완료)
+
+- **§5 화면 구성 표 ③ 왼쪽 패널** — "Tool Palette(15 카테고리 39 도구)".
+- **§6 비전 도구** — §6.3 Pattern Matching 은 Feature Match · Shape Match 만, **§6.4 Alignment — 얼라인** 신설
+  (Match Align · Multi-Step Align). 이후 절 번호 한 칸 이동(§6.5 Blob Analysis ~ §6.15 Surface Analysis).
+  다른 장에서 §6.4 이상을 참조하는 곳은 없음(§6.1·§6.3 참조만 존재).
+- 생성기: `gen_tools_chapter.py` ORDER 분리, `extract_tool_params.py` 카테고리 → `_tool_params.json`.
+
+### 스크린샷 — 재캡처 대기
+
+- `vs/full_main_scene.png` (§5 메인 화면): 팔레트 트리에 Pattern Matching 아래 Match Align 이 보이고
+  상단 메뉴에 제거된 WeldTeach 가 남아 있다. 실 레시피·이미지가 필요한 장면 캡처라 다음 캡처 회차에
+  갱신([[project_manual_v3_overhaul]] 장면 캡처 절차, `--instance` 격리 필수).
+- 별건: GS 제품설명서 생성기 `gen_product_description.js` 의 "팔레트 12 카테고리" 표는 이미 구식(현재 15).
