@@ -1013,9 +1013,11 @@ Mode 를 TwoPoint 로 바꾼 것과 같은 구성이라, 갤러리에서 고른 
   다른 장에서 §6.4 이상을 참조하는 곳은 없음(§6.1·§6.3 참조만 존재).
 - 생성기: `gen_tools_chapter.py` ORDER 분리, `extract_tool_params.py` 카테고리 → `_tool_params.json`.
 
-### 스크린샷 — 재캡처 대기
+### 스크린샷 — 재캡처 완료 (2026-09-17)
 
-- `vs/full_main_scene.png` (§5 메인 화면): 팔레트 트리에 Pattern Matching 아래 Match Align 이 보이고
-  상단 메뉴에 제거된 WeldTeach 가 남아 있다. 실 레시피·이미지가 필요한 장면 캡처라 다음 캡처 회차에
-  갱신([[project_manual_v3_overhaul]] 장면 캡처 절차, `--instance` 격리 필수).
+- `vs/full_main_scene.png` (§5 메인 화면): 팔레트 트리에 Alignment 카테고리(Match Align · Multi-Step Align)가
+  보이고 제거된 WeldTeach 메뉴가 사라진 상태로 재캡처. `capture_visionsetup_scene.ps1` 장면 1 과 같은
+  조건(mancap 인스턴스 · recipe_apple_iphone17_pro 스텝 4 · RefImages 기준 이미지 · Feature Match 선택)으로
+  `--capture-fullpage` 실행 후 원본 1/2 축소. **크기 2048×1232**(이전 2560×1392) — 캡처 코드가 주 모니터
+  작업 영역을 창 크기로 쓰므로 캡처 PC 의 주 모니터에 따라 달라진다. 매뉴얼은 data-width 620 고정이라 영향 없음.
 - 별건: GS 제품설명서 생성기 `gen_product_description.js` 의 "팔레트 12 카테고리" 표는 이미 구식(현재 15).
