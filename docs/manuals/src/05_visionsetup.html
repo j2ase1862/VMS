@@ -132,8 +132,8 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
   <tr><td>3D</td><td>3D 객체 카운트 · 치수 (기본)</td><td>Height Slicer → PointCloud Mask Crop → PointCloud Cluster. 높이 범위로 잘라 개수 · 치수 (3D 카메라 필요)</td></tr>
   <tr><td>3D</td><td>DL 세그 기반 3D 객체 검출</td><td>YOLOv8-seg(마스크 출력) → Mask Crop → Cluster. 딥러닝 윤곽으로 점군을 잘라 객체별 치수</td></tr>
   <tr><td>3D</td><td>3D 기준 형상 편차 검사</td><td>PointCloud Filter → Registration → Deviation. 기준 형상에 정합한 뒤 편차(들뜸 · 눌림) 검사</td></tr>
-  <tr><td>얼라인</td><td>표준 2D 매치 얼라인 / 2점 매치 얼라인</td><td>Grayscale → Feature Match(1 개 또는 A · B) → Match Align → Result. ΔX / ΔY / Δθ 산출 · 판정 · 로봇 변환</td></tr>
-  <tr><td>얼라인</td><td>2-스텝 얼라인</td><td>스텝 Align A / Align B + 합산 (Multi-Step Align). 카메라가 이동하는 대형 부품</td></tr>
+  <tr><td>얼라인</td><td>Match Align — 2D 매치 얼라인</td><td>Grayscale → Feature Match → Match Align → Result. 부품이 한 화면에 들어올 때. ΔX / ΔY / Δθ 산출 · 판정 · 로봇 변환. 각도 정밀도가 더 필요하면 Feature Match 를 하나 더 붙이고 Match Align 의 Mode 를 TwoPoint 로</td></tr>
+  <tr><td>얼라인</td><td>Multi-Step Align — 2-스텝 얼라인</td><td>스텝 Align A / Align B + 합산 (Multi-Step Align). 카메라가 이동하는 대형 부품(한 화면에 안 들어올 때)</td></tr>
   <tr><td>얼라인</td><td>표준 3D 얼라인 / 평면 틸트 얼라인 / 2D+3D 하이브리드 얼라인</td><td>Registration(6 축) / Plane Fit 2 개 → 3D Geometry(평면 각) / Match Align + Plane Fit (3D 카메라 필요)</td></tr>
 </table>
 <div class="callout warn"><strong>얼라인 템플릿의 기준(원점)은 Feature Match 의 학습 위치입니다.</strong> 부품을 옮겨 놓고 다시 학습하면 기준도 새 위치로 바뀝니다(기본). 마스터 포즈를 유지한 채 특징만 보강하려면 Feature Match 설정의 재학습 원점을 KeepReference 로 두세요(§6.3).</div>

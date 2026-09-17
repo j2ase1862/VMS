@@ -264,15 +264,19 @@ namespace VMS.VisionSetup.Services
             new RecipeTemplate
             {
                 Id = "2d-match-align",
-                Title = "표준 2D 매치 얼라인 (ΔX/ΔY/Δθ)",
+                Title = "Match Align — 2D 매치 얼라인 (ΔX/ΔY/Δθ)",
                 Category = CategoryAlign,
-                Description = "카메라 1대로 부품을 보며 기준(Origin) 포즈 대비 현재 부품의 " +
-                              "변위량 ΔX/ΔY/Δθ 를 계산해 로봇/스테이지 보정에 쓰는 표준 얼라인 " +
-                              "구성이다. ① Feature Match 에서 기준 부품의 패턴을 학습 → " +
+                Description = "부품이 한 화면(FOV)에 들어올 때 — 카메라 1대로 부품을 보며 기준(Origin) " +
+                              "포즈 대비 현재 부품의 변위량 ΔX/ΔY/Δθ 를 계산해 로봇/스테이지 보정에 " +
+                              "쓰는 표준 얼라인 구성이다. ① Feature Match 에서 기준 부품의 패턴을 학습 → " +
                               "② Run 마다 Match Align 이 학습 중심 대비 Δ를 산출 → " +
                               "③ mm 변위는 캘리브레이션(또는 스텝 Resolution) 설정 시 자동, " +
                               "로봇 좌표 변위는 Match Align 의 Robot Transform(핸드아이 상위 " +
-                              "2x2)을 켜면 RobotDX/DY/DTheta 로 출력된다.",
+                              "2x2)을 켜면 RobotDX/DY/DTheta 로 출력된다. " +
+                              "각도 정밀도가 더 필요하면 부품 양단의 특징을 찾는 Feature Match 를 " +
+                              "하나 더 붙여 Match Align 에 Result 로 연결하고 Mode 를 TwoPoint 로 " +
+                              "바꾼다(두 점을 잇는 벡터의 회전 = Δθ). 부품이 한 화면에 안 들어오면 " +
+                              "'Multi-Step Align — 2-스텝 얼라인' 템플릿을 쓴다.",
                 Tools =
                 {
                     new TemplateToolSpec { ToolType = "GrayscaleTool" },
@@ -288,43 +292,13 @@ namespace VMS.VisionSetup.Services
                 },
             },
 
-            new RecipeTemplate
-            {
-                Id = "2d-match-align-2pt",
-                Title = "2점 매치 얼라인 (회전 정밀)",
-                Category = CategoryAlign,
-                Description = "부품 양단의 특징 2개(예: 두 모서리·두 홀)를 각각 Feature Match 로 " +
-                              "찾아, 두 점을 잇는 벡터의 회전으로 Δθ 를, 두 점 중심의 이동으로 " +
-                              "ΔX/ΔY 를 계산한다. 기저선이 길수록 1점 방식보다 각도 정밀도가 " +
-                              "높다. Feature Match A/B 에 각각 패턴을 학습시킬 것 — 연결 순서가 " +
-                              "1번/2번 포인트. ScaleRatio 가 1.0 에서 벗어나면 오검출 의심.",
-                Tools =
-                {
-                    new TemplateToolSpec { ToolType = "GrayscaleTool" },
-                    new TemplateToolSpec { ToolType = "FeatureMatchTool", DisplayName = "Feature Match A" },
-                    new TemplateToolSpec { ToolType = "FeatureMatchTool", DisplayName = "Feature Match B" },
-                    new TemplateToolSpec
-                    {
-                        ToolType = "MatchAlignTool",
-                        Configure = t => ((VisionTools.PatternMatching.MatchAlignTool)t).Mode =
-                            VisionTools.PatternMatching.MatchAlignMode.TwoPoint,
-                    },
-                    new TemplateToolSpec { ToolType = "ResultTool" },
-                },
-                Connections =
-                {
-                    new TemplateConnectionSpec { SourceIndex = 0, TargetIndex = 1, Type = ConnectionType.Image },
-                    new TemplateConnectionSpec { SourceIndex = 0, TargetIndex = 2, Type = ConnectionType.Image },
-                    new TemplateConnectionSpec { SourceIndex = 1, TargetIndex = 3, Type = ConnectionType.Result },
-                    new TemplateConnectionSpec { SourceIndex = 2, TargetIndex = 3, Type = ConnectionType.Result },
-                    new TemplateConnectionSpec { SourceIndex = 3, TargetIndex = 4, Type = ConnectionType.Result },
-                },
-            },
+            // 2점 매치 얼라인 템플릿(2d-match-align-2pt)은 위 템플릿에 Feature Match 하나를 더 붙이고
+            // Mode=TwoPoint 로 바꾼 것과 동일해 갤러리에서 제거 (2026-09-17) — 툴과 템플릿이 겹쳐 혼동.
 
             new RecipeTemplate
             {
                 Id = "2d-multistep-align",
-                Title = "2-스텝 얼라인 (카메라 이동, 대형 부품)",
+                Title = "Multi-Step Align — 2-스텝 얼라인 (카메라 이동, 대형 부품)",
                 Category = CategoryAlign,
                 Description = "부품이 한 FOV 에 다 들어오지 않을 때 — 카메라(로봇/스테이지)가 " +
                               "이동하며 스텝 A/B 에서 부품 양단의 특징을 하나씩 매칭하고, " +
