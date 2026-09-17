@@ -1243,7 +1243,10 @@ namespace VMS.VisionSetup.Services
                 ["Pattern Matching"] = new[]
                 {
                     "FeatureMatchTool",
-                    "ShapeMatchTool",
+                    "ShapeMatchTool"
+                },
+                ["Alignment"] = new[]
+                {
                     "MatchAlignTool",
                     "MultiStepAlignTool"
                 },

@@ -1015,9 +1015,14 @@ namespace VMS.VisionSetup.ViewModels
             var patternMatching = new ToolCategory { CategoryName = "Pattern Matching" };
             patternMatching.Tools.Add(new ToolItem { Name = "Feature Match", ToolType = "FeatureMatchTool" });
             patternMatching.Tools.Add(new ToolItem { Name = "Shape Match", ToolType = "ShapeMatchTool" });
-            patternMatching.Tools.Add(new ToolItem { Name = "Match Align", ToolType = "MatchAlignTool" });
-            patternMatching.Tools.Add(new ToolItem { Name = "Multi-Step Align", ToolType = "MultiStepAlignTool" });
             ToolTree.Add(patternMatching);
+
+            // Alignment 카테고리 — 예제 템플릿 갤러리의 "얼라인" 탭과 같은 이름으로 분리 (2026-09-17).
+            // Pattern Matching 아래 숨어 있으면 갤러리 항목과 같은 툴인지 드러나지 않는다.
+            var alignment = new ToolCategory { CategoryName = "Alignment" };
+            alignment.Tools.Add(new ToolItem { Name = "Match Align", ToolType = "MatchAlignTool" });
+            alignment.Tools.Add(new ToolItem { Name = "Multi-Step Align", ToolType = "MultiStepAlignTool" });
+            ToolTree.Add(alignment);
 
             // Blob Analysis 카테고리
             var blobAnalysis = new ToolCategory { CategoryName = "Blob Analysis" };

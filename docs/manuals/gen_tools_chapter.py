@@ -16,7 +16,8 @@ esc = html.escape
 ORDER = [
   ("Preprocessing (Color) — 컬러 전처리", [("Blur (블러)", "01_Blur.png"), ("Morphology (형태학 연산)", "02_Morphology.png"), ("Image Enhance (이미지 보정)", "03_Image_Enhance.png"), ("Polar Unwrap (극좌표 펼치기)", "04_Polar_Unwrap.png")]),
   ("Conversion (Gray) — 그레이 변환", [("Grayscale (그레이 변환)", "05_Grayscale.png"), ("Threshold (이진화)", "06_Threshold.png"), ("Edge Detection (에지 검출)", "07_Edge_Detection.png"), ("Histogram (히스토그램)", "08_Histogram.png")]),
-  ("Pattern Matching — 패턴 매칭 · 얼라인", [("Feature Match (특징 매칭)", "09_Feature_Match.png"), ("Shape Match (형상 매칭)", "10_Shape_Match.png"), ("Match Align (매치 얼라인)", "11_Match_Align.png"), ("Multi-Step Align (다중 스텝 얼라인)", "12_Multi-Step_Align.png")]),
+  ("Pattern Matching — 패턴 매칭", [("Feature Match (특징 매칭)", "09_Feature_Match.png"), ("Shape Match (형상 매칭)", "10_Shape_Match.png")]),
+  ("Alignment — 얼라인", [("Match Align (매치 얼라인)", "11_Match_Align.png"), ("Multi-Step Align (다중 스텝 얼라인)", "12_Multi-Step_Align.png")]),
   ("Blob Analysis — 블롭 분석", [("Blob Analysis (블롭 분석)", "13_Blob.png")]),
   ("Measurement — 치수 측정", [("Caliper (캘리퍼 측정)", "14_Caliper.png"), ("Line Fit (직선 피팅)", "15_Line_Fit.png"), ("Circle Fit (원 피팅)", "16_Circle_Fit.png"), ("Geometry (기하 측정)", "17_Geometry.png")]),
   ("Identification — 문자 인식 · 검증", [("OCR (문자 인식)", "18_OCR.png"), ("OCV (문자 검증)", "19_OCV.png")]),
