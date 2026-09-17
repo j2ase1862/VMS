@@ -2686,7 +2686,7 @@
  },
  {
   "tool": "Match Align (매치 얼라인)",
-  "category": "Pattern Matching",
+  "category": "Alignment",
   "file": "MatchAlignToolSettings.xaml",
   "params": [
    {
@@ -2837,7 +2837,7 @@
  },
  {
   "tool": "Multi-Step Align (다중 스텝 얼라인)",
-  "category": "Pattern Matching",
+  "category": "Alignment",
   "file": "MultiStepAlignToolSettings.xaml",
   "params": [
    {

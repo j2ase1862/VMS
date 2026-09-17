@@ -111,7 +111,7 @@
 <ul>
 <li>MeanValue 를 PLC 에 매핑하면 조명이 어두워지는 추세를 PLC 에서 감시할 수 있습니다.</li>
 </ul>
-<h3 id="tools-3">6.3 Pattern Matching — 패턴 매칭 · 얼라인</h3>
+<h3 id="tools-3">6.3 Pattern Matching — 패턴 매칭</h3>
 <h4>Feature Match — 특징(에지) 기반 패턴 매칭</h4>
 <p>제품의 윤곽(에지)을 학습해 두었다가 검사 이미지에서 같은 패턴의 위치 · 각도 · 크기를 찾습니다. 부품 유무 확인, 위치 검출, 뒤 도구의 ROI 를 따라가게 하는 기준(Fixture), 얼라인의 기준으로 가장 많이 쓰는 도구입니다. 8-bit 그레이 이미지만 받으므로 컬러 카메라에서는 앞에 Grayscale 을 둡니다.</p>
 <figure><img src="../gs/screenshots/v3/vs/scene_fm_settings_split.png" data-width="500" alt="Feature Match — 특징(에지) 기반 패턴 매칭 설정 패널"><figcaption>Feature Match — 특징(에지) 기반 패턴 매칭 — Tool Settings 패널</figcaption></figure>
@@ -162,6 +162,7 @@
 <li>Feature Match 가 잘 안 잡히는 단색 로고 · 마킹에 먼저 시도해 보세요.</li>
 <li>속도가 필요하면 Search Region 을 제한하고 Min/Max Scale 을 1.0 으로 고정합니다.</li>
 </ul>
+<h3 id="tools-4">6.4 Alignment — 얼라인</h3>
 <h4>Match Align — 2D 얼라인 (ΔX / ΔY / Δθ)</h4>
 <p>Feature Match 가 찾은 현재 포즈(중심 · 각도)를 기준(마스터) 포즈와 비교해 변위 ΔX · ΔY · Δθ 를 계산합니다. 캘리브레이션(또는 스텝 Resolution)이 있으면 mm 로도 내고, 핸드아이 행렬로 로봇 · 스테이지 좌표 변위(RobotDX · RobotDY · RobotDTheta)까지 만들어 PLC 로 보낼 수 있습니다. 카메라 1 대로 부품을 보는 표준 2D 얼라인 구성입니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/11_Match_Align_split.png" data-width="500" alt="Match Align — 2D 얼라인 (ΔX / ΔY / Δθ) 설정 패널"><figcaption>Match Align — 2D 얼라인 (ΔX / ΔY / Δθ) — Tool Settings 패널</figcaption></figure>
@@ -200,7 +201,7 @@
 <li>예제 템플릿 '2-스텝 얼라인' 을 쓰면 Align A · Align B 스텝과 소스 연결이 자동으로 만들어집니다. 이후 각 스텝의 Feature Match 학습 → Baseline 입력 → 기준 등록 순서로 진행하세요.</li>
 <li>카메라 이동이 반복 정밀해야 정확합니다. Baseline 은 실제 이동량을 mm 로 넣으세요.</li>
 </ul>
-<h3 id="tools-4">6.4 Blob Analysis — 블롭 분석</h3>
+<h3 id="tools-5">6.5 Blob Analysis — 블롭 분석</h3>
 <h4>Blob — 블롭(덩어리) 분석</h4>
 <p>이진화된 이미지에서 연결된 영역(블롭)을 찾아 개수 · 면적 · 위치를 구하고 판정합니다. 부품 유무, 개수 세기, 이물 · 결함 검출에 가장 많이 쓰는 도구입니다. 내부 이진화를 켜면 Threshold 없이 그레이 이미지를 바로 받을 수 있습니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/13_Blob_split.png" data-width="500" alt="Blob — 블롭(덩어리) 분석 설정 패널"><figcaption>Blob — 블롭(덩어리) 분석 — Tool Settings 패널</figcaption></figure>
@@ -222,7 +223,7 @@
 <li>Angle 을 내보내므로 Blob 을 Coordinates 로 연결하면 뒤 도구의 ROI 가 블롭의 위치 · 기울기를 따라갑니다.</li>
 <li>Web 에서 기준값을 관리하려면 Count Mode 를 Tolerance 로 두고 Expected Count · 상/하 공차를 Web 파라미터에 연동합니다(§5.7).</li>
 </ul>
-<h3 id="tools-5">6.5 Measurement — 치수 측정</h3>
+<h3 id="tools-6">6.6 Measurement — 치수 측정</h3>
 <h4>Caliper — 엣지 검출 · 캘리퍼 측정</h4>
 <p>ROI 를 가로지르는 방향으로 밝기 변화를 스캔해 엣지(경계선)의 위치를 서브픽셀 정밀도로 찾습니다. 폭 측정, 엣지 간 거리, 위치 검출의 기본 도구이며, 찾은 점을 Geometry 에 Result 로 연결해 거리 · 각도를 계산하고 판정합니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/14_Caliper.png" data-width="240" alt="Caliper — 엣지 검출 · 캘리퍼 측정 설정 패널"><figcaption>Caliper — 엣지 검출 · 캘리퍼 측정 — Tool Settings 패널</figcaption></figure>
@@ -292,7 +293,7 @@
 <li>각도 연산은 Unit 과 무관하게 항상 도(°)로 판정합니다.</li>
 <li>Web 에서 기준값을 관리하려면 Dimension Tool 프리셋(Reference Value · Lower/Upper Tolerance)을 연동하세요.</li>
 </ul>
-<h3 id="tools-6">6.6 Identification — 문자 인식 · 검증</h3>
+<h3 id="tools-7">6.7 Identification — 문자 인식 · 검증</h3>
 <h4>OCR — 문자 인식</h4>
 <p>유통기한 · 시리얼 · 로트 번호 같은 산업용 문자를 폰트 학습 없이 읽습니다. 엔진은 Tesseract 와 PP-OCR(ONNX) 두 가지이며, 텍스트 영역을 스스로 찾고 회전 · 저대비 · 도트 문자에 강한 PP-OCR 을 대부분의 현장에 권장합니다. 읽은 문자열을 기대값(또는 정규식)과 비교해 판정할 수 있습니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/18_OCR.png" data-width="240" alt="OCR — 문자 인식 설정 패널"><figcaption>OCR — 문자 인식 — Tool Settings 패널</figcaption></figure>
@@ -332,7 +333,7 @@
 <ul>
 <li>컨베이어 위에서 라벨 위치가 바뀌면 Feature Match → Coordinates 연결로 Search Region 을 따라가게 하세요.</li>
 </ul>
-<h3 id="tools-7">6.7 Code Reading — 코드 판독</h3>
+<h3 id="tools-8">6.8 Code Reading — 코드 판독</h3>
 <h4>Code Reader — 바코드 · QR · DataMatrix 판독</h4>
 <p>QR · 1D 바코드(CODE 128/39, EAN 등) · DataMatrix · PDF417 을 인식해 문자열로 디코딩합니다. 저대비 레이저 마킹은 자동 대비 보정(CLAHE)으로 읽고, 회전 사각형 ROI 를 쓰면 기울어진 코드도 바로 세워 읽습니다. 기대 문자열 검증, GS1 파싱, DataMatrix 인쇄 품질 등급까지 지원합니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/20_Code_Reader.png" data-width="240" alt="Code Reader — 바코드 · QR · DataMatrix 판독 설정 패널"><figcaption>Code Reader — 바코드 · QR · DataMatrix 판독 — Tool Settings 패널</figcaption></figure>
@@ -351,7 +352,7 @@
 <li>곡면 라벨은 Circle Fit → Polar Unwrap 으로 펼친 뒤 읽습니다.</li>
 <li>DataMatrix 가 안 읽히면 Image Enhance 로 선명도를 올리거나 ROI 를 코드에 가깝게 잡아 보세요.</li>
 </ul>
-<h3 id="tools-8">6.8 3D Processing — 점군 처리</h3>
+<h3 id="tools-9">6.9 3D Processing — 점군 처리</h3>
 <h4>PointCloud Filter — 점군 솎아내기 · 이상점 제거</h4>
 <p>점군의 점 수를 줄이고(VoxelGrid 다운샘플) 표면에서 튄 점을 지웁니다(통계적 이상점 제거, SOR). Registration · Deviation 앞에 두어 처리 속도를 높이는 것이 주된 용도입니다. 촬영 자체의 노이즈는 이 도구가 아니라 스텝의 Camera Settings 에 있는 ‘포인트 클라우드 후처리’(끄기 · 약 · 중 · 강)로 카메라 안에서 정리합니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/21_PointCloud_Filter.png" data-width="240" alt="PointCloud Filter — 점군 솎아내기 · 이상점 제거 설정 패널"><figcaption>PointCloud Filter — 점군 솎아내기 · 이상점 제거 — Tool Settings 패널</figcaption></figure>
@@ -416,7 +417,7 @@
 <li>템플릿 ‘3D 객체 카운트 · 치수 (기본)’ · ‘DL 세그 기반 3D 객체 검출’ 이 이 도구까지 연결된 체인을 만들어 줍니다.</li>
 <li>3D Geometry 의 클러스터 콤보에서 덩어리를 고르면 2D 뷰에 강조 표시됩니다.</li>
 </ul>
-<h3 id="tools-9">6.9 3D Measurement — 3D 측정</h3>
+<h3 id="tools-10">6.10 3D Measurement — 3D 측정</h3>
 <h4>PointCloud Deviation — 기준 형상 대비 편차 히트맵</h4>
 <p>기준(양품) 점군과 현재 점군을 점 단위로 비교해 어느 부위가 얼마나 어긋났는지 히트맵(초록 = 일치, 노랑 = 어긋나기 시작, 빨강 = 범위 초과)으로 보여 주고, 허용 오차를 벗어난 점의 비율로 OK/NG 를 판정합니다. 들뜸 · 눌림 · 변형 검사에 씁니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/25_PointCloud_Deviation_split.png" data-width="500" alt="PointCloud Deviation — 기준 형상 대비 편차 히트맵 설정 패널"><figcaption>PointCloud Deviation — 기준 형상 대비 편차 히트맵 — Tool Settings 패널</figcaption></figure>
@@ -477,7 +478,7 @@
 <li>클러스터 콤보에서 덩어리를 고르면 2D 뷰에 해당 덩어리가 강조됩니다. 목록이 비어 있으면 PointCloud Cluster 를 Result 로 연결하고 Run 을 한 번 실행하세요.</li>
 <li>mm 정확도는 Cluster 의 Scale Mode(AutoFromCamera 권장)를 따릅니다.</li>
 </ul>
-<h3 id="tools-10">6.10 Deep Learning — 딥러닝 추론</h3>
+<h3 id="tools-11">6.11 Deep Learning — 딥러닝 추론</h3>
 <h4>Detection — 딥러닝 객체 검출 (D-FINE · YOLO)</h4>
 <p>학습된 ONNX 모델로 객체의 위치(박스)와 클래스를 검출합니다. 기본 학습 백본은 D-FINE(Apache 2.0)이며 YOLOv8/v11 형식도 자동 판별합니다. 부품 유무 · 다종 부품 검출 · 외관 결함 검출에 씁니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/29_Detection_YOLO.png" data-width="240" alt="Detection — 딥러닝 객체 검출 (D-FINE · YOLO) 설정 패널"><figcaption>Detection — 딥러닝 객체 검출 (D-FINE · YOLO) — Tool Settings 패널</figcaption></figure>
@@ -568,7 +569,7 @@
 <li>정상 샘플 폴더에 결함품이 섞이면 보정 임계값이 통째로 느슨해지니 폴더 내용을 먼저 확인하세요.</li>
 <li>템플릿 ‘DL 이상 탐지 판정’ 이 Anomaly → Result 체인을 만듭니다.</li>
 </ul>
-<h3 id="tools-11">6.11 Judgment — 판정</h3>
+<h3 id="tools-12">6.12 Judgment — 판정</h3>
 <h4>Result — 최종 OK / NG 판정</h4>
 <p>Result 로 연결된 도구들의 성공 · 실패를 모아 스텝의 최종 판정을 냅니다. 검사 파이프라인의 마지막에 두며, Result 도구가 있으면 그 결과가 스텝 전체의 판정이 됩니다. 소스 도구가 실패해도 이 도구는 건너뛰지 않고 실패 정보를 수집합니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/35_Result.png" data-width="240" alt="Result — 최종 OK / NG 판정 설정 패널"><figcaption>Result — 최종 OK / NG 판정 — Tool Settings 패널</figcaption></figure>
@@ -582,7 +583,7 @@
 <ul>
 <li>최종 OK/NG 신호를 PLC · IO 보드로 내보내는 것은 이 도구가 아니라 시퀀스 편집기의 Branch → Output Action 이 담당합니다(§5.10). 이 도구의 PLC Output 은 PassCount 같은 통계 값 보조 전송용입니다.</li>
 </ul>
-<h3 id="tools-12">6.12 Color — 색상</h3>
+<h3 id="tools-13">6.13 Color — 색상</h3>
 <h4>Color Extract — 색 추출 (HSV)</h4>
 <p>컬러 이미지에서 학습한 색 범위(HSV)에 해당하는 픽셀만 마스크로 뽑습니다. 여러 색 모델을 등록하면 OR 로 합쳐집니다. 뽑은 마스크를 Blob 에 연결해 색 부품의 유무 · 개수 · 위치를 검사합니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/36_Color_Extract.png" data-width="240" alt="Color Extract — 색 추출 (HSV) 설정 패널"><figcaption>Color Extract — 색 추출 (HSV) — Tool Settings 패널</figcaption></figure>
@@ -616,7 +617,7 @@
 <ul>
 <li>색 차이를 Web 에서 관리하려면 Color Tolerance 를 파라미터 연동 콤보에 연결하세요.</li>
 </ul>
-<h3 id="tools-13">6.13 Calibration — 보정</h3>
+<h3 id="tools-14">6.14 Calibration — 보정</h3>
 <h4>Image Rectify — 렌즈 왜곡 · 기울기 보정</h4>
 <p>캘리브레이션(§5.9) 결과로 이미지의 렌즈 왜곡을 펴고(Undistort), N-Point 방식이면 기울어진 평면을 정면으로 펴서(Apply Homography) 뒤따르는 측정 도구가 왜곡 없는 이미지를 보게 합니다. 측정 파이프라인 맨 앞에 둡니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/38_Image_Rectify.png" data-width="240" alt="Image Rectify — 렌즈 왜곡 · 기울기 보정 설정 패널"><figcaption>Image Rectify — 렌즈 왜곡 · 기울기 보정 — Tool Settings 패널</figcaption></figure>
@@ -631,7 +632,7 @@
 <li>켰는데 화면이 그대로면 캘리브레이션 방식이 맞지 않는 경우입니다 — 상태 메시지에 실제로 무엇이 적용됐는지 표시됩니다.</li>
 <li>펴는 과정에서 가장자리가 잘리거나 늘어날 수 있으므로 뒤 도구의 ROI 는 편 뒤의 화면 기준으로 잡으세요.</li>
 </ul>
-<h3 id="tools-14">6.14 Surface Analysis — 표면 분석</h3>
+<h3 id="tools-15">6.15 Surface Analysis — 표면 분석</h3>
 <h4>Photometric Stereo — 조명 방향별 사진 합성 (표면 요철 강조)</h4>
 <p>같은 자리에서 조명 방향만 바꿔 찍은 사진 3 장 이상(보통 4 장)을 합쳐 눌린 자국 · 얕은 긁힘 · 각인 누락처럼 밝기 차이로는 안 보이는 표면 요철을 드러냅니다. 결함 강조 이미지(DefectEnhanced)를 Blob · Threshold 로 넘겨 판정합니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/39_Photometric_Stereo.png" data-width="240" alt="Photometric Stereo — 조명 방향별 사진 합성 (표면 요철 강조) 설정 패널"><figcaption>Photometric Stereo — 조명 방향별 사진 합성 (표면 요철 강조) — Tool Settings 패널</figcaption></figure>
