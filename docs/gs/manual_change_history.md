@@ -1069,8 +1069,11 @@ Mode 를 TwoPoint 로 바꾼 것과 같은 구성이라, 갤러리에서 고른 
 - docx/PDF 재생성 **완료 (2026-09-18)** — 198쪽 · 그림 154장으로 이전과 동일, PDF 본문에서
   `Ultralytics` · `AGPL` · `Apache 2.0` · `TMED` · `Cognex:` 가 모두 사라진 것과 대체 문구가 들어간 것을 확인
   (남은 `Cognex` 는 10쪽 "지원 목록에 없는 제조사" 하드웨어 목록 한 곳뿐 — 사실 기재라 유지)
-- 도구 설정 패널 캡처 `tools/31_YOLOv8-seg.png` · `32_RF-DETR-seg.png` 는 패널 하단 안내 문구가 바뀌었으므로
-  다음 `--capture-toolpanels` 회차에 재캡처(그림 내용은 파라미터 위주라 급하지 않음)
+- 도구 설정 패널 캡처 `tools/31_YOLOv8-seg.png` · `32_RF-DETR-seg.png` **재캡처 완료 (2026-09-18)** —
+  `capture_wpf_apps.ps1` 과 같은 조건(`--instance mancap --capture-toolpanels`)으로 39개 패널을 다시 찍고
+  이 2장만 반영. 크기는 이전과 동일(606×1382 · 606×1419)이고 픽셀 차이는 안내 문구 줄 22행뿐.
+  이미지가 docx 에 박히므로 **docx/PDF 를 한 번 더 재생성**했다(198쪽 · 그림 154장 유지, PDF 109쪽에서
+  패널 그림 하단이 "YOLOv8/v11-seg 표준 export 규약." 으로 바뀐 것 확인).
 
 ---
 
