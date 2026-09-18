@@ -18,6 +18,13 @@ MIME = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
 html = io.open(SRC, encoding="utf-8", newline="").read()
 missing, inlined, total_bytes = [], 0, 0
 
+# data-internal 이 붙은 절·목차 항목은 배포본에서 뺀다 (예: 변경 이력 — 사내 기록이라
+# 시험기관·고객에게 줄 문서에는 넣지 않는다. 본편 v3.0 도 변경 이력 절을 폐지했다)
+dropped = len(re.findall(r'<section[^>]*\sdata-internal[^>]*>', html))
+html = re.sub(r'\s*<!--[^>]*data-internal[^>]*-->', "", html)
+html = re.sub(r'\s*<section[^>]*\sdata-internal[^>]*>.*?</section>', "", html, flags=re.S)
+html = re.sub(r'\s*<li[^>]*\sdata-internal[^>]*>.*?</li>', "", html, flags=re.S)
+
 
 def repl(m):
     global inlined, total_bytes
@@ -51,8 +58,8 @@ out = out.replace(marker, marker + "\n" + note, 1)
 
 io.open(OUT, "w", encoding="utf-8", newline="").write(out)
 
-print("WROTE %s (%.1f MB) — 이미지 %d장 담음(원본 %.1f MB)"
-      % (OUT, len(out.encode("utf-8")) / 1e6, inlined, total_bytes / 1e6))
+print("WROTE %s (%.1f MB) — 이미지 %d장 담음(원본 %.1f MB) · 내부 전용 절 %d개 제외"
+      % (OUT, len(out.encode("utf-8")) / 1e6, inlined, total_bytes / 1e6, dropped))
 if missing:
     print("MISSING:", *missing, sep="\n  ")
     sys.exit(1)

@@ -1225,3 +1225,14 @@ MLOps 만 빠져, 매뉴얼을 본 심사자가 "구성에 없는 프로그램" 
 > **PowerShell 함정** — Chrome 은 USB/GCM 잡음을 stderr 로 뱉는데 PowerShell 5.1 은 네이티브 stderr 를
 > 오류 레코드(NativeCommandError)로 감싸 `$ErrorActionPreference='Stop'` 에서 스크립트가 죽는다.
 > 호출 연산자(`&`) 대신 **`Start-Process -Wait`** 로 띄워 해결했다.
+
+### 문제 4 — 제출본에 사내 변경 이력이 실려 있었다 (해결)
+
+별책 §4 "변경 이력"은 개정 기록이라 시험기관·고객에게 줄 문서에 들어갈 이유가 없다
+(본편 v3.0 도 개편 때 변경 이력 절을 폐지했다). 다만 기록 자체는 남겨야 하므로 **편집 원본에는 두고
+배포본에서만 뺀다**:
+
+- 원본의 해당 `<section>` 과 목차 항목에 **`data-internal`** 표시.
+- `build_ai_tools_manual.py` 가 `data-internal` 이 붙은 절·목차 항목을 배포본에서 제거하고
+  몇 개를 뺐는지 출력한다. 앞으로 사내 전용 내용이 생기면 같은 표시만 붙이면 된다.
+- 결과: 배포본 HTML·PDF 에 "변경 이력" 없음(목차도 3항목), PDF 13쪽 유지.

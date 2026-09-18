@@ -152,7 +152,7 @@ Detection · Classify · Anomaly · YOLOv8-seg · RF-DETR-seg 도구)은 본편 
     <li><a href="#dl-app">딥러닝 모델 학습 (VMS.DeepLearning)</a></li>
     <li><a href="#dl-env">학습 환경 준비</a></li>
     <li><a href="#dl-license">모델·라이선스 안내</a></li>
-    <li><a href="#dl-changelog">변경 이력</a></li>
+    <li data-internal><a href="#dl-changelog">변경 이력</a></li>
   </ol>
 </nav>
 
@@ -383,7 +383,8 @@ MobileSAM(Apache 2.0).
 Ultralytics Enterprise License 를 보유한 사이트에서만 하세요. 그 외에는 기본값(D-FINE)을 사용합니다.</div>
 </section>
 
-<section id="dl-changelog">
+<!-- data-internal: 사내 기록용. 배포본(build_ai_tools_manual.py)에서는 제외된다 -->
+<section id="dl-changelog" data-internal>
 <h2>4. 변경 이력</h2>
 <ul>
   <li><strong>v1.3 (2026-09-18)</strong> — 본편 매뉴얼 v3.0(13장 구성) 기준으로 상호 참조 정정 — 딥러닝 검사 도구 §5 → <strong>§6.11</strong>, OCR §6.7, 3D 객체 검출 예제 §7.9, Image Save Settings §4.3 → <strong>§4.6</strong>, 설정 마법사 2단계 §3.3, <code>model://</code> 레시피 바인딩 §5.10 → <strong>§9.10</strong>. 도구 이름 YOLO-seg → YOLOv8-seg (RF-DETR-seg 병기). 표지 버전 표기를 실제 개정(v1.2)과 맞춰 갱신. 그림이 보이도록 이미지를 파일 안에 담은 배포본(<code>docs/gs/VMS_AI학습도구매뉴얼.html</code>) 추가. (SW v1.40.1)</li>
