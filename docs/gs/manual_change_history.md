@@ -1021,3 +1021,90 @@ Mode 를 TwoPoint 로 바꾼 것과 같은 구성이라, 갤러리에서 고른 
   `--capture-fullpage` 실행 후 원본 1/2 축소. **크기 2048×1232**(이전 2560×1392) — 캡처 코드가 주 모니터
   작업 영역을 창 크기로 쓰므로 캡처 PC 의 주 모니터에 따라 달라진다. 매뉴얼은 data-width 620 고정이라 영향 없음.
 - 별건: GS 제품설명서 생성기 `gen_product_description.js` 의 "팔레트 12 카테고리" 표는 이미 구식(현재 15).
+
+---
+
+## 29. 세그 도구 설명에서 라이선스 고지 문구 제거 (GS 제출본) — **매뉴얼 반영 완료 (같은 PR), docx/PDF 재생성 대기**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-09-18 |
+| 앱 · 화면 | VisionSetup Tool Settings — YOLOv8-seg · RF-DETR-seg · Detection 패널과 물음표 도움말 / 사용자 매뉴얼 §6.11 |
+| 변경 종류 | 문구만 (동작 · 파라미터 · 직렬화 변경 없음) |
+
+### 무엇이 문제였나
+
+본편 매뉴얼 §6.11 의 YOLOv8-seg 설명에 "Ultralytics 는 AGPL-3.0 이므로 상용 배포 라이선스를 확인하고"
+라는 문장이 있었고, RF-DETR-seg 설명은 "Ultralytics(AGPL) 의존이 없어 소스 공개 의무가 없습니다" 로
+대비시키고 있었다. GS 제출본에서 이 서술은 두 가지로 불리하다.
+
+- **사실과 다르게 읽힌다.** VisionSetup 의 `YoloSegTool` 은 ONNX Runtime + OpenCvSharp 로 output0/output1 을
+  직접 후처리하는 자체 구현이고, 제품 배포물에 Ultralytics 코드는 없다. AGPL 은 학습 패키지와 그 가중치에
+  붙으며, 학습 스택(`scripts\train_yolo.py` 등)은 인스톨러 `AiTools` Feature 라 인증 빌드
+  (`-p:ExcludeAiTools=true`)에는 파일 자체가 존재하지 않는다.
+- **문서 층위가 맞지 않는다.** 제3자 구성요소 라이선스는 `docs/gs/guides/gs_distribution_policy.md` §2.6 이
+  정본이고, 사용자 매뉴얼은 절차서다. 같은 내용을 두 곳에 두면 한쪽이 낡는다. 학습 쪽 경고는 AI 학습 도구
+  별책(`BODA-VMS-AI-Tools-Manual.html`)에 그대로 남겨 두었다 — AGPL 의무가 실제로 발생하는 지점이 거기다.
+
+### 무엇이 바뀌었나 (문구)
+
+| 위치 | 전 | 후 |
+|------|----|----|
+| §6.11 제목 | YOLOv8-seg — 인스턴스 분할 (Ultralytics) | YOLOv8-seg — 인스턴스 분할 |
+| §6.11 본문 | "Ultralytics 는 AGPL-3.0 이므로 상용 배포 라이선스를 확인하고, 대안으로 RF-DETR-seg 를 권장합니다." | "새로 만드는 검사에는 RF-DETR-seg 를 권장하며, 이 도구는 기존 YOLOv8/v11 규약 ONNX 를 쓰던 레시피 호환용입니다." |
+| §6.11 파라미터 표 | Ultralytics 표준 export(output0 + output1 프로토타입) | YOLOv8/v11 표준 export 규약(output0 + output1 프로토타입) |
+| §6.11 제목 | RF-DETR-seg — 인스턴스 분할 (Apache 2.0) | RF-DETR-seg — 인스턴스 분할 |
+| §6.11 본문 | "Ultralytics(AGPL) 의존이 없어 상용 배포 시 소스 공개 의무가 없습니다." | "새로 만드는 검사에는 이 도구를 권장합니다." |
+| §6.11 Detection 본문 | 기본 학습 백본은 D-FINE(Apache 2.0)이며 | 기본 학습 백본은 D-FINE 이며 |
+| 물음표 도움말 `YoloSegTool` | "Ultralytics YOLOv8/v11 … 추론", "Ultralytics에서 학습한 .pt를 .onnx로 export(yolo export …)" | 벤더 명칭 없이 규약 기준 서술 + RF-DETR-seg 권장 한 줄 |
+| 물음표 도움말 `RfdetrSegTool` | 이름 "RF-DETR-seg (인스턴스 분할, Apache-2.0)" · AGPL 대비 문장 | "RF-DETR-seg (인스턴스 분할)" · 권장 문장 |
+| 도구 패널 하단 안내 | "Ultralytics YOLOv8/v11-seg 표준 export." / "RF-DETR(Apache-2.0) 표준 export" | "YOLOv8/v11-seg 표준 export 규약." / "RF-DETR 표준 export" |
+
+정본은 `docs/manuals/tools_prose.json` 이고 `gen_tools_chapter.py` → `build_manual.py` 로 §6.11 을 재생성했다.
+팔레트 표시 이름(`YOLOv8-seg` · `RF-DETR-seg`)과 도구 타입 문자열(`YoloSegTool` · `RfdetrSegTool`)은 손대지
+않았으므로 레시피 호환성에는 영향이 없다.
+
+### 남은 일
+
+- docx/PDF 재생성 (§6.11 문구만 바뀌어 쪽수·그림 수는 그대로일 전망 — 198쪽 · 그림 154장)
+- 도구 설정 패널 캡처 `tools/31_YOLOv8-seg.png` · `32_RF-DETR-seg.png` 는 패널 하단 안내 문구가 바뀌었으므로
+  다음 `--capture-toolpanels` 회차에 재캡처(그림 내용은 파라미터 위주라 급하지 않음)
+
+---
+
+## 30. 예제 장에서 타사 제품명(TMED) 비유 제거 (GS 제출본) — **매뉴얼 반영 완료 (같은 PR), docx/PDF 재생성 대기**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-09-18 |
+| 위치 | 사용자 매뉴얼 §7.3 위치 보정 후 검사 · §7.8 얼라인 (`docs/manuals/src/07_examples.html`) |
+| 변경 종류 | 문구만 (코드 · 화면 무관) |
+
+### 무엇이 문제였나
+
+예제 두 곳이 타사 제품(TMED)의 기능 이름에 빗대어 상황을 설명하고 있었다. 집필 때 참고한 자료의
+용어가 본문에 남은 것으로, 제출 문서에 남길 이유가 없다 — 타사 제품명·기능명을 제품 매뉴얼 본문에서
+설명 기준으로 쓰는 것은 맞지 않고, 그 제품을 모르는 독자에게는 설명도 되지 않는다. 두 문장 모두
+비유를 빼도 앞뒤 서술만으로 상황이 온전히 전달된다.
+
+### 무엇이 바뀌었나
+
+| 절 | 전 | 후 |
+|----|----|----|
+| §7.3 | "… 늘 같은 자리를 검사합니다. **TMED 방식의 "위치 보정(Fixture)" 에 해당합니다.**" | "… 늘 같은 자리를 검사합니다. **이렇게 기준을 잡아 주는 방식을 위치 보정(Fixture) 이라고 부릅니다.**" (용어 소개는 유지) |
+| §7.8 | "상황 — **TMED 의 "로봇 얼라인" 처럼,** 부품이 기준 위치에서 얼마나 이동 · 회전했는지 재서 …" | "상황 — 부품이 기준 위치에서 얼마나 이동 · 회전했는지 재서 로봇이나 서보에 보정량을 보냅니다**(로봇 얼라인)**." |
+
+본문 전체를 다시 훑어 타사 제품명이 남은 곳은 없음을 확인했다. 매뉴얼에 남아 있는 타사 명칭은
+**하드웨어 호환 목록**(카메라 제조사, PLC 프로토콜 Mitsubishi · Siemens · LS Electric · Omron, NVIDIA GPU)과
+**데이터셋 형식 이름**(mvtec 등) 뿐이며, 이는 사실 기재라 그대로 둔다.
+
+### 같이 처리 — 물음표 도움말의 "Cognex 대응" 줄 숨김
+
+VisionSetup 물음표 도움말은 도구마다 **"Cognex: ViDi …"** 한 줄을 화면에 보여 주고 있었다. 매뉴얼 본문은
+아니지만 같은 성격의 타사 제품명 노출이고 심사 중 화면에 뜰 수 있어 **표시만 껐다**.
+
+- `HelpIcon.xaml.cs` 도구 전체 도움말 분기에서 `CognexBorder` 를 항상 `Collapsed` 로 둔다
+  (XAML 의 기본값도 `Collapsed` 라 어느 경로로도 뜨지 않는다).
+- **데이터는 남긴다** — `HelpContent.ToolHelp.CognexEquivalent` 속성과 도구별 값은 사내 참고용으로 그대로 둔다.
+  다시 보이게 하려면 그 분기 한 곳만 되돌리면 된다.
+- 매뉴얼에 물음표 도움말 팝업을 찍은 그림은 없어 스크린샷 재캡처는 불필요.

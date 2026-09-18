@@ -73,7 +73,7 @@
             </StackPanel>
         </Expander>
 
-        <TextBlock Text="Expected ONNX I/O: dets = [1, Q, 4] (정규화 cxcywh), labels = [1, Q, C] (로짓, 마지막 열이 배경), masks = [1, Q, mh, mw] (마스크 로짓). RF-DETR(Apache-2.0) 표준 export — scripts/train_rfdetr_seg.py 로 학습합니다."
+        <TextBlock Text="Expected ONNX I/O: dets = [1, Q, 4] (정규화 cxcywh), labels = [1, Q, C] (로짓, 마지막 열이 배경), masks = [1, Q, mh, mw] (마스크 로짓). RF-DETR 표준 export — scripts/train_rfdetr_seg.py 로 학습합니다."
                    Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,8,0,0"/>
     </StackPanel>
 </UserControl>

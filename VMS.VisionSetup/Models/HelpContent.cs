@@ -146,12 +146,12 @@ namespace VMS.VisionSetup.Models
             ["YoloSegTool"] = new ToolHelp
             {
                 Name = "YOLOv8-seg (인스턴스 분할)",
-                Description = "Ultralytics YOLOv8/v11 인스턴스 분할 ONNX 추론. 한 이미지에서 객체마다 박스 + 클래스 + 픽셀 마스크를 동시 출력.\n출력 두 텐서: output0(detections + 32 mask coefs) + output1(32 prototype masks). 후처리: NMS → coef×prototypes → sigmoid → threshold.",
-                Usage = "1) Ultralytics에서 학습한 .pt를 .onnx로 export(yolo export model=best.pt format=onnx). 2) Model Path 지정. 3) Confidence / IoU / Mask Threshold 조정. 4) Run → 결과 Data의 Inst{i}_* 키로 각 인스턴스 정보 확인.",
+                Description = "YOLOv8/v11 인스턴스 분할 ONNX 추론. 한 이미지에서 객체마다 박스 + 클래스 + 픽셀 마스크를 동시 출력.\n새로 만드는 검사에는 RF-DETR-seg 를 권장합니다 — 이 도구는 기존 YOLOv8/v11 규약 ONNX 를 쓰던 레시피 호환용입니다.\n출력 두 텐서: output0(detections + 32 mask coefs) + output1(32 prototype masks). 후처리: NMS → coef×prototypes → sigmoid → threshold.",
+                Usage = "1) 학습한 모델을 YOLOv8/v11 표준 규약(.onnx)으로 내보냅니다. 2) Model Path 지정. 3) Confidence / IoU / Mask Threshold 조정. 4) Run → 결과 Data의 Inst{i}_* 키로 각 인스턴스 정보 확인.",
                 CognexEquivalent = "ViDi Blue Locate (인스턴스 모드) / Red Supervised",
                 Parameters = new Dictionary<string, string>
                 {
-                    ["ModelPath"] = "YOLOv8-seg ONNX 모델 파일 경로 (.onnx). Ultralytics export 형식.",
+                    ["ModelPath"] = "YOLOv8-seg ONNX 모델 파일 경로 (.onnx). YOLOv8/v11 표준 export 규약.",
                     ["InputSize"] = "추론 입력 크기. 학습 시 사용한 imgsz와 일치 권장.\n• 320: 빠름, 정확도 ↓\n• 640: 기본\n• 1280: 정밀, 느림",
                     ["ConfidenceThreshold"] = "객체 confidence 임계값. 이하 박스는 버림.\n• 0.1~0.2: 많이 검출 (오탐 ↑)\n• 0.25: 기본\n• 0.5+: 보수적 (놓침 ↑)",
                     ["IouThreshold"] = "NMS IoU 임계값. 같은 클래스의 중복 박스 억제 기준.\n• 0.3: 엄격 (가까운 객체도 분리)\n• 0.45: 기본\n• 0.7+: 관대 (중복 잘 허용)",
@@ -165,9 +165,9 @@ namespace VMS.VisionSetup.Models
 
             ["RfdetrSegTool"] = new ToolHelp
             {
-                Name = "RF-DETR-seg (인스턴스 분할, Apache-2.0)",
+                Name = "RF-DETR-seg (인스턴스 분할)",
                 Description = "RF-DETR 인스턴스 분할 ONNX 추론. 한 이미지에서 객체마다 박스 + 클래스 + 픽셀 마스크를 동시 출력.\n"
-                            + "YOLOv8-seg 와 하는 일은 같고 라이선스가 다릅니다 — Ultralytics(AGPL-3.0) 의존이 없어 상용 배포 시 소스 공개 의무가 발생하지 않습니다.\n"
+                            + "YOLOv8-seg 와 하는 일은 같고, 새로 만드는 검사에는 이 도구를 권장합니다.\n"
                             + "출력 세 텐서: dets(정규화 cxcywh) + labels(클래스 로짓, 마지막 열이 배경) + masks(질의마다 온전한 마스크 로짓).\n"
                             + "후처리: 시그모이드 → 배경 열 제외 → (질의×클래스) 상위 선택 → 마스크 확대 → 0 에서 자름. NMS 를 쓰지 않습니다.",
                 Usage = "1) MLOps 웹에서 세그멘테이션 데이터셋으로 학습(scripts/train_rfdetr_seg.py)하거나, 학습 도구에서 학습 후 레지스트리에 등록. "
@@ -711,7 +711,7 @@ namespace VMS.VisionSetup.Models
             ["DetectionTool"] = new ToolHelp
             {
                 Name = "Detection (객체 검출)",
-                Description = "ONNX 기반 객체 검출 도구입니다.\nVMS.DeepLearning 에서 학습한 D-FINE(기본, Apache-2.0) 또는 YOLOv8/v11 ONNX 모델을 로드하여 이미지에서 객체의 위치와 클래스를 검출합니다. 모델 종류는 파일에서 자동 판별됩니다.",
+                Description = "ONNX 기반 객체 검출 도구입니다.\nVMS.DeepLearning 에서 학습한 D-FINE(기본) 또는 YOLOv8/v11 ONNX 모델을 로드하여 이미지에서 객체의 위치와 클래스를 검출합니다. 모델 종류는 파일에서 자동 판별됩니다.",
                 Usage = "부품 유무 검사, 다종 객체 검출, 결함 검출에 사용됩니다.\n• VMS.DeepLearning 앱에서 데이터셋을 라벨링하고 Detection 으로 학습한 best.onnx 를 지정합니다 (D-FINE 기본).\n• Class Names 는 모델 메타데이터에서 자동으로 채워지며, 없으면 학습 시 사용한 클래스 이름을 콤마로 구분하여 입력하세요.",
                 CognexEquivalent = "Cognex ViDi Blue Locate",
                 Parameters = new Dictionary<string, string>

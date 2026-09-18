@@ -1691,7 +1691,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 </ul>
 <h3 id="tools-11">6.11 Deep Learning — 딥러닝 추론</h3>
 <h4>Detection — 딥러닝 객체 검출 (D-FINE · YOLO)</h4>
-<p>학습된 ONNX 모델로 객체의 위치(박스)와 클래스를 검출합니다. 기본 학습 백본은 D-FINE(Apache 2.0)이며 YOLOv8/v11 형식도 자동 판별합니다. 부품 유무 · 다종 부품 검출 · 외관 결함 검출에 씁니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
+<p>학습된 ONNX 모델로 객체의 위치(박스)와 클래스를 검출합니다. 기본 학습 백본은 D-FINE이며 YOLOv8/v11 형식도 자동 판별합니다. 부품 유무 · 다종 부품 검출 · 외관 결함 검출에 씁니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/29_Detection_YOLO.png" data-width="240" alt="Detection — 딥러닝 객체 검출 (D-FINE · YOLO) 설정 패널"><figcaption>Detection — 딥러닝 객체 검출 (D-FINE · YOLO) — Tool Settings 패널</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
@@ -1722,12 +1722,12 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 </table>
 <p><strong>결과 값</strong> — NumClasses · ForegroundPixels · ForegroundRatio · Class{i}_Name · Class{i}_Pixels · Class{i}_AreaRatio</p>
 <p><strong>판정</strong> — 자체 판정 없음 — Blob · Result 로 판정합니다.</p>
-<h4>YOLOv8-seg — 인스턴스 분할 (Ultralytics)</h4>
-<p>YOLOv8/v11 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 픽셀 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). Ultralytics 는 AGPL-3.0 이므로 상용 배포 라이선스를 확인하고, 대안으로 RF-DETR-seg 를 권장합니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
-<figure><img src="../gs/screenshots/v3/tools/31_YOLOv8-seg.png" data-width="240" alt="YOLOv8-seg — 인스턴스 분할 (Ultralytics) 설정 패널"><figcaption>YOLOv8-seg — 인스턴스 분할 (Ultralytics) — Tool Settings 패널</figcaption></figure>
+<h4>YOLOv8-seg — 인스턴스 분할</h4>
+<p>YOLOv8/v11 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 픽셀 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 새로 만드는 검사에는 RF-DETR-seg 를 권장하며, 이 도구는 기존 YOLOv8/v11 규약 ONNX 를 쓰던 레시피 호환용입니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
+<figure><img src="../gs/screenshots/v3/tools/31_YOLOv8-seg.png" data-width="240" alt="YOLOv8-seg — 인스턴스 분할 설정 패널"><figcaption>YOLOv8-seg — 인스턴스 분할 — Tool Settings 패널</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
-<tr><td>Model Path (.onnx) · Input Size</td><td>(빈 값) · 640</td><td>Ultralytics 표준 export(output0 + output1 프로토타입)</td></tr>
+<tr><td>Model Path (.onnx) · Input Size</td><td>(빈 값) · 640</td><td>YOLOv8/v11 표준 export 규약(output0 + output1 프로토타입)</td></tr>
 <tr><td>Confidence Threshold · IoU Threshold (NMS) · Mask Threshold</td><td>0.25 · 0.45 · 0.5</td><td>검출 신뢰도 / 중복 제거 / 마스크 이진화 기준(0.3 크게 · 0.7 코어만)</td></tr>
 <tr><td>Show Mask Overlay · Overlay Opacity · Draw Boxes + Labels</td><td>켬 · 0.4 · 켬</td><td>표시 옵션</td></tr>
 <tr><td>Output Mask Image</td><td>해제</td><td>켜면 출력 이미지가 인스턴스 이진 마스크(흰색 = 인스턴스)가 되어 Mask Crop 등에 Image 연결</td></tr>
@@ -1737,9 +1737,9 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <ul>
 <li>템플릿 ‘DL 세그 기반 3D 객체 검출’ 이 YOLOv8-seg(마스크 출력) → Mask Crop → Cluster 체인을 만듭니다.</li>
 </ul>
-<h4>RF-DETR-seg — 인스턴스 분할 (Apache 2.0)</h4>
-<p>RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. YOLOv8-seg 와 하는 일은 같지만 Ultralytics(AGPL) 의존이 없어 상용 배포 시 소스 공개 의무가 없습니다. 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
-<figure><img src="../gs/screenshots/v3/tools/32_RF-DETR-seg.png" data-width="240" alt="RF-DETR-seg — 인스턴스 분할 (Apache 2.0) 설정 패널"><figcaption>RF-DETR-seg — 인스턴스 분할 (Apache 2.0) — Tool Settings 패널</figcaption></figure>
+<h4>RF-DETR-seg — 인스턴스 분할</h4>
+<p>RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. YOLOv8-seg 와 하는 일은 같고, 새로 만드는 검사에는 이 도구를 권장합니다. 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
+<figure><img src="../gs/screenshots/v3/tools/32_RF-DETR-seg.png" data-width="240" alt="RF-DETR-seg — 인스턴스 분할 설정 패널"><figcaption>RF-DETR-seg — 인스턴스 분할 — Tool Settings 패널</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Model Path (.onnx) · [레지스트리…]</td><td>(빈 값)</td><td>파일 또는 model:// 참조</td></tr>
@@ -1892,7 +1892,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 
 <h3 id="ex-fixture">7.3 위치 보정 후 검사 (Feature Match + Fixture)</h3>
 <figure><img src="../gs/screenshots/v3/vs/full_main_scene.png" data-width="620" alt="Feature Match 예제"><figcaption>Feature Match 학습 · 실행 예 — 학습 영역(ROI)으로 캡슐 하나를 학습하고 실행한 상태</figcaption></figure>
-<p><strong>상황</strong> — 부품이 지그 안에서 조금씩 이동 · 회전합니다. 부품의 특징을 먼저 찾고, 그 위치를 기준으로 뒤 검사의 ROI 를 옮겨 늘 같은 자리를 검사합니다. TMED 방식의 "위치 보정(Fixture)" 에 해당합니다.</p>
+<p><strong>상황</strong> — 부품이 지그 안에서 조금씩 이동 · 회전합니다. 부품의 특징을 먼저 찾고, 그 위치를 기준으로 뒤 검사의 ROI 를 옮겨 늘 같은 자리를 검사합니다. 이렇게 기준을 잡아 주는 방식을 <strong>위치 보정(Fixture)</strong> 이라고 부릅니다.</p>
 <ol>
   <li>템플릿 2D 측정 → <strong>패턴 매칭 (Feature Match)</strong> 을 생성합니다(Grayscale → Feature Match → Result).</li>
   <li><strong>Feature Match</strong> 를 선택하고 [Draw ROI] 로 부품의 뚜렷한 윤곽(모서리 · 구멍 · 마킹)을 감싸는 학습 영역을 그린 뒤 [Train Selected]. 오른쪽 특징 이미지의 초록 점이 윤곽을 따라 촘촘한지 확인합니다.</li>
@@ -1945,7 +1945,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 
 <h3 id="ex-align">7.8 얼라인 — 로봇 · 스테이지 보정량 산출</h3>
 <figure><img src="../gs/screenshots/v3/templates/2d-match-align.png" data-width="520" alt="2D 매치 얼라인 체인"><figcaption>Grayscale → Feature Match → Match Align → Result</figcaption></figure>
-<p><strong>상황</strong> — TMED 의 "로봇 얼라인" 처럼, 부품이 기준 위치에서 얼마나 이동 · 회전했는지 재서 로봇이나 서보에 보정량을 보냅니다.</p>
+<p><strong>상황</strong> — 부품이 기준 위치에서 얼마나 이동 · 회전했는지 재서 로봇이나 서보에 보정량을 보냅니다(로봇 얼라인).</p>
 <ol>
   <li>템플릿 얼라인 → <strong>Match Align — 2D 매치 얼라인</strong> 을 생성합니다. 각도 정밀도가 더 필요하면 부품 양단의 특징을 찾는 Feature Match 를 하나 더 붙여 Match Align 에 Result 로 연결하고 Mode 를 <strong>TwoPoint</strong> 로 바꿉니다(연결 순서 = 1 번 · 2 번 점).</li>
   <li>기준(마스터) 부품을 놓고 Feature Match 를 학습합니다. 학습 위치가 곧 기준 포즈입니다.</li>
