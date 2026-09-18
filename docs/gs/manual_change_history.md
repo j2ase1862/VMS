@@ -1098,8 +1098,13 @@ Mode 를 TwoPoint 로 바꾼 것과 같은 구성이라, 갤러리에서 고른 
 **하드웨어 호환 목록**(카메라 제조사, PLC 프로토콜 Mitsubishi · Siemens · LS Electric · Omron, NVIDIA GPU)과
 **데이터셋 형식 이름**(mvtec 등) 뿐이며, 이는 사실 기재라 그대로 둔다.
 
-### 별건 (미조치)
+### 같이 처리 — 물음표 도움말의 "Cognex 대응" 줄 숨김
 
-VisionSetup 물음표 도움말은 도구마다 **"Cognex 대응"** 한 줄(`HelpContent.ToolHelp.CognexEquivalent`,
-`HelpIcon.xaml.cs` 에서 표시)을 화면에 보여 준다. 매뉴얼 본문은 아니지만 같은 성격의 타사 제품명 노출이고
-심사 중 화면에 뜰 수 있다. 처리 여부는 별도 판단 필요.
+VisionSetup 물음표 도움말은 도구마다 **"Cognex: ViDi …"** 한 줄을 화면에 보여 주고 있었다. 매뉴얼 본문은
+아니지만 같은 성격의 타사 제품명 노출이고 심사 중 화면에 뜰 수 있어 **표시만 껐다**.
+
+- `HelpIcon.xaml.cs` 도구 전체 도움말 분기에서 `CognexBorder` 를 항상 `Collapsed` 로 둔다
+  (XAML 의 기본값도 `Collapsed` 라 어느 경로로도 뜨지 않는다).
+- **데이터는 남긴다** — `HelpContent.ToolHelp.CognexEquivalent` 속성과 도구별 값은 사내 참고용으로 그대로 둔다.
+  다시 보이게 하려면 그 분기 한 곳만 되돌리면 된다.
+- 매뉴얼에 물음표 도움말 팝업을 찍은 그림은 없어 스크린샷 재캡처는 불필요.

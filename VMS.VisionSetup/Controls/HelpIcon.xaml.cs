@@ -145,16 +145,10 @@ namespace VMS.VisionSetup.Controls
             HelpTitle.Text = toolHelp.Name;
             HelpDescription.Text = toolHelp.Description;
 
-            // Cognex 동등 도구 표시
-            if (!string.IsNullOrEmpty(toolHelp.CognexEquivalent))
-            {
-                CognexText.Text = toolHelp.CognexEquivalent;
-                CognexBorder.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                CognexBorder.Visibility = Visibility.Collapsed;
-            }
+            // Cognex 동등 도구 — 화면에는 표시하지 않는다.
+            // 타사 제품명을 제품 화면에 띄우지 않기 위한 결정이며(GS 제출본 문서 정리와 같은 맥락),
+            // 대응표 자체는 사내 참고용으로 HelpContent.CognexEquivalent 에 그대로 남겨 둔다.
+            CognexBorder.Visibility = Visibility.Collapsed;
 
             // 사용 예시 표시
             if (!string.IsNullOrEmpty(toolHelp.Usage))
