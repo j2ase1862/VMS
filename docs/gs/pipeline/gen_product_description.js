@@ -112,10 +112,10 @@ children.push(new Paragraph({ children: [new PageBreak()] }));
 children.push(H1("문서 정보"));
 children.push(infoTable([
   ["제품명", "BODA Vision Management System (VMS)"],
-  ["제품 버전", "v1.0  ([정식 릴리스 버전 기입])"],
+  ["제품 버전", "v1.40.1"],
   ["문서 버전", "1.0"],
   ["작성일", "2026-06-12"],
-  ["대상 운영체제", "Windows 10 / 11 (x64)"],
+  ["대상 운영체제", "Windows 11 (x64)"],
   ["개발 언어 / 프레임워크", "C# / .NET 8.0 (WPF)"],
   ["신청 기업", "[회사명·사업자등록번호 기입]"],
   ["작성자 / 연락처", "[작성자·연락처 기입]"],
@@ -132,7 +132,7 @@ children.push(P("VMS는 .NET 8.0 WPF 기반 데스크톱 애플리케이션과, 
 children.push(H2("1.1 주요 특징"));
 [
   "드래그앤드롭 방식의 비전 도구 워크스페이스(VMS.VisionSetup)로 코딩 없이 검사 레시피 구성",
-  "12개 카테고리의 비전 도구 및 ROI(검사 영역) 지정(Rectangle/Circle/Ellipse/Polygon 등) 제공",
+  "15개 카테고리 39종의 비전 도구 및 ROI(검사 영역) 지정(Rectangle/RectAffine/Circle/Ellipse/Polygon 등) 제공",
   "OpenCvSharp4(영상처리) · ONNX Runtime(딥러닝) · Tesseract(OCR) · ZXing(코드 판독) 통합",
   "카메라 미연결 환경을 위한 파일 불러오기(이미지 로드) 기반 검사 — 가상 검사 가능",
   "작업지시(Work Order)·Lot·Serial·작업자 4필드 추적성 및 검사 이미지 저장/업로드",
@@ -189,9 +189,9 @@ children.push(H2("4.1 하드웨어 요구사항"));
 }
 children.push(H2("4.2 소프트웨어 요구사항"));
 [
-  "운영체제: Windows 10 / 11 (64-bit)",
-  ".NET 8.0 Desktop Runtime",
-  "Visual C++ 재배포 패키지 (네이티브 영상처리 라이브러리용)",
+  "운영체제: Windows 11 (64-bit)",
+  ".NET 8.0 런타임 — MSI에 동봉(self-contained). 별도 설치 불필요",
+  "Visual C++ 재배포 패키지 — MSI에 동봉. 별도 설치 불필요 (폐쇄망 설치 가능)",
 ].forEach((t) => children.push(bullet(t)));
 children.push(H2("4.3 주요 사용 라이브러리"));
 children.push(P("VMS가 사용하는 주요 오픈소스/서드파티 라이브러리는 다음과 같다. (라이선스 고지는 별도 'OSS 라이선스 확인서' 참조)"));
@@ -321,20 +321,23 @@ children.push(funcTable([
   ["IV-02", "Save Image", "현재 표시 이미지 저장"],
   ["IV-03", "Fit / + / − / Delete / Clear All", "화면 맞춤·확대/축소·삭제·전체 지우기"],
 ]));
-children.push(H3("6.3.4 비전 도구 팔레트 (12 카테고리)"));
+children.push(H3("6.3.4 비전 도구 팔레트 (15 카테고리 · 39종)"));
 children.push(funcTable([
-  ["TP-01", "Preprocessing (Color)", "컬러 전처리 도구"],
-  ["TP-02", "Conversion (Gray)", "그레이 변환 도구"],
-  ["TP-03", "Pattern Matching", "패턴 매칭"],
-  ["TP-04", "Blob Analysis", "블롭 분석"],
-  ["TP-05", "Measurement", "치수 측정(캘리퍼/라인핏/원핏 등)"],
-  ["TP-06", "Identification", "OCR/OCV 문자 식별"],
-  ["TP-07", "Code Reading", "바코드/QR 판독"],
-  ["TP-08", "3D Analysis", "3D 분석"],
-  ["TP-09", "Deep Learning", "딥러닝 추론 도구"],
-  ["TP-10", "Judgment", "종합 판정"],
-  ["TP-11", "Color", "색상 검사"],
-  ["TP-12", "Calibration", "캘리브레이션 도구"],
+  ["TP-01", "Preprocessing (Color)", "컬러 전처리 — Blur / Morphology / Image Enhance / Polar Unwrap (4종)"],
+  ["TP-02", "Conversion (Gray)", "그레이 변환 — Grayscale / Threshold / Edge Detection / Histogram (4종)"],
+  ["TP-03", "Pattern Matching", "패턴 매칭 — Feature Match / Shape Match (2종)"],
+  ["TP-04", "Alignment", "얼라인 — Match Align / Multi-Step Align (2종), 로봇·스테이지 보정량 산출"],
+  ["TP-05", "Blob Analysis", "블롭 분석 — Blob (1종)"],
+  ["TP-06", "Measurement", "치수 측정 — Caliper / Line Fit / Circle Fit / Geometry (4종)"],
+  ["TP-07", "Identification", "문자 인식·검증 — OCR / OCV (2종)"],
+  ["TP-08", "Code Reading", "코드 판독 — Code Reader (1종, 1D 바코드·2D QR/DataMatrix)"],
+  ["TP-09", "3D Processing", "점군 처리 — PointCloud Filter / Registration / Mask Crop / Cluster (4종)"],
+  ["TP-10", "3D Measurement", "3D 측정 — PointCloud Deviation / Height Slicer / Plane Fit / 3D Geometry (4종)"],
+  ["TP-11", "Deep Learning", "딥러닝 추론 — Detection / Segmentation / YOLOv8-seg / RF-DETR-seg / Classify / Anomaly (6종)"],
+  ["TP-12", "Judgment", "종합 판정 — Result (1종)"],
+  ["TP-13", "Color", "색상 검사 — Color Extract / Color Match (2종)"],
+  ["TP-14", "Calibration", "보정 적용 — Image Rectify (1종). 캘리브레이션 자체는 별도 메뉴"],
+  ["TP-15", "Surface Analysis", "표면 분석 — Photometric Stereo (1종)"],
 ]));
 
 children.push(H2("6.4 관리/MES 웹 — BODA.VMS.Web (선택 연동)"));
@@ -357,8 +360,8 @@ children.push(H2("7.1 운영 클라이언트 (VMS) 메인 화면"));
 children.push(image("01_vms_main.png", 600));
 children.push(caption("그림 7-1. VMS 운영 메인 화면 — 상단 운영 흐름(작업자/작업지시/AUTO RUN), KPI 스트립, 카메라 표시 영역, 사이드 패널(Settings)"));
 children.push(H2("7.2 비전 설정 (VMS.VisionSetup) 워크스페이스"));
-children.push(image("03_visionsetup.png", 600));
-children.push(caption("그림 7-2. 비전 설정 — 카메라/Steps/Tool Palette(12 카테고리), Tool Workspace, ROI 도구(Select/Rectangle/RectAffine/Circle/Ellipse/Polygon) 및 이미지 뷰"));
+children.push(image("v3/vs/full_main_scene.png", 600));
+children.push(caption("그림 7-2. 비전 설정 — 카메라/Steps/Tool Palette(15 카테고리 39종), Tool Workspace, ROI 도구(Select/Rectangle/RectAffine/Circle/Ellipse/Polygon) 및 이미지 뷰"));
 children.push(H2("7.3 시스템 설정 마법사 (VMS.AppSetup)"));
 children.push(image("02_appsetup_welcome.png", 420));
 children.push(caption("그림 7-3. 시스템 설정 마법사 시작 화면"));
