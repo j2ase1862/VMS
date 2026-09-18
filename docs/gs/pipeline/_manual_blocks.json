@@ -34034,17 +34034,17 @@
     "m": false
    },
    {
-    "s": "BODA-VMS-AI-Tools-Manual.html",
+    "s": "VMS_AI학습도구매뉴얼.html",
     "b": false,
     "m": true
    },
    {
-    "s": ")을 참고하세요.",
+    "s": " — 본 매뉴얼과 함께 제공되는 별도 파일)을 참고하세요.",
     "b": false,
     "m": false
    }
   ],
-  "text": "화면별 상세 조작, 파이썬 환경 준비, 학습 스크립트별 유의사항은 별책 「BODA VMS AI 학습 도구 매뉴얼」(BODA-VMS-AI-Tools-Manual.html)을 참고하세요."
+  "text": "화면별 상세 조작, 파이썬 환경 준비, 학습 스크립트별 유의사항은 별책 「BODA VMS AI 학습 도구 매뉴얼」(VMS_AI학습도구매뉴얼.html — 본 매뉴얼과 함께 제공되는 별도 파일)을 참고하세요."
  },
  {
   "t": "h",
