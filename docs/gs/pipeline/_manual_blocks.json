@@ -24317,12 +24317,12 @@
   "t": "p",
   "segs": [
    {
-    "s": "학습된 ONNX 모델로 객체의 위치(박스)와 클래스를 검출합니다. 기본 학습 백본은 D-FINE(Apache 2.0)이며 YOLOv8/v11 형식도 자동 판별합니다. 부품 유무 · 다종 부품 검출 · 외관 결함 검출에 씁니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+    "s": "학습된 ONNX 모델로 객체의 위치(박스)와 클래스를 검출합니다. 기본 학습 백본은 D-FINE이며 YOLOv8/v11 형식도 자동 판별합니다. 부품 유무 · 다종 부품 검출 · 외관 결함 검출에 씁니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "학습된 ONNX 모델로 객체의 위치(박스)와 클래스를 검출합니다. 기본 학습 백본은 D-FINE(Apache 2.0)이며 YOLOv8/v11 형식도 자동 판별합니다. 부품 유무 · 다종 부품 검출 · 외관 결함 검출에 씁니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
+  "text": "학습된 ONNX 모델로 객체의 위치(박스)와 클래스를 검출합니다. 기본 학습 백본은 D-FINE이며 YOLOv8/v11 형식도 자동 판별합니다. 부품 유무 · 다종 부품 검출 · 외관 결함 검출에 씁니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
  },
  {
   "t": "figure",
@@ -24997,30 +24997,30 @@
   "t": "h",
   "segs": [
    {
-    "s": "YOLOv8-seg — 인스턴스 분할 (Ultralytics)",
+    "s": "YOLOv8-seg — 인스턴스 분할",
     "b": false,
     "m": false
    }
   ],
   "level": 4,
-  "text": "YOLOv8-seg — 인스턴스 분할 (Ultralytics)"
+  "text": "YOLOv8-seg — 인스턴스 분할"
  },
  {
   "t": "p",
   "segs": [
    {
-    "s": "YOLOv8/v11 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 픽셀 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). Ultralytics 는 AGPL-3.0 이므로 상용 배포 라이선스를 확인하고, 대안으로 RF-DETR-seg 를 권장합니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+    "s": "YOLOv8/v11 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 픽셀 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 새로 만드는 검사에는 RF-DETR-seg 를 권장하며, 이 도구는 기존 YOLOv8/v11 규약 ONNX 를 쓰던 레시피 호환용입니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "YOLOv8/v11 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 픽셀 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). Ultralytics 는 AGPL-3.0 이므로 상용 배포 라이선스를 확인하고, 대안으로 RF-DETR-seg 를 권장합니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
+  "text": "YOLOv8/v11 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 픽셀 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 새로 만드는 검사에는 RF-DETR-seg 를 권장하며, 이 도구는 기존 YOLOv8/v11 규약 ONNX 를 쓰던 레시피 호환용입니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
  },
  {
   "t": "figure",
   "src": "../gs/screenshots/v3/tools/31_YOLOv8-seg.png",
   "width": "240",
-  "caption": "YOLOv8-seg — 인스턴스 분할 (Ultralytics) — Tool Settings 패널"
+  "caption": "YOLOv8-seg — 인스턴스 분할 — Tool Settings 패널"
  },
  {
   "t": "table",
@@ -25091,14 +25091,14 @@
     {
      "segs": [
       {
-       "s": "Ultralytics 표준 export(output0 + output1 프로토타입)",
+       "s": "YOLOv8/v11 표준 export 규약(output0 + output1 프로토타입)",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "Ultralytics 표준 export(output0 + output1 프로토타입)"
+     "text": "YOLOv8/v11 표준 export 규약(output0 + output1 프로토타입)"
     }
    ],
    [
@@ -25267,30 +25267,30 @@
   "t": "h",
   "segs": [
    {
-    "s": "RF-DETR-seg — 인스턴스 분할 (Apache 2.0)",
+    "s": "RF-DETR-seg — 인스턴스 분할",
     "b": false,
     "m": false
    }
   ],
   "level": 4,
-  "text": "RF-DETR-seg — 인스턴스 분할 (Apache 2.0)"
+  "text": "RF-DETR-seg — 인스턴스 분할"
  },
  {
   "t": "p",
   "segs": [
    {
-    "s": "RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. YOLOv8-seg 와 하는 일은 같지만 Ultralytics(AGPL) 의존이 없어 상용 배포 시 소스 공개 의무가 없습니다. 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+    "s": "RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. YOLOv8-seg 와 하는 일은 같고, 새로 만드는 검사에는 이 도구를 권장합니다. 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. YOLOv8-seg 와 하는 일은 같지만 Ultralytics(AGPL) 의존이 없어 상용 배포 시 소스 공개 의무가 없습니다. 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
+  "text": "RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. YOLOv8-seg 와 하는 일은 같고, 새로 만드는 검사에는 이 도구를 권장합니다. 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
  },
  {
   "t": "figure",
   "src": "../gs/screenshots/v3/tools/32_RF-DETR-seg.png",
   "width": "240",
-  "caption": "RF-DETR-seg — 인스턴스 분할 (Apache 2.0) — Tool Settings 패널"
+  "caption": "RF-DETR-seg — 인스턴스 분할 — Tool Settings 패널"
  },
  {
   "t": "table",
@@ -27730,12 +27730,22 @@
     "m": false
    },
    {
-    "s": " — 부품이 지그 안에서 조금씩 이동 · 회전합니다. 부품의 특징을 먼저 찾고, 그 위치를 기준으로 뒤 검사의 ROI 를 옮겨 늘 같은 자리를 검사합니다. TMED 방식의 \"위치 보정(Fixture)\" 에 해당합니다.",
+    "s": " — 부품이 지그 안에서 조금씩 이동 · 회전합니다. 부품의 특징을 먼저 찾고, 그 위치를 기준으로 뒤 검사의 ROI 를 옮겨 늘 같은 자리를 검사합니다. 이렇게 기준을 잡아 주는 방식을 ",
+    "b": false,
+    "m": false
+   },
+   {
+    "s": "위치 보정(Fixture)",
+    "b": true,
+    "m": false
+   },
+   {
+    "s": " 이라고 부릅니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "상황 — 부품이 지그 안에서 조금씩 이동 · 회전합니다. 부품의 특징을 먼저 찾고, 그 위치를 기준으로 뒤 검사의 ROI 를 옮겨 늘 같은 자리를 검사합니다. TMED 방식의 \"위치 보정(Fixture)\" 에 해당합니다."
+  "text": "상황 — 부품이 지그 안에서 조금씩 이동 · 회전합니다. 부품의 특징을 먼저 찾고, 그 위치를 기준으로 뒤 검사의 ROI 를 옮겨 늘 같은 자리를 검사합니다. 이렇게 기준을 잡아 주는 방식을 위치 보정(Fixture) 이라고 부릅니다."
  },
  {
   "t": "li",
@@ -28269,12 +28279,12 @@
     "m": false
    },
    {
-    "s": " — TMED 의 \"로봇 얼라인\" 처럼, 부품이 기준 위치에서 얼마나 이동 · 회전했는지 재서 로봇이나 서보에 보정량을 보냅니다.",
+    "s": " — 부품이 기준 위치에서 얼마나 이동 · 회전했는지 재서 로봇이나 서보에 보정량을 보냅니다(로봇 얼라인).",
     "b": false,
     "m": false
    }
   ],
-  "text": "상황 — TMED 의 \"로봇 얼라인\" 처럼, 부품이 기준 위치에서 얼마나 이동 · 회전했는지 재서 로봇이나 서보에 보정량을 보냅니다."
+  "text": "상황 — 부품이 기준 위치에서 얼마나 이동 · 회전했는지 재서 로봇이나 서보에 보정량을 보냅니다(로봇 얼라인)."
  },
  {
   "t": "li",
