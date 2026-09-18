@@ -103,12 +103,33 @@
   /* Section anchor offset */
   section { scroll-margin-top: 12px; }
 
-  /* Print */
+  /* Print — 화면은 다크 테마지만 종이에는 흰 바탕·검은 글씨로 낸다.
+     (브라우저는 기본적으로 배경색을 인쇄하지 않으므로, 색을 안 바꾸면 흰 종이에 연회색 글씨가 된다) */
   @media print {
-    .layout { grid-template-columns: 1fr; }
+    @page { size: A4; margin: 16mm 14mm 18mm; }
+    :root {
+      --bg: #ffffff; --panel: #ffffff; --card: #f4f6f9; --border: #c4c8cf;
+      --text: #111315; --muted: #55595f; --accent: #0f766e; --primary: #1d4ed8;
+      --code-bg: #f4f5f7;
+    }
+    html, body { background: #ffffff; color: #111315; font-size: 10.5pt; }
+    .layout { display: block; }
     nav.toc { display: none; }
-    main { padding: 20px; max-width: 100%; }
-    pre, .callout { page-break-inside: avoid; }
+    main { padding: 0; max-width: 100%; }
+    .header-strip { background: #ffffff; color: #111315;
+      border: 1px solid #c4c8cf; border-radius: 6px; padding: 18px 20px; margin-bottom: 24px; }
+    .header-strip .sub { color: #55595f; }
+    .dist-note { display: none; }   /* 편집 위치 안내는 화면 전용 */
+    a { color: #1d4ed8; }
+    h2 { color: #0f766e; }
+    h3 { color: #1d4ed8; }
+    h4 { color: #111315; }
+    pre, code { background: #f4f5f7; color: #111315; border: 1px solid #dcdfe4; }
+    table, th, td { border-color: #c4c8cf; }
+    th { background: #eef1f5; color: #111315; }
+    img { max-width: 100%; }
+    figure, table, pre, .callout { page-break-inside: avoid; }
+    h2, h3, h4 { page-break-after: avoid; }
   }
 </style>
 </head>

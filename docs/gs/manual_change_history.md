@@ -1208,7 +1208,20 @@ MLOps 만 빠져, 매뉴얼을 본 심사자가 "구성에 없는 프로그램" 
   "별책 「BODA VMS AI 학습 도구 매뉴얼」(`VMS_AI학습도구매뉴얼.html` — 본 매뉴얼과 함께 제공되는 별도 파일)".
   본편 docx/PDF 재생성(198쪽 · 그림 154장 유지), PDF 172쪽에서 확인.
 
-### 남은 판단
+### 문제 3 — 별책에 PDF 가 없었다 (해결)
 
-별책은 아직 **HTML 만** 있고 docx/PDF 가 없다. 본편처럼 PDF 로 제출할지, 자체 포함 HTML 로 낼지는
-제출 직전에 정한다(Word 로 HTML 을 열어 PDF 로 내보내는 경로가 있다 — `docx2pdf_render.ps1` 과 같은 방식).
+본편은 docx/PDF 로 제출하는데 별책은 HTML 뿐이었다. **`docs/gs/VMS_AI학습도구매뉴얼.pdf`**(13쪽, 1.1MB)를
+만들었다.
+
+- 생성기 **`docs/gs/pipeline/html2pdf_chrome.ps1`** 신설 — Chrome 헤드리스 `--print-to-pdf` 로 HTML 을 그대로
+  인쇄한다(A4). Word COM(`docx2pdf_render.ps1`)과 달리 브라우저가 CSS 를 해석하므로 화면과 같은 판면이 나온다.
+  `-OutDir`·`-Pages` 를 주면 검수용 PNG 도 함께 뽑는다(WinRT 렌더러, docx2pdf_render.ps1 과 같은 방식).
+- 별책 `@media print` 보강 — **화면은 다크 테마라 그대로 인쇄하면 흰 종이에 연회색 글씨**가 된다(브라우저는
+  배경색을 인쇄하지 않는다). 인쇄 시 흰 바탕·검은 글씨로 토큰을 덮어쓰고, 사이드 목차 숨김 · A4 여백 ·
+  그림/표/코드 페이지 분리 금지 · 배포본 안내 줄 숨김을 넣었다.
+- 본편 §10 의 안내 파일명도 **`VMS_AI학습도구매뉴얼.pdf`** 로 맞췄다(PDF 독자가 PDF 를 찾도록). 재생성 후
+  198쪽 · 그림 154장 유지, PDF 172쪽에서 확인.
+
+> **PowerShell 함정** — Chrome 은 USB/GCM 잡음을 stderr 로 뱉는데 PowerShell 5.1 은 네이티브 stderr 를
+> 오류 레코드(NativeCommandError)로 감싸 `$ErrorActionPreference='Stop'` 에서 스크립트가 죽는다.
+> 호출 연산자(`&`) 대신 **`Start-Process -Wait`** 로 띄워 해결했다.
