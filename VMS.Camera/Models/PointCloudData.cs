@@ -120,7 +120,23 @@ namespace VMS.Camera.Models
         #region Binary Save / Load (.vpc format)
 
         // File format: VPC1 header + metadata + positions (float×3) + colors (byte×3)
+        //              + (선택) 후행 블록 — 아래 TrailerSignature 참조
         private static readonly byte[] FileSignature = "VPC1"u8.ToArray();
+
+        // ── 후행 블록 (2026-09-23 신설) ─────────────────────────────────
+        //
+        // 색상 뒤에 이어 붙이는 선택 블록. **헤더를 바꾸지 않은 이유는 호환성**이다 —
+        // 구버전 로더는 색상까지만 읽고 스트림 끝을 확인하지 않으므로 뒤에 붙은 블록을
+        // 무시하고 정상 로드한다(새 파일 → 구버전 앱 OK). 새 로더는 후행 블록이 없는
+        // 옛 파일도 그대로 읽는다.
+        //
+        // 무엇을 싣는가: **뎁스 카메라 내부 파라미터(fx/fy/cx/cy)**. grab 점군의 X/Y 는
+        // 뎁스맵 화소이고 Z 만 mm 인데, 화소를 mm 로 바꾸는 fx/fy 가 파일에 없어서 저장본을
+        // 다시 불러오면 치수 자동 환산(PointCloudCluster 의 AutoFromCamera)이 꺼졌다.
+        // 즉 **저장한 점군으로는 XY 치수를 mm 로 잴 수 없었다** — 오프라인 검증이나
+        // 시험 자료로 쓰기 어려운 제약이었고, 그래서 배율을 따로 받아 적어야 했다.
+        private static readonly byte[] TrailerSignature = "VPCX"u8.ToArray();
+        private const int TrailerVersion = 1;
 
         /// <summary>
         /// 포인트 클라우드를 바이너리 파일로 저장 (.vpc)
@@ -161,6 +177,18 @@ namespace VMS.Camera.Models
                 colorBuffer[offset + 2] = c.B;
             }
             bw.Write(colorBuffer);
+
+            // 후행 블록 — 내부 파라미터가 있을 때만 (없으면 옛 파일과 바이트가 동일하다)
+            var intrinsics = Intrinsics;
+            if (intrinsics is { IsValid: true })
+            {
+                bw.Write(TrailerSignature);
+                bw.Write(TrailerVersion);
+                bw.Write(intrinsics.Fx);
+                bw.Write(intrinsics.Fy);
+                bw.Write(intrinsics.Cx);
+                bw.Write(intrinsics.Cy);
+            }
         }
 
         /// <summary>
@@ -210,8 +238,47 @@ namespace VMS.Camera.Models
                 Positions = positions,
                 Colors = colors,
                 GridWidth = gridWidth,
-                GridHeight = gridHeight
+                GridHeight = gridHeight,
+                Intrinsics = ReadTrailerIntrinsics(br)
             };
+        }
+
+        /// <summary>
+        /// 색상 뒤의 후행 블록에서 내부 파라미터를 읽는다. 없으면(옛 파일) null.
+        /// 깨진 꼬리는 <b>로드 실패로 만들지 않는다</b> — 점군 본문은 이미 온전히 읽었고,
+        /// 여기서 던지면 멀쩡한 파일이 안 열리는 것처럼 보인다. 내부 파라미터만 포기한다.
+        /// </summary>
+        private static DepthIntrinsics? ReadTrailerIntrinsics(BinaryReader br)
+        {
+            try
+            {
+                var stream = br.BaseStream;
+                // 서명(4) + 버전(4) + double 4개(32)
+                if (!stream.CanSeek || stream.Length - stream.Position < 40)
+                    return null;
+
+                var sig = br.ReadBytes(4);
+                if (sig.Length < 4 || sig[0] != TrailerSignature[0] || sig[1] != TrailerSignature[1] ||
+                    sig[2] != TrailerSignature[2] || sig[3] != TrailerSignature[3])
+                    return null;
+
+                int version = br.ReadInt32();
+                if (version != TrailerVersion)
+                    return null;   // 더 새로운 형식 — 본문만 쓰고 넘어간다
+
+                var intrinsics = new DepthIntrinsics
+                {
+                    Fx = br.ReadDouble(),
+                    Fy = br.ReadDouble(),
+                    Cx = br.ReadDouble(),
+                    Cy = br.ReadDouble()
+                };
+                return intrinsics.IsValid ? intrinsics : null;
+            }
+            catch (Exception ex) when (ex is IOException or EndOfStreamException)
+            {
+                return null;
+            }
         }
 
         #endregion
