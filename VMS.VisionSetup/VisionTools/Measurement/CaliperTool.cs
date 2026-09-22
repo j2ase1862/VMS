@@ -695,7 +695,7 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 // Dark to Light (positive gradient peak)
                 if (g > 0 && Math.Abs(g) > EdgeThreshold)
                 {
-                    if (g > gradient[i - 1] && g > gradient[i + 1])
+                    if (g > gradient[i - 1] && g >= gradient[i + 1])
                     {
                         isLocalExtreme = true;
                         polarity = EdgePolarity.DarkToLight;
@@ -704,7 +704,7 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 // Light to Dark (negative gradient peak)
                 else if (g < 0 && Math.Abs(g) > EdgeThreshold)
                 {
-                    if (g < gradient[i - 1] && g < gradient[i + 1])
+                    if (g < gradient[i - 1] && g <= gradient[i + 1])
                     {
                         isLocalExtreme = true;
                         polarity = EdgePolarity.LightToDark;

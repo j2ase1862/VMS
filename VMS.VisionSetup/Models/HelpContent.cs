@@ -584,7 +584,9 @@ namespace VMS.VisionSetup.Models
                     ["FilterHalfWidth"] = "미분 필터의 반폭. 필터 커널 크기 = 2×반폭+1.\n• 작을수록: 날카로운 엣지에 민감\n• 클수록: 노이즈에 강함",
                     ["FitMethod"] = "라인 피팅 방법:\n• LeastSquares: 최소자승법 — 빠르지만 이상치에 민감\n• RANSAC: 이상치에 강건함 — 부분적으로 가려진 엣지에 효과적\n• Huber: 로버스트 피팅 — LeastSquares와 RANSAC의 중간",
                     ["RansacThreshold"] = "RANSAC 이상치 판정 거리 (픽셀). 피팅 라인으로부터 이 거리 이상 떨어진 점은 이상치로 처리됩니다.",
-                    ["MinFoundCalipers"] = "최소 검출 캘리퍼 수. 유효 엣지가 이보다 적으면 피팅 실패로 판정됩니다."
+                    ["MinFoundCalipers"] = "최소 검출 캘리퍼 수. 유효 엣지가 이보다 적으면 피팅 실패로 판정됩니다.",
+                    ["SearchAxis"] = "엣지를 훑는 방향. ROI 화살표가 가리키는 쪽이 곧 이 방향이고, 캘리퍼들은 그와 수직으로 늘어섭니다.\n• AlongWidth: ROI 가로 방향으로 훑음 (기준선은 세로)\n• AlongHeight: 세로 방향으로 훑음 (기준선은 가로)\n• LongerSide: 긴 변을 기준선으로 삼는 구버전 동작 — 화살표와 어긋날 수 있어 새 설정에는 권장하지 않습니다.",
+                    ["SelectionMode"] = "한 캘리퍼에서 엣지가 여러 개 잡힐 때 무엇을 쓸지 (대비가 최대의 50% 이상인 후보 중에서 고릅니다).\n• First: 탐색 시작점(화살표 꼬리)에 가장 가까운 엣지\n• Last: 가장 먼 엣지\n• Best: 대비가 가장 큰 엣지\n• ClosestToCenter: 검색선 중심에 가장 가까운 엣지 — 구버전 동작"
                 }
             },
 

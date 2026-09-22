@@ -36,5 +36,7 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         public LineFitMethod FitMethod { get => TypedTool.FitMethod; set => TypedTool.FitMethod = value; }
         public double RansacThreshold { get => TypedTool.RansacThreshold; set => TypedTool.RansacThreshold = value; }
         public int MinFoundCalipers { get => TypedTool.MinFoundCalipers; set => TypedTool.MinFoundCalipers = value; }
+        public LineSearchAxis SearchAxis { get => TypedTool.SearchAxis; set => TypedTool.SearchAxis = value; }
+        public LineEdgeSelectionMode SelectionMode { get => TypedTool.SelectionMode; set => TypedTool.SelectionMode = value; }
     }
 }

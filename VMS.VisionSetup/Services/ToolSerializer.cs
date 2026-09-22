@@ -269,6 +269,8 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["FitMethod"] = lineFit.FitMethod.ToString();
                     config.Parameters["RansacThreshold"] = lineFit.RansacThreshold;
                     config.Parameters["MinFoundCalipers"] = lineFit.MinFoundCalipers;
+                    config.Parameters["SearchAxis"] = lineFit.SearchAxis.ToString();
+                    config.Parameters["SelectionMode"] = lineFit.SelectionMode.ToString();
                     break;
 
                 case CircleFitTool circleFit:
@@ -1319,6 +1321,15 @@ namespace VMS.VisionSetup.Services
                 tool.RansacThreshold = GetDouble(rt);
             if (p.TryGetValue("MinFoundCalipers", out var mfc))
                 tool.MinFoundCalipers = GetInt(mfc);
+
+            // 이 두 설정이 없던 레시피는 구버전 동작으로 읽는다 — 새 기본값(화살표 방향 탐색,
+            // First 엣지)을 소급 적용하면 기존 레시피의 측정값이 조용히 달라진다.
+            tool.SearchAxis = p.TryGetValue("SearchAxis", out var lsa)
+                ? Enum.Parse<LineSearchAxis>(GetString(lsa))
+                : LineSearchAxis.LongerSide;
+            tool.SelectionMode = p.TryGetValue("SelectionMode", out var lsm)
+                ? Enum.Parse<LineEdgeSelectionMode>(GetString(lsm))
+                : LineEdgeSelectionMode.ClosestToCenter;
 
             return tool;
         }
