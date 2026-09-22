@@ -69,7 +69,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
   <li><strong>연결하기</strong> — 앞 도구 노드를 우클릭 → Connect Image(초록 실선) / Connect Coordinates(파랑 점선) / Connect Result(주황 점선) 를 고른 뒤 뒤 도구를 클릭합니다. Esc 또는 우클릭으로 취소합니다.
     <ul>
       <li><strong>Image</strong> — 앞 도구의 결과 이미지를 뒤 도구의 입력으로 넘깁니다(예: Grayscale → Threshold → Blob).</li>
-      <li><strong>Coordinates (Fixture)</strong> — 패턴 매칭이 찾은 위치 · 각도만큼 뒤 도구의 ROI 를 옮기고 기울입니다. 부품이 틀어져 놓여도 같은 자리를 검사합니다.</li>
+      <li><strong>Coordinates (Fixture)</strong> — 패턴 매칭이 찾은 위치 · 각도만큼 뒤 도구의 ROI 를 옮기고 기울입니다. 부품이 틀어져 놓여도 같은 자리를 검사합니다. 기준을 주는 도구가 실패하면(부품 없음 · 매칭 실패) 뒤 도구는 실행되지 않고 NG 로 처리됩니다.</li>
       <li><strong>Result</strong> — 앞 도구의 결과 값을 뒤 도구가 참조합니다(예: Caliper 두 개 → Geometry, 여러 도구 → Result).</li>
     </ul></li>
   <li><strong>ROI 그리기</strong> — 도구를 선택하고 Tool Settings 의 Use ROI 를 켠 뒤, 이미지 뷰 툴바에서 Rectangle · RectAffine(회전 사각형) · Circle · Ellipse · Polygon 을 골라 이미지 위에 그립니다. 흰 원 핸들로 크기, 금색 원 핸들로 회전을 조정하고 [Delete] / [Clear All] 로 지웁니다. [Show ROI] · [Draw ROI] · [Clear ROI] 버튼은 Tool Settings 의 ROI Settings 에 있습니다.</li>

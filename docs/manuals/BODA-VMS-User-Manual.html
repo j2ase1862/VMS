@@ -300,7 +300,7 @@ MLOps 를 쓰지 않는 현장은 이 서버 없이 운영해도 됩니다.</p>
   <tr><td>스텝 (Step)</td><td>레시피 안에서 카메라 1 대가 한 번 촬영해 검사하는 단위입니다. 이름은 "1-1", "1-2" 처럼 카메라 번호-순번으로 자동 매겨집니다.</td></tr>
   <tr><td>도구 (Tool)</td><td>이미지를 처리하거나 재고 판정하는 기능 블록입니다(Blob, Caliper, Feature Match 등 39 종, §6).</td></tr>
   <tr><td>ROI</td><td>도구가 볼 관심 영역입니다. 사각형 · 회전 사각형 · 원 · 타원 · 다각형으로 그립니다.</td></tr>
-  <tr><td>Fixture (좌표 연결)</td><td>패턴 매칭이 찾은 위치·각도만큼 뒤 도구의 ROI 를 자동으로 옮기는 연결입니다. 제품이 조금씩 틀어져 놓여도 같은 자리를 검사합니다.</td></tr>
+  <tr><td>Fixture (좌표 연결)</td><td>패턴 매칭이 찾은 위치·각도만큼 뒤 도구의 ROI 를 자동으로 옮기는 연결입니다. 제품이 조금씩 틀어져 놓여도 같은 자리를 검사합니다. 기준을 주는 도구가 제품을 못 찾으면 뒤 도구는 실행되지 않고 NG 로 처리됩니다.</td></tr>
   <tr><td>시퀀스</td><td>AUTO RUN 중 "트리거 대기 → 촬영 → 검사 → 결과 출력 → 반복" 흐름의 정의입니다. PLC 주소나 IO 보드 채널을 노드로 연결합니다.</td></tr>
   <tr><td>작업지시 (WO)</td><td>제품 × 계획 수량 × 레시피 단위의 생산 지시입니다. 계획됨 → 진행 중 → 완료 → 마감 순서로 진행됩니다.</td></tr>
   <tr><td>Lot</td><td>작업지시 안에서 자재 투입분이나 교대 단위로 나누는 생산 묶음입니다. 한 작업지시에 여러 Lot 을 동시에 열 수 있습니다.</td></tr>
@@ -1068,7 +1068,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
   <li><strong>연결하기</strong> — 앞 도구 노드를 우클릭 → Connect Image(초록 실선) / Connect Coordinates(파랑 점선) / Connect Result(주황 점선) 를 고른 뒤 뒤 도구를 클릭합니다. Esc 또는 우클릭으로 취소합니다.
     <ul>
       <li><strong>Image</strong> — 앞 도구의 결과 이미지를 뒤 도구의 입력으로 넘깁니다(예: Grayscale → Threshold → Blob).</li>
-      <li><strong>Coordinates (Fixture)</strong> — 패턴 매칭이 찾은 위치 · 각도만큼 뒤 도구의 ROI 를 옮기고 기울입니다. 부품이 틀어져 놓여도 같은 자리를 검사합니다.</li>
+      <li><strong>Coordinates (Fixture)</strong> — 패턴 매칭이 찾은 위치 · 각도만큼 뒤 도구의 ROI 를 옮기고 기울입니다. 부품이 틀어져 놓여도 같은 자리를 검사합니다. 기준을 주는 도구가 실패하면(부품 없음 · 매칭 실패) 뒤 도구는 실행되지 않고 NG 로 처리됩니다.</li>
       <li><strong>Result</strong> — 앞 도구의 결과 값을 뒤 도구가 참조합니다(예: Caliper 두 개 → Geometry, 여러 도구 → Result).</li>
     </ul></li>
   <li><strong>ROI 그리기</strong> — 도구를 선택하고 Tool Settings 의 Use ROI 를 켠 뒤, 이미지 뷰 툴바에서 Rectangle · RectAffine(회전 사각형) · Circle · Ellipse · Polygon 을 골라 이미지 위에 그립니다. 흰 원 핸들로 크기, 금색 원 핸들로 회전을 조정하고 [Delete] / [Clear All] 로 지웁니다. [Show ROI] · [Draw ROI] · [Clear ROI] 버튼은 Tool Settings 의 ROI Settings 에 있습니다.</li>
@@ -1904,6 +1904,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
   <li>그림자 · 날짜 각인이 함께 학습되면 [Edit Mask...] 로 제외하거나 현장 이미지 2 장 이상으로 [안정 특징 정제] 를 씁니다.</li>
   <li>같은 부품이 여러 개면 Max Instances 를 올리고, 반쪽 매칭이 생기면 Min Coverage 0.6~0.75 를 켭니다.</li>
 </ul>
+<div class="callout tip">Feature Match 가 부품을 못 찾으면 Coordinates 로 연결된 뒤 도구는 검사하지 않고 NG 가 됩니다. 최종 판정에 그 사유가 남도록 <strong>Feature Match 도 Result 로 판정 도구에 연결</strong>해 두세요.</div>
 
 <h3 id="ex-color">7.4 색상 검사 — 컬러 라벨 · 부품 색 확인 (Color Extract + Blob)</h3>
 <figure><img src="../gs/screenshots/v3/templates/2d-color-blob.png" data-width="520" alt="컬러 객체 검출 체인"><figcaption>Color Extract → Blob → Result (컬러 이미지 필요)</figcaption></figure>
@@ -2550,6 +2551,8 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
       <td>① 특징 이미지의 초록 점이 제품 윤곽을 따라 촘촘한지 — 듬성하면 [Train] 재학습 또는 Max Model Points 를 올립니다. ② 반쪽 매칭이 의심되면 Min Coverage(0.6~0.75)를 켭니다. ③ 그림자 · 반사가 함께 학습됐으면 학습 마스크 또는 [안정 특징 정제] 를 씁니다. ④ 제품이 아무 방향으로 놓이면 Angle Start −180 · Extent 360.</td></tr>
   <tr><td>부품이 돌아 놓이면 뒤 도구가 엉뚱한 곳을 봄</td>
       <td>패턴 매칭 도구에서 뒤 도구로 <strong>Coordinates(Fixture)</strong> 연결이 되어 있는지 확인합니다. 연결되면 ROI 가 위치와 각도를 모두 따라갑니다(§5.5).</td></tr>
+  <tr><td>"기준 위치를 주는 도구가 실패하여 건너뜀" 으로 NG</td>
+      <td>Coordinates(Fixture) 로 연결된 앞 도구가 제품을 찾지 못한 것입니다. 기준 위치가 없으면 뒤 도구는 검사하지 않고 NG 로 둡니다. 부품 유무 · 조명 · 패턴 매칭 Score Threshold(§6.3)를 먼저 확인하세요. "기준 좌표를 받지 못해 건너뜀" 은 앞 도구가 중심 좌표를 내보내지 않는 종류일 때 나옵니다 — Fixture 기준으로는 패턴 매칭 · Blob · Circle Fit 처럼 중심을 내보내는 도구를 쓰세요.</td></tr>
   <tr><td>검출이 0 건인데 NG 로 나옴</td>
       <td>"찾아야 할 것을 하나도 찾지 못한 검사" 는 설계상 NG 입니다(Blob · 패턴 매칭 · 딥러닝 · 코드 판독 공통). 결과 화면에서 무엇이 검출되지 않았는지 먼저 확인합니다(§5.6).</td></tr>
   <tr><td>측정값이 mm 로 나오는데 실제 치수와 다름</td>
@@ -3184,7 +3187,7 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <table class="cols-3-6">
   <tr><th>항목</th><th>값</th></tr>
   <tr><td>문서 버전</td><td>3.0 (2026-09-17)</td></tr>
-  <tr><td>대상 소프트웨어</td><td>VMS 1.39.2 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.1</td></tr>
+  <tr><td>대상 소프트웨어</td><td>VMS 1.41.0 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.1</td></tr>
   <tr><td>구성</td><td>VMS · VMS.VisionSetup · VMS.AppSetup (검사 런타임) / BODA.VMS.Web (생산 관리) / BODA.VMS.MLOps · VMS.DeepLearning (선택 구성 요소, 인증 범위 외)</td></tr>
   <tr><td>발행</td><td>BODA Vision AI</td></tr>
 </table>
