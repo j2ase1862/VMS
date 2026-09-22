@@ -524,24 +524,23 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             if (candidates.Count == 0)
                 return null;
 
-            // 4단계: 에지 선택
-            //   1) 최대 contrast 의 50% 이상인 후보만 남김 (약한 노이즈 에지 제거)
-            //   2) SelectionMode 에 따라 채택 — 기준은 CaliperTool 과 같은 말을 쓴다.
-            //      First/Last 는 "탐색 시작점에서" 가깝고 먼 것이므로 화살표 방향이 곧 기준이다.
-            double maxContrast = candidates.Max(c => c.Contrast);
-            double contrastFloor = maxContrast * 0.5;
+            // 4단계: 에지 선택 — 기준은 CaliperTool 과 같은 말을 쓴다.
+            // First/Last 는 "탐색 시작점에서" 가깝고 먼 것이므로 화살표 방향이 곧 기준이다.
+            //
+            // ⚠ 대비 하한(최대의 50%)은 ClosestToCenter 에만 건다.
+            //   First/Last 에 걸면 "같은 탐색선 안의 다른 강한 엣지"가 기준을 끌어올려
+            //   정작 찾으려던 약한 엣지가 탈락한다. 실제로 반사광이 걸린 두 캘리퍼만
+            //   다른 경계를 잡아 맞춰진 직선이 기울었다 (현장 보고 2026-09-22).
+            //   약한 엣지를 걸러 내는 손잡이는 EdgeThreshold 이고 그건 사용자 것이다 —
+            //   CaliperTool 도 EdgeThreshold + 극성만으로 First/Last 를 고른다.
             double centerPos = length / 2.0;
-
-            var qualified = candidates.Where(c => c.Contrast >= contrastFloor).ToList();
-            if (qualified.Count == 0)
-                qualified = candidates;
 
             var best = SelectionMode switch
             {
-                LineEdgeSelectionMode.First => qualified.OrderBy(c => c.Index).First(),
-                LineEdgeSelectionMode.Last => qualified.OrderByDescending(c => c.Index).First(),
-                LineEdgeSelectionMode.Best => qualified.OrderByDescending(c => c.Contrast).First(),
-                _ => qualified.OrderBy(c => Math.Abs(c.Index - centerPos)).First(),
+                LineEdgeSelectionMode.First => candidates.OrderBy(c => c.Index).First(),
+                LineEdgeSelectionMode.Last => candidates.OrderByDescending(c => c.Index).First(),
+                LineEdgeSelectionMode.Best => candidates.OrderByDescending(c => c.Contrast).First(),
+                _ => SelectClosestToCenter(candidates, centerPos),
             };
 
             double subPixelPos = ParabolicSubPixel(absGradient, best.Index);
@@ -549,6 +548,20 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 start.X + ux * subPixelPos,
                 start.Y + uy * subPixelPos);
             return (edgePoint, best.Contrast);
+        }
+
+        /// <summary>
+        /// 구버전 동작 — 최대 대비의 50% 이상인 후보 중 검색선 중심에 가장 가까운 엣지.
+        /// ClosestToCenter 전용이다 (이 설정이 없던 레시피의 호환 경로).
+        /// </summary>
+        private static (int Index, double Contrast) SelectClosestToCenter(
+            List<(int Index, double Contrast)> candidates, double centerPos)
+        {
+            double contrastFloor = candidates.Max(c => c.Contrast) * 0.5;
+            var qualified = candidates.Where(c => c.Contrast >= contrastFloor).ToList();
+            if (qualified.Count == 0)
+                qualified = candidates;
+            return qualified.OrderBy(c => Math.Abs(c.Index - centerPos)).First();
         }
 
         /// <summary>
