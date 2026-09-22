@@ -393,5 +393,64 @@ namespace VMS.Tests.Services
             Assert.Contains("\"resultDataType\":", json);
             Assert.DoesNotContain("\"Int16\"", json);
         }
+        // ─── 저장은 읽어 온 파일로 되돌려 쓴다 ─────────────────────
+
+        [Fact]
+        public void SaveRecipe_AfterLoadFromNameBasedFile_UpdatesThatFile_NoDuplicate()
+        {
+            // 실물 확인(2026-09-22)에서 잡힌 결함: 레시피 파일 이름이 항상
+            // recipe_<Id>.json 인 것은 아닌데(VisionSetup 은 이름 기반 파일도 만든다)
+            // 경로 없는 저장이 Id 로 경로를 새로 만들어 같은 레시피의 파일이 하나 더 생겼다.
+            // 그러면 편집이 실행 중인 레시피에 영원히 반영되지 않는다.
+            var recipe = NewSampleRecipe("NameBased");
+            var namePath = Path.Combine(_tempDir, "recipe_name_based.json");
+            Assert.True(_service.SaveRecipe(recipe, namePath));
+
+            var loaded = _service.LoadRecipe(namePath);
+            Assert.NotNull(loaded);
+            loaded!.Description = "편집됨";
+
+            Assert.True(_service.SaveRecipe(loaded));
+
+            var files = Directory.GetFiles(_tempDir, "*.json");
+            Assert.Equal(new[] { "recipe_name_based.json" },
+                files.Select(Path.GetFileName).OrderBy(f => f).ToArray());
+            Assert.Equal("편집됨", _service.LoadRecipe(namePath)!.Description);
+        }
+
+        [Fact]
+        public void SaveRecipe_NewRecipe_UsesIdBasedPath()
+        {
+            // 대조군 — 파일이 아직 없는 새 레시피는 종전대로 Id 기반 경로로 생성된다.
+            var recipe = _service.CreateNewRecipe("Fresh");
+            Assert.True(_service.SaveRecipe(recipe));
+
+            var file = Assert.Single(Directory.GetFiles(_tempDir, "*.json"));
+            Assert.Equal($"recipe_{recipe.Id}.json", Path.GetFileName(file));
+        }
+
+        [Fact]
+        public void ImportRecipe_WritesCopyIntoRecipesFolder_NotBackToSource()
+        {
+            // 가져오기는 외부 파일을 읽은 직후 저장한다 — 추적 경로를 그대로 쓰면
+            // 남의 파일에 되쓰게 된다.
+            var external = Path.Combine(Path.GetTempPath(), $"ext_{Guid.NewGuid():N}.json");
+            try
+            {
+                _service.ExportRecipe(NewSampleRecipe("External"), external);
+                var before = File.ReadAllText(external);
+
+                var imported = _service.ImportRecipe(external);
+
+                Assert.NotNull(imported);
+                Assert.Equal(before, File.ReadAllText(external));   // 원본 불변
+                var file = Assert.Single(Directory.GetFiles(_tempDir, "*.json"));
+                Assert.Equal($"recipe_{imported!.Id}.json", Path.GetFileName(file));
+            }
+            finally
+            {
+                if (File.Exists(external)) File.Delete(external);
+            }
+        }
     }
 }
