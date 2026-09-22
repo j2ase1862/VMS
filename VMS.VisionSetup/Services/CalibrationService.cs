@@ -133,26 +133,18 @@ namespace VMS.VisionSetup.Services
                 ? FindCirclesGridFlags.AsymmetricGrid
                 : FindCirclesGridFlags.SymmetricGrid;
 
-            // 밝은 배경의 검은 원이 기본. 반대(어두운 배경의 밝은 원)면 반전해 한 번 더 시도한다 —
-            // 현장 타겟은 둘 다 쓰이고, 사용자가 그 차이를 알 이유가 없다.
             int expected = patternCols * patternRows;
-            using var blobDetector = CreateCircleDetector(gray.Width, gray.Height);
-
-            var centers = TryFindCircles(gray, patternSize, flags, expected, blobDetector);
-            if (centers == null)
-            {
-                using var inverted = new Mat();
-                Cv2.BitwiseNot(gray, inverted);
-                centers = TryFindCircles(inverted, patternSize, flags, expected, blobDetector);
-            }
+            var centers = DetectCircleGrid(gray, patternSize, flags, expected);
 
             if (centers == null)
             {
                 var layout = asymmetric ? "비대칭(엇갈린)" : "대칭";
                 return Fail(
                     $"원형 그리드를 찾지 못했습니다 ({patternCols}×{patternRows}, {layout}). " +
-                    "행·열 개수와 배열 종류(대칭/비대칭)를 확인하세요. " +
-                    "비대칭 배열은 열 개수를 두 행 합쳐 세는 것이 OpenCV 관례입니다.");
+                    "① 행·열 개수와 배열 종류(대칭/비대칭)를 확인하세요 — 비대칭 배열은 열 개수를 " +
+                    "두 행 합쳐 세는 것이 OpenCV 관례입니다. " +
+                    "② 사진이 너무 어둡거나 과노출이면 원을 못 찾습니다 — 원과 배경이 눈에 또렷이 " +
+                    "구분되고 흰 부분이 하얗게 타지 않도록 노출을 맞춰 다시 찍으세요.");
             }
 
             if (accumulate)
@@ -388,7 +380,12 @@ namespace VMS.VisionSetup.Services
         /// 보드 전체)이 통째로 blob 으로 잡히는 것은 막는다. 원형도·관성비는 비스듬히 찍혀 타원이 된
         /// 원을 받아들일 만큼 느슨하게 두되, 잡음을 거를 정도는 유지한다.</para>
         /// </summary>
-        private static SimpleBlobDetector CreateCircleDetector(int width, int height)
+        /// <param name="minThreshold">이진화 스윕 시작 밝기. OpenCV 기본은 50.</param>
+        /// <param name="maxThreshold">이진화 스윕 끝 밝기. OpenCV 기본은 220.</param>
+        /// <param name="thresholdStep">스윕 간격. OpenCV 기본은 10.</param>
+        private static SimpleBlobDetector CreateCircleDetector(
+            int width, int height,
+            float minThreshold = 50f, float maxThreshold = 220f, float thresholdStep = 10f)
         {
             double area = (double)width * height;
             return SimpleBlobDetector.Create(new SimpleBlobDetector.Params
@@ -402,7 +399,72 @@ namespace VMS.VisionSetup.Services
                 MinConvexity = 0.8f,
                 FilterByInertia = true,
                 MinInertiaRatio = 0.25f,
+                MinThreshold = minThreshold,
+                MaxThreshold = maxThreshold,
+                ThresholdStep = thresholdStep,
             });
+        }
+
+        /// <summary>
+        /// 원형 그리드 검출 — 조명이 바뀌어도 찾도록 <b>단계적으로</b> 시도한다.
+        ///
+        /// <para><b>왜 단계를 두는가 (2026-09-22 실증).</b> SimpleBlobDetector 는 밝기를
+        /// <c>50~220</c> 구간에서 10 씩 훑어 이진화하고, 같은 자리에 반복해 나타나는 덩어리만
+        /// blob 으로 인정한다(OpenCV 기본값). 조명이 어두워지면 원과 배경 밝기가 통째로 이 구간
+        /// 아래로 밀려나 <b>대비는 충분한데도</b> blob 이 몇 개씩 빠지고, 원 20 개 중 하나라도
+        /// 빠지면 <c>FindCirclesGrid</c> 는 격자를 세우지 못한다. 실촬영 타겟을 밝기만 바꿔 가며
+        /// 26 조건으로 돌렸을 때 기본값은 13 건만 성공했다(평균 밝기 87 미만·215 초과에서 실패).</para>
+        ///
+        /// <para>그래서 ① 기본 구간으로 먼저 보고(정상 조명에서 가장 빠르다) ② 실패하면 구간을
+        /// <c>10~250</c> 으로 넓혀 촘촘히(step 5) ③ 그래도 실패하면 명암을 펴서(min-max 정규화)
+        /// 다시 본다. 같은 26 조건에서 25 건으로 올라가고, 잘 되던 조명에서는 1 단계에서 끝나
+        /// 속도가 그대로다(약 300ms). 남는 실패는 포화·흑색 클리핑처럼 원본 정보가 날아간 경우라
+        /// 재촬영이 답이다.</para>
+        ///
+        /// <para>검출된 중심 좌표는 어느 단계에서 찾아도 같다(실측 355.6~358.6px, 스케일 동일) —
+        /// 단계는 "찾느냐 못 찾느냐" 만 가르고 측정값을 바꾸지 않는다.</para>
+        /// </summary>
+        private static Point2f[]? DetectCircleGrid(
+            Mat gray, Size patternSize, FindCirclesGridFlags flags, int expected)
+        {
+            // 1·2 단계 — 원본 밝기 그대로, 임계 구간만 달리한다.
+            foreach (var (minTh, maxTh, step) in CircleThresholdStages)
+            {
+                using var detector = CreateCircleDetector(gray.Width, gray.Height, minTh, maxTh, step);
+                var found = TryBothPolarities(gray, patternSize, flags, expected, detector);
+                if (found != null)
+                    return found;
+            }
+
+            // 3 단계 — 명암을 전체 범위로 펴고 넓은 구간으로 한 번 더.
+            using var stretched = new Mat();
+            Cv2.Normalize(gray, stretched, 0, 255, NormTypes.MinMax);
+            var (wideMin, wideMax, wideStep) = CircleThresholdStages[^1];
+            using var wideDetector = CreateCircleDetector(gray.Width, gray.Height, wideMin, wideMax, wideStep);
+            return TryBothPolarities(stretched, patternSize, flags, expected, wideDetector);
+        }
+
+        /// <summary>밝기 임계 스윕 단계 — (시작, 끝, 간격). 첫 단계는 OpenCV 기본값이다.</summary>
+        private static readonly (float Min, float Max, float Step)[] CircleThresholdStages =
+        {
+            (50f, 220f, 10f),
+            (10f, 250f, 5f),
+        };
+
+        /// <summary>
+        /// 밝은 배경의 검은 원이 기본. 반대(어두운 배경의 밝은 원)면 반전해 한 번 더 시도한다 —
+        /// 현장 타겟은 둘 다 쓰이고, 사용자가 그 차이를 알 이유가 없다.
+        /// </summary>
+        private static Point2f[]? TryBothPolarities(
+            Mat gray, Size patternSize, FindCirclesGridFlags flags, int expected, Feature2D detector)
+        {
+            var centers = TryFindCircles(gray, patternSize, flags, expected, detector);
+            if (centers != null)
+                return centers;
+
+            using var inverted = new Mat();
+            Cv2.BitwiseNot(gray, inverted);
+            return TryFindCircles(inverted, patternSize, flags, expected, detector);
         }
 
         /// <summary>
