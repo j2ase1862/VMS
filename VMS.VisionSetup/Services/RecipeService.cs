@@ -32,12 +32,9 @@ namespace VMS.VisionSetup.Services
         private int _defaultRobotPort = 30003;
         private EulerConvention _defaultEulerConvention = EulerConvention.UR_RotationVector;
 
-        private static readonly JsonSerializerOptions JsonOptions = new()
-        {
-            WriteIndented = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-        };
+        // 레시피 직렬화 옵션은 VMS 와 공유 — 정의처는 RecipeJson 하나뿐이다.
+        // 양쪽이 각자 옵션을 들고 있다가 enum 표기가 갈려 레시피가 안 열린 적이 있다.
+        private static JsonSerializerOptions JsonOptions => RecipeJson.Options;
 
         public event EventHandler<Recipe?>? CurrentRecipeChanged;
 

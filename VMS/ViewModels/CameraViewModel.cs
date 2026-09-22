@@ -6,6 +6,7 @@ using VMS.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -28,8 +29,9 @@ namespace VMS.ViewModels
         private readonly IDialogService? _dialogService;
         private readonly IConfigurationService? _configService;
         private readonly IInspectionService? _inspectionService;
+        private readonly IRecipeService? _recipeService;
         private ICameraAcquisition? _acquisition;
-        private Models.Recipe? _currentRecipe;
+        private Recipe? _currentRecipe;
         private BitmapSource? _originalImage;  // 검사용 원본 이미지 (오버레이 전)
         private CancellationTokenSource? _liveGrabCts;
         private Task? _liveGrabTask;
@@ -119,15 +121,33 @@ namespace VMS.ViewModels
         [ObservableProperty]
         private double _height = 300;
 
-        // Step support
+        // ── 스텝 ──
+        // 레시피가 로드돼 있으면 이 카메라의 레시피 스텝이 그대로 목록이 된다.
+        // 종전에는 system_config.json 의 카메라별 steps/stepCount 로만 만들어서,
+        // 스텝이 2개인 레시피를 열어도 화면에는 늘 "Step 1" 하나만 보였다
+        // (그 필드가 비어 있으면 기본 1개를 만든다 — 2026-09-22 현장).
         [ObservableProperty]
-        private ObservableCollection<StepViewModel> _steps = new();
+        private ObservableCollection<InspectionStep> _steps = new();
 
         [ObservableProperty]
-        private StepViewModel? _selectedStep;
+        private InspectionStep? _selectedStep;
 
+        /// <summary>
+        /// 실행 대상 스텝의 위치. PLC 시퀀스의 StepChange 신호가 이 값을 바꾸고,
+        /// 화면 콤보는 SelectedStep 을 바꾼다 — 둘은 서로를 따라간다.
+        /// 종전에는 콤보를 바꿔도 이 값이 그대로여서 늘 첫 스텝만 검사했다.
+        /// </summary>
         [ObservableProperty]
         private int _currentStepIndex;
+
+        /// <summary>SelectedStep ↔ CurrentStepIndex 상호 갱신의 재진입 방지.</summary>
+        private bool _syncingStepSelection;
+
+        /// <summary>
+        /// 레시피가 없을 때 쓰는 스텝 (system_config.json 의 카메라 설정에서 생성).
+        /// 레시피를 닫으면 이 목록으로 돌아간다.
+        /// </summary>
+        private readonly List<InspectionStep> _configSteps = new();
 
         // Inline control box
         [ObservableProperty]
@@ -193,13 +213,31 @@ namespace VMS.ViewModels
             }
         }
 
-        partial void OnSelectedStepChanged(StepViewModel? value)
+        partial void OnSelectedStepChanged(InspectionStep? value)
         {
             OnPropertyChanged(nameof(Exposure));
             OnPropertyChanged(nameof(ExposureMs));
             OnPropertyChanged(nameof(Gain));
             OnPropertyChanged(nameof(Use2DCameraDefault));
             OnPropertyChanged(nameof(IsManualExposureEnabled));
+
+            if (_syncingStepSelection) return;
+            var index = value == null ? -1 : Steps.IndexOf(value);
+            if (index < 0) return;
+
+            _syncingStepSelection = true;
+            try { CurrentStepIndex = index; }
+            finally { _syncingStepSelection = false; }
+        }
+
+        partial void OnCurrentStepIndexChanged(int value)
+        {
+            if (_syncingStepSelection) return;
+            if (value < 0 || value >= Steps.Count) return;
+
+            _syncingStepSelection = true;
+            try { SelectedStep = Steps[value]; }
+            finally { _syncingStepSelection = false; }
         }
 
         // Inspection results
@@ -274,17 +312,68 @@ namespace VMS.ViewModels
         }
 
         public CameraViewModel(IDialogService dialogService, IConfigurationService configService,
-            IInspectionService? inspectionService = null)
+            IInspectionService? inspectionService = null, IRecipeService? recipeService = null)
         {
             _dialogService = dialogService;
             _configService = configService;
             _inspectionService = inspectionService;
+            _recipeService = recipeService;
         }
 
-        public void SetRecipe(Models.Recipe? recipe)
+        public void SetRecipe(Recipe? recipe)
         {
             _currentRecipe = recipe;
+            // 레시피 캘리브레이션은 스텝 밖에 있으므로 실행 엔진에 따로 알려 줘야 한다
+            _inspectionService?.SetRecipeContext(recipe);
             _inspectionService?.ClearCache();
+            RebuildSteps();
+        }
+
+        /// <summary>
+        /// 스텝 목록을 현재 레시피 기준으로 다시 만든다 — 이 카메라의 스텝만, 순번대로.
+        /// 레시피가 없거나 이 카메라를 쓰는 스텝이 없으면 카메라 설정(system_config)에서
+        /// 만든 스텝으로 돌아간다 (노출/게인 조작은 레시피 없이도 가능해야 한다).
+        /// 선택은 스텝 Id 로 유지 — 레시피를 저장만 하고 다시 로드한 경우 선택이 튀지 않는다.
+        ///
+        /// 주의: 여기서 StepNaming.RecomputeNames 를 부르지 말 것. 그 함수는 Sequence 를
+        /// 1..n 으로 재부여하는데, 검사 이미지 파일명의 Step 토큰이 Sequence 라서 VMS 가
+        /// 이름을 다시 매기면 저장된 이력과 어긋난다. 이름 편집 권한은 VisionSetup 에 있다.
+        /// </summary>
+        private void RebuildSteps()
+        {
+            var previousId = SelectedStep?.Id;
+
+            var recipeSteps = _currentRecipe?.Steps
+                .Where(s => s.CameraId == Id)
+                .OrderBy(s => s.Sequence)
+                .ToList();
+
+            var next = recipeSteps is { Count: > 0 } ? recipeSteps : _configSteps;
+
+            Steps.Clear();
+            foreach (var step in next)
+                Steps.Add(step);
+
+            _syncingStepSelection = true;
+            try
+            {
+                SelectedStep = Steps.FirstOrDefault(s => s.Id == previousId) ?? Steps.FirstOrDefault();
+                CurrentStepIndex = SelectedStep == null ? 0 : Steps.IndexOf(SelectedStep);
+            }
+            finally
+            {
+                _syncingStepSelection = false;
+            }
+        }
+
+        /// <summary>
+        /// 카메라 설정(system_config)에서 온 폴백 스텝을 등록. FromConfiguration 전용.
+        /// </summary>
+        internal void SetConfigSteps(IEnumerable<InspectionStep> steps)
+        {
+            _configSteps.Clear();
+            _configSteps.AddRange(steps);
+            RebuildSteps();
         }
 
         /// <summary>
@@ -701,12 +790,17 @@ namespace VMS.ViewModels
                 return;
             }
 
-            // Find matching inspection step for this camera + current step index
+            // 검사할 스텝 — 화면에 선택된 레시피 스텝
             var step = FindCurrentStep();
             if (step == null || step.Tools.Count == 0)
             {
+                // 검사할 것이 없으면 종전대로 통과시키되, 왜 통과했는지는 남긴다.
+                // 조용한 양품은 "검사가 도는 줄 알았는데 안 돌고 있었다"로 이어진다.
                 LastExecutionTimeMs = 0;
                 SetInspectionResult(true);
+                ResultMessage = SelectedStep == null
+                    ? "OK (검사할 스텝 없음 — 레시피를 불러오세요)"
+                    : $"OK (검사할 도구 없음 — {SelectedStep.DisplayName})";
                 return;
             }
 
@@ -794,26 +888,21 @@ namespace VMS.ViewModels
             }
         }
 
-        private Models.InspectionStep? FindCurrentStep()
+        /// <summary>
+        /// 검사할 스텝 — 화면에 선택된 그 스텝이다 (Steps 가 레시피 스텝 자체이므로
+        /// 별도 조회가 필요 없다). 레시피 밖의 폴백 스텝이거나 비활성 스텝이면 null.
+        /// </summary>
+        private InspectionStep? FindCurrentStep()
         {
-            if (_currentRecipe == null) return null;
+            var step = SelectedStep;
+            if (step == null || !step.IsEnabled) return null;
 
-            // Find steps matching this camera
-            var cameraSteps = _currentRecipe.Steps
-                .Where(s => s.CameraId == Id)
-                .OrderBy(s => s.Sequence)
-                .ToList();
-
-            if (cameraSteps.Count == 0) return null;
-
-            // Return step matching current step index
-            if (CurrentStepIndex >= 0 && CurrentStepIndex < cameraSteps.Count)
-                return cameraSteps[CurrentStepIndex];
-
-            return cameraSteps[0];
+            // 폴백(카메라 설정) 스텝은 검사 대상이 아니다 — 도구가 없다.
+            return _currentRecipe?.Steps.Contains(step) == true ? step : null;
         }
 
-        private static Mat? BitmapSourceToMat(BitmapSource source)
+        /// <summary>internal — 행 보폭 처리를 직접 검증하기 위한 테스트 시임.</summary>
+        internal static Mat? BitmapSourceToMat(BitmapSource source)
         {
             try
             {
@@ -822,12 +911,20 @@ namespace VMS.ViewModels
 
                 int width = converted.PixelWidth;
                 int height = converted.PixelHeight;
-                int stride = (width * 3 + 3) & ~3;
-                byte[] pixels = new byte[stride * height];
-                converted.CopyPixels(pixels, stride, 0);
+
+                // WPF 의 행 보폭은 4바이트 정렬(stride), Mat 의 행 보폭은 width*3 이라
+                // 폭이 4의 배수가 아니면 두 값이 다르다. 종전에는 정렬된 버퍼를 Mat 에
+                // 통째로 평탄 복사해서, 그런 폭에서는 행이 한 칸씩 밀려 영상이 사선으로
+                // 찌그러진 채 검사에 들어갔다. 행 단위로 옮긴다.
+                int srcStride = (width * 3 + 3) & ~3;
+                byte[] pixels = new byte[srcStride * height];
+                converted.CopyPixels(pixels, srcStride, 0);
 
                 var mat = new Mat(height, width, MatType.CV_8UC3);
-                Marshal.Copy(pixels, 0, mat.Data, Math.Min(pixels.Length, (int)(mat.Step() * height)));
+                int dstStride = (int)mat.Step();
+                int rowBytes = width * 3;
+                for (int y = 0; y < height; y++)
+                    Marshal.Copy(pixels, y * srcStride, mat.Data + y * dstStride, rowBytes);
                 return mat;
             }
             catch
@@ -839,6 +936,22 @@ namespace VMS.ViewModels
         [RelayCommand]
         private void SaveSettings()
         {
+            // 레시피 스텝을 편집 중이면 저장 대상은 레시피다 — 노출/게인이 레시피에
+            // 들어 있는데 system_config 에 쓰면 다음 로드 때 레시피 값에 덮여 사라진다.
+            if (_currentRecipe != null && SelectedStep != null && _currentRecipe.Steps.Contains(SelectedStep))
+            {
+                if (_recipeService == null)
+                {
+                    ResultMessage = "Save failed: recipe service unavailable";
+                    return;
+                }
+
+                ResultMessage = _recipeService.SaveRecipe(_currentRecipe)
+                    ? $"Recipe step saved: {SelectedStep.DisplayName}"
+                    : "Recipe step save failed";
+                return;
+            }
+
             if (_configService == null) return;
 
             var config = _configService.LoadSystemConfiguration();
@@ -857,7 +970,7 @@ namespace VMS.ViewModels
             {
                 camConfig.Steps.Add(new StepConfiguration
                 {
-                    StepNumber = step.StepNumber,
+                    StepNumber = step.Sequence,
                     Name = step.Name,
                     Use2DCameraDefault = step.Use2DCameraDefault,
                     Exposure = step.Exposure,
@@ -941,9 +1054,10 @@ namespace VMS.ViewModels
             CameraConfiguration config,
             IDialogService dialogService,
             IConfigurationService configService,
-            IInspectionService? inspectionService = null)
+            IInspectionService? inspectionService = null,
+            IRecipeService? recipeService = null)
         {
-            var vm = new CameraViewModel(dialogService, configService, inspectionService)
+            var vm = new CameraViewModel(dialogService, configService, inspectionService, recipeService)
             {
                 Id = config.Id,
                 Name = config.Name,
@@ -960,44 +1074,51 @@ namespace VMS.ViewModels
                 TriggerSource = config.TriggerSource.ToString()
             };
 
-            // Create steps from configuration or default
+            // 카메라 설정의 스텝 — 레시피가 없을 때만 쓰는 폴백이다.
+            // 레시피를 열면 SetRecipe → RebuildSteps 가 레시피 스텝으로 교체한다.
+            vm.SetConfigSteps(BuildConfigSteps(config));
+
+            return vm;
+        }
+
+        /// <summary>
+        /// system_config 의 카메라 스텝 → 폴백 스텝. 설정에 스텝이 없으면
+        /// StepCount(최소 1)만큼 기본 스텝을 만든다.
+        /// </summary>
+        private static List<InspectionStep> BuildConfigSteps(CameraConfiguration config)
+        {
+            var steps = new List<InspectionStep>();
+
             if (config.Steps != null && config.Steps.Count > 0)
             {
                 foreach (var step in config.Steps)
                 {
-                    vm.Steps.Add(new StepViewModel
+                    steps.Add(new InspectionStep
                     {
-                        StepNumber = step.StepNumber,
+                        Sequence = step.StepNumber,
                         Name = step.Name,
+                        CameraId = config.Id,
                         Use2DCameraDefault = step.Use2DCameraDefault,
                         Exposure = step.Exposure,
                         Gain = step.Gain
                     });
                 }
+                return steps;
             }
-            else
+
+            var stepCount = Math.Max(1, config.StepCount);
+            for (int i = 1; i <= stepCount; i++)
             {
-                // Create default steps based on StepCount
-                var stepCount = Math.Max(1, config.StepCount);
-                for (int i = 1; i <= stepCount; i++)
+                steps.Add(new InspectionStep
                 {
-                    vm.Steps.Add(new StepViewModel
-                    {
-                        StepNumber = i,
-                        Name = $"Step {i}",
-                        Exposure = 5000,
-                        Gain = 1.0
-                    });
-                }
+                    Sequence = i,
+                    Name = $"Step {i}",
+                    CameraId = config.Id,
+                    Exposure = 5000,
+                    Gain = 1.0
+                });
             }
-
-            // Select first step by default
-            if (vm.Steps.Count > 0)
-            {
-                vm.SelectedStep = vm.Steps[0];
-            }
-
-            return vm;
+            return steps;
         }
 
         public void ApplyLayout(CameraWindowLayout layout)
@@ -1021,28 +1142,4 @@ namespace VMS.ViewModels
         }
     }
 
-    /// <summary>
-    /// ViewModel for camera step (robot position with exposure/gain settings)
-    /// </summary>
-    public partial class StepViewModel : ObservableObject
-    {
-        [ObservableProperty]
-        private int _stepNumber = 1;
-
-        [ObservableProperty]
-        private string _name = "Step 1";
-
-        // 2D 노출/게인 카메라 설정 유지 — true(기본)면 Grab/Live 때 카메라의 현재
-        // 노출/게인을 건드리지 않는다 (Mech-Eye Viewer 등에서 튜닝한 값 보존)
-        [ObservableProperty]
-        private bool _use2DCameraDefault = true;
-
-        [ObservableProperty]
-        private double _exposure = 5000;
-
-        [ObservableProperty]
-        private double _gain = 1.0;
-
-        public override string ToString() => Name;
-    }
 }

@@ -539,7 +539,7 @@
                         <ComboBox Grid.Column="1"
                                   ItemsSource="{Binding Steps}"
                                   SelectedItem="{Binding SelectedStep}"
-                                  DisplayMemberPath="Name"
+                                  DisplayMemberPath="DisplayName"
                                   Background="{StaticResource Brush.Surface.Overlay}"
                                   Foreground="White"
                                   BorderThickness="0"

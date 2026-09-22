@@ -1,20 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <!--
+    WPF 컨트롤 테스트 전용 프로젝트 — VMS.VisionSetup.Tests 와 분리한 이유:
+
+    컨트롤 XAML 이 StaticResource 로 앱 스타일을 참조하므로 테스트에서 WPF
+    Application 을 만들어야 하는데, Application.Current 는 프로세스 전역이고
+    VisionService.InvokeOnUIThread 가 그 Dispatcher 로 결과를 마샬링한다.
+    같은 프로세스에 두면 파이프라인 테스트 18건이 UI 스레드로 넘어가 깨진다.
+    테스트 어셈블리는 각자 별도 프로세스에서 돌므로 분리하면 영향이 없다.
+  -->
   <PropertyGroup>
     <TargetFramework>net8.0-windows7.0</TargetFramework>
     <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
     <IsPackable>false</IsPackable>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <PlatformTarget>x64</PlatformTarget>
-    <UseWPF>true</UseWPF>
   </PropertyGroup>
 
-  <!-- Release에서 참조 대상 앱이 self-contained 로 빌드되므로(NETSDK1151 회피)
-       실행 파일 자체가 아닌 어셈블리만 쓰는 테스트에서는 검증을 끄준다. -->
   <PropertyGroup>
     <ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
   </PropertyGroup>
-
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
@@ -23,10 +29,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\VMS\VMS.csproj" />
-    <!-- DeepLearning 앱 추론 서비스 테스트 — VisionSetup 은 빌드 순서 참조만 하므로 명시 필요 -->
-    <ProjectReference Include="..\VMS.DeepLearning\VMS.DeepLearning.csproj" />
-    <!-- 레시피 모델(Recipe/InspectionStep/ToolConfig)의 정의처 — 전이 참조에 기대지 않고 명시 -->
     <ProjectReference Include="..\VMS.VisionSetup\VMS.VisionSetup.csproj" />
   </ItemGroup>
 

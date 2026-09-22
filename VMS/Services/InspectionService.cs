@@ -12,10 +12,10 @@ using VMS.Core.Services;
 using VMS.Interfaces;
 using VMS.Models;
 using VMS.VisionSetup.Interfaces;
-using VsToolConfig = VMS.VisionSetup.Models.ToolConfig;
 using VsConnectionType = VMS.VisionSetup.Models.ConnectionType;
 using VisionToolBase = VMS.VisionSetup.Models.VisionToolBase;
 using VisionResult = VMS.VisionSetup.Models.VisionResult;
+using VMS.VisionSetup.VisionTools.DeepLearning;
 using VMS.VisionSetup.VisionTools.Result;
 using VMS.VisionSetup.Services;
 using VMS.VisionSetup.VisionTools.Measurement;
@@ -35,6 +35,20 @@ namespace VMS.Services
 
         private readonly Dictionary<string, StepExecutionContext> _stepContexts = new();
         private readonly object _contextLock = new();
+
+        /// <summary>
+        /// 실행 중인 레시피 — 스텝 밖 실행 컨텍스트(캘리브레이션) 공급원.
+        /// <see cref="SetRecipeContext"/> 로만 바뀐다.
+        /// </summary>
+        private Recipe? _currentRecipe;
+
+        /// <summary>
+        /// 스텝 실행 직렬화. 도구들이 프로세스 전역 싱글톤(VisionService.EffectiveCalibration,
+        /// CurrentStepId, StepPoseStore)을 통해 실행 컨텍스트를 읽으므로, 두 카메라가 동시에
+        /// 검사하면 서로의 컨텍스트로 판정하게 된다. SequenceEngine 은 검사를 순차로 await
+        /// 하므로 (AUTO RUN) 직렬화에 따른 택트 손해는 없다.
+        /// </summary>
+        private readonly System.Threading.SemaphoreSlim _executeGate = new(1, 1);
 
         /// <summary>Web 파라미터 동기화 서비스 (외부 주입, nullable)</summary>
         public static IParameterSyncService? ParameterSyncService { get; set; }
@@ -309,6 +323,17 @@ namespace VMS.Services
             }
         }
 
+        /// <inheritdoc/>
+        public void SetRecipeContext(Recipe? recipe) => _currentRecipe = recipe;
+
+        /// <summary>
+        /// internal — 스텝의 ToolConfig 가 실행 도구로 어떻게 옮겨졌는지 검증하는 테스트용 시임.
+        /// 레시피 필드가 실행 경로에서 유실되는 결함(ROI 각도 등)은 결과만 봐서는 드러나지
+        /// 않아 실제 도구 인스턴스를 확인해야 한다.
+        /// </summary>
+        internal IReadOnlyList<VisionToolBase> GetToolsForTest(InspectionStep step)
+            => GetOrCreateContext(step).Tools;
+
         /// <summary>
         /// Step에 대한 도구 컨텍스트를 캐시에서 가져오거나 새로 생성.
         /// 캐싱을 통해 도구 인스턴스가 유지되므로 FixtureRef 기준점이
@@ -321,12 +346,13 @@ namespace VMS.Services
                 if (_stepContexts.TryGetValue(step.Id, out var existing))
                     return existing;
 
-                var vsConfigs = ConvertToolConfigs(step.Tools);
-
                 var tools = new List<VisionToolBase>();
                 var toolById = new Dictionary<string, VisionToolBase>();
 
-                foreach (var config in vsConfigs)
+                // step.Tools 를 그대로 넘긴다 — 종전에는 VMS 전용 ToolConfig 사본으로
+                // 한 번 옮겨 담았고, 그 사본에 없던 ROIAngle/ROICenterX/ROICenterY 와
+                // PlcMappings.DeviceId 가 매번 버려졌다 (회전 ROI 가 0° 로 실행됨).
+                foreach (var config in step.Tools)
                 {
                     var tool = VMS.VisionSetup.Services.ToolSerializer.DeserializeTool(config);
                     if (tool != null)
@@ -354,7 +380,16 @@ namespace VMS.Services
 
         public async Task<StepInspectionResult> ExecuteStepAsync(InspectionStep step, Mat inputImage)
         {
-            return await Task.Run(() => ExecuteStep(step, inputImage));
+            // 실행 컨텍스트가 프로세스 전역이라 스텝 실행은 한 번에 하나씩 (_executeGate 참고).
+            await _executeGate.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                return await Task.Run(() => ExecuteStep(step, inputImage)).ConfigureAwait(false);
+            }
+            finally
+            {
+                _executeGate.Release();
+            }
         }
 
         private StepInspectionResult ExecuteStep(InspectionStep step, Mat inputImage)
@@ -376,6 +411,19 @@ namespace VMS.Services
                     result.ExecutionTimeMs = sw.Elapsed.TotalMilliseconds;
                     return result;
                 }
+
+                // VisionSetup(MainViewModel.LoadStepToWorkspace)이 스텝을 워크스페이스에
+                // 올릴 때 세우는 것과 같은 실행 컨텍스트를 여기서도 세운다.
+                //
+                // 이게 없으면 측정 도구의 mm 변환에 쓰이는 VisionService.EffectiveCalibration
+                // 이 항상 null 이라, JudgmentUnit=Mm 로 설정된 GeometryTool 이 "mm 변환 불가"
+                // 로 무조건 실패했다 — 같은 레시피가 VisionSetup Run All 에서는 Pass 인데
+                // VMS Inspect 에서는 NG 가 나던 원인 (2026-09-22 현장).
+                // StepPoseStore 의 mm 좌표(다중 스텝 얼라인)도 같은 값에 의존한다.
+                var visionService = VMS.VisionSetup.Services.VisionService.Instance;
+                visionService.CurrentCalibrationMetadata = _currentRecipe?.Calibration;
+                visionService.CurrentStepResolutionMmPerPx = step.Resolution;
+                visionService.CurrentStepId = step.Id;
 
                 // 캐싱된 도구 컨텍스트 사용 (도구 인스턴스 재활용 → FixtureRef 유지)
                 var ctx = GetOrCreateContext(step);
@@ -401,41 +449,32 @@ namespace VMS.Services
 
                     var toolSw = Stopwatch.StartNew();
 
-                    // Result 연결 확인 (ResultTool은 실패 정보를 수집해야 하므로 스킵 우회)
-                    if (tool is not ResultTool && ShouldSkipByResultConnection(tool, ctx.Connections, resultMap))
-                    {
-                        var skipResult = new VisionResult
-                        {
-                            Success = false,
-                            Message = $"연결된 도구의 결과가 실패하여 건너뜀: {tool.Name}"
-                        };
-                        resultMap[tool.Id] = skipResult;
-                        allSuccess = false;
+                    // Result 연결 확인 — 실패 정보를 수집하는 집계 도구는 스킵 우회.
+                    // 우회 목록은 VisionService.ExecuteAll 과 같아야 한다. 종전에는 이쪽만
+                    // ResultTool 하나였고, 그 탓에 캘리퍼 하나가 실패하면 VisionSetup 은
+                    // Geometry 를 실행하는데 VMS 는 "건너뜀=실패"로 처리해 판정이 갈렸다.
+                    bool bypassesSkip = tool is ResultTool or GeometryTool or Geometry3DTool or EnsembleTool;
 
-                        toolSw.Stop();
-                        result.ToolResults.Add(new ToolInspectionResult
-                        {
-                            ToolName = tool.Name,
-                            ToolType = tool.ToolType,
-                            Success = false,
-                            Message = skipResult.Message,
-                            ExecutionTimeMs = toolSw.Elapsed.TotalMilliseconds,
-                            PlcMappings = tool.PlcMappings.Select(m => new VMS.Models.PlcResultMapping
-                            {
-                                ResultKey = m.ResultKey,
-                                DeviceId = string.IsNullOrWhiteSpace(m.DeviceId) ? "MainPLC" : m.DeviceId,
-                                PlcAddress = m.PlcAddress,
-                                DataType = m.DataType
-                            }).ToList()
-                        });
+                    if (!bypassesSkip && ShouldSkipByResultConnection(tool, ctx.Connections, resultMap))
+                    {
+                        RecordSkippedTool(result, resultMap, tool, toolSw,
+                            $"연결된 도구의 결과가 실패하여 건너뜀: {tool.Name}");
+                        allSuccess = false;
                         continue;
                     }
 
                     // Web 파라미터 적용 (LinkedParamCodes → 도구 프로퍼티)
                     ParameterApplyService?.ApplyParameters(tool);
 
-                    // Coordinates 연결 적용 (Fixture offset)
-                    ApplyCoordinatesConnection(tool, ctx.Connections, resultMap);
+                    // Coordinates 연결 적용 (Fixture offset) — 기준 좌표를 못 받으면 실행하지 않는다.
+                    // 실행하면 ROI 가 직전 사이클 위치에 남아 엉뚱한 자리를 측정한다.
+                    if (!TryApplyCoordinatesConnection(tool, ctx.Connections, resultMap, ctx.ToolById, out var fixtureFailure)
+                        && !bypassesSkip)
+                    {
+                        RecordSkippedTool(result, resultMap, tool, toolSw, fixtureFailure);
+                        allSuccess = false;
+                        continue;
+                    }
 
                     // Image 연결 해소
                     Mat toolInput;
@@ -451,36 +490,12 @@ namespace VMS.Services
 
                     try
                     {
-                        // ResultTool: Execute 전에 연결된 소스 결과 주입
-                        if (tool is ResultTool rt)
-                        {
-                            rt.SourceResults.Clear();
-                            foreach (var conn in ctx.Connections
-                                .Where(c => c.TargetId == tool.Id && c.Type == VsConnectionType.Result))
-                            {
-                                if (resultMap.TryGetValue(conn.SourceId, out var srcResult))
-                                {
-                                    var srcTool = ctx.SortedTools.FirstOrDefault(t => t.Id == conn.SourceId);
-                                    rt.SourceResults.Add(new SourceToolResult
-                                    {
-                                        ToolId = conn.SourceId,
-                                        ToolName = srcTool?.Name ?? conn.SourceId,
-                                        Success = srcResult.Success,
-                                        Message = srcResult.Message
-                                    });
-                                }
-                            }
-                        }
-
-                        // 소스 소비 도구 주입 — VisionSetup(VisionService.ExecuteAll)과 동일 규칙.
-                        // 이 엔진에는 ResultTool 주입만 있었고 Geometry/MatchAlign 이 누락돼
-                        // AUTO RUN 에서 소스가 비는 채로 실행됐다 (2026-08-27 발견).
-                        if (tool is GeometryTool geometryTool)
-                            ToolSourceInjector.InjectGeometry(
-                                geometryTool, EnumerateResultSources(tool, ctx, resultMap));
-                        if (tool is MatchAlignTool matchAlignTool)
-                            ToolSourceInjector.InjectMatchAlign(
-                                matchAlignTool, EnumerateResultSources(tool, ctx, resultMap));
+                        // 소스 소비 도구 주입 — 규칙은 ToolSourceInjector 한 곳에만 둔다
+                        // (VisionSetup 의 VisionService 가 같은 함수를 부른다). 엔진마다
+                        // 인라인으로 들고 있던 시절 Geometry/MatchAlign 이 이쪽에만 빠져
+                        // AUTO RUN 에서 소스가 비는 채로 실행됐고 (2026-08-27),
+                        // Ensemble/Geometry3D 는 그 뒤로도 빠져 있었다 (2026-09-22).
+                        InjectSources(tool, ctx, resultMap);
 
                         var toolResult = tool.Execute(toolInput);
                         tool.LastResult = toolResult;
@@ -841,54 +856,6 @@ namespace VMS.Services
 
         #endregion
 
-        #region Tool Config Conversion
-
-        private static List<VsToolConfig> ConvertToolConfigs(List<ToolConfig> vmsConfigs)
-        {
-            var result = new List<VsToolConfig>();
-
-            foreach (var src in vmsConfigs)
-            {
-                var dst = new VsToolConfig
-                {
-                    Id = src.Id,
-                    ToolType = src.ToolType,
-                    Name = src.Name,
-                    Sequence = src.Sequence,
-                    IsEnabled = src.IsEnabled,
-                    UseROI = src.UseROI,
-                    ROIX = src.ROIX,
-                    ROIY = src.ROIY,
-                    ROIWidth = src.ROIWidth,
-                    ROIHeight = src.ROIHeight,
-                    Parameters = src.Parameters ?? new Dictionary<string, object>(),
-                    PlcMappings = src.PlcMappings?.Select(m => new VMS.VisionSetup.Models.PlcResultMapping
-                    {
-                        ResultKey = m.ResultKey,
-                        PlcAddress = m.PlcAddress,
-                        DataType = m.DataType
-                    }).ToList() ?? new List<VMS.VisionSetup.Models.PlcResultMapping>(),
-                    // 레거시 호환 (ToolSerializer에서 마이그레이션 처리)
-                    ResultPlcAddress = src.ResultPlcAddress,
-                    ResultDataType = src.ResultDataType,
-                    ResultDataKey = src.ResultDataKey,
-                    Connections = src.Connections?.Select(c => new VMS.VisionSetup.Models.ToolConnectionConfig
-                    {
-                        SourceToolId = c.SourceToolId,
-                        ConnectionType = c.ConnectionType
-                    }).ToList() ?? new List<VMS.VisionSetup.Models.ToolConnectionConfig>(),
-                    LinkedParamCodes = src.LinkedParamCodes != null && src.LinkedParamCodes.Count > 0
-                        ? new Dictionary<string, int>(src.LinkedParamCodes)
-                        : new Dictionary<string, int>()
-                };
-                result.Add(dst);
-            }
-
-            return result;
-        }
-
-        #endregion
-
         #region Connection Management
 
         private class ConnectionInfo
@@ -896,6 +863,35 @@ namespace VMS.Services
             public string SourceId { get; set; } = string.Empty;
             public string TargetId { get; set; } = string.Empty;
             public VsConnectionType Type { get; set; }
+        }
+
+        /// <summary>
+        /// 소스 소비 도구(Result/Ensemble/Geometry/Geometry3D/MatchAlign)에 Result 연결
+        /// 소스를 주입한다 — 규칙의 단일 정의처는 <see cref="ToolSourceInjector"/> 이고
+        /// VisionSetup 의 VisionService 도 같은 함수를 부른다. 새 소스 소비 도구는
+        /// 반드시 양쪽 dispatcher 에 추가할 것.
+        /// </summary>
+        private static void InjectSources(
+            VisionToolBase tool, StepExecutionContext ctx, Dictionary<string, VisionResult> resultMap)
+        {
+            switch (tool)
+            {
+                case ResultTool rt:
+                    ToolSourceInjector.InjectResult(rt, EnumerateResultSources(rt, ctx, resultMap));
+                    break;
+                case EnsembleTool et:
+                    ToolSourceInjector.InjectEnsemble(et, EnumerateResultSources(et, ctx, resultMap));
+                    break;
+                case GeometryTool gt:
+                    ToolSourceInjector.InjectGeometry(gt, EnumerateResultSources(gt, ctx, resultMap));
+                    break;
+                case Geometry3DTool g3:
+                    ToolSourceInjector.InjectGeometry3D(g3, EnumerateResultSources(g3, ctx, resultMap));
+                    break;
+                case MatchAlignTool mat:
+                    ToolSourceInjector.InjectMatchAlign(mat, EnumerateResultSources(mat, ctx, resultMap));
+                    break;
+            }
         }
 
         /// <summary>대상 도구를 향한 Result 연결 소스를 연결 순서대로 열거 (주입 공용 로직용).</summary>
@@ -985,15 +981,50 @@ namespace VMS.Services
         }
 
         /// <summary>
+        /// 건너뛴 도구를 실패로 기록 — Result 연결 실패와 Fixture 좌표 미수신이 같은 모양으로
+        /// 남아야 화면·PLC·이력에서 사유만 다르고 취급은 동일하다.
+        /// </summary>
+        private static void RecordSkippedTool(
+            StepInspectionResult result, Dictionary<string, VisionResult> resultMap,
+            VisionToolBase tool, Stopwatch toolSw, string message)
+        {
+            resultMap[tool.Id] = new VisionResult { Success = false, Message = message };
+
+            toolSw.Stop();
+            result.ToolResults.Add(new ToolInspectionResult
+            {
+                ToolName = tool.Name,
+                ToolType = tool.ToolType,
+                Success = false,
+                Message = message,
+                ExecutionTimeMs = toolSw.Elapsed.TotalMilliseconds,
+                PlcMappings = tool.PlcMappings.Select(m => new VMS.Models.PlcResultMapping
+                {
+                    ResultKey = m.ResultKey,
+                    DeviceId = string.IsNullOrWhiteSpace(m.DeviceId) ? "MainPLC" : m.DeviceId,
+                    PlcAddress = m.PlcAddress,
+                    DataType = m.DataType
+                }).ToList()
+            });
+        }
+
+        /// <summary>
         /// Coordinates 연결(Fixture) 적용 — 변환 계산은 ToolSourceInjector 한 곳에만 둔다.
         ///
         /// <para>예전에는 이 메서드가 VisionService 의 계산을 복사해 들고 있었고, 그 사이
         /// SearchRegion 시프트가 VisionSetup 에만 들어가 AUTO RUN 에서는 ShapeMatch/Color/OCV 의
         /// 탐색 영역이 안 따라가는 상태로 갈라져 있었다. 공용 호출로 바꿔 재발을 막는다.</para>
+        ///
+        /// <para>기준 좌표를 받지 못하면 <paramref name="failureReason"/> 을 채우고 false 를
+        /// 반환한다 — 호출부는 그 도구를 실행하지 말아야 한다. 실행하면 ROI 가 직전 사이클
+        /// 위치에 남아 엉뚱한 자리를 측정한다 (<see cref="ToolSourceInjector"/> 게이트 주석).</para>
         /// </summary>
-        private static void ApplyCoordinatesConnection(
-            VisionToolBase tool, List<ConnectionInfo> connections, Dictionary<string, VisionResult> resultMap)
+        private static bool TryApplyCoordinatesConnection(
+            VisionToolBase tool, List<ConnectionInfo> connections, Dictionary<string, VisionResult> resultMap,
+            Dictionary<string, VisionToolBase> toolById, out string failureReason)
         {
+            failureReason = string.Empty;
+
             var coordConnections = connections
                 .Where(c => c.TargetId == tool.Id && c.Type == VsConnectionType.Coordinates)
                 .ToList();
@@ -1003,16 +1034,31 @@ namespace VMS.Services
             {
                 foreach (var conn in coordConnections)
                 {
+                    // 소스가 아직 안 돌았거나 비활성이면 종전처럼 통과 — 고정 ROI 운용이다.
                     if (!resultMap.TryGetValue(conn.SourceId, out var sourceResult) || sourceResult.Data == null)
                         continue;
 
-                    ToolSourceInjector.ApplyFixtureTransform(tool, sourceResult.Data);
+                    var sourceName = toolById.TryGetValue(conn.SourceId, out var src) ? src.Name : conn.SourceId;
+
+                    if (!sourceResult.Success)
+                    {
+                        failureReason = ToolSourceInjector.FixtureSourceFailedMessage(tool.Name, sourceName);
+                        return false;
+                    }
+
+                    if (!ToolSourceInjector.ApplyFixtureTransform(tool, sourceResult.Data))
+                    {
+                        failureReason = ToolSourceInjector.FixtureNoCoordinatesMessage(tool.Name, sourceName);
+                        return false;
+                    }
                 }
             }
             finally
             {
                 tool.IsFixtureTransformActive = false;
             }
+
+            return true;
         }
 
         #endregion

@@ -34,6 +34,13 @@ namespace VMS.Interfaces
         Task<StepInspectionResult> ExecuteStepAsync(InspectionStep step, Mat inputImage);
 
         /// <summary>
+        /// 현재 레시피를 실행 엔진에 알린다 (레시피 전환 시마다 호출).
+        /// 스텝 밖에 있는 실행 컨텍스트 — 지금은 캘리브레이션 — 를 공급하는 용도.
+        /// 이게 없으면 mm 판정 도구가 "변환 불가"로 무조건 NG 가 된다.
+        /// </summary>
+        void SetRecipeContext(Recipe? recipe);
+
+        /// <summary>
         /// 레시피 변경 시 캐싱된 도구 인스턴스를 초기화
         /// </summary>
         void ClearCache();

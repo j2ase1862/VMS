@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using OpenCvSharp;
 using VMS.VisionSetup.Models;
+using VMS.VisionSetup.VisionTools.DeepLearning;
 using VMS.VisionSetup.VisionTools.Measurement;
 using VMS.VisionSetup.VisionTools.PatternMatching;
+using VMS.VisionSetup.VisionTools.Result;
 
 namespace VMS.VisionSetup.Services
 {
@@ -21,6 +23,25 @@ namespace VMS.VisionSetup.Services
         /// <summary>Result 연결 소스 하나 — 연결 생성 순서 유지가 중요 (2점 모드의 포인트 순서).</summary>
         public readonly record struct ResultSource(
             string SourceId, VisionResult Result, string Name, string ToolType);
+
+        // ── Coordinates(Fixture) 연결 게이트 ─────────────────────────────
+        //
+        // 기준 위치를 주는 소스(FeatureMatch 등)가 실패했는데 대상 도구를 그대로 실행하면,
+        // 도구 인스턴스가 사이클 간 재사용되는 탓에 ROI 가 **직전 사이클 위치에 그대로 남아**
+        // 엉뚱한 자리를 측정한다. 제품이 없는 화면이라도 직전 자리에 엣지만 있으면 값이 나오고,
+        // 그 값이 공차에 들면 AUTO RUN 이 OK 를 내보낸다 (2026-09-22 재현: 패턴 없는 화면에
+        // 막대 두 개만 둔 이미지가 50.077mm 로 OK).
+        //
+        // 판정 규칙이 두 실행 엔진에서 갈리면 "VisionSetup 은 NG 인데 VMS 는 OK" 가 되므로
+        // 사유 메시지까지 여기에 둔다.
+
+        /// <summary>기준 좌표 소스가 실패했을 때의 건너뜀 사유.</summary>
+        public static string FixtureSourceFailedMessage(string toolName, string sourceName) =>
+            $"기준 위치를 주는 도구가 실패하여 건너뜀: {toolName} ← {sourceName}";
+
+        /// <summary>소스는 성공했으나 기준 좌표를 내주지 않았을 때의 건너뜀 사유.</summary>
+        public static string FixtureNoCoordinatesMessage(string toolName, string sourceName) =>
+            $"기준 좌표를 받지 못해 건너뜀: {toolName} ← {sourceName}";
 
         /// <summary>
         /// MatchAlignTool 소스 주입 — 포즈(CenterX/Y)를 가진 소스를 연결 순서대로
@@ -65,6 +86,58 @@ namespace VMS.VisionSetup.Services
                 if (geo != null)
                     tool.SourceGeometries.Add(geo);
             }
+        }
+
+        /// <summary>
+        /// ResultTool 소스 주입 — 연결된 도구의 성패/메시지를 집계 대상으로 채운다.
+        /// </summary>
+        public static void InjectResult(ResultTool tool, IEnumerable<ResultSource> resultSources)
+        {
+            tool.SourceResults.Clear();
+            foreach (var src in resultSources)
+            {
+                tool.SourceResults.Add(new SourceToolResult
+                {
+                    ToolId = src.SourceId,
+                    ToolName = src.Name,
+                    Success = src.Result.Success,
+                    Message = src.Result.Message
+                });
+            }
+        }
+
+        /// <summary>
+        /// EnsembleTool 소스 주입 — 판정 세부(DetectionCount, AnomalyScore 등)를 보려면
+        /// 성패만으로는 부족하므로 VisionResult 전체를 함께 넘긴다.
+        /// </summary>
+        public static void InjectEnsemble(EnsembleTool tool, IEnumerable<ResultSource> resultSources)
+        {
+            tool.SourceResults.Clear();
+            foreach (var src in resultSources)
+            {
+                tool.SourceResults.Add(new SourceToolResultEx
+                {
+                    ToolId = src.SourceId,
+                    ToolName = src.Name,
+                    ToolType = src.ToolType,
+                    Success = src.Result.Success,
+                    Message = src.Result.Message,
+                    FullResult = src.Result
+                });
+            }
+        }
+
+        /// <summary>
+        /// Geometry3DTool 소스 주입 — 3D 기하 요소(평면/클러스터 중심점) 수집.
+        /// 클러스터 소스가 하나뿐이면 FinalizeSourceGeometries 가 SourceB 번호의 중심점을
+        /// 추가해 클러스터 툴 1개로도 두 객체 간 거리 측정이 가능하다.
+        /// </summary>
+        public static void InjectGeometry3D(Geometry3DTool tool, IEnumerable<ResultSource> resultSources)
+        {
+            tool.ClearSourceGeometries();
+            foreach (var src in resultSources)
+                tool.CollectSourceGeometry(src.SourceId, src.Name, src.ToolType, src.Result);
+            tool.FinalizeSourceGeometries();
         }
 
         /// <summary>

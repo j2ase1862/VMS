@@ -2191,11 +2191,13 @@ namespace VMS.VisionSetup.ViewModels
                     tool.ROICenterX = affineROI.CenterX;
                     tool.ROICenterY = affineROI.CenterY;
 
-                    // CaliperTool: 탐색 방향 동기화
+                    // 탐색 방향 화살표 동기화 — 화살표가 실제로 훑는 방향을 가리키게 한다.
+                    // LineFitTool 은 동기화가 없어 화살표가 늘 Width 축을 가리켰고,
+                    // 실행은 ROI 의 긴 변을 기준선으로 삼아 90° 어긋났다 (현장 보고 2026-09-22).
                     if (tool is CaliperTool caliper)
-                    {
                         affineROI.SearchAlongWidth = caliper.SearchAxis == CaliperSearchAxis.AlongWidth;
-                    }
+                    else if (tool is LineFitTool lineFit)
+                        affineROI.SearchAlongWidth = ResolveLineSearchAlongWidth(lineFit, affineROI);
                 }
                 else
                 {
@@ -2541,6 +2543,18 @@ namespace VMS.VisionSetup.ViewModels
         /// 도구의 값 변경을 캔버스 도형에 반영한다 — 항상 UI 스레드에서 호출된다
         /// (<see cref="OnSelectedToolPropertyChanged"/> 가 보장).
         /// </summary>
+        /// <summary>
+        /// LineFitTool 이 실제로 훑는 방향이 ROI 의 Width 축인지. 화살표는 이 결과를 따른다.
+        /// LongerSide(구버전)는 긴 변을 기준선으로 삼으므로 짧은 변 쪽으로 훑는다.
+        /// </summary>
+        private static bool ResolveLineSearchAlongWidth(LineFitTool tool, RectangleAffineROI roi) =>
+            tool.SearchAxis switch
+            {
+                LineSearchAxis.AlongWidth => true,
+                LineSearchAxis.AlongHeight => false,
+                _ => roi.Width < roi.Height,
+            };
+
         private void SyncCanvasShapesFromTool(VisionToolBase tool, string? propertyName)
         {
             var e = new PropertyChangedEventArgs(propertyName);
@@ -2561,12 +2575,20 @@ namespace VMS.VisionSetup.ViewModels
                 }
             }
 
-            // CaliperTool.SearchAxis 변경 → RectangleAffineROI 동기화
+            // SearchAxis 변경 → RectangleAffineROI 화살표 동기화
             if (tool is CaliperTool caliper && e.PropertyName is nameof(CaliperTool.SearchAxis))
             {
                 if (tool.AssociatedROIShape is RectangleAffineROI affineROI)
                 {
                     affineROI.SearchAlongWidth = caliper.SearchAxis == CaliperSearchAxis.AlongWidth;
+                    WeakReferenceMessenger.Default.Send(new RequestRefreshROIMessage(affineROI));
+                }
+            }
+            if (tool is LineFitTool lineFitTool && e.PropertyName is nameof(LineFitTool.SearchAxis))
+            {
+                if (tool.AssociatedROIShape is RectangleAffineROI affineROI)
+                {
+                    affineROI.SearchAlongWidth = ResolveLineSearchAlongWidth(lineFitTool, affineROI);
                     WeakReferenceMessenger.Default.Send(new RequestRefreshROIMessage(affineROI));
                 }
             }

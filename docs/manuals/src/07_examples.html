@@ -42,6 +42,7 @@
   <li>그림자 · 날짜 각인이 함께 학습되면 [Edit Mask...] 로 제외하거나 현장 이미지 2 장 이상으로 [안정 특징 정제] 를 씁니다.</li>
   <li>같은 부품이 여러 개면 Max Instances 를 올리고, 반쪽 매칭이 생기면 Min Coverage 0.6~0.75 를 켭니다.</li>
 </ul>
+<div class="callout tip">Feature Match 가 부품을 못 찾으면 Coordinates 로 연결된 뒤 도구는 검사하지 않고 NG 가 됩니다. 최종 판정에 그 사유가 남도록 <strong>Feature Match 도 Result 로 판정 도구에 연결</strong>해 두세요.</div>
 
 <h3 id="ex-color">7.4 색상 검사 — 컬러 라벨 · 부품 색 확인 (Color Extract + Blob)</h3>
 <figure><img src="../gs/screenshots/v3/templates/2d-color-blob.png" data-width="520" alt="컬러 객체 검출 체인"><figcaption>Color Extract → Blob → Result (컬러 이미지 필요)</figcaption></figure>

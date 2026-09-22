@@ -1,3 +1,4 @@
+using VMS.VisionSetup.Attributes;
 using VMS.VisionSetup.Models;
 using OpenCvSharp;
 using System;
@@ -93,6 +94,32 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             set => SetProperty(ref _minFoundCalipers, Math.Max(2, value));
         }
 
+        // 탐색 방향 — 화살표가 가리키는 쪽이 곧 훑는 방향이다 (CaliperTool 과 같은 규약).
+        // 캘리퍼들은 이 방향과 수직으로 늘어서고, 찾은 점들로 직선을 맞춘다.
+        private LineSearchAxis _searchAxis = LineSearchAxis.AlongWidth;
+        [TunableParam(
+            Description = "엣지 탐색 방향. AlongWidth: ROI 가로 방향으로 훑음. AlongHeight: 세로 방향. " +
+                          "LongerSide: 긴 변을 기준선으로 삼고 짧은 변 쪽으로 훑음(구버전 동작).",
+            Tier = TuningTier.Semantic, DefaultHint = "AlongWidth")]
+        public LineSearchAxis SearchAxis
+        {
+            get => _searchAxis;
+            set => SetProperty(ref _searchAxis, value);
+        }
+
+        // 캘리퍼 하나에서 엣지가 여러 개 잡힐 때 무엇을 채택할지.
+        private LineEdgeSelectionMode _selectionMode = LineEdgeSelectionMode.First;
+        [TunableParam(
+            Description = "여러 엣지 중 채택 기준. First: 탐색 시작점에 가장 가까운 엣지. " +
+                          "Last: 가장 먼 엣지. Best: 대비가 가장 큰 엣지. " +
+                          "ClosestToCenter: 검색선 중심에 가장 가까운 엣지(구버전 동작).",
+            Tier = TuningTier.Semantic, DefaultHint = "First")]
+        public LineEdgeSelectionMode SelectionMode
+        {
+            get => _selectionMode;
+            set => SetProperty(ref _selectionMode, value);
+        }
+
         public LineFitTool()
         {
             Name = "Line Fit";
@@ -119,6 +146,10 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 Point2d baselineStart, baselineEnd;
                 double searchLength;
 
+                // 회전 ROI 면 화살표(ROI 각도)가 탐색 방향을 그대로 정한다 — 아래에서 채운다.
+                // null 이면 방향 정보가 없다는 뜻이라 기준선의 수직 방향을 쓰고 정규화한다.
+                double? searchDirX = null, searchDirY = null;
+
                 // 회전 각도 결정: 라이브 ROI shape 또는 저장된 ROIAngle 사용
                 double effectiveAngle = EffectiveROIAngle;
 
@@ -135,38 +166,61 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                     double cosA = Math.Cos(rad);
                     double sinA = Math.Sin(rad);
 
-                    if (w >= h)
+                    // 탐색 방향(화살표)과 수직인 축이 기준선이 된다.
+                    //   AlongWidth  → Width 축으로 훑음 → 기준선은 Height 축
+                    //   AlongHeight → Height 축으로 훑음 → 기준선은 Width 축
+                    //   LongerSide  → 구버전: 긴 변이 기준선 (화살표와 어긋날 수 있음)
+                    bool searchAlongWidth = SearchAxis switch
                     {
-                        // Width 축이 길면: 기준선 = Width 축 방향 (cosθ, sinθ), 검색 = Height
-                        baselineStart = new Point2d(cx - (w / 2) * cosA, cy - (w / 2) * sinA);
-                        baselineEnd = new Point2d(cx + (w / 2) * cosA, cy + (w / 2) * sinA);
-                        searchLength = h;
-                    }
-                    else
+                        LineSearchAxis.AlongWidth => true,
+                        LineSearchAxis.AlongHeight => false,
+                        _ => w < h,          // LongerSide: 긴 변이 기준선 = 짧은 변 쪽으로 훑음
+                    };
+
+                    if (searchAlongWidth)
                     {
-                        // Height 축이 길면: 기준선 = Height 축 방향 (-sinθ, cosθ), 검색 = Width
+                        // Width 방향으로 훑음 → 기준선 = Height 축 (-sinθ, cosθ), 검색 길이 = Width
                         baselineStart = new Point2d(cx - (h / 2) * (-sinA), cy - (h / 2) * cosA);
                         baselineEnd = new Point2d(cx + (h / 2) * (-sinA), cy + (h / 2) * cosA);
                         searchLength = w;
+                        // 화살표와 같은 방향 — CaliperTool 의 Width 축 탐색과 동일한 식.
+                        if (SearchAxis != LineSearchAxis.LongerSide) { searchDirX = cosA; searchDirY = sinA; }
+                    }
+                    else
+                    {
+                        // Height 방향으로 훑음 → 기준선 = Width 축 (cosθ, sinθ), 검색 길이 = Height
+                        baselineStart = new Point2d(cx - (w / 2) * cosA, cy - (w / 2) * sinA);
+                        baselineEnd = new Point2d(cx + (w / 2) * cosA, cy + (w / 2) * sinA);
+                        searchLength = h;
+                        if (SearchAxis != LineSearchAxis.LongerSide) { searchDirX = -sinA; searchDirY = cosA; }
                     }
                 }
                 else if (UseROI && ROI.Width > 0 && ROI.Height > 0)
                 {
                     // Fallback: 기존 축 정렬 RectangleROI
                     var roi = GetAdjustedROI(inputImage);
-                    if (roi.Width >= roi.Height)
+                    bool searchAlongWidth = SearchAxis switch
                     {
-                        double cy = roi.Y + roi.Height / 2.0;
-                        baselineStart = new Point2d(roi.X, cy);
-                        baselineEnd = new Point2d(roi.X + roi.Width, cy);
-                        searchLength = roi.Height;
+                        LineSearchAxis.AlongWidth => true,
+                        LineSearchAxis.AlongHeight => false,
+                        _ => roi.Width < roi.Height,
+                    };
+
+                    if (searchAlongWidth)
+                    {
+                        // 가로로 훑음 → 기준선은 세로
+                        double cxr = roi.X + roi.Width / 2.0;
+                        baselineStart = new Point2d(cxr, roi.Y);
+                        baselineEnd = new Point2d(cxr, roi.Y + roi.Height);
+                        searchLength = roi.Width;
                     }
                     else
                     {
-                        double cx = roi.X + roi.Width / 2.0;
-                        baselineStart = new Point2d(cx, roi.Y);
-                        baselineEnd = new Point2d(cx, roi.Y + roi.Height);
-                        searchLength = roi.Width;
+                        // 세로로 훑음 → 기준선은 가로
+                        double cyr = roi.Y + roi.Height / 2.0;
+                        baselineStart = new Point2d(roi.X, cyr);
+                        baselineEnd = new Point2d(roi.X + roi.Width, cyr);
+                        searchLength = roi.Height;
                     }
                 }
                 else
@@ -192,16 +246,31 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 double ux = dx / baseLength;
                 double uy = dy / baseLength;
 
-                // 수직 벡터 (검색 방향)
-                double vx = -uy;
-                double vy = ux;
-
-                // 검색 방향을 직관적으로 정규화: 왼쪽→오른쪽, 위→아래
-                // (vx < 0이면 오른쪽→왼쪽으로 검색하게 되므로 반전)
-                if (vx < 0 || (Math.Abs(vx) < 1e-6 && vy < 0))
+                // 검색 방향.
+                //
+                // 회전 ROI 면 화살표(ROI 각도)가 정한 방향을 그대로 쓴다 — 방향을 뒤집으면
+                // First/Last 의 "탐색 시작점" 이 반대가 되어 사용자가 화살표로 지시한 것과
+                // 정반대 엣지를 잡는다. 종전에는 무조건 왼쪽→오른쪽으로 정규화해서,
+                // 화살표를 왼쪽으로 돌려 놔도 오른쪽으로 훑었다 (현장 보고 2026-09-22).
+                // CaliperTool 은 처음부터 ROI 각도를 그대로 따랐다 — 이제 규약이 같다.
+                //
+                // 방향 정보가 없는 경우(축 정렬 ROI, Start/End 지정, 구버전 LongerSide)에만
+                // 기준선의 수직 방향을 잡고 왼쪽→오른쪽·위→아래로 정규화한다.
+                double vx, vy;
+                if (searchDirX.HasValue && searchDirY.HasValue)
                 {
-                    vx = -vx;
-                    vy = -vy;
+                    vx = searchDirX.Value;
+                    vy = searchDirY.Value;
+                }
+                else
+                {
+                    vx = -uy;
+                    vy = ux;
+                    if (vx < 0 || (Math.Abs(vx) < 1e-6 && vy < 0))
+                    {
+                        vx = -vx;
+                        vy = -vy;
+                    }
                 }
 
                 // 결과 이미지 생성 (원본 컬러 이미지 기반)
@@ -429,6 +498,13 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 absGradient[i] = Math.Abs(gradient[i]);
 
             // 3단계: 에지 후보 수집 (Local Maxima + Polarity 필터링)
+            //
+            // 봉우리 비교에서 한쪽만 엄격(>)하고 반대쪽은 같음을 허용(>=)한다.
+            // 양쪽 다 엄격하면 그래디언트가 두 표본에 걸쳐 같은 값이 될 때
+            // (대칭 엣지가 두 화소 사이에 놓이는 흔한 경우) 두 표본 모두 탈락해
+            // 엣지를 통째로 놓친다 — 실제로 그런 프로파일에서 검출이 0 이었다
+            // (2026-09-22). 한쪽만 허용하면 평탄부의 첫 표본 하나만 채택되므로
+            // 중복 후보도 생기지 않는다.
             var candidates = new List<(int Index, double Contrast)>();
 
             for (int i = FilterHalfWidth + 1; i < profileLength - FilterHalfWidth - 1; i++)
@@ -439,7 +515,7 @@ namespace VMS.VisionSetup.VisionTools.Measurement
 
                 if (g > 0 && g > EdgeThreshold)
                 {
-                    if (g > gradient[i - 1] && g > gradient[i + 1])
+                    if (g > gradient[i - 1] && g >= gradient[i + 1])
                     {
                         isLocalExtreme = true;
                         polarity = EdgePolarity.DarkToLight;
@@ -447,7 +523,7 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 }
                 else if (g < 0 && -g > EdgeThreshold)
                 {
-                    if (g < gradient[i - 1] && g < gradient[i + 1])
+                    if (g < gradient[i - 1] && g <= gradient[i + 1])
                     {
                         isLocalExtreme = true;
                         polarity = EdgePolarity.LightToDark;
@@ -470,25 +546,44 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             if (candidates.Count == 0)
                 return null;
 
-            // 4단계: 에지 선택 — "충분히 강한 에지 중 중심에 가장 가까운 것"
-            //   1) 최대 contrast의 50% 이상인 후보만 남김 (약한 노이즈 에지 제거)
-            //   2) 남은 후보 중 검색선 중심(= 기준선 위치)에 가장 가까운 것 선택
-            double maxContrast = candidates.Max(c => c.Contrast);
-            double contrastFloor = maxContrast * 0.5;
+            // 4단계: 에지 선택 — 기준은 CaliperTool 과 같은 말을 쓴다.
+            // First/Last 는 "탐색 시작점에서" 가깝고 먼 것이므로 화살표 방향이 곧 기준이다.
+            //
+            // ⚠ 대비 하한(최대의 50%)은 ClosestToCenter 에만 건다.
+            //   First/Last 에 걸면 "같은 탐색선 안의 다른 강한 엣지"가 기준을 끌어올려
+            //   정작 찾으려던 약한 엣지가 탈락한다. 실제로 반사광이 걸린 두 캘리퍼만
+            //   다른 경계를 잡아 맞춰진 직선이 기울었다 (현장 보고 2026-09-22).
+            //   약한 엣지를 걸러 내는 손잡이는 EdgeThreshold 이고 그건 사용자 것이다 —
+            //   CaliperTool 도 EdgeThreshold + 극성만으로 First/Last 를 고른다.
             double centerPos = length / 2.0;
 
-            var qualified = candidates.Where(c => c.Contrast >= contrastFloor).ToList();
-            if (qualified.Count == 0)
-                qualified = candidates;
-
-            // 중심에 가장 가까운 후보 선택
-            var best = qualified.OrderBy(c => Math.Abs(c.Index - centerPos)).First();
+            var best = SelectionMode switch
+            {
+                LineEdgeSelectionMode.First => candidates.OrderBy(c => c.Index).First(),
+                LineEdgeSelectionMode.Last => candidates.OrderByDescending(c => c.Index).First(),
+                LineEdgeSelectionMode.Best => candidates.OrderByDescending(c => c.Contrast).First(),
+                _ => SelectClosestToCenter(candidates, centerPos),
+            };
 
             double subPixelPos = ParabolicSubPixel(absGradient, best.Index);
             var edgePoint = new Point2d(
                 start.X + ux * subPixelPos,
                 start.Y + uy * subPixelPos);
             return (edgePoint, best.Contrast);
+        }
+
+        /// <summary>
+        /// 구버전 동작 — 최대 대비의 50% 이상인 후보 중 검색선 중심에 가장 가까운 엣지.
+        /// ClosestToCenter 전용이다 (이 설정이 없던 레시피의 호환 경로).
+        /// </summary>
+        private static (int Index, double Contrast) SelectClosestToCenter(
+            List<(int Index, double Contrast)> candidates, double centerPos)
+        {
+            double contrastFloor = candidates.Max(c => c.Contrast) * 0.5;
+            var qualified = candidates.Where(c => c.Contrast >= contrastFloor).ToList();
+            if (qualified.Count == 0)
+                qualified = candidates;
+            return qualified.OrderBy(c => Math.Abs(c.Index - centerPos)).First();
         }
 
         /// <summary>
@@ -744,5 +839,38 @@ namespace VMS.VisionSetup.VisionTools.Measurement
     {
         LeastSquares,
         RANSAC
+    }
+
+    /// <summary>
+    /// 직선 맞춤의 엣지 탐색 방향. ROI 화살표가 가리키는 쪽이 곧 훑는 방향이고,
+    /// 캘리퍼들은 그와 수직으로 늘어선다 (CaliperTool 과 같은 규약).
+    /// </summary>
+    public enum LineSearchAxis
+    {
+        /// <summary>ROI 가로 방향으로 훑는다 (기준선은 세로 축).</summary>
+        AlongWidth,
+        /// <summary>ROI 세로 방향으로 훑는다 (기준선은 가로 축).</summary>
+        AlongHeight,
+        /// <summary>
+        /// 구버전 동작 — 긴 변을 기준선으로 삼고 짧은 변 쪽으로 훑는다.
+        /// 화살표와 어긋날 수 있다. 이 설정이 없던 레시피의 호환 값.
+        /// </summary>
+        LongerSide
+    }
+
+    /// <summary>
+    /// 캘리퍼 하나에서 엣지가 여러 개 잡힐 때의 채택 기준.
+    /// First/Last 는 탐색 시작점(화살표 꼬리) 기준이다.
+    /// </summary>
+    public enum LineEdgeSelectionMode
+    {
+        /// <summary>탐색 시작점에 가장 가까운 엣지</summary>
+        First,
+        /// <summary>탐색 시작점에서 가장 먼 엣지</summary>
+        Last,
+        /// <summary>대비(contrast)가 가장 큰 엣지</summary>
+        Best,
+        /// <summary>검색선 중심에 가장 가까운 엣지 — 구버전 동작.</summary>
+        ClosestToCenter
     }
 }

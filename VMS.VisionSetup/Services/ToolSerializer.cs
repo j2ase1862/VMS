@@ -244,6 +244,15 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["PositionWeight"] = caliper.PositionWeight;
                     config.Parameters["PositionSigma"] = caliper.PositionSigma;
                     config.Parameters["PolarityWeight"] = caliper.PolarityWeight;
+                    // 아래 7개는 설정 화면에는 있는데 저장되지 않아 레시피를 다시 열면
+                    // 기본값으로 되돌아갔다 (현장 보고 2026-09-22 — Edge Selection).
+                    config.Parameters["SearchAxis"] = caliper.SearchAxis.ToString();
+                    config.Parameters["SelectionMode"] = caliper.SelectionMode.ToString();
+                    config.Parameters["ProjectionMode"] = caliper.ProjectionMode.ToString();
+                    config.Parameters["SubPixelMethod"] = caliper.SubPixelMethod.ToString();
+                    config.Parameters["UseGaussianFilter"] = caliper.UseGaussianFilter;
+                    config.Parameters["GaussianSigma"] = caliper.GaussianSigma;
+                    config.Parameters["UseNormalizedContrast"] = caliper.UseNormalizedContrast;
                     break;
 
                 case LineFitTool lineFit:
@@ -260,6 +269,8 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["FitMethod"] = lineFit.FitMethod.ToString();
                     config.Parameters["RansacThreshold"] = lineFit.RansacThreshold;
                     config.Parameters["MinFoundCalipers"] = lineFit.MinFoundCalipers;
+                    config.Parameters["SearchAxis"] = lineFit.SearchAxis.ToString();
+                    config.Parameters["SelectionMode"] = lineFit.SelectionMode.ToString();
                     break;
 
                 case CircleFitTool circleFit:
@@ -276,6 +287,9 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["FitMethod"] = circleFit.FitMethod.ToString();
                     config.Parameters["RansacThreshold"] = circleFit.RansacThreshold;
                     config.Parameters["MinFoundCalipers"] = circleFit.MinFoundCalipers;
+                    // 탐색 방향도 저장 — 빠지면 재로드 시 기본값으로 돌아가고
+                    // ROI 화살표(안/바깥) 표시까지 어긋난다.
+                    config.Parameters["SearchDirection"] = circleFit.SearchDirection.ToString();
                     break;
 
                 case HeightSlicerTool heightSlicer:
@@ -688,6 +702,9 @@ namespace VMS.VisionSetup.Services
                 config.Parameters["_FixtureBaseROIY"] = tool.FixtureBaseROI.Y;
                 config.Parameters["_FixtureBaseROIW"] = tool.FixtureBaseROI.Width;
                 config.Parameters["_FixtureBaseROIH"] = tool.FixtureBaseROI.Height;
+                // 기준 기울기도 함께 — 빠지면 재로드 후 Fixture 가 0 에 delta 를 더해
+                // 회전 ROI 도구의 각도를 통째로 날린다 (현장 확인 2026-09-22).
+                config.Parameters["_FixtureBaseROIAngle"] = tool.FixtureBaseROIAngle;
             }
 
             return config;
@@ -835,6 +852,14 @@ namespace VMS.VisionSetup.Services
                     // fallback: 현재 ROI를 base로 사용
                     tool.FixtureBaseROI = tool.ROI;
                 }
+
+                // 기준 기울기. 이 키가 없는 기존 레시피는 저장된 ROIAngle 이 곧 기준각이다
+                // (Fixture 가 적용되기 전 사용자가 세팅한 각도). 0 으로 두면 재로드 직후
+                // 첫 실행에서 회전 ROI 가 축정렬로 펴져 캘리퍼가 반대 방향을 훑는다.
+                tool.FixtureBaseROIAngle =
+                    config.Parameters.TryGetValue("_FixtureBaseROIAngle", out var bra)
+                        ? GetDouble(bra)
+                        : tool.ROIAngle;
             }
         }
 
@@ -1247,6 +1272,20 @@ namespace VMS.VisionSetup.Services
                 tool.PositionSigma = GetDouble(ps);
             if (p.TryGetValue("PolarityWeight", out var polW))
                 tool.PolarityWeight = GetDouble(polW);
+            if (p.TryGetValue("SearchAxis", out var sa))
+                tool.SearchAxis = Enum.Parse<CaliperSearchAxis>(GetString(sa));
+            if (p.TryGetValue("SelectionMode", out var selMode))
+                tool.SelectionMode = Enum.Parse<EdgeSelectionMode>(GetString(selMode));
+            if (p.TryGetValue("ProjectionMode", out var pm))
+                tool.ProjectionMode = Enum.Parse<ProjectionMode>(GetString(pm));
+            if (p.TryGetValue("SubPixelMethod", out var spm))
+                tool.SubPixelMethod = Enum.Parse<SubPixelMethod>(GetString(spm));
+            if (p.TryGetValue("UseGaussianFilter", out var ugf))
+                tool.UseGaussianFilter = GetBool(ugf);
+            if (p.TryGetValue("GaussianSigma", out var gs))
+                tool.GaussianSigma = GetDouble(gs);
+            if (p.TryGetValue("UseNormalizedContrast", out var unc))
+                tool.UseNormalizedContrast = GetBool(unc);
 
             return tool;
         }
@@ -1283,6 +1322,15 @@ namespace VMS.VisionSetup.Services
             if (p.TryGetValue("MinFoundCalipers", out var mfc))
                 tool.MinFoundCalipers = GetInt(mfc);
 
+            // 이 두 설정이 없던 레시피는 구버전 동작으로 읽는다 — 새 기본값(화살표 방향 탐색,
+            // First 엣지)을 소급 적용하면 기존 레시피의 측정값이 조용히 달라진다.
+            tool.SearchAxis = p.TryGetValue("SearchAxis", out var lsa)
+                ? Enum.Parse<LineSearchAxis>(GetString(lsa))
+                : LineSearchAxis.LongerSide;
+            tool.SelectionMode = p.TryGetValue("SelectionMode", out var lsm)
+                ? Enum.Parse<LineEdgeSelectionMode>(GetString(lsm))
+                : LineEdgeSelectionMode.ClosestToCenter;
+
             return tool;
         }
 
@@ -1318,6 +1366,8 @@ namespace VMS.VisionSetup.Services
                 tool.RansacThreshold = GetDouble(rt);
             if (p.TryGetValue("MinFoundCalipers", out var mfc))
                 tool.MinFoundCalipers = GetInt(mfc);
+            if (p.TryGetValue("SearchDirection", out var sd))
+                tool.SearchDirection = Enum.Parse<CircleSearchDirection>(GetString(sd));
 
             return tool;
         }

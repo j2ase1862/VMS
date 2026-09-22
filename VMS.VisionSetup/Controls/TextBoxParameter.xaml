@@ -17,7 +17,11 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <TextBox Text="{Binding Value, ElementName=Root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            <!-- Text 는 바인딩하지 않는다. 코드 비하인드가 한쪽 방향씩 옮긴다 —
+                 타이핑 중에 값이 되돌아와 글자를 덮어쓰면 소수점을 찍을 수 없다. -->
+            <TextBox x:Name="Box"
+                     TextChanged="Box_TextChanged"
+                     LostKeyboardFocus="Box_LostKeyboardFocus"
                      Style="{StaticResource WindowDarkTextBox}"
                      Margin="0,0,0,5"/>
             <Button x:Name="RegistryBtn" Grid.Column="1" Content="레지스트리…" FontSize="11"

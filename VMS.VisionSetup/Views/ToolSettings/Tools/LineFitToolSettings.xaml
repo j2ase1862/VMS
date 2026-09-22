@@ -24,6 +24,14 @@
             Value="{Binding SearchWidth}" Minimum="1" Maximum="50"
             TickFrequency="1" ValueFormat="F0"
             ToolType="LineFitTool" ParameterName="SearchWidth"/>
+        <controls:EnumComboBoxParameter Label="Search Axis"
+            ItemsSource="{conv:EnumValues {x:Type meas:LineSearchAxis}}"
+            SelectedValue="{Binding SearchAxis}"
+            ToolType="LineFitTool" ParameterName="SearchAxis"/>
+        <controls:EnumComboBoxParameter Label="Edge Selection"
+            ItemsSource="{conv:EnumValues {x:Type meas:LineEdgeSelectionMode}}"
+            SelectedValue="{Binding SelectionMode}"
+            ToolType="LineFitTool" ParameterName="SelectionMode"/>
         <controls:EnumComboBoxParameter Label="Polarity"
             ItemsSource="{conv:EnumValues {x:Type meas:EdgePolarity}}"
             SelectedValue="{Binding Polarity}"

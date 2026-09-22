@@ -48,15 +48,18 @@ namespace VMS.Tests.ViewModels
         private static CameraViewModel MakeVm(RecordingConfigService config, string id = "cam-1")
         {
             var vm = new CameraViewModel(new NoopDialogService(), config) { Id = id, Name = "Cam1" };
-            vm.Steps.Add(new StepViewModel
+            vm.SetConfigSteps(new[]
             {
-                StepNumber = 1,
-                Name = "Step 1",
-                Use2DCameraDefault = false,
-                Exposure = 12345,
-                Gain = 2.5
+                new InspectionStep
+                {
+                    Sequence = 1,
+                    Name = "Step 1",
+                    CameraId = id,
+                    Use2DCameraDefault = false,
+                    Exposure = 12345,
+                    Gain = 2.5
+                }
             });
-            vm.SelectedStep = vm.Steps[0];
             return vm;
         }
 

@@ -112,7 +112,7 @@ children.push(new Paragraph({ children: [new PageBreak()] }));
 children.push(H1("문서 정보"));
 children.push(infoTable([
   ["제품명", "BODA Vision Management System (VMS)"],
-  ["제품 버전", "v1.40.1"],
+  ["제품 버전", "v1.41.0"],
   ["문서 버전", "1.0"],
   ["작성일", "2026-06-12"],
   ["대상 운영체제", "Windows 11 (x64)"],

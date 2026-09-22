@@ -429,9 +429,16 @@ namespace VMS.VisionSetup.Services
         /// Coordinates 연결: Source 도구의 좌표 데이터를 Target 도구에 적용.
         /// 실제 변환(이동·회전·SearchRegion)은 ToolSourceInjector 한 곳에 있다 —
         /// VMS 메인 InspectionService 도 같은 것을 부른다.
+        ///
+        /// <para>기준 좌표를 받지 못하면 <paramref name="failureReason"/> 을 채우고 false 를
+        /// 반환한다 — 호출부는 그 도구를 실행하지 말아야 한다. 실행하면 ROI 가 직전 실행
+        /// 위치에 남아 엉뚱한 자리를 측정한다 (<see cref="ToolSourceInjector"/> 게이트 주석).</para>
         /// </summary>
-        private void ApplyCoordinatesConnection(VisionToolBase tool, Dictionary<string, VisionResult> resultMap)
+        private bool TryApplyCoordinatesConnection(
+            VisionToolBase tool, Dictionary<string, VisionResult> resultMap, out string failureReason)
         {
+            failureReason = string.Empty;
+
             var coordConnections = _connections
                 .Where(c => c.TargetId == tool.Id && c.Type == ConnectionType.Coordinates)
                 .ToList();
@@ -442,8 +449,17 @@ namespace VMS.VisionSetup.Services
             {
                 foreach (var conn in coordConnections)
                 {
+                    // 소스가 아직 안 돌았거나 비활성이면 종전처럼 통과 — 고정 ROI 운용이다.
                     if (!resultMap.TryGetValue(conn.SourceId, out var sourceResult) || sourceResult.Data == null)
                         continue;
+
+                    var sourceName = Tools.FirstOrDefault(t => t.Id == conn.SourceId)?.Name ?? conn.SourceId;
+
+                    if (!sourceResult.Success)
+                    {
+                        failureReason = ToolSourceInjector.FixtureSourceFailedMessage(tool.Name, sourceName);
+                        return false;
+                    }
 
                     // PolarUnwrapTool 특수 처리 — CircleFit/SourceCenter를 그대로 Center/Radius로 주입
                     // (ROI fixture 변환과 다른 의미 — 회전/이동 보정이 아니라 원의 실제 위치 전달)
@@ -466,13 +482,19 @@ namespace VMS.VisionSetup.Services
                         continue; // fixture 경로 스킵
                     }
 
-                    ToolSourceInjector.ApplyFixtureTransform(tool, sourceResult.Data);
+                    if (!ToolSourceInjector.ApplyFixtureTransform(tool, sourceResult.Data))
+                    {
+                        failureReason = ToolSourceInjector.FixtureNoCoordinatesMessage(tool.Name, sourceName);
+                        return false;
+                    }
                 }
             }
             finally
             {
                 tool.IsFixtureTransformActive = false;
             }
+
+            return true;
         }
 
         #endregion
@@ -664,8 +686,16 @@ namespace VMS.VisionSetup.Services
             {
                 if (!dep.IsEnabled) continue;
 
-                // Apply coordinates connection for upstream dependencies too
-                ApplyCoordinatesConnection(dep, resultMap);
+                // Apply coordinates connection for upstream dependencies too.
+                // 기준 좌표를 못 받은 업스트림은 실행하지 않는다 — 직전 ROI 로 돌면
+                // 그 결과가 아래 도구의 기준이 되어 오차가 조용히 전파된다.
+                if (!TryApplyCoordinatesConnection(dep, resultMap, out var depFixtureFailure))
+                {
+                    var depSkip = new VisionResult { Success = false, Message = depFixtureFailure };
+                    dep.LastResult = depSkip;
+                    resultMap[dep.Id] = depSkip;
+                    continue;
+                }
 
                 var depConnected = GetConnectedInputImage(dep, resultMap);
                 Mat depInput;
@@ -697,8 +727,17 @@ namespace VMS.VisionSetup.Services
                 }
             }
 
-            // Apply coordinates connection: shift ROI based on source tool's result
-            ApplyCoordinatesConnection(tool, resultMap);
+            // Apply coordinates connection: shift ROI based on source tool's result.
+            // 기준 좌표가 없으면 실행하지 않고 사유를 결과로 돌려준다 (직전 ROI 재사용 금지).
+            if (!TryApplyCoordinatesConnection(tool, resultMap, out var toolFixtureFailure))
+            {
+                foreach (var ci in clonedInputs)
+                    ci.Dispose();
+
+                var fixtureSkip = new VisionResult { Success = false, Message = toolFixtureFailure };
+                tool.LastResult = fixtureSkip;
+                return fixtureSkip;
+            }
 
             // Resolve connected input for the target tool
             // HeightSlicerTool: 연결이 없을 때 CV_32FC1 depth map 입력
@@ -725,11 +764,11 @@ namespace VMS.VisionSetup.Services
             {
                 // Run Selected에서도 3D 기하 소스 주입 (업스트림 결과는 resultMap에 수집됨)
                 if (tool is Geometry3DTool g3)
-                    InjectGeometry3DSources(g3, resultMap, Tools);
+                    ToolSourceInjector.InjectGeometry3D(g3, EnumerateResultSources(g3.Id, resultMap));
 
                 // Run Selected에서도 매칭 소스 주입 (업스트림 실행 결과 사용)
                 if (tool is MatchAlignTool mat)
-                    InjectMatchAlignSource(mat, resultMap);
+                    ToolSourceInjector.InjectMatchAlign(mat, EnumerateResultSources(mat.Id, resultMap));
 
                 tool.OverlayBaseImage = toolInput;
                 var result = tool.Execute(toolInput);
@@ -749,12 +788,33 @@ namespace VMS.VisionSetup.Services
         }
 
         /// <summary>
-        /// MatchAlignTool의 Result 연결 소스에서 매칭 포즈(CenterX/Y 보유 결과)를 주입 —
-        /// 연결 순서대로 1번/2번 포인트 (공용 로직은 ToolSourceInjector, VMS 메인과 공유).
+        /// 소스 소비 도구(Result/Ensemble/Geometry/Geometry3D/MatchAlign)에 Result 연결
+        /// 소스를 주입한다 — 규칙의 단일 정의처는 <see cref="ToolSourceInjector"/>.
+        ///
+        /// <para>VMS 메인(InspectionService)도 자체 실행 루프에서 이 규칙이 필요하다.
+        /// 각 엔진이 인라인으로 들고 있던 시절 Geometry/MatchAlign 은 VMS 쪽에만 빠져 있었고
+        /// (2026-08-27), Ensemble/Geometry3D 는 그 뒤로도 빠져 있었다 (2026-09-22).</para>
         /// </summary>
-        private void InjectMatchAlignSource(MatchAlignTool mat, Dictionary<string, VisionResult> resultMap)
+        private void InjectSources(VisionToolBase tool, Dictionary<string, VisionResult> resultMap)
         {
-            ToolSourceInjector.InjectMatchAlign(mat, EnumerateResultSources(mat.Id, resultMap));
+            switch (tool)
+            {
+                case ResultTool rt:
+                    ToolSourceInjector.InjectResult(rt, EnumerateResultSources(rt.Id, resultMap));
+                    break;
+                case EnsembleTool et:
+                    ToolSourceInjector.InjectEnsemble(et, EnumerateResultSources(et.Id, resultMap));
+                    break;
+                case GeometryTool gt:
+                    ToolSourceInjector.InjectGeometry(gt, EnumerateResultSources(gt.Id, resultMap));
+                    break;
+                case Geometry3DTool g3:
+                    ToolSourceInjector.InjectGeometry3D(g3, EnumerateResultSources(g3.Id, resultMap));
+                    break;
+                case MatchAlignTool mat:
+                    ToolSourceInjector.InjectMatchAlign(mat, EnumerateResultSources(mat.Id, resultMap));
+                    break;
+            }
         }
 
         /// <summary>대상 도구를 향한 Result 연결 소스를 연결 생성 순서대로 열거.</summary>
@@ -772,31 +832,6 @@ namespace VMS.VisionSetup.Services
                         srcTool?.Name ?? conn.SourceId, srcTool?.ToolType ?? string.Empty);
                 }
             }
-        }
-
-        /// <summary>
-        /// Geometry3DTool의 Result 연결 소스에서 3D 기하 요소(평면/클러스터 중심점)를 수집.
-        /// 클러스터 소스가 하나뿐이면 FinalizeSourceGeometries가 SourceB 번호의 중심점을
-        /// 추가해 클러스터 툴 1개로도 두 객체 간 거리 측정이 가능하다.
-        /// </summary>
-        private void InjectGeometry3DSources(Geometry3DTool g3,
-            Dictionary<string, VisionResult> resultMap, IEnumerable<VisionToolBase> tools)
-        {
-            g3.ClearSourceGeometries();
-            foreach (var conn in _connections
-                .Where(c => c.TargetId == g3.Id && c.Type == ConnectionType.Result))
-            {
-                if (resultMap.TryGetValue(conn.SourceId, out var srcResult))
-                {
-                    var srcTool = tools.FirstOrDefault(t => t.Id == conn.SourceId);
-                    g3.CollectSourceGeometry(
-                        conn.SourceId,
-                        srcTool?.Name ?? conn.SourceId,
-                        srcTool?.ToolType ?? string.Empty,
-                        srcResult);
-                }
-            }
-            g3.FinalizeSourceGeometries();
         }
 
         /// <summary>
@@ -881,7 +916,9 @@ namespace VMS.VisionSetup.Services
 
                 // 1. Result 연결 확인: Source가 실패이면 건너뛰기
                 //    ResultTool / EnsembleTool은 실패 정보를 수집해야 하므로 스킵 우회
-                if (tool is not ResultTool and not GeometryTool and not Geometry3DTool and not EnsembleTool && ShouldSkipByResultConnection(tool, resultMap))
+                bool bypassesSkip = tool is ResultTool or GeometryTool or Geometry3DTool or EnsembleTool;
+
+                if (!bypassesSkip && ShouldSkipByResultConnection(tool, resultMap))
                 {
                     var skipResult = new VisionResult
                     {
@@ -894,8 +931,17 @@ namespace VMS.VisionSetup.Services
                     continue;
                 }
 
-                // 2. Coordinates 연결: Source의 좌표 데이터를 현재 도구에 적용
-                ApplyCoordinatesConnection(tool, resultMap);
+                // 2. Coordinates 연결: Source의 좌표 데이터를 현재 도구에 적용.
+                //    기준 좌표를 못 받으면 실행하지 않는다 — 직전 위치의 ROI 로 측정하면
+                //    제품이 없어도 값이 나와 OK 가 될 수 있다.
+                if (!TryApplyCoordinatesConnection(tool, resultMap, out var fixtureFailure) && !bypassesSkip)
+                {
+                    var fixtureSkip = new VisionResult { Success = false, Message = fixtureFailure };
+                    results.Add(fixtureSkip);
+                    resultMap[tool.Id] = fixtureSkip;
+                    allSuccess = false;
+                    continue;
+                }
 
                 // 3. Image 연결: 연결된 Source의 출력 이미지를 입력으로 사용
                 //    연결이 없으면 원본 이미지 사용 (각 도구가 독립적으로 원본 처리)
@@ -934,79 +980,9 @@ namespace VMS.VisionSetup.Services
 
                 try
                 {
-                    // ResultTool: Execute 전에 연결된 소스 결과 주입
-                    if (tool is ResultTool rt)
-                    {
-                        rt.SourceResults.Clear();
-                        foreach (var conn in _connections
-                            .Where(c => c.TargetId == tool.Id && c.Type == ConnectionType.Result))
-                        {
-                            if (resultMap.TryGetValue(conn.SourceId, out var srcResult))
-                            {
-                                var srcTool = sortedTools.FirstOrDefault(t => t.Id == conn.SourceId);
-                                rt.SourceResults.Add(new SourceToolResult
-                                {
-                                    ToolId = conn.SourceId,
-                                    ToolName = srcTool?.Name ?? conn.SourceId,
-                                    Success = srcResult.Success,
-                                    Message = srcResult.Message
-                                });
-                            }
-                        }
-                    }
-
-                    // EnsembleTool: Execute 전에 연결된 소스의 전체 VisionResult 주입
-                    if (tool is EnsembleTool et)
-                    {
-                        et.SourceResults.Clear();
-                        foreach (var conn in _connections
-                            .Where(c => c.TargetId == tool.Id && c.Type == ConnectionType.Result))
-                        {
-                            if (resultMap.TryGetValue(conn.SourceId, out var srcResult))
-                            {
-                                var srcTool = sortedTools.FirstOrDefault(t => t.Id == conn.SourceId);
-                                et.SourceResults.Add(new SourceToolResultEx
-                                {
-                                    ToolId = conn.SourceId,
-                                    ToolName = srcTool?.Name ?? conn.SourceId,
-                                    ToolType = srcTool?.ToolType ?? string.Empty,
-                                    Success = srcResult.Success,
-                                    Message = srcResult.Message,
-                                    FullResult = srcResult
-                                });
-                            }
-                        }
-                    }
-
-                    // GeometryTool: Execute 전에 연결된 소스의 기하 데이터 주입
-                    if (tool is GeometryTool gt)
-                    {
-                        gt.SourceGeometries.Clear();
-                        foreach (var conn in _connections
-                            .Where(c => c.TargetId == tool.Id && c.Type == ConnectionType.Result))
-                        {
-                            if (resultMap.TryGetValue(conn.SourceId, out var srcResult))
-                            {
-                                var srcTool = sortedTools.FirstOrDefault(t => t.Id == conn.SourceId);
-                                var geo = GeometryTool.ExtractGeometry(
-                                    conn.SourceId,
-                                    srcTool?.Name ?? conn.SourceId,
-                                    srcTool?.ToolType ?? "",
-                                    srcResult);
-                                if (geo != null)
-                                    gt.SourceGeometries.Add(geo);
-                            }
-                        }
-                    }
-
-                    // Geometry3DTool: Execute 전에 연결된 소스의 3D 기하 요소 주입
-                    // (PlaneFitTool → 평면, PointCloudClusterTool → 클러스터 중심점 mm)
-                    if (tool is Geometry3DTool g3)
-                        InjectGeometry3DSources(g3, resultMap, sortedTools);
-
-                    // MatchAlignTool: Execute 전에 연결된 매칭 소스(CenterX/Y/Angle) 주입
-                    if (tool is MatchAlignTool mat)
-                        InjectMatchAlignSource(mat, resultMap);
+                    // 소스 소비 도구 주입 — 규칙은 ToolSourceInjector 한 곳에만 둔다
+                    // (VMS 메인 InspectionService 가 같은 함수를 부른다).
+                    InjectSources(tool, resultMap);
 
                     var result = tool.Execute(inputImage);
                     tool.LastResult = result;

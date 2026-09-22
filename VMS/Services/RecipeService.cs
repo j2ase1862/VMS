@@ -31,15 +31,21 @@ namespace VMS.Services
 
         public event Action<string>? ExternalRecipeFileChanged;
 
-        private static readonly JsonSerializerOptions JsonOptions = new()
-        {
-            WriteIndented = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            PropertyNameCaseInsensitive = true,
-            Converters = { new JsonStringEnumConverter() }
-        };
+        // 레시피 직렬화 옵션은 VisionSetup 과 공유 — 정의처는 RecipeJson 하나뿐이다.
+        // 종전에는 이쪽만 JsonStringEnumConverter 를 달고 있어 VMS 가 저장한 레시피의
+        // 문자열 enum 을 VisionSetup 이 읽다 예외를 내고 레시피가 열리지 않았다.
+        private static JsonSerializerOptions JsonOptions => VMS.VisionSetup.Services.RecipeJson.Options;
 
         public Recipe? CurrentRecipe => _currentRecipe;
+
+        /// <summary>
+        /// 현재 레시피를 읽어 온 파일 경로. 저장은 이 경로로 되돌려 써야 한다 —
+        /// 레시피 파일 이름이 항상 recipe_&lt;Id&gt;.json 인 것은 아니어서(VisionSetup 은
+        /// 이름 기반 파일도 만든다), Id 로 경로를 새로 만들면 같은 레시피가 파일만
+        /// 하나 더 생긴다. 그러면 편집은 실행 중인 레시피에 영원히 반영되지 않고
+        /// 목록에 중복만 늘어난다 (VisionSetup 쪽에서 먼저 겪은 현장 사고 2026-08-19).
+        /// </summary>
+        public string? CurrentRecipeFilePath { get; private set; }
 
         private RecipeService()
             : this(Path.Combine(ConfigurationService.Instance.ConfigDirectory, "Recipes"))
@@ -118,6 +124,7 @@ namespace VMS.Services
                     if (recipe != null)
                     {
                         _currentRecipe = recipe;
+                        CurrentRecipeFilePath = Path.GetFullPath(filePath);
                         AuditLogger.Instance.Log(
                             AuditCategory.RecipeChange, "LoadRecipe", AuditOutcome.Success,
                             source: nameof(RecipeService),
@@ -153,13 +160,16 @@ namespace VMS.Services
             {
                 recipe.ModifiedAt = DateTime.UtcNow;
 
-                var path = filePath ?? GetRecipeFilePath(recipe.Id);
+                var path = filePath ?? ResolveSavePath(recipe);
                 var json = JsonSerializer.Serialize(recipe, JsonOptions);
                 MarkSelfWrite(path);
                 File.WriteAllText(path, json);
 
                 if (setAsCurrent)
+                {
                     _currentRecipe = recipe;
+                    CurrentRecipeFilePath = Path.GetFullPath(path);
+                }
                 AuditLogger.Instance.Log(
                     AuditCategory.RecipeChange, "SaveRecipe", AuditOutcome.Success,
                     source: nameof(RecipeService),
@@ -199,10 +209,13 @@ namespace VMS.Services
                             {
                                 Id = recipe.Id,
                                 Name = recipe.Name,
-                                Description = recipe.Description,
+                                Author = recipe.Author,
                                 Version = recipe.Version,
                                 ModifiedAt = recipe.ModifiedAt,
-                                FilePath = file
+                                FilePath = file,
+                                StepCount = recipe.Steps.Count,
+                                ToolCount = recipe.TotalToolCount,
+                                WebRecipeId = recipe.WebRecipeId
                             });
                         }
                     }
@@ -234,6 +247,7 @@ namespace VMS.Services
             };
 
             _currentRecipe = recipe;
+            CurrentRecipeFilePath = null;   // 아직 파일이 없다 — 첫 저장에서 Id 기반 경로로 생성
             return recipe;
         }
 
@@ -252,6 +266,7 @@ namespace VMS.Services
                     if (_currentRecipe?.Id == id)
                     {
                         _currentRecipe = null;
+                        CurrentRecipeFilePath = null;
                     }
                     AuditLogger.Instance.Log(
                         AuditCategory.RecipeChange, "DeleteRecipe", AuditOutcome.Success,
@@ -323,7 +338,9 @@ namespace VMS.Services
             {
                 // Generate new ID to avoid conflicts
                 recipe.Id = Guid.NewGuid().ToString();
-                SaveRecipe(recipe);
+                // 가져오기는 원본 파일이 아니라 Recipes 폴더에 사본을 만든다 —
+                // 경로를 명시하지 않으면 방금 읽은 외부 경로로 되쓸 수 있다.
+                SaveRecipe(recipe, GetRecipeFilePath(recipe.Id));
             }
             return recipe;
         }
@@ -333,7 +350,29 @@ namespace VMS.Services
         /// </summary>
         public void SetCurrentRecipe(Recipe? recipe)
         {
+            if (!ReferenceEquals(_currentRecipe, recipe))
+                CurrentRecipeFilePath = null;
             _currentRecipe = recipe;
+        }
+
+        /// <summary>
+        /// 경로를 주지 않은 저장의 대상 파일. 지금 로드돼 있는 바로 그 레시피면
+        /// 읽어 온 파일로 되돌려 쓰고, 아니면 Id 기반 새 경로를 만든다.
+        /// 추적 경로가 Recipes 폴더 밖이면(외부에서 가져온 파일) 쓰지 않는다.
+        /// </summary>
+        private string ResolveSavePath(Recipe recipe)
+        {
+            if (ReferenceEquals(recipe, _currentRecipe)
+                && !string.IsNullOrEmpty(CurrentRecipeFilePath)
+                && string.Equals(
+                    Path.GetDirectoryName(CurrentRecipeFilePath),
+                    Path.GetFullPath(_recipesDirectory).TrimEnd(Path.DirectorySeparatorChar),
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return CurrentRecipeFilePath!;
+            }
+
+            return GetRecipeFilePath(recipe.Id);
         }
 
         private string GetRecipeFilePath(string recipeId)

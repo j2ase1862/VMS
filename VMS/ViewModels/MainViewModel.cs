@@ -644,7 +644,8 @@ namespace VMS.ViewModels
 
             foreach (var camConfig in _systemConfig.Cameras)
             {
-                var camVm = CameraViewModel.FromConfiguration(camConfig, _dialogService, _configService, _inspectionService);
+                var camVm = CameraViewModel.FromConfiguration(
+                    camConfig, _dialogService, _configService, _inspectionService, _recipeService);
                 camVm.X = xOffset;
                 camVm.Y = yOffset;
                 WireCameraEvents(camVm);
@@ -786,10 +787,11 @@ namespace VMS.ViewModels
         {
             for (int i = 1; i <= 2; i++)
             {
-                var vm = new CameraViewModel(_dialogService, _configService, _inspectionService)
+                var cameraId = $"default-camera-{i}";
+                var vm = new CameraViewModel(_dialogService, _configService, _inspectionService, _recipeService)
                 {
                     // 재실행 시 layout_config.json 매칭이 가능하도록 안정 ID 사용.
-                    Id = $"default-camera-{i}",
+                    Id = cameraId,
                     Name = $"Camera {i}",
                     IpAddress = $"192.168.0.{100 + i}",
                     Manufacturer = CameraManufacturer.Virtual,
@@ -798,14 +800,17 @@ namespace VMS.ViewModels
                     Width = 400,
                     Height = 300
                 };
-                vm.Steps.Add(new StepViewModel
+                vm.SetConfigSteps(new[]
                 {
-                    StepNumber = 1,
-                    Name = "Step 1",
-                    Exposure = 5000,
-                    Gain = 1.0
+                    new InspectionStep
+                    {
+                        Sequence = 1,
+                        Name = "Step 1",
+                        CameraId = cameraId,
+                        Exposure = 5000,
+                        Gain = 1.0
+                    }
                 });
-                vm.SelectedStep = vm.Steps[0];
                 WireCameraEvents(vm);
                 Cameras.Add(vm);
             }
