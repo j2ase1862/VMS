@@ -2558,7 +2558,7 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
   <tr><td>측정값이 mm 로 나오는데 실제 치수와 다름</td>
       <td>① 캘리브레이션의 Square Size(칸 크기)를 자로 잰 값으로 넣었는지 ② 카메라 · 렌즈 · 높이를 바꾼 뒤 캘리브레이션을 다시 했는지 ③ Steps 표의 Resolution 이 다른 카메라 값으로 들어가지 않았는지 확인합니다(§5.9).</td></tr>
   <tr><td>캘리브레이션에서 "패턴을 찾지 못했다"</td>
-      <td>체커보드는 Pattern Cols/Rows 에 <strong>안쪽 교차점 수</strong>(10 칸 → 9)를 넣고 가로 · 세로가 달라야 합니다. 원형 타겟은 Circles Grid 모드 · Asymmetric 체크 · 행/열 바꿔 재시도. 타겟이 화면 안에 다 들어오고 초점이 맞아야 합니다.</td></tr>
+      <td>체커보드는 Pattern Cols/Rows 에 <strong>안쪽 교차점 수</strong>(10 칸 → 9)를 넣고 가로 · 세로가 달라야 합니다. 원형 타겟은 Circles Grid 모드 · Asymmetric 체크 · 행/열 바꿔 재시도. 타겟이 화면 안에 다 들어오고 초점이 맞아야 합니다. 사진이 너무 어둡거나 흰 부분이 하얗게 타면(과노출) 원을 못 찾습니다 — 노출 · 조명을 조절해 원과 배경이 또렷이 구분되게 찍으세요.</td></tr>
   <tr><td>캘리브레이션을 적용했는데 Steps 의 Resolution 이 그대로</td>
       <td>Apply 구역의 "Resolution 을 갱신할 스텝" 목록에서 그 스텝이 체크됐는지 확인합니다. Steps 표는 선택한 카메라의 스텝만 보여 줍니다.</td></tr>
   <tr><td>Image Rectify 를 켰는데 이미지가 그대로</td>
@@ -3187,7 +3187,7 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <table class="cols-3-6">
   <tr><th>항목</th><th>값</th></tr>
   <tr><td>문서 버전</td><td>3.0 (2026-09-17)</td></tr>
-  <tr><td>대상 소프트웨어</td><td>VMS 1.41.0 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.1</td></tr>
+  <tr><td>대상 소프트웨어</td><td>VMS 1.41.1 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.1</td></tr>
   <tr><td>구성</td><td>VMS · VMS.VisionSetup · VMS.AppSetup (검사 런타임) / BODA.VMS.Web (생산 관리) / BODA.VMS.MLOps · VMS.DeepLearning (선택 구성 요소, 인증 범위 외)</td></tr>
   <tr><td>발행</td><td>BODA Vision AI</td></tr>
 </table>

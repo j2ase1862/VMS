@@ -36429,14 +36429,14 @@
        "m": false
       },
       {
-       "s": "(10 칸 → 9)를 넣고 가로 · 세로가 달라야 합니다. 원형 타겟은 Circles Grid 모드 · Asymmetric 체크 · 행/열 바꿔 재시도. 타겟이 화면 안에 다 들어오고 초점이 맞아야 합니다.",
+       "s": "(10 칸 → 9)를 넣고 가로 · 세로가 달라야 합니다. 원형 타겟은 Circles Grid 모드 · Asymmetric 체크 · 행/열 바꿔 재시도. 타겟이 화면 안에 다 들어오고 초점이 맞아야 합니다. 사진이 너무 어둡거나 흰 부분이 하얗게 타면(과노출) 원을 못 찾습니다 — 노출 · 조명을 조절해 원과 배경이 또렷이 구분되게 찍으세요.",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "체커보드는 Pattern Cols/Rows 에 안쪽 교차점 수(10 칸 → 9)를 넣고 가로 · 세로가 달라야 합니다. 원형 타겟은 Circles Grid 모드 · Asymmetric 체크 · 행/열 바꿔 재시도. 타겟이 화면 안에 다 들어오고 초점이 맞아야 합니다."
+     "text": "체커보드는 Pattern Cols/Rows 에 안쪽 교차점 수(10 칸 → 9)를 넣고 가로 · 세로가 달라야 합니다. 원형 타겟은 Circles Grid 모드 · Asymmetric 체크 · 행/열 바꿔 재시도. 타겟이 화면 안에 다 들어오고 초점이 맞아야 합니다. 사진이 너무 어둡거나 흰 부분이 하얗게 타면(과노출) 원을 못 찾습니다 — 노출 · 조명을 조절해 원과 배경이 또렷이 구분되게 찍으세요."
     }
    ],
    [
@@ -53103,14 +53103,14 @@
     {
      "segs": [
       {
-       "s": "VMS 1.41.0 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.1",
+       "s": "VMS 1.41.1 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.1",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "VMS 1.41.0 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.1"
+     "text": "VMS 1.41.1 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.1"
     }
    ],
    [

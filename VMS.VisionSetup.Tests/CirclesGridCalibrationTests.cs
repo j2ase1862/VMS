@@ -85,6 +85,72 @@ namespace VMS.VisionSetup.Tests
             return dst;
         }
 
+        /// <summary>
+        /// 밝기를 바꿔도 <b>검출</b>되는지 — 조명·노출이 조금만 달라져도 실패하던 현장 보고(2026-09-22).
+        ///
+        /// <para>원인은 원의 모양·크기 판별이 아니라 <b>SimpleBlobDetector 의 고정 밝기 임계 스윕</b>
+        /// (OpenCV 기본 50~220)이었다. 대비는 충분한데 원·배경 밝기가 그 구간 밖으로 밀려나면
+        /// blob 이 몇 개씩 빠지고, 원 하나만 빠져도 격자가 서지 않는다. 실촬영 타겟 26 조건 중
+        /// 기본값은 13 건만 성공했다.</para>
+        ///
+        /// <para><b>판정 기준은 "검출됐는가" 다.</b> 평면 타겟 한 장은 원을 다 찾아도 렌즈 값이
+        /// 수학적으로 정해지지 않아 계산 단계에서 막힐 수 있다(별도 테스트가 그 안내를 검증한다).
+        /// 그러므로 여기서는 <b>"원형 그리드를 찾지 못했습니다" 가 아니어야 한다</b>로 본다 —
+        /// 큰 원 회귀 테스트와 같은 규약이다.</para>
+        /// </summary>
+        /// <para>배경 밝기가 <c>255×gain + offset</c> 이고 원은 <c>offset</c> 이다.
+        /// 두 값이 모두 스윕 구간(50~220) 밖으로 나가면 기본 파라미터로는 blob 이 하나도 안 잡힌다 —
+        /// ×0.15 는 배경이 38 까지 내려간 경우, gain 0.1 + 230 은 원까지 230 으로 올라간 과노출이다.</para>
+        [Theory]
+        [InlineData(1.0, 0, "원본")]
+        [InlineData(0.35, 0, "어둡게 ×0.35")]
+        [InlineData(0.15, 0, "많이 어둡게 ×0.15 — 배경 38")]
+        [InlineData(0.12, 0, "많이 어둡게 ×0.12 — 배경 31")]
+        [InlineData(0.10, 230, "과노출 — 원 230 / 배경 255")]
+        [InlineData(0.20, 200, "저대비 밝은 쪽 — 원 200 / 배경 251")]
+        public void Circles_are_found_across_brightness(double gain, int offset, string label)
+        {
+            using var flat = MakeAsymmetricGrid(
+                cols: 4, rows: 5, spacingMm: 20.0, pxPerMm: 8.0, radiusPx: 26, marginPx: 90);
+            using var img = new Mat();
+            flat.ConvertTo(img, MatType.CV_8UC1, gain, offset);
+
+            var svc = new CalibrationService();
+            var result = svc.RunCirclesGrid(img, 4, 5, 20.0, asymmetric: true, accumulate: false);
+
+            Assert.DoesNotContain("원형 그리드를 찾지 못했습니다", result.Message);
+
+            // 찾았으면 좌표도 같아야 한다 — 단계는 "찾느냐" 만 가르고 측정값을 바꾸지 않는다.
+            if (result.Success)
+                Assert.InRange(result.Metadata!.PixelSizeMm, 1.0 / 8.0 * 0.95, 1.0 / 8.0 * 1.05);
+        }
+
+        /// <summary>
+        /// 어두운 사진으로도 <b>여러 장 모으면 캘리브레이션까지</b> 끝나는지 — 실제 사용 흐름.
+        /// </summary>
+        [Fact]
+        public void Dark_views_still_calibrate_when_accumulated()
+        {
+            var svc = new CalibrationService();
+            CalibrationResult? last = null;
+
+            foreach (var tilt in new[] { 0.0, 0.02, 0.03, 0.04, 0.05 })
+            {
+                using var flat = MakeSymmetricGrid(
+                    cols: 5, rows: 4, spacingMm: 15.0, pxPerMm: 8.0, radiusPx: 22, marginPx: 90);
+                using var view = Tilt(flat, tilt);
+                using var dark = new Mat();
+                view.ConvertTo(dark, MatType.CV_8UC1, 0.15, 0);   // 배경 38 — 기본 임계 구간(50~) 아래
+                last = svc.RunCirclesGrid(dark, 5, 4, 15.0, asymmetric: false, accumulate: true);
+            }
+
+            Assert.NotNull(last);
+            Assert.True(last!.Success, $"어두운 사진 5장: {last.Message}");
+            Assert.Equal(5, last.ViewCount);
+            // PixelSizeMm 은 마지막 장의 중심 간격에서 계산되는데 그 장은 기울어져 있다 —
+            // 배율 검증은 정면 1장짜리 테스트(Asymmetric_pixel_size_accounts_for_double_step)가 맡는다.
+        }
+
         [Fact]
         public void Asymmetric_grid_is_detected_and_calibrates()
         {
