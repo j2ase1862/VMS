@@ -2,7 +2,6 @@
   "solution": {
     "path": "VMS.sln",
     "projects": [
-      "tools\\licgen\\LicGen.csproj",
       "VMS.AppSetup.Tests\\VMS.AppSetup.Tests.csproj",
       "VMS.AppSetup\\VMS.AppSetup.csproj",
       "VMS.Camera\\VMS.Camera.csproj",
@@ -15,8 +14,10 @@
       "VMS.Tests\\VMS.Tests.csproj",
       "VMS.Updater\\VMS.Updater.csproj",
       "VMS.VisionSetup.Tests\\VMS.VisionSetup.Tests.csproj",
+      "VMS.VisionSetup.UiTests\\VMS.VisionSetup.UiTests.csproj",
       "VMS.VisionSetup\\VMS.VisionSetup.csproj",
-      "VMS\\VMS.csproj"
+      "VMS\\VMS.csproj",
+      "tools\\licgen\\LicGen.csproj"
     ]
   }
 }

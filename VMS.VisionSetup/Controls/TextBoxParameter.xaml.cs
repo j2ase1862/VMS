@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Input;
 
 namespace VMS.VisionSetup.Controls
 {
@@ -22,7 +23,8 @@ namespace VMS.VisionSetup.Controls
 
         public static readonly DependencyProperty ValueProperty =
             DependencyProperty.Register(nameof(Value), typeof(object), typeof(TextBoxParameter),
-                new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
+                new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
+                    OnValueChanged));
 
         public static readonly DependencyProperty ToolTypeProperty =
             DependencyProperty.Register(nameof(ToolType), typeof(string), typeof(TextBoxParameter), new PropertyMetadata(null));
@@ -70,6 +72,79 @@ namespace VMS.VisionSetup.Controls
         public TextBoxParameter()
         {
             InitializeComponent();
+        }
+
+        // ── 글자와 값 사이의 왕복 차단 ─────────────────────────────
+        //
+        // 종전에는 TextBox.Text 가 Value 에 TwoWay/PropertyChanged 로 묶여 있었다.
+        // Value 는 object 이고 바깥에서 double 속성에 다시 묶이므로, "23." 을 치는
+        // 순간 double 23 이 되고 그 23 이 글자로 되돌아와 "23" 으로 덮였다.
+        // 소수점이 지워지니 이어서 "5" 를 치면 "235" 가 된다 — 입력을 못 하는 정도가
+        // 아니라 10배 틀린 값이 조용히 저장됐다 (현장 보고 2026-09-22).
+        //
+        // 그래서 바인딩을 끊고 방향을 나눈다:
+        //   타이핑 → Value  : 글자 그대로 올려 보낸다 (변환은 바깥 바인딩이 한다)
+        //   Value → 타이핑  : 입력 중(키보드 포커스)에는 덮어쓰지 않는다
+        // 포커스가 떠날 때 최종 값으로 표시를 정규화한다.
+
+        /// <summary>코드가 글자를 바꾸는 중 — TextChanged 가 값을 되쏘지 않게 한다.</summary>
+        private bool _syncingText;
+
+        private static void OnValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+            => ((TextBoxParameter)d).SyncTextFromValue();
+
+        /// <param name="force">
+        /// true 면 지금 글자가 같은 값을 뜻하더라도 표시를 값 기준으로 다시 쓴다
+        /// (입력이 끝났을 때의 정규화용 — "0023" → "23").
+        /// </param>
+        private void SyncTextFromValue(bool force = false)
+        {
+            if (Box == null) return;
+
+            var text = Value?.ToString() ?? string.Empty;
+            if (Box.Text == text) return;
+
+            // 지금 글자가 이미 같은 값을 뜻하면 덮어쓰지 않는다.
+            // "23." 을 "23" 으로 되돌리면 소수점을 이어 칠 수 없다.
+            if (!force && RepresentsSameValue(Box.Text, Value)) return;
+
+            _syncingText = true;
+            try { Box.Text = text; }
+            finally { _syncingText = false; }
+        }
+
+        /// <summary>글자와 값이 같은 수를 뜻하는지 (숫자 칸에서만 성립 — 그 외는 false).</summary>
+        private static bool RepresentsSameValue(string text, object? value)
+        {
+            if (value is null || string.IsNullOrEmpty(text)) return false;
+
+            return TryParseNumber(text, out var typed)
+                && TryParseNumber(value.ToString(), out var current)
+                && Math.Abs(typed - current) < 1e-12;
+        }
+
+        private static bool TryParseNumber(string? s, out double value)
+        {
+            if (!string.IsNullOrWhiteSpace(s))
+            {
+                if (double.TryParse(s, NumberStyles.Float, CultureInfo.CurrentCulture, out value)) return true;
+                if (double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out value)) return true;
+            }
+            value = 0;
+            return false;
+        }
+
+        private void Box_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (_syncingText) return;
+            SetCurrentValue(ValueProperty, (object)Box.Text);
+        }
+
+        private void Box_LostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        {
+            // 입력이 끝났으니 실제 값 기준으로 표시를 정리한다
+            // (소스가 보정한 값, "23." → "23", "0023" → "23").
+            SyncTextFromValue(force: true);
         }
 
         /// <summary>

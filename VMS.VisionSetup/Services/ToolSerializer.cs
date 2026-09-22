@@ -688,6 +688,9 @@ namespace VMS.VisionSetup.Services
                 config.Parameters["_FixtureBaseROIY"] = tool.FixtureBaseROI.Y;
                 config.Parameters["_FixtureBaseROIW"] = tool.FixtureBaseROI.Width;
                 config.Parameters["_FixtureBaseROIH"] = tool.FixtureBaseROI.Height;
+                // 기준 기울기도 함께 — 빠지면 재로드 후 Fixture 가 0 에 delta 를 더해
+                // 회전 ROI 도구의 각도를 통째로 날린다 (현장 확인 2026-09-22).
+                config.Parameters["_FixtureBaseROIAngle"] = tool.FixtureBaseROIAngle;
             }
 
             return config;
@@ -835,6 +838,14 @@ namespace VMS.VisionSetup.Services
                     // fallback: 현재 ROI를 base로 사용
                     tool.FixtureBaseROI = tool.ROI;
                 }
+
+                // 기준 기울기. 이 키가 없는 기존 레시피는 저장된 ROIAngle 이 곧 기준각이다
+                // (Fixture 가 적용되기 전 사용자가 세팅한 각도). 0 으로 두면 재로드 직후
+                // 첫 실행에서 회전 ROI 가 축정렬로 펴져 캘리퍼가 반대 방향을 훑는다.
+                tool.FixtureBaseROIAngle =
+                    config.Parameters.TryGetValue("_FixtureBaseROIAngle", out var bra)
+                        ? GetDouble(bra)
+                        : tool.ROIAngle;
             }
         }
 
