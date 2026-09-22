@@ -221,7 +221,7 @@ namespace VMS.Capture
                 RaisePropertyChanged(vm, "SelectedWorkOrderProgressPercent");
                 RaisePropertyChanged(vm, "HasSelectedWorkOrderProgress");
 
-                SetFieldViaReflection(vm, "_currentRecipe", new Models.Recipe { Name = "A1", Version = "1.0.0" });
+                SetFieldViaReflection(vm, "_currentRecipe", new Recipe { Name = "A1", Version = "1.0.0" });
                 RaisePropertyChanged(vm, "CurrentRecipe");
                 vm.CurrentRecipeName = "A1";
             }, new (string, Func<FrameworkElement?>)[]

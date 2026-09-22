@@ -283,5 +283,115 @@ namespace VMS.Tests.Services
             var list = _service.GetRecipeList();
             Assert.Contains(list, ri => ri.Id == imported.Id);
         }
+        // ─── 레시피 왕복 무손실 (모델 통일) ─────────────────────────
+
+        // VMS 가 VisionSetup 의 축소 사본 모델로 레시피를 읽던 시절, VMS 가 한 번 저장하면
+        // 사본에 없는 필드가 파일에서 영구히 지워졌다 — 회전 ROI 각도, 스텝 Resolution,
+        // 캘리브레이션, 판정 기준, Web 레시피 Id, 툴 캔버스 좌표 등 (2026-09-22 현장).
+
+        [Fact]
+        public void SaveThenLoad_PreservesFieldsVmsUsedToDrop()
+        {
+            var recipe = NewSampleRecipe("RoundTrip");
+            recipe.WebRecipeId = 42;
+            recipe.Tags.Add("line-1");
+            recipe.Calibration = new VMS.VisionSetup.Models.CalibrationMetadata
+            {
+                Mode = VMS.VisionSetup.Models.CalibrationMode.SinglePointScale,
+                PixelSizeMm = 0.0112,
+                SourceToolName = "CalibrationTool"
+            };
+            recipe.Criteria = new PassFailCriteria
+            {
+                ToolCriteria =
+                {
+                    ["tool-1"] = new VMS.VisionSetup.Models.ToolPassCriteria
+                    {
+                        Ranges = { ["TotalArea"] = new VMS.VisionSetup.Models.RangeCriteria { Min = 8000, Max = 14200 } }
+                    }
+                }
+            };
+            recipe.Steps.Add(new InspectionStep
+            {
+                Id = "step-1",
+                Name = "1-1",
+                Sequence = 1,
+                CameraId = "cam-1",
+                Resolution = 0.05,
+                IsEnabled = false,
+                Tools =
+                {
+                    new ToolConfig
+                    {
+                        Id = "tool-1",
+                        ToolType = "CaliperTool",
+                        Name = "Caliper B",
+                        X = 146, Y = 355,
+                        UseROI = true,
+                        ROIX = 770, ROIY = 872, ROIWidth = 316, ROIHeight = 125,
+                        ROIAngle = 179.67071753615346,
+                        ROICenterX = 928.99988426959, ROICenterY = 935.11904691049,
+                        PlcMappings =
+                        {
+                            new VMS.VisionSetup.Models.PlcResultMapping
+                            {
+                                ResultKey = "Success", DeviceId = "ADLink_1", PlcAddress = "3"
+                            }
+                        }
+                    }
+                }
+            });
+
+            Assert.True(_service.SaveRecipe(recipe));
+            var path = Path.Combine(_tempDir, $"recipe_{recipe.Id}.json");
+            var loaded = _service.LoadRecipe(path);
+
+            Assert.NotNull(loaded);
+            Assert.Equal(42, loaded!.WebRecipeId);
+            Assert.Equal(new[] { "line-1" }, loaded.Tags);
+            Assert.Equal(0.0112, loaded.Calibration!.PixelSizeMm, 6);
+            Assert.Equal(8000, loaded.Criteria!.ToolCriteria["tool-1"].Ranges["TotalArea"].Min);
+
+            var step = Assert.Single(loaded.Steps);
+            Assert.Equal(0.05, step.Resolution, 6);
+            Assert.False(step.IsEnabled);
+
+            var tool = Assert.Single(step.Tools);
+            Assert.Equal(179.67071753615346, tool.ROIAngle, 9);
+            Assert.Equal(928.99988426959, tool.ROICenterX, 6);
+            Assert.Equal(146, tool.X, 6);
+            Assert.Equal("ADLink_1", Assert.Single(tool.PlcMappings).DeviceId);
+        }
+
+        [Fact]
+        public void LoadRecipe_AcceptsStringEnums_AndRewritesThemAsNumbers()
+        {
+            // 과거 VMS 가 JsonStringEnumConverter 로 저장한 레시피는 VisionSetup 이
+            // 읽다 예외를 내 통째로 열리지 않았다. 공유 옵션은 문자열·숫자를 모두 읽고,
+            // 구버전 VisionSetup 이 계속 열 수 있도록 숫자로 쓴다.
+            var path = Path.Combine(_tempDir, "legacy_string_enum.json");
+            File.WriteAllText(path, """
+                {
+                  "id": "legacy-1",
+                  "name": "Legacy",
+                  "eulerConvention": "UR_RotationVector",
+                  "steps": [
+                    { "id": "s1", "tools": [ { "id": "t1", "toolType": "BlobTool", "resultDataType": "Int16" } ] }
+                  ]
+                }
+                """);
+
+            var loaded = _service.LoadRecipe(path);
+
+            Assert.NotNull(loaded);
+            var tool = Assert.Single(Assert.Single(loaded!.Steps).Tools);
+            Assert.Equal(VMS.PLC.Models.PlcDataType.Int16, tool.ResultDataType);
+
+            var rewritten = Path.Combine(_tempDir, "rewritten.json");
+            Assert.True(_service.ExportRecipe(loaded, rewritten));
+            var json = File.ReadAllText(rewritten);
+            Assert.Contains("\"resultDataType\":", json);
+            Assert.DoesNotContain("\"Int16\"", json);
+        }
     }
 }

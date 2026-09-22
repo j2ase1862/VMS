@@ -12,7 +12,6 @@ using VMS.Core.Services;
 using VMS.Interfaces;
 using VMS.Models;
 using VMS.VisionSetup.Interfaces;
-using VsToolConfig = VMS.VisionSetup.Models.ToolConfig;
 using VsConnectionType = VMS.VisionSetup.Models.ConnectionType;
 using VisionToolBase = VMS.VisionSetup.Models.VisionToolBase;
 using VisionResult = VMS.VisionSetup.Models.VisionResult;
@@ -35,6 +34,20 @@ namespace VMS.Services
 
         private readonly Dictionary<string, StepExecutionContext> _stepContexts = new();
         private readonly object _contextLock = new();
+
+        /// <summary>
+        /// 실행 중인 레시피 — 스텝 밖 실행 컨텍스트(캘리브레이션) 공급원.
+        /// <see cref="SetRecipeContext"/> 로만 바뀐다.
+        /// </summary>
+        private Recipe? _currentRecipe;
+
+        /// <summary>
+        /// 스텝 실행 직렬화. 도구들이 프로세스 전역 싱글톤(VisionService.EffectiveCalibration,
+        /// CurrentStepId, StepPoseStore)을 통해 실행 컨텍스트를 읽으므로, 두 카메라가 동시에
+        /// 검사하면 서로의 컨텍스트로 판정하게 된다. SequenceEngine 은 검사를 순차로 await
+        /// 하므로 (AUTO RUN) 직렬화에 따른 택트 손해는 없다.
+        /// </summary>
+        private readonly System.Threading.SemaphoreSlim _executeGate = new(1, 1);
 
         /// <summary>Web 파라미터 동기화 서비스 (외부 주입, nullable)</summary>
         public static IParameterSyncService? ParameterSyncService { get; set; }
@@ -309,6 +322,17 @@ namespace VMS.Services
             }
         }
 
+        /// <inheritdoc/>
+        public void SetRecipeContext(Recipe? recipe) => _currentRecipe = recipe;
+
+        /// <summary>
+        /// internal — 스텝의 ToolConfig 가 실행 도구로 어떻게 옮겨졌는지 검증하는 테스트용 시임.
+        /// 레시피 필드가 실행 경로에서 유실되는 결함(ROI 각도 등)은 결과만 봐서는 드러나지
+        /// 않아 실제 도구 인스턴스를 확인해야 한다.
+        /// </summary>
+        internal IReadOnlyList<VisionToolBase> GetToolsForTest(InspectionStep step)
+            => GetOrCreateContext(step).Tools;
+
         /// <summary>
         /// Step에 대한 도구 컨텍스트를 캐시에서 가져오거나 새로 생성.
         /// 캐싱을 통해 도구 인스턴스가 유지되므로 FixtureRef 기준점이
@@ -321,12 +345,13 @@ namespace VMS.Services
                 if (_stepContexts.TryGetValue(step.Id, out var existing))
                     return existing;
 
-                var vsConfigs = ConvertToolConfigs(step.Tools);
-
                 var tools = new List<VisionToolBase>();
                 var toolById = new Dictionary<string, VisionToolBase>();
 
-                foreach (var config in vsConfigs)
+                // step.Tools 를 그대로 넘긴다 — 종전에는 VMS 전용 ToolConfig 사본으로
+                // 한 번 옮겨 담았고, 그 사본에 없던 ROIAngle/ROICenterX/ROICenterY 와
+                // PlcMappings.DeviceId 가 매번 버려졌다 (회전 ROI 가 0° 로 실행됨).
+                foreach (var config in step.Tools)
                 {
                     var tool = VMS.VisionSetup.Services.ToolSerializer.DeserializeTool(config);
                     if (tool != null)
@@ -354,7 +379,16 @@ namespace VMS.Services
 
         public async Task<StepInspectionResult> ExecuteStepAsync(InspectionStep step, Mat inputImage)
         {
-            return await Task.Run(() => ExecuteStep(step, inputImage));
+            // 실행 컨텍스트가 프로세스 전역이라 스텝 실행은 한 번에 하나씩 (_executeGate 참고).
+            await _executeGate.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                return await Task.Run(() => ExecuteStep(step, inputImage)).ConfigureAwait(false);
+            }
+            finally
+            {
+                _executeGate.Release();
+            }
         }
 
         private StepInspectionResult ExecuteStep(InspectionStep step, Mat inputImage)
@@ -376,6 +410,19 @@ namespace VMS.Services
                     result.ExecutionTimeMs = sw.Elapsed.TotalMilliseconds;
                     return result;
                 }
+
+                // VisionSetup(MainViewModel.LoadStepToWorkspace)이 스텝을 워크스페이스에
+                // 올릴 때 세우는 것과 같은 실행 컨텍스트를 여기서도 세운다.
+                //
+                // 이게 없으면 측정 도구의 mm 변환에 쓰이는 VisionService.EffectiveCalibration
+                // 이 항상 null 이라, JudgmentUnit=Mm 로 설정된 GeometryTool 이 "mm 변환 불가"
+                // 로 무조건 실패했다 — 같은 레시피가 VisionSetup Run All 에서는 Pass 인데
+                // VMS Inspect 에서는 NG 가 나던 원인 (2026-09-22 현장).
+                // StepPoseStore 의 mm 좌표(다중 스텝 얼라인)도 같은 값에 의존한다.
+                var visionService = VMS.VisionSetup.Services.VisionService.Instance;
+                visionService.CurrentCalibrationMetadata = _currentRecipe?.Calibration;
+                visionService.CurrentStepResolutionMmPerPx = step.Resolution;
+                visionService.CurrentStepId = step.Id;
 
                 // 캐싱된 도구 컨텍스트 사용 (도구 인스턴스 재활용 → FixtureRef 유지)
                 var ctx = GetOrCreateContext(step);
@@ -837,54 +884,6 @@ namespace VMS.Services
                     Debug.WriteLine($"[InspectionService] Parameter result upload error: {ex.Message}");
                 }
             });
-        }
-
-        #endregion
-
-        #region Tool Config Conversion
-
-        private static List<VsToolConfig> ConvertToolConfigs(List<ToolConfig> vmsConfigs)
-        {
-            var result = new List<VsToolConfig>();
-
-            foreach (var src in vmsConfigs)
-            {
-                var dst = new VsToolConfig
-                {
-                    Id = src.Id,
-                    ToolType = src.ToolType,
-                    Name = src.Name,
-                    Sequence = src.Sequence,
-                    IsEnabled = src.IsEnabled,
-                    UseROI = src.UseROI,
-                    ROIX = src.ROIX,
-                    ROIY = src.ROIY,
-                    ROIWidth = src.ROIWidth,
-                    ROIHeight = src.ROIHeight,
-                    Parameters = src.Parameters ?? new Dictionary<string, object>(),
-                    PlcMappings = src.PlcMappings?.Select(m => new VMS.VisionSetup.Models.PlcResultMapping
-                    {
-                        ResultKey = m.ResultKey,
-                        PlcAddress = m.PlcAddress,
-                        DataType = m.DataType
-                    }).ToList() ?? new List<VMS.VisionSetup.Models.PlcResultMapping>(),
-                    // 레거시 호환 (ToolSerializer에서 마이그레이션 처리)
-                    ResultPlcAddress = src.ResultPlcAddress,
-                    ResultDataType = src.ResultDataType,
-                    ResultDataKey = src.ResultDataKey,
-                    Connections = src.Connections?.Select(c => new VMS.VisionSetup.Models.ToolConnectionConfig
-                    {
-                        SourceToolId = c.SourceToolId,
-                        ConnectionType = c.ConnectionType
-                    }).ToList() ?? new List<VMS.VisionSetup.Models.ToolConnectionConfig>(),
-                    LinkedParamCodes = src.LinkedParamCodes != null && src.LinkedParamCodes.Count > 0
-                        ? new Dictionary<string, int>(src.LinkedParamCodes)
-                        : new Dictionary<string, int>()
-                };
-                result.Add(dst);
-            }
-
-            return result;
         }
 
         #endregion

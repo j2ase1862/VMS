@@ -31,13 +31,10 @@ namespace VMS.Services
 
         public event Action<string>? ExternalRecipeFileChanged;
 
-        private static readonly JsonSerializerOptions JsonOptions = new()
-        {
-            WriteIndented = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            PropertyNameCaseInsensitive = true,
-            Converters = { new JsonStringEnumConverter() }
-        };
+        // 레시피 직렬화 옵션은 VisionSetup 과 공유 — 정의처는 RecipeJson 하나뿐이다.
+        // 종전에는 이쪽만 JsonStringEnumConverter 를 달고 있어 VMS 가 저장한 레시피의
+        // 문자열 enum 을 VisionSetup 이 읽다 예외를 내고 레시피가 열리지 않았다.
+        private static JsonSerializerOptions JsonOptions => VMS.VisionSetup.Services.RecipeJson.Options;
 
         public Recipe? CurrentRecipe => _currentRecipe;
 
@@ -199,10 +196,13 @@ namespace VMS.Services
                             {
                                 Id = recipe.Id,
                                 Name = recipe.Name,
-                                Description = recipe.Description,
+                                Author = recipe.Author,
                                 Version = recipe.Version,
                                 ModifiedAt = recipe.ModifiedAt,
-                                FilePath = file
+                                FilePath = file,
+                                StepCount = recipe.Steps.Count,
+                                ToolCount = recipe.TotalToolCount,
+                                WebRecipeId = recipe.WebRecipeId
                             });
                         }
                     }

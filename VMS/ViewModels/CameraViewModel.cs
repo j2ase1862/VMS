@@ -29,7 +29,7 @@ namespace VMS.ViewModels
         private readonly IConfigurationService? _configService;
         private readonly IInspectionService? _inspectionService;
         private ICameraAcquisition? _acquisition;
-        private Models.Recipe? _currentRecipe;
+        private Recipe? _currentRecipe;
         private BitmapSource? _originalImage;  // 검사용 원본 이미지 (오버레이 전)
         private CancellationTokenSource? _liveGrabCts;
         private Task? _liveGrabTask;
@@ -281,9 +281,11 @@ namespace VMS.ViewModels
             _inspectionService = inspectionService;
         }
 
-        public void SetRecipe(Models.Recipe? recipe)
+        public void SetRecipe(Recipe? recipe)
         {
             _currentRecipe = recipe;
+            // 레시피 캘리브레이션은 스텝 밖에 있으므로 실행 엔진에 따로 알려 줘야 한다
+            _inspectionService?.SetRecipeContext(recipe);
             _inspectionService?.ClearCache();
         }
 
@@ -794,7 +796,7 @@ namespace VMS.ViewModels
             }
         }
 
-        private Models.InspectionStep? FindCurrentStep()
+        private InspectionStep? FindCurrentStep()
         {
             if (_currentRecipe == null) return null;
 
