@@ -68,6 +68,45 @@ namespace VMS.VisionSetup.Tests
         }
 
         [Fact]
+        public void 캘리퍼_설정이_왕복해도_유지된다()
+        {
+            // 현장 보고(2026-09-22): Edge Selection 을 바꿔도 레시피를 다시 열면 기본값이었다.
+            var tool = new CaliperTool
+            {
+                UseROI = true,
+                ROI = new Rect(100, 200, 300, 50),
+                SelectionMode = EdgeSelectionMode.Last,
+                SearchAxis = CaliperSearchAxis.AlongHeight,
+                ProjectionMode = ProjectionMode.Gaussian,
+                SubPixelMethod = SubPixelMethod.Quartic5Point,
+                UseGaussianFilter = true,
+                GaussianSigma = 1.75,
+                UseNormalizedContrast = true,
+            };
+
+            var restored = ToolSerializer.DeserializeTool(ToolSerializer.SerializeTool(tool)) as CaliperTool;
+
+            Assert.NotNull(restored);
+            Assert.Equal(EdgeSelectionMode.Last, restored!.SelectionMode);
+            Assert.Equal(CaliperSearchAxis.AlongHeight, restored.SearchAxis);
+            Assert.Equal(ProjectionMode.Gaussian, restored.ProjectionMode);
+            Assert.Equal(SubPixelMethod.Quartic5Point, restored.SubPixelMethod);
+            Assert.True(restored.UseGaussianFilter);
+            Assert.Equal(1.75, restored.GaussianSigma, 6);
+            Assert.True(restored.UseNormalizedContrast);
+        }
+
+        [Fact]
+        public void 원_맞춤_탐색_방향이_왕복해도_유지된다()
+        {
+            var tool = new CircleFitTool { SearchDirection = CircleSearchDirection.InwardToOutward };
+
+            var restored = ToolSerializer.DeserializeTool(ToolSerializer.SerializeTool(tool)) as CircleFitTool;
+
+            Assert.Equal(CircleSearchDirection.InwardToOutward, restored!.SearchDirection);
+        }
+
+        [Fact]
         public void Fixture를_쓰지_않는_도구는_기준_기울기를_저장하지_않는다()
         {
             var tool = new CaliperTool { UseROI = true, ROI = new Rect(10, 20, 30, 40), ROIAngle = 12.5 };
