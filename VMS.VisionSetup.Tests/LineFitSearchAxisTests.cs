@@ -77,6 +77,59 @@ namespace VMS.VisionSetup.Tests
             }
         }
 
+        /// <summary>왼쪽에 약한 경계(x=60), 오른쪽에 강한 경계(x=170). 방향에 따라 First 가 갈린다.</summary>
+        private static Mat TwoEdgeImage()
+        {
+            const int w = 240, h = 120;
+            var m = new Mat(h, w, MatType.CV_8UC3, new Scalar(220, 220, 220));
+            m.Rectangle(new Rect(60, 0, w - 60, h), new Scalar(150, 150, 150), -1);
+            m.Rectangle(new Rect(170, 0, w - 170, h), new Scalar(20, 20, 20), -1);
+            Cv2.GaussianBlur(m, m, new Size(7, 7), 2);
+            return m;
+        }
+
+        private static LineFitTool TwoEdgeTool(double roiAngle, EdgePolarity polarity) => new()
+        {
+            UseROI = true,
+            ROI = new Rect(20, 20, 200, 80),
+            ROIAngle = roiAngle,
+            ROICenterX = 120,
+            ROICenterY = 60,
+            SearchAxis = LineSearchAxis.AlongWidth,
+            SelectionMode = LineEdgeSelectionMode.First,
+            Polarity = polarity,
+            NumCalipers = 5,
+            MinFoundCalipers = 3,
+            EdgeThreshold = 8,
+        };
+
+        [Fact]
+        public void 화살표가_오른쪽이면_왼쪽_경계를_먼저_만난다()
+        {
+            using var img = TwoEdgeImage();
+            // 왼쪽→오른쪽으로 훑으면 220→150 이 명→암이다.
+            var r = TwoEdgeTool(roiAngle: 0.01, EdgePolarity.LightToDark).Execute(img);
+
+            Assert.True(r.Success, r.Message);
+            foreach (var c in (System.Collections.Generic.List<CaliperResult>)r.Data["CaliperResults"])
+                if (c.Found) Assert.True(Math.Abs(c.EdgePoint.X - 60) < 6, $"x={c.EdgePoint.X:F1}");
+        }
+
+        [Fact]
+        public void 화살표를_왼쪽으로_돌리면_오른쪽_경계를_먼저_만난다()
+        {
+            // ROI 를 180° 돌리면 화살표가 왼쪽을 가리킨다 — 탐색도 오른쪽→왼쪽이어야 한다.
+            // 종전에는 방향을 무조건 왼쪽→오른쪽으로 정규화해서 화살표와 반대로 훑었다.
+            //
+            // 극성은 탐색 방향에 상대적이다 — 오른쪽→왼쪽으로 보면 20→150 이 암→명이다.
+            using var img = TwoEdgeImage();
+            var r = TwoEdgeTool(roiAngle: 180, EdgePolarity.DarkToLight).Execute(img);
+
+            Assert.True(r.Success, r.Message);
+            foreach (var c in (System.Collections.Generic.List<CaliperResult>)r.Data["CaliperResults"])
+                if (c.Found) Assert.True(Math.Abs(c.EdgePoint.X - 170) < 6, $"x={c.EdgePoint.X:F1}");
+        }
+
         [Fact]
         public void 설정이_레시피_왕복에서_유지된다()
         {

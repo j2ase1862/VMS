@@ -146,6 +146,10 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 Point2d baselineStart, baselineEnd;
                 double searchLength;
 
+                // 회전 ROI 면 화살표(ROI 각도)가 탐색 방향을 그대로 정한다 — 아래에서 채운다.
+                // null 이면 방향 정보가 없다는 뜻이라 기준선의 수직 방향을 쓰고 정규화한다.
+                double? searchDirX = null, searchDirY = null;
+
                 // 회전 각도 결정: 라이브 ROI shape 또는 저장된 ROIAngle 사용
                 double effectiveAngle = EffectiveROIAngle;
 
@@ -179,6 +183,8 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                         baselineStart = new Point2d(cx - (h / 2) * (-sinA), cy - (h / 2) * cosA);
                         baselineEnd = new Point2d(cx + (h / 2) * (-sinA), cy + (h / 2) * cosA);
                         searchLength = w;
+                        // 화살표와 같은 방향 — CaliperTool 의 Width 축 탐색과 동일한 식.
+                        if (SearchAxis != LineSearchAxis.LongerSide) { searchDirX = cosA; searchDirY = sinA; }
                     }
                     else
                     {
@@ -186,6 +192,7 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                         baselineStart = new Point2d(cx - (w / 2) * cosA, cy - (w / 2) * sinA);
                         baselineEnd = new Point2d(cx + (w / 2) * cosA, cy + (w / 2) * sinA);
                         searchLength = h;
+                        if (SearchAxis != LineSearchAxis.LongerSide) { searchDirX = -sinA; searchDirY = cosA; }
                     }
                 }
                 else if (UseROI && ROI.Width > 0 && ROI.Height > 0)
@@ -239,16 +246,31 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 double ux = dx / baseLength;
                 double uy = dy / baseLength;
 
-                // 수직 벡터 (검색 방향)
-                double vx = -uy;
-                double vy = ux;
-
-                // 검색 방향을 직관적으로 정규화: 왼쪽→오른쪽, 위→아래
-                // (vx < 0이면 오른쪽→왼쪽으로 검색하게 되므로 반전)
-                if (vx < 0 || (Math.Abs(vx) < 1e-6 && vy < 0))
+                // 검색 방향.
+                //
+                // 회전 ROI 면 화살표(ROI 각도)가 정한 방향을 그대로 쓴다 — 방향을 뒤집으면
+                // First/Last 의 "탐색 시작점" 이 반대가 되어 사용자가 화살표로 지시한 것과
+                // 정반대 엣지를 잡는다. 종전에는 무조건 왼쪽→오른쪽으로 정규화해서,
+                // 화살표를 왼쪽으로 돌려 놔도 오른쪽으로 훑었다 (현장 보고 2026-09-22).
+                // CaliperTool 은 처음부터 ROI 각도를 그대로 따랐다 — 이제 규약이 같다.
+                //
+                // 방향 정보가 없는 경우(축 정렬 ROI, Start/End 지정, 구버전 LongerSide)에만
+                // 기준선의 수직 방향을 잡고 왼쪽→오른쪽·위→아래로 정규화한다.
+                double vx, vy;
+                if (searchDirX.HasValue && searchDirY.HasValue)
                 {
-                    vx = -vx;
-                    vy = -vy;
+                    vx = searchDirX.Value;
+                    vy = searchDirY.Value;
+                }
+                else
+                {
+                    vx = -uy;
+                    vy = ux;
+                    if (vx < 0 || (Math.Abs(vx) < 1e-6 && vy < 0))
+                    {
+                        vx = -vx;
+                        vy = -vy;
+                    }
                 }
 
                 // 결과 이미지 생성 (원본 컬러 이미지 기반)
