@@ -15,6 +15,7 @@ using VMS.VisionSetup.Interfaces;
 using VsConnectionType = VMS.VisionSetup.Models.ConnectionType;
 using VisionToolBase = VMS.VisionSetup.Models.VisionToolBase;
 using VisionResult = VMS.VisionSetup.Models.VisionResult;
+using VMS.VisionSetup.VisionTools.DeepLearning;
 using VMS.VisionSetup.VisionTools.Result;
 using VMS.VisionSetup.Services;
 using VMS.VisionSetup.VisionTools.Measurement;
@@ -448,8 +449,12 @@ namespace VMS.Services
 
                     var toolSw = Stopwatch.StartNew();
 
-                    // Result 연결 확인 (ResultTool은 실패 정보를 수집해야 하므로 스킵 우회)
-                    if (tool is not ResultTool && ShouldSkipByResultConnection(tool, ctx.Connections, resultMap))
+                    // Result 연결 확인 — 실패 정보를 수집하는 집계 도구는 스킵 우회.
+                    // 우회 목록은 VisionService.ExecuteAll 과 같아야 한다. 종전에는 이쪽만
+                    // ResultTool 하나였고, 그 탓에 캘리퍼 하나가 실패하면 VisionSetup 은
+                    // Geometry 를 실행하는데 VMS 는 "건너뜀=실패"로 처리해 판정이 갈렸다.
+                    if (tool is not ResultTool and not GeometryTool and not Geometry3DTool and not EnsembleTool
+                        && ShouldSkipByResultConnection(tool, ctx.Connections, resultMap))
                     {
                         var skipResult = new VisionResult
                         {
@@ -498,36 +503,12 @@ namespace VMS.Services
 
                     try
                     {
-                        // ResultTool: Execute 전에 연결된 소스 결과 주입
-                        if (tool is ResultTool rt)
-                        {
-                            rt.SourceResults.Clear();
-                            foreach (var conn in ctx.Connections
-                                .Where(c => c.TargetId == tool.Id && c.Type == VsConnectionType.Result))
-                            {
-                                if (resultMap.TryGetValue(conn.SourceId, out var srcResult))
-                                {
-                                    var srcTool = ctx.SortedTools.FirstOrDefault(t => t.Id == conn.SourceId);
-                                    rt.SourceResults.Add(new SourceToolResult
-                                    {
-                                        ToolId = conn.SourceId,
-                                        ToolName = srcTool?.Name ?? conn.SourceId,
-                                        Success = srcResult.Success,
-                                        Message = srcResult.Message
-                                    });
-                                }
-                            }
-                        }
-
-                        // 소스 소비 도구 주입 — VisionSetup(VisionService.ExecuteAll)과 동일 규칙.
-                        // 이 엔진에는 ResultTool 주입만 있었고 Geometry/MatchAlign 이 누락돼
-                        // AUTO RUN 에서 소스가 비는 채로 실행됐다 (2026-08-27 발견).
-                        if (tool is GeometryTool geometryTool)
-                            ToolSourceInjector.InjectGeometry(
-                                geometryTool, EnumerateResultSources(tool, ctx, resultMap));
-                        if (tool is MatchAlignTool matchAlignTool)
-                            ToolSourceInjector.InjectMatchAlign(
-                                matchAlignTool, EnumerateResultSources(tool, ctx, resultMap));
+                        // 소스 소비 도구 주입 — 규칙은 ToolSourceInjector 한 곳에만 둔다
+                        // (VisionSetup 의 VisionService 가 같은 함수를 부른다). 엔진마다
+                        // 인라인으로 들고 있던 시절 Geometry/MatchAlign 이 이쪽에만 빠져
+                        // AUTO RUN 에서 소스가 비는 채로 실행됐고 (2026-08-27),
+                        // Ensemble/Geometry3D 는 그 뒤로도 빠져 있었다 (2026-09-22).
+                        InjectSources(tool, ctx, resultMap);
 
                         var toolResult = tool.Execute(toolInput);
                         tool.LastResult = toolResult;
@@ -895,6 +876,35 @@ namespace VMS.Services
             public string SourceId { get; set; } = string.Empty;
             public string TargetId { get; set; } = string.Empty;
             public VsConnectionType Type { get; set; }
+        }
+
+        /// <summary>
+        /// 소스 소비 도구(Result/Ensemble/Geometry/Geometry3D/MatchAlign)에 Result 연결
+        /// 소스를 주입한다 — 규칙의 단일 정의처는 <see cref="ToolSourceInjector"/> 이고
+        /// VisionSetup 의 VisionService 도 같은 함수를 부른다. 새 소스 소비 도구는
+        /// 반드시 양쪽 dispatcher 에 추가할 것.
+        /// </summary>
+        private static void InjectSources(
+            VisionToolBase tool, StepExecutionContext ctx, Dictionary<string, VisionResult> resultMap)
+        {
+            switch (tool)
+            {
+                case ResultTool rt:
+                    ToolSourceInjector.InjectResult(rt, EnumerateResultSources(rt, ctx, resultMap));
+                    break;
+                case EnsembleTool et:
+                    ToolSourceInjector.InjectEnsemble(et, EnumerateResultSources(et, ctx, resultMap));
+                    break;
+                case GeometryTool gt:
+                    ToolSourceInjector.InjectGeometry(gt, EnumerateResultSources(gt, ctx, resultMap));
+                    break;
+                case Geometry3DTool g3:
+                    ToolSourceInjector.InjectGeometry3D(g3, EnumerateResultSources(g3, ctx, resultMap));
+                    break;
+                case MatchAlignTool mat:
+                    ToolSourceInjector.InjectMatchAlign(mat, EnumerateResultSources(mat, ctx, resultMap));
+                    break;
+            }
         }
 
         /// <summary>대상 도구를 향한 Result 연결 소스를 연결 순서대로 열거 (주입 공용 로직용).</summary>

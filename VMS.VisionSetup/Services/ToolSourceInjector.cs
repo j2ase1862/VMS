@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using OpenCvSharp;
 using VMS.VisionSetup.Models;
+using VMS.VisionSetup.VisionTools.DeepLearning;
 using VMS.VisionSetup.VisionTools.Measurement;
 using VMS.VisionSetup.VisionTools.PatternMatching;
+using VMS.VisionSetup.VisionTools.Result;
 
 namespace VMS.VisionSetup.Services
 {
@@ -65,6 +67,58 @@ namespace VMS.VisionSetup.Services
                 if (geo != null)
                     tool.SourceGeometries.Add(geo);
             }
+        }
+
+        /// <summary>
+        /// ResultTool 소스 주입 — 연결된 도구의 성패/메시지를 집계 대상으로 채운다.
+        /// </summary>
+        public static void InjectResult(ResultTool tool, IEnumerable<ResultSource> resultSources)
+        {
+            tool.SourceResults.Clear();
+            foreach (var src in resultSources)
+            {
+                tool.SourceResults.Add(new SourceToolResult
+                {
+                    ToolId = src.SourceId,
+                    ToolName = src.Name,
+                    Success = src.Result.Success,
+                    Message = src.Result.Message
+                });
+            }
+        }
+
+        /// <summary>
+        /// EnsembleTool 소스 주입 — 판정 세부(DetectionCount, AnomalyScore 등)를 보려면
+        /// 성패만으로는 부족하므로 VisionResult 전체를 함께 넘긴다.
+        /// </summary>
+        public static void InjectEnsemble(EnsembleTool tool, IEnumerable<ResultSource> resultSources)
+        {
+            tool.SourceResults.Clear();
+            foreach (var src in resultSources)
+            {
+                tool.SourceResults.Add(new SourceToolResultEx
+                {
+                    ToolId = src.SourceId,
+                    ToolName = src.Name,
+                    ToolType = src.ToolType,
+                    Success = src.Result.Success,
+                    Message = src.Result.Message,
+                    FullResult = src.Result
+                });
+            }
+        }
+
+        /// <summary>
+        /// Geometry3DTool 소스 주입 — 3D 기하 요소(평면/클러스터 중심점) 수집.
+        /// 클러스터 소스가 하나뿐이면 FinalizeSourceGeometries 가 SourceB 번호의 중심점을
+        /// 추가해 클러스터 툴 1개로도 두 객체 간 거리 측정이 가능하다.
+        /// </summary>
+        public static void InjectGeometry3D(Geometry3DTool tool, IEnumerable<ResultSource> resultSources)
+        {
+            tool.ClearSourceGeometries();
+            foreach (var src in resultSources)
+                tool.CollectSourceGeometry(src.SourceId, src.Name, src.ToolType, src.Result);
+            tool.FinalizeSourceGeometries();
         }
 
         /// <summary>

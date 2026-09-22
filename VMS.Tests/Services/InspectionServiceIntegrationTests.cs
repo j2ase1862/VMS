@@ -586,5 +586,89 @@ namespace VMS.Tests.Services
                 ROIHeight = 128
             };
         }
+        // ─── 두 실행 엔진의 규칙 정합 ────────────────────────────────
+
+        [Fact]
+        public async Task ExecuteStepAsync_EnsembleTool_ReceivesConnectedSources()
+        {
+            // 소스 주입 목록에 EnsembleTool 이 빠져 있어 VMS 에서는 늘 소스가 비었다
+            // ("소스 도구가 연결되지 않았습니다") — VisionSetup 에서는 정상 동작.
+            var gray = MakeGrayscaleToolConfig("Upstream");
+            var ensemble = new ToolConfig
+            {
+                Id = Guid.NewGuid().ToString(),
+                ToolType = "EnsembleTool",
+                Name = "Ensemble",
+                Parameters = new Dictionary<string, object> { ["Mode"] = "Or" },
+                Connections =
+                {
+                    new ToolConnectionConfig { SourceToolId = gray.Id, ConnectionType = "Result" }
+                }
+            };
+
+            var result = await _service.ExecuteStepAsync(StepWithTools(gray, ensemble), MakeTestImage());
+
+            var ensembleResult = Assert.Single(result.ToolResults, t => t.ToolName == "Ensemble");
+            Assert.DoesNotContain("연결되지 않았습니다", ensembleResult.Message);
+            Assert.True(ensembleResult.Success, $"Ensemble 실패: {ensembleResult.Message}");
+        }
+
+        [Fact]
+        public async Task ExecuteStepAsync_AggregatorTools_NotSkippedWhenSourceFails()
+        {
+            // 집계 도구는 실패 정보를 수집해야 하므로 소스가 실패해도 실행한다 —
+            // 우회 목록이 VisionService.ExecuteAll 과 같아야 판정이 갈리지 않는다.
+            // 소스 없는 EnsembleTool 은 반드시 실패하므로 실패 소스로 쓴다.
+            var failing = new ToolConfig
+            {
+                Id = Guid.NewGuid().ToString(),
+                ToolType = "EnsembleTool",
+                Name = "FailingSource",
+                Parameters = new Dictionary<string, object> { ["Mode"] = "Or" }
+            };
+            var geometry = new ToolConfig
+            {
+                Id = Guid.NewGuid().ToString(),
+                ToolType = "GeometryTool",
+                Name = "Geometry",
+                Connections =
+                {
+                    new ToolConnectionConfig { SourceToolId = failing.Id, ConnectionType = "Result" }
+                }
+            };
+
+            var result = await _service.ExecuteStepAsync(StepWithTools(failing, geometry), MakeTestImage());
+
+            Assert.False(Assert.Single(result.ToolResults, t => t.ToolName == "FailingSource").Success);
+
+            // Geometry 는 실행됐어야 한다 — 소스 부족으로 실패하더라도 "건너뜀" 은 아니다.
+            var geoResult = Assert.Single(result.ToolResults, t => t.ToolName == "Geometry");
+            Assert.DoesNotContain("건너뜀", geoResult.Message);
+        }
+
+        [Fact]
+        public async Task ExecuteStepAsync_NonAggregatorTool_StillSkippedWhenSourceFails()
+        {
+            // 대조군 — 집계 도구가 아닌 일반 도구는 종전대로 건너뛴다.
+            var failing = new ToolConfig
+            {
+                Id = Guid.NewGuid().ToString(),
+                ToolType = "EnsembleTool",
+                Name = "FailingSource",
+                Parameters = new Dictionary<string, object> { ["Mode"] = "Or" }
+            };
+            var gray = MakeGrayscaleToolConfig("Downstream");
+            gray.Connections.Add(new ToolConnectionConfig
+            {
+                SourceToolId = failing.Id,
+                ConnectionType = "Result"
+            });
+
+            var result = await _service.ExecuteStepAsync(StepWithTools(failing, gray), MakeTestImage());
+
+            var downstream = Assert.Single(result.ToolResults, t => t.ToolName == "Downstream");
+            Assert.False(downstream.Success);
+            Assert.Contains("건너뜀", downstream.Message);
+        }
     }
 }
