@@ -453,41 +453,28 @@ namespace VMS.Services
                     // 우회 목록은 VisionService.ExecuteAll 과 같아야 한다. 종전에는 이쪽만
                     // ResultTool 하나였고, 그 탓에 캘리퍼 하나가 실패하면 VisionSetup 은
                     // Geometry 를 실행하는데 VMS 는 "건너뜀=실패"로 처리해 판정이 갈렸다.
-                    if (tool is not ResultTool and not GeometryTool and not Geometry3DTool and not EnsembleTool
-                        && ShouldSkipByResultConnection(tool, ctx.Connections, resultMap))
-                    {
-                        var skipResult = new VisionResult
-                        {
-                            Success = false,
-                            Message = $"연결된 도구의 결과가 실패하여 건너뜀: {tool.Name}"
-                        };
-                        resultMap[tool.Id] = skipResult;
-                        allSuccess = false;
+                    bool bypassesSkip = tool is ResultTool or GeometryTool or Geometry3DTool or EnsembleTool;
 
-                        toolSw.Stop();
-                        result.ToolResults.Add(new ToolInspectionResult
-                        {
-                            ToolName = tool.Name,
-                            ToolType = tool.ToolType,
-                            Success = false,
-                            Message = skipResult.Message,
-                            ExecutionTimeMs = toolSw.Elapsed.TotalMilliseconds,
-                            PlcMappings = tool.PlcMappings.Select(m => new VMS.Models.PlcResultMapping
-                            {
-                                ResultKey = m.ResultKey,
-                                DeviceId = string.IsNullOrWhiteSpace(m.DeviceId) ? "MainPLC" : m.DeviceId,
-                                PlcAddress = m.PlcAddress,
-                                DataType = m.DataType
-                            }).ToList()
-                        });
+                    if (!bypassesSkip && ShouldSkipByResultConnection(tool, ctx.Connections, resultMap))
+                    {
+                        RecordSkippedTool(result, resultMap, tool, toolSw,
+                            $"연결된 도구의 결과가 실패하여 건너뜀: {tool.Name}");
+                        allSuccess = false;
                         continue;
                     }
 
                     // Web 파라미터 적용 (LinkedParamCodes → 도구 프로퍼티)
                     ParameterApplyService?.ApplyParameters(tool);
 
-                    // Coordinates 연결 적용 (Fixture offset)
-                    ApplyCoordinatesConnection(tool, ctx.Connections, resultMap);
+                    // Coordinates 연결 적용 (Fixture offset) — 기준 좌표를 못 받으면 실행하지 않는다.
+                    // 실행하면 ROI 가 직전 사이클 위치에 남아 엉뚱한 자리를 측정한다.
+                    if (!TryApplyCoordinatesConnection(tool, ctx.Connections, resultMap, ctx.ToolById, out var fixtureFailure)
+                        && !bypassesSkip)
+                    {
+                        RecordSkippedTool(result, resultMap, tool, toolSw, fixtureFailure);
+                        allSuccess = false;
+                        continue;
+                    }
 
                     // Image 연결 해소
                     Mat toolInput;
@@ -994,15 +981,50 @@ namespace VMS.Services
         }
 
         /// <summary>
+        /// 건너뛴 도구를 실패로 기록 — Result 연결 실패와 Fixture 좌표 미수신이 같은 모양으로
+        /// 남아야 화면·PLC·이력에서 사유만 다르고 취급은 동일하다.
+        /// </summary>
+        private static void RecordSkippedTool(
+            StepInspectionResult result, Dictionary<string, VisionResult> resultMap,
+            VisionToolBase tool, Stopwatch toolSw, string message)
+        {
+            resultMap[tool.Id] = new VisionResult { Success = false, Message = message };
+
+            toolSw.Stop();
+            result.ToolResults.Add(new ToolInspectionResult
+            {
+                ToolName = tool.Name,
+                ToolType = tool.ToolType,
+                Success = false,
+                Message = message,
+                ExecutionTimeMs = toolSw.Elapsed.TotalMilliseconds,
+                PlcMappings = tool.PlcMappings.Select(m => new VMS.Models.PlcResultMapping
+                {
+                    ResultKey = m.ResultKey,
+                    DeviceId = string.IsNullOrWhiteSpace(m.DeviceId) ? "MainPLC" : m.DeviceId,
+                    PlcAddress = m.PlcAddress,
+                    DataType = m.DataType
+                }).ToList()
+            });
+        }
+
+        /// <summary>
         /// Coordinates 연결(Fixture) 적용 — 변환 계산은 ToolSourceInjector 한 곳에만 둔다.
         ///
         /// <para>예전에는 이 메서드가 VisionService 의 계산을 복사해 들고 있었고, 그 사이
         /// SearchRegion 시프트가 VisionSetup 에만 들어가 AUTO RUN 에서는 ShapeMatch/Color/OCV 의
         /// 탐색 영역이 안 따라가는 상태로 갈라져 있었다. 공용 호출로 바꿔 재발을 막는다.</para>
+        ///
+        /// <para>기준 좌표를 받지 못하면 <paramref name="failureReason"/> 을 채우고 false 를
+        /// 반환한다 — 호출부는 그 도구를 실행하지 말아야 한다. 실행하면 ROI 가 직전 사이클
+        /// 위치에 남아 엉뚱한 자리를 측정한다 (<see cref="ToolSourceInjector"/> 게이트 주석).</para>
         /// </summary>
-        private static void ApplyCoordinatesConnection(
-            VisionToolBase tool, List<ConnectionInfo> connections, Dictionary<string, VisionResult> resultMap)
+        private static bool TryApplyCoordinatesConnection(
+            VisionToolBase tool, List<ConnectionInfo> connections, Dictionary<string, VisionResult> resultMap,
+            Dictionary<string, VisionToolBase> toolById, out string failureReason)
         {
+            failureReason = string.Empty;
+
             var coordConnections = connections
                 .Where(c => c.TargetId == tool.Id && c.Type == VsConnectionType.Coordinates)
                 .ToList();
@@ -1012,16 +1034,31 @@ namespace VMS.Services
             {
                 foreach (var conn in coordConnections)
                 {
+                    // 소스가 아직 안 돌았거나 비활성이면 종전처럼 통과 — 고정 ROI 운용이다.
                     if (!resultMap.TryGetValue(conn.SourceId, out var sourceResult) || sourceResult.Data == null)
                         continue;
 
-                    ToolSourceInjector.ApplyFixtureTransform(tool, sourceResult.Data);
+                    var sourceName = toolById.TryGetValue(conn.SourceId, out var src) ? src.Name : conn.SourceId;
+
+                    if (!sourceResult.Success)
+                    {
+                        failureReason = ToolSourceInjector.FixtureSourceFailedMessage(tool.Name, sourceName);
+                        return false;
+                    }
+
+                    if (!ToolSourceInjector.ApplyFixtureTransform(tool, sourceResult.Data))
+                    {
+                        failureReason = ToolSourceInjector.FixtureNoCoordinatesMessage(tool.Name, sourceName);
+                        return false;
+                    }
                 }
             }
             finally
             {
                 tool.IsFixtureTransformActive = false;
             }
+
+            return true;
         }
 
         #endregion

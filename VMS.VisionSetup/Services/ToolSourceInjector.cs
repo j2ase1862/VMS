@@ -24,6 +24,25 @@ namespace VMS.VisionSetup.Services
         public readonly record struct ResultSource(
             string SourceId, VisionResult Result, string Name, string ToolType);
 
+        // ── Coordinates(Fixture) 연결 게이트 ─────────────────────────────
+        //
+        // 기준 위치를 주는 소스(FeatureMatch 등)가 실패했는데 대상 도구를 그대로 실행하면,
+        // 도구 인스턴스가 사이클 간 재사용되는 탓에 ROI 가 **직전 사이클 위치에 그대로 남아**
+        // 엉뚱한 자리를 측정한다. 제품이 없는 화면이라도 직전 자리에 엣지만 있으면 값이 나오고,
+        // 그 값이 공차에 들면 AUTO RUN 이 OK 를 내보낸다 (2026-09-22 재현: 패턴 없는 화면에
+        // 막대 두 개만 둔 이미지가 50.077mm 로 OK).
+        //
+        // 판정 규칙이 두 실행 엔진에서 갈리면 "VisionSetup 은 NG 인데 VMS 는 OK" 가 되므로
+        // 사유 메시지까지 여기에 둔다.
+
+        /// <summary>기준 좌표 소스가 실패했을 때의 건너뜀 사유.</summary>
+        public static string FixtureSourceFailedMessage(string toolName, string sourceName) =>
+            $"기준 위치를 주는 도구가 실패하여 건너뜀: {toolName} ← {sourceName}";
+
+        /// <summary>소스는 성공했으나 기준 좌표를 내주지 않았을 때의 건너뜀 사유.</summary>
+        public static string FixtureNoCoordinatesMessage(string toolName, string sourceName) =>
+            $"기준 좌표를 받지 못해 건너뜀: {toolName} ← {sourceName}";
+
         /// <summary>
         /// MatchAlignTool 소스 주입 — 포즈(CenterX/Y)를 가진 소스를 연결 순서대로
         /// 1번/2번 포인트로 채운다 (1점 모드는 1번만 사용).

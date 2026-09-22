@@ -429,9 +429,16 @@ namespace VMS.VisionSetup.Services
         /// Coordinates 연결: Source 도구의 좌표 데이터를 Target 도구에 적용.
         /// 실제 변환(이동·회전·SearchRegion)은 ToolSourceInjector 한 곳에 있다 —
         /// VMS 메인 InspectionService 도 같은 것을 부른다.
+        ///
+        /// <para>기준 좌표를 받지 못하면 <paramref name="failureReason"/> 을 채우고 false 를
+        /// 반환한다 — 호출부는 그 도구를 실행하지 말아야 한다. 실행하면 ROI 가 직전 실행
+        /// 위치에 남아 엉뚱한 자리를 측정한다 (<see cref="ToolSourceInjector"/> 게이트 주석).</para>
         /// </summary>
-        private void ApplyCoordinatesConnection(VisionToolBase tool, Dictionary<string, VisionResult> resultMap)
+        private bool TryApplyCoordinatesConnection(
+            VisionToolBase tool, Dictionary<string, VisionResult> resultMap, out string failureReason)
         {
+            failureReason = string.Empty;
+
             var coordConnections = _connections
                 .Where(c => c.TargetId == tool.Id && c.Type == ConnectionType.Coordinates)
                 .ToList();
@@ -442,8 +449,17 @@ namespace VMS.VisionSetup.Services
             {
                 foreach (var conn in coordConnections)
                 {
+                    // 소스가 아직 안 돌았거나 비활성이면 종전처럼 통과 — 고정 ROI 운용이다.
                     if (!resultMap.TryGetValue(conn.SourceId, out var sourceResult) || sourceResult.Data == null)
                         continue;
+
+                    var sourceName = Tools.FirstOrDefault(t => t.Id == conn.SourceId)?.Name ?? conn.SourceId;
+
+                    if (!sourceResult.Success)
+                    {
+                        failureReason = ToolSourceInjector.FixtureSourceFailedMessage(tool.Name, sourceName);
+                        return false;
+                    }
 
                     // PolarUnwrapTool 특수 처리 — CircleFit/SourceCenter를 그대로 Center/Radius로 주입
                     // (ROI fixture 변환과 다른 의미 — 회전/이동 보정이 아니라 원의 실제 위치 전달)
@@ -466,13 +482,19 @@ namespace VMS.VisionSetup.Services
                         continue; // fixture 경로 스킵
                     }
 
-                    ToolSourceInjector.ApplyFixtureTransform(tool, sourceResult.Data);
+                    if (!ToolSourceInjector.ApplyFixtureTransform(tool, sourceResult.Data))
+                    {
+                        failureReason = ToolSourceInjector.FixtureNoCoordinatesMessage(tool.Name, sourceName);
+                        return false;
+                    }
                 }
             }
             finally
             {
                 tool.IsFixtureTransformActive = false;
             }
+
+            return true;
         }
 
         #endregion
@@ -664,8 +686,16 @@ namespace VMS.VisionSetup.Services
             {
                 if (!dep.IsEnabled) continue;
 
-                // Apply coordinates connection for upstream dependencies too
-                ApplyCoordinatesConnection(dep, resultMap);
+                // Apply coordinates connection for upstream dependencies too.
+                // 기준 좌표를 못 받은 업스트림은 실행하지 않는다 — 직전 ROI 로 돌면
+                // 그 결과가 아래 도구의 기준이 되어 오차가 조용히 전파된다.
+                if (!TryApplyCoordinatesConnection(dep, resultMap, out var depFixtureFailure))
+                {
+                    var depSkip = new VisionResult { Success = false, Message = depFixtureFailure };
+                    dep.LastResult = depSkip;
+                    resultMap[dep.Id] = depSkip;
+                    continue;
+                }
 
                 var depConnected = GetConnectedInputImage(dep, resultMap);
                 Mat depInput;
@@ -697,8 +727,17 @@ namespace VMS.VisionSetup.Services
                 }
             }
 
-            // Apply coordinates connection: shift ROI based on source tool's result
-            ApplyCoordinatesConnection(tool, resultMap);
+            // Apply coordinates connection: shift ROI based on source tool's result.
+            // 기준 좌표가 없으면 실행하지 않고 사유를 결과로 돌려준다 (직전 ROI 재사용 금지).
+            if (!TryApplyCoordinatesConnection(tool, resultMap, out var toolFixtureFailure))
+            {
+                foreach (var ci in clonedInputs)
+                    ci.Dispose();
+
+                var fixtureSkip = new VisionResult { Success = false, Message = toolFixtureFailure };
+                tool.LastResult = fixtureSkip;
+                return fixtureSkip;
+            }
 
             // Resolve connected input for the target tool
             // HeightSlicerTool: 연결이 없을 때 CV_32FC1 depth map 입력
@@ -877,7 +916,9 @@ namespace VMS.VisionSetup.Services
 
                 // 1. Result 연결 확인: Source가 실패이면 건너뛰기
                 //    ResultTool / EnsembleTool은 실패 정보를 수집해야 하므로 스킵 우회
-                if (tool is not ResultTool and not GeometryTool and not Geometry3DTool and not EnsembleTool && ShouldSkipByResultConnection(tool, resultMap))
+                bool bypassesSkip = tool is ResultTool or GeometryTool or Geometry3DTool or EnsembleTool;
+
+                if (!bypassesSkip && ShouldSkipByResultConnection(tool, resultMap))
                 {
                     var skipResult = new VisionResult
                     {
@@ -890,8 +931,17 @@ namespace VMS.VisionSetup.Services
                     continue;
                 }
 
-                // 2. Coordinates 연결: Source의 좌표 데이터를 현재 도구에 적용
-                ApplyCoordinatesConnection(tool, resultMap);
+                // 2. Coordinates 연결: Source의 좌표 데이터를 현재 도구에 적용.
+                //    기준 좌표를 못 받으면 실행하지 않는다 — 직전 위치의 ROI 로 측정하면
+                //    제품이 없어도 값이 나와 OK 가 될 수 있다.
+                if (!TryApplyCoordinatesConnection(tool, resultMap, out var fixtureFailure) && !bypassesSkip)
+                {
+                    var fixtureSkip = new VisionResult { Success = false, Message = fixtureFailure };
+                    results.Add(fixtureSkip);
+                    resultMap[tool.Id] = fixtureSkip;
+                    allSuccess = false;
+                    continue;
+                }
 
                 // 3. Image 연결: 연결된 Source의 출력 이미지를 입력으로 사용
                 //    연결이 없으면 원본 이미지 사용 (각 도구가 독립적으로 원본 처리)
