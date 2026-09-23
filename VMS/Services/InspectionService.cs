@@ -513,13 +513,13 @@ namespace VMS.Services
                         {
                             if (compositeOverlay == null)
                             {
-                                compositeOverlay = toolResult.OverlayImage.Clone();
-                                if (compositeOverlay.Channels() == 1)
-                                    Cv2.CvtColor(compositeOverlay, compositeOverlay, ColorConversionCodes.GRAY2BGR);
+                                compositeOverlay = VMS.VisionSetup.Services.OverlayComposer.CreateComposite(
+                                    toolResult.OverlayImage, inputImage);
                             }
                             else
                             {
-                                MergeOverlayGraphics(toolResult.OverlayImage, inputImage, compositeOverlay);
+                                VMS.VisionSetup.Services.OverlayComposer.Merge(
+                                    toolResult.OverlayImage, inputImage, compositeOverlay);
                             }
                         }
 
@@ -1118,46 +1118,5 @@ namespace VMS.Services
 
         #endregion
 
-        #region Overlay Merging
-
-        private static void MergeOverlayGraphics(Mat overlay, Mat baseInput, Mat composite)
-        {
-            Mat overlayBGR = overlay;
-            Mat inputBGR = baseInput;
-            bool disposeOverlay = false, disposeInput = false;
-
-            if (overlay.Channels() == 1)
-            {
-                overlayBGR = new Mat();
-                Cv2.CvtColor(overlay, overlayBGR, ColorConversionCodes.GRAY2BGR);
-                disposeOverlay = true;
-            }
-            if (baseInput.Channels() == 1)
-            {
-                inputBGR = new Mat();
-                Cv2.CvtColor(baseInput, inputBGR, ColorConversionCodes.GRAY2BGR);
-                disposeInput = true;
-            }
-
-            try
-            {
-                if (overlayBGR.Size() != composite.Size()) return;
-
-                using var diff = new Mat();
-                Cv2.Absdiff(overlayBGR, inputBGR, diff);
-                using var grayDiff = new Mat();
-                Cv2.CvtColor(diff, grayDiff, ColorConversionCodes.BGR2GRAY);
-                using var mask = new Mat();
-                Cv2.Threshold(grayDiff, mask, 1, 255, ThresholdTypes.Binary);
-                overlayBGR.CopyTo(composite, mask);
-            }
-            finally
-            {
-                if (disposeOverlay) overlayBGR.Dispose();
-                if (disposeInput) inputBGR.Dispose();
-            }
-        }
-
-        #endregion
     }
 }

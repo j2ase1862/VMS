@@ -1464,3 +1464,57 @@ WO 완료는 N번째 사이클의 **판정 업로드 응답**으로 온다(Web `
 ### 매뉴얼 반영
 
 §4 AUTO RUN 의 작업지시 완료 설명에 "진행 중인 제품까지 판정한 뒤 자동 정지" 한 줄.
+
+---
+
+## 39. 현장 3D 촬영본 검증 — Registration 발산 · 측정 실패 화소 · PlaneFit 합성 중단 (v1.42.3) — **반영 대기**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-09-23 |
+| 대상 | 본편 §6 3D 도구(Registration · PlaneFit · 3D Geometry) 설명 · §12 문제 조치 (서술 보강 검토) |
+| 변경 종류 | 결함 수정 3건 |
+
+### 검증 (사내 기록)
+
+현장 Mech-Mind 촬영본 `.vpc` 10장(2048×1536 격자, v1.42.0 이전 촬영 → X/Y 화소·Z mm)으로 3D 도구 7종을
+앱과 같은 `VisionService.ExecuteAll` 경로로 실행하고, VMS 를 거치지 않은 독립 계산값과 대조했다.
+장면: 카메라 ≈1.89m, 휜 패널(선형 평면 잔차 5~8mm) 위 금속 프레임 1개, 매 장 위치·각도만 다름.
+독립 기준값: 프레임 윗면 높이 86~92mm.
+
+하네스 `VMS.VisionSetup.Tests/Field3DToolValidationDiagnosticTests.cs`(CI 제외).
+
+| 도구 | 결과(수정 후) |
+|---|---|
+| Filter(voxel 4) | 314만 → 42만점, 0.2초 |
+| HeightSlicer → MaskCrop(격자) | 프레임 윗면 밴드만 추출 |
+| Cluster | 기본 Tolerance 5 는 금속 점 누락으로 프레임 2~4조각, 30 에서 대부분 1개 |
+| PlaneFit | 패널 법선 10장 일정 |
+| 3D Geometry 점-평면 | **85.3~92.2mm** (기준값 일치) |
+| Registration | 온전한 프레임끼리 회전각 일치(−25.0/−8.7/−31.0° vs 기준 −25.3/−8.7/−31.2°), 부분 프레임은 실패, Coarse(PCA)는 평평한 부품을 뒤집음 |
+
+### 결함과 수정
+
+1. **Registration(ICP) 발산** — `TransformUtils.ICP` 가 행벡터 규약에 열벡터 회전(V·Uᵀ)을 써 회전 방향이 반대였고,
+   특이값을 정렬하지 않아 반사 보정이 엉뚱한 축을 뒤집었다. 평면에 가까운 부품은 **순수 평행이동 10px 도 풀지 못했다**
+   (기존 테스트는 입체 큐브의 평행이동만 확인). → `SolveRigidTransform`(Kabsch, OpenCV SVD, double).
+   ⚠ **Registration 을 쓰던 레시피는 결과가 달라진다 — 새 값이 맞다.**
+2. **측정 실패 화소(Z=0)가 3D 점으로 사용** — 격자 점군의 Height Map 이 측정 실패 화소를 `(x, y, 0)` 점으로 넣어
+   PlaneFit 평면도 ≈1,900mm, 3D Geometry 수동 점(기본 0,0) = 카메라 거리(1,825mm)를 **성공으로** 냈다.
+   → 측정 실패 화소는 "점 없음". 3D Geometry 는 점이 없으면 실패 + 안내("수동 점이 켜져 있어 연결한 점이 쓰이지 않았습니다" 등).
+3. **PlaneFit + 다른 도구 오버레이 → Run 전체 중단** — PlaneFit 의 반투명(4채널) 오버레이를 합성하다 예외.
+   VisionSetup·VMS 메인에 중복돼 있던 합성 코드를 `OverlayComposer` 로 통합하고 반투명 합성으로 처리.
+
+회귀 테스트 8건(`Field3DDefectRegressionTests`) — 평면 부품 ICP 3건 · 측정 실패 화소 3건 · 오버레이 합성 2건.
+
+### 남은 제안 (사용자 결정)
+
+- Registration 이 신뢰도(Confidence)가 낮아도 성공으로 보고 — 판정 임계 파라미터
+- 3D Geometry 의 "수동 점 사용" 기본값이 켜짐이라 연결한 클러스터가 무시됨
+- PlaneFit 평면도 = ROI 전체 max−min — GS 기대값은 대상 면만 든 ROI 로
+- v1.42.0+ 촬영본(내부 파라미터 有)에서 3D Geometry 가 mm(클러스터 중심)와 화소(평면 좌표)를 섞을 가능성 — 새 촬영본으로 확인
+
+### 매뉴얼 반영
+
+§6 Registration: 위에서 내려다보는 평평한 부품은 거친 정렬(Coarse) 끄기 권장 · 실데이터 Tolerance 는 mm 수준(예: 2).
+§6 3D Geometry: 클러스터 중심을 쓰려면 "수동 점 사용" 끄기. §12: "Registration 결과가 엉뚱하다"·"평면도가 비정상적으로 크다" 조치.
