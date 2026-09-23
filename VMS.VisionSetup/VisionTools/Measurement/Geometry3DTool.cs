@@ -41,6 +41,14 @@ namespace VMS.VisionSetup.VisionTools.Measurement
         /// <summary>점 (X, Y, Z in mm)</summary>
         public Vector3 Point { get; set; }
 
+        /// <summary>
+        /// 점의 점군 원좌표 (카메라 격자 점군이면 X/Y 화소, Z mm) — PlaneFit 평면과 같은 좌표계.
+        /// 클러스터 소스만 채운다. 점-평면 거리는 이 값을 써야 한다: 치수 환산(AutoFromCamera)을 켜면
+        /// <see cref="Point"/> 는 실제 mm 인데 평면은 원좌표라, 섞으면 높이 90mm 가 55mm 로 나왔다
+        /// (2026-09-23 현장 촬영본).
+        /// </summary>
+        public Vector3? RawPoint { get; set; }
+
         /// <summary>평면 방정식 계수 (ax + by + cz + d = 0), 법선 정규화됨</summary>
         public double PlaneA { get; set; }
         public double PlaneB { get; set; }
@@ -212,6 +220,12 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                     {
                         geo.Point = new Vector3(
                             Convert.ToSingle(cx), Convert.ToSingle(cy), Convert.ToSingle(cz));
+                        if (data.TryGetValue($"Cluster{clusterIndex}_CenterX", out var rx) &&
+                            data.TryGetValue($"Cluster{clusterIndex}_CenterY", out var ry))
+                        {
+                            geo.RawPoint = new Vector3(
+                                Convert.ToSingle(rx), Convert.ToSingle(ry), Convert.ToSingle(cz));
+                        }
                         geo.HasPoint = true;
                         geo.ToolName = $"{toolName}[{clusterIndex}]";
                         return geo;
@@ -340,10 +354,11 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             }
             else
             {
-                // 연결 순서와 무관하게 첫 번째 '점' 소스 사용 (평면이 먼저 연결돼도 동작)
+                // 연결 순서와 무관하게 첫 번째 '점' 소스 사용 (평면이 먼저 연결돼도 동작).
+                // 평면(PlaneFit)은 점군 원좌표로 맞춘 것이므로 점도 원좌표를 쓴다 — mm 환산 좌표와 섞지 않는다.
                 var ptSrc = SourceGeometries.FirstOrDefault(s => s.HasPoint);
                 if (ptSrc != null)
-                    point = ptSrc.Point;
+                    point = ptSrc.RawPoint ?? ptSrc.Point;
             }
 
             // 평면 획득 (SourceGeometries에서)

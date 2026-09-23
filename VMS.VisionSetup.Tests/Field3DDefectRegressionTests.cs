@@ -146,6 +146,35 @@ namespace VMS.VisionSetup.Tests
             }
         }
 
+        [Fact]
+        public void Geometry3D_PointToPlane_UsesClusterRawCenter_NotMmCenter()
+        {
+            // 현장 촬영본(내부 파라미터 有) 값 그대로: 클러스터 AutoFromCamera → 중심 mm (47.7, -186.5),
+            // 원좌표 (991, 581) 화소. 패널 평면은 PlaneFit 이 원좌표로 맞춘 것.
+            var cluster = new VisionResult { Success = true };
+            cluster.Data["Cluster0_CenterX"] = 991.0;
+            cluster.Data["Cluster0_CenterY"] = 581.0;
+            cluster.Data["Cluster0_CenterZ"] = 1803.0;
+            cluster.Data["Cluster0_CenterXMm"] = 47.7;
+            cluster.Data["Cluster0_CenterYMm"] = -186.5;
+            var plane = new VisionResult { Success = true };
+            plane.Data["PlaneA"] = -0.0359; plane.Data["PlaneB"] = -0.0012;
+            plane.Data["PlaneC"] = 0.9994; plane.Data["PlaneD"] = -1855.5;
+
+            var geo = new Geometry3DTool { Operation = Geometry3DOperation.PointToPlaneDistance, UseManualPoints = false };
+            geo.ClearSourceGeometries();
+            geo.CollectSourceGeometry("p", "Panel", "PlaneFitTool", plane);
+            geo.CollectSourceGeometry("c", "Cluster", "PointCloudClusterTool", cluster);
+            geo.FinalizeSourceGeometries();
+
+            using var img = new Mat(10, 10, MatType.CV_8UC1, Scalar.All(0));
+            var r = geo.Execute(img);
+
+            Assert.True(r.Success, r.Message);
+            // 원좌표로 풀면 ≈ 90mm (도구 밖 평면식 계산과 일치), mm 좌표를 섞으면 ≈ 55mm 였다
+            Assert.InRange(Convert.ToDouble(r.Data["Distance3D"]), 89.5, 90.5);
+        }
+
         // ── ③ 오버레이 합성 ──
 
         [Fact]

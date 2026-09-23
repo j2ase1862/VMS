@@ -41,6 +41,12 @@ namespace VMS.Camera.Models
         // DataFlags
         public const uint FlagHas2D = 0x01;
         public const uint FlagHas3D = 0x02;
+        // 점군 카메라 내부 파라미터(fx, fy, cx, cy — double×4) 가 색상 뒤에 붙어 있음.
+        // 헤더가 꽉 차 있어 바디 끝에 둔다 — 구버전 Reader 는 모르는 플래그와 꼬리를 무시하므로
+        // Version 을 올리지 않는다. 없으면 VisionSetup 이 "Grab from VMS" 로 받은 점군을 저장할 때
+        // 내부 파라미터가 빠져 X/Y 치수를 mm 로 잴 수 없었다 (2026-09-23 현장).
+        public const uint FlagHasIntrinsics = 0x04;
+        public const int IntrinsicsBytes = 32;
 
         // Header field offsets
         public const int OffsetMagic = 0;

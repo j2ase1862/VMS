@@ -138,7 +138,11 @@ namespace VMS.Camera.Services
                 if (result.Image2D != null && !result.Image2D.Empty())
                     flags |= SharedFrameConstants.FlagHas2D;
                 if (result.PointCloud != null && result.PointCloud.PointCount > 0)
+                {
                     flags |= SharedFrameConstants.FlagHas3D;
+                    if (result.PointCloud.Intrinsics != null)
+                        flags |= SharedFrameConstants.FlagHasIntrinsics;
+                }
 
                 var counter = Interlocked.Increment(ref _frameCounter);
 
@@ -171,6 +175,8 @@ namespace VMS.Camera.Services
                     bodySize += (long)imgStride * imgH;
                 if ((flags & SharedFrameConstants.FlagHas3D) != 0)
                     bodySize += nameBytes.Length + (long)ptCount * 12 + (long)ptCount * 4;
+                if ((flags & SharedFrameConstants.FlagHasIntrinsics) != 0)
+                    bodySize += SharedFrameConstants.IntrinsicsBytes;
 
                 if (bodySize > SharedFrameConstants.MmfCapacity)
                     return; // 용량 초과 시 스킵
@@ -249,6 +255,17 @@ namespace VMS.Camera.Services
                         colorBytes[i * 4 + 3] = pc.Colors[i].A;
                     }
                     accessor.WriteArray(offset, colorBytes, 0, colorBytes.Length);
+                    offset += colorBytes.Length;
+
+                    // 카메라 내부 파라미터 (있을 때만 — FlagHasIntrinsics)
+                    if ((flags & SharedFrameConstants.FlagHasIntrinsics) != 0)
+                    {
+                        var intr = pc.Intrinsics!;
+                        accessor.Write(offset, intr.Fx);
+                        accessor.Write(offset + 8, intr.Fy);
+                        accessor.Write(offset + 16, intr.Cx);
+                        accessor.Write(offset + 24, intr.Cy);
+                    }
                 }
 
                 // ── 새 프레임 알림 ──
