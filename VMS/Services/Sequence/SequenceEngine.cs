@@ -53,9 +53,34 @@ namespace VMS.Services.Sequence
         private InputCheckMode _resetCheckMode;
         private int? _resetCompareValue;
 
+        // 사이클 경계 정지 (WO 완료 등) — 진행 중인 사이클은 판정·출력·집계까지 끝낸 뒤 멈춘다.
+        // 사이클 진행 중 = 경계(시작/Repeat) 이후 트리거 대기(InputCheck)가 충족됐거나 검사가 시작됨.
+        private readonly object _boundaryLock = new();
+        private bool _stopAtBoundaryRequested;
+        private bool _cycleActive;
+        private CancellationTokenSource? _idleWaitCts;
+
         public bool IsRunning { get; private set; }
         public string? CurrentNodeId { get; private set; }
         public bool WasReset { get; private set; }
+
+        /// <summary>마지막 RunAsync 가 사이클 경계 정지 요청으로 끝났는지.</summary>
+        public bool StoppedAtCycleBoundary { get; private set; }
+
+        /// <summary>
+        /// 사이클 경계에서 멈추도록 요청한다. 트리거를 기다리는 중(사이클 밖)이면 대기를 끊고
+        /// 바로 끝내고, 사이클 진행 중이면 그 사이클을 끝까지(판정·출력·Repeat) 수행한 뒤 끝낸다.
+        /// 즉시 취소(Stop)는 진행 중인 제품의 출력·집계를 끊어 설비가 NG 로 처리하게 만든다.
+        /// </summary>
+        public void RequestStopAtCycleBoundary()
+        {
+            lock (_boundaryLock)
+            {
+                _stopAtBoundaryRequested = true;
+                if (!_cycleActive)
+                    _idleWaitCts?.Cancel();
+            }
+        }
 
         public event EventHandler<SequenceNodeEventArgs>? NodeExecuting;
         public event EventHandler<SequenceNodeEventArgs>? NodeCompleted;
@@ -100,6 +125,8 @@ namespace VMS.Services.Sequence
             if (IsRunning) return;
             IsRunning = true;
             WasReset = false;
+            StoppedAtCycleBoundary = false;
+            lock (_boundaryLock) _cycleActive = false;
             _repeatCounters.Clear();
             _cameraResults.Clear();
             _lastInspectionOk = true;
@@ -196,6 +223,13 @@ namespace VMS.Services.Sequence
                         break;
                     }
 
+                    // 사이클 밖에서 경계 정지가 요청됐으면 다음 노드를 시작하지 않는다.
+                    if (IsStopRequestedOutsideCycle())
+                    {
+                        StoppedAtCycleBoundary = true;
+                        break;
+                    }
+
                     CurrentNodeId = currentNodeId;
                     var cameraId = node.NodeType == SequenceNodeType.Inspection ? node.CameraId : null;
                     var args = new SequenceNodeEventArgs(node.Id, node.Name, node.NodeType, cameraId);
@@ -203,7 +237,34 @@ namespace VMS.Services.Sequence
 
                     try
                     {
-                        var nextId = await ExecuteNodeAsync(node, config, combinedCts.Token);
+                        string? nextId;
+                        if (node.NodeType == SequenceNodeType.InputCheck
+                            && TryBeginIdleWait(combinedCts.Token, out var idleCts))
+                        {
+                            // 사이클 밖의 트리거 대기 — 경계 정지 요청이 이 대기만 끊을 수 있게 별도 토큰.
+                            // (보드 대기는 취소를 삼키고 정상 반환하므로 반환값이 아니라 토큰으로 판단한다.)
+                            try
+                            {
+                                nextId = await ExecuteNodeAsync(node, config, idleCts!.Token);
+                            }
+                            catch (OperationCanceledException) when (idleCts!.IsCancellationRequested
+                                                                     && !combinedCts.IsCancellationRequested)
+                            {
+                                nextId = null;
+                            }
+                            finally
+                            {
+                                if (EndIdleWait(idleCts!))
+                                    StoppedAtCycleBoundary = true;
+                            }
+                            if (StoppedAtCycleBoundary) break;
+                        }
+                        else
+                        {
+                            if (node.NodeType == SequenceNodeType.Inspection)
+                                lock (_boundaryLock) _cycleActive = true;
+                            nextId = await ExecuteNodeAsync(node, config, combinedCts.Token);
+                        }
                         NodeCompleted?.Invoke(this, args);
                         currentNodeId = nextId;
                     }
@@ -632,11 +693,60 @@ namespace VMS.Services.Sequence
             }
         }
 
+        // --- 사이클 경계 정지 helpers ---
+
+        private bool IsStopRequestedOutsideCycle()
+        {
+            lock (_boundaryLock) return _stopAtBoundaryRequested && !_cycleActive;
+        }
+
+        /// <summary>사이클 밖이면 트리거 대기용 토큰을 만든다. 사이클 진행 중이면 false (일반 대기).</summary>
+        private bool TryBeginIdleWait(CancellationToken outer, out CancellationTokenSource? idleCts)
+        {
+            lock (_boundaryLock)
+            {
+                if (_cycleActive)
+                {
+                    idleCts = null;
+                    return false;
+                }
+                idleCts = CancellationTokenSource.CreateLinkedTokenSource(outer);
+                _idleWaitCts = idleCts;
+                if (_stopAtBoundaryRequested) idleCts.Cancel();   // 확인과 등록 사이에 들어온 요청
+                return true;
+            }
+        }
+
+        /// <summary>대기 종료 — 정지 요청으로 끊겼으면 true, 아니면 트리거 충족 = 사이클 시작.</summary>
+        private bool EndIdleWait(CancellationTokenSource idleCts)
+        {
+            bool stopped;
+            lock (_boundaryLock)
+            {
+                _idleWaitCts = null;
+                stopped = _stopAtBoundaryRequested && idleCts.IsCancellationRequested;
+                if (!stopped) _cycleActive = true;
+            }
+            idleCts.Dispose();
+            return stopped;
+        }
+
         // --- Repeat: 반복 제어 ---
         private string? ExecuteRepeat(SequenceNodeConfig node)
         {
             // Repeat 노드 도달 = 사이클 경계 (무한/유한, 루프백/탈출 모두 동일)
             FireCycleCompletedIfInspected(resetForNextCycle: true);
+
+            lock (_boundaryLock)
+            {
+                _cycleActive = false;
+                if (_stopAtBoundaryRequested)
+                {
+                    // 이 사이클은 끝까지 수행됐다 — 다음 트리거를 받지 않고 끝낸다.
+                    StoppedAtCycleBoundary = true;
+                    return null;
+                }
+            }
 
             if (node.RepeatCount == -1)
             {

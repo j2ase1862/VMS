@@ -49,6 +49,12 @@ namespace VMS.Interfaces
         /// <summary>Stop the auto process and clear all output signals</summary>
         Task StopAsync();
 
+        /// <summary>
+        /// 사이클 경계에서 정지 — 진행 중인 사이클은 판정·출력·집계까지 끝낸 뒤 멈춘다.
+        /// timeout 안에 경계에 닿지 못하면 즉시 정지로 넘어간다.
+        /// </summary>
+        Task StopAfterCycleAsync(TimeSpan timeout);
+
         /// <summary>Get the current state of a specific camera channel</summary>
         AutoProcessState GetCameraState(string cameraId);
     }

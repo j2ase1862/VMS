@@ -100,9 +100,19 @@ namespace VMS.Services
             _ioRegistry = ioRegistry;
         }
 
+        // 사이클 경계 정지 (WO 완료) — 실행 중 엔진에 전달하고, 운전 루프가 다음 RunAsync 를 시작하지 않게 한다.
+        private readonly SemaphoreSlim _stopLock = new(1, 1);
+        private volatile bool _stopAfterCycleRequested;
+        private SequenceEngine? _currentEngine;
+
+        // 사이클 업로드는 fire-and-forget — 정지 시 사이클 버퍼를 비우기 전에 끝나기를 기다린다
+        // (마지막 사이클이 정지 직후 업로드되면서 비워진 버퍼를 읽는 경합 방지).
+        private readonly List<Task> _pendingUploads = new();
+
         public async Task StartAsync(CancellationToken cancellationToken = default)
         {
             if (IsRunning) return;
+            _stopAfterCycleRequested = false;
 
             _cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             IsRunning = true;
@@ -149,7 +159,49 @@ namespace VMS.Services
             }
         }
 
+        /// <summary>
+        /// 사이클 경계에서 정지 — 진행 중인 사이클(판정·출력·집계)을 끝낸 뒤 멈추고, 트리거 대기 중이면
+        /// 바로 멈춘다. <paramref name="timeout"/> 안에 경계에 닿지 못하면(예: PLC 응답 대기에 멈춤)
+        /// 즉시 정지로 넘어간다. 정리 작업은 <see cref="StopAsync"/> 와 같다.
+        /// </summary>
+        public async Task StopAfterCycleAsync(TimeSpan timeout)
+        {
+            if (!IsRunning) return;
+
+            _stopAfterCycleRequested = true;
+            _currentEngine?.RequestStopAtCycleBoundary();
+            _logService?.Log("진행 중인 사이클을 마친 뒤 자동 운전을 정지합니다.", LogLevel.Info, "AutoProcess");
+
+            var processTask = _processTask;
+            if (processTask != null)
+            {
+                var finished = await Task.WhenAny(processTask, Task.Delay(timeout)) == processTask;
+                if (!finished)
+                {
+                    _logService?.Log(
+                        $"사이클이 {timeout.TotalSeconds:0}초 안에 끝나지 않아 즉시 정지합니다.",
+                        LogLevel.Warning, "AutoProcess");
+                }
+            }
+
+            await StopAsync();
+        }
+
         public async Task StopAsync()
+        {
+            // 수동 정지와 WO 완료 정지가 겹칠 수 있다 — 정리는 한 번만.
+            await _stopLock.WaitAsync();
+            try
+            {
+                await StopCoreAsync();
+            }
+            finally
+            {
+                _stopLock.Release();
+            }
+        }
+
+        private async Task StopCoreAsync()
         {
             if (!IsRunning) return;
 
@@ -183,6 +235,22 @@ namespace VMS.Services
                 await _plc.DisconnectAsync();
             }
 
+            // 마지막 사이클 업로드가 버퍼를 읽기 전에 아래에서 버퍼를 비우지 않도록 기다린다.
+            Task[] uploads;
+            lock (_pendingUploads)
+            {
+                uploads = _pendingUploads.ToArray();
+                _pendingUploads.Clear();
+            }
+            if (uploads.Length > 0)
+            {
+                var all = Task.WhenAll(uploads);
+                if (await Task.WhenAny(all, Task.Delay(TimeSpan.FromSeconds(10))) != all)
+                    _logService?.Log("사이클 결과 업로드가 10초 안에 끝나지 않았습니다 — 정지를 계속합니다.",
+                        LogLevel.Warning, "AutoProcess");
+            }
+
+            _currentEngine = null;
             _processTask = null;
             _cameraStates.Clear();
             _cts?.Dispose();
@@ -222,6 +290,9 @@ namespace VMS.Services
                 _setResultFunc, _resetFunc, _getToolResultsFunc,
                 _recipeChangeByIndexFunc, _stepChangeFunc,
                 ioRegistry: _ioRegistry);
+            _currentEngine = engine;
+            if (_stopAfterCycleRequested)
+                engine.RequestStopAtCycleBoundary();
 
             // 시퀀스가 비었으면 RunAsync 가 즉시 리턴해 아래 루프가 무한 스핀한다 —
             // 시작 전에 한 번 검증하고 원인을 남긴 뒤 중단.
@@ -252,7 +323,7 @@ namespace VMS.Services
             {
                 engine.CycleCompleted += (s, e) =>
                 {
-                    _ = Task.Run(async () =>
+                    var upload = Task.Run(async () =>
                     {
                         try { await _cycleUploadFunc(e.AllInspectionsOk); }
                         catch (Exception ex)
@@ -261,6 +332,7 @@ namespace VMS.Services
                                 LogLevel.Warning, "AutoProcess");
                         }
                     });
+                    lock (_pendingUploads) _pendingUploads.Add(upload);
                 };
             }
 
@@ -288,7 +360,16 @@ namespace VMS.Services
                     // 이번 사이클의 MultiStepAlign 계산에 섞이지 않게 한다.
                     VMS.VisionSetup.Services.StepPoseStore.BeginCycle();
 
+                    if (_stopAfterCycleRequested) break;
+
                     await engine.RunAsync(config, ct);
+
+                    // 사이클 경계 정지 — 마지막 사이클은 판정·출력·업로드까지 끝났다.
+                    if (_stopAfterCycleRequested || engine.StoppedAtCycleBoundary)
+                    {
+                        _logService?.Log("사이클 경계에서 자동 운전을 정지했습니다.", LogLevel.Info, "AutoProcess");
+                        break;
+                    }
 
                     // 노드 오류로 중단된 경우 — 즉시 재시도하면 초당 수천 회 실패를 반복(busy loop)하므로
                     // 오류 복구 지연을 두고 다시 시도한다.
