@@ -324,56 +324,8 @@ namespace VMS.Camera.Utils
 
                 if (validPairs < 3) break;
 
-                float invN = 1.0f / validPairs;
-                srcCentroid *= invN;
-                refCentroid *= invN;
-
-                // 3. Compute cross-covariance matrix H (3x3)
-                float h11 = 0, h12 = 0, h13 = 0;
-                float h21 = 0, h22 = 0, h23 = 0;
-                float h31 = 0, h32 = 0, h33 = 0;
-
-                for (int i = 0; i < srcCount; i++)
-                {
-                    if (correspondences[i] < 0) continue;
-
-                    var ps = srcPoints[i] - srcCentroid;
-                    var pr = reference.Positions[correspondences[i]] - refCentroid;
-
-                    h11 += ps.X * pr.X; h12 += ps.X * pr.Y; h13 += ps.X * pr.Z;
-                    h21 += ps.Y * pr.X; h22 += ps.Y * pr.Y; h23 += ps.Y * pr.Z;
-                    h31 += ps.Z * pr.X; h32 += ps.Z * pr.Y; h33 += ps.Z * pr.Z;
-                }
-
-                // 4. SVD via Jacobi iteration (3x3 특화)
-                SvdDecompose3x3(
-                    h11, h12, h13, h21, h22, h23, h31, h32, h33,
-                    out var U, out var Vt);
-
-                // R = V × U^T — U 는 SvdDecompose3x3 에서 정규직교 보장되므로
-                // 역행렬 대신 전치 사용 (특이 행렬 Invert 실패 → NaN 오염 경로 제거)
-                var Ut = Transpose3x3(U);
-                var rotation = Vt * Ut;
-
-                // det(R) < 0이면 반사 보정
-                if (Matrix4x4Determinant3x3(rotation) < 0)
-                {
-                    // V의 3번째 열 부호 반전
-                    Vt.M31 = -Vt.M31;
-                    Vt.M32 = -Vt.M32;
-                    Vt.M33 = -Vt.M33;
-                    rotation = Vt * Ut;
-                }
-
-                // t = refCentroid - R × srcCentroid
-                var rotatedSrcCentroid = Vector3.Transform(srcCentroid, rotation);
-                var translation = refCentroid - rotatedSrcCentroid;
-
-                // 변환 행렬 합성
-                var stepTransform = rotation;
-                stepTransform.M41 = translation.X;
-                stepTransform.M42 = translation.Y;
-                stepTransform.M43 = translation.Z;
+                // 3~4. 대응점 쌍으로 최적 강체 변환 (Kabsch)
+                var stepTransform = SolveRigidTransform(srcPoints, reference.Positions, correspondences);
 
                 // 소스 점 업데이트
                 for (int i = 0; i < srcCount; i++)
@@ -409,6 +361,85 @@ namespace VMS.Camera.Utils
                 Converged = converged
             };
             return accumulatedTransform;
+        }
+
+        /// <summary>
+        /// 대응점 쌍(src[i] ↔ dst[corr[i]])을 가장 잘 맞추는 강체 변환 — Kabsch, double 정밀도.
+        /// 반환 행렬은 System.Numerics 규약(행벡터, <c>Vector3.Transform(p, M)</c>)이다.
+        ///
+        /// <para>종전 구현(간이 Jacobi SVD)의 결함 3가지를 대체한다 (2026-09-23 현장 3D 검증):
+        /// ① 열벡터 규약의 R=V·Uᵀ 를 행벡터 변환에 그대로 써 회전 방향이 반대였고,
+        /// ② 특이값을 정렬하지 않아 반사 보정이 엉뚱한 축을 뒤집었으며,
+        /// ③ 평면 물체(특이값 하나 ≈ 0)에서 U 의 셋째 열을 외적으로 재구성하며 부호가 틀렸다.
+        /// 그 결과 평면에 가까운 부품은 순수 평행이동조차 풀지 못하고 발산했다.</para>
+        /// </summary>
+        internal static Matrix4x4 SolveRigidTransform(Vector3[] src, Vector3[] dst, int[] corr)
+        {
+            double sx = 0, sy = 0, sz = 0, dx = 0, dy = 0, dz = 0;
+            int n = 0;
+            for (int i = 0; i < src.Length; i++)
+            {
+                if (corr[i] < 0) continue;
+                var s = src[i]; var d = dst[corr[i]];
+                sx += s.X; sy += s.Y; sz += s.Z;
+                dx += d.X; dy += d.Y; dz += d.Z;
+                n++;
+            }
+            if (n < 3) return Matrix4x4.Identity;
+            sx /= n; sy /= n; sz /= n; dx /= n; dy /= n; dz /= n;
+
+            // H = Σ (s - s̄)(d - d̄)ᵀ
+            var h = new double[9];
+            for (int i = 0; i < src.Length; i++)
+            {
+                if (corr[i] < 0) continue;
+                double ax = src[i].X - sx, ay = src[i].Y - sy, az = src[i].Z - sz;
+                var d = dst[corr[i]];
+                double bx = d.X - dx, by = d.Y - dy, bz = d.Z - dz;
+                h[0] += ax * bx; h[1] += ax * by; h[2] += ax * bz;
+                h[3] += ay * bx; h[4] += ay * by; h[5] += ay * bz;
+                h[6] += az * bx; h[7] += az * by; h[8] += az * bz;
+            }
+
+            // H = U·S·Vᵀ → 열벡터 회전 R = V·diag(1,1,det(V·Uᵀ))·Uᵀ (d = R·s)
+            using var hm = new OpenCvSharp.Mat(3, 3, OpenCvSharp.MatType.CV_64FC1);
+            hm.SetArray(h);
+            using var w = new OpenCvSharp.Mat();
+            using var u = new OpenCvSharp.Mat();
+            using var vt = new OpenCvSharp.Mat();
+            OpenCvSharp.Cv2.SVDecomp(hm, w, u, vt, OpenCvSharp.SVD.Flags.FullUV);
+            u.GetArray(out double[] U);
+            vt.GetArray(out double[] VT);
+
+            // V = VTᵀ, Uᵀ 원소: Ut[r,c] = U[c,r]
+            double V(int r, int c) => VT[c * 3 + r];
+            double Ut(int r, int c) => U[c * 3 + r];
+
+            var r0 = new double[9];
+            for (int r = 0; r < 3; r++)
+                for (int c = 0; c < 3; c++)
+                    r0[r * 3 + c] = V(r, 0) * Ut(0, c) + V(r, 1) * Ut(1, c) + V(r, 2) * Ut(2, c);
+            double det = r0[0] * (r0[4] * r0[8] - r0[5] * r0[7])
+                       - r0[1] * (r0[3] * r0[8] - r0[5] * r0[6])
+                       + r0[2] * (r0[3] * r0[7] - r0[4] * r0[6]);
+            double sign = det < 0 ? -1.0 : 1.0;   // 반사 보정 — 가장 작은 특이값 축(정렬된 3번째)만 뒤집는다
+
+            var R = new double[9];
+            for (int r = 0; r < 3; r++)
+                for (int c = 0; c < 3; c++)
+                    R[r * 3 + c] = V(r, 0) * Ut(0, c) + V(r, 1) * Ut(1, c) + sign * V(r, 2) * Ut(2, c);
+
+            // t = d̄ - R·s̄
+            double tx = dx - (R[0] * sx + R[1] * sy + R[2] * sz);
+            double ty = dy - (R[3] * sx + R[4] * sy + R[5] * sz);
+            double tz = dz - (R[6] * sx + R[7] * sy + R[8] * sz);
+
+            // 행벡터 규약: p' = p·M, M 의 3x3 = Rᵀ, 4행 = t
+            return new Matrix4x4(
+                (float)R[0], (float)R[3], (float)R[6], 0,
+                (float)R[1], (float)R[4], (float)R[7], 0,
+                (float)R[2], (float)R[5], (float)R[8], 0,
+                (float)tx, (float)ty, (float)tz, 1);
         }
 
         /// <summary>

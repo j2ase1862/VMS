@@ -304,7 +304,7 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             if (!p1.HasValue || !p2.HasValue)
             {
                 result.Success = false;
-                result.Message = "유효한 3D 좌표를 얻을 수 없습니다";
+                result.Message = "유효한 3D 좌표를 얻을 수 없습니다" + ManualPointHint();
                 return;
             }
 
@@ -360,7 +360,7 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             if (!point.HasValue)
             {
                 result.Success = false;
-                result.Message = "유효한 3D 포인트가 필요합니다";
+                result.Message = "유효한 3D 포인트가 필요합니다" + ManualPointHint();
                 return;
             }
 
@@ -479,6 +479,18 @@ namespace VMS.VisionSetup.VisionTools.Measurement
         #endregion
 
         #region Helpers
+
+        /// <summary>
+        /// 수동 점 모드(기본값)에서 점이 없을 때의 안내. 클러스터를 연결해 두고도 수동 점(기본 0,0)을
+        /// 쓰고 있으면 연결한 점이 무시된다 — 무엇을 끄면 되는지 알려준다.
+        /// </summary>
+        private string ManualPointHint()
+        {
+            if (!UseManualPoints) return string.Empty;
+            return SourceGeometries.Any(s => s.HasPoint)
+                ? " — 수동 점(Use Manual Points)이 켜져 있어 연결한 점이 쓰이지 않았습니다. 연결한 클러스터 중심을 쓰려면 끄세요"
+                : " — 지정한 화소 위치에 측정된 3D 점이 없습니다(카메라 측정 실패 영역)";
+        }
 
         private static Vector3? Get3DPointFromPixel(HeightMapMetadata metadata, Point2d pixel)
         {

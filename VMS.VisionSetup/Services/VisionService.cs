@@ -597,48 +597,6 @@ namespace VMS.VisionSetup.Services
         #endregion
 
         /// <summary>
-        /// 오버레이에서 그래픽만 추출하여 합성 이미지에 병합
-        /// 오버레이와 정확히 동일한 입력 이미지의 차이(그래픽 부분)만 합성 이미지에 복사
-        /// </summary>
-        private static void MergeOverlayGraphics(Mat overlay, Mat baseInput, Mat composite)
-        {
-            Mat overlayBGR = overlay;
-            Mat inputBGR = baseInput;
-            bool disposeOverlay = false, disposeInput = false;
-
-            if (overlay.Channels() == 1)
-            {
-                overlayBGR = new Mat();
-                Cv2.CvtColor(overlay, overlayBGR, ColorConversionCodes.GRAY2BGR);
-                disposeOverlay = true;
-            }
-            if (baseInput.Channels() == 1)
-            {
-                inputBGR = new Mat();
-                Cv2.CvtColor(baseInput, inputBGR, ColorConversionCodes.GRAY2BGR);
-                disposeInput = true;
-            }
-
-            try
-            {
-                if (overlayBGR.Size() != composite.Size()) return;
-
-                using var diff = new Mat();
-                Cv2.Absdiff(overlayBGR, inputBGR, diff);
-                using var grayDiff = new Mat();
-                Cv2.CvtColor(diff, grayDiff, ColorConversionCodes.BGR2GRAY);
-                using var mask = new Mat();
-                Cv2.Threshold(grayDiff, mask, 1, 255, ThresholdTypes.Binary);
-                overlayBGR.CopyTo(composite, mask);
-            }
-            finally
-            {
-                if (disposeOverlay) overlayBGR.Dispose();
-                if (disposeInput) inputBGR.Dispose();
-            }
-        }
-
-        /// <summary>
         /// 단일 도구 실행 (연결된 업스트림 도구가 있으면 자동으로 먼저 실행)
         /// </summary>
         public VisionResult ExecuteTool(VisionToolBase tool, Mat? inputImage = null)
@@ -1004,13 +962,11 @@ namespace VMS.VisionSetup.Services
                     {
                         if (compositeOverlay == null)
                         {
-                            compositeOverlay = result.OverlayImage.Clone();
-                            if (compositeOverlay.Channels() == 1)
-                                Cv2.CvtColor(compositeOverlay, compositeOverlay, ColorConversionCodes.GRAY2BGR);
+                            compositeOverlay = OverlayComposer.CreateComposite(result.OverlayImage, CurrentImage);
                         }
                         else
                         {
-                            MergeOverlayGraphics(result.OverlayImage, CurrentImage!, compositeOverlay);
+                            OverlayComposer.Merge(result.OverlayImage, CurrentImage!, compositeOverlay);
                         }
                     }
                 }
@@ -1347,7 +1303,12 @@ namespace VMS.VisionSetup.Services
                 var positions = pointCloud.Positions;
                 for (int i = 0; i < w * h; i++)
                 {
-                    pixelTo3D[i] = positions[i];
+                    // 측정 실패 화소(카메라가 Z=0 으로 채움)는 "점 없음"(null) — 그대로 넣으면
+                    // PlaneFit·Geometry3D 가 (x, y, 0) 을 실제 점으로 써 평면도 ~1,900mm,
+                    // 점-평면 거리 = 카메라 거리 같은 값을 성공으로 냈다 (2026-09-23 현장 3D 검증).
+                    var p = positions[i];
+                    pixelTo3D[i] = p.Z != 0f && float.IsFinite(p.X) && float.IsFinite(p.Y) && float.IsFinite(p.Z)
+                        ? p : null;
                 }
             }
             else
