@@ -150,7 +150,10 @@ namespace VMS.PLC.Services
                 var ret = DaskNativeMethods.DO_WriteLine(_cardHandle,
                     DaskNativeMethods.PortForChannel(channel), DaskNativeMethods.LineForChannel(channel),
                     (ushort)(value ? 1 : 0));
-                if (ret < 0) Debug.WriteLine($"[ADLink:{DeviceId}] DO_WriteLine ch={channel} ret={ret}");
+                // 출력 실패는 삼키지 않는다 — Debug 로그는 Release 에서 보이지 않아
+                // "시퀀스는 지나갔는데 출력이 안 나간다" 가 원인 없이 남는다.
+                if (ret < 0) throw new InvalidOperationException(
+                    $"ADLink '{DeviceId}' DO_WriteLine 실패 (ch={channel}, 에러 {ret})");
             }
             return Task.CompletedTask;
         }
@@ -161,7 +164,8 @@ namespace VMS.PLC.Services
             lock (_ioLock)
             {
                 var ret = DaskNativeMethods.DO_WritePort(_cardHandle, (ushort)portNo, value);
-                if (ret < 0) Debug.WriteLine($"[ADLink:{DeviceId}] DO_WritePort port={portNo} ret={ret}");
+                if (ret < 0) throw new InvalidOperationException(
+                    $"ADLink '{DeviceId}' DO_WritePort 실패 (port={portNo}, 에러 {ret})");
             }
             return Task.CompletedTask;
         }

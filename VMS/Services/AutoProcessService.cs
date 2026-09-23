@@ -235,6 +235,15 @@ namespace VMS.Services
                 return;
             }
 
+            // 화면의 연결선과 엔진 참조가 어긋난 시퀀스는 트리거마다 검사 없이 처음으로 돌아간다
+            // (오류·로그 없음). 운전 전에 맞추고, 맞출 수 없는 문제는 원인을 남긴다.
+            var links = VMS.PLC.Services.SequenceLinkReconciler.Reconcile(config);
+            foreach (var repair in links.Repairs)
+                _logService?.Log($"시퀀스 연결 보정 — {repair}", LogLevel.Warning, "AutoProcess");
+            foreach (var problem in links.Problems)
+                _logService?.Log($"시퀀스 연결 문제 — {problem} (VisionSetup 시퀀스 편집기에서 확인)",
+                    LogLevel.Error, "AutoProcess");
+
             engine.NodeExecuting += (s, e) => MapNodeToState(e);
 
             // 사이클 완료 → 판정 업로드 1건 (fire-and-forget — 업로드 지연이 다음 사이클의
