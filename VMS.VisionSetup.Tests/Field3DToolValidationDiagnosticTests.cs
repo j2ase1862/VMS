@@ -26,12 +26,15 @@ namespace VMS.VisionSetup.Tests
     [Collection("VisionServiceSingleton")]
     public class Field3DToolValidationDiagnosticTests
     {
-        private const string DataDir = @"D:\3D Image";
+        private static readonly string DataDir = Environment.GetEnvironmentVariable("VMS_FIELD3D_DIR") ?? @"D:\3D Image";
+        // 다른 촬영 회차의 기준 점군(.vpc)으로 정합할 때 — 비우면 RefIndex 스캔에서 만든다
+        private static readonly string? ExternalRef = Environment.GetEnvironmentVariable("VMS_FIELD3D_REFPATH");
         private const float PartZMin = 1780f;   // 프레임 윗면 밴드 (패널은 대부분 ≥1855mm)
         private const float PartZMax = 1845f;
         // 금속 프레임은 점 누락으로 레일이 끊겨 기본 Tolerance(5)로는 2~4조각 — 환경변수로 비교 실행
         private static readonly int RefIndex = int.TryParse(Environment.GetEnvironmentVariable("VMS_FIELD3D_REF"), out var ri) ? ri : 1;
         private static readonly bool Coarse = Environment.GetEnvironmentVariable("VMS_FIELD3D_COARSE") != "0";
+        private static readonly bool ScaleAuto = Environment.GetEnvironmentVariable("VMS_FIELD3D_SCALE") == "Auto";
         private static readonly float ClusterTol = float.TryParse(Environment.GetEnvironmentVariable("VMS_FIELD3D_TOL"), out var t) ? t : 5f;
 
         private readonly ITestOutputHelper _out;
@@ -39,7 +42,8 @@ namespace VMS.VisionSetup.Tests
 
         private static string[] Files() => Directory.Exists(DataDir)
             ? Directory.GetFiles(DataDir, "*.vpc")
-                .OrderBy(f => int.Parse(Path.GetFileNameWithoutExtension(f).Split('-').Last()))
+                .OrderBy(f => int.TryParse(Path.GetFileNameWithoutExtension(f).Split('-').Last(), out var n) ? n : int.MaxValue)
+                .ThenBy(f => f, StringComparer.Ordinal)
                 .ToArray()
             : Array.Empty<string>();
 
@@ -73,11 +77,12 @@ namespace VMS.VisionSetup.Tests
         public void Diagnostic_Field3D_RegistrationAndDeviation()
         {
             var files = Files();
-            if (files.Length < 2) { _out.WriteLine("데이터 없음 — 스킵"); return; }
+            if (files.Length < (ExternalRef != null ? 1 : 2)) { _out.WriteLine("데이터 없음 — 스킵"); return; }
 
-            // 기준 = 1번 스캔의 프레임 점군 (골든 샘플 방식)
-            var refPath = Path.Combine(Path.GetTempPath(), "vms_field3d_ref_scan1.vpc");
-            using (var cloud1 = PointCloudData.LoadFromFile(files[RefIndex - 1]))
+            // 기준 = RefIndex 스캔의 프레임 점군 (골든 샘플 방식) 또는 외부 기준 파일
+            var refPath = ExternalRef ?? Path.Combine(Path.GetTempPath(), "vms_field3d_ref_scan1.vpc");
+            if (ExternalRef != null) _out.WriteLine($"외부 기준 점군: {ExternalRef}");
+            else using (var cloud1 = PointCloudData.LoadFromFile(files[RefIndex - 1]))
             {
                 var partCloud = ExtractPartCloud(cloud1);
                 Assert.NotNull(partCloud);
@@ -166,7 +171,8 @@ namespace VMS.VisionSetup.Tests
             {
                 _out.WriteLine($"    C{i}: {Get(k, $"Cluster{i}_Points")}pt  size(px,px,mm)=({D(k, $"Cluster{i}_SizeX"):F0},{D(k, $"Cluster{i}_SizeY"):F0},{D(k, $"Cluster{i}_SizeZ"):F1})  " +
                                $"L×W={D(k, $"Cluster{i}_Length"):F0}×{D(k, $"Cluster{i}_Width"):F0}  ang={D(k, $"Cluster{i}_Angle"):F1}°  " +
-                               $"center=({D(k, $"Cluster{i}_CenterX"):F0},{D(k, $"Cluster{i}_CenterY"):F0},{D(k, $"Cluster{i}_CenterZ"):F1})");
+                               $"center=({D(k, $"Cluster{i}_CenterX"):F0},{D(k, $"Cluster{i}_CenterY"):F0},{D(k, $"Cluster{i}_CenterZ"):F1})  " +
+                               $"centerMm=({D(k, $"Cluster{i}_CenterXMm"):F1},{D(k, $"Cluster{i}_CenterYMm"):F1})  mm/px={D(k, $"Cluster{i}_MmPerPx"):F4}");
             }
             var result = (D(k, "Cluster0_CenterX"), D(k, "Cluster0_CenterY"), D(k, "Cluster0_CenterZ"),
                           D(k, "Cluster0_SizeX"), D(k, "Cluster0_SizeY"));
@@ -256,7 +262,7 @@ namespace VMS.VisionSetup.Tests
             var service = VisionService.Instance;
             var slicer = new HeightSlicerTool { Name = "Height Slicer", MinZ = PartZMin, MaxZ = PartZMax };
             var crop = new PointCloudMaskCropTool { Name = "Mask Crop" };
-            var cluster = new PointCloudClusterTool { Name = "Cluster", MinPoints = 2000, Tolerance = ClusterTol, OutputMode = mode };
+            var cluster = new PointCloudClusterTool { Name = "Cluster", MinPoints = 2000, Tolerance = ClusterTol, OutputMode = mode, ScaleMode = ScaleAuto ? PointCloudClusterTool.DimensionScaleMode.AutoFromCamera : PointCloudClusterTool.DimensionScaleMode.Manual };
             service.AddTool(slicer); service.AddTool(crop); service.AddTool(cluster);
             service.AddConnection(slicer, crop, ConnectionType.Image);
             service.AddConnection(crop, cluster, ConnectionType.Result);

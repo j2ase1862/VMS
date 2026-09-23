@@ -117,6 +117,52 @@ namespace VMS.Core.Tests.Services
         }
 
         /// <summary>
+        /// 점군의 카메라 내부 파라미터가 왕복해야 한다 — VisionSetup 은 카메라를 VMS 에서 넘겨받으므로
+        /// 여기서 빠지면 VisionSetup 에서 저장한 .vpc 에 내부 파라미터가 없어 X/Y 를 mm 로 잴 수 없다
+        /// (2026-09-23 현장: VMS 저장본에는 있고 VisionSetup 저장본에는 없었다).
+        /// 내부 파라미터가 없는 점군은 없는 채로(null) 읽혀야 한다.
+        /// </summary>
+        [Fact]
+        public void WriteFrame_RoundTripsPointCloudIntrinsics()
+        {
+            using var ipc = new IpcInstanceScope();
+            using var writer = new SharedFrameWriter();
+            writer.Initialize();
+
+            using var cloud = PointCloudData.FromArrays(
+                new float[] { 10, 20, 1800, 11, 20, 1801, 10, 21, 0, 11, 21, 1802 }, width: 2, height: 2);
+            cloud.Intrinsics = new DepthIntrinsics { Fx = 1795.89, Fy = 1795.89, Cx = 943.71, Cy = 766.75 };
+
+            using var reader = new SharedFrameReader();
+            Assert.True(reader.TryConnect());
+
+            writer.ResetReaderProbeCacheForTests();
+            writer.WriteFrame(new AcquisitionResult { Success = true, PointCloud = cloud }, "cam-3d");
+            var read = reader.TryReadFrame(skipIfSameFrame: false);
+
+            Assert.NotNull(read?.PointCloud);
+            var pc = read!.PointCloud!;
+            Assert.Equal(4, pc.PointCount);
+            Assert.Equal(2, pc.GridWidth);
+            Assert.Equal(1801f, pc.Positions[1].Z);
+            Assert.NotNull(pc.Intrinsics);
+            Assert.Equal(1795.89, pc.Intrinsics!.Fx);
+            Assert.Equal(1795.89, pc.Intrinsics.Fy);
+            Assert.Equal(943.71, pc.Intrinsics.Cx);
+            Assert.Equal(766.75, pc.Intrinsics.Cy);
+            pc.Dispose();
+
+            // 내부 파라미터 없는 점군 → null 로 읽힌다
+            cloud.Intrinsics = null;
+            writer.ResetReaderProbeCacheForTests();
+            writer.WriteFrame(new AcquisitionResult { Success = true, PointCloud = cloud }, "cam-3d");
+            var read2 = reader.TryReadFrame(skipIfSameFrame: false);
+            Assert.NotNull(read2?.PointCloud);
+            Assert.Null(read2!.PointCloud!.Intrinsics);
+            read2.PointCloud.Dispose();
+        }
+
+        /// <summary>
         /// 위 두 시험이 기대는 격리 장치 자체를 검증한다.
         ///
         /// <para>IpcInstanceScope 가 실제로 이름을 갈라 주지 않으면, 두 시험은 기본 인스턴스의

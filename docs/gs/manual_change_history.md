@@ -1518,3 +1518,39 @@ WO 완료는 N번째 사이클의 **판정 업로드 응답**으로 온다(Web `
 
 §6 Registration: 위에서 내려다보는 평평한 부품은 거친 정렬(Coarse) 끄기 권장 · 실데이터 Tolerance 는 mm 수준(예: 2).
 §6 3D Geometry: 클러스터 중심을 쓰려면 "수동 점 사용" 끄기. §12: "Registration 결과가 엉뚱하다"·"평면도가 비정상적으로 크다" 조치.
+
+---
+
+## 40. VisionSetup 저장 점군의 내부 파라미터 누락 · mm 환산 시 3D Geometry 높이 오류 (v1.42.4) — **반영 대기**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-09-23 |
+| 대상 | 본편 §5 VisionSetup 3D 저장 · §6 PointCloud Cluster(치수 환산) · 3D Geometry (서술 변경 없음 검토) |
+| 변경 종류 | 결함 수정 2건 |
+
+### 무엇이 문제였나 (사내 기록)
+
+v1.42.2 로 촬영한 현장 점군을 받아 보니 **내부 파라미터가 없었다**(파일 47,185,954B = 꼬리 없음).
+같은 카메라로 **VMS 에서 저장**하자 들어 있었다(47,185,994B, fx=fy=1795.89, cx 943.71, cy 766.75).
+
+1. **VMS → VisionSetup 공유 프레임(IPC)이 내부 파라미터를 싣지 않았다** — VisionSetup 은 카메라를 VMS 에서
+   넘겨받으므로("Grab from VMS"), VisionSetup 에서 저장한 `.vpc` 에는 항상 빠졌다. v1.42.0 기능은 직접 Grab 경로만 확인했었다.
+   → `FlagHasIntrinsics(0x04)` + 색상 뒤 32B(double×4). 헤더가 꽉 차 바디 끝에 두었고, 구버전 Reader 는 모르는 플래그·꼬리를
+   무시하므로 프로토콜 Version 은 올리지 않았다.
+2. **Cluster 치수 환산을 AutoFromCamera 로 켜면 3D Geometry 점-평면 거리가 틀렸다** — 클러스터 중심은 실제 mm
+   (47.7, −186.5)인데 PlaneFit 평면은 점군 원좌표(X/Y 화소)라 섞였다. 현장 파일에서 프레임 높이 **55.1mm(정답 90.0mm)**.
+   → 점-평면은 클러스터 중심의 원좌표(`SourceGeometry3D.RawPoint`)를 쓴다. 두 클러스터 간 거리는 종전대로 mm.
+
+회귀 테스트: `SharedFrameWriterTests.WriteFrame_RoundTripsPointCloudIntrinsics`(있음/없음 왕복) ·
+`Field3DDefectRegressionTests.Geometry3D_PointToPlane_UsesClusterRawCenter_NotMmCenter`(현장 값 → 90mm).
+
+### 현장 검증 (두 번째 촬영)
+
+프레임 높이 89.97mm(Manual·AutoFromCamera 동일, 독립 기준 p50 86.7) · AutoFromCamera 치수 377×250mm(mm/px 1.004,
+**캘리퍼 실측 대조 대기**) · 이전 촬영 회차 기준 정합 rotZ −6.9°(기대 −7.2°).
+
+### 매뉴얼 반영
+
+본문 서술 변경 없음(VisionSetup 저장본에도 내부 파라미터가 실린다는 것은 §36 서술과 이제 일치). §12 에 "저장한 점군에서
+치수가 mm 로 안 나온다 → v1.42.4 이상에서 다시 촬영·저장" 한 줄 검토.

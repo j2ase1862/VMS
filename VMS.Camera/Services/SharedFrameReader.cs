@@ -219,6 +219,20 @@ namespace VMS.Camera.Services
                     // Colors (RGBA)
                     var colorBytes = new byte[ptCount * 4];
                     accessor.ReadArray(offset, colorBytes, 0, colorBytes.Length);
+                    offset += colorBytes.Length;
+
+                    // 카메라 내부 파라미터 — 없으면 저장 .vpc 에서 X/Y mm 환산이 불가능해진다
+                    DepthIntrinsics? intrinsics = null;
+                    if ((flags & SharedFrameConstants.FlagHasIntrinsics) != 0)
+                    {
+                        intrinsics = new DepthIntrinsics
+                        {
+                            Fx = accessor.ReadDouble(offset),
+                            Fy = accessor.ReadDouble(offset + 8),
+                            Cx = accessor.ReadDouble(offset + 16),
+                            Cy = accessor.ReadDouble(offset + 24),
+                        };
+                    }
 
                     var colors = new System.Windows.Media.Color[ptCount];
                     for (int i = 0; i < ptCount; i++)
@@ -236,7 +250,8 @@ namespace VMS.Camera.Services
                         Positions = positions,
                         Colors = colors,
                         GridWidth = gridW,
-                        GridHeight = gridH
+                        GridHeight = gridH,
+                        Intrinsics = intrinsics
                     };
                 }
 
