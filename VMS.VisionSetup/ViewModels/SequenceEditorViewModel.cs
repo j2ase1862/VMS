@@ -32,6 +32,9 @@ namespace VMS.VisionSetup.ViewModels
         /// </summary>
         private readonly Dictionary<string, IIoBoardConnection> _boards = new();
 
+        // 편집기가 보드 출력 채널에 마지막으로 쓴 값 — 출력은 되읽을 수 없어 모니터가 이 값을 보여준다.
+        private readonly Dictionary<(string DeviceId, int Channel), bool> _boardOutputWrites = new();
+
         private readonly IRecipeService _recipeService;
         private readonly ICameraService _cameraService;
         private readonly IDialogService _dialogService;
@@ -378,6 +381,19 @@ namespace VMS.VisionSetup.ViewModels
                 _connectionSource.Config.NextNodeId = target.Id;
             }
 
+            // 한 노드의 Next(또는 Repeat) 선은 하나뿐 — 새 선이 기존 선을 대체한다. 두 선이 남으면
+            // 엔진은 마지막 선만 따라가고, 그 선을 지우면 참조가 비어 남은 선은 실행되지 않는다.
+            var replaced = 0;
+            if (label is "Next" or "Repeat")
+            {
+                var sourceId = _connectionSource.Id;
+                foreach (var old in Edges.Where(e => e.SourceNode?.Id == sourceId && e.Label == label).ToList())
+                {
+                    Edges.Remove(old);
+                    replaced++;
+                }
+            }
+
             var edgeConfig = new SequenceEdgeConfig
             {
                 SourceNodeId = _connectionSource.Id,
@@ -387,7 +403,8 @@ namespace VMS.VisionSetup.ViewModels
             var edgeItem = new SequenceEdgeItem(edgeConfig, _connectionSource, target);
             Edges.Add(edgeItem);
 
-            StatusMessage = $"연결 완료: {_connectionSource.Name} → {target.Name} ({label})";
+            StatusMessage = $"연결 완료: {_connectionSource.Name} → {target.Name} ({label})"
+                            + (replaced > 0 ? " — 기존 연결을 대체했습니다" : "");
             _connectionSource = null;
             OnPropertyChanged(nameof(IsConnecting));
         }
@@ -652,9 +669,9 @@ namespace VMS.VisionSetup.ViewModels
                 var config = JsonSerializer.Deserialize<SequenceConfig>(json, _jsonOptions);
                 if (config == null) return;
 
-                FromConfig(config);
+                var linkNote = FromConfig(config);
                 CurrentFilePath = null;
-                StatusMessage = $"시스템 시퀀스 로드됨: {config.Name}";
+                StatusMessage = $"시스템 시퀀스 로드됨: {config.Name}{linkNote}";
             }
             catch (Exception ex)
             {
@@ -707,9 +724,9 @@ namespace VMS.VisionSetup.ViewModels
                     return;
                 }
 
-                FromConfig(config);
+                var linkNote = FromConfig(config);
                 CurrentFilePath = path;
-                StatusMessage = $"시퀀스 가져옴: {Path.GetFileName(path)}";
+                StatusMessage = $"시퀀스 가져옴: {Path.GetFileName(path)}{linkNote}";
             }
             catch (Exception ex)
             {
@@ -762,8 +779,12 @@ namespace VMS.VisionSetup.ViewModels
         }
 
         /// <summary>SequenceConfig에서 에디터 상태 복원</summary>
-        public void FromConfig(SequenceConfig config)
+        /// <returns>연결 보정·문제 요약(없으면 빈 문자열) — 호출자가 상태줄 뒤에 붙인다.</returns>
+        public string FromConfig(SequenceConfig config)
         {
+            // 화면의 선과 실행 참조가 어긋난 파일(과거 편집 결함)을 불러올 때 맞춘다 — 보이는 선 = 실행 경로.
+            var links = SequenceLinkReconciler.Reconcile(config);
+
             Nodes.Clear();
             Edges.Clear();
             SelectedNode = null;
@@ -787,6 +808,18 @@ namespace VMS.VisionSetup.ViewModels
                 nodeDict.TryGetValue(edgeConfig.TargetNodeId, out var target);
                 Edges.Add(new SequenceEdgeItem(edgeConfig, source, target));
             }
+
+            return DescribeLinkReport(links);
+        }
+
+        private static string DescribeLinkReport(SequenceLinkReconciler.Result links)
+        {
+            var parts = new List<string>();
+            if (links.Repairs.Count > 0)
+                parts.Add($"연결 {links.Repairs.Count}건을 화면의 선과 맞춤(저장하면 파일에 반영)");
+            if (links.Problems.Count > 0)
+                parts.Add(links.Problems[0] + (links.Problems.Count > 1 ? $" 외 {links.Problems.Count - 1}건" : ""));
+            return parts.Count == 0 ? string.Empty : " · " + string.Join(" · ", parts);
         }
 
         // ====================================================================
@@ -950,6 +983,51 @@ namespace VMS.VisionSetup.ViewModels
             return _boards.TryGetValue(deviceId, out board);
         }
 
+        /// <summary>테스트 전용 — 실제 드라이버 없이 연결된 보드를 끼워 넣는다.</summary>
+        internal void AttachBoardForTesting(IIoBoardConnection board) => _boards[board.DeviceId] = board;
+
+        /// <summary>
+        /// 보드 노드면 true — 연결된 보드는 board 에, 미연결이면 board=null.
+        /// 보드 노드를 PLC 경로로 흘려보내면 채널 번호("0")가 PLC 주소로 쓰이므로,
+        /// 호출자는 true 일 때 PLC 로 가지 말고 board 유무만 보고 처리한다.
+        /// </summary>
+        private bool TryResolveBoardNode(SequenceNodeItem node, out IIoBoardConnection? board)
+        {
+            if (TryGetBoard(node, out board)) return true;
+            board = null;
+            return IsBoardNode(node);
+        }
+
+        /// <summary>
+        /// 보드 출력 노드의 설정값(Bit)을 1회 쓴다 — 단건 테스트·무부하 실행 공용.
+        /// 성공한 값은 모니터가 출력 채널 표시에 쓰도록 기억한다(출력 채널은 되읽을 수 없다).
+        /// </summary>
+        private async Task<(bool Ok, string Message)> WriteBoardOutputAsync(
+            SequenceNodeItem node, IIoBoardConnection? board)
+        {
+            var cfg = node.Config;
+            var deviceId = node.DeviceId ?? cfg.DeviceId;
+            if (board == null)
+                return (false, $"IO 보드 '{deviceId}' 가 연결되어 있지 않습니다 — 모니터 패널에서 먼저 장치를 연결하세요.");
+            if (!int.TryParse(cfg.PlcAddress?.Trim(), out var channel) || channel < 0)
+                return (false, $"채널 번호가 올바르지 않습니다: '{cfg.PlcAddress}' (IO 보드 주소는 0, 1 같은 채널 번호)");
+            if (cfg.OutputDataType != PlcDataType.Bit)
+                return (false, "IO 보드는 Bit 출력만 지원합니다.");
+
+            var value = cfg.BitValue ?? false;
+            try
+            {
+                await board.WriteBitAsync(channel, value);
+            }
+            catch (Exception ex)
+            {
+                return (false, $"'{deviceId}' ch{channel} 쓰기 실패: {ex.Message}");
+            }
+
+            _boardOutputWrites[(board.DeviceId, channel)] = value;
+            return (true, $"'{deviceId}' ch{channel} ← {(value ? "ON" : "OFF")}");
+        }
+
         /// <summary>PLC/IO 보드 연결 해제 및 모니터링 중지</summary>
         [RelayCommand]
         public async Task DisconnectPlcAsync()
@@ -979,6 +1057,7 @@ namespace VMS.VisionSetup.ViewModels
                 finally { b.Dispose(); }
             }
             _boards.Clear();
+            _boardOutputWrites.Clear();
 
             IsPlcConnected = false;
             IsPlcMonitoring = false;
@@ -1186,6 +1265,18 @@ namespace VMS.VisionSetup.ViewModels
                             item.ErrorMessage = "미연결";
                             continue;
                         }
+
+                        // 출력 채널 — ReadBitAsync 는 입력(DI)을 읽으므로 같은 번호의 입력 값이 나온다.
+                        // 편집기가 마지막으로 쓴 값을 보여주고, 쓴 적 없으면 비워 둔다.
+                        if (item.Direction == PlcIoDirection.Output)
+                        {
+                            item.CurrentValue = _boardOutputWrites.TryGetValue((item.DeviceId, item.Channel), out var written)
+                                ? (written ? "ON" : "OFF")
+                                : "—";
+                            item.ErrorMessage = null;
+                            continue;
+                        }
+
                         try
                         {
                             var on = await board.ReadBitAsync(item.Channel);
@@ -1472,8 +1563,16 @@ namespace VMS.VisionSetup.ViewModels
             }
 
             // IO 보드 노드 — 주소는 채널 번호. 실행 엔진과 동일 규약.
-            if (TryGetBoard(node, out var board))
-                return await ExecuteTestBoardInputCheck(node, board!, ct);
+            if (TryResolveBoardNode(node, out var board))
+            {
+                if (board != null)
+                    return await ExecuteTestBoardInputCheck(node, board, ct);
+
+                node.ConditionStatus = false;
+                StatusMessage = $"[무부하] {node.Name} — IO 보드 '{node.DeviceId ?? cfg.DeviceId}' 미연결, 건너뜀";
+                await Task.Delay(200, ct);
+                return cfg.NextNodeId;
+            }
 
             if (_plcConfig == null || _plcConnection == null)
             {
@@ -1651,20 +1750,11 @@ namespace VMS.VisionSetup.ViewModels
             }
 
             // IO 보드 노드 — Bit 출력만 지원 (실행 엔진과 동일).
-            if (TryGetBoard(node, out var outBoard))
+            if (TryResolveBoardNode(node, out var outBoard))
             {
-                if (!int.TryParse(cfg.PlcAddress.Trim(), out var outCh))
-                {
-                    StatusMessage = $"[무부하] {node.Name} — 채널 번호가 올바르지 않습니다: '{cfg.PlcAddress}'";
-                    return;
-                }
-                if (cfg.OutputDataType != PlcDataType.Bit)
-                {
-                    StatusMessage = $"[무부하] {node.Name} — IO 보드는 Bit 출력만 지원, 건너뜀";
-                    return;
-                }
-                await outBoard!.WriteBitAsync(outCh, cfg.BitValue ?? false);
-                StatusMessage = $"[무부하] {node.Name} — ch{outCh} ← {(cfg.BitValue == true ? "ON" : "OFF")}";
+                var (ok, message) = await WriteBoardOutputAsync(node, outBoard);
+                node.ConditionStatus = ok;
+                StatusMessage = $"[무부하] {node.Name} — {message}";
                 return;
             }
 
@@ -1708,12 +1798,6 @@ namespace VMS.VisionSetup.ViewModels
         [RelayCommand]
         private async Task TestWriteOutputAsync()
         {
-            if (_plcConnection == null || !_plcConnection.IsConnected)
-            {
-                StatusMessage = "PLC가 연결되어 있지 않습니다.";
-                return;
-            }
-
             var node = SelectedNode;
             if (node == null || node.NodeType != SequenceNodeType.OutputAction)
             {
@@ -1722,7 +1806,27 @@ namespace VMS.VisionSetup.ViewModels
             }
 
             var cfg = node.Config;
-            if (string.IsNullOrWhiteSpace(cfg.PlcAddress) || _plcConfig == null)
+            if (string.IsNullOrWhiteSpace(cfg.PlcAddress))
+            {
+                StatusMessage = "출력 주소(채널)가 설정되지 않았습니다.";
+                return;
+            }
+
+            // IO 보드 노드 — 보드 채널에 직접 쓴다. PLC 연결 여부와 무관.
+            if (TryResolveBoardNode(node, out var board))
+            {
+                var (ok, message) = await WriteBoardOutputAsync(node, board);
+                StatusMessage = ok ? $"[테스트 출력] {message}" : $"[테스트 출력 실패] {message}";
+                return;
+            }
+
+            if (_plcConnection == null || !_plcConnection.IsConnected)
+            {
+                StatusMessage = "PLC가 연결되어 있지 않습니다.";
+                return;
+            }
+
+            if (_plcConfig == null)
             {
                 StatusMessage = "PLC 주소가 설정되지 않았습니다.";
                 return;
@@ -1763,12 +1867,6 @@ namespace VMS.VisionSetup.ViewModels
         [RelayCommand]
         private async Task TestReadInputAsync()
         {
-            if (_plcConnection == null || !_plcConnection.IsConnected)
-            {
-                StatusMessage = "PLC가 연결되어 있지 않습니다.";
-                return;
-            }
-
             var node = SelectedNode;
             if (node == null || node.NodeType != SequenceNodeType.InputCheck)
             {
@@ -1777,7 +1875,45 @@ namespace VMS.VisionSetup.ViewModels
             }
 
             var cfg = node.Config;
-            if (string.IsNullOrWhiteSpace(cfg.PlcAddress) || _plcConfig == null)
+            if (string.IsNullOrWhiteSpace(cfg.PlcAddress))
+            {
+                StatusMessage = "입력 주소(채널)가 설정되지 않았습니다.";
+                return;
+            }
+
+            // IO 보드 노드 — 보드 채널을 직접 읽는다. PLC 연결 여부와 무관.
+            if (TryResolveBoardNode(node, out var board))
+            {
+                var deviceId = node.DeviceId ?? cfg.DeviceId;
+                if (board == null)
+                {
+                    StatusMessage = $"[테스트 읽기 실패] IO 보드 '{deviceId}' 가 연결되어 있지 않습니다 — 모니터 패널에서 먼저 장치를 연결하세요.";
+                    return;
+                }
+                if (!int.TryParse(cfg.PlcAddress.Trim(), out var channel) || channel < 0)
+                {
+                    StatusMessage = $"[테스트 읽기 실패] 채널 번호가 올바르지 않습니다: '{cfg.PlcAddress}'";
+                    return;
+                }
+                try
+                {
+                    var on = await board.ReadBitAsync(channel);
+                    StatusMessage = $"[테스트 읽기] '{deviceId}' ch{channel} = {(on ? "ON" : "OFF")}";
+                }
+                catch (Exception ex)
+                {
+                    StatusMessage = $"[테스트 읽기 실패] '{deviceId}' ch{channel}: {ex.Message}";
+                }
+                return;
+            }
+
+            if (_plcConnection == null || !_plcConnection.IsConnected)
+            {
+                StatusMessage = "PLC가 연결되어 있지 않습니다.";
+                return;
+            }
+
+            if (_plcConfig == null)
             {
                 StatusMessage = "PLC 주소가 설정되지 않았습니다.";
                 return;
