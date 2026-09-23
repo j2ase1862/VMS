@@ -1727,6 +1727,37 @@ namespace VMS.ViewModels
                 ReloadCurrentRecipe();
         }
 
+        /// <summary>
+        /// WO 완료 등 자동 정지 — 진행 중인 사이클을 끝낸 뒤 멈춘다. 수동 [정지] 는 종전대로 즉시.
+        /// </summary>
+        private async Task StopInspectionAfterCycleAsync()
+        {
+            SystemStatus = "Stopping after current cycle...";
+            LogService?.Log("Inspection stopping after current cycle...", LogLevel.Info, "System");
+
+            if (_autoProcessService != null && _autoProcessService.IsRunning)
+            {
+                try
+                {
+                    await Task.Run(() => _autoProcessService.StopAfterCycleAsync(AutoStopCycleTimeout));
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error stopping AutoProcess after cycle: {ex.Message}");
+                }
+            }
+
+            IsRunning = false;
+            SystemStatus = "Stopped";
+            LogService?.Log("Inspection stopped", LogLevel.Info, "System");
+
+            if (IsRecipeReloadPending)
+                ReloadCurrentRecipe();
+        }
+
+        /// <summary>사이클 경계 정지 대기 한도 — 넘으면 즉시 정지 (PLC 응답 대기 등에 멈춘 사이클).</summary>
+        private static readonly TimeSpan AutoStopCycleTimeout = TimeSpan.FromSeconds(30);
+
         [RelayCommand]
         private void OpenUserManagement()
         {
@@ -2482,7 +2513,10 @@ namespace VMS.ViewModels
         // 응답 파싱과 SignalR 둘 다에서 같은 이벤트가 올 수 있으므로 _lastCompletedNotifiedWoId 가드.
         private void OnWorkOrderCompletedFromServer(VMS.Core.Models.ParameterSync.WorkOrderProgressDto progress)
         {
-            Application.Current?.Dispatcher.Invoke(() =>
+            // 비동기로 넘긴다 — 이 호출은 사이클 업로드 응답 처리 안에서 온다. 동기 Invoke 로
+            // 모달 다이얼로그를 띄우면 업로드 작업이 다이얼로그가 닫힐 때까지 묶이고,
+            // 사이클 경계 정지가 그 업로드를 기다리며 멈춘다.
+            Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 // 같은 WO 에 대해 이미 알림을 띄웠으면 skip (응답 + SignalR 중복 차단)
                 if (_lastCompletedNotifiedWoId == progress.Id) return;
@@ -2501,11 +2535,13 @@ namespace VMS.ViewModels
 
                 SystemStatus = $"✓ WO {progress.OrderNo} 완료 — {progress.ProducedQuantity}/{progress.PlannedQuantity}";
 
-                // AUTO RUN 자동 정지 (실행 중일 때만)
+                // AUTO RUN 자동 정지 (실행 중일 때만) — 사이클 경계에서. 완료 응답은 사이클과 무관한
+                // 시점에 도착하므로, 즉시 취소하면 그때 설비에 들어와 있던 제품의 판정·출력·집계가
+                // 끊겨 설비가 NG 로 처리하고 화면에도 남지 않았다 (2026-09-23 실증).
                 bool wasRunning = IsRunning;
                 if (wasRunning)
                 {
-                    _ = StopInspectionAsync();
+                    _ = StopInspectionAfterCycleAsync();
                 }
 
                 // B3: 큰 다이얼로그 + 사운드 + KPI 카드. 결과 = "다음 작업지시 선택" / "닫기".
