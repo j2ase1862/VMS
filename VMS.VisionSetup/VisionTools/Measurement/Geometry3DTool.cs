@@ -270,6 +270,18 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                         return geo;
                     }
                     break;
+
+                case "PointCloudLineFitTool":
+                    if (data.TryGetValue("LinePointX", out var lx) && data.TryGetValue("LinePointY", out var ly) &&
+                        data.TryGetValue("LinePointZ", out var lz) && data.TryGetValue("LineDirX", out var dx) &&
+                        data.TryGetValue("LineDirY", out var dy) && data.TryGetValue("LineDirZ", out var dz))
+                    {
+                        geo.LinePoint = new Vector3(Convert.ToSingle(lx), Convert.ToSingle(ly), Convert.ToSingle(lz));
+                        geo.LineDirection = new Vector3(Convert.ToSingle(dx), Convert.ToSingle(dy), Convert.ToSingle(dz));
+                        geo.HasLine = true;
+                        return geo;
+                    }
+                    break;
             }
 
             return null;
@@ -519,7 +531,11 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             if (UseManualPoints && metadata != null)
                 point = Get3DPointFromPixel(metadata, PointA);
             else
-                point = SourceGeometries.FirstOrDefault(s => s.HasPoint)?.Point;
+            {
+                // 직선(PointCloud Line Fit)은 점군 원좌표 — 점도 원좌표로 (점-평면과 같은 규칙, mm 중심과 섞지 않는다)
+                var ptSrc = SourceGeometries.FirstOrDefault(s => s.HasPoint);
+                point = ptSrc == null ? null : ptSrc.RawPoint ?? ptSrc.Point;
+            }
 
             SourceGeometry3D? lineSrc = SourceGeometries.FirstOrDefault(s => s.HasLine);
 

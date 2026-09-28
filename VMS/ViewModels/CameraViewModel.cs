@@ -861,7 +861,7 @@ namespace VMS.ViewModels
         {
             "HeightSlicerTool", "PlaneFitTool", "Geometry3DTool",
             "PointCloudFilterTool", "PointCloudMaskCropTool", "PointCloudClusterTool",
-            "PointCloudRegistrationTool", "PointCloudDeviationTool",
+            "PointCloudRegistrationTool", "PointCloudDeviationTool", "PointCloudLineFitTool",
         };
 
         private void UpdateToolRunResults(Interfaces.StepInspectionResult result)

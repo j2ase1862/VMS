@@ -1195,6 +1195,7 @@ namespace VMS.VisionSetup.Services
                 "PointCloudClusterTool" => new VisionTools.PointCloud.PointCloudClusterTool(),
                 "PointCloudDeviationTool" => new VisionTools.PointCloud.PointCloudDeviationTool(),
                 "PointCloudMaskCropTool" => new VisionTools.PointCloud.PointCloudMaskCropTool(),
+                "PointCloudLineFitTool" => new VisionTools.PointCloud.PointCloudLineFitTool(),
 
                 // Pattern Matching
                 "FeatureMatchTool" => new FeatureMatchTool(),
@@ -1274,7 +1275,8 @@ namespace VMS.VisionSetup.Services
                     "PointCloudMaskCropTool",
                     "HeightSlicerTool",
                     "PlaneFitTool",
-                    "Geometry3DTool"
+                    "Geometry3DTool",
+                    "PointCloudLineFitTool"
                 },
                 ["Pattern Matching"] = new[]
                 {
@@ -1365,6 +1367,7 @@ namespace VMS.VisionSetup.Services
                 "PointCloudRegistrationTool" => "PointCloud Registration",
                 "PointCloudClusterTool" => "PointCloud Cluster",
                 "PointCloudMaskCropTool" => "PointCloud Mask Crop",
+                "PointCloudLineFitTool" => "PointCloud Line Fit",
                 "OCRTool" => "OCR",
                 "OCVTool" => "OCV",
                 "ImageEnhanceTool" => "Image Enhance",

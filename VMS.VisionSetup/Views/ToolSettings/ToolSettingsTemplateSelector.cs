@@ -43,6 +43,7 @@ namespace VMS.VisionSetup.Views.ToolSettings
         public DataTemplate? PointCloudFilterTemplate { get; set; }
         public DataTemplate? PointCloudRegistrationTemplate { get; set; }
         public DataTemplate? PointCloudClusterTemplate { get; set; }
+        public DataTemplate? PointCloudLineFitTemplate { get; set; }
         public DataTemplate? PointCloudDeviationTemplate { get; set; }
         public DataTemplate? PointCloudMaskCropTemplate { get; set; }
         public DataTemplate? PhotometricStereoTemplate { get; set; }
@@ -88,6 +89,7 @@ namespace VMS.VisionSetup.Views.ToolSettings
                 PointCloudFilterToolSettingsViewModel => PointCloudFilterTemplate,
                 PointCloudRegistrationToolSettingsViewModel => PointCloudRegistrationTemplate,
                 PointCloudClusterToolSettingsViewModel => PointCloudClusterTemplate,
+                PointCloudLineFitToolSettingsViewModel => PointCloudLineFitTemplate,
                 PointCloudDeviationToolSettingsViewModel => PointCloudDeviationTemplate,
                 PointCloudMaskCropToolSettingsViewModel => PointCloudMaskCropTemplate,
                 PhotometricStereoToolSettingsViewModel => PhotometricStereoTemplate,

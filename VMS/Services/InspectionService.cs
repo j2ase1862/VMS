@@ -401,7 +401,8 @@ namespace VMS.Services
             or VMS.VisionSetup.VisionTools.PointCloud.PointCloudMaskCropTool
             or VMS.VisionSetup.VisionTools.PointCloud.PointCloudClusterTool
             or VMS.VisionSetup.VisionTools.PointCloud.PointCloudRegistrationTool
-            or VMS.VisionSetup.VisionTools.PointCloud.PointCloudDeviationTool;
+            or VMS.VisionSetup.VisionTools.PointCloud.PointCloudDeviationTool
+            or VMS.VisionSetup.VisionTools.PointCloud.PointCloudLineFitTool;
 
         private StepInspectionResult ExecuteStep(InspectionStep step, Mat inputImage,
             VMS.Camera.Models.PointCloudData? pointCloud = null)

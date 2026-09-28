@@ -345,6 +345,37 @@ namespace VMS.VisionSetup.Models
                 }
             },
 
+            ["PointCloudLineFitTool"] = new ToolHelp
+            {
+                Name = "PointCloud Line Fit (3D 직선 피팅)",
+                Description = "현재 점군에 3D 직선을 맞추는 도구입니다. 레일·모서리·봉처럼 곧은 부위의 방향·길이·직진도를 재고, 3D Geometry 의 '점-직선 거리'에 직선을 넘겨줍니다.\n\n[언제 쓰나요]\n• 레일·프레임 변이 얼마나 곧은지(직진도) 볼 때\n• 부품 중심이 기준 모서리에서 얼마나 떨어져 있는지 잴 때 (Cluster 중심 → 3D Geometry 점-직선 거리)\n• 봉·파이프가 기울어진 각도를 볼 때\n\n알고리즘: RANSAC(두 점으로 후보 직선 → 가까운 점이 가장 많은 직선 선택) 후, 직선 위 점들의 주성분(PCA)으로 방향을 다듬습니다.",
+                Usage = "1) Height Slicer → Mask Crop 으로 직선 부위만 남긴다 (Mask Crop 에 ROI 를 그려 한 변만 남겨도 된다). 2) Mask Crop → 이 도구를 Result 로 연결. 3) Run → 길이·직진도 확인. 4) 점-직선 거리를 재려면 이 도구와 PointCloud Cluster 를 3D Geometry 에 Result 로 연결하고 Operation = PointToLineDistance3D, 연결 소스 모드.\n\n[좌표] 점군 원좌표 — 3D 카메라 grab 점군은 X/Y 가 화소, Z 가 mm (Plane Fit 과 같은 공간). 작동 거리 1.8m 에서는 1화소 ≈ 1mm.",
+                CognexEquivalent = "(3D Line Fit — PCL SACMODEL_LINE)",
+                Results = new Dictionary<string, string>
+                {
+                    ["LinePointX/Y/Z"] = "직선 위 한 점 (직선 위 점들의 중심).",
+                    ["LineDirX/Y/Z"] = "직선 방향 단위 벡터 (+X 쪽을 향하도록 부호 고정).",
+                    ["Length"] = "직선 위 점들이 걸친 길이 (끝점 End1 ~ End2).",
+                    ["Straightness"] = "직진도 (mm) — 직선 위 점의 99% 가 직선에서 떨어진 거리 이내 (상위 1% 제외). 3D 카메라의 튄 점 한두 개가 값을 정하지 않게 판정은 이 값으로 합니다.",
+                    ["MaxDeviation"] = "직선 위 점이 직선에서 떨어진 최대 거리 (mm) — 튄 점 하나에도 커지므로 참고용.",
+                    ["RmsDeviation"] = "직선까지 거리의 RMS — 표면 거칠기·측정 잡음 수준.",
+                    ["InlierCount / TotalPoints / InlierRatio"] = "직선 위 점 수 / 전체 유효 점 수 / 비율. 비율이 낮으면 직선이 아닌 점이 많이 섞인 것.",
+                    ["AngleXY"] = "XY 평면에서의 방향 (도, −90~90).",
+                    ["Elevation"] = "XY 평면에 대한 기울기 (도). 0 이면 수평.",
+                    ["End1X~End2Z"] = "직선 양 끝점.",
+                    ["JudgmentPass"] = "판정 결과 (Enable Judgment 시) — Straightness ≤ Max Straightness 면 True."
+                },
+                Parameters = new Dictionary<string, string>
+                {
+                    ["DistanceThreshold"] = "직선에서 이 거리(mm) 안의 점을 '직선 위의 점'으로 봅니다. 나머지는 잡음·다른 부위로 버립니다.\n• 0.5~1: 정밀 스캔\n• 2: 기본 (3D 카메라 측정 잡음 수 mm 기준)\n• 5~10: 폭이 있는 레일 전체를 한 직선으로 볼 때\n너무 작으면 직선을 못 찾고, 너무 크면 옆 부위까지 섞여 방향이 틀어집니다.",
+                    ["Iterations"] = "후보 직선을 몇 번 시도할지. 클수록 정확하지만 느립니다. 직선 부위가 전체 점의 일부뿐일수록 올립니다. 보통 300.",
+                    ["MinInliers"] = "직선 위 점이 이보다 적으면 '직선 없음'으로 실패합니다. 잡음 몇 점에 직선이 맞는 것을 막습니다.",
+                    ["DrawOverlay"] = "찾은 직선(양 끝점)을 2D 이미지 뷰어에 표시. 점군 X/Y 가 화소 좌표일 때만 그려집니다.",
+                    ["EnableJudgment"] = "직진도 판정 사용. 켜면 Straightness(상위 1% 제외) 가 Max Straightness 이하일 때 OK, 넘으면 NG.\n판정이 NG 여도 직선 자체는 3D Geometry 의 점-직선 거리에 계속 쓰입니다.",
+                    ["MaxStraightness"] = "직진도 상한 (mm) — 직선 위 점의 99% 가 이 거리 안이어야 합격.\n3D 카메라 측정 잡음(수 mm)보다 작게 두면 곧은 부품도 NG 가 납니다.\n⚠ Distance Threshold 를 이 값보다 크게 두세요 — 작으면 휜 부분이 직선 밖 점으로 빠져 직진도가 실제보다 작게 나옵니다 (결과 메시지에 경고, InlierRatio 확인)."
+                }
+            },
+
             ["PointCloudDeviationTool"] = new ToolHelp
             {
                 Name = "PointCloud Deviation (3D 편차 검사)",
@@ -992,7 +1023,7 @@ namespace VMS.VisionSetup.Models
             ["Geometry3DTool"] = new ToolHelp
             {
                 Name = "Geometry 3D (3D 기하 연산)",
-                Description = "3D 기하 요소(점/평면/직선) 간 관계를 계산합니다 — 점-점 거리, 점-평면 수직거리, 평면-평면 각도 등.\n점 소스: 수동 픽셀 입력(높이맵에서 3D 복원) 또는 Result 연결(PointCloud Cluster의 클러스터 중심점 mm).\n평면 소스: PlaneFitTool Result 연결.",
+                Description = "3D 기하 요소(점/평면/직선) 간 관계를 계산합니다 — 점-점 거리, 점-평면 수직거리, 평면-평면 각도 등.\n점 소스: 수동 픽셀 입력(높이맵에서 3D 복원) 또는 Result 연결(PointCloud Cluster의 클러스터 중심점 mm).\n평면 소스: PlaneFitTool Result 연결.\n직선 소스: PointCloud Line Fit Result 연결 (점-직선 거리).",
                 Usage = "3D 측정 파이프라인의 마지막 단계 — 형상 추출 도구의 결과를 Result로 연결해 정량 측정값 산출.\n예1: PlaneFitTool(A) + PlaneFitTool(B) → PlaneToPlaneAngle → 두 평면 각도.\n예2: PointCloud Cluster → PointToPointDistance → 검출된 두 객체(Cluster A/B 번호) 중심 간 mm 거리. 연결 소스를 쓰려면 Use Manual Points를 끄세요.\n예3: PointCloud Cluster + PlaneFitTool → PointToPlaneDistance → 객체 중심에서 기준면까지 높이.",
                 CognexEquivalent = "Cognex 3D Result Analysis Tool",
                 Parameters = new Dictionary<string, string>

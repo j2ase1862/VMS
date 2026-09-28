@@ -630,6 +630,15 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["SizeTolerancePlus"] = pcc.SizeTolerancePlus;
                     break;
 
+                case VisionTools.PointCloud.PointCloudLineFitTool pcl:
+                    config.Parameters["DistanceThreshold"] = pcl.DistanceThreshold;
+                    config.Parameters["Iterations"] = pcl.Iterations;
+                    config.Parameters["MinInliers"] = pcl.MinInliers;
+                    config.Parameters["DrawOverlay"] = pcl.DrawOverlay;
+                    config.Parameters["EnableJudgment"] = pcl.EnableJudgment;
+                    config.Parameters["MaxStraightness"] = pcl.MaxStraightness;
+                    break;
+
                 case VisionTools.PointCloud.PointCloudMaskCropTool pcm:
                     config.Parameters["InvertMask"] = pcm.InvertMask;
                     config.Parameters["MinMaskValue"] = pcm.MinMaskValue;
@@ -774,6 +783,7 @@ namespace VMS.VisionSetup.Services
                 "PointCloudFilterTool" => DeserializePointCloudFilterTool(config),
                 "PointCloudRegistrationTool" => DeserializePointCloudRegistrationTool(config),
                 "PointCloudClusterTool" => DeserializePointCloudClusterTool(config),
+                "PointCloudLineFitTool" => DeserializePointCloudLineFitTool(config),
                 "PointCloudDeviationTool" => DeserializePointCloudDeviationTool(config),
                 "PointCloudMaskCropTool" => DeserializePointCloudMaskCropTool(config),
                 "ColorExtractTool" => DeserializeColorExtractTool(config),
@@ -2051,6 +2061,19 @@ namespace VMS.VisionSetup.Services
             if (p.TryGetValue("ExpectedWidth", out var ew)) tool.ExpectedWidth = GetDouble(ew);
             if (p.TryGetValue("SizeToleranceMinus", out var stm)) tool.SizeToleranceMinus = GetDouble(stm);
             if (p.TryGetValue("SizeTolerancePlus", out var stp)) tool.SizeTolerancePlus = GetDouble(stp);
+            return tool;
+        }
+
+        private static VisionTools.PointCloud.PointCloudLineFitTool DeserializePointCloudLineFitTool(ToolConfig config)
+        {
+            var tool = new VisionTools.PointCloud.PointCloudLineFitTool();
+            var p = config.Parameters;
+            if (p.TryGetValue("DistanceThreshold", out var dt)) tool.DistanceThreshold = (float)GetDouble(dt);
+            if (p.TryGetValue("Iterations", out var it)) tool.Iterations = GetInt(it);
+            if (p.TryGetValue("MinInliers", out var mi)) tool.MinInliers = GetInt(mi);
+            if (p.TryGetValue("DrawOverlay", out var dov)) tool.DrawOverlay = GetBool(dov);
+            if (p.TryGetValue("EnableJudgment", out var ej)) tool.EnableJudgment = GetBool(ej);
+            if (p.TryGetValue("MaxStraightness", out var ms)) tool.MaxStraightness = GetDouble(ms);
             return tool;
         }
 
