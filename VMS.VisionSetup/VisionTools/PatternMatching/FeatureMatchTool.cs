@@ -159,6 +159,8 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
 
         private const int NUM_GRAD_BINS = 36;
         private const double BIN_WIDTH_DEG = 360.0 / NUM_GRAD_BINS;
+        // 정련 창 이동(언덕 오르기) 최대 횟수 — 최고점이 창 가장자리에 걸릴 때만 옮긴다
+        private const int MaxRefineClimbs = 3;
 
         /// <summary>
         /// Collection of trained pattern models.
@@ -1435,19 +1437,14 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
             double minSeparation = Math.Max(4.0,
                 Math.Min(model.TemplateWidth, model.TemplateHeight) * NmsDistanceFactor * invScale);
 
-            // 투표 스케일 축 — 투표는 원래 학습 스케일 고정이라, 실물 스케일이 중심에서
-            // 멀면(넓은 Min/MaxScale 설정) 투표 피크가 번져 진짜 위치가 후보에 못 든다.
-            // 스케일 범위가 ±0.15 를 넘으면 코스 스케일 몇 개로 나눠 투표하고 후보를
-            // 합친다 (기본 0.9~1.1 은 중심 1회 → 기존과 동일 비용).
+            // 투표 스케일 축 — 투표 스케일이 실물과 Δs 다르면 중심에서 r 떨어진 에지의 표가
+            // Δs·r 만큼 밀린다. 표는 에지가 몰린 쪽으로 쏠리므로 피크 자체가 중심에서 벗어나
+            // (실측: 455×349 템플릿, 1.08 배에서 12px) 정련 반경 밖에 남아 미검출·오검출이 된다.
+            // 템플릿 크기로 격자 간격을 정해, 가장 가까운 투표 스케일에서도 밀림이 투표 빈
+            // 하나(1<<BIN_SHIFT, 코스 px) 안에 들게 Min~Max 를 고르게 나눠 투표하고 후보를 합친다.
             double scaleCenter = (MinScale + MaxScale) / 2.0;
             double scaleRange = (MaxScale - MinScale) / 2.0;
-            const double VOTE_SCALE_STEP = 0.15;
-            var voteScales = new List<double> { scaleCenter };
-            for (int k = 1; voteScales.Count < 5 && k * VOTE_SCALE_STEP <= scaleRange + 1e-9; k++)
-            {
-                voteScales.Add(scaleCenter - k * VOTE_SCALE_STEP);
-                if (voteScales.Count < 5) voteScales.Add(scaleCenter + k * VOTE_SCALE_STEP);
-            }
+            var voteScales = VoteScaleGrid(MinScale, MaxScale, ModelRadius(model) * invScale, 1 << BIN_SHIFT);
 
             var rawCands = new List<(double cx, double cy, double angle, int votes)>();
 
@@ -1735,59 +1732,69 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                     scaleCenter, scaleRange, fineScaleStep,
                     out poseCount);
 
-                if (NativeVision.IsAvailable && poseCount > 0)
+                // 창 안 최고점이 창 가장자리에 걸리면 진짜 위치가 창 밖일 수 있다 — 그 자리로 창을
+                // 옮겨 다시 정련(언덕 오르기). 투표 피크가 스케일·형상 편향으로 반경보다 조금 더
+                // 밀린 경우를 구한다. 점수가 더 오르지 않으면 멈춘다.
+                int winCx = (int)candCx, winCy = (int)candCy;
+                for (int climb = 0; climb < MaxRefineClimbs && poseCount > 0; climb++)
                 {
-                    int bestDx, bestDy, bestPoseIdx;
-                    double score = NativeVision.EvaluateAllPosesNative(
-                        (int)candCx, (int)candCy, refRadius,
-                        model.NativeRxBuf, model.NativeRyBuf,
-                        model.NativeRdxBuf, model.NativeRdyBuf,
-                        model.NativeMarginBuf,
-                        poseCount, N,
-                        dxPtr, dyPtr, magPtr,
-                        W, H, thresh, greedy,
-                        &bestDx, &bestDy, &bestPoseIdx,
-                        ciFlag ? 1 : 0);
-                    if (score > cScore)
+                    double winScore = 0;
+                    int winX = winCx, winY = winCy, winPose = -1;
+                    if (NativeVision.IsAvailable)
                     {
-                        cScore = score;
-                        cX = (int)candCx + bestDx;
-                        cY = (int)candCy + bestDy;
-                        cAngle = model.NativeAngleBuf[bestPoseIdx];
-                        cScale = model.NativeScaleBuf[bestPoseIdx];
+                        int bestDx, bestDy, bestPoseIdx;
+                        winScore = NativeVision.EvaluateAllPosesNative(
+                            winCx, winCy, refRadius,
+                            model.NativeRxBuf, model.NativeRyBuf,
+                            model.NativeRdxBuf, model.NativeRdyBuf,
+                            model.NativeMarginBuf,
+                            poseCount, N,
+                            dxPtr, dyPtr, magPtr,
+                            W, H, thresh, greedy,
+                            &bestDx, &bestDy, &bestPoseIdx,
+                            ciFlag ? 1 : 0);
+                        winX = winCx + bestDx; winY = winCy + bestDy; winPose = bestPoseIdx;
                     }
-                }
-                else if (poseCount > 0)
-                {
-                    for (int pi = 0; pi < poseCount; pi++)
+                    else
                     {
-                        int fm = model.NativeMarginBuf[pi];
-                        int* pRx = model.NativeRxBuf + pi * N;
-                        int* pRy = model.NativeRyBuf + pi * N;
-                        float* pRdx = model.NativeRdxBuf + pi * N;
-                        float* pRdy = model.NativeRdyBuf + pi * N;
-                        for (int dy = -refRadius; dy <= refRadius; dy++)
+                        for (int pi = 0; pi < poseCount; pi++)
                         {
-                            int py = (int)candCy + dy;
-                            if (py < fm || py >= H - fm) continue;
-                            for (int dx = -refRadius; dx <= refRadius; dx++)
+                            int fm = model.NativeMarginBuf[pi];
+                            int* pRx = model.NativeRxBuf + pi * N;
+                            int* pRy = model.NativeRyBuf + pi * N;
+                            float* pRdx = model.NativeRdxBuf + pi * N;
+                            float* pRdy = model.NativeRdyBuf + pi * N;
+                            for (int dy = -refRadius; dy <= refRadius; dy++)
                             {
-                                int px = (int)candCx + dx;
-                                if (px < fm || px >= W - fm) continue;
-
-                                double score = EvaluateSimd(
-                                    px, py, pRx, pRy, pRdx, pRdy,
-                                    dxPtr, dyPtr, magPtr, W, N, thresh, greedy, ciFlag);
-                                if (score > cScore)
+                                int py = winCy + dy;
+                                if (py < fm || py >= H - fm) continue;
+                                for (int dx = -refRadius; dx <= refRadius; dx++)
                                 {
-                                    cScore = score;
-                                    cX = px; cY = py;
-                                    cAngle = model.NativeAngleBuf[pi];
-                                    cScale = model.NativeScaleBuf[pi];
+                                    int px = winCx + dx;
+                                    if (px < fm || px >= W - fm) continue;
+
+                                    double score = EvaluateSimd(
+                                        px, py, pRx, pRy, pRdx, pRdy,
+                                        dxPtr, dyPtr, magPtr, W, N, thresh, greedy, ciFlag);
+                                    if (score > winScore)
+                                    {
+                                        winScore = score;
+                                        winX = px; winY = py; winPose = pi;
+                                    }
                                 }
                             }
                         }
                     }
+
+                    if (winPose < 0 || winScore <= cScore) break;
+                    cScore = winScore;
+                    cX = winX; cY = winY;
+                    cAngle = model.NativeAngleBuf[winPose];
+                    cScale = model.NativeScaleBuf[winPose];
+
+                    bool onEdge = Math.Abs(winX - winCx) >= refRadius || Math.Abs(winY - winCy) >= refRadius;
+                    if (!onEdge) break;
+                    winCx = winX; winCy = winY;
                 }
 
                 if (cScore <= 0) continue;
@@ -1823,6 +1830,34 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
             }
 
             return (matches, bestVoteVal);
+        }
+
+        /// <summary>모델 에지점이 중심에서 떨어진 최대 거리 (풀해상도 px).</summary>
+        private static double ModelRadius(FeatureMatchModel model)
+        {
+            double r2 = 0;
+            foreach (var p in model.ModelEdges)
+                r2 = Math.Max(r2, (double)p.X * p.X + (double)p.Y * p.Y);
+            return Math.Sqrt(r2);
+        }
+
+        /// <summary>
+        /// 투표 스케일 격자 — [minScale, maxScale] 을 고르게 나눈다. 이웃 격자 사이 절반(Δs/2)만큼
+        /// 어긋났을 때 가장 먼 에지의 표 밀림(Δs/2 × voteRadius)이 maxShift(코스 px) 이하가 되는
+        /// 개수로 나누되 최대 MaxVoteScales 개. 범위가 없으면 중심 1개.
+        /// </summary>
+        internal static List<double> VoteScaleGrid(double minScale, double maxScale, double voteRadius, double maxShift)
+        {
+            const int MaxVoteScales = 9;
+            double lo = Math.Min(minScale, maxScale), hi = Math.Max(minScale, maxScale);
+            double span = hi - lo;
+            if (span < 1e-9 || voteRadius <= 0) return new List<double> { (lo + hi) / 2.0 };
+            double maxStep = 2.0 * maxShift / voteRadius;
+            int count = Math.Clamp((int)Math.Ceiling(span / maxStep) + 1, 1, MaxVoteScales);
+            if (count == 1) return new List<double> { (lo + hi) / 2.0 };
+            var grid = new List<double>(count);
+            for (int i = 0; i < count; i++) grid.Add(lo + span * i / (count - 1));
+            return grid;
         }
 
         /// <summary>

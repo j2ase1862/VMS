@@ -506,7 +506,7 @@ namespace VMS.VisionSetup.Models
             {
                 Name = "Shape Match (NCC + 피라미드 형상 매칭)",
                 Description = "정규화 상관(NCC) + 다중 해상도 피라미드 + Coarse-to-Fine 회전·스케일 탐색으로 학습된 형상을 검출합니다.\n1단계 Coarse: 1/2^N 해상도에서 큰 각도 스텝으로 모든 후보 평가\n2단계 Fine: 풀 해상도에서 상위 N개 후보 주변만 정밀화\nFeatureMatchTool의 에지 기반 매칭에 비해 단순하지만, 텍스처 없는 단색 형상·로고·인쇄 마크에 안정적입니다.",
-                Usage = "Training Region에 패턴을 학습(Train Template) → Search Region으로 검색 범위 제한 → Run. 회전 범위는 ±180° 고정이며 AngleStep으로 정밀도를 조절합니다.",
+                Usage = "Training Region에 패턴을 학습(Train Template) → Search Region으로 검색 범위 제한 → Run. 회전 범위는 ±180° 고정이며 AngleStep으로 정밀도를 조절합니다.\nTraining Region은 대상 둘레에 배경이 조금 들어가게 그리세요 — 회전 탐색 때 영역 테두리의 밝기를 배경으로 삼아 회전으로 생기는 모서리를 채웁니다.",
                 CognexEquivalent = "CogPMAlignTool (PatMax) — 단순화된 NCC 버전",
                 Parameters = new Dictionary<string, string>
                 {
