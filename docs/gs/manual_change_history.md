@@ -1629,3 +1629,56 @@ Cluster 32,565점 → Downsample 5,191점 → Registration Confidence 100% · De
 ### 매뉴얼 반영
 
 §5 도구 워크스페이스 설명에 확대/축소·이동 조작과 [전체 보기]/[100%] 추가. 예제 템플릿 그림은 새 배치로 재캡처 검토.
+
+---
+
+## 43. 3D 도구 판정 · VMS 본체 3D 검사 · PointCloud Line Fit (v1.42.7) — **반영 대기**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-09-28 |
+| 대상 | 본편 §5 VisionSetup 3D · §6 3D 도구(판정 항목 · Line Fit 절 신설) · §4 AUTO RUN(3D 카메라) · 부록 파라미터 표 |
+| 변경 종류 | 기능 추가 3건 (버전은 사용자 결정으로 1.42.x 유지 — 3D 검증 완료 전) |
+
+### 무엇이 문제였나 (사내 기록)
+
+현장 3D 촬영본으로 3D 도구 활용 가이드(`docs/3d_tools_job_guide.md`)를 쓰다 확인한 제약 3가지.
+
+1. **3D 도구는 값만 내고 OK/NG 를 못 냈다** — 공차 판정이 있는 3D 도구는 PointCloud Deviation 하나. 높이·각도·개수·치수는
+   PLC 로 보내 판정해야 했고, **Registration 은 정합이 틀려도(현장 Confidence 0.13) OK** 로 끝났다.
+2. **VMS 본체 검사(수동 검사·AUTO RUN)는 3D 레시피를 돌리지 못했다** — 카메라 2D 영상만 넘겨 Height Slicer
+   "CV_8UC3 미지원" · Mask Crop "No point cloud" · Plane Fit "HeightMapMetadata 필요" 로 전 도구 NG. 3D 레시피는 VisionSetup 전용.
+3. **3D Geometry 의 점-직선 거리를 쓸 수 없었다** — 연산은 있었지만 직선을 내는 도구가 없었다.
+
+### 바뀐 것
+
+1. **판정** (2D Geometry 와 같은 규약 — Enable Judgment + 기준값 ± 공차, 결과 키 JudgmentValue/Low/High/Pass, 기본 꺼짐)
+   - 3D Geometry: 거리 연산 Distance3D(mm) / 평면-평면 각도 AngleDeg(°)
+   - Plane Fit: 평탄도 ≤ Max Flatness
+   - PointCloud Cluster: 개수(Equal/≥/≤/Range) + 치수(보고되는 모든 덩어리의 Length·Width ± 공차). 개수 판정을 켜면 0개도 판정
+   - PointCloud Registration: Confidence ≥ Min Confidence (예제 템플릿 pc-deviation · 3d-registration-align 은 0.3 프리셋)
+   - 판정만 NG 인 소스(평탄도·치수)는 3D Geometry 가 기하 데이터로 계속 쓴다
+   - Cluster Tolerance 슬라이더 최대 50 → 100 (도구 허용 범위와 일치)
+2. **본체 3D 검사** — 3D 도구가 있는 스텝이면 촬영 점군을 검사 엔진에 넘기고, 스텝마다 복제본으로 점군·깊이맵(레시피 Height Slicing 범위)·
+   높이맵 메타데이터를 세운다(VisionSetup 이 점군을 열 때와 같은 것). 연결 입력 없는 Height Slicer 는 mm 깊이맵. 스텝 후 해제.
+   기본 입력 영상은 카메라 2D 영상 그대로.
+3. **PointCloud Line Fit** (3D Measurement) — RANSAC 직선 → 인라이어 PCA. 직선 점·방향, 길이·끝점, AngleXY·Elevation,
+   직진도 Straightness(인라이어 거리 P99 — 튄 점 한두 개가 정하지 않게), MaxDeviation·RMS. 직진도 판정.
+   Distance Threshold ≤ Max Straightness 면 휜 부분이 빠져 직진도가 작게 나오므로 결과 메시지에 경고.
+   3D Geometry 점-직선 거리의 점은 클러스터 원좌표(점-평면과 같은 규칙).
+
+### 검증
+
+- 테스트 +34: `ThreeDJudgmentTests` 22 · `InspectionService3DTests` 4 · `PointCloudLineFitToolTests` 8
+- 현장 8장(`D:\3D Image-1`): 판정 켠 예제 레시피(높이 90±5mm · 치수 376×252±6mm · Confidence ≥ 0.3) — 7장 OK,
+  57° 돌아간 103138 만 Registration 판정 NG(Confidence 0.168, 종전에는 OK 로 표시됐다)
+- **본체 엔진 결과가 VisionSetup 과 소수점까지 같다**(높이 89.32~93.75mm · 치수 · 회전 · Confidence · 편차), 103138 은 Deviation 건너뜀
+- Line Fit 현장: 골든 프레임 한쪽 — 방향 2.1~4.3°(독립 3.9°) · 길이 363~367(독립 375). 윗면이 폭 95mm 띠라 인라이어 비율 4~37% —
+  가는 봉·모서리에 적합
+- ⏳ 현장 확인: 실제 3D 카메라로 AUTO RUN 1사이클 · 카메라 2D 영상 해상도 = 깊이 격자(2048×1536) 여부
+  (다르면 2D 영상에 직접 그린 ROI 가 3D 좌표와 어긋난다 — VisionSetup 도 같은 조건)
+
+### 매뉴얼 반영
+
+§6 3D 도구 각 절에 Judgment 항목 추가, PointCloud Line Fit 절 신설(파라미터 표는 `extract_tool_params.py` 재실행).
+§4 AUTO RUN 에 "3D 카메라 스텝도 검사된다" 한 줄. §12 에서 "3D 레시피는 VisionSetup 에서만" 류 서술이 있으면 삭제.
