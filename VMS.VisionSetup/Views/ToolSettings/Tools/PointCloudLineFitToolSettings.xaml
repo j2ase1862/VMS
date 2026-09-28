@@ -1,0 +1,49 @@
+<UserControl x:Class="VMS.VisionSetup.Views.ToolSettings.Tools.PointCloudLineFitToolSettings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls">
+    <StackPanel>
+        <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,8"
+                   Text="현재 점군에 3D 직선을 맞춥니다 — 레일·모서리·봉의 방향·길이·직진도를 재고, 3D Geometry 의 점-직선 거리에 직선을 넘깁니다. 보통 Height Slicer → Mask Crop 으로 직선 부위만 남긴 뒤 Result 로 연결합니다."/>
+
+        <!-- Fitting -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Line Fitting" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:SliderParameter Label="Distance Threshold (mm)"
+                    Value="{Binding DistanceThreshold}" Minimum="0.1" Maximum="20.0"
+                    TickFrequency="0.1" ValueFormat="F1"
+                    ToolType="PointCloudLineFitTool" ParameterName="DistanceThreshold"/>
+                <controls:SliderParameter Label="Iterations"
+                    Value="{Binding Iterations}" Minimum="10" Maximum="2000"
+                    TickFrequency="10" ValueFormat="F0"
+                    ToolType="PointCloudLineFitTool" ParameterName="Iterations"/>
+                <controls:TextBoxParameter Label="Min Inliers"
+                    Value="{Binding MinInliers}"
+                    ToolType="PointCloudLineFitTool" ParameterName="MinInliers"/>
+                <controls:CheckBoxParameter Label="Draw Overlay"
+                    IsChecked="{Binding DrawOverlay}"
+                    ToolType="PointCloudLineFitTool" ParameterName="DrawOverlay"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- Judgment — 직진도 -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Judgment" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:CheckBoxParameter Label="Enable Judgment"
+                    IsChecked="{Binding EnableJudgment}"
+                    ToolType="PointCloudLineFitTool" ParameterName="EnableJudgment"/>
+                <controls:TextBoxParameter Label="Max Straightness (mm)"
+                    Value="{Binding MaxStraightness}"
+                    ToolType="PointCloudLineFitTool" ParameterName="MaxStraightness"/>
+                <TextBlock Foreground="#999999" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,0"
+                           Text="직진도 = 직선 위 점(인라이어)의 99% 가 직선에서 떨어진 거리 (튄 점 제외). Distance Threshold 를 Max Straightness 보다 크게 두세요 — 작으면 휜 부분이 빠져 직진도가 작게 나옵니다. 좌표는 점군 원좌표(3D 카메라는 X/Y 화소 · Z mm)."/>
+            </StackPanel>
+        </Expander>
+    </StackPanel>
+</UserControl>

@@ -235,7 +235,8 @@ namespace VMS.VisionSetup.Models
                     ["TranslationNorm"] = "이동량의 총 크기 (mm). '기준 위치에서 얼마나 밀려 있었나'.",
                     ["RotationX/Y/Z"] = "기준 대비 회전량 (도, 축별).",
                     ["RefPoints / SrcPoints"] = "기준 점군 / 현재 점군의 점 개수.",
-                    ["M11~M44"] = "4x4 변환 행렬 원소 (계산용 원자료). 일반적으로는 위의 이동/회전 값만 보면 됩니다."
+                    ["M11~M44"] = "4x4 변환 행렬 원소 (계산용 원자료). 일반적으로는 위의 이동/회전 값만 보면 됩니다.",
+                    ["JudgmentPass"] = "판정 결과 (Enable Judgment 시). Confidence ≥ Min Confidence 면 True. JudgmentValue = Confidence, JudgmentLow = Min Confidence."
                 },
                 Parameters = new Dictionary<string, string>
                 {
@@ -244,7 +245,9 @@ namespace VMS.VisionSetup.Models
                     ["ConfidenceDistanceMm"] = "Confidence(신뢰도) 판정 거리 (mm). 정합 후 이 거리 이내로 기준에 붙은 점을 '맞은 점'으로 집계.\n• 표면 정밀도 좋은 부품: 0.5~1.0\n• 일반: 1.0 (기본)\n• 거친 스캔: 2.0~5.0",
                     ["MaxIterations"] = "ICP 반복 최대 횟수. 수렴 안 되어도 이 횟수에서 중단.\n• 20~30: 빠름, 거친 정합\n• 50: 기본 (균형)\n• 100~200: 정밀, 느림",
                     ["Tolerance"] = "수렴 임계 (mm). 반복 간 변환 변화량이 이 값보다 작으면 수렴 판정 후 종료.\n• 0.001~0.005: 매우 정밀\n• 0.01: 기본\n• 0.05~0.1: 빠른 수렴, 정밀도 ↓",
-                    ["ApplyTransformToSource"] = "true: 산출된 변환을 Source에 적용 후 VisionService.CurrentPointCloud 갱신 (후속 도구가 정합된 점군 사용).\nfalse: 변환 행렬만 산출, Source는 그대로 유지."
+                    ["ApplyTransformToSource"] = "true: 산출된 변환을 Source에 적용 후 VisionService.CurrentPointCloud 갱신 (후속 도구가 정합된 점군 사용).\nfalse: 변환 행렬만 산출, Source는 그대로 유지.",
+                    ["EnableJudgment"] = "정합 품질 판정 사용. 켜면 Confidence 가 Min Confidence 미만일 때 NG.\n꺼 두면 정합이 틀려도 성공(OK)으로 끝납니다 — 현장에서 Confidence 0.13 인 실패 정합이 OK 로 표시된 적이 있습니다.",
+                    ["MinConfidence"] = "Confidence 하한 (0~1). 정합 후 Confidence Distance 이내로 기준에 붙은 점의 비율이 이 값보다 작으면 정합 실패.\n• 0.3: 현장 3D 카메라(측정 잡음 수 mm) 기준 — 제대로 맞으면 0.65 이상, 실패하면 0.3 아래\n• 0.5: 기본\n• 0.8~0.9: 정밀 스캔"
                 }
             },
 
@@ -266,7 +269,10 @@ namespace VMS.VisionSetup.Models
                     ["Cluster{i}_Length/Width"] = "XY 평면 최소 외접 사각형(OBB)의 긴 변/짧은 변 — 비스듬히 놓인 부품의 실제 길이·폭 (환산 배율 적용).",
                     ["Cluster{i}_Angle"] = "OBB 긴 변의 각도 (도, -90~90). 부품이 놓인 방향.",
                     ["Cluster{i}_MmPerPx"] = "이 덩어리 치수에 실제 적용된 mm/px 배율. AutoFromCamera면 덩어리 높이에 따라 달라지고, Manual이면 XyScale 그대로.",
-                    ["TotalClusteredPoints"] = "모든 덩어리 점 수 합계 (노이즈로 걸러진 점 제외)."
+                    ["TotalClusteredPoints"] = "모든 덩어리 점 수 합계 (노이즈로 걸러진 점 제외).",
+                    ["JudgmentPass"] = "판정 결과 (Enable Judgment 시) — 켜진 개수·치수 판정이 모두 합격이면 True.",
+                    ["CountJudgmentPass / SizeJudgmentPass"] = "개수 판정 / 치수 판정 각각의 결과.",
+                    ["SizeJudgmentFailIndex"] = "치수 판정에서 처음 벗어난 덩어리 번호 (모두 합격이면 -1)."
                 },
                 Parameters = new Dictionary<string, string>
                 {
@@ -277,6 +283,16 @@ namespace VMS.VisionSetup.Models
                     ["OutputMode"] = "결과 처리 모드:\n• LargestOnly: VisionService.CurrentPointCloud를 가장 큰 클러스터로 교체 (객체 분리용)\n• AllMerged: 활성 클러스터들을 모두 합산 (작은 노이즈 제거)\n• KeepOriginal: CurrentPointCloud 유지, 메트릭만",
                     ["ScaleMode"] = "치수 환산 방식:\n• Manual: 아래 XyScale 값 사용 (기본, 기존 호환)\n• AutoFromCamera (권장): 카메라 depth 내부 파라미터(fx/fy)와 덩어리의 실측 높이 Z로 mm/px = Z/fx 를 자동 계산 — 작동 거리가 바뀌어도 정확. Mech-Mind grab 점군에서만 가능하며, .vpc 로드 등 카메라 정보가 없으면 XyScale로 폴백(메시지에 ⚠ 표시).",
                     ["XyScale"] = "Manual 모드의 치수(SizeX/Y, Length/Width) X/Y 환산 배율 (mm/pixel). 3D 카메라 grab 점군은 X/Y가 픽셀 단위라(Z만 mm) 실측 mm 치수가 필요하면 mm/pixel을 입력.\n• 1.0: 원 단위 그대로 (기본)\n산출 절차: docs/3d_dimension_calibration_guide.md (기지 치수 물체 1회 측정).\n※ CenterX/Y에는 적용되지 않음 (기존 레시피 호환).",
+                    ["EnableJudgment"] = "판정 사용. 켜면 아래 개수·치수 판정 결과로 OK/NG 를 냅니다.\n꺼 두면 덩어리를 하나라도 찾으면 성공입니다 (개수가 모자라거나 치수가 틀려도 OK).",
+                    ["UseCountJudgment"] = "개수 판정. 찾은 덩어리 수를 Count Mode 로 판정합니다.\n켜 두면 덩어리가 0개여도 판정합니다 — Count Mode=LessOrEqual, Expected Count=0 이면 '이물 없음' 검사.",
+                    ["CountMode"] = "개수 판정 방식:\n• Equal: 정확히 Expected Count 개\n• GreaterOrEqual: Expected Count 개 이상\n• LessOrEqual: Expected Count 개 이하\n• Range: Expected Count ~ Expected Count Max 개",
+                    ["ExpectedCount"] = "기준 개수 (Range 모드에서는 최소 개수).",
+                    ["ExpectedCountMax"] = "Range 모드의 최대 개수. 다른 모드에서는 쓰지 않습니다.",
+                    ["UseSizeJudgment"] = "치수 판정. 결과에 보고되는 모든 덩어리(Max Reported Clusters 까지)의 길이·폭이 기준 ± 공차 안이어야 OK.\n하나라도 벗어나면 NG — 결과 SizeJudgmentFailIndex 가 벗어난 덩어리 번호.",
+                    ["ExpectedLength"] = "기준 길이 — 덩어리 외접 사각형의 긴 변 (Cluster{i}_Length).\n단위는 Scale Mode 를 따릅니다: AutoFromCamera 면 mm, Manual 이면 XY Scale 적용값.",
+                    ["ExpectedWidth"] = "기준 폭 — 외접 사각형의 짧은 변 (Cluster{i}_Width). 단위는 길이와 같습니다.",
+                    ["SizeToleranceMinus"] = "치수 하한 공차 — 길이·폭 공통. 기준 − 이 값까지 합격.\n3D 카메라 측정 잡음(수 mm)을 고려해 너무 좁히지 마세요.",
+                    ["SizeTolerancePlus"] = "치수 상한 공차 — 길이·폭 공통. 기준 + 이 값까지 합격.",
                     ["DrawOverlay"] = "찾은 덩어리를 2D 이미지 뷰어에 표시 (기본 켬). 덩어리별 색상 점 + 외접 사각형 + 중심 십자 + 라벨(#번호, 점 수, 길이x폭). 라벨 단위는 mm 환산 적용 시 mm, 아니면 px. 점군이 픽셀 좌표계가 아니면(변환된 mm 점군 등) 해당 덩어리는 그리지 않습니다."
                 }
             },
@@ -326,6 +342,37 @@ namespace VMS.VisionSetup.Models
                     ["EnableSor"] = "Statistical Outlier Removal 활성화. 통계적 outlier(노이즈/스파이크) 제거. KNN 검색이라 큰 점군에서는 시간 비용이 큼.",
                     ["SorK"] = "이웃 점 개수 (K-Nearest Neighbors). 각 점의 K개 이웃과의 평균 거리를 계산해 통계 분포 산출.\n• 10~20: 빠름, 거친 판정\n• 30: 기본 (균형)\n• 50~100: 정밀, 느림",
                     ["SorStddev"] = "표준편차 배수. 평균거리 ± 이 값 × σ 밖의 점은 outlier로 제거.\n• 1.0: 엄격 (많이 제거)\n• 2.0: 기본 (균형)\n• 3.0~5.0: 느슨 (강한 outlier만 제거)"
+                }
+            },
+
+            ["PointCloudLineFitTool"] = new ToolHelp
+            {
+                Name = "PointCloud Line Fit (3D 직선 피팅)",
+                Description = "현재 점군에 3D 직선을 맞추는 도구입니다. 레일·모서리·봉처럼 곧은 부위의 방향·길이·직진도를 재고, 3D Geometry 의 '점-직선 거리'에 직선을 넘겨줍니다.\n\n[언제 쓰나요]\n• 레일·프레임 변이 얼마나 곧은지(직진도) 볼 때\n• 부품 중심이 기준 모서리에서 얼마나 떨어져 있는지 잴 때 (Cluster 중심 → 3D Geometry 점-직선 거리)\n• 봉·파이프가 기울어진 각도를 볼 때\n\n알고리즘: RANSAC(두 점으로 후보 직선 → 가까운 점이 가장 많은 직선 선택) 후, 직선 위 점들의 주성분(PCA)으로 방향을 다듬습니다.",
+                Usage = "1) Height Slicer → Mask Crop 으로 직선 부위만 남긴다 (Mask Crop 에 ROI 를 그려 한 변만 남겨도 된다). 2) Mask Crop → 이 도구를 Result 로 연결. 3) Run → 길이·직진도 확인. 4) 점-직선 거리를 재려면 이 도구와 PointCloud Cluster 를 3D Geometry 에 Result 로 연결하고 Operation = PointToLineDistance3D, 연결 소스 모드.\n\n[좌표] 점군 원좌표 — 3D 카메라 grab 점군은 X/Y 가 화소, Z 가 mm (Plane Fit 과 같은 공간). 작동 거리 1.8m 에서는 1화소 ≈ 1mm.",
+                CognexEquivalent = "(3D Line Fit — PCL SACMODEL_LINE)",
+                Results = new Dictionary<string, string>
+                {
+                    ["LinePointX/Y/Z"] = "직선 위 한 점 (직선 위 점들의 중심).",
+                    ["LineDirX/Y/Z"] = "직선 방향 단위 벡터 (+X 쪽을 향하도록 부호 고정).",
+                    ["Length"] = "직선 위 점들이 걸친 길이 (끝점 End1 ~ End2).",
+                    ["Straightness"] = "직진도 (mm) — 직선 위 점의 99% 가 직선에서 떨어진 거리 이내 (상위 1% 제외). 3D 카메라의 튄 점 한두 개가 값을 정하지 않게 판정은 이 값으로 합니다.",
+                    ["MaxDeviation"] = "직선 위 점이 직선에서 떨어진 최대 거리 (mm) — 튄 점 하나에도 커지므로 참고용.",
+                    ["RmsDeviation"] = "직선까지 거리의 RMS — 표면 거칠기·측정 잡음 수준.",
+                    ["InlierCount / TotalPoints / InlierRatio"] = "직선 위 점 수 / 전체 유효 점 수 / 비율. 비율이 낮으면 직선이 아닌 점이 많이 섞인 것.",
+                    ["AngleXY"] = "XY 평면에서의 방향 (도, −90~90).",
+                    ["Elevation"] = "XY 평면에 대한 기울기 (도). 0 이면 수평.",
+                    ["End1X~End2Z"] = "직선 양 끝점.",
+                    ["JudgmentPass"] = "판정 결과 (Enable Judgment 시) — Straightness ≤ Max Straightness 면 True."
+                },
+                Parameters = new Dictionary<string, string>
+                {
+                    ["DistanceThreshold"] = "직선에서 이 거리(mm) 안의 점을 '직선 위의 점'으로 봅니다. 나머지는 잡음·다른 부위로 버립니다.\n• 0.5~1: 정밀 스캔\n• 2: 기본 (3D 카메라 측정 잡음 수 mm 기준)\n• 5~10: 폭이 있는 레일 전체를 한 직선으로 볼 때\n너무 작으면 직선을 못 찾고, 너무 크면 옆 부위까지 섞여 방향이 틀어집니다.",
+                    ["Iterations"] = "후보 직선을 몇 번 시도할지. 클수록 정확하지만 느립니다. 직선 부위가 전체 점의 일부뿐일수록 올립니다. 보통 300.",
+                    ["MinInliers"] = "직선 위 점이 이보다 적으면 '직선 없음'으로 실패합니다. 잡음 몇 점에 직선이 맞는 것을 막습니다.",
+                    ["DrawOverlay"] = "찾은 직선(양 끝점)을 2D 이미지 뷰어에 표시. 점군 X/Y 가 화소 좌표일 때만 그려집니다.",
+                    ["EnableJudgment"] = "직진도 판정 사용. 켜면 Straightness(상위 1% 제외) 가 Max Straightness 이하일 때 OK, 넘으면 NG.\n판정이 NG 여도 직선 자체는 3D Geometry 의 점-직선 거리에 계속 쓰입니다.",
+                    ["MaxStraightness"] = "직진도 상한 (mm) — 직선 위 점의 99% 가 이 거리 안이어야 합격.\n3D 카메라 측정 잡음(수 mm)보다 작게 두면 곧은 부품도 NG 가 납니다.\n⚠ Distance Threshold 를 이 값보다 크게 두세요 — 작으면 휜 부분이 직선 밖 점으로 빠져 직진도가 실제보다 작게 나옵니다 (결과 메시지에 경고, InlierRatio 확인)."
                 }
             },
 
@@ -962,14 +1009,21 @@ namespace VMS.VisionSetup.Models
                         "점을 몇 개 건너뛰며 쓸지입니다. 2 면 가로·세로 두 칸에 하나씩만 씁니다.\n\n" +
                         "• 값을 올리면 빨라지지만 작은 굴곡을 놓칠 수 있습니다\n" +
                         "• 점이 아주 많은 3D 카메라에서 속도가 문제될 때 올립니다\n" +
-                        "• 1 이면 모든 점을 씁니다"
+                        "• 1 이면 모든 점을 씁니다",
+                    ["EnableJudgment"] = "평탄도 판정 사용. 켜면 평탄도가 Max Flatness 이하일 때 OK, 넘으면 NG.\n판정이 NG 여도 평면 자체는 3D Geometry 의 기준면으로 계속 쓰입니다.",
+                    ["MaxFlatness"] =
+                        "평탄도 상한 (mm). 평탄도 = ROI 안 점들이 평면에서 떨어진 거리의 (최대 − 최소).\n\n" +
+                        "• 0.1~0.3 — 가공면\n" +
+                        "• 0.5 — 일반 (기본)\n" +
+                        "• 1~3 — 거친 면·잡음이 큰 3D 카메라\n\n" +
+                        "ROI 를 검사면 위에만 두세요. 다른 물체나 턱이 들어가면 그 높이만큼 평탄도가 커집니다."
                 }
             },
 
             ["Geometry3DTool"] = new ToolHelp
             {
                 Name = "Geometry 3D (3D 기하 연산)",
-                Description = "3D 기하 요소(점/평면/직선) 간 관계를 계산합니다 — 점-점 거리, 점-평면 수직거리, 평면-평면 각도 등.\n점 소스: 수동 픽셀 입력(높이맵에서 3D 복원) 또는 Result 연결(PointCloud Cluster의 클러스터 중심점 mm).\n평면 소스: PlaneFitTool Result 연결.",
+                Description = "3D 기하 요소(점/평면/직선) 간 관계를 계산합니다 — 점-점 거리, 점-평면 수직거리, 평면-평면 각도 등.\n점 소스: 수동 픽셀 입력(높이맵에서 3D 복원) 또는 Result 연결(PointCloud Cluster의 클러스터 중심점 mm).\n평면 소스: PlaneFitTool Result 연결.\n직선 소스: PointCloud Line Fit Result 연결 (점-직선 거리).",
                 Usage = "3D 측정 파이프라인의 마지막 단계 — 형상 추출 도구의 결과를 Result로 연결해 정량 측정값 산출.\n예1: PlaneFitTool(A) + PlaneFitTool(B) → PlaneToPlaneAngle → 두 평면 각도.\n예2: PointCloud Cluster → PointToPointDistance → 검출된 두 객체(Cluster A/B 번호) 중심 간 mm 거리. 연결 소스를 쓰려면 Use Manual Points를 끄세요.\n예3: PointCloud Cluster + PlaneFitTool → PointToPlaneDistance → 객체 중심에서 기준면까지 높이.",
                 CognexEquivalent = "Cognex 3D Result Analysis Tool",
                 Parameters = new Dictionary<string, string>
@@ -977,10 +1031,12 @@ namespace VMS.VisionSetup.Models
                     ["Operation"] = "기하 연산 종류:\n• PointToPointDistance: 두 점 사이 유클리드 거리(mm)\n• PointToPlaneDistance: 점에서 평면까지 수직 거리\n• PlaneToPlaneAngle: 두 평면 사이 각도(도)\n• PlaneToPlaneDistance: 평행 평면 간 거리\n• PointToLineDistance3D: 점에서 직선까지 수직 거리",
                     ["UseManualPoints"] = "포인트 소스 선택 (라디오): 수동 입력 = PointA/B 픽셀을 높이맵에서 3D 복원 / 연결 소스 = Result 연결(클러스터 중심점 등) 사용. 점을 쓰는 연산에서만 표시됩니다.",
                     ["SourceAClusterIndex"] = "첫 번째 클러스터 소스에서 쓸 클러스터 번호 (기본 0 = 가장 큰 덩어리). Run 후에는 콤보박스에서 '#번호 — 점수, 길이x폭'으로 선택 가능하고, 선택하면 2D 뷰어에 해당 덩어리가 강조 표시됩니다.",
-                    // ⚠ 이 도구에는 판정(ExpectedValue·Tolerance·EnableJudgment) 설정이 없다.
-                    //   예전에는 그 3개를 설명하고 있었는데 도구·설정 화면 어디에도 존재하지 않는 항목이었다
-                    //   (다른 측정 도구에서 복사된 것으로 보임 — 2026-09-15 소스 스캔으로 발견).
-                    //   판정이 필요하면 뒤에 Result 도구를 연결한다.
+                    // 판정 항목(EnableJudgment·ExpectedValue·Tolerance±)은 v1.42.7 에 실제로 추가됐다
+                    // (2026-09-15 스캔 당시에는 도구에 없는 항목을 설명하고 있어 지웠었다).
+                    ["EnableJudgment"] = "판정 사용. 켜면 연산 결과를 기준값 ± 공차로 판정해 OK/NG 를 냅니다 (Result 도구가 그대로 집계).\n• 거리 연산(점-점·점-평면·평면-평면 거리·점-직선): Distance3D (mm)\n• 평면-평면 각도: AngleDeg (°)\n꺼 두면 값만 계산합니다.",
+                    ["ExpectedValue"] = "기준값 — 거리(mm) 또는 각도(°).\n예: 부품 높이 90mm 면 90, 두 면이 평행해야 하면 0(°).",
+                    ["ToleranceMinus"] = "하한 공차. 기준값 − 이 값까지 합격.\n예: 기준 90, 하한 2 → 88mm 이상이면 합격.",
+                    ["TolerancePlus"] = "상한 공차. 기준값 + 이 값까지 합격.\n예: 기준 90, 상한 2 → 92mm 이하면 합격.",
                     ["SourceBClusterIndex"] = "두 번째 점의 클러스터 번호 (기본 1). 클러스터 툴 하나만 연결해도 A/B 두 클러스터 중심 간 거리를 잽니다.\n※ mm 정확도는 Cluster의 Scale Mode를 따름 — AutoFromCamera(권장) 또는 XyScale 설정 필요. XyScale=1이면 픽셀 혼합 단위."
                 }
             },

@@ -87,6 +87,21 @@ namespace VMS.Camera.Models
             };
         }
 
+        /// <summary>
+        /// 깊은 복사 (위치·색·격자·내부 파라미터). 검사가 백그라운드에서 도는 동안 화면 쪽 점군이
+        /// 다음 grab 으로 교체·해제돼도 영향이 없도록 검사 엔진에 넘길 때 쓴다.
+        /// </summary>
+        public PointCloudData Clone()
+        {
+            int count = PointCount;
+            var copy = CreatePooled(count, Name, GridWidth, GridHeight);
+            Array.Copy(Positions, copy.Positions, count);
+            if (Colors.Length >= count)
+                Array.Copy(Colors, copy.Colors, count);
+            copy.Intrinsics = Intrinsics;
+            return copy;
+        }
+
         public static PointCloudData FromArrays(float[] xyz, byte[]? rgb = null, string name = "PointCloud", int width = 0, int height = 0)
         {
             int count = xyz.Length / 3;

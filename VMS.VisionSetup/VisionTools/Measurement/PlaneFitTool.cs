@@ -56,6 +56,22 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             set => SetProperty(ref _sampleStride, Math.Max(1, value));
         }
 
+        private bool _enableJudgment;
+        /// <summary>평탄도 판정 사용 — 꺼져 있으면 평면·평탄도 값만 계산한다.</summary>
+        public bool EnableJudgment
+        {
+            get => _enableJudgment;
+            set => SetProperty(ref _enableJudgment, value);
+        }
+
+        private double _maxFlatness = 0.5;
+        /// <summary>평탄도 상한 (mm) — ROI 안 점들의 평면까지 거리 (최대 − 최소) 가 이 값 이하면 합격.</summary>
+        public double MaxFlatness
+        {
+            get => _maxFlatness;
+            set => SetProperty(ref _maxFlatness, Math.Max(0, value));
+        }
+
         public PlaneFitTool()
         {
             Name = "Plane Fit";
@@ -144,6 +160,8 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 result.Data["TotalPoints"] = points3D.Count;
                 result.Message = $"평면: {a:F4}x + {b:F4}y + {c:F4}z + {d:F2} = 0, " +
                                  $"평면도: {flatness:F3}mm, 인라이어: {inlierCount}/{points3D.Count}";
+                if (EnableJudgment)
+                    ToleranceJudgment.ApplyRange(result, flatness, 0, MaxFlatness, "mm", "평탄도");
 
                 // 오버레이 생성
                 result.OverlayImage = CreateOverlay(inputImage, metadata, roi, a, b, c, d);
@@ -407,7 +425,9 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             {
                 "Success", "PlaneA", "PlaneB", "PlaneC", "PlaneD",
                 "NormalX", "NormalY", "NormalZ",
-                "Flatness", "AvgError", "InlierCount", "TotalPoints"
+                "Flatness", "AvgError", "InlierCount", "TotalPoints",
+                // 판정 (EnableJudgment 시)
+                "JudgmentValue", "JudgmentLow", "JudgmentHigh", "JudgmentPass"
             };
         }
 
@@ -421,6 +441,8 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 RansacIterations = this.RansacIterations,
                 RansacThreshold = this.RansacThreshold,
                 SampleStride = this.SampleStride,
+                EnableJudgment = this.EnableJudgment,
+                MaxFlatness = this.MaxFlatness,
                 IsEnabled = this.IsEnabled,
                 UseROI = this.UseROI,
                 ROI = this.ROI

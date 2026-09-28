@@ -34,6 +34,7 @@ CORE = [
     ("Point Cloud Cluster (포인트클라우드 클러스터)", "3D Analysis", "PointCloudClusterToolSettings.xaml"),
     ("Point Cloud Filter (포인트클라우드 필터)", "3D Analysis", "PointCloudFilterToolSettings.xaml"),
     ("Point Cloud Registration (포인트클라우드 정합)", "3D Analysis", "PointCloudRegistrationToolSettings.xaml"),
+    ("Point Cloud Line Fit (포인트클라우드 직선 피팅)", "3D Analysis", "PointCloudLineFitToolSettings.xaml"),
     ("Detection (딥러닝 검출)", "Deep Learning", "DetectionToolSettings.xaml"),
     ("Segmentation (분할)", "Deep Learning", "SegmentationToolSettings.xaml"),
     ("YOLO Segmentation", "Deep Learning", "YoloSegToolSettings.xaml"),

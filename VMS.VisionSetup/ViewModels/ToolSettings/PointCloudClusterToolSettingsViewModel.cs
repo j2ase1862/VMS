@@ -29,5 +29,21 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         }
 
         public System.Array OutputModes => System.Enum.GetValues(typeof(PointCloudClusterTool.ClusterOutputMode));
+
+        // ── 판정 (Judgment) — 개수 · 치수 ──
+        public bool EnableJudgment { get => TypedTool.EnableJudgment; set { TypedTool.EnableJudgment = value; OnPropertyChanged(); } }
+        public bool UseCountJudgment { get => TypedTool.UseCountJudgment; set { TypedTool.UseCountJudgment = value; OnPropertyChanged(); } }
+        public PointCloudClusterTool.ClusterCountMode CountMode
+        {
+            get => TypedTool.CountMode;
+            set { TypedTool.CountMode = value; OnPropertyChanged(); }
+        }
+        public int ExpectedCount { get => TypedTool.ExpectedCount; set { TypedTool.ExpectedCount = value; OnPropertyChanged(); } }
+        public int ExpectedCountMax { get => TypedTool.ExpectedCountMax; set { TypedTool.ExpectedCountMax = value; OnPropertyChanged(); } }
+        public bool UseSizeJudgment { get => TypedTool.UseSizeJudgment; set { TypedTool.UseSizeJudgment = value; OnPropertyChanged(); } }
+        public double ExpectedLength { get => TypedTool.ExpectedLength; set { TypedTool.ExpectedLength = value; OnPropertyChanged(); } }
+        public double ExpectedWidth { get => TypedTool.ExpectedWidth; set { TypedTool.ExpectedWidth = value; OnPropertyChanged(); } }
+        public double SizeToleranceMinus { get => TypedTool.SizeToleranceMinus; set { TypedTool.SizeToleranceMinus = value; OnPropertyChanged(); } }
+        public double SizeTolerancePlus { get => TypedTool.SizeTolerancePlus; set { TypedTool.SizeTolerancePlus = value; OnPropertyChanged(); } }
     }
 }

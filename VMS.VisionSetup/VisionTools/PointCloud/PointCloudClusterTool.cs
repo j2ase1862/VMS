@@ -7,6 +7,7 @@ using VMS.Camera.Models;
 using VMS.Camera.Utils;
 using VMS.VisionSetup.Models;
 using VMS.VisionSetup.Services;
+using VMS.VisionSetup.VisionTools.Measurement;
 
 namespace VMS.VisionSetup.VisionTools.PointCloud
 {
@@ -123,6 +124,100 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
             set => SetProperty(ref _xyScale, Math.Clamp(value, 0.0001f, 1000f));
         }
 
+        // ── 판정 (Judgment) — 개수 · 치수 ──
+        // 종전에는 덩어리를 하나라도 찾으면 성공이었다. 개수가 모자라거나 치수가 틀려도 OK.
+
+        public enum ClusterCountMode
+        {
+            /// <summary>정확히 N개</summary>
+            Equal,
+            /// <summary>N개 이상</summary>
+            GreaterOrEqual,
+            /// <summary>N개 이하 (0개 = 이물 없음 검사)</summary>
+            LessOrEqual,
+            /// <summary>N ~ Max 개</summary>
+            Range
+        }
+
+        private bool _enableJudgment;
+        /// <summary>판정 사용 — 꺼져 있으면 덩어리를 하나라도 찾으면 성공 (종전 동작).</summary>
+        public bool EnableJudgment
+        {
+            get => _enableJudgment;
+            set => SetProperty(ref _enableJudgment, value);
+        }
+
+        private bool _useCountJudgment = true;
+        /// <summary>개수 판정 — 켜면 덩어리가 0개여도 판정한다 (LessOrEqual 0 = 이물 없음).</summary>
+        public bool UseCountJudgment
+        {
+            get => _useCountJudgment;
+            set => SetProperty(ref _useCountJudgment, value);
+        }
+
+        private ClusterCountMode _countMode = ClusterCountMode.Equal;
+        public ClusterCountMode CountMode
+        {
+            get => _countMode;
+            set => SetProperty(ref _countMode, value);
+        }
+
+        private int _expectedCount = 1;
+        /// <summary>기준 개수 (Range 모드에서는 최소).</summary>
+        public int ExpectedCount
+        {
+            get => _expectedCount;
+            set => SetProperty(ref _expectedCount, Math.Max(0, value));
+        }
+
+        private int _expectedCountMax = 1;
+        /// <summary>Range 모드의 최대 개수.</summary>
+        public int ExpectedCountMax
+        {
+            get => _expectedCountMax;
+            set => SetProperty(ref _expectedCountMax, Math.Max(0, value));
+        }
+
+        private bool _useSizeJudgment;
+        /// <summary>치수 판정 — 보고되는 모든 덩어리의 길이·폭이 기준 ± 공차 안이어야 합격.</summary>
+        public bool UseSizeJudgment
+        {
+            get => _useSizeJudgment;
+            set => SetProperty(ref _useSizeJudgment, value);
+        }
+
+        private double _expectedLength = 100;
+        /// <summary>기준 길이 (OBB 긴 변 — AutoFromCamera 면 mm, Manual 이면 XyScale 단위).</summary>
+        public double ExpectedLength
+        {
+            get => _expectedLength;
+            set => SetProperty(ref _expectedLength, Math.Max(0, value));
+        }
+
+        private double _expectedWidth = 50;
+        /// <summary>기준 폭 (OBB 짧은 변).</summary>
+        public double ExpectedWidth
+        {
+            get => _expectedWidth;
+            set => SetProperty(ref _expectedWidth, Math.Max(0, value));
+        }
+
+        private double _sizeToleranceMinus = 2;
+        /// <summary>치수 하한 공차 (길이·폭 공통).</summary>
+        public double SizeToleranceMinus
+        {
+            get => _sizeToleranceMinus;
+            set => SetProperty(ref _sizeToleranceMinus, Math.Max(0, value));
+        }
+
+        private double _sizeTolerancePlus = 2;
+        /// <summary>치수 상한 공차 (길이·폭 공통).</summary>
+        public double SizeTolerancePlus
+        {
+            get => _sizeTolerancePlus;
+            set => SetProperty(ref _sizeTolerancePlus, Math.Max(0, value));
+        }
+
         public PointCloudClusterTool()
         {
             Name = "PointCloud Cluster";
@@ -153,6 +248,9 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                     result.Message = $"No cluster found within size [{MinPoints}, {MaxPoints}] @ tol={Tolerance:F2}mm.";
                     result.OutputImage = inputImage.Clone();
                     result.Data["ClusterCount"] = 0;
+                    // 개수 판정이 켜져 있으면 0개도 판정 대상 (예: 이하 0 = 이물 없음 → 합격)
+                    if (EnableJudgment && UseCountJudgment)
+                        ApplyJudgment(result, 0, 0);
                     return result;
                 }
 
@@ -239,6 +337,8 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                     + (autoScaleUnavailable
                         ? " ⚠ Auto scale unavailable (no camera intrinsics) — using manual XyScale"
                         : "");
+                if (EnableJudgment)
+                    ApplyJudgment(result, clusters.Count, reported);
             }
             catch (Exception ex)
             {
@@ -252,6 +352,68 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                 LastResult = result;
             }
             return result;
+        }
+
+        /// <summary>
+        /// 개수·치수 판정. 개수는 찾은 덩어리 전부(clusterCount), 치수는 결과에 보고된
+        /// 덩어리(reported = MaxReportedClusters 까지)의 Length/Width 를 본다.
+        /// 결과 키: CountJudgmentPass · SizeJudgmentPass · SizeJudgmentFailIndex · JudgmentPass.
+        /// </summary>
+        private void ApplyJudgment(VisionResult result, int clusterCount, int reported)
+        {
+            var parts = new List<string>();
+            bool pass = true;
+
+            if (UseCountJudgment)
+            {
+                bool countPass = CountMode switch
+                {
+                    ClusterCountMode.Equal => clusterCount == ExpectedCount,
+                    ClusterCountMode.GreaterOrEqual => clusterCount >= ExpectedCount,
+                    ClusterCountMode.LessOrEqual => clusterCount <= ExpectedCount,
+                    ClusterCountMode.Range => clusterCount >= ExpectedCount && clusterCount <= ExpectedCountMax,
+                    _ => true
+                };
+                string expected = CountMode switch
+                {
+                    ClusterCountMode.Equal => $"= {ExpectedCount}",
+                    ClusterCountMode.GreaterOrEqual => $"≥ {ExpectedCount}",
+                    ClusterCountMode.LessOrEqual => $"≤ {ExpectedCount}",
+                    _ => $"{ExpectedCount}~{ExpectedCountMax}"
+                };
+                result.Data["CountJudgmentPass"] = countPass;
+                parts.Add($"개수 {clusterCount} (기준 {expected}) {(countPass ? "OK" : "NG")}");
+                pass &= countPass;
+            }
+
+            if (UseSizeJudgment && reported > 0)
+            {
+                double lo(double v) => v - SizeToleranceMinus;
+                double hi(double v) => v + SizeTolerancePlus;
+                int failIndex = -1;
+                for (int i = 0; i < reported && failIndex < 0; i++)
+                {
+                    double len = Convert.ToDouble(result.Data[$"Cluster{i}_Length"]);
+                    double wid = Convert.ToDouble(result.Data[$"Cluster{i}_Width"]);
+                    bool ok = len >= lo(ExpectedLength) && len <= hi(ExpectedLength)
+                              && wid >= lo(ExpectedWidth) && wid <= hi(ExpectedWidth);
+                    if (!ok) failIndex = i;
+                }
+                bool sizePass = failIndex < 0;
+                result.Data["SizeJudgmentPass"] = sizePass;
+                result.Data["SizeJudgmentFailIndex"] = failIndex;
+                parts.Add(sizePass
+                    ? $"치수 {reported}개 OK (기준 {ExpectedLength:F1}×{ExpectedWidth:F1} −{SizeToleranceMinus:F1}/+{SizeTolerancePlus:F1})"
+                    : $"치수 NG #{failIndex} {Convert.ToDouble(result.Data[$"Cluster{failIndex}_Length"]):F1}×{Convert.ToDouble(result.Data[$"Cluster{failIndex}_Width"]):F1} " +
+                      $"(기준 {ExpectedLength:F1}×{ExpectedWidth:F1} −{SizeToleranceMinus:F1}/+{SizeTolerancePlus:F1})");
+                pass &= sizePass;
+            }
+
+            if (parts.Count == 0) return;   // 판정 항목이 모두 꺼짐 — 종전 결과 유지
+
+            result.Data["JudgmentPass"] = pass;
+            result.Success = pass;
+            result.Message += $" · 판정 {(pass ? "OK" : "NG")} ({string.Join(", ", parts)})";
         }
 
         /// <summary>
@@ -435,7 +597,9 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
         {
             var keys = new List<string>
             {
-                "Success", "ClusterCount", "LargestPoints", "TotalClusteredPoints"
+                "Success", "ClusterCount", "LargestPoints", "TotalClusteredPoints",
+                // 판정 (EnableJudgment 시)
+                "JudgmentPass", "CountJudgmentPass", "SizeJudgmentPass", "SizeJudgmentFailIndex"
             };
             int slots = Math.Max(MaxReportedClusters, 4);
             for (int i = 0; i < slots; i++)
@@ -474,7 +638,17 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                 OutputMode = this.OutputMode,
                 ScaleMode = this.ScaleMode,
                 XyScale = this.XyScale,
-                DrawOverlay = this.DrawOverlay
+                DrawOverlay = this.DrawOverlay,
+                EnableJudgment = this.EnableJudgment,
+                UseCountJudgment = this.UseCountJudgment,
+                CountMode = this.CountMode,
+                ExpectedCount = this.ExpectedCount,
+                ExpectedCountMax = this.ExpectedCountMax,
+                UseSizeJudgment = this.UseSizeJudgment,
+                ExpectedLength = this.ExpectedLength,
+                ExpectedWidth = this.ExpectedWidth,
+                SizeToleranceMinus = this.SizeToleranceMinus,
+                SizeTolerancePlus = this.SizeTolerancePlus
             };
             CopyPlcMappingsTo(clone);
             return clone;

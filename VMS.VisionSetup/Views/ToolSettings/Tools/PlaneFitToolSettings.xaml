@@ -38,5 +38,22 @@
             Value="{Binding SampleStride}" Minimum="1" Maximum="16"
             TickFrequency="1" ValueFormat="F0"
             ToolType="PlaneFitTool" ParameterName="SampleStride"/>
+
+        <!-- Judgment — 평탄도 상한 -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Judgment" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:CheckBoxParameter Label="Enable Judgment"
+                    IsChecked="{Binding EnableJudgment}"
+                    ToolType="PlaneFitTool" ParameterName="EnableJudgment"/>
+                <controls:TextBoxParameter Label="Max Flatness (mm)"
+                    Value="{Binding MaxFlatness}"
+                    ToolType="PlaneFitTool" ParameterName="MaxFlatness"/>
+                <TextBlock Foreground="#999999" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,0"
+                           Text="평탄도 = ROI 안 점들의 평면까지 거리 (최대 − 최소). ROI 를 검사면 위에만 두세요 — 다른 물체가 들어가면 그만큼 평탄도가 커집니다."/>
+            </StackPanel>
+        </Expander>
     </StackPanel>
 </UserControl>

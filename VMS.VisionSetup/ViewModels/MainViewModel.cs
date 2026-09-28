@@ -1062,6 +1062,7 @@ namespace VMS.VisionSetup.ViewModels
             threeDMeasurement.Tools.Add(new ToolItem { Name = "Height Slicer", ToolType = "HeightSlicerTool" });
             threeDMeasurement.Tools.Add(new ToolItem { Name = "Plane Fit", ToolType = "PlaneFitTool" });
             threeDMeasurement.Tools.Add(new ToolItem { Name = "3D Geometry", ToolType = "Geometry3DTool" });
+            threeDMeasurement.Tools.Add(new ToolItem { Name = "PointCloud Line Fit", ToolType = "PointCloudLineFitTool" });
             ToolTree.Add(threeDMeasurement);
 
             // Deep Learning 카테고리
@@ -1578,6 +1579,16 @@ namespace VMS.VisionSetup.ViewModels
                         parts.Add($"Largest={lp}pt");
                     if (data.TryGetValue("Cluster0_1_DistanceMm", out var d01))
                         parts.Add($"Dist(0-1)={FormatResultValue(d01)}");
+                    return string.Join(", ", parts);
+                }
+
+                case VisionTools.PointCloud.PointCloudLineFitTool:
+                {
+                    var parts = new List<string>();
+                    if (data.TryGetValue("Length", out var len))
+                        parts.Add($"Length={FormatResultValue(len)}");
+                    if (data.TryGetValue("Straightness", out var st))
+                        parts.Add($"Straightness={FormatResultValue(st)}mm");
                     return string.Join(", ", parts);
                 }
 
@@ -4140,6 +4151,7 @@ namespace VMS.VisionSetup.ViewModels
                 VisionTools.PointCloud.PointCloudFilterTool t => new PointCloudFilterToolSettingsViewModel(t),
                 VisionTools.PointCloud.PointCloudRegistrationTool t => new PointCloudRegistrationToolSettingsViewModel(t),
                 VisionTools.PointCloud.PointCloudClusterTool t => new PointCloudClusterToolSettingsViewModel(t),
+                VisionTools.PointCloud.PointCloudLineFitTool t => new PointCloudLineFitToolSettingsViewModel(t),
                 VisionTools.PointCloud.PointCloudDeviationTool t => new PointCloudDeviationToolSettingsViewModel(t),
                 VisionTools.PointCloud.PointCloudMaskCropTool t => new PointCloudMaskCropToolSettingsViewModel(t),
                 VisionTools.SurfaceAnalysis.PhotometricStereoTool t => new PhotometricStereoToolSettingsViewModel(t),

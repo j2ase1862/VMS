@@ -15,7 +15,7 @@
             </Expander.Header>
             <StackPanel Margin="5,0,0,0">
                 <controls:SliderParameter Label="Tolerance (mm)"
-                    Value="{Binding Tolerance}" Minimum="0.1" Maximum="50.0"
+                    Value="{Binding Tolerance}" Minimum="0.1" Maximum="100.0"
                     TickFrequency="0.1" ValueFormat="F2"
                     ToolType="PointCloudClusterTool" ParameterName="Tolerance"/>
                 <controls:TextBoxParameter Label="Min Points"
@@ -50,6 +50,50 @@
                     ToolType="PointCloudClusterTool" ParameterName="XyScale"/>
                 <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,4"
                            Text="Manual 모드의 가로·세로 환산 배율. 3D 카메라 grab 점군은 가로·세로가 픽셀 단위라(높이 Z만 mm) 실측 mm가 필요하면 mm/pixel 값을 입력하세요. 1.0 = 원 단위 그대로. 산출 절차는 docs/3d_dimension_calibration_guide.md 참조."/>
+            </StackPanel>
+        </Expander>
+
+        <!-- Judgment — 개수 · 치수 -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Judgment" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:CheckBoxParameter Label="Enable Judgment"
+                    IsChecked="{Binding EnableJudgment}"
+                    ToolType="PointCloudClusterTool" ParameterName="EnableJudgment"/>
+
+                <controls:CheckBoxParameter Label="Count Judgment"
+                    IsChecked="{Binding UseCountJudgment}"
+                    ToolType="PointCloudClusterTool" ParameterName="UseCountJudgment"/>
+                <controls:EnumComboBoxParameter Label="Count Mode"
+                    ItemsSource="{conv:EnumValues {x:Type pc:PointCloudClusterTool+ClusterCountMode}}"
+                    SelectedValue="{Binding CountMode}"
+                    ToolType="PointCloudClusterTool" ParameterName="CountMode"/>
+                <controls:TextBoxParameter Label="Expected Count"
+                    Value="{Binding ExpectedCount}"
+                    ToolType="PointCloudClusterTool" ParameterName="ExpectedCount"/>
+                <controls:TextBoxParameter Label="Expected Count Max"
+                    Value="{Binding ExpectedCountMax}"
+                    ToolType="PointCloudClusterTool" ParameterName="ExpectedCountMax"/>
+
+                <controls:CheckBoxParameter Label="Size Judgment"
+                    IsChecked="{Binding UseSizeJudgment}"
+                    ToolType="PointCloudClusterTool" ParameterName="UseSizeJudgment"/>
+                <controls:TextBoxParameter Label="Expected Length"
+                    Value="{Binding ExpectedLength}"
+                    ToolType="PointCloudClusterTool" ParameterName="ExpectedLength"/>
+                <controls:TextBoxParameter Label="Expected Width"
+                    Value="{Binding ExpectedWidth}"
+                    ToolType="PointCloudClusterTool" ParameterName="ExpectedWidth"/>
+                <controls:TextBoxParameter Label="Size Tolerance (-)"
+                    Value="{Binding SizeToleranceMinus}"
+                    ToolType="PointCloudClusterTool" ParameterName="SizeToleranceMinus"/>
+                <controls:TextBoxParameter Label="Size Tolerance (+)"
+                    Value="{Binding SizeTolerancePlus}"
+                    ToolType="PointCloudClusterTool" ParameterName="SizeTolerancePlus"/>
+                <TextBlock Foreground="#999999" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,0"
+                           Text="개수 판정을 켜면 덩어리가 0개여도 판정합니다(Count Mode=LessOrEqual, 0 → 이물 없음 검사). 치수 판정은 결과에 보고되는 모든 덩어리의 길이·폭이 기준 ± 공차 안이어야 OK — 단위는 Scale Mode 를 따릅니다(AutoFromCamera 면 mm)."/>
             </StackPanel>
         </Expander>
 

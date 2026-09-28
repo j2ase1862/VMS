@@ -371,6 +371,8 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["RansacIterations"] = planeFit.RansacIterations;
                     config.Parameters["RansacThreshold"] = planeFit.RansacThreshold;
                     config.Parameters["SampleStride"] = planeFit.SampleStride;
+                    config.Parameters["EnableJudgment"] = planeFit.EnableJudgment;
+                    config.Parameters["MaxFlatness"] = planeFit.MaxFlatness;
                     break;
 
                 case Geometry3DTool geom3D:
@@ -382,6 +384,10 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["PointBY"] = geom3D.PointB.Y;
                     config.Parameters["SourceAClusterIndex"] = geom3D.SourceAClusterIndex;
                     config.Parameters["SourceBClusterIndex"] = geom3D.SourceBClusterIndex;
+                    config.Parameters["EnableJudgment"] = geom3D.EnableJudgment;
+                    config.Parameters["ExpectedValue"] = geom3D.ExpectedValue;
+                    config.Parameters["ToleranceMinus"] = geom3D.ToleranceMinus;
+                    config.Parameters["TolerancePlus"] = geom3D.TolerancePlus;
                     break;
 
                 case OCRTool ocr:
@@ -591,6 +597,8 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["ApplyTransformToSource"] = pcr.ApplyTransformToSource;
                     config.Parameters["EnableCoarseAlignment"] = pcr.EnableCoarseAlignment;
                     config.Parameters["ConfidenceDistanceMm"] = pcr.ConfidenceDistanceMm;
+                    config.Parameters["EnableJudgment"] = pcr.EnableJudgment;
+                    config.Parameters["MinConfidence"] = pcr.MinConfidence;
                     break;
 
                 case VisionTools.PointCloud.PointCloudDeviationTool pcd:
@@ -610,6 +618,25 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["ScaleMode"] = pcc.ScaleMode.ToString();
                     config.Parameters["XyScale"] = pcc.XyScale;
                     config.Parameters["DrawOverlay"] = pcc.DrawOverlay;
+                    config.Parameters["EnableJudgment"] = pcc.EnableJudgment;
+                    config.Parameters["UseCountJudgment"] = pcc.UseCountJudgment;
+                    config.Parameters["CountMode"] = pcc.CountMode.ToString();
+                    config.Parameters["ExpectedCount"] = pcc.ExpectedCount;
+                    config.Parameters["ExpectedCountMax"] = pcc.ExpectedCountMax;
+                    config.Parameters["UseSizeJudgment"] = pcc.UseSizeJudgment;
+                    config.Parameters["ExpectedLength"] = pcc.ExpectedLength;
+                    config.Parameters["ExpectedWidth"] = pcc.ExpectedWidth;
+                    config.Parameters["SizeToleranceMinus"] = pcc.SizeToleranceMinus;
+                    config.Parameters["SizeTolerancePlus"] = pcc.SizeTolerancePlus;
+                    break;
+
+                case VisionTools.PointCloud.PointCloudLineFitTool pcl:
+                    config.Parameters["DistanceThreshold"] = pcl.DistanceThreshold;
+                    config.Parameters["Iterations"] = pcl.Iterations;
+                    config.Parameters["MinInliers"] = pcl.MinInliers;
+                    config.Parameters["DrawOverlay"] = pcl.DrawOverlay;
+                    config.Parameters["EnableJudgment"] = pcl.EnableJudgment;
+                    config.Parameters["MaxStraightness"] = pcl.MaxStraightness;
                     break;
 
                 case VisionTools.PointCloud.PointCloudMaskCropTool pcm:
@@ -756,6 +783,7 @@ namespace VMS.VisionSetup.Services
                 "PointCloudFilterTool" => DeserializePointCloudFilterTool(config),
                 "PointCloudRegistrationTool" => DeserializePointCloudRegistrationTool(config),
                 "PointCloudClusterTool" => DeserializePointCloudClusterTool(config),
+                "PointCloudLineFitTool" => DeserializePointCloudLineFitTool(config),
                 "PointCloudDeviationTool" => DeserializePointCloudDeviationTool(config),
                 "PointCloudMaskCropTool" => DeserializePointCloudMaskCropTool(config),
                 "ColorExtractTool" => DeserializeColorExtractTool(config),
@@ -1527,6 +1555,10 @@ namespace VMS.VisionSetup.Services
                 tool.RansacThreshold = GetDouble(rt);
             if (p.TryGetValue("SampleStride", out var ss))
                 tool.SampleStride = GetInt(ss);
+            if (p.TryGetValue("EnableJudgment", out var ej))
+                tool.EnableJudgment = GetBool(ej);
+            if (p.TryGetValue("MaxFlatness", out var mf))
+                tool.MaxFlatness = GetDouble(mf);
 
             return tool;
         }
@@ -1548,6 +1580,14 @@ namespace VMS.VisionSetup.Services
                 tool.SourceAClusterIndex = GetInt(sai);
             if (p.TryGetValue("SourceBClusterIndex", out var sbi))
                 tool.SourceBClusterIndex = GetInt(sbi);
+            if (p.TryGetValue("EnableJudgment", out var ej))
+                tool.EnableJudgment = GetBool(ej);
+            if (p.TryGetValue("ExpectedValue", out var ev))
+                tool.ExpectedValue = GetDouble(ev);
+            if (p.TryGetValue("ToleranceMinus", out var tm))
+                tool.ToleranceMinus = GetDouble(tm);
+            if (p.TryGetValue("TolerancePlus", out var tp))
+                tool.TolerancePlus = GetDouble(tp);
 
             return tool;
         }
@@ -1978,6 +2018,8 @@ namespace VMS.VisionSetup.Services
             if (p.TryGetValue("ApplyTransformToSource", out var atts)) tool.ApplyTransformToSource = GetBool(atts);
             if (p.TryGetValue("EnableCoarseAlignment", out var eca)) tool.EnableCoarseAlignment = GetBool(eca);
             if (p.TryGetValue("ConfidenceDistanceMm", out var cdm)) tool.ConfidenceDistanceMm = (float)GetDouble(cdm);
+            if (p.TryGetValue("EnableJudgment", out var ej)) tool.EnableJudgment = GetBool(ej);
+            if (p.TryGetValue("MinConfidence", out var mc)) tool.MinConfidence = GetDouble(mc);
             return tool;
         }
 
@@ -2008,6 +2050,30 @@ namespace VMS.VisionSetup.Services
                 tool.ScaleMode = Enum.Parse<VisionTools.PointCloud.PointCloudClusterTool.DimensionScaleMode>(GetString(sm));
             if (p.TryGetValue("XyScale", out var xs)) tool.XyScale = (float)GetDouble(xs);
             if (p.TryGetValue("DrawOverlay", out var dov)) tool.DrawOverlay = GetBool(dov);
+            if (p.TryGetValue("EnableJudgment", out var ej)) tool.EnableJudgment = GetBool(ej);
+            if (p.TryGetValue("UseCountJudgment", out var ucj)) tool.UseCountJudgment = GetBool(ucj);
+            if (p.TryGetValue("CountMode", out var cm))
+                tool.CountMode = Enum.Parse<VisionTools.PointCloud.PointCloudClusterTool.ClusterCountMode>(GetString(cm));
+            if (p.TryGetValue("ExpectedCount", out var ec)) tool.ExpectedCount = GetInt(ec);
+            if (p.TryGetValue("ExpectedCountMax", out var ecm)) tool.ExpectedCountMax = GetInt(ecm);
+            if (p.TryGetValue("UseSizeJudgment", out var usj)) tool.UseSizeJudgment = GetBool(usj);
+            if (p.TryGetValue("ExpectedLength", out var el)) tool.ExpectedLength = GetDouble(el);
+            if (p.TryGetValue("ExpectedWidth", out var ew)) tool.ExpectedWidth = GetDouble(ew);
+            if (p.TryGetValue("SizeToleranceMinus", out var stm)) tool.SizeToleranceMinus = GetDouble(stm);
+            if (p.TryGetValue("SizeTolerancePlus", out var stp)) tool.SizeTolerancePlus = GetDouble(stp);
+            return tool;
+        }
+
+        private static VisionTools.PointCloud.PointCloudLineFitTool DeserializePointCloudLineFitTool(ToolConfig config)
+        {
+            var tool = new VisionTools.PointCloud.PointCloudLineFitTool();
+            var p = config.Parameters;
+            if (p.TryGetValue("DistanceThreshold", out var dt)) tool.DistanceThreshold = (float)GetDouble(dt);
+            if (p.TryGetValue("Iterations", out var it)) tool.Iterations = GetInt(it);
+            if (p.TryGetValue("MinInliers", out var mi)) tool.MinInliers = GetInt(mi);
+            if (p.TryGetValue("DrawOverlay", out var dov)) tool.DrawOverlay = GetBool(dov);
+            if (p.TryGetValue("EnableJudgment", out var ej)) tool.EnableJudgment = GetBool(ej);
+            if (p.TryGetValue("MaxStraightness", out var ms)) tool.MaxStraightness = GetDouble(ms);
             return tool;
         }
 

@@ -14,6 +14,29 @@
             SelectedValue="{Binding Operation}"
             ToolType="Geometry3DTool" ParameterName="Operation"/>
 
+        <!-- Judgment — 거리(mm)/각도(°)를 기준값 ± 공차로 판정 (Success 반영 → Result 도구 집계) -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Judgment" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:CheckBoxParameter Label="Enable Judgment"
+                    IsChecked="{Binding EnableJudgment}"
+                    ToolType="Geometry3DTool" ParameterName="EnableJudgment"/>
+                <controls:TextBoxParameter Label="Expected Value"
+                    Value="{Binding ExpectedValue}"
+                    ToolType="Geometry3DTool" ParameterName="ExpectedValue"/>
+                <controls:TextBoxParameter Label="Tolerance (-)"
+                    Value="{Binding ToleranceMinus}"
+                    ToolType="Geometry3DTool" ParameterName="ToleranceMinus"/>
+                <controls:TextBoxParameter Label="Tolerance (+)"
+                    Value="{Binding TolerancePlus}"
+                    ToolType="Geometry3DTool" ParameterName="TolerancePlus"/>
+                <TextBlock Foreground="#999999" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,0"
+                           Text="거리 연산은 Distance3D(mm), 평면-평면 각도는 AngleDeg(°)를 판정합니다. 점-점 거리의 mm 정확도는 Cluster 의 Scale Mode(AutoFromCamera)를 따릅니다."/>
+            </StackPanel>
+        </Expander>
+
         <!-- 포인트 소스 선택 (점을 쓰는 연산에서만 표시, 상호 배타) -->
         <StackPanel Visibility="{Binding ShowPointSourceSelector, Converter={StaticResource BoolToVis}}">
             <StackPanel Orientation="Horizontal" Margin="0,8,0,4">

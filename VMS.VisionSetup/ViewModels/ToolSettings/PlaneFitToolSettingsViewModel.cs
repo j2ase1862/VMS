@@ -36,5 +36,19 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         }
 
         public bool IsRansac => FitMethod == PlaneFitMethod.RANSAC;
+
+        // ── 판정 (Judgment) — 설정 UI 는 이 VM 에 바인딩되므로 툴 속성마다 래퍼 필수 ──
+
+        public bool EnableJudgment
+        {
+            get => TypedTool.EnableJudgment;
+            set { TypedTool.EnableJudgment = value; OnPropertyChanged(); }
+        }
+
+        public double MaxFlatness
+        {
+            get => TypedTool.MaxFlatness;
+            set { TypedTool.MaxFlatness = value; OnPropertyChanged(); }
+        }
     }
 }

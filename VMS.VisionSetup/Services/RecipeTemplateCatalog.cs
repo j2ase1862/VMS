@@ -114,7 +114,17 @@ namespace VMS.VisionSetup.Services
                 Tools =
                 {
                     new TemplateToolSpec { ToolType = "PointCloudFilterTool" },
-                    new TemplateToolSpec { ToolType = "PointCloudRegistrationTool" },
+                    new TemplateToolSpec
+                    {
+                        ToolType = "PointCloudRegistrationTool",
+                        // 정합이 틀리면 편차도 무의미 — 신뢰도 하한으로 먼저 걸러낸다(현장: 성공 0.65↑, 실패 0.3↓)
+                        Configure = t =>
+                        {
+                            var r = (PointCloudRegistrationTool)t;
+                            r.EnableJudgment = true;
+                            r.MinConfidence = 0.3;
+                        },
+                    },
                     new TemplateToolSpec { ToolType = "PointCloudDeviationTool" },
                 },
                 Connections =
@@ -362,7 +372,8 @@ namespace VMS.VisionSetup.Services
                               "회전 RX/RY/RZ(도)를 산출해 로봇 보정에 쓴다. 적용 후: ① 기준 부품을 " +
                               "촬영해 Registration 설정의 [현재 점군을 Reference 로 저장] (또는 " +
                               "CAD .stl 지정) ② Run 마다 Translation*/Rotation* 이 변위로 나온다. " +
-                              "정합 품질은 Confidence·MeanError 로 확인. 변위 측정용이라 Apply " +
+                              "정합 품질은 Confidence·MeanError 로 확인 — Confidence 0.3 미만이면 " +
+                              "NG(Registration 판정, 프리셋 켬). 변위 측정용이라 Apply " +
                               "Transform 은 꺼둔 프리셋 — 정합 점군을 후속 툴에 넘기려면 켤 것.",
                 Prerequisites = new[] { Badge3DCamera },
                 Tools =
@@ -372,7 +383,14 @@ namespace VMS.VisionSetup.Services
                     {
                         ToolType = "PointCloudRegistrationTool",
                         // 얼라인은 "변위량 측정"이 목적 — 원본 점군을 정합 결과로 덮어쓰지 않는다
-                        Configure = t => ((PointCloudRegistrationTool)t).ApplyTransformToSource = false,
+                        Configure = t =>
+                        {
+                            var r = (PointCloudRegistrationTool)t;
+                            r.ApplyTransformToSource = false;
+                            // 정합이 틀린 변위를 로봇에 넘기지 않도록 신뢰도 하한으로 NG 처리
+                            r.EnableJudgment = true;
+                            r.MinConfidence = 0.3;
+                        },
                     },
                     new TemplateToolSpec { ToolType = "ResultTool" },
                 },
@@ -392,8 +410,8 @@ namespace VMS.VisionSetup.Services
                               "두 법선의 사이각을 재고, 그 각도로 스테이지·척의 기울기를 보정한다. " +
                               "전체 형상 정합이 필요 없는 레벨링·평행도 맞춤용. 적용 후: " +
                               "① 두 Plane Fit 의 ROI 를 각 면 위에 배치 ② 3D Geometry 가 " +
-                              "AngleDeg(도)를 출력 — 0°가 평행. 3D Geometry 에는 공차 판정이 " +
-                              "없으니 합불이 필요하면 AngleDeg 를 PLC 매핑할 것. 면이 거칠면 " +
+                              "AngleDeg(도)를 출력 — 0°가 평행. 합불이 필요하면 3D Geometry 의 " +
+                              "Judgment 를 켜고 기준 0° ± 허용 각도를 넣을 것. 면이 거칠면 " +
                               "Plane Fit 의 RANSAC 임계값을 키운다.",
                 Prerequisites = new[] { Badge3DCamera },
                 Tools =

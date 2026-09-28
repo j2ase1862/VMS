@@ -133,6 +133,41 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             set => SetProperty(ref _sourceBClusterIndex, Math.Clamp(value, 0, 99));
         }
 
+        // ── 판정 (Judgment) — GeometryTool 과 같은 규약(기준값 ± 공차) ──
+        // 거리 연산은 Distance3D(mm), 평면-평면 각도는 AngleDeg(°)를 판정한다.
+
+        private bool _enableJudgment;
+        /// <summary>판정 사용 — 꺼져 있으면 기존처럼 값만 계산한다.</summary>
+        public bool EnableJudgment
+        {
+            get => _enableJudgment;
+            set => SetProperty(ref _enableJudgment, value);
+        }
+
+        private double _expectedValue;
+        /// <summary>기준값 — 거리(mm) 또는 각도(°).</summary>
+        public double ExpectedValue
+        {
+            get => _expectedValue;
+            set => SetProperty(ref _expectedValue, value);
+        }
+
+        private double _toleranceMinus = 0.5;
+        /// <summary>하한 공차 (기준값 − 이 값까지 합격).</summary>
+        public double ToleranceMinus
+        {
+            get => _toleranceMinus;
+            set => SetProperty(ref _toleranceMinus, Math.Max(0, value));
+        }
+
+        private double _tolerancePlus = 0.5;
+        /// <summary>상한 공차 (기준값 + 이 값까지 합격).</summary>
+        public double TolerancePlus
+        {
+            get => _tolerancePlus;
+            set => SetProperty(ref _tolerancePlus, Math.Max(0, value));
+        }
+
         // ── Result 연결 소스 수집 (VisionService가 Execute 전에 호출) ──
         private int _clusterSourceCount;
         private VisionResult? _lastClusterResult;
@@ -191,7 +226,11 @@ namespace VMS.VisionSetup.VisionTools.Measurement
         public static SourceGeometry3D? ExtractGeometry3D(string toolId, string toolName,
             string toolType, VisionResult sourceResult, int clusterIndex = 0)
         {
-            if (!sourceResult.Success) return null;
+            // 판정만 NG 인 소스(평탄도 초과·치수 공차 밖)는 기하 데이터가 유효하다 — 그대로 쓴다.
+            // 버리면 "평면 데이터가 필요합니다" 같은 엉뚱한 실패로 바뀌어 원인이 가려진다.
+            bool judgmentOnlyFailure = sourceResult.Data != null
+                && sourceResult.Data.TryGetValue("JudgmentPass", out var jp) && jp is false;
+            if (!sourceResult.Success && !judgmentOnlyFailure) return null;
 
             var data = sourceResult.Data;
             var geo = new SourceGeometry3D { ToolId = toolId, ToolName = toolName };
@@ -228,6 +267,18 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                         }
                         geo.HasPoint = true;
                         geo.ToolName = $"{toolName}[{clusterIndex}]";
+                        return geo;
+                    }
+                    break;
+
+                case "PointCloudLineFitTool":
+                    if (data.TryGetValue("LinePointX", out var lx) && data.TryGetValue("LinePointY", out var ly) &&
+                        data.TryGetValue("LinePointZ", out var lz) && data.TryGetValue("LineDirX", out var dx) &&
+                        data.TryGetValue("LineDirY", out var dy) && data.TryGetValue("LineDirZ", out var dz))
+                    {
+                        geo.LinePoint = new Vector3(Convert.ToSingle(lx), Convert.ToSingle(ly), Convert.ToSingle(lz));
+                        geo.LineDirection = new Vector3(Convert.ToSingle(dx), Convert.ToSingle(dy), Convert.ToSingle(dz));
+                        geo.HasLine = true;
                         return geo;
                     }
                     break;
@@ -274,6 +325,16 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 if (result.Success)
                 {
                     AddMeasurementGraphics(result, inputImage, metadata);
+                }
+
+                if (result.Success && EnableJudgment)
+                {
+                    bool isAngle = Operation == Geometry3DOperation.PlaneToPlaneAngle;
+                    string key = isAngle ? "AngleDeg" : "Distance3D";
+                    if (result.Data.TryGetValue(key, out var measured))
+                        ToleranceJudgment.ApplyRange(result, Convert.ToDouble(measured),
+                            ExpectedValue - ToleranceMinus, ExpectedValue + TolerancePlus,
+                            isAngle ? "°" : "mm", isAngle ? "각도" : "거리");
                 }
             }
             catch (Exception ex)
@@ -470,7 +531,11 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             if (UseManualPoints && metadata != null)
                 point = Get3DPointFromPixel(metadata, PointA);
             else
-                point = SourceGeometries.FirstOrDefault(s => s.HasPoint)?.Point;
+            {
+                // 직선(PointCloud Line Fit)은 점군 원좌표 — 점도 원좌표로 (점-평면과 같은 규칙, mm 중심과 섞지 않는다)
+                var ptSrc = SourceGeometries.FirstOrDefault(s => s.HasPoint);
+                point = ptSrc == null ? null : ptSrc.RawPoint ?? ptSrc.Point;
+            }
 
             SourceGeometry3D? lineSrc = SourceGeometries.FirstOrDefault(s => s.HasLine);
 
@@ -606,7 +671,9 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 "AngleDeg", "AngleRad",
                 "Point1X", "Point1Y", "Point1Z",
                 "Point2X", "Point2Y", "Point2Z",
-                "IsParallel"
+                "IsParallel",
+                // 판정 (EnableJudgment 시)
+                "JudgmentValue", "JudgmentLow", "JudgmentHigh", "JudgmentPass"
             };
         }
 
@@ -622,6 +689,10 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                 UseManualPoints = this.UseManualPoints,
                 SourceAClusterIndex = this.SourceAClusterIndex,
                 SourceBClusterIndex = this.SourceBClusterIndex,
+                EnableJudgment = this.EnableJudgment,
+                ExpectedValue = this.ExpectedValue,
+                ToleranceMinus = this.ToleranceMinus,
+                TolerancePlus = this.TolerancePlus,
                 IsEnabled = this.IsEnabled,
                 UseROI = this.UseROI,
                 ROI = this.ROI

@@ -25,6 +25,10 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         public float ConfidenceDistanceMm { get => TypedTool.ConfidenceDistanceMm; set => TypedTool.ConfidenceDistanceMm = value; }
         public bool IsReferenceLoaded => TypedTool.IsReferenceLoaded;
 
+        // ── 판정 (Judgment) — Confidence 하한 ──
+        public bool EnableJudgment { get => TypedTool.EnableJudgment; set { TypedTool.EnableJudgment = value; OnPropertyChanged(); } }
+        public double MinConfidence { get => TypedTool.MinConfidence; set { TypedTool.MinConfidence = value; OnPropertyChanged(); } }
+
         public IRelayCommand SaveCurrentAsReferenceCommand { get; }
         public IRelayCommand LoadReferenceCommand { get; }
         public IRelayCommand ClearReferenceCommand { get; }

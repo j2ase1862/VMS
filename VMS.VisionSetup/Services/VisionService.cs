@@ -233,6 +233,71 @@ namespace VMS.VisionSetup.Services
         private VisionService() { }
 
         /// <summary>
+        /// 외부 실행 엔진(VMS 본체 InspectionService)이 한 스텝의 3D 입력을 세운다 —
+        /// VisionSetup 이 점군을 열 때 세우는 것과 같은 것: 현재 점군 + 파이프라인 입력(Mask Crop Union 용) +
+        /// 깊이맵(Height Slicer 입력)·높이맵 메타데이터(Plane Fit · 3D Geometry 의 화소별 3D 좌표).
+        /// 높이 범위는 레시피의 Height Slicing 값(없으면 점군의 유효 Z 범위).
+        /// 스텝이 끝나면 <see cref="Clear3DInput"/> 로 해제한다.
+        /// </summary>
+        public void Set3DInput(VMS.Camera.Models.PointCloudData cloud, HeightSlicingSettings? slicing)
+        {
+            float baseline = slicing?.HeightBaseline ?? 0f;
+            float zMin, zMax;
+            if (slicing != null && slicing.HeightUpperLimit > slicing.HeightLowerLimit)
+            {
+                zMin = slicing.HeightLowerLimit;
+                zMax = slicing.HeightUpperLimit;
+            }
+            else
+            {
+                (zMin, zMax) = ValidZRange(cloud);
+            }
+
+            CurrentPointCloud = cloud;
+            _pipelineCloudInput = cloud;
+            _pipelineCloudOutput = null;
+
+            // 8bit Height Map 은 표시용 — 실행 엔진은 카메라 2D 영상을 기본 입력으로 쓰므로 버린다.
+            // 32F 깊이맵은 CurrentDepthMap32F(복제본)와 메타데이터(원본 참조)가 각각 쥔다.
+            var (heightMap8U, _, _) = GenerateHeightMap(cloud, baseline, zMin, zMax);
+            heightMap8U.Dispose();
+        }
+
+        /// <summary>
+        /// <see cref="Set3DInput"/> 로 세운 3D 입력 해제. 점군 도구가 교체한 중간 점군과 깊이맵의
+        /// 네이티브 메모리를 사이클마다 즉시 돌려준다 (AUTO RUN 에서 누적 방지).
+        /// </summary>
+        /// <param name="input">Set3DInput 에 넘긴 점군 — 호출자가 소유하므로 여기서 해제하지 않는다.</param>
+        public void Clear3DInput(VMS.Camera.Models.PointCloudData? input)
+        {
+            var last = CurrentPointCloud;
+            CurrentPointCloud = null;
+            if (last != null && !ReferenceEquals(last, input))
+                last.Dispose();
+            _pipelineCloudInput = null;
+            _pipelineCloudOutput = null;
+
+            var metadataDepth = CurrentHeightMapMetadata?.DepthMap32F;
+            CurrentHeightMapMetadata = null;
+            metadataDepth?.Dispose();
+            CurrentDepthMap32F = null;
+        }
+
+        private static (float Min, float Max) ValidZRange(VMS.Camera.Models.PointCloudData cloud)
+        {
+            float min = float.MaxValue, max = float.MinValue;
+            var positions = cloud.Positions;
+            for (int i = 0; i < cloud.PointCount; i++)
+            {
+                float z = positions[i].Z;
+                if (z == 0f || !float.IsFinite(z)) continue;
+                if (z < min) min = z;
+                if (z > max) max = z;
+            }
+            return min <= max ? (min, max) : (0f, 1f);
+        }
+
+        /// <summary>
         /// 이미지 파일 로드
         /// </summary>
         public bool LoadImage(string filePath)
@@ -1130,6 +1195,7 @@ namespace VMS.VisionSetup.Services
                 "PointCloudClusterTool" => new VisionTools.PointCloud.PointCloudClusterTool(),
                 "PointCloudDeviationTool" => new VisionTools.PointCloud.PointCloudDeviationTool(),
                 "PointCloudMaskCropTool" => new VisionTools.PointCloud.PointCloudMaskCropTool(),
+                "PointCloudLineFitTool" => new VisionTools.PointCloud.PointCloudLineFitTool(),
 
                 // Pattern Matching
                 "FeatureMatchTool" => new FeatureMatchTool(),
@@ -1209,7 +1275,8 @@ namespace VMS.VisionSetup.Services
                     "PointCloudMaskCropTool",
                     "HeightSlicerTool",
                     "PlaneFitTool",
-                    "Geometry3DTool"
+                    "Geometry3DTool",
+                    "PointCloudLineFitTool"
                 },
                 ["Pattern Matching"] = new[]
                 {
@@ -1300,6 +1367,7 @@ namespace VMS.VisionSetup.Services
                 "PointCloudRegistrationTool" => "PointCloud Registration",
                 "PointCloudClusterTool" => "PointCloud Cluster",
                 "PointCloudMaskCropTool" => "PointCloud Mask Crop",
+                "PointCloudLineFitTool" => "PointCloud Line Fit",
                 "OCRTool" => "OCR",
                 "OCVTool" => "OCV",
                 "ImageEnhanceTool" => "Image Enhance",
