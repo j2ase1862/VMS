@@ -1554,3 +1554,44 @@ v1.42.2 로 촬영한 현장 점군을 받아 보니 **내부 파라미터가 �
 
 본문 서술 변경 없음(VisionSetup 저장본에도 내부 파라미터가 실린다는 것은 §36 서술과 이제 일치). §12 에 "저장한 점군에서
 치수가 mm 로 안 나온다 → v1.42.4 이상에서 다시 촬영·저장" 한 줄 검토.
+
+---
+
+## 41. 도구 하나씩 실행(Run Selected) 시 3D 레시피에서 VisionSetup 멈춤 (v1.42.5) — **반영 대기**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-09-28 |
+| 대상 | 본편 §6 도구 실행(선택 실행) · §12 트러블슈팅 (서술 변경 없음 검토) |
+| 변경 종류 | 결함 수정 1건 |
+
+### 무엇이 문제였나 (사내 기록)
+
+재촬영 점군(`D:\3D Image-1`, 8장)으로 만든 예제 레시피를 VisionSetup 에 Import 하고, 스텝 1-2 의 도구를 하나씩
+선택 실행하자 **Frame Cluster 에서 화면이 멈췄다**. 스레드 스택: UI 스레드가 `RunSelectedTool → PointCloudClusterTool →
+EuclideanClustering` 에서 CPU 한 코어를 계속 사용(교착 아님).
+
+선택 실행(`VisionService.ExecuteTool`)은 연결된 앞 도구를 먼저 자동 실행하는데, Run All(`ExecuteAll`)과 규칙이 두 곳 달랐다.
+
+1. **앞 도구로 도는 Height Slicer 가 높이(mm) 깊이맵이 아니라 화면용 8bit Height Map(값 0~255)을 받았다** —
+   1780~1825mm 로 자르면 마스크가 비어 Mask Crop 이 "coverage 0%" 로 실패하고 점군은 원본 그대로(3,145,728점).
+2. **Result 연결의 앞 도구가 실패해도 대상 도구를 건너뛰지 않았다** — Cluster 가 원본 전체를 Tolerance 70 으로
+   군집화(격자 한 칸에 수천 점)하느라 끝나지 않았다.
+
+Run All 은 둘 다 처리하므로 헤드리스 Run All 시험에서는 드러나지 않았다.
+
+→ 앞 도구에도 Height Slicer 깊이맵 입력 · Result 연결 건너뛰기(`TrySkipByResultConnection`, Run All 과 같은 판정 함수) ·
+소스 주입(`InjectSources`)을 적용. 대상 도구도 같은 건너뛰기 판정을 거친다.
+
+회귀 테스트: `VisionServiceRunSelected3DTests` 2건(앞 Slicer 가 깊이맵을 받아 Crop 이 32점으로 좁힌다 ·
+Crop 실패 시 Cluster 를 건너뛰고 Run All 과 같은 메시지) — 수정 전 코드에서 2건 모두 실패 확인.
+
+### 현장 데이터 확인
+
+골든 102949 로 스텝 1-1·1-2 의 모든 도구를 하나씩 실행 — 값이 Run All 과 같다(높이 91.23mm · Crop 32,947점 →
+Cluster 32,565점 → Downsample 5,191점 → Registration Confidence 100% · Deviation OK). 사용자 화면 시험 통과.
+
+### 매뉴얼 반영
+
+본문 서술 변경 없음. §12 에 "도구를 하나씩 실행하면 '연결된 도구의 결과가 실패하여 건너뜀' 이 나온다 → 앞 도구의
+설정(예: Height Slicer 범위)을 먼저 확인" 한 줄 검토.

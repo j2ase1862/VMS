@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Numerics;
@@ -404,6 +405,28 @@ namespace VMS.VisionSetup.Services
         }
 
         /// <summary>
+        /// Result 연결로 건너뛸지 판정 — ExecuteAll·ExecuteTool(업스트림 포함) 공통 규칙.
+        /// 실패 정보를 모아야 하는 Result/Geometry/Geometry3D/Ensemble 은 건너뛰지 않는다.
+        /// </summary>
+        private bool TrySkipByResultConnection(VisionToolBase tool, Dictionary<string, VisionResult> resultMap,
+            [NotNullWhen(true)] out VisionResult? skipResult)
+        {
+            bool bypassesSkip = tool is ResultTool or GeometryTool or Geometry3DTool or EnsembleTool;
+            if (bypassesSkip || !ShouldSkipByResultConnection(tool, resultMap))
+            {
+                skipResult = null;
+                return false;
+            }
+
+            skipResult = new VisionResult
+            {
+                Success = false,
+                Message = $"연결된 도구의 결과가 실패하여 건너뜀: {tool.Name}"
+            };
+            return true;
+        }
+
+        /// <summary>
         /// Result 연결 확인: 연결된 Source 도구의 결과가 실패이면 실행 건너뛰기
         /// </summary>
         private bool ShouldSkipByResultConnection(VisionToolBase tool, Dictionary<string, VisionResult> resultMap)
@@ -644,6 +667,15 @@ namespace VMS.VisionSetup.Services
             {
                 if (!dep.IsEnabled) continue;
 
+                // Result 연결 — ExecuteAll 과 같은 규칙. 앞 도구가 실패했는데 이어서 돌면
+                // 좁혀지지 않은 원본 점군(수백만 점)으로 군집화 등이 UI 스레드에서 끝나지 않는다.
+                if (TrySkipByResultConnection(dep, resultMap, out var depResultSkip))
+                {
+                    dep.LastResult = depResultSkip;
+                    resultMap[dep.Id] = depResultSkip;
+                    continue;
+                }
+
                 // Apply coordinates connection for upstream dependencies too.
                 // 기준 좌표를 못 받은 업스트림은 실행하지 않는다 — 직전 ROI 로 돌면
                 // 그 결과가 아래 도구의 기준이 되어 오차가 조용히 전파된다.
@@ -663,6 +695,13 @@ namespace VMS.VisionSetup.Services
                     depInput = depConnected;
                     ownsInput = false;
                 }
+                else if (dep is HeightSlicerTool && CurrentDepthMap32F != null && !CurrentDepthMap32F.IsDisposed)
+                {
+                    // 업스트림으로 돌 때도 HeightSlicer 는 mm 깊이맵을 받는다 — 화면용 8bit Height Map 을
+                    // 받으면 0~255 값을 mm 범위로 잘라 빈 마스크가 된다.
+                    depInput = CurrentDepthMap32F.Clone();
+                    ownsInput = true;
+                }
                 else
                 {
                     depInput = image.Clone();
@@ -671,6 +710,7 @@ namespace VMS.VisionSetup.Services
 
                 try
                 {
+                    InjectSources(dep, resultMap);
                     var depResult = dep.Execute(depInput);
                     dep.LastResult = depResult;
                     resultMap[dep.Id] = depResult;
@@ -683,6 +723,15 @@ namespace VMS.VisionSetup.Services
                     if (ownsInput)
                         clonedInputs.Add(depInput);
                 }
+            }
+
+            if (TrySkipByResultConnection(tool, resultMap, out var toolResultSkip))
+            {
+                foreach (var ci in clonedInputs)
+                    ci.Dispose();
+
+                tool.LastResult = toolResultSkip;
+                return toolResultSkip;
             }
 
             // Apply coordinates connection: shift ROI based on source tool's result.
@@ -720,13 +769,8 @@ namespace VMS.VisionSetup.Services
 
             try
             {
-                // Run Selected에서도 3D 기하 소스 주입 (업스트림 결과는 resultMap에 수집됨)
-                if (tool is Geometry3DTool g3)
-                    ToolSourceInjector.InjectGeometry3D(g3, EnumerateResultSources(g3.Id, resultMap));
-
-                // Run Selected에서도 매칭 소스 주입 (업스트림 실행 결과 사용)
-                if (tool is MatchAlignTool mat)
-                    ToolSourceInjector.InjectMatchAlign(mat, EnumerateResultSources(mat.Id, resultMap));
+                // Run Selected에서도 소스 주입 (업스트림 결과는 resultMap에 수집됨)
+                InjectSources(tool, resultMap);
 
                 tool.OverlayBaseImage = toolInput;
                 var result = tool.Execute(toolInput);
@@ -876,13 +920,8 @@ namespace VMS.VisionSetup.Services
                 //    ResultTool / EnsembleTool은 실패 정보를 수집해야 하므로 스킵 우회
                 bool bypassesSkip = tool is ResultTool or GeometryTool or Geometry3DTool or EnsembleTool;
 
-                if (!bypassesSkip && ShouldSkipByResultConnection(tool, resultMap))
+                if (TrySkipByResultConnection(tool, resultMap, out var skipResult))
                 {
-                    var skipResult = new VisionResult
-                    {
-                        Success = false,
-                        Message = $"연결된 도구의 결과가 실패하여 건너뜀: {tool.Name}"
-                    };
                     results.Add(skipResult);
                     resultMap[tool.Id] = skipResult;
                     allSuccess = false;
