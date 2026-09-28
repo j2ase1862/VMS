@@ -2978,6 +2978,7 @@ namespace VMS.VisionSetup.ViewModels
             }
 
             StatusMessage = $"Step loaded: {step.Name} ({DroppedTools.Count} tools)";
+            WeakReferenceMessenger.Default.Send(new RequestFitWorkspaceMessage());
         }
 
         /// <summary>
@@ -3049,9 +3050,10 @@ namespace VMS.VisionSetup.ViewModels
             {
                 var tools = RecipeTemplateCatalog.CreateTools(template);
 
-                // 기존 툴과 겹치지 않도록 최하단 아래 새 행에 좌→우 배치
+                // 기존 툴과 겹치지 않도록 최하단 아래에, 연결 방향을 따라 위→아래 층으로 배치
                 var positions = RecipeTemplateCatalog.ComputeInsertPositions(
-                    DroppedTools.Select(t => (t.X, t.Y)), tools.Count);
+                    DroppedTools.Select(t => (t.X, t.Y)), tools.Count,
+                    template.Connections.Select(c => (c.SourceIndex, c.TargetIndex)));
 
                 var items = new List<ToolItem>(tools.Count);
                 for (int i = 0; i < tools.Count; i++)
@@ -3073,6 +3075,7 @@ namespace VMS.VisionSetup.ViewModels
                     AddConnection(items[conn.SourceIndex], items[conn.TargetIndex], conn.Type);
 
                 SaveWorkspaceToStep();
+                WeakReferenceMessenger.Default.Send(new RequestFitWorkspaceMessage());
                 StatusMessage = $"템플릿 생성: {template.Title} — 이미지(또는 3D 데이터) 로드 후 Run(F5)으로 테스트하세요";
             }
             catch (Exception ex)

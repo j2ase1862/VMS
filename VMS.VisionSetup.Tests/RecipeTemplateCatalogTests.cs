@@ -214,5 +214,65 @@ namespace VMS.VisionSetup.Tests
             Assert.Equal(RecipeTemplateCatalog.StartY, fresh[0].Y);
             Assert.Equal(RecipeTemplateCatalog.StartX, fresh[0].X);
         }
+
+        // 워크스페이스 폭(MainView 700 열 − 여백) 과 도구 노드 폭(MinWidth 150 + Margin 2×2)
+        private const double WorkspaceWidth = 690;
+        private const double NodeWidth = 154;
+
+        [Fact]
+        public void ComputeInsertPositions_Chain_StacksTopToBottomInOneColumn()
+        {
+            var edges = new[] { (0, 1), (1, 2), (2, 3), (3, 4) };
+            var p = RecipeTemplateCatalog.ComputeInsertPositions(Array.Empty<(double, double)>(), 5, edges);
+
+            Assert.All(p, q => Assert.Equal(RecipeTemplateCatalog.StartX, q.X));
+            for (int i = 1; i < p.Count; i++)
+                Assert.Equal(RecipeTemplateCatalog.RowSpacingY, p[i].Y - p[i - 1].Y);
+        }
+
+        [Fact]
+        public void ComputeInsertPositions_ManySiblings_WrapAtMaxNodesPerRow()
+        {
+            // 0 → 1..5 (한 층에 5개) → 3개 + 2개 두 줄
+            var edges = Enumerable.Range(1, 5).Select(i => (0, i));
+            var p = RecipeTemplateCatalog.ComputeInsertPositions(Array.Empty<(double, double)>(), 6, edges);
+
+            var rows = p.Skip(1).GroupBy(q => q.Y).OrderBy(g => g.Key).ToList();
+            Assert.Equal(new[] { 3, 2 }, rows.Select(r => r.Count()));
+            Assert.All(p, q => Assert.True(q.X + NodeWidth <= WorkspaceWidth, $"X={q.X} 가 폭을 넘음"));
+            Assert.All(p.Skip(1), q => Assert.True(q.Y > p[0].Y));
+        }
+
+        [Fact]
+        public void ComputeInsertPositions_Cycle_Terminates()
+        {
+            var p = RecipeTemplateCatalog.ComputeInsertPositions(
+                Array.Empty<(double, double)>(), 3, new[] { (0, 1), (1, 2), (2, 0) });
+            Assert.Equal(3, p.Distinct().Count());
+        }
+
+        /// <summary>
+        /// 모든 예제 템플릿(다중 스텝은 스텝마다)이 워크스페이스 폭 안에 겹침 없이 놓이고,
+        /// 연결은 위에서 아래로 흐른다 — 종전 한 줄 배치는 4번째 도구부터 화면 밖으로 잘렸다.
+        /// </summary>
+        [Fact]
+        public void AllTemplates_Layout_FitsWorkspaceWidth_NoOverlap_EdgesFlowDown()
+        {
+            var chains = RecipeTemplateCatalog.Templates
+                .SelectMany(t => t.Steps.Count > 0
+                    ? t.Steps.Select(s => (Id: $"{t.Id}/{s.Title}", s.Tools.Count, s.Connections))
+                    : new[] { (Id: t.Id, t.Tools.Count, t.Connections) });
+
+            foreach (var (id, count, connections) in chains)
+            {
+                var edges = connections.Select(c => (c.SourceIndex, c.TargetIndex)).ToList();
+                var p = RecipeTemplateCatalog.ComputeInsertPositions(Array.Empty<(double, double)>(), count, edges);
+
+                Assert.All(p, q => Assert.True(q.X >= 0 && q.X + NodeWidth <= WorkspaceWidth, $"{id}: X={q.X} 폭 초과"));
+                Assert.True(p.Distinct().Count() == count, $"{id}: 겹친 노드");
+                foreach (var (s, t) in edges)
+                    Assert.True(p[t].Y > p[s].Y, $"{id}: 연결 {s}→{t} 가 위로 향함");
+            }
+        }
     }
 }

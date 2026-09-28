@@ -26,6 +26,8 @@ namespace VMS.VisionSetup.Services
         public const double RowSpacingY = 110;
         public const double StartX = 30;
         public const double StartY = 30;
+        /// <summary>한 줄에 놓는 최대 노드 수 — 30 + 190×2 + 노드 폭 154 = 564 로 워크스페이스 폭 700 안.</summary>
+        public const int MaxNodesPerRow = 3;
 
         private const string Badge3DCamera = "3D 카메라 필요";
         private const string BadgeOnnxModel = "ONNX 모델 필요";
@@ -523,7 +525,8 @@ namespace VMS.VisionSetup.Services
                 };
 
                 var tools = CreateTools(stepSpec, template.Id);
-                var positions = ComputeInsertPositions(Array.Empty<(double, double)>(), tools.Count);
+                var positions = ComputeInsertPositions(Array.Empty<(double, double)>(), tools.Count,
+                    stepSpec.Connections.Select(c => (c.SourceIndex, c.TargetIndex)));
                 for (int i = 0; i < tools.Count; i++)
                 {
                     tools[i].X = positions[i].X;
@@ -562,19 +565,86 @@ namespace VMS.VisionSetup.Services
         }
 
         /// <summary>
-        /// 새 체인의 캔버스 배치 좌표 계산 — 기존 툴과 겹치지 않도록 기존 노드들의
-        /// 최하단 아래 새 행에 좌→우로 배치한다.
+        /// 새 체인의 캔버스 배치 좌표 계산 — 기존 툴과 겹치지 않도록 기존 노드들의 최하단 아래에,
+        /// 연결 방향을 따라 위→아래 층으로 배치한다.
+        /// 층 = 앞 도구에서 몇 단계째인가(가장 긴 경로). 같은 층에서 갈라지는 도구는 옆으로 나란히 두되
+        /// 한 줄에 <see cref="MaxNodesPerRow"/> 개까지 — 워크스페이스 폭(700)을 넘지 않는다.
+        /// 한 줄로 늘어놓던 종전 배치는 4번째 도구부터 화면 밖으로 잘렸다.
         /// </summary>
+        /// <param name="existing">워크스페이스에 이미 있는 노드 좌표.</param>
+        /// <param name="count">새로 놓을 노드 수.</param>
+        /// <param name="connections">새 노드끼리의 연결(인덱스). 없으면 순서대로 한 층에 둔다.</param>
         public static List<(double X, double Y)> ComputeInsertPositions(
-            IEnumerable<(double X, double Y)> existing, int count)
+            IEnumerable<(double X, double Y)> existing, int count,
+            IEnumerable<(int Source, int Target)>? connections = null)
         {
             var list = existing.ToList();
-            double y = list.Count == 0 ? StartY : list.Max(p => p.Y) + RowSpacingY;
+            double top = list.Count == 0 ? StartY : list.Max(p => p.Y) + RowSpacingY;
+            if (count <= 0) return new List<(double, double)>();
 
-            var positions = new List<(double, double)>(count);
+            var edges = (connections ?? Enumerable.Empty<(int Source, int Target)>())
+                .Where(e => e.Source != e.Target
+                            && e.Source >= 0 && e.Source < count
+                            && e.Target >= 0 && e.Target < count)
+                .Distinct()
+                .ToList();
+
+            // 층: 가장 긴 경로. 순환이 있어도 끝나도록 완화 횟수·층 번호를 count 로 제한한다.
+            var layer = new int[count];
+            for (int pass = 0; pass < count; pass++)
+            {
+                bool changed = false;
+                foreach (var (s, t) in edges)
+                {
+                    int next = Math.Min(layer[s] + 1, count - 1);
+                    if (layer[t] < next) { layer[t] = next; changed = true; }
+                }
+                if (!changed) break;
+            }
+
+            // 앞 도구가 없는 도구는 첫 연결 대상 바로 위층으로 내린다 — 맨 위에 두면 층을 건너뛰는 선이
+            // 가운데 도구 상자를 가로지른다 (예: 하이브리드 얼라인의 Plane Fit → Match Align).
             for (int i = 0; i < count; i++)
-                positions.Add((StartX + i * NodeSpacingX, y));
-            return positions;
+            {
+                if (edges.Any(e => e.Target == i)) continue;
+                var children = edges.Where(e => e.Source == i).Select(e => layer[e.Target]).ToList();
+                if (children.Count > 0) layer[i] = Math.Max(layer[i], children.Min() - 1);
+            }
+
+            // 층마다 줄을 만든다. 줄 안 순서는 앞 도구들의 평균 열(교차 줄이기) → 인덱스.
+            var column = new double[count];
+            var rows = new List<List<int>>();
+            foreach (var group in Enumerable.Range(0, count).GroupBy(i => layer[i]).OrderBy(g => g.Key))
+            {
+                var ordered = group
+                    .OrderBy(i =>
+                    {
+                        var parents = edges.Where(e => e.Target == i && layer[e.Source] < layer[i]).ToList();
+                        return parents.Count == 0 ? double.MaxValue : parents.Average(e => column[e.Source]);
+                    })
+                    .ThenBy(i => i)
+                    .ToList();
+
+                for (int start = 0; start < ordered.Count; start += MaxNodesPerRow)
+                {
+                    var row = ordered.Skip(start).Take(MaxNodesPerRow).ToList();
+                    for (int j = 0; j < row.Count; j++)
+                        column[row[j]] = (MaxNodesPerRow - row.Count) / 2.0 + j;
+                    rows.Add(row);
+                }
+            }
+
+            // 가장 넓은 줄 기준으로 가운데 정렬 — 외줄 체인은 왼쪽 한 열에 선다.
+            int widest = rows.Max(r => r.Count);
+            var positions = new (double X, double Y)[count];
+            for (int r = 0; r < rows.Count; r++)
+            {
+                var row = rows[r];
+                double x0 = StartX + (widest - row.Count) * NodeSpacingX / 2;
+                for (int j = 0; j < row.Count; j++)
+                    positions[row[j]] = (x0 + j * NodeSpacingX, top + r * RowSpacingY);
+            }
+            return positions.ToList();
         }
     }
 }
