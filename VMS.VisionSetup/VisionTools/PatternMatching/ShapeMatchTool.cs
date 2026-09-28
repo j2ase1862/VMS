@@ -424,12 +424,14 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
             var pyramid = BuildPyramid(template, NumPyramidLevels);
             try
             {
+                var angles = AngleGrid(AngleStep);
                 for (int p = 0; p < pyramid.Count; p++)
                 {
                     var srcLevel = pyramid[p];
-                    for (double a = -180; a <= 180 + 1e-6; a += AngleStep)
+                    double background = BorderMedian(srcLevel);
+                    foreach (double a in angles)
                     {
-                        using var rotated = RotateAround(srcLevel, a);
+                        using var rotated = RotateAround(srcLevel, a, background);
                         for (double s = MinScale; s <= MaxScale + 1e-6; s += ScaleStep)
                         {
                             int nw = (int)Math.Round(rotated.Width * s);
@@ -453,6 +455,28 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
 
         private static (int, int, int) CacheKey(double angle, double scale, int pyrLevel)
             => ((int)Math.Round(angle * 10), (int)Math.Round(scale * 1000), pyrLevel);
+
+        /// <summary>
+        /// 0° 를 기준으로 한 각도 격자 (k × step, -180~+180). -180 부터 step 씩 올라가면 180 이 step 의
+        /// 배수가 아닐 때 0° 가 격자에서 빠진다 — 학습 자세(0°)를 못 보고 이웃 각도로 매칭되던 원인.
+        /// 180 이 배수가 아니면 +180 을 따로 넣어 ±180 부근 공백을 메운다.
+        /// </summary>
+        internal static List<double> AngleGrid(double step)
+        {
+            int n = (int)Math.Floor(180.0 / step + 1e-9);
+            var grid = new List<double>(2 * n + 2);
+            for (int k = -n; k <= n; k++) grid.Add(k * step);
+            if (180.0 - n * step > 1e-6) grid.Add(180.0);
+            return grid;
+        }
+
+        /// <summary>각도를 (-180, 180] 로 정규화 (정밀 탐색이 ±180 을 넘어갈 때 격자 반대편으로).</summary>
+        private static double WrapAngle(double a)
+        {
+            while (a > 180 + 1e-6) a -= 360;
+            while (a <= -180 - 1e-6) a += 360;
+            return a;
+        }
 
         /// <summary>
         /// 템플릿 바이트의 빠른 해시 (길이 + 앞/뒤 몇 바이트). 충돌이 사실상 0이고 O(1).
@@ -524,15 +548,16 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                 // ── Coarse pass ──
                 var coarseGray = grayLevels[topIdx];
                 double coarseStep = AngleStep * CoarseAngleStepMultiplier;
-                double aStart = Math.Min(StartAngle, EndAngle);
-                double aEnd = Math.Max(StartAngle, EndAngle);
 
                 // 다중 인스턴스를 위해 후보를 충분히 많이 수집.
                 // 단일 모드(MaxInstances=1)는 TopCandidates로 충분, 다중 모드는 MaxInstances × 3 이상.
                 int candidatePoolSize = Math.Max(TopCandidates, MaxInstances * 3);
-                var candidates = new List<(double score, double angle, double scale, Point locFull, Size size)>();
+                // 후보 위치는 풀 해상도 "중심" — 회전(중심 기준)·배율이 바뀌면 템플릿 크기가 달라져
+                // 좌상단은 움직이지만 중심은 그대로다. 정밀 탐색이 이 중심에 각 템플릿을 맞춘다.
+                var candidates = new List<(double score, double angle, double scale, Point2d centerFull)>();
 
-                for (double a = aStart; a <= aEnd + 1e-6; a += coarseStep)
+                // 거친 격자도 0° 기준 (coarseStep 은 AngleStep 의 배수라 캐시 격자 위에 있다)
+                foreach (double a in AngleGrid(coarseStep))
                 {
                     for (double s = MinScale; s <= MaxScale + 1e-6; s += ScaleStep)
                     {
@@ -549,8 +574,7 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                         {
                             Cv2.MinMaxLoc(map, out _, out double mv, out _, out Point ml);
                             evalCount++;
-                            var locFull = new Point(ml.X * pyrFactor, ml.Y * pyrFactor);
-                            candidates.Add((mv, a, s, locFull, new Size(cached.Width, cached.Height)));
+                            candidates.Add((mv, a, s, CenterFull(ml, cached, pyrFactor)));
                         }
                         else
                         {
@@ -559,8 +583,7 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                             foreach (var (mv, ml) in PickLocalPeaks(map, picksPerMap, cached.Width, cached.Height))
                             {
                                 evalCount++;
-                                var locFull = new Point(ml.X * pyrFactor, ml.Y * pyrFactor);
-                                candidates.Add((mv, a, s, locFull, new Size(cached.Width, cached.Height)));
+                                candidates.Add((mv, a, s, CenterFull(ml, cached, pyrFactor)));
                             }
                         }
                     }
@@ -575,7 +598,7 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                 // ── Fine pass (풀 해상도) ──
                 double angleRange = coarseStep;
                 double scaleRange = ScaleStep;
-                int locMargin = pyrFactor * 2;
+                int locMargin = pyrFactor * 2 + 2;
                 var refined = new List<MatchInstance>(topN);
 
                 for (int k = 0; k < topN; k++)
@@ -587,7 +610,7 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
 
                     for (double da = -angleRange; da <= angleRange + 1e-6; da += AngleStep)
                     {
-                        double fa = c.angle + da;
+                        double fa = WrapAngle(c.angle + da);
                         for (double ds = -scaleRange; ds <= scaleRange + 1e-6; ds += ScaleStep)
                         {
                             double fs = c.scale + ds;
@@ -599,10 +622,13 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                             if (nw < 4 || nh < 4) continue;
                             if (nw > gray.Width || nh > gray.Height) continue;
 
-                            int sx0 = Math.Max(0, c.locFull.X - locMargin);
-                            int sy0 = Math.Max(0, c.locFull.Y - locMargin);
-                            int sx1 = Math.Min(gray.Width, c.locFull.X + nw + locMargin);
-                            int sy1 = Math.Min(gray.Height, c.locFull.Y + nh + locMargin);
+                            // 이 (각도, 배율) 템플릿을 후보 중심에 맞췄을 때의 좌상단 ± 여유
+                            int tlx = (int)Math.Round(c.centerFull.X - nw / 2.0);
+                            int tly = (int)Math.Round(c.centerFull.Y - nh / 2.0);
+                            int sx0 = Math.Max(0, tlx - locMargin);
+                            int sy0 = Math.Max(0, tly - locMargin);
+                            int sx1 = Math.Min(gray.Width, tlx + nw + locMargin);
+                            int sy1 = Math.Min(gray.Height, tly + nh + locMargin);
                             int sw = sx1 - sx0, sh = sy1 - sy0;
                             if (sw < nw || sh < nh) continue;
 
@@ -634,6 +660,10 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                 foreach (var m in grayLevels) m.Dispose();
             }
         }
+
+        /// <summary>거친 레벨 매칭 좌상단(ml)과 그 템플릿 크기로 풀 해상도 중심을 구한다.</summary>
+        private static Point2d CenterFull(Point ml, Mat coarseTemplate, int pyrFactor)
+            => new((ml.X + coarseTemplate.Width / 2.0) * pyrFactor, (ml.Y + coarseTemplate.Height / 2.0) * pyrFactor);
 
         /// <summary>
         /// 매칭맵에서 상위 N개의 로컬 피크를 추출. 추출 후 그 위치 주변(템플릿 절반 크기)을 마스킹하여 중복 피크 방지.
@@ -710,9 +740,25 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
         }
 
         /// <summary>
-        /// 템플릿을 angle도 회전. 회전된 bounding box 크기로 새 Mat 반환 (검은 패딩).
+        /// 템플릿 테두리 화소의 중앙값 — 학습 영역 둘레는 대개 배경이라 배경 밝기 추정치로 쓴다.
         /// </summary>
-        private static Mat RotateAround(Mat src, double angle)
+        internal static double BorderMedian(Mat src)
+        {
+            int w = src.Width, h = src.Height;
+            if (w == 0 || h == 0) return 0;
+            var values = new List<byte>(2 * (w + h));
+            for (int x = 0; x < w; x++) { values.Add(src.At<byte>(0, x)); values.Add(src.At<byte>(h - 1, x)); }
+            for (int y = 1; y < h - 1; y++) { values.Add(src.At<byte>(y, 0)); values.Add(src.At<byte>(y, w - 1)); }
+            values.Sort();
+            return values[values.Count / 2];
+        }
+
+        /// <summary>
+        /// 템플릿을 angle도 회전. 회전된 bounding box 크기로 새 Mat 반환.
+        /// 회전으로 생기는 빈 모서리는 background(템플릿 테두리 중앙값)로 채운다 — 검은색으로 채우면
+        /// 밝은 배경 위에서 모서리가 통째로 불일치가 되어 0°·180° 외 각도의 점수가 무너진다.
+        /// </summary>
+        private static Mat RotateAround(Mat src, double angle, double background)
         {
             if (Math.Abs(angle) < 1e-6) return src.Clone();
 
@@ -730,7 +776,7 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
 
             var dst = new Mat();
             Cv2.WarpAffine(src, dst, M, new Size(newW, newH),
-                InterpolationFlags.Cubic, BorderTypes.Constant, Scalar.All(0));
+                InterpolationFlags.Cubic, BorderTypes.Constant, Scalar.All(background));
             return dst;
         }
 
