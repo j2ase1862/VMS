@@ -20,6 +20,7 @@ using VMS.VisionSetup.VisionTools.Result;
 using VMS.VisionSetup.Services;
 using VMS.VisionSetup.VisionTools.Measurement;
 using VMS.VisionSetup.VisionTools.PatternMatching;
+using HeightSlicerTool = VMS.VisionSetup.VisionTools.ImageProcessing.HeightSlicerTool;
 
 namespace VMS.Services
 {
@@ -378,13 +379,14 @@ namespace VMS.Services
             }
         }
 
-        public async Task<StepInspectionResult> ExecuteStepAsync(InspectionStep step, Mat inputImage)
+        public async Task<StepInspectionResult> ExecuteStepAsync(InspectionStep step, Mat inputImage,
+            VMS.Camera.Models.PointCloudData? pointCloud = null)
         {
             // 실행 컨텍스트가 프로세스 전역이라 스텝 실행은 한 번에 하나씩 (_executeGate 참고).
             await _executeGate.WaitAsync().ConfigureAwait(false);
             try
             {
-                return await Task.Run(() => ExecuteStep(step, inputImage)).ConfigureAwait(false);
+                return await Task.Run(() => ExecuteStep(step, inputImage, pointCloud)).ConfigureAwait(false);
             }
             finally
             {
@@ -392,8 +394,19 @@ namespace VMS.Services
             }
         }
 
-        private StepInspectionResult ExecuteStep(InspectionStep step, Mat inputImage)
+        /// <summary>3D 실행 환경(점군·깊이맵·높이맵 메타데이터)이 필요한 도구.</summary>
+        private static bool Uses3DData(VisionToolBase tool) => tool
+            is HeightSlicerTool or PlaneFitTool or Geometry3DTool
+            or VMS.VisionSetup.VisionTools.PointCloud.PointCloudFilterTool
+            or VMS.VisionSetup.VisionTools.PointCloud.PointCloudMaskCropTool
+            or VMS.VisionSetup.VisionTools.PointCloud.PointCloudClusterTool
+            or VMS.VisionSetup.VisionTools.PointCloud.PointCloudRegistrationTool
+            or VMS.VisionSetup.VisionTools.PointCloud.PointCloudDeviationTool;
+
+        private StepInspectionResult ExecuteStep(InspectionStep step, Mat inputImage,
+            VMS.Camera.Models.PointCloudData? pointCloud = null)
         {
+            VMS.Camera.Models.PointCloudData? stepCloud = null;
             var sw = Stopwatch.StartNew();
             var result = new StepInspectionResult
             {
@@ -435,6 +448,16 @@ namespace VMS.Services
                     sw.Stop();
                     result.ExecutionTimeMs = sw.Elapsed.TotalMilliseconds;
                     return result;
+                }
+
+                // 3D 실행 환경 — VisionSetup 이 점군을 열 때 세우는 것과 같다. 종전에는 2D 영상만 넘겨
+                // 3D 레시피가 전 도구 NG 였다(Height Slicer "CV_8UC3 미지원" · Mask Crop "No point cloud" ·
+                // Plane Fit "HeightMapMetadata 필요" — 2026-09-28 현장 레시피 재현). 스텝마다 원본의 복제본에서
+                // 시작해 앞 스텝의 크롭이 뒤 스텝으로 새지 않게 하고, 3D 도구가 없는 스텝은 건드리지 않는다.
+                if (pointCloud != null && ctx.Tools.Any(t => t.IsEnabled && Uses3DData(t)))
+                {
+                    stepCloud = pointCloud.Clone();
+                    visionService.Set3DInput(stepCloud, _currentRecipe?.HeightSlicing);
                 }
 
                 // 실행
@@ -480,8 +503,11 @@ namespace VMS.Services
                     Mat toolInput;
                     var connectedImage = GetConnectedInputImage(tool, ctx.Connections, resultMap);
                     bool usesBaseImage = connectedImage == null;
+                    var depthMap = visionService.CurrentDepthMap32F;
                     if (connectedImage != null)
                         toolInput = connectedImage;
+                    else if (tool is HeightSlicerTool && stepCloud != null && depthMap != null && !depthMap.IsDisposed)
+                        toolInput = depthMap.Clone();   // VisionService 와 같은 규칙: 연결 없는 Height Slicer 는 mm 깊이맵
                     else
                         toolInput = inputImage.Clone();
 
@@ -624,6 +650,15 @@ namespace VMS.Services
                     source: nameof(InspectionService),
                     details: $"StepId={step.Id}, {ex.GetType().Name}: {ex.Message}");
                 return result;
+            }
+            finally
+            {
+                // 3D 입력 해제 — 점군 도구가 만든 중간 점군·깊이맵(각 수십 MB)을 사이클마다 돌려준다
+                if (stepCloud != null)
+                {
+                    VMS.VisionSetup.Services.VisionService.Instance.Clear3DInput(stepCloud);
+                    stepCloud.Dispose();
+                }
             }
         }
 

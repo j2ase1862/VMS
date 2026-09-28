@@ -815,9 +815,14 @@ namespace VMS.ViewModels
                 return;
             }
 
+            // 3D 카메라 점군 — 검사는 백그라운드에서 돌고 그 사이 화면 점군이 다음 grab 으로 교체·해제될 수
+            // 있으므로 UI 스레드에서 복제해 넘긴다 (3D 도구가 없는 스텝이면 엔진이 쓰지 않는다).
+            var cloud = CurrentPointCloud != null && step.Tools.Any(t => ThreeDToolTypes.Contains(t.ToolType))
+                ? CurrentPointCloud.Clone()
+                : null;
             try
             {
-                var result = await _inspectionService.ExecuteStepAsync(step, mat);
+                var result = await _inspectionService.ExecuteStepAsync(step, mat, cloud);
 
                 // 원본 이미지로 복원 후 오버레이 표시
                 if (result.OverlayImage != null && !result.OverlayImage.Empty())
@@ -847,8 +852,17 @@ namespace VMS.ViewModels
             finally
             {
                 mat.Dispose();
+                cloud?.Dispose();
             }
         }
+
+        /// <summary>점군이 필요한 도구 종류 — 이 도구가 없는 스텝은 점군을 복제·전달하지 않는다.</summary>
+        private static readonly HashSet<string> ThreeDToolTypes = new(StringComparer.Ordinal)
+        {
+            "HeightSlicerTool", "PlaneFitTool", "Geometry3DTool",
+            "PointCloudFilterTool", "PointCloudMaskCropTool", "PointCloudClusterTool",
+            "PointCloudRegistrationTool", "PointCloudDeviationTool",
+        };
 
         private void UpdateToolRunResults(Interfaces.StepInspectionResult result)
         {

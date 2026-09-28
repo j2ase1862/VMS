@@ -31,7 +31,12 @@ namespace VMS.Interfaces
 
     public interface IInspectionService
     {
-        Task<StepInspectionResult> ExecuteStepAsync(InspectionStep step, Mat inputImage);
+        /// <param name="pointCloud">
+        /// 3D 카메라 점군 (없으면 null). 스텝에 3D 도구가 있으면 이 점군으로 3D 실행 환경을 세운다 —
+        /// 엔진이 스텝마다 복제해 쓰므로 호출자가 소유·해제한다.
+        /// </param>
+        Task<StepInspectionResult> ExecuteStepAsync(InspectionStep step, Mat inputImage,
+            VMS.Camera.Models.PointCloudData? pointCloud = null);
 
         /// <summary>
         /// 현재 레시피를 실행 엔진에 알린다 (레시피 전환 시마다 호출).
