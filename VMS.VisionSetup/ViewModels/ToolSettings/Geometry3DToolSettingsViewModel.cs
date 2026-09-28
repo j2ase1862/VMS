@@ -41,6 +41,32 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
 
         public Array Operations => Enum.GetValues(typeof(Geometry3DOperation));
 
+        // ── 판정 (Judgment) — 설정 UI 는 이 VM 에 바인딩되므로 툴 속성마다 래퍼 필수 ──
+
+        public bool EnableJudgment
+        {
+            get => TypedTool.EnableJudgment;
+            set { TypedTool.EnableJudgment = value; OnPropertyChanged(); }
+        }
+
+        public double ExpectedValue
+        {
+            get => TypedTool.ExpectedValue;
+            set { TypedTool.ExpectedValue = value; OnPropertyChanged(); }
+        }
+
+        public double ToleranceMinus
+        {
+            get => TypedTool.ToleranceMinus;
+            set { TypedTool.ToleranceMinus = value; OnPropertyChanged(); }
+        }
+
+        public double TolerancePlus
+        {
+            get => TypedTool.TolerancePlus;
+            set { TypedTool.TolerancePlus = value; OnPropertyChanged(); }
+        }
+
         // ── 포인트 소스 모드 (라디오 상호 배타) ──
 
         public bool UseManualPoints

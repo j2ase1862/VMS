@@ -62,5 +62,23 @@
                     ToolType="PointCloudRegistrationTool" ParameterName="ApplyTransformToSource"/>
             </StackPanel>
         </Expander>
+
+        <!-- Judgment — Confidence 하한 (꺼 두면 정합이 틀려도 OK 로 끝난다) -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Judgment" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:CheckBoxParameter Label="Enable Judgment"
+                    IsChecked="{Binding EnableJudgment}"
+                    ToolType="PointCloudRegistrationTool" ParameterName="EnableJudgment"/>
+                <controls:SliderParameter Label="Min Confidence"
+                    Value="{Binding MinConfidence}" Minimum="0" Maximum="1"
+                    TickFrequency="0.01" ValueFormat="F2"
+                    ToolType="PointCloudRegistrationTool" ParameterName="MinConfidence"/>
+                <TextBlock Foreground="#999999" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,0"
+                           Text="Confidence(0~1) = 정합 후 Confidence Distance 이내로 기준에 붙은 점의 비율. 이 값 미만이면 정합 실패(NG)."/>
+            </StackPanel>
+        </Expander>
     </StackPanel>
 </UserControl>

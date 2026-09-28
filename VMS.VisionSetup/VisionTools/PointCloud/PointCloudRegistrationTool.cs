@@ -9,6 +9,7 @@ using VMS.Camera.Models;
 using VMS.Camera.Utils;
 using VMS.VisionSetup.Models;
 using VMS.VisionSetup.Services;
+using VMS.VisionSetup.VisionTools.Measurement;
 
 namespace VMS.VisionSetup.VisionTools.PointCloud
 {
@@ -68,6 +69,25 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
         {
             get => _confidenceDistanceMm;
             set => SetProperty(ref _confidenceDistanceMm, Math.Clamp(value, 0.01f, 100f));
+        }
+
+        private bool _enableJudgment;
+        /// <summary>
+        /// 정합 품질 판정 사용. 꺼져 있으면 정합이 틀려도 성공으로 끝난다(값만 계산) —
+        /// 현장 3D 검증에서 Confidence 0.13 인 실패 정합도 OK 로 표시됐다.
+        /// </summary>
+        public bool EnableJudgment
+        {
+            get => _enableJudgment;
+            set => SetProperty(ref _enableJudgment, value);
+        }
+
+        private double _minConfidence = 0.5;
+        /// <summary>Confidence(0~1) 하한 — 이 값 미만이면 정합 실패로 판정.</summary>
+        public double MinConfidence
+        {
+            get => _minConfidence;
+            set => SetProperty(ref _minConfidence, Math.Clamp(value, 0, 1));
         }
 
         public bool IsReferenceLoaded => !string.IsNullOrEmpty(ReferencePath) && File.Exists(ReferencePath);
@@ -218,6 +238,8 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                     + $"{(EnableCoarseAlignment ? " (coarse+fine)" : "")}, "
                     + $"|Δt|={result.Data["TranslationNorm"]:F3}mm "
                     + $"(Ref={reference.PointCount}, Src={src.PointCount})";
+                if (EnableJudgment)
+                    ToleranceJudgment.ApplyRange(result, confidence, MinConfidence, 1.0, "", "Confidence");
             }
             catch (Exception ex)
             {
@@ -245,7 +267,9 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                 "M11", "M12", "M13", "M14",
                 "M21", "M22", "M23", "M24",
                 "M31", "M32", "M33", "M34",
-                "M41", "M42", "M43", "M44"
+                "M41", "M42", "M43", "M44",
+                // 판정 (EnableJudgment 시)
+                "JudgmentValue", "JudgmentLow", "JudgmentHigh", "JudgmentPass"
             };
         }
 
@@ -261,7 +285,9 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                 Tolerance = this.Tolerance,
                 ApplyTransformToSource = this.ApplyTransformToSource,
                 EnableCoarseAlignment = this.EnableCoarseAlignment,
-                ConfidenceDistanceMm = this.ConfidenceDistanceMm
+                ConfidenceDistanceMm = this.ConfidenceDistanceMm,
+                EnableJudgment = this.EnableJudgment,
+                MinConfidence = this.MinConfidence
             };
             CopyPlcMappingsTo(clone);
             return clone;
