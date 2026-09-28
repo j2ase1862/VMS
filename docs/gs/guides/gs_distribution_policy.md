@@ -78,7 +78,8 @@ PR1~25 시점 기준. 라이선스 분류는 자체 코드(GROUP A) → 제3자 
 | MobileSAM 가중치 (라벨링 보조) | Apache 2.0 (ChaoningZhang/MobileSAM) |
 | anomalib · torchvision (Anomaly / Classification 학습) | Apache 2.0 · BSD-3 |
 | YOLOv8 사전학습 가중치 (`train_yolo.py`, **옵션 — 기본 아님**) | Ultralytics — **AGPL-3.0**. Ultralytics 는 fine-tuning 한 가중치와 ONNX 변환본까지 AGPL 파생물로 본다. **Ultralytics Enterprise License 를 보유한 사이트에서만 선택 사용** — https://www.ultralytics.com/license |
-| PP-OCRv4 가중치 | Apache 2.0 (PaddleOCR) |
+| PP-OCRv4 가중치 (det · rec ONNX + 사전) | Apache 2.0 (PaddleOCR, ONNX 변환 RapidOCR) — **인스톨러 동봉** `models\ppocr\` (v1.42.9~). 빌드가 고정 리비전에서 받아 SHA-256 검증 (`VMS.VisionSetup.csproj` `OcrDataFile`) |
+| Tesseract 언어 데이터 (tessdata_best eng · kor · jpn · chi_sim) | Apache 2.0 — **인스톨러 동봉** `tessdata\` (v1.42.9~), 받는 방식은 위와 같음 |
 | 학습 데이터셋 | 사이트별 — VASIM 책임 영역 밖 |
 | 학습 스택(torch · transformers · anomalib · paddlepaddle 등 pip 패키지) | **인증 제품 배포물 외** — 인스톨러 `AiTools` Feature(선택) 사용자가 별도 설치, 인증 제출 빌드(`-p:ExcludeAiTools=true`)에는 학습 도구 자체가 없음 ([gs_scope_ai_tools.md](gs_scope_ai_tools.md)) |
 

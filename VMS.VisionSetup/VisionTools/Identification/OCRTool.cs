@@ -702,9 +702,9 @@ namespace VMS.VisionSetup.VisionTools.Identification
 
         #region Tesseract Engine
 
-        private record OcrWord(string Text, float Confidence, OpenCvSharp.Rect BoundingBox);
+        internal record OcrWord(string Text, float Confidence, OpenCvSharp.Rect BoundingBox);
 
-        private record OcrResultData(string Text, float MeanConfidence, List<OcrWord> Words);
+        internal record OcrResultData(string Text, float MeanConfidence, List<OcrWord> Words);
 
         /// <summary>
         /// 엔진 캐시 — 동일 설정이면 재사용 (초기화 200~500ms 절약)
@@ -799,7 +799,7 @@ namespace VMS.VisionSetup.VisionTools.Identification
 
         #region Overlay
 
-        private void DrawOCROverlay(Mat overlay, Mat inputImage, OcrResultData ocrResult, bool success,
+        internal void DrawOCROverlay(Mat overlay, Mat inputImage, OcrResultData ocrResult, bool success,
             bool useAffineROI, double centerX, double centerY, int roiW, int roiH, double angle)
         {
             var color = success ? new Scalar(0, 255, 0) : new Scalar(0, 0, 255);
@@ -840,7 +840,10 @@ namespace VMS.VisionSetup.VisionTools.Identification
             }
 
             // 전체 인식 결과 표시 (이미지 좌상단)
+            // 빈 문자열은 Cv2.PutText 가 ArgumentNullException 을 던진다 — 인식 없음이 "OCR 실패: Value cannot be null."
+            // 로 보고되던 결함. 판정 메시지("문자를 인식하지 못했습니다.")가 그대로 남도록 자리표시로 그린다.
             string displayText = ocrResult.Text?.Trim().Replace("\n", " ") ?? "";
+            if (displayText.Length == 0) displayText = "(no text)";
             if (displayText.Length > 60) displayText = displayText[..57] + "...";
             Cv2.PutText(overlay, displayText,
                 new OpenCvSharp.Point(10, 30),
