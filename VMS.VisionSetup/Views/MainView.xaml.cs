@@ -14,6 +14,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace VMS.VisionSetup
 {
@@ -121,6 +122,16 @@ namespace VMS.VisionSetup
                 if (DataContext is MainViewModel mvm)
                     mvm.OnColorPickedFromImage(imgX, imgY);
             };
+
+            // 스텝 로드·템플릿 생성 직후 워크스페이스 맞춤 — 도구 컨테이너가 배치된 뒤라야 범위를 잴 수 있다
+            WeakReferenceMessenger.Default.Register<RequestFitWorkspaceMessage>(this, (r, msg) =>
+            {
+                Dispatcher.BeginInvoke(DispatcherPriority.Loaded, () =>
+                {
+                    WorkspaceZoomHost.UpdateLayout();
+                    WorkspaceZoomHost.FitToContent(msg.OnlyIfNeeded);
+                });
+            });
         }
 
         #region Tool Position Change Tracking
@@ -333,7 +344,7 @@ namespace VMS.VisionSetup
                 this.KeyDown += ConnectionMode_KeyDown;
 
                 // 마우스 이벤트 (임시 연결선 그리기)
-                WorkspaceArea.MouseMove += ConnectionMode_MouseMove;
+                WorkspaceZoomHost.MouseMove += ConnectionMode_MouseMove;
             }
         }
 
@@ -422,11 +433,8 @@ namespace VMS.VisionSetup
             double sourceY = _connectionSourceTool.Y + toolHeight / 2;
             var sourceCenter = new Point(sourceX, sourceY);
 
-            // WorkspaceArea가 Grid 안에 있으므로, Grid 기준 좌표로 변환
-            var grid = WorkspaceArea.Parent as Grid;
-            if (grid == null) return;
-
-            Point mousePos = e.GetPosition(grid);
+            // 도구 좌표계(확대/축소 전) 기준 — 배율·이동은 WorkspaceContent 의 변환이 풀어 준다
+            Point mousePos = e.GetPosition(WorkspaceContent);
 
             var brush = GetConnectionBrush(_pendingConnectionType);
 
@@ -468,7 +476,7 @@ namespace VMS.VisionSetup
             ConnectionModeHint.Visibility = Visibility.Collapsed;
 
             this.KeyDown -= ConnectionMode_KeyDown;
-            WorkspaceArea.MouseMove -= ConnectionMode_MouseMove;
+            WorkspaceZoomHost.MouseMove -= ConnectionMode_MouseMove;
         }
 
         /// <summary>
@@ -547,11 +555,11 @@ namespace VMS.VisionSetup
             {
                 var sourceTool = e.Data.GetData("Object") as ToolItem;
                 var vm = DataContext as MainViewModel;
-                var dropContainer = sender as UIElement;
 
-                if (vm != null && sourceTool != null && dropContainer != null)
+                if (vm != null && sourceTool != null)
                 {
-                    System.Windows.Point position = e.GetPosition(dropContainer);
+                    // 도구 좌표계(확대/축소 전) 기준 — 확대/축소 중에 놓아도 마우스 아래에 생긴다
+                    System.Windows.Point position = e.GetPosition(WorkspaceContent);
 
                     // ViewModel의 CreateDroppedTool 메서드를 사용하여 새 도구 생성
                     var newTool = vm.CreateDroppedTool(sourceTool, position.X, position.Y);

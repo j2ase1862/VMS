@@ -1131,143 +1131,182 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Text="Tool Workspace (Drag tools here)"
-                                   Foreground="Gray" FontSize="12" Margin="10,5"/>
+                        <DockPanel Grid.Row="0" Margin="10,5">
+                            <TextBlock DockPanel.Dock="Right" Text="휠: 확대/축소 · 빈 곳 드래그: 이동"
+                                       Foreground="{StaticResource BrushTextSecondary}" FontSize="12"/>
+                            <TextBlock Text="Tool Workspace (Drag tools here)"
+                                       Foreground="Gray" FontSize="12"/>
+                        </DockPanel>
 
                         <!-- 연결선 및 도구 워크스페이스 컨테이너 -->
-                        <Grid Grid.Row="1" AllowDrop="True" Drop="Sidebar2_Drop" Background="{StaticResource BrushBgCard}">
-                            <!-- 연결선 렌더링 캔버스 (도구 아래에 그려짐) -->
-                            <Canvas x:Name="ConnectionCanvas" IsHitTestVisible="False"/>
+                        <Grid Grid.Row="1">
+                            <!-- 확대/축소·이동 호스트 — 배경이 빈 곳의 클릭(이동)·드롭을 받는다.
+                                 안쪽 Grid 좌표계 = 도구 X/Y 좌표계 (배율은 화면 표시에만 걸린다) -->
+                            <controls:ZoomPanHost x:Name="WorkspaceZoomHost"
+                                                  Background="{StaticResource BrushBgCard}"
+                                                  AllowDrop="True" Drop="Sidebar2_Drop">
+                                <Grid x:Name="WorkspaceContent">
+                                    <!-- 연결선 렌더링 캔버스 (도구 아래에 그려짐) -->
+                                    <Canvas x:Name="ConnectionCanvas" IsHitTestVisible="False"/>
 
-                            <!-- 연결 모드 진행 중 안내 텍스트 -->
+                                    <!-- 도구 아이템 표시 (배경 없음 — 빈 곳 클릭은 호스트가 이동으로 받는다) -->
+                                    <ItemsControl x:Name="WorkspaceArea"
+                                                  ItemsSource="{Binding DroppedTools}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <Canvas IsItemsHost="True"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemContainerStyle>
+                                            <Style TargetType="ContentPresenter">
+                                                <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                                                <Setter Property="Canvas.Top" Value="{Binding Y}"/>
+                                            </Style>
+                                        </ItemsControl.ItemContainerStyle>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border x:Name="ToolOuterBorder"
+                                                        BorderBrush="{StaticResource BrushBorderStrong}" BorderThickness="1"
+                                                        CornerRadius="4,4,0,0" Cursor="Hand" Margin="2"
+                                                        MouseLeftButtonDown="Item_MouseLeftButtonDown"
+                                                        MouseMove="Item_MouseMove"
+                                                        MouseLeftButtonUp="Item_MouseLeftButtonUp"
+                                                        MouseRightButtonDown="Item_MouseRightButtonDown"
+                                                        MinWidth="150">
+                                                    <Border.ContextMenu>
+                                                        <ContextMenu>
+                                                            <ContextMenu.Style>
+                                                                <Style TargetType="ContextMenu">
+                                                                    <Setter Property="Background" Value="#2D2D30"/>
+                                                                    <Setter Property="Foreground" Value="White"/>
+                                                                    <Setter Property="BorderBrush" Value="{StaticResource BrushBorderStrong}"/>
+                                                                </Style>
+                                                            </ContextMenu.Style>
+                                                            <MenuItem Header="Rename Tool"
+                                                                      Click="RenameToolMenuItem_Click"/>
+                                                            <MenuItem Header="Duplicate Tool"
+                                                                      ToolTip="파라미터·ROI·학습 데이터까지 복사한 사본을 옆에 만듭니다 (연결은 복사되지 않음)"
+                                                                      Click="DuplicateToolMenuItem_Click"/>
+                                                            <Separator Background="{StaticResource BrushBorderStrong}"/>
+                                                            <MenuItem Header="Connect Image"
+                                                                      Tag="Image"
+                                                                      Click="ConnectMenuItem_Click">
+                                                                <MenuItem.Icon>
+                                                                    <Ellipse Width="10" Height="10" Fill="#4CAF50"/>
+                                                                </MenuItem.Icon>
+                                                            </MenuItem>
+                                                            <MenuItem Header="Connect Coordinates"
+                                                                      Tag="Coordinates"
+                                                                      Click="ConnectMenuItem_Click">
+                                                                <MenuItem.Icon>
+                                                                    <Ellipse Width="10" Height="10" Fill="#2196F3"/>
+                                                                </MenuItem.Icon>
+                                                            </MenuItem>
+                                                            <MenuItem Header="Connect Result"
+                                                                      Tag="Result"
+                                                                      Click="ConnectMenuItem_Click">
+                                                                <MenuItem.Icon>
+                                                                    <Ellipse Width="10" Height="10" Fill="#FF9800"/>
+                                                                </MenuItem.Icon>
+                                                            </MenuItem>
+                                                            <Separator Background="{StaticResource BrushBorderStrong}"/>
+                                                            <MenuItem Header="Remove Connections"
+                                                                      Click="RemoveConnectionsMenuItem_Click"/>
+                                                            <Separator Background="{StaticResource BrushBorderStrong}"/>
+                                                            <MenuItem Header="Delete Tool"
+                                                                      Click="DeleteToolMenuItem_Click"
+                                                                      Foreground="#FF5252"/>
+                                                        </ContextMenu>
+                                                    </Border.ContextMenu>
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+
+                                                        <!-- Tab Header: ToolType + Close button -->
+                                                        <Border x:Name="TabHeader" Grid.Row="0"
+                                                                Background="#1A3A5C"
+                                                                CornerRadius="3,3,0,0"
+                                                                Padding="8,4">
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <TextBlock Grid.Column="0"
+                                                                           Text="{Binding ToolType}"
+                                                                           Foreground="#B0C4DE" FontSize="11"
+                                                                           FontWeight="SemiBold"
+                                                                           VerticalAlignment="Center"
+                                                                           TextTrimming="CharacterEllipsis"/>
+                                                                <Button Grid.Column="1" Content="X"
+                                                                        Style="{StaticResource ToolCloseButtonStyle}"
+                                                                        Command="{Binding DataContext.RemoveToolCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                        CommandParameter="{Binding}"
+                                                                        Margin="6,0,0,0"/>
+                                                            </Grid>
+                                                        </Border>
+
+                                                        <!-- Tab Body: Name -->
+                                                        <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}"
+                                                                Padding="8,5">
+                                                            <TextBlock Text="{Binding Name}"
+                                                                       Foreground="White" FontSize="12"
+                                                                       FontWeight="Normal"
+                                                                       TextTrimming="CharacterEllipsis"/>
+                                                        </Border>
+                                                    </Grid>
+                                                </Border>
+                                                <DataTemplate.Triggers>
+                                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                        <Setter TargetName="ToolOuterBorder" Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
+                                                        <Setter TargetName="TabHeader" Property="Background" Value="{StaticResource BrushAccent}"/>
+                                                    </DataTrigger>
+                                                </DataTemplate.Triggers>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <!-- 연결 모드에서 임시 연결선 표시 캔버스 -->
+                                    <Canvas x:Name="TempConnectionCanvas" IsHitTestVisible="False"/>
+                                </Grid>
+                            </controls:ZoomPanHost>
+
+                            <!-- 연결 모드 진행 중 안내 텍스트 (배율과 무관하게 고정 위치) -->
                             <TextBlock x:Name="ConnectionModeHint"
                                        Text=""
                                        Foreground="#FFEB3B" FontSize="12" FontWeight="SemiBold"
                                        HorizontalAlignment="Center" VerticalAlignment="Top"
-                                       Margin="0,5,0,0" Visibility="Collapsed"/>
+                                       Margin="0,5,0,0" Visibility="Collapsed" IsHitTestVisible="False"/>
 
-                            <!-- 도구 아이템 표시 -->
-                            <ItemsControl x:Name="WorkspaceArea"
-                                          ItemsSource="{Binding DroppedTools}"
-                                          Background="Transparent">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <Canvas IsItemsHost="True"/>
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemContainerStyle>
-                                    <Style TargetType="ContentPresenter">
-                                        <Setter Property="Canvas.Left" Value="{Binding X}"/>
-                                        <Setter Property="Canvas.Top" Value="{Binding Y}"/>
-                                    </Style>
-                                </ItemsControl.ItemContainerStyle>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border x:Name="ToolOuterBorder"
-                                                BorderBrush="{StaticResource BrushBorderStrong}" BorderThickness="1"
-                                                CornerRadius="4,4,0,0" Cursor="Hand" Margin="2"
-                                                MouseLeftButtonDown="Item_MouseLeftButtonDown"
-                                                MouseMove="Item_MouseMove"
-                                                MouseLeftButtonUp="Item_MouseLeftButtonUp"
-                                                MouseRightButtonDown="Item_MouseRightButtonDown"
-                                                MinWidth="150">
-                                            <Border.ContextMenu>
-                                                <ContextMenu>
-                                                    <ContextMenu.Style>
-                                                        <Style TargetType="ContextMenu">
-                                                            <Setter Property="Background" Value="#2D2D30"/>
-                                                            <Setter Property="Foreground" Value="White"/>
-                                                            <Setter Property="BorderBrush" Value="{StaticResource BrushBorderStrong}"/>
-                                                        </Style>
-                                                    </ContextMenu.Style>
-                                                    <MenuItem Header="Rename Tool"
-                                                              Click="RenameToolMenuItem_Click"/>
-                                                    <MenuItem Header="Duplicate Tool"
-                                                              ToolTip="파라미터·ROI·학습 데이터까지 복사한 사본을 옆에 만듭니다 (연결은 복사되지 않음)"
-                                                              Click="DuplicateToolMenuItem_Click"/>
-                                                    <Separator Background="{StaticResource BrushBorderStrong}"/>
-                                                    <MenuItem Header="Connect Image"
-                                                              Tag="Image"
-                                                              Click="ConnectMenuItem_Click">
-                                                        <MenuItem.Icon>
-                                                            <Ellipse Width="10" Height="10" Fill="#4CAF50"/>
-                                                        </MenuItem.Icon>
-                                                    </MenuItem>
-                                                    <MenuItem Header="Connect Coordinates"
-                                                              Tag="Coordinates"
-                                                              Click="ConnectMenuItem_Click">
-                                                        <MenuItem.Icon>
-                                                            <Ellipse Width="10" Height="10" Fill="#2196F3"/>
-                                                        </MenuItem.Icon>
-                                                    </MenuItem>
-                                                    <MenuItem Header="Connect Result"
-                                                              Tag="Result"
-                                                              Click="ConnectMenuItem_Click">
-                                                        <MenuItem.Icon>
-                                                            <Ellipse Width="10" Height="10" Fill="#FF9800"/>
-                                                        </MenuItem.Icon>
-                                                    </MenuItem>
-                                                    <Separator Background="{StaticResource BrushBorderStrong}"/>
-                                                    <MenuItem Header="Remove Connections"
-                                                              Click="RemoveConnectionsMenuItem_Click"/>
-                                                    <Separator Background="{StaticResource BrushBorderStrong}"/>
-                                                    <MenuItem Header="Delete Tool"
-                                                              Click="DeleteToolMenuItem_Click"
-                                                              Foreground="#FF5252"/>
-                                                </ContextMenu>
-                                            </Border.ContextMenu>
-                                            <Grid>
-                                                <Grid.RowDefinitions>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                </Grid.RowDefinitions>
-
-                                                <!-- Tab Header: ToolType + Close button -->
-                                                <Border x:Name="TabHeader" Grid.Row="0"
-                                                        Background="#1A3A5C"
-                                                        CornerRadius="3,3,0,0"
-                                                        Padding="8,4">
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                        </Grid.ColumnDefinitions>
-                                                        <TextBlock Grid.Column="0"
-                                                                   Text="{Binding ToolType}"
-                                                                   Foreground="#B0C4DE" FontSize="11"
-                                                                   FontWeight="SemiBold"
-                                                                   VerticalAlignment="Center"
-                                                                   TextTrimming="CharacterEllipsis"/>
-                                                        <Button Grid.Column="1" Content="X"
-                                                                Style="{StaticResource ToolCloseButtonStyle}"
-                                                                Command="{Binding DataContext.RemoveToolCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                                CommandParameter="{Binding}"
-                                                                Margin="6,0,0,0"/>
-                                                    </Grid>
-                                                </Border>
-
-                                                <!-- Tab Body: Name -->
-                                                <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}"
-                                                        Padding="8,5">
-                                                    <TextBlock Text="{Binding Name}"
-                                                               Foreground="White" FontSize="12"
-                                                               FontWeight="Normal"
-                                                               TextTrimming="CharacterEllipsis"/>
-                                                </Border>
-                                            </Grid>
-                                        </Border>
-                                        <DataTemplate.Triggers>
-                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                <Setter TargetName="ToolOuterBorder" Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
-                                                <Setter TargetName="TabHeader" Property="Background" Value="{StaticResource BrushAccent}"/>
-                                            </DataTrigger>
-                                        </DataTemplate.Triggers>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-
-                            <!-- 연결 모드에서 임시 연결선 표시 캔버스 -->
-                            <Canvas x:Name="TempConnectionCanvas" IsHitTestVisible="False"/>
+                            <!-- 확대/축소 도구 모음 (오른쪽 아래) -->
+                            <Border HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,8,8"
+                                    Background="#E6252526" BorderBrush="{StaticResource BrushBorderStrong}"
+                                    BorderThickness="1" CornerRadius="6" Padding="3">
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="−" Style="{StaticResource ToolbarIconButtonStyle}"
+                                            Command="{x:Static controls:ZoomPanHost.ZoomOutCommand}"
+                                            CommandTarget="{Binding ElementName=WorkspaceZoomHost}"
+                                            ToolTip="축소 (휠 아래)"/>
+                                    <TextBlock Text="{Binding Zoom, ElementName=WorkspaceZoomHost, StringFormat={}{0:P0}}"
+                                               Foreground="{StaticResource BrushTextPrimary}" FontSize="12" FontWeight="SemiBold"
+                                               MinWidth="44" TextAlignment="Center" VerticalAlignment="Center"
+                                               ToolTip="현재 배율"/>
+                                    <Button Content="+" Style="{StaticResource ToolbarIconButtonStyle}"
+                                            Command="{x:Static controls:ZoomPanHost.ZoomInCommand}"
+                                            CommandTarget="{Binding ElementName=WorkspaceZoomHost}"
+                                            ToolTip="확대 (휠 위)"/>
+                                    <Button Content="전체 보기" Style="{StaticResource ToolbarButtonStyle}" Padding="10,7"
+                                            Command="{x:Static controls:ZoomPanHost.FitCommand}"
+                                            CommandTarget="{Binding ElementName=WorkspaceZoomHost}"
+                                            ToolTip="도구와 연결선이 모두 보이게 맞춥니다"/>
+                                    <Button Content="100%" Style="{StaticResource ToolbarButtonStyle}" Padding="10,7"
+                                            Command="{x:Static controls:ZoomPanHost.ResetCommand}"
+                                            CommandTarget="{Binding ElementName=WorkspaceZoomHost}"
+                                            ToolTip="원래 크기·원점으로"/>
+                                </StackPanel>
+                            </Border>
                         </Grid>
                     </Grid>
                 </Border>

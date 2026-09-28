@@ -29,6 +29,17 @@ namespace VMS.VisionSetup.Models
     /// <summary>이미지에서 한 픽셀 픽 모드 활성화 요청. MainView가 ImageCanvas의 EditMode.PickPoint 전환.</summary>
     public sealed class RequestPickColorMessage { }
 
+    /// <summary>
+    /// 도구 워크스페이스를 도구·연결선이 모두 보이게 맞추라는 요청 (스텝 로드·템플릿 생성 직후).
+    /// OnlyIfNeeded 면 100% 로 다 보일 때는 100%·원점으로 두고, 넘칠 때만 축소한다.
+    /// </summary>
+    public sealed class RequestFitWorkspaceMessage
+    {
+        public bool OnlyIfNeeded { get; }
+
+        public RequestFitWorkspaceMessage(bool onlyIfNeeded = true) => OnlyIfNeeded = onlyIfNeeded;
+    }
+
     // ViewModel-level messages (handled by MainViewModel)
     public sealed class RequestTrainPatternMessage { }
     public sealed class RequestAutoTuneMessage { }
