@@ -116,3 +116,6 @@ TestResults/
 
 ## MSI 동봉용 Web 서버 publish 산출물 (tools/stage-web-payload.ps1 이 생성 — 커밋 금지)
 VMS.MasterSetup/WebPayload/
+
+## OCR 데이터 캐시 (VMS.VisionSetup.csproj EnsureOcrData 가 고정 리비전에서 받아 SHA-256 검증 — 커밋 금지, 약 70MB)
+VMS.VisionSetup/OcrData/

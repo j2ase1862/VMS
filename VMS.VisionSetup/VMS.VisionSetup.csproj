@@ -72,6 +72,101 @@
     </None>
   </ItemGroup>
 
+  <!-- OCR 데이터 동봉 (폐쇄망 대응).
+       OCRTool 은 실행 폴더의 tessdata\ 를, PP-OCR 엔진은 models\ppocr\ 를 읽는다. 예전에는 둘 다 설치본에 없어
+       (tessdata 는 개발 PC 빌드 폴더에만 수동 배치, PP-OCR 은 첫 실행 때 인터넷 다운로드 — 그마저 Program Files 는
+       쓰기 권한이 없다) 현장·시험 PC 에서 OCR 이 동작하지 않았다.
+       파일은 용량(약 70MB — tessdata 영·한·일·중 + PP-OCR) 때문에 저장소에 넣지 않고, 고정 리비전 URL 에서 한 번 받아 OcrData\ 에 캐시한 뒤
+       SHA-256 을 검증해 출력 폴더로 복사한다. MSI 는 VMS 출력 폴더 전체를 담으므로 그대로 따라 들어간다.
+       - Release(비 CI): 받을 수 없거나 해시가 다르면 빌드 실패 → OCR 데이터 없는 설치본이 나올 수 없다.
+       - Debug: 경고만 (런타임 다운로드 대체 경로가 있다).
+       - CI(GitHub Actions, CI=true): 건너뜀 — 발행 MSI 는 개발 PC 빌드라 CI 산출물은 배포되지 않는다.
+       - 오프라인 개발 PC: -p:SkipOcrData=true -->
+  <PropertyGroup>
+    <OcrDataDir>$(MSBuildProjectDirectory)\OcrData\</OcrDataDir>
+    <OcrDataRequired Condition="'$(OcrDataRequired)' == '' and '$(Configuration)' == 'Release'">true</OcrDataRequired>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- 캐시 폴더는 SDK 기본 None 글로브에서 빼고, 아래 타깃이 출력 경로(Link)를 붙여 다시 넣는다 -->
+    <None Remove="OcrData\**" />
+    <!-- tessdata_best (Apache-2.0) -->
+    <OcrDataFile Include="tessdata\eng.traineddata"
+                 Url="https://github.com/tesseract-ocr/tessdata_best/raw/9ddc24e750eec0994223a9edc3fcb434a2244f3b/eng.traineddata"
+                 Sha256="8280aed0782fe27257a68ea10fe7ef324ca0f8d85bd2fd145d1c2b560bcb66ba" />
+    <OcrDataFile Include="tessdata\kor.traineddata"
+                 Url="https://github.com/tesseract-ocr/tessdata_best/raw/c7c86bb8deff3de329b2c455f99f6189f504b361/kor.traineddata"
+                 Sha256="f888d4038348a0c3d25151e7f452bda0d74ca275b18cab146798bcbb94084fff" />
+    <OcrDataFile Include="tessdata\jpn.traineddata"
+                 Url="https://github.com/tesseract-ocr/tessdata_best/raw/80b4d76313a90c76124b29321b2e51373527a40a/jpn.traineddata"
+                 Sha256="36bdf9ac823f5911e624c30d0553e890b8abc7c31a65b3ef14da943658c40b79" />
+    <OcrDataFile Include="tessdata\chi_sim.traineddata"
+                 Url="https://github.com/tesseract-ocr/tessdata_best/raw/9ddc24e750eec0994223a9edc3fcb434a2244f3b/chi_sim.traineddata"
+                 Sha256="4fef2d1306c8e87616d4d3e4c6c67faf5d44be3342290cf8f2f0f6e3aa7e735b" />
+    <!-- PP-OCRv4 ONNX 변환본 (PaddleOCR Apache-2.0) — PaddleOcrOnnxEngine.ModelUrls 와 같은 리비전 -->
+    <OcrDataFile Include="models\ppocr\ch_PP-OCRv4_det_infer.onnx"
+                 Url="https://huggingface.co/SWHL/RapidOCR/resolve/1cfba2e90fc938db55889873735088de210cc173/PP-OCRv4/ch_PP-OCRv4_det_infer.onnx"
+                 Sha256="d2a7720d45a54257208b1e13e36a8479894cb74155a5efe29462512d42f49da9" />
+    <OcrDataFile Include="models\ppocr\ch_PP-OCRv4_rec_infer.onnx"
+                 Url="https://huggingface.co/SWHL/RapidOCR/resolve/1cfba2e90fc938db55889873735088de210cc173/PP-OCRv4/ch_PP-OCRv4_rec_infer.onnx"
+                 Sha256="48fc40f24f6d2a207a2b1091d3437eb3cc3eb6b676dc3ef9c37384005483683b" />
+    <OcrDataFile Include="models\ppocr\ppocr_keys_v1.txt"
+                 Url="https://raw.githubusercontent.com/PaddlePaddle/PaddleOCR/24f06d1a1b018d90c3c16bf49e966f988f55d98d/ppocr/utils/ppocr_keys_v1.txt"
+                 Sha256="a1c84d9bdb9ab29043c58896224d32941783eb821629618416dcb08f12886492" />
+  </ItemGroup>
+
+  <Target Name="EnsureOcrData" BeforeTargets="BeforeBuild"
+          Condition="'$(SkipOcrData)' != 'true' and '$(CI)' != 'true'">
+    <!-- ① 캐시 검증 — 손상·다른 버전 파일은 지워 아래에서 다시 받는다 -->
+    <ItemGroup>
+      <_OcrCachePresent Include="@(OcrDataFile->'$(OcrDataDir)%(Identity)')" Condition="Exists('$(OcrDataDir)%(Identity)')" />
+    </ItemGroup>
+    <GetFileHash Files="@(_OcrCachePresent)" Algorithm="SHA256" Condition="'@(_OcrCachePresent)' != ''">
+      <Output TaskParameter="Items" ItemName="_OcrCacheHashed" />
+    </GetFileHash>
+    <ItemGroup>
+      <_OcrCacheBad Include="@(_OcrCacheHashed)" Condition="'%(_OcrCacheHashed.FileHash)' != '%(_OcrCacheHashed.Sha256)'" />
+    </ItemGroup>
+    <Warning Condition="'@(_OcrCacheBad)' != ''" Text="OCR 데이터 SHA-256 불일치 — 삭제합니다: @(_OcrCacheBad)" />
+    <Delete Files="@(_OcrCacheBad)" />
+
+    <!-- ② 없는 파일 받기 -->
+    <ItemGroup>
+      <_OcrDataMissing Include="@(OcrDataFile)" Condition="!Exists('$(OcrDataDir)%(Identity)')" />
+    </ItemGroup>
+    <DownloadFile SourceUrl="%(_OcrDataMissing.Url)"
+                  DestinationFolder="$(OcrDataDir)%(_OcrDataMissing.RelativeDir)"
+                  DestinationFileName="%(_OcrDataMissing.Filename)%(_OcrDataMissing.Extension)"
+                  Retries="2" ContinueOnError="true"
+                  Condition="'@(_OcrDataMissing)' != ''" />
+
+    <!-- ③ 받은 파일 검증 -->
+    <ItemGroup>
+      <_OcrNewPresent Include="@(OcrDataFile->'$(OcrDataDir)%(Identity)')" Condition="Exists('$(OcrDataDir)%(Identity)')" />
+    </ItemGroup>
+    <GetFileHash Files="@(_OcrNewPresent)" Algorithm="SHA256" Condition="'@(_OcrNewPresent)' != ''">
+      <Output TaskParameter="Items" ItemName="_OcrNewHashed" />
+    </GetFileHash>
+    <ItemGroup>
+      <_OcrNewBad Include="@(_OcrNewHashed)" Condition="'%(_OcrNewHashed.FileHash)' != '%(_OcrNewHashed.Sha256)'" />
+    </ItemGroup>
+    <Warning Condition="'@(_OcrNewBad)' != ''" Text="OCR 데이터 SHA-256 불일치 — 삭제합니다: @(_OcrNewBad)" />
+    <Delete Files="@(_OcrNewBad)" />
+
+    <ItemGroup>
+      <_OcrDataUnavailable Include="@(OcrDataFile)" Condition="!Exists('$(OcrDataDir)%(Identity)')" />
+    </ItemGroup>
+    <Error Condition="'$(OcrDataRequired)' == 'true' and '@(_OcrDataUnavailable)' != ''"
+           Text="OCR 데이터를 준비하지 못했습니다(다운로드 실패 또는 SHA-256 불일치): @(_OcrDataUnavailable). 이대로면 설치본 OCR 이 폐쇄망에서 동작하지 않습니다. 네트워크를 확인하거나, 검증된 파일을 $(OcrDataDir) 아래 같은 경로에 두세요." />
+    <Warning Condition="'$(OcrDataRequired)' != 'true' and '@(_OcrDataUnavailable)' != ''"
+             Text="OCR 데이터 없음(@(_OcrDataUnavailable)) — 이 빌드는 OCR 이 첫 실행 다운로드에 의존합니다." />
+
+    <!-- 출력 폴더로 복사 (정적 ItemGroup 은 평가 시점이라 첫 빌드에 받은 파일을 못 본다 → 여기서 추가) -->
+    <ItemGroup>
+      <None Include="$(OcrDataDir)%(OcrDataFile.Identity)" Condition="Exists('$(OcrDataDir)%(OcrDataFile.Identity)')"
+            Link="%(OcrDataFile.Identity)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    </ItemGroup>
+  </Target>
+
   <!-- After build, copy output to VMS output directory.
        VMS launcher 의 TargetFramework 는 net8.0-windows7.0 이므로 7.0 명시 필수 —
        이전 오타("net8.0-windows") 로 잘못된 폴더에 복사돼 VMS.DeepLearning.dll

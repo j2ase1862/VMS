@@ -59,6 +59,7 @@ MLOps 는 `D:\Repo\BODA.VMS.MLOps\docs\manual\screenshots` 재사용, 구성도�
 
 | PR | 매뉴얼에 들어갈 내용 | 대상 절 |
 |----|--------------------|--------|
+| v1.42.9 OCR 데이터 동봉 · 인식 없음 메시지 | **OCR 이 인터넷 없이 동작한다** — 언어 데이터(영어 · 한국어 · 일본어 · 중국어 간체)와 PP-OCR 모델이 설치본에 들어 있다. 글자를 못 읽으면 "문자를 인식하지 못했습니다." 로 표시(종전 "Value cannot be null" 결함 수정). 설정·사용법 변화 없음 | §6 OCR 절 첫 단락 한 줄 · §10 검토 |
 | v1.42.8 Feature Match 배율 탐색 | **Feature Match 가 배율 범위(Min~Max Scale) 안의 크기 변화를 고르게 찾는다** — 종전에는 1.04 배·1.08 배처럼 특정 배율에서 엉뚱한 자리를 잡거나 미검출되던 결함 수정. 찾은 배율(Scale) 값도 정확해짐. 설정·사용법 변화 없음 | §6 Feature Match 절 (서술 변경 없음 검토) |
 | v1.42.8 Shape Match 회전 탐색 | **Shape Match 가 비스듬히 놓인 대상(예: 33°·125°)을 찾는다** — 밝은 배경 위에서는 0°·180° 근처만 찾히던 결함 수정. 각도 간격 2° 에서도 학습 자세(0°)를 정확히 찾는다. 사용 요령 한 줄: Training Region 은 대상 둘레에 배경이 조금 들어가게 그린다(회전 모서리를 테두리 밝기로 채움) | §6 Shape Match 절 요령 · §12 검토 |
 | v1.42.7 3D 판정 · 본체 3D 검사 · PointCloud Line Fit | **① 3D 도구가 OK/NG 판정을 낸다** — 3D Geometry(기준값 ± 공차: 거리 mm·각도 °) · Plane Fit(평탄도 상한) · PointCloud Cluster(개수 같음/이상/이하/범위 + 모든 덩어리의 길이·폭 ± 공차, 개수 판정은 0개도 판정 → 이물 없음 검사) · PointCloud Registration(Confidence 하한 — 종전에는 정합이 틀려도 OK). 각 설정 화면에 Judgment 섹션, 기본 꺼짐. Registration 이 있는 예제 템플릿 2종은 하한 0.3 프리셋. **② VMS 본체 수동 검사·AUTO RUN 에서 3D 레시피가 돈다** — 종전에는 2D 영상만 넘겨 3D 도구가 전부 NG(3D 레시피는 VisionSetup 전용이었다). 결과가 VisionSetup 과 같다. **③ 새 도구 PointCloud Line Fit** (3D Measurement) — 점군에 3D 직선을 맞춰 방향·길이·직진도(상위 1% 제외)를 재고, 3D Geometry 점-직선 거리에 직선을 넘긴다. 상세 §43 | §5 VisionSetup 3D · §6 3D 도구(판정 항목·새 도구 절 신설) · §4 AUTO RUN(3D 카메라) · 부록 파라미터 표(extract_tool_params 재생성) |
