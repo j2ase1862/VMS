@@ -27,11 +27,13 @@ namespace VMS.VisionSetup.VisionTools.Identification
         private const string DictFile = "ppocr_keys_v1.txt";
 
         // ── 모델 다운로드 URL ──
+        // 설치본은 이 파일들을 동봉한다(VMS.VisionSetup.csproj OcrDataFile — 폐쇄망 대응). 아래 다운로드는 동봉본이
+        // 없는 개발 환경용 대체 경로라, 동봉본과 같은 파일이 오도록 같은 리비전에 고정한다.
         private static readonly Dictionary<string, string> ModelUrls = new()
         {
-            [DetModelFile] = "https://huggingface.co/SWHL/RapidOCR/resolve/main/PP-OCRv4/ch_PP-OCRv4_det_infer.onnx",
-            [RecModelFile] = "https://huggingface.co/SWHL/RapidOCR/resolve/main/PP-OCRv4/ch_PP-OCRv4_rec_infer.onnx",
-            [DictFile] = "https://raw.githubusercontent.com/PaddlePaddle/PaddleOCR/main/ppocr/utils/ppocr_keys_v1.txt",
+            [DetModelFile] = "https://huggingface.co/SWHL/RapidOCR/resolve/1cfba2e90fc938db55889873735088de210cc173/PP-OCRv4/ch_PP-OCRv4_det_infer.onnx",
+            [RecModelFile] = "https://huggingface.co/SWHL/RapidOCR/resolve/1cfba2e90fc938db55889873735088de210cc173/PP-OCRv4/ch_PP-OCRv4_rec_infer.onnx",
+            [DictFile] = "https://raw.githubusercontent.com/PaddlePaddle/PaddleOCR/24f06d1a1b018d90c3c16bf49e966f988f55d98d/ppocr/utils/ppocr_keys_v1.txt",
         };
 
         // ── Detection 파라미터 ──

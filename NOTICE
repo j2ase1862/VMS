@@ -21,6 +21,17 @@ Tesseract.Net SDK / tessdata
   https://github.com/charlesw/tesseract
   Licensed under the Apache License, Version 2.0
 
+tessdata_best (eng, kor, jpn, chi_sim language data — bundled in tessdata\)
+  Copyright (c) Google Inc. and Tesseract authors
+  https://github.com/tesseract-ocr/tessdata_best
+  Licensed under the Apache License, Version 2.0
+
+PaddleOCR PP-OCRv4 models (ONNX conversion by RapidOCR — bundled in models\ppocr\)
+  Copyright (c) PaddlePaddle Authors; RapidOCR contributors
+  https://github.com/PaddlePaddle/PaddleOCR
+  https://huggingface.co/SWHL/RapidOCR
+  Licensed under the Apache License, Version 2.0
+
 ZXing.Net
   Copyright (c) Michael Jahn
   https://github.com/micjahn/ZXing.Net
