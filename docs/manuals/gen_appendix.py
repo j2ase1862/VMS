@@ -17,6 +17,7 @@ DESC = {
   "CodeReaderMode":"판독 모드(1D · 2D · 자동)","MaxCodeCount":"한 화면에서 판독할 최대 코드 수","TryHarder":"저품질 코드 정밀 탐색","UseLocalization":"DataMatrix 후보 지역화","EnableVerification":"판독 결과 검증(기대값 비교)","ExpectedText":"기대 문자열","UseRegexMatch":"정규식으로 검증","ParseGs1":"GS1 AI 파싱","EnableQualityGrading":"인쇄 품질 등급화","MinPassGrade":"합격 최소 품질 등급","DrawOverlay":"결과 오버레이 표시",
   "OcrEngine":"OCR 엔진(Tesseract · PaddleOCR)","Language":"인식 언어","PageSegMode":"페이지 분할 모드","EngineMode":"엔진 모드","CharacterWhitelist":"허용 문자 집합","MaxSideLen":"입력 이미지 최대 변 길이","CustomDetModelPath":"커스텀 검출 모델 경로","CustomRecModelPath":"커스텀 인식 모델 경로","CustomDictPath":"커스텀 문자 사전 경로","ConfidenceThreshold":"신뢰도 임계값","AutoPreprocess":"자동 전처리","InvertImage":"명암 반전 후 인식","TargetTextHeight":"목표 글자 높이(0 = 자동)","DenoiseLevel":"노이즈 제거 강도","DotMatrixMode":"도트매트릭스(각인) 문자 모드","TessdataPath":"Tesseract tessdata 경로",
   "ModelPath":"모델 파일(.onnx) 경로 또는 model:// 참조","InputSize":"모델 입력 크기(px)","IouThreshold":"박스 중복 제거 IoU 임계값","UseROI":"ROI 안에서만 실행",
+  "MinCircularity":"최소 원형도(4π×면적÷둘레², 원=1.0) — 이보다 낮은 덩어리는 개수·면적에서 제외","MaxCircularity":"최대 원형도 — 이보다 원에 가까운 덩어리를 제외","MinConvexity":"최소 볼록도(면적÷볼록 껍질 면적) — 오목하게 패인 덩어리를 제외","ExpectedValue":"판정 기준값(거리 · 각도 · 높이 등)","ToleranceMinus":"기준값 아래쪽 허용오차","TolerancePlus":"기준값 위쪽 허용오차","MaxFlatness":"합격 최대 평탄도(mm)","MaxStraightness":"합격 최대 직진도(mm)","MinConfidence":"합격 최소 정합 신뢰도(0~1)","UseSizeJudgment":"클러스터 크기(길이 · 폭) 판정 사용","ExpectedLength":"기준 길이(mm)","ExpectedWidth":"기준 폭(mm)","SizeToleranceMinus":"크기 하한 허용오차","SizeTolerancePlus":"크기 상한 허용오차","DistanceThreshold":"직선으로 인정할 점의 최대 거리(mm)","MinInliers":"직선으로 인정할 최소 점 개수",
 }
 esc = html.escape
 out = []
@@ -70,7 +71,7 @@ out.append('''<h3 id="appx-results">13.3 검사 결과 값 이름 (PLC 매핑 ·
 <table class="cols-3-6">
   <tr><th>항목</th><th>값</th></tr>
   <tr><td>문서 버전</td><td>3.0 (2026-09-17)</td></tr>
-  <tr><td>대상 소프트웨어</td><td>VMS 1.39.2 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.1</td></tr>
+  <tr><td>대상 소프트웨어</td><td>VMS 1.42.0 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.1</td></tr>
   <tr><td>구성</td><td>VMS · VMS.VisionSetup · VMS.AppSetup (검사 런타임) / BODA.VMS.Web (생산 관리) / BODA.VMS.MLOps · VMS.DeepLearning (선택 구성 요소, 인증 범위 외)</td></tr>
   <tr><td>발행</td><td>BODA Vision AI</td></tr>
 </table>

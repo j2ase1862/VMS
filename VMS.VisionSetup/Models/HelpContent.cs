@@ -566,8 +566,8 @@ namespace VMS.VisionSetup.Models
                     ["MaxBlobCount"] = "반환할 최대 블롭 수. 정렬 후 상위 N개만 결과에 포함됩니다.\n• 기본값: 100",
 
                     // Judgment
-                    ["EnableJudgment"] = "양/불 판정 활성화. 활성화하면 면적 판정, 개수 판정 결과에 따라 PASS/FAIL이 결정됩니다.\n비활성화 시 블롭이 1개 이상 검출되면 항상 Success입니다.",
-                    ["UseAreaJudgment"] = "면적 기반 판정 사용. 첫 번째 블롭(정렬 후 최상위)의 면적이 기준 면적 ± 허용 오차 범위 내에 있는지 판정합니다.",
+                    ["EnableJudgment"] = "양/불 판정 활성화. 면적 판정·개수 판정을 쓰지 않을 때 켜면 블롭이 1개 이상이면 PASS, 0개면 FAIL 입니다.\n• Use Area Judgment / Use Count Judgment 를 켜면 이 항목과 관계없이 해당 판정을 합니다.",
+                    ["UseAreaJudgment"] = "면적 기반 판정 사용. 검출된 블롭 전체의 총 면적이 기준 면적 ± 허용 오차 범위 내에 있는지 판정합니다.\n• 블롭이 0개면 총 면적 0 으로 판정합니다.",
                     ["ExpectedArea"] = "기준 면적 (픽셀²). 전체 블롭의 총 면적이 ExpectedArea - Minus ~ ExpectedArea + Plus 범위에 있으면 PASS.\n• 예: 기준 5000, +500/-300 → 4700~5500이면 합격",
                     ["AreaTolerancePlus"] = "면적 상한 허용 오차 (픽셀²). 기준 면적(ExpectedArea)에 이 값을 더한 것이 허용 상한입니다.\n• 기준 1000, +200 → 상한 1200",
                     ["AreaToleranceMinus"] = "면적 하한 허용 오차 (픽셀²). 기준 면적(ExpectedArea)에서 이 값을 뺀 것이 허용 하한입니다.\n• 기준 1000, -200 → 하한 800",

@@ -1415,22 +1415,24 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <h3 id="tools-5">6.5 Blob Analysis — 블롭 분석</h3>
 <h4>Blob — 블롭(덩어리) 분석</h4>
 <p>이진화된 이미지에서 연결된 영역(블롭)을 찾아 개수 · 면적 · 위치를 구하고 판정합니다. 부품 유무, 개수 세기, 이물 · 결함 검출에 가장 많이 쓰는 도구입니다. 내부 이진화를 켜면 Threshold 없이 그레이 이미지를 바로 받을 수 있습니다.</p>
-<figure><img src="../gs/screenshots/v3/tools/13_Blob_split.png" data-width="500" alt="Blob — 블롭(덩어리) 분석 설정 패널"><figcaption>Blob — 블롭(덩어리) 분석 — Tool Settings 패널</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/tools/13_Blob_split.png" data-width="620" alt="Blob — 블롭(덩어리) 분석 설정 패널"><figcaption>Blob — 블롭(덩어리) 분석 — Tool Settings 패널</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Use Internal Threshold / Threshold Value</td><td>켬 / 128 (Web 연동 가능)</td><td>도구 안에서 이진화. 끄면 입력이 이미 이진 이미지여야 합니다</td></tr>
 <tr><td>Segmentation Polarity</td><td>LightOnDark (LightOnDark · DarkOnLight)</td><td>어두운 배경의 밝은 대상 / 밝은 배경의 어두운 대상</td></tr>
 <tr><td>Min Area / Max Area</td><td>100 / 100000000 (px²)</td><td>이 범위 밖의 덩어리는 버립니다 — 잡음 제거와 큰 배경 제외</td></tr>
-<tr><td>Enable Judgment</td><td>해제</td><td>판정 사용. 아래 면적 · 개수 판정이 함께 적용됩니다</td></tr>
+<tr><td>Min Circularity / Max Circularity</td><td>0 / 1</td><td>원형도(4π × 면적 ÷ 둘레², 완전한 원 = 1.0) 범위 밖의 덩어리는 개수 · 면적에서 뺍니다 — 이가 빠지거나 찌그러진 형상을 걸러 낼 때 씁니다</td></tr>
+<tr><td>Min Convexity</td><td>0</td><td>볼록도(면적 ÷ 볼록 껍질 면적, 볼록한 형상 = 1.0) 하한. 오목하게 패인 형상을 뺍니다</td></tr>
+<tr><td>Enable Judgment</td><td>해제</td><td>면적 · 개수 판정을 쓰지 않을 때 켜면 블롭이 1 개 이상이면 OK, 0 개면 NG. Use Area / Use Count Judgment 는 이 칸과 관계없이 적용됩니다</td></tr>
 <tr><td>Use Area Judgment / Expected Area / Tolerance ±</td><td>해제 / 1000 / 200 (Web 연동 가능)</td><td>전체 블롭 총 면적이 기준 ± 공차 안이면 OK</td></tr>
 <tr><td>Use Count Judgment / Count Mode / Expected Count</td><td>해제 / Equal / 1 (Web 연동 가능)</td><td>개수 판정. Count Mode 는 Equal · GreaterOrEqual · LessOrEqual · Range(Max 까지) · Tolerance(기준 ± 상/하 공차, Web 연동 권장)</td></tr>
 <tr><td>Draw Contours / Bounding Box / Center Point / Labels</td><td>모두 켬</td><td>결과 오버레이 — 색상 윤곽 · 노란 외접 사각형 · 빨간 십자 · #번호</td></tr>
-<tr><td>(Expert) Circularity · Perimeter · AspectRatio · Convexity 필터, SortBy · MaxBlobCount</td><td>—</td><td>원형도(1.0 = 완전한 원) · 둘레 · 종횡비 · 볼록도로 모양을 거르고, 정렬 기준과 상위 N 개만 남기기</td></tr>
 </table>
 <p><strong>결과 값</strong> — BlobCount · TotalArea · CenterX · CenterY · Area · Perimeter · Circularity · Angle · AreaJudgment · CountJudgment · JudgmentPass</p>
-<p><strong>판정</strong> — Enable Judgment 를 켜면 면적 판정 AND 개수 판정이 모두 통과해야 OK. 끄면 블롭이 1 개 이상 검출되면 OK, 0 개면 NG.</p>
+<p><strong>판정</strong> — Use Area Judgment · Use Count Judgment 중 켠 판정이 모두 통과해야 OK 입니다. 둘 다 끄면 블롭이 1 개 이상 검출되면 OK, 0 개면 NG. 형상 필터(원형도 · 볼록도)로 빠진 덩어리는 개수 · 면적에 들어가지 않습니다.</p>
 <ul>
 <li>실행 후 Run Results 의 Area 값을 보고 Min/Max Area 를 대상 크기의 절반~두 배로 잡으면 잡음이 대부분 걸러집니다.</li>
+<li>모양이 정해진 대상(원형 구멍 등)은 정상품의 Circularity 를 Run Results 에서 보고 그보다 조금 낮게 Min Circularity 를 잡으면, 이가 빠진 불량이 개수에서 빠져 개수 판정으로 걸러집니다(예: 정상 원 0.83~0.88 → 0.8).</li>
 <li>Angle 을 내보내므로 Blob 을 Coordinates 로 연결하면 뒤 도구의 ROI 가 블롭의 위치 · 기울기를 따라갑니다.</li>
 <li>Web 에서 기준값을 관리하려면 Count Mode 를 Tolerance 로 두고 Expected Count · 상/하 공차를 Web 파라미터에 연동합니다(§5.7).</li>
 </ul>
@@ -2770,6 +2772,9 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <tr><td>Segmentation Polarity</td><td>선택(목록) (SegmentationPolarity)</td><td>전경 극성(밝은 블롭 / 어두운 블롭)</td></tr>
 <tr><td>Min Area</td><td>입력</td><td>검출 최소 면적(px)</td></tr>
 <tr><td>Max Area</td><td>입력</td><td>검출 최대 면적(px)</td></tr>
+<tr><td>Min Circularity</td><td>입력</td><td>최소 원형도(4π×면적÷둘레², 원=1.0) — 이보다 낮은 덩어리는 개수·면적에서 제외</td></tr>
+<tr><td>Max Circularity</td><td>입력</td><td>최대 원형도 — 이보다 원에 가까운 덩어리를 제외</td></tr>
+<tr><td>Min Convexity</td><td>입력</td><td>최소 볼록도(면적÷볼록 껍질 면적) — 오목하게 패인 덩어리를 제외</td></tr>
 <tr><td>Enable Judgment</td><td>체크박스</td><td>이 도구의 OK/NG 판정 사용</td></tr>
 <tr><td>Use Area Judgment</td><td>체크박스</td><td>면적 기준 판정 사용</td></tr>
 <tr><td>Expected Area</td><td>입력</td><td>기준(목표) 면적</td></tr>
@@ -2811,6 +2816,8 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <tr><td>Num Calipers</td><td>슬라이더 [2~50]</td><td>캘리퍼 개수(많을수록 정밀 · 느림)</td></tr>
 <tr><td>Search Length</td><td>슬라이더 [10~200]</td><td>캘리퍼 탐색 길이</td></tr>
 <tr><td>Search Width</td><td>슬라이더 [1~50]</td><td>탐색(투영) 폭</td></tr>
+<tr><td>Search Axis</td><td>선택(목록) (LineSearchAxis)</td><td>탐색 축 방향</td></tr>
+<tr><td>Edge Selection</td><td>선택(목록) (LineEdgeSelectionMode)</td><td>사용할 에지 선택 방식(첫 · 최강 · 마지막 등)</td></tr>
 <tr><td>Polarity</td><td>선택(목록) (EdgePolarity)</td><td>에지 극성(밝→어두 · 어두→밝 · 모두)</td></tr>
 <tr><td>Edge Threshold</td><td>슬라이더 [1~100]</td><td>에지로 인정할 최소 강도</td></tr>
 <tr><td>Filter Half Width</td><td>슬라이더 [1~10]</td><td>에지 필터 반폭(노이즈 평활)</td></tr>
@@ -2840,9 +2847,9 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <tr><td>Operation</td><td>선택(목록) (GeometryOperation)</td><td>연산 종류</td></tr>
 <tr><td>Enable Judgment</td><td>체크박스</td><td>이 도구의 OK/NG 판정 사용</td></tr>
 <tr><td>Unit</td><td>선택(목록) (GeometryJudgmentUnit)</td><td></td></tr>
-<tr><td>Expected Value</td><td>입력</td><td></td></tr>
-<tr><td>Tolerance (-)</td><td>입력</td><td></td></tr>
-<tr><td>Tolerance (+)</td><td>입력</td><td></td></tr>
+<tr><td>Expected Value</td><td>입력</td><td>판정 기준값(거리 · 각도 · 높이 등)</td></tr>
+<tr><td>Tolerance (-)</td><td>입력</td><td>기준값 아래쪽 허용오차</td></tr>
+<tr><td>Tolerance (+)</td><td>입력</td><td>기준값 위쪽 허용오차</td></tr>
 </table>
 <h4>Pattern Matching</h4>
 <h5>Shape Match (형상 매칭)</h5>
@@ -2966,6 +2973,10 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <table class="cols-3-3-4">
 <tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
 <tr><td>Operation</td><td>선택(목록) (Geometry3DOperation)</td><td>연산 종류</td></tr>
+<tr><td>Enable Judgment</td><td>체크박스</td><td>이 도구의 OK/NG 판정 사용</td></tr>
+<tr><td>Expected Value</td><td>입력</td><td>판정 기준값(거리 · 각도 · 높이 등)</td></tr>
+<tr><td>Tolerance (-)</td><td>입력</td><td>기준값 아래쪽 허용오차</td></tr>
+<tr><td>Tolerance (+)</td><td>입력</td><td>기준값 위쪽 허용오차</td></tr>
 </table>
 <h5>Plane Fit (평면 피팅)</h5>
 <table class="cols-3-3-4">
@@ -2974,6 +2985,8 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <tr><td>RANSAC Iterations</td><td>슬라이더 [10~5000]</td><td></td></tr>
 <tr><td>RANSAC Threshold (mm)</td><td>슬라이더 [0.01~5.0]</td><td>RANSAC 인라이어 허용오차</td></tr>
 <tr><td>Sample Stride</td><td>슬라이더 [1~16]</td><td></td></tr>
+<tr><td>Enable Judgment</td><td>체크박스</td><td>이 도구의 OK/NG 판정 사용</td></tr>
+<tr><td>Max Flatness (mm)</td><td>입력</td><td>합격 최대 평탄도(mm)</td></tr>
 </table>
 <h5>Height Slicer (높이 슬라이스)</h5>
 <table class="cols-3-3-4">
@@ -2993,12 +3006,22 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <h5>Point Cloud Cluster (포인트클라우드 클러스터)</h5>
 <table class="cols-3-3-4">
 <tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
-<tr><td>Tolerance (mm)</td><td>슬라이더 [0.1~50.0]</td><td></td></tr>
+<tr><td>Tolerance (mm)</td><td>슬라이더 [0.1~100.0]</td><td></td></tr>
 <tr><td>Min Points</td><td>입력</td><td></td></tr>
 <tr><td>Max Points</td><td>입력</td><td></td></tr>
 <tr><td>Max Reported Clusters</td><td>슬라이더 [1~50]</td><td></td></tr>
 <tr><td>Scale Mode</td><td>선택(목록)</td><td></td></tr>
 <tr><td>XY Scale (mm/px)</td><td>입력</td><td></td></tr>
+<tr><td>Enable Judgment</td><td>체크박스</td><td>이 도구의 OK/NG 판정 사용</td></tr>
+<tr><td>Count Judgment</td><td>체크박스</td><td>블롭 개수 기준 판정 사용</td></tr>
+<tr><td>Count Mode</td><td>선택(목록)</td><td>개수 판정 모드(정확히 · 이상 · 범위 · 공차)</td></tr>
+<tr><td>Expected Count</td><td>입력</td><td>기준 개수</td></tr>
+<tr><td>Expected Count Max</td><td>입력</td><td>개수 상한(범위 모드)</td></tr>
+<tr><td>Size Judgment</td><td>체크박스</td><td>클러스터 크기(길이 · 폭) 판정 사용</td></tr>
+<tr><td>Expected Length</td><td>입력</td><td>기준 길이(mm)</td></tr>
+<tr><td>Expected Width</td><td>입력</td><td>기준 폭(mm)</td></tr>
+<tr><td>Size Tolerance (-)</td><td>입력</td><td>크기 하한 허용오차</td></tr>
+<tr><td>Size Tolerance (+)</td><td>입력</td><td>크기 상한 허용오차</td></tr>
 <tr><td>Output Mode</td><td>선택(목록)</td><td></td></tr>
 <tr><td>Draw Overlay</td><td>체크박스</td><td>결과 오버레이 표시</td></tr>
 </table>
@@ -3019,6 +3042,18 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <tr><td>Tolerance (mm)</td><td>슬라이더 [0.001~1.0]</td><td></td></tr>
 <tr><td>Confidence Distance (mm)</td><td>슬라이더 [0.05~10.0]</td><td></td></tr>
 <tr><td>Apply Transform to Source</td><td>체크박스</td><td></td></tr>
+<tr><td>Enable Judgment</td><td>체크박스</td><td>이 도구의 OK/NG 판정 사용</td></tr>
+<tr><td>Min Confidence</td><td>슬라이더 [0~1]</td><td>합격 최소 정합 신뢰도(0~1)</td></tr>
+</table>
+<h5>Point Cloud Line Fit (포인트클라우드 직선 피팅)</h5>
+<table class="cols-3-3-4">
+<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
+<tr><td>Distance Threshold (mm)</td><td>슬라이더 [0.1~20.0]</td><td>직선으로 인정할 점의 최대 거리(mm)</td></tr>
+<tr><td>Iterations</td><td>슬라이더 [10~2000]</td><td>연산 반복 횟수</td></tr>
+<tr><td>Min Inliers</td><td>입력</td><td>직선으로 인정할 최소 점 개수</td></tr>
+<tr><td>Draw Overlay</td><td>체크박스</td><td>결과 오버레이 표시</td></tr>
+<tr><td>Enable Judgment</td><td>체크박스</td><td>이 도구의 OK/NG 판정 사용</td></tr>
+<tr><td>Max Straightness (mm)</td><td>입력</td><td>합격 최대 직진도(mm)</td></tr>
 </table>
 <h5>Point Cloud Deviation (기준 형상 편차)</h5>
 <table class="cols-3-3-4">
