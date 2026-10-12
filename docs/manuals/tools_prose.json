@@ -235,9 +235,19 @@
     "이 범위 밖의 덩어리는 버립니다 — 잡음 제거와 큰 배경 제외"
    ],
    [
+    "Min Circularity / Max Circularity",
+    "0 / 1",
+    "원형도(4π × 면적 ÷ 둘레², 완전한 원 = 1.0) 범위 밖의 덩어리는 개수 · 면적에서 뺍니다 — 이가 빠지거나 찌그러진 형상을 걸러 낼 때 씁니다"
+   ],
+   [
+    "Min Convexity",
+    "0",
+    "볼록도(면적 ÷ 볼록 껍질 면적, 볼록한 형상 = 1.0) 하한. 오목하게 패인 형상을 뺍니다"
+   ],
+   [
     "Enable Judgment",
     "해제",
-    "판정 사용. 아래 면적 · 개수 판정이 함께 적용됩니다"
+    "면적 · 개수 판정을 쓰지 않을 때 켜면 블롭이 1 개 이상이면 OK, 0 개면 NG. Use Area / Use Count Judgment 는 이 칸과 관계없이 적용됩니다"
    ],
    [
     "Use Area Judgment / Expected Area / Tolerance ±",
@@ -253,17 +263,13 @@
     "Draw Contours / Bounding Box / Center Point / Labels",
     "모두 켬",
     "결과 오버레이 — 색상 윤곽 · 노란 외접 사각형 · 빨간 십자 · #번호"
-   ],
-   [
-    "(Expert) Circularity · Perimeter · AspectRatio · Convexity 필터, SortBy · MaxBlobCount",
-    "—",
-    "원형도(1.0 = 완전한 원) · 둘레 · 종횡비 · 볼록도로 모양을 거르고, 정렬 기준과 상위 N 개만 남기기"
    ]
   ],
   "outputs": "BlobCount · TotalArea · CenterX · CenterY · Area · Perimeter · Circularity · Angle · AreaJudgment · CountJudgment · JudgmentPass",
-  "judgment": "Enable Judgment 를 켜면 면적 판정 AND 개수 판정이 모두 통과해야 OK. 끄면 블롭이 1 개 이상 검출되면 OK, 0 개면 NG.",
+  "judgment": "Use Area Judgment · Use Count Judgment 중 켠 판정이 모두 통과해야 OK 입니다. 둘 다 끄면 블롭이 1 개 이상 검출되면 OK, 0 개면 NG. 형상 필터(원형도 · 볼록도)로 빠진 덩어리는 개수 · 면적에 들어가지 않습니다.",
   "tips": [
    "실행 후 Run Results 의 Area 값을 보고 Min/Max Area 를 대상 크기의 절반~두 배로 잡으면 잡음이 대부분 걸러집니다.",
+   "모양이 정해진 대상(원형 구멍 등)은 정상품의 Circularity 를 Run Results 에서 보고 그보다 조금 낮게 Min Circularity 를 잡으면, 이가 빠진 불량이 개수에서 빠져 개수 판정으로 걸러집니다(예: 정상 원 0.83~0.88 → 0.8).",
    "Angle 을 내보내므로 Blob 을 Coordinates 로 연결하면 뒤 도구의 ROI 가 블롭의 위치 · 기울기를 따라갑니다.",
    "Web 에서 기준값을 관리하려면 Count Mode 를 Tolerance 로 두고 Expected Count · 상/하 공차를 Web 파라미터에 연동합니다(§5.7)."
   ]

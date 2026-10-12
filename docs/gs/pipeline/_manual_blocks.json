@@ -19082,7 +19082,7 @@
  {
   "t": "figure",
   "src": "../gs/screenshots/v3/tools/13_Blob_split.png",
-  "width": "500",
+  "width": "620",
   "caption": "Blob — 블롭(덩어리) 분석 — Tool Settings 패널"
  },
  {
@@ -19244,6 +19244,82 @@
     {
      "segs": [
       {
+       "s": "Min Circularity / Max Circularity",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Min Circularity / Max Circularity"
+    },
+    {
+     "segs": [
+      {
+       "s": "0 / 1",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "0 / 1"
+    },
+    {
+     "segs": [
+      {
+       "s": "원형도(4π × 면적 ÷ 둘레², 완전한 원 = 1.0) 범위 밖의 덩어리는 개수 · 면적에서 뺍니다 — 이가 빠지거나 찌그러진 형상을 걸러 낼 때 씁니다",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "원형도(4π × 면적 ÷ 둘레², 완전한 원 = 1.0) 범위 밖의 덩어리는 개수 · 면적에서 뺍니다 — 이가 빠지거나 찌그러진 형상을 걸러 낼 때 씁니다"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Min Convexity",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Min Convexity"
+    },
+    {
+     "segs": [
+      {
+       "s": "0",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "0"
+    },
+    {
+     "segs": [
+      {
+       "s": "볼록도(면적 ÷ 볼록 껍질 면적, 볼록한 형상 = 1.0) 하한. 오목하게 패인 형상을 뺍니다",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "볼록도(면적 ÷ 볼록 껍질 면적, 볼록한 형상 = 1.0) 하한. 오목하게 패인 형상을 뺍니다"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
        "s": "Enable Judgment",
        "b": false,
        "m": false
@@ -19268,14 +19344,14 @@
     {
      "segs": [
       {
-       "s": "판정 사용. 아래 면적 · 개수 판정이 함께 적용됩니다",
+       "s": "면적 · 개수 판정을 쓰지 않을 때 켜면 블롭이 1 개 이상이면 OK, 0 개면 NG. Use Area / Use Count Judgment 는 이 칸과 관계없이 적용됩니다",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "판정 사용. 아래 면적 · 개수 판정이 함께 적용됩니다"
+     "text": "면적 · 개수 판정을 쓰지 않을 때 켜면 블롭이 1 개 이상이면 OK, 0 개면 NG. Use Area / Use Count Judgment 는 이 칸과 관계없이 적용됩니다"
     }
    ],
    [
@@ -19391,44 +19467,6 @@
      "imgs": [],
      "text": "결과 오버레이 — 색상 윤곽 · 노란 외접 사각형 · 빨간 십자 · #번호"
     }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "(Expert) Circularity · Perimeter · AspectRatio · Convexity 필터, SortBy · MaxBlobCount",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "(Expert) Circularity · Perimeter · AspectRatio · Convexity 필터, SortBy · MaxBlobCount"
-    },
-    {
-     "segs": [
-      {
-       "s": "—",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "—"
-    },
-    {
-     "segs": [
-      {
-       "s": "원형도(1.0 = 완전한 원) · 둘레 · 종횡비 · 볼록도로 모양을 거르고, 정렬 기준과 상위 N 개만 남기기",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "원형도(1.0 = 완전한 원) · 둘레 · 종횡비 · 볼록도로 모양을 거르고, 정렬 기준과 상위 N 개만 남기기"
-    }
    ]
   ],
   "cls": "cols-3-2-4"
@@ -19458,12 +19496,12 @@
     "m": false
    },
    {
-    "s": " — Enable Judgment 를 켜면 면적 판정 AND 개수 판정이 모두 통과해야 OK. 끄면 블롭이 1 개 이상 검출되면 OK, 0 개면 NG.",
+    "s": " — Use Area Judgment · Use Count Judgment 중 켠 판정이 모두 통과해야 OK 입니다. 둘 다 끄면 블롭이 1 개 이상 검출되면 OK, 0 개면 NG. 형상 필터(원형도 · 볼록도)로 빠진 덩어리는 개수 · 면적에 들어가지 않습니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "판정 — Enable Judgment 를 켜면 면적 판정 AND 개수 판정이 모두 통과해야 OK. 끄면 블롭이 1 개 이상 검출되면 OK, 0 개면 NG."
+  "text": "판정 — Use Area Judgment · Use Count Judgment 중 켠 판정이 모두 통과해야 OK 입니다. 둘 다 끄면 블롭이 1 개 이상 검출되면 OK, 0 개면 NG. 형상 필터(원형도 · 볼록도)로 빠진 덩어리는 개수 · 면적에 들어가지 않습니다."
  },
  {
   "t": "li",
@@ -19477,6 +19515,19 @@
   "ordered": false,
   "depth": 0,
   "text": "실행 후 Run Results 의 Area 값을 보고 Min/Max Area 를 대상 크기의 절반~두 배로 잡으면 잡음이 대부분 걸러집니다."
+ },
+ {
+  "t": "li",
+  "segs": [
+   {
+    "s": "모양이 정해진 대상(원형 구멍 등)은 정상품의 Circularity 를 Run Results 에서 보고 그보다 조금 낮게 Min Circularity 를 잡으면, 이가 빠진 불량이 개수에서 빠져 개수 판정으로 걸러집니다(예: 정상 원 0.83~0.88 → 0.8).",
+    "b": false,
+    "m": false
+   }
+  ],
+  "ordered": false,
+  "depth": 0,
+  "text": "모양이 정해진 대상(원형 구멍 등)은 정상품의 Circularity 를 Run Results 에서 보고 그보다 조금 낮게 Min Circularity 를 잡으면, 이가 빠진 불량이 개수에서 빠져 개수 판정으로 걸러집니다(예: 정상 원 0.83~0.88 → 0.8)."
  },
  {
   "t": "li",
@@ -41152,6 +41203,120 @@
     {
      "segs": [
       {
+       "s": "Min Circularity",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Min Circularity"
+    },
+    {
+     "segs": [
+      {
+       "s": "입력",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "입력"
+    },
+    {
+     "segs": [
+      {
+       "s": "최소 원형도(4π×면적÷둘레², 원=1.0) — 이보다 낮은 덩어리는 개수·면적에서 제외",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "최소 원형도(4π×면적÷둘레², 원=1.0) — 이보다 낮은 덩어리는 개수·면적에서 제외"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Max Circularity",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Max Circularity"
+    },
+    {
+     "segs": [
+      {
+       "s": "입력",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "입력"
+    },
+    {
+     "segs": [
+      {
+       "s": "최대 원형도 — 이보다 원에 가까운 덩어리를 제외",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "최대 원형도 — 이보다 원에 가까운 덩어리를 제외"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Min Convexity",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Min Convexity"
+    },
+    {
+     "segs": [
+      {
+       "s": "입력",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "입력"
+    },
+    {
+     "segs": [
+      {
+       "s": "최소 볼록도(면적÷볼록 껍질 면적) — 오목하게 패인 덩어리를 제외",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "최소 볼록도(면적÷볼록 껍질 면적) — 오목하게 패인 덩어리를 제외"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
        "s": "Enable Judgment",
        "b": false,
        "m": false
@@ -42480,6 +42645,82 @@
     {
      "segs": [
       {
+       "s": "Search Axis",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Search Axis"
+    },
+    {
+     "segs": [
+      {
+       "s": "선택(목록) (LineSearchAxis)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "선택(목록) (LineSearchAxis)"
+    },
+    {
+     "segs": [
+      {
+       "s": "탐색 축 방향",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "탐색 축 방향"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Edge Selection",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Edge Selection"
+    },
+    {
+     "segs": [
+      {
+       "s": "선택(목록) (LineEdgeSelectionMode)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "선택(목록) (LineEdgeSelectionMode)"
+    },
+    {
+     "segs": [
+      {
+       "s": "사용할 에지 선택 방식(첫 · 최강 · 마지막 등)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "사용할 에지 선택 방식(첫 · 최강 · 마지막 등)"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
        "s": "Polarity",
        "b": false,
        "m": false
@@ -43406,10 +43647,16 @@
      "text": "입력"
     },
     {
-     "segs": [],
+     "segs": [
+      {
+       "s": "판정 기준값(거리 · 각도 · 높이 등)",
+       "b": false,
+       "m": false
+      }
+     ],
      "header": false,
      "imgs": [],
-     "text": ""
+     "text": "판정 기준값(거리 · 각도 · 높이 등)"
     }
    ],
    [
@@ -43438,10 +43685,16 @@
      "text": "입력"
     },
     {
-     "segs": [],
+     "segs": [
+      {
+       "s": "기준값 아래쪽 허용오차",
+       "b": false,
+       "m": false
+      }
+     ],
      "header": false,
      "imgs": [],
-     "text": ""
+     "text": "기준값 아래쪽 허용오차"
     }
    ],
    [
@@ -43470,10 +43723,16 @@
      "text": "입력"
     },
     {
-     "segs": [],
+     "segs": [
+      {
+       "s": "기준값 위쪽 허용오차",
+       "b": false,
+       "m": false
+      }
+     ],
      "header": false,
      "imgs": [],
-     "text": ""
+     "text": "기준값 위쪽 허용오차"
     }
    ]
   ],
@@ -47361,6 +47620,158 @@
      "imgs": [],
      "text": "연산 종류"
     }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Enable Judgment",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Enable Judgment"
+    },
+    {
+     "segs": [
+      {
+       "s": "체크박스",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "체크박스"
+    },
+    {
+     "segs": [
+      {
+       "s": "이 도구의 OK/NG 판정 사용",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "이 도구의 OK/NG 판정 사용"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Expected Value",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Expected Value"
+    },
+    {
+     "segs": [
+      {
+       "s": "입력",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "입력"
+    },
+    {
+     "segs": [
+      {
+       "s": "판정 기준값(거리 · 각도 · 높이 등)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "판정 기준값(거리 · 각도 · 높이 등)"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Tolerance (-)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Tolerance (-)"
+    },
+    {
+     "segs": [
+      {
+       "s": "입력",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "입력"
+    },
+    {
+     "segs": [
+      {
+       "s": "기준값 아래쪽 허용오차",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "기준값 아래쪽 허용오차"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Tolerance (+)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Tolerance (+)"
+    },
+    {
+     "segs": [
+      {
+       "s": "입력",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "입력"
+    },
+    {
+     "segs": [
+      {
+       "s": "기준값 위쪽 허용오차",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "기준값 위쪽 허용오차"
+    }
    ]
   ],
   "cls": "cols-3-3-4"
@@ -47556,6 +47967,82 @@
      "header": false,
      "imgs": [],
      "text": ""
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Enable Judgment",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Enable Judgment"
+    },
+    {
+     "segs": [
+      {
+       "s": "체크박스",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "체크박스"
+    },
+    {
+     "segs": [
+      {
+       "s": "이 도구의 OK/NG 판정 사용",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "이 도구의 OK/NG 판정 사용"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Max Flatness (mm)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Max Flatness (mm)"
+    },
+    {
+     "segs": [
+      {
+       "s": "입력",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "입력"
+    },
+    {
+     "segs": [
+      {
+       "s": "합격 최대 평탄도(mm)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "합격 최대 평탄도(mm)"
     }
    ]
   ],
@@ -47966,14 +48453,14 @@
     {
      "segs": [
       {
-       "s": "슬라이더 [0.1~50.0]",
+       "s": "슬라이더 [0.1~100.0]",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "슬라이더 [0.1~50.0]"
+     "text": "슬라이더 [0.1~100.0]"
     },
     {
      "segs": [],
@@ -48140,6 +48627,386 @@
      "header": false,
      "imgs": [],
      "text": ""
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Enable Judgment",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Enable Judgment"
+    },
+    {
+     "segs": [
+      {
+       "s": "체크박스",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "체크박스"
+    },
+    {
+     "segs": [
+      {
+       "s": "이 도구의 OK/NG 판정 사용",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "이 도구의 OK/NG 판정 사용"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Count Judgment",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Count Judgment"
+    },
+    {
+     "segs": [
+      {
+       "s": "체크박스",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "체크박스"
+    },
+    {
+     "segs": [
+      {
+       "s": "블롭 개수 기준 판정 사용",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "블롭 개수 기준 판정 사용"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Count Mode",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Count Mode"
+    },
+    {
+     "segs": [
+      {
+       "s": "선택(목록)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "선택(목록)"
+    },
+    {
+     "segs": [
+      {
+       "s": "개수 판정 모드(정확히 · 이상 · 범위 · 공차)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "개수 판정 모드(정확히 · 이상 · 범위 · 공차)"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Expected Count",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Expected Count"
+    },
+    {
+     "segs": [
+      {
+       "s": "입력",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "입력"
+    },
+    {
+     "segs": [
+      {
+       "s": "기준 개수",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "기준 개수"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Expected Count Max",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Expected Count Max"
+    },
+    {
+     "segs": [
+      {
+       "s": "입력",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "입력"
+    },
+    {
+     "segs": [
+      {
+       "s": "개수 상한(범위 모드)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "개수 상한(범위 모드)"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Size Judgment",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Size Judgment"
+    },
+    {
+     "segs": [
+      {
+       "s": "체크박스",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "체크박스"
+    },
+    {
+     "segs": [
+      {
+       "s": "클러스터 크기(길이 · 폭) 판정 사용",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "클러스터 크기(길이 · 폭) 판정 사용"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Expected Length",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Expected Length"
+    },
+    {
+     "segs": [
+      {
+       "s": "입력",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "입력"
+    },
+    {
+     "segs": [
+      {
+       "s": "기준 길이(mm)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "기준 길이(mm)"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Expected Width",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Expected Width"
+    },
+    {
+     "segs": [
+      {
+       "s": "입력",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "입력"
+    },
+    {
+     "segs": [
+      {
+       "s": "기준 폭(mm)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "기준 폭(mm)"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Size Tolerance (-)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Size Tolerance (-)"
+    },
+    {
+     "segs": [
+      {
+       "s": "입력",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "입력"
+    },
+    {
+     "segs": [
+      {
+       "s": "크기 하한 허용오차",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "크기 하한 허용오차"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Size Tolerance (+)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Size Tolerance (+)"
+    },
+    {
+     "segs": [
+      {
+       "s": "입력",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "입력"
+    },
+    {
+     "segs": [
+      {
+       "s": "크기 상한 허용오차",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "크기 상한 허용오차"
     }
    ],
    [
@@ -48642,6 +49509,366 @@
      "header": false,
      "imgs": [],
      "text": ""
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Enable Judgment",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Enable Judgment"
+    },
+    {
+     "segs": [
+      {
+       "s": "체크박스",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "체크박스"
+    },
+    {
+     "segs": [
+      {
+       "s": "이 도구의 OK/NG 판정 사용",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "이 도구의 OK/NG 판정 사용"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Min Confidence",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Min Confidence"
+    },
+    {
+     "segs": [
+      {
+       "s": "슬라이더 [0~1]",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "슬라이더 [0~1]"
+    },
+    {
+     "segs": [
+      {
+       "s": "합격 최소 정합 신뢰도(0~1)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "합격 최소 정합 신뢰도(0~1)"
+    }
+   ]
+  ],
+  "cls": "cols-3-3-4"
+ },
+ {
+  "t": "h",
+  "segs": [
+   {
+    "s": "Point Cloud Line Fit (포인트클라우드 직선 피팅)",
+    "b": false,
+    "m": false
+   }
+  ],
+  "level": 5,
+  "text": "Point Cloud Line Fit (포인트클라우드 직선 피팅)"
+ },
+ {
+  "t": "table",
+  "rows": [
+   [
+    {
+     "segs": [
+      {
+       "s": "파라미터 (UI 라벨)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": true,
+     "imgs": [],
+     "text": "파라미터 (UI 라벨)"
+    },
+    {
+     "segs": [
+      {
+       "s": "컨트롤 / 범위",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": true,
+     "imgs": [],
+     "text": "컨트롤 / 범위"
+    },
+    {
+     "segs": [
+      {
+       "s": "설명",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": true,
+     "imgs": [],
+     "text": "설명"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Distance Threshold (mm)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Distance Threshold (mm)"
+    },
+    {
+     "segs": [
+      {
+       "s": "슬라이더 [0.1~20.0]",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "슬라이더 [0.1~20.0]"
+    },
+    {
+     "segs": [
+      {
+       "s": "직선으로 인정할 점의 최대 거리(mm)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "직선으로 인정할 점의 최대 거리(mm)"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Iterations",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Iterations"
+    },
+    {
+     "segs": [
+      {
+       "s": "슬라이더 [10~2000]",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "슬라이더 [10~2000]"
+    },
+    {
+     "segs": [
+      {
+       "s": "연산 반복 횟수",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "연산 반복 횟수"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Min Inliers",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Min Inliers"
+    },
+    {
+     "segs": [
+      {
+       "s": "입력",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "입력"
+    },
+    {
+     "segs": [
+      {
+       "s": "직선으로 인정할 최소 점 개수",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "직선으로 인정할 최소 점 개수"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Draw Overlay",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Draw Overlay"
+    },
+    {
+     "segs": [
+      {
+       "s": "체크박스",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "체크박스"
+    },
+    {
+     "segs": [
+      {
+       "s": "결과 오버레이 표시",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "결과 오버레이 표시"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Enable Judgment",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Enable Judgment"
+    },
+    {
+     "segs": [
+      {
+       "s": "체크박스",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "체크박스"
+    },
+    {
+     "segs": [
+      {
+       "s": "이 도구의 OK/NG 판정 사용",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "이 도구의 OK/NG 판정 사용"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Max Straightness (mm)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Max Straightness (mm)"
+    },
+    {
+     "segs": [
+      {
+       "s": "입력",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "입력"
+    },
+    {
+     "segs": [
+      {
+       "s": "합격 최대 직진도(mm)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "합격 최대 직진도(mm)"
     }
    ]
   ],

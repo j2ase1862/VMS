@@ -633,6 +633,30 @@
     "enum": null
    },
    {
+    "label": "Min Circularity",
+    "param": "MinCircularity",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Max Circularity",
+    "param": "MaxCircularity",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Min Convexity",
+    "param": "MinConvexity",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
     "label": "Enable Judgment",
     "param": "EnableJudgment",
     "ctrl": "체크박스",
@@ -901,6 +925,22 @@
     "min": "1",
     "max": "50",
     "enum": null
+   },
+   {
+    "label": "Search Axis",
+    "param": "SearchAxis",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "LineSearchAxis"
+   },
+   {
+    "label": "Edge Selection",
+    "param": "SelectionMode",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "LineEdgeSelectionMode"
    },
    {
     "label": "Polarity",
@@ -1909,6 +1949,38 @@
     "min": null,
     "max": null,
     "enum": "Geometry3DOperation"
+   },
+   {
+    "label": "Enable Judgment",
+    "param": "EnableJudgment",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Expected Value",
+    "param": "ExpectedValue",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Tolerance (-)",
+    "param": "ToleranceMinus",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Tolerance (+)",
+    "param": "TolerancePlus",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
    }
   ]
  },
@@ -1947,6 +2019,22 @@
     "ctrl": "슬라이더",
     "min": "1",
     "max": "16",
+    "enum": null
+   },
+   {
+    "label": "Enable Judgment",
+    "param": "EnableJudgment",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Max Flatness (mm)",
+    "param": "MaxFlatness",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
     "enum": null
    }
   ]
@@ -2031,7 +2119,7 @@
     "param": "Tolerance",
     "ctrl": "슬라이더",
     "min": "0.1",
-    "max": "50.0",
+    "max": "100.0",
     "enum": null
    },
    {
@@ -2069,6 +2157,86 @@
    {
     "label": "XY Scale (mm/px)",
     "param": "XyScale",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Enable Judgment",
+    "param": "EnableJudgment",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Count Judgment",
+    "param": "UseCountJudgment",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Count Mode",
+    "param": "CountMode",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Expected Count",
+    "param": "ExpectedCount",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Expected Count Max",
+    "param": "ExpectedCountMax",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Size Judgment",
+    "param": "UseSizeJudgment",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Expected Length",
+    "param": "ExpectedLength",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Expected Width",
+    "param": "ExpectedWidth",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Size Tolerance (-)",
+    "param": "SizeToleranceMinus",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Size Tolerance (+)",
+    "param": "SizeTolerancePlus",
     "ctrl": "입력",
     "min": null,
     "max": null,
@@ -2180,6 +2348,77 @@
     "label": "Apply Transform to Source",
     "param": "ApplyTransformToSource",
     "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Enable Judgment",
+    "param": "EnableJudgment",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Min Confidence",
+    "param": "MinConfidence",
+    "ctrl": "슬라이더",
+    "min": "0",
+    "max": "1",
+    "enum": null
+   }
+  ]
+ },
+ {
+  "tool": "Point Cloud Line Fit (포인트클라우드 직선 피팅)",
+  "category": "3D Analysis",
+  "file": "PointCloudLineFitToolSettings.xaml",
+  "params": [
+   {
+    "label": "Distance Threshold (mm)",
+    "param": "DistanceThreshold",
+    "ctrl": "슬라이더",
+    "min": "0.1",
+    "max": "20.0",
+    "enum": null
+   },
+   {
+    "label": "Iterations",
+    "param": "Iterations",
+    "ctrl": "슬라이더",
+    "min": "10",
+    "max": "2000",
+    "enum": null
+   },
+   {
+    "label": "Min Inliers",
+    "param": "MinInliers",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Draw Overlay",
+    "param": "DrawOverlay",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Enable Judgment",
+    "param": "EnableJudgment",
+    "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Max Straightness (mm)",
+    "param": "MaxStraightness",
+    "ctrl": "입력",
     "min": null,
     "max": null,
     "enum": null

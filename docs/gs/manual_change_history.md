@@ -1808,3 +1808,47 @@ PP-OCR 런타임 다운로드는 개발용 대체 경로로 남기되 같은 리
 
 §6 OCR 절 첫 단락에 한 줄: "언어 데이터(영어 · 한국어 · 일본어 · 중국어 간체)와 PP-OCR 모델은 설치본에 들어 있어
 인터넷 연결 없이 동작합니다." 인식 없음 메시지는 본문에 서술이 없어 변경 없음.
+
+---
+
+## 47. Blob 형상 필터(원형도 · 볼록도) 설정 화면 노출 + 판정 도움말 정정 (v1.42.10 예정) — **반영 완료**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-10-12 |
+| 대상 | 본편 §6.5 Blob (파라미터 표 · 판정 · 요령 · 패널 그림 `13_Blob.png`) · 부록 B 파라미터 표 |
+| 변경 종류 | 설정 화면 누락 1건 · 도움말 정정 2건 · 매뉴얼 오기 정정 |
+
+### 무엇이 문제였나 (사내 기록)
+
+GS 룰베이스 시험자료(Blob, 인쇄 타겟 BL01~05 실촬영) 레시피를 사용자가 VisionSetup 에서 열어 보다가
+"Hole 판정은 어떻게 하는 거냐 — 설정 파라미터에 해당 내용이 없다" 고 지적.
+
+1. **`MinCircularity` · `MaxCircularity` · `MinConvexity` 가 필터에 적용되는데 설정 화면에 칸이 없었다.**
+   도구 속성 · ToolSerializer · Settings VM 래퍼 · HelpContent 도움말까지 있었고 `BlobToolSettings.xaml` 만 빠져 있었다.
+   레시피 JSON 에 저장된 값(시험자료 0.8)이 판정을 좌우하는데 화면에서 보지도 고치지도 못했다 —
+   BL05(60° 결손 원, 원형도 0.55)가 NG 인 근거가 이 필터다(필터 0 이면 6개 · 총면적 47,065 px² 로 OK).
+   Expert Mode 토글도 Blob 에는 아무것도 더 보여 주지 않는다(Blob XAML 에 Expert 칸 없음).
+2. **도움말 2건이 실제 동작과 달랐다.** Enable Judgment — "끄면 블롭 1개 이상이면 항상 Success" 라 했지만
+   코드는 `EnableJudgment || UseAreaJudgment || UseCountJudgment` 중 하나만 켜져도 판정한다.
+   Use Area Judgment — "첫 번째 블롭의 면적" 이라 했지만 코드는 전체 블롭 총면적(0개면 0)으로 판정한다.
+3. **매뉴얼 §6.5 가 화면에 없는 항목을 적고 있었다** — "(Expert) Circularity · Perimeter · AspectRatio · Convexity 필터,
+   SortBy · MaxBlobCount". 전문가 모드 칸은 없고, Perimeter · AspectRatio 는 필터에 적용조차 안 된다.
+   판정 문단도 2번과 같은 오해("Enable Judgment 를 켜면 면적 AND 개수").
+
+→ `BlobToolSettings.xaml` 에 **Shape Filter** 칸(Area Filter 다음, 기본 펼침): Min Circularity · Max Circularity · Min Convexity.
+도움말 2건 정정. 회귀 테스트 `BlobToolShapeFilterTests` — 결손 원 제외(원형도 · 볼록도) · VM 왕복 · 직렬화 왕복 ·
+XAML 노출(바인딩 + ParameterName) 3종. Perimeter · AspectRatio 필터 미적용은 그대로(화면에 없으므로 사용자 영향 없음).
+
+### 매뉴얼 반영 (완료)
+
+- §6.5 파라미터 표: Min Area 다음에 "Min Circularity / Max Circularity (0 / 1)" · "Min Convexity (0)" 행 추가,
+  "(Expert) …" 행 삭제, Enable Judgment 설명을 실제 동작으로.
+- §6.5 판정: "Use Area Judgment · Use Count Judgment 중 켠 판정이 모두 통과해야 OK. 둘 다 끄면 1개 이상 OK · 0개 NG.
+  형상 필터로 빠진 덩어리는 개수 · 면적에 들어가지 않는다."
+- §6.5 요령 한 줄: 정상품 Circularity 를 보고 조금 낮게 Min Circularity 를 잡으면 이 빠진 불량이 개수 판정으로 걸러진다(예: 0.83~0.88 → 0.8).
+- 패널 그림 `13_Blob.png` 재캡처(`--capture-toolpanels`, 571×3096 → 3단 분할).
+- 부록 B: `extract_tool_params.py` 전체 재추출 — Blob 3칸 외에 v1.42.3~1.42.7 에서 생긴 Line Fit Search Axis · Edge Selection,
+  3D 도구 Judgment 칸, PointCloud Line Fit 절도 표에 들어갔다(본문 서술은 §39~§46 그대로 대기).
+  `gen_appendix.py` 설명 사전에 새 칸 16개 설명 추가, 하드코딩된 대상 SW 표기를 현재 본문과 같은 1.42.0 으로(생성기가 1.39.2 로 되돌리던 것).
+- docx/PDF 재생성 — 198쪽 · 그림 154장 유지, Blob 절 84~85쪽 육안 확인.
