@@ -26091,12 +26091,12 @@
     "m": false
    },
    {
-    "s": " — AnomalyScore 가 Anomaly Threshold 미만이면 정상(OK).",
+    "s": " — AnomalyScore 가 Anomaly Threshold 미만이면 정상(OK). 모델은 이상 점수([1] 또는 [1,1]) 또는 이상 맵([1,1,H,W])을 출력해야 하며, 이상 맵만 내는 모델은 맵의 최댓값을 점수로 씁니다. 둘 다 없는 모델(예: 분류 모델)을 지정하면 '이상 탐지 모델 규약이 아닙니다' 오류로 NG 입니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "판정 — AnomalyScore 가 Anomaly Threshold 미만이면 정상(OK)."
+  "text": "판정 — AnomalyScore 가 Anomaly Threshold 미만이면 정상(OK). 모델은 이상 점수([1] 또는 [1,1]) 또는 이상 맵([1,1,H,W])을 출력해야 하며, 이상 맵만 내는 모델은 맵의 최댓값을 점수로 씁니다. 둘 다 없는 모델(예: 분류 모델)을 지정하면 '이상 탐지 모델 규약이 아닙니다' 오류로 NG 입니다."
  },
  {
   "t": "li",
