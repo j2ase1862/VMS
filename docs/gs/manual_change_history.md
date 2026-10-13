@@ -1882,3 +1882,37 @@ Detection · Segmentation · Anomaly · Classify 에 지정했더니, 검출·�
 
 §6 Anomaly 판정: "모델은 이상 점수([1] 또는 [1,1]) 또는 이상 맵([1,1,H,W])을 출력해야 하며, 이상 맵만 내는 모델은 맵의 최댓값을 점수로 씁니다.
 둘 다 없는 모델(예: 분류 모델)을 지정하면 '이상 탐지 모델 규약이 아닙니다' 오류로 NG 입니다." docx/PDF 재생성(198쪽).
+
+---
+
+## 49. 이상 탐지 학습 스크립트(train_anomaly.py) — 두 경로 모두 VMS 가 읽는 ONNX 로 (v1.42.12 예정) — **반영 완료(별책)**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-10-13 |
+| 대상 | 별책 AI 학습 도구 매뉴얼 사전 준비 표(Anomaly 행). 본편 변경 없음 — GS 범위 밖(AI 학습 도구) |
+| 변경 종류 | 결함 수정 (학습 실패 · 산출 모델 VMS 비호환) |
+
+### 무엇이 문제였나 (사내 기록)
+
+v1.42.11(§48) 이후 MLOps 연계 확인 중 발견. 같은 스크립트가 MLOps 워커(`BODA.VMS.MLOps/scripts`)에도 쓰인다.
+
+1. **anomalib 경로가 import 에서 실패** — `FastFlow`(1.x 이름은 `Fastflow`), NumPy 2 에서 imgaug import 실패(`np.sctypes`),
+   모델 패키지 import 에 python-dotenv 필요. ImportError 라 조용히 간이 경로로 넘어갔다.
+   import 를 넘겨도 anomalib 1.2 `Folder` 는 `name` 필수 · 마스크 없으면 task=classification 필요, Windows 에서 `latest` 심볼릭 링크
+   (WinError 1314) · 결과 그림 저장 경로 길이(WinError 206), pandas 3 · matplotlib 3.10 비호환, `engine.export` 는 전처리를 모델에
+   넣어 VMS 정규화와 이중이 되고 torchvision 0.21 에서 NotImplementedError.
+2. **간이 경로는 학습 자체가 실패** — layer2(6,272차원) · layer3(12,544차원) 특징을 행으로 쌓아 결합 단계에서 차원 불일치.
+   통과했더라도 ONNX 는 특징 추출부(`features`[1,D])뿐이고 메모리 뱅크는 별도 `.npy` 라 VMS 가 판정할 수 없었다.
+
+→ anomalib 경로: 클래스 이름 · Folder 인자 · NumPy 2 호환 처리 · Windows 안전(링크 대신 폴더, 결과 그림 콜백 끔) · truststore ·
+VMS 와 같은 전처리 변환 · **PatchCore 본체를 직접 ONNX 로**. 간이 경로: 패치 단위 PatchCore(layer2+layer3 동일 격자, 3×3 평균,
+그리디 코어셋) — 메모리 뱅크를 ONNX 안에 상수로. 두 경로 모두 출력 `anomaly_map[1,1,S,S]` · `pred_score[1]`, 점수는 학습 때 정한
+임계값이 0.5 가 되도록 정규화(AnomalyTool 기본 임계값), 메타 `model_format=anomaly`. `--backend auto|anomalib|simple` 추가.
+검증: 실촬영 피팅 기반 소형 데이터(정상 30 · 불량 8)로 두 경로 학습 → VMS AnomalyTool 실행 — 간이 정상 ≤0.463 · 불량 ≥0.860,
+anomalib 정상 ≤0.292 · 불량 0.499~0.742(경계 1장), 스크립트 점수와 제품 점수 일치.
+
+### 매뉴얼 반영 (완료)
+
+별책 사전 준비 표 Anomaly 행: `pip install "anomalib[core]>=1.1,<2" "pandas<3" "matplotlib<3.10" python-dotenv …` +
+"두 방식 모두 VisionSetup 이상 탐지 도구가 그대로 읽는 ONNX 를 만듭니다".
