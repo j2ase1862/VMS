@@ -566,7 +566,7 @@
 <tr><td>Draw Overlay · Show Heatmap · Heatmap Opacity</td><td>켬 · 켬 · 0.4</td><td>NORMAL/ANOMALY 표시와 Jet 히트맵</td></tr>
 </table>
 <p><strong>결과 값</strong> — AnomalyScore · IsNormal</p>
-<p><strong>판정</strong> — AnomalyScore 가 Anomaly Threshold 미만이면 정상(OK).</p>
+<p><strong>판정</strong> — AnomalyScore 가 Anomaly Threshold 미만이면 정상(OK). 모델은 이상 점수([1] 또는 [1,1]) 또는 이상 맵([1,1,H,W])을 출력해야 하며, 이상 맵만 내는 모델은 맵의 최댓값을 점수로 씁니다. 둘 다 없는 모델(예: 분류 모델)을 지정하면 '이상 탐지 모델 규약이 아닙니다' 오류로 NG 입니다.</p>
 <ul>
 <li>정상 샘플 폴더에 결함품이 섞이면 보정 임계값이 통째로 느슨해지니 폴더 내용을 먼저 확인하세요.</li>
 <li>템플릿 ‘DL 이상 탐지 판정’ 이 Anomaly → Result 체인을 만듭니다.</li>

@@ -300,26 +300,31 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
             using var outputs = _session.Run(inputs);
 
             var result = new AnomalyResult();
+            bool scoreFound = false;
 
             // 출력 이름별 파싱 (anomalib 모델 호환)
+            // 규약: 점수 [1] 또는 [1,1] (이름에 score) · 이상 맵 [1,1,H,W] (이름에 map). 둘 중 하나는 있어야 한다.
+            // 모양을 확인하지 않고 아무 출력의 첫 값을 점수로 쓰면 분류 모델 같은 엉뚱한 모델이 그럴듯한
+            // 점수를 내고, 아무 출력도 못 알아보면 점수 0 = '정상' 이 되어 불량이 합격한다.
             foreach (var output in outputs)
             {
                 var outTensor = output.AsTensor<float>();
                 var dims = outTensor.Dimensions;
 
                 string name = output.Name.ToLower();
+                bool scalarShape = (dims.Length == 1 && dims[0] == 1) ||
+                                   (dims.Length == 2 && dims[0] == 1 && dims[1] == 1);
+                bool mapShape = dims.Length == 4 && dims[0] == 1 && dims[1] == 1;
 
-                if (name.Contains("score") || name.Contains("pred_score") ||
-                    (dims.Length == 1 && dims[0] == 1) ||
-                    (dims.Length == 2 && dims[0] == 1 && dims[1] == 1))
+                if (scalarShape && (name.Contains("score") || !name.Contains("map")))
                 {
                     // anomaly score
                     result.AnomalyScore = dims.Length == 2
                         ? outTensor[0, 0]
                         : outTensor[0];
+                    scoreFound = true;
                 }
-                else if (name.Contains("map") || name.Contains("anomaly_map") ||
-                         (dims.Length == 4 && dims[1] == 1))
+                else if (mapShape)
                 {
                     // anomaly map: [1, 1, H, W]
                     int mapH = dims[2];
@@ -338,16 +343,20 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
                 }
             }
 
-            // 단일 출력만 있는 경우 (score만 출력하는 모델)
-            if (result.AnomalyScore == 0 && outputs.Count() == 1)
+            if (!scoreFound)
             {
-                var singleOutput = outputs.First().AsTensor<float>();
-                if (singleOutput.Dimensions.Length <= 2)
+                if (result.AnomalyMap == null)
                 {
-                    result.AnomalyScore = singleOutput.Dimensions.Length == 2
-                        ? singleOutput[0, 0]
-                        : singleOutput[0];
+                    var shapes = string.Join(", ", outputs.Select(o =>
+                        $"{o.Name}[{string.Join("x", o.AsTensor<float>().Dimensions.ToArray())}]"));
+                    throw new InvalidOperationException(
+                        $"이상 탐지 모델 규약이 아닙니다 — 출력 {shapes}. " +
+                        "점수 [1] 또는 [1,1], 또는 이상 맵 [1,1,H,W] 출력이 필요합니다.");
                 }
+
+                // 맵만 내는 모델 — 맵의 최댓값을 점수로 (anomalib 의 pred_score 정의와 같다)
+                Cv2.MinMaxLoc(result.AnomalyMap, out _, out double maxVal);
+                result.AnomalyScore = (float)maxVal;
             }
 
             return result;
