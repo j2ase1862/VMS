@@ -175,9 +175,10 @@ namespace VMS.VisionSetup.VisionTools.Identification
             if (regions.Count == 0)
                 return new List<OnnxOcrResult>();
 
-            // 2) 각 영역에서 텍스트 인식
+            // 2) 각 영역에서 텍스트 인식 — 읽는 순서(위→아래, 같은 줄은 왼→오른쪽)로.
+            //    윤곽선 검출 순서 그대로 읽으면 여러 줄이 아래 줄부터 나온다.
             var results = new List<OnnxOcrResult>();
-            foreach (var region in regions)
+            foreach (var region in SortReadingOrder(regions))
             {
                 using var crop = CropTextRegion(image, region);
                 if (crop.Empty() || crop.Width < 2 || crop.Height < 2)
@@ -189,6 +190,33 @@ namespace VMS.VisionSetup.VisionTools.Identification
             }
 
             return results;
+        }
+
+        /// <summary>
+        /// 글자 영역을 읽는 순서로 정렬 — 위쪽 끝 기준 위→아래, 세로 차이가 두 영역 높이 중 작은 쪽의 절반 미만이면
+        /// 같은 줄로 보고 왼→오른쪽 (PaddleOCR sorted_boxes 와 같은 방식, 고정 10px 대신 높이 비례).
+        /// </summary>
+        public static List<Point2f[]> SortReadingOrder(IReadOnlyList<Point2f[]> regions)
+        {
+            var boxes = regions
+                .Where(r => r.Length > 0)
+                .Select(r => (pts: r, top: r.Min(p => p.Y), left: r.Min(p => p.X), h: r.Max(p => p.Y) - r.Min(p => p.Y)))
+                .OrderBy(b => b.top).ThenBy(b => b.left)
+                .ToList();
+            for (int i = 0; i < boxes.Count - 1; i++)
+            {
+                for (int j = i; j >= 0; j--)
+                {
+                    var a = boxes[j];
+                    var b = boxes[j + 1];
+                    float sameLine = 0.5f * Math.Min(a.h, b.h);
+                    if (Math.Abs(b.top - a.top) < sameLine && b.left < a.left)
+                        (boxes[j], boxes[j + 1]) = (b, a);
+                    else
+                        break;
+                }
+            }
+            return boxes.Select(b => b.pts).ToList();
         }
 
         #region Detection
@@ -485,6 +513,11 @@ namespace VMS.VisionSetup.VisionTools.Identification
             int lastIdx = 0; // blank
             var allowed = GetWhitelistIndices();
 
+            // PP-OCR 인식 모델은 use_space_char=True 로 학습돼 출력 클래스가 [blank, 사전 글자…, 공백] 이다 —
+            // 사전 파일에는 공백이 없으므로 마지막 번호가 공백이다. 이를 버리면 "LOT 261013" 이 "LOT261013" 이 된다.
+            int spaceIdx = numClasses == _dictionary.Length + 1 ? _dictionary.Length : -1;
+            bool spaceAllowed = allowed == null || _whitelist.Contains(' ');
+
             for (int t = 0; t < timeSteps; t++)
             {
                 // argmax (whitelist 적용 시 허용 인덱스만 후보)
@@ -492,7 +525,7 @@ namespace VMS.VisionSetup.VisionTools.Identification
                 float bestVal = float.MinValue;
                 for (int c = 0; c < numClasses; c++)
                 {
-                    if (allowed != null && !allowed.Contains(c)) continue;
+                    if (allowed != null && !allowed.Contains(c) && !(c == spaceIdx && spaceAllowed)) continue;
                     if (output[0, t, c] > bestVal)
                     {
                         bestVal = output[0, t, c];
@@ -511,6 +544,11 @@ namespace VMS.VisionSetup.VisionTools.Identification
                     if (bestIdx < _dictionary.Length)
                     {
                         chars.Add(_dictionary[bestIdx]);
+                        confidences.Add(prob);
+                    }
+                    else if (bestIdx == spaceIdx)
+                    {
+                        chars.Add(" ");
                         confidences.Add(prob);
                     }
                 }
