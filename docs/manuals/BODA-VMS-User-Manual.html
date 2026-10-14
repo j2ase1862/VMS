@@ -1514,7 +1514,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>OCR Engine · Language</td><td>Tesseract (Tesseract · PPOcrOnnx) · English</td><td>엔진과 언어(영 · 한 · 일 · 중 · 영+한). PP-OCR 은 자체 전처리를 하므로 Auto Preprocess · Invert · Denoise · Target Height 설정을 무시합니다</td></tr>
 <tr><td>Page Seg Mode · Engine Mode</td><td>SingleLine · LstmOnly</td><td>Tesseract 전용 — 한 줄 · 한 단어 · 한 글자 · 블록 등 레이아웃 가정과 엔진 모드</td></tr>
-<tr><td>Char Whitelist</td><td>(빈 값)</td><td>허용 문자 집합(예: 0123456789-/). O↔0, l↔1 같은 혼동을 막습니다</td></tr>
+<tr><td>Char Whitelist</td><td>(빈 값)</td><td>허용 문자 집합(예: 0123456789-/). O↔0, l↔1 같은 혼동을 막습니다. 공백이 들어가는 문자열(예: LOT 261013)은 공백도 넣습니다</td></tr>
 <tr><td>Max Side Length · Custom Det/Rec Model · Custom Dict</td><td>960 · (빈 값)</td><td>PP-OCR 전용 — 입력 최대 변(작은 글씨는 1600~2000)과 직접 학습한 모델 · 사전 파일</td></tr>
 <tr><td>Confidence Threshold</td><td>40 [0~100 %]</td><td>이 신뢰도 미만이면 실패</td></tr>
 <tr><td>Auto Preprocess · Invert Image · Target Text Height · Denoise Level · Dot Matrix Mode</td><td>켬 · 해제 · 40 · 1 · 해제</td><td>Tesseract 전용 전처리 — 자동 대비 · 이진화, 흑배경 백글자 반전, 글자 높이 확대, 잡음 제거, 도트 프린트 연결</td></tr>
@@ -1527,6 +1527,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <ul>
 <li>기울어진 문자는 RectAffine(회전 사각형) ROI 로 그리면 자동으로 바로 세워 인식합니다.</li>
 <li>정해진 형식의 문자열은 Format Preset 을 지정하면 오인식이 형식에 맞게 보정됩니다.</li>
+<li>여러 줄은 위 줄부터, 같은 줄은 왼쪽부터 읽어 한 줄로 이어 붙여(공백 구분) 나옵니다.</li>
 <li>깨끗한 흑백 문서 · 큰 영문 단어는 Tesseract, 그 외 대부분은 PPOcrOnnx 를 쓰세요. 정해진 폰트의 PASS/FAIL 검증이 목적이면 OCV 가 더 엄격합니다.</li>
 </ul>
 <h4>OCV — 문자 검증 (Optical Character Verification)</h4>
