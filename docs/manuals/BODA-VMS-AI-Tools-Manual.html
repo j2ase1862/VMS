@@ -341,7 +341,7 @@ Export 섹션의 <strong>[웹 데이터셋 내려받기]</strong> 를 누르면 
           세그멘테이션 데이터셋을 열면 학습 스크립트가 <code>train_rfdetr_seg.py</code> 로 자동 선택됩니다(COCO 형식 내보내기).
           결과 모델은 비전 설정의 RF-DETR-seg 도구(본편 §6.11)에 지정합니다.</td></tr>
   <tr><td>Classification (분류)</td><td><code>py -3.12 -m pip install torch torchvision onnx</code></td></tr>
-  <tr><td>Anomaly (이상 탐지)</td><td><code>py -3.12 -m pip install "anomalib[core]>=1.1,&lt;2" "pandas&lt;3" "matplotlib&lt;3.10" python-dotenv torch torchvision onnx</code> (anomalib 이 없으면 간이 PatchCore 로 자동 전환 — 두 방식 모두 VisionSetup 이상 탐지 도구가 그대로 읽는 ONNX 를 만듭니다)</td></tr>
+  <tr><td>Anomaly (이상 탐지)</td><td><code>py -3.12 -m pip install "anomalib[core]>=1.1,&lt;2" "pandas&lt;3" "matplotlib&lt;3.10" python-dotenv scikit-learn torch torchvision onnx</code> (anomalib 이 없으면 간이 PatchCore 로 자동 전환 — 두 방식 모두 VisionSetup 이상 탐지 도구가 그대로 읽는 ONNX 를 만듭니다)</td></tr>
   <tr><td>OCR (문자 인식)</td><td><code>py -3.12 -m pip install paddlepaddle paddleocr paddle2onnx onnx</code></td></tr>
   <tr><td>Segmentation 라벨링 보조 (SAM)</td><td>모델 파일 2개(Encoder/Decoder ONNX)만 있으면 됨 — 설치 담당자에게 요청</td></tr>
 </table>
