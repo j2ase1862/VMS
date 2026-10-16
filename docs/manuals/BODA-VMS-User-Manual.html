@@ -1725,6 +1725,9 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 </table>
 <p><strong>결과 값</strong> — NumClasses · ForegroundPixels · ForegroundRatio · Class{i}_Name · Class{i}_Pixels · Class{i}_AreaRatio</p>
 <p><strong>판정</strong> — 자체 판정 없음 — Blob · Result 로 판정합니다.</p>
+<ul>
+<li>Class{i}_Pixels 는 검사 이미지(ROI 를 쓰면 ROI 영역) 크기 기준 화소 수이고, Class{i}_AreaRatio 는 그 영역 안 비율이라 모든 클래스를 더하면 1 입니다. ROI 를 쓰면 오버레이도 ROI 자리에만 그려집니다.</li>
+</ul>
 <h4>YOLOv8-seg — 인스턴스 분할</h4>
 <p>YOLOv8/v11 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 픽셀 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 새로 만드는 검사에는 RF-DETR-seg 를 권장하며, 이 도구는 기존 YOLOv8/v11 규약 ONNX 를 쓰던 레시피 호환용입니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/31_YOLOv8-seg.png" data-width="240" alt="YOLOv8-seg — 인스턴스 분할 설정 패널"><figcaption>YOLOv8-seg — 인스턴스 분할 — Tool Settings 패널</figcaption></figure>

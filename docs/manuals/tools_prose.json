@@ -1279,7 +1279,9 @@
   ],
   "outputs": "NumClasses · ForegroundPixels · ForegroundRatio · Class{i}_Name · Class{i}_Pixels · Class{i}_AreaRatio",
   "judgment": "자체 판정 없음 — Blob · Result 로 판정합니다.",
-  "tips": []
+  "tips": [
+   "Class{i}_Pixels 는 검사 이미지(ROI 를 쓰면 ROI 영역) 크기 기준 화소 수이고, Class{i}_AreaRatio 는 그 영역 안 비율이라 모든 클래스를 더하면 1 입니다. ROI 를 쓰면 오버레이도 ROI 자리에만 그려집니다."
+  ]
  },
  "YOLO Segmentation": {
   "title": "YOLOv8-seg — 인스턴스 분할",

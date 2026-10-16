@@ -183,10 +183,7 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         /// </summary>
         private Mat BuildOverlay(Mat inputImage, Mat labelMap, int numClasses)
         {
-            // 입력 크기에 맞춰 라벨맵 리사이즈 (이미 맞으면 그대로)
-            using var resizedLabel = labelMap.Size() == inputImage.Size()
-                ? labelMap.Clone()
-                : labelMap.Resize(inputImage.Size(), 0, 0, InterpolationFlags.Nearest);
+            using var resizedLabel = PlaceLabelMap(inputImage, labelMap);
 
             var baseImg = GetColorOverlayBase(inputImage);
             using var colorMap = new Mat(resizedLabel.Size(), MatType.CV_8UC3, Scalar.All(0));
@@ -221,6 +218,25 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
             baseImg.CopyTo(blended, inv);
             baseImg.Dispose();
             return blended;
+        }
+
+        /// <summary>
+        /// 라벨맵(ROI 크기)을 입력 이미지 크기로 옮긴다. ROI 를 쓰면 ROI 자리에 그대로 놓고 바깥은 배경으로 채운다 —
+        /// 화면 전체로 늘리면 ROI 안의 마스크가 엉뚱한 자리에 그려진다.
+        /// </summary>
+        private Mat PlaceLabelMap(Mat inputImage, Mat labelMap)
+        {
+            if (labelMap.Size() == inputImage.Size()) return labelMap.Clone();
+
+            var adjROI = GetAdjustedROI(inputImage);
+            if (UseROI && adjROI.Width == labelMap.Width && adjROI.Height == labelMap.Height)
+            {
+                var full = new Mat(inputImage.Size(), MatType.CV_8UC1, Scalar.All(BackgroundClass));
+                using var slot = new Mat(full, adjROI);
+                labelMap.CopyTo(slot);
+                return full;
+            }
+            return labelMap.Resize(inputImage.Size(), 0, 0, InterpolationFlags.Nearest);
         }
 
         private static (byte R, byte G, byte B)[] BuildPalette(int n)
@@ -314,10 +330,9 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
             int outH = dims[2];
             int outW = dims[3];
 
-            // Argmax over channels → 라벨맵 + 클래스 카운트
+            // Argmax over channels → 라벨맵
             var labelMap = new Mat(outH, outW, MatType.CV_8UC1);
             var labelData = new byte[outH * outW];
-            var counts = new long[outC];
 
             // Tensor 인덱서 호출이 느려서 RawData 직접 접근 (NCHW float32)
             var raw = output.ToArray(); // [C*H*W] 평탄화 (배치=1 가정)
@@ -335,7 +350,6 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
                         if (v > maxScore) { maxScore = v; maxClass = c; }
                     }
                     labelData[hwIdx] = (byte)maxClass;
-                    counts[maxClass]++;
                 }
             }
             Marshal.Copy(labelData, 0, labelMap.Data, labelData.Length);
@@ -344,6 +358,13 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
             var resized = new Mat();
             Cv2.Resize(labelMap, resized, image.Size(), 0, 0, InterpolationFlags.Nearest);
             labelMap.Dispose();
+
+            // 클래스별 화소 수는 입력 이미지 크기 라벨맵에서 센다 — 모델 출력 해상도(예: 512²)에서 세면
+            // 입력 크기로 나눈 면적 비율의 합이 1 이 되지 않는다.
+            var counts = new long[outC];
+            var resizedData = new byte[resized.Width * resized.Height];
+            Marshal.Copy(resized.Data, resizedData, 0, resizedData.Length);
+            foreach (byte cls in resizedData) counts[cls]++;
 
             return new SegmentationInferenceResult
             {
