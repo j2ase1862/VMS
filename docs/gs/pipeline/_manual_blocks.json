@@ -33098,7 +33098,7 @@
     {
      "segs": [
       {
-       "s": "train_dfine · train_rfdetr_seg 는 ",
+       "s": "train_dfine · train_rfdetr_seg · train_anomaly 는 ",
        "b": false,
        "m": false
       },
@@ -33108,14 +33108,14 @@
        "m": false
       },
       {
-       "s": " — 워커는 인터넷에서 받지 않으므로 사전학습 미러(§9.8)에 먼저 올려야 합니다. 분류 · 이상탐지는 쓰지 않습니다.",
+       "s": " — 워커는 인터넷에서 받지 않으므로 사전학습 미러(§9.8)에 먼저 올려야 합니다. train_classifier 는 선택입니다 — 고르지 않으면 백본 이름으로 인터넷에서 받으므로, 인터넷이 없는 워커에서는 골라야 합니다.",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "train_dfine · train_rfdetr_seg 는 필수 — 워커는 인터넷에서 받지 않으므로 사전학습 미러(§9.8)에 먼저 올려야 합니다. 분류 · 이상탐지는 쓰지 않습니다."
+     "text": "train_dfine · train_rfdetr_seg · train_anomaly 는 필수 — 워커는 인터넷에서 받지 않으므로 사전학습 미러(§9.8)에 먼저 올려야 합니다. train_classifier 는 선택입니다 — 고르지 않으면 백본 이름으로 인터넷에서 받으므로, 인터넷이 없는 워커에서는 골라야 합니다."
     }
    ],
    [
@@ -33274,7 +33274,23 @@
     "m": true
    },
    {
-    "s": ") · 라이선스 · 출처를 등록하고 [파일 추가] 로 ",
+    "s": ") · 라이선스 · 출처를 등록하고 [파일 추가] 로 스크립트에 맞는 파일을 올립니다.",
+    "b": false,
+    "m": false
+   }
+  ],
+  "text": "워커는 인터넷 대신 여기서만 사전학습 가중치를 받습니다(폐쇄망 · SSL 검사 환경 대응). [자산 추가] 로 ref(예: dfine-small-obj2coco) · 라이선스 · 출처를 등록하고 [파일 추가] 로 스크립트에 맞는 파일을 올립니다."
+ },
+ {
+  "t": "li",
+  "segs": [
+   {
+    "s": "검출(train_dfine)",
+    "b": true,
+    "m": false
+   },
+   {
+    "s": " — ",
     "b": false,
     "m": false
    },
@@ -33294,12 +33310,98 @@
     "m": true
    },
    {
-    "s": " 를 올립니다.",
+    "s": ".",
     "b": false,
     "m": false
    }
   ],
-  "text": "워커는 인터넷 대신 여기서만 사전학습 가중치를 받습니다(폐쇄망 · SSL 검사 환경 대응). [자산 추가] 로 ref(예: dfine-small-obj2coco) · 라이선스 · 출처를 등록하고 [파일 추가] 로 config.json · model.safetensors 를 올립니다."
+  "ordered": false,
+  "depth": 0,
+  "text": "검출(train_dfine) — config.json · model.safetensors."
+ },
+ {
+  "t": "li",
+  "segs": [
+   {
+    "s": "인스턴스 분할(train_rfdetr_seg)",
+    "b": true,
+    "m": false
+   },
+   {
+    "s": " — 체크포인트 파일 하나. 파일 이름에서 모델 크기를 읽으므로 받은 이름 그대로 올립니다(예: ",
+    "b": false,
+    "m": false
+   },
+   {
+    "s": "rf-detr-seg-medium.pt",
+    "b": false,
+    "m": true
+   },
+   {
+    "s": ").",
+    "b": false,
+    "m": false
+   }
+  ],
+  "ordered": false,
+  "depth": 0,
+  "text": "인스턴스 분할(train_rfdetr_seg) — 체크포인트 파일 하나. 파일 이름에서 모델 크기를 읽으므로 받은 이름 그대로 올립니다(예: rf-detr-seg-medium.pt)."
+ },
+ {
+  "t": "li",
+  "segs": [
+   {
+    "s": "이상탐지(train_anomaly)",
+    "b": true,
+    "m": false
+   },
+   {
+    "s": " — 백본 가중치 ",
+    "b": false,
+    "m": false
+   },
+   {
+    "s": "model.safetensors",
+    "b": false,
+    "m": true
+   },
+   {
+    "s": " 하나. 학습 창의 백본(기본 resnet18)과 같은 구조여야 합니다.",
+    "b": false,
+    "m": false
+   }
+  ],
+  "ordered": false,
+  "depth": 0,
+  "text": "이상탐지(train_anomaly) — 백본 가중치 model.safetensors 하나. 학습 창의 백본(기본 resnet18)과 같은 구조여야 합니다."
+ },
+ {
+  "t": "li",
+  "segs": [
+   {
+    "s": "분류(train_classifier)",
+    "b": true,
+    "m": false
+   },
+   {
+    "s": " — 가중치 파일 하나. 파일 이름에서 구조를 읽으므로 받은 이름 그대로 올립니다(예: ",
+    "b": false,
+    "m": false
+   },
+   {
+    "s": "resnet18-f37072fd.pth",
+    "b": false,
+    "m": true
+   },
+   {
+    "s": ").",
+    "b": false,
+    "m": false
+   }
+  ],
+  "ordered": false,
+  "depth": 0,
+  "text": "분류(train_classifier) — 가중치 파일 하나. 파일 이름에서 구조를 읽으므로 받은 이름 그대로 올립니다(예: resnet18-f37072fd.pth)."
  },
  {
   "t": "h",
@@ -33328,14 +33430,34 @@
     "m": false
    },
    {
-    "s": " — 이름 · 작업 유형 · 클래스(순서가 ONNX 의 names 와 같아야 업로드가 통과) · 설명. 작업 유형은 만든 뒤 바꿀 수 없습니다.",
+    "s": " — 이름 · 작업 유형 · 클래스(순서가 ONNX 의 names 와 같아야 업로드가 통과) · 설명. 작업 유형은 만든 뒤 바꿀 수 없습니다. 이상탐지 계열은 정상 클래스 ",
+    "b": false,
+    "m": false
+   },
+   {
+    "s": "good",
+    "b": false,
+    "m": true
+   },
+   {
+    "s": " 을 맨 앞에, 불량 클래스를 이름순으로 그 뒤에 둡니다(예: ",
+    "b": false,
+    "m": false
+   },
+   {
+    "s": "good, defect",
+    "b": false,
+    "m": true
+   },
+   {
+    "s": ") — 학습 결과가 이 순서로 클래스를 기록합니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": false,
   "depth": 0,
-  "text": "[새 모델] — 이름 · 작업 유형 · 클래스(순서가 ONNX 의 names 와 같아야 업로드가 통과) · 설명. 작업 유형은 만든 뒤 바꿀 수 없습니다."
+  "text": "[새 모델] — 이름 · 작업 유형 · 클래스(순서가 ONNX 의 names 와 같아야 업로드가 통과) · 설명. 작업 유형은 만든 뒤 바꿀 수 없습니다. 이상탐지 계열은 정상 클래스 good 을 맨 앞에, 불량 클래스를 이름순으로 그 뒤에 둡니다(예: good, defect) — 학습 결과가 이 순서로 클래스를 기록합니다."
  },
  {
   "t": "li",
