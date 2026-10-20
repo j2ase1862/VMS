@@ -132,8 +132,7 @@ dotnet build VMS.MasterSetup/VMS.MasterSetup.wixproj -c Release
 | 문서 | 위치 |
 |------|------|
 | 사용자 매뉴얼 (전체) | [`docs/manuals/BODA-VMS-User-Manual.html`](docs/manuals/BODA-VMS-User-Manual.html) |
-| VisionSetup 매뉴얼 | [`docs/manuals/VMS-VisionSetup-Manual.html`](docs/manuals/VMS-VisionSetup-Manual.html) |
-| 비전 도구 운용 가이드 | [`docs/manuals/VMS_VisionTools_Operating_Manual.html`](docs/manuals/VMS_VisionTools_Operating_Manual.html) |
+| AI 학습 도구 매뉴얼 (별책) | [`docs/manuals/BODA-VMS-AI-Tools-Manual.html`](docs/manuals/BODA-VMS-AI-Tools-Manual.html) |
 | Hand-Eye 캘리브레이션 | [`docs/manuals/VMS_HandEye_Calibration_Manual.md`](docs/manuals/VMS_HandEye_Calibration_Manual.md) |
 | GS 인증 자료 | [`docs/gs/`](docs/gs/) (히스토리 + ISO/IEC 25051 매핑 + MSI 서명 + SIEM 가이드 + 배포 정책) |
 | 변경 이력 | [`CHANGELOG.md`](CHANGELOG.md) |
