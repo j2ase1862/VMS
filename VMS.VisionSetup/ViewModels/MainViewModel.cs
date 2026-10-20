@@ -3264,13 +3264,7 @@ namespace VMS.VisionSetup.ViewModels
                 if (!applied && IsStep3DCamera)
                     StatusMessage = "노출/게인 적용 실패 — logs\\camera.log 확인";
             }
-            await _cameraAcquisition.Apply3DSettingsAsync(new Scan3DSettings
-            {
-                PostProcessPreset = SelectedStep.PointCloudPostProcess,
-                UseDepthRange = SelectedStep.UseDepthRange,
-                DepthRangeMinMm = SelectedStep.DepthRangeMinMm,
-                DepthRangeMaxMm = SelectedStep.DepthRangeMaxMm
-            });
+            await _cameraAcquisition.Apply3DSettingsAsync(SelectedStep.ToScan3DSettings());
         }
 
         private async System.Threading.Tasks.Task AcquireImage()
