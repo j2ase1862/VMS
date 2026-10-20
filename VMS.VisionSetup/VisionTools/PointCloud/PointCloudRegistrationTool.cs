@@ -54,8 +54,9 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
 
         private bool _enableCoarseAlignment = true;
         /// <summary>
-        /// PCA 거친 정렬을 ICP 앞단에 수행. 초기 자세 차이가 커도 수렴하도록 함.
-        /// 이미 정렬된 상태에서는 거의 항등 변환이라 부작용 없음.
+        /// 거친 정렬을 ICP 앞단에 수행 — 초기 자세 차이가 커도 수렴하도록 함.
+        /// "그대로" + PCA 후보 4개에서 각각 ICP 를 돌려 신뢰도가 가장 높은 결과를 쓰므로(<see cref="TransformUtils.RegisterWithCoarse"/>)
+        /// 켜도 끈 것보다 나빠지지 않는다. 대신 정합 시간이 2~4배 — 앞에 Filter(복셀)를 두는 것을 권장.
         /// </summary>
         public bool EnableCoarseAlignment
         {
@@ -166,28 +167,20 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                     return result;
                 }
 
-                // 1단계: PCA 거친 정렬 (옵션) — 초기 자세 차이 해소 후 ICP 수렴 보장
-                var coarse = Matrix4x4.Identity;
-                PointCloudData icpInput = src;
-                PointCloudData? coarseCopy = null;
-                if (EnableCoarseAlignment)
-                {
-                    coarse = TransformUtils.CoarseAlignPCA(reference, src);
-                    coarseCopy = TransformUtils.TransformPointCloud(src, coarse);
-                    icpInput = coarseCopy;
-                }
-
-                // 2단계: ICP 정밀 정합 → 전체 변환 = coarse ∘ icp (행벡터 규약: coarse * icp)
+                // 거친 정렬(옵션) + ICP 정밀 정합. 거친 정렬은 "그대로" + PCA 후보 4개에서 각각 ICP 를 돌려
+                // 신뢰도가 가장 높은 결과를 쓴다 — 대칭에 가까운 부품이 180° 뒤집히지 않고, 켜도 끈 것보다 나빠지지 않는다.
                 Matrix4x4 transform;
                 TransformUtils.IcpStats stats;
-                try
+                string coarseChoice = "";
+                if (EnableCoarseAlignment)
                 {
-                    var icp = TransformUtils.ICP(reference, icpInput, MaxIterations, Tolerance, out stats);
-                    transform = coarse * icp;
+                    transform = TransformUtils.RegisterWithCoarse(reference, src, MaxIterations, Tolerance,
+                        ConfidenceDistanceMm, out stats, out var candidates);
+                    coarseChoice = candidates.FirstOrDefault(c => c.Chosen).Name ?? "";
                 }
-                finally
+                else
                 {
-                    coarseCopy?.Dispose();
+                    transform = TransformUtils.ICP(reference, src, MaxIterations, Tolerance, out stats);
                 }
 
                 // 정합 신뢰도 — 원본 소스 기준 inlier 비율 (0~1)
@@ -235,7 +228,7 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                 result.Message = $"ICP {(stats.Converged ? "converged" : "NOT converged")} "
                     + $"in {stats.Iterations} iter, mean error {stats.MeanError:F3}mm, "
                     + $"confidence {confidence:P0}"
-                    + $"{(EnableCoarseAlignment ? " (coarse+fine)" : "")}, "
+                    + $"{(EnableCoarseAlignment ? $" (coarse {coarseChoice}+fine)" : "")}, "
                     + $"|Δt|={result.Data["TranslationNorm"]:F3}mm "
                     + $"(Ref={reference.PointCount}, Src={src.PointCount})";
                 if (EnableJudgment)

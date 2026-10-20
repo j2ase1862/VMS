@@ -469,38 +469,13 @@ namespace VMS.Camera.Utils
             int srcCount = source.PointCount;
             if (refCount < 3 || srcCount < 3) return Matrix4x4.Identity;
 
-            var refCentroid = ComputeCentroid(reference.Positions, refCount);
-            var srcCentroid = ComputeCentroid(source.Positions, srcCount);
-
-            var refAxes = PrincipalAxes(reference.Positions, refCount, refCentroid);
-            var srcAxes = PrincipalAxes(source.Positions, srcCount, srcCentroid);
-
             // 후보 스코어링용 소스 샘플 (성능 — 최근접 탐색이 O(N·M))
             var samples = SamplePositions(source.Positions, srcCount, 2000);
 
-            // PCA 축 부호 모호성 → 프로퍼 회전(det=+1)이 되는 부호 조합 4개
-            var flips = new[]
-            {
-                new Vector3(1, 1, 1), new Vector3(1, -1, -1),
-                new Vector3(-1, 1, -1), new Vector3(-1, -1, 1)
-            };
-
             var best = Matrix4x4.Identity;
             float bestScore = float.MaxValue;
-
-            foreach (var f in flips)
+            foreach (var candidate in PcaCandidates(reference, source))
             {
-                // 행벡터 규약: src 축(행렬 A 행) → 부호 적용된 ref 축(행렬 B 행) 매핑.
-                // A·R = B, A 는 정규직교 → R = Aᵀ·B
-                var a = AxesToMatrix(srcAxes[0], srcAxes[1], srcAxes[2]);
-                var b = AxesToMatrix(refAxes[0] * f.X, refAxes[1] * f.Y, refAxes[2] * f.Z);
-                var rotation = Matrix4x4.Transpose(a) * b;
-
-                // t = refCentroid − srcCentroid·R
-                var t = refCentroid - Vector3.Transform(srcCentroid, rotation);
-                var candidate = rotation;
-                candidate.M41 = t.X; candidate.M42 = t.Y; candidate.M43 = t.Z;
-
                 float score = MeanNearestDistance(reference.Positions, refCount, samples, candidate);
                 if (score < bestScore)
                 {
@@ -510,6 +485,149 @@ namespace VMS.Camera.Utils
             }
 
             return best;
+        }
+
+        /// <summary>
+        /// PCA 주축을 맞추는 변환 후보 4개 — 축 부호 모호성 때문에 프로퍼 회전(det=+1)이 되는 부호 조합마다 하나.
+        /// </summary>
+        private static Matrix4x4[] PcaCandidates(PointCloudData reference, PointCloudData source)
+        {
+            int refCount = reference.PointCount;
+            int srcCount = source.PointCount;
+            var refCentroid = ComputeCentroid(reference.Positions, refCount);
+            var srcCentroid = ComputeCentroid(source.Positions, srcCount);
+            var refAxes = PrincipalAxes(reference.Positions, refCount, refCentroid);
+            var srcAxes = PrincipalAxes(source.Positions, srcCount, srcCentroid);
+
+            var flips = new[]
+            {
+                new Vector3(1, 1, 1), new Vector3(1, -1, -1),
+                new Vector3(-1, 1, -1), new Vector3(-1, -1, 1)
+            };
+            var candidates = new Matrix4x4[flips.Length];
+            for (int i = 0; i < flips.Length; i++)
+            {
+                var f = flips[i];
+                // 행벡터 규약: src 축(행렬 A 행) → 부호 적용된 ref 축(행렬 B 행) 매핑.
+                // A·R = B, A 는 정규직교 → R = Aᵀ·B
+                var a = AxesToMatrix(srcAxes[0], srcAxes[1], srcAxes[2]);
+                var b = AxesToMatrix(refAxes[0] * f.X, refAxes[1] * f.Y, refAxes[2] * f.Z);
+                var rotation = Matrix4x4.Transpose(a) * b;
+
+                // t = refCentroid − srcCentroid·R
+                var t = refCentroid - Vector3.Transform(srcCentroid, rotation);
+                rotation.M41 = t.X; rotation.M42 = t.Y; rotation.M43 = t.Z;
+                candidates[i] = rotation;
+            }
+            return candidates;
+        }
+
+        /// <summary>
+        /// Coarse 후보 하나의 평가 결과 (진단 · 결과 메시지용).
+        /// <paramref name="QuickConfidence"/> 는 샘플로 짧은 ICP 를 돌린 뒤, <paramref name="FinalConfidence"/> 는 본 ICP 까지 돌린 뒤의
+        /// 신뢰도(본 ICP 를 돌리지 않은 후보는 null).
+        /// </summary>
+        public readonly record struct CoarseCandidate(string Name, float QuickConfidence, float? FinalConfidence, float RotationDeg, bool Chosen);
+
+        /// <summary>
+        /// 거친 정렬 + ICP 정밀 정합을 한 번에 — 여러 출발 자세에서 돌려 보고 <b>정합 신뢰도(inlier 비율)</b> 가 가장 높은 결과를 쓴다.
+        ///
+        /// <para>출발 자세는 "그대로(무회전)" + PCA 주축 후보 4개다. 예전 방식(<see cref="CoarseAlignPCA"/> 로 하나를 고른 뒤 ICP)은
+        /// ICP 전의 평균 거리로만 골라서, 사각 프레임처럼 평면 내 180° 돌려도 모양이 거의 같은 부품에서 뒤집힌 쪽을 고르고
+        /// ICP 가 그 자리에서 수렴했다(현장 Mech-Mind 프레임 7장 중 5장이 140~175° 뒤집힘, 2026-09-28 재현).
+        /// "그대로" 가 후보에 있으므로 Coarse 를 켜도 끈 것보다 나빠지지 않는다.</para>
+        /// <para>순서: ① 다섯 후보를 샘플(기준 3000 · 소스 1500점)로 짧은 ICP → 신뢰도 ② "그대로" + 상위 PCA 후보(최고점에서
+        /// <paramref name="finalistMargin"/> 이내, 최대 <paramref name="maxFinalists"/> 개)만 전체 점으로 본 ICP → 신뢰도
+        /// ③ 그 신뢰도가 <paramref name="tieMargin"/> 안에서 비슷하면 회전이 작은 쪽. 짧은 ICP 점수만으로 고르면 뒤집힌 후보가
+        /// 몇 % 앞서는 경우가 있어(같은 데이터 Scan-3: 짧게 59% 대 54%, 끝까지 65% 대 68%) 마지막 선택은 본 ICP 뒤에 한다.
+        /// 모양으로 가를 수 없는 대칭 부품은 놓인 자세가 기준과 크게 다르지 않다고 보는 편이 맞다.</para>
+        /// </summary>
+        /// <param name="inlierThresholdMm">신뢰도의 대응점 거리 기준 (Registration 의 ConfidenceDistanceMm 과 같게)</param>
+        /// <returns>소스를 기준에 맞추는 최종 변환 (행벡터 규약)</returns>
+        public static Matrix4x4 RegisterWithCoarse(PointCloudData reference, PointCloudData source,
+            int maxIterations, float tolerance, float inlierThresholdMm,
+            out IcpStats stats, out CoarseCandidate[] evaluated,
+            int quickIterations = 20, float finalistMargin = 0.10f, int maxFinalists = 3, float tieMargin = 0.03f)
+        {
+            int refCount = reference.PointCount;
+            int srcCount = source.PointCount;
+            if (refCount < 3 || srcCount < 3)
+            {
+                evaluated = Array.Empty<CoarseCandidate>();
+                return ICP(reference, source, maxIterations, tolerance, out stats);
+            }
+
+            // ① 짧은 ICP 는 샘플로 — brute-force 최근접이라 점 수가 곧 시간이다
+            var starts = new List<(string Name, Matrix4x4 M)> { ("그대로", Matrix4x4.Identity) };
+            var pca = PcaCandidates(reference, source);
+            for (int i = 0; i < pca.Length; i++) starts.Add(($"PCA{i + 1}", pca[i]));
+
+            var quick = new List<(string Name, Matrix4x4 Pose, float Confidence)>(starts.Count);
+            using (var refSample = SampleCloud(reference, 3000))
+            using (var srcSample = SampleCloud(source, 1500))
+            {
+                foreach (var (name, start) in starts)
+                {
+                    using var moved = TransformPointCloud(srcSample, start);
+                    var pose = start * ICP(refSample, moved, quickIterations, 0.01f, out _);
+                    quick.Add((name, pose, ComputeInlierRatio(reference, source, pose, inlierThresholdMm)));
+                }
+            }
+
+            // ② 상위 후보만 본 ICP. "그대로"(0번)는 항상 넣는다 — 회전 없이 출발하면 짧은 ICP 로는 덜 다가가
+            //    점수가 낮게 나오지만(같은 데이터 Scan-3: 짧게 46%, 끝까지 68%) Coarse 를 끈 것과 같은 결과라
+            //    이것이 결선에 있어야 "켜도 끈 것보다 나빠지지 않는다" 가 성립한다.
+            float topQuick = quick.Max(q => q.Confidence);
+            var finalists = quick.Select((q, i) => (q, i))
+                .Where(x => x.i != 0 && x.q.Confidence >= topQuick - finalistMargin)
+                .OrderByDescending(x => x.q.Confidence)
+                .Take(maxFinalists)
+                .Select(x => x.i)
+                .Append(0)
+                .ToHashSet();
+
+            var finals = new Dictionary<int, (Matrix4x4 M, IcpStats Stats, float Confidence)>();
+            foreach (int i in finalists)
+            {
+                using var moved = TransformPointCloud(source, quick[i].Pose);
+                var m = quick[i].Pose * ICP(reference, moved, maxIterations, tolerance, out var s);
+                finals[i] = (m, s, ComputeInlierRatio(reference, source, m, inlierThresholdMm));
+            }
+
+            // ③ 비슷하면 회전이 작은 쪽
+            float topFinal = finals.Values.Max(f => f.Confidence);
+            int chosen = finals
+                .Where(f => f.Value.Confidence >= topFinal - tieMargin)
+                .OrderBy(f => RotationAngleDeg(f.Value.M))
+                .First().Key;
+
+            evaluated = quick.Select((q, i) => new CoarseCandidate(
+                q.Name, q.Confidence,
+                finals.TryGetValue(i, out var f) ? f.Confidence : null,
+                RotationAngleDeg(finals.TryGetValue(i, out var g) ? g.M : q.Pose),
+                i == chosen)).ToArray();
+            stats = finals[chosen].Stats;
+            return finals[chosen].M;
+        }
+
+        /// <summary>변환의 회전 크기 (도) — 축과 상관없이 얼마나 돌렸는지.</summary>
+        private static float RotationAngleDeg(Matrix4x4 m)
+        {
+            float cos = Math.Clamp((m.M11 + m.M22 + m.M33 - 1f) / 2f, -1f, 1f);
+            return MathF.Acos(cos) * 180f / MathF.PI;
+        }
+
+        private static PointCloudData SampleCloud(PointCloudData cloud, int maxPoints)
+        {
+            var positions = SamplePositions(cloud.Positions, cloud.PointCount, maxPoints);
+            // TransformPointCloud 가 색상도 복사하므로 길이를 맞춘 빈 색상 배열을 둔다
+            return new PointCloudData
+            {
+                Positions = positions,
+                Colors = new System.Windows.Media.Color[positions.Length],
+                PointCount = positions.Length,
+                Name = cloud.Name + "_sample",
+            };
         }
 
         /// <summary>
