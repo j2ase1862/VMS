@@ -521,6 +521,23 @@ Web 핫픽스마다 1.2GB MSI 를 재발행하지 않는다 — 기존 오프라
 (스크립트는 설정/DB 를 보존하고 서비스 중지 → 동기화 → 재시작한다. 이때 스크립트가
 서비스를 재등록하므로 이후 MSI 업그레이드 전에는 다시 13.4 절차를 따른다.)
 
+### 13.6 구성 시나리오 — 올인원(A) / 서버 분리(B)
+
+VMS 는 DB 에 직접 닿지 않고 `system_config.json` 의 `webServerUrl` 하나로 Web 과 통신한다. DB 는 Web 이 도는 PC 에만 있으므로
+Web 을 어디에 두느냐가 곧 구성이다. 두 구성 모두 같은 MSI 하나로 설치한다(사용자 절차는 매뉴얼 §2.3 방법 A/B).
+
+| | A. 올인원 (단일 PC) | B. 서버 분리 |
+|---|---|---|
+| 현장 PC | VMS + 동봉 Web + DB | VMS 만 (동봉 Web 미가동) |
+| webServerUrl | `http://localhost:5292` | `https://<서버>` — 원격 http 는 `InsecureUrlGuard` 가 막는다 |
+| MSI | 기본 설치 → 마법사 "Web 서버 초기 구성" (13.3) | 기본 설치 후 초기 구성을 실행하지 않거나 `INSTALLWEB=0` |
+
+- **B 에서 동봉 Web 서비스를 켜지 말 것** — 현장 PC 에 별도 DB 가 생겨 데이터가 서버와 갈라진다. 기본값(미시작)을 두면 안전하다.
+- B 의 각 현장 PC 는 AppSetup `ClientIndex` 를 **서로 겹치지 않게** 준다 — Web 이 라인을 가르는 키이고, VMS 는 자기 번호의 레시피만 내려받는다.
+- **A → B 전환**: 현장 PC 의 Web 서비스를 멈춘 상태에서 `C:\ProgramData\BODA\VMS\BodaVision.db` 와 `-wal` · `-shm` 을 함께 서버로 복사 →
+  현장 PC 의 `BodaVmsWeb` 서비스 중지 · 비활성화 → AppSetup 에서 `webServerUrl` 만 서버 주소로 바꾼다.
+- Web 만 업데이트할 때: A 는 13.5 단독 업데이트(또는 다음 MSI), B 는 서버에서 `Production_Deploy_Runbook` 배포만 하면 모든 현장에 반영된다.
+
 ---
 
 ## 14. AI 학습 도구 Feature 와 GS 인증 제출 빌드 (v1.31.0)
@@ -571,8 +588,6 @@ msiexec /i VMS-<버전>.msi INSTALLWEB=0                  # Web 서버 제외 (�
 | [gs_msi_code_signing_guide.md](gs/guides/gs_msi_code_signing_guide.md) | Authenticode 코드 서명 운영 절차 |
 | [gs_distribution_policy.md](gs/guides/gs_distribution_policy.md) | 라이선스 / 배포 채널 / EULA |
 | [field_install_checklist.md](field_install_checklist.md) | 현장 설치 실행 체크리스트 (현행) |
-| [deployment_scenario_guide.md](deployment_scenario_guide.md) | 올인원 vs 클라우드 분리 구성 선택 |
-| [manual_regression_v1.2.md](manual_regression_v1.2.md) | v1.2 시점 회귀 기록 (사문서 — 이력 참고용) |
 | [gs_compliance_overview_v1.0.md](gs/guides/gs_compliance_overview_v1.0.md) | GS 인증 보안 정책 종합 |
 | [SSO_Migration_Plan.md](gs/guides/SSO_Migration_Plan.md) | VMS ↔ Web SSO 통합 마이그레이션 설계 (PR1~5) |
 | [multi-instance-support.md](design/multi-instance-support.md) | 다중 인스턴스(한 PC 두 라인) 설계 |
