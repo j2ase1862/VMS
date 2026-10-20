@@ -506,6 +506,24 @@ namespace VMS.ViewModels
         }
 
         /// <summary>
+        /// 촬영 직전 스텝의 카메라 설정을 넣는다 — 2D 노출/게인 + 3D 후처리/뎁스 범위.
+        /// VisionSetup 획득과 같은 규칙: "카메라 설정 유지"(기본) 스텝은 노출/게인을 push 하지 않고
+        /// (카메라 튜닝값 보존), 3D 는 CameraDefault + 범위 미사용이면 카메라를 건드리지 않는다.
+        /// 미구현 제조사는 ICameraAcquisition 기본 no-op (#188), 같은 값은 구현체가 캐시로 건너뛴다.
+        /// 종전에는 3D 설정을 넣지 않아 AUTO RUN 이 VisionSetup 에서 맞춘 후처리·뎁스 범위 없이 찍었다.
+        /// </summary>
+        internal static async Task ApplyStepCameraSettingsAsync(
+            Camera.Interfaces.ICameraAcquisition acquisition, InspectionStep? step)
+        {
+            if (step == null) return;
+
+            if (!step.Use2DCameraDefault)
+                await acquisition.ApplySettingsAsync(step.Exposure, step.Gain);
+
+            await acquisition.Apply3DSettingsAsync(step.ToScan3DSettings());
+        }
+
+        /// <summary>
         /// 단발 grab 을 수행하고 실제 획득 성공 여부를 반환한다.
         /// Auto Run 의 grabFunc 가 이 반환값으로 grab 실패를 판정한다 —
         /// 실패가 은폐되면 SequenceEngine 이 직전 프레임(_originalImage)으로
@@ -528,12 +546,7 @@ namespace VMS.ViewModels
                     IsConnected = true;
                 }
 
-                // 선택 스텝의 노출/게인을 카메라에 반영 후 촬영.
-                // 미구현 제조사는 ICameraAcquisition 기본 no-op (#188).
-                // "카메라 설정 유지"(기본) 스텝은 push 하지 않는다 — 카메라 튜닝값 보존.
-                var step = SelectedStep;
-                if (step != null && !step.Use2DCameraDefault)
-                    await _acquisition.ApplySettingsAsync(step.Exposure, step.Gain);
+                await ApplyStepCameraSettingsAsync(_acquisition, SelectedStep);
 
                 var result = await _acquisition.AcquireAsync();
                 if (result.Success)
@@ -613,12 +626,9 @@ namespace VMS.ViewModels
 
                     while (!ct.IsCancellationRequested)
                     {
-                        // 매 프레임 선택 스텝의 노출/게인 반영 — 라이브 중 슬라이더
+                        // 매 프레임 선택 스텝의 설정 반영 — 라이브 중 슬라이더
                         // 조작이 실시간 적용됨 (VisionSetup Camera Live 와 동일, #199).
-                        // "카메라 설정 유지"(기본) 스텝은 push 하지 않는다 — 카메라 튜닝값 보존.
-                        var liveStep = SelectedStep;
-                        if (liveStep != null && !liveStep.Use2DCameraDefault)
-                            await _acquisition.ApplySettingsAsync(liveStep.Exposure, liveStep.Gain);
+                        await ApplyStepCameraSettingsAsync(_acquisition, SelectedStep);
 
                         var result = await _acquisition.AcquireAsync();
                         if (!result.Success)

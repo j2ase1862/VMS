@@ -2225,3 +2225,29 @@ v1.42.17(#552 · #553 · #554)과 함께 반영 대기 두 건(§58 · §60)을 
 ### 매뉴얼 반영 (완료)
 
 docx/PDF 재생성 204쪽(203 → 204) · 그림 154장 · 경고 0, 101쪽(Registration) 렌더 확인. 제품설명서 docx 재생성.
+
+## 62. VMS 본체 촬영에 스텝 3D 스캔 설정 적용 — **반영 대기**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-10-21 |
+| 대상 | 본편 §5 VisionSetup — 스텝 Camera Settings 설명 (`src/05_visionsetup.html` 52행) |
+| 변경 종류 | 결함 수정 (VMS 본체 촬영) |
+
+### 무엇이 바뀌었나 (사내 기록)
+
+스텝의 Camera Settings 는 2D(노출 · 게인)와 3D(점군 후처리 · 뎁스 범위)로 나뉘는데, VMS 본체의 촬영 경로
+(`CameraViewModel.GrabOnceAsync` — 수동 Grab · AUTO RUN grabFunc · VisionSetup 의 촬영 요청, 라이브 루프)는
+2D 만 넣고 3D 는 넣지 않았다. VisionSetup 의 Acquire · Live 만 3D 를 넣었으므로, 거기서 맞춘 후처리 · 뎁스 범위가
+자동 운전에서는 빠진 채로 찍혔다(카메라에 마지막으로 들어가 있던 값으로 찍힘).
+
+- `CameraViewModel.ApplyStepCameraSettingsAsync` 한 곳에서 2D(카메라 설정 유지면 건너뜀) + 3D 를 넣는다. Grab · 라이브가 이것을 쓴다.
+- `InspectionStep.ToScan3DSettings()` — VisionSetup 획득과 VMS 촬영이 같은 변환을 쓴다.
+- AUTO RUN 의 스텝 전환(StepChange → CurrentStepIndex → SelectedStep)은 이미 2D 노출을 따라가고 있었다. 3D 도 같은 스텝 값을 쓴다.
+- 3D 를 "카메라 설정"(CameraDefault) + 범위 미사용으로 둔 스텝은 카메라를 건드리지 않는다 — 앞 스텝이 넣은 값이 남는다(2D 유지 모드와 같은 규칙).
+
+### 매뉴얼 반영 (대기 — 다음 릴리즈 때)
+
+`src/05_visionsetup.html` 52행 끝 문장 "여기 값은 Acquire · Live 때 카메라에 적용되고 레시피에 저장됩니다." 를
+"여기 값은 레시피에 저장되고, VisionSetup 의 Acquire · Live 와 VMS 의 촬영(Grab · 자동 운전) 때 카메라에 적용됩니다." 로 바꾼다.
+그림 변경 없음.

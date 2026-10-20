@@ -184,6 +184,17 @@ namespace VMS.VisionSetup.Models
             set => SetProperty(ref _depthRangeMaxMm, Math.Max(0, value));
         }
 
+        /// <summary>
+        /// 촬영 직전 카메라에 넣을 3D 설정. VisionSetup 획득 · VMS 본체 Grab/AUTO RUN 이 같은 값을 쓴다.
+        /// </summary>
+        public Scan3DSettings ToScan3DSettings() => new()
+        {
+            PostProcessPreset = PointCloudPostProcess,
+            UseDepthRange = UseDepthRange,
+            DepthRangeMinMm = DepthRangeMinMm,
+            DepthRangeMaxMm = DepthRangeMaxMm
+        };
+
         #endregion
 
         /// <summary>
