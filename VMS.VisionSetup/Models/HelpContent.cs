@@ -474,7 +474,9 @@ namespace VMS.VisionSetup.Models
                         "3) Baseline(B 촬영 위치 − A 촬영 위치, mm 권장)을 입력합니다.\n" +
                         "4) 기준 부품으로 A → B 스텝을 Run 한 뒤 [현재 두 점을 기준으로 등록]을 누릅니다.\n" +
                         "5) 이후 Run 마다 Δ가 계산되고, Robot Transform 을 켜면 로봇 좌표 변위로 출력됩니다.\n" +
-                        "※ 두 스텝 모두 캘리브레이션(또는 스텝 Resolution)이 있으면 mm, 없으면 px 로 계산됩니다.",
+                        "※ 두 스텝 모두 캘리브레이션(또는 스텝 Resolution)이 있으면 mm, 없으면 px 로 계산됩니다. " +
+                        "기준을 등록할 때의 단위가 함께 기록되어, 나중에 캘리브레이션을 넣거나 빼서 단위가 바뀌면 '단위 불일치' 로 실패합니다 — " +
+                        "Baseline · Max ΔXY 를 새 단위로 맞추고 기준을 다시 등록하세요.",
                 CognexEquivalent = "2-카메라(2-FOV) 얼라인 구성 — CogPMAlign ×2 + 커스텀 합산 로직 대응",
                 Parameters = new Dictionary<string, string>
                 {
@@ -490,7 +492,7 @@ namespace VMS.VisionSetup.Models
                     ["RefBY"] = "기준 B 점 Y.",
                     ["RequireSameCycle"] = "AUTO RUN 에서 이번 사이클에 기록된 포즈만 인정합니다 (기본 켬).\n끄면 마지막 값이 유지되어 편집/튜닝이 편하지만, 운전 중 스텝 A 매칭이 실패했을 때 이전 사이클 값으로 잘못 계산될 수 있습니다.",
                     ["EnableJudgment"] = "변위가 허용 범위 이내인지 판정합니다. 합격: √(ΔX²+ΔY²) ≤ Max ΔXY 그리고 |Δθ| ≤ Max Δθ.",
-                    ["MaxDeltaXY"] = "위치 변위 허용 반경 (합성 좌표계 단위 — mm 캘리브 시 mm).",
+                    ["MaxDeltaXY"] = "위치 변위 허용 반경 (합성 좌표계 단위 — 설정 패널의 '기준 단위' 와 같은 단위, mm 캘리브 시 mm).",
                     ["MaxDeltaTheta"] = "각도 변위 허용값 (°).",
                     ["EnableRobotTransform"] = "켜면 Δ에 핸드아이 행렬 상위 2x2 를 적용해 로봇/스테이지 좌표계 변위(RobotDX/DY/DTheta)를 출력합니다.",
                     ["RobotM11"] = "핸드아이 행렬 상위 2x2 의 (1,1) 성분. 항등(1,0/0,1)이면 합성 좌표계 그대로 출력합니다.",

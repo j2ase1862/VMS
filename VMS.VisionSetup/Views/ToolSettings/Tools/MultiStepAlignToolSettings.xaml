@@ -72,6 +72,8 @@
                         HorizontalAlignment="Left" Margin="0,6,0,0" Padding="10,4"/>
                 <TextBlock Text="{Binding CaptureStatus}" Foreground="#999999" FontSize="10"
                            TextWrapping="Wrap" Margin="0,4,0,0"/>
+                <TextBlock Text="{Binding ReferenceUnitText}" Foreground="#999999" FontSize="10"
+                           TextWrapping="Wrap" Margin="0,4,0,0"/>
                 <TextBlock Foreground="#999999" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,0"
                            Text="기준 부품을 놓고 A 스텝 → B 스텝 순서로 Run 한 뒤 등록하세요. Baseline 을 먼저 입력해야 기준·현재가 같은 좌표계로 잡힙니다."/>
             </StackPanel>
