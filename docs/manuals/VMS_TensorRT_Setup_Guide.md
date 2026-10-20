@@ -302,8 +302,6 @@ DetectionTool:
 # (VMS 시퀀스 에디터의 Pipeline ExecutionTime 활용)
 ```
 
-측정 항목은 [VMS_DeepLearning_Detection_Improvements.md](VMS_DeepLearning_Detection_Improvements.md)의 실 환경 테스트 체크리스트 참조.
-
 ---
 
 ## 7. 문제 해결
@@ -390,5 +388,4 @@ GPU 환경에서 문제가 생기면 즉시 CPU로 복귀할 수 있습니다.
 ---
 
 **관련 문서**:
-- [VMS_DeepLearning_Detection_Improvements.md](VMS_DeepLearning_Detection_Improvements.md) — 전체 개선 사항
 - [VMS_Labeling_Training_Manual.md](VMS_Labeling_Training_Manual.md) — 학습 매뉴얼
