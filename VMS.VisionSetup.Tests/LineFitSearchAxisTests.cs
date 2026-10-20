@@ -11,7 +11,11 @@ namespace VMS.VisionSetup.Tests
     /// 현장 보고(2026-09-22): RectAffine ROI 를 그리면 화살표는 가로를 가리키는데
     /// 실제로는 세로로 훑었다. 실행이 ROI 의 <b>긴 변</b>을 기준선으로 삼았기 때문이다
     /// (가로가 긴 ROI → 세로 탐색). 이제 화살표 방향(SearchAxis)이 곧 탐색 방향이다.
+    /// <para>VisionServiceSingleton 컬렉션 — Execute 의 오버레이 바탕(GetColorOverlayBase)이
+    /// VisionService.Instance.CurrentImage 를 읽는다. 다른 테스트가 같은 크기의 이미지를 넣었다 해제하는
+    /// 사이에 병렬로 돌면 "Cannot access a disposed object" 로 실패했다 (CI, PR #556).</para>
     /// </summary>
+    [Collection("VisionServiceSingleton")]
     public class LineFitSearchAxisTests
     {
         /// <summary>
