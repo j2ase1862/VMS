@@ -63,7 +63,7 @@ namespace VMS.VisionSetup.Tests
             var pose = RotZ(degrees) * Matrix4x4.CreateTranslation(15f, -10f, 5f);
             var source = MakeBox(pose);
 
-            // Coarse 정렬 → ICP (툴의 실행 경로와 동일한 합성)
+            // PCA 하나를 고른 뒤 ICP (옛 툴 경로 — 지금 툴은 RegisterWithCoarse 를 쓴다)
             var coarse = TransformUtils.CoarseAlignPCA(reference, source);
             var coarseAligned = TransformUtils.TransformPointCloud(source, coarse);
             var icp = TransformUtils.ICP(reference, coarseAligned, 100, 0.05f, out var stats);
@@ -115,6 +115,108 @@ namespace VMS.VisionSetup.Tests
 
             Assert.True(TransformUtils.ComputeInlierRatio(reference, identical, Matrix4x4.Identity, 0.5f) > 0.99f);
             Assert.True(TransformUtils.ComputeInlierRatio(reference, offset, Matrix4x4.Identity, 0.5f) < 0.5f);
+        }
+
+        // ───────────── RegisterWithCoarse (툴이 쓰는 경로) ─────────────
+
+        /// <summary>
+        /// 현장 프레임과 비슷한 꼴 — 사각 링(376×252mm, 폭 20mm, 4mm 간격) + 한쪽에 치우친 낮은 가로대.
+        /// <paramref name="cutX"/> 보다 오른쪽은 찍히지 않은 것으로 뺀다(현장에서 프레임 일부가 가려진 촬영본).
+        /// </summary>
+        private static PointCloudData MakeFrame(Matrix4x4 transform, float cutX = 999f, float noise = 0f, int seed = 1)
+        {
+            var rnd = new Random(seed);
+            float N() => (float)(rnd.NextDouble() - 0.5) * noise;
+            var xyz = new System.Collections.Generic.List<float>();
+            for (float x = 0; x <= 376; x += 4)
+                for (float y = 0; y <= 252; y += 4)
+                {
+                    bool ring = x < 20 || x > 356 || y < 20 || y > 232;
+                    bool bar = x >= 100 && x < 120;
+                    if (!(ring || bar) || x > cutX) continue;
+                    var p = Vector3.Transform(new Vector3(x - 188 + N(), y - 126 + N(), (bar ? -25f : 0f) + N()), transform);
+                    xyz.Add(p.X); xyz.Add(p.Y); xyz.Add(p.Z);
+                }
+            return PointCloudData.FromArrays(xyz.ToArray());
+        }
+
+        [Theory]
+        [InlineData(90f)]
+        [InlineData(180f)]
+        public void RegisterWithCoarse_converges_on_large_rotation(float degrees)
+        {
+            var reference = MakeBox(Matrix4x4.Identity);
+            var source = MakeBox(RotZ(degrees) * Matrix4x4.CreateTranslation(15f, -10f, 5f));
+
+            var total = TransformUtils.RegisterWithCoarse(reference, source, 100, 0.05f, 1.0f, out var stats, out _);
+
+            Assert.True(stats.MeanError < 0.05f, $"mean error {stats.MeanError} at {degrees}°");
+            Assert.True(TransformUtils.ComputeInlierRatio(reference, source, total, 1.0f) > 0.95f);
+        }
+
+        /// <summary>
+        /// 핵심 — 일부가 가려진 프레임이 조금 돌아가 있으면 PCA 주축이 틀어져 옛 방식은 수십 도 어긋났다.
+        /// 새 방식은 "그대로" 를 포함한 후보를 끝까지 맞춰 보고 고르므로 실제 각도를 찾는다.
+        /// </summary>
+        [Theory]
+        [InlineData(5f)]
+        [InlineData(-20f)]
+        [InlineData(35f)]
+        public void RegisterWithCoarse_finds_the_pose_of_a_partly_hidden_frame(float degrees)
+        {
+            var reference = MakeFrame(Matrix4x4.Identity);
+            var source = MakeFrame(RotZ(degrees) * Matrix4x4.CreateTranslation(6f, -4f, 0f), cutX: 340f, noise: 1f, seed: 7);
+
+            var total = TransformUtils.RegisterWithCoarse(reference, source, 50, 0.05f, 3f, out _, out var candidates);
+            float rotZ = TransformUtils.ToEulerAnglesDegrees(total).Z;
+
+            Assert.True(Math.Abs(rotZ + degrees) < 3f, $"rotZ {rotZ}° — expected about {-degrees}°");
+            Assert.Equal(5, candidates.Length);
+            Assert.Single(candidates, c => c.Chosen);
+        }
+
+        /// <summary>위 시험이 무는지 — 같은 조건에서 옛 방식(PCA 하나를 고른 뒤 ICP)은 크게 어긋난다.</summary>
+        [Fact]
+        public void Old_pca_then_icp_misses_a_partly_hidden_frame()
+        {
+            var reference = MakeFrame(Matrix4x4.Identity);
+            var source = MakeFrame(RotZ(5f) * Matrix4x4.CreateTranslation(6f, -4f, 0f), cutX: 340f, noise: 1f, seed: 7);
+
+            var coarse = TransformUtils.CoarseAlignPCA(reference, source);
+            using var moved = TransformUtils.TransformPointCloud(source, coarse);
+            var total = coarse * TransformUtils.ICP(reference, moved, 50, 0.05f, out _);
+
+            Assert.True(Math.Abs(TransformUtils.ToEulerAnglesDegrees(total).Z + 5f) > 20f);
+        }
+
+        /// <summary>대칭 프레임이 같은 신뢰도의 "180° 뒤집힌" 답을 가져도 덜 돌린 쪽을 고른다.</summary>
+        [Theory]
+        [InlineData(10f)]
+        [InlineData(-25f)]
+        public void RegisterWithCoarse_prefers_the_smaller_rotation_on_a_tie(float degrees)
+        {
+            var reference = MakeFrame(Matrix4x4.Identity);
+            var source = MakeFrame(RotZ(degrees) * Matrix4x4.CreateTranslation(6f, -4f, 0f));
+
+            var total = TransformUtils.RegisterWithCoarse(reference, source, 50, 0.05f, 3f, out _, out _);
+
+            Assert.True(Math.Abs(TransformUtils.ToEulerAnglesDegrees(total).Z + degrees) < 1.5f);
+        }
+
+        /// <summary>"그대로" 가 늘 결선에 있으므로 Coarse 를 켜도 ICP 단독보다 신뢰도가 낮아지지 않는다.</summary>
+        [Fact]
+        public void RegisterWithCoarse_is_never_worse_than_icp_alone()
+        {
+            var reference = MakeFrame(Matrix4x4.Identity);
+            var source = MakeFrame(RotZ(5f) * Matrix4x4.CreateTranslation(2f, 1f, 0f), noise: 1f, seed: 3);
+
+            var icpOnly = TransformUtils.ICP(reference, source, 50, 0.05f, out _);
+            var withCoarse = TransformUtils.RegisterWithCoarse(reference, source, 50, 0.05f, 3f, out _, out var candidates);
+
+            float alone = TransformUtils.ComputeInlierRatio(reference, source, icpOnly, 3f);
+            float coarse = TransformUtils.ComputeInlierRatio(reference, source, withCoarse, 3f);
+            Assert.True(coarse >= alone - 0.03f, $"coarse {coarse:P0} < ICP alone {alone:P0}");
+            Assert.NotNull(candidates[0].FinalConfidence); // "그대로" 는 끝까지 맞춰 본다
         }
 
         [Fact]

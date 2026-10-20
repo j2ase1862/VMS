@@ -2133,3 +2133,28 @@ docs 정리(VMS #550) 때 판단을 미룬 6건을 정리했다.
 ### 매뉴얼 반영 (완료)
 
 별책 v1.4(표지 문서 버전 · 변경 이력), 배포본 HTML · PDF 재생성(13쪽 유지, 12쪽 렌더 확인).
+
+## 58. PointCloud Registration — Coarse 초기 맞춤 180° 뒤집힘 수정 — **반영 대기**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-10-20 |
+| 대상 | 본편 §6 PointCloud Registration 파라미터 표 (Enable Coarse Alignment 한 줄) |
+| 변경 종류 | 결함 수정 (VisionSetup · 본체 3D 검사) |
+
+### 무엇이 바뀌었나 (사내 기록)
+
+기본으로 켜진 Coarse(PCA) 초기 맞춤이 현장 Mech-Mind 사각 프레임에서 평면 내 140~175° 뒤집힌 자세를 골랐다(온전한 프레임 7장 중 5장).
+PCA 축 부호 4조합은 이미 시험했지만 ICP 전의 평균 거리로만 골라, 180° 돌려도 모양이 비슷한 부품에서는 뒤집힌 쪽이 앞서고
+ICP 가 그 자리에서 수렴했다. 또 "회전 없이 그대로" 는 후보에 없어 Coarse 를 켜면 끈 것보다 나빠질 수 있었다.
+
+새 경로 `TransformUtils.RegisterWithCoarse`: "그대로" + PCA 4후보를 샘플로 짧게 맞춘 뒤, "그대로"(항상) + 상위 PCA 후보만 본 ICP 까지 돌려
+신뢰도(inlier 비율)가 가장 높은 결과를 쓴다. 신뢰도가 3%p 안에서 비슷하면 회전이 작은 쪽. 현장 19장 진단(`RegistrationCoarseFieldDiagnosticTests`):
+온전한 프레임은 모두 Coarse OFF 와 1° 안에서 같은 자세 · 신뢰도는 1%p 이상 낮아지지 않음, 기준 대비 52° 돌아간 Scan-9 는 OFF 13% → 52.9° · 67%.
+일부만 찍힌 프레임(OFF 신뢰도 6~26%)은 결과가 달라지며 정답 자세를 알 수 없다. 정합 시간은 2~4배.
+
+### 매뉴얼 반영 (대기 — 다음 릴리즈 때)
+
+`docs/manuals/tools_prose.json` 의 Registration 파라미터 "Enable Coarse Alignment" 설명을 다음으로 바꾸고 6장 · docx/PDF 재생성:
+"켬 — 회전 없이 맞춘 자세와 주축을 맞춘 자세를 함께 맞춰 보고 신뢰도가 높은 쪽을 씁니다. 정합 시간이 2~4배 늘어나므로 앞에 Filter(VoxelGrid)를 두세요.
+구 · 정육면체처럼 완전 대칭인 물체는 자세를 가를 수 없습니다."
