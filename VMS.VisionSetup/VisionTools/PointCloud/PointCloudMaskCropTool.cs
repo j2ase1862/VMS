@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
+using VMS.Camera.Converters;
 using VMS.Camera.Models;
 using VMS.Camera.Utils;
 using VMS.VisionSetup.Models;
@@ -22,7 +23,9 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
     /// 좌표 매핑: organized 점군은 X/Y에 뎁스맵 픽셀 좌표가 저장되므로
     /// (MechMindCameraAcquisition — X=col·stride, Y=row·stride) 인접 점에서 stride를 복원해
     /// 마스크 해상도와 뎁스맵 해상도가 달라도 비율로 맞춘다.
-    /// unorganized 점군은 마스크와 같은 픽셀 공간이라고 가정한다(크롭/필터 이후 재적용 등).
+    /// unorganized 점군은 지금 Height Map 이 그 점군을 정사투영한 맵이고 마스크가 그 맵과 같은 크기면
+    /// 그 격자(원점·칸 크기)로 점을 마스크 화소에 넣는다 — 저장 .vpc 처럼 XY 가 mm 인 점군이 이 경우다.
+    /// 그 밖의 unorganized 점군은 마스크와 같은 픽셀 공간이라고 가정한다(격자 점군 크롭 이후 재적용 등).
     /// </summary>
     public class PointCloudMaskCropTool : VisionToolBase
     {
@@ -127,6 +130,7 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                 if (InvertMask)
                     Cv2.BitwiseNot(keptMask, keptMask);
 
+                var ortho = ResolveOrthographicGrid(src, service.CurrentHeightMapMetadata, maskW, maskH);
                 var (scaleX, scaleY) = ComputeMaskScale(src, maskW, maskH);
 
                 int inputCount = src.PointCount;
@@ -140,10 +144,19 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                     var p = positions[i];
                     if (SkipInvalidZ && p.Z == 0f) continue;
 
-                    int mx = (int)MathF.Round(p.X * scaleX);
-                    int my = (int)MathF.Round(p.Y * scaleY);
-                    bool inside = mx >= 0 && mx < maskW && my >= 0 && my < maskH
-                        && maskData[my * maskW + mx] >= MinMaskValue;
+                    int mx, my;
+                    bool mapped;
+                    if (ortho is { } grid)
+                    {
+                        mapped = grid.TryGetCell(p.X, p.Y, out mx, out my);
+                    }
+                    else
+                    {
+                        mx = (int)MathF.Round(p.X * scaleX);
+                        my = (int)MathF.Round(p.Y * scaleY);
+                        mapped = mx >= 0 && mx < maskW && my >= 0 && my < maskH;
+                    }
+                    bool inside = mapped && maskData[my * maskW + mx] >= MinMaskValue;
                     if (inside != InvertMask)
                         kept.Add(i);
                 }
@@ -198,7 +211,7 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
                 result.OverlayImage = RenderOverlay(inputImage, keptMask);
                 result.Success = true;
                 result.Message = $"Cropped {inputCount} → {kept.Count} points "
-                    + $"(mask {maskW}x{maskH}, coverage {coverage:F1}%"
+                    + $"(mask {maskW}x{maskH}{(ortho != null ? " ortho grid" : "")}, coverage {coverage:F1}%"
                     + $"{(UseROI ? ", ROI" : "")}"
                     + $"{(InvertMask ? ", inverted" : "")}"
                     + $"{(DilatePixels > 0 ? $", dilate {DilatePixels}px" : "")}"
@@ -291,6 +304,20 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
             using (var region = new Mat(outside, roi))
                 region.SetTo(0);
             gray.SetTo(0, outside);
+        }
+
+        /// <summary>
+        /// unorganized 점군을 정사투영 격자로 마스크에 되짚어야 하는 경우 그 격자.
+        /// 지금 Height Map 이 정사투영 맵이고 마스크가 그 맵과 같은 크기일 때만이다 — 마스크가 그 맵의
+        /// 화소 공간에서 나왔다는 근거가 크기 일치뿐이기 때문이다. 크기가 다르면(카메라 2D 영상 등) 예전처럼
+        /// 1:1 로 둔다. 격자는 맵을 만든 점군 기준이지만 좌표는 점군 단위(mm)라 그 뒤 좁혀진 점군에도 그대로 맞는다.
+        /// </summary>
+        private static OrthographicGrid? ResolveOrthographicGrid(
+            PointCloudData src, HeightMapMetadata? metadata, int maskW, int maskH)
+        {
+            if (src.IsOrganized) return null;
+            if (metadata?.Orthographic is not { } grid) return null;
+            return grid.Width == maskW && grid.Height == maskH ? grid : null;
         }
 
         /// <summary>

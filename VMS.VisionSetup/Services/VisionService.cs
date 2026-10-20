@@ -1399,6 +1399,7 @@ namespace VMS.VisionSetup.Services
             Mat depthMap32F;
             Vector3?[] pixelTo3D;
             int w, h;
+            OrthographicGrid? orthoGrid = null;
 
             if (pointCloud.IsOrganized)
             {
@@ -1422,7 +1423,8 @@ namespace VMS.VisionSetup.Services
             {
                 // 비격자 점군(Registration/Cluster 후 등) — 정사투영 비닝
                 (depthMap32F, pixelTo3D, w, h) =
-                    PointCloudConverter.OrthographicToDepthMap32F(pointCloud, zRef);
+                    PointCloudConverter.OrthographicToDepthMap32F(pointCloud, zRef, out var grid);
+                orthoGrid = grid;
             }
 
             var heightMap8U = PointCloudConverter.DepthMap32FTo8U(depthMap32F, zMin, zMax);
@@ -1435,7 +1437,8 @@ namespace VMS.VisionSetup.Services
                 ZMin = zMin,
                 ZMax = zMax,
                 DepthMap32F = depthMap32F,
-                PixelTo3D = pixelTo3D
+                PixelTo3D = pixelTo3D,
+                Orthographic = orthoGrid
             };
 
             // VisionService에 float map 보관 (HeightSlicerTool 라우팅용)
