@@ -56,7 +56,7 @@ namespace VMS.VisionSetup.VisionTools.PointCloud
         /// <summary>
         /// 거친 정렬을 ICP 앞단에 수행 — 초기 자세 차이가 커도 수렴하도록 함.
         /// "그대로" + PCA 후보 4개에서 각각 ICP 를 돌려 신뢰도가 가장 높은 결과를 쓰므로(<see cref="TransformUtils.RegisterWithCoarse"/>)
-        /// 켜도 끈 것보다 나빠지지 않는다. 대신 정합 시간이 2~4배 — 앞에 Filter(복셀)를 두는 것을 권장.
+        /// 켜도 끈 것보다 나빠지지 않는다. 대신 정합 시간이 2~4배(KD-트리 최근접 탐색으로 3만 점 원본도 약 3초) — 사이클이 빠듯하면 앞에 Filter(복셀).
         /// </summary>
         public bool EnableCoarseAlignment
         {

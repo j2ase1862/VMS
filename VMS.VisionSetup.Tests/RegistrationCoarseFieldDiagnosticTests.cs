@@ -30,6 +30,7 @@ namespace VMS.VisionSetup.Tests
         [Fact]
         public void Diagnostic_Registration_CoarseOnVsOff_OnFieldFrames()
         {
+            var swOff = new System.Diagnostics.Stopwatch(); var swNew = new System.Diagnostics.Stopwatch();
             foreach (var dir in DataDirs.Where(Directory.Exists))
             {
                 var refPath = Path.Combine(dir, "Recipe", "frame_reference.vpc");
@@ -43,9 +44,9 @@ namespace VMS.VisionSetup.Tests
                     if (src == null) { _out.WriteLine($"  {Path.GetFileName(file),-34} 프레임 없음"); continue; }
                     using (src)
                     {
-                        var off = Run(reference, src, coarse: false);
+                        swOff.Start(); var off = Run(reference, src, coarse: false); swOff.Stop();
                         var on = Run(reference, src, coarse: true);
-                        var neu = RunNew(reference, src, out var cands);
+                        swNew.Start(); var neu = RunNew(reference, src, out var cands); swNew.Stop();
                         _out.WriteLine($"  {Path.GetFileName(file),-34} n={src.PointCount,5} │ OFF {off.rotZ,7:F1}° {off.conf,4:P0} │ PCA {on.rotZ,7:F1}° {on.conf,4:P0} │ NEW {neu.rotZ,7:F1}° {neu.conf,4:P0}"
                                        + (Math.Abs(Wrap(neu.rotZ - off.rotZ)) > 20 ? "   ← NEW≠OFF" : "")
                                        + "  [" + string.Join(" ", cands.Select(c =>
@@ -53,6 +54,38 @@ namespace VMS.VisionSetup.Tests
                     }
                 }
             }
+            _out.WriteLine($"합계 — Coarse OFF {swOff.ElapsedMilliseconds} ms · 새 Coarse {swNew.ElapsedMilliseconds} ms");
+        }
+
+        /// <summary>
+        /// 다운샘플하지 않은 원본 규모(프레임 높이대 전체 점)로 정합 시간을 잰다 — ICP 최근접 탐색 비용 확인용.
+        /// </summary>
+        [Fact]
+        public void Diagnostic_Registration_Timing_OnRawFrameBand()
+        {
+            var dir = DataDirs.FirstOrDefault(Directory.Exists);
+            var refPath = dir == null ? null : Path.Combine(dir, "Recipe", "frame_reference.vpc");
+            if (refPath == null || !File.Exists(refPath)) { _out.WriteLine("데이터 없음 — 스킵"); return; }
+            foreach (var name in new[] { "Mech-Mind 3D Scan-2.vpc", "Mech-Mind 3D Scan-6.vpc" })
+            {
+                var file = Path.Combine(dir!, name);
+                if (!File.Exists(file)) continue;
+                using var refRaw = PrepareRaw(Path.Combine(dir!, "Mech-Mind 3D Scan-2.vpc"));
+                using var src = PrepareRaw(file);
+                if (refRaw == null || src == null) continue;
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                var t = TransformUtils.ICP(refRaw, src, 50, 2f, out _);
+                long icpMs = sw.ElapsedMilliseconds; sw.Restart();
+                var t2 = TransformUtils.RegisterWithCoarse(refRaw, src, 50, 2f, 3f, out _, out _);
+                long coarseMs = sw.ElapsedMilliseconds;
+                _out.WriteLine($"{name}: 기준 {refRaw.PointCount}점 · 소스 {src.PointCount}점 │ ICP 단독 {icpMs} ms (rotZ {TransformUtils.ToEulerAnglesDegrees(t).Z:F1}°) │ Coarse+ICP {coarseMs} ms (rotZ {TransformUtils.ToEulerAnglesDegrees(t2).Z:F1}°)");
+            }
+        }
+
+        private static PointCloudData? PrepareRaw(string file)
+        {
+            var voxelled = Prepare(file, voxel: false);
+            return voxelled;
         }
 
         private static (float rotZ, float conf) Run(PointCloudData reference, PointCloudData src, bool coarse)
@@ -82,7 +115,7 @@ namespace VMS.VisionSetup.Tests
         }
 
         /// <summary>레시피 1-2 와 같은 준비 — 높이대 → 가장 큰 클러스터 → 복셀.</summary>
-        private static PointCloudData? Prepare(string file)
+        private static PointCloudData? Prepare(string file, bool voxel = true)
         {
             using var raw = PointCloudData.LoadFromFile(file);
             var band = raw.Positions.Take(raw.PointCount)
@@ -99,7 +132,7 @@ namespace VMS.VisionSetup.Tests
             if (!cluster.Success || service.CurrentPointCloud == null) return null;
             var largest = service.CurrentPointCloud;
             service.CurrentPointCloud = null;
-            return TransformUtils.VoxelGridFilter(largest, Voxel);
+            return voxel ? TransformUtils.VoxelGridFilter(largest, Voxel) : largest;
         }
 
         private static float Wrap(float deg) => ((deg + 540f) % 360f) - 180f;
