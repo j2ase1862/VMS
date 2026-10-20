@@ -59,7 +59,7 @@ MLOps 는 `D:\Repo\BODA.VMS.MLOps\docs\manual\screenshots` 재사용, 구성도�
 
 | PR | 매뉴얼에 들어갈 내용 | 대상 절 |
 |----|--------------------|--------|
-| (PR 번호 미정) VMS 본체 촬영에 스텝 3D 설정 적용 — ⏳ **반영 대기** | **VMS 본체의 Grab · 자동 운전 · Live 도 촬영 직전에 스텝의 3D 스캔 설정(점군 후처리 · 뎁스 범위)을 카메라에 넣는다** (예전에는 2D 노출 · 게인만 넣어, VisionSetup 에서 맞춘 3D 설정 없이 찍었다). 매뉴얼 §5 Camera Settings 설명의 "여기 값은 Acquire · Live 때 카메라에 적용" 을 VMS 운전까지 넓힌다. 상세 §62 | §5 Camera Settings |
+| #556 VMS 본체 촬영에 스텝 3D 설정 적용 — ⏳ **반영 대기** | **VMS 본체의 Grab · 자동 운전 · Live 도 촬영 직전에 스텝의 3D 스캔 설정(점군 후처리 · 뎁스 범위)을 카메라에 넣는다** (예전에는 2D 노출 · 게인만 넣어, VisionSetup 에서 맞춘 3D 설정 없이 찍었다). 매뉴얼 §5 Camera Settings 설명의 "여기 값은 Acquire · Live 때 카메라에 적용" 을 VMS 운전까지 넓힌다. 상세 §62 | §5 Camera Settings |
 | #554 Multi-Step Align 기준 단위 기록 (v1.42.17) — ✅ **반영 완료**(본문 · docx/PDF, 2026-10-20 — 설정 패널 그림은 다음 재캡처 때) | **Multi-Step Align 이 기준을 등록할 때 단위(mm · px)를 기록하고, 캘리브레이션을 넣거나 빼서 단위가 바뀌면 "단위 불일치" 로 실패한다** (예전에는 다른 단위끼리 Δ · 판정을 냈다). 설정 패널에 "기준 단위" 줄. 옛 레시피(기록 없음)는 예전처럼. 매뉴얼 §6.4 Multi-Step Align 기준 등록 행에 한 줄, 설정 패널 그림(12_Multi-Step_Align_split.png)은 줄이 하나 늘어남. 상세 §60 | §6.4 Multi-Step Align |
 | #553 ICP KD-트리 (v1.42.17) — ✅ **매뉴얼 변경 없음** | **3D 정합(Registration · Deviation 등 ICP) 이 크게 빨라짐** — 원본 3만 점 ICP 97초 → 0.9초, Coarse+ICP 281초 → 2.8초, 결과는 같음. #552 행(§58)의 반영 문구에 시간을 넣음. 상세 §59 | (§6 Registration — #552 반영 때 함께) |
 | #552 Registration Coarse 뒤집힘 수정 (v1.42.17) — ✅ **반영 완료**(본문 · docx/PDF, 2026-10-20) | **PointCloud Registration 의 Enable Coarse Alignment 가 대칭에 가까운 부품을 180° 뒤집지 않는다** — 회전 없이 맞춘 자세와 주축 후보를 함께 맞춰 보고 신뢰도가 높은 쪽을 씀(켜도 끈 것보다 나빠지지 않음). 대신 정합 시간 2~4배 → 앞에 Filter(VoxelGrid) 권장. 매뉴얼 §6 Registration 파라미터 표 한 줄(tools_prose.json) 고칠 것. 상세 §58 | §6 PointCloud Registration |
