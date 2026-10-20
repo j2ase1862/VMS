@@ -207,7 +207,7 @@
 <main>
 <div class="header-strip">
   <h1>BODA VMS 사용자 매뉴얼</h1>
-  <div class="sub">버전 3.0 · 2026-09-17 · VMS v1.39.2 · BODA.VMS.Web v1.10.3 · BODA.VMS.MLOps v0.1.1 — 시스템 구성 → 설치 → 프로그램별 조작 → 검사 설정 → 웹 관리 → 유지보수</div>
+  <div class="sub">버전 3.0 · 2026-09-17 · VMS v1.42.16 · BODA.VMS.Web v1.10.3 · BODA.VMS.MLOps v0.1.2 — 시스템 구성 → 설치 → 프로그램별 조작 → 검사 설정 → 웹 관리 → 유지보수</div>
 </div>
 <section id="overview">
 <h2 id="1-시스템-개요">1. 시스템 개요</h2>
@@ -432,10 +432,10 @@ cd &lt;압축 푼 폴더&gt;\deploy
 <ol>
   <li>NVIDIA GPU(VRAM 8GB 이상), CUDA 12.4 지원 드라이버(550 이상), <strong>Python 3.12 64-bit 를 "모든 사용자용"으로</strong> 설치합니다.</li>
   <li>MLOps 화면 학습 → 워커 → [워커 등록]에서 이름을 넣고 [발급]을 눌러 <code>wk_…</code> 토큰을 받습니다. 토큰은 이때 한 번만 표시됩니다.</li>
-  <li><code>BODA-VMS-TrainWorker-0.1.1.msi</code> 를 실행하고 <strong>"워커 연결 설정"</strong> 화면에 관리 서버 주소(<code>http://서버:5310</code>) ·
+  <li><code>BODA-VMS-TrainWorker-0.1.2.msi</code> 를 실행하고 <strong>"워커 연결 설정"</strong> 화면에 관리 서버 주소(<code>http://서버:5310</code>) ·
       워커 토큰 · 워커 이름을 입력합니다.</li>
   <li>설치가 끝나면 서비스 <code>BodaVmsTrainWorker</code> 가 시작되어 첫 실행 시 파이썬 환경(venv, 약 6GB)을 준비합니다.
-      온라인 설치는 10~40 분이 걸립니다. 폐쇄망은 wheel 번들이 동봉된 <code>-offline.msi</code> 를 씁니다.</li>
+      온라인 설치는 10~40 분이 걸립니다. 폐쇄망은 MSI 대신 함께 배포되는 <code>BODA-VMS-TrainWorker-0.1.2-offline</code> 폴더의 <code>install-offline.cmd</code> 를 관리자 권한 명령 프롬프트에서 실행합니다(wheel 묶음을 이 PC 에 복사한 뒤 같은 MSI 를 설치합니다. 복사된 <code>%ProgramData%\BODA VMS TrainWorker\wheels</code> 는 지우지 마세요).</li>
   <li>MLOps 워커 화면에서 상태가 <strong>대기 중</strong>으로 바뀌면 준비 완료입니다. 로그는 <code>%ProgramData%\BODA VMS TrainWorker\logs</code> 에 남습니다.</li>
 </ol>
 <figure><img src="../gs/screenshots/mlops/worker_install_wizard.png" data-width="420" alt="학습 워커 설치 마법사">
@@ -3233,7 +3233,7 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <table class="cols-3-6">
   <tr><th>항목</th><th>값</th></tr>
   <tr><td>문서 버전</td><td>3.0 (2026-09-17)</td></tr>
-  <tr><td>대상 소프트웨어</td><td>VMS 1.42.0 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.1</td></tr>
+  <tr><td>대상 소프트웨어</td><td>VMS 1.42.16 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.2</td></tr>
   <tr><td>구성</td><td>VMS · VMS.VisionSetup · VMS.AppSetup (검사 런타임) / BODA.VMS.Web (생산 관리) / BODA.VMS.MLOps · VMS.DeepLearning (선택 구성 요소, 인증 범위 외)</td></tr>
   <tr><td>발행</td><td>BODA Vision AI</td></tr>
 </table>
