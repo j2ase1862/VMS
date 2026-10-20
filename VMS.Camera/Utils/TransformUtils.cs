@@ -303,11 +303,14 @@ namespace VMS.Camera.Utils
             int iterationsRun = 0;
             bool converged = false;
 
+            // 기준 점군은 반복 내내 그대로 — KD-트리를 한 번만 만든다
+            var refTree = new PointKdTree(reference.Positions, refCount);
+
             for (int iter = 0; iter < maxIterations; iter++)
             {
                 iterationsRun = iter + 1;
-                // 1. Find closest points (brute-force, 다운샘플 후 사용 권장)
-                var correspondences = FindClosestPoints(reference.Positions, refCount, srcPoints, srcCount);
+                // 1. Find closest points (KD-트리 — 전수 비교와 같은 결과)
+                var correspondences = FindClosestPoints(refTree, srcPoints, srcCount);
 
                 // 2. Compute centroid
                 Vector3 srcCentroid = Vector3.Zero;
@@ -469,7 +472,7 @@ namespace VMS.Camera.Utils
             int srcCount = source.PointCount;
             if (refCount < 3 || srcCount < 3) return Matrix4x4.Identity;
 
-            // 후보 스코어링용 소스 샘플 (성능 — 최근접 탐색이 O(N·M))
+            // 후보 스코어링용 소스 샘플 (점수만 보면 되므로 2000점이면 충분)
             var samples = SamplePositions(source.Positions, srcCount, 2000);
 
             var best = Matrix4x4.Identity;
@@ -557,7 +560,7 @@ namespace VMS.Camera.Utils
                 return ICP(reference, source, maxIterations, tolerance, out stats);
             }
 
-            // ① 짧은 ICP 는 샘플로 — brute-force 최근접이라 점 수가 곧 시간이다
+            // ① 짧은 ICP 는 샘플로 — 후보 다섯 개를 다 끝까지 돌리지 않으려는 것이다
             var starts = new List<(string Name, Matrix4x4 M)> { ("그대로", Matrix4x4.Identity) };
             var pca = PcaCandidates(reference, source);
             for (int i = 0; i < pca.Length; i++) starts.Add(($"PCA{i + 1}", pca[i]));
@@ -898,41 +901,15 @@ namespace VMS.Camera.Utils
         #region ICP Internal
 
         private static int[] FindClosestPoints(Vector3[] refPoints, int refCount, Vector3[] srcPoints, int srcCount)
+            => FindClosestPoints(new PointKdTree(refPoints, refCount), srcPoints, srcCount);
+
+        /// <summary>
+        /// 소스 점마다 가장 가까운 기준 점 번호 (없으면 -1). KD-트리 질의라 전수 비교와 결과가 같다(<see cref="PointKdTree"/>).
+        /// </summary>
+        private static int[] FindClosestPoints(PointKdTree tree, Vector3[] srcPoints, int srcCount)
         {
             var correspondences = new int[srcCount];
-
-            Parallel.For(0, srcCount, i =>
-            {
-                float minDist = float.MaxValue;
-                int minIdx = -1;
-                var sp = srcPoints[i];
-
-                if (float.IsNaN(sp.X))
-                {
-                    correspondences[i] = -1;
-                    return;
-                }
-
-                for (int j = 0; j < refCount; j++)
-                {
-                    var rp = refPoints[j];
-                    if (float.IsNaN(rp.X)) continue;
-
-                    float dx = sp.X - rp.X;
-                    float dy = sp.Y - rp.Y;
-                    float dz = sp.Z - rp.Z;
-                    float dist = dx * dx + dy * dy + dz * dz;
-
-                    if (dist < minDist)
-                    {
-                        minDist = dist;
-                        minIdx = j;
-                    }
-                }
-
-                correspondences[i] = minIdx;
-            });
-
+            Parallel.For(0, srcCount, i => correspondences[i] = tree.Nearest(srcPoints[i]));
             return correspondences;
         }
 
