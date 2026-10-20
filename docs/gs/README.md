@@ -59,7 +59,7 @@ MLOps 는 `D:\Repo\BODA.VMS.MLOps\docs\manual\screenshots` 재사용, 구성도�
 
 | PR | 매뉴얼에 들어갈 내용 | 대상 절 |
 |----|--------------------|--------|
-| (이 PR) Registration Coarse 뒤집힘 수정 — ⏳ **반영 대기** | **PointCloud Registration 의 Enable Coarse Alignment 가 대칭에 가까운 부품을 180° 뒤집지 않는다** — 회전 없이 맞춘 자세와 주축 후보를 함께 맞춰 보고 신뢰도가 높은 쪽을 씀(켜도 끈 것보다 나빠지지 않음). 대신 정합 시간 2~4배 → 앞에 Filter(VoxelGrid) 권장. 매뉴얼 §6 Registration 파라미터 표 한 줄(tools_prose.json) 고칠 것. 상세 §58 | §6 PointCloud Registration |
+| #552 Registration Coarse 뒤집힘 수정 — ⏳ **반영 대기** | **PointCloud Registration 의 Enable Coarse Alignment 가 대칭에 가까운 부품을 180° 뒤집지 않는다** — 회전 없이 맞춘 자세와 주축 후보를 함께 맞춰 보고 신뢰도가 높은 쪽을 씀(켜도 끈 것보다 나빠지지 않음). 대신 정합 시간 2~4배 → 앞에 Filter(VoxelGrid) 권장. 매뉴얼 §6 Registration 파라미터 표 한 줄(tools_prose.json) 고칠 것. 상세 §58 | §6 PointCloud Registration |
 | 별책 v1.4 · 문서 정리 — ✅ **반영 완료**(별책 배포본 HTML/PDF, 2026-10-20) | **별책 §2 에 「SAM 모델 파일 준비 (설치 담당자)」 신설** — 설치 파일에 SAM 모델이 없음, 네 파일 한 세트, export_mobile_sam.py 로 만드는 법(폐쇄망은 체크포인트 먼저). 옛 SAM · Labeling 매뉴얼은 삭제. 본편 변경 없음. 상세 §57 | 별책 §2 |
 | 그림 속 개발 PC 정보 가림 — ✅ **반영 완료**(그림 · docx/PDF · 별책 배포본/PDF, 2026-10-20) | **학습 워커 그림 2장에서 개발 PC 이름과 Windows 사용자 폴더를 일반 값으로 바꿈** — 설치 마법사(본편 그림 4 · 별책)의 워커 이름 → GPU-PC-01, 파이썬 경로의 사용자 폴더 → C:\Users\guest / 워커 카드(별책)의 제목 · 장비 이름 → GPU-PC-01. 본문 변경 없음. 상세 §56 | §2.4 그림 4 · 별책 §2 |
 | MLOps 0.1.2 학습 워커 배포 구조 (MLOps 6c6d8ba, 2026-10-14) — ✅ **반영 완료**(본문 · docx/PDF, 2026-10-20) | **학습 워커 설치 파일이 0.1.2, 폐쇄망은 -offline 폴더의 install-offline.cmd 로 설치** — wheel 묶음은 MSI 에 넣지 않고(2GB 한도) 이 PC 의 %ProgramData%\BODA VMS TrainWorker\wheels 로 복사한 뒤 같은 MSI 를 설치, 그 폴더는 지우지 않는다. 상세 §55 | §2.4 학습 워커 (GPU PC) |
