@@ -3949,6 +3949,11 @@ namespace VMS.VisionSetup.ViewModels
                     CurrentPointCloud = data;
                     old?.Dispose();
                     StatusMessage = $"3D 데이터 로드 완료: {data.Name} ({data.PointCount:N0} points)";
+
+                    // 격자 점군은 OnCurrentPointCloudChanged 가 Height Map 을 만든다. 비격자는 거기서 빼 두었으므로
+                    // (도구 실행마다 다시 만들면 MaskCrop 이 기준으로 쓰는 정사투영 격자가 바뀐다) 파일을 열 때만 만든다.
+                    if (!data.IsOrganized)
+                        GenerateHeightMap();
                 }
                 catch (Exception ex)
                 {
@@ -3958,7 +3963,8 @@ namespace VMS.VisionSetup.ViewModels
         }
 
         // 정사투영 지원으로 비격자(unorganized) 점군도 허용 — Registration/Cluster
-        // 이후에도 Height Map 생성 가능. 자동 생성은 성능상 organized 전용 유지.
+        // 이후에도 Height Map 생성 가능. 점군이 바뀔 때의 자동 생성은 organized 전용이고,
+        // 비격자는 파일을 열 때(LoadPointCloud)와 이 버튼으로 만든다.
         private bool CanGenerateHeightMap() => CurrentPointCloud is { PointCount: > 0 };
 
         private void SaveHeightSlicing()
@@ -4032,7 +4038,9 @@ namespace VMS.VisionSetup.ViewModels
 
         private void GenerateHeightMap()
         {
-            if (CurrentPointCloud == null || !CurrentPointCloud.IsOrganized)
+            // 비격자 점군도 만든다 — 서비스가 정사투영으로 비닝한다. 예전에는 여기서 조용히 끝나
+            // 저장 .vpc(비격자)로는 Plane Fit · Geometry 3D 가 "3D 데이터 없음" 으로 실패했다.
+            if (CurrentPointCloud == null || CurrentPointCloud.PointCount == 0)
                 return;
 
             try

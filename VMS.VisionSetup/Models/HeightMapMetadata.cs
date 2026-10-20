@@ -1,5 +1,6 @@
 using System.Numerics;
 using OpenCvSharp;
+using VMS.Camera.Converters;
 
 namespace VMS.VisionSetup.Models
 {
@@ -21,6 +22,12 @@ namespace VMS.VisionSetup.Models
         /// Null entry means the pixel had no valid 3D point.
         /// </summary>
         public Vector3?[] PixelTo3D { get; set; } = Array.Empty<Vector3?>();
+
+        /// <summary>
+        /// 비격자 점군을 정사투영해 만든 맵이면 그 격자(원점·칸 크기), 격자 점군의 맵이면 null.
+        /// 이 맵의 화소 공간에서 나온 마스크를 점군에 되짚을 때(PointCloudMaskCropTool) 쓴다.
+        /// </summary>
+        public OrthographicGrid? Orthographic { get; set; }
 
         public Vector3? GetPoint3D(int u, int v)
         {

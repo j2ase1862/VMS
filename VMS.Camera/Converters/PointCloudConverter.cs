@@ -80,6 +80,15 @@ namespace VMS.Camera.Converters
         /// </summary>
         public static (Mat DepthMap32F, Vector3?[] PixelTo3D, int Width, int Height)
             OrthographicToDepthMap32F(PointCloudData pointCloud, float zRef)
+            => OrthographicToDepthMap32F(pointCloud, zRef, out _);
+
+        /// <summary>
+        /// <see cref="OrthographicToDepthMap32F(PointCloudData, float)"/> 와 같고, 쓴 격자(원점·칸 크기)를
+        /// 함께 돌려준다. 이 맵에서 나온 2D 마스크를 다시 점군에 대응시킬 때(MaskCrop) 같은 격자가 필요하다 —
+        /// 비격자 점군의 XY 는 mm 라 마스크 화소와 1:1 이 아니다.
+        /// </summary>
+        public static (Mat DepthMap32F, Vector3?[] PixelTo3D, int Width, int Height)
+            OrthographicToDepthMap32F(PointCloudData pointCloud, float zRef, out OrthographicGrid grid)
         {
             int count = pointCloud.PointCount;
             var positions = pointCloud.Positions;
@@ -113,6 +122,7 @@ namespace VMS.Camera.Converters
 
             int w = Math.Max(1, (int)MathF.Ceiling(extentX / cell));
             int h = Math.Max(1, (int)MathF.Ceiling(extentY / cell));
+            grid = new OrthographicGrid(minX, minY, cell, w, h);
 
             var depthMap = new Mat(h, w, MatType.CV_32FC1, Scalar.All(0));
             var pixelTo3D = new Vector3?[w * h];
@@ -127,8 +137,8 @@ namespace VMS.Camera.Converters
                     var p = positions[i];
                     if (float.IsNaN(p.X) || float.IsNaN(p.Y) || float.IsNaN(p.Z)) continue;
 
-                    int u = Math.Min(w - 1, (int)((p.X - minX) / cell));
-                    int v = Math.Min(h - 1, (int)((p.Y - minY) / cell));
+                    // 칸 나누기는 OrthographicGrid 한 곳에서 — MaskCrop 이 같은 규칙으로 되짚는다
+                    if (!grid.TryGetCell(p.X, p.Y, out int u, out int v)) continue;
                     int idx = v * w + u;
 
                     // 같은 셀에 여러 점 — 윗면(Z 최대) 우선
