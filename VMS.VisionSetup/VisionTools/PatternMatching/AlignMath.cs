@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using VMS.VisionSetup.Models;
 
 namespace VMS.VisionSetup.VisionTools.PatternMatching
@@ -90,9 +91,10 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
             if (!posOk || !angOk)
             {
                 result.Success = false;
-                string theta = dTheta.ToString("F" + thetaDecimals);
-                result.Message += $" · 판정 NG: {(posOk ? "" : $"위치 {radial:F3}{unit} > {s.MaxDeltaXY}{unit} ")}" +
-                                  $"{(angOk ? "" : $"각도 |{theta}°| > {s.MaxDeltaTheta}°")}".TrimEnd();
+                var reasons = new List<string>(2);
+                if (!posOk) reasons.Add($"위치 {radial:F3}{unit} > {s.MaxDeltaXY}{unit}");
+                if (!angOk) reasons.Add($"각도 |{dTheta.ToString("F" + thetaDecimals)}°| > {s.MaxDeltaTheta}°");
+                result.Message += " · 판정 NG: " + string.Join(" ", reasons);
             }
             else
             {

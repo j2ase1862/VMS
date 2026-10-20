@@ -104,8 +104,8 @@ namespace VMS.VisionSetup.Tests
 
             var positionOnly = new VisionResult { Success = true, Message = "Δ" };
             AlignMath.Judge(positionOnly, s, 1, 0, 0, "mm", 2);
-            // 위치만 NG 면 끝에 공백 하나가 남는다(TrimEnd 가 각도 부분에만 걸림) — 추출 전 두 도구와 같은 출력.
-            Assert.Equal("Δ · 판정 NG: 위치 1.000mm > 0.5mm ", positionOnly.Message);
+            // 예전에는 위치만 NG 면 끝에 공백 하나가 남았다(TrimEnd 가 각도 부분에만 걸림).
+            Assert.Equal("Δ · 판정 NG: 위치 1.000mm > 0.5mm", positionOnly.Message);
         }
     }
 }
