@@ -32,7 +32,7 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
     /// - 수동 기준: 설정 패널의 [현재 매칭을 기준으로 등록]으로 현재 포즈를 캡처하거나
     ///   RefX/RefY/RefTheta 를 직접 입력한다.
     /// </summary>
-    public class MatchAlignTool : VisionToolBase
+    public class MatchAlignTool : VisionToolBase, IAlignOutputSettings
     {
         private MatchAlignMode _mode = MatchAlignMode.SinglePoint;
         /// <summary>얼라인 계산 방식 (1점 / 2점).</summary>
@@ -251,36 +251,29 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                         o1x = RefX; o1y = RefY; o2x = RefX2; o2y = RefY2;
                     }
 
-                    double baseLen = Math.Sqrt((o2x - o1x) * (o2x - o1x) + (o2y - o1y) * (o2y - o1y));
-                    if (baseLen < 1e-6)
+                    var align = AlignMath.TwoPoint(o1x, o1y, o2x, o2y, p1x, p1y, p2x, p2y);
+                    if (align.RefLength < 1e-6)
                     {
                         result.Success = false;
                         result.Message = "기준 두 점이 동일합니다 — 서로 다른 두 특징을 기준으로 잡으세요.";
                         return result;
                     }
 
-                    // Δθ = 두 점을 잇는 벡터의 회전 (매칭 각도보다 장기 기저선이라 정밀)
-                    double angO = Math.Atan2(o2y - o1y, o2x - o1x) * 180.0 / Math.PI;
-                    double angP = Math.Atan2(p2y - p1y, p2x - p1x) * 180.0 / Math.PI;
-                    dTheta = FeatureMatchTool.NormalizeAngle(angP - angO);
+                    dTheta = align.DeltaTheta;
+                    dxPx = align.DeltaX;
+                    dyPx = align.DeltaY;
 
-                    // ΔX/ΔY = 중심점(centroid) 이동
-                    double ocx = (o1x + o2x) / 2.0, ocy = (o1y + o2y) / 2.0;
-                    double pcx = (p1x + p2x) / 2.0, pcy = (p1y + p2y) / 2.0;
-                    dxPx = pcx - ocx;
-                    dyPx = pcy - ocy;
-
-                    double curLen = Math.Sqrt((p2x - p1x) * (p2x - p1x) + (p2y - p1y) * (p2y - p1y));
-                    result.Data["ScaleRatio"] = curLen / baseLen;   // 1.0 근처가 정상 — 이탈 시 오검/배율 변화 의심
+                    result.Data["ScaleRatio"] = align.ScaleRatio;
                     result.Data["Point1X"] = p1x; result.Data["Point1Y"] = p1y;
                     result.Data["Point2X"] = p2x; result.Data["Point2Y"] = p2y;
                     result.Data["Ref1X"] = o1x; result.Data["Ref1Y"] = o1y;
                     result.Data["Ref2X"] = o2x; result.Data["Ref2Y"] = o2y;
 
-                    refX = ocx; refY = ocy; curX = pcx; curY = pcy;
+                    refX = align.RefCenterX; refY = align.RefCenterY;
+                    curX = align.CurrentCenterX; curY = align.CurrentCenterY;
                     refX2 = o2x; refY2 = o2y; curX2 = p2x; curY2 = p2y;
-                    result.Data["RefTheta"] = angO;
-                    result.Data["CurrentTheta"] = angP;
+                    result.Data["RefTheta"] = align.RefAngleDeg;
+                    result.Data["CurrentTheta"] = align.CurrentAngleDeg;
 
                     if (cal != null)
                     {
@@ -347,15 +340,8 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                     result.Data["DeltaYMm"] = dyMm!.Value;
                 }
 
-                // ── 로봇/스테이지 좌표 변환 ──
-                if (EnableRobotTransform)
-                {
-                    double bx = dxMm ?? dxPx;
-                    double by = dyMm ?? dyPx;
-                    result.Data["RobotDX"] = RobotM11 * bx + RobotM12 * by;
-                    result.Data["RobotDY"] = RobotM21 * bx + RobotM22 * by;
-                    result.Data["RobotDTheta"] = RobotThetaSign * dTheta;
-                }
+                // ── 로봇/스테이지 좌표 변환 (mm 우선, 없으면 px) ──
+                AlignMath.WriteRobotDelta(result, this, dxMm ?? dxPx, dyMm ?? dyPx, dTheta);
 
                 // ── 메시지 + 판정 ──
                 string mmText = dxMm.HasValue ? $" ({dxMm:F3}, {dyMm:F3})mm" : "";
@@ -381,22 +367,8 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
 
                     if (jx != null && jy != null)
                     {
-                        double radial = Math.Sqrt(jx.Value * jx.Value + jy.Value * jy.Value);
-                        bool posOk = radial <= MaxDeltaXY;
-                        bool angOk = Math.Abs(dTheta) <= MaxDeltaTheta;
-                        result.Data["JudgmentRadial"] = radial;
-                        result.Data["JudgmentPass"] = posOk && angOk;
-                        if (!posOk || !angOk)
-                        {
-                            result.Success = false;
-                            string unit = JudgmentUnit == GeometryJudgmentUnit.Mm ? "mm" : "px";
-                            result.Message += $" · 판정 NG: {(posOk ? "" : $"위치 {radial:F3}{unit} > {MaxDeltaXY}{unit} ")}" +
-                                              $"{(angOk ? "" : $"각도 |{dTheta:F2}°| > {MaxDeltaTheta}°")}".TrimEnd();
-                        }
-                        else
-                        {
-                            result.Message += " · 판정 OK";
-                        }
+                        string unit = JudgmentUnit == GeometryJudgmentUnit.Mm ? "mm" : "px";
+                        AlignMath.Judge(result, this, jx.Value, jy.Value, dTheta, unit, thetaDecimals: 2);
                     }
                 }
 

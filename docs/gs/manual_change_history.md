@@ -2251,3 +2251,26 @@ docx/PDF 재생성 204쪽(203 → 204) · 그림 154장 · 경고 0, 101쪽(Regi
 `src/05_visionsetup.html` 52행 끝 문장 "여기 값은 Acquire · Live 때 카메라에 적용되고 레시피에 저장됩니다." 를
 "여기 값은 레시피에 저장되고, VisionSetup 의 Acquire · Live 와 VMS 의 촬영(Grab · 자동 운전) 때 카메라에 적용됩니다." 로 바꾼다.
 그림 변경 없음.
+
+## 63. Match Align · Multi-Step Align 공용 계산 추출 — **매뉴얼 변경 없음**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-10-21 |
+| 대상 | 없음 (내부 정리) |
+| 변경 종류 | 리팩터링 — 동작 변화 없음 |
+
+### 무엇이 바뀌었나 (사내 기록)
+
+두 얼라인 도구가 같은 식을 두 벌 들고 있었다 — 2점 강체 정합(두 점 벡터 회전 → Δθ, 중심 이동 → ΔX/ΔY, 길이 비 → ScaleRatio),
+로봇 2x2 변환(RobotDX/DY/DTheta), 반경 · 각도 판정(JudgmentRadial/Pass · "판정 NG/OK" 메시지). §60 단위 기록 때처럼 한쪽만 고쳐지는 일을 막으려고
+`VisionTools/PatternMatching/AlignMath.cs` 로 모았다(`IAlignOutputSettings` 를 두 도구가 구현). 결과 키 이름(Point1X ↔ PointAX)은
+레시피 · PLC 매핑이 참조하므로 그대로 두었다.
+
+추출 전후 출력 비교: Match Align(1점 · 2점 × 학습/수동 기준 × mm/px × 판정 4조합 × 로봇 × 오버레이)과 Multi-Step Align
+(판정 4조합 × 로봇 × 오버레이 × 기준 단위 3종)을 Resolution 0 · 0.05 에서 돌린 358개 조건의 메시지 · 결과 키 · 오버레이 픽셀이 바이트 단위로 같다.
+위치만 NG 일 때 메시지 끝에 공백 하나가 남는 기존 출력도 그대로다.
+
+### 매뉴얼 반영
+
+없음.

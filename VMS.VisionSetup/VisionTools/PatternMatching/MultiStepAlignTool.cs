@@ -23,7 +23,7 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
     /// 이 도구는 마지막 스텝(B 스텝)의 워크스페이스에 배치한다. 기준 등록은
     /// 기준 부품으로 두 스텝을 Run 한 뒤 설정 패널의 [현재 두 점을 기준으로 등록].
     /// </summary>
-    public class MultiStepAlignTool : VisionToolBase
+    public class MultiStepAlignTool : VisionToolBase, IAlignOutputSettings
     {
         // ── 소스 지정 (스텝 Id + 툴 Id — 레시피 저장 시 안정 키) ──
 
@@ -117,7 +117,7 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
             set => SetProperty(ref _requireSameCycle, value);
         }
 
-        // ── 로봇/스테이지 변환 + 판정 (MatchAlign 과 동일 컨벤션) ──
+        // ── 로봇/스테이지 변환 + 판정 (MatchAlign 과 동일 컨벤션 — 계산은 AlignMath 공용) ──
 
         private bool _enableRobotTransform;
         public bool EnableRobotTransform
@@ -262,26 +262,18 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                     return result;
                 }
 
-                double baseLen = Math.Sqrt(
-                    (RefBX - RefAX) * (RefBX - RefAX) + (RefBY - RefAY) * (RefBY - RefAY));
-                if (baseLen < 1e-9)
+                // 2점 강체 정합 — Δθ = 두 점 벡터의 회전, ΔX/ΔY = 중심 이동
+                var align = AlignMath.TwoPoint(RefAX, RefAY, RefBX, RefBY, ax, ay, bx, by);
+                if (align.RefLength < 1e-9)
                 {
                     result.Success = false;
                     result.Message = "기준 두 점이 동일합니다 — 기준 등록을 다시 하세요.";
                     return result;
                 }
 
-                // 2점 강체 정합 — Δθ = 두 점 벡터의 회전, ΔX/ΔY = 중심 이동
-                double angO = Math.Atan2(RefBY - RefAY, RefBX - RefAX) * 180.0 / Math.PI;
-                double angP = Math.Atan2(by - ay, bx - ax) * 180.0 / Math.PI;
-                double dTheta = FeatureMatchTool.NormalizeAngle(angP - angO);
-
-                double ocx = (RefAX + RefBX) / 2.0, ocy = (RefAY + RefBY) / 2.0;
-                double pcx = (ax + bx) / 2.0, pcy = (ay + by) / 2.0;
-                double dx = pcx - ocx;
-                double dy = pcy - ocy;
-
-                double curLen = Math.Sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay));
+                double dTheta = align.DeltaTheta;
+                double dx = align.DeltaX;
+                double dy = align.DeltaY;
 
                 result.Data["PointAX"] = ax; result.Data["PointAY"] = ay;
                 result.Data["PointBX"] = bx; result.Data["PointBY"] = by;
@@ -290,36 +282,15 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                 result.Data["DeltaX"] = dx;
                 result.Data["DeltaY"] = dy;
                 result.Data["DeltaTheta"] = dTheta;
-                result.Data["ScaleRatio"] = curLen / baseLen;
+                result.Data["ScaleRatio"] = align.ScaleRatio;
 
-                if (EnableRobotTransform)
-                {
-                    result.Data["RobotDX"] = RobotM11 * dx + RobotM12 * dy;
-                    result.Data["RobotDY"] = RobotM21 * dx + RobotM22 * dy;
-                    result.Data["RobotDTheta"] = RobotThetaSign * dTheta;
-                }
+                AlignMath.WriteRobotDelta(result, this, dx, dy, dTheta);
 
                 result.Success = true;
                 result.Message = $"Δ=({dx:F3}, {dy:F3}){unit}, Δθ={dTheta:F3}°";
 
                 if (EnableJudgment)
-                {
-                    double radial = Math.Sqrt(dx * dx + dy * dy);
-                    bool posOk = radial <= MaxDeltaXY;
-                    bool angOk = Math.Abs(dTheta) <= MaxDeltaTheta;
-                    result.Data["JudgmentRadial"] = radial;
-                    result.Data["JudgmentPass"] = posOk && angOk;
-                    if (!posOk || !angOk)
-                    {
-                        result.Success = false;
-                        result.Message += $" · 판정 NG: {(posOk ? "" : $"위치 {radial:F3}{unit} > {MaxDeltaXY}{unit} ")}" +
-                                          $"{(angOk ? "" : $"각도 |{dTheta:F3}°| > {MaxDeltaTheta}°")}".TrimEnd();
-                    }
-                    else
-                    {
-                        result.Message += " · 판정 OK";
-                    }
-                }
+                    AlignMath.Judge(result, this, dx, dy, dTheta, unit, thetaDecimals: 3);
 
                 // 오버레이 — 두 점이 서로 다른 FOV 라 이미지 좌표로 못 그린다.
                 // 요약 패널 텍스트만 표시.
@@ -331,7 +302,7 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                     Cv2.Rectangle(overlay, new Rect(8, 8, 430, 66), color, 2);
                     Cv2.PutText(overlay, $"MultiStepAlign dX={dx:F2} dY={dy:F2} {unit}",
                         new Point(18, 34), HersheyFonts.HersheySimplex, 0.6, new Scalar(255, 255, 255), 1);
-                    Cv2.PutText(overlay, $"dTheta={dTheta:F3} deg  scale={curLen / baseLen:F4}",
+                    Cv2.PutText(overlay, $"dTheta={dTheta:F3} deg  scale={align.ScaleRatio:F4}",
                         new Point(18, 60), HersheyFonts.HersheySimplex, 0.6, new Scalar(255, 255, 255), 1);
                     result.OverlayImage = overlay;
                 }
