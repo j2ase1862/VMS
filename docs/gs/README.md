@@ -59,6 +59,7 @@ MLOps 는 `D:\Repo\BODA.VMS.MLOps\docs\manual\screenshots` 재사용, 구성도�
 
 | PR | 매뉴얼에 들어갈 내용 | 대상 절 |
 |----|--------------------|--------|
+| (이 PR) Multi-Step Align 기준 단위 기록 — ⏳ **반영 대기** | **Multi-Step Align 이 기준을 등록할 때 단위(mm · px)를 기록하고, 캘리브레이션을 넣거나 빼서 단위가 바뀌면 "단위 불일치" 로 실패한다** (예전에는 다른 단위끼리 Δ · 판정을 냈다). 설정 패널에 "기준 단위" 줄. 옛 레시피(기록 없음)는 예전처럼. 매뉴얼 §6.4 Multi-Step Align 기준 등록 행에 한 줄, 설정 패널 그림(12_Multi-Step_Align_split.png)은 줄이 하나 늘어남. 상세 §60 | §6.4 Multi-Step Align |
 | #553 ICP KD-트리 — ✅ **매뉴얼 변경 없음** | **3D 정합(Registration · Deviation 등 ICP) 이 크게 빨라짐** — 원본 3만 점 ICP 97초 → 0.9초, Coarse+ICP 281초 → 2.8초, 결과는 같음. #552 행(§58)의 반영 문구에 시간을 넣음. 상세 §59 | (§6 Registration — #552 반영 때 함께) |
 | #552 Registration Coarse 뒤집힘 수정 — ⏳ **반영 대기** | **PointCloud Registration 의 Enable Coarse Alignment 가 대칭에 가까운 부품을 180° 뒤집지 않는다** — 회전 없이 맞춘 자세와 주축 후보를 함께 맞춰 보고 신뢰도가 높은 쪽을 씀(켜도 끈 것보다 나빠지지 않음). 대신 정합 시간 2~4배 → 앞에 Filter(VoxelGrid) 권장. 매뉴얼 §6 Registration 파라미터 표 한 줄(tools_prose.json) 고칠 것. 상세 §58 | §6 PointCloud Registration |
 | 별책 v1.4 · 문서 정리 — ✅ **반영 완료**(별책 배포본 HTML/PDF, 2026-10-20) | **별책 §2 에 「SAM 모델 파일 준비 (설치 담당자)」 신설** — 설치 파일에 SAM 모델이 없음, 네 파일 한 세트, export_mobile_sam.py 로 만드는 법(폐쇄망은 체크포인트 먼저). 옛 SAM · Labeling 매뉴얼은 삭제. 본편 변경 없음. 상세 §57 | 별책 §2 |

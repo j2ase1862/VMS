@@ -191,6 +191,7 @@ namespace VMS.VisionSetup.Tests
                 DrawOverlay = false
             };
             Assert.NotNull(vm);
+            tool.ReferenceUnit = "mm";
 
             var config = ToolSerializer.SerializeTool(tool);
             var jsonOpts = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
@@ -218,6 +219,93 @@ namespace VMS.VisionSetup.Tests
             Assert.Equal(0.5, restored.MaxDeltaXY);
             Assert.Equal(0.25, restored.MaxDeltaTheta);
             Assert.False(restored.DrawOverlay);
+            Assert.Equal("mm", restored.ReferenceUnit);
+        }
+
+        // ───────────── 기준 단위 기록 (캘리브레이션이 바뀌면 알린다) ─────────────
+
+        /// <summary>[현재 두 점을 기준으로 등록] 이 그때의 단위를 기록하고, 같은 단위면 예전처럼 Δ 를 낸다.</summary>
+        [Fact]
+        public void CaptureReference_records_the_unit_and_same_unit_runs()
+        {
+            var toolA = RecordPose("step-A", 10, 10);
+            var toolB = RecordPose("step-B", 20, 10);
+            var align = CreateAlign(toolA.Id, toolB.Id);
+            var vm = new MultiStepAlignToolSettingsViewModel(align);
+
+            vm.CaptureReferenceCommand.Execute(null);
+
+            Assert.True(align.HasReference);
+            Assert.Equal("px", align.ReferenceUnit);
+            Assert.Contains("px", vm.ReferenceUnitText);
+            using var img = TestImage();
+            var r = align.Execute(img);
+            Assert.True(r.Success, r.Message);
+            Assert.Equal("px", r.Data["ReferenceUnit"]);
+        }
+
+        /// <summary>핵심 — 기준을 px 로 잡은 뒤 캘리브레이션이 생겨 mm 로 계산되면 Δ 를 내지 않고 실패로 알린다.</summary>
+        [Fact]
+        public void Unit_change_after_capture_fails_instead_of_mixing_units()
+        {
+            var toolA = RecordPose("step-A", 10, 10);
+            var toolB = RecordPose("step-B", 20, 10);
+            var align = CreateAlign(toolA.Id, toolB.Id);
+            new MultiStepAlignToolSettingsViewModel(align).CaptureReferenceCommand.Execute(null);
+            Assert.Equal("px", align.ReferenceUnit);
+
+            try
+            {
+                VisionService.Instance.CurrentStepResolutionMmPerPx = 0.1;   // 캘리브레이션(스텝 Resolution) 추가
+                RecordPose("step-A", 10, 10, toolA);
+                RecordPose("step-B", 20, 10, toolB);
+
+                using var img = TestImage();
+                var r = align.Execute(img);
+
+                Assert.False(r.Success);
+                Assert.Contains("단위 불일치", r.Message);
+                Assert.Equal("mm", r.Data["Unit"]);
+                Assert.Equal("px", r.Data["ReferenceUnit"]);
+                Assert.False(r.Data.ContainsKey("DeltaX"));
+            }
+            finally
+            {
+                VisionService.Instance.CurrentStepResolutionMmPerPx = 0;
+            }
+        }
+
+        /// <summary>단위 기록이 없는 옛 레시피(빈 값)는 예전처럼 단위를 따지지 않는다 — 업데이트로 판정이 갑자기 바뀌지 않게.</summary>
+        [Fact]
+        public void Legacy_reference_without_unit_keeps_old_behavior()
+        {
+            var toolA = RecordPose("step-A", 10, 10);
+            var toolB = RecordPose("step-B", 20, 10);
+            var align = CreateAlign(toolA.Id, toolB.Id);
+            align.RefAX = 10; align.RefAY = 10; align.RefBX = 120; align.RefBY = 10;
+            align.HasReference = true;   // ReferenceUnit 은 비어 있음
+
+            try
+            {
+                VisionService.Instance.CurrentStepResolutionMmPerPx = 0.1;
+                RecordPose("step-A", 10, 10, toolA);
+                RecordPose("step-B", 20, 10, toolB);
+                using var img = TestImage();
+                var r = align.Execute(img);
+                Assert.True(r.Success, r.Message);
+                Assert.Equal("mm", r.Data["Unit"]);
+            }
+            finally
+            {
+                VisionService.Instance.CurrentStepResolutionMmPerPx = 0;
+            }
+
+            // 옛 레시피 JSON 에는 키가 없다 → 빈 값으로 읽힌다
+            var config = ToolSerializer.SerializeTool(align);
+            config.Parameters.Remove("ReferenceUnit");
+            var restored = Assert.IsType<MultiStepAlignTool>(ToolSerializer.DeserializeTool(config));
+            Assert.Equal(string.Empty, restored.ReferenceUnit);
+            Assert.Contains("기록 없음", new MultiStepAlignToolSettingsViewModel(restored).ReferenceUnitText);
         }
     }
 }

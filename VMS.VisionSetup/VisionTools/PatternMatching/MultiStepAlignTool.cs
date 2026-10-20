@@ -95,6 +95,18 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
             set => SetProperty(ref _hasReference, value);
         }
 
+        private string _referenceUnit = string.Empty;
+        /// <summary>
+        /// 기준을 등록할 때의 합성 좌표 단위("mm" · "px"). 빈 값 = 기록이 없는 옛 레시피(예전처럼 단위를 따지지 않음).
+        /// 실행 단위는 두 스텝의 캘리브레이션 유무로 매번 정해지므로, 기준을 px 로 잡은 뒤 캘리브레이션을 넣거나(또는 반대)
+        /// 하면 기준 · Baseline · Max ΔXY 와 현재값이 다른 단위가 된다. 예전에는 그대로 Δ 와 판정을 냈다 — 이제 실패로 알린다.
+        /// </summary>
+        public string ReferenceUnit
+        {
+            get => _referenceUnit;
+            set => SetProperty(ref _referenceUnit, value ?? string.Empty);
+        }
+
         // ── 사이클 규칙 ──
 
         private bool _requireSameCycle = true;
@@ -239,6 +251,17 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                     return result;
                 }
 
+                result.Data["Unit"] = unit;
+                result.Data["ReferenceUnit"] = ReferenceUnit;
+                if (!string.IsNullOrEmpty(ReferenceUnit) && ReferenceUnit != unit)
+                {
+                    result.Success = false;
+                    result.Message = $"단위 불일치 — 기준은 {ReferenceUnit} 로 등록됐는데 지금은 {unit} 로 계산됩니다. " +
+                                     "두 스텝의 캘리브레이션(또는 스텝 Resolution) 상태가 바뀌었습니다. " +
+                                     $"Baseline · Max ΔXY 를 {unit} 로 맞춘 뒤 기준을 다시 등록하세요.";
+                    return result;
+                }
+
                 double baseLen = Math.Sqrt(
                     (RefBX - RefAX) * (RefBX - RefAX) + (RefBY - RefAY) * (RefBY - RefAY));
                 if (baseLen < 1e-9)
@@ -260,7 +283,6 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
 
                 double curLen = Math.Sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay));
 
-                result.Data["Unit"] = unit;
                 result.Data["PointAX"] = ax; result.Data["PointAY"] = ay;
                 result.Data["PointBX"] = bx; result.Data["PointBY"] = by;
                 result.Data["RefAX"] = RefAX; result.Data["RefAY"] = RefAY;
@@ -335,7 +357,7 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
         {
             return new List<string>
             {
-                "Success", "Unit",
+                "Success", "Unit", "ReferenceUnit",
                 "PointAX", "PointAY", "PointBX", "PointBY",
                 "RefAX", "RefAY", "RefBX", "RefBY",
                 "DeltaX", "DeltaY", "DeltaTheta", "ScaleRatio",
@@ -362,6 +384,7 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                 RefBX = this.RefBX,
                 RefBY = this.RefBY,
                 HasReference = this.HasReference,
+                ReferenceUnit = this.ReferenceUnit,
                 RequireSameCycle = this.RequireSameCycle,
                 EnableRobotTransform = this.EnableRobotTransform,
                 RobotM11 = this.RobotM11,

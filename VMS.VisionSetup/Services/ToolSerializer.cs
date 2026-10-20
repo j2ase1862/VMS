@@ -344,6 +344,7 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["RefBX"] = msAlign.RefBX;
                     config.Parameters["RefBY"] = msAlign.RefBY;
                     config.Parameters["HasReference"] = msAlign.HasReference;
+                    config.Parameters["ReferenceUnit"] = msAlign.ReferenceUnit;
                     config.Parameters["RequireSameCycle"] = msAlign.RequireSameCycle;
                     config.Parameters["EnableRobotTransform"] = msAlign.EnableRobotTransform;
                     config.Parameters["RobotM11"] = msAlign.RobotM11;
@@ -1506,6 +1507,8 @@ namespace VMS.VisionSetup.Services
             if (p.TryGetValue("RefBX", out var rbx)) tool.RefBX = GetDouble(rbx);
             if (p.TryGetValue("RefBY", out var rby)) tool.RefBY = GetDouble(rby);
             if (p.TryGetValue("HasReference", out var hr)) tool.HasReference = GetBool(hr);
+            // 없으면 빈 값 — 단위 기록이 없는 옛 레시피는 예전처럼 동작한다
+            if (p.TryGetValue("ReferenceUnit", out var ru)) tool.ReferenceUnit = GetString(ru);
             if (p.TryGetValue("RequireSameCycle", out var rsc)) tool.RequireSameCycle = GetBool(rsc);
             if (p.TryGetValue("EnableRobotTransform", out var ert)) tool.EnableRobotTransform = GetBool(ert);
             if (p.TryGetValue("RobotM11", out var m11)) tool.RobotM11 = GetDouble(m11);

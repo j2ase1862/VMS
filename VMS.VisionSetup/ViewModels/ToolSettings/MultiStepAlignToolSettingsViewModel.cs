@@ -143,8 +143,21 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         public bool HasReference
         {
             get => TypedTool.HasReference;
-            set { TypedTool.HasReference = value; OnPropertyChanged(); }
+            set { TypedTool.HasReference = value; OnPropertyChanged(); OnPropertyChanged(nameof(ReferenceUnitText)); }
         }
+
+        /// <summary>기준을 등록할 때의 단위 — [현재 두 점을 기준으로 등록]이 정한다(사용자가 고치는 값이 아님).</summary>
+        public string ReferenceUnit
+        {
+            get => TypedTool.ReferenceUnit;
+            private set { TypedTool.ReferenceUnit = value; OnPropertyChanged(); OnPropertyChanged(nameof(ReferenceUnitText)); }
+        }
+
+        /// <summary>설정 패널 표시용 — 기준 단위와 그 뜻.</summary>
+        public string ReferenceUnitText =>
+            !TypedTool.HasReference ? "기준 단위: (기준 미등록)"
+            : string.IsNullOrEmpty(TypedTool.ReferenceUnit) ? "기준 단위: 기록 없음 — 예전 레시피입니다. 다시 등록하면 단위가 기록되어 캘리브레이션이 바뀌었을 때 알려 줍니다."
+            : $"기준 단위: {TypedTool.ReferenceUnit} — 실행 단위가 이와 다르면(캘리브레이션 추가 · 제거) 실패로 알립니다. Baseline · Max ΔXY 도 {TypedTool.ReferenceUnit} 입니다.";
 
         public bool RequireSameCycle
         {
@@ -240,6 +253,7 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
             RefAY = ay;
             RefBX = bx;
             RefBY = by;
+            ReferenceUnit = unit;
             HasReference = true;
             CaptureStatus = $"기준 등록({unit}): A({ax:F3}, {ay:F3}) · B({bx:F3}, {by:F3})";
         }
