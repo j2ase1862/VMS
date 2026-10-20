@@ -256,7 +256,7 @@ BODAVMSAudit_CL
 - [ ] 테스트 사이트 1곳에서 dry-run — 1주일 데이터 흐름 확인
 - [ ] 알람 / 대시보드 / KQL 쿼리 작성
 - [ ] SOC 운영자 핸드오버 — 알람 응답 절차서 + 사고 대응 플레이북
-- [ ] 운영 매뉴얼 (manual_regression_v1.x) 에 "SIEM 도달 확인" 항목 추가
+- [ ] 현장 체크리스트(`docs/field_install_checklist.md`) 에 "SIEM 도달 확인" 항목 추가
 - [ ] `gs_compliance_overview_v1.0.md` §5.3 "후속 강화 후보" 항목 업데이트
 - [ ] 분기 검토 일정 등록 (인덱스 템플릿 / 토큰 회전)
 

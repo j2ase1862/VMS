@@ -2110,3 +2110,26 @@ v1.42.16 반영 중 본편 15쪽 그림 4 에서 개발 PC 이름과 Windows 사
 ### 매뉴얼 반영 (완료)
 
 본편 docx/PDF 재생성(203쪽 유지, 15쪽 렌더 확인), 별책 배포본 HTML · PDF 재생성(13쪽 유지, 배포본에 담긴 그림 2장이 새 PNG 와 바이트까지 같음 확인).
+
+## 57. 별책 v1.4 — SAM 모델 파일 준비 소절 · 남은 옛 문서 정리 — **반영 완료**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-10-20 |
+| 대상 | 별책 §2 (본편 변경 없음) |
+| 변경 종류 | 문서 정리 (옛 문서의 고유 내용을 별책으로 옮김) |
+
+### 무엇이 바뀌었나 (사내 기록)
+
+docs 정리(VMS #550) 때 판단을 미룬 6건을 정리했다.
+
+- 옛 `VMS_SAM_Segmentation_Manual.md` 에만 있던 MobileSAM 모델 준비 절차를 별책 §2 「SAM 모델 파일 준비 (설치 담당자)」로 옮기고,
+  이 문서와 이를 9곳 참조하던 `VMS_Labeling_Training_Manual.md` 를 지웠다. 옛 문서의 "리포에 동봉" 설명은 틀렸다 —
+  모델은 git 에도 MSI 에도 없고, MSI 에는 `scripts\export_mobile_sam.py` 만 들어간다. 스크립트는 체크포인트가 출력 폴더에 없으면 인터넷에서 받는다.
+- `manual_regression_v1.2.md`(사문서) 삭제 — `gs_compliance_overview` §4.2 를 현행 `field_install_checklist.md` 기준으로 고쳤다(시험이 읽는 §5.10 은 그대로).
+- `deployment_scenario_guide.md` 삭제 — 고유 내용(B 에서 동봉 Web 금지 · ClientIndex 중복 금지 · A→B 전환)을 `msi_build_guide.md` §13.6 으로 옮겼다.
+- `docs/design/robot-finishing-product-feasibility-review.*` 는 RoboTeach 리포로 옮겼고(RoboTeach #33), 발송한 `GS인증_업체문의_초안.md` 는 지웠다.
+
+### 매뉴얼 반영 (완료)
+
+별책 v1.4(표지 문서 버전 · 변경 이력), 배포본 HTML · PDF 재생성(13쪽 유지, 12쪽 렌더 확인).

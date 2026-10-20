@@ -137,7 +137,7 @@
 <header>
   <h1>BODA VMS AI 학습 도구 매뉴얼 (별책)</h1>
   <p>VMS.DeepLearning — 데이터셋 · 라벨링 · 딥러닝 모델 학습 · 모델 파일(ONNX) 내보내기</p>
-  <p>문서 버전 v1.3 (2026-09-18) · 대상 SW v1.40.1 이상 · 본편 「BODA VMS 사용자 매뉴얼 v3.0」 10장에 대응하는 별책</p>
+  <p>문서 버전 v1.4 (2026-10-20) · 대상 SW v1.40.1 이상 · 본편 「BODA VMS 사용자 매뉴얼 v3.0」 10장에 대응하는 별책</p>
 </header>
 <p class="dist-note" style="color:#9b9ea4;font-size:12px;margin:-18px 0 24px">그림을 파일 안에 담은 배포본입니다 — 편집은 <code>docs/manuals/BODA-VMS-AI-Tools-Manual.html</code> 에서 하고 <code>docs/manuals/build_ai_tools_manual.py</code> 로 다시 만듭니다.</p>
 
@@ -343,10 +343,27 @@ Export 섹션의 <strong>[웹 데이터셋 내려받기]</strong> 를 누르면 
   <tr><td>Classification (분류)</td><td><code>py -3.12 -m pip install torch torchvision onnx</code></td></tr>
   <tr><td>Anomaly (이상 탐지)</td><td><code>py -3.12 -m pip install "anomalib[core]>=1.1,&lt;2" "pandas&lt;3" "matplotlib&lt;3.10" python-dotenv scikit-learn torch torchvision onnx</code> (anomalib 이 없으면 간이 PatchCore 로 자동 전환 — 두 방식 모두 VisionSetup 이상 탐지 도구가 그대로 읽는 ONNX 를 만듭니다)</td></tr>
   <tr><td>OCR (문자 인식)</td><td><code>py -3.12 -m pip install paddlepaddle paddleocr paddle2onnx onnx</code></td></tr>
-  <tr><td>Segmentation 라벨링 보조 (SAM)</td><td>모델 파일 2개(Encoder/Decoder ONNX)만 있으면 됨 — 설치 담당자에게 요청</td></tr>
+  <tr><td>Segmentation 라벨링 보조 (SAM)</td><td>모델 파일 2개(Encoder/Decoder ONNX)만 있으면 됨 — 설치 담당자에게 요청(아래 「SAM 모델 파일 준비」)</td></tr>
 </table>
 <p>NVIDIA GPU 를 쓰려면 torch 는 CUDA 빌드(예: <code>--index-url https://download.pytorch.org/whl/cu124</code>)로 설치합니다.
 CPU 만으로도 학습은 되지만 매우 느립니다.</p>
+
+<h3>SAM 모델 파일 준비 (설치 담당자)</h3>
+<p>설치 파일에는 SAM 모델이 들어 있지 않습니다. 아래 네 파일을 한 폴더(예: 설치 폴더 안 <code>models\sam\</code>)에 두고,
+[Load SAM Model] 에서 Encoder · Decoder 의 <code>.onnx</code> 파일을 지정합니다.</p>
+<table>
+  <tr><th>파일</th><th>내용</th></tr>
+  <tr><td><code>mobile_sam_encoder.onnx</code> · <code>mobile_sam_encoder.onnx.data</code></td><td>이미지 인코더와 그 가중치</td></tr>
+  <tr><td><code>mobile_sam_decoder.onnx</code> · <code>mobile_sam_decoder.onnx.data</code></td><td>마스크 디코더와 그 가중치</td></tr>
+</table>
+<p><code>.onnx</code> 와 같은 이름의 <code>.onnx.data</code> 는 반드시 같은 폴더에 함께 있어야 합니다. 하나만 옮기면 모델을 불러오지 못합니다.</p>
+<p>파일이 없으면 설치 폴더의 <code>scripts\export_mobile_sam.py</code> 로 만듭니다.</p>
+<ol>
+  <li><code>py -3.12 -m pip install torch torchvision onnx onnxruntime</code> 와 MobileSAM 파이썬 패키지를 설치합니다.</li>
+  <li><code>py -3.12 scripts\export_mobile_sam.py --output models\sam</code> 를 실행합니다.
+      체크포인트(<code>mobile_sam.pt</code>)가 그 폴더에 없으면 스크립트가 인터넷에서 받습니다.
+      폐쇄망 PC 는 다른 PC 에서 받은 <code>mobile_sam.pt</code> 를 먼저 그 폴더에 넣어 둡니다.</li>
+</ol>
 
 <h3>학습이 끝나면 생기는 파일</h3>
 <p>학습이 끝나면 출력 폴더에 모델 파일(<code>.onnx</code>) 말고도 두 가지가 함께 생깁니다 —

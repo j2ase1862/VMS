@@ -295,7 +295,7 @@ Get-AuthenticodeSignature "VMS-<버전>.msi" | Format-List *
 - [ ] `.gitignore` 에 `*.pfx` 패턴 확인
 - [ ] PR 으로 변경 머지 → master CI 에서 첫 서명 빌드 검증
 - [ ] `signtool verify /pa` + 탐색기 속성 → 디지털 서명 양쪽 검증
-- [ ] 운영 매뉴얼 (manual_regression_v1.x) 에 "서명 검증" 항목 추가
+- [ ] 현장 체크리스트(`docs/field_install_checklist.md`) 에 "서명 검증" 항목 추가
 - [ ] `gs_compliance_overview_v1.0.md` §5.3 "후속 강화 후보" 항목 업데이트
 
 ---

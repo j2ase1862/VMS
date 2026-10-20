@@ -240,17 +240,16 @@ baseline PR1~44 이후 추가된 보안/품질 작업. 시간순 상세는 `GS_H
 - 결과 artifact 30일 보관
 
 ### 4.2 수동 회귀 검증 (운영 환경)
-`docs/manual_regression_v1.2.md` — 26 항목 체크리스트 (v1.2 시점 기록 — 현행 절차는 `docs/field_install_checklist.md`)
-- 3.1 IO Device Integration (5)
-- 3.2 Expert Mode (4)
-- 3.3 Security Mode (3, GS critical)
-- 3.4 Credentials + DB ACL (3)
-- 3.5 Input Validation (3, 1 optional)
-- 3.6 Audit Logging (4, GS critical)
-- 3.7 in-app Help (3)
-- 3.8 Integration Test Areas (3)
+`docs/field_install_checklist.md` — 현장 설치 · 업데이트 때 실행하는 체크리스트
+- 0 사전 준비물
+- 1 Web 서버 수동 설치 · 검증 (부록 · 예외 경로)
+- 2 VMS 설치 · AppSetup 마법사 · VMS 검증 (업데이트 설치에서도 마법사 생략 금지)
+- 3 SSO 마무리 (SSO 사용 시)
+- 4 연동 확인
+- 실패 시 수거 (보고용)
 
-합격 기준: 26 항목 중 25 이상 PASS (Optional 1 항목 제외 가능).
+릴리즈마다 바뀐 기능의 현장 확인 항목은 릴리즈 보관 폴더의 현장 검증 체크리스트로 따로 낸다.
+(v1.2 시점의 26 항목 회귀 기록 `manual_regression_v1.2.md` 는 위 체크리스트로 대체되어 2026-10-20 정리했다 — git 이력에 남아 있다.)
 
 ### 4.3 감사 로그 자체 검증
 1. 운영 중 `%LocalAppData%\BODA VISION AI\audit\YYYY-MM-DD.jsonl` 생성 확인

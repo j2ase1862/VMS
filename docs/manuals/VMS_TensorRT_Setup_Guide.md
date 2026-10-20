@@ -388,4 +388,4 @@ GPU 환경에서 문제가 생기면 즉시 CPU로 복귀할 수 있습니다.
 ---
 
 **관련 문서**:
-- [VMS_Labeling_Training_Manual.md](VMS_Labeling_Training_Manual.md) — 학습 매뉴얼
+- [BODA-VMS-AI-Tools-Manual.html](BODA-VMS-AI-Tools-Manual.html) — AI 학습 도구 매뉴얼(별책: 라벨링 · 학습)
