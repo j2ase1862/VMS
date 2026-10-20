@@ -190,7 +190,7 @@
 <tr><td>Sources — Point A / Point B (스텝 + 도구)</td><td>—</td><td>A · B 스텝의 Feature Match 를 콤보로 지정합니다(Result 연결이 아니라 스텝 간 포즈 저장소를 읽음)</td></tr>
 <tr><td>Require Same Cycle</td><td>켬</td><td>이번 사이클에 기록된 포즈만 인정. 끄면 편집은 편하지만 운전 중 A 매칭 실패 시 이전 값으로 잘못 계산될 수 있음</td></tr>
 <tr><td>Baseline X / Y (B − A)</td><td>0 / 0</td><td>B 촬영 위치의 A 대비 오프셋(로봇 · 스테이지 이동량). 두 스텝 모두 캘리브레이션이 있으면 mm, 없으면 px — mm 권장</td></tr>
-<tr><td>Ref A X/Y · Ref B X/Y · [현재 두 점을 기준으로 등록]</td><td>0</td><td>기준 부품을 놓고 A → B 순서로 Run 한 뒤 등록. Baseline 을 먼저 넣어야 같은 좌표계로 잡힙니다</td></tr>
+<tr><td>Ref A X/Y · Ref B X/Y · [현재 두 점을 기준으로 등록]</td><td>0</td><td>기준 부품을 놓고 A → B 순서로 Run 한 뒤 등록. Baseline 을 먼저 넣어야 같은 좌표계로 잡힙니다. 등록할 때의 단위(mm · px)가 함께 기록되어, 나중에 캘리브레이션을 넣거나 빼서 단위가 바뀌면 &#x27;단위 불일치&#x27; 로 실패합니다 — Baseline · Max ΔXY 를 새 단위로 맞추고 다시 등록하세요</td></tr>
 <tr><td>Enable Judgment · Max ΔXY · Max Δθ</td><td>해제 · 1.0 · 1.0</td><td>Match Align 과 같은 규칙</td></tr>
 <tr><td>Enable Robot Transform · M11~M22 · θ Sign</td><td>해제 · 항등 · 1</td><td>핸드아이 2×2 변환</td></tr>
 <tr><td>Draw Overlay</td><td>켬</td><td>두 점이 서로 다른 화면에 있으므로 좌상단에 Δ 수치 패널만 표시</td></tr>
@@ -375,7 +375,7 @@
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Reference Point Cloud · [Save Current as Reference] [Load...] [Clear]</td><td>(없음)</td><td>현재 점군을 기준으로 저장하거나 .vpc / .stl 파일을 불러옵니다(STL 은 표면을 약 20만 점으로 샘플링)</td></tr>
-<tr><td>Enable Coarse Alignment</td><td>켬</td><td>PCA 거친 정렬. 구 · 정육면체처럼 완전 대칭인 물체에는 효과가 없습니다</td></tr>
+<tr><td>Enable Coarse Alignment</td><td>켬</td><td>회전 없이 맞춘 자세와 주축을 맞춘 자세를 함께 맞춰 보고 신뢰도가 높은 쪽을 씁니다. 정합 시간이 2~4배 늘어납니다(3만 점 원본 기준 약 3초) — 사이클 시간이 빠듯하면 앞에 Filter(VoxelGrid)를 두세요. 구 · 정육면체처럼 완전 대칭인 물체는 자세를 가를 수 없습니다</td></tr>
 <tr><td>Max Iterations · Tolerance (mm)</td><td>50 · 0.01</td><td>ICP 반복 횟수와 수렴 기준</td></tr>
 <tr><td>Confidence Distance (mm)</td><td>1.0</td><td>신뢰도 계산에 쓰는 대응 거리</td></tr>
 <tr><td>Apply Transform to Source</td><td>켬</td><td>구한 변환을 현재 점군에 적용(뒤 도구가 정렬된 점군을 봄). 변위만 필요하면 끕니다</td></tr>
