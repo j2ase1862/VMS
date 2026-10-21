@@ -2398,3 +2398,33 @@ v1.42.19(#561 · #562)와 함께 반영 대기 §66 을 본문에 넣었다(`src
 ### 매뉴얼 반영 (완료)
 
 docx/PDF 재생성 204쪽(변동 없음) · 그림 154장 · 경고 0. docx 본문에 새 문장 3개와 "VMS 1.42.19" 를 document.xml 에서 확인. 제품설명서 docx 재생성.
+
+## 69. Classify 양품 클래스(OK Classes) 판정 — **반영 대기**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-10-21 |
+| 대상 | 본편 §6 Classify — 파라미터 표 · 판정 문단 (`tools_prose.json` → `gen_tools_chapter.py`) · 설정 패널 그림 `33_Classify.png` · 부록 파라미터 전체표(`extract_tool_params.py`) |
+| 변경 종류 | 기능 추가 (판정 규칙) |
+
+### 무엇이 바뀌었나 (사내 기록)
+
+Classify 판정이 "Top-1 신뢰도 ≥ 임계값" 하나뿐이라, 불량 클래스로 자신 있게 분류될수록 OK 가 됐다(2026-10-16 GS 딥러닝 시험자료 결함 ① —
+시험자료는 판정 열 대신 ClassName 대조로 피해 갔다). 사용자 결정(10-21): 양품 클래스 목록 · 확신 없는 양품은 NG · 빈 목록은 종전 동작.
+
+- 새 파라미터 `OkClassesText`(콤마 구분, 여러 개). 지정하면 판정 = **양품 클래스로 분류 AND 신뢰도 ≥ Confidence Threshold**.
+  불량 클래스면 메시지 끝 " — 불량 클래스", 양품이지만 신뢰도 미달이면 " — 신뢰도 부족". 클래스 이름 비교는 대소문자 무시.
+- 비어 있으면 종전처럼 신뢰도만(옛 레시피 판정 불변). 설정 패널에 노란 경고 "양품 클래스가 지정되지 않아 신뢰도만으로 판정합니다 …".
+- 고른 이름이 Class Names 에 없으면(오타 · 모델 교체) 추론 전에 실패 + "설정의 OK Classes 를 다시 고르세요".
+- 설정 패널 Classification 구역에 OK Classes 체크박스 목록(Class Names 순서로 기록) + 물음표 도움말. Confidence Threshold 도움말 · 도구 Usage 갱신.
+- 5종 세트: 도구(+Clone) · ToolSerializer · ClassifyToolSettingsViewModel(OkClassOptions) · XAML · HelpContent.
+- 시험: `ClassifyOkClassesTests` 11건(종전 판정 유지 · 양품 OK · 불량 클래스 NG · 신뢰도 부족 NG · 대소문자/여러 개 · 모르는 이름 · 직렬화 왕복과 옛 레시피 · Clone · VM 왕복 2 · 도움말).
+- GS 시험자료 `D:\GS_TestData\DeepLearning\Classification` 재산출(OK Classes = OK): 22장 판정이 정답과 일치(OK 10 = OK, 불량 12 = NG). 이전 산출본은 `_backup_Classification_20261021_before_okclasses`. README 갱신 — VMS 1.42.20 이상 필요.
+
+### 매뉴얼 반영 (대기 — 다음 릴리즈 때)
+
+`tools_prose.json` Classify 항목을 고치고 `gen_tools_chapter.py` · `extract_tool_params.py` 재실행:
+- Confidence Threshold 행 설명 "Top-1 신뢰도가 이 값 이상이면 PASS" → "가장 확률이 높은 클래스의 신뢰도가 이 값보다 낮으면 NG".
+- 새 행 "OK Classes | (비어 있음) | 양품으로 볼 클래스(여러 개). 지정하면 그 클래스로 분류되고 신뢰도도 임계값 이상일 때만 OK — 양품 · 불량을 가르는 검사라면 반드시 지정".
+- 판정 문단 → "OK Classes 를 지정하면 양품 클래스로 분류되고 신뢰도가 Confidence Threshold 이상일 때 OK, 그 밖은 NG(불량 클래스 · 신뢰도 부족). 지정하지 않으면 신뢰도만으로 판정합니다."
+- 설정 패널 그림 `33_Classify.png` 재캡처(OK Classes 구역 추가).
