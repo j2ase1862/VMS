@@ -1391,7 +1391,7 @@
    [
     "Auto Threshold Calibration — Normal Images Folder · Sigma (k) · [Calibrate Threshold]",
     "— · 3.0",
-    "정상 이미지 폴더의 점수 분포로 임계값을 제안(평균 + k × 표준편차). 제안값을 Anomaly Threshold 에 직접 반영해야 합니다"
+    "정상 이미지 폴더의 점수 분포로 임계값을 계산해 Anomaly Threshold 에 넣습니다(평균 + k × 표준편차). ROI 를 쓰면 같은 ROI 영역으로 채점하므로, 폴더에는 검사와 같은 크기로 찍은 원본 이미지를 넣습니다"
    ],
    [
     "Draw Overlay · Show Heatmap · Heatmap Opacity",
