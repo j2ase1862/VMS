@@ -2326,3 +2326,37 @@ v1.42.18(#556 · #557 · #558 · #559)과 함께 반영 대기 두 건(§62 · �
 ### 매뉴얼 반영 (완료)
 
 docx/PDF 재생성 204쪽(변동 없음) · 그림 154장 · 경고 0. docx 본문에 새 문장 2개와 "VMS 1.42.18" 이 들어간 것을 document.xml 에서 확인. 제품설명서 docx 재생성.
+
+## 66. IO 보드 · 결과 출력 실패를 드러냄 (Advantech DAQNavi · 시퀀스 결과 매핑) — **반영 대기**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-10-21 |
+| 대상 | 본편 §2 설치 — 드라이버 표 Advantech 행 (`src/02_install.html` 16행) · §12 문제 조치 — IO 칩 행 · "판정 신호가 PLC 에 안 들어감" 행 (`src/12_troubleshooting.html` 49~52행) |
+| 변경 종류 | 결함 수정 (출력 실패 무음) |
+
+### 무엇이 바뀌었나 (사내 기록)
+
+출력 신호가 설비에 안 가도 VMS 가 성공으로 알던 경로 세 곳을 막았다.
+
+1. **Advantech DAQNavi 호출의 반환 코드** — `DaqNaviReflection` 의 WriteBit · WriteAny · ReadBit · ReadAny 가 ErrorCode 를 버리고,
+   메서드를 못 찾으면 `?.Invoke` 로 아무것도 하지 않았다. 이제 `InvokeChecked` 한 곳에서 메서드 없음 · 오류 코드(0xE… 대역)를 예외로 올린다
+   (경고 0xA… 대역은 통과). 메서드 찾기는 `(int, int, data)` 3인자 오버로드를 고른다 — `GetMethod(name)` 은 오버로드가 있으면 모호성 예외로
+   로드 전체가 실패했다. WriteBit 의 data 형식(byte/bool)은 SDK 판의 시그니처를 따른다.
+2. **Advantech 연결** — ADLink 처럼 `IIoBoardDiagnostics.LastError` 를 남긴다. I/O 메서드 4개가 없거나, DeviceInformation 을 못 만들거나,
+   `Initialized` 가 false(보드 번호 불일치)면 연결 실패. **DAQNavi 가 없으면 조용히 Mock 보드로 바꾸던 팩토리 폴백을 없앴다** — 이제 연결 실패 +
+   System Log `[IoBoard]` 에 "Automation.BDaq4.dll(DAQNavi) 이 없거나…". 시뮬레이션은 ADLink 와 같이 Description 의 `[MOCK]` 표식으로만.
+3. **시퀀스 검사 결과 매핑 쓰기** (`SequenceEngine.WriteToolResultsAsync`, PLC · IO 보드 공통) — 쓰기 예외를 Debug 로그만 남기고 넘겼다.
+   이제 매핑을 끝까지 시도한 뒤 실패가 있으면 Inspection 노드 오류로 올린다 → AutoProcessService 가 System Log 에
+   "시퀀스 'Inspect' 노드 오류 — 검사 결과 출력 실패 N건 — …" (Error) + 카메라 상태 Error + 재시도 지연. 그 사이클은 미완성이라 WO 수량에 세지 않는다.
+
+- ADLink 는 쓰기 실패를 이미 예외로 올리고 있었다(읽기 오류는 Debug 로그만 — 현장 검증된 경로라 이번에 건드리지 않음).
+- 시험: `DaqNaviReflectionTests` 12건(가짜 ErrorCode enum · 오버로드 · out 인자 · 드라이버 예외 · 팩토리 · DAQNavi 없는 연결),
+  `SequenceEngineIoBoardTests` 2건 추가(결과 출력 실패 → SequenceError, 뒤 매핑도 씀 / 성공 시 오류 없음 — 앞 건은 수정 전 실패).
+- 실제 Advantech 보드 검증은 못 함(dev PC 에 DAQNavi · 보드 없음) — 현장 DO 실측 때 확인.
+
+### 매뉴얼 반영 (대기 — 다음 릴리즈 때)
+
+- §2 드라이버 표 Advantech 행 비고 "미설치 시 시뮬레이션 보드로 동작합니다" → "미설치 시 보드가 연결되지 않습니다(System Log 에 사유)".
+- §12 "상태바 IO 칩이 빨강" 행에 한 문장: "Advantech 는 "DAQNavi 이 없거나" → 드라이버 설치, "보드 BID#n 를 열지 못했습니다" → Advantech Navigator 의 보드 번호와 마법사 6 단계 Board ID 를 맞춥니다."
+- §12 "판정 신호가 PLC 에 안 들어감" 행 앞에 한 문장: "System Log 에 "검사 결과 출력 실패" 가 있으면 그 줄의 도구 · 주소로 쓰기가 실패한 것입니다 — 그 사이클은 오류로 멈추고 생산 수량에 세지 않습니다."

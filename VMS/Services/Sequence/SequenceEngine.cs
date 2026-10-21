@@ -1053,6 +1053,10 @@ namespace VMS.Services.Sequence
             var toolResults = _getToolResultsFunc?.Invoke(cameraId);
             if (toolResults == null) return;
 
+            // 쓰기 실패는 모아 두었다가 매핑을 끝까지 시도한 뒤 노드 오류로 올린다.
+            // 종전에는 Debug 로그만 남겨, 결과 신호가 설비에 안 가도 운전 화면에는 아무것도 보이지 않았다.
+            var failures = new List<string>();
+
             foreach (var tr in toolResults)
             {
                 if (tr.PlcMappings == null || tr.PlcMappings.Count == 0) continue;
@@ -1098,9 +1102,14 @@ namespace VMS.Services.Sequence
                     catch (Exception ex)
                     {
                         Debug.WriteLine($"[SequenceEngine] Error writing tool result '{tr.ToolName}' key '{mapping.ResultKey}' to {mapping.DeviceId}/{mapping.PlcAddress}: {ex.Message}");
+                        failures.Add($"'{tr.ToolName}' {mapping.ResultKey} → {mapping.DeviceId}/{mapping.PlcAddress}: {ex.Message}");
                     }
                 }
             }
+
+            if (failures.Count > 0)
+                throw new InvalidOperationException(
+                    $"검사 결과 출력 실패 {failures.Count}건 — " + string.Join(" / ", failures));
         }
 
         private static bool TryGetNumericValue(ToolInspectionResult tr, string resultKey, out double value)

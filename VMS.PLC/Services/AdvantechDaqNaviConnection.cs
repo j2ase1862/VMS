@@ -24,7 +24,7 @@ namespace VMS.PLC.Services
     ///
     /// DeviceDescription: "BID#{BoardId}" 형식 (Advantech 표준).
     /// </summary>
-    public sealed class AdvantechDaqNaviConnection : IIoBoardConnection
+    public sealed class AdvantechDaqNaviConnection : IIoBoardConnection, IIoBoardDiagnostics
     {
         private readonly string _deviceDescription;
         private readonly int _boardId;
@@ -54,40 +54,58 @@ namespace VMS.PLC.Services
 
         public event EventHandler<IoBitChangedEventArgs>? BitChanged;
 
+        /// <summary>연결 실패 사유 — 호출자(App/편집기)가 로그에 남긴다.</summary>
+        public string? LastError { get; private set; }
+
         public Task<bool> ConnectAsync()
         {
             if (!DaqNaviReflection.EnsureLoaded())
-            {
-                Debug.WriteLine($"[Advantech:{DeviceId}] Automation.BDaq4.dll 미설치 또는 로드 실패");
-                return Task.FromResult(false);
-            }
+                return Fail("Automation.BDaq4.dll(DAQNavi) 이 없거나 불러오지 못했습니다 — Advantech DAQNavi 드라이버 설치를 확인하세요.");
+
+            // 비트 · 포트 I/O 메서드를 하나라도 못 찾으면 그 I/O 는 동작할 수 없다 — 연결 단계에서 막는다
+            var missing = DaqNaviReflection.MissingIoMethods();
+            if (missing.Length > 0)
+                return Fail($"DAQNavi 에서 {missing} 을(를) 찾지 못했습니다 — Automation.BDaq4.dll 판을 확인하세요.");
 
             try
             {
                 _instantDi = DaqNaviReflection.CreateInstantDi();
                 _instantDo = DaqNaviReflection.CreateInstantDo();
                 if (_instantDi is null || _instantDo is null)
-                {
-                    Debug.WriteLine($"[Advantech:{DeviceId}] InstantDi/Do ctrl 생성 실패");
-                    return Task.FromResult(false);
-                }
+                    return Fail("DAQNavi InstantDiCtrl/InstantDoCtrl 을 만들지 못했습니다.");
 
                 var deviceInfo = DaqNaviReflection.CreateDeviceInformation(_deviceDescription, _boardId);
-                if (deviceInfo is not null)
-                {
-                    DaqNaviReflection.SetSelectedDevice(_instantDi, deviceInfo);
-                    DaqNaviReflection.SetSelectedDevice(_instantDo, deviceInfo);
-                }
+                if (deviceInfo is null)
+                    return Fail($"보드 {_deviceDescription} 의 DeviceInformation 을 만들지 못했습니다.");
+                DaqNaviReflection.SetSelectedDevice(_instantDi, deviceInfo);
+                DaqNaviReflection.SetSelectedDevice(_instantDo, deviceInfo);
+
+                // 보드 번호가 틀리면 SelectedDevice 설정은 지나가도 보드가 열리지 않는다 (Initialized = false)
+                if (DaqNaviReflection.IsInitialized(_instantDi) == false || DaqNaviReflection.IsInitialized(_instantDo) == false)
+                    return Fail($"보드 {_deviceDescription} 를 열지 못했습니다 — Advantech Navigator 의 보드 번호(BID)와 설정의 Board ID 가 같은지 확인하세요.");
 
                 _connected = true;
+                LastError = null;
                 Debug.WriteLine($"[Advantech:{DeviceId}] connected (device={_deviceDescription})");
                 return Task.FromResult(true);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[Advantech:{DeviceId}] Connect error: {ex.Message}");
-                return Task.FromResult(false);
+                var inner = ex is System.Reflection.TargetInvocationException { InnerException: { } ie } ? ie : ex;
+                return Fail($"연결 오류 ({_deviceDescription}): {inner.Message}");
             }
+        }
+
+        private Task<bool> Fail(string reason)
+        {
+            LastError = reason;
+            Debug.WriteLine($"[Advantech:{DeviceId}] {reason}");
+            (_instantDi as IDisposable)?.Dispose();
+            (_instantDo as IDisposable)?.Dispose();
+            _instantDi = null;
+            _instantDo = null;
+            _connected = false;
+            return Task.FromResult(false);
         }
 
         public Task DisconnectAsync()
