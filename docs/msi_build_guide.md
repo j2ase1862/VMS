@@ -43,7 +43,7 @@ CI runner 는 `windows-2025` 사용 (.github/workflows/build.yml).
 dotnet build VMS.sln -c Release
 ```
 솔루션 전체를 Release 로 빌드하면 의존성 순서에 따라:
-1. VMS.Core / VMS.PLC / VMS.Camera / VMS.DeepLearning / VMS.VisionSetup
+1. VMS.Core / VMS.PLC / VMS.Camera / VMS.VisionSetup
 2. VMS (메인 런처)
 3. **VMS.MasterSetup → MSI 생성**
 
@@ -540,45 +540,22 @@ Web 을 어디에 두느냐가 곧 구성이다. 두 구성 모두 같은 MSI �
 
 ---
 
-## 14. AI 학습 도구 Feature 와 GS 인증 제출 빌드 (v1.31.0)
+## 14. AI 학습 도구 Feature (v1.31.0 ~ v1.43.x, 제거됨)
 
-VMS.DeepLearning(라벨링·모델 학습 앱)과 `scripts\*.py`(train_dfine / train_yolo / train_classifier /
-train_anomaly / train_ppocr / export_mobile_sam) 는 **"모델을 만드는" 기능**으로, 파이썬·GPU 환경에
-의존하고 학습 결과가 비결정적이라 GS 인증 범위에서 제외한다. 검사 런타임(VMS·VisionSetup 의
-Detection / Classify / Anomaly / YOLO-seg / OCR **추론** 도구)은 ONNX 모델만 있으면 동작하므로 범위에 남는다.
+2026-10 에 VMS.DeepLearning(WPF 라벨링 · 학습 앱)과 학습 스크립트를 제품에서 제거했다 — 라벨링 · 학습 · 등록은 BODA VMS MLOps 로 일원화.
+인스톨러의 `AiTools` Feature · `INSTALLAITOOLS` 속성 · 설치 마법사 체크박스 · `-p:ExcludeAiTools=true` 인증 빌드(`VMS-<버전>-cert.msi`)도
+함께 없앴다. 이제 일반 릴리즈 MSI 에 학습 도구 파일이 들어가지 않으므로 인증 제출용으로 따로 빌드할 필요가 없다.
 
-### 14.1 구조
+- 업그레이드: 이전 판에서 AI 학습 도구를 포함해 설치한 PC 도 메이저 업그레이드가 옛 제품을 통째로 제거하므로
+  `VMS.DeepLearning.*` · `scripts\` · 레지스트리 마커(`AiToolsInstalled`)가 함께 사라진다.
+- 빌드 PC 방어: `AppFiles` 수확의 `<Exclude>` 두 줄(`VMS.DeepLearning.*`, `scripts\**`)은 남겨 두었다 — 개발 · 빌드 PC 의
+  VMS 출력 폴더에 옛 빌드 산출물이 남아 있어도 MSI 에 섞이지 않게 한다(§ `win-x64\` 잔재와 같은 방어).
+- 학습 PC: MLOps 학습 워커 설치 패키지(MLOps 리포 `src/BODA.VMS.MLOps.TrainWorker.Setup`)를 따로 설치한다.
 
-| 항목 | 값 |
-|---|---|
-| Feature | `AiTools` ("AI 학습 도구 (VMS.DeepLearning)") — **기본 제외**(2026-09-10 전환), 마법사 체크 또는 `INSTALLAITOOLS=1` 로 포함. 업그레이드는 `HKLM\Software\VASIM\BODA Vision System\AiToolsInstalled` 마커로 이전 선택 유지 |
-| 포함 파일 | `VMS.DeepLearning.exe/.dll/.deps.json/.runtimeconfig.json`, `scripts\*.py` |
-| Main 에서 제외 | `AppFiles` 의 `<Exclude>` 로 위 파일을 빼고 `AiToolsAppFiles`/`AiToolsScriptFiles` 로 분리 |
-| 설치 마법사 | "설치 구성 선택" 화면의 두 번째 체크박스 (Web 서버 체크박스 아래) |
-| 앱 동작 | VisionSetup Tools › Deep Learning 메뉴는 exe 가 없으면 숨김. OCR Synth Data 창은 `train_ppocr.py` 가 없으면 학습 카드·[Generate & Train] 을 숨기고 합성 데이터 생성만 남김 |
-
-### 14.2 GS 인증 제출 빌드
-
-```powershell
-.\tools\stage-web-payload.ps1
-dotnet build VMS.sln -c Release
-dotnet build VMS.MasterSetup\VMS.MasterSetup.wixproj -c Release -t:Rebuild -p:ExcludeAiTools=true
-# → VMS.MasterSetup\bin\Release\VMS-<버전>-cert.msi
-```
-
-`ExcludeAiTools=true` 는 WiX 전처리 상수로 `AiTools` Feature·속성·설치 마법사 체크박스를 **컴파일 자체에서
-제거**한다. 따라서 인증 MSI 에는 VMS.DeepLearning 과 scripts 폴더가 존재하지 않으며 `INSTALLAITOOLS` 속성도
-없다. 일반 릴리즈 MSI(`VMS-<버전>.msi`)는 그대로 Feature 를 포함한다 — 두 산출물은 파일명으로 구분.
-
-검증: 설치 후 `C:\Program Files\VASIM\BODA Vision System\` 에 `VMS.DeepLearning.exe` 와 `scripts\` 가 없어야
-하고, VisionSetup Tools 메뉴에 Deep Learning 항목이 보이지 않아야 한다. 심사용 샘플 ONNX 는
-`docs/gs/guides/gs_scope_ai_tools.md` 참조.
-
-### 14.3 무인 설치
+### 14.1 무인 설치
 
 ```
-msiexec /i VMS-<버전>.msi INSTALLAITOOLS=1            # AI 학습 도구 포함 (기본은 제외)
-msiexec /i VMS-<버전>.msi INSTALLWEB=0                  # Web 서버 제외 (검사 전용 PC — AI 학습 도구는 기본 제외)
+msiexec /i VMS-<버전>.msi INSTALLWEB=0                  # Web 서버 제외 (검사 전용 PC)
 ```
 
 ## 15. 관련 문서
@@ -605,5 +582,6 @@ msiexec /i VMS-<버전>.msi INSTALLWEB=0                  # Web 서버 제외 (�
 | v1.3 | 2026-06-04 | §11 초기 admin 비밀번호 설정 절차 추가 (Option C: VMS/Web 양쪽 디폴트 시드 제거, 운영자 명시 입력 필수) |
 | v1.4 | 2026-07-09 | §12 다중 인스턴스 운용(한 PC 두 라인) 절차 추가 — --instance 바로가기 / AppSetup 인스턴스별 구성 / 주의사항 |
 | v1.5 | 2026-08-06 | §13 Web 서버 동봉 추가 — WebServer Feature(payload 스테이징·INSTALLWEB=0) / AppSetup 초기 구성 카드 / 스크립트 설치 마이그레이션 / Web 단독 업데이트 경로 |
+| v1.9 | 2026-10-21 | §14 AI 학습 도구 Feature · 인증 빌드(ExcludeAiTools) 제거 — MLOps 로 일원화 |
 | v1.8 | 2026-09-10 | §14 AI 학습 도구 기본 제외 전환(INSTALLAITOOLS 기본값 제거 + 업그레이드 선택 기억 레지스트리 마커 AiToolsMarkerComp + 마커 없던 v1.33 이하 첫 업그레이드용 파일 폴백 AITOOLS_PREVFILE→SetProperty) |
 | v1.7 | 2026-09-08 | §14 AI 학습 도구 Feature(AiTools·INSTALLAITOOLS=0) + GS 인증 제출 빌드(-p:ExcludeAiTools=true → VMS-x.y.z-cert.msi) / 관련 문서는 §15 로 |

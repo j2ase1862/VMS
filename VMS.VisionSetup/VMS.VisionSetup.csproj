@@ -35,14 +35,6 @@
     <InternalsVisibleTo Include="VMS.VisionSetup.Tests" />
   </ItemGroup>
 
-  <!-- Python 학습 스크립트 — 빌드 시 bin/scripts/로 복사 -->
-  <ItemGroup>
-    <Content Include="scripts\*.py">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <!-- Publish 시 제외 — VMS.DeepLearning 와 같은 경로 충돌 + 운영자 PC 에 불필요 -->
-      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
-    </Content>
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
@@ -60,9 +52,6 @@
     <ProjectReference Include="..\VMS.Camera\VMS.Camera.csproj" />
     <ProjectReference Include="..\VMS.Core\VMS.Core.csproj" />
     <ProjectReference Include="..\VMS.PLC\VMS.PLC.csproj" />
-    <ProjectReference Include="..\VMS.DeepLearning\VMS.DeepLearning.csproj">
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>
@@ -169,9 +158,8 @@
 
   <!-- After build, copy output to VMS output directory.
        VMS launcher 의 TargetFramework 는 net8.0-windows7.0 이므로 7.0 명시 필수 —
-       이전 오타("net8.0-windows") 로 잘못된 폴더에 복사돼 VMS.DeepLearning.dll
-       등이 누락, DeepLearning 메뉴 실행시 "application to execute does not exist"
-       런타임 에러 발생했음. -->
+       이전 오타("net8.0-windows") 로 잘못된 폴더에 복사돼 VMS 실행 폴더에서
+       DLL 이 누락되고 "application to execute does not exist" 런타임 에러가 났었다. -->
   <Target Name="CopyToVmsOutput" AfterTargets="Build">
     <PropertyGroup>
       <VmsOutputDir>..\VMS\bin\$(Configuration)\net8.0-windows7.0\</VmsOutputDir>

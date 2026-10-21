@@ -1,7 +1,7 @@
 # HTML -> PDF (Chrome headless) + 검수용 페이지 PNG
 #   powershell -File docs/gs/pipeline/html2pdf_chrome.ps1 -Html <입력.html> -Pdf <출력.pdf> [-OutDir <PNG 폴더>] [-Pages 1,2] [-Dpi 110]
 #
-# 별책(AI 학습 도구 매뉴얼)처럼 docx 파이프라인을 타지 않는 HTML 문서를 종이 형식으로 낼 때 쓴다.
+# docx 파이프라인을 타지 않는 HTML 문서를 종이 형식으로 낼 때 쓴다.
 # Word COM(docx2pdf_render.ps1)과 달리 브라우저가 CSS 를 그대로 해석하므로 화면과 같은 판면이 나온다.
 # 문서 쪽 @media print 에서 흰 바탕·검은 글씨로 바꿔 두어야 한다 — 브라우저는 배경색을 인쇄하지 않는다.
 param(

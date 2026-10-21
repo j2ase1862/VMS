@@ -170,7 +170,7 @@ namespace VMS.VisionSetup.Models
                             + "YOLOv8-seg 와 하는 일은 같고, 새로 만드는 검사에는 이 도구를 권장합니다.\n"
                             + "출력 세 텐서: dets(정규화 cxcywh) + labels(클래스 로짓, 마지막 열이 배경) + masks(질의마다 온전한 마스크 로짓).\n"
                             + "후처리: 시그모이드 → 배경 열 제외 → (질의×클래스) 상위 선택 → 마스크 확대 → 0 에서 자름. NMS 를 쓰지 않습니다.",
-                Usage = "1) MLOps 웹에서 세그멘테이션 데이터셋으로 학습(scripts/train_rfdetr_seg.py)하거나, 학습 도구에서 학습 후 레지스트리에 등록. "
+                Usage = "1) MLOps 웹에서 세그멘테이션 데이터셋으로 학습해 레지스트리에 등록. "
                       + "2) Model Path 에 .onnx 지정 — [레지스트리…] 로 model:// 참조를 고를 수도 있습니다. "
                       + "3) Confidence 조정. 4) Run → 결과 Data 의 Inst{i}_* 키로 각 인스턴스 확인.",
                 CognexEquivalent = "ViDi Blue Locate (인스턴스 모드) / Red Supervised",
@@ -762,12 +762,12 @@ namespace VMS.VisionSetup.Models
             ["DetectionTool"] = new ToolHelp
             {
                 Name = "Detection (객체 검출)",
-                Description = "ONNX 기반 객체 검출 도구입니다.\nVMS.DeepLearning 에서 학습한 D-FINE(기본) 또는 YOLOv8/v11 ONNX 모델을 로드하여 이미지에서 객체의 위치와 클래스를 검출합니다. 모델 종류는 파일에서 자동 판별됩니다.",
-                Usage = "부품 유무 검사, 다종 객체 검출, 결함 검출에 사용됩니다.\n• VMS.DeepLearning 앱에서 데이터셋을 라벨링하고 Detection 으로 학습한 best.onnx 를 지정합니다 (D-FINE 기본).\n• Class Names 는 모델 메타데이터에서 자동으로 채워지며, 없으면 학습 시 사용한 클래스 이름을 콤마로 구분하여 입력하세요.",
+                Description = "ONNX 기반 객체 검출 도구입니다.\nMLOps 에서 학습한 D-FINE(기본) 또는 YOLOv8/v11 ONNX 모델을 로드하여 이미지에서 객체의 위치와 클래스를 검출합니다. 모델 종류는 파일에서 자동 판별됩니다.",
+                Usage = "부품 유무 검사, 다종 객체 검출, 결함 검출에 사용됩니다.\n• MLOps 웹에서 데이터셋을 라벨링 · 학습한 모델을 [레지스트리…] 로 고르거나, best.onnx 파일을 지정합니다 (D-FINE 기본).\n• Class Names 는 모델 메타데이터에서 자동으로 채워지며, 없으면 학습 시 사용한 클래스 이름을 콤마로 구분하여 입력하세요.",
                 CognexEquivalent = "Cognex ViDi Blue Locate",
                 Parameters = new Dictionary<string, string>
                 {
-                    ["ModelPath"] = "검출 ONNX 모델 파일 경로 (.onnx).\nVMS.DeepLearning에서 학습한 best.onnx 파일을 지정합니다.\n• D-FINE(train_dfine.py) / YOLOv8·v11 규약 자동 판별",
+                    ["ModelPath"] = "검출 ONNX 모델 파일 경로 (.onnx) 또는 레지스트리 참조(model://).\nMLOps 에서 학습한 모델을 지정합니다.\n• D-FINE / YOLOv8·v11 규약 자동 판별",
                     ["InputSize"] = "모델 입력 이미지 크기 (픽셀).\n학습 시 설정한 imgsz와 동일하게 설정하세요.\n• D-FINE / YOLOv8 기본: 640",
                     ["ConfidenceThreshold"] = "검출 신뢰도 임계값 (0~1). 이 값 이상의 신뢰도를 가진 객체만 검출됩니다.\n• 낮은 값 (0.25): 많은 객체 검출, 오검출 증가\n• 높은 값 (0.7): 확실한 객체만 검출",
                     ["IouThreshold"] = "NMS IoU 임계값 (0~1). 겹치는 검출 박스를 제거하는 기준입니다.\n• 낮은 값 (0.3): 강한 중복 제거\n• 높은 값 (0.7): 약한 중복 제거 (밀집 객체에 적합)",
@@ -852,11 +852,11 @@ namespace VMS.VisionSetup.Models
             {
                 Name = "Classify (이미지 분류)",
                 Description = "ONNX 기반 이미지 분류 도구입니다.\nResNet, MobileNet 등 분류 모델의 ONNX를 로드하여 이미지를 분류합니다.",
-                Usage = "양품/불량 판정, 부품 종류 분류, 외관 등급 판정에 사용됩니다.\n• VMS.DeepLearning 앱에서 ImageFolder 형식으로 학습한 ONNX 모델을 사용합니다.\n• Class Names에 학습 시 사용한 폴더명(클래스)을 콤마로 구분하여 입력하세요.\n• 양품/불량 판정에 쓸 때는 OK Classes 에서 양품 클래스를 고르세요.",
+                Usage = "양품/불량 판정, 부품 종류 분류, 외관 등급 판정에 사용됩니다.\n• MLOps 웹에서 분류 데이터셋으로 학습한 ONNX 모델을 사용합니다.\n• Class Names에 학습 시 사용한 폴더명(클래스)을 콤마로 구분하여 입력하세요.\n• 양품/불량 판정에 쓸 때는 OK Classes 에서 양품 클래스를 고르세요.",
                 CognexEquivalent = "Cognex ViDi Green Classify",
                 Parameters = new Dictionary<string, string>
                 {
-                    ["ModelPath"] = "분류 ONNX 모델 파일 경로 (.onnx).\nVMS.DeepLearning에서 학습한 classifier.onnx 파일을 지정합니다.",
+                    ["ModelPath"] = "분류 ONNX 모델 파일 경로 (.onnx) 또는 레지스트리 참조(model://).\nMLOps 에서 학습한 모델을 지정합니다.",
                     ["InputWidth"] = "모델 입력 이미지 너비 (픽셀). 학습 시 imgsz와 동일하게 설정.\n• 기본값: 224",
                     ["InputHeight"] = "모델 입력 이미지 높이 (픽셀). 학습 시 imgsz와 동일하게 설정.\n• 기본값: 224",
                     ["ConfidenceThreshold"] = "분류 신뢰도 임계값 (0~1). 가장 확률이 높은 클래스의 신뢰도가 이 값보다 낮으면 NG 입니다.\n" +
@@ -877,11 +877,11 @@ namespace VMS.VisionSetup.Models
             {
                 Name = "Anomaly (이상 탐지)",
                 Description = "ONNX 기반 이상 탐지 도구입니다.\nPatchCore, FastFlow, EfficientAD 등 anomalib 호환 모델을 로드하여 정상/이상 판정 및 히트맵을 생성합니다.",
-                Usage = "학습 데이터에 정상 이미지만 사용하여 이상(결함)을 탐지합니다.\n• VMS.DeepLearning 앱에서 MVTec 형식으로 학습한 ONNX 모델을 사용합니다.\n• Anomaly Threshold를 조정하여 정상/이상 경계를 설정합니다.\n• 히트맵으로 이상 영역을 시각적으로 확인할 수 있습니다.",
+                Usage = "학습 데이터에 정상 이미지만 사용하여 이상(결함)을 탐지합니다.\n• MLOps 웹에서 정상 이미지로 학습한 ONNX 모델을 사용합니다.\n• Anomaly Threshold를 조정하여 정상/이상 경계를 설정합니다.\n• 히트맵으로 이상 영역을 시각적으로 확인할 수 있습니다.",
                 CognexEquivalent = "Cognex ViDi Red Analyze",
                 Parameters = new Dictionary<string, string>
                 {
-                    ["ModelPath"] = "이상 탐지 ONNX 모델 파일 경로 (.onnx).\nanomalib 또는 VMS.DeepLearning에서 학습한 모델을 지정합니다.",
+                    ["ModelPath"] = "이상 탐지 ONNX 모델 파일 경로 (.onnx) 또는 레지스트리 참조(model://).\nMLOps 또는 anomalib 으로 학습한 모델을 지정합니다.",
                     ["InputSize"] = "모델 입력 이미지 크기 (픽셀). 학습 시 image_size와 동일하게 설정.\n• 기본값: 224",
                     ["AnomalyThreshold"] = "이상 판정 임계값 (0~1). Anomaly Score가 이 값 미만이면 정상, 이상이면 이상으로 판정합니다.\n• 낮은 값 (0.3): 엄격한 판정 (약간의 이상도 검출)\n• 높은 값 (0.7): 느슨한 판정 (확실한 이상만 검출)",
                     ["DrawOverlay"] = "판정 결과 오버레이 표시. NORMAL/ANOMALY 텍스트와 점수를 표시하고, 정상=녹색/이상=빨간색 테두리를 그립니다.",

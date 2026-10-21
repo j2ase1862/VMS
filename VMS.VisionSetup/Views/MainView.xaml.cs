@@ -816,16 +816,6 @@ namespace VMS.VisionSetup
         }
 
         /// <summary>
-        /// Deep Learning 라벨링/학습 앱 실행
-        /// </summary>
-        private void DeepLearning_Click(object sender, RoutedEventArgs e)
-        {
-            var vm = DataContext as MainViewModel;
-
-            vm?.LaunchDeepLearning();
-        }
-
-        /// <summary>
         /// ONNX Runtime 설정 다이얼로그 — Execution Provider / TensorRT 캐시·FP16 편집.
         /// </summary>
         private void OnnxSettings_Click(object sender, RoutedEventArgs e)

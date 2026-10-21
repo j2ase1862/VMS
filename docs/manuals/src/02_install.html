@@ -38,17 +38,15 @@ VisionSetup 에서 연결할 때 "SDK 미탑재 — 시뮬레이션 모드" 경�
     <ul>
       <li><strong>BODA VMS Web 서버 포함</strong> (기본: 켬) — 이 PC 를 생산 관리 서버로도 쓰거나, 나중에 쓸 가능성이 있으면 켜 둡니다.
           포함해서 설치해도 자동으로 실행되지는 않으며, 설정 마법사에서 켤 때만 동작합니다(§2.3).</li>
-      <li><strong>AI 학습 도구 포함</strong> (기본: 해제) — MLOps 서버 없이 이 PC 에서 직접 모델을 학습해야 하는 엔지니어 PC 만 켭니다.
-          검사만 하는 라인 PC 에는 필요 없습니다.</li>
     </ul></li>
   <li>[설치]를 누르면 파일 복사가 진행되고, 완료 화면에서 [마침]을 누릅니다. 시작 메뉴와 바탕화면에 바로가기가 만들어집니다.</li>
 </ol>
 <figure><img src="../gs/screenshots/70_msi_welcome.png" data-width="420" alt="설치 마법사 시작 화면">
 <figcaption>설치 마법사 시작 화면</figcaption></figure>
 <figure><img src="../gs/screenshots/71_msi_weboption.png" data-width="420" alt="설치 구성 선택 화면">
-<figcaption>설치 구성 선택 — "BODA VMS Web 서버 포함" · "AI 학습 도구 포함" 체크박스</figcaption></figure>
+<figcaption>설치 구성 선택 — "BODA VMS Web 서버 포함" 체크박스</figcaption></figure>
 <div class="callout tip"><strong>무인 설치</strong>가 필요하면 명령 프롬프트(관리자)에서 다음처럼 실행합니다.
-<code>msiexec /i VMS-1.39.2.msi /qn INSTALLWEB=0 INSTALLAITOOLS=0</code> — 값 0 은 제외, 1 은 포함입니다.</div>
+<code>msiexec /i VMS-1.39.2.msi /qn INSTALLWEB=0</code> — 값 0 은 제외, 1 은 포함입니다.</div>
 
 <h4>설치 후 처음 실행하면</h4>
 <p>VMS 를 처음 실행하면 설정 파일이 없으므로 "초기 시스템 설정이 필요합니다" 안내와 함께

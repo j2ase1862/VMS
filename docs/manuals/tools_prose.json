@@ -1202,7 +1202,7 @@
  },
  "Detection (딥러닝 검출)": {
   "title": "Detection — 딥러닝 객체 검출 (D-FINE · YOLO)",
-  "purpose": "학습된 ONNX 모델로 객체의 위치(박스)와 클래스를 검출합니다. 기본 학습 백본은 D-FINE이며 YOLOv8/v11 형식도 자동 판별합니다. 부품 유무 · 다종 부품 검출 · 외관 결함 검출에 씁니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+  "purpose": "학습된 ONNX 모델로 객체의 위치(박스)와 클래스를 검출합니다. 기본 학습 백본은 D-FINE이며 YOLOv8/v11 형식도 자동 판별합니다. 부품 유무 · 다종 부품 검출 · 외관 결함 검출에 씁니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
   "params": [
    [
     "Model Path (.onnx) · [레지스트리…]",
@@ -1254,7 +1254,7 @@
  },
  "Segmentation (분할)": {
   "title": "Segmentation — 픽셀 단위 분할 (semantic)",
-  "purpose": "U-Net 같은 픽셀 분류 모델로 이미지를 클래스별 마스크로 나눕니다. 결함 영역의 면적을 재거나 배경 · 전경을 분리할 때 쓰며, 같은 클래스의 개체를 따로 세야 하면 YOLOv8-seg · RF-DETR-seg 를 씁니다. 뒤에 Blob 을 붙여 개수 · 크기를 분석합니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+  "purpose": "U-Net 같은 픽셀 분류 모델로 이미지를 클래스별 마스크로 나눕니다. 결함 영역의 면적을 재거나 배경 · 전경을 분리할 때 쓰며, 같은 클래스의 개체를 따로 세야 하면 YOLOv8-seg · RF-DETR-seg 를 씁니다. 뒤에 Blob 을 붙여 개수 · 크기를 분석합니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
   "params": [
    [
     "Model Path (.onnx) · Input Size",
@@ -1285,7 +1285,7 @@
  },
  "YOLO Segmentation": {
   "title": "YOLOv8-seg — 인스턴스 분할",
-  "purpose": "YOLOv8/v11 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 픽셀 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 새로 만드는 검사에는 RF-DETR-seg 를 권장하며, 이 도구는 기존 YOLOv8/v11 규약 ONNX 를 쓰던 레시피 호환용입니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+  "purpose": "YOLOv8/v11 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 픽셀 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 새로 만드는 검사에는 RF-DETR-seg 를 권장하며, 이 도구는 기존 YOLOv8/v11 규약 ONNX 를 쓰던 레시피 호환용입니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
   "params": [
    [
     "Model Path (.onnx) · Input Size",
@@ -1316,7 +1316,7 @@
  },
  "RF-DETR-seg (인스턴스 분할)": {
   "title": "RF-DETR-seg — 인스턴스 분할",
-  "purpose": "RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. YOLOv8-seg 와 하는 일은 같고, 새로 만드는 검사에는 이 도구를 권장합니다. 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+  "purpose": "RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. YOLOv8-seg 와 하는 일은 같고, 새로 만드는 검사에는 이 도구를 권장합니다. 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
   "params": [
    [
     "Model Path (.onnx) · [레지스트리…]",
@@ -1347,7 +1347,7 @@
  },
  "Classify (분류)": {
   "title": "Classify — 이미지 분류",
-  "purpose": "ResNet · MobileNet 같은 분류 모델(ONNX)로 이미지(또는 ROI) 전체를 한 클래스로 판정합니다. 양품/불량 판정, 부품 종류 구분, 외관 등급에 씁니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+  "purpose": "ResNet · MobileNet 같은 분류 모델(ONNX)로 이미지(또는 ROI) 전체를 한 클래스로 판정합니다. 양품/불량 판정, 부품 종류 구분, 외관 등급에 씁니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
   "params": [
    [
     "Model Path (.onnx) · Input Width / Height",
@@ -1381,7 +1381,7 @@
  },
  "Anomaly (이상 탐지)": {
   "title": "Anomaly — 이상 탐지 (정상 이미지만으로 학습)",
-  "purpose": "PatchCore · FastFlow · EfficientAD 같은 anomalib 호환 모델로 정상 대비 이상 점수를 계산하고 히트맵으로 이상 부위를 표시합니다. 불량 샘플이 거의 없는 공정에서 정상 이미지만으로 학습해 쓰는 방식입니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+  "purpose": "PatchCore · FastFlow · EfficientAD 같은 anomalib 호환 모델로 정상 대비 이상 점수를 계산하고 히트맵으로 이상 부위를 표시합니다. 불량 샘플이 거의 없는 공정에서 정상 이미지만으로 학습해 쓰는 방식입니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
   "params": [
    [
     "Model Path (.onnx) · Input Size",

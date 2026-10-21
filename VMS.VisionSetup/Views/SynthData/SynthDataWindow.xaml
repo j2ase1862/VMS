@@ -45,10 +45,10 @@
 
         <!-- Title -->
         <StackPanel Grid.Row="0" Margin="0,0,0,12">
-            <TextBlock Text="Synthetic Data Generator &#x2022; Fine-tuning"
+            <TextBlock Text="Synthetic Data Generator"
                        Foreground="{StaticResource BrushTextPrimary}"
                        FontSize="20" FontWeight="Light"/>
-            <TextBlock Text="폰트·패턴·증강을 조합해 OCR 학습 데이터셋을 생성하고, PaddleOCR 인식 모델을 파인튜닝합니다."
+            <TextBlock Text="폰트·패턴·증강을 조합해 OCR 학습 데이터셋을 생성합니다. 학습은 BODA VMS MLOps 에서 합니다."
                        Style="{StaticResource WindowMutedText}" Margin="0,4,0,0"/>
         </StackPanel>
 
@@ -261,164 +261,17 @@
                     </StackPanel>
                 </Border>
 
-                <!-- ============= Training Card (AI 학습 도구 미설치 시 숨김) ============= -->
-                <Border Style="{StaticResource WindowCard}" Margin="0,0,0,10"
-                        Visibility="{Binding IsTrainingAvailable, Converter={StaticResource BoolToVis}}">
+                <!-- ============= Training — 학습은 MLOps 에서 ============= -->
+                <Border Style="{StaticResource WindowCard}" Margin="0,0,0,10">
                     <StackPanel>
-                        <TextBlock Text="Training — PP-OCR Fine-tuning"
-                                   Style="{StaticResource WindowSectionHeaderFirst}"/>
-
-                        <TextBlock Text="Python 실행파일 (paddlepaddle 설치된 venv)"
-                                   Style="{StaticResource WindowFieldLabel}"/>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBox Grid.Column="0"
-                                     Text="{Binding PythonPath, UpdateSourceTrigger=PropertyChanged}"
-                                     FontFamily="Consolas"
-                                     Style="{StaticResource WindowDarkTextBox}"/>
-                            <Button Grid.Column="1" Content="Browse..."
-                                    Command="{Binding BrowsePythonCommand}"
-                                    Style="{StaticResource ModernGhostButton}" Margin="6,0,0,0"/>
-                        </Grid>
-
-                        <TextBlock Text="train_ppocr.py 경로" Style="{StaticResource WindowFieldLabel}"/>
-                        <TextBox Text="{Binding TrainScriptPath, UpdateSourceTrigger=PropertyChanged}"
-                                 FontFamily="Consolas"
-                                 Style="{StaticResource WindowDarkTextBox}"/>
-
-                        <TextBlock Text="학습 출력 폴더" Style="{StaticResource WindowFieldLabel}"/>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBox Grid.Column="0"
-                                     Text="{Binding TrainOutputDir, UpdateSourceTrigger=PropertyChanged}"
-                                     Style="{StaticResource WindowDarkTextBox}"/>
-                            <Button Grid.Column="1" Content="Browse..."
-                                    Command="{Binding BrowseTrainOutputCommand}"
-                                    Style="{StaticResource ModernGhostButton}" Margin="6,0,0,0"/>
-                        </Grid>
-
-                        <TextBlock Text="사전학습 모델 prefix (.pdparams 제외)"
-                                   Style="{StaticResource WindowFieldLabel}"/>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBox Grid.Column="0"
-                                     Text="{Binding PretrainedModel, UpdateSourceTrigger=PropertyChanged}"
-                                     Style="{StaticResource WindowDarkTextBox}"/>
-                            <Button Grid.Column="1" Content="Browse..."
-                                    Command="{Binding BrowsePretrainedCommand}"
-                                    Style="{StaticResource ModernGhostButton}" Margin="6,0,0,0"/>
-                        </Grid>
-
-                        <Grid Margin="0,8,0,0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                                <TextBlock Text="Epochs" Style="{StaticResource WindowFieldLabel}"/>
-                                <TextBox Text="{Binding Epochs, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource WindowDarkTextBox}"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="1" Margin="0,0,10,0">
-                                <TextBlock Text="Batch Size" Style="{StaticResource WindowFieldLabel}"/>
-                                <TextBox Text="{Binding BatchSize, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource WindowDarkTextBox}"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="2" Margin="0,0,10,0">
-                                <TextBlock Text="Learning Rate" Style="{StaticResource WindowFieldLabel}"/>
-                                <TextBox Text="{Binding LearningRate, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource WindowDarkTextBox}"/>
-                            </StackPanel>
-                            <CheckBox Grid.Column="3" Content="ONNX export"
-                                      IsChecked="{Binding ExportOnnx}"
-                                      Style="{StaticResource WindowDarkCheckBox}"
-                                      VerticalAlignment="Bottom" Margin="0,0,0,8"/>
-                        </Grid>
-                    </StackPanel>
-                </Border>
-
-                <!-- ============= Training Progress Card (AI 학습 도구 미설치 시 숨김) ============= -->
-                <Border Style="{StaticResource WindowCard}" Margin="0,0,0,10"
-                        Visibility="{Binding IsTrainingAvailable, Converter={StaticResource BoolToVis}}">
-                    <StackPanel>
-                        <TextBlock Text="Training Progress" Style="{StaticResource WindowSectionHeaderFirst}"/>
-
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Margin="0,0,16,6" Foreground="{StaticResource BrushTextSecondary}" VerticalAlignment="Center">
-                                <Run Text="Epoch:"/>
-                                <Run Text="{Binding TrainEpoch, Mode=OneWay}" Foreground="{StaticResource BrushTextAccent}" FontWeight="Bold"/>
-                                <Run Text="/"/>
-                                <Run Text="{Binding TrainEpochTotal, Mode=OneWay}"/>
-                                <Run Text="  Loss:"/>
-                                <Run Text="{Binding LastLoss, Mode=OneWay, StringFormat=F4, FallbackValue=-}" Foreground="#FFCC66"/>
-                                <Run Text="  Acc:"/>
-                                <Run Text="{Binding LastAcc, Mode=OneWay, StringFormat=F4, FallbackValue=-}" Foreground="#4CAF50"/>
-                            </TextBlock>
-                            <ProgressBar Grid.Column="1" Minimum="0" Maximum="100"
-                                         Value="{Binding TrainProgress}"
-                                         Style="{StaticResource WindowProgressBar}"
-                                         VerticalAlignment="Center"/>
-                        </Grid>
-
-                        <TextBlock Text="ONNX 출력 경로" Style="{StaticResource WindowFieldLabel}"/>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBox Grid.Column="0"
-                                     Text="{Binding ResultOnnxPath, Mode=OneWay}"
-                                     Style="{StaticResource WindowReadOnlyTextBox}"
-                                     Foreground="#4CAF50"/>
-                            <Button Grid.Column="1" Content="Copy"
-                                    Click="CopyOnnxPath_Click"
-                                    Style="{StaticResource ModernGhostButton}"
-                                    Margin="6,0,0,0"/>
-                        </Grid>
-
-                        <Grid Margin="0,8,0,0">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,4">
-                                <TextBlock Text="Training Log" Foreground="{StaticResource BrushTextSecondary}" VerticalAlignment="Center"/>
-                                <Button Content="Copy All" Click="CopyLog_Click"
-                                        Style="{StaticResource ModernGhostButton}"
-                                        Margin="10,0,0,0"/>
-                                <Button Content="Clear" Click="ClearLog_Click"
-                                        Style="{StaticResource ModernGhostButton}"
-                                        Margin="4,0,0,0"/>
-                                <TextBlock Text=" Visual Studio Output 창에도 동시 출력됩니다"
-                                           Foreground="{StaticResource BrushTextMuted}" FontSize="11"
-                                           VerticalAlignment="Center" Margin="8,0,0,0"/>
-                            </StackPanel>
-                            <Border Grid.Row="1" Style="{StaticResource WindowLogSurface}">
-                                <TextBox x:Name="LogTextBox" Height="180"
-                                         IsReadOnly="True" AcceptsReturn="True"
-                                         TextWrapping="NoWrap"
-                                         FontFamily="Consolas" FontSize="11"
-                                         Background="Transparent" Foreground="{StaticResource BrushTextSecondary}"
-                                         BorderThickness="0"
-                                         HorizontalScrollBarVisibility="Auto"
-                                         VerticalScrollBarVisibility="Auto"/>
-                            </Border>
-                        </Grid>
+                        <TextBlock Text="Training — BODA VMS MLOps" Style="{StaticResource WindowSectionHeaderFirst}"/>
+                        <TextBlock Style="{StaticResource WindowBodyText}" TextWrapping="Wrap" LineHeight="20">
+                            학습은 BODA VMS MLOps 에서 합니다. 출력 폴더를 열고 그 안의 train_crops · val_crops 폴더와
+                            train_rec.txt · val_rec.txt · dict.txt 를 모두 골라 압축한 뒤, MLOps 의 [데이터셋 버전] ▸ [버전 업로드] 에서
+                            작업 유형 OCR, 형식 ppocr 로 올리세요. 폴더째 압축하면 거절됩니다.
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource WindowMutedText}" TextWrapping="Wrap" Margin="0,6,0,0"
+                                   Text="출력 형식이 PaddleOCR rec 일 때만 해당합니다."/>
                     </StackPanel>
                 </Border>
 
@@ -439,14 +292,8 @@
                            Foreground="{StaticResource BrushTextAccent}"
                            VerticalAlignment="Center" FontSize="12"/>
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Button Content="Cancel Train" Command="{Binding CancelTrainCommand}"
-                            Style="{StaticResource ModernDangerButton}" Margin="0,0,8,0"
-                            Visibility="{Binding IsTrainingAvailable, Converter={StaticResource BoolToVis}}"/>
                     <Button Content="Generate" Command="{Binding GenerateCommand}"
-                            Style="{StaticResource ModernSecondaryButton}" Margin="0,0,8,0"/>
-                    <Button Content="Generate &amp; Train" Command="{Binding GenerateAndTrainCommand}"
-                            Style="{StaticResource ModernPrimaryButton}" Padding="20,7" Margin="0,0,8,0"
-                            Visibility="{Binding IsTrainingAvailable, Converter={StaticResource BoolToVis}}"/>
+                            Style="{StaticResource ModernPrimaryButton}" Padding="20,7" Margin="0,0,8,0"/>
                     <Button Content="Close"
                             Command="{x:Static SystemCommands.CloseWindowCommand}"
                             Style="{StaticResource ModernGhostButton}"/>

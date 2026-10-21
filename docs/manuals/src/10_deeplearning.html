@@ -1,18 +1,18 @@
 <section id="deeplearning">
-<h2>10. AI 학습 도구 (VMS.DeepLearning, 선택 설치)</h2>
-<div class="callout"><strong>선택 구성 요소 · 인증 범위 외.</strong> 설치 파일의 "설치 구성 선택" 화면에서 <strong>AI 학습 도구 포함</strong>을 체크한 PC 에만 설치됩니다(기본 해제).
-라벨링과 학습은 MLOps 플랫폼(9장)에서 하는 것이 기본이며, MLOps 서버 없이 이 PC 에서 직접 학습해야 하는 현장만 씁니다.</div>
-<figure><img src="../gs/screenshots/06_deeplearning_full.png" data-width="620" alt="AI 학습 도구 화면"><figcaption>AI 학습 도구(VMS.DeepLearning) — 데이터셋 · 이미지 목록(좌) / 라벨링 캔버스(중) / 클래스 · 라벨 · 학습(우)</figcaption></figure>
-<p>딥러닝 검사 도구(§6)에 쓰는 모델 파일(ONNX)을 이 PC 에서 만드는 별도 프로그램입니다. VisionSetup 의 Deep Learning 메뉴에서 실행하며, 설치되지 않은 PC 에서는 그 메뉴가 표시되지 않습니다.
-학습에는 파이썬과 NVIDIA GPU 가 필요합니다.</p>
+<h2>10. 딥러닝 모델 준비</h2>
+<p>딥러닝 검사 도구(§6 — Detection · Classify · Anomaly · YOLOv8-seg · RF-DETR-seg · OCR)는 학습된 모델 파일(ONNX)로 동작합니다.
+모델의 라벨링 · 학습 · 등록은 AI 학습 플랫폼 BODA VMS MLOps(9장)에서 합니다. VMS 와 VisionSetup 은 만들어진 모델을 불러와 검사에 씁니다.</p>
 <ol>
-  <li><strong>데이터셋 만들기</strong> — [New Dataset] 으로 이름과 작업 유형(Detection · Segmentation · Classification · Anomaly)을 정하고 [Add Images] 로 사진을 넣습니다.</li>
-  <li><strong>라벨링</strong> — 클래스를 정의하고 사각형 · 폴리곤을 그립니다. SAM 을 쓰면 클릭만으로 윤곽이 그려집니다. [Auto Split] 으로 학습/검증을 나눕니다.</li>
-  <li><strong>학습</strong> — Training 패널에서 스크립트(Detection 은 D-FINE 기본) · 에폭 · 배치 등을 정하고 학습을 시작합니다. 끝나면 출력 폴더에 ONNX · 지표 요약(<code>metrics.json</code>) · 학습 곡선(<code>curves.png</code>)이 생깁니다.</li>
-  <li><strong>내보내기</strong> — 만들어진 ONNX 를 VisionSetup 의 Detection · Classify · Anomaly · YOLOv8-seg · RF-DETR-seg 도구 Model Path 에 지정합니다.</li>
-  <li><strong>MLOps 와 함께 쓰기</strong> — Training 패널의 <strong>[레지스트리에 등록]</strong> 은 학습한 ONNX 를 MLOps 모델 계열의 후보 버전으로 올리고(Web 관리자 계정 로그인 필요), Export 구역의 <strong>[웹 데이터셋 내려받기]</strong> 는 MLOps 에서 라벨링한 데이터셋 판을 받아 학습 경로로 자동 설정합니다.</li>
+  <li><strong>학습</strong> — MLOps 에서 데이터셋을 라벨링하고 학습 작업을 실행합니다(§9.5 · §9.6). 끝난 모델은 모델 레지스트리에 후보 버전으로 등록됩니다.</li>
+  <li><strong>승격</strong> — 모델 레지스트리에서 결과를 확인하고 스테이징 · 운영 단계로 올립니다(§9.9).</li>
+  <li><strong>레시피에 지정</strong> — VisionSetup 딥러닝 도구의 Model Path 옆 <strong>[레지스트리…]</strong> 로 모델을 고르면 <code>model://</code> 참조가 들어갑니다(§9.10).
+      라인 PC 는 그 참조가 가리키는 버전을 자동으로 내려받아 씁니다. 모델 파일을 직접 받아 둔 경우에는 Model Path 에 .onnx 경로를 지정해도 됩니다.</li>
 </ol>
-<figure><img src="../gs/screenshots/v3/dl/dlg_ModelUpload_ready.png" data-width="420" alt="레지스트리에 등록 창"><figcaption>[레지스트리에 등록] 창 — 파일 정보 · 등록 대상 계열 · 라이선스 · 메모 · [올리기]</figcaption></figure>
-<figure><img src="../gs/screenshots/v3/dl/dlg_DatasetDownload_ready.png" data-width="480" alt="웹 데이터셋 내려받기 창"><figcaption>[웹 데이터셋 내려받기] 창 — 데이터셋 · 판(버전) 선택 · 풀어 넣을 폴더 · [받기]</figcaption></figure>
-<p>화면별 상세 조작, 파이썬 환경 준비, 학습 스크립트별 유의사항은 별책 <strong>「BODA VMS AI 학습 도구 매뉴얼」</strong>(<code>VMS_AI학습도구매뉴얼.pdf</code> — 본 매뉴얼과 함께 제공되는 별도 파일)을 참고하세요.</p>
+<h3 id="dl-ocr-synth">10.1 OCR 합성 데이터로 학습하기</h3>
+<p>날짜 · 로트 번호처럼 형식이 정해진 문자열은 VisionSetup 의 OCR Synth Data(§5)로 학습 데이터를 만들어 MLOps 에서 학습할 수 있습니다.</p>
+<ol>
+  <li>OCR Synth Data 에서 출력 형식을 PaddleOCR rec 로 두고 [Generate] 로 데이터를 만듭니다.</li>
+  <li>출력 폴더 안의 <code>train_crops</code> · <code>val_crops</code> 폴더와 <code>train_rec.txt</code> · <code>val_rec.txt</code> · <code>dict.txt</code> 를 모두 골라 압축합니다. 폴더째 압축하면 업로드가 거절됩니다.</li>
+  <li>MLOps 의 [데이터셋 버전] ▸ [버전 업로드] 에서 작업 유형 OCR, 형식 ppocr 로 올리고(§9.7) 학습 작업을 실행합니다.</li>
+</ol>
 </section>

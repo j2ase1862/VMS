@@ -2523,3 +2523,28 @@ v1.43.1(#568)과 함께 반영 대기 §73 을 넣었다. `src/05_visionsetup.ht
 ### 매뉴얼 반영 (완료)
 
 docx/PDF 재생성 204쪽(변동 없음) · 그림 154장 · 경고 0. docx 본문에 새 문장과 "VMS 1.43.1" 을 document.xml 에서 확인. 제품설명서 docx 재생성.
+
+## 75. WPF AI 학습 도구 제거 · MLOps 일원화 — **반영 대기**(릴리즈 때 docx/PDF · 설치 그림)
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-10-21 |
+| 대상 | 본편 §1 · §2 · §5 · §6 · §7 · §9.8 · 10장 · §13.4, 그림 `v3/vs/dlg_SynthData.png`(재캡처) · `71_msi_weboption.png`(릴리즈 MSI 로 재캡처 예정), 제품설명서 §2.2 · §3, 별책 폐기 |
+| 변경 종류 | 기능 제거 (MLOps 로 일원화) |
+
+### 무엇이 바뀌었나 (사내 기록)
+
+- 사용자 결정(2026-10-21): 딥러닝 라벨링 · 학습은 MLOps 로 일원화하고 WPF AI 학습 도구와 "서버 없는 단독 학습" 을 접는다. 워커는 별도 MSI 로 배포.
+  MLOps 쪽 선행 조건(PP-OCR 내보내기 · SynthData zip 업로드 #45, 클래스 덧붙이기 #48, 모델 돌려 보기 #49)을 채운 뒤 제거.
+- 제거: `VMS.DeepLearning` 프로젝트(sln · slnf · 빌드 순서 참조) · 학습 스크립트(`VMS.DeepLearning/scripts` · `VMS.VisionSetup/scripts`, 원본은 MLOps `scripts/` — 내용 동일 확인) ·
+  인스톨러 `AiTools` Feature · `INSTALLAITOOLS` · 설치 마법사 체크박스 · `-p:ExcludeAiTools=true` 인증 빌드(일반 MSI 가 곧 제출본) ·
+  VisionSetup Tools ▸ Deep Learning 메뉴 · OCR Synth Data 학습 카드/[Generate & Train]/PaddleOcrTrainingService(→ MLOps 업로드 안내 카드) ·
+  쓰이지 않던 VisionSetup 라벨링 · 학습 코드(AnnotationView/ViewModel · AnnotationService · TrainingService · Models/Annotation) ·
+  WPF 앱만 쓰던 VMS.Core 코드(ModelUpload/DatasetDownload VM · ILabelingDialogService · DatasetRegistryClient · TrainingExportClasses · AnnotationService · TrainingService · RegistryTaskType · Models/Annotation · ModelRegistryClient 업로드 메서드) 와 그 시험.
+- 남긴 것: 수확 `<Exclude>` 두 줄(빌드 PC 의 옛 출력물 방어), `VMS.Core.Contracts` 의 학습 규약(TrainingOutputParser · TrainingArgumentBuilder · TrainingConfig — MLOps 워커가 씀).
+- 도움말: Detection · Classify · Anomaly · RF-DETR-seg 의 "VMS.DeepLearning 에서 학습" 을 "MLOps 에서 학습 · [레지스트리…]" 로. 템플릿 갤러리 문구 2곳.
+- 업그레이드: 메이저 업그레이드가 옛 제품을 통째로 지우므로 AI 학습 도구를 포함했던 PC 에서도 파일 · 레지스트리 마커가 함께 사라진다.
+
+### 매뉴얼 반영
+
+본문 src 는 이 PR 에서 고쳤다(10장 재작성 · 9.8 한 줄 = §71 반영). 릴리즈 때 `71_msi_weboption.png` 를 릴리즈 MSI 로 다시 찍고(`tools/capture-msi-weboption.ps1`, 체크박스 하나), docx/PDF · 제품설명서를 재생성한다(그림 3장 감소 예상: 06_deeplearning_full · ModelUpload · DatasetDownload).

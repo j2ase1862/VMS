@@ -101,58 +101,16 @@ VisionSetup 의 도구 설정에서 모델 경로 칸 옆 **[레지스트리…]
 
 `ModelCacheMaxGB` 를 넘으면 앱 시작 때 오래 안 쓴 파일부터 지웁니다. 지금 레시피가 쓰는 파일은 지우지 않습니다.
 
-## 올리는 쪽 — AI 학습 도구의 [레지스트리에 등록]
+## 올리고 받는 쪽 — MLOps 웹
 
-여기까지가 "받아 쓰는" 이야기였고, 그 앞에 "올리는" 자리가 있습니다.
-학습이 끝나면 AI 학습 도구(`VMS.DeepLearning`)의 학습 패널에서 **[레지스트리에 등록]** 을 누릅니다.
-지금까지는 ONNX 파일을 사람이 라인 PC 로 복사했고, 그래서 어느 PC 가 어느 모델을 쓰는지 아무도 몰랐습니다.
-
-| 무엇 | 어떻게 |
-|---|---|
-| 누가 올리나 | **사람의 계정**. BODA.VMS.Web 에 로그인해 받은 JWT 를 MLOps 가 그대로 받습니다 (같은 키·발급자). |
-| 왜 라인 토큰이 아닌가 | `ln_` 토큰은 받아 가는 쪽 자격입니다. 등록·승격은 엔지니어의 일이라 서비스 계정에 열지 않습니다. |
-| 권한이 모자라면 | 서버가 403 으로 답하고, 창이 "모델 등록은 엔지니어 이상 계정이어야 합니다" 로 옮겨 보여 줍니다. |
-| 어디로 들어가나 | **Candidate**. 바로 라인에 나가지 않습니다. 사람이 레지스트리에서 확인하고 승격해야 합니다. |
-| 클래스는 | 학습에 쓴 이름을 그대로 보냅니다. 서버가 ONNX 안의 이름과 대조해 어긋나면 거절합니다. |
-| 라이선스는 | YOLO 계열은 라이선스 없이는 등록도 Production 승격도 되지 않습니다 (`AGPL-3.0`). |
-
-올릴 파일은 방금 학습한 산출물이 우선이고, 없으면 데이터셋에 남아 있는 마지막 산출물을 씁니다 —
-앱을 다시 켠 뒤에도 올릴 수 있어야 하기 때문입니다.
-
-서버 주소는 `system_config.json` 의 `MlopsServerUrl`·`WebServerUrl` 에서 읽습니다.
-둘 중 하나라도 없으면 창을 띄우지 않고 무엇이 빠졌는지 말해 줍니다.
-
-## 받는 쪽 — AI 학습 도구의 [웹 데이터셋 내려받기]
-
-모델만 오가는 것이 아닙니다. 웹에서 라벨링한 데이터셋도 학습 도구로 내려옵니다.
-학습 도구의 Export 구역에서 **[웹 데이터셋 내려받기]** 를 누릅니다.
-
-받는 것은 **내보내기 폴더**입니다 — 학습 스크립트가 그대로 읽는 형식(yolo·imagefolder·mvtec·
-ppocr·coco)으로 서버가 굽습니다. 라벨을 학습 도구의 데이터셋 형식으로 되돌리지 **않습니다**.
-두 형식을 오가며 옮겨 적는 길을 열면 어느 쪽이 정본인지 흐려지고, 조용히 어긋난 라벨이
-다음 학습에 들어갑니다. 웹에서 라벨링한 것은 웹이 정본이고, 학습 도구는 그것으로 학습만 합니다.
-그래서 이 창이 끝내 놓는 것은 Export 버튼들과 같은 것 하나입니다 — **학습 데이터셋 경로**.
-
-| 무엇 | 어떻게 |
-|---|---|
-| 판(버전) | 데이터셋은 계속 바뀌므로 학습은 "그때 그 판" 을 받아야 재현됩니다. 이미 뜬 판을 고르거나 지금 상태로 새로 뜹니다. |
-| 미라벨 포함 | 기본은 라벨이 붙은 것만 담습니다. 검출에서 배경 샘플이 필요할 때만 켭니다 — 분류·이상탐지에서 켜면 라벨 없는 이미지가 학습에 섞입니다. |
-| 폴더 이름 | `{판 이름}-{매니페스트 해시 앞 8자리}`. 어느 학습이 어느 판으로 돌았는지 폴더 이름만 봐도 압니다. |
-| 다시 받으면 | 대상 폴더를 비우고 새로 풉니다. 이전 판의 라벨 파일이 남아 섞이면 지운 라벨이 학습에 되살아납니다. |
-| 다 받았는지 | 받으면서 SHA-256 을 계산해 서버가 준 값과 대조하고, `Content-Length` 로 길이도 봅니다. 끊긴 연결로 반쯤 받은 zip 을 풀면 이미지 몇 장이 빠진 채 학습이 돌고, 그건 아무 데도 남지 않습니다. |
-
-**`X-Content-Sha256` 은 내보내기 zip 파일의 SHA-256 입니다** (MLOps `DatasetVersion.ExportSha256`).
-한동안 서버가 여기에 **매니페스트 해시**를 실었습니다 — 그것은 이미지·라벨·분할 목록 JSON 의 해시,
-즉 내용의 신원이라 zip 바이트와 무관하고, 같은 내용이라도 zip 은 구울 때마다 바이트가 달라집니다.
-그래서 이 헤더로 파일을 검증하던 워커는 스냅샷으로 만든 판을 받을 때마다 실패했습니다
-(MLOps main `cd5ed15` 에서 고쳤습니다). 옛 서버에 붙으면 헤더 값이 `manifestHash` 와 같게 오므로,
-그때는 대조를 건너뛰고 길이만 봅니다.
+모델 등록 · 승격과 데이터셋 라벨링 · 학습은 MLOps 웹에서 합니다. VMS 는 레지스트리에서 **받아 쓰기만** 하고,
+올리는 클라이언트는 두지 않습니다(2026-10 에 VMS.DeepLearning(WPF 라벨링 · 학습 앱)과 학습 스크립트를 제품에서 제거했다 — 라벨링 · 학습 · 등록은 BODA VMS MLOps 로 일원화.).
 
 ## 세그멘테이션 — RF-DETR 규약
 
 세그멘테이션 모델은 `rfdetrseg` 규약입니다. 검출에서 D-FINE 을 고른 것과 같은 이유로,
 Ultralytics(AGPL-3.0) 없이 상용 배포를 하기 위해서입니다. 학습은 MLOps 의
-`scripts/train_rfdetr_seg.py`(원본은 `VMS.DeepLearning/scripts/`)가 하고,
+`scripts/train_rfdetr_seg.py` 가 하고,
 라인에서는 `RfdetrSegTool` 이 읽습니다.
 
 | 이름 | 모양 | 뜻 |
@@ -203,14 +161,7 @@ Web 생산 이력으로 가는 NG 썸네일 전송과는 별개의 길입니다 
 | 엔진 적재 연결 | `VMS.VisionSetup/VisionTools/DeepLearning/OnnxEngineCache.cs` |
 | 레시피 로드 시 준비 | `VMS.VisionSetup/Services/RecipeService.cs` |
 | 고르는 창 | `VMS.VisionSetup/Views/Dialogs/ModelRegistryPickerWindow.xaml` |
-| 올리는 창 | `VMS.DeepLearning/Views/ModelUploadWindow.xaml` |
-| 올리는 창의 상태 | `VMS.Core/ViewModels/ModelUploadViewModel.cs` |
-| 작업 유형 이름 대응 | `VMS.Core/Services/RegistryTaskType.cs` |
 | 서버 주소 읽기 | `VMS.Core/Services/SystemConfigReader.cs` |
-| 데이터셋 받기 | `VMS.Core/Services/DatasetRegistryClient.cs` |
-| 받는 창 | `VMS.DeepLearning/Views/DatasetDownloadWindow.xaml` |
-| 받는 창의 상태 | `VMS.Core/ViewModels/DatasetDownloadViewModel.cs` |
-| 학습에 쓴 클래스 되읽기 | `VMS.Core/Services/TrainingExportClasses.cs` |
 | 세그멘테이션 런타임 도구 | `VMS.VisionSetup/VisionTools/DeepLearning/RfdetrSegTool.cs` |
 | 라인 NG 이미지 송신 | `VMS/Services/ImageUpload/LineNgImageUploader.cs` (큐·샘플링·거절 보관) |
 | 송신 토글·샘플 비율 | `VMS.Core/Imaging/ImageSaveOptions.cs` (`mlopsSendNg` · `mlopsOkSampleRate`), 설정 창 `VMS/ViewModels/ImageSaveSettingsViewModel.cs` |
@@ -230,18 +181,4 @@ set MLOPS_URL=http://localhost:5310
 set MLOPS_LINE_TOKEN=ln_...
 set MLOPS_MODEL_ID=<운영 단계로 승격된 모델 ID>
 dotnet test VMS.Core.Tests --filter MlopsRegistryIntegrationTests
-```
-
-올리는 쪽은 사람의 JWT 가 필요해 따로 켭니다. 서버에 진짜 계열과 버전을 남기므로 개발 서버에서만 돌리세요.
-
-```bash
-set MLOPS_JWT=<엔지니어 이상 계정의 토큰>
-set MLOPS_ONNX=D:\Repo\VMS\VMS.DeepLearning\best.onnx
-set MLOPS_ONNX_CLASSES=object,logo
-```
-
-데이터셋 받기도 같은 JWT 로 확인합니다. 라벨이 붙은 이미지가 한 장은 있어야 판이 떠집니다.
-
-```bash
-set MLOPS_DATASET_ID=<웹에서 라벨링한 검출 데이터셋 ID>
 ```

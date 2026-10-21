@@ -22,8 +22,6 @@
 
 VMS의 ONNX 추론(Detection / Anomaly / Classify)을 NVIDIA GPU + TensorRT로 가속하는 절차입니다. 모든 코드 변경은 완료되어 있고, **환경 설치 + 설정 파일 한 줄**만 추가하면 작동합니다.
 
-> **적용 범위 참고**: SAM(라벨링 앱의 클릭 세그멘테이션)은 이 가이드의 적용 대상이 **아닙니다**. VMS.DeepLearning 앱은 EP 설정을 읽지 않으므로, SAM은 EP 설정과 무관하게 항상 CPU로 동작합니다.
-
 ### 가속 단계
 
 | 단계 | 첫 추론 | 캐시 후 | 비고 |
@@ -39,7 +37,6 @@ VMS의 ONNX 추론(Detection / Anomaly / Classify)을 NVIDIA GPU + TensorRT로 �
 
 ✅ **이미 적용 완료**:
 - `VMS.VisionSetup.csproj`: `Microsoft.ML.OnnxRuntime.Gpu` v1.21.0
-- `VMS.DeepLearning.csproj`: `Microsoft.ML.OnnxRuntime.Gpu` v1.21.0
 
 빌드 산출물 (`VMS.VisionSetup/bin/Debug/net8.0-windows7.0/`)에 다음 DLL이 자동 배포됩니다:
 - `onnxruntime_providers_cuda.dll`
@@ -379,7 +376,7 @@ GPU 환경에서 문제가 생기면 즉시 CPU로 복귀할 수 있습니다.
 
 방법 2: NuGet 패키지를 다시 CPU 버전으로 교체
 ```xml
-<!-- VMS.VisionSetup.csproj, VMS.DeepLearning.csproj -->
+<!-- VMS.VisionSetup.csproj -->
 <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.21.0" />
 ```
 
@@ -388,4 +385,3 @@ GPU 환경에서 문제가 생기면 즉시 CPU로 복귀할 수 있습니다.
 ---
 
 **관련 문서**:
-- [BODA-VMS-AI-Tools-Manual.html](BODA-VMS-AI-Tools-Manual.html) — AI 학습 도구 매뉴얼(별책: 라벨링 · 학습)

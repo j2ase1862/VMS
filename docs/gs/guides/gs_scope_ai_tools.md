@@ -2,6 +2,10 @@
 
 문서 버전: v1.0 (2026-09-08)
 대상: GS 인증 2차 준비 (목표 2026-10-30) — 제출 제품 구성과 시험 범위의 경계
+> **2026-10-21 갱신 — AI 학습 도구를 제품에서 제거했다.** 라벨링 · 학습 · 등록은 BODA VMS MLOps 로 일원화했고,
+> VMS.DeepLearning 앱 · 학습 스크립트 · 인스톨러 `AiTools` Feature · 인증 제출 빌드(`-p:ExcludeAiTools=true`)가 모두 없어졌다.
+> 따라서 일반 릴리즈 MSI 가 곧 제출본이며, 아래 "제외" 처리는 당시 경계를 정한 기록이다. 추론(검사) 도구의 범위 판단은 그대로 유효하다.
+
 관련: [gs_compliance_overview_v1.0.md](gs_compliance_overview_v1.0.md) §1.1 · [gs_distribution_policy.md](gs_distribution_policy.md) §2.6 · [msi_build_guide.md](../../msi_build_guide.md) §14
 
 ---
