@@ -2274,3 +2274,35 @@ docx/PDF 재생성 204쪽(203 → 204) · 그림 154장 · 경고 0, 101쪽(Regi
 ### 매뉴얼 반영
 
 없음.
+
+## 64. Anomaly 자동 임계값 — ROI 영역으로 채점 — **반영 대기**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-10-21 |
+| 대상 | 본편 §6 Anomaly 파라미터 표 — Auto Threshold Calibration 행 (`src/06_tools.html` 569행 · `tools_prose.json`) |
+| 변경 종류 | 결함 수정 (판정 임계값) + 도움말 · 매뉴얼 문구 정정 |
+
+### 무엇이 바뀌었나 (사내 기록)
+
+[Calibrate Threshold] 는 정상 이미지 폴더의 점수 분포(평균 + k × 표준편차)로 Anomaly Threshold 를 정한다.
+그런데 `AnomalyTool.CalibrateThresholdAsync` 는 UseROI 와 무관하게 **원본 전체**로 점수를 매겼고, 검사(Execute)는 **ROI 안**만 채점한다.
+ROI 를 쓰는 레시피에서는 임계값이 검사 점수와 다른 눈금으로 잡혀 과검 · 미검이 났다
+(2026-10-16 GS 딥러닝 시험자료에서 발견 — 시험자료는 칸 크롭 이미지 + ROI 미사용으로 피해 갔다).
+
+- UseROI 면 정상 샘플도 Execute 와 같은 규칙(음수 크기 정규화 + 이미지와 겹치는 부분)으로 ROI 를 잘라 채점한다.
+  `VisionToolBase.ClipRectToImage` 로 GetAdjustedROI 와 같은 자르기를 쓴다.
+- Fixture 로 ROI 가 옮겨진 뒤(HasFixtureBaseROI)라면 마지막 실행 위치가 아니라 **기준 자세 ROI**(FixtureBaseROI)로 채점한다.
+- ROI 가 이미지와 겹치지 않는 장은 건너뛰고(종전 GetROIImage 는 이때 원본 전체를 돌려줌), 전부 건너뛰면 실패 + "검사와 같은 화각 · 크기의 원본 이미지를 넣으세요" 안내. 임계값은 그대로 둔다.
+- ROI 일부가 이미지 밖인 장은 겹친 부분만 채점하고(Execute 와 같음) 보고에 장 수를 적는다.
+- 결과 보고 줄에 채점 영역(`ROI (x,y w×h) 영역으로 채점` / `이미지 전체로 채점`)이 나온다.
+- ROI 미사용 레시피는 종전과 같다.
+- 도움말(CalibrationSigma)의 "계산된 값은 제안일 뿐, Anomaly Threshold 에 반영해야" 는 틀린 설명이었다 — 버튼을 누르면 바로 들어간다. 정정하고 ROI 문단을 더했다. 설정 패널 안내 문구에도 한 문장 추가.
+- 시험: `AnomalyCalibrationRoiTests` 5건(점수 = 평균 밝기 스텁으로 ROI 안팎 밝기를 달리 둠 — 캘리브레이션 임계값 = 같은 이미지의 Execute 점수로 낸 mean+1σ). 수정 전 코드에서 5건 모두 실패.
+
+### 매뉴얼 반영 (대기 — 다음 릴리즈 때)
+
+§6 Anomaly 파라미터 표 Auto Threshold Calibration 행 설명(`src/06_tools.html` · `tools_prose.json` 같은 문장)
+"정상 이미지 폴더의 점수 분포로 임계값을 제안(평균 + k × 표준편차). 제안값을 Anomaly Threshold 에 직접 반영해야 합니다" 를
+"정상 이미지 폴더의 점수 분포로 임계값을 계산해 Anomaly Threshold 에 넣습니다(평균 + k × 표준편차). ROI 를 쓰면 같은 ROI 영역으로 채점하므로, 폴더에는 검사와 같은 크기로 찍은 원본 이미지를 넣습니다" 로 바꾼다.
+설정 패널 그림은 안내 문구가 한 줄 늘어남(다음 재캡처 때).

@@ -70,6 +70,8 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         /// CalibrationFolder 내 이미지들을 순차 추론하여 AnomalyScore 분포를 구한 뒤,
         /// mean + sigma·std 값으로 AnomalyThreshold를 자동 설정합니다.
         /// 정상 이미지만 포함된 폴더를 지정하세요.
+        /// UseROI 면 Execute 와 같은 ROI 로 잘라 채점한다 — 원본 전체로 채점하면 검사 점수와 눈금이 달라
+        /// 임계값이 어긋난다. 그래서 폴더에는 검사와 같은 화각 · 크기의 원본 이미지를 넣어야 한다.
         /// </summary>
         public async Task<bool> CalibrateThresholdAsync(CancellationToken ct = default)
         {
@@ -97,8 +99,14 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
             }
 
             var calibEngine = EnsureEngine();
+            bool useRoi = UseROI;
+            // Fixture 로 옮겨진 뒤라면 ROI 는 마지막 실행 위치에 머물러 있다 — 기준 자세 ROI 로 채점한다
+            var calibRoi = HasFixtureBaseROI ? FixtureBaseROI : ROI;
+            int roiW = Math.Abs(calibRoi.Width), roiH = Math.Abs(calibRoi.Height);
 
             var scores = new List<double>(files.Count);
+            int roiOutside = 0;   // ROI 가 이미지와 겹치지 않아 건너뛴 장
+            int roiClipped = 0;   // ROI 일부가 이미지 밖이라 잘린 장 (Execute 와 같이 겹친 부분만 채점)
             await Task.Run(() =>
             {
                 foreach (var f in files)
@@ -108,17 +116,38 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
                     {
                         using var img = Cv2.ImRead(f, ImreadModes.Color);
                         if (img.Empty()) continue;
-                        var r = calibEngine.Detect(img, InputSize);
-                        scores.Add(r.AnomalyScore);
-                        r.AnomalyMap?.Dispose();
+
+                        Mat? crop = null;
+                        if (useRoi)
+                        {
+                            // Execute 의 GetROIImage 와 같은 자르기 (겹침이 없으면 그쪽은 원본 전체를 쓰지만 여기선 건너뛴다)
+                            var adj = ClipRectToImage(calibRoi, img);
+                            if (adj.Width <= 0 || adj.Height <= 0) { roiOutside++; continue; }
+                            if (adj.Width < roiW || adj.Height < roiH) roiClipped++;
+                            crop = new Mat(img, adj);
+                        }
+
+                        using (crop)
+                        {
+                            var r = calibEngine.Detect(crop ?? img, InputSize);
+                            scores.Add(r.AnomalyScore);
+                            r.AnomalyMap?.Dispose();
+                        }
                     }
                     catch { /* 개별 실패는 무시하고 계속 */ }
                 }
             }, ct);
 
+            string roiNote = useRoi
+                ? $"ROI ({Math.Min(calibRoi.X, calibRoi.X + calibRoi.Width)},{Math.Min(calibRoi.Y, calibRoi.Y + calibRoi.Height)} {roiW}×{roiH}) 영역으로 채점"
+                : "이미지 전체로 채점";
+
             if (scores.Count == 0)
             {
-                CalibrationReport = "유효한 이미지에서 점수를 얻지 못했습니다.";
+                CalibrationReport = roiOutside > 0
+                    ? $"ROI 가 캘리브레이션 이미지 밖에 있습니다 ({roiOutside}장). " +
+                      "검사와 같은 화각 · 크기의 원본 이미지를 넣으세요."
+                    : "유효한 이미지에서 점수를 얻지 못했습니다.";
                 return false;
             }
 
@@ -129,8 +158,12 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
 
             AnomalyThreshold = Math.Clamp(suggested, 0.0, 1.0);
             CalibrationReport =
-                $"샘플 {scores.Count}장 · mean={mean:F3} · std={std:F3} · " +
+                $"샘플 {scores.Count}장 · {roiNote} · mean={mean:F3} · std={std:F3} · " +
                 $"suggested={suggested:F3} (→ 적용: {AnomalyThreshold:F3})";
+            if (roiOutside > 0)
+                CalibrationReport += $"{Environment.NewLine}⚠ ROI 가 이미지 밖이라 건너뜀 {roiOutside}장 — 검사와 같은 크기의 원본인지 확인하세요.";
+            if (roiClipped > 0)
+                CalibrationReport += $"{Environment.NewLine}⚠ ROI 일부가 이미지 밖 {roiClipped}장 — 겹친 부분만 채점했습니다.";
             return true;
         }
 
