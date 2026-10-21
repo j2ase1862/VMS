@@ -58,9 +58,16 @@ namespace VMS.Services
         public event Action? PaperEntered;
         public event Action? PaperExited;
 
-        public RollerInspectionService(ISystemLogService? logService = null)
+        // 연속 검사 동안 쥐는 "검사 중" 신호 — 같은 PC 의 학습 워커가 학습을 멈춘다 (InspectionActivity).
+        private readonly Func<IDisposable?> _activitySignalFactory;
+        private IDisposable? _activitySignal;
+
+        public RollerInspectionService(ISystemLogService? logService = null,
+            Func<IDisposable?>? activitySignalFactory = null)
         {
             _logService = logService;
+            _activitySignalFactory = activitySignalFactory
+                ?? (() => InspectionActivity.Acquire(logService, "Roller"));
         }
 
         public void Start()
@@ -68,6 +75,7 @@ namespace VMS.Services
             if (IsRunning) return;
 
             IsRunning = true;
+            _activitySignal = _activitySignalFactory();
             ResetState();
             _logService?.Log("Roller inspection started", LogLevel.Success, "Roller");
         }
@@ -77,6 +85,8 @@ namespace VMS.Services
             if (!IsRunning) return;
 
             IsRunning = false;
+            _activitySignal?.Dispose();
+            _activitySignal = null;
             DisposeAccumulatedFrames();
             ResetState();
             _logService?.Log("Roller inspection stopped", LogLevel.Info, "Roller");

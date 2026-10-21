@@ -17,12 +17,13 @@
 | `VMS.Core.Services` | `TrainingOutputParser`, `TrainingOutputKind` | train_*.py stdout 프로토콜 해석 — 워커 진행률 보고 |
 | `VMS.Core.Services` | `TrainingArgumentBuilder` | `TrainingConfig` → 스크립트 인자(화이트리스트) — 워커 실행 |
 | `VMS.Core.Models.Annotation` | `TrainingConfig`, `TrainingTarget`, `TrainingStatus`, `TrainingState` | 학습 설정·상태 모델 |
+| `VMS.Core.Services` | `InspectionActivitySignal` | 검사 중 신호(1.43.0~) — VMS 가 AUTO RUN · Roller 연속 검사 동안 `Global\BODA.VMS.InspectionActive` 를 쥐고, 같은 PC 학습 워커는 `IsActive()` 가 참이면 학습을 받지 않거나 중단한다 |
 
 ## 패키지 만들기 (VMS 리포, dev PC)
 
 ```powershell
 .\tools\pack-contracts.ps1                 # → D:\Repo\nuget-local\VMS.Core.Contracts.<버전>.nupkg (+ .snupkg)
-.\tools\pack-contracts.ps1 -Suffix dev     # 개발 중 반복 pack: 1.33.0-dev.<타임스탬프>
+.\tools\pack-contracts.ps1 -Suffix dev     # 개발 중 반복 pack: 1.43.0-dev.<타임스탬프>
 ```
 
 버전은 `Directory.Build.props` 의 `<Version>` 을 그대로 쓴다(릴리즈와 동기화). 규약이 바뀌는 PR 은 VMS 릴리즈(MINOR)와
@@ -45,7 +46,7 @@
 프로젝트:
 
 ```xml
-<PackageReference Include="VMS.Core.Contracts" Version="1.33.*" />
+<PackageReference Include="VMS.Core.Contracts" Version="1.43.*" />   <!-- InspectionActivitySignal 은 1.43.0 부터 -->
 ```
 
 사용 예:
@@ -58,10 +59,13 @@ var format = DetectionModelFormatProbe.Probe(onnxPath);            // 업로드 
 var meta   = OnnxMetadataReader.Read(onnxPath);                     // names / imgsz / model_format
 var kind   = TrainingOutputParser.Apply(line, status);              // 워커 stdout 한 줄 → 상태 갱신
 var args   = TrainingArgumentBuilder.Build(config);                 // 워커 프로세스 인자
+var busy   = InspectionActivitySignal.IsActive();                   // 같은 PC 에서 VMS 가 검사 중인가 (워커가 1~2초마다)
 ```
 
 ## 규칙
 
 - 규약 변경(프로토콜 태그·인자·ONNX 규약 판별)은 **이 패키지 + 스크립트 5종 + VMS 소비자**를 한 PR 에서 함께 바꾼다.
 - 여기에는 Windows·WPF·OpenCV·ONNX Runtime·HTTP 클라이언트를 넣지 않는다. 추론 엔진(`IDetectionEngine`, `DFineOnnxEngine`)은 VisionSetup 에 남는다.
+- `InspectionActivitySignal` 은 **존재가 신호**인 명명 Mutex 다. 워커는 직접 `Mutex.TryOpenExisting` 하지 말고 `IsActive()` 만 쓴다
+  (확인 후 핸들을 바로 닫고, 객체는 있는데 권한이 없으면 검사 중으로 본다). 이름은 PC 단위라 인스턴스(`--instance`) 접미사를 붙이지 않는다.
 - 사내 NuGet 서버를 두게 되면 `pack-contracts.ps1 -Feed` 만 바꾸면 된다. CI 는 pack 하지 않는다(dev PC 에서 릴리즈와 함께).
