@@ -34,6 +34,22 @@ namespace VMS.Core.Tests.Services
             Assert.Equal(id, DlModelIdentity.TryReadVersionId(DlModelIdentity.ForVersion(id)));
         }
 
+        /// <summary>
+        /// 이미 운영 웹 DB 에 쌓인 값과 MLOps 집계가 이 문자열 모양에 기댄다 — 바이트 단위로 고정한다.
+        /// 형식을 바꿔야 하면 이 시험과 MLOps 쪽을 같은 날 함께 바꾼다.
+        /// </summary>
+        [Fact]
+        public void Wire_format_is_pinned()
+        {
+            var id = Guid.Parse("0123abcd-4567-89ef-0123-456789abcdef");
+
+            Assert.Equal("mv:0123abcd456789ef0123456789abcdef", DlModelIdentity.ForVersion(id));
+            Assert.Equal(id, DlModelIdentity.TryReadVersionId("  mv:0123abcd456789ef0123456789abcdef  "));
+            Assert.Equal(id, DlModelIdentity.TryReadVersionId("mv:0123ABCD456789EF0123456789ABCDEF"));
+            Assert.Null(DlModelIdentity.TryReadVersionId("MV:0123abcd456789ef0123456789abcdef"));
+            Assert.Null(DlModelIdentity.TryReadVersionId("mv:0123abcd-4567-89ef-0123-456789abcdef"));
+        }
+
         [Fact]
         public void Non_version_identities_read_back_as_null()
         {

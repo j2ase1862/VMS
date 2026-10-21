@@ -17,6 +17,7 @@
 | `VMS.Core.Services` | `TrainingOutputParser`, `TrainingOutputKind` | train_*.py stdout 프로토콜 해석 — 워커 진행률 보고 |
 | `VMS.Core.Services` | `TrainingArgumentBuilder` | `TrainingConfig` → 스크립트 인자(화이트리스트) — 워커 실행 |
 | `VMS.Core.Models.Annotation` | `TrainingConfig`, `TrainingTarget`, `TrainingStatus`, `TrainingState` | 학습 설정·상태 모델 |
+| `VMS.Core.Services` | `DlModelIdentity` | 검사 결과에 싣는 모델 식별자(1.45.0~) — VMS 는 `ForVersion` 으로 `mv:{32자}` 를 쓰고, MLOps 모니터링은 `TryReadVersionId` 로 되읽어 모델별 불량률을 집계한다. 옛 MLOps `ModelVersionTag` 를 대신한다 |
 | `VMS.Core.Services` | `InspectionActivitySignal` | 검사 중 신호(1.43.0~) — VMS 가 AUTO RUN · Roller 연속 검사 동안 `Global\BODA.VMS.InspectionActive` 를 쥐고, 같은 PC 학습 워커는 `IsActive()` 가 참이면 학습을 받지 않거나 중단한다 |
 
 ## 패키지 만들기 (VMS 리포, dev PC)
@@ -46,7 +47,7 @@
 프로젝트:
 
 ```xml
-<PackageReference Include="VMS.Core.Contracts" Version="1.43.*" />   <!-- InspectionActivitySignal 은 1.43.0 부터 -->
+<PackageReference Include="VMS.Core.Contracts" Version="1.45.*" />   <!-- InspectionActivitySignal 1.43.0~, DlModelIdentity 1.45.0~ -->
 ```
 
 사용 예:
@@ -59,6 +60,7 @@ var format = DetectionModelFormatProbe.Probe(onnxPath);            // 업로드 
 var meta   = OnnxMetadataReader.Read(onnxPath);                     // names / imgsz / model_format
 var kind   = TrainingOutputParser.Apply(line, status);              // 워커 stdout 한 줄 → 상태 갱신
 var args   = TrainingArgumentBuilder.Build(config);                 // 워커 프로세스 인자
+var verId  = DlModelIdentity.TryReadVersionId(row.ModelVersion);   // 검사 이력의 모델 식별자 → 버전 id (아니면 null)
 var busy   = InspectionActivitySignal.IsActive();                   // 같은 PC 에서 VMS 가 검사 중인가 (워커가 1~2초마다)
 ```
 
