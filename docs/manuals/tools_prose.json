@@ -1357,7 +1357,12 @@
    [
     "Confidence Threshold",
     "0.5 [0.1~1]",
-    "Top-1 신뢰도가 이 값 이상이면 PASS"
+    "가장 확률이 높은 클래스의 신뢰도가 이 값보다 낮으면 NG"
+   ],
+   [
+    "OK Classes",
+    "(비어 있음)",
+    "양품으로 볼 클래스(여러 개). 지정하면 그 클래스로 분류되고 신뢰도도 임계값 이상일 때만 OK — 양품 · 불량을 가르는 검사라면 반드시 지정"
    ],
    [
     "Use ImageNet Normalization",
@@ -1371,7 +1376,7 @@
    ]
   ],
   "outputs": "ClassName · ClassId · Confidence",
-  "judgment": "Top-1 신뢰도가 Confidence Threshold 이상이면 OK. 클래스에 따른 OK/NG 는 Result 또는 Batch Test 임계로 정합니다.",
+  "judgment": "OK Classes 를 지정하면 양품 클래스로 분류되고 신뢰도가 Confidence Threshold 이상일 때 OK, 그 밖은 NG(결과 메시지 끝에 \"불량 클래스\" 또는 \"신뢰도 부족\"). 지정하지 않으면 신뢰도만으로 판정하며, 설정 패널에 경고가 표시됩니다.",
   "tips": []
  },
  "Anomaly (이상 탐지)": {

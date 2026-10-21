@@ -2399,7 +2399,7 @@ v1.42.19(#561 · #562)와 함께 반영 대기 §66 을 본문에 넣었다(`src
 
 docx/PDF 재생성 204쪽(변동 없음) · 그림 154장 · 경고 0. docx 본문에 새 문장 3개와 "VMS 1.42.19" 를 document.xml 에서 확인. 제품설명서 docx 재생성.
 
-## 69. Classify 양품 클래스(OK Classes) 판정 — **반영 대기**
+## 69. Classify 양품 클래스(OK Classes) 판정 — **반영 완료**(v1.42.20)
 
 | 항목 | 내용 |
 |------|------|
@@ -2421,10 +2421,30 @@ Classify 판정이 "Top-1 신뢰도 ≥ 임계값" 하나뿐이라, 불량 클�
 - 시험: `ClassifyOkClassesTests` 11건(종전 판정 유지 · 양품 OK · 불량 클래스 NG · 신뢰도 부족 NG · 대소문자/여러 개 · 모르는 이름 · 직렬화 왕복과 옛 레시피 · Clone · VM 왕복 2 · 도움말).
 - GS 시험자료 `D:\GS_TestData\DeepLearning\Classification` 재산출(OK Classes = OK): 22장 판정이 정답과 일치(OK 10 = OK, 불량 12 = NG). 이전 산출본은 `_backup_Classification_20261021_before_okclasses`. README 갱신 — VMS 1.42.20 이상 필요.
 
-### 매뉴얼 반영 (대기 — 다음 릴리즈 때)
+### 매뉴얼 반영 (완료 — v1.42.20, §70)
 
 `tools_prose.json` Classify 항목을 고치고 `gen_tools_chapter.py` · `extract_tool_params.py` 재실행:
 - Confidence Threshold 행 설명 "Top-1 신뢰도가 이 값 이상이면 PASS" → "가장 확률이 높은 클래스의 신뢰도가 이 값보다 낮으면 NG".
 - 새 행 "OK Classes | (비어 있음) | 양품으로 볼 클래스(여러 개). 지정하면 그 클래스로 분류되고 신뢰도도 임계값 이상일 때만 OK — 양품 · 불량을 가르는 검사라면 반드시 지정".
 - 판정 문단 → "OK Classes 를 지정하면 양품 클래스로 분류되고 신뢰도가 Confidence Threshold 이상일 때 OK, 그 밖은 NG(불량 클래스 · 신뢰도 부족). 지정하지 않으면 신뢰도만으로 판정합니다."
 - 설정 패널 그림 `33_Classify.png` 재캡처(OK Classes 구역 추가).
+
+## 70. v1.42.20 반영 — §6 Classify 표 · 판정 문단 · 패널 그림 · 대상 SW · 제품설명서 — **반영 완료**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-10-21 |
+| 대상 | 본편 §6 Classify · 그림 `tools/33_Classify.png` · §13.4 문서 정보 · 머리글 · 제품설명서 제품 버전 |
+| 변경 종류 | 릴리즈 반영 |
+
+### 무엇이 바뀌었나 (사내 기록)
+
+v1.42.20(#564)과 함께 반영 대기 §69 를 넣었다. `tools_prose.json` Classify 항목(Confidence Threshold 행 · OK Classes 행 신설 · 판정 문단)을 고치고
+`gen_tools_chapter.py` 로 6장 재생성. 패널 그림은 Debug 빌드 `VMS.VisionSetup.exe --instance capture1420 --capture-toolpanels <scratch>` 로 다시 찍어
+`34_Classify.png`(캡처 순번은 도구 추가로 하나 밀림)를 `33_Classify.png` 로 교체 — 606×1513(종전 1299, OK Classes 구역 · 노란 경고 추가) — 길어져서 `gen_tools_chapter.py` 가 2단 그림 `33_Classify_split.png`(신규, 1236×757)를 만들고 6장이 그것을 참조한다(다른 2단 그림 10장과 같이 커밋). 격리 인스턴스라 실제 레시피는 건드리지 않음.
+부록 파라미터 전체표는 바뀌지 않는다 — `extract_tool_params.py` 는 Label 이 있는 파라미터 컨트롤만 읽는데, OK Classes 는 체크박스 목록이라
+FeatureMatch · Geometry3D · OCR 의 단독 물음표 파라미터처럼 부록에 없다(기존 관례). 대상 소프트웨어 · 제품설명서 1.42.20.
+
+### 매뉴얼 반영 (완료)
+
+docx/PDF 재생성 204쪽(변동 없음) · 그림 154장 · 경고 0. docx 본문에 새 문장 3개와 "VMS 1.42.20" 을 document.xml 에서 확인. 제품설명서 docx 재생성.

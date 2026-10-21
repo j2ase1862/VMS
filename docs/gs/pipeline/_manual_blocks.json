@@ -25655,8 +25655,8 @@
  },
  {
   "t": "figure",
-  "src": "../gs/screenshots/v3/tools/33_Classify.png",
-  "width": "240",
+  "src": "../gs/screenshots/v3/tools/33_Classify_split.png",
+  "width": "500",
   "caption": "Classify — 이미지 분류 — Tool Settings 패널"
  },
  {
@@ -25766,14 +25766,52 @@
     {
      "segs": [
       {
-       "s": "Top-1 신뢰도가 이 값 이상이면 PASS",
+       "s": "가장 확률이 높은 클래스의 신뢰도가 이 값보다 낮으면 NG",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "Top-1 신뢰도가 이 값 이상이면 PASS"
+     "text": "가장 확률이 높은 클래스의 신뢰도가 이 값보다 낮으면 NG"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "OK Classes",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "OK Classes"
+    },
+    {
+     "segs": [
+      {
+       "s": "(비어 있음)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "(비어 있음)"
+    },
+    {
+     "segs": [
+      {
+       "s": "양품으로 볼 클래스(여러 개). 지정하면 그 클래스로 분류되고 신뢰도도 임계값 이상일 때만 OK — 양품 · 불량을 가르는 검사라면 반드시 지정",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "양품으로 볼 클래스(여러 개). 지정하면 그 클래스로 분류되고 신뢰도도 임계값 이상일 때만 OK — 양품 · 불량을 가르는 검사라면 반드시 지정"
     }
    ],
    [
@@ -25880,12 +25918,12 @@
     "m": false
    },
    {
-    "s": " — Top-1 신뢰도가 Confidence Threshold 이상이면 OK. 클래스에 따른 OK/NG 는 Result 또는 Batch Test 임계로 정합니다.",
+    "s": " — OK Classes 를 지정하면 양품 클래스로 분류되고 신뢰도가 Confidence Threshold 이상일 때 OK, 그 밖은 NG(결과 메시지 끝에 \"불량 클래스\" 또는 \"신뢰도 부족\"). 지정하지 않으면 신뢰도만으로 판정하며, 설정 패널에 경고가 표시됩니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "판정 — Top-1 신뢰도가 Confidence Threshold 이상이면 OK. 클래스에 따른 OK/NG 는 Result 또는 Batch Test 임계로 정합니다."
+  "text": "판정 — OK Classes 를 지정하면 양품 클래스로 분류되고 신뢰도가 Confidence Threshold 이상일 때 OK, 그 밖은 NG(결과 메시지 끝에 \"불량 클래스\" 또는 \"신뢰도 부족\"). 지정하지 않으면 신뢰도만으로 판정하며, 설정 패널에 경고가 표시됩니다."
  },
  {
   "t": "h",
@@ -54516,14 +54554,14 @@
     {
      "segs": [
       {
-       "s": "VMS 1.42.19 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.2",
+       "s": "VMS 1.42.20 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.2",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "VMS 1.42.19 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.2"
+     "text": "VMS 1.42.20 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.2"
     }
    ],
    [
