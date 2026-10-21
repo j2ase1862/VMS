@@ -2584,3 +2584,23 @@ docx 본문에서 "VMS 1.44.0" · "딥러닝 모델 준비" · "OCR 합성 데�
 ### 매뉴얼 반영
 
 없음.
+
+## 78. Hikrobot 카메라 노출 · 게인 적용 경로 정리 — **매뉴얼 변경 없음**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-10-21 |
+| 대상 | 없음 (Hikrobot 은 매뉴얼 하드웨어 호환 목록에 없고, 배포판에 SDK 미포함) |
+| 변경 종류 | 결함 수정 (조건부 컴파일 코드) |
+
+### 무엇이 바뀌었나 (사내 기록)
+
+- `HikCameraAcquisition` 은 `HIK_AVAILABLE` 이 정의될 때만 컴파일된다(현재 어디서도 정의 안 함 · MvCamCtrl.NET 참조 없음). 그래서 `ApplyCameraParameters` 가 노출 · 게인을 스텝 설정으로 옮긴 뒤 없어진
+  `CameraInfo.ExposureTime` · `Gain` 을 읽는 것이 숨어 있었다 — SDK 를 켜는 순간 빌드가 깨진다.
+- 연결 때 한 번 넣던 그 메서드를 지우고, 다른 제조사와 같은 계약 `ApplySettingsAsync(exposureUs, gain)` 를 구현했다 — VMS 촬영 · VisionSetup 촬영 직전에 스텝 설정이 들어온다.
+  ExposureAuto · GainAuto 를 끄고 ExposureTime(µs) · Gain(dB) float 노드에 쓴다. 게인 실패는 전체 실패로 치지 않는다(Basler · Mech-Eye 와 같은 규칙). 쓰지 않던 `_camera` 필드 제거.
+- 확인: SDK 모양을 흉내 낸 스텁(MvCamCtrl.NET 의 쓰는 멤버만)과 `HIK_AVAILABLE` 로 임시 프로젝트를 만들어 컴파일 — 고치기 전 판은 위 네 줄에서만 CS1061, 고친 판은 오류 0. 실제 SDK · 카메라 실기 확인은 Hikrobot 현장이 생길 때.
+
+### 매뉴얼 반영
+
+없음.
