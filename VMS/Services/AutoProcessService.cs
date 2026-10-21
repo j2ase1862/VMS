@@ -53,6 +53,10 @@ namespace VMS.Services
         private readonly Action<bool>? _cycleAccumulationFunc;
         private readonly Func<bool, Task>? _cycleUploadFunc;
 
+        // 운전 동안 쥐는 "검사 중" 신호 — 같은 PC 의 학습 워커가 학습을 멈춘다 (InspectionActivity).
+        private readonly Func<IDisposable?> _activitySignalFactory;
+        private IDisposable? _activitySignal;
+
         private readonly Dictionary<string, AutoProcessState> _cameraStates = new();
         private CancellationTokenSource? _cts;
         private Task? _processTask;
@@ -80,8 +84,11 @@ namespace VMS.Services
             IIoDeviceRegistry? ioRegistry = null,
             Func<SequenceConfig?>? sequenceProvider = null,
             Action<bool>? cycleAccumulationFunc = null,
-            Func<bool, Task>? cycleUploadFunc = null)
+            Func<bool, Task>? cycleUploadFunc = null,
+            Func<IDisposable?>? activitySignalFactory = null)
         {
+            _activitySignalFactory = activitySignalFactory
+                ?? (() => InspectionActivity.Acquire(logService, "AutoProcess"));
             _cycleAccumulationFunc = cycleAccumulationFunc;
             _cycleUploadFunc = cycleUploadFunc;
             _sequenceProvider = sequenceProvider;
@@ -116,12 +123,30 @@ namespace VMS.Services
 
             _cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             IsRunning = true;
+            _activitySignal = _activitySignalFactory();
             _logService?.Log("AutoProcess started", LogLevel.Success, "AutoProcess");
 
             // AUTO RUN 동안 검사별 Web 업로드를 사이클 버퍼로 전환 ("1사이클 = 1개")
             try { _cycleAccumulationFunc?.Invoke(true); }
             catch (Exception ex) { Debug.WriteLine($"[AutoProcess] cycle accumulation on failed: {ex.Message}"); }
 
+            try
+            {
+                await StartCoreAsync(_cts.Token);
+            }
+            catch
+            {
+                // 시작 실패 — 운전 중 상태와 검사 중 신호를 남기지 않는다 (신호는 StopAsync 가 놓는다). 남으면 다음 시작이 무시되고
+                // 같은 PC 의 학습 워커가 운전하지 않는데도 계속 멈춘다.
+                try { await StopAsync(); }
+                catch (Exception stopEx) { Debug.WriteLine($"[AutoProcess] cleanup after start failure: {stopEx.Message}"); }
+                IsRunning = false;
+                throw;
+            }
+        }
+
+        private async Task StartCoreAsync(CancellationToken token)
+        {
             // Connect PLC if not already connected
             if (!_plc.IsConnected)
             {
@@ -149,13 +174,13 @@ namespace VMS.Services
             }
 
             // Start single unified process task on ThreadPool to avoid UI thread blocking
-            _processTask = Task.Run(() => RunProcessAsync(_cts.Token));
+            _processTask = Task.Run(() => RunProcessAsync(token));
 
             // Start heartbeat task if any signal map has a heartbeat address
             var heartbeatMap = _signalConfig.SignalMaps.FirstOrDefault(m => !string.IsNullOrEmpty(m.HeartbeatAddress));
             if (heartbeatMap != null)
             {
-                _heartbeatTask = RunHeartbeatAsync(heartbeatMap.HeartbeatAddress, _cts.Token);
+                _heartbeatTask = RunHeartbeatAsync(heartbeatMap.HeartbeatAddress, token);
             }
         }
 
@@ -197,6 +222,9 @@ namespace VMS.Services
             }
             finally
             {
+                // 정리 도중 예외(출력 신호 초기화·PLC 해제 실패)가 나도 검사 중 신호는 놓는다 —
+                // 운전 루프는 이미 취소됐고, 신호가 남으면 학습 워커가 계속 멈춘다.
+                ReleaseActivitySignal();
                 _stopLock.Release();
             }
         }
@@ -262,6 +290,12 @@ namespace VMS.Services
             catch (Exception ex) { Debug.WriteLine($"[AutoProcess] cycle accumulation off failed: {ex.Message}"); }
 
             _logService?.Log("AutoProcess stopped", LogLevel.Info, "AutoProcess");
+        }
+
+        private void ReleaseActivitySignal()
+        {
+            _activitySignal?.Dispose();
+            _activitySignal = null;
         }
 
         public AutoProcessState GetCameraState(string cameraId)

@@ -2448,3 +2448,24 @@ FeatureMatch · Geometry3D · OCR 의 단독 물음표 파라미터처럼 부록
 ### 매뉴얼 반영 (완료)
 
 docx/PDF 재생성 204쪽(변동 없음) · 그림 154장 · 경고 0. docx 본문에 새 문장 3개와 "VMS 1.42.20" 을 document.xml 에서 확인. 제품설명서 docx 재생성.
+
+## 71. 검사 중 신호 (같은 PC 학습 워커 정지용) — **반영 대기**(MLOps 3-c 머지 후, v1.43.0)
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-10-21 |
+| 대상 | §9 MLOps — 워커 쪽(3-c)이 들어온 뒤 |
+| 변경 종류 | 기능 추가 (MLOps 연동 규약) |
+
+### 무엇이 바뀌었나 (사내 기록)
+
+- 사용자 결정(2026-10-21): 소규모 현장은 라인 PC 한 대에 런타임 · MLOps 서버 · 학습 워커를 함께 둘 수 있다. 대신 VMS 가 검사하는 동안 워커는 학습하지 않고, 학습 중 검사가 시작되면 학습을 중단해 대기열로 되돌린다.
+- VMS 는 AUTO RUN(`AutoProcessService` 시작~정지)과 Roller 연속 검사(`RollerInspectionService` Start~Stop) 동안 명명 Mutex `Global\BODA.VMS.InspectionActive` 핸들을 쥔다. 규약은 `VMS.Core.Contracts` 의 `InspectionActivitySignal`(패키지 1.43.0)이며 워커는 `IsActive()` 로 확인한다.
+  - 존재가 신호다. 여러 인스턴스가 각자 쥐어도 마지막 핸들이 닫힐 때만 사라지고, VMS 가 비정상 종료하면 운영체제가 닫는다.
+  - 신호를 못 만들어도 검사는 막지 않는다(System Log 경고).
+- 함께 고친 것: AUTO RUN 시작이 중간에 실패하면(예: 트리거 주소 오류) 서비스가 운전 중 상태로 남아 다음 시작이 무시되던 것을 정리한다(정지 절차를 돌리고 예외를 그대로 올린다).
+- 시험: Contracts `InspectionActivitySignalTests` 6건(규약 이름 고정 · 보유 중/해제 후 · 두 보유자 · 확인이 수명을 늘리지 않음 · 생성 실패 시 null), VMS `InspectionActivitySignalHoldTests` 5건(AUTO RUN 보유 · 중복 시작 · 시작 실패 해제 · Roller · 신호 없어도 검사).
+
+### 매뉴얼 반영
+
+대기. 워커 쪽이 들어오면 §9 의 배치 설명에 "라인 PC 겸용이면 검사 중에는 학습이 멈추고, 검사가 끝나면 대기열에서 다시 시작한다" 한 줄.
