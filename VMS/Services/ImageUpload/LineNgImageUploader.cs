@@ -64,19 +64,85 @@ namespace VMS.Services.ImageUpload
     }
 
     /// <summary>
-    /// 양품 N 장에 1 장을 고르는 계수기. 첫 장을 바로 보내고 그 뒤로 N 장마다 한 장이라,
-    /// 라인이 새로 켜져도 정상 샘플이 곧바로 한 장은 올라간다.
+    /// 양품 N 장에 1 장을 고르는 계수기. 처음 세는 라인은 첫 장을 바로 보내고 그 뒤로 N 장마다 한 장.
+    ///
+    /// <para><b>센 수는 파일에 이어 둔다</b>(<paramref name="statePath"/>). 메모리에만 두면 VMS 를 다시
+    /// 켤 때마다 0 부터 세어 재시작마다 첫 양품이 바로 올라갔다 — 하루에 몇 번씩 켜고 끄는 라인은
+    /// 양품 사진이 정한 비율보다 훨씬 많이 쌓인다. 쓰기는 고른 장과 <see cref="SaveEvery"/> 장마다,
+    /// 그리고 <see cref="Flush"/> 때만 한다 — 검사마다 디스크를 건드리지 않는다. 그래서 비정상 종료 때는
+    /// 최대 그만큼 덜 센 채로 이어지는데, 비율이 조금 흔들릴 뿐 같은 사진을 두 번 보내지는 않는다.
+    /// 읽기 · 쓰기 실패는 무시한다 — 샘플 비율 때문에 검사 이미지 전송이 멈추면 안 된다.</para>
     /// </summary>
     public sealed class OkSampler
     {
+        /// <summary>고르지 않은 장도 이만큼마다 한 번 기록한다.</summary>
+        public const int SaveEvery = 50;
+
+        private readonly string? _statePath;
+        private readonly object _saveLock = new();
         private long _seen;
+        private long _saved;
+
+        /// <param name="statePath">센 수를 이어 둘 파일. null 이면 메모리에만 센다(시험용).</param>
+        public OkSampler(string? statePath = null)
+        {
+            _statePath = statePath;
+            _seen = _saved = Load(statePath);
+        }
+
+        /// <summary>지금까지 센 양품 수 (이어 온 값 포함).</summary>
+        public long Seen => Interlocked.Read(ref _seen);
 
         /// <summary><paramref name="rate"/> 가 0 이하이면 세지도 않고 false.</summary>
         public bool Take(int rate)
         {
             if (rate <= 0) return false;
             var n = Interlocked.Increment(ref _seen);
-            return (n - 1) % rate == 0;
+            var pick = (n - 1) % rate == 0;
+            if (pick || n % SaveEvery == 0) Save(n);
+            return pick;
+        }
+
+        /// <summary>센 수를 지금 기록한다 — 종료할 때 부른다.</summary>
+        public void Flush() => Save(Interlocked.Read(ref _seen));
+
+        private void Save(long n)
+        {
+            if (_statePath == null) return;
+            lock (_saveLock)
+            {
+                if (n <= _saved) return;   // 늦게 도착한 쓰기가 더 큰 값을 덮지 않게
+                try
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(_statePath)!);
+                    File.WriteAllText(_statePath, JsonSerializer.Serialize(new OkSamplerState { Seen = n }));
+                    _saved = n;
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[OkSampler] 기록 실패(무시): {ex.Message}");
+                }
+            }
+        }
+
+        private static long Load(string? path)
+        {
+            if (path == null) return 0;
+            try
+            {
+                if (!File.Exists(path)) return 0;
+                var state = JsonSerializer.Deserialize<OkSamplerState>(File.ReadAllText(path));
+                return Math.Max(0, state?.Seen ?? 0);
+            }
+            catch
+            {
+                return 0;   // 깨진 파일은 처음부터 센다
+            }
+        }
+
+        private sealed class OkSamplerState
+        {
+            public long Seen { get; set; }
         }
     }
 
@@ -110,7 +176,7 @@ namespace VMS.Services.ImageUpload
         private readonly string _baseUrl;
         private readonly string _queueDir;
         private readonly HttpClient _httpClient;
-        private readonly OkSampler _okSampler = new();
+        private readonly OkSampler _okSampler;
         private readonly SemaphoreSlim _slots = new(MaxConcurrentUploads, MaxConcurrentUploads);
         private readonly object _capLock = new();
         private readonly object _statsLock = new();
@@ -134,6 +200,7 @@ namespace VMS.Services.ImageUpload
             _httpClient = httpClient ?? HttpClientPolicy.Build(TimeSpan.FromSeconds(120));
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", lineToken.Trim());
             _queueDir = queueDir ?? VMS.Camera.Configuration.AppDataPaths.GetPath(QueueDirName);
+            _okSampler = new OkSampler(Path.Combine(_queueDir, StatsSubdir, OkSamplerFileName));
         }
 
         public void Start()
@@ -172,7 +239,7 @@ namespace VMS.Services.ImageUpload
 
         /// <summary>
         /// 보낼지 결정. NG 는 토글이 켜져 있으면 전부, OK 는 토글이 켜져 있고 샘플러가 고른 장만.
-        /// 토글이 꺼져 있으면 샘플러를 세지 않는다 — 켜는 순간 첫 양품이 바로 한 장 나가야 한다.
+        /// 토글이 꺼져 있으면 샘플러를 세지 않는다 — 켜 둔 동안 본 양품만 비율에 넣는다.
         /// </summary>
         internal static bool ShouldSend(bool ok, ImageSaveOptions opts, OkSampler sampler)
         {
@@ -421,6 +488,9 @@ namespace VMS.Services.ImageUpload
 
         private string StatsPath => Path.Combine(_queueDir, StatsSubdir, StatsFileName);
 
+        /// <summary>양품 샘플러가 센 수를 이어 두는 파일 — 통계와 같은 하위 폴더(드레인 대상 밖).</summary>
+        public const string OkSamplerFileName = "ok_sampler.json";
+
         /// <summary>통계를 읽어 고치고 되쓴다. 실패는 삼킨다 — 전송을 막을 이유가 없다.</summary>
         private void UpdateStats(Action<LineNgUploadStats> change)
         {
@@ -569,6 +639,7 @@ namespace VMS.Services.ImageUpload
         {
             if (_disposed) return;
             _disposed = true;
+            _okSampler.Flush();
             _drainTimer?.Dispose();
             _httpClient.Dispose();
             _slots.Dispose();

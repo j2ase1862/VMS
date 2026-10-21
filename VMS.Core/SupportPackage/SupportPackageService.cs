@@ -326,6 +326,16 @@ namespace VMS.Core.SupportPackage
                     w.WriteLine("아직 없습니다 — 한 장도 보내거나 거절되지 않았습니다.");
                 }
 
+                // 양품 샘플러가 이어 세는 수 — "양품 사진이 비율보다 많다/적다" 를 따질 때 본다
+                var samplerPath = Path.Combine(queueDir, "state", "ok_sampler.json");
+                if (File.Exists(samplerPath))
+                {
+                    w.WriteLine();
+                    w.WriteLine("## 양품 샘플러 (ok_sampler.json)");
+                    try { w.WriteLine(File.ReadAllText(samplerPath)); }
+                    catch (Exception ex) { w.WriteLine($"(읽기 실패: {ex.Message})"); }
+                }
+
                 if (rejected > 0)
                 {
                     w.WriteLine();
