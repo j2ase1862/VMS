@@ -41,7 +41,7 @@
             </Expander.Header>
             <StackPanel Margin="5,0,0,0">
                 <TextBlock Foreground="#888" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,6"
-                           Text="정상 이미지 폴더의 점수 분포로 threshold를 자동 산출합니다. 공식: threshold = mean + σ × std"/>
+                           Text="정상 이미지 폴더의 점수 분포로 threshold를 자동 산출합니다. 공식: threshold = mean + σ × std. ROI 를 쓰면 같은 ROI 영역으로 채점하므로, 검사와 같은 크기의 원본 이미지를 넣으세요."/>
 
                 <TextBlock Text="Normal Images Folder" Foreground="LightGray" FontSize="12" Margin="0,0,0,2"/>
                 <Grid Margin="0,0,0,6">

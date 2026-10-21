@@ -412,13 +412,18 @@ namespace VMS.VisionSetup.Models
             return new Mat(rotated, new Rect(x1, y1, x2 - x1, y2 - y1)).Clone();
         }
 
-        protected Rect GetAdjustedROI(Mat inputImage)
+        protected Rect GetAdjustedROI(Mat inputImage) => ClipRectToImage(ROI, inputImage);
+
+        /// <summary>
+        /// 임의의 사각형을 GetAdjustedROI 와 같은 규칙(음수 크기 정규화 + 이미지와 겹치는 부분)으로 자른다.
+        /// </summary>
+        protected static Rect ClipRectToImage(Rect roi, Mat inputImage)
         {
             // 1. 역방향 드래그 등으로 인한 음수 Width/Height 보정 (Normalization)
-            int x1 = ROI.X;
-            int y1 = ROI.Y;
-            int x2 = ROI.X + ROI.Width;
-            int y2 = ROI.Y + ROI.Height;
+            int x1 = roi.X;
+            int y1 = roi.Y;
+            int x2 = roi.X + roi.Width;
+            int y2 = roi.Y + roi.Height;
 
             int minX = Math.Min(x1, x2);
             int maxX = Math.Max(x1, x2);
