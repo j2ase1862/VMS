@@ -4480,43 +4480,6 @@ namespace VMS.VisionSetup.ViewModels
                 : "캘리브레이션 없음 — 측정은 스텝 Resolution(mm/px) 또는 픽셀 단위로 판정됩니다.";
         }
 
-        /// <summary>
-        /// AI 학습 도구(VMS.DeepLearning.exe) 설치 여부. 인스톨러 "AI 학습 도구" 옵션을 해제했거나
-        /// GS 인증 빌드(ExcludeAiTools)로 설치된 PC 에서는 false → Tools 메뉴의 Deep Learning 항목을 숨긴다.
-        /// 검사 도구(Detection 등)는 이와 무관하게 동작한다.
-        /// </summary>
-        public bool IsDeepLearningAvailable =>
-            System.IO.File.Exists(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "VMS.DeepLearning.exe"));
-
-        public void LaunchDeepLearning()
-        {
-            try
-            {
-                var currentDir = AppDomain.CurrentDomain.BaseDirectory;
-                var exePath = System.IO.Path.Combine(currentDir, "VMS.DeepLearning.exe");
-
-                if (!System.IO.File.Exists(exePath))
-                {
-                    _dialogService.ShowWarning(
-                        "AI 학습 도구(VMS.DeepLearning)가 설치되어 있지 않습니다.\n" +
-                        "설치 파일을 다시 실행해 '설치 구성 선택'에서 AI 학습 도구를 포함하세요.\n" +
-                        "(개발 환경이면 VMS.DeepLearning 프로젝트를 먼저 빌드해 주세요.)",
-                        "Deep Learning");
-                    return;
-                }
-
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName = exePath,
-                    UseShellExecute = true
-                });
-            }
-            catch (Exception ex)
-            {
-                _dialogService.ShowError($"VMS.DeepLearning 실행 실패: {ex.Message}", "Error");
-            }
-        }
-
         public void RenameTool(ToolItem tool)
         {
             if (tool == null) return;

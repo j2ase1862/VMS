@@ -7,7 +7,6 @@ VMS 솔루션 (BODA Vision AI) 의 사용자 매뉴얼 및 도구별 운영 가�
 | 파일 | 대상 |
 |------|------|
 | [`BODA-VMS-User-Manual.html`](BODA-VMS-User-Manual.html) | 전체 사용자 매뉴얼 v3.0 (GS 제출물의 원본) — **생성물: 직접 편집 금지.** 본문은 `src/NN_*.html` 장별 조각, `python build_manual.py` 로 합성(6장은 `gen_tools_chapter.py` + `tools_prose.json`, 13장 부록은 `gen_appendix.py`). docx/PDF 재생성은 `docs/gs/README.md` 참조 |
-| [`BODA-VMS-AI-Tools-Manual.html`](BODA-VMS-AI-Tools-Manual.html) | AI 학습 도구 매뉴얼(별책) — 라벨링 · 학습 · 레지스트리. 제출용 배포본은 `build_ai_tools_manual.py` 로 `docs/gs/` 에 만든다 |
 | [`VMS_OCR_SynthData_Manual.html`](VMS_OCR_SynthData_Manual.html) | OCR 합성 데이터 매뉴얼 |
 
 ## 워크플로 / 기술 가이드 (Markdown)

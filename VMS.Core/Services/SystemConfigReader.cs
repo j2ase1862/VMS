@@ -10,7 +10,7 @@ namespace VMS.Core.Services
     /// `system_config.json` 에서 서버 연동에 필요한 값만 읽는다.
     ///
     /// <para>
-    /// VisionSetup 과 AI 학습 도구는 VMS 런타임의 <c>SystemConfiguration</c> 형식을 직접 참조하지 않는다.
+    /// VisionSetup 은 VMS 런타임의 <c>SystemConfiguration</c> 형식을 직접 참조하지 않는다.
     /// 그래서 필요한 키만 직접 읽는데, 그 읽는 방법이 앱마다 갈리면 "설정했는데 안 붙는다" 가 생긴다.
     /// 한 곳에 모아 둔다.
     /// </para>

@@ -94,7 +94,7 @@ namespace VMS.VisionSetup.Services
 
         /// <summary>
         /// 레지스트리 주소와 라인 토큰. 없으면 빈 문자열이고, 그때는 [레지스트리…] 창이 설정하라고 알린다.
-        /// 같은 파일을 AI 학습 도구도 읽으므로 읽는 방법은 <see cref="VMS.Core.Services.SystemConfigReader"/>
+        /// 같은 파일을 VMS 본체도 읽으므로 읽는 방법은 <see cref="VMS.Core.Services.SystemConfigReader"/>
         /// 한 곳에 둔다. 앱마다 키 표기를 달리 다루면 "설정했는데 안 붙는다" 가 생긴다.
         /// </summary>
         public static MlopsSettings ReadMlopsSettings()

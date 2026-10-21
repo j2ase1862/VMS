@@ -29,7 +29,7 @@ PR1~25 시점 기준. 라이선스 분류는 자체 코드(GROUP A) → 제3자 
 ### 2.1 GROUP A — VMS 자체 코드
 | 컴포넌트 | 라이선스 | 보유 |
 |---|---|---|
-| VMS / VMS.Core / VMS.AppSetup / VMS.VisionSetup / VMS.DeepLearning / VMS.PLC / VMS.Camera / VMS.MasterSetup | 상용 (LICENSE 참조) | VASIM Co., Ltd. |
+| VMS / VMS.Core / VMS.AppSetup / VMS.VisionSetup / VMS.PLC / VMS.Camera / VMS.MasterSetup | 상용 (LICENSE 참조) | VASIM Co., Ltd. |
 | NativeVision (C++ AVX2 가속) | 상용 | VASIM Co., Ltd. |
 
 ### 2.2 GROUP B — Apache License 2.0 (NOTICE 표기 의무)
@@ -81,7 +81,7 @@ PR1~25 시점 기준. 라이선스 분류는 자체 코드(GROUP A) → 제3자 
 | PP-OCRv4 가중치 (det · rec ONNX + 사전) | Apache 2.0 (PaddleOCR, ONNX 변환 RapidOCR) — **인스톨러 동봉** `models\ppocr\` (v1.42.9~). 빌드가 고정 리비전에서 받아 SHA-256 검증 (`VMS.VisionSetup.csproj` `OcrDataFile`) |
 | Tesseract 언어 데이터 (tessdata_best eng · kor · jpn · chi_sim) | Apache 2.0 — **인스톨러 동봉** `tessdata\` (v1.42.9~), 받는 방식은 위와 같음 |
 | 학습 데이터셋 | 사이트별 — VASIM 책임 영역 밖 |
-| 학습 스택(torch · transformers · anomalib · paddlepaddle 등 pip 패키지) | **인증 제품 배포물 외** — 인스톨러 `AiTools` Feature(선택) 사용자가 별도 설치, 인증 제출 빌드(`-p:ExcludeAiTools=true`)에는 학습 도구 자체가 없음 ([gs_scope_ai_tools.md](gs_scope_ai_tools.md)) |
+| 학습 스택(torch · transformers · anomalib · paddlepaddle 등 pip 패키지) | **인증 제품 배포물 외** — VMS MSI 에는 학습 도구 · 학습 스크립트가 없다(2026-10-21 제거). 학습은 별도 플랫폼 BODA VMS MLOps 의 학습 워커가 한다 ([gs_scope_ai_tools.md](gs_scope_ai_tools.md)) |
 
 > **AGPL-3.0 (Ultralytics YOLO) 해석 — 2026-09-08 정정.** Ultralytics 는 사전학습 가중치로 fine-tuning 한 모델(.pt) 과 그 ONNX 변환본까지 AGPL 파생물로 본다. VASIM 이 학습한 모델을 고객에게 전달하는 것은 '배포'에 해당하므로 **온프레미스 납품이라도 AGPL 의무가 면제되지 않는다** (이전 판 "온프레미스는 trigger 안 됨" 서술은 모델을 우리가 전달하는 경우에 맞지 않아 폐기). 고객이 자기 PC 에서 직접 학습해 자체 사용만 하는 경우는 배포가 아니므로 의무가 발생하지 않는다.
 > 대응: **Detection 기본 백본을 D-FINE (Apache 2.0) 으로 전환** (`train_dfine.py`, VisionSetup Detection 도구는 D-FINE / YOLO ONNX 규약을 자동 판별). `train_yolo.py` 는 Ultralytics Enterprise License 를 보유한 사이트에서만 선택 사용하며, 그 외에는 YOLO 로 학습한 모델을 납품하지 않는다. 최종 해석은 법무 검토 필요.

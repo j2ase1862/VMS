@@ -28,7 +28,6 @@ VMS-Solution/
 ├── VMS/                      메인 런처 + 시퀀스 엔진 + Inspection 서비스 + 운영 UI
 ├── VMS.VisionSetup/          비전 도구 워크스페이스 (가장 큰 컴포넌트)
 ├── VMS.AppSetup/             시스템 설정 마법사 (PLC / 카메라 / 로봇 / IO 보드)
-├── VMS.DeepLearning/         딥러닝 모델 학습 GUI
 ├── VMS.MasterSetup/          WiX MSI 인스톨러
 ├── VMS.Core/                 공용 인터페이스 / 모델 / Web 서비스 클라이언트
 ├── VMS.PLC/                  PLC + IO 보드 추상화 (IPlcConnection, IIoBoardConnection)
@@ -84,8 +83,6 @@ dotnet run --project VMS.VisionSetup
 # 시스템 설정 마법사
 dotnet run --project VMS.AppSetup
 
-# 딥러닝 학습 GUI
-dotnet run --project VMS.DeepLearning
 ```
 
 ### 테스트
@@ -132,7 +129,6 @@ dotnet build VMS.MasterSetup/VMS.MasterSetup.wixproj -c Release
 | 문서 | 위치 |
 |------|------|
 | 사용자 매뉴얼 (전체) | [`docs/manuals/BODA-VMS-User-Manual.html`](docs/manuals/BODA-VMS-User-Manual.html) |
-| AI 학습 도구 매뉴얼 (별책) | [`docs/manuals/BODA-VMS-AI-Tools-Manual.html`](docs/manuals/BODA-VMS-AI-Tools-Manual.html) |
 | Hand-Eye 캘리브레이션 | [`docs/manuals/VMS_HandEye_Calibration_Manual.md`](docs/manuals/VMS_HandEye_Calibration_Manual.md) |
 | GS 인증 자료 | [`docs/gs/`](docs/gs/) (히스토리 + ISO/IEC 25051 매핑 + MSI 서명 + SIEM 가이드 + 배포 정책) |
 | 변경 이력 | [`CHANGELOG.md`](CHANGELOG.md) |

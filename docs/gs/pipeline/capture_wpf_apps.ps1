@@ -28,7 +28,6 @@ function Run-Capture($exe, $argList, $timeoutSec) {
 $vs  = 'D:\Repo\VMS\VMS.VisionSetup\bin\Debug\net8.0-windows7.0\VMS.VisionSetup.exe'
 $vms = 'D:\Repo\VMS\VMS\bin\Debug\net8.0-windows7.0\VMS.exe'
 $aps = 'D:\Repo\VMS\VMS.AppSetup\bin\Debug\net8.0-windows\VMS.AppSetup.exe'
-$dl  = 'D:\Repo\VMS\VMS.DeepLearning\bin\Debug\net8.0-windows7.0\VMS.DeepLearning.exe'
 
 Run-Capture $vs  "--instance mancap --capture-fullpage `"$root\visionsetup_full`"" 300
 Run-Capture $vs  "--instance mancap --capture-toolpanels `"$root\toolpanels`"" 600
@@ -38,8 +37,6 @@ Run-Capture $vms "--instance mancap --capture-controls `"$root\vms_ctl`"" 300
 Run-Capture $vms "--instance mancap --capture-dialogs `"$root\vms_dlg`"" 300
 Run-Capture $aps "--capture-controls `"$root\appsetup_ctl`"" 300
 Run-Capture $aps "--capture-fullpage `"$root\appsetup_full`"" 300
-Run-Capture $dl  "--capture-controls `"$root\dl_ctl`"" 300
-Run-Capture $dl  "--capture-dialogs `"$root\dl_dlg`"" 300
 
 "DONE $(Get-Date -Format s)" | Out-File $log -Append -Encoding utf8
 Get-ChildItem $root -Directory | ForEach-Object { "$($_.Name): $((Get-ChildItem $_.FullName -File).Count) files" } | Out-File $log -Append -Encoding utf8

@@ -66,7 +66,7 @@ function WaitReady($hwnd) {
 $found = $false
 $names = WaitReady $h
 for ($step = 0; $step -lt 3; $step++) {
-    if (($names | Where-Object { $_ -like "*AI 학습 도구*" }).Count -gt 0) { $found = $true; break }
+    if (($names | Where-Object { $_ -like "*Web 서버 포함*" }).Count -gt 0) { $found = $true; break }
     if ($step -eq 2) { break }
     "page ${step}: [$($names -join ' | ')] -> Next"
     $before = ($names -join '|')

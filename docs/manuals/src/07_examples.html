@@ -74,7 +74,7 @@
 <figure><img src="../gs/screenshots/v3/templates/dl-detection.png" data-width="420" alt="DL 객체 검출 체인"><figcaption>Detection → Result (ONNX 모델 필요)</figcaption></figure>
 <p><strong>상황</strong> — 규칙으로 정의하기 어려운 외관 결함(긁힘 · 찍힘 · 이물)이나 다양한 모양의 부품을 학습된 모델로 판정합니다.</p>
 <ol>
-  <li>모델을 준비합니다 — MLOps(9장)에서 학습해 운영으로 승격하거나, AI 학습 도구(10장)로 ONNX 파일을 만듭니다.</li>
+  <li>모델을 준비합니다 — MLOps(9장)에서 학습해 운영으로 승격합니다(10장).</li>
   <li>템플릿 Deep Learning → <strong>DL 객체 검출 판정</strong>(또는 DL 이상 탐지 판정)을 생성합니다.</li>
   <li><strong>Detection</strong> 의 Model Path 에 ONNX 파일을 지정하거나 [레지스트리…] 로 <code>model://…@production</code> 참조를 고릅니다. D-FINE · YOLO 형식은 자동 판별됩니다.</li>
   <li>Confidence Threshold(기본 0.5 부근)를 조정해 오검출과 미검출의 균형을 잡고, 특정 클래스만 볼 때는 클래스 필터를 씁니다. 0 건 검출은 NG 이므로 "결함이 없으면 OK" 인 검사에는 결과 해석을 Result 도구에서 반대로 잡습니다(결함 클래스 검출 = NG).</li>
