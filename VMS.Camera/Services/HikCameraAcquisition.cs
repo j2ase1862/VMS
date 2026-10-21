@@ -17,7 +17,6 @@ namespace VMS.Camera.Services
 #if HIK_AVAILABLE
     public class HikCameraAcquisition : ICameraAcquisition
     {
-        private Models.CameraInfo? _camera;
         private MyCamera? _cam;
         private bool _isGrabbing;
         private bool _disposed;
@@ -26,8 +25,6 @@ namespace VMS.Camera.Services
 
         public async Task<bool> ConnectAsync(Models.CameraInfo camera)
         {
-            _camera = camera;
-
             try
             {
                 // 1. Enumerate GigE + USB devices
@@ -90,8 +87,7 @@ namespace VMS.Camera.Services
                 // 5. Trigger mode off (소프트웨어로 한 프레임씩 가져옴)
                 _cam.MV_CC_SetEnumValue_NET("TriggerMode", 0);
 
-                // 6. Apply camera parameters (exposure / gain)
-                ApplyCameraParameters();
+                // 노출 · 게인은 연결 때가 아니라 촬영 직전에 스텝 설정으로 넣는다 (ApplySettingsAsync).
 
                 IsConnected = true;
                 System.Diagnostics.Debug.WriteLine("Hikrobot 카메라 연결 성공");
@@ -230,23 +226,40 @@ namespace VMS.Camera.Services
             _isGrabbing = false;
         }
 
-        private void ApplyCameraParameters()
+        /// <summary>
+        /// 노출(µs)/게인을 카메라에 적용 — 레시피 스텝의 2D 설정이 촬영 직전에 이 경로로 온다
+        /// (다른 제조사와 같은 <see cref="ICameraAcquisition.ApplySettingsAsync"/> 계약).
+        /// Hikrobot 의 ExposureTime(µs) · Gain(dB) 는 float 노드다. 게인은 모델에 따라 없거나
+        /// 자동 모드로 잠겨 있을 수 있어 실패해도 전체 실패로 치지 않는다 (Basler · Mech-Eye 와 같은 규칙).
+        /// </summary>
+        public Task<bool> ApplySettingsAsync(double exposureUs, double gain)
         {
-            if (_cam == null || _camera == null) return;
-            try
+            if (!IsConnected || _cam == null) return Task.FromResult(false);
+            var cam = _cam;
+            return Task.Run(() =>
             {
-                // Exposure time (microseconds) — float node
-                if (_camera.ExposureTime > 0)
-                    _cam.MV_CC_SetFloatValue_NET("ExposureTime", (float)_camera.ExposureTime);
-
-                // Gain — float node
-                if (_camera.Gain > 0)
-                    _cam.MV_CC_SetFloatValue_NET("Gain", (float)_camera.Gain);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Hikrobot 파라미터 적용 실패: {ex.Message}");
-            }
+                try
+                {
+                    bool ok = true;
+                    if (exposureUs > 0)
+                    {
+                        cam.MV_CC_SetEnumValue_NET("ExposureAuto", 0);
+                        ok = cam.MV_CC_SetFloatValue_NET("ExposureTime", (float)exposureUs) == MyCamera.MV_OK;
+                    }
+                    if (gain >= 0)
+                    {
+                        cam.MV_CC_SetEnumValue_NET("GainAuto", 0);
+                        if (cam.MV_CC_SetFloatValue_NET("Gain", (float)gain) != MyCamera.MV_OK)
+                            System.Diagnostics.Debug.WriteLine("Hikrobot 게인 적용 실패 (모델 미지원 가능)");
+                    }
+                    return ok;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Hikrobot 파라미터 적용 실패: {ex.Message}");
+                    return false;
+                }
+            });
         }
 
         private static bool TryMatch(MyCamera.MV_CC_DEVICE_INFO dev, Models.CameraInfo target)
