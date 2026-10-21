@@ -67,6 +67,76 @@ namespace VMS.Tests.Services
             Assert.True(LineNgImageUploader.ShouldSend(ok: true, on, sampler));
         }
 
+        // ─── 양품 샘플러 이어 세기 ─────────────────────────────
+
+        private string SamplerPath => Path.Combine(_queueDir, LineNgImageUploader.StatsSubdir, LineNgImageUploader.OkSamplerFileName);
+
+        [Fact]
+        public void Restart_continues_the_count_instead_of_sending_the_first_ok_again()
+        {
+            // 예전에는 다시 켤 때마다 0 부터 세어 재시작마다 첫 양품이 바로 올라갔다.
+            var first = new OkSampler(SamplerPath);
+            Assert.True(first.Take(3));      // 1 번째 — 처음 세는 라인은 바로 한 장
+            Assert.False(first.Take(3));     // 2
+            first.Flush();
+
+            var restarted = new OkSampler(SamplerPath);
+            Assert.Equal(2, restarted.Seen);
+            var picks = Enumerable.Range(0, 5).Select(_ => restarted.Take(3)).ToArray();
+            Assert.Equal(new[] { false, true, false, false, true }, picks);   // 3 · 4(고름) · 5 · 6 · 7(고름)
+        }
+
+        [Fact]
+        public void Picked_sample_is_recorded_without_flush()
+        {
+            // 고른 장은 바로 기록한다 — 고른 직후 비정상 종료해도 다음 실행이 같은 자리에서 다시 고르지 않는다.
+            var sampler = new OkSampler(SamplerPath);
+            Assert.True(sampler.Take(5));
+
+            var afterCrash = new OkSampler(SamplerPath);
+            Assert.Equal(1, afterCrash.Seen);
+            Assert.False(afterCrash.Take(5));
+        }
+
+        [Fact]
+        public void Count_is_saved_every_SaveEvery_without_flush()
+        {
+            var sampler = new OkSampler(SamplerPath);
+            for (int i = 0; i < OkSampler.SaveEvery; i++) sampler.Take(1000);
+
+            Assert.Equal(OkSampler.SaveEvery, new OkSampler(SamplerPath).Seen);
+        }
+
+        [Fact]
+        public void Broken_or_missing_state_starts_from_zero()
+        {
+            Assert.Equal(0, new OkSampler(SamplerPath).Seen);
+
+            Directory.CreateDirectory(Path.GetDirectoryName(SamplerPath)!);
+            File.WriteAllText(SamplerPath, "{ 깨진");
+            var sampler = new OkSampler(SamplerPath);
+            Assert.Equal(0, sampler.Seen);
+            Assert.True(sampler.Take(3));
+        }
+
+        [Fact]
+        public void Uploader_keeps_the_sampler_in_the_state_folder_and_flushes_on_dispose()
+        {
+            // 양품 3 장 중 첫 장만 고른다(비율 1000). 나머지 2 장은 종료 때 기록된다.
+            var handler = new FakeHandler(_ => Json(HttpStatusCode.OK,
+                "{\"results\":[{\"created\":true}],\"created\":1,\"duplicates\":0,\"errors\":[]}"));
+            var up = NewUploader(handler);
+            var ok = new InspectionImageContext { Ok = true, CameraName = "Cam", StepNumber = 1, Timestamp = DateTime.Now };
+            var opts = new ImageSaveOptions { MlopsSendNg = true, MlopsOkSampleRate = 1000 };
+            for (int i = 0; i < 3; i++) up.Enqueue(MakeImage(), ok, opts);
+            up.Dispose();
+
+            Assert.Equal(3, new OkSampler(SamplerPath).Seen);
+            // 큐 폴더 바로 아래의 *.json 은 드레인이 큐 항목으로 읽는다 — 샘플러 파일은 거기 있으면 안 된다.
+            Assert.DoesNotContain(Directory.GetFiles(_queueDir, "*.json"),
+                f => Path.GetFileName(f) == LineNgImageUploader.OkSamplerFileName);
+        }
+
         [Theory]
         [InlineData(HttpStatusCode.BadRequest, true)]
         [InlineData(HttpStatusCode.NotFound, true)]
