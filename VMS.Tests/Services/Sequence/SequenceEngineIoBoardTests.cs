@@ -32,7 +32,8 @@ namespace VMS.Tests.Services.Sequence
             try { _plc.Dispose(); } catch { /* 무시 */ }
         }
 
-        private SequenceEngine MakeEngine(IIoDeviceRegistry? registry)
+        private SequenceEngine MakeEngine(IIoDeviceRegistry? registry,
+            Func<string, IReadOnlyList<VMS.Interfaces.ToolInspectionResult>?>? toolResults = null)
         {
             return new SequenceEngine(
                 _plc,
@@ -41,7 +42,7 @@ namespace VMS.Tests.Services.Sequence
                 _ => Task.FromResult(true),
                 (_, _) => { },
                 _ => { },
-                getToolResultsFunc: null,
+                getToolResultsFunc: toolResults,
                 recipeChangeByIndexFunc: null,
                 stepChangeFunc: null,
                 ioRegistry: registry);
@@ -151,6 +152,78 @@ namespace VMS.Tests.Services.Sequence
             Assert.Empty(board.ReadChannels);   // 보드는 건드리지 않았다
         }
 
+        [Fact]
+        public async Task ToolResultOutput_WriteFailure_RaisesSequenceError_AndWritesOtherMappings()
+        {
+            // 검사 결과(OK/NG)를 보드로 내보내다 실패하면 — 종전에는 Debug 로그만 남고 운전 화면은 조용했다.
+            var board = new StubBoard { FailWriteChannels = { 1 } };
+            var result = new VMS.Interfaces.ToolInspectionResult
+            {
+                ToolName = "Blob 1",
+                Success = true,
+                PlcMappings =
+                {
+                    new VMS.Models.PlcResultMapping { ResultKey = "Success", DeviceId = BoardId, PlcAddress = "1" },
+                    new VMS.Models.PlcResultMapping { ResultKey = "Success", DeviceId = BoardId, PlcAddress = "2" },
+                }
+            };
+            var engine = MakeEngine(MakeRegistry(board), _ => new[] { result });
+
+            var config = new SequenceConfig
+            {
+                Name = "ResultOut",
+                Nodes = new List<SequenceNodeConfig>
+                {
+                    Start("s", "insp"),
+                    new() { Id = "insp", NodeType = SequenceNodeType.Inspection, Name = "Inspect", CameraId = "Cam1", NextNodeId = "e" },
+                    End("e")
+                }
+            };
+
+            SequenceErrorEventArgs? error = null;
+            engine.SequenceError += (_, e) => error = e;
+
+            await engine.RunAsync(config, CancellationToken.None);
+
+            Assert.NotNull(error);
+            Assert.Equal("Inspect", error!.NodeName);
+            Assert.Contains("검사 결과 출력 실패 1건", error.Error.Message);
+            Assert.Contains("Blob 1", error.Error.Message);
+            Assert.True(board.GetBit(2));   // 실패한 매핑 뒤의 매핑도 끝까지 썼다
+        }
+
+        [Fact]
+        public async Task ToolResultOutput_AllWritesSucceed_NoError()
+        {
+            var board = new StubBoard();
+            var result = new VMS.Interfaces.ToolInspectionResult
+            {
+                ToolName = "Blob 1",
+                Success = true,
+                PlcMappings = { new VMS.Models.PlcResultMapping { ResultKey = "Success", DeviceId = BoardId, PlcAddress = "3" } }
+            };
+            var engine = MakeEngine(MakeRegistry(board), _ => new[] { result });
+
+            var config = new SequenceConfig
+            {
+                Name = "ResultOutOk",
+                Nodes = new List<SequenceNodeConfig>
+                {
+                    Start("s", "insp"),
+                    new() { Id = "insp", NodeType = SequenceNodeType.Inspection, Name = "Inspect", CameraId = "Cam1", NextNodeId = "e" },
+                    End("e")
+                }
+            };
+
+            SequenceErrorEventArgs? error = null;
+            engine.SequenceError += (_, e) => error = e;
+
+            await engine.RunAsync(config, CancellationToken.None);
+
+            Assert.Null(error);
+            Assert.True(board.GetBit(3));
+        }
+
         // ─── 스텁 ────────────────────────────────────────────────
 
         /// <summary>
@@ -172,7 +245,11 @@ namespace VMS.Tests.Services.Sequence
 
             public event EventHandler<IoBitChangedEventArgs>? BitChanged;
 
+            /// <summary>쓰기 시 드라이버 오류를 흉내 낼 채널 (Advantech ErrorCode 실패와 같은 InvalidOperationException).</summary>
+            public HashSet<int> FailWriteChannels { get; } = new();
+
             public void SetBit(int channel, bool value) => _bits[channel] = value;
+            public bool GetBit(int channel) => _bits.GetValueOrDefault(channel, false);
 
             public Task<bool> ConnectAsync() => Task.FromResult(!ThrowOnRead);
             public Task DisconnectAsync() => Task.CompletedTask;
@@ -196,6 +273,8 @@ namespace VMS.Tests.Services.Sequence
             {
                 if (ThrowOnRead)
                     throw new InvalidOperationException($"StubBoard '{DeviceId}' not connected.");
+                if (FailWriteChannels.Contains(channel))
+                    throw new InvalidOperationException($"DAQNavi WriteBit(ch={channel}) 실패 (ErrorCode ErrorDeviceIoTimeOut)");
                 _bits[channel] = value;
                 BitChanged?.Invoke(this, new IoBitChangedEventArgs(channel, value));
                 return Task.CompletedTask;
