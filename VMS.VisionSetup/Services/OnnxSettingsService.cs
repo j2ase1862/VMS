@@ -30,7 +30,28 @@ namespace VMS.VisionSetup.Services
             bool TensorRTFp16);
 
         /// <summary>파일이 없거나 키가 없으면 OnnxModelBase의 현재(기본) 값을 반환한다.</summary>
-        public static OnnxSettings Load()
+        public static OnnxSettings Load() => Load(ConfigPath);
+
+        /// <summary>
+        /// 저장된 설정을 읽어 OnnxModelBase 정적 속성에 반영한다 — 이후 만드는 InferenceSession 부터 적용.
+        /// VisionSetup 과 VMS 본체가 시작할 때 각각 부른다. 본체가 이걸 부르지 않으면 [ONNX 설정]에서 고른
+        /// 장치(TensorRT · CPU 등)가 티칭에만 쓰이고 AUTO RUN 은 늘 Auto(CUDA → DML → CPU)로 돈다.
+        /// </summary>
+        public static OnnxSettings ApplySaved()
+        {
+            var settings = Load();
+            Apply(settings);
+            return settings;
+        }
+
+        internal static void Apply(OnnxSettings settings)
+        {
+            OnnxModelBase.PreferredProvider = settings.Provider;
+            OnnxModelBase.TensorRTCachePath = settings.TensorRTCachePath;
+            OnnxModelBase.TensorRTFp16 = settings.TensorRTFp16;
+        }
+
+        internal static OnnxSettings Load(string configPath)
         {
             var ep = OnnxModelBase.PreferredProvider;
             var cache = OnnxModelBase.TensorRTCachePath;
@@ -38,10 +59,10 @@ namespace VMS.VisionSetup.Services
 
             try
             {
-                if (!File.Exists(ConfigPath))
+                if (!File.Exists(configPath))
                     return new OnnxSettings(ep, cache, fp16);
 
-                var json = File.ReadAllText(ConfigPath);
+                var json = File.ReadAllText(configPath);
                 using var doc = JsonDocument.Parse(json);
                 var root = doc.RootElement;
 

@@ -446,6 +446,22 @@ namespace VMS
                 logService.Log($"모델 레지스트리 초기화 실패: {ex.Message}", LogLevel.Warning, "System");
             }
 
+            // ── ONNX 추론 장치 (VisionSetup [ONNX 설정]과 같은 system_config.json 키) ──
+            // 검사 추론은 이 프로세스의 OnnxModelBase 가 한다 — 여기서 읽지 않으면 AUTO RUN 이 설정과 무관하게
+            // Auto(CUDA → DML → CPU)로 돌고 TensorRT 캐시 · FP16 도 기본값이다.
+            try
+            {
+                var onnx = VMS.VisionSetup.Services.OnnxSettingsService.ApplySaved();
+                logService.Log($"추론 장치 설정: {onnx.Provider}" +
+                    (onnx.Provider == VMS.VisionSetup.VisionTools.DeepLearning.OnnxExecutionProvider.TensorRT
+                        ? $" (FP16 {(onnx.TensorRTFp16 ? "켬" : "끔")})" : ""),
+                    LogLevel.Info, "System");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] ONNX settings apply failed: {ex.Message}");
+            }
+
             // ── Web Parameter Sync Service ──
             IParameterSyncService? parameterSyncService = null;
             if (webIntegrated) try

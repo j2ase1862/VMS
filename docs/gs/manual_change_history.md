@@ -2486,3 +2486,23 @@ v1.43.0(#566 검사 중 신호)은 VMS 화면 · 조작 변화가 없어 본문�
 ### 매뉴얼 반영 (완료)
 
 docx/PDF 재생성 204쪽(변동 없음) · 그림 154장 · 경고 0. docx 본문의 "VMS 1.43.0" 을 document.xml 에서 확인. 제품설명서 docx 재생성(v1.43.0 확인).
+
+## 73. VMS 운전에 추론 장치 설정 적용 — **반영 대기**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-10-21 |
+| 대상 | 본편 §5 Inference Settings 문단 |
+| 변경 종류 | 결함 수정 |
+
+### 무엇이 바뀌었나 (사내 기록)
+
+- `system_config.json` 의 `onnxExecutionProvider` · `tensorRTCachePath` · `tensorRTFp16` 은 VisionSetup 만 시작할 때 읽었다. 검사 추론을 하는 VMS 본체는 이 키를 읽지 않아
+  AUTO RUN 이 설정과 무관하게 Auto(CUDA → DML → CPU), TensorRT 캐시 · FP16 은 기본값으로 돌았다(검사 중 신호 #566 검토 중 발견). 티칭 때 본 속도 · 결과가 운전과 다를 수 있었다.
+- 읽기 규칙을 `OnnxSettingsService.ApplySaved()` 한 곳으로 모으고(VisionSetup `LoadAIConfig` 의 중복 파싱 제거) VMS 본체도 시작할 때 부른다. System Log 에 "추론 장치 설정: …" Info 한 줄.
+- VMS 는 시작할 때만 읽는다 — VisionSetup 에서 바꾼 뒤에는 VMS 를 다시 시작해야 운전에 반영된다.
+- 시험: `OnnxSettingsApplyTests` 4건(세 키 읽기 · 키 없음/빈 캐시 경로는 현재값 유지 · 파일 없음/깨짐 · 정적 속성 반영).
+
+### 매뉴얼 반영
+
+대기. §5 Inference Settings 문단 끝 "변경은 다음 모델 로드부터 적용됩니다." 뒤에 "VMS 운전에도 같은 설정이 쓰이며, VMS 는 시작할 때 읽으므로 바꾼 뒤에는 VMS 를 다시 시작하세요." 한 문장.
