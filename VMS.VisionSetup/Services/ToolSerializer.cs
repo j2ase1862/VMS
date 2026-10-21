@@ -497,6 +497,7 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["InputHeight"] = classify.InputHeight;
                     config.Parameters["ConfidenceThreshold"] = classify.ConfidenceThreshold;
                     config.Parameters["ClassNamesText"] = classify.ClassNamesText;
+                    config.Parameters["OkClassesText"] = classify.OkClassesText;
                     config.Parameters["UseImageNetNormalization"] = classify.UseImageNetNormalization;
                     config.Parameters["DrawOverlay"] = classify.DrawOverlay;
                     break;
@@ -1842,6 +1843,8 @@ namespace VMS.VisionSetup.Services
                 tool.ConfidenceThreshold = GetDouble(ct);
             if (p.TryGetValue("ClassNamesText", out var cn))
                 tool.ClassNamesText = GetString(cn);
+            if (p.TryGetValue("OkClassesText", out var okc))
+                tool.OkClassesText = GetString(okc);
             if (p.TryGetValue("UseImageNetNormalization", out var uin))
                 tool.UseImageNetNormalization = GetBool(uin);
             if (p.TryGetValue("DrawOverlay", out var dov))

@@ -36,6 +36,13 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         [ObservableProperty]
         private string _classNamesText = string.Empty;
 
+        /// <summary>
+        /// 양품 클래스 이름 (콤마 구분, 여러 개 가능). 지정하면 "양품 클래스이고 신뢰도 ≥ 임계값" 일 때만 OK.
+        /// 비어 있으면 종전처럼 신뢰도만으로 판정한다 — 이때는 불량 클래스로 자신 있게 분류돼도 OK 가 된다.
+        /// </summary>
+        [ObservableProperty]
+        private string _okClassesText = string.Empty;
+
         [ObservableProperty]
         private bool _drawOverlay = true;
 
@@ -99,9 +106,13 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
             catch { }
         }
 
-        public string[] ClassNames => string.IsNullOrWhiteSpace(ClassNamesText)
+        public string[] ClassNames => SplitNames(ClassNamesText);
+
+        public string[] OkClasses => SplitNames(OkClassesText);
+
+        private static string[] SplitNames(string text) => string.IsNullOrWhiteSpace(text)
             ? Array.Empty<string>()
-            : ClassNamesText.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+            : text.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 
         public override VisionResult Execute(Mat inputImage)
         {
@@ -116,19 +127,39 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
                     return result;
                 }
 
+                // 양품 클래스 이름이 모델 클래스 목록에 없으면(오타 · 모델 교체) 모든 판정이 NG 가 된다 — 추론 전에 막는다
+                var names = ClassNames;
+                var okClasses = OkClasses;
+                if (okClasses.Length > 0 && names.Length > 0)
+                {
+                    var unknown = okClasses.Where(c => !names.Contains(c, StringComparer.OrdinalIgnoreCase)).ToArray();
+                    if (unknown.Length > 0)
+                    {
+                        result.Success = false;
+                        result.Message = $"양품 클래스 '{string.Join("', '", unknown)}' 가 Class Names 에 없습니다 — " +
+                                         "설정의 OK Classes 를 다시 고르세요.";
+                        return result;
+                    }
+                }
+
                 var roiImage = UseROI ? GetROIImage(inputImage) : inputImage;
 
                 var engine = EnsureEngine();
                 var classResult = engine.Classify(roiImage, InputWidth, InputHeight, UseImageNetNormalization);
 
-                string className = classResult.ClassId < ClassNames.Length
-                    ? ClassNames[classResult.ClassId]
+                string className = classResult.ClassId < names.Length
+                    ? names[classResult.ClassId]
                     : $"class{classResult.ClassId}";
 
-                bool pass = classResult.Confidence >= ConfidenceThreshold;
+                // 판정 = (양품 클래스를 지정했으면) 양품 클래스 + 신뢰도 ≥ 임계값.
+                // 확신 없는 양품도 NG 로 보낸다(보수적). 지정이 없으면 종전처럼 신뢰도만 본다.
+                bool confident = classResult.Confidence >= ConfidenceThreshold;
+                bool okClass = okClasses.Length == 0 || okClasses.Contains(className, StringComparer.OrdinalIgnoreCase);
+                bool pass = confident && okClass;
 
                 result.Success = pass;
-                result.Message = $"{className} ({classResult.Confidence:P1})";
+                result.Message = $"{className} ({classResult.Confidence:P1})" +
+                                 (!okClass ? " — 불량 클래스" : !confident ? " — 신뢰도 부족" : "");
                 result.Data["ClassName"] = className;
                 result.Data["ClassId"] = classResult.ClassId;
                 result.Data["Confidence"] = classResult.Confidence;
@@ -179,6 +210,7 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
                 InputHeight = this.InputHeight,
                 ConfidenceThreshold = this.ConfidenceThreshold,
                 ClassNamesText = this.ClassNamesText,
+                OkClassesText = this.OkClassesText,
                 DrawOverlay = this.DrawOverlay,
                 UseImageNetNormalization = this.UseImageNetNormalization,
                 UseROI = this.UseROI,

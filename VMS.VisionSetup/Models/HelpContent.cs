@@ -852,15 +852,22 @@ namespace VMS.VisionSetup.Models
             {
                 Name = "Classify (이미지 분류)",
                 Description = "ONNX 기반 이미지 분류 도구입니다.\nResNet, MobileNet 등 분류 모델의 ONNX를 로드하여 이미지를 분류합니다.",
-                Usage = "양품/불량 판정, 부품 종류 분류, 외관 등급 판정에 사용됩니다.\n• VMS.DeepLearning 앱에서 ImageFolder 형식으로 학습한 ONNX 모델을 사용합니다.\n• Class Names에 학습 시 사용한 폴더명(클래스)을 콤마로 구분하여 입력하세요.",
+                Usage = "양품/불량 판정, 부품 종류 분류, 외관 등급 판정에 사용됩니다.\n• VMS.DeepLearning 앱에서 ImageFolder 형식으로 학습한 ONNX 모델을 사용합니다.\n• Class Names에 학습 시 사용한 폴더명(클래스)을 콤마로 구분하여 입력하세요.\n• 양품/불량 판정에 쓸 때는 OK Classes 에서 양품 클래스를 고르세요.",
                 CognexEquivalent = "Cognex ViDi Green Classify",
                 Parameters = new Dictionary<string, string>
                 {
                     ["ModelPath"] = "분류 ONNX 모델 파일 경로 (.onnx).\nVMS.DeepLearning에서 학습한 classifier.onnx 파일을 지정합니다.",
                     ["InputWidth"] = "모델 입력 이미지 너비 (픽셀). 학습 시 imgsz와 동일하게 설정.\n• 기본값: 224",
                     ["InputHeight"] = "모델 입력 이미지 높이 (픽셀). 학습 시 imgsz와 동일하게 설정.\n• 기본값: 224",
-                    ["ConfidenceThreshold"] = "분류 신뢰도 임계값 (0~1). Top-1 클래스의 신뢰도가 이 값 이상이면 PASS.\n• 기본값: 0.5",
+                    ["ConfidenceThreshold"] = "분류 신뢰도 임계값 (0~1). 가장 확률이 높은 클래스의 신뢰도가 이 값보다 낮으면 NG 입니다.\n" +
+                        "OK Classes 를 지정했으면, 그 클래스로 분류되고 신뢰도도 이 값 이상일 때만 OK 입니다.\n• 기본값: 0.5",
                     ["ClassNamesText"] = "클래스 이름 목록 (콤마 구분).\n학습 데이터의 폴더명 순서대로 입력합니다.\n예: good,scratch,dent",
+                    ["OkClassesText"] =
+                        "판정에서 **양품으로 볼 클래스**를 고릅니다 (여러 개 가능 — 예: good_front, good_back).\n\n" +
+                        "• 지정하면: 고른 클래스로 분류되고 신뢰도가 Confidence Threshold 이상일 때만 OK. " +
+                        "불량 클래스로 분류되면 신뢰도가 높아도 NG, 양품 클래스라도 신뢰도가 낮으면 NG 입니다.\n" +
+                        "• 비워 두면: 신뢰도만으로 판정합니다 — 불량 클래스로 자신 있게 분류돼도 OK 가 되므로, 양품 · 불량을 가르는 검사라면 반드시 지정하세요.\n\n" +
+                        "모델을 바꿔 고른 클래스가 Class Names 에 없어지면 도구가 실행되지 않고 다시 고르라고 알립니다.",
                     ["UseImageNetNormalization"] = "ImageNet 정규화 사용 여부.\n• 활성화 (기본): mean=[0.485,0.456,0.406], std=[0.229,0.224,0.225]\n• 비활성화: 0~1 단순 정규화\n\ntorchvision pretrained 모델은 활성화를 권장합니다.",
                     ["DrawOverlay"] = "분류 결과 오버레이 표시. 클래스 이름과 신뢰도를 이미지 위에 표시하고, PASS/FAIL에 따라 녹색/빨간색 테두리를 그립니다."
                 }
