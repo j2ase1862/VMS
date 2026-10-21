@@ -207,7 +207,7 @@
 <main>
 <div class="header-strip">
   <h1>BODA VMS 사용자 매뉴얼</h1>
-  <div class="sub">버전 3.0 · 2026-09-17 · VMS v1.42.17 · BODA.VMS.Web v1.10.3 · BODA.VMS.MLOps v0.1.2 — 시스템 구성 → 설치 → 프로그램별 조작 → 검사 설정 → 웹 관리 → 유지보수</div>
+  <div class="sub">버전 3.0 · 2026-09-17 · VMS v1.42.18 · BODA.VMS.Web v1.10.3 · BODA.VMS.MLOps v0.1.2 — 시스템 구성 → 설치 → 프로그램별 조작 → 검사 설정 → 웹 관리 → 유지보수</div>
 </div>
 <section id="overview">
 <h2 id="1-시스템-개요">1. 시스템 개요</h2>
@@ -1048,7 +1048,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
   <li>Camera 콤보에서 카메라를 고르면 Steps 표에 <strong>그 카메라의 스텝만</strong> 표시됩니다(제목에 "Steps — 카메라명"). 레시피를 불러오면 레시피가 쓰는 카메라가 자동 선택됩니다.</li>
   <li>스텝 버튼: Add Step · Delete Step · <strong>Duplicate Step</strong>(카메라 설정과 도구 파이프라인을 복사해 바로 뒤에 추가) · Generate Robot Waypoint Steps(로봇 멀티뷰용) · Move Up / Move Down.</li>
   <li>Steps 표의 <strong>Resolution</strong>(mm/px)은 측정 도구가 픽셀을 mm 로 바꾸는 값입니다. 캘리브레이션을 적용하면 자동으로 채워지고(§5.9), 간단한 현장은 직접 입력해도 됩니다.</li>
-  <li>스텝만 선택하면 오른쪽 패널이 <strong>Camera Settings</strong> 로 바뀝니다 — 스텝 정보(별칭 · 로봇 노드 번호), 2D 이미지(카메라 설정 유지 체크 · 노출 ms · 게인 dB), 3D 카메라면 3D 스캔(점군 후처리 끄기/약/중/강 · 뎁스 범위 제한 mm). 여기 값은 Acquire · Live 때 카메라에 적용되고 레시피에 저장됩니다.</li>
+  <li>스텝만 선택하면 오른쪽 패널이 <strong>Camera Settings</strong> 로 바뀝니다 — 스텝 정보(별칭 · 로봇 노드 번호), 2D 이미지(카메라 설정 유지 체크 · 노출 ms · 게인 dB), 3D 카메라면 3D 스캔(점군 후처리 끄기/약/중/강 · 뎁스 범위 제한 mm). 여기 값은 레시피에 저장되고, VisionSetup 의 Acquire · Live 와 VMS 의 촬영(Grab · 자동 운전) 때 카메라에 적용됩니다.</li>
 </ul>
 <h4>다른 PC 에서 만든 레시피 — 카메라 재연결</h4>
 <p>이 PC 에 없는 카메라를 쓰는 레시피를 열면 <strong>미등록 카메라 재연결</strong> 창이 뜹니다. 스텝별로 이 PC 의 카메라를 골라 [적용 및 저장] 을 누르면 도구 · 학습 데이터를 그대로 두고 카메라만 바꿔 쓸 수 있습니다. [건너뛰기] 하면 스텝 이름이 "?-1" 로 표시됩니다.</p>
@@ -1401,7 +1401,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <tr><td>Sources — Point A / Point B (스텝 + 도구)</td><td>—</td><td>A · B 스텝의 Feature Match 를 콤보로 지정합니다(Result 연결이 아니라 스텝 간 포즈 저장소를 읽음)</td></tr>
 <tr><td>Require Same Cycle</td><td>켬</td><td>이번 사이클에 기록된 포즈만 인정. 끄면 편집은 편하지만 운전 중 A 매칭 실패 시 이전 값으로 잘못 계산될 수 있음</td></tr>
 <tr><td>Baseline X / Y (B − A)</td><td>0 / 0</td><td>B 촬영 위치의 A 대비 오프셋(로봇 · 스테이지 이동량). 두 스텝 모두 캘리브레이션이 있으면 mm, 없으면 px — mm 권장</td></tr>
-<tr><td>Ref A X/Y · Ref B X/Y · [현재 두 점을 기준으로 등록]</td><td>0</td><td>기준 부품을 놓고 A → B 순서로 Run 한 뒤 등록. Baseline 을 먼저 넣어야 같은 좌표계로 잡힙니다. 등록할 때의 단위(mm · px)가 함께 기록되어, 나중에 캘리브레이션을 넣거나 빼서 단위가 바뀌면 &#x27;단위 불일치&#x27; 로 실패합니다 — Baseline · Max ΔXY 를 새 단위로 맞추고 다시 등록하세요</td></tr>
+<tr><td>Ref A X/Y · Ref B X/Y · [현재 두 점을 기준으로 등록]</td><td>0</td><td>기준 부품을 놓고 A → B 순서로 Run 한 뒤 등록. Baseline 을 먼저 넣어야 같은 좌표계로 잡힙니다. 등록할 때의 단위(mm · px)가 함께 기록되어, 나중에 캘리브레이션을 넣거나 빼서 단위가 바뀌면 '단위 불일치' 로 실패합니다 — Baseline · Max ΔXY 를 새 단위로 맞추고 다시 등록하세요</td></tr>
 <tr><td>Enable Judgment · Max ΔXY · Max Δθ</td><td>해제 · 1.0 · 1.0</td><td>Match Align 과 같은 규칙</td></tr>
 <tr><td>Enable Robot Transform · M11~M22 · θ Sign</td><td>해제 · 항등 · 1</td><td>핸드아이 2×2 변환</td></tr>
 <tr><td>Draw Overlay</td><td>켬</td><td>두 점이 서로 다른 화면에 있으므로 좌상단에 Δ 수치 패널만 표시</td></tr>
@@ -1777,7 +1777,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Model Path (.onnx) · Input Size</td><td>(빈 값) · 224 [64~512]</td><td>학습 image_size 와 같게</td></tr>
 <tr><td>Anomaly Threshold</td><td>0.5 [0~1]</td><td>이 점수 이상이면 이상. 0.3 엄격(약한 이상도), 0.7 느슨</td></tr>
-<tr><td>Auto Threshold Calibration — Normal Images Folder · Sigma (k) · [Calibrate Threshold]</td><td>— · 3.0</td><td>정상 이미지 폴더의 점수 분포로 임계값을 제안(평균 + k × 표준편차). 제안값을 Anomaly Threshold 에 직접 반영해야 합니다</td></tr>
+<tr><td>Auto Threshold Calibration — Normal Images Folder · Sigma (k) · [Calibrate Threshold]</td><td>— · 3.0</td><td>정상 이미지 폴더의 점수 분포로 임계값을 계산해 Anomaly Threshold 에 넣습니다(평균 + k × 표준편차). ROI 를 쓰면 같은 ROI 영역으로 채점하므로, 폴더에는 검사와 같은 크기로 찍은 원본 이미지를 넣습니다</td></tr>
 <tr><td>Draw Overlay · Show Heatmap · Heatmap Opacity</td><td>켬 · 켬 · 0.4</td><td>NORMAL/ANOMALY 표시와 Jet 히트맵</td></tr>
 </table>
 <p><strong>결과 값</strong> — AnomalyScore · IsNormal</p>
@@ -3233,7 +3233,7 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <table class="cols-3-6">
   <tr><th>항목</th><th>값</th></tr>
   <tr><td>문서 버전</td><td>3.0 (2026-09-17)</td></tr>
-  <tr><td>대상 소프트웨어</td><td>VMS 1.42.17 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.2</td></tr>
+  <tr><td>대상 소프트웨어</td><td>VMS 1.42.18 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.2</td></tr>
   <tr><td>구성</td><td>VMS · VMS.VisionSetup · VMS.AppSetup (검사 런타임) / BODA.VMS.Web (생산 관리) / BODA.VMS.MLOps · VMS.DeepLearning (선택 구성 요소, 인증 범위 외)</td></tr>
   <tr><td>발행</td><td>BODA Vision AI</td></tr>
 </table>
