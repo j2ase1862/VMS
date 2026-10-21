@@ -5,7 +5,8 @@
     "규약" 계층. Windows/WPF/OpenCV/ONNX Runtime 의존이 없어 net8.0 (크로스플랫폼) 으로 빌드되고 NuGet 으로 배포된다.
       · VMS.Core.DeepLearning      — OnnxMetadataReader(metadata_props·그래프 입출력 이름), DetectionModelFormatProbe(규약 판별)
       · VMS.Core.Services          — TrainingOutputParser(stdout 프로토콜), TrainingArgumentBuilder(스크립트 인자 조립),
-                                     InspectionActivitySignal(검사 중 신호 — 같은 PC 학습 워커가 학습을 멈춘다)
+                                     InspectionActivitySignal(검사 중 신호 — 같은 PC 학습 워커가 학습을 멈춘다),
+                                     DlModelIdentity(검사 결과의 모델 식별자 mv:{버전id} — MLOps 모니터링이 되읽는다)
       · VMS.Core.Models.Annotation — TrainingConfig · TrainingTarget · TrainingStatus · TrainingState
     VMS.Core 는 이 프로젝트를 ProjectReference 로 참조하므로 기존 네임스페이스·타입 이름은 그대로다.
     패키징: tools\pack-contracts.ps1 (→ D:\Repo\nuget-local) · 사용법: docs\mlops_contracts_package.md

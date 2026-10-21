@@ -2566,3 +2566,21 @@ v1.44.0(#570)과 함께 반영 대기 §75 · §71 을 docx/PDF 로 냈다. 설�
 
 docx/PDF 재생성 202쪽(204 → 202) · 그림 151장(154 → 151: `06_deeplearning_full` · `ModelUpload` · `DatasetDownload` 삭제) · 경고 0.
 docx 본문에서 "VMS 1.44.0" · "딥러닝 모델 준비" · "OCR 합성 데이터로 학습하기" · §9.8 워커 문장 확인, "VMS.DeepLearning" · "AI 학습 도구" · "INSTALLAITOOLS" 0건. 제품설명서 docx 재생성(v1.44.0, 학습 도구 행 없음).
+
+## 77. 모델 식별자 규약을 Contracts 로 — **매뉴얼 변경 없음**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-10-21 |
+| 대상 | 없음 |
+| 변경 종류 | 구조 정리 (MLOps 연동 규약) |
+
+### 무엇이 바뀌었나 (사내 기록)
+
+- `DlModelIdentity`(검사 결과의 `DlModelVersion` 에 싣는 `mv:{32자}` · 50자 상한 · 경로 힌트)를 `VMS.Core` → `VMS.Core.Contracts` 로 옮겼다. 네임스페이스(`VMS.Core.Services`)가 같아 VMS 사용처는 그대로.
+- MLOps 는 같은 규칙을 `ModelVersionTag` 로 따로 들고 있었다(§0-g ①). 한쪽만 바뀌면 모니터링의 모델별 불량률 집계가 조용히 빈다 — Contracts 1.45.0 을 받으면 MLOps 쪽 사본을 지우고 `DlModelIdentity.TryReadVersionId` 를 쓴다.
+- 시험: `DlModelIdentityTests.Wire_format_is_pinned` — 알려진 GUID 의 바이트 단위 형식 · 공백 허용 · 대문자 16진 허용 · 접두 대문자(`MV:`) · 하이픈 형식 거부.
+
+### 매뉴얼 반영
+
+없음.

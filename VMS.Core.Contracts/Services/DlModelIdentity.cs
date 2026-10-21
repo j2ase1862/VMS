@@ -22,13 +22,18 @@ namespace VMS.Core.Services
     /// MLOps 가 모델별 불량률을 집계할 때 이을 수 있는 키입니다. 알 수 없으면 사람이 읽을
     /// 힌트만 남기고 <see cref="MaxLength"/> 안으로 줄입니다 — 줄이더라도 업로드는 살아야 합니다.
     /// </para>
+    /// <para><b>규약의 정의처는 여기 하나.</b>
+    /// VMS 가 <see cref="ForVersion"/> 으로 쓰고 MLOps 모니터링이 <see cref="TryReadVersionId"/> 로 읽는다.
+    /// 예전에는 MLOps 가 같은 규칙(<c>ModelVersionTag</c>)을 따로 들고 있어 한쪽만 바뀌면 집계가 조용히 비었다 —
+    /// 그래서 Contracts 로 옮겼다(1.45.0). 형식을 바꾸면 두 리포 PR 을 함께 낸다.
+    /// </para>
     /// </summary>
     public static class DlModelIdentity
     {
         /// <summary>운영 웹이 받는 상한. 이 값을 넘기면 업로드 전체가 거절된다.</summary>
         public const int MaxLength = 50;
 
-        /// <summary>버전 id 로 만든 식별자임을 알리는 접두. MLOps 가 이 접두를 보고 이어 붙인다.</summary>
+        /// <summary>버전 id 로 만든 식별자임을 알리는 접두. MLOps 가 이 접두를 보고 버전에 이어 붙인다.</summary>
         public const string VersionPrefix = "mv:";
 
         /// <summary>
@@ -38,7 +43,7 @@ namespace VMS.Core.Services
 
         /// <summary>
         /// <see cref="ForVersion"/> 이 만든 문자열에서 버전 id 를 되읽는다. 그 형식이 아니면 null.
-        /// MLOps 쪽 집계가 쓴다.
+        /// MLOps 모니터링 집계가 쓴다.
         /// </summary>
         public static Guid? TryReadVersionId(string? identity)
         {
