@@ -294,49 +294,6 @@
      "imgs": [],
      "text": "카메라 · PLC · 로봇 · IO 보드 · Web/MLOps 서버 주소 · 보안 모드 · 라이선스를 7 단계 마법사로 설정합니다. 설치 후 최초 1 회 실행하며, 설비가 바뀔 때만 다시 엽니다."
     }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "VMS.DeepLearning",
-       "b": true,
-       "m": false
-      },
-      {
-       "s": " (AI 학습 도구, 선택)",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "VMS.DeepLearning (AI 학습 도구, 선택)"
-    },
-    {
-     "segs": [
-      {
-       "s": "비전 엔지니어",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "비전 엔지니어"
-    },
-    {
-     "segs": [
-      {
-       "s": "MLOps 서버 없이 이 PC 에서 직접 사진을 라벨링하고 모델을 학습할 때 쓰는 별도 프로그램입니다. 설치 시 \"AI 학습 도구 포함\"을 체크한 PC 에만 설치되며, 인증 범위 밖의 선택 구성 요소입니다. 사용법은 별책 「AI 학습 도구 매뉴얼」을 참고하세요.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "MLOps 서버 없이 이 PC 에서 직접 사진을 라벨링하고 모델을 학습할 때 쓰는 별도 프로그램입니다. 설치 시 \"AI 학습 도구 포함\"을 체크한 PC 에만 설치되며, 인증 범위 밖의 선택 구성 요소입니다. 사용법은 별책 「AI 학습 도구 매뉴얼」을 참고하세요."
-    }
    ]
   ],
   "cls": "cols-2-2-5"
@@ -2020,24 +1977,6 @@
   "t": "li",
   "segs": [
    {
-    "s": "AI 학습 도구 포함",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " (기본: 해제) — MLOps 서버 없이 이 PC 에서 직접 모델을 학습해야 하는 엔지니어 PC 만 켭니다. 검사만 하는 라인 PC 에는 필요 없습니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 1,
-  "text": "AI 학습 도구 포함 (기본: 해제) — MLOps 서버 없이 이 PC 에서 직접 모델을 학습해야 하는 엔지니어 PC 만 켭니다. 검사만 하는 라인 PC 에는 필요 없습니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
     "s": "[설치]를 누르면 파일 복사가 진행되고, 완료 화면에서 [마침]을 누릅니다. 시작 메뉴와 바탕화면에 바로가기가 만들어집니다.",
     "b": false,
     "m": false
@@ -2057,7 +1996,7 @@
   "t": "figure",
   "src": "../gs/screenshots/71_msi_weboption.png",
   "width": "420",
-  "caption": "설치 구성 선택 — \"BODA VMS Web 서버 포함\" · \"AI 학습 도구 포함\" 체크박스"
+  "caption": "설치 구성 선택 — \"BODA VMS Web 서버 포함\" 체크박스"
  },
  {
   "t": "callout",
@@ -2074,7 +2013,7 @@
     "m": false
    },
    {
-    "s": "msiexec /i VMS-1.39.2.msi /qn INSTALLWEB=0 INSTALLAITOOLS=0",
+    "s": "msiexec /i VMS-1.39.2.msi /qn INSTALLWEB=0",
     "b": false,
     "m": true
    },
@@ -2084,7 +2023,7 @@
     "m": false
    }
   ],
-  "text": "무인 설치가 필요하면 명령 프롬프트(관리자)에서 다음처럼 실행합니다. msiexec /i VMS-1.39.2.msi /qn INSTALLWEB=0 INSTALLAITOOLS=0 — 값 0 은 제외, 1 은 포함입니다."
+  "text": "무인 설치가 필요하면 명령 프롬프트(관리자)에서 다음처럼 실행합니다. msiexec /i VMS-1.39.2.msi /qn INSTALLWEB=0 — 값 0 은 제외, 1 은 포함입니다."
  },
  {
   "t": "h",
@@ -12321,32 +12260,6 @@
     {
      "segs": [
       {
-       "s": "Deep Learning",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Deep Learning"
-    },
-    {
-     "segs": [
-      {
-       "s": "AI 학습 도구(10장)를 실행합니다. 설치되지 않은 PC 에서는 메뉴가 보이지 않습니다.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "AI 학습 도구(10장)를 실행합니다. 설치되지 않은 PC 에서는 메뉴가 보이지 않습니다."
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
        "s": "Batch Test... / OCR Synth Data... / Inference Settings...",
        "b": false,
        "m": false
@@ -15141,18 +15054,18 @@
   "t": "figure",
   "src": "../gs/screenshots/v3/vs/dlg_SynthData.png",
   "width": "520",
-  "caption": "Synthetic Data Generator — Font · Patterns · Dataset · Background · Augmentation · Training(PP-OCR fine-tuning, AI 학습 도구 설치 시)"
+  "caption": "Synthetic Data Generator — Font · Patterns · Dataset · Background · Augmentation · Training(MLOps 업로드 안내)"
  },
  {
   "t": "p",
   "segs": [
    {
-    "s": "날짜 · 로트 번호처럼 형식이 정해진 문자열을 폰트 · 배경 · 증강을 조합해 대량 생성합니다. OCR 도구의 인식 모델을 다듬을 학습 데이터로 쓰며, PP-OCR 학습 카드는 AI 학습 도구가 설치된 PC 에서만 표시됩니다.",
+    "s": "날짜 · 로트 번호처럼 형식이 정해진 문자열을 폰트 · 배경 · 증강을 조합해 대량 생성합니다. OCR 도구의 인식 모델을 다듬을 학습 데이터로 쓰며, 학습은 만든 데이터를 MLOps 에 올려서 합니다(§10.1).",
     "b": false,
     "m": false
    }
   ],
-  "text": "날짜 · 로트 번호처럼 형식이 정해진 문자열을 폰트 · 배경 · 증강을 조합해 대량 생성합니다. OCR 도구의 인식 모델을 다듬을 학습 데이터로 쓰며, PP-OCR 학습 카드는 AI 학습 도구가 설치된 PC 에서만 표시됩니다."
+  "text": "날짜 · 로트 번호처럼 형식이 정해진 문자열을 폰트 · 배경 · 증강을 조합해 대량 생성합니다. OCR 도구의 인식 모델을 다듬을 학습 데이터로 쓰며, 학습은 만든 데이터를 MLOps 에 올려서 합니다(§10.1)."
  },
  {
   "t": "h",
@@ -24401,12 +24314,12 @@
   "t": "p",
   "segs": [
    {
-    "s": "학습된 ONNX 모델로 객체의 위치(박스)와 클래스를 검출합니다. 기본 학습 백본은 D-FINE이며 YOLOv8/v11 형식도 자동 판별합니다. 부품 유무 · 다종 부품 검출 · 외관 결함 검출에 씁니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+    "s": "학습된 ONNX 모델로 객체의 위치(박스)와 클래스를 검출합니다. 기본 학습 백본은 D-FINE이며 YOLOv8/v11 형식도 자동 판별합니다. 부품 유무 · 다종 부품 검출 · 외관 결함 검출에 씁니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "학습된 ONNX 모델로 객체의 위치(박스)와 클래스를 검출합니다. 기본 학습 백본은 D-FINE이며 YOLOv8/v11 형식도 자동 판별합니다. 부품 유무 · 다종 부품 검출 · 외관 결함 검출에 씁니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
+  "text": "학습된 ONNX 모델로 객체의 위치(박스)와 클래스를 검출합니다. 기본 학습 백본은 D-FINE이며 YOLOv8/v11 형식도 자동 판별합니다. 부품 유무 · 다종 부품 검출 · 외관 결함 검출에 씁니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
  },
  {
   "t": "figure",
@@ -24836,12 +24749,12 @@
   "t": "p",
   "segs": [
    {
-    "s": "U-Net 같은 픽셀 분류 모델로 이미지를 클래스별 마스크로 나눕니다. 결함 영역의 면적을 재거나 배경 · 전경을 분리할 때 쓰며, 같은 클래스의 개체를 따로 세야 하면 YOLOv8-seg · RF-DETR-seg 를 씁니다. 뒤에 Blob 을 붙여 개수 · 크기를 분석합니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+    "s": "U-Net 같은 픽셀 분류 모델로 이미지를 클래스별 마스크로 나눕니다. 결함 영역의 면적을 재거나 배경 · 전경을 분리할 때 쓰며, 같은 클래스의 개체를 따로 세야 하면 YOLOv8-seg · RF-DETR-seg 를 씁니다. 뒤에 Blob 을 붙여 개수 · 크기를 분석합니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "U-Net 같은 픽셀 분류 모델로 이미지를 클래스별 마스크로 나눕니다. 결함 영역의 면적을 재거나 배경 · 전경을 분리할 때 쓰며, 같은 클래스의 개체를 따로 세야 하면 YOLOv8-seg · RF-DETR-seg 를 씁니다. 뒤에 Blob 을 붙여 개수 · 크기를 분석합니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
+  "text": "U-Net 같은 픽셀 분류 모델로 이미지를 클래스별 마스크로 나눕니다. 결함 영역의 면적을 재거나 배경 · 전경을 분리할 때 쓰며, 같은 클래스의 개체를 따로 세야 하면 YOLOv8-seg · RF-DETR-seg 를 씁니다. 뒤에 Blob 을 붙여 개수 · 크기를 분석합니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
  },
  {
   "t": "figure",
@@ -25106,12 +25019,12 @@
   "t": "p",
   "segs": [
    {
-    "s": "YOLOv8/v11 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 픽셀 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 새로 만드는 검사에는 RF-DETR-seg 를 권장하며, 이 도구는 기존 YOLOv8/v11 규약 ONNX 를 쓰던 레시피 호환용입니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+    "s": "YOLOv8/v11 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 픽셀 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 새로 만드는 검사에는 RF-DETR-seg 를 권장하며, 이 도구는 기존 YOLOv8/v11 규약 ONNX 를 쓰던 레시피 호환용입니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "YOLOv8/v11 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 픽셀 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 새로 만드는 검사에는 RF-DETR-seg 를 권장하며, 이 도구는 기존 YOLOv8/v11 규약 ONNX 를 쓰던 레시피 호환용입니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
+  "text": "YOLOv8/v11 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 픽셀 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 새로 만드는 검사에는 RF-DETR-seg 를 권장하며, 이 도구는 기존 YOLOv8/v11 규약 ONNX 를 쓰던 레시피 호환용입니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
  },
  {
   "t": "figure",
@@ -25376,12 +25289,12 @@
   "t": "p",
   "segs": [
    {
-    "s": "RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. YOLOv8-seg 와 하는 일은 같고, 새로 만드는 검사에는 이 도구를 권장합니다. 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+    "s": "RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. YOLOv8-seg 와 하는 일은 같고, 새로 만드는 검사에는 이 도구를 권장합니다. 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. YOLOv8-seg 와 하는 일은 같고, 새로 만드는 검사에는 이 도구를 권장합니다. 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
+  "text": "RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. YOLOv8-seg 와 하는 일은 같고, 새로 만드는 검사에는 이 도구를 권장합니다. 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
  },
  {
   "t": "figure",
@@ -25646,12 +25559,12 @@
   "t": "p",
   "segs": [
    {
-    "s": "ResNet · MobileNet 같은 분류 모델(ONNX)로 이미지(또는 ROI) 전체를 한 클래스로 판정합니다. 양품/불량 판정, 부품 종류 구분, 외관 등급에 씁니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+    "s": "ResNet · MobileNet 같은 분류 모델(ONNX)로 이미지(또는 ROI) 전체를 한 클래스로 판정합니다. 양품/불량 판정, 부품 종류 구분, 외관 등급에 씁니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "ResNet · MobileNet 같은 분류 모델(ONNX)로 이미지(또는 ROI) 전체를 한 클래스로 판정합니다. 양품/불량 판정, 부품 종류 구분, 외관 등급에 씁니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
+  "text": "ResNet · MobileNet 같은 분류 모델(ONNX)로 이미지(또는 ROI) 전체를 한 클래스로 판정합니다. 양품/불량 판정, 부품 종류 구분, 외관 등급에 씁니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
  },
  {
   "t": "figure",
@@ -25941,12 +25854,12 @@
   "t": "p",
   "segs": [
    {
-    "s": "PatchCore · FastFlow · EfficientAD 같은 anomalib 호환 모델로 정상 대비 이상 점수를 계산하고 히트맵으로 이상 부위를 표시합니다. 불량 샘플이 거의 없는 공정에서 정상 이미지만으로 학습해 쓰는 방식입니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+    "s": "PatchCore · FastFlow · EfficientAD 같은 anomalib 호환 모델로 정상 대비 이상 점수를 계산하고 히트맵으로 이상 부위를 표시합니다. 불량 샘플이 거의 없는 공정에서 정상 이미지만으로 학습해 쓰는 방식입니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "PatchCore · FastFlow · EfficientAD 같은 anomalib 호환 모델로 정상 대비 이상 점수를 계산하고 히트맵으로 이상 부위를 표시합니다. 불량 샘플이 거의 없는 공정에서 정상 이미지만으로 학습해 쓰는 방식입니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
+  "text": "PatchCore · FastFlow · EfficientAD 같은 anomalib 호환 모델로 정상 대비 이상 점수를 계산하고 히트맵으로 이상 부위를 표시합니다. 불량 샘플이 거의 없는 공정에서 정상 이미지만으로 학습해 쓰는 방식입니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
  },
  {
   "t": "figure",
@@ -28310,14 +28223,14 @@
   "t": "li",
   "segs": [
    {
-    "s": "모델을 준비합니다 — MLOps(9장)에서 학습해 운영으로 승격하거나, AI 학습 도구(10장)로 ONNX 파일을 만듭니다.",
+    "s": "모델을 준비합니다 — MLOps(9장)에서 학습해 운영으로 승격합니다(10장).",
     "b": false,
     "m": false
    }
   ],
   "ordered": true,
   "depth": 0,
-  "text": "모델을 준비합니다 — MLOps(9장)에서 학습해 운영으로 승격하거나, AI 학습 도구(10장)로 ONNX 파일을 만듭니다."
+  "text": "모델을 준비합니다 — MLOps(9장)에서 학습해 운영으로 승격합니다(10장)."
  },
  {
   "t": "li",
@@ -33313,6 +33226,19 @@
   "text": "[토큰 재발급] 하면 옛 토큰은 즉시 무효가 되므로 워커 설정을 갱신해야 합니다."
  },
  {
+  "t": "li",
+  "segs": [
+   {
+    "s": "라인 PC 에 워커를 함께 설치한 경우, VMS 가 자동 운전 · Roller 연속 검사 중이면 그 워커는 새 학습을 받지 않고 진행 중이던 학습도 중단해 대기열로 돌려놓습니다. 검사와 학습이 같은 GPU 를 나눠 쓰지 않게 하기 위한 것이며, 검사가 끝나면 다시 학습합니다.",
+    "b": false,
+    "m": false
+   }
+  ],
+  "ordered": false,
+  "depth": 0,
+  "text": "라인 PC 에 워커를 함께 설치한 경우, VMS 가 자동 운전 · Roller 연속 검사 중이면 그 워커는 새 학습을 받지 않고 진행 중이던 학습도 중단해 대기열로 돌려놓습니다. 검사와 학습이 같은 GPU 를 나눠 쓰지 않게 하기 위한 것이며, 검사가 끝나면 다시 학습합니다."
+ },
+ {
   "t": "figure",
   "src": "../gs/screenshots/v3/mlops/07_pretrained.png",
   "width": "620",
@@ -34118,93 +34044,24 @@
   "t": "h",
   "segs": [
    {
-    "s": "10. AI 학습 도구 (VMS.DeepLearning, 선택 설치)",
+    "s": "10. 딥러닝 모델 준비",
     "b": false,
     "m": false
    }
   ],
   "level": 2,
-  "text": "10. AI 학습 도구 (VMS.DeepLearning, 선택 설치)"
- },
- {
-  "t": "callout",
-  "kind": "note",
-  "segs": [
-   {
-    "s": "선택 구성 요소 · 인증 범위 외.",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " 설치 파일의 \"설치 구성 선택\" 화면에서 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "AI 학습 도구 포함",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": "을 체크한 PC 에만 설치됩니다(기본 해제). 라벨링과 학습은 MLOps 플랫폼(9장)에서 하는 것이 기본이며, MLOps 서버 없이 이 PC 에서 직접 학습해야 하는 현장만 씁니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "text": "선택 구성 요소 · 인증 범위 외. 설치 파일의 \"설치 구성 선택\" 화면에서 AI 학습 도구 포함을 체크한 PC 에만 설치됩니다(기본 해제). 라벨링과 학습은 MLOps 플랫폼(9장)에서 하는 것이 기본이며, MLOps 서버 없이 이 PC 에서 직접 학습해야 하는 현장만 씁니다."
- },
- {
-  "t": "figure",
-  "src": "../gs/screenshots/06_deeplearning_full.png",
-  "width": "620",
-  "caption": "AI 학습 도구(VMS.DeepLearning) — 데이터셋 · 이미지 목록(좌) / 라벨링 캔버스(중) / 클래스 · 라벨 · 학습(우)"
+  "text": "10. 딥러닝 모델 준비"
  },
  {
   "t": "p",
   "segs": [
    {
-    "s": "딥러닝 검사 도구(§6)에 쓰는 모델 파일(ONNX)을 이 PC 에서 만드는 별도 프로그램입니다. VisionSetup 의 Deep Learning 메뉴에서 실행하며, 설치되지 않은 PC 에서는 그 메뉴가 표시되지 않습니다. 학습에는 파이썬과 NVIDIA GPU 가 필요합니다.",
+    "s": "딥러닝 검사 도구(§6 — Detection · Classify · Anomaly · YOLOv8-seg · RF-DETR-seg · OCR)는 학습된 모델 파일(ONNX)로 동작합니다. 모델의 라벨링 · 학습 · 등록은 AI 학습 플랫폼 BODA VMS MLOps(9장)에서 합니다. VMS 와 VisionSetup 은 만들어진 모델을 불러와 검사에 씁니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "딥러닝 검사 도구(§6)에 쓰는 모델 파일(ONNX)을 이 PC 에서 만드는 별도 프로그램입니다. VisionSetup 의 Deep Learning 메뉴에서 실행하며, 설치되지 않은 PC 에서는 그 메뉴가 표시되지 않습니다. 학습에는 파이썬과 NVIDIA GPU 가 필요합니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "데이터셋 만들기",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " — [New Dataset] 으로 이름과 작업 유형(Detection · Segmentation · Classification · Anomaly)을 정하고 [Add Images] 로 사진을 넣습니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "데이터셋 만들기 — [New Dataset] 으로 이름과 작업 유형(Detection · Segmentation · Classification · Anomaly)을 정하고 [Add Images] 로 사진을 넣습니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "라벨링",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " — 클래스를 정의하고 사각형 · 폴리곤을 그립니다. SAM 을 쓰면 클릭만으로 윤곽이 그려집니다. [Auto Split] 으로 학습/검증을 나눕니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "라벨링 — 클래스를 정의하고 사각형 · 폴리곤을 그립니다. SAM 을 쓰면 클릭만으로 윤곽이 그려집니다. [Auto Split] 으로 학습/검증을 나눕니다."
+  "text": "딥러닝 검사 도구(§6 — Detection · Classify · Anomaly · YOLOv8-seg · RF-DETR-seg · OCR)는 학습된 모델 파일(ONNX)로 동작합니다. 모델의 라벨링 · 학습 · 등록은 AI 학습 플랫폼 BODA VMS MLOps(9장)에서 합니다. VMS 와 VisionSetup 은 만들어진 모델을 불러와 검사에 씁니다."
  },
  {
   "t": "li",
@@ -34215,133 +34072,182 @@
     "m": false
    },
    {
-    "s": " — Training 패널에서 스크립트(Detection 은 D-FINE 기본) · 에폭 · 배치 등을 정하고 학습을 시작합니다. 끝나면 출력 폴더에 ONNX · 지표 요약(",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "metrics.json",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": ") · 학습 곡선(",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "curves.png",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": ")이 생깁니다.",
+    "s": " — MLOps 에서 데이터셋을 라벨링하고 학습 작업을 실행합니다(§9.5 · §9.6). 끝난 모델은 모델 레지스트리에 후보 버전으로 등록됩니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": true,
   "depth": 0,
-  "text": "학습 — Training 패널에서 스크립트(Detection 은 D-FINE 기본) · 에폭 · 배치 등을 정하고 학습을 시작합니다. 끝나면 출력 폴더에 ONNX · 지표 요약(metrics.json) · 학습 곡선(curves.png)이 생깁니다."
+  "text": "학습 — MLOps 에서 데이터셋을 라벨링하고 학습 작업을 실행합니다(§9.5 · §9.6). 끝난 모델은 모델 레지스트리에 후보 버전으로 등록됩니다."
  },
  {
   "t": "li",
   "segs": [
    {
-    "s": "내보내기",
+    "s": "승격",
     "b": true,
     "m": false
    },
    {
-    "s": " — 만들어진 ONNX 를 VisionSetup 의 Detection · Classify · Anomaly · YOLOv8-seg · RF-DETR-seg 도구 Model Path 에 지정합니다.",
+    "s": " — 모델 레지스트리에서 결과를 확인하고 스테이징 · 운영 단계로 올립니다(§9.9).",
     "b": false,
     "m": false
    }
   ],
   "ordered": true,
   "depth": 0,
-  "text": "내보내기 — 만들어진 ONNX 를 VisionSetup 의 Detection · Classify · Anomaly · YOLOv8-seg · RF-DETR-seg 도구 Model Path 에 지정합니다."
+  "text": "승격 — 모델 레지스트리에서 결과를 확인하고 스테이징 · 운영 단계로 올립니다(§9.9)."
  },
  {
   "t": "li",
   "segs": [
    {
-    "s": "MLOps 와 함께 쓰기",
+    "s": "레시피에 지정",
     "b": true,
     "m": false
    },
    {
-    "s": " — Training 패널의 ",
+    "s": " — VisionSetup 딥러닝 도구의 Model Path 옆 ",
     "b": false,
     "m": false
    },
    {
-    "s": "[레지스트리에 등록]",
+    "s": "[레지스트리…]",
     "b": true,
     "m": false
    },
    {
-    "s": " 은 학습한 ONNX 를 MLOps 모델 계열의 후보 버전으로 올리고(Web 관리자 계정 로그인 필요), Export 구역의 ",
+    "s": " 로 모델을 고르면 ",
     "b": false,
     "m": false
    },
    {
-    "s": "[웹 데이터셋 내려받기]",
-    "b": true,
-    "m": false
+    "s": "model://",
+    "b": false,
+    "m": true
    },
    {
-    "s": " 는 MLOps 에서 라벨링한 데이터셋 판을 받아 학습 경로로 자동 설정합니다.",
+    "s": " 참조가 들어갑니다(§9.10). 라인 PC 는 그 참조가 가리키는 버전을 자동으로 내려받아 씁니다. 모델 파일을 직접 받아 둔 경우에는 Model Path 에 .onnx 경로를 지정해도 됩니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": true,
   "depth": 0,
-  "text": "MLOps 와 함께 쓰기 — Training 패널의 [레지스트리에 등록] 은 학습한 ONNX 를 MLOps 모델 계열의 후보 버전으로 올리고(Web 관리자 계정 로그인 필요), Export 구역의 [웹 데이터셋 내려받기] 는 MLOps 에서 라벨링한 데이터셋 판을 받아 학습 경로로 자동 설정합니다."
+  "text": "레시피에 지정 — VisionSetup 딥러닝 도구의 Model Path 옆 [레지스트리…] 로 모델을 고르면 model:// 참조가 들어갑니다(§9.10). 라인 PC 는 그 참조가 가리키는 버전을 자동으로 내려받아 씁니다. 모델 파일을 직접 받아 둔 경우에는 Model Path 에 .onnx 경로를 지정해도 됩니다."
  },
  {
-  "t": "figure",
-  "src": "../gs/screenshots/v3/dl/dlg_ModelUpload_ready.png",
-  "width": "420",
-  "caption": "[레지스트리에 등록] 창 — 파일 정보 · 등록 대상 계열 · 라이선스 · 메모 · [올리기]"
- },
- {
-  "t": "figure",
-  "src": "../gs/screenshots/v3/dl/dlg_DatasetDownload_ready.png",
-  "width": "480",
-  "caption": "[웹 데이터셋 내려받기] 창 — 데이터셋 · 판(버전) 선택 · 풀어 넣을 폴더 · [받기]"
+  "t": "h",
+  "segs": [
+   {
+    "s": "10.1 OCR 합성 데이터로 학습하기",
+    "b": false,
+    "m": false
+   }
+  ],
+  "level": 3,
+  "text": "10.1 OCR 합성 데이터로 학습하기"
  },
  {
   "t": "p",
   "segs": [
    {
-    "s": "화면별 상세 조작, 파이썬 환경 준비, 학습 스크립트별 유의사항은 별책 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "「BODA VMS AI 학습 도구 매뉴얼」",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": "(",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "VMS_AI학습도구매뉴얼.pdf",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": " — 본 매뉴얼과 함께 제공되는 별도 파일)을 참고하세요.",
+    "s": "날짜 · 로트 번호처럼 형식이 정해진 문자열은 VisionSetup 의 OCR Synth Data(§5)로 학습 데이터를 만들어 MLOps 에서 학습할 수 있습니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "화면별 상세 조작, 파이썬 환경 준비, 학습 스크립트별 유의사항은 별책 「BODA VMS AI 학습 도구 매뉴얼」(VMS_AI학습도구매뉴얼.pdf — 본 매뉴얼과 함께 제공되는 별도 파일)을 참고하세요."
+  "text": "날짜 · 로트 번호처럼 형식이 정해진 문자열은 VisionSetup 의 OCR Synth Data(§5)로 학습 데이터를 만들어 MLOps 에서 학습할 수 있습니다."
+ },
+ {
+  "t": "li",
+  "segs": [
+   {
+    "s": "OCR Synth Data 에서 출력 형식을 PaddleOCR rec 로 두고 [Generate] 로 데이터를 만듭니다.",
+    "b": false,
+    "m": false
+   }
+  ],
+  "ordered": true,
+  "depth": 0,
+  "text": "OCR Synth Data 에서 출력 형식을 PaddleOCR rec 로 두고 [Generate] 로 데이터를 만듭니다."
+ },
+ {
+  "t": "li",
+  "segs": [
+   {
+    "s": "출력 폴더 안의 ",
+    "b": false,
+    "m": false
+   },
+   {
+    "s": "train_crops",
+    "b": false,
+    "m": true
+   },
+   {
+    "s": " · ",
+    "b": false,
+    "m": false
+   },
+   {
+    "s": "val_crops",
+    "b": false,
+    "m": true
+   },
+   {
+    "s": " 폴더와 ",
+    "b": false,
+    "m": false
+   },
+   {
+    "s": "train_rec.txt",
+    "b": false,
+    "m": true
+   },
+   {
+    "s": " · ",
+    "b": false,
+    "m": false
+   },
+   {
+    "s": "val_rec.txt",
+    "b": false,
+    "m": true
+   },
+   {
+    "s": " · ",
+    "b": false,
+    "m": false
+   },
+   {
+    "s": "dict.txt",
+    "b": false,
+    "m": true
+   },
+   {
+    "s": " 를 모두 골라 압축합니다. 폴더째 압축하면 업로드가 거절됩니다.",
+    "b": false,
+    "m": false
+   }
+  ],
+  "ordered": true,
+  "depth": 0,
+  "text": "출력 폴더 안의 train_crops · val_crops 폴더와 train_rec.txt · val_rec.txt · dict.txt 를 모두 골라 압축합니다. 폴더째 압축하면 업로드가 거절됩니다."
+ },
+ {
+  "t": "li",
+  "segs": [
+   {
+    "s": "MLOps 의 [데이터셋 버전] ▸ [버전 업로드] 에서 작업 유형 OCR, 형식 ppocr 로 올리고(§9.7) 학습 작업을 실행합니다.",
+    "b": false,
+    "m": false
+   }
+  ],
+  "ordered": true,
+  "depth": 0,
+  "text": "MLOps 의 [데이터셋 버전] ▸ [버전 업로드] 에서 작업 유형 OCR, 형식 ppocr 로 올리고(§9.7) 학습 작업을 실행합니다."
  },
  {
   "t": "h",
@@ -54554,14 +54460,14 @@
     {
      "segs": [
       {
-       "s": "VMS 1.43.1 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.2",
+       "s": "VMS 1.44.0 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.2",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "VMS 1.43.1 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.2"
+     "text": "VMS 1.44.0 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.2"
     }
    ],
    [
@@ -54580,14 +54486,14 @@
     {
      "segs": [
       {
-       "s": "VMS · VMS.VisionSetup · VMS.AppSetup (검사 런타임) / BODA.VMS.Web (생산 관리) / BODA.VMS.MLOps · VMS.DeepLearning (선택 구성 요소, 인증 범위 외)",
+       "s": "VMS · VMS.VisionSetup · VMS.AppSetup (검사 런타임) / BODA.VMS.Web (생산 관리) / BODA.VMS.MLOps (선택 구성 요소, 인증 범위 외)",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "VMS · VMS.VisionSetup · VMS.AppSetup (검사 런타임) / BODA.VMS.Web (생산 관리) / BODA.VMS.MLOps · VMS.DeepLearning (선택 구성 요소, 인증 범위 외)"
+     "text": "VMS · VMS.VisionSetup · VMS.AppSetup (검사 런타임) / BODA.VMS.Web (생산 관리) / BODA.VMS.MLOps (선택 구성 요소, 인증 범위 외)"
     }
    ],
    [

@@ -177,7 +177,8 @@
 <li><a href="#mlops-lines">라인 PC</a></li>
 <li><a href="#mlops-monitoring">라인 모니터링</a></li>
 </ol></li>
-<li><a href="#10-AI-학습-도구-VMS-DeepLearning-선택-설치">AI 학습 도구 (VMS.DeepLearning, 선택 설치)</a><ol>
+<li><a href="#10-딥러닝-모델-준비">딥러닝 모델 준비</a><ol>
+<li><a href="#dl-ocr-synth">OCR 합성 데이터로 학습하기</a></li>
 </ol></li>
 <li><a href="#11-유지보수">유지보수</a><ol>
 <li><a href="#mt-backup">백업과 복원</a></li>
@@ -207,7 +208,7 @@
 <main>
 <div class="header-strip">
   <h1>BODA VMS 사용자 매뉴얼</h1>
-  <div class="sub">버전 3.0 · 2026-09-17 · VMS v1.43.1 · BODA.VMS.Web v1.10.3 · BODA.VMS.MLOps v0.1.2 — 시스템 구성 → 설치 → 프로그램별 조작 → 검사 설정 → 웹 관리 → 유지보수</div>
+  <div class="sub">버전 3.0 · 2026-09-17 · VMS v1.44.0 · BODA.VMS.Web v1.10.3 · BODA.VMS.MLOps v0.1.2 — 시스템 구성 → 설치 → 프로그램별 조작 → 검사 설정 → 웹 관리 → 유지보수</div>
 </div>
 <section id="overview">
 <h2 id="1-시스템-개요">1. 시스템 개요</h2>
@@ -240,10 +241,6 @@
   <tr><td><strong>VMS.AppSetup</strong> (시스템 설정 마법사)</td><td>설치 담당자</td>
       <td>카메라 · PLC · 로봇 · IO 보드 · Web/MLOps 서버 주소 · 보안 모드 · 라이선스를 7 단계 마법사로
       설정합니다. 설치 후 최초 1 회 실행하며, 설비가 바뀔 때만 다시 엽니다.</td></tr>
-  <tr><td><strong>VMS.DeepLearning</strong> (AI 학습 도구, 선택)</td><td>비전 엔지니어</td>
-      <td>MLOps 서버 없이 이 PC 에서 직접 사진을 라벨링하고 모델을 학습할 때 쓰는 별도 프로그램입니다.
-      설치 시 "AI 학습 도구 포함"을 체크한 PC 에만 설치되며, 인증 범위 밖의 선택 구성 요소입니다.
-      사용법은 별책 「AI 학습 도구 매뉴얼」을 참고하세요.</td></tr>
 </table>
 
 <h4>생산 관리 서버 — BODA.VMS.Web</h4>
@@ -364,17 +361,15 @@ VisionSetup 에서 연결할 때 "SDK 미탑재 — 시뮬레이션 모드" 경�
     <ul>
       <li><strong>BODA VMS Web 서버 포함</strong> (기본: 켬) — 이 PC 를 생산 관리 서버로도 쓰거나, 나중에 쓸 가능성이 있으면 켜 둡니다.
           포함해서 설치해도 자동으로 실행되지는 않으며, 설정 마법사에서 켤 때만 동작합니다(§2.3).</li>
-      <li><strong>AI 학습 도구 포함</strong> (기본: 해제) — MLOps 서버 없이 이 PC 에서 직접 모델을 학습해야 하는 엔지니어 PC 만 켭니다.
-          검사만 하는 라인 PC 에는 필요 없습니다.</li>
     </ul></li>
   <li>[설치]를 누르면 파일 복사가 진행되고, 완료 화면에서 [마침]을 누릅니다. 시작 메뉴와 바탕화면에 바로가기가 만들어집니다.</li>
 </ol>
 <figure><img src="../gs/screenshots/70_msi_welcome.png" data-width="420" alt="설치 마법사 시작 화면">
 <figcaption>설치 마법사 시작 화면</figcaption></figure>
 <figure><img src="../gs/screenshots/71_msi_weboption.png" data-width="420" alt="설치 구성 선택 화면">
-<figcaption>설치 구성 선택 — "BODA VMS Web 서버 포함" · "AI 학습 도구 포함" 체크박스</figcaption></figure>
+<figcaption>설치 구성 선택 — "BODA VMS Web 서버 포함" 체크박스</figcaption></figure>
 <div class="callout tip"><strong>무인 설치</strong>가 필요하면 명령 프롬프트(관리자)에서 다음처럼 실행합니다.
-<code>msiexec /i VMS-1.39.2.msi /qn INSTALLWEB=0 INSTALLAITOOLS=0</code> — 값 0 은 제외, 1 은 포함입니다.</div>
+<code>msiexec /i VMS-1.39.2.msi /qn INSTALLWEB=0</code> — 값 0 은 제외, 1 은 포함입니다.</div>
 
 <h4>설치 후 처음 실행하면</h4>
 <p>VMS 를 처음 실행하면 설정 파일이 없으므로 "초기 시스템 설정이 필요합니다" 안내와 함께
@@ -1025,7 +1020,6 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
   <tr><td>Recipe → Recipe Manager / Save Recipe</td><td>레시피 관리 창(§5.3) / 현재 레시피 저장. 저장하면 실행 중인 VMS 가 자동으로 다시 불러옵니다.</td></tr>
   <tr><td>예제 Template</td><td>템플릿 갤러리(§5.8). 스텝을 먼저 선택해야 활성화됩니다.</td></tr>
   <tr><td>Sequence</td><td>시퀀스 편집기(§5.10).</td></tr>
-  <tr><td>Deep Learning</td><td>AI 학습 도구(10장)를 실행합니다. 설치되지 않은 PC 에서는 메뉴가 보이지 않습니다.</td></tr>
   <tr><td>Batch Test... / OCR Synth Data... / Inference Settings...</td><td>배치 테스트(§5.11) / OCR 합성 데이터 생성(§5.12) / ONNX 추론 엔진 설정(§5.12).</td></tr>
   <tr><td>Camera → Camera Manager / Calibration Manager... / Camera Info / Acquire Image / Start · Stop Camera Live / Receive from VMS / Start · Stop Live Receive (from VMS)</td><td>카메라 등록 창 / 캘리브레이션 창(§5.9) / 선택 카메라 정보 팝업 / 촬영 · 라이브 · VMS 프레임 수신(§5.4).</td></tr>
   <tr><td>3D → Save · Load 3D Data / Generate Height Map / Save · Clear Height Slicing</td><td>점군(.vpc) 저장 · 불러오기, 높이 맵 생성, 높이 슬라이스 저장 · 지우기.</td></tr>
@@ -1203,8 +1197,8 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <figure><img src="../gs/screenshots/v3/vs/dlg_InferenceSettings.png" data-width="420" alt="Inference Engine Settings"><figcaption>Inference Engine Settings — Execution Provider · TensorRT Engine Cache Folder · Enable TensorRT FP16</figcaption></figure>
 <p>ONNX Runtime 의 실행 백엔드(Auto · CPU · CUDA · TensorRT)를 고릅니다. GPU 가 없으면 CPU 로 자동 동작합니다. TensorRT 캐시 폴더를 두면 두 번째 실행부터 엔진 재빌드를 건너뛰고, FP16 은 RTX 계열에서 속도를 높입니다. 변경은 다음 모델 로드부터 적용됩니다. VMS 운전에도 같은 설정이 쓰이며, VMS 는 시작할 때 읽으므로 바꾼 뒤에는 VMS 를 다시 시작하세요.</p>
 <h4>OCR Synth Data — 합성 문자 데이터</h4>
-<figure><img src="../gs/screenshots/v3/vs/dlg_SynthData.png" data-width="520" alt="Synthetic Data Generator"><figcaption>Synthetic Data Generator — Font · Patterns · Dataset · Background · Augmentation · Training(PP-OCR fine-tuning, AI 학습 도구 설치 시)</figcaption></figure>
-<p>날짜 · 로트 번호처럼 형식이 정해진 문자열을 폰트 · 배경 · 증강을 조합해 대량 생성합니다. OCR 도구의 인식 모델을 다듬을 학습 데이터로 쓰며, PP-OCR 학습 카드는 AI 학습 도구가 설치된 PC 에서만 표시됩니다.</p>
+<figure><img src="../gs/screenshots/v3/vs/dlg_SynthData.png" data-width="520" alt="Synthetic Data Generator"><figcaption>Synthetic Data Generator — Font · Patterns · Dataset · Background · Augmentation · Training(MLOps 업로드 안내)</figcaption></figure>
+<p>날짜 · 로트 번호처럼 형식이 정해진 문자열을 폰트 · 배경 · 증강을 조합해 대량 생성합니다. OCR 도구의 인식 모델을 다듬을 학습 데이터로 쓰며, 학습은 만든 데이터를 MLOps 에 올려서 합니다(§10.1).</p>
 <h4>SLM Recipe Bot</h4>
 <p>툴바의 말풍선 버튼으로 엽니다. 모델에 [Connect] 한 뒤 "원형 부품의 지름을 재고 싶어" 처럼 입력하면 레시피 구성을 제안하고, [Apply Recipe] 로 작업 공간에 만들어 줍니다. "자동 실행" 을 켜면 적용 직후 실행 결과까지 알려 줍니다.</p>
 </section>
@@ -1694,7 +1688,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 </ul>
 <h3 id="tools-11">6.11 Deep Learning — 딥러닝 추론</h3>
 <h4>Detection — 딥러닝 객체 검출 (D-FINE · YOLO)</h4>
-<p>학습된 ONNX 모델로 객체의 위치(박스)와 클래스를 검출합니다. 기본 학습 백본은 D-FINE이며 YOLOv8/v11 형식도 자동 판별합니다. 부품 유무 · 다종 부품 검출 · 외관 결함 검출에 씁니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
+<p>학습된 ONNX 모델로 객체의 위치(박스)와 클래스를 검출합니다. 기본 학습 백본은 D-FINE이며 YOLOv8/v11 형식도 자동 판별합니다. 부품 유무 · 다종 부품 검출 · 외관 결함 검출에 씁니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/29_Detection_YOLO.png" data-width="240" alt="Detection — 딥러닝 객체 검출 (D-FINE · YOLO) 설정 패널"><figcaption>Detection — 딥러닝 객체 검출 (D-FINE · YOLO) — Tool Settings 패널</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
@@ -1714,7 +1708,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <li>템플릿 ‘DL 객체 검출 판정’ 이 Detection → Result 체인을 만들어 줍니다.</li>
 </ul>
 <h4>Segmentation — 픽셀 단위 분할 (semantic)</h4>
-<p>U-Net 같은 픽셀 분류 모델로 이미지를 클래스별 마스크로 나눕니다. 결함 영역의 면적을 재거나 배경 · 전경을 분리할 때 쓰며, 같은 클래스의 개체를 따로 세야 하면 YOLOv8-seg · RF-DETR-seg 를 씁니다. 뒤에 Blob 을 붙여 개수 · 크기를 분석합니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
+<p>U-Net 같은 픽셀 분류 모델로 이미지를 클래스별 마스크로 나눕니다. 결함 영역의 면적을 재거나 배경 · 전경을 분리할 때 쓰며, 같은 클래스의 개체를 따로 세야 하면 YOLOv8-seg · RF-DETR-seg 를 씁니다. 뒤에 Blob 을 붙여 개수 · 크기를 분석합니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/30_Segmentation.png" data-width="240" alt="Segmentation — 픽셀 단위 분할 (semantic) 설정 패널"><figcaption>Segmentation — 픽셀 단위 분할 (semantic) — Tool Settings 패널</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
@@ -1729,7 +1723,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <li>Class{i}_Pixels 는 검사 이미지(ROI 를 쓰면 ROI 영역) 크기 기준 화소 수이고, Class{i}_AreaRatio 는 그 영역 안 비율이라 모든 클래스를 더하면 1 입니다. ROI 를 쓰면 오버레이도 ROI 자리에만 그려집니다.</li>
 </ul>
 <h4>YOLOv8-seg — 인스턴스 분할</h4>
-<p>YOLOv8/v11 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 픽셀 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 새로 만드는 검사에는 RF-DETR-seg 를 권장하며, 이 도구는 기존 YOLOv8/v11 규약 ONNX 를 쓰던 레시피 호환용입니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
+<p>YOLOv8/v11 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 픽셀 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 새로 만드는 검사에는 RF-DETR-seg 를 권장하며, 이 도구는 기존 YOLOv8/v11 규약 ONNX 를 쓰던 레시피 호환용입니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/31_YOLOv8-seg.png" data-width="240" alt="YOLOv8-seg — 인스턴스 분할 설정 패널"><figcaption>YOLOv8-seg — 인스턴스 분할 — Tool Settings 패널</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
@@ -1744,7 +1738,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <li>템플릿 ‘DL 세그 기반 3D 객체 검출’ 이 YOLOv8-seg(마스크 출력) → Mask Crop → Cluster 체인을 만듭니다.</li>
 </ul>
 <h4>RF-DETR-seg — 인스턴스 분할</h4>
-<p>RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. YOLOv8-seg 와 하는 일은 같고, 새로 만드는 검사에는 이 도구를 권장합니다. 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
+<p>RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. YOLOv8-seg 와 하는 일은 같고, 새로 만드는 검사에는 이 도구를 권장합니다. 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/32_RF-DETR-seg.png" data-width="240" alt="RF-DETR-seg — 인스턴스 분할 설정 패널"><figcaption>RF-DETR-seg — 인스턴스 분할 — Tool Settings 패널</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
@@ -1759,7 +1753,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <li>학습은 MLOps 의 train_rfdetr_seg.py(세그멘테이션 데이터셋, coco 형식)로 합니다(§9.6).</li>
 </ul>
 <h4>Classify — 이미지 분류</h4>
-<p>ResNet · MobileNet 같은 분류 모델(ONNX)로 이미지(또는 ROI) 전체를 한 클래스로 판정합니다. 양품/불량 판정, 부품 종류 구분, 외관 등급에 씁니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
+<p>ResNet · MobileNet 같은 분류 모델(ONNX)로 이미지(또는 ROI) 전체를 한 클래스로 판정합니다. 양품/불량 판정, 부품 종류 구분, 외관 등급에 씁니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/33_Classify_split.png" data-width="500" alt="Classify — 이미지 분류 설정 패널"><figcaption>Classify — 이미지 분류 — Tool Settings 패널</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
@@ -1772,7 +1766,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <p><strong>결과 값</strong> — ClassName · ClassId · Confidence</p>
 <p><strong>판정</strong> — OK Classes 를 지정하면 양품 클래스로 분류되고 신뢰도가 Confidence Threshold 이상일 때 OK, 그 밖은 NG(결과 메시지 끝에 "불량 클래스" 또는 "신뢰도 부족"). 지정하지 않으면 신뢰도만으로 판정하며, 설정 패널에 경고가 표시됩니다.</p>
 <h4>Anomaly — 이상 탐지 (정상 이미지만으로 학습)</h4>
-<p>PatchCore · FastFlow · EfficientAD 같은 anomalib 호환 모델로 정상 대비 이상 점수를 계산하고 히트맵으로 이상 부위를 표시합니다. 불량 샘플이 거의 없는 공정에서 정상 이미지만으로 학습해 쓰는 방식입니다. 모델 파일(.onnx)은 AI 학습 도구(10장)나 MLOps(9장)에서 만듭니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
+<p>PatchCore · FastFlow · EfficientAD 같은 anomalib 호환 모델로 정상 대비 이상 점수를 계산하고 히트맵으로 이상 부위를 표시합니다. 불량 샘플이 거의 없는 공정에서 정상 이미지만으로 학습해 쓰는 방식입니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/34_Anomaly.png" data-width="240" alt="Anomaly — 이상 탐지 (정상 이미지만으로 학습) 설정 패널"><figcaption>Anomaly — 이상 탐지 (정상 이미지만으로 학습) — Tool Settings 패널</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
@@ -1943,7 +1937,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <figure><img src="../gs/screenshots/v3/templates/dl-detection.png" data-width="420" alt="DL 객체 검출 체인"><figcaption>Detection → Result (ONNX 모델 필요)</figcaption></figure>
 <p><strong>상황</strong> — 규칙으로 정의하기 어려운 외관 결함(긁힘 · 찍힘 · 이물)이나 다양한 모양의 부품을 학습된 모델로 판정합니다.</p>
 <ol>
-  <li>모델을 준비합니다 — MLOps(9장)에서 학습해 운영으로 승격하거나, AI 학습 도구(10장)로 ONNX 파일을 만듭니다.</li>
+  <li>모델을 준비합니다 — MLOps(9장)에서 학습해 운영으로 승격합니다(10장).</li>
   <li>템플릿 Deep Learning → <strong>DL 객체 검출 판정</strong>(또는 DL 이상 탐지 판정)을 생성합니다.</li>
   <li><strong>Detection</strong> 의 Model Path 에 ONNX 파일을 지정하거나 [레지스트리…] 로 <code>model://…@production</code> 참조를 고릅니다. D-FINE · YOLO 형식은 자동 판별됩니다.</li>
   <li>Confidence Threshold(기본 0.5 부근)를 조정해 오검출과 미검출의 균형을 잡고, 특정 클래스만 볼 때는 클래스 필터를 씁니다. 0 건 검출은 NG 이므로 "결함이 없으면 OK" 인 검사에는 결과 해석을 Result 도구에서 반대로 잡습니다(결함 클래스 검출 = NG).</li>
@@ -2351,6 +2345,7 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
   <li>[워커 등록] 에서 이름을 넣고 [발급] 하면 <code>wk_…</code> 토큰과 GPU PC 에서 실행할 명령이 표시됩니다. 워커 설치 마법사(§2.4)에 이 값을 넣습니다.</li>
   <li>상태 — 대기 중(초록) · 학습 중(파랑) · 연결 끊김(회색) · 비활성(빨강). 진단에 실패한 워커(예: CUDA 사용 불가)는 비활성으로 작업을 받지 않으며 사유가 카드에 표시됩니다.</li>
   <li>[토큰 재발급] 하면 옛 토큰은 즉시 무효가 되므로 워커 설정을 갱신해야 합니다.</li>
+  <li>라인 PC 에 워커를 함께 설치한 경우, VMS 가 자동 운전 · Roller 연속 검사 중이면 그 워커는 새 학습을 받지 않고 진행 중이던 학습도 중단해 대기열로 돌려놓습니다. 검사와 학습이 같은 GPU 를 나눠 쓰지 않게 하기 위한 것이며, 검사가 끝나면 다시 학습합니다.</li>
 </ul>
 <figure><img src="../gs/screenshots/v3/mlops/07_pretrained.png" data-width="620" alt="사전학습 미러"><figcaption>사전학습 미러 — 자산(ref · 파일 · 라이선스 · 출처) 목록, [자산 추가] [파일 추가]</figcaption></figure>
 <p>워커는 인터넷 대신 여기서만 사전학습 가중치를 받습니다(폐쇄망 · SSL 검사 환경 대응). [자산 추가] 로 ref(예: <code>dfine-small-obj2coco</code>) · 라이선스 · 출처를 등록하고 [파일 추가] 로 스크립트에 맞는 파일을 올립니다.</p>
@@ -2405,22 +2400,22 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 </section>
 
 <section id="deeplearning">
-<h2 id="10-AI-학습-도구-VMS-DeepLearning-선택-설치">10. AI 학습 도구 (VMS.DeepLearning, 선택 설치)</h2>
-<div class="callout"><strong>선택 구성 요소 · 인증 범위 외.</strong> 설치 파일의 "설치 구성 선택" 화면에서 <strong>AI 학습 도구 포함</strong>을 체크한 PC 에만 설치됩니다(기본 해제).
-라벨링과 학습은 MLOps 플랫폼(9장)에서 하는 것이 기본이며, MLOps 서버 없이 이 PC 에서 직접 학습해야 하는 현장만 씁니다.</div>
-<figure><img src="../gs/screenshots/06_deeplearning_full.png" data-width="620" alt="AI 학습 도구 화면"><figcaption>AI 학습 도구(VMS.DeepLearning) — 데이터셋 · 이미지 목록(좌) / 라벨링 캔버스(중) / 클래스 · 라벨 · 학습(우)</figcaption></figure>
-<p>딥러닝 검사 도구(§6)에 쓰는 모델 파일(ONNX)을 이 PC 에서 만드는 별도 프로그램입니다. VisionSetup 의 Deep Learning 메뉴에서 실행하며, 설치되지 않은 PC 에서는 그 메뉴가 표시되지 않습니다.
-학습에는 파이썬과 NVIDIA GPU 가 필요합니다.</p>
+<h2 id="10-딥러닝-모델-준비">10. 딥러닝 모델 준비</h2>
+<p>딥러닝 검사 도구(§6 — Detection · Classify · Anomaly · YOLOv8-seg · RF-DETR-seg · OCR)는 학습된 모델 파일(ONNX)로 동작합니다.
+모델의 라벨링 · 학습 · 등록은 AI 학습 플랫폼 BODA VMS MLOps(9장)에서 합니다. VMS 와 VisionSetup 은 만들어진 모델을 불러와 검사에 씁니다.</p>
 <ol>
-  <li><strong>데이터셋 만들기</strong> — [New Dataset] 으로 이름과 작업 유형(Detection · Segmentation · Classification · Anomaly)을 정하고 [Add Images] 로 사진을 넣습니다.</li>
-  <li><strong>라벨링</strong> — 클래스를 정의하고 사각형 · 폴리곤을 그립니다. SAM 을 쓰면 클릭만으로 윤곽이 그려집니다. [Auto Split] 으로 학습/검증을 나눕니다.</li>
-  <li><strong>학습</strong> — Training 패널에서 스크립트(Detection 은 D-FINE 기본) · 에폭 · 배치 등을 정하고 학습을 시작합니다. 끝나면 출력 폴더에 ONNX · 지표 요약(<code>metrics.json</code>) · 학습 곡선(<code>curves.png</code>)이 생깁니다.</li>
-  <li><strong>내보내기</strong> — 만들어진 ONNX 를 VisionSetup 의 Detection · Classify · Anomaly · YOLOv8-seg · RF-DETR-seg 도구 Model Path 에 지정합니다.</li>
-  <li><strong>MLOps 와 함께 쓰기</strong> — Training 패널의 <strong>[레지스트리에 등록]</strong> 은 학습한 ONNX 를 MLOps 모델 계열의 후보 버전으로 올리고(Web 관리자 계정 로그인 필요), Export 구역의 <strong>[웹 데이터셋 내려받기]</strong> 는 MLOps 에서 라벨링한 데이터셋 판을 받아 학습 경로로 자동 설정합니다.</li>
+  <li><strong>학습</strong> — MLOps 에서 데이터셋을 라벨링하고 학습 작업을 실행합니다(§9.5 · §9.6). 끝난 모델은 모델 레지스트리에 후보 버전으로 등록됩니다.</li>
+  <li><strong>승격</strong> — 모델 레지스트리에서 결과를 확인하고 스테이징 · 운영 단계로 올립니다(§9.9).</li>
+  <li><strong>레시피에 지정</strong> — VisionSetup 딥러닝 도구의 Model Path 옆 <strong>[레지스트리…]</strong> 로 모델을 고르면 <code>model://</code> 참조가 들어갑니다(§9.10).
+      라인 PC 는 그 참조가 가리키는 버전을 자동으로 내려받아 씁니다. 모델 파일을 직접 받아 둔 경우에는 Model Path 에 .onnx 경로를 지정해도 됩니다.</li>
 </ol>
-<figure><img src="../gs/screenshots/v3/dl/dlg_ModelUpload_ready.png" data-width="420" alt="레지스트리에 등록 창"><figcaption>[레지스트리에 등록] 창 — 파일 정보 · 등록 대상 계열 · 라이선스 · 메모 · [올리기]</figcaption></figure>
-<figure><img src="../gs/screenshots/v3/dl/dlg_DatasetDownload_ready.png" data-width="480" alt="웹 데이터셋 내려받기 창"><figcaption>[웹 데이터셋 내려받기] 창 — 데이터셋 · 판(버전) 선택 · 풀어 넣을 폴더 · [받기]</figcaption></figure>
-<p>화면별 상세 조작, 파이썬 환경 준비, 학습 스크립트별 유의사항은 별책 <strong>「BODA VMS AI 학습 도구 매뉴얼」</strong>(<code>VMS_AI학습도구매뉴얼.pdf</code> — 본 매뉴얼과 함께 제공되는 별도 파일)을 참고하세요.</p>
+<h3 id="dl-ocr-synth">10.1 OCR 합성 데이터로 학습하기</h3>
+<p>날짜 · 로트 번호처럼 형식이 정해진 문자열은 VisionSetup 의 OCR Synth Data(§5)로 학습 데이터를 만들어 MLOps 에서 학습할 수 있습니다.</p>
+<ol>
+  <li>OCR Synth Data 에서 출력 형식을 PaddleOCR rec 로 두고 [Generate] 로 데이터를 만듭니다.</li>
+  <li>출력 폴더 안의 <code>train_crops</code> · <code>val_crops</code> 폴더와 <code>train_rec.txt</code> · <code>val_rec.txt</code> · <code>dict.txt</code> 를 모두 골라 압축합니다. 폴더째 압축하면 업로드가 거절됩니다.</li>
+  <li>MLOps 의 [데이터셋 버전] ▸ [버전 업로드] 에서 작업 유형 OCR, 형식 ppocr 로 올리고(§9.7) 학습 작업을 실행합니다.</li>
+</ol>
 </section>
 
 <section id="maintenance">
@@ -3234,8 +3229,8 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <table class="cols-3-6">
   <tr><th>항목</th><th>값</th></tr>
   <tr><td>문서 버전</td><td>3.0 (2026-09-17)</td></tr>
-  <tr><td>대상 소프트웨어</td><td>VMS 1.43.1 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.2</td></tr>
-  <tr><td>구성</td><td>VMS · VMS.VisionSetup · VMS.AppSetup (검사 런타임) / BODA.VMS.Web (생산 관리) / BODA.VMS.MLOps · VMS.DeepLearning (선택 구성 요소, 인증 범위 외)</td></tr>
+  <tr><td>대상 소프트웨어</td><td>VMS 1.44.0 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.2</td></tr>
+  <tr><td>구성</td><td>VMS · VMS.VisionSetup · VMS.AppSetup (검사 런타임) / BODA.VMS.Web (생산 관리) / BODA.VMS.MLOps (선택 구성 요소, 인증 범위 외)</td></tr>
   <tr><td>발행</td><td>BODA Vision AI</td></tr>
 </table>
 </section>
