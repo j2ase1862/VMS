@@ -2441,7 +2441,7 @@ Classify 판정이 "Top-1 신뢰도 ≥ 임계값" 하나뿐이라, 불량 클�
 
 v1.42.20(#564)과 함께 반영 대기 §69 를 넣었다. `tools_prose.json` Classify 항목(Confidence Threshold 행 · OK Classes 행 신설 · 판정 문단)을 고치고
 `gen_tools_chapter.py` 로 6장 재생성. 패널 그림은 Debug 빌드 `VMS.VisionSetup.exe --instance capture1420 --capture-toolpanels <scratch>` 로 다시 찍어
-`34_Classify.png`(캡처 순번은 도구 추가로 하나 밀림)를 `33_Classify.png` 로 교체 — 606×1513(종전 1299, OK Classes 구역 · 노란 경고 추가). 격리 인스턴스라 실제 레시피는 건드리지 않음.
+`34_Classify.png`(캡처 순번은 도구 추가로 하나 밀림)를 `33_Classify.png` 로 교체 — 606×1513(종전 1299, OK Classes 구역 · 노란 경고 추가) — 길어져서 `gen_tools_chapter.py` 가 2단 그림 `33_Classify_split.png`(신규, 1236×757)를 만들고 6장이 그것을 참조한다(다른 2단 그림 10장과 같이 커밋). 격리 인스턴스라 실제 레시피는 건드리지 않음.
 부록 파라미터 전체표는 바뀌지 않는다 — `extract_tool_params.py` 는 Label 이 있는 파라미터 컨트롤만 읽는데, OK Classes 는 체크박스 목록이라
 FeatureMatch · Geometry3D · OCR 의 단독 물음표 파라미터처럼 부록에 없다(기존 관례). 대상 소프트웨어 · 제품설명서 1.42.20.
 
