@@ -2,18 +2,15 @@ using System;
 using System.Diagnostics;
 using VMS.PLC.Interfaces;
 using VMS.PLC.Models;
-using VMS.PLC.Services.Native;
 
 namespace VMS.PLC.Services
 {
     /// <summary>
     /// IoDeviceConfig → IIoBoardConnection 인스턴스 생성.
     ///
-    /// Phase 3: 실 SDK try-load 분기 추가 —
-    ///   • ADLink: ConnectAsync 단계에서 dask.dll 미발견 시 Mock 폴백
-    ///   • Advantech: DaqNaviReflection.EnsureLoaded() 로 Automation.BDaq4.dll 사전 체크,
-    ///     실패 시 Mock 폴백
-    /// 호출자(App.xaml.cs) 는 항상 IIoBoardConnection 받음 — SDK 가용성에 따라 native or Mock.
+    /// 두 벤더 모두 native 연결을 돌려주고, SDK(dask.dll · Automation.BDaq4.dll)가 없으면
+    /// ConnectAsync 가 false + IIoBoardDiagnostics.LastError 로 사유를 남긴다.
+    /// Mock 은 Description 에 "[MOCK]" 표식이 있을 때만 (개발 · 시험용).
     /// </summary>
     public static class IoBoardConnectionFactory
     {
@@ -59,21 +56,16 @@ namespace VMS.PLC.Services
         }
 
         /// <summary>
-        /// Advantech: DAQNavi 의 .NET assembly 사전 체크. EnsureLoaded() 가 GAC/PATH 에서
-        /// Automation.BDaq4.dll 로드 시도 후 성공 여부 반환. 실패 시 Mock 폴백 — 명시적.
+        /// Advantech: ADLink 와 같이 항상 DAQNavi native 를 돌려준다. Automation.BDaq4.dll 이 없으면
+        /// ConnectAsync 가 false + LastError("DAQNavi 없음") → 호출자가 사유를 로그에 남기고 등록하지 않는다.
+        /// (종전에는 여기서 조용히 Mock 으로 바꿔, 운영 PC 에 드라이버가 없으면 출력이 어디로도 나가지 않는데
+        /// 연결 · 쓰기는 성공으로 보였다.) 시뮬레이션은 Description 의 "[MOCK]" 표식으로만.
         /// </summary>
         private static IIoBoardConnection CreateAdvantech(IoDeviceConfig c)
         {
             if (c.Description?.Contains("[MOCK]", StringComparison.OrdinalIgnoreCase) == true)
             {
                 Debug.WriteLine($"[IoFactory:{c.DeviceId}] Advantech → Mock (description 표식)");
-                return new AdvantechMockBoard(c.DeviceId, c.InputChannelCount, c.OutputChannelCount);
-            }
-
-            if (!DaqNaviReflection.EnsureLoaded())
-            {
-                Debug.WriteLine($"[IoFactory:{c.DeviceId}] Advantech → Mock 폴백 " +
-                                "(Automation.BDaq4.dll 로드 실패 — DAQNavi 미설치)");
                 return new AdvantechMockBoard(c.DeviceId, c.InputChannelCount, c.OutputChannelCount);
             }
 
