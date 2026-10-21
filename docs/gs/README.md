@@ -59,6 +59,7 @@ MLOps 는 `D:\Repo\BODA.VMS.MLOps\docs\manual\screenshots` 재사용, 구성도�
 
 | PR | 매뉴얼에 들어갈 내용 | 대상 절 |
 |----|--------------------|--------|
+| (PR 번호 미정) VMS 운전에 추론 장치 설정 적용 — ⏳ **반영 대기** | **VisionSetup Inference Settings 에서 고른 실행 백엔드(Auto · CPU · CUDA · TensorRT) · TensorRT 캐시 · FP16 을 VMS 본체 운전(AUTO RUN · 수동 검사)에도 쓴다** (예전에는 VisionSetup 에만 적용되고 VMS 는 늘 Auto 로 돌았다). VMS 는 시작할 때 읽으므로 바꾼 뒤 VMS 를 다시 시작해야 하고, 시작 시 System Log 에 "추론 장치 설정: …" 한 줄. 매뉴얼 §5 Inference Settings 문단 끝 "변경은 다음 모델 로드부터 적용" 에 VMS 재시작 한 문장. 상세 §73 | §5 Inference Settings |
 | #566 검사 중 신호 — 같은 PC 학습 워커 정지용 (v1.43.0) — ⏳ **반영 대기**(MLOps 워커 쪽 3-c 머지 후) | **VMS 가 자동 운전(AUTO RUN) · Roller 연속 검사 중이면 "검사 중" 신호를 켜고, 멈추면 끈다.** 같은 PC 의 MLOps 학습 워커가 이 신호를 보고 학습을 받지 않거나 중단한다(라인 PC 겸용 배치에서 GPU 경합으로 택트가 깨지는 것 방지). VMS 화면 변화는 없고, 신호를 못 만들면 System Log 에 경고만 남기고 검사는 그대로. 워커 쪽이 들어오면 §9 MLOps(배치 · 라인 PC 겸용) 에 한 줄. 상세 §71 | §9 (워커 반영 후) |
 | #564 Classify 양품 클래스(OK Classes) (v1.42.20) — ✅ **반영 완료**(본문 · 패널 그림 · docx/PDF, 2026-10-21) | **Classify 도구에 OK Classes(양품 클래스, 여러 개)를 고르면 그 클래스로 분류되고 신뢰도도 임계값 이상일 때만 OK** (예전에는 신뢰도만 봐서 불량 클래스로 자신 있게 분류돼도 OK). 비워 두면 예전처럼 신뢰도만 보고 설정 패널에 경고. 매뉴얼 §6 Classify 표 두 행 · 판정 문단 · 패널 그림. 상세 §69 | §6 Classify |
 | #562 Anomaly 히트맵 ROI 영역 표시 (v1.42.19) — ✅ **매뉴얼 변경 없음** | ROI 를 쓰는 Anomaly 도구의 히트맵이 ROI 영역에만 겹친다(예전에는 ROI 의 맵을 화면 전체로 늘려 이상 위치가 엉뚱하게 보였다). 판정 · 점수 변화 없음. 검사마다 남던 이상 맵 메모리도 해제. 상세 §67 | — |

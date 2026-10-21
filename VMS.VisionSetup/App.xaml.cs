@@ -597,31 +597,8 @@ namespace VMS.VisionSetup
         {
             try
             {
-                var configPath = VMS.Camera.Configuration.AppDataPaths.SystemConfigFile;
-
-                if (!File.Exists(configPath)) return;
-
-                var json = File.ReadAllText(configPath);
-                using var doc = JsonDocument.Parse(json);
-                var root = doc.RootElement;
-
-                if (root.TryGetProperty("onnxExecutionProvider", out var epProp) &&
-                    Enum.TryParse<OnnxExecutionProvider>(epProp.GetString(), ignoreCase: true, out var ep))
-                {
-                    OnnxModelBase.PreferredProvider = ep;
-                }
-
-                if (root.TryGetProperty("tensorRTCachePath", out var cacheProp))
-                {
-                    var cachePath = cacheProp.GetString();
-                    // 빈 문자열이면 OnnxModelBase의 합리적 기본값(LocalAppData/trt_cache)을 유지한다.
-                    // 기본값 자체가 TRT 엔진 재빌드(30~60초)를 피하는 핵심이므로 명시적 빈 값으로 비활성화하지 않는다.
-                    if (!string.IsNullOrWhiteSpace(cachePath))
-                        OnnxModelBase.TensorRTCachePath = cachePath;
-                }
-
-                if (root.TryGetProperty("tensorRTFp16", out var fp16Prop))
-                    OnnxModelBase.TensorRTFp16 = fp16Prop.GetBoolean();
+                // 읽는 규칙(빈 캐시 경로는 기본값 유지 등)은 OnnxSettingsService 한 곳 — VMS 본체도 같은 함수를 쓴다.
+                OnnxSettingsService.ApplySaved();
 
                 Debug.WriteLine($"[App] ONNX EP: {OnnxModelBase.PreferredProvider}, " +
                     $"TRT cache: '{OnnxModelBase.TensorRTCachePath}', FP16: {OnnxModelBase.TensorRTFp16}");
