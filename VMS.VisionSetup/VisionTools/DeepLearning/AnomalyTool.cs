@@ -196,6 +196,8 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         public override VisionResult Execute(Mat inputImage)
         {
             var result = new VisionResult();
+            Mat? roiImage = null;
+            AnomalyResult? anomalyResult = null;
 
             try
             {
@@ -206,10 +208,11 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
                     return result;
                 }
 
-                var roiImage = UseROI ? GetROIImage(inputImage) : inputImage;
+                // ROI 를 쓸 때만 새 Mat(헤더) — 아래 finally 에서 해제한다
+                roiImage = UseROI ? GetROIImage(inputImage) : null;
 
                 var engine = EnsureEngine();
-                var anomalyResult = engine.Detect(roiImage, InputSize);
+                anomalyResult = engine.Detect(roiImage ?? inputImage, InputSize);
 
                 bool isNormal = anomalyResult.AnomalyScore < AnomalyThreshold;
 
@@ -232,15 +235,23 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
                         new Point(10, 30),
                         HersheyFonts.HersheySimplex, 1.0, color, 2);
 
-                    // 히트맵 오버레이
+                    // 히트맵 오버레이 — 맵은 추론한 영역(ROI)의 것이므로 그 영역에만 겹친다.
+                    // 종전에는 ROI 맵을 화면 전체 크기로 늘려 덮어, 이상 위치가 엉뚱한 곳에 보였다.
                     if (ShowHeatmap && anomalyResult.AnomalyMap != null)
                     {
+                        var mapRect = new Rect(0, 0, overlay.Width, overlay.Height);
+                        if (UseROI)
+                        {
+                            var adj = GetAdjustedROI(inputImage);
+                            // 겹침이 없으면 GetROIImage 가 원본 전체로 추론했다 → 전체에 겹친다
+                            if (adj.Width > 0 && adj.Height > 0) mapRect = adj;
+                        }
+
+                        using var region = new Mat(overlay, mapRect);
                         using var heatmap = new Mat();
                         using var resizedMap = new Mat();
 
-                        // anomaly map을 원본 크기로 리사이즈
-                        Cv2.Resize(anomalyResult.AnomalyMap, resizedMap,
-                            new Size(overlay.Width, overlay.Height));
+                        Cv2.Resize(anomalyResult.AnomalyMap, resizedMap, mapRect.Size);
 
                         // 0~1 → 0~255 정규화
                         using var normalized = new Mat();
@@ -249,8 +260,8 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
                         // 컬러 히트맵 적용
                         Cv2.ApplyColorMap(normalized, heatmap, ColormapTypes.Jet);
 
-                        // 알파 블렌딩
-                        Cv2.AddWeighted(overlay, 1.0 - HeatmapOpacity, heatmap, HeatmapOpacity, 0, overlay);
+                        // 알파 블렌딩 (overlay 의 영역 뷰에 바로 쓴다)
+                        Cv2.AddWeighted(region, 1.0 - HeatmapOpacity, heatmap, HeatmapOpacity, 0, region);
                     }
 
                     // 테두리
@@ -273,6 +284,12 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
             {
                 result.Success = false;
                 result.Message = $"Anomaly 오류: {ex.Message}";
+            }
+            finally
+            {
+                // 이상 맵은 오버레이에 겹친 뒤 쓰지 않는다 — 종전에는 해제하지 않아 검사마다 네이티브 메모리가 남았다
+                anomalyResult?.AnomalyMap?.Dispose();
+                roiImage?.Dispose();
             }
 
             return result;
