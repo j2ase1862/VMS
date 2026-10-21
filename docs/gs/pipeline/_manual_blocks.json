@@ -15118,12 +15118,12 @@
   "t": "p",
   "segs": [
    {
-    "s": "ONNX Runtime 의 실행 백엔드(Auto · CPU · CUDA · TensorRT)를 고릅니다. GPU 가 없으면 CPU 로 자동 동작합니다. TensorRT 캐시 폴더를 두면 두 번째 실행부터 엔진 재빌드를 건너뛰고, FP16 은 RTX 계열에서 속도를 높입니다. 변경은 다음 모델 로드부터 적용됩니다.",
+    "s": "ONNX Runtime 의 실행 백엔드(Auto · CPU · CUDA · TensorRT)를 고릅니다. GPU 가 없으면 CPU 로 자동 동작합니다. TensorRT 캐시 폴더를 두면 두 번째 실행부터 엔진 재빌드를 건너뛰고, FP16 은 RTX 계열에서 속도를 높입니다. 변경은 다음 모델 로드부터 적용됩니다. VMS 운전에도 같은 설정이 쓰이며, VMS 는 시작할 때 읽으므로 바꾼 뒤에는 VMS 를 다시 시작하세요.",
     "b": false,
     "m": false
    }
   ],
-  "text": "ONNX Runtime 의 실행 백엔드(Auto · CPU · CUDA · TensorRT)를 고릅니다. GPU 가 없으면 CPU 로 자동 동작합니다. TensorRT 캐시 폴더를 두면 두 번째 실행부터 엔진 재빌드를 건너뛰고, FP16 은 RTX 계열에서 속도를 높입니다. 변경은 다음 모델 로드부터 적용됩니다."
+  "text": "ONNX Runtime 의 실행 백엔드(Auto · CPU · CUDA · TensorRT)를 고릅니다. GPU 가 없으면 CPU 로 자동 동작합니다. TensorRT 캐시 폴더를 두면 두 번째 실행부터 엔진 재빌드를 건너뛰고, FP16 은 RTX 계열에서 속도를 높입니다. 변경은 다음 모델 로드부터 적용됩니다. VMS 운전에도 같은 설정이 쓰이며, VMS 는 시작할 때 읽으므로 바꾼 뒤에는 VMS 를 다시 시작하세요."
  },
  {
   "t": "h",
@@ -54554,14 +54554,14 @@
     {
      "segs": [
       {
-       "s": "VMS 1.43.0 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.2",
+       "s": "VMS 1.43.1 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.2",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "VMS 1.43.0 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.2"
+     "text": "VMS 1.43.1 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.2"
     }
    ],
    [

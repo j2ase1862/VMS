@@ -207,7 +207,7 @@
 <main>
 <div class="header-strip">
   <h1>BODA VMS 사용자 매뉴얼</h1>
-  <div class="sub">버전 3.0 · 2026-09-17 · VMS v1.43.0 · BODA.VMS.Web v1.10.3 · BODA.VMS.MLOps v0.1.2 — 시스템 구성 → 설치 → 프로그램별 조작 → 검사 설정 → 웹 관리 → 유지보수</div>
+  <div class="sub">버전 3.0 · 2026-09-17 · VMS v1.43.1 · BODA.VMS.Web v1.10.3 · BODA.VMS.MLOps v0.1.2 — 시스템 구성 → 설치 → 프로그램별 조작 → 검사 설정 → 웹 관리 → 유지보수</div>
 </div>
 <section id="overview">
 <h2 id="1-시스템-개요">1. 시스템 개요</h2>
@@ -1201,7 +1201,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <p>VisionSetup 에서 직접 촬영할 카메라를 등록합니다. 운전용 카메라 구성은 시스템 설정 마법사(3장)가 기준이며, 여기서는 편집 작업에 쓸 카메라를 관리합니다.</p>
 <h4>Inference Settings — 딥러닝 추론 엔진</h4>
 <figure><img src="../gs/screenshots/v3/vs/dlg_InferenceSettings.png" data-width="420" alt="Inference Engine Settings"><figcaption>Inference Engine Settings — Execution Provider · TensorRT Engine Cache Folder · Enable TensorRT FP16</figcaption></figure>
-<p>ONNX Runtime 의 실행 백엔드(Auto · CPU · CUDA · TensorRT)를 고릅니다. GPU 가 없으면 CPU 로 자동 동작합니다. TensorRT 캐시 폴더를 두면 두 번째 실행부터 엔진 재빌드를 건너뛰고, FP16 은 RTX 계열에서 속도를 높입니다. 변경은 다음 모델 로드부터 적용됩니다.</p>
+<p>ONNX Runtime 의 실행 백엔드(Auto · CPU · CUDA · TensorRT)를 고릅니다. GPU 가 없으면 CPU 로 자동 동작합니다. TensorRT 캐시 폴더를 두면 두 번째 실행부터 엔진 재빌드를 건너뛰고, FP16 은 RTX 계열에서 속도를 높입니다. 변경은 다음 모델 로드부터 적용됩니다. VMS 운전에도 같은 설정이 쓰이며, VMS 는 시작할 때 읽으므로 바꾼 뒤에는 VMS 를 다시 시작하세요.</p>
 <h4>OCR Synth Data — 합성 문자 데이터</h4>
 <figure><img src="../gs/screenshots/v3/vs/dlg_SynthData.png" data-width="520" alt="Synthetic Data Generator"><figcaption>Synthetic Data Generator — Font · Patterns · Dataset · Background · Augmentation · Training(PP-OCR fine-tuning, AI 학습 도구 설치 시)</figcaption></figure>
 <p>날짜 · 로트 번호처럼 형식이 정해진 문자열을 폰트 · 배경 · 증강을 조합해 대량 생성합니다. OCR 도구의 인식 모델을 다듬을 학습 데이터로 쓰며, PP-OCR 학습 카드는 AI 학습 도구가 설치된 PC 에서만 표시됩니다.</p>
@@ -3234,7 +3234,7 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <table class="cols-3-6">
   <tr><th>항목</th><th>값</th></tr>
   <tr><td>문서 버전</td><td>3.0 (2026-09-17)</td></tr>
-  <tr><td>대상 소프트웨어</td><td>VMS 1.43.0 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.2</td></tr>
+  <tr><td>대상 소프트웨어</td><td>VMS 1.43.1 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.2</td></tr>
   <tr><td>구성</td><td>VMS · VMS.VisionSetup · VMS.AppSetup (검사 런타임) / BODA.VMS.Web (생산 관리) / BODA.VMS.MLOps · VMS.DeepLearning (선택 구성 요소, 인증 범위 외)</td></tr>
   <tr><td>발행</td><td>BODA Vision AI</td></tr>
 </table>
