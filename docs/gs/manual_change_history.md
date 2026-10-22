@@ -2819,3 +2819,25 @@ v1.46.1 은 #582(레시피 이름이 Web 과 맞지 않을 때 직전 레시피�
 ### 매뉴얼 반영 (완료)
 
 docx/PDF 재생성 204쪽(변동 없음) · 그림 151장 · 경고 0. docx 본문의 "VMS 1.46.1" 을 document.xml 에서 확인. 제품설명서 docx 재생성(v1.46.1).
+
+## 90. 마법사를 마치지 않은 설정 파일이면 마법사를 띄움 · Web 서버 키가 없으면 Web 미사용 — **반영 대기**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-10-22 |
+| 대상 | §2.2 "설치 후 처음 실행하면" · §3 도입 "최초 실행 자동" · §4.1 시작 |
+| 변경 종류 | 결함 수정 (Web 부분 사용 검토 조사, 백로그 §0-q) |
+
+### 무엇이 바뀌었나 (사내 기록)
+
+- VMS 런타임 `SystemConfiguration.WebServerUrl` 기본값이 `http://localhost:5292` 라, `system_config.json` 에 `webServerUrl` 키가 없으면 Web 연동 모드(작업자 로그인 · 작업지시 필수, 하트비트 · 업로드 대상 localhost)로 운전했다. 같은 파일을 읽는 `SystemConfigReader` · `WebSsoConfig` · `StartupHealthCheck` 는 키가 없으면 빈 값(미사용)으로 봐서 앱마다 해석이 갈렸다.
+- 키가 빠지는 실제 경로: VisionSetup `OnnxSettingsService.Save` 는 파일이 없으면 ONNX 키만 든 새 파일을 만든다. 새 PC 에서 마법사보다 VisionSetup 을 먼저 열어 ONNX 설정을 저장하면, VMS 최초 실행 감지(`TryLaunchInitialSetup` — 파일 존재만 봄)를 지나 마법사 없이 시작했다(Release 는 securityMode 도 없어 보안 정책 오류로 멈추지만, 환경 변수 `BODA_VMS_SECURITY_MODE` 를 둔 PC 는 그대로 진행). 손으로 편집하다 키를 지운 경우도 같다.
+- 수정: ① `SystemConfigReader.IsSetupCompleted()` — 파일이 있고 `webServerUrl` 키가 있으면(값이 빈 단독 모드 포함) 마법사를 마친 파일. 마법사는 이 키를 항상 쓴다. 최초 실행 감지가 이것을 보고, 마치지 않은 파일이면 "시스템 설정이 끝나지 않았습니다 …" 안내 후 마법사 실행 · VMS 종료(마법사는 SystemConfigMerge 로 기존 키를 보존). ② `SystemConfiguration.WebServerUrl` 기본값 빈 문자열 — 마법사를 띄우지 못했을 때(AppSetup.exe 없음 등) localhost 대신 Web 없이 운전하고 System Log 경고 "시스템 설정 파일에 Web 서버 설정이 없습니다 …".
+- 마법사가 저장한 파일(키 있음)은 동작 변화 없음.
+- 시험: `SystemConfigReaderTests` +4(HasKey) · `ConfigurationServiceIntegrationTests` +2(키 없음 = 빈 값 · 마법사 값 유지).
+
+### 매뉴얼 반영 (대기)
+
+- §2.2 "설치 후 처음 실행하면" 문단 끝에: "설정 파일이 있어도 마법사를 끝까지 저장하지 않은 것이면 \"시스템 설정이 끝나지 않았습니다\" 안내와 함께 마법사가 열립니다."
+- §3 도입 "최초 실행 자동" 항목: "(설정 파일이 없으면)" → "(설정 파일이 없거나 마법사를 마치지 않았으면)".
+- §4.1 시작 항목: "설정 파일이 없으면" → "설정 파일이 없거나 마법사를 마치지 않았으면", 안내 문구 두 가지 병기.

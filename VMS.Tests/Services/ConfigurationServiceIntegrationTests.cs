@@ -65,6 +65,23 @@ namespace VMS.Tests.Services
         }
 
         [Fact]
+        public void LoadSystemConfiguration_MissingWebServerUrl_IsNotIntegrated()
+        {
+            // 다른 프로그램이 일부 키만 넣어 만든 파일 — localhost 로 채워 Web 연동 모드로 운전하면 안 된다.
+            File.WriteAllText(Path.Combine(_tempDir, "system_config.json"), """{"onnxExecutionProvider":"Auto"}""");
+
+            Assert.Equal(string.Empty, _service.LoadSystemConfiguration().WebServerUrl);
+        }
+
+        [Fact]
+        public void LoadSystemConfiguration_KeepsWizardWebServerUrl()
+        {
+            File.WriteAllText(Path.Combine(_tempDir, "system_config.json"), """{"webServerUrl":"http://localhost:5292"}""");
+
+            Assert.Equal("http://localhost:5292", _service.LoadSystemConfiguration().WebServerUrl);
+        }
+
+        [Fact]
         public void SaveSystemConfiguration_WritesFile()
         {
             var cfg = new SystemConfiguration

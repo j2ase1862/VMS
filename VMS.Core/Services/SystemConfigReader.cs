@@ -49,6 +49,35 @@ namespace VMS.Core.Services
         }
 
         /// <summary>
+        /// 설정 마법사를 마친 파일인가 — 마법사는 <c>webServerUrl</c> 을 항상 쓴다(단독 모드는 빈 값).
+        /// 이 키가 없는 파일은 다른 프로그램이 일부 키만 넣어 만든 것이다(예: 마법사보다 먼저 VisionSetup 의
+        /// ONNX 설정을 저장). 파일이 없거나 읽지 못하면 false.
+        /// </summary>
+        public static bool IsSetupCompleted()
+        {
+            try
+            {
+                if (!File.Exists(ConfigPath)) return false;
+                using var document = JsonDocument.Parse(File.ReadAllText(ConfigPath));
+                return HasKey(document.RootElement, "webServerUrl");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[SystemConfig] 읽지 못했습니다: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>그 이름의 키가 있는가 — 값이 빈 문자열이어도 있으면 true. 대소문자는 가리지 않는다.</summary>
+        public static bool HasKey(JsonElement root, string name)
+        {
+            if (root.ValueKind != JsonValueKind.Object) return false;
+            foreach (var property in root.EnumerateObject())
+                if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
+        }
+
+        /// <summary>
         /// 대소문자를 가리지 않고 찾는다. AppSetup 은 camelCase 로 쓰고 사람이 손으로 넣은 파일은
         /// PascalCase 일 수 있는데, 둘을 갈라 다루면 "설정했는데 안 붙는다" 가 된다.
         /// </summary>

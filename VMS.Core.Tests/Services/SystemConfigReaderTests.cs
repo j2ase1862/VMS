@@ -13,6 +13,23 @@ namespace VMS.Core.Tests.Services
     {
         private static JsonElement Parse(string json) => JsonDocument.Parse(json).RootElement;
 
+        // 설정 마법사는 webServerUrl 을 항상 쓴다(단독 모드는 빈 값) — 키가 없으면 마법사를 마치지 않은 파일.
+        [Fact]
+        public void HasKey_TrueForEmptyStandaloneValue()
+            => Assert.True(SystemConfigReader.HasKey(Parse("""{"webServerUrl":""}"""), "webServerUrl"));
+
+        [Fact]
+        public void HasKey_IgnoresCase()
+            => Assert.True(SystemConfigReader.HasKey(Parse("""{"WebServerUrl":"http://x:5292"}"""), "webServerUrl"));
+
+        [Fact]
+        public void HasKey_FalseWhenOnlyOtherProgramsKeys()
+            => Assert.False(SystemConfigReader.HasKey(Parse("""{"onnxExecutionProvider":"Auto"}"""), "webServerUrl"));
+
+        [Fact]
+        public void HasKey_FalseForNonObject()
+            => Assert.False(SystemConfigReader.HasKey(Parse("""[1,2]"""), "webServerUrl"));
+
         [Fact]
         public void ReadString_FindsExactName()
             => Assert.Equal("http://a:5310",
