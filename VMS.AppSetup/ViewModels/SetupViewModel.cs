@@ -62,6 +62,19 @@ namespace VMS.AppSetup.ViewModels
 
         public bool IsWebFieldsEnabled => !IsStandaloneMode;
 
+        // ── 생산 관리 — Web 연동 라인에서 작업자 로그인 · 작업지시를 운전 조건으로 요구할지 (둘 다 기본 켬) ──
+        // WO 목록은 작업자 로그인으로 조회하므로 로그인을 끄면 WO 필수도 끈다.
+        [ObservableProperty]
+        private bool _requireOperatorLogin = true;
+
+        [ObservableProperty]
+        private bool _requireWorkOrder = true;
+
+        partial void OnRequireOperatorLoginChanged(bool value)
+        {
+            if (!value) RequireWorkOrder = false;
+        }
+
         [ObservableProperty]
         private string _visionServerUrl = "http://localhost:5000";
 
@@ -537,6 +550,8 @@ namespace VMS.AppSetup.ViewModels
                 WebServerUrl = IsStandaloneMode ? WebServerUrl : config.WebServerUrl;
                 VisionServerUrl = config.VisionServerUrl;
                 ClientApiKey = config.ClientApiKey;
+                RequireOperatorLogin = config.RequireOperatorLogin;
+                RequireWorkOrder = config.RequireOperatorLogin && config.RequireWorkOrder;
                 MlopsServerUrl = config.MlopsServerUrl ?? string.Empty;
                 MlopsLineToken = config.MlopsLineToken ?? string.Empty;
                 IsAdvancedWebSettingsVisible = !string.IsNullOrWhiteSpace(config.ClientApiKey)
@@ -982,6 +997,8 @@ namespace VMS.AppSetup.ViewModels
                 WebServerUrl = IsStandaloneMode ? string.Empty : WebServerUrl,
                 VisionServerUrl = VisionServerUrl,
                 ClientApiKey = ClientApiKey,
+                RequireOperatorLogin = RequireOperatorLogin,
+                RequireWorkOrder = RequireOperatorLogin && RequireWorkOrder,
                 MlopsServerUrl = (MlopsServerUrl ?? string.Empty).Trim(),
                 MlopsLineToken = (MlopsLineToken ?? string.Empty).Trim(),
                 WebSso = new WebSsoSettings

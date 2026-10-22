@@ -218,16 +218,21 @@ namespace VMS.ViewModels
         /// </summary>
         private bool HasStartStopPermission => Services.StartStopGate.Allows(_userService);
 
+        /// <summary>
+        /// 생산 관리 게이트 — Web 연동이고 AppSetup 의 "작업자 로그인 필수" · "작업지시 선택 필수" 가 켜져 있을 때만
+        /// 로그인 · WO 를 운전 조건으로 요구한다(둘 다 기본 켬 = 종전 동작). 단독 모드는 둘 다 무시.
+        /// </summary>
+        private Services.ProductionGate Gate => new(
+            WebIntegrated: _operatorAuthService != null,
+            RequireOperatorLogin: _systemConfig.RequireOperatorLogin,
+            RequireWorkOrder: _systemConfig.RequireWorkOrder);
+
         public bool CanStartStop =>
             HasConnectedCamera
             && HasStartStopPermission
-            // Web 통합 환경 (OperatorAuthService 존재) 에서는 Operator 로그인 + WO 선택 필수.
-            // OperatorAuthService 가 없으면 standalone — 기존 동작 유지.
-            && (_operatorAuthService == null
-                || (IsOperatorLoggedIn
-                    && SelectedWorkOrder != null
-                    // Completed/Closed 상태에서는 결과 업로드해도 카운터가 증가하지 않으므로 비활성.
-                    && (SelectedWorkOrder.Status == "Planned" || SelectedWorkOrder.Status == "InProgress")));
+            // 로그인 · WO 필수 여부는 Gate. WO 를 골랐다면 Planned/InProgress 여야 한다 —
+            // Completed/Closed 로 올리면 카운터가 오르지 않는다.
+            && Gate.AllowsRun(IsOperatorLoggedIn, SelectedWorkOrder?.Status);
 
         /// <summary>
         /// 카메라 조작(Grab / Live Start) 활성 조건 — CanStartStop 에서 Work Order 요건을 뺀 것.
@@ -239,7 +244,7 @@ namespace VMS.ViewModels
         public bool CanOperateCamera =>
             HasConnectedCamera
             && HasStartStopPermission
-            && (_operatorAuthService == null || IsOperatorLoggedIn);
+            && Gate.AllowsCamera(IsOperatorLoggedIn);
 
         /// <summary>
         /// 단발 Grab 활성 조건 — CanOperateCamera 에서 연결 요건을 뺀 것. Grab 은
@@ -249,7 +254,7 @@ namespace VMS.ViewModels
         /// </summary>
         public bool CanGrabCamera =>
             HasStartStopPermission
-            && (_operatorAuthService == null || IsOperatorLoggedIn);
+            && Gate.AllowsCamera(IsOperatorLoggedIn);
 
         /// <summary>
         /// 카메라 조작 버튼이 비활성일 때 툴팁으로 보여줄 사유 — 현장에서 "왜 안
@@ -258,7 +263,7 @@ namespace VMS.ViewModels
         public string? CameraOperateBlockReason =>
             !HasStartStopPermission
                 ? "로그인한 시스템 사용자에게 Start/Stop 권한이 없습니다 — 로그아웃하거나 권한 있는 계정으로 로그인하세요"
-                : (_operatorAuthService != null && !IsOperatorLoggedIn)
+                : !Gate.AllowsCamera(IsOperatorLoggedIn)
                     ? "Operator 로그인이 필요합니다"
                     : !HasConnectedCamera
                         ? "연결된 카메라가 없습니다 — Grab 을 누르면 자동 연결됩니다"
@@ -2015,13 +2020,14 @@ namespace VMS.ViewModels
         // D10 — Role 기반 메뉴 가시성. Web 통합 환경에서만 의미. Standalone 은 항상 true (제약 없음).
         // Lead = 반장 (Recipe 편집, Camera Control). Supervisor = + 외부 도구 (Vision Tool / System Setup) + 사용자 관리.
         // VMS 시스템 Admin (IUserService) 은 Web Operator 역할과 무관하게 통과 — 보안 모델상 최상위 우회 권한.
+        // 로그인 필수가 꺼져 있으면 단독 모드처럼 작업자 역할 제한을 두지 않는다 (시스템 사용자 권한만).
         public bool CanLeadOrAbove =>
-            _operatorAuthService == null
+            !Gate.LoginRequired
             || _userService?.CurrentUser?.Grade == UserGrade.Admin
             || (IsOperatorLoggedIn && (CurrentOperatorRole == VMS.Core.Models.ParameterSync.OperatorRoles.Lead
                                        || CurrentOperatorRole == VMS.Core.Models.ParameterSync.OperatorRoles.Supervisor));
         public bool CanSupervisor =>
-            _operatorAuthService == null
+            !Gate.LoginRequired
             || _userService?.CurrentUser?.Grade == UserGrade.Admin
             || (IsOperatorLoggedIn && CurrentOperatorRole == VMS.Core.Models.ParameterSync.OperatorRoles.Supervisor);
 
