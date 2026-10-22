@@ -61,6 +61,8 @@ namespace VMS.PLC.Services
             }
 
             problems.AddRange(FindDeadEnds(config, nodes));
+            if (WorkOrderCompleteBranch.Resolve(config, out var woProblem) == null && woProblem != null)
+                problems.Add(woProblem);
             return new Result(repairs, problems);
         }
 
@@ -78,6 +80,13 @@ namespace VMS.PLC.Services
                 var node = queue.Dequeue();
                 if (!seen.Add(node.Id)) continue;
                 if (node.NodeType == SequenceNodeType.End) continue;
+                if (node.NodeType == SequenceNodeType.WorkOrderComplete)
+                {
+                    // 운전 흐름에서는 End 처럼 끝난다 — 완료 신호가 매 사이클 나가는 것으로 착각하기 쉽다.
+                    yield return $"운전 흐름에서 '{node.Name}' 노드로 들어가는 연결선이 있습니다 — 이 노드는 WO 완료 때만 " +
+                                 "따로 실행되므로 들어가는 선을 지우세요(운전 흐름에서는 여기서 끝납니다).";
+                    continue;
+                }
 
                 var nexts = node.NodeType switch
                 {

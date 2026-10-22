@@ -267,6 +267,7 @@ namespace VMS.VisionSetup.ViewModels
             PaletteItems.Add(new NodePaletteItem(SequenceNodeType.Repeat, "Repeat", "#00BCD4"));
             PaletteItems.Add(new NodePaletteItem(SequenceNodeType.RecipeChange, "Recipe Change", "#E91E63"));
             PaletteItems.Add(new NodePaletteItem(SequenceNodeType.StepChange, "Step Change", "#00897B"));
+            PaletteItems.Add(new NodePaletteItem(SequenceNodeType.WorkOrderComplete, "WO Complete", "#8BC34A"));
         }
 
         private void LoadAvailableCameras()
@@ -281,6 +282,18 @@ namespace VMS.VisionSetup.ViewModels
         private void AddNode(NodePaletteItem? paletteItem)
         {
             if (paletteItem == null) return;
+
+            // "WO 완료 시" 진입점은 시퀀스에 하나만 — 둘이면 어느 쪽도 실행되지 않는다.
+            if (paletteItem.NodeType == SequenceNodeType.WorkOrderComplete)
+            {
+                var existing = Nodes.FirstOrDefault(n => n.NodeType == SequenceNodeType.WorkOrderComplete);
+                if (existing != null)
+                {
+                    SelectedNode = existing;
+                    StatusMessage = $"'{existing.Name}' 노드가 이미 있습니다 — 시퀀스에 하나만 둘 수 있습니다.";
+                    return;
+                }
+            }
 
             var config = new SequenceNodeConfig
             {
@@ -339,6 +352,14 @@ namespace VMS.VisionSetup.ViewModels
         private void CompleteConnection(SequenceNodeItem? target)
         {
             if (_connectionSource == null || target == null || _connectionSource == target) return;
+
+            // "WO 완료 시" 는 진입점 — 들어오는 선이 있으면 운전 흐름이 거기서 끝난다.
+            if (target.NodeType == SequenceNodeType.WorkOrderComplete)
+            {
+                StatusMessage = $"'{target.Name}' 노드로는 연결할 수 없습니다 — WO 완료 때 따로 실행되는 시작점입니다.";
+                CancelConnection();
+                return;
+            }
 
             // 중복 연결 방지
             var exists = Edges.Any(e =>
@@ -745,7 +766,10 @@ namespace VMS.VisionSetup.ViewModels
                 var config = ToConfig();
                 var json = JsonSerializer.Serialize(config, _jsonOptions);
                 File.WriteAllText(path, json);
-                StatusMessage = $"시퀀스 저장됨: {Path.GetFileName(path)}";
+                // "WO 완료 시" 분기 규칙 위반은 운전 중 WO 완료 순간에야 드러나므로 저장할 때 알린다.
+                WorkOrderCompleteBranch.Resolve(config, out var woProblem);
+                StatusMessage = $"시퀀스 저장됨: {Path.GetFileName(path)}"
+                                + (woProblem != null ? $" · ⚠ {woProblem}" : "");
             }
             catch (Exception ex)
             {

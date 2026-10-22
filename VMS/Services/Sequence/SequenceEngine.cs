@@ -3,6 +3,7 @@ using VMS.Interfaces;
 using VMS.PLC.Interfaces;
 using VMS.PLC.Models;
 using VMS.PLC.Models.Sequence;
+using VMS.PLC.Services;
 
 namespace VMS.Services.Sequence
 {
@@ -333,6 +334,34 @@ namespace VMS.Services.Sequence
             }
         }
 
+        /// <summary>
+        /// "WO 완료 시" 분기를 한 번 실행한다 — 작업지시 완료로 운전이 사이클 경계에서 멈춘 직후, PLC 를 끊기 전에
+        /// 호출한다. 분기가 없으면 false. 규칙(<see cref="WorkOrderCompleteBranch"/>)에 어긋나면 아무것도 내보내지 않고
+        /// <see cref="InvalidOperationException"/>.
+        /// </summary>
+        public async Task<bool> RunWorkOrderCompleteAsync(SequenceConfig config, CancellationToken ct)
+        {
+            var chain = WorkOrderCompleteBranch.Resolve(config, out var problem)
+                        ?? throw new InvalidOperationException(problem);
+            if (WorkOrderCompleteBranch.FindEntry(config) == null) return false;
+
+            foreach (var node in chain)
+            {
+                ct.ThrowIfCancellationRequested();
+                if (node.NodeType == SequenceNodeType.OutputAction)
+                    await ExecuteOutputActionAsync(node, ct);
+                else
+                    await ExecuteDelayAsync(node, ct);
+            }
+
+            VMS.Core.Security.AuditLogger.Instance.Log(
+                VMS.Core.Security.AuditCategory.SequenceControl, "WorkOrderCompleteBranch",
+                VMS.Core.Security.AuditOutcome.Success,
+                source: nameof(SequenceEngine),
+                details: $"Sequence='{config.Name}', Nodes={chain.Count}");
+            return true;
+        }
+
         private async Task<string?> ExecuteNodeAsync(SequenceNodeConfig node, SequenceConfig config, CancellationToken ct)
         {
             return node.NodeType switch
@@ -347,6 +376,8 @@ namespace VMS.Services.Sequence
                 SequenceNodeType.Repeat => ExecuteRepeat(node),
                 SequenceNodeType.RecipeChange => await ExecuteRecipeChangeAsync(node),
                 SequenceNodeType.StepChange => await ExecuteStepChangeAsync(node),
+                // 운전 흐름에서 들어오면 End 처럼 끝낸다 — 분기는 RunWorkOrderCompleteAsync 로만 실행 (연결 점검이 경고).
+                SequenceNodeType.WorkOrderComplete => null,
                 _ => node.NextNodeId
             };
         }

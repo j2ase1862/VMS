@@ -52,8 +52,9 @@ namespace VMS.Interfaces
         /// <summary>
         /// 사이클 경계에서 정지 — 진행 중인 사이클은 판정·출력·집계까지 끝낸 뒤 멈춘다.
         /// timeout 안에 경계에 닿지 못하면 즉시 정지로 넘어간다.
+        /// <paramref name="workOrderCompleted"/> 면 PLC 를 끊기 전에 시퀀스의 "WO 완료 시" 분기를 한 번 실행한다.
         /// </summary>
-        Task StopAfterCycleAsync(TimeSpan timeout);
+        Task StopAfterCycleAsync(TimeSpan timeout, bool workOrderCompleted = false);
 
         /// <summary>Get the current state of a specific camera channel</summary>
         AutoProcessState GetCameraState(string cameraId);
