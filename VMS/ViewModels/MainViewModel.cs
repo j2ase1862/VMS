@@ -2342,6 +2342,12 @@ namespace VMS.ViewModels
         /// 레시피를 가리키도록 보장 — 불일치(0 포함) 상태로 운전하면 사이클 업로드가 조용히
         /// 스킵/미귀속되어 WO 수량·안돈·이력·NG 이미지가 전부 침묵한다 (2026-08-20 실증).
         /// </summary>
+        /// <summary>
+        /// 운전 레시피를 바꾼 뒤 Web 레시피 연결을 이름으로 다시 맞춘다 — PLC Recipe Change 처럼
+        /// 이 ViewModel 밖에서 <see cref="CurrentRecipe"/> 를 바꾸는 경로용.
+        /// </summary>
+        public Task RelinkWebRecipeAsync() => EnsureWebParamCacheAsync();
+
         private async Task EnsureWebParamCacheAsync()
         {
             if (_parameterSyncService == null) return;
