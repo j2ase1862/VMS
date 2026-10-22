@@ -1633,7 +1633,8 @@
                 <Rectangle Grid.Column="5" Width="1" Fill="{StaticResource Brush.Surface.Overlay}" Margin="10,6"/>
 
                 <!-- [6] Web Status -->
-                <StackPanel Grid.Column="6" Orientation="Horizontal" VerticalAlignment="Center">
+                <StackPanel Grid.Column="6" Orientation="Horizontal" VerticalAlignment="Center"
+                            ToolTip="{Binding WebBlockedReason}">
                     <TextBlock Text="&#xE774;" FontFamily="Segoe MDL2 Assets"
                                FontSize="13" Foreground="{StaticResource Brush.Text.Secondary}"
                                VerticalAlignment="Center" Margin="0,0,5,0"/>
@@ -1652,6 +1653,10 @@
                                     <DataTrigger Binding="{Binding IsStandaloneMode}" Value="True">
                                         <Setter Property="Fill" Value="{StaticResource Brush.Surface.Overlay}"/>
                                     </DataTrigger>
+                                    <!-- Web 차단 — 보안 정책 설정 잘못(빨강) -->
+                                    <DataTrigger Binding="{Binding IsWebBlocked}" Value="True">
+                                        <Setter Property="Fill" Value="{StaticResource Brush.Danger}"/>
+                                    </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Ellipse.Style>
@@ -1664,6 +1669,9 @@
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsWebConnected}" Value="True">
                                         <Setter Property="Foreground" Value="{StaticResource Brush.Success}"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsWebBlocked}" Value="True">
+                                        <Setter Property="Foreground" Value="{StaticResource Brush.Danger}"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
