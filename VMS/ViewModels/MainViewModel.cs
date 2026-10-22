@@ -2197,6 +2197,9 @@ namespace VMS.ViewModels
             }
             else
             {
+                // 업로드 경로(WorkOrderIdText → syncService.WorkOrderId)도 함께 비운다 — 남으면 WO 완료 · 해제 뒤의
+                // 검사가 이전 WO 로 집계된다.
+                WorkOrderIdText = "";
                 LotIdText = "";
                 SelectedOpenLot = null;
                 OpenLots.Clear();
@@ -2330,6 +2333,8 @@ namespace VMS.ViewModels
         private async Task EnsureWebParamCacheAsync()
         {
             if (_parameterSyncService == null || CurrentRecipe == null) return;
+            // Web 이 지금 끊겨 있어도 이 이름으로 주기 동기화가 다시 찾고, 그 사이 사이클 결과는 이 이름으로 큐에 쌓인다.
+            _parameterSyncService.DesiredRecipeName = CurrentRecipe.Name;
             try
             {
                 if (_parameterSyncService.Recipes.Count == 0)
