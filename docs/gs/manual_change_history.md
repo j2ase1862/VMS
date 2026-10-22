@@ -2763,3 +2763,24 @@ v1.46.0 의 세 건(§82 WO Complete · §83 업로드 큐 · §84 생산 관리
 ### 매뉴얼 반영 (완료)
 
 docx/PDF 재생성 204쪽(+2, 2단계 표 두 행 · 전체 그림 길어짐) · 그림 151장 · 경고 0 · docx media 214→216(컨트롤 그림 2장). 새 문장 6종을 document.xml 에서 확인, 22쪽 표 렌더 육안 확인.
+
+## 87. 레시피 이름이 Web 과 맞지 않을 때 직전 레시피로 결과가 올라가던 결함 — **매뉴얼 변경 없음**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-10-22 |
+| 대상 | — (System Log 문구만) |
+| 변경 종류 | 결함 수정 (Web 부분 사용 검토 조사 3, 백로그 §0-q) |
+
+### 무엇이 바뀌었나 (사내 기록)
+
+- `MainViewModel.EnsureWebParamCacheAsync` 는 운전 레시피 이름이 Web 목록에 없거나, 목록을 못 받았거나(Web 끊김), `LoadRecipeAsync` 가 실패하면 그냥 돌아와 `ParameterSyncService.CurrentRecipeId` 와 파라미터 캐시가 **직전 레시피 것으로 남았다**. 그 상태의 사이클은 `FlushCycleResultAsync` 가 직전 레시피 ID 로 업로드(Web 이력 · WO 레시피 줄 집계가 엉뚱한 레시피로)하고, `RecordLocalInspection` 은 Recent Inspections 에 직전 Web 레시피 이름을 찍었다. 판정은 이 캐시를 쓰지 않아 OK/NG 는 영향 없음.
+- 이름 매칭을 서비스로 옮김: `ParameterSyncService.LinkRecipeByNameAsync(name)` → `RecipeLinkResult`(Linked · AlreadyLinked · NotOnWeb · WebUnavailable · LoadFailed · NoRecipe · Superseded). 목록에 없으면 한 번 새로 받아 본다(Web 에 막 추가된 레시피). 연결하지 못하면 `ClearCurrentRecipe()` 로 ID 0 · 캐시 비움 → #578 의 이름 큐 경로를 탄다(Web 끊김 = 이름으로 큐, 미등록 = 올리지 않음). 1 분 주기 `TryResolveDesiredRecipeAsync` 가 이름으로 다시 연결한다.
+- 경합: 레시피를 바꾸거나 비울 때마다 세대 번호(`_recipeGeneration`)를 올리고, 파라미터 응답은 받기 시작한 세대가 그대로일 때만 반영한다. 주기 동기화(`SyncAsync`)가 직전 레시피를 받기 시작한 뒤 레시피를 바꾸면 그 응답이 바꾼 연결을 덮어 되살리던 틈, 빠르게 두 번 바꿀 때 먼저 시작한 호출의 실패가 나중 연결을 지우던 틈을 막는다(`Superseded`).
+- 연결을 다시 맞추지 않던 경로 3곳에 호출 추가: 사이드 패널 [New] · [Import] · 운전 레시피 [Delete](→ NoRecipe 로 비움).
+- System Log: 미등록 "… Web 레시피 목록에 없습니다 — 검사 결과가 Web 에 올라가지 않고 …" · Web 끊김 "Web 레시피 목록을 받지 못했습니다 — Web 이 연결되면 '…' 으로 다시 찾고, 그 사이 검사 결과는 보관했다가 올립니다." · 파라미터 실패 "… 1 분 뒤 다시 시도합니다." · 직전 연결 해제 "직전 Web 레시피(Web ID n) 연결을 끊었습니다 …".
+- 시험: `RecipeLinkTests` 8건(미등록 · Web 끊김 → 새 이름으로 큐 · 파라미터 실패 후 주기 재연결 · 목록 갱신 후 발견 · 같은 레시피 재요청 무로드 · 레시피 없음 · 주기 동기화 경합 · 연속 전환 경합).
+
+### 매뉴얼 반영
+
+없음 — 매뉴얼은 "작업지시를 고르면 그 레시피로 Web 파라미터가 연결된다" 는 정상 동작만 서술한다.

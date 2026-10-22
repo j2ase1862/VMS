@@ -48,6 +48,9 @@ namespace VMS.VisionSetup.Tests
             public Task<int?> RegisterRecipeAsync(string name, string? description = null)
                 => Task.FromResult<int?>(null);
             public Task<bool> LoadRecipeAsync(int recipeId) => Task.FromResult(true);
+            public Task<RecipeLinkResult> LinkRecipeByNameAsync(string? recipeName)
+                => Task.FromResult(new RecipeLinkResult(RecipeLinkOutcome.NotOnWeb, 0, 0));
+            public void ClearCurrentRecipe() { }
             public Task<bool> SyncAsync() { SyncAsyncCalls++; return Task.FromResult(true); }
             public void StartPeriodicSync(int intervalSeconds = 60) { }
             public double ResolveValue(int paramCode, double defaultValue = 0) => defaultValue;
