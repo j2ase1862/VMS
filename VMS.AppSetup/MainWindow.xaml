@@ -219,6 +219,18 @@
                                 <TextBlock Text="VisionServer API 주소 (클라이언트 자동 등록)"
                                            Foreground="{StaticResource BrushTextMuted}" FontSize="11" Margin="0,0,0,15"/>
 
+                                <!-- 생산 관리 — 작업자 로그인 · 작업지시를 운전 조건으로 요구할지 (VMS ProductionGate) -->
+                                <TextBlock Style="{StaticResource LabelStyle}"><Run Text="생산 관리"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="생산 관리" CustomDescription="Web 서버를 쓰는 라인에서 자동 운전(AUTO RUN)을 시작하기 전에 작업자 로그인과 작업지시 선택을 요구할지 정합니다. 둘 다 끄면 레시피 파라미터 · 생산 이력 · 품질 · 설비 현황은 Web 으로 보내면서, 작업자 · 작업지시 없이 운전할 수 있습니다. 이때 작업지시 수량은 집계되지 않습니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
+                                <CheckBox Content="작업자 로그인 필수"
+                                          IsChecked="{Binding RequireOperatorLogin}"
+                                          Style="{StaticResource WindowDarkCheckBox}" Margin="0,0,0,5"/>
+                                <CheckBox Content="작업지시 선택 필수"
+                                          IsChecked="{Binding RequireWorkOrder}"
+                                          IsEnabled="{Binding RequireOperatorLogin}"
+                                          Style="{StaticResource WindowDarkCheckBox}" Margin="20,0,0,5"/>
+                                <TextBlock Text="끄면 해당 항목 없이 AUTO RUN 할 수 있습니다. 작업지시는 작업자 로그인 후에 고르므로, 로그인을 끄면 작업지시 필수도 꺼집니다."
+                                           Foreground="{StaticResource BrushTextMuted}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,15"/>
+
                                 </StackPanel>
 
                                 <!-- 고급 설정 — Web Client API Key · MLOps 모델 레지스트리.

@@ -58,6 +58,11 @@ namespace VMS.AppSetup.Models
         // Web 서버의 ClientApiKey:Value (user-secrets / 환경변수 ClientApiKey__Value) 와 동일하게 설정.
         public string ClientApiKey { get; set; } = string.Empty;
 
+        // 생산 관리 게이트 (VMS ProductionGate) — Web 연동 라인에서 작업자 로그인 · 작업지시 선택을 운전 조건으로
+        // 요구할지. 둘 다 기본 켬(종전 동작). WO 필수는 로그인 필수일 때만 의미가 있다. 단독 모드에서는 무시.
+        public bool RequireOperatorLogin { get; set; } = true;
+        public bool RequireWorkOrder { get; set; } = true;
+
         // MLOps 모델 레지스트리 (Phase 1 §6) — 레시피의 model:// 참조를 라인 PC 가 풀 때 쓴다.
         // 비어 있으면 참조를 풀지 못하고 캐시에 있는 모델만 쓴다(절대 경로 모델은 무관).
         // JSON 키는 camelCase(mlopsServerUrl · mlopsLineToken) — VMS/VisionSetup 이 대소문자 무시로 읽는다.

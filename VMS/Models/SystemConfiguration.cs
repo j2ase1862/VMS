@@ -56,6 +56,18 @@ namespace VMS.Models
         /// </summary>
         public string ClientApiKey { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Web 연동 라인에서 AUTO RUN · 카메라 조작에 작업자 로그인을 요구하는가 (기본 켬 — 종전 동작).
+        /// 끄면 작업자 · WO 없이 운전하고 결과는 작업자 없이 업로드된다. 단독 모드에서는 무시.
+        /// </summary>
+        public bool RequireOperatorLogin { get; set; } = true;
+
+        /// <summary>
+        /// Web 연동 라인에서 AUTO RUN 에 작업지시 선택을 요구하는가 (기본 켬). 작업자 로그인 필수일 때만 의미가 있다 —
+        /// WO 목록은 작업자 로그인으로 조회한다. 끄면 WO 없이 운전하고 WO 수량은 집계되지 않는다.
+        /// </summary>
+        public bool RequireWorkOrder { get; set; } = true;
+
         // ─── MLOps 모델 레지스트리 (개발 문서 §5.1 배포) ───
 
         /// <summary>
