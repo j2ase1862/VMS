@@ -2683,3 +2683,27 @@ docx/PDF 재생성 202쪽(변동 없음) · 그림 151장 · 경고 0. docx 본�
 - §5.10 절차에 한 줄: 레벨 신호로 쓰면 Start 다음에 그 출력을 OFF 하는 Output Action 을 둔다.
 - §4 작업지시 완료 문단(계획 수량 도달 → 자동 정지)에 "시퀀스에 WO Complete 를 두면 이때 설비에 완료 신호가 나갑니다(§5.10)" 한 줄.
 - 그림: dlg_Sequence.png 는 팔레트 맨 아래에 항목이 하나 늘 뿐이라 재캡처 선택.
+
+## 83. Web 끊김 중 사이클 결과 보존 · WO 해제 후 이전 WO 집계 방지 — **반영 대기**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-10-22 |
+| 대상 | §12 문제 조치(업로드 큐 행) — 한 줄 |
+| 변경 종류 | 결함 수정 2건 (Web 부분 사용 검토에서 발견, 백로그 §0-q) |
+
+### 무엇이 바뀌었나 (사내 기록)
+
+1. **Web 레시피 ID 를 모르는 사이클이 버려지던 것** — 사이클 업로드는 `CurrentRecipeId > 0` 일 때만 했고, 0 이면 업로드도 큐 저장도 하지 않았다(`InspectionService.FlushCycleResultAsync`). 기동 · 레시피 전환 순간 Web 이 끊겨 있으면 ID 가 0 으로 남아, Web 이 돌아와도 그 사이 검사 이력 · WO 수량이 영영 빠졌다(로컬 이력에만 남음).
+   - `ParameterSyncService.DesiredRecipeName` — 운전 레시피 이름(MainViewModel `EnsureWebParamCacheAsync` 가 설정).
+   - `UploadForPendingRecipeAsync` — 목록에 이름이 있으면 그 ID 로 바로 올리고, 목록을 못 받았으면 큐 파일에 `pendingRecipeName` 을 달아 넣는다. 목록을 받아 봤는데 이름이 없으면(Web 에 없는 레시피) 예전처럼 올리지 않는다 — 큐 맨 앞을 막지 않기 위해.
+   - 드레인: `pendingRecipeName` 항목은 보내기 전에 이름 → ID(없으면 목록을 한 번 새로 받음). Web 이 안 되면 멈추고 다음 tick, Web 은 되는데 이름이 없으면 `NotRegisteredGrace`(30분) 동안 기다렸다 `rejected\`. `pendingRecipeName` 은 `WhenWritingNull` 이라 ID 로 바뀐 뒤에는 Web 으로 나가지 않는다.
+   - 1분 주기 동기화: `CurrentRecipeId == 0` 이면 이름으로 다시 찾아 파라미터까지 받는다 — 이후 사이클은 바로 올라간다.
+   - 한계: ID 를 모르는 동안은 파라미터 연동 측정값을 모으지 못하므로(코드 → 판정이 캐시 기준) 큐에 쌓이는 것은 판정(OK/NG) · 추적 필드 · 피처뿐이다. SPC 측정값은 그 구간만 빈다.
+2. **WO 해제 뒤 이전 WO 로 집계** — `SelectedWorkOrder = null`(WO 완료 · 해제)일 때 `LotIdText` 만 비우고 `WorkOrderIdText` 는 남겨, 업로드 컨텍스트(`syncService.WorkOrderId`)에 이전 WO 가 남았다. 이제 함께 비운다.
+- 시험: `PendingRecipeUploadTests` 5건(Web 끊김 → 이름으로 큐 → 복구 후 ID 로 전송 · Web 에 없는 레시피는 큐에 안 넣음 · 이름을 알면 바로 전송 · 이름 없음 유예 후 rejected · 주기 재연결). 시험용 `ParameterSyncService` 내부 생성자(HttpMessageHandler · 큐 폴더 · 타이머 끔).
+
+### 매뉴얼 반영 (대기)
+
+- §12 "결과가 서버에 안 올라감" 행(`upload_queue\` · `rejected\`)에 한 문장: "Web 에 등록되지 않은 레시피 이름으로 쌓인 결과는 30분 뒤 `rejected\` 로 옮겨집니다 — 레시피를 Web 에 등록했는지 확인하세요."
+- §8 오프라인 복구 행은 서술 그대로(이제 레시피 연결 전 구간도 포함).

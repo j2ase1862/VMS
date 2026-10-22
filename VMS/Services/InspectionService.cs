@@ -154,9 +154,9 @@ namespace VMS.Services
                 mode: VMS.Services.LocalHistory.LocalInspectionMode.Cycle);
 
             var syncService = ParameterSyncService;
-            if (syncService == null || syncService.CurrentRecipeId <= 0)
+            if (syncService == null)
             {
-                Debug.WriteLine("[InspectionService] cycle upload skipped — Web 연동 레시피 아님 (로컬 이력만 기록)");
+                Debug.WriteLine("[InspectionService] cycle upload skipped — 단독 모드 (로컬 이력만 기록)");
                 return false;
             }
 
@@ -164,6 +164,17 @@ namespace VMS.Services
 
             try
             {
+                // Web ID 를 아직 모른다(기동·레시피 전환 때 Web 이 끊겨 있었다) — 예전에는 여기서 버려
+                // Web 이 돌아와도 그 사이 이력 · WO 수량이 빠졌다. 레시피 이름으로 큐에 둔다.
+                // Web 에 없는 레시피면 올릴 곳이 없으므로 로컬 이력만 남는다.
+                if (syncService.CurrentRecipeId <= 0)
+                {
+                    var accepted = await syncService.UploadForPendingRecipeAsync(results, metrics, corrKey, overallPass);
+                    if (!accepted)
+                        Debug.WriteLine("[InspectionService] cycle upload skipped — Web 연동 레시피 아님 (로컬 이력만 기록)");
+                    return accepted;
+                }
+
                 return await syncService.UploadResultsAsync(
                     syncService.CurrentRecipeId, results, metrics, corrKey, overallPass);
             }

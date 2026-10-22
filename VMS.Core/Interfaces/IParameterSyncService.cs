@@ -41,6 +41,22 @@ namespace VMS.Core.Interfaces
         /// <summary>서버에서 조회된 레시피 목록</summary>
         List<RecipeSummaryDto> Recipes { get; }
 
+        /// <summary>
+        /// 운전 중인 로컬 레시피 이름 — Web ID 를 아직 못 정했을 때 주기 동기화가 이 이름으로 다시 찾고,
+        /// 그 사이 사이클 결과도 이 이름으로 큐에 둔다.
+        /// </summary>
+        string? DesiredRecipeName { get; set; }
+
+        /// <summary>
+        /// <see cref="CurrentRecipeId"/> 를 모르는 채 끝난 사이클 결과를 올린다 — 목록에 이름이 있으면 그 ID 로,
+        /// 목록을 못 받았으면 이름을 달아 큐에(드레인이 ID 로 바꿔 보냄). Web 에 없는 레시피면 false.
+        /// </summary>
+        Task<bool> UploadForPendingRecipeAsync(
+            List<ParameterResultDto> results,
+            InspectionFeatureMetrics? featureMetrics = null,
+            string? correlationKey = null,
+            bool? overallPass = null);
+
         /// <summary>서버에서 레시피 목록을 동기화</summary>
         Task<bool> SyncRecipesAsync();
 
