@@ -714,21 +714,9 @@ namespace VMS
                                 cam.SetRecipe(recipe);
                             logService.Log($"Recipe changed to [{recipeIndex}] {recipe.Name}", LogLevel.Success, "RecipeChange");
 
-                            // Web 파라미터 동기화 — Web 레시피 목록을 먼저 갱신 후 올바른 ID로 로드
-                            if (parameterSyncService != null)
-                            {
-                                await parameterSyncService.SyncRecipesAsync();
-                                var webRecipes = parameterSyncService.Recipes;
-                                if (recipeIndex >= 0 && recipeIndex < webRecipes.Count)
-                                {
-                                    var webRecipeId = webRecipes[recipeIndex].Id;
-                                    await parameterSyncService.LoadRecipeAsync(webRecipeId);
-                                }
-                                else
-                                {
-                                    logService.Log($"Web recipe index {recipeIndex} out of range (0~{webRecipes.Count - 1})", LogLevel.Warning, "RecipeChange");
-                                }
-                            }
+                            // Web 레시피는 이름으로 찾는다 — Index 는 이 PC 레시피 폴더 순서라 Web 목록(등록 순, 다른 PC 레시피 포함)의
+                            // 같은 Index 가 같은 레시피라는 보장이 없다. Index 로 고르면 이 레시피의 결과가 다른 레시피로 올라간다.
+                            await mainViewModel.RelinkWebRecipeAsync();
                         }
                     });
                 },

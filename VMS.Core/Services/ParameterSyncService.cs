@@ -297,6 +297,10 @@ namespace VMS.Core.Services
             }
 
             DesiredRecipeName = recipeName;
+            // 다른 레시피로 바꾸는 중이면 직전 연결부터 비운다 — 운전은 연결을 기다리지 않으므로(PLC Recipe Change),
+            // 목록 · 파라미터를 받는 동안 끝난 사이클이 직전 레시피 ID 로 올라가지 않고 이 이름으로 큐에 간다.
+            if (previous > 0 && !string.Equals(FindRecipeName(previous), recipeName, StringComparison.OrdinalIgnoreCase))
+                ClearCurrentRecipe();
             // 시작할 때 세대를 올린다 — 나중에 시작한 호출이 이기고, 그보다 먼저 받기 시작한 응답(주기 동기화 포함)은 버려진다.
             var generation = Interlocked.Increment(ref _recipeGeneration);
             var (id, listFetched) = await ResolveRecipeIdAsync(recipeName);
@@ -437,6 +441,8 @@ namespace VMS.Core.Services
 
         private int FindRecipeId(string name)
             => Recipes.FirstOrDefault(r => string.Equals(r.Name, name, StringComparison.OrdinalIgnoreCase))?.Id ?? 0;
+
+        private string? FindRecipeName(int recipeId) => Recipes.FirstOrDefault(r => r.Id == recipeId)?.Name;
 
         /// <summary>이름 → Web 레시피 ID. 목록에 없으면 한 번 새로 받아 본다. listFetched = 목록을 받아 봤는가.</summary>
         private async Task<(int RecipeId, bool ListFetched)> ResolveRecipeIdAsync(string name)

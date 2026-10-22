@@ -2784,3 +2784,22 @@ docx/PDF 재생성 204쪽(+2, 2단계 표 두 행 · 전체 그림 길어짐) ·
 ### 매뉴얼 반영
 
 없음 — 매뉴얼은 "작업지시를 고르면 그 레시피로 Web 파라미터가 연결된다" 는 정상 동작만 서술한다.
+
+## 88. PLC Recipe Change 가 Web 레시피를 Index 로 고르던 결함 — **매뉴얼 변경 없음**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-10-22 |
+| 대상 | — |
+| 변경 종류 | 결함 수정 (Web 부분 사용 검토 조사 4, 백로그 §0-q) |
+
+### 무엇이 바뀌었나 (사내 기록)
+
+- `App.xaml.cs` `recipeChangeByIndexFunc` 는 PLC Index 로 로컬 레시피(`RecipeService.GetRecipeList()` = 레시피 폴더 `Directory.GetFiles` 순)를 열고, Web 연결은 `SyncRecipesAsync` 후 **Web 목록의 같은 Index**(`/api/parameters/sync/recipes/{clientIndex}` — ORDER BY 없는 DB 순, 다른 PC 레시피 포함)로 `LoadRecipeAsync` 했다. 두 목록 순서가 다르면 로컬은 B 를 검사하면서 Web 은 X 에 연결돼, B 의 결과가 X 로 올라갔다. 같은 순서로 등록하고 Web 에만 있는 레시피가 없으면 우연히 맞아 드러나지 않는다. 이 경로는 `DesiredRecipeName` 도 갱신하지 않아, Web 끊김 중 결과가 직전 레시피 이름으로 큐에 갔다(#578 · #582 경로 밖).
+- 이제 로컬 레시피를 연 뒤 `MainViewModel.RelinkWebRecipeAsync()`(= `EnsureWebParamCacheAsync` → `LinkRecipeByNameAsync`, §87)로 **이름**으로 연결한다. 로컬을 Index 로 여는 동작은 그대로.
+- `LinkRecipeByNameAsync` 는 다른 이름으로 바꿀 때 목록 · 파라미터를 받기 **전에** 직전 연결을 비운다. 시퀀스는 Dispatcher 호출을 기다리지 않고 다음 트리거로 가므로, 받는 몇 초 사이에 끝난 사이클이 직전 레시피 ID 로 올라가던 틈 — 이제 그 사이클은 새 이름으로 큐(Web 끊김) 또는 목록에 있는 ID 로 바로 전송.
+- 시험: `RecipeLinkTests` +2(전환 중 직전 연결 즉시 해제 · Web 목록 순서 무관).
+
+### 매뉴얼 반영
+
+없음 — §5.10 Recipe Change "Index 를 읽어 레시피를 전환" 서술은 그대로 맞다.

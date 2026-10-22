@@ -176,6 +176,42 @@ namespace VMS.Core.Tests.Services
             Assert.Equal(9, svc.CurrentRecipeId);
         }
 
+        [Fact]
+        public async Task Switching_drops_previous_link_before_new_parameters_arrive()
+        {
+            using var svc = await LinkedToAAsync();
+            _web.RecipeList.Add(new RecipeSummaryDto { Id = 8, Name = "Fitting-B" });
+            var gate = new TaskCompletionSource();
+            _web.ParamGates[8] = gate.Task;
+
+            // PLC Recipe Change 는 연결을 기다리지 않고 다음 사이클로 간다 — 받는 동안 직전 레시피 ID 가 남으면 안 된다.
+            var toB = svc.LinkRecipeByNameAsync("Fitting-B");
+            Assert.Equal(0, svc.CurrentRecipeId);
+            Assert.Equal("Fitting-B", svc.DesiredRecipeName);
+
+            gate.SetResult();
+            Assert.Equal(RecipeLinkOutcome.Linked, (await toB).Outcome);
+            Assert.Equal(8, svc.CurrentRecipeId);
+        }
+
+        [Fact]
+        public async Task Web_list_order_does_not_matter()
+        {
+            // PLC Index 는 이 PC 레시피 폴더 순서다. Web 목록은 등록 순이고 다른 PC 레시피도 섞여 있다.
+            _web.RecipeList = new()
+            {
+                new RecipeSummaryDto { Id = 5, Name = "Cover-X" },
+                new RecipeSummaryDto { Id = 7, Name = "Bracket-A" },
+                new RecipeSummaryDto { Id = 8, Name = "Bracket-B" },
+            };
+            using var svc = CreateService();
+
+            var link = await svc.LinkRecipeByNameAsync("Bracket-B");
+
+            Assert.Equal(RecipeLinkOutcome.Linked, link.Outcome);
+            Assert.Equal(8, svc.CurrentRecipeId);
+        }
+
         /// <summary>Web 흉내 — 레시피 목록 · 레시피 파라미터(지연 · 실패 지정) · 결과 업로드.</summary>
         private sealed class StubWeb : HttpMessageHandler
         {
