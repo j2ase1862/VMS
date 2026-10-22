@@ -285,6 +285,9 @@ namespace VMS.VisionSetup.Tests
             public int CachedItemCount => 0;
             public int PendingUploadCount => 0;
             public List<RecipeSummaryDto> Recipes { get; } = new();
+            public string? DesiredRecipeName { get; set; }
+            public Task<bool> UploadForPendingRecipeAsync(List<ParameterResultDto> results, InspectionFeatureMetrics? featureMetrics = null,
+                string? correlationKey = null, bool? overallPass = null) => Task.FromResult(false);
             public int? WorkOrderId { get; set; }
             public int? LotId { get; set; }
             public int? OperatorId { get; set; }

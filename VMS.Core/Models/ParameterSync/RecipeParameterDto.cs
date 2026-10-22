@@ -116,6 +116,13 @@ namespace VMS.Core.Models.ParameterSync
         /// </summary>
         public bool? OverallPass { get; set; }
 
+        /// <summary>
+        /// (VMS 큐 전용) Web 레시피 ID 를 아직 몰라 <see cref="RecipeId"/> 가 0 인 채 큐에 담긴 사이클의
+        /// 레시피 이름. 드레인이 이름을 ID 로 바꾼 뒤 비우고 보내므로 Web 으로는 나가지 않는다.
+        /// </summary>
+        [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+        public string? PendingRecipeName { get; set; }
+
         // ─── Predictive_DefectRate_Plan §5.1 (V1/V2/V3): 예측 모델용 피처 ───
         // 모두 nullable — Web 측 후방호환 유지(미지원 VMS 빌드 시 자연스럽게 NULL).
         /// <summary>V2: 검사 1회 소요 시간(ms). 가동 페이스 둔화 = 품질 저하 선행 신호.</summary>

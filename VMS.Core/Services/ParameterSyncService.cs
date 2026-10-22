@@ -59,11 +59,20 @@ namespace VMS.Core.Services
         public List<RecipeSummaryDto> Recipes { get; private set; } = new();
 
         public ParameterSyncService(string baseUrl, int clientIndex, string clientApiKey = "")
+            : this(baseUrl, clientIndex, clientApiKey, handler: null, queueDir: null, startRetryTimer: true)
+        {
+        }
+
+        /// <summary>시험용 — HTTP 응답과 큐 폴더를 바꿔 끼우고, 드레인은 시험이 직접 부른다.</summary>
+        internal ParameterSyncService(string baseUrl, int clientIndex, string clientApiKey,
+            HttpMessageHandler? handler, string? queueDir, bool startRetryTimer)
         {
             _baseUrl = baseUrl.TrimEnd('/');
             _clientIndex = clientIndex;
             InsecureUrlGuard.Check(_baseUrl, nameof(ParameterSyncService));
-            _httpClient = HttpClientPolicy.Build(TimeSpan.FromSeconds(10));
+            _httpClient = handler != null
+                ? new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(10) }
+                : HttpClientPolicy.Build(TimeSpan.FromSeconds(10));
 
             // GS 인증: Web 서버 X-API-Key 인증 (BODA.VMS.Web PR #10).
             if (!string.IsNullOrWhiteSpace(clientApiKey))
@@ -72,13 +81,14 @@ namespace VMS.Core.Services
             }
 
             // C6: 검사 결과 업로드 실패 시 디스크에 보존 (프로세스 재시작 후에도 복구)
-            _queueDir = AppDataPaths.GetPath("upload_queue");
+            _queueDir = queueDir ?? AppDataPaths.GetPath("upload_queue");
             try { Directory.CreateDirectory(_queueDir); }
             catch (Exception ex) { Debug.WriteLine($"[ParameterSync] queue dir create failed: {ex.Message}"); }
 
             // 5초마다 큐 드레인 시도 — 시작 직후도 한 번 (이전 세션의 미전송 결과 복구)
-            _retryTimer = new Timer(_ => _ = TryDrainQueueAsync(),
-                null, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(5));
+            if (startRetryTimer)
+                _retryTimer = new Timer(_ => _ = TryDrainQueueAsync(),
+                    null, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(5));
         }
 
         /// <summary>C6: 디스크 큐에 남아있는 미전송 결과 개수.</summary>
@@ -117,6 +127,7 @@ namespace VMS.Core.Services
                 if (!response.IsSuccessStatusCode)
                 {
                     Debug.WriteLine($"[ParameterSync] SyncRecipes failed: {response.StatusCode}");
+                    _recipeListFetched = false;
                     return false;
                 }
 
@@ -132,6 +143,7 @@ namespace VMS.Core.Services
                 bool changed = !oldIds.SetEquals(newIds);
 
                 Recipes = recipes;
+                _recipeListFetched = true;
                 Debug.WriteLine($"[ParameterSync] Synced {Recipes.Count} recipes");
 
                 if (changed)
@@ -144,6 +156,7 @@ namespace VMS.Core.Services
             catch (Exception ex)
             {
                 Debug.WriteLine($"[ParameterSync] SyncRecipes error: {ex.Message}");
+                _recipeListFetched = false;
                 return false;
             }
         }
@@ -252,6 +265,8 @@ namespace VMS.Core.Services
 
                     if (CurrentRecipeId > 0)
                         await SyncAsync();
+                    else
+                        await TryResolveDesiredRecipeAsync();
                 },
                 null,
                 TimeSpan.FromSeconds(intervalSeconds),
@@ -300,6 +315,73 @@ namespace VMS.Core.Services
         public int? LotId { get; set; }
         public int? OperatorId { get; set; }
         public string? SerialNumber { get; set; }
+
+        /// <summary>
+        /// 운전 중인 로컬 레시피 이름. Web ID(<see cref="CurrentRecipeId"/>)를 아직 못 정했을 때 —
+        /// 기동·레시피 전환 순간 Web 이 끊겨 있었다 — 주기 동기화가 이 이름으로 다시 찾고,
+        /// 그 사이 사이클 결과도 이 이름으로 큐에 둔다(<see cref="UploadForPendingRecipeAsync"/>).
+        /// </summary>
+        public string? DesiredRecipeName { get; set; }
+
+        // 마지막 레시피 목록 조회가 성공했는가 — "목록을 받아 봤는데 그 이름이 없다(Web 에 없는 레시피)" 와
+        // "목록을 못 받았다(Web 이 끊김)" 를 가른다. 앞의 것은 올릴 곳이 없고, 뒤의 것은 나중에 올릴 수 있다.
+        private volatile bool _recipeListFetched;
+
+        /// <summary>
+        /// <see cref="CurrentRecipeId"/> 를 모르는 채 끝난 사이클의 결과를 올린다. 예전에는 이 사이클들이
+        /// 큐에도 들어가지 않아, Web 이 돌아와도 검사 이력 · WO 수량에서 영영 빠졌다(로컬 이력에만 남음).
+        /// <list type="bullet">
+        /// <item>레시피 목록에 그 이름이 있으면 그 ID 로 바로 올린다(실패하면 평소처럼 큐).</item>
+        /// <item>목록을 못 받았으면 이름을 달아 큐에 넣고, 드레인이 ID 로 바꿔 보낸다.</item>
+        /// <item>목록을 받았는데 이름이 없으면 Web 에 없는 레시피라 올리지 않는다(false).</item>
+        /// </list>
+        /// </summary>
+        public async Task<bool> UploadForPendingRecipeAsync(
+            List<ParameterResultDto> results,
+            InspectionFeatureMetrics? featureMetrics = null,
+            string? correlationKey = null,
+            bool? overallPass = null)
+        {
+            var name = DesiredRecipeName;
+            if (string.IsNullOrWhiteSpace(name)) return false;
+
+            var known = FindRecipeId(name);
+            if (known > 0)
+                return await UploadResultsAsync(known, results, featureMetrics, correlationKey, overallPass);
+            if (_recipeListFetched) return false;
+
+            var request = BuildUploadRequest(
+                _clientIndex, 0, results, featureMetrics, correlationKey, overallPass,
+                WorkOrderId, LotId, OperatorId, SerialNumber, DateTimeOffset.Now);
+            request.PendingRecipeName = name;
+            EnqueueFailed(request);
+            return true;
+        }
+
+        private int FindRecipeId(string name)
+            => Recipes.FirstOrDefault(r => string.Equals(r.Name, name, StringComparison.OrdinalIgnoreCase))?.Id ?? 0;
+
+        /// <summary>이름 → Web 레시피 ID. 목록에 없으면 한 번 새로 받아 본다. listFetched = 목록을 받아 봤는가.</summary>
+        private async Task<(int RecipeId, bool ListFetched)> ResolveRecipeIdAsync(string name)
+        {
+            var id = FindRecipeId(name);
+            if (id > 0) return (id, true);
+            var fetched = await SyncRecipesAsync();
+            return (fetched ? FindRecipeId(name) : 0, fetched);
+        }
+
+        /// <summary>Web ID 를 아직 못 정한 운전 레시피를 이름으로 찾아 파라미터를 받는다 — 이후 사이클은 바로 올라간다.</summary>
+        internal async Task TryResolveDesiredRecipeAsync()
+        {
+            var name = DesiredRecipeName;
+            if (CurrentRecipeId > 0 || string.IsNullOrWhiteSpace(name)) return;
+            var id = FindRecipeId(name);
+            if (id > 0 && await LoadRecipeAsync(id))
+                Debug.WriteLine($"[ParameterSync] 운전 레시피 '{name}' 을 Web ID {id} 로 다시 연결했습니다.");
+        }
+
+        /// <summary>시험용 — 5초 타이머 대신 큐 드레인을 한 번 돌린다.</summary>
+        internal Task DrainQueueOnceAsync() => TryDrainQueueAsync();
 
         public async Task<bool> UploadResultsAsync(
             int recipeId,
@@ -568,6 +650,32 @@ namespace VMS.Core.Services
                     {
                         try { File.Delete(file); } catch { }
                         continue;
+                    }
+
+                    if (request.RecipeId <= 0 && !string.IsNullOrWhiteSpace(request.PendingRecipeName))
+                    {
+                        var (recipeId, listFetched) = await ResolveRecipeIdAsync(request.PendingRecipeName);
+                        if (recipeId > 0)
+                        {
+                            request.RecipeId = recipeId;
+                            request.PendingRecipeName = null;
+                        }
+                        else if (!listFetched)
+                        {
+                            break;   // Web 이 아직 안 살아남 — 다음 tick 에 다시
+                        }
+                        else if (QueuedAge(file) > NotRegisteredGrace)
+                        {
+                            // Web 은 살아 있는데 그 이름의 레시피가 끝내 없다 — 큐 맨 앞을 막지 않게 치운다.
+                            Debug.WriteLine($"[ParameterSync] 레시피 '{request.PendingRecipeName}' 이 Web 에 없습니다. " +
+                                            $"옆으로 치웁니다: {Path.GetFileName(file)}");
+                            MoveAside(file);
+                            continue;
+                        }
+                        else
+                        {
+                            break;   // 등록될 때까지 유예 — 순서 보존
+                        }
                     }
 
                     var outcome = await TrySendAsync(request);
