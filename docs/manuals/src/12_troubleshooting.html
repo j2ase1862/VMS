@@ -80,8 +80,8 @@
 <h3 id="ts-web">12.5 Web · 네트워크 ⚙</h3>
 <table class="cols-3-6">
   <tr><th>증상</th><th>확인 · 조치</th></tr>
-  <tr><td>VMS 상태바 Web 이 빨강 (Web Disconnected)</td>
-      <td>① 라인 PC 브라우저에서 Web 주소가 열리는지 ② 설정 마법사 2 단계의 Web Server URL(포트 5292)이 맞는지 ③ Production 모드에서 원격 http 주소를 쓰고 있지 않은지 — 시작 시 "Web 연동 경고" 창이 떴다면 이 경우입니다(https 로 바꾸거나 Development 모드) ④ 서버 방화벽 5292 ⑤ 애플리케이션 이름에 줄바꿈 같은 특수 문자가 들어가지 않았는지.</td></tr>
+  <tr><td>VMS 상태바 Web 이 빨강 (Web Disconnected · Web 차단)</td>
+      <td>① 라인 PC 브라우저에서 Web 주소가 열리는지 ② 설정 마법사 2 단계의 Web Server URL(포트 5292)이 맞는지 ③ Production 모드에서 원격 http 주소를 쓰고 있지 않은지 — 상태바가 "Web 차단 (보안 정책 — https 필요)" 이고 시작 시 "Web 연동 경고" 창이 떴다면 이 경우입니다(https 로 바꾸거나 Development 모드) ④ 서버 방화벽 5292 ⑤ 애플리케이션 이름에 줄바꿈 같은 특수 문자가 들어가지 않았는지.</td></tr>
   <tr><td>검사 결과가 서버로 안 올라가고 계속 쌓임</td>
       <td>결과는 <code>upload_queue\</code> 에 보관되었다가 연결이 돌아오면 자동 전송됩니다. 폴더의 파일 수가 줄어드는지 봅니다. <code>rejected\</code> 에 파일이 쌓이면 서버가 받지 않은 건(사유 파일 동봉)이며, 라인이 서버에 등록되지 않은 경우가 흔합니다. Web 에 등록되지 않은 레시피 이름으로 쌓인 결과는 30 분 뒤 <code>rejected\</code> 로 옮겨집니다 — 그 레시피가 Web 에 등록되어 있는지 확인하세요.</td></tr>
   <tr><td>NG 사진이 Web · MLOps 에 안 보임</td>

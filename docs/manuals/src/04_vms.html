@@ -13,7 +13,7 @@
 <h3 id="vms-start">4.1 실행과 시작 화면</h3>
 <ol>
   <li>바탕화면의 <strong>BODA Vision System</strong> 바로가기를 실행합니다. 시작 화면(Splash)이 표시되는 동안 설정과 레시피를 읽고 카메라를 자동으로 연결합니다.</li>
-  <li>설정 파일이 없으면 "초기 시스템 설정이 필요합니다" 안내와 함께 시스템 설정 마법사(3장)가 열리고 VMS 는 종료됩니다. 마법사를 저장한 뒤 다시 실행하세요.</li>
+  <li>설정 파일이 없으면 "초기 시스템 설정이 필요합니다", 설정 파일은 있지만 마법사를 마치지 않았으면 "시스템 설정이 끝나지 않았습니다" 안내와 함께 시스템 설정 마법사(3장)가 열리고 VMS 는 종료됩니다. 마법사를 저장한 뒤 다시 실행하세요.</li>
   <li>메인 화면이 뜹니다. 시스템 사용자 로그인 창은 시작 시 뜨지 않으며, <strong>사이드 패널(⚙)을 열거나 헤더의 사용자 칩을 누를 때</strong> 표시됩니다(§4.12).</li>
   <li>새 버전이 있으면 "업데이트 가능" 안내가 뜹니다(§2.7). 지금 검사를 해야 하면 닫고 나중에 진행해도 됩니다.</li>
 </ol>
@@ -206,7 +206,7 @@
   <tr><td>PLC</td><td>PLC 미구성이면 "PLC N/A". 구성 시 벤더명 · IP, 연결 초록 / 끊김 빨강. 벤더 None 이면 시뮬레이션 PLC 라 항상 연결로 보이므로 IO 보드 구성에서는 IO 칩을 보세요</td></tr>
   <tr><td>IO n/m</td><td>IO 보드를 등록한 구성에서만 표시. 하나라도 연결 실패면 빨강 — 사유는 System Log 의 <code>[IoBoard]</code> 항목에 있습니다. 상태는 AUTO RUN 시작 시점에 갱신됩니다</td></tr>
   <tr><td>MLOps 비활성</td><td>MLOps 주소 · 토큰을 설정했는데 시작 시 연결 준비가 실패한 경우에만 빨간 칩이 나타납니다. 툴팁에 사유(대표적으로 Production 모드가 http 주소를 거부)가 표시되며, 이 상태에서는 NG 사진 수집과 모델 내려받기가 동작하지 않습니다</td></tr>
-  <tr><td>Web</td><td>Web Connected(초록) · Web Disconnected(빨강) · <strong>단독 모드 (Web 미사용)</strong>(회색 — 고장 아님)</td></tr>
+  <tr><td>Web</td><td>Web Connected(초록) · Web Disconnected(빨강) · <strong>단독 모드 (Web 미사용)</strong>(회색 — 고장 아님) · <strong>Web 차단 (보안 정책 — https 필요)</strong>(빨강 — Production 모드에서 원격 http 주소를 쓴 경우, 칩에 마우스를 올리면 사유가 보입니다)</td></tr>
   <tr><td>ROBOT</td><td>표시 자리(현재 N/A 고정)</td></tr>
 </table>
 <figure><img src="../gs/screenshots/v3/vms_ctl/S4_mlops_issue_00_status_mlops_issue_chip.png" data-width="150" alt="MLOps 비활성 칩"><figcaption>상태바의 "MLOps 비활성" 칩</figcaption></figure>

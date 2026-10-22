@@ -208,7 +208,7 @@
 <main>
 <div class="header-strip">
   <h1>BODA VMS 사용자 매뉴얼</h1>
-  <div class="sub">버전 3.0 · 2026-09-17 · VMS v1.46.1 · BODA.VMS.Web v1.10.3 · BODA.VMS.MLOps v0.1.2 — 시스템 구성 → 설치 → 프로그램별 조작 → 검사 설정 → 웹 관리 → 유지보수</div>
+  <div class="sub">버전 3.0 · 2026-09-17 · VMS v1.46.2 · BODA.VMS.Web v1.10.3 · BODA.VMS.MLOps v0.1.2 — 시스템 구성 → 설치 → 프로그램별 조작 → 검사 설정 → 웹 관리 → 유지보수</div>
 </div>
 <section id="overview">
 <h2 id="1-시스템-개요">1. 시스템 개요</h2>
@@ -374,7 +374,8 @@ VisionSetup 에서 연결할 때 "SDK 미탑재 — 시뮬레이션 모드" 경�
 <h4>설치 후 처음 실행하면</h4>
 <p>VMS 를 처음 실행하면 설정 파일이 없으므로 "초기 시스템 설정이 필요합니다" 안내와 함께
 <strong>시스템 설정 마법사(VMS.AppSetup)</strong>가 자동으로 열립니다. 3장에 따라 7 단계를 저장한 뒤
-VMS 를 다시 실행하세요. 설정 파일과 레시피, 검사 이력은 모두 <code>%LocalAppData%\BODA VISION AI\</code>
+VMS 를 다시 실행하세요. 설정 파일이 있어도 마법사를 끝까지 저장하지 않은 것이면 "시스템 설정이 끝나지 않았습니다" 안내와 함께
+마법사가 열립니다. 설정 파일과 레시피, 검사 이력은 모두 <code>%LocalAppData%\BODA VISION AI\</code>
 아래에 저장되며 프로그램을 제거하거나 업그레이드해도 지워지지 않습니다.</p>
 
 <h3 id="install-web">2.3 Web 서버 설치와 구성</h3>
@@ -511,7 +512,7 @@ cd &lt;압축 푼 폴더&gt;\deploy
 <h3 id="appsetup-run">3.1 실행 방법과 저장 동작</h3>
 <p>시스템 설정 마법사는 다음 세 가지 경로로 실행합니다.</p>
 <ul>
-  <li><strong>최초 실행 자동</strong> — VMS 를 설치 후 처음 실행하면(설정 파일이 없으면) 안내 창과 함께 마법사가 자동으로 열립니다. 저장을 마친 뒤 VMS 를 다시 실행하세요.</li>
+  <li><strong>최초 실행 자동</strong> — VMS 를 설치 후 처음 실행하면(설정 파일이 없거나 마법사를 마치지 않았으면) 안내 창과 함께 마법사가 자동으로 열립니다. 저장을 마친 뒤 VMS 를 다시 실행하세요.</li>
   <li><strong>VMS 에서 실행</strong> — 사이드 패널 External Tools 의 <strong>[System Setup]</strong> 버튼 (Supervisor · Admin 전용, §4.6).</li>
   <li><strong>시작 메뉴</strong> — "BODA Vision System" 그룹의 설정 마법사 바로가기. 한 PC 에서 두 라인을 운용할 때는
       <code>VMS.AppSetup.exe --instance 이름</code> 으로 실행합니다(§11.5).</li>
@@ -676,7 +677,7 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
 <h3 id="vms-start">4.1 실행과 시작 화면</h3>
 <ol>
   <li>바탕화면의 <strong>BODA Vision System</strong> 바로가기를 실행합니다. 시작 화면(Splash)이 표시되는 동안 설정과 레시피를 읽고 카메라를 자동으로 연결합니다.</li>
-  <li>설정 파일이 없으면 "초기 시스템 설정이 필요합니다" 안내와 함께 시스템 설정 마법사(3장)가 열리고 VMS 는 종료됩니다. 마법사를 저장한 뒤 다시 실행하세요.</li>
+  <li>설정 파일이 없으면 "초기 시스템 설정이 필요합니다", 설정 파일은 있지만 마법사를 마치지 않았으면 "시스템 설정이 끝나지 않았습니다" 안내와 함께 시스템 설정 마법사(3장)가 열리고 VMS 는 종료됩니다. 마법사를 저장한 뒤 다시 실행하세요.</li>
   <li>메인 화면이 뜹니다. 시스템 사용자 로그인 창은 시작 시 뜨지 않으며, <strong>사이드 패널(⚙)을 열거나 헤더의 사용자 칩을 누를 때</strong> 표시됩니다(§4.12).</li>
   <li>새 버전이 있으면 "업데이트 가능" 안내가 뜹니다(§2.7). 지금 검사를 해야 하면 닫고 나중에 진행해도 됩니다.</li>
 </ol>
@@ -869,7 +870,7 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
   <tr><td>PLC</td><td>PLC 미구성이면 "PLC N/A". 구성 시 벤더명 · IP, 연결 초록 / 끊김 빨강. 벤더 None 이면 시뮬레이션 PLC 라 항상 연결로 보이므로 IO 보드 구성에서는 IO 칩을 보세요</td></tr>
   <tr><td>IO n/m</td><td>IO 보드를 등록한 구성에서만 표시. 하나라도 연결 실패면 빨강 — 사유는 System Log 의 <code>[IoBoard]</code> 항목에 있습니다. 상태는 AUTO RUN 시작 시점에 갱신됩니다</td></tr>
   <tr><td>MLOps 비활성</td><td>MLOps 주소 · 토큰을 설정했는데 시작 시 연결 준비가 실패한 경우에만 빨간 칩이 나타납니다. 툴팁에 사유(대표적으로 Production 모드가 http 주소를 거부)가 표시되며, 이 상태에서는 NG 사진 수집과 모델 내려받기가 동작하지 않습니다</td></tr>
-  <tr><td>Web</td><td>Web Connected(초록) · Web Disconnected(빨강) · <strong>단독 모드 (Web 미사용)</strong>(회색 — 고장 아님)</td></tr>
+  <tr><td>Web</td><td>Web Connected(초록) · Web Disconnected(빨강) · <strong>단독 모드 (Web 미사용)</strong>(회색 — 고장 아님) · <strong>Web 차단 (보안 정책 — https 필요)</strong>(빨강 — Production 모드에서 원격 http 주소를 쓴 경우, 칩에 마우스를 올리면 사유가 보입니다)</td></tr>
   <tr><td>ROBOT</td><td>표시 자리(현재 N/A 고정)</td></tr>
 </table>
 <figure><img src="../gs/screenshots/v3/vms_ctl/S4_mlops_issue_00_status_mlops_issue_chip.png" data-width="150" alt="MLOps 비활성 칩"><figcaption>상태바의 "MLOps 비활성" 칩</figcaption></figure>
@@ -2590,8 +2591,8 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <h3 id="ts-web">12.5 Web · 네트워크 ⚙</h3>
 <table class="cols-3-6">
   <tr><th>증상</th><th>확인 · 조치</th></tr>
-  <tr><td>VMS 상태바 Web 이 빨강 (Web Disconnected)</td>
-      <td>① 라인 PC 브라우저에서 Web 주소가 열리는지 ② 설정 마법사 2 단계의 Web Server URL(포트 5292)이 맞는지 ③ Production 모드에서 원격 http 주소를 쓰고 있지 않은지 — 시작 시 "Web 연동 경고" 창이 떴다면 이 경우입니다(https 로 바꾸거나 Development 모드) ④ 서버 방화벽 5292 ⑤ 애플리케이션 이름에 줄바꿈 같은 특수 문자가 들어가지 않았는지.</td></tr>
+  <tr><td>VMS 상태바 Web 이 빨강 (Web Disconnected · Web 차단)</td>
+      <td>① 라인 PC 브라우저에서 Web 주소가 열리는지 ② 설정 마법사 2 단계의 Web Server URL(포트 5292)이 맞는지 ③ Production 모드에서 원격 http 주소를 쓰고 있지 않은지 — 상태바가 "Web 차단 (보안 정책 — https 필요)" 이고 시작 시 "Web 연동 경고" 창이 떴다면 이 경우입니다(https 로 바꾸거나 Development 모드) ④ 서버 방화벽 5292 ⑤ 애플리케이션 이름에 줄바꿈 같은 특수 문자가 들어가지 않았는지.</td></tr>
   <tr><td>검사 결과가 서버로 안 올라가고 계속 쌓임</td>
       <td>결과는 <code>upload_queue\</code> 에 보관되었다가 연결이 돌아오면 자동 전송됩니다. 폴더의 파일 수가 줄어드는지 봅니다. <code>rejected\</code> 에 파일이 쌓이면 서버가 받지 않은 건(사유 파일 동봉)이며, 라인이 서버에 등록되지 않은 경우가 흔합니다. Web 에 등록되지 않은 레시피 이름으로 쌓인 결과는 30 분 뒤 <code>rejected\</code> 로 옮겨집니다 — 그 레시피가 Web 에 등록되어 있는지 확인하세요.</td></tr>
   <tr><td>NG 사진이 Web · MLOps 에 안 보임</td>
@@ -3238,7 +3239,7 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <table class="cols-3-6">
   <tr><th>항목</th><th>값</th></tr>
   <tr><td>문서 버전</td><td>3.0 (2026-09-17)</td></tr>
-  <tr><td>대상 소프트웨어</td><td>VMS 1.46.1 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.2</td></tr>
+  <tr><td>대상 소프트웨어</td><td>VMS 1.46.2 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.2</td></tr>
   <tr><td>구성</td><td>VMS · VMS.VisionSetup · VMS.AppSetup (검사 런타임) / BODA.VMS.Web (생산 관리) / BODA.VMS.MLOps (선택 구성 요소, 인증 범위 외)</td></tr>
   <tr><td>발행</td><td>BODA Vision AI</td></tr>
 </table>
