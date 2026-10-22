@@ -23,7 +23,7 @@
 
 <h3 id="appsetup-s2">3.3 2 단계 — Application Settings (이름 · IP · 서버 연동 · 관리자 계정)</h3>
 <figure><img src="../gs/screenshots/v3/as/FullPage_P2_ApplicationSettings.png" data-width="360" alt="2단계 전체 화면">
-<figcaption>2 단계 — Application Settings (스크롤 전체). 위에서부터 애플리케이션 이름 · System IP · Web Server Integration · 고급 설정 · Web 서버 초기 구성 · Web SSO · 관리자 비밀번호</figcaption></figure>
+<figcaption>2 단계 — Application Settings (스크롤 전체). 위에서부터 애플리케이션 이름 · System IP · Web Server Integration · 생산 관리 · 고급 설정 · Web 서버 초기 구성 · Web SSO · 관리자 비밀번호</figcaption></figure>
 <table class="cols-2-3-4-1">
   <tr><th>항목</th><th>컨트롤</th><th>설명</th><th>기본값</th></tr>
   <tr><td>Application Name</td><td><img src="../gs/screenshots/v3/as_ctl/P2_default_02_TextBox_OP102.png" alt=""></td>
@@ -38,6 +38,10 @@
       <td>생산 관리 웹 주소입니다. 이 PC 안의 동봉 서버면 <code>http://localhost:5292</code>, 별도 서버면 <code>http://서버IP:5292</code>(Production 모드에서는 https 필요, §3.8).</td><td>http://localhost:5292</td></tr>
   <tr><td>Vision Server URL</td><td><img src="../gs/screenshots/v3/as_ctl/P2_default_16_TextBox_httplocalhost5000.png" alt=""></td>
       <td>VisionServer 연동 구성에서만 씁니다. 쓰지 않으면 그대로 둡니다.</td><td>http://localhost:5000</td></tr>
+  <tr><td>생산 관리 — 작업자 로그인 필수</td><td><img src="../gs/screenshots/v3/as_ctl/P2_default_19_CheckBox_작업자_로그인_필수.png" alt=""></td>
+      <td>체크하면 작업자가 로그인해야 [AUTO RUN] · [Grab] · [Live] 를 쓸 수 있습니다(§4.3). 끄면 작업자 로그인 없이 운전하고, 레시피 파라미터 · 생산 이력 · 품질 · 설비 현황은 그대로 Web 으로 보냅니다. 작업자는 원하면 로그인할 수 있으며, 그때는 검사 결과에 작업자가 기록됩니다.</td><td>체크</td></tr>
+  <tr><td>생산 관리 — 작업지시 선택 필수</td><td><img src="../gs/screenshots/v3/as_ctl/P2_default_20_CheckBox_작업지시_선택_필수.png" alt=""></td>
+      <td>체크하면 작업지시를 골라야 [AUTO RUN] 을 시작할 수 있습니다. 작업지시는 작업자 로그인 후에 고르므로, 작업자 로그인 필수를 끄면 이 항목도 함께 꺼지고 잠깁니다. 작업지시 없이 운전하면 작업지시 수량은 집계되지 않습니다.</td><td>체크</td></tr>
   <tr><td>고급 설정 (접기/펼치기)</td><td><img src="../gs/screenshots/v3/as_ctl/P2_default_18_ToggleButton_고급_설정__Web_Client_API_Key__MLOps_모델_레지스트.png" alt=""></td>
       <td>클릭하면 Web Client API Key · MLOps 서버 주소 · MLOps 라인 토큰 입력란이 나타납니다. 해당 현장만 펼칩니다. 이미 값이 저장된 PC 에서는 자동으로 펼쳐집니다.</td><td>접힘</td></tr>
   <tr><td>Web Client API Key (고급)</td><td><img src="../gs/screenshots/v3/as_ctl/P2_advanced_02_TextBox_TextBox.png" alt=""></td>

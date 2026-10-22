@@ -174,12 +174,14 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
   <tr><td>Output Action</td><td>PLC 출력(비트 ON/OFF · 워드 · Float) 또는 IO 보드 채널에 기록 — OK/NG 램프, 액추에이터, 컨베이어. [▶ 테스트 출력] 으로 바로 써 봅니다</td></tr>
   <tr><td>Delay / Repeat</td><td>지연(ms) / 반복(횟수, −1 무한)</td></tr>
   <tr><td>Recipe Change / Step Change</td><td>PLC 신호 조건 충족 시 Index 를 읽어 레시피 · 스텝을 전환합니다. Recipe Change 는 도구를 다시 초기화(Fixture 기준도 새로), Step Change 는 레시피를 유지한 채 스텝만 바꿉니다</td></tr>
+  <tr><td>WO Complete</td><td>작업지시가 완료돼 자동 운전이 멈출 때 한 번만 실행되는 별도 시작점입니다. 뒤에 Output Action · Delay 를 이어 설비에 완료 신호를 보냅니다(펄스: Output Action ON → Delay → Output Action OFF). 운전 흐름과 선으로 잇지 않고 따로 두며, 시퀀스에 하나만 둘 수 있습니다. 뒤에는 Output Action · Delay · End 만 쓸 수 있고 전체가 10 초 안에 끝나야 합니다. 수동 [STOP] · 오류 정지에서는 실행되지 않습니다</td></tr>
 </table>
 <h4>절차</h4>
 <ol>
   <li>[디폴트 생성] 으로 기본 흐름(Start → Input Check → Inspection → Branch → Output Action → End)을 만들거나, 팔레트에서 노드를 끌어 놓고 노드 우클릭 → 연결 시작 → 대상 노드 클릭으로 잇습니다.</li>
   <li>각 노드를 선택해 오른쪽 노드 속성에서 디바이스(MainPLC 또는 등록한 IO 보드 Device ID) · 주소 · 값을 입력합니다. IO 보드는 주소 대신 <strong>채널 번호(0~N-1)</strong> 를 넣고 ON/OFF 신호만 다룹니다.</li>
   <li>Reset 신호 주소를 두면 어느 노드에서든 그 조건이 충족될 때 즉시 Start 로 돌아갑니다.</li>
+  <li>설비에 작업지시 완료를 알리려면 팔레트의 WO Complete 를 운전 흐름과 떨어진 곳에 놓고 Output Action · Delay 를 잇습니다. 완료 신호를 계속 켜 두는 방식(레벨)이면 WO Complete 뒤에는 ON 만 두고, 운전 흐름의 Start 다음에 그 출력을 OFF 하는 Output Action 을 둡니다. 신호가 나가면 System Log 에 "WO 완료 신호를 설비에 보냈습니다" 가 남습니다.</li>
   <li>[PLC Monitor] 로 참조 주소의 현재값을 보면서, <strong>[▶ 무부하 테스트]</strong> 로 카메라 검사만 항상 합격으로 시뮬레이션한 채 트리거 · 분기 · 출력 신호가 설비와 실제로 오가는지 확인합니다. 노드가 진행에 따라 초록/빨강으로 표시되고 Cycle 수가 올라갑니다.</li>
   <li>[저장]. 필요하면 [내보내기] 로 파일로 보관하고 다른 PC 에서 [가져오기] 합니다.</li>
 </ol>
