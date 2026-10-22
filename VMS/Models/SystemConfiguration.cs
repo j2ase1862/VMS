@@ -44,8 +44,9 @@ namespace VMS.Models
         // 이 리스트의 DeviceId 와 매칭. 빈 리스트면 기본 PLC 만 사용 (후방호환).
         public List<IoDeviceConfig> IoBoards { get; set; } = new();
 
-        // Web Parameter Sync
-        public string WebServerUrl { get; set; } = "http://localhost:5292";
+        // Web Parameter Sync — 키가 없으면 빈 값(Web 미사용). 마법사는 이 키를 항상 쓰므로(단독 모드는 빈 값)
+        // 없다는 것은 마법사를 마치지 않은 파일이고, 다른 설정 읽기(SystemConfigReader · WebSsoConfig)도 미사용으로 본다.
+        public string WebServerUrl { get; set; } = string.Empty;
         public string VisionServerUrl { get; set; } = "http://localhost:5000";
         public int ClientIndex { get; set; } = 1;
 

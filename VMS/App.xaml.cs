@@ -390,6 +390,10 @@ namespace VMS
             bool webIntegrated = !string.IsNullOrWhiteSpace(systemConfig.WebServerUrl);
             if (!webIntegrated)
                 logService.Log("단독 모드 — Web 서버 미구성 (작업자 로그인·작업지시·결과 업로드 비활성)", LogLevel.Info, "System");
+            if (!VMS.Core.Services.SystemConfigReader.IsSetupCompleted())
+                logService.Log(
+                    "시스템 설정 파일에 Web 서버 설정이 없습니다 — 시스템 설정 마법사를 마치지 않은 상태라 Web 없이 운전합니다. 마법사에서 저장하세요.",
+                    LogLevel.Warning, "System");
 
             // Recent Inspections 레시피 이름 — Web 연동 여부와 무관하게 로컬 레시피 이름을 공급
             // (단독 모드·Web 미연동 레시피에서 "Recipe#0" 으로 보이던 문제).
@@ -1112,7 +1116,10 @@ namespace VMS
             try
             {
                 var configPath = VMS.Camera.Configuration.AppDataPaths.SystemConfigFile;
-                if (File.Exists(configPath)) return false;
+                // 파일이 있어도 마법사를 마치지 않은 것(다른 프로그램이 일부 키만 넣어 만든 파일)이면 마법사를 띄운다 —
+                // 그대로 진행하면 Web 서버 · 카메라 · PLC 설정 없이 운전한다.
+                var fileExists = File.Exists(configPath);
+                if (fileExists && VMS.Core.Services.SystemConfigReader.IsSetupCompleted()) return false;
 
                 var setupExe = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "VMS.AppSetup.exe");
                 if (!File.Exists(setupExe))
@@ -1124,7 +1131,9 @@ namespace VMS
                 // 최초 실행 시점엔 MainWindow 가 아직 생성 전 — owner null.
                 VMS.VisionSetup.Views.Common.MessageDialog.Show(
                     owner: null,
-                    "초기 시스템 설정이 필요합니다.\n시스템 설정 마법사를 실행합니다.\n\n설정 완료 후 VMS를 다시 실행해 주세요.",
+                    fileExists
+                        ? "시스템 설정이 끝나지 않았습니다.\n시스템 설정 마법사를 실행합니다.\n\n설정 완료 후 VMS를 다시 실행해 주세요."
+                        : "초기 시스템 설정이 필요합니다.\n시스템 설정 마법사를 실행합니다.\n\n설정 완료 후 VMS를 다시 실행해 주세요.",
                     "BODA Vision System - 최초 실행",
                     VMS.VisionSetup.Views.Common.MessageDialogKind.Info);
 
