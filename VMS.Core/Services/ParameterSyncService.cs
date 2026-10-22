@@ -193,7 +193,14 @@ namespace VMS.Core.Services
             }
         }
 
-        public async Task<bool> LoadRecipeAsync(int recipeId)
+        // 레시피를 바꾸거나 비울 때마다 1 씩 오른다. 받는 도중에 이 값이 바뀌었으면 그 응답은 버린다 —
+        // 주기 동기화가 받기 시작한 직전 레시피가, 그 사이 바꾼 연결을 덮어 되살리지 않도록.
+        private int _recipeGeneration;
+
+        public Task<bool> LoadRecipeAsync(int recipeId)
+            => LoadRecipeCoreAsync(recipeId, Interlocked.Increment(ref _recipeGeneration));
+
+        private async Task<bool> LoadRecipeCoreAsync(int recipeId, int generation)
         {
             try
             {
@@ -216,6 +223,12 @@ namespace VMS.Core.Services
 
                 lock (_cacheLock)
                 {
+                    if (generation != Volatile.Read(ref _recipeGeneration))
+                    {
+                        Debug.WriteLine($"[ParameterSync] LoadRecipe {recipeId} superseded — 그 사이 레시피가 바뀌어 응답을 버립니다.");
+                        return false;
+                    }
+
                     _cache.Clear();
                     _parameterDetails.Clear();
 
@@ -224,9 +237,10 @@ namespace VMS.Core.Services
                         _cache[param.ParamCode] = param.ParamValue;
                         _parameterDetails[param.ParamCode] = param;
                     }
+
+                    CurrentRecipeId = recipeId;
                 }
 
-                CurrentRecipeId = recipeId;
                 LastSyncedAt = DateTime.Now;
 
                 var recipeName = Recipes.FirstOrDefault(r => r.Id == recipeId)?.Name ?? $"Recipe#{recipeId}";
@@ -246,12 +260,75 @@ namespace VMS.Core.Services
 
         public async Task<bool> SyncAsync()
         {
-            if (CurrentRecipeId <= 0)
+            int recipeId, generation;
+            lock (_cacheLock)
+            {
+                recipeId = CurrentRecipeId;
+                generation = _recipeGeneration;
+            }
+            if (recipeId <= 0)
                 return false;
 
-            var success = await LoadRecipeAsync(CurrentRecipeId);
+            // 같은 레시피를 다시 받는 것이라 세대를 올리지 않는다 — 그 사이 바뀌면 이 응답이 버려진다.
+            var success = await LoadRecipeCoreAsync(recipeId, generation);
             SyncCompleted?.Invoke(success, CachedItemCount);
             return success;
+        }
+
+        public void ClearCurrentRecipe()
+        {
+            lock (_cacheLock)
+            {
+                Interlocked.Increment(ref _recipeGeneration);
+                _cache.Clear();
+                _parameterDetails.Clear();
+                CurrentRecipeId = 0;
+            }
+        }
+
+        public async Task<RecipeLinkResult> LinkRecipeByNameAsync(string? recipeName)
+        {
+            var previous = CurrentRecipeId;
+            if (string.IsNullOrWhiteSpace(recipeName))
+            {
+                DesiredRecipeName = null;
+                ClearCurrentRecipe();
+                return new RecipeLinkResult(RecipeLinkOutcome.NoRecipe, 0, previous);
+            }
+
+            DesiredRecipeName = recipeName;
+            // 시작할 때 세대를 올린다 — 나중에 시작한 호출이 이기고, 그보다 먼저 받기 시작한 응답(주기 동기화 포함)은 버려진다.
+            var generation = Interlocked.Increment(ref _recipeGeneration);
+            var (id, listFetched) = await ResolveRecipeIdAsync(recipeName);
+            if (id <= 0)
+            {
+                if (!ClearIfUnchangedSince(generation))
+                    return new RecipeLinkResult(RecipeLinkOutcome.Superseded, 0, previous);
+                var outcome = listFetched ? RecipeLinkOutcome.NotOnWeb : RecipeLinkOutcome.WebUnavailable;
+                return new RecipeLinkResult(outcome, 0, previous);
+            }
+
+            if (CurrentRecipeId == id)
+                return new RecipeLinkResult(RecipeLinkOutcome.AlreadyLinked, id, previous);
+
+            if (await LoadRecipeCoreAsync(id, generation))
+                return new RecipeLinkResult(RecipeLinkOutcome.Linked, id, previous);
+
+            // 받는 동안 다른 호출이 레시피를 바꿨으면 그 연결을 지우지 않는다.
+            if (!ClearIfUnchangedSince(generation))
+                return new RecipeLinkResult(RecipeLinkOutcome.Superseded, id, previous);
+            return new RecipeLinkResult(RecipeLinkOutcome.LoadFailed, id, previous);
+        }
+
+        /// <summary><paramref name="generation"/> 이후 아무도 레시피를 바꾸지 않았을 때만 비운다. 비웠으면 true.</summary>
+        private bool ClearIfUnchangedSince(int generation)
+        {
+            lock (_cacheLock)
+            {
+                if (generation != _recipeGeneration) return false;
+                ClearCurrentRecipe();
+                return true;
+            }
         }
 
         public void StartPeriodicSync(int intervalSeconds = 60)
@@ -376,8 +453,16 @@ namespace VMS.Core.Services
             var name = DesiredRecipeName;
             if (CurrentRecipeId > 0 || string.IsNullOrWhiteSpace(name)) return;
             var id = FindRecipeId(name);
-            if (id > 0 && await LoadRecipeAsync(id))
-                Debug.WriteLine($"[ParameterSync] 운전 레시피 '{name}' 을 Web ID {id} 로 다시 연결했습니다.");
+            if (id <= 0) return;
+            var generation = Interlocked.Increment(ref _recipeGeneration);
+            if (!await LoadRecipeCoreAsync(id, generation)) return;
+            // 받는 동안 운전 레시피가 바뀌었다 — 옛 이름의 연결을 남기지 않는다.
+            if (!string.Equals(DesiredRecipeName, name, StringComparison.OrdinalIgnoreCase))
+            {
+                ClearIfUnchangedSince(generation);
+                return;
+            }
+            Debug.WriteLine($"[ParameterSync] 운전 레시피 '{name}' 을 Web ID {id} 로 다시 연결했습니다.");
         }
 
         /// <summary>시험용 — 5초 타이머 대신 큐 드레인을 한 번 돌린다.</summary>

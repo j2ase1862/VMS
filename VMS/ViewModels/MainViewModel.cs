@@ -2,6 +2,7 @@ using VMS.Camera.Models;
 using VMS.Camera.Services;
 using VMS.Core.Imaging;
 using VMS.Core.Interfaces;
+using RecipeLinkOutcome = VMS.Core.Models.ParameterSync.RecipeLinkOutcome;
 using VMS.Core.Models.Predictive;
 using VMS.Core.Models.Updates;
 using VMS.Core.Security;
@@ -898,6 +899,9 @@ namespace VMS.ViewModels
             CurrentRecipe = recipe;
             CurrentRecipeName = recipe.Name;
             SystemStatus = "New recipe created";
+
+            // Web 파라미터 캐시를 이 레시피로 전환 (Web 에 없으면 직전 레시피 연결을 끊는다)
+            _ = EnsureWebParamCacheAsync();
         }
 
         [RelayCommand]
@@ -939,6 +943,7 @@ namespace VMS.ViewModels
                     {
                         CurrentRecipe = null;
                         CurrentRecipeName = "No Recipe Loaded";
+                        _ = EnsureWebParamCacheAsync();   // 운전 레시피가 없으니 Web 레시피 연결도 비운다
                     }
                     RefreshRecipeList();
                     SystemStatus = "Recipe deleted";
@@ -993,6 +998,7 @@ namespace VMS.ViewModels
                     CurrentRecipe = recipe;
                     CurrentRecipeName = recipe.Name;
                     SystemStatus = $"Recipe imported: {recipe.Name}";
+                    _ = EnsureWebParamCacheAsync();
                 }
                 else
                 {
@@ -2338,34 +2344,44 @@ namespace VMS.ViewModels
         /// </summary>
         private async Task EnsureWebParamCacheAsync()
         {
-            if (_parameterSyncService == null || CurrentRecipe == null) return;
-            // Web 이 지금 끊겨 있어도 이 이름으로 주기 동기화가 다시 찾고, 그 사이 사이클 결과는 이 이름으로 큐에 쌓인다.
-            _parameterSyncService.DesiredRecipeName = CurrentRecipe.Name;
+            if (_parameterSyncService == null) return;
+            // 연결하지 못하면 서비스가 직전 레시피의 연결을 비운다 — 이 레시피 결과가 직전 레시피 ID 로 올라가지 않도록.
+            // Web 이 끊겨 있으면 이 이름으로 주기 동기화가 다시 찾고, 그 사이 사이클 결과는 이 이름으로 큐에 쌓인다.
+            var recipeName = CurrentRecipe?.Name;
             try
             {
-                if (_parameterSyncService.Recipes.Count == 0)
-                    await _parameterSyncService.SyncRecipesAsync();
-
-                var web = _parameterSyncService.Recipes.FirstOrDefault(r =>
-                    string.Equals(r.Name, CurrentRecipe.Name, StringComparison.OrdinalIgnoreCase));
-                if (web == null)
+                var link = await _parameterSyncService.LinkRecipeByNameAsync(recipeName);
+                switch (link.Outcome)
                 {
-                    LogService?.Log(
-                        $"레시피 '{CurrentRecipe.Name}' 이 Web 레시피 목록에 없습니다 — 파라미터 연동/작업지시 집계가 동작하지 않습니다.",
-                        LogLevel.Warning, "ParameterSync");
-                    return;
+                    case RecipeLinkOutcome.Linked:
+                        LogService?.Log(
+                            $"Web 파라미터 캐시 전환: '{recipeName}' (Web ID {link.RecipeId}, 코드 {_parameterSyncService.CachedItemCount}개)",
+                            LogLevel.Info, "ParameterSync");
+                        break;
+                    case RecipeLinkOutcome.NotOnWeb:
+                        LogService?.Log(
+                            $"레시피 '{recipeName}' 이 Web 레시피 목록에 없습니다 — 검사 결과가 Web 에 올라가지 않고 파라미터 연동/작업지시 집계가 동작하지 않습니다.",
+                            LogLevel.Warning, "ParameterSync");
+                        break;
+                    case RecipeLinkOutcome.WebUnavailable:
+                        LogService?.Log(
+                            $"Web 레시피 목록을 받지 못했습니다 — Web 이 연결되면 '{recipeName}' 으로 다시 찾고, 그 사이 검사 결과는 보관했다가 올립니다.",
+                            LogLevel.Warning, "ParameterSync");
+                        break;
+                    case RecipeLinkOutcome.LoadFailed:
+                        LogService?.Log(
+                            $"Web 레시피 '{recipeName}'(Web ID {link.RecipeId}) 의 파라미터를 받지 못했습니다 — 1 분 뒤 다시 시도합니다.",
+                            LogLevel.Warning, "ParameterSync");
+                        break;
                 }
-
-                if (_parameterSyncService.CurrentRecipeId != web.Id)
-                {
-                    await _parameterSyncService.LoadRecipeAsync(web.Id);
+                if (link.DroppedPrevious)
                     LogService?.Log(
-                        $"Web 파라미터 캐시 전환: '{CurrentRecipe.Name}' (Web ID {web.Id}, 코드 {_parameterSyncService.CachedItemCount}개)",
+                        $"직전 Web 레시피(Web ID {link.PreviousRecipeId}) 연결을 끊었습니다 — 이 레시피의 결과를 그 레시피로 올리지 않습니다.",
                         LogLevel.Info, "ParameterSync");
-                }
             }
             catch (Exception ex)
             {
+                _parameterSyncService.ClearCurrentRecipe();
                 LogService?.Log($"Web 파라미터 캐시 전환 실패: {ex.Message}", LogLevel.Warning, "ParameterSync");
             }
         }

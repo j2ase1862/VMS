@@ -70,6 +70,17 @@ namespace VMS.Core.Interfaces
         /// <summary>특정 레시피의 파라미터를 로드하여 캐시</summary>
         Task<bool> LoadRecipeAsync(int recipeId);
 
+        /// <summary>
+        /// 운전 레시피를 이름으로 Web 레시피에 연결한다(<see cref="DesiredRecipeName"/> 도 이 이름으로).
+        /// 목록에 없으면 한 번 새로 받아 본다. 연결하지 못하면 — Web 에 없는 레시피 · Web 끊김 · 파라미터 수신 실패 —
+        /// 직전 레시피의 연결과 캐시를 비운다(<see cref="CurrentRecipeId"/> = 0). 그대로 두면 이 레시피의 결과가
+        /// 직전 레시피 ID 로 올라간다.
+        /// </summary>
+        Task<RecipeLinkResult> LinkRecipeByNameAsync(string? recipeName);
+
+        /// <summary>Web 레시피 연결과 파라미터 캐시를 비운다(<see cref="CurrentRecipeId"/> = 0).</summary>
+        void ClearCurrentRecipe();
+
         /// <summary>현재 레시피의 파라미터를 재동기화</summary>
         Task<bool> SyncAsync();
 
