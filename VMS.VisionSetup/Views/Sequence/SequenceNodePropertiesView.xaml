@@ -458,6 +458,17 @@
                            Foreground="{StaticResource BrushTextMuted}" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"/>
             </StackPanel>
 
+            <!-- WO 완료 시 (진입점) -->
+            <StackPanel Visibility="{Binding SelectedNode.NodeType, Converter={StaticResource NodeTypeVisibilityConverter}, ConverterParameter=WorkOrderComplete}">
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,4">
+                    <TextBlock Text="── WO 완료 시 ──" Foreground="#8BC34A" FontWeight="SemiBold"/>
+                    <controls:HelpIcon ToolType="SequenceNode_WorkOrderComplete"
+                                       Margin="8,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+                <TextBlock Text="작업지시가 완료돼 자동 운전이 멈출 때 한 번만 실행됩니다.&#x0a;이 노드 뒤에 Output Action · Delay 를 한 줄로 이어 설비에 완료 신호를 보내세요.&#x0a;펄스: 출력 ON → Delay → 출력 OFF&#x0a;수동 정지·오류 정지에서는 실행되지 않습니다."
+                           Foreground="{StaticResource BrushTextSecondary}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0"/>
+            </StackPanel>
+
         </StackPanel>
     </ScrollViewer>
 </UserControl>

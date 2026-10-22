@@ -1376,6 +1376,13 @@ namespace VMS.VisionSetup.Models
                 }
             },
 
+            ["SequenceNode_WorkOrderComplete"] = new ToolHelp
+            {
+                Name = "WO Complete (WO 완료 시)",
+                Description = "작업지시(WO)가 완료되면 자동 운전은 진행 중인 사이클을 끝낸 뒤 멈춥니다. 이 노드는 그때 한 번만 실행되는 별도 시작점으로, 설비에 \"WO 완료\" 신호를 보내 다음 제품 투입을 멈추게 할 때 씁니다.\n\nWO 완료는 Web 서버가 판정하므로 Web 연동 레시피로 작업지시를 선택해 운전할 때만 실행됩니다. 수동 [정지]·오류 정지에서는 실행되지 않습니다.",
+                Usage = "운전 흐름(Start 쪽)과 선으로 잇지 말고 따로 둡니다. 시퀀스에 하나만 둘 수 있습니다.\n\n펄스 신호:\nWO Complete → Output Action(Y20 = ON) → Delay(500ms) → Output Action(Y20 = OFF)\n\n계속 켜 두는 신호:\nWO Complete → Output Action(Y20 = ON)\n이때는 다음 운전을 시작할 때 꺼지도록 운전 흐름 앞쪽(Start 다음)에 Output Action(Y20 = OFF) 를 두세요.\n\n이 노드 뒤에는 Output Action · Delay · End 만 쓸 수 있고, 전체가 10초 안에 끝나야 합니다."
+            },
+
             ["SequenceNode_Repeat"] = new ToolHelp
             {
                 Name = "Repeat (반복 루프)",

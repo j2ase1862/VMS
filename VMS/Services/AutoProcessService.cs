@@ -111,6 +111,12 @@ namespace VMS.Services
         private readonly SemaphoreSlim _stopLock = new(1, 1);
         private volatile bool _stopAfterCycleRequested;
         private SequenceEngine? _currentEngine;
+        private SequenceConfig? _currentConfig;
+
+        // WO 완료 정지 — 정리 단계에서 PLC 를 끊기 전에 "WO 완료 시" 분기를 한 번 실행한다.
+        // 사이클 경계에 못 닿아 즉시 정지로 넘어간 경우에도 실행한다(그때는 이미 사이클 밖이다).
+        private volatile bool _workOrderCompletePending;
+        private static readonly TimeSpan WorkOrderCompleteBranchTimeout = TimeSpan.FromSeconds(10);
 
         // 사이클 업로드는 fire-and-forget — 정지 시 사이클 버퍼를 비우기 전에 끝나기를 기다린다
         // (마지막 사이클이 정지 직후 업로드되면서 비워진 버퍼를 읽는 경합 방지).
@@ -120,6 +126,7 @@ namespace VMS.Services
         {
             if (IsRunning) return;
             _stopAfterCycleRequested = false;
+            _workOrderCompletePending = false;
 
             _cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             IsRunning = true;
@@ -189,10 +196,11 @@ namespace VMS.Services
         /// 바로 멈춘다. <paramref name="timeout"/> 안에 경계에 닿지 못하면(예: PLC 응답 대기에 멈춤)
         /// 즉시 정지로 넘어간다. 정리 작업은 <see cref="StopAsync"/> 와 같다.
         /// </summary>
-        public async Task StopAfterCycleAsync(TimeSpan timeout)
+        public async Task StopAfterCycleAsync(TimeSpan timeout, bool workOrderCompleted = false)
         {
             if (!IsRunning) return;
 
+            if (workOrderCompleted) _workOrderCompletePending = true;
             _stopAfterCycleRequested = true;
             _currentEngine?.RequestStopAtCycleBoundary();
             _logService?.Log("진행 중인 사이클을 마친 뒤 자동 운전을 정지합니다.", LogLevel.Info, "AutoProcess");
@@ -257,6 +265,13 @@ namespace VMS.Services
                 await ClearOutputSignals(signalMap);
             }
 
+            // 결과 신호를 지운 뒤에 내보낸다 — 같은 주소를 완료 신호로 써도 지워지지 않게.
+            if (_workOrderCompletePending)
+            {
+                _workOrderCompletePending = false;
+                await RunWorkOrderCompleteBranchAsync();
+            }
+
             // Disconnect PLC
             if (_plc.IsConnected)
             {
@@ -279,6 +294,7 @@ namespace VMS.Services
             }
 
             _currentEngine = null;
+            _currentConfig = null;
             _processTask = null;
             _cameraStates.Clear();
             _cts?.Dispose();
@@ -290,6 +306,33 @@ namespace VMS.Services
             catch (Exception ex) { Debug.WriteLine($"[AutoProcess] cycle accumulation off failed: {ex.Message}"); }
 
             _logService?.Log("AutoProcess stopped", LogLevel.Info, "AutoProcess");
+        }
+
+        /// <summary>
+        /// 시퀀스의 "WO 완료 시" 분기 실행 — 실패해도 정지는 계속한다(로그로 원인만 남김).
+        /// </summary>
+        private async Task RunWorkOrderCompleteBranchAsync()
+        {
+            var engine = _currentEngine;
+            var config = _currentConfig;
+            if (engine == null || config == null) return;
+
+            using var cts = new CancellationTokenSource(WorkOrderCompleteBranchTimeout);
+            try
+            {
+                if (await engine.RunWorkOrderCompleteAsync(config, cts.Token))
+                    _logService?.Log("WO 완료 신호를 설비에 보냈습니다 (시퀀스 'WO 완료 시' 분기).", LogLevel.Success, "AutoProcess");
+            }
+            catch (OperationCanceledException)
+            {
+                _logService?.Log(
+                    $"'WO 완료 시' 분기가 {WorkOrderCompleteBranchTimeout.TotalSeconds:0}초 안에 끝나지 않아 중단했습니다 — Delay 를 줄이세요.",
+                    LogLevel.Warning, "AutoProcess");
+            }
+            catch (Exception ex)
+            {
+                _logService?.Log($"WO 완료 신호를 보내지 못했습니다 — {ex.Message}", LogLevel.Error, "AutoProcess");
+            }
         }
 
         private void ReleaseActivitySignal()
@@ -325,6 +368,7 @@ namespace VMS.Services
                 _recipeChangeByIndexFunc, _stepChangeFunc,
                 ioRegistry: _ioRegistry);
             _currentEngine = engine;
+            _currentConfig = config;
             if (_stopAfterCycleRequested)
                 engine.RequestStopAtCycleBoundary();
 

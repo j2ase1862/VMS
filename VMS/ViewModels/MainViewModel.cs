@@ -1728,7 +1728,8 @@ namespace VMS.ViewModels
         }
 
         /// <summary>
-        /// WO 완료 등 자동 정지 — 진행 중인 사이클을 끝낸 뒤 멈춘다. 수동 [정지] 는 종전대로 즉시.
+        /// WO 완료 자동 정지 — 진행 중인 사이클을 끝낸 뒤 멈추고, 시퀀스의 "WO 완료 시" 분기로 설비에 알린다.
+        /// 수동 [정지] 는 즉시 멈추고 분기를 실행하지 않는다.
         /// </summary>
         private async Task StopInspectionAfterCycleAsync()
         {
@@ -1739,7 +1740,7 @@ namespace VMS.ViewModels
             {
                 try
                 {
-                    await Task.Run(() => _autoProcessService.StopAfterCycleAsync(AutoStopCycleTimeout));
+                    await Task.Run(() => _autoProcessService.StopAfterCycleAsync(AutoStopCycleTimeout, workOrderCompleted: true));
                 }
                 catch (Exception ex)
                 {
