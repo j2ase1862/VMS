@@ -390,6 +390,29 @@ namespace VMS
             bool webIntegrated = !string.IsNullOrWhiteSpace(systemConfig.WebServerUrl);
             if (!webIntegrated)
                 logService.Log("단독 모드 — Web 서버 미구성 (작업자 로그인·작업지시·결과 업로드 비활성)", LogLevel.Info, "System");
+
+            // Web 주소는 있는데 보안 정책이 막는 경우(Production + 원격 http) — 웹 서비스는 전부 같은 검사로
+            // 생성에서 실패하므로 한 번 먼저 확인하고 만들지 않는다. 화면은 단독 모드가 아니라 "Web 차단" 으로
+            // 표시한다(SetWebBlocked) — 단독 모드로 보이면 설정 잘못이 아니라 의도된 구성으로 읽힌다.
+            string? webBlockedReason = null;
+            if (webIntegrated)
+            {
+                try
+                {
+                    VMS.Core.Security.InsecureUrlGuard.Check(systemConfig.WebServerUrl, "Web 연동");
+                }
+                catch (InvalidOperationException ex)
+                {
+                    webBlockedReason = ex.Message;
+                    webIntegrated = false;
+                    logService.Log($"Web 연동 차단: {ex.Message}", LogLevel.Error, "System");
+                    VMS.VisionSetup.Views.Common.MessageDialog.Show(
+                        owner: null,
+                        "Web 서버 연동이 보안 정책으로 차단되었습니다 — 작업자 로그인 · 작업지시 · 레시피 동기화 · 검사 결과 업로드가 동작하지 않습니다.\n\n"
+                        + ex.Message,
+                        "BODA VMS — Web 연동 경고", VMS.VisionSetup.Views.Common.MessageDialogKind.Warning);
+                }
+            }
             if (!VMS.Core.Services.SystemConfigReader.IsSetupCompleted())
                 logService.Log(
                     "시스템 설정 파일에 Web 서버 설정이 없습니다 — 시스템 설정 마법사를 마치지 않은 상태라 Web 없이 운전합니다. 마법사에서 저장하세요.",
@@ -481,19 +504,6 @@ namespace VMS
                 InspectionService.ParameterSyncService = parameterSyncService;
                 InspectionService.ParameterApplyService =
                     new VsParameterApplyService(parameterSyncService);
-            }
-            catch (InvalidOperationException ex)
-            {
-                // InsecureUrlGuard 차단 (Production + 비-loopback HTTP webServerUrl) —
-                // 조용히 삼키면 레시피/파라미터/결과 업로드가 무증상으로 꺼진다 (2026-08-10).
-                // 앱은 로컬 검사 가능하므로 계속 부팅하되 반드시 통지.
-                Debug.WriteLine($"[App] ParameterSyncService init failed: {ex.Message}");
-                logService.Log($"Web 연동 비활성: {ex.Message}", LogLevel.Warning, "System");
-                VMS.VisionSetup.Views.Common.MessageDialog.Show(
-                    owner: null,
-                    "Web 서버 연동이 비활성화되었습니다 — 레시피 동기화·검사 결과 업로드가 동작하지 않습니다.\n\n"
-                    + ex.Message,
-                    "BODA VMS — Web 연동 경고", VMS.VisionSetup.Views.Common.MessageDialogKind.Warning);
             }
             catch (Exception ex)
             {
@@ -607,7 +617,7 @@ namespace VMS
                 var licStatus = VMS.Core.Security.Licensing.LicenseBootCheck.Current?.Status;
                 if ((licStatus is VMS.Core.Security.Licensing.LicenseStatus.Missing
                                 or VMS.Core.Security.Licensing.LicenseStatus.SeatLeased)
-                    && !string.IsNullOrWhiteSpace(systemConfig.WebServerUrl))
+                    && webIntegrated)
                 {
                     _licenseClient = new VMS.Core.Services.LicenseClient(
                         systemConfig.WebServerUrl,
@@ -817,6 +827,9 @@ namespace VMS
                 ioBoards: ioBoardConnections,
                 updateInstallService: updateInstallService,
                 localHistoryStore: historyStore);
+
+            if (webBlockedReason != null)
+                mainViewModel.SetWebBlocked(webBlockedReason);
 
             // VisionSetup 의 Grab 요청 수신 시작 — VisionSetup 이 VMS 창을 거치지 않고
             // 이 PC 의 카메라 이미지를 받아갈 수 있게 한다 (운전/라이브 중 요청은 거절).

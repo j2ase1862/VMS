@@ -342,8 +342,28 @@ namespace VMS.ViewModels
         /// </summary>
         public bool IsWebIntegrated => _operatorAuthService != null;
 
-        /// <summary>단독 모드 여부 — 상태바 Web 칩의 3-상태(연결/끊김/단독) 트리거용.</summary>
-        public bool IsStandaloneMode => _operatorAuthService == null;
+        /// <summary>단독 모드 여부 — 상태바 Web 칩의 3-상태(연결/끊김/단독) 트리거용. Web 차단은 단독 모드가 아니다.</summary>
+        public bool IsStandaloneMode => _operatorAuthService == null && !IsWebBlocked;
+
+        /// <summary>
+        /// Web 주소는 설정했는데 보안 정책(Production + 원격 http)이 연동을 막았다 — 웹 서비스가 없어
+        /// 동작은 단독 모드와 같지만, 상태바는 설정 잘못으로 보이게 빨간 "Web 차단" 으로 표시한다.
+        /// </summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsStandaloneMode))]
+        private bool _isWebBlocked;
+
+        /// <summary>Web 차단 사유 — 상태바 Web 칩 툴팁.</summary>
+        [ObservableProperty]
+        private string? _webBlockedReason;
+
+        /// <summary>App 이 시작할 때 보안 정책 차단을 알린다.</summary>
+        public void SetWebBlocked(string reason)
+        {
+            WebBlockedReason = reason;
+            IsWebBlocked = true;
+            WebStatusText = "Web 차단 (보안 정책 — https 필요)";
+        }
 
 
         public int ConnectedCameraCount => Cameras.Count(c => c.IsConnected);
