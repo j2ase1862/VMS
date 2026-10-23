@@ -208,7 +208,7 @@
 <main>
 <div class="header-strip">
   <h1>BODA VMS 사용자 매뉴얼</h1>
-  <div class="sub">버전 3.0 · 2026-09-17 · VMS v1.46.2 · BODA.VMS.Web v1.10.3 · BODA.VMS.MLOps v0.1.2 — 시스템 구성 → 설치 → 프로그램별 조작 → 검사 설정 → 웹 관리 → 유지보수</div>
+  <div class="sub">버전 3.0 · 2026-10-23 · VMS v1.47.0 · BODA.VMS.Web v1.10.4 · BODA.VMS.MLOps v0.1.5 — 시스템 구성 → 설치 → 프로그램별 조작 → 검사 설정 → 웹 관리 → 유지보수</div>
 </div>
 <section id="overview">
 <h2 id="1-시스템-개요">1. 시스템 개요</h2>
@@ -354,7 +354,7 @@ VisionSetup 에서 연결할 때 "SDK 미탑재 — 시뮬레이션 모드" 경�
 
 <h3 id="install-vms">2.2 VMS 설치 (설치 마법사)</h3>
 <ol>
-  <li><code>VMS-1.39.2.msi</code> 처럼 버전이 붙은 설치 파일을 더블 클릭합니다. 설치에는 관리자 권한이 필요합니다.</li>
+  <li><code>VMS-1.47.0.msi</code> 처럼 버전이 붙은 설치 파일을 더블 클릭합니다. 설치에는 관리자 권한이 필요합니다.</li>
   <li><strong>시작 화면</strong>에서 [다음]을 누릅니다. 별도의 라이선스 동의 단계는 없습니다.</li>
   <li><strong>설치 폴더</strong>는 기본값 <code>C:\Program Files\VASIM\BODA Vision System\</code> 을 그대로 두는 것을 권장합니다.</li>
   <li><strong>설치 구성 선택</strong> 화면에서 이 PC 에 함께 설치할 항목을 고릅니다.
@@ -369,7 +369,7 @@ VisionSetup 에서 연결할 때 "SDK 미탑재 — 시뮬레이션 모드" 경�
 <figure><img src="../gs/screenshots/71_msi_weboption.png" data-width="420" alt="설치 구성 선택 화면">
 <figcaption>설치 구성 선택 — "BODA VMS Web 서버 포함" 체크박스</figcaption></figure>
 <div class="callout tip"><strong>무인 설치</strong>가 필요하면 명령 프롬프트(관리자)에서 다음처럼 실행합니다.
-<code>msiexec /i VMS-1.39.2.msi /qn INSTALLWEB=0</code> — 값 0 은 제외, 1 은 포함입니다.</div>
+<code>msiexec /i VMS-1.47.0.msi /qn INSTALLWEB=0</code> — 값 0 은 제외, 1 은 포함입니다.</div>
 
 <h4>설치 후 처음 실행하면</h4>
 <p>VMS 를 처음 실행하면 설정 파일이 없으므로 "초기 시스템 설정이 필요합니다" 안내와 함께
@@ -411,7 +411,7 @@ cd &lt;압축 푼 폴더&gt;\deploy
 <pre><code>.\Install-Web-Offline.ps1 -Port 8080 -InstallPath "D:\BODA Web" -DataDir "D:\BODA Data"</code></pre>
 <div class="callout warn"><strong>서명 키의 유일한 사본은 서버의 <code>appsettings.Production.json</code> 입니다.</strong> 이 파일을 잃으면 모든
 사용자가 다시 로그인해야 하므로 설치 직후 안전한 곳에 백업하세요. 첫 로그인 후에는 <code>admin</code> 비밀번호를
-바꾸고, 필요한 사용자를 가입 → 승인으로 추가합니다(§8.2).</div>
+바꾸고(오른쪽 위 사용자 이름 → [비밀번호 변경], §8.1), 필요한 사용자를 가입 → 승인으로 추가합니다(§8.2).</div>
 
 <h3 id="install-mlops">2.4 MLOps 서버 · 학습 워커 설치 (선택)</h3>
 <p>딥러닝 모델을 웹에서 만들어 라인에 배포하려는 현장만 설치합니다. 검사 자체는 MLOps 없이도 동작합니다.</p>
@@ -428,10 +428,10 @@ cd &lt;압축 푼 폴더&gt;\deploy
 <ol>
   <li>NVIDIA GPU(VRAM 8GB 이상), CUDA 12.4 지원 드라이버(550 이상), <strong>Python 3.12 64-bit 를 "모든 사용자용"으로</strong> 설치합니다.</li>
   <li>MLOps 화면 학습 → 워커 → [워커 등록]에서 이름을 넣고 [발급]을 눌러 <code>wk_…</code> 토큰을 받습니다. 토큰은 이때 한 번만 표시됩니다.</li>
-  <li><code>BODA-VMS-TrainWorker-0.1.2.msi</code> 를 실행하고 <strong>"워커 연결 설정"</strong> 화면에 관리 서버 주소(<code>http://서버:5310</code>) ·
+  <li><code>BODA-VMS-TrainWorker-0.1.5.msi</code> 를 실행하고 <strong>"워커 연결 설정"</strong> 화면에 관리 서버 주소(<code>http://서버:5310</code>) ·
       워커 토큰 · 워커 이름을 입력합니다.</li>
   <li>설치가 끝나면 서비스 <code>BodaVmsTrainWorker</code> 가 시작되어 첫 실행 시 파이썬 환경(venv, 약 6GB)을 준비합니다.
-      온라인 설치는 10~40 분이 걸립니다. 폐쇄망은 MSI 대신 함께 배포되는 <code>BODA-VMS-TrainWorker-0.1.2-offline</code> 폴더의 <code>install-offline.cmd</code> 를 관리자 권한 명령 프롬프트에서 실행합니다(wheel 묶음을 이 PC 에 복사한 뒤 같은 MSI 를 설치합니다. 복사된 <code>%ProgramData%\BODA VMS TrainWorker\wheels</code> 는 지우지 마세요).</li>
+      온라인 설치는 10~40 분이 걸립니다. 폐쇄망은 MSI 대신 함께 배포되는 <code>BODA-VMS-TrainWorker-0.1.5-offline</code> 폴더의 <code>install-offline.cmd</code> 를 관리자 권한 명령 프롬프트에서 실행합니다(wheel 묶음을 이 PC 에 복사한 뒤 같은 MSI 를 설치합니다. 복사된 <code>%ProgramData%\BODA VMS TrainWorker\wheels</code> 는 지우지 마세요).</li>
   <li>MLOps 워커 화면에서 상태가 <strong>대기 중</strong>으로 바뀌면 준비 완료입니다. 로그는 <code>%ProgramData%\BODA VMS TrainWorker\logs</code> 에 남습니다.</li>
 </ol>
 <figure><img src="../gs/screenshots/mlops/worker_install_wizard.png" data-width="420" alt="학습 워커 설치 마법사">
@@ -2026,7 +2026,8 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
   <li>신청한 계정은 <strong>승인 대기</strong> 상태이며, 관리자가 시스템 관리 → 사용자 승인에서 역할(Guest / User / Admin)을 정해 승인해야 로그인할 수 있습니다(§8.22). 신청이 들어오면 관리자에게 알람이 생깁니다.</li>
 </ul>
 <h4>비밀번호 변경</h4>
-<p>관리자가 비밀번호를 초기화하면 임시 비밀번호가 발급됩니다. 임시 비밀번호로 로그인하면 <strong>비밀번호 변경</strong> 화면으로 자동 이동하며, 바꾸기 전에는 다른 화면을 쓸 수 없습니다.
+<p>화면 오른쪽 위의 사용자 이름을 누르고 <strong>[비밀번호 변경]</strong> 을 고르면 언제든 비밀번호를 바꿀 수 있습니다.
+관리자가 비밀번호를 초기화하면 임시 비밀번호가 발급됩니다. 임시 비밀번호로 로그인하면 <strong>비밀번호 변경</strong> 화면으로 자동 이동하며, 바꾸기 전에는 다른 화면을 쓸 수 없습니다.
 현재 비밀번호 · 새 비밀번호 · 확인을 입력하고 [비밀번호 변경] 을 누릅니다.</p>
 
 <figure><img src="../gs/screenshots/v3/web/d32_mobile_drawer.png" data-width="260" alt="좁은 화면(태블릿 · 스마트폰)에서는 ☰ 로 여는 드로어 메뉴"><figcaption>좁은 화면(태블릿 · 스마트폰)에서는 ☰ 로 여는 드로어 메뉴</figcaption></figure>
@@ -3243,8 +3244,8 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <h3 id="appx-version">13.4 문서 정보</h3>
 <table class="cols-3-6">
   <tr><th>항목</th><th>값</th></tr>
-  <tr><td>문서 버전</td><td>3.0 (2026-09-17)</td></tr>
-  <tr><td>대상 소프트웨어</td><td>VMS 1.46.2 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.2</td></tr>
+  <tr><td>문서 버전</td><td>3.0 (2026-10-23)</td></tr>
+  <tr><td>대상 소프트웨어</td><td>VMS 1.47.0 · BODA.VMS.Web 1.10.4 · BODA.VMS.MLOps 0.1.5</td></tr>
   <tr><td>구성</td><td>VMS · VMS.VisionSetup · VMS.AppSetup (검사 런타임) / BODA.VMS.Web (생산 관리) / BODA.VMS.MLOps (선택 구성 요소, 인증 범위 외)</td></tr>
   <tr><td>발행</td><td>BODA Vision AI</td></tr>
 </table>

@@ -1877,7 +1877,7 @@
   "t": "li",
   "segs": [
    {
-    "s": "VMS-1.39.2.msi",
+    "s": "VMS-1.47.0.msi",
     "b": false,
     "m": true
    },
@@ -1889,7 +1889,7 @@
   ],
   "ordered": true,
   "depth": 0,
-  "text": "VMS-1.39.2.msi 처럼 버전이 붙은 설치 파일을 더블 클릭합니다. 설치에는 관리자 권한이 필요합니다."
+  "text": "VMS-1.47.0.msi 처럼 버전이 붙은 설치 파일을 더블 클릭합니다. 설치에는 관리자 권한이 필요합니다."
  },
  {
   "t": "li",
@@ -2013,7 +2013,7 @@
     "m": false
    },
    {
-    "s": "msiexec /i VMS-1.39.2.msi /qn INSTALLWEB=0",
+    "s": "msiexec /i VMS-1.47.0.msi /qn INSTALLWEB=0",
     "b": false,
     "m": true
    },
@@ -2023,7 +2023,7 @@
     "m": false
    }
   ],
-  "text": "무인 설치가 필요하면 명령 프롬프트(관리자)에서 다음처럼 실행합니다. msiexec /i VMS-1.39.2.msi /qn INSTALLWEB=0 — 값 0 은 제외, 1 은 포함입니다."
+  "text": "무인 설치가 필요하면 명령 프롬프트(관리자)에서 다음처럼 실행합니다. msiexec /i VMS-1.47.0.msi /qn INSTALLWEB=0 — 값 0 은 제외, 1 은 포함입니다."
  },
  {
   "t": "h",
@@ -2416,12 +2416,12 @@
     "m": true
    },
    {
-    "s": " 비밀번호를 바꾸고, 필요한 사용자를 가입 → 승인으로 추가합니다(§8.2).",
+    "s": " 비밀번호를 바꾸고(오른쪽 위 사용자 이름 → [비밀번호 변경], §8.1), 필요한 사용자를 가입 → 승인으로 추가합니다(§8.2).",
     "b": false,
     "m": false
    }
   ],
-  "text": "서명 키의 유일한 사본은 서버의 appsettings.Production.json 입니다. 이 파일을 잃으면 모든 사용자가 다시 로그인해야 하므로 설치 직후 안전한 곳에 백업하세요. 첫 로그인 후에는 admin 비밀번호를 바꾸고, 필요한 사용자를 가입 → 승인으로 추가합니다(§8.2)."
+  "text": "서명 키의 유일한 사본은 서버의 appsettings.Production.json 입니다. 이 파일을 잃으면 모든 사용자가 다시 로그인해야 하므로 설치 직후 안전한 곳에 백업하세요. 첫 로그인 후에는 admin 비밀번호를 바꾸고(오른쪽 위 사용자 이름 → [비밀번호 변경], §8.1), 필요한 사용자를 가입 → 승인으로 추가합니다(§8.2)."
  },
  {
   "t": "h",
@@ -2620,7 +2620,7 @@
   "t": "li",
   "segs": [
    {
-    "s": "BODA-VMS-TrainWorker-0.1.2.msi",
+    "s": "BODA-VMS-TrainWorker-0.1.5.msi",
     "b": false,
     "m": true
    },
@@ -2652,7 +2652,7 @@
   ],
   "ordered": true,
   "depth": 0,
-  "text": "BODA-VMS-TrainWorker-0.1.2.msi 를 실행하고 \"워커 연결 설정\" 화면에 관리 서버 주소(http://서버:5310) · 워커 토큰 · 워커 이름을 입력합니다."
+  "text": "BODA-VMS-TrainWorker-0.1.5.msi 를 실행하고 \"워커 연결 설정\" 화면에 관리 서버 주소(http://서버:5310) · 워커 토큰 · 워커 이름을 입력합니다."
  },
  {
   "t": "li",
@@ -2673,7 +2673,7 @@
     "m": false
    },
    {
-    "s": "BODA-VMS-TrainWorker-0.1.2-offline",
+    "s": "BODA-VMS-TrainWorker-0.1.5-offline",
     "b": false,
     "m": true
    },
@@ -2705,7 +2705,7 @@
   ],
   "ordered": true,
   "depth": 0,
-  "text": "설치가 끝나면 서비스 BodaVmsTrainWorker 가 시작되어 첫 실행 시 파이썬 환경(venv, 약 6GB)을 준비합니다. 온라인 설치는 10~40 분이 걸립니다. 폐쇄망은 MSI 대신 함께 배포되는 BODA-VMS-TrainWorker-0.1.2-offline 폴더의 install-offline.cmd 를 관리자 권한 명령 프롬프트에서 실행합니다(wheel 묶음을 이 PC 에 복사한 뒤 같은 MSI 를 설치합니다. 복사된 %ProgramData%\\BODA VMS TrainWorker\\wheels 는 지우지 마세요)."
+  "text": "설치가 끝나면 서비스 BodaVmsTrainWorker 가 시작되어 첫 실행 시 파이썬 환경(venv, 약 6GB)을 준비합니다. 온라인 설치는 10~40 분이 걸립니다. 폐쇄망은 MSI 대신 함께 배포되는 BODA-VMS-TrainWorker-0.1.5-offline 폴더의 install-offline.cmd 를 관리자 권한 명령 프롬프트에서 실행합니다(wheel 묶음을 이 PC 에 복사한 뒤 같은 MSI 를 설치합니다. 복사된 %ProgramData%\\BODA VMS TrainWorker\\wheels 는 지우지 마세요)."
  },
  {
   "t": "li",
@@ -29429,7 +29429,17 @@
   "t": "p",
   "segs": [
    {
-    "s": "관리자가 비밀번호를 초기화하면 임시 비밀번호가 발급됩니다. 임시 비밀번호로 로그인하면 ",
+    "s": "화면 오른쪽 위의 사용자 이름을 누르고 ",
+    "b": false,
+    "m": false
+   },
+   {
+    "s": "[비밀번호 변경]",
+    "b": true,
+    "m": false
+   },
+   {
+    "s": " 을 고르면 언제든 비밀번호를 바꿀 수 있습니다. 관리자가 비밀번호를 초기화하면 임시 비밀번호가 발급됩니다. 임시 비밀번호로 로그인하면 ",
     "b": false,
     "m": false
    },
@@ -29444,7 +29454,7 @@
     "m": false
    }
   ],
-  "text": "관리자가 비밀번호를 초기화하면 임시 비밀번호가 발급됩니다. 임시 비밀번호로 로그인하면 비밀번호 변경 화면으로 자동 이동하며, 바꾸기 전에는 다른 화면을 쓸 수 없습니다. 현재 비밀번호 · 새 비밀번호 · 확인을 입력하고 [비밀번호 변경] 을 누릅니다."
+  "text": "화면 오른쪽 위의 사용자 이름을 누르고 [비밀번호 변경] 을 고르면 언제든 비밀번호를 바꿀 수 있습니다. 관리자가 비밀번호를 초기화하면 임시 비밀번호가 발급됩니다. 임시 비밀번호로 로그인하면 비밀번호 변경 화면으로 자동 이동하며, 바꾸기 전에는 다른 화면을 쓸 수 없습니다. 현재 비밀번호 · 새 비밀번호 · 확인을 입력하고 [비밀번호 변경] 을 누릅니다."
  },
  {
   "t": "figure",
@@ -54604,14 +54614,14 @@
     {
      "segs": [
       {
-       "s": "3.0 (2026-09-17)",
+       "s": "3.0 (2026-10-23)",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "3.0 (2026-09-17)"
+     "text": "3.0 (2026-10-23)"
     }
    ],
    [
@@ -54630,14 +54640,14 @@
     {
      "segs": [
       {
-       "s": "VMS 1.46.2 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.2",
+       "s": "VMS 1.47.0 · BODA.VMS.Web 1.10.4 · BODA.VMS.MLOps 0.1.5",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "VMS 1.46.2 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.2"
+     "text": "VMS 1.47.0 · BODA.VMS.Web 1.10.4 · BODA.VMS.MLOps 0.1.5"
     }
    ],
    [
