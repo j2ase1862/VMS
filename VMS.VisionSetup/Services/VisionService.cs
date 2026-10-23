@@ -1315,6 +1315,8 @@ namespace VMS.VisionSetup.Services
                     "AnomalyTool",
                     "EnsembleTool",
                     "SegmentationTool",
+                    // YoloSegTool — 팔레트에서 숨김(2026-10-23, 인스턴스 분할은 RF-DETR-seg). 옛 레시피 열기·실행용으로
+                    // 직렬화 왕복 순회에는 남긴다.
                     "YoloSegTool",
                     "RfdetrSegTool"
                 },

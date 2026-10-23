@@ -1092,7 +1092,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
   <tr><td>Blob</td><td>판정을 켰을 때 면적 · 개수가 기준 범위를 벗어난 경우. 덩어리가 하나도 없으면 NG</td></tr>
   <tr><td>Feature Match · Shape Match</td><td>패턴을 찾지 못했거나, 커버리지 판정 · 각도/크기 판정에 걸린 경우</td></tr>
   <tr><td>Geometry · Match Align · Multi-Step Align</td><td>측정값(거리 · 각도 · Δ)이 기준값 ± 공차를 벗어난 경우</td></tr>
-  <tr><td>Detection · Segmentation · YOLOv8-seg · RF-DETR-seg</td><td>객체가 0 건 검출된 경우(또는 각도 판정을 켰는데 계산 불가)</td></tr>
+  <tr><td>Detection · Segmentation · RF-DETR-seg</td><td>객체가 0 건 검출된 경우(또는 각도 판정을 켰는데 계산 불가)</td></tr>
   <tr><td>Code Reader · OCR · OCV</td><td>판독 실패, 기대 문자열 불일치, 품질 등급 미달</td></tr>
   <tr><td>Result</td><td>연결된 도구 중 하나라도 Fail 이면 최종 NG</td></tr>
   <tr><td>운전 공통</td><td>카메라에서 이미지를 받지 못한 사이클</td></tr>
@@ -1131,7 +1131,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
   <tr><td>식별</td><td>코드 판독</td><td>Code Reader → Result. 바코드 · QR · DataMatrix</td></tr>
   <tr><td>Deep Learning</td><td>DL 객체 검출 판정 / DL 이상 탐지 판정</td><td>Detection → Result / Anomaly → Result (ONNX 모델 필요)</td></tr>
   <tr><td>3D</td><td>3D 객체 카운트 · 치수 (기본)</td><td>Height Slicer → PointCloud Mask Crop → PointCloud Cluster. 높이 범위로 잘라 개수 · 치수 (3D 카메라 필요)</td></tr>
-  <tr><td>3D</td><td>DL 세그 기반 3D 객체 검출</td><td>YOLOv8-seg(마스크 출력) → Mask Crop → Cluster. 딥러닝 윤곽으로 점군을 잘라 객체별 치수</td></tr>
+  <tr><td>3D</td><td>DL 세그 기반 3D 객체 검출</td><td>RF-DETR-seg(마스크 출력) → Mask Crop → Cluster. 딥러닝 윤곽으로 점군을 잘라 객체별 치수</td></tr>
   <tr><td>3D</td><td>3D 기준 형상 편차 검사</td><td>PointCloud Filter → Registration → Deviation. 기준 형상에 정합한 뒤 편차(들뜸 · 눌림) 검사</td></tr>
   <tr><td>얼라인</td><td>Match Align — 2D 매치 얼라인</td><td>Grayscale → Feature Match → Match Align → Result. 부품이 한 화면에 들어올 때. ΔX / ΔY / Δθ 산출 · 판정 · 로봇 변환. 각도 정밀도가 더 필요하면 Feature Match 를 하나 더 붙이고 Match Align 의 Mode 를 TwoPoint 로</td></tr>
   <tr><td>얼라인</td><td>Multi-Step Align — 2-스텝 얼라인</td><td>스텝 Align A / Align B + 합산 (Multi-Step Align). 카메라가 이동하는 대형 부품(한 화면에 안 들어올 때)</td></tr>
@@ -1601,7 +1601,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <li>템플릿 ‘표준 3D 얼라인’ 은 Filter → Registration(변환 미적용) → Result 로 6 축 변위를 내고, ‘3D 기준 형상 편차 검사’ 는 Registration → Deviation 순서입니다.</li>
 </ul>
 <h4>PointCloud Mask Crop — 마스크로 점군 잘라내기</h4>
-<p>2D 마스크 이미지(Threshold · Height Slicer · YOLOv8-seg 의 마스크 출력)에 해당하는 영역만 3D 점군에서 남깁니다. 2D 딥러닝 검출과 3D 측정을 잇는 다리 역할이며, 마스크와 점군 해상도가 달라도 자동으로 비율을 맞춥니다. 마스크 없이 ROI 만 그려 잘라낼 수도 있습니다.</p>
+<p>2D 마스크 이미지(Threshold · Height Slicer · RF-DETR-seg 의 마스크 출력)에 해당하는 영역만 3D 점군에서 남깁니다. 2D 딥러닝 검출과 3D 측정을 잇는 다리 역할이며, 마스크와 점군 해상도가 달라도 자동으로 비율을 맞춥니다. 마스크 없이 ROI 만 그려 잘라낼 수도 있습니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/23_PointCloud_Mask_Crop_split.png" data-width="500" alt="PointCloud Mask Crop — 마스크로 점군 잘라내기 설정 패널"><figcaption>PointCloud Mask Crop — 마스크로 점군 잘라내기 — Tool Settings 패널</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
@@ -1614,7 +1614,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <p><strong>결과 값</strong> — InputPoints · OutputPoints · KeptRatio · MaskCoveragePercent · MergedPoints</p>
 <p><strong>판정</strong> — 남은 점이 0 이면 실패(점군은 바뀌지 않음). MaskCoveragePercent 가 100 에 가까우면 마스크가 아니라 일반 이미지를 연결한 것입니다.</p>
 <ul>
-<li>자동 마스크 흐름: YOLOv8-seg(Output Mask Image 켬) 또는 Threshold · Height Slicer → Image 연결 → Mask Crop → Result 연결 → PointCloud Cluster.</li>
+<li>자동 마스크 흐름: RF-DETR-seg(Output Mask Image 켬) 또는 Threshold · Height Slicer → Image 연결 → Mask Crop → Result 연결 → PointCloud Cluster.</li>
 <li>수동 흐름: 2D 이미지를 연결하고 이 도구를 선택한 뒤 이미지 뷰에서 ROI(사각형 · 원 · 다각형)를 그립니다. 결과는 Point Cloud 탭에서 확인합니다.</li>
 </ul>
 <h4>PointCloud Cluster — 덩어리 분리 · 개수 · 치수</h4>
@@ -1718,7 +1718,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <li>템플릿 ‘DL 객체 검출 판정’ 이 Detection → Result 체인을 만들어 줍니다.</li>
 </ul>
 <h4>Segmentation — 픽셀 단위 분할 (semantic)</h4>
-<p>U-Net 같은 픽셀 분류 모델로 이미지를 클래스별 마스크로 나눕니다. 결함 영역의 면적을 재거나 배경 · 전경을 분리할 때 쓰며, 같은 클래스의 개체를 따로 세야 하면 YOLOv8-seg · RF-DETR-seg 를 씁니다. 뒤에 Blob 을 붙여 개수 · 크기를 분석합니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
+<p>U-Net 같은 픽셀 분류 모델로 이미지를 클래스별 마스크로 나눕니다. 결함 영역의 면적을 재거나 배경 · 전경을 분리할 때 쓰며, 같은 클래스의 개체를 따로 세야 하면 RF-DETR-seg 를 씁니다. 뒤에 Blob 을 붙여 개수 · 크기를 분석합니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/30_Segmentation.png" data-width="240" alt="Segmentation — 픽셀 단위 분할 (semantic) 설정 패널"><figcaption>Segmentation — 픽셀 단위 분할 (semantic) — Tool Settings 패널</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
@@ -1732,35 +1732,21 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <ul>
 <li>Class{i}_Pixels 는 검사 이미지(ROI 를 쓰면 ROI 영역) 크기 기준 화소 수이고, Class{i}_AreaRatio 는 그 영역 안 비율이라 모든 클래스를 더하면 1 입니다. ROI 를 쓰면 오버레이도 ROI 자리에만 그려집니다.</li>
 </ul>
-<h4>YOLOv8-seg — 인스턴스 분할</h4>
-<p>YOLOv8/v11 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 픽셀 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 새로 만드는 검사에는 RF-DETR-seg 를 권장하며, 이 도구는 기존 YOLOv8/v11 규약 ONNX 를 쓰던 레시피 호환용입니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
-<figure><img src="../gs/screenshots/v3/tools/31_YOLOv8-seg.png" data-width="240" alt="YOLOv8-seg — 인스턴스 분할 설정 패널"><figcaption>YOLOv8-seg — 인스턴스 분할 — Tool Settings 패널</figcaption></figure>
-<table class="cols-3-2-4">
-<tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
-<tr><td>Model Path (.onnx) · Input Size</td><td>(빈 값) · 640</td><td>YOLOv8/v11 표준 export 규약(output0 + output1 프로토타입)</td></tr>
-<tr><td>Confidence Threshold · IoU Threshold (NMS) · Mask Threshold</td><td>0.25 · 0.45 · 0.5</td><td>검출 신뢰도 / 중복 제거 / 마스크 이진화 기준(0.3 크게 · 0.7 코어만)</td></tr>
-<tr><td>Show Mask Overlay · Overlay Opacity · Draw Boxes + Labels</td><td>켬 · 0.4 · 켬</td><td>표시 옵션</td></tr>
-<tr><td>Output Mask Image</td><td>해제</td><td>켜면 출력 이미지가 인스턴스 이진 마스크(흰색 = 인스턴스)가 되어 Mask Crop 등에 Image 연결</td></tr>
-</table>
-<p><strong>결과 값</strong> — InstanceCount · Inst{i}_Class · Inst{i}_ClassName · Inst{i}_Score · Inst{i}_X/Y/Width/Height · Inst{i}_MaskPixels</p>
-<p><strong>판정</strong> — 인스턴스가 0 건이면 NG.</p>
-<ul>
-<li>템플릿 ‘DL 세그 기반 3D 객체 검출’ 이 YOLOv8-seg(마스크 출력) → Mask Crop → Cluster 체인을 만듭니다.</li>
-</ul>
 <h4>RF-DETR-seg — 인스턴스 분할</h4>
-<p>RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. YOLOv8-seg 와 하는 일은 같고, 새로 만드는 검사에는 이 도구를 권장합니다. 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
+<p>RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/32_RF-DETR-seg.png" data-width="240" alt="RF-DETR-seg — 인스턴스 분할 설정 패널"><figcaption>RF-DETR-seg — 인스턴스 분할 — Tool Settings 패널</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Model Path (.onnx) · [레지스트리…]</td><td>(빈 값)</td><td>파일 또는 model:// 참조</td></tr>
 <tr><td>Input Size (모델이 정합니다)</td><td>560 (잠김)</td><td>모델을 열면 ONNX 가 정한 값으로 자동 설정되고 칸이 잠깁니다 — 모델마다 배수가 달라 손으로 맞추면 안 됩니다</td></tr>
 <tr><td>Confidence Threshold · Max Instances</td><td>0.5 · 100 [1~1000]</td><td>검출 신뢰도 / 점수 순 상한</td></tr>
-<tr><td>Show Mask Overlay · Overlay Opacity · Draw Boxes + Labels · Output Mask Image</td><td>켬 · 0.4 · 켬 · 해제</td><td>YOLOv8-seg 와 같은 표시 · 마스크 출력 옵션</td></tr>
+<tr><td>Show Mask Overlay · Overlay Opacity · Draw Boxes + Labels · Output Mask Image</td><td>켬 · 0.4 · 켬 · 해제</td><td>표시 옵션 · 켜면 출력 이미지가 인스턴스 이진 마스크(흰색 = 인스턴스)가 되어 Mask Crop 등에 Image 연결</td></tr>
 </table>
-<p><strong>결과 값</strong> — YOLOv8-seg 와 동일(InstanceCount · Inst{i}_…)</p>
+<p><strong>결과 값</strong> — InstanceCount · Inst{i}_Class · Inst{i}_ClassName · Inst{i}_Score · Inst{i}_X/Y/Width/Height · Inst{i}_MaskPixels</p>
 <p><strong>판정</strong> — 인스턴스가 0 건이면 NG.</p>
 <ul>
 <li>학습은 MLOps 의 train_rfdetr_seg.py(세그멘테이션 데이터셋, coco 형식)로 합니다(§9.6).</li>
+<li>템플릿 ‘DL 세그 기반 3D 객체 검출’ 이 RF-DETR-seg(마스크 출력) → Mask Crop → Cluster 체인을 만듭니다.</li>
 </ul>
 <h4>Classify — 이미지 분류</h4>
 <p>ResNet · MobileNet 같은 분류 모델(ONNX)로 이미지(또는 ROI) 전체를 한 클래스로 판정합니다. 양품/불량 판정, 부품 종류 구분, 외관 등급에 씁니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
@@ -1967,7 +1953,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 </ol>
 
 <h3 id="ex-3d">7.9 3D 검사 — 객체 개수 · 치수 · 형상 편차</h3>
-<figure><img src="../gs/screenshots/v3/templates/pc-dl-detect.png" data-width="520" alt="DL 세그 기반 3D 객체 검출 체인"><figcaption>YOLOv8-seg → PointCloud Mask Crop → PointCloud Cluster</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/templates/pc-dl-detect.png" data-width="520" alt="DL 세그 기반 3D 객체 검출 체인"><figcaption>RF-DETR-seg → PointCloud Mask Crop → PointCloud Cluster</figcaption></figure>
 <p><strong>상황</strong> — 3D 카메라(Mech-Mind 등)로 찍은 점군에서 부품 개수와 가로 · 세로 · 높이를 재거나, 기준 형상과의 편차(들뜸 · 눌림)를 봅니다. "어디에 있는지" 는 2D 에서 찾고 "얼마나 큰지" 는 3D 에서 잽니다.</p>
 <ol>
   <li>3D 카메라 스텝에서 Acquire(또는 3D → Load 3D Data 로 .vpc 파일)로 점군을 가져옵니다. Depth Map · Point Cloud 탭에서 확인합니다.</li>
@@ -2411,7 +2397,7 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 
 <section id="deeplearning">
 <h2 id="10-딥러닝-모델-준비">10. 딥러닝 모델 준비</h2>
-<p>딥러닝 검사 도구(§6 — Detection · Classify · Anomaly · YOLOv8-seg · RF-DETR-seg · OCR)는 학습된 모델 파일(ONNX)로 동작합니다.
+<p>딥러닝 검사 도구(§6 — Detection · Classify · Anomaly · RF-DETR-seg · OCR)는 학습된 모델 파일(ONNX)로 동작합니다.
 모델의 라벨링 · 학습 · 등록은 AI 학습 플랫폼 BODA VMS MLOps(9장)에서 합니다. VMS 와 VisionSetup 은 만들어진 모델을 불러와 검사에 씁니다.</p>
 <ol>
   <li><strong>학습</strong> — MLOps 에서 데이터셋을 라벨링하고 학습 작업을 실행합니다(§9.5 · §9.6). 끝난 모델은 모델 레지스트리에 후보 버전으로 등록됩니다.</li>
@@ -3115,19 +3101,6 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <tr><td>Background Class Index</td><td>슬라이더 [0~32]</td><td></td></tr>
 <tr><td>Show Overlay</td><td>체크박스</td><td></td></tr>
 <tr><td>Overlay Opacity</td><td>슬라이더 [0.0~1.0]</td><td></td></tr>
-</table>
-<h5>YOLO Segmentation</h5>
-<table class="cols-3-3-4">
-<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
-<tr><td>Model Path (.onnx)</td><td>입력</td><td>모델 파일(.onnx) 경로 또는 model:// 참조</td></tr>
-<tr><td>Input Size</td><td>슬라이더 [64~1280]</td><td>모델 입력 크기(px)</td></tr>
-<tr><td>Confidence Threshold</td><td>슬라이더 [0.01~1.0]</td><td>신뢰도 임계값</td></tr>
-<tr><td>IoU Threshold (NMS)</td><td>슬라이더 [0.1~1.0]</td><td>박스 중복 제거 IoU 임계값</td></tr>
-<tr><td>Mask Threshold</td><td>슬라이더 [0.1~0.99]</td><td></td></tr>
-<tr><td>Show Mask Overlay</td><td>체크박스</td><td></td></tr>
-<tr><td>Overlay Opacity</td><td>슬라이더 [0.0~1.0]</td><td></td></tr>
-<tr><td>Draw Boxes + Labels</td><td>체크박스</td><td></td></tr>
-<tr><td>Output Mask Image</td><td>체크박스</td><td></td></tr>
 </table>
 <h5>RF-DETR-seg (인스턴스 분할)</h5>
 <table class="cols-3-3-4">

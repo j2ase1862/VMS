@@ -73,16 +73,16 @@ namespace VMS.VisionSetup.Services
                 Id = "pc-dl-detect",
                 Title = "DL 세그 기반 3D 객체 검출",
                 Category = Category3D,
-                Description = "YOLOv8-seg 가 만든 인스턴스 마스크로 점군을 크롭해 객체별 " +
-                              "개수·좌표·각도·치수를 잰다. YOLOv8-seg 설정에서 학습된 ONNX " +
+                Description = "RF-DETR-seg 가 만든 인스턴스 마스크로 점군을 크롭해 객체별 " +
+                              "개수·좌표·각도·치수를 잰다. RF-DETR-seg 설정에서 학습된 ONNX " +
                               "모델 경로를 지정해야 동작한다 (MLOps 에서 학습).",
                 Prerequisites = new[] { Badge3DCamera, BadgeOnnxModel },
                 Tools =
                 {
                     new TemplateToolSpec
                     {
-                        ToolType = "YoloSegTool",
-                        Configure = t => ((YoloSegTool)t).OutputMaskImage = true,
+                        ToolType = "RfdetrSegTool",
+                        Configure = t => ((RfdetrSegTool)t).OutputMaskImage = true,
                     },
                     new TemplateToolSpec { ToolType = "PointCloudMaskCropTool" },
                     new TemplateToolSpec

@@ -2877,3 +2877,28 @@ v1.46.2 는 #585(마법사를 마치지 않은 설정 파일이면 마법사, §
 ### 매뉴얼 반영 (완료)
 
 docx/PDF 재생성 204쪽(변동 없음) · 그림 151장 · 경고 0. 새 문장("시스템 설정이 끝나지 않았습니다" · "마법사를 마치지 않았으면" · "Web 차단 (보안 정책") 과 "VMS 1.46.2" 를 document.xml 에서 확인. 제품설명서 docx 재생성(v1.46.2).
+
+## 93. YOLOv8-seg 를 도구 팔레트 · 예제 템플릿에서 숨김 — **반영 완료**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-10-23 |
+| 대상 | §5 결과 판정 표 · 예제 템플릿 표 · §6.11 Deep Learning(YOLOv8-seg 절 삭제 · RF-DETR-seg · Segmentation · Mask Crop 문구) · §7.9 그림 · §10 도입 · §13 부록 B 파라미터 표 · 제품설명서 팔레트 39종 |
+| 변경 종류 | 기능 정리 (GS 시험 범위 결정) |
+
+### 무엇이 바뀌었나 (사내 기록)
+
+- GS 재신청 범위 검토(2026-10-23)에서 YOLOv8-seg 는 시험 모델이 없어(학습하려면 AGPL 프레임워크 필요, 시험 모델은 Apache-2.0 / BSD 계열만 쓰기로 함) **시험 범위 제외 + 팔레트 숨김**으로 사용자 결정. 인스턴스 분할은 RF-DETR-seg 가 같은 일을 한다.
+- 코드: `MainViewModel.InitializeToolTree` 에서 항목 삭제. `RecipeTemplateCatalog` 의 `pc-dl-detect` 를 `RfdetrSegTool`(OutputMaskImage 켬)으로 교체 + 다이어그램 PNG 재생성. 도움말(RF-DETR-seg · Mask Crop) · Mask Crop 설정 패널 안내 문구에서 YOLOv8-seg → RF-DETR-seg.
+- 남긴 것: `YoloSegTool` 클래스 · 직렬화 · `VisionService.CreateTool` · 설정 패널 · 도움말 — 이 도구가 든 기존 레시피를 열고 실행하기 위해. `GetAvailableTools` 에도 남겨 직렬화 왕복 테스트가 계속 순회한다.
+- 시험: `ToolPaletteCategoryTests.Palette_HidesYoloSeg_ButLegacyRecipesStillLoad`(팔레트 · 템플릿에 없음 + 직렬화 왕복 · 생성 가능).
+- 매뉴얼 생성기: `extract_tool_params.py` CORE 에서 YOLO Segmentation 삭제 → `_tool_params.json` 41 → 40 도구(YOLO 행만 빠짐, 나머지 동일 확인). `gen_tools_chapter.py` ORDER · `tools_prose.json` 에서 삭제.
+
+### 매뉴얼 반영 (완료 2026-10-23 — 다음 릴리즈 매뉴얼)
+
+- §5 결과 판정 표: "Detection · Segmentation · YOLOv8-seg · RF-DETR-seg" → "Detection · Segmentation · RF-DETR-seg".
+- §5 예제 템플릿 표 · §7.9 그림 캡션: "YOLOv8-seg(마스크 출력) → Mask Crop → Cluster" → "RF-DETR-seg(마스크 출력) → …", 그림 `templates/pc-dl-detect.png` 교체.
+- §6.11: YOLOv8-seg 절 삭제(패널 그림 31_YOLOv8-seg 빠짐). RF-DETR-seg 절 — "YOLOv8-seg 와 하는 일은 같고 …" 문장을 "Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출)." 로, 결과 값을 키 목록으로, 템플릿 안내 한 줄 추가. Segmentation · Mask Crop 의 YOLOv8-seg 언급 → RF-DETR-seg.
+- §10 도입: 딥러닝 검사 도구 목록에서 YOLOv8-seg 삭제. §13 부록 B: YOLO Segmentation 표 삭제.
+- 제품설명서: 팔레트 "15 카테고리 · 40종" → 39종, TP-11 Deep Learning 5종.
+- docx/PDF 재생성 203쪽(−1) · 그림 150장(−1) · 경고 0. document.xml 에 YOLOv8-seg 도구 언급 없음(Detection 의 "YOLOv8/v11 형식도 자동 판별" 은 검출 모델 형식 설명이라 유지).

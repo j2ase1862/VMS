@@ -8,7 +8,7 @@
         <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,4"
                    Text="2D 이미지에서 정한 영역으로 3D 점군을 잘라냅니다. 이미지에서 밝은(0이 아닌) 픽셀 자리에 해당하는 점만 남고, 남은 점군은 뒤에 오는 도구(Cluster 등)와 3D 뷰어에서 사용됩니다."/>
         <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,8"
-                   Text="사용법 두 가지 — ① 자동: 마스크를 만드는 도구(YOLOv8-seg의 Output Mask, Threshold, Height Slicer 등)를 Image로 연결. ② 수동: 2D 이미지를 그대로 연결하고, 이 도구를 선택한 뒤 이미지 뷰어에서 ROI(사각형·원·다각형)를 그리면 그 영역의 점군만 남습니다."/>
+                   Text="사용법 두 가지 — ① 자동: 마스크를 만드는 도구(RF-DETR-seg의 Output Mask, Threshold, Height Slicer 등)를 Image로 연결. ② 수동: 2D 이미지를 그대로 연결하고, 이 도구를 선택한 뒤 이미지 뷰어에서 ROI(사각형·원·다각형)를 그리면 그 영역의 점군만 남습니다."/>
 
         <!-- Mask Interpretation -->
         <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">

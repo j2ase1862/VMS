@@ -167,7 +167,6 @@ namespace VMS.VisionSetup.Models
             {
                 Name = "RF-DETR-seg (인스턴스 분할)",
                 Description = "RF-DETR 인스턴스 분할 ONNX 추론. 한 이미지에서 객체마다 박스 + 클래스 + 픽셀 마스크를 동시 출력.\n"
-                            + "YOLOv8-seg 와 하는 일은 같고, 새로 만드는 검사에는 이 도구를 권장합니다.\n"
                             + "출력 세 텐서: dets(정규화 cxcywh) + labels(클래스 로짓, 마지막 열이 배경) + masks(질의마다 온전한 마스크 로짓).\n"
                             + "후처리: 시그모이드 → 배경 열 제외 → (질의×클래스) 상위 선택 → 마스크 확대 → 0 에서 자름. NMS 를 쓰지 않습니다.",
                 Usage = "1) MLOps 웹에서 세그멘테이션 데이터셋으로 학습해 레지스트리에 등록. "
@@ -300,8 +299,8 @@ namespace VMS.VisionSetup.Models
             ["PointCloudMaskCropTool"] = new ToolHelp
             {
                 Name = "PointCloud Mask Crop (2D 마스크로 점군 잘라내기)",
-                Description = "2D 마스크 이미지로 3D 점군을 잘라내는 도구 — 2D 딥러닝 검출과 3D 분석을 잇는 다리입니다.\n\n[언제 쓰나요]\n• YOLOv8-seg가 찾은 객체의 점군만 남겨 개수/치수를 재고 싶을 때\n• Threshold/Height Slicer 마스크로 관심 영역의 점군만 추리고 싶을 때\n\n마스크에서 0이 아닌 픽셀 위치의 점만 남기고, 남은 점군은 후속 점군 도구(Cluster, Registration 등)가 사용합니다. 마스크와 점군의 해상도가 달라도 자동으로 비율을 맞춥니다.",
-                Usage = "[자동 마스크] 1) 마스크를 만드는 도구(YOLOv8-seg의 Output Mask Image 켬, Threshold, Height Slicer 등)를 앞에 배치. 2) 그 도구 → 이 도구로 Image 연결. 3) Run → 마스크 안의 점만 남음. 4) 뒤에 PointCloud Cluster를 연결(Result 연결로 순서 보장)하면 객체 개수·치수 측정 완성.\n\n[수동 ROI] 마스크 도구 없이 2D 이미지를 그대로 연결하고, 이 도구를 선택한 뒤 이미지 뷰어에서 ROI(사각형·원·다각형)를 그리면 그 영역의 점군만 남습니다 — 결과는 3D 뷰어에서 확인.",
+                Description = "2D 마스크 이미지로 3D 점군을 잘라내는 도구 — 2D 딥러닝 검출과 3D 분석을 잇는 다리입니다.\n\n[언제 쓰나요]\n• RF-DETR-seg가 찾은 객체의 점군만 남겨 개수/치수를 재고 싶을 때\n• Threshold/Height Slicer 마스크로 관심 영역의 점군만 추리고 싶을 때\n\n마스크에서 0이 아닌 픽셀 위치의 점만 남기고, 남은 점군은 후속 점군 도구(Cluster, Registration 등)가 사용합니다. 마스크와 점군의 해상도가 달라도 자동으로 비율을 맞춥니다.",
+                Usage = "[자동 마스크] 1) 마스크를 만드는 도구(RF-DETR-seg의 Output Mask Image 켬, Threshold, Height Slicer 등)를 앞에 배치. 2) 그 도구 → 이 도구로 Image 연결. 3) Run → 마스크 안의 점만 남음. 4) 뒤에 PointCloud Cluster를 연결(Result 연결로 순서 보장)하면 객체 개수·치수 측정 완성.\n\n[수동 ROI] 마스크 도구 없이 2D 이미지를 그대로 연결하고, 이 도구를 선택한 뒤 이미지 뷰어에서 ROI(사각형·원·다각형)를 그리면 그 영역의 점군만 남습니다 — 결과는 3D 뷰어에서 확인.",
                 CognexEquivalent = "(Mech-Vision의 '마스크로 점군 추출' 스텝 대응)",
                 Results = new Dictionary<string, string>
                 {

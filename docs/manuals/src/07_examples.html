@@ -94,7 +94,7 @@
 </ol>
 
 <h3 id="ex-3d">7.9 3D 검사 — 객체 개수 · 치수 · 형상 편차</h3>
-<figure><img src="../gs/screenshots/v3/templates/pc-dl-detect.png" data-width="520" alt="DL 세그 기반 3D 객체 검출 체인"><figcaption>YOLOv8-seg → PointCloud Mask Crop → PointCloud Cluster</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/templates/pc-dl-detect.png" data-width="520" alt="DL 세그 기반 3D 객체 검출 체인"><figcaption>RF-DETR-seg → PointCloud Mask Crop → PointCloud Cluster</figcaption></figure>
 <p><strong>상황</strong> — 3D 카메라(Mech-Mind 등)로 찍은 점군에서 부품 개수와 가로 · 세로 · 높이를 재거나, 기준 형상과의 편차(들뜸 · 눌림)를 봅니다. "어디에 있는지" 는 2D 에서 찾고 "얼마나 큰지" 는 3D 에서 잽니다.</p>
 <ol>
   <li>3D 카메라 스텝에서 Acquire(또는 3D → Load 3D Data 로 .vpc 파일)로 점군을 가져옵니다. Depth Map · Point Cloud 탭에서 확인합니다.</li>
