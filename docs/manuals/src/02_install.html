@@ -31,7 +31,7 @@ VisionSetup 에서 연결할 때 "SDK 미탑재 — 시뮬레이션 모드" 경�
 
 <h3 id="install-vms">2.2 VMS 설치 (설치 마법사)</h3>
 <ol>
-  <li><code>VMS-1.39.2.msi</code> 처럼 버전이 붙은 설치 파일을 더블 클릭합니다. 설치에는 관리자 권한이 필요합니다.</li>
+  <li><code>VMS-1.47.0.msi</code> 처럼 버전이 붙은 설치 파일을 더블 클릭합니다. 설치에는 관리자 권한이 필요합니다.</li>
   <li><strong>시작 화면</strong>에서 [다음]을 누릅니다. 별도의 라이선스 동의 단계는 없습니다.</li>
   <li><strong>설치 폴더</strong>는 기본값 <code>C:\Program Files\VASIM\BODA Vision System\</code> 을 그대로 두는 것을 권장합니다.</li>
   <li><strong>설치 구성 선택</strong> 화면에서 이 PC 에 함께 설치할 항목을 고릅니다.
@@ -46,7 +46,7 @@ VisionSetup 에서 연결할 때 "SDK 미탑재 — 시뮬레이션 모드" 경�
 <figure><img src="../gs/screenshots/71_msi_weboption.png" data-width="420" alt="설치 구성 선택 화면">
 <figcaption>설치 구성 선택 — "BODA VMS Web 서버 포함" 체크박스</figcaption></figure>
 <div class="callout tip"><strong>무인 설치</strong>가 필요하면 명령 프롬프트(관리자)에서 다음처럼 실행합니다.
-<code>msiexec /i VMS-1.39.2.msi /qn INSTALLWEB=0</code> — 값 0 은 제외, 1 은 포함입니다.</div>
+<code>msiexec /i VMS-1.47.0.msi /qn INSTALLWEB=0</code> — 값 0 은 제외, 1 은 포함입니다.</div>
 
 <h4>설치 후 처음 실행하면</h4>
 <p>VMS 를 처음 실행하면 설정 파일이 없으므로 "초기 시스템 설정이 필요합니다" 안내와 함께
@@ -88,7 +88,7 @@ cd &lt;압축 푼 폴더&gt;\deploy
 <pre><code>.\Install-Web-Offline.ps1 -Port 8080 -InstallPath "D:\BODA Web" -DataDir "D:\BODA Data"</code></pre>
 <div class="callout warn"><strong>서명 키의 유일한 사본은 서버의 <code>appsettings.Production.json</code> 입니다.</strong> 이 파일을 잃으면 모든
 사용자가 다시 로그인해야 하므로 설치 직후 안전한 곳에 백업하세요. 첫 로그인 후에는 <code>admin</code> 비밀번호를
-바꾸고, 필요한 사용자를 가입 → 승인으로 추가합니다(§8.2).</div>
+바꾸고(오른쪽 위 사용자 이름 → [비밀번호 변경], §8.1), 필요한 사용자를 가입 → 승인으로 추가합니다(§8.2).</div>
 
 <h3 id="install-mlops">2.4 MLOps 서버 · 학습 워커 설치 (선택)</h3>
 <p>딥러닝 모델을 웹에서 만들어 라인에 배포하려는 현장만 설치합니다. 검사 자체는 MLOps 없이도 동작합니다.</p>
@@ -105,10 +105,10 @@ cd &lt;압축 푼 폴더&gt;\deploy
 <ol>
   <li>NVIDIA GPU(VRAM 8GB 이상), CUDA 12.4 지원 드라이버(550 이상), <strong>Python 3.12 64-bit 를 "모든 사용자용"으로</strong> 설치합니다.</li>
   <li>MLOps 화면 학습 → 워커 → [워커 등록]에서 이름을 넣고 [발급]을 눌러 <code>wk_…</code> 토큰을 받습니다. 토큰은 이때 한 번만 표시됩니다.</li>
-  <li><code>BODA-VMS-TrainWorker-0.1.2.msi</code> 를 실행하고 <strong>"워커 연결 설정"</strong> 화면에 관리 서버 주소(<code>http://서버:5310</code>) ·
+  <li><code>BODA-VMS-TrainWorker-0.1.5.msi</code> 를 실행하고 <strong>"워커 연결 설정"</strong> 화면에 관리 서버 주소(<code>http://서버:5310</code>) ·
       워커 토큰 · 워커 이름을 입력합니다.</li>
   <li>설치가 끝나면 서비스 <code>BodaVmsTrainWorker</code> 가 시작되어 첫 실행 시 파이썬 환경(venv, 약 6GB)을 준비합니다.
-      온라인 설치는 10~40 분이 걸립니다. 폐쇄망은 MSI 대신 함께 배포되는 <code>BODA-VMS-TrainWorker-0.1.2-offline</code> 폴더의 <code>install-offline.cmd</code> 를 관리자 권한 명령 프롬프트에서 실행합니다(wheel 묶음을 이 PC 에 복사한 뒤 같은 MSI 를 설치합니다. 복사된 <code>%ProgramData%\BODA VMS TrainWorker\wheels</code> 는 지우지 마세요).</li>
+      온라인 설치는 10~40 분이 걸립니다. 폐쇄망은 MSI 대신 함께 배포되는 <code>BODA-VMS-TrainWorker-0.1.5-offline</code> 폴더의 <code>install-offline.cmd</code> 를 관리자 권한 명령 프롬프트에서 실행합니다(wheel 묶음을 이 PC 에 복사한 뒤 같은 MSI 를 설치합니다. 복사된 <code>%ProgramData%\BODA VMS TrainWorker\wheels</code> 는 지우지 마세요).</li>
   <li>MLOps 워커 화면에서 상태가 <strong>대기 중</strong>으로 바뀌면 준비 완료입니다. 로그는 <code>%ProgramData%\BODA VMS TrainWorker\logs</code> 에 남습니다.</li>
 </ol>
 <figure><img src="../gs/screenshots/mlops/worker_install_wizard.png" data-width="420" alt="학습 워커 설치 마법사">
