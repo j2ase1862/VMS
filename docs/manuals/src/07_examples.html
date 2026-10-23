@@ -29,7 +29,7 @@
 <div class="callout tip">엣지가 흔들리면 Caliper 의 Search Width 를 넓히고 Filter Half Width 를 키우거나, 앞에 Blur 를 둡니다. 직선 · 원 자체를 재려면 Line Fit · Circle Fit 을 Geometry 에 연결합니다(LineLineAngle, CircleCircleDistance 등).</div>
 
 <h3 id="ex-fixture">7.3 위치 보정 후 검사 (Feature Match + Fixture)</h3>
-<figure><img src="../gs/screenshots/v3/vs/full_main_scene.png" data-width="620" alt="Feature Match 예제"><figcaption>Feature Match 학습 · 실행 예 — 학습 영역(ROI)으로 캡슐 하나를 학습하고 실행한 상태</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/vs/full_main_scene.png" data-width="620" alt="Feature Match 예제"><figcaption>Feature Match 학습 · 실행 예 — 학습 영역(ROI)으로 피팅을 학습하고, 약 33° 돌아간 피팅을 찾은 상태</figcaption></figure>
 <p><strong>상황</strong> — 부품이 지그 안에서 조금씩 이동 · 회전합니다. 부품의 특징을 먼저 찾고, 그 위치를 기준으로 뒤 검사의 ROI 를 옮겨 늘 같은 자리를 검사합니다. 이렇게 기준을 잡아 주는 방식을 <strong>위치 보정(Fixture)</strong> 이라고 부릅니다.</p>
 <ol>
   <li>템플릿 2D 측정 → <strong>패턴 매칭 (Feature Match)</strong> 을 생성합니다(Grayscale → Feature Match → Result).</li>

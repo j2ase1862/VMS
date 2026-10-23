@@ -1276,7 +1276,8 @@ namespace VMS.VisionSetup.Services
                     "HeightSlicerTool",
                     "PlaneFitTool",
                     "Geometry3DTool",
-                    "PointCloudLineFitTool"
+                    "PointCloudLineFitTool",
+                    "PointCloudDeviationTool"   // 팔레트에는 있는데 빠져 직렬화 왕복이 이 도구를 돌지 않았다 (2026-10-23)
                 },
                 ["Pattern Matching"] = new[]
                 {
@@ -1313,7 +1314,6 @@ namespace VMS.VisionSetup.Services
                     "DetectionTool",
                     "ClassifyTool",
                     "AnomalyTool",
-                    "EnsembleTool",
                     "SegmentationTool",
                     // YoloSegTool — 팔레트에서 숨김(2026-10-23, 인스턴스 분할은 RF-DETR-seg). 옛 레시피 열기·실행용으로
                     // 직렬화 왕복 순회에는 남긴다.
@@ -1322,7 +1322,8 @@ namespace VMS.VisionSetup.Services
                 },
                 ["Judgment"] = new[]
                 {
-                    "ResultTool"
+                    "ResultTool",
+                    "EnsembleTool"
                 },
                 ["Calibration"] = new[]
                 {

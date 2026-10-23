@@ -57,6 +57,21 @@ namespace VMS.VisionSetup.Tests
         }
 
         [Fact]
+        public void Palette_ListsEveryAvailableTool_ExceptHidden()
+        {
+            // 지원 도구 목록(GetAvailableTools)에 있는데 팔레트에 없으면 사용자가 새로 놓을 수 없다 —
+            // Ensemble 이 그렇게 빠져 있었다(2026-10-23 추가). 숨김은 YOLOv8-seg 하나뿐(옛 레시피 호환용).
+            var vm = CreateViewModel();
+            var palette = vm.ToolTree.SelectMany(c => c.Tools).Select(t => t.ToolType).OrderBy(t => t).ToArray();
+            var available = VisionService.GetAvailableTools().SelectMany(kv => kv.Value).Where(t => t != "YoloSegTool").OrderBy(t => t).ToArray();
+            Assert.Equal(available, palette);
+
+            var judgment = Assert.Single(vm.ToolTree, c => c.CategoryName == "Judgment");
+            Assert.Equal(new[] { "ResultTool", "EnsembleTool" }, judgment.Tools.Select(t => t.ToolType).ToArray());
+            Assert.Equal(new[] { "ResultTool", "EnsembleTool" }, VisionService.GetAvailableTools()["Judgment"]);
+        }
+
+        [Fact]
         public void Palette_HidesYoloSeg_ButLegacyRecipesStillLoad()
         {
             // YOLOv8-seg 는 팔레트·예제 템플릿에서 숨긴다(인스턴스 분할은 RF-DETR-seg, 2026-10-23).

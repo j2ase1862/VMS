@@ -242,14 +242,14 @@
     {
      "segs": [
       {
-       "s": "검사 레시피를 만드는 작업 공간입니다. 39 종의 비전 도구를 끌어다 놓고 연결해 검사 순서를 만들고, 관심 영역(ROI)과 판정 기준을 정합니다. 시퀀스 편집기, 카메라 캘리브레이션, 배치 테스트, 예제 템플릿 갤러리가 여기에 있습니다.",
+       "s": "검사 레시피를 만드는 작업 공간입니다. 40 종의 비전 도구를 끌어다 놓고 연결해 검사 순서를 만들고, 관심 영역(ROI)과 판정 기준을 정합니다. 시퀀스 편집기, 카메라 캘리브레이션, 배치 테스트, 예제 템플릿 갤러리가 여기에 있습니다.",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "검사 레시피를 만드는 작업 공간입니다. 39 종의 비전 도구를 끌어다 놓고 연결해 검사 순서를 만들고, 관심 영역(ROI)과 판정 기준을 정합니다. 시퀀스 편집기, 카메라 캘리브레이션, 배치 테스트, 예제 템플릿 갤러리가 여기에 있습니다."
+     "text": "검사 레시피를 만드는 작업 공간입니다. 40 종의 비전 도구를 끌어다 놓고 연결해 검사 순서를 만들고, 관심 영역(ROI)과 판정 기준을 정합니다. 시퀀스 편집기, 카메라 캘리브레이션, 배치 테스트, 예제 템플릿 갤러리가 여기에 있습니다."
     }
    ],
    [
@@ -923,14 +923,14 @@
     {
      "segs": [
       {
-       "s": "이미지를 처리하거나 재고 판정하는 기능 블록입니다(Blob, Caliper, Feature Match 등 39 종, §6).",
+       "s": "이미지를 처리하거나 재고 판정하는 기능 블록입니다(Blob, Caliper, Feature Match 등 40 종, §6).",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "이미지를 처리하거나 재고 판정하는 기능 블록입니다(Blob, Caliper, Feature Match 등 39 종, §6)."
+     "text": "이미지를 처리하거나 재고 판정하는 기능 블록입니다(Blob, Caliper, Feature Match 등 40 종, §6)."
     }
    ],
    [
@@ -12083,14 +12083,14 @@
     {
      "segs": [
       {
-       "s": "File · Run · Recipe · 예제 Template · Sequence · Deep Learning · Batch Test... · OCR Synth Data... · Inference Settings... · Camera · 3D. 오른쪽 끝 X 는 프로그램 종료",
+       "s": "File · Run · Recipe · 예제 Template · Sequence · Batch Test... · OCR Synth Data... · Inference Settings... · Camera · 3D. 오른쪽 끝 X 는 프로그램 종료",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "File · Run · Recipe · 예제 Template · Sequence · Deep Learning · Batch Test... · OCR Synth Data... · Inference Settings... · Camera · 3D. 오른쪽 끝 X 는 프로그램 종료"
+     "text": "File · Run · Recipe · 예제 Template · Sequence · Batch Test... · OCR Synth Data... · Inference Settings... · Camera · 3D. 오른쪽 끝 X 는 프로그램 종료"
     }
    ],
    [
@@ -13392,6 +13392,32 @@
      "header": false,
      "imgs": [],
      "text": "연결된 도구 중 하나라도 Fail 이면 최종 NG"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Ensemble",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Ensemble"
+    },
+    {
+     "segs": [
+      {
+       "s": "연결된 딥러닝 도구 판정을 모드(And · Or · Weighted · Consensus)대로 합친 결과가 NG 인 경우. 소스 도구가 연결되지 않았으면 NG",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "연결된 딥러닝 도구 판정을 모드(And · Or · Weighted · Consensus)대로 합친 결과가 NG 인 경우. 소스 도구가 연결되지 않았으면 NG"
     }
    ],
    [
@@ -24496,6 +24522,289 @@
   "t": "h",
   "segs": [
    {
+    "s": "PointCloud Line Fit — 3D 직선 피팅",
+    "b": false,
+    "m": false
+   }
+  ],
+  "level": 4,
+  "text": "PointCloud Line Fit — 3D 직선 피팅"
+ },
+ {
+  "t": "p",
+  "segs": [
+   {
+    "s": "현재 점군에 3D 직선을 맞춰 레일 · 모서리 · 봉의 방향 · 길이 · 직진도를 잽니다. 보통 Height Slicer → PointCloud Mask Crop 으로 직선 부위의 점만 남긴 뒤 Result 로 연결합니다. 맞춘 직선은 3D Geometry 의 점-직선 거리(PointToLineDistance3D)에 넘길 수 있습니다.",
+    "b": false,
+    "m": false
+   }
+  ],
+  "text": "현재 점군에 3D 직선을 맞춰 레일 · 모서리 · 봉의 방향 · 길이 · 직진도를 잽니다. 보통 Height Slicer → PointCloud Mask Crop 으로 직선 부위의 점만 남긴 뒤 Result 로 연결합니다. 맞춘 직선은 3D Geometry 의 점-직선 거리(PointToLineDistance3D)에 넘길 수 있습니다."
+ },
+ {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/tools/29_PointCloud_Line_Fit_split.png",
+  "width": "500",
+  "caption": "PointCloud Line Fit — 3D 직선 피팅 — Tool Settings 패널"
+ },
+ {
+  "t": "table",
+  "rows": [
+   [
+    {
+     "segs": [
+      {
+       "s": "파라미터",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": true,
+     "imgs": [],
+     "text": "파라미터"
+    },
+    {
+     "segs": [
+      {
+       "s": "기본값 / 범위",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": true,
+     "imgs": [],
+     "text": "기본값 / 범위"
+    },
+    {
+     "segs": [
+      {
+       "s": "설명",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": true,
+     "imgs": [],
+     "text": "설명"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Distance Threshold (mm)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Distance Threshold (mm)"
+    },
+    {
+     "segs": [
+      {
+       "s": "2.0 [0.1~20.0]",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "2.0 [0.1~20.0]"
+    },
+    {
+     "segs": [
+      {
+       "s": "직선에서 이 거리 안의 점을 직선 위 점(인라이어)으로 봅니다. Max Straightness 보다 크게 두어야 휜 부분이 인라이어에 남아 직진도에 잡힙니다",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "직선에서 이 거리 안의 점을 직선 위 점(인라이어)으로 봅니다. Max Straightness 보다 크게 두어야 휜 부분이 인라이어에 남아 직진도에 잡힙니다"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Iterations · Min Inliers",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Iterations · Min Inliers"
+    },
+    {
+     "segs": [
+      {
+       "s": "300 [10~2000] · 50",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "300 [10~2000] · 50"
+    },
+    {
+     "segs": [
+      {
+       "s": "RANSAC 반복 횟수 / 직선으로 인정할 최소 인라이어 수",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "RANSAC 반복 횟수 / 직선으로 인정할 최소 인라이어 수"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Draw Overlay",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Draw Overlay"
+    },
+    {
+     "segs": [
+      {
+       "s": "켬",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "켬"
+    },
+    {
+     "segs": [
+      {
+       "s": "맞춘 직선을 2D 화면에 표시",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "맞춘 직선을 2D 화면에 표시"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Enable Judgment · Max Straightness (mm)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Enable Judgment · Max Straightness (mm)"
+    },
+    {
+     "segs": [
+      {
+       "s": "해제 · 1",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "해제 · 1"
+    },
+    {
+     "segs": [
+      {
+       "s": "직진도가 이 값 이하이면 OK",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "직진도가 이 값 이하이면 OK"
+    }
+   ]
+  ],
+  "cls": "cols-3-2-4"
+ },
+ {
+  "t": "p",
+  "segs": [
+   {
+    "s": "결과 값",
+    "b": true,
+    "m": false
+   },
+   {
+    "s": " — Length · Straightness · MaxDeviation · RmsDeviation · InlierCount · TotalPoints · InlierRatio · AngleXY(평면 방향 °) · Elevation(고각 °) · LinePointX/Y/Z · LineDirX/Y/Z",
+    "b": false,
+    "m": false
+   }
+  ],
+  "text": "결과 값 — Length · Straightness · MaxDeviation · RmsDeviation · InlierCount · TotalPoints · InlierRatio · AngleXY(평면 방향 °) · Elevation(고각 °) · LinePointX/Y/Z · LineDirX/Y/Z"
+ },
+ {
+  "t": "p",
+  "segs": [
+   {
+    "s": "판정",
+    "b": true,
+    "m": false
+   },
+   {
+    "s": " — 판정을 켜면 직진도(인라이어의 99 % 가 직선에서 떨어진 거리)가 Max Straightness 이하일 때 OK. 유효한 점이 Min Inliers 보다 적거나 직선을 찾지 못하면 NG.",
+    "b": false,
+    "m": false
+   }
+  ],
+  "text": "판정 — 판정을 켜면 직진도(인라이어의 99 % 가 직선에서 떨어진 거리)가 Max Straightness 이하일 때 OK. 유효한 점이 Min Inliers 보다 적거나 직선을 찾지 못하면 NG."
+ },
+ {
+  "t": "li",
+  "segs": [
+   {
+    "s": "좌표는 점군 원좌표입니다 — 3D 카메라 점군은 X/Y 가 화소, Z 가 mm 라 길이 · 방향은 화소 기준입니다.",
+    "b": false,
+    "m": false
+   }
+  ],
+  "ordered": false,
+  "depth": 0,
+  "text": "좌표는 점군 원좌표입니다 — 3D 카메라 점군은 X/Y 가 화소, Z 가 mm 라 길이 · 방향은 화소 기준입니다."
+ },
+ {
+  "t": "li",
+  "segs": [
+   {
+    "s": "직진도에는 막대 · 레일의 굵기와 표면 흩어짐도 들어갑니다. 곧은 부품을 먼저 재서 기준을 정하세요.",
+    "b": false,
+    "m": false
+   }
+  ],
+  "ordered": false,
+  "depth": 0,
+  "text": "직진도에는 막대 · 레일의 굵기와 표면 흩어짐도 들어갑니다. 곧은 부품을 먼저 재서 기준을 정하세요."
+ },
+ {
+  "t": "h",
+  "segs": [
+   {
     "s": "6.11 Deep Learning — 딥러닝 추론",
     "b": false,
     "m": false
@@ -26280,6 +26589,276 @@
   "t": "h",
   "segs": [
    {
+    "s": "Ensemble — 딥러닝 판정 결합",
+    "b": false,
+    "m": false
+   }
+  ],
+  "level": 4,
+  "text": "Ensemble — 딥러닝 판정 결합"
+ },
+ {
+  "t": "p",
+  "segs": [
+   {
+    "s": "Result 로 연결한 딥러닝 도구(주로 Detection = 알려진 결함 + Anomaly = 평소와 다른 상태)의 판정을 하나로 합칩니다. 두 모델을 함께 써서 과검(정상을 NG 로)과 미검(불량을 OK 로)을 같이 줄일 때 씁니다. Result 도구가 OK/NG 개수만 세는 것과 달리 검출 개수 · 이상 점수를 판정에 씁니다.",
+    "b": false,
+    "m": false
+   }
+  ],
+  "text": "Result 로 연결한 딥러닝 도구(주로 Detection = 알려진 결함 + Anomaly = 평소와 다른 상태)의 판정을 하나로 합칩니다. 두 모델을 함께 써서 과검(정상을 NG 로)과 미검(불량을 OK 로)을 같이 줄일 때 씁니다. Result 도구가 OK/NG 개수만 세는 것과 달리 검출 개수 · 이상 점수를 판정에 씁니다."
+ },
+ {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/tools/36_Ensemble.png",
+  "width": "240",
+  "caption": "Ensemble — 딥러닝 판정 결합 — Tool Settings 패널"
+ },
+ {
+  "t": "table",
+  "rows": [
+   [
+    {
+     "segs": [
+      {
+       "s": "파라미터",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": true,
+     "imgs": [],
+     "text": "파라미터"
+    },
+    {
+     "segs": [
+      {
+       "s": "기본값 / 범위",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": true,
+     "imgs": [],
+     "text": "기본값 / 범위"
+    },
+    {
+     "segs": [
+      {
+       "s": "설명",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": true,
+     "imgs": [],
+     "text": "설명"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Ensemble Mode",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Ensemble Mode"
+    },
+    {
+     "segs": [
+      {
+       "s": "And (And · Or · Weighted · Consensus)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "And (And · Or · Weighted · Consensus)"
+    },
+    {
+     "segs": [
+      {
+       "s": "And: 모두 OK 여야 OK(미검 최소화). Or: 하나라도 OK 면 OK(과검 최소화). Weighted: 가중 점수로 판정. Consensus: 소스 판정이 엇갈리면 NG(검토 필요)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "And: 모두 OK 여야 OK(미검 최소화). Or: 하나라도 OK 면 OK(과검 최소화). Weighted: 가중 점수로 판정. Consensus: 소스 판정이 엇갈리면 NG(검토 필요)"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Detection Weight · Anomaly Weight · NG Threshold",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Detection Weight · Anomaly Weight · NG Threshold"
+    },
+    {
+     "segs": [
+      {
+       "s": "0.5 · 0.5 · 0.5 [0.0~1.0]",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "0.5 · 0.5 · 0.5 [0.0~1.0]"
+    },
+    {
+     "segs": [
+      {
+       "s": "Weighted 모드에서만 보입니다. Detection 실패 비율 × Detection Weight + Anomaly 최대 점수 × Anomaly Weight 가 NG Threshold 를 넘으면 NG",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Weighted 모드에서만 보입니다. Detection 실패 비율 × Detection Weight + Anomaly 최대 점수 × Anomaly Weight 가 NG Threshold 를 넘으면 NG"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Draw Overlay",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Draw Overlay"
+    },
+    {
+     "segs": [
+      {
+       "s": "켬",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "켬"
+    },
+    {
+     "segs": [
+      {
+       "s": "판정과 근거 문구를 화면에 표시",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "판정과 근거 문구를 화면에 표시"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "Source Results",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Source Results"
+    },
+    {
+     "segs": [
+      {
+       "s": "—",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "—"
+    },
+    {
+     "segs": [
+      {
+       "s": "Result 로 연결된 도구 목록(빈 상태 ‘No source tools connected’)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Result 로 연결된 도구 목록(빈 상태 ‘No source tools connected’)"
+    }
+   ]
+  ],
+  "cls": "cols-3-2-4"
+ },
+ {
+  "t": "p",
+  "segs": [
+   {
+    "s": "결과 값",
+    "b": true,
+    "m": false
+   },
+   {
+    "s": " — Success · Mode · SourceCount · DetectionCount(소스 검출 개수 합) · AnomalyScore(소스 이상 점수 최댓값)",
+    "b": false,
+    "m": false
+   }
+  ],
+  "text": "결과 값 — Success · Mode · SourceCount · DetectionCount(소스 검출 개수 합) · AnomalyScore(소스 이상 점수 최댓값)"
+ },
+ {
+  "t": "p",
+  "segs": [
+   {
+    "s": "판정",
+    "b": true,
+    "m": false
+   },
+   {
+    "s": " — 모드에 따라 OK/NG. 소스 도구가 하나도 연결되지 않았으면 NG(‘소스 도구가 연결되지 않았습니다’).",
+    "b": false,
+    "m": false
+   }
+  ],
+  "text": "판정 — 모드에 따라 OK/NG. 소스 도구가 하나도 연결되지 않았으면 NG(‘소스 도구가 연결되지 않았습니다’)."
+ },
+ {
+  "t": "li",
+  "segs": [
+   {
+    "s": "Detection · Anomaly 도구에서 Ensemble 로 Result 연결을 잇습니다. 같은 소스에 Ensemble 을 여러 개 붙이면 모드별 결과를 나란히 비교할 수 있습니다.",
+    "b": false,
+    "m": false
+   }
+  ],
+  "ordered": false,
+  "depth": 0,
+  "text": "Detection · Anomaly 도구에서 Ensemble 로 Result 연결을 잇습니다. 같은 소스에 Ensemble 을 여러 개 붙이면 모드별 결과를 나란히 비교할 수 있습니다."
+ },
+ {
+  "t": "h",
+  "segs": [
+   {
     "s": "6.13 Color — 색상",
     "b": false,
     "m": false
@@ -27716,7 +28295,7 @@
   "t": "figure",
   "src": "../gs/screenshots/v3/vs/full_main_scene.png",
   "width": "620",
-  "caption": "Feature Match 학습 · 실행 예 — 학습 영역(ROI)으로 캡슐 하나를 학습하고 실행한 상태"
+  "caption": "Feature Match 학습 · 실행 예 — 학습 영역(ROI)으로 피팅을 학습하고, 약 33° 돌아간 피팅을 찾은 상태"
  },
  {
   "t": "p",

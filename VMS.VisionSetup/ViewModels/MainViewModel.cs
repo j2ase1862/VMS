@@ -1077,6 +1077,7 @@ namespace VMS.VisionSetup.ViewModels
             // Judgment 카테고리
             var judgment = new ToolCategory { CategoryName = "Judgment" };
             judgment.Tools.Add(new ToolItem { Name = "Result", ToolType = "ResultTool" });
+            judgment.Tools.Add(new ToolItem { Name = "Ensemble", ToolType = "EnsembleTool" });
             ToolTree.Add(judgment);
 
             // Color 카테고리
