@@ -1877,7 +1877,7 @@
   "t": "li",
   "segs": [
    {
-    "s": "VMS-1.47.0.msi",
+    "s": "VMS-1.47.1.msi",
     "b": false,
     "m": true
    },
@@ -1889,7 +1889,7 @@
   ],
   "ordered": true,
   "depth": 0,
-  "text": "VMS-1.47.0.msi 처럼 버전이 붙은 설치 파일을 더블 클릭합니다. 설치에는 관리자 권한이 필요합니다."
+  "text": "VMS-1.47.1.msi 처럼 버전이 붙은 설치 파일을 더블 클릭합니다. 설치에는 관리자 권한이 필요합니다."
  },
  {
   "t": "li",
@@ -2013,7 +2013,7 @@
     "m": false
    },
    {
-    "s": "msiexec /i VMS-1.47.0.msi /qn INSTALLWEB=0",
+    "s": "msiexec /i VMS-1.47.1.msi /qn INSTALLWEB=0",
     "b": false,
     "m": true
    },
@@ -2023,7 +2023,7 @@
     "m": false
    }
   ],
-  "text": "무인 설치가 필요하면 명령 프롬프트(관리자)에서 다음처럼 실행합니다. msiexec /i VMS-1.47.0.msi /qn INSTALLWEB=0 — 값 0 은 제외, 1 은 포함입니다."
+  "text": "무인 설치가 필요하면 명령 프롬프트(관리자)에서 다음처럼 실행합니다. msiexec /i VMS-1.47.1.msi /qn INSTALLWEB=0 — 값 0 은 제외, 1 은 포함입니다."
  },
  {
   "t": "h",
@@ -24817,13 +24817,13 @@
   "t": "h",
   "segs": [
    {
-    "s": "Detection — 딥러닝 객체 검출 (D-FINE · YOLO)",
+    "s": "Detection — 딥러닝 객체 검출",
     "b": false,
     "m": false
    }
   ],
   "level": 4,
-  "text": "Detection — 딥러닝 객체 검출 (D-FINE · YOLO)"
+  "text": "Detection — 딥러닝 객체 검출"
  },
  {
   "t": "p",
@@ -24838,9 +24838,9 @@
  },
  {
   "t": "figure",
-  "src": "../gs/screenshots/v3/tools/29_Detection_YOLO.png",
+  "src": "../gs/screenshots/v3/tools/29_Detection.png",
   "width": "240",
-  "caption": "Detection — 딥러닝 객체 검출 (D-FINE · YOLO) — Tool Settings 패널"
+  "caption": "Detection — 딥러닝 객체 검출 — Tool Settings 패널"
  },
  {
   "t": "table",
@@ -54640,14 +54640,14 @@
     {
      "segs": [
       {
-       "s": "VMS 1.47.0 · BODA.VMS.Web 1.10.4 · BODA.VMS.MLOps 0.1.5",
+       "s": "VMS 1.47.1 · BODA.VMS.Web 1.10.4 · BODA.VMS.MLOps 0.1.5",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "VMS 1.47.0 · BODA.VMS.Web 1.10.4 · BODA.VMS.MLOps 0.1.5"
+     "text": "VMS 1.47.1 · BODA.VMS.Web 1.10.4 · BODA.VMS.MLOps 0.1.5"
     }
    ],
    [

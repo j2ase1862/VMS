@@ -1067,7 +1067,7 @@ namespace VMS.VisionSetup.ViewModels
 
             // Deep Learning 카테고리
             var deepLearning = new ToolCategory { CategoryName = "Deep Learning" };
-            deepLearning.Tools.Add(new ToolItem { Name = "Detection (YOLO)", ToolType = "DetectionTool" });
+            deepLearning.Tools.Add(new ToolItem { Name = "Detection", ToolType = "DetectionTool" });
             deepLearning.Tools.Add(new ToolItem { Name = "Segmentation", ToolType = "SegmentationTool" });
             deepLearning.Tools.Add(new ToolItem { Name = "RF-DETR-seg", ToolType = "RfdetrSegTool" });
             deepLearning.Tools.Add(new ToolItem { Name = "Classify", ToolType = "ClassifyTool" });

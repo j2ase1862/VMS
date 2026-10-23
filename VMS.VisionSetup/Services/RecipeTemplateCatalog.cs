@@ -140,7 +140,7 @@ namespace VMS.VisionSetup.Services
                 Id = "dl-detection",
                 Title = "DL 객체 검출 판정",
                 Category = CategoryDeepLearning,
-                Description = "YOLO 객체 검출 결과를 Result 로 판정한다. Detection 설정에서 " +
+                Description = "딥러닝 객체 검출 결과를 Result 로 판정한다. Detection 설정에서 " +
                               "학습된 ONNX 모델 경로를 지정할 것 (MLOps 에서 학습).",
                 Prerequisites = new[] { BadgeOnnxModel },
                 Tools =

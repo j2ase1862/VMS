@@ -17,7 +17,9 @@ namespace VMS.VisionSetup.Tests
     /// 툴 팔레트 카테고리 구성 검증 (2026-09-17).
     /// 얼라인 툴은 예제 템플릿 갤러리의 "얼라인" 탭과 같은 이름의 "Alignment" 카테고리에 있어야
     /// 갤러리 항목과 팔레트 항목이 같은 툴임이 드러난다 — Pattern Matching 아래 숨기지 않는다.
+    /// MainViewModel 이 VisionService.Instance 를 쓰므로 싱글턴을 만지는 다른 테스트와 같은 컬렉션(직렬)에서 돈다.
     /// </summary>
+    [Collection("VisionServiceSingleton")]
     public class ToolPaletteCategoryTests
     {
         private static readonly string[] AlignToolTypes = { "MatchAlignTool", "MultiStepAlignTool" };
@@ -86,6 +88,21 @@ namespace VMS.VisionSetup.Tests
             Assert.NotNull(config);
             Assert.IsType<VMS.VisionSetup.VisionTools.DeepLearning.YoloSegTool>(ToolSerializer.DeserializeTool(config!));
             Assert.IsType<VMS.VisionSetup.VisionTools.DeepLearning.YoloSegTool>(VisionService.CreateTool("YoloSegTool"));
+        }
+
+        [Fact]
+        public void Palette_ToolNames_DoNotCarryThirdPartyModelNames()
+        {
+            // 제품 화면에 타사 제품명을 도구 이름으로 쓰지 않는다 — "Detection (YOLO)" 였지만 기본 백본은 D-FINE (2026-10-23).
+            // 숨긴 YOLOv8-seg(옛 레시피 호환)는 팔레트에 없으므로 대상 밖.
+            var vm = CreateViewModel();
+            foreach (var tool in vm.ToolTree.SelectMany(c => c.Tools))
+            {
+                Assert.DoesNotContain("YOLO", tool.Name, StringComparison.OrdinalIgnoreCase);
+                Assert.DoesNotContain("YOLO", VisionService.GetToolDisplayName(tool.ToolType), StringComparison.OrdinalIgnoreCase);
+            }
+            Assert.Equal("Detection", Assert.Single(vm.ToolTree.SelectMany(c => c.Tools), t => t.ToolType == "DetectionTool").Name);
+            Assert.DoesNotContain(RecipeTemplateCatalog.Templates, t => t.Description.Contains("YOLO", StringComparison.OrdinalIgnoreCase));
         }
 
         private static MainViewModel CreateViewModel()
