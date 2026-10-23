@@ -188,7 +188,7 @@
                 <controls:CheckBoxParameter Label="Use Dot Analysis"
                     IsChecked="{Binding UseDotAnalysis}"
                     ToolType="DetectionTool" ParameterName="UseDotAnalysis"
-                    ToolTip="YOLO가 검출한 각 바운딩 박스 내부에서 dot 군락의 개수와 배치 각도를 추가 분석합니다.&#x0a;활성화 시 클래스별 기대값(아래 표)과 비교하여 Pass/Fail을 판정합니다."/>
+                    ToolTip="검출한 각 바운딩 박스 내부에서 dot 군락의 개수와 배치 각도를 추가 분석합니다.&#x0a;활성화 시 클래스별 기대값(아래 표)과 비교하여 Pass/Fail을 판정합니다."/>
 
                 <StackPanel Visibility="{Binding UseDotAnalysis, Converter={StaticResource BoolToVisibility}, FallbackValue=Collapsed}">
                     <!-- Detection Method -->

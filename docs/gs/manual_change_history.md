@@ -2963,3 +2963,25 @@ docx/PDF 재생성 204쪽(변동 없음) · 그림 151장 · 경고 0. 새 문�
 
 - 표지 · 머리글 · §13.4 의 문서 버전은 3.0(2026-09-17 전면 개편)인데 산출 파일은 `VMS_사용자매뉴얼_v2.0.docx/pdf` 그대로였다(`gen_user_manual.js` 의 `MANUAL_OUT` 기본값). 사용자 결정으로 `VMS_사용자매뉴얼_v3.0.docx/pdf` 로 바꿈 — git mv(내용 동일, v1.47.0 기준 205쪽), 생성기 기본값 · README 산출물 표 갱신.
 - 이 절 이전 기록의 `v2.0` 파일명은 당시 이름이라 그대로 둔다.
+
+## 97. 도구 팔레트 이름 "Detection (YOLO)" → "Detection" (v1.47.1) — **반영 완료**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-10-23 |
+| 대상 | §5 메인 화면 그림 · §6.11 Detection 절 제목 · 표지 · §2.2 · §13.4 · 제품설명서 |
+| 변경 종류 | 제품 화면 문구 (GS 제출본 원칙 — 타사 제품명 금지) |
+
+### 무엇이 바뀌었나 (사내 기록)
+
+- 시험자료 재배치 확인 캡처에서 도구 팔레트에 "Detection (YOLO)" 가 보였다. 기본 학습 백본은 D-FINE 이고, 제품 화면에 타사 제품명을 쓰지 않는 원칙(§29 · §30)과도 어긋난다.
+- 팔레트(`MainViewModel.InitializeToolTree`) · 표시 이름(`VisionService.GetToolDisplayName`) → "Detection". 함께: 예제 템플릿 "DL 객체 검출 판정" 설명의 "YOLO 객체 검출" → "딥러닝 객체 검출", Detection 설정 화면 Dot Cluster 툴팁 "YOLO가 검출한" → "검출한", AI 도우미 도구 표의 표시 이름. 검색 키워드 "YOLO" 와 모델 형식 설명(ONNX 규약 "D-FINE / YOLOv8·v11 자동 판별")은 형식 이름이라 유지(§93 과 같은 기준).
+- 도구 인스턴스 기본 이름은 원래 "Detection" — 레시피 파일 · 시험자료에는 영향 없음. 숨긴 YOLOv8-seg(옛 레시피 호환)는 그대로.
+- 시험: `Palette_ToolNames_DoNotCarryThirdPartyModelNames`. `ToolPaletteCategoryTests` 를 `VisionServiceSingleton` 컬렉션에 넣음(MainViewModel 이 싱글턴을 쓴다).
+
+### 매뉴얼 반영 (완료 2026-10-23)
+
+- §6.11 절 제목 "Detection — 딥러닝 객체 검출 (D-FINE · YOLO)" → "Detection — 딥러닝 객체 검출"(`tools_prose.json`). 패널 그림은 재캡처 결과 픽셀 동일 — 파일 이름만 `29_Detection_YOLO.png` → `29_Detection.png`.
+- §5 메인 화면 그림 `vs/full_main_scene.png` 재캡처(같은 GS PatternMatch 장면, 팔레트 "Detection", 시험자료 레시피 층 배치 반영).
+- 표지 · §13.4 대상 SW VMS 1.47.1, §2.2 예시 `VMS-1.47.1.msi`, 제품설명서 v1.47.1.
+- docx/PDF 재생성 205쪽 · 그림 152장 · 경고 0. document.xml 에 "Detection (YOLO)" · "D-FINE · YOLO)" 없음.

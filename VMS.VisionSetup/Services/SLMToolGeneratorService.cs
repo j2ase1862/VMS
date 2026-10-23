@@ -52,7 +52,7 @@ namespace VMS.VisionSetup.Services
             { "PlaneFitTool", "평면 피팅" },
             { "CodeReaderTool", "바코드/QR 읽기" },
             { "OCRTool", "문자 인식 (OCR)" },
-            { "DetectionTool", "딥러닝 검출 (YOLO)" },
+            { "DetectionTool", "딥러닝 객체 검출" },
             { "ClassifyTool", "딥러닝 분류" },
             { "AnomalyTool", "이상 탐지" },
             { "ResultTool", "최종 판정 (Pass/Fail)" },

@@ -73,7 +73,7 @@ namespace VMS.VisionSetup.Services
 | GeometryTool | 2D 기하학 계산 (거리/각도) | 2D geometry (distance, angle) | 거리계산, 각도, 기하학 |
 | CodeReaderTool | 바코드/QR/DataMatrix 읽기 | 1D/2D barcode reading | 바코드, QR, 코드, DataMatrix |
 | OCRTool | 문자 인식 | Optical character recognition | 문자, OCR, 텍스트, 인식 |
-| DetectionTool | 딥러닝 객체 검출 (YOLO) | Deep learning object detection | 검출, YOLO, 딥러닝, 객체 |
+| DetectionTool | 딥러닝 객체 검출 | Deep learning object detection | 검출, YOLO, 딥러닝, 객체 |
 | ClassifyTool | 딥러닝 분류 | Deep learning classification | 분류, 양품불량, AI분류 |
 | AnomalyTool | 딥러닝 이상 탐지 | Deep learning anomaly detection | 이상탐지, 결함, 스크래치 |
 | ResultTool | 최종 판정 (Pass/Fail 집계) | Final pass/fail judgment | 판정, 결과, Pass, Fail |

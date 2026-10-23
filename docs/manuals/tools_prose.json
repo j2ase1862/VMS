@@ -1264,7 +1264,7 @@
   ]
  },
  "Detection (딥러닝 검출)": {
-  "title": "Detection — 딥러닝 객체 검출 (D-FINE · YOLO)",
+  "title": "Detection — 딥러닝 객체 검출",
   "purpose": "학습된 ONNX 모델로 객체의 위치(박스)와 클래스를 검출합니다. 기본 학습 백본은 D-FINE이며 YOLOv8/v11 형식도 자동 판별합니다. 부품 유무 · 다종 부품 검출 · 외관 결함 검출에 씁니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
   "params": [
    [

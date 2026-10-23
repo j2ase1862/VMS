@@ -1376,7 +1376,7 @@ namespace VMS.VisionSetup.Services
                 "ImageEnhanceTool" => "Image Enhance",
                 "PolarUnwrapTool" => "Polar Unwrap",
                 "CodeReaderTool" => "Code Reader",
-                "DetectionTool" => "Detection (YOLO)",
+                "DetectionTool" => "Detection",
                 "ClassifyTool" => "Classify",
                 "AnomalyTool" => "Anomaly",
                 "EnsembleTool" => "Ensemble",
