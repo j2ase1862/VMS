@@ -9,7 +9,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <figure><img src="../gs/screenshots/v3/vs/full_main_scene.png" data-width="620" alt="VisionSetup 메인 화면"><figcaption>VisionSetup 메인 화면 (레시피 로드 · 이미지 실행 상태) — ① 메뉴 바 ② 아이콘 툴바 ③ 레시피 · 카메라 · Steps · Tool Palette(좌) ④ Tool Workspace(중) ⑤ 이미지 뷰 + Run Results ⑥ Tool Settings / Camera Settings(우) ⑦ 상태바</figcaption></figure>
 <table class="cols-2-7">
   <tr><th>영역</th><th>내용</th></tr>
-  <tr><td>① 메뉴 바</td><td>File · Run · Recipe · 예제 Template · Sequence · Deep Learning · Batch Test... · OCR Synth Data... · Inference Settings... · Camera · 3D. 오른쪽 끝 X 는 프로그램 종료</td></tr>
+  <tr><td>① 메뉴 바</td><td>File · Run · Recipe · 예제 Template · Sequence · Batch Test... · OCR Synth Data... · Inference Settings... · Camera · 3D. 오른쪽 끝 X 는 프로그램 종료</td></tr>
   <tr><td>② 아이콘 툴바</td><td>이미지 열기 · 폴더 열기 · Recipe Manager · 저장 · Run All · Run Selected · Clear All Tools · Camera Manager · 카메라 연결 토글 · Acquire · Live 시작/정지 · SLM Recipe Bot. 폴더를 열면 ◀ ▶ 와 Navigate / Run All / Run Selected 모드 라디오가 나타납니다</td></tr>
   <tr><td>③ 왼쪽 패널</td><td>현재 레시피 배지(Now Recipe) · Camera 콤보 · Steps 표(# · Resolution · Tools)와 스텝 버튼 · Tool Palette(15 카테고리 39 도구, [Expand All]/[Collapse All])</td></tr>
   <tr><td>④ Tool Workspace</td><td>도구 노드를 놓고 연결하는 캔버스. 노드를 드래그해 배치하고 우클릭 메뉴로 이름 변경 · 복제 · 연결 · 삭제</td></tr>
@@ -93,6 +93,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
   <tr><td>Detection · Segmentation · RF-DETR-seg</td><td>객체가 0 건 검출된 경우(또는 각도 판정을 켰는데 계산 불가)</td></tr>
   <tr><td>Code Reader · OCR · OCV</td><td>판독 실패, 기대 문자열 불일치, 품질 등급 미달</td></tr>
   <tr><td>Result</td><td>연결된 도구 중 하나라도 Fail 이면 최종 NG</td></tr>
+  <tr><td>Ensemble</td><td>연결된 딥러닝 도구 판정을 모드(And · Or · Weighted · Consensus)대로 합친 결과가 NG 인 경우. 소스 도구가 연결되지 않았으면 NG</td></tr>
   <tr><td>운전 공통</td><td>카메라에서 이미지를 받지 못한 사이클</td></tr>
 </table>
 <p>"찾아야 할 것을 하나도 찾지 못한 검사" 는 합격이 아니라 NG 입니다. 예상과 다른 NG 가 나오면 결과 화면에서 무엇이 검출되지 않았는지 먼저 확인하세요.</p>

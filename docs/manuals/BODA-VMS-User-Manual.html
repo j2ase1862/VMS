@@ -235,7 +235,7 @@
       돌리고, 판정 결과·수량·NG 이력을 보여 주며 검사 결과를 서버에 올립니다. PLC/IO 보드와 주고받는
       트리거·판정 신호(시퀀스)도 이 프로그램이 처리합니다.</td></tr>
   <tr><td><strong>VMS.VisionSetup</strong> (레시피 편집)</td><td>비전 엔지니어</td>
-      <td>검사 레시피를 만드는 작업 공간입니다. 39 종의 비전 도구를 끌어다 놓고 연결해 검사 순서를
+      <td>검사 레시피를 만드는 작업 공간입니다. 40 종의 비전 도구를 끌어다 놓고 연결해 검사 순서를
       만들고, 관심 영역(ROI)과 판정 기준을 정합니다. 시퀀스 편집기, 카메라 캘리브레이션,
       배치 테스트, 예제 템플릿 갤러리가 여기에 있습니다.</td></tr>
   <tr><td><strong>VMS.AppSetup</strong> (시스템 설정 마법사)</td><td>설치 담당자</td>
@@ -295,7 +295,7 @@ MLOps 를 쓰지 않는 현장은 이 서버 없이 운영해도 됩니다.</p>
   <tr><td>레시피 (Recipe)</td><td>제품 하나를 검사하는 설정 묶음입니다. 카메라별 스텝, 스텝 안의 비전 도구 연결, ROI, 판정 기준을 담습니다.
       VisionSetup 에서 만들고 VMS 가 불러와 실행합니다. Web 에서는 "레시피 파라미터" 화면에서 기준값을 관리합니다.</td></tr>
   <tr><td>스텝 (Step)</td><td>레시피 안에서 카메라 1 대가 한 번 촬영해 검사하는 단위입니다. 이름은 "1-1", "1-2" 처럼 카메라 번호-순번으로 자동 매겨집니다.</td></tr>
-  <tr><td>도구 (Tool)</td><td>이미지를 처리하거나 재고 판정하는 기능 블록입니다(Blob, Caliper, Feature Match 등 39 종, §6).</td></tr>
+  <tr><td>도구 (Tool)</td><td>이미지를 처리하거나 재고 판정하는 기능 블록입니다(Blob, Caliper, Feature Match 등 40 종, §6).</td></tr>
   <tr><td>ROI</td><td>도구가 볼 관심 영역입니다. 사각형 · 회전 사각형 · 원 · 타원 · 다각형으로 그립니다.</td></tr>
   <tr><td>Fixture (좌표 연결)</td><td>패턴 매칭이 찾은 위치·각도만큼 뒤 도구의 ROI 를 자동으로 옮기는 연결입니다. 제품이 조금씩 틀어져 놓여도 같은 자리를 검사합니다. 기준을 주는 도구가 제품을 못 찾으면 뒤 도구는 실행되지 않고 NG 로 처리됩니다.</td></tr>
   <tr><td>시퀀스</td><td>AUTO RUN 중 "트리거 대기 → 촬영 → 검사 → 결과 출력 → 반복" 흐름의 정의입니다. PLC 주소나 IO 보드 채널을 노드로 연결합니다.</td></tr>
@@ -1011,7 +1011,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <figure><img src="../gs/screenshots/v3/vs/full_main_scene.png" data-width="620" alt="VisionSetup 메인 화면"><figcaption>VisionSetup 메인 화면 (레시피 로드 · 이미지 실행 상태) — ① 메뉴 바 ② 아이콘 툴바 ③ 레시피 · 카메라 · Steps · Tool Palette(좌) ④ Tool Workspace(중) ⑤ 이미지 뷰 + Run Results ⑥ Tool Settings / Camera Settings(우) ⑦ 상태바</figcaption></figure>
 <table class="cols-2-7">
   <tr><th>영역</th><th>내용</th></tr>
-  <tr><td>① 메뉴 바</td><td>File · Run · Recipe · 예제 Template · Sequence · Deep Learning · Batch Test... · OCR Synth Data... · Inference Settings... · Camera · 3D. 오른쪽 끝 X 는 프로그램 종료</td></tr>
+  <tr><td>① 메뉴 바</td><td>File · Run · Recipe · 예제 Template · Sequence · Batch Test... · OCR Synth Data... · Inference Settings... · Camera · 3D. 오른쪽 끝 X 는 프로그램 종료</td></tr>
   <tr><td>② 아이콘 툴바</td><td>이미지 열기 · 폴더 열기 · Recipe Manager · 저장 · Run All · Run Selected · Clear All Tools · Camera Manager · 카메라 연결 토글 · Acquire · Live 시작/정지 · SLM Recipe Bot. 폴더를 열면 ◀ ▶ 와 Navigate / Run All / Run Selected 모드 라디오가 나타납니다</td></tr>
   <tr><td>③ 왼쪽 패널</td><td>현재 레시피 배지(Now Recipe) · Camera 콤보 · Steps 표(# · Resolution · Tools)와 스텝 버튼 · Tool Palette(15 카테고리 39 도구, [Expand All]/[Collapse All])</td></tr>
   <tr><td>④ Tool Workspace</td><td>도구 노드를 놓고 연결하는 캔버스. 노드를 드래그해 배치하고 우클릭 메뉴로 이름 변경 · 복제 · 연결 · 삭제</td></tr>
@@ -1095,6 +1095,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
   <tr><td>Detection · Segmentation · RF-DETR-seg</td><td>객체가 0 건 검출된 경우(또는 각도 판정을 켰는데 계산 불가)</td></tr>
   <tr><td>Code Reader · OCR · OCV</td><td>판독 실패, 기대 문자열 불일치, 품질 등급 미달</td></tr>
   <tr><td>Result</td><td>연결된 도구 중 하나라도 Fail 이면 최종 NG</td></tr>
+  <tr><td>Ensemble</td><td>연결된 딥러닝 도구 판정을 모드(And · Or · Weighted · Consensus)대로 합친 결과가 NG 인 경우. 소스 도구가 연결되지 않았으면 NG</td></tr>
   <tr><td>운전 공통</td><td>카메라에서 이미지를 받지 못한 사이클</td></tr>
 </table>
 <p>"찾아야 할 것을 하나도 찾지 못한 검사" 는 합격이 아니라 NG 입니다. 예상과 다른 NG 가 나오면 결과 화면에서 무엇이 검출되지 않았는지 먼저 확인하세요.</p>
@@ -1696,6 +1697,22 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <li>클러스터 콤보에서 덩어리를 고르면 2D 뷰에 해당 덩어리가 강조됩니다. 목록이 비어 있으면 PointCloud Cluster 를 Result 로 연결하고 Run 을 한 번 실행하세요.</li>
 <li>mm 정확도는 Cluster 의 Scale Mode(AutoFromCamera 권장)를 따릅니다.</li>
 </ul>
+<h4>PointCloud Line Fit — 3D 직선 피팅</h4>
+<p>현재 점군에 3D 직선을 맞춰 레일 · 모서리 · 봉의 방향 · 길이 · 직진도를 잽니다. 보통 Height Slicer → PointCloud Mask Crop 으로 직선 부위의 점만 남긴 뒤 Result 로 연결합니다. 맞춘 직선은 3D Geometry 의 점-직선 거리(PointToLineDistance3D)에 넘길 수 있습니다.</p>
+<figure><img src="../gs/screenshots/v3/tools/29_PointCloud_Line_Fit_split.png" data-width="500" alt="PointCloud Line Fit — 3D 직선 피팅 설정 패널"><figcaption>PointCloud Line Fit — 3D 직선 피팅 — Tool Settings 패널</figcaption></figure>
+<table class="cols-3-2-4">
+<tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
+<tr><td>Distance Threshold (mm)</td><td>2.0 [0.1~20.0]</td><td>직선에서 이 거리 안의 점을 직선 위 점(인라이어)으로 봅니다. Max Straightness 보다 크게 두어야 휜 부분이 인라이어에 남아 직진도에 잡힙니다</td></tr>
+<tr><td>Iterations · Min Inliers</td><td>300 [10~2000] · 50</td><td>RANSAC 반복 횟수 / 직선으로 인정할 최소 인라이어 수</td></tr>
+<tr><td>Draw Overlay</td><td>켬</td><td>맞춘 직선을 2D 화면에 표시</td></tr>
+<tr><td>Enable Judgment · Max Straightness (mm)</td><td>해제 · 1</td><td>직진도가 이 값 이하이면 OK</td></tr>
+</table>
+<p><strong>결과 값</strong> — Length · Straightness · MaxDeviation · RmsDeviation · InlierCount · TotalPoints · InlierRatio · AngleXY(평면 방향 °) · Elevation(고각 °) · LinePointX/Y/Z · LineDirX/Y/Z</p>
+<p><strong>판정</strong> — 판정을 켜면 직진도(인라이어의 99 % 가 직선에서 떨어진 거리)가 Max Straightness 이하일 때 OK. 유효한 점이 Min Inliers 보다 적거나 직선을 찾지 못하면 NG.</p>
+<ul>
+<li>좌표는 점군 원좌표입니다 — 3D 카메라 점군은 X/Y 가 화소, Z 가 mm 라 길이 · 방향은 화소 기준입니다.</li>
+<li>직진도에는 막대 · 레일의 굵기와 표면 흩어짐도 들어갑니다. 곧은 부품을 먼저 재서 기준을 정하세요.</li>
+</ul>
 <h3 id="tools-11">6.11 Deep Learning — 딥러닝 추론</h3>
 <h4>Detection — 딥러닝 객체 검출 (D-FINE · YOLO)</h4>
 <p>학습된 ONNX 모델로 객체의 위치(박스)와 클래스를 검출합니다. 기본 학습 백본은 D-FINE이며 YOLOv8/v11 형식도 자동 판별합니다. 부품 유무 · 다종 부품 검출 · 외관 결함 검출에 씁니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
@@ -1790,6 +1807,21 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <p><strong>판정</strong> — 판정 모드에 따라 OK/NG. 이 결과가 Run Results 의 Pass/Fail 과 VMS 의 판정 배지가 됩니다.</p>
 <ul>
 <li>최종 OK/NG 신호를 PLC · IO 보드로 내보내는 것은 이 도구가 아니라 시퀀스 편집기의 Branch → Output Action 이 담당합니다(§5.10). 이 도구의 PLC Output 은 PassCount 같은 통계 값 보조 전송용입니다.</li>
+</ul>
+<h4>Ensemble — 딥러닝 판정 결합</h4>
+<p>Result 로 연결한 딥러닝 도구(주로 Detection = 알려진 결함 + Anomaly = 평소와 다른 상태)의 판정을 하나로 합칩니다. 두 모델을 함께 써서 과검(정상을 NG 로)과 미검(불량을 OK 로)을 같이 줄일 때 씁니다. Result 도구가 OK/NG 개수만 세는 것과 달리 검출 개수 · 이상 점수를 판정에 씁니다.</p>
+<figure><img src="../gs/screenshots/v3/tools/36_Ensemble.png" data-width="240" alt="Ensemble — 딥러닝 판정 결합 설정 패널"><figcaption>Ensemble — 딥러닝 판정 결합 — Tool Settings 패널</figcaption></figure>
+<table class="cols-3-2-4">
+<tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
+<tr><td>Ensemble Mode</td><td>And (And · Or · Weighted · Consensus)</td><td>And: 모두 OK 여야 OK(미검 최소화). Or: 하나라도 OK 면 OK(과검 최소화). Weighted: 가중 점수로 판정. Consensus: 소스 판정이 엇갈리면 NG(검토 필요)</td></tr>
+<tr><td>Detection Weight · Anomaly Weight · NG Threshold</td><td>0.5 · 0.5 · 0.5 [0.0~1.0]</td><td>Weighted 모드에서만 보입니다. Detection 실패 비율 × Detection Weight + Anomaly 최대 점수 × Anomaly Weight 가 NG Threshold 를 넘으면 NG</td></tr>
+<tr><td>Draw Overlay</td><td>켬</td><td>판정과 근거 문구를 화면에 표시</td></tr>
+<tr><td>Source Results</td><td>—</td><td>Result 로 연결된 도구 목록(빈 상태 ‘No source tools connected’)</td></tr>
+</table>
+<p><strong>결과 값</strong> — Success · Mode · SourceCount · DetectionCount(소스 검출 개수 합) · AnomalyScore(소스 이상 점수 최댓값)</p>
+<p><strong>판정</strong> — 모드에 따라 OK/NG. 소스 도구가 하나도 연결되지 않았으면 NG(‘소스 도구가 연결되지 않았습니다’).</p>
+<ul>
+<li>Detection · Anomaly 도구에서 Ensemble 로 Result 연결을 잇습니다. 같은 소스에 Ensemble 을 여러 개 붙이면 모드별 결과를 나란히 비교할 수 있습니다.</li>
 </ul>
 <h3 id="tools-13">6.13 Color — 색상</h3>
 <h4>Color Extract — 색 추출 (HSV)</h4>
@@ -1888,7 +1920,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <div class="callout tip">엣지가 흔들리면 Caliper 의 Search Width 를 넓히고 Filter Half Width 를 키우거나, 앞에 Blur 를 둡니다. 직선 · 원 자체를 재려면 Line Fit · Circle Fit 을 Geometry 에 연결합니다(LineLineAngle, CircleCircleDistance 등).</div>
 
 <h3 id="ex-fixture">7.3 위치 보정 후 검사 (Feature Match + Fixture)</h3>
-<figure><img src="../gs/screenshots/v3/vs/full_main_scene.png" data-width="620" alt="Feature Match 예제"><figcaption>Feature Match 학습 · 실행 예 — 학습 영역(ROI)으로 캡슐 하나를 학습하고 실행한 상태</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/vs/full_main_scene.png" data-width="620" alt="Feature Match 예제"><figcaption>Feature Match 학습 · 실행 예 — 학습 영역(ROI)으로 피팅을 학습하고, 약 33° 돌아간 피팅을 찾은 상태</figcaption></figure>
 <p><strong>상황</strong> — 부품이 지그 안에서 조금씩 이동 · 회전합니다. 부품의 특징을 먼저 찾고, 그 위치를 기준으로 뒤 검사의 ROI 를 옮겨 늘 같은 자리를 검사합니다. 이렇게 기준을 잡아 주는 방식을 <strong>위치 보정(Fixture)</strong> 이라고 부릅니다.</p>
 <ol>
   <li>템플릿 2D 측정 → <strong>패턴 매칭 (Feature Match)</strong> 을 생성합니다(Grayscale → Feature Match → Result).</li>

@@ -481,6 +481,22 @@
 <li>클러스터 콤보에서 덩어리를 고르면 2D 뷰에 해당 덩어리가 강조됩니다. 목록이 비어 있으면 PointCloud Cluster 를 Result 로 연결하고 Run 을 한 번 실행하세요.</li>
 <li>mm 정확도는 Cluster 의 Scale Mode(AutoFromCamera 권장)를 따릅니다.</li>
 </ul>
+<h4>PointCloud Line Fit — 3D 직선 피팅</h4>
+<p>현재 점군에 3D 직선을 맞춰 레일 · 모서리 · 봉의 방향 · 길이 · 직진도를 잽니다. 보통 Height Slicer → PointCloud Mask Crop 으로 직선 부위의 점만 남긴 뒤 Result 로 연결합니다. 맞춘 직선은 3D Geometry 의 점-직선 거리(PointToLineDistance3D)에 넘길 수 있습니다.</p>
+<figure><img src="../gs/screenshots/v3/tools/29_PointCloud_Line_Fit_split.png" data-width="500" alt="PointCloud Line Fit — 3D 직선 피팅 설정 패널"><figcaption>PointCloud Line Fit — 3D 직선 피팅 — Tool Settings 패널</figcaption></figure>
+<table class="cols-3-2-4">
+<tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
+<tr><td>Distance Threshold (mm)</td><td>2.0 [0.1~20.0]</td><td>직선에서 이 거리 안의 점을 직선 위 점(인라이어)으로 봅니다. Max Straightness 보다 크게 두어야 휜 부분이 인라이어에 남아 직진도에 잡힙니다</td></tr>
+<tr><td>Iterations · Min Inliers</td><td>300 [10~2000] · 50</td><td>RANSAC 반복 횟수 / 직선으로 인정할 최소 인라이어 수</td></tr>
+<tr><td>Draw Overlay</td><td>켬</td><td>맞춘 직선을 2D 화면에 표시</td></tr>
+<tr><td>Enable Judgment · Max Straightness (mm)</td><td>해제 · 1</td><td>직진도가 이 값 이하이면 OK</td></tr>
+</table>
+<p><strong>결과 값</strong> — Length · Straightness · MaxDeviation · RmsDeviation · InlierCount · TotalPoints · InlierRatio · AngleXY(평면 방향 °) · Elevation(고각 °) · LinePointX/Y/Z · LineDirX/Y/Z</p>
+<p><strong>판정</strong> — 판정을 켜면 직진도(인라이어의 99 % 가 직선에서 떨어진 거리)가 Max Straightness 이하일 때 OK. 유효한 점이 Min Inliers 보다 적거나 직선을 찾지 못하면 NG.</p>
+<ul>
+<li>좌표는 점군 원좌표입니다 — 3D 카메라 점군은 X/Y 가 화소, Z 가 mm 라 길이 · 방향은 화소 기준입니다.</li>
+<li>직진도에는 막대 · 레일의 굵기와 표면 흩어짐도 들어갑니다. 곧은 부품을 먼저 재서 기준을 정하세요.</li>
+</ul>
 <h3 id="tools-11">6.11 Deep Learning — 딥러닝 추론</h3>
 <h4>Detection — 딥러닝 객체 검출 (D-FINE · YOLO)</h4>
 <p>학습된 ONNX 모델로 객체의 위치(박스)와 클래스를 검출합니다. 기본 학습 백본은 D-FINE이며 YOLOv8/v11 형식도 자동 판별합니다. 부품 유무 · 다종 부품 검출 · 외관 결함 검출에 씁니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
@@ -575,6 +591,21 @@
 <p><strong>판정</strong> — 판정 모드에 따라 OK/NG. 이 결과가 Run Results 의 Pass/Fail 과 VMS 의 판정 배지가 됩니다.</p>
 <ul>
 <li>최종 OK/NG 신호를 PLC · IO 보드로 내보내는 것은 이 도구가 아니라 시퀀스 편집기의 Branch → Output Action 이 담당합니다(§5.10). 이 도구의 PLC Output 은 PassCount 같은 통계 값 보조 전송용입니다.</li>
+</ul>
+<h4>Ensemble — 딥러닝 판정 결합</h4>
+<p>Result 로 연결한 딥러닝 도구(주로 Detection = 알려진 결함 + Anomaly = 평소와 다른 상태)의 판정을 하나로 합칩니다. 두 모델을 함께 써서 과검(정상을 NG 로)과 미검(불량을 OK 로)을 같이 줄일 때 씁니다. Result 도구가 OK/NG 개수만 세는 것과 달리 검출 개수 · 이상 점수를 판정에 씁니다.</p>
+<figure><img src="../gs/screenshots/v3/tools/36_Ensemble.png" data-width="240" alt="Ensemble — 딥러닝 판정 결합 설정 패널"><figcaption>Ensemble — 딥러닝 판정 결합 — Tool Settings 패널</figcaption></figure>
+<table class="cols-3-2-4">
+<tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
+<tr><td>Ensemble Mode</td><td>And (And · Or · Weighted · Consensus)</td><td>And: 모두 OK 여야 OK(미검 최소화). Or: 하나라도 OK 면 OK(과검 최소화). Weighted: 가중 점수로 판정. Consensus: 소스 판정이 엇갈리면 NG(검토 필요)</td></tr>
+<tr><td>Detection Weight · Anomaly Weight · NG Threshold</td><td>0.5 · 0.5 · 0.5 [0.0~1.0]</td><td>Weighted 모드에서만 보입니다. Detection 실패 비율 × Detection Weight + Anomaly 최대 점수 × Anomaly Weight 가 NG Threshold 를 넘으면 NG</td></tr>
+<tr><td>Draw Overlay</td><td>켬</td><td>판정과 근거 문구를 화면에 표시</td></tr>
+<tr><td>Source Results</td><td>—</td><td>Result 로 연결된 도구 목록(빈 상태 ‘No source tools connected’)</td></tr>
+</table>
+<p><strong>결과 값</strong> — Success · Mode · SourceCount · DetectionCount(소스 검출 개수 합) · AnomalyScore(소스 이상 점수 최댓값)</p>
+<p><strong>판정</strong> — 모드에 따라 OK/NG. 소스 도구가 하나도 연결되지 않았으면 NG(‘소스 도구가 연결되지 않았습니다’).</p>
+<ul>
+<li>Detection · Anomaly 도구에서 Ensemble 로 Result 연결을 잇습니다. 같은 소스에 Ensemble 을 여러 개 붙이면 모드별 결과를 나란히 비교할 수 있습니다.</li>
 </ul>
 <h3 id="tools-13">6.13 Color — 색상</h3>
 <h4>Color Extract — 색 추출 (HSV)</h4>

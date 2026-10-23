@@ -2902,3 +2902,28 @@ docx/PDF 재생성 204쪽(변동 없음) · 그림 151장 · 경고 0. 새 문�
 - §10 도입: 딥러닝 검사 도구 목록에서 YOLOv8-seg 삭제. §13 부록 B: YOLO Segmentation 표 삭제.
 - 제품설명서: 팔레트 "15 카테고리 · 40종" → 39종, TP-11 Deep Learning 5종.
 - docx/PDF 재생성 203쪽(−1) · 그림 150장(−1) · 경고 0. document.xml 에 YOLOv8-seg 도구 언급 없음(Detection 의 "YOLOv8/v11 형식도 자동 판별" 은 검출 모델 형식 설명이라 유지).
+
+## 94. Ensemble 팔레트 추가 · 6장 PointCloud Line Fit · Ensemble 절 · VisionSetup 그림 재캡처 — **반영 완료**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-10-23 |
+| 대상 | §1 도구 수 · §5 메인 화면 그림 · 메뉴 바 행 · 판정 규칙 표 · 템플릿 갤러리 그림 · §6.10 PointCloud Line Fit 절 · §6.12 Ensemble 절 · §7.3 그림 캡션 · 제품설명서 팔레트 40종 |
+| 변경 종류 | 기능 보완 + 매뉴얼 · 제품 불일치 정리 (GS 재신청 검토) |
+
+### 무엇이 바뀌었나 (사내 기록)
+
+- **Ensemble 이 팔레트에 없었다** — 도구 · 설정 화면 · 도움말 · 매뉴얼 부록(Judgment)은 있었고 `GetAvailableTools` 에도 Deep Learning 으로 올라 있었지만 `InitializeToolTree` 에만 빠져, 새로 놓을 수 없고 이 도구가 든 레시피를 불러와야만 썼다(GS 시험자료 Ensemble 레시피가 그 경로). 팔레트 Judgment 에 Result 다음으로 추가하고 `GetAvailableTools` 도 Judgment 로 옮김.
+- 반대쪽 누락도 발견: `GetAvailableTools` 에 PointCloud Deviation 이 없어 직렬화 왕복 테스트가 이 도구를 돌지 않았다 → 추가(왕복 통과).
+- 시험: `Palette_ListsEveryAvailableTool_ExceptHidden` — 팔레트 도구 집합 = 지원 도구 집합 − YOLOv8-seg(숨김). 앞으로 한쪽에만 넣으면 실패한다.
+- 매뉴얼 불일치 2건: ① 6장에 PointCloud Line Fit 절이 없었다(v1.42.7 추가 때 `gen_tools_chapter.py` ORDER · `tools_prose.json` 누락, 부록 표에만 있음 — 6장 도구 절 38개). ② §5 메인 화면 그림 `vs/full_main_scene.png` 가 v1.44.0 이전 캡처라 없어진 "Deep Learning" 메뉴가 보였고 메뉴 바 행에도 적혀 있었다. 템플릿 갤러리 그림 `vs/dlg_TemplateGallery.png` 에는 #588 에서 바꾼 YOLOv8-seg 다이어그램이 남아 있었다.
+- 캡처: Debug VisionSetup `--instance mancap` (기본 인스턴스 system_config 복사 — 카메라 등록이 없으면 레시피 로드 시 "미등록 카메라 참조" 경고 창이 떠 캡처가 멈춘다). 툴 패널 `--capture-toolpanels`(기존 그림과 바이트 동일 확인), 메인 화면 `--capture-fullpage` + 1/2 축소 — 옛 iPhone 캡처 레시피가 노트북 초기화로 없어 GS PatternMatch 레시피(스텝 1 Feature Match, PM02 회전 피팅)로 장면을 바꿈, 템플릿 갤러리 `--capture-dialogs`.
+
+### 매뉴얼 반영 (완료 2026-10-23 — 다음 릴리즈 매뉴얼)
+
+- §1: "39 종의 비전 도구" → "40 종" (두 곳).
+- §5 메뉴 바 행: "… Sequence · Deep Learning · Batch Test..." → "… Sequence · Batch Test...". 메인 화면 그림 교체(GS PatternMatch 장면). 판정 규칙 표에 Ensemble 행 추가. 템플릿 갤러리 그림 교체.
+- §6.10 3D Measurement 에 "PointCloud Line Fit — 3D 직선 피팅" 절(패널 그림 29_PointCloud_Line_Fit, 2단), §6.12 Judgment 에 "Ensemble — 딥러닝 판정 결합" 절(패널 그림 36_Ensemble) 추가. 쓰지 않는 31_YOLOv8-seg.png 삭제.
+- §7.3 그림 캡션: "캡슐 하나를 학습하고 실행한 상태" → "피팅을 학습하고, 약 33° 돌아간 피팅을 찾은 상태".
+- 제품설명서: 팔레트 15 카테고리 · 40종, TP-12 Judgment "Result / Ensemble (2종)".
+- docx/PDF 재생성 205쪽(+2) · 그림 152장(+2) · 경고 0. 새 절 p110(Line Fit) · p118~119(Ensemble) 렌더 확인, document.xml 에 "Sequence · Deep Learning" · YOLOv8-seg 없음.
