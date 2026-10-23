@@ -881,7 +881,7 @@
  },
  "Point Cloud Mask Crop (마스크 점군 크롭)": {
   "title": "PointCloud Mask Crop — 마스크로 점군 잘라내기",
-  "purpose": "2D 마스크 이미지(Threshold · Height Slicer · YOLOv8-seg 의 마스크 출력)에 해당하는 영역만 3D 점군에서 남깁니다. 2D 딥러닝 검출과 3D 측정을 잇는 다리 역할이며, 마스크와 점군 해상도가 달라도 자동으로 비율을 맞춥니다. 마스크 없이 ROI 만 그려 잘라낼 수도 있습니다.",
+  "purpose": "2D 마스크 이미지(Threshold · Height Slicer · RF-DETR-seg 의 마스크 출력)에 해당하는 영역만 3D 점군에서 남깁니다. 2D 딥러닝 검출과 3D 측정을 잇는 다리 역할이며, 마스크와 점군 해상도가 달라도 자동으로 비율을 맞춥니다. 마스크 없이 ROI 만 그려 잘라낼 수도 있습니다.",
   "params": [
    [
     "Min Mask Value",
@@ -912,7 +912,7 @@
   "outputs": "InputPoints · OutputPoints · KeptRatio · MaskCoveragePercent · MergedPoints",
   "judgment": "남은 점이 0 이면 실패(점군은 바뀌지 않음). MaskCoveragePercent 가 100 에 가까우면 마스크가 아니라 일반 이미지를 연결한 것입니다.",
   "tips": [
-   "자동 마스크 흐름: YOLOv8-seg(Output Mask Image 켬) 또는 Threshold · Height Slicer → Image 연결 → Mask Crop → Result 연결 → PointCloud Cluster.",
+   "자동 마스크 흐름: RF-DETR-seg(Output Mask Image 켬) 또는 Threshold · Height Slicer → Image 연결 → Mask Crop → Result 연결 → PointCloud Cluster.",
    "수동 흐름: 2D 이미지를 연결하고 이 도구를 선택한 뒤 이미지 뷰에서 ROI(사각형 · 원 · 다각형)를 그립니다. 결과는 Point Cloud 탭에서 확인합니다."
   ]
  },
@@ -1254,7 +1254,7 @@
  },
  "Segmentation (분할)": {
   "title": "Segmentation — 픽셀 단위 분할 (semantic)",
-  "purpose": "U-Net 같은 픽셀 분류 모델로 이미지를 클래스별 마스크로 나눕니다. 결함 영역의 면적을 재거나 배경 · 전경을 분리할 때 쓰며, 같은 클래스의 개체를 따로 세야 하면 YOLOv8-seg · RF-DETR-seg 를 씁니다. 뒤에 Blob 을 붙여 개수 · 크기를 분석합니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+  "purpose": "U-Net 같은 픽셀 분류 모델로 이미지를 클래스별 마스크로 나눕니다. 결함 영역의 면적을 재거나 배경 · 전경을 분리할 때 쓰며, 같은 클래스의 개체를 따로 세야 하면 RF-DETR-seg 를 씁니다. 뒤에 Blob 을 붙여 개수 · 크기를 분석합니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
   "params": [
    [
     "Model Path (.onnx) · Input Size",
@@ -1283,40 +1283,9 @@
    "Class{i}_Pixels 는 검사 이미지(ROI 를 쓰면 ROI 영역) 크기 기준 화소 수이고, Class{i}_AreaRatio 는 그 영역 안 비율이라 모든 클래스를 더하면 1 입니다. ROI 를 쓰면 오버레이도 ROI 자리에만 그려집니다."
   ]
  },
- "YOLO Segmentation": {
-  "title": "YOLOv8-seg — 인스턴스 분할",
-  "purpose": "YOLOv8/v11 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 픽셀 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 새로 만드는 검사에는 RF-DETR-seg 를 권장하며, 이 도구는 기존 YOLOv8/v11 규약 ONNX 를 쓰던 레시피 호환용입니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
-  "params": [
-   [
-    "Model Path (.onnx) · Input Size",
-    "(빈 값) · 640",
-    "YOLOv8/v11 표준 export 규약(output0 + output1 프로토타입)"
-   ],
-   [
-    "Confidence Threshold · IoU Threshold (NMS) · Mask Threshold",
-    "0.25 · 0.45 · 0.5",
-    "검출 신뢰도 / 중복 제거 / 마스크 이진화 기준(0.3 크게 · 0.7 코어만)"
-   ],
-   [
-    "Show Mask Overlay · Overlay Opacity · Draw Boxes + Labels",
-    "켬 · 0.4 · 켬",
-    "표시 옵션"
-   ],
-   [
-    "Output Mask Image",
-    "해제",
-    "켜면 출력 이미지가 인스턴스 이진 마스크(흰색 = 인스턴스)가 되어 Mask Crop 등에 Image 연결"
-   ]
-  ],
-  "outputs": "InstanceCount · Inst{i}_Class · Inst{i}_ClassName · Inst{i}_Score · Inst{i}_X/Y/Width/Height · Inst{i}_MaskPixels",
-  "judgment": "인스턴스가 0 건이면 NG.",
-  "tips": [
-   "템플릿 ‘DL 세그 기반 3D 객체 검출’ 이 YOLOv8-seg(마스크 출력) → Mask Crop → Cluster 체인을 만듭니다."
-  ]
- },
  "RF-DETR-seg (인스턴스 분할)": {
   "title": "RF-DETR-seg — 인스턴스 분할",
-  "purpose": "RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. YOLOv8-seg 와 하는 일은 같고, 새로 만드는 검사에는 이 도구를 권장합니다. 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+  "purpose": "RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
   "params": [
    [
     "Model Path (.onnx) · [레지스트리…]",
@@ -1336,13 +1305,14 @@
    [
     "Show Mask Overlay · Overlay Opacity · Draw Boxes + Labels · Output Mask Image",
     "켬 · 0.4 · 켬 · 해제",
-    "YOLOv8-seg 와 같은 표시 · 마스크 출력 옵션"
+    "표시 옵션 · 켜면 출력 이미지가 인스턴스 이진 마스크(흰색 = 인스턴스)가 되어 Mask Crop 등에 Image 연결"
    ]
   ],
-  "outputs": "YOLOv8-seg 와 동일(InstanceCount · Inst{i}_…)",
+  "outputs": "InstanceCount · Inst{i}_Class · Inst{i}_ClassName · Inst{i}_Score · Inst{i}_X/Y/Width/Height · Inst{i}_MaskPixels",
   "judgment": "인스턴스가 0 건이면 NG.",
   "tips": [
-   "학습은 MLOps 의 train_rfdetr_seg.py(세그멘테이션 데이터셋, coco 형식)로 합니다(§9.6)."
+   "학습은 MLOps 의 train_rfdetr_seg.py(세그멘테이션 데이터셋, coco 형식)로 합니다(§9.6).",
+   "템플릿 ‘DL 세그 기반 3D 객체 검출’ 이 RF-DETR-seg(마스크 출력) → Mask Crop → Cluster 체인을 만듭니다."
   ]
  },
  "Classify (분류)": {

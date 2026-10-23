@@ -56,6 +56,23 @@ namespace VMS.VisionSetup.Tests
             Assert.DoesNotContain(available["Pattern Matching"], t => AlignToolTypes.Contains(t));
         }
 
+        [Fact]
+        public void Palette_HidesYoloSeg_ButLegacyRecipesStillLoad()
+        {
+            // YOLOv8-seg 는 팔레트·예제 템플릿에서 숨긴다(인스턴스 분할은 RF-DETR-seg, 2026-10-23).
+            // 이 도구가 든 옛 레시피는 그대로 열리고 실행돼야 하므로 생성·직렬화 경로는 남는다.
+            var vm = CreateViewModel();
+            var all = vm.ToolTree.SelectMany(c => c.Tools).Select(t => t.ToolType).ToList();
+            Assert.DoesNotContain("YoloSegTool", all);
+            Assert.Contains("RfdetrSegTool", all);
+            Assert.DoesNotContain(RecipeTemplateCatalog.Templates.SelectMany(t => t.Tools.Concat(t.Steps.SelectMany(s => s.Tools))), s => s.ToolType == "YoloSegTool");
+
+            var config = ToolSerializer.SerializeTool(new VMS.VisionSetup.VisionTools.DeepLearning.YoloSegTool { OutputMaskImage = true });
+            Assert.NotNull(config);
+            Assert.IsType<VMS.VisionSetup.VisionTools.DeepLearning.YoloSegTool>(ToolSerializer.DeserializeTool(config!));
+            Assert.IsType<VMS.VisionSetup.VisionTools.DeepLearning.YoloSegTool>(VisionService.CreateTool("YoloSegTool"));
+        }
+
         private static MainViewModel CreateViewModel()
         {
             return new MainViewModel(

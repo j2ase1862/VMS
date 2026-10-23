@@ -386,7 +386,7 @@
 <li>템플릿 ‘표준 3D 얼라인’ 은 Filter → Registration(변환 미적용) → Result 로 6 축 변위를 내고, ‘3D 기준 형상 편차 검사’ 는 Registration → Deviation 순서입니다.</li>
 </ul>
 <h4>PointCloud Mask Crop — 마스크로 점군 잘라내기</h4>
-<p>2D 마스크 이미지(Threshold · Height Slicer · YOLOv8-seg 의 마스크 출력)에 해당하는 영역만 3D 점군에서 남깁니다. 2D 딥러닝 검출과 3D 측정을 잇는 다리 역할이며, 마스크와 점군 해상도가 달라도 자동으로 비율을 맞춥니다. 마스크 없이 ROI 만 그려 잘라낼 수도 있습니다.</p>
+<p>2D 마스크 이미지(Threshold · Height Slicer · RF-DETR-seg 의 마스크 출력)에 해당하는 영역만 3D 점군에서 남깁니다. 2D 딥러닝 검출과 3D 측정을 잇는 다리 역할이며, 마스크와 점군 해상도가 달라도 자동으로 비율을 맞춥니다. 마스크 없이 ROI 만 그려 잘라낼 수도 있습니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/23_PointCloud_Mask_Crop_split.png" data-width="500" alt="PointCloud Mask Crop — 마스크로 점군 잘라내기 설정 패널"><figcaption>PointCloud Mask Crop — 마스크로 점군 잘라내기 — Tool Settings 패널</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
@@ -399,7 +399,7 @@
 <p><strong>결과 값</strong> — InputPoints · OutputPoints · KeptRatio · MaskCoveragePercent · MergedPoints</p>
 <p><strong>판정</strong> — 남은 점이 0 이면 실패(점군은 바뀌지 않음). MaskCoveragePercent 가 100 에 가까우면 마스크가 아니라 일반 이미지를 연결한 것입니다.</p>
 <ul>
-<li>자동 마스크 흐름: YOLOv8-seg(Output Mask Image 켬) 또는 Threshold · Height Slicer → Image 연결 → Mask Crop → Result 연결 → PointCloud Cluster.</li>
+<li>자동 마스크 흐름: RF-DETR-seg(Output Mask Image 켬) 또는 Threshold · Height Slicer → Image 연결 → Mask Crop → Result 연결 → PointCloud Cluster.</li>
 <li>수동 흐름: 2D 이미지를 연결하고 이 도구를 선택한 뒤 이미지 뷰에서 ROI(사각형 · 원 · 다각형)를 그립니다. 결과는 Point Cloud 탭에서 확인합니다.</li>
 </ul>
 <h4>PointCloud Cluster — 덩어리 분리 · 개수 · 치수</h4>
@@ -503,7 +503,7 @@
 <li>템플릿 ‘DL 객체 검출 판정’ 이 Detection → Result 체인을 만들어 줍니다.</li>
 </ul>
 <h4>Segmentation — 픽셀 단위 분할 (semantic)</h4>
-<p>U-Net 같은 픽셀 분류 모델로 이미지를 클래스별 마스크로 나눕니다. 결함 영역의 면적을 재거나 배경 · 전경을 분리할 때 쓰며, 같은 클래스의 개체를 따로 세야 하면 YOLOv8-seg · RF-DETR-seg 를 씁니다. 뒤에 Blob 을 붙여 개수 · 크기를 분석합니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
+<p>U-Net 같은 픽셀 분류 모델로 이미지를 클래스별 마스크로 나눕니다. 결함 영역의 면적을 재거나 배경 · 전경을 분리할 때 쓰며, 같은 클래스의 개체를 따로 세야 하면 RF-DETR-seg 를 씁니다. 뒤에 Blob 을 붙여 개수 · 크기를 분석합니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/30_Segmentation.png" data-width="240" alt="Segmentation — 픽셀 단위 분할 (semantic) 설정 패널"><figcaption>Segmentation — 픽셀 단위 분할 (semantic) — Tool Settings 패널</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
@@ -517,35 +517,21 @@
 <ul>
 <li>Class{i}_Pixels 는 검사 이미지(ROI 를 쓰면 ROI 영역) 크기 기준 화소 수이고, Class{i}_AreaRatio 는 그 영역 안 비율이라 모든 클래스를 더하면 1 입니다. ROI 를 쓰면 오버레이도 ROI 자리에만 그려집니다.</li>
 </ul>
-<h4>YOLOv8-seg — 인스턴스 분할</h4>
-<p>YOLOv8/v11 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 픽셀 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 새로 만드는 검사에는 RF-DETR-seg 를 권장하며, 이 도구는 기존 YOLOv8/v11 규약 ONNX 를 쓰던 레시피 호환용입니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
-<figure><img src="../gs/screenshots/v3/tools/31_YOLOv8-seg.png" data-width="240" alt="YOLOv8-seg — 인스턴스 분할 설정 패널"><figcaption>YOLOv8-seg — 인스턴스 분할 — Tool Settings 패널</figcaption></figure>
-<table class="cols-3-2-4">
-<tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
-<tr><td>Model Path (.onnx) · Input Size</td><td>(빈 값) · 640</td><td>YOLOv8/v11 표준 export 규약(output0 + output1 프로토타입)</td></tr>
-<tr><td>Confidence Threshold · IoU Threshold (NMS) · Mask Threshold</td><td>0.25 · 0.45 · 0.5</td><td>검출 신뢰도 / 중복 제거 / 마스크 이진화 기준(0.3 크게 · 0.7 코어만)</td></tr>
-<tr><td>Show Mask Overlay · Overlay Opacity · Draw Boxes + Labels</td><td>켬 · 0.4 · 켬</td><td>표시 옵션</td></tr>
-<tr><td>Output Mask Image</td><td>해제</td><td>켜면 출력 이미지가 인스턴스 이진 마스크(흰색 = 인스턴스)가 되어 Mask Crop 등에 Image 연결</td></tr>
-</table>
-<p><strong>결과 값</strong> — InstanceCount · Inst{i}_Class · Inst{i}_ClassName · Inst{i}_Score · Inst{i}_X/Y/Width/Height · Inst{i}_MaskPixels</p>
-<p><strong>판정</strong> — 인스턴스가 0 건이면 NG.</p>
-<ul>
-<li>템플릿 ‘DL 세그 기반 3D 객체 검출’ 이 YOLOv8-seg(마스크 출력) → Mask Crop → Cluster 체인을 만듭니다.</li>
-</ul>
 <h4>RF-DETR-seg — 인스턴스 분할</h4>
-<p>RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. YOLOv8-seg 와 하는 일은 같고, 새로 만드는 검사에는 이 도구를 권장합니다. 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
+<p>RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/32_RF-DETR-seg.png" data-width="240" alt="RF-DETR-seg — 인스턴스 분할 설정 패널"><figcaption>RF-DETR-seg — 인스턴스 분할 — Tool Settings 패널</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Model Path (.onnx) · [레지스트리…]</td><td>(빈 값)</td><td>파일 또는 model:// 참조</td></tr>
 <tr><td>Input Size (모델이 정합니다)</td><td>560 (잠김)</td><td>모델을 열면 ONNX 가 정한 값으로 자동 설정되고 칸이 잠깁니다 — 모델마다 배수가 달라 손으로 맞추면 안 됩니다</td></tr>
 <tr><td>Confidence Threshold · Max Instances</td><td>0.5 · 100 [1~1000]</td><td>검출 신뢰도 / 점수 순 상한</td></tr>
-<tr><td>Show Mask Overlay · Overlay Opacity · Draw Boxes + Labels · Output Mask Image</td><td>켬 · 0.4 · 켬 · 해제</td><td>YOLOv8-seg 와 같은 표시 · 마스크 출력 옵션</td></tr>
+<tr><td>Show Mask Overlay · Overlay Opacity · Draw Boxes + Labels · Output Mask Image</td><td>켬 · 0.4 · 켬 · 해제</td><td>표시 옵션 · 켜면 출력 이미지가 인스턴스 이진 마스크(흰색 = 인스턴스)가 되어 Mask Crop 등에 Image 연결</td></tr>
 </table>
-<p><strong>결과 값</strong> — YOLOv8-seg 와 동일(InstanceCount · Inst{i}_…)</p>
+<p><strong>결과 값</strong> — InstanceCount · Inst{i}_Class · Inst{i}_ClassName · Inst{i}_Score · Inst{i}_X/Y/Width/Height · Inst{i}_MaskPixels</p>
 <p><strong>판정</strong> — 인스턴스가 0 건이면 NG.</p>
 <ul>
 <li>학습은 MLOps 의 train_rfdetr_seg.py(세그멘테이션 데이터셋, coco 형식)로 합니다(§9.6).</li>
+<li>템플릿 ‘DL 세그 기반 3D 객체 검출’ 이 RF-DETR-seg(마스크 출력) → Mask Crop → Cluster 체인을 만듭니다.</li>
 </ul>
 <h4>Classify — 이미지 분류</h4>
 <p>ResNet · MobileNet 같은 분류 모델(ONNX)로 이미지(또는 ROI) 전체를 한 클래스로 판정합니다. 양품/불량 판정, 부품 종류 구분, 외관 등급에 씁니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>

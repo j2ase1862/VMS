@@ -37,7 +37,6 @@ CORE = [
     ("Point Cloud Line Fit (포인트클라우드 직선 피팅)", "3D Analysis", "PointCloudLineFitToolSettings.xaml"),
     ("Detection (딥러닝 검출)", "Deep Learning", "DetectionToolSettings.xaml"),
     ("Segmentation (분할)", "Deep Learning", "SegmentationToolSettings.xaml"),
-    ("YOLO Segmentation", "Deep Learning", "YoloSegToolSettings.xaml"),
     ("RF-DETR-seg (인스턴스 분할)", "Deep Learning", "RfdetrSegToolSettings.xaml"),
     ("Anomaly (이상 탐지)", "Deep Learning", "AnomalyToolSettings.xaml"),
     ("Classify (분류)", "Deep Learning", "ClassifyToolSettings.xaml"),

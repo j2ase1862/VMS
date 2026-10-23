@@ -13320,14 +13320,14 @@
     {
      "segs": [
       {
-       "s": "Detection · Segmentation · YOLOv8-seg · RF-DETR-seg",
+       "s": "Detection · Segmentation · RF-DETR-seg",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "Detection · Segmentation · YOLOv8-seg · RF-DETR-seg"
+     "text": "Detection · Segmentation · RF-DETR-seg"
     },
     {
      "segs": [
@@ -13998,14 +13998,14 @@
     {
      "segs": [
       {
-       "s": "YOLOv8-seg(마스크 출력) → Mask Crop → Cluster. 딥러닝 윤곽으로 점군을 잘라 객체별 치수",
+       "s": "RF-DETR-seg(마스크 출력) → Mask Crop → Cluster. 딥러닝 윤곽으로 점군을 잘라 객체별 치수",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "YOLOv8-seg(마스크 출력) → Mask Crop → Cluster. 딥러닝 윤곽으로 점군을 잘라 객체별 치수"
+     "text": "RF-DETR-seg(마스크 출력) → Mask Crop → Cluster. 딥러닝 윤곽으로 점군을 잘라 객체별 치수"
     }
    ],
    [
@@ -22786,12 +22786,12 @@
   "t": "p",
   "segs": [
    {
-    "s": "2D 마스크 이미지(Threshold · Height Slicer · YOLOv8-seg 의 마스크 출력)에 해당하는 영역만 3D 점군에서 남깁니다. 2D 딥러닝 검출과 3D 측정을 잇는 다리 역할이며, 마스크와 점군 해상도가 달라도 자동으로 비율을 맞춥니다. 마스크 없이 ROI 만 그려 잘라낼 수도 있습니다.",
+    "s": "2D 마스크 이미지(Threshold · Height Slicer · RF-DETR-seg 의 마스크 출력)에 해당하는 영역만 3D 점군에서 남깁니다. 2D 딥러닝 검출과 3D 측정을 잇는 다리 역할이며, 마스크와 점군 해상도가 달라도 자동으로 비율을 맞춥니다. 마스크 없이 ROI 만 그려 잘라낼 수도 있습니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "2D 마스크 이미지(Threshold · Height Slicer · YOLOv8-seg 의 마스크 출력)에 해당하는 영역만 3D 점군에서 남깁니다. 2D 딥러닝 검출과 3D 측정을 잇는 다리 역할이며, 마스크와 점군 해상도가 달라도 자동으로 비율을 맞춥니다. 마스크 없이 ROI 만 그려 잘라낼 수도 있습니다."
+  "text": "2D 마스크 이미지(Threshold · Height Slicer · RF-DETR-seg 의 마스크 출력)에 해당하는 영역만 3D 점군에서 남깁니다. 2D 딥러닝 검출과 3D 측정을 잇는 다리 역할이며, 마스크와 점군 해상도가 달라도 자동으로 비율을 맞춥니다. 마스크 없이 ROI 만 그려 잘라낼 수도 있습니다."
  },
  {
   "t": "figure",
@@ -23069,14 +23069,14 @@
   "t": "li",
   "segs": [
    {
-    "s": "자동 마스크 흐름: YOLOv8-seg(Output Mask Image 켬) 또는 Threshold · Height Slicer → Image 연결 → Mask Crop → Result 연결 → PointCloud Cluster.",
+    "s": "자동 마스크 흐름: RF-DETR-seg(Output Mask Image 켬) 또는 Threshold · Height Slicer → Image 연결 → Mask Crop → Result 연결 → PointCloud Cluster.",
     "b": false,
     "m": false
    }
   ],
   "ordered": false,
   "depth": 0,
-  "text": "자동 마스크 흐름: YOLOv8-seg(Output Mask Image 켬) 또는 Threshold · Height Slicer → Image 연결 → Mask Crop → Result 연결 → PointCloud Cluster."
+  "text": "자동 마스크 흐름: RF-DETR-seg(Output Mask Image 켬) 또는 Threshold · Height Slicer → Image 연결 → Mask Crop → Result 연결 → PointCloud Cluster."
  },
  {
   "t": "li",
@@ -24955,12 +24955,12 @@
   "t": "p",
   "segs": [
    {
-    "s": "U-Net 같은 픽셀 분류 모델로 이미지를 클래스별 마스크로 나눕니다. 결함 영역의 면적을 재거나 배경 · 전경을 분리할 때 쓰며, 같은 클래스의 개체를 따로 세야 하면 YOLOv8-seg · RF-DETR-seg 를 씁니다. 뒤에 Blob 을 붙여 개수 · 크기를 분석합니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+    "s": "U-Net 같은 픽셀 분류 모델로 이미지를 클래스별 마스크로 나눕니다. 결함 영역의 면적을 재거나 배경 · 전경을 분리할 때 쓰며, 같은 클래스의 개체를 따로 세야 하면 RF-DETR-seg 를 씁니다. 뒤에 Blob 을 붙여 개수 · 크기를 분석합니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "U-Net 같은 픽셀 분류 모델로 이미지를 클래스별 마스크로 나눕니다. 결함 영역의 면적을 재거나 배경 · 전경을 분리할 때 쓰며, 같은 클래스의 개체를 따로 세야 하면 YOLOv8-seg · RF-DETR-seg 를 씁니다. 뒤에 Blob 을 붙여 개수 · 크기를 분석합니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
+  "text": "U-Net 같은 픽셀 분류 모델로 이미지를 클래스별 마스크로 나눕니다. 결함 영역의 면적을 재거나 배경 · 전경을 분리할 때 쓰며, 같은 클래스의 개체를 따로 세야 하면 RF-DETR-seg 를 씁니다. 뒤에 Blob 을 붙여 개수 · 크기를 분석합니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
  },
  {
   "t": "figure",
@@ -25213,276 +25213,6 @@
   "t": "h",
   "segs": [
    {
-    "s": "YOLOv8-seg — 인스턴스 분할",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 4,
-  "text": "YOLOv8-seg — 인스턴스 분할"
- },
- {
-  "t": "p",
-  "segs": [
-   {
-    "s": "YOLOv8/v11 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 픽셀 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 새로 만드는 검사에는 RF-DETR-seg 를 권장하며, 이 도구는 기존 YOLOv8/v11 규약 ONNX 를 쓰던 레시피 호환용입니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "text": "YOLOv8/v11 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 픽셀 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 새로 만드는 검사에는 RF-DETR-seg 를 권장하며, 이 도구는 기존 YOLOv8/v11 규약 ONNX 를 쓰던 레시피 호환용입니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
- },
- {
-  "t": "figure",
-  "src": "../gs/screenshots/v3/tools/31_YOLOv8-seg.png",
-  "width": "240",
-  "caption": "YOLOv8-seg — 인스턴스 분할 — Tool Settings 패널"
- },
- {
-  "t": "table",
-  "rows": [
-   [
-    {
-     "segs": [
-      {
-       "s": "파라미터",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": true,
-     "imgs": [],
-     "text": "파라미터"
-    },
-    {
-     "segs": [
-      {
-       "s": "기본값 / 범위",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": true,
-     "imgs": [],
-     "text": "기본값 / 범위"
-    },
-    {
-     "segs": [
-      {
-       "s": "설명",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": true,
-     "imgs": [],
-     "text": "설명"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "Model Path (.onnx) · Input Size",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Model Path (.onnx) · Input Size"
-    },
-    {
-     "segs": [
-      {
-       "s": "(빈 값) · 640",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "(빈 값) · 640"
-    },
-    {
-     "segs": [
-      {
-       "s": "YOLOv8/v11 표준 export 규약(output0 + output1 프로토타입)",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "YOLOv8/v11 표준 export 규약(output0 + output1 프로토타입)"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "Confidence Threshold · IoU Threshold (NMS) · Mask Threshold",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Confidence Threshold · IoU Threshold (NMS) · Mask Threshold"
-    },
-    {
-     "segs": [
-      {
-       "s": "0.25 · 0.45 · 0.5",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "0.25 · 0.45 · 0.5"
-    },
-    {
-     "segs": [
-      {
-       "s": "검출 신뢰도 / 중복 제거 / 마스크 이진화 기준(0.3 크게 · 0.7 코어만)",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "검출 신뢰도 / 중복 제거 / 마스크 이진화 기준(0.3 크게 · 0.7 코어만)"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "Show Mask Overlay · Overlay Opacity · Draw Boxes + Labels",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Show Mask Overlay · Overlay Opacity · Draw Boxes + Labels"
-    },
-    {
-     "segs": [
-      {
-       "s": "켬 · 0.4 · 켬",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "켬 · 0.4 · 켬"
-    },
-    {
-     "segs": [
-      {
-       "s": "표시 옵션",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "표시 옵션"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "Output Mask Image",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Output Mask Image"
-    },
-    {
-     "segs": [
-      {
-       "s": "해제",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "해제"
-    },
-    {
-     "segs": [
-      {
-       "s": "켜면 출력 이미지가 인스턴스 이진 마스크(흰색 = 인스턴스)가 되어 Mask Crop 등에 Image 연결",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "켜면 출력 이미지가 인스턴스 이진 마스크(흰색 = 인스턴스)가 되어 Mask Crop 등에 Image 연결"
-    }
-   ]
-  ],
-  "cls": "cols-3-2-4"
- },
- {
-  "t": "p",
-  "segs": [
-   {
-    "s": "결과 값",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " — InstanceCount · Inst{i}_Class · Inst{i}_ClassName · Inst{i}_Score · Inst{i}_X/Y/Width/Height · Inst{i}_MaskPixels",
-    "b": false,
-    "m": false
-   }
-  ],
-  "text": "결과 값 — InstanceCount · Inst{i}_Class · Inst{i}_ClassName · Inst{i}_Score · Inst{i}_X/Y/Width/Height · Inst{i}_MaskPixels"
- },
- {
-  "t": "p",
-  "segs": [
-   {
-    "s": "판정",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " — 인스턴스가 0 건이면 NG.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "text": "판정 — 인스턴스가 0 건이면 NG."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "템플릿 ‘DL 세그 기반 3D 객체 검출’ 이 YOLOv8-seg(마스크 출력) → Mask Crop → Cluster 체인을 만듭니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 0,
-  "text": "템플릿 ‘DL 세그 기반 3D 객체 검출’ 이 YOLOv8-seg(마스크 출력) → Mask Crop → Cluster 체인을 만듭니다."
- },
- {
-  "t": "h",
-  "segs": [
-   {
     "s": "RF-DETR-seg — 인스턴스 분할",
     "b": false,
     "m": false
@@ -25495,12 +25225,12 @@
   "t": "p",
   "segs": [
    {
-    "s": "RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. YOLOv8-seg 와 하는 일은 같고, 새로 만드는 검사에는 이 도구를 권장합니다. 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+    "s": "RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. YOLOv8-seg 와 하는 일은 같고, 새로 만드는 검사에는 이 도구를 권장합니다. 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
+  "text": "RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
  },
  {
   "t": "figure",
@@ -25691,14 +25421,14 @@
     {
      "segs": [
       {
-       "s": "YOLOv8-seg 와 같은 표시 · 마스크 출력 옵션",
+       "s": "표시 옵션 · 켜면 출력 이미지가 인스턴스 이진 마스크(흰색 = 인스턴스)가 되어 Mask Crop 등에 Image 연결",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "YOLOv8-seg 와 같은 표시 · 마스크 출력 옵션"
+     "text": "표시 옵션 · 켜면 출력 이미지가 인스턴스 이진 마스크(흰색 = 인스턴스)가 되어 Mask Crop 등에 Image 연결"
     }
    ]
   ],
@@ -25713,12 +25443,12 @@
     "m": false
    },
    {
-    "s": " — YOLOv8-seg 와 동일(InstanceCount · Inst{i}_…)",
+    "s": " — InstanceCount · Inst{i}_Class · Inst{i}_ClassName · Inst{i}_Score · Inst{i}_X/Y/Width/Height · Inst{i}_MaskPixels",
     "b": false,
     "m": false
    }
   ],
-  "text": "결과 값 — YOLOv8-seg 와 동일(InstanceCount · Inst{i}_…)"
+  "text": "결과 값 — InstanceCount · Inst{i}_Class · Inst{i}_ClassName · Inst{i}_Score · Inst{i}_X/Y/Width/Height · Inst{i}_MaskPixels"
  },
  {
   "t": "p",
@@ -25748,6 +25478,19 @@
   "ordered": false,
   "depth": 0,
   "text": "학습은 MLOps 의 train_rfdetr_seg.py(세그멘테이션 데이터셋, coco 형식)로 합니다(§9.6)."
+ },
+ {
+  "t": "li",
+  "segs": [
+   {
+    "s": "템플릿 ‘DL 세그 기반 3D 객체 검출’ 이 RF-DETR-seg(마스크 출력) → Mask Crop → Cluster 체인을 만듭니다.",
+    "b": false,
+    "m": false
+   }
+  ],
+  "ordered": false,
+  "depth": 0,
+  "text": "템플릿 ‘DL 세그 기반 3D 객체 검출’ 이 RF-DETR-seg(마스크 출력) → Mask Crop → Cluster 체인을 만듭니다."
  },
  {
   "t": "h",
@@ -28698,7 +28441,7 @@
   "t": "figure",
   "src": "../gs/screenshots/v3/templates/pc-dl-detect.png",
   "width": "520",
-  "caption": "YOLOv8-seg → PointCloud Mask Crop → PointCloud Cluster"
+  "caption": "RF-DETR-seg → PointCloud Mask Crop → PointCloud Cluster"
  },
  {
   "t": "p",
@@ -34262,12 +34005,12 @@
   "t": "p",
   "segs": [
    {
-    "s": "딥러닝 검사 도구(§6 — Detection · Classify · Anomaly · YOLOv8-seg · RF-DETR-seg · OCR)는 학습된 모델 파일(ONNX)로 동작합니다. 모델의 라벨링 · 학습 · 등록은 AI 학습 플랫폼 BODA VMS MLOps(9장)에서 합니다. VMS 와 VisionSetup 은 만들어진 모델을 불러와 검사에 씁니다.",
+    "s": "딥러닝 검사 도구(§6 — Detection · Classify · Anomaly · RF-DETR-seg · OCR)는 학습된 모델 파일(ONNX)로 동작합니다. 모델의 라벨링 · 학습 · 등록은 AI 학습 플랫폼 BODA VMS MLOps(9장)에서 합니다. VMS 와 VisionSetup 은 만들어진 모델을 불러와 검사에 씁니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "딥러닝 검사 도구(§6 — Detection · Classify · Anomaly · YOLOv8-seg · RF-DETR-seg · OCR)는 학습된 모델 파일(ONNX)로 동작합니다. 모델의 라벨링 · 학습 · 등록은 AI 학습 플랫폼 BODA VMS MLOps(9장)에서 합니다. VMS 와 VisionSetup 은 만들어진 모델을 불러와 검사에 씁니다."
+  "text": "딥러닝 검사 도구(§6 — Detection · Classify · Anomaly · RF-DETR-seg · OCR)는 학습된 모델 파일(ONNX)로 동작합니다. 모델의 라벨링 · 학습 · 등록은 AI 학습 플랫폼 BODA VMS MLOps(9장)에서 합니다. VMS 와 VisionSetup 은 만들어진 모델을 불러와 검사에 씁니다."
  },
  {
   "t": "li",
@@ -51423,374 +51166,6 @@
      "header": false,
      "imgs": [],
      "text": "슬라이더 [0.0~1.0]"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [],
-     "text": ""
-    }
-   ]
-  ],
-  "cls": "cols-3-3-4"
- },
- {
-  "t": "h",
-  "segs": [
-   {
-    "s": "YOLO Segmentation",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 5,
-  "text": "YOLO Segmentation"
- },
- {
-  "t": "table",
-  "rows": [
-   [
-    {
-     "segs": [
-      {
-       "s": "파라미터 (UI 라벨)",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": true,
-     "imgs": [],
-     "text": "파라미터 (UI 라벨)"
-    },
-    {
-     "segs": [
-      {
-       "s": "컨트롤 / 범위",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": true,
-     "imgs": [],
-     "text": "컨트롤 / 범위"
-    },
-    {
-     "segs": [
-      {
-       "s": "설명",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": true,
-     "imgs": [],
-     "text": "설명"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "Model Path (.onnx)",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Model Path (.onnx)"
-    },
-    {
-     "segs": [
-      {
-       "s": "입력",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "입력"
-    },
-    {
-     "segs": [
-      {
-       "s": "모델 파일(.onnx) 경로 또는 model:// 참조",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "모델 파일(.onnx) 경로 또는 model:// 참조"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "Input Size",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Input Size"
-    },
-    {
-     "segs": [
-      {
-       "s": "슬라이더 [64~1280]",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "슬라이더 [64~1280]"
-    },
-    {
-     "segs": [
-      {
-       "s": "모델 입력 크기(px)",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "모델 입력 크기(px)"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "Confidence Threshold",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Confidence Threshold"
-    },
-    {
-     "segs": [
-      {
-       "s": "슬라이더 [0.01~1.0]",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "슬라이더 [0.01~1.0]"
-    },
-    {
-     "segs": [
-      {
-       "s": "신뢰도 임계값",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "신뢰도 임계값"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "IoU Threshold (NMS)",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "IoU Threshold (NMS)"
-    },
-    {
-     "segs": [
-      {
-       "s": "슬라이더 [0.1~1.0]",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "슬라이더 [0.1~1.0]"
-    },
-    {
-     "segs": [
-      {
-       "s": "박스 중복 제거 IoU 임계값",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "박스 중복 제거 IoU 임계값"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "Mask Threshold",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Mask Threshold"
-    },
-    {
-     "segs": [
-      {
-       "s": "슬라이더 [0.1~0.99]",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "슬라이더 [0.1~0.99]"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [],
-     "text": ""
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "Show Mask Overlay",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Show Mask Overlay"
-    },
-    {
-     "segs": [
-      {
-       "s": "체크박스",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "체크박스"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [],
-     "text": ""
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "Overlay Opacity",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Overlay Opacity"
-    },
-    {
-     "segs": [
-      {
-       "s": "슬라이더 [0.0~1.0]",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "슬라이더 [0.0~1.0]"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [],
-     "text": ""
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "Draw Boxes + Labels",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Draw Boxes + Labels"
-    },
-    {
-     "segs": [
-      {
-       "s": "체크박스",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "체크박스"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [],
-     "text": ""
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "Output Mask Image",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Output Mask Image"
-    },
-    {
-     "segs": [
-      {
-       "s": "체크박스",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "체크박스"
     },
     {
      "segs": [],
