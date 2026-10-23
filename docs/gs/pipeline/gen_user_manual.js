@@ -1,7 +1,7 @@
 // GS 제출용 사용자 매뉴얼(docx) 생성기 — v3 (2026-09-16 전면 개편)
 // 입력: _manual_blocks.json (parse_manual.py 출력) — 그림·표·콜아웃이 HTML 본문 순서대로 들어 있다.
 //       생성기는 본문을 "순서대로" 옮길 뿐, 절이나 그림을 따로 끼워 넣지 않는다.
-// 출력: docs/gs/VMS_사용자매뉴얼_v2.0.docx
+// 출력: docs/gs/VMS_사용자매뉴얼_v3.0.docx
 const path = require("path");
 const fs = require("fs");
 const GLOBAL = "C:/Users/vinos/AppData/Roaming/npm/node_modules";
@@ -16,7 +16,7 @@ const GS = path.join(DIR, "..");                    // docs/gs
 const HTML = path.join(GS, "..", "manuals", "BODA-VMS-User-Manual.html");
 const HTML_DIR = path.dirname(HTML);
 const blocks = JSON.parse(fs.readFileSync(path.join(DIR, "_manual_blocks.json"), "utf-8"));
-const OUT = path.join(GS, process.env.MANUAL_OUT || "VMS_사용자매뉴얼_v2.0.docx");
+const OUT = path.join(GS, process.env.MANUAL_OUT || "VMS_사용자매뉴얼_v3.0.docx");
 
 const PAGE_W = 11906, PAGE_H = 16838, MARGIN = 1300;
 const CONTENT_W = PAGE_W - 2 * MARGIN;              // twips

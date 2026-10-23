@@ -17,7 +17,7 @@ docs/gs/
 
 | 파일 | 생성기 |
 |------|--------|
-| `VMS_사용자매뉴얼_v2.0.docx` (+ 동명 `.pdf` 내보내기본) | `pipeline/parse_manual.py` → `pipeline/gen_user_manual.js` |
+| `VMS_사용자매뉴얼_v3.0.docx` (+ 동명 `.pdf` 내보내기본) | `pipeline/parse_manual.py` → `pipeline/gen_user_manual.js` |
 | `../manuals/BODA-VMS-AI-Tools-Manual.html` (별책 — AI 학습 도구, 인증 범위 외) | 수동 편집 HTML (본편 6장 분리, 2026-09-08). docx 생성기 없음 — 필요 시 브라우저 인쇄로 PDF |
 | `VMS_제품설명서_v1.0.docx` | `pipeline/gen_product_description.js` |
 | `VMS_OSS_라이선스_확인서_v1.0.docx` `VMS_GS_신청서_템플릿_v1.0.docx` `VMS_GS_신청_체크리스트_v1.0.docx` | `pipeline/gen_gs_supporting_docs.js` |
@@ -33,7 +33,7 @@ python docs/manuals/gen_tools_chapter.py     # 6장 도구 레퍼런스 (tools_p
 python docs/manuals/gen_appendix.py          # 13장 부록 (파라미터 전체표)
 python docs/manuals/build_manual.py          # src/*.html 합치기 + 사이드 목차 → docs/manuals/BODA-VMS-User-Manual.html
 python docs/gs/pipeline/parse_manual.py      # HTML → _manual_blocks.json
-node docs/gs/pipeline/gen_user_manual.js     # → docs/gs/VMS_사용자매뉴얼_v2.0.docx
+node docs/gs/pipeline/gen_user_manual.js     # → docs/gs/VMS_사용자매뉴얼_v3.0.docx
 docs/gs/pipeline/docx2pdf_render.ps1 -Docx <docx> -Pdf <pdf> -OutDir <png폴더>   # Word COM → PDF + 페이지 PNG(검수용)
 ```
 
