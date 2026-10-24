@@ -475,7 +475,7 @@ namespace VMS.Services
                 // 실행
                 var resultMap = new Dictionary<string, VisionResult>();
                 bool allSuccess = true;
-                Mat? compositeOverlay = null;
+                using var compositeBuilder = new VMS.VisionSetup.Services.CompositeOverlayBuilder();
 
                 foreach (var tool in ctx.SortedTools)
                 {
@@ -546,20 +546,8 @@ namespace VMS.Services
                         if (!toolResult.Success)
                             allSuccess = false;
 
-                        // 오버레이 합성
-                        if (toolResult.OverlayImage != null && !toolResult.OverlayImage.Empty())
-                        {
-                            if (compositeOverlay == null)
-                            {
-                                compositeOverlay = VMS.VisionSetup.Services.OverlayComposer.CreateComposite(
-                                    toolResult.OverlayImage, inputImage);
-                            }
-                            else
-                            {
-                                VMS.VisionSetup.Services.OverlayComposer.Merge(
-                                    toolResult.OverlayImage, inputImage, compositeOverlay);
-                            }
-                        }
+                        // 오버레이 합성 — 머리표는 쌓고 판정 테두리는 스텝 판정으로 (CompositeOverlayBuilder)
+                        compositeBuilder.Add(toolResult, inputImage);
 
                         toolSw.Stop();
                         result.ToolResults.Add(new ToolInspectionResult
@@ -595,7 +583,7 @@ namespace VMS.Services
 
                 result.Success = finalSuccess;
                 result.Message = finalSuccess ? "All tools passed" : "One or more tools failed";
-                result.OverlayImage = compositeOverlay;
+                result.OverlayImage = compositeBuilder.Build(finalSuccess);
 
                 // 실패한 도구 이름 — 감사 로그 + 로컬 이력(NG 코드 대체)에 사용.
                 var failedTools = result.ToolResults
@@ -643,7 +631,7 @@ namespace VMS.Services
                 // 방치하면 AUTO RUN 사이클마다 수십 MB 씩 쌓였다 지연 회수되는 톱니형
                 // 증가가 되고(실증 PC 2026-08-29), LastResult 로 캐시 툴에 남는 직전
                 // 사이클 1세트는 상시 상주했다. 표시용 오버레이는 위에서 합성본
-                // (compositeOverlay 클론)으로 분리됐고, 이 엔진은 사이클 간에 결과
+                // (CompositeOverlayBuilder 합성본)으로 분리됐고, 이 엔진은 사이클 간에 결과
                 // 이미지를 참조하지 않으므로(판정/Data 만 사용) 여기서 안전하다.
                 // ReleaseMats 는 idempotent 이며 Data/Message 는 보존한다.
                 foreach (var vr in resultMap.Values)

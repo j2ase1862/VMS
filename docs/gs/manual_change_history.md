@@ -3004,7 +3004,7 @@ docx/PDF 재생성 204쪽(변동 없음) · 그림 151장 · 경고 0. 새 문�
 - 캡처 도구(DEBUG 전용): VisionSetup `--capture-scenes`(env `VMS_CAPTURE_SCENES` 장면 목록 JSON — 레시피 · 스텝 · 이미지/.vpc · 도구 · post · showRoi · tab), VMS `--capture-inspect`(env `VMS_CAPTURE_RECIPE` · `VMS_CAPTURE_IMAGES`). VMS `CameraViewModel.OpenImage` 의 파일 표시 부분을 `LoadImageFile` 로 분리(동작 동일). 자르기 `pipeline/crop_tool_scenes.py` · `pipeline/crop_manual_figs.py`.
 - 캡처 환경: `--instance mancap`(webServerUrl 빈 값 = 단독 모드, 운영 Web 무접촉), 3D 레시피용 카메라 `gs-mechmind-3d` 를 mancap system_config 에 등록(없으면 재연결 창에서 멈춤), 레시피는 시험자료 사본(`D:\Temp\mancap_scenes\recipes`)으로 실행 — 동결본 `D:\GS_TestData` 무변경.
 
-### 캡처 중 발견 (미수정, 사용자 판단 대기)
+### 캡처 중 발견 (→ §99 v1.47.2 에서 둘 다 수정)
 
 - **합성 오버레이의 OK/NG 배지 겹침** — Geometry · Ensemble · PointCloud Cluster · PointCloud Deviation 은 자기 판정 배지를 같은 자리(18, 31)에 그린다. 한 스텝에 이런 도구가 둘 이상이면 Run All · VMS 검사 합성 이미지에 **마지막 도구의 배지만** 남아, 스텝이 NG 인데 이미지 배지는 OK 로 보일 수 있다(예: Measure 레시피 MS04 — Hole Pitch NG, 마지막 Block Angle OK → 배지 OK, 헤더 배지는 NG). 매뉴얼 그림은 마지막 장을 배지와 판정이 일치하는 MS05 로 찍었다.
 - **Run Results 에 목록 값이 형식 이름으로 표시** — "Edges=System.Collections.Generic.List…", "TopN=…", "CaliperResults=…" 처럼 목록형 결과 값이 .NET 형식 이름으로 보인다(VisionSetup `FormatResultValue` · VMS `CameraViewModel.UpdateToolRunResults`).
@@ -3012,3 +3012,30 @@ docx/PDF 재생성 204쪽(변동 없음) · 그림 151장 · 경고 0. 새 문�
 ### 매뉴얼 반영 (완료 2026-10-24)
 
 - docx/PDF 재생성 **235쪽 · 그림 200장**(+48) · 경고 0, docx 24.7MB.
+
+## 99. 결과 이미지 판정 글자 쌓기 · Run Results 목록 값 표시 (v1.47.2) — **반영 완료**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-10-24 |
+| 대상 | §4.5 · §5.6 · 6장 실행 예 그림(35장 재캡처) · Ensemble 실행 예 캡션 · §4.4/§4.5/§4.9 그림 재캡처 · 표지 · §2.2 · §13.5 대상 SW · 제품설명서 |
+| 변경 종류 | SW 동작 변경(표시만 — 판정 · 결과 값 · 기대 결과표 불변) |
+
+### 무엇이 바뀌었나 (사내 기록)
+
+- §98 캡처 중 발견한 결함 2건을 사용자 결정으로 수정, v1.47.2.
+- **판정 글자 겹침** — 이미지 왼쪽 위에 판정 글자를 그리는 도구(Geometry 판정 배지 · Classify · Anomaly · Ensemble · OCR 인식 문자열 · Code Reader 등급/GS1 · Multi-Step Align 요약 상자)가 모두 (10, 30) 근처에 그려, 한 스텝 합성 이미지(VisionSetup Run All · VMS 검사)에 마지막 도구 것만 남았다. §98 의 "PointCloud Cluster · Deviation" 은 잘못 적은 것 — 두 도구는 왼쪽 위 배지를 그리지 않는다.
+  - 도구가 그린 머리표 영역을 `VisionResult.HeaderRegions` 에 남기고(`VisionToolBase.PutHeaderText` · `AddHeaderRegion`), 새 합성기 `CompositeOverlayBuilder`(VisionService · InspectionService 공용)가 둘째 도구부터 머리표를 앞 것 아래로 4 px 간격으로 옮겨 붙인다.
+  - 판정 테두리(Classify · Ensemble, `VerdictFrameThickness`)는 합성 이미지에서 도구별 테두리 대신 **스텝 판정 색**(ResultTool 이 있으면 그 판정) 하나로 다시 그린다.
+  - 겹침이 풀리며 드러난 것: 이미지 글꼴(Hershey)은 ASCII 만 그려 Ensemble 문구의 `×` 와 Consensus 한글 문구가 `?` 로 찍혔다 → 머리표 글자의 흔한 기호를 ASCII 로 바꾸고(`ToOverlayAscii`), Consensus 는 이미지용 영문 문구를 따로 둔다(결과 메시지는 그대로 — 기대 결과표가 메시지를 쓴다).
+- **Run Results 목록 값** — 목록형 결과 값이 `System.Collections.Generic.List…` 로 보였다. 공용 포맷터 `ResultValueFormatter`(VisionSetup Run Results · VMS 카메라 Run Results): 실수 소수 3자리, 목록은 앞 4 개 `[a, b, …] (n개)`, 글자로 못 바꾸는 항목의 목록은 개수만(`Detections=1개`), 튜플은 항목마다 포맷(`TopN=[(3, 1.000), …]`).
+- 시험: `CompositeOverlayBuilderTests` 10 · `ResultValueFormatterTests` 8. 전체 테스트(진단 제외) 통과.
+- **GS 시험자료 영향 없음** — v1.47.2 코드로 `VMS_GS_VERIFY` 2D 22 묶음 375 행 모두 일치. 기대 결과표는 판정 · 값 · 메시지만 쓰고 오버레이 · 화면 표시 문자열은 쓰지 않는다.
+
+### 매뉴얼 반영 (완료 2026-10-24)
+
+- §5.6 실행과 결과 보기에 두 항목 추가(판정 글자가 실행 순서대로 쌓임 · 테두리는 스텝 판정 색 / Run Results 값 표시 규칙과 예), §4.5 에 "VisionSetup 과 같음(§5.6)" 한 문장.
+- 6장 실행 예 재캡처(42장 중 35장 변경 — Run Results 목록 값, Ensemble 판정 글자 5 줄 쌓임), Ensemble 캡션에 쌓임 · 테두리 설명.
+- §4 검사 운전 재캡처 — 마지막 장을 MS04(구멍 간격 NG · 블록 각도 OK)로 바꿔 배지 두 개가 쌓인 모습, §4.5 캡션 보강. 합격 4 · 불량 3 구성 · KPI 캡션 불변.
+- 대상 SW 1.47.2(표지 · §2.2 예시 파일명 · §13.5), 제품설명서 제품 버전 v1.47.2.
+- docx/PDF 재생성 **235쪽 · 그림 200장** · 경고 0, docx 24.7MB.

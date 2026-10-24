@@ -231,7 +231,7 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
 
                     // 판정 텍스트
                     string label = isNormal ? "NORMAL" : "ANOMALY";
-                    Cv2.PutText(overlay, $"{label}: {anomalyResult.AnomalyScore:F3}",
+                    PutHeaderText(overlay, result, $"{label}: {anomalyResult.AnomalyScore:F3}",
                         new Point(10, 30),
                         HersheyFonts.HersheySimplex, 1.0, color, 2);
 

@@ -97,7 +97,7 @@ SCENES = {
  "Classify (분류)": ("Classify", "테이프가 붙은 피팅을 tape(100%)로 분류 — tape 는 OK Classes 에 없으므로 NG(왼쪽 위 붉은 글자)"),
  "Anomaly (이상 탐지)": ("Anomaly", "수정액 자국이 있는 피팅 — 이상 점수 0.665 가 임계값 0.545 를 넘어 NG. 히트맵에서 이상 부위가 밝게 표시됩니다"),
  "Result (결과/판정)": ("Result", "막대 폭이 불량인 이미지 — Bar Width 가 실패하자 Result All Pass(모두 합격)는 NG, Result Any Pass(하나라도 합격)는 OK. 오른쪽 Source Results 에 연결된 도구별 OK/NG 가 보입니다"),
- "Ensemble (앙상블)": ("Ensemble", "수정액 자국이 있는 피팅 — Detection 은 OK, Anomaly 는 NG. 결합 방식별로 And · Weighted · Consensus 는 NG, Or 만 OK"),
+ "Ensemble (앙상블)": ("Ensemble", "수정액 자국이 있는 피팅 — Detection 은 OK, Anomaly 는 NG. 결합 방식별로 And · Weighted · Consensus 는 NG, Or 만 OK. 왼쪽 위에 Anomaly 와 앙상블 4 개의 판정 글자가 실행 순서대로 쌓이고, 테두리는 스텝 판정(NG) 색입니다"),
  "Color Extract (색 추출)": ("ColorExtract", "학습한 파란 캡 색(HSV 범위)을 추출 — 화면의 3.47%(36,970 px). 개수 · 면적 판정은 뒤의 Blob 이 합니다"),
  "Color Match (색 매칭)": ("ColorMatch", "학습한 파란 캡 색과 ΔE 25 이내인 화소 3.79%(40,353 px)를 표시. 면적 판정은 뒤의 Blob 이 합니다"),
  "Image Rectify (이미지 정류)": ("ImageRectify", "레시피의 캘리브레이션으로 렌즈 왜곡을 보정한 이미지(화소 크기 0.057 mm) — 뒤의 Caliper · Circle Fit 이 보정된 이미지로 잽니다"),

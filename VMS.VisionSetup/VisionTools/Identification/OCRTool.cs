@@ -453,7 +453,7 @@ namespace VMS.VisionSetup.VisionTools.Identification
                     {
                         Mat overlay = GetColorOverlayBase(inputImage);
                         DrawOCROverlay(overlay, inputImage, ocrResult, result.Success,
-                            useAffineROI, affineCenterX, affineCenterY, affineW, affineH, affineAngle);
+                            useAffineROI, affineCenterX, affineCenterY, affineW, affineH, affineAngle, result);
                         result.OverlayImage = overlay;
                     }
 
@@ -800,7 +800,8 @@ namespace VMS.VisionSetup.VisionTools.Identification
         #region Overlay
 
         internal void DrawOCROverlay(Mat overlay, Mat inputImage, OcrResultData ocrResult, bool success,
-            bool useAffineROI, double centerX, double centerY, int roiW, int roiH, double angle)
+            bool useAffineROI, double centerX, double centerY, int roiW, int roiH, double angle,
+            VisionResult? result = null)
         {
             var color = success ? new Scalar(0, 255, 0) : new Scalar(0, 0, 255);
 
@@ -845,7 +846,7 @@ namespace VMS.VisionSetup.VisionTools.Identification
             string displayText = ocrResult.Text?.Trim().Replace("\n", " ") ?? "";
             if (displayText.Length == 0) displayText = "(no text)";
             if (displayText.Length > 60) displayText = displayText[..57] + "...";
-            Cv2.PutText(overlay, displayText,
+            PutHeaderText(overlay, result ?? new VisionResult(), displayText,
                 new OpenCvSharp.Point(10, 30),
                 HersheyFonts.HersheySimplex, 0.7, color, 2);
         }

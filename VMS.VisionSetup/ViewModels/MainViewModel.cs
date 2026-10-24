@@ -1535,13 +1535,7 @@ namespace VMS.VisionSetup.ViewModels
             }
         }
 
-        private static string FormatResultValue(object? value) => value switch
-        {
-            double d => d.ToString("F3"),
-            float f => f.ToString("F3"),
-            decimal m => m.ToString("F3"),
-            _ => value?.ToString() ?? ""
-        };
+        private static string FormatResultValue(object? value) => ResultValueFormatter.Format(value);
 
         /// <summary>
         /// Run Results 요약 한 줄 — 툴별 핵심 값만 표시.

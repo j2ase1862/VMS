@@ -892,16 +892,7 @@ namespace VMS.ViewModels
                 if (toolResult.Data != null && toolResult.Data.Count > 0)
                 {
                     var entries = toolResult.Data.Select(kv =>
-                    {
-                        var formatted = kv.Value switch
-                        {
-                            double d => d.ToString("F3"),
-                            float f => f.ToString("F3"),
-                            decimal m => m.ToString("F3"),
-                            _ => kv.Value?.ToString() ?? ""
-                        };
-                        return $"{kv.Key}={formatted}";
-                    });
+                        $"{kv.Key}={VMS.VisionSetup.Services.ResultValueFormatter.Format(kv.Value)}");
                     resultValue = string.Join(", ", entries);
                 }
                 else

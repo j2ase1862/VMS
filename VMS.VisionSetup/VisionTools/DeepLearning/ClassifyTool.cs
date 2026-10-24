@@ -171,7 +171,7 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
                     var color = pass ? new Scalar(0, 255, 0) : new Scalar(0, 0, 255);
                     string text = $"{className}: {classResult.Confidence:P1}";
 
-                    Cv2.PutText(overlay, text,
+                    PutHeaderText(overlay, result, text,
                         new Point(10, 30),
                         HersheyFonts.HersheySimplex, 1.0, color, 2);
 
@@ -179,6 +179,7 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
                     Cv2.Rectangle(overlay,
                         new Rect(0, 0, overlay.Width, overlay.Height),
                         color, 4);
+                    result.VerdictFrameThickness = 4;
 
                     result.OverlayImage = overlay;
 
