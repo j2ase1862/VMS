@@ -639,7 +639,7 @@ namespace VMS.VisionSetup.VisionTools.Measurement
                     result.Success = false;
                     result.Message += " · 판정 NG: mm 변환 불가 — 캘리브레이션 또는 스텝 Resolution(mm/px)을 설정하세요";
                     result.Data["JudgmentPass"] = false;
-                    DrawJudgmentBadge(overlay, false);
+                    DrawJudgmentBadge(overlay, result, false);
                     return;
                 }
                 measured = Convert.ToDouble(mmObj);
@@ -663,15 +663,16 @@ namespace VMS.VisionSetup.VisionTools.Measurement
             result.Message += pass
                 ? $" · 판정 OK ({measured:F3}{unitLabel} ∈ {low:F3}~{high:F3}{unitLabel})"
                 : $" · 판정 NG ({measured:F3}{unitLabel} ∉ {low:F3}~{high:F3}{unitLabel})";
-            DrawJudgmentBadge(overlay, pass);
+            DrawJudgmentBadge(overlay, result, pass);
         }
 
-        private static void DrawJudgmentBadge(Mat overlay, bool pass)
+        private static void DrawJudgmentBadge(Mat overlay, VisionResult result, bool pass)
         {
             var color = pass ? new Scalar(0, 200, 0) : new Scalar(0, 0, 230);
             Cv2.Rectangle(overlay, new Rect(8, 8, 64, 30), color, -1);
             Cv2.PutText(overlay, pass ? "OK" : "NG", new Point(18, 31),
                 HersheyFonts.HersheySimplex, 0.8, new Scalar(255, 255, 255), 2);
+            AddHeaderRegion(overlay, result, new Rect(8, 8, 64, 30));
         }
 
         #endregion

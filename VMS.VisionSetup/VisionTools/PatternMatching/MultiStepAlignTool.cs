@@ -304,6 +304,7 @@ namespace VMS.VisionSetup.VisionTools.PatternMatching
                         new Point(18, 34), HersheyFonts.HersheySimplex, 0.6, new Scalar(255, 255, 255), 1);
                     Cv2.PutText(overlay, $"dTheta={dTheta:F3} deg  scale={align.ScaleRatio:F4}",
                         new Point(18, 60), HersheyFonts.HersheySimplex, 0.6, new Scalar(255, 255, 255), 1);
+                    AddHeaderRegion(overlay, result, new Rect(7, 7, 432, 68));
                     result.OverlayImage = overlay;
                 }
 

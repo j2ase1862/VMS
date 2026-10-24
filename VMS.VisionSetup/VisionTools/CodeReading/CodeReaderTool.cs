@@ -351,7 +351,7 @@ namespace VMS.VisionSetup.VisionTools.CodeReading
                         {
                             var gradeColor = (int)quality.OverallGrade >= (int)MinPassGrade
                                 ? new Scalar(0, 255, 0) : new Scalar(0, 0, 255);
-                            Cv2.PutText(overlayImage, quality.FormatSummary(),
+                            PutHeaderText(overlayImage, result, quality.FormatSummary(),
                                 new Point(10, badgeY), HersheyFonts.HersheySimplex, 0.5, gradeColor, 1);
                             badgeY += 20;
                         }
@@ -359,7 +359,7 @@ namespace VMS.VisionSetup.VisionTools.CodeReading
                         {
                             string gs1Text = gs1Obj?.ToString() ?? string.Empty;
                             if (!string.IsNullOrEmpty(gs1Text))
-                                Cv2.PutText(overlayImage, "GS1: " + gs1Text,
+                                PutHeaderText(overlayImage, result, "GS1: " + gs1Text,
                                     new Point(10, badgeY), HersheyFonts.HersheySimplex, 0.5,
                                     new Scalar(255, 255, 0), 1);
                         }

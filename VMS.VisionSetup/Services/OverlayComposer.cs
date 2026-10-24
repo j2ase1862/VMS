@@ -22,6 +22,19 @@ namespace VMS.VisionSetup.Services
         /// </summary>
         public static void Merge(Mat overlay, Mat baseInput, Mat composite)
         {
+            int headerBottom = 0;
+            Merge(overlay, baseInput, composite, Array.Empty<Rect>(), ref headerBottom, 0);
+        }
+
+        /// <summary>
+        /// <see cref="Merge(Mat, Mat, Mat)"/> 에 머리표 쌓기를 더한다. <paramref name="headers"/> 영역의
+        /// 그래픽은 제자리 대신 <paramref name="headerBottom"/> 아래로 옮겨 붙이고(도구 하나의 머리표는
+        /// 같이 움직인다), 쌓인 맨 아래 y 를 갱신한다. <paramref name="frameThickness"/> 가 있으면 그 두께의
+        /// 판정 테두리는 옮기지 않는다 — 합성 쪽이 스텝 판정 색으로 다시 그린다.
+        /// </summary>
+        public static void Merge(Mat overlay, Mat baseInput, Mat composite,
+            IReadOnlyList<Rect> headers, ref int headerBottom, int frameThickness)
+        {
             Mat overlayBGR = overlay;
             Mat inputBGR = baseInput;
             bool disposeOverlay = false, disposeInput = false;
@@ -47,7 +60,47 @@ namespace VMS.VisionSetup.Services
                 Cv2.CvtColor(diff, grayDiff, ColorConversionCodes.BGR2GRAY);
                 using var mask = new Mat();
                 Cv2.Threshold(grayDiff, mask, 1, 255, ThresholdTypes.Binary);
+
+                var bounds = new Rect(0, 0, composite.Width, composite.Height);
+                if (frameThickness > 0)
+                    Cv2.Rectangle(mask, bounds, Scalar.Black, frameThickness * 2 + 2);
+
+                // 머리표 그래픽은 떼어 두었다가 나머지를 옮긴 뒤 위에 붙인다 — 다른 그래픽에 가리지 않게.
+                var moved = new List<(Rect src, Rect dst, Mat patchMask)>();
+                var regions = headers
+                    .Select(r => r & bounds)
+                    .Where(r => r.Width > 0 && r.Height > 0)
+                    .ToList();
+                if (regions.Count > 0)
+                {
+                    int top = regions.Min(r => r.Y);
+                    int offset = Math.Max(0, headerBottom + CompositeOverlayBuilder.HeaderGap - top);
+                    foreach (var r in regions)
+                    {
+                        using (var sub = new Mat(mask, r))
+                        {
+                            var dst = new Rect(r.X, r.Y + offset, r.Width, r.Height) & bounds;
+                            if (dst.Width > 0 && dst.Height > 0)
+                            {
+                                var src = new Rect(r.X, r.Y, dst.Width, dst.Height);
+                                using var srcMask = new Mat(mask, src);
+                                moved.Add((src, dst, srcMask.Clone()));
+                            }
+                            sub.SetTo(Scalar.Black);
+                        }
+                        headerBottom = Math.Max(headerBottom, r.Bottom + offset);
+                    }
+                }
+
                 overlayBGR.CopyTo(composite, mask);
+
+                foreach (var (src, dst, patchMask) in moved)
+                {
+                    using (patchMask)
+                    using (var srcPatch = new Mat(overlayBGR, src))
+                    using (var dstPatch = new Mat(composite, dst))
+                        srcPatch.CopyTo(dstPatch, patchMask);
+                }
             }
             finally
             {

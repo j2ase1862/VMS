@@ -316,6 +316,58 @@ namespace VMS.VisionSetup.Models
         }
 
         /// <summary>
+        /// 오버레이 왼쪽 위에 머리표 글자(판정·요약)를 그리고 그 영역을 결과에 남긴다.
+        /// 한 스텝의 합성 이미지에서는 다른 도구의 머리표와 겹치지 않게 아래로 차례로 쌓인다
+        /// (<see cref="CompositeOverlayBuilder"/>).
+        /// </summary>
+        protected static void PutHeaderText(Mat overlay, VisionResult result, string text, Point org,
+            HersheyFonts font, double scale, Scalar color, int thickness)
+        {
+            text = ToOverlayAscii(text);
+            Cv2.PutText(overlay, text, org, font, scale, color, thickness);
+            var size = Cv2.GetTextSize(text, font, scale, thickness, out int baseline);
+            AddHeaderRegion(overlay, result,
+                new Rect(org.X - 2, org.Y - size.Height - 2, size.Width + 4, size.Height + baseline + 4));
+        }
+
+        /// <summary>
+        /// 이미지 글꼴(Hershey)은 ASCII 만 그려 그 밖의 글자는 '?' 로 찍힌다 — 흔한 기호는 ASCII 로 바꾼다.
+        /// </summary>
+        internal static string ToOverlayAscii(string text)
+        {
+            if (text.All(c => c < 128)) return text;
+            var sb = new System.Text.StringBuilder(text.Length);
+            foreach (char c in text)
+            {
+                sb.Append(c switch
+                {
+                    '×' => "x",
+                    '—' or '–' or '−' => "-",
+                    '≥' => ">=",
+                    '≤' => "<=",
+                    '→' => "->",
+                    '∈' => "in",
+                    '∉' => "not in",
+                    '°' => "deg",
+                    'Δ' => "d",
+                    'θ' => "theta",
+                    'µ' or 'μ' => "u",
+                    '·' => ",",
+                    _ => c.ToString()
+                });
+            }
+            return sb.ToString();
+        }
+
+        /// <summary>머리표(배지·요약 상자)로 그린 영역을 결과에 남긴다 — 화면 밖은 잘라낸다.</summary>
+        protected static void AddHeaderRegion(Mat overlay, VisionResult result, Rect region)
+        {
+            var clipped = region & new Rect(0, 0, overlay.Width, overlay.Height);
+            if (clipped.Width > 0 && clipped.Height > 0)
+                result.HeaderRegions.Add(clipped);
+        }
+
+        /// <summary>
         /// 도구 실행 - 파생 클래스에서 구현
         /// </summary>
         public abstract VisionResult Execute(Mat inputImage);
@@ -585,6 +637,18 @@ namespace VMS.VisionSetup.Models
 
         // Graphics 오버레이 정보
         public List<GraphicOverlay> Graphics { get; set; } = new List<GraphicOverlay>();
+
+        /// <summary>
+        /// 오버레이 왼쪽 위에 머리표(판정 배지·요약 글자)를 그린 영역. 도구마다 같은 자리에 그리므로
+        /// 한 스텝의 합성 이미지에서는 <see cref="CompositeOverlayBuilder"/> 가 이 영역을 아래로 쌓는다.
+        /// </summary>
+        public List<Rect> HeaderRegions { get; } = new List<Rect>();
+
+        /// <summary>
+        /// 이미지 테두리로 판정을 표시한 두께(0 = 테두리 없음). 합성 이미지에는 도구별 테두리 대신
+        /// 스텝 판정 색의 테두리 하나만 남는다.
+        /// </summary>
+        public int VerdictFrameThickness { get; set; }
 
         /// <summary>
         /// 보유한 Mat 리소스(OutputImage/OverlayImage) 해제.

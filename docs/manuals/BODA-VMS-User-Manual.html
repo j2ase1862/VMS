@@ -209,7 +209,7 @@
 <main>
 <div class="header-strip">
   <h1>BODA VMS 사용자 매뉴얼</h1>
-  <div class="sub">버전 3.0 · 2026-10-24 · VMS v1.47.1 · BODA.VMS.Web v1.10.4 · BODA.VMS.MLOps v0.1.5 — 시스템 구성 → 설치 → 프로그램별 조작 → 검사 설정 → 웹 관리 → 유지보수</div>
+  <div class="sub">버전 3.0 · 2026-10-24 · VMS v1.47.2 · BODA.VMS.Web v1.10.4 · BODA.VMS.MLOps v0.1.5 — 시스템 구성 → 설치 → 프로그램별 조작 → 검사 설정 → 웹 관리 → 유지보수</div>
 </div>
 <section id="overview">
 <h2 id="1-시스템-개요">1. 시스템 개요</h2>
@@ -355,7 +355,7 @@ VisionSetup 에서 연결할 때 "SDK 미탑재 — 시뮬레이션 모드" 경�
 
 <h3 id="install-vms">2.2 VMS 설치 (설치 마법사)</h3>
 <ol>
-  <li><code>VMS-1.47.1.msi</code> 처럼 버전이 붙은 설치 파일을 더블 클릭합니다. 설치에는 관리자 권한이 필요합니다.</li>
+  <li><code>VMS-1.47.2.msi</code> 처럼 버전이 붙은 설치 파일을 더블 클릭합니다. 설치에는 관리자 권한이 필요합니다.</li>
   <li><strong>시작 화면</strong>에서 [다음]을 누릅니다. 별도의 라이선스 동의 단계는 없습니다.</li>
   <li><strong>설치 폴더</strong>는 기본값 <code>C:\Program Files\VASIM\BODA Vision System\</code> 을 그대로 두는 것을 권장합니다.</li>
   <li><strong>설치 구성 선택</strong> 화면에서 이 PC 에 함께 설치할 항목을 고릅니다.
@@ -370,7 +370,7 @@ VisionSetup 에서 연결할 때 "SDK 미탑재 — 시뮬레이션 모드" 경�
 <figure><img src="../gs/screenshots/71_msi_weboption.png" data-width="420" alt="설치 구성 선택 화면">
 <figcaption>설치 구성 선택 — "BODA VMS Web 서버 포함" 체크박스</figcaption></figure>
 <div class="callout tip"><strong>무인 설치</strong>가 필요하면 명령 프롬프트(관리자)에서 다음처럼 실행합니다.
-<code>msiexec /i VMS-1.47.1.msi /qn INSTALLWEB=0</code> — 값 0 은 제외, 1 은 포함입니다.</div>
+<code>msiexec /i VMS-1.47.2.msi /qn INSTALLWEB=0</code> — 값 0 은 제외, 1 은 포함입니다.</div>
 
 <h4>설치 후 처음 실행하면</h4>
 <p>VMS 를 처음 실행하면 설정 파일이 없으므로 "초기 시스템 설정이 필요합니다" 안내와 함께
@@ -786,9 +786,10 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
 
 <h3 id="vms-camera">4.5 카메라 화면과 설정 창</h3>
 <p>카메라 타일의 헤더에는 연결 표시등(초록 Connected / 빨강 Disconnected), 카메라 이름, <strong>설정(톱니바퀴)</strong> 버튼, 판정 배지가 있습니다.
-본문은 2D · Depth Map · Point Cloud 탭이며 아래에 Run Results(도구별 Pass/Fail · 결과값 · 처리 ms) 표와 IP · Count 가 표시됩니다.</p>
+본문은 2D · Depth Map · Point Cloud 탭이며 아래에 Run Results(도구별 Pass/Fail · 결과값 · 처리 ms) 표와 IP · Count 가 표시됩니다.
+검사 이미지 위의 판정 글자 · 테두리와 Run Results 결과 값 표시 방식은 VisionSetup 과 같습니다(§5.6).</p>
 <p>톱니바퀴를 누르면 타일 오른쪽에 <strong>카메라 조작 상자</strong>가 펼쳐집니다.</p>
-<figure><img src="../gs/screenshots/v3/vms/inspect_camera_box.jpg" data-width="620" alt="카메라 화면과 조작 상자"><figcaption>카메라 화면과 조작 상자 — [Open] 으로 연 이미지를 [Inspect] 로 검사한 결과: 타일 오른쪽 위 판정 배지(NG), 이미지 위 도구별 결과 그림(엣지 · 원 · 직선), 아래 Run Results 표, 오른쪽 NG History 썸네일</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/vms/inspect_camera_box.jpg" data-width="620" alt="카메라 화면과 조작 상자"><figcaption>카메라 화면과 조작 상자 — [Open] 으로 연 이미지를 [Inspect] 로 검사한 결과: 타일 오른쪽 위 판정 배지(NG), 이미지 왼쪽 위에 판정 도구 2 개의 배지가 실행 순서대로 쌓인 모습(구멍 간격 NG · 블록 각도 OK), 이미지 위 도구별 결과 그림(엣지 · 원 · 직선), 아래 Run Results 표, 오른쪽 NG History 썸네일</figcaption></figure>
 <table class="cols-2-7">
   <tr><th>컨트롤</th><th>설명</th></tr>
   <tr><td>Step 콤보</td><td>이 카메라가 쓰는 레시피 스텝을 고릅니다. 노출 · 게인은 스텝 단위로 저장됩니다.</td></tr>
@@ -1102,6 +1103,8 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <ul>
   <li>툴바 ▶ (Run All) 을 누르면 현재 스텝의 도구가 연결 순서대로 실행되고 상태바에 "실행 완료: n/m 성공" 이 표시됩니다. 도구 하나만 시험하려면 그 도구를 선택하고 ▶| (Run Selected).</li>
   <li>이미지 뷰에 결과가 겹쳐 그려지고(검출 윤곽 · 에지 · 매칭 위치 · OK/NG 배지), 아래 <strong>Run Results</strong> 표에 도구별 Pass/Fail 과 결과 값이 나옵니다. 행을 누르면 상세가 펼쳐지고 우클릭으로 복사할 수 있습니다. 이미지 소스 콤보를 Result Image 로 바꾸면 도구가 만든 결과 이미지 자체를 봅니다.</li>
+  <li>이미지 왼쪽 위에 판정 글자를 그리는 도구(Geometry 판정 배지 · Classify · Anomaly · Ensemble · OCR · Code Reader 등급 · Multi-Step Align 요약)가 한 스텝에 여럿이면, Run All 결과 이미지에서는 도구 실행 순서대로 한 줄씩 아래로 쌓여 모두 보입니다. 판정 테두리를 그리는 도구(Classify · Ensemble)가 있으면 테두리는 스텝 전체 판정 색(초록 OK · 빨강 NG) 하나로 그려집니다. 도구 하나를 선택하면 그 도구의 글자와 테두리만 제자리에 보입니다.</li>
+  <li>Run Results 의 결과 값은 숫자를 소수 셋째 자리까지 보입니다. 목록은 앞의 네 개까지 [ ] 안에 보이고(예: Classify 의 <code>TopN=[(3, 1.000), (0, 0.000), (2, 0.000), (1, 0.000)]</code> — 클래스 번호와 점수), 다섯 개 이상이면 뒤를 줄이고 전체 개수를 붙입니다(예: <code>[1, 2, 3, 4, …] (6개)</code>). 항목을 글자로 나타낼 수 없는 목록은 개수만 보입니다(예: <code>Detections=1개</code>) — 항목별 값은 <code>Det0_Class</code> · <code>Det0_Confidence</code> 처럼 따로 나온 값에서 확인합니다.</li>
   <li>[Save Image] 로 현재 표시 중인 이미지를 PNG · JPG · BMP · TIFF 로 저장할 수 있습니다.</li>
 </ul>
 <h4>판정 규칙</h4>
@@ -1682,7 +1685,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <h4>PointCloud Deviation — 기준 형상 대비 편차 히트맵</h4>
 <p>기준(양품) 점군과 현재 점군을 점 단위로 비교해 어느 부위가 얼마나 어긋났는지 히트맵(초록 = 일치, 노랑 = 어긋나기 시작, 빨강 = 범위 초과)으로 보여 주고, 허용 오차를 벗어난 점의 비율로 OK/NG 를 판정합니다. 들뜸 · 눌림 · 변형 검사에 씁니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/25_PointCloud_Deviation_split.png" data-width="500" alt="PointCloud Deviation — 기준 형상 대비 편차 히트맵 설정 패널"><figcaption>PointCloud Deviation — 기준 형상 대비 편차 히트맵 — Tool Settings 패널</figcaption></figure>
-<figure><img src="../gs/screenshots/v3/scenes/PCDeviation.jpg" data-width="620" alt="PointCloud Deviation — 기준 형상 대비 편차 히트맵 실행 예"><figcaption>실행 예 — 비틀린 프레임(합성 불량)의 편차 — 기준에서 5 mm 넘게 벗어난 점이 41.2%로 상한 10% 를 넘어 NG</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/scenes/PCDeviation.jpg" data-width="620" alt="PointCloud Deviation — 기준 형상 대비 편차 히트맵 실행 예"><figcaption>실행 예 — 비틀린 프레임(합성 불량)의 편차 — 기준에서 5 mm 넘게 벗어난 점이 41.2%로 상한 15% 를 넘어 NG</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Reference Point Cloud · [Save Current as Reference] [Load...] [Clear]</td><td>(없음)</td><td>기준 점군(.vpc) 또는 CAD(.stl)</td></tr>
@@ -1864,7 +1867,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <h4>Ensemble — 딥러닝 판정 결합</h4>
 <p>Result 로 연결한 딥러닝 도구(주로 Detection = 알려진 결함 + Anomaly = 평소와 다른 상태)의 판정을 하나로 합칩니다. 두 모델을 함께 써서 과검(정상을 NG 로)과 미검(불량을 OK 로)을 같이 줄일 때 씁니다. Result 도구가 OK/NG 개수만 세는 것과 달리 검출 개수 · 이상 점수를 판정에 씁니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/36_Ensemble.png" data-width="240" alt="Ensemble — 딥러닝 판정 결합 설정 패널"><figcaption>Ensemble — 딥러닝 판정 결합 — Tool Settings 패널</figcaption></figure>
-<figure><img src="../gs/screenshots/v3/scenes/Ensemble.jpg" data-width="620" alt="Ensemble — 딥러닝 판정 결합 실행 예"><figcaption>실행 예 — 수정액 자국이 있는 피팅 — Detection 은 OK, Anomaly 는 NG. 결합 방식별로 And · Weighted · Consensus 는 NG, Or 만 OK</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/scenes/Ensemble.jpg" data-width="620" alt="Ensemble — 딥러닝 판정 결합 실행 예"><figcaption>실행 예 — 수정액 자국이 있는 피팅 — Detection 은 OK, Anomaly 는 NG. 결합 방식별로 And · Weighted · Consensus 는 NG, Or 만 OK. 왼쪽 위에 Anomaly 와 앙상블 4 개의 판정 글자가 실행 순서대로 쌓이고, 테두리는 스텝 판정(NG) 색입니다</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Ensemble Mode</td><td>And (And · Or · Weighted · Consensus)</td><td>And: 모두 OK 여야 OK(미검 최소화). Or: 하나라도 OK 면 OK(과검 최소화). Weighted: 가중 점수로 판정. Consensus: 소스 판정이 엇갈리면 NG(검토 필요)</td></tr>
@@ -3373,7 +3376,7 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <table class="cols-3-6">
   <tr><th>항목</th><th>값</th></tr>
   <tr><td>문서 버전</td><td>3.0 (2026-10-24)</td></tr>
-  <tr><td>대상 소프트웨어</td><td>VMS 1.47.1 · BODA.VMS.Web 1.10.4 · BODA.VMS.MLOps 0.1.5</td></tr>
+  <tr><td>대상 소프트웨어</td><td>VMS 1.47.2 · BODA.VMS.Web 1.10.4 · BODA.VMS.MLOps 0.1.5</td></tr>
   <tr><td>구성</td><td>VMS · VMS.VisionSetup · VMS.AppSetup (검사 런타임) / BODA.VMS.Web (생산 관리) / BODA.VMS.MLOps (선택 구성 요소, 인증 범위 외)</td></tr>
   <tr><td>발행</td><td>BODA Vision AI</td></tr>
 </table>

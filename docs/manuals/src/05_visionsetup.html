@@ -87,6 +87,8 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <ul>
   <li>툴바 ▶ (Run All) 을 누르면 현재 스텝의 도구가 연결 순서대로 실행되고 상태바에 "실행 완료: n/m 성공" 이 표시됩니다. 도구 하나만 시험하려면 그 도구를 선택하고 ▶| (Run Selected).</li>
   <li>이미지 뷰에 결과가 겹쳐 그려지고(검출 윤곽 · 에지 · 매칭 위치 · OK/NG 배지), 아래 <strong>Run Results</strong> 표에 도구별 Pass/Fail 과 결과 값이 나옵니다. 행을 누르면 상세가 펼쳐지고 우클릭으로 복사할 수 있습니다. 이미지 소스 콤보를 Result Image 로 바꾸면 도구가 만든 결과 이미지 자체를 봅니다.</li>
+  <li>이미지 왼쪽 위에 판정 글자를 그리는 도구(Geometry 판정 배지 · Classify · Anomaly · Ensemble · OCR · Code Reader 등급 · Multi-Step Align 요약)가 한 스텝에 여럿이면, Run All 결과 이미지에서는 도구 실행 순서대로 한 줄씩 아래로 쌓여 모두 보입니다. 판정 테두리를 그리는 도구(Classify · Ensemble)가 있으면 테두리는 스텝 전체 판정 색(초록 OK · 빨강 NG) 하나로 그려집니다. 도구 하나를 선택하면 그 도구의 글자와 테두리만 제자리에 보입니다.</li>
+  <li>Run Results 의 결과 값은 숫자를 소수 셋째 자리까지 보입니다. 목록은 앞의 네 개까지 [ ] 안에 보이고(예: Classify 의 <code>TopN=[(3, 1.000), (0, 0.000), (2, 0.000), (1, 0.000)]</code> — 클래스 번호와 점수), 다섯 개 이상이면 뒤를 줄이고 전체 개수를 붙입니다(예: <code>[1, 2, 3, 4, …] (6개)</code>). 항목을 글자로 나타낼 수 없는 목록은 개수만 보입니다(예: <code>Detections=1개</code>) — 항목별 값은 <code>Det0_Class</code> · <code>Det0_Confidence</code> 처럼 따로 나온 값에서 확인합니다.</li>
   <li>[Save Image] 로 현재 표시 중인 이미지를 PNG · JPG · BMP · TIFF 로 저장할 수 있습니다.</li>
 </ul>
 <h4>판정 규칙</h4>

@@ -954,7 +954,7 @@ namespace VMS.VisionSetup.Services
             // 각 도구의 실행 결과를 추적 (ID 기반, 연결 데이터 전달용)
             var resultMap = new Dictionary<string, VisionResult>();
             bool allSuccess = true;
-            Mat? compositeOverlay = null;
+            using var compositeBuilder = new CompositeOverlayBuilder();
             LastCompositeOverlay = null;
 
             // Pre-compute grayscale for the base image once
@@ -1062,17 +1062,7 @@ namespace VMS.VisionSetup.Services
                     // 합성 오버레이 구축: 각 도구의 그래픽을 하나의 이미지에 합성
                     // Overlays are drawn on CurrentImage (original color) via GetColorOverlayBase,
                     // so use CurrentImage as the diff base to correctly extract only graphics pixels.
-                    if (result.OverlayImage != null && !result.OverlayImage.Empty())
-                    {
-                        if (compositeOverlay == null)
-                        {
-                            compositeOverlay = OverlayComposer.CreateComposite(result.OverlayImage, CurrentImage);
-                        }
-                        else
-                        {
-                            OverlayComposer.Merge(result.OverlayImage, CurrentImage!, compositeOverlay);
-                        }
-                    }
+                    compositeBuilder.Add(result, CurrentImage);
                 }
                 finally
                 {
@@ -1090,7 +1080,14 @@ namespace VMS.VisionSetup.Services
                 g.Dispose();
             connectedGrayCache.Clear();
 
-            LastCompositeOverlay = compositeOverlay;
+            // ResultTool이 존재하면 최종 판정은 ResultTool의 Success로 결정
+            var resultToolInstance = sortedTools.OfType<ResultTool>().FirstOrDefault();
+            bool runSuccess = resultToolInstance != null
+                ? resultMap.TryGetValue(resultToolInstance.Id, out var rtResult) && rtResult.Success
+                : allSuccess;
+
+            // 합성 이미지의 판정 테두리는 스텝 판정 색 — 도구별 테두리 중 마지막 것이 남지 않게
+            LastCompositeOverlay = compositeBuilder.Build(runSuccess);
 
             // 실행 결과를 UI 스레드에서 일괄 반영 (백그라운드 CollectionChanged 크래시 방지)
             PublishResults(results);
@@ -1102,11 +1099,7 @@ namespace VMS.VisionSetup.Services
             // resultMap은 topological sort 영향 없이 id로 안전하게 lookup 가능
             LastExecutionResultsById = new Dictionary<string, VisionResult>(resultMap);
 
-            // ResultTool이 존재하면 최종 판정은 ResultTool의 Success로 결정
-            var resultToolInstance = sortedTools.OfType<ResultTool>().FirstOrDefault();
-            LastRunSuccess = resultToolInstance != null
-                ? resultMap.TryGetValue(resultToolInstance.Id, out var rtResult) && rtResult.Success
-                : allSuccess;
+            LastRunSuccess = runSuccess;
             _pipelineCloudOutput = CurrentPointCloud;
             IsRunning = false;
 

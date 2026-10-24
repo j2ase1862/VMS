@@ -82,6 +82,8 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
 
             bool ok;
             string detail;
+            // 이미지 글꼴은 영문만 그린다 — 한글 문구는 이미지용 영문 문구를 따로 둔다(메시지는 그대로).
+            string? overlayDetail = null;
 
             switch (Mode)
             {
@@ -101,11 +103,13 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
                     {
                         ok = false;
                         detail = "CONSENSUS: 모델 간 판정 불일치 — 검토 필요";
+                        overlayDetail = $"CONSENSUS: disagree {passCount}/{SourceResults.Count} passed - review";
                     }
                     else
                     {
                         ok = passCount == SourceResults.Count;
                         detail = ok ? "CONSENSUS: 전원 정상" : "CONSENSUS: 전원 이상";
+                        overlayDetail = ok ? "CONSENSUS: all passed" : "CONSENSUS: all failed";
                     }
                     break;
 
@@ -149,12 +153,13 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
                 var overlay = GetColorOverlayBase(inputImage);
                 var color = ok ? new Scalar(0, 255, 0) : new Scalar(0, 0, 255);
                 string label = ok ? "OK" : "NG";
-                Cv2.PutText(overlay, $"{label}: {detail}",
+                PutHeaderText(overlay, result, $"{label}: {overlayDetail ?? detail}",
                     new Point(10, 30),
                     HersheyFonts.HersheySimplex, 0.8, color, 2);
                 Cv2.Rectangle(overlay,
                     new Rect(0, 0, overlay.Width, overlay.Height),
                     color, 4);
+                result.VerdictFrameThickness = 4;
                 result.OverlayImage = overlay;
 
                 result.Graphics.Add(new GraphicOverlay

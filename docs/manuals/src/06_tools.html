@@ -448,7 +448,7 @@
 <h4>PointCloud Deviation — 기준 형상 대비 편차 히트맵</h4>
 <p>기준(양품) 점군과 현재 점군을 점 단위로 비교해 어느 부위가 얼마나 어긋났는지 히트맵(초록 = 일치, 노랑 = 어긋나기 시작, 빨강 = 범위 초과)으로 보여 주고, 허용 오차를 벗어난 점의 비율로 OK/NG 를 판정합니다. 들뜸 · 눌림 · 변형 검사에 씁니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/25_PointCloud_Deviation_split.png" data-width="500" alt="PointCloud Deviation — 기준 형상 대비 편차 히트맵 설정 패널"><figcaption>PointCloud Deviation — 기준 형상 대비 편차 히트맵 — Tool Settings 패널</figcaption></figure>
-<figure><img src="../gs/screenshots/v3/scenes/PCDeviation.jpg" data-width="620" alt="PointCloud Deviation — 기준 형상 대비 편차 히트맵 실행 예"><figcaption>실행 예 — 비틀린 프레임(합성 불량)의 편차 — 기준에서 5 mm 넘게 벗어난 점이 41.2%로 상한 10% 를 넘어 NG</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/scenes/PCDeviation.jpg" data-width="620" alt="PointCloud Deviation — 기준 형상 대비 편차 히트맵 실행 예"><figcaption>실행 예 — 비틀린 프레임(합성 불량)의 편차 — 기준에서 5 mm 넘게 벗어난 점이 41.2%로 상한 15% 를 넘어 NG</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Reference Point Cloud · [Save Current as Reference] [Load...] [Clear]</td><td>(없음)</td><td>기준 점군(.vpc) 또는 CAD(.stl)</td></tr>
@@ -630,7 +630,7 @@
 <h4>Ensemble — 딥러닝 판정 결합</h4>
 <p>Result 로 연결한 딥러닝 도구(주로 Detection = 알려진 결함 + Anomaly = 평소와 다른 상태)의 판정을 하나로 합칩니다. 두 모델을 함께 써서 과검(정상을 NG 로)과 미검(불량을 OK 로)을 같이 줄일 때 씁니다. Result 도구가 OK/NG 개수만 세는 것과 달리 검출 개수 · 이상 점수를 판정에 씁니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/36_Ensemble.png" data-width="240" alt="Ensemble — 딥러닝 판정 결합 설정 패널"><figcaption>Ensemble — 딥러닝 판정 결합 — Tool Settings 패널</figcaption></figure>
-<figure><img src="../gs/screenshots/v3/scenes/Ensemble.jpg" data-width="620" alt="Ensemble — 딥러닝 판정 결합 실행 예"><figcaption>실행 예 — 수정액 자국이 있는 피팅 — Detection 은 OK, Anomaly 는 NG. 결합 방식별로 And · Weighted · Consensus 는 NG, Or 만 OK</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/scenes/Ensemble.jpg" data-width="620" alt="Ensemble — 딥러닝 판정 결합 실행 예"><figcaption>실행 예 — 수정액 자국이 있는 피팅 — Detection 은 OK, Anomaly 는 NG. 결합 방식별로 And · Weighted · Consensus 는 NG, Or 만 OK. 왼쪽 위에 Anomaly 와 앙상블 4 개의 판정 글자가 실행 순서대로 쌓이고, 테두리는 스텝 판정(NG) 색입니다</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Ensemble Mode</td><td>And (And · Or · Weighted · Consensus)</td><td>And: 모두 OK 여야 OK(미검 최소화). Or: 하나라도 OK 면 OK(과검 최소화). Weighted: 가중 점수로 판정. Consensus: 소스 판정이 엇갈리면 NG(검토 필요)</td></tr>
