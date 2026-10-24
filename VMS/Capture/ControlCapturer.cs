@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -83,6 +84,63 @@ namespace VMS.Capture
                     File.AppendAllText(Path.Combine(outputDir, "_dialog.log"), name + ": " + ex + "\n");
                 }
                 finally { try { win.Close(); } catch { } }
+            }
+        }
+
+        /// <summary>
+        /// 매뉴얼 4장 검사 운전 장면 (--capture-inspect, 2026-10-24) — 레시피를 불러와 첫 카메라 화면에서
+        /// 이미지 파일 열기 → 수동 검사를 여러 장 반복한 뒤(판정 · 집계 · NG 이력이 쌓인 상태) 메인 창과
+        /// 카메라 설정 창(톱니)을 연 상태를 저장한다.
+        ///   VMS_CAPTURE_RECIPE = 레시피 JSON 경로, VMS_CAPTURE_IMAGES = 이미지 경로들('|' 구분, 마지막 장이 화면에 남는다)
+        /// </summary>
+        public static async Task RunInspectSceneAsync(Window window, ViewModels.MainViewModel vm, string outputDir)
+        {
+            Directory.CreateDirectory(outputDir);
+            string logp = Path.Combine(outputDir, "_inspect.log");
+            var recipePath = Environment.GetEnvironmentVariable("VMS_CAPTURE_RECIPE") ?? "";
+            var images = (Environment.GetEnvironmentVariable("VMS_CAPTURE_IMAGES") ?? "")
+                .Split('|', StringSplitOptions.RemoveEmptyEntries);
+            if (!File.Exists(recipePath)) { File.AppendAllText(logp, "레시피 없음: " + recipePath + "\n"); return; }
+
+            vm.SelectedRecipeInfo = new VMS.VisionSetup.Models.RecipeInfo
+            { FilePath = recipePath, Name = Path.GetFileNameWithoutExtension(recipePath) };
+            vm.LoadRecipeCommand.Execute(null);
+            await Settle(window);
+
+            var cam = vm.Cameras.FirstOrDefault(c => c.Steps.Count > 0 && c.SelectedStep != null) ?? vm.Cameras.FirstOrDefault();
+            if (cam == null) { File.AppendAllText(logp, "카메라 화면 없음\n"); return; }
+            foreach (var img in images)
+            {
+                try
+                {
+                    cam.LoadImageFile(img);
+                    await Settle(window);
+                    await cam.ManualInspectCommand.ExecuteAsync(null);
+                    await Settle(window);
+                    await Task.Delay(300);
+                    File.AppendAllText(logp, $"{Path.GetFileName(img)}: {cam.ResultMessage}\n");
+                }
+                catch (Exception ex) { File.AppendAllText(logp, img + ": " + ex + "\n"); }
+            }
+            await Settle(window);
+            await CaptureLiveWindowAsync(window, outputDir, "VMS_inspect");
+
+            try
+            {
+                await cam.ToggleControlBoxCommand.ExecuteAsync(null);
+                await Settle(window);
+                await Task.Delay(300);
+                await CaptureLiveWindowAsync(window, outputDir, "VMS_inspect_controlbox");
+            }
+            catch (Exception ex) { File.AppendAllText(logp, "control box: " + ex + "\n"); }
+
+            static async Task Settle(Window w)
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    w.UpdateLayout();
+                    await w.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Background);
+                }
             }
         }
 

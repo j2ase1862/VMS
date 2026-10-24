@@ -19,6 +19,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 </table>
 
 <h3 id="vs-toolbar">5.2 메뉴와 툴바</h3>
+<figure><img src="../gs/screenshots/v3/vs/scene_menu_toolbar.jpg" data-width="620" alt="메뉴 막대(File · Run · Recipe · 예제 Template · Sequence · Batch Test · OCR Synth Data · Inference Settings · Camera · 3D)와 툴바"><figcaption>메뉴 막대(File · Run · Recipe · 예제 Template · Sequence · Batch Test · OCR Synth Data · Inference Settings · Camera · 3D)와 툴바</figcaption></figure>
 <table class="cols-3-6">
   <tr><th>메뉴 / 버튼</th><th>동작</th></tr>
   <tr><td>File → Open Image / Open Folder</td><td>이미지 파일 하나를 열거나, 폴더를 열어 ◀ ▶ 로 넘겨 봅니다. 폴더 모드에서 Run All · Run Selected 라디오를 고르면 이미지를 넘길 때마다 자동으로 실행됩니다.</td></tr>
@@ -44,6 +45,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 </ol>
 <p>레시피는 <code>%LocalAppData%\BODA VISION AI\Recipes\</code> 에 JSON 으로 저장되며, Web 연동 현장에서는 같은 이름으로 Web 레시피 원장에 자동 등록됩니다.</p>
 <h4>스텝과 카메라 설정</h4>
+<figure><img src="../gs/screenshots/v3/vs/scene_step_camera.jpg" data-width="520" alt="왼쪽"><figcaption>왼쪽 — 현재 레시피 배지 · Camera 콤보 · Step 버튼과 Steps 표(스텝 이름 · Resolution · 도구 수). 오른쪽 — 스텝만 선택했을 때의 Camera Settings(스텝 별칭 · 로봇 노드 번호 · 카메라 설정 유지 · 노출 · 게인)</figcaption></figure>
 <ul>
   <li>Camera 콤보에서 카메라를 고르면 Steps 표에 <strong>그 카메라의 스텝만</strong> 표시됩니다(제목에 "Steps — 카메라명"). 레시피를 불러오면 레시피가 쓰는 카메라가 자동 선택됩니다.</li>
   <li>스텝 버튼: Add Step · Delete Step · <strong>Duplicate Step</strong>(카메라 설정과 도구 파이프라인을 복사해 바로 뒤에 추가) · Generate Robot Waypoint Steps(로봇 멀티뷰용) · Move Up / Move Down.</li>
@@ -61,6 +63,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
   <tr><td>VMS 실행 중</td><td>VMS 메인이 카메라를 쥐고 있으면 툴바에 "VMS 실행 감지" 가 표시되고 직접 연결이 잠깁니다. 이때 [Acquire] 를 누르면 <strong>VMS 에 촬영을 요청</strong>해 그 사진을 받아옵니다(운전 · 라이브 중이면 거절). Camera → Receive from VMS 는 VMS 가 마지막으로 찍은 프레임을, Start Live Receive 는 VMS 의 라이브 영상을 이어서 받습니다.</td></tr>
 </table>
 <p>받은 이미지는 2D Image 탭에 표시되고 상태바에 "이미지 로드 완료" 가 나옵니다. 이후 Run All 이 활성화됩니다.</p>
+<figure><img src="../gs/screenshots/v3/scenes/PointCloudView.jpg" data-width="620" alt="3D → Load 3D Data 로 연 점군(.vpc)"><figcaption>3D → Load 3D Data 로 연 점군(.vpc) — Point Cloud 탭에 높이 색으로 표시됩니다. 마우스로 돌리고 확대하며, 오른쪽 위 Top · Front · Side 로 시점을 바꿉니다. 격자 점군은 열 때 Height Map 이 만들어져 2D Image 탭에도 표시됩니다</figcaption></figure>
 
 <h3 id="vs-tools">5.5 도구 배치 · 연결 · ROI</h3>
 <ol>
@@ -74,6 +77,8 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
   <li><strong>ROI 그리기</strong> — 도구를 선택하고 Tool Settings 의 Use ROI 를 켠 뒤, 이미지 뷰 툴바에서 Rectangle · RectAffine(회전 사각형) · Circle · Ellipse · Polygon 을 골라 이미지 위에 그립니다. 흰 원 핸들로 크기, 금색 원 핸들로 회전을 조정하고 [Delete] / [Clear All] 로 지웁니다. [Show ROI] · [Draw ROI] · [Clear ROI] 버튼은 Tool Settings 의 ROI Settings 에 있습니다.</li>
   <li><strong>이름 · 복제</strong> — 노드 우클릭 → Rename Tool 로 이름을 바꾸고, Duplicate Tool 로 파라미터 · ROI · 학습 데이터까지 복사한 사본을 만듭니다(연결은 복사되지 않음).</li>
 </ol>
+<figure><img src="../gs/screenshots/v3/vs/scene_workspace_links.jpg" data-width="460" alt="Tool Workspace 연결 예"><figcaption>Tool Workspace 연결 예 — Image(초록 실선) · Result(주황 점선) · Coordinates(파랑 점선). 한 도구의 결과를 여러 도구로 나눠 보낼 수 있습니다</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/scenes/RoiEdit.jpg" data-width="620" alt="ROI 표시 · 편집"><figcaption>ROI 표시 · 편집 — [Show ROI] 로 선택한 도구(Bar Width)의 회전 사각형 ROI 를 이미지 위에 띄운 상태. 화살표가 탐색 방향이고, 이미지 뷰 위쪽 툴바에서 도형을 고르거나 지웁니다</figcaption></figure>
 <div class="callout tip">각 도구 설정 상단의 <strong>Expert Mode</strong> 토글을 켜면 고급 파라미터가 나타납니다. 같은 종류의 모든 도구에 적용되고 다음 실행에도 유지됩니다. 처음에는 끈 채로 기본 파라미터만으로 시작하세요.</div>
 
 <h3 id="vs-run">5.6 실행과 결과 보기 · 판정</h3>
