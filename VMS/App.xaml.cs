@@ -892,6 +892,25 @@ namespace VMS
                             finally { Shutdown(); }
                         }));
                 }
+                // 검사 운전 장면 — "--capture-inspect [폴더]" (env VMS_CAPTURE_RECIPE · VMS_CAPTURE_IMAGES, §4 매뉴얼용)
+                else if (TryGetDir(e.Args, "--capture-inspect", out string inspCapDir))
+                {
+                    _ = mainWindow.Dispatcher.BeginInvoke(
+                        System.Windows.Threading.DispatcherPriority.ApplicationIdle,
+                        new Action(async () =>
+                        {
+                            try
+                            {
+                                await Capture.ControlCapturer.RunInspectSceneAsync(mainWindow, mainViewModel, inspCapDir);
+                            }
+                            catch (Exception ex)
+                            {
+                                System.IO.Directory.CreateDirectory(inspCapDir);
+                                System.IO.File.AppendAllText(System.IO.Path.Combine(inspCapDir, "_inspect.log"), "run: " + ex + "\n");
+                            }
+                            finally { Shutdown(); }
+                        }));
+                }
                 else if (TryGetDir(e.Args, "--capture-dialogs", out string capDir))
                 {
                     var logp = System.IO.Path.Combine(capDir, "_capture.log");

@@ -110,6 +110,7 @@
 </table>
 
 <h3 id="vms-kpi">4.4 KPI 스트립</h3>
+<figure><img src="../gs/screenshots/v3/vms/inspect_kpi.jpg" data-width="620" alt="KPI 스트립"><figcaption>KPI 스트립 — 수동 검사 7 건(합격 4 · 불량 3)을 마친 상태: YIELD 57.1%, TOTAL 7 · OK 4 · NG 3. 수동 검사라 TACT TIME 은 0.00 이고 PROC 에 마지막 검사 처리 시간이 표시됩니다</figcaption></figure>
 <table class="cols-2-7">
   <tr><th>카드</th><th>의미</th></tr>
   <tr><td>TACT TIME</td><td>AUTO RUN 중 "한 검사가 끝나고 다음 검사가 시작되기까지의 간격"(초)입니다. 수동 검사에서는 갱신되지 않습니다. 아래 <strong>PROC n ms</strong> 는 마지막 검사 1 건의 순수 처리 시간입니다.</td></tr>
@@ -122,6 +123,7 @@
 <p>카메라 타일의 헤더에는 연결 표시등(초록 Connected / 빨강 Disconnected), 카메라 이름, <strong>설정(톱니바퀴)</strong> 버튼, 판정 배지가 있습니다.
 본문은 2D · Depth Map · Point Cloud 탭이며 아래에 Run Results(도구별 Pass/Fail · 결과값 · 처리 ms) 표와 IP · Count 가 표시됩니다.</p>
 <p>톱니바퀴를 누르면 타일 오른쪽에 <strong>카메라 조작 상자</strong>가 펼쳐집니다.</p>
+<figure><img src="../gs/screenshots/v3/vms/inspect_camera_box.jpg" data-width="620" alt="카메라 화면과 조작 상자"><figcaption>카메라 화면과 조작 상자 — [Open] 으로 연 이미지를 [Inspect] 로 검사한 결과: 타일 오른쪽 위 판정 배지(NG), 이미지 위 도구별 결과 그림(엣지 · 원 · 직선), 아래 Run Results 표, 오른쪽 NG History 썸네일</figcaption></figure>
 <table class="cols-2-7">
   <tr><th>컨트롤</th><th>설명</th></tr>
   <tr><td>Step 콤보</td><td>이 카메라가 쓰는 레시피 스텝을 고릅니다. 노출 · 게인은 스텝 단위로 저장됩니다.</td></tr>
@@ -140,6 +142,15 @@
   <li>운전이나 대기 중에 카메라 케이블이 빠지면 몇 초 안에 연결 표시등이 빨간색으로 바뀌고 상태바 CAM 수가 줄어듭니다. 다시 꽂으면 <strong>다음 촬영에서 자동으로 재연결</strong>됩니다. 라이브 표시는 연결이 끊기면 스스로 멈춥니다.</li>
   <li>Basler 카메라도 스텝별 노출/게인이 그대로 적용되며, 연결 시 자동 노출/게인이 꺼져 촬영마다 밝기가 달라지지 않습니다.</li>
 </ul>
+
+<h4>카메라 없이 이미지 파일로 검사하기 (수동 검사)</h4>
+<ol>
+  <li>사이드 패널 Recipe 섹션에서 레시피를 [Load] 합니다.</li>
+  <li>카메라 타일의 톱니바퀴로 조작 상자를 열고 Step 콤보에서 검사할 스텝을 고릅니다.</li>
+  <li>[Open] 으로 이미지 파일(bmp · jpg · png · tif)을 엽니다.</li>
+  <li>[Inspect] 를 누르면 그 이미지로 검사가 1 회 실행되어 판정 배지 · Run Results · KPI 스트립이 갱신되고, NG 면 NG History 에 썸네일이 추가됩니다.</li>
+</ol>
+<p>카메라로 찍을 때는 [Open] 대신 [Grab] 으로 한 장 촬영한 뒤 [Inspect] 합니다.</p>
 
 <h3 id="vms-sidepanel">4.6 사이드 패널 (Settings)</h3>
 <figure><img src="../gs/screenshots/v3/vms_ctl/S3_full_sidepanel.png" data-width="620" alt="사이드 패널 펼침"><figcaption>사이드 패널(Settings)을 펼친 상태</figcaption></figure>
@@ -234,6 +245,7 @@
 </ol>
 
 <h3 id="vms-standalone">4.9 단독 모드 — Web 서버 없이 운전</h3>
+<figure><img src="../gs/screenshots/v3/vms/inspect_full.jpg" data-width="620" alt="단독 모드에서 검사를 마친 메인 화면"><figcaption>단독 모드에서 검사를 마친 메인 화면 — 헤더에 Recipe 칩과 추적 정보(Ctx) 칩만 있고, 상태바 Web 칩이 "단독 모드 (Web 미사용)", System Log 에 단독 모드 안내가 표시됩니다</figcaption></figure>
 <p>생산 이력 관리 없이 검사만 필요한 현장은 설정 마법사 2 단계에서 <strong>"Web 서버 미사용 — 단독(Standalone) 모드"</strong>를 체크합니다(§3.3). 단독 모드에서는 다음이 달라집니다.</p>
 <ul>
   <li>헤더의 Operator 칩 · [Work Orders] · WO 칩 · 예측 칩이 사라지고, 상태바 Web 칩이 "단독 모드 (Web 미사용)" 으로 표시됩니다.</li>

@@ -335,14 +335,16 @@ namespace VMS.VisionSetup
             //  "--capture-fullpage [폴더]"   : MainView 전체 화면 1장
             //  "--capture-toolpanels [폴더]" : 전 비전 툴의 우측 Tool Settings 파라미터 패널
             //  "--capture-dialogs [폴더]"    : VisionSetup 다이얼로그 전체 캡처(Sequence/BatchTest …)
+            //  "--capture-scenes [폴더]"     : 레시피 실행 장면 여러 장(env VMS_CAPTURE_SCENES = 장면 목록 JSON)
             bool isControls = TryGetCaptureOutputDir(e.Args, "--capture-controls", out string captureDir);
             bool isFullPage = TryGetCaptureOutputDir(e.Args, "--capture-fullpage", out string fullPageDir);
             bool isToolPanels = TryGetCaptureOutputDir(e.Args, "--capture-toolpanels", out string toolPanelsDir);
             bool isDialogs = TryGetCaptureOutputDir(e.Args, "--capture-dialogs", out string dialogsDir);
-            if (isControls || isFullPage || isToolPanels || isDialogs)
+            bool isScenes = TryGetCaptureOutputDir(e.Args, "--capture-scenes", out string scenesDir);
+            if (isControls || isFullPage || isToolPanels || isDialogs || isScenes)
             {
                 string dir = isControls ? captureDir : isFullPage ? fullPageDir
-                           : isToolPanels ? toolPanelsDir : dialogsDir;
+                           : isToolPanels ? toolPanelsDir : isDialogs ? dialogsDir : scenesDir;
                 var dbgLog = Path.Combine(dir, "_capture.log");
                 mainView.Dispatcher.BeginInvoke(
                     System.Windows.Threading.DispatcherPriority.ApplicationIdle,
@@ -356,6 +358,8 @@ namespace VMS.VisionSetup
                                 await Capture.ControlCapturer.RunFullPageAsync(mainView, fullPageDir);
                             if (isToolPanels)
                                 await Capture.ControlCapturer.RunToolPanelsAsync(mainView, toolPanelsDir);
+                            if (isScenes)
+                                await Capture.ControlCapturer.RunScenesAsync(mainView, scenesDir);
                             if (isDialogs)
                             {
                                 // fitScroll=true: 내부 ScrollViewer 콘텐츠에 맞춰 창을 키워 전체 스크롤 담기.

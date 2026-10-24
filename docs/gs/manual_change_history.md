@@ -2985,3 +2985,30 @@ docx/PDF 재생성 204쪽(변동 없음) · 그림 151장 · 경고 0. 새 문�
 - §5 메인 화면 그림 `vs/full_main_scene.png` 재캡처(같은 GS PatternMatch 장면, 팔레트 "Detection", 시험자료 레시피 층 배치 반영).
 - 표지 · §13.4 대상 SW VMS 1.47.1, §2.2 예시 `VMS-1.47.1.msi`, 제품설명서 v1.47.1.
 - docx/PDF 재생성 205쪽 · 그림 152장 · 경고 0. document.xml 에 "Detection (YOLO)" · "D-FINE · YOLO)" 없음.
+
+## 98. 화면 캡처 보강 — 도구별 실행 예 40장 · 검사 운전 · VisionSetup 조작 · 기능 목록 대응표 (v1.47.1) — **반영 완료**
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-10-24 |
+| 대상 | §4.4 · §4.5 · §4.9 · §5.2 · §5.3 · §5.4 · §5.5 · 6장 도구 40절 · §13.4(신설) · §13.5 · 표지 날짜 |
+| 변경 종류 | 그림 · 설명 보강 (SW 동작 변경 없음) |
+
+### 무엇이 바뀌었나 (사내 기록)
+
+- 사용자 요청: "각 항목에 대한 화면캡쳐, 기능 설명" 을 확실히. 6장은 도구마다 기본 상태 설정 패널 그림뿐이었고, §4.4 · §4.5 · §5.2~§5.5 는 그림이 없었으며, §4 메인 화면 그림은 이미지 · 집계가 빈 상태였다.
+- **6장 "실행 예" 40장** — GS 시험 레시피 · 이미지를 실제로 실행한 화면(이미지 뷰 · Run Results · 그 레시피의 Tool Settings). 도구마다 패널 그림 바로 아래, 캡션에 그 실행의 결과 값. 합성 이미지 예제(Polar Unwrap · Photometric Stereo · 3D 합성 불량)는 캡션에 "합성" 표기. 생성기 `gen_tools_chapter.py` 의 `SCENES`.
+- **§4 검사 운전** — 단독 모드에서 Measure 레시피를 [Open] → [Inspect] 로 7 장(OK 4 · NG 3) 검사한 상태: §4.4 KPI 스트립, §4.5 카메라 화면 + 조작 상자(NG 배지 · 결과 그림 · Run Results · NG History), §4.9 전체 화면. §4.5 에 "카메라 없이 이미지 파일로 검사하기" 절차 4 단계 추가(코드 확인: [Grab] 은 검사하지 않음, [Inspect] 가 KPI · NG History 갱신).
+- **§5** — 메뉴 · 툴바(§5.2), Steps 표 + Camera Settings(§5.3), 점군 Point Cloud 탭(§5.4), 연결 3종이 보이는 작업 공간 · ROI 표시 편집(§5.5).
+- **§13.4 기능 목록 — 설명 위치** 신설: 체크리스트 '기능 리스트' 65 항목 → 설명 절. 문서 정보는 §13.5 로.
+- 캡처 도구(DEBUG 전용): VisionSetup `--capture-scenes`(env `VMS_CAPTURE_SCENES` 장면 목록 JSON — 레시피 · 스텝 · 이미지/.vpc · 도구 · post · showRoi · tab), VMS `--capture-inspect`(env `VMS_CAPTURE_RECIPE` · `VMS_CAPTURE_IMAGES`). VMS `CameraViewModel.OpenImage` 의 파일 표시 부분을 `LoadImageFile` 로 분리(동작 동일). 자르기 `pipeline/crop_tool_scenes.py` · `pipeline/crop_manual_figs.py`.
+- 캡처 환경: `--instance mancap`(webServerUrl 빈 값 = 단독 모드, 운영 Web 무접촉), 3D 레시피용 카메라 `gs-mechmind-3d` 를 mancap system_config 에 등록(없으면 재연결 창에서 멈춤), 레시피는 시험자료 사본(`D:\Temp\mancap_scenes\recipes`)으로 실행 — 동결본 `D:\GS_TestData` 무변경.
+
+### 캡처 중 발견 (미수정, 사용자 판단 대기)
+
+- **합성 오버레이의 OK/NG 배지 겹침** — Geometry · Ensemble · PointCloud Cluster · PointCloud Deviation 은 자기 판정 배지를 같은 자리(18, 31)에 그린다. 한 스텝에 이런 도구가 둘 이상이면 Run All · VMS 검사 합성 이미지에 **마지막 도구의 배지만** 남아, 스텝이 NG 인데 이미지 배지는 OK 로 보일 수 있다(예: Measure 레시피 MS04 — Hole Pitch NG, 마지막 Block Angle OK → 배지 OK, 헤더 배지는 NG). 매뉴얼 그림은 마지막 장을 배지와 판정이 일치하는 MS05 로 찍었다.
+- **Run Results 에 목록 값이 형식 이름으로 표시** — "Edges=System.Collections.Generic.List…", "TopN=…", "CaliperResults=…" 처럼 목록형 결과 값이 .NET 형식 이름으로 보인다(VisionSetup `FormatResultValue` · VMS `CameraViewModel.UpdateToolRunResults`).
+
+### 매뉴얼 반영 (완료 2026-10-24)
+
+- docx/PDF 재생성 **235쪽 · 그림 200장**(+48) · 경고 0, docx 24.7MB.

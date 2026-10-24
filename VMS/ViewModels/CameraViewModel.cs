@@ -770,21 +770,27 @@ namespace VMS.ViewModels
             {
                 try
                 {
-                    var bitmap = new BitmapImage();
-                    bitmap.BeginInit();
-                    bitmap.UriSource = new Uri(filePath);
-                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                    bitmap.EndInit();
-                    bitmap.Freeze();
-                    _originalImage = bitmap;
-                    CurrentImage = bitmap;
-                    SelectedViewTab = 0;
+                    LoadImageFile(filePath);
                 }
                 catch (Exception ex)
                 {
                     _dialogService.ShowError($"Image load failed: {ex.Message}", "Error");
                 }
             }
+        }
+
+        /// <summary>이미지 파일을 검사 원본으로 표시한다 — [Open Image] 와 매뉴얼 캡처(DEBUG)가 같이 쓴다.</summary>
+        internal void LoadImageFile(string filePath)
+        {
+            var bitmap = new BitmapImage();
+            bitmap.BeginInit();
+            bitmap.UriSource = new Uri(filePath);
+            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.EndInit();
+            bitmap.Freeze();
+            _originalImage = bitmap;
+            CurrentImage = bitmap;
+            SelectedViewTab = 0;
         }
 
         [RelayCommand]

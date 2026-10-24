@@ -20,6 +20,75 @@ DESC = {
   "MinCircularity":"최소 원형도(4π×면적÷둘레², 원=1.0) — 이보다 낮은 덩어리는 개수·면적에서 제외","MaxCircularity":"최대 원형도 — 이보다 원에 가까운 덩어리를 제외","MinConvexity":"최소 볼록도(면적÷볼록 껍질 면적) — 오목하게 패인 덩어리를 제외","ExpectedValue":"판정 기준값(거리 · 각도 · 높이 등)","ToleranceMinus":"기준값 아래쪽 허용오차","TolerancePlus":"기준값 위쪽 허용오차","MaxFlatness":"합격 최대 평탄도(mm)","MaxStraightness":"합격 최대 직진도(mm)","MinConfidence":"합격 최소 정합 신뢰도(0~1)","UseSizeJudgment":"클러스터 크기(길이 · 폭) 판정 사용","ExpectedLength":"기준 길이(mm)","ExpectedWidth":"기준 폭(mm)","SizeToleranceMinus":"크기 하한 허용오차","SizeTolerancePlus":"크기 상한 허용오차","DistanceThreshold":"직선으로 인정할 점의 최대 거리(mm)","MinInliers":"직선으로 인정할 최소 점 개수",
 }
 esc = html.escape
+# 13.4 기능 리스트 대응표 — GS 신청 기능 리스트(체크리스트 xlsx '기능 리스트' 탭 6~70행)의 각 항목을 설명하는 절
+FUNC_MAP = [
+  ("검사 운전 (VMS 메인)", "자동 운전", "AUTO RUN 연속 검사", "§4.3 · §4.8"),
+  ("검사 운전 (VMS 메인)", "자동 운전", "수동 검사 실행", "§4.5"),
+  ("검사 운전 (VMS 메인)", "자동 운전", "외부 트리거 연동", "§3.7 · §5.10"),
+  ("검사 운전 (VMS 메인)", "판정·집계", "양불 판정 및 카운트", "§4.4 · §5.6"),
+  ("검사 운전 (VMS 메인)", "판정·집계", "NG 이력 조회", "§4.2 · §4.5 · §4.6"),
+  ("검사 운전 (VMS 메인)", "판정·집계", "단독 모드 로컬 생산 이력", "§4.9 · §4.10"),
+  ("검사 운전 (VMS 메인)", "생산 관리 연동", "작업지시(WO) 운전", "§4.3 · §4.8 · §8.7"),
+  ("검사 운전 (VMS 메인)", "생산 관리 연동", "멀티 Lot 관리", "§4.3 · §8.7"),
+  ("검사 운전 (VMS 메인)", "생산 관리 연동", "작업자 로그인", "§4.3 · §4.12 · §8.9"),
+  ("검사 운전 (VMS 메인)", "생산 관리 연동", "검사 결과 웹 업로드", "§8.6 · §8.26"),
+  ("검사 운전 (VMS 메인)", "시퀀스 제어", "IO 시퀀스 운전", "§3.7 · §5.10"),
+  ("레시피 편집 (Vision Setup)", "레시피 관리", "레시피 생성/저장/복사/이름 변경", "§5.3 · §8.10"),
+  ("레시피 편집 (Vision Setup)", "레시피 관리", "예제 템플릿 갤러리", "§5.8"),
+  ("레시피 편집 (Vision Setup)", "카메라·영상 취득", "카메라 연결/촬영/라이브", "§3.4 · §4.5 · §5.4 · §5.12"),
+  ("레시피 편집 (Vision Setup)", "카메라·영상 취득", "이미지 파일 로드", "§4.5 · §5.4"),
+  ("레시피 편집 (Vision Setup)", "ROI·좌표계", "ROI 설정(사각형/회전 사각형)", "§5.5"),
+  ("레시피 편집 (Vision Setup)", "ROI·좌표계", "좌표 보정(Fixture)", "§5.5 · §7.3"),
+  ("레시피 편집 (Vision Setup)", "영상 전처리 도구", "Blur / Morphology / Image Enhance / Grayscale / Threshold / Edge Detection / Histogram", "§6.1 · §6.2"),
+  ("레시피 편집 (Vision Setup)", "영상 전처리 도구", "Polar Unwrap (원형 → 띠 펼침)", "§6.1"),
+  ("레시피 편집 (Vision Setup)", "패턴 매칭 도구", "Feature Match (기하학적 패턴 매칭)", "§6.3 · §7.3"),
+  ("레시피 편집 (Vision Setup)", "패턴 매칭 도구", "Shape Match (템플릿 매칭)", "§6.3"),
+  ("레시피 편집 (Vision Setup)", "측정·판정 도구", "Blob (입자 분석)", "§6.5 · §7.1"),
+  ("레시피 편집 (Vision Setup)", "측정·판정 도구", "Caliper / Line Fit / Circle Fit (치수 측정)", "§6.6 · §7.2"),
+  ("레시피 편집 (Vision Setup)", "측정·판정 도구", "Geometry (기하 연산)", "§6.6 · §7.2"),
+  ("레시피 편집 (Vision Setup)", "측정·판정 도구", "Result (판정 종합)", "§5.6 · §6.12"),
+  ("레시피 편집 (Vision Setup)", "측정·판정 도구", "Code Reader (DataMatrix · GS1)", "§6.8 · §7.5"),
+  ("레시피 편집 (Vision Setup)", "측정·판정 도구", "OCR (문자 인식)", "§6.7 · §7.6"),
+  ("레시피 편집 (Vision Setup)", "측정·판정 도구", "OCV (문자 검증)", "§6.7 · §7.6"),
+  ("레시피 편집 (Vision Setup)", "측정·판정 도구", "Color Extract / Color Match (색상 검사)", "§6.13 · §7.4"),
+  ("레시피 편집 (Vision Setup)", "측정·판정 도구", "Photometric Stereo (표면 결함 검사)", "§6.15"),
+  ("레시피 편집 (Vision Setup)", "딥러닝 도구", "Detection (객체 검출)", "§6.11 · §7.7"),
+  ("레시피 편집 (Vision Setup)", "딥러닝 도구", "RF-DETR-seg (인스턴스 분할)", "§6.11"),
+  ("레시피 편집 (Vision Setup)", "딥러닝 도구", "Segmentation (시맨틱 분할)", "§6.11"),
+  ("레시피 편집 (Vision Setup)", "딥러닝 도구", "Classify (분류)", "§6.11"),
+  ("레시피 편집 (Vision Setup)", "딥러닝 도구", "Anomaly (이상 탐지)", "§6.11 · §7.7"),
+  ("레시피 편집 (Vision Setup)", "딥러닝 도구", "Ensemble (앙상블 판정)", "§6.12"),
+  ("레시피 편집 (Vision Setup)", "정렬(얼라인)", "Match Align (1점/2점 정렬)", "§6.4 · §7.8"),
+  ("레시피 편집 (Vision Setup)", "정렬(얼라인)", "Multi-Step Align (2-스텝 정렬)", "§6.4"),
+  ("레시피 편집 (Vision Setup)", "3D 측정 도구", "3D 점군 측정(높이·평면·직선·기하)", "§6.10 · §7.9"),
+  ("레시피 편집 (Vision Setup)", "3D 측정 도구", "3D 정렬·편차·객체 검출", "§6.9 · §6.10 · §7.9"),
+  ("레시피 편집 (Vision Setup)", "검증 도구", "배치 테스트·CSV 리포트", "§5.11"),
+  ("레시피 편집 (Vision Setup)", "캘리브레이션", "카메라 캘리브레이션 (mm 환산)", "§5.9"),
+  ("레시피 편집 (Vision Setup)", "캘리브레이션", "Image Rectify (왜곡 보정)", "§6.14"),
+  ("시스템 구성 (App Setup)", "장치 구성", "카메라 등록·시스템 구성 마법사", "3 장"),
+  ("시스템 구성 (App Setup)", "보안", "사용자 계정·보안 모드", "§3.8 · §4.11 · §4.12"),
+  ("생산 관리 웹 (동봉 BODA.VMS.Web)", "대시보드", "공장 전체 현황", "§8.2 · §8.3"),
+  ("생산 관리 웹 (동봉 BODA.VMS.Web)", "현장 모니터링", "안돈 보드", "§8.4"),
+  ("생산 관리 웹 (동봉 BODA.VMS.Web)", "현장 모니터링", "알람", "§8.5"),
+  ("생산 관리 웹 (동봉 BODA.VMS.Web)", "현장 모니터링", "생산 이력", "§8.6"),
+  ("생산 관리 웹 (동봉 BODA.VMS.Web)", "생산 관리", "작업 지시", "§8.7"),
+  ("생산 관리 웹 (동봉 BODA.VMS.Web)", "생산 관리", "제품 · 작업자", "§8.8 · §8.9"),
+  ("생산 관리 웹 (동봉 BODA.VMS.Web)", "품질 관리", "레시피 파라미터 (검사 기준값)", "§5.7 · §8.10"),
+  ("생산 관리 웹 (동봉 BODA.VMS.Web)", "품질 관리", "파레토 분석 · SPC 관리도", "§8.11 · §8.12"),
+  ("생산 관리 웹 (동봉 BODA.VMS.Web)", "품질 관리", "불량 코드", "§8.13"),
+  ("생산 관리 웹 (동봉 BODA.VMS.Web)", "품질 관리", "교대 리포트 · PDF 리포트", "§8.14 · §8.15"),
+  ("생산 관리 웹 (동봉 BODA.VMS.Web)", "설비 관리", "비전 클라이언트 (라인)", "§8.16"),
+  ("생산 관리 웹 (동봉 BODA.VMS.Web)", "설비 관리", "OEE · 설비 신뢰성", "§8.17 · §8.18"),
+  ("생산 관리 웹 (동봉 BODA.VMS.Web)", "설비 관리", "예방 보전", "§8.19"),
+  ("생산 관리 웹 (동봉 BODA.VMS.Web)", "설비 관리", "불량률 예측", "§4.3 · §8.4 · §8.20"),
+  ("생산 관리 웹 (동봉 BODA.VMS.Web)", "시스템 관리 (Admin)", "사용자 승인 · 권한", "§8.22"),
+  ("생산 관리 웹 (동봉 BODA.VMS.Web)", "시스템 관리 (Admin)", "감사 로그", "§8.23"),
+  ("생산 관리 웹 (동봉 BODA.VMS.Web)", "시스템 관리 (Admin)", "교대 마스터 · 시스템 설정 · SW 라이선스", "§8.21 · §8.24 · §8.25"),
+  ("공통", "계정·권한", "로그인·권한 제한", "§4.12 · §8.1 · §8.2"),
+  ("공통", "라이선스", "라이선스 인증", "§2.6 · §3.8 · §8.24 · §11.4"),
+  ("공통", "유지 관리", "인앱 업데이트", "§2.7 · §4.6"),
+]
+
 out = []
 out.append('<section id="appendix">\n<h2>13. 부록</h2>\n<div class="callout"><strong>⚙ 부록은 관리자와 기술 지원 담당자용 참고 자료입니다.</strong></div>\n')
 out.append('''<h3 id="appx-keys">13.1 단축키 · 마우스 조작 (VisionSetup)</h3>
@@ -67,11 +136,19 @@ out.append('''<h3 id="appx-results">13.3 검사 결과 값 이름 (PLC 매핑 ·
   <tr><td>PointCloud Cluster · 3D Geometry</td><td>ClusterCount · Cluster{i}_SizeX/Y/Z · Cluster{i}_Length/Width · Distance3D · AngleDeg</td></tr>
   <tr><td>Result</td><td>PassCount · FailCount · TotalCount</td></tr>
 </table>
-<h3 id="appx-version">13.4 문서 정보</h3>
+<h3 id="appx-funcmap">13.4 기능 목록 — 설명 위치</h3>
+<p>제품 기능 목록의 항목마다 이 매뉴얼에서 화면과 사용법을 설명하는 절입니다.</p>
+<table class="cols-2-2-3-2">
+  <tr><th>대분류</th><th>중분류</th><th>기능</th><th>설명 절</th></tr>
+''')
+for big, mid, small, sec in FUNC_MAP:
+    out.append(f'  <tr><td>{esc(big)}</td><td>{esc(mid)}</td><td>{esc(small)}</td><td>{sec}</td></tr>\n')
+out.append('''</table>
+<h3 id="appx-version">13.5 문서 정보</h3>
 <table class="cols-3-6">
   <tr><th>항목</th><th>값</th></tr>
-  <tr><td>문서 버전</td><td>3.0 (2026-09-17)</td></tr>
-  <tr><td>대상 소프트웨어</td><td>VMS 1.46.2 · BODA.VMS.Web 1.10.3 · BODA.VMS.MLOps 0.1.2</td></tr>
+  <tr><td>문서 버전</td><td>3.0 (2026-10-24)</td></tr>
+  <tr><td>대상 소프트웨어</td><td>VMS 1.47.1 · BODA.VMS.Web 1.10.4 · BODA.VMS.MLOps 0.1.5</td></tr>
   <tr><td>구성</td><td>VMS · VMS.VisionSetup · VMS.AppSetup (검사 런타임) / BODA.VMS.Web (생산 관리) / BODA.VMS.MLOps (선택 구성 요소, 인증 범위 외)</td></tr>
   <tr><td>발행</td><td>BODA Vision AI</td></tr>
 </table>

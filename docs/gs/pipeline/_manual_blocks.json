@@ -8524,6 +8524,12 @@
   "text": "4.4 KPI 스트립"
  },
  {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/vms/inspect_kpi.jpg",
+  "width": "620",
+  "caption": "KPI 스트립 — 수동 검사 7 건(합격 4 · 불량 3)을 마친 상태: YIELD 57.1%, TOTAL 7 · OK 4 · NG 3. 수동 검사라 TACT TIME 은 0.00 이고 PROC 에 마지막 검사 처리 시간이 표시됩니다"
+ },
+ {
   "t": "table",
   "rows": [
    [
@@ -8722,6 +8728,12 @@
    }
   ],
   "text": "톱니바퀴를 누르면 타일 오른쪽에 카메라 조작 상자가 펼쳐집니다."
+ },
+ {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/vms/inspect_camera_box.jpg",
+  "width": "620",
+  "caption": "카메라 화면과 조작 상자 — [Open] 으로 연 이미지를 [Inspect] 로 검사한 결과: 타일 오른쪽 위 판정 배지(NG), 이미지 위 도구별 결과 그림(엣지 · 원 · 직선), 아래 Run Results 표, 오른쪽 NG History 썸네일"
  },
  {
   "t": "table",
@@ -9073,6 +9085,81 @@
   "ordered": false,
   "depth": 0,
   "text": "Basler 카메라도 스텝별 노출/게인이 그대로 적용되며, 연결 시 자동 노출/게인이 꺼져 촬영마다 밝기가 달라지지 않습니다."
+ },
+ {
+  "t": "h",
+  "segs": [
+   {
+    "s": "카메라 없이 이미지 파일로 검사하기 (수동 검사)",
+    "b": false,
+    "m": false
+   }
+  ],
+  "level": 4,
+  "text": "카메라 없이 이미지 파일로 검사하기 (수동 검사)"
+ },
+ {
+  "t": "li",
+  "segs": [
+   {
+    "s": "사이드 패널 Recipe 섹션에서 레시피를 [Load] 합니다.",
+    "b": false,
+    "m": false
+   }
+  ],
+  "ordered": true,
+  "depth": 0,
+  "text": "사이드 패널 Recipe 섹션에서 레시피를 [Load] 합니다."
+ },
+ {
+  "t": "li",
+  "segs": [
+   {
+    "s": "카메라 타일의 톱니바퀴로 조작 상자를 열고 Step 콤보에서 검사할 스텝을 고릅니다.",
+    "b": false,
+    "m": false
+   }
+  ],
+  "ordered": true,
+  "depth": 0,
+  "text": "카메라 타일의 톱니바퀴로 조작 상자를 열고 Step 콤보에서 검사할 스텝을 고릅니다."
+ },
+ {
+  "t": "li",
+  "segs": [
+   {
+    "s": "[Open] 으로 이미지 파일(bmp · jpg · png · tif)을 엽니다.",
+    "b": false,
+    "m": false
+   }
+  ],
+  "ordered": true,
+  "depth": 0,
+  "text": "[Open] 으로 이미지 파일(bmp · jpg · png · tif)을 엽니다."
+ },
+ {
+  "t": "li",
+  "segs": [
+   {
+    "s": "[Inspect] 를 누르면 그 이미지로 검사가 1 회 실행되어 판정 배지 · Run Results · KPI 스트립이 갱신되고, NG 면 NG History 에 썸네일이 추가됩니다.",
+    "b": false,
+    "m": false
+   }
+  ],
+  "ordered": true,
+  "depth": 0,
+  "text": "[Inspect] 를 누르면 그 이미지로 검사가 1 회 실행되어 판정 배지 · Run Results · KPI 스트립이 갱신되고, NG 면 NG History 에 썸네일이 추가됩니다."
+ },
+ {
+  "t": "p",
+  "segs": [
+   {
+    "s": "카메라로 찍을 때는 [Open] 대신 [Grab] 으로 한 장 촬영한 뒤 [Inspect] 합니다.",
+    "b": false,
+    "m": false
+   }
+  ],
+  "text": "카메라로 찍을 때는 [Open] 대신 [Grab] 으로 한 장 촬영한 뒤 [Inspect] 합니다."
  },
  {
   "t": "h",
@@ -10315,6 +10402,12 @@
   ],
   "level": 3,
   "text": "4.9 단독 모드 — Web 서버 없이 운전"
+ },
+ {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/vms/inspect_full.jpg",
+  "width": "620",
+  "caption": "단독 모드에서 검사를 마친 메인 화면 — 헤더에 Recipe 칩과 추적 정보(Ctx) 칩만 있고, 상태바 Web 칩이 \"단독 모드 (Web 미사용)\", System Log 에 단독 모드 안내가 표시됩니다"
  },
  {
   "t": "p",
@@ -12265,6 +12358,12 @@
   "text": "5.2 메뉴와 툴바"
  },
  {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/vs/scene_menu_toolbar.jpg",
+  "width": "620",
+  "caption": "메뉴 막대(File · Run · Recipe · 예제 Template · Sequence · Batch Test · OCR Synth Data · Inference Settings · Camera · 3D)와 툴바"
+ },
+ {
   "t": "table",
   "rows": [
    [
@@ -12697,6 +12796,12 @@
   "text": "스텝과 카메라 설정"
  },
  {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/vs/scene_step_camera.jpg",
+  "width": "520",
+  "caption": "왼쪽 — 현재 레시피 배지 · Camera 콤보 · Step 버튼과 Steps 표(스텝 이름 · Resolution · 도구 수). 오른쪽 — 스텝만 선택했을 때의 Camera Settings(스텝 별칭 · 로봇 노드 번호 · 카메라 설정 유지 · 노출 · 게인)"
+ },
+ {
   "t": "li",
   "segs": [
    {
@@ -12965,6 +13070,12 @@
   "text": "받은 이미지는 2D Image 탭에 표시되고 상태바에 \"이미지 로드 완료\" 가 나옵니다. 이후 Run All 이 활성화됩니다."
  },
  {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/PointCloudView.jpg",
+  "width": "620",
+  "caption": "3D → Load 3D Data 로 연 점군(.vpc) — Point Cloud 탭에 높이 색으로 표시됩니다. 마우스로 돌리고 확대하며, 오른쪽 위 Top · Front · Side 로 시점을 바꿉니다. 격자 점군은 열 때 Height Map 이 만들어져 2D Image 탭에도 표시됩니다"
+ },
+ {
   "t": "h",
   "segs": [
    {
@@ -13101,6 +13212,18 @@
   "ordered": true,
   "depth": 0,
   "text": "이름 · 복제 — 노드 우클릭 → Rename Tool 로 이름을 바꾸고, Duplicate Tool 로 파라미터 · ROI · 학습 데이터까지 복사한 사본을 만듭니다(연결은 복사되지 않음)."
+ },
+ {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/vs/scene_workspace_links.jpg",
+  "width": "460",
+  "caption": "Tool Workspace 연결 예 — Image(초록 실선) · Result(주황 점선) · Coordinates(파랑 점선). 한 도구의 결과를 여러 도구로 나눠 보낼 수 있습니다"
+ },
+ {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/RoiEdit.jpg",
+  "width": "620",
+  "caption": "ROI 표시 · 편집 — [Show ROI] 로 선택한 도구(Bar Width)의 회전 사각형 ROI 를 이미지 위에 띄운 상태. 화살표가 탐색 방향이고, 이미지 뷰 위쪽 툴바에서 도형을 고르거나 지웁니다"
  },
  {
   "t": "callout",
@@ -15348,12 +15471,22 @@
     "m": false
    },
    {
-    "s": "을 정리했으며, 설정 패널 그림은 Expert Mode 를 끈 기본 상태입니다. 파라미터의 정확한 범위와 전체 목록은 부록 13.2 를, 도구를 연결하는 방법은 §5.5 를 참고하세요. 각 파라미터 옆의 물음표(?)에 마우스를 올리면 같은 설명이 프로그램 안에서도 표시됩니다.",
+    "s": "을 정리했으며, 설정 패널 그림은 Expert Mode 를 끈 기본 상태이고, ",
+    "b": false,
+    "m": false
+   },
+   {
+    "s": "실행 예",
+    "b": true,
+    "m": false
+   },
+   {
+    "s": " 그림은 예제 레시피와 이미지를 실제로 실행한 화면(이미지 뷰 · Run Results · 그 레시피의 Tool Settings)입니다. 파라미터의 정확한 범위와 전체 목록은 부록 13.2 를, 도구를 연결하는 방법은 §5.5 를 참고하세요. 각 파라미터 옆의 물음표(?)에 마우스를 올리면 같은 설명이 프로그램 안에서도 표시됩니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "Tool Palette 의 도구를 카테고리 순서대로 설명합니다. 도구마다 용도 · 설정 패널 · 주요 파라미터 · 결과 값 · 사용 요령을 정리했으며, 설정 패널 그림은 Expert Mode 를 끈 기본 상태입니다. 파라미터의 정확한 범위와 전체 목록은 부록 13.2 를, 도구를 연결하는 방법은 §5.5 를 참고하세요. 각 파라미터 옆의 물음표(?)에 마우스를 올리면 같은 설명이 프로그램 안에서도 표시됩니다."
+  "text": "Tool Palette 의 도구를 카테고리 순서대로 설명합니다. 도구마다 용도 · 설정 패널 · 주요 파라미터 · 결과 값 · 사용 요령을 정리했으며, 설정 패널 그림은 Expert Mode 를 끈 기본 상태이고, 실행 예 그림은 예제 레시피와 이미지를 실제로 실행한 화면(이미지 뷰 · Run Results · 그 레시피의 Tool Settings)입니다. 파라미터의 정확한 범위와 전체 목록은 부록 13.2 를, 도구를 연결하는 방법은 §5.5 를 참고하세요. 각 파라미터 옆의 물음표(?)에 마우스를 올리면 같은 설명이 프로그램 안에서도 표시됩니다."
  },
  {
   "t": "h",
@@ -15395,6 +15528,12 @@
   "src": "../gs/screenshots/v3/tools/01_Blur.png",
   "width": "240",
   "caption": "Blur — 블러(흐림) — Tool Settings 패널"
+ },
+ {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/Blur.jpg",
+  "width": "620",
+  "caption": "실행 예 — 그레이 이미지에 Gaussian 블러(커널 5)를 적용한 결과 이미지. Run Results 에 적용한 방식 · 커널 크기가 표시됩니다"
  },
  {
   "t": "table",
@@ -15626,6 +15765,12 @@
   "caption": "Morphology — 형태학 연산 — Tool Settings 패널"
  },
  {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/Morphology.jpg",
+  "width": "620",
+  "caption": "실행 예 — 이진화된 부품 이미지에 Open(5 × 5, 1 회)을 적용 — 작은 잡음 점이 지워진 결과"
+ },
+ {
   "t": "table",
   "rows": [
    [
@@ -15853,6 +15998,12 @@
   "src": "../gs/screenshots/v3/tools/03_Image_Enhance.png",
   "width": "240",
   "caption": "Image Enhance — 선명도 보정 — Tool Settings 패널"
+ },
+ {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/ImageEnhance.jpg",
+  "width": "620",
+  "caption": "실행 예 — UnsharpMask(강도 1.0)로 윤곽을 선명하게 만든 결과"
  },
  {
   "t": "table",
@@ -16107,6 +16258,12 @@
   "src": "../gs/screenshots/v3/tools/04_Polar_Unwrap_split.png",
   "width": "500",
   "caption": "Polar Unwrap — 극좌표 펼치기 — Tool Settings 패널"
+ },
+ {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/PolarUnwrap.jpg",
+  "width": "620",
+  "caption": "실행 예 — 원형으로 인쇄된 문자(35° 돌아감)를 반지름 300~400 px 띠(2513 × 100 px)로 펼친 결과. 뒤에 연결한 OCR 이 \"LOT 260923 A12\" 를 읽습니다(예제 이미지는 합성)"
  },
  {
   "t": "table",
@@ -16413,6 +16570,12 @@
   "caption": "Grayscale — 그레이 변환 — Tool Settings 패널"
  },
  {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/Grayscale.jpg",
+  "width": "620",
+  "caption": "실행 예 — 컬러 이미지를 1 채널 그레이(2448 × 2048)로 바꾼 결과"
+ },
+ {
   "t": "p",
   "segs": [
    {
@@ -16480,6 +16643,12 @@
   "src": "../gs/screenshots/v3/tools/06_Threshold.png",
   "width": "240",
   "caption": "Threshold — 이진화 — Tool Settings 패널"
+ },
+ {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/Threshold.jpg",
+  "width": "620",
+  "caption": "실행 예 — Otsu 자동 이진화 결과(계산된 임계값 128) — 밝은 배경과 어두운 부품이 흑백으로 나뉩니다"
  },
  {
   "t": "table",
@@ -16787,6 +16956,12 @@
   "caption": "Edge Detection — 에지 검출 — Tool Settings 패널"
  },
  {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/EdgeDetection.jpg",
+  "width": "620",
+  "caption": "실행 예 — Canny 에지 검출 결과 — 밝기가 크게 바뀌는 윤곽만 흰 점으로 남습니다(EdgePixelCount 6,763)"
+ },
+ {
   "t": "table",
   "rows": [
    [
@@ -17041,6 +17216,12 @@
   "caption": "Histogram — 히스토그램 분석 · 평활화 — Tool Settings 패널"
  },
  {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/Histogram.jpg",
+  "width": "620",
+  "caption": "실행 예 — 어둡게 찍힌 저대비 이미지에 히스토그램 평활화(Equalize)를 적용해 대비를 넓힌 결과"
+ },
+ {
   "t": "table",
   "rows": [
    [
@@ -17267,6 +17448,12 @@
   "src": "../gs/screenshots/v3/vs/scene_fm_settings_split.png",
   "width": "500",
   "caption": "Feature Match — 특징(에지) 기반 패턴 매칭 — Tool Settings 패널"
+ },
+ {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/FeatureMatch.jpg",
+  "width": "620",
+  "caption": "실행 예 — 학습한 피팅 모델로 화면 안의 2 개를 함께 찾은 예(Max Instances 2) — 찾은 위치마다 녹색 외곽선, Run Results 에 개수 · 점수 · 위치 · 각도 · 커버리지"
  },
  {
   "t": "table",
@@ -18018,6 +18205,12 @@
   "caption": "Shape Match — 템플릿(NCC) 형상 매칭 — Tool Settings 패널"
  },
  {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/ShapeMatch.jpg",
+  "width": "620",
+  "caption": "실행 예 — 35° 돌아간 피팅을 찾은 예 — 점수 0.967, 각도 −35.0°"
+ },
+ {
   "t": "table",
   "rows": [
    [
@@ -18465,6 +18658,12 @@
   "caption": "Match Align — 2D 얼라인 (ΔX / ΔY / Δθ) — Tool Settings 패널"
  },
  {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/MatchAlign.jpg",
+  "width": "620",
+  "caption": "실행 예 — 돌아가고 옮겨진 피팅의 기준 위치 대비 보정량 — ΔX −39.6 px · ΔY −3.8 px · Δθ 33.38°, 허용 범위 안이라 OK"
+ },
+ {
   "t": "table",
   "rows": [
    [
@@ -18840,6 +19039,12 @@
   "src": "../gs/screenshots/v3/tools/12_Multi-Step_Align_split.png",
   "width": "500",
   "caption": "Multi-Step Align — 2-스텝 얼라인 (카메라 이동, 대형 부품) — Tool Settings 패널"
+ },
+ {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/MultiStepAlign.jpg",
+  "width": "620",
+  "caption": "실행 예 — A 스텝(왼쪽 시야)과 B 스텝(오른쪽 시야)에서 각각 매칭한 결과를 합쳐 계산한 보정량 — 부품을 3° 돌려 놓은 장면에서 Δθ −2.899°, 판정 OK. B 스텝 화면입니다"
  },
  {
   "t": "table",
@@ -19249,6 +19454,12 @@
   "src": "../gs/screenshots/v3/tools/13_Blob_split.png",
   "width": "620",
   "caption": "Blob — 블롭(덩어리) 분석 — Tool Settings 패널"
+ },
+ {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/Blob.jpg",
+  "width": "620",
+  "caption": "실행 예 — 판의 구멍 6 개를 검출 — 개수 6 · 총 면적 48,417 px² 가 기준 안이라 OK. 구멍마다 윤곽 · 중심 · 번호가 표시됩니다"
  },
  {
   "t": "table",
@@ -19762,6 +19973,12 @@
   "caption": "Caliper — 엣지 검출 · 캘리퍼 측정 — Tool Settings 패널"
  },
  {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/Caliper.jpg",
+  "width": "620",
+  "caption": "실행 예 — 막대의 폭을 엣지 쌍(EdgePair)으로 측정 — 141.11 px(캘리브레이션 적용 8.051 mm)"
+ },
+ {
   "t": "table",
   "rows": [
    [
@@ -20210,6 +20427,12 @@
   "caption": "Line Fit — 직선 피팅 — Tool Settings 패널"
  },
  {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/LineFit.jpg",
+  "width": "620",
+  "caption": "실행 예 — 블록 윗변에 캘리퍼 12 개를 놓아 직선 피팅 — 각도 0.35°, 12/12 점 사용"
+ },
+ {
   "t": "table",
   "rows": [
    [
@@ -20516,6 +20739,12 @@
   "src": "../gs/screenshots/v3/tools/16_Circle_Fit.png",
   "width": "240",
   "caption": "Circle Fit — 원 피팅 — Tool Settings 패널"
+ },
+ {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/CircleFit.jpg",
+  "width": "620",
+  "caption": "실행 예 — 구멍 A 의 원 피팅 — 중심 (1005.8, 982.2), 반지름 70.4 px"
  },
  {
   "t": "table",
@@ -20826,6 +21055,12 @@
   "caption": "Geometry — 기하 계산과 공차 판정 — Tool Settings 패널"
  },
  {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/Geometry.jpg",
+  "width": "620",
+  "caption": "실행 예 — 두 구멍의 중심 거리 판정에서 NG 가 난 예 — 21.045 mm 가 기준 20 ± 0.3 mm(19.7~20.3 mm) 밖이라 NG(왼쪽 위 붉은 배지)"
+ },
+ {
   "t": "table",
   "rows": [
    [
@@ -21094,6 +21329,12 @@
   "src": "../gs/screenshots/v3/tools/18_OCR.png",
   "width": "240",
   "caption": "OCR — 문자 인식 — Tool Settings 패널"
+ },
+ {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/OCR.jpg",
+  "width": "620",
+  "caption": "실행 예 — Tesseract 엔진으로 인쇄 문자 \"LOT 260928-A01\" 을 읽어 기대 문자열과 일치 — 신뢰도 91%"
  },
  {
   "t": "table",
@@ -21595,6 +21836,12 @@
   "caption": "OCV — 문자 검증 (Optical Character Verification) — Tool Settings 패널"
  },
  {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/OCV.jpg",
+  "width": "620",
+  "caption": "실행 예 — 글자 하나가 빠진 인쇄(기준 VMS2658K → 읽힘 VMS268K)를 불일치로 판정한 NG 예"
+ },
+ {
   "t": "table",
   "rows": [
    [
@@ -21951,6 +22198,12 @@
   "src": "../gs/screenshots/v3/tools/20_Code_Reader.png",
   "width": "240",
   "caption": "Code Reader — 바코드 · QR · DataMatrix 판독 — Tool Settings 패널"
+ },
+ {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/CodeReader.jpg",
+  "width": "620",
+  "caption": "실행 예 — GS1 DataMatrix 판독 — 읽은 데이터를 응용 식별자 (01) · (17) · (10) · (21) 로 나눠 해석합니다"
  },
  {
   "t": "table",
@@ -22324,6 +22577,12 @@
   "caption": "PointCloud Filter — 점군 솎아내기 · 이상점 제거 — Tool Settings 패널"
  },
  {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/PCFilter.jpg",
+  "width": "620",
+  "caption": "실행 예 — 프레임 점군 28,382 점을 4 mm 복셀로 솎아 5,330 점으로 줄인 결과(81.2% 감소). 뒤의 정합 · 편차 계산이 빨라집니다"
+ },
+ {
   "t": "table",
   "rows": [
    [
@@ -22516,6 +22775,12 @@
   "src": "../gs/screenshots/v3/tools/22_PointCloud_Registration.png",
   "width": "240",
   "caption": "PointCloud Registration — 기준 형상 정합 (3D 얼라인) — Tool Settings 패널"
+ },
+ {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/PCRegistration.jpg",
+  "width": "620",
+  "caption": "실행 예 — −44° 돌아가 놓인 프레임을 기준 점군에 정합 — 회전 RotationZ −44.06°, 평균 오차 2.736 mm, 신뢰도 0.697 이 하한 0.3 이상이라 OK"
  },
  {
   "t": "table",
@@ -22824,6 +23089,12 @@
   "src": "../gs/screenshots/v3/tools/23_PointCloud_Mask_Crop_split.png",
   "width": "500",
   "caption": "PointCloud Mask Crop — 마스크로 점군 잘라내기 — Tool Settings 패널"
+ },
+ {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/PCMaskCrop.jpg",
+  "width": "620",
+  "caption": "실행 예 — Height Slicer 마스크로 전체 3,145,728 점 가운데 프레임 28,770 점만 남긴 결과"
  },
  {
   "t": "table",
@@ -23145,6 +23416,12 @@
   "src": "../gs/screenshots/v3/tools/24_PointCloud_Cluster_split.png",
   "width": "500",
   "caption": "PointCloud Cluster — 덩어리 분리 · 개수 · 치수 — Tool Settings 패널"
+ },
+ {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/PCCluster.jpg",
+  "width": "620",
+  "caption": "실행 예 — 남은 점을 덩어리로 나눠 프레임 1 개를 찾은 예 — 치수가 기준 376 × 252 mm(−6 / +6) 안이라 OK"
  },
  {
   "t": "table",
@@ -23518,6 +23795,12 @@
   "caption": "PointCloud Deviation — 기준 형상 대비 편차 히트맵 — Tool Settings 패널"
  },
  {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/PCDeviation.jpg",
+  "width": "620",
+  "caption": "실행 예 — 비틀린 프레임(합성 불량)의 편차 — 기준에서 5 mm 넘게 벗어난 점이 41.2%로 상한 10% 를 넘어 NG"
+ },
+ {
   "t": "table",
   "rows": [
    [
@@ -23826,6 +24109,12 @@
   "caption": "Height Slicer — 높이 범위로 2D 마스크 만들기 — Tool Settings 패널"
  },
  {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/HeightSlicer.jpg",
+  "width": "620",
+  "caption": "실행 예 — 높이 1780~1825 mm 구간의 점만 흰색으로 남긴 2D 마스크 — 바닥 위에 놓인 프레임만 남습니다"
+ },
+ {
   "t": "table",
   "rows": [
    [
@@ -24031,6 +24320,12 @@
   "src": "../gs/screenshots/v3/tools/27_Plane_Fit.png",
   "width": "240",
   "caption": "Plane Fit — 평면 피팅 (평탄도 · 기울기 · 단차 기준면) — Tool Settings 패널"
+ },
+ {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/PlaneFit.jpg",
+  "width": "620",
+  "caption": "실행 예 — ROI 안의 점으로 평면을 피팅 — 인라이어 70,403 / 81,114 점, 평면 식과 평면도가 Run Results 에 표시됩니다(이 레시피는 기준면 용도라 판정 끔)"
  },
  {
   "t": "table",
@@ -24303,6 +24598,12 @@
   "caption": "3D Geometry — 점 · 평면 사이 거리 · 각도 — Tool Settings 패널"
  },
  {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/Geometry3D.jpg",
+  "width": "620",
+  "caption": "실행 예 — 높이가 낮아진 프레임(합성 불량)의 점-평면 거리 — 81.44 mm 가 기준 90 ± 5 mm 밖이라 NG"
+ },
+ {
   "t": "table",
   "rows": [
    [
@@ -24546,6 +24847,12 @@
   "src": "../gs/screenshots/v3/tools/29_PointCloud_Line_Fit_split.png",
   "width": "500",
   "caption": "PointCloud Line Fit — 3D 직선 피팅 — Tool Settings 패널"
+ },
+ {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/PCLineFit.jpg",
+  "width": "620",
+  "caption": "실행 예 — 가운데가 8 mm 휜 막대(합성 점군) — 직진도 5.318 mm 가 상한 3 mm 를 넘어 NG"
  },
  {
   "t": "table",
@@ -24841,6 +25148,12 @@
   "src": "../gs/screenshots/v3/tools/29_Detection.png",
   "width": "240",
   "caption": "Detection — 딥러닝 객체 검출 — Tool Settings 패널"
+ },
+ {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/Detection.jpg",
+  "width": "620",
+  "caption": "실행 예 — T · Y 피팅 3 개를 검출 — 객체마다 클래스별 색 박스, Run Results 에 개수 · 클래스 · 신뢰도"
  },
  {
   "t": "table",
@@ -25278,6 +25591,12 @@
   "caption": "Segmentation — 픽셀 단위 분할 (semantic) — Tool Settings 패널"
  },
  {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/Segmentation.jpg",
+  "width": "620",
+  "caption": "실행 예 — 화소 단위 분할 — 배경 · T · Y 3 클래스를 색으로 칠하고, 클래스별 화소 수 · 비율을 냅니다"
+ },
+ {
   "t": "table",
   "rows": [
    [
@@ -25546,6 +25865,12 @@
   "src": "../gs/screenshots/v3/tools/32_RF-DETR-seg.png",
   "width": "240",
   "caption": "RF-DETR-seg — 인스턴스 분할 — Tool Settings 패널"
+ },
+ {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/RfdetrSeg.jpg",
+  "width": "620",
+  "caption": "실행 예 — 인스턴스 분할 — 피팅 3 개 각각의 마스크 · 박스 · 클래스 · 신뢰도"
  },
  {
   "t": "table",
@@ -25829,6 +26154,12 @@
   "src": "../gs/screenshots/v3/tools/33_Classify_split.png",
   "width": "500",
   "caption": "Classify — 이미지 분류 — Tool Settings 패널"
+ },
+ {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/Classify.jpg",
+  "width": "620",
+  "caption": "실행 예 — 테이프가 붙은 피팅을 tape(100%)로 분류 — tape 는 OK Classes 에 없으므로 NG(왼쪽 위 붉은 글자)"
  },
  {
   "t": "table",
@@ -26126,6 +26457,12 @@
   "caption": "Anomaly — 이상 탐지 (정상 이미지만으로 학습) — Tool Settings 패널"
  },
  {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/Anomaly.jpg",
+  "width": "620",
+  "caption": "실행 예 — 수정액 자국이 있는 피팅 — 이상 점수 0.665 가 임계값 0.545 를 넘어 NG. 히트맵에서 이상 부위가 밝게 표시됩니다"
+ },
+ {
   "t": "table",
   "rows": [
    [
@@ -26421,6 +26758,12 @@
   "caption": "Result — 최종 OK / NG 판정 — Tool Settings 패널"
  },
  {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/Result.jpg",
+  "width": "620",
+  "caption": "실행 예 — 막대 폭이 불량인 이미지 — Bar Width 가 실패하자 Result All Pass(모두 합격)는 NG, Result Any Pass(하나라도 합격)는 OK. 오른쪽 Source Results 에 연결된 도구별 OK/NG 가 보입니다"
+ },
+ {
   "t": "table",
   "rows": [
    [
@@ -26613,6 +26956,12 @@
   "src": "../gs/screenshots/v3/tools/36_Ensemble.png",
   "width": "240",
   "caption": "Ensemble — 딥러닝 판정 결합 — Tool Settings 패널"
+ },
+ {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/Ensemble.jpg",
+  "width": "620",
+  "caption": "실행 예 — 수정액 자국이 있는 피팅 — Detection 은 OK, Anomaly 는 NG. 결합 방식별로 And · Weighted · Consensus 는 NG, Or 만 OK"
  },
  {
   "t": "table",
@@ -26895,6 +27244,12 @@
   "src": "../gs/screenshots/v3/tools/36_Color_Extract.png",
   "width": "240",
   "caption": "Color Extract — 색 추출 (HSV) — Tool Settings 패널"
+ },
+ {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/ColorExtract.jpg",
+  "width": "620",
+  "caption": "실행 예 — 학습한 파란 캡 색(HSV 범위)을 추출 — 화면의 3.47%(36,970 px). 개수 · 면적 판정은 뒤의 Blob 이 합니다"
  },
  {
   "t": "table",
@@ -27243,6 +27598,12 @@
   "caption": "Color Match — 색 매칭 (Lab ΔE) — Tool Settings 패널"
  },
  {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/ColorMatch.jpg",
+  "width": "620",
+  "caption": "실행 예 — 학습한 파란 캡 색과 ΔE 25 이내인 화소 3.79%(40,353 px)를 표시. 면적 판정은 뒤의 Blob 이 합니다"
+ },
+ {
   "t": "table",
   "rows": [
    [
@@ -27563,6 +27924,12 @@
   "caption": "Image Rectify — 렌즈 왜곡 · 기울기 보정 — Tool Settings 패널"
  },
  {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/ImageRectify.jpg",
+  "width": "620",
+  "caption": "실행 예 — 레시피의 캘리브레이션으로 렌즈 왜곡을 보정한 이미지(화소 크기 0.057 mm) — 뒤의 Caliper · Circle Fit 이 보정된 이미지로 잽니다"
+ },
+ {
   "t": "table",
   "rows": [
    [
@@ -27780,6 +28147,12 @@
   "src": "../gs/screenshots/v3/tools/39_Photometric_Stereo.png",
   "width": "240",
   "caption": "Photometric Stereo — 조명 방향별 사진 합성 (표면 요철 강조) — Tool Settings 패널"
+ },
+ {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/scenes/PhotometricStereo.jpg",
+  "width": "620",
+  "caption": "실행 예 — 조명 4 방향 이미지로 계산한 결함 강조(DefectEnhanced) 이미지 — 긁힘(선)과 찍힘(점)이 드러나고, 뒤의 Threshold · Blob 이 NG 로 판정합니다(예제 이미지는 합성)"
  },
  {
   "t": "table",
@@ -54561,13 +54934,3342 @@
   "t": "h",
   "segs": [
    {
-    "s": "13.4 문서 정보",
+    "s": "13.4 기능 목록 — 설명 위치",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "13.4 문서 정보"
+  "text": "13.4 기능 목록 — 설명 위치"
+ },
+ {
+  "t": "p",
+  "segs": [
+   {
+    "s": "제품 기능 목록의 항목마다 이 매뉴얼에서 화면과 사용법을 설명하는 절입니다.",
+    "b": false,
+    "m": false
+   }
+  ],
+  "text": "제품 기능 목록의 항목마다 이 매뉴얼에서 화면과 사용법을 설명하는 절입니다."
+ },
+ {
+  "t": "table",
+  "rows": [
+   [
+    {
+     "segs": [
+      {
+       "s": "대분류",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": true,
+     "imgs": [],
+     "text": "대분류"
+    },
+    {
+     "segs": [
+      {
+       "s": "중분류",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": true,
+     "imgs": [],
+     "text": "중분류"
+    },
+    {
+     "segs": [
+      {
+       "s": "기능",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": true,
+     "imgs": [],
+     "text": "기능"
+    },
+    {
+     "segs": [
+      {
+       "s": "설명 절",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": true,
+     "imgs": [],
+     "text": "설명 절"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "검사 운전 (VMS 메인)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "검사 운전 (VMS 메인)"
+    },
+    {
+     "segs": [
+      {
+       "s": "자동 운전",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "자동 운전"
+    },
+    {
+     "segs": [
+      {
+       "s": "AUTO RUN 연속 검사",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "AUTO RUN 연속 검사"
+    },
+    {
+     "segs": [
+      {
+       "s": "§4.3 · §4.8",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§4.3 · §4.8"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "검사 운전 (VMS 메인)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "검사 운전 (VMS 메인)"
+    },
+    {
+     "segs": [
+      {
+       "s": "자동 운전",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "자동 운전"
+    },
+    {
+     "segs": [
+      {
+       "s": "수동 검사 실행",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "수동 검사 실행"
+    },
+    {
+     "segs": [
+      {
+       "s": "§4.5",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§4.5"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "검사 운전 (VMS 메인)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "검사 운전 (VMS 메인)"
+    },
+    {
+     "segs": [
+      {
+       "s": "자동 운전",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "자동 운전"
+    },
+    {
+     "segs": [
+      {
+       "s": "외부 트리거 연동",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "외부 트리거 연동"
+    },
+    {
+     "segs": [
+      {
+       "s": "§3.7 · §5.10",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§3.7 · §5.10"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "검사 운전 (VMS 메인)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "검사 운전 (VMS 메인)"
+    },
+    {
+     "segs": [
+      {
+       "s": "판정·집계",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "판정·집계"
+    },
+    {
+     "segs": [
+      {
+       "s": "양불 판정 및 카운트",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "양불 판정 및 카운트"
+    },
+    {
+     "segs": [
+      {
+       "s": "§4.4 · §5.6",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§4.4 · §5.6"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "검사 운전 (VMS 메인)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "검사 운전 (VMS 메인)"
+    },
+    {
+     "segs": [
+      {
+       "s": "판정·집계",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "판정·집계"
+    },
+    {
+     "segs": [
+      {
+       "s": "NG 이력 조회",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "NG 이력 조회"
+    },
+    {
+     "segs": [
+      {
+       "s": "§4.2 · §4.5 · §4.6",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§4.2 · §4.5 · §4.6"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "검사 운전 (VMS 메인)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "검사 운전 (VMS 메인)"
+    },
+    {
+     "segs": [
+      {
+       "s": "판정·집계",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "판정·집계"
+    },
+    {
+     "segs": [
+      {
+       "s": "단독 모드 로컬 생산 이력",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "단독 모드 로컬 생산 이력"
+    },
+    {
+     "segs": [
+      {
+       "s": "§4.9 · §4.10",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§4.9 · §4.10"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "검사 운전 (VMS 메인)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "검사 운전 (VMS 메인)"
+    },
+    {
+     "segs": [
+      {
+       "s": "생산 관리 연동",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "생산 관리 연동"
+    },
+    {
+     "segs": [
+      {
+       "s": "작업지시(WO) 운전",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "작업지시(WO) 운전"
+    },
+    {
+     "segs": [
+      {
+       "s": "§4.3 · §4.8 · §8.7",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§4.3 · §4.8 · §8.7"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "검사 운전 (VMS 메인)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "검사 운전 (VMS 메인)"
+    },
+    {
+     "segs": [
+      {
+       "s": "생산 관리 연동",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "생산 관리 연동"
+    },
+    {
+     "segs": [
+      {
+       "s": "멀티 Lot 관리",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "멀티 Lot 관리"
+    },
+    {
+     "segs": [
+      {
+       "s": "§4.3 · §8.7",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§4.3 · §8.7"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "검사 운전 (VMS 메인)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "검사 운전 (VMS 메인)"
+    },
+    {
+     "segs": [
+      {
+       "s": "생산 관리 연동",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "생산 관리 연동"
+    },
+    {
+     "segs": [
+      {
+       "s": "작업자 로그인",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "작업자 로그인"
+    },
+    {
+     "segs": [
+      {
+       "s": "§4.3 · §4.12 · §8.9",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§4.3 · §4.12 · §8.9"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "검사 운전 (VMS 메인)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "검사 운전 (VMS 메인)"
+    },
+    {
+     "segs": [
+      {
+       "s": "생산 관리 연동",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "생산 관리 연동"
+    },
+    {
+     "segs": [
+      {
+       "s": "검사 결과 웹 업로드",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "검사 결과 웹 업로드"
+    },
+    {
+     "segs": [
+      {
+       "s": "§8.6 · §8.26",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§8.6 · §8.26"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "검사 운전 (VMS 메인)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "검사 운전 (VMS 메인)"
+    },
+    {
+     "segs": [
+      {
+       "s": "시퀀스 제어",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "시퀀스 제어"
+    },
+    {
+     "segs": [
+      {
+       "s": "IO 시퀀스 운전",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "IO 시퀀스 운전"
+    },
+    {
+     "segs": [
+      {
+       "s": "§3.7 · §5.10",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§3.7 · §5.10"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "레시피 관리",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 관리"
+    },
+    {
+     "segs": [
+      {
+       "s": "레시피 생성/저장/복사/이름 변경",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 생성/저장/복사/이름 변경"
+    },
+    {
+     "segs": [
+      {
+       "s": "§5.3 · §8.10",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§5.3 · §8.10"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "레시피 관리",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 관리"
+    },
+    {
+     "segs": [
+      {
+       "s": "예제 템플릿 갤러리",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "예제 템플릿 갤러리"
+    },
+    {
+     "segs": [
+      {
+       "s": "§5.8",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§5.8"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "카메라·영상 취득",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "카메라·영상 취득"
+    },
+    {
+     "segs": [
+      {
+       "s": "카메라 연결/촬영/라이브",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "카메라 연결/촬영/라이브"
+    },
+    {
+     "segs": [
+      {
+       "s": "§3.4 · §4.5 · §5.4 · §5.12",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§3.4 · §4.5 · §5.4 · §5.12"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "카메라·영상 취득",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "카메라·영상 취득"
+    },
+    {
+     "segs": [
+      {
+       "s": "이미지 파일 로드",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "이미지 파일 로드"
+    },
+    {
+     "segs": [
+      {
+       "s": "§4.5 · §5.4",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§4.5 · §5.4"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "ROI·좌표계",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "ROI·좌표계"
+    },
+    {
+     "segs": [
+      {
+       "s": "ROI 설정(사각형/회전 사각형)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "ROI 설정(사각형/회전 사각형)"
+    },
+    {
+     "segs": [
+      {
+       "s": "§5.5",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§5.5"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "ROI·좌표계",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "ROI·좌표계"
+    },
+    {
+     "segs": [
+      {
+       "s": "좌표 보정(Fixture)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "좌표 보정(Fixture)"
+    },
+    {
+     "segs": [
+      {
+       "s": "§5.5 · §7.3",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§5.5 · §7.3"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "영상 전처리 도구",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "영상 전처리 도구"
+    },
+    {
+     "segs": [
+      {
+       "s": "Blur / Morphology / Image Enhance / Grayscale / Threshold / Edge Detection / Histogram",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Blur / Morphology / Image Enhance / Grayscale / Threshold / Edge Detection / Histogram"
+    },
+    {
+     "segs": [
+      {
+       "s": "§6.1 · §6.2",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§6.1 · §6.2"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "영상 전처리 도구",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "영상 전처리 도구"
+    },
+    {
+     "segs": [
+      {
+       "s": "Polar Unwrap (원형 → 띠 펼침)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Polar Unwrap (원형 → 띠 펼침)"
+    },
+    {
+     "segs": [
+      {
+       "s": "§6.1",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§6.1"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "패턴 매칭 도구",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "패턴 매칭 도구"
+    },
+    {
+     "segs": [
+      {
+       "s": "Feature Match (기하학적 패턴 매칭)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Feature Match (기하학적 패턴 매칭)"
+    },
+    {
+     "segs": [
+      {
+       "s": "§6.3 · §7.3",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§6.3 · §7.3"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "패턴 매칭 도구",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "패턴 매칭 도구"
+    },
+    {
+     "segs": [
+      {
+       "s": "Shape Match (템플릿 매칭)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Shape Match (템플릿 매칭)"
+    },
+    {
+     "segs": [
+      {
+       "s": "§6.3",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§6.3"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "측정·판정 도구",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "측정·판정 도구"
+    },
+    {
+     "segs": [
+      {
+       "s": "Blob (입자 분석)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Blob (입자 분석)"
+    },
+    {
+     "segs": [
+      {
+       "s": "§6.5 · §7.1",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§6.5 · §7.1"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "측정·판정 도구",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "측정·판정 도구"
+    },
+    {
+     "segs": [
+      {
+       "s": "Caliper / Line Fit / Circle Fit (치수 측정)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Caliper / Line Fit / Circle Fit (치수 측정)"
+    },
+    {
+     "segs": [
+      {
+       "s": "§6.6 · §7.2",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§6.6 · §7.2"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "측정·판정 도구",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "측정·판정 도구"
+    },
+    {
+     "segs": [
+      {
+       "s": "Geometry (기하 연산)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Geometry (기하 연산)"
+    },
+    {
+     "segs": [
+      {
+       "s": "§6.6 · §7.2",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§6.6 · §7.2"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "측정·판정 도구",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "측정·판정 도구"
+    },
+    {
+     "segs": [
+      {
+       "s": "Result (판정 종합)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Result (판정 종합)"
+    },
+    {
+     "segs": [
+      {
+       "s": "§5.6 · §6.12",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§5.6 · §6.12"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "측정·판정 도구",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "측정·판정 도구"
+    },
+    {
+     "segs": [
+      {
+       "s": "Code Reader (DataMatrix · GS1)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Code Reader (DataMatrix · GS1)"
+    },
+    {
+     "segs": [
+      {
+       "s": "§6.8 · §7.5",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§6.8 · §7.5"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "측정·판정 도구",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "측정·판정 도구"
+    },
+    {
+     "segs": [
+      {
+       "s": "OCR (문자 인식)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "OCR (문자 인식)"
+    },
+    {
+     "segs": [
+      {
+       "s": "§6.7 · §7.6",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§6.7 · §7.6"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "측정·판정 도구",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "측정·판정 도구"
+    },
+    {
+     "segs": [
+      {
+       "s": "OCV (문자 검증)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "OCV (문자 검증)"
+    },
+    {
+     "segs": [
+      {
+       "s": "§6.7 · §7.6",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§6.7 · §7.6"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "측정·판정 도구",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "측정·판정 도구"
+    },
+    {
+     "segs": [
+      {
+       "s": "Color Extract / Color Match (색상 검사)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Color Extract / Color Match (색상 검사)"
+    },
+    {
+     "segs": [
+      {
+       "s": "§6.13 · §7.4",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§6.13 · §7.4"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "측정·판정 도구",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "측정·판정 도구"
+    },
+    {
+     "segs": [
+      {
+       "s": "Photometric Stereo (표면 결함 검사)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Photometric Stereo (표면 결함 검사)"
+    },
+    {
+     "segs": [
+      {
+       "s": "§6.15",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§6.15"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "딥러닝 도구",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "딥러닝 도구"
+    },
+    {
+     "segs": [
+      {
+       "s": "Detection (객체 검출)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Detection (객체 검출)"
+    },
+    {
+     "segs": [
+      {
+       "s": "§6.11 · §7.7",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§6.11 · §7.7"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "딥러닝 도구",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "딥러닝 도구"
+    },
+    {
+     "segs": [
+      {
+       "s": "RF-DETR-seg (인스턴스 분할)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "RF-DETR-seg (인스턴스 분할)"
+    },
+    {
+     "segs": [
+      {
+       "s": "§6.11",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§6.11"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "딥러닝 도구",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "딥러닝 도구"
+    },
+    {
+     "segs": [
+      {
+       "s": "Segmentation (시맨틱 분할)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Segmentation (시맨틱 분할)"
+    },
+    {
+     "segs": [
+      {
+       "s": "§6.11",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§6.11"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "딥러닝 도구",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "딥러닝 도구"
+    },
+    {
+     "segs": [
+      {
+       "s": "Classify (분류)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Classify (분류)"
+    },
+    {
+     "segs": [
+      {
+       "s": "§6.11",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§6.11"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "딥러닝 도구",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "딥러닝 도구"
+    },
+    {
+     "segs": [
+      {
+       "s": "Anomaly (이상 탐지)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Anomaly (이상 탐지)"
+    },
+    {
+     "segs": [
+      {
+       "s": "§6.11 · §7.7",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§6.11 · §7.7"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "딥러닝 도구",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "딥러닝 도구"
+    },
+    {
+     "segs": [
+      {
+       "s": "Ensemble (앙상블 판정)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Ensemble (앙상블 판정)"
+    },
+    {
+     "segs": [
+      {
+       "s": "§6.12",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§6.12"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "정렬(얼라인)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "정렬(얼라인)"
+    },
+    {
+     "segs": [
+      {
+       "s": "Match Align (1점/2점 정렬)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Match Align (1점/2점 정렬)"
+    },
+    {
+     "segs": [
+      {
+       "s": "§6.4 · §7.8",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§6.4 · §7.8"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "정렬(얼라인)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "정렬(얼라인)"
+    },
+    {
+     "segs": [
+      {
+       "s": "Multi-Step Align (2-스텝 정렬)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Multi-Step Align (2-스텝 정렬)"
+    },
+    {
+     "segs": [
+      {
+       "s": "§6.4",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§6.4"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "3D 측정 도구",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "3D 측정 도구"
+    },
+    {
+     "segs": [
+      {
+       "s": "3D 점군 측정(높이·평면·직선·기하)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "3D 점군 측정(높이·평면·직선·기하)"
+    },
+    {
+     "segs": [
+      {
+       "s": "§6.10 · §7.9",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§6.10 · §7.9"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "3D 측정 도구",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "3D 측정 도구"
+    },
+    {
+     "segs": [
+      {
+       "s": "3D 정렬·편차·객체 검출",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "3D 정렬·편차·객체 검출"
+    },
+    {
+     "segs": [
+      {
+       "s": "§6.9 · §6.10 · §7.9",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§6.9 · §6.10 · §7.9"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "검증 도구",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "검증 도구"
+    },
+    {
+     "segs": [
+      {
+       "s": "배치 테스트·CSV 리포트",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "배치 테스트·CSV 리포트"
+    },
+    {
+     "segs": [
+      {
+       "s": "§5.11",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§5.11"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "캘리브레이션",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "캘리브레이션"
+    },
+    {
+     "segs": [
+      {
+       "s": "카메라 캘리브레이션 (mm 환산)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "카메라 캘리브레이션 (mm 환산)"
+    },
+    {
+     "segs": [
+      {
+       "s": "§5.9",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§5.9"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "레시피 편집 (Vision Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 편집 (Vision Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "캘리브레이션",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "캘리브레이션"
+    },
+    {
+     "segs": [
+      {
+       "s": "Image Rectify (왜곡 보정)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "Image Rectify (왜곡 보정)"
+    },
+    {
+     "segs": [
+      {
+       "s": "§6.14",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§6.14"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "시스템 구성 (App Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "시스템 구성 (App Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "장치 구성",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "장치 구성"
+    },
+    {
+     "segs": [
+      {
+       "s": "카메라 등록·시스템 구성 마법사",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "카메라 등록·시스템 구성 마법사"
+    },
+    {
+     "segs": [
+      {
+       "s": "3 장",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "3 장"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "시스템 구성 (App Setup)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "시스템 구성 (App Setup)"
+    },
+    {
+     "segs": [
+      {
+       "s": "보안",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "보안"
+    },
+    {
+     "segs": [
+      {
+       "s": "사용자 계정·보안 모드",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "사용자 계정·보안 모드"
+    },
+    {
+     "segs": [
+      {
+       "s": "§3.8 · §4.11 · §4.12",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§3.8 · §4.11 · §4.12"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "생산 관리 웹 (동봉 BODA.VMS.Web)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "생산 관리 웹 (동봉 BODA.VMS.Web)"
+    },
+    {
+     "segs": [
+      {
+       "s": "대시보드",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "대시보드"
+    },
+    {
+     "segs": [
+      {
+       "s": "공장 전체 현황",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "공장 전체 현황"
+    },
+    {
+     "segs": [
+      {
+       "s": "§8.2 · §8.3",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§8.2 · §8.3"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "생산 관리 웹 (동봉 BODA.VMS.Web)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "생산 관리 웹 (동봉 BODA.VMS.Web)"
+    },
+    {
+     "segs": [
+      {
+       "s": "현장 모니터링",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "현장 모니터링"
+    },
+    {
+     "segs": [
+      {
+       "s": "안돈 보드",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "안돈 보드"
+    },
+    {
+     "segs": [
+      {
+       "s": "§8.4",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§8.4"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "생산 관리 웹 (동봉 BODA.VMS.Web)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "생산 관리 웹 (동봉 BODA.VMS.Web)"
+    },
+    {
+     "segs": [
+      {
+       "s": "현장 모니터링",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "현장 모니터링"
+    },
+    {
+     "segs": [
+      {
+       "s": "알람",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "알람"
+    },
+    {
+     "segs": [
+      {
+       "s": "§8.5",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§8.5"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "생산 관리 웹 (동봉 BODA.VMS.Web)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "생산 관리 웹 (동봉 BODA.VMS.Web)"
+    },
+    {
+     "segs": [
+      {
+       "s": "현장 모니터링",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "현장 모니터링"
+    },
+    {
+     "segs": [
+      {
+       "s": "생산 이력",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "생산 이력"
+    },
+    {
+     "segs": [
+      {
+       "s": "§8.6",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§8.6"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "생산 관리 웹 (동봉 BODA.VMS.Web)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "생산 관리 웹 (동봉 BODA.VMS.Web)"
+    },
+    {
+     "segs": [
+      {
+       "s": "생산 관리",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "생산 관리"
+    },
+    {
+     "segs": [
+      {
+       "s": "작업 지시",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "작업 지시"
+    },
+    {
+     "segs": [
+      {
+       "s": "§8.7",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§8.7"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "생산 관리 웹 (동봉 BODA.VMS.Web)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "생산 관리 웹 (동봉 BODA.VMS.Web)"
+    },
+    {
+     "segs": [
+      {
+       "s": "생산 관리",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "생산 관리"
+    },
+    {
+     "segs": [
+      {
+       "s": "제품 · 작업자",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "제품 · 작업자"
+    },
+    {
+     "segs": [
+      {
+       "s": "§8.8 · §8.9",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§8.8 · §8.9"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "생산 관리 웹 (동봉 BODA.VMS.Web)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "생산 관리 웹 (동봉 BODA.VMS.Web)"
+    },
+    {
+     "segs": [
+      {
+       "s": "품질 관리",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "품질 관리"
+    },
+    {
+     "segs": [
+      {
+       "s": "레시피 파라미터 (검사 기준값)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "레시피 파라미터 (검사 기준값)"
+    },
+    {
+     "segs": [
+      {
+       "s": "§5.7 · §8.10",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§5.7 · §8.10"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "생산 관리 웹 (동봉 BODA.VMS.Web)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "생산 관리 웹 (동봉 BODA.VMS.Web)"
+    },
+    {
+     "segs": [
+      {
+       "s": "품질 관리",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "품질 관리"
+    },
+    {
+     "segs": [
+      {
+       "s": "파레토 분석 · SPC 관리도",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "파레토 분석 · SPC 관리도"
+    },
+    {
+     "segs": [
+      {
+       "s": "§8.11 · §8.12",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§8.11 · §8.12"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "생산 관리 웹 (동봉 BODA.VMS.Web)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "생산 관리 웹 (동봉 BODA.VMS.Web)"
+    },
+    {
+     "segs": [
+      {
+       "s": "품질 관리",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "품질 관리"
+    },
+    {
+     "segs": [
+      {
+       "s": "불량 코드",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "불량 코드"
+    },
+    {
+     "segs": [
+      {
+       "s": "§8.13",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§8.13"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "생산 관리 웹 (동봉 BODA.VMS.Web)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "생산 관리 웹 (동봉 BODA.VMS.Web)"
+    },
+    {
+     "segs": [
+      {
+       "s": "품질 관리",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "품질 관리"
+    },
+    {
+     "segs": [
+      {
+       "s": "교대 리포트 · PDF 리포트",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "교대 리포트 · PDF 리포트"
+    },
+    {
+     "segs": [
+      {
+       "s": "§8.14 · §8.15",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§8.14 · §8.15"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "생산 관리 웹 (동봉 BODA.VMS.Web)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "생산 관리 웹 (동봉 BODA.VMS.Web)"
+    },
+    {
+     "segs": [
+      {
+       "s": "설비 관리",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "설비 관리"
+    },
+    {
+     "segs": [
+      {
+       "s": "비전 클라이언트 (라인)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "비전 클라이언트 (라인)"
+    },
+    {
+     "segs": [
+      {
+       "s": "§8.16",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§8.16"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "생산 관리 웹 (동봉 BODA.VMS.Web)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "생산 관리 웹 (동봉 BODA.VMS.Web)"
+    },
+    {
+     "segs": [
+      {
+       "s": "설비 관리",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "설비 관리"
+    },
+    {
+     "segs": [
+      {
+       "s": "OEE · 설비 신뢰성",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "OEE · 설비 신뢰성"
+    },
+    {
+     "segs": [
+      {
+       "s": "§8.17 · §8.18",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§8.17 · §8.18"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "생산 관리 웹 (동봉 BODA.VMS.Web)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "생산 관리 웹 (동봉 BODA.VMS.Web)"
+    },
+    {
+     "segs": [
+      {
+       "s": "설비 관리",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "설비 관리"
+    },
+    {
+     "segs": [
+      {
+       "s": "예방 보전",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "예방 보전"
+    },
+    {
+     "segs": [
+      {
+       "s": "§8.19",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§8.19"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "생산 관리 웹 (동봉 BODA.VMS.Web)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "생산 관리 웹 (동봉 BODA.VMS.Web)"
+    },
+    {
+     "segs": [
+      {
+       "s": "설비 관리",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "설비 관리"
+    },
+    {
+     "segs": [
+      {
+       "s": "불량률 예측",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "불량률 예측"
+    },
+    {
+     "segs": [
+      {
+       "s": "§4.3 · §8.4 · §8.20",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§4.3 · §8.4 · §8.20"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "생산 관리 웹 (동봉 BODA.VMS.Web)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "생산 관리 웹 (동봉 BODA.VMS.Web)"
+    },
+    {
+     "segs": [
+      {
+       "s": "시스템 관리 (Admin)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "시스템 관리 (Admin)"
+    },
+    {
+     "segs": [
+      {
+       "s": "사용자 승인 · 권한",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "사용자 승인 · 권한"
+    },
+    {
+     "segs": [
+      {
+       "s": "§8.22",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§8.22"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "생산 관리 웹 (동봉 BODA.VMS.Web)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "생산 관리 웹 (동봉 BODA.VMS.Web)"
+    },
+    {
+     "segs": [
+      {
+       "s": "시스템 관리 (Admin)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "시스템 관리 (Admin)"
+    },
+    {
+     "segs": [
+      {
+       "s": "감사 로그",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "감사 로그"
+    },
+    {
+     "segs": [
+      {
+       "s": "§8.23",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§8.23"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "생산 관리 웹 (동봉 BODA.VMS.Web)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "생산 관리 웹 (동봉 BODA.VMS.Web)"
+    },
+    {
+     "segs": [
+      {
+       "s": "시스템 관리 (Admin)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "시스템 관리 (Admin)"
+    },
+    {
+     "segs": [
+      {
+       "s": "교대 마스터 · 시스템 설정 · SW 라이선스",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "교대 마스터 · 시스템 설정 · SW 라이선스"
+    },
+    {
+     "segs": [
+      {
+       "s": "§8.21 · §8.24 · §8.25",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§8.21 · §8.24 · §8.25"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "공통",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "공통"
+    },
+    {
+     "segs": [
+      {
+       "s": "계정·권한",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "계정·권한"
+    },
+    {
+     "segs": [
+      {
+       "s": "로그인·권한 제한",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "로그인·권한 제한"
+    },
+    {
+     "segs": [
+      {
+       "s": "§4.12 · §8.1 · §8.2",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§4.12 · §8.1 · §8.2"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "공통",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "공통"
+    },
+    {
+     "segs": [
+      {
+       "s": "라이선스",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "라이선스"
+    },
+    {
+     "segs": [
+      {
+       "s": "라이선스 인증",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "라이선스 인증"
+    },
+    {
+     "segs": [
+      {
+       "s": "§2.6 · §3.8 · §8.24 · §11.4",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§2.6 · §3.8 · §8.24 · §11.4"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "공통",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "공통"
+    },
+    {
+     "segs": [
+      {
+       "s": "유지 관리",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "유지 관리"
+    },
+    {
+     "segs": [
+      {
+       "s": "인앱 업데이트",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "인앱 업데이트"
+    },
+    {
+     "segs": [
+      {
+       "s": "§2.7 · §4.6",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "§2.7 · §4.6"
+    }
+   ]
+  ],
+  "cls": "cols-2-2-3-2"
+ },
+ {
+  "t": "h",
+  "segs": [
+   {
+    "s": "13.5 문서 정보",
+    "b": false,
+    "m": false
+   }
+  ],
+  "level": 3,
+  "text": "13.5 문서 정보"
  },
  {
   "t": "table",
@@ -54614,14 +58316,14 @@
     {
      "segs": [
       {
-       "s": "3.0 (2026-10-23)",
+       "s": "3.0 (2026-10-24)",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "3.0 (2026-10-23)"
+     "text": "3.0 (2026-10-24)"
     }
    ],
    [

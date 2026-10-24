@@ -207,6 +207,125 @@ namespace VMS.VisionSetup.Capture
         }
 
         /// <summary>
+        /// 매뉴얼 6장 "실행 예" 장면을 여러 장 연속 캡처한다 (2026-10-24).
+        /// 환경변수 VMS_CAPTURE_SCENES = 장면 목록 JSON 파일:
+        ///   [{ "name": "13_Blob", "recipe": "...json", "step": 0, "image": "...png | ...vpc",
+        ///      "tool": 0, "post": "selected", "showRoi": false, "tab": "2D Image" }]
+        /// 장면마다 레시피 로드 → 스텝 선택 → 이미지(.vpc 면 점군) → Run All → 도구 선택 → post 에 따라
+        /// "selected"(기본: 그 도구만 다시 실행해 그 도구의 결과 표시) · "all"(전체 다시 실행) · "none"(원본 표시)
+        /// → showRoi 면 그 도구의 ROI 를 이미지 위에 표시 → 탭 선택 → 전체 화면 PNG.
+        /// </summary>
+        public static async Task RunScenesAsync(Window window, string outputDir)
+        {
+            Directory.CreateDirectory(outputDir);
+            string log = Path.Combine(outputDir, "_scenes.log");
+            if (window.DataContext is not ViewModels.MainViewModel vm) return;
+            var listPath = Environment.GetEnvironmentVariable("VMS_CAPTURE_SCENES");
+            if (string.IsNullOrEmpty(listPath) || !File.Exists(listPath))
+            {
+                File.AppendAllText(log, "VMS_CAPTURE_SCENES 없음\n");
+                return;
+            }
+
+            double w = window.Width, h = window.Height;
+            if (double.IsNaN(w) || w < 1) w = 1920;
+            if (double.IsNaN(h) || h < 1) h = 1080;
+            var size = new Size(w, h);
+
+            using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(listPath));
+            foreach (var sc in doc.RootElement.EnumerateArray())
+            {
+                string name = sc.GetProperty("name").GetString() ?? "scene";
+                try
+                {
+                    string recipePath = sc.GetProperty("recipe").GetString() ?? "";
+                    int stepIdx = sc.TryGetProperty("step", out var s) ? s.GetInt32() : 0;
+                    string imagePath = sc.TryGetProperty("image", out var im) ? im.GetString() ?? "" : "";
+                    int toolIdx = sc.TryGetProperty("tool", out var t) ? t.GetInt32() : -1;
+                    string post = sc.TryGetProperty("post", out var po) ? po.GetString() ?? "selected" : "selected";
+                    bool showRoi = sc.TryGetProperty("showRoi", out var sr) && sr.GetBoolean();
+                    string tab = sc.TryGetProperty("tab", out var tb) ? tb.GetString() ?? "2D Image" : "2D Image";
+
+                    var recipe = Services.RecipeService.Instance.LoadRecipe(recipePath);
+                    if (recipe == null) { File.AppendAllText(log, $"{name}: 레시피 로드 실패\n"); continue; }
+                    Services.RecipeService.Instance.SetCurrentRecipe(recipe);
+                    // "pre": [{ "step": 0, "image": "..." }] — 앞 스텝을 먼저 실행해 둔다(Multi-Step Align 등 스텝 간 참조).
+                    if (sc.TryGetProperty("pre", out var pre))
+                    {
+                        foreach (var p in pre.EnumerateArray())
+                        {
+                            int ps = p.GetProperty("step").GetInt32();
+                            if (ps < 0 || ps >= recipe.Steps.Count) continue;
+                            vm.SelectedStep = recipe.Steps[ps];
+                            await LayoutPass(window, size);
+                            var pm = OpenCvSharp.Cv2.ImRead(p.GetProperty("image").GetString() ?? "");
+                            if (!pm.Empty()) vm.CurrentImage = pm;
+                            await vm.RunAllToolsAsync();
+                        }
+                    }
+                    if (stepIdx >= 0 && stepIdx < recipe.Steps.Count) vm.SelectedStep = recipe.Steps[stepIdx];
+                    await LayoutPass(window, size);
+
+                    // 앞 장면의 2D 이미지 · 점군이 남지 않게 비운다 (점군만 열면 Height Map 이 2D 이미지가 된다).
+                    vm.CurrentImage = null;   // setter 가 이전 Mat 을 해제한다
+                    var prevPc = vm.CurrentPointCloud;
+                    vm.CurrentPointCloud = null;
+                    prevPc?.Dispose();
+                    await LayoutPass(window, size);
+
+                    if (imagePath.EndsWith(".vpc", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var pc = VMS.Camera.Models.PointCloudData.LoadFromFile(imagePath);
+                        vm.CurrentPointCloud = pc;
+                        if (!pc.IsOrganized && vm.GenerateHeightMapCommand.CanExecute(null))
+                            vm.GenerateHeightMapCommand.Execute(null);
+                    }
+                    else if (File.Exists(imagePath))
+                    {
+                        var mat = OpenCvSharp.Cv2.ImRead(imagePath);
+                        if (!mat.Empty()) vm.CurrentImage = mat;
+                    }
+                    await LayoutPass(window, size);
+
+                    await vm.RunAllToolsAsync();
+                    await LayoutPass(window, size);
+
+                    if (toolIdx >= 0 && toolIdx < vm.DroppedTools.Count)
+                    {
+                        vm.SelectedTool = vm.DroppedTools[toolIdx];
+                        await LayoutPass(window, size);
+                        if (post == "selected" && vm.RunSelectedCommand.CanExecute(null))
+                            vm.RunSelectedCommand.Execute(null);
+                        else if (post == "all")
+                            await vm.RunAllToolsAsync();   // 선택 상태에서 전체 결과 · 합성 오버레이를 다시 표시 (Result · Ensemble)
+                        await LayoutPass(window, size);
+                        if (showRoi && vm.SelectedToolSettings?.ShowROICommand.CanExecute(null) == true)
+                            vm.SelectedToolSettings.ShowROICommand.Execute(null);
+                    }
+                    await LayoutPass(window, size);
+
+                    foreach (var tc in FindAll<TabControl>(window))
+                    {
+                        for (int i = 0; i < tc.Items.Count; i++)
+                            if (tc.Items[i] is TabItem ti && Equals(ti.Header as string, tab)) tc.SelectedIndex = i;
+                    }
+                    await LayoutPass(window, size);
+                    await LayoutPass(window, size);
+
+                    var root = window.Content as FrameworkElement ?? window;
+                    double rw = root.ActualWidth > 1 ? root.ActualWidth : w;
+                    double rh = root.ActualHeight > 1 ? root.ActualHeight : h;
+                    RenderRootToFile(window, root, rw, rh, Path.Combine(outputDir, name + ".png"));
+                    File.AppendAllText(log, $"{name}: OK — {vm.StatusMessage}\n");
+                }
+                catch (Exception ex)
+                {
+                    File.AppendAllText(log, $"{name}: {ex}\n");
+                }
+            }
+        }
+
+        /// <summary>
         /// 모든 비전 툴의 우측 Tool Settings 파라미터 패널을 한 장씩 캡처한다.
         /// 각 ToolType 으로 VisionTool 을 만들어 MainViewModel.SelectedTool 에 할당하면
         /// 우측 ToolSettingsControl(ScrollViewer>StackPanel) 이 해당 툴 패널로 렌더된다.
