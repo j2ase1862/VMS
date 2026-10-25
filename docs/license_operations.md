@@ -2,6 +2,7 @@
 
 문서 버전: v1.0 (2026-08-25) — 설계 근거는 [docs/design/license-spec.md](design/license-spec.md).
 이 문서는 **본사 발급 담당자용 운영 절차**다. 고객/현장 절차(활성화)는 사용자 매뉴얼이 담당.
+**LicGen 화면 사용법(단계별)은 [licgen_admin_manual.md](licgen_admin_manual.md).**
 
 ## 0. 한눈에 보기
 
@@ -82,7 +83,7 @@ licgen verify --file license.lic --fingerprint 0X0Y9-MMS36-7540K
 
 - **Web 서버 PC 1대에만** 발급·설치한다 (`--fingerprint` = 서버 지문, `--max-clients N` = 계약 좌석).
 - 클라이언트 PC 는 발급 불필요 — Web 서버에서 좌석을 자동 임대한다.
-- 좌석 현황 확인: Web 에 Admin 로그인 → `GET /api/license/status` (관리 화면 UI 는 후속).
+- 좌석 현황 확인: Web 에 Admin 로그인 → 시스템 관리 → SW 라이선스 (`/admin/license`).
 
 ### 2d. 사내(테스터/개발/데모) 발급
 
@@ -108,7 +109,7 @@ licgen issue --key $env:USERPROFILE\.boda-licgen\dev-2026.private.pem --key-id d
 - `issue` 실행 시 개인키 파일 옆 `ledger.jsonl` 에 자동 append (licenseId·고객·조건·발급자·UTC 시각).
 - **라이선스의 목적이 계약 관리이므로 대장이 발급의 절반이다** — 수동 편집 금지, 백업은 §1a 에 포함.
 - 재발급(PC 교체·지문 변경) 시에도 새 licenseId 로 발급하고, 사유를 대장 항목 뒤에 남기려면
-  같은 고객명으로 재발급 후 비고를 별도 관리한다 (구조화 비고 필드는 LicGen WPF 후속에서).
+  LicGen [발급 대장] 탭의 비고에 새 줄·옛 줄 모두 사유를 남긴다 (비고는 `ledger-notes.json` 별도 저장).
 
 ## 4. 키 rotation (유출 의심 시)
 
