@@ -29875,6 +29875,18 @@
   "text": "비밀번호 변경"
  },
  {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/web/w56_user_menu.png",
+  "width": "360",
+  "caption": "오른쪽 위 사용자 메뉴 — [비밀번호 변경] · [닫기 (로그아웃)]"
+ },
+ {
+  "t": "figure",
+  "src": "../gs/screenshots/v3/web/w55_change_password.png",
+  "width": "520",
+  "caption": "비밀번호 변경 화면 — 현재 비밀번호 · 새 비밀번호(강도 표시) · 확인"
+ },
+ {
   "t": "p",
   "segs": [
    {
@@ -58392,14 +58404,14 @@
     {
      "segs": [
       {
-       "s": "3.0 (2026-10-24)",
+       "s": "3.0 (2026-10-25)",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "3.0 (2026-10-24)"
+     "text": "3.0 (2026-10-25)"
     }
    ],
    [

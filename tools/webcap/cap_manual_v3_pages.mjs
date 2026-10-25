@@ -68,6 +68,18 @@ for (const [name, route] of routes) {
   } catch (e) { log(`FAIL ${name}: ${e.message}`); }
 }
 
+// 오른쪽 위 사용자 메뉴 — [비밀번호 변경] · 로그아웃
+try {
+  await page.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(3000);
+  await page.locator('header').getByText(USER, { exact: true }).last().click();
+  await page.getByText('비밀번호 변경').first().waitFor({ timeout: 8000 });
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: `${OUT}/w56_user_menu.png`, clip: { x: 1000, y: 0, width: 600, height: 300 } });
+  log('shot w56_user_menu');
+  await page.keyboard.press('Escape');
+} catch (e) { log('user menu err ' + e.message.split('\n')[0]); }
+
 // 알림 종 드롭다운 (대시보드에서)
 try {
   await page.goto(BASE + '/', { waitUntil: 'networkidle' });

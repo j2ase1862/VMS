@@ -1,8 +1,8 @@
 // BODA.VMS.Web 다이얼로그·상호작용 화면 2차 캡처
 import { chromium } from 'playwright';
 import fs from 'fs';
-const BASE = 'http://localhost:5599';
-const OUT = 'D:/Temp/mancap/web/shots2';
+const BASE = process.env.WEB_BASE || 'http://localhost:5599';
+const OUT = process.env.WEB_OUT || 'D:/Temp/mancap/web/shots2';
 fs.mkdirSync(OUT, { recursive: true });
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 1600, height: 1000 }, locale: 'ko-KR' });
