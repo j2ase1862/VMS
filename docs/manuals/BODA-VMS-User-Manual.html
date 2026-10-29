@@ -209,7 +209,7 @@
 <main>
 <div class="header-strip">
   <h1>BODA VMS 사용자 매뉴얼</h1>
-  <div class="sub">버전 3.0 · 2026-10-26 · VMS v1.47.2 · BODA.VMS.Web v1.10.4 · BODA.VMS.MLOps v0.1.5 — 시스템 구성 → 설치 → 프로그램별 조작 → 검사 설정 → 웹 관리 → 유지보수</div>
+  <div class="sub">버전 3.0 · 2026-10-29 · VMS v1.47.3 · BODA.VMS.Web v1.11.0 · BODA.VMS.MLOps v0.1.5 — 시스템 구성 → 설치 → 프로그램별 조작 → 검사 설정 → 웹 관리 → 유지보수</div>
 </div>
 <section id="overview">
 <h2 id="1-시스템-개요">1. 시스템 개요</h2>
@@ -355,7 +355,7 @@ VisionSetup 에서 연결할 때 "SDK 미탑재 — 시뮬레이션 모드" 경�
 
 <h3 id="install-vms">2.2 VMS 설치 (설치 마법사)</h3>
 <ol>
-  <li><code>VMS-1.47.2.msi</code> 처럼 버전이 붙은 설치 파일을 더블 클릭합니다. 설치에는 관리자 권한이 필요합니다.</li>
+  <li><code>VMS-1.47.3.msi</code> 처럼 버전이 붙은 설치 파일을 더블 클릭합니다. 설치에는 관리자 권한이 필요합니다.</li>
   <li><strong>시작 화면</strong>에서 [다음]을 누릅니다. 별도의 라이선스 동의 단계는 없습니다.</li>
   <li><strong>설치 폴더</strong>는 기본값 <code>C:\Program Files\VASIM\BODA Vision System\</code> 을 그대로 두는 것을 권장합니다.</li>
   <li><strong>설치 구성 선택</strong> 화면에서 이 PC 에 함께 설치할 항목을 고릅니다.
@@ -370,7 +370,7 @@ VisionSetup 에서 연결할 때 "SDK 미탑재 — 시뮬레이션 모드" 경�
 <figure><img src="../gs/screenshots/71_msi_weboption.png" data-width="420" alt="설치 구성 선택 화면">
 <figcaption>설치 구성 선택 — "BODA VMS Web 서버 포함" 체크박스</figcaption></figure>
 <div class="callout tip"><strong>무인 설치</strong>가 필요하면 명령 프롬프트(관리자)에서 다음처럼 실행합니다.
-<code>msiexec /i VMS-1.47.2.msi /qn INSTALLWEB=0</code> — 값 0 은 제외, 1 은 포함입니다.</div>
+<code>msiexec /i VMS-1.47.3.msi /qn INSTALLWEB=0</code> — 값 0 은 제외, 1 은 포함입니다.</div>
 
 <h4>설치 후 처음 실행하면</h4>
 <p>VMS 를 처음 실행하면 설정 파일이 없으므로 "초기 시스템 설정이 필요합니다" 안내와 함께
@@ -3377,8 +3377,8 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <h3 id="appx-version">13.5 문서 정보</h3>
 <table class="cols-3-6">
   <tr><th>항목</th><th>값</th></tr>
-  <tr><td>문서 버전</td><td>3.0 (2026-10-26)</td></tr>
-  <tr><td>대상 소프트웨어</td><td>VMS 1.47.2 · BODA.VMS.Web 1.10.4 · BODA.VMS.MLOps 0.1.5</td></tr>
+  <tr><td>문서 버전</td><td>3.0 (2026-10-29)</td></tr>
+  <tr><td>대상 소프트웨어</td><td>VMS 1.47.3 · BODA.VMS.Web 1.11.0 · BODA.VMS.MLOps 0.1.5</td></tr>
   <tr><td>구성</td><td>VMS · VMS.VisionSetup · VMS.AppSetup (검사 런타임) / BODA.VMS.Web (생산 관리) / BODA.VMS.MLOps (선택 구성 요소, 인증 범위 외)</td></tr>
   <tr><td>발행</td><td>BODA Vision AI</td></tr>
 </table>

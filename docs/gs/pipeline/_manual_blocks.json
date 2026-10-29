@@ -1877,7 +1877,7 @@
   "t": "li",
   "segs": [
    {
-    "s": "VMS-1.47.2.msi",
+    "s": "VMS-1.47.3.msi",
     "b": false,
     "m": true
    },
@@ -1889,7 +1889,7 @@
   ],
   "ordered": true,
   "depth": 0,
-  "text": "VMS-1.47.2.msi 처럼 버전이 붙은 설치 파일을 더블 클릭합니다. 설치에는 관리자 권한이 필요합니다."
+  "text": "VMS-1.47.3.msi 처럼 버전이 붙은 설치 파일을 더블 클릭합니다. 설치에는 관리자 권한이 필요합니다."
  },
  {
   "t": "li",
@@ -2013,7 +2013,7 @@
     "m": false
    },
    {
-    "s": "msiexec /i VMS-1.47.2.msi /qn INSTALLWEB=0",
+    "s": "msiexec /i VMS-1.47.3.msi /qn INSTALLWEB=0",
     "b": false,
     "m": true
    },
@@ -2023,7 +2023,7 @@
     "m": false
    }
   ],
-  "text": "무인 설치가 필요하면 명령 프롬프트(관리자)에서 다음처럼 실행합니다. msiexec /i VMS-1.47.2.msi /qn INSTALLWEB=0 — 값 0 은 제외, 1 은 포함입니다."
+  "text": "무인 설치가 필요하면 명령 프롬프트(관리자)에서 다음처럼 실행합니다. msiexec /i VMS-1.47.3.msi /qn INSTALLWEB=0 — 값 0 은 제외, 1 은 포함입니다."
  },
  {
   "t": "h",
@@ -58404,14 +58404,14 @@
     {
      "segs": [
       {
-       "s": "3.0 (2026-10-26)",
+       "s": "3.0 (2026-10-29)",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "3.0 (2026-10-26)"
+     "text": "3.0 (2026-10-29)"
     }
    ],
    [
@@ -58430,14 +58430,14 @@
     {
      "segs": [
       {
-       "s": "VMS 1.47.2 · BODA.VMS.Web 1.10.4 · BODA.VMS.MLOps 0.1.5",
+       "s": "VMS 1.47.3 · BODA.VMS.Web 1.11.0 · BODA.VMS.MLOps 0.1.5",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "VMS 1.47.2 · BODA.VMS.Web 1.10.4 · BODA.VMS.MLOps 0.1.5"
+     "text": "VMS 1.47.3 · BODA.VMS.Web 1.11.0 · BODA.VMS.MLOps 0.1.5"
     }
    ],
    [
