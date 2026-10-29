@@ -48,6 +48,9 @@ if ($SkipBuild) {
         exit 1
     }
     $publishDir = Join-Path $env:TEMP "boda-web-payload-publish"
+    # 지난 publish 를 지우고 시작한다. dotnet publish -o 는 기존 파일을 지우지 않아, Web 이 뺀 패키지
+    # (예: QuestPDF.dll · 네이티브 DLL)가 이 폴더에 남고 아래 /MIR 가 그대로 MSI 까지 옮긴다.
+    if (Test-Path $publishDir) { Remove-Item -Recurse -Force $publishDir }
     Write-Host "[1/3] dotnet publish (self-contained win-x64)..." -ForegroundColor Green
     dotnet publish $csproj -c Release -r win-x64 --self-contained true `
         -p:PublishSingleFile=false -o $publishDir --nologo
