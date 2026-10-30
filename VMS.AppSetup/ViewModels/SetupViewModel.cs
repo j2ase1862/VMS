@@ -1,3 +1,4 @@
+using VMS.Core;
 using VMS.AppSetup.Interfaces;
 using VMS.AppSetup.Models;
 using VMS.AppSetup.Services;
@@ -47,7 +48,10 @@ namespace VMS.AppSetup.ViewModels
 
         // Page 2: Application Settings
         [ObservableProperty]
-        private string _applicationName = "BODA Vision System";
+        private string _applicationName = ProductInfo.Name;
+
+        /// <summary>환영 화면의 제품명 · 버전 (예: BODA VMS v1.48.0).</summary>
+        public string ProductDisplayName => ProductInfo.DisplayName;
 
         [ObservableProperty]
         private string _systemIpAddress = "192.168.0.1";
@@ -583,7 +587,8 @@ namespace VMS.AppSetup.ViewModels
 
             if (config != null)
             {
-                ApplicationName = config.ApplicationName;
+                // 옛 기본값(제품명 변경 전)은 현재 제품명으로 바꿔 저장되게 한다 — 사용자가 바꾼 이름은 그대로
+                ApplicationName = ProductInfo.NormalizeApplicationName(config.ApplicationName);
                 SystemIpAddress = config.SystemIpAddress;
                 ClientIndex = config.ClientIndex;
                 // 빈 URL = 단독 모드로 저장된 구성 — 체크박스 상태로 복원하고,
@@ -818,7 +823,7 @@ namespace VMS.AppSetup.ViewModels
             switch (CurrentPage)
             {
                 case 1:
-                    PageTitle = "Welcome to BODA Vision Setup";
+                    PageTitle = $"Welcome to {ProductInfo.Name} Setup";
                     PageDescription = "This wizard will help you configure the machine vision system.\n\n" +
                         "You will set up:\n" +
                         "• Application settings and network configuration\n" +

@@ -16,7 +16,7 @@ namespace VMS.AppSetup.Models
     public class SetupConfiguration
     {
         // Page 2: Application Settings
-        public string ApplicationName { get; set; } = "BODA Vision System";
+        public string ApplicationName { get; set; } = VMS.Core.ProductInfo.Name;
         public string SystemIpAddress { get; set; } = "192.168.0.1";
 
         // Page 3: Camera Mode

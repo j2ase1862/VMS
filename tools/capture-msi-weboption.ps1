@@ -20,7 +20,7 @@ public static class W {
 [W]::SetProcessDPIAware() | Out-Null
 New-Item -ItemType Directory -Force (Split-Path $Out) | Out-Null
 
-$title = "BODA Vision System 설치"
+$title = "BODA VMS 설치"
 $p = Start-Process msiexec.exe -ArgumentList @("/i", "`"$Msi`"") -PassThru
 $h = [IntPtr]::Zero
 for ($i = 0; $i -lt 60; $i++) { Start-Sleep -Milliseconds 500; $ui = Get-Process msiexec -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 -and $_.MainWindowTitle -eq $title } | Select-Object -First 1; if ($ui) { $h = [IntPtr]$ui.MainWindowHandle; $p = $ui; break } }

@@ -10,7 +10,7 @@ namespace VMS.Models
     /// </summary>
     public class SystemConfiguration
     {
-        public string ApplicationName { get; set; } = "BODA Vision System";
+        public string ApplicationName { get; set; } = VMS.Core.ProductInfo.Name;
         public string SystemIpAddress { get; set; } = "192.168.0.1";
         public CameraMode CameraMode { get; set; } = CameraMode.Virtual;
         public List<CameraConfiguration> Cameras { get; set; } = new();

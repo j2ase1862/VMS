@@ -8,7 +8,7 @@
         xmlns:converters="clr-namespace:VMS.AppSetup.Converters"
         xmlns:controls="clr-namespace:VMS.VisionSetup.Controls"
         mc:Ignorable="d"
-        Title="BODA Vision System Setup"
+        Title="BODA VMS Setup"
         Icon="/icon/AppSetup.ico"
         Width="960" Height="820"
         WindowStartupLocation="CenterScreen"
@@ -167,8 +167,10 @@
                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                         <TextBlock Text="BODA" FontSize="72" Foreground="#0078D4"
                                    FontWeight="Bold" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Vision System" FontSize="28" Foreground="White"
+                        <TextBlock Text="VMS" FontSize="28" Foreground="White"
                                    HorizontalAlignment="Center" Margin="0,-5,0,0"/>
+                        <TextBlock Text="{Binding ProductDisplayName}" FontSize="14"
+                                   Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Center" Margin="0,10,0,0"/>
                         <TextBlock Text="Machine Vision Configuration Wizard" FontSize="14"
                                    Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Center" Margin="0,15,0,0"/>
                     </StackPanel>

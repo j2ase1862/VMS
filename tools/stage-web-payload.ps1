@@ -51,9 +51,16 @@ if ($SkipBuild) {
     # 지난 publish 를 지우고 시작한다. dotnet publish -o 는 기존 파일을 지우지 않아, Web 이 뺀 패키지
     # (예: QuestPDF.dll · 네이티브 DLL)가 이 폴더에 남고 아래 /MIR 가 그대로 MSI 까지 옮긴다.
     if (Test-Path $publishDir) { Remove-Item -Recurse -Force $publishDir }
-    Write-Host "[1/3] dotnet publish (self-contained win-x64)..." -ForegroundColor Green
+    # 동봉 웹은 VMS 와 하나의 제품(BODA VMS) — 웹 화면의 버전 표시가 VMS 제품 버전을 쓰게 넘긴다
+    # (Web 의 Directory.Build.props → 어셈블리 메타데이터 BodaProductVersion → ProductVersionLabel).
+    $productVersion = ([xml](Get-Content (Join-Path $RepoRoot "Directory.Build.props") -Raw)).Project.PropertyGroup.Version
+    if (-not $productVersion) {
+        Write-Error "VMS Directory.Build.props 에서 Version 을 읽지 못했습니다."
+        exit 1
+    }
+    Write-Host "[1/3] dotnet publish (self-contained win-x64, 제품 버전 $productVersion)..." -ForegroundColor Green
     dotnet publish $csproj -c Release -r win-x64 --self-contained true `
-        -p:PublishSingleFile=false -o $publishDir --nologo
+        -p:PublishSingleFile=false -p:BodaProductVersion=$productVersion -o $publishDir --nologo
     if ($LASTEXITCODE -ne 0) {
         Write-Error "dotnet publish 실패 (exit=$LASTEXITCODE)"
         exit 1
