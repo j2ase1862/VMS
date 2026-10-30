@@ -98,7 +98,7 @@ children.push(new Paragraph({ spacing: { before: 2400, after: 0 }, alignment: Al
 children.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 120 },
   children: [new TextRun({ text: "(Product Description)", size: 28, color: "595959" })] }));
 children.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 240, after: 60 },
-  children: [new TextRun({ text: "BODA Vision Management System (VMS)", bold: true, size: 34 })] }));
+  children: [new TextRun({ text: "BODA VMS", bold: true, size: 34 })] }));
 children.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 600 },
   children: [new TextRun({ text: "산업용 머신비전 검사 플랫폼", size: 24, color: "595959" })] }));
 children.push(image("01_vms_main.png", 460));
@@ -112,7 +112,7 @@ children.push(new Paragraph({ children: [new PageBreak()] }));
 children.push(H1("문서 정보"));
 children.push(infoTable([
   ["제품명", "BODA VMS"],
-  ["제품 버전", "v1.47.3"],
+  ["제품 버전", "v1.48.0"],
   ["문서 버전", "1.0"],
   ["작성일", "2026-06-12"],
   ["대상 운영체제", "Windows 11 (x64)"],
@@ -127,7 +127,7 @@ children.push(new Paragraph({ children: [new PageBreak()] }));
 
 // ---- 1. 제품 개요 ----
 children.push(H1("1. 제품 개요"));
-children.push(P("BODA Vision Management System(이하 VMS)은 산업 현장의 자동 외관·치수 검사를 위한 머신비전 검사 플랫폼이다. 사용자는 카메라로 취득한 이미지에 비전 도구(전처리, 패턴 매칭, 블롭, 측정, OCR/코드 판독, 딥러닝 등)를 조합한 검사 레시피를 구성하고, 생산 라인에서 자동/수동으로 검사를 실행하여 양품(OK)·불량(NG) 판정과 통계를 관리한다."));
+children.push(P("BODA VMS(이하 VMS)는 산업 현장의 자동 외관·치수 검사를 위한 머신비전 검사 플랫폼이다. 사용자는 카메라로 취득한 이미지에 비전 도구(전처리, 패턴 매칭, 블롭, 측정, OCR/코드 판독, 딥러닝 등)를 조합한 검사 레시피를 구성하고, 생산 라인에서 자동/수동으로 검사를 실행하여 양품(OK)·불량(NG) 판정과 통계를 관리한다."));
 children.push(P("VMS는 .NET 8.0 WPF 기반 데스크톱 애플리케이션과, 선택적으로 연동되는 웹(MES/품질관리) 서버로 구성된다. 검사 결과·작업지시·추적성 정보를 웹 서버와 동기화하여 다중 라인 운영과 생산 이력 관리를 지원한다."));
 children.push(H2("1.1 주요 특징"));
 [
@@ -159,7 +159,7 @@ children.push(P("VMS는 다음 모듈로 구성된다."));
       ["VMS.AppSetup (시스템 설정)", "최초 1회 시스템 구성 마법사. 애플리케이션·네트워크·카메라·PLC·IO 보드·초기 관리자 계정·보안 모드·라이선스 설정."],
       ["VMS.VisionSetup (비전 설정)", "비전 도구 워크스페이스. 카메라 취득·ROI 지정·도구 조합·레시피/시퀀스 편집·배치 테스트·캘리브레이션."],
       ["NativeVision (C++ 가속)", "AVX2/FMA 기반 영상처리 가속 네이티브 라이브러리."],
-      ["BODA.VMS.Web (관리/MES)", "ASP.NET Core 8 + Blazor 웹. 대시보드·작업지시·생산이력·검사이미지 조회·알람·감사로그 등. 같은 설치 파일에서 "Web 서버 포함"으로 설치."],
+      ["BODA.VMS.Web (관리/MES)", "ASP.NET Core 8 + Blazor 웹. 대시보드·작업지시·생산이력·검사이미지 조회·알람·감사로그 등. 같은 설치 파일에서 「Web 서버 포함」으로 설치."],
     ].map(([a, b], i) => new TableRow({ children: [
       cell(a, c1, { bold: true, fill: i % 2 ? "F4F7FB" : "FFFFFF" }),
       cell(b, c2, { fill: i % 2 ? "F4F7FB" : "FFFFFF" }),

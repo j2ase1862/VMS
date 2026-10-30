@@ -28,6 +28,8 @@ const subM = rawHtml.match(/<div class="sub">([^<]*)<\/div>/);
 const SUB = subM ? subM[1].trim() : "";
 const verM = SUB.match(/버전\s*([0-9.]+)/); const dateM = SUB.match(/(\d{4}-\d{2}-\d{2})/);
 const VERSION = verM ? verM[1] : "3.0"; const DATE = dateM ? dateM[1] : new Date().toISOString().slice(0, 10);
+// 표지의 대상 제품 · 버전 (머리글의 "BODA VMS v1.48.0") — 설치 프로그램 · 프로그램 화면과 같은 표기
+const prodM = SUB.match(/BODA VMS v[0-9.]+/); const PRODUCT = prodM ? prodM[0] : "BODA VMS";
 
 const border = { style: BorderStyle.SINGLE, size: 1, color: "BFBFBF" };
 const borders = { top: border, bottom: border, left: border, right: border };
@@ -197,7 +199,7 @@ front.push(new Paragraph({ spacing: { before: 2400, after: 0 }, alignment: Align
 front.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 100 },
   children: [new TextRun({ text: "(User Manual)", size: 26, color: "595959", font: FONT })] }));
 front.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 240, after: 60 },
-  children: [new TextRun({ text: "BODA Vision Management System", bold: true, size: 34, font: FONT })] }));
+  children: [new TextRun({ text: PRODUCT, bold: true, size: 34, font: FONT })] }));
 front.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 400 },
   children: [new TextRun({ text: "VMS · VMS.VisionSetup · VMS.AppSetup · BODA.VMS.Web", size: 22, color: "595959", font: FONT })] }));
 const coverImg = resolveSrc("../gs/screenshots/cover_vms_main.png") || resolveSrc("../gs/screenshots/01_vms_main.png");

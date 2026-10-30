@@ -136,14 +136,21 @@ namespace VMS.AppSetup.Capture
                 (1, "Welcome", _ => { }),
                 (3, "CameraConfiguration", v =>
                 {
-                    // 실제 장비 구성과 무관한 결정적 상태 — 3D 카메라 1대(노출/게인/캡처모드 패널 노출)
+                    // 실제 장비 구성과 무관한 결정적 상태 — 카메라 1대. 3D 카메라 확장 옵션이 없으면(매뉴얼 = 기본 구성)
+                    // 2D 카메라로, 있으면 3D 카메라로 둔다
                     v.CameraMode = CameraMode.Live;
                     v.Cameras.Clear();
-                    v.Cameras.Add(new CameraConfiguration
-                    {
-                        Name = "Cam1", IpAddress = "192.168.1.60",
-                        Manufacturer = CameraManufacturer.Mech_Mind, CameraType = CameraType.AreaScan3D
-                    });
+                    v.Cameras.Add(v.IsCamera3DOptionEnabled
+                        ? new CameraConfiguration
+                        {
+                            Name = "Cam1", IpAddress = "192.168.1.60",
+                            Manufacturer = CameraManufacturer.Mech_Mind, CameraType = CameraType.AreaScan3D
+                        }
+                        : new CameraConfiguration
+                        {
+                            Name = "Cam1", IpAddress = "192.168.1.60",
+                            Manufacturer = CameraManufacturer.Basler, CameraType = CameraType.AreaScan2D
+                        });
                 }),
                 (4, "PLCCommunication", v =>
                 {
@@ -277,12 +284,13 @@ namespace VMS.AppSetup.Capture
                     Manufacturer = CameraManufacturer.Basler, CameraType = CameraType.LineScan2D,
                     TriggerSource = TriggerSource.Encoder
                 });
-                // Area Scan 3D — 카메라 기본 항목만 (Capture Mode/Filter/Z-range 입력란은 제거됨, VisionSetup 스텝으로 이관)
-                vm.Cameras.Add(new CameraConfiguration
-                {
-                    Name = "Cam3D", IpAddress = "192.168.0.103",
-                    Manufacturer = CameraManufacturer.Mech_Mind, CameraType = CameraType.AreaScan3D
-                });
+                // Area Scan 3D — 카메라 기본 항목만. 3D 카메라 확장 옵션이 있을 때만 (기본 구성 캡처에는 없음)
+                if (vm.IsCamera3DOptionEnabled)
+                    vm.Cameras.Add(new CameraConfiguration
+                    {
+                        Name = "Cam3D", IpAddress = "192.168.0.103",
+                        Manufacturer = CameraManufacturer.Mech_Mind, CameraType = CameraType.AreaScan3D
+                    });
                 // Matrox — Frame Grabber(MIL: Board Type/#/Digitizer/DCF) 패널
                 vm.Cameras.Add(new CameraConfiguration
                 {

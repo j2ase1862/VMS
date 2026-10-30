@@ -152,8 +152,8 @@ out.append('''</table>
 <h3 id="appx-version">11.5 문서 정보</h3>
 <table class="cols-3-6">
   <tr><th>항목</th><th>값</th></tr>
-  <tr><td>문서 버전</td><td>3.0 (2026-10-29)</td></tr>
-  <tr><td>대상 소프트웨어</td><td>BODA VMS v1.47.3 (VMS · VMS.AppSetup · VMS.VisionSetup · 생산 관리 웹)</td></tr>
+  <tr><td>문서 버전</td><td>3.0 (2026-10-30)</td></tr>
+  <tr><td>대상 소프트웨어</td><td>BODA VMS v1.48.0 (VMS · VMS.AppSetup · VMS.VisionSetup · 생산 관리 웹)</td></tr>
   <tr><td>구성</td><td>VMS · VMS.VisionSetup · VMS.AppSetup (검사 런타임) / BODA.VMS.Web (생산 관리)</td></tr>
   <tr><td>발행</td><td>BODA Vision AI</td></tr>
 </table>

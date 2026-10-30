@@ -189,7 +189,7 @@
 <main>
 <div class="header-strip">
   <h1>BODA VMS 사용자 매뉴얼</h1>
-  <div class="sub">버전 3.0 · 2026-10-29 · BODA VMS v1.47.3 — 시스템 구성 → 설치 → 프로그램별 조작 → 검사 설정 → 웹 관리 → 유지보수</div>
+  <div class="sub">버전 3.0 · 2026-10-30 · BODA VMS v1.48.0 — 시스템 구성 → 설치 → 프로그램별 조작 → 검사 설정 → 웹 관리 → 유지보수</div>
 </div>
 <section id="overview">
 <h2 id="1-시스템-개요">1. 시스템 개요</h2>
@@ -494,7 +494,7 @@ cd &lt;압축 푼 폴더&gt;\deploy
       <td>체크하면 작업자가 로그인해야 [AUTO RUN] · [Grab] · [Live] 를 쓸 수 있습니다(§4.3). 끄면 작업자 로그인 없이 운전하고, 레시피 파라미터 · 생산 이력 · 품질 · 설비 현황은 그대로 Web 으로 보냅니다. 작업자는 원하면 로그인할 수 있으며, 그때는 검사 결과에 작업자가 기록됩니다.</td><td>체크</td></tr>
   <tr><td>생산 관리 — 작업지시 선택 필수</td><td><img src="../gs/screenshots/v3/as_ctl/P2_default_20_CheckBox_작업지시_선택_필수.png" alt=""></td>
       <td>체크하면 작업지시를 골라야 [AUTO RUN] 을 시작할 수 있습니다. 작업지시는 작업자 로그인 후에 고르므로, 작업자 로그인 필수를 끄면 이 항목도 함께 꺼지고 잠깁니다. 작업지시 없이 운전하면 작업지시 수량은 집계되지 않습니다.</td><td>체크</td></tr>
-  <tr><td>고급 설정 (접기/펼치기)</td><td><img src="../gs/screenshots/v3/as_ctl/P2_default_18_ToggleButton_고급_설정__Web_Client_API_Key__MLOps_모델_레지스트.png" alt=""></td>
+  <tr><td>고급 설정 (접기/펼치기)</td><td><img src="../gs/screenshots/v3/as_ctl/P2_default_22_ToggleButton_고급_설정__Web_Client_API_Key_해당_현장만.png" alt=""></td>
       <td>"고급 설정 — Web Client API Key (해당 현장만)" 링크입니다. 클릭하면 Web Client API Key 입력란이 나타납니다. 해당 현장만 펼칩니다. 이미 값이 저장된 PC 에서는 자동으로 펼쳐집니다.</td><td>접힘</td></tr>
   <tr><td>Web Client API Key (고급)</td><td><img src="../gs/screenshots/v3/as_ctl/P2_advanced_02_TextBox_TextBox.png" alt=""></td>
       <td>보통 비워 둡니다. Web 서버 관리자가 "API 키 강제"를 켠 경우에만 받은 키를 그대로 입력합니다. 값이 틀리면 작업지시 · 이력 업로드 · 작업자 로그인이 모두 끊깁니다. 단독 모드에서는 잠깁니다.</td><td>(빈 값)</td></tr>
@@ -619,7 +619,7 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
   <tr><th>영역</th><th>내용</th></tr>
   <tr><td>① 헤더</td><td>왼쪽부터 로고 · 애플리케이션 이름, 운영 흐름 순서의 칩(작업자 → 작업지시 → 레시피 → 추적 정보 → 예측), 오른쪽에 [AUTO RUN] · 사용자 칩 · 관리 아이콘 · 창 조작 버튼. 4.3 절 참고</td></tr>
   <tr><td>② KPI 스트립</td><td>TACT TIME · YIELD · TOTAL · OK · NG 카드와 통계 초기화 버튼. 4.4 절</td></tr>
-  <tr><td>③ 카메라 화면</td><td>카메라마다 타일 하나. 2D / Depth Map / Point Cloud 탭, 판정 배지(WAIT · OK · NG), Run Results 표, 설정(톱니바퀴) 창. 타일은 드래그로 옮기고 가장자리를 끌어 크기를 바꿀 수 있으며 헤더의 [Save Layout] 으로 배치를 저장합니다. 4.5 절</td></tr>
+  <tr><td>③ 카메라 화면</td><td>카메라마다 타일 하나. 2D 이미지, 판정 배지(WAIT · OK · NG), Run Results 표, 설정(톱니바퀴) 창. 타일은 드래그로 옮기고 가장자리를 끌어 크기를 바꿀 수 있으며 헤더의 [Save Layout] 으로 배치를 저장합니다. 4.5 절</td></tr>
   <tr><td>④ NG History</td><td>최근 불량 이미지 썸네일(카메라 이름 · 시각). 항목을 누르면 그 카메라 화면에 크게 표시됩니다</td></tr>
   <tr><td>⑤ 사이드 패널 (Settings)</td><td>헤더 오른쪽 ⚙ 로 열고 닫습니다. 레시피 · 외부 도구 · 업데이트 · Web 파라미터 · 이미지 저장 · 최근 검사 · 통계 섹션. 4.6 절</td></tr>
   <tr><td>⑥ System Log</td><td><code>[시각] [출처] 메시지</code> 형식의 실시간 로그. 카메라 · PLC · IO 보드 · 시퀀스 · Web 연동 상태가 여기에 남습니다. 오른쪽 위 아이콘으로 비웁니다</td></tr>
@@ -715,7 +715,7 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
 
 <h3 id="vms-camera">4.5 카메라 화면과 설정 창</h3>
 <p>카메라 타일의 헤더에는 연결 표시등(초록 Connected / 빨강 Disconnected), 카메라 이름, <strong>설정(톱니바퀴)</strong> 버튼, 판정 배지가 있습니다.
-본문은 2D · Depth Map · Point Cloud 탭이며 아래에 Run Results(도구별 Pass/Fail · 결과값 · 처리 ms) 표와 IP · Count 가 표시됩니다.
+본문은 2D 이미지이며 아래에 Run Results(도구별 Pass/Fail · 결과값 · 처리 ms) 표와 IP · Count 가 표시됩니다.
 검사 이미지 위의 판정 글자 · 테두리와 Run Results 결과 값 표시 방식은 VisionSetup 과 같습니다(§5.6).</p>
 <p>톱니바퀴를 누르면 타일 오른쪽에 <strong>카메라 조작 상자</strong>가 펼쳐집니다.</p>
 <figure><img src="../gs/screenshots/v3/vms/inspect_camera_box.jpg" data-width="620" alt="카메라 화면과 조작 상자"><figcaption>카메라 화면과 조작 상자 — [Open] 으로 연 이미지를 [Inspect] 로 검사한 결과: 타일 오른쪽 위 판정 배지(NG), 이미지 왼쪽 위에 판정 도구 2 개의 배지가 실행 순서대로 쌓인 모습(구멍 간격 NG · 블록 각도 OK), 이미지 위 도구별 결과 그림(엣지 · 원 · 직선), 아래 Run Results 표, 오른쪽 NG History 썸네일</figcaption></figure>
@@ -3087,8 +3087,8 @@ NG 코드별 건수 · 비중 · 누적이 표로 나오고, 누적선이 80% �
 <h3 id="appx-version">11.5 문서 정보</h3>
 <table class="cols-3-6">
   <tr><th>항목</th><th>값</th></tr>
-  <tr><td>문서 버전</td><td>3.0 (2026-10-29)</td></tr>
-  <tr><td>대상 소프트웨어</td><td>BODA VMS v1.47.3 (VMS · VMS.AppSetup · VMS.VisionSetup · 생산 관리 웹)</td></tr>
+  <tr><td>문서 버전</td><td>3.0 (2026-10-30)</td></tr>
+  <tr><td>대상 소프트웨어</td><td>BODA VMS v1.48.0 (VMS · VMS.AppSetup · VMS.VisionSetup · 생산 관리 웹)</td></tr>
   <tr><td>구성</td><td>VMS · VMS.VisionSetup · VMS.AppSetup (검사 런타임) / BODA.VMS.Web (생산 관리)</td></tr>
   <tr><td>발행</td><td>BODA Vision AI</td></tr>
 </table>
