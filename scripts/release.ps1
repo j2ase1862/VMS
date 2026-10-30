@@ -138,8 +138,10 @@ Step '소스 repo 태그 push' {
 }
 
 # ── 6. 로컬 보관 + 최종 확인 ──
-Step '로컬 보관 (D:\VMS-Releases)' {
-    $dir = "D:\VMS-Releases\VMS-$Version"
+Step '로컬 보관 (D:\30_Releases\VMS-Releases)' {
+    # 2026-10-30 D 드라이브 정리로 보관 폴더가 30_Releases 아래로 옮겨짐 — 없는 PC 는 옛 위치
+    $archiveRoot = if (Test-Path 'D:\30_Releases\VMS-Releases') { 'D:\30_Releases\VMS-Releases' } else { 'D:\VMS-Releases' }
+    $dir = "$archiveRoot\VMS-$Version"
     New-Item -ItemType Directory -Force $dir | Out-Null
     Copy-Item "$msiPath*" $dir\ -Force
     # 노트를 보관 폴더에서 직접 작성한 경우 자기 복사가 IOException — 스킵
