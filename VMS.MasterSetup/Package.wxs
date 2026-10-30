@@ -2,8 +2,9 @@
      xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util"
      xmlns:fw="http://wixtoolset.org/schemas/v4/wxs/firewall">
 
-  <!-- 제품명 = BODA VMS (GS 인증 신청명 — 제어판 · 설치 창 · 바로가기 동일 표기).
-       설치 폴더 · 레지스트리 키의 "BODA Vision System" 은 기존 설치본 업그레이드 · 마커 호환을 위해 그대로 둔다. -->
+  <!-- 제품명 = BODA VMS (GS 인증 신청명 — 제어판 · 설치 창 · 바로가기 · 기본 설치 폴더 동일 표기).
+       옛 폴더에 설치된 버전의 업그레이드는 그 폴더를 유지한다(아래 LEGACYDIR*). 바로가기 키패스용
+       HKCU 레지스트리 키 "Software\VASIM\BODA Vision System" 은 화면에 안 보이는 내부 키라 그대로 둔다. -->
   <Package Name="BODA VMS"
            Manufacturer="VASIM"
            Version="$(var.BuildVersion)"
@@ -42,6 +43,33 @@
     <!-- 커스텀 다이얼로그 세트 (WixUI_VmsInstall.wxs) — 라이선스 화면 없는
          WixUI_InstallDir 변형 + VASIM 브랜딩 비트맵. -->
     <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+
+    <!-- 옛 기본 폴더(VASIM\BODA Vision System)에 설치된 버전을 올릴 때는 그 폴더에 그대로 설치한다.
+         새 기본 폴더(VASIM\BODA VMS)로 옮기면 ① 설치 폴더에만 있는 Web\appsettings.Production.json
+         (Jwt 키 · DB 경로 — MSI 파일이 아님)이 남겨져 Web 이 시작되지 못하고 ② 이미 배포된 구버전의
+         인앱 업데이트 스크립트가 옛 경로의 VMS.exe 를 다시 실행하려다 실패한다.
+         새 기본 폴더는 신규 설치에만 적용된다. 32비트 패키지라 ProgramFilesFolder 가 기본 위치,
+         64비트 쪽도 함께 찾는다. -->
+    <Property Id="LEGACYDIR86">
+      <DirectorySearch Id="LegacyDir86" Path="[ProgramFilesFolder]VASIM\BODA Vision System" Depth="0" AssignToProperty="yes">
+        <FileSearch Id="LegacyExe86" Name="VMS.exe" />
+      </DirectorySearch>
+    </Property>
+    <Property Id="LEGACYDIR64">
+      <DirectorySearch Id="LegacyDir64" Path="[ProgramFiles64Folder]VASIM\BODA Vision System" Depth="0" AssignToProperty="yes">
+        <FileSearch Id="LegacyExe64" Name="VMS.exe" />
+      </DirectorySearch>
+    </Property>
+    <!-- 설치 마법사(전체 UI)에서는 폴더 화면의 기본값으로만 넣고(사용자가 바꾸면 그 값이 실행 단계로 넘어감),
+         마법사 없이 도는 설치(인앱 업데이트 · /passive · /qn)에서만 실행 단계가 직접 정한다. -->
+    <SetProperty Id="INSTALLFOLDER" Action="SetInstallFolderLegacy64Ui" Value="[LEGACYDIR64]" After="AppSearch" Sequence="ui"
+                 Condition="LEGACYDIR64 AND NOT Installed" />
+    <SetProperty Id="INSTALLFOLDER" Action="SetInstallFolderLegacy86Ui" Value="[LEGACYDIR86]" After="AppSearch" Sequence="ui"
+                 Condition="LEGACYDIR86 AND NOT Installed" />
+    <SetProperty Id="INSTALLFOLDER" Action="SetInstallFolderLegacy64" Value="[LEGACYDIR64]" After="AppSearch" Sequence="execute"
+                 Condition="LEGACYDIR64 AND NOT Installed AND UILevel &lt; 5" />
+    <SetProperty Id="INSTALLFOLDER" Action="SetInstallFolderLegacy86" Value="[LEGACYDIR86]" After="AppSearch" Sequence="execute"
+                 Condition="LEGACYDIR86 AND NOT Installed AND UILevel &lt; 5" />
     <UIRef Id="WixUI_VmsInstall" />
     <WixVariable Id="WixUIBannerBmp" Value="Resources\banner.bmp" />
     <WixVariable Id="WixUIDialogBmp" Value="Resources\dialog.bmp" />
@@ -51,7 +79,7 @@
   <!-- Directory Structure -->
   <Fragment>
     <StandardDirectory Id="ProgramFiles6432Folder">
-      <Directory Id="INSTALLFOLDER" Name="VASIM\BODA Vision System" />
+      <Directory Id="INSTALLFOLDER" Name="VASIM\BODA VMS" />
     </StandardDirectory>
   </Fragment>
 

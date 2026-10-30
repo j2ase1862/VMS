@@ -2,7 +2,7 @@
 
 문서 버전: v1.7
 대상 빌드: master @ 2026-09-08 (v1.30.0+)
-범위: `VMS.MasterSetup` 프로젝트로 BODA Vision System MSI 인스톨러 생성
+범위: `VMS.MasterSetup` 프로젝트로 BODA VMS MSI 인스톨러 생성
 
 > 코드 서명 (Authenticode) 은 별도 문서 — [gs_msi_code_signing_guide.md](gs/guides/gs_msi_code_signing_guide.md) (PR24) 참고.
 
@@ -13,11 +13,11 @@
 | 항목 | 값 |
 |---|---|
 | 인스톨러 형식 | Windows MSI |
-| 제품명 | BODA Vision System |
+| 제품명 | BODA VMS (2026-10-30 전: BODA Vision System) |
 | 제조사 | VASIM |
-| 기본 설치 경로 | `C:\Program Files\VASIM\BODA Vision System\` |
+| 기본 설치 경로 | `C:\Program Files (x86)\VASIM\BODA VMS\` (32비트 패키지). **옛 폴더 `VASIM\BODA Vision System` 에 설치된 PC 를 업그레이드하면 그 폴더를 유지** — §6.3 |
 | UpgradeCode (고정) | `A70E988A-739F-4CDC-BE08-EBFE03DACA32` |
-| 단축키 | 데스크탑 "VMS 실행" + 시작 메뉴 "VASIM\BODA Vision System" |
+| 단축키 | 데스크탑 "BODA VMS" + 시작 메뉴 "VASIM\BODA VMS" |
 | 빌드 도구 | WiX Toolset 6.0.2 (NuGet) |
 | Codepage / Language | 949 / 1042 (Korean) |
 
@@ -121,11 +121,11 @@ WiX 정의 — 4 Fragment 구성:
 | Fragment | 역할 |
 |---|---|
 | Package (root) | 제품명 / Manufacturer / UpgradeCode / MajorUpgrade / Feature / UI |
-| Directory Structure | `ProgramFiles6432Folder\VASIM\BODA Vision System` |
+| Directory Structure | `ProgramFiles6432Folder\VASIM\BODA VMS` (옛 폴더 업그레이드는 LEGACYDIR* 검색으로 유지) |
 | AppFiles ComponentGroup | `<Files Include="$(var.VMS.TargetDir)**" />` — VMS 빌드 출력 자동 수집 |
 | WebServer Feature | 동봉 BODA.VMS.Web (`WebPayload\` + `BodaVmsWeb` 서비스 demand 등록 + 방화벽 5292/TCP — §13) |
-| DesktopShortcutComp | 데스크탑 "VMS 실행" 단축키 + HKCU 키 (KeyPath) |
-| StartMenuShortcutComp | 시작 메뉴 "VASIM\BODA Vision System" 단축키 + RemoveFolder on uninstall |
+| DesktopShortcutComp | 데스크탑 "BODA VMS" 단축키 + HKCU 키 (KeyPath, 키 이름은 옛 `Software\VASIM\BODA Vision System` 유지) |
+| StartMenuShortcutComp | 시작 메뉴 "VASIM\BODA VMS" 단축키 + RemoveFolder on uninstall |
 | AppSetup/VisionSetup 시작 메뉴 | "BODA VMS 설정 마법사" / "Vision Setup" 시작 메뉴 단축키 |
 
 ### 5.3 파일 자동 수집
@@ -151,16 +151,23 @@ WiX 정의 — 4 Fragment 구성:
 ### 6.2 제조사 / 제품명
 `Package.wxs` line 4-5:
 ```xml
-<Package Name="BODA Vision System" Manufacturer="VASIM" ... />
+<Package Name="BODA VMS" Manufacturer="VASIM" ... />
 ```
 OEM 배포 시 동시 변경 + NOTICE / LICENSE 표기 정책 확인 필요 (gs/guides/gs_distribution_policy.md §4.2).
 
 ### 6.3 설치 경로
 `Package.wxs` line 27:
 ```xml
-<Directory Id="INSTALLFOLDER" Name="VASIM\BODA Vision System" />
+<Directory Id="INSTALLFOLDER" Name="VASIM\BODA VMS" />
 ```
 설치 시 UI 의 InstallDir 다이얼로그로 사용자가 다른 경로 선택 가능 (WixUI_InstallDir).
+
+**옛 폴더 유지 (2026-10-30, 제품명 변경)** — `AppSearch` 가 `[ProgramFilesFolder]` · `[ProgramFiles64Folder]` 의
+`VASIM\BODA Vision System\VMS.exe` 를 찾으면 `INSTALLFOLDER` 를 그 폴더로 바꾼다
+(`SetInstallFolderLegacy*` — 마법사에서는 폴더 화면 기본값으로만, 마법사 없는 설치(인앱 업데이트 · /passive · /qn)는 실행 단계에서).
+옮기지 않는 이유: ① `Web\appsettings.Production.json`(Jwt 키 · DB 경로)은 MSI 파일이 아니라 설치 폴더에만 있어
+새 폴더로 가면 Web 이 시작되지 않는다 ② 이미 배포된 구버전의 인앱 업데이트 스크립트는 옛 경로의 VMS.exe 를 다시 실행한다.
+새 기본 폴더는 신규 설치에만 적용된다. 옛 폴더를 지정 경로로 바꿔 설치한 PC 는 검색에 걸리지 않으므로 업그레이드 마법사에서 원래 폴더를 직접 고른다.
 
 ### 6.4 단축키 추가 / 제거
 새 단축키 추가는 별도 ComponentGroup 정의 후 Feature 에 ComponentRef 추가. 제거는 RegistryValue + Component 제거.
@@ -454,7 +461,7 @@ MSI 하나로 VMS + BODA.VMS.Web 서버를 함께 설치하는 구성. 기존 �
 | 항목 | 값 |
 |---|---|
 | Feature | `WebServer` ("BODA VMS Web 서버") — 기본 포함, `INSTALLWEB=0` 으로 제외 |
-| 설치 위치 | `C:\Program Files\VASIM\BODA Vision System\Web\` |
+| 설치 위치 | `<설치 폴더>\Web\` (신규 `C:\Program Files (x86)\VASIM\BODA VMS\Web\`, 옛 설치본은 `…\BODA Vision System\Web\`) |
 | Windows Service | `BodaVmsWeb` — **demand(수동) 등록 + 미시작** (아래 13.3) |
 | 방화벽 | 인바운드 5292/TCP 규칙 (Firewall.wixext, 제거 시 자동 정리) |
 | 페이로드 | `VMS.MasterSetup\WebPayload\` (self-contained publish, .gitignore 대상) |
@@ -502,7 +509,7 @@ ServiceInstall 충돌로 설치가 실패/롤백된다.** 순서:
 2. 계정·토큰 유지가 필요하면 기존 `appsettings.Production.json` 백업
    (기본 `C:\Deploy\BodaVmsWeb\appsettings.Production.json`)
 3. MSI 설치 (WebServer Feature 포함)
-4. 백업한 설정을 `C:\Program Files\VASIM\BODA Vision System\Web\` 에 복사
+4. 백업한 설정을 `<설치 폴더>\Web\` 에 복사
    → 마법사 카드가 "구성 완료" 로 표시됨 → 서비스 시작만 확인
    (백업이 없으면 카드에서 새로 구성 — DB 가 이미 있으면 admin 시드는 무시되고 기존 계정 유지)
 
@@ -515,7 +522,7 @@ DB(`C:\ProgramData\BODA\VMS\BodaVision.db`)는 양쪽 방식이 같은 경로를
 Web 핫픽스마다 1.2GB MSI 를 재발행하지 않는다 — 기존 오프라인 스크립트로 파일만 교체:
 
 ```powershell
-.\Install-Web-Offline.ps1 -SourcePath <새 publish> -InstallPath "C:\Program Files\VASIM\BODA Vision System\Web"
+.\Install-Web-Offline.ps1 -SourcePath <새 publish> -InstallPath "<설치 폴더>\Web"
 ```
 
 (스크립트는 설정/DB 를 보존하고 서비스 중지 → 동기화 → 재시작한다. 이때 스크립트가
