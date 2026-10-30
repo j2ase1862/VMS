@@ -497,6 +497,9 @@ namespace VMS.VisionSetup.ViewModels
         /// <summary>로봇 연동 확장 옵션 (라이선스) — 꺼져 있으면 로봇 · 멀티뷰 · 핸드아이 진입점을 숨긴다.</summary>
         public bool IsRobotOptionEnabled => LicenseBootCheck.Options.Robot;
 
+        /// <summary>MLOps 연동 확장 옵션 — 꺼져 있으면 OCR 합성 데이터(학습 데이터 생성) 메뉴를 숨긴다.</summary>
+        public bool IsMLOpsOptionEnabled => LicenseBootCheck.Options.MLOps;
+
         /// <summary>로봇 웨이포인트가 있는 스텝이 존재하는지 (UI Visibility 바인딩용)</summary>
         public bool NeedsRobot => IsRobotOptionEnabled && Steps.Any(s => s.RobotWaypoint != null);
 

@@ -61,7 +61,6 @@
 <li><a href="#install-prep">설치 전 준비</a></li>
 <li><a href="#install-vms">VMS 설치 (설치 마법사)</a></li>
 <li><a href="#install-web">Web 서버 설치와 구성</a></li>
-<li><a href="#install-mlops">MLOps 서버 · 학습 워커 설치 (선택)</a></li>
 <li><a href="#install-network">네트워크 · 방화벽</a></li>
 <li><a href="#install-license">SW 라이선스 설치 · 활성화</a></li>
 <li><a href="#install-upgrade">업그레이드와 제거</a></li>
@@ -72,9 +71,8 @@
 <li><a href="#appsetup-s2">2 단계 — Application Settings (이름 · IP · 서버 연동 · 관리자 계정)</a></li>
 <li><a href="#appsetup-s3">3 단계 — Camera Configuration (카메라)</a></li>
 <li><a href="#appsetup-s4">4 단계 — PLC Communication (PLC 통신)</a></li>
-<li><a href="#appsetup-s5">5 단계 — Robot Configuration (로봇, 선택)</a></li>
-<li><a href="#appsetup-s6">6 단계 — IO Board Configuration (IO 보드)</a></li>
-<li><a href="#appsetup-s7">7 단계 — Security &amp;amp; License (보안 모드 · 라이선스)</a></li>
+<li><a href="#appsetup-s6">5 단계 — IO Board Configuration (IO 보드)</a></li>
+<li><a href="#appsetup-s7">6 단계 — Security &amp;amp; License (보안 모드 · 라이선스)</a></li>
 <li><a href="#appsetup-after">저장 후 확인할 것</a></li>
 </ol></li>
 <li><a href="#4-검사-운전-VMS-메인">검사 운전 (VMS 메인)</a><ol>
@@ -130,7 +128,7 @@
 <li><a href="#ex-code">코드 판독 (Code Reader)</a></li>
 <li><a href="#ex-ocr">문자 인식 · 검증 (OCR / OCV)</a></li>
 <li><a href="#ex-dl">딥러닝 판정 — 검출 · 이상 탐지</a></li>
-<li><a href="#ex-align">얼라인 — 로봇 · 스테이지 보정량 산출</a></li>
+<li><a href="#ex-align">얼라인 — 설비 · 스테이지 보정량 산출</a></li>
 <li><a href="#ex-3d">3D 검사 — 객체 개수 · 치수 · 형상 편차</a></li>
 <li><a href="#ex-finish">레시피 마무리 — 시퀀스 · 배치 검증 · 운전 연결</a></li>
 </ol></li>
@@ -163,24 +161,7 @@
 <li><a href="#web-workflow">라인 PC 와 서버가 맞물리는 방식</a></li>
 <li><a href="#web-multiline">여러 라인 · 여러 서버 운영</a></li>
 </ol></li>
-<li><a href="#9-AI-학습-플랫폼-BODA-VMS-MLOps">AI 학습 플랫폼 (BODA.VMS.MLOps)</a><ol>
-<li><a href="#mlops-login">로그인과 역할</a></li>
-<li><a href="#mlops-nav">메뉴 구조</a></li>
-<li><a href="#mlops-workflow">전체 흐름 — 수집에서 배포까지</a></li>
-<li><a href="#mlops-images">수집 사진</a></li>
-<li><a href="#mlops-datasets">데이터셋 · 라벨링</a></li>
-<li><a href="#mlops-training">학습 작업</a></li>
-<li><a href="#mlops-versions">데이터셋 버전</a></li>
-<li><a href="#mlops-workers">워커 · 사전학습 미러</a></li>
-<li><a href="#mlops-models">모델 레지스트리</a></li>
-<li><a href="#mlops-bindings">레시피 바인딩</a></li>
-<li><a href="#mlops-lines">라인 PC</a></li>
-<li><a href="#mlops-monitoring">라인 모니터링</a></li>
-</ol></li>
-<li><a href="#10-딥러닝-모델-준비">딥러닝 모델 준비</a><ol>
-<li><a href="#dl-ocr-synth">OCR 합성 데이터로 학습하기</a></li>
-</ol></li>
-<li><a href="#11-유지보수">유지보수</a><ol>
+<li><a href="#9-유지보수">유지보수</a><ol>
 <li><a href="#mt-backup">백업과 복원</a></li>
 <li><a href="#mt-retention">데이터 보존과 디스크 관리</a></li>
 <li><a href="#mt-camera">카메라 교체 · IP 변경</a></li>
@@ -189,16 +170,15 @@
 <li><a href="#mt-logs">로그 · 데이터 위치</a></li>
 <li><a href="#mt-support">문제 보고 방법</a></li>
 </ol></li>
-<li><a href="#12-문제점-및-조치-방법">문제점 및 조치 방법</a><ol>
+<li><a href="#10-문제점-및-조치-방법">문제점 및 조치 방법</a><ol>
 <li><a href="#ts-camera">카메라 · 촬영</a></li>
 <li><a href="#ts-run">검사 운전 · 작업지시</a></li>
 <li><a href="#ts-plc">PLC · IO 보드 ⚙</a></li>
 <li><a href="#ts-recipe">레시피 편집 · 판정</a></li>
 <li><a href="#ts-web">Web · 네트워크 ⚙</a></li>
-<li><a href="#ts-mlops">MLOps · 학습 워커 ⚙</a></li>
 <li><a href="#ts-pc">PC · 프로그램 실행</a></li>
 </ol></li>
-<li><a href="#13-부록">부록</a><ol>
+<li><a href="#11-부록">부록</a><ol>
 <li><a href="#appx-keys">단축키 · 마우스 조작 (VisionSetup)</a></li>
 <li><a href="#appx-params">비전 도구 파라미터 전체표</a></li>
 <li><a href="#appx-results">검사 결과 값 이름 (PLC 매핑 · Web 이력)</a></li>
@@ -209,25 +189,24 @@
 <main>
 <div class="header-strip">
   <h1>BODA VMS 사용자 매뉴얼</h1>
-  <div class="sub">버전 3.0 · 2026-10-29 · VMS v1.47.3 · BODA.VMS.Web v1.11.0 · BODA.VMS.MLOps v0.1.5 — 시스템 구성 → 설치 → 프로그램별 조작 → 검사 설정 → 웹 관리 → 유지보수</div>
+  <div class="sub">버전 3.0 · 2026-10-29 · BODA VMS v1.47.3 — 시스템 구성 → 설치 → 프로그램별 조작 → 검사 설정 → 웹 관리 → 유지보수</div>
 </div>
 <section id="overview">
 <h2 id="1-시스템-개요">1. 시스템 개요</h2>
 
 <p>BODA VMS(Vision Management System)는 산업용 카메라로 제품을 촬영해 양품/불량을 판정하는
-<strong>머신 비전 검사 시스템</strong>입니다. 검사를 실제로 수행하는 <strong>검사 라인 PC</strong>,
-여러 라인의 생산 실적과 품질을 한곳에서 관리하는 <strong>생산 관리 서버(BODA.VMS.Web)</strong>,
-그리고 딥러닝 검사 모델을 만들고 배포하는 <strong>AI 학습 플랫폼(BODA.VMS.MLOps, 선택)</strong>으로
+<strong>머신 비전 검사 시스템</strong>입니다. 검사를 실제로 수행하는 <strong>검사 라인 PC</strong>와
+여러 라인의 생산 실적과 품질을 한곳에서 관리하는 <strong>생산 관리 서버(BODA.VMS.Web)</strong>로
 구성됩니다. 이 매뉴얼은 설치 담당자, 검사 레시피를 만드는 엔지니어, 현장 작업자, 관리자가
 각자 필요한 장을 찾아 볼 수 있도록 <strong>시스템 구성 → 설치 → 프로그램별 조작 → 검사 설정 →
 웹 관리 → 유지보수</strong> 순서로 되어 있습니다.</p>
 
 <h3 id="overview-arch">1.1 시스템 구성</h3>
 <figure><img src="../gs/screenshots/v3/diagrams/system_overview.png" data-width="620" alt="시스템 구성도">
-<figcaption>BODA VMS 시스템 구성 — 검사 라인 PC · 생산 관리 서버 · AI 학습 플랫폼</figcaption></figure>
+<figcaption>BODA VMS 시스템 구성 — 검사 라인 PC · 생산 관리 서버</figcaption></figure>
 
 <h4>검사 라인 PC</h4>
-<p>라인마다 PC 1대를 두고, 카메라·PLC(또는 IO 보드)·필요 시 로봇을 연결합니다. 이 PC 에는
+<p>라인마다 PC 1대를 두고, 카메라·PLC(또는 IO 보드)를 연결합니다. 이 PC 에는
 다음 프로그램이 함께 설치됩니다.</p>
 <table class="cols-2-2-5">
   <tr><th>프로그램</th><th>사용자</th><th>역할</th></tr>
@@ -240,7 +219,7 @@
       만들고, 관심 영역(ROI)과 판정 기준을 정합니다. 시퀀스 편집기, 카메라 캘리브레이션,
       배치 테스트, 예제 템플릿 갤러리가 여기에 있습니다.</td></tr>
   <tr><td><strong>VMS.AppSetup</strong> (시스템 설정 마법사)</td><td>설치 담당자</td>
-      <td>카메라 · PLC · 로봇 · IO 보드 · Web/MLOps 서버 주소 · 보안 모드 · 라이선스를 7 단계 마법사로
+      <td>카메라 · PLC · IO 보드 · Web 서버 주소 · 보안 모드 · 라이선스를 6 단계 마법사로
       설정합니다. 설치 후 최초 1 회 실행하며, 설비가 바뀔 때만 다시 엽니다.</td></tr>
 </table>
 
@@ -250,12 +229,6 @@
 만듭니다. VMS 설치 파일에 동봉되어 있어 라인 PC 와 같은 PC 에 Windows 서비스로 켤 수도 있고,
 별도 서버 PC 에 설치해 라인 여러 대(최대 100 대)를 붙일 수도 있습니다.
 Web 서버 없이 검사만 하는 <strong>단독 모드</strong>도 지원합니다(§4.9).</p>
-
-<h4>AI 학습 플랫폼 — BODA.VMS.MLOps (선택)</h4>
-<p>딥러닝 검사 도구가 쓰는 모델(ONNX 파일)을 만드는 서버입니다. 라인에서 올라온 불량 사진을 모아
-웹에서 라벨링하고, GPU 가 있는 학습 워커 PC 가 학습을 돌려 모델 레지스트리에 등록하면,
-라인 PC 는 레시피의 참조(<code>model://…</code>)로 운영 모델을 자동으로 내려받습니다.
-MLOps 를 쓰지 않는 현장은 이 서버 없이 운영해도 됩니다.</p>
 
 <h3 id="overview-flow">1.2 운영 흐름 한눈에</h3>
 <p>설치와 레시피 작성이 끝난 뒤 현장에서 매일 반복되는 흐름은 다음과 같습니다.</p>
@@ -280,14 +253,12 @@ MLOps 를 쓰지 않는 현장은 이 서버 없이 운영해도 됩니다.</p>
       NVIDIA GPU 가 있으면 추론이 빨라지지만, 없어도 CPU 로 자동 동작합니다</td></tr>
   <tr><td>디스크</td><td>설치 약 1.5GB + 검사 이미지 저장 공간(보존 기간 × 일 생산량에 따라 산정)</td></tr>
   <tr><td>런타임</td><td>.NET 8 · Visual C++ 런타임은 설치 파일에 동봉되어 별도 설치가 필요 없습니다</td></tr>
-  <tr><td>카메라</td><td>GigE Vision 2D(Area Scan · Line Scan) · 3D 카메라. 제조사별 연결 방식은 §2.1 표 참고.
-      카메라 없이 저장 이미지 · 점군 파일로도 레시피 편집과 검사 시험이 가능합니다</td></tr>
+  <tr><td>카메라</td><td>GigE Vision 2D(Area Scan · Line Scan). 제조사별 연결 방식은 §2.1 표 참고.
+      카메라 없이 저장 이미지 · 저장된 점군 파일(.vpc)로도 레시피 편집과 검사 시험이 가능합니다</td></tr>
   <tr><td>PLC</td><td>Mitsubishi(MC) · Siemens(S7) · LS Electric(XGT) · Omron(FINS) · Modbus TCP — 모두 TCP 직접 통신이라
       별도 드라이버가 필요 없습니다. 시리얼(RS-232/485) 연결도 지원합니다</td></tr>
   <tr><td>IO 보드</td><td>ADLink PCI-7432/7433/7434/7396 (DASK x64 드라이버) · Advantech PCI-1730/1750 계열 (DAQNavi)</td></tr>
-  <tr><td>로봇 (선택)</td><td>Universal Robots · Doosan · Jaka · ABB · Fanuc — 멀티뷰 3D 스캔과 얼라인 보정용</td></tr>
-  <tr><td>브라우저</td><td>Google Chrome (생산 관리 웹 · MLOps 화면)</td></tr>
-  <tr><td>학습 워커 (MLOps 선택)</td><td>NVIDIA GPU(VRAM 8GB 이상) · CUDA 12.4 드라이버(550 이상) · Python 3.12 64-bit · 여유 디스크 50GB</td></tr>
+  <tr><td>브라우저</td><td>Google Chrome (생산 관리 웹)</td></tr>
 </table>
 
 <h3 id="overview-terms">1.4 핵심 용어</h3>
@@ -306,16 +277,15 @@ MLOps 를 쓰지 않는 현장은 이 서버 없이 운영해도 됩니다.</p>
   <tr><td>시스템 사용자</td><td>VMS PC 안의 관리 계정(Operator / Engineer / Admin)입니다. 설정 패널 · 레시피 편집 · 관리자 도구 권한을 정합니다(§4.12).</td></tr>
   <tr><td>OK / NG</td><td>검사 판정 결과입니다. NG 가 나오면 Web 에 알람이 자동 생성됩니다.</td></tr>
   <tr><td>라인 번호 (ClientIndex)</td><td>Web 서버가 라인 PC 를 구분하는 번호(0~99)입니다. 작업지시 · 레시피 · 이력이 이 번호로 분리됩니다.</td></tr>
-  <tr><td>model:// 참조</td><td>딥러닝 도구의 모델 파일 대신 MLOps 레지스트리의 모델을 가리키는 주소입니다. 예: <code>model://{모델ID}@production</code></td></tr>
 </table>
 
 <h3 id="overview-doc">1.5 이 매뉴얼 읽는 법</h3>
 <table class="cols-3-6">
   <tr><th>독자</th><th>읽을 장</th></tr>
-  <tr><td>설치 담당자</td><td>2장 설치 · 3장 시스템 설정 마법사 · 11장 유지보수 · 12장 문제 조치</td></tr>
-  <tr><td>현장 작업자 · 반장</td><td>4장 검사 운전 · 12장 문제 조치 (앞부분)</td></tr>
-  <tr><td>비전 엔지니어</td><td>5장 레시피 편집 · 6장 비전 도구 · 7장 검사 설정 예제 · 9장 MLOps(딥러닝 도구를 쓸 때)</td></tr>
-  <tr><td>관리자 (생산 · 품질)</td><td>8장 생산 관리 웹 · 11장 유지보수</td></tr>
+  <tr><td>설치 담당자</td><td>2장 설치 · 3장 시스템 설정 마법사 · 9장 유지보수 · 10장 문제 조치</td></tr>
+  <tr><td>현장 작업자 · 반장</td><td>4장 검사 운전 · 10장 문제 조치 (앞부분)</td></tr>
+  <tr><td>비전 엔지니어</td><td>5장 레시피 편집 · 6장 비전 도구 · 7장 검사 설정 예제</td></tr>
+  <tr><td>관리자 (생산 · 품질)</td><td>8장 생산 관리 웹 · 9장 유지보수</td></tr>
 </table>
 <p>화면의 버튼 이름은 <strong>[대괄호]</strong>로, 메뉴 경로는 <strong>메뉴 → 항목</strong> 으로 적었습니다.
 입력란 옆의 파란 물음표(?) 아이콘에 마우스를 올리면 그 항목의 설명이 프로그램 안에서 바로 표시되므로,
@@ -334,7 +304,6 @@ MLOps 를 쓰지 않는 현장은 이 서버 없이 운영해도 됩니다.</p>
   <tr><th>장비</th><th>별도 설치할 것</th><th>비고</th></tr>
   <tr><td>Basler 카메라</td><td>pylon Camera Software Suite (Runtime)</td><td>없으면 카메라 검색은 되지만 연결 · 촬영이 실패합니다</td></tr>
   <tr><td>Hikrobot 카메라</td><td>MVS (Machine Vision Software) 런타임</td><td>GigE 필터 드라이버 포함</td></tr>
-  <tr><td>Mech-Mind 3D 카메라</td><td>없음</td><td>구동 파일이 설치 파일에 동봉됩니다</td></tr>
   <tr><td>Matrox · Dalsa (프레임 그래버)</td><td>MIL 런타임</td><td>Camera Link 카메라 구성에서만</td></tr>
   <tr><td>ADLink IO 보드</td><td>DASK 드라이버 <strong>64비트(x64)</strong></td><td>32비트만 설치된 PC 에서는 보드가 인식되지 않습니다</td></tr>
   <tr><td>Advantech IO 보드</td><td>DAQNavi</td><td>미설치 시 보드가 연결되지 않습니다(System Log 에 사유)</td></tr>
@@ -355,26 +324,27 @@ VisionSetup 에서 연결할 때 "SDK 미탑재 — 시뮬레이션 모드" 경�
 
 <h3 id="install-vms">2.2 VMS 설치 (설치 마법사)</h3>
 <ol>
-  <li><code>VMS-1.47.3.msi</code> 처럼 버전이 붙은 설치 파일을 더블 클릭합니다. 설치에는 관리자 권한이 필요합니다.</li>
+  <li><code>VMS-1.48.0.msi</code> 처럼 버전이 붙은 설치 파일을 더블 클릭합니다. 설치에는 관리자 권한이 필요합니다.</li>
   <li><strong>시작 화면</strong>에서 [다음]을 누릅니다. 별도의 라이선스 동의 단계는 없습니다.</li>
-  <li><strong>설치 폴더</strong>는 기본값 <code>C:\Program Files\VASIM\BODA Vision System\</code> 을 그대로 두는 것을 권장합니다.</li>
+  <li><strong>설치 폴더</strong>는 설치 마법사가 보여 주는 기본값을 그대로 두는 것을 권장합니다.</li>
   <li><strong>설치 구성 선택</strong> 화면에서 이 PC 에 함께 설치할 항목을 고릅니다.
     <ul>
       <li><strong>BODA VMS Web 서버 포함</strong> (기본: 켬) — 이 PC 를 생산 관리 서버로도 쓰거나, 나중에 쓸 가능성이 있으면 켜 둡니다.
           포함해서 설치해도 자동으로 실행되지는 않으며, 설정 마법사에서 켤 때만 동작합니다(§2.3).</li>
     </ul></li>
-  <li>[설치]를 누르면 파일 복사가 진행되고, 완료 화면에서 [마침]을 누릅니다. 시작 메뉴와 바탕화면에 바로가기가 만들어집니다.</li>
+  <li>[설치]를 누르면 파일 복사가 진행되고, 완료 화면에서 [마침]을 누릅니다. 바탕화면에 <strong>BODA VMS</strong> 바로가기가,
+      시작 메뉴에 BODA VMS · BODA VMS 설정 마법사 (AppSetup) · BODA VMS 비전 설정 (VisionSetup) 바로가기가 만들어집니다.</li>
 </ol>
 <figure><img src="../gs/screenshots/70_msi_welcome.png" data-width="420" alt="설치 마법사 시작 화면">
 <figcaption>설치 마법사 시작 화면</figcaption></figure>
 <figure><img src="../gs/screenshots/71_msi_weboption.png" data-width="420" alt="설치 구성 선택 화면">
 <figcaption>설치 구성 선택 — "BODA VMS Web 서버 포함" 체크박스</figcaption></figure>
 <div class="callout tip"><strong>무인 설치</strong>가 필요하면 명령 프롬프트(관리자)에서 다음처럼 실행합니다.
-<code>msiexec /i VMS-1.47.3.msi /qn INSTALLWEB=0</code> — 값 0 은 제외, 1 은 포함입니다.</div>
+<code>msiexec /i VMS-1.48.0.msi /qn INSTALLWEB=0</code> — 값 0 은 제외, 1 은 포함입니다.</div>
 
 <h4>설치 후 처음 실행하면</h4>
 <p>VMS 를 처음 실행하면 설정 파일이 없으므로 "초기 시스템 설정이 필요합니다" 안내와 함께
-<strong>시스템 설정 마법사(VMS.AppSetup)</strong>가 자동으로 열립니다. 3장에 따라 7 단계를 저장한 뒤
+<strong>시스템 설정 마법사(VMS.AppSetup)</strong>가 자동으로 열립니다. 3장에 따라 6 단계를 저장한 뒤
 VMS 를 다시 실행하세요. 설정 파일이 있어도 마법사를 끝까지 저장하지 않은 것이면 "시스템 설정이 끝나지 않았습니다" 안내와 함께
 마법사가 열립니다. 설정 파일과 레시피, 검사 이력은 모두 <code>%LocalAppData%\BODA VISION AI\</code>
 아래에 저장되며 프로그램을 제거하거나 업그레이드해도 지워지지 않습니다.</p>
@@ -397,7 +367,7 @@ VMS 를 다시 실행하세요. 설정 파일이 있어도 마법사를 끝까�
   <li>구성은 끝났는데 서비스가 멈춰 있으면(Stopped) 카드에 <strong>[서비스 시작 (관리자 권한)]</strong> 버튼이 나타납니다.
       누르면 Windows 권한 확인 창(UAC)이 뜨고, 승인하면 서비스가 부팅 시 자동 시작으로 바뀐 뒤 곧바로 시작됩니다.</li>
   <li>이 구성에서는 Web 서버가 <strong>이 PC 안에서만(127.0.0.1)</strong> 응답합니다. 다른 PC 의 브라우저에서 보려면
-      §2.5 의 안내에 따라 바인딩 주소와 방화벽을 열어야 합니다.</li>
+      §2.4 의 안내에 따라 바인딩 주소와 방화벽을 열어야 합니다.</li>
 </ul>
 
 <h4>방법 B — 별도 서버 PC 에 설치 (배포 스크립트)</h4>
@@ -414,39 +384,13 @@ cd &lt;압축 푼 폴더&gt;\deploy
 사용자가 다시 로그인해야 하므로 설치 직후 안전한 곳에 백업하세요. 첫 로그인 후에는 <code>admin</code> 비밀번호를
 바꾸고(오른쪽 위 사용자 이름 → [비밀번호 변경], §8.1), 필요한 사용자를 가입 → 승인으로 추가합니다(§8.2).</div>
 
-<h3 id="install-mlops">2.4 MLOps 서버 · 학습 워커 설치 (선택)</h3>
-<p>딥러닝 모델을 웹에서 만들어 라인에 배포하려는 현장만 설치합니다. 검사 자체는 MLOps 없이도 동작합니다.</p>
-<h4>MLOps 서버</h4>
-<ol>
-  <li>서버 PC(Web 서버와 같은 PC 여도 됨)에 MLOps 배포 패키지를 풀고 관리자 PowerShell 에서 실행합니다.
-<pre><code>.\scripts\install-server-service.ps1 -DataDir D:\BODA-MLOps -ProductionWebUrl http://&lt;Web 서버&gt;:5292</code></pre></li>
-  <li>서비스 <code>BodaVmsMlops</code>(포트 <strong>5310</strong>)가 등록되고 방화벽 규칙이 추가됩니다. 데이터(DB · 사진 · 모델)는
-      <code>-DataDir</code> 폴더에 저장되므로 이 폴더를 백업 대상에 넣습니다.</li>
-  <li>MLOps 화면은 <strong>Web 서버의 관리자 계정</strong>으로 로그인합니다(§9.1). 두 서버가 같은 서명 키를 쓰도록 스크립트가
-      <code>-JwtKey</code> 를 요구하며, 값은 파일이 아니라 서비스 환경변수에만 저장됩니다.</li>
-</ol>
-<h4>학습 워커 (GPU PC)</h4>
-<ol>
-  <li>NVIDIA GPU(VRAM 8GB 이상), CUDA 12.4 지원 드라이버(550 이상), <strong>Python 3.12 64-bit 를 "모든 사용자용"으로</strong> 설치합니다.</li>
-  <li>MLOps 화면 학습 → 워커 → [워커 등록]에서 이름을 넣고 [발급]을 눌러 <code>wk_…</code> 토큰을 받습니다. 토큰은 이때 한 번만 표시됩니다.</li>
-  <li><code>BODA-VMS-TrainWorker-0.1.5.msi</code> 를 실행하고 <strong>"워커 연결 설정"</strong> 화면에 관리 서버 주소(<code>http://서버:5310</code>) ·
-      워커 토큰 · 워커 이름을 입력합니다.</li>
-  <li>설치가 끝나면 서비스 <code>BodaVmsTrainWorker</code> 가 시작되어 첫 실행 시 파이썬 환경(venv, 약 6GB)을 준비합니다.
-      온라인 설치는 10~40 분이 걸립니다. 폐쇄망은 MSI 대신 함께 배포되는 <code>BODA-VMS-TrainWorker-0.1.5-offline</code> 폴더의 <code>install-offline.cmd</code> 를 관리자 권한 명령 프롬프트에서 실행합니다(wheel 묶음을 이 PC 에 복사한 뒤 같은 MSI 를 설치합니다. 복사된 <code>%ProgramData%\BODA VMS TrainWorker\wheels</code> 는 지우지 마세요).</li>
-  <li>MLOps 워커 화면에서 상태가 <strong>대기 중</strong>으로 바뀌면 준비 완료입니다. 로그는 <code>%ProgramData%\BODA VMS TrainWorker\logs</code> 에 남습니다.</li>
-</ol>
-<figure><img src="../gs/screenshots/mlops/worker_install_wizard.png" data-width="420" alt="학습 워커 설치 마법사">
-<figcaption>학습 워커 설치 마법사 — 워커 연결 설정 화면</figcaption></figure>
-
-<h3 id="install-network">2.5 네트워크 · 방화벽</h3>
+<h3 id="install-network">2.4 네트워크 · 방화벽</h3>
 <table class="cols-2-2-2-3">
   <tr><th>연결</th><th>포트 / 프로토콜</th><th>방향</th><th>용도</th></tr>
   <tr><td>라인 PC → Web 서버</td><td>5292 / TCP (HTTP)</td><td>아웃바운드</td><td>검사 결과 업로드 · 작업지시 · 작업자 로그인 · 실시간 알림(SignalR)</td></tr>
   <tr><td>브라우저 → Web 서버</td><td>5292 / TCP</td><td>인바운드(서버)</td><td>관리 화면 접속</td></tr>
-  <tr><td>라인 PC · 워커 → MLOps 서버</td><td>5310 / TCP</td><td>아웃바운드</td><td>모델 내려받기 · NG 사진 업로드 · 학습 작업</td></tr>
   <tr><td>라인 PC ↔ 카메라</td><td>3956 / UDP + GVSP 스트림</td><td>양방향</td><td>GigE Vision 검색 · 영상 수신 (점보 프레임 9000 권장)</td></tr>
   <tr><td>라인 PC → PLC</td><td>벤더별 (MC 5000 · S7 102 · FINS 9600 · Modbus 502 등)</td><td>아웃바운드</td><td>트리거 · 판정 신호</td></tr>
-  <tr><td>라인 PC → 로봇</td><td>벤더별 (UR 30003 · Modbus 502 등)</td><td>아웃바운드</td><td>포즈 읽기 · 웨이포인트</td></tr>
 </table>
 <ul>
   <li>Web 서버를 별도 PC 에 설치하면 배포 스크립트가 방화벽 인바운드 규칙 <code>BODA VMS Web</code> 을 만듭니다.
@@ -454,12 +398,12 @@ cd &lt;압축 푼 폴더&gt;\deploy
       보려면 <code>appsettings.Production.json</code> 의 <code>Kestrel:Endpoints:Http:Url</code> 을 <code>http://0.0.0.0:5292</code> 로
       바꾸고 방화벽에서 5292 를 사내망(Private/Domain)에만 엽니다.</li>
   <li>카메라는 전용 네트워크 카드에 직결하고, 그 카드에만 카메라와 같은 대역의 고정 IP 를 줍니다.</li>
-  <li>보안 모드가 <strong>Production</strong> 인 라인 PC 는 다른 PC 를 가리키는 <code>http://</code> 서버 주소를 거부합니다(§3.8).
+  <li>보안 모드가 <strong>Production</strong> 인 라인 PC 는 다른 PC 를 가리키는 <code>http://</code> 서버 주소를 거부합니다(§3.7).
       원격 서버는 <code>https://</code> 로 열거나(사설 인증서), 사내 실증 단계에서는 Development 모드를 씁니다.
       같은 PC 를 가리키는 <code>localhost</code> 주소는 http 여도 허용됩니다.</li>
 </ul>
 
-<h3 id="install-license">2.6 SW 라이선스 설치 · 활성화</h3>
+<h3 id="install-license">2.5 SW 라이선스 설치 · 활성화</h3>
 <p>SW 라이선스는 "이 PC 에서 BODA VMS 를 사용해도 된다"는 사용권 파일(<code>license.lic</code>)입니다.
 인터넷 연결 없이 파일 하나로 동작하므로 폐쇄망에서도 추가 설정이 필요 없습니다.
 지금은 도입 전환기라 라이선스가 없어도 사용 제한은 없으며, 상태 표시와 기록에 "미설치" 경고만 남습니다.</p>
@@ -481,7 +425,7 @@ cd &lt;압축 푼 폴더&gt;\deploy
   <li><strong>만료 임박 · 유지보수 만료</strong> — 계약 갱신 후 받은 새 파일을 같은 방법으로 가져오기 하면 덮어써집니다.</li>
 </ul>
 
-<h3 id="install-upgrade">2.7 업그레이드와 제거</h3>
+<h3 id="install-upgrade">2.6 업그레이드와 제거</h3>
 <h4>인앱 업데이트 (권장)</h4>
 <p>새 버전이 나오면 VMS 가 시작할 때 "업데이트 가능" 창으로 알려 주고, 사이드 패널 Updates 섹션에 배지가 표시됩니다.</p>
 <ol>
@@ -499,7 +443,7 @@ cd &lt;압축 푼 폴더&gt;\deploy
 설정 · 레시피 · 검사 이력 · 캘리브레이션은 그대로 보존됩니다.</p>
 <h4>제거</h4>
 <ul>
-  <li>Windows 설정 → 앱 → "BODA Vision System" → 제거. 또는 시작 메뉴의 제거 바로가기.</li>
+  <li>Windows 설정 → 앱 → "BODA VMS" → 제거. 또는 시작 메뉴의 제거 바로가기.</li>
   <li>사용자 데이터(<code>%LocalAppData%\BODA VISION AI\</code>)와 Web 데이터(<code>C:\ProgramData\BODA\VMS\</code>)는 제거해도 남습니다.
       완전히 지우려면 두 폴더를 직접 삭제합니다.</li>
 </ul>
@@ -507,7 +451,7 @@ cd &lt;압축 푼 폴더&gt;\deploy
 
 <section id="appsetup">
 <h2 id="3-시스템-설정-마법사-VMS-AppSetup">3. 시스템 설정 마법사 (VMS.AppSetup)</h2>
-<div class="callout"><strong>⚙ 이 장은 설치 담당자 · 관리자용입니다.</strong> 시스템 설정 마법사는 카메라 · PLC · 로봇 · IO 보드 · 서버 연동 · 보안 · 라이선스 등
+<div class="callout"><strong>⚙ 이 장은 설치 담당자 · 관리자용입니다.</strong> 시스템 설정 마법사는 카메라 · PLC · IO 보드 · 서버 연동 · 보안 · 라이선스 등
 시스템 전체 구성을 저장하는 프로그램입니다. 일반 작업자는 사용할 일이 없습니다.</div>
 
 <h3 id="appsetup-run">3.1 실행 방법과 저장 동작</h3>
@@ -515,18 +459,19 @@ cd &lt;압축 푼 폴더&gt;\deploy
 <ul>
   <li><strong>최초 실행 자동</strong> — VMS 를 설치 후 처음 실행하면(설정 파일이 없거나 마법사를 마치지 않았으면) 안내 창과 함께 마법사가 자동으로 열립니다. 저장을 마친 뒤 VMS 를 다시 실행하세요.</li>
   <li><strong>VMS 에서 실행</strong> — 사이드 패널 External Tools 의 <strong>[System Setup]</strong> 버튼 (Supervisor · Admin 전용, §4.6).</li>
-  <li><strong>시작 메뉴</strong> — "BODA Vision System" 그룹의 설정 마법사 바로가기. 한 PC 에서 두 라인을 운용할 때는
-      <code>VMS.AppSetup.exe --instance 이름</code> 으로 실행합니다(§11.5).</li>
+  <li><strong>시작 메뉴</strong> — <strong>BODA VMS 설정 마법사 (AppSetup)</strong> 바로가기. 한 PC 에서 두 라인을 운용할 때는
+      <code>VMS.AppSetup.exe --instance 이름</code> 으로 실행합니다(§9.5).</li>
 </ul>
-<p>마법사는 총 7 단계이며, 각 단계 하단의 <strong>[← Back] / [Next]</strong> 로 이동하고 마지막 단계에서 <strong>[Finish]</strong> 를 누르면
+<p>마법사 창의 제목은 <strong>BODA VMS Setup</strong> 이며, 오른쪽 위에 현재 단계(예: Step 2 of 6)가 표시됩니다.
+마법사는 총 6 단계이며, 각 단계 하단의 <strong>[← Back] / [Next]</strong> 로 이동하고 마지막 단계에서 <strong>[Finish]</strong> 를 누르면
 설정 파일(<code>%LocalAppData%\BODA VISION AI\system_config.json</code>)에 저장됩니다. 저장한 설정은 <strong>VMS 를 다시 시작할 때</strong>
 반영됩니다 — 운전 중이라면 검사를 멈추고 VMS 를 재시작하세요. [Finish] 를 누르지 않고 닫으면 아무것도 바뀌지 않습니다.</p>
 <p>입력란 라벨 옆의 파란 물음표(?) 아이콘에 마우스를 올리면 그 항목의 설명이 말풍선으로 표시됩니다. 이 장의 표와 같은 내용입니다.</p>
 
 <h3 id="appsetup-s1">3.2 1 단계 — 시작 (Welcome)</h3>
 <figure><img src="../gs/screenshots/v3/as/Window_P1_Welcome.png" data-width="520" alt="1단계 시작 화면">
-<figcaption>1 단계 — 시작 화면. 이후 애플리케이션 → 카메라 → PLC → 로봇 → IO 보드 → 보안 순으로 진행합니다</figcaption></figure>
-<p>입력 항목이 없는 안내 화면입니다. [Next] 를 눌러 진행합니다.</p>
+<figcaption>1 단계 — 시작 화면. 이후 애플리케이션 → 카메라 → PLC → IO 보드 → 보안 · 라이선스 순으로 진행합니다</figcaption></figure>
+<p>입력 항목이 없는 안내 화면입니다. 가운데에 <strong>BODA</strong> · <strong>VMS</strong> 로고와 제품명 · 버전(예: BODA VMS v1.48.0)이 표시됩니다. [Next] 를 눌러 진행합니다.</p>
 
 <h3 id="appsetup-s2">3.3 2 단계 — Application Settings (이름 · IP · 서버 연동 · 관리자 계정)</h3>
 <figure><img src="../gs/screenshots/v3/as/FullPage_P2_ApplicationSettings.png" data-width="360" alt="2단계 전체 화면">
@@ -534,7 +479,7 @@ cd &lt;압축 푼 폴더&gt;\deploy
 <table class="cols-2-3-4-1">
   <tr><th>항목</th><th>컨트롤</th><th>설명</th><th>기본값</th></tr>
   <tr><td>Application Name</td><td><img src="../gs/screenshots/v3/as_ctl/P2_default_02_TextBox_OP102.png" alt=""></td>
-      <td>이 검사기를 부르는 이름입니다. VMS 헤더 왼쪽과 Web 라인 목록에 표시됩니다. 줄바꿈 · 탭 같은 특수 문자는 넣지 마세요.</td><td>BODA Vision System</td></tr>
+      <td>이 검사기를 부르는 이름입니다. VMS 헤더 왼쪽과 Web 라인 목록에 표시됩니다. 줄바꿈 · 탭 같은 특수 문자는 넣지 마세요.</td><td>BODA VMS</td></tr>
   <tr><td>System IP Address</td><td><img src="../gs/screenshots/v3/as_ctl/P2_default_04_TextBox_1921681101.png" alt=""></td>
       <td>이 PC 의 IP 주소입니다. Web 라인 목록에 참고용으로 표시됩니다.</td><td>192.168.0.1</td></tr>
   <tr><td>Web 서버 미사용 — 단독(Standalone) 모드</td><td><img src="../gs/screenshots/v3/as_ctl/P2_default_07_CheckBox_Web_서버_미사용__단독Standalone_모드.png" alt=""></td>
@@ -542,7 +487,7 @@ cd &lt;압축 푼 폴더&gt;\deploy
   <tr><td>Client Index (라인 번호)</td><td><img src="../gs/screenshots/v3/as_ctl/P2_default_10_TextBox_2.png" alt=""></td>
       <td>Web 서버가 이 라인을 구분하는 번호입니다. <strong>0~99</strong> 만 저장되며 서버 안에서 겹치면 안 됩니다. 서버가 여러 대인 공장은 십의 자리를 서버 번호로 쓰는 규칙을 권장합니다(§8.28).</td><td>1</td></tr>
   <tr><td>Web Server URL</td><td><img src="../gs/screenshots/v3/as_ctl/P2_default_13_TextBox_httplocalhost5292.png" alt=""></td>
-      <td>생산 관리 웹 주소입니다. 이 PC 안의 동봉 서버면 <code>http://localhost:5292</code>, 별도 서버면 <code>http://서버IP:5292</code>(Production 모드에서는 https 필요, §3.8).</td><td>http://localhost:5292</td></tr>
+      <td>생산 관리 웹 주소입니다. 이 PC 안의 동봉 서버면 <code>http://localhost:5292</code>, 별도 서버면 <code>http://서버IP:5292</code>(Production 모드에서는 https 필요, §3.7).</td><td>http://localhost:5292</td></tr>
   <tr><td>Vision Server URL</td><td><img src="../gs/screenshots/v3/as_ctl/P2_default_16_TextBox_httplocalhost5000.png" alt=""></td>
       <td>VisionServer 연동 구성에서만 씁니다. 쓰지 않으면 그대로 둡니다.</td><td>http://localhost:5000</td></tr>
   <tr><td>생산 관리 — 작업자 로그인 필수</td><td><img src="../gs/screenshots/v3/as_ctl/P2_default_19_CheckBox_작업자_로그인_필수.png" alt=""></td>
@@ -550,13 +495,9 @@ cd &lt;압축 푼 폴더&gt;\deploy
   <tr><td>생산 관리 — 작업지시 선택 필수</td><td><img src="../gs/screenshots/v3/as_ctl/P2_default_20_CheckBox_작업지시_선택_필수.png" alt=""></td>
       <td>체크하면 작업지시를 골라야 [AUTO RUN] 을 시작할 수 있습니다. 작업지시는 작업자 로그인 후에 고르므로, 작업자 로그인 필수를 끄면 이 항목도 함께 꺼지고 잠깁니다. 작업지시 없이 운전하면 작업지시 수량은 집계되지 않습니다.</td><td>체크</td></tr>
   <tr><td>고급 설정 (접기/펼치기)</td><td><img src="../gs/screenshots/v3/as_ctl/P2_default_18_ToggleButton_고급_설정__Web_Client_API_Key__MLOps_모델_레지스트.png" alt=""></td>
-      <td>클릭하면 Web Client API Key · MLOps 서버 주소 · MLOps 라인 토큰 입력란이 나타납니다. 해당 현장만 펼칩니다. 이미 값이 저장된 PC 에서는 자동으로 펼쳐집니다.</td><td>접힘</td></tr>
+      <td>"고급 설정 — Web Client API Key (해당 현장만)" 링크입니다. 클릭하면 Web Client API Key 입력란이 나타납니다. 해당 현장만 펼칩니다. 이미 값이 저장된 PC 에서는 자동으로 펼쳐집니다.</td><td>접힘</td></tr>
   <tr><td>Web Client API Key (고급)</td><td><img src="../gs/screenshots/v3/as_ctl/P2_advanced_02_TextBox_TextBox.png" alt=""></td>
       <td>보통 비워 둡니다. Web 서버 관리자가 "API 키 강제"를 켠 경우에만 받은 키를 그대로 입력합니다. 값이 틀리면 작업지시 · 이력 업로드 · 작업자 로그인이 모두 끊깁니다. 단독 모드에서는 잠깁니다.</td><td>(빈 값)</td></tr>
-  <tr><td>MLOps 서버 주소 (고급)</td><td><img src="../gs/screenshots/v3/as_ctl/P2_advanced_05_TextBox_TextBox.png" alt=""></td>
-      <td>MLOps 모델 레지스트리 주소(예: <code>http://서버:5310</code>). 레시피의 <code>model://</code> 참조 모델을 이 서버에서 내려받고 NG 사진을 학습 데이터로 올립니다(9장). 단독 모드에서도 입력할 수 있습니다. 쓰지 않으면 비워 둡니다.</td><td>(빈 값)</td></tr>
-  <tr><td>MLOps 라인 토큰 (고급)</td><td><img src="../gs/screenshots/v3/as_ctl/P2_advanced_08_TextBox_TextBox.png" alt=""></td>
-      <td>MLOps 화면 배포 → 라인 PC 에서 이 라인용으로 발급한 토큰(<code>ln_…</code>)을 그대로 붙여 넣습니다. 토큰이 없으면 모델을 내려받지 못하고 사진도 올라가지 않습니다.</td><td>(빈 값)</td></tr>
   <tr><td>Web 서버 초기 구성 (이 PC)</td><td>—</td>
       <td>설치 시 Web 서버를 포함한 PC 에만 카드가 나타납니다. admin 비밀번호를 넣고 구성 버튼을 누르면 서비스가 등록 · 시작되며, 멈춰 있으면 [서비스 시작 (관리자 권한)] 버튼이 나타납니다(§2.3).</td><td>—</td></tr>
   <tr><td>Web SSO 활성</td><td><img src="../gs/screenshots/v3/as_ctl/P2_default_22_CheckBox_Web_SSO_활성__AdminManager_인증을_BODAVMSWeb_.png" alt=""></td>
@@ -579,16 +520,16 @@ cd &lt;압축 푼 폴더&gt;\deploy
   <tr><td>사용 체크 · Name · IP</td><td><img src="../gs/screenshots/v3/as_ctl/P3_camtypes_03_TextBox_AreaCam.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P3_camtypes_05_TextBox_1921680101.png" alt=""></td>
       <td>카드 왼쪽 체크를 끄면 그 카메라는 VMS 가 연결하지 않습니다. 이름은 VMS 카메라 화면 제목과 레시피 스텝 이름("1-1")의 번호 순서에 쓰입니다.</td><td>Camera 1 / 192.168.0.101</td></tr>
   <tr><td>Camera Type</td><td><img src="../gs/screenshots/v3/as_ctl/P3_camtypes_06_ComboBox_AreaScan2D.png" alt=""></td>
-      <td>AreaScan2D · AreaScan3D · LineScan2D · LineScan3D. 선택에 따라 카드 아래에 라인 스캔 항목이 나타납니다.</td><td>AreaScan2D</td></tr>
+      <td>AreaScan2D · LineScan2D. LineScan2D 를 고르면 카드 아래에 라인 스캔 항목이 나타납니다.</td><td>AreaScan2D</td></tr>
   <tr><td>Manufacturer</td><td><img src="../gs/screenshots/v3/as_ctl/P3_camtypes_08_ComboBox_HIK.png" alt=""></td>
-      <td>제조사. HIK · Basler · Mech_Mind · Matrox/Dalsa 는 실제 드라이버로 연결되며, 그 외는 시뮬레이션으로 동작합니다(§2.1). Matrox · Dalsa 를 고르면 Frame Grabber 항목이 나타납니다.</td><td>HIK</td></tr>
+      <td>제조사. HIK · Basler · Matrox/Dalsa 는 실제 드라이버로 연결되며, 그 외는 시뮬레이션으로 동작합니다(§2.1). Matrox · Dalsa 를 고르면 Frame Grabber 항목이 나타납니다.</td><td>HIK</td></tr>
   <tr><td>〈Line Scan〉 Trigger / Line Rate / Scan Length</td><td><img src="../gs/screenshots/v3/as_ctl/P3_camtypes_24_ComboBox_Encoder.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P3_camtypes_27_TextBox_10000.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P3_camtypes_29_TextBox_4096.png" alt=""></td>
       <td>라인 스캔 카메라의 트리거 소스(Internal · Encoder) · 라인 레이트(Hz) · 스캔 길이(라인 수).</td><td>Internal / 10000 / 4096</td></tr>
   <tr><td>〈Frame Grabber〉 Board Type / Board# / Digitizer# / DCF</td><td><img src="../gs/screenshots/v3/as_ctl/P3_camtypes_54_ComboBox_ComboBox.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P3_camtypes_62_Button_unnamed.png" alt=""></td>
       <td>MIL 보드 타입 · 보드/디지타이저 번호 · Camera Link DCF 파일.</td><td>SOLIOS / 0 / 0</td></tr>
 </table>
-<div class="callout tip"><strong>노출 · 게인 · 3D 취득 옵션은 여기서 정하지 않습니다.</strong> 카드 아래 안내 문구처럼, 노출(Exposure) · 게인(Gain)과
-3D 옵션(점군 후처리 필터, 깊이 Z 범위)은 VMS 메인의 카메라 설정 창(§4.5) 또는 VisionSetup 의 스텝 카메라 설정(§5.3)에서 조정하며,
+<div class="callout tip"><strong>노출 · 게인은 여기서 정하지 않습니다.</strong> 카드 아래 안내 문구처럼, 노출(Exposure) · 게인(Gain)은
+VMS 메인의 카메라 설정 창(§4.5) 또는 VisionSetup 의 스텝 카메라 설정(§5.3)에서 조정하며,
 기본은 카메라에 저장된 현재 값을 그대로 씁니다.</div>
 
 <h3 id="appsetup-s4">3.5 4 단계 — PLC Communication (PLC 통신)</h3>
@@ -597,7 +538,7 @@ cd &lt;압축 푼 폴더&gt;\deploy
 <table class="cols-2-3-4-1">
   <tr><th>항목</th><th>컨트롤</th><th>설명</th><th>기본값</th></tr>
   <tr><td>PLC Vendor</td><td><img src="../gs/screenshots/v3/as_ctl/P4_ethernet_02_RadioButton_Mitsubishi.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P4_ethernet_06_RadioButton_Modbus_TCP.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P4_ethernet_07_RadioButton_None_No_PLC.png" alt=""></td>
-      <td>Mitsubishi(MC) · Siemens(S7) · LS Electric(XGT) · Omron(FINS) · Modbus TCP · None. PLC 없이 IO 보드만 쓰면 None 으로 두고 6 단계에서 보드를 등록합니다(§4.11).</td><td>None</td></tr>
+      <td>Mitsubishi(MC) · Siemens(S7) · LS Electric(XGT) · Omron(FINS) · Modbus TCP · None. PLC 없이 IO 보드만 쓰면 None 으로 두고 5 단계에서 보드를 등록합니다(§4.11).</td><td>None</td></tr>
   <tr><td>Communication Type</td><td><img src="../gs/screenshots/v3/as_ctl/P4_ethernet_22_ComboBox_Ethernet.png" alt=""></td><td>Ethernet 또는 Serial. Serial 이면 아래 IP · Port 대신 시리얼 항목이 나타납니다.</td><td>Ethernet</td></tr>
   <tr><td>〈Ethernet〉 PLC IP Address / Port</td><td><img src="../gs/screenshots/v3/as_ctl/P4_ethernet_25_TextBox_1921680100.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P4_ethernet_27_TextBox_502.png" alt=""></td><td>PLC 의 IP 주소와 포트.</td><td>192.168.0.100 / 502</td></tr>
   <tr><td>〈Modbus〉 Modbus Unit ID</td><td><img src="../gs/screenshots/v3/as_ctl/P4_modbus_02_TextBox_255.png" alt=""></td><td>Modbus 슬레이브 ID(1~255).</td><td>255</td></tr>
@@ -609,22 +550,9 @@ cd &lt;압축 푼 폴더&gt;\deploy
 </table>
 <p>PLC 주소를 어느 신호에 쓸지는 이 단계가 아니라 VisionSetup 의 시퀀스 편집기(§5.10)에서 노드마다 지정합니다.</p>
 
-<h3 id="appsetup-s5">3.6 5 단계 — Robot Configuration (로봇, 선택)</h3>
-<figure><img src="../gs/screenshots/v3/as/FullPage_P5_RobotConfiguration.png" data-width="360" alt="5단계 로봇 구성">
-<figcaption>5 단계 — Robot Configuration (로봇 연동 활성 상태, 스크롤 전체)</figcaption></figure>
-<table class="cols-2-3-4-1">
-  <tr><th>항목</th><th>컨트롤</th><th>설명</th><th>기본값</th></tr>
-  <tr><td>Enable Robot Integration</td><td><img src="../gs/screenshots/v3/as_ctl/P5_disabled_01_CheckBox_Enable_Robot_Integration.png" alt=""></td><td>멀티뷰 3D 스캔이나 얼라인 보정에 로봇을 쓸 때 켭니다. 끄면 아래 항목이 숨겨집니다.</td><td>해제</td></tr>
-  <tr><td>Robot Vendor</td><td><img src="../gs/screenshots/v3/as_ctl/P5_enabled_02_RadioButton_Universal_Robots_UR.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P5_enabled_03_RadioButton_Doosan_Robotics.png" alt=""></td><td>UR · Doosan · Jaka · ABB · Fanuc. 선택하면 포트와 Euler 규약이 벤더 기본값으로 바뀝니다.</td><td>UR</td></tr>
-  <tr><td>Robot IP Address / Port</td><td><img src="../gs/screenshots/v3/as_ctl/P5_enabled_09_TextBox_1921680200.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P5_enabled_11_TextBox_502.png" alt=""></td><td>로봇 컨트롤러 주소와 포트.</td><td>192.168.0.200 / 벤더 기본</td></tr>
-  <tr><td>Communication Protocol</td><td><img src="../gs/screenshots/v3/as_ctl/P5_enabled_13_RadioButton_Vendor_Native.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P5_enabled_14_RadioButton_Modbus-TCP.png" alt=""></td><td>Vendor Native · Modbus-TCP(Doosan) · Custom Socket(CSV).</td><td>Vendor Native</td></tr>
-  <tr><td>〈Modbus-TCP〉 Unit ID / Pose Start Register</td><td><img src="../gs/screenshots/v3/as_ctl/P5_enabled_18_TextBox_1.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P5_enabled_20_TextBox_270.png" alt=""></td><td>Holding Register 로 포즈를 읽을 때의 슬레이브 ID 와 시작 주소(270 = Doosan 표준).</td><td>1 / 270</td></tr>
-  <tr><td>Euler Convention</td><td><img src="../gs/screenshots/v3/as_ctl/P5_enabled_23_ComboBox_Doosan_ZYX.png" alt=""></td><td>회전 표현 규약. 벤더 선택 시 자동 설정되며 필요하면 바꿉니다.</td><td>벤더 기본</td></tr>
-</table>
-
-<h3 id="appsetup-s6">3.7 6 단계 — IO Board Configuration (IO 보드)</h3>
-<figure><img src="../gs/screenshots/v3/as/Window_P6_IOConfiguration.png" data-width="520" alt="6단계 IO 보드 구성">
-<figcaption>6 단계 — IO Board Configuration. 왼쪽 목록에서 보드를 고르고 오른쪽에서 속성을 입력합니다</figcaption></figure>
+<h3 id="appsetup-s6">3.6 5 단계 — IO Board Configuration (IO 보드)</h3>
+<figure><img src="../gs/screenshots/v3/as/Window_P6_IOConfiguration.png" data-width="520" alt="5단계 IO 보드 구성">
+<figcaption>5 단계 — IO Board Configuration. 왼쪽 목록에서 보드를 고르고 오른쪽에서 속성을 입력합니다</figcaption></figure>
 <table class="cols-2-3-4-1">
   <tr><th>항목</th><th>컨트롤</th><th>설명</th><th>기본값</th></tr>
   <tr><td>[+ Add] / [− Remove]</td><td><img src="../gs/screenshots/v3/as_ctl/P6_withboard_02_Button__Add.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P6_withboard_03_Button__Remove.png" alt=""></td><td>보드를 추가 / 선택한 보드를 제거합니다.</td><td>—</td></tr>
@@ -639,26 +567,27 @@ cd &lt;압축 푼 폴더&gt;\deploy
 <div class="callout warn">IO 보드를 실제로 쓰려면 제조사 드라이버(ADLink DASK · Advantech DAQNavi)를 <strong>64비트(x64)</strong>용으로 설치해야 합니다.
 VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다. 연결 결과는 VMS 하단 상태바의 IO 칩과 System Log 에서 확인합니다(§4.7).</div>
 
-<h3 id="appsetup-s7">3.8 7 단계 — Security &amp; License (보안 모드 · 라이선스)</h3>
-<figure><img src="../gs/screenshots/v3/as/Window_P7_SecurityMode.png" data-width="520" alt="7단계 보안 및 라이선스">
-<figcaption>7 단계 — Security &amp; License. 보안 모드 선택 + SW 라이선스 카드. [Finish] 로 저장합니다</figcaption></figure>
+<h3 id="appsetup-s7">3.7 6 단계 — Security &amp; License (보안 모드 · 라이선스)</h3>
+<figure><img src="../gs/screenshots/v3/as/Window_P7_SecurityMode.png" data-width="520" alt="6단계 보안 및 라이선스">
+<figcaption>6 단계 — Security &amp; License. 보안 모드 선택 + SW 라이선스 카드. [Finish] 로 저장합니다</figcaption></figure>
 <table class="cols-2-3-4-1">
   <tr><th>항목</th><th>컨트롤</th><th>설명</th><th>기본값</th></tr>
   <tr><td>Production (운영 — 권장)</td><td><img src="../gs/screenshots/v3/as_ctl/P7_default_03_RadioButton_Production_운영__권장.png" alt=""></td>
       <td>다른 PC 를 가리키는 서버 주소는 HTTPS 만 허용하고 인증서를 엄격하게 검증합니다. 현장에 설치하는 PC 는 이 모드를 씁니다. 같은 PC 의 <code>localhost</code> 주소는 http 여도 됩니다.</td><td>선택됨</td></tr>
   <tr><td>Development (개발 — 사내 테스트 전용)</td><td><img src="../gs/screenshots/v3/as_ctl/P7_default_05_RadioButton_Development_개발__사내_테스트_전용.png" alt=""></td>
       <td>HTTP 와 자체 서명 인증서를 허용합니다. 사내 실증처럼 원격 서버를 http 로 붙여야 하는 환경에서만 씁니다.</td><td>—</td></tr>
-  <tr><td>지문 코드 + [복사]</td><td><img src="../gs/screenshots/v3/as_ctl/P7_default_10_TextBox_0X0Y9-FC635-7540K.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P7_default_11_Button_복사.png" alt=""></td><td>이 PC 의 라이선스 발급용 지문 코드(15 자). [복사] 후 본사에 전달합니다(§2.6).</td><td>자동 표시</td></tr>
+  <tr><td>지문 코드 + [복사]</td><td><img src="../gs/screenshots/v3/as_ctl/P7_default_10_TextBox_0X0Y9-FC635-7540K.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P7_default_11_Button_복사.png" alt=""></td><td>이 PC 의 라이선스 발급용 지문 코드(15 자). [복사] 후 본사에 전달합니다(§2.5).</td><td>자동 표시</td></tr>
   <tr><td>현재 상태</td><td>—</td><td>설치된 라이선스의 상태(정상 · 미설치 · 만료 임박 · 지문 불일치 등)와 고객명 · 좌석 수.</td><td>미설치</td></tr>
+  <tr><td>확장 옵션</td><td>—</td><td>현재 상태 아래에 표시되는 라이선스 구성입니다. 이 제품의 표준 구성에서는 <strong>기본 구성 (확장 옵션 없음)</strong> 으로 표시됩니다.</td><td>기본 구성 (확장 옵션 없음)</td></tr>
   <tr><td>[라이선스 파일 가져오기...] / [상태 새로고침]</td><td><img src="../gs/screenshots/v3/as_ctl/P7_default_14_Button_라이선스_파일_가져오기.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P7_default_15_Button_상태_새로고침.png" alt=""></td><td>발급받은 <code>license.lic</code> 를 선택해 설치 / 상태 표시를 다시 읽습니다.</td><td>—</td></tr>
 </table>
 <div class="callout warn">보안 모드가 저장되어 있지 않으면 VMS 가 시작할 때 <strong>"보안 정책 오류"</strong>를 표시하고 실행되지 않습니다. 반드시 [Finish] 까지 진행하세요.
 전산 담당자가 환경변수 <code>BODA_VMS_SECURITY_MODE</code> 를 설정해 둔 PC 에서는 환경변수가 이 선택보다 우선합니다.</div>
 
-<h3 id="appsetup-after">3.9 저장 후 확인할 것</h3>
+<h3 id="appsetup-after">3.8 저장 후 확인할 것</h3>
 <ol>
   <li>VMS 를 실행해 하단 상태바를 봅니다 — <strong>CAM n/m</strong> 이 초록(전부 연결), <strong>Web Connected</strong>(또는 단독 모드) 인지 확인합니다(§4.7).</li>
-  <li>PLC 를 구성했다면 PLC 칩이 초록인지, IO 보드를 구성했다면 <strong>IO n/m</strong> 칩이 초록인지 확인합니다. 빨간색이면 System Log 의 사유를 보고 12장을 참고합니다.</li>
+  <li>PLC 를 구성했다면 PLC 칩이 초록인지, IO 보드를 구성했다면 <strong>IO n/m</strong> 칩이 초록인지 확인합니다. 빨간색이면 System Log 의 사유를 보고 10장을 참고합니다.</li>
   <li>Web 연동 현장은 Web 의 설비 관리 → 비전 클라이언트 화면에 이 라인이 온라인으로 보이는지 확인합니다(§8.16).</li>
 </ol>
 </section>
@@ -677,10 +606,10 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
 
 <h3 id="vms-start">4.1 실행과 시작 화면</h3>
 <ol>
-  <li>바탕화면의 <strong>BODA Vision System</strong> 바로가기를 실행합니다. 시작 화면(Splash)이 표시되는 동안 설정과 레시피를 읽고 카메라를 자동으로 연결합니다.</li>
+  <li>바탕화면의 <strong>BODA VMS</strong> 바로가기를 실행합니다. 시작 화면(Splash)이 표시되는 동안 설정과 레시피를 읽고 카메라를 자동으로 연결합니다.</li>
   <li>설정 파일이 없으면 "초기 시스템 설정이 필요합니다", 설정 파일은 있지만 마법사를 마치지 않았으면 "시스템 설정이 끝나지 않았습니다" 안내와 함께 시스템 설정 마법사(3장)가 열리고 VMS 는 종료됩니다. 마법사를 저장한 뒤 다시 실행하세요.</li>
-  <li>메인 화면이 뜹니다. 시스템 사용자 로그인 창은 시작 시 뜨지 않으며, <strong>사이드 패널(⚙)을 열거나 헤더의 사용자 칩을 누를 때</strong> 표시됩니다(§4.12).</li>
-  <li>새 버전이 있으면 "업데이트 가능" 안내가 뜹니다(§2.7). 지금 검사를 해야 하면 닫고 나중에 진행해도 됩니다.</li>
+  <li>메인 화면이 뜹니다. 시스템 사용자 로그인 창은 시작 시 뜨지 않으며, <strong>사이드 패널(⚙)을 열거나 헤더의 사용자 칩을 누를 때</strong> 표시됩니다(§4.12). 로그인 창 위쪽에는 제품명 · 버전(예: BODA VMS v1.48.0)이 표시됩니다.</li>
+  <li>새 버전이 있으면 "업데이트 가능" 안내가 뜹니다(§2.6). 지금 검사를 해야 하면 닫고 나중에 진행해도 됩니다.</li>
 </ol>
 
 <h3 id="vms-layout">4.2 화면 구성</h3>
@@ -694,7 +623,7 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
   <tr><td>④ NG History</td><td>최근 불량 이미지 썸네일(카메라 이름 · 시각). 항목을 누르면 그 카메라 화면에 크게 표시됩니다</td></tr>
   <tr><td>⑤ 사이드 패널 (Settings)</td><td>헤더 오른쪽 ⚙ 로 열고 닫습니다. 레시피 · 외부 도구 · 업데이트 · Web 파라미터 · 이미지 저장 · 최근 검사 · 통계 섹션. 4.6 절</td></tr>
   <tr><td>⑥ System Log</td><td><code>[시각] [출처] 메시지</code> 형식의 실시간 로그. 카메라 · PLC · IO 보드 · 시퀀스 · Web 연동 상태가 여기에 남습니다. 오른쪽 위 아이콘으로 비웁니다</td></tr>
-  <tr><td>⑦ 상태바</td><td>시스템 상태 · CAM · PLC · IO · MLOps · Web · ROBOT 연결 표시. 4.7 절</td></tr>
+  <tr><td>⑦ 상태바</td><td>시스템 상태 · CAM · PLC · IO · Web 연결 표시와 오른쪽 끝의 제품명 · 버전. 4.7 절</td></tr>
 </table>
 <p>창 폭이 1980px 보다 좁은 모니터(FHD 등)에서는 헤더가 <strong>컴팩트 모드</strong>로 바뀌어 사번 · 등급 뱃지 · 진행률 막대가 숨겨지고 레시피 · 작업지시 이름이 줄여 표시됩니다. 기능은 같습니다.</p>
 
@@ -800,7 +729,6 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
   <tr><td>[Open]</td><td>이미지 파일을 열어 카메라 대신 표시합니다(카메라 없는 시험용).</td></tr>
   <tr><td>[Inspect]</td><td>현재 이미지로 검사를 1 회 실행합니다.</td></tr>
   <tr><td>[Save Parameter]</td><td>입력한 노출/게인을 스텝에 저장합니다. 완료/실패 메시지가 표시되며, 카메라가 등록되지 않았으면 설정 마법사를 먼저 실행하라는 안내가 뜹니다.</td></tr>
-  <tr><td>[Save 3D]</td><td>촬영한 3D 데이터를 <code>.vpc</code> 파일로 저장합니다. VisionSetup 에서 열어 레시피를 만들 수 있습니다.</td></tr>
   <tr><td>[Close]</td><td>조작 상자를 닫습니다.</td></tr>
 </table>
 <ul>
@@ -847,7 +775,7 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
 
 <h4>Updates</h4>
 <figure><img src="../gs/screenshots/v3/vms_ctl/S3_sidepanel_00_sec_updates.png" data-width="290" alt="Updates 섹션"><figcaption>Updates — [Check for updates], 새 버전 감지 시 배지와 다운로드 진행률</figcaption></figure>
-<p>새 버전이 있으면 "새 버전 vX.Y.Z" 배지가 나타나고, 다운로드 중에는 진행률과 [다운로드 취소] 가 표시됩니다. 절차는 §2.7 을 참고하세요.</p>
+<p>새 버전이 있으면 "새 버전 vX.Y.Z" 배지가 나타나고, 다운로드 중에는 진행률과 [다운로드 취소] 가 표시됩니다. 절차는 §2.6 을 참고하세요.</p>
 
 <h4>Web Parameters</h4>
 <figure><img src="../gs/screenshots/v3/vms_ctl/S3_sidepanel_00_sec_web_parameters.png" data-width="290" alt="Web Parameters 섹션"><figcaption>Web Parameters — [Sync Parameters]</figcaption></figure>
@@ -856,14 +784,13 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
 
 <h4>Image Saving (Admin 전용)</h4>
 <figure><img src="../gs/screenshots/v3/vms_ctl/S3_sidepanel_00_sec_image_saving.png" data-width="290" alt="Image Saving 섹션"><figcaption>Image Saving — [Image Save Settings]</figcaption></figure>
-<figure><img src="../gs/screenshots/v3/vms/dlg_ImageSave.png" data-width="360" alt="Image Save Settings 창"><figcaption>Image Save Settings 창 — 저장 · 포맷/품질 · Web 연동 · MLOps 학습 데이터 수집 · 파일명 규칙 · 예시</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/vms/dlg_ImageSave.png" data-width="360" alt="Image Save Settings 창"><figcaption>Image Save Settings 창 — 저장 · 포맷/품질 · Web 연동 · 파일명 규칙 · 예시</figcaption></figure>
 <p>검사 판정 이미지의 저장과 전송을 설정합니다. 설정은 [Save] 즉시 다음 검사부터 적용됩니다(재시작 불필요).</p>
 <table class="cols-2-7">
   <tr><th>카드</th><th>설정 항목</th></tr>
   <tr><td>저장</td><td>양품(OK) / 불량(NG) 이미지 저장 체크, 저장 경로, 보존 기간(일, 0 = 무제한). 경로 아래에 <code>{날짜}\OK</code> · <code>{날짜}\NG</code> 폴더가 자동으로 만들어지고 오래된 폴더는 시작 시 정리됩니다. <strong>저장 경로가 비어 있으면 저장되지 않습니다.</strong></td></tr>
   <tr><td>포맷 / 품질</td><td>파일 포맷(PNG · JPEG · BMP · TIFF)과 JPEG 품질(1~100).</td></tr>
   <tr><td>Web 연동 (생산 이력)</td><td>전달 모드는 <strong>Auto</strong>(권장). OK / NG 이미지 Web 전송 체크(로컬 저장과 별개), 전송 화질(썸네일 권장 · Full), 썸네일 장변(px). Web 생산 이력의 상세 창에서 사진을 보려면 여기서 NG 전송을 켜야 합니다. SharedPath 모드는 전송하지 않습니다.</td></tr>
-  <tr><td>MLOps 학습 데이터 수집</td><td><strong>NG 이미지 MLOps 전송</strong> 체크와 <strong>양품 샘플 비율</strong>(N 장에 1 장, 기본 200, 0 = 양품 안 보냄). 켜면 NG 사진이 결과 그래픽 없는 원본으로 MLOps 수집 사진 화면에 쌓입니다(9장). 카드 아래 안내가 빨간색이면 설정은 있는데 보안 정책 등으로 막힌 상태이며 사유가 함께 표시됩니다.</td></tr>
   <tr><td>파일명 규칙</td><td>파일명에 넣을 토큰(시각 · 카메라 · 판정 · 시리얼 등)을 체크하고 ▲▼ 로 순서를 정합니다. 구분자 기본 <code>_</code>. 아래 예시 카드에서 결과를 미리 봅니다.</td></tr>
 </table>
 
@@ -882,15 +809,13 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
   <tr><td>CAM n/m</td><td>등록된 카메라 m 대 중 연결된 n 대. 전부 초록 / 일부 주황 / 전부 끊김 빨강</td></tr>
   <tr><td>PLC</td><td>PLC 미구성이면 "PLC N/A". 구성 시 벤더명 · IP, 연결 초록 / 끊김 빨강. 벤더 None 이면 시뮬레이션 PLC 라 항상 연결로 보이므로 IO 보드 구성에서는 IO 칩을 보세요</td></tr>
   <tr><td>IO n/m</td><td>IO 보드를 등록한 구성에서만 표시. 하나라도 연결 실패면 빨강 — 사유는 System Log 의 <code>[IoBoard]</code> 항목에 있습니다. 상태는 AUTO RUN 시작 시점에 갱신됩니다</td></tr>
-  <tr><td>MLOps 비활성</td><td>MLOps 주소 · 토큰을 설정했는데 시작 시 연결 준비가 실패한 경우에만 빨간 칩이 나타납니다. 툴팁에 사유(대표적으로 Production 모드가 http 주소를 거부)가 표시되며, 이 상태에서는 NG 사진 수집과 모델 내려받기가 동작하지 않습니다</td></tr>
   <tr><td>Web</td><td>Web Connected(초록) · Web Disconnected(빨강) · <strong>단독 모드 (Web 미사용)</strong>(회색 — 고장 아님) · <strong>Web 차단 (보안 정책 — https 필요)</strong>(빨강 — Production 모드에서 원격 http 주소를 쓴 경우, 칩에 마우스를 올리면 사유가 보입니다)</td></tr>
-  <tr><td>ROBOT</td><td>표시 자리(현재 N/A 고정)</td></tr>
+  <tr><td>제품명 · 버전</td><td>상태바 오른쪽 끝에 설치된 제품명과 버전(예: BODA VMS v1.48.0)이 표시됩니다. 지원 요청 시 이 표기를 알려 주세요</td></tr>
 </table>
-<figure><img src="../gs/screenshots/v3/vms_ctl/S4_mlops_issue_00_status_mlops_issue_chip.png" data-width="150" alt="MLOps 비활성 칩"><figcaption>상태바의 "MLOps 비활성" 칩</figcaption></figure>
 <p><strong>System Log</strong> 는 문제의 원인을 가장 먼저 알려 주는 곳입니다. 출처 태그별로 뜻은 다음과 같습니다.</p>
 <table class="cols-2-7">
   <tr><th>출처</th><th>내용</th></tr>
-  <tr><td>[System]</td><td>시작 · 카메라 자동 연결 결과 · 단독 모드 안내 · 모델 캐시 정리</td></tr>
+  <tr><td>[System]</td><td>시작 · 카메라 자동 연결 결과 · 단독 모드 안내</td></tr>
   <tr><td>[IoBoard]</td><td>IO 보드 연결 성공/실패와 실패 사유(드라이버 파일 · 오류 번호 · 모델 · 보드 번호)</td></tr>
   <tr><td>[AutoProcess]</td><td>시퀀스 노드 오류("시퀀스 '노드' 노드 오류 — 사유", 5 초 후 자동 재시도), Reset 신호 감지, 시퀀스 재로드</td></tr>
   <tr><td>[Update]</td><td>새 버전 감지</td></tr>
@@ -917,7 +842,6 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
   <li>헤더의 Operator 칩 · [Work Orders] · WO 칩 · 예측 칩이 사라지고, 상태바 Web 칩이 "단독 모드 (Web 미사용)" 으로 표시됩니다.</li>
   <li>검사할 레시피는 사이드 패널 Recipe 섹션의 [Load] 로 고르고, 작업자 로그인 · 작업지시 없이 [AUTO RUN] 을 시작할 수 있습니다.</li>
   <li>검사 결과는 서버 대신 이 PC 의 검사 이력 파일에 사이클마다 저장됩니다(기본 90 일 보존). 최근 결과는 Recent Inspections 에서, 전체는 [전체 이력] 창(§4.10)에서 봅니다.</li>
-  <li>MLOps 주소 · 토큰을 넣어 두면 단독 모드에서도 NG 사진 수집과 모델 내려받기는 동작합니다.</li>
   <li>External Tools 섹션은 등급과 무관하게 항상 보입니다.</li>
 </ul>
 <p>나중에 서버를 두게 되면 마법사에서 체크를 해제하고 Web 서버 주소를 넣어 연동 모드로 바꿀 수 있습니다.</p>
@@ -963,7 +887,7 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
 
 <h4>Backup / Restore — 백업과 복원</h4>
 <figure><img src="../gs/screenshots/v3/vms/dlg_BackupRestore.png" data-width="520" alt="Backup / Restore"><figcaption>Backup / Restore — 백업 생성 · 백업 복원 · 복원된 manifest</figcaption></figure>
-<p>설정 파일 · 레이아웃 · PLC 신호 맵 · 사용자 DB · 검사 이력 DB · 레시피 전체(선택 시 감사 로그)를 ZIP 하나로 만듭니다. 복원 시 [기존 파일 덮어쓰기] 를 켜고 [Run Restore] 한 뒤 VMS 를 재시작합니다. 자세한 운영 요령은 §11.1 을 참고하세요.</p>
+<p>설정 파일 · 레이아웃 · PLC 신호 맵 · 사용자 DB · 검사 이력 DB · 레시피 전체(선택 시 감사 로그)를 ZIP 하나로 만듭니다. 복원 시 [기존 파일 덮어쓰기] 를 켜고 [Run Restore] 한 뒤 VMS 를 재시작합니다. 자세한 운영 요령은 §9.1 을 참고하세요.</p>
 
 <h4>Auto Backup Settings — 자동 백업</h4>
 <figure><img src="../gs/screenshots/v3/vms/dlg_AutoBackup.png" data-width="480" alt="Auto Backup Settings"><figcaption>Auto Backup Settings — 활성화 · 주기(시간) · 보존(일) · 위치</figcaption></figure>
@@ -980,7 +904,7 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
 
 <h4>Support Package — 원격 지원용 진단 패키지</h4>
 <figure><img src="../gs/screenshots/v3/vms/dlg_SupportPackage.png" data-width="480" alt="Support Package"><figcaption>Support Package Export — 감사 로그 일수 · 환경 정보 · 백업 인덱스 · 사이트 식별 정보 포함 여부</figcaption></figure>
-<p>문제 보고 시 공급사에 보낼 ZIP 을 만듭니다. 설정 파일 · 감사 로그(1~90 일) · 환경 정보 · 헬스 스냅샷 · MLOps 전송 큐 상태가 들어가며, 사용자 DB 와 레시피는 <strong>포함되지 않습니다</strong>.</p>
+<p>문제 보고 시 공급사에 보낼 ZIP 을 만듭니다. 설정 파일 · 감사 로그(1~90 일) · 환경 정보 · 헬스 스냅샷이 들어가며, 사용자 DB 와 레시피는 <strong>포함되지 않습니다</strong>.</p>
 
 <h3 id="vms-permissions">4.12 계정과 권한</h3>
 <p>VMS 에는 두 종류의 신원이 있습니다. <strong>작업자</strong>(Web 에 등록된 사번 + PIN)는 "누가 생산했는가"를 기록하는 신원이고,
@@ -1025,7 +949,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <figure><img src="../gs/screenshots/v3/vs/full_main_scene.png" data-width="620" alt="VisionSetup 메인 화면"><figcaption>VisionSetup 메인 화면 (레시피 로드 · 이미지 실행 상태) — ① 메뉴 바 ② 아이콘 툴바 ③ 레시피 · 카메라 · Steps · Tool Palette(좌) ④ Tool Workspace(중) ⑤ 이미지 뷰 + Run Results ⑥ Tool Settings / Camera Settings(우) ⑦ 상태바</figcaption></figure>
 <table class="cols-2-7">
   <tr><th>영역</th><th>내용</th></tr>
-  <tr><td>① 메뉴 바</td><td>File · Run · Recipe · 예제 Template · Sequence · Batch Test... · OCR Synth Data... · Inference Settings... · Camera · 3D. 오른쪽 끝 X 는 프로그램 종료</td></tr>
+  <tr><td>① 메뉴 바</td><td>File · Run · Recipe · 예제 Template · Sequence · Batch Test... · Inference Settings... · Camera · 3D. 오른쪽 끝 X 는 프로그램 종료</td></tr>
   <tr><td>② 아이콘 툴바</td><td>이미지 열기 · 폴더 열기 · Recipe Manager · 저장 · Run All · Run Selected · Clear All Tools · Camera Manager · 카메라 연결 토글 · Acquire · Live 시작/정지 · SLM Recipe Bot. 폴더를 열면 ◀ ▶ 와 Navigate / Run All / Run Selected 모드 라디오가 나타납니다</td></tr>
   <tr><td>③ 왼쪽 패널</td><td>현재 레시피 배지(Now Recipe) · Camera 콤보 · Steps 표(# · Resolution · Tools)와 스텝 버튼 · Tool Palette(15 카테고리 39 도구, [Expand All]/[Collapse All])</td></tr>
   <tr><td>④ Tool Workspace</td><td>도구 노드를 놓고 연결하는 캔버스. 노드를 드래그해 배치하고 우클릭 메뉴로 이름 변경 · 복제 · 연결 · 삭제</td></tr>
@@ -1035,7 +959,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 </table>
 
 <h3 id="vs-toolbar">5.2 메뉴와 툴바</h3>
-<figure><img src="../gs/screenshots/v3/vs/scene_menu_toolbar.jpg" data-width="620" alt="메뉴 막대(File · Run · Recipe · 예제 Template · Sequence · Batch Test · OCR Synth Data · Inference Settings · Camera · 3D)와 툴바"><figcaption>메뉴 막대(File · Run · Recipe · 예제 Template · Sequence · Batch Test · OCR Synth Data · Inference Settings · Camera · 3D)와 툴바</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/vs/scene_menu_toolbar.jpg" data-width="620" alt="메뉴 막대(File · Run · Recipe · 예제 Template · Sequence · Batch Test · Inference Settings · Camera · 3D)와 툴바"><figcaption>메뉴 막대(File · Run · Recipe · 예제 Template · Sequence · Batch Test · Inference Settings · Camera · 3D)와 툴바</figcaption></figure>
 <table class="cols-3-6">
   <tr><th>메뉴 / 버튼</th><th>동작</th></tr>
   <tr><td>File → Open Image / Open Folder</td><td>이미지 파일 하나를 열거나, 폴더를 열어 ◀ ▶ 로 넘겨 봅니다. 폴더 모드에서 Run All · Run Selected 라디오를 고르면 이미지를 넘길 때마다 자동으로 실행됩니다.</td></tr>
@@ -1043,7 +967,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
   <tr><td>Recipe → Recipe Manager / Save Recipe</td><td>레시피 관리 창(§5.3) / 현재 레시피 저장. 저장하면 실행 중인 VMS 가 자동으로 다시 불러옵니다.</td></tr>
   <tr><td>예제 Template</td><td>템플릿 갤러리(§5.8). 스텝을 먼저 선택해야 활성화됩니다.</td></tr>
   <tr><td>Sequence</td><td>시퀀스 편집기(§5.10).</td></tr>
-  <tr><td>Batch Test... / OCR Synth Data... / Inference Settings...</td><td>배치 테스트(§5.11) / OCR 합성 데이터 생성(§5.12) / ONNX 추론 엔진 설정(§5.12).</td></tr>
+  <tr><td>Batch Test... / Inference Settings...</td><td>배치 테스트(§5.11) / ONNX 추론 엔진 설정(§5.12).</td></tr>
   <tr><td>Camera → Camera Manager / Calibration Manager... / Camera Info / Acquire Image / Start · Stop Camera Live / Receive from VMS / Start · Stop Live Receive (from VMS)</td><td>카메라 등록 창 / 캘리브레이션 창(§5.9) / 선택 카메라 정보 팝업 / 촬영 · 라이브 · VMS 프레임 수신(§5.4).</td></tr>
   <tr><td>3D → Save · Load 3D Data / Generate Height Map / Save · Clear Height Slicing</td><td>점군(.vpc) 저장 · 불러오기, 높이 맵 생성, 높이 슬라이스 저장 · 지우기.</td></tr>
   <tr><td>툴바 카메라 연결 토글</td><td>선택 카메라의 연결/해제. 초록이면 연결됨. VMS 가 실행 중이면 카메라 소유권이 VMS 에 있어 비활성이며 툴팁에 사유가 표시됩니다.</td></tr>
@@ -1061,12 +985,12 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 </ol>
 <p>레시피는 <code>%LocalAppData%\BODA VISION AI\Recipes\</code> 에 JSON 으로 저장되며, Web 연동 현장에서는 같은 이름으로 Web 레시피 원장에 자동 등록됩니다.</p>
 <h4>스텝과 카메라 설정</h4>
-<figure><img src="../gs/screenshots/v3/vs/scene_step_camera.jpg" data-width="520" alt="왼쪽"><figcaption>왼쪽 — 현재 레시피 배지 · Camera 콤보 · Step 버튼과 Steps 표(스텝 이름 · Resolution · 도구 수). 오른쪽 — 스텝만 선택했을 때의 Camera Settings(스텝 별칭 · 로봇 노드 번호 · 카메라 설정 유지 · 노출 · 게인)</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/vs/scene_step_camera.jpg" data-width="520" alt="왼쪽"><figcaption>왼쪽 — 현재 레시피 배지 · Camera 콤보 · Step 버튼과 Steps 표(스텝 이름 · Resolution · 도구 수). 오른쪽 — 스텝만 선택했을 때의 Camera Settings(스텝 별칭 · 카메라 설정 유지 · 노출 · 게인)</figcaption></figure>
 <ul>
   <li>Camera 콤보에서 카메라를 고르면 Steps 표에 <strong>그 카메라의 스텝만</strong> 표시됩니다(제목에 "Steps — 카메라명"). 레시피를 불러오면 레시피가 쓰는 카메라가 자동 선택됩니다.</li>
-  <li>스텝 버튼: Add Step · Delete Step · <strong>Duplicate Step</strong>(카메라 설정과 도구 파이프라인을 복사해 바로 뒤에 추가) · Generate Robot Waypoint Steps(로봇 멀티뷰용) · Move Up / Move Down.</li>
+  <li>스텝 버튼: Add Step · Delete Step · <strong>Duplicate Step</strong>(카메라 설정과 도구 파이프라인을 복사해 바로 뒤에 추가) · Move Up / Move Down.</li>
   <li>Steps 표의 <strong>Resolution</strong>(mm/px)은 측정 도구가 픽셀을 mm 로 바꾸는 값입니다. 캘리브레이션을 적용하면 자동으로 채워지고(§5.9), 간단한 현장은 직접 입력해도 됩니다.</li>
-  <li>스텝만 선택하면 오른쪽 패널이 <strong>Camera Settings</strong> 로 바뀝니다 — 스텝 정보(별칭 · 로봇 노드 번호), 2D 이미지(카메라 설정 유지 체크 · 노출 ms · 게인 dB), 3D 카메라면 3D 스캔(점군 후처리 끄기/약/중/강 · 뎁스 범위 제한 mm). 여기 값은 레시피에 저장되고, VisionSetup 의 Acquire · Live 와 VMS 의 촬영(Grab · 자동 운전) 때 카메라에 적용됩니다.</li>
+  <li>스텝만 선택하면 오른쪽 패널이 <strong>Camera Settings</strong> 로 바뀝니다 — 스텝 정보(별칭), 2D 이미지(카메라 설정 유지 체크 · 노출 ms · 게인 dB). 여기 값은 레시피에 저장되고, VisionSetup 의 Acquire · Live 와 VMS 의 촬영(Grab · 자동 운전) 때 카메라에 적용됩니다.</li>
 </ul>
 <h4>다른 PC 에서 만든 레시피 — 카메라 재연결</h4>
 <p>이 PC 에 없는 카메라를 쓰는 레시피를 열면 <strong>미등록 카메라 재연결</strong> 창이 뜹니다. 스텝별로 이 PC 의 카메라를 골라 [적용 및 저장] 을 누르면 도구 · 학습 데이터를 그대로 두고 카메라만 바꿔 쓸 수 있습니다. [건너뛰기] 하면 스텝 이름이 "?-1" 로 표시됩니다.</p>
@@ -1152,12 +1076,12 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
   <tr><td>2D 측정</td><td>컬러 객체 검출</td><td>Color Extract → Blob → Result. 지정 색 영역의 개수 · 위치 (컬러 이미지 필요)</td></tr>
   <tr><td>식별</td><td>코드 판독</td><td>Code Reader → Result. 바코드 · QR · DataMatrix</td></tr>
   <tr><td>Deep Learning</td><td>DL 객체 검출 판정 / DL 이상 탐지 판정</td><td>Detection → Result / Anomaly → Result (ONNX 모델 필요)</td></tr>
-  <tr><td>3D</td><td>3D 객체 카운트 · 치수 (기본)</td><td>Height Slicer → PointCloud Mask Crop → PointCloud Cluster. 높이 범위로 잘라 개수 · 치수 (3D 카메라 필요)</td></tr>
+  <tr><td>3D</td><td>3D 객체 카운트 · 치수 (기본)</td><td>Height Slicer → PointCloud Mask Crop → PointCloud Cluster. 높이 범위로 잘라 개수 · 치수 (점군 데이터 필요)</td></tr>
   <tr><td>3D</td><td>DL 세그 기반 3D 객체 검출</td><td>RF-DETR-seg(마스크 출력) → Mask Crop → Cluster. 딥러닝 윤곽으로 점군을 잘라 객체별 치수</td></tr>
   <tr><td>3D</td><td>3D 기준 형상 편차 검사</td><td>PointCloud Filter → Registration → Deviation. 기준 형상에 정합한 뒤 편차(들뜸 · 눌림) 검사</td></tr>
-  <tr><td>얼라인</td><td>Match Align — 2D 매치 얼라인</td><td>Grayscale → Feature Match → Match Align → Result. 부품이 한 화면에 들어올 때. ΔX / ΔY / Δθ 산출 · 판정 · 로봇 변환. 각도 정밀도가 더 필요하면 Feature Match 를 하나 더 붙이고 Match Align 의 Mode 를 TwoPoint 로</td></tr>
+  <tr><td>얼라인</td><td>Match Align — 2D 매치 얼라인</td><td>Grayscale → Feature Match → Match Align → Result. 부품이 한 화면에 들어올 때. ΔX / ΔY / Δθ 산출 · 판정. 각도 정밀도가 더 필요하면 Feature Match 를 하나 더 붙이고 Match Align 의 Mode 를 TwoPoint 로</td></tr>
   <tr><td>얼라인</td><td>Multi-Step Align — 2-스텝 얼라인</td><td>스텝 Align A / Align B + 합산 (Multi-Step Align). 카메라가 이동하는 대형 부품(한 화면에 안 들어올 때)</td></tr>
-  <tr><td>얼라인</td><td>표준 3D 얼라인 / 평면 틸트 얼라인 / 2D+3D 하이브리드 얼라인</td><td>Registration(6 축) / Plane Fit 2 개 → 3D Geometry(평면 각) / Match Align + Plane Fit (3D 카메라 필요)</td></tr>
+  <tr><td>얼라인</td><td>표준 3D 얼라인 / 평면 틸트 얼라인 / 2D+3D 하이브리드 얼라인</td><td>Registration(6 축) / Plane Fit 2 개 → 3D Geometry(평면 각) / Match Align + Plane Fit (점군 데이터 필요)</td></tr>
 </table>
 <div class="callout warn"><strong>얼라인 템플릿의 기준(원점)은 Feature Match 의 학습 위치입니다.</strong> 부품을 옮겨 놓고 다시 학습하면 기준도 새 위치로 바뀝니다(기본). 마스터 포즈를 유지한 채 특징만 보강하려면 Feature Match 설정의 재학습 원점을 KeepReference 로 두세요(§6.3).</div>
 
@@ -1228,16 +1152,13 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <h4>Inference Settings — 딥러닝 추론 엔진</h4>
 <figure><img src="../gs/screenshots/v3/vs/dlg_InferenceSettings.png" data-width="420" alt="Inference Engine Settings"><figcaption>Inference Engine Settings — Execution Provider · TensorRT Engine Cache Folder · Enable TensorRT FP16</figcaption></figure>
 <p>ONNX Runtime 의 실행 백엔드(Auto · CPU · CUDA · TensorRT)를 고릅니다. GPU 가 없으면 CPU 로 자동 동작합니다. TensorRT 캐시 폴더를 두면 두 번째 실행부터 엔진 재빌드를 건너뛰고, FP16 은 RTX 계열에서 속도를 높입니다. 변경은 다음 모델 로드부터 적용됩니다. VMS 운전에도 같은 설정이 쓰이며, VMS 는 시작할 때 읽으므로 바꾼 뒤에는 VMS 를 다시 시작하세요.</p>
-<h4>OCR Synth Data — 합성 문자 데이터</h4>
-<figure><img src="../gs/screenshots/v3/vs/dlg_SynthData.png" data-width="520" alt="Synthetic Data Generator"><figcaption>Synthetic Data Generator — Font · Patterns · Dataset · Background · Augmentation · Training(MLOps 업로드 안내)</figcaption></figure>
-<p>날짜 · 로트 번호처럼 형식이 정해진 문자열을 폰트 · 배경 · 증강을 조합해 대량 생성합니다. OCR 도구의 인식 모델을 다듬을 학습 데이터로 쓰며, 학습은 만든 데이터를 MLOps 에 올려서 합니다(§10.1).</p>
 <h4>SLM Recipe Bot</h4>
 <p>툴바의 말풍선 버튼으로 엽니다. 모델에 [Connect] 한 뒤 "원형 부품의 지름을 재고 싶어" 처럼 입력하면 레시피 구성을 제안하고, [Apply Recipe] 로 작업 공간에 만들어 줍니다. "자동 실행" 을 켜면 적용 직후 실행 결과까지 알려 줍니다.</p>
 </section>
 
 <section id="tools">
 <h2 id="6-비전-도구-설명-및-사용법">6. 비전 도구 설명 및 사용법</h2>
-<p>Tool Palette 의 도구를 카테고리 순서대로 설명합니다. 도구마다 <strong>용도 · 설정 패널 · 주요 파라미터 · 결과 값 · 사용 요령</strong>을 정리했으며, 설정 패널 그림은 Expert Mode 를 끈 기본 상태이고, <strong>실행 예</strong> 그림은 예제 레시피와 이미지를 실제로 실행한 화면(이미지 뷰 · Run Results · 그 레시피의 Tool Settings)입니다. 파라미터의 정확한 범위와 전체 목록은 부록 13.2 를, 도구를 연결하는 방법은 §5.5 를 참고하세요. 각 파라미터 옆의 물음표(?)에 마우스를 올리면 같은 설명이 프로그램 안에서도 표시됩니다.</p>
+<p>Tool Palette 의 도구를 카테고리 순서대로 설명합니다. 도구마다 <strong>용도 · 설정 패널 · 주요 파라미터 · 결과 값 · 사용 요령</strong>을 정리했으며, 설정 패널 그림은 Expert Mode 를 끈 기본 상태이고, <strong>실행 예</strong> 그림은 예제 레시피와 이미지를 실제로 실행한 화면(이미지 뷰 · Run Results · 그 레시피의 Tool Settings)입니다. 파라미터의 정확한 범위와 전체 목록은 부록 11.2 를, 도구를 연결하는 방법은 §5.5 를 참고하세요. 각 파라미터 옆의 물음표(?)에 마우스를 올리면 같은 설명이 프로그램 안에서도 표시됩니다.</p>
 <h3 id="tools-1">6.1 Preprocessing (Color) — 컬러 전처리</h3>
 <h4>Blur — 블러(흐림)</h4>
 <p>이미지에 블러를 적용해 노이즈를 줄입니다. 엣지 검출이나 이진화 앞에 두면 작은 잡음이 검출에 섞이는 것을 막을 수 있습니다. 컬러 이미지는 컬러 그대로, 그레이 이미지는 그레이 그대로 나옵니다.</p>
@@ -1411,7 +1332,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 </ul>
 <h3 id="tools-4">6.4 Alignment — 얼라인</h3>
 <h4>Match Align — 2D 얼라인 (ΔX / ΔY / Δθ)</h4>
-<p>Feature Match 가 찾은 현재 포즈(중심 · 각도)를 기준(마스터) 포즈와 비교해 변위 ΔX · ΔY · Δθ 를 계산합니다. 캘리브레이션(또는 스텝 Resolution)이 있으면 mm 로도 내고, 핸드아이 행렬로 로봇 · 스테이지 좌표 변위(RobotDX · RobotDY · RobotDTheta)까지 만들어 PLC 로 보낼 수 있습니다. 카메라 1 대로 부품을 보는 표준 2D 얼라인 구성입니다.</p>
+<p>Feature Match 가 찾은 현재 포즈(중심 · 각도)를 기준(마스터) 포즈와 비교해 변위 ΔX · ΔY · Δθ 를 계산합니다. 캘리브레이션(또는 스텝 Resolution)이 있으면 mm 로도 내며, 계산한 보정량은 PLC 로 설비(스테이지 등)에 보낼 수 있습니다. 카메라 1 대로 부품을 보는 표준 2D 얼라인 구성입니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/11_Match_Align_split.png" data-width="500" alt="Match Align — 2D 얼라인 (ΔX / ΔY / Δθ) 설정 패널"><figcaption>Match Align — 2D 얼라인 (ΔX / ΔY / Δθ) — Tool Settings 패널</figcaption></figure>
 <figure><img src="../gs/screenshots/v3/scenes/MatchAlign.jpg" data-width="620" alt="Match Align — 2D 얼라인 (ΔX / ΔY / Δθ) 실행 예"><figcaption>실행 예 — 돌아가고 옮겨진 피팅의 기준 위치 대비 보정량 — ΔX −39.6 px · ΔY −3.8 px · Δθ 33.38°, 허용 범위 안이라 OK</figcaption></figure>
 <table class="cols-3-2-4">
@@ -1420,31 +1341,29 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <tr><td>Use Trained Reference</td><td>켬</td><td>Feature Match 학습 시점의 패턴 중심 · 학습 ROI 각도를 기준으로 씁니다. 끄면 아래 Ref 값 사용</td></tr>
 <tr><td>Ref X / Ref Y (px) · Ref θ (°) · Ref X2 / Y2</td><td>0</td><td>수동 기준. [현재 매칭을 기준으로 등록] 으로 지금 매칭 위치를 기준으로 캡처</td></tr>
 <tr><td>Enable Judgment · Unit · Max ΔXY (radial) · Max Δθ (°)</td><td>해제 · Mm · 1.0 · 1.0</td><td>√(ΔX²+ΔY²) 와 |Δθ| 가 모두 한계 이내면 OK. Unit=Mm 은 캘리브레이션 또는 스텝 Resolution 필요</td></tr>
-<tr><td>Enable Robot Transform · M11 M21 M12 M22 · θ Sign</td><td>해제 · 1 0 0 1 · 1</td><td>핸드아이 행렬의 상위 2×2(회전 · 스케일 · 반전)와 각도 부호. Δ 는 벡터라 병진 성분은 필요 없습니다</td></tr>
 <tr><td>Draw Overlay</td><td>켬</td><td>기준(노란 십자) → 현재(원) 변위 화살표와 수치. 초록 = 합격, 빨강 = NG</td></tr>
 </table>
-<p><strong>결과 값</strong> — RefX/Y/Theta · CurrentX/Y/Theta · DeltaX · DeltaY · DeltaTheta · DeltaXMm · DeltaYMm · RobotDX · RobotDY · RobotDTheta · ScaleRatio · JudgmentRadial · JudgmentPass</p>
+<p><strong>결과 값</strong> — RefX/Y/Theta · CurrentX/Y/Theta · DeltaX · DeltaY · DeltaTheta · DeltaXMm · DeltaYMm · ScaleRatio · JudgmentRadial · JudgmentPass</p>
 <p><strong>판정</strong> — Enable Judgment 를 켜면 위치(반경)와 각도가 모두 한계 이내여야 OK. Unit=Mm 인데 mm 변환이 불가능하면 픽셀로 잘못 판정하지 않고 실패 처리합니다.</p>
 <ul>
-<li><strong>절차</strong> — ① Feature Match 로 기준 부품의 패턴을 학습 ② Feature Match 를 이 도구에 Result 로 연결하고 Run → Δ 계산 ③ 기준을 학습 시점과 다르게 잡으려면 기준 부품을 놓고 Run 후 [현재 매칭을 기준으로 등록] ④ 로봇 전송은 Robot Transform 을 켜고 핸드아이 상위 2×2 입력.</li>
+<li><strong>절차</strong> — ① Feature Match 로 기준 부품의 패턴을 학습 ② Feature Match 를 이 도구에 Result 로 연결하고 Run → Δ 계산 ③ 기준을 학습 시점과 다르게 잡으려면 기준 부품을 놓고 Run 후 [현재 매칭을 기준으로 등록] ④ 보정량(DeltaX · DeltaY · DeltaTheta)을 설비로 보내려면 PLC Output 에 매핑.</li>
 <li>2 점 모드에서 ScaleRatio 가 1.0 에서 벗어나면 오검출이나 배율 변화를 의심하세요.</li>
 <li>Feature Match 를 재학습하면 기준도 함께 바뀌거나(UseCurrentImage) 유지되므로(KeepReference) 재학습 원점 설정을 확인하세요.</li>
 </ul>
 <h4>Multi-Step Align — 2-스텝 얼라인 (카메라 이동, 대형 부품)</h4>
-<p>카메라 1 대가 로봇 · 스테이지로 이동하며 두 스텝에서 부품 양단의 특징을 하나씩 매칭할 때, 두 스텝의 포즈를 한 좌표계로 합쳐 기준 대비 ΔX · ΔY · Δθ 를 계산합니다. 부품이 한 화면에 다 들어오지 않는 패널 · 프레임 얼라인에 씁니다. 이 도구는 마지막(B) 스텝의 작업 공간에 놓습니다.</p>
+<p>카메라 1 대가 스테이지 등 이동 장치로 옮겨 가며 두 스텝에서 부품 양단의 특징을 하나씩 매칭할 때, 두 스텝의 포즈를 한 좌표계로 합쳐 기준 대비 ΔX · ΔY · Δθ 를 계산합니다. 부품이 한 화면에 다 들어오지 않는 패널 · 프레임 얼라인에 씁니다. 이 도구는 마지막(B) 스텝의 작업 공간에 놓습니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/12_Multi-Step_Align_split.png" data-width="500" alt="Multi-Step Align — 2-스텝 얼라인 (카메라 이동, 대형 부품) 설정 패널"><figcaption>Multi-Step Align — 2-스텝 얼라인 (카메라 이동, 대형 부품) — Tool Settings 패널</figcaption></figure>
 <figure><img src="../gs/screenshots/v3/scenes/MultiStepAlign.jpg" data-width="620" alt="Multi-Step Align — 2-스텝 얼라인 (카메라 이동, 대형 부품) 실행 예"><figcaption>실행 예 — A 스텝(왼쪽 시야)과 B 스텝(오른쪽 시야)에서 각각 매칭한 결과를 합쳐 계산한 보정량 — 부품을 3° 돌려 놓은 장면에서 Δθ −2.899°, 판정 OK. B 스텝 화면입니다</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Sources — Point A / Point B (스텝 + 도구)</td><td>—</td><td>A · B 스텝의 Feature Match 를 콤보로 지정합니다(Result 연결이 아니라 스텝 간 포즈 저장소를 읽음)</td></tr>
 <tr><td>Require Same Cycle</td><td>켬</td><td>이번 사이클에 기록된 포즈만 인정. 끄면 편집은 편하지만 운전 중 A 매칭 실패 시 이전 값으로 잘못 계산될 수 있음</td></tr>
-<tr><td>Baseline X / Y (B − A)</td><td>0 / 0</td><td>B 촬영 위치의 A 대비 오프셋(로봇 · 스테이지 이동량). 두 스텝 모두 캘리브레이션이 있으면 mm, 없으면 px — mm 권장</td></tr>
+<tr><td>Baseline X / Y (B − A)</td><td>0 / 0</td><td>B 촬영 위치의 A 대비 오프셋(카메라 이동량). 두 스텝 모두 캘리브레이션이 있으면 mm, 없으면 px — mm 권장</td></tr>
 <tr><td>Ref A X/Y · Ref B X/Y · [현재 두 점을 기준으로 등록]</td><td>0</td><td>기준 부품을 놓고 A → B 순서로 Run 한 뒤 등록. Baseline 을 먼저 넣어야 같은 좌표계로 잡힙니다. 등록할 때의 단위(mm · px)가 함께 기록되어, 나중에 캘리브레이션을 넣거나 빼서 단위가 바뀌면 '단위 불일치' 로 실패합니다 — Baseline · Max ΔXY 를 새 단위로 맞추고 다시 등록하세요</td></tr>
 <tr><td>Enable Judgment · Max ΔXY · Max Δθ</td><td>해제 · 1.0 · 1.0</td><td>Match Align 과 같은 규칙</td></tr>
-<tr><td>Enable Robot Transform · M11~M22 · θ Sign</td><td>해제 · 항등 · 1</td><td>핸드아이 2×2 변환</td></tr>
 <tr><td>Draw Overlay</td><td>켬</td><td>두 점이 서로 다른 화면에 있으므로 좌상단에 Δ 수치 패널만 표시</td></tr>
 </table>
-<p><strong>결과 값</strong> — Unit · PointAX/AY · PointBX/BY · RefAX/AY · RefBX/BY · DeltaX · DeltaY · DeltaTheta · ScaleRatio · RobotDX/DY/DTheta · JudgmentRadial · JudgmentPass</p>
+<p><strong>결과 값</strong> — Unit · PointAX/AY · PointBX/BY · RefAX/AY · RefBX/BY · DeltaX · DeltaY · DeltaTheta · ScaleRatio · JudgmentRadial · JudgmentPass</p>
 <p><strong>판정</strong> — Match Align 과 동일 — 위치(반경)와 각도가 모두 한계 이내면 OK.</p>
 <ul>
 <li>예제 템플릿 '2-스텝 얼라인' 을 쓰면 Align A · Align B 스텝과 소스 연결이 자동으로 만들어집니다. 이후 각 스텝의 Feature Match 학습 → Baseline 입력 → 기준 등록 순서로 진행하세요.</li>
@@ -1559,7 +1478,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <tr><td>OCR Engine · Language</td><td>Tesseract (Tesseract · PPOcrOnnx) · English</td><td>엔진과 언어(영 · 한 · 일 · 중 · 영+한). PP-OCR 은 자체 전처리를 하므로 Auto Preprocess · Invert · Denoise · Target Height 설정을 무시합니다</td></tr>
 <tr><td>Page Seg Mode · Engine Mode</td><td>SingleLine · LstmOnly</td><td>Tesseract 전용 — 한 줄 · 한 단어 · 한 글자 · 블록 등 레이아웃 가정과 엔진 모드</td></tr>
 <tr><td>Char Whitelist</td><td>(빈 값)</td><td>허용 문자 집합(예: 0123456789-/). O↔0, l↔1 같은 혼동을 막습니다. 공백이 들어가는 문자열(예: LOT 261013)은 공백도 넣습니다</td></tr>
-<tr><td>Max Side Length · Custom Det/Rec Model · Custom Dict</td><td>960 · (빈 값)</td><td>PP-OCR 전용 — 입력 최대 변(작은 글씨는 1600~2000)과 직접 학습한 모델 · 사전 파일</td></tr>
+<tr><td>Max Side Length · Custom Det/Rec Model · Custom Dict</td><td>960 · (빈 값)</td><td>PP-OCR 전용 — 입력 최대 변(작은 글씨는 1600~2000)과 별도로 준비한 검출 · 인식 모델과 문자 사전 파일(비우면 기본 모델)</td></tr>
 <tr><td>Confidence Threshold</td><td>40 [0~100 %]</td><td>이 신뢰도 미만이면 실패</td></tr>
 <tr><td>Auto Preprocess · Invert Image · Target Text Height · Denoise Level · Dot Matrix Mode</td><td>켬 · 해제 · 40 · 1 · 해제</td><td>Tesseract 전용 전처리 — 자동 대비 · 이진화, 흑배경 백글자 반전, 글자 높이 확대, 잡음 제거, 도트 프린트 연결</td></tr>
 <tr><td>Format Preset · Custom Patterns</td><td>None</td><td>출력 형식 강제 — DD/MM/YYYY, YYYY-MM-DD, LOT 6~8 자리, 직접 입력. 토큰 D/M/Y/H/S/f=숫자, L=영문, A=영숫자, ?=임의, 그 외 문자는 리터럴로 치환(‘/’↔‘7’ 오인식 보정)</td></tr>
@@ -1614,7 +1533,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 </ul>
 <h3 id="tools-9">6.9 3D Processing — 점군 처리</h3>
 <h4>PointCloud Filter — 점군 솎아내기 · 이상점 제거</h4>
-<p>점군의 점 수를 줄이고(VoxelGrid 다운샘플) 표면에서 튄 점을 지웁니다(통계적 이상점 제거, SOR). Registration · Deviation 앞에 두어 처리 속도를 높이는 것이 주된 용도입니다. 촬영 자체의 노이즈는 이 도구가 아니라 스텝의 Camera Settings 에 있는 ‘포인트 클라우드 후처리’(끄기 · 약 · 중 · 강)로 카메라 안에서 정리합니다.</p>
+<p>점군의 점 수를 줄이고(VoxelGrid 다운샘플) 표면에서 튄 점을 지웁니다(통계적 이상점 제거, SOR). Registration · Deviation 앞에 두어 처리 속도를 높이는 것이 주된 용도입니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/21_PointCloud_Filter.png" data-width="240" alt="PointCloud Filter — 점군 솎아내기 · 이상점 제거 설정 패널"><figcaption>PointCloud Filter — 점군 솎아내기 · 이상점 제거 — Tool Settings 패널</figcaption></figure>
 <figure><img src="../gs/screenshots/v3/scenes/PCFilter.jpg" data-width="620" alt="PointCloud Filter — 점군 솎아내기 · 이상점 제거 실행 예"><figcaption>실행 예 — 프레임 점군 28,382 점을 4 mm 복셀로 솎아 5,330 점으로 줄인 결과(81.2% 감소). 뒤의 정합 · 편차 계산이 빨라집니다</figcaption></figure>
 <table class="cols-3-2-4">
@@ -1625,7 +1544,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <p><strong>결과 값</strong> — InputPoints · OutputPoints · ReductionRatio · AppliedVoxel · AppliedSor</p>
 <p><strong>판정</strong> — 판정 없음. ReductionRatio 가 0.9 이상이면 Voxel Size 가 과한지 확인하세요.</p>
 <ul>
-<li>가공된 점군은 뒤의 점군 도구(Registration · Deviation · Cluster · Plane Fit)가 그대로 쓰지만, 촬영 시 만들어진 Depth Map(Height Slicer 입력)에는 반영되지 않습니다.</li>
+<li>가공된 점군은 뒤의 점군 도구(Registration · Deviation · Cluster · Plane Fit)가 그대로 쓰지만, 점군 데이터에 함께 들어 있는 Depth Map(Height Slicer 입력)에는 반영되지 않습니다.</li>
 </ul>
 <h4>PointCloud Registration — 기준 형상 정합 (3D 얼라인)</h4>
 <p>기준 3D 데이터(.vpc 점군 또는 .stl CAD)와 현재 점군을 겹쳐 맞춥니다. PCA 로 거칠게 맞춘 뒤 ICP 로 정밀 정합해 이동 · 회전량(6 축)을 구하며, 부품이 매번 조금씩 다르게 놓일 때 자세를 재거나 편차 검사 앞단에서 자세를 맞출 때 씁니다.</p>
@@ -1663,7 +1582,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <li>수동 흐름: 2D 이미지를 연결하고 이 도구를 선택한 뒤 이미지 뷰에서 ROI(사각형 · 원 · 다각형)를 그립니다. 결과는 Point Cloud 탭에서 확인합니다.</li>
 </ul>
 <h4>PointCloud Cluster — 덩어리 분리 · 개수 · 치수</h4>
-<p>점군을 거리 기준으로 덩어리(클러스터)로 나눠 물체 개수를 세고 덩어리마다 크기(가로 · 세로 · 높이) · 중심 · 방향을 잽니다. 부품 개수 세기, 가장 큰 물체만 남기기, 부스러기 제거에 씁니다. 카메라 정보로 mm 환산이 가능합니다.</p>
+<p>점군을 거리 기준으로 덩어리(클러스터)로 나눠 물체 개수를 세고 덩어리마다 크기(가로 · 세로 · 높이) · 중심 · 방향을 잽니다. 부품 개수 세기, 가장 큰 물체만 남기기, 부스러기 제거에 씁니다. 점군에 저장된 카메라 정보로 mm 환산이 가능합니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/24_PointCloud_Cluster_split.png" data-width="500" alt="PointCloud Cluster — 덩어리 분리 · 개수 · 치수 설정 패널"><figcaption>PointCloud Cluster — 덩어리 분리 · 개수 · 치수 — Tool Settings 패널</figcaption></figure>
 <figure><img src="../gs/screenshots/v3/scenes/PCCluster.jpg" data-width="620" alt="PointCloud Cluster — 덩어리 분리 · 개수 · 치수 실행 예"><figcaption>실행 예 — 남은 점을 덩어리로 나눠 프레임 1 개를 찾은 예 — 치수가 기준 376 × 252 mm(−6 / +6) 안이라 OK</figcaption></figure>
 <table class="cols-3-2-4">
@@ -1671,7 +1590,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <tr><td>Tolerance (mm)</td><td>5.0 [0.1~50]</td><td>이 거리 안의 점은 같은 덩어리. 부품 사이 간격보다 작게</td></tr>
 <tr><td>Min Points · Max Points</td><td>100 · 1000000</td><td>덩어리로 인정할 점 수 범위(잡음 제외)</td></tr>
 <tr><td>Max Reported Clusters</td><td>10 [1~50]</td><td>결과에 보고할 덩어리 수 상한</td></tr>
-<tr><td>Scale Mode · XY Scale (mm/px)</td><td>Manual (Manual · AutoFromCamera) · 1.0</td><td>AutoFromCamera 는 Mech-Mind 촬영 점군에서 카메라 내부 정보와 실측 높이로 mm/px 를 자동 계산(권장). 파일 점군 등 정보가 없으면 XY Scale 로 폴백</td></tr>
+<tr><td>Scale Mode · XY Scale (mm/px)</td><td>Manual (Manual · AutoFromCamera) · 1.0</td><td>AutoFromCamera 는 점군 파일(.vpc)에 함께 저장된 카메라 내부 정보와 실측 높이로 mm/px 를 자동 계산(권장). 그 정보가 없는 점군은 XY Scale 로 계산</td></tr>
 <tr><td>Output Mode</td><td>LargestOnly (LargestOnly · AllMerged · KeepOriginal)</td><td>가장 큰 덩어리만 남김 / 유효 덩어리 전부 합침(잡음 제거) / 점군 유지하고 측정만</td></tr>
 <tr><td>Draw Overlay</td><td>켬</td><td>2D 이미지에 덩어리별 색 점 · 외접 사각형 · 중심 · 라벨(#번호, 점 수, 길이×폭)</td></tr>
 </table>
@@ -1760,18 +1679,18 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <p><strong>결과 값</strong> — Length · Straightness · MaxDeviation · RmsDeviation · InlierCount · TotalPoints · InlierRatio · AngleXY(평면 방향 °) · Elevation(고각 °) · LinePointX/Y/Z · LineDirX/Y/Z</p>
 <p><strong>판정</strong> — 판정을 켜면 직진도(인라이어의 99 % 가 직선에서 떨어진 거리)가 Max Straightness 이하일 때 OK. 유효한 점이 Min Inliers 보다 적거나 직선을 찾지 못하면 NG.</p>
 <ul>
-<li>좌표는 점군 원좌표입니다 — 3D 카메라 점군은 X/Y 가 화소, Z 가 mm 라 길이 · 방향은 화소 기준입니다.</li>
+<li>좌표는 점군 원좌표입니다 — X/Y 가 화소, Z 가 mm 로 저장된 점군이면 길이 · 방향도 화소 기준입니다.</li>
 <li>직진도에는 막대 · 레일의 굵기와 표면 흩어짐도 들어갑니다. 곧은 부품을 먼저 재서 기준을 정하세요.</li>
 </ul>
 <h3 id="tools-11">6.11 Deep Learning — 딥러닝 추론</h3>
 <h4>Detection — 딥러닝 객체 검출</h4>
-<p>학습된 ONNX 모델로 객체의 위치(박스)와 클래스를 검출합니다. 기본 학습 백본은 D-FINE이며 YOLOv8/v11 형식도 자동 판별합니다. 부품 유무 · 다종 부품 검출 · 외관 결함 검출에 씁니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
+<p>학습된 ONNX 모델로 객체의 위치(박스)와 클래스를 검출합니다. D-FINE 형식 모델을 기본으로 하며 YOLOv8/v11 형식도 자동 판별합니다. 부품 유무 · 다종 부품 검출 · 외관 결함 검출에 씁니다. 모델은 학습된 ONNX 파일(.onnx)을 Model Path 오른쪽의 [폴더] 버튼으로 지정합니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/29_Detection.png" data-width="240" alt="Detection — 딥러닝 객체 검출 설정 패널"><figcaption>Detection — 딥러닝 객체 검출 — Tool Settings 패널</figcaption></figure>
 <figure><img src="../gs/screenshots/v3/scenes/Detection.jpg" data-width="620" alt="Detection — 딥러닝 객체 검출 실행 예"><figcaption>실행 예 — T · Y 피팅 3 개를 검출 — 객체마다 클래스별 색 박스, Run Results 에 개수 · 클래스 · 신뢰도</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
-<tr><td>Model Path (.onnx) · [레지스트리…]</td><td>(빈 값)</td><td>ONNX 파일 또는 MLOps 레지스트리 참조(model://…). Class Names 는 모델 메타데이터에서 자동으로 채워집니다</td></tr>
-<tr><td>Inference Size (px)</td><td>640 [320~1280]</td><td>학습 imgsz 와 같게</td></tr>
+<tr><td>Model Path (.onnx) · [폴더]</td><td>(빈 값)</td><td>ONNX 모델 파일 경로. [폴더] 버튼으로 파일을 고릅니다. Class Names 는 모델 메타데이터에서 자동으로 채워집니다</td></tr>
+<tr><td>Inference Size (px)</td><td>640 [320~1280]</td><td>모델의 입력 크기와 같게</td></tr>
 <tr><td>Use SAHI · Tile Size · Overlap Ratio</td><td>해제 · 640 · 0.2</td><td>큰 이미지를 타일로 나눠 추론(작은 결함). 타일 수만큼 느려집니다</td></tr>
 <tr><td>Use CLAHE · Clip Limit · Tile Grid Size</td><td>해제 · 2.0 · 8</td><td>추론 전 국소 대비 향상(어두운 이미지). 조명이 고르면 끕니다</td></tr>
 <tr><td>Confidence Threshold · IoU Threshold</td><td>0.25 · 0.45</td><td>검출 신뢰도 하한(0.25 많이, 0.7 확실한 것만) / 중복 박스 제거 기준</td></tr>
@@ -1786,13 +1705,13 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <li>템플릿 ‘DL 객체 검출 판정’ 이 Detection → Result 체인을 만들어 줍니다.</li>
 </ul>
 <h4>Segmentation — 픽셀 단위 분할 (semantic)</h4>
-<p>U-Net 같은 픽셀 분류 모델로 이미지를 클래스별 마스크로 나눕니다. 결함 영역의 면적을 재거나 배경 · 전경을 분리할 때 쓰며, 같은 클래스의 개체를 따로 세야 하면 RF-DETR-seg 를 씁니다. 뒤에 Blob 을 붙여 개수 · 크기를 분석합니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
+<p>U-Net 같은 픽셀 분류 모델로 이미지를 클래스별 마스크로 나눕니다. 결함 영역의 면적을 재거나 배경 · 전경을 분리할 때 쓰며, 같은 클래스의 개체를 따로 세야 하면 RF-DETR-seg 를 씁니다. 뒤에 Blob 을 붙여 개수 · 크기를 분석합니다. 모델은 학습된 ONNX 파일(.onnx)을 Model Path 오른쪽의 [폴더] 버튼으로 지정합니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/30_Segmentation.png" data-width="240" alt="Segmentation — 픽셀 단위 분할 (semantic) 설정 패널"><figcaption>Segmentation — 픽셀 단위 분할 (semantic) — Tool Settings 패널</figcaption></figure>
 <figure><img src="../gs/screenshots/v3/scenes/Segmentation.jpg" data-width="620" alt="Segmentation — 픽셀 단위 분할 (semantic) 실행 예"><figcaption>실행 예 — 화소 단위 분할 — 배경 · T · Y 3 클래스를 색으로 칠하고, 클래스별 화소 수 · 비율을 냅니다</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
-<tr><td>Model Path (.onnx) · Input Size</td><td>(빈 값) · 512 [64~1024]</td><td>입력 [1,3,H,W] · 출력 [1,C,H,W] 로짓 모델. 입력 크기는 학습 크기와 같아야 합니다(다르면 오류 없이 정확도만 떨어짐)</td></tr>
-<tr><td>ImageNet Normalization</td><td>켬</td><td>학습 때와 같아야 합니다. 마스크가 엉뚱하면 이 설정부터 확인</td></tr>
+<tr><td>Model Path (.onnx) · Input Size</td><td>(빈 값) · 512 [64~1024]</td><td>입력 [1,3,H,W] · 출력 [1,C,H,W] 로짓 모델. 입력 크기는 모델의 입력 크기와 같아야 합니다(다르면 오류 없이 정확도만 떨어짐)</td></tr>
+<tr><td>ImageNet Normalization</td><td>켬</td><td>모델을 만들 때 쓴 정규화 방식과 같아야 합니다. 마스크가 엉뚱하면 이 설정부터 확인</td></tr>
 <tr><td>Background Class Index</td><td>0 [0~32]</td><td>이 클래스는 마스크에서 제외</td></tr>
 <tr><td>Show Overlay · Overlay Opacity</td><td>켬 · 0.4</td><td>클래스별 컬러 반투명 오버레이</td></tr>
 </table>
@@ -1802,12 +1721,12 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <li>Class{i}_Pixels 는 검사 이미지(ROI 를 쓰면 ROI 영역) 크기 기준 화소 수이고, Class{i}_AreaRatio 는 그 영역 안 비율이라 모든 클래스를 더하면 1 입니다. ROI 를 쓰면 오버레이도 ROI 자리에만 그려집니다.</li>
 </ul>
 <h4>RF-DETR-seg — 인스턴스 분할</h4>
-<p>RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
+<p>RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델은 학습된 ONNX 파일(.onnx)을 Model Path 오른쪽의 [폴더] 버튼으로 지정합니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/32_RF-DETR-seg.png" data-width="240" alt="RF-DETR-seg — 인스턴스 분할 설정 패널"><figcaption>RF-DETR-seg — 인스턴스 분할 — Tool Settings 패널</figcaption></figure>
 <figure><img src="../gs/screenshots/v3/scenes/RfdetrSeg.jpg" data-width="620" alt="RF-DETR-seg — 인스턴스 분할 실행 예"><figcaption>실행 예 — 인스턴스 분할 — 피팅 3 개 각각의 마스크 · 박스 · 클래스 · 신뢰도</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
-<tr><td>Model Path (.onnx) · [레지스트리…]</td><td>(빈 값)</td><td>파일 또는 model:// 참조</td></tr>
+<tr><td>Model Path (.onnx) · [폴더]</td><td>(빈 값)</td><td>ONNX 모델 파일 경로. [폴더] 버튼으로 파일을 고릅니다</td></tr>
 <tr><td>Input Size (모델이 정합니다)</td><td>560 (잠김)</td><td>모델을 열면 ONNX 가 정한 값으로 자동 설정되고 칸이 잠깁니다 — 모델마다 배수가 달라 손으로 맞추면 안 됩니다</td></tr>
 <tr><td>Confidence Threshold · Max Instances</td><td>0.5 · 100 [1~1000]</td><td>검출 신뢰도 / 점수 순 상한</td></tr>
 <tr><td>Show Mask Overlay · Overlay Opacity · Draw Boxes + Labels · Output Mask Image</td><td>켬 · 0.4 · 켬 · 해제</td><td>표시 옵션 · 켜면 출력 이미지가 인스턴스 이진 마스크(흰색 = 인스턴스)가 되어 Mask Crop 등에 Image 연결</td></tr>
@@ -1815,30 +1734,29 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <p><strong>결과 값</strong> — InstanceCount · Inst{i}_Class · Inst{i}_ClassName · Inst{i}_Score · Inst{i}_X/Y/Width/Height · Inst{i}_MaskPixels</p>
 <p><strong>판정</strong> — 인스턴스가 0 건이면 NG.</p>
 <ul>
-<li>학습은 MLOps 의 train_rfdetr_seg.py(세그멘테이션 데이터셋, coco 형식)로 합니다(§9.6).</li>
 <li>템플릿 ‘DL 세그 기반 3D 객체 검출’ 이 RF-DETR-seg(마스크 출력) → Mask Crop → Cluster 체인을 만듭니다.</li>
 </ul>
 <h4>Classify — 이미지 분류</h4>
-<p>ResNet · MobileNet 같은 분류 모델(ONNX)로 이미지(또는 ROI) 전체를 한 클래스로 판정합니다. 양품/불량 판정, 부품 종류 구분, 외관 등급에 씁니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
+<p>ResNet · MobileNet 같은 분류 모델(ONNX)로 이미지(또는 ROI) 전체를 한 클래스로 판정합니다. 양품/불량 판정, 부품 종류 구분, 외관 등급에 씁니다. 모델은 학습된 ONNX 파일(.onnx)을 Model Path 오른쪽의 [폴더] 버튼으로 지정합니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/33_Classify_split.png" data-width="500" alt="Classify — 이미지 분류 설정 패널"><figcaption>Classify — 이미지 분류 — Tool Settings 패널</figcaption></figure>
 <figure><img src="../gs/screenshots/v3/scenes/Classify.jpg" data-width="620" alt="Classify — 이미지 분류 실행 예"><figcaption>실행 예 — 테이프가 붙은 피팅을 tape(100%)로 분류 — tape 는 OK Classes 에 없으므로 NG(왼쪽 위 붉은 글자)</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
-<tr><td>Model Path (.onnx) · Input Width / Height</td><td>(빈 값) · 224 / 224</td><td>학습 입력 크기와 같게</td></tr>
+<tr><td>Model Path (.onnx) · Input Width / Height</td><td>(빈 값) · 224 / 224</td><td>모델의 입력 크기와 같게</td></tr>
 <tr><td>Confidence Threshold</td><td>0.5 [0.1~1]</td><td>가장 확률이 높은 클래스의 신뢰도가 이 값보다 낮으면 NG</td></tr>
 <tr><td>OK Classes</td><td>(비어 있음)</td><td>양품으로 볼 클래스(여러 개). 지정하면 그 클래스로 분류되고 신뢰도도 임계값 이상일 때만 OK — 양품 · 불량을 가르는 검사라면 반드시 지정</td></tr>
-<tr><td>Use ImageNet Normalization</td><td>켬</td><td>torchvision 사전학습 모델이면 켬</td></tr>
-<tr><td>Class Names · Draw Overlay</td><td>(자동) · 켬</td><td>학습 폴더 순서대로 쉼표 구분 / 클래스 · 신뢰도 표시(PASS 초록 · FAIL 빨강 테두리)</td></tr>
+<tr><td>Use ImageNet Normalization</td><td>켬</td><td>ImageNet 정규화를 쓰는 모델이면 켬</td></tr>
+<tr><td>Class Names · Draw Overlay</td><td>(자동) · 켬</td><td>모델의 클래스 순서대로 쉼표 구분 / 클래스 · 신뢰도 표시(PASS 초록 · FAIL 빨강 테두리)</td></tr>
 </table>
 <p><strong>결과 값</strong> — ClassName · ClassId · Confidence</p>
 <p><strong>판정</strong> — OK Classes 를 지정하면 양품 클래스로 분류되고 신뢰도가 Confidence Threshold 이상일 때 OK, 그 밖은 NG(결과 메시지 끝에 "불량 클래스" 또는 "신뢰도 부족"). 지정하지 않으면 신뢰도만으로 판정하며, 설정 패널에 경고가 표시됩니다.</p>
-<h4>Anomaly — 이상 탐지 (정상 이미지만으로 학습)</h4>
-<p>PatchCore · FastFlow · EfficientAD 같은 anomalib 호환 모델로 정상 대비 이상 점수를 계산하고 히트맵으로 이상 부위를 표시합니다. 불량 샘플이 거의 없는 공정에서 정상 이미지만으로 학습해 쓰는 방식입니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
-<figure><img src="../gs/screenshots/v3/tools/34_Anomaly.png" data-width="240" alt="Anomaly — 이상 탐지 (정상 이미지만으로 학습) 설정 패널"><figcaption>Anomaly — 이상 탐지 (정상 이미지만으로 학습) — Tool Settings 패널</figcaption></figure>
-<figure><img src="../gs/screenshots/v3/scenes/Anomaly.jpg" data-width="620" alt="Anomaly — 이상 탐지 (정상 이미지만으로 학습) 실행 예"><figcaption>실행 예 — 수정액 자국이 있는 피팅 — 이상 점수 0.665 가 임계값 0.545 를 넘어 NG. 히트맵에서 이상 부위가 밝게 표시됩니다</figcaption></figure>
+<h4>Anomaly — 이상 탐지 (정상 대비 이상 점수)</h4>
+<p>PatchCore · FastFlow · EfficientAD 같은 이상 탐지 모델로 정상 대비 이상 점수를 계산하고 히트맵으로 이상 부위를 표시합니다. 정상 이미지만으로 만든 모델을 쓰므로 불량 샘플이 거의 없는 공정에 알맞습니다. 모델은 학습된 ONNX 파일(.onnx)을 Model Path 오른쪽의 [폴더] 버튼으로 지정합니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
+<figure><img src="../gs/screenshots/v3/tools/34_Anomaly.png" data-width="240" alt="Anomaly — 이상 탐지 (정상 대비 이상 점수) 설정 패널"><figcaption>Anomaly — 이상 탐지 (정상 대비 이상 점수) — Tool Settings 패널</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/scenes/Anomaly.jpg" data-width="620" alt="Anomaly — 이상 탐지 (정상 대비 이상 점수) 실행 예"><figcaption>실행 예 — 수정액 자국이 있는 피팅 — 이상 점수 0.665 가 임계값 0.545 를 넘어 NG. 히트맵에서 이상 부위가 밝게 표시됩니다</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
-<tr><td>Model Path (.onnx) · Input Size</td><td>(빈 값) · 224 [64~512]</td><td>학습 image_size 와 같게</td></tr>
+<tr><td>Model Path (.onnx) · Input Size</td><td>(빈 값) · 224 [64~512]</td><td>모델의 입력 크기와 같게</td></tr>
 <tr><td>Anomaly Threshold</td><td>0.5 [0~1]</td><td>이 점수 이상이면 이상. 0.3 엄격(약한 이상도), 0.7 느슨</td></tr>
 <tr><td>Auto Threshold Calibration — Normal Images Folder · Sigma (k) · [Calibrate Threshold]</td><td>— · 3.0</td><td>정상 이미지 폴더의 점수 분포로 임계값을 계산해 Anomaly Threshold 에 넣습니다(평균 + k × 표준편차). ROI 를 쓰면 같은 ROI 영역으로 채점하므로, 폴더에는 검사와 같은 크기로 찍은 원본 이미지를 넣습니다</td></tr>
 <tr><td>Draw Overlay · Show Heatmap · Heatmap Opacity</td><td>켬 · 켬 · 0.4</td><td>NORMAL/ANOMALY 표시와 Jet 히트맵</td></tr>
@@ -2019,37 +1937,37 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <ol>
   <li>OCR 도구를 놓고 ROI 를 글자 영역에 그립니다. OCR Engine(Tesseract · PaddleOCR)과 Language 를 고르고, 숫자만 있는 각인은 Character Whitelist 에 <code>0123456789</code> 를 넣어 오인식을 줄입니다.</li>
   <li>흐릿한 각인은 앞에 Image Enhance 를, 도트 프린트는 Dot Matrix Mode 를 켭니다. Auto Preprocess 는 기본 켬.</li>
-  <li>"정해진 문자열이 맞는지" 만 보려면 OCV 도구에 기준 문자를 학습시켜 검증합니다. 날짜 · 로트처럼 형식이 정해진 문자열의 인식률을 높이려면 OCR Synth Data(§5.12)로 합성 데이터를 만들어 모델을 다듬습니다.</li>
+  <li>"정해진 문자열이 맞는지" 만 보려면 OCV 도구에 기준 문자를 학습시켜 검증합니다.</li>
 </ol>
 
 <h3 id="ex-dl">7.7 딥러닝 판정 — 검출 · 이상 탐지</h3>
 <figure><img src="../gs/screenshots/v3/templates/dl-detection.png" data-width="420" alt="DL 객체 검출 체인"><figcaption>Detection → Result (ONNX 모델 필요)</figcaption></figure>
 <p><strong>상황</strong> — 규칙으로 정의하기 어려운 외관 결함(긁힘 · 찍힘 · 이물)이나 다양한 모양의 부품을 학습된 모델로 판정합니다.</p>
 <ol>
-  <li>모델을 준비합니다 — MLOps(9장)에서 학습해 운영으로 승격합니다(10장).</li>
+  <li>모델을 준비합니다 — 검사 대상에 맞게 학습된 ONNX 모델 파일을 이 PC 의 폴더에 복사해 둡니다.</li>
   <li>템플릿 Deep Learning → <strong>DL 객체 검출 판정</strong>(또는 DL 이상 탐지 판정)을 생성합니다.</li>
-  <li><strong>Detection</strong> 의 Model Path 에 ONNX 파일을 지정하거나 [레지스트리…] 로 <code>model://…@production</code> 참조를 고릅니다. D-FINE · YOLO 형식은 자동 판별됩니다.</li>
+  <li><strong>Detection</strong> 의 Model Path 옆 폴더 버튼을 눌러 ONNX 모델 파일을 지정합니다. D-FINE · YOLO 형식은 자동 판별됩니다.</li>
   <li>Confidence Threshold(기본 0.5 부근)를 조정해 오검출과 미검출의 균형을 잡고, 특정 클래스만 볼 때는 클래스 필터를 씁니다. 0 건 검출은 NG 이므로 "결함이 없으면 OK" 인 검사에는 결과 해석을 Result 도구에서 반대로 잡습니다(결함 클래스 검출 = NG).</li>
-  <li>이상 탐지(Anomaly)는 정상 이미지만으로 학습한 모델을 쓰며 Anomaly Score 임계값으로 판정합니다. 히트맵 오버레이로 이상 부위를 확인합니다.</li>
+  <li>이상 탐지(Anomaly)는 정상 이미지를 기준으로 하는 이상 탐지 모델(ONNX)을 쓰며 Anomaly Score 임계값으로 판정합니다. 히트맵 오버레이로 이상 부위를 확인합니다.</li>
   <li>GPU 가 없는 PC 는 CPU 로 동작합니다. 속도가 필요하면 Inference Settings(§5.12)에서 CUDA · TensorRT 를 고릅니다.</li>
 </ol>
 
-<h3 id="ex-align">7.8 얼라인 — 로봇 · 스테이지 보정량 산출</h3>
+<h3 id="ex-align">7.8 얼라인 — 설비 · 스테이지 보정량 산출</h3>
 <figure><img src="../gs/screenshots/v3/templates/2d-match-align.png" data-width="520" alt="2D 매치 얼라인 체인"><figcaption>Grayscale → Feature Match → Match Align → Result</figcaption></figure>
-<p><strong>상황</strong> — 부품이 기준 위치에서 얼마나 이동 · 회전했는지 재서 로봇이나 서보에 보정량을 보냅니다(로봇 얼라인).</p>
+<p><strong>상황</strong> — 부품이 기준 위치에서 얼마나 이동 · 회전했는지 재서 설비(스테이지 · 서보)에 보정량을 보냅니다.</p>
 <ol>
   <li>템플릿 얼라인 → <strong>Match Align — 2D 매치 얼라인</strong> 을 생성합니다. 각도 정밀도가 더 필요하면 부품 양단의 특징을 찾는 Feature Match 를 하나 더 붙여 Match Align 에 Result 로 연결하고 Mode 를 <strong>TwoPoint</strong> 로 바꿉니다(연결 순서 = 1 번 · 2 번 점).</li>
   <li>기준(마스터) 부품을 놓고 Feature Match 를 학습합니다. 학습 위치가 곧 기준 포즈입니다.</li>
-  <li><strong>Match Align</strong> 에서 Unit=Mm(캘리브레이션 필요) · Max ΔXY · Max Δθ 를 정하고 Enable Judgment 를 켭니다. 로봇으로 보내려면 Enable Robot Transform 을 켜고 핸드아이 행렬 상위 2×2 를 넣습니다.</li>
-  <li>부품을 옮긴 이미지로 Run All → DeltaX · DeltaY · DeltaTheta(RobotDX · DY · DTheta)를 확인합니다. Match Align 의 PLC Output 에서 이 값들을 PLC 주소에 매핑하면 시퀀스가 돌 때마다 PLC 로 전달됩니다.</li>
-  <li>부품이 한 화면에 안 들어오면 <strong>2-스텝 얼라인</strong>(Multi-Step Align)을, 기울기까지 필요하면 3D 카메라로 <strong>평면 틸트 얼라인</strong> · <strong>2D+3D 하이브리드 얼라인</strong> 을 씁니다.</li>
+  <li><strong>Match Align</strong> 에서 Unit=Mm(캘리브레이션 필요) · Max ΔXY · Max Δθ 를 정하고 Enable Judgment 를 켭니다.</li>
+  <li>부품을 옮긴 이미지로 Run All → DeltaX · DeltaY · DeltaTheta 를 확인합니다. Match Align 의 PLC Output 에서 이 값들을 PLC 주소에 매핑하면 시퀀스가 돌 때마다 PLC 로 전달됩니다.</li>
+  <li>부품이 한 화면에 안 들어오면 <strong>2-스텝 얼라인</strong>(Multi-Step Align)을, 기울기까지 재야 하면 점군(.vpc) 데이터를 쓰는 <strong>평면 틸트 얼라인</strong> · <strong>2D+3D 하이브리드 얼라인</strong> 템플릿(§5.8)을 씁니다.</li>
 </ol>
 
 <h3 id="ex-3d">7.9 3D 검사 — 객체 개수 · 치수 · 형상 편차</h3>
 <figure><img src="../gs/screenshots/v3/templates/pc-dl-detect.png" data-width="520" alt="DL 세그 기반 3D 객체 검출 체인"><figcaption>RF-DETR-seg → PointCloud Mask Crop → PointCloud Cluster</figcaption></figure>
-<p><strong>상황</strong> — 3D 카메라(Mech-Mind 등)로 찍은 점군에서 부품 개수와 가로 · 세로 · 높이를 재거나, 기준 형상과의 편차(들뜸 · 눌림)를 봅니다. "어디에 있는지" 는 2D 에서 찾고 "얼마나 큰지" 는 3D 에서 잽니다.</p>
+<p><strong>상황</strong> — 저장해 둔 점군(.vpc) 데이터에서 부품 개수와 가로 · 세로 · 높이를 재거나, 기준 형상과의 편차(들뜸 · 눌림)를 봅니다. "어디에 있는지" 는 2D 에서 찾고 "얼마나 큰지" 는 3D 에서 잽니다.</p>
 <ol>
-  <li>3D 카메라 스텝에서 Acquire(또는 3D → Load 3D Data 로 .vpc 파일)로 점군을 가져옵니다. Depth Map · Point Cloud 탭에서 확인합니다.</li>
+  <li>메뉴 3D → Load 3D Data 로 .vpc 파일을 열어 점군을 가져옵니다(§5.4). Depth Map · Point Cloud 탭에서 확인합니다.</li>
   <li>템플릿 3D → <strong>3D 객체 카운트 · 치수 (기본)</strong> 를 생성합니다. Height Slicer 의 MinZ/MaxZ 를 부품 높이 범위(mm)로 맞추면 그 높이의 영역만 마스크가 됩니다. 딥러닝 윤곽으로 자르려면 <strong>DL 세그 기반 3D 객체 검출</strong> 을 씁니다.</li>
   <li><strong>PointCloud Cluster</strong> 의 Tolerance(mm) 를 부품 사이 간격보다 작게, Min Points 를 잡음보다 크게 잡습니다. Scale Mode 는 AutoFromCamera(카메라 정보로 mm 자동 환산)를 권장합니다. Run 후 ClusterCount 와 Cluster{i}_SizeX/Y/Z 를 확인합니다.</li>
   <li>형상 편차 검사는 <strong>3D 기준 형상 편차 검사</strong> 템플릿 — Registration 에 기준 점군(.vpc) 또는 CAD(.stl)를 지정해 자세를 맞춘 뒤 Deviation 의 Tolerance(mm) · Max Defect Ratio 로 판정합니다. 결과는 점군 위 히트맵(초록 = 일치, 빨강 = 초과)으로 표시됩니다.</li>
@@ -2288,8 +2206,8 @@ NG 코드별 건수 · 비중 · 누적이 표로 나오고, 누적선이 80% �
 <figure><img src="../gs/screenshots/v3/web/d27_pm_perform.png" data-width="440" alt="수행 기록 창 — 실제 소요 시간 · 비고"><figcaption>수행 기록 창 — 실제 소요 시간 · 비고</figcaption></figure>
 <h3 id="web-forecast">8.20 불량률 예측</h3>
 <figure><img src="../gs/screenshots/v3/web/w44_forecast.png" data-width="620" alt="불량률 예측"><figcaption>불량률 예측 — 라인별 예측 NG율 카드와 최근 24 시간 실측 · 예측 잔차 SPC 차트</figcaption></figure>
-<p>최근 검사 흐름을 학습한 예측 모델이 다음 1 시간의 불량률을 추정합니다. 60 초마다 자동 갱신되며, 예측값은 VMS 헤더의 예측 칩과 안돈 보드의 사전 경보에도 표시됩니다.
-모델이 등록되지 않은 서버는 "활성 ML 모델이 등록되지 않았습니다" 배너가 뜨고 예측이 표시되지 않습니다(모델 등록과 재학습은 서버 관리 도구 <code>tools/register_model.py</code> · <code>tools/retrain_pipeline.py</code> 로 합니다).</p>
+<p>최근 검사 흐름을 바탕으로 예측 모델이 다음 1 시간의 불량률을 추정합니다. 60 초마다 자동 갱신되며, 예측값은 VMS 헤더의 예측 칩과 안돈 보드의 사전 경보에도 표시됩니다.
+모델이 등록되지 않은 서버는 "활성 ML 모델이 등록되지 않았습니다" 배너가 뜨고 예측이 표시되지 않습니다. 예측 모델 등록은 서버 관리자가 합니다.</p>
 
 <h3 id="web-shifts">8.21 교대 마스터 (Admin)</h3>
 <figure><img src="../gs/screenshots/v3/web/w50_shifts.png" data-width="620" alt="교대 마스터"><figcaption>교대 마스터 — 교대명 · 시각 · 소요 시간 · 상태</figcaption></figure>
@@ -2310,7 +2228,7 @@ NG 코드별 건수 · 비중 · 누적이 표로 나오고, 누적선이 80% �
 <h3 id="web-license">8.24 SW 라이선스 (Admin)</h3>
 <figure><img src="../gs/screenshots/v3/web/w53_admin_license.png" data-width="620" alt="SW 라이선스"><figcaption>SW 라이선스 — 라이선스 정보 · 서버 지문 코드 · 점유 좌석</figcaption></figure>
 <p>서버에 설치된 라이선스(상태 · 고객 · 라이선스 ID · 좌석 사용/계약)와 각 라인 PC 가 점유한 좌석(클라이언트 번호 · 호스트 · 지문 · 마지막 갱신)을 30 초마다 갱신해 보여 줍니다.
-좌석은 72 시간 동안 갱신이 없으면 자동 해제됩니다. 계약 좌석을 초과하면 경고 배너가 뜹니다(현재는 운전 제한 없음). 서버 지문 코드는 라이선스 발급 요청에 씁니다(§2.6).</p>
+좌석은 72 시간 동안 갱신이 없으면 자동 해제됩니다. 계약 좌석을 초과하면 경고 배너가 뜹니다(현재는 운전 제한 없음). 서버 지문 코드는 라이선스 발급 요청에 씁니다(§2.5).</p>
 
 <h3 id="web-settings">8.25 시스템 설정 (Admin)</h3>
 <figure><img src="../gs/screenshots/v3/web/w54_settings.png" data-width="620" alt="시스템 설정"><figcaption>시스템 설정 — 시스템 정보 · 모니터링 설정 · VisionServer 연결</figcaption></figure>
@@ -2332,189 +2250,15 @@ NG 코드별 건수 · 비중 · 누적이 표로 나오고, 누적선이 80% �
   <li>라인 PC 는 설정 마법사의 라인 번호(0~99)로 구분되며, 같은 서버 안에서 번호가 겹치면 안 됩니다. 작업지시 · 레시피 · 작업자 세션은 라인별로 분리됩니다.</li>
   <li>공장 네트워크 사정으로 서버를 여러 대 두고 라인을 나누어 붙일 수도 있습니다. 이때 라인 번호는 <strong>십의 자리를 서버 번호</strong>로 쓰기를 권장합니다 — 0~9 시험 · 예비, 10~19 1 번 서버, 20~29 2 번 서버 … 90~99 9 번 서버. 나중에 서버를 합치거나 보고서를 모을 때 어느 라인인지 구분됩니다.</li>
   <li>서버를 나누면 대시보드 · 작업지시 · 품질 분석 · 백업 · 관리자 계정 · 기준 정보도 서버마다 따로입니다. 네트워크가 허락하면 서버 1 대 구성이 운영이 가장 단순합니다.</li>
-  <li>한 PC 에 카메라가 여러 대 있으면 VMS 를 인스턴스 이름으로 두 개 띄워 두 라인으로 운용할 수 있습니다(§11.5).</li>
+  <li>한 PC 에 카메라가 여러 대 있으면 VMS 를 인스턴스 이름으로 두 개 띄워 두 라인으로 운용할 수 있습니다(§9.5).</li>
 </ul>
-</section>
-
-<section id="mlops">
-<h2 id="9-AI-학습-플랫폼-BODA-VMS-MLOps">9. AI 학습 플랫폼 (BODA.VMS.MLOps)</h2>
-<div class="callout"><strong>⚙ 이 장은 딥러닝 검사 도구의 모델을 만들고 배포하는 엔지니어 · 관리자용이며, MLOps 는 인증 범위 밖의 선택 구성 요소입니다.</strong>
-MLOps 서버 없이 검사만 운영하는 현장은 건너뛰어도 됩니다.</div>
-<p>MLOps 는 브라우저로 접속하는 웹 프로그램(<code>http://서버주소:5310</code>)입니다. 라인에서 올라온 불량 사진을 모아 라벨링하고,
-GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단계별(후보 → 스테이징 → 운영)로 관리하며, 라인 PC 는 레시피에 적힌 참조로 운영 모델을 자동으로 내려받습니다.
-설치는 §2.4, 라인 PC 쪽 설정은 §3.3(고급 설정)과 §4.6(Image Saving) 을 참고하세요.</p>
-
-<h3 id="mlops-login">9.1 로그인과 역할</h3>
-<ul>
-  <li>MLOps 는 별도 계정이 없고 <strong>BODA.VMS.Web 의 계정</strong>으로 들어갑니다. 로그인 화면에 Web 에서 로그인해 받은 액세스 토큰(JWT)을 붙여 넣는 방식이며, 두 서버가 같은 서명 키를 쓰기 때문에 그대로 통합니다.</li>
-  <li>현재는 <strong>Web 의 Admin 계정만</strong> 모든 기능을 쓸 수 있습니다. MLOps 안에는 Viewer(조회) · Labeler(라벨링) · Engineer(학습 · 스테이징 승격) · Admin(운영 승격 · 워커 · 라인 PC 관리) 역할 체계가 있지만, Web 의 User · Guest 계정으로는 화면이 "역할 없음" 으로 표시되고 기능이 열리지 않습니다.</li>
-  <li>라인 PC 와 학습 워커는 사람이 로그인하지 않고 <strong>토큰</strong>(<code>ln_…</code> · <code>wk_…</code>)으로 붙습니다. 토큰은 발급 시 한 번만 표시되며 서버에는 해시만 남습니다.</li>
-</ul>
-
-<h3 id="mlops-nav">9.2 메뉴 구조</h3>
-<figure><img src="../gs/screenshots/v3/mlops/01_dashboard.png" data-width="620" alt="MLOps 대시보드"><figcaption>MLOps 대시보드 — 모델 계열 · 워커 · 진행 중인 학습 · 데이터셋 버전 카드, 경고 블록, 최근 학습 작업 · 운영 중인 모델</figcaption></figure>
-<table class="cols-2-3-4">
-  <tr><th>그룹</th><th>메뉴</th><th>용도</th></tr>
-  <tr><td>—</td><td>대시보드</td><td>모델 · 워커 · 학습 · 데이터셋 현황과 경고(작업을 못 받는 워커, 라인에서 달라진 모델)</td></tr>
-  <tr><td>데이터</td><td>수집 사진</td><td>라인 PC 가 올린 NG 사진 · 양품 샘플, 사람이 올린 사진 → 데이터셋에 담기</td></tr>
-  <tr><td>데이터</td><td>데이터셋 · 라벨링</td><td>데이터셋 만들기 · 이미지 올리기 · 라벨링 캔버스 · 판(스냅샷) 뜨기</td></tr>
-  <tr><td>학습</td><td>학습 작업</td><td>학습 제출 · 진행률 · 로그 · 학습 곡선 · 재실행</td></tr>
-  <tr><td>학습</td><td>데이터셋 버전</td><td>학습 대상으로 고정된 판 목록 · 외부 zip 업로드</td></tr>
-  <tr><td>학습</td><td>워커</td><td>GPU 학습 PC 등록 · 상태 · 토큰 재발급 · 비활성화</td></tr>
-  <tr><td>학습</td><td>사전학습 미러</td><td>워커가 인터넷 대신 받아 가는 사전학습 가중치 저장소</td></tr>
-  <tr><td>배포</td><td>모델</td><td>모델 계열 · 버전 · 단계(후보 · 스테이징 · 운영 · 폐기) · ONNX 업로드 · 라인 배포 이력</td></tr>
-  <tr><td>배포</td><td>레시피 바인딩</td><td>레시피의 도구가 어느 모델 버전을 쓰는지 · 롤백</td></tr>
-  <tr><td>배포</td><td>라인 PC</td><td>라인 PC 등록 · 토큰 발급 · 중지 · 삭제</td></tr>
-  <tr><td>배포</td><td>라인 모니터링</td><td>운영 웹의 검사 이력을 모델 버전별로 비교 · 재학습 권고</td></tr>
-</table>
-
-<h3 id="mlops-workflow">9.3 전체 흐름 — 수집에서 배포까지</h3>
-<ol>
-  <li><strong>라인 NG 수집</strong> — 라인 PC 의 Image Save Settings 에서 [NG 이미지 MLOps 전송] 을 켜고 양품 샘플 비율(N 장에 1 장)을 정합니다(§4.6). 사진이 결과 그래픽 없는 원본으로 <strong>수집 사진</strong> 화면에 쌓입니다.</li>
-  <li><strong>데이터셋에 담기</strong> — 수집 사진에서 출처 "라인 NG", "데이터셋에 안 담긴 것만" 으로 걸러 고른 뒤 [데이터셋에 담기](데이터셋 + 학습/검증/시험 분할).</li>
-  <li><strong>라벨링</strong> — 데이터셋 상세에서 [라벨링 시작]. 사각형 · 폴리곤 · SAM 클릭으로 라벨을 붙이고 [저장하고 다음]. Engineer 가 [검토 승인].</li>
-  <li><strong>판 뜨기</strong> — [버전 만들기] 로 지금의 이미지와 라벨을 굳혀 학습 대상 버전을 만듭니다.</li>
-  <li><strong>학습 제출</strong> — 학습 작업 → [작업 제출]: 데이터셋 버전 · 모델 계열 · 스크립트 · 사전학습 가중치 · 하이퍼파라미터.</li>
-  <li><strong>워커 실행</strong> — GPU 워커가 작업을 가져가 학습하고 진행률 · 로그 · 학습 곡선을 실시간으로 올립니다. 끝나면 모델이 <strong>후보(Candidate)</strong> 버전으로 자동 등록됩니다.</li>
-  <li><strong>승격</strong> — 모델 상세에서 버전의 [스테이지] 로 후보 → 스테이징(Engineer) → 운영(Admin). 라인으로 나가는 결정은 항상 사람이 합니다.</li>
-  <li><strong>레시피 연결</strong> — VisionSetup 딥러닝 도구의 Model Path 옆 [레지스트리…] 로 모델을 고르면 <code>model://{모델ID}@production</code> 참조가 저장됩니다(§6). 라인 PC 는 레시피를 열 때 운영 버전을 내려받아 캐시하고, 검사 중에는 네트워크를 쓰지 않습니다.</li>
-  <li><strong>모니터링</strong> — 라인 모니터링에서 모델 버전별 불량률 · 신뢰도를 비교하고, 권고가 붙으면 [재학습] 으로 5 단계부터 다시 돕니다.</li>
-</ol>
-<div class="callout tip">자동으로 되는 것은 수집 · 사전 라벨 · 판 뜨기 · 후보 등록 · 재학습 권고까지입니다. <strong>스테이징 · 운영 승격과 롤백은 항상 사람</strong>이 결정하며, 데이터가 쌓였다고 사람 없이 재학습이 도는 일은 없습니다.</div>
-
-<h3 id="mlops-images">9.4 수집 사진</h3>
-<figure><img src="../gs/screenshots/v3/mlops/15_image_pool.png" data-width="620" alt="수집 사진"><figcaption>수집 사진 — 출처 · 데이터셋에 안 담긴 것만 · 태그 · 파일명 필터, 격자(NG/OK 칩 · 라인 ID · 파일명 · 시각), [데이터셋에 담기]</figcaption></figure>
-<ul>
-  <li>필터: 출처(라인 NG · 양품 샘플 / 직접 올림, 기본 라인 NG), "데이터셋에 안 담긴 것만"(기본 켜짐), 태그(예: <code>verdict:ng</code>, <code>recipe:PUT-10</code>), 파일명 검색.</li>
-  <li>카드를 클릭해 선택하고 [데이터셋에 담기] → 데이터셋과 분할(학습 · 검증 · 시험)을 고릅니다. 사진은 복제되지 않고 참조로 담깁니다.</li>
-  <li>사진이 올라오지 않으면 라인 PC 의 [NG 이미지 MLOps 전송] 스위치와 라인 PC 등록 · 토큰(§9.11)을 확인하세요.</li>
-</ul>
-
-<h3 id="mlops-datasets">9.5 데이터셋 · 라벨링</h3>
-<figure><img src="../gs/screenshots/v3/mlops/02_datasets.png" data-width="620" alt="데이터셋 목록"><figcaption>데이터셋 — 카드(작업 유형 · 클래스 · 라벨 진척 · 분할) · [열기] [라벨링] · [새 데이터셋]</figcaption></figure>
-<ul>
-  <li><strong>[새 데이터셋]</strong> — 이름 · 작업 유형(검출 · 분류 · 이상탐지 · 세그멘테이션 · OCR) · 클래스(쉼표 구분, 순서가 클래스 번호) · 설명. 작업 유형과 클래스는 만든 뒤 바꿀 수 없습니다. 이상탐지는 정상 클래스(good · normal · ok · 정상)가 필요합니다.</li>
-</ul>
-<figure><img src="../gs/screenshots/v3/mlops/03_dataset_detail.png" data-width="620" alt="데이터셋 상세"><figcaption>데이터셋 상세 — [라벨링 시작] [이미지 올리기] [모델로 미리 채우기] [버전 만들기], 통계 카드, 이미지 격자(라벨 오버레이 · 상태 · 분할)</figcaption></figure>
-<table class="cols-3-6">
-  <tr><th>버튼</th><th>동작</th></tr>
-  <tr><td>[이미지 올리기]</td><td>jpg · png · bmp · webp 최대 500 장, 태그 · 라인 ID(선택), "올린 뒤 이 데이터셋에 담기"(기본 켜짐). 10 장씩 나눠 전송합니다.</td></tr>
-  <tr><td>[모델로 미리 채우기]</td><td>같은 작업 유형 · 클래스의 검출 모델로 미라벨 이미지에 초기 라벨을 붙이고 불확실도를 기록합니다(확신도 문턱 기본 0.25, 한 번에 200 장). 붙은 라벨은 "작업 중" 상태이므로 사람이 확인 · 수정 후 완료로 표시합니다. 검출 데이터셋에서만 지원합니다.</td></tr>
-  <tr><td>[자동 분할 8:2] · [분할 지정]</td><td>학습 · 검증 · 시험 분할을 자동 또는 선택 지정.</td></tr>
-  <tr><td>[버전 만들기]</td><td>지금의 이미지와 라벨을 굳혀 학습 대상 판을 만듭니다. "검토를 마친 이미지만 담기" · "라벨 없는 이미지도 담기(배경 샘플)" 옵션.</td></tr>
-</table>
-<h4>라벨링 캔버스</h4>
-<figure><img src="../gs/screenshots/v3/mlops/11_labeling_detection.png" data-width="620" alt="라벨링 캔버스 (검출)"><figcaption>라벨링 캔버스(검출) — 모드 토글(사각형 · 폴리곤 · SAM 클릭) · 확대/축소/맞춤 · 원본 해상도, 오른쪽 클래스 · 라벨 · 진행 패널, [이전] [저장하고 다음]</figcaption></figure>
-<figure><img src="../gs/screenshots/v3/mlops/12_labeling_classification.png" data-width="620" alt="라벨링 캔버스 (분류)"><figcaption>라벨링 캔버스(분류) — 이미지당 클래스 하나를 고릅니다</figcaption></figure>
-<ul>
-  <li>작업 유형별 도형 — 검출: 사각형 · 폴리곤 / 세그멘테이션: 폴리곤 / 분류 · 이상탐지: 이미지당 클래스 하나 / OCR: 사각형 + 문자열.</li>
-  <li>단축키 — ←/→ 이전 · 다음 이미지, 끌어서 그리기, 휠 확대, Alt+끌기 이동, 숫자키로 클래스 선택, Delete 삭제, Esc 선택 해제. 폴리곤은 클릭으로 점을 찍고 오른쪽 클릭 또는 Enter 로 닫습니다.</li>
-  <li><strong>SAM 클릭</strong> — 객체를 클릭하면 경계를 자동으로 만들어 줍니다. Shift+클릭(또는 오른쪽 클릭)은 빼고 싶은 곳, Tab 으로 더 크게 · 작게 후보 순회, Backspace 로 마지막 점 취소, <strong>Enter 로 확정</strong>해야 라벨이 됩니다. 서버에 SAM 모델이 없으면 이 모드는 나타나지 않습니다.</li>
-  <li>클래스 선택은 "다음에 그릴 것"만 정합니다. 이미 붙은 라벨의 클래스는 라벨 목록의 팔레트 메뉴로 바꿉니다. 이미지 1 장은 한 사람만 작업할 수 있으며(잠금 10 분, 저장 시 연장) 남이 잡고 있으면 읽기 전용입니다.</li>
-  <li>진행 패널의 [검토 승인] / [반려] 는 Engineer 이상이 누릅니다.</li>
-</ul>
-
-<h3 id="mlops-training">9.6 학습 작업</h3>
-<figure><img src="../gs/screenshots/v3/mlops/04_training.png" data-width="620" alt="학습 작업"><figcaption>학습 작업 — 상태 필터, 목록(상태 · 스크립트 · 진행 · 에폭 · 손실 · 지표 · 우선순위 · 경과 · 제출), [작업 제출]</figcaption></figure>
-<figure><img src="../gs/screenshots/v3/mlops/14_retrain.png" data-width="560" alt="학습 작업 제출"><figcaption>학습 작업 제출(재학습) 창 — 데이터셋 버전 · 모델 계열 · 스크립트 · 사전학습 가중치 · 백본 · Seed · 우선순위 · 하이퍼파라미터</figcaption></figure>
-<table class="cols-3-6">
-  <tr><th>항목</th><th>설명</th></tr>
-  <tr><td>데이터셋 버전</td><td>작업 유형과 내보내기 형식이 스크립트와 맞아야 합니다(검출 yolo · 분류 imagefolder · 이상탐지 mvtec · OCR ppocr · 세그멘테이션 coco).</td></tr>
-  <tr><td>결과를 등록할 모델 계열</td><td>학습이 끝나면 여기에 후보 버전이 생깁니다.</td></tr>
-  <tr><td>스크립트</td><td>train_dfine.py(검출, D-FINE) · train_rfdetr_seg.py(세그멘테이션) · train_classifier.py(분류) · train_anomaly.py(이상탐지) · train_ppocr.py(OCR). 서버가 허용한 목록만 나옵니다.</td></tr>
-  <tr><td>사전학습 가중치</td><td>train_dfine · train_rfdetr_seg · train_anomaly 는 <strong>필수</strong> — 워커는 인터넷에서 받지 않으므로 사전학습 미러(§9.8)에 먼저 올려야 합니다. train_classifier 는 선택입니다 — 고르지 않으면 백본 이름으로 인터넷에서 받으므로, 인터넷이 없는 워커에서는 골라야 합니다.</td></tr>
-  <tr><td>하이퍼파라미터</td><td>epochs · lr · batch_size · imgsz 와 증강(mosaic · mixup · hsv) 등 서버 허용 목록. 비우면 스크립트 기본값.</td></tr>
-</table>
-<p>작업은 대기 → 배정됨 → 준비 중 → 학습 중 → 내보내는 중 → 업로드 중 → 성공(또는 실패 · 취소됨) 순으로 진행됩니다. 상세 화면에서 진행률 · 로그 · 학습 곡선(손실 · mAP50) · 아티팩트(ONNX · 지표 · 곡선 · 로그) · 재현성 정보(데이터셋 해시 · 스크립트 해시 · GPU · 패키지)를 보고, 끝난 작업은 [같은 설정으로 재실행] 할 수 있습니다.</p>
-
-<h3 id="mlops-versions">9.7 데이터셋 버전</h3>
-<figure><img src="../gs/screenshots/v3/mlops/05_dataset_versions.png" data-width="620" alt="데이터셋 버전"><figcaption>데이터셋 버전 — 이름 · 작업 유형 · 형식 · 이미지 · 클래스 · 크기 · 매니페스트 해시 · 등록 · [다운로드], [버전 업로드]</figcaption></figure>
-<p>학습은 항상 버전에 대해 실행됩니다. 데이터셋에서 뜬 판이 여기에 쌓이고, 외부에서 만든 내보내기 zip 도 [버전 업로드] 로 올려 고정할 수 있습니다(이름 · 작업 유형 · 형식 · 이미지 수 · 클래스).</p>
-
-<h3 id="mlops-workers">9.8 워커 · 사전학습 미러</h3>
-<figure><img src="../gs/screenshots/v3/mlops/06_workers.png" data-width="620" alt="워커"><figcaption>워커 — 카드(상태 · GPU · CUDA · 파이썬 · torch · 디스크 · 지원 작업 · 마지막 하트비트), [토큰 재발급] [비활성화], [워커 등록]</figcaption></figure>
-<ul>
-  <li>[워커 등록] 에서 이름을 넣고 [발급] 하면 <code>wk_…</code> 토큰과 GPU PC 에서 실행할 명령이 표시됩니다. 워커 설치 마법사(§2.4)에 이 값을 넣습니다.</li>
-  <li>상태 — 대기 중(초록) · 학습 중(파랑) · 연결 끊김(회색) · 비활성(빨강). 진단에 실패한 워커(예: CUDA 사용 불가)는 비활성으로 작업을 받지 않으며 사유가 카드에 표시됩니다.</li>
-  <li>[토큰 재발급] 하면 옛 토큰은 즉시 무효가 되므로 워커 설정을 갱신해야 합니다.</li>
-  <li>라인 PC 에 워커를 함께 설치한 경우, VMS 가 자동 운전 · Roller 연속 검사 중이면 그 워커는 새 학습을 받지 않고 진행 중이던 학습도 중단해 대기열로 돌려놓습니다. 검사와 학습이 같은 GPU 를 나눠 쓰지 않게 하기 위한 것이며, 검사가 끝나면 다시 학습합니다.</li>
-</ul>
-<figure><img src="../gs/screenshots/v3/mlops/07_pretrained.png" data-width="620" alt="사전학습 미러"><figcaption>사전학습 미러 — 자산(ref · 파일 · 라이선스 · 출처) 목록, [자산 추가] [파일 추가]</figcaption></figure>
-<p>워커는 인터넷 대신 여기서만 사전학습 가중치를 받습니다(폐쇄망 · SSL 검사 환경 대응). [자산 추가] 로 ref(예: <code>dfine-small-obj2coco</code>) · 라이선스 · 출처를 등록하고 [파일 추가] 로 스크립트에 맞는 파일을 올립니다.</p>
-<ul>
-  <li><strong>검출(train_dfine)</strong> — <code>config.json</code> · <code>model.safetensors</code>.</li>
-  <li><strong>인스턴스 분할(train_rfdetr_seg)</strong> — 체크포인트 파일 하나. 파일 이름에서 모델 크기를 읽으므로 받은 이름 그대로 올립니다(예: <code>rf-detr-seg-medium.pt</code>).</li>
-  <li><strong>이상탐지(train_anomaly)</strong> — 백본 가중치 <code>model.safetensors</code> 하나. 학습 창의 백본(기본 resnet18)과 같은 구조여야 합니다.</li>
-  <li><strong>분류(train_classifier)</strong> — 가중치 파일 하나. 파일 이름에서 구조를 읽으므로 받은 이름 그대로 올립니다(예: <code>resnet18-f37072fd.pth</code>).</li>
-</ul>
-
-<h3 id="mlops-models">9.9 모델 레지스트리</h3>
-<figure><img src="../gs/screenshots/v3/mlops/08_models.png" data-width="620" alt="모델"><figcaption>모델 — 계열 카드(운영 버전 · 작업 유형 · 클래스 · 버전 수 · 바인딩), [새 모델]</figcaption></figure>
-<ul>
-  <li><strong>[새 모델]</strong> — 이름 · 작업 유형 · 클래스(순서가 ONNX 의 names 와 같아야 업로드가 통과) · 설명. 작업 유형은 만든 뒤 바꿀 수 없습니다. 이상탐지 계열은 정상 클래스 <code>good</code> 을 맨 앞에, 불량 클래스를 이름순으로 그 뒤에 둡니다(예: <code>good, defect</code>) — 학습 결과가 이 순서로 클래스를 기록합니다.</li>
-  <li><strong>모델 상세</strong> — 버전 표(버전 · 스테이지 · 규약 · 입력 · 지표 · 크기 · SHA-256 · 출처 · 등록)와 [상세] [다운로드] [스테이지]. [버전 업로드] 로 외부 ONNX 를 직접 올릴 수도 있습니다(YOLO 파생 모델은 라이선스 확인 문구 필수).</li>
-  <li><strong>계열 이름 변경 · 삭제</strong> — 모델 상세 위쪽의 연필 아이콘 [이름 변경] 으로 계열 이름을 바꿉니다. 이름만 바뀌고 버전 · 학습 작업 · 레시피 바인딩은 그대로 이어집니다. 버전이 없는 계열은 휴지통 아이콘으로 지울 수 있습니다(학습 작업이나 바인딩 이력이 있으면 지워지지 않습니다). 엔지니어 · 관리자만 보입니다.</li>
-  <li><strong>스테이지</strong> — 후보(Candidate) → 스테이징(Staging) → 운영(Production) → 폐기(Retired). 운영은 모델 계열당 하나뿐이라 새 버전을 승격하면 이전 운영 버전은 스테이징으로 내려갑니다. 사유는 감사 기록에 남습니다.</li>
-  <li>버전 상세 드로어에서 아티팩트 정보 · 지표 · ONNX 메타데이터 · 스테이지 이력 · <strong>라인 배포 이력</strong>(어느 라인이 언제 받아 갔는지)을 확인합니다.</li>
-</ul>
-
-<h3 id="mlops-bindings">9.10 레시피 바인딩</h3>
-<figure><img src="../gs/screenshots/v3/mlops/09_bindings.png" data-width="620" alt="레시피 바인딩"><figcaption>레시피 바인딩 — 레시피 ID 조회, 활성 바인딩(도구 · 모델 · 모드 · 해석된 버전 · 참조), 이력, [롤백]</figcaption></figure>
-<p>레시피의 검사 도구가 어느 모델 버전을 쓰는지 정하는 화면입니다. 보통은 VisionSetup 의 [레지스트리…] 로 "운영 추종"(<code>@production</code>) 참조를 저장하면 되고, 특정 버전을 고정하거나 이전 버전으로 되돌릴 때 이 화면의 [도구에 모델 연결] · [롤백] 을 씁니다.
-"해석 불가" 로 표시되면 운영으로 승격된 버전이 없어 라인 PC 가 모델을 받지 못하는 상태입니다.</p>
-<table class="cols-3-6">
-  <tr><th>참조 형식</th><th>의미</th></tr>
-  <tr><td><code>model://{모델ID}@production</code></td><td>지금 운영 단계인 버전 (권장)</td></tr>
-  <tr><td><code>model://{모델ID}@staging</code> · <code>@candidate</code></td><td>스테이징 · 후보 단계의 최신 버전</td></tr>
-  <tr><td><code>model://{모델ID}@7</code></td><td>7 번 버전 고정</td></tr>
-</table>
-
-<h3 id="mlops-lines">9.11 라인 PC</h3>
-<figure><img src="../gs/screenshots/v3/mlops/10_line_clients.png" data-width="620" alt="라인 PC"><figcaption>라인 PC — 이름 · 라인 · 상태 · 마지막 접속 · 발급, [⋮] 토큰 재발급 · 중지 · 삭제, [라인 PC 등록]</figcaption></figure>
-<ol>
-  <li>[라인 PC 등록] 에서 이름(예: 라인A 1호기)과 라인 ID(예: LINE-A)를 넣고 [발급] 을 누릅니다. <code>ln_…</code> 토큰이 한 번만 표시됩니다.</li>
-  <li>그 라인 PC 의 설정 마법사 2 단계 고급 설정에 <strong>MLOps 서버 주소</strong>와 <strong>MLOps 라인 토큰</strong>을 넣고 저장한 뒤 VMS 를 재시작합니다(§3.3).</li>
-  <li>라인 PC 가 모델을 받거나 사진을 올리면 "마지막 접속" 이 갱신됩니다. [중지] 하면 그 PC 는 새 모델을 받지도 사진을 올리지도 못하지만 이미 캐시된 모델로 검사는 계속됩니다.</li>
-</ol>
-
-<h3 id="mlops-monitoring">9.12 라인 모니터링</h3>
-<figure><img src="../gs/screenshots/v3/mlops/13_monitoring.png" data-width="620" alt="라인 모니터링"><figcaption>라인 모니터링 — 모델 · 단계 · 신호 · 기준 불량률 · 최근 불량률 · 우연일 확률 · 판단 · [재학습]</figcaption></figure>
-<p>운영 웹의 검사 이력을 모델 버전별로 최근 7 일과 기준 21 일로 비교합니다. 여기서 모델을 자동으로 내리지는 않습니다.</p>
-<table class="cols-2-5-2">
-  <tr><th>신호</th><th>의미</th><th>재학습 권고</th></tr>
-  <tr><td>이상 없음</td><td>변화 없음</td><td>—</td></tr>
-  <tr><td>판단 보류</td><td>어느 구간이든 100 건 미만 — "괜찮다"가 아니라 "아직 모른다"</td><td>—</td></tr>
-  <tr><td>입력 변화</td><td>밝기 · 선명도가 20% 넘게 달라짐 — 조명 · 초점 · 렌즈를 먼저 확인</td><td>—</td></tr>
-  <tr><td>불량률 상승</td><td>2%p 넘게 올랐고 통계적으로 유의(p &lt; 0.01)</td><td>예</td></tr>
-  <tr><td>신뢰도 하락</td><td>딥러닝 신뢰도 평균이 10% 넘게 하락</td><td>예</td></tr>
-</table>
-<p>불량률이 올랐다고 곧 모델이 나빠진 것은 아닙니다 — 실제로 불량이 늘었을 수도 있습니다. 입력 변화로 나온 신호는 재학습해도 낫지 않으니 조명 · 초점 · 렌즈를 먼저 보세요.</p>
-</section>
-
-<section id="deeplearning">
-<h2 id="10-딥러닝-모델-준비">10. 딥러닝 모델 준비</h2>
-<p>딥러닝 검사 도구(§6 — Detection · Classify · Anomaly · RF-DETR-seg · OCR)는 학습된 모델 파일(ONNX)로 동작합니다.
-모델의 라벨링 · 학습 · 등록은 AI 학습 플랫폼 BODA VMS MLOps(9장)에서 합니다. VMS 와 VisionSetup 은 만들어진 모델을 불러와 검사에 씁니다.</p>
-<ol>
-  <li><strong>학습</strong> — MLOps 에서 데이터셋을 라벨링하고 학습 작업을 실행합니다(§9.5 · §9.6). 끝난 모델은 모델 레지스트리에 후보 버전으로 등록됩니다.</li>
-  <li><strong>승격</strong> — 모델 레지스트리에서 결과를 확인하고 스테이징 · 운영 단계로 올립니다(§9.9).</li>
-  <li><strong>레시피에 지정</strong> — VisionSetup 딥러닝 도구의 Model Path 옆 <strong>[레지스트리…]</strong> 로 모델을 고르면 <code>model://</code> 참조가 들어갑니다(§9.10).
-      라인 PC 는 그 참조가 가리키는 버전을 자동으로 내려받아 씁니다. 모델 파일을 직접 받아 둔 경우에는 Model Path 에 .onnx 경로를 지정해도 됩니다.</li>
-</ol>
-<h3 id="dl-ocr-synth">10.1 OCR 합성 데이터로 학습하기</h3>
-<p>날짜 · 로트 번호처럼 형식이 정해진 문자열은 VisionSetup 의 OCR Synth Data(§5)로 학습 데이터를 만들어 MLOps 에서 학습할 수 있습니다.</p>
-<ol>
-  <li>OCR Synth Data 에서 출력 형식을 PaddleOCR rec 로 두고 [Generate] 로 데이터를 만듭니다.</li>
-  <li>출력 폴더 안의 <code>train_crops</code> · <code>val_crops</code> 폴더와 <code>train_rec.txt</code> · <code>val_rec.txt</code> · <code>dict.txt</code> 를 모두 골라 압축합니다. 폴더째 압축하면 업로드가 거절됩니다.</li>
-  <li>MLOps 의 [데이터셋 버전] ▸ [버전 업로드] 에서 작업 유형 OCR, 형식 ppocr 로 올리고(§9.7) 학습 작업을 실행합니다.</li>
-</ol>
 </section>
 
 <section id="maintenance">
-<h2 id="11-유지보수">11. 유지보수</h2>
+<h2 id="9-유지보수">9. 유지보수</h2>
 <div class="callout"><strong>⚙ 이 장은 관리자 · 설치 담당자용입니다.</strong> 백업, 데이터 보존, 카메라 교체, 라이선스 재발급, 다중 인스턴스 운용을 다룹니다.</div>
 
-<h3 id="mt-backup">11.1 백업과 복원</h3>
+<h3 id="mt-backup">9.1 백업과 복원</h3>
 <h4>라인 PC (VMS)</h4>
 <ul>
   <li><strong>수동 백업</strong> — Admin Tools → Backup / Restore → [Run Backup...] 로 ZIP 을 만듭니다(§4.11). 설정 파일 · 레이아웃 · PLC 신호 맵 · 사용자 DB · 검사 이력 DB · 레시피 전체가 들어가며 감사 로그는 선택입니다. 레시피를 크게 바꾸기 전, 프로그램을 업그레이드하기 전, PC 를 교체하기 전에 받아 두세요.</li>
@@ -2528,10 +2272,8 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
   <li>수동 사본이 필요하면 서비스를 멈추고 <code>BodaVision.db</code> · <code>BodaVision.db-wal</code> · <code>BodaVision.db-shm</code> 세 파일을 함께 복사합니다. 검사 사진은 <code>C:\ProgramData\BODA\VMS\images\</code> 에 있습니다.</li>
   <li>서명 키가 든 <code>appsettings.Production.json</code> 도 함께 백업합니다(§2.3).</li>
 </ul>
-<h4>MLOps 서버 · 워커</h4>
-<p>MLOps 데이터 폴더(<code>D:\BODA-MLOps</code> 등 설치 시 지정한 <code>-DataDir</code>)에 DB · 사진 · 모델이 모두 있습니다. 이 폴더를 백업하면 됩니다. 워커의 파이썬 환경(<code>%ProgramData%\BODA VMS TrainWorker</code>)은 재설치로 복구되므로 백업하지 않아도 됩니다.</p>
 
-<h3 id="mt-retention">11.2 데이터 보존과 디스크 관리</h3>
+<h3 id="mt-retention">9.2 데이터 보존과 디스크 관리</h3>
 <table class="cols-3-3-3">
   <tr><th>데이터</th><th>기본 보존</th><th>설정 위치</th></tr>
   <tr><td>VMS 검사 이미지 (OK/NG 파일)</td><td>Image Save Settings 의 보존 기간(일)</td><td>§4.6 — 시작 시 오래된 날짜 폴더 삭제. 야간 예약 작업으로 <code>VMS.exe --cleanup-images</code> 를 돌려도 됩니다</td></tr>
@@ -2543,23 +2285,23 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 </table>
 <p>Web DB 는 행을 지워도 파일 크기가 줄지 않습니다. 파일을 줄이려면 정지 시간을 잡고 SQLite <code>VACUUM</code> 을 수동으로 실행합니다.</p>
 
-<h3 id="mt-camera">11.3 카메라 교체 · IP 변경</h3>
+<h3 id="mt-camera">9.3 카메라 교체 · IP 변경</h3>
 <ol>
-  <li>새 카메라를 같은 네트워크 카드에 연결하고, 제조사 프로그램(pylon Viewer · MVS · Mech-Eye Viewer)으로 카메라에 <strong>기존과 같은 고정 IP</strong> 를 부여합니다. IP 가 같으면 VMS 설정을 바꿀 필요가 없습니다.</li>
+  <li>새 카메라를 같은 네트워크 카드에 연결하고, 카메라 제조사의 설정 프로그램으로 카메라에 <strong>기존과 같은 고정 IP</strong> 를 부여합니다. IP 가 같으면 VMS 설정을 바꿀 필요가 없습니다.</li>
   <li>IP 나 제조사가 바뀌면 시스템 설정 마법사 3 단계에서 해당 카메라 카드의 IP · 제조사 · 타입을 고치고 [Finish] 로 저장한 뒤 VMS 를 재시작합니다(§3.4). 카메라 순서(카드 순서)가 바뀌면 레시피 스텝 이름("1-1")의 번호도 바뀌므로 순서는 유지하세요.</li>
   <li>VMS 를 실행해 상태바 CAM 이 초록인지, 카메라 톱니바퀴 → [Grab] 으로 영상이 들어오는지 확인합니다. 노출 · 게인은 "카메라 설정 유지" 가 켜져 있으면 카메라에 저장된 값을 쓰므로 제조사 프로그램에서 이전 값과 같게 맞춥니다.</li>
   <li>렌즈 · 설치 높이가 바뀌었다면 측정값이 조용히 틀어지므로 <strong>캘리브레이션을 다시</strong> 하고(§5.9) 대표 부품으로 판정을 재확인합니다.</li>
   <li>다른 PC 에서 만든 레시피를 열 때 이 PC 에 없는 카메라를 쓰면 <strong>카메라 재연결 창</strong>이 떠서 스텝별로 이 PC 의 카메라를 짝지을 수 있습니다(§5.3).</li>
 </ol>
 
-<h3 id="mt-license">11.4 라이선스 · 좌석 관리</h3>
+<h3 id="mt-license">9.4 라이선스 · 좌석 관리</h3>
 <ul>
-  <li>라이선스 상태는 설정 마법사 7 단계 카드, VMS Health Check 의 License 항목, Web 시스템 관리 → SW 라이선스에서 봅니다.</li>
-  <li>PC 교체 · Windows 재설치 후 "지문 불일치" 가 뜨면 새 지문 코드로 재발급을 요청합니다(§2.6). 서버-라인 구성에서는 서버 PC 만 해당합니다.</li>
+  <li>라이선스 상태는 설정 마법사 6 단계 카드, VMS Health Check 의 License 항목, Web 시스템 관리 → SW 라이선스에서 봅니다.</li>
+  <li>PC 교체 · Windows 재설치 후 "지문 불일치" 가 뜨면 새 지문 코드로 재발급을 요청합니다(§2.5). 서버-라인 구성에서는 서버 PC 만 해당합니다.</li>
   <li>라인 PC 를 철거하면 그 좌석은 72 시간 후 자동으로 반환됩니다. 계약 좌석이 모자라면 Web 화면에 경고 배너가 뜹니다.</li>
 </ul>
 
-<h3 id="mt-instance">11.5 한 PC 에서 두 라인 운용 (다중 인스턴스)</h3>
+<h3 id="mt-instance">9.5 한 PC 에서 두 라인 운용 (다중 인스턴스)</h3>
 <p>PC 한 대에 카메라가 여러 대 있으면 VMS 를 두 개 띄워 각각 다른 라인으로 운용할 수 있습니다.</p>
 <ol>
   <li>바탕화면에 VMS 바로가기를 하나 더 만들고 대상 끝에 <code>--instance line2</code> 를 붙입니다(영문 · 숫자 · 하이픈 · 밑줄 1~32 자).</li>
@@ -2567,42 +2309,39 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
   <li>두 바로가기로 VMS 를 각각 실행합니다. 인스턴스마다 설정 · 레시피 · 계정 · 검사 이력이 <code>%LocalAppData%\BODA VISION AI\instances\line2\</code> 아래에 완전히 분리되어 보관되며, VMS 에서 실행한 VisionSetup · AppSetup 도 같은 인스턴스를 자동으로 씁니다.</li>
 </ol>
 
-<h3 id="mt-logs">11.6 로그 · 데이터 위치</h3>
+<h3 id="mt-logs">9.6 로그 · 데이터 위치</h3>
 <table class="cols-3-4-2">
   <tr><th>항목</th><th>위치</th><th>용도</th></tr>
   <tr><td>VMS 설정 · 레시피 · 사용자 DB</td><td><code>%LocalAppData%\BODA VISION AI\</code> (system_config.json · recipes\ · BodaVision.db · layout_config.json · process_sequence.json)</td><td>백업 대상</td></tr>
   <tr><td>VMS 검사 이력 DB</td><td><code>…\inspection_history.db</code></td><td>[전체 이력] 창</td></tr>
   <tr><td>VMS 감사 로그</td><td><code>…\audit\YYYY-MM-DD.jsonl</code></td><td>Audit Log Viewer</td></tr>
-  <tr><td>VMS 업로드 큐</td><td><code>…\upload_queue\</code> · <code>…\image_upload_queue\</code> · <code>…\mlops_line_ng_queue\</code> (각 <code>rejected\</code> 보관함)</td><td>파일 수가 줄면 전송 중</td></tr>
-  <tr><td>VMS 모델 캐시</td><td><code>…\models\</code></td><td>model:// 참조로 받은 ONNX</td></tr>
+  <tr><td>VMS 업로드 큐</td><td><code>…\upload_queue\</code> · <code>…\image_upload_queue\</code> (각 <code>rejected\</code> 보관함)</td><td>파일 수가 줄면 전송 중</td></tr>
   <tr><td>카메라 로그</td><td><code>…\logs\camera.log</code></td><td>카메라 SDK 로그</td></tr>
   <tr><td>업데이트 로그</td><td><code>C:\ProgramData\BODA\VMS\update-bootstrap.log</code></td><td>인앱 업데이트 과정</td></tr>
   <tr><td>Web DB · 백업 · 사진</td><td><code>C:\ProgramData\BODA\VMS\</code> (BodaVision.db · backups\ · images\)</td><td>서버 데이터</td></tr>
   <tr><td>Web 서비스 로그</td><td><code>{설치 폴더}\Logs\boda-vms-YYYYMMDD.json</code> (14 일 보관) · Windows 이벤트 뷰어 → Application</td><td>서비스 시작 실패 등</td></tr>
-  <tr><td>MLOps 데이터 · 로그</td><td>설치 시 지정한 데이터 폴더 (mlops.db · storage\ · logs\)</td><td></td></tr>
-  <tr><td>학습 워커</td><td><code>%ProgramData%\BODA VMS TrainWorker\</code> (worker.json · venv\ · logs\)</td><td></td></tr>
 </table>
 
-<h3 id="mt-support">11.7 문제 보고 방법</h3>
+<h3 id="mt-support">9.7 문제 보고 방법</h3>
 <ol>
-  <li>VMS Admin Tools → Support Package... 로 진단 ZIP 을 만듭니다(설정 · 감사 로그 · 환경 정보 · 헬스 스냅샷 · MLOps 전송 큐 상태 포함, 레시피 · 사용자 DB 는 미포함).</li>
+  <li>VMS Admin Tools → Support Package... 로 진단 ZIP 을 만듭니다(설정 · 감사 로그 · 환경 정보 · 헬스 스냅샷 포함, 레시피 · 사용자 DB 는 미포함).</li>
   <li>증상이 난 시각과 System Log 의 관련 줄, 화면 캡처를 함께 준비합니다.</li>
-  <li>Web 문제는 <code>{설치 폴더}\Logs\</code> 의 해당 날짜 로그와 <code>/health</code> 응답을, MLOps 문제는 학습 작업 상세의 로그를 첨부합니다.</li>
+  <li>Web 문제는 <code>{설치 폴더}\Logs\</code> 의 해당 날짜 로그와 <code>/health</code> 응답을 첨부합니다.</li>
 </ol>
 </section>
 
 <section id="troubleshoot">
-<h2 id="12-문제점-및-조치-방법">12. 문제점 및 조치 방법</h2>
+<h2 id="10-문제점-및-조치-방법">10. 문제점 및 조치 방법</h2>
 <p>자주 겪는 증상과 확인 순서입니다. 대부분의 원인은 VMS 하단 <strong>상태바</strong>와 <strong>System Log</strong>(§4.7)에 먼저 나타나므로 그 두 곳부터 보세요.
 ⚙ 표시가 있는 항목은 관리자 · 설치 담당자용입니다.</p>
 
-<h3 id="ts-camera">12.1 카메라 · 촬영</h3>
+<h3 id="ts-camera">10.1 카메라 · 촬영</h3>
 <table class="cols-3-6">
   <tr><th>증상</th><th>확인 · 조치</th></tr>
   <tr><td>상태바 CAM 이 0/n (빨강), 카메라 화면 "No Image"</td>
-      <td>① 카메라 전원 · 케이블 · 네트워크 카드 링크 램프를 확인합니다. ② 제조사 프로그램(pylon Viewer · MVS · Mech-Eye Viewer)에서 카메라가 보이는지 확인합니다 — 보이지 않으면 IP 대역 · 방화벽(UDP 3956) 문제입니다. ③ 제조사 프로그램은 닫습니다(카메라는 한 프로그램만 열 수 있습니다). ④ 설정 마법사 3 단계의 IP · 제조사 · 타입이 맞는지 봅니다. ⑤ 케이블을 다시 꽂으면 다음 촬영에서 자동 재연결됩니다.</td></tr>
+      <td>① 카메라 전원 · 케이블 · 네트워크 카드 링크 램프를 확인합니다. ② 카메라 제조사의 설정 프로그램에서 카메라가 보이는지 확인합니다 — 보이지 않으면 IP 대역 · 방화벽(UDP 3956) 문제입니다. ③ 제조사 프로그램은 닫습니다(카메라는 한 프로그램만 열 수 있습니다). ④ 설정 마법사 3 단계의 IP · 제조사 · 타입이 맞는지 봅니다. ⑤ 케이블을 다시 꽂으면 다음 촬영에서 자동 재연결됩니다.</td></tr>
   <tr><td>영상이 실제 제품과 다르게 보임 (시뮬레이션 영상)</td>
-      <td>제조사 SDK 가 없는 빌드이거나 지원하지 않는 제조사를 선택한 것입니다. VisionSetup 연결 시 "SDK 미탑재 — 시뮬레이션 모드" 경고가 뜹니다. 설정 마법사의 제조사를 HIK · Basler · Mech_Mind · Matrox 중 실제 장비로 바꾸고, 해당 런타임(§2.1)이 설치되었는지 확인합니다.</td></tr>
+      <td>제조사 SDK 가 없는 빌드이거나 지원하지 않는 제조사를 선택한 것입니다. VisionSetup 연결 시 "SDK 미탑재 — 시뮬레이션 모드" 경고가 뜹니다. 설정 마법사의 제조사를 HIK · Basler · Matrox 중 실제 장비로 바꾸고, 해당 런타임(§2.1)이 설치되었는지 확인합니다.</td></tr>
   <tr><td>촬영마다 밝기가 달라짐</td>
       <td>카메라 조작 상자의 "카메라 설정 유지" 를 끄고 Exposure · Gain 을 고정값으로 넣은 뒤 [Save Parameter] 합니다. 제조사 프로그램에서 자동 노출을 끄는 것도 방법입니다.</td></tr>
   <tr><td>[Grab] · [Live] 버튼이 눌리지 않음</td>
@@ -2613,7 +2352,7 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
       <td>운전 중 이미지를 받지 못한 사이클은 검사 없이 NG 로 집계됩니다. 카메라 연결 표시등이 빨간지 확인하고 케이블 · 전원 · 네트워크를 점검합니다.</td></tr>
 </table>
 
-<h3 id="ts-run">12.2 검사 운전 · 작업지시</h3>
+<h3 id="ts-run">10.2 검사 운전 · 작업지시</h3>
 <table class="cols-3-6">
   <tr><th>증상</th><th>확인 · 조치</th></tr>
   <tr><td>[AUTO RUN] 이 켜지지 않음</td>
@@ -2634,18 +2373,18 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
       <td>종료 통지가 서버에서 거부된 경우입니다(API 키 불일치 ⚙). 다시 로그인하면 교체되며, Web 작업자 → 출근 이력에서 관리자가 종료할 수도 있습니다. 라인 PC 가 15 초 이상 응답이 없으면 서버가 자동으로 세션을 닫습니다.</td></tr>
 </table>
 
-<h3 id="ts-plc">12.3 PLC · IO 보드 ⚙</h3>
+<h3 id="ts-plc">10.3 PLC · IO 보드 ⚙</h3>
 <table class="cols-3-6">
   <tr><th>증상</th><th>확인 · 조치</th></tr>
   <tr><td>상태바 PLC 칩이 빨강</td>
       <td>① PLC IP 로 ping 이 되는지 ② 설정 마법사 4 단계의 벤더 · 포트 · 통신 방식이 PLC 설정과 같은지 ③ PLC 쪽 이더넷 모듈의 접속 허용 수(Mitsubishi 는 포트 생존 확인 필요)를 확인합니다. Auto Reconnect 가 켜져 있으면 연결이 돌아올 때 자동 복구됩니다.</td></tr>
   <tr><td>상태바 IO 칩이 빨강 / "IO 보드 연결 실패"</td>
-      <td>System Log 의 <code>[IoBoard]</code> 항목에 사유가 있습니다. "라이브러리를 찾을 수 없습니다" → 드라이버(ADLink DASK · Advantech DAQNavi)를 <strong>64비트용</strong>으로 설치합니다. "Register_Card 실패" → 마법사 6 단계의 모델 · Board ID 가 실제 카드와 맞는지 확인합니다. Advantech 는 "DAQNavi 이 없거나" → 드라이버를 설치하고, "보드 BID#n 를 열지 못했습니다" → Advantech Navigator 의 보드 번호와 마법사 6 단계 Board ID 를 맞춥니다. "연결 시간 초과(5초)" → 카드 장착과 드라이버를 확인하고 재부팅합니다. 보드가 실패해도 검사는 되지만 그 보드를 쓰는 시퀀스 노드는 동작하지 않습니다.</td></tr>
+      <td>System Log 의 <code>[IoBoard]</code> 항목에 사유가 있습니다. "라이브러리를 찾을 수 없습니다" → 드라이버(ADLink DASK · Advantech DAQNavi)를 <strong>64비트용</strong>으로 설치합니다. "Register_Card 실패" → 마법사 5 단계의 모델 · Board ID 가 실제 카드와 맞는지 확인합니다. Advantech 는 "DAQNavi 이 없거나" → 드라이버를 설치하고, "보드 BID#n 를 열지 못했습니다" → Advantech Navigator 의 보드 번호와 마법사 5 단계 Board ID 를 맞춥니다. "연결 시간 초과(5초)" → 카드 장착과 드라이버를 확인하고 재부팅합니다. 보드가 실패해도 검사는 되지만 그 보드를 쓰는 시퀀스 노드는 동작하지 않습니다.</td></tr>
   <tr><td>판정 신호가 PLC 에 안 들어감</td>
       <td>System Log 에 "검사 결과 출력 실패" 가 있으면 그 줄의 도구 · 주소로 쓰기가 실패한 것입니다 — 그 사이클은 오류로 멈추고 생산 수량에 세지 않습니다. 시퀀스의 Output Action 노드 주소 · 값, Write Mode(Handshake) 규약, Endian 을 PLC 프로그램과 대조합니다. 시퀀스 편집기의 [PLC Monitor] 로 실제 값을 보면서 [무부하 테스트] 로 신호만 주고받아 확인합니다(§5.10).</td></tr>
 </table>
 
-<h3 id="ts-recipe">12.4 레시피 편집 · 판정</h3>
+<h3 id="ts-recipe">10.4 레시피 편집 · 판정</h3>
 <table class="cols-3-6">
   <tr><th>증상</th><th>확인 · 조치</th></tr>
   <tr><td>학습한 패턴을 못 찾거나 중심이 어긋남 (Feature Match)</td>
@@ -2667,18 +2406,18 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
   <tr><td>도구 설정의 Web 파라미터 연동 콤보에 코드가 안 보임</td>
       <td>레시피를 불러올 때 상태바에 연동 진단이 표시됩니다. Web 레시피와 이름이 연결되지 않았거나 파라미터가 등록되지 않은 경우입니다(§5.7, §8.10).</td></tr>
   <tr><td>딥러닝 도구가 "모델을 찾을 수 없음"</td>
-      <td>파일 경로 모델은 파일이 그 PC 에 있는지, model:// 참조 모델은 상태바 "MLOps 비활성" 칩이 없는지와 라인 PC 토큰(§9.11) · 운영 승격 버전이 있는지(§9.10 "해석 불가") 확인합니다.</td></tr>
+      <td>Model Path 에 지정한 ONNX 파일이 그 PC 의 그 경로에 있는지 확인합니다. 다른 PC 에서 만든 레시피를 옮겨 왔으면 모델 파일도 함께 복사하고 Model Path 를 [폴더] 버튼으로 다시 지정합니다(§6.11).</td></tr>
 </table>
 
-<h3 id="ts-web">12.5 Web · 네트워크 ⚙</h3>
+<h3 id="ts-web">10.5 Web · 네트워크 ⚙</h3>
 <table class="cols-3-6">
   <tr><th>증상</th><th>확인 · 조치</th></tr>
   <tr><td>VMS 상태바 Web 이 빨강 (Web Disconnected · Web 차단)</td>
       <td>① 라인 PC 브라우저에서 Web 주소가 열리는지 ② 설정 마법사 2 단계의 Web Server URL(포트 5292)이 맞는지 ③ Production 모드에서 원격 http 주소를 쓰고 있지 않은지 — 상태바가 "Web 차단 (보안 정책 — https 필요)" 이고 시작 시 "Web 연동 경고" 창이 떴다면 이 경우입니다(https 로 바꾸거나 Development 모드) ④ 서버 방화벽 5292 ⑤ 애플리케이션 이름에 줄바꿈 같은 특수 문자가 들어가지 않았는지.</td></tr>
   <tr><td>검사 결과가 서버로 안 올라가고 계속 쌓임</td>
       <td>결과는 <code>upload_queue\</code> 에 보관되었다가 연결이 돌아오면 자동 전송됩니다. 폴더의 파일 수가 줄어드는지 봅니다. <code>rejected\</code> 에 파일이 쌓이면 서버가 받지 않은 건(사유 파일 동봉)이며, 라인이 서버에 등록되지 않은 경우가 흔합니다. Web 에 등록되지 않은 레시피 이름으로 쌓인 결과는 30 분 뒤 <code>rejected\</code> 로 옮겨집니다 — 그 레시피가 Web 에 등록되어 있는지 확인하세요.</td></tr>
-  <tr><td>NG 사진이 Web · MLOps 에 안 보임</td>
-      <td>Image Save Settings 에서 Web 전송(NG 이미지 Web 전송)과 MLOps 수집은 <strong>별개 스위치</strong>입니다. 전달 모드가 SharedPath 면 전송되지 않으니 Auto 로 둡니다. <code>image_upload_queue\</code> · <code>mlops_line_ng_queue\</code> 의 파일 수와 <code>rejected\</code> 를 확인하고, MLOps 는 상태바 "MLOps 비활성" 칩의 사유를 봅니다.</td></tr>
+  <tr><td>NG 사진이 Web 에 안 보임</td>
+      <td>Image Save Settings 에서 NG 이미지 Web 전송이 켜져 있는지 확인합니다. 전달 모드가 SharedPath 면 전송되지 않으니 Auto 로 둡니다. <code>image_upload_queue\</code> 의 파일 수와 <code>rejected\</code> 를 확인합니다.</td></tr>
   <tr><td>Web 서비스가 시작되지 않음</td>
       <td>Windows 이벤트 뷰어 → Application 과 <code>{설치 폴더}\Logs\</code> 의 로그를 봅니다. 흔한 원인: 포트 5292 충돌(<code>netstat -ano | findstr 5292</code>), 서명 키(Jwt:Key) 32 자 미만, 초기 관리자 비밀번호 8 자 미만. 동봉 서버는 설정 마법사 2 단계의 [서비스 시작 (관리자 권한)] 으로 다시 시작합니다.</td></tr>
   <tr><td>업데이트한 뒤 Web 에 접속되지 않음</td>
@@ -2693,28 +2432,11 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
       <td>실시간 연결이 잠시 끊긴 경우로 몇 초 후 자동 복구됩니다. 오래가면 서버 상태(<code>/health</code>)와 네트워크를 확인합니다.</td></tr>
 </table>
 
-<h3 id="ts-mlops">12.6 MLOps · 학습 워커 ⚙</h3>
-<table class="cols-3-6">
-  <tr><th>증상</th><th>확인 · 조치</th></tr>
-  <tr><td>MLOps 로그인 후 "역할 없음" · 모든 화면이 403</td>
-      <td>Web 의 Admin 계정으로 받은 토큰이어야 합니다. User · Guest 계정은 쓸 수 없습니다(§9.1).</td></tr>
-  <tr><td>수집 사진이 올라오지 않음</td>
-      <td>라인 PC: Image Save Settings 의 [NG 이미지 MLOps 전송] 체크, 설정 마법사 고급 설정의 서버 주소 · 라인 토큰, 상태바 "MLOps 비활성" 칩(Production 모드 + http 주소가 대표 사유). 서버: 배포 → 라인 PC 에서 그 라인이 "사용 중" 인지.</td></tr>
-  <tr><td>워커가 "비활성 (진단 실패)" · CUDA 사용 불가</td>
-      <td>GPU PC 에서 <code>nvidia-smi</code> 로 드라이버(550 이상)를 확인하고, Python 3.12 가 "모든 사용자용" 으로 설치됐는지 봅니다. 서비스 계정이 파이썬을 찾지 못하면 관리자 명령 프롬프트에서 <code>BODA.VMS.MLOps.TrainWorker.exe diag</code> 를 한 번 실행합니다. 로그: <code>%ProgramData%\BODA VMS TrainWorker\logs</code>.</td></tr>
-  <tr><td>학습 작업이 제출되지 않음 — 사전학습 가중치 필수</td>
-      <td>train_dfine · train_rfdetr_seg 는 사전학습 미러에 자산이 있어야 합니다(§9.8). 워커는 인터넷에서 받지 않습니다.</td></tr>
-  <tr><td>라인 모니터링 "볼 수 없습니다"</td>
-      <td>MLOps 설정의 운영 웹 주소(<code>Monitoring:ProductionWebUrl</code>)와 API 키(<code>Monitoring__ApiKey</code>)를 확인합니다. 401 이면 키가 다른 것입니다.</td></tr>
-  <tr><td>레시피 바인딩이 "해석 불가"</td>
-      <td>그 모델 계열에 운영(Production)으로 승격된 버전이 없습니다. 모델 상세에서 승격하거나 버전 고정 참조를 씁니다.</td></tr>
-</table>
-
-<h3 id="ts-pc">12.7 PC · 프로그램 실행</h3>
+<h3 id="ts-pc">10.6 PC · 프로그램 실행</h3>
 <table class="cols-3-6">
   <tr><th>증상</th><th>확인 · 조치</th></tr>
   <tr><td>실행하자마자 "보안 정책 오류"</td>
-      <td>보안 모드가 저장되지 않은 것입니다. 설정 마법사를 7 단계까지 진행해 [Finish] 로 저장합니다(§3.8).</td></tr>
+      <td>보안 모드가 저장되지 않은 것입니다. 설정 마법사를 6 단계까지 진행해 [Finish] 로 저장합니다(§3.7).</td></tr>
   <tr><td>실행하자마자 DLL 오류</td>
       <td>정상 설치본에서는 나지 않습니다. 백신이 설치 폴더의 파일을 격리하지 않았는지 확인하고, 설치 파일을 다시 실행해 복구 설치합니다.</td></tr>
   <tr><td>VMS 를 닫았는데 프로세스가 남음</td>
@@ -2722,14 +2444,14 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
   <tr><td>PC 가 켜지지 않음 · 부팅 후 프로그램이 자동 실행되지 않음</td>
       <td>전원 · 모니터 신호를 확인합니다. 자동 실행은 Windows 시작 프로그램에 VMS 바로가기를 등록해 둡니다. Web 서비스(BodaVmsWeb)는 부팅 시 자동 시작으로 등록되어 있습니다.</td></tr>
   <tr><td>디스크가 가득 참</td>
-      <td>Image Save Settings 의 보존 기간, Retention Settings, Web 의 ImageStore · DataRetention 설정을 줄입니다(§11.2). <code>rejected\</code> 보관함은 200 건 · 200MB 상한으로 자동 관리됩니다.</td></tr>
+      <td>Image Save Settings 의 보존 기간, Retention Settings, Web 의 ImageStore · DataRetention 설정을 줄입니다(§9.2). <code>rejected\</code> 보관함은 200 건 · 200MB 상한으로 자동 관리됩니다.</td></tr>
 </table>
 </section>
 
 <section id="appendix">
-<h2 id="13-부록">13. 부록</h2>
+<h2 id="11-부록">11. 부록</h2>
 <div class="callout"><strong>⚙ 부록은 관리자와 기술 지원 담당자용 참고 자료입니다.</strong></div>
-<h3 id="appx-keys">13.1 단축키 · 마우스 조작 (VisionSetup)</h3>
+<h3 id="appx-keys">11.1 단축키 · 마우스 조작 (VisionSetup)</h3>
 <table class="cols-2-3-4">
   <tr><th>키 / 조작</th><th>범위</th><th>동작</th></tr>
   <tr><td>← / →</td><td>메인 창 (폴더 열기 후)</td><td>이전 / 다음 이미지. 툴바의 Navigate · Run All · Run Selected 모드에 따라 이동 시 자동 실행</td></tr>
@@ -2742,7 +2464,7 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
   <tr><td>Enter</td><td>SLM Recipe Bot 입력창 · 작업자 로그인 PIN</td><td>전송 / 로그인</td></tr>
 </table>
 <p>메뉴에 표시된 Ctrl+O · Ctrl+S · F5 · F6 는 관례 표기이며, 실제 실행은 메뉴 또는 툴바 버튼으로 합니다.</p>
-<h3 id="appx-params">13.2 비전 도구 파라미터 전체표</h3>
+<h3 id="appx-params">11.2 비전 도구 파라미터 전체표</h3>
 <p>Tool Settings 패널에 표시되는 파라미터를 도구별로 정리했습니다. 라벨은 화면 표기와 같으며, 각 도구의 용도와 사용 요령은 6장을 참고하세요.</p>
 <h4>Conversion</h4>
 <h5>Grayscale (그레이 변환)</h5>
@@ -3166,7 +2888,7 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <h5>Detection (딥러닝 검출)</h5>
 <table class="cols-3-3-4">
 <tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
-<tr><td>Model Path (.onnx)</td><td>입력</td><td>모델 파일(.onnx) 경로 또는 model:// 참조</td></tr>
+<tr><td>Model Path (.onnx)</td><td>입력</td><td>모델 파일(.onnx) 경로([폴더] 버튼으로 선택)</td></tr>
 <tr><td>Inference Size (px)</td><td>슬라이더 [320~1280]</td><td>모델 입력 크기(px)</td></tr>
 <tr><td>Use SAHI</td><td>체크박스</td><td></td></tr>
 <tr><td>Tile Size (px)</td><td>슬라이더 [320~1536]</td><td></td></tr>
@@ -3191,7 +2913,7 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <h5>Segmentation (분할)</h5>
 <table class="cols-3-3-4">
 <tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
-<tr><td>Model Path (.onnx)</td><td>입력</td><td>모델 파일(.onnx) 경로 또는 model:// 참조</td></tr>
+<tr><td>Model Path (.onnx)</td><td>입력</td><td>모델 파일(.onnx) 경로([폴더] 버튼으로 선택)</td></tr>
 <tr><td>Input Size</td><td>슬라이더 [64~1024]</td><td>모델 입력 크기(px)</td></tr>
 <tr><td>ImageNet Normalization</td><td>체크박스</td><td></td></tr>
 <tr><td>Background Class Index</td><td>슬라이더 [0~32]</td><td></td></tr>
@@ -3201,7 +2923,7 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <h5>RF-DETR-seg (인스턴스 분할)</h5>
 <table class="cols-3-3-4">
 <tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
-<tr><td>Model Path (.onnx)</td><td>입력</td><td>모델 파일(.onnx) 경로 또는 model:// 참조</td></tr>
+<tr><td>Model Path (.onnx)</td><td>입력</td><td>모델 파일(.onnx) 경로([폴더] 버튼으로 선택)</td></tr>
 <tr><td>Input Size (모델이 정합니다)</td><td>슬라이더 [64~1280]</td><td>모델 입력 크기(px)</td></tr>
 <tr><td>Confidence Threshold</td><td>슬라이더 [0.01~1.0]</td><td>신뢰도 임계값</td></tr>
 <tr><td>Max Instances</td><td>슬라이더 [1~1000]</td><td>최대 검출 개수</td></tr>
@@ -3213,7 +2935,7 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <h5>Anomaly (이상 탐지)</h5>
 <table class="cols-3-3-4">
 <tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
-<tr><td>Model Path (.onnx)</td><td>입력</td><td>모델 파일(.onnx) 경로 또는 model:// 참조</td></tr>
+<tr><td>Model Path (.onnx)</td><td>입력</td><td>모델 파일(.onnx) 경로([폴더] 버튼으로 선택)</td></tr>
 <tr><td>Input Size</td><td>슬라이더 [64~512]</td><td>모델 입력 크기(px)</td></tr>
 <tr><td>Anomaly Threshold</td><td>슬라이더 [0.0~1.0]</td><td></td></tr>
 <tr><td>Sigma (k)</td><td>슬라이더 [1.0~6.0]</td><td></td></tr>
@@ -3224,7 +2946,7 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <h5>Classify (분류)</h5>
 <table class="cols-3-3-4">
 <tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
-<tr><td>Model Path (.onnx)</td><td>입력</td><td>모델 파일(.onnx) 경로 또는 model:// 참조</td></tr>
+<tr><td>Model Path (.onnx)</td><td>입력</td><td>모델 파일(.onnx) 경로([폴더] 버튼으로 선택)</td></tr>
 <tr><td>Input Width</td><td>슬라이더 [32~640]</td><td></td></tr>
 <tr><td>Input Height</td><td>슬라이더 [32~640]</td><td></td></tr>
 <tr><td>Confidence Threshold</td><td>슬라이더 [0.1~1.0]</td><td>신뢰도 임계값</td></tr>
@@ -3246,12 +2968,6 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <tr><td>Unit</td><td>선택(목록) (GeometryJudgmentUnit)</td><td></td></tr>
 <tr><td>Max ΔXY (radial)</td><td>입력</td><td></td></tr>
 <tr><td>Max Δθ (°)</td><td>입력</td><td></td></tr>
-<tr><td>Enable Robot Transform</td><td>체크박스</td><td></td></tr>
-<tr><td>M11</td><td>입력</td><td></td></tr>
-<tr><td>M21</td><td>입력</td><td></td></tr>
-<tr><td>M12</td><td>입력</td><td></td></tr>
-<tr><td>M22</td><td>입력</td><td></td></tr>
-<tr><td>θ Sign (+1/-1)</td><td>입력</td><td></td></tr>
 <tr><td>Draw Overlay</td><td>체크박스</td><td>결과 오버레이 표시</td></tr>
 </table>
 <h5>Multi-Step Align (다중 스텝 얼라인)</h5>
@@ -3267,12 +2983,6 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <tr><td>Enable Judgment</td><td>체크박스</td><td>이 도구의 OK/NG 판정 사용</td></tr>
 <tr><td>Max ΔXY (radial)</td><td>입력</td><td></td></tr>
 <tr><td>Max Δθ (°)</td><td>입력</td><td></td></tr>
-<tr><td>Enable Robot Transform</td><td>체크박스</td><td></td></tr>
-<tr><td>M11</td><td>입력</td><td></td></tr>
-<tr><td>M21</td><td>입력</td><td></td></tr>
-<tr><td>M12</td><td>입력</td><td></td></tr>
-<tr><td>M22</td><td>입력</td><td></td></tr>
-<tr><td>θ Sign (+1/-1)</td><td>입력</td><td></td></tr>
 <tr><td>Draw Overlay</td><td>체크박스</td><td>결과 오버레이 표시</td></tr>
 </table>
 <h4>Judgment</h4>
@@ -3290,7 +3000,7 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
 <tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
 <tr><td>Judgment Mode</td><td>선택(목록) (ResultJudgmentMode)</td><td></td></tr>
 </table>
-<h3 id="appx-results">13.3 검사 결과 값 이름 (PLC 매핑 · Web 이력)</h3>
+<h3 id="appx-results">11.3 검사 결과 값 이름 (PLC 매핑 · Web 이력)</h3>
 <p>도구 설정의 PLC Output 에서 고르는 결과 키(Key)는 도구가 내보내는 값 이름입니다. 자주 쓰는 이름은 다음과 같습니다.</p>
 <table class="cols-3-6">
   <tr><th>도구</th><th>대표 결과 값</th></tr>
@@ -3298,19 +3008,19 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
   <tr><td>Caliper · Line Fit · Circle Fit</td><td>EdgeX/Y · Angle · CenterX/Y · Radius · Score</td></tr>
   <tr><td>Geometry</td><td>Distance · DistanceMm · Angle · IntersectionX/Y · JudgmentValue · JudgmentPass</td></tr>
   <tr><td>Feature Match · Shape Match</td><td>MatchCount · Score · CenterX/Y · Angle · Scale · Match{n}_X/Y/Angle/Score</td></tr>
-  <tr><td>Match Align · Multi-Step Align</td><td>DeltaX · DeltaY · DeltaTheta · RobotDX/DY/DTheta · JudgmentPass</td></tr>
+  <tr><td>Match Align · Multi-Step Align</td><td>DeltaX · DeltaY · DeltaTheta · JudgmentPass</td></tr>
   <tr><td>Code Reader · OCR · OCV</td><td>Text · Count · Verified · Grade · Confidence</td></tr>
   <tr><td>Detection · Segmentation 계열</td><td>Count · Class{n} · Score{n} · Box{n}_X/Y/W/H · MaskPixels</td></tr>
   <tr><td>PointCloud Cluster · 3D Geometry</td><td>ClusterCount · Cluster{i}_SizeX/Y/Z · Cluster{i}_Length/Width · Distance3D · AngleDeg</td></tr>
   <tr><td>Result</td><td>PassCount · FailCount · TotalCount</td></tr>
 </table>
-<h3 id="appx-funcmap">13.4 기능 목록 — 설명 위치</h3>
+<h3 id="appx-funcmap">11.4 기능 목록 — 설명 위치</h3>
 <p>제품 기능 목록의 항목마다 이 매뉴얼에서 화면과 사용법을 설명하는 절입니다.</p>
 <table class="cols-2-2-3-2">
   <tr><th>대분류</th><th>중분류</th><th>기능</th><th>설명 절</th></tr>
   <tr><td>검사 운전 (VMS 메인)</td><td>자동 운전</td><td>AUTO RUN 연속 검사</td><td>§4.3 · §4.8</td></tr>
   <tr><td>검사 운전 (VMS 메인)</td><td>자동 운전</td><td>수동 검사 실행</td><td>§4.5</td></tr>
-  <tr><td>검사 운전 (VMS 메인)</td><td>자동 운전</td><td>외부 트리거 연동</td><td>§3.7 · §5.10</td></tr>
+  <tr><td>검사 운전 (VMS 메인)</td><td>자동 운전</td><td>외부 트리거 연동</td><td>§3.5 · §3.6 · §5.10</td></tr>
   <tr><td>검사 운전 (VMS 메인)</td><td>판정·집계</td><td>양불 판정 및 카운트</td><td>§4.4 · §5.6</td></tr>
   <tr><td>검사 운전 (VMS 메인)</td><td>판정·집계</td><td>NG 이력 조회</td><td>§4.2 · §4.5 · §4.6</td></tr>
   <tr><td>검사 운전 (VMS 메인)</td><td>판정·집계</td><td>단독 모드 로컬 생산 이력</td><td>§4.9 · §4.10</td></tr>
@@ -3318,7 +3028,7 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
   <tr><td>검사 운전 (VMS 메인)</td><td>생산 관리 연동</td><td>멀티 Lot 관리</td><td>§4.3 · §8.7</td></tr>
   <tr><td>검사 운전 (VMS 메인)</td><td>생산 관리 연동</td><td>작업자 로그인</td><td>§4.3 · §4.12 · §8.9</td></tr>
   <tr><td>검사 운전 (VMS 메인)</td><td>생산 관리 연동</td><td>검사 결과 웹 업로드</td><td>§8.6 · §8.26</td></tr>
-  <tr><td>검사 운전 (VMS 메인)</td><td>시퀀스 제어</td><td>IO 시퀀스 운전</td><td>§3.7 · §5.10</td></tr>
+  <tr><td>검사 운전 (VMS 메인)</td><td>시퀀스 제어</td><td>IO 시퀀스 운전</td><td>§3.6 · §5.10</td></tr>
   <tr><td>레시피 편집 (Vision Setup)</td><td>레시피 관리</td><td>레시피 생성/저장/복사/이름 변경</td><td>§5.3 · §8.10</td></tr>
   <tr><td>레시피 편집 (Vision Setup)</td><td>레시피 관리</td><td>예제 템플릿 갤러리</td><td>§5.8</td></tr>
   <tr><td>레시피 편집 (Vision Setup)</td><td>카메라·영상 취득</td><td>카메라 연결/촬영/라이브</td><td>§3.4 · §4.5 · §5.4 · §5.12</td></tr>
@@ -3352,7 +3062,7 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
   <tr><td>레시피 편집 (Vision Setup)</td><td>캘리브레이션</td><td>카메라 캘리브레이션 (mm 환산)</td><td>§5.9</td></tr>
   <tr><td>레시피 편집 (Vision Setup)</td><td>캘리브레이션</td><td>Image Rectify (왜곡 보정)</td><td>§6.14</td></tr>
   <tr><td>시스템 구성 (App Setup)</td><td>장치 구성</td><td>카메라 등록·시스템 구성 마법사</td><td>3 장</td></tr>
-  <tr><td>시스템 구성 (App Setup)</td><td>보안</td><td>사용자 계정·보안 모드</td><td>§3.8 · §4.11 · §4.12</td></tr>
+  <tr><td>시스템 구성 (App Setup)</td><td>보안</td><td>사용자 계정·보안 모드</td><td>§3.7 · §4.11 · §4.12</td></tr>
   <tr><td>생산 관리 웹 (동봉 BODA.VMS.Web)</td><td>대시보드</td><td>공장 전체 현황</td><td>§8.2 · §8.3</td></tr>
   <tr><td>생산 관리 웹 (동봉 BODA.VMS.Web)</td><td>현장 모니터링</td><td>안돈 보드</td><td>§8.4</td></tr>
   <tr><td>생산 관리 웹 (동봉 BODA.VMS.Web)</td><td>현장 모니터링</td><td>알람</td><td>§8.5</td></tr>
@@ -3371,15 +3081,15 @@ GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단
   <tr><td>생산 관리 웹 (동봉 BODA.VMS.Web)</td><td>시스템 관리 (Admin)</td><td>감사 로그</td><td>§8.23</td></tr>
   <tr><td>생산 관리 웹 (동봉 BODA.VMS.Web)</td><td>시스템 관리 (Admin)</td><td>교대 마스터 · 시스템 설정 · SW 라이선스</td><td>§8.21 · §8.24 · §8.25</td></tr>
   <tr><td>공통</td><td>계정·권한</td><td>로그인·권한 제한</td><td>§4.12 · §8.1 · §8.2</td></tr>
-  <tr><td>공통</td><td>라이선스</td><td>라이선스 인증</td><td>§2.6 · §3.8 · §8.24 · §11.4</td></tr>
-  <tr><td>공통</td><td>유지 관리</td><td>인앱 업데이트</td><td>§2.7 · §4.6</td></tr>
+  <tr><td>공통</td><td>라이선스</td><td>라이선스 인증</td><td>§2.5 · §3.7 · §8.24 · §9.4</td></tr>
+  <tr><td>공통</td><td>유지 관리</td><td>인앱 업데이트</td><td>§2.6 · §4.6</td></tr>
 </table>
-<h3 id="appx-version">13.5 문서 정보</h3>
+<h3 id="appx-version">11.5 문서 정보</h3>
 <table class="cols-3-6">
   <tr><th>항목</th><th>값</th></tr>
   <tr><td>문서 버전</td><td>3.0 (2026-10-29)</td></tr>
-  <tr><td>대상 소프트웨어</td><td>VMS 1.47.3 · BODA.VMS.Web 1.11.0 · BODA.VMS.MLOps 0.1.5</td></tr>
-  <tr><td>구성</td><td>VMS · VMS.VisionSetup · VMS.AppSetup (검사 런타임) / BODA.VMS.Web (생산 관리) / BODA.VMS.MLOps (선택 구성 요소, 인증 범위 외)</td></tr>
+  <tr><td>대상 소프트웨어</td><td>BODA VMS v1.47.3 (VMS · VMS.AppSetup · VMS.VisionSetup · 생산 관리 웹)</td></tr>
+  <tr><td>구성</td><td>VMS · VMS.VisionSetup · VMS.AppSetup (검사 런타임) / BODA.VMS.Web (생산 관리)</td></tr>
   <tr><td>발행</td><td>BODA Vision AI</td></tr>
 </table>
 </section>

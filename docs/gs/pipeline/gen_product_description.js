@@ -111,7 +111,7 @@ children.push(new Paragraph({ children: [new PageBreak()] }));
 // ---- 문서 정보 ----
 children.push(H1("문서 정보"));
 children.push(infoTable([
-  ["제품명", "BODA Vision Management System (VMS)"],
+  ["제품명", "BODA VMS"],
   ["제품 버전", "v1.47.3"],
   ["문서 버전", "1.0"],
   ["작성일", "2026-06-12"],
@@ -144,7 +144,7 @@ children.push(H1("2. 목적 및 적용 범위"));
 children.push(H2("2.1 목적"));
 children.push(P("본 제품설명서는 VMS의 제품 개요, 동작 환경(하드웨어/소프트웨어 요구사항), 그리고 구현·검증된 기능 명세(Function List)를 정의한다. 본 문서에 기술된 기능 목록은 GS 인증 시험 시나리오의 기준이 된다."));
 children.push(H2("2.2 적용 범위"));
-children.push(P("적용 범위는 VMS 데스크톱 제품군(운영 클라이언트 VMS, 시스템 설정 VMS.AppSetup, 비전 설정 VMS.VisionSetup)과 이와 연동되는 BODA.VMS.Web(관리/MES) 서버를 포함한다. 제품은 학습된 ONNX 모델을 사용한 추론 검사 기능만 포함하며, 모델을 만드는 학습 기능은 별도 플랫폼(BODA.VMS.MLOps)의 몫으로 본 인증 범위에 포함하지 않는다."));
+children.push(P("적용 범위는 BODA VMS 를 이루는 운영 클라이언트 VMS, 시스템 설정 VMS.AppSetup, 비전 설정 VMS.VisionSetup, 생산 관리 웹 BODA.VMS.Web 이며, 네 구성 요소는 하나의 설치 파일로 제공된다. 딥러닝 검사는 학습된 ONNX 모델 파일을 불러와 추론하는 기능이며, 제품에 모델 학습 기능은 없다."));
 children.push(P("※ 본 문서에는 현재 정식 구현·동작이 확인된 기능만 기술하였다.", { italics: true, size: 18, color: "595959" }));
 
 // ---- 3. 제품 구성 ----
@@ -156,11 +156,10 @@ children.push(P("VMS는 다음 모듈로 구성된다."));
     new TableRow({ tableHeader: true, children: [hcell("모듈", c1), hcell("역할", c2)] }),
     ...[
       ["VMS (운영 클라이언트)", "생산 현장 운영 화면. 카메라 제어/검사 실행(AUTO RUN)·판정·통계·작업지시·이미지 저장·관리자 도구."],
-      ["VMS.AppSetup (시스템 설정)", "최초 1회 시스템 구성 마법사. 애플리케이션·네트워크·카메라·PLC·로봇·초기 관리자 계정 설정."],
+      ["VMS.AppSetup (시스템 설정)", "최초 1회 시스템 구성 마법사. 애플리케이션·네트워크·카메라·PLC·IO 보드·초기 관리자 계정·보안 모드·라이선스 설정."],
       ["VMS.VisionSetup (비전 설정)", "비전 도구 워크스페이스. 카메라 취득·ROI 지정·도구 조합·레시피/시퀀스 편집·배치 테스트·캘리브레이션."],
-      ["(선택 구성) BODA.VMS.MLOps", "딥러닝 모델 수집·라벨링·학습·배포를 관리하는 별도 웹 플랫폼(GPU 학습 워커 포함) — 선택 구성 요소, 인증 범위 외 (제품 MSI 미포함, 별도 서버에 설치). 사용자 매뉴얼 9장 참조."],
       ["NativeVision (C++ 가속)", "AVX2/FMA 기반 영상처리 가속 네이티브 라이브러리."],
-      ["BODA.VMS.Web (관리/MES)", "ASP.NET Core 8 + Blazor 웹. 대시보드·작업지시·생산이력·검사이미지 조회·알람·감사로그 등(선택 연동)."],
+      ["BODA.VMS.Web (관리/MES)", "ASP.NET Core 8 + Blazor 웹. 대시보드·작업지시·생산이력·검사이미지 조회·알람·감사로그 등. 같은 설치 파일에서 "Web 서버 포함"으로 설치."],
     ].map(([a, b], i) => new TableRow({ children: [
       cell(a, c1, { bold: true, fill: i % 2 ? "F4F7FB" : "FFFFFF" }),
       cell(b, c2, { fill: i % 2 ? "F4F7FB" : "FFFFFF" }),
@@ -238,8 +237,9 @@ children.push(funcTable([
   ["AS-01", "Application / Network", "애플리케이션 기본 설정 및 네트워크(Web 서버 주소 등) 구성"],
   ["AS-02", "Camera", "카메라 제조사·IP 등 연결 설정"],
   ["AS-03", "PLC", "PLC 통신(벤더/IP/프로토콜) 설정"],
-  ["AS-04", "Robot", "로봇 연동 설정 (선택)"],
+  ["AS-04", "IO Board", "디지털 IO 보드(ADLink / Advantech) 등록 · 채널 수 설정"],
   ["AS-05", "Admin 비밀번호", "초기 VMS Admin / Local Fallback Admin 계정 비밀번호 설정(기본 비밀번호 시드 없음)"],
+  ["AS-06", "Security & License", "보안 모드(Production / Development) 저장, SW 라이선스 설치 · 상태 확인"],
 ]));
 
 children.push(H2("6.2 운영 클라이언트 — VMS (메인 화면)"));
@@ -304,7 +304,8 @@ children.push(funcTable([
   ["VS-04", "Run", "검사 파이프라인 1회/연속 실행"],
   ["VS-05", "Sequence", "시퀀스(디바이스 연동 흐름) 편집"],
   ["VS-06", "Batch Test", "다수 이미지 일괄 검사/검증"],
-  ["VS-07", "Calibration", "카메라/핸드아이 캘리브레이션"],
+  ["VS-07", "Calibration", "카메라 캘리브레이션 (체커보드 · 원형 그리드)"],
+  ["VS-08", "3D Data", "저장 점군(.vpc) 불러오기 · 저장, 높이 맵 생성 — 3D 검사 도구의 입력"],
 ]));
 children.push(H3("6.3.2 ROI(검사 영역) 지정"));
 children.push(funcTable([
@@ -326,7 +327,7 @@ children.push(funcTable([
   ["TP-01", "Preprocessing (Color)", "컬러 전처리 — Blur / Morphology / Image Enhance / Polar Unwrap (4종)"],
   ["TP-02", "Conversion (Gray)", "그레이 변환 — Grayscale / Threshold / Edge Detection / Histogram (4종)"],
   ["TP-03", "Pattern Matching", "패턴 매칭 — Feature Match / Shape Match (2종)"],
-  ["TP-04", "Alignment", "얼라인 — Match Align / Multi-Step Align (2종), 로봇·스테이지 보정량 산출"],
+  ["TP-04", "Alignment", "얼라인 — Match Align / Multi-Step Align (2종), 설비(스테이지) 보정량 산출"],
   ["TP-05", "Blob Analysis", "블롭 분석 — Blob (1종)"],
   ["TP-06", "Measurement", "치수 측정 — Caliper / Line Fit / Circle Fit / Geometry (4종)"],
   ["TP-07", "Identification", "문자 인식·검증 — OCR / OCV (2종)"],

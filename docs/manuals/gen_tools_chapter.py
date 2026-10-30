@@ -9,6 +9,11 @@ PROSE = os.path.join(HERE, "tools_prose.json")
 SHOT = os.path.normpath(os.path.join(HERE, "..", "gs", "screenshots", "v3", "tools"))
 OUT = os.path.join(HERE, "src", "06_tools.html")
 tools = {t["tool"]: t for t in json.load(io.open(PARAMS, encoding="utf-8"))}
+# 기본판(인증 범위) 매뉴얼에서 빼는 파라미터 — 확장 옵션(로봇 연동)에서만 보이는 Robot Transform 항목
+def in_scope_param(name):
+    return not (name.startswith("Robot") or name == "EnableRobotTransform")
+for t in tools.values():
+    if t.get("params"): t["params"] = [pp for pp in t["params"] if in_scope_param(pp["param"])]
 prose = json.load(io.open(PROSE, encoding="utf-8"))
 esc = html.escape
 
@@ -114,7 +119,7 @@ def scene_figure(key, title):
 
 out = ['<section id="tools">\n<h2>6. 비전 도구 설명 및 사용법</h2>\n',
  '<p>Tool Palette 의 도구를 카테고리 순서대로 설명합니다. 도구마다 <strong>용도 · 설정 패널 · 주요 파라미터 · 결과 값 · 사용 요령</strong>을 정리했으며, '
- '설정 패널 그림은 Expert Mode 를 끈 기본 상태이고, <strong>실행 예</strong> 그림은 예제 레시피와 이미지를 실제로 실행한 화면(이미지 뷰 · Run Results · 그 레시피의 Tool Settings)입니다. 파라미터의 정확한 범위와 전체 목록은 부록 13.2 를, 도구를 연결하는 방법은 §5.5 를 참고하세요. '
+ '설정 패널 그림은 Expert Mode 를 끈 기본 상태이고, <strong>실행 예</strong> 그림은 예제 레시피와 이미지를 실제로 실행한 화면(이미지 뷰 · Run Results · 그 레시피의 Tool Settings)입니다. 파라미터의 정확한 범위와 전체 목록은 부록 11.2 를, 도구를 연결하는 방법은 §5.5 를 참고하세요. '
  '각 파라미터 옆의 물음표(?)에 마우스를 올리면 같은 설명이 프로그램 안에서도 표시됩니다.</p>\n']
 sec = 0
 for cat, items in ORDER:

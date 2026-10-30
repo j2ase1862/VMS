@@ -1,7 +1,7 @@
 <section id="appendix">
-<h2>13. 부록</h2>
+<h2>11. 부록</h2>
 <div class="callout"><strong>⚙ 부록은 관리자와 기술 지원 담당자용 참고 자료입니다.</strong></div>
-<h3 id="appx-keys">13.1 단축키 · 마우스 조작 (VisionSetup)</h3>
+<h3 id="appx-keys">11.1 단축키 · 마우스 조작 (VisionSetup)</h3>
 <table class="cols-2-3-4">
   <tr><th>키 / 조작</th><th>범위</th><th>동작</th></tr>
   <tr><td>← / →</td><td>메인 창 (폴더 열기 후)</td><td>이전 / 다음 이미지. 툴바의 Navigate · Run All · Run Selected 모드에 따라 이동 시 자동 실행</td></tr>
@@ -14,7 +14,7 @@
   <tr><td>Enter</td><td>SLM Recipe Bot 입력창 · 작업자 로그인 PIN</td><td>전송 / 로그인</td></tr>
 </table>
 <p>메뉴에 표시된 Ctrl+O · Ctrl+S · F5 · F6 는 관례 표기이며, 실제 실행은 메뉴 또는 툴바 버튼으로 합니다.</p>
-<h3 id="appx-params">13.2 비전 도구 파라미터 전체표</h3>
+<h3 id="appx-params">11.2 비전 도구 파라미터 전체표</h3>
 <p>Tool Settings 패널에 표시되는 파라미터를 도구별로 정리했습니다. 라벨은 화면 표기와 같으며, 각 도구의 용도와 사용 요령은 6장을 참고하세요.</p>
 <h4>Conversion</h4>
 <h5>Grayscale (그레이 변환)</h5>
@@ -438,7 +438,7 @@
 <h5>Detection (딥러닝 검출)</h5>
 <table class="cols-3-3-4">
 <tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
-<tr><td>Model Path (.onnx)</td><td>입력</td><td>모델 파일(.onnx) 경로 또는 model:// 참조</td></tr>
+<tr><td>Model Path (.onnx)</td><td>입력</td><td>모델 파일(.onnx) 경로([폴더] 버튼으로 선택)</td></tr>
 <tr><td>Inference Size (px)</td><td>슬라이더 [320~1280]</td><td>모델 입력 크기(px)</td></tr>
 <tr><td>Use SAHI</td><td>체크박스</td><td></td></tr>
 <tr><td>Tile Size (px)</td><td>슬라이더 [320~1536]</td><td></td></tr>
@@ -463,7 +463,7 @@
 <h5>Segmentation (분할)</h5>
 <table class="cols-3-3-4">
 <tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
-<tr><td>Model Path (.onnx)</td><td>입력</td><td>모델 파일(.onnx) 경로 또는 model:// 참조</td></tr>
+<tr><td>Model Path (.onnx)</td><td>입력</td><td>모델 파일(.onnx) 경로([폴더] 버튼으로 선택)</td></tr>
 <tr><td>Input Size</td><td>슬라이더 [64~1024]</td><td>모델 입력 크기(px)</td></tr>
 <tr><td>ImageNet Normalization</td><td>체크박스</td><td></td></tr>
 <tr><td>Background Class Index</td><td>슬라이더 [0~32]</td><td></td></tr>
@@ -473,7 +473,7 @@
 <h5>RF-DETR-seg (인스턴스 분할)</h5>
 <table class="cols-3-3-4">
 <tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
-<tr><td>Model Path (.onnx)</td><td>입력</td><td>모델 파일(.onnx) 경로 또는 model:// 참조</td></tr>
+<tr><td>Model Path (.onnx)</td><td>입력</td><td>모델 파일(.onnx) 경로([폴더] 버튼으로 선택)</td></tr>
 <tr><td>Input Size (모델이 정합니다)</td><td>슬라이더 [64~1280]</td><td>모델 입력 크기(px)</td></tr>
 <tr><td>Confidence Threshold</td><td>슬라이더 [0.01~1.0]</td><td>신뢰도 임계값</td></tr>
 <tr><td>Max Instances</td><td>슬라이더 [1~1000]</td><td>최대 검출 개수</td></tr>
@@ -485,7 +485,7 @@
 <h5>Anomaly (이상 탐지)</h5>
 <table class="cols-3-3-4">
 <tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
-<tr><td>Model Path (.onnx)</td><td>입력</td><td>모델 파일(.onnx) 경로 또는 model:// 참조</td></tr>
+<tr><td>Model Path (.onnx)</td><td>입력</td><td>모델 파일(.onnx) 경로([폴더] 버튼으로 선택)</td></tr>
 <tr><td>Input Size</td><td>슬라이더 [64~512]</td><td>모델 입력 크기(px)</td></tr>
 <tr><td>Anomaly Threshold</td><td>슬라이더 [0.0~1.0]</td><td></td></tr>
 <tr><td>Sigma (k)</td><td>슬라이더 [1.0~6.0]</td><td></td></tr>
@@ -496,7 +496,7 @@
 <h5>Classify (분류)</h5>
 <table class="cols-3-3-4">
 <tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
-<tr><td>Model Path (.onnx)</td><td>입력</td><td>모델 파일(.onnx) 경로 또는 model:// 참조</td></tr>
+<tr><td>Model Path (.onnx)</td><td>입력</td><td>모델 파일(.onnx) 경로([폴더] 버튼으로 선택)</td></tr>
 <tr><td>Input Width</td><td>슬라이더 [32~640]</td><td></td></tr>
 <tr><td>Input Height</td><td>슬라이더 [32~640]</td><td></td></tr>
 <tr><td>Confidence Threshold</td><td>슬라이더 [0.1~1.0]</td><td>신뢰도 임계값</td></tr>
@@ -518,12 +518,6 @@
 <tr><td>Unit</td><td>선택(목록) (GeometryJudgmentUnit)</td><td></td></tr>
 <tr><td>Max ΔXY (radial)</td><td>입력</td><td></td></tr>
 <tr><td>Max Δθ (°)</td><td>입력</td><td></td></tr>
-<tr><td>Enable Robot Transform</td><td>체크박스</td><td></td></tr>
-<tr><td>M11</td><td>입력</td><td></td></tr>
-<tr><td>M21</td><td>입력</td><td></td></tr>
-<tr><td>M12</td><td>입력</td><td></td></tr>
-<tr><td>M22</td><td>입력</td><td></td></tr>
-<tr><td>θ Sign (+1/-1)</td><td>입력</td><td></td></tr>
 <tr><td>Draw Overlay</td><td>체크박스</td><td>결과 오버레이 표시</td></tr>
 </table>
 <h5>Multi-Step Align (다중 스텝 얼라인)</h5>
@@ -539,12 +533,6 @@
 <tr><td>Enable Judgment</td><td>체크박스</td><td>이 도구의 OK/NG 판정 사용</td></tr>
 <tr><td>Max ΔXY (radial)</td><td>입력</td><td></td></tr>
 <tr><td>Max Δθ (°)</td><td>입력</td><td></td></tr>
-<tr><td>Enable Robot Transform</td><td>체크박스</td><td></td></tr>
-<tr><td>M11</td><td>입력</td><td></td></tr>
-<tr><td>M21</td><td>입력</td><td></td></tr>
-<tr><td>M12</td><td>입력</td><td></td></tr>
-<tr><td>M22</td><td>입력</td><td></td></tr>
-<tr><td>θ Sign (+1/-1)</td><td>입력</td><td></td></tr>
 <tr><td>Draw Overlay</td><td>체크박스</td><td>결과 오버레이 표시</td></tr>
 </table>
 <h4>Judgment</h4>
@@ -562,7 +550,7 @@
 <tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
 <tr><td>Judgment Mode</td><td>선택(목록) (ResultJudgmentMode)</td><td></td></tr>
 </table>
-<h3 id="appx-results">13.3 검사 결과 값 이름 (PLC 매핑 · Web 이력)</h3>
+<h3 id="appx-results">11.3 검사 결과 값 이름 (PLC 매핑 · Web 이력)</h3>
 <p>도구 설정의 PLC Output 에서 고르는 결과 키(Key)는 도구가 내보내는 값 이름입니다. 자주 쓰는 이름은 다음과 같습니다.</p>
 <table class="cols-3-6">
   <tr><th>도구</th><th>대표 결과 값</th></tr>
@@ -570,19 +558,19 @@
   <tr><td>Caliper · Line Fit · Circle Fit</td><td>EdgeX/Y · Angle · CenterX/Y · Radius · Score</td></tr>
   <tr><td>Geometry</td><td>Distance · DistanceMm · Angle · IntersectionX/Y · JudgmentValue · JudgmentPass</td></tr>
   <tr><td>Feature Match · Shape Match</td><td>MatchCount · Score · CenterX/Y · Angle · Scale · Match{n}_X/Y/Angle/Score</td></tr>
-  <tr><td>Match Align · Multi-Step Align</td><td>DeltaX · DeltaY · DeltaTheta · RobotDX/DY/DTheta · JudgmentPass</td></tr>
+  <tr><td>Match Align · Multi-Step Align</td><td>DeltaX · DeltaY · DeltaTheta · JudgmentPass</td></tr>
   <tr><td>Code Reader · OCR · OCV</td><td>Text · Count · Verified · Grade · Confidence</td></tr>
   <tr><td>Detection · Segmentation 계열</td><td>Count · Class{n} · Score{n} · Box{n}_X/Y/W/H · MaskPixels</td></tr>
   <tr><td>PointCloud Cluster · 3D Geometry</td><td>ClusterCount · Cluster{i}_SizeX/Y/Z · Cluster{i}_Length/Width · Distance3D · AngleDeg</td></tr>
   <tr><td>Result</td><td>PassCount · FailCount · TotalCount</td></tr>
 </table>
-<h3 id="appx-funcmap">13.4 기능 목록 — 설명 위치</h3>
+<h3 id="appx-funcmap">11.4 기능 목록 — 설명 위치</h3>
 <p>제품 기능 목록의 항목마다 이 매뉴얼에서 화면과 사용법을 설명하는 절입니다.</p>
 <table class="cols-2-2-3-2">
   <tr><th>대분류</th><th>중분류</th><th>기능</th><th>설명 절</th></tr>
   <tr><td>검사 운전 (VMS 메인)</td><td>자동 운전</td><td>AUTO RUN 연속 검사</td><td>§4.3 · §4.8</td></tr>
   <tr><td>검사 운전 (VMS 메인)</td><td>자동 운전</td><td>수동 검사 실행</td><td>§4.5</td></tr>
-  <tr><td>검사 운전 (VMS 메인)</td><td>자동 운전</td><td>외부 트리거 연동</td><td>§3.7 · §5.10</td></tr>
+  <tr><td>검사 운전 (VMS 메인)</td><td>자동 운전</td><td>외부 트리거 연동</td><td>§3.5 · §3.6 · §5.10</td></tr>
   <tr><td>검사 운전 (VMS 메인)</td><td>판정·집계</td><td>양불 판정 및 카운트</td><td>§4.4 · §5.6</td></tr>
   <tr><td>검사 운전 (VMS 메인)</td><td>판정·집계</td><td>NG 이력 조회</td><td>§4.2 · §4.5 · §4.6</td></tr>
   <tr><td>검사 운전 (VMS 메인)</td><td>판정·집계</td><td>단독 모드 로컬 생산 이력</td><td>§4.9 · §4.10</td></tr>
@@ -590,7 +578,7 @@
   <tr><td>검사 운전 (VMS 메인)</td><td>생산 관리 연동</td><td>멀티 Lot 관리</td><td>§4.3 · §8.7</td></tr>
   <tr><td>검사 운전 (VMS 메인)</td><td>생산 관리 연동</td><td>작업자 로그인</td><td>§4.3 · §4.12 · §8.9</td></tr>
   <tr><td>검사 운전 (VMS 메인)</td><td>생산 관리 연동</td><td>검사 결과 웹 업로드</td><td>§8.6 · §8.26</td></tr>
-  <tr><td>검사 운전 (VMS 메인)</td><td>시퀀스 제어</td><td>IO 시퀀스 운전</td><td>§3.7 · §5.10</td></tr>
+  <tr><td>검사 운전 (VMS 메인)</td><td>시퀀스 제어</td><td>IO 시퀀스 운전</td><td>§3.6 · §5.10</td></tr>
   <tr><td>레시피 편집 (Vision Setup)</td><td>레시피 관리</td><td>레시피 생성/저장/복사/이름 변경</td><td>§5.3 · §8.10</td></tr>
   <tr><td>레시피 편집 (Vision Setup)</td><td>레시피 관리</td><td>예제 템플릿 갤러리</td><td>§5.8</td></tr>
   <tr><td>레시피 편집 (Vision Setup)</td><td>카메라·영상 취득</td><td>카메라 연결/촬영/라이브</td><td>§3.4 · §4.5 · §5.4 · §5.12</td></tr>
@@ -624,7 +612,7 @@
   <tr><td>레시피 편집 (Vision Setup)</td><td>캘리브레이션</td><td>카메라 캘리브레이션 (mm 환산)</td><td>§5.9</td></tr>
   <tr><td>레시피 편집 (Vision Setup)</td><td>캘리브레이션</td><td>Image Rectify (왜곡 보정)</td><td>§6.14</td></tr>
   <tr><td>시스템 구성 (App Setup)</td><td>장치 구성</td><td>카메라 등록·시스템 구성 마법사</td><td>3 장</td></tr>
-  <tr><td>시스템 구성 (App Setup)</td><td>보안</td><td>사용자 계정·보안 모드</td><td>§3.8 · §4.11 · §4.12</td></tr>
+  <tr><td>시스템 구성 (App Setup)</td><td>보안</td><td>사용자 계정·보안 모드</td><td>§3.7 · §4.11 · §4.12</td></tr>
   <tr><td>생산 관리 웹 (동봉 BODA.VMS.Web)</td><td>대시보드</td><td>공장 전체 현황</td><td>§8.2 · §8.3</td></tr>
   <tr><td>생산 관리 웹 (동봉 BODA.VMS.Web)</td><td>현장 모니터링</td><td>안돈 보드</td><td>§8.4</td></tr>
   <tr><td>생산 관리 웹 (동봉 BODA.VMS.Web)</td><td>현장 모니터링</td><td>알람</td><td>§8.5</td></tr>
@@ -643,15 +631,15 @@
   <tr><td>생산 관리 웹 (동봉 BODA.VMS.Web)</td><td>시스템 관리 (Admin)</td><td>감사 로그</td><td>§8.23</td></tr>
   <tr><td>생산 관리 웹 (동봉 BODA.VMS.Web)</td><td>시스템 관리 (Admin)</td><td>교대 마스터 · 시스템 설정 · SW 라이선스</td><td>§8.21 · §8.24 · §8.25</td></tr>
   <tr><td>공통</td><td>계정·권한</td><td>로그인·권한 제한</td><td>§4.12 · §8.1 · §8.2</td></tr>
-  <tr><td>공통</td><td>라이선스</td><td>라이선스 인증</td><td>§2.6 · §3.8 · §8.24 · §11.4</td></tr>
-  <tr><td>공통</td><td>유지 관리</td><td>인앱 업데이트</td><td>§2.7 · §4.6</td></tr>
+  <tr><td>공통</td><td>라이선스</td><td>라이선스 인증</td><td>§2.5 · §3.7 · §8.24 · §9.4</td></tr>
+  <tr><td>공통</td><td>유지 관리</td><td>인앱 업데이트</td><td>§2.6 · §4.6</td></tr>
 </table>
-<h3 id="appx-version">13.5 문서 정보</h3>
+<h3 id="appx-version">11.5 문서 정보</h3>
 <table class="cols-3-6">
   <tr><th>항목</th><th>값</th></tr>
   <tr><td>문서 버전</td><td>3.0 (2026-10-29)</td></tr>
-  <tr><td>대상 소프트웨어</td><td>VMS 1.47.3 · BODA.VMS.Web 1.11.0 · BODA.VMS.MLOps 0.1.5</td></tr>
-  <tr><td>구성</td><td>VMS · VMS.VisionSetup · VMS.AppSetup (검사 런타임) / BODA.VMS.Web (생산 관리) / BODA.VMS.MLOps (선택 구성 요소, 인증 범위 외)</td></tr>
+  <tr><td>대상 소프트웨어</td><td>BODA VMS v1.47.3 (VMS · VMS.AppSetup · VMS.VisionSetup · 생산 관리 웹)</td></tr>
+  <tr><td>구성</td><td>VMS · VMS.VisionSetup · VMS.AppSetup (검사 런타임) / BODA.VMS.Web (생산 관리)</td></tr>
   <tr><td>발행</td><td>BODA Vision AI</td></tr>
 </table>
 </section>
