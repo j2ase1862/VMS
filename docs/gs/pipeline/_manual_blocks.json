@@ -47,7 +47,7 @@
     "m": false
    },
    {
-    "s": ", 여러 라인의 생산 실적과 품질을 한곳에서 관리하는 ",
+    "s": "와 여러 라인의 생산 실적과 품질을 한곳에서 관리하는 ",
     "b": false,
     "m": false
    },
@@ -57,17 +57,7 @@
     "m": false
    },
    {
-    "s": ", 그리고 딥러닝 검사 모델을 만들고 배포하는 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "AI 학습 플랫폼(BODA.VMS.MLOps, 선택)",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": "으로 구성됩니다. 이 매뉴얼은 설치 담당자, 검사 레시피를 만드는 엔지니어, 현장 작업자, 관리자가 각자 필요한 장을 찾아 볼 수 있도록 ",
+    "s": "로 구성됩니다. 이 매뉴얼은 설치 담당자, 검사 레시피를 만드는 엔지니어, 현장 작업자, 관리자가 각자 필요한 장을 찾아 볼 수 있도록 ",
     "b": false,
     "m": false
    },
@@ -82,7 +72,7 @@
     "m": false
    }
   ],
-  "text": "BODA VMS(Vision Management System)는 산업용 카메라로 제품을 촬영해 양품/불량을 판정하는 머신 비전 검사 시스템입니다. 검사를 실제로 수행하는 검사 라인 PC, 여러 라인의 생산 실적과 품질을 한곳에서 관리하는 생산 관리 서버(BODA.VMS.Web), 그리고 딥러닝 검사 모델을 만들고 배포하는 AI 학습 플랫폼(BODA.VMS.MLOps, 선택)으로 구성됩니다. 이 매뉴얼은 설치 담당자, 검사 레시피를 만드는 엔지니어, 현장 작업자, 관리자가 각자 필요한 장을 찾아 볼 수 있도록 시스템 구성 → 설치 → 프로그램별 조작 → 검사 설정 → 웹 관리 → 유지보수 순서로 되어 있습니다."
+  "text": "BODA VMS(Vision Management System)는 산업용 카메라로 제품을 촬영해 양품/불량을 판정하는 머신 비전 검사 시스템입니다. 검사를 실제로 수행하는 검사 라인 PC와 여러 라인의 생산 실적과 품질을 한곳에서 관리하는 생산 관리 서버(BODA.VMS.Web)로 구성됩니다. 이 매뉴얼은 설치 담당자, 검사 레시피를 만드는 엔지니어, 현장 작업자, 관리자가 각자 필요한 장을 찾아 볼 수 있도록 시스템 구성 → 설치 → 프로그램별 조작 → 검사 설정 → 웹 관리 → 유지보수 순서로 되어 있습니다."
  },
  {
   "t": "h",
@@ -100,7 +90,7 @@
   "t": "figure",
   "src": "../gs/screenshots/v3/diagrams/system_overview.png",
   "width": "620",
-  "caption": "BODA VMS 시스템 구성 — 검사 라인 PC · 생산 관리 서버 · AI 학습 플랫폼"
+  "caption": "BODA VMS 시스템 구성 — 검사 라인 PC · 생산 관리 서버"
  },
  {
   "t": "h",
@@ -118,12 +108,12 @@
   "t": "p",
   "segs": [
    {
-    "s": "라인마다 PC 1대를 두고, 카메라·PLC(또는 IO 보드)·필요 시 로봇을 연결합니다. 이 PC 에는 다음 프로그램이 함께 설치됩니다.",
+    "s": "라인마다 PC 1대를 두고, 카메라·PLC(또는 IO 보드)를 연결합니다. 이 PC 에는 다음 프로그램이 함께 설치됩니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "라인마다 PC 1대를 두고, 카메라·PLC(또는 IO 보드)·필요 시 로봇을 연결합니다. 이 PC 에는 다음 프로그램이 함께 설치됩니다."
+  "text": "라인마다 PC 1대를 두고, 카메라·PLC(또는 IO 보드)를 연결합니다. 이 PC 에는 다음 프로그램이 함께 설치됩니다."
  },
  {
   "t": "table",
@@ -285,14 +275,14 @@
     {
      "segs": [
       {
-       "s": "카메라 · PLC · 로봇 · IO 보드 · Web/MLOps 서버 주소 · 보안 모드 · 라이선스를 7 단계 마법사로 설정합니다. 설치 후 최초 1 회 실행하며, 설비가 바뀔 때만 다시 엽니다.",
+       "s": "카메라 · PLC · IO 보드 · Web 서버 주소 · 보안 모드 · 라이선스를 6 단계 마법사로 설정합니다. 설치 후 최초 1 회 실행하며, 설비가 바뀔 때만 다시 엽니다.",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "카메라 · PLC · 로봇 · IO 보드 · Web/MLOps 서버 주소 · 보안 모드 · 라이선스를 7 단계 마법사로 설정합니다. 설치 후 최초 1 회 실행하며, 설비가 바뀔 때만 다시 엽니다."
+     "text": "카메라 · PLC · IO 보드 · Web 서버 주소 · 보안 모드 · 라이선스를 6 단계 마법사로 설정합니다. 설치 후 최초 1 회 실행하며, 설비가 바뀔 때만 다시 엽니다."
     }
    ]
   ],
@@ -330,39 +320,6 @@
    }
   ],
   "text": "브라우저(Chrome)로 접속하는 웹 프로그램입니다. 작업지시 · Lot · 작업자 · 제품 · 불량 코드 같은 기준 정보를 관리하고, 라인에서 올라온 검사 결과로 생산 이력 · 알람 · 파레토 · SPC · OEE · 보고서를 만듭니다. VMS 설치 파일에 동봉되어 있어 라인 PC 와 같은 PC 에 Windows 서비스로 켤 수도 있고, 별도 서버 PC 에 설치해 라인 여러 대(최대 100 대)를 붙일 수도 있습니다. Web 서버 없이 검사만 하는 단독 모드도 지원합니다(§4.9)."
- },
- {
-  "t": "h",
-  "segs": [
-   {
-    "s": "AI 학습 플랫폼 — BODA.VMS.MLOps (선택)",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 4,
-  "text": "AI 학습 플랫폼 — BODA.VMS.MLOps (선택)"
- },
- {
-  "t": "p",
-  "segs": [
-   {
-    "s": "딥러닝 검사 도구가 쓰는 모델(ONNX 파일)을 만드는 서버입니다. 라인에서 올라온 불량 사진을 모아 웹에서 라벨링하고, GPU 가 있는 학습 워커 PC 가 학습을 돌려 모델 레지스트리에 등록하면, 라인 PC 는 레시피의 참조(",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "model://…",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": ")로 운영 모델을 자동으로 내려받습니다. MLOps 를 쓰지 않는 현장은 이 서버 없이 운영해도 됩니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "text": "딥러닝 검사 도구가 쓰는 모델(ONNX 파일)을 만드는 서버입니다. 라인에서 올라온 불량 사진을 모아 웹에서 라벨링하고, GPU 가 있는 학습 워커 PC 가 학습을 돌려 모델 레지스트리에 등록하면, 라인 PC 는 레시피의 참조(model://…)로 운영 모델을 자동으로 내려받습니다. MLOps 를 쓰지 않는 현장은 이 서버 없이 운영해도 됩니다."
  },
  {
   "t": "h",
@@ -671,14 +628,14 @@
     {
      "segs": [
       {
-       "s": "GigE Vision 2D(Area Scan · Line Scan) · 3D 카메라. 제조사별 연결 방식은 §2.1 표 참고. 카메라 없이 저장 이미지 · 점군 파일로도 레시피 편집과 검사 시험이 가능합니다",
+       "s": "GigE Vision 2D(Area Scan · Line Scan). 제조사별 연결 방식은 §2.1 표 참고. 카메라 없이 저장 이미지 · 저장된 점군 파일(.vpc)로도 레시피 편집과 검사 시험이 가능합니다",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "GigE Vision 2D(Area Scan · Line Scan) · 3D 카메라. 제조사별 연결 방식은 §2.1 표 참고. 카메라 없이 저장 이미지 · 점군 파일로도 레시피 편집과 검사 시험이 가능합니다"
+     "text": "GigE Vision 2D(Area Scan · Line Scan). 제조사별 연결 방식은 §2.1 표 참고. 카메라 없이 저장 이미지 · 저장된 점군 파일(.vpc)로도 레시피 편집과 검사 시험이 가능합니다"
     }
    ],
    [
@@ -737,32 +694,6 @@
     {
      "segs": [
       {
-       "s": "로봇 (선택)",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "로봇 (선택)"
-    },
-    {
-     "segs": [
-      {
-       "s": "Universal Robots · Doosan · Jaka · ABB · Fanuc — 멀티뷰 3D 스캔과 얼라인 보정용",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Universal Robots · Doosan · Jaka · ABB · Fanuc — 멀티뷰 3D 스캔과 얼라인 보정용"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
        "s": "브라우저",
        "b": false,
        "m": false
@@ -775,40 +706,14 @@
     {
      "segs": [
       {
-       "s": "Google Chrome (생산 관리 웹 · MLOps 화면)",
+       "s": "Google Chrome (생산 관리 웹)",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "Google Chrome (생산 관리 웹 · MLOps 화면)"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "학습 워커 (MLOps 선택)",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "학습 워커 (MLOps 선택)"
-    },
-    {
-     "segs": [
-      {
-       "s": "NVIDIA GPU(VRAM 8GB 이상) · CUDA 12.4 드라이버(550 이상) · Python 3.12 64-bit · 여유 디스크 50GB",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "NVIDIA GPU(VRAM 8GB 이상) · CUDA 12.4 드라이버(550 이상) · Python 3.12 64-bit · 여유 디스크 50GB"
+     "text": "Google Chrome (생산 관리 웹)"
     }
    ]
   ],
@@ -1166,37 +1071,6 @@
      "imgs": [],
      "text": "Web 서버가 라인 PC 를 구분하는 번호(0~99)입니다. 작업지시 · 레시피 · 이력이 이 번호로 분리됩니다."
     }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "model:// 참조",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "model:// 참조"
-    },
-    {
-     "segs": [
-      {
-       "s": "딥러닝 도구의 모델 파일 대신 MLOps 레지스트리의 모델을 가리키는 주소입니다. 예: ",
-       "b": false,
-       "m": false
-      },
-      {
-       "s": "model://{모델ID}@production",
-       "b": false,
-       "m": true
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "딥러닝 도구의 모델 파일 대신 MLOps 레지스트리의 모델을 가리키는 주소입니다. 예: model://{모델ID}@production"
-    }
    ]
   ],
   "cls": "cols-2-7"
@@ -1258,14 +1132,14 @@
     {
      "segs": [
       {
-       "s": "2장 설치 · 3장 시스템 설정 마법사 · 11장 유지보수 · 12장 문제 조치",
+       "s": "2장 설치 · 3장 시스템 설정 마법사 · 9장 유지보수 · 10장 문제 조치",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "2장 설치 · 3장 시스템 설정 마법사 · 11장 유지보수 · 12장 문제 조치"
+     "text": "2장 설치 · 3장 시스템 설정 마법사 · 9장 유지보수 · 10장 문제 조치"
     }
    ],
    [
@@ -1284,14 +1158,14 @@
     {
      "segs": [
       {
-       "s": "4장 검사 운전 · 12장 문제 조치 (앞부분)",
+       "s": "4장 검사 운전 · 10장 문제 조치 (앞부분)",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "4장 검사 운전 · 12장 문제 조치 (앞부분)"
+     "text": "4장 검사 운전 · 10장 문제 조치 (앞부분)"
     }
    ],
    [
@@ -1310,14 +1184,14 @@
     {
      "segs": [
       {
-       "s": "5장 레시피 편집 · 6장 비전 도구 · 7장 검사 설정 예제 · 9장 MLOps(딥러닝 도구를 쓸 때)",
+       "s": "5장 레시피 편집 · 6장 비전 도구 · 7장 검사 설정 예제",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "5장 레시피 편집 · 6장 비전 도구 · 7장 검사 설정 예제 · 9장 MLOps(딥러닝 도구를 쓸 때)"
+     "text": "5장 레시피 편집 · 6장 비전 도구 · 7장 검사 설정 예제"
     }
    ],
    [
@@ -1336,14 +1210,14 @@
     {
      "segs": [
       {
-       "s": "8장 생산 관리 웹 · 11장 유지보수",
+       "s": "8장 생산 관리 웹 · 9장 유지보수",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "8장 생산 관리 웹 · 11장 유지보수"
+     "text": "8장 생산 관리 웹 · 9장 유지보수"
     }
    ]
   ],
@@ -1557,44 +1431,6 @@
      "header": false,
      "imgs": [],
      "text": "GigE 필터 드라이버 포함"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "Mech-Mind 3D 카메라",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Mech-Mind 3D 카메라"
-    },
-    {
-     "segs": [
-      {
-       "s": "없음",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "없음"
-    },
-    {
-     "segs": [
-      {
-       "s": "구동 파일이 설치 파일에 동봉됩니다",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "구동 파일이 설치 파일에 동봉됩니다"
     }
    ],
    [
@@ -1877,7 +1713,7 @@
   "t": "li",
   "segs": [
    {
-    "s": "VMS-1.47.3.msi",
+    "s": "VMS-1.48.0.msi",
     "b": false,
     "m": true
    },
@@ -1889,7 +1725,7 @@
   ],
   "ordered": true,
   "depth": 0,
-  "text": "VMS-1.47.3.msi 처럼 버전이 붙은 설치 파일을 더블 클릭합니다. 설치에는 관리자 권한이 필요합니다."
+  "text": "VMS-1.48.0.msi 처럼 버전이 붙은 설치 파일을 더블 클릭합니다. 설치에는 관리자 권한이 필요합니다."
  },
  {
   "t": "li",
@@ -1918,24 +1754,14 @@
     "m": false
    },
    {
-    "s": "는 기본값 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "C:\\Program Files\\VASIM\\BODA Vision System\\",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": " 을 그대로 두는 것을 권장합니다.",
+    "s": "는 설치 마법사가 보여 주는 기본값을 그대로 두는 것을 권장합니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": true,
   "depth": 0,
-  "text": "설치 폴더는 기본값 C:\\Program Files\\VASIM\\BODA Vision System\\ 을 그대로 두는 것을 권장합니다."
+  "text": "설치 폴더는 설치 마법사가 보여 주는 기본값을 그대로 두는 것을 권장합니다."
  },
  {
   "t": "li",
@@ -1977,14 +1803,24 @@
   "t": "li",
   "segs": [
    {
-    "s": "[설치]를 누르면 파일 복사가 진행되고, 완료 화면에서 [마침]을 누릅니다. 시작 메뉴와 바탕화면에 바로가기가 만들어집니다.",
+    "s": "[설치]를 누르면 파일 복사가 진행되고, 완료 화면에서 [마침]을 누릅니다. 바탕화면에 ",
+    "b": false,
+    "m": false
+   },
+   {
+    "s": "BODA VMS",
+    "b": true,
+    "m": false
+   },
+   {
+    "s": " 바로가기가, 시작 메뉴에 BODA VMS · BODA VMS 설정 마법사 (AppSetup) · BODA VMS 비전 설정 (VisionSetup) 바로가기가 만들어집니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": true,
   "depth": 0,
-  "text": "[설치]를 누르면 파일 복사가 진행되고, 완료 화면에서 [마침]을 누릅니다. 시작 메뉴와 바탕화면에 바로가기가 만들어집니다."
+  "text": "[설치]를 누르면 파일 복사가 진행되고, 완료 화면에서 [마침]을 누릅니다. 바탕화면에 BODA VMS 바로가기가, 시작 메뉴에 BODA VMS · BODA VMS 설정 마법사 (AppSetup) · BODA VMS 비전 설정 (VisionSetup) 바로가기가 만들어집니다."
  },
  {
   "t": "figure",
@@ -2013,7 +1849,7 @@
     "m": false
    },
    {
-    "s": "msiexec /i VMS-1.47.3.msi /qn INSTALLWEB=0",
+    "s": "msiexec /i VMS-1.48.0.msi /qn INSTALLWEB=0",
     "b": false,
     "m": true
    },
@@ -2023,7 +1859,7 @@
     "m": false
    }
   ],
-  "text": "무인 설치가 필요하면 명령 프롬프트(관리자)에서 다음처럼 실행합니다. msiexec /i VMS-1.47.3.msi /qn INSTALLWEB=0 — 값 0 은 제외, 1 은 포함입니다."
+  "text": "무인 설치가 필요하면 명령 프롬프트(관리자)에서 다음처럼 실행합니다. msiexec /i VMS-1.48.0.msi /qn INSTALLWEB=0 — 값 0 은 제외, 1 은 포함입니다."
  },
  {
   "t": "h",
@@ -2051,7 +1887,7 @@
     "m": false
    },
    {
-    "s": "가 자동으로 열립니다. 3장에 따라 7 단계를 저장한 뒤 VMS 를 다시 실행하세요. 설정 파일이 있어도 마법사를 끝까지 저장하지 않은 것이면 \"시스템 설정이 끝나지 않았습니다\" 안내와 함께 마법사가 열립니다. 설정 파일과 레시피, 검사 이력은 모두 ",
+    "s": "가 자동으로 열립니다. 3장에 따라 6 단계를 저장한 뒤 VMS 를 다시 실행하세요. 설정 파일이 있어도 마법사를 끝까지 저장하지 않은 것이면 \"시스템 설정이 끝나지 않았습니다\" 안내와 함께 마법사가 열립니다. 설정 파일과 레시피, 검사 이력은 모두 ",
     "b": false,
     "m": false
    },
@@ -2066,7 +1902,7 @@
     "m": false
    }
   ],
-  "text": "VMS 를 처음 실행하면 설정 파일이 없으므로 \"초기 시스템 설정이 필요합니다\" 안내와 함께 시스템 설정 마법사(VMS.AppSetup)가 자동으로 열립니다. 3장에 따라 7 단계를 저장한 뒤 VMS 를 다시 실행하세요. 설정 파일이 있어도 마법사를 끝까지 저장하지 않은 것이면 \"시스템 설정이 끝나지 않았습니다\" 안내와 함께 마법사가 열립니다. 설정 파일과 레시피, 검사 이력은 모두 %LocalAppData%\\BODA VISION AI\\ 아래에 저장되며 프로그램을 제거하거나 업그레이드해도 지워지지 않습니다."
+  "text": "VMS 를 처음 실행하면 설정 파일이 없으므로 \"초기 시스템 설정이 필요합니다\" 안내와 함께 시스템 설정 마법사(VMS.AppSetup)가 자동으로 열립니다. 3장에 따라 6 단계를 저장한 뒤 VMS 를 다시 실행하세요. 설정 파일이 있어도 마법사를 끝까지 저장하지 않은 것이면 \"시스템 설정이 끝나지 않았습니다\" 안내와 함께 마법사가 열립니다. 설정 파일과 레시피, 검사 이력은 모두 %LocalAppData%\\BODA VISION AI\\ 아래에 저장되며 프로그램을 제거하거나 업그레이드해도 지워지지 않습니다."
  },
  {
   "t": "h",
@@ -2291,14 +2127,14 @@
     "m": false
    },
    {
-    "s": " 응답합니다. 다른 PC 의 브라우저에서 보려면 §2.5 의 안내에 따라 바인딩 주소와 방화벽을 열어야 합니다.",
+    "s": " 응답합니다. 다른 PC 의 브라우저에서 보려면 §2.4 의 안내에 따라 바인딩 주소와 방화벽을 열어야 합니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": false,
   "depth": 0,
-  "text": "이 구성에서는 Web 서버가 이 PC 안에서만(127.0.0.1) 응답합니다. 다른 PC 의 브라우저에서 보려면 §2.5 의 안내에 따라 바인딩 주소와 방화벽을 열어야 합니다."
+  "text": "이 구성에서는 Web 서버가 이 PC 안에서만(127.0.0.1) 응답합니다. 다른 PC 의 브라우저에서 보려면 §2.4 의 안내에 따라 바인딩 주소와 방화벽을 열어야 합니다."
  },
  {
   "t": "h",
@@ -2427,336 +2263,13 @@
   "t": "h",
   "segs": [
    {
-    "s": "2.4 MLOps 서버 · 학습 워커 설치 (선택)",
+    "s": "2.4 네트워크 · 방화벽",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "2.4 MLOps 서버 · 학습 워커 설치 (선택)"
- },
- {
-  "t": "p",
-  "segs": [
-   {
-    "s": "딥러닝 모델을 웹에서 만들어 라인에 배포하려는 현장만 설치합니다. 검사 자체는 MLOps 없이도 동작합니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "text": "딥러닝 모델을 웹에서 만들어 라인에 배포하려는 현장만 설치합니다. 검사 자체는 MLOps 없이도 동작합니다."
- },
- {
-  "t": "h",
-  "segs": [
-   {
-    "s": "MLOps 서버",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 4,
-  "text": "MLOps 서버"
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "서버 PC(Web 서버와 같은 PC 여도 됨)에 MLOps 배포 패키지를 풀고 관리자 PowerShell 에서 실행합니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "서버 PC(Web 서버와 같은 PC 여도 됨)에 MLOps 배포 패키지를 풀고 관리자 PowerShell 에서 실행합니다."
- },
- {
-  "t": "code",
-  "segs": [
-   {
-    "s": ".\\scripts\\install-server-service.ps1 -DataDir D:\\BODA-MLOps -ProductionWebUrl http://<Web 서버>:5292",
-    "b": false,
-    "m": true
-   }
-  ],
-  "text": ".\\scripts\\install-server-service.ps1 -DataDir D:\\BODA-MLOps -ProductionWebUrl http://<Web 서버>:5292"
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "서비스 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "BodaVmsMlops",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": "(포트 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "5310",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": ")가 등록되고 방화벽 규칙이 추가됩니다. 데이터(DB · 사진 · 모델)는 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "-DataDir",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": " 폴더에 저장되므로 이 폴더를 백업 대상에 넣습니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "서비스 BodaVmsMlops(포트 5310)가 등록되고 방화벽 규칙이 추가됩니다. 데이터(DB · 사진 · 모델)는 -DataDir 폴더에 저장되므로 이 폴더를 백업 대상에 넣습니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "MLOps 화면은 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "Web 서버의 관리자 계정",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": "으로 로그인합니다(§9.1). 두 서버가 같은 서명 키를 쓰도록 스크립트가 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "-JwtKey",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": " 를 요구하며, 값은 파일이 아니라 서비스 환경변수에만 저장됩니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "MLOps 화면은 Web 서버의 관리자 계정으로 로그인합니다(§9.1). 두 서버가 같은 서명 키를 쓰도록 스크립트가 -JwtKey 를 요구하며, 값은 파일이 아니라 서비스 환경변수에만 저장됩니다."
- },
- {
-  "t": "h",
-  "segs": [
-   {
-    "s": "학습 워커 (GPU PC)",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 4,
-  "text": "학습 워커 (GPU PC)"
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "NVIDIA GPU(VRAM 8GB 이상), CUDA 12.4 지원 드라이버(550 이상), ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "Python 3.12 64-bit 를 \"모든 사용자용\"으로",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " 설치합니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "NVIDIA GPU(VRAM 8GB 이상), CUDA 12.4 지원 드라이버(550 이상), Python 3.12 64-bit 를 \"모든 사용자용\"으로 설치합니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "MLOps 화면 학습 → 워커 → [워커 등록]에서 이름을 넣고 [발급]을 눌러 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "wk_…",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": " 토큰을 받습니다. 토큰은 이때 한 번만 표시됩니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "MLOps 화면 학습 → 워커 → [워커 등록]에서 이름을 넣고 [발급]을 눌러 wk_… 토큰을 받습니다. 토큰은 이때 한 번만 표시됩니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "BODA-VMS-TrainWorker-0.1.5.msi",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": " 를 실행하고 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "\"워커 연결 설정\"",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " 화면에 관리 서버 주소(",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "http://서버:5310",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": ") · 워커 토큰 · 워커 이름을 입력합니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "BODA-VMS-TrainWorker-0.1.5.msi 를 실행하고 \"워커 연결 설정\" 화면에 관리 서버 주소(http://서버:5310) · 워커 토큰 · 워커 이름을 입력합니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "설치가 끝나면 서비스 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "BodaVmsTrainWorker",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": " 가 시작되어 첫 실행 시 파이썬 환경(venv, 약 6GB)을 준비합니다. 온라인 설치는 10~40 분이 걸립니다. 폐쇄망은 MSI 대신 함께 배포되는 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "BODA-VMS-TrainWorker-0.1.5-offline",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": " 폴더의 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "install-offline.cmd",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": " 를 관리자 권한 명령 프롬프트에서 실행합니다(wheel 묶음을 이 PC 에 복사한 뒤 같은 MSI 를 설치합니다. 복사된 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "%ProgramData%\\BODA VMS TrainWorker\\wheels",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": " 는 지우지 마세요).",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "설치가 끝나면 서비스 BodaVmsTrainWorker 가 시작되어 첫 실행 시 파이썬 환경(venv, 약 6GB)을 준비합니다. 온라인 설치는 10~40 분이 걸립니다. 폐쇄망은 MSI 대신 함께 배포되는 BODA-VMS-TrainWorker-0.1.5-offline 폴더의 install-offline.cmd 를 관리자 권한 명령 프롬프트에서 실행합니다(wheel 묶음을 이 PC 에 복사한 뒤 같은 MSI 를 설치합니다. 복사된 %ProgramData%\\BODA VMS TrainWorker\\wheels 는 지우지 마세요)."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "MLOps 워커 화면에서 상태가 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "대기 중",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": "으로 바뀌면 준비 완료입니다. 로그는 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "%ProgramData%\\BODA VMS TrainWorker\\logs",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": " 에 남습니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "MLOps 워커 화면에서 상태가 대기 중으로 바뀌면 준비 완료입니다. 로그는 %ProgramData%\\BODA VMS TrainWorker\\logs 에 남습니다."
- },
- {
-  "t": "figure",
-  "src": "../gs/screenshots/mlops/worker_install_wizard.png",
-  "width": "420",
-  "caption": "학습 워커 설치 마법사 — 워커 연결 설정 화면"
- },
- {
-  "t": "h",
-  "segs": [
-   {
-    "s": "2.5 네트워크 · 방화벽",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 3,
-  "text": "2.5 네트워크 · 방화벽"
+  "text": "2.4 네트워크 · 방화벽"
  },
  {
   "t": "table",
@@ -2915,56 +2428,6 @@
     {
      "segs": [
       {
-       "s": "라인 PC · 워커 → MLOps 서버",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "라인 PC · 워커 → MLOps 서버"
-    },
-    {
-     "segs": [
-      {
-       "s": "5310 / TCP",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "5310 / TCP"
-    },
-    {
-     "segs": [
-      {
-       "s": "아웃바운드",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "아웃바운드"
-    },
-    {
-     "segs": [
-      {
-       "s": "모델 내려받기 · NG 사진 업로드 · 학습 작업",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "모델 내려받기 · NG 사진 업로드 · 학습 작업"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
        "s": "라인 PC ↔ 카메라",
        "b": false,
        "m": false
@@ -3059,56 +2522,6 @@
      "header": false,
      "imgs": [],
      "text": "트리거 · 판정 신호"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "라인 PC → 로봇",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "라인 PC → 로봇"
-    },
-    {
-     "segs": [
-      {
-       "s": "벤더별 (UR 30003 · Modbus 502 등)",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "벤더별 (UR 30003 · Modbus 502 등)"
-    },
-    {
-     "segs": [
-      {
-       "s": "아웃바운드",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "아웃바운드"
-    },
-    {
-     "segs": [
-      {
-       "s": "포즈 읽기 · 웨이포인트",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "포즈 읽기 · 웨이포인트"
     }
    ]
   ],
@@ -3214,7 +2627,7 @@
     "m": true
    },
    {
-    "s": " 서버 주소를 거부합니다(§3.8). 원격 서버는 ",
+    "s": " 서버 주소를 거부합니다(§3.7). 원격 서버는 ",
     "b": false,
     "m": false
    },
@@ -3241,19 +2654,19 @@
   ],
   "ordered": false,
   "depth": 0,
-  "text": "보안 모드가 Production 인 라인 PC 는 다른 PC 를 가리키는 http:// 서버 주소를 거부합니다(§3.8). 원격 서버는 https:// 로 열거나(사설 인증서), 사내 실증 단계에서는 Development 모드를 씁니다. 같은 PC 를 가리키는 localhost 주소는 http 여도 허용됩니다."
+  "text": "보안 모드가 Production 인 라인 PC 는 다른 PC 를 가리키는 http:// 서버 주소를 거부합니다(§3.7). 원격 서버는 https:// 로 열거나(사설 인증서), 사내 실증 단계에서는 Development 모드를 씁니다. 같은 PC 를 가리키는 localhost 주소는 http 여도 허용됩니다."
  },
  {
   "t": "h",
   "segs": [
    {
-    "s": "2.6 SW 라이선스 설치 · 활성화",
+    "s": "2.5 SW 라이선스 설치 · 활성화",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "2.6 SW 라이선스 설치 · 활성화"
+  "text": "2.5 SW 라이선스 설치 · 활성화"
  },
  {
   "t": "p",
@@ -3490,13 +2903,13 @@
   "t": "h",
   "segs": [
    {
-    "s": "2.7 업그레이드와 제거",
+    "s": "2.6 업그레이드와 제거",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "2.7 업그레이드와 제거"
+  "text": "2.6 업그레이드와 제거"
  },
  {
   "t": "h",
@@ -3648,14 +3061,14 @@
   "t": "li",
   "segs": [
    {
-    "s": "Windows 설정 → 앱 → \"BODA Vision System\" → 제거. 또는 시작 메뉴의 제거 바로가기.",
+    "s": "Windows 설정 → 앱 → \"BODA VMS\" → 제거. 또는 시작 메뉴의 제거 바로가기.",
     "b": false,
     "m": false
    }
   ],
   "ordered": false,
   "depth": 0,
-  "text": "Windows 설정 → 앱 → \"BODA Vision System\" → 제거. 또는 시작 메뉴의 제거 바로가기."
+  "text": "Windows 설정 → 앱 → \"BODA VMS\" → 제거. 또는 시작 메뉴의 제거 바로가기."
  },
  {
   "t": "li",
@@ -3712,12 +3125,12 @@
     "m": false
    },
    {
-    "s": " 시스템 설정 마법사는 카메라 · PLC · 로봇 · IO 보드 · 서버 연동 · 보안 · 라이선스 등 시스템 전체 구성을 저장하는 프로그램입니다. 일반 작업자는 사용할 일이 없습니다.",
+    "s": " 시스템 설정 마법사는 카메라 · PLC · IO 보드 · 서버 연동 · 보안 · 라이선스 등 시스템 전체 구성을 저장하는 프로그램입니다. 일반 작업자는 사용할 일이 없습니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "⚙ 이 장은 설치 담당자 · 관리자용입니다. 시스템 설정 마법사는 카메라 · PLC · 로봇 · IO 보드 · 서버 연동 · 보안 · 라이선스 등 시스템 전체 구성을 저장하는 프로그램입니다. 일반 작업자는 사용할 일이 없습니다."
+  "text": "⚙ 이 장은 설치 담당자 · 관리자용입니다. 시스템 설정 마법사는 카메라 · PLC · IO 보드 · 서버 연동 · 보안 · 라이선스 등 시스템 전체 구성을 저장하는 프로그램입니다. 일반 작업자는 사용할 일이 없습니다."
  },
  {
   "t": "h",
@@ -3797,7 +3210,17 @@
     "m": false
    },
    {
-    "s": " — \"BODA Vision System\" 그룹의 설정 마법사 바로가기. 한 PC 에서 두 라인을 운용할 때는 ",
+    "s": " — ",
+    "b": false,
+    "m": false
+   },
+   {
+    "s": "BODA VMS 설정 마법사 (AppSetup)",
+    "b": true,
+    "m": false
+   },
+   {
+    "s": " 바로가기. 한 PC 에서 두 라인을 운용할 때는 ",
     "b": false,
     "m": false
    },
@@ -3807,20 +3230,30 @@
     "m": true
    },
    {
-    "s": " 으로 실행합니다(§11.5).",
+    "s": " 으로 실행합니다(§9.5).",
     "b": false,
     "m": false
    }
   ],
   "ordered": false,
   "depth": 0,
-  "text": "시작 메뉴 — \"BODA Vision System\" 그룹의 설정 마법사 바로가기. 한 PC 에서 두 라인을 운용할 때는 VMS.AppSetup.exe --instance 이름 으로 실행합니다(§11.5)."
+  "text": "시작 메뉴 — BODA VMS 설정 마법사 (AppSetup) 바로가기. 한 PC 에서 두 라인을 운용할 때는 VMS.AppSetup.exe --instance 이름 으로 실행합니다(§9.5)."
  },
  {
   "t": "p",
   "segs": [
    {
-    "s": "마법사는 총 7 단계이며, 각 단계 하단의 ",
+    "s": "마법사 창의 제목은 ",
+    "b": false,
+    "m": false
+   },
+   {
+    "s": "BODA VMS Setup",
+    "b": true,
+    "m": false
+   },
+   {
+    "s": " 이며, 오른쪽 위에 현재 단계(예: Step 2 of 6)가 표시됩니다. 마법사는 총 6 단계이며, 각 단계 하단의 ",
     "b": false,
     "m": false
    },
@@ -3865,7 +3298,7 @@
     "m": false
    }
   ],
-  "text": "마법사는 총 7 단계이며, 각 단계 하단의 [← Back] / [Next] 로 이동하고 마지막 단계에서 [Finish] 를 누르면 설정 파일(%LocalAppData%\\BODA VISION AI\\system_config.json)에 저장됩니다. 저장한 설정은 VMS 를 다시 시작할 때 반영됩니다 — 운전 중이라면 검사를 멈추고 VMS 를 재시작하세요. [Finish] 를 누르지 않고 닫으면 아무것도 바뀌지 않습니다."
+  "text": "마법사 창의 제목은 BODA VMS Setup 이며, 오른쪽 위에 현재 단계(예: Step 2 of 6)가 표시됩니다. 마법사는 총 6 단계이며, 각 단계 하단의 [← Back] / [Next] 로 이동하고 마지막 단계에서 [Finish] 를 누르면 설정 파일(%LocalAppData%\\BODA VISION AI\\system_config.json)에 저장됩니다. 저장한 설정은 VMS 를 다시 시작할 때 반영됩니다 — 운전 중이라면 검사를 멈추고 VMS 를 재시작하세요. [Finish] 를 누르지 않고 닫으면 아무것도 바뀌지 않습니다."
  },
  {
   "t": "p",
@@ -3894,18 +3327,38 @@
   "t": "figure",
   "src": "../gs/screenshots/v3/as/Window_P1_Welcome.png",
   "width": "520",
-  "caption": "1 단계 — 시작 화면. 이후 애플리케이션 → 카메라 → PLC → 로봇 → IO 보드 → 보안 순으로 진행합니다"
+  "caption": "1 단계 — 시작 화면. 이후 애플리케이션 → 카메라 → PLC → IO 보드 → 보안 · 라이선스 순으로 진행합니다"
  },
  {
   "t": "p",
   "segs": [
    {
-    "s": "입력 항목이 없는 안내 화면입니다. [Next] 를 눌러 진행합니다.",
+    "s": "입력 항목이 없는 안내 화면입니다. 가운데에 ",
+    "b": false,
+    "m": false
+   },
+   {
+    "s": "BODA",
+    "b": true,
+    "m": false
+   },
+   {
+    "s": " · ",
+    "b": false,
+    "m": false
+   },
+   {
+    "s": "VMS",
+    "b": true,
+    "m": false
+   },
+   {
+    "s": " 로고와 제품명 · 버전(예: BODA VMS v1.48.0)이 표시됩니다. [Next] 를 눌러 진행합니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "입력 항목이 없는 안내 화면입니다. [Next] 를 눌러 진행합니다."
+  "text": "입력 항목이 없는 안내 화면입니다. 가운데에 BODA · VMS 로고와 제품명 · 버전(예: BODA VMS v1.48.0)이 표시됩니다. [Next] 를 눌러 진행합니다."
  },
  {
   "t": "h",
@@ -4014,14 +3467,14 @@
     {
      "segs": [
       {
-       "s": "BODA Vision System",
+       "s": "BODA VMS",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "BODA Vision System"
+     "text": "BODA VMS"
     }
    ],
    [
@@ -4216,14 +3669,14 @@
        "m": true
       },
       {
-       "s": "(Production 모드에서는 https 필요, §3.8).",
+       "s": "(Production 모드에서는 https 필요, §3.7).",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "생산 관리 웹 주소입니다. 이 PC 안의 동봉 서버면 http://localhost:5292, 별도 서버면 http://서버IP:5292(Production 모드에서는 https 필요, §3.8)."
+     "text": "생산 관리 웹 주소입니다. 이 PC 안의 동봉 서버면 http://localhost:5292, 별도 서버면 http://서버IP:5292(Production 모드에서는 https 필요, §3.7)."
     },
     {
      "segs": [
@@ -4393,21 +3846,21 @@
      "segs": [],
      "header": false,
      "imgs": [
-      "../gs/screenshots/v3/as_ctl/P2_default_18_ToggleButton_고급_설정__Web_Client_API_Key__MLOps_모델_레지스트.png"
+      "../gs/screenshots/v3/as_ctl/P2_default_22_ToggleButton_고급_설정__Web_Client_API_Key_해당_현장만.png"
      ],
      "text": ""
     },
     {
      "segs": [
       {
-       "s": "클릭하면 Web Client API Key · MLOps 서버 주소 · MLOps 라인 토큰 입력란이 나타납니다. 해당 현장만 펼칩니다. 이미 값이 저장된 PC 에서는 자동으로 펼쳐집니다.",
+       "s": "\"고급 설정 — Web Client API Key (해당 현장만)\" 링크입니다. 클릭하면 Web Client API Key 입력란이 나타납니다. 해당 현장만 펼칩니다. 이미 값이 저장된 PC 에서는 자동으로 펼쳐집니다.",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "클릭하면 Web Client API Key · MLOps 서버 주소 · MLOps 라인 토큰 입력란이 나타납니다. 해당 현장만 펼칩니다. 이미 값이 저장된 PC 에서는 자동으로 펼쳐집니다."
+     "text": "\"고급 설정 — Web Client API Key (해당 현장만)\" 링크입니다. 클릭하면 Web Client API Key 입력란이 나타납니다. 해당 현장만 펼칩니다. 이미 값이 저장된 PC 에서는 자동으로 펼쳐집니다."
     },
     {
      "segs": [
@@ -4454,128 +3907,6 @@
      "header": false,
      "imgs": [],
      "text": "보통 비워 둡니다. Web 서버 관리자가 \"API 키 강제\"를 켠 경우에만 받은 키를 그대로 입력합니다. 값이 틀리면 작업지시 · 이력 업로드 · 작업자 로그인이 모두 끊깁니다. 단독 모드에서는 잠깁니다."
-    },
-    {
-     "segs": [
-      {
-       "s": "(빈 값)",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "(빈 값)"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "MLOps 서버 주소 (고급)",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "MLOps 서버 주소 (고급)"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [
-      "../gs/screenshots/v3/as_ctl/P2_advanced_05_TextBox_TextBox.png"
-     ],
-     "text": ""
-    },
-    {
-     "segs": [
-      {
-       "s": "MLOps 모델 레지스트리 주소(예: ",
-       "b": false,
-       "m": false
-      },
-      {
-       "s": "http://서버:5310",
-       "b": false,
-       "m": true
-      },
-      {
-       "s": "). 레시피의 ",
-       "b": false,
-       "m": false
-      },
-      {
-       "s": "model://",
-       "b": false,
-       "m": true
-      },
-      {
-       "s": " 참조 모델을 이 서버에서 내려받고 NG 사진을 학습 데이터로 올립니다(9장). 단독 모드에서도 입력할 수 있습니다. 쓰지 않으면 비워 둡니다.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "MLOps 모델 레지스트리 주소(예: http://서버:5310). 레시피의 model:// 참조 모델을 이 서버에서 내려받고 NG 사진을 학습 데이터로 올립니다(9장). 단독 모드에서도 입력할 수 있습니다. 쓰지 않으면 비워 둡니다."
-    },
-    {
-     "segs": [
-      {
-       "s": "(빈 값)",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "(빈 값)"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "MLOps 라인 토큰 (고급)",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "MLOps 라인 토큰 (고급)"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [
-      "../gs/screenshots/v3/as_ctl/P2_advanced_08_TextBox_TextBox.png"
-     ],
-     "text": ""
-    },
-    {
-     "segs": [
-      {
-       "s": "MLOps 화면 배포 → 라인 PC 에서 이 라인용으로 발급한 토큰(",
-       "b": false,
-       "m": false
-      },
-      {
-       "s": "ln_…",
-       "b": false,
-       "m": true
-      },
-      {
-       "s": ")을 그대로 붙여 넣습니다. 토큰이 없으면 모델을 내려받지 못하고 사진도 올라가지 않습니다.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "MLOps 화면 배포 → 라인 PC 에서 이 라인용으로 발급한 토큰(ln_…)을 그대로 붙여 넣습니다. 토큰이 없으면 모델을 내려받지 못하고 사진도 올라가지 않습니다."
     },
     {
      "segs": [
@@ -5107,14 +4438,14 @@
     {
      "segs": [
       {
-       "s": "AreaScan2D · AreaScan3D · LineScan2D · LineScan3D. 선택에 따라 카드 아래에 라인 스캔 항목이 나타납니다.",
+       "s": "AreaScan2D · LineScan2D. LineScan2D 를 고르면 카드 아래에 라인 스캔 항목이 나타납니다.",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "AreaScan2D · AreaScan3D · LineScan2D · LineScan3D. 선택에 따라 카드 아래에 라인 스캔 항목이 나타납니다."
+     "text": "AreaScan2D · LineScan2D. LineScan2D 를 고르면 카드 아래에 라인 스캔 항목이 나타납니다."
     },
     {
      "segs": [
@@ -5153,14 +4484,14 @@
     {
      "segs": [
       {
-       "s": "제조사. HIK · Basler · Mech_Mind · Matrox/Dalsa 는 실제 드라이버로 연결되며, 그 외는 시뮬레이션으로 동작합니다(§2.1). Matrox · Dalsa 를 고르면 Frame Grabber 항목이 나타납니다.",
+       "s": "제조사. HIK · Basler · Matrox/Dalsa 는 실제 드라이버로 연결되며, 그 외는 시뮬레이션으로 동작합니다(§2.1). Matrox · Dalsa 를 고르면 Frame Grabber 항목이 나타납니다.",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "제조사. HIK · Basler · Mech_Mind · Matrox/Dalsa 는 실제 드라이버로 연결되며, 그 외는 시뮬레이션으로 동작합니다(§2.1). Matrox · Dalsa 를 고르면 Frame Grabber 항목이 나타납니다."
+     "text": "제조사. HIK · Basler · Matrox/Dalsa 는 실제 드라이버로 연결되며, 그 외는 시뮬레이션으로 동작합니다(§2.1). Matrox · Dalsa 를 고르면 Frame Grabber 항목이 나타납니다."
     },
     {
      "segs": [
@@ -5278,17 +4609,17 @@
   "kind": "tip",
   "segs": [
    {
-    "s": "노출 · 게인 · 3D 취득 옵션은 여기서 정하지 않습니다.",
+    "s": "노출 · 게인은 여기서 정하지 않습니다.",
     "b": true,
     "m": false
    },
    {
-    "s": " 카드 아래 안내 문구처럼, 노출(Exposure) · 게인(Gain)과 3D 옵션(점군 후처리 필터, 깊이 Z 범위)은 VMS 메인의 카메라 설정 창(§4.5) 또는 VisionSetup 의 스텝 카메라 설정(§5.3)에서 조정하며, 기본은 카메라에 저장된 현재 값을 그대로 씁니다.",
+    "s": " 카드 아래 안내 문구처럼, 노출(Exposure) · 게인(Gain)은 VMS 메인의 카메라 설정 창(§4.5) 또는 VisionSetup 의 스텝 카메라 설정(§5.3)에서 조정하며, 기본은 카메라에 저장된 현재 값을 그대로 씁니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "노출 · 게인 · 3D 취득 옵션은 여기서 정하지 않습니다. 카드 아래 안내 문구처럼, 노출(Exposure) · 게인(Gain)과 3D 옵션(점군 후처리 필터, 깊이 Z 범위)은 VMS 메인의 카메라 설정 창(§4.5) 또는 VisionSetup 의 스텝 카메라 설정(§5.3)에서 조정하며, 기본은 카메라에 저장된 현재 값을 그대로 씁니다."
+  "text": "노출 · 게인은 여기서 정하지 않습니다. 카드 아래 안내 문구처럼, 노출(Exposure) · 게인(Gain)은 VMS 메인의 카메라 설정 창(§4.5) 또는 VisionSetup 의 스텝 카메라 설정(§5.3)에서 조정하며, 기본은 카메라에 저장된 현재 값을 그대로 씁니다."
  },
  {
   "t": "h",
@@ -5387,14 +4718,14 @@
     {
      "segs": [
       {
-       "s": "Mitsubishi(MC) · Siemens(S7) · LS Electric(XGT) · Omron(FINS) · Modbus TCP · None. PLC 없이 IO 보드만 쓰면 None 으로 두고 6 단계에서 보드를 등록합니다(§4.11).",
+       "s": "Mitsubishi(MC) · Siemens(S7) · LS Electric(XGT) · Omron(FINS) · Modbus TCP · None. PLC 없이 IO 보드만 쓰면 None 으로 두고 5 단계에서 보드를 등록합니다(§4.11).",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "Mitsubishi(MC) · Siemens(S7) · LS Electric(XGT) · Omron(FINS) · Modbus TCP · None. PLC 없이 IO 보드만 쓰면 None 으로 두고 6 단계에서 보드를 등록합니다(§4.11)."
+     "text": "Mitsubishi(MC) · Siemens(S7) · LS Electric(XGT) · Omron(FINS) · Modbus TCP · None. PLC 없이 IO 보드만 쓰면 None 으로 두고 5 단계에서 보드를 등록합니다(§4.11)."
     },
     {
      "segs": [
@@ -5798,373 +5129,19 @@
   "t": "h",
   "segs": [
    {
-    "s": "3.6 5 단계 — Robot Configuration (로봇, 선택)",
+    "s": "3.6 5 단계 — IO Board Configuration (IO 보드)",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "3.6 5 단계 — Robot Configuration (로봇, 선택)"
- },
- {
-  "t": "figure",
-  "src": "../gs/screenshots/v3/as/FullPage_P5_RobotConfiguration.png",
-  "width": "360",
-  "caption": "5 단계 — Robot Configuration (로봇 연동 활성 상태, 스크롤 전체)"
- },
- {
-  "t": "table",
-  "rows": [
-   [
-    {
-     "segs": [
-      {
-       "s": "항목",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": true,
-     "imgs": [],
-     "text": "항목"
-    },
-    {
-     "segs": [
-      {
-       "s": "컨트롤",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": true,
-     "imgs": [],
-     "text": "컨트롤"
-    },
-    {
-     "segs": [
-      {
-       "s": "설명",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": true,
-     "imgs": [],
-     "text": "설명"
-    },
-    {
-     "segs": [
-      {
-       "s": "기본값",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": true,
-     "imgs": [],
-     "text": "기본값"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "Enable Robot Integration",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Enable Robot Integration"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [
-      "../gs/screenshots/v3/as_ctl/P5_disabled_01_CheckBox_Enable_Robot_Integration.png"
-     ],
-     "text": ""
-    },
-    {
-     "segs": [
-      {
-       "s": "멀티뷰 3D 스캔이나 얼라인 보정에 로봇을 쓸 때 켭니다. 끄면 아래 항목이 숨겨집니다.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "멀티뷰 3D 스캔이나 얼라인 보정에 로봇을 쓸 때 켭니다. 끄면 아래 항목이 숨겨집니다."
-    },
-    {
-     "segs": [
-      {
-       "s": "해제",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "해제"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "Robot Vendor",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Robot Vendor"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [
-      "../gs/screenshots/v3/as_ctl/P5_enabled_02_RadioButton_Universal_Robots_UR.png",
-      "../gs/screenshots/v3/as_ctl/P5_enabled_03_RadioButton_Doosan_Robotics.png"
-     ],
-     "text": ""
-    },
-    {
-     "segs": [
-      {
-       "s": "UR · Doosan · Jaka · ABB · Fanuc. 선택하면 포트와 Euler 규약이 벤더 기본값으로 바뀝니다.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "UR · Doosan · Jaka · ABB · Fanuc. 선택하면 포트와 Euler 규약이 벤더 기본값으로 바뀝니다."
-    },
-    {
-     "segs": [
-      {
-       "s": "UR",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "UR"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "Robot IP Address / Port",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Robot IP Address / Port"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [
-      "../gs/screenshots/v3/as_ctl/P5_enabled_09_TextBox_1921680200.png",
-      "../gs/screenshots/v3/as_ctl/P5_enabled_11_TextBox_502.png"
-     ],
-     "text": ""
-    },
-    {
-     "segs": [
-      {
-       "s": "로봇 컨트롤러 주소와 포트.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "로봇 컨트롤러 주소와 포트."
-    },
-    {
-     "segs": [
-      {
-       "s": "192.168.0.200 / 벤더 기본",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "192.168.0.200 / 벤더 기본"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "Communication Protocol",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Communication Protocol"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [
-      "../gs/screenshots/v3/as_ctl/P5_enabled_13_RadioButton_Vendor_Native.png",
-      "../gs/screenshots/v3/as_ctl/P5_enabled_14_RadioButton_Modbus-TCP.png"
-     ],
-     "text": ""
-    },
-    {
-     "segs": [
-      {
-       "s": "Vendor Native · Modbus-TCP(Doosan) · Custom Socket(CSV).",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Vendor Native · Modbus-TCP(Doosan) · Custom Socket(CSV)."
-    },
-    {
-     "segs": [
-      {
-       "s": "Vendor Native",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Vendor Native"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "〈Modbus-TCP〉 Unit ID / Pose Start Register",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "〈Modbus-TCP〉 Unit ID / Pose Start Register"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [
-      "../gs/screenshots/v3/as_ctl/P5_enabled_18_TextBox_1.png",
-      "../gs/screenshots/v3/as_ctl/P5_enabled_20_TextBox_270.png"
-     ],
-     "text": ""
-    },
-    {
-     "segs": [
-      {
-       "s": "Holding Register 로 포즈를 읽을 때의 슬레이브 ID 와 시작 주소(270 = Doosan 표준).",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Holding Register 로 포즈를 읽을 때의 슬레이브 ID 와 시작 주소(270 = Doosan 표준)."
-    },
-    {
-     "segs": [
-      {
-       "s": "1 / 270",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "1 / 270"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "Euler Convention",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Euler Convention"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [
-      "../gs/screenshots/v3/as_ctl/P5_enabled_23_ComboBox_Doosan_ZYX.png"
-     ],
-     "text": ""
-    },
-    {
-     "segs": [
-      {
-       "s": "회전 표현 규약. 벤더 선택 시 자동 설정되며 필요하면 바꿉니다.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "회전 표현 규약. 벤더 선택 시 자동 설정되며 필요하면 바꿉니다."
-    },
-    {
-     "segs": [
-      {
-       "s": "벤더 기본",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "벤더 기본"
-    }
-   ]
-  ],
-  "cls": "cols-2-3-4-1"
- },
- {
-  "t": "h",
-  "segs": [
-   {
-    "s": "3.7 6 단계 — IO Board Configuration (IO 보드)",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 3,
-  "text": "3.7 6 단계 — IO Board Configuration (IO 보드)"
+  "text": "3.6 5 단계 — IO Board Configuration (IO 보드)"
  },
  {
   "t": "figure",
   "src": "../gs/screenshots/v3/as/Window_P6_IOConfiguration.png",
   "width": "520",
-  "caption": "6 단계 — IO Board Configuration. 왼쪽 목록에서 보드를 고르고 오른쪽에서 속성을 입력합니다"
+  "caption": "5 단계 — IO Board Configuration. 왼쪽 목록에서 보드를 고르고 오른쪽에서 속성을 입력합니다"
  },
  {
   "t": "table",
@@ -6618,19 +5595,19 @@
   "t": "h",
   "segs": [
    {
-    "s": "3.8 7 단계 — Security & License (보안 모드 · 라이선스)",
+    "s": "3.7 6 단계 — Security & License (보안 모드 · 라이선스)",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "3.8 7 단계 — Security & License (보안 모드 · 라이선스)"
+  "text": "3.7 6 단계 — Security & License (보안 모드 · 라이선스)"
  },
  {
   "t": "figure",
   "src": "../gs/screenshots/v3/as/Window_P7_SecurityMode.png",
   "width": "520",
-  "caption": "7 단계 — Security & License. 보안 모드 선택 + SW 라이선스 카드. [Finish] 로 저장합니다"
+  "caption": "6 단계 — Security & License. 보안 모드 선택 + SW 라이선스 카드. [Finish] 로 저장합니다"
  },
  {
   "t": "table",
@@ -6812,14 +5789,14 @@
     {
      "segs": [
       {
-       "s": "이 PC 의 라이선스 발급용 지문 코드(15 자). [복사] 후 본사에 전달합니다(§2.6).",
+       "s": "이 PC 의 라이선스 발급용 지문 코드(15 자). [복사] 후 본사에 전달합니다(§2.5).",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "이 PC 의 라이선스 발급용 지문 코드(15 자). [복사] 후 본사에 전달합니다(§2.6)."
+     "text": "이 PC 의 라이선스 발급용 지문 코드(15 자). [복사] 후 본사에 전달합니다(§2.5)."
     },
     {
      "segs": [
@@ -6882,6 +5859,66 @@
      "header": false,
      "imgs": [],
      "text": "미설치"
+    }
+   ],
+   [
+    {
+     "segs": [
+      {
+       "s": "확장 옵션",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "확장 옵션"
+    },
+    {
+     "segs": [
+      {
+       "s": "—",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "—"
+    },
+    {
+     "segs": [
+      {
+       "s": "현재 상태 아래에 표시되는 라이선스 구성입니다. 이 제품의 표준 구성에서는 ",
+       "b": false,
+       "m": false
+      },
+      {
+       "s": "기본 구성 (확장 옵션 없음)",
+       "b": true,
+       "m": false
+      },
+      {
+       "s": " 으로 표시됩니다.",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "현재 상태 아래에 표시되는 라이선스 구성입니다. 이 제품의 표준 구성에서는 기본 구성 (확장 옵션 없음) 으로 표시됩니다."
+    },
+    {
+     "segs": [
+      {
+       "s": "기본 구성 (확장 옵션 없음)",
+       "b": false,
+       "m": false
+      }
+     ],
+     "header": false,
+     "imgs": [],
+     "text": "기본 구성 (확장 옵션 없음)"
     }
    ],
    [
@@ -6980,13 +6017,13 @@
   "t": "h",
   "segs": [
    {
-    "s": "3.9 저장 후 확인할 것",
+    "s": "3.8 저장 후 확인할 것",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "3.9 저장 후 확인할 것"
+  "text": "3.8 저장 후 확인할 것"
  },
  {
   "t": "li",
@@ -7035,14 +6072,14 @@
     "m": false
    },
    {
-    "s": " 칩이 초록인지 확인합니다. 빨간색이면 System Log 의 사유를 보고 12장을 참고합니다.",
+    "s": " 칩이 초록인지 확인합니다. 빨간색이면 System Log 의 사유를 보고 10장을 참고합니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": true,
   "depth": 0,
-  "text": "PLC 를 구성했다면 PLC 칩이 초록인지, IO 보드를 구성했다면 IO n/m 칩이 초록인지 확인합니다. 빨간색이면 System Log 의 사유를 보고 12장을 참고합니다."
+  "text": "PLC 를 구성했다면 PLC 칩이 초록인지, IO 보드를 구성했다면 IO n/m 칩이 초록인지 확인합니다. 빨간색이면 System Log 의 사유를 보고 10장을 참고합니다."
  },
  {
   "t": "li",
@@ -7200,7 +6237,7 @@
     "m": false
    },
    {
-    "s": "BODA Vision System",
+    "s": "BODA VMS",
     "b": true,
     "m": false
    },
@@ -7212,7 +6249,7 @@
   ],
   "ordered": true,
   "depth": 0,
-  "text": "바탕화면의 BODA Vision System 바로가기를 실행합니다. 시작 화면(Splash)이 표시되는 동안 설정과 레시피를 읽고 카메라를 자동으로 연결합니다."
+  "text": "바탕화면의 BODA VMS 바로가기를 실행합니다. 시작 화면(Splash)이 표시되는 동안 설정과 레시피를 읽고 카메라를 자동으로 연결합니다."
  },
  {
   "t": "li",
@@ -7241,27 +6278,27 @@
     "m": false
    },
    {
-    "s": " 표시됩니다(§4.12).",
+    "s": " 표시됩니다(§4.12). 로그인 창 위쪽에는 제품명 · 버전(예: BODA VMS v1.48.0)이 표시됩니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": true,
   "depth": 0,
-  "text": "메인 화면이 뜹니다. 시스템 사용자 로그인 창은 시작 시 뜨지 않으며, 사이드 패널(⚙)을 열거나 헤더의 사용자 칩을 누를 때 표시됩니다(§4.12)."
+  "text": "메인 화면이 뜹니다. 시스템 사용자 로그인 창은 시작 시 뜨지 않으며, 사이드 패널(⚙)을 열거나 헤더의 사용자 칩을 누를 때 표시됩니다(§4.12). 로그인 창 위쪽에는 제품명 · 버전(예: BODA VMS v1.48.0)이 표시됩니다."
  },
  {
   "t": "li",
   "segs": [
    {
-    "s": "새 버전이 있으면 \"업데이트 가능\" 안내가 뜹니다(§2.7). 지금 검사를 해야 하면 닫고 나중에 진행해도 됩니다.",
+    "s": "새 버전이 있으면 \"업데이트 가능\" 안내가 뜹니다(§2.6). 지금 검사를 해야 하면 닫고 나중에 진행해도 됩니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": true,
   "depth": 0,
-  "text": "새 버전이 있으면 \"업데이트 가능\" 안내가 뜹니다(§2.7). 지금 검사를 해야 하면 닫고 나중에 진행해도 됩니다."
+  "text": "새 버전이 있으면 \"업데이트 가능\" 안내가 뜹니다(§2.6). 지금 검사를 해야 하면 닫고 나중에 진행해도 됩니다."
  },
  {
   "t": "h",
@@ -7378,14 +6415,14 @@
     {
      "segs": [
       {
-       "s": "카메라마다 타일 하나. 2D / Depth Map / Point Cloud 탭, 판정 배지(WAIT · OK · NG), Run Results 표, 설정(톱니바퀴) 창. 타일은 드래그로 옮기고 가장자리를 끌어 크기를 바꿀 수 있으며 헤더의 [Save Layout] 으로 배치를 저장합니다. 4.5 절",
+       "s": "카메라마다 타일 하나. 2D 이미지, 판정 배지(WAIT · OK · NG), Run Results 표, 설정(톱니바퀴) 창. 타일은 드래그로 옮기고 가장자리를 끌어 크기를 바꿀 수 있으며 헤더의 [Save Layout] 으로 배치를 저장합니다. 4.5 절",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "카메라마다 타일 하나. 2D / Depth Map / Point Cloud 탭, 판정 배지(WAIT · OK · NG), Run Results 표, 설정(톱니바퀴) 창. 타일은 드래그로 옮기고 가장자리를 끌어 크기를 바꿀 수 있으며 헤더의 [Save Layout] 으로 배치를 저장합니다. 4.5 절"
+     "text": "카메라마다 타일 하나. 2D 이미지, 판정 배지(WAIT · OK · NG), Run Results 표, 설정(톱니바퀴) 창. 타일은 드래그로 옮기고 가장자리를 끌어 크기를 바꿀 수 있으며 헤더의 [Save Layout] 으로 배치를 저장합니다. 4.5 절"
     }
    ],
    [
@@ -7487,14 +6524,14 @@
     {
      "segs": [
       {
-       "s": "시스템 상태 · CAM · PLC · IO · MLOps · Web · ROBOT 연결 표시. 4.7 절",
+       "s": "시스템 상태 · CAM · PLC · IO · Web 연결 표시와 오른쪽 끝의 제품명 · 버전. 4.7 절",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "시스템 상태 · CAM · PLC · IO · MLOps · Web · ROBOT 연결 표시. 4.7 절"
+     "text": "시스템 상태 · CAM · PLC · IO · Web 연결 표시와 오른쪽 끝의 제품명 · 버전. 4.7 절"
     }
    ]
   ],
@@ -8701,12 +7738,12 @@
     "m": false
    },
    {
-    "s": " 버튼, 판정 배지가 있습니다. 본문은 2D · Depth Map · Point Cloud 탭이며 아래에 Run Results(도구별 Pass/Fail · 결과값 · 처리 ms) 표와 IP · Count 가 표시됩니다. 검사 이미지 위의 판정 글자 · 테두리와 Run Results 결과 값 표시 방식은 VisionSetup 과 같습니다(§5.6).",
+    "s": " 버튼, 판정 배지가 있습니다. 본문은 2D 이미지이며 아래에 Run Results(도구별 Pass/Fail · 결과값 · 처리 ms) 표와 IP · Count 가 표시됩니다. 검사 이미지 위의 판정 글자 · 테두리와 Run Results 결과 값 표시 방식은 VisionSetup 과 같습니다(§5.6).",
     "b": false,
     "m": false
    }
   ],
-  "text": "카메라 타일의 헤더에는 연결 표시등(초록 Connected / 빨강 Disconnected), 카메라 이름, 설정(톱니바퀴) 버튼, 판정 배지가 있습니다. 본문은 2D · Depth Map · Point Cloud 탭이며 아래에 Run Results(도구별 Pass/Fail · 결과값 · 처리 ms) 표와 IP · Count 가 표시됩니다. 검사 이미지 위의 판정 글자 · 테두리와 Run Results 결과 값 표시 방식은 VisionSetup 과 같습니다(§5.6)."
+  "text": "카메라 타일의 헤더에는 연결 표시등(초록 Connected / 빨강 Disconnected), 카메라 이름, 설정(톱니바퀴) 버튼, 판정 배지가 있습니다. 본문은 2D 이미지이며 아래에 Run Results(도구별 Pass/Fail · 결과값 · 처리 ms) 표와 IP · Count 가 표시됩니다. 검사 이미지 위의 판정 글자 · 테두리와 Run Results 결과 값 표시 방식은 VisionSetup 과 같습니다(§5.6)."
  },
  {
   "t": "p",
@@ -8970,42 +8007,6 @@
      "header": false,
      "imgs": [],
      "text": "입력한 노출/게인을 스텝에 저장합니다. 완료/실패 메시지가 표시되며, 카메라가 등록되지 않았으면 설정 마법사를 먼저 실행하라는 안내가 뜹니다."
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "[Save 3D]",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "[Save 3D]"
-    },
-    {
-     "segs": [
-      {
-       "s": "촬영한 3D 데이터를 ",
-       "b": false,
-       "m": false
-      },
-      {
-       "s": ".vpc",
-       "b": false,
-       "m": true
-      },
-      {
-       "s": " 파일로 저장합니다. VisionSetup 에서 열어 레시피를 만들 수 있습니다.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "촬영한 3D 데이터를 .vpc 파일로 저장합니다. VisionSetup 에서 열어 레시피를 만들 수 있습니다."
     }
    ],
    [
@@ -9418,12 +8419,12 @@
   "t": "p",
   "segs": [
    {
-    "s": "새 버전이 있으면 \"새 버전 vX.Y.Z\" 배지가 나타나고, 다운로드 중에는 진행률과 [다운로드 취소] 가 표시됩니다. 절차는 §2.7 을 참고하세요.",
+    "s": "새 버전이 있으면 \"새 버전 vX.Y.Z\" 배지가 나타나고, 다운로드 중에는 진행률과 [다운로드 취소] 가 표시됩니다. 절차는 §2.6 을 참고하세요.",
     "b": false,
     "m": false
    }
   ],
-  "text": "새 버전이 있으면 \"새 버전 vX.Y.Z\" 배지가 나타나고, 다운로드 중에는 진행률과 [다운로드 취소] 가 표시됩니다. 절차는 §2.7 을 참고하세요."
+  "text": "새 버전이 있으면 \"새 버전 vX.Y.Z\" 배지가 나타나고, 다운로드 중에는 진행률과 [다운로드 취소] 가 표시됩니다. 절차는 §2.6 을 참고하세요."
  },
  {
   "t": "h",
@@ -9482,7 +8483,7 @@
   "t": "figure",
   "src": "../gs/screenshots/v3/vms/dlg_ImageSave.png",
   "width": "360",
-  "caption": "Image Save Settings 창 — 저장 · 포맷/품질 · Web 연동 · MLOps 학습 데이터 수집 · 파일명 규칙 · 예시"
+  "caption": "Image Save Settings 창 — 저장 · 포맷/품질 · Web 연동 · 파일명 규칙 · 예시"
  },
  {
   "t": "p",
@@ -9635,47 +8636,6 @@
      "header": false,
      "imgs": [],
      "text": "전달 모드는 Auto(권장). OK / NG 이미지 Web 전송 체크(로컬 저장과 별개), 전송 화질(썸네일 권장 · Full), 썸네일 장변(px). Web 생산 이력의 상세 창에서 사진을 보려면 여기서 NG 전송을 켜야 합니다. SharedPath 모드는 전송하지 않습니다."
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "MLOps 학습 데이터 수집",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "MLOps 학습 데이터 수집"
-    },
-    {
-     "segs": [
-      {
-       "s": "NG 이미지 MLOps 전송",
-       "b": true,
-       "m": false
-      },
-      {
-       "s": " 체크와 ",
-       "b": false,
-       "m": false
-      },
-      {
-       "s": "양품 샘플 비율",
-       "b": true,
-       "m": false
-      },
-      {
-       "s": "(N 장에 1 장, 기본 200, 0 = 양품 안 보냄). 켜면 NG 사진이 결과 그래픽 없는 원본으로 MLOps 수집 사진 화면에 쌓입니다(9장). 카드 아래 안내가 빨간색이면 설정은 있는데 보안 정책 등으로 막힌 상태이며 사유가 함께 표시됩니다.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "NG 이미지 MLOps 전송 체크와 양품 샘플 비율(N 장에 1 장, 기본 200, 0 = 양품 안 보냄). 켜면 NG 사진이 결과 그래픽 없는 원본으로 MLOps 수집 사진 화면에 쌓입니다(9장). 카드 아래 안내가 빨간색이면 설정은 있는데 보안 정책 등으로 막힌 상태이며 사유가 함께 표시됩니다."
     }
    ],
    [
@@ -9948,32 +8908,6 @@
     {
      "segs": [
       {
-       "s": "MLOps 비활성",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "MLOps 비활성"
-    },
-    {
-     "segs": [
-      {
-       "s": "MLOps 주소 · 토큰을 설정했는데 시작 시 연결 준비가 실패한 경우에만 빨간 칩이 나타납니다. 툴팁에 사유(대표적으로 Production 모드가 http 주소를 거부)가 표시되며, 이 상태에서는 NG 사진 수집과 모델 내려받기가 동작하지 않습니다",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "MLOps 주소 · 토큰을 설정했는데 시작 시 연결 준비가 실패한 경우에만 빨간 칩이 나타납니다. 툴팁에 사유(대표적으로 Production 모드가 http 주소를 거부)가 표시되며, 이 상태에서는 NG 사진 수집과 모델 내려받기가 동작하지 않습니다"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
        "s": "Web",
        "b": false,
        "m": false
@@ -10020,36 +8954,30 @@
     {
      "segs": [
       {
-       "s": "ROBOT",
+       "s": "제품명 · 버전",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "ROBOT"
+     "text": "제품명 · 버전"
     },
     {
      "segs": [
       {
-       "s": "표시 자리(현재 N/A 고정)",
+       "s": "상태바 오른쪽 끝에 설치된 제품명과 버전(예: BODA VMS v1.48.0)이 표시됩니다. 지원 요청 시 이 표기를 알려 주세요",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "표시 자리(현재 N/A 고정)"
+     "text": "상태바 오른쪽 끝에 설치된 제품명과 버전(예: BODA VMS v1.48.0)이 표시됩니다. 지원 요청 시 이 표기를 알려 주세요"
     }
    ]
   ],
   "cls": "cols-2-7"
- },
- {
-  "t": "figure",
-  "src": "../gs/screenshots/v3/vms_ctl/S4_mlops_issue_00_status_mlops_issue_chip.png",
-  "width": "150",
-  "caption": "상태바의 \"MLOps 비활성\" 칩"
  },
  {
   "t": "p",
@@ -10112,14 +9040,14 @@
     {
      "segs": [
       {
-       "s": "시작 · 카메라 자동 연결 결과 · 단독 모드 안내 · 모델 캐시 정리",
+       "s": "시작 · 카메라 자동 연결 결과 · 단독 모드 안내",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "시작 · 카메라 자동 연결 결과 · 단독 모드 안내 · 모델 캐시 정리"
+     "text": "시작 · 카메라 자동 연결 결과 · 단독 모드 안내"
     }
    ],
    [
@@ -10468,19 +9396,6 @@
   "ordered": false,
   "depth": 0,
   "text": "검사 결과는 서버 대신 이 PC 의 검사 이력 파일에 사이클마다 저장됩니다(기본 90 일 보존). 최근 결과는 Recent Inspections 에서, 전체는 [전체 이력] 창(§4.10)에서 봅니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "MLOps 주소 · 토큰을 넣어 두면 단독 모드에서도 NG 사진 수집과 모델 내려받기는 동작합니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 0,
-  "text": "MLOps 주소 · 토큰을 넣어 두면 단독 모드에서도 NG 사진 수집과 모델 내려받기는 동작합니다."
  },
  {
   "t": "li",
@@ -10897,12 +9812,12 @@
   "t": "p",
   "segs": [
    {
-    "s": "설정 파일 · 레이아웃 · PLC 신호 맵 · 사용자 DB · 검사 이력 DB · 레시피 전체(선택 시 감사 로그)를 ZIP 하나로 만듭니다. 복원 시 [기존 파일 덮어쓰기] 를 켜고 [Run Restore] 한 뒤 VMS 를 재시작합니다. 자세한 운영 요령은 §11.1 을 참고하세요.",
+    "s": "설정 파일 · 레이아웃 · PLC 신호 맵 · 사용자 DB · 검사 이력 DB · 레시피 전체(선택 시 감사 로그)를 ZIP 하나로 만듭니다. 복원 시 [기존 파일 덮어쓰기] 를 켜고 [Run Restore] 한 뒤 VMS 를 재시작합니다. 자세한 운영 요령은 §9.1 을 참고하세요.",
     "b": false,
     "m": false
    }
   ],
-  "text": "설정 파일 · 레이아웃 · PLC 신호 맵 · 사용자 DB · 검사 이력 DB · 레시피 전체(선택 시 감사 로그)를 ZIP 하나로 만듭니다. 복원 시 [기존 파일 덮어쓰기] 를 켜고 [Run Restore] 한 뒤 VMS 를 재시작합니다. 자세한 운영 요령은 §11.1 을 참고하세요."
+  "text": "설정 파일 · 레이아웃 · PLC 신호 맵 · 사용자 DB · 검사 이력 DB · 레시피 전체(선택 시 감사 로그)를 ZIP 하나로 만듭니다. 복원 시 [기존 파일 덮어쓰기] 를 켜고 [Run Restore] 한 뒤 VMS 를 재시작합니다. 자세한 운영 요령은 §9.1 을 참고하세요."
  },
  {
   "t": "h",
@@ -11035,7 +9950,7 @@
   "t": "p",
   "segs": [
    {
-    "s": "문제 보고 시 공급사에 보낼 ZIP 을 만듭니다. 설정 파일 · 감사 로그(1~90 일) · 환경 정보 · 헬스 스냅샷 · MLOps 전송 큐 상태가 들어가며, 사용자 DB 와 레시피는 ",
+    "s": "문제 보고 시 공급사에 보낼 ZIP 을 만듭니다. 설정 파일 · 감사 로그(1~90 일) · 환경 정보 · 헬스 스냅샷이 들어가며, 사용자 DB 와 레시피는 ",
     "b": false,
     "m": false
    },
@@ -11050,7 +9965,7 @@
     "m": false
    }
   ],
-  "text": "문제 보고 시 공급사에 보낼 ZIP 을 만듭니다. 설정 파일 · 감사 로그(1~90 일) · 환경 정보 · 헬스 스냅샷 · MLOps 전송 큐 상태가 들어가며, 사용자 DB 와 레시피는 포함되지 않습니다."
+  "text": "문제 보고 시 공급사에 보낼 ZIP 을 만듭니다. 설정 파일 · 감사 로그(1~90 일) · 환경 정보 · 헬스 스냅샷이 들어가며, 사용자 DB 와 레시피는 포함되지 않습니다."
  },
  {
   "t": "h",
@@ -12176,14 +11091,14 @@
     {
      "segs": [
       {
-       "s": "File · Run · Recipe · 예제 Template · Sequence · Batch Test... · OCR Synth Data... · Inference Settings... · Camera · 3D. 오른쪽 끝 X 는 프로그램 종료",
+       "s": "File · Run · Recipe · 예제 Template · Sequence · Batch Test... · Inference Settings... · Camera · 3D. 오른쪽 끝 X 는 프로그램 종료",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "File · Run · Recipe · 예제 Template · Sequence · Batch Test... · OCR Synth Data... · Inference Settings... · Camera · 3D. 오른쪽 끝 X 는 프로그램 종료"
+     "text": "File · Run · Recipe · 예제 Template · Sequence · Batch Test... · Inference Settings... · Camera · 3D. 오른쪽 끝 X 는 프로그램 종료"
     }
    ],
    [
@@ -12361,7 +11276,7 @@
   "t": "figure",
   "src": "../gs/screenshots/v3/vs/scene_menu_toolbar.jpg",
   "width": "620",
-  "caption": "메뉴 막대(File · Run · Recipe · 예제 Template · Sequence · Batch Test · OCR Synth Data · Inference Settings · Camera · 3D)와 툴바"
+  "caption": "메뉴 막대(File · Run · Recipe · 예제 Template · Sequence · Batch Test · Inference Settings · Camera · 3D)와 툴바"
  },
  {
   "t": "table",
@@ -12526,26 +11441,26 @@
     {
      "segs": [
       {
-       "s": "Batch Test... / OCR Synth Data... / Inference Settings...",
+       "s": "Batch Test... / Inference Settings...",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "Batch Test... / OCR Synth Data... / Inference Settings..."
+     "text": "Batch Test... / Inference Settings..."
     },
     {
      "segs": [
       {
-       "s": "배치 테스트(§5.11) / OCR 합성 데이터 생성(§5.12) / ONNX 추론 엔진 설정(§5.12).",
+       "s": "배치 테스트(§5.11) / ONNX 추론 엔진 설정(§5.12).",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "배치 테스트(§5.11) / OCR 합성 데이터 생성(§5.12) / ONNX 추론 엔진 설정(§5.12)."
+     "text": "배치 테스트(§5.11) / ONNX 추론 엔진 설정(§5.12)."
     }
    ],
    [
@@ -12799,7 +11714,7 @@
   "t": "figure",
   "src": "../gs/screenshots/v3/vs/scene_step_camera.jpg",
   "width": "520",
-  "caption": "왼쪽 — 현재 레시피 배지 · Camera 콤보 · Step 버튼과 Steps 표(스텝 이름 · Resolution · 도구 수). 오른쪽 — 스텝만 선택했을 때의 Camera Settings(스텝 별칭 · 로봇 노드 번호 · 카메라 설정 유지 · 노출 · 게인)"
+  "caption": "왼쪽 — 현재 레시피 배지 · Camera 콤보 · Step 버튼과 Steps 표(스텝 이름 · Resolution · 도구 수). 오른쪽 — 스텝만 선택했을 때의 Camera Settings(스텝 별칭 · 카메라 설정 유지 · 노출 · 게인)"
  },
  {
   "t": "li",
@@ -12838,14 +11753,14 @@
     "m": false
    },
    {
-    "s": "(카메라 설정과 도구 파이프라인을 복사해 바로 뒤에 추가) · Generate Robot Waypoint Steps(로봇 멀티뷰용) · Move Up / Move Down.",
+    "s": "(카메라 설정과 도구 파이프라인을 복사해 바로 뒤에 추가) · Move Up / Move Down.",
     "b": false,
     "m": false
    }
   ],
   "ordered": false,
   "depth": 0,
-  "text": "스텝 버튼: Add Step · Delete Step · Duplicate Step(카메라 설정과 도구 파이프라인을 복사해 바로 뒤에 추가) · Generate Robot Waypoint Steps(로봇 멀티뷰용) · Move Up / Move Down."
+  "text": "스텝 버튼: Add Step · Delete Step · Duplicate Step(카메라 설정과 도구 파이프라인을 복사해 바로 뒤에 추가) · Move Up / Move Down."
  },
  {
   "t": "li",
@@ -12884,14 +11799,14 @@
     "m": false
    },
    {
-    "s": " 로 바뀝니다 — 스텝 정보(별칭 · 로봇 노드 번호), 2D 이미지(카메라 설정 유지 체크 · 노출 ms · 게인 dB), 3D 카메라면 3D 스캔(점군 후처리 끄기/약/중/강 · 뎁스 범위 제한 mm). 여기 값은 레시피에 저장되고, VisionSetup 의 Acquire · Live 와 VMS 의 촬영(Grab · 자동 운전) 때 카메라에 적용됩니다.",
+    "s": " 로 바뀝니다 — 스텝 정보(별칭), 2D 이미지(카메라 설정 유지 체크 · 노출 ms · 게인 dB). 여기 값은 레시피에 저장되고, VisionSetup 의 Acquire · Live 와 VMS 의 촬영(Grab · 자동 운전) 때 카메라에 적용됩니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": false,
   "depth": 0,
-  "text": "스텝만 선택하면 오른쪽 패널이 Camera Settings 로 바뀝니다 — 스텝 정보(별칭 · 로봇 노드 번호), 2D 이미지(카메라 설정 유지 체크 · 노출 ms · 게인 dB), 3D 카메라면 3D 스캔(점군 후처리 끄기/약/중/강 · 뎁스 범위 제한 mm). 여기 값은 레시피에 저장되고, VisionSetup 의 Acquire · Live 와 VMS 의 촬영(Grab · 자동 운전) 때 카메라에 적용됩니다."
+  "text": "스텝만 선택하면 오른쪽 패널이 Camera Settings 로 바뀝니다 — 스텝 정보(별칭), 2D 이미지(카메라 설정 유지 체크 · 노출 ms · 게인 dB). 여기 값은 레시피에 저장되고, VisionSetup 의 Acquire · Live 와 VMS 의 촬영(Grab · 자동 운전) 때 카메라에 적용됩니다."
  },
  {
   "t": "h",
@@ -14185,14 +13100,14 @@
     {
      "segs": [
       {
-       "s": "Height Slicer → PointCloud Mask Crop → PointCloud Cluster. 높이 범위로 잘라 개수 · 치수 (3D 카메라 필요)",
+       "s": "Height Slicer → PointCloud Mask Crop → PointCloud Cluster. 높이 범위로 잘라 개수 · 치수 (점군 데이터 필요)",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "Height Slicer → PointCloud Mask Crop → PointCloud Cluster. 높이 범위로 잘라 개수 · 치수 (3D 카메라 필요)"
+     "text": "Height Slicer → PointCloud Mask Crop → PointCloud Cluster. 높이 범위로 잘라 개수 · 치수 (점군 데이터 필요)"
     }
    ],
    [
@@ -14299,14 +13214,14 @@
     {
      "segs": [
       {
-       "s": "Grayscale → Feature Match → Match Align → Result. 부품이 한 화면에 들어올 때. ΔX / ΔY / Δθ 산출 · 판정 · 로봇 변환. 각도 정밀도가 더 필요하면 Feature Match 를 하나 더 붙이고 Match Align 의 Mode 를 TwoPoint 로",
+       "s": "Grayscale → Feature Match → Match Align → Result. 부품이 한 화면에 들어올 때. ΔX / ΔY / Δθ 산출 · 판정. 각도 정밀도가 더 필요하면 Feature Match 를 하나 더 붙이고 Match Align 의 Mode 를 TwoPoint 로",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "Grayscale → Feature Match → Match Align → Result. 부품이 한 화면에 들어올 때. ΔX / ΔY / Δθ 산출 · 판정 · 로봇 변환. 각도 정밀도가 더 필요하면 Feature Match 를 하나 더 붙이고 Match Align 의 Mode 를 TwoPoint 로"
+     "text": "Grayscale → Feature Match → Match Align → Result. 부품이 한 화면에 들어올 때. ΔX / ΔY / Δθ 산출 · 판정. 각도 정밀도가 더 필요하면 Feature Match 를 하나 더 붙이고 Match Align 의 Mode 를 TwoPoint 로"
     }
    ],
    [
@@ -14375,14 +13290,14 @@
     {
      "segs": [
       {
-       "s": "Registration(6 축) / Plane Fit 2 개 → 3D Geometry(평면 각) / Match Align + Plane Fit (3D 카메라 필요)",
+       "s": "Registration(6 축) / Plane Fit 2 개 → 3D Geometry(평면 각) / Match Align + Plane Fit (점군 데이터 필요)",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "Registration(6 축) / Plane Fit 2 개 → 3D Geometry(평면 각) / Match Align + Plane Fit (3D 카메라 필요)"
+     "text": "Registration(6 축) / Plane Fit 2 개 → 3D Geometry(평면 각) / Match Align + Plane Fit (점군 데이터 필요)"
     }
    ]
   ],
@@ -15473,35 +14388,6 @@
   "t": "h",
   "segs": [
    {
-    "s": "OCR Synth Data — 합성 문자 데이터",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 4,
-  "text": "OCR Synth Data — 합성 문자 데이터"
- },
- {
-  "t": "figure",
-  "src": "../gs/screenshots/v3/vs/dlg_SynthData.png",
-  "width": "520",
-  "caption": "Synthetic Data Generator — Font · Patterns · Dataset · Background · Augmentation · Training(MLOps 업로드 안내)"
- },
- {
-  "t": "p",
-  "segs": [
-   {
-    "s": "날짜 · 로트 번호처럼 형식이 정해진 문자열을 폰트 · 배경 · 증강을 조합해 대량 생성합니다. OCR 도구의 인식 모델을 다듬을 학습 데이터로 쓰며, 학습은 만든 데이터를 MLOps 에 올려서 합니다(§10.1).",
-    "b": false,
-    "m": false
-   }
-  ],
-  "text": "날짜 · 로트 번호처럼 형식이 정해진 문자열을 폰트 · 배경 · 증강을 조합해 대량 생성합니다. OCR 도구의 인식 모델을 다듬을 학습 데이터로 쓰며, 학습은 만든 데이터를 MLOps 에 올려서 합니다(§10.1)."
- },
- {
-  "t": "h",
-  "segs": [
-   {
     "s": "SLM Recipe Bot",
     "b": false,
     "m": false
@@ -15557,12 +14443,12 @@
     "m": false
    },
    {
-    "s": " 그림은 예제 레시피와 이미지를 실제로 실행한 화면(이미지 뷰 · Run Results · 그 레시피의 Tool Settings)입니다. 파라미터의 정확한 범위와 전체 목록은 부록 13.2 를, 도구를 연결하는 방법은 §5.5 를 참고하세요. 각 파라미터 옆의 물음표(?)에 마우스를 올리면 같은 설명이 프로그램 안에서도 표시됩니다.",
+    "s": " 그림은 예제 레시피와 이미지를 실제로 실행한 화면(이미지 뷰 · Run Results · 그 레시피의 Tool Settings)입니다. 파라미터의 정확한 범위와 전체 목록은 부록 11.2 를, 도구를 연결하는 방법은 §5.5 를 참고하세요. 각 파라미터 옆의 물음표(?)에 마우스를 올리면 같은 설명이 프로그램 안에서도 표시됩니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "Tool Palette 의 도구를 카테고리 순서대로 설명합니다. 도구마다 용도 · 설정 패널 · 주요 파라미터 · 결과 값 · 사용 요령을 정리했으며, 설정 패널 그림은 Expert Mode 를 끈 기본 상태이고, 실행 예 그림은 예제 레시피와 이미지를 실제로 실행한 화면(이미지 뷰 · Run Results · 그 레시피의 Tool Settings)입니다. 파라미터의 정확한 범위와 전체 목록은 부록 13.2 를, 도구를 연결하는 방법은 §5.5 를 참고하세요. 각 파라미터 옆의 물음표(?)에 마우스를 올리면 같은 설명이 프로그램 안에서도 표시됩니다."
+  "text": "Tool Palette 의 도구를 카테고리 순서대로 설명합니다. 도구마다 용도 · 설정 패널 · 주요 파라미터 · 결과 값 · 사용 요령을 정리했으며, 설정 패널 그림은 Expert Mode 를 끈 기본 상태이고, 실행 예 그림은 예제 레시피와 이미지를 실제로 실행한 화면(이미지 뷰 · Run Results · 그 레시피의 Tool Settings)입니다. 파라미터의 정확한 범위와 전체 목록은 부록 11.2 를, 도구를 연결하는 방법은 §5.5 를 참고하세요. 각 파라미터 옆의 물음표(?)에 마우스를 올리면 같은 설명이 프로그램 안에서도 표시됩니다."
  },
  {
   "t": "h",
@@ -18720,12 +17606,12 @@
   "t": "p",
   "segs": [
    {
-    "s": "Feature Match 가 찾은 현재 포즈(중심 · 각도)를 기준(마스터) 포즈와 비교해 변위 ΔX · ΔY · Δθ 를 계산합니다. 캘리브레이션(또는 스텝 Resolution)이 있으면 mm 로도 내고, 핸드아이 행렬로 로봇 · 스테이지 좌표 변위(RobotDX · RobotDY · RobotDTheta)까지 만들어 PLC 로 보낼 수 있습니다. 카메라 1 대로 부품을 보는 표준 2D 얼라인 구성입니다.",
+    "s": "Feature Match 가 찾은 현재 포즈(중심 · 각도)를 기준(마스터) 포즈와 비교해 변위 ΔX · ΔY · Δθ 를 계산합니다. 캘리브레이션(또는 스텝 Resolution)이 있으면 mm 로도 내며, 계산한 보정량은 PLC 로 설비(스테이지 등)에 보낼 수 있습니다. 카메라 1 대로 부품을 보는 표준 2D 얼라인 구성입니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "Feature Match 가 찾은 현재 포즈(중심 · 각도)를 기준(마스터) 포즈와 비교해 변위 ΔX · ΔY · Δθ 를 계산합니다. 캘리브레이션(또는 스텝 Resolution)이 있으면 mm 로도 내고, 핸드아이 행렬로 로봇 · 스테이지 좌표 변위(RobotDX · RobotDY · RobotDTheta)까지 만들어 PLC 로 보낼 수 있습니다. 카메라 1 대로 부품을 보는 표준 2D 얼라인 구성입니다."
+  "text": "Feature Match 가 찾은 현재 포즈(중심 · 각도)를 기준(마스터) 포즈와 비교해 변위 ΔX · ΔY · Δθ 를 계산합니다. 캘리브레이션(또는 스텝 Resolution)이 있으면 mm 로도 내며, 계산한 보정량은 PLC 로 설비(스테이지 등)에 보낼 수 있습니다. 카메라 1 대로 부품을 보는 표준 2D 얼라인 구성입니다."
  },
  {
   "t": "figure",
@@ -18936,44 +17822,6 @@
     {
      "segs": [
       {
-       "s": "Enable Robot Transform · M11 M21 M12 M22 · θ Sign",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Enable Robot Transform · M11 M21 M12 M22 · θ Sign"
-    },
-    {
-     "segs": [
-      {
-       "s": "해제 · 1 0 0 1 · 1",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "해제 · 1 0 0 1 · 1"
-    },
-    {
-     "segs": [
-      {
-       "s": "핸드아이 행렬의 상위 2×2(회전 · 스케일 · 반전)와 각도 부호. Δ 는 벡터라 병진 성분은 필요 없습니다",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "핸드아이 행렬의 상위 2×2(회전 · 스케일 · 반전)와 각도 부호. Δ 는 벡터라 병진 성분은 필요 없습니다"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
        "s": "Draw Overlay",
        "b": false,
        "m": false
@@ -19020,12 +17868,12 @@
     "m": false
    },
    {
-    "s": " — RefX/Y/Theta · CurrentX/Y/Theta · DeltaX · DeltaY · DeltaTheta · DeltaXMm · DeltaYMm · RobotDX · RobotDY · RobotDTheta · ScaleRatio · JudgmentRadial · JudgmentPass",
+    "s": " — RefX/Y/Theta · CurrentX/Y/Theta · DeltaX · DeltaY · DeltaTheta · DeltaXMm · DeltaYMm · ScaleRatio · JudgmentRadial · JudgmentPass",
     "b": false,
     "m": false
    }
   ],
-  "text": "결과 값 — RefX/Y/Theta · CurrentX/Y/Theta · DeltaX · DeltaY · DeltaTheta · DeltaXMm · DeltaYMm · RobotDX · RobotDY · RobotDTheta · ScaleRatio · JudgmentRadial · JudgmentPass"
+  "text": "결과 값 — RefX/Y/Theta · CurrentX/Y/Theta · DeltaX · DeltaY · DeltaTheta · DeltaXMm · DeltaYMm · ScaleRatio · JudgmentRadial · JudgmentPass"
  },
  {
   "t": "p",
@@ -19052,14 +17900,14 @@
     "m": false
    },
    {
-    "s": " — ① Feature Match 로 기준 부품의 패턴을 학습 ② Feature Match 를 이 도구에 Result 로 연결하고 Run → Δ 계산 ③ 기준을 학습 시점과 다르게 잡으려면 기준 부품을 놓고 Run 후 [현재 매칭을 기준으로 등록] ④ 로봇 전송은 Robot Transform 을 켜고 핸드아이 상위 2×2 입력.",
+    "s": " — ① Feature Match 로 기준 부품의 패턴을 학습 ② Feature Match 를 이 도구에 Result 로 연결하고 Run → Δ 계산 ③ 기준을 학습 시점과 다르게 잡으려면 기준 부품을 놓고 Run 후 [현재 매칭을 기준으로 등록] ④ 보정량(DeltaX · DeltaY · DeltaTheta)을 설비로 보내려면 PLC Output 에 매핑.",
     "b": false,
     "m": false
    }
   ],
   "ordered": false,
   "depth": 0,
-  "text": "절차 — ① Feature Match 로 기준 부품의 패턴을 학습 ② Feature Match 를 이 도구에 Result 로 연결하고 Run → Δ 계산 ③ 기준을 학습 시점과 다르게 잡으려면 기준 부품을 놓고 Run 후 [현재 매칭을 기준으로 등록] ④ 로봇 전송은 Robot Transform 을 켜고 핸드아이 상위 2×2 입력."
+  "text": "절차 — ① Feature Match 로 기준 부품의 패턴을 학습 ② Feature Match 를 이 도구에 Result 로 연결하고 Run → Δ 계산 ③ 기준을 학습 시점과 다르게 잡으려면 기준 부품을 놓고 Run 후 [현재 매칭을 기준으로 등록] ④ 보정량(DeltaX · DeltaY · DeltaTheta)을 설비로 보내려면 PLC Output 에 매핑."
  },
  {
   "t": "li",
@@ -19103,12 +17951,12 @@
   "t": "p",
   "segs": [
    {
-    "s": "카메라 1 대가 로봇 · 스테이지로 이동하며 두 스텝에서 부품 양단의 특징을 하나씩 매칭할 때, 두 스텝의 포즈를 한 좌표계로 합쳐 기준 대비 ΔX · ΔY · Δθ 를 계산합니다. 부품이 한 화면에 다 들어오지 않는 패널 · 프레임 얼라인에 씁니다. 이 도구는 마지막(B) 스텝의 작업 공간에 놓습니다.",
+    "s": "카메라 1 대가 스테이지 등 이동 장치로 옮겨 가며 두 스텝에서 부품 양단의 특징을 하나씩 매칭할 때, 두 스텝의 포즈를 한 좌표계로 합쳐 기준 대비 ΔX · ΔY · Δθ 를 계산합니다. 부품이 한 화면에 다 들어오지 않는 패널 · 프레임 얼라인에 씁니다. 이 도구는 마지막(B) 스텝의 작업 공간에 놓습니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "카메라 1 대가 로봇 · 스테이지로 이동하며 두 스텝에서 부품 양단의 특징을 하나씩 매칭할 때, 두 스텝의 포즈를 한 좌표계로 합쳐 기준 대비 ΔX · ΔY · Δθ 를 계산합니다. 부품이 한 화면에 다 들어오지 않는 패널 · 프레임 얼라인에 씁니다. 이 도구는 마지막(B) 스텝의 작업 공간에 놓습니다."
+  "text": "카메라 1 대가 스테이지 등 이동 장치로 옮겨 가며 두 스텝에서 부품 양단의 특징을 하나씩 매칭할 때, 두 스텝의 포즈를 한 좌표계로 합쳐 기준 대비 ΔX · ΔY · Δθ 를 계산합니다. 부품이 한 화면에 다 들어오지 않는 패널 · 프레임 얼라인에 씁니다. 이 도구는 마지막(B) 스텝의 작업 공간에 놓습니다."
  },
  {
   "t": "figure",
@@ -19267,14 +18115,14 @@
     {
      "segs": [
       {
-       "s": "B 촬영 위치의 A 대비 오프셋(로봇 · 스테이지 이동량). 두 스텝 모두 캘리브레이션이 있으면 mm, 없으면 px — mm 권장",
+       "s": "B 촬영 위치의 A 대비 오프셋(카메라 이동량). 두 스텝 모두 캘리브레이션이 있으면 mm, 없으면 px — mm 권장",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "B 촬영 위치의 A 대비 오프셋(로봇 · 스테이지 이동량). 두 스텝 모두 캘리브레이션이 있으면 mm, 없으면 px — mm 권장"
+     "text": "B 촬영 위치의 A 대비 오프셋(카메라 이동량). 두 스텝 모두 캘리브레이션이 있으면 mm, 없으면 px — mm 권장"
     }
    ],
    [
@@ -19357,44 +18205,6 @@
     {
      "segs": [
       {
-       "s": "Enable Robot Transform · M11~M22 · θ Sign",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Enable Robot Transform · M11~M22 · θ Sign"
-    },
-    {
-     "segs": [
-      {
-       "s": "해제 · 항등 · 1",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "해제 · 항등 · 1"
-    },
-    {
-     "segs": [
-      {
-       "s": "핸드아이 2×2 변환",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "핸드아이 2×2 변환"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
        "s": "Draw Overlay",
        "b": false,
        "m": false
@@ -19441,12 +18251,12 @@
     "m": false
    },
    {
-    "s": " — Unit · PointAX/AY · PointBX/BY · RefAX/AY · RefBX/BY · DeltaX · DeltaY · DeltaTheta · ScaleRatio · RobotDX/DY/DTheta · JudgmentRadial · JudgmentPass",
+    "s": " — Unit · PointAX/AY · PointBX/BY · RefAX/AY · RefBX/BY · DeltaX · DeltaY · DeltaTheta · ScaleRatio · JudgmentRadial · JudgmentPass",
     "b": false,
     "m": false
    }
   ],
-  "text": "결과 값 — Unit · PointAX/AY · PointBX/BY · RefAX/AY · RefBX/BY · DeltaX · DeltaY · DeltaTheta · ScaleRatio · RobotDX/DY/DTheta · JudgmentRadial · JudgmentPass"
+  "text": "결과 값 — Unit · PointAX/AY · PointBX/BY · RefAX/AY · RefBX/BY · DeltaX · DeltaY · DeltaTheta · ScaleRatio · JudgmentRadial · JudgmentPass"
  },
  {
   "t": "p",
@@ -21595,14 +20405,14 @@
     {
      "segs": [
       {
-       "s": "PP-OCR 전용 — 입력 최대 변(작은 글씨는 1600~2000)과 직접 학습한 모델 · 사전 파일",
+       "s": "PP-OCR 전용 — 입력 최대 변(작은 글씨는 1600~2000)과 별도로 준비한 검출 · 인식 모델과 문자 사전 파일(비우면 기본 모델)",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "PP-OCR 전용 — 입력 최대 변(작은 글씨는 1600~2000)과 직접 학습한 모델 · 사전 파일"
+     "text": "PP-OCR 전용 — 입력 최대 변(작은 글씨는 1600~2000)과 별도로 준비한 검출 · 인식 모델과 문자 사전 파일(비우면 기본 모델)"
     }
    ],
    [
@@ -22639,12 +21449,12 @@
   "t": "p",
   "segs": [
    {
-    "s": "점군의 점 수를 줄이고(VoxelGrid 다운샘플) 표면에서 튄 점을 지웁니다(통계적 이상점 제거, SOR). Registration · Deviation 앞에 두어 처리 속도를 높이는 것이 주된 용도입니다. 촬영 자체의 노이즈는 이 도구가 아니라 스텝의 Camera Settings 에 있는 ‘포인트 클라우드 후처리’(끄기 · 약 · 중 · 강)로 카메라 안에서 정리합니다.",
+    "s": "점군의 점 수를 줄이고(VoxelGrid 다운샘플) 표면에서 튄 점을 지웁니다(통계적 이상점 제거, SOR). Registration · Deviation 앞에 두어 처리 속도를 높이는 것이 주된 용도입니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "점군의 점 수를 줄이고(VoxelGrid 다운샘플) 표면에서 튄 점을 지웁니다(통계적 이상점 제거, SOR). Registration · Deviation 앞에 두어 처리 속도를 높이는 것이 주된 용도입니다. 촬영 자체의 노이즈는 이 도구가 아니라 스텝의 Camera Settings 에 있는 ‘포인트 클라우드 후처리’(끄기 · 약 · 중 · 강)로 카메라 안에서 정리합니다."
+  "text": "점군의 점 수를 줄이고(VoxelGrid 다운샘플) 표면에서 튄 점을 지웁니다(통계적 이상점 제거, SOR). Registration · Deviation 앞에 두어 처리 속도를 높이는 것이 주된 용도입니다."
  },
  {
   "t": "figure",
@@ -22814,14 +21624,14 @@
   "t": "li",
   "segs": [
    {
-    "s": "가공된 점군은 뒤의 점군 도구(Registration · Deviation · Cluster · Plane Fit)가 그대로 쓰지만, 촬영 시 만들어진 Depth Map(Height Slicer 입력)에는 반영되지 않습니다.",
+    "s": "가공된 점군은 뒤의 점군 도구(Registration · Deviation · Cluster · Plane Fit)가 그대로 쓰지만, 점군 데이터에 함께 들어 있는 Depth Map(Height Slicer 입력)에는 반영되지 않습니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": false,
   "depth": 0,
-  "text": "가공된 점군은 뒤의 점군 도구(Registration · Deviation · Cluster · Plane Fit)가 그대로 쓰지만, 촬영 시 만들어진 Depth Map(Height Slicer 입력)에는 반영되지 않습니다."
+  "text": "가공된 점군은 뒤의 점군 도구(Registration · Deviation · Cluster · Plane Fit)가 그대로 쓰지만, 점군 데이터에 함께 들어 있는 Depth Map(Height Slicer 입력)에는 반영되지 않습니다."
  },
  {
   "t": "h",
@@ -23480,12 +22290,12 @@
   "t": "p",
   "segs": [
    {
-    "s": "점군을 거리 기준으로 덩어리(클러스터)로 나눠 물체 개수를 세고 덩어리마다 크기(가로 · 세로 · 높이) · 중심 · 방향을 잽니다. 부품 개수 세기, 가장 큰 물체만 남기기, 부스러기 제거에 씁니다. 카메라 정보로 mm 환산이 가능합니다.",
+    "s": "점군을 거리 기준으로 덩어리(클러스터)로 나눠 물체 개수를 세고 덩어리마다 크기(가로 · 세로 · 높이) · 중심 · 방향을 잽니다. 부품 개수 세기, 가장 큰 물체만 남기기, 부스러기 제거에 씁니다. 점군에 저장된 카메라 정보로 mm 환산이 가능합니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "점군을 거리 기준으로 덩어리(클러스터)로 나눠 물체 개수를 세고 덩어리마다 크기(가로 · 세로 · 높이) · 중심 · 방향을 잽니다. 부품 개수 세기, 가장 큰 물체만 남기기, 부스러기 제거에 씁니다. 카메라 정보로 mm 환산이 가능합니다."
+  "text": "점군을 거리 기준으로 덩어리(클러스터)로 나눠 물체 개수를 세고 덩어리마다 크기(가로 · 세로 · 높이) · 중심 · 방향을 잽니다. 부품 개수 세기, 가장 큰 물체만 남기기, 부스러기 제거에 씁니다. 점군에 저장된 카메라 정보로 mm 환산이 가능합니다."
  },
  {
   "t": "figure",
@@ -23682,14 +22492,14 @@
     {
      "segs": [
       {
-       "s": "AutoFromCamera 는 Mech-Mind 촬영 점군에서 카메라 내부 정보와 실측 높이로 mm/px 를 자동 계산(권장). 파일 점군 등 정보가 없으면 XY Scale 로 폴백",
+       "s": "AutoFromCamera 는 점군 파일(.vpc)에 함께 저장된 카메라 내부 정보와 실측 높이로 mm/px 를 자동 계산(권장). 그 정보가 없는 점군은 XY Scale 로 계산",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "AutoFromCamera 는 Mech-Mind 촬영 점군에서 카메라 내부 정보와 실측 높이로 mm/px 를 자동 계산(권장). 파일 점군 등 정보가 없으면 XY Scale 로 폴백"
+     "text": "AutoFromCamera 는 점군 파일(.vpc)에 함께 저장된 카메라 내부 정보와 실측 높이로 mm/px 를 자동 계산(권장). 그 정보가 없는 점군은 XY Scale 로 계산"
     }
    ],
    [
@@ -25162,14 +23972,14 @@
   "t": "li",
   "segs": [
    {
-    "s": "좌표는 점군 원좌표입니다 — 3D 카메라 점군은 X/Y 가 화소, Z 가 mm 라 길이 · 방향은 화소 기준입니다.",
+    "s": "좌표는 점군 원좌표입니다 — X/Y 가 화소, Z 가 mm 로 저장된 점군이면 길이 · 방향도 화소 기준입니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": false,
   "depth": 0,
-  "text": "좌표는 점군 원좌표입니다 — 3D 카메라 점군은 X/Y 가 화소, Z 가 mm 라 길이 · 방향은 화소 기준입니다."
+  "text": "좌표는 점군 원좌표입니다 — X/Y 가 화소, Z 가 mm 로 저장된 점군이면 길이 · 방향도 화소 기준입니다."
  },
  {
   "t": "li",
@@ -25212,12 +24022,12 @@
   "t": "p",
   "segs": [
    {
-    "s": "학습된 ONNX 모델로 객체의 위치(박스)와 클래스를 검출합니다. 기본 학습 백본은 D-FINE이며 YOLOv8/v11 형식도 자동 판별합니다. 부품 유무 · 다종 부품 검출 · 외관 결함 검출에 씁니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+    "s": "학습된 ONNX 모델로 객체의 위치(박스)와 클래스를 검출합니다. D-FINE 형식 모델을 기본으로 하며 YOLOv8/v11 형식도 자동 판별합니다. 부품 유무 · 다종 부품 검출 · 외관 결함 검출에 씁니다. 모델은 학습된 ONNX 파일(.onnx)을 Model Path 오른쪽의 [폴더] 버튼으로 지정합니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "학습된 ONNX 모델로 객체의 위치(박스)와 클래스를 검출합니다. 기본 학습 백본은 D-FINE이며 YOLOv8/v11 형식도 자동 판별합니다. 부품 유무 · 다종 부품 검출 · 외관 결함 검출에 씁니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
+  "text": "학습된 ONNX 모델로 객체의 위치(박스)와 클래스를 검출합니다. D-FINE 형식 모델을 기본으로 하며 YOLOv8/v11 형식도 자동 판별합니다. 부품 유무 · 다종 부품 검출 · 외관 결함 검출에 씁니다. 모델은 학습된 ONNX 파일(.onnx)을 Model Path 오른쪽의 [폴더] 버튼으로 지정합니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
  },
  {
   "t": "figure",
@@ -25276,14 +24086,14 @@
     {
      "segs": [
       {
-       "s": "Model Path (.onnx) · [레지스트리…]",
+       "s": "Model Path (.onnx) · [폴더]",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "Model Path (.onnx) · [레지스트리…]"
+     "text": "Model Path (.onnx) · [폴더]"
     },
     {
      "segs": [
@@ -25300,14 +24110,14 @@
     {
      "segs": [
       {
-       "s": "ONNX 파일 또는 MLOps 레지스트리 참조(model://…). Class Names 는 모델 메타데이터에서 자동으로 채워집니다",
+       "s": "ONNX 모델 파일 경로. [폴더] 버튼으로 파일을 고릅니다. Class Names 는 모델 메타데이터에서 자동으로 채워집니다",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "ONNX 파일 또는 MLOps 레지스트리 참조(model://…). Class Names 는 모델 메타데이터에서 자동으로 채워집니다"
+     "text": "ONNX 모델 파일 경로. [폴더] 버튼으로 파일을 고릅니다. Class Names 는 모델 메타데이터에서 자동으로 채워집니다"
     }
    ],
    [
@@ -25338,14 +24148,14 @@
     {
      "segs": [
       {
-       "s": "학습 imgsz 와 같게",
+       "s": "모델의 입력 크기와 같게",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "학습 imgsz 와 같게"
+     "text": "모델의 입력 크기와 같게"
     }
    ],
    [
@@ -25653,12 +24463,12 @@
   "t": "p",
   "segs": [
    {
-    "s": "U-Net 같은 픽셀 분류 모델로 이미지를 클래스별 마스크로 나눕니다. 결함 영역의 면적을 재거나 배경 · 전경을 분리할 때 쓰며, 같은 클래스의 개체를 따로 세야 하면 RF-DETR-seg 를 씁니다. 뒤에 Blob 을 붙여 개수 · 크기를 분석합니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+    "s": "U-Net 같은 픽셀 분류 모델로 이미지를 클래스별 마스크로 나눕니다. 결함 영역의 면적을 재거나 배경 · 전경을 분리할 때 쓰며, 같은 클래스의 개체를 따로 세야 하면 RF-DETR-seg 를 씁니다. 뒤에 Blob 을 붙여 개수 · 크기를 분석합니다. 모델은 학습된 ONNX 파일(.onnx)을 Model Path 오른쪽의 [폴더] 버튼으로 지정합니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "U-Net 같은 픽셀 분류 모델로 이미지를 클래스별 마스크로 나눕니다. 결함 영역의 면적을 재거나 배경 · 전경을 분리할 때 쓰며, 같은 클래스의 개체를 따로 세야 하면 RF-DETR-seg 를 씁니다. 뒤에 Blob 을 붙여 개수 · 크기를 분석합니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
+  "text": "U-Net 같은 픽셀 분류 모델로 이미지를 클래스별 마스크로 나눕니다. 결함 영역의 면적을 재거나 배경 · 전경을 분리할 때 쓰며, 같은 클래스의 개체를 따로 세야 하면 RF-DETR-seg 를 씁니다. 뒤에 Blob 을 붙여 개수 · 크기를 분석합니다. 모델은 학습된 ONNX 파일(.onnx)을 Model Path 오른쪽의 [폴더] 버튼으로 지정합니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
  },
  {
   "t": "figure",
@@ -25741,14 +24551,14 @@
     {
      "segs": [
       {
-       "s": "입력 [1,3,H,W] · 출력 [1,C,H,W] 로짓 모델. 입력 크기는 학습 크기와 같아야 합니다(다르면 오류 없이 정확도만 떨어짐)",
+       "s": "입력 [1,3,H,W] · 출력 [1,C,H,W] 로짓 모델. 입력 크기는 모델의 입력 크기와 같아야 합니다(다르면 오류 없이 정확도만 떨어짐)",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "입력 [1,3,H,W] · 출력 [1,C,H,W] 로짓 모델. 입력 크기는 학습 크기와 같아야 합니다(다르면 오류 없이 정확도만 떨어짐)"
+     "text": "입력 [1,3,H,W] · 출력 [1,C,H,W] 로짓 모델. 입력 크기는 모델의 입력 크기와 같아야 합니다(다르면 오류 없이 정확도만 떨어짐)"
     }
    ],
    [
@@ -25779,14 +24589,14 @@
     {
      "segs": [
       {
-       "s": "학습 때와 같아야 합니다. 마스크가 엉뚱하면 이 설정부터 확인",
+       "s": "모델을 만들 때 쓴 정규화 방식과 같아야 합니다. 마스크가 엉뚱하면 이 설정부터 확인",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "학습 때와 같아야 합니다. 마스크가 엉뚱하면 이 설정부터 확인"
+     "text": "모델을 만들 때 쓴 정규화 방식과 같아야 합니다. 마스크가 엉뚱하면 이 설정부터 확인"
     }
    ],
    [
@@ -25929,12 +24739,12 @@
   "t": "p",
   "segs": [
    {
-    "s": "RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+    "s": "RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델은 학습된 ONNX 파일(.onnx)을 Model Path 오른쪽의 [폴더] 버튼으로 지정합니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
+  "text": "RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델은 학습된 ONNX 파일(.onnx)을 Model Path 오른쪽의 [폴더] 버튼으로 지정합니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
  },
  {
   "t": "figure",
@@ -25993,14 +24803,14 @@
     {
      "segs": [
       {
-       "s": "Model Path (.onnx) · [레지스트리…]",
+       "s": "Model Path (.onnx) · [폴더]",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "Model Path (.onnx) · [레지스트리…]"
+     "text": "Model Path (.onnx) · [폴더]"
     },
     {
      "segs": [
@@ -26017,14 +24827,14 @@
     {
      "segs": [
       {
-       "s": "파일 또는 model:// 참조",
+       "s": "ONNX 모델 파일 경로. [폴더] 버튼으로 파일을 고릅니다",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "파일 또는 model:// 참조"
+     "text": "ONNX 모델 파일 경로. [폴더] 버튼으로 파일을 고릅니다"
     }
    ],
    [
@@ -26180,19 +24990,6 @@
   "t": "li",
   "segs": [
    {
-    "s": "학습은 MLOps 의 train_rfdetr_seg.py(세그멘테이션 데이터셋, coco 형식)로 합니다(§9.6).",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 0,
-  "text": "학습은 MLOps 의 train_rfdetr_seg.py(세그멘테이션 데이터셋, coco 형식)로 합니다(§9.6)."
- },
- {
-  "t": "li",
-  "segs": [
-   {
     "s": "템플릿 ‘DL 세그 기반 3D 객체 검출’ 이 RF-DETR-seg(마스크 출력) → Mask Crop → Cluster 체인을 만듭니다.",
     "b": false,
     "m": false
@@ -26218,12 +25015,12 @@
   "t": "p",
   "segs": [
    {
-    "s": "ResNet · MobileNet 같은 분류 모델(ONNX)로 이미지(또는 ROI) 전체를 한 클래스로 판정합니다. 양품/불량 판정, 부품 종류 구분, 외관 등급에 씁니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+    "s": "ResNet · MobileNet 같은 분류 모델(ONNX)로 이미지(또는 ROI) 전체를 한 클래스로 판정합니다. 양품/불량 판정, 부품 종류 구분, 외관 등급에 씁니다. 모델은 학습된 ONNX 파일(.onnx)을 Model Path 오른쪽의 [폴더] 버튼으로 지정합니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "ResNet · MobileNet 같은 분류 모델(ONNX)로 이미지(또는 ROI) 전체를 한 클래스로 판정합니다. 양품/불량 판정, 부품 종류 구분, 외관 등급에 씁니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
+  "text": "ResNet · MobileNet 같은 분류 모델(ONNX)로 이미지(또는 ROI) 전체를 한 클래스로 판정합니다. 양품/불량 판정, 부품 종류 구분, 외관 등급에 씁니다. 모델은 학습된 ONNX 파일(.onnx)을 Model Path 오른쪽의 [폴더] 버튼으로 지정합니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
  },
  {
   "t": "figure",
@@ -26306,14 +25103,14 @@
     {
      "segs": [
       {
-       "s": "학습 입력 크기와 같게",
+       "s": "모델의 입력 크기와 같게",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "학습 입력 크기와 같게"
+     "text": "모델의 입력 크기와 같게"
     }
    ],
    [
@@ -26420,14 +25217,14 @@
     {
      "segs": [
       {
-       "s": "torchvision 사전학습 모델이면 켬",
+       "s": "ImageNet 정규화를 쓰는 모델이면 켬",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "torchvision 사전학습 모델이면 켬"
+     "text": "ImageNet 정규화를 쓰는 모델이면 켬"
     }
    ],
    [
@@ -26458,14 +25255,14 @@
     {
      "segs": [
       {
-       "s": "학습 폴더 순서대로 쉼표 구분 / 클래스 · 신뢰도 표시(PASS 초록 · FAIL 빨강 테두리)",
+       "s": "모델의 클래스 순서대로 쉼표 구분 / 클래스 · 신뢰도 표시(PASS 초록 · FAIL 빨강 테두리)",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "학습 폴더 순서대로 쉼표 구분 / 클래스 · 신뢰도 표시(PASS 초록 · FAIL 빨강 테두리)"
+     "text": "모델의 클래스 순서대로 쉼표 구분 / 클래스 · 신뢰도 표시(PASS 초록 · FAIL 빨강 테두리)"
     }
    ]
   ],
@@ -26507,30 +25304,30 @@
   "t": "h",
   "segs": [
    {
-    "s": "Anomaly — 이상 탐지 (정상 이미지만으로 학습)",
+    "s": "Anomaly — 이상 탐지 (정상 대비 이상 점수)",
     "b": false,
     "m": false
    }
   ],
   "level": 4,
-  "text": "Anomaly — 이상 탐지 (정상 이미지만으로 학습)"
+  "text": "Anomaly — 이상 탐지 (정상 대비 이상 점수)"
  },
  {
   "t": "p",
   "segs": [
    {
-    "s": "PatchCore · FastFlow · EfficientAD 같은 anomalib 호환 모델로 정상 대비 이상 점수를 계산하고 히트맵으로 이상 부위를 표시합니다. 불량 샘플이 거의 없는 공정에서 정상 이미지만으로 학습해 쓰는 방식입니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+    "s": "PatchCore · FastFlow · EfficientAD 같은 이상 탐지 모델로 정상 대비 이상 점수를 계산하고 히트맵으로 이상 부위를 표시합니다. 정상 이미지만으로 만든 모델을 쓰므로 불량 샘플이 거의 없는 공정에 알맞습니다. 모델은 학습된 ONNX 파일(.onnx)을 Model Path 오른쪽의 [폴더] 버튼으로 지정합니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "PatchCore · FastFlow · EfficientAD 같은 anomalib 호환 모델로 정상 대비 이상 점수를 계산하고 히트맵으로 이상 부위를 표시합니다. 불량 샘플이 거의 없는 공정에서 정상 이미지만으로 학습해 쓰는 방식입니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
+  "text": "PatchCore · FastFlow · EfficientAD 같은 이상 탐지 모델로 정상 대비 이상 점수를 계산하고 히트맵으로 이상 부위를 표시합니다. 정상 이미지만으로 만든 모델을 쓰므로 불량 샘플이 거의 없는 공정에 알맞습니다. 모델은 학습된 ONNX 파일(.onnx)을 Model Path 오른쪽의 [폴더] 버튼으로 지정합니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다."
  },
  {
   "t": "figure",
   "src": "../gs/screenshots/v3/tools/34_Anomaly.png",
   "width": "240",
-  "caption": "Anomaly — 이상 탐지 (정상 이미지만으로 학습) — Tool Settings 패널"
+  "caption": "Anomaly — 이상 탐지 (정상 대비 이상 점수) — Tool Settings 패널"
  },
  {
   "t": "figure",
@@ -26607,14 +25404,14 @@
     {
      "segs": [
       {
-       "s": "학습 image_size 와 같게",
+       "s": "모델의 입력 크기와 같게",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "학습 image_size 와 같게"
+     "text": "모델의 입력 크기와 같게"
     }
    ],
    [
@@ -29153,14 +27950,14 @@
   "t": "li",
   "segs": [
    {
-    "s": "\"정해진 문자열이 맞는지\" 만 보려면 OCV 도구에 기준 문자를 학습시켜 검증합니다. 날짜 · 로트처럼 형식이 정해진 문자열의 인식률을 높이려면 OCR Synth Data(§5.12)로 합성 데이터를 만들어 모델을 다듬습니다.",
+    "s": "\"정해진 문자열이 맞는지\" 만 보려면 OCV 도구에 기준 문자를 학습시켜 검증합니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": true,
   "depth": 0,
-  "text": "\"정해진 문자열이 맞는지\" 만 보려면 OCV 도구에 기준 문자를 학습시켜 검증합니다. 날짜 · 로트처럼 형식이 정해진 문자열의 인식률을 높이려면 OCR Synth Data(§5.12)로 합성 데이터를 만들어 모델을 다듬습니다."
+  "text": "\"정해진 문자열이 맞는지\" 만 보려면 OCV 도구에 기준 문자를 학습시켜 검증합니다."
  },
  {
   "t": "h",
@@ -29200,14 +27997,14 @@
   "t": "li",
   "segs": [
    {
-    "s": "모델을 준비합니다 — MLOps(9장)에서 학습해 운영으로 승격합니다(10장).",
+    "s": "모델을 준비합니다 — 검사 대상에 맞게 학습된 ONNX 모델 파일을 이 PC 의 폴더에 복사해 둡니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": true,
   "depth": 0,
-  "text": "모델을 준비합니다 — MLOps(9장)에서 학습해 운영으로 승격합니다(10장)."
+  "text": "모델을 준비합니다 — 검사 대상에 맞게 학습된 ONNX 모델 파일을 이 PC 의 폴더에 복사해 둡니다."
  },
  {
   "t": "li",
@@ -29241,24 +28038,14 @@
     "m": false
    },
    {
-    "s": " 의 Model Path 에 ONNX 파일을 지정하거나 [레지스트리…] 로 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "model://…@production",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": " 참조를 고릅니다. D-FINE · YOLO 형식은 자동 판별됩니다.",
+    "s": " 의 Model Path 옆 폴더 버튼을 눌러 ONNX 모델 파일을 지정합니다. D-FINE · YOLO 형식은 자동 판별됩니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": true,
   "depth": 0,
-  "text": "Detection 의 Model Path 에 ONNX 파일을 지정하거나 [레지스트리…] 로 model://…@production 참조를 고릅니다. D-FINE · YOLO 형식은 자동 판별됩니다."
+  "text": "Detection 의 Model Path 옆 폴더 버튼을 눌러 ONNX 모델 파일을 지정합니다. D-FINE · YOLO 형식은 자동 판별됩니다."
  },
  {
   "t": "li",
@@ -29277,14 +28064,14 @@
   "t": "li",
   "segs": [
    {
-    "s": "이상 탐지(Anomaly)는 정상 이미지만으로 학습한 모델을 쓰며 Anomaly Score 임계값으로 판정합니다. 히트맵 오버레이로 이상 부위를 확인합니다.",
+    "s": "이상 탐지(Anomaly)는 정상 이미지를 기준으로 하는 이상 탐지 모델(ONNX)을 쓰며 Anomaly Score 임계값으로 판정합니다. 히트맵 오버레이로 이상 부위를 확인합니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": true,
   "depth": 0,
-  "text": "이상 탐지(Anomaly)는 정상 이미지만으로 학습한 모델을 쓰며 Anomaly Score 임계값으로 판정합니다. 히트맵 오버레이로 이상 부위를 확인합니다."
+  "text": "이상 탐지(Anomaly)는 정상 이미지를 기준으로 하는 이상 탐지 모델(ONNX)을 쓰며 Anomaly Score 임계값으로 판정합니다. 히트맵 오버레이로 이상 부위를 확인합니다."
  },
  {
   "t": "li",
@@ -29303,13 +28090,13 @@
   "t": "h",
   "segs": [
    {
-    "s": "7.8 얼라인 — 로봇 · 스테이지 보정량 산출",
+    "s": "7.8 얼라인 — 설비 · 스테이지 보정량 산출",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "7.8 얼라인 — 로봇 · 스테이지 보정량 산출"
+  "text": "7.8 얼라인 — 설비 · 스테이지 보정량 산출"
  },
  {
   "t": "figure",
@@ -29326,12 +28113,12 @@
     "m": false
    },
    {
-    "s": " — 부품이 기준 위치에서 얼마나 이동 · 회전했는지 재서 로봇이나 서보에 보정량을 보냅니다(로봇 얼라인).",
+    "s": " — 부품이 기준 위치에서 얼마나 이동 · 회전했는지 재서 설비(스테이지 · 서보)에 보정량을 보냅니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "상황 — 부품이 기준 위치에서 얼마나 이동 · 회전했는지 재서 로봇이나 서보에 보정량을 보냅니다(로봇 얼라인)."
+  "text": "상황 — 부품이 기준 위치에서 얼마나 이동 · 회전했는지 재서 설비(스테이지 · 서보)에 보정량을 보냅니다."
  },
  {
   "t": "li",
@@ -29388,27 +28175,27 @@
     "m": false
    },
    {
-    "s": " 에서 Unit=Mm(캘리브레이션 필요) · Max ΔXY · Max Δθ 를 정하고 Enable Judgment 를 켭니다. 로봇으로 보내려면 Enable Robot Transform 을 켜고 핸드아이 행렬 상위 2×2 를 넣습니다.",
+    "s": " 에서 Unit=Mm(캘리브레이션 필요) · Max ΔXY · Max Δθ 를 정하고 Enable Judgment 를 켭니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": true,
   "depth": 0,
-  "text": "Match Align 에서 Unit=Mm(캘리브레이션 필요) · Max ΔXY · Max Δθ 를 정하고 Enable Judgment 를 켭니다. 로봇으로 보내려면 Enable Robot Transform 을 켜고 핸드아이 행렬 상위 2×2 를 넣습니다."
+  "text": "Match Align 에서 Unit=Mm(캘리브레이션 필요) · Max ΔXY · Max Δθ 를 정하고 Enable Judgment 를 켭니다."
  },
  {
   "t": "li",
   "segs": [
    {
-    "s": "부품을 옮긴 이미지로 Run All → DeltaX · DeltaY · DeltaTheta(RobotDX · DY · DTheta)를 확인합니다. Match Align 의 PLC Output 에서 이 값들을 PLC 주소에 매핑하면 시퀀스가 돌 때마다 PLC 로 전달됩니다.",
+    "s": "부품을 옮긴 이미지로 Run All → DeltaX · DeltaY · DeltaTheta 를 확인합니다. Match Align 의 PLC Output 에서 이 값들을 PLC 주소에 매핑하면 시퀀스가 돌 때마다 PLC 로 전달됩니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": true,
   "depth": 0,
-  "text": "부품을 옮긴 이미지로 Run All → DeltaX · DeltaY · DeltaTheta(RobotDX · DY · DTheta)를 확인합니다. Match Align 의 PLC Output 에서 이 값들을 PLC 주소에 매핑하면 시퀀스가 돌 때마다 PLC 로 전달됩니다."
+  "text": "부품을 옮긴 이미지로 Run All → DeltaX · DeltaY · DeltaTheta 를 확인합니다. Match Align 의 PLC Output 에서 이 값들을 PLC 주소에 매핑하면 시퀀스가 돌 때마다 PLC 로 전달됩니다."
  },
  {
   "t": "li",
@@ -29424,7 +28211,7 @@
     "m": false
    },
    {
-    "s": "(Multi-Step Align)을, 기울기까지 필요하면 3D 카메라로 ",
+    "s": "(Multi-Step Align)을, 기울기까지 재야 하면 점군(.vpc) 데이터를 쓰는 ",
     "b": false,
     "m": false
    },
@@ -29444,14 +28231,14 @@
     "m": false
    },
    {
-    "s": " 을 씁니다.",
+    "s": " 템플릿(§5.8)을 씁니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": true,
   "depth": 0,
-  "text": "부품이 한 화면에 안 들어오면 2-스텝 얼라인(Multi-Step Align)을, 기울기까지 필요하면 3D 카메라로 평면 틸트 얼라인 · 2D+3D 하이브리드 얼라인 을 씁니다."
+  "text": "부품이 한 화면에 안 들어오면 2-스텝 얼라인(Multi-Step Align)을, 기울기까지 재야 하면 점군(.vpc) 데이터를 쓰는 평면 틸트 얼라인 · 2D+3D 하이브리드 얼라인 템플릿(§5.8)을 씁니다."
  },
  {
   "t": "h",
@@ -29480,25 +28267,25 @@
     "m": false
    },
    {
-    "s": " — 3D 카메라(Mech-Mind 등)로 찍은 점군에서 부품 개수와 가로 · 세로 · 높이를 재거나, 기준 형상과의 편차(들뜸 · 눌림)를 봅니다. \"어디에 있는지\" 는 2D 에서 찾고 \"얼마나 큰지\" 는 3D 에서 잽니다.",
+    "s": " — 저장해 둔 점군(.vpc) 데이터에서 부품 개수와 가로 · 세로 · 높이를 재거나, 기준 형상과의 편차(들뜸 · 눌림)를 봅니다. \"어디에 있는지\" 는 2D 에서 찾고 \"얼마나 큰지\" 는 3D 에서 잽니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "상황 — 3D 카메라(Mech-Mind 등)로 찍은 점군에서 부품 개수와 가로 · 세로 · 높이를 재거나, 기준 형상과의 편차(들뜸 · 눌림)를 봅니다. \"어디에 있는지\" 는 2D 에서 찾고 \"얼마나 큰지\" 는 3D 에서 잽니다."
+  "text": "상황 — 저장해 둔 점군(.vpc) 데이터에서 부품 개수와 가로 · 세로 · 높이를 재거나, 기준 형상과의 편차(들뜸 · 눌림)를 봅니다. \"어디에 있는지\" 는 2D 에서 찾고 \"얼마나 큰지\" 는 3D 에서 잽니다."
  },
  {
   "t": "li",
   "segs": [
    {
-    "s": "3D 카메라 스텝에서 Acquire(또는 3D → Load 3D Data 로 .vpc 파일)로 점군을 가져옵니다. Depth Map · Point Cloud 탭에서 확인합니다.",
+    "s": "메뉴 3D → Load 3D Data 로 .vpc 파일을 열어 점군을 가져옵니다(§5.4). Depth Map · Point Cloud 탭에서 확인합니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": true,
   "depth": 0,
-  "text": "3D 카메라 스텝에서 Acquire(또는 3D → Load 3D Data 로 .vpc 파일)로 점군을 가져옵니다. Depth Map · Point Cloud 탭에서 확인합니다."
+  "text": "메뉴 3D → Load 3D Data 로 .vpc 파일을 열어 점군을 가져옵니다(§5.4). Depth Map · Point Cloud 탭에서 확인합니다."
  },
  {
   "t": "li",
@@ -32228,32 +31015,12 @@
   "t": "p",
   "segs": [
    {
-    "s": "최근 검사 흐름을 학습한 예측 모델이 다음 1 시간의 불량률을 추정합니다. 60 초마다 자동 갱신되며, 예측값은 VMS 헤더의 예측 칩과 안돈 보드의 사전 경보에도 표시됩니다. 모델이 등록되지 않은 서버는 \"활성 ML 모델이 등록되지 않았습니다\" 배너가 뜨고 예측이 표시되지 않습니다(모델 등록과 재학습은 서버 관리 도구 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "tools/register_model.py",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": " · ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "tools/retrain_pipeline.py",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": " 로 합니다).",
+    "s": "최근 검사 흐름을 바탕으로 예측 모델이 다음 1 시간의 불량률을 추정합니다. 60 초마다 자동 갱신되며, 예측값은 VMS 헤더의 예측 칩과 안돈 보드의 사전 경보에도 표시됩니다. 모델이 등록되지 않은 서버는 \"활성 ML 모델이 등록되지 않았습니다\" 배너가 뜨고 예측이 표시되지 않습니다. 예측 모델 등록은 서버 관리자가 합니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "최근 검사 흐름을 학습한 예측 모델이 다음 1 시간의 불량률을 추정합니다. 60 초마다 자동 갱신되며, 예측값은 VMS 헤더의 예측 칩과 안돈 보드의 사전 경보에도 표시됩니다. 모델이 등록되지 않은 서버는 \"활성 ML 모델이 등록되지 않았습니다\" 배너가 뜨고 예측이 표시되지 않습니다(모델 등록과 재학습은 서버 관리 도구 tools/register_model.py · tools/retrain_pipeline.py 로 합니다)."
+  "text": "최근 검사 흐름을 바탕으로 예측 모델이 다음 1 시간의 불량률을 추정합니다. 60 초마다 자동 갱신되며, 예측값은 VMS 헤더의 예측 칩과 안돈 보드의 사전 경보에도 표시됩니다. 모델이 등록되지 않은 서버는 \"활성 ML 모델이 등록되지 않았습니다\" 배너가 뜨고 예측이 표시되지 않습니다. 예측 모델 등록은 서버 관리자가 합니다."
  },
  {
   "t": "h",
@@ -32395,12 +31162,12 @@
   "t": "p",
   "segs": [
    {
-    "s": "서버에 설치된 라이선스(상태 · 고객 · 라이선스 ID · 좌석 사용/계약)와 각 라인 PC 가 점유한 좌석(클라이언트 번호 · 호스트 · 지문 · 마지막 갱신)을 30 초마다 갱신해 보여 줍니다. 좌석은 72 시간 동안 갱신이 없으면 자동 해제됩니다. 계약 좌석을 초과하면 경고 배너가 뜹니다(현재는 운전 제한 없음). 서버 지문 코드는 라이선스 발급 요청에 씁니다(§2.6).",
+    "s": "서버에 설치된 라이선스(상태 · 고객 · 라이선스 ID · 좌석 사용/계약)와 각 라인 PC 가 점유한 좌석(클라이언트 번호 · 호스트 · 지문 · 마지막 갱신)을 30 초마다 갱신해 보여 줍니다. 좌석은 72 시간 동안 갱신이 없으면 자동 해제됩니다. 계약 좌석을 초과하면 경고 배너가 뜹니다(현재는 운전 제한 없음). 서버 지문 코드는 라이선스 발급 요청에 씁니다(§2.5).",
     "b": false,
     "m": false
    }
   ],
-  "text": "서버에 설치된 라이선스(상태 · 고객 · 라이선스 ID · 좌석 사용/계약)와 각 라인 PC 가 점유한 좌석(클라이언트 번호 · 호스트 · 지문 · 마지막 갱신)을 30 초마다 갱신해 보여 줍니다. 좌석은 72 시간 동안 갱신이 없으면 자동 해제됩니다. 계약 좌석을 초과하면 경고 배너가 뜹니다(현재는 운전 제한 없음). 서버 지문 코드는 라이선스 발급 요청에 씁니다(§2.6)."
+  "text": "서버에 설치된 라이선스(상태 · 고객 · 라이선스 ID · 좌석 사용/계약)와 각 라인 PC 가 점유한 좌석(클라이언트 번호 · 호스트 · 지문 · 마지막 갱신)을 30 초마다 갱신해 보여 줍니다. 좌석은 72 시간 동안 갱신이 없으면 자동 해제됩니다. 계약 좌석을 초과하면 경고 배너가 뜹니다(현재는 운전 제한 없음). 서버 지문 코드는 라이선스 발급 요청에 씁니다(§2.5)."
  },
  {
   "t": "h",
@@ -32696,2569 +31463,26 @@
   "t": "li",
   "segs": [
    {
-    "s": "한 PC 에 카메라가 여러 대 있으면 VMS 를 인스턴스 이름으로 두 개 띄워 두 라인으로 운용할 수 있습니다(§11.5).",
+    "s": "한 PC 에 카메라가 여러 대 있으면 VMS 를 인스턴스 이름으로 두 개 띄워 두 라인으로 운용할 수 있습니다(§9.5).",
     "b": false,
     "m": false
    }
   ],
   "ordered": false,
   "depth": 0,
-  "text": "한 PC 에 카메라가 여러 대 있으면 VMS 를 인스턴스 이름으로 두 개 띄워 두 라인으로 운용할 수 있습니다(§11.5)."
+  "text": "한 PC 에 카메라가 여러 대 있으면 VMS 를 인스턴스 이름으로 두 개 띄워 두 라인으로 운용할 수 있습니다(§9.5)."
  },
  {
   "t": "h",
   "segs": [
    {
-    "s": "9. AI 학습 플랫폼 (BODA.VMS.MLOps)",
+    "s": "9. 유지보수",
     "b": false,
     "m": false
    }
   ],
   "level": 2,
-  "text": "9. AI 학습 플랫폼 (BODA.VMS.MLOps)"
- },
- {
-  "t": "callout",
-  "kind": "note",
-  "segs": [
-   {
-    "s": "⚙ 이 장은 딥러닝 검사 도구의 모델을 만들고 배포하는 엔지니어 · 관리자용이며, MLOps 는 인증 범위 밖의 선택 구성 요소입니다.",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " MLOps 서버 없이 검사만 운영하는 현장은 건너뛰어도 됩니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "text": "⚙ 이 장은 딥러닝 검사 도구의 모델을 만들고 배포하는 엔지니어 · 관리자용이며, MLOps 는 인증 범위 밖의 선택 구성 요소입니다. MLOps 서버 없이 검사만 운영하는 현장은 건너뛰어도 됩니다."
- },
- {
-  "t": "p",
-  "segs": [
-   {
-    "s": "MLOps 는 브라우저로 접속하는 웹 프로그램(",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "http://서버주소:5310",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": ")입니다. 라인에서 올라온 불량 사진을 모아 라벨링하고, GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단계별(후보 → 스테이징 → 운영)로 관리하며, 라인 PC 는 레시피에 적힌 참조로 운영 모델을 자동으로 내려받습니다. 설치는 §2.4, 라인 PC 쪽 설정은 §3.3(고급 설정)과 §4.6(Image Saving) 을 참고하세요.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "text": "MLOps 는 브라우저로 접속하는 웹 프로그램(http://서버주소:5310)입니다. 라인에서 올라온 불량 사진을 모아 라벨링하고, GPU 학습 워커가 학습을 돌려 만든 모델을 레지스트리에서 단계별(후보 → 스테이징 → 운영)로 관리하며, 라인 PC 는 레시피에 적힌 참조로 운영 모델을 자동으로 내려받습니다. 설치는 §2.4, 라인 PC 쪽 설정은 §3.3(고급 설정)과 §4.6(Image Saving) 을 참고하세요."
- },
- {
-  "t": "h",
-  "segs": [
-   {
-    "s": "9.1 로그인과 역할",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 3,
-  "text": "9.1 로그인과 역할"
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "MLOps 는 별도 계정이 없고 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "BODA.VMS.Web 의 계정",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": "으로 들어갑니다. 로그인 화면에 Web 에서 로그인해 받은 액세스 토큰(JWT)을 붙여 넣는 방식이며, 두 서버가 같은 서명 키를 쓰기 때문에 그대로 통합니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 0,
-  "text": "MLOps 는 별도 계정이 없고 BODA.VMS.Web 의 계정으로 들어갑니다. 로그인 화면에 Web 에서 로그인해 받은 액세스 토큰(JWT)을 붙여 넣는 방식이며, 두 서버가 같은 서명 키를 쓰기 때문에 그대로 통합니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "현재는 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "Web 의 Admin 계정만",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " 모든 기능을 쓸 수 있습니다. MLOps 안에는 Viewer(조회) · Labeler(라벨링) · Engineer(학습 · 스테이징 승격) · Admin(운영 승격 · 워커 · 라인 PC 관리) 역할 체계가 있지만, Web 의 User · Guest 계정으로는 화면이 \"역할 없음\" 으로 표시되고 기능이 열리지 않습니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 0,
-  "text": "현재는 Web 의 Admin 계정만 모든 기능을 쓸 수 있습니다. MLOps 안에는 Viewer(조회) · Labeler(라벨링) · Engineer(학습 · 스테이징 승격) · Admin(운영 승격 · 워커 · 라인 PC 관리) 역할 체계가 있지만, Web 의 User · Guest 계정으로는 화면이 \"역할 없음\" 으로 표시되고 기능이 열리지 않습니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "라인 PC 와 학습 워커는 사람이 로그인하지 않고 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "토큰",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": "(",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "ln_…",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": " · ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "wk_…",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": ")으로 붙습니다. 토큰은 발급 시 한 번만 표시되며 서버에는 해시만 남습니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 0,
-  "text": "라인 PC 와 학습 워커는 사람이 로그인하지 않고 토큰(ln_… · wk_…)으로 붙습니다. 토큰은 발급 시 한 번만 표시되며 서버에는 해시만 남습니다."
- },
- {
-  "t": "h",
-  "segs": [
-   {
-    "s": "9.2 메뉴 구조",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 3,
-  "text": "9.2 메뉴 구조"
- },
- {
-  "t": "figure",
-  "src": "../gs/screenshots/v3/mlops/01_dashboard.png",
-  "width": "620",
-  "caption": "MLOps 대시보드 — 모델 계열 · 워커 · 진행 중인 학습 · 데이터셋 버전 카드, 경고 블록, 최근 학습 작업 · 운영 중인 모델"
- },
- {
-  "t": "table",
-  "rows": [
-   [
-    {
-     "segs": [
-      {
-       "s": "그룹",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": true,
-     "imgs": [],
-     "text": "그룹"
-    },
-    {
-     "segs": [
-      {
-       "s": "메뉴",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": true,
-     "imgs": [],
-     "text": "메뉴"
-    },
-    {
-     "segs": [
-      {
-       "s": "용도",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": true,
-     "imgs": [],
-     "text": "용도"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "—",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "—"
-    },
-    {
-     "segs": [
-      {
-       "s": "대시보드",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "대시보드"
-    },
-    {
-     "segs": [
-      {
-       "s": "모델 · 워커 · 학습 · 데이터셋 현황과 경고(작업을 못 받는 워커, 라인에서 달라진 모델)",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "모델 · 워커 · 학습 · 데이터셋 현황과 경고(작업을 못 받는 워커, 라인에서 달라진 모델)"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "데이터",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "데이터"
-    },
-    {
-     "segs": [
-      {
-       "s": "수집 사진",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "수집 사진"
-    },
-    {
-     "segs": [
-      {
-       "s": "라인 PC 가 올린 NG 사진 · 양품 샘플, 사람이 올린 사진 → 데이터셋에 담기",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "라인 PC 가 올린 NG 사진 · 양품 샘플, 사람이 올린 사진 → 데이터셋에 담기"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "데이터",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "데이터"
-    },
-    {
-     "segs": [
-      {
-       "s": "데이터셋 · 라벨링",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "데이터셋 · 라벨링"
-    },
-    {
-     "segs": [
-      {
-       "s": "데이터셋 만들기 · 이미지 올리기 · 라벨링 캔버스 · 판(스냅샷) 뜨기",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "데이터셋 만들기 · 이미지 올리기 · 라벨링 캔버스 · 판(스냅샷) 뜨기"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "학습",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "학습"
-    },
-    {
-     "segs": [
-      {
-       "s": "학습 작업",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "학습 작업"
-    },
-    {
-     "segs": [
-      {
-       "s": "학습 제출 · 진행률 · 로그 · 학습 곡선 · 재실행",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "학습 제출 · 진행률 · 로그 · 학습 곡선 · 재실행"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "학습",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "학습"
-    },
-    {
-     "segs": [
-      {
-       "s": "데이터셋 버전",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "데이터셋 버전"
-    },
-    {
-     "segs": [
-      {
-       "s": "학습 대상으로 고정된 판 목록 · 외부 zip 업로드",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "학습 대상으로 고정된 판 목록 · 외부 zip 업로드"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "학습",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "학습"
-    },
-    {
-     "segs": [
-      {
-       "s": "워커",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "워커"
-    },
-    {
-     "segs": [
-      {
-       "s": "GPU 학습 PC 등록 · 상태 · 토큰 재발급 · 비활성화",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "GPU 학습 PC 등록 · 상태 · 토큰 재발급 · 비활성화"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "학습",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "학습"
-    },
-    {
-     "segs": [
-      {
-       "s": "사전학습 미러",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "사전학습 미러"
-    },
-    {
-     "segs": [
-      {
-       "s": "워커가 인터넷 대신 받아 가는 사전학습 가중치 저장소",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "워커가 인터넷 대신 받아 가는 사전학습 가중치 저장소"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "배포",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "배포"
-    },
-    {
-     "segs": [
-      {
-       "s": "모델",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "모델"
-    },
-    {
-     "segs": [
-      {
-       "s": "모델 계열 · 버전 · 단계(후보 · 스테이징 · 운영 · 폐기) · ONNX 업로드 · 라인 배포 이력",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "모델 계열 · 버전 · 단계(후보 · 스테이징 · 운영 · 폐기) · ONNX 업로드 · 라인 배포 이력"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "배포",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "배포"
-    },
-    {
-     "segs": [
-      {
-       "s": "레시피 바인딩",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "레시피 바인딩"
-    },
-    {
-     "segs": [
-      {
-       "s": "레시피의 도구가 어느 모델 버전을 쓰는지 · 롤백",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "레시피의 도구가 어느 모델 버전을 쓰는지 · 롤백"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "배포",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "배포"
-    },
-    {
-     "segs": [
-      {
-       "s": "라인 PC",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "라인 PC"
-    },
-    {
-     "segs": [
-      {
-       "s": "라인 PC 등록 · 토큰 발급 · 중지 · 삭제",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "라인 PC 등록 · 토큰 발급 · 중지 · 삭제"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "배포",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "배포"
-    },
-    {
-     "segs": [
-      {
-       "s": "라인 모니터링",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "라인 모니터링"
-    },
-    {
-     "segs": [
-      {
-       "s": "운영 웹의 검사 이력을 모델 버전별로 비교 · 재학습 권고",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "운영 웹의 검사 이력을 모델 버전별로 비교 · 재학습 권고"
-    }
-   ]
-  ],
-  "cls": "cols-2-3-4"
- },
- {
-  "t": "h",
-  "segs": [
-   {
-    "s": "9.3 전체 흐름 — 수집에서 배포까지",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 3,
-  "text": "9.3 전체 흐름 — 수집에서 배포까지"
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "라인 NG 수집",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " — 라인 PC 의 Image Save Settings 에서 [NG 이미지 MLOps 전송] 을 켜고 양품 샘플 비율(N 장에 1 장)을 정합니다(§4.6). 사진이 결과 그래픽 없는 원본으로 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "수집 사진",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " 화면에 쌓입니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "라인 NG 수집 — 라인 PC 의 Image Save Settings 에서 [NG 이미지 MLOps 전송] 을 켜고 양품 샘플 비율(N 장에 1 장)을 정합니다(§4.6). 사진이 결과 그래픽 없는 원본으로 수집 사진 화면에 쌓입니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "데이터셋에 담기",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " — 수집 사진에서 출처 \"라인 NG\", \"데이터셋에 안 담긴 것만\" 으로 걸러 고른 뒤 [데이터셋에 담기](데이터셋 + 학습/검증/시험 분할).",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "데이터셋에 담기 — 수집 사진에서 출처 \"라인 NG\", \"데이터셋에 안 담긴 것만\" 으로 걸러 고른 뒤 [데이터셋에 담기](데이터셋 + 학습/검증/시험 분할)."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "라벨링",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " — 데이터셋 상세에서 [라벨링 시작]. 사각형 · 폴리곤 · SAM 클릭으로 라벨을 붙이고 [저장하고 다음]. Engineer 가 [검토 승인].",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "라벨링 — 데이터셋 상세에서 [라벨링 시작]. 사각형 · 폴리곤 · SAM 클릭으로 라벨을 붙이고 [저장하고 다음]. Engineer 가 [검토 승인]."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "판 뜨기",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " — [버전 만들기] 로 지금의 이미지와 라벨을 굳혀 학습 대상 버전을 만듭니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "판 뜨기 — [버전 만들기] 로 지금의 이미지와 라벨을 굳혀 학습 대상 버전을 만듭니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "학습 제출",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " — 학습 작업 → [작업 제출]: 데이터셋 버전 · 모델 계열 · 스크립트 · 사전학습 가중치 · 하이퍼파라미터.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "학습 제출 — 학습 작업 → [작업 제출]: 데이터셋 버전 · 모델 계열 · 스크립트 · 사전학습 가중치 · 하이퍼파라미터."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "워커 실행",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " — GPU 워커가 작업을 가져가 학습하고 진행률 · 로그 · 학습 곡선을 실시간으로 올립니다. 끝나면 모델이 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "후보(Candidate)",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " 버전으로 자동 등록됩니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "워커 실행 — GPU 워커가 작업을 가져가 학습하고 진행률 · 로그 · 학습 곡선을 실시간으로 올립니다. 끝나면 모델이 후보(Candidate) 버전으로 자동 등록됩니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "승격",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " — 모델 상세에서 버전의 [스테이지] 로 후보 → 스테이징(Engineer) → 운영(Admin). 라인으로 나가는 결정은 항상 사람이 합니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "승격 — 모델 상세에서 버전의 [스테이지] 로 후보 → 스테이징(Engineer) → 운영(Admin). 라인으로 나가는 결정은 항상 사람이 합니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "레시피 연결",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " — VisionSetup 딥러닝 도구의 Model Path 옆 [레지스트리…] 로 모델을 고르면 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "model://{모델ID}@production",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": " 참조가 저장됩니다(§6). 라인 PC 는 레시피를 열 때 운영 버전을 내려받아 캐시하고, 검사 중에는 네트워크를 쓰지 않습니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "레시피 연결 — VisionSetup 딥러닝 도구의 Model Path 옆 [레지스트리…] 로 모델을 고르면 model://{모델ID}@production 참조가 저장됩니다(§6). 라인 PC 는 레시피를 열 때 운영 버전을 내려받아 캐시하고, 검사 중에는 네트워크를 쓰지 않습니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "모니터링",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " — 라인 모니터링에서 모델 버전별 불량률 · 신뢰도를 비교하고, 권고가 붙으면 [재학습] 으로 5 단계부터 다시 돕니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "모니터링 — 라인 모니터링에서 모델 버전별 불량률 · 신뢰도를 비교하고, 권고가 붙으면 [재학습] 으로 5 단계부터 다시 돕니다."
- },
- {
-  "t": "callout",
-  "kind": "tip",
-  "segs": [
-   {
-    "s": "자동으로 되는 것은 수집 · 사전 라벨 · 판 뜨기 · 후보 등록 · 재학습 권고까지입니다. ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "스테이징 · 운영 승격과 롤백은 항상 사람",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": "이 결정하며, 데이터가 쌓였다고 사람 없이 재학습이 도는 일은 없습니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "text": "자동으로 되는 것은 수집 · 사전 라벨 · 판 뜨기 · 후보 등록 · 재학습 권고까지입니다. 스테이징 · 운영 승격과 롤백은 항상 사람이 결정하며, 데이터가 쌓였다고 사람 없이 재학습이 도는 일은 없습니다."
- },
- {
-  "t": "h",
-  "segs": [
-   {
-    "s": "9.4 수집 사진",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 3,
-  "text": "9.4 수집 사진"
- },
- {
-  "t": "figure",
-  "src": "../gs/screenshots/v3/mlops/15_image_pool.png",
-  "width": "620",
-  "caption": "수집 사진 — 출처 · 데이터셋에 안 담긴 것만 · 태그 · 파일명 필터, 격자(NG/OK 칩 · 라인 ID · 파일명 · 시각), [데이터셋에 담기]"
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "필터: 출처(라인 NG · 양품 샘플 / 직접 올림, 기본 라인 NG), \"데이터셋에 안 담긴 것만\"(기본 켜짐), 태그(예: ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "verdict:ng",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": ", ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "recipe:PUT-10",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": "), 파일명 검색.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 0,
-  "text": "필터: 출처(라인 NG · 양품 샘플 / 직접 올림, 기본 라인 NG), \"데이터셋에 안 담긴 것만\"(기본 켜짐), 태그(예: verdict:ng, recipe:PUT-10), 파일명 검색."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "카드를 클릭해 선택하고 [데이터셋에 담기] → 데이터셋과 분할(학습 · 검증 · 시험)을 고릅니다. 사진은 복제되지 않고 참조로 담깁니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 0,
-  "text": "카드를 클릭해 선택하고 [데이터셋에 담기] → 데이터셋과 분할(학습 · 검증 · 시험)을 고릅니다. 사진은 복제되지 않고 참조로 담깁니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "사진이 올라오지 않으면 라인 PC 의 [NG 이미지 MLOps 전송] 스위치와 라인 PC 등록 · 토큰(§9.11)을 확인하세요.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 0,
-  "text": "사진이 올라오지 않으면 라인 PC 의 [NG 이미지 MLOps 전송] 스위치와 라인 PC 등록 · 토큰(§9.11)을 확인하세요."
- },
- {
-  "t": "h",
-  "segs": [
-   {
-    "s": "9.5 데이터셋 · 라벨링",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 3,
-  "text": "9.5 데이터셋 · 라벨링"
- },
- {
-  "t": "figure",
-  "src": "../gs/screenshots/v3/mlops/02_datasets.png",
-  "width": "620",
-  "caption": "데이터셋 — 카드(작업 유형 · 클래스 · 라벨 진척 · 분할) · [열기] [라벨링] · [새 데이터셋]"
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "[새 데이터셋]",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " — 이름 · 작업 유형(검출 · 분류 · 이상탐지 · 세그멘테이션 · OCR) · 클래스(쉼표 구분, 순서가 클래스 번호) · 설명. 작업 유형과 클래스는 만든 뒤 바꿀 수 없습니다. 이상탐지는 정상 클래스(good · normal · ok · 정상)가 필요합니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 0,
-  "text": "[새 데이터셋] — 이름 · 작업 유형(검출 · 분류 · 이상탐지 · 세그멘테이션 · OCR) · 클래스(쉼표 구분, 순서가 클래스 번호) · 설명. 작업 유형과 클래스는 만든 뒤 바꿀 수 없습니다. 이상탐지는 정상 클래스(good · normal · ok · 정상)가 필요합니다."
- },
- {
-  "t": "figure",
-  "src": "../gs/screenshots/v3/mlops/03_dataset_detail.png",
-  "width": "620",
-  "caption": "데이터셋 상세 — [라벨링 시작] [이미지 올리기] [모델로 미리 채우기] [버전 만들기], 통계 카드, 이미지 격자(라벨 오버레이 · 상태 · 분할)"
- },
- {
-  "t": "table",
-  "rows": [
-   [
-    {
-     "segs": [
-      {
-       "s": "버튼",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": true,
-     "imgs": [],
-     "text": "버튼"
-    },
-    {
-     "segs": [
-      {
-       "s": "동작",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": true,
-     "imgs": [],
-     "text": "동작"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "[이미지 올리기]",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "[이미지 올리기]"
-    },
-    {
-     "segs": [
-      {
-       "s": "jpg · png · bmp · webp 최대 500 장, 태그 · 라인 ID(선택), \"올린 뒤 이 데이터셋에 담기\"(기본 켜짐). 10 장씩 나눠 전송합니다.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "jpg · png · bmp · webp 최대 500 장, 태그 · 라인 ID(선택), \"올린 뒤 이 데이터셋에 담기\"(기본 켜짐). 10 장씩 나눠 전송합니다."
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "[모델로 미리 채우기]",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "[모델로 미리 채우기]"
-    },
-    {
-     "segs": [
-      {
-       "s": "같은 작업 유형 · 클래스의 검출 모델로 미라벨 이미지에 초기 라벨을 붙이고 불확실도를 기록합니다(확신도 문턱 기본 0.25, 한 번에 200 장). 붙은 라벨은 \"작업 중\" 상태이므로 사람이 확인 · 수정 후 완료로 표시합니다. 검출 데이터셋에서만 지원합니다.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "같은 작업 유형 · 클래스의 검출 모델로 미라벨 이미지에 초기 라벨을 붙이고 불확실도를 기록합니다(확신도 문턱 기본 0.25, 한 번에 200 장). 붙은 라벨은 \"작업 중\" 상태이므로 사람이 확인 · 수정 후 완료로 표시합니다. 검출 데이터셋에서만 지원합니다."
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "[자동 분할 8:2] · [분할 지정]",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "[자동 분할 8:2] · [분할 지정]"
-    },
-    {
-     "segs": [
-      {
-       "s": "학습 · 검증 · 시험 분할을 자동 또는 선택 지정.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "학습 · 검증 · 시험 분할을 자동 또는 선택 지정."
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "[버전 만들기]",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "[버전 만들기]"
-    },
-    {
-     "segs": [
-      {
-       "s": "지금의 이미지와 라벨을 굳혀 학습 대상 판을 만듭니다. \"검토를 마친 이미지만 담기\" · \"라벨 없는 이미지도 담기(배경 샘플)\" 옵션.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "지금의 이미지와 라벨을 굳혀 학습 대상 판을 만듭니다. \"검토를 마친 이미지만 담기\" · \"라벨 없는 이미지도 담기(배경 샘플)\" 옵션."
-    }
-   ]
-  ],
-  "cls": "cols-3-6"
- },
- {
-  "t": "h",
-  "segs": [
-   {
-    "s": "라벨링 캔버스",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 4,
-  "text": "라벨링 캔버스"
- },
- {
-  "t": "figure",
-  "src": "../gs/screenshots/v3/mlops/11_labeling_detection.png",
-  "width": "620",
-  "caption": "라벨링 캔버스(검출) — 모드 토글(사각형 · 폴리곤 · SAM 클릭) · 확대/축소/맞춤 · 원본 해상도, 오른쪽 클래스 · 라벨 · 진행 패널, [이전] [저장하고 다음]"
- },
- {
-  "t": "figure",
-  "src": "../gs/screenshots/v3/mlops/12_labeling_classification.png",
-  "width": "620",
-  "caption": "라벨링 캔버스(분류) — 이미지당 클래스 하나를 고릅니다"
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "작업 유형별 도형 — 검출: 사각형 · 폴리곤 / 세그멘테이션: 폴리곤 / 분류 · 이상탐지: 이미지당 클래스 하나 / OCR: 사각형 + 문자열.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 0,
-  "text": "작업 유형별 도형 — 검출: 사각형 · 폴리곤 / 세그멘테이션: 폴리곤 / 분류 · 이상탐지: 이미지당 클래스 하나 / OCR: 사각형 + 문자열."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "단축키 — ←/→ 이전 · 다음 이미지, 끌어서 그리기, 휠 확대, Alt+끌기 이동, 숫자키로 클래스 선택, Delete 삭제, Esc 선택 해제. 폴리곤은 클릭으로 점을 찍고 오른쪽 클릭 또는 Enter 로 닫습니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 0,
-  "text": "단축키 — ←/→ 이전 · 다음 이미지, 끌어서 그리기, 휠 확대, Alt+끌기 이동, 숫자키로 클래스 선택, Delete 삭제, Esc 선택 해제. 폴리곤은 클릭으로 점을 찍고 오른쪽 클릭 또는 Enter 로 닫습니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "SAM 클릭",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " — 객체를 클릭하면 경계를 자동으로 만들어 줍니다. Shift+클릭(또는 오른쪽 클릭)은 빼고 싶은 곳, Tab 으로 더 크게 · 작게 후보 순회, Backspace 로 마지막 점 취소, ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "Enter 로 확정",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": "해야 라벨이 됩니다. 서버에 SAM 모델이 없으면 이 모드는 나타나지 않습니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 0,
-  "text": "SAM 클릭 — 객체를 클릭하면 경계를 자동으로 만들어 줍니다. Shift+클릭(또는 오른쪽 클릭)은 빼고 싶은 곳, Tab 으로 더 크게 · 작게 후보 순회, Backspace 로 마지막 점 취소, Enter 로 확정해야 라벨이 됩니다. 서버에 SAM 모델이 없으면 이 모드는 나타나지 않습니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "클래스 선택은 \"다음에 그릴 것\"만 정합니다. 이미 붙은 라벨의 클래스는 라벨 목록의 팔레트 메뉴로 바꿉니다. 이미지 1 장은 한 사람만 작업할 수 있으며(잠금 10 분, 저장 시 연장) 남이 잡고 있으면 읽기 전용입니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 0,
-  "text": "클래스 선택은 \"다음에 그릴 것\"만 정합니다. 이미 붙은 라벨의 클래스는 라벨 목록의 팔레트 메뉴로 바꿉니다. 이미지 1 장은 한 사람만 작업할 수 있으며(잠금 10 분, 저장 시 연장) 남이 잡고 있으면 읽기 전용입니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "진행 패널의 [검토 승인] / [반려] 는 Engineer 이상이 누릅니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 0,
-  "text": "진행 패널의 [검토 승인] / [반려] 는 Engineer 이상이 누릅니다."
- },
- {
-  "t": "h",
-  "segs": [
-   {
-    "s": "9.6 학습 작업",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 3,
-  "text": "9.6 학습 작업"
- },
- {
-  "t": "figure",
-  "src": "../gs/screenshots/v3/mlops/04_training.png",
-  "width": "620",
-  "caption": "학습 작업 — 상태 필터, 목록(상태 · 스크립트 · 진행 · 에폭 · 손실 · 지표 · 우선순위 · 경과 · 제출), [작업 제출]"
- },
- {
-  "t": "figure",
-  "src": "../gs/screenshots/v3/mlops/14_retrain.png",
-  "width": "560",
-  "caption": "학습 작업 제출(재학습) 창 — 데이터셋 버전 · 모델 계열 · 스크립트 · 사전학습 가중치 · 백본 · Seed · 우선순위 · 하이퍼파라미터"
- },
- {
-  "t": "table",
-  "rows": [
-   [
-    {
-     "segs": [
-      {
-       "s": "항목",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": true,
-     "imgs": [],
-     "text": "항목"
-    },
-    {
-     "segs": [
-      {
-       "s": "설명",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": true,
-     "imgs": [],
-     "text": "설명"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "데이터셋 버전",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "데이터셋 버전"
-    },
-    {
-     "segs": [
-      {
-       "s": "작업 유형과 내보내기 형식이 스크립트와 맞아야 합니다(검출 yolo · 분류 imagefolder · 이상탐지 mvtec · OCR ppocr · 세그멘테이션 coco).",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "작업 유형과 내보내기 형식이 스크립트와 맞아야 합니다(검출 yolo · 분류 imagefolder · 이상탐지 mvtec · OCR ppocr · 세그멘테이션 coco)."
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "결과를 등록할 모델 계열",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "결과를 등록할 모델 계열"
-    },
-    {
-     "segs": [
-      {
-       "s": "학습이 끝나면 여기에 후보 버전이 생깁니다.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "학습이 끝나면 여기에 후보 버전이 생깁니다."
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "스크립트",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "스크립트"
-    },
-    {
-     "segs": [
-      {
-       "s": "train_dfine.py(검출, D-FINE) · train_rfdetr_seg.py(세그멘테이션) · train_classifier.py(분류) · train_anomaly.py(이상탐지) · train_ppocr.py(OCR). 서버가 허용한 목록만 나옵니다.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "train_dfine.py(검출, D-FINE) · train_rfdetr_seg.py(세그멘테이션) · train_classifier.py(분류) · train_anomaly.py(이상탐지) · train_ppocr.py(OCR). 서버가 허용한 목록만 나옵니다."
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "사전학습 가중치",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "사전학습 가중치"
-    },
-    {
-     "segs": [
-      {
-       "s": "train_dfine · train_rfdetr_seg · train_anomaly 는 ",
-       "b": false,
-       "m": false
-      },
-      {
-       "s": "필수",
-       "b": true,
-       "m": false
-      },
-      {
-       "s": " — 워커는 인터넷에서 받지 않으므로 사전학습 미러(§9.8)에 먼저 올려야 합니다. train_classifier 는 선택입니다 — 고르지 않으면 백본 이름으로 인터넷에서 받으므로, 인터넷이 없는 워커에서는 골라야 합니다.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "train_dfine · train_rfdetr_seg · train_anomaly 는 필수 — 워커는 인터넷에서 받지 않으므로 사전학습 미러(§9.8)에 먼저 올려야 합니다. train_classifier 는 선택입니다 — 고르지 않으면 백본 이름으로 인터넷에서 받으므로, 인터넷이 없는 워커에서는 골라야 합니다."
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "하이퍼파라미터",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "하이퍼파라미터"
-    },
-    {
-     "segs": [
-      {
-       "s": "epochs · lr · batch_size · imgsz 와 증강(mosaic · mixup · hsv) 등 서버 허용 목록. 비우면 스크립트 기본값.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "epochs · lr · batch_size · imgsz 와 증강(mosaic · mixup · hsv) 등 서버 허용 목록. 비우면 스크립트 기본값."
-    }
-   ]
-  ],
-  "cls": "cols-3-6"
- },
- {
-  "t": "p",
-  "segs": [
-   {
-    "s": "작업은 대기 → 배정됨 → 준비 중 → 학습 중 → 내보내는 중 → 업로드 중 → 성공(또는 실패 · 취소됨) 순으로 진행됩니다. 상세 화면에서 진행률 · 로그 · 학습 곡선(손실 · mAP50) · 아티팩트(ONNX · 지표 · 곡선 · 로그) · 재현성 정보(데이터셋 해시 · 스크립트 해시 · GPU · 패키지)를 보고, 끝난 작업은 [같은 설정으로 재실행] 할 수 있습니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "text": "작업은 대기 → 배정됨 → 준비 중 → 학습 중 → 내보내는 중 → 업로드 중 → 성공(또는 실패 · 취소됨) 순으로 진행됩니다. 상세 화면에서 진행률 · 로그 · 학습 곡선(손실 · mAP50) · 아티팩트(ONNX · 지표 · 곡선 · 로그) · 재현성 정보(데이터셋 해시 · 스크립트 해시 · GPU · 패키지)를 보고, 끝난 작업은 [같은 설정으로 재실행] 할 수 있습니다."
- },
- {
-  "t": "h",
-  "segs": [
-   {
-    "s": "9.7 데이터셋 버전",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 3,
-  "text": "9.7 데이터셋 버전"
- },
- {
-  "t": "figure",
-  "src": "../gs/screenshots/v3/mlops/05_dataset_versions.png",
-  "width": "620",
-  "caption": "데이터셋 버전 — 이름 · 작업 유형 · 형식 · 이미지 · 클래스 · 크기 · 매니페스트 해시 · 등록 · [다운로드], [버전 업로드]"
- },
- {
-  "t": "p",
-  "segs": [
-   {
-    "s": "학습은 항상 버전에 대해 실행됩니다. 데이터셋에서 뜬 판이 여기에 쌓이고, 외부에서 만든 내보내기 zip 도 [버전 업로드] 로 올려 고정할 수 있습니다(이름 · 작업 유형 · 형식 · 이미지 수 · 클래스).",
-    "b": false,
-    "m": false
-   }
-  ],
-  "text": "학습은 항상 버전에 대해 실행됩니다. 데이터셋에서 뜬 판이 여기에 쌓이고, 외부에서 만든 내보내기 zip 도 [버전 업로드] 로 올려 고정할 수 있습니다(이름 · 작업 유형 · 형식 · 이미지 수 · 클래스)."
- },
- {
-  "t": "h",
-  "segs": [
-   {
-    "s": "9.8 워커 · 사전학습 미러",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 3,
-  "text": "9.8 워커 · 사전학습 미러"
- },
- {
-  "t": "figure",
-  "src": "../gs/screenshots/v3/mlops/06_workers.png",
-  "width": "620",
-  "caption": "워커 — 카드(상태 · GPU · CUDA · 파이썬 · torch · 디스크 · 지원 작업 · 마지막 하트비트), [토큰 재발급] [비활성화], [워커 등록]"
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "[워커 등록] 에서 이름을 넣고 [발급] 하면 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "wk_…",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": " 토큰과 GPU PC 에서 실행할 명령이 표시됩니다. 워커 설치 마법사(§2.4)에 이 값을 넣습니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 0,
-  "text": "[워커 등록] 에서 이름을 넣고 [발급] 하면 wk_… 토큰과 GPU PC 에서 실행할 명령이 표시됩니다. 워커 설치 마법사(§2.4)에 이 값을 넣습니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "상태 — 대기 중(초록) · 학습 중(파랑) · 연결 끊김(회색) · 비활성(빨강). 진단에 실패한 워커(예: CUDA 사용 불가)는 비활성으로 작업을 받지 않으며 사유가 카드에 표시됩니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 0,
-  "text": "상태 — 대기 중(초록) · 학습 중(파랑) · 연결 끊김(회색) · 비활성(빨강). 진단에 실패한 워커(예: CUDA 사용 불가)는 비활성으로 작업을 받지 않으며 사유가 카드에 표시됩니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "[토큰 재발급] 하면 옛 토큰은 즉시 무효가 되므로 워커 설정을 갱신해야 합니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 0,
-  "text": "[토큰 재발급] 하면 옛 토큰은 즉시 무효가 되므로 워커 설정을 갱신해야 합니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "라인 PC 에 워커를 함께 설치한 경우, VMS 가 자동 운전 · Roller 연속 검사 중이면 그 워커는 새 학습을 받지 않고 진행 중이던 학습도 중단해 대기열로 돌려놓습니다. 검사와 학습이 같은 GPU 를 나눠 쓰지 않게 하기 위한 것이며, 검사가 끝나면 다시 학습합니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 0,
-  "text": "라인 PC 에 워커를 함께 설치한 경우, VMS 가 자동 운전 · Roller 연속 검사 중이면 그 워커는 새 학습을 받지 않고 진행 중이던 학습도 중단해 대기열로 돌려놓습니다. 검사와 학습이 같은 GPU 를 나눠 쓰지 않게 하기 위한 것이며, 검사가 끝나면 다시 학습합니다."
- },
- {
-  "t": "figure",
-  "src": "../gs/screenshots/v3/mlops/07_pretrained.png",
-  "width": "620",
-  "caption": "사전학습 미러 — 자산(ref · 파일 · 라이선스 · 출처) 목록, [자산 추가] [파일 추가]"
- },
- {
-  "t": "p",
-  "segs": [
-   {
-    "s": "워커는 인터넷 대신 여기서만 사전학습 가중치를 받습니다(폐쇄망 · SSL 검사 환경 대응). [자산 추가] 로 ref(예: ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "dfine-small-obj2coco",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": ") · 라이선스 · 출처를 등록하고 [파일 추가] 로 스크립트에 맞는 파일을 올립니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "text": "워커는 인터넷 대신 여기서만 사전학습 가중치를 받습니다(폐쇄망 · SSL 검사 환경 대응). [자산 추가] 로 ref(예: dfine-small-obj2coco) · 라이선스 · 출처를 등록하고 [파일 추가] 로 스크립트에 맞는 파일을 올립니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "검출(train_dfine)",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " — ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "config.json",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": " · ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "model.safetensors",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": ".",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 0,
-  "text": "검출(train_dfine) — config.json · model.safetensors."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "인스턴스 분할(train_rfdetr_seg)",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " — 체크포인트 파일 하나. 파일 이름에서 모델 크기를 읽으므로 받은 이름 그대로 올립니다(예: ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "rf-detr-seg-medium.pt",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": ").",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 0,
-  "text": "인스턴스 분할(train_rfdetr_seg) — 체크포인트 파일 하나. 파일 이름에서 모델 크기를 읽으므로 받은 이름 그대로 올립니다(예: rf-detr-seg-medium.pt)."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "이상탐지(train_anomaly)",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " — 백본 가중치 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "model.safetensors",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": " 하나. 학습 창의 백본(기본 resnet18)과 같은 구조여야 합니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 0,
-  "text": "이상탐지(train_anomaly) — 백본 가중치 model.safetensors 하나. 학습 창의 백본(기본 resnet18)과 같은 구조여야 합니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "분류(train_classifier)",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " — 가중치 파일 하나. 파일 이름에서 구조를 읽으므로 받은 이름 그대로 올립니다(예: ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "resnet18-f37072fd.pth",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": ").",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 0,
-  "text": "분류(train_classifier) — 가중치 파일 하나. 파일 이름에서 구조를 읽으므로 받은 이름 그대로 올립니다(예: resnet18-f37072fd.pth)."
- },
- {
-  "t": "h",
-  "segs": [
-   {
-    "s": "9.9 모델 레지스트리",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 3,
-  "text": "9.9 모델 레지스트리"
- },
- {
-  "t": "figure",
-  "src": "../gs/screenshots/v3/mlops/08_models.png",
-  "width": "620",
-  "caption": "모델 — 계열 카드(운영 버전 · 작업 유형 · 클래스 · 버전 수 · 바인딩), [새 모델]"
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "[새 모델]",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " — 이름 · 작업 유형 · 클래스(순서가 ONNX 의 names 와 같아야 업로드가 통과) · 설명. 작업 유형은 만든 뒤 바꿀 수 없습니다. 이상탐지 계열은 정상 클래스 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "good",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": " 을 맨 앞에, 불량 클래스를 이름순으로 그 뒤에 둡니다(예: ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "good, defect",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": ") — 학습 결과가 이 순서로 클래스를 기록합니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 0,
-  "text": "[새 모델] — 이름 · 작업 유형 · 클래스(순서가 ONNX 의 names 와 같아야 업로드가 통과) · 설명. 작업 유형은 만든 뒤 바꿀 수 없습니다. 이상탐지 계열은 정상 클래스 good 을 맨 앞에, 불량 클래스를 이름순으로 그 뒤에 둡니다(예: good, defect) — 학습 결과가 이 순서로 클래스를 기록합니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "모델 상세",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " — 버전 표(버전 · 스테이지 · 규약 · 입력 · 지표 · 크기 · SHA-256 · 출처 · 등록)와 [상세] [다운로드] [스테이지]. [버전 업로드] 로 외부 ONNX 를 직접 올릴 수도 있습니다(YOLO 파생 모델은 라이선스 확인 문구 필수).",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 0,
-  "text": "모델 상세 — 버전 표(버전 · 스테이지 · 규약 · 입력 · 지표 · 크기 · SHA-256 · 출처 · 등록)와 [상세] [다운로드] [스테이지]. [버전 업로드] 로 외부 ONNX 를 직접 올릴 수도 있습니다(YOLO 파생 모델은 라이선스 확인 문구 필수)."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "계열 이름 변경 · 삭제",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " — 모델 상세 위쪽의 연필 아이콘 [이름 변경] 으로 계열 이름을 바꿉니다. 이름만 바뀌고 버전 · 학습 작업 · 레시피 바인딩은 그대로 이어집니다. 버전이 없는 계열은 휴지통 아이콘으로 지울 수 있습니다(학습 작업이나 바인딩 이력이 있으면 지워지지 않습니다). 엔지니어 · 관리자만 보입니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 0,
-  "text": "계열 이름 변경 · 삭제 — 모델 상세 위쪽의 연필 아이콘 [이름 변경] 으로 계열 이름을 바꿉니다. 이름만 바뀌고 버전 · 학습 작업 · 레시피 바인딩은 그대로 이어집니다. 버전이 없는 계열은 휴지통 아이콘으로 지울 수 있습니다(학습 작업이나 바인딩 이력이 있으면 지워지지 않습니다). 엔지니어 · 관리자만 보입니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "스테이지",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " — 후보(Candidate) → 스테이징(Staging) → 운영(Production) → 폐기(Retired). 운영은 모델 계열당 하나뿐이라 새 버전을 승격하면 이전 운영 버전은 스테이징으로 내려갑니다. 사유는 감사 기록에 남습니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 0,
-  "text": "스테이지 — 후보(Candidate) → 스테이징(Staging) → 운영(Production) → 폐기(Retired). 운영은 모델 계열당 하나뿐이라 새 버전을 승격하면 이전 운영 버전은 스테이징으로 내려갑니다. 사유는 감사 기록에 남습니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "버전 상세 드로어에서 아티팩트 정보 · 지표 · ONNX 메타데이터 · 스테이지 이력 · ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "라인 배포 이력",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": "(어느 라인이 언제 받아 갔는지)을 확인합니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": false,
-  "depth": 0,
-  "text": "버전 상세 드로어에서 아티팩트 정보 · 지표 · ONNX 메타데이터 · 스테이지 이력 · 라인 배포 이력(어느 라인이 언제 받아 갔는지)을 확인합니다."
- },
- {
-  "t": "h",
-  "segs": [
-   {
-    "s": "9.10 레시피 바인딩",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 3,
-  "text": "9.10 레시피 바인딩"
- },
- {
-  "t": "figure",
-  "src": "../gs/screenshots/v3/mlops/09_bindings.png",
-  "width": "620",
-  "caption": "레시피 바인딩 — 레시피 ID 조회, 활성 바인딩(도구 · 모델 · 모드 · 해석된 버전 · 참조), 이력, [롤백]"
- },
- {
-  "t": "p",
-  "segs": [
-   {
-    "s": "레시피의 검사 도구가 어느 모델 버전을 쓰는지 정하는 화면입니다. 보통은 VisionSetup 의 [레지스트리…] 로 \"운영 추종\"(",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "@production",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": ") 참조를 저장하면 되고, 특정 버전을 고정하거나 이전 버전으로 되돌릴 때 이 화면의 [도구에 모델 연결] · [롤백] 을 씁니다. \"해석 불가\" 로 표시되면 운영으로 승격된 버전이 없어 라인 PC 가 모델을 받지 못하는 상태입니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "text": "레시피의 검사 도구가 어느 모델 버전을 쓰는지 정하는 화면입니다. 보통은 VisionSetup 의 [레지스트리…] 로 \"운영 추종\"(@production) 참조를 저장하면 되고, 특정 버전을 고정하거나 이전 버전으로 되돌릴 때 이 화면의 [도구에 모델 연결] · [롤백] 을 씁니다. \"해석 불가\" 로 표시되면 운영으로 승격된 버전이 없어 라인 PC 가 모델을 받지 못하는 상태입니다."
- },
- {
-  "t": "table",
-  "rows": [
-   [
-    {
-     "segs": [
-      {
-       "s": "참조 형식",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": true,
-     "imgs": [],
-     "text": "참조 형식"
-    },
-    {
-     "segs": [
-      {
-       "s": "의미",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": true,
-     "imgs": [],
-     "text": "의미"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "model://{모델ID}@production",
-       "b": false,
-       "m": true
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "model://{모델ID}@production"
-    },
-    {
-     "segs": [
-      {
-       "s": "지금 운영 단계인 버전 (권장)",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "지금 운영 단계인 버전 (권장)"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "model://{모델ID}@staging",
-       "b": false,
-       "m": true
-      },
-      {
-       "s": " · ",
-       "b": false,
-       "m": false
-      },
-      {
-       "s": "@candidate",
-       "b": false,
-       "m": true
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "model://{모델ID}@staging · @candidate"
-    },
-    {
-     "segs": [
-      {
-       "s": "스테이징 · 후보 단계의 최신 버전",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "스테이징 · 후보 단계의 최신 버전"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "model://{모델ID}@7",
-       "b": false,
-       "m": true
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "model://{모델ID}@7"
-    },
-    {
-     "segs": [
-      {
-       "s": "7 번 버전 고정",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "7 번 버전 고정"
-    }
-   ]
-  ],
-  "cls": "cols-3-6"
- },
- {
-  "t": "h",
-  "segs": [
-   {
-    "s": "9.11 라인 PC",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 3,
-  "text": "9.11 라인 PC"
- },
- {
-  "t": "figure",
-  "src": "../gs/screenshots/v3/mlops/10_line_clients.png",
-  "width": "620",
-  "caption": "라인 PC — 이름 · 라인 · 상태 · 마지막 접속 · 발급, [⋮] 토큰 재발급 · 중지 · 삭제, [라인 PC 등록]"
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "[라인 PC 등록] 에서 이름(예: 라인A 1호기)과 라인 ID(예: LINE-A)를 넣고 [발급] 을 누릅니다. ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "ln_…",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": " 토큰이 한 번만 표시됩니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "[라인 PC 등록] 에서 이름(예: 라인A 1호기)과 라인 ID(예: LINE-A)를 넣고 [발급] 을 누릅니다. ln_… 토큰이 한 번만 표시됩니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "그 라인 PC 의 설정 마법사 2 단계 고급 설정에 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "MLOps 서버 주소",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": "와 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "MLOps 라인 토큰",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": "을 넣고 저장한 뒤 VMS 를 재시작합니다(§3.3).",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "그 라인 PC 의 설정 마법사 2 단계 고급 설정에 MLOps 서버 주소와 MLOps 라인 토큰을 넣고 저장한 뒤 VMS 를 재시작합니다(§3.3)."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "라인 PC 가 모델을 받거나 사진을 올리면 \"마지막 접속\" 이 갱신됩니다. [중지] 하면 그 PC 는 새 모델을 받지도 사진을 올리지도 못하지만 이미 캐시된 모델로 검사는 계속됩니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "라인 PC 가 모델을 받거나 사진을 올리면 \"마지막 접속\" 이 갱신됩니다. [중지] 하면 그 PC 는 새 모델을 받지도 사진을 올리지도 못하지만 이미 캐시된 모델로 검사는 계속됩니다."
- },
- {
-  "t": "h",
-  "segs": [
-   {
-    "s": "9.12 라인 모니터링",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 3,
-  "text": "9.12 라인 모니터링"
- },
- {
-  "t": "figure",
-  "src": "../gs/screenshots/v3/mlops/13_monitoring.png",
-  "width": "620",
-  "caption": "라인 모니터링 — 모델 · 단계 · 신호 · 기준 불량률 · 최근 불량률 · 우연일 확률 · 판단 · [재학습]"
- },
- {
-  "t": "p",
-  "segs": [
-   {
-    "s": "운영 웹의 검사 이력을 모델 버전별로 최근 7 일과 기준 21 일로 비교합니다. 여기서 모델을 자동으로 내리지는 않습니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "text": "운영 웹의 검사 이력을 모델 버전별로 최근 7 일과 기준 21 일로 비교합니다. 여기서 모델을 자동으로 내리지는 않습니다."
- },
- {
-  "t": "table",
-  "rows": [
-   [
-    {
-     "segs": [
-      {
-       "s": "신호",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": true,
-     "imgs": [],
-     "text": "신호"
-    },
-    {
-     "segs": [
-      {
-       "s": "의미",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": true,
-     "imgs": [],
-     "text": "의미"
-    },
-    {
-     "segs": [
-      {
-       "s": "재학습 권고",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": true,
-     "imgs": [],
-     "text": "재학습 권고"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "이상 없음",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "이상 없음"
-    },
-    {
-     "segs": [
-      {
-       "s": "변화 없음",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "변화 없음"
-    },
-    {
-     "segs": [
-      {
-       "s": "—",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "—"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "판단 보류",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "판단 보류"
-    },
-    {
-     "segs": [
-      {
-       "s": "어느 구간이든 100 건 미만 — \"괜찮다\"가 아니라 \"아직 모른다\"",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "어느 구간이든 100 건 미만 — \"괜찮다\"가 아니라 \"아직 모른다\""
-    },
-    {
-     "segs": [
-      {
-       "s": "—",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "—"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "입력 변화",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "입력 변화"
-    },
-    {
-     "segs": [
-      {
-       "s": "밝기 · 선명도가 20% 넘게 달라짐 — 조명 · 초점 · 렌즈를 먼저 확인",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "밝기 · 선명도가 20% 넘게 달라짐 — 조명 · 초점 · 렌즈를 먼저 확인"
-    },
-    {
-     "segs": [
-      {
-       "s": "—",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "—"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "불량률 상승",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "불량률 상승"
-    },
-    {
-     "segs": [
-      {
-       "s": "2%p 넘게 올랐고 통계적으로 유의(p < 0.01)",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "2%p 넘게 올랐고 통계적으로 유의(p < 0.01)"
-    },
-    {
-     "segs": [
-      {
-       "s": "예",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "예"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "신뢰도 하락",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "신뢰도 하락"
-    },
-    {
-     "segs": [
-      {
-       "s": "딥러닝 신뢰도 평균이 10% 넘게 하락",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "딥러닝 신뢰도 평균이 10% 넘게 하락"
-    },
-    {
-     "segs": [
-      {
-       "s": "예",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "예"
-    }
-   ]
-  ],
-  "cls": "cols-2-5-2"
- },
- {
-  "t": "p",
-  "segs": [
-   {
-    "s": "불량률이 올랐다고 곧 모델이 나빠진 것은 아닙니다 — 실제로 불량이 늘었을 수도 있습니다. 입력 변화로 나온 신호는 재학습해도 낫지 않으니 조명 · 초점 · 렌즈를 먼저 보세요.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "text": "불량률이 올랐다고 곧 모델이 나빠진 것은 아닙니다 — 실제로 불량이 늘었을 수도 있습니다. 입력 변화로 나온 신호는 재학습해도 낫지 않으니 조명 · 초점 · 렌즈를 먼저 보세요."
- },
- {
-  "t": "h",
-  "segs": [
-   {
-    "s": "10. 딥러닝 모델 준비",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 2,
-  "text": "10. 딥러닝 모델 준비"
- },
- {
-  "t": "p",
-  "segs": [
-   {
-    "s": "딥러닝 검사 도구(§6 — Detection · Classify · Anomaly · RF-DETR-seg · OCR)는 학습된 모델 파일(ONNX)로 동작합니다. 모델의 라벨링 · 학습 · 등록은 AI 학습 플랫폼 BODA VMS MLOps(9장)에서 합니다. VMS 와 VisionSetup 은 만들어진 모델을 불러와 검사에 씁니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "text": "딥러닝 검사 도구(§6 — Detection · Classify · Anomaly · RF-DETR-seg · OCR)는 학습된 모델 파일(ONNX)로 동작합니다. 모델의 라벨링 · 학습 · 등록은 AI 학습 플랫폼 BODA VMS MLOps(9장)에서 합니다. VMS 와 VisionSetup 은 만들어진 모델을 불러와 검사에 씁니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "학습",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " — MLOps 에서 데이터셋을 라벨링하고 학습 작업을 실행합니다(§9.5 · §9.6). 끝난 모델은 모델 레지스트리에 후보 버전으로 등록됩니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "학습 — MLOps 에서 데이터셋을 라벨링하고 학습 작업을 실행합니다(§9.5 · §9.6). 끝난 모델은 모델 레지스트리에 후보 버전으로 등록됩니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "승격",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " — 모델 레지스트리에서 결과를 확인하고 스테이징 · 운영 단계로 올립니다(§9.9).",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "승격 — 모델 레지스트리에서 결과를 확인하고 스테이징 · 운영 단계로 올립니다(§9.9)."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "레시피에 지정",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " — VisionSetup 딥러닝 도구의 Model Path 옆 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "[레지스트리…]",
-    "b": true,
-    "m": false
-   },
-   {
-    "s": " 로 모델을 고르면 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "model://",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": " 참조가 들어갑니다(§9.10). 라인 PC 는 그 참조가 가리키는 버전을 자동으로 내려받아 씁니다. 모델 파일을 직접 받아 둔 경우에는 Model Path 에 .onnx 경로를 지정해도 됩니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "레시피에 지정 — VisionSetup 딥러닝 도구의 Model Path 옆 [레지스트리…] 로 모델을 고르면 model:// 참조가 들어갑니다(§9.10). 라인 PC 는 그 참조가 가리키는 버전을 자동으로 내려받아 씁니다. 모델 파일을 직접 받아 둔 경우에는 Model Path 에 .onnx 경로를 지정해도 됩니다."
- },
- {
-  "t": "h",
-  "segs": [
-   {
-    "s": "10.1 OCR 합성 데이터로 학습하기",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 3,
-  "text": "10.1 OCR 합성 데이터로 학습하기"
- },
- {
-  "t": "p",
-  "segs": [
-   {
-    "s": "날짜 · 로트 번호처럼 형식이 정해진 문자열은 VisionSetup 의 OCR Synth Data(§5)로 학습 데이터를 만들어 MLOps 에서 학습할 수 있습니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "text": "날짜 · 로트 번호처럼 형식이 정해진 문자열은 VisionSetup 의 OCR Synth Data(§5)로 학습 데이터를 만들어 MLOps 에서 학습할 수 있습니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "OCR Synth Data 에서 출력 형식을 PaddleOCR rec 로 두고 [Generate] 로 데이터를 만듭니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "OCR Synth Data 에서 출력 형식을 PaddleOCR rec 로 두고 [Generate] 로 데이터를 만듭니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "출력 폴더 안의 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "train_crops",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": " · ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "val_crops",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": " 폴더와 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "train_rec.txt",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": " · ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "val_rec.txt",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": " · ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "dict.txt",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": " 를 모두 골라 압축합니다. 폴더째 압축하면 업로드가 거절됩니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "출력 폴더 안의 train_crops · val_crops 폴더와 train_rec.txt · val_rec.txt · dict.txt 를 모두 골라 압축합니다. 폴더째 압축하면 업로드가 거절됩니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "MLOps 의 [데이터셋 버전] ▸ [버전 업로드] 에서 작업 유형 OCR, 형식 ppocr 로 올리고(§9.7) 학습 작업을 실행합니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "MLOps 의 [데이터셋 버전] ▸ [버전 업로드] 에서 작업 유형 OCR, 형식 ppocr 로 올리고(§9.7) 학습 작업을 실행합니다."
- },
- {
-  "t": "h",
-  "segs": [
-   {
-    "s": "11. 유지보수",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 2,
-  "text": "11. 유지보수"
+  "text": "9. 유지보수"
  },
  {
   "t": "callout",
@@ -35281,13 +31505,13 @@
   "t": "h",
   "segs": [
    {
-    "s": "11.1 백업과 복원",
+    "s": "9.1 백업과 복원",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "11.1 백업과 복원"
+  "text": "9.1 백업과 복원"
  },
  {
   "t": "h",
@@ -35533,66 +31757,13 @@
   "t": "h",
   "segs": [
    {
-    "s": "MLOps 서버 · 워커",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 4,
-  "text": "MLOps 서버 · 워커"
- },
- {
-  "t": "p",
-  "segs": [
-   {
-    "s": "MLOps 데이터 폴더(",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "D:\\BODA-MLOps",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": " 등 설치 시 지정한 ",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "-DataDir",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": ")에 DB · 사진 · 모델이 모두 있습니다. 이 폴더를 백업하면 됩니다. 워커의 파이썬 환경(",
-    "b": false,
-    "m": false
-   },
-   {
-    "s": "%ProgramData%\\BODA VMS TrainWorker",
-    "b": false,
-    "m": true
-   },
-   {
-    "s": ")은 재설치로 복구되므로 백업하지 않아도 됩니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "text": "MLOps 데이터 폴더(D:\\BODA-MLOps 등 설치 시 지정한 -DataDir)에 DB · 사진 · 모델이 모두 있습니다. 이 폴더를 백업하면 됩니다. 워커의 파이썬 환경(%ProgramData%\\BODA VMS TrainWorker)은 재설치로 복구되므로 백업하지 않아도 됩니다."
- },
- {
-  "t": "h",
-  "segs": [
-   {
-    "s": "11.2 데이터 보존과 디스크 관리",
+    "s": "9.2 데이터 보존과 디스크 관리",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "11.2 데이터 보존과 디스크 관리"
+  "text": "9.2 데이터 보존과 디스크 관리"
  },
  {
   "t": "table",
@@ -35911,19 +32082,19 @@
   "t": "h",
   "segs": [
    {
-    "s": "11.3 카메라 교체 · IP 변경",
+    "s": "9.3 카메라 교체 · IP 변경",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "11.3 카메라 교체 · IP 변경"
+  "text": "9.3 카메라 교체 · IP 변경"
  },
  {
   "t": "li",
   "segs": [
    {
-    "s": "새 카메라를 같은 네트워크 카드에 연결하고, 제조사 프로그램(pylon Viewer · MVS · Mech-Eye Viewer)으로 카메라에 ",
+    "s": "새 카메라를 같은 네트워크 카드에 연결하고, 카메라 제조사의 설정 프로그램으로 카메라에 ",
     "b": false,
     "m": false
    },
@@ -35940,7 +32111,7 @@
   ],
   "ordered": true,
   "depth": 0,
-  "text": "새 카메라를 같은 네트워크 카드에 연결하고, 제조사 프로그램(pylon Viewer · MVS · Mech-Eye Viewer)으로 카메라에 기존과 같은 고정 IP 를 부여합니다. IP 가 같으면 VMS 설정을 바꿀 필요가 없습니다."
+  "text": "새 카메라를 같은 네트워크 카드에 연결하고, 카메라 제조사의 설정 프로그램으로 카메라에 기존과 같은 고정 IP 를 부여합니다. IP 가 같으면 VMS 설정을 바꿀 필요가 없습니다."
  },
  {
   "t": "li",
@@ -36018,39 +32189,39 @@
   "t": "h",
   "segs": [
    {
-    "s": "11.4 라이선스 · 좌석 관리",
+    "s": "9.4 라이선스 · 좌석 관리",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "11.4 라이선스 · 좌석 관리"
+  "text": "9.4 라이선스 · 좌석 관리"
  },
  {
   "t": "li",
   "segs": [
    {
-    "s": "라이선스 상태는 설정 마법사 7 단계 카드, VMS Health Check 의 License 항목, Web 시스템 관리 → SW 라이선스에서 봅니다.",
+    "s": "라이선스 상태는 설정 마법사 6 단계 카드, VMS Health Check 의 License 항목, Web 시스템 관리 → SW 라이선스에서 봅니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": false,
   "depth": 0,
-  "text": "라이선스 상태는 설정 마법사 7 단계 카드, VMS Health Check 의 License 항목, Web 시스템 관리 → SW 라이선스에서 봅니다."
+  "text": "라이선스 상태는 설정 마법사 6 단계 카드, VMS Health Check 의 License 항목, Web 시스템 관리 → SW 라이선스에서 봅니다."
  },
  {
   "t": "li",
   "segs": [
    {
-    "s": "PC 교체 · Windows 재설치 후 \"지문 불일치\" 가 뜨면 새 지문 코드로 재발급을 요청합니다(§2.6). 서버-라인 구성에서는 서버 PC 만 해당합니다.",
+    "s": "PC 교체 · Windows 재설치 후 \"지문 불일치\" 가 뜨면 새 지문 코드로 재발급을 요청합니다(§2.5). 서버-라인 구성에서는 서버 PC 만 해당합니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": false,
   "depth": 0,
-  "text": "PC 교체 · Windows 재설치 후 \"지문 불일치\" 가 뜨면 새 지문 코드로 재발급을 요청합니다(§2.6). 서버-라인 구성에서는 서버 PC 만 해당합니다."
+  "text": "PC 교체 · Windows 재설치 후 \"지문 불일치\" 가 뜨면 새 지문 코드로 재발급을 요청합니다(§2.5). 서버-라인 구성에서는 서버 PC 만 해당합니다."
  },
  {
   "t": "li",
@@ -36069,13 +32240,13 @@
   "t": "h",
   "segs": [
    {
-    "s": "11.5 한 PC 에서 두 라인 운용 (다중 인스턴스)",
+    "s": "9.5 한 PC 에서 두 라인 운용 (다중 인스턴스)",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "11.5 한 PC 에서 두 라인 운용 (다중 인스턴스)"
+  "text": "9.5 한 PC 에서 두 라인 운용 (다중 인스턴스)"
  },
  {
   "t": "p",
@@ -36171,13 +32342,13 @@
   "t": "h",
   "segs": [
    {
-    "s": "11.6 로그 · 데이터 위치",
+    "s": "9.6 로그 · 데이터 위치",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "11.6 로그 · 데이터 위치"
+  "text": "9.6 로그 · 데이터 위치"
  },
  {
   "t": "table",
@@ -36370,16 +32541,6 @@
        "m": true
       },
       {
-       "s": " · ",
-       "b": false,
-       "m": false
-      },
-      {
-       "s": "…\\mlops_line_ng_queue\\",
-       "b": false,
-       "m": true
-      },
-      {
        "s": " (각 ",
        "b": false,
        "m": false
@@ -36397,7 +32558,7 @@
      ],
      "header": false,
      "imgs": [],
-     "text": "…\\upload_queue\\ · …\\image_upload_queue\\ · …\\mlops_line_ng_queue\\ (각 rejected\\ 보관함)"
+     "text": "…\\upload_queue\\ · …\\image_upload_queue\\ (각 rejected\\ 보관함)"
     },
     {
      "segs": [
@@ -36410,44 +32571,6 @@
      "header": false,
      "imgs": [],
      "text": "파일 수가 줄면 전송 중"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "VMS 모델 캐시",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "VMS 모델 캐시"
-    },
-    {
-     "segs": [
-      {
-       "s": "…\\models\\",
-       "b": false,
-       "m": true
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "…\\models\\"
-    },
-    {
-     "segs": [
-      {
-       "s": "model:// 참조로 받은 ONNX",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "model:// 참조로 받은 ONNX"
     }
    ],
    [
@@ -36611,75 +32734,6 @@
      "imgs": [],
      "text": "서비스 시작 실패 등"
     }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "MLOps 데이터 · 로그",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "MLOps 데이터 · 로그"
-    },
-    {
-     "segs": [
-      {
-       "s": "설치 시 지정한 데이터 폴더 (mlops.db · storage\\ · logs\\)",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "설치 시 지정한 데이터 폴더 (mlops.db · storage\\ · logs\\)"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [],
-     "text": ""
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "학습 워커",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "학습 워커"
-    },
-    {
-     "segs": [
-      {
-       "s": "%ProgramData%\\BODA VMS TrainWorker\\",
-       "b": false,
-       "m": true
-      },
-      {
-       "s": " (worker.json · venv\\ · logs\\)",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "%ProgramData%\\BODA VMS TrainWorker\\ (worker.json · venv\\ · logs\\)"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [],
-     "text": ""
-    }
    ]
   ],
   "cls": "cols-3-4-2"
@@ -36688,26 +32742,26 @@
   "t": "h",
   "segs": [
    {
-    "s": "11.7 문제 보고 방법",
+    "s": "9.7 문제 보고 방법",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "11.7 문제 보고 방법"
+  "text": "9.7 문제 보고 방법"
  },
  {
   "t": "li",
   "segs": [
    {
-    "s": "VMS Admin Tools → Support Package... 로 진단 ZIP 을 만듭니다(설정 · 감사 로그 · 환경 정보 · 헬스 스냅샷 · MLOps 전송 큐 상태 포함, 레시피 · 사용자 DB 는 미포함).",
+    "s": "VMS Admin Tools → Support Package... 로 진단 ZIP 을 만듭니다(설정 · 감사 로그 · 환경 정보 · 헬스 스냅샷 포함, 레시피 · 사용자 DB 는 미포함).",
     "b": false,
     "m": false
    }
   ],
   "ordered": true,
   "depth": 0,
-  "text": "VMS Admin Tools → Support Package... 로 진단 ZIP 을 만듭니다(설정 · 감사 로그 · 환경 정보 · 헬스 스냅샷 · MLOps 전송 큐 상태 포함, 레시피 · 사용자 DB 는 미포함)."
+  "text": "VMS Admin Tools → Support Package... 로 진단 ZIP 을 만듭니다(설정 · 감사 로그 · 환경 정보 · 헬스 스냅샷 포함, 레시피 · 사용자 DB 는 미포함)."
  },
  {
   "t": "li",
@@ -36746,26 +32800,26 @@
     "m": true
    },
    {
-    "s": " 응답을, MLOps 문제는 학습 작업 상세의 로그를 첨부합니다.",
+    "s": " 응답을 첨부합니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": true,
   "depth": 0,
-  "text": "Web 문제는 {설치 폴더}\\Logs\\ 의 해당 날짜 로그와 /health 응답을, MLOps 문제는 학습 작업 상세의 로그를 첨부합니다."
+  "text": "Web 문제는 {설치 폴더}\\Logs\\ 의 해당 날짜 로그와 /health 응답을 첨부합니다."
  },
  {
   "t": "h",
   "segs": [
    {
-    "s": "12. 문제점 및 조치 방법",
+    "s": "10. 문제점 및 조치 방법",
     "b": false,
     "m": false
    }
   ],
   "level": 2,
-  "text": "12. 문제점 및 조치 방법"
+  "text": "10. 문제점 및 조치 방법"
  },
  {
   "t": "p",
@@ -36802,13 +32856,13 @@
   "t": "h",
   "segs": [
    {
-    "s": "12.1 카메라 · 촬영",
+    "s": "10.1 카메라 · 촬영",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "12.1 카메라 · 촬영"
+  "text": "10.1 카메라 · 촬영"
  },
  {
   "t": "table",
@@ -36855,14 +32909,14 @@
     {
      "segs": [
       {
-       "s": "① 카메라 전원 · 케이블 · 네트워크 카드 링크 램프를 확인합니다. ② 제조사 프로그램(pylon Viewer · MVS · Mech-Eye Viewer)에서 카메라가 보이는지 확인합니다 — 보이지 않으면 IP 대역 · 방화벽(UDP 3956) 문제입니다. ③ 제조사 프로그램은 닫습니다(카메라는 한 프로그램만 열 수 있습니다). ④ 설정 마법사 3 단계의 IP · 제조사 · 타입이 맞는지 봅니다. ⑤ 케이블을 다시 꽂으면 다음 촬영에서 자동 재연결됩니다.",
+       "s": "① 카메라 전원 · 케이블 · 네트워크 카드 링크 램프를 확인합니다. ② 카메라 제조사의 설정 프로그램에서 카메라가 보이는지 확인합니다 — 보이지 않으면 IP 대역 · 방화벽(UDP 3956) 문제입니다. ③ 제조사 프로그램은 닫습니다(카메라는 한 프로그램만 열 수 있습니다). ④ 설정 마법사 3 단계의 IP · 제조사 · 타입이 맞는지 봅니다. ⑤ 케이블을 다시 꽂으면 다음 촬영에서 자동 재연결됩니다.",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "① 카메라 전원 · 케이블 · 네트워크 카드 링크 램프를 확인합니다. ② 제조사 프로그램(pylon Viewer · MVS · Mech-Eye Viewer)에서 카메라가 보이는지 확인합니다 — 보이지 않으면 IP 대역 · 방화벽(UDP 3956) 문제입니다. ③ 제조사 프로그램은 닫습니다(카메라는 한 프로그램만 열 수 있습니다). ④ 설정 마법사 3 단계의 IP · 제조사 · 타입이 맞는지 봅니다. ⑤ 케이블을 다시 꽂으면 다음 촬영에서 자동 재연결됩니다."
+     "text": "① 카메라 전원 · 케이블 · 네트워크 카드 링크 램프를 확인합니다. ② 카메라 제조사의 설정 프로그램에서 카메라가 보이는지 확인합니다 — 보이지 않으면 IP 대역 · 방화벽(UDP 3956) 문제입니다. ③ 제조사 프로그램은 닫습니다(카메라는 한 프로그램만 열 수 있습니다). ④ 설정 마법사 3 단계의 IP · 제조사 · 타입이 맞는지 봅니다. ⑤ 케이블을 다시 꽂으면 다음 촬영에서 자동 재연결됩니다."
     }
    ],
    [
@@ -36881,14 +32935,14 @@
     {
      "segs": [
       {
-       "s": "제조사 SDK 가 없는 빌드이거나 지원하지 않는 제조사를 선택한 것입니다. VisionSetup 연결 시 \"SDK 미탑재 — 시뮬레이션 모드\" 경고가 뜹니다. 설정 마법사의 제조사를 HIK · Basler · Mech_Mind · Matrox 중 실제 장비로 바꾸고, 해당 런타임(§2.1)이 설치되었는지 확인합니다.",
+       "s": "제조사 SDK 가 없는 빌드이거나 지원하지 않는 제조사를 선택한 것입니다. VisionSetup 연결 시 \"SDK 미탑재 — 시뮬레이션 모드\" 경고가 뜹니다. 설정 마법사의 제조사를 HIK · Basler · Matrox 중 실제 장비로 바꾸고, 해당 런타임(§2.1)이 설치되었는지 확인합니다.",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "제조사 SDK 가 없는 빌드이거나 지원하지 않는 제조사를 선택한 것입니다. VisionSetup 연결 시 \"SDK 미탑재 — 시뮬레이션 모드\" 경고가 뜹니다. 설정 마법사의 제조사를 HIK · Basler · Mech_Mind · Matrox 중 실제 장비로 바꾸고, 해당 런타임(§2.1)이 설치되었는지 확인합니다."
+     "text": "제조사 SDK 가 없는 빌드이거나 지원하지 않는 제조사를 선택한 것입니다. VisionSetup 연결 시 \"SDK 미탑재 — 시뮬레이션 모드\" 경고가 뜹니다. 설정 마법사의 제조사를 HIK · Basler · Matrox 중 실제 장비로 바꾸고, 해당 런타임(§2.1)이 설치되었는지 확인합니다."
     }
    ],
    [
@@ -37002,13 +33056,13 @@
   "t": "h",
   "segs": [
    {
-    "s": "12.2 검사 운전 · 작업지시",
+    "s": "10.2 검사 운전 · 작업지시",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "12.2 검사 운전 · 작업지시"
+  "text": "10.2 검사 운전 · 작업지시"
  },
  {
   "t": "table",
@@ -37264,13 +33318,13 @@
   "t": "h",
   "segs": [
    {
-    "s": "12.3 PLC · IO 보드 ⚙",
+    "s": "10.3 PLC · IO 보드 ⚙",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "12.3 PLC · IO 보드 ⚙"
+  "text": "10.3 PLC · IO 보드 ⚙"
  },
  {
   "t": "table",
@@ -37363,14 +33417,14 @@
        "m": false
       },
       {
-       "s": "으로 설치합니다. \"Register_Card 실패\" → 마법사 6 단계의 모델 · Board ID 가 실제 카드와 맞는지 확인합니다. Advantech 는 \"DAQNavi 이 없거나\" → 드라이버를 설치하고, \"보드 BID#n 를 열지 못했습니다\" → Advantech Navigator 의 보드 번호와 마법사 6 단계 Board ID 를 맞춥니다. \"연결 시간 초과(5초)\" → 카드 장착과 드라이버를 확인하고 재부팅합니다. 보드가 실패해도 검사는 되지만 그 보드를 쓰는 시퀀스 노드는 동작하지 않습니다.",
+       "s": "으로 설치합니다. \"Register_Card 실패\" → 마법사 5 단계의 모델 · Board ID 가 실제 카드와 맞는지 확인합니다. Advantech 는 \"DAQNavi 이 없거나\" → 드라이버를 설치하고, \"보드 BID#n 를 열지 못했습니다\" → Advantech Navigator 의 보드 번호와 마법사 5 단계 Board ID 를 맞춥니다. \"연결 시간 초과(5초)\" → 카드 장착과 드라이버를 확인하고 재부팅합니다. 보드가 실패해도 검사는 되지만 그 보드를 쓰는 시퀀스 노드는 동작하지 않습니다.",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "System Log 의 [IoBoard] 항목에 사유가 있습니다. \"라이브러리를 찾을 수 없습니다\" → 드라이버(ADLink DASK · Advantech DAQNavi)를 64비트용으로 설치합니다. \"Register_Card 실패\" → 마법사 6 단계의 모델 · Board ID 가 실제 카드와 맞는지 확인합니다. Advantech 는 \"DAQNavi 이 없거나\" → 드라이버를 설치하고, \"보드 BID#n 를 열지 못했습니다\" → Advantech Navigator 의 보드 번호와 마법사 6 단계 Board ID 를 맞춥니다. \"연결 시간 초과(5초)\" → 카드 장착과 드라이버를 확인하고 재부팅합니다. 보드가 실패해도 검사는 되지만 그 보드를 쓰는 시퀀스 노드는 동작하지 않습니다."
+     "text": "System Log 의 [IoBoard] 항목에 사유가 있습니다. \"라이브러리를 찾을 수 없습니다\" → 드라이버(ADLink DASK · Advantech DAQNavi)를 64비트용으로 설치합니다. \"Register_Card 실패\" → 마법사 5 단계의 모델 · Board ID 가 실제 카드와 맞는지 확인합니다. Advantech 는 \"DAQNavi 이 없거나\" → 드라이버를 설치하고, \"보드 BID#n 를 열지 못했습니다\" → Advantech Navigator 의 보드 번호와 마법사 5 단계 Board ID 를 맞춥니다. \"연결 시간 초과(5초)\" → 카드 장착과 드라이버를 확인하고 재부팅합니다. 보드가 실패해도 검사는 되지만 그 보드를 쓰는 시퀀스 노드는 동작하지 않습니다."
     }
    ],
    [
@@ -37406,13 +33460,13 @@
   "t": "h",
   "segs": [
    {
-    "s": "12.4 레시피 편집 · 판정",
+    "s": "10.4 레시피 편집 · 판정",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "12.4 레시피 편집 · 판정"
+  "text": "10.4 레시피 편집 · 판정"
  },
  {
   "t": "table",
@@ -37713,14 +33767,14 @@
     {
      "segs": [
       {
-       "s": "파일 경로 모델은 파일이 그 PC 에 있는지, model:// 참조 모델은 상태바 \"MLOps 비활성\" 칩이 없는지와 라인 PC 토큰(§9.11) · 운영 승격 버전이 있는지(§9.10 \"해석 불가\") 확인합니다.",
+       "s": "Model Path 에 지정한 ONNX 파일이 그 PC 의 그 경로에 있는지 확인합니다. 다른 PC 에서 만든 레시피를 옮겨 왔으면 모델 파일도 함께 복사하고 Model Path 를 [폴더] 버튼으로 다시 지정합니다(§6.11).",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "파일 경로 모델은 파일이 그 PC 에 있는지, model:// 참조 모델은 상태바 \"MLOps 비활성\" 칩이 없는지와 라인 PC 토큰(§9.11) · 운영 승격 버전이 있는지(§9.10 \"해석 불가\") 확인합니다."
+     "text": "Model Path 에 지정한 ONNX 파일이 그 PC 의 그 경로에 있는지 확인합니다. 다른 PC 에서 만든 레시피를 옮겨 왔으면 모델 파일도 함께 복사하고 Model Path 를 [폴더] 버튼으로 다시 지정합니다(§6.11)."
     }
    ]
   ],
@@ -37730,13 +33784,13 @@
   "t": "h",
   "segs": [
    {
-    "s": "12.5 Web · 네트워크 ⚙",
+    "s": "10.5 Web · 네트워크 ⚙",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "12.5 Web · 네트워크 ⚙"
+  "text": "10.5 Web · 네트워크 ⚙"
  },
  {
   "t": "table",
@@ -37853,44 +33907,24 @@
     {
      "segs": [
       {
-       "s": "NG 사진이 Web · MLOps 에 안 보임",
+       "s": "NG 사진이 Web 에 안 보임",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "NG 사진이 Web · MLOps 에 안 보임"
+     "text": "NG 사진이 Web 에 안 보임"
     },
     {
      "segs": [
       {
-       "s": "Image Save Settings 에서 Web 전송(NG 이미지 Web 전송)과 MLOps 수집은 ",
-       "b": false,
-       "m": false
-      },
-      {
-       "s": "별개 스위치",
-       "b": true,
-       "m": false
-      },
-      {
-       "s": "입니다. 전달 모드가 SharedPath 면 전송되지 않으니 Auto 로 둡니다. ",
+       "s": "Image Save Settings 에서 NG 이미지 Web 전송이 켜져 있는지 확인합니다. 전달 모드가 SharedPath 면 전송되지 않으니 Auto 로 둡니다. ",
        "b": false,
        "m": false
       },
       {
        "s": "image_upload_queue\\",
-       "b": false,
-       "m": true
-      },
-      {
-       "s": " · ",
-       "b": false,
-       "m": false
-      },
-      {
-       "s": "mlops_line_ng_queue\\",
        "b": false,
        "m": true
       },
@@ -37905,14 +33939,14 @@
        "m": true
       },
       {
-       "s": " 를 확인하고, MLOps 는 상태바 \"MLOps 비활성\" 칩의 사유를 봅니다.",
+       "s": " 를 확인합니다.",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "Image Save Settings 에서 Web 전송(NG 이미지 Web 전송)과 MLOps 수집은 별개 스위치입니다. 전달 모드가 SharedPath 면 전송되지 않으니 Auto 로 둡니다. image_upload_queue\\ · mlops_line_ng_queue\\ 의 파일 수와 rejected\\ 를 확인하고, MLOps 는 상태바 \"MLOps 비활성\" 칩의 사유를 봅니다."
+     "text": "Image Save Settings 에서 NG 이미지 Web 전송이 켜져 있는지 확인합니다. 전달 모드가 SharedPath 면 전송되지 않으니 Auto 로 둡니다. image_upload_queue\\ 의 파일 수와 rejected\\ 를 확인합니다."
     }
    ],
    [
@@ -38148,263 +34182,13 @@
   "t": "h",
   "segs": [
    {
-    "s": "12.6 MLOps · 학습 워커 ⚙",
+    "s": "10.6 PC · 프로그램 실행",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "12.6 MLOps · 학습 워커 ⚙"
- },
- {
-  "t": "table",
-  "rows": [
-   [
-    {
-     "segs": [
-      {
-       "s": "증상",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": true,
-     "imgs": [],
-     "text": "증상"
-    },
-    {
-     "segs": [
-      {
-       "s": "확인 · 조치",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": true,
-     "imgs": [],
-     "text": "확인 · 조치"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "MLOps 로그인 후 \"역할 없음\" · 모든 화면이 403",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "MLOps 로그인 후 \"역할 없음\" · 모든 화면이 403"
-    },
-    {
-     "segs": [
-      {
-       "s": "Web 의 Admin 계정으로 받은 토큰이어야 합니다. User · Guest 계정은 쓸 수 없습니다(§9.1).",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Web 의 Admin 계정으로 받은 토큰이어야 합니다. User · Guest 계정은 쓸 수 없습니다(§9.1)."
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "수집 사진이 올라오지 않음",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "수집 사진이 올라오지 않음"
-    },
-    {
-     "segs": [
-      {
-       "s": "라인 PC: Image Save Settings 의 [NG 이미지 MLOps 전송] 체크, 설정 마법사 고급 설정의 서버 주소 · 라인 토큰, 상태바 \"MLOps 비활성\" 칩(Production 모드 + http 주소가 대표 사유). 서버: 배포 → 라인 PC 에서 그 라인이 \"사용 중\" 인지.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "라인 PC: Image Save Settings 의 [NG 이미지 MLOps 전송] 체크, 설정 마법사 고급 설정의 서버 주소 · 라인 토큰, 상태바 \"MLOps 비활성\" 칩(Production 모드 + http 주소가 대표 사유). 서버: 배포 → 라인 PC 에서 그 라인이 \"사용 중\" 인지."
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "워커가 \"비활성 (진단 실패)\" · CUDA 사용 불가",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "워커가 \"비활성 (진단 실패)\" · CUDA 사용 불가"
-    },
-    {
-     "segs": [
-      {
-       "s": "GPU PC 에서 ",
-       "b": false,
-       "m": false
-      },
-      {
-       "s": "nvidia-smi",
-       "b": false,
-       "m": true
-      },
-      {
-       "s": " 로 드라이버(550 이상)를 확인하고, Python 3.12 가 \"모든 사용자용\" 으로 설치됐는지 봅니다. 서비스 계정이 파이썬을 찾지 못하면 관리자 명령 프롬프트에서 ",
-       "b": false,
-       "m": false
-      },
-      {
-       "s": "BODA.VMS.MLOps.TrainWorker.exe diag",
-       "b": false,
-       "m": true
-      },
-      {
-       "s": " 를 한 번 실행합니다. 로그: ",
-       "b": false,
-       "m": false
-      },
-      {
-       "s": "%ProgramData%\\BODA VMS TrainWorker\\logs",
-       "b": false,
-       "m": true
-      },
-      {
-       "s": ".",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "GPU PC 에서 nvidia-smi 로 드라이버(550 이상)를 확인하고, Python 3.12 가 \"모든 사용자용\" 으로 설치됐는지 봅니다. 서비스 계정이 파이썬을 찾지 못하면 관리자 명령 프롬프트에서 BODA.VMS.MLOps.TrainWorker.exe diag 를 한 번 실행합니다. 로그: %ProgramData%\\BODA VMS TrainWorker\\logs."
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "학습 작업이 제출되지 않음 — 사전학습 가중치 필수",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "학습 작업이 제출되지 않음 — 사전학습 가중치 필수"
-    },
-    {
-     "segs": [
-      {
-       "s": "train_dfine · train_rfdetr_seg 는 사전학습 미러에 자산이 있어야 합니다(§9.8). 워커는 인터넷에서 받지 않습니다.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "train_dfine · train_rfdetr_seg 는 사전학습 미러에 자산이 있어야 합니다(§9.8). 워커는 인터넷에서 받지 않습니다."
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "라인 모니터링 \"볼 수 없습니다\"",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "라인 모니터링 \"볼 수 없습니다\""
-    },
-    {
-     "segs": [
-      {
-       "s": "MLOps 설정의 운영 웹 주소(",
-       "b": false,
-       "m": false
-      },
-      {
-       "s": "Monitoring:ProductionWebUrl",
-       "b": false,
-       "m": true
-      },
-      {
-       "s": ")와 API 키(",
-       "b": false,
-       "m": false
-      },
-      {
-       "s": "Monitoring__ApiKey",
-       "b": false,
-       "m": true
-      },
-      {
-       "s": ")를 확인합니다. 401 이면 키가 다른 것입니다.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "MLOps 설정의 운영 웹 주소(Monitoring:ProductionWebUrl)와 API 키(Monitoring__ApiKey)를 확인합니다. 401 이면 키가 다른 것입니다."
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "레시피 바인딩이 \"해석 불가\"",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "레시피 바인딩이 \"해석 불가\""
-    },
-    {
-     "segs": [
-      {
-       "s": "그 모델 계열에 운영(Production)으로 승격된 버전이 없습니다. 모델 상세에서 승격하거나 버전 고정 참조를 씁니다.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "그 모델 계열에 운영(Production)으로 승격된 버전이 없습니다. 모델 상세에서 승격하거나 버전 고정 참조를 씁니다."
-    }
-   ]
-  ],
-  "cls": "cols-3-6"
- },
- {
-  "t": "h",
-  "segs": [
-   {
-    "s": "12.7 PC · 프로그램 실행",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 3,
-  "text": "12.7 PC · 프로그램 실행"
+  "text": "10.6 PC · 프로그램 실행"
  },
  {
   "t": "table",
@@ -38451,14 +34235,14 @@
     {
      "segs": [
       {
-       "s": "보안 모드가 저장되지 않은 것입니다. 설정 마법사를 7 단계까지 진행해 [Finish] 로 저장합니다(§3.8).",
+       "s": "보안 모드가 저장되지 않은 것입니다. 설정 마법사를 6 단계까지 진행해 [Finish] 로 저장합니다(§3.7).",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "보안 모드가 저장되지 않은 것입니다. 설정 마법사를 7 단계까지 진행해 [Finish] 로 저장합니다(§3.8)."
+     "text": "보안 모드가 저장되지 않은 것입니다. 설정 마법사를 6 단계까지 진행해 [Finish] 로 저장합니다(§3.7)."
     }
    ],
    [
@@ -38555,7 +34339,7 @@
     {
      "segs": [
       {
-       "s": "Image Save Settings 의 보존 기간, Retention Settings, Web 의 ImageStore · DataRetention 설정을 줄입니다(§11.2). ",
+       "s": "Image Save Settings 의 보존 기간, Retention Settings, Web 의 ImageStore · DataRetention 설정을 줄입니다(§9.2). ",
        "b": false,
        "m": false
       },
@@ -38572,7 +34356,7 @@
      ],
      "header": false,
      "imgs": [],
-     "text": "Image Save Settings 의 보존 기간, Retention Settings, Web 의 ImageStore · DataRetention 설정을 줄입니다(§11.2). rejected\\ 보관함은 200 건 · 200MB 상한으로 자동 관리됩니다."
+     "text": "Image Save Settings 의 보존 기간, Retention Settings, Web 의 ImageStore · DataRetention 설정을 줄입니다(§9.2). rejected\\ 보관함은 200 건 · 200MB 상한으로 자동 관리됩니다."
     }
    ]
   ],
@@ -38582,13 +34366,13 @@
   "t": "h",
   "segs": [
    {
-    "s": "13. 부록",
+    "s": "11. 부록",
     "b": false,
     "m": false
    }
   ],
   "level": 2,
-  "text": "13. 부록"
+  "text": "11. 부록"
  },
  {
   "t": "callout",
@@ -38606,13 +34390,13 @@
   "t": "h",
   "segs": [
    {
-    "s": "13.1 단축키 · 마우스 조작 (VisionSetup)",
+    "s": "11.1 단축키 · 마우스 조작 (VisionSetup)",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "13.1 단축키 · 마우스 조작 (VisionSetup)"
+  "text": "11.1 단축키 · 마우스 조작 (VisionSetup)"
  },
  {
   "t": "table",
@@ -38977,13 +34761,13 @@
   "t": "h",
   "segs": [
    {
-    "s": "13.2 비전 도구 파라미터 전체표",
+    "s": "11.2 비전 도구 파라미터 전체표",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "13.2 비전 도구 파라미터 전체표"
+  "text": "11.2 비전 도구 파라미터 전체표"
  },
  {
   "t": "p",
@@ -51290,14 +47074,14 @@
     {
      "segs": [
       {
-       "s": "모델 파일(.onnx) 경로 또는 model:// 참조",
+       "s": "모델 파일(.onnx) 경로([폴더] 버튼으로 선택)",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "모델 파일(.onnx) 경로 또는 model:// 참조"
+     "text": "모델 파일(.onnx) 경로([폴더] 버튼으로 선택)"
     }
    ],
    [
@@ -52048,14 +47832,14 @@
     {
      "segs": [
       {
-       "s": "모델 파일(.onnx) 경로 또는 model:// 참조",
+       "s": "모델 파일(.onnx) 경로([폴더] 버튼으로 선택)",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "모델 파일(.onnx) 경로 또는 model:// 참조"
+     "text": "모델 파일(.onnx) 경로([폴더] 버튼으로 선택)"
     }
    ],
    [
@@ -52308,14 +48092,14 @@
     {
      "segs": [
       {
-       "s": "모델 파일(.onnx) 경로 또는 model:// 참조",
+       "s": "모델 파일(.onnx) 경로([폴더] 버튼으로 선택)",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "모델 파일(.onnx) 경로 또는 model:// 참조"
+     "text": "모델 파일(.onnx) 경로([폴더] 버튼으로 선택)"
     }
    ],
    [
@@ -52644,14 +48428,14 @@
     {
      "segs": [
       {
-       "s": "모델 파일(.onnx) 경로 또는 model:// 참조",
+       "s": "모델 파일(.onnx) 경로([폴더] 버튼으로 선택)",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "모델 파일(.onnx) 경로 또는 model:// 참조"
+     "text": "모델 파일(.onnx) 경로([폴더] 버튼으로 선택)"
     }
    ],
    [
@@ -52942,14 +48726,14 @@
     {
      "segs": [
       {
-       "s": "모델 파일(.onnx) 경로 또는 model:// 참조",
+       "s": "모델 파일(.onnx) 경로([폴더] 버튼으로 선택)",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "모델 파일(.onnx) 경로 또는 model:// 참조"
+     "text": "모델 파일(.onnx) 경로([폴더] 버튼으로 선택)"
     }
    ],
    [
@@ -53560,198 +49344,6 @@
     {
      "segs": [
       {
-       "s": "Enable Robot Transform",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Enable Robot Transform"
-    },
-    {
-     "segs": [
-      {
-       "s": "체크박스",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "체크박스"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [],
-     "text": ""
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "M11",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "M11"
-    },
-    {
-     "segs": [
-      {
-       "s": "입력",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "입력"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [],
-     "text": ""
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "M21",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "M21"
-    },
-    {
-     "segs": [
-      {
-       "s": "입력",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "입력"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [],
-     "text": ""
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "M12",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "M12"
-    },
-    {
-     "segs": [
-      {
-       "s": "입력",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "입력"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [],
-     "text": ""
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "M22",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "M22"
-    },
-    {
-     "segs": [
-      {
-       "s": "입력",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "입력"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [],
-     "text": ""
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "θ Sign (+1/-1)",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "θ Sign (+1/-1)"
-    },
-    {
-     "segs": [
-      {
-       "s": "입력",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "입력"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [],
-     "text": ""
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
        "s": "Draw Overlay",
        "b": false,
        "m": false
@@ -54172,198 +49764,6 @@
     {
      "segs": [
       {
-       "s": "Enable Robot Transform",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Enable Robot Transform"
-    },
-    {
-     "segs": [
-      {
-       "s": "체크박스",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "체크박스"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [],
-     "text": ""
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "M11",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "M11"
-    },
-    {
-     "segs": [
-      {
-       "s": "입력",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "입력"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [],
-     "text": ""
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "M21",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "M21"
-    },
-    {
-     "segs": [
-      {
-       "s": "입력",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "입력"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [],
-     "text": ""
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "M12",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "M12"
-    },
-    {
-     "segs": [
-      {
-       "s": "입력",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "입력"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [],
-     "text": ""
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "M22",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "M22"
-    },
-    {
-     "segs": [
-      {
-       "s": "입력",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "입력"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [],
-     "text": ""
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "θ Sign (+1/-1)",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "θ Sign (+1/-1)"
-    },
-    {
-     "segs": [
-      {
-       "s": "입력",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "입력"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [],
-     "text": ""
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
        "s": "Draw Overlay",
        "b": false,
        "m": false
@@ -54733,13 +50133,13 @@
   "t": "h",
   "segs": [
    {
-    "s": "13.3 검사 결과 값 이름 (PLC 매핑 · Web 이력)",
+    "s": "11.3 검사 결과 값 이름 (PLC 매핑 · Web 이력)",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "13.3 검사 결과 값 이름 (PLC 매핑 · Web 이력)"
+  "text": "11.3 검사 결과 값 이름 (PLC 매핑 · Web 이력)"
  },
  {
   "t": "p",
@@ -54901,14 +50301,14 @@
     {
      "segs": [
       {
-       "s": "DeltaX · DeltaY · DeltaTheta · RobotDX/DY/DTheta · JudgmentPass",
+       "s": "DeltaX · DeltaY · DeltaTheta · JudgmentPass",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "DeltaX · DeltaY · DeltaTheta · RobotDX/DY/DTheta · JudgmentPass"
+     "text": "DeltaX · DeltaY · DeltaTheta · JudgmentPass"
     }
    ],
    [
@@ -55022,13 +50422,13 @@
   "t": "h",
   "segs": [
    {
-    "s": "13.4 기능 목록 — 설명 위치",
+    "s": "11.4 기능 목록 — 설명 위치",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "13.4 기능 목록 — 설명 위치"
+  "text": "11.4 기능 목록 — 설명 위치"
  },
  {
   "t": "p",
@@ -55234,14 +50634,14 @@
     {
      "segs": [
       {
-       "s": "§3.7 · §5.10",
+       "s": "§3.5 · §3.6 · §5.10",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "§3.7 · §5.10"
+     "text": "§3.5 · §3.6 · §5.10"
     }
    ],
    [
@@ -55634,14 +51034,14 @@
     {
      "segs": [
       {
-       "s": "§3.7 · §5.10",
+       "s": "§3.6 · §5.10",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "§3.7 · §5.10"
+     "text": "§3.6 · §5.10"
     }
    ],
    [
@@ -57334,14 +52734,14 @@
     {
      "segs": [
       {
-       "s": "§3.8 · §4.11 · §4.12",
+       "s": "§3.7 · §4.11 · §4.12",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "§3.8 · §4.11 · §4.12"
+     "text": "§3.7 · §4.11 · §4.12"
     }
    ],
    [
@@ -58284,14 +53684,14 @@
     {
      "segs": [
       {
-       "s": "§2.6 · §3.8 · §8.24 · §11.4",
+       "s": "§2.5 · §3.7 · §8.24 · §9.4",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "§2.6 · §3.8 · §8.24 · §11.4"
+     "text": "§2.5 · §3.7 · §8.24 · §9.4"
     }
    ],
    [
@@ -58334,14 +53734,14 @@
     {
      "segs": [
       {
-       "s": "§2.7 · §4.6",
+       "s": "§2.6 · §4.6",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "§2.7 · §4.6"
+     "text": "§2.6 · §4.6"
     }
    ]
   ],
@@ -58351,13 +53751,13 @@
   "t": "h",
   "segs": [
    {
-    "s": "13.5 문서 정보",
+    "s": "11.5 문서 정보",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "13.5 문서 정보"
+  "text": "11.5 문서 정보"
  },
  {
   "t": "table",
@@ -58404,14 +53804,14 @@
     {
      "segs": [
       {
-       "s": "3.0 (2026-10-29)",
+       "s": "3.0 (2026-10-30)",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "3.0 (2026-10-29)"
+     "text": "3.0 (2026-10-30)"
     }
    ],
    [
@@ -58430,14 +53830,14 @@
     {
      "segs": [
       {
-       "s": "VMS 1.47.3 · BODA.VMS.Web 1.11.0 · BODA.VMS.MLOps 0.1.5",
+       "s": "BODA VMS v1.48.0 (VMS · VMS.AppSetup · VMS.VisionSetup · 생산 관리 웹)",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "VMS 1.47.3 · BODA.VMS.Web 1.11.0 · BODA.VMS.MLOps 0.1.5"
+     "text": "BODA VMS v1.48.0 (VMS · VMS.AppSetup · VMS.VisionSetup · 생산 관리 웹)"
     }
    ],
    [
@@ -58456,14 +53856,14 @@
     {
      "segs": [
       {
-       "s": "VMS · VMS.VisionSetup · VMS.AppSetup (검사 런타임) / BODA.VMS.Web (생산 관리) / BODA.VMS.MLOps (선택 구성 요소, 인증 범위 외)",
+       "s": "VMS · VMS.VisionSetup · VMS.AppSetup (검사 런타임) / BODA.VMS.Web (생산 관리)",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "VMS · VMS.VisionSetup · VMS.AppSetup (검사 런타임) / BODA.VMS.Web (생산 관리) / BODA.VMS.MLOps (선택 구성 요소, 인증 범위 외)"
+     "text": "VMS · VMS.VisionSetup · VMS.AppSetup (검사 런타임) / BODA.VMS.Web (생산 관리)"
     }
    ],
    [

@@ -1,7 +1,9 @@
-# MSI 마법사 "설치 구성 선택"(WebOptionDlg) 화면 캡처 — 설치하지 않고 UI 만 띄워 PrintWindow 후 종료
+﻿# MSI 마법사 "설치 구성 선택"(WebOptionDlg) 화면 캡처 — 설치하지 않고 UI 만 띄워 PrintWindow 후 종료
 param(
     [string]$Msi = "D:\Repo\VMS\VMS.MasterSetup\bin\Release\VMS-1.33.0.msi",
-    [string]$Out = "D:\Temp\msi-cap\71_msi_weboption.png"
+    [string]$Out = "D:\Temp\msi-cap\71_msi_weboption.png",
+    # 지정하면 첫 화면(Welcome)도 찍는다 — 매뉴얼 70_msi_welcome.png
+    [string]$WelcomeOut = ""
 )
 $ErrorActionPreference = "Stop"
 Add-Type -AssemblyName System.Windows.Forms, System.Drawing, UIAutomationClient, UIAutomationTypes
@@ -63,8 +65,23 @@ function WaitReady($hwnd) {
     }
     return (Page $hwnd)
 }
+function Snap($path) {
+    $hw = CurrentHwnd
+    [W]::SetForegroundWindow($hw) | Out-Null
+    Start-Sleep -Milliseconds 600
+    $r = New-Object W+R; [W]::GetWindowRect($hw, [ref]$r) | Out-Null
+    $w = $r.Rt - $r.L; $hh = $r.B - $r.T
+    $bmp = New-Object System.Drawing.Bitmap $w, $hh
+    $g = [System.Drawing.Graphics]::FromImage($bmp)
+    $hdc = $g.GetHdc()
+    [W]::PrintWindow($hw, $hdc, 2) | Out-Null   # PW_RENDERFULLCONTENT
+    $g.ReleaseHdc($hdc); $g.Dispose()
+    $bmp.Save($path, [System.Drawing.Imaging.ImageFormat]::Png); $bmp.Dispose()
+    "saved $path ${w}x${hh}"
+}
 $found = $false
 $names = WaitReady $h
+if ($WelcomeOut) { Snap $WelcomeOut }
 for ($step = 0; $step -lt 3; $step++) {
     if (($names | Where-Object { $_ -like "*Web 서버 포함*" }).Count -gt 0) { $found = $true; break }
     if ($step -eq 2) { break }
@@ -83,18 +100,7 @@ for ($step = 0; $step -lt 3; $step++) {
 if (-not $found) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue; throw "설치 구성 선택 화면에 도달하지 못했습니다" }
 "reached WebOptionDlg: [$((Page $h) -join ' | ')]"
 
-$h = CurrentHwnd
-[W]::SetForegroundWindow($h) | Out-Null
-Start-Sleep -Milliseconds 600
-$r = New-Object W+R; [W]::GetWindowRect($h, [ref]$r) | Out-Null
-$w = $r.Rt - $r.L; $hh = $r.B - $r.T
-$bmp = New-Object System.Drawing.Bitmap $w, $hh
-$g = [System.Drawing.Graphics]::FromImage($bmp)
-$hdc = $g.GetHdc()
-[W]::PrintWindow($h, $hdc, 2) | Out-Null   # PW_RENDERFULLCONTENT
-$g.ReleaseHdc($hdc); $g.Dispose()
-$bmp.Save($Out, [System.Drawing.Imaging.ImageFormat]::Png); $bmp.Dispose()
-"saved $Out ${w}x${hh}"
+Snap $Out
 
 # 설치는 하지 않는다 — UI 프로세스만 종료 (VerifyReady 이전이라 시스템 변경 없음)
 Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue

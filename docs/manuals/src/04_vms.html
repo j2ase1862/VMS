@@ -25,7 +25,7 @@
   <tr><th>영역</th><th>내용</th></tr>
   <tr><td>① 헤더</td><td>왼쪽부터 로고 · 애플리케이션 이름, 운영 흐름 순서의 칩(작업자 → 작업지시 → 레시피 → 추적 정보 → 예측), 오른쪽에 [AUTO RUN] · 사용자 칩 · 관리 아이콘 · 창 조작 버튼. 4.3 절 참고</td></tr>
   <tr><td>② KPI 스트립</td><td>TACT TIME · YIELD · TOTAL · OK · NG 카드와 통계 초기화 버튼. 4.4 절</td></tr>
-  <tr><td>③ 카메라 화면</td><td>카메라마다 타일 하나. 2D / Depth Map / Point Cloud 탭, 판정 배지(WAIT · OK · NG), Run Results 표, 설정(톱니바퀴) 창. 타일은 드래그로 옮기고 가장자리를 끌어 크기를 바꿀 수 있으며 헤더의 [Save Layout] 으로 배치를 저장합니다. 4.5 절</td></tr>
+  <tr><td>③ 카메라 화면</td><td>카메라마다 타일 하나. 2D 이미지, 판정 배지(WAIT · OK · NG), Run Results 표, 설정(톱니바퀴) 창. 타일은 드래그로 옮기고 가장자리를 끌어 크기를 바꿀 수 있으며 헤더의 [Save Layout] 으로 배치를 저장합니다. 4.5 절</td></tr>
   <tr><td>④ NG History</td><td>최근 불량 이미지 썸네일(카메라 이름 · 시각). 항목을 누르면 그 카메라 화면에 크게 표시됩니다</td></tr>
   <tr><td>⑤ 사이드 패널 (Settings)</td><td>헤더 오른쪽 ⚙ 로 열고 닫습니다. 레시피 · 외부 도구 · 업데이트 · Web 파라미터 · 이미지 저장 · 최근 검사 · 통계 섹션. 4.6 절</td></tr>
   <tr><td>⑥ System Log</td><td><code>[시각] [출처] 메시지</code> 형식의 실시간 로그. 카메라 · PLC · IO 보드 · 시퀀스 · Web 연동 상태가 여기에 남습니다. 오른쪽 위 아이콘으로 비웁니다</td></tr>
@@ -121,7 +121,7 @@
 
 <h3 id="vms-camera">4.5 카메라 화면과 설정 창</h3>
 <p>카메라 타일의 헤더에는 연결 표시등(초록 Connected / 빨강 Disconnected), 카메라 이름, <strong>설정(톱니바퀴)</strong> 버튼, 판정 배지가 있습니다.
-본문은 2D · Depth Map · Point Cloud 탭이며 아래에 Run Results(도구별 Pass/Fail · 결과값 · 처리 ms) 표와 IP · Count 가 표시됩니다.
+본문은 2D 이미지이며 아래에 Run Results(도구별 Pass/Fail · 결과값 · 처리 ms) 표와 IP · Count 가 표시됩니다.
 검사 이미지 위의 판정 글자 · 테두리와 Run Results 결과 값 표시 방식은 VisionSetup 과 같습니다(§5.6).</p>
 <p>톱니바퀴를 누르면 타일 오른쪽에 <strong>카메라 조작 상자</strong>가 펼쳐집니다.</p>
 <figure><img src="../gs/screenshots/v3/vms/inspect_camera_box.jpg" data-width="620" alt="카메라 화면과 조작 상자"><figcaption>카메라 화면과 조작 상자 — [Open] 으로 연 이미지를 [Inspect] 로 검사한 결과: 타일 오른쪽 위 판정 배지(NG), 이미지 왼쪽 위에 판정 도구 2 개의 배지가 실행 순서대로 쌓인 모습(구멍 간격 NG · 블록 각도 OK), 이미지 위 도구별 결과 그림(엣지 · 원 · 직선), 아래 Run Results 표, 오른쪽 NG History 썸네일</figcaption></figure>

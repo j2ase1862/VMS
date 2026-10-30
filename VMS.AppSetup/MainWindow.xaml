@@ -596,7 +596,7 @@
                                                      마법사에 저장된 카메라 단위 값은 어디에서도 읽히지 않았다 (모델 필드는 json 호환용 유지). -->
                                                 <Border Background="{StaticResource BrushBgCard}" CornerRadius="4" Padding="10,8" Margin="0,8,0,0">
                                                     <TextBlock Foreground="{StaticResource BrushTextMuted}" FontSize="11" TextWrapping="Wrap"
-                                                               Text="노출(Exposure)·게인(Gain)과 3D 취득 옵션(점군 후처리 필터, 깊이 Z 범위)은 여기서 설정하지 않습니다. VMS 메인 화면의 카메라 스텝 설정 또는 VisionSetup 레시피 스텝에서 조정하며, 기본은 카메라에 저장된 현재 값을 그대로 사용합니다."/>
+                                                               Text="노출(Exposure)·게인(Gain)은 여기서 설정하지 않습니다. VMS 메인 화면의 카메라 스텝 설정 또는 VisionSetup 레시피 스텝에서 조정하며, 기본은 카메라에 저장된 현재 값을 그대로 사용합니다."/>
                                                 </Border>
 
                                                 <!-- Row 3: Line Scan Parameters -->
