@@ -181,8 +181,9 @@
                     </Border>
                 </TabItem>
 
-                <!-- Tab 1: Depth Map -->
-                <TabItem Header="Depth Map">
+                <!-- Tab 1: Depth Map — VMS 의 3D 데이터는 3D 카메라 촬영에서만 오므로 3D 카메라 확장 옵션이 있을 때만 -->
+                <TabItem Header="Depth Map"
+                         Visibility="{Binding IsCamera3DOptionEnabled, Converter={StaticResource BoolToVisibilityConverter}}">
                     <Border Background="{StaticResource Brush.Surface.Base}">
                         <Grid>
                             <!-- Placeholder when no point cloud -->
@@ -210,8 +211,9 @@
                     </Border>
                 </TabItem>
 
-                <!-- Tab 2: Point Cloud (3D viewer) -->
-                <TabItem Header="Point Cloud">
+                <!-- Tab 2: Point Cloud (3D viewer) — 3D 카메라 확장 옵션이 있을 때만 -->
+                <TabItem Header="Point Cloud"
+                         Visibility="{Binding IsCamera3DOptionEnabled, Converter={StaticResource BoolToVisibilityConverter}}">
                     <Border Background="{StaticResource Brush.Surface.Base}">
                         <Grid>
                             <!-- Placeholder when no point cloud -->
@@ -725,6 +727,7 @@
                         </Button>
                         <Button Grid.Column="1"
                                 Command="{Binding SavePointCloudCommand}"
+                                Visibility="{Binding IsCamera3DOptionEnabled, Converter={StaticResource BoolToVisibilityConverter}}"
                                 Style="{StaticResource ModernButton}"
                                 ToolTip="Grab한 3D 데이터를 .vpc 파일로 저장합니다 — VisionSetup에서 열 수 있습니다"
                                 Padding="6,4" Margin="2,0,2,0">

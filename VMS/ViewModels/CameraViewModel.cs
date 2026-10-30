@@ -472,6 +472,9 @@ namespace VMS.ViewModels
                 ? $"{Name}: {disabled.Reason}"
                 : fallback;
 
+        /// <summary>3D 카메라 확장 옵션 — 꺼져 있으면 Depth Map · Point Cloud 탭과 [Save 3D] 를 숨긴다.</summary>
+        public bool IsCamera3DOptionEnabled => VMS.Core.Security.Licensing.LicenseBootCheck.Options.Camera3D;
+
         private string ConnectedLabel()
             => _isSimulationFallback
                 ? $"Connected (SIMULATION — SDK 미탑재): {Name}"

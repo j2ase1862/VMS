@@ -382,8 +382,9 @@
                             </MenuItem.Icon>
                         </MenuItem>
 
-                        <!-- Synthetic OCR Data Generator -->
-                        <MenuItem Header="OCR _Synth Data..." Click="SynthData_Click">
+                        <!-- Synthetic OCR Data Generator — OCR 학습 데이터 생성(학습은 MLOps) 이라 MLOps 연동 확장 옵션이 있을 때만 -->
+                        <MenuItem Header="OCR _Synth Data..." Click="SynthData_Click"
+                                  Visibility="{Binding IsMLOpsOptionEnabled, Converter={StaticResource BoolToVisibility}}">
                             <MenuItem.Icon>
                                 <Path Data="M2,4 L18,4 L18,8 L2,8 Z M2,10 L18,10 L18,14 L2,14 Z M4,16 L10,16 L10,18 L4,18 Z"
                                       Stroke="#9C27B0" StrokeThickness="1.1" Fill="Transparent"

@@ -138,9 +138,9 @@ namespace VMS.VisionSetup.Tests
 
             // 3D 얼라인은 전부 3D 카메라 배지를 달아야 한다 (2D 는 달지 않음)
             foreach (var t in align.Where(t => t.Id.StartsWith("3d-")))
-                Assert.Contains("3D 카메라 필요", t.Prerequisites);
+                Assert.Contains("점군 데이터 필요", t.Prerequisites);
             foreach (var t in align.Where(t => t.Id.StartsWith("2d-")))
-                Assert.DoesNotContain("3D 카메라 필요", t.Prerequisites);
+                Assert.DoesNotContain("점군 데이터 필요", t.Prerequisites);
         }
 
         [Fact]

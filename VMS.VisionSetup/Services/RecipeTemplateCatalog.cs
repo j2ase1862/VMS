@@ -29,7 +29,8 @@ namespace VMS.VisionSetup.Services
         /// <summary>한 줄에 놓는 최대 노드 수 — 30 + 190×2 + 노드 폭 154 = 564 로 워크스페이스 폭 700 안.</summary>
         public const int MaxNodesPerRow = 3;
 
-        private const string Badge3DCamera = "3D 카메라 필요";
+        // 3D 템플릿은 저장 점군(.vpc)으로도 돈다 — 3D 카메라 실촬영은 라이선스 확장 옵션이라 배지는 데이터 기준
+        private const string Badge3DCamera = "점군 데이터 필요";
         private const string BadgeOnnxModel = "ONNX 모델 필요";
         private const string BadgeColorImage = "컬러 이미지 필요";
 
@@ -279,12 +280,10 @@ namespace VMS.VisionSetup.Services
                 Title = "Match Align — 2D 매치 얼라인 (ΔX/ΔY/Δθ)",
                 Category = CategoryAlign,
                 Description = "부품이 한 화면(FOV)에 들어올 때 — 카메라 1대로 부품을 보며 기준(Origin) " +
-                              "포즈 대비 현재 부품의 변위량 ΔX/ΔY/Δθ 를 계산해 로봇/스테이지 보정에 " +
+                              "포즈 대비 현재 부품의 변위량 ΔX/ΔY/Δθ 를 계산해 설비(스테이지) 보정에 " +
                               "쓰는 표준 얼라인 구성이다. ① Feature Match 에서 기준 부품의 패턴을 학습 → " +
                               "② Run 마다 Match Align 이 학습 중심 대비 Δ를 산출 → " +
                               "③ mm 변위는 캘리브레이션(또는 스텝 Resolution) 설정 시 자동, " +
-                              "로봇 좌표 변위는 Match Align 의 Robot Transform(핸드아이 상위 " +
-                              "2x2)을 켜면 RobotDX/DY/DTheta 로 출력된다. " +
                               "각도 정밀도가 더 필요하면 부품 양단의 특징을 찾는 Feature Match 를 " +
                               "하나 더 붙여 Match Align 에 Result 로 연결하고 Mode 를 TwoPoint 로 " +
                               "바꾼다(두 점을 잇는 벡터의 회전 = Δθ). 부품이 한 화면에 안 들어오면 " +
@@ -312,7 +311,7 @@ namespace VMS.VisionSetup.Services
                 Id = "2d-multistep-align",
                 Title = "Multi-Step Align — 2-스텝 얼라인 (카메라 이동, 대형 부품)",
                 Category = CategoryAlign,
-                Description = "부품이 한 FOV 에 다 들어오지 않을 때 — 카메라(로봇/스테이지)가 " +
+                Description = "부품이 한 FOV 에 다 들어오지 않을 때 — 카메라(스테이지)가 " +
                               "이동하며 스텝 A/B 에서 부품 양단의 특징을 하나씩 매칭하고, " +
                               "Multi-Step Align 이 두 포즈를 합쳐 ΔX/ΔY/Δθ 를 계산한다. " +
                               "선택 시 레시피에 스텝 2개가 새로 생성된다. 적용 후: ① 각 스텝 " +
@@ -369,8 +368,8 @@ namespace VMS.VisionSetup.Services
                 Title = "표준 3D 얼라인 (6DOF, 기준 형상 정합)",
                 Category = CategoryAlign,
                 Description = "2D 매치 얼라인의 3D 판 — 기준 형상 대비 6축 변위 ΔX/ΔY/ΔZ(mm)·" +
-                              "회전 RX/RY/RZ(도)를 산출해 로봇 보정에 쓴다. 적용 후: ① 기준 부품을 " +
-                              "촬영해 Registration 설정의 [현재 점군을 Reference 로 저장] (또는 " +
+                              "회전 RX/RY/RZ(도)를 산출해 설비 보정에 쓴다. 적용 후: ① 기준 부품의 " +
+                              "점군을 불러와 Registration 설정의 [현재 점군을 Reference 로 저장] (또는 " +
                               "CAD .stl 지정) ② Run 마다 Translation*/Rotation* 이 변위로 나온다. " +
                               "정합 품질은 Confidence·MeanError 로 확인 — Confidence 0.3 미만이면 " +
                               "NG(Registration 판정, 프리셋 켬). 변위 측정용이라 Apply " +
@@ -387,7 +386,7 @@ namespace VMS.VisionSetup.Services
                         {
                             var r = (PointCloudRegistrationTool)t;
                             r.ApplyTransformToSource = false;
-                            // 정합이 틀린 변위를 로봇에 넘기지 않도록 신뢰도 하한으로 NG 처리
+                            // 정합이 틀린 변위를 설비에 넘기지 않도록 신뢰도 하한으로 NG 처리
                             r.EnableJudgment = true;
                             r.MinConfidence = 0.3;
                         },
