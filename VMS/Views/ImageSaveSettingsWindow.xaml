@@ -201,8 +201,9 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- MLOps 학습 데이터 수집 (BODA.VMS.MLOps) -->
-                        <Border Style="{StaticResource WindowCard}" Padding="18,14" Margin="0,0,0,12">
+                        <!-- MLOps 학습 데이터 수집 (BODA.VMS.MLOps) — MLOps 연동 확장 옵션이 있을 때만 -->
+                        <Border Style="{StaticResource WindowCard}" Padding="18,14" Margin="0,0,0,12"
+                                Visibility="{Binding IsMLOpsOptionEnabled, Converter={StaticResource BoolToVisibilityConverter}}">
                             <StackPanel>
                                 <TextBlock Text="MLOps 학습 데이터 수집" Style="{StaticResource WindowSectionHeaderFirst}"/>
 

@@ -25,6 +25,7 @@
        정규화가 제품/도구 간 단일 구현이 되도록 파일 자체를 공유, spec §8). -->
   <ItemGroup>
     <Compile Include="..\..\VMS.Core\Security\Licensing\LicensePayload.cs" Link="Shared\LicensePayload.cs" />
+    <Compile Include="..\..\VMS.Core\Security\Licensing\LicenseOptions.cs" Link="Shared\LicenseOptions.cs" />
     <Compile Include="..\..\VMS.Core\Security\Licensing\LicenseCanonicalJson.cs" Link="Shared\LicenseCanonicalJson.cs" />
     <Compile Include="..\..\VMS.Core\Security\Licensing\LicenseCrypto.cs" Link="Shared\LicenseCrypto.cs" />
     <Compile Include="..\..\VMS.Core\Security\Licensing\LicenseKeyring.cs" Link="Shared\LicenseKeyring.cs" />

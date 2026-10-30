@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -167,6 +168,67 @@ namespace VMS.AppSetup.Tests
             var dialog = new StubDialogService();
             var vm = new SetupViewModel(new StubConfigService(), dialog, () => { }, licenseSetup: license);
             return (vm, dialog, license);
+        }
+
+        // ─── 확장 옵션 (기본 구성 라이선스 = GS 인증 구성) ─────────────
+
+        private static StubLicenseService LicenseWithOptions(params string[] options) => new()
+        {
+            Status = new LicenseEvaluation
+            {
+                Status = LicenseStatus.Valid,
+                Message = "정상",
+                Payload = new LicensePayload { Options = options }
+            }
+        };
+
+        [Fact]
+        public void No_license_keeps_every_extension_visible()
+        {
+            var (vm, _, _) = CreateVm();
+
+            Assert.True(vm.IsCamera3DOptionEnabled && vm.IsRobotOptionEnabled && vm.IsMLOpsOptionEnabled);
+            Assert.Contains(VMS.Camera.Models.CameraManufacturer.Mech_Mind,
+                vm.CameraManufacturers.Cast<VMS.Camera.Models.CameraManufacturer>());
+            Assert.Contains("MLOps", vm.AdvancedWebSettingsHeader);
+        }
+
+        [Fact]
+        public void Base_license_hides_3d_camera_choices_and_mlops()
+        {
+            var (vm, _, _) = CreateVm(LicenseWithOptions());
+
+            Assert.Equal("기본 구성 (확장 옵션 없음)", vm.LicenseOptionsText);
+            Assert.DoesNotContain(VMS.Camera.Models.CameraManufacturer.Mech_Mind,
+                vm.CameraManufacturers.Cast<VMS.Camera.Models.CameraManufacturer>());
+            Assert.DoesNotContain(VMS.Camera.Models.CameraType.AreaScan3D,
+                vm.CameraTypes.Cast<VMS.Camera.Models.CameraType>());
+            Assert.DoesNotContain("MLOps", vm.AdvancedWebSettingsHeader);
+        }
+
+        [Fact]
+        public void Base_license_skips_the_robot_page_both_ways()
+        {
+            var (vm, _, _) = CreateVm(LicenseWithOptions());
+
+            vm.CurrentPage = 4;
+            vm.GoNextCommand.Execute(null);
+            Assert.Equal(6, vm.CurrentPage);
+            Assert.Equal(5, vm.DisplayStepNumber); // 머리글은 "Step 5 of 6"
+            Assert.Equal(6, vm.DisplayStepTotal);
+
+            vm.GoBackCommand.Execute(null);
+            Assert.Equal(4, vm.CurrentPage);
+        }
+
+        [Fact]
+        public void Robot_option_keeps_the_robot_page()
+        {
+            var (vm, _, _) = CreateVm(LicenseWithOptions(LicenseOptionKeys.Robot));
+
+            vm.CurrentPage = 4;
+            vm.GoNextCommand.Execute(null);
+            Assert.Equal(5, vm.CurrentPage);
         }
 
         [Fact]

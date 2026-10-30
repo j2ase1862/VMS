@@ -496,7 +496,9 @@ namespace VMS.VisionSetup.ViewModels
                         // 맨 아래에만 떠서, 현장에서는 "눌러도 아무 반응이 없다"로 보였다.
                         RefreshSourceAvailability();
                         string hint =
-                            IsMainWindowHoldingCamera
+                            _cameraAcquisition is OptionDisabledCameraAcquisition disabled
+                                ? disabled.Reason
+                            : IsMainWindowHoldingCamera
                                 ? "VisionSetup 메인 화면이 이 카메라를 쓰고 있습니다 — 메인 화면의 카메라 연결을 끊고 다시 시도하세요."
                             : IsVmsWriterAlive
                                 ? "VMS가 카메라를 쓰고 있을 수 있습니다 — 이미지 소스를 'VMS Shared Frame'으로 바꾸세요."

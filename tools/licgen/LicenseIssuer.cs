@@ -16,7 +16,8 @@ public sealed record IssueRequest(
     int MaxClients,
     string? MaintenanceUntil,
     string? ExpiresAt,
-    string Edition = "Standard");
+    string Edition = "Standard",
+    IReadOnlyList<string>? Options = null);
 
 public sealed record IssueResult(string LicenseId, string LicenseJson, string LedgerPath);
 
@@ -37,6 +38,11 @@ public static class LicenseIssuer
             throw new ArgumentException($"개인키 파일 없음: {request.KeyPath}");
         if (request.MaxClients < 1)
             throw new ArgumentException("좌석 수는 1 이상");
+        foreach (var option in request.Options ?? Array.Empty<string>())
+        {
+            if (!LicenseOptionKeys.All.Contains(option))
+                throw new ArgumentException($"알 수 없는 확장 옵션 '{option}' — 사용 가능: {string.Join(", ", LicenseOptionKeys.All)}");
+        }
 
         if (request.Kind == LicenseKind.Production && request.Fingerprint == MachineFingerprint.Wildcard)
             throw new ArgumentException("Production 은 지문 와일드카드 불가 — 대상 PC 의 fingerprint 필요");
@@ -69,7 +75,8 @@ public static class LicenseIssuer
             IssuedAt = today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
             MaintenanceUntil = request.MaintenanceUntil,
             ExpiresAt = request.ExpiresAt,
-            KeyId = request.KeyId
+            KeyId = request.KeyId,
+            Options = request.Options?.ToArray()
         };
 
         var payloadNode = JsonSerializer.SerializeToNode(payload)!;
@@ -81,7 +88,7 @@ public static class LicenseIssuer
         LedgerStore.Append(keyDir, new LedgerEntry(
             licenseId, request.Customer, request.Kind.ToString(), request.Fingerprint,
             request.MaxClients, request.MaintenanceUntil, request.ExpiresAt,
-            DateTime.UtcNow.ToString("o"), Environment.UserName));
+            DateTime.UtcNow.ToString("o"), Environment.UserName, request.Options?.ToArray()));
 
         return new IssueResult(licenseId, licenseJson, LedgerStore.PathFor(keyDir));
     }

@@ -243,8 +243,8 @@ namespace VMS.VisionSetup.Views.Recipe
                 }
             }
 
-            // Robot Waypoint 정보 표시
-            if (step.RobotWaypoint != null)
+            // Robot Waypoint 정보 표시 — 로봇 연동 확장 옵션이 있을 때만
+            if (step.RobotWaypoint != null && VMS.Core.Security.Licensing.LicenseBootCheck.Options.Robot)
             {
                 StepWaypointPanel.Visibility = Visibility.Visible;
                 var wp = step.RobotWaypoint;

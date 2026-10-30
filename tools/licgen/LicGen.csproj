@@ -16,6 +16,7 @@
        LicenseBootCheck 는 AuditLogger(VMS.Core 전체) 의존이라 링크하지 않음. -->
   <ItemGroup>
     <Compile Include="..\..\VMS.Core\Security\Licensing\LicensePayload.cs" Link="Shared\LicensePayload.cs" />
+    <Compile Include="..\..\VMS.Core\Security\Licensing\LicenseOptions.cs" Link="Shared\LicenseOptions.cs" />
     <Compile Include="..\..\VMS.Core\Security\Licensing\LicenseCanonicalJson.cs" Link="Shared\LicenseCanonicalJson.cs" />
     <Compile Include="..\..\VMS.Core\Security\Licensing\LicenseCrypto.cs" Link="Shared\LicenseCrypto.cs" />
     <Compile Include="..\..\VMS.Core\Security\Licensing\LicenseKeyring.cs" Link="Shared\LicenseKeyring.cs" />

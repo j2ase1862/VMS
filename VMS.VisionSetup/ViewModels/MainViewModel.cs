@@ -2,6 +2,7 @@
 using VMS.Camera.Interfaces;
 using VMS.Camera.Models;
 using VMS.Camera.Services;
+using VMS.Core.Security.Licensing;
 using VMS.VisionSetup.Interfaces;
 using VMS.VisionSetup.Models;
 using VMS.VisionSetup.Services;
@@ -490,8 +491,11 @@ namespace VMS.VisionSetup.ViewModels
             ? "VMS에 Grab 요청 — VMS가 촬영한 이미지를 받아옵니다 (운전/라이브 중에는 거절됨)"
             : "Acquire Image — 선택 카메라로 촬영";
 
+        /// <summary>로봇 연동 확장 옵션 (라이선스) — 꺼져 있으면 로봇 · 멀티뷰 · 핸드아이 진입점을 숨긴다.</summary>
+        public bool IsRobotOptionEnabled => LicenseBootCheck.Options.Robot;
+
         /// <summary>로봇 웨이포인트가 있는 스텝이 존재하는지 (UI Visibility 바인딩용)</summary>
-        public bool NeedsRobot => Steps.Any(s => s.RobotWaypoint != null);
+        public bool NeedsRobot => IsRobotOptionEnabled && Steps.Any(s => s.RobotWaypoint != null);
 
         // 로봇 연결 설정
         private string _robotIpAddress = "192.168.1.100";
@@ -688,8 +692,10 @@ namespace VMS.VisionSetup.ViewModels
                 return;
             }
 
-            IsStep3DCamera = cam.CameraType is CameraType.AreaScan3D or CameraType.LineScan3D
-                || cam.Manufacturer.Replace("_", "").Contains("Mech", StringComparison.OrdinalIgnoreCase);
+            // 3D 카메라 확장 옵션이 없으면 촬영 파라미터(3D 스캔)도 보이지 않는다
+            IsStep3DCamera = LicenseBootCheck.Options.Camera3D
+                && (cam.CameraType is CameraType.AreaScan3D or CameraType.LineScan3D
+                    || cam.Manufacturer.Replace("_", "").Contains("Mech", StringComparison.OrdinalIgnoreCase));
             StepCameraSummary = $"카메라: {cam.Name} ({cam.Manufacturer} · {cam.CameraType})";
             _ = RefreshStepCameraCurrentTextAsync();
         }
@@ -3195,7 +3201,9 @@ namespace VMS.VisionSetup.ViewModels
                     ? (creation.IsSimulationFallback
                         ? $"카메라 연결됨(시뮬레이션 — SDK 미탑재): {SelectedCamera.Name}"
                         : $"카메라 연결됨: {SelectedCamera.Name}")
-                    : $"카메라 연결 실패: {SelectedCamera.Name}";
+                    : creation.Acquisition is OptionDisabledCameraAcquisition disabled
+                        ? $"카메라 연결 안 함: {SelectedCamera.Name} — {disabled.Reason}"
+                        : $"카메라 연결 실패: {SelectedCamera.Name}";
 
                 if (success)
                     _ = RefreshStepCameraCurrentTextAsync();

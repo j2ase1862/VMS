@@ -929,9 +929,10 @@
                                       Stroke="#9C27B0" StrokeThickness="1.5"
                                       Width="14" Height="14" Stretch="Uniform"/>
                             </Button>
-                            <!-- Generate Robot Waypoint Steps -->
+                            <!-- Generate Robot Waypoint Steps — 로봇 연동 확장 옵션 -->
                             <Button Command="{Binding GenerateWaypointsCommand}" ToolTip="Generate Robot Waypoint Steps"
-                                    Style="{StaticResource StepControlButtonStyle}">
+                                    Style="{StaticResource StepControlButtonStyle}"
+                                    Visibility="{Binding IsRobotOptionEnabled, Converter={StaticResource BoolToVisibility}}">
                                 <Path Data="M12,2 L12,8 M12,8 L8,5 M12,8 L16,5 M4,12 A8,8 0 1,0 20,12 M20,12 L17,10 M20,12 L17,14"
                                       Stroke="#00897B" StrokeThickness="1.5"
                                       Width="14" Height="14" Stretch="Uniform"/>
@@ -1730,7 +1731,8 @@
                                         <TextBox Text="{Binding SelectedStep.Description, UpdateSourceTrigger=PropertyChanged}"
                                                  Style="{StaticResource WindowDarkTextBox}"/>
                                     </StackPanel>
-                                    <StackPanel Grid.Column="2">
+                                    <StackPanel Grid.Column="2"
+                                                Visibility="{Binding IsRobotOptionEnabled, Converter={StaticResource BoolToVisibility}}">
                                         <TextBlock Text="로봇 노드 번호" Style="{StaticResource SettingLabelStyle}" Margin="0,0,0,3"
                                                    ToolTip="로봇이 보내오는 노드 index 와 이 스텝을 매칭합니다. 비워두면 스텝 순번으로 매칭됩니다."/>
                                         <TextBox Text="{Binding SelectedStep.RobotNodeIndex, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"

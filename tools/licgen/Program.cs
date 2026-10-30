@@ -10,6 +10,7 @@ using VMS.Core.Security.Licensing;
 //   licgen issue --key <private.pem> --key-id dev-2026 --customer "OO정공" --fingerprint XXXXX-XXXXX-XXXXX
 //                [--kind Production|Internal|Trial] [--edition Standard] [--max-clients 1]
 //                [--maintenance-until yyyy-MM-dd] [--expires yyyy-MM-dd] [--out license.lic]
+//                [--options all|none|3d-camera,robot,mlops]   (생략 = all — 확장 옵션 전부를 명시해 발급)
 //   licgen verify --file license.lic [--fingerprint <code>] [--key-id <id> --pubkey <spki-base64>]
 //   licgen backup --to <USB 드라이브/폴더> [--from <키 폴더>]
 //
@@ -106,7 +107,8 @@ int Issue()
         MaxClients: int.Parse(options.GetValueOrDefault("max-clients", "1"), CultureInfo.InvariantCulture),
         MaintenanceUntil: options.GetValueOrDefault("maintenance-until"),
         ExpiresAt: options.GetValueOrDefault("expires"),
-        Edition: options.GetValueOrDefault("edition", "Standard"));
+        Edition: options.GetValueOrDefault("edition", "Standard"),
+        Options: ParseOptions(options.GetValueOrDefault("options", "all")));
 
     var result = LicenseIssuer.Issue(request, DateOnly.FromDateTime(DateTime.Now));
 
@@ -118,6 +120,14 @@ int Issue()
     WarnIfBackupStale(Path.GetDirectoryName(result.LedgerPath)!);
     return 0;
 }
+
+// all = 확장 옵션 전부, none = 기본 구성(GS 인증 구성), 그 밖 = 쉼표로 나열한 옵션만
+static string[] ParseOptions(string value) => value.Trim().ToLowerInvariant() switch
+{
+    "all" => LicenseOptionKeys.All.ToArray(),
+    "none" => Array.Empty<string>(),
+    var list => list.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+};
 
 int Backup()
 {
@@ -163,5 +173,7 @@ int Verify()
 
     Console.WriteLine($"상태: {eval.Status}");
     Console.WriteLine($"내용: {eval.Message}");
+    if (eval.Payload != null)
+        Console.WriteLine($"확장 옵션: {LicenseOptions.From(eval).Describe()}");
     return eval.Status == LicenseStatus.Valid ? 0 : 1;
 }
