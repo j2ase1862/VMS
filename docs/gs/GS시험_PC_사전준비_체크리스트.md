@@ -1,6 +1,6 @@
 # GS 시험 PC(실증 PC) 사전 준비 체크리스트
 
-작성 2026-10-26 · 개정 2026-10-30 · 시험 대상 **BODA VMS v1.48.0** (생산 관리 웹 포함, 기본 구성 라이선스) · 시험자료 동결본 `D:\30_Releases\GS_Freeze\v1.47.3\GS_TestData_v1.47.3.zip`
+작성 2026-10-26 · 개정 2026-10-30 · 시험 대상 **BODA VMS v1.48.0** (생산 관리 웹 포함, 기본 구성 라이선스) · 시험자료 동결본 `D:\30_Releases\GS_Freeze\v1.48.0\GS_TestData_v1.48.0.zip`
 
 시험 PC = **실증 PC** (Basler acA2440-20gc · ADLink PCI-7432 장착, 라이선스 LIC-2026-0004 · 지문 `T61TV-FYA3G-74N81`).
 순서대로 진행하고, 끝난 칸에 `x` 를 친다.
@@ -52,14 +52,14 @@
 
 ## E. 시험자료 넣기
 
-- [ ] 동결본 `GS_TestData_v1.47.3.zip` (1,914,957,244 B) 을 USB 로 옮긴다
-- [ ] zip 해시 확인 — `6e4e96254c887fc7b165dacff60b1a588a5132c0b96e868749ed154b92008f13`
+- [ ] 동결본 `GS_TestData_v1.48.0.zip` (1,914,957,681 B) 을 USB 로 옮긴다
+- [ ] zip 해시 확인 — `8d7384a9b7da08475f716f6fc349ed853ba261df7f71fce7de5d4bc26b837eff`
       ```powershell
-      (Get-FileHash .\GS_TestData_v1.47.3.zip -Algorithm SHA256).Hash
+      (Get-FileHash .\GS_TestData_v1.48.0.zip -Algorithm SHA256).Hash
       ```
 - [ ] **탐색기 또는 `Expand-Archive` 로 `D:\` 에 푼다** → `D:\GS_TestData` (Git Bash `unzip` 금지 — 한글 이름이 깨진다)
       ```powershell
-      Expand-Archive .\GS_TestData_v1.47.3.zip -DestinationPath D:\
+      Expand-Archive .\GS_TestData_v1.48.0.zip -DestinationPath D:\
       ```
 - [ ] 파일 479개 해시 확인 — 아무것도 출력되지 않으면 정상
       ```powershell
