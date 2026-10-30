@@ -1492,6 +1492,7 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- [0] System Status -->
@@ -1691,6 +1692,11 @@
                     <TextBlock Text="ROBOT N/A" Foreground="{StaticResource Brush.Text.Tertiary}" FontSize="12"
                                VerticalAlignment="Center"/>
                 </StackPanel>
+
+                <!-- [9] 제품명 · 버전 — 설치 프로그램 · 매뉴얼과 같은 표기 -->
+                <TextBlock Grid.Column="9" Text="{Binding ProductDisplayName}" Margin="16,0,0,0"
+                           Foreground="{StaticResource Brush.Text.Tertiary}" FontSize="12"
+                           VerticalAlignment="Center"/>
             </Grid>
         </Border>
     </Grid>

@@ -95,7 +95,7 @@ namespace VMS.VisionSetup.ViewModels
         #region Fields
         // 브랜드명 — AppData 루트 폴더 이름과 동일한 단일 원천을 공유
         private readonly string _appName = VMS.Camera.Configuration.AppDataPaths.RootFolderName;
-        private readonly string _appVersion = "1.0.0";
+        private readonly string _appVersion = VMS.Core.ProductInfo.Version;
         private readonly IVisionService _visionService;
         private readonly IRecipeService _recipeService;
         private readonly ICameraService _cameraService;
@@ -120,6 +120,9 @@ namespace VMS.VisionSetup.ViewModels
         #region Properties
         public string AppName => _appName;
         public string AppVersion => _appVersion;
+
+        /// <summary>창 제목 — 제품명 · 버전 (예: BODA VMS v1.48.0 — 비전 설정).</summary>
+        public string WindowTitle => $"{VMS.Core.ProductInfo.DisplayName} — 비전 설정";
 
         // 도구 트리 (사이드바)
         public ObservableCollection<ToolCategory> ToolTree { get; } = new();

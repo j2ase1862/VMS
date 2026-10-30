@@ -6,7 +6,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:UpdaterViewModel}"
-        Title="BODA Vision System 업데이트"
+        Title="BODA VMS 업데이트"
         Icon="Resources/Vasim.ico"
         Width="480" SizeToContent="Height"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
@@ -58,7 +58,7 @@
                            RenderOptions.BitmapScalingMode="HighQuality" />
                 </Border>
                 <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
-                    <TextBlock Text="BODA Vision System 업데이트"
+                    <TextBlock Text="BODA VMS 업데이트"
                                FontSize="15" FontWeight="Bold" Foreground="#F8FAFC" />
                     <TextBlock Text="{Binding VersionText}"
                                FontSize="11.5" Foreground="#94A3B8" />

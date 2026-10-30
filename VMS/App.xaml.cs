@@ -606,7 +606,7 @@ namespace VMS
                     systemConfig.VisionServerUrl,
                     systemConfig.ClientIndex,
                     systemConfig.SystemIpAddress,
-                    systemConfig.ApplicationName,
+                    VMS.Core.ProductInfo.NormalizeApplicationName(systemConfig.ApplicationName),
                     systemConfig.ClientApiKey);
                 heartbeatService.Start();
             }
@@ -1173,7 +1173,7 @@ namespace VMS
                     fileExists
                         ? "시스템 설정이 끝나지 않았습니다.\n시스템 설정 마법사를 실행합니다.\n\n설정 완료 후 VMS를 다시 실행해 주세요."
                         : "초기 시스템 설정이 필요합니다.\n시스템 설정 마법사를 실행합니다.\n\n설정 완료 후 VMS를 다시 실행해 주세요.",
-                    "BODA Vision System - 최초 실행",
+                    $"{VMS.Core.ProductInfo.Name} - 최초 실행",
                     VMS.VisionSetup.Views.Common.MessageDialogKind.Info);
 
                 Process.Start(new ProcessStartInfo

@@ -13,7 +13,7 @@
         xmlns:core="clr-namespace:VMS.Core.Controls;assembly=VMS.Core"
 
         mc:Ignorable="d"
-        Title="BODA VISION AI - OpenCvSharp Vision System"
+        Title="{Binding WindowTitle}"
         WindowStartupLocation="Manual"
         Left="{Binding Source={x:Static SystemParameters.WorkArea}, Path=Left}"
         Top="{Binding Source={x:Static SystemParameters.WorkArea}, Path=Top}"

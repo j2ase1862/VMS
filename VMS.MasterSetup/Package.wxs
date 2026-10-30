@@ -2,7 +2,9 @@
      xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util"
      xmlns:fw="http://wixtoolset.org/schemas/v4/wxs/firewall">
 
-  <Package Name="BODA Vision System"
+  <!-- 제품명 = BODA VMS (GS 인증 신청명 — 제어판 · 설치 창 · 바로가기 동일 표기).
+       설치 폴더 · 레지스트리 키의 "BODA Vision System" 은 기존 설치본 업그레이드 · 마커 호환을 위해 그대로 둔다. -->
+  <Package Name="BODA VMS"
            Manufacturer="VASIM"
            Version="$(var.BuildVersion)"
            UpgradeCode="A70E988A-739F-4CDC-BE08-EBFE03DACA32"
@@ -12,7 +14,7 @@
     <MajorUpgrade DowngradeErrorMessage="최신 버전이 이미 설치되어 있습니다." />
     <MediaTemplate EmbedCab="yes" />
 
-    <Feature Id="Main" Title="BODA Vision System" Level="1">
+    <Feature Id="Main" Title="BODA VMS" Level="1">
       <ComponentGroupRef Id="AppFiles" />
       <ComponentRef Id="DesktopShortcutComp" />
       <ComponentRef Id="StartMenuShortcutComp" />
@@ -73,7 +75,7 @@
     <StandardDirectory Id="DesktopFolder">
       <Component Id="DesktopShortcutComp">
         <Shortcut Id="DesktopShortcut"
-                  Name="VMS 실행"
+                  Name="BODA VMS"
                   Target="[INSTALLFOLDER]VMS.exe"
                   WorkingDirectory="INSTALLFOLDER" />
         <RegistryValue Root="HKCU"
@@ -92,7 +94,7 @@
       <Directory Id="AppMenuFolder" Name="VASIM">
         <Component Id="StartMenuShortcutComp">
           <Shortcut Id="StartMenuShortcut"
-                    Name="BODA Vision System"
+                    Name="BODA VMS"
                     Target="[INSTALLFOLDER]VMS.exe"
                     WorkingDirectory="INSTALLFOLDER" />
           <RemoveFolder Id="RemoveAppMenuFolder" On="uninstall" />

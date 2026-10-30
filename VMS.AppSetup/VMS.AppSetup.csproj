@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <DefineConstants>$(DefineConstants);PRODUCTINFO_INTERNAL</DefineConstants>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
@@ -90,6 +91,8 @@
     <Compile Include="..\VMS.Core\Services\WebClientIndex.cs" Link="Services\WebClientIndex.cs" />
     <Compile Include="..\VMS.Core\Security\Licensing\LicensePayload.cs" Link="Licensing\LicensePayload.cs" />
     <Compile Include="..\VMS.Core\Security\Licensing\LicenseOptions.cs" Link="Licensing\LicenseOptions.cs" />
+    <!-- 제품명 · 버전 단일 원천 — internal 로 컴파일 (VMS 가 AppSetup · VMS.Core 를 함께 참조) -->
+    <Compile Include="..\VMS.Core\ProductInfo.cs" Link="ProductInfo.cs" />
     <Compile Include="..\VMS.Core\Security\Licensing\LicenseCanonicalJson.cs" Link="Licensing\LicenseCanonicalJson.cs" />
     <Compile Include="..\VMS.Core\Security\Licensing\LicenseCrypto.cs" Link="Licensing\LicenseCrypto.cs" />
     <Compile Include="..\VMS.Core\Security\Licensing\LicenseKeyring.cs" Link="Licensing\LicenseKeyring.cs" />

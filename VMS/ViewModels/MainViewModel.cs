@@ -28,7 +28,10 @@ namespace VMS.ViewModels
     public partial class MainViewModel : ObservableObject
     {
         [ObservableProperty]
-        private string _applicationTitle = "BODA Vision System";
+        private string _applicationTitle = VMS.Core.ProductInfo.Name;
+
+        /// <summary>상태 표시줄 오른쪽 끝의 제품명 · 버전 (예: BODA VMS v1.48.0).</summary>
+        public string ProductDisplayName => VMS.Core.ProductInfo.DisplayName;
 
         #region Predictive Defect Rate Widget (Plan §5.3 V5)
 
@@ -665,7 +668,8 @@ namespace VMS.ViewModels
         private void LoadConfiguration()
         {
             _systemConfig = _configService.LoadSystemConfiguration();
-            ApplicationTitle = _systemConfig.ApplicationName;
+            // 옛 기본값(제품명 변경 전)은 현재 제품명으로 보인다 — 사용자가 바꾼 이름은 그대로
+            ApplicationTitle = VMS.Core.ProductInfo.NormalizeApplicationName(_systemConfig.ApplicationName);
 
             // Load cameras from configuration
             Cameras.Clear();
