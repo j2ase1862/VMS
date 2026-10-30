@@ -419,7 +419,7 @@
  },
  "Match Align (매치 얼라인)": {
   "title": "Match Align — 2D 얼라인 (ΔX / ΔY / Δθ)",
-  "purpose": "Feature Match 가 찾은 현재 포즈(중심 · 각도)를 기준(마스터) 포즈와 비교해 변위 ΔX · ΔY · Δθ 를 계산합니다. 캘리브레이션(또는 스텝 Resolution)이 있으면 mm 로도 내고, 핸드아이 행렬로 로봇 · 스테이지 좌표 변위(RobotDX · RobotDY · RobotDTheta)까지 만들어 PLC 로 보낼 수 있습니다. 카메라 1 대로 부품을 보는 표준 2D 얼라인 구성입니다.",
+  "purpose": "Feature Match 가 찾은 현재 포즈(중심 · 각도)를 기준(마스터) 포즈와 비교해 변위 ΔX · ΔY · Δθ 를 계산합니다. 캘리브레이션(또는 스텝 Resolution)이 있으면 mm 로도 내며, 계산한 보정량은 PLC 로 설비(스테이지 등)에 보낼 수 있습니다. 카메라 1 대로 부품을 보는 표준 2D 얼라인 구성입니다.",
   "params": [
    [
     "Mode",
@@ -442,27 +442,22 @@
     "√(ΔX²+ΔY²) 와 |Δθ| 가 모두 한계 이내면 OK. Unit=Mm 은 캘리브레이션 또는 스텝 Resolution 필요"
    ],
    [
-    "Enable Robot Transform · M11 M21 M12 M22 · θ Sign",
-    "해제 · 1 0 0 1 · 1",
-    "핸드아이 행렬의 상위 2×2(회전 · 스케일 · 반전)와 각도 부호. Δ 는 벡터라 병진 성분은 필요 없습니다"
-   ],
-   [
     "Draw Overlay",
     "켬",
     "기준(노란 십자) → 현재(원) 변위 화살표와 수치. 초록 = 합격, 빨강 = NG"
    ]
   ],
-  "outputs": "RefX/Y/Theta · CurrentX/Y/Theta · DeltaX · DeltaY · DeltaTheta · DeltaXMm · DeltaYMm · RobotDX · RobotDY · RobotDTheta · ScaleRatio · JudgmentRadial · JudgmentPass",
+  "outputs": "RefX/Y/Theta · CurrentX/Y/Theta · DeltaX · DeltaY · DeltaTheta · DeltaXMm · DeltaYMm · ScaleRatio · JudgmentRadial · JudgmentPass",
   "judgment": "Enable Judgment 를 켜면 위치(반경)와 각도가 모두 한계 이내여야 OK. Unit=Mm 인데 mm 변환이 불가능하면 픽셀로 잘못 판정하지 않고 실패 처리합니다.",
   "tips": [
-   "<strong>절차</strong> — ① Feature Match 로 기준 부품의 패턴을 학습 ② Feature Match 를 이 도구에 Result 로 연결하고 Run → Δ 계산 ③ 기준을 학습 시점과 다르게 잡으려면 기준 부품을 놓고 Run 후 [현재 매칭을 기준으로 등록] ④ 로봇 전송은 Robot Transform 을 켜고 핸드아이 상위 2×2 입력.",
+   "<strong>절차</strong> — ① Feature Match 로 기준 부품의 패턴을 학습 ② Feature Match 를 이 도구에 Result 로 연결하고 Run → Δ 계산 ③ 기준을 학습 시점과 다르게 잡으려면 기준 부품을 놓고 Run 후 [현재 매칭을 기준으로 등록] ④ 보정량(DeltaX · DeltaY · DeltaTheta)을 설비로 보내려면 PLC Output 에 매핑.",
    "2 점 모드에서 ScaleRatio 가 1.0 에서 벗어나면 오검출이나 배율 변화를 의심하세요.",
    "Feature Match 를 재학습하면 기준도 함께 바뀌거나(UseCurrentImage) 유지되므로(KeepReference) 재학습 원점 설정을 확인하세요."
   ]
  },
  "Multi-Step Align (다중 스텝 얼라인)": {
   "title": "Multi-Step Align — 2-스텝 얼라인 (카메라 이동, 대형 부품)",
-  "purpose": "카메라 1 대가 로봇 · 스테이지로 이동하며 두 스텝에서 부품 양단의 특징을 하나씩 매칭할 때, 두 스텝의 포즈를 한 좌표계로 합쳐 기준 대비 ΔX · ΔY · Δθ 를 계산합니다. 부품이 한 화면에 다 들어오지 않는 패널 · 프레임 얼라인에 씁니다. 이 도구는 마지막(B) 스텝의 작업 공간에 놓습니다.",
+  "purpose": "카메라 1 대가 스테이지 등 이동 장치로 옮겨 가며 두 스텝에서 부품 양단의 특징을 하나씩 매칭할 때, 두 스텝의 포즈를 한 좌표계로 합쳐 기준 대비 ΔX · ΔY · Δθ 를 계산합니다. 부품이 한 화면에 다 들어오지 않는 패널 · 프레임 얼라인에 씁니다. 이 도구는 마지막(B) 스텝의 작업 공간에 놓습니다.",
   "params": [
    [
     "Sources — Point A / Point B (스텝 + 도구)",
@@ -477,7 +472,7 @@
    [
     "Baseline X / Y (B − A)",
     "0 / 0",
-    "B 촬영 위치의 A 대비 오프셋(로봇 · 스테이지 이동량). 두 스텝 모두 캘리브레이션이 있으면 mm, 없으면 px — mm 권장"
+    "B 촬영 위치의 A 대비 오프셋(카메라 이동량). 두 스텝 모두 캘리브레이션이 있으면 mm, 없으면 px — mm 권장"
    ],
    [
     "Ref A X/Y · Ref B X/Y · [현재 두 점을 기준으로 등록]",
@@ -490,17 +485,12 @@
     "Match Align 과 같은 규칙"
    ],
    [
-    "Enable Robot Transform · M11~M22 · θ Sign",
-    "해제 · 항등 · 1",
-    "핸드아이 2×2 변환"
-   ],
-   [
     "Draw Overlay",
     "켬",
     "두 점이 서로 다른 화면에 있으므로 좌상단에 Δ 수치 패널만 표시"
    ]
   ],
-  "outputs": "Unit · PointAX/AY · PointBX/BY · RefAX/AY · RefBX/BY · DeltaX · DeltaY · DeltaTheta · ScaleRatio · RobotDX/DY/DTheta · JudgmentRadial · JudgmentPass",
+  "outputs": "Unit · PointAX/AY · PointBX/BY · RefAX/AY · RefBX/BY · DeltaX · DeltaY · DeltaTheta · ScaleRatio · JudgmentRadial · JudgmentPass",
   "judgment": "Match Align 과 동일 — 위치(반경)와 각도가 모두 한계 이내면 OK.",
   "tips": [
    "예제 템플릿 '2-스텝 얼라인' 을 쓰면 Align A · Align B 스텝과 소스 연결이 자동으로 만들어집니다. 이후 각 스텝의 Feature Match 학습 → Baseline 입력 → 기준 등록 순서로 진행하세요.",
@@ -682,7 +672,7 @@
    [
     "Max Side Length · Custom Det/Rec Model · Custom Dict",
     "960 · (빈 값)",
-    "PP-OCR 전용 — 입력 최대 변(작은 글씨는 1600~2000)과 직접 학습한 모델 · 사전 파일"
+    "PP-OCR 전용 — 입력 최대 변(작은 글씨는 1600~2000)과 별도로 준비한 검출 · 인식 모델과 문자 사전 파일(비우면 기본 모델)"
    ],
    [
     "Confidence Threshold",
@@ -918,7 +908,7 @@
  },
  "Point Cloud Cluster (포인트클라우드 클러스터)": {
   "title": "PointCloud Cluster — 덩어리 분리 · 개수 · 치수",
-  "purpose": "점군을 거리 기준으로 덩어리(클러스터)로 나눠 물체 개수를 세고 덩어리마다 크기(가로 · 세로 · 높이) · 중심 · 방향을 잽니다. 부품 개수 세기, 가장 큰 물체만 남기기, 부스러기 제거에 씁니다. 카메라 정보로 mm 환산이 가능합니다.",
+  "purpose": "점군을 거리 기준으로 덩어리(클러스터)로 나눠 물체 개수를 세고 덩어리마다 크기(가로 · 세로 · 높이) · 중심 · 방향을 잽니다. 부품 개수 세기, 가장 큰 물체만 남기기, 부스러기 제거에 씁니다. 점군에 저장된 카메라 정보로 mm 환산이 가능합니다.",
   "params": [
    [
     "Tolerance (mm)",
@@ -938,7 +928,7 @@
    [
     "Scale Mode · XY Scale (mm/px)",
     "Manual (Manual · AutoFromCamera) · 1.0",
-    "AutoFromCamera 는 Mech-Mind 촬영 점군에서 카메라 내부 정보와 실측 높이로 mm/px 를 자동 계산(권장). 파일 점군 등 정보가 없으면 XY Scale 로 폴백"
+    "AutoFromCamera 는 점군 파일(.vpc)에 함께 저장된 카메라 내부 정보와 실측 높이로 mm/px 를 자동 계산(권장). 그 정보가 없는 점군은 XY Scale 로 계산"
    ],
    [
     "Output Mode",
@@ -1085,7 +1075,7 @@
   "outputs": "Length · Straightness · MaxDeviation · RmsDeviation · InlierCount · TotalPoints · InlierRatio · AngleXY(평면 방향 °) · Elevation(고각 °) · LinePointX/Y/Z · LineDirX/Y/Z",
   "judgment": "판정을 켜면 직진도(인라이어의 99 % 가 직선에서 떨어진 거리)가 Max Straightness 이하일 때 OK. 유효한 점이 Min Inliers 보다 적거나 직선을 찾지 못하면 NG.",
   "tips": [
-   "좌표는 점군 원좌표입니다 — 3D 카메라 점군은 X/Y 가 화소, Z 가 mm 라 길이 · 방향은 화소 기준입니다.",
+   "좌표는 점군 원좌표입니다 — X/Y 가 화소, Z 가 mm 로 저장된 점군이면 길이 · 방향도 화소 기준입니다.",
    "직진도에는 막대 · 레일의 굵기와 표면 흩어짐도 들어갑니다. 곧은 부품을 먼저 재서 기준을 정하세요."
   ]
  },
@@ -1113,7 +1103,7 @@
  },
  "Point Cloud Filter (포인트클라우드 필터)": {
   "title": "PointCloud Filter — 점군 솎아내기 · 이상점 제거",
-  "purpose": "점군의 점 수를 줄이고(VoxelGrid 다운샘플) 표면에서 튄 점을 지웁니다(통계적 이상점 제거, SOR). Registration · Deviation 앞에 두어 처리 속도를 높이는 것이 주된 용도입니다. 촬영 자체의 노이즈는 이 도구가 아니라 스텝의 Camera Settings 에 있는 ‘포인트 클라우드 후처리’(끄기 · 약 · 중 · 강)로 카메라 안에서 정리합니다.",
+  "purpose": "점군의 점 수를 줄이고(VoxelGrid 다운샘플) 표면에서 튄 점을 지웁니다(통계적 이상점 제거, SOR). Registration · Deviation 앞에 두어 처리 속도를 높이는 것이 주된 용도입니다.",
   "params": [
    [
     "Enable Voxel Grid · Voxel Size (mm)",
@@ -1129,7 +1119,7 @@
   "outputs": "InputPoints · OutputPoints · ReductionRatio · AppliedVoxel · AppliedSor",
   "judgment": "판정 없음. ReductionRatio 가 0.9 이상이면 Voxel Size 가 과한지 확인하세요.",
   "tips": [
-   "가공된 점군은 뒤의 점군 도구(Registration · Deviation · Cluster · Plane Fit)가 그대로 쓰지만, 촬영 시 만들어진 Depth Map(Height Slicer 입력)에는 반영되지 않습니다."
+   "가공된 점군은 뒤의 점군 도구(Registration · Deviation · Cluster · Plane Fit)가 그대로 쓰지만, 점군 데이터에 함께 들어 있는 Depth Map(Height Slicer 입력)에는 반영되지 않습니다."
   ]
  },
  "Height Slicer (높이 슬라이스)": {
@@ -1265,17 +1255,17 @@
  },
  "Detection (딥러닝 검출)": {
   "title": "Detection — 딥러닝 객체 검출",
-  "purpose": "학습된 ONNX 모델로 객체의 위치(박스)와 클래스를 검출합니다. 기본 학습 백본은 D-FINE이며 YOLOv8/v11 형식도 자동 판별합니다. 부품 유무 · 다종 부품 검출 · 외관 결함 검출에 씁니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+  "purpose": "학습된 ONNX 모델로 객체의 위치(박스)와 클래스를 검출합니다. D-FINE 형식 모델을 기본으로 하며 YOLOv8/v11 형식도 자동 판별합니다. 부품 유무 · 다종 부품 검출 · 외관 결함 검출에 씁니다. 모델은 학습된 ONNX 파일(.onnx)을 Model Path 오른쪽의 [폴더] 버튼으로 지정합니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
   "params": [
    [
-    "Model Path (.onnx) · [레지스트리…]",
+    "Model Path (.onnx) · [폴더]",
     "(빈 값)",
-    "ONNX 파일 또는 MLOps 레지스트리 참조(model://…). Class Names 는 모델 메타데이터에서 자동으로 채워집니다"
+    "ONNX 모델 파일 경로. [폴더] 버튼으로 파일을 고릅니다. Class Names 는 모델 메타데이터에서 자동으로 채워집니다"
    ],
    [
     "Inference Size (px)",
     "640 [320~1280]",
-    "학습 imgsz 와 같게"
+    "모델의 입력 크기와 같게"
    ],
    [
     "Use SAHI · Tile Size · Overlap Ratio",
@@ -1317,17 +1307,17 @@
  },
  "Segmentation (분할)": {
   "title": "Segmentation — 픽셀 단위 분할 (semantic)",
-  "purpose": "U-Net 같은 픽셀 분류 모델로 이미지를 클래스별 마스크로 나눕니다. 결함 영역의 면적을 재거나 배경 · 전경을 분리할 때 쓰며, 같은 클래스의 개체를 따로 세야 하면 RF-DETR-seg 를 씁니다. 뒤에 Blob 을 붙여 개수 · 크기를 분석합니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+  "purpose": "U-Net 같은 픽셀 분류 모델로 이미지를 클래스별 마스크로 나눕니다. 결함 영역의 면적을 재거나 배경 · 전경을 분리할 때 쓰며, 같은 클래스의 개체를 따로 세야 하면 RF-DETR-seg 를 씁니다. 뒤에 Blob 을 붙여 개수 · 크기를 분석합니다. 모델은 학습된 ONNX 파일(.onnx)을 Model Path 오른쪽의 [폴더] 버튼으로 지정합니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
   "params": [
    [
     "Model Path (.onnx) · Input Size",
     "(빈 값) · 512 [64~1024]",
-    "입력 [1,3,H,W] · 출력 [1,C,H,W] 로짓 모델. 입력 크기는 학습 크기와 같아야 합니다(다르면 오류 없이 정확도만 떨어짐)"
+    "입력 [1,3,H,W] · 출력 [1,C,H,W] 로짓 모델. 입력 크기는 모델의 입력 크기와 같아야 합니다(다르면 오류 없이 정확도만 떨어짐)"
    ],
    [
     "ImageNet Normalization",
     "켬",
-    "학습 때와 같아야 합니다. 마스크가 엉뚱하면 이 설정부터 확인"
+    "모델을 만들 때 쓴 정규화 방식과 같아야 합니다. 마스크가 엉뚱하면 이 설정부터 확인"
    ],
    [
     "Background Class Index",
@@ -1348,12 +1338,12 @@
  },
  "RF-DETR-seg (인스턴스 분할)": {
   "title": "RF-DETR-seg — 인스턴스 분할",
-  "purpose": "RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+  "purpose": "RF-DETR 인스턴스 분할 ONNX 모델로 객체마다 박스 · 클래스 · 마스크를 출력합니다. Output Mask Image 를 켜면 인스턴스 합집합 마스크가 다음 도구로 넘어가 PointCloud Mask Crop 과 연결할 수 있습니다(3D 객체 검출). 집합 예측 방식이라 NMS · IoU · 마스크 임계가 없습니다. 모델은 학습된 ONNX 파일(.onnx)을 Model Path 오른쪽의 [폴더] 버튼으로 지정합니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
   "params": [
    [
-    "Model Path (.onnx) · [레지스트리…]",
+    "Model Path (.onnx) · [폴더]",
     "(빈 값)",
-    "파일 또는 model:// 참조"
+    "ONNX 모델 파일 경로. [폴더] 버튼으로 파일을 고릅니다"
    ],
    [
     "Input Size (모델이 정합니다)",
@@ -1374,18 +1364,17 @@
   "outputs": "InstanceCount · Inst{i}_Class · Inst{i}_ClassName · Inst{i}_Score · Inst{i}_X/Y/Width/Height · Inst{i}_MaskPixels",
   "judgment": "인스턴스가 0 건이면 NG.",
   "tips": [
-   "학습은 MLOps 의 train_rfdetr_seg.py(세그멘테이션 데이터셋, coco 형식)로 합니다(§9.6).",
    "템플릿 ‘DL 세그 기반 3D 객체 검출’ 이 RF-DETR-seg(마스크 출력) → Mask Crop → Cluster 체인을 만듭니다."
   ]
  },
  "Classify (분류)": {
   "title": "Classify — 이미지 분류",
-  "purpose": "ResNet · MobileNet 같은 분류 모델(ONNX)로 이미지(또는 ROI) 전체를 한 클래스로 판정합니다. 양품/불량 판정, 부품 종류 구분, 외관 등급에 씁니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+  "purpose": "ResNet · MobileNet 같은 분류 모델(ONNX)로 이미지(또는 ROI) 전체를 한 클래스로 판정합니다. 양품/불량 판정, 부품 종류 구분, 외관 등급에 씁니다. 모델은 학습된 ONNX 파일(.onnx)을 Model Path 오른쪽의 [폴더] 버튼으로 지정합니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
   "params": [
    [
     "Model Path (.onnx) · Input Width / Height",
     "(빈 값) · 224 / 224",
-    "학습 입력 크기와 같게"
+    "모델의 입력 크기와 같게"
    ],
    [
     "Confidence Threshold",
@@ -1400,12 +1389,12 @@
    [
     "Use ImageNet Normalization",
     "켬",
-    "torchvision 사전학습 모델이면 켬"
+    "ImageNet 정규화를 쓰는 모델이면 켬"
    ],
    [
     "Class Names · Draw Overlay",
     "(자동) · 켬",
-    "학습 폴더 순서대로 쉼표 구분 / 클래스 · 신뢰도 표시(PASS 초록 · FAIL 빨강 테두리)"
+    "모델의 클래스 순서대로 쉼표 구분 / 클래스 · 신뢰도 표시(PASS 초록 · FAIL 빨강 테두리)"
    ]
   ],
   "outputs": "ClassName · ClassId · Confidence",
@@ -1413,13 +1402,13 @@
   "tips": []
  },
  "Anomaly (이상 탐지)": {
-  "title": "Anomaly — 이상 탐지 (정상 이미지만으로 학습)",
-  "purpose": "PatchCore · FastFlow · EfficientAD 같은 anomalib 호환 모델로 정상 대비 이상 점수를 계산하고 히트맵으로 이상 부위를 표시합니다. 불량 샘플이 거의 없는 공정에서 정상 이미지만으로 학습해 쓰는 방식입니다. 모델 파일(.onnx)은 MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
+  "title": "Anomaly — 이상 탐지 (정상 대비 이상 점수)",
+  "purpose": "PatchCore · FastFlow · EfficientAD 같은 이상 탐지 모델로 정상 대비 이상 점수를 계산하고 히트맵으로 이상 부위를 표시합니다. 정상 이미지만으로 만든 모델을 쓰므로 불량 샘플이 거의 없는 공정에 알맞습니다. 모델은 학습된 ONNX 파일(.onnx)을 Model Path 오른쪽의 [폴더] 버튼으로 지정합니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.",
   "params": [
    [
     "Model Path (.onnx) · Input Size",
     "(빈 값) · 224 [64~512]",
-    "학습 image_size 와 같게"
+    "모델의 입력 크기와 같게"
    ],
    [
     "Anomaly Threshold",

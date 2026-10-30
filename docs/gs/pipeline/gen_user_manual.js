@@ -199,7 +199,7 @@ front.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 10
 front.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 240, after: 60 },
   children: [new TextRun({ text: "BODA Vision Management System", bold: true, size: 34, font: FONT })] }));
 front.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 400 },
-  children: [new TextRun({ text: "VMS · VMS.VisionSetup · VMS.AppSetup · BODA.VMS.Web · BODA.VMS.MLOps", size: 22, color: "595959", font: FONT })] }));
+  children: [new TextRun({ text: "VMS · VMS.VisionSetup · VMS.AppSetup · BODA.VMS.Web", size: 22, color: "595959", font: FONT })] }));
 const coverImg = resolveSrc("../gs/screenshots/cover_vms_main.png") || resolveSrc("../gs/screenshots/01_vms_main.png");
 if (coverImg) front.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [imgRun(coverImg, 500)] }));
 front.push(new Paragraph({ spacing: { before: 480 }, alignment: AlignmentType.CENTER,

@@ -67,37 +67,37 @@
 <ol>
   <li>OCR 도구를 놓고 ROI 를 글자 영역에 그립니다. OCR Engine(Tesseract · PaddleOCR)과 Language 를 고르고, 숫자만 있는 각인은 Character Whitelist 에 <code>0123456789</code> 를 넣어 오인식을 줄입니다.</li>
   <li>흐릿한 각인은 앞에 Image Enhance 를, 도트 프린트는 Dot Matrix Mode 를 켭니다. Auto Preprocess 는 기본 켬.</li>
-  <li>"정해진 문자열이 맞는지" 만 보려면 OCV 도구에 기준 문자를 학습시켜 검증합니다. 날짜 · 로트처럼 형식이 정해진 문자열의 인식률을 높이려면 OCR Synth Data(§5.12)로 합성 데이터를 만들어 모델을 다듬습니다.</li>
+  <li>"정해진 문자열이 맞는지" 만 보려면 OCV 도구에 기준 문자를 학습시켜 검증합니다.</li>
 </ol>
 
 <h3 id="ex-dl">7.7 딥러닝 판정 — 검출 · 이상 탐지</h3>
 <figure><img src="../gs/screenshots/v3/templates/dl-detection.png" data-width="420" alt="DL 객체 검출 체인"><figcaption>Detection → Result (ONNX 모델 필요)</figcaption></figure>
 <p><strong>상황</strong> — 규칙으로 정의하기 어려운 외관 결함(긁힘 · 찍힘 · 이물)이나 다양한 모양의 부품을 학습된 모델로 판정합니다.</p>
 <ol>
-  <li>모델을 준비합니다 — MLOps(9장)에서 학습해 운영으로 승격합니다(10장).</li>
+  <li>모델을 준비합니다 — 검사 대상에 맞게 학습된 ONNX 모델 파일을 이 PC 의 폴더에 복사해 둡니다.</li>
   <li>템플릿 Deep Learning → <strong>DL 객체 검출 판정</strong>(또는 DL 이상 탐지 판정)을 생성합니다.</li>
-  <li><strong>Detection</strong> 의 Model Path 에 ONNX 파일을 지정하거나 [레지스트리…] 로 <code>model://…@production</code> 참조를 고릅니다. D-FINE · YOLO 형식은 자동 판별됩니다.</li>
+  <li><strong>Detection</strong> 의 Model Path 옆 폴더 버튼을 눌러 ONNX 모델 파일을 지정합니다. D-FINE · YOLO 형식은 자동 판별됩니다.</li>
   <li>Confidence Threshold(기본 0.5 부근)를 조정해 오검출과 미검출의 균형을 잡고, 특정 클래스만 볼 때는 클래스 필터를 씁니다. 0 건 검출은 NG 이므로 "결함이 없으면 OK" 인 검사에는 결과 해석을 Result 도구에서 반대로 잡습니다(결함 클래스 검출 = NG).</li>
-  <li>이상 탐지(Anomaly)는 정상 이미지만으로 학습한 모델을 쓰며 Anomaly Score 임계값으로 판정합니다. 히트맵 오버레이로 이상 부위를 확인합니다.</li>
+  <li>이상 탐지(Anomaly)는 정상 이미지를 기준으로 하는 이상 탐지 모델(ONNX)을 쓰며 Anomaly Score 임계값으로 판정합니다. 히트맵 오버레이로 이상 부위를 확인합니다.</li>
   <li>GPU 가 없는 PC 는 CPU 로 동작합니다. 속도가 필요하면 Inference Settings(§5.12)에서 CUDA · TensorRT 를 고릅니다.</li>
 </ol>
 
-<h3 id="ex-align">7.8 얼라인 — 로봇 · 스테이지 보정량 산출</h3>
+<h3 id="ex-align">7.8 얼라인 — 설비 · 스테이지 보정량 산출</h3>
 <figure><img src="../gs/screenshots/v3/templates/2d-match-align.png" data-width="520" alt="2D 매치 얼라인 체인"><figcaption>Grayscale → Feature Match → Match Align → Result</figcaption></figure>
-<p><strong>상황</strong> — 부품이 기준 위치에서 얼마나 이동 · 회전했는지 재서 로봇이나 서보에 보정량을 보냅니다(로봇 얼라인).</p>
+<p><strong>상황</strong> — 부품이 기준 위치에서 얼마나 이동 · 회전했는지 재서 설비(스테이지 · 서보)에 보정량을 보냅니다.</p>
 <ol>
   <li>템플릿 얼라인 → <strong>Match Align — 2D 매치 얼라인</strong> 을 생성합니다. 각도 정밀도가 더 필요하면 부품 양단의 특징을 찾는 Feature Match 를 하나 더 붙여 Match Align 에 Result 로 연결하고 Mode 를 <strong>TwoPoint</strong> 로 바꿉니다(연결 순서 = 1 번 · 2 번 점).</li>
   <li>기준(마스터) 부품을 놓고 Feature Match 를 학습합니다. 학습 위치가 곧 기준 포즈입니다.</li>
-  <li><strong>Match Align</strong> 에서 Unit=Mm(캘리브레이션 필요) · Max ΔXY · Max Δθ 를 정하고 Enable Judgment 를 켭니다. 로봇으로 보내려면 Enable Robot Transform 을 켜고 핸드아이 행렬 상위 2×2 를 넣습니다.</li>
-  <li>부품을 옮긴 이미지로 Run All → DeltaX · DeltaY · DeltaTheta(RobotDX · DY · DTheta)를 확인합니다. Match Align 의 PLC Output 에서 이 값들을 PLC 주소에 매핑하면 시퀀스가 돌 때마다 PLC 로 전달됩니다.</li>
-  <li>부품이 한 화면에 안 들어오면 <strong>2-스텝 얼라인</strong>(Multi-Step Align)을, 기울기까지 필요하면 3D 카메라로 <strong>평면 틸트 얼라인</strong> · <strong>2D+3D 하이브리드 얼라인</strong> 을 씁니다.</li>
+  <li><strong>Match Align</strong> 에서 Unit=Mm(캘리브레이션 필요) · Max ΔXY · Max Δθ 를 정하고 Enable Judgment 를 켭니다.</li>
+  <li>부품을 옮긴 이미지로 Run All → DeltaX · DeltaY · DeltaTheta 를 확인합니다. Match Align 의 PLC Output 에서 이 값들을 PLC 주소에 매핑하면 시퀀스가 돌 때마다 PLC 로 전달됩니다.</li>
+  <li>부품이 한 화면에 안 들어오면 <strong>2-스텝 얼라인</strong>(Multi-Step Align)을, 기울기까지 재야 하면 점군(.vpc) 데이터를 쓰는 <strong>평면 틸트 얼라인</strong> · <strong>2D+3D 하이브리드 얼라인</strong> 템플릿(§5.8)을 씁니다.</li>
 </ol>
 
 <h3 id="ex-3d">7.9 3D 검사 — 객체 개수 · 치수 · 형상 편차</h3>
 <figure><img src="../gs/screenshots/v3/templates/pc-dl-detect.png" data-width="520" alt="DL 세그 기반 3D 객체 검출 체인"><figcaption>RF-DETR-seg → PointCloud Mask Crop → PointCloud Cluster</figcaption></figure>
-<p><strong>상황</strong> — 3D 카메라(Mech-Mind 등)로 찍은 점군에서 부품 개수와 가로 · 세로 · 높이를 재거나, 기준 형상과의 편차(들뜸 · 눌림)를 봅니다. "어디에 있는지" 는 2D 에서 찾고 "얼마나 큰지" 는 3D 에서 잽니다.</p>
+<p><strong>상황</strong> — 저장해 둔 점군(.vpc) 데이터에서 부품 개수와 가로 · 세로 · 높이를 재거나, 기준 형상과의 편차(들뜸 · 눌림)를 봅니다. "어디에 있는지" 는 2D 에서 찾고 "얼마나 큰지" 는 3D 에서 잽니다.</p>
 <ol>
-  <li>3D 카메라 스텝에서 Acquire(또는 3D → Load 3D Data 로 .vpc 파일)로 점군을 가져옵니다. Depth Map · Point Cloud 탭에서 확인합니다.</li>
+  <li>메뉴 3D → Load 3D Data 로 .vpc 파일을 열어 점군을 가져옵니다(§5.4). Depth Map · Point Cloud 탭에서 확인합니다.</li>
   <li>템플릿 3D → <strong>3D 객체 카운트 · 치수 (기본)</strong> 를 생성합니다. Height Slicer 의 MinZ/MaxZ 를 부품 높이 범위(mm)로 맞추면 그 높이의 영역만 마스크가 됩니다. 딥러닝 윤곽으로 자르려면 <strong>DL 세그 기반 3D 객체 검출</strong> 을 씁니다.</li>
   <li><strong>PointCloud Cluster</strong> 의 Tolerance(mm) 를 부품 사이 간격보다 작게, Min Points 를 잡음보다 크게 잡습니다. Scale Mode 는 AutoFromCamera(카메라 정보로 mm 자동 환산)를 권장합니다. Run 후 ClusterCount 와 Cluster{i}_SizeX/Y/Z 를 확인합니다.</li>
   <li>형상 편차 검사는 <strong>3D 기준 형상 편차 검사</strong> 템플릿 — Registration 에 기준 점군(.vpc) 또는 CAD(.stl)를 지정해 자세를 맞춘 뒤 Deviation 의 Tolerance(mm) · Max Defect Ratio 로 판정합니다. 결과는 점군 위 히트맵(초록 = 일치, 빨강 = 초과)으로 표시됩니다.</li>
