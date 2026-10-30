@@ -54,6 +54,9 @@ namespace VMS.ViewModels
         [ObservableProperty] private bool _mlopsSendNg;
         [ObservableProperty] private int _mlopsOkSampleRate = ImageSaveOptions.DefaultMlopsOkSampleRate;
 
+        /// <summary>MLOps 연동 확장 옵션 — 꺼져 있으면 학습 데이터 수집 카드를 숨긴다 (저장값은 보존).</summary>
+        public bool IsMLOpsOptionEnabled => VMS.Core.Security.Licensing.LicenseBootCheck.Options.MLOps;
+
         /// <summary>MLOps 서버 주소·라인 토큰이 설정돼 있는지 — 없으면 토글을 켜도 나가지 않으므로 화면에서 알려 준다.</summary>
         public bool MlopsConfigured { get; }
         /// <summary>설정은 있는데 시작 시 송신부가 만들어지지 못한 경우(보안 정책 등) — 힌트를 빨간 계열로 보이는 근거.</summary>

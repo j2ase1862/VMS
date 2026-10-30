@@ -123,6 +123,9 @@ namespace VMS
             try
             {
                 VMS.Core.Security.Licensing.LicenseBootCheck.Run();
+                // 확장 옵션 — 3D 카메라 실촬영 허용 여부를 카메라 계층에 주입 (라이선스 없음 = 허용)
+                VMS.Camera.Services.CameraAcquisitionFactory.Allow3DCamera =
+                    VMS.Core.Security.Licensing.LicenseBootCheck.Options.Camera3D;
             }
             catch (Exception ex)
             {
@@ -456,8 +459,11 @@ namespace VMS
             // 서버 주소나 토큰이 없으면 해석기는 캐시만 보는 상태로 남고, 절대 경로로 지정한 도구는 그대로 돈다.
             try
             {
+                // MLOps 연동 확장 옵션이 없으면 서버에 붙지 않는다 (내려받아 둔 캐시만)
+                var mlopsAllowed = VMS.Core.Security.Licensing.LicenseBootCheck.Options.MLOps;
                 ModelReferenceResolver.Current = ModelReferenceResolver.CreateDefault(
-                    systemConfig.MlopsServerUrl, systemConfig.MlopsLineToken);
+                    mlopsAllowed ? systemConfig.MlopsServerUrl : null,
+                    mlopsAllowed ? systemConfig.MlopsLineToken : null);
 
                 // 캐시가 무한정 커지지 않게 시작할 때 한 번 정리한다. 쓰고 있는 파일은 건드리지 않는다.
                 var maxBytes = Math.Max(1, systemConfig.ModelCacheMaxGB) * 1024L * 1024L * 1024L;
@@ -772,7 +778,8 @@ namespace VMS
             // Web 연동과 무관하게 서버 주소·토큰만 있으면 켠다 — 단독 모드 라인도 학습 데이터는 모을 수 있다.
             // 실제 전송 여부는 이미지 저장 설정의 "MLOps 전송" 토글이 정한다.
             VMS.Services.ImageUpload.ILineNgImageUploader? lineNgUploader = null;
-            if (!string.IsNullOrWhiteSpace(systemConfig.MlopsServerUrl)
+            if (VMS.Core.Security.Licensing.LicenseBootCheck.Options.MLOps
+                && !string.IsNullOrWhiteSpace(systemConfig.MlopsServerUrl)
                 && !string.IsNullOrWhiteSpace(systemConfig.MlopsLineToken)) try
             {
                 lineNgUploader = new VMS.Services.ImageUpload.LineNgImageUploader(

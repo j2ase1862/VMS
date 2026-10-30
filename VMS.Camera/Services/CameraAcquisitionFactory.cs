@@ -19,13 +19,32 @@ namespace VMS.Camera.Services
     public static class CameraAcquisitionFactory
     {
         /// <summary>
+        /// 3D 카메라 실촬영 허용 여부 — 라이선스 확장 옵션(3d-camera). 앱 기동 시 한 번 정한다
+        /// (VMS.Camera 는 라이선스 코드를 참조하지 않으므로 값만 주입받는다). 기본 true.
+        /// </summary>
+        public static bool Allow3DCamera { get; set; } = true;
+
+        public const string Camera3DDisabledReason =
+            "3D 카메라 촬영은 이 라이선스에 포함되지 않은 확장 옵션입니다 — 저장된 점군은 [3D] › [Load 3D Data] 로 열 수 있습니다";
+
+        /// <summary>3D 카메라(구조광 · 3D 종류)인가 — 확장 옵션 판정 기준.</summary>
+        public static bool Is3DCamera(CameraInfo camera) =>
+            camera.CameraType is CameraType.AreaScan3D or CameraType.LineScan3D
+            || (camera.Manufacturer ?? string.Empty).Contains("Mech", StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>
         /// 구현체 + 폴백 정보 반환. UI 호출부는 IsSimulationFallback 이면 반드시
         /// 사용자에게 경고를 표시할 것 (시뮬레이션 영상을 실카메라로 오인 방지).
         /// 제조사 미지정/알 수 없음 → 의도된 시뮬레이션(가상 카메라)으로 폴백 아님.
+        /// 3D 카메라 옵션이 꺼져 있으면 연결을 거절하는 구현체를 돌려준다(ConnectAsync=false).
         /// </summary>
         public static CameraAcquisitionCreation CreateWithInfo(CameraInfo camera)
         {
             var manufacturer = camera.Manufacturer ?? string.Empty;
+
+            if (!Allow3DCamera && Is3DCamera(camera))
+                return new CameraAcquisitionCreation(
+                    new OptionDisabledCameraAcquisition(Camera3DDisabledReason), false, Camera3DDisabledReason);
 
             if (manufacturer.Contains("Mech", StringComparison.OrdinalIgnoreCase))
             {

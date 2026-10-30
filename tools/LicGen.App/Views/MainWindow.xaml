@@ -8,7 +8,7 @@
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
         Title="BODA VMS 라이선스 발급 (LicGen — 사내 전용)"
-        Width="1060" Height="768"
+        Width="1060" Height="816"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         WindowStyle="None"
@@ -142,6 +142,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
                             <Grid.Resources>
@@ -218,10 +219,24 @@
                                            Text="Trial/Internal 전용 (필수) — Production 은 비워서 영구로 발급. 날짜 텍스트를 지우면 해제"/>
                             </StackPanel>
 
-                            <Separator Grid.Row="7" Grid.ColumnSpan="2" Margin="0,4,0,12"
+                            <TextBlock Grid.Row="7" Grid.Column="0" Text="확장 옵션" Style="{StaticResource FieldLabel}"/>
+                            <StackPanel Grid.Row="7" Grid.Column="1" Margin="0,0,0,12">
+                                <StackPanel Orientation="Horizontal">
+                                    <CheckBox Style="{StaticResource WindowDarkCheckBox}" Margin="0,0,20,0"
+                                              Content="3D 카메라 촬영" IsChecked="{Binding OptionCamera3D}"/>
+                                    <CheckBox Style="{StaticResource WindowDarkCheckBox}" Margin="0,0,20,0"
+                                              Content="로봇 연동 · 멀티뷰" IsChecked="{Binding OptionRobot}"/>
+                                    <CheckBox Style="{StaticResource WindowDarkCheckBox}"
+                                              Content="MLOps 서버 연동" IsChecked="{Binding OptionMLOps}"/>
+                                </StackPanel>
+                                <TextBlock Style="{StaticResource FieldHint}"
+                                           Text="해제한 기능은 대상 PC 에서 메뉴 · 설정이 보이지 않음. 모두 해제 = 기본 구성 (GS 인증 구성)"/>
+                            </StackPanel>
+
+                            <Separator Grid.Row="8" Grid.ColumnSpan="2" Margin="0,4,0,12"
                                        Background="{StaticResource BrushBorderSubtle}"/>
 
-                            <Button Grid.Row="8" Grid.Column="1" Content="발급"
+                            <Button Grid.Row="9" Grid.Column="1" Content="발급"
                                     Style="{StaticResource ModernPrimaryButton}"
                                     MinWidth="150" HorizontalAlignment="Left"
                                     Command="{Binding IssueLicenseCommand}"/>

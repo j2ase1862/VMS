@@ -1681,8 +1681,9 @@
 
                 <!-- [7] Spacer -->
 
-                <!-- [8] Robot (placeholder) -->
-                <StackPanel Grid.Column="8" Orientation="Horizontal" VerticalAlignment="Center">
+                <!-- [8] Robot (placeholder) — 로봇 연동 확장 옵션이 있을 때만 -->
+                <StackPanel Grid.Column="8" Orientation="Horizontal" VerticalAlignment="Center"
+                            Visibility="{Binding IsRobotOptionEnabled, Converter={StaticResource BoolToVisibilityConverter}}">
                     <TextBlock Text="&#xE99A;" FontFamily="Segoe MDL2 Assets"
                                FontSize="13" Foreground="{StaticResource Brush.Text.Tertiary}"
                                VerticalAlignment="Center" Margin="0,0,5,0"/>

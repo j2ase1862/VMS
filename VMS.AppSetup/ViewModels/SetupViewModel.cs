@@ -21,6 +21,7 @@ namespace VMS.AppSetup.ViewModels
         // Phase 2b — Page 6 (IO 보드) 추가로 5 → 6
         // Page 7 (보안 모드) 추가로 6 → 7 — RELEASE VMS 의 RequireExplicit 부팅 정책 대응
         private const int TotalPages = 7;
+        private const int RobotPage = 5; // 로봇 확장 옵션이 없으면 건너뛴다
 
         private readonly IConfigurationService _configService;
         private readonly IDialogService _dialogService;
@@ -31,7 +32,12 @@ namespace VMS.AppSetup.ViewModels
         private readonly ILicenseSetupService? _licenseSetup;
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(DisplayStepNumber))]
         private int _currentPage = 1;
+
+        // 머리글 "Step N of M" — 로봇 단계를 건너뛰는 라이선스에서는 번호를 당겨 빈 번호가 보이지 않게 한다
+        public int DisplayStepNumber => !IsRobotOptionEnabled && CurrentPage > RobotPage ? CurrentPage - 1 : CurrentPage;
+        public int DisplayStepTotal => IsRobotOptionEnabled ? TotalPages : TotalPages - 1;
 
         [ObservableProperty]
         private string _pageTitle = "Welcome";
@@ -276,6 +282,35 @@ namespace VMS.AppSetup.ViewModels
         [NotifyCanExecuteChangedFor(nameof(ImportLicenseCommand))]
         private bool _isImportingLicense;
 
+        // 확장 옵션 — 라이선스가 options 를 지정한 경우에만 끈다 (없음 · 옛 발급분 = 전부 켬).
+        // 꺼진 옵션의 설정 화면은 숨기되, 이미 저장된 설정값은 건드리지 않는다.
+        [ObservableProperty]
+        private string _licenseOptionsText = string.Empty;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(CameraManufacturers), nameof(CameraTypes))]
+        private bool _isCamera3DOptionEnabled = true;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(DisplayStepNumber), nameof(DisplayStepTotal))]
+        private bool _isRobotOptionEnabled = true;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(AdvancedWebSettingsHeader))]
+        private bool _isMLOpsOptionEnabled = true;
+
+        public string AdvancedWebSettingsHeader => IsMLOpsOptionEnabled
+            ? "고급 설정 — Web Client API Key · MLOps 모델 레지스트리 (해당 현장만)"
+            : "고급 설정 — Web Client API Key (해당 현장만)";
+
+        private void ApplyLicenseOptions(LicenseOptions options)
+        {
+            LicenseOptionsText = options.Describe();
+            IsCamera3DOptionEnabled = options.Camera3D;
+            IsRobotOptionEnabled = options.Robot;
+            IsMLOpsOptionEnabled = options.MLOps;
+        }
+
         [RelayCommand]
         private void RefreshLicenseStatus()
         {
@@ -283,11 +318,13 @@ namespace VMS.AppSetup.ViewModels
             {
                 LicenseStatusText = "확인 불가 (라이선스 서비스 미주입)";
                 LicenseStatusLevel = "Warn";
+                ApplyLicenseOptions(LicenseOptions.AllEnabled);
                 return;
             }
 
             MachineFingerprintCode = _licenseSetup.GetMachineFingerprint();
             var eval = _licenseSetup.GetStatus();
+            ApplyLicenseOptions(LicenseOptions.From(eval));
             LicenseStatusText = $"{StatusLabel(eval.Status)} — {eval.Message}";
             LicenseStatusLevel = eval.Status switch
             {
@@ -486,8 +523,13 @@ namespace VMS.AppSetup.ViewModels
         private string _nextButtonText = "Next";
 
         // Enum values for binding
-        public Array CameraManufacturers => Enum.GetValues(typeof(CameraManufacturer));
-        public Array CameraTypes => Enum.GetValues(typeof(CameraType));
+        // 3D 카메라 확장 옵션이 없으면 3D 종류 · Mech-Mind 를 고를 수 없게 한다 (이미 저장된 항목은 보존)
+        public Array CameraManufacturers => IsCamera3DOptionEnabled
+            ? Enum.GetValues(typeof(CameraManufacturer))
+            : Enum.GetValues<CameraManufacturer>().Where(m => m != CameraManufacturer.Mech_Mind).ToArray();
+        public Array CameraTypes => IsCamera3DOptionEnabled
+            ? Enum.GetValues(typeof(CameraType))
+            : Enum.GetValues<CameraType>().Where(t => t is not (CameraType.AreaScan3D or CameraType.LineScan3D)).ToArray();
         public Array TriggerSources => Enum.GetValues(typeof(TriggerSource));
         public Array PlcVendors => Enum.GetValues(typeof(PlcVendor));
         public Array CommunicationTypes => Enum.GetValues(typeof(PlcCommunicationType));
@@ -516,10 +558,10 @@ namespace VMS.AppSetup.ViewModels
             _webServerSetup = webServerSetup;
             _licenseSetup = licenseSetup;
 
+            RefreshLicenseStatus();
             UpdatePageInfo();
             LoadExistingConfiguration();
             RefreshWebServerStatus();
-            RefreshLicenseStatus();
         }
 
         private void LoadExistingConfiguration()
@@ -555,8 +597,8 @@ namespace VMS.AppSetup.ViewModels
                 MlopsServerUrl = config.MlopsServerUrl ?? string.Empty;
                 MlopsLineToken = config.MlopsLineToken ?? string.Empty;
                 IsAdvancedWebSettingsVisible = !string.IsNullOrWhiteSpace(config.ClientApiKey)
-                    || !string.IsNullOrWhiteSpace(config.MlopsServerUrl)
-                    || !string.IsNullOrWhiteSpace(config.MlopsLineToken);
+                    || IsMLOpsOptionEnabled && (!string.IsNullOrWhiteSpace(config.MlopsServerUrl)
+                                                || !string.IsNullOrWhiteSpace(config.MlopsLineToken));
                 WebSsoEnabled = config.WebSso?.Enabled ?? false;
                 SecurityMode = config.SecurityMode;
                 CameraMode = config.CameraMode;
@@ -782,7 +824,7 @@ namespace VMS.AppSetup.ViewModels
                         "• Application settings and network configuration\n" +
                         "• Camera connections and manufacturers\n" +
                         "• PLC communication interface\n" +
-                        "• Robot integration (optional)\n" +
+                        (IsRobotOptionEnabled ? "• Robot integration (optional)\n" : "") +
                         "• Security mode (Production / Development)\n\n" +
                         "Click 'Next' to begin the setup process.";
                     break;
@@ -823,6 +865,7 @@ namespace VMS.AppSetup.ViewModels
             if (CurrentPage > 1)
             {
                 CurrentPage--;
+                if (CurrentPage == RobotPage && !IsRobotOptionEnabled) CurrentPage--;
             }
         }
 
@@ -838,6 +881,7 @@ namespace VMS.AppSetup.ViewModels
             else if (CurrentPage < TotalPages)
             {
                 CurrentPage++;
+                if (CurrentPage == RobotPage && !IsRobotOptionEnabled) CurrentPage++;
             }
         }
 
@@ -912,6 +956,8 @@ namespace VMS.AppSetup.ViewModels
                 foreach (var dev in found)
                 {
                     if (Cameras.Any(c => string.Equals(c.IpAddress, dev.IpAddress, StringComparison.OrdinalIgnoreCase)))
+                        continue;
+                    if (!IsCamera3DOptionEnabled && ResolveManufacturer(dev.Manufacturer) == CameraManufacturer.Mech_Mind)
                         continue;
 
                     Cameras.Add(new CameraConfiguration

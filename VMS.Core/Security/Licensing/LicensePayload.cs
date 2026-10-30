@@ -17,8 +17,9 @@ namespace VMS.Core.Security.Licensing
 
     /// <summary>
     /// license.lic 의 서명 대상 본문. 날짜는 "yyyy-MM-dd" 문자열 (시간대 모호성 제거).
-    /// 필드 추가 시 schemaVersion 을 올릴 것 — 서명은 canonical JSON 전체에 걸리므로
-    /// 구버전 검증기가 새 필드를 만나도 서명 자체는 유효하다 (LicenseCanonicalJson 참조).
+    /// 서명은 canonical JSON 전체에 걸리므로 구버전 검증기가 새 필드를 만나도 서명 자체는 유효하다
+    /// (LicenseCanonicalJson 참조). 구버전 검증기는 schemaVersion != 1 을 거부하므로, 구버전이 무시해도
+    /// 의미가 깨지지 않는 선택 필드(예: options)는 schemaVersion 을 올리지 않고 추가한다.
     /// </summary>
     public sealed class LicensePayload
     {
@@ -42,6 +43,16 @@ namespace VMS.Core.Security.Licensing
         /// <summary>예약 — 기능 게이팅은 후속 (spec §2).</summary>
         [JsonPropertyName("features")]
         public string[] Features { get; init; } = System.Array.Empty<string>();
+
+        /// <summary>
+        /// 확장 옵션 (<see cref="LicenseOptionKeys"/>). null = 지정 없음 → 전부 켬 — 이 필드가 생기기 전
+        /// 발급분과 같은 의미다. 빈 배열 = 기본 구성 (확장 옵션 없음).
+        /// schemaVersion 은 올리지 않는다: 구버전 검증기(VMS v1.47 이하 · Web 사본)는 모르는 필드를
+        /// 서명에만 넣고 지나가며, 그쪽 동작(전부 켬)이 곧 옛 의미라 같은 파일을 양쪽에서 쓸 수 있다.
+        /// </summary>
+        [JsonPropertyName("options")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string[]? Options { get; init; }
 
         /// <summary>좌석 수. 단일 PC = 1.</summary>
         [JsonPropertyName("maxClients")]

@@ -466,6 +466,12 @@ namespace VMS.ViewModels
                 dispatcher.InvokeAsync(Apply);
         }
 
+        // 확장 옵션이 꺼진 카메라(3D)는 연결을 거절한다 — 일반 실패 문구 대신 사유를 보인다
+        private string ConnectFailedLabel(string fallback)
+            => _acquisition is OptionDisabledCameraAcquisition disabled
+                ? $"{Name}: {disabled.Reason}"
+                : fallback;
+
         private string ConnectedLabel()
             => _isSimulationFallback
                 ? $"Connected (SIMULATION — SDK 미탑재): {Name}"
@@ -490,7 +496,7 @@ namespace VMS.ViewModels
                 IsConnected = connected;
                 ResultMessage = connected
                     ? ConnectedLabel()
-                    : $"Connection failed: {Name}";
+                    : ConnectFailedLabel($"Connection failed: {Name}");
             }
             catch (Exception ex)
             {
@@ -540,7 +546,7 @@ namespace VMS.ViewModels
                     var connected = await _acquisition.ConnectAsync(ToCameraInfo());
                     if (!connected)
                     {
-                        ResultMessage = "Camera connection failed";
+                        ResultMessage = ConnectFailedLabel("Camera connection failed");
                         return false;
                     }
                     IsConnected = true;
@@ -603,7 +609,7 @@ namespace VMS.ViewModels
                     var connected = await _acquisition.ConnectAsync(ToCameraInfo());
                     if (!connected)
                     {
-                        ResultMessage = "Camera connection failed";
+                        ResultMessage = ConnectFailedLabel("Camera connection failed");
                         return;
                     }
                     IsConnected = true;

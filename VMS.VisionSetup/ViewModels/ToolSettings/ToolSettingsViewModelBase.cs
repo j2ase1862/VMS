@@ -2,6 +2,7 @@ using VMS.VisionSetup.Models;
 using VMS.VisionSetup.VisionTools.BlobAnalysis;
 using VMS.VisionSetup.VisionTools.Measurement;
 using VMS.Core.Interfaces;
+using VMS.Core.Security.Licensing;
 using VMS.PLC.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -19,6 +20,9 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
     public abstract class ToolSettingsViewModelBase : ObservableObject, IDisposable
     {
         public VisionToolBase Tool { get; }
+
+        /// <summary>로봇 연동 확장 옵션 — 꺼져 있으면 로봇 좌표 변환(Hand-Eye) 묶음을 숨긴다.</summary>
+        public bool IsRobotOptionEnabled => LicenseBootCheck.Options.Robot;
 
         protected ToolSettingsViewModelBase(VisionToolBase tool)
         {

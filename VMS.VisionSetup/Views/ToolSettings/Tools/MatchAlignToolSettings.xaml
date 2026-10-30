@@ -5,6 +5,9 @@
              xmlns:conv="clr-namespace:VMS.VisionSetup.Converters"
              xmlns:meas="clr-namespace:VMS.VisionSetup.VisionTools.Measurement"
              xmlns:pm="clr-namespace:VMS.VisionSetup.VisionTools.PatternMatching">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+    </UserControl.Resources>
     <StackPanel>
         <controls:EnumComboBoxParameter Label="Mode"
             ItemsSource="{conv:EnumValues {x:Type pm:MatchAlignMode}}"
@@ -98,8 +101,9 @@
             </StackPanel>
         </Expander>
 
-        <!-- 로봇/스테이지 좌표 변환 -->
-        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}">
+        <!-- 로봇/스테이지 좌표 변환 — 로봇 연동 확장 옵션이 있을 때만 -->
+        <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}"
+                  Visibility="{Binding IsRobotOptionEnabled, Converter={StaticResource BoolToVisibility}}">
             <Expander.Header>
                 <TextBlock Text="Robot Transform (Hand-Eye)" Style="{StaticResource ExpanderHeaderStyle}"/>
             </Expander.Header>

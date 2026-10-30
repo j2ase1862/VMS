@@ -18,7 +18,8 @@ public sealed record LedgerEntry(
     string? MaintenanceUntil,
     string? ExpiresAt,
     string IssuedAtUtc,
-    string Issuer);
+    string Issuer,
+    string[]? Options = null); // 확장 옵션 — null 은 옵션 도입 전 발급분(전부 켬)
 
 public static class LedgerStore
 {

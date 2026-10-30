@@ -61,6 +61,10 @@ namespace VMS.VisionSetup
             // ── 보안 정책 로드 (HttpClient / SignalR 초기화 전 필수) ──
             VMS.Core.Security.SecurityOptions.LoadFromAppData();
 
+            // ── 라이선스 확장 옵션 — 3D 카메라 실촬영 허용 여부를 카메라 계층에 주입 ──
+            VMS.Camera.Services.CameraAcquisitionFactory.Allow3DCamera =
+                VMS.Core.Security.Licensing.LicenseBootCheck.Options.Camera3D;
+
             // ── ONNX Execution Provider 설정 로드 ──
             LoadAIConfig();
             InitModelReferenceResolver();
@@ -246,7 +250,8 @@ namespace VMS.VisionSetup
             // ── Robot Service ──
             IRobotService? robotService = null;
             var robotConfig = LoadRobotConfig();
-            if (robotConfig.isEnabled)
+            // 로봇 연동 확장 옵션이 없으면 설정이 남아 있어도 로봇 서비스를 만들지 않는다
+            if (robotConfig.isEnabled && VMS.Core.Security.Licensing.LicenseBootCheck.Options.Robot)
             {
                 try
                 {
@@ -586,9 +591,12 @@ namespace VMS.VisionSetup
             try
             {
                 var settings = OnnxSettingsService.ReadMlopsSettings();
+                // MLOps 연동 확장 옵션이 없으면 서버에 붙지 않는다 (내려받아 둔 캐시만)
+                var mlopsAllowed = VMS.Core.Security.Licensing.LicenseBootCheck.Options.MLOps;
+                var serverUrl = mlopsAllowed ? settings.ServerUrl : null;
                 VMS.Core.Services.ModelReferenceResolver.Current =
-                    VMS.Core.Services.ModelReferenceResolver.CreateDefault(settings.ServerUrl, settings.LineToken);
-                Debug.WriteLine($"[App] ModelReferenceResolver: registry={(string.IsNullOrWhiteSpace(settings.ServerUrl) ? "(없음 — 캐시만)" : settings.ServerUrl)}");
+                    VMS.Core.Services.ModelReferenceResolver.CreateDefault(serverUrl, mlopsAllowed ? settings.LineToken : null);
+                Debug.WriteLine($"[App] ModelReferenceResolver: registry={(string.IsNullOrWhiteSpace(serverUrl) ? "(없음 — 캐시만)" : serverUrl)}");
             }
             catch (Exception ex)
             {

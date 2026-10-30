@@ -126,8 +126,9 @@
                 <!-- Page Indicator -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" Margin="0,4,16,0">
                     <TextBlock Text="Step " Foreground="{StaticResource BrushTextMuted}" FontSize="14"/>
-                    <TextBlock Text="{Binding CurrentPage}" Foreground="#FFD700" FontSize="14" FontWeight="Bold"/>
-                    <TextBlock Text=" of 7" Foreground="{StaticResource BrushTextMuted}" FontSize="14"/>
+                    <TextBlock Text="{Binding DisplayStepNumber}" Foreground="#FFD700" FontSize="14" FontWeight="Bold"/>
+                    <TextBlock Text=" of " Foreground="{StaticResource BrushTextMuted}" FontSize="14"/>
+                    <TextBlock Text="{Binding DisplayStepTotal}" Foreground="{StaticResource BrushTextMuted}" FontSize="14"/>
                 </StackPanel>
 
                 <!-- 윈도우 컨트롤 (최소화 / 닫기 — wizard 는 NoResize 라 최대화 없음).
@@ -248,7 +249,7 @@
                                      그대로 보존한다. -->
                                 <ToggleButton IsChecked="{Binding IsAdvancedWebSettingsVisible}"
                                               Style="{StaticResource WizardDisclosureToggle}"
-                                              Content="고급 설정 — Web Client API Key · MLOps 모델 레지스트리 (해당 현장만)"/>
+                                              Content="{Binding AdvancedWebSettingsHeader}"/>
                                 <StackPanel Margin="0,10,0,0"
                                             Visibility="{Binding IsAdvancedWebSettingsVisible, Converter={StaticResource BoolToVisConverter}}">
                                     <!-- API Key 는 Web 전용 — 단독 모드에서는 쓰이지 않으므로 함께 잠근다 -->
@@ -261,7 +262,9 @@
                                     </StackPanel>
 
                                     <!-- MLOps 모델 레지스트리 (Phase 1 §6) — 레시피가 model:// 참조로 모델을 가리킬 때만 필요.
-                                         단독 모드에서도 입력 가능하다 (Web 서버와 별개 서버). -->
+                                         단독 모드에서도 입력 가능하다 (Web 서버와 별개 서버).
+                                         MLOps 확장 옵션이 없는 라이선스에서는 칸 전체를 숨긴다 (저장값은 보존). -->
+                                    <StackPanel Visibility="{Binding IsMLOpsOptionEnabled, Converter={StaticResource BoolToVisConverter}}">
                                     <TextBlock Style="{StaticResource LabelStyle}"><Run Text="MLOps 서버 주소"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="MLOps 서버 주소" CustomDescription="모델 레지스트리(MLOps 플랫폼) 주소입니다. 예: https://mlops.example.local:5310 — 비전 설정에서 [레지스트리…]로 고른 모델(model:// 참조)을 이 서버에서 내려받습니다. 레지스트리를 쓰지 않으면 비워 둡니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                                     <TextBox Text="{Binding MlopsServerUrl, UpdateSourceTrigger=PropertyChanged}"
                                              Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,5"/>
@@ -273,6 +276,7 @@
                                              Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,5"/>
                                     <TextBlock Text="MLOps 관리 화면에서 라인마다 발급한 토큰(ln_…)을 그대로 붙여 넣습니다. 토큰이 없으면 참조 모델을 내려받지 못합니다."
                                                Foreground="{StaticResource BrushTextMuted}" FontSize="11" TextWrapping="Wrap"/>
+                                    </StackPanel>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
@@ -1155,6 +1159,10 @@
                                         </Style>
                                     </TextBlock.Style>
                                 </TextBlock>
+
+                                <TextBlock Style="{StaticResource LabelStyle}"><Run Text="확장 옵션"/></TextBlock>
+                                <TextBlock Text="{Binding LicenseOptionsText}" FontSize="12" TextWrapping="Wrap"
+                                           Foreground="{StaticResource BrushTextPrimary}" Margin="0,0,0,12"/>
 
                                 <StackPanel Orientation="Horizontal">
                                     <Button Content="라이선스 파일 가져오기..."

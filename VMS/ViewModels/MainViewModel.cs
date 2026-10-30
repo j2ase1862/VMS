@@ -305,7 +305,11 @@ namespace VMS.ViewModels
         // ── MLOps 연동 상태 (헤더 칩) ──
         // 송신부·레지스트리 클라이언트가 시작 시 만들어지지 못하면(보안 정책이 http:// 를 거부하는 등) 기능만 조용히 빠졌다.
         // 설정이 있는데 비활성인 경우에만 칩을 띄운다 — 설정 자체가 없는 단독 라인은 조용한 것이 맞다.
-        public bool HasMlopsIssue => VMS.Core.Services.MlopsClientStatus.HasDisabled;
+        public bool HasMlopsIssue => VMS.Core.Security.Licensing.LicenseBootCheck.Options.MLOps
+                                     && VMS.Core.Services.MlopsClientStatus.HasDisabled;
+
+        /// <summary>로봇 연동 확장 옵션 — 꺼져 있으면 상태 표시줄의 로봇 칸을 숨긴다.</summary>
+        public bool IsRobotOptionEnabled => VMS.Core.Security.Licensing.LicenseBootCheck.Options.Robot;
         public string MlopsIssueText => "MLOps 비활성";
         public string MlopsIssueTooltip => VMS.Core.Services.MlopsClientStatus.Summary ?? string.Empty;
 

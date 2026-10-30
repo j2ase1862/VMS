@@ -13,6 +13,33 @@ namespace VMS.Core.Security.Licensing
         /// <summary>마지막 Run 결과 — StartupHealthCheck / UI 상태 표시가 참조.</summary>
         public static LicenseEvaluation? Current { get; private set; }
 
+        private static LicenseOptions? _options;
+
+        /// <summary>
+        /// 이 PC 의 확장 옵션. Run 을 거치지 않는 프로세스(VisionSetup)는 첫 조회 때 감사 기록 없이 평가한다.
+        /// 평가 실패도 전부 켬 — 라이선스 검사가 현장 기능을 빼앗아서는 안 됨.
+        /// </summary>
+        public static LicenseOptions Options
+        {
+            get
+            {
+                if (_options != null) return _options;
+                LicenseEvaluation? eval = Current;
+                if (eval == null)
+                {
+                    try
+                    {
+                        eval = Evaluate(null, MachineFingerprint.GetCode(), DateOnly.FromDateTime(DateTime.Now));
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"[LicenseBootCheck] 옵션 평가 실패: {ex.Message}");
+                    }
+                }
+                return _options = LicenseOptions.From(eval);
+            }
+        }
+
         /// <summary>
         /// 기본 경로 + 실제 머신 지문 + 오늘 날짜로 평가 후 감사 기록.
         /// 어떤 예외도 전파하지 않는다 — 라이선스 검사가 기동을 깨서는 안 됨.
@@ -37,6 +64,7 @@ namespace VMS.Core.Security.Licensing
             }
 
             Current = result;
+            _options = LicenseOptions.From(result);
 
             try
             {

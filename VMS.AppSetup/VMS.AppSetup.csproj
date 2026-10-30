@@ -89,6 +89,7 @@
          (의존성 없는 상수 클래스라 링크만으로 충분) -->
     <Compile Include="..\VMS.Core\Services\WebClientIndex.cs" Link="Services\WebClientIndex.cs" />
     <Compile Include="..\VMS.Core\Security\Licensing\LicensePayload.cs" Link="Licensing\LicensePayload.cs" />
+    <Compile Include="..\VMS.Core\Security\Licensing\LicenseOptions.cs" Link="Licensing\LicenseOptions.cs" />
     <Compile Include="..\VMS.Core\Security\Licensing\LicenseCanonicalJson.cs" Link="Licensing\LicenseCanonicalJson.cs" />
     <Compile Include="..\VMS.Core\Security\Licensing\LicenseCrypto.cs" Link="Licensing\LicenseCrypto.cs" />
     <Compile Include="..\VMS.Core\Security\Licensing\LicenseKeyring.cs" Link="Licensing\LicenseKeyring.cs" />

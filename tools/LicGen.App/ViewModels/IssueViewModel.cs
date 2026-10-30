@@ -44,6 +44,24 @@ namespace Boda.LicGen.App.ViewModels
         [ObservableProperty]
         private DateTime? _expiresAt;
 
+        // 확장 옵션 — 기본은 전부 켬(현장 납품 구성). 모두 끄면 기본 구성(GS 인증 구성)
+        [ObservableProperty]
+        private bool _optionCamera3D = true;
+
+        [ObservableProperty]
+        private bool _optionRobot = true;
+
+        [ObservableProperty]
+        private bool _optionMLOps = true;
+
+        private string[] SelectedOptions() => new (bool On, string Key)[]
+            {
+                (OptionCamera3D, LicenseOptionKeys.Camera3D),
+                (OptionRobot, LicenseOptionKeys.Robot),
+                (OptionMLOps, LicenseOptionKeys.MLOps)
+            }
+            .Where(o => o.On).Select(o => o.Key).ToArray();
+
         public IssueViewModel(string keyDir, IDialogService dialogService)
         {
             _keyDir = keyDir;
@@ -100,7 +118,8 @@ namespace Boda.LicGen.App.ViewModels
                 Kind: SelectedKind,
                 MaxClients: seats,
                 MaintenanceUntil: MaintenanceUntil?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-                ExpiresAt: ExpiresAt?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+                ExpiresAt: ExpiresAt?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                Options: SelectedOptions());
 
             var today = DateOnly.FromDateTime(DateTime.Now);
             try
@@ -117,7 +136,8 @@ namespace Boda.LicGen.App.ViewModels
             var summary =
                 $"고객명: {request.Customer}\n종류: {request.Kind} (서명 키 {request.KeyId})\n" +
                 $"지문: {request.Fingerprint}\n좌석: {seats}\n" +
-                $"유지보수 만료: {request.MaintenanceUntil ?? "-"}\n실행 만료: {request.ExpiresAt ?? "- (영구)"}\n\n" +
+                $"유지보수 만료: {request.MaintenanceUntil ?? "-"}\n실행 만료: {request.ExpiresAt ?? "- (영구)"}\n" +
+                $"확장 옵션: {LicenseOptions.Of(request.Options!).Describe()}\n\n" +
                 "발급 즉시 대장(ledger.jsonl)에 기록됩니다. 진행할까요?";
             if (!_dialogService.ShowConfirmation(summary, "발급 확인")) return;
 

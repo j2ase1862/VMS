@@ -39,7 +39,10 @@ namespace VMS.VisionSetup.Controls
             DependencyProperty.Register(nameof(BrowseFolder), typeof(bool), typeof(TextBoxParameter), new PropertyMetadata(false));
 
         public static readonly DependencyProperty ShowRegistryPickerProperty =
-            DependencyProperty.Register(nameof(ShowRegistryPicker), typeof(bool), typeof(TextBoxParameter), new PropertyMetadata(false));
+            DependencyProperty.Register(nameof(ShowRegistryPicker), typeof(bool), typeof(TextBoxParameter),
+                new PropertyMetadata(false, null,
+                    // MLOps 확장 옵션이 없는 라이선스에서는 XAML 이 켜 둬도 버튼을 띄우지 않는다
+                    (_, value) => value is true && VMS.Core.Security.Licensing.LicenseBootCheck.Options.MLOps));
 
         public static readonly DependencyProperty RegistryTaskTypeProperty =
             DependencyProperty.Register(nameof(RegistryTaskType), typeof(string), typeof(TextBoxParameter), new PropertyMetadata(null));
