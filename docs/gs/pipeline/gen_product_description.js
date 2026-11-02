@@ -94,8 +94,8 @@ function caption(text) {
 const DOC_VERSION = "1.1";
 const DOC_DATE = "2026-11-02";
 const PRODUCT_VERSION = "v1.48.1";
-const APPLICANT = "(주)바심 (사업자등록번호 [기입])";
-const AUTHOR = "김기동 부장 (R&D사업부) / TEL 031-421-9063 · gdkim@vasim.co.kr";
+const APPLICANT = "(주)바심 (사업자등록번호 387-87-00586)";
+const AUTHOR = "김기동 부장 (기업부설연구소) / TEL 031-421-9063 · gdkim@vasim.co.kr";
 
 const children = [];
 
