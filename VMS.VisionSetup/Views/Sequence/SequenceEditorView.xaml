@@ -271,13 +271,17 @@
                     <TextBox Text="{Binding SequenceName, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource DarkTextBox}" Width="200"/>
 
-                    <Rectangle Width="1" Fill="#3F3F46" Margin="12,4"/>
+                    <!-- Reset 신호 — PLC 주소 전용이라 PLC 연동 확장 옵션이 있을 때만 -->
+                    <Rectangle Width="1" Fill="#3F3F46" Margin="12,4"
+                               Visibility="{Binding IsPlcEnabled, Converter={StaticResource BoolToVisibility}}"/>
 
                     <TextBlock Text="Reset 신호:" Foreground="#FF8A80" FontSize="12"
                                FontWeight="SemiBold"
                                VerticalAlignment="Center" Margin="0,0,6,0"
-                               ToolTip="이 PLC 주소의 조건이 충족되면 어느 노드에서든 즉시 Start로 복귀합니다"/>
-                    <Grid Width="120">
+                               ToolTip="이 PLC 주소의 조건이 충족되면 어느 노드에서든 즉시 Start로 복귀합니다"
+                               Visibility="{Binding IsPlcEnabled, Converter={StaticResource BoolToVisibility}}"/>
+                    <Grid Width="120"
+                          Visibility="{Binding IsPlcEnabled, Converter={StaticResource BoolToVisibility}}">
                         <TextBox x:Name="ResetAddressBox"
                                  Text="{Binding ResetSignalAddress, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource DarkTextBox}"
@@ -299,10 +303,12 @@
                     <ComboBox ItemsSource="{Binding ResetCheckModes}"
                               SelectedItem="{Binding ResetSignalCheckMode}"
                               Style="{StaticResource DarkComboBox}" Width="110" Margin="4,0,0,0"
-                              ToolTip="체크 모드 (BitOn, WordEquals 등)"/>
+                              ToolTip="체크 모드 (BitOn, WordEquals 등)"
+                              Visibility="{Binding IsPlcEnabled, Converter={StaticResource BoolToVisibility}}"/>
                     <TextBox Text="{Binding ResetSignalCompareValue, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource DarkTextBox}" Width="60" Margin="4,0,0,0"
-                             ToolTip="비교값 (Word 모드용)"/>
+                             ToolTip="비교값 (Word 모드용)"
+                             Visibility="{Binding IsPlcEnabled, Converter={StaticResource BoolToVisibility}}"/>
                 </StackPanel>
 
                 <!-- 오른쪽: 버튼 -->
@@ -329,7 +335,7 @@
                         <StackPanel Orientation="Horizontal">
                             <Ellipse Width="8" Height="8" Margin="0,0,6,0"
                                      Fill="{Binding IsPlcConnected, Converter={StaticResource PlcStatusColorConverter}}"/>
-                            <TextBlock Text="PLC Monitor" Foreground="White"/>
+                            <TextBlock Text="{Binding MonitorTitle}" Foreground="White"/>
                         </StackPanel>
                     </Button>
 
@@ -576,7 +582,7 @@
                         Margin="0,8,8,0" IsHitTestVisible="False"
                         Visibility="{Binding IsPlcMonitoring, Converter={StaticResource BoolToVisibility}}">
                     <StackPanel>
-                        <TextBlock Text="PLC Monitor" Foreground="{StaticResource BrushTextSecondary}" FontSize="10"
+                        <TextBlock Text="{Binding MonitorTitle}" Foreground="{StaticResource BrushTextSecondary}" FontSize="10"
                                    FontWeight="SemiBold" Margin="0,0,0,4"/>
                         <!-- 조건 충족 -->
                         <StackPanel Orientation="Horizontal" Margin="0,2">
@@ -617,7 +623,7 @@
                         <Border DockPanel.Dock="Top" Background="{StaticResource BrushBgCard}" Padding="8,4">
                             <DockPanel>
                                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock Text="PLC I/O Monitor" Foreground="{StaticResource BrushTextPrimary}"
+                                    <TextBlock Text="{Binding MonitorPanelTitle}" Foreground="{StaticResource BrushTextPrimary}"
                                                FontWeight="SemiBold" FontSize="12" Margin="0,0,10,0"/>
                                     <Ellipse Width="8" Height="8" Margin="0,0,4,0"
                                              Fill="{Binding IsPlcConnected, Converter={StaticResource PlcStatusColorConverter}}"/>
@@ -677,16 +683,29 @@
                             </DockPanel>
                         </Border>
 
-                        <!-- 모니터 본문 — 상단 PLC, 하단 IO 보드 두 섹션으로 분리 -->
+                        <!-- 모니터 본문 — 상단 PLC, 하단 IO 보드 두 섹션으로 분리.
+                             PLC 연동 확장 옵션이 없으면 PLC 섹션을 접어 IO 보드 섹션이 맨 위로 온다. -->
                         <Grid>
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="*"/>
+                                <RowDefinition>
+                                    <RowDefinition.Style>
+                                        <Style TargetType="RowDefinition">
+                                            <Setter Property="Height" Value="*"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsPlcEnabled}" Value="False">
+                                                    <Setter Property="Height" Value="Auto"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </RowDefinition.Style>
+                                </RowDefinition>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
                         <!-- PLC 모니터 데이터 그리드 -->
                         <DataGrid Grid.Row="0" ItemsSource="{Binding MonitorItems}"
+                                  Visibility="{Binding IsPlcEnabled, Converter={StaticResource BoolToVisibility}}"
                                   AutoGenerateColumns="False" IsReadOnly="True"
                                   Background="{StaticResource BrushBgWindow}" Foreground="{StaticResource BrushTextPrimary}"
                                   BorderThickness="0" GridLinesVisibility="Horizontal"
@@ -769,8 +788,6 @@
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="IO Board Monitor" Foreground="#FF9800"
                                            FontWeight="SemiBold" FontSize="12" Margin="0,0,10,0"/>
-                                <TextBlock Text="(채널 구성 — 라이브 폴링은 Phase B)"
-                                           Foreground="#888888" FontSize="11" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Border>
 

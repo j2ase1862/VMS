@@ -10,7 +10,7 @@ using VMS.Core.Security.Licensing;
 //   licgen issue --key <private.pem> --key-id dev-2026 --customer "OO정공" --fingerprint XXXXX-XXXXX-XXXXX
 //                [--kind Production|Internal|Trial] [--edition Standard] [--max-clients 1]
 //                [--maintenance-until yyyy-MM-dd] [--expires yyyy-MM-dd] [--out license.lic]
-//                [--options all|none|3d-camera,robot,mlops]   (생략 = all — 확장 옵션 전부를 명시해 발급)
+//                [--options all|none|3d-camera,robot,mlops,plc,line-scan]   (생략 = all — 확장 옵션 전부를 명시해 발급)
 //   licgen verify --file license.lic [--fingerprint <code>] [--key-id <id> --pubkey <spki-base64>]
 //   licgen backup --to <USB 드라이브/폴더> [--from <키 폴더>]
 //

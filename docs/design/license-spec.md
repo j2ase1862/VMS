@@ -26,7 +26,7 @@
 | MSI 배포 | **자유 배포** (필드 엔지니어/테스터/개발자 누구나 다운로드) | 배포와 사용 권한의 분리. MSI에는 비밀이 없다 (ClientApiKey·JWT 키는 현장 생성) — 인앱 업데이트 경로 무수정 |
 | 활성화 경로 | **USB 라이선스 파일 단일 경로** — 온라인 활성화 서버는 만들지 않는다 | 파일이 지문 바인딩이라 유출 무해. 인터넷 노출 발급 서버의 운영·보안 비용 > 효익. 오프라인 경로는 어차피 필수이므로 경로를 하나로 통일 |
 | 판매 모델 | **영구 라이선스 + 연 유지보수** (만료 시 실행은 유지, 업데이트만 차단) — 권장 기본값 | 만료로 생산이 멈추는 리스크 제거. 구독형(만료 시 실행 차단)은 포맷상 지원하되 기본 아님 |
-| 에디션 | `features[]` 는 예약으로 남기고, **확장 옵션은 `options[]`** 로 켠다 (2026-10-30, §3a) | 기본 구성 = GS 인증 범위. 3D 카메라 · 로봇 · MLOps 연동은 고객별 옵션 |
+| 에디션 | `features[]` 는 예약으로 남기고, **확장 옵션은 `options[]`** 로 켠다 (2026-10-30, §3a) | 기본 구성 = GS 인증 범위. 3D 카메라 · 로봇 · MLOps · PLC 연동 · 라인스캔은 고객별 옵션 |
 
 ## 3a. 확장 옵션 (2026-10-30)
 
@@ -37,6 +37,8 @@ GS 인증은 **기본 구성**으로 받는다 — 인증 범위 밖 기능은 �
 | `3d-camera` | 3D 카메라(Mech-Mind · 3D 종류) 실촬영 · 촬영 파라미터 | AppSetup 카메라 종류 · 제조사 목록에서 빠지고, 연결을 거절(`OptionDisabledCameraAcquisition`). VisionSetup "3D 스캔" 패널 숨김. **저장 점군 열기([3D] › [Load 3D Data]) · 3D 검사 도구는 기본 구성** |
 | `robot` | 로봇 연동 · 핸드아이 캘리브레이션 · 로봇 멀티뷰 스캔 | AppSetup 5단계(Robot) 건너뜀, VisionSetup 멀티뷰 패널 · 웨이포인트 버튼 · 로봇 노드 번호 · 정렬 도구의 Robot Transform 숨김, 로봇 서비스 미생성, VMS 상태 표시줄 로봇 칸 숨김 |
 | `mlops` | MLOps 서버 연동 | AppSetup 고급 설정의 MLOps 칸, VisionSetup [레지스트리…] 버튼, VMS 이미지 저장 설정의 MLOps 카드 · 헤더 칩 숨김. 모델 해석기는 캐시만, NG 이미지 송신부 미생성 |
+| `plc` | PLC 통신 연동 (2026-11-02, TTA 11월 요청) | AppSetup 4단계(PLC) 건너뜀, 저장된 PLC 설정이 있어도 연결하지 않음(VMS 는 벤더 None 으로 기동). 시퀀스 에디터 · 도구 출력 매핑의 장치 목록에서 MainPLC 제외(새 입출력 노드 = 첫 IO 보드), Reset 신호 · PLC 모니터 표 숨김, 모니터 이름 "I/O Monitor", 도구 설정 "PLC Output" 섹션 숨김, 시퀀스 노드 · Result 도구 도움말은 IO 보드 문구, VMS 상태 표시줄 PLC 칸 숨김. **IO 보드 연동은 기본 구성** |
+| `line-scan` | 라인스캔 카메라 · 롤러 연속 검사 (2026-11-02) | AppSetup 카메라 종류 목록에서 LineScan 2D/3D 제외, VMS 사이드 패널 Roller Inspection 섹션 숨김 · 토글 비활성 |
 
 판정 (`LicenseOptions.From`):
 - 서명이 유효한 라이선스가 `options` 를 적은 경우에만 그 목록을 따른다 (지문 불일치 · 만료여도 목록은 따름).
@@ -59,7 +61,7 @@ GS 인증은 **기본 구성**으로 받는다 — 인증 범위 밖 기능은 �
     "kind": "Production",                   // Production | Internal | Trial
     "edition": "Standard",
     "features": [],                         // 예약 (사용 안 함)
-    "options": ["3d-camera","robot","mlops"], // 확장 옵션 — §3a. 필드가 없으면 전부 켬, [] = 기본 구성
+    "options": ["3d-camera","robot","mlops","plc","line-scan"], // 확장 옵션 — §3a. 필드가 없으면 전부 켬, [] = 기본 구성
     "maxClients": 5,                        // 좌석 수 (단일 PC = 1)
     "fingerprint": "A3F2K-9K71C-BC04D",     // 바인딩 대상 지문 (Internal은 "*" 허용)
     "issuedAt": "2026-08-25",

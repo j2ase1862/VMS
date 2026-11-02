@@ -256,14 +256,18 @@ namespace VMS
 
             // ── PLC connection setup ──
             var systemConfig = configService.LoadSystemConfiguration();
+            // PLC 연동 확장 옵션이 없으면 저장된 PLC 설정과 무관하게 연결하지 않는다 (기본 구성 = IO 보드만).
+            // systemConfig 자체는 바꾸지 않는다 — 저장 경로가 PLC 설정을 None 으로 덮어쓰면 안 된다.
+            var plcAllowed = VMS.Core.Security.Licensing.LicenseBootCheck.Options.Plc;
+            var effectivePlcVendor = plcAllowed ? systemConfig.PlcVendor : PlcVendor.None;
             var plcConfig = new PlcConnectionConfig
             {
-                Vendor = systemConfig.PlcVendor,
+                Vendor = effectivePlcVendor,
                 CommunicationType = systemConfig.CommunicationType,
                 IpAddress = systemConfig.PlcIpAddress,
                 Port = systemConfig.PlcPort > 0
                     ? systemConfig.PlcPort
-                    : PlcConnectionFactory.GetDefaultPort(systemConfig.PlcVendor),
+                    : PlcConnectionFactory.GetDefaultPort(effectivePlcVendor),
 
                 // Modbus
                 UnitId = systemConfig.ModbusUnitId,
@@ -360,18 +364,20 @@ namespace VMS
             }
 
             // SequenceEditor 콤보 자동 채움 — PLC + IO 보드 entry 들을 VMS.VisionSetup holder 에 주입.
-            // **항상 MainPLC 가 첫 항목** — PlcVendor=None 이어도 콤보에서 PLC 옵션 노출.
-            var sequenceDevices = new List<VMS.VisionSetup.Services.SequenceDeviceEntry>
-            {
-                new VMS.VisionSetup.Services.SequenceDeviceEntry(
-                    "MainPLC", VMS.PLC.Models.IoDeviceType.Plc)
-            };
+            // PLC 연동 옵션이 있으면 **항상 MainPLC 가 첫 항목** — PlcVendor=None 이어도 콤보에서 PLC 옵션 노출.
+            // 옵션이 없으면(기본 구성) IO 보드만 — 시퀀스 · 도구 출력 매핑에 PLC 가 보이지 않는다.
+            var sequenceDevices = new List<VMS.VisionSetup.Services.SequenceDeviceEntry>();
+            if (plcAllowed)
+                sequenceDevices.Add(new VMS.VisionSetup.Services.SequenceDeviceEntry(
+                    "MainPLC", VMS.PLC.Models.IoDeviceType.Plc));
             foreach (var board in ioBoardConnections)
             {
                 sequenceDevices.Add(new VMS.VisionSetup.Services.SequenceDeviceEntry(
                     board.DeviceId, board.DeviceType));
             }
             VMS.VisionSetup.Services.SequenceEditorContext.ExtraDevices = sequenceDevices;
+            VMS.VisionSetup.Services.SequenceEditorContext.PlcEnabled = plcAllowed;
+            VMS.VisionSetup.Models.HelpContent.PlcEnabled = plcAllowed;
 
             var signalConfig = configService.LoadPlcSignalConfiguration();
 
@@ -647,7 +653,7 @@ namespace VMS
             IAutoProcessService autoProcessService = new AutoProcessService(
                 plcConnection,
                 signalConfig,
-                systemConfig.PlcVendor,
+                effectivePlcVendor,
                 grabFunc: async (cameraId) =>
                 {
                     var innerTask = await Current.Dispatcher.InvokeAsync(async () =>
@@ -818,7 +824,7 @@ namespace VMS
                 logService,
                 sharedFrameWriter,
                 plcConnection: plcConnection,
-                plcVendorName: systemConfig.PlcVendor.ToString(),
+                plcVendorName: effectivePlcVendor.ToString(),
                 plcIpAddress: systemConfig.PlcIpAddress,
                 rollerInspectionService: rollerInspectionService,
                 heartbeatService: heartbeatService,

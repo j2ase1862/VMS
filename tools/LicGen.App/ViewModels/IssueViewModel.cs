@@ -54,11 +54,19 @@ namespace Boda.LicGen.App.ViewModels
         [ObservableProperty]
         private bool _optionMLOps = true;
 
+        [ObservableProperty]
+        private bool _optionPlc = true;
+
+        [ObservableProperty]
+        private bool _optionLineScan = true;
+
         private string[] SelectedOptions() => new (bool On, string Key)[]
             {
                 (OptionCamera3D, LicenseOptionKeys.Camera3D),
                 (OptionRobot, LicenseOptionKeys.Robot),
-                (OptionMLOps, LicenseOptionKeys.MLOps)
+                (OptionMLOps, LicenseOptionKeys.MLOps),
+                (OptionPlc, LicenseOptionKeys.Plc),
+                (OptionLineScan, LicenseOptionKeys.LineScan)
             }
             .Where(o => o.On).Select(o => o.Key).ToArray();
 

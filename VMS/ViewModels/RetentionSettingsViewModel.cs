@@ -63,7 +63,7 @@ namespace VMS.ViewModels
         {
             [AuditCategory.Security]        = "보안 정책 위반 (HTTP / cert / DTO 거부)",
             [AuditCategory.UserManagement]  = "사용자 생성 / 삭제 / 변경 / 비밀번호",
-            [AuditCategory.Configuration]   = "시스템 설정 변경 (PLC / 카메라 / 보안)",
+            [AuditCategory.Configuration]   = "시스템 설정 변경 (장치 / 카메라 / 보안)",
             [AuditCategory.Authentication]  = "로그인 / 로그아웃 / 로그인 실패",
             [AuditCategory.Authorization]   = "권한 부족 거부 / 역할 변경",
             [AuditCategory.RecipeChange]    = "레시피 로드 / 저장 / 변경 / 삭제",

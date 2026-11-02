@@ -207,28 +207,72 @@ namespace VMS.AppSetup.Tests
         }
 
         [Fact]
-        public void Base_license_skips_the_robot_page_both_ways()
+        public void Base_license_skips_the_plc_and_robot_pages_both_ways()
         {
             var (vm, _, _) = CreateVm(LicenseWithOptions());
 
-            vm.CurrentPage = 4;
+            vm.CurrentPage = 3;
             vm.GoNextCommand.Execute(null);
             Assert.Equal(6, vm.CurrentPage);
-            Assert.Equal(5, vm.DisplayStepNumber); // 머리글은 "Step 5 of 6"
-            Assert.Equal(6, vm.DisplayStepTotal);
+            Assert.Equal(4, vm.DisplayStepNumber); // 머리글은 "Step 4 of 5"
+            Assert.Equal(5, vm.DisplayStepTotal);
 
             vm.GoBackCommand.Execute(null);
+            Assert.Equal(3, vm.CurrentPage);
+            Assert.Equal(3, vm.DisplayStepNumber);
+        }
+
+        [Fact]
+        public void Robot_option_keeps_the_robot_page_but_skips_plc()
+        {
+            var (vm, _, _) = CreateVm(LicenseWithOptions(LicenseOptionKeys.Robot));
+
+            vm.CurrentPage = 3;
+            vm.GoNextCommand.Execute(null);
+            Assert.Equal(5, vm.CurrentPage);
+            Assert.Equal(4, vm.DisplayStepNumber); // "Step 4 of 6"
+            Assert.Equal(6, vm.DisplayStepTotal);
+        }
+
+        [Fact]
+        public void Plc_option_keeps_the_plc_page_but_skips_robot()
+        {
+            var (vm, _, _) = CreateVm(LicenseWithOptions(LicenseOptionKeys.Plc));
+
+            vm.CurrentPage = 3;
+            vm.GoNextCommand.Execute(null);
+            Assert.Equal(4, vm.CurrentPage);
+            vm.GoNextCommand.Execute(null);
+            Assert.Equal(6, vm.CurrentPage);
+            Assert.Equal(5, vm.DisplayStepNumber); // "Step 5 of 6"
+            Assert.Equal(6, vm.DisplayStepTotal);
+        }
+
+        [Fact]
+        public void No_license_shows_every_page_and_the_plc_line()
+        {
+            var (vm, _, _) = CreateVm();
+
+            Assert.Equal(7, vm.DisplayStepTotal);
+            Assert.Contains("PLC", vm.PageDescription);
+            vm.CurrentPage = 3;
+            vm.GoNextCommand.Execute(null);
             Assert.Equal(4, vm.CurrentPage);
         }
 
         [Fact]
-        public void Robot_option_keeps_the_robot_page()
+        public void Base_license_hides_plc_wording_and_line_scan_types()
         {
-            var (vm, _, _) = CreateVm(LicenseWithOptions(LicenseOptionKeys.Robot));
+            var (vm, _, _) = CreateVm(LicenseWithOptions());
 
-            vm.CurrentPage = 4;
-            vm.GoNextCommand.Execute(null);
-            Assert.Equal(5, vm.CurrentPage);
+            Assert.DoesNotContain("PLC", vm.PageDescription); // 시작 화면 목록
+            Assert.DoesNotContain(VMS.Camera.Models.CameraType.LineScan2D,
+                vm.CameraTypes.Cast<VMS.Camera.Models.CameraType>());
+            Assert.Contains(VMS.Camera.Models.CameraType.AreaScan2D,
+                vm.CameraTypes.Cast<VMS.Camera.Models.CameraType>());
+
+            vm.CurrentPage = 6;
+            Assert.DoesNotContain("PLC", vm.PageDescription);
         }
 
         [Fact]

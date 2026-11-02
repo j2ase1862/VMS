@@ -57,7 +57,7 @@ namespace VMS.Core.Tests.Security.Licensing
             var options = OptionsOf(SignedFile(node));
 
             Assert.True(options.IsUnrestricted);
-            Assert.True(options.Camera3D && options.Robot && options.MLOps);
+            Assert.True(options.Camera3D && options.Robot && options.MLOps && options.Plc && options.LineScan);
         }
 
         [Fact]
@@ -69,7 +69,20 @@ namespace VMS.Core.Tests.Security.Licensing
             Assert.False(options.Camera3D);
             Assert.False(options.Robot);
             Assert.False(options.MLOps);
+            Assert.False(options.Plc);
+            Assert.False(options.LineScan);
             Assert.Equal("기본 구성 (확장 옵션 없음)", options.Describe());
+        }
+
+        [Fact]
+        public void Plc_and_line_scan_are_separate_options()
+        {
+            var options = OptionsOf(SignedFile(MakePayload(new[] { LicenseOptionKeys.Plc })));
+
+            Assert.True(options.Plc);
+            Assert.False(options.LineScan);
+            Assert.Equal("PLC 연동", options.Describe());
+            Assert.Contains(LicenseOptionKeys.LineScan, LicenseOptionKeys.All);
         }
 
         [Fact]

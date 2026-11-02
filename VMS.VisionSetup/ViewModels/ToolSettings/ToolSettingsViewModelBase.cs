@@ -227,7 +227,8 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
 
         // View-state: PLC Output 섹션 숨김용. 현재 override 없음 — ResultTool 도
         // 통계 키(PassCount 등) 전송을 위해 노출한다 (최종 OK/NG 는 시퀀스 에디터 담당).
-        public virtual bool HidePlcSection => false;
+        // PLC 연동 확장 옵션이 없으면(기본 구성) 숨긴다 — IO 보드 출력은 시퀀스 에디터 Output Action 으로 한다.
+        public virtual bool HidePlcSection => !LicenseBootCheck.Options.Plc;
 
         // ── Web Parameter Link (ParamCode) ──
 

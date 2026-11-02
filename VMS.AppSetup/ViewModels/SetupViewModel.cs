@@ -22,6 +22,7 @@ namespace VMS.AppSetup.ViewModels
         // Phase 2b — Page 6 (IO 보드) 추가로 5 → 6
         // Page 7 (보안 모드) 추가로 6 → 7 — RELEASE VMS 의 RequireExplicit 부팅 정책 대응
         private const int TotalPages = 7;
+        private const int PlcPage = 4;   // PLC 연동 확장 옵션이 없으면 건너뛴다
         private const int RobotPage = 5; // 로봇 확장 옵션이 없으면 건너뛴다
 
         private readonly IConfigurationService _configService;
@@ -36,9 +37,14 @@ namespace VMS.AppSetup.ViewModels
         [NotifyPropertyChangedFor(nameof(DisplayStepNumber))]
         private int _currentPage = 1;
 
-        // 머리글 "Step N of M" — 로봇 단계를 건너뛰는 라이선스에서는 번호를 당겨 빈 번호가 보이지 않게 한다
-        public int DisplayStepNumber => !IsRobotOptionEnabled && CurrentPage > RobotPage ? CurrentPage - 1 : CurrentPage;
-        public int DisplayStepTotal => IsRobotOptionEnabled ? TotalPages : TotalPages - 1;
+        // 머리글 "Step N of M" — PLC · 로봇 단계를 건너뛰는 라이선스에서는 번호를 당겨 빈 번호가 보이지 않게 한다
+        public int DisplayStepNumber => CurrentPage - SkippedPagesBefore(CurrentPage);
+        public int DisplayStepTotal => TotalPages - SkippedPagesBefore(TotalPages + 1);
+
+        private bool IsPageSkipped(int page) =>
+            (page == PlcPage && !IsPlcOptionEnabled) || (page == RobotPage && !IsRobotOptionEnabled);
+
+        private int SkippedPagesBefore(int page) => Enumerable.Range(1, page - 1).Count(IsPageSkipped);
 
         [ObservableProperty]
         private string _pageTitle = "Welcome";
@@ -303,6 +309,18 @@ namespace VMS.AppSetup.ViewModels
         [NotifyPropertyChangedFor(nameof(AdvancedWebSettingsHeader))]
         private bool _isMLOpsOptionEnabled = true;
 
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(DisplayStepNumber), nameof(DisplayStepTotal))]
+        private bool _isPlcOptionEnabled = true;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(CameraTypes))]
+        private bool _isLineScanOptionEnabled = true;
+
+        // 시작 화면 목록 · IO 보드 단계 설명이 켜진 옵션을 따라가도록 다시 쓴다
+        partial void OnIsRobotOptionEnabledChanged(bool value) => UpdatePageInfo();
+        partial void OnIsPlcOptionEnabledChanged(bool value) => UpdatePageInfo();
+
         public string AdvancedWebSettingsHeader => IsMLOpsOptionEnabled
             ? "고급 설정 — Web Client API Key · MLOps 모델 레지스트리 (해당 현장만)"
             : "고급 설정 — Web Client API Key (해당 현장만)";
@@ -313,6 +331,8 @@ namespace VMS.AppSetup.ViewModels
             IsCamera3DOptionEnabled = options.Camera3D;
             IsRobotOptionEnabled = options.Robot;
             IsMLOpsOptionEnabled = options.MLOps;
+            IsPlcOptionEnabled = options.Plc;
+            IsLineScanOptionEnabled = options.LineScan;
         }
 
         [RelayCommand]
@@ -531,9 +551,10 @@ namespace VMS.AppSetup.ViewModels
         public Array CameraManufacturers => IsCamera3DOptionEnabled
             ? Enum.GetValues(typeof(CameraManufacturer))
             : Enum.GetValues<CameraManufacturer>().Where(m => m != CameraManufacturer.Mech_Mind).ToArray();
-        public Array CameraTypes => IsCamera3DOptionEnabled
-            ? Enum.GetValues(typeof(CameraType))
-            : Enum.GetValues<CameraType>().Where(t => t is not (CameraType.AreaScan3D or CameraType.LineScan3D)).ToArray();
+        public Array CameraTypes => Enum.GetValues<CameraType>()
+            .Where(t => IsCamera3DOptionEnabled || t is not (CameraType.AreaScan3D or CameraType.LineScan3D))
+            .Where(t => IsLineScanOptionEnabled || t is not (CameraType.LineScan2D or CameraType.LineScan3D))
+            .ToArray();
         public Array TriggerSources => Enum.GetValues(typeof(TriggerSource));
         public Array PlcVendors => Enum.GetValues(typeof(PlcVendor));
         public Array CommunicationTypes => Enum.GetValues(typeof(PlcCommunicationType));
@@ -828,7 +849,8 @@ namespace VMS.AppSetup.ViewModels
                         "You will set up:\n" +
                         "• Application settings and network configuration\n" +
                         "• Camera connections and manufacturers\n" +
-                        "• PLC communication interface\n" +
+                        (IsPlcOptionEnabled ? "• PLC communication interface\n" : "") +
+                        "• Digital IO boards\n" +
                         (IsRobotOptionEnabled ? "• Robot integration (optional)\n" : "") +
                         "• Security mode (Production / Development)\n\n" +
                         "Click 'Next' to begin the setup process.";
@@ -853,7 +875,9 @@ namespace VMS.AppSetup.ViewModels
                     break;
                 case 6:
                     PageTitle = "IO Board Configuration";
-                    PageDescription = "Configure digital IO boards (ADLink / Advantech) used alongside the PLC.";
+                    PageDescription = IsPlcOptionEnabled
+                        ? "Configure digital IO boards (ADLink / Advantech) used alongside the PLC."
+                        : "Configure digital IO boards (ADLink / Advantech) for trigger input and result output.";
                     break;
                 case 7:
                     PageTitle = "Security & License";
@@ -870,7 +894,7 @@ namespace VMS.AppSetup.ViewModels
             if (CurrentPage > 1)
             {
                 CurrentPage--;
-                if (CurrentPage == RobotPage && !IsRobotOptionEnabled) CurrentPage--;
+                while (CurrentPage > 1 && IsPageSkipped(CurrentPage)) CurrentPage--;
             }
         }
 
@@ -886,7 +910,7 @@ namespace VMS.AppSetup.ViewModels
             else if (CurrentPage < TotalPages)
             {
                 CurrentPage++;
-                if (CurrentPage == RobotPage && !IsRobotOptionEnabled) CurrentPage++;
+                while (CurrentPage < TotalPages && IsPageSkipped(CurrentPage)) CurrentPage++;
             }
         }
 

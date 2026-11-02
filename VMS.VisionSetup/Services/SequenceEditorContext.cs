@@ -50,6 +50,13 @@ namespace VMS.VisionSetup.Services
             Array.Empty<SequenceDeviceEntry>();
 
         /// <summary>
+        /// PLC 연동 확장 옵션 — false(기본 구성)면 시퀀스 에디터 · 도구 출력 매핑이 IO 보드만 다룬다
+        /// (MainPLC 안전망 항목 없음, PLC 모니터 · Reset 신호 숨김, 새 노드의 장치 = 첫 IO 보드).
+        /// Host(VMS) 또는 standalone(VMS.VisionSetup) App 이 ExtraDevices 와 함께 set.
+        /// </summary>
+        public static bool PlcEnabled { get; set; } = true;
+
+        /// <summary>
         /// 후방호환 — DeviceId 만 필요한 외부 호출자용 view. ExtraDevices 에서 derived.
         /// </summary>
         public static IReadOnlyCollection<string> ExtraDeviceIds =>

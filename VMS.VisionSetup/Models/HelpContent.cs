@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace VMS.VisionSetup.Models
 {
@@ -1429,8 +1430,12 @@ namespace VMS.VisionSetup.Models
         /// <summary>
         /// 도구 타입으로 도움말 정보 가져오기
         /// </summary>
-        public static ToolHelp? GetToolHelp(string toolType)
+        public static ToolHelp? GetToolHelp(string toolType) => GetToolHelp(toolType, PlcEnabled);
+
+        internal static ToolHelp? GetToolHelp(string toolType, bool plcEnabled)
         {
+            if (!plcEnabled && _ioOnlyHelp.Value.TryGetValue(toolType, out var ioOnly))
+                return ioOnly;
             return _toolHelp.TryGetValue(toolType, out var help) ? help : null;
         }
 
@@ -1439,14 +1444,128 @@ namespace VMS.VisionSetup.Models
         /// </summary>
         public static string? GetParameterHelp(string toolType, string parameterName)
         {
-            if (_toolHelp.TryGetValue(toolType, out var help) &&
-                help.Parameters != null &&
-                help.Parameters.TryGetValue(parameterName, out var paramHelp))
+            if (GetToolHelp(toolType) is { Parameters: { } parameters } &&
+                parameters.TryGetValue(parameterName, out var paramHelp))
             {
                 return paramHelp;
             }
             return null;
         }
+
+        #region IO 보드 전용 문구 (PLC 연동 확장 옵션 없음)
+
+        /// <summary>
+        /// PLC 연동 확장 옵션 — false 면 시퀀스 노드 · Result 도구 도움말을 IO 보드 기준 문구로 바꿔 보여 준다.
+        /// VMS · VisionSetup App 이 시작 시 라이선스 옵션으로 set (AppSetup 은 Linked Compile 이라 기본값 그대로).
+        /// </summary>
+        public static bool PlcEnabled { get; set; } = true;
+
+        /// <summary>
+        /// PLC 연동 확장 옵션이 없을 때(기본 구성) 대신 보여 줄 도움말 — PLC 주소 · 워드 예시 없이 IO 보드 채널 기준.
+        /// 원본(_toolHelp)을 복사해 바뀌는 칸만 덮어쓴다.
+        /// </summary>
+        private static readonly Lazy<Dictionary<string, ToolHelp>> _ioOnlyHelp = new(BuildIoOnlyHelp);
+
+        private static Dictionary<string, ToolHelp> BuildIoOnlyHelp()
+        {
+            var result = new Dictionary<string, ToolHelp>();
+
+            void Override(string key, Action<ToolHelp> edit)
+            {
+                var src = _toolHelp[key];
+                var copy = new ToolHelp
+                {
+                    Name = src.Name,
+                    Description = src.Description,
+                    Usage = src.Usage,
+                    CognexEquivalent = src.CognexEquivalent,
+                    Parameters = src.Parameters == null ? null : new Dictionary<string, string>(src.Parameters),
+                    Results = src.Results
+                };
+                edit(copy);
+                result[key] = copy;
+            }
+
+            Override("ResultTool", h =>
+            {
+                h.Usage = "검사 파이프라인의 마지막 단계에서 사용됩니다. 여러 도구의 성공/실패 결과를 논리 연산으로 결합하여 최종 판정을 내립니다.\n\n[IO 출력 위치 안내]\n• 최종 OK/NG 를 IO 보드로 내보내는 설정은 이 도구가 아니라 시퀀스 에디터에서 합니다 — Branch(AllInspectionsOk) → Output Action 노드로 결과 채널을 켭니다.";
+                h.Parameters?.Remove("PlcMappings");
+            });
+
+            Override("CodeReaderTool", h =>
+            {
+                if (h.Parameters != null && h.Parameters.TryGetValue("ParseGs1", out var gs1))
+                    h.Parameters["ParseGs1"] = gs1.Replace(" (PLC 매핑 가능)", string.Empty);
+            });
+
+            Override("SequenceNode_Start", h =>
+                h.Description = "시퀀스의 진입점입니다. 자동 운전(AUTO RUN)을 시작하면 이 노드부터 흐름이 시작됩니다. 외부 신호(IO 보드 입력)를 기다리려면 Start 다음에 Input Check 를 둡니다.\n\n모든 시퀀스에 정확히 1개의 Start 노드가 존재해야 하며, 여기서 출력된 흐름이 하위 노드들로 전달됩니다. Start 가 없거나 둘 이상이면 시퀀스는 실행되지 않습니다.");
+
+            Override("SequenceNode_End", h =>
+                h.Description = "시퀀스 한 사이클의 종료점입니다. End 노드에 도달하면 사이클이 완료된 것으로 간주하고 결과를 Web 등 외부로 통보합니다.\n\n정상 종료(OK)와 NG 종료를 구분하려면 Branch 의 각 가지 끝에 End 를 여러 개 배치하는 패턴이 일반적입니다.");
+
+            Override("SequenceNode_InputCheck", h =>
+            {
+                h.Description = "IO 보드 입력 채널의 값(ON / OFF)을 읽어 조건을 검사합니다. 검사 결과(True / False) 에 따라 다음 노드로 분기하거나 대기합니다.\n\nBranch 와의 차이: Branch 가 직전 노드 결과(주로 Inspection PASS/FAIL) 를 기준으로 한다면, InputCheck 는 외부 신호(센서·광커튼·작업자 버튼 등) 가 기준입니다.";
+                h.Usage = "예: '제품 도착 신호(입력 채널 0)가 ON 인가?' 검사 후\n• True 가지 → Inspection (실제 검사 시작)\n• False 가지 → Delay(50ms) → 다시 InputCheck (폴링 루프)\n\n타임아웃 옵션으로 무한 대기 방지.";
+                h.Parameters = new Dictionary<string, string>
+                {
+                    ["DeviceId"] = "검사할 IO 보드 — 시스템 설정(AppSetup)에서 등록한 보드 (ADLink_* / Advantech_*).",
+                    ["PlcAddress"] = "IO 보드 입력 채널 번호 (예: 0, 5, 15).",
+                    ["CheckMode"] = "검사 모드:\n• BitOn: 신호가 ON 일 때 True\n• BitOff: 신호가 OFF 일 때 True\n• BitRisingEdge: OFF → ON 으로 바뀌는 순간 True\n• BitFallingEdge: ON → OFF 로 바뀌는 순간 True",
+                    ["TimeoutMs"] = _toolHelp["SequenceNode_InputCheck"].Parameters!["TimeoutMs"]
+                };
+            });
+
+            Override("SequenceNode_OutputAction", h =>
+            {
+                h.Description = "IO 보드 출력 채널을 켜거나 끕니다. 검사 결과 알림(OK / NG 램프), 분배기 액추에이터 트리거, 컨베이어 정지·재가동 등 외부 장비 제어에 사용됩니다.";
+                h.Usage = "결과 분기 직후 신호 발생:\nBranch.True  → OutputAction(채널 0 = ON, OK 램프)\nBranch.False → OutputAction(채널 1 = ON, NG 분배기)\n\n펄스 출력이 필요한 경우:\nOutputAction(ON) → Delay(100ms) → OutputAction(OFF) 으로 폭 제어.";
+                h.Parameters = new Dictionary<string, string>
+                {
+                    ["DeviceId"] = "출력 대상 IO 보드 (InputCheck 와 동일).",
+                    ["PlcAddress"] = "IO 보드 출력 채널 번호 (예: 0, 1).",
+                    ["OutputDataType"] = "IO 보드는 Bit(ON / OFF) 출력만 지원합니다.",
+                    ["BitValue"] = "출력할 값 (True=ON, False=OFF)."
+                };
+            });
+
+            Override("SequenceNode_WorkOrderComplete", h =>
+                h.Usage = "운전 흐름(Start 쪽)과 선으로 잇지 말고 따로 둡니다. 시퀀스에 하나만 둘 수 있습니다.\n\n펄스 신호:\nWO Complete → Output Action(채널 5 = ON) → Delay(500ms) → Output Action(채널 5 = OFF)\n\n계속 켜 두는 신호:\nWO Complete → Output Action(채널 5 = ON)\n이때는 다음 운전을 시작할 때 꺼지도록 운전 흐름 앞쪽(Start 다음)에 Output Action(채널 5 = OFF) 를 두세요.\n\n이 노드 뒤에는 Output Action · Delay · End 만 쓸 수 있고, 전체가 10초 안에 끝나야 합니다.");
+
+            Override("SequenceNode_Repeat", h =>
+            {
+                if (h.Parameters != null)
+                    h.Parameters["RepeatCount"] = "최대 반복 횟수.\n• 양수 (1 이상): 명시 횟수만큼 반복 후 종료.\n• -1: 무한 반복 — 폴링 루프나 상시 모니터링용. InputCheck timeout 으로 종료 보장 필요.\n\n0 이하의 다른 값은 의미 없음 (1 회만 실행).";
+            });
+
+            Override("SequenceNode_RecipeChange", h =>
+            {
+                h.Usage = "품종 변경 자동화:\nStart → InputCheck(품종 변경 신호, 입력 채널 10) → RecipeChange(RecipeId=2) → Inspection\n\nWeb WorkOrder 연동 환경:\n작업지시 선택 시 시스템이 자동으로 권장 레시피로 RecipeChange 트리거 — 작업자 수동 개입 불필요.";
+                h.Parameters = new Dictionary<string, string>
+                {
+                    ["DeviceId"] = "Signal / Index 를 읽을 IO 보드. Signal = 입력 채널, Index = 포트 번호로 해석.",
+                    ["RecipeSignalAddress"] = "(선택) 레시피 변경 트리거 신호 채널.\n• 설정 시: 신호 조건 만족할 때만 Index 를 읽어 레시피 교체.\n• 미설정 시: 매 통과 시 Index 를 읽어 자동 동기화.",
+                    ["RecipeSignalCheckMode"] = "신호 검사 모드 (BitOn / BitOff).",
+                    ["RecipeIndexAddress"] = "레시피 인덱스를 읽을 IO 보드 포트 번호 (32-bit ReadPort).\n\n읽은 정수를 레시피 목록 인덱스로 사용 — 현재 레시피와 다르면 교체."
+                };
+            });
+
+            Override("SequenceNode_StepChange", h =>
+            {
+                h.Parameters = new Dictionary<string, string>
+                {
+                    ["DeviceId"] = "Signal / Index 를 읽을 IO 보드. RecipeChange 와 동일 패턴.",
+                    ["StepSignalAddress"] = "(선택) 단계 변경 트리거 신호 채널. RecipeChange.RecipeSignalAddress 와 같은 의미 — 만족 시에만 Index 를 읽어 단계 이동.",
+                    ["StepSignalCheckMode"] = "신호 검사 모드 (BitOn / BitOff).",
+                    ["StepIndexAddress"] = "단계 인덱스를 읽을 IO 보드 포트 번호. 미설정 시 항상 0번 단계.\n\n예: 설비가 현재 위치를 포트 입력에 0/1/2 로 내보내면, 이 포트로 단계 자동 이동."
+                };
+            });
+
+            return result;
+        }
+
+        #endregion
     }
 
     /// <summary>

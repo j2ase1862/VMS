@@ -330,12 +330,12 @@ namespace VMS.VisionSetup.Views.Sequence
     }
 
     /// <summary>
-    /// bool → 연결 버튼 텍스트 (true="연결 해제", false="PLC 연결")
+    /// bool → 연결 버튼 텍스트 (true="연결 해제", false="장치 연결")
     /// </summary>
     public class ConnectButtonTextConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-            => value is true ? "연결 해제" : "PLC 연결";
+            => value is true ? "연결 해제" : "장치 연결";
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
             => throw new NotSupportedException();
