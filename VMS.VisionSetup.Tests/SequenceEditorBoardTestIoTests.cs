@@ -88,13 +88,18 @@ namespace VMS.VisionSetup.Tests
             return (vm, board);
         }
 
-        internal static SequenceEditorViewModel CreateViewModel() => new(
-            new FakeRecipeService(), new FakeCameraService(), new FakeDialogService(),
+        internal static SequenceEditorViewModel CreateViewModel() => CreateViewModel(
             new[]
             {
                 new SequenceDeviceEntry("MainPLC", IoDeviceType.Plc),
                 new SequenceDeviceEntry(BoardId, IoDeviceType.AdLinkPci743x),
-            });
+            },
+            plcEnabled: true);
+
+        internal static SequenceEditorViewModel CreateViewModel(
+            IEnumerable<SequenceDeviceEntry> devices, bool plcEnabled) => new(
+            new FakeRecipeService(), new FakeCameraService(), new FakeDialogService(),
+            devices, plcEnabled);
 
         private static SequenceNodeItem AddNode(SequenceEditorViewModel vm, SequenceNodeType type,
             string channel, bool? bitValue = null)

@@ -77,6 +77,32 @@ namespace VMS.VisionSetup.ViewModels
         /// </summary>
         public ObservableCollection<SequenceDeviceEntry> AvailableDevices { get; } = new();
 
+        /// <summary>
+        /// PLC 연동 확장 옵션. false(기본 구성)면 IO 보드만 다룬다 — MainPLC 안전망 항목 없음,
+        /// Reset 신호(PLC 주소 전용) 숨김, 모니터 이름 "I/O Monitor", 새 노드의 장치 = 첫 IO 보드.
+        /// </summary>
+        public bool IsPlcEnabled { get; }
+
+        /// <summary>툴바 버튼 · 범례의 모니터 이름.</summary>
+        public string MonitorTitle => IsPlcEnabled ? "PLC Monitor" : "I/O Monitor";
+
+        /// <summary>하단 모니터 패널 머리글.</summary>
+        public string MonitorPanelTitle => IsPlcEnabled ? "PLC I/O Monitor" : "I/O Monitor";
+
+        /// <summary>장치를 지정하지 않은(= MainPLC) 노드의 장치 이름 — 상태 메시지용.</summary>
+        private string PlcNodeDeviceLabel => IsPlcEnabled ? "PLC" : "장치";
+
+        /// <summary>
+        /// 새 InputCheck · OutputAction · RecipeChange · StepChange · 출력 노드의 장치.
+        /// PLC 옵션이 있으면 null(= MainPLC), 없으면 첫 IO 보드.
+        /// </summary>
+        private string? DefaultNodeDeviceId => IsPlcEnabled
+            ? null
+            : AvailableDevices.FirstOrDefault(d => d.IsBoard)?.DeviceId;
+
+        private static bool UsesDevice(SequenceNodeType type) => type is SequenceNodeType.InputCheck
+            or SequenceNodeType.OutputAction or SequenceNodeType.RecipeChange or SequenceNodeType.StepChange;
+
         /// <summary>현재 SelectedNode 의 DeviceId 가 가리키는 디바이스 종류 — UI 가 PLC/IO 보드 분기 표시.</summary>
         [ObservableProperty]
         private IoDeviceType _selectedDeviceType = IoDeviceType.Plc;
@@ -183,11 +209,13 @@ namespace VMS.VisionSetup.ViewModels
             IRecipeService recipeService,
             ICameraService cameraService,
             IDialogService dialogService,
-            IEnumerable<SequenceDeviceEntry>? extraDevices = null)
+            IEnumerable<SequenceDeviceEntry>? extraDevices = null,
+            bool? plcEnabled = null)
         {
             _recipeService = recipeService;
             _cameraService = cameraService;
             _dialogService = dialogService;
+            IsPlcEnabled = plcEnabled ?? SequenceEditorContext.PlcEnabled;
 
             // 호출자(host or standalone App.xaml.cs) 가 PLC + IO 보드 entry 를 전달.
             // 중복 방지 + 빈 DeviceId 필터링.
@@ -200,8 +228,8 @@ namespace VMS.VisionSetup.ViewModels
                     AvailableDevices.Add(d);
                 }
             }
-            // 안전망 — 콤보가 비지 않도록 기본 MainPLC entry 채움.
-            if (AvailableDevices.Count == 0)
+            // 안전망 — 콤보가 비지 않도록 기본 MainPLC entry 채움 (PLC 연동 옵션이 있을 때만).
+            if (AvailableDevices.Count == 0 && IsPlcEnabled)
                 AvailableDevices.Add(new SequenceDeviceEntry("MainPLC", IoDeviceType.Plc));
 
             InitializePalette();
@@ -300,7 +328,8 @@ namespace VMS.VisionSetup.ViewModels
                 NodeType = paletteItem.NodeType,
                 Name = paletteItem.DisplayName,
                 X = 200,
-                Y = 50 + (Nodes.Count * 110)
+                Y = 50 + (Nodes.Count * 110),
+                DeviceId = UsesDevice(paletteItem.NodeType) ? DefaultNodeDeviceId : null
             };
 
             var nodeItem = new SequenceNodeItem(config);
@@ -494,7 +523,8 @@ namespace VMS.VisionSetup.ViewModels
                     NodeType = type,
                     Name = name,
                     X = nodeX,
-                    Y = 50 + (idx * spacing)
+                    Y = 50 + (idx * spacing),
+                    DeviceId = UsesDevice(type) ? DefaultNodeDeviceId : null
                 };
                 idx++;
                 return cfg;
@@ -893,10 +923,11 @@ namespace VMS.VisionSetup.ViewModels
             try
             {
                 PlcConnectionStatus = "연결 중...";
-                StatusMessage = "PLC 연결 중...";
+                StatusMessage = "장치 연결 중...";
 
                 // PLC 는 선택 사항 — 벤더가 None 이면 _plcConfig 가 null 이고 보드만으로 진행한다.
-                _plcConfig = PlcConfigLoader.LoadFromAppData();
+                // PLC 연동 옵션이 없으면(기본 구성) 저장된 PLC 설정이 있어도 IO 보드만 연결한다.
+                _plcConfig = IsPlcEnabled ? PlcConfigLoader.LoadFromAppData() : null;
                 var plcOk = false;
 
                 if (_plcConfig != null)
@@ -916,11 +947,15 @@ namespace VMS.VisionSetup.ViewModels
                 if (!plcOk && boardOk == 0)
                 {
                     PlcConnectionStatus = _plcConfig == null ? "설정 없음" : "연결 실패";
-                    StatusMessage = _plcConfig == null
-                        ? "PLC 벤더가 None 이고 사용 가능한 IO 보드도 없습니다."
-                        : "PLC 연결 실패";
+                    StatusMessage = !IsPlcEnabled
+                        ? "사용 가능한 IO 보드가 없습니다."
+                        : _plcConfig == null
+                            ? "PLC 벤더가 None 이고 사용 가능한 IO 보드도 없습니다."
+                            : "PLC 연결 실패";
                     _dialogService.ShowWarning(
-                        "연결할 장치가 없습니다.\n\nBODA Setup 에서 PLC 를 설정하거나 IO 보드를 등록/활성화해 주세요.\n" +
+                        (IsPlcEnabled
+                            ? "연결할 장치가 없습니다.\n\nBODA Setup 에서 PLC 를 설정하거나 IO 보드를 등록/활성화해 주세요.\n"
+                            : "연결할 장치가 없습니다.\n\nBODA Setup 에서 IO 보드를 등록/활성화해 주세요.\n") +
                         "(IO 보드가 등록돼 있는데도 실패하면 드라이버 설치 여부와 모델·보드 번호를 확인하세요.)",
                         "장치 연결");
                     return;
@@ -942,7 +977,7 @@ namespace VMS.VisionSetup.ViewModels
             catch (Exception ex)
             {
                 PlcConnectionStatus = "연결 오류";
-                StatusMessage = $"PLC 연결 오류: {ex.Message}";
+                StatusMessage = $"장치 연결 오류: {ex.Message}";
                 System.Diagnostics.Debug.WriteLine($"[SequenceEditor] PLC connect error: {ex}");
 
                 _plcConnection?.Dispose();
@@ -1600,7 +1635,7 @@ namespace VMS.VisionSetup.ViewModels
 
             if (_plcConfig == null || _plcConnection == null)
             {
-                StatusMessage = $"[무부하] {node.Name} — PLC 미연결, 건너뜀";
+                StatusMessage = $"[무부하] {node.Name} — {PlcNodeDeviceLabel} 미연결, 건너뜀";
                 await Task.Delay(200, ct);
                 return cfg.NextNodeId;
             }
@@ -1784,7 +1819,7 @@ namespace VMS.VisionSetup.ViewModels
 
             if (_plcConfig == null || _plcConnection == null)
             {
-                StatusMessage = $"[무부하] {node.Name} — PLC 미연결, 건너뜀";
+                StatusMessage = $"[무부하] {node.Name} — {PlcNodeDeviceLabel} 미연결, 건너뜀";
                 return;
             }
 
@@ -1846,13 +1881,13 @@ namespace VMS.VisionSetup.ViewModels
 
             if (_plcConnection == null || !_plcConnection.IsConnected)
             {
-                StatusMessage = "PLC가 연결되어 있지 않습니다.";
+                StatusMessage = $"{PlcNodeDeviceLabel}가 연결되어 있지 않습니다.";
                 return;
             }
 
             if (_plcConfig == null)
             {
-                StatusMessage = "PLC 주소가 설정되지 않았습니다.";
+                StatusMessage = $"{PlcNodeDeviceLabel} 주소가 설정되지 않았습니다.";
                 return;
             }
 
@@ -1933,13 +1968,13 @@ namespace VMS.VisionSetup.ViewModels
 
             if (_plcConnection == null || !_plcConnection.IsConnected)
             {
-                StatusMessage = "PLC가 연결되어 있지 않습니다.";
+                StatusMessage = $"{PlcNodeDeviceLabel}가 연결되어 있지 않습니다.";
                 return;
             }
 
             if (_plcConfig == null)
             {
-                StatusMessage = "PLC 주소가 설정되지 않았습니다.";
+                StatusMessage = $"{PlcNodeDeviceLabel} 주소가 설정되지 않았습니다.";
                 return;
             }
 

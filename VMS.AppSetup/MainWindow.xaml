@@ -184,7 +184,7 @@
                         <TextBox Text="{Binding ApplicationName, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,20"/>
 
-                        <TextBlock Style="{StaticResource LabelStyle}"><Run Text="System IP Address"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="System IP Address" CustomDescription="이 비전 PC 의 IP 주소입니다. 카메라·PLC 와 같은 네트워크 대역이어야 합니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
+                        <TextBlock Style="{StaticResource LabelStyle}"><Run Text="System IP Address"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="System IP Address" CustomDescription="이 비전 PC 의 IP 주소입니다. 카메라 등 연결 장비와 같은 네트워크 대역이어야 합니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                         <TextBox Text="{Binding SystemIpAddress, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource WindowDarkTextBox}"/>
 

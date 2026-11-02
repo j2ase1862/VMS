@@ -543,11 +543,14 @@ namespace VMS.VisionSetup
         {
             try
             {
-                var entries = new System.Collections.Generic.List<SequenceDeviceEntry>
-                {
-                    // 항상 MainPLC 노출 — IO 보드만 설정된 시스템에서도 PLC 선택지 보장.
-                    new SequenceDeviceEntry("MainPLC", VMS.PLC.Models.IoDeviceType.Plc)
-                };
+                // PLC 연동 확장 옵션이 있으면 항상 MainPLC 노출 — IO 보드만 설정된 시스템에서도 PLC 선택지 보장.
+                // 옵션이 없으면(기본 구성) IO 보드만.
+                var plcAllowed = VMS.Core.Security.Licensing.LicenseBootCheck.Options.Plc;
+                SequenceEditorContext.PlcEnabled = plcAllowed;
+                VMS.VisionSetup.Models.HelpContent.PlcEnabled = plcAllowed;
+                var entries = new System.Collections.Generic.List<SequenceDeviceEntry>();
+                if (plcAllowed)
+                    entries.Add(new SequenceDeviceEntry("MainPLC", VMS.PLC.Models.IoDeviceType.Plc));
 
                 // IO 보드 — IsEnabled=true 인 모든 보드 entry 추가.
                 foreach (var ioCfg in IoBoardConfigLoader.LoadFromAppData())

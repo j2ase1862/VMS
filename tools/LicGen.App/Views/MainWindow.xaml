@@ -226,8 +226,12 @@
                                               Content="3D 카메라 촬영" IsChecked="{Binding OptionCamera3D}"/>
                                     <CheckBox Style="{StaticResource WindowDarkCheckBox}" Margin="0,0,20,0"
                                               Content="로봇 연동 · 멀티뷰" IsChecked="{Binding OptionRobot}"/>
-                                    <CheckBox Style="{StaticResource WindowDarkCheckBox}"
+                                    <CheckBox Style="{StaticResource WindowDarkCheckBox}" Margin="0,0,20,0"
                                               Content="MLOps 서버 연동" IsChecked="{Binding OptionMLOps}"/>
+                                    <CheckBox Style="{StaticResource WindowDarkCheckBox}" Margin="0,0,20,0"
+                                              Content="PLC 연동" IsChecked="{Binding OptionPlc}"/>
+                                    <CheckBox Style="{StaticResource WindowDarkCheckBox}"
+                                              Content="라인스캔 · 롤러 검사" IsChecked="{Binding OptionLineScan}"/>
                                 </StackPanel>
                                 <TextBlock Style="{StaticResource FieldHint}"
                                            Text="해제한 기능은 대상 PC 에서 메뉴 · 설정이 보이지 않음. 모두 해제 = 기본 구성 (GS 인증 구성)"/>

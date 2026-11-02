@@ -19,7 +19,13 @@ namespace VMS.Core.Security.Licensing
         /// <summary>MLOps 서버 연동 (서버 주소 · 라인 토큰, 레지스트리 모델 선택).</summary>
         public const string MLOps = "mlops";
 
-        public static IReadOnlyList<string> All { get; } = new[] { Camera3D, Robot, MLOps };
+        /// <summary>PLC 통신 연동 (AppSetup PLC 단계 · 시퀀스 PLC 장치 · 도구 출력 매핑). IO 보드 연동은 기본 구성.</summary>
+        public const string Plc = "plc";
+
+        /// <summary>라인스캔 카메라 · 롤러 연속 검사.</summary>
+        public const string LineScan = "line-scan";
+
+        public static IReadOnlyList<string> All { get; } = new[] { Camera3D, Robot, MLOps, Plc, LineScan };
 
         /// <summary>발급 화면 · 상태 표시용 이름.</summary>
         public static string DisplayName(string key) => key switch
@@ -27,6 +33,8 @@ namespace VMS.Core.Security.Licensing
             Camera3D => "3D 카메라 촬영",
             Robot => "로봇 연동 · 멀티뷰",
             MLOps => "MLOps 서버 연동",
+            Plc => "PLC 연동",
+            LineScan => "라인스캔 · 롤러 검사",
             _ => key
         };
     }
@@ -53,7 +61,7 @@ namespace VMS.Core.Security.Licensing
         {
 #if DEBUG
             // 개발 빌드 전용 — 운영 라이선스를 건드리지 않고 기본 구성 화면을 확인 · 캡처한다.
-            // VMS_LICENSE_OPTIONS=none (기본 구성) | 3d-camera,robot,mlops 중 일부. Release 빌드에는 없다.
+            // VMS_LICENSE_OPTIONS=none (기본 구성) | 3d-camera,robot,mlops,plc,line-scan 중 일부. Release 빌드에는 없다.
             var simulated = Environment.GetEnvironmentVariable("VMS_LICENSE_OPTIONS");
             if (simulated != null)
             {
@@ -73,6 +81,8 @@ namespace VMS.Core.Security.Licensing
         public bool Camera3D => Has(LicenseOptionKeys.Camera3D);
         public bool Robot => Has(LicenseOptionKeys.Robot);
         public bool MLOps => Has(LicenseOptionKeys.MLOps);
+        public bool Plc => Has(LicenseOptionKeys.Plc);
+        public bool LineScan => Has(LicenseOptionKeys.LineScan);
 
         /// <summary>상태 표시용 — "전부" 또는 켜진 옵션 이름 목록, 하나도 없으면 "기본 구성".</summary>
         public string Describe()

@@ -279,7 +279,8 @@ namespace VMS.ViewModels
         /// LineScan2D/LineScan3D 가 있을 때만 활성 (에어리어 전용 장비에서는 항상 비활성).
         /// </summary>
         public bool CanToggleRollerInspection =>
-            CanStartStop
+            IsLineScanOptionEnabled
+            && CanStartStop
             && Cameras.Any(c => c.CameraType == VMS.Camera.Models.CameraType.LineScan2D
                              || c.CameraType == VMS.Camera.Models.CameraType.LineScan3D);
 
@@ -313,6 +314,15 @@ namespace VMS.ViewModels
 
         /// <summary>로봇 연동 확장 옵션 — 꺼져 있으면 상태 표시줄의 로봇 칸을 숨긴다.</summary>
         public bool IsRobotOptionEnabled => VMS.Core.Security.Licensing.LicenseBootCheck.Options.Robot;
+
+        /// <summary>PLC 연동 확장 옵션 — 꺼져 있으면 상태 표시줄의 PLC 칸을 숨긴다 (IO 보드 칸은 그대로).</summary>
+        public bool IsPlcOptionEnabled => VMS.Core.Security.Licensing.LicenseBootCheck.Options.Plc;
+
+        /// <summary>상태 표시줄 장치 칸(PLC · IO 보드 · MLOps 경고)에 보일 것이 있는가 — 없으면 앞 구분선도 숨긴다.</summary>
+        public bool HasDeviceStatus => IsPlcOptionEnabled || HasIoBoards || HasMlopsIssue;
+
+        /// <summary>라인스캔 · 롤러 검사 확장 옵션 — 꺼져 있으면 사이드 패널의 Roller Inspection 섹션을 숨긴다.</summary>
+        public bool IsLineScanOptionEnabled => VMS.Core.Security.Licensing.LicenseBootCheck.Options.LineScan;
         public string MlopsIssueText => "MLOps 비활성";
         public string MlopsIssueTooltip => VMS.Core.Services.MlopsClientStatus.Summary ?? string.Empty;
 

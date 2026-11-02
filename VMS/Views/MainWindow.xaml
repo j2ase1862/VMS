@@ -870,11 +870,13 @@
 
                         <!-- Roller Inspection Section — 라인스캔 전용 검사 실행 모드.
                              Grab/Live 는 카메라 카드의 설정 창(컨트롤 박스)으로 이동 — 카메라
-                             단위 조작은 카메라 옆에서, 검사 모드는 여기서. -->
+                             단위 조작은 카메라 옆에서, 검사 모드는 여기서.
+                             라인스캔 · 롤러 검사 확장 옵션이 있을 때만. -->
                         <Border Background="{StaticResource Brush.Surface.Overlay}"
                                 CornerRadius="8"
                                 Padding="12"
-                                Margin="0,0,0,16">
+                                Margin="0,0,0,16"
+                                Visibility="{Binding IsLineScanOptionEnabled, Converter={StaticResource BoolToVisibilityConverter}}">
                             <StackPanel>
                                 <TextBlock FontWeight="SemiBold"
                                            Foreground="{StaticResource Brush.Primary}"
@@ -1092,7 +1094,7 @@
                                         IsEnabled="{Binding CanLaunchAppSetup}"
                                         Style="{StaticResource Button.Subtle}"
                                         HorizontalAlignment="Stretch"
-                                        ToolTip="시스템 설정 마법사(VMS.AppSetup)를 실행합니다 — 카메라/PLC/네트워크">
+                                        ToolTip="시스템 설정 마법사(VMS.AppSetup)를 실행합니다 — 카메라 · 네트워크 · 장치 연결">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock VerticalAlignment="Center" Text="&#xE713;"
                                                    FontFamily="Segoe MDL2 Assets"
@@ -1538,14 +1540,17 @@
                 </StackPanel>
 
                 <!-- [3] Separator -->
-                <Rectangle Grid.Column="3" Width="1" Fill="{StaticResource Brush.Surface.Overlay}" Margin="10,6"/>
+                <Rectangle Grid.Column="3" Width="1" Fill="{StaticResource Brush.Surface.Overlay}" Margin="10,6"
+                           Visibility="{Binding HasDeviceStatus, Converter={StaticResource BoolToVisibilityConverter}}"/>
 
-                <!-- [4] PLC Status -->
+                <!-- [4] PLC Status — PLC 아이콘 · 점 · 이름은 PLC 연동 확장 옵션이 있을 때만 (IO 보드 칸은 그대로) -->
                 <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="&#xE950;" FontFamily="Segoe MDL2 Assets"
                                FontSize="13" Foreground="{StaticResource Brush.Text.Secondary}"
-                               VerticalAlignment="Center" Margin="0,0,5,0"/>
-                    <Ellipse Width="8" Height="8" Margin="0,0,5,0">
+                               VerticalAlignment="Center" Margin="0,0,5,0"
+                               Visibility="{Binding IsPlcOptionEnabled, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                    <Ellipse Width="8" Height="8" Margin="0,0,5,0"
+                             Visibility="{Binding IsPlcOptionEnabled, Converter={StaticResource BoolToVisibilityConverter}}">
                         <Ellipse.Style>
                             <Style TargetType="Ellipse">
                                 <Setter Property="Fill" Value="{StaticResource Brush.Surface.Overlay}"/>
@@ -1568,7 +1573,8 @@
                             </Style>
                         </Ellipse.Style>
                     </Ellipse>
-                    <TextBlock FontSize="12" VerticalAlignment="Center">
+                    <TextBlock FontSize="12" VerticalAlignment="Center"
+                               Visibility="{Binding IsPlcOptionEnabled, Converter={StaticResource BoolToVisibilityConverter}}">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Foreground" Value="{StaticResource Brush.Text.Secondary}"/>
@@ -1589,7 +1595,8 @@
                          구성에서 보드 연결 실패를 즉시 알 수 있게 한다 (자세한 사유는 로그 IoBoard). -->
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0"
                                 Visibility="{Binding HasIoBoards, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <Rectangle Width="1" Fill="{StaticResource Brush.Surface.Overlay}" Margin="0,6,10,6"/>
+                        <Rectangle Width="1" Fill="{StaticResource Brush.Surface.Overlay}" Margin="0,6,10,6"
+                                   Visibility="{Binding IsPlcOptionEnabled, Converter={StaticResource BoolToVisibilityConverter}}"/>
                         <Ellipse Width="8" Height="8" Margin="0,0,5,0">
                             <Ellipse.Style>
                                 <Style TargetType="Ellipse">
