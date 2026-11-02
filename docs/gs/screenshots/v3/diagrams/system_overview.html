@@ -7,13 +7,13 @@ svg text{font-family:'Malgun Gothic','Segoe UI',sans-serif}
 <rect x="0" y="0" width="1400" height="760" fill="#ffffff"/>
 <!-- 현장 라인 PC 영역 -->
 <rect x="40" y="60" width="640" height="640" rx="14" fill="#f3f6fb" stroke="#2e5496" stroke-width="2"/>
-<text x="60" y="92" font-size="20" font-weight="bold" fill="#1f3864">검사 라인 PC (Windows 11 x64) — 라인마다 1대</text>
+<text x="60" y="92" font-size="20" font-weight="bold" fill="#1f3864">검사 라인 PC — 라인마다 1대</text>
 <!-- VMS 3앱 -->
 <rect x="70" y="120" width="270" height="110" rx="8" fill="#1f3864"/>
 <text x="205" y="150" font-size="17" font-weight="bold" fill="#fff" text-anchor="middle">VMS (검사 운전)</text>
 <text x="205" y="176" font-size="13" fill="#dfe7f5" text-anchor="middle">작업자 로그인 · 작업지시 · AUTO RUN</text>
 <text x="205" y="196" font-size="13" fill="#dfe7f5" text-anchor="middle">판정 · 집계 · 이력 · 결과 업로드</text>
-<text x="205" y="216" font-size="13" fill="#dfe7f5" text-anchor="middle">PLC/IO 시퀀스 · 이미지 저장</text>
+<text x="205" y="216" font-size="13" fill="#dfe7f5" text-anchor="middle">IO 시퀀스 · 이미지 저장</text>
 <rect x="370" y="120" width="290" height="110" rx="8" fill="#2e5496"/>
 <text x="515" y="150" font-size="17" font-weight="bold" fill="#fff" text-anchor="middle">VMS.VisionSetup (레시피 편집)</text>
 <text x="515" y="176" font-size="13" fill="#dfe7f5" text-anchor="middle">비전 도구 40종 · ROI · 판정 기준</text>
@@ -21,7 +21,7 @@ svg text{font-family:'Malgun Gothic','Segoe UI',sans-serif}
 <text x="515" y="216" font-size="13" fill="#dfe7f5" text-anchor="middle">배치 테스트 · 예제 템플릿</text>
 <rect x="70" y="250" width="270" height="70" rx="8" fill="#0e8f73"/>
 <text x="205" y="280" font-size="15" font-weight="bold" fill="#fff" text-anchor="middle">VMS.AppSetup (설정 마법사)</text>
-<text x="205" y="303" font-size="12" fill="#e3f7f2" text-anchor="middle">카메라 · PLC · IO 보드 · 서버 · 보안 · 라이선스</text>
+<text x="205" y="303" font-size="12" fill="#e3f7f2" text-anchor="middle">카메라 · IO 보드 · 서버 · 보안 · 라이선스</text>
 <rect x="370" y="250" width="290" height="70" rx="8" fill="#4b5f86"/>
 <text x="515" y="280" font-size="16" font-weight="bold" fill="#fff" text-anchor="middle">검사 데이터 파일</text>
 <text x="515" y="303" font-size="12" fill="#e6ebf5" text-anchor="middle">ONNX 모델 · 저장 이미지 · 저장 점군(.vpc)</text>
@@ -32,13 +32,13 @@ svg text{font-family:'Malgun Gothic','Segoe UI',sans-serif}
 <!-- 장비 -->
 <rect x="70" y="430" width="270" height="110" rx="8" fill="#fff" stroke="#2e5496" stroke-width="1.5"/>
 <text x="205" y="458" font-size="15" font-weight="bold" fill="#1f3864" text-anchor="middle">산업용 카메라</text>
-<text x="205" y="480" font-size="12" fill="#333" text-anchor="middle">2D Area Scan · Line Scan</text>
+<text x="205" y="480" font-size="12" fill="#333" text-anchor="middle">2D Area Scan</text>
 <text x="205" y="498" font-size="12" fill="#333" text-anchor="middle">GigE Vision (UDP 3956)</text>
 <text x="205" y="516" font-size="12" fill="#333" text-anchor="middle">HIK · Basler 등</text>
 <rect x="390" y="430" width="270" height="110" rx="8" fill="#fff" stroke="#2e5496" stroke-width="1.5"/>
-<text x="525" y="458" font-size="15" font-weight="bold" fill="#1f3864" text-anchor="middle">PLC / IO 보드</text>
-<text x="525" y="480" font-size="12" fill="#333" text-anchor="middle">Mitsubishi · Siemens · LS</text>
-<text x="525" y="498" font-size="12" fill="#333" text-anchor="middle">Omron · Modbus TCP</text>
+<text x="525" y="458" font-size="15" font-weight="bold" fill="#1f3864" text-anchor="middle">디지털 IO 보드</text>
+<text x="525" y="480" font-size="12" fill="#333" text-anchor="middle">트리거 입력 · 판정 출력</text>
+<text x="525" y="498" font-size="12" fill="#333" text-anchor="middle">(경광등 · 센서)</text>
 <text x="525" y="516" font-size="12" fill="#333" text-anchor="middle">ADLink · Advantech DIO</text>
 <line x1="205" y1="430" x2="205" y2="396" stroke="#555" stroke-width="1.5" marker-end="url(#ar)"/>
 <line x1="525" y1="430" x2="525" y2="396" stroke="#555" stroke-width="1.5" marker-end="url(#ar)"/>
@@ -72,7 +72,7 @@ svg text{font-family:'Malgun Gothic','Segoe UI',sans-serif}
 <text x="1195" y="508" font-size="15" font-weight="bold" fill="#fff" text-anchor="middle">"Web 서버 포함" 선택 시</text>
 <text x="1195" y="530" font-size="12" fill="#e3f7f2" text-anchor="middle">BODA.VMS.Web 서비스 · 방화벽 5292</text>
 <text x="1195" y="548" font-size="12" fill="#e3f7f2" text-anchor="middle">한 PC 로 검사와 생산 관리를 함께</text>
-<text x="1050" y="620" font-size="12" fill="#666" text-anchor="middle">프로그램 화면에 제품명 · 버전이 표시됩니다 (예: BODA VMS v1.48.0)</text>
+<text x="1050" y="620" font-size="12" fill="#666" text-anchor="middle">프로그램 화면에 제품명 · 버전이 표시됩니다 (예: BODA VMS v1.48.1)</text>
 <!-- 연결선 -->
 <line x1="680" y1="175" x2="740" y2="175" stroke="#0e8f73" stroke-width="3" marker-end="url(#ar)"/>
 <line x1="740" y1="200" x2="680" y2="200" stroke="#0e8f73" stroke-width="3" marker-end="url(#ar)"/>

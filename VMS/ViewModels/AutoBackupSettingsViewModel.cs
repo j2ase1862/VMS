@@ -52,7 +52,7 @@ namespace VMS.ViewModels
                 RetentionDays = loaded.RetentionDays;
                 BackupDir = loaded.BackupDir ?? string.Empty;
                 IncludeAudit = loaded.IncludeAudit;
-                ProductVersion = loaded.ProductVersion;
+                ProductVersion = string.IsNullOrWhiteSpace(loaded.ProductVersion) ? VMS.Core.ProductInfo.Version : loaded.ProductVersion;
                 StatusMessage = File.Exists(_configPath)
                     ? "현재 system_config.json 값을 로드함"
                     : "system_config.json 없음 — 저장 시 새로 생성";

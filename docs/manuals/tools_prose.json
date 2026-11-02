@@ -212,7 +212,7 @@
   ],
   "outputs": "MinValue · MaxValue · MeanValue · StdDev (판정 없음)",
   "tips": [
-   "MeanValue 를 PLC 에 매핑하면 조명이 어두워지는 추세를 PLC 에서 감시할 수 있습니다."
+   "MeanValue 를 Run Results 에서 꾸준히 보면 조명이 어두워지는 추세를 알아챌 수 있습니다."
   ]
  },
  "Blob Analysis (블롭 분석)": {
@@ -419,7 +419,7 @@
  },
  "Match Align (매치 얼라인)": {
   "title": "Match Align — 2D 얼라인 (ΔX / ΔY / Δθ)",
-  "purpose": "Feature Match 가 찾은 현재 포즈(중심 · 각도)를 기준(마스터) 포즈와 비교해 변위 ΔX · ΔY · Δθ 를 계산합니다. 캘리브레이션(또는 스텝 Resolution)이 있으면 mm 로도 내며, 계산한 보정량은 PLC 로 설비(스테이지 등)에 보낼 수 있습니다. 카메라 1 대로 부품을 보는 표준 2D 얼라인 구성입니다.",
+  "purpose": "Feature Match 가 찾은 현재 포즈(중심 · 각도)를 기준(마스터) 포즈와 비교해 변위 ΔX · ΔY · Δθ 를 계산합니다. 캘리브레이션(또는 스텝 Resolution)이 있으면 mm 로도 내며, 허용 변위를 넘으면 NG 로 판정합니다. 카메라 1 대로 부품을 보는 표준 2D 얼라인 구성입니다.",
   "params": [
    [
     "Mode",
@@ -450,7 +450,7 @@
   "outputs": "RefX/Y/Theta · CurrentX/Y/Theta · DeltaX · DeltaY · DeltaTheta · DeltaXMm · DeltaYMm · ScaleRatio · JudgmentRadial · JudgmentPass",
   "judgment": "Enable Judgment 를 켜면 위치(반경)와 각도가 모두 한계 이내여야 OK. Unit=Mm 인데 mm 변환이 불가능하면 픽셀로 잘못 판정하지 않고 실패 처리합니다.",
   "tips": [
-   "<strong>절차</strong> — ① Feature Match 로 기준 부품의 패턴을 학습 ② Feature Match 를 이 도구에 Result 로 연결하고 Run → Δ 계산 ③ 기준을 학습 시점과 다르게 잡으려면 기준 부품을 놓고 Run 후 [현재 매칭을 기준으로 등록] ④ 보정량(DeltaX · DeltaY · DeltaTheta)을 설비로 보내려면 PLC Output 에 매핑.",
+   "<strong>절차</strong> — ① Feature Match 로 기준 부품의 패턴을 학습 ② Feature Match 를 이 도구에 Result 로 연결하고 Run → Δ 계산 ③ 기준을 학습 시점과 다르게 잡으려면 기준 부품을 놓고 Run 후 [현재 매칭을 기준으로 등록] ④ 보정량(DeltaX · DeltaY · DeltaTheta)은 Run Results 에서 확인.",
    "2 점 모드에서 ScaleRatio 가 1.0 에서 벗어나면 오검출이나 배율 변화를 의심하세요.",
    "Feature Match 를 재학습하면 기준도 함께 바뀌거나(UseCurrentImage) 유지되므로(KeepReference) 재학습 원점 설정을 확인하세요."
   ]
@@ -1041,7 +1041,7 @@
    ]
   ],
   "outputs": "Distance3D · SignedDistance · DeltaX/Y/Z · AngleDeg · AngleRad · Point1X/Y/Z · Point2X/Y/Z · IsParallel",
-  "judgment": "이 도구에는 공차 판정이 없습니다. 합불이 필요하면 뒤에 Result 도구를 연결하거나 AngleDeg · Distance3D 를 PLC 로 매핑해 PLC 에서 판정합니다.",
+  "judgment": "이 도구에는 공차 판정이 없습니다. 각도 · 거리(AngleDeg · Distance3D)는 Run Results 에서 확인합니다.",
   "tips": [
    "클러스터 콤보에서 덩어리를 고르면 2D 뷰에 해당 덩어리가 강조됩니다. 목록이 비어 있으면 PointCloud Cluster 를 Result 로 연결하고 Run 을 한 번 실행하세요.",
    "mm 정확도는 Cluster 의 Scale Mode(AutoFromCamera 권장)를 따릅니다."
@@ -1170,7 +1170,7 @@
    ]
   ],
   "outputs": "PlaneA/B/C/D · NormalX/Y/Z · Flatness · AvgError · InlierCount · TotalPoints",
-  "judgment": "자체 판정 없음 — 3D Geometry 로 각도 · 거리를 구한 뒤 Result 또는 PLC 에서 판정합니다.",
+  "judgment": "자체 판정 없음 — 3D Geometry 로 각도 · 거리를 구해 확인합니다.",
   "tips": [
    "템플릿 ‘평면 틸트 얼라인’ 은 Plane Fit Ref · Plane Fit Target → 3D Geometry(PlaneToPlaneAngle) 로 구성되며 AngleDeg 0° 가 평행입니다."
   ]
@@ -1193,7 +1193,7 @@
   "outputs": "PassCount · FailCount · TotalCount (메시지 ‘OK (n/m passed)’ · ‘NG (n/m failed)’)",
   "judgment": "판정 모드에 따라 OK/NG. 이 결과가 Run Results 의 Pass/Fail 과 VMS 의 판정 배지가 됩니다.",
   "tips": [
-   "최종 OK/NG 신호를 PLC · IO 보드로 내보내는 것은 이 도구가 아니라 시퀀스 편집기의 Branch → Output Action 이 담당합니다(§5.10). 이 도구의 PLC Output 은 PassCount 같은 통계 값 보조 전송용입니다."
+   "최종 OK/NG 신호를 IO 보드로 내보내는 것은 이 도구가 아니라 시퀀스 편집기의 Branch → Output Action 이 담당합니다(§5.10)."
   ]
  },
  "Ensemble (앙상블)": {

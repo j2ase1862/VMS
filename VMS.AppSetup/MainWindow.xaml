@@ -1066,7 +1066,7 @@
                                         </StackPanel>
                                     </Grid>
 
-                                    <CheckBox Content="활성화 (체크 해제 시 시스템 부팅 시 인스턴스 생성 skip)"
+                                    <CheckBox Content="활성화 (해제하면 VMS 시작 시 이 보드를 연결하지 않습니다)"
                                               IsChecked="{Binding IsEnabled, Mode=TwoWay}"
                                               Style="{StaticResource WindowDarkCheckBox}"
                                               Margin="0,0,0,12"/>
@@ -1077,8 +1077,9 @@
 
                                     <Border Background="#1E3A5F" CornerRadius="4" Padding="10" Margin="0,12,0,0">
                                         <TextBlock Foreground="#A0D0F0" FontSize="11" TextWrapping="Wrap">
-                                            ※ 현재 Mock 구현만 활성 — 실제 ADLink DASK / Advantech DAQNavi SDK 통합은 Phase 3 작업입니다.
-                                            Phase 1+2 까지는 인프라 검증용으로 보드 등록 후 시퀀스에서 채널 read/write 호출 시 in-memory 동작합니다.
+                                            ※ 보드를 쓰려면 제조사 드라이버(ADLink DASK · Advantech DAQNavi)를 64비트용으로 설치해야 합니다.
+                                            트리거 입력 · 판정 출력 채널은 비전 설정(VisionSetup)의 시퀀스 편집기에서 노드마다 지정하며,
+                                            연결 결과는 VMS 하단 상태바의 IO 칩에서 확인합니다.
                                         </TextBlock>
                                     </Border>
                                 </StackPanel>

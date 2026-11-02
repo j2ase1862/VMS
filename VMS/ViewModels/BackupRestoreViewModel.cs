@@ -26,7 +26,7 @@ namespace VMS.ViewModels
 
         [ObservableProperty] private string _backupFileName = string.Empty;
         [ObservableProperty] private bool _includeAudit;
-        [ObservableProperty] private string _productVersion = "1.2.0";
+        [ObservableProperty] private string _productVersion = VMS.Core.ProductInfo.Version;
         [ObservableProperty] private string _backupStatus = "Ready";
         // WindowStyles.xaml 토큰과 일치 — BrushNeutral / BrushSuccess / BrushDanger.
         [ObservableProperty] private string _backupStatusColor = "#22303C";

@@ -5,7 +5,7 @@
 <h3 id="mt-backup">9.1 백업과 복원</h3>
 <h4>라인 PC (VMS)</h4>
 <ul>
-  <li><strong>수동 백업</strong> — Admin Tools → Backup / Restore → [Run Backup...] 로 ZIP 을 만듭니다(§4.11). 설정 파일 · 레이아웃 · PLC 신호 맵 · 사용자 DB · 검사 이력 DB · 레시피 전체가 들어가며 감사 로그는 선택입니다. 레시피를 크게 바꾸기 전, 프로그램을 업그레이드하기 전, PC 를 교체하기 전에 받아 두세요.</li>
+  <li><strong>수동 백업</strong> — Admin Tools → Backup / Restore → [Run Backup...] 로 ZIP 을 만듭니다(§4.11). 설정 파일 · 레이아웃 · 신호 설정 · 사용자 DB · 검사 이력 DB · 레시피 전체가 들어가며 감사 로그는 선택입니다. 레시피를 크게 바꾸기 전, 프로그램을 업그레이드하기 전, PC 를 교체하기 전에 받아 두세요.</li>
   <li><strong>자동 백업</strong> — Admin Tools → Auto Backup Settings 에서 활성화 · 주기(시간) · 보존(일) · 위치를 정합니다. 기본 위치는 <code>%LocalAppData%\BODA VISION AI\backups</code> 이며 다른 드라이브나 네트워크 폴더를 권장합니다.</li>
   <li><strong>복원</strong> — Backup / Restore 의 백업 복원에서 파일을 고르고 [기존 파일 덮어쓰기] 를 켠 뒤 [Run Restore]. 복원 후 VMS 를 재시작합니다. 다른 PC 에 복원하면 카메라 구성이 다를 수 있으므로 설정 마법사 3 단계를 확인하세요.</li>
 </ul>
@@ -40,7 +40,7 @@
 
 <h3 id="mt-license">9.4 라이선스 · 좌석 관리</h3>
 <ul>
-  <li>라이선스 상태는 설정 마법사 6 단계 카드, VMS Health Check 의 License 항목, Web 시스템 관리 → SW 라이선스에서 봅니다.</li>
+  <li>라이선스 상태는 설정 마법사 5 단계 카드, VMS Health Check 의 License 항목, Web 시스템 관리 → SW 라이선스에서 봅니다.</li>
   <li>PC 교체 · Windows 재설치 후 "지문 불일치" 가 뜨면 새 지문 코드로 재발급을 요청합니다(§2.5). 서버-라인 구성에서는 서버 PC 만 해당합니다.</li>
   <li>라인 PC 를 철거하면 그 좌석은 72 시간 후 자동으로 반환됩니다. 계약 좌석이 모자라면 Web 화면에 경고 배너가 뜹니다.</li>
 </ul>

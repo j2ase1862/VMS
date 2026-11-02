@@ -111,7 +111,7 @@ namespace VMS.Core.Backup
                     new BackupOptions
                     {
                         IncludeAudit = _options.IncludeAudit,
-                        ProductVersion = _options.ProductVersion
+                        ProductVersion = string.IsNullOrWhiteSpace(_options.ProductVersion) ? ProductInfo.Version : _options.ProductVersion
                     });
 
                 int cleaned = CleanupOldBackups();

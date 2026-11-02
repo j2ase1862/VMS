@@ -13,7 +13,6 @@
   <tr><td>Matrox · Dalsa (프레임 그래버)</td><td>MIL 런타임</td><td>Camera Link 카메라 구성에서만</td></tr>
   <tr><td>ADLink IO 보드</td><td>DASK 드라이버 <strong>64비트(x64)</strong></td><td>32비트만 설치된 PC 에서는 보드가 인식되지 않습니다</td></tr>
   <tr><td>Advantech IO 보드</td><td>DAQNavi</td><td>미설치 시 보드가 연결되지 않습니다(System Log 에 사유)</td></tr>
-  <tr><td>PLC (5 종)</td><td>없음</td><td>TCP 직접 통신 — 드라이버 불필요</td></tr>
 </table>
 <div class="callout warn"><strong>지원 목록에 없는 제조사</strong>(IDS · Cognex · Keyence · Baumer · Allied Vision · FLIR · JAI)를 설정 마법사에서
 고르면 카메라가 <strong>시뮬레이션 모드</strong>로 동작합니다 — 화면에 보이는 영상은 실제 카메라 영상이 아닙니다.
@@ -21,16 +20,16 @@ VisionSetup 에서 연결할 때 "SDK 미탑재 — 시뮬레이션 모드" 경�
 
 <h4>설치 순서 (권장)</h4>
 <ol>
-  <li>카메라 · PLC · IO 보드를 PC 에 연결하고 제조사 소프트웨어를 설치합니다.</li>
+  <li>카메라 · IO 보드를 PC 에 연결하고 제조사 소프트웨어를 설치합니다.</li>
   <li>VMS 설치 파일을 실행합니다 (§2.2).</li>
   <li>서버 PC 를 따로 두는 구성이면 서버 PC 에 Web 서버를 먼저 설치하고 접속을 확인합니다 (§2.3).</li>
-  <li>라인 PC 에서 시스템 설정 마법사(3장)를 실행해 카메라 · PLC · Web 주소 · 보안 모드를 저장합니다.</li>
+  <li>라인 PC 에서 시스템 설정 마법사(3장)를 실행해 카메라 · IO 보드 · Web 주소 · 보안 모드를 저장합니다.</li>
   <li>VMS 를 실행해 하단 상태바의 CAM · Web 연결 표시를 확인합니다 (§4.7).</li>
 </ol>
 
 <h3 id="install-vms">2.2 VMS 설치 (설치 마법사)</h3>
 <ol>
-  <li><code>VMS-1.48.0.msi</code> 처럼 버전이 붙은 설치 파일을 더블 클릭합니다. 설치에는 관리자 권한이 필요합니다.</li>
+  <li><code>VMS-1.48.1.msi</code> 처럼 버전이 붙은 설치 파일을 더블 클릭합니다. 설치에는 관리자 권한이 필요합니다.</li>
   <li><strong>시작 화면</strong>에서 [다음]을 누릅니다. 별도의 라이선스 동의 단계는 없습니다.</li>
   <li><strong>설치 폴더</strong>는 설치 마법사가 보여 주는 기본값을 그대로 두는 것을 권장합니다.</li>
   <li><strong>설치 구성 선택</strong> 화면에서 이 PC 에 함께 설치할 항목을 고릅니다.
@@ -46,11 +45,11 @@ VisionSetup 에서 연결할 때 "SDK 미탑재 — 시뮬레이션 모드" 경�
 <figure><img src="../gs/screenshots/71_msi_weboption.png" data-width="420" alt="설치 구성 선택 화면">
 <figcaption>설치 구성 선택 — "BODA VMS Web 서버 포함" 체크박스</figcaption></figure>
 <div class="callout tip"><strong>무인 설치</strong>가 필요하면 명령 프롬프트(관리자)에서 다음처럼 실행합니다.
-<code>msiexec /i VMS-1.48.0.msi /qn INSTALLWEB=0</code> — 값 0 은 제외, 1 은 포함입니다.</div>
+<code>msiexec /i VMS-1.48.1.msi /qn INSTALLWEB=0</code> — 값 0 은 제외, 1 은 포함입니다.</div>
 
 <h4>설치 후 처음 실행하면</h4>
 <p>VMS 를 처음 실행하면 설정 파일이 없으므로 "초기 시스템 설정이 필요합니다" 안내와 함께
-<strong>시스템 설정 마법사(VMS.AppSetup)</strong>가 자동으로 열립니다. 3장에 따라 6 단계를 저장한 뒤
+<strong>시스템 설정 마법사(VMS.AppSetup)</strong>가 자동으로 열립니다. 3장에 따라 5 단계를 저장한 뒤
 VMS 를 다시 실행하세요. 설정 파일이 있어도 마법사를 끝까지 저장하지 않은 것이면 "시스템 설정이 끝나지 않았습니다" 안내와 함께
 마법사가 열립니다. 설정 파일과 레시피, 검사 이력은 모두 <code>%LocalAppData%\BODA VISION AI\</code>
 아래에 저장되며 프로그램을 제거하거나 업그레이드해도 지워지지 않습니다.</p>
@@ -96,7 +95,6 @@ cd &lt;압축 푼 폴더&gt;\deploy
   <tr><td>라인 PC → Web 서버</td><td>5292 / TCP (HTTP)</td><td>아웃바운드</td><td>검사 결과 업로드 · 작업지시 · 작업자 로그인 · 실시간 알림(SignalR)</td></tr>
   <tr><td>브라우저 → Web 서버</td><td>5292 / TCP</td><td>인바운드(서버)</td><td>관리 화면 접속</td></tr>
   <tr><td>라인 PC ↔ 카메라</td><td>3956 / UDP + GVSP 스트림</td><td>양방향</td><td>GigE Vision 검색 · 영상 수신 (점보 프레임 9000 권장)</td></tr>
-  <tr><td>라인 PC → PLC</td><td>벤더별 (MC 5000 · S7 102 · FINS 9600 · Modbus 502 등)</td><td>아웃바운드</td><td>트리거 · 판정 신호</td></tr>
 </table>
 <ul>
   <li>Web 서버를 별도 PC 에 설치하면 배포 스크립트가 방화벽 인바운드 규칙 <code>BODA VMS Web</code> 을 만듭니다.
@@ -104,7 +102,7 @@ cd &lt;압축 푼 폴더&gt;\deploy
       보려면 <code>appsettings.Production.json</code> 의 <code>Kestrel:Endpoints:Http:Url</code> 을 <code>http://0.0.0.0:5292</code> 로
       바꾸고 방화벽에서 5292 를 사내망(Private/Domain)에만 엽니다.</li>
   <li>카메라는 전용 네트워크 카드에 직결하고, 그 카드에만 카메라와 같은 대역의 고정 IP 를 줍니다.</li>
-  <li>보안 모드가 <strong>Production</strong> 인 라인 PC 는 다른 PC 를 가리키는 <code>http://</code> 서버 주소를 거부합니다(§3.7).
+  <li>보안 모드가 <strong>Production</strong> 인 라인 PC 는 다른 PC 를 가리키는 <code>http://</code> 서버 주소를 거부합니다(§3.6).
       원격 서버는 <code>https://</code> 로 열거나(사설 인증서), 사내 실증 단계에서는 Development 모드를 씁니다.
       같은 PC 를 가리키는 <code>localhost</code> 주소는 http 여도 허용됩니다.</li>
 </ul>

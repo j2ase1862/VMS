@@ -29,7 +29,7 @@ namespace VMS.ViewModels
         [ObservableProperty] private bool _includeEnvironment = true;
         [ObservableProperty] private bool _includeBackupIndex = true;
         [ObservableProperty] private bool _includeMachineName;
-        [ObservableProperty] private string _productVersion = "1.2.0";
+        [ObservableProperty] private string _productVersion = VMS.Core.ProductInfo.Version;
 
         [ObservableProperty] private string _status = "Ready";
         [ObservableProperty] private string _statusColor = "#22303C";  // BrushNeutral

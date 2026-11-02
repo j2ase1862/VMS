@@ -1056,7 +1056,7 @@ namespace VMS
                                 Add("HealthCheck", () => new Views.HealthCheckWindow { DataContext = new HealthCheckViewModel() });
                                 Add("AutoBackup", () =>
                                 {
-                                    var vm = new AutoBackupSettingsViewModel { Enabled = true, ProductVersion = "1.2.0" };
+                                    var vm = new AutoBackupSettingsViewModel { Enabled = true, ProductVersion = VMS.Core.ProductInfo.Version };
                                     if (string.IsNullOrWhiteSpace(vm.BackupDir))
                                         vm.BackupDir = @"D:\BODA-VMS\backups";
                                     return new Views.AutoBackupSettingsWindow { DataContext = vm };
