@@ -524,14 +524,14 @@
     {
      "segs": [
       {
-       "s": "Windows 11 x64. 라인 PC · 서버 PC 공통",
+       "s": "Windows 10 IoT Enterprise LTSC 2021 (x64). 라인 PC · 서버 PC 공통",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "Windows 11 x64. 라인 PC · 서버 PC 공통"
+     "text": "Windows 10 IoT Enterprise LTSC 2021 (x64). 라인 PC · 서버 PC 공통"
     }
    ],
    [

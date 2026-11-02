@@ -3147,18 +3147,18 @@ docx/PDF 재생성 204쪽(변동 없음) · 그림 151장 · 경고 0. 새 문�
 ### 무엇이 바뀌었나 (사내 기록)
 
 - **TTA 11월 메일**: 실제 PLC 연동을 범위에 넣으려면 장비 · 시험환경이 필요하고, 빼면 다른 제외 기능처럼 프로그램 · 제출 문서에서 정리할 것.
-  운영체제 표기를 Windows 11 (x64) 로 통일할 것. 제품설명서 작성일 · 문서 이력 · 신청 기업 · 작성자/연락처 기입.
+  운영체제 표기를 시험 대상 OS 로 통일할 것. 제품설명서 작성일 · 문서 이력 · 신청 기업 · 작성자/연락처 기입.
   결정(사용자 2026-11-02): PLC 연동 제외, 롤러 검사(라인스캔)도 반입 장비로 시험할 수 없어 제외, 버전 v1.48.1 로 다시 확정.
 - SW: #609 확장 옵션 `plc` · `line-scan` — 기본 구성에서 AppSetup PLC 단계 건너뜀(5단계), VMS 상태 표시줄 PLC 칸 · Roller Inspection 숨김,
   시퀀스 에디터 IO 보드만(새 노드 = 첫 IO 보드, Reset 신호 · PLC 모니터 표 숨김, "I/O Monitor", "장치 연결"), 도구 설정 PLC Output 숨김,
   시퀀스 노드 · Result 도구 도움말 IO 보드 문구. release/1.48.1: AppSetup IO 보드 단계에 남아 있던 개발 안내("Mock 구현 · Phase 3") 교체,
   백업 · 지원 패키지 · 자동 백업 창 ProductVersion 기본값 1.2.0 → 설치된 버전, 설치 마법사 배너 "BODA Vision System" → "BODA VMS".
 - 매뉴얼 본문: 3.5 PLC 단계 · 5.6 PLC Output · 4.6 Roller Inspection → `docs/manuals/extension/plc.html`(제출 제외). 3장 단계 번호 · 교차 참조(§3.6→§3.5 등),
-  1 · 2장 PLC · 라인스캔 · Windows 10 표기, 4.7 상태바 PLC 칸, 5.10 시퀀스 IO 보드 기준, 6장 Align · 3D Geometry · Result 의 PLC 문장, 7장 예제, 9 · 10장, 11.3 결과 값 이름.
+  1 · 2장 PLC · 라인스캔 표기, 1.3 운영체제 Windows 10 IoT Enterprise LTSC 2021 (x64)(시험 PC 와 같게, 구성도 제목에서는 OS 뺌), 4.7 상태바 PLC 칸, 5.10 시퀀스 IO 보드 기준, 6장 Align · 3D Geometry · Result 의 PLC 문장, 7장 예제, 9 · 10장, 11.3 결과 값 이름.
   시스템 구성도 IO 보드 상자.
 - 그림: 기본 구성 · v1.48.1 — AppSetup 5장(Step N of 5) · 컨트롤, VMS 메인 · 사이드 패널 · 검사 운전 · 백업/지원 패키지/자동 백업/보존 창,
   VisionSetup 도구 패널 40종(PLC Output 없음) · 실행 예 장면 · 메인 · 시퀀스 편집기, 웹 39장(버전 v1.48.1), 설치 창 70/71(새 배너), 표지 · 제품설명서 그림.
-- 제품설명서 v1.1: 문서 정보(작성일 · 신청 기업 · 작성자/연락처), 문서 이력, AS-03 PLC · OP-04 Roller 삭제(번호 당김), 하드웨어 표 IO 보드, 운영체제 Windows 11 (x64), 웹 = 구성 요소.
+- 제품설명서 v1.1: 문서 정보(작성일 · 신청 기업 · 작성자/연락처), 문서 이력, AS-03 PLC · OP-04 Roller 삭제(번호 당김), 하드웨어 표 IO 보드, 운영체제 Windows 10 IoT Enterprise LTSC 2021 (x64)(시험 PC = 실증 PC), 웹 = 구성 요소.
 
 ### 매뉴얼 반영 (완료 2026-11-02)
 

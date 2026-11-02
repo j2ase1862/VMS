@@ -122,7 +122,7 @@ children.push(infoTable([
   ["제품 버전", PRODUCT_VERSION],
   ["문서 버전", DOC_VERSION],
   ["작성일", DOC_DATE],
-  ["대상 운영체제", "Windows 11 (x64)"],
+  ["대상 운영체제", "Windows 10 IoT Enterprise LTSC 2021 (x64)"],
   ["개발 언어 / 프레임워크", "C# / .NET 8.0 (WPF)"],
   ["신청 기업", APPLICANT],
   ["작성자 / 연락처", AUTHOR],
@@ -197,7 +197,7 @@ children.push(H2("4.1 하드웨어 요구사항"));
 }
 children.push(H2("4.2 소프트웨어 요구사항"));
 [
-  "운영체제: Windows 11 (x64)",
+  "운영체제: Windows 10 IoT Enterprise LTSC 2021 (x64)",
   ".NET 8.0 런타임 — MSI에 동봉(self-contained). 별도 설치 불필요",
   "Visual C++ 재배포 패키지 — MSI에 동봉. 별도 설치 불필요 (폐쇄망 설치 가능)",
 ].forEach((t) => children.push(bullet(t)));
