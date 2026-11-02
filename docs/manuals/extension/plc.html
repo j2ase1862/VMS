@@ -1,0 +1,32 @@
+<!-- 확장 옵션 "PLC 연동" · "라인스캔 · 롤러 검사" — 2026-11-02 기본 구성 매뉴얼(v3.1)에서 뺀 조각. 번호는 v3.0 기준. -->
+<!-- appsetup_plc -->
+<h3 id="appsetup-s4">3.5 4 단계 — PLC Communication (PLC 통신)</h3>
+<figure><img src="../gs/screenshots/v3/as/Window_P4_PLCCommunication.png" data-width="520" alt="4단계 PLC 통신">
+<figcaption>4 단계 — PLC Communication. 벤더 · 통신 방식 · 주소 · 폴링/하트비트 · 쓰기 모드</figcaption></figure>
+<table class="cols-2-3-4-1">
+  <tr><th>항목</th><th>컨트롤</th><th>설명</th><th>기본값</th></tr>
+  <tr><td>PLC Vendor</td><td><img src="../gs/screenshots/v3/as_ctl/P4_ethernet_02_RadioButton_Mitsubishi.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P4_ethernet_06_RadioButton_Modbus_TCP.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P4_ethernet_07_RadioButton_None_No_PLC.png" alt=""></td>
+      <td>Mitsubishi(MC) · Siemens(S7) · LS Electric(XGT) · Omron(FINS) · Modbus TCP · None. PLC 없이 IO 보드만 쓰면 None 으로 두고 5 단계에서 보드를 등록합니다(§4.11).</td><td>None</td></tr>
+  <tr><td>Communication Type</td><td><img src="../gs/screenshots/v3/as_ctl/P4_ethernet_22_ComboBox_Ethernet.png" alt=""></td><td>Ethernet 또는 Serial. Serial 이면 아래 IP · Port 대신 시리얼 항목이 나타납니다.</td><td>Ethernet</td></tr>
+  <tr><td>〈Ethernet〉 PLC IP Address / Port</td><td><img src="../gs/screenshots/v3/as_ctl/P4_ethernet_25_TextBox_1921680100.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P4_ethernet_27_TextBox_502.png" alt=""></td><td>PLC 의 IP 주소와 포트.</td><td>192.168.0.100 / 502</td></tr>
+  <tr><td>〈Modbus〉 Modbus Unit ID</td><td><img src="../gs/screenshots/v3/as_ctl/P4_modbus_02_TextBox_255.png" alt=""></td><td>Modbus 슬레이브 ID(1~255).</td><td>255</td></tr>
+  <tr><td>〈Serial〉 Port / Baud / Data / Parity / Stop</td><td><img src="../gs/screenshots/v3/as_ctl/P4_serial_03_TextBox_COM1.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P4_serial_05_ComboBox_115200.png" alt=""></td><td>시리얼 포트 파라미터.</td><td>COM1 / 115200 / 8 / None / One</td></tr>
+  <tr><td>Polling Interval (ms)</td><td><img src="../gs/screenshots/v3/as_ctl/P4_ethernet_10_TextBox_20.png" alt=""></td><td>PLC 신호를 읽는 주기입니다. 짧을수록 트리거 반응이 빠르지만 PLC 부하가 늘어납니다.</td><td>20</td></tr>
+  <tr><td>Use Heartbeat / 주소</td><td><img src="../gs/screenshots/v3/as_ctl/P4_ethernet_11_CheckBox_Use_Heartbeat.png" alt=""></td><td>켜면 VMS 가 지정 주소(예: D100)에 카운터를 계속 써서 PLC 가 VMS 생존을 감시할 수 있습니다.</td><td>해제</td></tr>
+  <tr><td>Auto Reconnect</td><td><img src="../gs/screenshots/v3/as_ctl/P4_ethernet_13_CheckBox_Auto_Reconnect.png" alt=""></td><td>연결이 끊기면 자동으로 다시 접속합니다.</td><td>사용</td></tr>
+  <tr><td>Write Mode / Endian Mode</td><td><img src="../gs/screenshots/v3/as_ctl/P4_ethernet_16_ComboBox_Handshake.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P4_ethernet_19_ComboBox_LittleEndian.png" alt=""></td><td>결과 쓰기 방식(Handshake 등)과 워드 바이트 순서. PLC 프로그램의 규약에 맞춥니다.</td><td>Handshake / LittleEndian</td></tr>
+</table>
+<p>PLC 주소를 어느 신호에 쓸지는 이 단계가 아니라 VisionSetup 의 시퀀스 편집기(§5.10)에서 노드마다 지정합니다.</p>
+
+
+<!-- vs_plc_output -->
+<h4>PLC Output — 결과 값을 PLC 로 보내기</h4>
+<p>도구 설정 아래의 PLC Output 에서 [+ Add PLC Mapping] 을 누르고 Key(결과 값 이름) · Device(MainPLC 또는 IO 보드) · Address(PLC 주소 또는 IO 채널) · Type 을 정하면 실행 때마다 그 값이 PLC 에 기록됩니다.</p>
+
+
+<!-- vms_roller -->
+<h4>Roller Inspection</h4>
+<figure><img src="../gs/screenshots/v3/vms_ctl/S3_sidepanel_00_sec_roller_inspection.png" data-width="290" alt="Roller Inspection 섹션"><figcaption>Roller Inspection — [Roller] 토글</figcaption></figure>
+<p>라인 스캔 카메라로 회전하는 롤러 표면을 연속 검사하는 모드를 켜고 끕니다. AUTO RUN 조건을 만족하고 라인 스캔 카메라가 구성된 경우에만 켤 수 있습니다.</p>
+
+

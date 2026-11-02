@@ -1,5 +1,5 @@
 // GS 제출용 제품설명서 (ISO/IEC 25051 기준) + 기능명세 생성기
-// 출력: docs/gs/VMS_제품설명서_v1.0.docx
+// 출력: docs/gs/VMS_제품설명서_v1.1.docx
 const path = require("path");
 const fs = require("fs");
 const GLOBAL = "C:/Users/vinos/AppData/Roaming/npm/node_modules";
@@ -10,7 +10,7 @@ const {
 } = require(path.join(GLOBAL, "docx"));
 
 const SHOT = path.join(__dirname, "..", "screenshots");
-const OUT = path.join(__dirname, "..", "VMS_제품설명서_v1.0.docx");
+const OUT = path.join(__dirname, "..", "VMS_제품설명서_v1.1.docx");
 
 // ---- A4 ----
 const PAGE_W = 11906, PAGE_H = 16838, MARGIN = 1440;
@@ -90,6 +90,13 @@ function caption(text) {
 }
 
 // ============================ CONTENT ============================
+// 문서 정보 — 제출본마다 버전 · 작성일 · 문서 이력을 함께 올린다
+const DOC_VERSION = "1.1";
+const DOC_DATE = "2026-11-02";
+const PRODUCT_VERSION = "v1.48.1";
+const APPLICANT = "(주)바심 (사업자등록번호 [기입])";
+const AUTHOR = "김기동 부장 (R&D사업부) / TEL 031-421-9063 · gdkim@vasim.co.kr";
+
 const children = [];
 
 // ---- 표지 ----
@@ -105,22 +112,23 @@ children.push(image("01_vms_main.png", 460));
 children.push(new Paragraph({ spacing: { before: 600 }, alignment: AlignmentType.CENTER,
   children: [new TextRun({ text: "ISO/IEC 25051 기준 / GS 인증 제출용", size: 22, color: "595959" })] }));
 children.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 120 },
-  children: [new TextRun({ text: "버전 1.0 · 작성일 2026-06-12", size: 22 })] }));
+  children: [new TextRun({ text: `버전 ${DOC_VERSION} · 작성일 ${DOC_DATE}`, size: 22 })] }));
 children.push(new Paragraph({ children: [new PageBreak()] }));
 
 // ---- 문서 정보 ----
 children.push(H1("문서 정보"));
 children.push(infoTable([
   ["제품명", "BODA VMS"],
-  ["제품 버전", "v1.48.0"],
-  ["문서 버전", "1.0"],
-  ["작성일", "2026-06-12"],
+  ["제품 버전", PRODUCT_VERSION],
+  ["문서 버전", DOC_VERSION],
+  ["작성일", DOC_DATE],
   ["대상 운영체제", "Windows 11 (x64)"],
   ["개발 언어 / 프레임워크", "C# / .NET 8.0 (WPF)"],
-  ["신청 기업", "[회사명·사업자등록번호 기입]"],
-  ["작성자 / 연락처", "[작성자·연락처 기입]"],
+  ["신청 기업", APPLICANT],
+  ["작성자 / 연락처", AUTHOR],
 ]));
-children.push(P("※ 대괄호 [ ] 항목은 신청 기관 제출 전 신청인 정보로 채워야 합니다.", { italics: true, size: 18, color: "C00000" }));
+if (/\[기입\]/.test(APPLICANT + AUTHOR))
+  children.push(P("※ 대괄호 [ ] 항목은 신청 기관 제출 전 신청인 정보로 채워야 합니다.", { italics: true, size: 18, color: "C00000" }));
 
 children.push(new TableOfContents("목차", { hyperlink: true, headingStyleRange: "1-2" }));
 children.push(new Paragraph({ children: [new PageBreak()] }));
@@ -128,7 +136,7 @@ children.push(new Paragraph({ children: [new PageBreak()] }));
 // ---- 1. 제품 개요 ----
 children.push(H1("1. 제품 개요"));
 children.push(P("BODA VMS(이하 VMS)는 산업 현장의 자동 외관·치수 검사를 위한 머신비전 검사 플랫폼이다. 사용자는 카메라로 취득한 이미지에 비전 도구(전처리, 패턴 매칭, 블롭, 측정, OCR/코드 판독, 딥러닝 등)를 조합한 검사 레시피를 구성하고, 생산 라인에서 자동/수동으로 검사를 실행하여 양품(OK)·불량(NG) 판정과 통계를 관리한다."));
-children.push(P("VMS는 .NET 8.0 WPF 기반 데스크톱 애플리케이션과, 선택적으로 연동되는 웹(MES/품질관리) 서버로 구성된다. 검사 결과·작업지시·추적성 정보를 웹 서버와 동기화하여 다중 라인 운영과 생산 이력 관리를 지원한다."));
+children.push(P("VMS는 .NET 8.0 WPF 기반 데스크톱 애플리케이션과 생산 관리 웹(BODA.VMS.Web) 서버로 구성되며, 두 구성 요소는 하나의 설치 파일로 제공된다. 검사 결과·작업지시·추적성 정보를 웹 서버와 동기화하여 다중 라인 운영과 생산 이력 관리를 지원하며, 웹 서버 없이 검사만 운전하는 단독 모드도 지원한다."));
 children.push(H2("1.1 주요 특징"));
 [
   "드래그앤드롭 방식의 비전 도구 워크스페이스(VMS.VisionSetup)로 코딩 없이 검사 레시피 구성",
@@ -156,7 +164,7 @@ children.push(P("VMS는 다음 모듈로 구성된다."));
     new TableRow({ tableHeader: true, children: [hcell("모듈", c1), hcell("역할", c2)] }),
     ...[
       ["VMS (운영 클라이언트)", "생산 현장 운영 화면. 카메라 제어/검사 실행(AUTO RUN)·판정·통계·작업지시·이미지 저장·관리자 도구."],
-      ["VMS.AppSetup (시스템 설정)", "최초 1회 시스템 구성 마법사. 애플리케이션·네트워크·카메라·PLC·IO 보드·초기 관리자 계정·보안 모드·라이선스 설정."],
+      ["VMS.AppSetup (시스템 설정)", "최초 1회 시스템 구성 마법사. 애플리케이션·네트워크·카메라·IO 보드·초기 관리자 계정·보안 모드·라이선스 설정."],
       ["VMS.VisionSetup (비전 설정)", "비전 도구 워크스페이스. 카메라 취득·ROI 지정·도구 조합·레시피/시퀀스 편집·배치 테스트·캘리브레이션."],
       ["NativeVision (C++ 가속)", "AVX2/FMA 기반 영상처리 가속 네이티브 라이브러리."],
       ["BODA.VMS.Web (관리/MES)", "ASP.NET Core 8 + Blazor 웹. 대시보드·작업지시·생산이력·검사이미지 조회·알람·감사로그 등. 같은 설치 파일에서 「Web 서버 포함」으로 설치."],
@@ -179,7 +187,8 @@ children.push(H2("4.1 하드웨어 요구사항"));
       ["메모리", "8GB 이상 (16GB 권장)"],
       ["저장장치", "SSD 256GB 이상 (검사 이미지 저장 시 여유 용량 추가)"],
       ["GPU", "딥러닝/TensorRT 사용 시 NVIDIA GPU (CUDA 지원). 미사용 시 불필요"],
-      ["카메라", "GigE Vision 등 산업용 카메라. 미연결 시 파일 불러오기 모드로 검사 가능"],
+      ["카메라", "GigE Vision 2D 에어리어 카메라. 미연결 시 파일 불러오기 모드로 검사 가능"],
+      ["디지털 IO 보드", "ADLink PCI-7432 등 (트리거 입력 · 판정 출력, 64비트 드라이버). 설비 신호 연동 시"],
       ["디스플레이", "1920×1080 이상 권장"],
     ].map(([a, b], i) => new TableRow({ children: [
       cell(a, c1, { bold: true, fill: i % 2 ? "F4F7FB" : "FFFFFF" }), cell(b, c2, { fill: i % 2 ? "F4F7FB" : "FFFFFF" }),
@@ -188,7 +197,7 @@ children.push(H2("4.1 하드웨어 요구사항"));
 }
 children.push(H2("4.2 소프트웨어 요구사항"));
 [
-  "운영체제: Windows 11 (64-bit)",
+  "운영체제: Windows 11 (x64)",
   ".NET 8.0 런타임 — MSI에 동봉(self-contained). 별도 설치 불필요",
   "Visual C++ 재배포 패키지 — MSI에 동봉. 별도 설치 불필요 (폐쇄망 설치 가능)",
 ].forEach((t) => children.push(bullet(t)));
@@ -221,7 +230,7 @@ children.push(H1("5. 설치 및 실행 개요"));
 children.push(P("상세 절차 및 화면은 '사용자 취급 설명서(매뉴얼)'에서 스크린샷과 함께 다룬다. 본 절은 개요만 기술한다."));
 [
   "1) MSI 설치 패키지로 VMS 클라이언트를 설치한다.",
-  "2) 최초 실행 시 시스템 설정 마법사(VMS.AppSetup)가 자동 실행되어 애플리케이션·네트워크·카메라·PLC·초기 관리자 계정을 구성한다.",
+  "2) 최초 실행 시 시스템 설정 마법사(VMS.AppSetup)가 자동 실행되어 애플리케이션·네트워크·카메라·IO 보드·초기 관리자 계정·보안 모드·라이선스를 구성한다.",
   "3) 구성 완료 후 VMS를 실행하면 운영 화면이 표시된다.",
   "4) 검사 레시피는 비전 설정(VMS.VisionSetup)에서 작성하여 운영 클라이언트에서 로드한다.",
 ].forEach((t) => children.push(bullet(t)));
@@ -236,10 +245,9 @@ children.push(H2("6.1 시스템 설정 — VMS.AppSetup"));
 children.push(funcTable([
   ["AS-01", "Application / Network", "애플리케이션 기본 설정 및 네트워크(Web 서버 주소 등) 구성"],
   ["AS-02", "Camera", "카메라 제조사·IP 등 연결 설정"],
-  ["AS-03", "PLC", "PLC 통신(벤더/IP/프로토콜) 설정"],
-  ["AS-04", "IO Board", "디지털 IO 보드(ADLink / Advantech) 등록 · 채널 수 설정"],
-  ["AS-05", "Admin 비밀번호", "초기 VMS Admin / Local Fallback Admin 계정 비밀번호 설정(기본 비밀번호 시드 없음)"],
-  ["AS-06", "Security & License", "보안 모드(Production / Development) 저장, SW 라이선스 설치 · 상태 확인"],
+  ["AS-03", "IO Board", "디지털 IO 보드(ADLink / Advantech) 등록 · 채널 수 설정"],
+  ["AS-04", "Admin 비밀번호", "초기 VMS Admin / Local Fallback Admin 계정 비밀번호 설정(기본 비밀번호 시드 없음)"],
+  ["AS-05", "Security & License", "보안 모드(Production / Development) 저장, SW 라이선스 설치 · 상태 확인"],
 ]));
 
 children.push(H2("6.2 운영 클라이언트 — VMS (메인 화면)"));
@@ -248,9 +256,8 @@ children.push(funcTable([
   ["OP-01", "Grab", "카메라에서 단일 이미지 1장 취득"],
   ["OP-02", "Live Start", "연속 라이브 그랩 시작"],
   ["OP-03", "Live Stop", "라이브 그랩 정지"],
-  ["OP-04", "Roller", "롤러 검사 모드 토글"],
-  ["OP-05", "AUTO RUN", "자동 검사 운영 시작(작업자 로그인·레시피 등 조건 충족 시)"],
-  ["OP-06", "STOP", "자동 운영 정지"],
+  ["OP-04", "AUTO RUN", "자동 검사 운영 시작(작업자 로그인·레시피 등 조건 충족 시)"],
+  ["OP-05", "STOP", "자동 운영 정지"],
 ]));
 children.push(H3("6.2.2 레시피 관리"));
 children.push(funcTable([
@@ -302,7 +309,7 @@ children.push(funcTable([
   ["VS-02", "Steps", "검사 스텝 추가/삭제/순서 변경"],
   ["VS-03", "Recipe", "레시피 신규/열기/저장"],
   ["VS-04", "Run", "검사 파이프라인 1회/연속 실행"],
-  ["VS-05", "Sequence", "시퀀스(디바이스 연동 흐름) 편집"],
+  ["VS-05", "Sequence", "시퀀스(IO 보드 트리거 입력 · 판정 출력 흐름) 편집"],
   ["VS-06", "Batch Test", "다수 이미지 일괄 검사/검증"],
   ["VS-07", "Calibration", "카메라 캘리브레이션 (체커보드 · 원형 그리드)"],
   ["VS-08", "3D Data", "저장 점군(.vpc) 불러오기 · 저장, 높이 맵 생성 — 3D 검사 도구의 입력"],
@@ -341,7 +348,7 @@ children.push(funcTable([
   ["TP-15", "Surface Analysis", "표면 분석 — Photometric Stereo (1종)"],
 ]));
 
-children.push(H2("6.4 관리/MES 웹 — BODA.VMS.Web (선택 연동)"));
+children.push(H2("6.4 생산 관리 웹 — BODA.VMS.Web"));
 children.push(funcTable([
   ["WB-01", "Dashboard", "라인 생산/품질 KPI 대시보드"],
   ["WB-02", "Production History", "검사 생산 이력 조회(검사 이미지 열람 포함)"],
@@ -375,6 +382,7 @@ children.push(H1("문서 이력"));
   children.push(new Table({ width: { size: CONTENT_W, type: WidthType.DXA }, columnWidths: [c1, c2, c3], rows: [
     new TableRow({ tableHeader: true, children: [hcell("버전", c1), hcell("일자", c2), hcell("변경 내용", c3)] }),
     new TableRow({ children: [cell("1.0", c1), cell("2026-06-12", c2), cell("최초 작성 (제품 개요·동작환경·기능명세·대표화면)", c3)] }),
+    new TableRow({ children: [cell("1.1", c1), cell("2026-11-02", c2), cell("제품명 · 버전 BODA VMS v1.48.1 반영, 시험범위 기준으로 기능 명세 정리(PLC 연동 · 롤러 검사 제외), 운영체제 표기 통일, 신청 기업 · 작성자 기입, 대표 화면 갱신", c3)] }),
   ] }));
 }
 

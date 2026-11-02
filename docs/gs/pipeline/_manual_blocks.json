@@ -108,12 +108,12 @@
   "t": "p",
   "segs": [
    {
-    "s": "라인마다 PC 1대를 두고, 카메라·PLC(또는 IO 보드)를 연결합니다. 이 PC 에는 다음 프로그램이 함께 설치됩니다.",
+    "s": "라인마다 PC 1대를 두고, 카메라 · IO 보드를 연결합니다. 이 PC 에는 다음 프로그램이 함께 설치됩니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "라인마다 PC 1대를 두고, 카메라·PLC(또는 IO 보드)를 연결합니다. 이 PC 에는 다음 프로그램이 함께 설치됩니다."
+  "text": "라인마다 PC 1대를 두고, 카메라 · IO 보드를 연결합니다. 이 PC 에는 다음 프로그램이 함께 설치됩니다."
  },
  {
   "t": "table",
@@ -189,14 +189,14 @@
     {
      "segs": [
       {
-       "s": "매일 쓰는 메인 화면입니다. 작업자 로그인 → 작업지시 선택 → [AUTO RUN] 으로 연속 검사를 돌리고, 판정 결과·수량·NG 이력을 보여 주며 검사 결과를 서버에 올립니다. PLC/IO 보드와 주고받는 트리거·판정 신호(시퀀스)도 이 프로그램이 처리합니다.",
+       "s": "매일 쓰는 메인 화면입니다. 작업자 로그인 → 작업지시 선택 → [AUTO RUN] 으로 연속 검사를 돌리고, 판정 결과·수량·NG 이력을 보여 주며 검사 결과를 서버에 올립니다. IO 보드와 주고받는 트리거·판정 신호(시퀀스)도 이 프로그램이 처리합니다.",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "매일 쓰는 메인 화면입니다. 작업자 로그인 → 작업지시 선택 → [AUTO RUN] 으로 연속 검사를 돌리고, 판정 결과·수량·NG 이력을 보여 주며 검사 결과를 서버에 올립니다. PLC/IO 보드와 주고받는 트리거·판정 신호(시퀀스)도 이 프로그램이 처리합니다."
+     "text": "매일 쓰는 메인 화면입니다. 작업자 로그인 → 작업지시 선택 → [AUTO RUN] 으로 연속 검사를 돌리고, 판정 결과·수량·NG 이력을 보여 주며 검사 결과를 서버에 올립니다. IO 보드와 주고받는 트리거·판정 신호(시퀀스)도 이 프로그램이 처리합니다."
     }
    ],
    [
@@ -275,14 +275,14 @@
     {
      "segs": [
       {
-       "s": "카메라 · PLC · IO 보드 · Web 서버 주소 · 보안 모드 · 라이선스를 6 단계 마법사로 설정합니다. 설치 후 최초 1 회 실행하며, 설비가 바뀔 때만 다시 엽니다.",
+       "s": "카메라 · IO 보드 · Web 서버 주소 · 보안 모드 · 라이선스를 5 단계 마법사로 설정합니다. 설치 후 최초 1 회 실행하며, 설비가 바뀔 때만 다시 엽니다.",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "카메라 · PLC · IO 보드 · Web 서버 주소 · 보안 모드 · 라이선스를 6 단계 마법사로 설정합니다. 설치 후 최초 1 회 실행하며, 설비가 바뀔 때만 다시 엽니다."
+     "text": "카메라 · IO 보드 · Web 서버 주소 · 보안 모드 · 라이선스를 5 단계 마법사로 설정합니다. 설치 후 최초 1 회 실행하며, 설비가 바뀔 때만 다시 엽니다."
     }
    ]
   ],
@@ -524,14 +524,14 @@
     {
      "segs": [
       {
-       "s": "Windows 11 x64 (Windows 10 x64 가능). 라인 PC · 서버 PC 공통",
+       "s": "Windows 11 x64. 라인 PC · 서버 PC 공통",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "Windows 11 x64 (Windows 10 x64 가능). 라인 PC · 서버 PC 공통"
+     "text": "Windows 11 x64. 라인 PC · 서버 PC 공통"
     }
    ],
    [
@@ -628,40 +628,14 @@
     {
      "segs": [
       {
-       "s": "GigE Vision 2D(Area Scan · Line Scan). 제조사별 연결 방식은 §2.1 표 참고. 카메라 없이 저장 이미지 · 저장된 점군 파일(.vpc)로도 레시피 편집과 검사 시험이 가능합니다",
+       "s": "GigE Vision 2D(Area Scan). 제조사별 연결 방식은 §2.1 표 참고. 카메라 없이 저장 이미지 · 저장된 점군 파일(.vpc)로도 레시피 편집과 검사 시험이 가능합니다",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "GigE Vision 2D(Area Scan · Line Scan). 제조사별 연결 방식은 §2.1 표 참고. 카메라 없이 저장 이미지 · 저장된 점군 파일(.vpc)로도 레시피 편집과 검사 시험이 가능합니다"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "PLC",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "PLC"
-    },
-    {
-     "segs": [
-      {
-       "s": "Mitsubishi(MC) · Siemens(S7) · LS Electric(XGT) · Omron(FINS) · Modbus TCP — 모두 TCP 직접 통신이라 별도 드라이버가 필요 없습니다. 시리얼(RS-232/485) 연결도 지원합니다",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Mitsubishi(MC) · Siemens(S7) · LS Electric(XGT) · Omron(FINS) · Modbus TCP — 모두 TCP 직접 통신이라 별도 드라이버가 필요 없습니다. 시리얼(RS-232/485) 연결도 지원합니다"
+     "text": "GigE Vision 2D(Area Scan). 제조사별 연결 방식은 §2.1 표 참고. 카메라 없이 저장 이미지 · 저장된 점군 파일(.vpc)로도 레시피 편집과 검사 시험이 가능합니다"
     }
    ],
    [
@@ -906,14 +880,14 @@
     {
      "segs": [
       {
-       "s": "AUTO RUN 중 \"트리거 대기 → 촬영 → 검사 → 결과 출력 → 반복\" 흐름의 정의입니다. PLC 주소나 IO 보드 채널을 노드로 연결합니다.",
+       "s": "AUTO RUN 중 \"트리거 대기 → 촬영 → 검사 → 결과 출력 → 반복\" 흐름의 정의입니다. IO 보드 입출력 채널을 노드로 연결합니다.",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "AUTO RUN 중 \"트리거 대기 → 촬영 → 검사 → 결과 출력 → 반복\" 흐름의 정의입니다. PLC 주소나 IO 보드 채널을 노드로 연결합니다."
+     "text": "AUTO RUN 중 \"트리거 대기 → 촬영 → 검사 → 결과 출력 → 반복\" 흐름의 정의입니다. IO 보드 입출력 채널을 노드로 연결합니다."
     }
    ],
    [
@@ -1551,44 +1525,6 @@
      "imgs": [],
      "text": "미설치 시 보드가 연결되지 않습니다(System Log 에 사유)"
     }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "PLC (5 종)",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "PLC (5 종)"
-    },
-    {
-     "segs": [
-      {
-       "s": "없음",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "없음"
-    },
-    {
-     "segs": [
-      {
-       "s": "TCP 직접 통신 — 드라이버 불필요",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "TCP 직접 통신 — 드라이버 불필요"
-    }
    ]
   ],
   "cls": "cols-2-3-4"
@@ -1636,14 +1572,14 @@
   "t": "li",
   "segs": [
    {
-    "s": "카메라 · PLC · IO 보드를 PC 에 연결하고 제조사 소프트웨어를 설치합니다.",
+    "s": "카메라 · IO 보드를 PC 에 연결하고 제조사 소프트웨어를 설치합니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": true,
   "depth": 0,
-  "text": "카메라 · PLC · IO 보드를 PC 에 연결하고 제조사 소프트웨어를 설치합니다."
+  "text": "카메라 · IO 보드를 PC 에 연결하고 제조사 소프트웨어를 설치합니다."
  },
  {
   "t": "li",
@@ -1675,14 +1611,14 @@
   "t": "li",
   "segs": [
    {
-    "s": "라인 PC 에서 시스템 설정 마법사(3장)를 실행해 카메라 · PLC · Web 주소 · 보안 모드를 저장합니다.",
+    "s": "라인 PC 에서 시스템 설정 마법사(3장)를 실행해 카메라 · IO 보드 · Web 주소 · 보안 모드를 저장합니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": true,
   "depth": 0,
-  "text": "라인 PC 에서 시스템 설정 마법사(3장)를 실행해 카메라 · PLC · Web 주소 · 보안 모드를 저장합니다."
+  "text": "라인 PC 에서 시스템 설정 마법사(3장)를 실행해 카메라 · IO 보드 · Web 주소 · 보안 모드를 저장합니다."
  },
  {
   "t": "li",
@@ -1713,7 +1649,7 @@
   "t": "li",
   "segs": [
    {
-    "s": "VMS-1.48.0.msi",
+    "s": "VMS-1.48.1.msi",
     "b": false,
     "m": true
    },
@@ -1725,7 +1661,7 @@
   ],
   "ordered": true,
   "depth": 0,
-  "text": "VMS-1.48.0.msi 처럼 버전이 붙은 설치 파일을 더블 클릭합니다. 설치에는 관리자 권한이 필요합니다."
+  "text": "VMS-1.48.1.msi 처럼 버전이 붙은 설치 파일을 더블 클릭합니다. 설치에는 관리자 권한이 필요합니다."
  },
  {
   "t": "li",
@@ -1849,7 +1785,7 @@
     "m": false
    },
    {
-    "s": "msiexec /i VMS-1.48.0.msi /qn INSTALLWEB=0",
+    "s": "msiexec /i VMS-1.48.1.msi /qn INSTALLWEB=0",
     "b": false,
     "m": true
    },
@@ -1859,7 +1795,7 @@
     "m": false
    }
   ],
-  "text": "무인 설치가 필요하면 명령 프롬프트(관리자)에서 다음처럼 실행합니다. msiexec /i VMS-1.48.0.msi /qn INSTALLWEB=0 — 값 0 은 제외, 1 은 포함입니다."
+  "text": "무인 설치가 필요하면 명령 프롬프트(관리자)에서 다음처럼 실행합니다. msiexec /i VMS-1.48.1.msi /qn INSTALLWEB=0 — 값 0 은 제외, 1 은 포함입니다."
  },
  {
   "t": "h",
@@ -1887,7 +1823,7 @@
     "m": false
    },
    {
-    "s": "가 자동으로 열립니다. 3장에 따라 6 단계를 저장한 뒤 VMS 를 다시 실행하세요. 설정 파일이 있어도 마법사를 끝까지 저장하지 않은 것이면 \"시스템 설정이 끝나지 않았습니다\" 안내와 함께 마법사가 열립니다. 설정 파일과 레시피, 검사 이력은 모두 ",
+    "s": "가 자동으로 열립니다. 3장에 따라 5 단계를 저장한 뒤 VMS 를 다시 실행하세요. 설정 파일이 있어도 마법사를 끝까지 저장하지 않은 것이면 \"시스템 설정이 끝나지 않았습니다\" 안내와 함께 마법사가 열립니다. 설정 파일과 레시피, 검사 이력은 모두 ",
     "b": false,
     "m": false
    },
@@ -1902,7 +1838,7 @@
     "m": false
    }
   ],
-  "text": "VMS 를 처음 실행하면 설정 파일이 없으므로 \"초기 시스템 설정이 필요합니다\" 안내와 함께 시스템 설정 마법사(VMS.AppSetup)가 자동으로 열립니다. 3장에 따라 6 단계를 저장한 뒤 VMS 를 다시 실행하세요. 설정 파일이 있어도 마법사를 끝까지 저장하지 않은 것이면 \"시스템 설정이 끝나지 않았습니다\" 안내와 함께 마법사가 열립니다. 설정 파일과 레시피, 검사 이력은 모두 %LocalAppData%\\BODA VISION AI\\ 아래에 저장되며 프로그램을 제거하거나 업그레이드해도 지워지지 않습니다."
+  "text": "VMS 를 처음 실행하면 설정 파일이 없으므로 \"초기 시스템 설정이 필요합니다\" 안내와 함께 시스템 설정 마법사(VMS.AppSetup)가 자동으로 열립니다. 3장에 따라 5 단계를 저장한 뒤 VMS 를 다시 실행하세요. 설정 파일이 있어도 마법사를 끝까지 저장하지 않은 것이면 \"시스템 설정이 끝나지 않았습니다\" 안내와 함께 마법사가 열립니다. 설정 파일과 레시피, 검사 이력은 모두 %LocalAppData%\\BODA VISION AI\\ 아래에 저장되며 프로그램을 제거하거나 업그레이드해도 지워지지 않습니다."
  },
  {
   "t": "h",
@@ -2473,56 +2409,6 @@
      "imgs": [],
      "text": "GigE Vision 검색 · 영상 수신 (점보 프레임 9000 권장)"
     }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "라인 PC → PLC",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "라인 PC → PLC"
-    },
-    {
-     "segs": [
-      {
-       "s": "벤더별 (MC 5000 · S7 102 · FINS 9600 · Modbus 502 등)",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "벤더별 (MC 5000 · S7 102 · FINS 9600 · Modbus 502 등)"
-    },
-    {
-     "segs": [
-      {
-       "s": "아웃바운드",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "아웃바운드"
-    },
-    {
-     "segs": [
-      {
-       "s": "트리거 · 판정 신호",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "트리거 · 판정 신호"
-    }
    ]
   ],
   "cls": "cols-2-2-2-3"
@@ -2627,7 +2513,7 @@
     "m": true
    },
    {
-    "s": " 서버 주소를 거부합니다(§3.7). 원격 서버는 ",
+    "s": " 서버 주소를 거부합니다(§3.6). 원격 서버는 ",
     "b": false,
     "m": false
    },
@@ -2654,7 +2540,7 @@
   ],
   "ordered": false,
   "depth": 0,
-  "text": "보안 모드가 Production 인 라인 PC 는 다른 PC 를 가리키는 http:// 서버 주소를 거부합니다(§3.7). 원격 서버는 https:// 로 열거나(사설 인증서), 사내 실증 단계에서는 Development 모드를 씁니다. 같은 PC 를 가리키는 localhost 주소는 http 여도 허용됩니다."
+  "text": "보안 모드가 Production 인 라인 PC 는 다른 PC 를 가리키는 http:// 서버 주소를 거부합니다(§3.6). 원격 서버는 https:// 로 열거나(사설 인증서), 사내 실증 단계에서는 Development 모드를 씁니다. 같은 PC 를 가리키는 localhost 주소는 http 여도 허용됩니다."
  },
  {
   "t": "h",
@@ -3125,12 +3011,12 @@
     "m": false
    },
    {
-    "s": " 시스템 설정 마법사는 카메라 · PLC · IO 보드 · 서버 연동 · 보안 · 라이선스 등 시스템 전체 구성을 저장하는 프로그램입니다. 일반 작업자는 사용할 일이 없습니다.",
+    "s": " 시스템 설정 마법사는 카메라 · IO 보드 · 서버 연동 · 보안 · 라이선스 등 시스템 전체 구성을 저장하는 프로그램입니다. 일반 작업자는 사용할 일이 없습니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "⚙ 이 장은 설치 담당자 · 관리자용입니다. 시스템 설정 마법사는 카메라 · PLC · IO 보드 · 서버 연동 · 보안 · 라이선스 등 시스템 전체 구성을 저장하는 프로그램입니다. 일반 작업자는 사용할 일이 없습니다."
+  "text": "⚙ 이 장은 설치 담당자 · 관리자용입니다. 시스템 설정 마법사는 카메라 · IO 보드 · 서버 연동 · 보안 · 라이선스 등 시스템 전체 구성을 저장하는 프로그램입니다. 일반 작업자는 사용할 일이 없습니다."
  },
  {
   "t": "h",
@@ -3253,7 +3139,7 @@
     "m": false
    },
    {
-    "s": " 이며, 오른쪽 위에 현재 단계(예: Step 2 of 6)가 표시됩니다. 마법사는 총 6 단계이며, 각 단계 하단의 ",
+    "s": " 이며, 오른쪽 위에 현재 단계(예: Step 2 of 5)가 표시됩니다. 마법사는 총 5 단계이며, 각 단계 하단의 ",
     "b": false,
     "m": false
    },
@@ -3298,7 +3184,7 @@
     "m": false
    }
   ],
-  "text": "마법사 창의 제목은 BODA VMS Setup 이며, 오른쪽 위에 현재 단계(예: Step 2 of 6)가 표시됩니다. 마법사는 총 6 단계이며, 각 단계 하단의 [← Back] / [Next] 로 이동하고 마지막 단계에서 [Finish] 를 누르면 설정 파일(%LocalAppData%\\BODA VISION AI\\system_config.json)에 저장됩니다. 저장한 설정은 VMS 를 다시 시작할 때 반영됩니다 — 운전 중이라면 검사를 멈추고 VMS 를 재시작하세요. [Finish] 를 누르지 않고 닫으면 아무것도 바뀌지 않습니다."
+  "text": "마법사 창의 제목은 BODA VMS Setup 이며, 오른쪽 위에 현재 단계(예: Step 2 of 5)가 표시됩니다. 마법사는 총 5 단계이며, 각 단계 하단의 [← Back] / [Next] 로 이동하고 마지막 단계에서 [Finish] 를 누르면 설정 파일(%LocalAppData%\\BODA VISION AI\\system_config.json)에 저장됩니다. 저장한 설정은 VMS 를 다시 시작할 때 반영됩니다 — 운전 중이라면 검사를 멈추고 VMS 를 재시작하세요. [Finish] 를 누르지 않고 닫으면 아무것도 바뀌지 않습니다."
  },
  {
   "t": "p",
@@ -3327,7 +3213,7 @@
   "t": "figure",
   "src": "../gs/screenshots/v3/as/Window_P1_Welcome.png",
   "width": "520",
-  "caption": "1 단계 — 시작 화면. 이후 애플리케이션 → 카메라 → PLC → IO 보드 → 보안 · 라이선스 순으로 진행합니다"
+  "caption": "1 단계 — 시작 화면. 이후 애플리케이션 → 카메라 → IO 보드 → 보안 · 라이선스 순으로 진행합니다"
  },
  {
   "t": "p",
@@ -3353,12 +3239,12 @@
     "m": false
    },
    {
-    "s": " 로고와 제품명 · 버전(예: BODA VMS v1.48.0)이 표시됩니다. [Next] 를 눌러 진행합니다.",
+    "s": " 로고와 제품명 · 버전(예: BODA VMS v1.48.1)이 표시됩니다. [Next] 를 눌러 진행합니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "입력 항목이 없는 안내 화면입니다. 가운데에 BODA · VMS 로고와 제품명 · 버전(예: BODA VMS v1.48.0)이 표시됩니다. [Next] 를 눌러 진행합니다."
+  "text": "입력 항목이 없는 안내 화면입니다. 가운데에 BODA · VMS 로고와 제품명 · 버전(예: BODA VMS v1.48.1)이 표시됩니다. [Next] 를 눌러 진행합니다."
  },
  {
   "t": "h",
@@ -3669,14 +3555,14 @@
        "m": true
       },
       {
-       "s": "(Production 모드에서는 https 필요, §3.7).",
+       "s": "(Production 모드에서는 https 필요, §3.6).",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "생산 관리 웹 주소입니다. 이 PC 안의 동봉 서버면 http://localhost:5292, 별도 서버면 http://서버IP:5292(Production 모드에서는 https 필요, §3.7)."
+     "text": "생산 관리 웹 주소입니다. 이 PC 안의 동봉 서버면 http://localhost:5292, 별도 서버면 http://서버IP:5292(Production 모드에서는 https 필요, §3.6)."
     },
     {
      "segs": [
@@ -4438,14 +4324,14 @@
     {
      "segs": [
       {
-       "s": "AreaScan2D · LineScan2D. LineScan2D 를 고르면 카드 아래에 라인 스캔 항목이 나타납니다.",
+       "s": "AreaScan2D (2D 에어리어 카메라).",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "AreaScan2D · LineScan2D. LineScan2D 를 고르면 카드 아래에 라인 스캔 항목이 나타납니다."
+     "text": "AreaScan2D (2D 에어리어 카메라)."
     },
     {
      "segs": [
@@ -4504,54 +4390,6 @@
      "header": false,
      "imgs": [],
      "text": "HIK"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "〈Line Scan〉 Trigger / Line Rate / Scan Length",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "〈Line Scan〉 Trigger / Line Rate / Scan Length"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [
-      "../gs/screenshots/v3/as_ctl/P3_camtypes_24_ComboBox_Encoder.png",
-      "../gs/screenshots/v3/as_ctl/P3_camtypes_27_TextBox_10000.png",
-      "../gs/screenshots/v3/as_ctl/P3_camtypes_29_TextBox_4096.png"
-     ],
-     "text": ""
-    },
-    {
-     "segs": [
-      {
-       "s": "라인 스캔 카메라의 트리거 소스(Internal · Encoder) · 라인 레이트(Hz) · 스캔 길이(라인 수).",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "라인 스캔 카메라의 트리거 소스(Internal · Encoder) · 라인 레이트(Hz) · 스캔 길이(라인 수)."
-    },
-    {
-     "segs": [
-      {
-       "s": "Internal / 10000 / 4096",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Internal / 10000 / 4096"
     }
    ],
    [
@@ -4625,523 +4463,19 @@
   "t": "h",
   "segs": [
    {
-    "s": "3.5 4 단계 — PLC Communication (PLC 통신)",
+    "s": "3.5 4 단계 — IO Board Configuration (IO 보드)",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "3.5 4 단계 — PLC Communication (PLC 통신)"
- },
- {
-  "t": "figure",
-  "src": "../gs/screenshots/v3/as/Window_P4_PLCCommunication.png",
-  "width": "520",
-  "caption": "4 단계 — PLC Communication. 벤더 · 통신 방식 · 주소 · 폴링/하트비트 · 쓰기 모드"
- },
- {
-  "t": "table",
-  "rows": [
-   [
-    {
-     "segs": [
-      {
-       "s": "항목",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": true,
-     "imgs": [],
-     "text": "항목"
-    },
-    {
-     "segs": [
-      {
-       "s": "컨트롤",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": true,
-     "imgs": [],
-     "text": "컨트롤"
-    },
-    {
-     "segs": [
-      {
-       "s": "설명",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": true,
-     "imgs": [],
-     "text": "설명"
-    },
-    {
-     "segs": [
-      {
-       "s": "기본값",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": true,
-     "imgs": [],
-     "text": "기본값"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "PLC Vendor",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "PLC Vendor"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [
-      "../gs/screenshots/v3/as_ctl/P4_ethernet_02_RadioButton_Mitsubishi.png",
-      "../gs/screenshots/v3/as_ctl/P4_ethernet_06_RadioButton_Modbus_TCP.png",
-      "../gs/screenshots/v3/as_ctl/P4_ethernet_07_RadioButton_None_No_PLC.png"
-     ],
-     "text": ""
-    },
-    {
-     "segs": [
-      {
-       "s": "Mitsubishi(MC) · Siemens(S7) · LS Electric(XGT) · Omron(FINS) · Modbus TCP · None. PLC 없이 IO 보드만 쓰면 None 으로 두고 5 단계에서 보드를 등록합니다(§4.11).",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Mitsubishi(MC) · Siemens(S7) · LS Electric(XGT) · Omron(FINS) · Modbus TCP · None. PLC 없이 IO 보드만 쓰면 None 으로 두고 5 단계에서 보드를 등록합니다(§4.11)."
-    },
-    {
-     "segs": [
-      {
-       "s": "None",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "None"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "Communication Type",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Communication Type"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [
-      "../gs/screenshots/v3/as_ctl/P4_ethernet_22_ComboBox_Ethernet.png"
-     ],
-     "text": ""
-    },
-    {
-     "segs": [
-      {
-       "s": "Ethernet 또는 Serial. Serial 이면 아래 IP · Port 대신 시리얼 항목이 나타납니다.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Ethernet 또는 Serial. Serial 이면 아래 IP · Port 대신 시리얼 항목이 나타납니다."
-    },
-    {
-     "segs": [
-      {
-       "s": "Ethernet",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Ethernet"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "〈Ethernet〉 PLC IP Address / Port",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "〈Ethernet〉 PLC IP Address / Port"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [
-      "../gs/screenshots/v3/as_ctl/P4_ethernet_25_TextBox_1921680100.png",
-      "../gs/screenshots/v3/as_ctl/P4_ethernet_27_TextBox_502.png"
-     ],
-     "text": ""
-    },
-    {
-     "segs": [
-      {
-       "s": "PLC 의 IP 주소와 포트.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "PLC 의 IP 주소와 포트."
-    },
-    {
-     "segs": [
-      {
-       "s": "192.168.0.100 / 502",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "192.168.0.100 / 502"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "〈Modbus〉 Modbus Unit ID",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "〈Modbus〉 Modbus Unit ID"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [
-      "../gs/screenshots/v3/as_ctl/P4_modbus_02_TextBox_255.png"
-     ],
-     "text": ""
-    },
-    {
-     "segs": [
-      {
-       "s": "Modbus 슬레이브 ID(1~255).",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Modbus 슬레이브 ID(1~255)."
-    },
-    {
-     "segs": [
-      {
-       "s": "255",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "255"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "〈Serial〉 Port / Baud / Data / Parity / Stop",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "〈Serial〉 Port / Baud / Data / Parity / Stop"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [
-      "../gs/screenshots/v3/as_ctl/P4_serial_03_TextBox_COM1.png",
-      "../gs/screenshots/v3/as_ctl/P4_serial_05_ComboBox_115200.png"
-     ],
-     "text": ""
-    },
-    {
-     "segs": [
-      {
-       "s": "시리얼 포트 파라미터.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "시리얼 포트 파라미터."
-    },
-    {
-     "segs": [
-      {
-       "s": "COM1 / 115200 / 8 / None / One",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "COM1 / 115200 / 8 / None / One"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "Polling Interval (ms)",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Polling Interval (ms)"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [
-      "../gs/screenshots/v3/as_ctl/P4_ethernet_10_TextBox_20.png"
-     ],
-     "text": ""
-    },
-    {
-     "segs": [
-      {
-       "s": "PLC 신호를 읽는 주기입니다. 짧을수록 트리거 반응이 빠르지만 PLC 부하가 늘어납니다.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "PLC 신호를 읽는 주기입니다. 짧을수록 트리거 반응이 빠르지만 PLC 부하가 늘어납니다."
-    },
-    {
-     "segs": [
-      {
-       "s": "20",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "20"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "Use Heartbeat / 주소",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Use Heartbeat / 주소"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [
-      "../gs/screenshots/v3/as_ctl/P4_ethernet_11_CheckBox_Use_Heartbeat.png"
-     ],
-     "text": ""
-    },
-    {
-     "segs": [
-      {
-       "s": "켜면 VMS 가 지정 주소(예: D100)에 카운터를 계속 써서 PLC 가 VMS 생존을 감시할 수 있습니다.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "켜면 VMS 가 지정 주소(예: D100)에 카운터를 계속 써서 PLC 가 VMS 생존을 감시할 수 있습니다."
-    },
-    {
-     "segs": [
-      {
-       "s": "해제",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "해제"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "Auto Reconnect",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Auto Reconnect"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [
-      "../gs/screenshots/v3/as_ctl/P4_ethernet_13_CheckBox_Auto_Reconnect.png"
-     ],
-     "text": ""
-    },
-    {
-     "segs": [
-      {
-       "s": "연결이 끊기면 자동으로 다시 접속합니다.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "연결이 끊기면 자동으로 다시 접속합니다."
-    },
-    {
-     "segs": [
-      {
-       "s": "사용",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "사용"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "Write Mode / Endian Mode",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Write Mode / Endian Mode"
-    },
-    {
-     "segs": [],
-     "header": false,
-     "imgs": [
-      "../gs/screenshots/v3/as_ctl/P4_ethernet_16_ComboBox_Handshake.png",
-      "../gs/screenshots/v3/as_ctl/P4_ethernet_19_ComboBox_LittleEndian.png"
-     ],
-     "text": ""
-    },
-    {
-     "segs": [
-      {
-       "s": "결과 쓰기 방식(Handshake 등)과 워드 바이트 순서. PLC 프로그램의 규약에 맞춥니다.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "결과 쓰기 방식(Handshake 등)과 워드 바이트 순서. PLC 프로그램의 규약에 맞춥니다."
-    },
-    {
-     "segs": [
-      {
-       "s": "Handshake / LittleEndian",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "Handshake / LittleEndian"
-    }
-   ]
-  ],
-  "cls": "cols-2-3-4-1"
- },
- {
-  "t": "p",
-  "segs": [
-   {
-    "s": "PLC 주소를 어느 신호에 쓸지는 이 단계가 아니라 VisionSetup 의 시퀀스 편집기(§5.10)에서 노드마다 지정합니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "text": "PLC 주소를 어느 신호에 쓸지는 이 단계가 아니라 VisionSetup 의 시퀀스 편집기(§5.10)에서 노드마다 지정합니다."
- },
- {
-  "t": "h",
-  "segs": [
-   {
-    "s": "3.6 5 단계 — IO Board Configuration (IO 보드)",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 3,
-  "text": "3.6 5 단계 — IO Board Configuration (IO 보드)"
+  "text": "3.5 4 단계 — IO Board Configuration (IO 보드)"
  },
  {
   "t": "figure",
   "src": "../gs/screenshots/v3/as/Window_P6_IOConfiguration.png",
   "width": "520",
-  "caption": "5 단계 — IO Board Configuration. 왼쪽 목록에서 보드를 고르고 오른쪽에서 속성을 입력합니다"
+  "caption": "4 단계 — IO Board Configuration. 왼쪽 목록에서 보드를 고르고 오른쪽에서 속성을 입력합니다"
  },
  {
   "t": "table",
@@ -5359,14 +4693,14 @@
     {
      "segs": [
       {
-       "s": "시퀀스 편집기의 장치 목록에 나타나는 이름입니다. 노드에서 이 이름으로 보드를 고릅니다.",
+       "s": "시퀀스 편집기의 장치 목록에 나타나는 이름입니다. 노드에서 이 이름으로 보드를 고릅니다(§5.10). 트리거 입력 · 판정 출력 채널은 이 단계가 아니라 시퀀스 편집기에서 노드마다 지정합니다.",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "시퀀스 편집기의 장치 목록에 나타나는 이름입니다. 노드에서 이 이름으로 보드를 고릅니다."
+     "text": "시퀀스 편집기의 장치 목록에 나타나는 이름입니다. 노드에서 이 이름으로 보드를 고릅니다(§5.10). 트리거 입력 · 판정 출력 채널은 이 단계가 아니라 시퀀스 편집기에서 노드마다 지정합니다."
     },
     {
      "segs": [
@@ -5491,7 +4825,7 @@
      "segs": [],
      "header": false,
      "imgs": [
-      "../gs/screenshots/v3/as_ctl/P6_withboard_18_CheckBox_활성화_체크_해제_시_시스템_부팅_시_인스턴스_생성_skip.png"
+      "../gs/screenshots/v3/as_ctl/P6_withboard_18_CheckBox_활성화_해제하면_VMS_시작_시_이_보드를_연결하지_않습니다.png"
      ],
      "text": ""
     },
@@ -5595,19 +4929,19 @@
   "t": "h",
   "segs": [
    {
-    "s": "3.7 6 단계 — Security & License (보안 모드 · 라이선스)",
+    "s": "3.6 5 단계 — Security & License (보안 모드 · 라이선스)",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "3.7 6 단계 — Security & License (보안 모드 · 라이선스)"
+  "text": "3.6 5 단계 — Security & License (보안 모드 · 라이선스)"
  },
  {
   "t": "figure",
   "src": "../gs/screenshots/v3/as/Window_P7_SecurityMode.png",
   "width": "520",
-  "caption": "6 단계 — Security & License. 보안 모드 선택 + SW 라이선스 카드. [Finish] 로 저장합니다"
+  "caption": "5 단계 — Security & License. 보안 모드 선택 + SW 라이선스 카드. [Finish] 로 저장합니다"
  },
  {
   "t": "table",
@@ -6017,13 +5351,13 @@
   "t": "h",
   "segs": [
    {
-    "s": "3.8 저장 후 확인할 것",
+    "s": "3.7 저장 후 확인할 것",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "3.8 저장 후 확인할 것"
+  "text": "3.7 저장 후 확인할 것"
  },
  {
   "t": "li",
@@ -6062,7 +5396,7 @@
   "t": "li",
   "segs": [
    {
-    "s": "PLC 를 구성했다면 PLC 칩이 초록인지, IO 보드를 구성했다면 ",
+    "s": "IO 보드를 구성했다면 ",
     "b": false,
     "m": false
    },
@@ -6079,7 +5413,7 @@
   ],
   "ordered": true,
   "depth": 0,
-  "text": "PLC 를 구성했다면 PLC 칩이 초록인지, IO 보드를 구성했다면 IO n/m 칩이 초록인지 확인합니다. 빨간색이면 System Log 의 사유를 보고 10장을 참고합니다."
+  "text": "IO 보드를 구성했다면 IO n/m 칩이 초록인지 확인합니다. 빨간색이면 System Log 의 사유를 보고 10장을 참고합니다."
  },
  {
   "t": "li",
@@ -6278,14 +5612,14 @@
     "m": false
    },
    {
-    "s": " 표시됩니다(§4.12). 로그인 창 위쪽에는 제품명 · 버전(예: BODA VMS v1.48.0)이 표시됩니다.",
+    "s": " 표시됩니다(§4.12). 로그인 창 위쪽에는 제품명 · 버전(예: BODA VMS v1.48.1)이 표시됩니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": true,
   "depth": 0,
-  "text": "메인 화면이 뜹니다. 시스템 사용자 로그인 창은 시작 시 뜨지 않으며, 사이드 패널(⚙)을 열거나 헤더의 사용자 칩을 누를 때 표시됩니다(§4.12). 로그인 창 위쪽에는 제품명 · 버전(예: BODA VMS v1.48.0)이 표시됩니다."
+  "text": "메인 화면이 뜹니다. 시스템 사용자 로그인 창은 시작 시 뜨지 않으며, 사이드 패널(⚙)을 열거나 헤더의 사용자 칩을 누를 때 표시됩니다(§4.12). 로그인 창 위쪽에는 제품명 · 버전(예: BODA VMS v1.48.1)이 표시됩니다."
  },
  {
   "t": "li",
@@ -6498,14 +5832,14 @@
        "m": true
       },
       {
-       "s": " 형식의 실시간 로그. 카메라 · PLC · IO 보드 · 시퀀스 · Web 연동 상태가 여기에 남습니다. 오른쪽 위 아이콘으로 비웁니다",
+       "s": " 형식의 실시간 로그. 카메라 · IO 보드 · 시퀀스 · Web 연동 상태가 여기에 남습니다. 오른쪽 위 아이콘으로 비웁니다",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "[시각] [출처] 메시지 형식의 실시간 로그. 카메라 · PLC · IO 보드 · 시퀀스 · Web 연동 상태가 여기에 남습니다. 오른쪽 위 아이콘으로 비웁니다"
+     "text": "[시각] [출처] 메시지 형식의 실시간 로그. 카메라 · IO 보드 · 시퀀스 · Web 연동 상태가 여기에 남습니다. 오른쪽 위 아이콘으로 비웁니다"
     }
    ],
    [
@@ -6524,14 +5858,14 @@
     {
      "segs": [
       {
-       "s": "시스템 상태 · CAM · PLC · IO · Web 연결 표시와 오른쪽 끝의 제품명 · 버전. 4.7 절",
+       "s": "시스템 상태 · CAM · IO · Web 연결 표시와 오른쪽 끝의 제품명 · 버전. 4.7 절",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "시스템 상태 · CAM · PLC · IO · Web 연결 표시와 오른쪽 끝의 제품명 · 버전. 4.7 절"
+     "text": "시스템 상태 · CAM · IO · Web 연결 표시와 오른쪽 끝의 제품명 · 버전. 4.7 절"
     }
    ]
   ],
@@ -8195,35 +7529,6 @@
   "t": "h",
   "segs": [
    {
-    "s": "Roller Inspection",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 4,
-  "text": "Roller Inspection"
- },
- {
-  "t": "figure",
-  "src": "../gs/screenshots/v3/vms_ctl/S3_sidepanel_00_sec_roller_inspection.png",
-  "width": "290",
-  "caption": "Roller Inspection — [Roller] 토글"
- },
- {
-  "t": "p",
-  "segs": [
-   {
-    "s": "라인 스캔 카메라로 회전하는 롤러 표면을 연속 검사하는 모드를 켜고 끕니다. AUTO RUN 조건을 만족하고 라인 스캔 카메라가 구성된 경우에만 켤 수 있습니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "text": "라인 스캔 카메라로 회전하는 롤러 표면을 연속 검사하는 모드를 켜고 끕니다. AUTO RUN 조건을 만족하고 라인 스캔 카메라가 구성된 경우에만 켤 수 있습니다."
- },
- {
-  "t": "h",
-  "segs": [
-   {
     "s": "Recipe",
     "b": false,
     "m": false
@@ -8796,7 +8101,7 @@
     {
      "segs": [
       {
-       "s": "Ready · Starting... · AutoProcess Running · Stopped · Roller Inspecting · ",
+       "s": "Ready · Starting... · AutoProcess Running · Stopped · ",
        "b": false,
        "m": false
       },
@@ -8813,7 +8118,7 @@
      ],
      "header": false,
      "imgs": [],
-     "text": "Ready · Starting... · AutoProcess Running · Stopped · Roller Inspecting · Running — 경고: Web 미연동 (작업지시 수량 미집계) · ✓ WO 완료 등"
+     "text": "Ready · Starting... · AutoProcess Running · Stopped · Running — 경고: Web 미연동 (작업지시 수량 미집계) · ✓ WO 완료 등"
     }
    ],
    [
@@ -8840,32 +8145,6 @@
      "header": false,
      "imgs": [],
      "text": "등록된 카메라 m 대 중 연결된 n 대. 전부 초록 / 일부 주황 / 전부 끊김 빨강"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "PLC",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "PLC"
-    },
-    {
-     "segs": [
-      {
-       "s": "PLC 미구성이면 \"PLC N/A\". 구성 시 벤더명 · IP, 연결 초록 / 끊김 빨강. 벤더 None 이면 시뮬레이션 PLC 라 항상 연결로 보이므로 IO 보드 구성에서는 IO 칩을 보세요",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "PLC 미구성이면 \"PLC N/A\". 구성 시 벤더명 · IP, 연결 초록 / 끊김 빨강. 벤더 None 이면 시뮬레이션 PLC 라 항상 연결로 보이므로 IO 보드 구성에서는 IO 칩을 보세요"
     }
    ],
    [
@@ -8966,14 +8245,14 @@
     {
      "segs": [
       {
-       "s": "상태바 오른쪽 끝에 설치된 제품명과 버전(예: BODA VMS v1.48.0)이 표시됩니다. 지원 요청 시 이 표기를 알려 주세요",
+       "s": "상태바 오른쪽 끝에 설치된 제품명과 버전(예: BODA VMS v1.48.1)이 표시됩니다. 지원 요청 시 이 표기를 알려 주세요",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "상태바 오른쪽 끝에 설치된 제품명과 버전(예: BODA VMS v1.48.0)이 표시됩니다. 지원 요청 시 이 표기를 알려 주세요"
+     "text": "상태바 오른쪽 끝에 설치된 제품명과 버전(예: BODA VMS v1.48.1)이 표시됩니다. 지원 요청 시 이 표기를 알려 주세요"
     }
    ]
   ],
@@ -9256,14 +8535,14 @@
     "m": false
    },
    {
-    "s": " — [AUTO RUN]. 트리거(PLC/IO 신호)가 들어올 때마다 검사가 돌고 판정 배지 · KPI · WO 진행률이 갱신됩니다.",
+    "s": " — [AUTO RUN]. 트리거(IO 보드 입력 신호)가 들어올 때마다 검사가 돌고 판정 배지 · KPI · WO 진행률이 갱신됩니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": true,
   "depth": 0,
-  "text": "검사 시작 — [AUTO RUN]. 트리거(PLC/IO 신호)가 들어올 때마다 검사가 돌고 판정 배지 · KPI · WO 진행률이 갱신됩니다."
+  "text": "검사 시작 — [AUTO RUN]. 트리거(IO 보드 입력 신호)가 들어올 때마다 검사가 돌고 판정 배지 · KPI · WO 진행률이 갱신됩니다."
  },
  {
   "t": "li",
@@ -9812,12 +9091,12 @@
   "t": "p",
   "segs": [
    {
-    "s": "설정 파일 · 레이아웃 · PLC 신호 맵 · 사용자 DB · 검사 이력 DB · 레시피 전체(선택 시 감사 로그)를 ZIP 하나로 만듭니다. 복원 시 [기존 파일 덮어쓰기] 를 켜고 [Run Restore] 한 뒤 VMS 를 재시작합니다. 자세한 운영 요령은 §9.1 을 참고하세요.",
+    "s": "설정 파일 · 레이아웃 · 신호 설정 · 사용자 DB · 검사 이력 DB · 레시피 전체(선택 시 감사 로그)를 ZIP 하나로 만듭니다. 복원 시 [기존 파일 덮어쓰기] 를 켜고 [Run Restore] 한 뒤 VMS 를 재시작합니다. 자세한 운영 요령은 §9.1 을 참고하세요.",
     "b": false,
     "m": false
    }
   ],
-  "text": "설정 파일 · 레이아웃 · PLC 신호 맵 · 사용자 DB · 검사 이력 DB · 레시피 전체(선택 시 감사 로그)를 ZIP 하나로 만듭니다. 복원 시 [기존 파일 덮어쓰기] 를 켜고 [Run Restore] 한 뒤 VMS 를 재시작합니다. 자세한 운영 요령은 §9.1 을 참고하세요."
+  "text": "설정 파일 · 레이아웃 · 신호 설정 · 사용자 DB · 검사 이력 DB · 레시피 전체(선택 시 감사 로그)를 ZIP 하나로 만듭니다. 복원 시 [기존 파일 덮어쓰기] 를 켜고 [Run Restore] 한 뒤 VMS 를 재시작합니다. 자세한 운영 요령은 §9.1 을 참고하세요."
  },
  {
   "t": "h",
@@ -12578,13 +11857,13 @@
   "t": "h",
   "segs": [
    {
-    "s": "Result 도구 — 최종 판정과 PLC 통계",
+    "s": "Result 도구 — 최종 판정",
     "b": false,
     "m": false
    }
   ],
   "level": 4,
-  "text": "Result 도구 — 최종 판정과 PLC 통계"
+  "text": "Result 도구 — 최종 판정"
  },
  {
   "t": "p",
@@ -12600,35 +11879,12 @@
     "m": false
    },
    {
-    "s": " 도구를 두고 판정에 넣을 도구들을 Result 연결하면, 모두 Pass 일 때만 OK 가 됩니다. Result 도구의 PLC Output 에는 PassCount · FailCount · TotalCount 통계를 PLC 주소에 매핑할 수 있습니다. 검사 1 건의 최종 OK/NG 신호는 시퀀스 편집기의 Branch → Output Action 이 담당합니다(§5.10).",
+    "s": " 도구를 두고 판정에 넣을 도구들을 Result 연결하면, 모두 Pass 일 때만 OK 가 됩니다. 검사 1 건의 최종 OK/NG 신호를 IO 보드로 내보내는 것은 시퀀스 편집기의 Branch → Output Action 이 담당합니다(§5.10).",
     "b": false,
     "m": false
    }
   ],
-  "text": "스텝의 마지막에 Result 도구를 두고 판정에 넣을 도구들을 Result 연결하면, 모두 Pass 일 때만 OK 가 됩니다. Result 도구의 PLC Output 에는 PassCount · FailCount · TotalCount 통계를 PLC 주소에 매핑할 수 있습니다. 검사 1 건의 최종 OK/NG 신호는 시퀀스 편집기의 Branch → Output Action 이 담당합니다(§5.10)."
- },
- {
-  "t": "h",
-  "segs": [
-   {
-    "s": "PLC Output — 결과 값을 PLC 로 보내기",
-    "b": false,
-    "m": false
-   }
-  ],
-  "level": 4,
-  "text": "PLC Output — 결과 값을 PLC 로 보내기"
- },
- {
-  "t": "p",
-  "segs": [
-   {
-    "s": "도구 설정 아래의 PLC Output 에서 [+ Add PLC Mapping] 을 누르고 Key(결과 값 이름) · Device(MainPLC 또는 IO 보드) · Address(PLC 주소 또는 IO 채널) · Type 을 정하면 실행 때마다 그 값이 PLC 에 기록됩니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "text": "도구 설정 아래의 PLC Output 에서 [+ Add PLC Mapping] 을 누르고 Key(결과 값 이름) · Device(MainPLC 또는 IO 보드) · Address(PLC 주소 또는 IO 채널) · Type 을 정하면 실행 때마다 그 값이 PLC 에 기록됩니다."
+  "text": "스텝의 마지막에 Result 도구를 두고 판정에 넣을 도구들을 Result 연결하면, 모두 Pass 일 때만 OK 가 됩니다. 검사 1 건의 최종 OK/NG 신호를 IO 보드로 내보내는 것은 시퀀스 편집기의 Branch → Output Action 이 담당합니다(§5.10)."
  },
  {
   "t": "h",
@@ -13786,19 +13042,19 @@
   "t": "h",
   "segs": [
    {
-    "s": "5.10 시퀀스 편집기 — PLC · IO 보드 운전 흐름",
+    "s": "5.10 시퀀스 편집기 — IO 보드 운전 흐름",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "5.10 시퀀스 편집기 — PLC · IO 보드 운전 흐름"
+  "text": "5.10 시퀀스 편집기 — IO 보드 운전 흐름"
  },
  {
   "t": "figure",
   "src": "../gs/screenshots/v3/vs/dlg_Sequence.png",
   "width": "620",
-  "caption": "Sequence Editor — 상단(프로세스 시퀀스 이름 · Reset 신호 · [디폴트 생성] [저장] [가져오기] [내보내기] [PLC Monitor] [▶ 무부하 테스트]), 왼쪽 노드 팔레트, 가운데 캔버스, 오른쪽 노드 속성"
+  "caption": "Sequence Editor — 상단(프로세스 시퀀스 이름 · [디폴트 생성] [저장] [가져오기] [내보내기] [I/O Monitor] [▶ 무부하 테스트]), 왼쪽 노드 팔레트, 가운데 캔버스, 오른쪽 노드 속성"
  },
  {
   "t": "p",
@@ -13904,7 +13160,7 @@
     {
      "segs": [
       {
-       "s": "PLC 입력(비트/워드) 또는 IO 보드 채널 조건을 기다립니다 — 디바이스 · 주소(또는 채널 번호) · 체크 모드 · 비교값 · 타임아웃(ms, −1 무제한) · 디바운스(ms). 스위치 · 센서 트리거는 ",
+       "s": "IO 보드 입력 채널 조건을 기다립니다 — 디바이스 · 채널 번호 · 체크 모드 · 타임아웃(ms, −1 무제한) · 디바운스(ms). 스위치 · 센서 트리거는 ",
        "b": false,
        "m": false
       },
@@ -13921,7 +13177,7 @@
      ],
      "header": false,
      "imgs": [],
-     "text": "PLC 입력(비트/워드) 또는 IO 보드 채널 조건을 기다립니다 — 디바이스 · 주소(또는 채널 번호) · 체크 모드 · 비교값 · 타임아웃(ms, −1 무제한) · 디바운스(ms). 스위치 · 센서 트리거는 BitRisingEdge(꺼짐→켜짐 순간) 권장 — BitOn 은 신호가 켜져 있는 동안 매 사이클 통과합니다. [▶ 테스트 읽기] 로 현재 값을 읽어 봅니다"
+     "text": "IO 보드 입력 채널 조건을 기다립니다 — 디바이스 · 채널 번호 · 체크 모드 · 타임아웃(ms, −1 무제한) · 디바운스(ms). 스위치 · 센서 트리거는 BitRisingEdge(꺼짐→켜짐 순간) 권장 — BitOn 은 신호가 켜져 있는 동안 매 사이클 통과합니다. [▶ 테스트 읽기] 로 현재 값을 읽어 봅니다"
     }
    ],
    [
@@ -13992,14 +13248,14 @@
     {
      "segs": [
       {
-       "s": "PLC 출력(비트 ON/OFF · 워드 · Float) 또는 IO 보드 채널에 기록 — OK/NG 램프, 액추에이터, 컨베이어. [▶ 테스트 출력] 으로 바로 써 봅니다",
+       "s": "IO 보드 출력 채널을 켜거나 끕니다 — OK/NG 램프, 액추에이터, 컨베이어. [▶ 테스트 출력] 으로 바로 써 봅니다",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "PLC 출력(비트 ON/OFF · 워드 · Float) 또는 IO 보드 채널에 기록 — OK/NG 램프, 액추에이터, 컨베이어. [▶ 테스트 출력] 으로 바로 써 봅니다"
+     "text": "IO 보드 출력 채널을 켜거나 끕니다 — OK/NG 램프, 액추에이터, 컨베이어. [▶ 테스트 출력] 으로 바로 써 봅니다"
     }
    ],
    [
@@ -14044,14 +13300,14 @@
     {
      "segs": [
       {
-       "s": "PLC 신호 조건 충족 시 Index 를 읽어 레시피 · 스텝을 전환합니다. Recipe Change 는 도구를 다시 초기화(Fixture 기준도 새로), Step Change 는 레시피를 유지한 채 스텝만 바꿉니다",
+       "s": "IO 보드 신호 조건 충족 시 Index(포트 입력)를 읽어 레시피 · 스텝을 전환합니다. Recipe Change 는 도구를 다시 초기화(Fixture 기준도 새로), Step Change 는 레시피를 유지한 채 스텝만 바꿉니다",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "PLC 신호 조건 충족 시 Index 를 읽어 레시피 · 스텝을 전환합니다. Recipe Change 는 도구를 다시 초기화(Fixture 기준도 새로), Step Change 는 레시피를 유지한 채 스텝만 바꿉니다"
+     "text": "IO 보드 신호 조건 충족 시 Index(포트 입력)를 읽어 레시피 · 스텝을 전환합니다. Recipe Change 는 도구를 다시 초기화(Fixture 기준도 새로), Step Change 는 레시피를 유지한 채 스텝만 바꿉니다"
     }
    ],
    [
@@ -14112,7 +13368,7 @@
   "t": "li",
   "segs": [
    {
-    "s": "각 노드를 선택해 오른쪽 노드 속성에서 디바이스(MainPLC 또는 등록한 IO 보드 Device ID) · 주소 · 값을 입력합니다. IO 보드는 주소 대신 ",
+    "s": "각 노드를 선택해 오른쪽 노드 속성에서 디바이스(시스템 설정 4 단계에서 등록한 IO 보드 Device ID) · ",
     "b": false,
     "m": false
    },
@@ -14122,27 +13378,14 @@
     "m": false
    },
    {
-    "s": " 를 넣고 ON/OFF 신호만 다룹니다.",
+    "s": " · 값을 입력합니다. 새로 놓은 노드는 첫 번째 IO 보드가 기본으로 선택되며, IO 보드는 ON/OFF 신호만 다룹니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": true,
   "depth": 0,
-  "text": "각 노드를 선택해 오른쪽 노드 속성에서 디바이스(MainPLC 또는 등록한 IO 보드 Device ID) · 주소 · 값을 입력합니다. IO 보드는 주소 대신 채널 번호(0~N-1) 를 넣고 ON/OFF 신호만 다룹니다."
- },
- {
-  "t": "li",
-  "segs": [
-   {
-    "s": "Reset 신호 주소를 두면 어느 노드에서든 그 조건이 충족될 때 즉시 Start 로 돌아갑니다.",
-    "b": false,
-    "m": false
-   }
-  ],
-  "ordered": true,
-  "depth": 0,
-  "text": "Reset 신호 주소를 두면 어느 노드에서든 그 조건이 충족될 때 즉시 Start 로 돌아갑니다."
+  "text": "각 노드를 선택해 오른쪽 노드 속성에서 디바이스(시스템 설정 4 단계에서 등록한 IO 보드 Device ID) · 채널 번호(0~N-1) · 값을 입력합니다. 새로 놓은 노드는 첫 번째 IO 보드가 기본으로 선택되며, IO 보드는 ON/OFF 신호만 다룹니다."
  },
  {
   "t": "li",
@@ -14161,7 +13404,7 @@
   "t": "li",
   "segs": [
    {
-    "s": "[PLC Monitor] 로 참조 주소의 현재값을 보면서, ",
+    "s": "[I/O Monitor] 로 참조 채널의 현재값을 보면서, ",
     "b": false,
     "m": false
    },
@@ -14178,7 +13421,7 @@
   ],
   "ordered": true,
   "depth": 0,
-  "text": "[PLC Monitor] 로 참조 주소의 현재값을 보면서, [▶ 무부하 테스트] 로 카메라 검사만 항상 합격으로 시뮬레이션한 채 트리거 · 분기 · 출력 신호가 설비와 실제로 오가는지 확인합니다. 노드가 진행에 따라 초록/빨강으로 표시되고 Cycle 수가 올라갑니다."
+  "text": "[I/O Monitor] 로 참조 채널의 현재값을 보면서, [▶ 무부하 테스트] 로 카메라 검사만 항상 합격으로 시뮬레이션한 채 트리거 · 분기 · 출력 신호가 설비와 실제로 오가는지 확인합니다. 노드가 진행에 따라 초록/빨강으로 표시되고 Cycle 수가 올라갑니다."
  },
  {
   "t": "li",
@@ -15217,8 +14460,8 @@
  },
  {
   "t": "figure",
-  "src": "../gs/screenshots/v3/tools/04_Polar_Unwrap_split.png",
-  "width": "500",
+  "src": "../gs/screenshots/v3/tools/04_Polar_Unwrap.png",
+  "width": "240",
   "caption": "Polar Unwrap — 극좌표 펼치기 — Tool Settings 패널"
  },
  {
@@ -16361,14 +15604,14 @@
   "t": "li",
   "segs": [
    {
-    "s": "MeanValue 를 PLC 에 매핑하면 조명이 어두워지는 추세를 PLC 에서 감시할 수 있습니다.",
+    "s": "MeanValue 를 Run Results 에서 꾸준히 보면 조명이 어두워지는 추세를 알아챌 수 있습니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": false,
   "depth": 0,
-  "text": "MeanValue 를 PLC 에 매핑하면 조명이 어두워지는 추세를 PLC 에서 감시할 수 있습니다."
+  "text": "MeanValue 를 Run Results 에서 꾸준히 보면 조명이 어두워지는 추세를 알아챌 수 있습니다."
  },
  {
   "t": "h",
@@ -17606,12 +16849,12 @@
   "t": "p",
   "segs": [
    {
-    "s": "Feature Match 가 찾은 현재 포즈(중심 · 각도)를 기준(마스터) 포즈와 비교해 변위 ΔX · ΔY · Δθ 를 계산합니다. 캘리브레이션(또는 스텝 Resolution)이 있으면 mm 로도 내며, 계산한 보정량은 PLC 로 설비(스테이지 등)에 보낼 수 있습니다. 카메라 1 대로 부품을 보는 표준 2D 얼라인 구성입니다.",
+    "s": "Feature Match 가 찾은 현재 포즈(중심 · 각도)를 기준(마스터) 포즈와 비교해 변위 ΔX · ΔY · Δθ 를 계산합니다. 캘리브레이션(또는 스텝 Resolution)이 있으면 mm 로도 내며, 허용 변위를 넘으면 NG 로 판정합니다. 카메라 1 대로 부품을 보는 표준 2D 얼라인 구성입니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "Feature Match 가 찾은 현재 포즈(중심 · 각도)를 기준(마스터) 포즈와 비교해 변위 ΔX · ΔY · Δθ 를 계산합니다. 캘리브레이션(또는 스텝 Resolution)이 있으면 mm 로도 내며, 계산한 보정량은 PLC 로 설비(스테이지 등)에 보낼 수 있습니다. 카메라 1 대로 부품을 보는 표준 2D 얼라인 구성입니다."
+  "text": "Feature Match 가 찾은 현재 포즈(중심 · 각도)를 기준(마스터) 포즈와 비교해 변위 ΔX · ΔY · Δθ 를 계산합니다. 캘리브레이션(또는 스텝 Resolution)이 있으면 mm 로도 내며, 허용 변위를 넘으면 NG 로 판정합니다. 카메라 1 대로 부품을 보는 표준 2D 얼라인 구성입니다."
  },
  {
   "t": "figure",
@@ -17900,14 +17143,14 @@
     "m": false
    },
    {
-    "s": " — ① Feature Match 로 기준 부품의 패턴을 학습 ② Feature Match 를 이 도구에 Result 로 연결하고 Run → Δ 계산 ③ 기준을 학습 시점과 다르게 잡으려면 기준 부품을 놓고 Run 후 [현재 매칭을 기준으로 등록] ④ 보정량(DeltaX · DeltaY · DeltaTheta)을 설비로 보내려면 PLC Output 에 매핑.",
+    "s": " — ① Feature Match 로 기준 부품의 패턴을 학습 ② Feature Match 를 이 도구에 Result 로 연결하고 Run → Δ 계산 ③ 기준을 학습 시점과 다르게 잡으려면 기준 부품을 놓고 Run 후 [현재 매칭을 기준으로 등록] ④ 보정량(DeltaX · DeltaY · DeltaTheta)은 Run Results 에서 확인.",
     "b": false,
     "m": false
    }
   ],
   "ordered": false,
   "depth": 0,
-  "text": "절차 — ① Feature Match 로 기준 부품의 패턴을 학습 ② Feature Match 를 이 도구에 Result 로 연결하고 Run → Δ 계산 ③ 기준을 학습 시점과 다르게 잡으려면 기준 부품을 놓고 Run 후 [현재 매칭을 기준으로 등록] ④ 보정량(DeltaX · DeltaY · DeltaTheta)을 설비로 보내려면 PLC Output 에 매핑."
+  "text": "절차 — ① Feature Match 로 기준 부품의 패턴을 학습 ② Feature Match 를 이 도구에 Result 로 연결하고 Run → Δ 계산 ③ 기준을 학습 시점과 다르게 잡으려면 기준 부품을 놓고 Run 후 [현재 매칭을 기준으로 등록] ④ 보정량(DeltaX · DeltaY · DeltaTheta)은 Run Results 에서 확인."
  },
  {
   "t": "li",
@@ -18338,7 +17581,7 @@
  {
   "t": "figure",
   "src": "../gs/screenshots/v3/tools/13_Blob_split.png",
-  "width": "620",
+  "width": "500",
   "caption": "Blob — 블롭(덩어리) 분석 — Tool Settings 패널"
  },
  {
@@ -19936,8 +19179,8 @@
  },
  {
   "t": "figure",
-  "src": "../gs/screenshots/v3/tools/17_Geometry_split.png",
-  "width": "500",
+  "src": "../gs/screenshots/v3/tools/17_Geometry.png",
+  "width": "240",
   "caption": "Geometry — 기하 계산과 공차 판정 — Tool Settings 패널"
  },
  {
@@ -21658,8 +20901,8 @@
  },
  {
   "t": "figure",
-  "src": "../gs/screenshots/v3/tools/22_PointCloud_Registration.png",
-  "width": "240",
+  "src": "../gs/screenshots/v3/tools/22_PointCloud_Registration_split.png",
+  "width": "500",
   "caption": "PointCloud Registration — 기준 형상 정합 (3D 얼라인) — Tool Settings 패널"
  },
  {
@@ -22300,7 +21543,7 @@
  {
   "t": "figure",
   "src": "../gs/screenshots/v3/tools/24_PointCloud_Cluster_split.png",
-  "width": "500",
+  "width": "620",
   "caption": "PointCloud Cluster — 덩어리 분리 · 개수 · 치수 — Tool Settings 패널"
  },
  {
@@ -22676,8 +21919,8 @@
  },
  {
   "t": "figure",
-  "src": "../gs/screenshots/v3/tools/25_PointCloud_Deviation_split.png",
-  "width": "500",
+  "src": "../gs/screenshots/v3/tools/25_PointCloud_Deviation.png",
+  "width": "240",
   "caption": "PointCloud Deviation — 기준 형상 대비 편차 히트맵 — Tool Settings 패널"
  },
  {
@@ -23434,12 +22677,12 @@
     "m": false
    },
    {
-    "s": " — 자체 판정 없음 — 3D Geometry 로 각도 · 거리를 구한 뒤 Result 또는 PLC 에서 판정합니다.",
+    "s": " — 자체 판정 없음 — 3D Geometry 로 각도 · 거리를 구해 확인합니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "판정 — 자체 판정 없음 — 3D Geometry 로 각도 · 거리를 구한 뒤 Result 또는 PLC 에서 판정합니다."
+  "text": "판정 — 자체 판정 없음 — 3D Geometry 로 각도 · 거리를 구해 확인합니다."
  },
  {
   "t": "li",
@@ -23672,12 +22915,12 @@
     "m": false
    },
    {
-    "s": " — 이 도구에는 공차 판정이 없습니다. 합불이 필요하면 뒤에 Result 도구를 연결하거나 AngleDeg · Distance3D 를 PLC 로 매핑해 PLC 에서 판정합니다.",
+    "s": " — 이 도구에는 공차 판정이 없습니다. 각도 · 거리(AngleDeg · Distance3D)는 Run Results 에서 확인합니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "판정 — 이 도구에는 공차 판정이 없습니다. 합불이 필요하면 뒤에 Result 도구를 연결하거나 AngleDeg · Distance3D 를 PLC 로 매핑해 PLC 에서 판정합니다."
+  "text": "판정 — 이 도구에는 공차 판정이 없습니다. 각도 · 거리(AngleDeg · Distance3D)는 Run Results 에서 확인합니다."
  },
  {
   "t": "li",
@@ -23730,8 +22973,8 @@
  },
  {
   "t": "figure",
-  "src": "../gs/screenshots/v3/tools/29_PointCloud_Line_Fit_split.png",
-  "width": "500",
+  "src": "../gs/screenshots/v3/tools/29_PointCloud_Line_Fit.png",
+  "width": "240",
   "caption": "PointCloud Line Fit — 3D 직선 피팅 — Tool Settings 패널"
  },
  {
@@ -25024,8 +24267,8 @@
  },
  {
   "t": "figure",
-  "src": "../gs/screenshots/v3/tools/33_Classify_split.png",
-  "width": "500",
+  "src": "../gs/screenshots/v3/tools/33_Classify.png",
+  "width": "240",
   "caption": "Classify — 이미지 분류 — Tool Settings 패널"
  },
  {
@@ -25792,14 +25035,14 @@
   "t": "li",
   "segs": [
    {
-    "s": "최종 OK/NG 신호를 PLC · IO 보드로 내보내는 것은 이 도구가 아니라 시퀀스 편집기의 Branch → Output Action 이 담당합니다(§5.10). 이 도구의 PLC Output 은 PassCount 같은 통계 값 보조 전송용입니다.",
+    "s": "최종 OK/NG 신호를 IO 보드로 내보내는 것은 이 도구가 아니라 시퀀스 편집기의 Branch → Output Action 이 담당합니다(§5.10).",
     "b": false,
     "m": false
    }
   ],
   "ordered": false,
   "depth": 0,
-  "text": "최종 OK/NG 신호를 PLC · IO 보드로 내보내는 것은 이 도구가 아니라 시퀀스 편집기의 Branch → Output Action 이 담당합니다(§5.10). 이 도구의 PLC Output 은 PassCount 같은 통계 값 보조 전송용입니다."
+  "text": "최종 OK/NG 신호를 IO 보드로 내보내는 것은 이 도구가 아니라 시퀀스 편집기의 Branch → Output Action 이 담당합니다(§5.10)."
  },
  {
   "t": "h",
@@ -28188,14 +27431,14 @@
   "t": "li",
   "segs": [
    {
-    "s": "부품을 옮긴 이미지로 Run All → DeltaX · DeltaY · DeltaTheta 를 확인합니다. Match Align 의 PLC Output 에서 이 값들을 PLC 주소에 매핑하면 시퀀스가 돌 때마다 PLC 로 전달됩니다.",
+    "s": "부품을 옮긴 이미지로 Run All → Run Results 에서 DeltaX · DeltaY · DeltaTheta 와 판정을 확인합니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": true,
   "depth": 0,
-  "text": "부품을 옮긴 이미지로 Run All → DeltaX · DeltaY · DeltaTheta 를 확인합니다. Match Align 의 PLC Output 에서 이 값들을 PLC 주소에 매핑하면 시퀀스가 돌 때마다 PLC 로 전달됩니다."
+  "text": "부품을 옮긴 이미지로 Run All → Run Results 에서 DeltaX · DeltaY · DeltaTheta 와 판정을 확인합니다."
  },
  {
   "t": "li",
@@ -28431,14 +27674,14 @@
     "m": false
    },
    {
-    "s": "(§5.10)에서 트리거 입력 · 검사 · 분기 · 판정 출력 노드에 PLC 주소(또는 IO 채널)를 넣고 [무부하 테스트] 로 신호를 확인합니다.",
+    "s": "(§5.10)에서 트리거 입력 · 검사 · 분기 · 판정 출력 노드에 IO 보드 채널을 넣고 [무부하 테스트] 로 신호를 확인합니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": true,
   "depth": 0,
-  "text": "시퀀스(§5.10)에서 트리거 입력 · 검사 · 분기 · 판정 출력 노드에 PLC 주소(또는 IO 채널)를 넣고 [무부하 테스트] 로 신호를 확인합니다."
+  "text": "시퀀스(§5.10)에서 트리거 입력 · 검사 · 분기 · 판정 출력 노드에 IO 보드 채널을 넣고 [무부하 테스트] 로 신호를 확인합니다."
  },
  {
   "t": "li",
@@ -31534,14 +30777,14 @@
     "m": false
    },
    {
-    "s": " — Admin Tools → Backup / Restore → [Run Backup...] 로 ZIP 을 만듭니다(§4.11). 설정 파일 · 레이아웃 · PLC 신호 맵 · 사용자 DB · 검사 이력 DB · 레시피 전체가 들어가며 감사 로그는 선택입니다. 레시피를 크게 바꾸기 전, 프로그램을 업그레이드하기 전, PC 를 교체하기 전에 받아 두세요.",
+    "s": " — Admin Tools → Backup / Restore → [Run Backup...] 로 ZIP 을 만듭니다(§4.11). 설정 파일 · 레이아웃 · 신호 설정 · 사용자 DB · 검사 이력 DB · 레시피 전체가 들어가며 감사 로그는 선택입니다. 레시피를 크게 바꾸기 전, 프로그램을 업그레이드하기 전, PC 를 교체하기 전에 받아 두세요.",
     "b": false,
     "m": false
    }
   ],
   "ordered": false,
   "depth": 0,
-  "text": "수동 백업 — Admin Tools → Backup / Restore → [Run Backup...] 로 ZIP 을 만듭니다(§4.11). 설정 파일 · 레이아웃 · PLC 신호 맵 · 사용자 DB · 검사 이력 DB · 레시피 전체가 들어가며 감사 로그는 선택입니다. 레시피를 크게 바꾸기 전, 프로그램을 업그레이드하기 전, PC 를 교체하기 전에 받아 두세요."
+  "text": "수동 백업 — Admin Tools → Backup / Restore → [Run Backup...] 로 ZIP 을 만듭니다(§4.11). 설정 파일 · 레이아웃 · 신호 설정 · 사용자 DB · 검사 이력 DB · 레시피 전체가 들어가며 감사 로그는 선택입니다. 레시피를 크게 바꾸기 전, 프로그램을 업그레이드하기 전, PC 를 교체하기 전에 받아 두세요."
  },
  {
   "t": "li",
@@ -32201,14 +31444,14 @@
   "t": "li",
   "segs": [
    {
-    "s": "라이선스 상태는 설정 마법사 6 단계 카드, VMS Health Check 의 License 항목, Web 시스템 관리 → SW 라이선스에서 봅니다.",
+    "s": "라이선스 상태는 설정 마법사 5 단계 카드, VMS Health Check 의 License 항목, Web 시스템 관리 → SW 라이선스에서 봅니다.",
     "b": false,
     "m": false
    }
   ],
   "ordered": false,
   "depth": 0,
-  "text": "라이선스 상태는 설정 마법사 6 단계 카드, VMS Health Check 의 License 항목, Web 시스템 관리 → SW 라이선스에서 봅니다."
+  "text": "라이선스 상태는 설정 마법사 5 단계 카드, VMS Health Check 의 License 항목, Web 시스템 관리 → SW 라이선스에서 봅니다."
  },
  {
   "t": "li",
@@ -33275,14 +32518,14 @@
     {
      "segs": [
       {
-       "s": "System Log 의 \"[AutoProcess] 시퀀스 '노드' 노드 오류 — 사유\" 를 봅니다. 5 초 후 자동 재시도합니다. PLC 주소 오타, 연결 끊김, IO 보드 채널 번호 범위 초과가 흔한 원인입니다.",
+       "s": "System Log 의 \"[AutoProcess] 시퀀스 '노드' 노드 오류 — 사유\" 를 봅니다. 5 초 후 자동 재시도합니다. IO 보드 연결 실패, 채널 번호 범위 초과가 흔한 원인입니다.",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "System Log 의 \"[AutoProcess] 시퀀스 '노드' 노드 오류 — 사유\" 를 봅니다. 5 초 후 자동 재시도합니다. PLC 주소 오타, 연결 끊김, IO 보드 채널 번호 범위 초과가 흔한 원인입니다."
+     "text": "System Log 의 \"[AutoProcess] 시퀀스 '노드' 노드 오류 — 사유\" 를 봅니다. 5 초 후 자동 재시도합니다. IO 보드 연결 실패, 채널 번호 범위 초과가 흔한 원인입니다."
     }
    ],
    [
@@ -33318,13 +32561,13 @@
   "t": "h",
   "segs": [
    {
-    "s": "10.3 PLC · IO 보드 ⚙",
+    "s": "10.3 IO 보드 ⚙",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "10.3 PLC · IO 보드 ⚙"
+  "text": "10.3 IO 보드 ⚙"
  },
  {
   "t": "table",
@@ -33353,32 +32596,6 @@
      "header": true,
      "imgs": [],
      "text": "확인 · 조치"
-    }
-   ],
-   [
-    {
-     "segs": [
-      {
-       "s": "상태바 PLC 칩이 빨강",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "상태바 PLC 칩이 빨강"
-    },
-    {
-     "segs": [
-      {
-       "s": "① PLC IP 로 ping 이 되는지 ② 설정 마법사 4 단계의 벤더 · 포트 · 통신 방식이 PLC 설정과 같은지 ③ PLC 쪽 이더넷 모듈의 접속 허용 수(Mitsubishi 는 포트 생존 확인 필요)를 확인합니다. Auto Reconnect 가 켜져 있으면 연결이 돌아올 때 자동 복구됩니다.",
-       "b": false,
-       "m": false
-      }
-     ],
-     "header": false,
-     "imgs": [],
-     "text": "① PLC IP 로 ping 이 되는지 ② 설정 마법사 4 단계의 벤더 · 포트 · 통신 방식이 PLC 설정과 같은지 ③ PLC 쪽 이더넷 모듈의 접속 허용 수(Mitsubishi 는 포트 생존 확인 필요)를 확인합니다. Auto Reconnect 가 켜져 있으면 연결이 돌아올 때 자동 복구됩니다."
     }
    ],
    [
@@ -33417,40 +32634,40 @@
        "m": false
       },
       {
-       "s": "으로 설치합니다. \"Register_Card 실패\" → 마법사 5 단계의 모델 · Board ID 가 실제 카드와 맞는지 확인합니다. Advantech 는 \"DAQNavi 이 없거나\" → 드라이버를 설치하고, \"보드 BID#n 를 열지 못했습니다\" → Advantech Navigator 의 보드 번호와 마법사 5 단계 Board ID 를 맞춥니다. \"연결 시간 초과(5초)\" → 카드 장착과 드라이버를 확인하고 재부팅합니다. 보드가 실패해도 검사는 되지만 그 보드를 쓰는 시퀀스 노드는 동작하지 않습니다.",
+       "s": "으로 설치합니다. \"Register_Card 실패\" → 마법사 4 단계의 모델 · Board ID 가 실제 카드와 맞는지 확인합니다. Advantech 는 \"DAQNavi 이 없거나\" → 드라이버를 설치하고, \"보드 BID#n 를 열지 못했습니다\" → Advantech Navigator 의 보드 번호와 마법사 4 단계 Board ID 를 맞춥니다. \"연결 시간 초과(5초)\" → 카드 장착과 드라이버를 확인하고 재부팅합니다. 보드가 실패해도 검사는 되지만 그 보드를 쓰는 시퀀스 노드는 동작하지 않습니다.",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "System Log 의 [IoBoard] 항목에 사유가 있습니다. \"라이브러리를 찾을 수 없습니다\" → 드라이버(ADLink DASK · Advantech DAQNavi)를 64비트용으로 설치합니다. \"Register_Card 실패\" → 마법사 5 단계의 모델 · Board ID 가 실제 카드와 맞는지 확인합니다. Advantech 는 \"DAQNavi 이 없거나\" → 드라이버를 설치하고, \"보드 BID#n 를 열지 못했습니다\" → Advantech Navigator 의 보드 번호와 마법사 5 단계 Board ID 를 맞춥니다. \"연결 시간 초과(5초)\" → 카드 장착과 드라이버를 확인하고 재부팅합니다. 보드가 실패해도 검사는 되지만 그 보드를 쓰는 시퀀스 노드는 동작하지 않습니다."
+     "text": "System Log 의 [IoBoard] 항목에 사유가 있습니다. \"라이브러리를 찾을 수 없습니다\" → 드라이버(ADLink DASK · Advantech DAQNavi)를 64비트용으로 설치합니다. \"Register_Card 실패\" → 마법사 4 단계의 모델 · Board ID 가 실제 카드와 맞는지 확인합니다. Advantech 는 \"DAQNavi 이 없거나\" → 드라이버를 설치하고, \"보드 BID#n 를 열지 못했습니다\" → Advantech Navigator 의 보드 번호와 마법사 4 단계 Board ID 를 맞춥니다. \"연결 시간 초과(5초)\" → 카드 장착과 드라이버를 확인하고 재부팅합니다. 보드가 실패해도 검사는 되지만 그 보드를 쓰는 시퀀스 노드는 동작하지 않습니다."
     }
    ],
    [
     {
      "segs": [
       {
-       "s": "판정 신호가 PLC 에 안 들어감",
+       "s": "판정 신호가 설비에 안 들어감",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "판정 신호가 PLC 에 안 들어감"
+     "text": "판정 신호가 설비에 안 들어감"
     },
     {
      "segs": [
       {
-       "s": "System Log 에 \"검사 결과 출력 실패\" 가 있으면 그 줄의 도구 · 주소로 쓰기가 실패한 것입니다 — 그 사이클은 오류로 멈추고 생산 수량에 세지 않습니다. 시퀀스의 Output Action 노드 주소 · 값, Write Mode(Handshake) 규약, Endian 을 PLC 프로그램과 대조합니다. 시퀀스 편집기의 [PLC Monitor] 로 실제 값을 보면서 [무부하 테스트] 로 신호만 주고받아 확인합니다(§5.10).",
+       "s": "System Log 에 \"검사 결과 출력 실패\" 가 있으면 그 줄의 도구 · 주소로 쓰기가 실패한 것입니다 — 그 사이클은 오류로 멈추고 생산 수량에 세지 않습니다. 시퀀스의 Output Action 노드 장치 · 채널 번호 · 값과 설비 배선을 대조합니다. 시퀀스 편집기의 [I/O Monitor] 로 실제 값을 보면서 [무부하 테스트] 로 신호만 주고받아 확인합니다(§5.10).",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "System Log 에 \"검사 결과 출력 실패\" 가 있으면 그 줄의 도구 · 주소로 쓰기가 실패한 것입니다 — 그 사이클은 오류로 멈추고 생산 수량에 세지 않습니다. 시퀀스의 Output Action 노드 주소 · 값, Write Mode(Handshake) 규약, Endian 을 PLC 프로그램과 대조합니다. 시퀀스 편집기의 [PLC Monitor] 로 실제 값을 보면서 [무부하 테스트] 로 신호만 주고받아 확인합니다(§5.10)."
+     "text": "System Log 에 \"검사 결과 출력 실패\" 가 있으면 그 줄의 도구 · 주소로 쓰기가 실패한 것입니다 — 그 사이클은 오류로 멈추고 생산 수량에 세지 않습니다. 시퀀스의 Output Action 노드 장치 · 채널 번호 · 값과 설비 배선을 대조합니다. 시퀀스 편집기의 [I/O Monitor] 로 실제 값을 보면서 [무부하 테스트] 로 신호만 주고받아 확인합니다(§5.10)."
     }
    ]
   ],
@@ -34235,14 +33452,14 @@
     {
      "segs": [
       {
-       "s": "보안 모드가 저장되지 않은 것입니다. 설정 마법사를 6 단계까지 진행해 [Finish] 로 저장합니다(§3.7).",
+       "s": "보안 모드가 저장되지 않은 것입니다. 설정 마법사를 5 단계까지 진행해 [Finish] 로 저장합니다(§3.6).",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "보안 모드가 저장되지 않은 것입니다. 설정 마법사를 6 단계까지 진행해 [Finish] 로 저장합니다(§3.7)."
+     "text": "보안 모드가 저장되지 않은 것입니다. 설정 마법사를 5 단계까지 진행해 [Finish] 로 저장합니다(§3.6)."
     }
    ],
    [
@@ -50133,24 +49350,24 @@
   "t": "h",
   "segs": [
    {
-    "s": "11.3 검사 결과 값 이름 (PLC 매핑 · Web 이력)",
+    "s": "11.3 검사 결과 값 이름",
     "b": false,
     "m": false
    }
   ],
   "level": 3,
-  "text": "11.3 검사 결과 값 이름 (PLC 매핑 · Web 이력)"
+  "text": "11.3 검사 결과 값 이름"
  },
  {
   "t": "p",
   "segs": [
    {
-    "s": "도구 설정의 PLC Output 에서 고르는 결과 키(Key)는 도구가 내보내는 값 이름입니다. 자주 쓰는 이름은 다음과 같습니다.",
+    "s": "도구가 내보내는 결과 값 이름입니다. VisionSetup 의 Run Results 목록에 이 이름으로 표시됩니다. 자주 쓰는 이름은 다음과 같습니다.",
     "b": false,
     "m": false
    }
   ],
-  "text": "도구 설정의 PLC Output 에서 고르는 결과 키(Key)는 도구가 내보내는 값 이름입니다. 자주 쓰는 이름은 다음과 같습니다."
+  "text": "도구가 내보내는 결과 값 이름입니다. VisionSetup 의 Run Results 목록에 이 이름으로 표시됩니다. 자주 쓰는 이름은 다음과 같습니다."
  },
  {
   "t": "table",
@@ -50634,14 +49851,14 @@
     {
      "segs": [
       {
-       "s": "§3.5 · §3.6 · §5.10",
+       "s": "§3.5 · §5.10",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "§3.5 · §3.6 · §5.10"
+     "text": "§3.5 · §5.10"
     }
    ],
    [
@@ -51034,14 +50251,14 @@
     {
      "segs": [
       {
-       "s": "§3.6 · §5.10",
+       "s": "§3.5 · §5.10",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "§3.6 · §5.10"
+     "text": "§3.5 · §5.10"
     }
    ],
    [
@@ -52734,14 +51951,14 @@
     {
      "segs": [
       {
-       "s": "§3.7 · §4.11 · §4.12",
+       "s": "§3.6 · §4.11 · §4.12",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "§3.7 · §4.11 · §4.12"
+     "text": "§3.6 · §4.11 · §4.12"
     }
    ],
    [
@@ -53684,14 +52901,14 @@
     {
      "segs": [
       {
-       "s": "§2.5 · §3.7 · §8.24 · §9.4",
+       "s": "§2.5 · §3.6 · §8.24 · §9.4",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "§2.5 · §3.7 · §8.24 · §9.4"
+     "text": "§2.5 · §3.6 · §8.24 · §9.4"
     }
    ],
    [
@@ -53804,14 +53021,14 @@
     {
      "segs": [
       {
-       "s": "3.0 (2026-10-30)",
+       "s": "3.1 (2026-11-02)",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "3.0 (2026-10-30)"
+     "text": "3.1 (2026-11-02)"
     }
    ],
    [
@@ -53830,14 +53047,14 @@
     {
      "segs": [
       {
-       "s": "BODA VMS v1.48.0 (VMS · VMS.AppSetup · VMS.VisionSetup · 생산 관리 웹)",
+       "s": "BODA VMS v1.48.1 (VMS · VMS.AppSetup · VMS.VisionSetup · 생산 관리 웹)",
        "b": false,
        "m": false
       }
      ],
      "header": false,
      "imgs": [],
-     "text": "BODA VMS v1.48.0 (VMS · VMS.AppSetup · VMS.VisionSetup · 생산 관리 웹)"
+     "text": "BODA VMS v1.48.1 (VMS · VMS.AppSetup · VMS.VisionSetup · 생산 관리 웹)"
     }
    ],
    [

@@ -49,7 +49,7 @@
 </ul>
 <h4>Polar Unwrap — 극좌표 펼치기</h4>
 <p>캡 · 약병 · 파이프처럼 둥근 표면에 둘러 인쇄된 라벨을 극좌표 변환으로 직사각형 띠로 펼칩니다. 펼친 이미지를 OCR 이나 Code Reader 에 연결하면 곡면 글자를 읽을 수 있습니다.</p>
-<figure><img src="../gs/screenshots/v3/tools/04_Polar_Unwrap_split.png" data-width="500" alt="Polar Unwrap — 극좌표 펼치기 설정 패널"><figcaption>Polar Unwrap — 극좌표 펼치기 — Tool Settings 패널</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/tools/04_Polar_Unwrap.png" data-width="240" alt="Polar Unwrap — 극좌표 펼치기 설정 패널"><figcaption>Polar Unwrap — 극좌표 펼치기 — Tool Settings 패널</figcaption></figure>
 <figure><img src="../gs/screenshots/v3/scenes/PolarUnwrap.jpg" data-width="620" alt="Polar Unwrap — 극좌표 펼치기 실행 예"><figcaption>실행 예 — 원형으로 인쇄된 문자(35° 돌아감)를 반지름 300~400 px 띠(2513 × 100 px)로 펼친 결과. 뒤에 연결한 OCR 이 &quot;LOT 260923 A12&quot; 를 읽습니다(예제 이미지는 합성)</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
@@ -117,7 +117,7 @@
 </table>
 <p><strong>결과 값</strong> — MinValue · MaxValue · MeanValue · StdDev (판정 없음)</p>
 <ul>
-<li>MeanValue 를 PLC 에 매핑하면 조명이 어두워지는 추세를 PLC 에서 감시할 수 있습니다.</li>
+<li>MeanValue 를 Run Results 에서 꾸준히 보면 조명이 어두워지는 추세를 알아챌 수 있습니다.</li>
 </ul>
 <h3 id="tools-3">6.3 Pattern Matching — 패턴 매칭</h3>
 <h4>Feature Match — 특징(에지) 기반 패턴 매칭</h4>
@@ -174,7 +174,7 @@
 </ul>
 <h3 id="tools-4">6.4 Alignment — 얼라인</h3>
 <h4>Match Align — 2D 얼라인 (ΔX / ΔY / Δθ)</h4>
-<p>Feature Match 가 찾은 현재 포즈(중심 · 각도)를 기준(마스터) 포즈와 비교해 변위 ΔX · ΔY · Δθ 를 계산합니다. 캘리브레이션(또는 스텝 Resolution)이 있으면 mm 로도 내며, 계산한 보정량은 PLC 로 설비(스테이지 등)에 보낼 수 있습니다. 카메라 1 대로 부품을 보는 표준 2D 얼라인 구성입니다.</p>
+<p>Feature Match 가 찾은 현재 포즈(중심 · 각도)를 기준(마스터) 포즈와 비교해 변위 ΔX · ΔY · Δθ 를 계산합니다. 캘리브레이션(또는 스텝 Resolution)이 있으면 mm 로도 내며, 허용 변위를 넘으면 NG 로 판정합니다. 카메라 1 대로 부품을 보는 표준 2D 얼라인 구성입니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/11_Match_Align_split.png" data-width="500" alt="Match Align — 2D 얼라인 (ΔX / ΔY / Δθ) 설정 패널"><figcaption>Match Align — 2D 얼라인 (ΔX / ΔY / Δθ) — Tool Settings 패널</figcaption></figure>
 <figure><img src="../gs/screenshots/v3/scenes/MatchAlign.jpg" data-width="620" alt="Match Align — 2D 얼라인 (ΔX / ΔY / Δθ) 실행 예"><figcaption>실행 예 — 돌아가고 옮겨진 피팅의 기준 위치 대비 보정량 — ΔX −39.6 px · ΔY −3.8 px · Δθ 33.38°, 허용 범위 안이라 OK</figcaption></figure>
 <table class="cols-3-2-4">
@@ -188,7 +188,7 @@
 <p><strong>결과 값</strong> — RefX/Y/Theta · CurrentX/Y/Theta · DeltaX · DeltaY · DeltaTheta · DeltaXMm · DeltaYMm · ScaleRatio · JudgmentRadial · JudgmentPass</p>
 <p><strong>판정</strong> — Enable Judgment 를 켜면 위치(반경)와 각도가 모두 한계 이내여야 OK. Unit=Mm 인데 mm 변환이 불가능하면 픽셀로 잘못 판정하지 않고 실패 처리합니다.</p>
 <ul>
-<li><strong>절차</strong> — ① Feature Match 로 기준 부품의 패턴을 학습 ② Feature Match 를 이 도구에 Result 로 연결하고 Run → Δ 계산 ③ 기준을 학습 시점과 다르게 잡으려면 기준 부품을 놓고 Run 후 [현재 매칭을 기준으로 등록] ④ 보정량(DeltaX · DeltaY · DeltaTheta)을 설비로 보내려면 PLC Output 에 매핑.</li>
+<li><strong>절차</strong> — ① Feature Match 로 기준 부품의 패턴을 학습 ② Feature Match 를 이 도구에 Result 로 연결하고 Run → Δ 계산 ③ 기준을 학습 시점과 다르게 잡으려면 기준 부품을 놓고 Run 후 [현재 매칭을 기준으로 등록] ④ 보정량(DeltaX · DeltaY · DeltaTheta)은 Run Results 에서 확인.</li>
 <li>2 점 모드에서 ScaleRatio 가 1.0 에서 벗어나면 오검출이나 배율 변화를 의심하세요.</li>
 <li>Feature Match 를 재학습하면 기준도 함께 바뀌거나(UseCurrentImage) 유지되므로(KeepReference) 재학습 원점 설정을 확인하세요.</li>
 </ul>
@@ -214,7 +214,7 @@
 <h3 id="tools-5">6.5 Blob Analysis — 블롭 분석</h3>
 <h4>Blob — 블롭(덩어리) 분석</h4>
 <p>이진화된 이미지에서 연결된 영역(블롭)을 찾아 개수 · 면적 · 위치를 구하고 판정합니다. 부품 유무, 개수 세기, 이물 · 결함 검출에 가장 많이 쓰는 도구입니다. 내부 이진화를 켜면 Threshold 없이 그레이 이미지를 바로 받을 수 있습니다.</p>
-<figure><img src="../gs/screenshots/v3/tools/13_Blob_split.png" data-width="620" alt="Blob — 블롭(덩어리) 분석 설정 패널"><figcaption>Blob — 블롭(덩어리) 분석 — Tool Settings 패널</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/tools/13_Blob_split.png" data-width="500" alt="Blob — 블롭(덩어리) 분석 설정 패널"><figcaption>Blob — 블롭(덩어리) 분석 — Tool Settings 패널</figcaption></figure>
 <figure><img src="../gs/screenshots/v3/scenes/Blob.jpg" data-width="620" alt="Blob — 블롭(덩어리) 분석 실행 예"><figcaption>실행 예 — 판의 구멍 6 개를 검출 — 개수 6 · 총 면적 48,417 px² 가 기준 안이라 OK. 구멍마다 윤곽 · 중심 · 번호가 표시됩니다</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
@@ -295,7 +295,7 @@
 </ul>
 <h4>Geometry — 기하 계산과 공차 판정</h4>
 <p>Caliper(점) · Line Fit(직선) · Circle Fit(원)을 Result 로 연결해 두 요소 사이의 거리 · 각도 · 교차점을 계산하고, 기준값 ± 공차로 OK/NG 를 판정합니다. 측정 검사의 마지막 계산 · 판정 도구입니다. 소스가 2 개 이상 연결되어야 합니다.</p>
-<figure><img src="../gs/screenshots/v3/tools/17_Geometry_split.png" data-width="500" alt="Geometry — 기하 계산과 공차 판정 설정 패널"><figcaption>Geometry — 기하 계산과 공차 판정 — Tool Settings 패널</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/tools/17_Geometry.png" data-width="240" alt="Geometry — 기하 계산과 공차 판정 설정 패널"><figcaption>Geometry — 기하 계산과 공차 판정 — Tool Settings 패널</figcaption></figure>
 <figure><img src="../gs/screenshots/v3/scenes/Geometry.jpg" data-width="620" alt="Geometry — 기하 계산과 공차 판정 실행 예"><figcaption>실행 예 — 두 구멍의 중심 거리 판정에서 NG 가 난 예 — 21.045 mm 가 기준 20 ± 0.3 mm(19.7~20.3 mm) 밖이라 NG(왼쪽 위 붉은 배지)</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
@@ -390,7 +390,7 @@
 </ul>
 <h4>PointCloud Registration — 기준 형상 정합 (3D 얼라인)</h4>
 <p>기준 3D 데이터(.vpc 점군 또는 .stl CAD)와 현재 점군을 겹쳐 맞춥니다. PCA 로 거칠게 맞춘 뒤 ICP 로 정밀 정합해 이동 · 회전량(6 축)을 구하며, 부품이 매번 조금씩 다르게 놓일 때 자세를 재거나 편차 검사 앞단에서 자세를 맞출 때 씁니다.</p>
-<figure><img src="../gs/screenshots/v3/tools/22_PointCloud_Registration.png" data-width="240" alt="PointCloud Registration — 기준 형상 정합 (3D 얼라인) 설정 패널"><figcaption>PointCloud Registration — 기준 형상 정합 (3D 얼라인) — Tool Settings 패널</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/tools/22_PointCloud_Registration_split.png" data-width="500" alt="PointCloud Registration — 기준 형상 정합 (3D 얼라인) 설정 패널"><figcaption>PointCloud Registration — 기준 형상 정합 (3D 얼라인) — Tool Settings 패널</figcaption></figure>
 <figure><img src="../gs/screenshots/v3/scenes/PCRegistration.jpg" data-width="620" alt="PointCloud Registration — 기준 형상 정합 (3D 얼라인) 실행 예"><figcaption>실행 예 — −44° 돌아가 놓인 프레임을 기준 점군에 정합 — 회전 RotationZ −44.06°, 평균 오차 2.736 mm, 신뢰도 0.697 이 하한 0.3 이상이라 OK</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
@@ -425,7 +425,7 @@
 </ul>
 <h4>PointCloud Cluster — 덩어리 분리 · 개수 · 치수</h4>
 <p>점군을 거리 기준으로 덩어리(클러스터)로 나눠 물체 개수를 세고 덩어리마다 크기(가로 · 세로 · 높이) · 중심 · 방향을 잽니다. 부품 개수 세기, 가장 큰 물체만 남기기, 부스러기 제거에 씁니다. 점군에 저장된 카메라 정보로 mm 환산이 가능합니다.</p>
-<figure><img src="../gs/screenshots/v3/tools/24_PointCloud_Cluster_split.png" data-width="500" alt="PointCloud Cluster — 덩어리 분리 · 개수 · 치수 설정 패널"><figcaption>PointCloud Cluster — 덩어리 분리 · 개수 · 치수 — Tool Settings 패널</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/tools/24_PointCloud_Cluster_split.png" data-width="620" alt="PointCloud Cluster — 덩어리 분리 · 개수 · 치수 설정 패널"><figcaption>PointCloud Cluster — 덩어리 분리 · 개수 · 치수 — Tool Settings 패널</figcaption></figure>
 <figure><img src="../gs/screenshots/v3/scenes/PCCluster.jpg" data-width="620" alt="PointCloud Cluster — 덩어리 분리 · 개수 · 치수 실행 예"><figcaption>실행 예 — 남은 점을 덩어리로 나눠 프레임 1 개를 찾은 예 — 치수가 기준 376 × 252 mm(−6 / +6) 안이라 OK</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
@@ -445,7 +445,7 @@
 <h3 id="tools-10">6.10 3D Measurement — 3D 측정</h3>
 <h4>PointCloud Deviation — 기준 형상 대비 편차 히트맵</h4>
 <p>기준(양품) 점군과 현재 점군을 점 단위로 비교해 어느 부위가 얼마나 어긋났는지 히트맵(초록 = 일치, 노랑 = 어긋나기 시작, 빨강 = 범위 초과)으로 보여 주고, 허용 오차를 벗어난 점의 비율로 OK/NG 를 판정합니다. 들뜸 · 눌림 · 변형 검사에 씁니다.</p>
-<figure><img src="../gs/screenshots/v3/tools/25_PointCloud_Deviation_split.png" data-width="500" alt="PointCloud Deviation — 기준 형상 대비 편차 히트맵 설정 패널"><figcaption>PointCloud Deviation — 기준 형상 대비 편차 히트맵 — Tool Settings 패널</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/tools/25_PointCloud_Deviation.png" data-width="240" alt="PointCloud Deviation — 기준 형상 대비 편차 히트맵 설정 패널"><figcaption>PointCloud Deviation — 기준 형상 대비 편차 히트맵 — Tool Settings 패널</figcaption></figure>
 <figure><img src="../gs/screenshots/v3/scenes/PCDeviation.jpg" data-width="620" alt="PointCloud Deviation — 기준 형상 대비 편차 히트맵 실행 예"><figcaption>실행 예 — 비틀린 프레임(합성 불량)의 편차 — 기준에서 5 mm 넘게 벗어난 점이 41.2%로 상한 15% 를 넘어 NG</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
@@ -487,7 +487,7 @@
 <tr><td>Sample Stride</td><td>2 [1~16]</td><td>점 표본 간격. 올리면 빨라지지만 작은 굴곡을 놓칠 수 있음</td></tr>
 </table>
 <p><strong>결과 값</strong> — PlaneA/B/C/D · NormalX/Y/Z · Flatness · AvgError · InlierCount · TotalPoints</p>
-<p><strong>판정</strong> — 자체 판정 없음 — 3D Geometry 로 각도 · 거리를 구한 뒤 Result 또는 PLC 에서 판정합니다.</p>
+<p><strong>판정</strong> — 자체 판정 없음 — 3D Geometry 로 각도 · 거리를 구해 확인합니다.</p>
 <ul>
 <li>템플릿 ‘평면 틸트 얼라인’ 은 Plane Fit Ref · Plane Fit Target → 3D Geometry(PlaneToPlaneAngle) 로 구성되며 AngleDeg 0° 가 평행입니다.</li>
 </ul>
@@ -502,14 +502,14 @@
 <tr><td>Source Geometries</td><td>—</td><td>Result 로 연결된 Plane Fit · Cluster 목록</td></tr>
 </table>
 <p><strong>결과 값</strong> — Distance3D · SignedDistance · DeltaX/Y/Z · AngleDeg · AngleRad · Point1X/Y/Z · Point2X/Y/Z · IsParallel</p>
-<p><strong>판정</strong> — 이 도구에는 공차 판정이 없습니다. 합불이 필요하면 뒤에 Result 도구를 연결하거나 AngleDeg · Distance3D 를 PLC 로 매핑해 PLC 에서 판정합니다.</p>
+<p><strong>판정</strong> — 이 도구에는 공차 판정이 없습니다. 각도 · 거리(AngleDeg · Distance3D)는 Run Results 에서 확인합니다.</p>
 <ul>
 <li>클러스터 콤보에서 덩어리를 고르면 2D 뷰에 해당 덩어리가 강조됩니다. 목록이 비어 있으면 PointCloud Cluster 를 Result 로 연결하고 Run 을 한 번 실행하세요.</li>
 <li>mm 정확도는 Cluster 의 Scale Mode(AutoFromCamera 권장)를 따릅니다.</li>
 </ul>
 <h4>PointCloud Line Fit — 3D 직선 피팅</h4>
 <p>현재 점군에 3D 직선을 맞춰 레일 · 모서리 · 봉의 방향 · 길이 · 직진도를 잽니다. 보통 Height Slicer → PointCloud Mask Crop 으로 직선 부위의 점만 남긴 뒤 Result 로 연결합니다. 맞춘 직선은 3D Geometry 의 점-직선 거리(PointToLineDistance3D)에 넘길 수 있습니다.</p>
-<figure><img src="../gs/screenshots/v3/tools/29_PointCloud_Line_Fit_split.png" data-width="500" alt="PointCloud Line Fit — 3D 직선 피팅 설정 패널"><figcaption>PointCloud Line Fit — 3D 직선 피팅 — Tool Settings 패널</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/tools/29_PointCloud_Line_Fit.png" data-width="240" alt="PointCloud Line Fit — 3D 직선 피팅 설정 패널"><figcaption>PointCloud Line Fit — 3D 직선 피팅 — Tool Settings 패널</figcaption></figure>
 <figure><img src="../gs/screenshots/v3/scenes/PCLineFit.jpg" data-width="620" alt="PointCloud Line Fit — 3D 직선 피팅 실행 예"><figcaption>실행 예 — 가운데가 8 mm 휜 막대(합성 점군) — 직진도 5.318 mm 가 상한 3 mm 를 넘어 NG</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
@@ -580,7 +580,7 @@
 </ul>
 <h4>Classify — 이미지 분류</h4>
 <p>ResNet · MobileNet 같은 분류 모델(ONNX)로 이미지(또는 ROI) 전체를 한 클래스로 판정합니다. 양품/불량 판정, 부품 종류 구분, 외관 등급에 씁니다. 모델은 학습된 ONNX 파일(.onnx)을 Model Path 오른쪽의 [폴더] 버튼으로 지정합니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
-<figure><img src="../gs/screenshots/v3/tools/33_Classify_split.png" data-width="500" alt="Classify — 이미지 분류 설정 패널"><figcaption>Classify — 이미지 분류 — Tool Settings 패널</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/tools/33_Classify.png" data-width="240" alt="Classify — 이미지 분류 설정 패널"><figcaption>Classify — 이미지 분류 — Tool Settings 패널</figcaption></figure>
 <figure><img src="../gs/screenshots/v3/scenes/Classify.jpg" data-width="620" alt="Classify — 이미지 분류 실행 예"><figcaption>실행 예 — 테이프가 붙은 피팅을 tape(100%)로 분류 — tape 는 OK Classes 에 없으므로 NG(왼쪽 위 붉은 글자)</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
@@ -622,7 +622,7 @@
 <p><strong>결과 값</strong> — PassCount · FailCount · TotalCount (메시지 ‘OK (n/m passed)’ · ‘NG (n/m failed)’)</p>
 <p><strong>판정</strong> — 판정 모드에 따라 OK/NG. 이 결과가 Run Results 의 Pass/Fail 과 VMS 의 판정 배지가 됩니다.</p>
 <ul>
-<li>최종 OK/NG 신호를 PLC · IO 보드로 내보내는 것은 이 도구가 아니라 시퀀스 편집기의 Branch → Output Action 이 담당합니다(§5.10). 이 도구의 PLC Output 은 PassCount 같은 통계 값 보조 전송용입니다.</li>
+<li>최종 OK/NG 신호를 IO 보드로 내보내는 것은 이 도구가 아니라 시퀀스 편집기의 Branch → Output Action 이 담당합니다(§5.10).</li>
 </ul>
 <h4>Ensemble — 딥러닝 판정 결합</h4>
 <p>Result 로 연결한 딥러닝 도구(주로 Detection = 알려진 결함 + Anomaly = 평소와 다른 상태)의 판정을 하나로 합칩니다. 두 모델을 함께 써서 과검(정상을 NG 로)과 미검(불량을 OK 로)을 같이 줄일 때 씁니다. Result 도구가 OK/NG 개수만 세는 것과 달리 검출 개수 · 이상 점수를 판정에 씁니다.</p>
