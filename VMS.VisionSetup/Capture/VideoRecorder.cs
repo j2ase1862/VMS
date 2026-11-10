@@ -357,6 +357,7 @@ namespace VMS.VisionSetup.Capture
                         await Settle();
                         break;
                     case "scrollTo": Find(a.GetProperty("target").GetString()!)?.BringIntoView(); await Settle(); break;
+                    case "zoom": await ZoomAsync(a); break;
                     case "save":
                         if (a.TryGetProperty("target", out var st)) await ClickVisual(Find(st.GetString()!));
                         _vm.SaveCurrentRecipe();
@@ -565,6 +566,48 @@ namespace VMS.VisionSetup.Capture
         }
 
         private Rect ImageRect(double x, double y, double w, double h) => new(ImagePoint(x, y), ImagePoint(x + w, y + h));
+
+        /// <summary>
+        /// 이미지 확대 — {"op":"zoom","img":[x,y,w,h],"fill":0.8,"ms":700} 은 그 영역이 화면을 fill 만큼 채우도록
+        /// 확대하고 가운데로 옮긴다. {"op":"zoom","fit":true} 는 전체 보기. 작은 코드 · 글자를 영상에서 읽히게 하려는 것.
+        /// </summary>
+        private async Task ZoomAsync(JsonElement a)
+        {
+            var ic = Find("name:ImageCanvasControl");
+            var sv = ic?.FindName("ImageScrollViewer") as ScrollViewer;
+            var setZoom = ic?.GetType().GetMethod("SetZoom", BindingFlags.NonPublic | BindingFlags.Instance);
+            var zf = ic?.GetType().GetField("_zoomLevel", BindingFlags.NonPublic | BindingFlags.Instance);
+            if (ic == null || sv == null || setZoom == null || zf == null) { Log("  zoom: 이미지 캔버스를 찾지 못함"); return; }
+            double z0 = (double)zf.GetValue(ic)!;
+            double vw = sv.ViewportWidth, vh = sv.ViewportHeight;
+            double cx0 = (sv.HorizontalOffset + vw / 2) / z0, cy0 = (sv.VerticalOffset + vh / 2) / z0;
+            double z1, cx1, cy1;
+            if (a.TryGetProperty("fit", out var fit) && fit.GetBoolean())
+            {
+                var img = DisplayImage();
+                double iw = img?.Source?.Width ?? vw, ih = img?.Source?.Height ?? vh;
+                z1 = Math.Min(vw / iw, vh / ih) * 0.9; cx1 = iw / 2; cy1 = ih / 2;
+            }
+            else
+            {
+                var r = a.GetProperty("img");
+                double x = r[0].GetDouble(), y = r[1].GetDouble(), w = r[2].GetDouble(), h = r[3].GetDouble();
+                double fill = a.TryGetProperty("fill", out var f) ? f.GetDouble() : 0.8;
+                z1 = Math.Clamp(Math.Min(vw / w, vh / h) * fill, 0.1, 5.0); cx1 = x + w / 2; cy1 = y + h / 2;
+            }
+            int steps = Math.Max(1, Ms(a, 700) / 33);
+            for (int i = 1; i <= steps; i++)
+            {
+                double k = (double)i / steps, e = k < .5 ? 2 * k * k : 1 - Math.Pow(-2 * k + 2, 2) / 2;
+                double z = z0 + (z1 - z0) * e, cx = cx0 + (cx1 - cx0) * e, cy = cy0 + (cy1 - cy0) * e;
+                setZoom.Invoke(ic, new object[] { z });
+                sv.UpdateLayout();
+                sv.ScrollToHorizontalOffset(cx * z - vw / 2);
+                sv.ScrollToVerticalOffset(cy * z - vh / 2);
+                await Task.Delay(33);
+            }
+            await Settle();
+        }
 
         private void ZoomFit()
         {
