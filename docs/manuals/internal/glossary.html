@@ -1,0 +1,107 @@
+<p>본문에 자주 나오는 낱말을 일의 순서대로 모았습니다 — 촬영, 검사 도구, 레시피 · 운전, 3D · 확장 옵션, 시스템 순입니다. "화면" 은 그 낱말이 나오는 곳, "더 읽기" 는 깊이 알고 싶을 때 볼 바깥 자료입니다.</p>
+<dl class="glossary">
+<dt id="g-roi">ROI <span class="en">Region of Interest, 검사 영역</span></dt>
+<dd>사진에서 도구가 실제로 보는 부분. 좁힐수록 빠르고 엉뚱한 곳을 덜 잡습니다. 화면: VisionSetup 이미지 위 사각형(§5.5).</dd>
+<dt id="g-exposure">노출 · 게인 <span class="en">Exposure · Gain</span></dt>
+<dd>노출은 셔터가 열린 시간(밝기와 번짐을 함께 정함), 게인은 신호 증폭(밝아지지만 잡음도 커짐). 화면: VMS 카메라 설정 창(§4.5), VisionSetup 스텝 카메라 설정(§5.3). 더 읽기: <a href="https://en.wikipedia.org/wiki/Exposure_(photography)" target="_blank">Exposure (Wikipedia)</a></dd>
+<dt id="g-fov">시야 · 해상도 <span class="en">FOV · mm/px</span></dt>
+<dd>카메라가 한 번에 보는 크기와, 한 화소가 실제로 몇 mm 인지. 잡을 결함의 크기를 정합니다(§1.7).</dd>
+<dt id="g-calibration">캘리브레이션 <span class="en">Calibration</span></dt>
+<dd>화소 좌표를 mm 로 바꾸는 기준을 만드는 일. 체커보드 · 원 격자 · 두 점 거리 등으로 합니다. 화면: VisionSetup 캘리브레이션(§5.9). 더 읽기: <a href="https://en.wikipedia.org/wiki/Camera_resectioning" target="_blank">Camera resectioning (Wikipedia)</a></dd>
+<dt id="g-trigger">트리거 <span class="en">Trigger</span></dt>
+<dd>"지금 찍어라" 신호. 센서 · 설비 신호를 IO 보드(◆PLC)로 받아 찍는 외부 트리거가 기본입니다. 화면: 시퀀스 편집기 Input Check 노드(§5.10).</dd>
+<dt id="g-linescan">◆라인스캔 카메라 <span class="en">Line Scan</span></dt>
+<dd>한 줄씩 찍어 움직이는 제품을 이어 붙이는 카메라. 롤러 · 시트처럼 계속 흐르는 표면에 씁니다. 화면: 설정 마법사 카메라 단계(§3.4), 사이드 패널 Roller Inspection(§4.6). 더 읽기: <a href="https://en.wikipedia.org/wiki/Line-scan_camera" target="_blank">Line-scan camera (Wikipedia)</a></dd>
+<dt id="g-threshold">이진화 <span class="en">Threshold</span></dt>
+<dd>밝기 기준값으로 사진을 흑과 백 두 값으로 나누는 것. 블롭 분석 앞 단계로 씁니다(§6.2). 더 읽기: <a href="https://en.wikipedia.org/wiki/Thresholding_(image_processing)" target="_blank">Thresholding (Wikipedia)</a></dd>
+<dt id="g-histogram">히스토그램 <span class="en">Histogram</span></dt>
+<dd>밝기마다 화소가 몇 개인지 센 그래프. 사진이 너무 어둡거나 하얗게 날아갔는지 봅니다(§6.2).</dd>
+<dt id="g-edge">에지 <span class="en">Edge</span></dt>
+<dd>밝기가 급하게 바뀌는 경계. 치수 측정과 패턴 매칭의 기준입니다(§6.2 · §6.6).</dd>
+<dt id="g-blob">블롭 <span class="en">Blob</span></dt>
+<dd>이진화한 사진에서 붙어 있는 덩어리. 개수 · 넓이 · 위치로 부품 유무 · 이물을 판정합니다(§6.5 · §7.1). 더 읽기: <a href="https://en.wikipedia.org/wiki/Blob_detection" target="_blank">Blob detection (Wikipedia)</a></dd>
+<dt id="g-caliper">캘리퍼 <span class="en">Caliper</span></dt>
+<dd>지정한 선을 따라 에지를 찾아 두 에지 사이 거리를 재는 도구(§6.6 · §7.2).</dd>
+<dt id="g-pattern">패턴 매칭 <span class="en">Feature Match · Shape Match</span></dt>
+<dd>미리 가르쳐 둔 모양을 사진에서 찾아 위치 · 각도 · 점수를 내는 것. Feature Match 는 에지 특징, Shape Match 는 밝기 상관(NCC)을 씁니다(§6.3). 더 읽기: <a href="https://en.wikipedia.org/wiki/Template_matching" target="_blank">Template matching (Wikipedia)</a></dd>
+<dt id="g-fixture">위치 보정 <span class="en">Fixture</span></dt>
+<dd>패턴 매칭으로 찾은 위치 · 각도를 기준으로 뒤 도구의 ROI 를 함께 옮기는 것. 제품이 조금씩 다른 자리에 와도 같은 곳을 검사합니다(§7.3).</dd>
+<dt id="g-align">얼라인 <span class="en">Align, ΔX · ΔY · Δθ</span></dt>
+<dd>기준 위치 대비 지금 위치가 얼마나 어긋났는지(가로 · 세로 · 각도) 계산하는 것. ◆로봇 · 스테이지 보정량으로 보낼 수 있습니다(§6.4 · §7.8).</dd>
+<dt id="g-ocr">OCR · OCV</dt>
+<dd>OCR 은 글자를 읽는 것, OCV 는 정해진 글자가 맞게 찍혔는지 확인하는 것(§6.7 · §7.6). 더 읽기: <a href="https://ko.wikipedia.org/wiki/%EA%B4%91%ED%95%99_%EB%AC%B8%EC%9E%90_%EC%9D%B8%EC%8B%9D" target="_blank">위키백과 — 광학 문자 인식</a></dd>
+<dt id="g-code">코드 판독 <span class="en">Barcode · QR · DataMatrix</span></dt>
+<dd>1차원 바코드와 2차원 코드를 읽는 것. DataMatrix 는 작은 부품 각인에 많이 씁니다(§6.8 · §7.5). 더 읽기: <a href="https://en.wikipedia.org/wiki/Data_Matrix" target="_blank">Data Matrix (Wikipedia)</a></dd>
+<dt id="g-color">색 공간 <span class="en">HSV · Lab · ΔE</span></dt>
+<dd>색을 숫자로 나타내는 방식. HSV 는 색상 · 채도 · 명도로 색을 고르기 쉽고, Lab 의 ΔE 는 두 색이 사람 눈에 얼마나 달라 보이는지를 냅니다(§6.13 · §7.4). 더 읽기: <a href="https://en.wikipedia.org/wiki/Color_difference" target="_blank">Color difference (Wikipedia)</a></dd>
+<dt id="g-dl-tool">딥러닝 검사 도구</dt>
+<dd>학습된 모델(ONNX)로 검출 · 분류 · 이상탐지 · 분할을 하는 도구. 규칙으로 적기 어려운 흠집 · 이물에 씁니다(§6.11 · 10장). 개념은 MLOps 매뉴얼 1부에 쉽게 풀어 두었습니다.</dd>
+<dt id="g-onnx">ONNX</dt>
+<dd>여러 학습 도구가 같이 쓰는 모델 파일 표준. 딥러닝 도구의 Model Path 에 지정합니다. 더 읽기: <a href="https://onnx.ai/" target="_blank">onnx.ai</a></dd>
+<dt id="g-tensorrt">TensorRT</dt>
+<dd>NVIDIA GPU 에서 딥러닝 추론을 빠르게 하는 엔진. Inference Settings 에서 고릅니다(§10.2). 더 읽기: <a href="https://onnxruntime.ai/docs/execution-providers/TensorRT-ExecutionProvider.html" target="_blank">ONNX Runtime — TensorRT</a></dd>
+<dt id="g-modelref">◆모델 참조 <span class="en">model://</span></dt>
+<dd>레시피가 모델 파일 대신 MLOps 레지스트리의 모델을 가리키는 주소. <code>model://계열ID@production</code>(운영 추종) 또는 <code>@버전번호</code>(고정). 화면: 딥러닝 도구 [레지스트리…](§5.13).</dd>
+<dt id="g-recipe">레시피 · 스텝 <span class="en">Recipe · Step</span></dt>
+<dd>레시피는 한 제품의 검사 설정 전체, 스텝은 그 안의 촬영 한 번(카메라 설정 + 도구 목록)입니다. 화면: VisionSetup Recipe Manager(§5.3).</dd>
+<dt id="g-judge">판정 · Result 연결</dt>
+<dd>도구마다 Pass/Fail 을 내고, Result 도구에 연결한 도구가 모두 Pass 일 때 그 스텝이 OK 입니다(§5.6).</dd>
+<dt id="g-template">예제 템플릿</dt>
+<dd>자주 쓰는 도구 조합을 한 번에 놓아 주는 출발점(§5.8).</dd>
+<dt id="g-batch">배치 테스트 · 골든셋</dt>
+<dd>사진 폴더 전체로 레시피를 돌려 과검 · 미검을 세는 것. 골든셋은 정답(OK/NG)을 매겨 둔 기준 사진 묶음입니다(§5.11).</dd>
+<dt id="g-webparam">Web 파라미터 연동</dt>
+<dd>도구의 기준값을 생산 관리 웹에서 바꿀 수 있게 이어 두는 것. 바꾸면 라인 PC 에 바로 전달됩니다(§5.7 · §8.10).</dd>
+<dt id="g-sequence">시퀀스 <span class="en">Process Sequence</span></dt>
+<dd>AUTO RUN 중 "트리거 대기 → 촬영 → 검사 → 결과 출력 → 반복" 흐름을 노드로 그린 것(§5.10).</dd>
+<dt id="g-autorun">AUTO RUN</dt>
+<dd>시퀀스대로 계속 검사하는 운전 상태. 시작 조건(작업지시 · 작업자 · 레시피)이 맞아야 시작됩니다(§4.3).</dd>
+<dt id="g-wo">작업지시 · Lot <span class="en">Work Order</span></dt>
+<dd>무엇을 몇 개 만들지 정한 지시와, 그 안에서 묶어 관리하는 생산 단위. 생산 관리 웹에서 만들고 VMS 에서 고릅니다(§4.3 · §8.7).</dd>
+<dt id="g-trace">추적 정보 <span class="en">WO · Lot · S/N</span></dt>
+<dd>검사 결과마다 붙는 작업지시 · Lot · 일련번호 등. 나중에 이력을 찾는 열쇠입니다(§4.3).</dd>
+<dt id="g-kpi">KPI</dt>
+<dd>VMS 화면 위쪽의 생산 수 · 양품률 · 사이클 시간 같은 핵심 숫자(§4.4).</dd>
+<dt id="g-standalone">단독 모드</dt>
+<dd>생산 관리 웹 없이 라인 PC 혼자 검사하는 운전. 작업지시 · 작업자 연동이 빠집니다(§4.9).</dd>
+<dt id="g-instance">인스턴스</dt>
+<dd>한 PC 에서 VMS 를 이름을 달리해 둘 이상 띄우는 것. 설정 · 레시피 · 이력이 따로 저장됩니다(§11.5).</dd>
+<dt id="g-iobaord">IO 보드</dt>
+<dd>PC 에 꽂는 디지털 입출력 카드. 센서 신호를 받고 램프 · 배출기를 켭니다(§3.7 · §5.10).</dd>
+<dt id="g-plc">◆PLC</dt>
+<dd>설비를 제어하는 산업용 컴퓨터. VMS 가 이더넷 · 시리얼로 직접 주소를 읽고 씁니다(§3.5). 더 읽기: <a href="https://ko.wikipedia.org/wiki/%ED%94%84%EB%A1%9C%EA%B7%B8%EB%9E%98%EB%A8%B8%EB%B8%94_%EB%A1%9C%EC%A7%81_%EC%BB%A8%ED%8A%B8%EB%A1%A4%EB%9F%AC" target="_blank">위키백과 — PLC</a></dd>
+<dt id="g-handshake">◆핸드셰이크 · 엔디언 <span class="en">Handshake · Endian</span></dt>
+<dd>결과를 쓴 뒤 PLC 가 받았다는 신호를 확인하는 쓰기 방식, 그리고 여러 바이트 값의 순서. PLC 프로그램 규약과 맞춰야 합니다(§3.5).</dd>
+<dt id="g-pointcloud">점군 <span class="en">Point Cloud · .vpc</span></dt>
+<dd>3D 카메라가 찍은 점 (X, Y, Z) 들의 모음. <code>.vpc</code> 는 VMS 가 저장한 점군 파일이고, 저장된 파일로는 기본 구성에서도 3D 검사를 만들 수 있습니다(§6.9 · §7.9). 더 읽기: <a href="https://en.wikipedia.org/wiki/Point_cloud" target="_blank">Point cloud (Wikipedia)</a></dd>
+<dt id="g-heightmap">높이 맵 <span class="en">Height Map · Depth Map</span></dt>
+<dd>점군의 높이를 밝기로 바꾼 2D 사진. 2D 도구를 높이 정보에 쓸 수 있게 합니다(§5.13 · §6.10).</dd>
+<dt id="g-3dcam">◆3D 카메라 촬영</dt>
+<dd>3D 카메라(Mech-Mind)로 점군을 직접 찍는 기능. 저장된 .vpc 를 쓰는 기능과 달리 확장 옵션입니다(§3.4 · §5.13).</dd>
+<dt id="g-multiview">◆멀티뷰 스캔</dt>
+<dd>로봇이 카메라를 여러 자세로 옮겨 가며 찍은 점군을 하나로 합치는 것. 한 번에 다 보이지 않는 큰 · 입체 부품에 씁니다(§5.13).</dd>
+<dt id="g-handeye">◆핸드아이 캘리브레이션 <span class="en">Hand-Eye</span></dt>
+<dd>카메라 좌표와 로봇 좌표 사이의 관계(변환 행렬)를 구하는 것. 얼라인 보정량을 로봇 좌표로 바꾸고 멀티뷰 점군을 합치는 데 씁니다(§5.13). 더 읽기: <a href="https://en.wikipedia.org/wiki/Hand_eye_calibration_problem" target="_blank">Hand eye calibration problem (Wikipedia)</a></dd>
+<dt id="g-waypoint">◆웨이포인트 스텝</dt>
+<dd>로봇이 지나갈 촬영 자세마다 스텝을 하나씩 만든 것. 멀티뷰 스캔과 다점 검사에 씁니다(§5.13).</dd>
+<dt id="g-roller">◆롤러 검사 <span class="en">Roller Inspection</span></dt>
+<dd>라인스캔 카메라로 도는 롤러 표면을 연속 검사하는 운전 모드(§4.6).</dd>
+<dt id="g-option">확장 옵션 <span class="en">License Options</span></dt>
+<dd>라이선스에 따로 들어 있어야 보이는 기능 묶음(◆). 본문에서 ◆ 로 표시했습니다(§1.6).</dd>
+<dt id="g-fingerprint">지문 코드 <span class="en">Fingerprint</span></dt>
+<dd>PC 하드웨어로 만든 고유 코드. 라이선스는 이 코드에 묶여 발급됩니다(§2.6 · §13.7).</dd>
+<dt id="g-seat">좌석 <span class="en">Seat</span></dt>
+<dd>서버 라이선스 하나로 동시에 붙을 수 있는 라인 PC 수(§11.4 · §8.24).</dd>
+<dt id="g-security">보안 모드 <span class="en">Development · Production</span></dt>
+<dd>Production 모드는 다른 PC 로 가는 http 주소를 막고 관리자 비밀번호를 요구하는 등 운영용으로 잠급니다(§3.8).</dd>
+<dt id="g-queue">업로드 큐</dt>
+<dd>서버에 닿지 못한 검사 결과를 라인 PC 에 파일로 쌓아 두었다가 연결이 돌아오면 다시 보내는 곳(§8.26).</dd>
+<dt id="g-health">Health Check</dt>
+<dd>카메라 · 디스크 · 라이선스 · 서버 연결 등을 한 번에 점검하는 관리자 도구(§4.11).</dd>
+<dt id="g-support">지원 패키지 <span class="en">Support Package</span></dt>
+<dd>문제 보고용으로 설정 · 로그 · 환경 정보를 묶은 ZIP. 레시피와 사용자 DB 는 넣지 않습니다(§4.11 · §11.7).</dd>
+<dt id="g-audit">감사 로그 <span class="en">Audit Log</span></dt>
+<dd>누가 언제 무엇을 바꿨는지 남는 기록(§4.11).</dd>
+<dt id="g-mlops">◆MLOps</dt>
+<dd>딥러닝 모델을 만들고 · 배포하고 · 지켜보는 별도 서버(9장). 처음 쓰는 분을 위한 설명은 MLOps 매뉴얼 1부에 있습니다.</dd>
+</dl>

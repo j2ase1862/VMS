@@ -1,0 +1,29 @@
+<section id="mlops">
+<h2>9. ◆AI 학습 플랫폼 (BODA.VMS.MLOps)</h2>
+<div class="callout"><strong>◆ 확장 옵션 · 이 장은 요약입니다.</strong> MLOps 의 화면별 사용법과 개념(처음 쓰는 분용)은 별책 「BODA VMS MLOps 사용자 매뉴얼」에 있습니다. 아래 링크는 같은 폴더의 MLOps 매뉴얼 해당 절로 이어집니다. 여기에는 라인 PC(VMS) 쪽에서 알아야 할 것만 남겼습니다.</div>
+<p>MLOps 는 딥러닝 검사 도구가 쓰는 모델(ONNX)을 만들고 라인에 배포하는 웹 서버입니다(기본 포트 5310). 라인 PC 와는 두 방향으로 이어집니다 — 불량 사진을 올리고(수집), 승격된 모델을 받아 갑니다(배포). 설치는 §2.4 입니다.</p>
+<h3 id="mlops-login" data-video="M-01">9.1 로그인과 역할</h3>
+<p>Web 의 아이디 · 비밀번호로 들어오고, MLOps 안의 역할(Viewer · Labeler · Engineer · Admin)은 관리자가 [사용자 역할] 에서 붙입니다. → MLOps 매뉴얼: <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-login">접속과 로그인</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-roles">역할과 권한</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-members">사용자 역할 지정</a></p>
+<h3 id="mlops-nav" data-video="M-02">9.2 메뉴 구조</h3>
+<p>왼쪽 메뉴는 데이터 · 학습 · 배포 세 묶음입니다. 대시보드에 워커 · 모니터링 경고가 뜹니다. → MLOps 매뉴얼: <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-dashboard">화면 구성과 대시보드</a></p>
+<h3 id="mlops-workflow" data-video="M-C2">9.3 전체 흐름 — 수집에서 배포까지</h3>
+<p>수집 → 라벨링 → 판 뜨기 → 학습 → 평가 · 배포 → 모니터링의 한 바퀴. 처음이라면 MLOps 매뉴얼 1부(개념)부터 읽기를 권합니다. → MLOps 매뉴얼: <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#c-loop">MLOps 한 바퀴</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#c-task-types">작업 유형 고르기</a></p>
+<h3 id="mlops-images" data-video="M-05">9.4 수집 사진</h3>
+<p>라인 PC 가 보낸 NG 사진과 양품 샘플이 쌓이는 곳입니다. 라인 PC 쪽 설정은 §3.3(MLOps 주소 · 라인 토큰)과 §4.6(이미지 저장 설정의 NG 이미지 MLOps 전송)입니다. → MLOps 매뉴얼: <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-pool">수집 사진</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-vms-send">라인 PC 가 사진을 보내게 하기</a></p>
+<h3 id="mlops-datasets" data-video="M-03">9.5 데이터셋 · 라벨링</h3>
+<p>작업 유형과 클래스를 정해 데이터셋을 만들고, 사진에 라벨을 붙이고, 검토합니다. → MLOps 매뉴얼: <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-dataset-create">데이터셋 만들기</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-label-basic">라벨링 화면</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-review">검토</a></p>
+<h3 id="mlops-training" data-video="M-20">9.6 학습 작업</h3>
+<p>판 · 모델 계열 · 스크립트 · 사전학습 가중치를 골라 제출하면 GPU 워커가 학습하고, 결과는 후보 버전으로 자동 등록됩니다. → MLOps 매뉴얼: <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-train-submit">학습 제출</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-train-progress">진행 · 곡선 · 재현성</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-train-fail">실패 읽기</a></p>
+<h3 id="mlops-versions" data-video="M-17">9.7 데이터셋 버전</h3>
+<p>학습은 언제나 그 순간을 굳힌 판으로 합니다. VisionSetup 의 OCR 합성 데이터(§5.12)도 판으로 올립니다(§10.1). → MLOps 매뉴얼: <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-version">판 만들기 · 올리기</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-version-contents">무엇이 담기나</a></p>
+<h3 id="mlops-workers" data-video="M-18">9.8 워커 · 사전학습 미러</h3>
+<p>학습을 돌리는 GPU PC(워커)와, 워커가 인터넷 대신 가중치를 받는 미러를 관리합니다. → MLOps 매뉴얼: <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-train-ready">학습 준비</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-workers">워커 등록</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-mirror">사전학습 미러</a></p>
+<h3 id="mlops-models" data-video="M-23">9.9 모델 레지스트리</h3>
+<p>모델 계열 · 버전 · 단계(후보 → 스테이징 → 운영)를 관리하고, 승격 전에 사진에 돌려 봅니다. → MLOps 매뉴얼: <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-model-detail">모델 상세</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-model-try">돌려 보기</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-stage">승격 · 강등 · 폐기</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-upload-onnx">ONNX 올리기</a></p>
+<h3 id="mlops-bindings" data-video="V-5-31">9.10 레시피 바인딩</h3>
+<p>라인 PC 는 레시피에 저장된 <code>model://</code> 참조를 따릅니다. 참조는 VisionSetup 딥러닝 도구의 [레지스트리…](§5.13)에서 넣습니다. MLOps 의 [레시피 바인딩] 화면 기록은 지금 판의 VMS 가 읽지 않습니다. → MLOps 매뉴얼: <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-binding">라인에 모델 걸기</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-binding-screen">[레시피 바인딩] 화면</a></p>
+<h3 id="mlops-lines" data-video="M-28">9.11 라인 PC</h3>
+<p>라인 PC 마다 계정을 만들어 라인 토큰(ln_…)을 받고, 설정 마법사 고급 설정(§3.3)에 넣습니다. → MLOps 매뉴얼: <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-line-pc">라인 PC 계정</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-vms-fetch">모델을 받아 가는 길</a></p>
+<h3 id="mlops-monitoring" data-video="M-29">9.12 라인 모니터링</h3>
+<p>운영 웹의 검사 이력을 모델 버전별로 모아 불량률 · 신뢰도 · 입력 변화를 봅니다. VMS 가 결과에 모델 식별자를 실어 보냅니다. → MLOps 매뉴얼: <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-monitor">신호 읽기</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-retrain">재학습</a></p>
+</section>
