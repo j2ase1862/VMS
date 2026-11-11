@@ -12,13 +12,17 @@
 8. LicGen 관리자 매뉴얼의 옵션 표는 7 개, 화면 체크박스는 5 개.
 9. 유지 관리 화면의 [변경] / [복구] / [제거] 글자는 WiX 기본 한국어 문자열 — 화면 캡처로 확인 필요(리포에 캡처 없음).
 10. 3.5 PLC 단계 그림이 "Step 4 of 6"(로봇 옵션 없이 찍힌 것). 모든 옵션 기준(7 단계)으로 다시 찍으면 좋음.
+11. **웨이포인트 스텝 번호가 기존 스텝과 겹침** — Generate Robot Waypoint Steps 로 만든 스텝 이름이 "3-1 Top · 3-2 Side-1 …" 로, 같은 카메라의 기존 스텝 "3-1 — … · 3-2 — …" 와 번호가 같음(그림 vs_waypoint_steps 참고).
 
-## B. 아직 없는 그림
+## B. 그림
 
-- 5.13 의 MultiView Scan Setup · Hand-Eye Calibration · 레지스트리 모델 고르기 창, 3D 스캔 패널.
-  VisionSetup DEBUG `--capture-dialogs` 에 이 창들을 더해야 찍을 수 있음(제품 코드 변경 → 별도 브랜치에서 할 일).
-- 2.7 유지 관리(복구 · 제거) 화면, 13.7 LicGen 창.
-- 7.11 ~ 7.14 확장 옵션 예제 화면(실장비 필요한 것 포함 — 영상 계획의 H 편).
+- **5.13 확장 옵션 화면 6장은 찍음(11-11)** — VisionSetup DEBUG `--capture-extension`(새로 더한 캡처 모드, Release 빌드에는 없음)으로
+  `mancap` 인스턴스 · GS 3D 레시피 사본(`recipe_GS_3D.json`)에서 화면 밖 렌더. 레지스트리 창은 MLOps 서버에 닿지 않게 가짜 목록(시연용 이름)으로 채움.
+  다시 찍기: `set VMS_CAPTURE_RECIPE=<3D 레시피 사본>` · `VMS_CAPTURE_STEP=0` → `VMS.VisionSetup.exe --instance mancap --capture-extension <폴더>` → 크롭은 `figs/ext/` 참고.
+- **찍지 않은 것 (이유)**
+  - 2.7 MSI 유지 관리(복구 · 제거) 화면 — 기존 방법(`tools/capture-msi-weboption.ps1`)은 실제 MSI 를 띄워 UI Automation 으로 버튼을 누름. 이 PC 는 BODA VMS(운영 Web 포함)가 설치돼 있어 유지 관리 화면에서 잘못 누르면 복구 · 제거가 실행됨 → 설치되지 않은 PC(또는 VM)에서 찍어야 함.
+  - 13.7 LicGen 창 — 발급 대장에 실제 고객 이름 · 지문, 서명 키 이름이 보임. 빈 대장(다른 USERPROFILE)으로 찍을 수는 있으나 LicGen 에 화면 밖 캡처 모드가 없어 실제 창을 띄워야 함 → 담당자 판단 후.
+  - 7.11 ~ 7.14 예제 — 5.13 · 9장 그림으로 갈음. 실촬영(3D · 로봇 · PLC) 장면은 영상 계획의 H 편과 함께.
 
 ## C. 내용 출처
 
