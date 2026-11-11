@@ -346,10 +346,12 @@ namespace VMS.VisionSetup
             bool isToolPanels = TryGetCaptureOutputDir(e.Args, "--capture-toolpanels", out string toolPanelsDir);
             bool isDialogs = TryGetCaptureOutputDir(e.Args, "--capture-dialogs", out string dialogsDir);
             bool isScenes = TryGetCaptureOutputDir(e.Args, "--capture-scenes", out string scenesDir);
-            if (isControls || isFullPage || isToolPanels || isDialogs || isScenes)
+            //  "--capture-extension [폴더]"  : 사내 매뉴얼 확장 옵션 화면(3D 스캔 · 웨이포인트 · 멀티뷰 · 핸드아이 · 레지스트리)
+            bool isExtension = TryGetCaptureOutputDir(e.Args, "--capture-extension", out string extensionDir);
+            if (isControls || isFullPage || isToolPanels || isDialogs || isScenes || isExtension)
             {
                 string dir = isControls ? captureDir : isFullPage ? fullPageDir
-                           : isToolPanels ? toolPanelsDir : isDialogs ? dialogsDir : scenesDir;
+                           : isToolPanels ? toolPanelsDir : isDialogs ? dialogsDir : isScenes ? scenesDir : extensionDir;
                 var dbgLog = Path.Combine(dir, "_capture.log");
                 mainView.Dispatcher.BeginInvoke(
                     System.Windows.Threading.DispatcherPriority.ApplicationIdle,
@@ -365,6 +367,8 @@ namespace VMS.VisionSetup
                                 await Capture.ControlCapturer.RunToolPanelsAsync(mainView, toolPanelsDir);
                             if (isScenes)
                                 await Capture.ControlCapturer.RunScenesAsync(mainView, scenesDir);
+                            if (isExtension)
+                                await Capture.ControlCapturer.RunExtensionAsync(mainView, extensionDir);
                             if (isDialogs)
                             {
                                 // fitScroll=true: 내부 ScrollViewer 콘텐츠에 맞춰 창을 키워 전체 스크롤 담기.
