@@ -35,8 +35,12 @@ namespace VMS.Interfaces
         /// 3D 카메라 점군 (없으면 null). 스텝에 3D 도구가 있으면 이 점군으로 3D 실행 환경을 세운다 —
         /// 엔진이 스텝마다 복제해 쓰므로 호출자가 소유·해제한다.
         /// </param>
+        /// <param name="recordOutcome">
+        /// false 면 판정만 돌려주고 검사 이력(Recent Inspections · 로컬 이력) · 사이클 누적 · Web 결과 업로드를
+        /// 하지 않는다 — 작업자의 수동 [Inspect] 처럼 생산 기록이 아닌 검사용.
+        /// </param>
         Task<StepInspectionResult> ExecuteStepAsync(InspectionStep step, Mat inputImage,
-            VMS.Camera.Models.PointCloudData? pointCloud = null);
+            VMS.Camera.Models.PointCloudData? pointCloud = null, bool recordOutcome = true);
 
         /// <summary>
         /// 현재 레시피를 실행 엔진에 알린다 (레시피 전환 시마다 호출).

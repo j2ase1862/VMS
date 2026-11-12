@@ -812,6 +812,16 @@ namespace VMS.ViewModels
                     "Inspection");
             };
 
+            // 수동 [Inspect] — 처리 시간만 보여 주고 생산 집계 · 불량 이력 · 이미지 저장 · 업로드는 하지 않는다.
+            cam.ManualInspectionCompleted += (cameraName, ok) =>
+            {
+                Dashboard.RecordManualInspection(cam.LastExecutionTimeMs);
+                LogService?.Log(
+                    $"Manual Inspection {(ok ? "OK" : "NG")} - {cameraName} (집계 제외)",
+                    ok ? LogLevel.Success : LogLevel.Warning,
+                    "Inspection");
+            };
+
             cam.PropertyChanged += (s, e) =>
             {
                 if (e.PropertyName == nameof(CameraViewModel.IsConnected))

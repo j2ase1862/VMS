@@ -674,7 +674,7 @@ namespace VMS
                     {
                         var cam = mainViewModel.Cameras.FirstOrDefault(c => c.Id == cameraId);
                         if (cam == null) return false;
-                        await cam.ManualInspectCommand.ExecuteAsync(null);
+                        await cam.InspectForProductionAsync();
                         return cam.InspectionOk;
                     });
                     return await innerTask;

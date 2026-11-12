@@ -177,6 +177,30 @@ namespace VMS.Tests.Services
         }
 
         [Fact]
+        public async Task ExecuteStepAsync_RecordOutcomeFalse_LeavesHistoryUntouched()
+        {
+            // 수동 [Inspect] 는 검사 이력(Recent Inspections · 로컬 이력)에 남기지 않는다
+            VMS.Core.Services.RecentInspectionsService.Instance.Clear();
+            InspectionService.SetCycleAccumulation(false);
+            try
+            {
+                var step = StepWithTools(MakeGrayscaleToolConfig());
+                var img = MakeTestImage();
+
+                var manual = await _service.ExecuteStepAsync(step, img, recordOutcome: false);
+                Assert.True(manual.Success);
+                Assert.Empty(VMS.Core.Services.RecentInspectionsService.Instance.Items);
+
+                await _service.ExecuteStepAsync(step, img);
+                Assert.Single(VMS.Core.Services.RecentInspectionsService.Instance.Items);
+            }
+            finally
+            {
+                VMS.Core.Services.RecentInspectionsService.Instance.Clear();
+            }
+        }
+
+        [Fact]
         public async Task ExecuteStepAsync_DisabledTool_SkipsExecution()
         {
             // IsEnabled=false 도구는 ctx.Tools 에는 있으나 실행 루프에서 continue 로 건너뜀.
