@@ -330,6 +330,7 @@ namespace VMS.Capture
                         break;
                     }
                     case "hlClear": _hl = new(); break;
+                    case "ripple": _clickT = Now(); _clickP = _cur; await Task.Delay(250); break;   // 빈 곳 클릭 연출 (동작 없음)
                     case "tip":
                     {
                         var fe = Find(a.GetProperty("target").GetString()!);
@@ -498,7 +499,10 @@ namespace VMS.Capture
                         var lb = Find("name:LogListBox") as ListBox;
                         if (lb == null || lb.Items.Count == 0) break;
                         if (a.TryGetProperty("move", out var mv) && mv.GetBoolean()) await MoveTo(Center(Bounds(lb)), 600);
+                        lb.UpdateLayout();
                         lb.ScrollIntoView(lb.Items[^1]);
+                        await Settle();
+                        FindAll<ScrollViewer>(lb).FirstOrDefault()?.ScrollToEnd();
                         await Settle();
                         break;
                     }
@@ -683,6 +687,15 @@ namespace VMS.Capture
 
         private FrameworkElement? FindIn(DependencyObject root, string kind, string key, int idx)
         {
+            if (kind == "section")     // 설정 패널 섹션 카드 — 머리글 글자를 감싼 Border
+            {
+                var head = FindAll<TextBlock>(root).FirstOrDefault(t => t.ActualWidth > 0 && IsShown(t) && (t.Text == key || InlineText(t) == key));
+                return head == null ? null : FindAncestor<Border>(head);
+            }
+            if (kind == "ngitem")      // NG History 썸네일 n 번째 (0 = 최신)
+                return ItemContainer(root, _vm.Dashboard.NgImageHistory, int.TryParse(key, out var ni) ? ni : 0, null);
+            if (kind == "recipeitem")  // 설정 패널 레시피 목록의 그 이름 행
+                return ItemContainer(root, _vm.RecipeList, -1, o => o is VMS.VisionSetup.Models.RecipeInfo ri && ri.Name == key);
             if (kind == "row")
                 return FindAll<DataGridRow>(root).FirstOrDefault(r => r.ActualWidth > 0 && IsShown(r) && FindAll<TextBlock>(r).Any(t => t.Text == key));
             IEnumerable<FrameworkElement> all = FindAll<FrameworkElement>(root).Where(e => e.ActualWidth > 0 && IsShown(e));
@@ -699,6 +712,14 @@ namespace VMS.Capture
             if (kind == "text" || kind == "textp")   // 글자 TextBlock 이 버튼 · 탭 안에 있으면 그 컨트롤을 대상으로
                 hits = hits.Select(h => (FrameworkElement)(FindAncestor<ButtonBase>(h) ?? (FrameworkElement?)FindAncestor<TabItem>(h) ?? h)).Distinct().ToList();
             return idx < hits.Count ? hits[idx] : null;
+        }
+
+        private static FrameworkElement? ItemContainer(DependencyObject root, System.Collections.IEnumerable source, int index, Func<object, bool>? match)
+        {
+            var ic = FindAll<ItemsControl>(root).FirstOrDefault(c => ReferenceEquals(c.ItemsSource, source) && c.ActualWidth > 0);
+            if (ic == null) return null;
+            object? item = match != null ? ic.Items.Cast<object>().FirstOrDefault(match) : (index < ic.Items.Count ? ic.Items[index] : null);
+            return item == null ? null : ic.ItemContainerGenerator.ContainerFromItem(item) as FrameworkElement;
         }
 
         private bool IsCommandNamed(ButtonBase b, string name)
