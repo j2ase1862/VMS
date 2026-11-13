@@ -712,6 +712,34 @@ namespace VMS.Capture
                         break;
                     }
                     case "menuClose": _menu = null; _menuHover = -1; break;
+                    case "resizeWin":
+                    {
+                        // 맨 위 창 아래 가장자리를 끌어 높이를 키우는 연출 — 창 Height 를 커서와 함께 늘린다 (사용자가 테두리를 끄는 것과 같은 결과)
+                        var w = OverWindows().LastOrDefault();
+                        if (w == null) { Log("  ⚠ resizeWin 창 없음"); break; }
+                        double h0 = w.ActualHeight, h1 = a.GetProperty("h").GetDouble();
+                        int ms = Ms(a, 900);
+                        var o = OffsetOf(w);
+                        double cx = o.X + ((FrameworkElement)w.Content).ActualWidth / 2;
+                        double top = w.Top - _win.Top;
+                        await MoveTo(new Point(cx, top + h0 - 2), 600);
+                        await Task.Delay(150);
+                        _clickT = Now(); _clickP = _cur;
+                        var sw = Stopwatch.StartNew();
+                        while (sw.ElapsedMilliseconds < ms)
+                        {
+                            double k = sw.ElapsedMilliseconds / (double)ms;
+                            double e = k < .5 ? 2 * k * k : 1 - Math.Pow(-2 * k + 2, 2) / 2;
+                            w.Height = h0 + (h1 - h0) * e;
+                            _cur = new Point(cx, top + w.Height - 2);
+                            await Task.Delay(15);
+                        }
+                        w.Height = h1;
+                        _cur = new Point(cx, top + h1 - 2);
+                        await Settle();
+                        Log($"  resizeWin: {w.GetType().Name} {h0:F0} → {h1:F0}");
+                        break;
+                    }
                     case "fileDialog":
                     {
                         // 다음 파일 저장 · 열기 대화상자 대신 돌려줄 경로 — MainViewModel 의 IDialogService 를 녹화용 래퍼로 감싼다
