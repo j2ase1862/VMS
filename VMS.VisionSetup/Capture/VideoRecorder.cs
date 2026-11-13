@@ -53,6 +53,8 @@ namespace VMS.VisionSetup.Capture
         private DispatcherTimer? _timer;
         private int _frameNo;
         private bool _busy;
+        private string? _segId;
+        private double _segT0;
 
         // 덧그림 상태
         private Point _cur = new(1100, 620);
@@ -508,6 +510,7 @@ namespace VMS.VisionSetup.Capture
                     {
                         string id = a.GetProperty("id").GetString()!;
                         double t0 = Now();
+                        _segId = id; _segT0 = t0;
                         _marks.Add((id, t0));
                         Log($"[{id}] start");
                         if (a.TryGetProperty("do", out var list))
@@ -518,6 +521,16 @@ namespace VMS.VisionSetup.Capture
                         break;
                     }
                     case "wait": await Task.Delay(TimeSpan.FromSeconds(a.GetProperty("s").GetDouble())); break;
+                    case "at":
+                    {
+                        // 이 구간 내레이션의 f 지점(0~1)까지 기다린다 — 자막 문장과 화면 동작을 맞추는 용도. 이미 지났으면 바로 진행
+                        if (_segId != null && _durs.TryGetValue(_segId, out var sd))
+                        {
+                            double left = _segT0 + a.GetProperty("f").GetDouble() * sd - Now();
+                            if (left > 0) await Task.Delay(TimeSpan.FromSeconds(left));
+                        }
+                        break;
+                    }
                     case "move": await MoveTo(ResolvePoint(a), Ms(a, 700)); break;
                     case "click": await ClickAsync(a); break;
                     case "hl":
@@ -1021,7 +1034,7 @@ namespace VMS.VisionSetup.Capture
                 }
             }
             catch (Exception ex) { Log($"op {op} 실패: {ex}"); }
-            if (op != "seg" && op != "wait" && op != "move" && op != "hl" && op != "hlClear" && op != "tip" && op != "tipClear" && op != "ripple" && op != "menuClose")
+            if (op != "seg" && op != "wait" && op != "at" && op != "move" && op != "hl" && op != "hlClear" && op != "tip" && op != "tipClear" && op != "ripple" && op != "menuClose")
                 Log($"  {op}: {_vm.StatusMessage}");
         }
 
@@ -1143,7 +1156,14 @@ namespace VMS.VisionSetup.Capture
             if (a.TryGetProperty("target", out var t))
             {
                 var fe = Find(t.GetString()!);
-                if (fe != null) { var r = Bounds(fe); return new Point(r.X + r.Width / 2, r.Y + r.Height / 2); }
+                if (fe != null)
+                {
+                    // ax: 0 = 왼쪽 끝 · 0.5 = 가운데(기본) · 1 = 오른쪽 끝, dx · dy: 더 옮길 화소 — 값 글자를 커서가 가리지 않게
+                    var r = Bounds(fe);
+                    double ax = a.TryGetProperty("ax", out var axe) ? axe.GetDouble() : 0.5;
+                    double dx = a.TryGetProperty("dx", out var dxe) ? dxe.GetDouble() : 0, dy = a.TryGetProperty("dy", out var dye) ? dye.GetDouble() : 0;
+                    return new Point(r.X + r.Width * ax + dx, r.Y + r.Height / 2 + dy);
+                }
             }
             if (a.TryGetProperty("img", out var im)) return ImagePoint(im[0].GetDouble(), im[1].GetDouble());
             if (a.TryGetProperty("rect", out var rr))
