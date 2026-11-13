@@ -67,6 +67,8 @@ namespace VMS.Capture
         private int _menuHover = -1;
         // 파일 열기 · 저장 대화상자 대신 쓸 경로 (OS 대화상자는 화면 밖 녹화에 담기지 않는다)
         private RecordingDialogService? _dlg;
+        // 마지막 saveAs 로 만든 파일 — set 의 문자열 값 "$lastSaveAs" 로 받아 쓴다 (방금 만든 백업 ZIP 을 복원 파일로 고르는 장면)
+        private string? _lastSaveAs;
 
         private VideoRecorder(Window win, MainViewModel vm, string outDir, Dictionary<string, double> durs)
         {
@@ -769,6 +771,7 @@ namespace VMS.Capture
                         if (dc is BackupRestoreViewModel b)
                         {
                             var p = Path.Combine(dir, b.BackupFileName);
+                            _lastSaveAs = p;
                             var r = VMS.Core.Backup.BackupRestoreService.CreateBackup(root, p,
                                 new VMS.Core.Backup.BackupOptions { IncludeAudit = b.IncludeAudit, ProductVersion = b.ProductVersion });
                             if (r.Success)
@@ -782,6 +785,7 @@ namespace VMS.Capture
                         else if (dc is SupportPackageViewModel s)
                         {
                             var p = Path.Combine(dir, s.DefaultFileName);
+                            _lastSaveAs = p;
                             var r = VMS.Core.SupportPackage.SupportPackageService.Export(root, p, new VMS.Core.SupportPackage.SupportPackageOptions
                             {
                                 AuditDays = s.AuditDays, IncludeEnvironment = s.IncludeEnvironment, IncludeBackupIndex = s.IncludeBackupIndex,
@@ -953,7 +957,7 @@ namespace VMS.Capture
                 var t when t == typeof(bool) => v.GetBoolean(),
                 var t when t == typeof(int) => v.GetInt32(),
                 var t when t == typeof(double) => v.GetDouble(),
-                var t when t == typeof(string) => v.GetString(),
+                var t when t == typeof(string) => v.GetString() == "$lastSaveAs" ? _lastSaveAs : v.GetString(),
                 var t when t == typeof(DateTime) || t == typeof(DateTime?) => DateTime.Parse(v.GetString()!, CultureInfo.InvariantCulture),
                 var t when t.IsEnum => Enum.Parse(t, v.GetString()!),
                 _ => null,
