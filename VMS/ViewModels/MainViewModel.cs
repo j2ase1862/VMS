@@ -207,6 +207,8 @@ namespace VMS.ViewModels
         public bool CanManageUsers => _userService?.HasPermission(UserPermission.ManageUsers) ?? false;
         public bool CanLaunchVisionSetup => _userService?.HasPermission(UserPermission.LaunchVisionSetup) ?? true;
         public bool CanLaunchAppSetup => _userService?.HasPermission(UserPermission.LaunchAppSetup) ?? true;
+        /// <summary>카메라 조작 상자의 노출/게인 변경 · [Save Parameter] — 권한 표 CameraSettings.</summary>
+        public bool CanEditCameraSettings => _userService?.HasPermission(UserPermission.CameraSettings) ?? true;
         public bool HasConnectedCamera => Cameras.Any(c => c.IsConnected);
         /// <summary>
         /// 검사 시작/정지 권한. **시스템 사용자가 로그인하지 않았으면 허용**하고, 로그인한
@@ -643,6 +645,10 @@ namespace VMS.ViewModels
             // VMS 시스템 사용자 변경 시 Role-게이트 properties 도 재평가 (Admin 우회 통과 반영)
             OnPropertyChanged(nameof(CanLeadOrAbove));
             OnPropertyChanged(nameof(CanSupervisor));
+
+            bool canEditCameraSettings = CanEditCameraSettings;
+            foreach (var cam in Cameras)
+                cam.CanEditCameraSettings = canEditCameraSettings;
         }
 
         /// <summary>
@@ -768,6 +774,8 @@ namespace VMS.ViewModels
 
         private void WireCameraEvents(CameraViewModel cam)
         {
+            cam.CanEditCameraSettings = CanEditCameraSettings;
+
             // 프레임에 카메라 식별자를 함께 실어 보낸다 — VisionSetup 이 "요청한 카메라의
             // 프레임인지" 대조할 수 있어야 한다 (다른 카메라 Grab·라이브가 끼어드는 경우).
             cam.FrameAcquired += result => _sharedFrameWriter?.WriteFrame(result, cam.Id);
