@@ -110,6 +110,7 @@
                                       Margin="0,0,18,0"/>
                             <CheckBox Content="감사 로그도 복원 (Restore Audit)"
                                       IsChecked="{Binding RestoreAudit}"
+                                      ToolTip="이 PC 에 없는 날짜의 감사 로그만 되살립니다. 이미 있는 날짜의 감사 로그는 덮어쓰지 않습니다."
                                       Style="{StaticResource WindowDarkCheckBox}"/>
                         </StackPanel>
 
