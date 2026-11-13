@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -60,6 +61,12 @@ namespace VMS.Capture
         private double _hlT0;
         private string? _tipText;
         private Rect _tipAnchor;
+        // 드롭다운 메뉴(ContextMenu) — 화면 밖 창의 팝업은 그려지지 않으므로 항목 글자를 직접 그린다
+        private ContextMenu? _menu;
+        private Rect _menuAnchor;
+        private int _menuHover = -1;
+        // 파일 열기 · 저장 대화상자 대신 쓸 경로 (OS 대화상자는 화면 밖 녹화에 담기지 않는다)
+        private RecordingDialogService? _dlg;
 
         private VideoRecorder(Window win, MainViewModel vm, string outDir, Dictionary<string, double> durs)
         {
@@ -160,21 +167,50 @@ namespace VMS.Capture
                 rtb.Render(Root);
                 foreach (var w in OverWindows())
                 {
-                    var content = (FrameworkElement)w.Content;
-                    var o = OffsetOf(w);
+                    // 창 클라이언트 영역 = 창 템플릿 루트(여백 없음). 콘텐츠 자체는 Margin 이 있을 수 있어
+                    // VisualBrush 원점이 어긋나므로 템플릿 루트를 그린다
+                    var content = VisualTreeHelper.GetChildrenCount(w) > 0 && VisualTreeHelper.GetChild(w, 0) is FrameworkElement tr
+                        ? tr : (FrameworkElement)w.Content;
+                    Point o;
+                    try { o = Root.PointFromScreen(content.PointToScreen(new Point(0, 0))); }
+                    catch { o = OffsetOf(w); }
                     var r = new Rect(o.X, o.Y, content.ActualWidth, content.ActualHeight);
                     var dv = new DrawingVisual();
                     using (var dc = dv.RenderOpen())
                     {
-                        // 창 그림자 — 화면 밖 창은 OS 그림자가 없어 경계가 묻힌다
-                        for (int i = 1; i <= 4; i++)
+                        // OS 제목 표시줄이 있는 창(WindowStyle 기본)은 RenderTargetBitmap 에 비클라이언트 영역이 안 담기므로
+                        // Windows 밝은 테마 기본 모양(흰 바탕 · 검은 제목 · 최소화/최대화/닫기)으로 그린다
+                        bool chrome = w.WindowStyle != WindowStyle.None;
+                        var full = chrome ? new Rect(r.X, r.Y - 31, r.Width, r.Height + 31) : r;
+                        // 창 그림자 — 화면 밖 창은 OS 그림자가 없어 경계가 묻힌다 (투명 창은 자체 그림자가 있다)
+                        for (int i = 1; i <= (w.AllowsTransparency ? 0 : 4); i++)
                         {
-                            var sr = r; sr.Inflate(i * 3, i * 3); sr.Offset(0, i * 2);
+                            var sr = full; sr.Inflate(i * 3, i * 3); sr.Offset(0, i * 2);
                             dc.DrawRoundedRectangle(new SolidColorBrush(Color.FromArgb((byte)(34 - i * 6), 0, 0, 0)), null, sr, 6 + i * 3, 6 + i * 3);
                         }
+                        if (chrome)
+                        {
+                            var bar = new Rect(r.X, r.Y - 31, r.Width, 31);
+                            dc.DrawRectangle(Brushes.White, null, bar);
+                            var tt = new FormattedText(w.Title ?? "", CultureInfo.GetCultureInfo("ko-KR"), FlowDirection.LeftToRight,
+                                new Typeface("Segoe UI"), 12, Brushes.Black, 1.0);
+                            dc.DrawText(tt, new Point(bar.X + 12, bar.Y + (31 - tt.Height) / 2));
+                            var mdl = new Typeface(new FontFamily("Segoe MDL2 Assets"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+                            string[] caps = w.ResizeMode == ResizeMode.NoResize ? new[] { "" } : new[] { "", "", "" };
+                            for (int ci = 0; ci < caps.Length; ci++)
+                            {
+                                var gt = new FormattedText(caps[ci], CultureInfo.InvariantCulture, FlowDirection.LeftToRight, mdl, 10, Brushes.Black, 1.0);
+                                double cx = bar.Right - 46 * (caps.Length - ci) + (46 - gt.Width) / 2;
+                                dc.DrawText(gt, new Point(cx, bar.Y + (31 - gt.Height) / 2));
+                            }
+                        }
                         dc.DrawRectangle(w.Background ?? Brushes.Black, null, r);
-                        dc.DrawRectangle(new VisualBrush(content) { Stretch = Stretch.None, AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Top },
-                            null, r);
+                        // Viewbox 를 콘텐츠 배치 사각형으로 고정 — 그림자 효과가 여백 밖으로 번지는 창(메시지 창)도 좌표가 어긋나지 않게
+                        dc.DrawRectangle(new VisualBrush(content)
+                        {
+                            Stretch = Stretch.Fill, ViewboxUnits = BrushMappingMode.Absolute,
+                            Viewbox = new Rect(0, 0, content.ActualWidth, content.ActualHeight),
+                        }, null, r);
                     }
                     rtb.Render(dv);
                 }
@@ -212,6 +248,7 @@ namespace VMS.Capture
                 dc.DrawRoundedRectangle(null, new Pen(new SolidColorBrush(Color.FromArgb((byte)(90 * a), 0xFF, 0x6B, 0x1A)), 12), r, 14, 14);
                 dc.DrawRoundedRectangle(null, new Pen(new SolidColorBrush(Color.FromArgb((byte)(255 * a), 0xFF, 0x6B, 0x1A)), 4), r, 14, 14);
             }
+            if (_menu != null) DrawMenu(dc);
             // 툴팁 — 화면 밖 창의 툴팁 팝업은 그려지지 않으므로 요소의 ToolTip 글자를 직접 그린다
             if (_tipText != null)
             {
@@ -241,6 +278,59 @@ namespace VMS.Capture
             g.Transform = new TransformGroup { Children = { new ScaleTransform(1.25, 1.25), new TranslateTransform(_cur.X - 5, _cur.Y - 3.5) } };
             dc.DrawGeometry(new SolidColorBrush(Color.FromArgb(70, 0, 0, 0)), null, Shift(g, 1.5, 2));
             dc.DrawGeometry(new SolidColorBrush(Color.FromRgb(0x11, 0x11, 0x11)), new Pen(Brushes.White, 2) { LineJoin = PenLineJoin.Round }, g);
+        }
+
+        // ───────────────────────── 드롭다운 메뉴 ─────────────────────────
+
+        private const double MenuItemH = 34, MenuSepH = 9, MenuW = 250;
+
+        /// <summary>메뉴 항목 사각형 (메뉴가 열린 자리 기준, 구분선 포함 순서 그대로).</summary>
+        private List<(object Item, Rect R)> MenuLayout()
+        {
+            var list = new List<(object, Rect)>();
+            if (_menu == null) return list;
+            double x = Math.Clamp(_menuAnchor.Right - MenuW, 8, W - MenuW - 8), y = _menuAnchor.Bottom + 2 + 4;
+            foreach (var it in _menu.Items)
+            {
+                double h = it is Separator ? MenuSepH : MenuItemH;
+                list.Add((it, new Rect(x + 4, y, MenuW - 8, h)));
+                y += h;
+            }
+            return list;
+        }
+
+        private void DrawMenu(DrawingContext dc)
+        {
+            var lay = MenuLayout();
+            if (lay.Count == 0) return;
+            var box = new Rect(lay[0].R.X - 4, lay[0].R.Y - 4, MenuW, lay[^1].R.Bottom - lay[0].R.Y + 8);
+            var sh = box; sh.Offset(0, 4);
+            dc.DrawRoundedRectangle(new SolidColorBrush(Color.FromArgb(80, 0, 0, 0)), null, sh, 4, 4);
+            dc.DrawRectangle(_menu!.Background ?? new SolidColorBrush(Color.FromRgb(0x2A, 0x2F, 0x3A)),
+                new Pen(_menu.BorderBrush ?? Brushes.Gray, 1), box);
+            var fg = _menu.Foreground ?? Brushes.White;
+            for (int i = 0; i < lay.Count; i++)
+            {
+                var (it, r) = lay[i];
+                if (it is Separator)
+                {
+                    dc.DrawRectangle(_menu.BorderBrush ?? Brushes.Gray, null, new Rect(r.X + 6, r.Y + r.Height / 2, r.Width - 12, 1));
+                    continue;
+                }
+                if (it is not MenuItem mi) continue;
+                if (i == _menuHover)
+                    dc.DrawRoundedRectangle(new SolidColorBrush(Color.FromArgb(48, 0xFF, 0xFF, 0xFF)), null, r, 3, 3);
+                if (mi.Icon is TextBlock ic)
+                {
+                    var g = new FormattedText(ic.Text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
+                        new Typeface(ic.FontFamily, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal), ic.FontSize,
+                        ic.Foreground ?? fg, 1.0);
+                    dc.DrawText(g, new Point(r.X + 12, r.Y + (r.Height - g.Height) / 2));
+                }
+                var t = new FormattedText(mi.Header?.ToString() ?? "", CultureInfo.GetCultureInfo("ko-KR"), FlowDirection.LeftToRight,
+                    new Typeface("Segoe UI"), 13, fg, 1.0);
+                dc.DrawText(t, new Point(r.X + 42, r.Y + (r.Height - t.Height) / 2));
+            }
         }
 
         private static Geometry Shift(Geometry g, double dx, double dy)
@@ -342,10 +432,37 @@ namespace VMS.Capture
                         break;
                     }
                     case "tipClear": _tipText = null; break;
+                    case "seedUser":
+                    {
+                        // 녹화 인스턴스 사용자 DB 에 계정 만들기 (준비 단계용) — admin 은 설정 마법사와 같은 SeedInitialAdmin
+                        var us = typeof(MainViewModel).GetField("_userService", BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(_vm);
+                        string user = a.GetProperty("user").GetString()!, pw = a.GetProperty("password").GetString()!;
+                        string name = a.TryGetProperty("name", out var nm) ? nm.GetString()! : user;
+                        object? ok;
+                        if (string.Equals(user, "admin", StringComparison.OrdinalIgnoreCase))
+                            ok = us?.GetType().GetMethod("SeedInitialAdmin")?.Invoke(us, new object[] { pw, name });
+                        else
+                            ok = us?.GetType().GetMethod("CreateUser")?.Invoke(us, new object[] { user, pw, name,
+                                Enum.Parse<Models.UserGrade>(a.TryGetProperty("grade", out var g2) ? g2.GetString()! : "Operator") });
+                        Log($"  seedUser {user}: {ok}");
+                        break;
+                    }
                     case "login":
                     {
                         // 시스템 사용자 로그인 상태 주입 (로그인 창은 화면 가운데에 뜨므로 쓰지 않는다)
+                        //   password 가 있으면 사용자 DB 로 실제 인증(감사 로그에도 남음), 없으면 admin 상태만 주입
                         var us = typeof(MainViewModel).GetField("_userService", BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(_vm);
+                        if (a.TryGetProperty("password", out var lpw))
+                        {
+                            var ok = us?.GetType().GetMethod("Authenticate")?.Invoke(us, new object[] { a.GetProperty("user").GetString()!, lpw.GetString()! });
+                            typeof(MainViewModel).GetMethod("UpdateUserDisplay", BindingFlags.NonPublic | BindingFlags.Instance)?.Invoke(_vm, null);
+                            if (ok is true)
+                                _vm.LogService?.Log($"User logged in: {(us?.GetType().GetProperty("CurrentUser")?.GetValue(us) as Models.User)?.DisplayName}",
+                                    Interfaces.LogLevel.Success, "Auth");
+                            Log($"  login(실제 인증) {a.GetProperty("user").GetString()}: {ok} → {_vm.CurrentUserDisplay}");
+                            await Settle();
+                            break;
+                        }
                         var grade = Enum.Parse<Models.UserGrade>(a.TryGetProperty("grade", out var gr) ? gr.GetString()! : "Admin");
                         var user = new Models.User
                         {
@@ -493,9 +610,20 @@ namespace VMS.Capture
                         // 글자 칸에 한 글자씩 입력 연출 — TextBox.Text 를 바꾸고 바인딩을 원본으로 밀어 넣는다
                         var fe = Find(a.GetProperty("target").GetString()!);
                         await ClickVisual(fe, Ms(a, 700));
-                        if (fe is not TextBox tb) { Log("  글자 칸 아님: " + a.GetProperty("target").GetString()); break; }
                         string text = a.GetProperty("text").GetString()!;
                         int per = a.TryGetProperty("perChar", out var pc) ? pc.GetInt32() : 45;
+                        if (fe is PasswordBox pb)
+                        {
+                            // 암호 칸 — 점으로 한 글자씩. 로그인 창은 마우스를 뗄 때 암호를 VM 에 옮기므로(LoginWindow.OnPreviewMouseLeftButtonUp)
+                            // VM 에 Password 속성이 있으면 같은 값을 넣어 둔다. 사용자 관리 창은 버튼 Click 처리기가 옮긴다(click onclick).
+                            pb.Password = "";
+                            for (int i = 1; i <= text.Length; i++) { pb.Password = text[..i]; await Task.Delay(per); }
+                            var pp = pb.DataContext?.GetType().GetProperty("Password");
+                            if (pp != null && pp.CanWrite && pp.PropertyType == typeof(string)) pp.SetValue(pb.DataContext, text);
+                            await Settle();
+                            break;
+                        }
+                        if (fe is not TextBox tb) { Log("  글자 칸 아님: " + a.GetProperty("target").GetString()); break; }
                         tb.Text = "";
                         for (int i = 1; i <= text.Length; i++)
                         {
@@ -549,6 +677,97 @@ namespace VMS.Capture
                             .Any(p => p.GetIndexParameters().Length == 0 && p.PropertyType == typeof(string) && (p.GetValue(o) as string) == want));
                         if (grid == null || item == null) { Log("  gridShow 대상 없음: " + want); break; }
                         grid.ScrollIntoView(item);
+                        await Settle();
+                        break;
+                    }
+                    case "menu":
+                    {
+                        // 버튼의 드롭다운 메뉴(ContextMenu)를 그려 보이고 항목을 고른다 — 항목 명령은 디스패처로 넘겨 모달 창이 떠도 막히지 않게
+                        var btn = Find(a.GetProperty("target").GetString()!);
+                        if (btn?.ContextMenu == null) { Log("  메뉴 없음: " + a.GetProperty("target").GetString()); break; }
+                        await ClickVisual(btn, Ms(a, 700));
+                        _menu = btn.ContextMenu; _menuAnchor = Bounds(btn); _menuHover = -1;
+                        await Task.Delay(a.TryGetProperty("show", out var shw) ? (int)(shw.GetDouble() * 1000) : 700);
+                        if (!a.TryGetProperty("pick", out var pk)) break;   // 펼쳐 보이기만 (다음 menuClose 까지)
+                        var lay = MenuLayout();
+                        int idx = lay.FindIndex(l => l.Item is MenuItem m && m.Header?.ToString() == pk.GetString());
+                        if (idx < 0) { Log("  메뉴 항목 없음: " + pk.GetString()); _menu = null; break; }
+                        var r = lay[idx].R;
+                        await MoveTo(new Point(r.X + 70, r.Y + r.Height / 2), 600);
+                        _menuHover = idx;
+                        await Task.Delay(450);
+                        _clickT = Now(); _clickP = _cur;
+                        await Task.Delay(220);
+                        _menu = null; _menuHover = -1;
+                        var mi = (MenuItem)lay[idx].Item;
+                        var cmd = mi.Command;
+                        if (cmd == null && BindingOperations.GetBinding(mi, MenuItem.CommandProperty) is { } bd)   // 열린 적 없는 메뉴는 DataContext 가 없다
+                            cmd = _vm.GetType().GetProperty(bd.Path.Path)?.GetValue(_vm) as ICommand;
+                        if (cmd == null || !cmd.CanExecute(mi.CommandParameter)) { Log("  메뉴 명령 실행 불가: " + pk.GetString()); break; }
+                        var prm = mi.CommandParameter;
+                        _ = _win.Dispatcher.BeginInvoke(() => cmd.Execute(prm));
+                        await Settle();
+                        await Task.Delay(200);
+                        await Settle();
+                        break;
+                    }
+                    case "menuClose": _menu = null; _menuHover = -1; break;
+                    case "fileDialog":
+                    {
+                        // 다음 파일 저장 · 열기 대화상자 대신 돌려줄 경로 — MainViewModel 의 IDialogService 를 녹화용 래퍼로 감싼다
+                        if (_dlg == null)
+                        {
+                            var f = typeof(MainViewModel).GetField("_dialogService", BindingFlags.NonPublic | BindingFlags.Instance);
+                            if (f?.GetValue(_vm) is Interfaces.IDialogService inner)
+                            {
+                                _dlg = new RecordingDialogService(inner, Log);
+                                f.SetValue(_vm, _dlg);
+                            }
+                            else { Log("  ⚠ 대화상자 서비스 없음"); break; }
+                        }
+                        if (a.TryGetProperty("save", out var sv)) _dlg.Saves.Enqueue(sv.GetString()!);
+                        if (a.TryGetProperty("open", out var opn)) _dlg.Opens.Enqueue(opn.GetString()!);
+                        break;
+                    }
+                    case "saveAs":
+                    {
+                        // 맨 위 창의 [Run Backup...] · [Run Export...] — VM 이 직접 띄우는 OS 저장 대화상자 대신 경로를 주고
+                        // 같은 서비스 호출 · 같은 결과 표시를 한다 (BackupRestoreViewModel.RunBackup · SupportPackageViewModel.RunExport 와 동일)
+                        var dc = OverWindows().LastOrDefault()?.DataContext;
+                        if (a.TryGetProperty("target", out var tg)) await ClickVisual(Find(tg.GetString()!), Ms(a, 700));
+                        string dir = a.GetProperty("dir").GetString()!;
+                        Directory.CreateDirectory(dir);
+                        var root = VMS.Camera.Configuration.AppDataPaths.Root;
+                        if (dc is BackupRestoreViewModel b)
+                        {
+                            var p = Path.Combine(dir, b.BackupFileName);
+                            var r = VMS.Core.Backup.BackupRestoreService.CreateBackup(root, p,
+                                new VMS.Core.Backup.BackupOptions { IncludeAudit = b.IncludeAudit, ProductVersion = b.ProductVersion });
+                            if (r.Success)
+                            {
+                                b.BackupStatus = "Success"; b.BackupStatusColor = "#10B981";
+                                b.LastBackupSummary = $"{r.FileCount} 파일 · {r.BytesWritten / 1024.0:F1} KB → {r.ZipPath}";
+                            }
+                            else { b.BackupStatus = "Failed"; b.BackupStatusColor = "#EF4444"; b.LastBackupSummary = r.ErrorMessage ?? "(원인 불명)"; }
+                            Log($"  saveAs(백업, 대화상자 대신 경로 주입) {p}: {b.BackupStatus} {b.LastBackupSummary}");
+                        }
+                        else if (dc is SupportPackageViewModel s)
+                        {
+                            var p = Path.Combine(dir, s.DefaultFileName);
+                            var r = VMS.Core.SupportPackage.SupportPackageService.Export(root, p, new VMS.Core.SupportPackage.SupportPackageOptions
+                            {
+                                AuditDays = s.AuditDays, IncludeEnvironment = s.IncludeEnvironment, IncludeBackupIndex = s.IncludeBackupIndex,
+                                IncludeMachineName = s.IncludeMachineName, ProductVersion = s.ProductVersion,
+                            });
+                            if (r.Success)
+                            {
+                                s.Status = "Success"; s.StatusColor = "#10B981";
+                                s.SummaryLine = $"{r.FileCount} 항목 · {r.BytesWritten / 1024.0:F1} KB → {r.ZipPath}";
+                            }
+                            else { s.Status = "Failed"; s.StatusColor = "#EF4444"; s.SummaryLine = r.ErrorMessage ?? "(원인 불명)"; }
+                            Log($"  saveAs(지원 패키지, 대화상자 대신 경로 주입) {p}: {s.Status} {s.SummaryLine}");
+                        }
+                        else Log("  ⚠ saveAs 대상 창 아님: " + dc?.GetType().Name);
                         await Settle();
                         break;
                     }
@@ -638,9 +857,24 @@ namespace VMS.Capture
             var fe = Find(a.GetProperty("target").GetString()!);
             await ClickVisual(fe, Ms(a, 700));
             if (fe == null || (a.TryGetProperty("invoke", out var inv) && !inv.GetBoolean())) return;
+            bool defer = a.TryGetProperty("defer", out var df) && df.GetBoolean();
+            if (a.TryGetProperty("onclick", out var oc) && oc.GetBoolean() && fe is ButtonBase ob)
+            {
+                // 버튼 누름 그대로 — Click 처리기와 Command 를 함께 (ButtonBase.OnClick). 비활성이면 누르지 않는다.
+                if (!ob.IsEnabled) Log("  버튼 비활성: " + a.GetProperty("target").GetString());
+                else
+                {
+                    var m = typeof(ButtonBase).GetMethod("OnClick", BindingFlags.NonPublic | BindingFlags.Instance)!;
+                    _ = _win.Dispatcher.BeginInvoke(() => m.Invoke(ob, null));
+                }
+                await Settle(); await Task.Delay(120); await Settle();
+                return;
+            }
             switch (fe)
             {
                 case TabItem ti: ti.IsSelected = true; break;
+                case ToggleButton tb when tb.Command == null && defer:   // 켜면 모달(로그인 창)이 뜨는 토글
+                    _ = _win.Dispatcher.BeginInvoke(() => tb.IsChecked = !(tb.IsChecked ?? false)); break;
                 case ToggleButton tb when tb.Command == null: tb.IsChecked = !(tb.IsChecked ?? false); break;
                 case ButtonBase b:
                     if (b.Command != null)
@@ -863,7 +1097,7 @@ namespace VMS.Capture
                     string? label = e switch
                     {
                         TextBlock tb => "text=" + (string.IsNullOrEmpty(tb.Text) ? InlineText(tb) : tb.Text),
-                        ButtonBase b => $"button cmd={(b.Command != null)} auto={System.Windows.Automation.AutomationProperties.GetName(b)} tip={ToolTipText(b)}",
+                        ButtonBase b => $"button cmd={(b.Command != null)}{(b.IsEnabled ? "" : " 비활성")} auto={System.Windows.Automation.AutomationProperties.GetName(b)} tip={ToolTipText(b)}",
                         TextBox tbx => $"textbox={tbx.Text} tip={ToolTipText(tbx)}",
                         ComboBox cbx => $"combo={cbx.SelectedItem} n={cbx.Items.Count}",
                         _ when !string.IsNullOrEmpty(e.Name) => "name=" + e.Name,
@@ -873,6 +1107,42 @@ namespace VMS.Capture
                     var r = Bounds(e);
                     Log($"  dump {e.GetType().Name} [{r.X:F0},{r.Y:F0},{r.Width:F0},{r.Height:F0}] {label.Replace('\n', ' ')}");
                 }
+        }
+
+        /// <summary>
+        /// 녹화용 대화상자 서비스 — 메시지 창 · 로그인 창은 원래 서비스 그대로, 파일 저장 · 열기는 시나리오가 준 경로를 돌려준다
+        /// (OS 파일 대화상자는 실제 화면에 떠서 녹화에 담기지 않는다). 준 경로가 없으면 대화상자를 띄우지 않고 취소로 처리한다.
+        /// </summary>
+        private sealed class RecordingDialogService : Interfaces.IDialogService
+        {
+            private readonly Interfaces.IDialogService _inner;
+            private readonly Action<string> _log;
+            public readonly Queue<string> Saves = new(), Opens = new();
+            public RecordingDialogService(Interfaces.IDialogService inner, Action<string> log) { _inner = inner; _log = log; }
+            public void ShowInformation(string message, string title) => _inner.ShowInformation(message, title);
+            public void ShowWarning(string message, string title) => _inner.ShowWarning(message, title);
+            public void ShowError(string message, string title) => _inner.ShowError(message, title);
+            public bool ShowConfirmation(string message, string title) => _inner.ShowConfirmation(message, title);
+            public bool ShowLoginDialog(Interfaces.IUserService userService) => _inner.ShowLoginDialog(userService);
+            public string? ShowSaveFileDialog(string filter, string defaultExt, string? fileName = null)
+            {
+                if (Saves.Count == 0) { _log("  ⚠ 저장 대화상자 경로 없음 — 취소로 처리"); return null; }
+                var p = Saves.Dequeue();
+                if (fileName != null && (Directory.Exists(p) || Path.GetExtension(p).Length == 0))   // 폴더만 주면 제품이 제안한 파일 이름
+                {
+                    Directory.CreateDirectory(p);
+                    p = Path.Combine(p, fileName);
+                }
+                _log($"  저장 대화상자 대신 경로 주입: {p} (제안 이름 {fileName})");
+                return p;
+            }
+            public string? ShowOpenFileDialog(string filter, string defaultExt)
+            {
+                if (Opens.Count == 0) { _log("  ⚠ 열기 대화상자 경로 없음 — 취소로 처리"); return null; }
+                var p = Opens.Dequeue();
+                _log("  열기 대화상자 대신 경로 주입: " + p);
+                return p;
+            }
         }
 
         /// <summary>녹화 전용 취득기 — 카메라 대신 이미지 파일을 차례로 내준다 (AUTO RUN 시연).</summary>
