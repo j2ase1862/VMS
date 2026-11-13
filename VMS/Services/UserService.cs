@@ -544,10 +544,14 @@ namespace VMS.Services
 
         public bool UpdateUser(int userId, string displayName, UserGrade grade)
         {
+            string target = $"UserId={userId}";
             try
             {
                 using var conn = new SqliteConnection(_connectionString);
                 conn.Open();
+
+                var before = FindUserSummary(conn, userId);
+                if (before != null) target = before.Value.Username;
 
                 using var cmd = conn.CreateCommand();
                 cmd.CommandText = @"
@@ -556,29 +560,60 @@ namespace VMS.Services
                 cmd.Parameters.AddWithValue("@display", displayName);
                 cmd.Parameters.AddWithValue("@grade", (int)grade);
                 cmd.Parameters.AddWithValue("@id", userId);
-                return cmd.ExecuteNonQuery() > 0;
+                bool updated = cmd.ExecuteNonQuery() > 0;
+
+                var change = before == null
+                    ? $"Grade={grade}"
+                    : $"Grade={before.Value.Grade}→{grade}" +
+                      (before.Value.DisplayName != displayName ? ", DisplayName 변경" : string.Empty);
+                AuditLogger.Instance.Log(
+                    AuditCategory.UserManagement, "UpdateUser",
+                    updated ? AuditOutcome.Success : AuditOutcome.Failure,
+                    userName: CurrentUser?.Username, source: nameof(UserService),
+                    details: updated ? $"Target='{target}', {change}" : $"Target='{target}', 대상 없음");
+                return updated;
             }
-            catch
+            catch (Exception ex)
             {
+                AuditLogger.Instance.Log(
+                    AuditCategory.UserManagement, "UpdateUser", AuditOutcome.Failure,
+                    userName: CurrentUser?.Username, source: nameof(UserService),
+                    details: $"Target='{target}', {ex.GetType().Name}: {ex.Message}");
                 return false;
             }
         }
 
         public bool ChangePassword(int userId, string newPassword)
         {
+            string target = $"UserId={userId}";
             try
             {
                 using var conn = new SqliteConnection(_connectionString);
                 conn.Open();
 
+                var before = FindUserSummary(conn, userId);
+                if (before != null) target = before.Value.Username;
+
                 using var cmd = conn.CreateCommand();
                 cmd.CommandText = "UPDATE Users SET PasswordHash = @hash WHERE UserId = @id";
                 cmd.Parameters.AddWithValue("@hash", BCrypt.Net.BCrypt.HashPassword(newPassword));
                 cmd.Parameters.AddWithValue("@id", userId);
-                return cmd.ExecuteNonQuery() > 0;
+                bool changed = cmd.ExecuteNonQuery() > 0;
+
+                // 비밀번호 값 · 해시는 기록하지 않는다.
+                AuditLogger.Instance.Log(
+                    AuditCategory.UserManagement, "ChangePassword",
+                    changed ? AuditOutcome.Success : AuditOutcome.Failure,
+                    userName: CurrentUser?.Username, source: nameof(UserService),
+                    details: changed ? $"Target='{target}'" : $"Target='{target}', 대상 없음");
+                return changed;
             }
-            catch
+            catch (Exception ex)
             {
+                AuditLogger.Instance.Log(
+                    AuditCategory.UserManagement, "ChangePassword", AuditOutcome.Failure,
+                    userName: CurrentUser?.Username, source: nameof(UserService),
+                    details: $"Target='{target}', {ex.GetType().Name}");
                 return false;
             }
         }
@@ -586,22 +621,58 @@ namespace VMS.Services
         public bool DeleteUser(int userId)
         {
             // Prevent deleting the currently logged-in user
-            if (CurrentUser?.UserId == userId) return false;
+            if (CurrentUser?.UserId == userId)
+            {
+                AuditLogger.Instance.Log(
+                    AuditCategory.UserManagement, "DeleteUser", AuditOutcome.Denied,
+                    userName: CurrentUser.Username, source: nameof(UserService),
+                    details: $"Target='{CurrentUser.Username}', 로그인 중인 본인 계정은 삭제할 수 없음");
+                return false;
+            }
 
+            string target = $"UserId={userId}";
             try
             {
                 using var conn = new SqliteConnection(_connectionString);
                 conn.Open();
 
+                var before = FindUserSummary(conn, userId);
+                if (before != null) target = before.Value.Username;
+
                 using var cmd = conn.CreateCommand();
                 cmd.CommandText = "DELETE FROM Users WHERE UserId = @id";
                 cmd.Parameters.AddWithValue("@id", userId);
-                return cmd.ExecuteNonQuery() > 0;
+                bool deleted = cmd.ExecuteNonQuery() > 0;
+
+                AuditLogger.Instance.Log(
+                    AuditCategory.UserManagement, "DeleteUser",
+                    deleted ? AuditOutcome.Success : AuditOutcome.Failure,
+                    userName: CurrentUser?.Username, source: nameof(UserService),
+                    details: deleted
+                        ? $"Deleted='{target}', Grade={before?.Grade}"
+                        : $"Target='{target}', 대상 없음");
+                return deleted;
             }
-            catch
+            catch (Exception ex)
             {
+                AuditLogger.Instance.Log(
+                    AuditCategory.UserManagement, "DeleteUser", AuditOutcome.Failure,
+                    userName: CurrentUser?.Username, source: nameof(UserService),
+                    details: $"Target='{target}', {ex.GetType().Name}: {ex.Message}");
                 return false;
             }
+        }
+
+        /// <summary>감사 기록용 — 변경 전 사용자 이름 · 표시 이름 · 등급.</summary>
+        private static (string Username, string DisplayName, UserGrade Grade)? FindUserSummary(
+            SqliteConnection conn, int userId)
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT Username, DisplayName, Grade FROM Users WHERE UserId = @id";
+            cmd.Parameters.AddWithValue("@id", userId);
+            using var reader = cmd.ExecuteReader();
+            if (!reader.Read()) return null;
+            return (reader.GetString(0), reader.GetString(1), (UserGrade)reader.GetInt32(2));
         }
 
         public List<User> GetAllUsers()
