@@ -612,7 +612,11 @@ namespace VMS.Capture
                         // 글자 칸에 한 글자씩 입력 연출 — TextBox.Text 를 바꾸고 바인딩을 원본으로 밀어 넣는다
                         var fe = Find(a.GetProperty("target").GetString()!);
                         await ClickVisual(fe, Ms(a, 700));
-                        string text = a.GetProperty("text").GetString()!;
+                        // textEnv — 값을 환경 변수에서 읽는다(작업자 PIN 처럼 시나리오 · 로그에 남기면 안 되는 값). 값은 로그에 쓰지 않는다.
+                        string text = a.TryGetProperty("textEnv", out var te)
+                            ? Environment.GetEnvironmentVariable(te.GetString()!) ?? ""
+                            : a.GetProperty("text").GetString()!;
+                        if (text.Length == 0) Log("  ⚠ type: 넣을 글자 없음 (textEnv 비어 있음?)");
                         int per = a.TryGetProperty("perChar", out var pc) ? pc.GetInt32() : 45;
                         if (fe is PasswordBox pb)
                         {
@@ -648,7 +652,7 @@ namespace VMS.Capture
                         object? hit = null;
                         foreach (var it in cb.Items)
                         {
-                            string s = it?.ToString() ?? "";
+                            string s = it is ContentControl cci ? cci.Content?.ToString() ?? "" : it?.ToString() ?? "";   // XAML 에 적은 ComboBoxItem 은 Content 글자로
                             if (!string.IsNullOrEmpty(cb.DisplayMemberPath))
                                 s = it?.GetType().GetProperty(cb.DisplayMemberPath)?.GetValue(it)?.ToString() ?? s;
                             if (s == want) { hit = it; break; }
@@ -800,6 +804,56 @@ namespace VMS.Capture
                             Log($"  saveAs(지원 패키지, 대화상자 대신 경로 주입) {p}: {s.Status} {s.SummaryLine}");
                         }
                         else Log("  ⚠ saveAs 대상 창 아님: " + dc?.GetType().Name);
+                        await Settle();
+                        break;
+                    }
+                    case "opLogin":
+                    {
+                        // 작업자(Web 사번 + PIN) 로그인 — 준비 단계용. 로그인 창 없이 같은 서비스(OperatorAuthService.LoginAsync)를 부른다.
+                        //   PIN 은 환경 변수(pinEnv)에서만 읽고 로그에 남기지 않는다.
+                        var svc = typeof(MainViewModel).GetField("_operatorAuthService", BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(_vm)
+                            as VMS.Core.Services.OperatorAuthService;
+                        if (svc == null) { Log("  ⚠ opLogin: 작업자 로그인 서비스 없음 (단독 모드?)"); break; }
+                        string emp = a.GetProperty("employee").GetString()!;
+                        string pin = Environment.GetEnvironmentVariable(a.GetProperty("pinEnv").GetString()!) ?? "";
+                        var (ok, _, err) = await svc.LoginAsync(emp, pin);
+                        pin = "";
+                        await Settle();
+                        Log($"  opLogin {emp}: {ok}{(ok ? "" : " — " + err)} → {_vm.CurrentOperatorName}");
+                        if (!ok) Log("  ⚠ opLogin 실패");
+                        break;
+                    }
+                    case "run":
+                    {
+                        // 녹화 중 바깥 프로그램 실행(데모 Web 값 바꾸기 등) — 끝날 때까지 기다린다. 인자는 로그에 쓰지 않는다.
+                        var psi = new ProcessStartInfo(a.GetProperty("exe").GetString()!) { UseShellExecute = false, CreateNoWindow = true,
+                            RedirectStandardOutput = true, RedirectStandardError = true };
+                        foreach (var x in a.GetProperty("args").EnumerateArray()) psi.ArgumentList.Add(x.GetString()!);
+                        using var p = Process.Start(psi)!;
+                        var so = p.StandardOutput.ReadToEndAsync();
+                        var se = p.StandardError.ReadToEndAsync();
+                        var sw = Stopwatch.StartNew();
+                        while (!p.HasExited && sw.ElapsedMilliseconds < Ms(a, 20000)) await Task.Delay(50);
+                        if (!p.HasExited) { try { p.Kill(); } catch { } Log("  ⚠ run 시간 초과"); break; }
+                        string label = a.TryGetProperty("label", out var lb) ? lb.GetString()! : Path.GetFileName(psi.FileName);
+                        Log($"  run {label}: exit {p.ExitCode} ({sw.ElapsedMilliseconds} ms) {(await so).Trim().Replace('\n', ' ')}");
+                        if (p.ExitCode != 0) Log("  ⚠ run 실패: " + (await se).Trim().Replace('\n', ' '));
+                        await Settle();
+                        break;
+                    }
+                    case "waitFor":
+                    {
+                        // 대상이 보일 때까지(또는 gone:true 면 사라질 때까지) 기다린다 — 비동기로 뜨는 창 · 값 대기. 기다리는 동안 찾기 실패는 로그하지 않는다.
+                        string spec = a.GetProperty("target").GetString()!;
+                        bool gone = a.TryGetProperty("gone", out var gn) && gn.GetBoolean();
+                        var sw = Stopwatch.StartNew();
+                        while (sw.ElapsedMilliseconds < Ms(a, 10000))
+                        {
+                            if ((Find(spec, quiet: true) != null) != gone) break;
+                            await Task.Delay(50);
+                        }
+                        bool done = (Find(spec, quiet: true) != null) != gone;
+                        Log($"  waitFor {spec}{(gone ? " (사라짐)" : "")}: {(done ? "OK" : "⚠ 시간 초과")} {sw.ElapsedMilliseconds} ms");
                         await Settle();
                         break;
                     }
@@ -995,7 +1049,7 @@ namespace VMS.Capture
         /// name:X(x:Name) · tip:X(ToolTip 글자) · tipp:X(ToolTip 앞부분) · auto:X(AutomationProperties.Name) ·
         /// text:X(보이는 글자, #n 으로 n번째) · textp:X(글자 앞부분) · cmd:X(VM 명령 속성 이름에 묶인 버튼) · row:X(표의 행)
         /// </summary>
-        private FrameworkElement? Find(string spec)
+        private FrameworkElement? Find(string spec, bool quiet = false)
         {
             int idx = 0;
             int hash = spec.LastIndexOf('#');
@@ -1008,7 +1062,7 @@ namespace VMS.Capture
                 var hit = FindIn(root, kind, key, idx);
                 if (hit != null) return hit;
             }
-            if (kind == "text" || kind == "textp" || kind == "name")
+            if (!quiet && (kind == "text" || kind == "textp" || kind == "name"))
             {
                 var raw = roots.SelectMany(r => FindAll<FrameworkElement>(r)).Where(e => MatchText(e, kind, key)).ToList();
                 Log($"  찾기 실패 {spec}: 후보 {raw.Count} — " + string.Join(", ", raw.Take(4).Select(r => $"{r.GetType().Name} w={r.ActualWidth:F0} vis={r.IsVisible}")));
