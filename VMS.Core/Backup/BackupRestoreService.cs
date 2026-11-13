@@ -79,8 +79,8 @@ namespace VMS.Core.Backup
     /// VMS 운영 데이터(시스템 설정, 사용자 DB, 레시피) 의 백업 / 복원 서비스.
     ///
     /// 백업 대상:
-    ///   system_config.json / layout_config.json / plc_signals.json
-    ///   BodaVision.db (사용자 DB)
+    ///   system_config.json / layout_config.json / plc_signals.json / process_sequence.json
+    ///   BodaVision.db (사용자 DB) / inspection_history.db (로컬 검사 이력) — 실행 중에도 일관 복사
     ///   recipes/ (전체)
     ///   audit/ (옵션 — 기본 제외)
     ///
@@ -100,6 +100,8 @@ namespace VMS.Core.Backup
             "system_config.json",
             "layout_config.json",
             "plc_signals.json",
+            // 시스템 프로세스 시퀀스 (IO 보드 · PLC 순서) — 빠지면 복원 뒤 시퀀스가 사라짐
+            "process_sequence.json",
             "BodaVision.db",
             // 로컬 검사 이력 (기본 저널 모드 — 사이드카 없이 .db 하나로 일관)
             "inspection_history.db"
@@ -109,6 +111,23 @@ namespace VMS.Core.Backup
         {
             "recipes"
         };
+
+        /// <summary>
+        /// VMS 가 실행 중에 연결을 열어 두는 SQLite DB. 파일을 통째로 읽거나 덮어쓰면
+        /// 사용 중 오류가 나거나 쓰는 중인 페이지가 섞이므로 <see cref="DatabaseCopier"/> 로 복사한다.
+        /// </summary>
+        private static readonly HashSet<string> _databaseFiles = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "BodaVision.db",
+            "inspection_history.db"
+        };
+
+        /// <summary>
+        /// SQLite DB 를 일관된 상태로 복사하는 함수 (원본 경로, 대상 경로).
+        /// VMS 앱이 시작할 때 SQLite 온라인 백업으로 설정한다 — 연결이 열려 있어도 동작.
+        /// null 이면 공유 읽기로 파일을 그대로 복사한다 (테스트 · 앱 밖 사용).
+        /// </summary>
+        public static Action<string, string>? DatabaseCopier { get; set; }
 
         // ─── CreateBackup ─────────────────────────────────────────
 
@@ -151,7 +170,10 @@ namespace VMS.Core.Backup
                     {
                         var src = Path.Combine(sourceAppDataDir, name);
                         if (!File.Exists(src)) continue;
-                        archive.CreateEntryFromFile(src, name, CompressionLevel.Optimal);
+                        if (_databaseFiles.Contains(name))
+                            AddDatabaseEntry(archive, src, name);
+                        else
+                            AddFileEntry(archive, src, name);
                         fileCount++;
                         if (string.Equals(name, "BodaVision.db", StringComparison.OrdinalIgnoreCase))
                             dbIncluded = true;
@@ -203,6 +225,9 @@ namespace VMS.Core.Backup
             }
             catch (Exception ex)
             {
+                // 실패한 ZIP 은 manifest 가 없어 복원할 수 없음 — 백업처럼 보이지 않게 지운다.
+                try { if (File.Exists(outputZipPath)) File.Delete(outputZipPath); }
+                catch (Exception delEx) { Debug.WriteLine($"[Backup] 실패 ZIP 삭제: {delEx.Message}"); }
                 return AuditedFail(outputZipPath, $"{ex.GetType().Name}: {ex.Message}", isCreate: true);
             }
         }
@@ -216,10 +241,69 @@ namespace VMS.Core.Backup
             foreach (var file in Directory.EnumerateFiles(subdir, "*", SearchOption.AllDirectories))
             {
                 var rel = Path.GetRelativePath(sourceAppDataDir, file).Replace('\\', '/');
-                archive.CreateEntryFromFile(file, rel, CompressionLevel.Optimal);
+                AddFileEntry(archive, file, rel);
                 count++;
             }
             return count;
+        }
+
+        /// <summary>
+        /// 다른 프로세스 · 스레드가 쓰기용으로 열어 둔 파일도 읽는다 (CreateEntryFromFile 은 읽기 공유만 허용).
+        /// </summary>
+        private static void AddFileEntry(ZipArchive archive, string sourcePath, string entryName)
+        {
+            using var source = new FileStream(sourcePath, FileMode.Open, FileAccess.Read,
+                FileShare.ReadWrite | FileShare.Delete);
+            var entry = archive.CreateEntry(entryName, CompressionLevel.Optimal);
+            entry.LastWriteTime = File.GetLastWriteTime(sourcePath);
+            using var target = entry.Open();
+            source.CopyTo(target);
+        }
+
+        /// <summary>SQLite DB 를 임시 파일로 일관 복사한 뒤 ZIP 에 넣는다.</summary>
+        private static void AddDatabaseEntry(ZipArchive archive, string sourcePath, string entryName)
+        {
+            if (DatabaseCopier == null)
+            {
+                AddFileEntry(archive, sourcePath, entryName);
+                return;
+            }
+
+            var tempPath = Path.Combine(Path.GetTempPath(), $"vms-backup-{Guid.NewGuid():N}.db");
+            try
+            {
+                DatabaseCopier(sourcePath, tempPath);
+                AddFileEntry(archive, tempPath, entryName);
+            }
+            finally
+            {
+                try { if (File.Exists(tempPath)) File.Delete(tempPath); }
+                catch (Exception ex) { Debug.WriteLine($"[Backup] 임시 DB 삭제: {ex.Message}"); }
+            }
+        }
+
+        /// <summary>
+        /// 복원 — 실행 중인 VMS 가 연 DB 는 덮어쓸 수 없으므로 임시 파일로 풀어 DB 안으로 복사한다.
+        /// </summary>
+        private static void ExtractDatabaseEntry(ZipArchiveEntry entry, string destPath)
+        {
+            if (DatabaseCopier == null || !File.Exists(destPath))
+            {
+                entry.ExtractToFile(destPath, overwrite: true);
+                return;
+            }
+
+            var tempPath = Path.Combine(Path.GetTempPath(), $"vms-restore-{Guid.NewGuid():N}.db");
+            try
+            {
+                entry.ExtractToFile(tempPath, overwrite: true);
+                DatabaseCopier(tempPath, destPath);
+            }
+            finally
+            {
+                try { if (File.Exists(tempPath)) File.Delete(tempPath); }
+                catch (Exception ex) { Debug.WriteLine($"[Backup] 임시 DB 삭제: {ex.Message}"); }
+            }
         }
 
         // ─── RestoreBackup ────────────────────────────────────────
@@ -301,7 +385,10 @@ namespace VMS.Core.Backup
                     var destDir = Path.GetDirectoryName(destPath);
                     if (!string.IsNullOrEmpty(destDir)) Directory.CreateDirectory(destDir);
 
-                    entry.ExtractToFile(destPath, overwrite: true);
+                    if (_databaseFiles.Contains(entry.FullName))
+                        ExtractDatabaseEntry(entry, destPath);
+                    else
+                        entry.ExtractToFile(destPath, overwrite: true);
                     restored++;
                 }
 
