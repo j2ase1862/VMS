@@ -577,7 +577,14 @@ namespace VMS.VisionSetup.Capture
                     case "openImage":
                     {
                         if (a.TryGetProperty("target", out var tg)) await ClickVisual(Find(tg.GetString()!));
-                        var mat = OpenCvSharp.Cv2.ImRead(a.GetProperty("path").GetString()!);
+                        string ip = a.GetProperty("path").GetString()!;
+                        if (ip.Contains('*'))   // 녹화 중 만들어진 파일 — 폴더의 첫 파일(이름순)
+                        {
+                            var dir = System.IO.Path.GetDirectoryName(ip)!;
+                            ip = Directory.Exists(dir) ? Directory.GetFiles(dir, System.IO.Path.GetFileName(ip)).OrderBy(x => x, StringComparer.Ordinal).FirstOrDefault() ?? ip : ip;
+                            Log("  openImage: " + ip);
+                        }
+                        var mat = OpenCvSharp.Cv2.ImRead(ip);
                         if (!mat.Empty()) _vm.CurrentImage = mat;
                         _vm.SelectedDisplayMode = ImageDisplayMode.OriginalImage;
                         await Settle();
@@ -730,11 +737,13 @@ namespace VMS.VisionSetup.Capture
                         if (fe is not TextBox tb) { Log("  글자 칸 아님: " + a.GetProperty("target").GetString()); break; }
                         if (!(a.TryGetProperty("append", out var ap) && ap.GetBoolean())) tb.Text = "";
                         string start = tb.Text;
-                        for (int i = 1; i <= text.Length; i++)
+                        int stepN = a.TryGetProperty("step", out var stp) ? Math.Max(1, stp.GetInt32()) : 1;   // 한 번에 넣을 글자 수 — 긴 경로를 녹화 부하 속에서도 빨리
+                        for (int i = Math.Min(stepN, text.Length); ; i = Math.Min(i + stepN, text.Length))
                         {
                             tb.Text = start + text[..i];
                             tb.CaretIndex = tb.Text.Length;
                             await Task.Delay(per);
+                            if (i >= text.Length) break;
                         }
                         tb.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
                         if (a.TryGetProperty("enter", out var en) && en.GetBoolean())
@@ -1027,6 +1036,110 @@ namespace VMS.VisionSetup.Capture
                             foreach (var part in n.GetString()!.Split('.')) v = v?.GetType().GetProperty(part)?.GetValue(v);
                             Log($"  win {n.GetString()} = {v}");
                         }
+                        break;
+                    }
+                    case "dblclick":
+                    {
+                        // 표 행 두 번 클릭 — 행을 고르고 DataGrid 의 MouseDoubleClick(코드비하인드 처리기)을 그대로 일으킨다
+                        var fe = Find(a.GetProperty("target").GetString()!);
+                        await ClickVisual(fe, Ms(a, 700));
+                        await Task.Delay(90); _clickT = Now(); _clickP = _cur;
+                        var row = fe as DataGridRow ?? (fe != null ? FindAncestor<DataGridRow>(fe) : null);
+                        var grid = row != null ? FindAncestor<DataGrid>(row) : null;
+                        if (row == null || grid == null) { Log("  ⚠ dblclick: 표 행 아님"); break; }
+                        grid.SelectedItem = row.Item;
+                        await Settle();
+                        _ = _win.Dispatcher.BeginInvoke(() => grid.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left)
+                            { RoutedEvent = Control.MouseDoubleClickEvent, Source = row }));
+                        await Settle(); await Task.Delay(150); await Settle();
+                        break;
+                    }
+                    case "key":
+                    {
+                        // 맨 위 창에 키 누름(KeyDown) — 창 코드비하인드의 키 처리기(← → Esc 등)를 그대로 탄다. 실제 키보드는 쓰지 않는다
+                        var w = OverWindows().LastOrDefault();
+                        if (w == null) { Log("  ⚠ key: 창 없음"); break; }
+                        var key = Enum.Parse<Key>(a.GetProperty("key").GetString()!);
+                        var src = PresentationSource.FromVisual(w);
+                        if (src == null) { Log("  ⚠ key: PresentationSource 없음"); break; }
+                        w.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, src, Environment.TickCount, key) { RoutedEvent = Keyboard.KeyDownEvent });
+                        await Settle();
+                        Log($"  key {key}");
+                        break;
+                    }
+                    case "golden":
+                    {
+                        // 배치 테스트 [Save as Golden] · [Load Golden] — 이 두 버튼은 VM 이 OS 저장 · 열기 대화상자를 직접 띄워(IDialogService 를 거치지 않음)
+                        // 경로를 넣을 수 없다. 버튼을 누르는 연출 뒤, 대화상자 다음 처리(BatchTestViewModel.SaveAsGolden · LoadGolden 본문)를 같게 한다.
+                        if (a.TryGetProperty("target", out var tg)) await ClickVisual(Find(tg.GetString()!), Ms(a, 700));
+                        if (WinVm() is not BatchTestViewModel bvm) { Log("  ⚠ golden: 배치 테스트 창 아님"); break; }
+                        string gp = a.GetProperty("path").GetString()!;
+                        if (a.GetProperty("mode").GetString() == "save")
+                        {
+                            if (bvm.Results.Count == 0) { Log("  ⚠ golden: 결과 없음"); break; }
+                            var vs = typeof(BatchTestViewModel).GetField("_visionService", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(bvm) as Interfaces.IVisionService;
+                            var lr = typeof(BatchTestViewModel).GetField("_loadedRecipe", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(bvm) as Recipe;
+                            var toolNames = vs!.Tools.ToDictionary(t => t.Id, t => t.Name);
+                            var golden = Services.BatchTesting.GoldenSet.FromBatchResults(System.IO.Path.GetFileNameWithoutExtension(gp), lr?.Name ?? "", bvm.Results.ToList(), toolNames);
+                            Log("  저장 대화상자 대신 경로: " + gp);
+                            if (golden.Save(gp)) { bvm.ActiveGoldenSet = golden; bvm.StatusMessage = $"골든셋 저장됨: {gp} ({golden.Count}장)"; }
+                            else bvm.StatusMessage = "골든셋 저장 실패";
+                        }
+                        else
+                        {
+                            Log("  열기 대화상자 대신 경로: " + gp);
+                            var golden = Services.BatchTesting.GoldenSet.Load(gp);
+                            if (golden == null) bvm.StatusMessage = "골든셋 로드 실패 (파일 형식 오류)";
+                            else { bvm.ActiveGoldenSet = golden; bvm.StatusMessage = $"골든셋 로드됨: {golden.Name} ({golden.Count}장)"; }
+                        }
+                        await Settle();
+                        Log("  golden: " + bvm.StatusMessage);
+                        break;
+                    }
+                    case "epProbe":
+                    {
+                        // 탐색용 — 이 PC 에서 ONNX Runtime 실행 백엔드를 붙일 수 있는지 로그에만 남긴다(화면에는 아무것도 하지 않음)
+                        foreach (var ep in Enum.GetValues<VisionTools.DeepLearning.OnnxExecutionProvider>())
+                            Log($"  ep {ep}: {VisionTools.DeepLearning.OnnxModelBase.IsProviderAvailable(ep)}");
+                        break;
+                    }
+                    case "slide":
+                    {
+                        // 숫자 속성을 끌어 옮기듯 조금씩 바꾼다 (Depth Map 범위 손잡이 등) — on: "vm"(기본) · "win".
+                        // from · to 좌표가 있으면 커서가 손잡이를 잡고 그 사이를 같이 움직인다
+                        string sOn = a.TryGetProperty("on", out var son) ? son.GetString() ?? "" : "";
+                        object? tgtObj = sOn == "win" ? WinVm() : sOn == "settings" ? _vm.SelectedToolSettings : _vm;   // settings = 선택 도구의 설정 VM
+                        var pi = tgtObj?.GetType().GetProperty(a.GetProperty("prop").GetString()!);
+                        if (pi == null) { Log("  ⚠ slide: 속성 없음"); break; }
+                        double v0 = Convert.ToDouble(pi.GetValue(tgtObj)), v1 = a.GetProperty("to").GetDouble();
+                        Point? p0 = a.TryGetProperty("from", out var fp) ? new Point(fp[0].GetDouble(), fp[1].GetDouble()) : null;
+                        Point? p1 = a.TryGetProperty("at", out var tp2) ? new Point(tp2[0].GetDouble(), tp2[1].GetDouble()) : null;
+                        if (p0 != null) { await MoveTo(p0.Value, 600); await Task.Delay(120); _clickT = Now(); _clickP = _cur; await Task.Delay(150); }
+                        int ms = Ms(a, 1400), steps = Math.Max(1, ms / 60);
+                        for (int i = 1; i <= steps; i++)
+                        {
+                            double k = (double)i / steps, e = k < .5 ? 2 * k * k : 1 - Math.Pow(-2 * k + 2, 2) / 2;
+                            double v = v0 + (v1 - v0) * e;
+                            pi.SetValue(tgtObj, pi.PropertyType == typeof(float) ? (object)(float)v : pi.PropertyType == typeof(int) ? (object)(int)Math.Round(v) : v);
+                            if (p0 != null && p1 != null) _cur = new Point(p0.Value.X + (p1.Value.X - p0.Value.X) * e, p0.Value.Y + (p1.Value.Y - p0.Value.Y) * e);
+                            await Task.Delay(60);
+                        }
+                        await Settle();
+                        Log($"  slide {pi.Name}: {v0:G6} → {pi.GetValue(tgtObj)}");
+                        break;
+                    }
+                    case "popupNamed":
+                    {
+                        // 메인 창의 이름 붙은 Popup(카메라 정보 등) 내용을 열지 않고 기준 요소 아래에 그린다 — 열면 실제 화면에 뜬다
+                        var pop = Root.FindName(a.GetProperty("name").GetString()!) as Popup ?? _win.FindName(a.GetProperty("name").GetString()!) as Popup;
+                        var anchor = Find(a.GetProperty("anchor").GetString()!);
+                        if (pop?.Child is not FrameworkElement child || anchor == null) { Log("  ⚠ popupNamed: 없음"); break; }
+                        child.Measure(new Size(600, 900));
+                        child.Arrange(new Rect(child.DesiredSize));
+                        child.UpdateLayout();
+                        var ar = Bounds(anchor);
+                        _popupEl = child; _popupRect = new Rect(ar.X, ar.Bottom + 2, child.ActualWidth, child.ActualHeight);
+                        Log($"  popupNamed {child.ActualWidth:F0}x{child.ActualHeight:F0} at {ar.X:F0},{ar.Bottom:F0}");
                         break;
                     }
                     case "dump": Dump(a.TryGetProperty("filter", out var fl) ? fl.GetString() : null); break;
@@ -1451,6 +1564,7 @@ namespace VMS.VisionSetup.Capture
                 var t when t == typeof(bool) => v.GetBoolean(),
                 var t when t == typeof(int) => v.GetInt32(),
                 var t when t == typeof(double) => v.GetDouble(),
+                var t when t == typeof(float) => (float)v.GetDouble(),
                 var t when t == typeof(string) => v.GetString(),
                 var t when t.IsEnum => Enum.Parse(t, v.GetString()!),
                 _ => "\u0001",
