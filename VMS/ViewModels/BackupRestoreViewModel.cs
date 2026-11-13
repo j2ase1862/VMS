@@ -107,7 +107,8 @@ namespace VMS.ViewModels
             {
                 RestoreStatus = "Success";
                 RestoreStatusColor = "#10B981";  // BrushSuccess
-                LastRestoreSummary = $"복원 {result.FilesRestored} 파일 · skip {result.FilesSkipped} 파일";
+                LastRestoreSummary = $"복원 {result.FilesRestored} 파일 · skip {result.FilesSkipped} 파일" +
+                                     " — 설정은 VMS 를 다시 시작하면 적용됩니다";
                 if (result.Manifest != null)
                 {
                     ManifestSummary =

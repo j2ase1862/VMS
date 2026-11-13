@@ -44,7 +44,7 @@
                     <TextBlock Style="{StaticResource WindowBodyText}" TextWrapping="Wrap">
                         <Run Text="원격 지원 / 엔지니어링 분석용 ZIP 패키지를 생성합니다. 백업과 달리 사용자 DB (BCrypt 해시) 와 레시피는 "/>
                         <Run FontWeight="SemiBold" Text="포함되지 않습니다"/>
-                        <Run Text="."/>
+                        <Run Text=". 설정 파일의 API 키 · 토큰 · 비밀번호 값은 가려서 넣습니다."/>
                     </TextBlock>
                 </Border>
 

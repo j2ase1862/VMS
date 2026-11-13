@@ -25,6 +25,7 @@ namespace VMS.Core.SupportPackage
     /// 의도적 제외:
     /// - BodaVision.db (사용자 BCrypt 해시 — 외부 공유 금지)
     /// - recipes/ (IP — 공유 시점 별도 동의)
+    /// - 설정 파일의 비밀 값 (clientApiKey · mlopsLineToken 등 — <see cref="RedactSecrets"/> 로 가림)
     ///
     /// CI 필터 호환: 클래스명에 "Diagnostic" 미포함 (CI 가 ML diagnostic 테스트만 제외).
     /// </summary>
@@ -70,7 +71,13 @@ namespace VMS.Core.SupportPackage
                     {
                         var src = Path.Combine(appDataDir, name);
                         if (!File.Exists(src)) continue;
-                        archive.CreateEntryFromFile(src, $"config/{name}", CompressionLevel.Optimal);
+                        // API 키 · 토큰 · 비밀번호 값은 가려서 넣는다 — 패키지는 외부(공급사)로 나간다.
+                        var configEntry = archive.CreateEntry($"config/{name}", CompressionLevel.Optimal);
+                        using (var configStream = configEntry.Open())
+                        using (var configWriter = new StreamWriter(configStream, new UTF8Encoding(false)))
+                        {
+                            configWriter.Write(RedactSecrets(ReadSharedText(src)));
+                        }
                         fileCount++;
                     }
 
@@ -385,6 +392,81 @@ namespace VMS.Core.SupportPackage
             {
                 w.Write(JsonSerializer.Serialize(new { error = $"{ex.GetType().Name}: {ex.Message}" }));
             }
+        }
+
+        /// <summary>가린 값 자리에 넣는 표시.</summary>
+        internal const string RedactedValue = "***REDACTED***";
+
+        /// <summary>이름이 이것으로 끝나는 설정 키의 값은 가린다 (대소문자 무시) — 예: clientApiKey · mlopsLineToken.</summary>
+        private static readonly string[] SecretKeySuffixes = { "apikey", "token", "password", "secret" };
+
+        /// <summary>
+        /// JSON 설정에서 비밀 값(API 키 · 토큰 · 비밀번호 · 시크릿)을 가린다.
+        /// 빈 값은 "설정 안 됨" 진단에 쓰이도록 그대로 둔다. JSON 이 아니면 원문 대신 안내만 넣는다.
+        /// </summary>
+        internal static string RedactSecrets(string json)
+        {
+            System.Text.Json.Nodes.JsonNode? root;
+            try
+            {
+                root = System.Text.Json.Nodes.JsonNode.Parse(json,
+                    documentOptions: new JsonDocumentOptions
+                    {
+                        CommentHandling = JsonCommentHandling.Skip,
+                        AllowTrailingCommas = true
+                    });
+            }
+            catch (JsonException)
+            {
+                return JsonSerializer.Serialize(new { note = "JSON 해석 실패 — 비밀 값 보호를 위해 원문을 넣지 않음" });
+            }
+            if (root == null) return json;
+
+            RedactNode(root);
+            return root.ToJsonString(new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            });
+        }
+
+        private static void RedactNode(System.Text.Json.Nodes.JsonNode node)
+        {
+            if (node is System.Text.Json.Nodes.JsonObject obj)
+            {
+                foreach (var key in obj.Select(p => p.Key).ToList())
+                {
+                    var child = obj[key];
+                    if (child == null) continue;
+                    if (IsSecretKey(key) && child is System.Text.Json.Nodes.JsonValue value)
+                    {
+                        if (value.TryGetValue<string>(out var s) && string.IsNullOrEmpty(s)) continue;
+                        obj[key] = RedactedValue;
+                    }
+                    else
+                    {
+                        RedactNode(child);
+                    }
+                }
+            }
+            else if (node is System.Text.Json.Nodes.JsonArray arr)
+            {
+                foreach (var item in arr)
+                {
+                    if (item != null) RedactNode(item);
+                }
+            }
+        }
+
+        private static bool IsSecretKey(string key) =>
+            SecretKeySuffixes.Any(s => key.EndsWith(s, StringComparison.OrdinalIgnoreCase));
+
+        /// <summary>다른 곳이 쓰기용으로 열어 둔 파일도 읽는다.</summary>
+        private static string ReadSharedText(string path)
+        {
+            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var reader = new StreamReader(fs, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+            return reader.ReadToEnd();
         }
 
         private static string Truncate(string value, int max)

@@ -195,6 +195,9 @@ namespace VMS
                 Debug.WriteLine($"[App] InspectionHistoryRetention 실패 (best-effort): {ex.Message}");
             }
 
+            // 백업 · 복원이 실행 중인 SQLite DB 를 온라인 백업으로 복사하게 한다 (수동 · 자동 백업 공통).
+            BackupRestoreService.DatabaseCopier = SqliteDatabaseCopier.Copy;
+
             // 자동 백업 스케줄러 — autoBackup.enabled=true 일 때만 시작.
             // last_backup_at.txt 기반으로 잔여 시간 계산 → 즉시 또는 잔여 시간 후 첫 백업.
             // 운영 시작을 막지 않도록 best-effort.

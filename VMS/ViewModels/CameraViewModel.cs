@@ -169,8 +169,19 @@ namespace VMS.ViewModels
             }
         }
 
-        // 노출/게인 슬라이더 활성 조건 — 스텝 선택 + 유지 모드 해제
-        public bool IsManualExposureEnabled => SelectedStep != null && !Use2DCameraDefault;
+        // 노출/게인 슬라이더 활성 조건 — 스텝 선택 + 유지 모드 해제 + 카메라 설정 권한
+        public bool IsManualExposureEnabled => SelectedStep != null && !Use2DCameraDefault && CanEditCameraSettings;
+
+        /// <summary>
+        /// 시스템 사용자 권한 CameraSettings (Engineer · Admin) — 노출/게인 · 카메라 설정 유지 변경과
+        /// [Save Parameter] 를 막는다. MainViewModel 이 로그인 사용자가 바뀔 때 넣어 준다.
+        /// </summary>
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(SaveSettingsCommand))]
+        private bool _canEditCameraSettings = true;
+
+        partial void OnCanEditCameraSettingsChanged(bool value) =>
+            OnPropertyChanged(nameof(IsManualExposureEnabled));
 
         // 카메라가 실제로 쓰는 현재 노출/게인 (read-back, 지원 카메라만) — 설정 창 열 때 갱신
         [ObservableProperty]
@@ -963,9 +974,11 @@ namespace VMS.ViewModels
             }
         }
 
-        [RelayCommand]
+        [RelayCommand(CanExecute = nameof(CanEditCameraSettings))]
         private void SaveSettings()
         {
+            if (!CanEditCameraSettings) return;
+
             // 레시피 스텝을 편집 중이면 저장 대상은 레시피다 — 노출/게인이 레시피에
             // 들어 있는데 system_config 에 쓰면 다음 로드 때 레시피 값에 덮여 사라진다.
             if (_currentRecipe != null && SelectedStep != null && _currentRecipe.Steps.Contains(SelectedStep))

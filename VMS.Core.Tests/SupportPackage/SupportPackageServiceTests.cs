@@ -333,5 +333,41 @@ namespace VMS.Core.Tests.SupportPackage
             using var sr = new StreamReader(entry.Open());
             return JsonSerializer.Deserialize<SupportPackageManifest>(sr.ReadToEnd());
         }
+
+        // ─── 비밀 값 가림 (VM-24) ─────────────────────────────────
+
+        [Fact]
+        public void Export_SystemConfig_RedactsApiKeyAndTokens()
+        {
+            Seed("system_config.json",
+                "{\"webServerUrl\":\"http://line\",\"clientApiKey\":\"sk-secret-123\"," +
+                "\"mlopsLineToken\":\"ln_abc\",\"emptyToken\":\"\"," +
+                "\"imageSave\":{\"fileNameTokens\":[\"date\"],\"uploadPassword\":\"pw\"}}");
+
+            var result = SupportPackageService.Export(_appDataDir, _outputZip);
+
+            Assert.True(result.Success);
+            var text = ReadEntry("config/system_config.json");
+            Assert.DoesNotContain("sk-secret-123", text);
+            Assert.DoesNotContain("ln_abc", text);
+            Assert.DoesNotContain("\"pw\"", text);
+            Assert.Contains(SupportPackageService.RedactedValue, text);
+            Assert.Contains("http://line", text);       // 진단에 필요한 값은 그대로
+            Assert.Contains("fileNameTokens", text);    // 이름에 Tokens 가 들어가도 목록은 유지
+            Assert.Contains("\"date\"", text);
+            using var doc = JsonDocument.Parse(text);
+            Assert.Equal("", doc.RootElement.GetProperty("emptyToken").GetString());  // 빈 값은 "설정 안 됨" 진단용
+        }
+
+        [Fact]
+        public void Export_UnparsableConfig_DoesNotIncludeRawText()
+        {
+            Seed("system_config.json", "clientApiKey=sk-secret-raw");
+
+            var result = SupportPackageService.Export(_appDataDir, _outputZip);
+
+            Assert.True(result.Success);
+            Assert.DoesNotContain("sk-secret-raw", ReadEntry("config/system_config.json"));
+        }
     }
 }
