@@ -1012,7 +1012,8 @@ namespace VMS.VisionSetup.Capture
                         var w = OverWindows().LastOrDefault();
                         if (w == null) { Log("  ⚠ winSize: 창 없음"); break; }
                         w.Width = a.GetProperty("w").GetDouble(); w.Height = a.GetProperty("h").GetDouble();
-                        w.Left = _win.Left + (W - w.Width) / 2; w.Top = _win.Top + Math.Max(0, (H - w.Height) / 2);
+                        w.Left = _win.Left + (W - w.Width) / 2;
+                        w.Top = _win.Top + (a.TryGetProperty("top", out var wt) ? wt.GetDouble() : Math.Max(0, (H - w.Height) / 2));   // top: 자막 자리(아래)를 피해 위로
                         await Settle();
                         Log($"  winSize {w.GetType().Name} {w.Width}x{w.Height}");
                         break;
