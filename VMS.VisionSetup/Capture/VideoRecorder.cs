@@ -603,7 +603,7 @@ namespace VMS.VisionSetup.Capture
                     {
                         // on: "win" = 맨 위에 뜬 창의 DataContext, "vm" = 메인 VM, 없으면 도구(tool 이름 또는 선택 도구)의 VisionTool
                         string onv = a.TryGetProperty("on", out var on) ? on.GetString() ?? "" : "";
-                        object target = onv == "win" ? (OverWindows().LastOrDefault()?.DataContext ?? _vm)
+                        object target = onv == "win" ? (WinVm() ?? _vm)
                                       : onv == "vm" ? _vm
                                       : (a.TryGetProperty("tool", out var tn) ? Tool(tn.GetString()!) : _vm.SelectedTool!).VisionTool!;
                         if (a.TryGetProperty("target", out var stg)) await ClickVisual(Find(stg.GetString()!), Ms(a, 700));
@@ -616,7 +616,7 @@ namespace VMS.VisionSetup.Capture
                     {
                         // VM 의 ICommand 실행 — 커서는 target 으로 먼저 이동·클릭 연출. modal:true 면 디스패처로 넘겨 모달 창이 떠도 흐름이 막히지 않게
                         if (a.TryGetProperty("target", out var tg)) await ClickVisual(Find(tg.GetString()!), Ms(a, 700));
-                        object src = a.TryGetProperty("on", out var on) && on.GetString() == "win" ? (OverWindows().LastOrDefault()?.DataContext ?? _vm) : _vm;
+                        object src = a.TryGetProperty("on", out var on) && on.GetString() == "win" ? (WinVm() ?? _vm) : _vm;
                         string name = a.GetProperty("name").GetString()!;
                         var c = src.GetType().GetProperty(name)?.GetValue(src) as ICommand;
                         if (c == null || !c.CanExecute(null)) { Log("  명령 실행 불가: " + name); break; }
@@ -935,6 +935,86 @@ namespace VMS.VisionSetup.Capture
                         await Settle();
                         break;
                     }
+                    case "pick": await PickAsync(a); break;
+                    case "cellType": await CellTypeAsync(a); break;
+                    case "seqAdd": await SeqAddAsync(a); break;
+                    case "seqSelect":
+                    {
+                        var vm = SeqVm(); var node = SeqNode(a.GetProperty("node").GetString()!);
+                        if (vm == null || node == null) { Log("  ⚠ seqSelect: 노드 없음"); break; }
+                        await ClickVisual(SeqNodeEl(node), Ms(a, 700));
+                        foreach (var n in vm.Nodes) n.IsSelected = false;
+                        node.IsSelected = true; vm.SelectedNode = node;
+                        await Settle();
+                        break;
+                    }
+                    case "seqConnect": await SeqConnectAsync(a); break;
+                    case "seqMove":
+                    {
+                        // 노드 끌어 옮기기 (Node_MouseMove 와 같음) — at = 캔버스 좌표(노드 왼쪽 위)
+                        var node = SeqNode(a.GetProperty("node").GetString()!);
+                        if (node == null) { Log("  ⚠ seqMove: 노드 없음"); break; }
+                        await ClickVisual(SeqNodeEl(node), 500);
+                        double x0 = node.X, y0 = node.Y, x1 = a.GetProperty("at")[0].GetDouble(), y1 = a.GetProperty("at")[1].GetDouble();
+                        var c0 = _cur; int ms = Ms(a, 800); var sw = Stopwatch.StartNew();
+                        while (true)
+                        {
+                            double k = Math.Min(1, sw.ElapsedMilliseconds / (double)ms), e = k < .5 ? 2 * k * k : 1 - Math.Pow(-2 * k + 2, 2) / 2;
+                            node.X = x0 + (x1 - x0) * e; node.Y = y0 + (y1 - y0) * e;
+                            _cur = new Point(c0.X + (x1 - x0) * e, c0.Y + (y1 - y0) * e);
+                            SeqRefreshEdges();
+                            if (k >= 1) break;
+                            await Task.Delay(15);
+                        }
+                        await Settle();
+                        break;
+                    }
+                    case "mockInput":
+                    {
+                        // 시험용 가상 IO 보드(Description "[MOCK]")의 입력 채널 값 — 센서 신호 대신
+                        var vm = SeqVm();
+                        var boards = vm?.GetType().GetField("_boards", BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(vm) as System.Collections.IDictionary;
+                        string dev = a.GetProperty("device").GetString()!;
+                        var board = boards?[dev];
+                        var bits = board?.GetType().BaseType?.GetField("_inputBits", BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(board) as bool[];
+                        if (bits == null) { Log("  ⚠ mockInput: 가상 보드 없음 " + dev); break; }
+                        int ch = a.GetProperty("ch").GetInt32();
+                        bits[ch] = a.GetProperty("value").GetBoolean();
+                        Log($"  mockInput {dev} ch{ch} = {bits[ch]}");
+                        break;
+                    }
+                    case "winSet":
+                    {
+                        // 맨 위 창 VM 의 속성 — 화면 조작으로 바꿀 수 없는 값만(예: 콤보가 아닌 내부 상태). target 으로 클릭 연출
+                        if (a.TryGetProperty("target", out var tg)) await ClickVisual(Find(tg.GetString()!), Ms(a, 700));
+                        object? dc = WinVm();
+                        if (dc == null) { Log("  ⚠ winSet: 창 VM 없음"); break; }
+                        foreach (var p in a.GetProperty("values").EnumerateObject()) SetProp(dc, p.Name, p.Value);
+                        await Settle();
+                        break;
+                    }
+                    case "winSize":
+                    {
+                        // 맨 위 창 크기 — 녹화 화면(1920x1080) 안에서 가운데로. 사용자가 창 가장자리를 끌어 키우는 것과 같음
+                        var w = OverWindows().LastOrDefault();
+                        if (w == null) { Log("  ⚠ winSize: 창 없음"); break; }
+                        w.Width = a.GetProperty("w").GetDouble(); w.Height = a.GetProperty("h").GetDouble();
+                        w.Left = _win.Left + (W - w.Width) / 2; w.Top = _win.Top + Math.Max(0, (H - w.Height) / 2);
+                        await Settle();
+                        Log($"  winSize {w.GetType().Name} {w.Width}x{w.Height}");
+                        break;
+                    }
+                    case "winLog":
+                    {
+                        object? dc = WinVm();
+                        foreach (var n in a.GetProperty("props").EnumerateArray())
+                        {
+                            object? v = dc;
+                            foreach (var part in n.GetString()!.Split('.')) v = v?.GetType().GetProperty(part)?.GetValue(v);
+                            Log($"  win {n.GetString()} = {v}");
+                        }
+                        break;
+                    }
                     case "dump": Dump(a.TryGetProperty("filter", out var fl) ? fl.GetString() : null); break;
                     case "log": Log("  status: " + _vm.StatusMessage); break;
                     default: Log("알 수 없는 op " + op); break;
@@ -952,6 +1032,9 @@ namespace VMS.VisionSetup.Capture
             string s = it is ContentControl cci ? cci.Content?.ToString() ?? "" : it?.ToString() ?? "";
             if (!string.IsNullOrEmpty(cb.DisplayMemberPath))
                 s = it?.GetType().GetProperty(cb.DisplayMemberPath)?.GetValue(it)?.ToString() ?? s;
+            else if (it != null && s.StartsWith(it.GetType().Name + " {", StringComparison.Ordinal)
+                     && it.GetType().GetProperty("Display")?.GetValue(it) is string disp)   // record 기본 ToString — 표시 글자(Display)로
+                s = disp;
             return s;
         }
 
@@ -1140,6 +1223,153 @@ namespace VMS.VisionSetup.Capture
             _vm.OnROICreated(shape);
             WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(shape));
             await Settle();
+        }
+
+        // ───────────────────────── 다른 창 (캘리브레이션 · 시퀀스) ─────────────────────────
+
+        /// <summary>맨 위에 뜬 창의 VM — 창 DataContext 가 없으면 안쪽 뷰의 것.</summary>
+        private object? WinVm()
+        {
+            var w = OverWindows().LastOrDefault();
+            if (w == null) return null;
+            return w.DataContext ?? FindAll<FrameworkElement>((DependencyObject)w.Content).Select(e => e.DataContext).FirstOrDefault(d => d != null);
+        }
+
+        private SequenceEditorViewModel? SeqVm() =>
+            OverWindows().AsEnumerable().Reverse()
+                .SelectMany(w => FindAll<FrameworkElement>((DependencyObject)w.Content).Select(e => e.DataContext).Prepend(w.DataContext))
+                .OfType<SequenceEditorViewModel>().FirstOrDefault();
+
+        private SequenceNodeItem? SeqNode(string name) => SeqVm()?.Nodes.FirstOrDefault(n => n.Name == name);
+
+        private FrameworkElement? SeqNodeEl(SequenceNodeItem node) =>
+            OverWindows().AsEnumerable().Reverse().SelectMany(w => FindAll<FrameworkElement>((DependencyObject)w.Content))
+                .FirstOrDefault(e => e.Name == "NodeBorder" && ReferenceEquals(e.DataContext, node) && e.ActualWidth > 0);
+
+        private void SeqRefreshEdges()
+        {
+            var view = OverWindows().SelectMany(w => FindAll<Views.Sequence.SequenceEditorView>((DependencyObject)w.Content)).FirstOrDefault();
+            view?.GetType().GetMethod("UpdateEdgeLines", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public)?.Invoke(view, null);
+        }
+
+        /// <summary>
+        /// 캘리브레이션 창 미리보기 이미지의 원본 화소 (x, y) 를 클릭 — 코드비하인드 PreviewImage_MouseLeftButtonDown 과 같은 변환의 역.
+        /// {"op":"pick","x":..,"y":..,"ms":700}
+        /// </summary>
+        private async Task PickAsync(JsonElement a)
+        {
+            var img = Find("name:PreviewImageControl") as Image;
+            if (img?.Source is not BitmapSource bmp) { Log("  ⚠ pick: 미리보기 이미지 없음"); return; }
+            double px = a.GetProperty("x").GetDouble(), py = a.GetProperty("y").GetDouble();
+            double scale = Math.Min(img.ActualWidth / bmp.PixelWidth, img.ActualHeight / bmp.PixelHeight);
+            double ox = (img.ActualWidth - bmp.PixelWidth * scale) / 2.0, oy = (img.ActualHeight - bmp.PixelHeight * scale) / 2.0;
+            var r = Bounds(img);
+            await MoveTo(new Point(r.X + ox + px * scale, r.Y + oy + py * scale), Ms(a, 700));
+            await Task.Delay(150);
+            _clickT = Now(); _clickP = _cur;
+            await Task.Delay(120);
+            var dc = img.DataContext ?? WinVm();
+            var m = dc?.GetType().GetMethod("AddPickedPoint");
+            if (m == null) { Log("  ⚠ pick: AddPickedPoint 없음"); return; }
+            m.Invoke(dc, new object[] { px, py });
+            await Settle();
+            Log($"  pick ({px:F1}, {py:F1})");
+        }
+
+        /// <summary>
+        /// 표 칸에 숫자 입력 연출 — {"op":"cellType","grid":"grid:0","row":0,"col":"Xmm","prop":"WorldXmm","text":"56"}.
+        /// 칸으로 커서를 옮겨 누르고, 행 항목의 속성을 한 글자씩(앞부분 숫자) 바꾼다.
+        /// </summary>
+        private async Task CellTypeAsync(JsonElement a)
+        {
+            var grid = Find(a.GetProperty("grid").GetString()!) as DataGrid;
+            int ri = a.GetProperty("row").GetInt32();
+            if (grid == null || ri >= grid.Items.Count) { Log("  ⚠ cellType: 표 · 행 없음"); return; }
+            var item = grid.Items[ri];
+            var col = grid.Columns.FirstOrDefault(c => c.Header?.ToString() == a.GetProperty("col").GetString());
+            grid.ScrollIntoView(item);
+            await Settle();
+            var cell = col?.GetCellContent(item) as FrameworkElement;
+            if (cell != null) await ClickVisual(cell, Ms(a, 600));
+            var p = item.GetType().GetProperty(a.GetProperty("prop").GetString()!);
+            if (p == null) { Log("  ⚠ cellType: 속성 없음"); return; }
+            string text = a.GetProperty("text").GetString()!;
+            int per = a.TryGetProperty("perChar", out var pc) ? pc.GetInt32() : 120;
+            for (int i = 1; i <= text.Length; i++)
+            {
+                if (double.TryParse(text[..i], NumberStyles.Float, CultureInfo.InvariantCulture, out var v)) p.SetValue(item, v);
+                await Task.Delay(per);
+            }
+            await Settle();
+        }
+
+        /// <summary>시퀀스 노드 팔레트 항목을 캔버스 at(캔버스 좌표)로 끌어다 놓기 — Canvas_Drop 과 같게 AddNode 후 위치 지정.</summary>
+        private async Task SeqAddAsync(JsonElement a)
+        {
+            var vm = SeqVm();
+            string name = a.GetProperty("palette").GetString()!;
+            var pi = vm?.PaletteItems.FirstOrDefault(p => p.DisplayName == name);
+            var canvas = Find("name:SequenceCanvas");
+            if (vm == null || pi == null || canvas == null) { Log("  ⚠ seqAdd: 팔레트 항목 · 캔버스 없음 " + name); return; }
+            var li = FindAll<ListBoxItem>(Window.GetWindow(canvas)!).FirstOrDefault(l => ReferenceEquals(l.DataContext, pi));
+            if (li != null) { li.BringIntoView(); await Settle(); await ClickVisual(li, 600); }
+            double cx = a.GetProperty("at")[0].GetDouble(), cy = a.GetProperty("at")[1].GetDouble();
+            var cr = Bounds(canvas);
+            _ghost = name;
+            await MoveTo(new Point(cr.X + cx, cr.Y + cy), Ms(a, 1000));
+            _ghost = null;
+            _clickT = Now(); _clickP = _cur;
+            vm.AddNodeCommand.Execute(pi);
+            var last = vm.Nodes.LastOrDefault();
+            if (last != null && last.Name == pi.DisplayName) { last.X = cx - 60; last.Y = cy - 20; }
+            if (a.TryGetProperty("name", out var nn) && last != null) last.Name = nn.GetString()!;
+            await Settle();
+            SeqRefreshEdges();
+        }
+
+        /// <summary>노드 우클릭 → "연결 시작" → 대상 노드 클릭 (StartConnection · CompleteConnection 명령).</summary>
+        private async Task SeqConnectAsync(JsonElement a)
+        {
+            var vm = SeqVm();
+            var from = SeqNode(a.GetProperty("from").GetString()!);
+            var to = SeqNode(a.GetProperty("to").GetString()!);
+            if (vm == null || from == null || to == null) { Log("  ⚠ seqConnect: 노드 없음"); return; }
+            var fe = SeqNodeEl(from); var te = SeqNodeEl(to);
+            if (fe == null || te == null) { Log("  ⚠ seqConnect: 노드 요소 없음"); return; }
+            await ClickVisual(fe, Ms(a, 600));
+            foreach (var n in vm.Nodes) n.IsSelected = false;
+            from.IsSelected = true; vm.SelectedNode = from;
+            if (fe.ContextMenu != null)
+            {
+                var mv = new MenuView { Context = fe.ContextMenu, Owner = fe, TopLeft = new Point(_cur.X + 2, _cur.Y + 2), Width = 200,
+                    Items = fe.ContextMenu.Items.Cast<object>().ToList() };
+                _menu = mv; _menuHover = -1;
+                await Task.Delay(a.TryGetProperty("show", out var shw) ? (int)(shw.GetDouble() * 1000) : 500);
+                var lay = MenuLayout();
+                int idx = lay.FindIndex(l => l.Item is MenuItem m && HeaderText(m) == "연결 시작");
+                if (idx >= 0)
+                {
+                    await MoveTo(new Point(lay[idx].R.X + 60, lay[idx].R.Y + lay[idx].R.Height / 2), 450);
+                    _menuHover = idx; await Task.Delay(350);
+                    _clickT = Now(); _clickP = _cur; await Task.Delay(180);
+                }
+                _menu = null; _menuHover = -1;
+            }
+            vm.StartConnectionCommand.Execute(from);
+            await Settle();
+            if (a.TryGetProperty("pause", out var pz)) await Task.Delay((int)(pz.GetDouble() * 1000));
+            var r0 = Bounds(fe);
+            _lineBrush = new SolidColorBrush(Color.FromRgb(0xFF, 0xD7, 0x00));
+            _lineFrom = new Point(r0.X + r0.Width / 2, r0.Y + r0.Height / 2);
+            var r1 = Bounds(te);
+            await MoveTo(new Point(r1.X + r1.Width / 2, r1.Y + r1.Height / 2), Ms(a, 900));
+            await Task.Delay(150);
+            _clickT = Now(); _clickP = _cur;
+            _lineFrom = null;
+            vm.CompleteConnectionCommand.Execute(to);
+            await Settle();
+            SeqRefreshEdges();
+            Log($"  seqConnect {from.Name} → {to.Name}: 연결 {vm.Edges.Count}개 · {vm.StatusMessage}");
         }
 
         private static Brush LineBrushOf(ConnectionType type) => type switch
@@ -1373,6 +1603,7 @@ namespace VMS.VisionSetup.Capture
                     return FindAll<Controls.HelpIcon>(root).Where(Vis).ElementAtOrDefault(0) is null ? null
                         : FindAll<Controls.HelpIcon>(root).Where(Vis).Where(h => h.ToolType == parts[0] && (parts.Length == 1 ? string.IsNullOrEmpty(h.ParameterName) : h.ParameterName == parts[1])).ElementAtOrDefault(idx);
                 }
+                case "snode": return FindAll<FrameworkElement>(root).FirstOrDefault(e => e.Name == "NodeBorder" && e.DataContext is SequenceNodeItem sn && sn.Name == key && Vis(e));   // 시퀀스 캔버스 노드
                 case "close": return FindAll<ButtonBase>(root).Where(Vis).FirstOrDefault(b => ReferenceEquals(b.Command, SystemCommands.CloseWindowCommand));   // 맨 위 창의 제목 표시줄 닫기 버튼
             }
             IEnumerable<FrameworkElement> all = FindAll<FrameworkElement>(root).Where(Vis);
@@ -1521,8 +1752,20 @@ namespace VMS.VisionSetup.Capture
                 window.ShowDialog();
                 return loaded;
             }
-            public void ShowSequenceEditorDialog(IEnumerable<Services.SequenceDeviceEntry>? extraDevices = null) => _inner.ShowSequenceEditorDialog(extraDevices);
-            public void ShowCalibrationManagerDialog() => _inner.ShowCalibrationManagerDialog();
+            private object? Inner(string n) => _inner.GetType().GetField(n, BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(_inner);
+            public void ShowSequenceEditorDialog(IEnumerable<Services.SequenceDeviceEntry>? extraDevices = null)
+            {
+                // DialogService 와 같되 창 안의 가져오기 · 내보내기가 이 래퍼(경로 주입)를 쓰게 한다
+                if (Inner("_recipeService") is not Interfaces.IRecipeService rs || Inner("_cameraService") is not Interfaces.ICameraService cs)
+                { _inner.ShowSequenceEditorDialog(extraDevices); return; }
+                new Views.Sequence.SequenceEditorWindow(rs, cs, this, extraDevices) { Owner = Application.Current.MainWindow }.ShowDialog();
+            }
+            public void ShowCalibrationManagerDialog()
+            {
+                // 캘리브레이션 창의 Load Image... 가 이 래퍼(경로 주입)를 쓰게 한다
+                if (Inner("_recipeService") is not Interfaces.IRecipeService rs) { _inner.ShowCalibrationManagerDialog(); return; }
+                new Views.Calibration.CalibrationManagerWindow(rs, this) { Owner = Application.Current.MainWindow }.ShowDialog();
+            }
             public RecipeTemplate? ShowTemplateGalleryDialog() => _inner.ShowTemplateGalleryDialog();
             public Dictionary<string, string>? ShowCameraRemapDialog(IReadOnlyList<(string oldId, int stepCount)> unregistered,
                 IReadOnlyList<VMS.Camera.Models.CameraInfo> cameras) => _inner.ShowCameraRemapDialog(unregistered, cameras);
