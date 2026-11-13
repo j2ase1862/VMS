@@ -267,6 +267,30 @@ namespace VMS.Core.Tests.Backup
             Assert.False(File.Exists(Path.Combine(_restoreDir, "audit", "2026-05-29.jsonl")));
         }
 
+        [Fact]
+        public void RestoreBackup_AuditDayAlreadyPresent_IsNotOverwritten()
+        {
+            // 백업 뒤에 같은 날짜 파일에 쌓인 기록(그 백업을 만든 기록 포함)이 복원으로 사라지면 안 됨.
+            Seed("audit/2026-05-29.jsonl", "{\"a\":\"before-backup\"}\n");
+            Seed("audit/2026-05-28.jsonl", "{\"a\":\"old-day\"}\n");
+            BackupRestoreService.CreateBackup(_sourceDir, _backupZip,
+                new BackupOptions { IncludeAudit = true });
+
+            var auditDir = Path.Combine(_restoreDir, "audit");
+            Directory.CreateDirectory(auditDir);
+            var todayLog = "{\"a\":\"before-backup\"}\n{\"a\":\"BackupCreated\"}\n{\"a\":\"after-backup\"}\n";
+            File.WriteAllText(Path.Combine(auditDir, "2026-05-29.jsonl"), todayLog);
+
+            var result = BackupRestoreService.RestoreBackup(_backupZip, _restoreDir,
+                new RestoreOptions { Overwrite = true, RestoreAudit = true });
+
+            Assert.True(result.Success);
+            Assert.Equal(todayLog, File.ReadAllText(Path.Combine(auditDir, "2026-05-29.jsonl")));  // 그대로
+            Assert.Equal("{\"a\":\"old-day\"}\n", File.ReadAllText(Path.Combine(auditDir, "2026-05-28.jsonl")));  // 없던 날짜는 되살림
+            Assert.Equal(1, result.FilesRestored);
+            Assert.Equal(1, result.FilesSkipped);
+        }
+
         // ─── Manifest 메타데이터 ──────────────────────────────────
 
         [Fact]

@@ -53,7 +53,11 @@ namespace VMS.Core.Backup
         /// <summary>대상 디렉토리에 이미 있는 파일을 덮어쓸지. false 면 충돌 시 skip + 카운트.</summary>
         public bool Overwrite { get; init; } = true;
 
-        /// <summary>audit/ 도 복원할지. 백업에 포함되어 있을 때만 의미 있음.</summary>
+        /// <summary>
+        /// audit/ 도 복원할지. 백업에 포함되어 있을 때만 의미 있음.
+        /// 감사 로그는 쌓기만 하는 기록이라 대상에 이미 있는 날짜 파일은 <see cref="Overwrite"/> 와 무관하게
+        /// 덮어쓰지 않고, 대상에 없는 날짜만 되살린다.
+        /// </summary>
         public bool RestoreAudit { get; init; } = true;
     }
 
@@ -349,15 +353,17 @@ namespace VMS.Core.Backup
 
                 int restored = 0;
                 int skipped = 0;
+                int auditKept = 0;
 
                 foreach (var entry in archive.Entries)
                 {
                     if (entry.FullName == ManifestEntryName) continue;
                     if (string.IsNullOrEmpty(entry.Name)) continue;  // pure directory entry
 
+                    bool isAudit = entry.FullName.StartsWith("audit/", StringComparison.OrdinalIgnoreCase);
+
                     // audit/ skip 옵션
-                    if (entry.FullName.StartsWith("audit/", StringComparison.OrdinalIgnoreCase)
-                        && !options.RestoreAudit)
+                    if (isAudit && !options.RestoreAudit)
                     {
                         skipped++;
                         continue;
@@ -372,6 +378,15 @@ namespace VMS.Core.Backup
                             AuditCategory.Security, "BackupEntryRejected", AuditOutcome.Denied,
                             source: nameof(BackupRestoreService),
                             details: $"Entry={entry.FullName} escapes target — skipped");
+                        skipped++;
+                        continue;
+                    }
+
+                    // 감사 로그는 쌓기만 하는 기록 — 이미 있는 날짜 파일을 백업 시점 내용으로 덮으면
+                    // 백업 뒤에 남은 기록(그 백업을 만든 기록까지)이 사라진다. 없는 날짜만 되살린다.
+                    if (isAudit && File.Exists(destPath))
+                    {
+                        auditKept++;
                         skipped++;
                         continue;
                     }
@@ -395,7 +410,7 @@ namespace VMS.Core.Backup
                 AuditLogger.Instance.Log(
                     AuditCategory.Configuration, "BackupRestored", AuditOutcome.Success,
                     source: nameof(BackupRestoreService),
-                    details: $"Path={zipPath}, Restored={restored}, Skipped={skipped}, ManifestVersion={manifest!.SchemaVersion}, Created={manifest.CreatedAtUtc:o}");
+                    details: $"Path={zipPath}, Restored={restored}, Skipped={skipped}, AuditKeptExisting={auditKept}, ManifestVersion={manifest!.SchemaVersion}, Created={manifest.CreatedAtUtc:o}");
 
                 return new RestoreResult
                 {
