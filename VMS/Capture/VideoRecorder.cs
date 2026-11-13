@@ -443,7 +443,9 @@ namespace VMS.Capture
                     }
                     case "set":
                     {
-                        object target = a.TryGetProperty("on", out var on) && on.GetString() == "cam" ? Cam(a) : _vm;
+                        // on: "cam" = 카메라 VM, "win" = 맨 위에 뜬 창의 DataContext, 없으면 메인 VM
+                        string onv = a.TryGetProperty("on", out var on) ? on.GetString() ?? "" : "";
+                        object target = onv == "cam" ? Cam(a) : onv == "win" ? (OverWindows().LastOrDefault()?.DataContext ?? _vm) : _vm;
                         if (a.TryGetProperty("target", out var stg)) await ClickVisual(Find(stg.GetString()!), Ms(a, 700));
                         foreach (var p in a.GetProperty("values").EnumerateObject())
                             SetProp(target, p.Name, p.Value);
@@ -483,6 +485,70 @@ namespace VMS.Capture
                         await ClickVisual(fe, Ms(a, 700));
                         var ti = fe as TabItem ?? (fe != null ? FindAncestor<TabItem>(fe) : null);
                         if (ti != null) ti.IsSelected = true; else Log("  탭 없음");
+                        await Settle();
+                        break;
+                    }
+                    case "type":
+                    {
+                        // 글자 칸에 한 글자씩 입력 연출 — TextBox.Text 를 바꾸고 바인딩을 원본으로 밀어 넣는다
+                        var fe = Find(a.GetProperty("target").GetString()!);
+                        await ClickVisual(fe, Ms(a, 700));
+                        if (fe is not TextBox tb) { Log("  글자 칸 아님: " + a.GetProperty("target").GetString()); break; }
+                        string text = a.GetProperty("text").GetString()!;
+                        int per = a.TryGetProperty("perChar", out var pc) ? pc.GetInt32() : 45;
+                        tb.Text = "";
+                        for (int i = 1; i <= text.Length; i++)
+                        {
+                            tb.Text = text[..i];
+                            tb.CaretIndex = i;
+                            await Task.Delay(per);
+                        }
+                        tb.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
+                        await Settle();
+                        break;
+                    }
+                    case "combo":
+                    {
+                        // 콤보 상자 항목 고르기 — 항목 글자(ToString / 표시 경로)로
+                        var fe = Find(a.GetProperty("target").GetString()!);
+                        await ClickVisual(fe, Ms(a, 700));
+                        var cb = fe as ComboBox ?? (fe != null ? FindAncestor<ComboBox>(fe) : null);
+                        if (cb == null) { Log("  콤보 아님: " + a.GetProperty("target").GetString()); break; }
+                        string want = a.GetProperty("item").GetString()!;
+                        object? hit = null;
+                        foreach (var it in cb.Items)
+                        {
+                            string s = it?.ToString() ?? "";
+                            if (!string.IsNullOrEmpty(cb.DisplayMemberPath))
+                                s = it?.GetType().GetProperty(cb.DisplayMemberPath)?.GetValue(it)?.ToString() ?? s;
+                            if (s == want) { hit = it; break; }
+                        }
+                        if (hit == null) Log($"  콤보 항목 없음: {want} — " + string.Join(", ", cb.Items.Cast<object>().Select(o => o?.ToString())));
+                        else cb.SelectedItem = hit;
+                        await Settle();
+                        break;
+                    }
+                    case "touch":
+                    {
+                        // 파일을 같은 내용으로 다시 쓴다 — 외부 프로그램(VisionSetup)의 저장을 대신해 파일 감시를 깨운다
+                        string p = a.GetProperty("path").GetString()!;
+                        var bytes = File.ReadAllBytes(p);
+                        File.WriteAllBytes(p, bytes);
+                        File.SetLastWriteTime(p, DateTime.Now);
+                        Log("  touch: " + p);
+                        await Task.Delay(400);
+                        await Settle();
+                        break;
+                    }
+                    case "gridShow":
+                    {
+                        // 표(grid:n)에서 속성 값이 그 글자인 항목까지 스크롤 — 아래쪽에 숨은 행을 보이게 한다
+                        var grid = Find(a.GetProperty("target").GetString()!) as DataGrid;
+                        string want = a.GetProperty("text").GetString()!;
+                        var item = grid?.Items.Cast<object>().FirstOrDefault(o => o != null && o.GetType().GetProperties()
+                            .Any(p => p.GetIndexParameters().Length == 0 && p.PropertyType == typeof(string) && (p.GetValue(o) as string) == want));
+                        if (grid == null || item == null) { Log("  gridShow 대상 없음: " + want); break; }
+                        grid.ScrollIntoView(item);
                         await Settle();
                         break;
                     }
@@ -590,6 +656,12 @@ namespace VMS.Capture
                     break;
                 case ListBoxItem li: li.IsSelected = true; break;
                 case TreeViewItem tvi: tvi.IsSelected = true; break;
+                case DataGridRow dgr:
+                {
+                    var grid = FindAncestor<DataGrid>(dgr);
+                    if (grid != null) grid.SelectedItem = dgr.Item; else dgr.IsSelected = true;
+                    break;
+                }
             }
             await Settle();
             await Task.Delay(120);
@@ -620,6 +692,7 @@ namespace VMS.Capture
                 var t when t == typeof(int) => v.GetInt32(),
                 var t when t == typeof(double) => v.GetDouble(),
                 var t when t == typeof(string) => v.GetString(),
+                var t when t == typeof(DateTime) || t == typeof(DateTime?) => DateTime.Parse(v.GetString()!, CultureInfo.InvariantCulture),
                 var t when t.IsEnum => Enum.Parse(t, v.GetString()!),
                 _ => null,
             };
@@ -696,6 +769,20 @@ namespace VMS.Capture
                 return ItemContainer(root, _vm.Dashboard.NgImageHistory, int.TryParse(key, out var ni) ? ni : 0, null);
             if (kind == "recipeitem")  // 설정 패널 레시피 목록의 그 이름 행
                 return ItemContainer(root, _vm.RecipeList, -1, o => o is VMS.VisionSetup.Models.RecipeInfo ri && ri.Name == key);
+            if (kind == "combo")       // n 번째 보이는 콤보 상자 (0 부터)
+                return FindAll<ComboBox>(root).Where(r => r.ActualWidth > 0 && IsShown(r)).ElementAtOrDefault(int.TryParse(key, out var ci) ? ci : 0);
+            if (kind == "textbox")     // n 번째 보이는 글자 칸 (0 부터)
+                return FindAll<TextBox>(root).Where(r => r.ActualWidth > 0 && IsShown(r)).ElementAtOrDefault(int.TryParse(key, out var xi) ? xi : 0);
+            if (kind == "dgrow")       // "g|글자" — g 번째 보이는 표에서 그 글자가 든 행
+            {
+                var parts = key.Split('|', 2);
+                var grid = FindAll<DataGrid>(root).Where(r => r.ActualWidth > 0 && IsShown(r)).ElementAtOrDefault(int.Parse(parts[0]));
+                return grid == null ? null : FindAll<DataGridRow>(grid).FirstOrDefault(r => r.ActualWidth > 0 && IsShown(r) && FindAll<TextBlock>(r).Any(t => t.Text == parts[1]));
+            }
+            if (kind == "grid")        // n 번째 보이는 표
+                return FindAll<DataGrid>(root).Where(r => r.ActualWidth > 0 && IsShown(r)).ElementAtOrDefault(int.TryParse(key, out var gdi) ? gdi : 0);
+            if (kind == "gridrow")     // 표의 n 번째 보이는 행 (0 부터)
+                return FindAll<DataGridRow>(root).Where(r => r.ActualWidth > 0 && IsShown(r)).ElementAtOrDefault(int.TryParse(key, out var gi) ? gi : 0);
             if (kind == "row")
                 return FindAll<DataGridRow>(root).FirstOrDefault(r => r.ActualWidth > 0 && IsShown(r) && FindAll<TextBlock>(r).Any(t => t.Text == key));
             IEnumerable<FrameworkElement> all = FindAll<FrameworkElement>(root).Where(e => e.ActualWidth > 0 && IsShown(e));
@@ -777,6 +864,8 @@ namespace VMS.Capture
                     {
                         TextBlock tb => "text=" + (string.IsNullOrEmpty(tb.Text) ? InlineText(tb) : tb.Text),
                         ButtonBase b => $"button cmd={(b.Command != null)} auto={System.Windows.Automation.AutomationProperties.GetName(b)} tip={ToolTipText(b)}",
+                        TextBox tbx => $"textbox={tbx.Text} tip={ToolTipText(tbx)}",
+                        ComboBox cbx => $"combo={cbx.SelectedItem} n={cbx.Items.Count}",
                         _ when !string.IsNullOrEmpty(e.Name) => "name=" + e.Name,
                         _ => null,
                     };
