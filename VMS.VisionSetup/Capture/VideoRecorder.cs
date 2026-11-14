@@ -692,7 +692,9 @@ namespace VMS.VisionSetup.Capture
                         // top:true 면 대상이 감싼 ScrollViewer 맨 위(여백 offset)로 오게 스크롤 — 아니면 BringIntoView
                         var fe = Find(a.GetProperty("target").GetString()!);
                         if (fe == null) break;
-                        if (a.TryGetProperty("top", out var tp) && tp.GetBoolean() && FindAncestor<ScrollViewer>(fe) is ScrollViewer sv)
+                        if (a.TryGetProperty("end", out var se) && se.GetBoolean() && FindAncestor<ScrollViewer>(fe) is ScrollViewer sve)
+                            sve.ScrollToEnd();   // end:true — 대상이 든 목록을 맨 아래로(대화 창 등)
+                        else if (a.TryGetProperty("top", out var tp) && tp.GetBoolean() && FindAncestor<ScrollViewer>(fe) is ScrollViewer sv)
                         {
                             double off = a.TryGetProperty("offset", out var of) ? of.GetDouble() : 8;
                             double y = fe.TransformToAncestor(sv).Transform(new Point(0, 0)).Y;
@@ -1021,7 +1023,7 @@ namespace VMS.VisionSetup.Capture
                         var w = OverWindows().LastOrDefault();
                         if (w == null) { Log("  ⚠ winSize: 창 없음"); break; }
                         w.Width = a.GetProperty("w").GetDouble(); w.Height = a.GetProperty("h").GetDouble();
-                        w.Left = _win.Left + (W - w.Width) / 2;
+                        w.Left = _win.Left + (a.TryGetProperty("left", out var wl) ? wl.GetDouble() : (W - w.Width) / 2);   // left: 옆에 붙여 작업 공간이 보이게
                         w.Top = _win.Top + (a.TryGetProperty("top", out var wt) ? wt.GetDouble() : Math.Max(0, (H - w.Height) / 2));   // top: 자막 자리(아래)를 피해 위로
                         await Settle();
                         Log($"  winSize {w.GetType().Name} {w.Width}x{w.Height}");
@@ -1034,8 +1036,37 @@ namespace VMS.VisionSetup.Capture
                         {
                             object? v = dc;
                             foreach (var part in n.GetString()!.Split('.')) v = v?.GetType().GetProperty(part)?.GetValue(v);
-                            Log($"  win {n.GetString()} = {v}");
+                            if (v is System.Collections.IEnumerable list && v is not string)   // 목록(대화 메시지 등) — 항목마다 한 줄, 줄바꿈은 ⏎
+                            {
+                                int k = 0;
+                                foreach (var item in list)
+                                {
+                                    object? c = item?.GetType().GetProperty("Content")?.GetValue(item) ?? item;
+                                    Log($"  win {n.GetString()}[{k++}] = {c?.ToString()?.Replace("\r", "").Replace("\n", " ⏎ ")}");
+                                }
+                                if (k == 0) Log($"  win {n.GetString()} = (비어 있음)");
+                            }
+                            else Log($"  win {n.GetString()} = {v}");
                         }
+                        break;
+                    }
+                    case "waitWin":
+                    {
+                        // 맨 위 창 VM 속성이 그 값이 될 때까지 기다린다 — 비동기 명령(응답 생성 등)이 끝나길 기다리는 용도. 걸린 시간은 로그에
+                        string prop = a.GetProperty("prop").GetString()!;
+                        string want = a.GetProperty("value").ToString();
+                        var sw = Stopwatch.StartNew();
+                        string? cur = null;
+                        while (sw.ElapsedMilliseconds < Ms(a, 10000))
+                        {
+                            object? dc = WinVm();
+                            cur = dc?.GetType().GetProperty(prop)?.GetValue(dc)?.ToString();
+                            if (string.Equals(cur, want, StringComparison.OrdinalIgnoreCase)) break;
+                            await Task.Delay(50);
+                        }
+                        bool ok = string.Equals(cur, want, StringComparison.OrdinalIgnoreCase);
+                        Log($"  waitWin {prop}={want}: {(ok ? "OK" : "⚠ 시간 초과")} {sw.ElapsedMilliseconds} ms");
+                        await Settle();
                         break;
                     }
                     case "dblclick":
@@ -1291,8 +1322,11 @@ namespace VMS.VisionSetup.Capture
 
         // ───────────────────────── 도구 · ROI · 연결 ─────────────────────────
 
+        // "type:BlobTool" = 그 종류의 첫 도구 — 이름을 녹화 중에 정하는 경우(SLM 봇이 만든 도구 등)
         private ToolItem Tool(string name) =>
-            _vm.DroppedTools.FirstOrDefault(t => t.Name == name) ?? throw new InvalidOperationException("도구 없음: " + name);
+            (name.StartsWith("type:", StringComparison.Ordinal)
+                ? _vm.DroppedTools.FirstOrDefault(t => t.ToolType == name[5..])
+                : _vm.DroppedTools.FirstOrDefault(t => t.Name == name)) ?? throw new InvalidOperationException("도구 없음: " + name);
 
         private FrameworkElement? NodeOf(ToolItem item) =>
             FindAll<FrameworkElement>(Root).FirstOrDefault(e => e.Name == "ToolOuterBorder" && ReferenceEquals(e.DataContext, item) && e.ActualWidth > 0);
@@ -1702,7 +1736,9 @@ namespace VMS.VisionSetup.Capture
             string kind = spec[..colon], key = spec[(colon + 1)..];
             if (kind == "tool")
             {
-                var ti = _vm.DroppedTools.FirstOrDefault(t => t.Name == key);
+                var ti = key.StartsWith("type:", StringComparison.Ordinal)   // tool:type:BlobTool — 그 종류의 첫 도구
+                    ? _vm.DroppedTools.FirstOrDefault(t => t.ToolType == key[5..])
+                    : _vm.DroppedTools.FirstOrDefault(t => t.Name == key);
                 if (ti == null) { if (!quiet) Log("  찾기 실패 " + spec + ": 도구 없음"); return null; }
                 return NodeOf(ti);
             }
