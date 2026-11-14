@@ -1221,6 +1221,8 @@ namespace VMS.VisionSetup.Capture
                 return;
             }
             object hitObj = fe.Name == "PART_Header" && FindAncestor<TreeViewItem>(fe) is TreeViewItem hdrOwner ? hdrOwner : fe;   // tvi: 는 머리글 줄을 돌려준다
+            if (fe is TextBlock && FindAncestor<ToggleButton>(fe) is ToggleButton expHdr && FindAncestor<Expander>(expHdr) != null)
+                hitObj = expHdr;   // 접힌 설정 묶음(Expander) 머리글 글자 — 머리글 토글로 펼침 · 접음
             switch (hitObj)
             {
                 case TabItem ti: ti.IsSelected = true; break;
@@ -1326,6 +1328,34 @@ namespace VMS.VisionSetup.Capture
 
         private async Task DrawRoiAsync(JsonElement a)
         {
+            if (a.TryGetProperty("circle", out var cc))
+            {
+                // 원 ROI (Circle Fit) — 중심을 누르고 반지름만큼 끌어 넓힘. circle: [cx, cy, r]
+                double cx = cc[0].GetDouble(), cy = cc[1].GetDouble(), rad = cc[2].GetDouble();
+                if (a.TryGetProperty("target", out var ctg)) await ClickVisual(Find(ctg.GetString()!));
+                _vm.SelectedDisplayMode = ImageDisplayMode.OriginalImage;
+                await Settle();
+                await MoveTo(ImagePoint(cx, cy), 700);
+                _clickT = Now(); _clickP = _cur;
+                var circ = new CircleROI(cx, cy, 1) { Name = $"{_vm.SelectedTool?.Name} ROI", ShowSearchArrow = true };
+                WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(circ));
+                int cms = Ms(a, 1200);
+                var csw = Stopwatch.StartNew();
+                while (true)
+                {
+                    double k = Math.Min(1, csw.ElapsedMilliseconds / (double)cms);
+                    double e = k < .5 ? 2 * k * k : 1 - Math.Pow(-2 * k + 2, 2) / 2;
+                    circ.Radius = Math.Max(1, rad * e);
+                    WeakReferenceMessenger.Default.Send(new RequestRefreshROIMessage(circ));
+                    _cur = ImagePoint(cx + circ.Radius, cy);
+                    if (k >= 1) break;
+                    await Task.Delay(15);
+                }
+                _vm.OnROICreated(circ);
+                WeakReferenceMessenger.Default.Send(new RequestShowToolROIMessage(circ));
+                await Settle();
+                return;
+            }
             var r = a.GetProperty("rect");
             double x = r[0].GetDouble(), y = r[1].GetDouble(), w = r[2].GetDouble(), h = r[3].GetDouble();
             bool affine = a.TryGetProperty("affine", out var af) && af.GetBoolean();
