@@ -1182,7 +1182,7 @@ namespace VMS.VisionSetup.ViewModels
             if (_chatService == null)
             {
                 _dialogService.ShowWarning(
-                    "SLM Chat 서비스가 초기화되지 않았습니다.\nOllama가 설치되어 있는지 확인하세요.",
+                    "SLM Chat 서비스가 초기화되지 않았습니다.\n이 PC 에 로컬 언어 모델 서버가 설치되어 있는지 확인하세요.",
                     "SLM Chat");
                 return;
             }

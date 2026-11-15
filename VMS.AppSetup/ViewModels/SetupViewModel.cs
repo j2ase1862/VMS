@@ -1158,7 +1158,7 @@ namespace VMS.AppSetup.ViewModels
 
                 var msg = $"설정이 저장되었습니다.\n\n저장 위치: {_configService.ConfigFilePath}";
                 if (seededAdmin)
-                    msg += "\n\n✓ admin 계정 초기 시드 완료.";
+                    msg += "\n\n✓ admin 계정 생성 완료.";
                 else if (adminAlreadyExists)
                     msg += "\n\n⚠ admin 계정이 이미 존재하여 입력한 비밀번호는 적용되지 않았습니다." +
                            "\n   비밀번호 변경은 VMS 로그인 후 [사용자 관리]에서," +
