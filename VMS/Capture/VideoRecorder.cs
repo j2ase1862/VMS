@@ -69,6 +69,9 @@ namespace VMS.Capture
         private RecordingDialogService? _dlg;
         // 마지막 saveAs 로 만든 파일 — set 의 문자열 값 "$lastSaveAs" 로 받아 쓴다 (방금 만든 백업 ZIP 을 복원 파일로 고르는 장면)
         private string? _lastSaveAs;
+        // 지금 구간 — at 동작(내레이션 f 지점까지 대기)이 쓴다
+        private string? _segId;
+        private double _segT0;
 
         private VideoRecorder(Window win, MainViewModel vm, string outDir, Dictionary<string, double> durs)
         {
@@ -395,6 +398,7 @@ namespace VMS.Capture
                         string id = a.GetProperty("id").GetString()!;
                         double t0 = Now();
                         _marks.Add((id, t0));
+                        _segId = id; _segT0 = t0;
                         Log($"[{id}] start");
                         if (a.TryGetProperty("do", out var list))
                             foreach (var x in list.EnumerateArray()) await DoAsync(x);
@@ -404,6 +408,16 @@ namespace VMS.Capture
                         break;
                     }
                     case "wait": await Task.Delay(TimeSpan.FromSeconds(a.GetProperty("s").GetDouble())); break;
+                    case "at":
+                    {
+                        // 이 구간 내레이션의 f 지점(0~1)까지 기다린다 — 자막 문장과 화면 동작을 맞춘다 (VisionSetup 녹화기와 같음). 이미 지났으면 바로
+                        if (_segId != null && _durs.TryGetValue(_segId, out var sd))
+                        {
+                            double left = _segT0 + a.GetProperty("f").GetDouble() * sd - Now();
+                            if (left > 0) await Task.Delay(TimeSpan.FromSeconds(left));
+                        }
+                        break;
+                    }
                     case "move": await MoveTo(ResolvePoint(a), Ms(a, 700)); break;
                     case "click": await ClickAsync(a); break;
                     case "hl":
