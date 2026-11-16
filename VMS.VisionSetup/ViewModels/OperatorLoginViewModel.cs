@@ -48,8 +48,9 @@ namespace VMS.VisionSetup.ViewModels
                 }
                 else
                 {
+                    // PIN 을 먼저 비운다 — OnPinChanged 가 오류 문구를 지우므로, 문구는 그 뒤에 넣어야 남는다 (VM-32)
+                    Pin = "";  // PIN 클리어 (화면 PIN 칸은 대화상자가 이 변경을 보고 비운다)
                     ErrorMessage = error ?? "로그인 실패";
-                    Pin = "";  // PIN 클리어
                 }
             }
             finally
