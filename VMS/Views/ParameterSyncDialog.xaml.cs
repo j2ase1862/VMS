@@ -69,6 +69,12 @@ namespace VMS.Views
         {
             dgParameters.ItemsSource = items;
             txtItemCount.Text = $"{items.Count} parameters";
+
+            // Web 동기화 응답은 규격 노출을 줄이려 분류를 보내지 않는다 — 늘 빈 칸이던 Category 열은
+            // 값이 하나라도 있을 때만 보인다 (VM-36)
+            colCategory.Visibility = items.Any(i => !string.IsNullOrWhiteSpace(i.Category))
+                ? Visibility.Visible
+                : Visibility.Collapsed;
         }
 
         private async void CboRecipes_SelectionChanged(object sender, SelectionChangedEventArgs e)
