@@ -193,5 +193,41 @@ namespace VMS.Tests.ViewModels
             Assert.True(vm.IsInspected);
             Assert.Equal("No image to inspect", vm.ResultMessage);
         }
+
+        [Fact]
+        public async Task ManualInspect_DoesNotCountAsProduction()
+        {
+            // 수동 [Inspect] 는 레시피 확인용 — 판정 배지는 바뀌지만 검사 수 · 생산 집계 이벤트는 없어야 한다
+            var vm = MakeVm(new FakeAcquisition());
+            int production = 0, manual = 0;
+            vm.InspectionCompleted += (_, _, _, _, _, _) => production++;
+            vm.ManualInspectionCompleted += (_, _) => manual++;
+
+            await vm.ManualInspectCommand.ExecuteAsync(null);
+
+            Assert.True(vm.IsInspected);
+            Assert.Equal(0, vm.InspectionCount);
+            Assert.Equal(0, vm.FailCount);
+            Assert.Equal(0, production);
+            Assert.Equal(1, manual);
+        }
+
+        [Fact]
+        public async Task InspectForProduction_CountsAndRaisesInspectionCompleted()
+        {
+            // AUTO RUN 경로 — 판정이 검사 수와 생산 집계 이벤트로 이어져야 한다
+            var vm = MakeVm(new FakeAcquisition());
+            int production = 0, manual = 0;
+            vm.InspectionCompleted += (_, _, _, _, _, _) => production++;
+            vm.ManualInspectionCompleted += (_, _) => manual++;
+
+            await vm.InspectForProductionAsync();
+
+            Assert.False(vm.InspectionOk);
+            Assert.Equal(1, vm.InspectionCount);
+            Assert.Equal(1, vm.FailCount);
+            Assert.Equal(1, production);
+            Assert.Equal(0, manual);
+        }
     }
 }
