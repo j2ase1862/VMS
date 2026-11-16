@@ -8,10 +8,11 @@ namespace VMS.VisionSetup.Views.BatchTest
 {
     public partial class BatchTestWindow : Window
     {
-        public BatchTestWindow(IVisionService visionService, IRecipeService recipeService, ICameraService cameraService)
+        public BatchTestWindow(IVisionService visionService, IRecipeService recipeService, ICameraService cameraService,
+            IDialogService dialogService)
         {
             InitializeComponent();
-            DataContext = new BatchTestViewModel(visionService, recipeService, cameraService);
+            DataContext = new BatchTestViewModel(visionService, recipeService, cameraService, dialogService);
             Loaded += BatchTestWindow_Loaded;
         }
 

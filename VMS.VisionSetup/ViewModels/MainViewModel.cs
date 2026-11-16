@@ -1851,19 +1851,15 @@ namespace VMS.VisionSetup.ViewModels
                 ? $"result_{DateTime.Now:yyyyMMdd_HHmmss}.png"
                 : $"original_{DateTime.Now:yyyyMMdd_HHmmss}.png";
 
-            var dlg = new Microsoft.Win32.SaveFileDialog
-            {
-                Title = "이미지 저장",
-                Filter = "PNG (*.png)|*.png|JPEG (*.jpg)|*.jpg|BMP (*.bmp)|*.bmp|TIFF (*.tif)|*.tif",
-                FileName = defaultName,
-                DefaultExt = ".png"
-            };
-            if (dlg.ShowDialog() != true) return;
+            var fileName = _dialogService.ShowSaveFileDialog("이미지 저장",
+                "PNG (*.png)|*.png|JPEG (*.jpg)|*.jpg|BMP (*.bmp)|*.bmp|TIFF (*.tif)|*.tif", ".png",
+                defaultName, null);
+            if (fileName == null) return;
 
             try
             {
-                OpenCvSharp.Cv2.ImWrite(dlg.FileName, mat);
-                StatusMessage = $"저장됨: {dlg.FileName}";
+                OpenCvSharp.Cv2.ImWrite(fileName, mat);
+                StatusMessage = $"저장됨: {fileName}";
             }
             catch (Exception ex)
             {
@@ -4165,7 +4161,7 @@ namespace VMS.VisionSetup.ViewModels
                 CodeReaderTool t => new CodeReaderToolSettingsViewModel(t),
                 DetectionTool t => new DetectionToolSettingsViewModel(t),
                 ClassifyTool t => new ClassifyToolSettingsViewModel(t),
-                AnomalyTool t => new AnomalyToolSettingsViewModel(t),
+                AnomalyTool t => new AnomalyToolSettingsViewModel(t, _dialogService),
                 EnsembleTool t => new EnsembleToolSettingsViewModel(t),
                 SegmentationTool t => new SegmentationToolSettingsViewModel(t),
                 YoloSegTool t => new YoloSegToolSettingsViewModel(t),
@@ -4174,10 +4170,10 @@ namespace VMS.VisionSetup.ViewModels
                 VisionTools.Color.ColorExtractTool t => new ColorExtractToolSettingsViewModel(t),
                 VisionTools.Color.ColorMatchTool t => new ColorMatchToolSettingsViewModel(t),
                 VisionTools.PointCloud.PointCloudFilterTool t => new PointCloudFilterToolSettingsViewModel(t),
-                VisionTools.PointCloud.PointCloudRegistrationTool t => new PointCloudRegistrationToolSettingsViewModel(t),
+                VisionTools.PointCloud.PointCloudRegistrationTool t => new PointCloudRegistrationToolSettingsViewModel(t, _dialogService),
                 VisionTools.PointCloud.PointCloudClusterTool t => new PointCloudClusterToolSettingsViewModel(t),
                 VisionTools.PointCloud.PointCloudLineFitTool t => new PointCloudLineFitToolSettingsViewModel(t),
-                VisionTools.PointCloud.PointCloudDeviationTool t => new PointCloudDeviationToolSettingsViewModel(t),
+                VisionTools.PointCloud.PointCloudDeviationTool t => new PointCloudDeviationToolSettingsViewModel(t, _dialogService),
                 VisionTools.PointCloud.PointCloudMaskCropTool t => new PointCloudMaskCropToolSettingsViewModel(t),
                 VisionTools.SurfaceAnalysis.PhotometricStereoTool t => new PhotometricStereoToolSettingsViewModel(t),
                 _ => null
@@ -4441,6 +4437,18 @@ namespace VMS.VisionSetup.ViewModels
                     "No Recipe");
             }
         }
+
+        /// <summary>배치 테스트 러너 — 폴더 이미지에 현재 레시피 일괄 적용 → CSV 리포트.</summary>
+        [RelayCommand]
+        private void OpenBatchTest() => _dialogService.ShowBatchTestDialog();
+
+        /// <summary>합성 OCR 데이터 생성기.</summary>
+        [RelayCommand]
+        private void OpenSynthData() => _dialogService.ShowSynthDataDialog();
+
+        /// <summary>추론 엔진 설정.</summary>
+        [RelayCommand]
+        private void OpenOnnxSettings() => _dialogService.ShowOnnxSettingsDialog();
 
         public void OpenRecipeManager()
         {

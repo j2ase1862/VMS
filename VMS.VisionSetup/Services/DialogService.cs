@@ -94,6 +94,72 @@ namespace VMS.VisionSetup.Services
             return dialog.ShowDialog() == true ? dialog.FileName : null;
         }
 
+        public string? ShowOpenFileDialog(string title, string filter, string? initialDirectory)
+        {
+            var dialog = new OpenFileDialog
+            {
+                Title = title,
+                Filter = filter
+            };
+            if (!string.IsNullOrWhiteSpace(initialDirectory) && System.IO.Directory.Exists(initialDirectory))
+                dialog.InitialDirectory = initialDirectory;
+            return dialog.ShowDialog() == true ? dialog.FileName : null;
+        }
+
+        public string? ShowFolderBrowserDialog(string description, string? initialDirectory)
+        {
+            var dialog = new OpenFolderDialog
+            {
+                Title = description
+            };
+            if (!string.IsNullOrWhiteSpace(initialDirectory) && System.IO.Directory.Exists(initialDirectory))
+                dialog.InitialDirectory = initialDirectory;
+            return dialog.ShowDialog() == true ? dialog.FolderName : null;
+        }
+
+        public string? ShowSaveFileDialog(string title, string filter, string defaultExt, string? fileName, string? initialDirectory)
+        {
+            var dialog = new SaveFileDialog
+            {
+                Title = title,
+                Filter = filter,
+                DefaultExt = defaultExt
+            };
+            if (fileName != null)
+                dialog.FileName = fileName;
+            if (!string.IsNullOrWhiteSpace(initialDirectory) && System.IO.Directory.Exists(initialDirectory))
+                dialog.InitialDirectory = initialDirectory;
+            return dialog.ShowDialog() == true ? dialog.FileName : null;
+        }
+
+        public void ShowBatchTestDialog()
+        {
+            var window = new Views.BatchTest.BatchTestWindow(
+                VisionService.Instance, _recipeService, _cameraService, this)
+            {
+                Owner = Application.Current.MainWindow
+            };
+            window.ShowDialog();
+        }
+
+        public void ShowSynthDataDialog()
+        {
+            var window = new Views.SynthData.SynthDataWindow(this)
+            {
+                Owner = Application.Current.MainWindow
+            };
+            window.ShowDialog();
+        }
+
+        public void ShowOnnxSettingsDialog()
+        {
+            var window = new OnnxSettingsDialog(this)
+            {
+                Owner = Application.Current.MainWindow
+            };
+            window.ShowDialog();
+        }
+
         public System.Collections.Generic.Dictionary<string, string>? ShowCameraRemapDialog(
             System.Collections.Generic.IReadOnlyList<(string oldId, int stepCount)> unregistered,
             System.Collections.Generic.IReadOnlyList<VMS.Camera.Models.CameraInfo> cameras)

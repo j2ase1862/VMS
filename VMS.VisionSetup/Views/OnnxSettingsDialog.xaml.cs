@@ -1,60 +1,21 @@
-using Microsoft.Win32;
 using System.Windows;
-using VMS.VisionSetup.Services;
-using VMS.VisionSetup.VisionTools.DeepLearning;
+using VMS.VisionSetup.Interfaces;
+using VMS.VisionSetup.ViewModels;
 
 namespace VMS.VisionSetup.Views
 {
+    /// <summary>
+    /// 추론 엔진 설정 창 — 읽기 · 저장 · 폴더 선택은 <see cref="OnnxSettingsViewModel"/> 이 한다.
+    /// 코드 비하인드는 VM 의 닫기 요청을 DialogResult 로 옮기기만 한다.
+    /// </summary>
     public partial class OnnxSettingsDialog : Window
     {
-        public OnnxSettingsDialog()
+        public OnnxSettingsDialog(IDialogService dialogService)
         {
             InitializeComponent();
-            Loaded += (_, _) => LoadCurrentSettings();
-        }
-
-        private void LoadCurrentSettings()
-        {
-            var s = OnnxSettingsService.Load();
-            ProviderComboBox.SelectedItem = s.Provider;
-            TrtCacheTextBox.Text = s.TensorRTCachePath;
-            Fp16CheckBox.IsChecked = s.TensorRTFp16;
-        }
-
-        private void BrowseButton_Click(object sender, RoutedEventArgs e)
-        {
-            var dlg = new OpenFolderDialog
-            {
-                Title = "TensorRT 엔진 캐시 폴더 선택"
-            };
-            if (!string.IsNullOrWhiteSpace(TrtCacheTextBox.Text))
-                dlg.InitialDirectory = TrtCacheTextBox.Text;
-
-            if (dlg.ShowDialog() == true)
-                TrtCacheTextBox.Text = dlg.FolderName;
-        }
-
-        private void SaveButton_Click(object sender, RoutedEventArgs e)
-        {
-            var provider = (OnnxExecutionProvider)(ProviderComboBox.SelectedItem
-                                                   ?? OnnxExecutionProvider.Auto);
-            var settings = new OnnxSettingsService.OnnxSettings(
-                provider,
-                TrtCacheTextBox.Text?.Trim() ?? string.Empty,
-                Fp16CheckBox.IsChecked == true);
-
-            try
-            {
-                OnnxSettingsService.Save(settings);
-                DialogResult = true;
-            }
-            catch (System.Exception ex)
-            {
-                Common.MessageDialog.Show(this,
-                    $"설정 저장 실패: {ex.Message}",
-                    "Inference Engine Settings",
-                    Common.MessageDialogKind.Error);
-            }
+            var vm = new OnnxSettingsViewModel(dialogService);
+            vm.CloseRequested += (_, ok) => DialogResult = ok;
+            DataContext = vm;
         }
     }
 }

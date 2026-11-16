@@ -1,4 +1,3 @@
-using Microsoft.Win32;
 using System;
 using System.Globalization;
 using System.Windows;
@@ -160,33 +159,33 @@ namespace VMS.VisionSetup.Controls
             if (picked is not null) SetCurrentValue(ValueProperty, (object)picked);
         }
 
+        /// <summary>
+        /// 파일 · 폴더 고르기 — 대화상자는 DialogService 가 연다(VS-30). 이 컨트롤은 고른 경로를 값에 넣기만 한다.
+        /// </summary>
         private void BrowseButton_Click(object sender, RoutedEventArgs e)
         {
+            var dialogs = App.Dialogs;
+            if (dialogs == null) return;
+
             string? current = Value as string;
             if (BrowseFolder)
             {
-                var dlg = new OpenFolderDialog { Title = Label ?? "폴더 선택" };
-                if (!string.IsNullOrEmpty(current) && System.IO.Directory.Exists(current))
-                    dlg.InitialDirectory = current;
-                if (dlg.ShowDialog() == true)
-                    SetCurrentValue(ValueProperty, (object)dlg.FolderName);
+                var folder = dialogs.ShowFolderBrowserDialog(Label ?? "폴더 선택", current);
+                if (folder != null)
+                    SetCurrentValue(ValueProperty, (object)folder);
                 return;
             }
 
-            var dialog = new OpenFileDialog
-            {
-                Title = Label ?? "파일 선택",
-                Filter = BrowseFilter ?? "All Files (*.*)|*.*"
-            };
-
+            string? initialDir = null;
             if (!string.IsNullOrEmpty(current))
             {
-                try { dialog.InitialDirectory = System.IO.Path.GetDirectoryName(current) ?? ""; }
+                try { initialDir = System.IO.Path.GetDirectoryName(current); }
                 catch { /* ignore */ }
             }
 
-            if (dialog.ShowDialog() == true)
-                SetCurrentValue(ValueProperty, (object)dialog.FileName);
+            var file = dialogs.ShowOpenFileDialog(Label ?? "파일 선택", BrowseFilter ?? "All Files (*.*)|*.*", initialDir);
+            if (file != null)
+                SetCurrentValue(ValueProperty, (object)file);
         }
     }
 }
