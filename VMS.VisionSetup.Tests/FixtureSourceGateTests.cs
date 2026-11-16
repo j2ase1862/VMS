@@ -140,6 +140,30 @@ namespace VMS.VisionSetup.Tests
         }
 
         [Fact]
+        public void 건너뛴_하위_도구의_LastResult_는_건너뜀으로_바뀐다()
+        {
+            // VS-01: Run All 에서 건너뛴 도구의 Run Results 행이 직전 결과(OK)를 보여 주던 문제.
+            // Run Results 는 도구의 LastResult 를 읽는다.
+            var (service, source, target) = Build();
+            try
+            {
+                service.ExecuteAll();
+                Assert.True(target.LastResult?.Success);
+
+                source.ShouldSucceed = false;
+                service.ExecuteAll();
+
+                Assert.NotNull(target.LastResult);
+                Assert.False(target.LastResult!.Success);
+                Assert.Contains("기준 위치를 주는 도구가 실패", target.LastResult.Message);
+            }
+            finally
+            {
+                service.ClearTools();
+            }
+        }
+
+        [Fact]
         public void 기준_좌표를_못_받으면_하위_도구는_실행되지_않는다()
         {
             var (service, source, target) = Build();
