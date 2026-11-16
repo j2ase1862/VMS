@@ -15,7 +15,7 @@
 <p><strong>결과 값</strong> — BlurType · KernelSize · ROI (판정 없음, 항상 성공)</p>
 <ul>
 <li>Kernel Size 는 3~7 에서 시작해 잡음이 사라질 때까지만 키우세요. 너무 크면 검사 대상의 엣지까지 흐려집니다.</li>
-<li>Use ROI 를 켜면 ROI 안쪽만 흐리게 하고 바깥은 그대로 둡니다.</li>
+<li>Use ROI 를 켜면 ROI 안쪽만 처리하고, 결과 이미지의 ROI 바깥은 검게 채워집니다. 뒤 도구도 이 결과 이미지를 받으므로 바깥이 필요하면 ROI 를 넓힙니다.</li>
 </ul>
 <h4>Morphology — 형태학 연산</h4>
 <p>이진화(또는 그레이) 이미지에 침식 · 팽창 등 형태학 연산을 적용합니다. Blob 검출 전에 작은 잡음을 지우거나, 끊어진 영역을 잇거나, 구멍을 메울 때 씁니다.</p>
@@ -31,6 +31,7 @@
 <ul>
 <li>점 모양 잡음을 지우려면 Open, 글자나 마킹의 끊김을 이으려면 Close 를 먼저 시도하세요.</li>
 <li>Threshold → Morphology → Blob 순서가 기본 구성입니다.</li>
+<li>Use ROI 를 켜면 ROI 안쪽만 처리하고, 결과 이미지의 ROI 바깥은 검게 채워집니다. 뒤 도구도 이 결과 이미지를 받으므로 바깥이 필요하면 ROI 를 넓힙니다.</li>
 </ul>
 <h4>Image Enhance — 선명도 보정</h4>
 <p>Sharpen 또는 Unsharp Mask 로 이미지 선명도를 높입니다. 흐릿한 마킹이나 작은 글자를 OCR · Code Reader 로 읽기 전에 두면 인식률이 올라갑니다.</p>
@@ -46,6 +47,7 @@
 <p><strong>결과 값</strong> — Success (판정 없음)</p>
 <ul>
 <li>인쇄 글자가 번져 보이는 라벨은 Image Enhance → OCR 로 연결해 보세요.</li>
+<li>Use ROI 를 켜면 ROI 안쪽만 처리하고, 결과 이미지의 ROI 바깥은 검게 채워집니다. 뒤 도구도 이 결과 이미지를 받으므로 바깥이 필요하면 ROI 를 넓힙니다.</li>
 </ul>
 <h4>Polar Unwrap — 극좌표 펼치기</h4>
 <p>캡 · 약병 · 파이프처럼 둥근 표면에 둘러 인쇄된 라벨을 극좌표 변환으로 직사각형 띠로 펼칩니다. 펼친 이미지를 OCR 이나 Code Reader 에 연결하면 곡면 글자를 읽을 수 있습니다.</p>
@@ -72,6 +74,7 @@
 <p><strong>결과 값</strong> — Width · Height · Channels (판정 없음, 파라미터 없음)</p>
 <ul>
 <li>컬러 정보로 검사해야 하는 도구(Color Extract · Color Match)는 이 도구 앞에서 원본 이미지를 연결하세요.</li>
+<li>Use ROI 를 켜면 ROI 안쪽만 처리하고, 결과 이미지의 ROI 바깥은 검게 채워집니다. 뒤 도구도 이 결과 이미지를 받으므로 바깥이 필요하면 ROI 를 넓힙니다.</li>
 </ul>
 <h4>Threshold — 이진화</h4>
 <p>임계값을 기준으로 이미지를 흰색(255)과 검은색(0)으로 나눕니다. 밝기 차이로 대상과 배경을 분리해 Blob 검출로 넘기는 가장 기본적인 전처리입니다. 출력 마스크는 PointCloud Mask Crop 에 연결해 3D 점군을 자를 때도 씁니다.</p>
@@ -81,14 +84,16 @@
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Threshold Value</td><td>128 [0~255] (Web 연동 가능)</td><td>이 값보다 밝은 픽셀이 흰색이 됩니다</td></tr>
 <tr><td>Max Value</td><td>255 [0~255]</td><td>흰색으로 칠할 값(보통 255)</td></tr>
+<tr><td>Threshold Type</td><td>Binary (Binary · BinaryInv · Trunc · ToZero · ToZeroInv)</td><td>이진화 방식. Binary 는 임계값보다 밝으면 흰색, <strong>BinaryInv</strong> 는 반대 — 밝은 바탕의 어두운 대상(구멍 · 글자)을 흰색으로 만들 때 씁니다. Trunc · ToZero · ToZeroInv 는 이진이 아닌 잘라내기 방식</td></tr>
 <tr><td>Use Otsu</td><td>해제</td><td>히스토그램에서 임계값을 자동으로 정합니다. 밝기 분포가 두 봉우리인 이미지에 효과적</td></tr>
 <tr><td>Use Adaptive</td><td>해제</td><td>국소 영역마다 임계값을 정합니다. 조명이 고르지 않은 이미지에 효과적</td></tr>
 <tr><td>Block Size / Constant C</td><td>11 / 2</td><td>Adaptive 전용 — 국소 블록 크기(홀수)와 평균에서 뺄 상수</td></tr>
 </table>
 <p><strong>결과 값</strong> — ThresholdValue · WhitePixelCount · WhitePixelRatio (판정 없음)</p>
 <ul>
-<li>실행 후 이미지 소스를 Result Image 로 바꾸면 이진화 결과를 바로 볼 수 있습니다. 대상이 하얗게, 배경이 검게 나오도록 값을 맞추세요.</li>
+<li>실행 후 이미지 소스를 Result Image 로 바꾸면 이진화 결과를 바로 볼 수 있습니다. 대상이 하얗게, 배경이 검게 나오도록 값을 맞추세요 — 대상이 바탕보다 어두우면 Threshold Type 을 BinaryInv 로 둡니다.</li>
 <li>조명이 가장자리에서 어두워지면 Use Adaptive 를 켜 보세요.</li>
+<li>Use ROI 를 켜면 ROI 안쪽만 처리하고, 결과 이미지의 ROI 바깥은 검게 채워집니다. 뒤 도구도 이 결과 이미지를 받으므로 바깥이 필요하면 ROI 를 넓힙니다.</li>
 </ul>
 <h4>Edge Detection — 에지 검출</h4>
 <p>이미지에서 경계선(에지)만 남깁니다. 윤곽 형상 분석이나 직선 · 원 피팅의 전처리로 씁니다.</p>
@@ -98,12 +103,13 @@
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Method</td><td>Canny (Canny · Sobel · Scharr · Laplacian)</td><td>Canny 가 가장 범용. Sobel · Scharr 는 방향성 1 차 미분, Laplacian 은 2 차 미분</td></tr>
 <tr><td>Canny Threshold 1 / 2</td><td>50 / 150 [0~255]</td><td>낮은 임계(에지 연결) / 높은 임계(강한 에지 판정)</td></tr>
-<tr><td>Aperture Size</td><td>3 [3~7]</td><td>Sobel 커널 크기</td></tr>
+<tr><td>Aperture Size</td><td>3 [3~7]</td><td>Canny 가 밝기 기울기를 계산할 때 쓰는 커널 크기(3 · 5 · 7). Sobel · Scharr 의 커널 크기는 화면에서 바꾸지 않습니다</td></tr>
 <tr><td>L2 Gradient</td><td>해제</td><td>더 정확한 L2 노름 사용(느림)</td></tr>
 </table>
 <p><strong>결과 값</strong> — EdgePixelCount · EdgePixelRatio (판정 없음)</p>
 <ul>
 <li>Threshold 2 를 올리면 약한 에지가 사라지고, Threshold 1 을 내리면 끊긴 에지가 이어집니다. 보통 1:2~1:3 비율로 둡니다.</li>
+<li>Use ROI 를 켜면 ROI 안쪽만 처리하고, 결과 이미지의 ROI 바깥은 검게 채워집니다. 뒤 도구도 이 결과 이미지를 받으므로 바깥이 필요하면 ROI 를 넓힙니다.</li>
 </ul>
 <h4>Histogram — 히스토그램 분석 · 평활화</h4>
 <p>이미지 밝기 분포를 분석하거나 대비를 개선합니다. 조명이 약해 대비가 낮은 이미지에 Equalize · CLAHE 를 적용하면 후속 검출이 안정됩니다. 분석 모드의 평균 · 표준편차는 조명 상태 감시에 쓸 수 있습니다.</p>
@@ -118,6 +124,7 @@
 <p><strong>결과 값</strong> — MinValue · MaxValue · MeanValue · StdDev (판정 없음)</p>
 <ul>
 <li>MeanValue 를 Run Results 에서 꾸준히 보면 조명이 어두워지는 추세를 알아챌 수 있습니다. ◆PLC 에 매핑하면 PLC 에서 감시할 수 있습니다.</li>
+<li>Use ROI 를 켜면 ROI 안쪽만 처리하고, 결과 이미지의 ROI 바깥은 검게 채워집니다. 뒤 도구도 이 결과 이미지를 받으므로 바깥이 필요하면 ROI 를 넓힙니다.</li>
 </ul>
 <h3 id="tools-3">6.3 Pattern Matching — 패턴 매칭</h3>
 <h4>Feature Match — 특징(에지) 기반 패턴 매칭</h4>
@@ -137,9 +144,9 @@
 <tr><td>Train Mask · [Edit Mask...] [Clear Mask]</td><td>—</td><td>그림자 · 날짜 각인 · 반사처럼 이미지마다 달라지는 영역을 학습에서 제외(빨간 영역)</td></tr>
 <tr><td>[안정 특징 정제 (샘플 이미지)...]</td><td>—</td><td>현장 이미지 2 장 이상을 골라 흔들리는 에지를 자동으로 마스크에 추가하고 재학습</td></tr>
 <tr><td>Pose Judgment — Use Angle / Scale Judgment · Lower/Upper Limit</td><td>해제 / −180~180° / 0.9~1.1 (Web 연동 가능)</td><td>찾긴 했는데 기울었거나 크기가 다르면 NG 로 걸러냅니다</td></tr>
-<tr><td>Search Range — Angle Start / Extent · Min / Max Scale</td><td>−45 / 90° · 0.9 / 1.1</td><td>탐색할 회전 · 크기 범위. 아무 방향으로나 놓이면 Start −180 · Extent 360</td></tr>
-<tr><td>Accuracy / Speed — Angle Step · Scale Step · Greediness · Num Levels · NMS Distance</td><td>1° · 0.05 · 0.8 · 3 · 0.5</td><td>탐색 간격(작을수록 정밀 · 느림), 탐욕도(1 에 가까울수록 빠르나 놓칠 수 있음), 피라미드 레벨, 중복 검출 억제 거리</td></tr>
-<tr><td>Edge Config — Canny Low / High · Max Points · Curvature Weight</td><td>50 / 150 · 200 · 0.4</td><td>학습 에지 추출 임계, 특징점 상한(Auto Tune 시 자동), 곡률 가중</td></tr>
+<tr><td>Search Range — Angle Start / Extent · Min / Max Scale</td><td>−45 / 90° · 0.9 / 1.1</td><td>탐색할 회전 · 크기 범위. 아무 방향으로나 놓이면 Start −180 · Extent 360 <em>(Expert Mode 를 켜야 보임)</em></td></tr>
+<tr><td>Accuracy / Speed — Angle Step · Scale Step · Greediness · Num Levels · NMS Distance</td><td>1° · 0.05 · 0.8 · 3 · 0.5</td><td>탐색 간격(작을수록 정밀 · 느림), 탐욕도(1 에 가까울수록 빠르나 놓칠 수 있음), 피라미드 레벨, 중복 검출 억제 거리 <em>(Expert Mode 를 켜야 보임)</em></td></tr>
+<tr><td>Edge Config — Canny Low / High · Max Points · Curvature Weight</td><td>50 / 150 · 200 · 0.4</td><td>학습 에지 추출 임계, 특징점 상한(Auto Tune 시 자동), 곡률 가중 <em>(Expert Mode 를 켜야 보임)</em></td></tr>
 <tr><td>Search Region · [Draw Search Region] [Clear] · X Y W H</td><td>해제</td><td>탐색 영역 제한 — 속도 향상</td></tr>
 </table>
 <p><strong>결과 값</strong> — Score · CenterX · CenterY · Angle · Scale · Coverage · MatchCount · Match{i}_Score/CenterX/CenterY/Angle/Scale/Coverage. 1 순위 매칭이 CenterX/Y · Angle 에 실려 Fixture · Match Align 연결에 쓰입니다</p>
@@ -158,12 +165,12 @@
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Template · [Train Template] [Clear Template]</td><td>—</td><td>이미지를 열고 Training Region 을 그린 뒤 [Train Template] 으로 학습. Status 에 학습 상태 표시</td></tr>
-<tr><td>Angle Step (°)</td><td>5 [0.5~30]</td><td>회전 탐색 간격. 2° 정밀 · 5° 균형 · 10° 이상 빠름</td></tr>
-<tr><td>Min / Max Scale · Scale Step</td><td>0.8 / 1.2 · 0.1</td><td>크기 탐색 범위와 간격. 1.0/1.0 이면 크기 탐색 없이 가장 빠름</td></tr>
+<tr><td>Angle Step (°)</td><td>5 [0.5~30]</td><td>회전 탐색 간격. 2° 정밀 · 5° 균형 · 10° 이상 빠름 <em>(Expert Mode 를 켜야 보임)</em></td></tr>
+<tr><td>Min / Max Scale · Scale Step</td><td>0.8 / 1.2 · 0.1</td><td>크기 탐색 범위와 간격. 1.0/1.0 이면 크기 탐색 없이 가장 빠름 <em>(Expert Mode 를 켜야 보임)</em></td></tr>
 <tr><td>Score Threshold</td><td>0.7 [0~1]</td><td>이 점수 이상이면 검출</td></tr>
 <tr><td>Max Instances · NMS Distance Factor</td><td>1 · 0.5</td><td>다중 검출 개수 상한과 중복 억제 거리</td></tr>
 <tr><td>Pose Judgment — Angle / Scale Limit</td><td>해제 (Web 연동 가능)</td><td>각도 · 크기 판정</td></tr>
-<tr><td>Pyramid Levels · Top Candidates to Refine</td><td>2 · 3</td><td>피라미드 단계(높을수록 빠름, 작은 객체 위험)와 정밀화할 상위 후보 수</td></tr>
+<tr><td>Pyramid Levels · Top Candidates to Refine</td><td>2 · 3</td><td>피라미드 단계(높을수록 빠름, 작은 객체 위험)와 정밀화할 상위 후보 수 <em>(Expert Mode 를 켜야 보임)</em></td></tr>
 <tr><td>Search Region · X Y W H</td><td>해제</td><td>탐색 영역 제한. Fixture 연결 시 이 영역도 함께 옮겨집니다</td></tr>
 </table>
 <p><strong>결과 값</strong> — Score · CenterX · CenterY · Angle · Scale · MatchWidth · MatchHeight · MatchCount · Match{i}_…</p>
@@ -212,6 +219,7 @@
 <ul>
 <li>예제 템플릿 '2-스텝 얼라인' 을 쓰면 Align A · Align B 스텝과 소스 연결이 자동으로 만들어집니다. 이후 각 스텝의 Feature Match 학습 → Baseline 입력 → 기준 등록 순서로 진행하세요.</li>
 <li>카메라 이동이 반복 정밀해야 정확합니다. Baseline 은 실제 이동량을 mm 로 넣으세요.</li>
+<li>A · B 스텝을 오가며 기준을 등록해도 각 스텝의 편집은 메모리에 남습니다. 끝나면 [Save Recipe] 로 파일에 저장합니다.</li>
 </ul>
 <h3 id="tools-5">6.5 Blob Analysis — 블롭 분석</h3>
 <h4>Blob — 블롭(덩어리) 분석</h4>
@@ -242,24 +250,26 @@
 <h4>Caliper — 엣지 검출 · 캘리퍼 측정</h4>
 <p>ROI 를 가로지르는 방향으로 밝기 변화를 스캔해 엣지(경계선)의 위치를 서브픽셀 정밀도로 찾습니다. 폭 측정, 엣지 간 거리, 위치 검출의 기본 도구이며, 찾은 점을 Geometry 에 Result 로 연결해 거리 · 각도를 계산하고 판정합니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/14_Caliper.png" data-width="240" alt="Caliper — 엣지 검출 · 캘리퍼 측정 설정 패널"><figcaption>Caliper — 엣지 검출 · 캘리퍼 측정 — Tool Settings 패널</figcaption></figure>
-<figure><img src="../gs/screenshots/v3/scenes/Caliper.jpg" data-width="620" alt="Caliper — 엣지 검출 · 캘리퍼 측정 실행 예"><figcaption>실행 예 — 막대의 폭을 엣지 쌍(EdgePair)으로 측정 — 141.11 px(캘리브레이션 적용 8.051 mm)</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/scenes/Caliper.jpg" data-width="620" alt="Caliper — 엣지 검출 · 캘리퍼 측정 실행 예"><figcaption>실행 예 — 막대의 폭을 엣지 쌍(EdgePair)으로 측정 — 141.11 px(캘리브레이션 적용 8.051 mm). Expected Width 를 막대 폭 가까이 넣은 레시피입니다</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Projection Width</td><td>20 [1~200]</td><td>스캔 라인에 수직인 방향의 폭. 클수록 잡음에 강하지만 가는 엣지를 놓칠 수 있습니다</td></tr>
-<tr><td>Search Axis</td><td>AlongWidth (AlongWidth · AlongHeight)</td><td>ROI 의 어느 축을 따라 탐색할지. 화면의 화살표가 실제 탐색 방향입니다</td></tr>
+<tr><td>Search Axis</td><td>AlongWidth (AlongWidth · AlongHeight)</td><td>ROI 의 어느 축을 따라 탐색할지. 화면의 화살표가 실제 탐색 방향입니다 <em>(Expert Mode 를 켜야 보임)</em></td></tr>
 <tr><td>Polarity</td><td>DarkToLight (DarkToLight · LightToDark · Any)</td><td>탐색 방향 기준 밝기 변화 극성</td></tr>
 <tr><td>Edge Threshold</td><td>30 [1~100] (Web 연동 가능)</td><td>엣지로 인정할 최소 대비. 5~20 약한 엣지, 30~60 일반, 70 이상 강한 엣지만</td></tr>
 <tr><td>Filter Half Width</td><td>2 [1~10]</td><td>평활 필터 반폭. 1~2 날카로운 엣지, 4~10 잡음 많은 이미지</td></tr>
 <tr><td>Mode</td><td>SingleEdge (SingleEdge · EdgePair)</td><td>엣지 1 개 / 반대 극성의 엣지 쌍 사이 폭(Width) 측정</td></tr>
-<tr><td>Max Edges · Scorer Mode · Edge Selection</td><td>10 · MaxContrast · Best</td><td>후보 엣지 수 상한, 점수 방식(대비 우선 · 중앙 근접 · 종합 · 사용자 가중), 선택 기준(최고 점수 · 첫 · 마지막)</td></tr>
+<tr><td>Edge Pair Width — Expected Width (px) · Width Tolerance (±px)</td><td>50 · 20 (각각 Web 연동 가능)</td><td>Mode 가 EdgePair 일 때만 씁니다. 두 엣지 사이 거리가 기대 폭 ± 허용 오차 안인 쌍만 채택하고 기대 폭에 가까운 쌍을 고릅니다. 실제 폭이 이 범위 밖이면 "Edge Pair를 찾을 수 없습니다" 로 실패하므로 재려는 폭에 맞게 넣습니다</td></tr>
+<tr><td>Max Edges · Scorer Mode · Edge Selection</td><td>10 · MaxContrast · Best</td><td>후보 엣지 수 상한, 점수 방식(대비 우선 · 중앙 근접 · 종합 · 사용자 가중), 선택 기준(최고 점수 · 첫 · 마지막) <em>(Expert Mode 를 켜야 보임)</em></td></tr>
 <tr><td>Projection Mode · Gaussian Filter · Sigma · Normalized Contrast · Sub-Pixel Method</td><td>Uniform · 켬 · 1.0 · 해제 · Parabolic</td><td>투영 방식, 가우시안 평활(고정밀 권장), 조명 불균일 보정, 서브픽셀 보간 방법(Parabolic · Gaussian · Quartic5Point)</td></tr>
 </table>
 <p><strong>결과 값</strong> — EdgeX · EdgeY · EdgeScore · Width · Edge1X/Y · Edge2X/Y · CenterX/Y · EdgeCount 와 mm 환산 키(EdgeXMm · WidthMm …)</p>
-<p><strong>판정</strong> — 자체 공차 판정은 없습니다. 엣지를 찾지 못하면 실패. 치수 판정은 Geometry 에서 합니다.</p>
+<p><strong>판정</strong> — 자체 치수 공차 판정은 없습니다. 엣지를 찾지 못하면(EdgePair 는 기대 폭 ± 허용 오차 안의 쌍이 없으면) 실패. 치수 판정은 Geometry 에서 합니다.</p>
 <ul>
 <li>ROI 를 엣지에 직각으로, 엣지가 ROI 가운데쯤 오도록 그리세요. 화살표 방향과 Polarity 를 맞추는 것이 첫 번째 확인 사항입니다.</li>
 <li>엣지가 흔들리면 Projection Width 와 Filter Half Width 를 키우거나 Gaussian Filter 를 켭니다.</li>
 <li>Fixture 연결로 각도가 넘어오면 스캔 축도 함께 기울어집니다.</li>
+<li>아래 실행 예는 Mode 를 EdgePair 로 두고 Expected Width 를 막대 폭(약 141 px)에 가깝게, Width Tolerance 를 그 둘레로 넣은 결과입니다. 기본값(50 ± 20 px)으로는 이 막대의 엣지 쌍을 채택하지 않습니다.</li>
 </ul>
 <h4>Line Fit — 직선 피팅</h4>
 <p>기준선을 따라 여러 개의 캘리퍼를 배치해 엣지 점들을 찾고 직선을 피팅합니다. 직선 엣지의 위치 · 각도 측정, 정렬 검사, Geometry 의 직선 입력에 씁니다.</p>
@@ -268,10 +278,12 @@
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Num Calipers</td><td>10 [2~50]</td><td>기준선을 따라 균등 배치할 캘리퍼 수. 5~20 권장</td></tr>
+<tr><td>Search Axis</td><td>AlongWidth (AlongWidth · AlongHeight)</td><td>캘리퍼가 엣지를 찾는 방향. 세로로 선 엣지(왼 · 오른쪽 변)는 AlongWidth, 가로로 누운 엣지(윗 · 아랫변)는 AlongHeight 로 바꿔야 찾습니다. 화면의 화살표가 탐색 방향입니다</td></tr>
 <tr><td>Search Length · Search Width</td><td>50 · 5</td><td>기준선에 수직인 탐색 거리 / 기준선 방향 투영 폭</td></tr>
 <tr><td>Polarity · Edge Threshold · Filter Half Width</td><td>DarkToLight · 30 (Web 연동 가능) · 2</td><td>Caliper 와 동일</td></tr>
-<tr><td>Fit Method · RANSAC Threshold</td><td>LeastSquares (LeastSquares · RANSAC) · 5.0 px</td><td>최소제곱(빠름) / RANSAC(이상치 · 부분 가림에 강함)과 이상치 거리</td></tr>
-<tr><td>Min Found Calipers</td><td>3 [2~20]</td><td>유효 엣지가 이보다 적으면 피팅 실패</td></tr>
+<tr><td>Edge Selection</td><td>First (First · Last · Best)</td><td>캘리퍼마다 후보 엣지가 여럿일 때 첫 엣지 · 마지막 엣지 · 대비가 가장 큰 엣지 중 무엇을 쓸지</td></tr>
+<tr><td>Fit Method · RANSAC Threshold</td><td>LeastSquares (LeastSquares · RANSAC) · 5.0 px</td><td>최소제곱(빠름) / RANSAC(이상치 · 부분 가림에 강함)과 이상치 거리 <em>(Expert Mode 를 켜야 보임)</em></td></tr>
+<tr><td>Min Found Calipers</td><td>3 [2~20]</td><td>유효 엣지가 이보다 적으면 피팅 실패 <em>(Expert Mode 를 켜야 보임)</em></td></tr>
 </table>
 <p><strong>결과 값</strong> — FoundCount · LineAngle · LinePointX/Y · FitError · InlierCount</p>
 <p><strong>판정</strong> — 유효 캘리퍼가 Min Found Calipers 미만이면 실패. 각도 · 거리 판정은 Geometry(LineLineAngle · LineLineDistance)에서.</p>
@@ -286,9 +298,9 @@
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Center X / Y · Expected Radius</td><td>200 / 200 · 100 (Web 연동 가능)</td><td>예상 중심과 반지름. ROI(원)를 그리면 자동으로 채워집니다</td></tr>
 <tr><td>Num Calipers · Search Length · Search Width</td><td>16 · 50 · 5</td><td>원주를 따라 배치할 캘리퍼 수(8~36 권장)와 반경 방향 탐색 거리 · 접선 방향 폭</td></tr>
-<tr><td>Start Angle · End Angle</td><td>0 · 360</td><td>부분 원호만 볼 때 범위 지정</td></tr>
+<tr><td>Start Angle · End Angle</td><td>0 · 360</td><td>부분 원호만 볼 때 범위 지정 <em>(Expert Mode 를 켜야 보임)</em></td></tr>
 <tr><td>Search Direction · Polarity · Edge Threshold</td><td>InwardToOutward · DarkToLight · 30</td><td>중심→바깥 / 바깥→중심 탐색 방향, 극성, 대비 임계</td></tr>
-<tr><td>Fit Method</td><td>LeastSquares (LeastSquares · RANSAC)</td><td>부분 가림에는 RANSAC</td></tr>
+<tr><td>Fit Method</td><td>LeastSquares (LeastSquares · RANSAC)</td><td>부분 가림에는 RANSAC <em>(Expert Mode 를 켜야 보임)</em></td></tr>
 </table>
 <p><strong>결과 값</strong> — FoundCount · CenterX · CenterY · Radius · Diameter · FitError · InlierCount 와 mm 키(CenterXMm · RadiusMm · DiameterMm)</p>
 <p><strong>판정</strong> — 유효 캘리퍼가 부족하면 실패. 지름 공차 판정은 Geometry(CircleCircleDistance 등)나 Batch Test 의 Edit Thresholds 로.</p>
@@ -311,6 +323,7 @@
 <li>결과 이미지 좌상단에 OK(초록) / NG(빨강) 배지가 그려집니다.</li>
 <li>각도 연산은 Unit 과 무관하게 항상 도(°)로 판정합니다.</li>
 <li>Web 에서 기준값을 관리하려면 Dimension Tool 프리셋(Reference Value · Lower/Upper Tolerance)을 연동하세요.</li>
+<li>오른쪽 Source Geometries 목록에 Result 로 연결한 도구가 보이며, 연결을 바꾸거나 실행하면 바로 갱신됩니다.</li>
 </ul>
 <h3 id="tools-7">6.7 Identification — 문자 인식 · 검증</h3>
 <h4>OCR — 문자 인식</h4>
@@ -325,8 +338,8 @@
 <tr><td>Max Side Length · Custom Det/Rec Model · Custom Dict</td><td>960 · (빈 값)</td><td>PP-OCR 전용 — 입력 최대 변(작은 글씨는 1600~2000)과 직접 학습한 모델 · 사전 파일</td></tr>
 <tr><td>Confidence Threshold</td><td>40 [0~100 %]</td><td>이 신뢰도 미만이면 실패</td></tr>
 <tr><td>Auto Preprocess · Invert Image · Target Text Height · Denoise Level · Dot Matrix Mode</td><td>켬 · 해제 · 40 · 1 · 해제</td><td>Tesseract 전용 전처리 — 자동 대비 · 이진화, 흑배경 백글자 반전, 글자 높이 확대, 잡음 제거, 도트 프린트 연결</td></tr>
-<tr><td>Format Preset · Custom Patterns</td><td>None</td><td>출력 형식 강제 — DD/MM/YYYY, YYYY-MM-DD, LOT 6~8 자리, 직접 입력. 토큰 D/M/Y/H/S/f=숫자, L=영문, A=영숫자, ?=임의, 그 외 문자는 리터럴로 치환(‘/’↔‘7’ 오인식 보정)</td></tr>
-<tr><td>Enable Verification · Expected Text · Use Regex Match</td><td>해제 · (빈 값) · 해제</td><td>기대 문자열(또는 정규식)과 비교해 판정</td></tr>
+<tr><td>Format Preset · Custom Patterns</td><td>None</td><td>출력 형식 강제 — DD/MM/YYYY, YYYY-MM-DD, LOT 6~8 자리, 직접 입력. 토큰 D/M/Y/H/S/f=숫자, L=영문, A=영숫자, ?=임의, 그 외 문자는 리터럴로 치환(‘/’↔‘7’ 오인식 보정) <em>(Expert Mode 를 켜야 보임)</em></td></tr>
+<tr><td>Enable Verification · Expected Text · Use Regex Match</td><td>해제 · (빈 값) · 해제</td><td>기대 문자열(또는 정규식)과 비교해 판정 <em>(Expert Mode 를 켜야 보임)</em></td></tr>
 <tr><td>Draw Overlay · Tessdata Path</td><td>켬 · (빈 값)</td><td>단어별 박스 · 신뢰도 표시 / Tesseract 데이터 폴더(비우면 자동)</td></tr>
 </table>
 <p><strong>결과 값</strong> — RecognizedText · RawText · FormatMatched · MatchedPattern · Confidence · WordCount · Words · WordConfidences · VerificationPass</p>
@@ -347,13 +360,14 @@
 <tr><td>Invert Image · Min/Max Char Height · Min Char Width</td><td>해제 · 12 / 200 · 4 (px)</td><td>이진화 극성과 글자 크기 필터(잡음 · 배경 제외)</td></tr>
 <tr><td>Match Threshold</td><td>0.65 [0~1]</td><td>문자별 NCC 점수 하한. 0.65 산업 기본, 0.80 이상 엄격, 0.50 이하 관대</td></tr>
 <tr><td>Expected Text (optional)</td><td>(빈 값)</td><td>지정하면 위치별 문자 비교와 길이 일치까지 판정</td></tr>
-<tr><td>Use Search Region · X Y W H</td><td>해제</td><td>학습 위치와 다른 곳에서 검증할 때 탐색 영역 지정. Fixture 연결 시 함께 이동</td></tr>
+<tr><td>Use Search Region · X Y W H</td><td>해제</td><td>켜면 학습 영역 대신 이 영역에서 글자를 찾습니다(Fixture 연결 시 함께 이동). 끄면 학습 위치를 기준으로 검증합니다</td></tr>
 <tr><td>Draw Overlay</td><td>켬</td><td>분할 박스 · 인식 문자 · 점수(초록 PASS · 빨강 BadChar)</td></tr>
 </table>
 <p><strong>결과 값</strong> — ReadString · CharCount · GoodCharCount · BadCharCount · MeanScore · MinScore · AllCharsPass · LengthMatch</p>
 <p><strong>판정</strong> — 문자 하나라도 점수가 Match Threshold 미만이면 NG. Expected Text 를 지정하면 문자 · 길이 불일치도 NG.</p>
 <ul>
 <li>컨베이어 위에서 라벨 위치가 바뀌면 Feature Match → Coordinates 연결로 Search Region 을 따라가게 하세요.</li>
+<li>Use Search Region 을 끈 상태에서 학습 영역 밖으로 글자를 찾게 하면 이미지 전체에서 글자를 찾으므로, 화면 전체를 찍은 사진에서는 종이 결 · 무늬까지 글자로 잡혀 불합격이 됩니다. 글자가 학습 위치와 다른 곳에 오면 Use Search Region 을 켜고 글자 둘레만 영역으로 잡으세요.</li>
 </ul>
 <h3 id="tools-8">6.8 Code Reading — 코드 판독</h3>
 <h4>Code Reader — 바코드 · QR · DataMatrix 판독</h4>
@@ -364,9 +378,9 @@
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Code Reader Mode</td><td>Auto (Auto · QRCode · Barcode1D · DataMatrix · PDF417)</td><td>코드 종류를 지정하면 빠르고 정확합니다</td></tr>
 <tr><td>Max Code Count · Try Harder · DM Candidate Localization</td><td>10 · 켬 · 켬</td><td>한 화면 판독 개수 상한, 정밀 탐색, DataMatrix 후보 영역 선탐색</td></tr>
-<tr><td>Enable Verification · Expected Text · Use Regex Match</td><td>해제 · (빈 값) · 해제</td><td>판독 문자열 검증(예: ^LOT-\d{6}$)</td></tr>
-<tr><td>Parse GS1 AIs</td><td>해제</td><td>GS1 코드를 (01)GTIN · (10)Batch · (17)Expiry · (21)Serial 로 분리해 Gs1_01 같은 결과 키로 노출</td></tr>
-<tr><td>Enable Grading · Min Pass Grade</td><td>해제 · F</td><td>DataMatrix 인쇄 품질 등급(ISO/IEC 15415 간소화). C 가 산업 표준 최저</td></tr>
+<tr><td>Enable Verification · Expected Text · Use Regex Match</td><td>해제 · (빈 값) · 해제</td><td>판독 문자열 검증(예: ^LOT-\d{6}$) <em>(Expert Mode 를 켜야 보임)</em></td></tr>
+<tr><td>Parse GS1 AIs</td><td>해제</td><td>GS1 코드를 (01)GTIN · (10)Batch · (17)Expiry · (21)Serial 로 분리해 Gs1_01 같은 결과 키로 노출 <em>(Expert Mode 에서 보이며 GS1 · Quality Grading 묶음은 접혀 있어 펼쳐야 보임)</em></td></tr>
+<tr><td>Enable Grading · Min Pass Grade</td><td>해제 · F</td><td>DataMatrix 인쇄 품질 등급(ISO/IEC 15415 간소화). C 가 산업 표준 최저 <em>(Expert Mode 를 켜야 보임)</em></td></tr>
 <tr><td>Draw Overlay</td><td>켬</td><td>코드 위치 폴리곤 + 문자열(초록 PASS · 빨강 FAIL), 등급 · GS1 배지</td></tr>
 </table>
 <p><strong>결과 값</strong> — DecodedText · CodeFormat · CodeCount · Gs1Formatted · Gs1_xx · OverallGrade · SymbolContrast · Modulation · PixelsPerModule · SymbolSize</p>
@@ -382,28 +396,29 @@
 <figure><img src="../gs/screenshots/v3/scenes/PCFilter.jpg" data-width="620" alt="PointCloud Filter — 점군 솎아내기 · 이상점 제거 실행 예"><figcaption>실행 예 — 프레임 점군 28,382 점을 4 mm 복셀로 솎아 5,330 점으로 줄인 결과(81.2% 감소). 뒤의 정합 · 편차 계산이 빨라집니다</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
-<tr><td>Enable Voxel Grid · Voxel Size (mm)</td><td>켬 · 1.0 [0.05~20]</td><td>같은 격자 안의 점을 하나로 합칩니다. 0.1~0.5 정밀(작은 부품), 1.0 일반, 2~5 속도 우선</td></tr>
+<tr><td>Enable Voxel Grid · Voxel Size (mm)</td><td>켬 · 1.0 [0.05~20]</td><td>같은 격자 안의 점을 하나로 합칩니다. 3D 카메라로 찍은 점군은 X · Y 가 화소 간격이라 1.0 처럼 작은 값으로는 줄어드는 점이 거의 없습니다 — 4 정도부터 크게 줄어듭니다(실행 예: 4 mm 로 81 % 감소). ReductionRatio 를 보며 정합니다</td></tr>
 <tr><td>Enable SOR · Neighbor Count (K) · Stddev Multiplier</td><td>해제 · 30 · 2.0</td><td>통계적 이상점 제거. 큰 점군에서는 시간이 오래 걸리므로 VoxelGrid 로 먼저 솎아낸 뒤 켭니다</td></tr>
 </table>
 <p><strong>결과 값</strong> — InputPoints · OutputPoints · ReductionRatio · AppliedVoxel · AppliedSor</p>
 <p><strong>판정</strong> — 판정 없음. ReductionRatio 가 0.9 이상이면 Voxel Size 가 과한지 확인하세요.</p>
 <ul>
-<li>가공된 점군은 뒤의 점군 도구(Registration · Deviation · Cluster · Plane Fit)가 그대로 쓰지만, 촬영 시 만들어진 Depth Map(Height Slicer 입력)에는 반영되지 않습니다.</li>
+<li>청소된 점군은 뒤의 점군 도구(Mask Crop · Cluster · Registration · Deviation · PointCloud Line Fit)가 씁니다. Height Slicer · Plane Fit 은 깊이 맵을 읽으므로 이 결과가 반영되지 않습니다.</li>
 </ul>
 <h4>PointCloud Registration — 기준 형상 정합 (3D 얼라인)</h4>
 <p>기준 3D 데이터(.vpc 점군 또는 .stl CAD)와 현재 점군을 겹쳐 맞춥니다. PCA 로 거칠게 맞춘 뒤 ICP 로 정밀 정합해 이동 · 회전량(6 축)을 구하며, 부품이 매번 조금씩 다르게 놓일 때 자세를 재거나 편차 검사 앞단에서 자세를 맞출 때 씁니다.</p>
 <figure><img src="figs/split/22_PointCloud_Registration_split.png" data-width="500" alt="PointCloud Registration — 기준 형상 정합 (3D 얼라인) 설정 패널"><figcaption>PointCloud Registration — 기준 형상 정합 (3D 얼라인) — Tool Settings 패널</figcaption></figure>
-<figure><img src="../gs/screenshots/v3/scenes/PCRegistration.jpg" data-width="620" alt="PointCloud Registration — 기준 형상 정합 (3D 얼라인) 실행 예"><figcaption>실행 예 — −44° 돌아가 놓인 프레임을 기준 점군에 정합 — 회전 RotationZ −44.06°, 평균 오차 2.736 mm, 신뢰도 0.697 이 하한 0.3 이상이라 OK</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/scenes/PCRegistration.jpg" data-width="620" alt="PointCloud Registration — 기준 형상 정합 (3D 얼라인) 실행 예"><figcaption>실행 예 — −44° 돌아가 놓인 프레임을 기준 점군에 정합 — 회전 RotationZ −44.06°, 평균 오차 2.736 mm, 신뢰도 0.697 이 하한 0.3 이상이라 OK(이 레시피는 Confidence Distance 3 mm · Min Confidence 0.3 · Coarse Alignment 끔)</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Reference Point Cloud · [Save Current as Reference] [Load...] [Clear]</td><td>(없음)</td><td>현재 점군을 기준으로 저장하거나 .vpc / .stl 파일을 불러옵니다(STL 은 표면을 약 20만 점으로 샘플링)</td></tr>
 <tr><td>Enable Coarse Alignment</td><td>켬</td><td>회전 없이 맞춘 자세와 주축을 맞춘 자세를 함께 맞춰 보고 신뢰도가 높은 쪽을 씁니다. 정합 시간이 2~4배 늘어납니다(3만 점 원본 기준 약 3초) — 사이클 시간이 빠듯하면 앞에 Filter(VoxelGrid)를 두세요. 구 · 정육면체처럼 완전 대칭인 물체는 자세를 가를 수 없습니다</td></tr>
 <tr><td>Max Iterations · Tolerance (mm)</td><td>50 · 0.01</td><td>ICP 반복 횟수와 수렴 기준</td></tr>
-<tr><td>Confidence Distance (mm)</td><td>1.0</td><td>신뢰도 계산에 쓰는 대응 거리</td></tr>
+<tr><td>Confidence Distance (mm)</td><td>1.0</td><td>신뢰도 계산에 쓰는 대응 거리 — 이 거리 안에 짝이 있는 점의 비율이 신뢰도입니다. 촬영 오차(평균 오차 MeanError)보다 작으면 제대로 맞아도 신뢰도가 낮게 나오므로, 평균 오차보다 넉넉히(예: 2~3 배) 잡습니다</td></tr>
 <tr><td>Apply Transform to Source</td><td>켬</td><td>구한 변환을 현재 점군에 적용(뒤 도구가 정렬된 점군을 봄). 변위만 필요하면 끕니다</td></tr>
+<tr><td>Enable Judgment · Min Confidence</td><td>해제 · 0.5</td><td>판정을 켜면 신뢰도가 이 값 이상일 때 OK</td></tr>
 </table>
 <p><strong>결과 값</strong> — MeanError · Iterations · Converged · Confidence · CoarseApplied · TranslationX/Y/Z · TranslationNorm · RotationX/Y/Z · M11~M44</p>
-<p><strong>판정</strong> — MeanError(mm)가 작고 Converged = True 면 성공. Confidence 0.9 이상이면 잘 맞은 것, 0.5 이하면 다른 부품이거나 정합 실패 의심.</p>
+<p><strong>판정</strong> — Enable Judgment 를 켜면 Confidence 가 Min Confidence 이상일 때 OK. 신뢰도는 Confidence Distance 에 따라 달라지므로, 양품 몇 개로 실행해 본 값을 보고 하한을 정합니다. Converged = True 이고 MeanError 가 작아야 잘 맞은 것입니다.</p>
 <ul>
 <li>템플릿 ‘표준 3D 얼라인’ 은 Filter → Registration(변환 미적용) → Result 로 6 축 변위를 내고, ‘3D 기준 형상 편차 검사’ 는 Registration → Deviation 순서입니다.</li>
 </ul>
@@ -423,7 +438,7 @@
 <p><strong>판정</strong> — 남은 점이 0 이면 실패(점군은 바뀌지 않음). MaskCoveragePercent 가 100 에 가까우면 마스크가 아니라 일반 이미지를 연결한 것입니다.</p>
 <ul>
 <li>자동 마스크 흐름: RF-DETR-seg(Output Mask Image 켬) 또는 Threshold · Height Slicer → Image 연결 → Mask Crop → Result 연결 → PointCloud Cluster.</li>
-<li>수동 흐름: 2D 이미지를 연결하고 이 도구를 선택한 뒤 이미지 뷰에서 ROI(사각형 · 원 · 다각형)를 그립니다. 결과는 Point Cloud 탭에서 확인합니다.</li>
+<li>수동 흐름: 2D 이미지를 연결하고 이 도구를 선택한 뒤 이미지 뷰에서 ROI(사각형 · 원 · 다각형)를 그립니다. 실행하면 잘라낸 점군이 Point Cloud 탭에 보이고, 2D 이미지에는 남긴 영역이 초록으로 덧그려집니다.</li>
 </ul>
 <h4>PointCloud Cluster — 덩어리 분리 · 개수 · 치수</h4>
 <p>점군을 거리 기준으로 덩어리(클러스터)로 나눠 물체 개수를 세고 덩어리마다 크기(가로 · 세로 · 높이) · 중심 · 방향을 잽니다. 부품 개수 세기, 가장 큰 물체만 남기기, 부스러기 제거에 씁니다. 카메라 정보로 mm 환산이 가능합니다.</p>
@@ -437,9 +452,11 @@
 <tr><td>Scale Mode · XY Scale (mm/px)</td><td>Manual (Manual · AutoFromCamera) · 1.0</td><td>AutoFromCamera 는 ◆Mech-Mind 촬영 점군에서 카메라 내부 정보와 실측 높이로 mm/px 를 자동 계산(권장). 파일 점군 등 정보가 없으면 XY Scale 로 폴백</td></tr>
 <tr><td>Output Mode</td><td>LargestOnly (LargestOnly · AllMerged · KeepOriginal)</td><td>가장 큰 덩어리만 남김 / 유효 덩어리 전부 합침(잡음 제거) / 점군 유지하고 측정만</td></tr>
 <tr><td>Draw Overlay</td><td>켬</td><td>2D 이미지에 덩어리별 색 점 · 외접 사각형 · 중심 · 라벨(#번호, 점 수, 길이×폭)</td></tr>
+<tr><td>Enable Judgment · Count Judgment(Count Mode · Expected Count)</td><td>해제 · 켬(Equal · 1)</td><td>판정을 켜면 덩어리 개수를 기대 개수와 비교합니다(같음 · 범위 등)</td></tr>
+<tr><td>Size Judgment — Expected Length · Expected Width · Tolerance (−) / (+)</td><td>해제 · 100 · 50 · 2 / 2 (mm)</td><td>덩어리의 길이 · 폭이 기준 ± 공차 안인지 판정합니다</td></tr>
 </table>
 <p><strong>결과 값</strong> — ClusterCount · LargestPoints · Cluster{i}_Points · Cluster{i}_CenterX/Y/Z(+Mm) · Cluster{i}_SizeX/Y/Z · Cluster{i}_Length · Cluster{i}_Width · Cluster{i}_Angle · Cluster{i}_{j}_DistanceMm</p>
-<p><strong>판정</strong> — 자체 공차 판정 없음 — 개수 · 치수는 Result 도구 또는 Batch Test 임계로 판정하고, 덩어리 간 거리 · 각도는 3D Geometry 로 계산합니다.</p>
+<p><strong>판정</strong> — Enable Judgment 를 켜면 개수 판정(기본 켬, 기대 1 개)과, 켠 경우 치수 판정을 모두 통과해야 OK. 끄면 판정 없이 측정만 합니다. 덩어리 간 거리 · 각도는 3D Geometry 로 계산합니다.</p>
 <ul>
 <li>템플릿 ‘3D 객체 카운트 · 치수 (기본)’ · ‘DL 세그 기반 3D 객체 검출’ 이 이 도구까지 연결된 체인을 만들어 줍니다.</li>
 <li>3D Geometry 의 클러스터 콤보에서 덩어리를 고르면 2D 뷰에 강조 표시됩니다.</li>
@@ -474,8 +491,9 @@
 <p><strong>결과 값</strong> — MinZ · MaxZ (출력은 슬라이스된 2D 이미지)</p>
 <p><strong>판정</strong> — 판정 없음.</p>
 <ul>
-<li>3D 뷰에 슬라이스 경계가 표시됩니다. 3D → Save Height Slicing 으로 설정을 저장할 수 있습니다.</li>
+<li>Point Cloud 탭(3D 뷰)에 보이는 높이 경계는 3D 메뉴의 Height Slicing 범위(§5.13)를 따르며, 이 도구의 Min Z · Max Z 와는 따로입니다. 이 도구의 결과는 2D 마스크 이미지로 확인합니다.</li>
 <li>템플릿 ‘3D 객체 카운트 · 치수 (기본)’ 에서 MinZ/MaxZ 를 부품 높이 범위에 맞추는 것이 첫 조정 항목입니다.</li>
+<li>3D 카메라 점군의 Z 는 카메라에서의 거리입니다 — 값이 클수록 멀리(바닥 쪽) 있습니다. 바닥을 빼려면 Max Z 를 바닥보다 조금 작게 둡니다.</li>
 </ul>
 <h4>Plane Fit — 평면 피팅 (평탄도 · 기울기 · 단차 기준면)</h4>
 <p>ROI 안의 3D 점들에서 평면 방정식을 구합니다. 평탄도, 기울기(두 평면 각도), 단차(점-평면 거리)의 기준면을 만들며, 결과를 3D Geometry 에 Result 로 연결해 씁니다.</p>
@@ -487,9 +505,10 @@
 <tr><td>RANSAC Iterations</td><td>1000 [10~5000]</td><td>보통 200~500 이면 충분. 점군이 지저분할수록 올립니다</td></tr>
 <tr><td>RANSAC Threshold (mm)</td><td>0.5 [0.01~5]</td><td>평면에서 이 거리 안의 점을 평면 위 점으로 봅니다. 0.1 가공면, 0.5 일반, 2.0 거친 표면. 너무 작으면 실패, 너무 크면 결과가 기웁니다</td></tr>
 <tr><td>Sample Stride</td><td>2 [1~16]</td><td>점 표본 간격. 올리면 빨라지지만 작은 굴곡을 놓칠 수 있음</td></tr>
+<tr><td>Enable Judgment · Max Flatness (mm)</td><td>해제 · 0.5</td><td>평탄도(Flatness)가 이 값 이하면 OK</td></tr>
 </table>
 <p><strong>결과 값</strong> — PlaneA/B/C/D · NormalX/Y/Z · Flatness · AvgError · InlierCount · TotalPoints</p>
-<p><strong>판정</strong> — 자체 판정 없음 — 3D Geometry 로 각도 · 거리를 구해 확인합니다(◆PLC 옵션이면 PLC 에서 판정).</p>
+<p><strong>판정</strong> — Enable Judgment 를 켜면 평탄도가 Max Flatness 이하일 때 OK. 기울기 · 단차는 3D Geometry 로 구해 판정합니다.</p>
 <ul>
 <li>템플릿 ‘평면 틸트 얼라인’ 은 Plane Fit Ref · Plane Fit Target → 3D Geometry(PlaneToPlaneAngle) 로 구성되며 AngleDeg 0° 가 평행입니다.</li>
 </ul>
@@ -500,11 +519,12 @@
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Operation</td><td>PointToPointDistance (PointToPointDistance · PointToPlaneDistance · PlaneToPlaneAngle · PlaneToPlaneDistance · PointToLineDistance3D)</td><td>계산 종류</td></tr>
-<tr><td>Point Source</td><td>수동 입력 (픽셀) (수동 · 연결 소스(클러스터))</td><td>Point A/B 의 픽셀 좌표를 직접 넣거나, Result 로 연결한 PointCloud Cluster 의 덩어리(Cluster A / Cluster B 콤보)를 고릅니다. 클러스터 도구 하나만 연결해도 A/B 두 덩어리 중심 간 거리를 잽니다</td></tr>
-<tr><td>Source Geometries</td><td>—</td><td>Result 로 연결된 Plane Fit · Cluster 목록</td></tr>
+<tr><td>Point Source</td><td>수동 입력 (픽셀) (수동 · 연결 소스(클러스터))</td><td>새로 놓은 도구는 수동 입력(픽셀)입니다. PointCloud Cluster 를 Result 로 연결했으면 <strong>연결 소스(클러스터)</strong>로 바꾸고 Cluster A / Cluster B 콤보에서 덩어리를 고릅니다 — 수동 입력인 채로는 점-평면 거리 등이 실패합니다(메시지가 끄라고 안내). 클러스터 도구 하나만 연결해도 A/B 두 덩어리 중심 간 거리를 잽니다</td></tr>
+<tr><td>Source Geometries</td><td>—</td><td>Result 로 연결된 Plane Fit · Cluster 목록. 연결을 바꾸거나 실행하면 바로 갱신됩니다</td></tr>
+<tr><td>Enable Judgment · Expected Value · Tolerance (−) / (+)</td><td>해제 · 0 · 0.5 / 0.5</td><td>거리(mm) 또는 각도(°)가 기준 ± 공차 안이면 OK</td></tr>
 </table>
 <p><strong>결과 값</strong> — Distance3D · SignedDistance · DeltaX/Y/Z · AngleDeg · AngleRad · Point1X/Y/Z · Point2X/Y/Z · IsParallel</p>
-<p><strong>판정</strong> — 이 도구에는 공차 판정이 없습니다. 각도 · 거리(AngleDeg · Distance3D)는 Run Results 에서 확인합니다. ◆PLC 옵션이면 PLC 로 매핑해 PLC 에서 판정할 수 있습니다.</p>
+<p><strong>판정</strong> — Enable Judgment 를 켜면 계산한 거리 · 각도가 [기준 − 공차(−), 기준 + 공차(+)] 안일 때 OK. 끄면 값만 계산합니다(Run Results 에서 확인).</p>
 <ul>
 <li>클러스터 콤보에서 덩어리를 고르면 2D 뷰에 해당 덩어리가 강조됩니다. 목록이 비어 있으면 PointCloud Cluster 를 Result 로 연결하고 Run 을 한 번 실행하세요.</li>
 <li>mm 정확도는 Cluster 의 Scale Mode(AutoFromCamera 권장)를 따릅니다.</li>
@@ -571,9 +591,9 @@
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Model Path (.onnx) · [◆레지스트리…]</td><td>(빈 값)</td><td>파일 또는 ◆model:// 참조</td></tr>
-<tr><td>Input Size (모델이 정합니다)</td><td>560 (잠김)</td><td>모델을 열면 ONNX 가 정한 값으로 자동 설정되고 칸이 잠깁니다 — 모델마다 배수가 달라 손으로 맞추면 안 됩니다</td></tr>
+<tr><td>Input Size (모델이 정합니다)</td><td>560 → 첫 실행 뒤 모델 값(예: 552)으로 잠김</td><td>모델을 고른 직후에는 560 이 보이고 고칠 수 있지만, <strong>첫 실행 뒤</strong> ONNX 가 정한 값(예: 552)으로 바뀌고 칸이 잠깁니다 — 모델마다 배수가 달라 손으로 맞추지 않습니다</td></tr>
 <tr><td>Confidence Threshold · Max Instances</td><td>0.5 · 100 [1~1000]</td><td>검출 신뢰도 / 점수 순 상한</td></tr>
-<tr><td>Show Mask Overlay · Overlay Opacity · Draw Boxes + Labels · Output Mask Image</td><td>켬 · 0.4 · 켬 · 해제</td><td>표시 옵션 · 켜면 출력 이미지가 인스턴스 이진 마스크(흰색 = 인스턴스)가 되어 Mask Crop 등에 Image 연결</td></tr>
+<tr><td>Show Mask Overlay · Overlay Opacity · Draw Boxes + Labels · Output Mask Image</td><td>켬 · 0.4 · 켬 · 해제</td><td>표시 옵션. Output Mask Image 를 켜면 인스턴스 이진 마스크(흰색 = 인스턴스)가 다음 도구(Mask Crop 등)로만 넘어가며, 화면 덧그림과 Result Image 는 그대로입니다</td></tr>
 </table>
 <p><strong>결과 값</strong> — InstanceCount · Inst{i}_Class · Inst{i}_ClassName · Inst{i}_Score · Inst{i}_X/Y/Width/Height · Inst{i}_MaskPixels</p>
 <p><strong>판정</strong> — 인스턴스가 0 건이면 NG.</p>
@@ -602,8 +622,8 @@
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Model Path (.onnx) · Input Size</td><td>(빈 값) · 224 [64~512]</td><td>학습 image_size 와 같게</td></tr>
-<tr><td>Anomaly Threshold</td><td>0.5 [0~1]</td><td>이 점수 이상이면 이상. 0.3 엄격(약한 이상도), 0.7 느슨</td></tr>
-<tr><td>Auto Threshold Calibration — Normal Images Folder · Sigma (k) · [Calibrate Threshold]</td><td>— · 3.0</td><td>정상 이미지 폴더의 점수 분포로 임계값을 계산해 Anomaly Threshold 에 넣습니다(평균 + k × 표준편차). ROI 를 쓰면 같은 ROI 영역으로 채점하므로, 폴더에는 검사와 같은 크기로 찍은 원본 이미지를 넣습니다</td></tr>
+<tr><td>Anomaly Threshold</td><td>0.5 [0~1]</td><td>이 점수 이상이면 이상. 0.3 엄격(약한 이상도), 0.7 느슨. 값은 소수 셋째 자리까지 보입니다</td></tr>
+<tr><td>Auto Threshold Calibration — Normal Images Folder · Sigma (k) · [Calibrate Threshold]</td><td>— · 3.0</td><td>정상 이미지 폴더의 점수 분포로 임계값을 계산해 Anomaly Threshold 에 넣습니다(평균 + k × 표준편차). ROI 를 쓰면 같은 ROI 영역으로 채점하므로, 폴더에는 검사와 같은 크기로 찍은 원본 이미지를 넣습니다. 이 묶음은 접혀 있어 펼쳐야 보입니다</td></tr>
 <tr><td>Draw Overlay · Show Heatmap · Heatmap Opacity</td><td>켬 · 켬 · 0.4</td><td>NORMAL/ANOMALY 표시와 Jet 히트맵</td></tr>
 </table>
 <p><strong>결과 값</strong> — AnomalyScore · IsNormal</p>
@@ -620,7 +640,7 @@
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Judgment Mode</td><td>AllPass (AllPass · AnyPass)</td><td>AllPass: 연결된 도구가 모두 성공해야 OK(소스가 하나도 없으면 NG). AnyPass: 하나라도 성공하면 OK</td></tr>
-<tr><td>Source Results</td><td>—</td><td>Result 로 연결된 도구 목록(빈 상태 ‘No source tools connected’)</td></tr>
+<tr><td>Source Results</td><td>—</td><td>Result 로 연결된 도구 목록(빈 상태 ‘No source tools connected’). 연결을 바꾸거나 실행하면 바로 갱신되어 도구마다 OK/NG 가 보입니다</td></tr>
 </table>
 <p><strong>결과 값</strong> — PassCount · FailCount · TotalCount (메시지 ‘OK (n/m passed)’ · ‘NG (n/m failed)’)</p>
 <p><strong>판정</strong> — 판정 모드에 따라 OK/NG. 이 결과가 Run Results 의 Pass/Fail 과 VMS 의 판정 배지가 됩니다.</p>
@@ -630,18 +650,19 @@
 <h4>Ensemble — 딥러닝 판정 결합</h4>
 <p>Result 로 연결한 딥러닝 도구(주로 Detection = 알려진 결함 + Anomaly = 평소와 다른 상태)의 판정을 하나로 합칩니다. 두 모델을 함께 써서 과검(정상을 NG 로)과 미검(불량을 OK 로)을 같이 줄일 때 씁니다. Result 도구가 OK/NG 개수만 세는 것과 달리 검출 개수 · 이상 점수를 판정에 씁니다.</p>
 <figure><img src="../gs/screenshots/v3/tools/36_Ensemble.png" data-width="240" alt="Ensemble — 딥러닝 판정 결합 설정 패널"><figcaption>Ensemble — 딥러닝 판정 결합 — Tool Settings 패널</figcaption></figure>
-<figure><img src="../gs/screenshots/v3/scenes/Ensemble.jpg" data-width="620" alt="Ensemble — 딥러닝 판정 결합 실행 예"><figcaption>실행 예 — 수정액 자국이 있는 피팅 — Detection 은 OK, Anomaly 는 NG. 결합 방식별로 And · Weighted · Consensus 는 NG, Or 만 OK. 왼쪽 위에 Anomaly 와 앙상블 4 개의 판정 글자가 실행 순서대로 쌓이고, 테두리는 스텝 판정(NG) 색입니다</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/scenes/Ensemble.jpg" data-width="620" alt="Ensemble — 딥러닝 판정 결합 실행 예"><figcaption>실행 예 — 수정액 자국이 있는 피팅 — Detection 은 OK, Anomaly 는 NG. 결합 방식별로 And · Weighted · Consensus 는 NG, Or 만 OK(Weighted 는 Anomaly Weight 1.0 으로 둔 레시피). 왼쪽 위에 Anomaly 와 앙상블 4 개의 판정 글자가 실행 순서대로 쌓이고, 테두리는 스텝 판정(NG) 색입니다</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Ensemble Mode</td><td>And (And · Or · Weighted · Consensus)</td><td>And: 모두 OK 여야 OK(미검 최소화). Or: 하나라도 OK 면 OK(과검 최소화). Weighted: 가중 점수로 판정. Consensus: 소스 판정이 엇갈리면 NG(검토 필요)</td></tr>
 <tr><td>Detection Weight · Anomaly Weight · NG Threshold</td><td>0.5 · 0.5 · 0.5 [0.0~1.0]</td><td>Weighted 모드에서만 보입니다. Detection 실패 비율 × Detection Weight + Anomaly 최대 점수 × Anomaly Weight 가 NG Threshold 를 넘으면 NG</td></tr>
 <tr><td>Draw Overlay</td><td>켬</td><td>판정과 근거 문구를 화면에 표시</td></tr>
-<tr><td>Source Results</td><td>—</td><td>Result 로 연결된 도구 목록(빈 상태 ‘No source tools connected’)</td></tr>
+<tr><td>Source Results</td><td>—</td><td>Result 로 연결된 도구 목록(빈 상태 ‘No source tools connected’). 연결을 바꾸거나 실행하면 바로 갱신되어 도구마다 OK/NG 가 보입니다</td></tr>
 </table>
 <p><strong>결과 값</strong> — Success · Mode · SourceCount · DetectionCount(소스 검출 개수 합) · AnomalyScore(소스 이상 점수 최댓값)</p>
 <p><strong>판정</strong> — 모드에 따라 OK/NG. 소스 도구가 하나도 연결되지 않았으면 NG(‘소스 도구가 연결되지 않았습니다’).</p>
 <ul>
 <li>Detection · Anomaly 도구에서 Ensemble 로 Result 연결을 잇습니다. 같은 소스에 Ensemble 을 여러 개 붙이면 모드별 결과를 나란히 비교할 수 있습니다.</li>
+<li>Weighted 는 가중치에 따라 결과가 달라집니다. 기본값(Detection · Anomaly Weight 0.5)에서는 이상 점수 0.68 인 자국도 0.34 로 계산되어 OK 가 됩니다. 아래 실행 예의 Weighted NG 는 Anomaly Weight 1.0 으로 둔 레시피 결과입니다.</li>
 </ul>
 <h3 id="tools-13">6.13 Color — 색상</h3>
 <h4>Color Extract — 색 추출 (HSV)</h4>
@@ -694,6 +715,7 @@
 <ul>
 <li>켰는데 화면이 그대로면 캘리브레이션 방식이 맞지 않는 경우입니다 — 상태 메시지에 실제로 무엇이 적용됐는지 표시됩니다.</li>
 <li>펴는 과정에서 가장자리가 잘리거나 늘어날 수 있으므로 뒤 도구의 ROI 는 편 뒤의 화면 기준으로 잡으세요.</li>
+<li>보정된 이미지를 보려면 이 도구만 선택해 Run Selected 로 실행합니다. Run All 뒤의 결과 이미지는 모든 도구의 결과를 겹친 화면이라 보정된 이미지가 아닙니다.</li>
 </ul>
 <h3 id="tools-15">6.15 Surface Analysis — 표면 분석</h3>
 <h4>Photometric Stereo — 조명 방향별 사진 합성 (표면 요철 강조)</h4>
@@ -710,5 +732,7 @@
 <p><strong>판정</strong> — 자체 판정 없음 — DefectEnhanced → Blob 또는 Threshold → Result 로 판정합니다.</p>
 <ul>
 <li>조명 4 개를 제품 둘레에 배치하고 하나씩 켜 가며 같은 장면을 찍는 구성이 표준입니다.</li>
+<li>결함 강조 이미지는 이 도구만 선택해 Run Selected 로 봅니다. Run All 뒤의 결과 화면은 원본 사진(첫 입력) 위의 덧그림이라 강조 이미지가 보이지 않습니다.</li>
+<li>결함 강조에서도 인쇄 무늬의 가장자리는 희미하게 남습니다(거의 보이지 않는 정도). 뒤의 Threshold · Blob 임계를 그보다 높게 잡습니다.</li>
 </ul>
 </section>
