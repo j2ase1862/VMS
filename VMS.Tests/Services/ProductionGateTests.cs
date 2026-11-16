@@ -70,5 +70,17 @@ namespace VMS.Tests.Services
             Assert.False(gate.AllowsRun(operatorLoggedIn: true, workOrderStatus: status));
             Assert.True(gate.AllowsRun(operatorLoggedIn: true, workOrderStatus: "Planned"));
         }
+
+        [Theory]
+        [InlineData(false, true, true, "검사 시작 — 카메라 연결 후 활성")]
+        [InlineData(true, true, true, "검사 시작 — 카메라 연결 + 작업자 로그인 + 작업지시 선택 후 활성")]
+        [InlineData(true, true, false, "검사 시작 — 카메라 연결 + 작업자 로그인 후 활성")]
+        [InlineData(true, false, true, "검사 시작 — 카메라 연결 후 활성")]
+        public void AutoRun_tooltip_lists_only_required_conditions(bool web, bool login, bool wo, string expected)
+        {
+            // VM-09 — 단독 모드에서 작업자 로그인 · 작업지시가 필요하다고 안내하지 않는다
+            var gate = new ProductionGate(WebIntegrated: web, RequireOperatorLogin: login, RequireWorkOrder: wo);
+            Assert.Equal(expected, gate.DescribeRunRequirements());
+        }
     }
 }

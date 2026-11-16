@@ -424,7 +424,7 @@
                             Padding="20,0" Margin="0,0,6,0" Height="34"
                             VerticalAlignment="Center"
                             FontSize="13" FontWeight="Bold"
-                            ToolTip="검사 시작 — 카메라 연결 + 작업자 로그인 + 작업지시 선택 후 활성"
+                            ToolTip="{Binding AutoRunToolTip}"
                             ToolTipService.ShowOnDisabled="True">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">

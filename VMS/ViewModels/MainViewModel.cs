@@ -240,6 +240,9 @@ namespace VMS.ViewModels
             // Completed/Closed 로 올리면 카운터가 오르지 않는다.
             && Gate.AllowsRun(IsOperatorLoggedIn, SelectedWorkOrder?.Status);
 
+        /// <summary>AUTO RUN 버튼 툴팁 — 단독 모드 · 게이트 설정에 맞춰 실제 조건만 안내 (VM-09).</summary>
+        public string AutoRunToolTip => Gate.DescribeRunRequirements();
+
         /// <summary>
         /// 카메라 조작(Grab / Live Start) 활성 조건 — CanStartStop 에서 Work Order 요건을 뺀 것.
         /// Grab/Live 는 레시피·WO 데이터를 사용하지 않는 순수 카메라 조작이므로, 카메라 상태
