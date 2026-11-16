@@ -779,9 +779,14 @@
                     Grid.Column="0"
                     Background="{StaticResource Brush.Surface.Base}"
                     ClipToBounds="True">
-                <ItemsControl ItemsSource="{Binding Cameras}"
+                <!-- 영역이 좁아지면(설정 패널 열림 등) 타일을 비례 축소해 표시 — 배율은 코드 비하인드가 정한다 (VM-11) -->
+                <ItemsControl x:Name="CameraTiles"
+                              ItemsSource="{Binding Cameras}"
                               Width="{Binding ActualWidth, ElementName=CameraCanvas}"
                               Height="{Binding ActualHeight, ElementName=CameraCanvas}">
+                    <ItemsControl.RenderTransform>
+                        <ScaleTransform x:Name="CameraTilesScale" ScaleX="1" ScaleY="1"/>
+                    </ItemsControl.RenderTransform>
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <Canvas/>

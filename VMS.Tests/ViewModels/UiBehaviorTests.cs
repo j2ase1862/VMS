@@ -48,6 +48,17 @@ namespace VMS.Tests.ViewModels
             });
         }
 
+        [Theory]
+        [InlineData(1600, 900, 1500, 800, 1.0)]     // 다 들어감 — 그대로
+        [InlineData(1280, 900, 1600, 800, 0.8)]     // 패널을 열어 폭이 줄었다 — 폭 기준 축소
+        [InlineData(1600, 400, 1600, 800, 0.5)]     // 높이가 모자람
+        [InlineData(0, 0, 1600, 800, 1.0)]          // 아직 크기를 모름
+        public void TileLayoutScale_FitsContentIntoArea(double w, double h, double right, double bottom, double expected)
+        {
+            // VM-11 — 설정 패널을 열면 타일을 남은 폭에 맞게 비례 축소
+            Assert.Equal(expected, TileLayoutScale.Compute(w, h, right, bottom), 3);
+        }
+
         [Fact]
         public void ListBoxAutoScroll_AtBottomCheck()
         {
