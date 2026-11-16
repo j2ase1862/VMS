@@ -467,7 +467,7 @@ MSI 하나로 VMS + BODA.VMS.Web 서버를 함께 설치하는 구성. 기존 �
 
 | 항목 | 값 |
 |---|---|
-| Feature | `WebServer` ("BODA VMS Web 서버") — 기본 포함, `INSTALLWEB=0` 으로 제외 |
+| Feature | `WebServer` ("BODA VMS Web 서버") — 새 설치는 기본 포함, `INSTALLWEB=0` 으로 제외. **업그레이드(인앱 업데이트 · 같은 버전 교체 포함)는 이전 설치의 구성을 따른다** — 이전 설치에 `WebServiceComp` 가 있으면 포함, 없으면 제외 유지(ComponentSearch, v1.48.1 이하에서 올릴 때도 동작). 명령줄 `INSTALLWEB=0/1` 이 우선. 설치된 PC 에서 같은 MSI 를 다시 실행하면 복구 · 제거만 있으므로(ARPNOMODIFY) 나중에 Web 을 넣으려면 제거 후 재설치 또는 새 버전 MSI 를 전체 UI 로 실행해 체크 |
 | 설치 위치 | `<설치 폴더>\Web\` (신규 `C:\Program Files (x86)\VASIM\BODA VMS\Web\`, 옛 설치본은 `…\BODA Vision System\Web\`) |
 | Windows Service | `BodaVmsWeb` — **demand(수동) 등록 + 미시작** (아래 13.3) |
 | 방화벽 | 인바운드 5292/TCP 규칙 (Firewall.wixext, 제거 시 자동 정리) |
@@ -570,6 +570,7 @@ Web 을 어디에 두느냐가 곧 구성이다. 두 구성 모두 같은 MSI �
 
 ```
 msiexec /i VMS-<버전>.msi INSTALLWEB=0                  # Web 서버 제외 (검사 전용 PC)
+msiexec /i VMS-<버전>.msi INSTALLWEB=1                  # Web 이 빠진 PC 를 올리면서 Web 추가 (업그레이드 때만 — 기본은 이전 구성 유지)
 ```
 
 ## 15. 관련 문서
