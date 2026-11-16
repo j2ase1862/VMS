@@ -99,7 +99,8 @@
                                     <TextBlock Grid.Column="0" Text="감사 로그 (audit/)"
                                                Style="{StaticResource WindowFieldLabel}"/>
                                     <TextBox Grid.Column="1" Text="{Binding AuditRetentionDays}"
-                                             Style="{StaticResource WindowDarkTextBox}"/>
+                                             Style="{StaticResource WindowDarkTextBox}"
+                                             ToolTip="날짜 파일을 통째로 지우는 기준입니다. 아래 분류별 보존 기간 중 가장 긴 값보다 짧으면 그 값까지 늘려 적용합니다 — 분류별 기간이 지켜지도록."/>
                                     <TextBlock Grid.Column="2" Text="{Binding AuditRange}"
                                                Style="{StaticResource WindowMutedText}"
                                                VerticalAlignment="Center" Margin="10,0,0,0"/>

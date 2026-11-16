@@ -159,9 +159,13 @@ namespace VMS
 
             // 감사 로그 보존 정책 — system_config.json 의 "auditRetentionDays" 키 (기본 365).
             // 오늘 파일은 보존 기간 무관 유지. 정리 작업 자체도 AuditCategory.System 으로 기록.
+            // 날짜 파일 통째 삭제는 분류별 보존 기간의 최댓값까지 늘려 적용한다 (VM-42) — 그래야
+            // 분류별로 길게 잡은 기간(보안 1095일 등)이 실제로 지켜진다. 짧은 분류는 아래 필터가 줄 단위로.
             try
             {
-                var retentionDays = AuditLogRetention.LoadRetentionDaysFromAppData();
+                var retentionDays = AuditLogRetention.EffectiveWholeFileDays(
+                    AuditLogRetention.LoadRetentionDaysFromAppData(),
+                    AuditCategoryRetention.LoadDaysFromAppData());
                 AuditLogRetention.CleanupOldFiles(AuditLogger.Instance.AuditDirectory, retentionDays);
             }
             catch (Exception ex)

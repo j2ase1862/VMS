@@ -197,7 +197,9 @@ namespace VMS.ViewModels
                 foreach (var item in CategoryRetentions)
                     perCat[item.Category] = ClampInRange(item.Days, 1, 3650);
 
-                var auditSum = RetentionPreviewService.PreviewAuditLogCleanup(auditDir, audit);
+                // 실제 정리와 같은 기준 — 분류별 보존 기간의 최댓값까지 늘린 값 (VM-42)
+                var auditSum = RetentionPreviewService.PreviewAuditLogCleanup(auditDir,
+                    AuditLogRetention.EffectiveWholeFileDays(audit, perCat));
                 var abSum = RetentionPreviewService.PreviewAutoBackupCleanup(backupDir, ab);
                 var queueSum = RetentionPreviewService.PreviewUploadQueueCleanup(queueDir, queue);
                 var histSum = VMS.Services.LocalHistory.LocalInspectionHistoryStore.PreviewCleanup(appData, hist);
