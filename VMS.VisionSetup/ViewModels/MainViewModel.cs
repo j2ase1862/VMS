@@ -1212,7 +1212,7 @@ namespace VMS.VisionSetup.ViewModels
             if (_chatService == null)
             {
                 _dialogService.ShowWarning(
-                    "SLM Chat 서비스가 초기화되지 않았습니다.\nOllama가 설치되어 있는지 확인하세요.",
+                    "SLM Chat 서비스가 초기화되지 않았습니다.\n이 PC 에 로컬 언어 모델 서버가 설치되어 있는지 확인하세요.",
                     "SLM Chat");
                 return;
             }
@@ -2196,7 +2196,31 @@ namespace VMS.VisionSetup.ViewModels
         {
             if (SelectedVisionTool != null && SelectedROI != null)
             {
+                // 도구 자신의 도형을 다시 고른 것(Show ROI · 캔버스에서 도형 클릭)은 보기만 한다 —
+                // 그 도형은 도구 값으로 만든 것이라 되돌려 쓸 것이 없고, 되돌려 쓰면 정수 반올림이나
+                // 오래된 회전 중심 때문에 ROI 가 1px 라도 바뀌어 Fixture 기준(HasFixtureBaseROI)이
+                // 버려지고 레시피가 바뀌었다 (VS-07). 도형을 새로 그리거나 끌어 고친 경우는
+                // OnROICreated · OnROIModified 가 ApplyROIToTool 을 직접 부른다.
+                if (ReferenceEquals(SelectedROI, SelectedVisionTool.AssociatedROIShape))
+                {
+                    FillMissingRotationCenter(SelectedVisionTool, SelectedROI);
+                    return;
+                }
+
                 ApplyROIToTool(SelectedVisionTool, SelectedROI);
+            }
+        }
+
+        /// <summary>
+        /// 회전 중심이 비어 있는(0,0) 옛 레시피만 도형의 중심으로 채운다 — ROI 사각형 · 각도는 건드리지 않으므로
+        /// Fixture 기준이 유지된다. GetAlignedROIImage 는 회전 ROI 의 ROICenter 를 그대로 쓴다.
+        /// </summary>
+        private static void FillMissingRotationCenter(VisionToolBase tool, ROIShape roi)
+        {
+            if (roi is RectangleAffineROI affine && tool.ROICenterX == 0 && tool.ROICenterY == 0)
+            {
+                tool.ROICenterX = affine.CenterX;
+                tool.ROICenterY = affine.CenterY;
             }
         }
 

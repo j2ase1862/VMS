@@ -37,5 +37,17 @@ namespace VMS.Services
             if (workOrderStatus == null) return !WorkOrderRequired;
             return workOrderStatus is "Planned" or "InProgress";
         }
+
+        /// <summary>
+        /// AUTO RUN 버튼 안내 — 이 라인에서 실제로 요구하는 조건만 적는다 (VM-09).
+        /// 종전 고정 문구는 단독 모드에서도 작업자 로그인 · 작업지시가 필요하다고 안내했다.
+        /// </summary>
+        public string DescribeRunRequirements()
+        {
+            var parts = "카메라 연결";
+            if (LoginRequired) parts += " + 작업자 로그인";
+            if (WorkOrderRequired) parts += " + 작업지시 선택";
+            return $"검사 시작 — {parts} 후 활성";
+        }
     }
 }

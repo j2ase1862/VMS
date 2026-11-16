@@ -54,12 +54,53 @@ public partial class App : Application
         IDialogService dialogService = new DialogService();
         IWebServerSetupService webServerSetupService = new WebServerSetupService();
         ILicenseSetupService licenseSetupService = new LicenseSetupService();
+        System.Action shutdownAction = () => Shutdown();
+
+#if DEBUG
+        // 사용 안내 동영상 녹화 — 되돌릴 수 없는 동작(관리자 권한 재실행 · 서비스 · 라이선스 설치 · OS 파일 대화상자)을 막는
+        // 가드로 서비스를 감싸고, [Finish] 뒤 종료 요청은 녹화가 끝날 때까지 미룬다.
+        bool isRecord = TryGetCaptureOutputDir(e.Args, "--record-video", out string recordDir);
+        if (isRecord)
+        {
+            dialogService = new Capture.VideoRecorder.Guards.Dialogs(dialogService);
+            webServerSetupService = new Capture.VideoRecorder.Guards.Web(webServerSetupService);
+            licenseSetupService = new Capture.VideoRecorder.Guards.License(licenseSetupService);
+            shutdownAction = Capture.VideoRecorder.OnWizardShutdownRequested;
+        }
+#endif
 
         var mainWindow = new MainWindow();
-        var setupVm = new SetupViewModel(configService, dialogService, () => Shutdown(), webServerSetupService,
+        var setupVm = new SetupViewModel(configService, dialogService, shutdownAction, webServerSetupService,
             licenseSetupService);
         mainWindow.DataContext = setupVm;
+#if DEBUG
+        if (isRecord)
+            Capture.VideoRecorder.PrepareWindow(mainWindow);
+#endif
         mainWindow.Show();
+
+#if DEBUG
+        // 사용 안내 동영상 녹화 — "--record-video [폴더]" (env VMS_RECORD_SCENARIO · VMS_RECORD_DURATIONS, --instance vidrec… 필수)
+        if (isRecord)
+        {
+            mainWindow.Dispatcher.BeginInvoke(
+                System.Windows.Threading.DispatcherPriority.ApplicationIdle,
+                new System.Action(async () =>
+                {
+                    try
+                    {
+                        await Capture.VideoRecorder.RunAsync(mainWindow, recordDir);
+                    }
+                    catch (System.Exception ex)
+                    {
+                        System.IO.Directory.CreateDirectory(recordDir);
+                        System.IO.File.AppendAllText(System.IO.Path.Combine(recordDir, "_record_fatal.log"), "run: " + ex + "\n");
+                    }
+                    Shutdown();
+                }));
+            return;
+        }
+#endif
 
 #if DEBUG
         // 매뉴얼/문서용 캡처 — Release(배포) 빌드에는 #if DEBUG 로 컴파일되지 않는다.

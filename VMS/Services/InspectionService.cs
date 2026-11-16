@@ -391,13 +391,13 @@ namespace VMS.Services
         }
 
         public async Task<StepInspectionResult> ExecuteStepAsync(InspectionStep step, Mat inputImage,
-            VMS.Camera.Models.PointCloudData? pointCloud = null)
+            VMS.Camera.Models.PointCloudData? pointCloud = null, bool recordOutcome = true)
         {
             // 실행 컨텍스트가 프로세스 전역이라 스텝 실행은 한 번에 하나씩 (_executeGate 참고).
             await _executeGate.WaitAsync().ConfigureAwait(false);
             try
             {
-                return await Task.Run(() => ExecuteStep(step, inputImage, pointCloud)).ConfigureAwait(false);
+                return await Task.Run(() => ExecuteStep(step, inputImage, pointCloud, recordOutcome)).ConfigureAwait(false);
             }
             finally
             {
@@ -416,7 +416,7 @@ namespace VMS.Services
             or VMS.VisionSetup.VisionTools.PointCloud.PointCloudLineFitTool;
 
         private StepInspectionResult ExecuteStep(InspectionStep step, Mat inputImage,
-            VMS.Camera.Models.PointCloudData? pointCloud = null)
+            VMS.Camera.Models.PointCloudData? pointCloud = null, bool recordOutcome = true)
         {
             VMS.Camera.Models.PointCloudData? stepCloud = null;
             var sw = Stopwatch.StartNew();
@@ -621,10 +621,14 @@ namespace VMS.Services
                     DlModelVersion = dlModelVersion
                 };
 
-                // 로컬 이력 기록 + Web 파라미터 결과 수집·업로드 (피처 + 이미지와 공유할 상관 키 동봉)
-                var paramResults = CollectParameterResults(ctx, resultMap);
-                RecordInspectionOutcome(finalSuccess, failedTools, paramResults, featureMetrics, result.CorrelationKey,
-                    ToLocalToolResults(result.ToolResults));
+                // 로컬 이력 기록 + Web 파라미터 결과 수집·업로드 (피처 + 이미지와 공유할 상관 키 동봉).
+                // 수동 검사(recordOutcome=false)는 생산 기록이 아니므로 남기지 않는다.
+                if (recordOutcome)
+                {
+                    var paramResults = CollectParameterResults(ctx, resultMap);
+                    RecordInspectionOutcome(finalSuccess, failedTools, paramResults, featureMetrics, result.CorrelationKey,
+                        ToLocalToolResults(result.ToolResults));
+                }
 
                 // 사이클 임시 Mat 즉시 해제 — 툴 결과의 OutputImage/OverlayImage 는 프레임
                 // 크기 네이티브 메모리라 GC 통계에 잡히지 않고 파이널라이저까지 떠 있는다.

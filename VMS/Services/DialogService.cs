@@ -62,10 +62,16 @@ namespace VMS.Services
         public bool ShowLoginDialog(IUserService userService)
         {
             var vm = new LoginViewModel(userService);
+            var owner = Application.Current.MainWindow;
             var window = new LoginWindow
             {
                 DataContext = vm,
-                Owner = Application.Current.MainWindow
+                Owner = owner,
+                // VMS 창 가운데에 띄운다 — 모니터가 여러 대면 화면 가운데는 VMS 창과 떨어진 곳일 수 있다 (VM-10).
+                // 주인 창이 아직 화면에 없으면 화면 가운데.
+                WindowStartupLocation = owner is { IsVisible: true }
+                    ? WindowStartupLocation.CenterOwner
+                    : WindowStartupLocation.CenterScreen
             };
             return window.ShowDialog() == true;
         }

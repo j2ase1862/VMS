@@ -65,7 +65,10 @@ namespace VMS.Tests.Services
 
             public User? CurrentUser => IsLoggedIn ? new User { Username = "tester" } : null;
 
-            public bool HasPermission(UserPermission permission)
+            public bool HasPermission(UserPermission permission) => IsGranted(permission);
+
+            // 권한 질의 횟수 — 기록 여부와 무관하게 "물었는가" 를 센다
+            public bool IsGranted(UserPermission permission)
             {
                 HasPermissionCallCount++;
                 return permission == UserPermission.StartStop && StartStopGranted;

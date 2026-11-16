@@ -18,8 +18,15 @@ namespace VMS.Models
         public bool Result
         {
             get => _result;
-            set => SetProperty(ref _result, value);
+            set
+            {
+                if (SetProperty(ref _result, value))
+                    OnPropertyChanged(nameof(ResultText));
+            }
         }
+
+        /// <summary>Run Results P/F 칸에 보이는 글자 — Pass / Fail (bool 을 그대로 묶으면 True / False 로 나온다, VM-04).</summary>
+        public string ResultText => _result ? "Pass" : "Fail";
 
         private string _resultValue = string.Empty;
         public string ResultValue

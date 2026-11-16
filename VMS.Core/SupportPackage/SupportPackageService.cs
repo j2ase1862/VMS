@@ -113,7 +113,9 @@ namespace VMS.Core.SupportPackage
                     // 4) Backup 인덱스
                     if (options.IncludeBackupIndex)
                     {
-                        var backupsDir = Path.Combine(appDataDir, "backups");
+                        // 자동 백업 위치를 바꿨으면 그 폴더를 본다 — 스케줄러가 실제로 쓰는 곳 (VM-31)
+                        var backupsDir = VMS.Core.Backup.AutoBackupOptions.ResolveBackupDir(appDataDir,
+                            VMS.Core.Backup.AutoBackupOptions.LoadFrom(Path.Combine(appDataDir, "system_config.json")).BackupDir);
                         var entry = archive.CreateEntry("backups_index.txt", CompressionLevel.Optimal);
                         using var w = new StreamWriter(entry.Open(), Encoding.UTF8);
                         WriteBackupIndex(w, backupsDir);
@@ -183,6 +185,7 @@ namespace VMS.Core.SupportPackage
         {
             w.WriteLine("# BODA Vision AI — Environment");
             w.WriteLine($"GeneratedAtUtc:    {DateTime.UtcNow:o}");
+            w.WriteLine($"ProductVersion:    {ProductInfo.Version} (build {ProductInfo.BuildNumber})");
             if (includeMachineName)
             {
                 w.WriteLine($"MachineName:       {Environment.MachineName}");

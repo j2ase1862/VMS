@@ -26,6 +26,7 @@ namespace VMS.PLC.Services
     public sealed class AdLinkDaskConnection : IIoBoardConnection, IIoBoardDiagnostics
     {
         private readonly ushort _cardType;
+        private readonly string _model;
         private readonly ushort _boardNum;
         private ushort _cardHandle;
         private bool _connected;
@@ -38,6 +39,7 @@ namespace VMS.PLC.Services
             int inputChannelCount, int outputChannelCount)
         {
             DeviceId = deviceId;
+            _model = model;
             _cardType = DaskNativeMethods.ModelToCardType(model);
             _boardNum = (ushort)boardId;
             InputChannelCount = inputChannelCount;
@@ -69,7 +71,11 @@ namespace VMS.PLC.Services
                 var result = DaskNativeMethods.Register_Card(_cardType, _boardNum);
                 if (result < 0)
                 {
+                    var modelHint = DaskNativeMethods.IsKnownModel(_model)
+                        ? ""
+                        : $"모델 '{_model}' 은 지원 모델(PCI-7432 · PCI-7433 · PCI-7434)이 아니어서 PCI-7432 로 등록을 시도했습니다. ";
                     LastError = $"Register_Card 실패 (에러 {result}, cardType=0x{_cardType:X}, board={_boardNum}). " +
+                                modelHint +
                                 $"모델·보드 번호가 실제 카드와 일치하는지 확인하세요. {DaskNativeMethods.DiagnosticsText}";
                     Debug.WriteLine($"[ADLink:{DeviceId}] {LastError}");
                     return Task.FromResult(false);

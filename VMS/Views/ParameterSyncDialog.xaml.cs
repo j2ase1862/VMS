@@ -45,19 +45,36 @@ namespace VMS.Views
         {
             txtSyncStatus.Text = "Loading...";
 
-            await _syncService.LoadRecipeAsync(recipeId);
-            RefreshGrid();
+            // 운전에 연결된 레시피만 캐시를 새로 받는다. 다른 레시피는 보기만 한다 — 이 창에서 고르는 것만으로
+            // 검사 판정 기준값 · 결과 업로드 대상 Web 레시피가 바뀌면 안 된다 (VM-35).
+            if (recipeId == _syncService.CurrentRecipeId)
+            {
+                await _syncService.LoadRecipeAsync(recipeId);
+                ShowItems(_syncService.GetAll());
 
-            txtSyncStatus.Text = _syncService.LastSyncedAt.HasValue
-                ? $"Synced: {_syncService.LastSyncedAt.Value:yyyy-MM-dd HH:mm:ss} (Recipe ID={recipeId})"
-                : "Not synced";
+                txtSyncStatus.Text = _syncService.LastSyncedAt.HasValue
+                    ? $"Synced: {_syncService.LastSyncedAt.Value:yyyy-MM-dd HH:mm:ss} (Recipe ID={recipeId})"
+                    : "Not synced";
+                return;
+            }
+
+            var items = await _syncService.FetchRecipeParametersAsync(recipeId);
+            ShowItems(items ?? System.Array.Empty<RecipeParameterDto>());
+            txtSyncStatus.Text = items == null
+                ? $"불러오지 못했습니다 (Recipe ID={recipeId})"
+                : $"보기 전용 (Recipe ID={recipeId}) — 검사에 쓰는 레시피 연결은 바뀌지 않습니다";
         }
 
-        private void RefreshGrid()
+        private void ShowItems(System.Collections.Generic.IReadOnlyCollection<RecipeParameterDto> items)
         {
-            var items = _syncService.GetAll();
             dgParameters.ItemsSource = items;
             txtItemCount.Text = $"{items.Count} parameters";
+
+            // Web 동기화 응답은 규격 노출을 줄이려 분류를 보내지 않는다 — 늘 빈 칸이던 Category 열은
+            // 값이 하나라도 있을 때만 보인다 (VM-36)
+            colCategory.Visibility = items.Any(i => !string.IsNullOrWhiteSpace(i.Category))
+                ? Visibility.Visible
+                : Visibility.Collapsed;
         }
 
         private async void CboRecipes_SelectionChanged(object sender, SelectionChangedEventArgs e)

@@ -32,8 +32,14 @@ namespace VMS
         // OnExit 에서 Dispose 로 타이머 종료.
         private AutoBackupScheduler? _autoBackupScheduler;
 
+        // 검사 이미지 보존 기간 정리 — 시작 때 1회 + 실행 중 하루 1회 (VM-41)
+        private VMS.Services.ImageRetentionScheduler? _imageRetentionScheduler;
+
         // Web 서버 좌석 임대 (spec §5b) — 로컬 license.lic 없는 클라이언트 PC 에서만 활성.
         private VMS.Core.Services.LicenseClient? _licenseClient;
+
+        // 같은 인스턴스 두 번 실행 방지 (VM-43) — 프로세스가 끝날 때까지 쥐고 있는다(끝나면 OS 가 푼다).
+        private static VMS.Services.SingleInstanceGuard? _singleInstanceGuard;
 
         protected override async void OnStartup(StartupEventArgs e)
         {
@@ -61,15 +67,37 @@ namespace VMS
             {
                 try
                 {
-                    var removed = VMS.Core.Imaging.ImageRetentionCleaner.Cleanup(
-                        VMS.Core.Imaging.ImageSaveOptions.LoadFromAppData());
-                    System.Diagnostics.Debug.WriteLine($"[App] --cleanup-images: {removed} folder(s) removed");
+                    var result = VMS.Core.Imaging.ImageRetentionCleaner.CleanupAndAudit(
+                        VMS.Core.Imaging.ImageSaveOptions.LoadFromAppData(), trigger: "CommandLine");
+                    System.Diagnostics.Debug.WriteLine($"[App] --cleanup-images: {result.Deleted.Count} folder(s) removed");
                 }
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"[App] --cleanup-images failed: {ex.Message}");
                 }
                 Shutdown();
+                return;
+            }
+
+            // 같은 인스턴스가 이미 떠 있으면 시작하지 않는다 (VM-43). 인스턴스마다 설정 파일 · 프레임 공유 이름 ·
+            // 카메라가 따로라, 같은 이름으로 두 번 뜨면 두 프로세스가 그것들을 함께 쓴다. 다른 이름은 막지 않는다.
+            // 헤드리스 정리(--cleanup-images)는 위에서 이미 끝났다 — 운전 중에도 예약 작업으로 돌아야 한다.
+            _singleInstanceGuard = VMS.Services.SingleInstanceGuard.TryAcquire(
+                VMS.Camera.Configuration.AppDataPaths.QualifyIpcName(@"Local\BODA_VMS_Main"),
+                TimeSpan.FromSeconds(5));
+            if (_singleInstanceGuard == null)
+            {
+                var instanceLabel = VMS.Camera.Configuration.AppDataPaths.IsDefaultInstance
+                    ? "기본 인스턴스"
+                    : $"인스턴스 '{VMS.Camera.Configuration.AppDataPaths.InstanceName}'";
+                VMS.VisionSetup.Views.Common.MessageDialog.Show(
+                    owner: null,
+                    $"이 PC 에서 {instanceLabel} 의 BODA VMS 가 이미 실행 중입니다.\n\n" +
+                    "작업 표시줄에서 실행 중인 창을 사용하세요. 같은 인스턴스를 두 번 실행하면 " +
+                    "설정 파일과 카메라를 두 프로그램이 함께 써서 문제가 생깁니다.",
+                    "BODA VMS — 이미 실행 중",
+                    VMS.VisionSetup.Views.Common.MessageDialogKind.Warning);
+                Shutdown(exitCode: 3);
                 return;
             }
 
@@ -134,9 +162,13 @@ namespace VMS
 
             // 감사 로그 보존 정책 — system_config.json 의 "auditRetentionDays" 키 (기본 365).
             // 오늘 파일은 보존 기간 무관 유지. 정리 작업 자체도 AuditCategory.System 으로 기록.
+            // 날짜 파일 통째 삭제는 분류별 보존 기간의 최댓값까지 늘려 적용한다 (VM-42) — 그래야
+            // 분류별로 길게 잡은 기간(보안 1095일 등)이 실제로 지켜진다. 짧은 분류는 아래 필터가 줄 단위로.
             try
             {
-                var retentionDays = AuditLogRetention.LoadRetentionDaysFromAppData();
+                var retentionDays = AuditLogRetention.EffectiveWholeFileDays(
+                    AuditLogRetention.LoadRetentionDaysFromAppData(),
+                    AuditCategoryRetention.LoadDaysFromAppData());
                 AuditLogRetention.CleanupOldFiles(AuditLogger.Instance.AuditDirectory, retentionDays);
             }
             catch (Exception ex)
@@ -214,6 +246,19 @@ namespace VMS
             catch (Exception ex)
             {
                 Debug.WriteLine($"[App] AutoBackupScheduler 시작 실패 (best-effort): {ex.Message}");
+            }
+
+            // 검사 이미지 보존 기간 정리 (VM-41) — 설정 창 안내대로 시작 때 한 번, 켜 둔 동안 하루 한 번.
+            // 시작 직후 카메라 · 서비스 초기화와 겹치지 않게 조금 늦춰 백그라운드에서 돈다. 지운 폴더는 감사 로그에.
+            try
+            {
+                _imageRetentionScheduler = new VMS.Services.ImageRetentionScheduler(
+                    VMS.Core.Imaging.ImageSaveOptions.LoadFromAppData);
+                _imageRetentionScheduler.Start();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] ImageRetentionScheduler 시작 실패 (best-effort): {ex.Message}");
             }
 
             var splash = new SplashWindow();
@@ -384,15 +429,10 @@ namespace VMS
 
             var signalConfig = configService.LoadPlcSignalConfiguration();
 
-            var mainViewModel = new MainViewModel(
-                configService,
-                recipeService,
-                dialogService,
-                processService,
-                inspectionService,
-                () => Shutdown(),
-                userService: userService,
-                logService: logService);
+            // 아래 델리게이트(AutoProcessService 등)가 붙잡는 변수 — 실제 인스턴스는 서비스를 다 만든 뒤 한 번만 만든다.
+            // 종전에는 여기서 임시 MainViewModel 을 하나 더 만들어 "Application started" 가 두 번 찍히고
+            // 레시피 목록 동기화 · 파일 감시 구독도 두 번 걸렸다 (VM-08).
+            MainViewModel mainViewModel = null!;
 
             // ── 단독(Standalone) 모드 — Web 서버 주소가 비어 있으면 웹 연동 서비스를
             // 아예 만들지 않는다. 각 서비스는 null 이어도 MainViewModel/InspectionService 가
@@ -474,12 +514,8 @@ namespace VMS
                     mlopsAllowed ? systemConfig.MlopsServerUrl : null,
                     mlopsAllowed ? systemConfig.MlopsLineToken : null);
 
-                // 캐시가 무한정 커지지 않게 시작할 때 한 번 정리한다. 쓰고 있는 파일은 건드리지 않는다.
-                var maxBytes = Math.Max(1, systemConfig.ModelCacheMaxGB) * 1024L * 1024L * 1024L;
-                var trimmed = ModelReferenceResolver.Current.Cache.Trim(
-                    maxBytes, ModelReferenceResolver.Current.InUsePaths());
-                if (trimmed > 0)
-                    logService.Log($"모델 캐시 정리: {trimmed}개 삭제", LogLevel.Info, "System");
+                // 캐시 정리는 레시피의 참조를 모두 받은 뒤에 한다(ModelReferencePreparer, VM-40).
+                // 시작 때는 아직 아무 참조도 풀지 않아 보호 목록(InUsePaths)이 비어 있다 — 쓰는 모델도 지울 수 있었다.
             }
             catch (Exception ex)
             {
@@ -677,7 +713,7 @@ namespace VMS
                     {
                         var cam = mainViewModel.Cameras.FirstOrDefault(c => c.Id == cameraId);
                         if (cam == null) return false;
-                        await cam.ManualInspectCommand.ExecuteAsync(null);
+                        await cam.InspectForProductionAsync();
                         return cam.InspectionOk;
                     });
                     return await innerTask;
@@ -738,9 +774,8 @@ namespace VMS
                             mainViewModel.CurrentRecipeName = recipe.Name;
                             // 소스 파일 경로 동기화 — 안 하면 외부 변경 워처가 이전 레시피
                             // 파일과 비교해 실행 중 레시피의 VisionSetup 수정을 놓친다.
-                            mainViewModel.SetCurrentRecipeFilePath(target.FilePath);
-                            foreach (var cam in mainViewModel.Cameras)
-                                cam.SetRecipe(recipe);
+                            // 카메라 레시피 교체 + model:// 참조 준비(VM-40)도 같은 지점에서.
+                            mainViewModel.ApplyRecipeToCameras(recipe, target.FilePath);
                             logService.Log($"Recipe changed to [{recipeIndex}] {recipe.Name}", LogLevel.Success, "RecipeChange");
 
                             // Web 레시피는 이름으로 찾는다 — Index 는 이 PC 레시피 폴더 순서라 Web 목록(등록 순, 다른 PC 레시피 포함)의
@@ -804,7 +839,7 @@ namespace VMS
                 VMS.Core.Services.MlopsClientStatus.ReportDisabled(VMS.Core.Services.MlopsClientStatus.NgCollector, ex);
             }
 
-            // Re-create MainViewModel with AutoProcessService injected
+            // MainViewModel — 서비스를 모두 주입해 한 번만 만든다
             mainViewModel = new MainViewModel(
                 configService,
                 recipeService,
@@ -842,7 +877,9 @@ namespace VMS
                 lineNgUploader: lineNgUploader,
                 ioBoards: ioBoardConnections,
                 updateInstallService: updateInstallService,
-                localHistoryStore: historyStore);
+                localHistoryStore: historyStore,
+                modelReferencePreparer: new ModelReferencePreparer(
+                    logService, Math.Max(1, systemConfig.ModelCacheMaxGB) * 1024L * 1024L * 1024L));
 
             if (webBlockedReason != null)
                 mainViewModel.SetWebBlocked(webBlockedReason);
@@ -872,6 +909,11 @@ namespace VMS
                 historyStore?.Dispose();
                 ForceShutdown(mainViewModel, heartbeatService, parameterSyncService, sharedFrameWriter, plcConnection, autoProcessService, processService);
             };
+#if DEBUG
+            // 사용 안내 동영상 녹화 — 창을 화면 밖에 띄운다 (입력 장치·화면 캡처를 쓰지 않음)
+            if (e.Args.Any(a => string.Equals(a, "--record-video", StringComparison.OrdinalIgnoreCase)))
+                Capture.VideoRecorder.PrepareWindow(mainWindow);
+#endif
             mainWindow.Show();
 
 #if DEBUG
@@ -904,6 +946,25 @@ namespace VMS
                             {
                                 System.IO.Directory.CreateDirectory(ctlCapDir);
                                 System.IO.File.AppendAllText(System.IO.Path.Combine(ctlCapDir, "_controls.log"), "run: " + ex + "\n");
+                            }
+                            finally { Shutdown(); }
+                        }));
+                }
+                // 사용 안내 동영상 녹화 — "--record-video [폴더]" (env VMS_RECORD_SCENARIO · VMS_RECORD_DURATIONS)
+                else if (TryGetDir(e.Args, "--record-video", out string recordDir))
+                {
+                    _ = mainWindow.Dispatcher.BeginInvoke(
+                        System.Windows.Threading.DispatcherPriority.ApplicationIdle,
+                        new Action(async () =>
+                        {
+                            try
+                            {
+                                await Capture.VideoRecorder.RunAsync(mainWindow, recordDir);
+                            }
+                            catch (Exception ex)
+                            {
+                                System.IO.Directory.CreateDirectory(recordDir);
+                                System.IO.File.AppendAllText(System.IO.Path.Combine(recordDir, "_record_fatal.log"), "run: " + ex + "\n");
                             }
                             finally { Shutdown(); }
                         }));
@@ -1340,6 +1401,7 @@ namespace VMS
                 // 자동 백업 스케줄러 정지 — 타이머 콜백이 진행 중이면 미완료 백업 한 건 손실 가능,
                 // 다음 시작 시 last_backup_at.txt 기반으로 자동 재개.
                 try { _autoBackupScheduler?.Dispose(); } catch { }
+                try { _imageRetentionScheduler?.Dispose(); } catch { }
 
                 // 정리 완료 → 즉시 종료
                 Process.GetCurrentProcess().Kill();

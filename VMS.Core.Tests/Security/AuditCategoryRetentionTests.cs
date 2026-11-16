@@ -47,6 +47,35 @@ namespace VMS.Core.Tests.Security
             return path;
         }
 
+        // ─── 전역 정리 기준 = 분류별 최댓값 (VM-42) ─────────────────
+
+        [Fact]
+        public void EffectiveWholeFileDays_IsMaxOfGlobalAndCategories()
+        {
+            Assert.Equal(1095, AuditLogRetention.EffectiveWholeFileDays(365, AuditCategoryRetention.Defaults));
+            Assert.Equal(2000, AuditLogRetention.EffectiveWholeFileDays(2000, AuditCategoryRetention.Defaults));
+            Assert.Equal(365, AuditLogRetention.EffectiveWholeFileDays(365, null));
+        }
+
+        [Fact]
+        public void LongCategoryRetention_IsKept_PastGlobalDays()
+        {
+            // 기본값 그대로(전역 365일)에서 500일 전 파일 — 보안(1095일) 줄은 남고 System(90일) 줄은 지워진다
+            var date = DateTime.UtcNow.Date.AddDays(-500);
+            var path = WriteFile(date,
+                MakeLine(date.AddHours(9), AuditCategory.Security, "Keep"),
+                MakeLine(date.AddHours(9), AuditCategory.System, "Drop"));
+
+            var days = AuditLogRetention.EffectiveWholeFileDays(365, AuditCategoryRetention.Defaults);
+            AuditLogRetention.CleanupOldFiles(_tempDir, days);
+            AuditCategoryRetention.FilterFilesByCategory(_tempDir, AuditCategoryRetention.Defaults);
+
+            Assert.True(File.Exists(path), "분류별 보존(1095일)이 전역 정리(365일)에 먼저 지워졌습니다");
+            var lines = File.ReadAllLines(path);
+            Assert.Single(lines);
+            Assert.Contains("Keep", lines[0]);
+        }
+
         // ─── Defaults / Clamp ────────────────────────────────────
 
         [Fact]

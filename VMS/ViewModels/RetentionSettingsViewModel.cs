@@ -181,7 +181,8 @@ namespace VMS.ViewModels
             {
                 var appData = Path.GetDirectoryName(_configPath)!;
                 var auditDir = Path.Combine(appData, "audit");
-                var backupDir = Path.Combine(appData, "backups");
+                // 자동 백업 위치를 바꿨으면 그 폴더 — 실제 정리(스케줄러)와 같은 곳을 미리 본다 (VM-31)
+                var backupDir = AutoBackupOptions.ResolveBackupDir(appData, AutoBackupOptions.LoadFrom(_configPath).BackupDir);
                 var queueDir = Path.Combine(appData, "upload_queue");
 
                 // Clamp 입력값
@@ -196,7 +197,9 @@ namespace VMS.ViewModels
                 foreach (var item in CategoryRetentions)
                     perCat[item.Category] = ClampInRange(item.Days, 1, 3650);
 
-                var auditSum = RetentionPreviewService.PreviewAuditLogCleanup(auditDir, audit);
+                // 실제 정리와 같은 기준 — 분류별 보존 기간의 최댓값까지 늘린 값 (VM-42)
+                var auditSum = RetentionPreviewService.PreviewAuditLogCleanup(auditDir,
+                    AuditLogRetention.EffectiveWholeFileDays(audit, perCat));
                 var abSum = RetentionPreviewService.PreviewAutoBackupCleanup(backupDir, ab);
                 var queueSum = RetentionPreviewService.PreviewUploadQueueCleanup(queueDir, queue);
                 var histSum = VMS.Services.LocalHistory.LocalInspectionHistoryStore.PreviewCleanup(appData, hist);

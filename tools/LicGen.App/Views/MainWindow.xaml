@@ -8,7 +8,7 @@
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
         Title="BODA VMS 라이선스 발급 (LicGen — 사내 전용)"
-        Width="1060" Height="816"
+        Width="1240" Height="860"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         WindowStyle="None"
@@ -89,7 +89,7 @@
                             </Style>
                         </TextBlock.Style>
                     </TextBlock>
-                    <TextBlock Text="{Binding BackupStatusText}" FontSize="13" Margin="0,6,0,0">
+                    <TextBlock Text="{Binding BackupStatusText}" FontSize="13" Margin="0,6,0,0" TextWrapping="Wrap">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
@@ -121,7 +121,7 @@
             <!-- ══════════ 발급 탭 ══════════ -->
             <TabItem Header="라이선스 발급">
                 <!-- 고정 크기 창(NoResize)에 폼이 전부 들어가므로 ScrollViewer 불필요 -->
-                <Border MaxWidth="680" HorizontalAlignment="Left" VerticalAlignment="Top"
+                <Border MaxWidth="860" HorizontalAlignment="Left" VerticalAlignment="Top"
                         Margin="8,12" Padding="20"
                             Background="{StaticResource BrushBgCard}"
                             BorderBrush="{StaticResource BrushBorderSubtle}"
@@ -192,7 +192,7 @@
                                          FontFamily="Consolas" CharacterCasing="Upper"
                                          Text="{Binding Fingerprint, UpdateSourceTrigger=PropertyChanged}"/>
                                 <TextBlock Style="{StaticResource FieldHint}"
-                                           Text="대상 PC 의 AppSetup 7페이지(Security &amp; License)에 표시되는 XXXXX-XXXXX-XXXXX 코드. Internal 만 * (와일드카드) 허용"/>
+                                           Text="대상 PC 의 설정 마법사(AppSetup) 마지막 단계 Security &amp; License(기본 구성은 5단계, 확장 옵션에 따라 6 · 7단계)에 표시되는 XXXXX-XXXXX-XXXXX 코드. Internal 만 * (와일드카드) 허용"/>
                             </StackPanel>
 
                             <TextBlock Grid.Row="4" Grid.Column="0" Text="좌석 수" Style="{StaticResource FieldLabel}"/>
@@ -208,7 +208,7 @@
                                 <DatePicker Style="{StaticResource WindowDarkDatePicker}" Width="180" HorizontalAlignment="Left"
                                             SelectedDate="{Binding MaintenanceUntil}"/>
                                 <TextBlock Style="{StaticResource FieldHint}"
-                                           Text="지나면 업데이트만 차단, 실행은 유지 — 영구+유지보수 모델의 기본 축 (기본 1년)"/>
+                                           Text="지나도 실행 · 업데이트는 그대로 되고, 대상 PC 의 라이선스 상태에 '유지보수 만료' 로 표시만 됨 — 영구+유지보수 모델의 기본 축 (기본 1년)"/>
                             </StackPanel>
 
                             <TextBlock Grid.Row="6" Grid.Column="0" Text="실행 만료" Style="{StaticResource FieldLabel}"/>
@@ -221,18 +221,20 @@
 
                             <TextBlock Grid.Row="7" Grid.Column="0" Text="확장 옵션" Style="{StaticResource FieldLabel}"/>
                             <StackPanel Grid.Row="7" Grid.Column="1" Margin="0,0,0,12">
-                                <StackPanel Orientation="Horizontal">
-                                    <CheckBox Style="{StaticResource WindowDarkCheckBox}" Margin="0,0,20,0"
+                                <!-- WrapPanel — 한 줄 StackPanel 이면 다섯째 상자가 카드 폭(예전 MaxWidth 680) 밖으로 잘려
+                                     켜진 채 안 보였다(VO-13). 넘치면 다음 줄로 내려 모든 상자가 보이게 한다. -->
+                                <WrapPanel Orientation="Horizontal">
+                                    <CheckBox Style="{StaticResource WindowDarkCheckBox}" Margin="0,0,20,6"
                                               Content="3D 카메라 촬영" IsChecked="{Binding OptionCamera3D}"/>
-                                    <CheckBox Style="{StaticResource WindowDarkCheckBox}" Margin="0,0,20,0"
+                                    <CheckBox Style="{StaticResource WindowDarkCheckBox}" Margin="0,0,20,6"
                                               Content="로봇 연동 · 멀티뷰" IsChecked="{Binding OptionRobot}"/>
-                                    <CheckBox Style="{StaticResource WindowDarkCheckBox}" Margin="0,0,20,0"
+                                    <CheckBox Style="{StaticResource WindowDarkCheckBox}" Margin="0,0,20,6"
                                               Content="MLOps 서버 연동" IsChecked="{Binding OptionMLOps}"/>
-                                    <CheckBox Style="{StaticResource WindowDarkCheckBox}" Margin="0,0,20,0"
+                                    <CheckBox Style="{StaticResource WindowDarkCheckBox}" Margin="0,0,20,6"
                                               Content="PLC 연동" IsChecked="{Binding OptionPlc}"/>
-                                    <CheckBox Style="{StaticResource WindowDarkCheckBox}"
+                                    <CheckBox Style="{StaticResource WindowDarkCheckBox}" Margin="0,0,20,6"
                                               Content="라인스캔 · 롤러 검사" IsChecked="{Binding OptionLineScan}"/>
-                                </StackPanel>
+                                </WrapPanel>
                                 <TextBlock Style="{StaticResource FieldHint}"
                                            Text="해제한 기능은 대상 PC 에서 메뉴 · 설정이 보이지 않음. 모두 해제 = 기본 구성 (GS 인증 구성)"/>
                             </StackPanel>
@@ -273,16 +275,32 @@
                         <DataGrid.Columns>
                             <!-- 고객명은 * 폭 + MinWidth — 고정 폭 합이 뷰포트에 근접하면
                                  * 컬럼이 0 으로 붕괴해 고객명이 사라진다 (실기 확인) -->
-                            <DataGridTextColumn Header="라이선스 ID" Binding="{Binding LicenseId}" Width="120"/>
-                            <DataGridTextColumn Header="고객명" Binding="{Binding Customer}" Width="*" MinWidth="150"/>
-                            <DataGridTextColumn Header="종류" Binding="{Binding Kind}" Width="85"/>
-                            <DataGridTextColumn Header="지문" Binding="{Binding Fingerprint}" Width="150"/>
-                            <DataGridTextColumn Header="좌석" Binding="{Binding MaxClients}" Width="50"/>
-                            <DataGridTextColumn Header="유지보수" Binding="{Binding MaintenanceUntil}" Width="90"/>
-                            <DataGridTextColumn Header="실행 만료" Binding="{Binding ExpiresAt}" Width="90"/>
+                            <!-- 지문은 XXXXX-XXXXX-XXXXX 가 다 보이는 폭, 비고는 남는 폭을 고객명과 나눠 쓰고
+                                 넘치면 말줄임(…) + 마우스를 올리면 전체 — 예전엔 둘 다 고정 폭이라 끝이 잘렸다(VO-13). -->
+                            <DataGridTextColumn Header="라이선스 ID" Binding="{Binding LicenseId}" Width="115"/>
+                            <DataGridTextColumn Header="고객명" Binding="{Binding Customer}" Width="*" MinWidth="140">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock" BasedOn="{x:Static DataGridTextColumn.DefaultElementStyle}">
+                                        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                        <Setter Property="ToolTip" Value="{Binding Customer}"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="종류" Binding="{Binding Kind}" Width="92"/>
+                            <DataGridTextColumn Header="지문" Binding="{Binding Fingerprint}" Width="205"/>
+                            <DataGridTextColumn Header="좌석" Binding="{Binding MaxClients}" Width="45"/>
+                            <DataGridTextColumn Header="유지보수" Binding="{Binding MaintenanceUntil}" Width="88"/>
+                            <DataGridTextColumn Header="실행 만료" Binding="{Binding ExpiresAt}" Width="88"/>
                             <DataGridTextColumn Header="발급 시각" Binding="{Binding IssuedAt}" Width="120"/>
-                            <DataGridTextColumn Header="발급자" Binding="{Binding Issuer}" Width="70"/>
-                            <DataGridTextColumn Header="비고" Binding="{Binding Note}" Width="130"/>
+                            <DataGridTextColumn Header="발급자" Binding="{Binding Issuer}" Width="65"/>
+                            <DataGridTextColumn Header="비고" Binding="{Binding Note}" Width="*" MinWidth="150">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock" BasedOn="{x:Static DataGridTextColumn.DefaultElementStyle}">
+                                        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                        <Setter Property="ToolTip" Value="{Binding Note}"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
                         </DataGrid.Columns>
                     </DataGrid>
 

@@ -49,7 +49,7 @@
                     Value="{Binding XyScale}"
                     ToolType="PointCloudClusterTool" ParameterName="XyScale"/>
                 <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,4"
-                           Text="Manual 모드의 가로·세로 환산 배율. 3D 카메라 grab 점군은 가로·세로가 픽셀 단위라(높이 Z만 mm) 실측 mm가 필요하면 mm/pixel 값을 입력하세요. 1.0 = 원 단위 그대로. 산출 절차는 docs/3d_dimension_calibration_guide.md 참조."/>
+                           Text="Manual 모드의 가로·세로 환산 배율. 3D 카메라 grab 점군은 가로·세로가 픽셀 단위라(높이 Z만 mm) 실측 mm가 필요하면 mm/pixel 값을 입력하세요. 1.0 = 원 단위 그대로. 치수를 아는 물체를 한 번 측정해 실제 치수(mm) ÷ 측정된 픽셀 수로 구합니다."/>
             </StackPanel>
         </Expander>
 

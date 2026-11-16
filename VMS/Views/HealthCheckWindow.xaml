@@ -110,7 +110,9 @@
                 </Border>
 
                 <!-- Items list -->
+                <!-- 항목이 창보다 길면 스크롤 — 기본 크기에서 마지막 항목(License)이 잘려 안 보였다 (VM-28) -->
                 <Border Grid.Row="1" Style="{StaticResource WindowCard}" Padding="8">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <ItemsControl ItemsSource="{Binding Items}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -140,6 +142,7 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
+                    </ScrollViewer>
                 </Border>
 
                 <!-- Footer -->

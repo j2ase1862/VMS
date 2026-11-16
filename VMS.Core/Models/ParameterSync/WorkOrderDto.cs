@@ -42,6 +42,21 @@ namespace VMS.Core.Models.ParameterSync
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
 
+        /// <summary>
+        /// 화면 표시용 계획 시작 — 현지 시각 (VM-34). Web 은 UTC 로 저장해 보내므로 그대로 쓰면
+        /// 한국 시각 09:00 계획이 00:00 으로 보였다. 시간대 표시가 없는 값(Unspecified)도 Web 이 저장한 UTC 로 본다.
+        /// </summary>
+        public DateTime? PlannedStartAtLocal => ToLocalDisplayTime(PlannedStartAt);
+
+        /// <summary>서버(UTC) 시각을 현지 시각으로. Local 로 표시된 값은 그대로 둔다.</summary>
+        public static DateTime? ToLocalDisplayTime(DateTime? serverTime) => serverTime switch
+        {
+            null => null,
+            { Kind: DateTimeKind.Local } local => local,
+            { Kind: DateTimeKind.Utc } utc => utc.ToLocalTime(),
+            { } unspecified => DateTime.SpecifyKind(unspecified, DateTimeKind.Utc).ToLocalTime(),
+        };
+
         // UI 표시용 (Web에 동일 로직 있음)
         public double PassRate => ProducedQuantity > 0
             ? Math.Round((double)PassQuantity / ProducedQuantity * 100, 2)

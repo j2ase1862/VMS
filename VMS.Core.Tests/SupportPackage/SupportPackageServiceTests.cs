@@ -276,6 +276,24 @@ namespace VMS.Core.Tests.SupportPackage
             Assert.Contains("auto-backup-20260101-120000.zip", text);
         }
 
+        [Fact]
+        public void Export_BackupsIndex_FollowsConfiguredAutoBackupDir()
+        {
+            // VM-31 — 자동 백업 위치를 바꾸면 인덱스도 그 폴더를 본다 (스케줄러가 실제로 쓰는 곳)
+            var custom = Path.Combine(_tempBase, "custom_backups");
+            Directory.CreateDirectory(custom);
+            File.WriteAllText(Path.Combine(custom, "auto-backup-20260202-090000.zip"), "fake");
+            Seed("backups/auto-backup-20260101-120000.zip", "fake");
+            Seed("system_config.json",
+                "{\"autoBackup\":{\"enabled\":true,\"directory\":" + System.Text.Json.JsonSerializer.Serialize(custom) + "}}");
+
+            SupportPackageService.Export(_appDataDir, _outputZip);
+
+            var text = ReadEntry("backups_index.txt");
+            Assert.Contains("auto-backup-20260202-090000.zip", text);
+            Assert.DoesNotContain("auto-backup-20260101-120000.zip", text);
+        }
+
         // ─── MLOps 전송 큐 ────────────────────────────────────────
 
         /// <summary>

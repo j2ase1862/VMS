@@ -31,7 +31,10 @@ namespace VMS.PLC.Models
         // Modbus specific
         public byte UnitId { get; set; } = 255;
 
-        // Serial communication (active when CommunicationType == Serial)
+        // CommunicationType · Serial · PollingIntervalMs · UseHeartbeat · HeartbeatAddress · WriteMode 는
+        // 현재 어느 연결 코드도 읽지 않는다(연결은 제조사별 TCP 뿐, 신호 감시 주기 · 하트비트는 시퀀스 신호 설정 값).
+        // 설정 마법사 화면에서는 뺐고(VO-06 · VO-07), 기존 설정 파일 호환을 위해 필드만 남긴다.
+        // Serial communication (not used by any connection yet)
         public string SerialPortName { get; set; } = "COM1";
         public int BaudRate { get; set; } = 115200;
         public int DataBits { get; set; } = 8;

@@ -323,8 +323,8 @@
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
                             <DataGridTextColumn Header="P/F"
-                                                Binding="{Binding Result}"
-                                                Width="40">
+                                                Binding="{Binding ResultText}"
+                                                Width="44">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Padding" Value="4,2"/>
@@ -745,6 +745,24 @@
                             <TextBlock Text="Close" FontSize="11"/>
                         </Button>
                     </Grid>
+
+                    <!-- 마지막 조작 결과 (Save Parameter 저장 완료 / 실패 등) — 종전에는 어디에도 보이지 않았다 (VM-14) -->
+                    <TextBlock Text="{Binding ResultMessage}"
+                               Margin="0,6,0,0" FontSize="11" TextWrapping="Wrap"
+                               Foreground="{StaticResource Brush.Text.Secondary}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ResultMessage}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding ResultMessage}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </StackPanel>
             </Border>
         </Grid>

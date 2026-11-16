@@ -90,7 +90,7 @@
                                                Style="{StaticResource WindowFieldLabel}"/>
                                     <TextBox Grid.Column="1" Text="{Binding RetentionDays}"
                                              Style="{StaticResource WindowDarkTextBox}"
-                                             ToolTip="이 기간(일)보다 오래된 연월일 폴더를 시작 시 자동 삭제. 0 = 무제한"/>
+                                             ToolTip="이 기간(일)보다 오래된 연월일 폴더를 VMS 시작 때와 켜 둔 동안 하루 한 번 자동 삭제합니다(지운 폴더는 감사 로그에 기록). 0 = 무제한"/>
                                     <TextBlock Grid.Column="2" Text="일 (0 = 무제한, 자동 삭제 안 함)"
                                                Style="{StaticResource WindowMutedText}"
                                                VerticalAlignment="Center" Margin="10,0,0,0"/>

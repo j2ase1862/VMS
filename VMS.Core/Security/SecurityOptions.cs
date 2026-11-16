@@ -179,7 +179,7 @@ namespace VMS.Core.Security
                     "운영 배포에서는 다음 중 하나로 모드를 명시해야 합니다:\n" +
                     "  - 환경변수: setx BODA_VMS_SECURITY_MODE Production /M\n" +
                     $"  - {AppDataPaths.SystemConfigFile} 의 \"securityMode\" 키\n" +
-                    "Development 자동 폴백은 GS 보안성 항목에서 자동 다운그레이드로 감점 사유입니다.");
+                    "시스템 설정 마법사의 Security Mode 단계에서 모드를 골라 저장하면 이 키가 기록됩니다.");
             }
 
             // WarnOnFallback — 다운그레이드를 AuditLog 에 기록해 사후 추적 가능
