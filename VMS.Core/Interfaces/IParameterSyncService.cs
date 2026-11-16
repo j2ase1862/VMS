@@ -71,6 +71,14 @@ namespace VMS.Core.Interfaces
         Task<bool> LoadRecipeAsync(int recipeId);
 
         /// <summary>
+        /// 레시피 파라미터를 <b>보기만</b> 한다 — 캐시 · <see cref="CurrentRecipeId"/> 를 바꾸지 않는다 (VM-35).
+        /// Inspection Parameters 창에서 다른 레시피를 골라 보는 조작이 운전 중 Web 기준값 · 업로드 대상을
+        /// 바꾸면 안 된다. 실패하면 null. (기본 구현은 null — 시험용 대역은 구현하지 않아도 된다.)
+        /// </summary>
+        Task<IReadOnlyList<RecipeParameterDto>?> FetchRecipeParametersAsync(int recipeId)
+            => Task.FromResult<IReadOnlyList<RecipeParameterDto>?>(null);
+
+        /// <summary>
         /// 운전 레시피를 이름으로 Web 레시피에 연결한다(<see cref="DesiredRecipeName"/> 도 이 이름으로).
         /// 목록에 없으면 한 번 새로 받아 본다. 연결하지 못하면 — Web 에 없는 레시피 · Web 끊김 · 파라미터 수신 실패 —
         /// 직전 레시피의 연결과 캐시를 비운다(<see cref="CurrentRecipeId"/> = 0). 그대로 두면 이 레시피의 결과가
