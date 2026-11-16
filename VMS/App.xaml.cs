@@ -872,6 +872,11 @@ namespace VMS
                 historyStore?.Dispose();
                 ForceShutdown(mainViewModel, heartbeatService, parameterSyncService, sharedFrameWriter, plcConnection, autoProcessService, processService);
             };
+#if DEBUG
+            // 사용 안내 동영상 녹화 — 창을 화면 밖에 띄운다 (입력 장치·화면 캡처를 쓰지 않음)
+            if (e.Args.Any(a => string.Equals(a, "--record-video", StringComparison.OrdinalIgnoreCase)))
+                Capture.VideoRecorder.PrepareWindow(mainWindow);
+#endif
             mainWindow.Show();
 
 #if DEBUG
@@ -904,6 +909,25 @@ namespace VMS
                             {
                                 System.IO.Directory.CreateDirectory(ctlCapDir);
                                 System.IO.File.AppendAllText(System.IO.Path.Combine(ctlCapDir, "_controls.log"), "run: " + ex + "\n");
+                            }
+                            finally { Shutdown(); }
+                        }));
+                }
+                // 사용 안내 동영상 녹화 — "--record-video [폴더]" (env VMS_RECORD_SCENARIO · VMS_RECORD_DURATIONS)
+                else if (TryGetDir(e.Args, "--record-video", out string recordDir))
+                {
+                    _ = mainWindow.Dispatcher.BeginInvoke(
+                        System.Windows.Threading.DispatcherPriority.ApplicationIdle,
+                        new Action(async () =>
+                        {
+                            try
+                            {
+                                await Capture.VideoRecorder.RunAsync(mainWindow, recordDir);
+                            }
+                            catch (Exception ex)
+                            {
+                                System.IO.Directory.CreateDirectory(recordDir);
+                                System.IO.File.AppendAllText(System.IO.Path.Combine(recordDir, "_record_fatal.log"), "run: " + ex + "\n");
                             }
                             finally { Shutdown(); }
                         }));

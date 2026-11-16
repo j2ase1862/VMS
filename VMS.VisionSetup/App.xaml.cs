@@ -332,6 +332,11 @@ namespace VMS.VisionSetup
             // Create and show main window
             var mainView = new MainView();
             mainView.DataContext = viewModel;
+#if DEBUG
+            // 사용 안내 동영상 녹화 — 창을 화면 밖에 띄운다 (입력 장치·화면 캡처를 쓰지 않음)
+            if (Array.IndexOf(e.Args, "--record-video") >= 0)
+                Capture.VideoRecorder.PrepareWindow(mainView);
+#endif
             mainView.Show();
 
 #if DEBUG
@@ -346,10 +351,12 @@ namespace VMS.VisionSetup
             bool isToolPanels = TryGetCaptureOutputDir(e.Args, "--capture-toolpanels", out string toolPanelsDir);
             bool isDialogs = TryGetCaptureOutputDir(e.Args, "--capture-dialogs", out string dialogsDir);
             bool isScenes = TryGetCaptureOutputDir(e.Args, "--capture-scenes", out string scenesDir);
-            if (isControls || isFullPage || isToolPanels || isDialogs || isScenes)
+            //  "--record-video [폴더]"       : 사용 안내 동영상 프레임 녹화(env VMS_RECORD_SCENARIO · VMS_RECORD_DURATIONS)
+            bool isRecord = TryGetCaptureOutputDir(e.Args, "--record-video", out string recordDir);
+            if (isControls || isFullPage || isToolPanels || isDialogs || isScenes || isRecord)
             {
                 string dir = isControls ? captureDir : isFullPage ? fullPageDir
-                           : isToolPanels ? toolPanelsDir : isDialogs ? dialogsDir : scenesDir;
+                           : isToolPanels ? toolPanelsDir : isDialogs ? dialogsDir : isScenes ? scenesDir : recordDir;
                 var dbgLog = Path.Combine(dir, "_capture.log");
                 mainView.Dispatcher.BeginInvoke(
                     System.Windows.Threading.DispatcherPriority.ApplicationIdle,
@@ -365,6 +372,8 @@ namespace VMS.VisionSetup
                                 await Capture.ControlCapturer.RunToolPanelsAsync(mainView, toolPanelsDir);
                             if (isScenes)
                                 await Capture.ControlCapturer.RunScenesAsync(mainView, scenesDir);
+                            if (isRecord)
+                                await Capture.VideoRecorder.RunAsync(mainView, recordDir);
                             if (isDialogs)
                             {
                                 // fitScroll=true: 내부 ScrollViewer 콘텐츠에 맞춰 창을 키워 전체 스크롤 담기.
