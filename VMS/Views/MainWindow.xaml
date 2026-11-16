@@ -383,7 +383,7 @@
                                     Background="Transparent" Foreground="{StaticResource Brush.Text.Secondary}"
                                     BorderBrush="#555" BorderThickness="1"
                                     VerticalAlignment="Center"
-                                    Cursor="Hand" ToolTip="모든 컨텍스트 필드 비우기"/>
+                                    Cursor="Hand" ToolTip="Lot · S/N 비우기 (작업지시 선택과 작업자는 그대로)"/>
                         </StackPanel>
                     </Border>
 

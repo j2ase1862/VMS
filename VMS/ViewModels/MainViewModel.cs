@@ -2202,12 +2202,16 @@ namespace VMS.ViewModels
             });
         }
 
+        /// <summary>
+        /// Ctx 칩 [✕] — Lot · S/N 만 비운다. 작업지시 선택(WO ID)과 작업자는 그대로 둔다 (VM-33, 11-16 결정).
+        /// 종전에는 WO ID 까지 비워, 작업지시 칩과 Lot 콤보는 그대로 보이는데 그 뒤 검사가 작업지시 · Lot 수량에
+        /// 집계되지 않았다(컴팩트 헤더에서는 WO 칸이 숨어 다시 넣을 방법도 없었다).
+        /// </summary>
         [RelayCommand]
         private void ClearInspectionContext()
         {
-            WorkOrderIdText = "";
+            SelectedOpenLot = null;
             LotIdText = "";
-            OperatorIdText = "";
             SerialNumberText = "";
         }
 
