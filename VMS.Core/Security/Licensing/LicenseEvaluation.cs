@@ -13,7 +13,7 @@ namespace VMS.Core.Security.Licensing
         SeatLeased,
         /// <summary>유지보수 만료 30일 전 — 비차단 경고.</summary>
         MaintenanceExpiring,
-        /// <summary>유지보수 만료 — 실행 유지, 업데이트만 차단 대상.</summary>
+        /// <summary>유지보수 만료 — 상태 표시만(실행 · 업데이트 모두 그대로).</summary>
         MaintenanceExpired,
         /// <summary>구독 만료 30일 전 — 비차단 경고.</summary>
         Expiring,
