@@ -70,6 +70,30 @@ namespace VMS.VisionSetup.Tests
             Assert.Equal(savedEnabled.Id, savedConnection.SourceToolId);
         }
 
+        [Fact]
+        public void ChangingStep_ClearsRunResults_AndToolCountFollowsWorkspace()
+        {
+            var vm = CreateViewModel();
+
+            var blur = VisionService.CreateTool("BlurTool")!;
+            var stepA = new InspectionStep { Name = "1-1" };
+            stepA.Tools.Add(ToolSerializer.SerializeTool(blur));
+            var stepB = new InspectionStep { Name = "1-2" };
+
+            vm.SelectedStep = stepA;
+            vm.ToolRunResults.Add(new ToolResultItem { ToolName = "Blur", Result = true });
+
+            // VS-32: 다른 스텝으로 가면 앞 스텝의 실행 결과 행이 남지 않는다
+            vm.SelectedStep = stepB;
+            Assert.Empty(vm.ToolRunResults);
+
+            // VS-08: 떠난 스텝은 저장된 도구 수, 선택 스텝은 작업 공간 도구 수
+            Assert.Equal(1, stepA.ToolCount);
+            Assert.Equal(0, stepB.ToolCount);
+            vm.DroppedTools.Add(new ToolItem { Name = "Blob", ToolType = "BlobTool" });
+            Assert.Equal(1, stepB.ToolCount);
+        }
+
         private static MainViewModel CreateViewModel()
         {
             return new MainViewModel(

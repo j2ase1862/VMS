@@ -668,6 +668,10 @@ namespace VMS.VisionSetup.ViewModels
                     if (value != null)
                         LoadStepToWorkspace(value);
 
+                    // 앞 스텝의 실행 결과 행을 지운다 — 남겨 두면 새 스텝을 실행하기 전까지
+                    // 다른 스텝의 판정을 지금 스텝 것으로 오해한다 (VS-32).
+                    ToolRunResults.Clear();
+
                     // 우측 패널 전환: 스텝 선택 → 카메라 파라미터, 도구 선택 → 도구 파라미터
                     ShowCameraSettings = value != null;
                     UpdateStepCameraInfo(value);
