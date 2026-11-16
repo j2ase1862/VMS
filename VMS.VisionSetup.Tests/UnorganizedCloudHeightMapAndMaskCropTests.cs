@@ -173,6 +173,55 @@ namespace VMS.VisionSetup.Tests
             }
         }
 
+        /// <summary>점군 앞 10개만 남기는 점군 도구 대역 (Mask Crop · Cluster 처럼 CurrentPointCloud 를 바꾼다).</summary>
+        private sealed class ShrinkCloudTool : VisionToolBase
+        {
+            public ShrinkCloudTool() { Name = "Shrink"; ToolType = "ShrinkCloudTool"; }
+
+            public override VisionResult Execute(Mat inputImage)
+            {
+                var src = VisionService.Instance.CurrentPointCloud!;
+                var xyz = new float[10 * 3];
+                for (int i = 0; i < 10; i++)
+                {
+                    xyz[i * 3] = src.Positions[i].X;
+                    xyz[i * 3 + 1] = src.Positions[i].Y;
+                    xyz[i * 3 + 2] = src.Positions[i].Z;
+                }
+                VisionService.Instance.CurrentPointCloud = PointCloudData.FromArrays(xyz, null, "shrunk");
+                return new VisionResult { Success = true, Message = "ok" };
+            }
+
+            public override VisionToolBase Clone() => new ShrinkCloudTool();
+        }
+
+        /// <summary>VS-23 — Run All 뒤 3D 뷰(Point Cloud 탭)는 점군 도구가 바꾼 점군을 보인다. 입력 점군은 그대로.</summary>
+        [Fact]
+        public async System.Threading.Tasks.Task RunAll_shows_tool_modified_cloud_in_3D_view()
+        {
+            var vm = CreateViewModel(new FakeDialogService());
+            var input = MakeMetricScan();
+            vm.CurrentPointCloud = input;
+            vm.GenerateHeightMapCommand.Execute(null); // 2D 영상이 없으므로 Height Map 이 작업 이미지가 된다
+            Assert.Same(input, vm.DisplayPointCloud);
+
+            VisionService.Instance.ClearTools();
+            VisionService.Instance.AddTool(new ShrinkCloudTool());
+            try
+            {
+                await vm.RunAllToolsAsync();
+
+                Assert.NotNull(vm.DisplayPointCloud);
+                Assert.Equal(10, vm.DisplayPointCloud!.PointCount);
+                Assert.Same(input, vm.CurrentPointCloud);
+            }
+            finally
+            {
+                VisionService.Instance.ClearTools();
+                VisionService.Instance.CurrentPointCloud = null;
+            }
+        }
+
         private static MainViewModel CreateViewModel(FakeDialogService dialogs)
         {
             VisionService.Instance.CurrentHeightMapMetadata = null;

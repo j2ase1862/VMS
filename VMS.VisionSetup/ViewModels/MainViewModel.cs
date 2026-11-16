@@ -362,6 +362,13 @@ namespace VMS.VisionSetup.ViewModels
         [ObservableProperty]
         private PointCloudData? _currentPointCloud;
 
+        // Point Cloud 탭(3D 뷰)에 보일 점군 — 불러온 점군(CurrentPointCloud)이 기본이고, 실행 뒤에는
+        // 점군 도구가 바꾼 결과(자른 점군 · 남긴 덩어리 · 편차 색 등)를 보인다 (VS-23).
+        // 입력 점군과 분리해 둔다 — 결과를 CurrentPointCloud 에 넣으면 높이 맵이 그 점군으로 다시 만들어져
+        // 다음 실행의 입력이 바뀐다.
+        [ObservableProperty]
+        private PointCloudData? _displayPointCloud;
+
         // Height Slicing 파라미터
         [ObservableProperty]
         private float _heightBaseline;
@@ -1451,6 +1458,7 @@ namespace VMS.VisionSetup.ViewModels
                     StatusMessage += $" [경고] {_visionService.LastPipelineWarning}";
 
                 UpdateToolRunResults();
+                RefreshDisplayPointCloud();
             }
             catch (Exception ex)
             {
@@ -1502,6 +1510,7 @@ namespace VMS.VisionSetup.ViewModels
                     StatusMessage += $" [경고] {_visionService.LastPipelineWarning}";
 
                 UpdateToolRunResults(SelectedTool.VisionTool);
+                RefreshDisplayPointCloud();
             }
             catch (Exception ex)
             {
@@ -1511,6 +1520,15 @@ namespace VMS.VisionSetup.ViewModels
             {
                 IsRunning = false;
             }
+        }
+
+        /// <summary>
+        /// 실행 뒤 3D 뷰 갱신 — 점군 도구가 바꾼 점군이 있으면 그것을, 없으면 불러온 점군을 보인다 (VS-23).
+        /// </summary>
+        private void RefreshDisplayPointCloud()
+        {
+            var processed = _visionService.CurrentPointCloud;
+            DisplayPointCloud = processed is { PointCount: > 0 } ? processed : CurrentPointCloud;
         }
 
         /// <summary>
@@ -3875,6 +3893,7 @@ namespace VMS.VisionSetup.ViewModels
         {
             // 도구가 접근 가능하도록 VisionService 슬롯과 동기화
             VisionService.Instance.CurrentPointCloud = value;
+            DisplayPointCloud = value;
 
             if (value != null && value.Positions.Length > 0)
             {

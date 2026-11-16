@@ -1663,7 +1663,7 @@
                                 <Grid>
                                     <!-- PointDrawingCanvas with 3D viewer -->
                                     <controls:PointDrawingCanvas x:Name="PointCanvasControl"
-                                                                 PointCloud="{Binding CurrentPointCloud}"
+                                                                 PointCloud="{Binding DisplayPointCloud}"
                                                                  HeightSliceBaseline="{Binding HeightBaseline}"
                                                                  HeightSliceLower="{Binding HeightLowerLimit}"
                                                                  HeightSliceUpper="{Binding HeightUpperLimit}"
