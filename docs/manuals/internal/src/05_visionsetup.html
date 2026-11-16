@@ -110,7 +110,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <p>스텝의 마지막에 <strong>Result</strong> 도구를 두고 판정에 넣을 도구들을 Result 연결하면, 모두 Pass 일 때만 OK 가 됩니다. ◆PLC 옵션에서는 Result 도구의 PLC Output 에 PassCount · FailCount · TotalCount 통계를 PLC 주소에 매핑할 수 있습니다.
 검사 1 건의 최종 OK/NG 신호를 IO 보드(◆PLC)로 내보내는 것은 시퀀스 편집기의 Branch → Output Action 이 담당합니다(§5.10).</p>
 <h4>◆PLC Output — 결과 값을 PLC 로 보내기</h4>
-<p>◆PLC 옵션이 켜진 라이선스에서는 도구 설정 아래에 PLC Output 이 나타납니다. [+ Add PLC Mapping] 을 누르고 Key(결과 값 이름) · Device(MainPLC 또는 IO 보드) · Address(PLC 주소 또는 IO 채널) · Type 을 정하면 실행 때마다 그 값이 PLC 에 기록됩니다. 결과 값 이름은 부록(§13.3)에 있습니다.</p>
+<p>◆PLC 옵션이 켜진 라이선스에서는 도구 설정 아래에 PLC Output 이 나타납니다. [+ Add PLC Mapping] 을 누르고 Key(결과 값 이름) · Device(MainPLC 또는 IO 보드) · Address(PLC 주소 또는 IO 채널) · Type 을 정하면 실행 때마다 그 값이 PLC 에 기록됩니다. Key 목록에는 도구가 PLC 로 보낼 수 있게 정해 둔 값만 나옵니다(예: Detection 은 Success · DetectionCount 두 개 — 검출별 Det0_… 값은 없음). Device 목록은 시스템 설정의 MainPLC 와 등록한 IO 보드이며, IO 보드가 없는 PC 에서는 MainPLC 하나만 보입니다. 결과 값 이름은 부록(§13.3)에 있습니다.</p>
 <h3 id="vs-webparam">5.7 검사 기준값을 Web 에서 관리하기 (파라미터 연동)</h3>
 <p>Blob · Caliper · Line Fit · Circle Fit · Geometry · Feature Match · Shape Match · Threshold · Color Match · Height Slicer 의 판정 기준 입력란 옆에는 <strong>Web 파라미터 연동 콤보</strong>가 있습니다.
 콤보에서 파라미터 코드를 고르면 운전(AUTO RUN) 때 그 코드의 Web 값을 씁니다 — 이후 기준값은 현장에서 도구 설정을 열지 않고 Web 레시피 파라미터 화면(§8.10)에서 바꿉니다.</p>
