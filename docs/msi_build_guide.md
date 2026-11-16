@@ -148,6 +148,13 @@ WiX 정의 — 4 Fragment 구성:
 `Version="$(var.BuildVersion)"` 으로 받는다 — Package.wxs 를 수동으로 고칠 일은 없다.
 절차는 [release_manual_procedure.md](release_manual_procedure.md) ① 참조.
 
+**같은 버전 다시 빌드(수정판)** — 버전 표기를 그대로 두고 수정만 다시 배포할 때는 `Directory.Build.props`
+의 `<BuildRevision>` 을 1 올린다. 파일 버전 넷째 자리(예 1.48.1.**2**)로만 들어가 지원 패키지
+`ProductVersion: 1.48.1 (build 2)` 줄과 파일 속성에서 빌드를 구분한다. 화면 · 설치 창 · 제어판 버전은 그대로.
+`Package.wxs` 의 `MajorUpgrade AllowSameVersionUpgrades="yes"` 가 같은 버전 설치본도 지우고 교체하므로
+덮어 설치하면 된다(이 설정 전 판에서는 제품이 두 줄로 등록되고 파일 버전이 같은 DLL 이 안 바뀔 수 있었다).
+새 버전으로 올릴 때는 `<BuildRevision>` 을 0 으로 되돌린다.
+
 ### 6.2 제조사 / 제품명
 `Package.wxs` line 4-5:
 ```xml

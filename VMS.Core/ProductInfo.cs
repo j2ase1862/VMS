@@ -23,6 +23,12 @@ namespace VMS.Core
         /// <summary>예: 1.48.0 (빌드 메타데이터 "+커밋" 은 뗀다).</summary>
         public static string Version { get; } = ReadVersion();
 
+        /// <summary>
+        /// 같은 버전을 다시 빌드한 판을 구분하는 빌드 번호 — 파일 버전 넷째 자리(Directory.Build.props 의 BuildRevision).
+        /// 화면 버전 표기에는 넣지 않고 지원 패키지에만 쓴다.
+        /// </summary>
+        public static int BuildNumber { get; } = ReadBuildNumber();
+
         /// <summary>예: BODA VMS v1.48.0</summary>
         public static string DisplayName => $"{Name} v{Version}";
 
@@ -44,6 +50,13 @@ namespace VMS.Core
                 return informational.Split('+')[0];
             var v = asm.GetName().Version;
             return v == null ? "0.0.0" : $"{v.Major}.{v.Minor}.{Math.Max(v.Build, 0)}";
+        }
+
+        private static int ReadBuildNumber()
+        {
+            var asm = Assembly.GetEntryAssembly() ?? typeof(ProductInfo).Assembly;
+            var fileVersion = asm.GetCustomAttribute<AssemblyFileVersionAttribute>()?.Version;
+            return System.Version.TryParse(fileVersion, out var v) ? Math.Max(v.Revision, 0) : 0;
         }
     }
 }

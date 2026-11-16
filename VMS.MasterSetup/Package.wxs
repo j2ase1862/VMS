@@ -12,7 +12,9 @@
            Codepage="949"
            Language="1042">
 
-    <MajorUpgrade DowngradeErrorMessage="최신 버전이 이미 설치되어 있습니다." />
+    <!-- AllowSameVersionUpgrades: 같은 버전(예: 1.48.1)을 다시 빌드한 설치 파일도 기존 설치를 지우고 교체한다.
+         없으면 제품이 두 개로 등록되고 파일 버전이 같은 DLL 은 바뀌지 않아 수정이 빠질 수 있다. -->
+    <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="최신 버전이 이미 설치되어 있습니다." />
     <MediaTemplate EmbedCab="yes" />
 
     <Feature Id="Main" Title="BODA VMS" Level="1">

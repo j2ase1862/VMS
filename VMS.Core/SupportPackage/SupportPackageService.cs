@@ -183,6 +183,7 @@ namespace VMS.Core.SupportPackage
         {
             w.WriteLine("# BODA Vision AI — Environment");
             w.WriteLine($"GeneratedAtUtc:    {DateTime.UtcNow:o}");
+            w.WriteLine($"ProductVersion:    {ProductInfo.Version} (build {ProductInfo.BuildNumber})");
             if (includeMachineName)
             {
                 w.WriteLine($"MachineName:       {Environment.MachineName}");
