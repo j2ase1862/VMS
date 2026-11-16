@@ -237,5 +237,13 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         {
             OnPropertyChanged(nameof(SourceGeometries));
         }
+
+        // 연결 입력(SourceGeometries)은 실행 직전에 채워진다 — 실행 결과가 바뀔 때 목록도 다시 읽는다.
+        protected override void OnToolPropertyChanged(string? propertyName)
+        {
+            base.OnToolPropertyChanged(propertyName);
+            if (propertyName == nameof(LastResult))
+                RefreshSourceGeometries();
+        }
     }
 }
