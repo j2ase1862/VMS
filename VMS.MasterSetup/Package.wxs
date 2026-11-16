@@ -12,7 +12,12 @@
            Codepage="949"
            Language="1042">
 
-    <MajorUpgrade DowngradeErrorMessage="최신 버전이 이미 설치되어 있습니다." />
+    <!-- AllowSameVersionUpgrades: 같은 버전(예: 1.48.1)을 다시 빌드한 설치 파일도 기존 설치를 지우고 교체한다.
+         없으면 제품이 두 개로 등록되고 파일 버전이 같은 DLL 은 바뀌지 않아 수정이 빠질 수 있다. -->
+    <!-- MigrateFeatures="no": 기능 상태는 아래 INSTALLWEB 결정(이전 설치에 Web 이 있었는지)만으로 정한다.
+         기본값(yes)이면 MigrateFeatureStates 가 업그레이드 화면에서 고른 Web 포함 여부를 이전 상태로 덮어쓸 수 있다
+         (기능이 Main · WebServer 둘뿐이고 Main 은 항상 설치라 옮길 상태가 따로 없다). -->
+    <MajorUpgrade AllowSameVersionUpgrades="yes" MigrateFeatures="no" DowngradeErrorMessage="최신 버전이 이미 설치되어 있습니다." />
     <MediaTemplate EmbedCab="yes" />
 
     <Feature Id="Main" Title="BODA VMS" Level="1">
@@ -31,8 +36,21 @@
          제외 경로 2가지 — 같은 INSTALLWEB 속성 공유:
            · 설치 마법사 "설치 구성 선택" 화면의 체크 해제 (WebOptionDlg — 해제 시 속성 제거)
            · 무인 설치: msiexec /i VMS-x.y.z.msi INSTALLWEB=0
-         기본값 1(Property) 이라 UI 없는 설치도 기본은 포함. -->
-    <Property Id="INSTALLWEB" Value="1" Secure="yes" />
+         새 설치의 기본은 포함(1). 업그레이드(인앱 업데이트 · 같은 버전 교체 포함)는 이전 설치의 구성을 따른다 —
+         이전 설치에 Web 서비스 구성 요소(WebServiceComp)가 있으면 1, 없으면 비워 둔다(= 제외 유지).
+         이전 설치 확인은 Windows Installer 의 구성 요소 등록(ComponentSearch)을 읽으므로 이 방식 이전 버전
+         (v1.48.1 까지)에서 올릴 때도 맞게 동작한다. 명령줄의 INSTALLWEB=0/1 은 그대로 우선한다.
+         실행 단계(execute) 결정은 마법사 없이 도는 설치(인앱 업데이트 · /passive · /qn)에서만 —
+         전체 UI 설치는 화면 체크 결과가 넘어온다(체크 해제 = 속성 없음). 설치된 제품의 유지 관리 · 제거
+         (업그레이드가 옛 제품을 지우는 경우 포함)는 예전처럼 늘 1 이라 WebServer 기능이 비활성화되지 않는다. -->
+    <Property Id="INSTALLWEB" Secure="yes" />
+    <Property Id="WEBPREVINSTALLED" Secure="yes">
+      <ComponentSearch Id="WebServiceCompSearch" Guid="{D5190E50-9255-5E23-A1FE-5EB0D2562D97}" Type="file" />
+    </Property>
+    <SetProperty Id="INSTALLWEB" Action="SetInstallWebDefaultUi" Value="1" After="AppSearch" Sequence="ui"
+                 Condition="NOT INSTALLWEB AND (Installed OR WEBPREVINSTALLED OR NOT WIX_UPGRADE_DETECTED)" />
+    <SetProperty Id="INSTALLWEB" Action="SetInstallWebDefault" Value="1" After="AppSearch" Sequence="execute"
+                 Condition="NOT INSTALLWEB AND (Installed OR (UILevel &lt; 5 AND (WEBPREVINSTALLED OR NOT WIX_UPGRADE_DETECTED)))" />
     <Feature Id="WebServer" Title="BODA VMS Web 서버" Level="1" AllowAbsent="yes">
       <Level Value="0" Condition="INSTALLWEB=0 OR NOT INSTALLWEB" />
       <ComponentGroupRef Id="WebFiles" />
@@ -183,7 +201,9 @@
       </Files>
     </ComponentGroup>
 
-    <Component Id="WebServiceComp" Directory="WebFolder">
+    <!-- Guid 는 v1.48.0 · v1.48.1 MSI 에 자동 생성돼 있던 값 그대로 고정 — 위 WEBPREVINSTALLED 의
+         ComponentSearch 가 이 값으로 이전 설치의 Web 포함 여부를 찾는다. 바꾸지 말 것. -->
+    <Component Id="WebServiceComp" Guid="{D5190E50-9255-5E23-A1FE-5EB0D2562D97}" Directory="WebFolder">
       <File Id="WebServerExe" Source="$(var.WebPayloadDir)BODA.VMS.Web.exe" KeyPath="yes" />
       <ServiceInstall Id="WebSvcInstall"
                       Name="BodaVmsWeb"
