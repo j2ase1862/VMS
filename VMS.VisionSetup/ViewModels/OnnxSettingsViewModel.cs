@@ -13,27 +13,63 @@ namespace VMS.VisionSetup.ViewModels
     /// 추론 엔진 설정(Inference Settings) 창 ViewModel — 실행 백엔드 · TensorRT 캐시 폴더 · FP16.
     /// 읽기 · 저장은 <see cref="OnnxSettingsService"/>, 폴더 선택 · 오류 안내는 <see cref="IDialogService"/>.
     /// </summary>
+    /// <summary>실행 백엔드 콤보 항목 — 이 PC 에서 쓸 수 없으면 표시 이름에 적는다.</summary>
+    public sealed record OnnxProviderOption(OnnxExecutionProvider Provider, bool IsAvailable)
+    {
+        public string Display => IsAvailable ? Provider.ToString() : $"{Provider} (이 PC 에서 사용 불가)";
+    }
+
     public partial class OnnxSettingsViewModel : ObservableObject
     {
         private readonly IDialogService _dialogService;
 
         public OnnxSettingsViewModel(IDialogService dialogService)
-            : this(dialogService, OnnxSettingsService.Load())
+            : this(dialogService, OnnxSettingsService.Load(), OnnxModelBase.IsProviderAvailable,
+                   OnnxModelBase.LastActiveProvider)
         {
         }
 
-        internal OnnxSettingsViewModel(IDialogService dialogService, OnnxSettingsService.OnnxSettings current)
+        internal OnnxSettingsViewModel(IDialogService dialogService, OnnxSettingsService.OnnxSettings current,
+            Func<OnnxExecutionProvider, bool>? isAvailable = null, string? lastActiveProvider = null)
         {
             _dialogService = dialogService;
             _provider = current.Provider;
             _tensorRTCachePath = current.TensorRTCachePath;
             _tensorRTFp16 = current.TensorRTFp16;
+
+            // 창을 열 때 이 PC 에서 붙일 수 있는 백엔드를 확인한다 (VS-14, 사용자 결정 11-16)
+            var check = isAvailable ?? (_ => true);
+            ProviderOptions = Enum.GetValues(typeof(OnnxExecutionProvider)).Cast<OnnxExecutionProvider>()
+                .Select(p => new OnnxProviderOption(p, check(p)))
+                .ToList();
+            ActiveProviderText = string.IsNullOrEmpty(lastActiveProvider)
+                ? "실제 사용 백엔드: 아직 모델을 불러오지 않았습니다 (도구를 실행하면 표시)"
+                : $"실제 사용 백엔드(마지막 모델 로드): {DisplayName(lastActiveProvider)}";
         }
 
-        public IReadOnlyList<OnnxExecutionProvider> Providers { get; } =
-            Enum.GetValues(typeof(OnnxExecutionProvider)).Cast<OnnxExecutionProvider>().ToList();
+        /// <summary>실행 백엔드 콤보 항목 — 사용 불가 표시 포함.</summary>
+        public IReadOnlyList<OnnxProviderOption> ProviderOptions { get; }
 
-        [ObservableProperty] private OnnxExecutionProvider _provider;
+        /// <summary>마지막으로 모델을 불러올 때 실제로 붙은 백엔드 한 줄.</summary>
+        public string ActiveProviderText { get; }
+
+        /// <summary>고른 백엔드를 이 PC 에서 쓸 수 없을 때 안내 (쓸 수 있으면 빈 문자열).</summary>
+        public string ProviderWarning =>
+            ProviderOptions.FirstOrDefault(o => o.Provider == Provider) is { IsAvailable: false }
+                ? "고른 백엔드를 이 PC 에서 쓸 수 없어 다른 백엔드(최종적으로 CPU)로 실행됩니다."
+                : string.Empty;
+
+        private static string DisplayName(string ep) => ep switch
+        {
+            "DML" => "DirectML",
+            "CUDA" => "Cuda",
+            "CPU" => "Cpu",
+            _ => ep
+        };
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(ProviderWarning))]
+        private OnnxExecutionProvider _provider;
         [ObservableProperty] private string _tensorRTCachePath;
         [ObservableProperty] private bool _tensorRTFp16;
 

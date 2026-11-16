@@ -4,7 +4,7 @@
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         xmlns:c="clr-namespace:VMS.VisionSetup.Views.Common"
         Title="Inference Engine Settings"
-        Width="580" Height="420"
+        Width="580" Height="480"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         WindowStyle="None"
@@ -49,9 +49,25 @@
                     <StackPanel>
                         <TextBlock Text="Execution Provider" Style="{StaticResource WindowFieldLabel}"/>
                         <ComboBox x:Name="ProviderComboBox"
-                                  ItemsSource="{Binding Providers}"
-                                  SelectedItem="{Binding Provider}"
+                                  ItemsSource="{Binding ProviderOptions}"
+                                  DisplayMemberPath="Display"
+                                  SelectedValuePath="Provider"
+                                  SelectedValue="{Binding Provider}"
                                   Style="{StaticResource WindowDarkComboBox}"/>
+                        <TextBlock Text="{Binding ProviderWarning}" Foreground="{StaticResource BrushWarning}"
+                                   TextWrapping="Wrap" Margin="0,4,0,0" FontSize="11">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <Trigger Property="Text" Value="">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock Text="{Binding ActiveProviderText}"
+                                   Style="{StaticResource WindowMutedText}" Margin="0,4,0,0"/>
 
                         <TextBlock Text="TensorRT Engine Cache Folder (선택)"
                                    Style="{StaticResource WindowFieldLabel}" Margin="0,10,0,2"/>
@@ -72,7 +88,7 @@
 
                         <CheckBox x:Name="Fp16CheckBox"
                                   IsChecked="{Binding TensorRTFp16}"
-                                  Content="Enable TensorRT FP16 (RTX 계열에서 2~3배 속도 향상)"
+                                  Content="Enable TensorRT FP16 (반정밀도 — 지원 GPU 에서 더 빠름)"
                                   Style="{StaticResource WindowDarkCheckBox}"
                                   Margin="0,14,0,0"/>
 

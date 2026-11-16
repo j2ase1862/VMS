@@ -60,11 +60,17 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         public static string TensorRTCachePath { get; set; } =
             VMS.Camera.Configuration.AppDataPaths.GetPath("trt_cache");
 
-        /// <summary>TensorRT 빌드 시 FP16 최적화 활성화 (RTX 이상 GPU에서 2~3배 속도 향상)</summary>
+        /// <summary>TensorRT 빌드 시 FP16(반정밀도) 최적화 활성화 — 지원 GPU 에서 더 빠르다.</summary>
         public static bool TensorRTFp16 { get; set; } = true;
 
         /// <summary>현재 세션에서 실제로 활성화된 EP (LoadModel 이후 유효)</summary>
         public string ActiveProvider { get; private set; } = "CPU";
+
+        /// <summary>
+        /// 이 프로세스에서 마지막으로 모델을 불러올 때 실제로 붙은 EP — 추론 설정 창이 보인다 (VS-14).
+        /// 아직 모델을 불러오지 않았으면 null.
+        /// </summary>
+        public static string? LastActiveProvider { get; private set; }
 
         protected void LoadModel(string modelPath)
             => LoadModel(modelPath, PreferredProvider);
@@ -98,6 +104,7 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
             try
             {
                 _session = new InferenceSession(modelPath, options);
+                LastActiveProvider = ActiveProvider;
             }
             catch (Exception ex)
             {

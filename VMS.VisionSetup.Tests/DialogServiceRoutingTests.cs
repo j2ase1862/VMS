@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using OpenCvSharp;
 using VMS.Camera.Models;
 using VMS.VisionSetup.Interfaces;
@@ -122,6 +123,26 @@ namespace VMS.VisionSetup.Tests
 
             Assert.Equal(OnnxSettingsService.DefaultTensorRTCachePath, saved!.Value.TensorRTCachePath);
             Assert.Equal(OnnxSettingsService.DefaultTensorRTCachePath, vm.TensorRTCachePath);
+        }
+
+        [Fact]
+        public void OnnxSettings_MarksUnavailableProviders_AndShowsLastActive()
+        {
+            // VS-14: 이 PC 에서 붙일 수 없는 백엔드 표시 · 마지막 실제 백엔드 한 줄 · 고른 것이 불가면 경고
+            var vm = new OnnxSettingsViewModel(new FakeDialogService(),
+                new OnnxSettingsService.OnnxSettings(OnnxExecutionProvider.Auto, @"D:\trt", true),
+                isAvailable: p => p is OnnxExecutionProvider.Auto or OnnxExecutionProvider.Cpu,
+                lastActiveProvider: "DML");
+
+            var cuda = vm.ProviderOptions.Single(o => o.Provider == OnnxExecutionProvider.Cuda);
+            Assert.False(cuda.IsAvailable);
+            Assert.Equal("Cuda (이 PC 에서 사용 불가)", cuda.Display);
+            Assert.Equal("Cpu", vm.ProviderOptions.Single(o => o.Provider == OnnxExecutionProvider.Cpu).Display);
+            Assert.Contains("DirectML", vm.ActiveProviderText);
+
+            Assert.Equal(string.Empty, vm.ProviderWarning);
+            vm.Provider = OnnxExecutionProvider.TensorRT;
+            Assert.NotEqual(string.Empty, vm.ProviderWarning);
         }
 
         internal sealed class FakeDialogService : IDialogService
