@@ -45,10 +45,41 @@ namespace VMS.Core.Tests.Backup
 
         private string CreateAutoBackupFor(DateTime utc)
         {
-            var name = $"auto-backup-{utc:yyyyMMdd-HHmmss}.zip";
+            // 파일 이름은 현지 시각 (VM-30)
+            var name = AutoBackupScheduler.MakeBackupFileName(utc.ToLocalTime());
             var path = Path.Combine(_backupDir, name);
             File.WriteAllText(path, "fake-zip-content");
             return path;
+        }
+
+        // ─── 파일 이름 = 현지 시각 (VM-30) ─────────────────────────
+
+        [Fact]
+        public void BackupFileName_UsesLocalTime_AndParsesBackToSameInstant()
+        {
+            var local = new DateTime(2026, 11, 13, 14, 0, 29, DateTimeKind.Local);
+
+            var name = AutoBackupScheduler.MakeBackupFileName(local);
+
+            Assert.Equal("auto-backup-20261113-140029.zip", name);
+            Assert.True(AutoBackupScheduler.TryParseBackupFileTime(Path.GetFileNameWithoutExtension(name), out var utc));
+            Assert.Equal(local.ToUniversalTime(), utc);
+        }
+
+        [Fact]
+        public void BackupFileTime_RejectsOtherNames()
+        {
+            Assert.False(AutoBackupScheduler.TryParseBackupFileTime("auto-backup-not-a-date", out _));
+            Assert.False(AutoBackupScheduler.TryParseBackupFileTime("BODA-VMS-backup-20261113-140333", out _));
+        }
+
+        [Fact]
+        public void ResolveBackupDir_EmptyMeansAppDataBackups()
+        {
+            // VM-31 — 스케줄러 · 미리보기 · 지원 패키지가 같은 답을 쓴다
+            Assert.Equal(Path.Combine("C:/x", "backups"), AutoBackupOptions.ResolveBackupDir("C:/x", null));
+            Assert.Equal(Path.Combine("C:/x", "backups"), AutoBackupOptions.ResolveBackupDir("C:/x", "  "));
+            Assert.Equal("D:/bk", AutoBackupOptions.ResolveBackupDir("C:/x", "D:/bk"));
         }
 
         // ─── AutoBackupOptions.Clamp ──────────────────────────────

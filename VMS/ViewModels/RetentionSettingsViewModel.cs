@@ -181,7 +181,8 @@ namespace VMS.ViewModels
             {
                 var appData = Path.GetDirectoryName(_configPath)!;
                 var auditDir = Path.Combine(appData, "audit");
-                var backupDir = Path.Combine(appData, "backups");
+                // 자동 백업 위치를 바꿨으면 그 폴더 — 실제 정리(스케줄러)와 같은 곳을 미리 본다 (VM-31)
+                var backupDir = AutoBackupOptions.ResolveBackupDir(appData, AutoBackupOptions.LoadFrom(_configPath).BackupDir);
                 var queueDir = Path.Combine(appData, "upload_queue");
 
                 // Clamp 입력값
