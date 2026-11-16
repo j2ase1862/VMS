@@ -2033,15 +2033,20 @@ namespace VMS.ViewModels
 
         partial void OnSelectedNgImageChanged(NgImageItem? value)
         {
-            if (value?.Thumbnail != null)
-            {
-                // Show the NG image in the selected camera if one is available
-                if (SelectedCamera != null)
-                {
-                    SelectedCamera.CurrentImage = value.Thumbnail;
-                }
-            }
+            if (value?.Thumbnail == null) return;
+
+            // 그 NG 를 찍은 카메라 화면에 크게 보여 준다. 썸네일에는 카메라 이름이 실려 있다.
+            // (종전에는 SelectedCamera 를 아무도 정하지 않아 썸네일을 눌러도 아무 일이 없었다 — VM-02)
+            var camera = FindCameraForNgImage(Cameras, value) ?? SelectedCamera;
+            if (camera == null) return;
+
+            SelectedCamera = camera;
+            camera.CurrentImage = value.Thumbnail;
         }
+
+        /// <summary>NG 썸네일을 찍은 카메라 — 이름으로 찾는다. 없으면 null.</summary>
+        internal static CameraViewModel? FindCameraForNgImage(IEnumerable<CameraViewModel> cameras, NgImageItem item)
+            => cameras.FirstOrDefault(c => string.Equals(c.Name, item.CameraName, StringComparison.Ordinal));
 
         partial void OnTotalPassChanged(int value)
         {
