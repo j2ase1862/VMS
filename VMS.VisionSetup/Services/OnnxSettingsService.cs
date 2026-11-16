@@ -24,6 +24,10 @@ namespace VMS.VisionSetup.Services
 
         public static string ConfigPath => VMS.Camera.Configuration.AppDataPaths.SystemConfigFile;
 
+        /// <summary>TensorRT 엔진 캐시 기본 폴더 — 칸을 비워 저장하면 이 폴더를 쓴다. 빈 값을 그대로 저장해도
+        /// 다시 시작할 때 Load 가 기본 폴더로 채우므로, 저장 때부터 같은 값으로 맞춘다 (VS-37).</summary>
+        public static string DefaultTensorRTCachePath => VMS.Camera.Configuration.AppDataPaths.GetPath("trt_cache");
+
         public readonly record struct OnnxSettings(
             OnnxExecutionProvider Provider,
             string TensorRTCachePath,

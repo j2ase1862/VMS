@@ -67,7 +67,7 @@
                                     Command="{Binding BrowseCommand}"
                                     Style="{StaticResource ModernGhostButton}"/>
                         </Grid>
-                        <TextBlock Text="비워두면 캐시 없음. 설정 시 TensorRT 엔진을 캐시하여 재실행 시 재빌드를 건너뜁니다."
+                        <TextBlock Text="TensorRT 엔진을 이 폴더에 저장해 두고 다시 실행할 때 재빌드를 건너뜁니다. 비워 두고 저장하면 기본 폴더(설정 폴더의 trt_cache)를 씁니다."
                                    Style="{StaticResource WindowMutedText}" Margin="0,4,0,0"/>
 
                         <CheckBox x:Name="Fp16CheckBox"

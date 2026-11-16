@@ -108,6 +108,22 @@ namespace VMS.VisionSetup.Tests
             Assert.Contains("disk full", dialogs.LastError);
         }
 
+        [Fact]
+        public void OnnxSettings_BlankCachePath_SavesDefaultFolder()
+        {
+            // VS-37: 빈 칸 저장은 "캐시 없음" 이 아니라 기본 폴더 — 다시 시작하면 기본 폴더로 읽히므로 처음부터 같게.
+            var vm = new OnnxSettingsViewModel(new FakeDialogService(),
+                new OnnxSettingsService.OnnxSettings(OnnxExecutionProvider.Auto, @"D:\trt", true));
+            OnnxSettingsService.OnnxSettings? saved = null;
+            vm.SaveAction = s => saved = s;
+
+            vm.TensorRTCachePath = "   ";
+            vm.SaveCommand.Execute(null);
+
+            Assert.Equal(OnnxSettingsService.DefaultTensorRTCachePath, saved!.Value.TensorRTCachePath);
+            Assert.Equal(OnnxSettingsService.DefaultTensorRTCachePath, vm.TensorRTCachePath);
+        }
+
         internal sealed class FakeDialogService : IDialogService
         {
             public string? FolderResult { get; set; }

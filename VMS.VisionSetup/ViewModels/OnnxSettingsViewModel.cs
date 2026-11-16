@@ -54,10 +54,15 @@ namespace VMS.VisionSetup.ViewModels
         [RelayCommand]
         private void Save()
         {
-            var settings = new OnnxSettingsService.OnnxSettings(
-                Provider,
-                TensorRTCachePath?.Trim() ?? string.Empty,
-                TensorRTFp16);
+            // 빈 칸은 기본 캐시 폴더 — 다시 시작하면 어차피 기본 폴더로 읽히므로 이번 세션부터 같게 (VS-37)
+            var cachePath = TensorRTCachePath?.Trim();
+            if (string.IsNullOrEmpty(cachePath))
+            {
+                cachePath = OnnxSettingsService.DefaultTensorRTCachePath;
+                TensorRTCachePath = cachePath;
+            }
+
+            var settings = new OnnxSettingsService.OnnxSettings(Provider, cachePath, TensorRTFp16);
 
             try
             {
