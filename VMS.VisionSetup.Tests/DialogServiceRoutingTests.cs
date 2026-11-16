@@ -152,7 +152,10 @@ namespace VMS.VisionSetup.Tests
             }
             public string? ShowRenameDialog(string currentName) => null;
             public void ShowCameraManagerDialog() { }
-            public Recipe? ShowRecipeManagerDialog() => null;
+            public Recipe? ShowRecipeManagerDialog() => ShowRecipeManagerDialog(null);
+            /// <summary>레시피 관리자 창 대신 실행할 동작 — 인자는 넘겨받은 기본 카메라 ID.</summary>
+            public Func<string?, Recipe?>? OnRecipeManager { get; set; }
+            public Recipe? ShowRecipeManagerDialog(string? defaultCameraId) => OnRecipeManager?.Invoke(defaultCameraId);
             public void ShowSequenceEditorDialog(IEnumerable<SequenceDeviceEntry>? extraDevices = null) { }
             public void ShowCalibrationManagerDialog() { }
             public RecipeTemplate? ShowTemplateGalleryDialog() => null;

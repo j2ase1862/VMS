@@ -367,12 +367,9 @@ namespace VMS.VisionSetup.Views.Recipe
         {
             if (_currentRecipe == null || RecipeService == null) return;
 
-            var step = new InspectionStep
-            {
-                Name = $"Step {_currentRecipe.Steps.Count(s => string.IsNullOrEmpty(s.CameraId)) + 1}",
-            };
-
-            RecipeService.AddStep(_currentRecipe, step);
+            // 메인에서 고른 카메라로 붙이고 "1-n" 이름을 매긴다 (VS-05) — 규칙은 VM 에
+            if (DataContext is not RecipeEditorViewModel vm) return;
+            var step = vm.AddStepForDefaultCamera(_currentRecipe);
             MarkUnsavedChanges();
             RefreshTree();
             UpdateStatus($"Added step: {step.Name}");

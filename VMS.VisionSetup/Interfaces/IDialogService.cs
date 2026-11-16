@@ -40,6 +40,9 @@ namespace VMS.VisionSetup.Interfaces
         string? ShowRenameDialog(string currentName);
         void ShowCameraManagerDialog();
         Recipe? ShowRecipeManagerDialog();
+
+        /// <summary>레시피 관리자 — 편집기 [Add Step] 이 쓸 카메라(메인에서 고른 카메라)를 넘긴다.</summary>
+        Recipe? ShowRecipeManagerDialog(string? defaultCameraId) => ShowRecipeManagerDialog();
         /// <summary>
         /// Sequence Editor 다이얼로그. extraDevices 는 InputCheck/OutputAction 노드의
         /// 디바이스 콤보에 표시될 PLC + IO 보드 entry 리스트.

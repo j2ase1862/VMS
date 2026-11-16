@@ -19,7 +19,8 @@ namespace VMS.VisionSetup.Views.Recipe
         public event EventHandler<Models.Recipe>? RecipeLoaded;
 
         public RecipeManagerWindow(IRecipeService recipeService, ICameraService cameraService,
-            IDialogService dialogService, IParameterSyncService? parameterSyncService = null)
+            IDialogService dialogService, IParameterSyncService? parameterSyncService = null,
+            string? defaultCameraId = null)
         {
             InitializeComponent();
 
@@ -27,7 +28,10 @@ namespace VMS.VisionSetup.Views.Recipe
 
             // Create ViewModels with injected services
             _listViewModel = new RecipeListViewModel(recipeService, dialogService, parameterSyncService);
-            _editorViewModel = new RecipeEditorViewModel(recipeService, cameraService, dialogService);
+            _editorViewModel = new RecipeEditorViewModel(recipeService, cameraService, dialogService)
+            {
+                DefaultCameraId = defaultCameraId
+            };
 
             // Set DataContext on child controls
             RecipeListPanel.DataContext = _listViewModel;

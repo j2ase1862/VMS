@@ -229,10 +229,13 @@ namespace VMS.VisionSetup.Services
             window.ShowDialog();
         }
 
-        public Recipe? ShowRecipeManagerDialog()
+        public Recipe? ShowRecipeManagerDialog() => ShowRecipeManagerDialog(null);
+
+        public Recipe? ShowRecipeManagerDialog(string? defaultCameraId)
         {
             Recipe? loadedRecipe = null;
-            var window = new RecipeManagerWindow(_recipeService, _cameraService, this, _parameterSyncService);
+            var window = new RecipeManagerWindow(_recipeService, _cameraService, this, _parameterSyncService,
+                defaultCameraId);
             window.Owner = Application.Current.MainWindow;
             window.RecipeLoaded += (s, recipe) =>
             {

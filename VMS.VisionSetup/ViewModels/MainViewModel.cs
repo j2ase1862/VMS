@@ -4475,12 +4475,23 @@ namespace VMS.VisionSetup.ViewModels
 
         public void OpenRecipeManager()
         {
-            var loadedRecipe = _dialogService.ShowRecipeManagerDialog();
+            var loadedRecipe = _dialogService.ShowRecipeManagerDialog(SelectedCamera?.Id);
             if (loadedRecipe != null)
             {
                 CurrentRecipeName = loadedRecipe.Name;
                 LoadRobotSettingsFromRecipe(loadedRecipe);
                 StatusMessage = $"Recipe loaded: {loadedRecipe.Name}";
+            }
+
+            // 편집기에서 스텝을 더하거나 고쳤을 수 있다 — 지금 레시피의 스텝 이름 · 표를 다시 맞춘다 (VS-05).
+            // 종전에는 창을 닫아도 Steps 표가 그대로라 목록에서 다시 [Load] 해야 보였다.
+            if (_recipeService.CurrentRecipe is { } current)
+            {
+                var keep = SelectedStep;
+                StepNaming.RecomputeNames(current, Cameras);
+                RefreshSteps();
+                if (keep != null && Steps.Contains(keep) && !ReferenceEquals(SelectedStep, keep))
+                    SelectedStep = keep;
             }
         }
 
