@@ -305,6 +305,9 @@ namespace VMS.VisionSetup.ViewModels
                 }
                 if (_recipe != null)
                 {
+                    // 값은 작업 공간 도구 인스턴스에 들어갔다 — 레시피의 ToolConfig 에도 옮겨야
+                    // 파일에 남는다(종전에는 옛 값 그대로 수정 시각만 바뀌었다, VS-10).
+                    SyncToolParametersToRecipe(_recipe, best.Bindings.Select(b => b.Sweep.Tool));
                     try { _recipeService.SaveRecipe(_recipe); } catch { /* best effort */ }
                 }
                 StatusMessage = $"적용됨: {best.CombinationText}";
@@ -313,6 +316,26 @@ namespace VMS.VisionSetup.ViewModels
             {
                 StatusMessage = $"적용 실패: {ex.Message}";
             }
+        }
+
+        /// <summary>
+        /// 작업 공간 도구의 현재 파라미터를 레시피의 같은 ID ToolConfig 에 옮긴다.
+        /// 위치 · 연결은 그대로 두고 파라미터 사전만 바꾼다. 반환값은 갱신한 도구 수.
+        /// </summary>
+        internal static int SyncToolParametersToRecipe(Recipe recipe, IEnumerable<VisionToolBase> tools)
+        {
+            int updated = 0;
+            foreach (var tool in tools.Distinct())
+            {
+                var config = recipe.Steps
+                    .SelectMany(s => s.Tools)
+                    .FirstOrDefault(c => c.Id == tool.Id);
+                if (config == null) continue;
+
+                config.Parameters = Services.ToolSerializer.SerializeTool(tool).Parameters;
+                updated++;
+            }
+            return updated;
         }
 
         private static void Dispatch(Action a)
