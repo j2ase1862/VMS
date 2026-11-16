@@ -32,6 +32,9 @@ namespace VMS
         // OnExit 에서 Dispose 로 타이머 종료.
         private AutoBackupScheduler? _autoBackupScheduler;
 
+        // 검사 이미지 보존 기간 정리 — 시작 때 1회 + 실행 중 하루 1회 (VM-41)
+        private VMS.Services.ImageRetentionScheduler? _imageRetentionScheduler;
+
         // Web 서버 좌석 임대 (spec §5b) — 로컬 license.lic 없는 클라이언트 PC 에서만 활성.
         private VMS.Core.Services.LicenseClient? _licenseClient;
 
@@ -64,9 +67,9 @@ namespace VMS
             {
                 try
                 {
-                    var removed = VMS.Core.Imaging.ImageRetentionCleaner.Cleanup(
-                        VMS.Core.Imaging.ImageSaveOptions.LoadFromAppData());
-                    System.Diagnostics.Debug.WriteLine($"[App] --cleanup-images: {removed} folder(s) removed");
+                    var result = VMS.Core.Imaging.ImageRetentionCleaner.CleanupAndAudit(
+                        VMS.Core.Imaging.ImageSaveOptions.LoadFromAppData(), trigger: "CommandLine");
+                    System.Diagnostics.Debug.WriteLine($"[App] --cleanup-images: {result.Deleted.Count} folder(s) removed");
                 }
                 catch (Exception ex)
                 {
@@ -243,6 +246,19 @@ namespace VMS
             catch (Exception ex)
             {
                 Debug.WriteLine($"[App] AutoBackupScheduler 시작 실패 (best-effort): {ex.Message}");
+            }
+
+            // 검사 이미지 보존 기간 정리 (VM-41) — 설정 창 안내대로 시작 때 한 번, 켜 둔 동안 하루 한 번.
+            // 시작 직후 카메라 · 서비스 초기화와 겹치지 않게 조금 늦춰 백그라운드에서 돈다. 지운 폴더는 감사 로그에.
+            try
+            {
+                _imageRetentionScheduler = new VMS.Services.ImageRetentionScheduler(
+                    VMS.Core.Imaging.ImageSaveOptions.LoadFromAppData);
+                _imageRetentionScheduler.Start();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] ImageRetentionScheduler 시작 실패 (best-effort): {ex.Message}");
             }
 
             var splash = new SplashWindow();
@@ -1361,6 +1377,7 @@ namespace VMS
                 // 자동 백업 스케줄러 정지 — 타이머 콜백이 진행 중이면 미완료 백업 한 건 손실 가능,
                 // 다음 시작 시 last_backup_at.txt 기반으로 자동 재개.
                 try { _autoBackupScheduler?.Dispose(); } catch { }
+                try { _imageRetentionScheduler?.Dispose(); } catch { }
 
                 // 정리 완료 → 즉시 종료
                 Process.GetCurrentProcess().Kill();
