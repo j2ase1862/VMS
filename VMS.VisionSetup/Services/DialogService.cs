@@ -195,6 +195,9 @@ namespace VMS.VisionSetup.Services
 
             var viewModel = ViewModels.ModelRegistryPickerViewModel.ForClient(
                 () => new VMS.Core.Services.ModelRegistryClient(settings.ServerUrl, settings.LineToken), taskType);
+            // 고른 모델을 그 자리에서 받아 둔다 — 레시피를 다시 열지 않아도 바로 실행할 수 있게 (VS-33)
+            if (VMS.Core.Services.ModelReferenceResolver.Current is { } resolver)
+                viewModel.PrepareReference = (reference, ct) => resolver.PrepareAsync(reference, ct);
             var window = new Views.Dialogs.ModelRegistryPickerWindow(viewModel)
             {
                 Owner = Application.Current.MainWindow
