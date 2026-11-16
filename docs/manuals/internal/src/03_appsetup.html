@@ -52,9 +52,10 @@
   <tr><td>◆MLOps 라인 토큰 (고급)</td><td><img src="../gs/screenshots/v3/as_ctl/P2_advanced_08_TextBox_TextBox.png" alt=""></td>
       <td>◆MLOps 화면 배포 → 라인 PC 에서 이 라인용으로 발급한 토큰(<code>ln_…</code>)을 그대로 붙여 넣습니다. 토큰이 없으면 모델을 내려받지 못하고 사진도 올라가지 않습니다.</td><td>(빈 값)</td></tr>
   <tr><td>Web 서버 초기 구성 (이 PC)</td><td>—</td>
-      <td>설치 시 Web 서버를 포함한 PC 에만 카드가 나타납니다. admin 비밀번호를 넣고 구성 버튼을 누르면 서비스가 등록 · 시작되며, 멈춰 있으면 [서비스 시작 (관리자 권한)] 버튼이 나타납니다(§2.3).</td><td>—</td></tr>
+      <td>설치 때 Web 서버를 포함한 PC 에서 쓰는 카드입니다(Web 서비스 등록은 설치 파일이 이미 해 둡니다). admin 비밀번호를 두 번 넣고 [초기 구성 실행 (관리자 권한)] 을 누르면, 관리자 승인 → 설정 작성(서명 키 자동 생성) → 서비스 자동 시작 전환 · 시작 → 응답 확인 순으로 진행됩니다.
+      구성한 뒤 서비스가 멈춰 있으면 [서비스 시작 (관리자 권한)] 버튼이, 서비스가 등록돼 있지 않으면 "서비스 미등록 — MSI 재설치(복구)가 필요합니다" 안내가 나옵니다(§2.3 · §2.7). Web 서버를 빼고 설치한 PC 에는 "Web 서버가 설치되어 있지 않습니다" 안내만 보입니다.</td><td>—</td></tr>
   <tr><td>Web SSO 활성</td><td><img src="../gs/screenshots/v3/as_ctl/P2_default_22_CheckBox_Web_SSO_활성__AdminManager_인증을_BODAVMSWeb_.png" alt=""></td>
-      <td>체크하면 VMS 의 관리자(Admin/Engineer) 로그인을 Web 계정으로 위임해 계정을 한곳에서 관리합니다. Web 에 닿지 못할 때는 비상 계정 <code>local-admin</code> 만 제한 권한으로 진입합니다.</td><td>해제</td></tr>
+      <td>체크 상자 글은 "Web SSO 활성 — VMS 사용자 로그인을 BODA.VMS.Web 계정으로 확인" 입니다. 체크하면 VMS 사용자 로그인을 Web 계정으로 확인해 계정을 한곳에서 관리합니다. 등급은 Web 역할을 따릅니다 — Admin 은 Admin, Manager · User 는 Engineer. Web 에 닿지 못할 때는 비상 계정 <code>local-admin</code> 만 제한 권한으로 진입합니다.</td><td>해제</td></tr>
   <tr><td>VMS Admin 비밀번호</td><td><img src="../gs/screenshots/v3/as_ctl/P2_default_27_PasswordBox_InitialAdminPasswordBox.png" alt=""></td>
       <td>VMS 안의 관리자 계정 <code>admin</code> 비밀번호입니다. 신규 설치 시 필수(8 자 이상, 12 자 이상 권장). 이미 계정이 있는 PC 에서는 비워 두면 바꾸지 않습니다.</td><td>—</td></tr>
   <tr><td>Local Fallback Admin 비밀번호</td><td><img src="../gs/screenshots/v3/as_ctl/P2_default_30_PasswordBox_LocalAdminPasswordBox.png" alt=""></td>
@@ -75,7 +76,7 @@
   <tr><td>Camera Type</td><td><img src="../gs/screenshots/v3/as_ctl/P3_camtypes_06_ComboBox_AreaScan2D.png" alt=""></td>
       <td>AreaScan2D · ◆AreaScan3D · ◆LineScan2D · ◆LineScan3D. 선택에 따라 카드 아래에 라인 스캔 항목이 나타납니다.</td><td>AreaScan2D</td></tr>
   <tr><td>Manufacturer</td><td><img src="../gs/screenshots/v3/as_ctl/P3_camtypes_08_ComboBox_HIK.png" alt=""></td>
-      <td>제조사. HIK · Basler · ◆Mech_Mind(3D) · Matrox/Dalsa 는 실제 드라이버로 연결되며, 그 외는 시뮬레이션으로 동작합니다(§2.1). Matrox · Dalsa 를 고르면 Frame Grabber 항목이 나타납니다.</td><td>HIK</td></tr>
+      <td>제조사. 목록 맨 앞의 <strong>Virtual</strong> 은 카메라 없이 시험하는 시뮬레이션 카메라입니다(저장 이미지 · 영상 녹화용). 실제 카메라로 연결되는 것은 Basler 와 ◆Mech_Mind(3D)이며, 그 밖의 제조사(HIK · Matrox · Dalsa 포함)는 연결할 때 "SDK 미탑재" 경고와 함께 시뮬레이션으로 동작합니다(§2.1). Matrox · Dalsa 를 고르면 Frame Grabber 항목이 나타납니다.</td><td>HIK</td></tr>
   <tr><td>◆〈Line Scan〉 Trigger / Line Rate / Scan Length</td><td><img src="../gs/screenshots/v3/as_ctl/P3_camtypes_24_ComboBox_Encoder.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P3_camtypes_27_TextBox_10000.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P3_camtypes_29_TextBox_4096.png" alt=""></td>
       <td>◆라인 스캔 카메라의 트리거 소스(Internal · Encoder) · 라인 레이트(Hz) · 스캔 길이(라인 수).</td><td>Internal / 10000 / 4096</td></tr>
   <tr><td>〈Frame Grabber〉 Board Type / Board# / Digitizer# / DCF</td><td><img src="../gs/screenshots/v3/as_ctl/P3_camtypes_54_ComboBox_ComboBox.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P3_camtypes_62_Button_unnamed.png" alt=""></td>
@@ -87,21 +88,18 @@
 
 <h3 id="appsetup-s4">3.5 4 단계 — ◆PLC Communication (PLC 통신)</h3>
 <figure><img src="../gs/screenshots/v3/as/Window_P4_PLCCommunication.png" data-width="520" alt="4단계 PLC 통신">
-<figcaption>4 단계 — ◆PLC Communication. 벤더 · 통신 방식 · 주소 · 폴링/하트비트 · 쓰기 모드</figcaption></figure>
+<figcaption>4 단계 — ◆PLC Communication. 벤더 · IP 주소 · 포트 · 자동 재접속(Modbus TCP 면 Unit ID · Endian Mode)</figcaption></figure>
+<p>◆PLC 는 고른 제조사의 이더넷(TCP) 통신으로만 연결합니다. 화면에는 연결에 쓰는 항목만 있습니다.</p>
 <table class="cols-2-3-4-1">
   <tr><th>항목</th><th>컨트롤</th><th>설명</th><th>기본값</th></tr>
   <tr><td>◆PLC Vendor</td><td><img src="../gs/screenshots/v3/as_ctl/P4_ethernet_02_RadioButton_Mitsubishi.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P4_ethernet_06_RadioButton_Modbus_TCP.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P4_ethernet_07_RadioButton_None_No_PLC.png" alt=""></td>
-      <td>Mitsubishi(MC) · Siemens(S7) · LS Electric(XGT) · Omron(FINS) · Modbus TCP · None. ◆PLC 없이 IO 보드만 쓰면 None 으로 두고 6 단계에서 보드를 등록합니다(§4.11).</td><td>None</td></tr>
-  <tr><td>Communication Type</td><td><img src="../gs/screenshots/v3/as_ctl/P4_ethernet_22_ComboBox_Ethernet.png" alt=""></td><td>Ethernet 또는 Serial. Serial 이면 아래 IP · Port 대신 시리얼 항목이 나타납니다.</td><td>Ethernet</td></tr>
-  <tr><td>〈Ethernet〉 ◆PLC IP Address / Port</td><td><img src="../gs/screenshots/v3/as_ctl/P4_ethernet_25_TextBox_1921680100.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P4_ethernet_27_TextBox_502.png" alt=""></td><td>PLC 의 IP 주소와 포트.</td><td>192.168.0.100 / 502</td></tr>
-  <tr><td>〈Modbus〉 Modbus Unit ID</td><td><img src="../gs/screenshots/v3/as_ctl/P4_modbus_02_TextBox_255.png" alt=""></td><td>Modbus 슬레이브 ID(1~255).</td><td>255</td></tr>
-  <tr><td>〈Serial〉 Port / Baud / Data / Parity / Stop</td><td><img src="../gs/screenshots/v3/as_ctl/P4_serial_03_TextBox_COM1.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P4_serial_05_ComboBox_115200.png" alt=""></td><td>시리얼 포트 파라미터.</td><td>COM1 / 115200 / 8 / None / One</td></tr>
-  <tr><td>Polling Interval (ms)</td><td><img src="../gs/screenshots/v3/as_ctl/P4_ethernet_10_TextBox_20.png" alt=""></td><td>◆PLC 신호를 읽는 주기입니다. 짧을수록 트리거 반응이 빠르지만 PLC 부하가 늘어납니다.</td><td>20</td></tr>
-  <tr><td>Use Heartbeat / 주소</td><td><img src="../gs/screenshots/v3/as_ctl/P4_ethernet_11_CheckBox_Use_Heartbeat.png" alt=""></td><td>켜면 VMS 가 지정 주소(예: D100)에 카운터를 계속 써서 ◆PLC 가 VMS 생존을 감시할 수 있습니다.</td><td>해제</td></tr>
+      <td>Mitsubishi(MC) · Siemens(S7) · LS Electric(XGT) · Omron(FINS) · Modbus TCP · None. ◆PLC 없이 IO 보드만 쓰면 None 으로 두고 6 단계에서 보드를 등록합니다(§3.7).</td><td>None</td></tr>
+  <tr><td>◆PLC IP Address / Port</td><td><img src="../gs/screenshots/v3/as_ctl/P4_ethernet_25_TextBox_1921680100.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P4_ethernet_27_TextBox_502.png" alt=""></td><td>PLC 의 IP 주소와 포트.</td><td>192.168.0.100 / 502</td></tr>
+  <tr><td>〈Modbus TCP〉 Modbus Unit ID</td><td><img src="../gs/screenshots/v3/as_ctl/P4_modbus_02_TextBox_255.png" alt=""></td><td>Modbus 슬레이브 ID(1~255).</td><td>255</td></tr>
   <tr><td>Auto Reconnect</td><td><img src="../gs/screenshots/v3/as_ctl/P4_ethernet_13_CheckBox_Auto_Reconnect.png" alt=""></td><td>연결이 끊기면 자동으로 다시 접속합니다.</td><td>사용</td></tr>
-  <tr><td>Write Mode / Endian Mode</td><td><img src="../gs/screenshots/v3/as_ctl/P4_ethernet_16_ComboBox_Handshake.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P4_ethernet_19_ComboBox_LittleEndian.png" alt=""></td><td>결과 쓰기 방식(Handshake 등)과 워드 바이트 순서. ◆PLC 프로그램의 규약에 맞춥니다.</td><td>Handshake / LittleEndian</td></tr>
+  <tr><td>〈Modbus TCP〉 Endian Mode</td><td><img src="../gs/screenshots/v3/as_ctl/P4_ethernet_19_ComboBox_LittleEndian.png" alt=""></td><td>32 비트 값을 워드 2 개로 나눠 보낼 때의 순서입니다. Modbus TCP 를 골랐을 때만 보이며 ◆PLC 쪽 설정과 같아야 값이 깨지지 않습니다.</td><td>LittleEndian</td></tr>
 </table>
-<p>◆PLC 주소를 어느 신호에 쓸지는 이 단계가 아니라 VisionSetup 의 시퀀스 편집기(§5.10)에서 노드마다 지정합니다.</p>
+<p>◆PLC 주소를 어느 신호에 쓸지는 이 단계가 아니라 VisionSetup 의 시퀀스 편집기(§5.10)에서 노드마다 지정합니다. 신호를 읽는 주기와 생존 신호(하트비트)도 시퀀스 쪽 신호 설정을 따릅니다.</p>
 
 <h3 id="appsetup-s5">3.6 5 단계 — ◆Robot Configuration (로봇)</h3>
 <figure><img src="../gs/screenshots/v3/as/FullPage_P5_RobotConfiguration.png" data-width="360" alt="5단계 로봇 구성">
@@ -111,7 +109,7 @@
   <tr><td>Enable ◆Robot Integration</td><td><img src="../gs/screenshots/v3/as_ctl/P5_disabled_01_CheckBox_Enable_Robot_Integration.png" alt=""></td><td>멀티뷰 3D 스캔이나 얼라인 보정에 로봇을 쓸 때 켭니다. 끄면 아래 항목이 숨겨집니다.</td><td>해제</td></tr>
   <tr><td>◆Robot Vendor</td><td><img src="../gs/screenshots/v3/as_ctl/P5_enabled_02_RadioButton_Universal_Robots_UR.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P5_enabled_03_RadioButton_Doosan_Robotics.png" alt=""></td><td>UR · Doosan · Jaka · ABB · Fanuc. 선택하면 포트와 Euler 규약이 벤더 기본값으로 바뀝니다.</td><td>UR</td></tr>
   <tr><td>◆Robot IP Address / Port</td><td><img src="../gs/screenshots/v3/as_ctl/P5_enabled_09_TextBox_1921680200.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P5_enabled_11_TextBox_502.png" alt=""></td><td>로봇 컨트롤러 주소와 포트.</td><td>192.168.0.200 / 벤더 기본</td></tr>
-  <tr><td>Communication Protocol</td><td><img src="../gs/screenshots/v3/as_ctl/P5_enabled_13_RadioButton_Vendor_Native.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P5_enabled_14_RadioButton_Modbus-TCP.png" alt=""></td><td>Vendor Native · Modbus-TCP(Doosan) · Custom Socket(CSV).</td><td>Vendor Native</td></tr>
+  <tr><td>Communication Protocol</td><td><img src="../gs/screenshots/v3/as_ctl/P5_enabled_13_RadioButton_Vendor_Native.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P5_enabled_14_RadioButton_Modbus-TCP.png" alt=""></td><td>Vendor Native · Modbus-TCP(Doosan) · Custom Socket(CSV). 프로토콜을 바꾸면 포트가 그 프로토콜의 기본값(Modbus-TCP 502, Vendor Native · Custom Socket 은 벤더 기본)으로 바뀝니다 — 포트를 직접 바꿔 두었으면 그대로 둡니다.</td><td>Vendor Native</td></tr>
   <tr><td>〈Modbus-TCP〉 Unit ID / Pose Start Register</td><td><img src="../gs/screenshots/v3/as_ctl/P5_enabled_18_TextBox_1.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P5_enabled_20_TextBox_270.png" alt=""></td><td>Holding Register 로 포즈를 읽을 때의 슬레이브 ID 와 시작 주소(270 = Doosan 표준).</td><td>1 / 270</td></tr>
   <tr><td>Euler Convention</td><td><img src="../gs/screenshots/v3/as_ctl/P5_enabled_23_ComboBox_Doosan_ZYX.png" alt=""></td><td>회전 표현 규약. 벤더 선택 시 자동 설정되며 필요하면 바꿉니다.</td><td>벤더 기본</td></tr>
 </table>
@@ -123,7 +121,7 @@
   <tr><th>항목</th><th>컨트롤</th><th>설명</th><th>기본값</th></tr>
   <tr><td>[+ Add] / [− Remove]</td><td><img src="../gs/screenshots/v3/as_ctl/P6_withboard_02_Button__Add.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P6_withboard_03_Button__Remove.png" alt=""></td><td>보드를 추가 / 선택한 보드를 제거합니다.</td><td>—</td></tr>
   <tr><td>Vendor</td><td><img src="../gs/screenshots/v3/as_ctl/P6_withboard_06_ComboBox_AdLink.png" alt=""></td><td>AdLink · Advantech.</td><td>AdLink</td></tr>
-  <tr><td>Model</td><td><img src="../gs/screenshots/v3/as_ctl/P6_withboard_09_TextBox_PCI-7432.png" alt=""></td><td>보드 모델명. ADLink PCI-7432/7433/7434/7396, Advantech PCI-1730/1750 계열.</td><td>PCI-7432</td></tr>
+  <tr><td>Model</td><td><img src="../gs/screenshots/v3/as_ctl/P6_withboard_09_TextBox_PCI-7432.png" alt=""></td><td>보드 모델명. ADLink PCI-7432/7433/7434, Advantech PCI-1730/1750 계열. 그 밖의 ADLink 모델(예: PCI-7396)은 지원하지 않습니다(아래 결선 표).</td><td>PCI-7432</td></tr>
   <tr><td>Device ID</td><td><img src="../gs/screenshots/v3/as_ctl/P6_withboard_11_TextBox_IoBoard_1.png" alt=""></td><td>시퀀스 편집기의 장치 목록에 나타나는 이름입니다. 노드에서 이 이름으로 보드를 고릅니다(§5.10). 트리거 입력 · 판정 출력 채널은 이 단계가 아니라 시퀀스 편집기에서 노드마다 지정합니다.</td><td>IoBoard_1</td></tr>
   <tr><td>Board ID</td><td><img src="../gs/screenshots/v3/as_ctl/P6_withboard_13_TextBox_0.png" alt=""></td><td>같은 모델이 여러 장일 때 몇 번째 카드인지(0 부터).</td><td>0</td></tr>
   <tr><td>Input / Output 채널 수</td><td><img src="../gs/screenshots/v3/as_ctl/P6_withboard_15_TextBox_16.png" alt=""> <img src="../gs/screenshots/v3/as_ctl/P6_withboard_17_TextBox_16.png" alt=""></td><td>디지털 입력 · 출력 채널 수. 채널 번호는 0 부터 셉니다.</td><td>16 / 16</td></tr>
@@ -137,7 +135,7 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
 <table class="cols-2-7">
   <tr><th>보드</th><th>VMS 가 다루는 범위</th></tr>
   <tr><td>ADLink PCI-7432</td><td>절연 입력 32 · 절연 출력 32. 채널 0~31 이 포트 0, 32~63 이 포트 1. 실제 장비로 확인한 모델입니다(드라이버 PCI-Dask 64비트)</td></tr>
-  <tr><td>ADLink PCI-7433 · 7434</td><td>입력 64 · 출력 64 전용 모델. 코드는 지원하지만 실장비 확인 전입니다. 그 밖의 ADLink 모델 이름은 PCI-7432 로 취급합니다</td></tr>
+  <tr><td>ADLink PCI-7433 · 7434</td><td>입력 64 · 출력 64 전용 모델. 코드는 지원하지만 실장비 확인 전입니다. 그 밖의 ADLink 모델(PCI-7396 등)은 지원하지 않습니다 — PCI-7432 로 등록을 시도하며, 연결에 실패하면 System Log 에 "지원 모델이 아니어서 PCI-7432 로 등록을 시도했습니다" 가 함께 남습니다</td></tr>
   <tr><td>Advantech PCI-17xx</td><td>DAQNavi 드라이버(64비트)로 8비트 포트 단위 디지털 입출력. Board ID 는 Advantech Navigator 의 보드 번호(BID#n)와 같아야 합니다</td></tr>
 </table>
 <ul>

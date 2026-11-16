@@ -70,8 +70,8 @@ Web 서버 없이 검사만 하는 <strong>단독 모드</strong>도 지원합�
   <tr><td>카메라</td><td>GigE Vision 2D(Area Scan) · ◆라인스캔 · ◆3D 카메라. 제조사별 연결 방식은 §2.1 표 참고.
       카메라 없이 저장 이미지 · 저장된 점군 파일(.vpc)로도 레시피 편집과 검사 시험이 가능합니다</td></tr>
   <tr><td>◆PLC</td><td>Mitsubishi(MC) · Siemens(S7) · LS Electric(XGT) · Omron(FINS) · Modbus TCP — 모두 TCP 직접 통신이라
-      별도 드라이버가 필요 없습니다. 시리얼(RS-232/485) 연결도 지원합니다</td></tr>
-  <tr><td>IO 보드</td><td>ADLink PCI-7432/7433/7434/7396 (DASK x64 드라이버) · Advantech PCI-1730/1750 계열 (DAQNavi)</td></tr>
+      별도 드라이버가 필요 없습니다. 시리얼(RS-232/485) 연결은 지원하지 않습니다</td></tr>
+  <tr><td>IO 보드</td><td>ADLink PCI-7432/7433/7434 (DASK x64 드라이버, PCI-7396 은 지원 모델 아님) · Advantech PCI-1730/1750 계열 (DAQNavi)</td></tr>
   <tr><td>◆로봇 (선택)</td><td>Universal Robots · Doosan · Jaka · ABB · Fanuc — 멀티뷰 3D 스캔과 얼라인 보정용</td></tr>
   <tr><td>브라우저</td><td>Google Chrome (생산 관리 웹 · ◆MLOps 화면)</td></tr>
   <tr><td>◆학습 워커 (MLOps 선택)</td><td>NVIDIA GPU(VRAM 8GB 이상) · CUDA 12.4 드라이버(550 이상) · Python 3.12 64-bit · 여유 디스크 50GB</td></tr>
@@ -119,7 +119,7 @@ Web 서버 없이 검사만 하는 <strong>단독 모드</strong>도 지원합�
   <tr><td>◆라인스캔 · 롤러 검사</td><td>라인스캔 카메라 종류(§3.4), 사이드 패널 Roller Inspection(§4.6)</td><td>에어리어 카메라만 고를 수 있습니다</td></tr>
 </table>
 <p>지금 PC 의 라이선스에 무엇이 들어 있는지는 설정 마법사 마지막 단계(보안 · 라이선스, §3.8)의 <strong>확장 옵션</strong> 줄에 나옵니다 — "기본 구성 (확장 옵션 없음)", "확장 옵션 전부", 또는 켜진 옵션 이름. 옵션은 라이선스를 발급할 때 정합니다(§13.7).</p>
-<div class="callout warn"><strong>알아 둘 것:</strong> 라이선스 파일이 없거나 옵션 항목이 없는 예전 라이선스, 서버 좌석으로 붙는 라인 PC 는 <strong>확장 옵션이 전부 켜진 것</strong>으로 동작합니다. 고객에게 기본 구성만 보여야 하는 현장(GS 시험 PC 등)은 옵션이 비어 있는 라이선스를 반드시 설치합니다.</div>
+<div class="callout warn"><strong>알아 둘 것:</strong> 라이선스 파일이 없는 PC, 옵션 항목이 적혀 있지 않은 예전 라이선스(옵션 칸이 생기기 전인 2026-10-30 이전 발급분), 서버 좌석으로 붙는 라인 PC 는 <strong>확장 옵션이 전부 켜진 것</strong>으로 동작합니다(업데이트만으로 현장 기능이 사라지지 않게 하려는 동작입니다). 고객에게 기본 구성만 보여야 하는 현장(GS 시험 PC 등)은 확장 옵션을 모두 해제해 발급한 라이선스를 반드시 설치합니다 — 설정 마법사 마지막 단계에 "기본 구성 (확장 옵션 없음)" 으로 나오면 맞습니다.</div>
 
 <h3 id="overview-mv-basics">1.7 머신비전 기초 — 좋은 사진이 검사의 절반</h3>
 <p>검사 도구는 사진에 찍힌 것만 판단합니다. 결함이 사진에 또렷이 보이지 않으면 어떤 도구 설정으로도 잡을 수 없습니다. 레시피를 만들기 전에 아래 다섯 가지를 먼저 맞춥니다.</p>
