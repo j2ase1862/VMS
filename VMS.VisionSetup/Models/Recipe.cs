@@ -161,7 +161,7 @@ namespace VMS.VisionSetup.Models
         /// 마지막 수정 시간 표시용
         /// </summary>
         [JsonIgnore]
-        public string ModifiedAtDisplay => ModifiedAt.ToString("yyyy-MM-dd HH:mm:ss");
+        public string ModifiedAtDisplay => ModifiedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
 
         /// <summary>
         /// 총 도구 수
@@ -297,7 +297,7 @@ namespace VMS.VisionSetup.Models
         /// <summary>Web 원장 레시피 ID (null = 미등록 — 동기화 시 등록 재시도 대상)</summary>
         public int? WebRecipeId { get; set; }
 
-        public string ModifiedAtDisplay => ModifiedAt.ToString("yyyy-MM-dd HH:mm");
+        public string ModifiedAtDisplay => ModifiedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
 
         /// <summary>ComboBox/리스트 표시용 — Recipe.DisplayInfo와 동일 포맷.</summary>
         public string DisplayInfo => string.IsNullOrEmpty(Version) ? Name : $"{Name} (v{Version})";

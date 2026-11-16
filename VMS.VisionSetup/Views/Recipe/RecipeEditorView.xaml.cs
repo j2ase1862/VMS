@@ -481,7 +481,7 @@ namespace VMS.VisionSetup.Views.Recipe
         {
             if (_currentRecipe == null || RecipeService == null) return;
 
-            _currentRecipe.ModifiedAt = DateTime.Now;
+            _currentRecipe.ModifiedAt = DateTime.UtcNow;
             RecipeService.SaveRecipe(_currentRecipe);
             _hasUnsavedChanges = false;
             UpdateUI();

@@ -287,7 +287,7 @@ namespace VMS.VisionSetup.ViewModels
         {
             if (CurrentRecipe == null) return;
 
-            CurrentRecipe.ModifiedAt = DateTime.Now;
+            CurrentRecipe.ModifiedAt = DateTime.UtcNow;
             _recipeService.SaveRecipe(CurrentRecipe);
             HasUnsavedChanges = false;
             UpdateHeader();

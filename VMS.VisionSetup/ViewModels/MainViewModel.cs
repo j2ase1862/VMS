@@ -4418,7 +4418,7 @@ namespace VMS.VisionSetup.ViewModels
             {
                 SaveWorkspaceToStep();
                 SaveRobotSettingsToRecipe(currentRecipe);
-                currentRecipe.ModifiedAt = DateTime.Now;
+                currentRecipe.ModifiedAt = DateTime.UtcNow;
                 _recipeService.SaveRecipe(currentRecipe);
                 StatusMessage = $"Recipe saved: {currentRecipe.Name}";
             }
