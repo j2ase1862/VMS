@@ -155,8 +155,6 @@ namespace VMS.AppSetup.Capture
                 (4, "PLCCommunication", v =>
                 {
                     v.SelectedPlcVendor = PlcVendor.Mitsubishi;
-                    v.SelectedCommunicationType = PlcCommunicationType.Ethernet;
-                    v.UseHeartbeat = true;
                 }),
                 (6, "IOConfiguration", v =>
                 {
@@ -299,18 +297,9 @@ namespace VMS.AppSetup.Capture
                 });
             });
 
-            // ── Page 4 (PLC): Ethernet(기본) / Modbus Unit ID / Serial 분기 ──
-            yield return new Scene(4, "ethernet", vm =>
-            {
-                vm.SelectedPlcVendor = PlcVendor.Mitsubishi;
-                vm.SelectedCommunicationType = PlcCommunicationType.Ethernet;
-                vm.UseHeartbeat = true;   // Heartbeat Address 입력칸 활성
-            });
+            // ── Page 4 (PLC): 제조사 TCP(기본) / Modbus Unit ID · Endian 분기 ──
+            yield return new Scene(4, "ethernet", vm => vm.SelectedPlcVendor = PlcVendor.Mitsubishi);
             yield return new Scene(4, "modbus", vm => vm.SelectedPlcVendor = PlcVendor.Modbus);
-            yield return new Scene(4, "serial", vm =>
-            {
-                vm.SelectedCommunicationType = PlcCommunicationType.Serial;
-            });
 
             // ── Page 5 (Robot): 비활성(기본) / 활성 + Doosan + Modbus-TCP ──
             yield return new Scene(5, "disabled", vm => vm.IsRobotEnabled = false);
