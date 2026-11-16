@@ -456,6 +456,7 @@ namespace VMS.VisionSetup.Services
                     config.Parameters["ConfidenceThreshold"] = detection.ConfidenceThreshold;
                     config.Parameters["IouThreshold"] = detection.IouThreshold;
                     config.Parameters["ClassNamesText"] = detection.ClassNamesText;
+                    config.Parameters["NgClassesText"] = detection.NgClassesText;
                     config.Parameters["DrawOverlay"] = detection.DrawOverlay;
                     config.Parameters["UseClahe"] = detection.UseClahe;
                     config.Parameters["ClaheClipLimit"] = detection.ClaheClipLimit;
@@ -1727,6 +1728,8 @@ namespace VMS.VisionSetup.Services
                 tool.IouThreshold = GetDouble(iou);
             if (p.TryGetValue("ClassNamesText", out var cn))
                 tool.ClassNamesText = GetString(cn);
+            if (p.TryGetValue("NgClassesText", out var ngc))
+                tool.NgClassesText = GetString(ngc);
             if (p.TryGetValue("DrawOverlay", out var dov))
                 tool.DrawOverlay = GetBool(dov);
             if (p.TryGetValue("UseClahe", out var uc))
