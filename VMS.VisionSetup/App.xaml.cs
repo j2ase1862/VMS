@@ -247,6 +247,10 @@ namespace VMS.VisionSetup
                 Debug.WriteLine($"[App] ParameterSyncService init failed: {ex.Message}");
             }
 
+            // 단독 모드(Web 없음)에서도 값 적용 서비스는 만든다 — 레시피 봇이 제안한 파라미터를
+            // 도구에 넣는 경로(SLM)는 Web 과 무관하다. 없으면 제안 값이 조용히 버려졌다 (VS-34).
+            parameterApplyService ??= new ParameterApplyService(parameterSyncService);
+
             // ── Robot Service ──
             IRobotService? robotService = null;
             var robotConfig = LoadRobotConfig();
