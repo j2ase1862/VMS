@@ -22,9 +22,9 @@
 <h3 id="mt-retention">11.2 데이터 보존과 디스크 관리</h3>
 <table class="cols-3-3-3">
   <tr><th>데이터</th><th>기본 보존</th><th>설정 위치</th></tr>
-  <tr><td>VMS 검사 이미지 (OK/NG 파일)</td><td>Image Save Settings 의 보존 기간(일)</td><td>§4.6 — 시작 시 오래된 날짜 폴더 삭제. 야간 예약 작업으로 <code>VMS.exe --cleanup-images</code> 를 돌려도 됩니다</td></tr>
+  <tr><td>VMS 검사 이미지 (OK/NG 파일)</td><td>Image Save Settings 의 보존 기간(일)</td><td>§4.6 — VMS 시작 2 분 뒤 한 번, 켜 둔 동안 하루 한 번 보존 기간이 지난 날짜 폴더를 지우고 감사 로그(Configuration)에 남깁니다. VMS 를 끄고 지내는 PC 는 예약 작업으로 <code>VMS.exe --cleanup-images</code> 를 돌려도 됩니다(같은 정리)</td></tr>
   <tr><td>VMS 검사 이력 DB</td><td>90 일</td><td>Retention Settings "검사 이력" 행</td></tr>
-  <tr><td>VMS 감사 로그 · 자동 백업 · 업로드 큐</td><td>프리셋 Standard 기준</td><td>Retention Settings 전역 · 카테고리별</td></tr>
+  <tr><td>VMS 감사 로그 · 자동 백업 · 업로드 큐</td><td>프리셋 Standard 기준</td><td>Retention Settings 전역 · 카테고리별. 감사 로그 날짜 파일은 전역 · 카테고리별 값 중 가장 긴 기간이 지나야 통째로 지워지므로, 카테고리별로 길게 잡은 기간(보안 1095 일 등)이 그대로 지켜집니다</td></tr>
   <tr><td>Web 검사 이력 · 측정값 · 알람 · 상태 로그</td><td><strong>무제한</strong>(기본 꺼짐)</td><td><code>DataRetention</code> 설정을 켜고 항목별 일수를 지정. 감사 로그는 법적 보존 기간이 따로 있으므로 기본 무제한</td></tr>
   <tr><td>Web 검사 사진</td><td>90 일</td><td><code>ImageStore:RetentionDays</code></td></tr>
   <tr><td>Web DB 백업</td><td>14 벌</td><td><code>DatabaseBackup:RetainCount</code></td></tr>
@@ -33,9 +33,9 @@
 
 <h3 id="mt-camera">11.3 카메라 교체 · IP 변경</h3>
 <ol>
-  <li>새 카메라를 같은 네트워크 카드에 연결하고, 제조사 프로그램(pylon Viewer · MVS · ◆Mech-Eye Viewer)으로 카메라에 <strong>기존과 같은 고정 IP</strong> 를 부여합니다. IP 가 같으면 VMS 설정을 바꿀 필요가 없습니다.</li>
-  <li>IP 나 제조사가 바뀌면 시스템 설정 마법사 3 단계에서 해당 카메라 카드의 IP · 제조사 · 타입을 고치고 [Finish] 로 저장한 뒤 VMS 를 재시작합니다(§3.4). 카메라 순서(카드 순서)가 바뀌면 레시피 스텝 이름("1-1")의 번호도 바뀌므로 순서는 유지하세요.</li>
-  <li>VMS 를 실행해 상태바 CAM 이 초록인지, 카메라 톱니바퀴 → [Grab] 으로 영상이 들어오는지 확인합니다. 노출 · 게인은 "카메라 설정 유지" 가 켜져 있으면 카메라에 저장된 값을 쓰므로 제조사 프로그램에서 이전 값과 같게 맞춥니다.</li>
+  <li>새 카메라를 같은 네트워크 카드에 연결하고, 카메라 제조사의 설정 프로그램으로 카메라에 <strong>기존과 같은 고정 IP</strong> 를 부여합니다. IP 가 같으면 VMS 설정을 바꿀 필요가 없습니다.</li>
+  <li>IP 나 제조사가 바뀌면 시스템 설정 마법사 3 단계에서 해당 카메라 카드의 IP · 제조사 · 타입을 고치고 [Finish] 로 저장한 뒤 VMS 를 재시작합니다(§3.4). 카메라 순서(카드 순서)가 바뀌면 레시피 스텝 이름("1-1")의 번호도 바뀌므로 순서는 유지하세요. 카드를 지우고 새로 만들면 카메라 ID 가 바뀌어 레시피가 그 카메라를 찾지 못하므로, 기존 카드의 값만 고치는 것이 좋습니다 — 새로 만들었다면 레시피를 열 때 뜨는 카메라 재연결 창에서 스텝을 다시 짝짓습니다(아래 5).</li>
+  <li>VMS 를 실행해 상태바 CAM 이 초록인지, 카메라 톱니바퀴 → [Grab] 으로 영상이 들어오는지 확인합니다. 노출 · 게인은 "카메라 설정 유지"(VMS 카메라 조작 상자 §4.5 · VisionSetup 스텝의 Camera Settings §5.3 에 있음 — 설정 마법사에는 없음)가 켜져 있으면 카메라에 저장된 값을 쓰므로, 제조사 설정 프로그램에서 이전 값과 같게 맞추거나 그 체크를 끄고 스텝의 노출 · 게인을 씁니다.</li>
   <li>렌즈 · 설치 높이가 바뀌었다면 측정값이 조용히 틀어지므로 <strong>캘리브레이션을 다시</strong> 하고(§5.9) 대표 부품으로 판정을 재확인합니다.</li>
   <li>다른 PC 에서 만든 레시피를 열 때 이 PC 에 없는 카메라를 쓰면 <strong>카메라 재연결 창</strong>이 떠서 스텝별로 이 PC 의 카메라를 짝지을 수 있습니다(§5.3).</li>
 </ol>
@@ -43,8 +43,8 @@
 <h3 id="mt-license">11.4 라이선스 · 좌석 관리</h3>
 <ul>
   <li>라이선스 상태는 설정 마법사 마지막 단계(보안 · 라이선스) 카드, VMS Health Check 의 License 항목, Web 시스템 관리 → SW 라이선스에서 봅니다.</li>
-  <li>PC 교체 · Windows 재설치 후 "지문 불일치" 가 뜨면 새 지문 코드로 재발급을 요청합니다(§2.6). 서버-라인 구성에서는 서버 PC 만 해당합니다.</li>
-  <li>라인 PC 를 철거하면 그 좌석은 72 시간 후 자동으로 반환됩니다. 계약 좌석이 모자라면 Web 화면에 경고 배너가 뜹니다.</li>
+  <li>지문은 세 묶음(Windows 설치 · 네트워크 카드 · CPU 모델) 중 <strong>두 묶음이 같으면</strong> 같은 PC 로 봅니다 — Windows 재설치나 네트워크 카드 교체 하나만으로는 그대로 유효합니다. 둘 이상 바뀌어(PC 교체 등) "지문 불일치" 가 뜨면 새 지문 코드로 재발급을 요청합니다(§2.6). 서버-라인 구성에서는 서버 PC 만 해당합니다.</li>
+  <li>라인 PC 를 철거하면 그 좌석은 72 시간 후 자동으로 반환됩니다. 계약 좌석이 모자라면 Web 의 SW 라이선스 화면(시스템 관리 → SW 라이선스, <code>/admin/license</code>)에 경고가 나오고, 라인 PC 에서는 Health Check 의 License 항목으로 봅니다. 좌석 사용 기록은 Web 서버가 메모리에 들고 있어 Web 을 다시 시작한 직후에는 잠시 비어 보이다가 라인 PC 가 다시 붙으면 채워집니다.</li>
 </ul>
 
 <h3 id="mt-instance">11.5 한 PC 에서 두 라인 운용 (다중 인스턴스)</h3>
@@ -52,8 +52,12 @@
 <ol>
   <li>바탕화면에 VMS 바로가기를 하나 더 만들고 대상 끝에 <code>--instance line2</code> 를 붙입니다(영문 · 숫자 · 하이픈 · 밑줄 1~32 자).</li>
   <li>설정 마법사도 같은 이름으로 실행합니다: <code>VMS.AppSetup.exe --instance line2</code>. 2 번 라인이 쓸 카메라와 라인 번호를 등록하고 저장합니다. <strong>같은 카메라를 두 인스턴스에 겹쳐 등록하면 안 됩니다</strong> — 카메라는 한 번에 한 프로그램만 연결할 수 있습니다.</li>
-  <li>두 바로가기로 VMS 를 각각 실행합니다. 인스턴스마다 설정 · 레시피 · 계정 · 검사 이력이 <code>%LocalAppData%\BODA VISION AI\instances\line2\</code> 아래에 완전히 분리되어 보관되며, VMS 에서 실행한 VisionSetup · AppSetup 도 같은 인스턴스를 자동으로 씁니다.</li>
+  <li>두 바로가기로 VMS 를 각각 실행합니다. 인스턴스마다 설정 · 레시피 · 계정 · 검사 이력이 <code>%LocalAppData%\BODA VISION AI\instances\line2\</code> 아래에 완전히 분리되어 보관되며, VMS 에서 실행한 VisionSetup · AppSetup 도 같은 인스턴스를 자동으로 씁니다(VMS 가 환경 변수 <code>BODA_VMS_INSTANCE</code> 로 넘겨 줍니다).</li>
 </ol>
+<ul>
+  <li>인스턴스 이름은 VMS 헤더의 애플리케이션 이름 뒤 <code>[line2]</code>, AppSetup 의 인스턴스 배지, Health Check 의 Instance 항목에서 보입니다.</li>
+  <li>같은 인스턴스를 두 번 실행하면 두 번째 VMS 는 "이미 실행 중" 안내 뒤 꺼집니다. 이름이 다른 인스턴스는 함께 실행됩니다. 바로가기 이름에 라인 번호를 넣어 두면 헷갈리지 않습니다.</li>
+</ul>
 
 <h3 id="mt-logs">11.6 로그 · 데이터 위치</h3>
 <table class="cols-3-4-2">
@@ -67,13 +71,13 @@
   <tr><td>업데이트 로그</td><td><code>C:\ProgramData\BODA\VMS\update-bootstrap.log</code></td><td>인앱 업데이트 과정</td></tr>
   <tr><td>Web DB · 백업 · 사진</td><td><code>C:\ProgramData\BODA\VMS\</code> (BodaVision.db · backups\ · images\)</td><td>서버 데이터</td></tr>
   <tr><td>Web 서비스 로그</td><td><code>{설치 폴더}\Logs\boda-vms-YYYYMMDD.json</code> (14 일 보관) · Windows 이벤트 뷰어 → Application</td><td>서비스 시작 실패 등</td></tr>
-  <tr><td>◆MLOps 데이터 · 로그</td><td>설치 시 지정한 데이터 폴더 (mlops.db · storage\ · logs\)</td><td></td></tr>
+  <tr><td>◆MLOps 데이터 · 로그</td><td>설치 시 지정한 데이터 폴더(지정하지 않으면 <code>C:\ProgramData\BODA VMS MLOps</code>) — mlops.db · storage\ · logs\ · job-logs\(학습 작업 로그)</td><td></td></tr>
   <tr><td>◆학습 워커</td><td><code>%ProgramData%\BODA VMS TrainWorker\</code> (worker.json · venv\ · logs\)</td><td></td></tr>
 </table>
 
 <h3 id="mt-support">11.7 문제 보고 방법</h3>
 <ol>
-  <li>VMS Admin Tools → Support Package... 로 진단 ZIP 을 만듭니다(설정 · 감사 로그 · 환경 정보 · 헬스 스냅샷 · ◆MLOps 전송 큐 상태 포함, 레시피 · 사용자 DB 는 미포함).</li>
+  <li>VMS Admin Tools → Support Package... 로 진단 ZIP 을 만듭니다(설정 · 감사 로그 · 환경 정보 · 헬스 스냅샷 · 자동 백업 목록 · ◆MLOps 전송 큐 상태 포함, 레시피 · 사용자 DB 는 미포함). 카메라 로그(<code>logs\camera.log</code>)와 Web 로그는 들어가지 않으므로 카메라 · Web 문제면 따로 첨부합니다(§11.6).</li>
   <li>증상이 난 시각과 System Log 의 관련 줄, 화면 캡처를 함께 준비합니다.</li>
   <li>Web 문제는 <code>{설치 폴더}\Logs\</code> 의 해당 날짜 로그와 <code>/health</code> 응답을, ◆MLOps 문제는 학습 작업 상세의 로그를 첨부합니다.</li>
 </ol>
