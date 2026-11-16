@@ -35,6 +35,13 @@ namespace VMS.ViewModels
         [ObservableProperty] private bool _includeAudit;
         [ObservableProperty] private string _productVersion = string.Empty;
 
+        /// <summary>
+        /// '백업 위치' 칸 안내 — 실제 기본 위치(인스턴스 폴더 아래 backups)를 보여 준다 (VM-27).
+        /// 종전 고정 문구 %LocalAppData%\BODA VISION AI\backups 는 명명 인스턴스(--instance)에서 틀렸다.
+        /// </summary>
+        public string BackupDirHint =>
+            $"비워두면 {AutoBackupOptions.ResolveBackupDir(Path.GetDirectoryName(_configPath)!, null)}";
+
         [ObservableProperty] private string _statusMessage = string.Empty;
         // WindowStyles.xaml 색 토큰과 일치 — BrushNeutral / BrushSuccess / BrushDanger.
         [ObservableProperty] private string _statusColor = "#22303C";

@@ -32,6 +32,13 @@ namespace VMS.ViewModels
         [ObservableProperty] private string _statusMessage = string.Empty;
         [ObservableProperty] private int _entryCount;
 
+        /// <summary>
+        /// 창 아래 '저장 위치' — 실제 감사 로그 폴더 (VM-27). 명명 인스턴스(--instance)는
+        /// …\instances\&lt;이름&gt;\audit 이라 고정 문구 %LocalAppData%\BODA VISION AI\audit 와 달랐다.
+        /// </summary>
+        public string StorageLocationText =>
+            System.IO.Path.Combine(AuditLogger.Instance.AuditDirectory, "YYYY-MM-DD.jsonl");
+
         public AuditLogViewerViewModel()
         {
             // 카테고리 / outcome 옵션 — 첫 항목 null 은 "전체" 의미.

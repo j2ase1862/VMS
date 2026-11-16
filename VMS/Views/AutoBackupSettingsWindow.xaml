@@ -86,7 +86,7 @@
                                        Style="{StaticResource WindowFieldLabel}"/>
                             <TextBox Grid.Column="1" Text="{Binding BackupDir}"
                                      Style="{StaticResource WindowDarkTextBox}"
-                                     ToolTip="비워두면 %LocalAppData%\BODA VISION AI\backups"/>
+                                     ToolTip="{Binding BackupDirHint}"/>
                             <Button Grid.Column="2" Content="Browse..."
                                     Command="{Binding PickBackupDirCommand}"
                                     Style="{StaticResource ModernGhostButton}"
