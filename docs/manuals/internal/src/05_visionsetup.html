@@ -65,6 +65,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 </table>
 <p>받은 이미지는 2D Image 탭에 표시되고 Run All 이 활성화됩니다. 상태바 문구는 가져온 방법마다 다릅니다 — 파일 열기는 "이미지 로드 완료", 카메라 촬영은 "… 획득 완료"(시뮬레이션 카메라면 "시뮬레이션 …"), VMS 에서 받으면 "VMS 프레임 수신 완료 (Frame #n)" 이고, 폴더 열기는 따로 문구가 없습니다.</p>
 <figure><img src="../gs/screenshots/v3/scenes/PointCloudView.jpg" data-width="620" alt="3D → Load 3D Data 로 연 점군(.vpc)"><figcaption>3D → Load 3D Data 로 연 점군(.vpc) — Point Cloud 탭에 높이 색으로 표시됩니다. 마우스로 돌리고 확대하며, 오른쪽 위 Top · Front · Side 로 시점을 바꿉니다. 격자 점군은 열 때 Height Map 이 만들어져 2D Image 탭에도 표시됩니다</figcaption></figure>
+<p>3D 도구가 있는 스텝을 Run All · Run Selected 로 실행하면 Point Cloud 탭은 도구가 만든 결과 점군(필터 · 크롭 · 클러스터 결과)을 보여 줍니다. 다음 실행의 입력 점군과 Depth Map 탭은 바뀌지 않습니다.</p>
 
 <h3 id="vs-tools">5.5 도구 배치 · 연결 · ROI</h3>
 <ol>
@@ -200,23 +201,41 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
   <li>메뉴 Batch Test... 를 열고 RECIPE → CAMERA → STEP 을 고릅니다.</li>
   <li>INPUT 에 이미지 폴더(하위 폴더 재귀 가능), OUTPUT 에 CSV 리포트 경로와 실패 케이스 오버레이 저장 여부를 정합니다.</li>
   <li>[Run Batch] — PROCESSED · PASS · FAIL · AVG TIME 이 실시간으로 집계되고 Results 탭에 파일별 결과가 쌓입니다. 실패 행을 더블 클릭하면 <strong>Failure Browser</strong>(원본 · 오버레이 좌우 비교, ← → 이동)가 열립니다.</li>
-  <li><strong>[Edit Thresholds...]</strong> — 도구별 Must Succeed(실패 시 즉시 FAIL)와 결과 값의 Min..Max 범위 임계치를 정해 판정 기준을 검증합니다.</li>
-  <li><strong>[Auto-tune...]</strong> — 도구 파라미터를 From · To · Step 으로 훑으며(또는 Random search) 폴더 전체 PASS 율이 가장 높은 조합을 찾고 [Apply Best] 로 도구에 적용 · 저장합니다.</li>
+  <li><strong>[Edit Thresholds...]</strong> — 도구별 Must Succeed 와 결과 값의 Min..Max 범위 임계치를 정해 판정 기준을 검증합니다.
+    <ul>
+      <li>Must Succeed 를 켠 도구(기본)나 임계치에 없는 도구가 실패하면 그 사진은 FAIL 입니다. 끈 도구의 실패는 사진 판정에서 뺍니다.</li>
+      <li>단, Result 도구가 그 도구를 연결해 받으면 Result 가 실패하므로 여전히 FAIL 입니다 — Result 판정을 따릅니다.</li>
+      <li>앞 도구가 실패해 건너뛴 뒤 도구도 각자 실패로 셉니다. 빼려면 그 도구들의 Must Succeed 도 끕니다.</li>
+    </ul></li>
+  <li><strong>[Auto-tune...]</strong> — 도구 파라미터를 From · To · Step 으로 훑으며(또는 Random search) 폴더 전체 PASS 율이 가장 높은 조합을 찾고(★ 표시) [Apply Best] 로 도구에 적용해 레시피 파일에 저장합니다. PASS 율이 가장 높은 값을 고르는 방식이므로 <strong>양품 사진 폴더</strong>로 돌립니다 — 불량 사진이 섞이면 불량까지 합격시키는 값이 뽑힙니다.</li>
   <li><strong>골든셋</strong> — [Save as Golden] 으로 지금 결과를 정답으로 저장하면 이후 배치 결과가 자동 비교되어 달라진 케이스를 알려 줍니다. 레시피를 고친 뒤 회귀 확인에 씁니다.</li>
 </ol>
 
 <h3 id="vs-misc">5.12 기타 설정 창</h3>
 <h4>Camera Manager</h4>
 <figure><img src="../gs/screenshots/v3/vs/dlg_CameraManager.png" data-width="520" alt="Camera Manager"><figcaption>Camera Manager — Cameras 목록 · [Add] [Remove] · Camera Properties(Name · Manufacturer · Model · Serial · Width · Height · Connection String · Enabled) · [Save] [Cancel]</figcaption></figure>
-<p>VisionSetup 에서 직접 촬영할 카메라를 등록합니다. 운전용 카메라 구성은 시스템 설정 마법사(3장)가 기준이며, 여기서는 편집 작업에 쓸 카메라를 관리합니다.</p>
+<p>VisionSetup 에서 직접 촬영할 카메라를 등록합니다. 운전용 카메라 구성은 시스템 설정 마법사(3장)가 기준이며, 여기서는 편집 작업에 쓸 카메라를 관리합니다. 이 창에는 연결 시험 버튼이 없습니다 — 등록한 뒤 Camera → Camera Info 의 [Connect](또는 툴바 카메라 연결 토글)로 연결해 확인합니다.</p>
 <h4>Inference Settings — 딥러닝 추론 엔진</h4>
 <figure><img src="../gs/screenshots/v3/vs/dlg_InferenceSettings.png" data-width="420" alt="Inference Engine Settings"><figcaption>Inference Engine Settings — Execution Provider · TensorRT Engine Cache Folder · Enable TensorRT FP16</figcaption></figure>
-<p>ONNX Runtime 의 실행 백엔드(Auto · CPU · CUDA · TensorRT)를 고릅니다. GPU 가 없으면 CPU 로 자동 동작합니다. TensorRT 캐시 폴더를 두면 두 번째 실행부터 엔진 재빌드를 건너뛰고, FP16 은 RTX 계열에서 속도를 높입니다. 변경은 다음 모델 로드부터 적용됩니다. VMS 운전에도 같은 설정이 쓰이며, VMS 는 시작할 때 읽으므로 바꾼 뒤에는 VMS 를 다시 시작하세요.</p>
+<p>딥러닝 추론의 실행 백엔드를 고릅니다. 목록은 Auto · Cpu · Cuda · DirectML · TensorRT 입니다. 변경은 다음 모델 로드부터 적용됩니다. VMS 운전에도 같은 설정이 쓰이며, VMS 는 시작할 때 읽으므로 바꾼 뒤에는 VMS 를 다시 시작하세요.</p>
+<ul>
+  <li><strong>Auto</strong> 는 Cuda → DirectML → Cpu 순서로 이 PC 에서 쓸 수 있는 첫 백엔드를 씁니다(TensorRT 는 Auto 에 들어가지 않으므로 쓰려면 직접 고릅니다).</li>
+  <li>이 PC 에서 쓸 수 없는 항목은 "(이 PC 에서 사용 불가)" 가 붙고, 그런 항목을 고르면 "다른 백엔드(최종적으로 CPU)로 실행됩니다" 경고가 나옵니다.</li>
+  <li>창 아래 "실제 사용 백엔드(마지막 모델 로드)" 줄에 마지막으로 모델을 불러올 때 실제로 쓴 백엔드가 보입니다(도구를 한 번 실행한 뒤 표시).</li>
+  <li>TensorRT Engine Cache Folder — 엔진을 이 폴더에 저장해 두고 다시 실행할 때 재빌드를 건너뜁니다. 비워 두고 저장하면 기본 폴더(설정 폴더의 <code>trt_cache</code>)를 씁니다.</li>
+  <li>Enable TensorRT FP16 — 반정밀도로 계산합니다. 지원 GPU 에서 더 빠르며, 효과는 모델과 GPU 에 따라 다릅니다.</li>
+</ul>
 <h4>◆OCR Synth Data — 합성 문자 데이터</h4>
 <figure><img src="../gs/screenshots/v3/vs/dlg_SynthData.png" data-width="520" alt="Synthetic Data Generator"><figcaption>Synthetic Data Generator — Font · Patterns · Dataset · Background · Augmentation · Training(◆MLOps 업로드 안내)</figcaption></figure>
 <p>날짜 · 로트 번호처럼 형식이 정해진 문자열을 폰트 · 배경 · 증강을 조합해 대량 생성합니다. OCR 도구의 인식 모델을 다듬을 학습 데이터로 쓰며, 학습은 만든 데이터를 ◆MLOps 에 올려서 합니다(§10.1).</p>
 <h4>SLM Recipe Bot</h4>
-<p>툴바의 말풍선 버튼으로 엽니다. 모델에 [Connect] 한 뒤 "원형 부품의 지름을 재고 싶어" 처럼 입력하면 레시피 구성을 제안하고, [Apply Recipe] 로 작업 공간에 만들어 줍니다. "자동 실행" 을 켜면 적용 직후 실행 결과까지 알려 줍니다.</p>
+<p>툴바의 말풍선 버튼으로 엽니다. 창을 열면 자동으로 언어 모델에 연결을 시도합니다. 이 PC 에 로컬 언어 모델 서버(<code>http://localhost:11434</code>)가 실행 중이고 창의 모델 칸에 나온 기본 모델이 받아져 있어야 합니다.</p>
+<ol>
+  <li>"이 사진에서 구멍 개수를 세는 레시피를 만들어 줘" 처럼 원하는 검사를 입력합니다. 봇은 글로 설명하지 않고 언제나 <strong>도구 구성 미리보기</strong>(작업 공간에 도구가 있으면 수정 미리보기)로 답합니다 — 파라미터 뜻을 묻는 용도가 아니며, 그런 설명은 각 칸의 물음표(?)를 봅니다.</li>
+  <li>미리보기의 파라미터는 <strong>제안 값</strong>입니다. 그 도구에 없는 파라미터는 "✕ 이 도구에 없는 파라미터 — 적용하지 않음" 으로 표시되고 적용되지 않습니다.</li>
+  <li>[Apply Recipe] 로 작업 공간에 만듭니다. 단독 모드에서도 제안 값이 도구에 들어갑니다.</li>
+  <li>Run All 로 실행해 결과를 보고, 각 도구 설정에서 값을 우리 제품에 맞게 확인 · 조정합니다. "자동 실행" 을 켜면 적용 직후 실행하고 도구 수 · 성공 수와 대표 값 하나(개수 · 거리 등)를 요약해 보여 줍니다.</li>
+</ol>
 
 <h3 id="vs-ext">5.13 3D 데이터 · ◆로봇 멀티뷰 · ◆MLOps 모델 고르기</h3>
 <p>3D 데이터 메뉴는 기본 구성이고, 나머지는 확장 옵션이 있어야 보입니다(§1.6).</p>
@@ -225,9 +244,10 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <table class="cols-2-7">
   <tr><th>[3D] 메뉴</th><th>하는 일</th></tr>
   <tr><td>Save 3D Data / Load 3D Data</td><td>점군을 <code>.vpc</code> 로 저장하고 엽니다. 격자 모양이 아닌 점군은 열 때 높이 맵을 자동으로 만듭니다</td></tr>
-  <tr><td>Generate Height Map</td><td>기준 높이 · 하한 · 상한으로 점군의 높이를 밝기로 바꾼 2D 사진(높이 맵)을 만듭니다. 실제 2D 사진이 없을 때 2D 탭에 보입니다</td></tr>
-  <tr><td>Save Height Slicing / Clear Height Slicing</td><td>그 높이 범위 설정을 레시피에 저장하거나 지웁니다</td></tr>
+  <tr><td>Generate Height Map</td><td>Depth Map 탭의 Baseline(높이 기준, 이 값을 0 으로 잼) · Lower · Upper(높이 맵에 담을 Z 하한 · 상한, mm)로 점군의 높이를 밝기로 바꾼 2D 사진(높이 맵)을 만듭니다. 실제 2D 사진이 없을 때 2D 탭에 보입니다. Depth Map 탭의 [Generate Height Map] 버튼도 같습니다</td></tr>
+  <tr><td>Save Height Slicing / Clear Height Slicing</td><td>높이 맵 범위(Baseline · Lower · Upper)와 Depth Map 탭 손잡이로 고른 범위를 함께 레시피에 저장하거나 지웁니다. 저장하면 상태바에 두 범위가 모두 표시됩니다</td></tr>
 </table>
+<p>높이 맵을 다시 만들어도 손잡이로 고른 범위는 그대로 남습니다. 하한 · 상한과 손잡이 범위를 점군 전체 Z 범위로 되돌리려면 Depth Map 탭의 [전체로] 를 누릅니다(높이 맵도 다시 만듦).</p>
 
 <h4>3D 스캔 패널</h4>
 <p>◆3D 카메라 촬영 옵션. 스텝의 카메라가 3D 카메라일 때 Camera Settings 아래에 <strong>3D 스캔</strong> 묶음이 나옵니다. 값은 촬영할 때 카메라 안에서 적용되고 스텝마다 레시피에 저장됩니다.</p>
@@ -243,7 +263,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <ol>
   <li>레시피를 열고 카메라를 고른 뒤, Steps 머리의 <strong>Generate Robot Waypoint Steps</strong> 아이콘을 누릅니다.</li>
   <li>현재 Waypoint Planner 값(기본 Pattern TopPlusRing · Count 5 · Dist 500 mm · Elev 30°)으로 자세를 계산합니다. 대상 중심은 지금 열린 점군의 중심입니다(없으면 원점).</li>
-  <li>이 카메라의 기존 로봇 스텝을 지우고 "카메라-번호 Top / Side-k (θ°)" 같은 이름의 빈 스텝을 만듭니다. 상태줄에 "N개 웨이포인트 생성됨" 이 나옵니다.</li>
+  <li>이 카메라의 기존 로봇 스텝을 지우고 "카메라-번호 Top / Side-k (θ°)" 같은 이름의 빈 스텝을 만듭니다. 번호는 같은 카메라의 기존 스텝 뒤부터 매겨져 겹치지 않습니다. 상태줄에 "N개 웨이포인트 생성됨" 이 나옵니다.</li>
 </ol>
 <figure><img src="figs/ext/vs_waypoint_steps.png" data-width="300" alt="웨이포인트 스텝을 만든 뒤 — Steps 목록에 Top · Side-1~4 스텝이 생기고, 위에 Robot MultiView 줄과 [Setup] 이 나타납니다"><figcaption>웨이포인트 스텝을 만든 뒤 — Steps 목록에 Top · Side-1~4 스텝이 생기고, 위에 Robot MultiView 줄과 [Setup] 이 나타납니다</figcaption></figure>
 <p>Pattern 은 Ring · TopPlusRing · Hemisphere 중 고릅니다(Custom 은 만들지 않음). 스텝 정보의 <strong>로봇 노드 번호</strong>는 로봇이 보내오는 노드 번호와 스텝을 짝지을 때 씁니다 — 비워 두면 스텝 순서로 맞춥니다.</p>
@@ -278,9 +298,10 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
   <li>먼저 설정 마법사 2 단계 고급 설정에 MLOps 서버 주소와 라인 토큰을 넣어 둡니다(§3.3). 없으면 "레지스트리 설정 없음" 안내가 뜹니다.</li>
   <li>[레지스트리…] → "레지스트리에서 모델 고르기" 창 왼쪽 [모델] 에서 계열을 고릅니다(그 도구의 작업 유형만 나옴).</li>
   <li>[무엇을 가리킬까요] 에서 <strong>지금 운영 중인 버전</strong>(단계 production · staging · candidate 중 선택 — 승격 · 롤백하면 도구도 따라감) 또는 <strong>특정 버전 고정</strong>(버전 목록에서 하나 — 언제 열어도 같은 파일)을 고릅니다.</li>
-  <li>[저장될 값] 에 <code>model://…</code> 가 보이면 [선택] 을 누르고 레시피를 저장합니다.</li>
+  <li>[저장될 값] 에 <code>model://…</code> 가 보이면 [선택] 을 누릅니다. 창이 그 모델을 먼저 내려받은 뒤("선택한 모델을 내려받는 중…") 닫히므로 바로 실행해 볼 수 있습니다. 받지 못하면 창이 닫히지 않고 "모델을 내려받지 못했습니다: 사유" 가 표시됩니다.</li>
+  <li>레시피를 저장합니다.</li>
 </ol>
 <figure><img src="figs/ext/vs_registry_stage.png" data-width="560" alt="레지스트리에서 모델 고르기 — 지금 운영 중인 버전(production). 저장될 값 model://계열ID@production"><figcaption>레지스트리에서 모델 고르기 — 지금 운영 중인 버전(production). 저장될 값 model://계열ID@production</figcaption></figure>
 <figure><img src="figs/ext/vs_registry_pinned.png" data-width="560" alt="같은 창에서 특정 버전 고정 — v2(운영)을 고르면 저장될 값이 model://계열ID@2 가 됩니다 (그림의 모델 목록은 시연용)"><figcaption>같은 창에서 특정 버전 고정 — v2(운영)을 고르면 저장될 값이 model://계열ID@2 가 됩니다 (그림의 모델 목록은 시연용)</figcaption></figure>
-<p>라인 PC 는 레시피를 열 때 참조를 풀어 모델을 내려받아 두고, 검사 중에는 받아 둔 파일만 씁니다. 승격한 모델을 쓰려면 라인에서 레시피를 다시 엽니다. 자세한 흐름은 9장과 MLOps 매뉴얼의 <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-binding">라인에 모델 걸기</a>에 있습니다.</p>
+<p>VisionSetup 은 레시피를 열 때, 라인 PC 의 VMS 는 레시피를 불러올 때(사이드 패널 [Load] · 작업지시 선택 · ◆PLC 레시피 변경 · 외부 변경 재로드 · 새 레시피 · 가져오기) 참조를 풀어 모델을 내려받아 두고, 검사 중에는 받아 둔 파일만 씁니다. 받아 둔 모델은 MLOps 서버가 꺼져 있어도(VMS 를 다시 시작한 직후 포함) 그대로 씁니다. 받지 못하면 운전은 막히지 않고 System Log 에 "모델 참조 준비 실패" 경고가 남으며, 그 모델을 쓰는 도구는 받을 때까지 NG 입니다. 승격한 모델로 바꾸려면 라인에서 레시피를 다시 불러옵니다. 자세한 흐름은 9장과 MLOps 매뉴얼의 <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-binding">라인에 모델 걸기</a>에 있습니다.</p>
 </section>
