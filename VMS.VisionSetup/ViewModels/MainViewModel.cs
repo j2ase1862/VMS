@@ -659,6 +659,13 @@ namespace VMS.VisionSetup.ViewModels
             set
             {
                 var previous = _selectedStep;
+
+                // 떠나는 스텝의 작업 공간 편집을 그 스텝(메모리)에 남긴다 — 남기지 않으면 다시 돌아왔을 때
+                // 레시피의 옛 값이 올라와 바꾼 값 · Multi-Step Align 기준 등록이 사라졌다 (VS-19, 사용자 결정 11-16).
+                // 파일 저장은 그대로 [Save Recipe] 가 한다.
+                if (previous != null && !ReferenceEquals(previous, value))
+                    SaveWorkspaceToStep();
+
                 if (SetProperty(ref _selectedStep, value))
                 {
                     // 떠나는 스텝은 작업 공간 도구 수 대신 저장된 도구 수로 되돌린다.

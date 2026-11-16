@@ -94,6 +94,29 @@ namespace VMS.VisionSetup.Tests
             Assert.Equal(1, stepB.ToolCount);
         }
 
+        [Fact]
+        public void LeavingStep_KeepsWorkspaceEdits_InMemory()
+        {
+            // VS-19: 스텝을 바꿨다 돌아와도 저장 전 도구 편집이 남는다(파일 저장은 하지 않음)
+            var vm = CreateViewModel();
+            var blur = VisionService.CreateTool("BlurTool")!;
+            blur.Name = "Blur";
+            var stepA = new InspectionStep { Name = "1-1" };
+            stepA.Tools.Add(ToolSerializer.SerializeTool(blur));
+            var stepB = new InspectionStep { Name = "1-2" };
+
+            vm.SelectedStep = stepA;
+            vm.DroppedTools[0].VisionTool!.Name = "Blur (edited)";
+            vm.DroppedTools[0].VisionTool!.IsEnabled = false;
+
+            vm.SelectedStep = stepB;
+            vm.SelectedStep = stepA;
+
+            var tool = Assert.Single(vm.DroppedTools).VisionTool!;
+            Assert.Equal("Blur (edited)", tool.Name);
+            Assert.False(tool.IsEnabled);
+        }
+
         private static MainViewModel CreateViewModel()
         {
             return new MainViewModel(
