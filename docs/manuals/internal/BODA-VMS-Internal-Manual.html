@@ -111,7 +111,7 @@
 <li><a href="#vs-webparam">검사 기준값을 Web 에서 관리하기 (파라미터 연동) <span class="v">▶</span></a></li>
 <li><a href="#vs-templates">예제 템플릿 갤러리 <span class="v">▶</span></a></li>
 <li><a href="#vs-calibration">카메라 캘리브레이션 — mm 로 재기 위한 준비 <span class="v">▶</span></a></li>
-<li><a href="#vs-sequence">시퀀스 편집기 — IO 보드 · ◆PLC 운전 흐름</a></li>
+<li><a href="#vs-sequence">시퀀스 편집기 — IO 보드 · ◆PLC 운전 흐름 <span class="v">▶</span></a></li>
 <li><a href="#vs-batch">배치 테스트 — 이미지 폴더로 레시피 검증 <span class="v">▶</span></a></li>
 <li><a href="#vs-misc">기타 설정 창</a></li>
 <li><a href="#vs-ext">3D 데이터 · ◆로봇 멀티뷰 · ◆MLOps 모델 고르기</a></li>
@@ -303,8 +303,8 @@ Web 서버 없이 검사만 하는 <strong>단독 모드</strong>도 지원합�
   <tr><td>카메라</td><td>GigE Vision 2D(Area Scan) · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>라인스캔 · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>3D 카메라. 제조사별 연결 방식은 <a class="ref" href="#install-prep">§2.1</a> 표 참고.
       카메라 없이 저장 이미지 · 저장된 점군 파일(.vpc)로도 레시피 편집과 검사 시험이 가능합니다</td></tr>
   <tr><td><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC</td><td>Mitsubishi(MC) · Siemens(S7) · LS Electric(XGT) · Omron(FINS) · Modbus TCP — 모두 TCP 직접 통신이라
-      별도 드라이버가 필요 없습니다. 시리얼(RS-232/485) 연결도 지원합니다</td></tr>
-  <tr><td>IO 보드</td><td>ADLink PCI-7432/7433/7434/7396 (DASK x64 드라이버) · Advantech PCI-1730/1750 계열 (DAQNavi)</td></tr>
+      별도 드라이버가 필요 없습니다. 시리얼(RS-232/485) 연결은 지원하지 않습니다</td></tr>
+  <tr><td>IO 보드</td><td>ADLink PCI-7432/7433/7434 (DASK x64 드라이버, PCI-7396 은 지원 모델 아님) · Advantech PCI-1730/1750 계열 (DAQNavi)</td></tr>
   <tr><td><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>로봇 (선택)</td><td>Universal Robots · Doosan · Jaka · ABB · Fanuc — 멀티뷰 3D 스캔과 얼라인 보정용</td></tr>
   <tr><td>브라우저</td><td>Google Chrome (생산 관리 웹 · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>MLOps 화면)</td></tr>
   <tr><td><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>학습 워커 (MLOps 선택)</td><td>NVIDIA GPU(VRAM 8GB 이상) · CUDA 12.4 드라이버(550 이상) · Python 3.12 64-bit · 여유 디스크 50GB</td></tr>
@@ -352,7 +352,7 @@ Web 서버 없이 검사만 하는 <strong>단독 모드</strong>도 지원합�
   <tr><td><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>라인스캔 · 롤러 검사</td><td>라인스캔 카메라 종류(<a class="ref" href="#appsetup-s3">§3.4</a>), 사이드 패널 Roller Inspection(<a class="ref" href="#vms-sidepanel">§4.6</a>)</td><td>에어리어 카메라만 고를 수 있습니다</td></tr>
 </table>
 <p>지금 PC 의 라이선스에 무엇이 들어 있는지는 설정 마법사 마지막 단계(보안 · 라이선스, <a class="ref" href="#appsetup-s7">§3.8</a>)의 <strong>확장 옵션</strong> 줄에 나옵니다 — "기본 구성 (확장 옵션 없음)", "확장 옵션 전부", 또는 켜진 옵션 이름. 옵션은 라이선스를 발급할 때 정합니다(<a class="ref" href="#appx-licgen">§13.7</a>).</p>
-<div class="callout warn"><strong>알아 둘 것:</strong> 라이선스 파일이 없거나 옵션 항목이 없는 예전 라이선스, 서버 좌석으로 붙는 라인 PC 는 <strong>확장 옵션이 전부 켜진 것</strong>으로 동작합니다. 고객에게 기본 구성만 보여야 하는 현장(GS 시험 PC 등)은 옵션이 비어 있는 라이선스를 반드시 설치합니다.</div>
+<div class="callout warn"><strong>알아 둘 것:</strong> 라이선스 파일이 없는 PC, 옵션 항목이 적혀 있지 않은 예전 라이선스(옵션 칸이 생기기 전인 2026-10-30 이전 발급분), 서버 좌석으로 붙는 라인 PC 는 <strong>확장 옵션이 전부 켜진 것</strong>으로 동작합니다(업데이트만으로 현장 기능이 사라지지 않게 하려는 동작입니다). 고객에게 기본 구성만 보여야 하는 현장(GS 시험 PC 등)은 확장 옵션을 모두 해제해 발급한 라이선스를 반드시 설치합니다 — 설정 마법사 마지막 단계에 "기본 구성 (확장 옵션 없음)" 으로 나오면 맞습니다.</div>
 
 <h3 id="overview-mv-basics">1.7 머신비전 기초 — 좋은 사진이 검사의 절반 <span class="video" title="이 절을 따라 하는 사용 영상">▶ 영상 V-1-3</span></h3>
 <p>검사 도구는 사진에 찍힌 것만 판단합니다. 결함이 사진에 또렷이 보이지 않으면 어떤 도구 설정으로도 잡을 수 없습니다. 레시피를 만들기 전에 아래 다섯 가지를 먼저 맞춥니다.</p>
@@ -379,16 +379,14 @@ Web 서버 없이 검사만 하는 <strong>단독 모드</strong>도 지원합�
 <table class="cols-2-3-4">
   <tr><th>장비</th><th>별도 설치할 것</th><th>비고</th></tr>
   <tr><td>Basler 카메라</td><td>pylon Camera Software Suite (Runtime)</td><td>없으면 카메라 검색은 되지만 연결 · 촬영이 실패합니다</td></tr>
-  <tr><td>Hikrobot 카메라</td><td>MVS (Machine Vision Software) 런타임</td><td>GigE 필터 드라이버 포함</td></tr>
   <tr><td><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>Mech-Mind 3D 카메라</td><td>없음</td><td>구동 파일이 설치 파일에 동봉됩니다</td></tr>
-  <tr><td>Matrox · Dalsa (프레임 그래버)</td><td>MIL 런타임</td><td>Camera Link 카메라 구성에서만</td></tr>
   <tr><td>ADLink IO 보드</td><td>DASK 드라이버 <strong>64비트(x64)</strong></td><td>32비트만 설치된 PC 에서는 보드가 인식되지 않습니다</td></tr>
   <tr><td>Advantech IO 보드</td><td>DAQNavi</td><td>미설치 시 보드가 연결되지 않습니다(System Log 에 사유)</td></tr>
   <tr><td><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC (5 종)</td><td>없음</td><td>TCP 직접 통신 — 드라이버 불필요</td></tr>
 </table>
-<div class="callout warn"><strong>지원 목록에 없는 제조사</strong>(IDS · Cognex · Keyence · Baumer · Allied Vision · FLIR · JAI)를 설정 마법사에서
-고르면 카메라가 <strong>시뮬레이션 모드</strong>로 동작합니다 — 화면에 보이는 영상은 실제 카메라 영상이 아닙니다.
-VisionSetup 에서 연결할 때 "SDK 미탑재 — 시뮬레이션 모드" 경고 창이 뜹니다.</div>
+<div class="callout warn"><strong>위 표에 없는 제조사</strong>를 설정 마법사에서 고르면 카메라가 <strong>시뮬레이션 모드</strong>로 동작합니다 — 화면에 보이는 영상은 실제 카메라 영상이 아닙니다.
+마법사 목록의 IDS · Cognex · Keyence · Baumer · Allied Vision · FLIR · JAI 와, 지금 설치 파일에 연결 기능이 들어 있지 않은 Hikrobot(HIK) · Matrox · Dalsa 가 여기에 해당합니다.
+VMS 나 VisionSetup 에서 그 카메라를 연결할 때 "… SDK 미탑재 — 시뮬레이션 모드로 동작합니다 (실카메라 영상 아님)" 경고가 표시됩니다. 이 제조사를 써야 하면 공급사에 문의하세요.</div>
 
 <h4>설치 순서 (권장)</h4>
 <ol>
@@ -408,8 +406,9 @@ VisionSetup 에서 연결할 때 "SDK 미탑재 — 시뮬레이션 모드" 경�
     <ul>
       <li><strong>BODA VMS Web 서버 포함</strong> (기본: 켬) — 이 PC 를 생산 관리 서버로도 쓰거나, 나중에 쓸 가능성이 있으면 켜 둡니다.
           포함해서 설치해도 자동으로 실행되지는 않으며, 설정 마법사에서 켤 때만 동작합니다(<a class="ref" href="#install-web">§2.3</a>).</li>
+      <li>여기서 고른 구성은 업데이트해도 그대로 유지됩니다. 나중에 Web 서버를 넣으려면 프로그램을 제거한 뒤 다시 설치하면서 체크합니다(설정 · 레시피 · 이력은 제거해도 남습니다, <a class="ref" href="#install-upgrade">§2.7</a>).</li>
     </ul></li>
-  <li>[설치]를 누르면 파일 복사가 진행되고, 완료 화면에서 [마침]을 누릅니다. 바탕화면에 <strong>BODA VMS</strong> 바로가기가,
+  <li>[설치]를 누르면 파일 복사가 진행되고, 완료 화면에서 [마침]을 누릅니다. 동봉 Web 서버를 포함하면 Windows 방화벽에 "BODA VMS Web (5292/TCP)" 인바운드 규칙도 함께 만들어집니다(<a class="ref" href="#install-network">§2.5</a>). 바탕화면에 <strong>BODA VMS</strong> 바로가기가,
       시작 메뉴에 BODA VMS · BODA VMS 설정 마법사 (AppSetup) · BODA VMS 비전 설정 (VisionSetup) 바로가기가 만들어집니다.</li>
 </ol>
 <figure><img src="../../gs/screenshots/70_msi_welcome.png" data-width="420" alt="설치 마법사 시작 화면">
@@ -443,8 +442,8 @@ VMS 를 다시 실행하세요. 설정 파일이 있어도 마법사를 끝까�
 <ul>
   <li>구성은 끝났는데 서비스가 멈춰 있으면(Stopped) 카드에 <strong>[서비스 시작 (관리자 권한)]</strong> 버튼이 나타납니다.
       누르면 Windows 권한 확인 창(UAC)이 뜨고, 승인하면 서비스가 부팅 시 자동 시작으로 바뀐 뒤 곧바로 시작됩니다.</li>
-  <li>이 구성에서는 Web 서버가 <strong>이 PC 안에서만(127.0.0.1)</strong> 응답합니다. 다른 PC 의 브라우저에서 보려면
-      <a class="ref" href="#install-network">§2.5</a> 의 안내에 따라 바인딩 주소와 방화벽을 열어야 합니다.</li>
+  <li>이 구성의 Web 서버는 <strong>이 PC 의 모든 네트워크 주소(포트 5292)</strong>에서 응답하고, 설치 때 만든 방화벽 규칙 "BODA VMS Web (5292/TCP)" 이 모든 네트워크 프로필에서 열려 있습니다.
+      그래서 같은 사내망의 다른 PC 브라우저에서도 <code>http://이 PC 의 IP:5292</code> 로 접속됩니다. 외부 접속을 막아야 하는 현장은 <a class="ref" href="#install-network">§2.5</a> 를 참고해 방화벽 규칙의 범위를 좁힙니다.</li>
 </ul>
 
 <h4>방법 B — 별도 서버 PC 에 설치 (배포 스크립트) <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-2-5</span></h4>
@@ -453,10 +452,14 @@ VMS 를 다시 실행하세요. 설정 파일이 있어도 마법사를 끝까�
 <pre><code># 관리자 PowerShell — 압축을 푼 폴더로 이동
 cd &lt;압축 푼 폴더&gt;\deploy
 .\Install-Web-Offline.ps1</code></pre>
-<p>스크립트가 서비스 등록 · 서명 키 생성 · 초기 관리자 비밀번호 생성 · 설정 파일 권한 제한 · 방화벽 규칙까지
+<p>스크립트가 서비스 등록 · 서명 키 생성 · 초기 관리자 비밀번호 생성 · 설정 파일 권한 제한을
 한 번에 처리하고, 화면에 초기 admin 비밀번호를 표시합니다. 기본값은 설치 폴더 <code>C:\Deploy\BodaVmsWeb</code>,
 데이터 폴더 <code>C:\ProgramData\BODA\VMS</code>, 포트 5292 입니다. 옵션으로 바꿀 수 있습니다.</p>
 <pre><code>.\Install-Web-Offline.ps1 -Port 8080 -InstallPath "D:\BODA Web" -DataDir "D:\BODA Data"</code></pre>
+<div class="callout warn"><strong>라인 PC 가 붙는 서버는 <code>-AllowLanAccess</code> 를 붙여 설치합니다.</strong>
+옵션이 없으면 서버가 <strong>이 PC 안에서만</strong>(127.0.0.1) 응답하고 방화벽 규칙도 만들지 않으며, 완료 화면에 "LAN 접속 : 꺼짐 — 이 PC 에서만" 이 표시됩니다.
+<code>-AllowLanAccess</code> 를 붙이면 모든 네트워크 주소에서 응답하고 방화벽 인바운드 규칙 <code>BODA VMS Web</code> 을 사내망(Domain · Private) 프로필에만 만들며, 완료 화면에 LAN 접속 주소가 표시됩니다.
+<pre><code>.\Install-Web-Offline.ps1 -AllowLanAccess</code></pre></div>
 <div class="callout warn"><strong>서명 키의 유일한 사본은 서버의 <code>appsettings.Production.json</code> 입니다.</strong> 이 파일을 잃으면 모든
 사용자가 다시 로그인해야 하므로 설치 직후 안전한 곳에 백업하세요. 첫 로그인 후에는 <code>admin</code> 비밀번호를
 바꾸고(오른쪽 위 사용자 이름 → [비밀번호 변경], <a class="ref" href="#web-login">§8.1</a>), 필요한 사용자를 가입 → 승인으로 추가합니다(<a class="ref" href="#web-nav">§8.2</a>).</div>
@@ -466,7 +469,8 @@ cd &lt;압축 푼 폴더&gt;\deploy
 <h4><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>MLOps 서버 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-2-9</span></h4>
 <ol>
   <li>서버 PC(Web 서버와 같은 PC 여도 됨)에 <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>MLOps 배포 패키지를 풀고 관리자 PowerShell 에서 실행합니다.
-<pre><code>.\scripts\install-server-service.ps1 -DataDir D:\BODA-MLOps -ProductionWebUrl http://&lt;Web 서버&gt;:5292</code></pre></li>
+<pre><code>.\scripts\install-server-service.ps1 -DataDir D:\BODA-MLOps -ProductionWebUrl http://&lt;Web 서버&gt;:5292 -JwtKey &lt;Web 서버의 서명 키&gt;</code></pre>
+      <code>-JwtKey</code> 가 없으면 스크립트가 멈춥니다. 값은 Web 서버 <code>appsettings.Production.json</code> 의 서명 키와 같아야 합니다.</li>
   <li>서비스 <code>BodaVmsMlops</code>(포트 <strong>5310</strong>)가 등록되고 방화벽 규칙이 추가됩니다. 데이터(DB · 사진 · 모델)는
       <code>-DataDir</code> 폴더에 저장되므로 이 폴더를 백업 대상에 넣습니다.</li>
   <li><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>MLOps 화면은 <strong>Web 서버의 관리자 계정</strong>으로 로그인합니다(<a class="ref" href="#mlops-login">§9.1</a>). 두 서버가 같은 서명 키를 쓰도록 스크립트가
@@ -478,8 +482,8 @@ cd &lt;압축 푼 폴더&gt;\deploy
   <li><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>MLOps 화면 학습 → 워커 → [워커 등록]에서 이름을 넣고 [발급]을 눌러 <code>wk_…</code> 토큰을 받습니다. 토큰은 이때 한 번만 표시됩니다.</li>
   <li><code>BODA-VMS-TrainWorker-0.1.5.msi</code> 를 실행하고 <strong>"워커 연결 설정"</strong> 화면에 관리 서버 주소(<code>http://서버:5310</code>) ·
       워커 토큰 · 워커 이름을 입력합니다.</li>
-  <li>설치가 끝나면 서비스 <code>BodaVmsTrainWorker</code> 가 시작되어 첫 실행 시 파이썬 환경(venv, 약 6GB)을 준비합니다.
-      온라인 설치는 10~40 분이 걸립니다. 폐쇄망은 MSI 대신 함께 배포되는 <code>BODA-VMS-TrainWorker-0.1.5-offline</code> 폴더의 <code>install-offline.cmd</code> 를 관리자 권한 명령 프롬프트에서 실행합니다(wheel 묶음을 이 PC 에 복사한 뒤 같은 MSI 를 설치합니다. 복사된 <code>%ProgramData%\BODA VMS TrainWorker\wheels</code> 는 지우지 마세요).</li>
+  <li>설치가 끝나면 서비스 <code>BodaVmsTrainWorker</code> 가 시작되어 첫 실행 시 파이썬 환경(venv, 수 GB)을 준비합니다.
+      온라인 설치는 수십 분이 걸립니다(설치 마법사 완료 화면 안내와 같음). 폐쇄망은 MSI 대신 함께 배포되는 <code>BODA-VMS-TrainWorker-0.1.5-offline</code> 폴더의 <code>install-offline.cmd</code> 를 관리자 권한 명령 프롬프트에서 실행합니다(wheel 묶음을 이 PC 에 복사한 뒤 같은 MSI 를 설치합니다. 복사된 <code>%ProgramData%\BODA VMS TrainWorker\wheels</code> 는 지우지 마세요).</li>
   <li><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>MLOps 워커 화면에서 상태가 <strong>대기 중</strong>으로 바뀌면 준비 완료입니다. 로그는 <code>%ProgramData%\BODA VMS TrainWorker\logs</code> 에 남습니다.</li>
 </ol>
 <figure><img src="../../gs/screenshots/mlops/worker_install_wizard.png" data-width="420" alt="학습 워커 설치 마법사">
@@ -496,10 +500,9 @@ cd &lt;압축 푼 폴더&gt;\deploy
   <tr><td><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>라인 PC → 로봇</td><td>벤더별 (UR 30003 · Modbus 502 등)</td><td>아웃바운드</td><td>포즈 읽기 · 웨이포인트</td></tr>
 </table>
 <ul>
-  <li>Web 서버를 별도 PC 에 설치하면 배포 스크립트가 방화벽 인바운드 규칙 <code>BODA VMS Web</code> 을 만듭니다.
-      라인 PC 와 동봉 구성(방법 A)은 기본이 <code>127.0.0.1</code> 바인딩이라 외부 접속이 막혀 있습니다 — 다른 PC 에서
-      보려면 <code>appsettings.Production.json</code> 의 <code>Kestrel:Endpoints:Http:Url</code> 을 <code>http://0.0.0.0:5292</code> 로
-      바꾸고 방화벽에서 5292 를 사내망(Private/Domain)에만 엽니다.</li>
+  <li>별도 서버 PC(방법 B)는 배포 스크립트를 <code>-AllowLanAccess</code> 로 실행해야 다른 PC 에서 접속됩니다 — 모든 네트워크 주소에서 응답하고 방화벽 인바운드 규칙 <code>BODA VMS Web</code> 을 사내망(Domain · Private) 프로필에만 만듭니다. 옵션 없이 설치하면 이 PC 안에서만 응답하고 규칙도 만들지 않습니다(<a class="ref" href="#install-web">§2.3</a>).</li>
+  <li>라인 PC 의 동봉 Web(방법 A)은 설치할 때부터 모든 네트워크 주소(5292)에서 응답하고, 방화벽 규칙 "BODA VMS Web (5292/TCP)" 이 모든 프로필에 열립니다.
+      외부에서 접속할 필요가 없는 현장은 Windows 방화벽 고급 설정에서 이 규칙의 프로필을 사내망(Domain · Private)으로 줄이거나 규칙을 끕니다.</li>
   <li>카메라는 전용 네트워크 카드에 직결하고, 그 카드에만 카메라와 같은 대역의 고정 IP 를 줍니다.</li>
   <li>보안 모드가 <strong>Production</strong> 인 라인 PC 는 다른 PC 를 가리키는 <code>http://</code> 서버 주소를 거부합니다(<a class="ref" href="#appsetup-s7">§3.8</a>).
       원격 서버는 <code>https://</code> 로 열거나(사설 인증서), 사내 실증 단계에서는 Development 모드를 씁니다.
@@ -524,15 +527,15 @@ cd &lt;압축 푼 폴더&gt;\deploy
 봅니다(<a class="ref" href="#web-license">§8.24</a>). 서버가 꺼져 있어도 라인 PC 는 마지막으로 좌석을 받은 시점부터 <strong>72 시간</strong> 동안 정상 동작합니다.</p>
 <h4>재발급이 필요한 경우</h4>
 <ul>
-  <li><strong>지문 불일치</strong> — 다른 PC 용 라이선스이거나, 부품 교체 · Windows 재설치로 지문이 바뀐 경우입니다. 새 지문 코드로 재발급을 요청합니다.</li>
+  <li><strong>지문 불일치</strong> — 다른 PC 용 라이선스이거나, PC 를 바꾸는 등으로 지문의 세 묶음(Windows 설치 · 네트워크 카드 · CPU 모델) 중 두 묶음 이상이 바뀐 경우입니다. Windows 재설치나 네트워크 카드 교체 하나만으로는 그대로 유효합니다. 새 지문 코드로 재발급을 요청합니다.</li>
   <li><strong>만료 임박 · 유지보수 만료</strong> — 계약 갱신 후 받은 새 파일을 같은 방법으로 가져오기 하면 덮어써집니다.</li>
 </ul>
 
 <h3 id="install-upgrade">2.7 업그레이드와 제거</h3>
 <h4>인앱 업데이트 (권장) <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-2-8</span></h4>
-<p>새 버전이 나오면 VMS 가 시작할 때 "업데이트 가능" 창으로 알려 주고, 사이드 패널 Updates 섹션에 배지가 표시됩니다.</p>
+<p>새 버전이 나오면 VMS 가 시작할 때 창 없이 알려 줍니다 — 사이드 패널 Updates 섹션에 "새 버전" 배지가 붙고, System Log 에 <code>[Update]</code> 새 버전 감지 줄이 남습니다.</p>
 <ol>
-  <li>안내 창에서 [확인]을 누릅니다. 수동으로 확인하려면 사이드 패널 Updates 의 [Check for updates] 를 누릅니다.</li>
+  <li>사이드 패널 Updates 의 배지나 [Check for updates] 를 누르면 "업데이트 가능" 창이 열립니다. 창에서 [확인]을 누릅니다.</li>
   <li>설치 파일이 앱 안에서 다운로드되며 Updates 섹션에 진행률이 표시됩니다. [다운로드 취소]로 멈출 수 있고, 내려받은 파일은 손상 여부(SHA-256)를 자동 검증합니다.</li>
   <li>다운로드가 끝나면 설치 시작 확인 창이 뜹니다. 시작하면 Windows 권한 확인 창(UAC)이 한 번 뜨고, 진행률 창(버전 · 현재 작업 · %)이 표시되는 동안 기다립니다.</li>
   <li>설치가 끝나면 VMS 가 자동으로 다시 실행됩니다. 이 PC 에서 Web 서비스를 운영 중이었다면 업데이트가 서비스를 먼저 내리고, 설치 후 다시 시작해 응답까지 확인합니다.</li>
@@ -544,8 +547,10 @@ cd &lt;압축 푼 폴더&gt;\deploy
 <p><strong>업데이트 창(VMS.Updater)</strong> — 설치 중 뜨는 "BODA VMS 업데이트" 창이 업데이트 프로그램입니다. "v현재 → v새 버전" 과 진행 상태가 나오고, 끝나면 "설치 완료 — VMS를 다시 시작합니다." 로 VMS 를 다시 띄웁니다. 실패하면 "설치에 실패했습니다 (코드 n). 기존 버전이 유지됩니다." 와 [닫기] 가 나옵니다 — 설치는 Windows Installer 가 통째로 되돌리므로 옛 버전이 그대로 남습니다. 다른 설치가 진행 중이면 잠시 뒤 다시 합니다. 이 창은 직접 실행하는 프로그램이 아닙니다(인앱 업데이트가 자동으로 띄움).</p>
 <p>업데이트는 이 순서로 진행됩니다: VMS 종료 대기 → 이 PC 의 Web 서비스 상태 기록 · 정지 → 설치 → Web 서비스 재시작과 응답(health) 확인(실패하면 한 번 복구 설치 후 재시도) → VMS 다시 실행 → 내려받은 설치 파일 정리.</p>
 <h4>설치 파일로 직접 업그레이드</h4>
-<p>새 버전 MSI 를 더블 클릭하면 이전 버전이 자동으로 제거되고 새 버전이 설치됩니다. 설치 구성 선택은 이전 선택이 유지되며,
+<p>새 버전 MSI 를 더블 클릭하면 이전 버전이 자동으로 제거되고 새 버전이 설치됩니다. 버전 번호가 같은 수정판 설치 파일도 같은 방식으로 기존 설치를 교체합니다(제어판에는 한 줄만 남습니다).
+설치 구성(Web 서버 포함 여부)은 이전 설치를 따르며 — 이전에 Web 을 뺐으면 계속 빠지고, 넣었으면 계속 들어갑니다 — 인앱 업데이트도 같습니다.
 설정 · 레시피 · 검사 이력 · 캘리브레이션은 그대로 보존됩니다.</p>
+<p>어느 빌드가 설치됐는지는 지원 패키지의 환경 정보 "ProductVersion: 1.48.1 (build n)" 줄로 구분합니다.</p>
 <h4>복구와 제거 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-2-3</span></h4>
 <p>설치된 PC 에서 같은 MSI 를 다시 실행하면 유지 관리 화면이 나옵니다. [변경] 은 쓰지 않고(꺼져 있음), [복구] 와 [제거] 중 하나를 고릅니다.</p>
 <table class="cols-2-7">
@@ -616,9 +621,10 @@ cd &lt;압축 푼 폴더&gt;\deploy
   <tr><td><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>MLOps 라인 토큰 (고급)</td><td><img src="../../gs/screenshots/v3/as_ctl/P2_advanced_08_TextBox_TextBox.png" alt=""></td>
       <td><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>MLOps 화면 배포 → 라인 PC 에서 이 라인용으로 발급한 토큰(<code>ln_…</code>)을 그대로 붙여 넣습니다. 토큰이 없으면 모델을 내려받지 못하고 사진도 올라가지 않습니다.</td><td>(빈 값)</td></tr>
   <tr><td>Web 서버 초기 구성 (이 PC)</td><td>—</td>
-      <td>설치 시 Web 서버를 포함한 PC 에만 카드가 나타납니다. admin 비밀번호를 넣고 구성 버튼을 누르면 서비스가 등록 · 시작되며, 멈춰 있으면 [서비스 시작 (관리자 권한)] 버튼이 나타납니다(<a class="ref" href="#install-web">§2.3</a>).</td><td>—</td></tr>
+      <td>설치 때 Web 서버를 포함한 PC 에서 쓰는 카드입니다(Web 서비스 등록은 설치 파일이 이미 해 둡니다). admin 비밀번호를 두 번 넣고 [초기 구성 실행 (관리자 권한)] 을 누르면, 관리자 승인 → 설정 작성(서명 키 자동 생성) → 서비스 자동 시작 전환 · 시작 → 응답 확인 순으로 진행됩니다.
+      구성한 뒤 서비스가 멈춰 있으면 [서비스 시작 (관리자 권한)] 버튼이, 서비스가 등록돼 있지 않으면 "서비스 미등록 — MSI 재설치(복구)가 필요합니다" 안내가 나옵니다(<a class="ref" href="#install-web">§2.3</a> · <a class="ref" href="#install-upgrade">§2.7</a>). Web 서버를 빼고 설치한 PC 에는 "Web 서버가 설치되어 있지 않습니다" 안내만 보입니다.</td><td>—</td></tr>
   <tr><td>Web SSO 활성</td><td><img src="../../gs/screenshots/v3/as_ctl/P2_default_22_CheckBox_Web_SSO_활성__AdminManager_인증을_BODAVMSWeb_.png" alt=""></td>
-      <td>체크하면 VMS 의 관리자(Admin/Engineer) 로그인을 Web 계정으로 위임해 계정을 한곳에서 관리합니다. Web 에 닿지 못할 때는 비상 계정 <code>local-admin</code> 만 제한 권한으로 진입합니다.</td><td>해제</td></tr>
+      <td>체크 상자 글은 "Web SSO 활성 — VMS 사용자 로그인을 BODA.VMS.Web 계정으로 확인" 입니다. 체크하면 VMS 사용자 로그인을 Web 계정으로 확인해 계정을 한곳에서 관리합니다. 등급은 Web 역할을 따릅니다 — Admin 은 Admin, Manager · User 는 Engineer. Web 에 닿지 못할 때는 비상 계정 <code>local-admin</code> 만 제한 권한으로 진입합니다.</td><td>해제</td></tr>
   <tr><td>VMS Admin 비밀번호</td><td><img src="../../gs/screenshots/v3/as_ctl/P2_default_27_PasswordBox_InitialAdminPasswordBox.png" alt=""></td>
       <td>VMS 안의 관리자 계정 <code>admin</code> 비밀번호입니다. 신규 설치 시 필수(8 자 이상, 12 자 이상 권장). 이미 계정이 있는 PC 에서는 비워 두면 바꾸지 않습니다.</td><td>—</td></tr>
   <tr><td>Local Fallback Admin 비밀번호</td><td><img src="../../gs/screenshots/v3/as_ctl/P2_default_30_PasswordBox_LocalAdminPasswordBox.png" alt=""></td>
@@ -639,7 +645,7 @@ cd &lt;압축 푼 폴더&gt;\deploy
   <tr><td>Camera Type</td><td><img src="../../gs/screenshots/v3/as_ctl/P3_camtypes_06_ComboBox_AreaScan2D.png" alt=""></td>
       <td>AreaScan2D · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>AreaScan3D · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>LineScan2D · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>LineScan3D. 선택에 따라 카드 아래에 라인 스캔 항목이 나타납니다.</td><td>AreaScan2D</td></tr>
   <tr><td>Manufacturer</td><td><img src="../../gs/screenshots/v3/as_ctl/P3_camtypes_08_ComboBox_HIK.png" alt=""></td>
-      <td>제조사. HIK · Basler · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>Mech_Mind(3D) · Matrox/Dalsa 는 실제 드라이버로 연결되며, 그 외는 시뮬레이션으로 동작합니다(<a class="ref" href="#install-prep">§2.1</a>). Matrox · Dalsa 를 고르면 Frame Grabber 항목이 나타납니다.</td><td>HIK</td></tr>
+      <td>제조사. 목록 맨 앞의 <strong>Virtual</strong> 은 카메라 없이 시험하는 시뮬레이션 카메라입니다(저장 이미지 · 영상 녹화용). 실제 카메라로 연결되는 것은 Basler 와 <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>Mech_Mind(3D)이며, 그 밖의 제조사(HIK · Matrox · Dalsa 포함)는 연결할 때 "SDK 미탑재" 경고와 함께 시뮬레이션으로 동작합니다(<a class="ref" href="#install-prep">§2.1</a>). Matrox · Dalsa 를 고르면 Frame Grabber 항목이 나타납니다.</td><td>HIK</td></tr>
   <tr><td><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>〈Line Scan〉 Trigger / Line Rate / Scan Length</td><td><img src="../../gs/screenshots/v3/as_ctl/P3_camtypes_24_ComboBox_Encoder.png" alt=""> <img src="../../gs/screenshots/v3/as_ctl/P3_camtypes_27_TextBox_10000.png" alt=""> <img src="../../gs/screenshots/v3/as_ctl/P3_camtypes_29_TextBox_4096.png" alt=""></td>
       <td><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>라인 스캔 카메라의 트리거 소스(Internal · Encoder) · 라인 레이트(Hz) · 스캔 길이(라인 수).</td><td>Internal / 10000 / 4096</td></tr>
   <tr><td>〈Frame Grabber〉 Board Type / Board# / Digitizer# / DCF</td><td><img src="../../gs/screenshots/v3/as_ctl/P3_camtypes_54_ComboBox_ComboBox.png" alt=""> <img src="../../gs/screenshots/v3/as_ctl/P3_camtypes_62_Button_unnamed.png" alt=""></td>
@@ -651,21 +657,18 @@ cd &lt;압축 푼 폴더&gt;\deploy
 
 <h3 id="appsetup-s4">3.5 4 단계 — <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC Communication (PLC 통신) <span class="video" title="이 절을 따라 하는 사용 영상">▶ 영상 V-3-9</span></h3>
 <figure><img src="../../gs/screenshots/v3/as/Window_P4_PLCCommunication.png" data-width="520" alt="4단계 PLC 통신">
-<figcaption>4 단계 — <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC Communication. 벤더 · 통신 방식 · 주소 · 폴링/하트비트 · 쓰기 모드</figcaption></figure>
+<figcaption>4 단계 — <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC Communication. 벤더 · IP 주소 · 포트 · 자동 재접속(Modbus TCP 면 Unit ID · Endian Mode)</figcaption></figure>
+<p><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 는 고른 제조사의 이더넷(TCP) 통신으로만 연결합니다. 화면에는 연결에 쓰는 항목만 있습니다.</p>
 <table class="cols-2-3-4-1">
   <tr><th>항목</th><th>컨트롤</th><th>설명</th><th>기본값</th></tr>
   <tr><td><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC Vendor</td><td><img src="../../gs/screenshots/v3/as_ctl/P4_ethernet_02_RadioButton_Mitsubishi.png" alt=""> <img src="../../gs/screenshots/v3/as_ctl/P4_ethernet_06_RadioButton_Modbus_TCP.png" alt=""> <img src="../../gs/screenshots/v3/as_ctl/P4_ethernet_07_RadioButton_None_No_PLC.png" alt=""></td>
-      <td>Mitsubishi(MC) · Siemens(S7) · LS Electric(XGT) · Omron(FINS) · Modbus TCP · None. <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 없이 IO 보드만 쓰면 None 으로 두고 6 단계에서 보드를 등록합니다(<a class="ref" href="#vms-admin">§4.11</a>).</td><td>None</td></tr>
-  <tr><td>Communication Type</td><td><img src="../../gs/screenshots/v3/as_ctl/P4_ethernet_22_ComboBox_Ethernet.png" alt=""></td><td>Ethernet 또는 Serial. Serial 이면 아래 IP · Port 대신 시리얼 항목이 나타납니다.</td><td>Ethernet</td></tr>
-  <tr><td>〈Ethernet〉 <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC IP Address / Port</td><td><img src="../../gs/screenshots/v3/as_ctl/P4_ethernet_25_TextBox_1921680100.png" alt=""> <img src="../../gs/screenshots/v3/as_ctl/P4_ethernet_27_TextBox_502.png" alt=""></td><td>PLC 의 IP 주소와 포트.</td><td>192.168.0.100 / 502</td></tr>
-  <tr><td>〈Modbus〉 Modbus Unit ID</td><td><img src="../../gs/screenshots/v3/as_ctl/P4_modbus_02_TextBox_255.png" alt=""></td><td>Modbus 슬레이브 ID(1~255).</td><td>255</td></tr>
-  <tr><td>〈Serial〉 Port / Baud / Data / Parity / Stop</td><td><img src="../../gs/screenshots/v3/as_ctl/P4_serial_03_TextBox_COM1.png" alt=""> <img src="../../gs/screenshots/v3/as_ctl/P4_serial_05_ComboBox_115200.png" alt=""></td><td>시리얼 포트 파라미터.</td><td>COM1 / 115200 / 8 / None / One</td></tr>
-  <tr><td>Polling Interval (ms)</td><td><img src="../../gs/screenshots/v3/as_ctl/P4_ethernet_10_TextBox_20.png" alt=""></td><td><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 신호를 읽는 주기입니다. 짧을수록 트리거 반응이 빠르지만 PLC 부하가 늘어납니다.</td><td>20</td></tr>
-  <tr><td>Use Heartbeat / 주소</td><td><img src="../../gs/screenshots/v3/as_ctl/P4_ethernet_11_CheckBox_Use_Heartbeat.png" alt=""></td><td>켜면 VMS 가 지정 주소(예: D100)에 카운터를 계속 써서 <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 가 VMS 생존을 감시할 수 있습니다.</td><td>해제</td></tr>
+      <td>Mitsubishi(MC) · Siemens(S7) · LS Electric(XGT) · Omron(FINS) · Modbus TCP · None. <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 없이 IO 보드만 쓰면 None 으로 두고 6 단계에서 보드를 등록합니다(<a class="ref" href="#appsetup-s6">§3.7</a>).</td><td>None</td></tr>
+  <tr><td><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC IP Address / Port</td><td><img src="../../gs/screenshots/v3/as_ctl/P4_ethernet_25_TextBox_1921680100.png" alt=""> <img src="../../gs/screenshots/v3/as_ctl/P4_ethernet_27_TextBox_502.png" alt=""></td><td>PLC 의 IP 주소와 포트.</td><td>192.168.0.100 / 502</td></tr>
+  <tr><td>〈Modbus TCP〉 Modbus Unit ID</td><td><img src="../../gs/screenshots/v3/as_ctl/P4_modbus_02_TextBox_255.png" alt=""></td><td>Modbus 슬레이브 ID(1~255).</td><td>255</td></tr>
   <tr><td>Auto Reconnect</td><td><img src="../../gs/screenshots/v3/as_ctl/P4_ethernet_13_CheckBox_Auto_Reconnect.png" alt=""></td><td>연결이 끊기면 자동으로 다시 접속합니다.</td><td>사용</td></tr>
-  <tr><td>Write Mode / Endian Mode</td><td><img src="../../gs/screenshots/v3/as_ctl/P4_ethernet_16_ComboBox_Handshake.png" alt=""> <img src="../../gs/screenshots/v3/as_ctl/P4_ethernet_19_ComboBox_LittleEndian.png" alt=""></td><td>결과 쓰기 방식(Handshake 등)과 워드 바이트 순서. <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 프로그램의 규약에 맞춥니다.</td><td>Handshake / LittleEndian</td></tr>
+  <tr><td>〈Modbus TCP〉 Endian Mode</td><td><img src="../../gs/screenshots/v3/as_ctl/P4_ethernet_19_ComboBox_LittleEndian.png" alt=""></td><td>32 비트 값을 워드 2 개로 나눠 보낼 때의 순서입니다. Modbus TCP 를 골랐을 때만 보이며 <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 쪽 설정과 같아야 값이 깨지지 않습니다.</td><td>LittleEndian</td></tr>
 </table>
-<p><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 주소를 어느 신호에 쓸지는 이 단계가 아니라 VisionSetup 의 시퀀스 편집기(<a class="ref" href="#vs-sequence">§5.10</a>)에서 노드마다 지정합니다.</p>
+<p><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 주소를 어느 신호에 쓸지는 이 단계가 아니라 VisionSetup 의 시퀀스 편집기(<a class="ref" href="#vs-sequence">§5.10</a>)에서 노드마다 지정합니다. 신호를 읽는 주기와 생존 신호(하트비트)도 시퀀스 쪽 신호 설정을 따릅니다.</p>
 
 <h3 id="appsetup-s5">3.6 5 단계 — <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>Robot Configuration (로봇) <span class="video" title="이 절을 따라 하는 사용 영상">▶ 영상 V-3-10</span></h3>
 <figure><img src="../../gs/screenshots/v3/as/FullPage_P5_RobotConfiguration.png" data-width="360" alt="5단계 로봇 구성">
@@ -675,7 +678,7 @@ cd &lt;압축 푼 폴더&gt;\deploy
   <tr><td>Enable <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>Robot Integration</td><td><img src="../../gs/screenshots/v3/as_ctl/P5_disabled_01_CheckBox_Enable_Robot_Integration.png" alt=""></td><td>멀티뷰 3D 스캔이나 얼라인 보정에 로봇을 쓸 때 켭니다. 끄면 아래 항목이 숨겨집니다.</td><td>해제</td></tr>
   <tr><td><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>Robot Vendor</td><td><img src="../../gs/screenshots/v3/as_ctl/P5_enabled_02_RadioButton_Universal_Robots_UR.png" alt=""> <img src="../../gs/screenshots/v3/as_ctl/P5_enabled_03_RadioButton_Doosan_Robotics.png" alt=""></td><td>UR · Doosan · Jaka · ABB · Fanuc. 선택하면 포트와 Euler 규약이 벤더 기본값으로 바뀝니다.</td><td>UR</td></tr>
   <tr><td><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>Robot IP Address / Port</td><td><img src="../../gs/screenshots/v3/as_ctl/P5_enabled_09_TextBox_1921680200.png" alt=""> <img src="../../gs/screenshots/v3/as_ctl/P5_enabled_11_TextBox_502.png" alt=""></td><td>로봇 컨트롤러 주소와 포트.</td><td>192.168.0.200 / 벤더 기본</td></tr>
-  <tr><td>Communication Protocol</td><td><img src="../../gs/screenshots/v3/as_ctl/P5_enabled_13_RadioButton_Vendor_Native.png" alt=""> <img src="../../gs/screenshots/v3/as_ctl/P5_enabled_14_RadioButton_Modbus-TCP.png" alt=""></td><td>Vendor Native · Modbus-TCP(Doosan) · Custom Socket(CSV).</td><td>Vendor Native</td></tr>
+  <tr><td>Communication Protocol</td><td><img src="../../gs/screenshots/v3/as_ctl/P5_enabled_13_RadioButton_Vendor_Native.png" alt=""> <img src="../../gs/screenshots/v3/as_ctl/P5_enabled_14_RadioButton_Modbus-TCP.png" alt=""></td><td>Vendor Native · Modbus-TCP(Doosan) · Custom Socket(CSV). 프로토콜을 바꾸면 포트가 그 프로토콜의 기본값(Modbus-TCP 502, Vendor Native · Custom Socket 은 벤더 기본)으로 바뀝니다 — 포트를 직접 바꿔 두었으면 그대로 둡니다.</td><td>Vendor Native</td></tr>
   <tr><td>〈Modbus-TCP〉 Unit ID / Pose Start Register</td><td><img src="../../gs/screenshots/v3/as_ctl/P5_enabled_18_TextBox_1.png" alt=""> <img src="../../gs/screenshots/v3/as_ctl/P5_enabled_20_TextBox_270.png" alt=""></td><td>Holding Register 로 포즈를 읽을 때의 슬레이브 ID 와 시작 주소(270 = Doosan 표준).</td><td>1 / 270</td></tr>
   <tr><td>Euler Convention</td><td><img src="../../gs/screenshots/v3/as_ctl/P5_enabled_23_ComboBox_Doosan_ZYX.png" alt=""></td><td>회전 표현 규약. 벤더 선택 시 자동 설정되며 필요하면 바꿉니다.</td><td>벤더 기본</td></tr>
 </table>
@@ -687,7 +690,7 @@ cd &lt;압축 푼 폴더&gt;\deploy
   <tr><th>항목</th><th>컨트롤</th><th>설명</th><th>기본값</th></tr>
   <tr><td>[+ Add] / [− Remove]</td><td><img src="../../gs/screenshots/v3/as_ctl/P6_withboard_02_Button__Add.png" alt=""> <img src="../../gs/screenshots/v3/as_ctl/P6_withboard_03_Button__Remove.png" alt=""></td><td>보드를 추가 / 선택한 보드를 제거합니다.</td><td>—</td></tr>
   <tr><td>Vendor</td><td><img src="../../gs/screenshots/v3/as_ctl/P6_withboard_06_ComboBox_AdLink.png" alt=""></td><td>AdLink · Advantech.</td><td>AdLink</td></tr>
-  <tr><td>Model</td><td><img src="../../gs/screenshots/v3/as_ctl/P6_withboard_09_TextBox_PCI-7432.png" alt=""></td><td>보드 모델명. ADLink PCI-7432/7433/7434/7396, Advantech PCI-1730/1750 계열.</td><td>PCI-7432</td></tr>
+  <tr><td>Model</td><td><img src="../../gs/screenshots/v3/as_ctl/P6_withboard_09_TextBox_PCI-7432.png" alt=""></td><td>보드 모델명. ADLink PCI-7432/7433/7434, Advantech PCI-1730/1750 계열. 그 밖의 ADLink 모델(예: PCI-7396)은 지원하지 않습니다(아래 결선 표).</td><td>PCI-7432</td></tr>
   <tr><td>Device ID</td><td><img src="../../gs/screenshots/v3/as_ctl/P6_withboard_11_TextBox_IoBoard_1.png" alt=""></td><td>시퀀스 편집기의 장치 목록에 나타나는 이름입니다. 노드에서 이 이름으로 보드를 고릅니다(<a class="ref" href="#vs-sequence">§5.10</a>). 트리거 입력 · 판정 출력 채널은 이 단계가 아니라 시퀀스 편집기에서 노드마다 지정합니다.</td><td>IoBoard_1</td></tr>
   <tr><td>Board ID</td><td><img src="../../gs/screenshots/v3/as_ctl/P6_withboard_13_TextBox_0.png" alt=""></td><td>같은 모델이 여러 장일 때 몇 번째 카드인지(0 부터).</td><td>0</td></tr>
   <tr><td>Input / Output 채널 수</td><td><img src="../../gs/screenshots/v3/as_ctl/P6_withboard_15_TextBox_16.png" alt=""> <img src="../../gs/screenshots/v3/as_ctl/P6_withboard_17_TextBox_16.png" alt=""></td><td>디지털 입력 · 출력 채널 수. 채널 번호는 0 부터 셉니다.</td><td>16 / 16</td></tr>
@@ -701,7 +704,7 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
 <table class="cols-2-7">
   <tr><th>보드</th><th>VMS 가 다루는 범위</th></tr>
   <tr><td>ADLink PCI-7432</td><td>절연 입력 32 · 절연 출력 32. 채널 0~31 이 포트 0, 32~63 이 포트 1. 실제 장비로 확인한 모델입니다(드라이버 PCI-Dask 64비트)</td></tr>
-  <tr><td>ADLink PCI-7433 · 7434</td><td>입력 64 · 출력 64 전용 모델. 코드는 지원하지만 실장비 확인 전입니다. 그 밖의 ADLink 모델 이름은 PCI-7432 로 취급합니다</td></tr>
+  <tr><td>ADLink PCI-7433 · 7434</td><td>입력 64 · 출력 64 전용 모델. 코드는 지원하지만 실장비 확인 전입니다. 그 밖의 ADLink 모델(PCI-7396 등)은 지원하지 않습니다 — PCI-7432 로 등록을 시도하며, 연결에 실패하면 System Log 에 "지원 모델이 아니어서 PCI-7432 로 등록을 시도했습니다" 가 함께 남습니다</td></tr>
   <tr><td>Advantech PCI-17xx</td><td>DAQNavi 드라이버(64비트)로 8비트 포트 단위 디지털 입출력. Board ID 는 Advantech Navigator 의 보드 번호(BID#n)와 같아야 합니다</td></tr>
 </table>
 <ul>
@@ -751,7 +754,7 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
   <li>바탕화면의 <strong>BODA VMS</strong> 바로가기를 실행합니다. 시작 화면(Splash)이 표시되는 동안 설정과 레시피를 읽고 카메라를 자동으로 연결합니다.</li>
   <li>설정 파일이 없으면 "초기 시스템 설정이 필요합니다", 설정 파일은 있지만 마법사를 마치지 않았으면 "시스템 설정이 끝나지 않았습니다" 안내와 함께 시스템 설정 마법사(3장)가 열리고 VMS 는 종료됩니다. 마법사를 저장한 뒤 다시 실행하세요.</li>
   <li>메인 화면이 뜹니다. 시스템 사용자 로그인 창은 시작 시 뜨지 않으며, <strong>사이드 패널(⚙)을 열거나 헤더의 사용자 칩을 누를 때</strong> 표시됩니다(<a class="ref" href="#vms-permissions">§4.12</a>). 로그인 창 위쪽에는 제품명 · 버전(예: BODA VMS v1.48.1)이 표시됩니다.</li>
-  <li>새 버전이 있으면 "업데이트 가능" 안내가 뜹니다(<a class="ref" href="#install-upgrade">§2.7</a>). 지금 검사를 해야 하면 닫고 나중에 진행해도 됩니다.</li>
+  <li>새 버전이 있으면 시작할 때 창은 뜨지 않고, 사이드 패널 Updates 섹션에 "새 버전" 배지가 붙고 System Log 에 <code>[Update]</code> 새 버전 감지 줄이 남습니다. 배지나 [Check for updates] 를 누를 때 "업데이트 가능" 창이 열립니다(<a class="ref" href="#install-upgrade">§2.7</a>). 지금 검사를 해야 하면 나중에 진행해도 됩니다.</li>
 </ol>
 
 <h3 id="vms-layout">4.2 화면 구성 <span class="video" title="이 절을 따라 하는 사용 영상">▶ 영상 V-4-2</span></h3>
@@ -759,15 +762,17 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
 <figcaption>VMS 메인 화면 (작업자 로그인 · 작업지시 선택 · 사이드 패널 펼침 상태) — ① 헤더 ② KPI 스트립 ③ 카메라 화면 ④ NG History ⑤ 사이드 패널(Settings) ⑥ System Log ⑦ 상태바</figcaption></figure>
 <table class="cols-2-7">
   <tr><th>영역</th><th>내용</th></tr>
-  <tr><td>① 헤더</td><td>왼쪽부터 로고 · 애플리케이션 이름, 운영 흐름 순서의 칩(작업자 → 작업지시 → 레시피 → 추적 정보 → 예측), 오른쪽에 [AUTO RUN] · 사용자 칩 · 관리 아이콘 · 창 조작 버튼. 4.3 절 참고</td></tr>
+  <tr><td>① 헤더</td><td>왼쪽부터 로고 · 애플리케이션 이름(다중 인스턴스로 실행했으면 뒤에 <code>[인스턴스 이름]</code>, <a class="ref" href="#mt-instance">§11.5</a>), 운영 흐름 순서의 칩(작업자 → 작업지시 → 레시피 → 추적 정보 → 예측), 오른쪽에 [AUTO RUN] · 사용자 칩 · 관리 아이콘 · 창 조작 버튼. 4.3 절 참고</td></tr>
   <tr><td>② KPI 스트립</td><td>TACT TIME · YIELD · TOTAL · OK · NG 카드와 통계 초기화 버튼. 4.4 절</td></tr>
-  <tr><td>③ 카메라 화면</td><td>카메라마다 타일 하나. 2D 이미지, 판정 배지(WAIT · OK · NG), Run Results 표, 설정(톱니바퀴) 창. 타일은 드래그로 옮기고 가장자리를 끌어 크기를 바꿀 수 있으며 헤더의 [Save Layout] 으로 배치를 저장합니다. 4.5 절</td></tr>
-  <tr><td>④ NG History</td><td>최근 불량 이미지 썸네일(카메라 이름 · 시각). 항목을 누르면 그 카메라 화면에 크게 표시됩니다</td></tr>
+  <tr><td>③ 카메라 화면</td><td>카메라마다 타일 하나. 2D 이미지, 판정 배지(WAIT · OK · NG), Run Results 표, 설정(톱니바퀴) 창. 타일은 드래그로 옮기고 가장자리를 끌어 크기를 바꿀 수 있으며 헤더의 [Save Layout] 으로 배치를 저장합니다. 사이드 패널을 열어 영역이 좁아지면 타일 전체가 보이도록 비율 그대로 줄여 보여 주며(저장한 배치는 그대로), 줄어든 동안에는 타일을 옮기거나 크기를 바꿀 수 없습니다 — 패널을 닫으면 원래 크기로 돌아옵니다. 4.5 절</td></tr>
+  <tr><td>④ NG History</td><td>AUTO RUN 에서 나온 최근 불량 이미지 썸네일(카메라 이름 · 시각). 항목을 누르면 그 사진을 찍은 카메라 화면에 크게 표시됩니다</td></tr>
   <tr><td>⑤ 사이드 패널 (Settings)</td><td>헤더 오른쪽 ⚙ 로 열고 닫습니다. 레시피 · 외부 도구 · 업데이트 · Web 파라미터 · 이미지 저장 · 최근 검사 · 통계 섹션. 4.6 절</td></tr>
-  <tr><td>⑥ System Log</td><td><code>[시각] [출처] 메시지</code> 형식의 실시간 로그. 카메라 · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC · IO 보드 · 시퀀스 · Web 연동 상태가 여기에 남습니다. 오른쪽 위 아이콘으로 비웁니다</td></tr>
+  <tr><td>⑥ System Log</td><td><code>[시각] [출처] 메시지</code> 형식의 실시간 로그. 카메라 · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC · IO 보드 · 시퀀스 · Web 연동 상태가 여기에 남습니다. 맨 아래를 보고 있으면 새 줄을 따라 내려가고, 위로 올려 읽는 동안에는 그 자리에 머뭅니다. 오른쪽 위 아이콘으로 비웁니다</td></tr>
   <tr><td>⑦ 상태바</td><td>시스템 상태 · CAM · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC · IO · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>MLOps · Web · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>ROBOT 연결 표시와 오른쪽 끝의 제품명 · 버전. 4.7 절</td></tr>
 </table>
-<p>창 폭이 1980px 보다 좁은 모니터(FHD 등)에서는 헤더가 <strong>컴팩트 모드</strong>로 바뀌어 사번 · 등급 뱃지 · 진행률 막대가 숨겨지고 레시피 · 작업지시 이름이 줄여 표시됩니다. 기능은 같습니다.</p>
+<p>창 폭이 1980px 보다 좁으면(가로 1920 의 FHD 모니터를 최대화한 경우 포함) 헤더가 <strong>컴팩트 모드</strong>로 바뀝니다.
+작업자 사번 · 등급 뱃지, 작업지시 진행률 막대, Ctx 칩의 WO 칸, 예측 칩의 "다음 1시간:" 글자가 숨고, 작업지시는 번호 · 제품을 줄여 보여 주되
+<strong>진행 수량(예: 3 / 6, 양품 3 / 6)은 그대로</strong> 표시합니다. 숨은 내용은 칩에 마우스를 올리면 툴팁으로 볼 수 있으며, 기능은 같습니다.</p>
 
 <h3 id="vms-header">4.3 헤더 — 운영 흐름</h3>
 <p>헤더의 칩은 실제 작업 순서대로 왼쪽에서 오른쪽으로 배치되어 있습니다: <strong>작업자 로그인 → 작업지시 선택 → 레시피 확인 → 검사 시작</strong>.</p>
@@ -775,11 +780,11 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
 
 <h4>Operator 칩 — 작업자 로그인 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-4-3</span></h4>
 <figure><img src="../../gs/screenshots/v3/vms_ctl/S1_header_00_hdr_operator_chip.png" data-width="200" alt="Operator 칩 로그인 전"><figcaption>Operator 칩 — 로그인 전 ([Login...] 버튼)</figcaption></figure>
-<figure><img src="../../gs/screenshots/v3/vms_ctl/S2_loggedin_00_hdr_operator_chip_in.png" data-width="300" alt="Operator 칩 로그인 후"><figcaption>Operator 칩 — 로그인 후 (이름 · 사번 · 등급 뱃지 · [Logout])</figcaption></figure>
+<figure><img src="../../gs/screenshots/v3/vms_ctl/S2_loggedin_00_hdr_operator_chip_in.png" data-width="300" alt="Operator 칩 로그인 후"><figcaption>Operator 칩 — 로그인 후 (이름 · 사번 · 등급 뱃지 · [Logout]). 컴팩트 헤더에서는 이름만 보입니다</figcaption></figure>
 <ol>
   <li>[Login...] 을 누르면 <strong>작업자 로그인</strong> 창이 열립니다. 사번과 PIN 을 넣고 [Login] (또는 Enter) 을 누릅니다.</li>
   <li>입력값은 Web 서버의 작업자 명단과 대조됩니다. 성공하면 칩이 "이름 (사번)" 으로 바뀌고, 등급이 Lead(파랑) · Supervisor(빨강)면 뱃지가 붙습니다. Operator 등급은 뱃지가 없습니다.</li>
-  <li>실패 메시지가 "사번/PIN 오류" 가 아니라 "서버가 이 PC 의 키를 거부" 라면 설정 마법사의 Web Client API Key 를 확인합니다(<a class="ref" href="#appsetup-s2">§3.3</a>).</li>
+  <li>실패하면 창이 그대로 남고 PIN 칸이 비워지며, 창 안에 실패 사유가 표시됩니다. 사유가 "사번/PIN 오류" 가 아니라 "서버가 이 PC 의 키를 거부" 라면 설정 마법사의 Web Client API Key 를 확인합니다(<a class="ref" href="#appsetup-s2">§3.3</a>).</li>
   <li>교대 시에는 [Logout] 후 다음 작업자가 로그인합니다. VMS 를 정상 종료하면 서버의 작업자 세션도 함께 종료됩니다.</li>
 </ol>
 
@@ -788,18 +793,19 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
 <figcaption>Work Orders 창 — 상태 필터 · [Refresh] · 목록(Order No · Product · Recipe · Progress · Status · Planned Start) · [Cancel] / [Select]</figcaption></figure>
 <ul>
   <li>작업자 로그인 후 활성화됩니다. 누르면 Web 서버에서 <strong>이 라인에 배정된</strong> 작업지시 목록을 가져옵니다.</li>
-  <li>상태 필터: 활성(Planned + InProgress, 기본) / 전체 / Planned / InProgress / Completed.</li>
+  <li>상태 필터: 활성(Planned + InProgress, 기본) / 전체 / Planned / InProgress / Completed. 위쪽 건수는 지금 필터로 보이는 수이며, 전체와 다르면 "2건 (전체 3건)" 처럼 함께 표시됩니다.</li>
+  <li>Planned Start 는 이 PC 의 현지 시각으로 표시됩니다.</li>
   <li>행을 더블 클릭하거나 선택 후 [Select] 를 누릅니다. 선택하면 그 작업지시의 레시피가 자동으로 불러와지고, 열려 있는 Lot 이 하나면 Ctx 의 Lot 도 자동으로 채워집니다.</li>
 </ul>
 
 <h4>WO 칩 — 진행률 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-4-5</span></h4>
-<figure><img src="../../gs/screenshots/v3/vms_ctl/S2_loggedin_00_hdr_wo_chip.png" data-width="340" alt="WO 칩"><figcaption>WO 칩 — 작업지시 번호 · 제품 · 진행(생산/계획) + 진행률 막대</figcaption></figure>
+<figure><img src="../../gs/screenshots/v3/vms_ctl/S2_loggedin_00_hdr_wo_chip.png" data-width="340" alt="WO 칩"><figcaption>WO 칩 — 작업지시 번호 · 제품 · 진행(생산/계획) + 진행률 막대. 컴팩트 헤더에서는 번호 · 제품을 줄이고 진행 수량만 옆에 표시합니다(막대 없음)</figcaption></figure>
 <ul>
   <li>검사 1 사이클이 끝날 때마다 진행 수량이 올라갑니다. 한 제품을 여러 스텝(카메라)으로 검사해도 <strong>1 사이클 = 제품 1 개</strong>로 집계됩니다.</li>
   <li>완료 기준이 "양품" 인 작업지시는 "양품 80 / 100" 처럼 합격 수량으로 표시됩니다(<a class="ref" href="#web-workorders">§8.7</a>).</li>
   <li>여러 레시피가 섞인 작업지시는 칩에 마우스를 올리면 레시피별 진행이 줄 단위로 보입니다.</li>
-  <li>계획 수량에 도달하면 검사가 자동으로 멈추고 <strong>작업지시 완료</strong> 창이 뜹니다 — 완료된 번호, 계획 · 검사 · Pass · NG 카드, 합격률이 표시되고 알림음이 울립니다.
-      [다음 작업지시 선택] (Enter) 을 누르면 바로 Work Orders 창이 열립니다. Web 에서 관리자가 수동으로 완료해도 같은 창이 뜨며 검사가 즉시 멈춥니다.</li>
+  <li>계획 수량에 도달하면 검사가 자동으로 멈추고 <strong>작업지시 완료</strong> 창("계획 수량에 도달하여 자동 완료되었습니다")이 뜹니다 — 완료된 번호, 계획 · 검사 · Pass · NG 카드, 합격률이 표시되고 알림음이 울립니다.
+      [다음 작업지시 선택] (Enter) 을 누르면 바로 Work Orders 창이 열립니다. 계획 수량 전에 Web 에서 관리자가 완료 처리하면 같은 창이 "Web 에서 작업지시가 완료 처리되었습니다 (계획 수량 전)" 문구로 뜨며 검사가 즉시 멈춥니다.</li>
   <li>시퀀스에 <strong>WO Complete</strong> 분기를 두면 계획 수량에 도달해 자동으로 멈출 때 설비에 완료 신호가 나갑니다(<a class="ref" href="#vs-sequence">§5.10</a>).</li>
 </ul>
 
@@ -816,16 +822,18 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
   <tr><td>WO</td><td>작업지시 선택 시 자동</td><td>직접 수정 가능 (컴팩트 헤더에서는 숨김)</td></tr>
   <tr><td>Lot</td><td>열린 Lot 이 1 개면 자동. 여러 개면 <strong>작업자가 콤보에서 선택</strong></td><td>Web 에서 발행 · 마감하면 수 초 안에 목록이 따라옵니다. 고르지 않으면 검사가 어느 Lot 에도 귀속되지 않습니다(<a class="ref" href="#web-workorders">§8.7</a>)</td></tr>
   <tr><td>S/N</td><td>바코드 스캐너로 입력</td><td>제품 시리얼 — 검사 1 회당 1 개. 비어 있어도 됩니다</td></tr>
-  <tr><td>Op ID</td><td>작업자 로그인 시 자동</td><td>검사 결과에 작업자로 기록</td></tr>
 </table>
-<p>[✕] 를 누르면 필드가 모두 지워집니다. 네 값은 검사 결과와 함께 서버에 저장되어 나중에 "누가 · 어떤 작업지시 · 어떤 묶음으로" 검사했는지 역추적하는 근거가 됩니다.</p>
+<p>작업자는 칩의 칸이 아니라 Operator 로그인으로 정해지며, 검사 결과에 작업자로 함께 기록됩니다.</p>
+<p>[✕] 를 누르면 <strong>Lot 선택과 S/N 만</strong> 비워집니다. 고른 작업지시와 작업자는 그대로이므로 그 뒤 검사도 작업지시 수량에 집계됩니다. 작업지시를 바꾸거나 해제하려면 [Work Orders] 에서 다시 고릅니다.
+이 값들은 검사 결과와 함께 서버에 저장되어 나중에 "누가 · 어떤 작업지시 · 어떤 묶음으로" 검사했는지 역추적하는 근거가 됩니다.</p>
 
 <h4>예측 칩 — "다음 1시간: …" <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-4-8</span></h4>
-<p>Web 서버의 예측 모델이 계산한 다음 1 시간 예상 불량률입니다. 5% 미만 초록, 10% 이상 빨강으로 표시됩니다. 모델이 등록되지 않은 현장은 "모델 미등록" 으로 표시되며 고장이 아닙니다(<a class="ref" href="#web-forecast">§8.20</a>).</p>
+<p>Web 서버의 예측 모델이 계산한 예상 불량률입니다. 기준은 <strong>마지막으로 검사가 있었던 시간의 다음 1 시간</strong>이며, 칩에 마우스를 올리면 예측 대상 시간과 마지막 집계 시간의 검사 건수가 보입니다. 검사가 한동안 없었던 라인은 예측 대상 시간이 이미 지났을 수 있고, 그때는 툴팁에 함께 알려 줍니다.
+색은 5% 미만 초록, 5~10% 주황, 10% 이상 빨강입니다. 모델이 등록되지 않은 현장은 "모델 미등록" 으로 표시되며 고장이 아닙니다(<a class="ref" href="#web-forecast">§8.20</a>).</p>
 
 <h4>[AUTO RUN] / [STOP] <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-4-9</span></h4>
 <figure><img src="../../gs/screenshots/v3/vms_ctl/S1_header_00_hdr_autorun_btn.png" data-width="150" alt="AUTO RUN 버튼"><figcaption>[AUTO RUN] — 운영 흐름의 단일 실행 버튼. 실행 중에는 같은 자리가 빨간 [STOP] 이 됩니다</figcaption></figure>
-<p>다음 조건을 모두 만족해야 켜집니다. 버튼이 꺼져 있으면 마우스를 올려 툴팁을 확인하세요.</p>
+<p>다음 조건을 모두 만족해야 켜집니다. 버튼에 마우스를 올리면 이 PC 의 설정(단독 모드 · 생산 관리 필수 항목)에 맞는 조건이 툴팁으로 표시됩니다.</p>
 <ol>
   <li>카메라가 1 대 이상 연결되어 있음 (상태바 CAM 이 0/n 이 아님).</li>
   <li>시스템 사용자로 로그인했다면 그 계정에 검사 시작/정지 권한이 있음 (로그인하지 않은 상태는 허용).</li>
@@ -846,12 +854,12 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
 </table>
 
 <h3 id="vms-kpi">4.4 KPI 스트립 <span class="video" title="이 절을 따라 하는 사용 영상">▶ 영상 V-4-10</span></h3>
-<figure><img src="../../gs/screenshots/v3/vms/inspect_kpi.jpg" data-width="620" alt="KPI 스트립"><figcaption>KPI 스트립 — 수동 검사 7 건(합격 4 · 불량 3)을 마친 상태: YIELD 57.1%, TOTAL 7 · OK 4 · NG 3. 수동 검사라 TACT TIME 은 0.00 이고 PROC 에 마지막 검사 처리 시간이 표시됩니다</figcaption></figure>
+<figure><img src="../../gs/screenshots/v3/vms/inspect_kpi.jpg" data-width="620" alt="KPI 스트립"><figcaption>KPI 스트립 — TACT TIME(아래 PROC) · YIELD · TOTAL · OK · NG 카드와 ↻ 버튼</figcaption></figure>
 <table class="cols-2-7">
   <tr><th>카드</th><th>의미</th></tr>
-  <tr><td>TACT TIME</td><td>AUTO RUN 중 "한 검사가 끝나고 다음 검사가 시작되기까지의 간격"(초)입니다. 수동 검사에서는 갱신되지 않습니다. 아래 <strong>PROC n ms</strong> 는 마지막 검사 1 건의 순수 처리 시간입니다.</td></tr>
+  <tr><td>TACT TIME</td><td>AUTO RUN 중 "한 검사가 끝나고 다음 검사가 시작되기까지의 간격"(초)입니다. 수동 검사에서는 갱신되지 않습니다. 아래 <strong>PROC n ms</strong> 는 마지막 검사 1 건의 순수 처리 시간이며, 수동 [Inspect] 도 이 값만 갱신합니다.</td></tr>
   <tr><td>YIELD</td><td>세션 합격률(%)</td></tr>
-  <tr><td>TOTAL / OK / NG</td><td>세션 누적 검사 · 합격 · 불량 수</td></tr>
+  <tr><td>TOTAL / OK / NG</td><td>세션 누적 검사 · 합격 · 불량 수. <strong>AUTO RUN 검사만</strong> 셉니다 — 카메라 조작 상자의 수동 [Inspect] 는 들어가지 않습니다(<a class="ref" href="#vms-camera">§4.5</a>)</td></tr>
   <tr><td>↻ (Reset Statistics)</td><td>KPI 와 세션 통계를 0 으로 되돌립니다. 서버나 로컬 이력에 저장된 검사 기록은 지워지지 않습니다.</td></tr>
 </table>
 
@@ -860,17 +868,18 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
 본문은 2D 이미지이며 아래에 Run Results(도구별 Pass/Fail · 결과값 · 처리 ms) 표와 IP · Count 가 표시됩니다.
 검사 이미지 위의 판정 글자 · 테두리와 Run Results 결과 값 표시 방식은 VisionSetup 과 같습니다(<a class="ref" href="#vs-run">§5.6</a>).</p>
 <p>톱니바퀴를 누르면 타일 오른쪽에 <strong>카메라 조작 상자</strong>가 펼쳐집니다.</p>
-<figure><img src="../../gs/screenshots/v3/vms/inspect_camera_box.jpg" data-width="620" alt="카메라 화면과 조작 상자"><figcaption>카메라 화면과 조작 상자 — [Open] 으로 연 이미지를 [Inspect] 로 검사한 결과: 타일 오른쪽 위 판정 배지(NG), 이미지 왼쪽 위에 판정 도구 2 개의 배지가 실행 순서대로 쌓인 모습(구멍 간격 NG · 블록 각도 OK), 이미지 위 도구별 결과 그림(엣지 · 원 · 직선), 아래 Run Results 표, 오른쪽 NG History 썸네일</figcaption></figure>
+<figure><img src="../../gs/screenshots/v3/vms/inspect_camera_box.jpg" data-width="620" alt="카메라 화면과 조작 상자"><figcaption>카메라 화면과 조작 상자 — [Open] 으로 연 이미지를 [Inspect] 로 검사한 결과: 타일 오른쪽 위 판정 배지(NG), 이미지 왼쪽 위에 판정 도구 2 개의 배지가 실행 순서대로 쌓인 모습(구멍 간격 NG · 블록 각도 OK), 이미지 위 도구별 결과 그림(엣지 · 원 · 직선), 아래 Run Results 표(P/F 칸 Pass · Fail)</figcaption></figure>
 <table class="cols-2-7">
   <tr><th>컨트롤</th><th>설명</th></tr>
   <tr><td>Step 콤보</td><td>이 카메라가 쓰는 레시피 스텝을 고릅니다. 노출 · 게인은 스텝 단위로 저장됩니다.</td></tr>
   <tr><td>카메라 설정 유지 (체크박스)</td><td>기본 켬. 켜져 있으면 카메라에 저장된 노출/게인을 그대로 씁니다(제조사 프로그램에서 튜닝한 값 보존). 끄면 아래 값을 촬영 전에 카메라에 적용합니다.</td></tr>
   <tr><td>Exposure (ms) / Gain (dB)</td><td>노출 시간과 게인을 숫자로 입력합니다. "카메라 설정 유지"를 끄고 스텝을 고른 상태에서만 입력할 수 있습니다.</td></tr>
+  <tr><td colspan="2">카메라 설정 유지 · Exposure · Gain · [Save Parameter] 는 시스템 사용자 <strong>Engineer · Admin</strong> 으로 로그인했을 때만 바꿀 수 있습니다(<a class="ref" href="#vms-permissions">§4.12</a> CameraSettings). 로그인하지 않았거나 Operator 면 잠겨 있습니다.</td></tr>
   <tr><td>[Grab]</td><td>사진을 한 장 촬영합니다. 카메라가 연결되어 있지 않으면 자동으로 연결합니다. 라이브 중에는 누를 수 없습니다.</td></tr>
   <tr><td>[Live] / [Stop]</td><td>모든 활성 카메라의 실시간 영상을 켜고 끕니다. AUTO RUN 을 시작하면 자동으로 꺼집니다.</td></tr>
   <tr><td>[Open]</td><td>이미지 파일을 열어 카메라 대신 표시합니다(카메라 없는 시험용).</td></tr>
-  <tr><td>[Inspect]</td><td>현재 이미지로 검사를 1 회 실행합니다.</td></tr>
-  <tr><td>[Save Parameter]</td><td>입력한 노출/게인을 스텝에 저장합니다. 완료/실패 메시지가 표시되며, 카메라가 등록되지 않았으면 설정 마법사를 먼저 실행하라는 안내가 뜹니다.</td></tr>
+  <tr><td>[Inspect]</td><td>현재 이미지로 검사를 1 회 실행합니다. 레시피 · 조명 확인용이라 판정 배지 · Run Results 만 바뀌고, 생산 집계(KPI · NG History · Recent Inspections · 검사 이력 · 판정 이미지 저장 · 서버 전송)에는 들어가지 않습니다.</td></tr>
+  <tr><td>[Save Parameter]</td><td>입력한 노출/게인을 스텝에 저장합니다. 조작 상자 아래 결과 줄에 "Recipe step saved: 스텝 이름"(레시피 스텝을 고른 경우) 또는 "Camera settings saved" 가 표시되고, 실패하면 사유가 표시됩니다. 카메라가 시스템 설정에 등록되지 않았으면 "camera not found in system config — run AppSetup" 이 표시되므로 설정 마법사를 먼저 실행합니다.</td></tr>
   <tr><td>[Save 3D]</td><td>촬영한 3D 데이터를 <code>.vpc</code> 파일로 저장합니다. VisionSetup 에서 열어 레시피를 만들 수 있습니다.</td></tr>
   <tr><td>[Close]</td><td>조작 상자를 닫습니다.</td></tr>
 </table>
@@ -885,9 +894,10 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
   <li>사이드 패널 Recipe 섹션에서 레시피를 [Load] 합니다.</li>
   <li>카메라 타일의 톱니바퀴로 조작 상자를 열고 Step 콤보에서 검사할 스텝을 고릅니다.</li>
   <li>[Open] 으로 이미지 파일(bmp · jpg · png · tif)을 엽니다.</li>
-  <li>[Inspect] 를 누르면 그 이미지로 검사가 1 회 실행되어 판정 배지 · Run Results · KPI 스트립이 갱신되고, NG 면 NG History 에 썸네일이 추가됩니다.</li>
+  <li>[Inspect] 를 누르면 그 이미지로 검사가 1 회 실행되어 판정 배지와 Run Results 가 갱신됩니다. KPI 스트립은 처리 시간(PROC)만 바뀝니다.</li>
 </ol>
 <p>카메라로 찍을 때는 [Open] 대신 [Grab] 으로 한 장 촬영한 뒤 [Inspect] 합니다.</p>
+<p>수동 검사는 레시피를 확인하는 용도라 <strong>생산 실적에 넣지 않습니다</strong> — KPI 수량 · NG History · Recent Inspections · 검사 이력(<a class="ref" href="#vms-history">§4.10</a>)에 쌓이지 않고, 판정 이미지 저장과 Web · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>MLOps 전송도 하지 않습니다. System Log 에는 "Manual Inspection OK/NG … (집계 제외)" 로 남습니다.</p>
 
 <h3 id="vms-sidepanel">4.6 사이드 패널 (Settings)</h3>
 <figure><img src="../../gs/screenshots/v3/vms_ctl/S3_full_sidepanel.png" data-width="620" alt="사이드 패널 펼침"><figcaption>사이드 패널(Settings)을 펼친 상태</figcaption></figure>
@@ -922,8 +932,12 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
 
 <h4>Web Parameters <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-4-18</span></h4>
 <figure><img src="../../gs/screenshots/v3/vms_ctl/S3_sidepanel_00_sec_web_parameters.png" data-width="290" alt="Web Parameters 섹션"><figcaption>Web Parameters — [Sync Parameters]</figcaption></figure>
-<figure><img src="../../gs/screenshots/v3/vms/dlg_SyncParameters.png" data-width="480" alt="Inspection Parameters 창"><figcaption>Inspection Parameters 창 — 레시피 콤보 · [Sync] · 코드 / 값 / 설명 / 분류 / 단위</figcaption></figure>
+<figure><img src="../../gs/screenshots/v3/vms/dlg_SyncParameters.png" data-width="480" alt="Inspection Parameters 창"><figcaption>Inspection Parameters 창 — 레시피 콤보 · [Sync] · 코드 / 값 / 설명 / 단위</figcaption></figure>
 <p>Web 의 레시피 파라미터(검사 기준값)를 지금 즉시 가져와 표로 보여 줍니다. 평소에는 60 초마다 자동 동기화되므로 기다리지 않고 바로 반영하고 싶을 때만 씁니다. 단독 모드에서는 "Parameter Sync Service is not available" 안내가 뜹니다.</p>
+<ul>
+  <li>콤보에서 지금 운전에 연결된 레시피를 고르면 그 값을 새로 받아 반영합니다. <strong>다른 레시피를 고르면 값을 보기만</strong> 하며(아래 줄에 "보기 전용"), 검사에 쓰는 기준값과 결과를 올릴 레시피는 바뀌지 않습니다. 레시피를 불러오지 않은 상태에서 창을 열어도 마찬가지입니다.</li>
+  <li>분류(Category) 열은 서버가 분류 값을 보낼 때만 나타납니다.</li>
+</ul>
 
 <h4>Image Saving (Admin 전용) <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-4-19</span></h4>
 <figure><img src="../../gs/screenshots/v3/vms_ctl/S3_sidepanel_00_sec_image_saving.png" data-width="290" alt="Image Saving 섹션"><figcaption>Image Saving — [Image Save Settings]</figcaption></figure>
@@ -931,7 +945,7 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
 <p>검사 판정 이미지의 저장과 전송을 설정합니다. 설정은 [Save] 즉시 다음 검사부터 적용됩니다(재시작 불필요).</p>
 <table class="cols-2-7">
   <tr><th>카드</th><th>설정 항목</th></tr>
-  <tr><td>저장</td><td>양품(OK) / 불량(NG) 이미지 저장 체크, 저장 경로, 보존 기간(일, 0 = 무제한). 경로 아래에 <code>{날짜}\OK</code> · <code>{날짜}\NG</code> 폴더가 자동으로 만들어지고 오래된 폴더는 시작 시 정리됩니다. <strong>저장 경로가 비어 있으면 저장되지 않습니다.</strong></td></tr>
+  <tr><td>저장</td><td>양품(OK) / 불량(NG) 이미지 저장 체크, 저장 경로, 보존 기간(일, 0 = 무제한). 경로 아래에 <code>{날짜}\OK</code> · <code>{날짜}\NG</code> 폴더가 자동으로 만들어지고, 보존 기간이 지난 날짜 폴더는 VMS 시작 2 분 뒤 한 번과 켜 둔 동안 하루 한 번 지워집니다(지운 폴더는 감사 로그 Configuration 분류에 기록). <strong>저장 경로가 비어 있으면 저장되지 않습니다.</strong></td></tr>
   <tr><td>포맷 / 품질</td><td>파일 포맷(PNG · JPEG · BMP · TIFF)과 JPEG 품질(1~100).</td></tr>
   <tr><td>Web 연동 (생산 이력)</td><td>전달 모드는 <strong>Auto</strong>(권장). OK / NG 이미지 Web 전송 체크(로컬 저장과 별개), 전송 화질(썸네일 권장 · Full), 썸네일 장변(px). Web 생산 이력의 상세 창에서 사진을 보려면 여기서 NG 전송을 켜야 합니다. SharedPath 모드는 전송하지 않습니다.</td></tr>
   <tr><td><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>MLOps 학습 데이터 수집</td><td><strong>NG 이미지 MLOps 전송</strong> 체크와 <strong>양품 샘플 비율</strong>(N 장에 1 장, 기본 200, 0 = 양품 안 보냄). 켜면 NG 사진이 결과 그래픽 없는 원본으로 MLOps 수집 사진 화면에 쌓입니다(9장). 카드 아래 안내가 빨간색이면 설정은 있는데 보안 정책 등으로 막힌 상태이며 사유가 함께 표시됩니다.</td></tr>
@@ -940,7 +954,7 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
 
 <h4>Recent Inspections <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-4-20</span></h4>
 <figure><img src="../../gs/screenshots/v3/vms_ctl/S3_sidepanel_00_sec_recent.png" data-width="290" alt="Recent Inspections 섹션"><figcaption>Recent Inspections — Total / Pass / NG · Pass rate · [전체 이력] · [Clear] · 최근 목록</figcaption></figure>
-<p>최근 검사 결과를 VMS 안에 최대 200 건까지 보관해 보여 줍니다(재시작 시 비워짐). 시각 · OK/NG · 시리얼 · 작업지시 · 레시피 · NG 코드(또는 실패한 도구 이름)가 표시됩니다.
+<p>AUTO RUN 검사의 최근 결과를 VMS 안에 최대 200 건까지 보관해 보여 줍니다(재시작 시 비워짐, 수동 [Inspect] 는 들어가지 않음). 시각 · OK/NG · 시리얼 · 작업지시 · 레시피 · NG 코드(또는 실패한 도구 이름)가 표시됩니다.
 <strong>[전체 이력]</strong> 은 이 PC 에 영구 저장된 검사 이력 조회 창(<a class="ref" href="#vms-history">§4.10</a>)을 열고, [Clear] 는 화면 목록만 비웁니다.</p>
 
 <h4>Statistics</h4>
@@ -956,7 +970,7 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
   <tr><td><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>MLOps 비활성</td><td>MLOps 주소 · 토큰을 설정했는데 시작 시 연결 준비가 실패한 경우에만 빨간 칩이 나타납니다. 툴팁에 사유(대표적으로 Production 모드가 http 주소를 거부)가 표시되며, 이 상태에서는 NG 사진 수집과 모델 내려받기가 동작하지 않습니다</td></tr>
   <tr><td>Web</td><td>Web Connected(초록) · Web Disconnected(빨강) · <strong>단독 모드 (Web 미사용)</strong>(회색 — 고장 아님) · <strong>Web 차단 (보안 정책 — https 필요)</strong>(빨강 — Production 모드에서 원격 http 주소를 쓴 경우, 칩에 마우스를 올리면 사유가 보입니다)</td></tr>
   <tr><td>제품명 · 버전</td><td>상태바 오른쪽 끝에 설치된 제품명과 버전(예: BODA VMS v1.48.1)이 표시됩니다. 지원 요청 시 이 표기를 알려 주세요</td></tr>
-  <tr><td><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>ROBOT</td><td>표시 자리(현재 N/A 고정)</td></tr>
+  <tr><td><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>ROBOT</td><td>늘 "ROBOT N/A" 로 보입니다. 검사 운전 화면은 로봇에 직접 연결하지 않기 때문이며 고장이 아닙니다 — 로봇 연결과 핸드아이 보정은 Vision Tool Setup 에서 합니다(칩 툴팁과 같음)</td></tr>
 </table>
 <figure><img src="../../gs/screenshots/v3/vms_ctl/S4_mlops_issue_00_status_mlops_issue_chip.png" data-width="150" alt="MLOps 비활성 칩"><figcaption>상태바의 "<span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>MLOps 비활성" 칩</figcaption></figure>
 <p><strong>System Log</strong> 는 문제의 원인을 가장 먼저 알려 주는 곳입니다. 출처 태그별로 뜻은 다음과 같습니다.</p>
@@ -997,13 +1011,14 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
 
 <h3 id="vms-history">4.10 생산 이력 조회 창 — [전체 이력] <span class="video" title="이 절을 따라 하는 사용 영상">▶ 영상 V-4-25 · V-4-26 · V-4-27</span></h3>
 <figure><img src="../../gs/screenshots/v3/vms/dlg_InspectionHistory.png" data-width="620" alt="생산 이력 조회 창"><figcaption>생산 이력 조회 창 — 필터 바 · 이력 목록 탭 · 상세(도구별 결과 + 검사 사진) · 하단 페이지 이동</figcaption></figure>
-<p>검사 결과는 사이클 또는 수동 검사 1 건마다 이 PC 의 검사 이력 파일(<code>%LocalAppData%\BODA VISION AI\inspection_history.db</code>)에 저장됩니다.
-단독 모드의 영구 이력이며, Web 연동 현장에서는 오프라인 백업 역할을 합니다. 사이드 패널 Recent Inspections 의 [전체 이력] 로 엽니다.</p>
+<p>검사 결과는 AUTO RUN 사이클마다 이 PC 의 검사 이력 파일(<code>%LocalAppData%\BODA VISION AI\inspection_history.db</code>)에 저장됩니다.
+단독 모드의 영구 이력이며, Web 연동 현장에서는 오프라인 백업 역할을 합니다. 카메라 조작 상자의 수동 [Inspect] 결과는 저장하지 않습니다(<a class="ref" href="#vms-camera">§4.5</a>). 사이드 패널 Recent Inspections 의 [전체 이력] 로 엽니다.</p>
 <ol>
-  <li>필터를 고르고 [조회] 를 누릅니다 — From / To(기본 최근 7 일), 판정(전체 · PASS · NG), 레시피, NG 코드(실패 도구 이름 포함 검색). [필터 초기화] 로 되돌립니다.</li>
+  <li>필터를 고르고 [조회] 를 누릅니다 — From / To(날짜는 yyyy-MM-dd, 기본 최근 7 일), 판정(전체 · PASS · NG), 레시피, NG 코드(실패 도구 이름 포함 검색). [필터 초기화] 로 되돌립니다.</li>
   <li><strong>이력 목록</strong> 탭 — 검사 시각 · 판정 · 레시피 · NG 코드/도구 · 구분(사이클/수동) · ms · 추적(시리얼 · 작업지시 · Lot) · IMG. 행을 누르면 오른쪽에 <strong>도구별 결과 표</strong>와 <strong>저장된 검사 사진</strong>이 표시되고 [폴더 열기] 로 파일 위치를 엽니다.</li>
   <li><strong>일별 집계</strong> 탭 — 기간 전체의 총 검사 · PASS · NG · 수율 카드와 날짜별 표.</li>
   <li><strong>NG 파레토</strong> 탭 — NG 원인(NG 코드 또는 실패 도구)별 건수 · 비율 · 누적 비율.</li>
+  <li>일별 집계 · NG 파레토 두 탭은 <strong>기간(From · To)으로만</strong> 계산합니다. 판정 · 레시피 · NG 코드 필터는 이력 목록 탭에만 적용됩니다(탭 위 안내 줄과 같음).</li>
   <li>200 건이 넘으면 하단 [◀ 이전] / [다음 ▶] 로 넘기고, [CSV 내보내기] 는 현재 필터의 <strong>전체 결과</strong>를 Excel 호환 CSV 로 저장합니다.</li>
 </ol>
 <figure><img src="../../gs/screenshots/v3/vms/dlg_InspectionHistory_Summary.png" data-width="560" alt="일별 집계 탭"><figcaption>일별 집계 탭</figcaption></figure>
@@ -1022,24 +1037,35 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
 <ul>
   <li>Users 목록 — Username · Display Name · Grade · Last Login. 행을 선택하면 오른쪽 편집 패널에 값이 채워집니다.</li>
   <li>Add New User — Username · Display Name · Password · Grade(Operator / Engineer / Admin) → [Add User].</li>
-  <li>Edit Selected User — Display Name · Grade 수정 → [Save Changes]. New Password → [Change Password]. [Delete User] 로 삭제.</li>
+  <li>Edit Selected User — Display Name · Grade 수정 → [Save Changes]. 저장한 뒤에도 같은 사용자가 선택된 채로 남아 이어서 New Password → [Change Password], [Delete User] 를 할 수 있습니다.</li>
+  <li>사용자 추가 · 정보/등급 변경 · 비밀번호 변경 · 삭제는 감사 로그의 UserManagement 분류에 남습니다(비밀번호 값은 남기지 않음).</li>
 </ul>
 
 <h4>Audit Log Viewer — 감사 로그 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-4-29</span></h4>
 <figure><img src="../../gs/screenshots/v3/vms/dlg_AuditLog.png" data-width="600" alt="Audit Log Viewer"><figcaption>Audit Log Viewer — From/To · Category · Outcome · Search · [조회] [필터 초기화] [CSV 내보내기]</figcaption></figure>
-<p>로그인 · 권한 거부 · 설정 변경 · 백업 등 관리 행위가 <code>%LocalAppData%\BODA VISION AI\audit\YYYY-MM-DD.jsonl</code> 에 기록됩니다. Outcome 은 Success(초록) · Failure(빨강) · Denied(주황)로 구분됩니다.</p>
+<p>로그인 · 권한 거부 · 설정 변경 · 백업 등 관리 행위가 날짜별 파일(<code>audit\YYYY-MM-DD.jsonl</code>)로 기록됩니다. 실제 폴더는 창 아래에 표시됩니다(기본 <code>%LocalAppData%\BODA VISION AI\audit\</code>, 다중 인스턴스는 그 인스턴스 폴더 아래). Outcome 은 Success(초록) · Failure(빨강) · Denied(주황)로 구분됩니다.</p>
 
 <h4>Health Check — 시스템 상태 점검 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-4-30</span></h4>
 <figure><img src="../../gs/screenshots/v3/vms/dlg_HealthCheck.png" data-width="520" alt="Health Check"><figcaption>Health Check — OVERALL 배지 · 항목별 Pass / Warn / Fail</figcaption></figure>
-<p>인스턴스 · 설정 파일 · 보안 옵션 · Web 서버 · 라이선스 · 디스크 여유 공간을 점검합니다. [Refresh] 로 다시 점검하고 [Copy] 로 결과를 복사해 지원 요청에 붙일 수 있습니다.</p>
+<p>인스턴스 · 설정 파일 · 보안 옵션 · Web 서버 · 라이선스 · 디스크 여유 공간을 점검합니다. 항목이 많으면 목록을 스크롤해 끝(License)까지 봅니다. [Refresh] 로 다시 점검하고 [Copy] 로 결과를 복사해 지원 요청에 붙일 수 있습니다.</p>
 
 <h4>Backup / Restore — 백업과 복원 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-4-31</span></h4>
 <figure><img src="../../gs/screenshots/v3/vms/dlg_BackupRestore.png" data-width="520" alt="Backup / Restore"><figcaption>Backup / Restore — 백업 생성 · 백업 복원 · 복원된 manifest</figcaption></figure>
-<p>설정 파일 · 레이아웃 · 신호 설정(<span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 신호 맵) · 사용자 DB · 검사 이력 DB · 레시피 전체(선택 시 감사 로그)를 ZIP 하나로 만듭니다. 복원 시 [기존 파일 덮어쓰기] 를 켜고 [Run Restore] 한 뒤 VMS 를 재시작합니다. 자세한 운영 요령은 <a class="ref" href="#mt-backup">§11.1</a> 을 참고하세요.</p>
+<p>설정 파일 · 레이아웃 · 시퀀스(<code>process_sequence.json</code>) · 신호 설정(<span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 신호 맵) · 사용자 DB · 검사 이력 DB · 레시피 전체(선택 시 감사 로그)를 ZIP 하나로 만듭니다. VMS 를 켠 채로 백업 · 복원할 수 있습니다.</p>
+<ol>
+  <li>백업 — [Run Backup...] 으로 저장 위치를 고릅니다. 파일 이름은 <code>BODA-VMS-backup-날짜-시각.zip</code>(이 PC 시각)입니다.</li>
+  <li>복원 — 백업 ZIP 을 고르고 [기존 파일 덮어쓰기] 를 켠 뒤 [Run Restore] 를 누릅니다. 결과 줄에 "복원 n 파일 · skip n 파일 — 설정은 VMS 를 다시 시작하면 적용됩니다" 가 나오면 VMS 를 다시 시작합니다.</li>
+  <li>[감사 로그도 복원] (기본 켬) 은 이 PC 에 <strong>없는 날짜</strong>의 감사 로그만 되살립니다. 이미 있는 날짜의 파일은 덮어쓰지 않으므로 백업 뒤에 남은 기록이 지워지지 않습니다.</li>
+</ol>
+<p>자세한 운영 요령은 <a class="ref" href="#mt-backup">§11.1</a> 을 참고하세요.</p>
 
 <h4>Auto Backup Settings — 자동 백업</h4>
 <figure><img src="../../gs/screenshots/v3/vms/dlg_AutoBackup.png" data-width="480" alt="Auto Backup Settings"><figcaption>Auto Backup Settings — 활성화 · 주기(시간) · 보존(일) · 위치</figcaption></figure>
-<p>주기(1~720 시간)와 보존 기간(1~365 일), 저장 위치(비우면 <code>backups</code> 폴더)를 정합니다. 변경은 VMS 재시작 후 적용됩니다.</p>
+<p>주기(1~720 시간)와 보존 기간(1~365 일), 저장 위치(비우면 이 PC 의 기본 <code>backups</code> 폴더 — 칸에 마우스를 올리면 실제 경로)를 정합니다. 변경은 VMS 재시작 후 적용됩니다.</p>
+<ul>
+  <li>파일 이름은 <code>auto-backup-날짜-시각.zip</code>(이 PC 시각)입니다.</li>
+  <li>백업할 때마다 그 위치에서 보존 기간이 지난 <code>auto-backup-*.zip</code> 을 지웁니다. 수동 백업 파일은 지우지 않습니다.</li>
+</ul>
 
 <h4>Retention Settings — 데이터 보존 정책 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-4-32</span></h4>
 <figure><img src="../../gs/screenshots/v3/vms/dlg_Retention.png" data-width="520" alt="Retention Settings"><figcaption>Retention Settings — 프리셋 · 전역 보존 · 카테고리별 보존 · 미리보기</figcaption></figure>
@@ -1047,12 +1073,13 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
   <li>빠른 프리셋 — Conservative(규제 사이트) / Standard(권장 기본) / Minimal(디스크 제한 사이트). 적용 후 [Save] 가 필요합니다.</li>
   <li>전역 보존(일) — 감사 로그 · 자동 백업 · 업로드 큐 · 검사 이력. "검사 결과를 로컬 이력 DB 에 저장" 체크로 로컬 이력 저장을 켜고 끕니다.</li>
   <li>카테고리별 차등 보존 — 9 개 감사 카테고리를 따로 지정합니다(기본: 보안/사용자/설정 1095 일, 인증/권한/레시피 730 일, 시퀀스/검사 365 일, 시스템 90 일).</li>
-  <li>[Preview] 는 실제 삭제 없이 정리 예정 건수를 보여 주고 [Export Preview...] 로 CSV 저장이 가능합니다. 변경은 VMS 재시작 후 적용됩니다.</li>
+  <li>감사 로그 날짜 파일을 통째로 지우는 기준은 <strong>전역 값과 카테고리별 값 중 가장 긴 값</strong>입니다. 그래서 카테고리별로 길게 잡은 기간이 그대로 지켜지고, 짧게 잡은 카테고리의 줄은 그 기간이 지나면 줄 단위로 지워집니다.</li>
+  <li>[Preview] 는 실제 삭제 없이 정리 예정 건수를 보여 주고 [Export Preview...] 로 CSV 저장이 가능합니다. 자동 백업 위치를 바꿨다면 그 위치를 기준으로 셉니다. 변경은 VMS 재시작 후 적용됩니다.</li>
 </ul>
 
 <h4>Support Package — 원격 지원용 진단 패키지 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-4-33</span></h4>
 <figure><img src="../../gs/screenshots/v3/vms/dlg_SupportPackage.png" data-width="480" alt="Support Package"><figcaption>Support Package Export — 감사 로그 일수 · 환경 정보 · 백업 인덱스 · 사이트 식별 정보 포함 여부</figcaption></figure>
-<p>문제 보고 시 공급사에 보낼 ZIP 을 만듭니다. 설정 파일 · 감사 로그(1~90 일) · 환경 정보 · 헬스 스냅샷 · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>MLOps 전송 큐 상태가 들어가며, 사용자 DB 와 레시피는 <strong>포함되지 않습니다</strong>.</p>
+<p>문제 보고 시 공급사에 보낼 ZIP 을 만듭니다. 설정 파일 · 감사 로그(1~90 일) · 환경 정보 · 헬스 스냅샷 · 자동 백업 목록(바꾼 위치 포함) · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>MLOps 전송 큐 상태가 들어가며, 사용자 DB 와 레시피는 <strong>포함되지 않습니다</strong>. 설정 파일 안의 API 키 · 토큰 · 비밀번호 값은 가려서 넣습니다.</p>
 
 <h3 id="vms-permissions">4.12 계정과 권한</h3>
 <p>VMS 에는 두 종류의 신원이 있습니다. <strong>작업자</strong>(Web 에 등록된 사번 + PIN)는 "누가 생산했는가"를 기록하는 신원이고,
@@ -1061,20 +1088,18 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
 <table>
   <tr><th>권한 (기능)</th><th>Operator</th><th>Engineer</th><th>Admin</th><th>local-admin<br>(비상 폴백)</th></tr>
   <tr><td>StartStop (검사 시작/정지 · Grab · Live)</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
-  <tr><td>ViewStatistics (통계 · 이력 조회)</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
   <tr><td>EditRecipe (레시피 편집 · 저장 · 가져오기)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
   <tr><td>DeleteRecipe (레시피 삭제)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
-  <tr><td>CameraSettings (카메라 설정)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
+  <tr><td>CameraSettings (카메라 조작 상자의 카메라 설정 유지 · 노출 · 게인 · [Save Parameter])</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
   <tr><td>LaunchVisionSetup (Vision Tool Setup 실행)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
   <tr><td>LaunchAppSetup (System Setup 실행)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
-  <tr><td>SystemConfiguration (시스템 구성 변경)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
-  <tr><td>RestartWebService (Web 서비스 재시작)</td><td>—</td><td>✓</td><td>✓</td><td>✓</td></tr>
   <tr><td>ManageUsers (사용자 관리 · Admin Tools · Image Saving)</td><td>—</td><td>—</td><td>✓</td><td>—</td></tr>
 </table>
 <ul>
-  <li>시스템 사용자로 로그인하지 않은 상태에서도 AUTO RUN · Grab · Live 는 허용됩니다(작업자 로그인이 생산 신원이므로 이중 로그인을 요구하지 않습니다).</li>
-  <li>Web SSO 를 켠 현장에서는 Admin/Engineer 로그인을 Web 계정으로 대조합니다(Web Admin → Admin, User → Engineer). 서버에 닿지 못할 때는 비상 계정 <code>local-admin</code> 만 검사 시작/정지 · 통계 · Web 서비스 재시작 권한으로 진입합니다.</li>
-  <li>권한이 거부된 시도는 감사 로그에 사용자 · 등급 · 요청 권한과 함께 기록됩니다.</li>
+  <li>시스템 사용자로 로그인하지 않은 상태에서도 AUTO RUN · Grab · Live 는 허용됩니다(작업자 로그인이 생산 신원이므로 이중 로그인을 요구하지 않습니다). 카메라 설정 · 레시피 편집 · 관리 기능은 위 표의 등급으로 로그인해야 합니다.</li>
+  <li>KPI · Recent Inspections · [전체 이력] 같은 통계 · 이력 조회는 등급과 관계없이 볼 수 있습니다.</li>
+  <li>Web SSO 를 켠 현장에서는 VMS 사용자 로그인을 Web 계정으로 확인합니다. 등급은 Web 역할을 따릅니다 — Web Admin 은 Admin, Manager · User 는 Engineer. 서버에 닿지 못할 때는 비상 계정 <code>local-admin</code> 만 검사 시작/정지 권한으로 진입합니다.</li>
+  <li>권한이 없는 기능을 실제로 실행하려다 막히면 감사 로그에 사용자 · 등급 · 요청 권한과 함께 기록됩니다. 등급 때문에 버튼이 꺼져 보이는 것만으로는 기록되지 않습니다.</li>
 </ul>
 <h4>작업자 등급이 VMS 화면에 미치는 영향</h4>
 <table class="cols-3-2-2-2">
@@ -1127,7 +1152,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <figure><img src="../../gs/screenshots/v3/vs/dlg_RecipeManager.png" data-width="600" alt="Recipe Manager"><figcaption>Recipe Manager — 왼쪽 레시피 목록(검색 · New · Load · Duplicate · Rename · Delete · Import · Export · Open Folder), 오른쪽 편집기(스텝/도구 트리 · Properties · Save/Discard)</figcaption></figure>
 <ol>
   <li>[New] 로 레시피를 만들고 오른쪽 Properties 에서 Recipe Name · Description · Version · Author 를 입력한 뒤 [Save] 합니다.</li>
-  <li>[Add Step] 으로 스텝을 추가하고 스텝의 Camera 를 고릅니다. 스텝 이름("1-1", "1-2")은 카메라 등록 순서 기준으로 자동 계산되며 바꿀 수 없습니다. 부르기 쉬운 이름이 필요하면 <strong>Step Alias</strong>(별칭)를 넣습니다.</li>
+  <li>[Add Step] 으로 스텝을 추가합니다. 스텝은 메인 화면 왼쪽 Camera 콤보에서 고른 카메라로 붙고, 필요하면 스텝의 Camera 를 바꿉니다. 스텝 이름("1-1", "1-2")은 카메라 등록 순서 기준으로 자동 계산되며 바꿀 수 없습니다. 부르기 쉬운 이름이 필요하면 <strong>Step Alias</strong>(별칭)를 넣습니다. 편집기에서 [Save] 한 뒤 창을 닫으면 지금 열린 레시피의 Steps 표에 바로 반영됩니다.</li>
   <li>[Load] 로 레시피를 메인 화면에 불러옵니다. 왼쪽 배지가 "Now Recipe: 이름" 으로 바뀌고 Steps 표에 스텝이 나타납니다.</li>
   <li><strong>[Duplicate]</strong> 는 스텝 · 도구 · 학습 데이터까지 통째로 복사해 "이름 - 복사본" 을 만들고, <strong>[Rename]</strong> 은 이름을 바꿉니다(Web 원장 이름은 별도). [Import] / [Export] 로 JSON 파일을 주고받으며 [Open Folder] 는 저장 폴더를 엽니다.</li>
 </ol>
@@ -1137,7 +1162,8 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <ul>
   <li>Camera 콤보에서 카메라를 고르면 Steps 표에 <strong>그 카메라의 스텝만</strong> 표시됩니다(제목에 "Steps — 카메라명"). 레시피를 불러오면 레시피가 쓰는 카메라가 자동 선택됩니다.</li>
   <li>스텝 버튼: Add Step · Delete Step · <strong>Duplicate Step</strong>(카메라 설정과 도구 파이프라인을 복사해 바로 뒤에 추가) · Generate <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>Robot Waypoint Steps(로봇 멀티뷰용) · Move Up / Move Down.</li>
-  <li>Steps 표의 <strong>Resolution</strong>(mm/px)은 측정 도구가 픽셀을 mm 로 바꾸는 값입니다. 캘리브레이션을 적용하면 자동으로 채워지고(<a class="ref" href="#vs-calibration">§5.9</a>), 간단한 현장은 직접 입력해도 됩니다.</li>
+  <li>Steps 표의 <strong>Resolution</strong>(mm/px)은 측정 도구가 픽셀을 mm 로 바꾸는 값입니다. 표는 읽기 전용이라 직접 입력하는 칸은 없고, 캘리브레이션 창의 [Apply to Current Recipe] 로만 바뀝니다(<a class="ref" href="#vs-calibration">§5.9</a>). 새 스텝은 0.05 로 시작합니다.</li>
+  <li>다른 스텝을 고르면 떠나는 스텝의 편집(도구 · 연결 · ROI)은 메모리에 그대로 남고, Run Results 표는 비워집니다. 파일에는 [Save Recipe] 를 눌러야 저장됩니다.</li>
   <li>스텝만 선택하면 오른쪽 패널이 <strong>Camera Settings</strong> 로 바뀝니다 — 스텝 정보(별칭 · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>로봇 노드 번호), 2D 이미지(카메라 설정 유지 체크 · 노출 ms · 게인 dB), 3D 카메라면 3D 스캔(점군 후처리 끄기/약/중/강 · 뎁스 범위 제한 mm). 여기 값은 레시피에 저장되고, VisionSetup 의 Acquire · Live 와 VMS 의 촬영(Grab · 자동 운전) 때 카메라에 적용됩니다.</li>
 </ul>
 <h4>다른 PC 에서 만든 레시피 — 카메라 재연결 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-5-3</span></h4>
@@ -1147,11 +1173,12 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <table class="cols-3-6">
   <tr><th>방법</th><th>절차</th></tr>
   <tr><td>파일</td><td>File → Open Image(또는 툴바 첫 버튼)로 jpg · png · bmp · tif 를 엽니다. 폴더를 열면 ◀ ▶ 로 넘기며 여러 장을 검증할 수 있습니다. 3D 는 3D → Load 3D Data 로 .vpc 파일을 엽니다.</td></tr>
-  <tr><td>카메라 직접 촬영</td><td>Camera Manager 에 카메라를 등록하고 왼쪽 Camera 콤보에서 고른 뒤 툴바 [Acquire](한 장) 또는 [Start Camera Live](연속). 선택한 스텝의 노출 · 게인이 적용됩니다.</td></tr>
+  <tr><td>카메라 직접 촬영</td><td>Camera Manager 에 카메라를 등록하고 왼쪽 Camera 콤보에서 고른 뒤 툴바 [Acquire](한 장) 또는 [Start Camera Live](연속). 스텝의 "카메라 설정 유지"(기본 켬)를 끈 경우에만 그 스텝의 노출 · 게인이 적용되고, 켜 두면 카메라에 저장된 값을 그대로 씁니다.</td></tr>
   <tr><td>VMS 실행 중</td><td>VMS 메인이 카메라를 쥐고 있으면 툴바에 "VMS 실행 감지" 가 표시되고 직접 연결이 잠깁니다. 이때 [Acquire] 를 누르면 <strong>VMS 에 촬영을 요청</strong>해 그 사진을 받아옵니다(운전 · 라이브 중이면 거절). Camera → Receive from VMS 는 VMS 가 마지막으로 찍은 프레임을, Start Live Receive 는 VMS 의 라이브 영상을 이어서 받습니다.</td></tr>
 </table>
-<p>받은 이미지는 2D Image 탭에 표시되고 상태바에 "이미지 로드 완료" 가 나옵니다. 이후 Run All 이 활성화됩니다.</p>
+<p>받은 이미지는 2D Image 탭에 표시되고 Run All 이 활성화됩니다. 상태바 문구는 가져온 방법마다 다릅니다 — 파일 열기는 "이미지 로드 완료", 카메라 촬영은 "… 획득 완료"(시뮬레이션 카메라면 "시뮬레이션 …"), VMS 에서 받으면 "VMS 프레임 수신 완료 (Frame #n)" 이고, 폴더 열기는 따로 문구가 없습니다.</p>
 <figure><img src="../../gs/screenshots/v3/scenes/PointCloudView.jpg" data-width="620" alt="3D → Load 3D Data 로 연 점군(.vpc)"><figcaption>3D → Load 3D Data 로 연 점군(.vpc) — Point Cloud 탭에 높이 색으로 표시됩니다. 마우스로 돌리고 확대하며, 오른쪽 위 Top · Front · Side 로 시점을 바꿉니다. 격자 점군은 열 때 Height Map 이 만들어져 2D Image 탭에도 표시됩니다</figcaption></figure>
+<p>3D 도구가 있는 스텝을 Run All · Run Selected 로 실행하면 Point Cloud 탭은 도구가 만든 결과 점군(필터 · 크롭 · 클러스터 결과)을 보여 줍니다. 다음 실행의 입력 점군과 Depth Map 탭은 바뀌지 않습니다.</p>
 
 <h3 id="vs-tools">5.5 도구 배치 · 연결 · ROI <span class="video" title="이 절을 따라 하는 사용 영상">▶ 영상 V-5-6 · V-5-7</span></h3>
 <ol>
@@ -1195,8 +1222,8 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <h4>Result 도구 — 최종 판정</h4>
 <p>스텝의 마지막에 <strong>Result</strong> 도구를 두고 판정에 넣을 도구들을 Result 연결하면, 모두 Pass 일 때만 OK 가 됩니다. <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 옵션에서는 Result 도구의 PLC Output 에 PassCount · FailCount · TotalCount 통계를 PLC 주소에 매핑할 수 있습니다.
 검사 1 건의 최종 OK/NG 신호를 IO 보드(<span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC)로 내보내는 것은 시퀀스 편집기의 Branch → Output Action 이 담당합니다(<a class="ref" href="#vs-sequence">§5.10</a>).</p>
-<h4><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC Output — 결과 값을 PLC 로 보내기 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-5-17</span></h4>
-<p><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 옵션이 켜진 라이선스에서는 도구 설정 아래에 PLC Output 이 나타납니다. [+ Add PLC Mapping] 을 누르고 Key(결과 값 이름) · Device(MainPLC 또는 IO 보드) · Address(PLC 주소 또는 IO 채널) · Type 을 정하면 실행 때마다 그 값이 PLC 에 기록됩니다. 결과 값 이름은 부록(<a class="ref" href="#appx-results">§13.3</a>)에 있습니다.</p>
+<h4><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC Output — 결과 값을 PLC 로 보내기 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-6-41</span></h4>
+<p><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 옵션이 켜진 라이선스에서는 도구 설정 아래에 PLC Output 이 나타납니다. [+ Add PLC Mapping] 을 누르고 Key(결과 값 이름) · Device(MainPLC 또는 IO 보드) · Address(PLC 주소 또는 IO 채널) · Type 을 정하면 실행 때마다 그 값이 PLC 에 기록됩니다. Key 목록에는 도구가 PLC 로 보낼 수 있게 정해 둔 값만 나옵니다(예: Detection 은 Success · DetectionCount 두 개 — 검출별 Det0_… 값은 없음). Device 목록은 시스템 설정의 MainPLC 와 등록한 IO 보드이며, IO 보드가 없는 PC 에서는 MainPLC 하나만 보입니다. 결과 값 이름은 부록(<a class="ref" href="#appx-results">§13.3</a>)에 있습니다.</p>
 <h3 id="vs-webparam">5.7 검사 기준값을 Web 에서 관리하기 (파라미터 연동) <span class="video" title="이 절을 따라 하는 사용 영상">▶ 영상 V-5-9</span></h3>
 <p>Blob · Caliper · Line Fit · Circle Fit · Geometry · Feature Match · Shape Match · Threshold · Color Match · Height Slicer 의 판정 기준 입력란 옆에는 <strong>Web 파라미터 연동 콤보</strong>가 있습니다.
 콤보에서 파라미터 코드를 고르면 운전(AUTO RUN) 때 그 코드의 Web 값을 씁니다 — 이후 기준값은 현장에서 도구 설정을 열지 않고 Web 레시피 파라미터 화면(<a class="ref" href="#web-recipes">§8.10</a>)에서 바꿉니다.</p>
@@ -1256,7 +1283,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
   <li>Image Rectify 도구의 Undistort 는 Checkerboard · Circles Grid 결과로, Apply Homography 는 N-Point 결과로만 동작합니다(<a class="ref" href="#tools-1">§6.1</a>).</li>
 </ul>
 
-<h3 id="vs-sequence">5.10 시퀀스 편집기 — IO 보드 · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 운전 흐름</h3>
+<h3 id="vs-sequence">5.10 시퀀스 편집기 — IO 보드 · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 운전 흐름 <span class="video" title="이 절을 따라 하는 사용 영상">▶ 영상 V-5-17</span></h3>
 <figure><img src="../../gs/screenshots/v3/vs/dlg_Sequence.png" data-width="620" alt="Sequence Editor"><figcaption>Sequence Editor — 상단(프로세스 시퀀스 이름 · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>Reset 신호 · [디폴트 생성] [저장] [가져오기] [내보내기] [I/O Monitor](<span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 옵션에서는 [PLC Monitor]) [▶ 무부하 테스트]), 왼쪽 노드 팔레트, 가운데 캔버스, 오른쪽 노드 속성</figcaption></figure>
 <p>AUTO RUN 의 "트리거 대기 → 촬영 → 검사 → 결과 출력 → 반복" 흐름을 노드로 정의합니다. 메뉴 Sequence 로 엽니다. 저장한 시퀀스는 <code>process_sequence.json</code> 에 기록되며 VMS 는 재시작 없이 다음 AUTO RUN 부터 새 시퀀스를 읽습니다.</p>
 <h4>노드 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-5-15</span></h4>
@@ -1273,11 +1300,11 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 </table>
 <h4>절차 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-5-16</span></h4>
 <ol>
-  <li>[디폴트 생성] 으로 기본 흐름(Start → Input Check → Inspection → Branch → Output Action → End)을 만들거나, 팔레트에서 노드를 끌어 놓고 노드 우클릭 → 연결 시작 → 대상 노드 클릭으로 잇습니다.</li>
+  <li>[디폴트 생성] 으로 기본 흐름을 만들거나, 팔레트에서 노드를 끌어 놓고 노드 우클릭 → 연결 시작 → 대상 노드 클릭으로 잇습니다. 기본 흐름은 설비와 신호를 주고받는 15 노드입니다 — Start → Recipe Change → Wait Trigger → Step Change → Busy ON → Inspection → Result Branch → Result OK / NG ON → Complete ON → Wait Ack → Busy OFF → Complete OFF → Repeat(무한) → End. 캔버스에 이미 노드가 있으면 확인 창이 뜨고, [예] 를 누르면 지금 흐름을 지우고 새로 만듭니다. 쓰지 않는 노드는 지우고 채널 · 주소를 현장에 맞게 바꿉니다.</li>
   <li>각 노드를 선택해 오른쪽 노드 속성에서 디바이스(시스템 설정 4 단계에서 등록한 IO 보드 Device ID) · <strong>채널 번호(0~N-1)</strong> · 값을 입력합니다. 새로 놓은 노드는 첫 번째 IO 보드가 기본으로 선택되며, IO 보드는 ON/OFF 신호만 다룹니다. <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 옵션에서는 디바이스로 MainPLC 를 고르고 채널 대신 PLC 주소를 넣습니다.</li>
   <li><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 옵션에서는 Reset 신호 주소를 두면 어느 노드에서든 그 조건이 충족될 때 즉시 Start 로 돌아갑니다.</li>
   <li>설비에 작업지시 완료를 알리려면 팔레트의 WO Complete 를 운전 흐름과 떨어진 곳에 놓고 Output Action · Delay 를 잇습니다. 완료 신호를 계속 켜 두는 방식(레벨)이면 WO Complete 뒤에는 ON 만 두고, 운전 흐름의 Start 다음에 그 출력을 OFF 하는 Output Action 을 둡니다. 신호가 나가면 System Log 에 "WO 완료 신호를 설비에 보냈습니다" 가 남습니다.</li>
-  <li>[I/O Monitor] 로 참조 채널의 현재값을 보면서, <strong>[▶ 무부하 테스트]</strong> 로 카메라 검사만 항상 합격으로 시뮬레이션한 채 트리거 · 분기 · 출력 신호가 설비와 실제로 오가는지 확인합니다. 노드가 진행에 따라 초록/빨강으로 표시되고 Cycle 수가 올라갑니다.</li>
+  <li>[I/O Monitor] 로 시퀀스가 참조하는 IO 보드 채널(<span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 주소)의 현재값을 보면서, <strong>[▶ 무부하 테스트]</strong> 로 카메라 검사만 항상 합격으로 시뮬레이션한 채 트리거 · 분기 · 출력 신호가 설비와 실제로 오가는지 확인합니다. 노드가 진행에 따라 초록/빨강으로 표시됩니다. 흐름에 Repeat(무한) 노드가 있으면 Cycle 수가 올라가며 반복하고, End 로 끝나는 흐름은 한 번 돌고 "[무부하] 시퀀스 완료" 로 멈춥니다. IO 보드 · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 가 연결되지 않은 PC 에서는 신호 노드를 건너뛰므로, 장치를 연결한 뒤 시험합니다. 노드 하나만 확인하려면 노드 속성의 [▶ 테스트 읽기] · [▶ 테스트 출력] 을 씁니다.</li>
   <li>[저장]. 필요하면 [내보내기] 로 파일로 보관하고 다른 PC 에서 [가져오기] 합니다.</li>
 </ol>
 
@@ -1287,23 +1314,41 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
   <li>메뉴 Batch Test... 를 열고 RECIPE → CAMERA → STEP 을 고릅니다.</li>
   <li>INPUT 에 이미지 폴더(하위 폴더 재귀 가능), OUTPUT 에 CSV 리포트 경로와 실패 케이스 오버레이 저장 여부를 정합니다.</li>
   <li>[Run Batch] — PROCESSED · PASS · FAIL · AVG TIME 이 실시간으로 집계되고 Results 탭에 파일별 결과가 쌓입니다. 실패 행을 더블 클릭하면 <strong>Failure Browser</strong>(원본 · 오버레이 좌우 비교, ← → 이동)가 열립니다.</li>
-  <li><strong>[Edit Thresholds...]</strong> — 도구별 Must Succeed(실패 시 즉시 FAIL)와 결과 값의 Min..Max 범위 임계치를 정해 판정 기준을 검증합니다.</li>
-  <li><strong>[Auto-tune...]</strong> — 도구 파라미터를 From · To · Step 으로 훑으며(또는 Random search) 폴더 전체 PASS 율이 가장 높은 조합을 찾고 [Apply Best] 로 도구에 적용 · 저장합니다.</li>
+  <li><strong>[Edit Thresholds...]</strong> — 도구별 Must Succeed 와 결과 값의 Min..Max 범위 임계치를 정해 판정 기준을 검증합니다.
+    <ul>
+      <li>Must Succeed 를 켠 도구(기본)나 임계치에 없는 도구가 실패하면 그 사진은 FAIL 입니다. 끈 도구의 실패는 사진 판정에서 뺍니다.</li>
+      <li>단, Result 도구가 그 도구를 연결해 받으면 Result 가 실패하므로 여전히 FAIL 입니다 — Result 판정을 따릅니다.</li>
+      <li>앞 도구가 실패해 건너뛴 뒤 도구도 각자 실패로 셉니다. 빼려면 그 도구들의 Must Succeed 도 끕니다.</li>
+    </ul></li>
+  <li><strong>[Auto-tune...]</strong> — 도구 파라미터를 From · To · Step 으로 훑으며(또는 Random search) 폴더 전체 PASS 율이 가장 높은 조합을 찾고(★ 표시) [Apply Best] 로 도구에 적용해 레시피 파일에 저장합니다. PASS 율이 가장 높은 값을 고르는 방식이므로 <strong>양품 사진 폴더</strong>로 돌립니다 — 불량 사진이 섞이면 불량까지 합격시키는 값이 뽑힙니다.</li>
   <li><strong>골든셋</strong> — [Save as Golden] 으로 지금 결과를 정답으로 저장하면 이후 배치 결과가 자동 비교되어 달라진 케이스를 알려 줍니다. 레시피를 고친 뒤 회귀 확인에 씁니다.</li>
 </ol>
 
 <h3 id="vs-misc">5.12 기타 설정 창</h3>
 <h4>Camera Manager <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-5-23</span></h4>
 <figure><img src="../../gs/screenshots/v3/vs/dlg_CameraManager.png" data-width="520" alt="Camera Manager"><figcaption>Camera Manager — Cameras 목록 · [Add] [Remove] · Camera Properties(Name · Manufacturer · Model · Serial · Width · Height · Connection String · Enabled) · [Save] [Cancel]</figcaption></figure>
-<p>VisionSetup 에서 직접 촬영할 카메라를 등록합니다. 운전용 카메라 구성은 시스템 설정 마법사(3장)가 기준이며, 여기서는 편집 작업에 쓸 카메라를 관리합니다.</p>
+<p>VisionSetup 에서 직접 촬영할 카메라를 등록합니다. 운전용 카메라 구성은 시스템 설정 마법사(3장)가 기준이며, 여기서는 편집 작업에 쓸 카메라를 관리합니다. 이 창에는 연결 시험 버튼이 없습니다 — 등록한 뒤 Camera → Camera Info 의 [Connect](또는 툴바 카메라 연결 토글)로 연결해 확인합니다.</p>
 <h4>Inference Settings — 딥러닝 추론 엔진 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-5-24</span></h4>
 <figure><img src="../../gs/screenshots/v3/vs/dlg_InferenceSettings.png" data-width="420" alt="Inference Engine Settings"><figcaption>Inference Engine Settings — Execution Provider · TensorRT Engine Cache Folder · Enable TensorRT FP16</figcaption></figure>
-<p>ONNX Runtime 의 실행 백엔드(Auto · CPU · CUDA · TensorRT)를 고릅니다. GPU 가 없으면 CPU 로 자동 동작합니다. TensorRT 캐시 폴더를 두면 두 번째 실행부터 엔진 재빌드를 건너뛰고, FP16 은 RTX 계열에서 속도를 높입니다. 변경은 다음 모델 로드부터 적용됩니다. VMS 운전에도 같은 설정이 쓰이며, VMS 는 시작할 때 읽으므로 바꾼 뒤에는 VMS 를 다시 시작하세요.</p>
+<p>딥러닝 추론의 실행 백엔드를 고릅니다. 목록은 Auto · Cpu · Cuda · DirectML · TensorRT 입니다. 변경은 다음 모델 로드부터 적용됩니다. VMS 운전에도 같은 설정이 쓰이며, VMS 는 시작할 때 읽으므로 바꾼 뒤에는 VMS 를 다시 시작하세요.</p>
+<ul>
+  <li><strong>Auto</strong> 는 Cuda → DirectML → Cpu 순서로 이 PC 에서 쓸 수 있는 첫 백엔드를 씁니다(TensorRT 는 Auto 에 들어가지 않으므로 쓰려면 직접 고릅니다).</li>
+  <li>이 PC 에서 쓸 수 없는 항목은 "(이 PC 에서 사용 불가)" 가 붙고, 그런 항목을 고르면 "다른 백엔드(최종적으로 CPU)로 실행됩니다" 경고가 나옵니다.</li>
+  <li>창 아래 "실제 사용 백엔드(마지막 모델 로드)" 줄에 마지막으로 모델을 불러올 때 실제로 쓴 백엔드가 보입니다(도구를 한 번 실행한 뒤 표시).</li>
+  <li>TensorRT Engine Cache Folder — 엔진을 이 폴더에 저장해 두고 다시 실행할 때 재빌드를 건너뜁니다. 비워 두고 저장하면 기본 폴더(설정 폴더의 <code>trt_cache</code>)를 씁니다.</li>
+  <li>Enable TensorRT FP16 — 반정밀도로 계산합니다. 지원 GPU 에서 더 빠르며, 효과는 모델과 GPU 에 따라 다릅니다.</li>
+</ul>
 <h4><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>OCR Synth Data — 합성 문자 데이터 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-5-32</span></h4>
 <figure><img src="../../gs/screenshots/v3/vs/dlg_SynthData.png" data-width="520" alt="Synthetic Data Generator"><figcaption>Synthetic Data Generator — Font · Patterns · Dataset · Background · Augmentation · Training(<span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>MLOps 업로드 안내)</figcaption></figure>
 <p>날짜 · 로트 번호처럼 형식이 정해진 문자열을 폰트 · 배경 · 증강을 조합해 대량 생성합니다. OCR 도구의 인식 모델을 다듬을 학습 데이터로 쓰며, 학습은 만든 데이터를 <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>MLOps 에 올려서 합니다(<a class="ref" href="#dl-ocr-synth">§10.1</a>).</p>
 <h4>SLM Recipe Bot <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-5-25</span></h4>
-<p>툴바의 말풍선 버튼으로 엽니다. 모델에 [Connect] 한 뒤 "원형 부품의 지름을 재고 싶어" 처럼 입력하면 레시피 구성을 제안하고, [Apply Recipe] 로 작업 공간에 만들어 줍니다. "자동 실행" 을 켜면 적용 직후 실행 결과까지 알려 줍니다.</p>
+<p>툴바의 말풍선 버튼으로 엽니다. 창을 열면 자동으로 언어 모델에 연결을 시도합니다. 이 PC 에 로컬 언어 모델 서버(<code>http://localhost:11434</code>)가 실행 중이고 창의 모델 칸에 나온 기본 모델이 받아져 있어야 합니다.</p>
+<ol>
+  <li>"이 사진에서 구멍 개수를 세는 레시피를 만들어 줘" 처럼 원하는 검사를 입력합니다. 봇은 글로 설명하지 않고 언제나 <strong>도구 구성 미리보기</strong>(작업 공간에 도구가 있으면 수정 미리보기)로 답합니다 — 파라미터 뜻을 묻는 용도가 아니며, 그런 설명은 각 칸의 물음표(?)를 봅니다.</li>
+  <li>미리보기의 파라미터는 <strong>제안 값</strong>입니다. 그 도구에 없는 파라미터는 "✕ 이 도구에 없는 파라미터 — 적용하지 않음" 으로 표시되고 적용되지 않습니다.</li>
+  <li>[Apply Recipe] 로 작업 공간에 만듭니다. 단독 모드에서도 제안 값이 도구에 들어갑니다.</li>
+  <li>Run All 로 실행해 결과를 보고, 각 도구 설정에서 값을 우리 제품에 맞게 확인 · 조정합니다. "자동 실행" 을 켜면 적용 직후 실행하고 도구 수 · 성공 수와 대표 값 하나(개수 · 거리 등)를 요약해 보여 줍니다.</li>
+</ol>
 
 <h3 id="vs-ext">5.13 3D 데이터 · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>로봇 멀티뷰 · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>MLOps 모델 고르기</h3>
 <p>3D 데이터 메뉴는 기본 구성이고, 나머지는 확장 옵션이 있어야 보입니다(<a class="ref" href="#overview-options">§1.6</a>).</p>
@@ -1312,9 +1357,10 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <table class="cols-2-7">
   <tr><th>[3D] 메뉴</th><th>하는 일</th></tr>
   <tr><td>Save 3D Data / Load 3D Data</td><td>점군을 <code>.vpc</code> 로 저장하고 엽니다. 격자 모양이 아닌 점군은 열 때 높이 맵을 자동으로 만듭니다</td></tr>
-  <tr><td>Generate Height Map</td><td>기준 높이 · 하한 · 상한으로 점군의 높이를 밝기로 바꾼 2D 사진(높이 맵)을 만듭니다. 실제 2D 사진이 없을 때 2D 탭에 보입니다</td></tr>
-  <tr><td>Save Height Slicing / Clear Height Slicing</td><td>그 높이 범위 설정을 레시피에 저장하거나 지웁니다</td></tr>
+  <tr><td>Generate Height Map</td><td>Depth Map 탭의 Baseline(높이 기준, 이 값을 0 으로 잼) · Lower · Upper(높이 맵에 담을 Z 하한 · 상한, mm)로 점군의 높이를 밝기로 바꾼 2D 사진(높이 맵)을 만듭니다. 실제 2D 사진이 없을 때 2D 탭에 보입니다. Depth Map 탭의 [Generate Height Map] 버튼도 같습니다</td></tr>
+  <tr><td>Save Height Slicing / Clear Height Slicing</td><td>높이 맵 범위(Baseline · Lower · Upper)와 Depth Map 탭 손잡이로 고른 범위를 함께 레시피에 저장하거나 지웁니다. 저장하면 상태바에 두 범위가 모두 표시됩니다</td></tr>
 </table>
+<p>높이 맵을 다시 만들어도 손잡이로 고른 범위는 그대로 남습니다. 하한 · 상한과 손잡이 범위를 점군 전체 Z 범위로 되돌리려면 Depth Map 탭의 [전체로] 를 누릅니다(높이 맵도 다시 만듦).</p>
 
 <h4>3D 스캔 패널 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-5-27</span></h4>
 <p><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>3D 카메라 촬영 옵션. 스텝의 카메라가 3D 카메라일 때 Camera Settings 아래에 <strong>3D 스캔</strong> 묶음이 나옵니다. 값은 촬영할 때 카메라 안에서 적용되고 스텝마다 레시피에 저장됩니다.</p>
@@ -1330,7 +1376,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <ol>
   <li>레시피를 열고 카메라를 고른 뒤, Steps 머리의 <strong>Generate Robot Waypoint Steps</strong> 아이콘을 누릅니다.</li>
   <li>현재 Waypoint Planner 값(기본 Pattern TopPlusRing · Count 5 · Dist 500 mm · Elev 30°)으로 자세를 계산합니다. 대상 중심은 지금 열린 점군의 중심입니다(없으면 원점).</li>
-  <li>이 카메라의 기존 로봇 스텝을 지우고 "카메라-번호 Top / Side-k (θ°)" 같은 이름의 빈 스텝을 만듭니다. 상태줄에 "N개 웨이포인트 생성됨" 이 나옵니다.</li>
+  <li>이 카메라의 기존 로봇 스텝을 지우고 "카메라-번호 Top / Side-k (θ°)" 같은 이름의 빈 스텝을 만듭니다. 번호는 같은 카메라의 기존 스텝 뒤부터 매겨져 겹치지 않습니다. 상태줄에 "N개 웨이포인트 생성됨" 이 나옵니다.</li>
 </ol>
 <figure><img src="figs/ext/vs_waypoint_steps.png" data-width="300" alt="웨이포인트 스텝을 만든 뒤 — Steps 목록에 Top · Side-1~4 스텝이 생기고, 위에 Robot MultiView 줄과 [Setup] 이 나타납니다"><figcaption>웨이포인트 스텝을 만든 뒤 — Steps 목록에 Top · Side-1~4 스텝이 생기고, 위에 Robot MultiView 줄과 [Setup] 이 나타납니다</figcaption></figure>
 <p>Pattern 은 Ring · TopPlusRing · Hemisphere 중 고릅니다(Custom 은 만들지 않음). 스텝 정보의 <strong>로봇 노드 번호</strong>는 로봇이 보내오는 노드 번호와 스텝을 짝지을 때 씁니다 — 비워 두면 스텝 순서로 맞춥니다.</p>
@@ -1365,11 +1411,12 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
   <li>먼저 설정 마법사 2 단계 고급 설정에 MLOps 서버 주소와 라인 토큰을 넣어 둡니다(<a class="ref" href="#appsetup-s2">§3.3</a>). 없으면 "레지스트리 설정 없음" 안내가 뜹니다.</li>
   <li>[레지스트리…] → "레지스트리에서 모델 고르기" 창 왼쪽 [모델] 에서 계열을 고릅니다(그 도구의 작업 유형만 나옴).</li>
   <li>[무엇을 가리킬까요] 에서 <strong>지금 운영 중인 버전</strong>(단계 production · staging · candidate 중 선택 — 승격 · 롤백하면 도구도 따라감) 또는 <strong>특정 버전 고정</strong>(버전 목록에서 하나 — 언제 열어도 같은 파일)을 고릅니다.</li>
-  <li>[저장될 값] 에 <code>model://…</code> 가 보이면 [선택] 을 누르고 레시피를 저장합니다.</li>
+  <li>[저장될 값] 에 <code>model://…</code> 가 보이면 [선택] 을 누릅니다. 창이 그 모델을 먼저 내려받은 뒤("선택한 모델을 내려받는 중…") 닫히므로 바로 실행해 볼 수 있습니다. 받지 못하면 창이 닫히지 않고 "모델을 내려받지 못했습니다: 사유" 가 표시됩니다.</li>
+  <li>레시피를 저장합니다.</li>
 </ol>
 <figure><img src="figs/ext/vs_registry_stage.png" data-width="560" alt="레지스트리에서 모델 고르기 — 지금 운영 중인 버전(production). 저장될 값 model://계열ID@production"><figcaption>레지스트리에서 모델 고르기 — 지금 운영 중인 버전(production). 저장될 값 model://계열ID@production</figcaption></figure>
 <figure><img src="figs/ext/vs_registry_pinned.png" data-width="560" alt="같은 창에서 특정 버전 고정 — v2(운영)을 고르면 저장될 값이 model://계열ID@2 가 됩니다 (그림의 모델 목록은 시연용)"><figcaption>같은 창에서 특정 버전 고정 — v2(운영)을 고르면 저장될 값이 model://계열ID@2 가 됩니다 (그림의 모델 목록은 시연용)</figcaption></figure>
-<p>라인 PC 는 레시피를 열 때 참조를 풀어 모델을 내려받아 두고, 검사 중에는 받아 둔 파일만 씁니다. 승격한 모델을 쓰려면 라인에서 레시피를 다시 엽니다. 자세한 흐름은 9장과 MLOps 매뉴얼의 <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-binding">라인에 모델 걸기</a>에 있습니다.</p>
+<p>VisionSetup 은 레시피를 열 때, 라인 PC 의 VMS 는 레시피를 불러올 때(사이드 패널 [Load] · 작업지시 선택 · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 레시피 변경 · 외부 변경 재로드 · 새 레시피 · 가져오기) 참조를 풀어 모델을 내려받아 두고, 검사 중에는 받아 둔 파일만 씁니다. 받아 둔 모델은 MLOps 서버가 꺼져 있어도(VMS 를 다시 시작한 직후 포함) 그대로 씁니다. 받지 못하면 운전은 막히지 않고 System Log 에 "모델 참조 준비 실패" 경고가 남으며, 그 모델을 쓰는 도구는 받을 때까지 NG 입니다. 승격한 모델로 바꾸려면 라인에서 레시피를 다시 불러옵니다. 자세한 흐름은 9장과 MLOps 매뉴얼의 <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-binding">라인에 모델 걸기</a>에 있습니다.</p>
 </section>
 
 <section id="tools">
@@ -1389,7 +1436,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <p><strong>결과 값</strong> — BlurType · KernelSize · ROI (판정 없음, 항상 성공)</p>
 <ul>
 <li>Kernel Size 는 3~7 에서 시작해 잡음이 사라질 때까지만 키우세요. 너무 크면 검사 대상의 엣지까지 흐려집니다.</li>
-<li>Use ROI 를 켜면 ROI 안쪽만 흐리게 하고 바깥은 그대로 둡니다.</li>
+<li>Use ROI 를 켜면 ROI 안쪽만 처리하고, 결과 이미지의 ROI 바깥은 검게 채워집니다. 뒤 도구도 이 결과 이미지를 받으므로 바깥이 필요하면 ROI 를 넓힙니다.</li>
 </ul>
 <h4>Morphology — 형태학 연산 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-6-2</span></h4>
 <p>이진화(또는 그레이) 이미지에 침식 · 팽창 등 형태학 연산을 적용합니다. Blob 검출 전에 작은 잡음을 지우거나, 끊어진 영역을 잇거나, 구멍을 메울 때 씁니다.</p>
@@ -1405,6 +1452,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <ul>
 <li>점 모양 잡음을 지우려면 Open, 글자나 마킹의 끊김을 이으려면 Close 를 먼저 시도하세요.</li>
 <li>Threshold → Morphology → Blob 순서가 기본 구성입니다.</li>
+<li>Use ROI 를 켜면 ROI 안쪽만 처리하고, 결과 이미지의 ROI 바깥은 검게 채워집니다. 뒤 도구도 이 결과 이미지를 받으므로 바깥이 필요하면 ROI 를 넓힙니다.</li>
 </ul>
 <h4>Image Enhance — 선명도 보정 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-6-3</span></h4>
 <p>Sharpen 또는 Unsharp Mask 로 이미지 선명도를 높입니다. 흐릿한 마킹이나 작은 글자를 OCR · Code Reader 로 읽기 전에 두면 인식률이 올라갑니다.</p>
@@ -1420,6 +1468,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <p><strong>결과 값</strong> — Success (판정 없음)</p>
 <ul>
 <li>인쇄 글자가 번져 보이는 라벨은 Image Enhance → OCR 로 연결해 보세요.</li>
+<li>Use ROI 를 켜면 ROI 안쪽만 처리하고, 결과 이미지의 ROI 바깥은 검게 채워집니다. 뒤 도구도 이 결과 이미지를 받으므로 바깥이 필요하면 ROI 를 넓힙니다.</li>
 </ul>
 <h4>Polar Unwrap — 극좌표 펼치기 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-6-4</span></h4>
 <p>캡 · 약병 · 파이프처럼 둥근 표면에 둘러 인쇄된 라벨을 극좌표 변환으로 직사각형 띠로 펼칩니다. 펼친 이미지를 OCR 이나 Code Reader 에 연결하면 곡면 글자를 읽을 수 있습니다.</p>
@@ -1446,6 +1495,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <p><strong>결과 값</strong> — Width · Height · Channels (판정 없음, 파라미터 없음)</p>
 <ul>
 <li>컬러 정보로 검사해야 하는 도구(Color Extract · Color Match)는 이 도구 앞에서 원본 이미지를 연결하세요.</li>
+<li>Use ROI 를 켜면 ROI 안쪽만 처리하고, 결과 이미지의 ROI 바깥은 검게 채워집니다. 뒤 도구도 이 결과 이미지를 받으므로 바깥이 필요하면 ROI 를 넓힙니다.</li>
 </ul>
 <h4>Threshold — 이진화 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-6-6</span></h4>
 <p>임계값을 기준으로 이미지를 흰색(255)과 검은색(0)으로 나눕니다. 밝기 차이로 대상과 배경을 분리해 Blob 검출로 넘기는 가장 기본적인 전처리입니다. 출력 마스크는 PointCloud Mask Crop 에 연결해 3D 점군을 자를 때도 씁니다.</p>
@@ -1455,14 +1505,16 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Threshold Value</td><td>128 [0~255] (Web 연동 가능)</td><td>이 값보다 밝은 픽셀이 흰색이 됩니다</td></tr>
 <tr><td>Max Value</td><td>255 [0~255]</td><td>흰색으로 칠할 값(보통 255)</td></tr>
+<tr><td>Threshold Type</td><td>Binary (Binary · BinaryInv · Trunc · ToZero · ToZeroInv)</td><td>이진화 방식. Binary 는 임계값보다 밝으면 흰색, <strong>BinaryInv</strong> 는 반대 — 밝은 바탕의 어두운 대상(구멍 · 글자)을 흰색으로 만들 때 씁니다. Trunc · ToZero · ToZeroInv 는 이진이 아닌 잘라내기 방식</td></tr>
 <tr><td>Use Otsu</td><td>해제</td><td>히스토그램에서 임계값을 자동으로 정합니다. 밝기 분포가 두 봉우리인 이미지에 효과적</td></tr>
 <tr><td>Use Adaptive</td><td>해제</td><td>국소 영역마다 임계값을 정합니다. 조명이 고르지 않은 이미지에 효과적</td></tr>
 <tr><td>Block Size / Constant C</td><td>11 / 2</td><td>Adaptive 전용 — 국소 블록 크기(홀수)와 평균에서 뺄 상수</td></tr>
 </table>
 <p><strong>결과 값</strong> — ThresholdValue · WhitePixelCount · WhitePixelRatio (판정 없음)</p>
 <ul>
-<li>실행 후 이미지 소스를 Result Image 로 바꾸면 이진화 결과를 바로 볼 수 있습니다. 대상이 하얗게, 배경이 검게 나오도록 값을 맞추세요.</li>
+<li>실행 후 이미지 소스를 Result Image 로 바꾸면 이진화 결과를 바로 볼 수 있습니다. 대상이 하얗게, 배경이 검게 나오도록 값을 맞추세요 — 대상이 바탕보다 어두우면 Threshold Type 을 BinaryInv 로 둡니다.</li>
 <li>조명이 가장자리에서 어두워지면 Use Adaptive 를 켜 보세요.</li>
+<li>Use ROI 를 켜면 ROI 안쪽만 처리하고, 결과 이미지의 ROI 바깥은 검게 채워집니다. 뒤 도구도 이 결과 이미지를 받으므로 바깥이 필요하면 ROI 를 넓힙니다.</li>
 </ul>
 <h4>Edge Detection — 에지 검출 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-6-7</span></h4>
 <p>이미지에서 경계선(에지)만 남깁니다. 윤곽 형상 분석이나 직선 · 원 피팅의 전처리로 씁니다.</p>
@@ -1472,12 +1524,13 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Method</td><td>Canny (Canny · Sobel · Scharr · Laplacian)</td><td>Canny 가 가장 범용. Sobel · Scharr 는 방향성 1 차 미분, Laplacian 은 2 차 미분</td></tr>
 <tr><td>Canny Threshold 1 / 2</td><td>50 / 150 [0~255]</td><td>낮은 임계(에지 연결) / 높은 임계(강한 에지 판정)</td></tr>
-<tr><td>Aperture Size</td><td>3 [3~7]</td><td>Sobel 커널 크기</td></tr>
+<tr><td>Aperture Size</td><td>3 [3~7]</td><td>Canny 가 밝기 기울기를 계산할 때 쓰는 커널 크기(3 · 5 · 7). Sobel · Scharr 의 커널 크기는 화면에서 바꾸지 않습니다</td></tr>
 <tr><td>L2 Gradient</td><td>해제</td><td>더 정확한 L2 노름 사용(느림)</td></tr>
 </table>
 <p><strong>결과 값</strong> — EdgePixelCount · EdgePixelRatio (판정 없음)</p>
 <ul>
 <li>Threshold 2 를 올리면 약한 에지가 사라지고, Threshold 1 을 내리면 끊긴 에지가 이어집니다. 보통 1:2~1:3 비율로 둡니다.</li>
+<li>Use ROI 를 켜면 ROI 안쪽만 처리하고, 결과 이미지의 ROI 바깥은 검게 채워집니다. 뒤 도구도 이 결과 이미지를 받으므로 바깥이 필요하면 ROI 를 넓힙니다.</li>
 </ul>
 <h4>Histogram — 히스토그램 분석 · 평활화 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-6-8</span></h4>
 <p>이미지 밝기 분포를 분석하거나 대비를 개선합니다. 조명이 약해 대비가 낮은 이미지에 Equalize · CLAHE 를 적용하면 후속 검출이 안정됩니다. 분석 모드의 평균 · 표준편차는 조명 상태 감시에 쓸 수 있습니다.</p>
@@ -1492,6 +1545,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <p><strong>결과 값</strong> — MinValue · MaxValue · MeanValue · StdDev (판정 없음)</p>
 <ul>
 <li>MeanValue 를 Run Results 에서 꾸준히 보면 조명이 어두워지는 추세를 알아챌 수 있습니다. <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 에 매핑하면 PLC 에서 감시할 수 있습니다.</li>
+<li>Use ROI 를 켜면 ROI 안쪽만 처리하고, 결과 이미지의 ROI 바깥은 검게 채워집니다. 뒤 도구도 이 결과 이미지를 받으므로 바깥이 필요하면 ROI 를 넓힙니다.</li>
 </ul>
 <h3 id="tools-3">6.3 Pattern Matching — 패턴 매칭</h3>
 <h4>Feature Match — 특징(에지) 기반 패턴 매칭 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-6-9</span></h4>
@@ -1511,9 +1565,9 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <tr><td>Train Mask · [Edit Mask...] [Clear Mask]</td><td>—</td><td>그림자 · 날짜 각인 · 반사처럼 이미지마다 달라지는 영역을 학습에서 제외(빨간 영역)</td></tr>
 <tr><td>[안정 특징 정제 (샘플 이미지)...]</td><td>—</td><td>현장 이미지 2 장 이상을 골라 흔들리는 에지를 자동으로 마스크에 추가하고 재학습</td></tr>
 <tr><td>Pose Judgment — Use Angle / Scale Judgment · Lower/Upper Limit</td><td>해제 / −180~180° / 0.9~1.1 (Web 연동 가능)</td><td>찾긴 했는데 기울었거나 크기가 다르면 NG 로 걸러냅니다</td></tr>
-<tr><td>Search Range — Angle Start / Extent · Min / Max Scale</td><td>−45 / 90° · 0.9 / 1.1</td><td>탐색할 회전 · 크기 범위. 아무 방향으로나 놓이면 Start −180 · Extent 360</td></tr>
-<tr><td>Accuracy / Speed — Angle Step · Scale Step · Greediness · Num Levels · NMS Distance</td><td>1° · 0.05 · 0.8 · 3 · 0.5</td><td>탐색 간격(작을수록 정밀 · 느림), 탐욕도(1 에 가까울수록 빠르나 놓칠 수 있음), 피라미드 레벨, 중복 검출 억제 거리</td></tr>
-<tr><td>Edge Config — Canny Low / High · Max Points · Curvature Weight</td><td>50 / 150 · 200 · 0.4</td><td>학습 에지 추출 임계, 특징점 상한(Auto Tune 시 자동), 곡률 가중</td></tr>
+<tr><td>Search Range — Angle Start / Extent · Min / Max Scale</td><td>−45 / 90° · 0.9 / 1.1</td><td>탐색할 회전 · 크기 범위. 아무 방향으로나 놓이면 Start −180 · Extent 360 <em>(Expert Mode 를 켜야 보임)</em></td></tr>
+<tr><td>Accuracy / Speed — Angle Step · Scale Step · Greediness · Num Levels · NMS Distance</td><td>1° · 0.05 · 0.8 · 3 · 0.5</td><td>탐색 간격(작을수록 정밀 · 느림), 탐욕도(1 에 가까울수록 빠르나 놓칠 수 있음), 피라미드 레벨, 중복 검출 억제 거리 <em>(Expert Mode 를 켜야 보임)</em></td></tr>
+<tr><td>Edge Config — Canny Low / High · Max Points · Curvature Weight</td><td>50 / 150 · 200 · 0.4</td><td>학습 에지 추출 임계, 특징점 상한(Auto Tune 시 자동), 곡률 가중 <em>(Expert Mode 를 켜야 보임)</em></td></tr>
 <tr><td>Search Region · [Draw Search Region] [Clear] · X Y W H</td><td>해제</td><td>탐색 영역 제한 — 속도 향상</td></tr>
 </table>
 <p><strong>결과 값</strong> — Score · CenterX · CenterY · Angle · Scale · Coverage · MatchCount · Match{i}_Score/CenterX/CenterY/Angle/Scale/Coverage. 1 순위 매칭이 CenterX/Y · Angle 에 실려 Fixture · Match Align 연결에 쓰입니다</p>
@@ -1532,12 +1586,12 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Template · [Train Template] [Clear Template]</td><td>—</td><td>이미지를 열고 Training Region 을 그린 뒤 [Train Template] 으로 학습. Status 에 학습 상태 표시</td></tr>
-<tr><td>Angle Step (°)</td><td>5 [0.5~30]</td><td>회전 탐색 간격. 2° 정밀 · 5° 균형 · 10° 이상 빠름</td></tr>
-<tr><td>Min / Max Scale · Scale Step</td><td>0.8 / 1.2 · 0.1</td><td>크기 탐색 범위와 간격. 1.0/1.0 이면 크기 탐색 없이 가장 빠름</td></tr>
+<tr><td>Angle Step (°)</td><td>5 [0.5~30]</td><td>회전 탐색 간격. 2° 정밀 · 5° 균형 · 10° 이상 빠름 <em>(Expert Mode 를 켜야 보임)</em></td></tr>
+<tr><td>Min / Max Scale · Scale Step</td><td>0.8 / 1.2 · 0.1</td><td>크기 탐색 범위와 간격. 1.0/1.0 이면 크기 탐색 없이 가장 빠름 <em>(Expert Mode 를 켜야 보임)</em></td></tr>
 <tr><td>Score Threshold</td><td>0.7 [0~1]</td><td>이 점수 이상이면 검출</td></tr>
 <tr><td>Max Instances · NMS Distance Factor</td><td>1 · 0.5</td><td>다중 검출 개수 상한과 중복 억제 거리</td></tr>
 <tr><td>Pose Judgment — Angle / Scale Limit</td><td>해제 (Web 연동 가능)</td><td>각도 · 크기 판정</td></tr>
-<tr><td>Pyramid Levels · Top Candidates to Refine</td><td>2 · 3</td><td>피라미드 단계(높을수록 빠름, 작은 객체 위험)와 정밀화할 상위 후보 수</td></tr>
+<tr><td>Pyramid Levels · Top Candidates to Refine</td><td>2 · 3</td><td>피라미드 단계(높을수록 빠름, 작은 객체 위험)와 정밀화할 상위 후보 수 <em>(Expert Mode 를 켜야 보임)</em></td></tr>
 <tr><td>Search Region · X Y W H</td><td>해제</td><td>탐색 영역 제한. Fixture 연결 시 이 영역도 함께 옮겨집니다</td></tr>
 </table>
 <p><strong>결과 값</strong> — Score · CenterX · CenterY · Angle · Scale · MatchWidth · MatchHeight · MatchCount · Match{i}_…</p>
@@ -1557,7 +1611,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <tr><td>Use Trained Reference</td><td>켬</td><td>Feature Match 학습 시점의 패턴 중심 · 학습 ROI 각도를 기준으로 씁니다. 끄면 아래 Ref 값 사용</td></tr>
 <tr><td>Ref X / Ref Y (px) · Ref θ (°) · Ref X2 / Y2</td><td>0</td><td>수동 기준. [현재 매칭을 기준으로 등록] 으로 지금 매칭 위치를 기준으로 캡처</td></tr>
 <tr><td>Enable Judgment · Unit · Max ΔXY (radial) · Max Δθ (°)</td><td>해제 · Mm · 1.0 · 1.0</td><td>√(ΔX²+ΔY²) 와 |Δθ| 가 모두 한계 이내면 OK. Unit=Mm 은 캘리브레이션 또는 스텝 Resolution 필요</td></tr>
-<tr><td>Enable <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>Robot Transform · M11 M21 M12 M22 · θ Sign</td><td>해제 · 1 0 0 1 · 1</td><td><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>핸드아이 행렬의 상위 2×2(회전 · 스케일 · 반전)와 각도 부호. Δ 는 벡터라 병진 성분은 필요 없습니다</td></tr>
+<tr><td>Enable <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>Robot Transform · M11 M21 M12 M22 · θ Sign</td><td>해제 · 1 0 0 1 · 1</td><td><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>핸드아이 행렬의 상위 2×2(회전 · 스케일 · 반전)와 각도 부호. Δ 는 벡터라 병진 성분은 필요 없습니다 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-6-42</span></td></tr>
 <tr><td>Draw Overlay</td><td>켬</td><td>기준(노란 십자) → 현재(원) 변위 화살표와 수치. 초록 = 합격, 빨강 = NG</td></tr>
 </table>
 <p><strong>결과 값</strong> — RefX/Y/Theta · CurrentX/Y/Theta · DeltaX · DeltaY · DeltaTheta · DeltaXMm · DeltaYMm · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>RobotDX · RobotDY · RobotDTheta · ScaleRatio · JudgmentRadial · JudgmentPass</p>
@@ -1586,6 +1640,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <ul>
 <li>예제 템플릿 '2-스텝 얼라인' 을 쓰면 Align A · Align B 스텝과 소스 연결이 자동으로 만들어집니다. 이후 각 스텝의 Feature Match 학습 → Baseline 입력 → 기준 등록 순서로 진행하세요.</li>
 <li>카메라 이동이 반복 정밀해야 정확합니다. Baseline 은 실제 이동량을 mm 로 넣으세요.</li>
+<li>A · B 스텝을 오가며 기준을 등록해도 각 스텝의 편집은 메모리에 남습니다. 끝나면 [Save Recipe] 로 파일에 저장합니다.</li>
 </ul>
 <h3 id="tools-5">6.5 Blob Analysis — 블롭 분석</h3>
 <h4>Blob — 블롭(덩어리) 분석 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-6-13</span></h4>
@@ -1616,24 +1671,26 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <h4>Caliper — 엣지 검출 · 캘리퍼 측정 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-6-14</span></h4>
 <p>ROI 를 가로지르는 방향으로 밝기 변화를 스캔해 엣지(경계선)의 위치를 서브픽셀 정밀도로 찾습니다. 폭 측정, 엣지 간 거리, 위치 검출의 기본 도구이며, 찾은 점을 Geometry 에 Result 로 연결해 거리 · 각도를 계산하고 판정합니다.</p>
 <figure><img src="../../gs/screenshots/v3/tools/14_Caliper.png" data-width="240" alt="Caliper — 엣지 검출 · 캘리퍼 측정 설정 패널"><figcaption>Caliper — 엣지 검출 · 캘리퍼 측정 — Tool Settings 패널</figcaption></figure>
-<figure><img src="../../gs/screenshots/v3/scenes/Caliper.jpg" data-width="620" alt="Caliper — 엣지 검출 · 캘리퍼 측정 실행 예"><figcaption>실행 예 — 막대의 폭을 엣지 쌍(EdgePair)으로 측정 — 141.11 px(캘리브레이션 적용 8.051 mm)</figcaption></figure>
+<figure><img src="../../gs/screenshots/v3/scenes/Caliper.jpg" data-width="620" alt="Caliper — 엣지 검출 · 캘리퍼 측정 실행 예"><figcaption>실행 예 — 막대의 폭을 엣지 쌍(EdgePair)으로 측정 — 141.11 px(캘리브레이션 적용 8.051 mm). Expected Width 를 막대 폭 가까이 넣은 레시피입니다</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Projection Width</td><td>20 [1~200]</td><td>스캔 라인에 수직인 방향의 폭. 클수록 잡음에 강하지만 가는 엣지를 놓칠 수 있습니다</td></tr>
-<tr><td>Search Axis</td><td>AlongWidth (AlongWidth · AlongHeight)</td><td>ROI 의 어느 축을 따라 탐색할지. 화면의 화살표가 실제 탐색 방향입니다</td></tr>
+<tr><td>Search Axis</td><td>AlongWidth (AlongWidth · AlongHeight)</td><td>ROI 의 어느 축을 따라 탐색할지. 화면의 화살표가 실제 탐색 방향입니다 <em>(Expert Mode 를 켜야 보임)</em></td></tr>
 <tr><td>Polarity</td><td>DarkToLight (DarkToLight · LightToDark · Any)</td><td>탐색 방향 기준 밝기 변화 극성</td></tr>
 <tr><td>Edge Threshold</td><td>30 [1~100] (Web 연동 가능)</td><td>엣지로 인정할 최소 대비. 5~20 약한 엣지, 30~60 일반, 70 이상 강한 엣지만</td></tr>
 <tr><td>Filter Half Width</td><td>2 [1~10]</td><td>평활 필터 반폭. 1~2 날카로운 엣지, 4~10 잡음 많은 이미지</td></tr>
 <tr><td>Mode</td><td>SingleEdge (SingleEdge · EdgePair)</td><td>엣지 1 개 / 반대 극성의 엣지 쌍 사이 폭(Width) 측정</td></tr>
-<tr><td>Max Edges · Scorer Mode · Edge Selection</td><td>10 · MaxContrast · Best</td><td>후보 엣지 수 상한, 점수 방식(대비 우선 · 중앙 근접 · 종합 · 사용자 가중), 선택 기준(최고 점수 · 첫 · 마지막)</td></tr>
+<tr><td>Edge Pair Width — Expected Width (px) · Width Tolerance (±px)</td><td>50 · 20 (각각 Web 연동 가능)</td><td>Mode 가 EdgePair 일 때만 씁니다. 두 엣지 사이 거리가 기대 폭 ± 허용 오차 안인 쌍만 채택하고 기대 폭에 가까운 쌍을 고릅니다. 실제 폭이 이 범위 밖이면 "Edge Pair를 찾을 수 없습니다" 로 실패하므로 재려는 폭에 맞게 넣습니다</td></tr>
+<tr><td>Max Edges · Scorer Mode · Edge Selection</td><td>10 · MaxContrast · Best</td><td>후보 엣지 수 상한, 점수 방식(대비 우선 · 중앙 근접 · 종합 · 사용자 가중), 선택 기준(최고 점수 · 첫 · 마지막) <em>(Expert Mode 를 켜야 보임)</em></td></tr>
 <tr><td>Projection Mode · Gaussian Filter · Sigma · Normalized Contrast · Sub-Pixel Method</td><td>Uniform · 켬 · 1.0 · 해제 · Parabolic</td><td>투영 방식, 가우시안 평활(고정밀 권장), 조명 불균일 보정, 서브픽셀 보간 방법(Parabolic · Gaussian · Quartic5Point)</td></tr>
 </table>
 <p><strong>결과 값</strong> — EdgeX · EdgeY · EdgeScore · Width · Edge1X/Y · Edge2X/Y · CenterX/Y · EdgeCount 와 mm 환산 키(EdgeXMm · WidthMm …)</p>
-<p><strong>판정</strong> — 자체 공차 판정은 없습니다. 엣지를 찾지 못하면 실패. 치수 판정은 Geometry 에서 합니다.</p>
+<p><strong>판정</strong> — 자체 치수 공차 판정은 없습니다. 엣지를 찾지 못하면(EdgePair 는 기대 폭 ± 허용 오차 안의 쌍이 없으면) 실패. 치수 판정은 Geometry 에서 합니다.</p>
 <ul>
 <li>ROI 를 엣지에 직각으로, 엣지가 ROI 가운데쯤 오도록 그리세요. 화살표 방향과 Polarity 를 맞추는 것이 첫 번째 확인 사항입니다.</li>
 <li>엣지가 흔들리면 Projection Width 와 Filter Half Width 를 키우거나 Gaussian Filter 를 켭니다.</li>
 <li>Fixture 연결로 각도가 넘어오면 스캔 축도 함께 기울어집니다.</li>
+<li>아래 실행 예는 Mode 를 EdgePair 로 두고 Expected Width 를 막대 폭(약 141 px)에 가깝게, Width Tolerance 를 그 둘레로 넣은 결과입니다. 기본값(50 ± 20 px)으로는 이 막대의 엣지 쌍을 채택하지 않습니다.</li>
 </ul>
 <h4>Line Fit — 직선 피팅 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-6-15</span></h4>
 <p>기준선을 따라 여러 개의 캘리퍼를 배치해 엣지 점들을 찾고 직선을 피팅합니다. 직선 엣지의 위치 · 각도 측정, 정렬 검사, Geometry 의 직선 입력에 씁니다.</p>
@@ -1642,10 +1699,12 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Num Calipers</td><td>10 [2~50]</td><td>기준선을 따라 균등 배치할 캘리퍼 수. 5~20 권장</td></tr>
+<tr><td>Search Axis</td><td>AlongWidth (AlongWidth · AlongHeight)</td><td>캘리퍼가 엣지를 찾는 방향. 세로로 선 엣지(왼 · 오른쪽 변)는 AlongWidth, 가로로 누운 엣지(윗 · 아랫변)는 AlongHeight 로 바꿔야 찾습니다. 화면의 화살표가 탐색 방향입니다</td></tr>
 <tr><td>Search Length · Search Width</td><td>50 · 5</td><td>기준선에 수직인 탐색 거리 / 기준선 방향 투영 폭</td></tr>
 <tr><td>Polarity · Edge Threshold · Filter Half Width</td><td>DarkToLight · 30 (Web 연동 가능) · 2</td><td>Caliper 와 동일</td></tr>
-<tr><td>Fit Method · RANSAC Threshold</td><td>LeastSquares (LeastSquares · RANSAC) · 5.0 px</td><td>최소제곱(빠름) / RANSAC(이상치 · 부분 가림에 강함)과 이상치 거리</td></tr>
-<tr><td>Min Found Calipers</td><td>3 [2~20]</td><td>유효 엣지가 이보다 적으면 피팅 실패</td></tr>
+<tr><td>Edge Selection</td><td>First (First · Last · Best)</td><td>캘리퍼마다 후보 엣지가 여럿일 때 첫 엣지 · 마지막 엣지 · 대비가 가장 큰 엣지 중 무엇을 쓸지</td></tr>
+<tr><td>Fit Method · RANSAC Threshold</td><td>LeastSquares (LeastSquares · RANSAC) · 5.0 px</td><td>최소제곱(빠름) / RANSAC(이상치 · 부분 가림에 강함)과 이상치 거리 <em>(Expert Mode 를 켜야 보임)</em></td></tr>
+<tr><td>Min Found Calipers</td><td>3 [2~20]</td><td>유효 엣지가 이보다 적으면 피팅 실패 <em>(Expert Mode 를 켜야 보임)</em></td></tr>
 </table>
 <p><strong>결과 값</strong> — FoundCount · LineAngle · LinePointX/Y · FitError · InlierCount</p>
 <p><strong>판정</strong> — 유효 캘리퍼가 Min Found Calipers 미만이면 실패. 각도 · 거리 판정은 Geometry(LineLineAngle · LineLineDistance)에서.</p>
@@ -1660,9 +1719,9 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Center X / Y · Expected Radius</td><td>200 / 200 · 100 (Web 연동 가능)</td><td>예상 중심과 반지름. ROI(원)를 그리면 자동으로 채워집니다</td></tr>
 <tr><td>Num Calipers · Search Length · Search Width</td><td>16 · 50 · 5</td><td>원주를 따라 배치할 캘리퍼 수(8~36 권장)와 반경 방향 탐색 거리 · 접선 방향 폭</td></tr>
-<tr><td>Start Angle · End Angle</td><td>0 · 360</td><td>부분 원호만 볼 때 범위 지정</td></tr>
+<tr><td>Start Angle · End Angle</td><td>0 · 360</td><td>부분 원호만 볼 때 범위 지정 <em>(Expert Mode 를 켜야 보임)</em></td></tr>
 <tr><td>Search Direction · Polarity · Edge Threshold</td><td>InwardToOutward · DarkToLight · 30</td><td>중심→바깥 / 바깥→중심 탐색 방향, 극성, 대비 임계</td></tr>
-<tr><td>Fit Method</td><td>LeastSquares (LeastSquares · RANSAC)</td><td>부분 가림에는 RANSAC</td></tr>
+<tr><td>Fit Method</td><td>LeastSquares (LeastSquares · RANSAC)</td><td>부분 가림에는 RANSAC <em>(Expert Mode 를 켜야 보임)</em></td></tr>
 </table>
 <p><strong>결과 값</strong> — FoundCount · CenterX · CenterY · Radius · Diameter · FitError · InlierCount 와 mm 키(CenterXMm · RadiusMm · DiameterMm)</p>
 <p><strong>판정</strong> — 유효 캘리퍼가 부족하면 실패. 지름 공차 판정은 Geometry(CircleCircleDistance 등)나 Batch Test 의 Edit Thresholds 로.</p>
@@ -1685,6 +1744,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <li>결과 이미지 좌상단에 OK(초록) / NG(빨강) 배지가 그려집니다.</li>
 <li>각도 연산은 Unit 과 무관하게 항상 도(°)로 판정합니다.</li>
 <li>Web 에서 기준값을 관리하려면 Dimension Tool 프리셋(Reference Value · Lower/Upper Tolerance)을 연동하세요.</li>
+<li>오른쪽 Source Geometries 목록에 Result 로 연결한 도구가 보이며, 연결을 바꾸거나 실행하면 바로 갱신됩니다.</li>
 </ul>
 <h3 id="tools-7">6.7 Identification — 문자 인식 · 검증</h3>
 <h4>OCR — 문자 인식 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-6-18</span></h4>
@@ -1699,8 +1759,8 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <tr><td>Max Side Length · Custom Det/Rec Model · Custom Dict</td><td>960 · (빈 값)</td><td>PP-OCR 전용 — 입력 최대 변(작은 글씨는 1600~2000)과 직접 학습한 모델 · 사전 파일</td></tr>
 <tr><td>Confidence Threshold</td><td>40 [0~100 %]</td><td>이 신뢰도 미만이면 실패</td></tr>
 <tr><td>Auto Preprocess · Invert Image · Target Text Height · Denoise Level · Dot Matrix Mode</td><td>켬 · 해제 · 40 · 1 · 해제</td><td>Tesseract 전용 전처리 — 자동 대비 · 이진화, 흑배경 백글자 반전, 글자 높이 확대, 잡음 제거, 도트 프린트 연결</td></tr>
-<tr><td>Format Preset · Custom Patterns</td><td>None</td><td>출력 형식 강제 — DD/MM/YYYY, YYYY-MM-DD, LOT 6~8 자리, 직접 입력. 토큰 D/M/Y/H/S/f=숫자, L=영문, A=영숫자, ?=임의, 그 외 문자는 리터럴로 치환(‘/’↔‘7’ 오인식 보정)</td></tr>
-<tr><td>Enable Verification · Expected Text · Use Regex Match</td><td>해제 · (빈 값) · 해제</td><td>기대 문자열(또는 정규식)과 비교해 판정</td></tr>
+<tr><td>Format Preset · Custom Patterns</td><td>None</td><td>출력 형식 강제 — DD/MM/YYYY, YYYY-MM-DD, LOT 6~8 자리, 직접 입력. 토큰 D/M/Y/H/S/f=숫자, L=영문, A=영숫자, ?=임의, 그 외 문자는 리터럴로 치환(‘/’↔‘7’ 오인식 보정) <em>(Expert Mode 를 켜야 보임)</em></td></tr>
+<tr><td>Enable Verification · Expected Text · Use Regex Match</td><td>해제 · (빈 값) · 해제</td><td>기대 문자열(또는 정규식)과 비교해 판정 <em>(Expert Mode 를 켜야 보임)</em></td></tr>
 <tr><td>Draw Overlay · Tessdata Path</td><td>켬 · (빈 값)</td><td>단어별 박스 · 신뢰도 표시 / Tesseract 데이터 폴더(비우면 자동)</td></tr>
 </table>
 <p><strong>결과 값</strong> — RecognizedText · RawText · FormatMatched · MatchedPattern · Confidence · WordCount · Words · WordConfidences · VerificationPass</p>
@@ -1721,13 +1781,14 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <tr><td>Invert Image · Min/Max Char Height · Min Char Width</td><td>해제 · 12 / 200 · 4 (px)</td><td>이진화 극성과 글자 크기 필터(잡음 · 배경 제외)</td></tr>
 <tr><td>Match Threshold</td><td>0.65 [0~1]</td><td>문자별 NCC 점수 하한. 0.65 산업 기본, 0.80 이상 엄격, 0.50 이하 관대</td></tr>
 <tr><td>Expected Text (optional)</td><td>(빈 값)</td><td>지정하면 위치별 문자 비교와 길이 일치까지 판정</td></tr>
-<tr><td>Use Search Region · X Y W H</td><td>해제</td><td>학습 위치와 다른 곳에서 검증할 때 탐색 영역 지정. Fixture 연결 시 함께 이동</td></tr>
+<tr><td>Use Search Region · X Y W H</td><td>해제</td><td>켜면 학습 영역 대신 이 영역에서 글자를 찾습니다(Fixture 연결 시 함께 이동). 끄면 학습 위치를 기준으로 검증합니다</td></tr>
 <tr><td>Draw Overlay</td><td>켬</td><td>분할 박스 · 인식 문자 · 점수(초록 PASS · 빨강 BadChar)</td></tr>
 </table>
 <p><strong>결과 값</strong> — ReadString · CharCount · GoodCharCount · BadCharCount · MeanScore · MinScore · AllCharsPass · LengthMatch</p>
 <p><strong>판정</strong> — 문자 하나라도 점수가 Match Threshold 미만이면 NG. Expected Text 를 지정하면 문자 · 길이 불일치도 NG.</p>
 <ul>
 <li>컨베이어 위에서 라벨 위치가 바뀌면 Feature Match → Coordinates 연결로 Search Region 을 따라가게 하세요.</li>
+<li>Use Search Region 을 끈 상태에서 학습 영역 밖으로 글자를 찾게 하면 이미지 전체에서 글자를 찾으므로, 화면 전체를 찍은 사진에서는 종이 결 · 무늬까지 글자로 잡혀 불합격이 됩니다. 글자가 학습 위치와 다른 곳에 오면 Use Search Region 을 켜고 글자 둘레만 영역으로 잡으세요.</li>
 </ul>
 <h3 id="tools-8">6.8 Code Reading — 코드 판독</h3>
 <h4>Code Reader — 바코드 · QR · DataMatrix 판독 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-6-20</span></h4>
@@ -1738,9 +1799,9 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Code Reader Mode</td><td>Auto (Auto · QRCode · Barcode1D · DataMatrix · PDF417)</td><td>코드 종류를 지정하면 빠르고 정확합니다</td></tr>
 <tr><td>Max Code Count · Try Harder · DM Candidate Localization</td><td>10 · 켬 · 켬</td><td>한 화면 판독 개수 상한, 정밀 탐색, DataMatrix 후보 영역 선탐색</td></tr>
-<tr><td>Enable Verification · Expected Text · Use Regex Match</td><td>해제 · (빈 값) · 해제</td><td>판독 문자열 검증(예: ^LOT-\d{6}$)</td></tr>
-<tr><td>Parse GS1 AIs</td><td>해제</td><td>GS1 코드를 (01)GTIN · (10)Batch · (17)Expiry · (21)Serial 로 분리해 Gs1_01 같은 결과 키로 노출</td></tr>
-<tr><td>Enable Grading · Min Pass Grade</td><td>해제 · F</td><td>DataMatrix 인쇄 품질 등급(ISO/IEC 15415 간소화). C 가 산업 표준 최저</td></tr>
+<tr><td>Enable Verification · Expected Text · Use Regex Match</td><td>해제 · (빈 값) · 해제</td><td>판독 문자열 검증(예: ^LOT-\d{6}$) <em>(Expert Mode 를 켜야 보임)</em></td></tr>
+<tr><td>Parse GS1 AIs</td><td>해제</td><td>GS1 코드를 (01)GTIN · (10)Batch · (17)Expiry · (21)Serial 로 분리해 Gs1_01 같은 결과 키로 노출 <em>(Expert Mode 에서 보이며 GS1 · Quality Grading 묶음은 접혀 있어 펼쳐야 보임)</em></td></tr>
+<tr><td>Enable Grading · Min Pass Grade</td><td>해제 · F</td><td>DataMatrix 인쇄 품질 등급(ISO/IEC 15415 간소화). C 가 산업 표준 최저 <em>(Expert Mode 를 켜야 보임)</em></td></tr>
 <tr><td>Draw Overlay</td><td>켬</td><td>코드 위치 폴리곤 + 문자열(초록 PASS · 빨강 FAIL), 등급 · GS1 배지</td></tr>
 </table>
 <p><strong>결과 값</strong> — DecodedText · CodeFormat · CodeCount · Gs1Formatted · Gs1_xx · OverallGrade · SymbolContrast · Modulation · PixelsPerModule · SymbolSize</p>
@@ -1756,28 +1817,29 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <figure><img src="../../gs/screenshots/v3/scenes/PCFilter.jpg" data-width="620" alt="PointCloud Filter — 점군 솎아내기 · 이상점 제거 실행 예"><figcaption>실행 예 — 프레임 점군 28,382 점을 4 mm 복셀로 솎아 5,330 점으로 줄인 결과(81.2% 감소). 뒤의 정합 · 편차 계산이 빨라집니다</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
-<tr><td>Enable Voxel Grid · Voxel Size (mm)</td><td>켬 · 1.0 [0.05~20]</td><td>같은 격자 안의 점을 하나로 합칩니다. 0.1~0.5 정밀(작은 부품), 1.0 일반, 2~5 속도 우선</td></tr>
+<tr><td>Enable Voxel Grid · Voxel Size (mm)</td><td>켬 · 1.0 [0.05~20]</td><td>같은 격자 안의 점을 하나로 합칩니다. 3D 카메라로 찍은 점군은 X · Y 가 화소 간격이라 1.0 처럼 작은 값으로는 줄어드는 점이 거의 없습니다 — 4 정도부터 크게 줄어듭니다(실행 예: 4 mm 로 81 % 감소). ReductionRatio 를 보며 정합니다</td></tr>
 <tr><td>Enable SOR · Neighbor Count (K) · Stddev Multiplier</td><td>해제 · 30 · 2.0</td><td>통계적 이상점 제거. 큰 점군에서는 시간이 오래 걸리므로 VoxelGrid 로 먼저 솎아낸 뒤 켭니다</td></tr>
 </table>
 <p><strong>결과 값</strong> — InputPoints · OutputPoints · ReductionRatio · AppliedVoxel · AppliedSor</p>
 <p><strong>판정</strong> — 판정 없음. ReductionRatio 가 0.9 이상이면 Voxel Size 가 과한지 확인하세요.</p>
 <ul>
-<li>가공된 점군은 뒤의 점군 도구(Registration · Deviation · Cluster · Plane Fit)가 그대로 쓰지만, 촬영 시 만들어진 Depth Map(Height Slicer 입력)에는 반영되지 않습니다.</li>
+<li>청소된 점군은 뒤의 점군 도구(Mask Crop · Cluster · Registration · Deviation · PointCloud Line Fit)가 씁니다. Height Slicer · Plane Fit 은 깊이 맵을 읽으므로 이 결과가 반영되지 않습니다.</li>
 </ul>
 <h4>PointCloud Registration — 기준 형상 정합 (3D 얼라인) <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-6-22</span></h4>
 <p>기준 3D 데이터(.vpc 점군 또는 .stl CAD)와 현재 점군을 겹쳐 맞춥니다. PCA 로 거칠게 맞춘 뒤 ICP 로 정밀 정합해 이동 · 회전량(6 축)을 구하며, 부품이 매번 조금씩 다르게 놓일 때 자세를 재거나 편차 검사 앞단에서 자세를 맞출 때 씁니다.</p>
 <figure><img src="figs/split/22_PointCloud_Registration_split.png" data-width="500" alt="PointCloud Registration — 기준 형상 정합 (3D 얼라인) 설정 패널"><figcaption>PointCloud Registration — 기준 형상 정합 (3D 얼라인) — Tool Settings 패널</figcaption></figure>
-<figure><img src="../../gs/screenshots/v3/scenes/PCRegistration.jpg" data-width="620" alt="PointCloud Registration — 기준 형상 정합 (3D 얼라인) 실행 예"><figcaption>실행 예 — −44° 돌아가 놓인 프레임을 기준 점군에 정합 — 회전 RotationZ −44.06°, 평균 오차 2.736 mm, 신뢰도 0.697 이 하한 0.3 이상이라 OK</figcaption></figure>
+<figure><img src="../../gs/screenshots/v3/scenes/PCRegistration.jpg" data-width="620" alt="PointCloud Registration — 기준 형상 정합 (3D 얼라인) 실행 예"><figcaption>실행 예 — −44° 돌아가 놓인 프레임을 기준 점군에 정합 — 회전 RotationZ −44.06°, 평균 오차 2.736 mm, 신뢰도 0.697 이 하한 0.3 이상이라 OK(이 레시피는 Confidence Distance 3 mm · Min Confidence 0.3 · Coarse Alignment 끔)</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Reference Point Cloud · [Save Current as Reference] [Load...] [Clear]</td><td>(없음)</td><td>현재 점군을 기준으로 저장하거나 .vpc / .stl 파일을 불러옵니다(STL 은 표면을 약 20만 점으로 샘플링)</td></tr>
 <tr><td>Enable Coarse Alignment</td><td>켬</td><td>회전 없이 맞춘 자세와 주축을 맞춘 자세를 함께 맞춰 보고 신뢰도가 높은 쪽을 씁니다. 정합 시간이 2~4배 늘어납니다(3만 점 원본 기준 약 3초) — 사이클 시간이 빠듯하면 앞에 Filter(VoxelGrid)를 두세요. 구 · 정육면체처럼 완전 대칭인 물체는 자세를 가를 수 없습니다</td></tr>
 <tr><td>Max Iterations · Tolerance (mm)</td><td>50 · 0.01</td><td>ICP 반복 횟수와 수렴 기준</td></tr>
-<tr><td>Confidence Distance (mm)</td><td>1.0</td><td>신뢰도 계산에 쓰는 대응 거리</td></tr>
+<tr><td>Confidence Distance (mm)</td><td>1.0</td><td>신뢰도 계산에 쓰는 대응 거리 — 이 거리 안에 짝이 있는 점의 비율이 신뢰도입니다. 촬영 오차(평균 오차 MeanError)보다 작으면 제대로 맞아도 신뢰도가 낮게 나오므로, 평균 오차보다 넉넉히(예: 2~3 배) 잡습니다</td></tr>
 <tr><td>Apply Transform to Source</td><td>켬</td><td>구한 변환을 현재 점군에 적용(뒤 도구가 정렬된 점군을 봄). 변위만 필요하면 끕니다</td></tr>
+<tr><td>Enable Judgment · Min Confidence</td><td>해제 · 0.5</td><td>판정을 켜면 신뢰도가 이 값 이상일 때 OK</td></tr>
 </table>
 <p><strong>결과 값</strong> — MeanError · Iterations · Converged · Confidence · CoarseApplied · TranslationX/Y/Z · TranslationNorm · RotationX/Y/Z · M11~M44</p>
-<p><strong>판정</strong> — MeanError(mm)가 작고 Converged = True 면 성공. Confidence 0.9 이상이면 잘 맞은 것, 0.5 이하면 다른 부품이거나 정합 실패 의심.</p>
+<p><strong>판정</strong> — Enable Judgment 를 켜면 Confidence 가 Min Confidence 이상일 때 OK. 신뢰도는 Confidence Distance 에 따라 달라지므로, 양품 몇 개로 실행해 본 값을 보고 하한을 정합니다. Converged = True 이고 MeanError 가 작아야 잘 맞은 것입니다.</p>
 <ul>
 <li>템플릿 ‘표준 3D 얼라인’ 은 Filter → Registration(변환 미적용) → Result 로 6 축 변위를 내고, ‘3D 기준 형상 편차 검사’ 는 Registration → Deviation 순서입니다.</li>
 </ul>
@@ -1797,7 +1859,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <p><strong>판정</strong> — 남은 점이 0 이면 실패(점군은 바뀌지 않음). MaskCoveragePercent 가 100 에 가까우면 마스크가 아니라 일반 이미지를 연결한 것입니다.</p>
 <ul>
 <li>자동 마스크 흐름: RF-DETR-seg(Output Mask Image 켬) 또는 Threshold · Height Slicer → Image 연결 → Mask Crop → Result 연결 → PointCloud Cluster.</li>
-<li>수동 흐름: 2D 이미지를 연결하고 이 도구를 선택한 뒤 이미지 뷰에서 ROI(사각형 · 원 · 다각형)를 그립니다. 결과는 Point Cloud 탭에서 확인합니다.</li>
+<li>수동 흐름: 2D 이미지를 연결하고 이 도구를 선택한 뒤 이미지 뷰에서 ROI(사각형 · 원 · 다각형)를 그립니다. 실행하면 잘라낸 점군이 Point Cloud 탭에 보이고, 2D 이미지에는 남긴 영역이 초록으로 덧그려집니다.</li>
 </ul>
 <h4>PointCloud Cluster — 덩어리 분리 · 개수 · 치수 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-6-24</span></h4>
 <p>점군을 거리 기준으로 덩어리(클러스터)로 나눠 물체 개수를 세고 덩어리마다 크기(가로 · 세로 · 높이) · 중심 · 방향을 잽니다. 부품 개수 세기, 가장 큰 물체만 남기기, 부스러기 제거에 씁니다. 카메라 정보로 mm 환산이 가능합니다.</p>
@@ -1811,9 +1873,11 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <tr><td>Scale Mode · XY Scale (mm/px)</td><td>Manual (Manual · AutoFromCamera) · 1.0</td><td>AutoFromCamera 는 <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>Mech-Mind 촬영 점군에서 카메라 내부 정보와 실측 높이로 mm/px 를 자동 계산(권장). 파일 점군 등 정보가 없으면 XY Scale 로 폴백</td></tr>
 <tr><td>Output Mode</td><td>LargestOnly (LargestOnly · AllMerged · KeepOriginal)</td><td>가장 큰 덩어리만 남김 / 유효 덩어리 전부 합침(잡음 제거) / 점군 유지하고 측정만</td></tr>
 <tr><td>Draw Overlay</td><td>켬</td><td>2D 이미지에 덩어리별 색 점 · 외접 사각형 · 중심 · 라벨(#번호, 점 수, 길이×폭)</td></tr>
+<tr><td>Enable Judgment · Count Judgment(Count Mode · Expected Count)</td><td>해제 · 켬(Equal · 1)</td><td>판정을 켜면 덩어리 개수를 기대 개수와 비교합니다(같음 · 범위 등)</td></tr>
+<tr><td>Size Judgment — Expected Length · Expected Width · Tolerance (−) / (+)</td><td>해제 · 100 · 50 · 2 / 2 (mm)</td><td>덩어리의 길이 · 폭이 기준 ± 공차 안인지 판정합니다</td></tr>
 </table>
 <p><strong>결과 값</strong> — ClusterCount · LargestPoints · Cluster{i}_Points · Cluster{i}_CenterX/Y/Z(+Mm) · Cluster{i}_SizeX/Y/Z · Cluster{i}_Length · Cluster{i}_Width · Cluster{i}_Angle · Cluster{i}_{j}_DistanceMm</p>
-<p><strong>판정</strong> — 자체 공차 판정 없음 — 개수 · 치수는 Result 도구 또는 Batch Test 임계로 판정하고, 덩어리 간 거리 · 각도는 3D Geometry 로 계산합니다.</p>
+<p><strong>판정</strong> — Enable Judgment 를 켜면 개수 판정(기본 켬, 기대 1 개)과, 켠 경우 치수 판정을 모두 통과해야 OK. 끄면 판정 없이 측정만 합니다. 덩어리 간 거리 · 각도는 3D Geometry 로 계산합니다.</p>
 <ul>
 <li>템플릿 ‘3D 객체 카운트 · 치수 (기본)’ · ‘DL 세그 기반 3D 객체 검출’ 이 이 도구까지 연결된 체인을 만들어 줍니다.</li>
 <li>3D Geometry 의 클러스터 콤보에서 덩어리를 고르면 2D 뷰에 강조 표시됩니다.</li>
@@ -1848,8 +1912,9 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <p><strong>결과 값</strong> — MinZ · MaxZ (출력은 슬라이스된 2D 이미지)</p>
 <p><strong>판정</strong> — 판정 없음.</p>
 <ul>
-<li>3D 뷰에 슬라이스 경계가 표시됩니다. 3D → Save Height Slicing 으로 설정을 저장할 수 있습니다.</li>
+<li>Point Cloud 탭(3D 뷰)에 보이는 높이 경계는 3D 메뉴의 Height Slicing 범위(<a class="ref" href="#vs-ext">§5.13</a>)를 따르며, 이 도구의 Min Z · Max Z 와는 따로입니다. 이 도구의 결과는 2D 마스크 이미지로 확인합니다.</li>
 <li>템플릿 ‘3D 객체 카운트 · 치수 (기본)’ 에서 MinZ/MaxZ 를 부품 높이 범위에 맞추는 것이 첫 조정 항목입니다.</li>
+<li>3D 카메라 점군의 Z 는 카메라에서의 거리입니다 — 값이 클수록 멀리(바닥 쪽) 있습니다. 바닥을 빼려면 Max Z 를 바닥보다 조금 작게 둡니다.</li>
 </ul>
 <h4>Plane Fit — 평면 피팅 (평탄도 · 기울기 · 단차 기준면) <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-6-27</span></h4>
 <p>ROI 안의 3D 점들에서 평면 방정식을 구합니다. 평탄도, 기울기(두 평면 각도), 단차(점-평면 거리)의 기준면을 만들며, 결과를 3D Geometry 에 Result 로 연결해 씁니다.</p>
@@ -1861,9 +1926,10 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <tr><td>RANSAC Iterations</td><td>1000 [10~5000]</td><td>보통 200~500 이면 충분. 점군이 지저분할수록 올립니다</td></tr>
 <tr><td>RANSAC Threshold (mm)</td><td>0.5 [0.01~5]</td><td>평면에서 이 거리 안의 점을 평면 위 점으로 봅니다. 0.1 가공면, 0.5 일반, 2.0 거친 표면. 너무 작으면 실패, 너무 크면 결과가 기웁니다</td></tr>
 <tr><td>Sample Stride</td><td>2 [1~16]</td><td>점 표본 간격. 올리면 빨라지지만 작은 굴곡을 놓칠 수 있음</td></tr>
+<tr><td>Enable Judgment · Max Flatness (mm)</td><td>해제 · 0.5</td><td>평탄도(Flatness)가 이 값 이하면 OK</td></tr>
 </table>
 <p><strong>결과 값</strong> — PlaneA/B/C/D · NormalX/Y/Z · Flatness · AvgError · InlierCount · TotalPoints</p>
-<p><strong>판정</strong> — 자체 판정 없음 — 3D Geometry 로 각도 · 거리를 구해 확인합니다(<span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 옵션이면 PLC 에서 판정).</p>
+<p><strong>판정</strong> — Enable Judgment 를 켜면 평탄도가 Max Flatness 이하일 때 OK. 기울기 · 단차는 3D Geometry 로 구해 판정합니다.</p>
 <ul>
 <li>템플릿 ‘평면 틸트 얼라인’ 은 Plane Fit Ref · Plane Fit Target → 3D Geometry(PlaneToPlaneAngle) 로 구성되며 AngleDeg 0° 가 평행입니다.</li>
 </ul>
@@ -1874,11 +1940,12 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Operation</td><td>PointToPointDistance (PointToPointDistance · PointToPlaneDistance · PlaneToPlaneAngle · PlaneToPlaneDistance · PointToLineDistance3D)</td><td>계산 종류</td></tr>
-<tr><td>Point Source</td><td>수동 입력 (픽셀) (수동 · 연결 소스(클러스터))</td><td>Point A/B 의 픽셀 좌표를 직접 넣거나, Result 로 연결한 PointCloud Cluster 의 덩어리(Cluster A / Cluster B 콤보)를 고릅니다. 클러스터 도구 하나만 연결해도 A/B 두 덩어리 중심 간 거리를 잽니다</td></tr>
-<tr><td>Source Geometries</td><td>—</td><td>Result 로 연결된 Plane Fit · Cluster 목록</td></tr>
+<tr><td>Point Source</td><td>수동 입력 (픽셀) (수동 · 연결 소스(클러스터))</td><td>새로 놓은 도구는 수동 입력(픽셀)입니다. PointCloud Cluster 를 Result 로 연결했으면 <strong>연결 소스(클러스터)</strong>로 바꾸고 Cluster A / Cluster B 콤보에서 덩어리를 고릅니다 — 수동 입력인 채로는 점-평면 거리 등이 실패합니다(메시지가 끄라고 안내). 클러스터 도구 하나만 연결해도 A/B 두 덩어리 중심 간 거리를 잽니다</td></tr>
+<tr><td>Source Geometries</td><td>—</td><td>Result 로 연결된 Plane Fit · Cluster 목록. 연결을 바꾸거나 실행하면 바로 갱신됩니다</td></tr>
+<tr><td>Enable Judgment · Expected Value · Tolerance (−) / (+)</td><td>해제 · 0 · 0.5 / 0.5</td><td>거리(mm) 또는 각도(°)가 기준 ± 공차 안이면 OK</td></tr>
 </table>
 <p><strong>결과 값</strong> — Distance3D · SignedDistance · DeltaX/Y/Z · AngleDeg · AngleRad · Point1X/Y/Z · Point2X/Y/Z · IsParallel</p>
-<p><strong>판정</strong> — 이 도구에는 공차 판정이 없습니다. 각도 · 거리(AngleDeg · Distance3D)는 Run Results 에서 확인합니다. <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 옵션이면 PLC 로 매핑해 PLC 에서 판정할 수 있습니다.</p>
+<p><strong>판정</strong> — Enable Judgment 를 켜면 계산한 거리 · 각도가 [기준 − 공차(−), 기준 + 공차(+)] 안일 때 OK. 끄면 값만 계산합니다(Run Results 에서 확인).</p>
 <ul>
 <li>클러스터 콤보에서 덩어리를 고르면 2D 뷰에 해당 덩어리가 강조됩니다. 목록이 비어 있으면 PointCloud Cluster 를 Result 로 연결하고 Run 을 한 번 실행하세요.</li>
 <li>mm 정확도는 Cluster 의 Scale Mode(AutoFromCamera 권장)를 따릅니다.</li>
@@ -1919,7 +1986,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <p><strong>결과 값</strong> — DetectionCount 와 검출별 클래스 · 신뢰도 · 박스</p>
 <p><strong>판정</strong> — 객체가 0 건이면 NG(<a class="ref" href="#vs-run">§5.6</a>). Dot Analysis 를 켜면 모든 군락이 기대치 안이어야 OK.</p>
 <ul>
-<li>‘결함이 없으면 OK’ 인 검사는 결함 클래스 검출 = NG 로 해석해야 하므로 Result 도구 또는 Per-Class 설정으로 판정 방향을 맞추세요.</li>
+<li>Detection 은 1 건 이상 검출하면 OK 입니다. ‘결함이 없어야 OK’ 인 검사는 이 판정을 뒤집는 설정이 없으므로 이상 탐지(Anomaly)나 분류(Classify 의 OK Classes)로 판정합니다(<a class="ref" href="#ex-dl">§7.7</a>).</li>
 <li>템플릿 ‘DL 객체 검출 판정’ 이 Detection → Result 체인을 만들어 줍니다.</li>
 </ul>
 <h4>Segmentation — 픽셀 단위 분할 (semantic) <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-6-31</span></h4>
@@ -1945,9 +2012,9 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Model Path (.onnx) · [<span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>레지스트리…]</td><td>(빈 값)</td><td>파일 또는 <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>model:// 참조</td></tr>
-<tr><td>Input Size (모델이 정합니다)</td><td>560 (잠김)</td><td>모델을 열면 ONNX 가 정한 값으로 자동 설정되고 칸이 잠깁니다 — 모델마다 배수가 달라 손으로 맞추면 안 됩니다</td></tr>
+<tr><td>Input Size (모델이 정합니다)</td><td>560 → 첫 실행 뒤 모델 값(예: 552)으로 잠김</td><td>모델을 고른 직후에는 560 이 보이고 고칠 수 있지만, <strong>첫 실행 뒤</strong> ONNX 가 정한 값(예: 552)으로 바뀌고 칸이 잠깁니다 — 모델마다 배수가 달라 손으로 맞추지 않습니다</td></tr>
 <tr><td>Confidence Threshold · Max Instances</td><td>0.5 · 100 [1~1000]</td><td>검출 신뢰도 / 점수 순 상한</td></tr>
-<tr><td>Show Mask Overlay · Overlay Opacity · Draw Boxes + Labels · Output Mask Image</td><td>켬 · 0.4 · 켬 · 해제</td><td>표시 옵션 · 켜면 출력 이미지가 인스턴스 이진 마스크(흰색 = 인스턴스)가 되어 Mask Crop 등에 Image 연결</td></tr>
+<tr><td>Show Mask Overlay · Overlay Opacity · Draw Boxes + Labels · Output Mask Image</td><td>켬 · 0.4 · 켬 · 해제</td><td>표시 옵션. Output Mask Image 를 켜면 인스턴스 이진 마스크(흰색 = 인스턴스)가 다음 도구(Mask Crop 등)로만 넘어가며, 화면 덧그림과 Result Image 는 그대로입니다</td></tr>
 </table>
 <p><strong>결과 값</strong> — InstanceCount · Inst{i}_Class · Inst{i}_ClassName · Inst{i}_Score · Inst{i}_X/Y/Width/Height · Inst{i}_MaskPixels</p>
 <p><strong>판정</strong> — 인스턴스가 0 건이면 NG.</p>
@@ -1976,8 +2043,8 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Model Path (.onnx) · Input Size</td><td>(빈 값) · 224 [64~512]</td><td>학습 image_size 와 같게</td></tr>
-<tr><td>Anomaly Threshold</td><td>0.5 [0~1]</td><td>이 점수 이상이면 이상. 0.3 엄격(약한 이상도), 0.7 느슨</td></tr>
-<tr><td>Auto Threshold Calibration — Normal Images Folder · Sigma (k) · [Calibrate Threshold]</td><td>— · 3.0</td><td>정상 이미지 폴더의 점수 분포로 임계값을 계산해 Anomaly Threshold 에 넣습니다(평균 + k × 표준편차). ROI 를 쓰면 같은 ROI 영역으로 채점하므로, 폴더에는 검사와 같은 크기로 찍은 원본 이미지를 넣습니다</td></tr>
+<tr><td>Anomaly Threshold</td><td>0.5 [0~1]</td><td>이 점수 이상이면 이상. 0.3 엄격(약한 이상도), 0.7 느슨. 값은 소수 셋째 자리까지 보입니다</td></tr>
+<tr><td>Auto Threshold Calibration — Normal Images Folder · Sigma (k) · [Calibrate Threshold]</td><td>— · 3.0</td><td>정상 이미지 폴더의 점수 분포로 임계값을 계산해 Anomaly Threshold 에 넣습니다(평균 + k × 표준편차). ROI 를 쓰면 같은 ROI 영역으로 채점하므로, 폴더에는 검사와 같은 크기로 찍은 원본 이미지를 넣습니다. 이 묶음은 접혀 있어 펼쳐야 보입니다</td></tr>
 <tr><td>Draw Overlay · Show Heatmap · Heatmap Opacity</td><td>켬 · 켬 · 0.4</td><td>NORMAL/ANOMALY 표시와 Jet 히트맵</td></tr>
 </table>
 <p><strong>결과 값</strong> — AnomalyScore · IsNormal</p>
@@ -1994,7 +2061,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Judgment Mode</td><td>AllPass (AllPass · AnyPass)</td><td>AllPass: 연결된 도구가 모두 성공해야 OK(소스가 하나도 없으면 NG). AnyPass: 하나라도 성공하면 OK</td></tr>
-<tr><td>Source Results</td><td>—</td><td>Result 로 연결된 도구 목록(빈 상태 ‘No source tools connected’)</td></tr>
+<tr><td>Source Results</td><td>—</td><td>Result 로 연결된 도구 목록(빈 상태 ‘No source tools connected’). 연결을 바꾸거나 실행하면 바로 갱신되어 도구마다 OK/NG 가 보입니다</td></tr>
 </table>
 <p><strong>결과 값</strong> — PassCount · FailCount · TotalCount (메시지 ‘OK (n/m passed)’ · ‘NG (n/m failed)’)</p>
 <p><strong>판정</strong> — 판정 모드에 따라 OK/NG. 이 결과가 Run Results 의 Pass/Fail 과 VMS 의 판정 배지가 됩니다.</p>
@@ -2004,18 +2071,19 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <h4>Ensemble — 딥러닝 판정 결합 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-6-36</span></h4>
 <p>Result 로 연결한 딥러닝 도구(주로 Detection = 알려진 결함 + Anomaly = 평소와 다른 상태)의 판정을 하나로 합칩니다. 두 모델을 함께 써서 과검(정상을 NG 로)과 미검(불량을 OK 로)을 같이 줄일 때 씁니다. Result 도구가 OK/NG 개수만 세는 것과 달리 검출 개수 · 이상 점수를 판정에 씁니다.</p>
 <figure><img src="../../gs/screenshots/v3/tools/36_Ensemble.png" data-width="240" alt="Ensemble — 딥러닝 판정 결합 설정 패널"><figcaption>Ensemble — 딥러닝 판정 결합 — Tool Settings 패널</figcaption></figure>
-<figure><img src="../../gs/screenshots/v3/scenes/Ensemble.jpg" data-width="620" alt="Ensemble — 딥러닝 판정 결합 실행 예"><figcaption>실행 예 — 수정액 자국이 있는 피팅 — Detection 은 OK, Anomaly 는 NG. 결합 방식별로 And · Weighted · Consensus 는 NG, Or 만 OK. 왼쪽 위에 Anomaly 와 앙상블 4 개의 판정 글자가 실행 순서대로 쌓이고, 테두리는 스텝 판정(NG) 색입니다</figcaption></figure>
+<figure><img src="../../gs/screenshots/v3/scenes/Ensemble.jpg" data-width="620" alt="Ensemble — 딥러닝 판정 결합 실행 예"><figcaption>실행 예 — 수정액 자국이 있는 피팅 — Detection 은 OK, Anomaly 는 NG. 결합 방식별로 And · Weighted · Consensus 는 NG, Or 만 OK(Weighted 는 Anomaly Weight 1.0 으로 둔 레시피). 왼쪽 위에 Anomaly 와 앙상블 4 개의 판정 글자가 실행 순서대로 쌓이고, 테두리는 스텝 판정(NG) 색입니다</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
 <tr><td>Ensemble Mode</td><td>And (And · Or · Weighted · Consensus)</td><td>And: 모두 OK 여야 OK(미검 최소화). Or: 하나라도 OK 면 OK(과검 최소화). Weighted: 가중 점수로 판정. Consensus: 소스 판정이 엇갈리면 NG(검토 필요)</td></tr>
 <tr><td>Detection Weight · Anomaly Weight · NG Threshold</td><td>0.5 · 0.5 · 0.5 [0.0~1.0]</td><td>Weighted 모드에서만 보입니다. Detection 실패 비율 × Detection Weight + Anomaly 최대 점수 × Anomaly Weight 가 NG Threshold 를 넘으면 NG</td></tr>
 <tr><td>Draw Overlay</td><td>켬</td><td>판정과 근거 문구를 화면에 표시</td></tr>
-<tr><td>Source Results</td><td>—</td><td>Result 로 연결된 도구 목록(빈 상태 ‘No source tools connected’)</td></tr>
+<tr><td>Source Results</td><td>—</td><td>Result 로 연결된 도구 목록(빈 상태 ‘No source tools connected’). 연결을 바꾸거나 실행하면 바로 갱신되어 도구마다 OK/NG 가 보입니다</td></tr>
 </table>
 <p><strong>결과 값</strong> — Success · Mode · SourceCount · DetectionCount(소스 검출 개수 합) · AnomalyScore(소스 이상 점수 최댓값)</p>
 <p><strong>판정</strong> — 모드에 따라 OK/NG. 소스 도구가 하나도 연결되지 않았으면 NG(‘소스 도구가 연결되지 않았습니다’).</p>
 <ul>
 <li>Detection · Anomaly 도구에서 Ensemble 로 Result 연결을 잇습니다. 같은 소스에 Ensemble 을 여러 개 붙이면 모드별 결과를 나란히 비교할 수 있습니다.</li>
+<li>Weighted 는 가중치에 따라 결과가 달라집니다. 기본값(Detection · Anomaly Weight 0.5)에서는 이상 점수 0.68 인 자국도 0.34 로 계산되어 OK 가 됩니다. 아래 실행 예의 Weighted NG 는 Anomaly Weight 1.0 으로 둔 레시피 결과입니다.</li>
 </ul>
 <h3 id="tools-13">6.13 Color — 색상</h3>
 <h4>Color Extract — 색 추출 (HSV) <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-6-37</span></h4>
@@ -2068,6 +2136,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <ul>
 <li>켰는데 화면이 그대로면 캘리브레이션 방식이 맞지 않는 경우입니다 — 상태 메시지에 실제로 무엇이 적용됐는지 표시됩니다.</li>
 <li>펴는 과정에서 가장자리가 잘리거나 늘어날 수 있으므로 뒤 도구의 ROI 는 편 뒤의 화면 기준으로 잡으세요.</li>
+<li>보정된 이미지를 보려면 이 도구만 선택해 Run Selected 로 실행합니다. Run All 뒤의 결과 이미지는 모든 도구의 결과를 겹친 화면이라 보정된 이미지가 아닙니다.</li>
 </ul>
 <h3 id="tools-15">6.15 Surface Analysis — 표면 분석</h3>
 <h4>Photometric Stereo — 조명 방향별 사진 합성 (표면 요철 강조) <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-6-40</span></h4>
@@ -2084,13 +2153,15 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <p><strong>판정</strong> — 자체 판정 없음 — DefectEnhanced → Blob 또는 Threshold → Result 로 판정합니다.</p>
 <ul>
 <li>조명 4 개를 제품 둘레에 배치하고 하나씩 켜 가며 같은 장면을 찍는 구성이 표준입니다.</li>
+<li>결함 강조 이미지는 이 도구만 선택해 Run Selected 로 봅니다. Run All 뒤의 결과 화면은 원본 사진(첫 입력) 위의 덧그림이라 강조 이미지가 보이지 않습니다.</li>
+<li>결함 강조에서도 인쇄 무늬의 가장자리는 희미하게 남습니다(거의 보이지 않는 정도). 뒤의 Threshold · Blob 임계를 그보다 높게 잡습니다.</li>
 </ul>
 </section>
 
 <section id="examples">
 <h2 id="examples-start">7. 검사 설정 예제 <span class="video" title="이 절을 따라 하는 사용 영상">▶ 영상 V-7-0</span></h2>
 <p>현장에서 자주 만드는 검사 유형별로 <strong>어떤 도구를 어떤 순서로 연결하고 무엇을 조정하는지</strong>를 단계별로 설명합니다.
-모든 예제는 예제 템플릿 갤러리(<a class="ref" href="#vs-templates">§5.8</a>)에서 한 번에 만들 수 있으며, 여기서는 만든 뒤 우리 제품에 맞게 손보는 요령까지 다룹니다.
+대부분의 예제는 예제 템플릿 갤러리(<a class="ref" href="#vs-templates">§5.8</a>)에서 한 번에 만들 수 있으며(<a class="ref" href="#ex-ocr">§7.6</a> OCR · OCV 는 템플릿이 없어 Tool Palette 에서 도구를 놓습니다), 여기서는 만든 뒤 우리 제품에 맞게 손보는 요령까지 다룹니다.
 공통 준비: VisionSetup 을 열고 레시피 · 스텝을 만든 뒤(<a class="ref" href="#vs-recipe">§5.3</a>) 기준 부품 이미지를 엽니다(<a class="ref" href="#vs-image">§5.4</a>).</p>
 
 <h3 id="ex-blob">7.1 부품 유무 · 개수 검사 (Blob) <span class="video" title="이 절을 따라 하는 사용 영상">▶ 영상 V-7-1</span></h3>
@@ -2098,9 +2169,10 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <p><strong>상황</strong> — 밝은 배경 위의 어두운 부품(또는 그 반대)이 정해진 개수만큼 있는지 확인합니다. 볼트 · 핀 · 오링 유무, 트레이의 부품 개수 세기에 씁니다.</p>
 <ol>
   <li>템플릿 2D 측정 → <strong>Blob 검출</strong> 을 생성합니다.</li>
-  <li><strong>Threshold</strong> 를 선택하고 Run Selected 후 이미지 소스를 Result Image 로 바꿔 부품이 흰색, 배경이 검게 분리되는 Threshold Value 를 찾습니다. 조명이 고르지 않으면 Use Adaptive 를 켭니다.</li>
-  <li><strong>Blob</strong> 을 선택하고 Use ROI 를 켠 뒤 검사할 자리에 ROI 를 그립니다. Run 후 Run Results 의 Area 를 보고 Min/Max Area 를 부품 면적의 절반~두 배로 잡아 잡음을 거릅니다.</li>
-  <li>판정 — Enable Judgment 와 Use Count Judgment 를 켜고 Count Mode 를 Equal(정확히 N 개) 또는 Tolerance(기준 ± 공차)로, Expected Count 에 정상 개수를 넣습니다. 면적으로 크기까지 보려면 Use Area Judgment 도 켭니다.</li>
+  <li><strong>Threshold</strong> 를 선택하고 Run Selected 후 이미지 소스를 Result Image 로 바꿔 <strong>셀 대상이 흰색</strong>, 배경이 검게 분리되는 Threshold Value 를 찾습니다. 조명이 고르지 않으면 Use Adaptive 를 켭니다.</li>
+  <li>밝은 판의 어두운 구멍처럼 <strong>대상이 바탕보다 어두우면</strong>, 기본(Binary)으로는 구멍이 검게 · 판이 희게 나와 Blob 이 판 전체를 덩어리 1 개로 셉니다. Threshold 의 Threshold Type 을 BinaryInv 로 바꾸거나, Blob 의 Segmentation Polarity 를 DarkOnLight 로 바꿔 구멍을 셉니다.</li>
+  <li><strong>Blob</strong> 을 선택하고 Use ROI 를 켠 뒤 검사할 자리에 ROI 를 그립니다. Run 후 Run Results 의 Area 를 보고 Min Area 는 잡음보다 크고 <strong>정상 대상 중 가장 작은 것보다 작게</strong> 잡습니다 — Min Area 를 너무 크게(예: 부품 면적의 절반) 잡으면 작게 뚫린 불량 구멍은 개수에서 빠져 버립니다.</li>
+  <li>판정 — Enable Judgment 와 Use Count Judgment 를 켜고 Count Mode 를 Equal(정확히 N 개) 또는 Tolerance(기준 ± 공차)로, Expected Count 에 정상 개수를 넣습니다. 크기가 작거나 큰 불량까지 잡으려면 Use Area Judgment 를 켜고 정상 면적 범위를 넣습니다. 모양이 찌그러진 구멍은 개수 · 면적만으로는 합격하므로, 정상품의 Circularity 보다 조금 낮게 Min Circularity 를 잡아 걸러냅니다(<a class="ref" href="#tools-5">§6.5</a>).</li>
   <li>양품 · 불량 이미지를 각각 열어 Run All 로 OK/NG 가 맞게 나오는지 확인하고 저장합니다. 이미지가 많으면 Batch Test(<a class="ref" href="#vs-batch">§5.11</a>)로 한꺼번에 검증합니다.</li>
 </ol>
 <div class="callout tip">부품이 트레이 안에서 조금씩 움직이면 앞에 Feature Match 를 두고 Coordinates 로 Blob 에 연결해 ROI 가 따라가게 합니다(<a class="ref" href="#ex-fixture">§7.3</a>).</div>
@@ -2138,8 +2210,8 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <p><strong>상황</strong> — 특정 색의 라벨 · 캡 · 케이블이 제자리에 있는지, 색이 맞는지 확인합니다.</p>
 <ol>
   <li>템플릿 2D 측정 → <strong>컬러 객체 검출</strong> 을 생성합니다. 컬러 이미지를 열어야 합니다(Grayscale 을 앞에 두지 마세요).</li>
-  <li><strong>Color Extract</strong> 를 선택하고 색 범위를 지정합니다 — 이미지에서 대상 색을 클릭해 값을 채우고(상태바에 BGR 값 표시) 허용 폭을 넓힙니다. Run 후 Result Image 로 대상 색만 흰색으로 남는지 확인합니다.</li>
-  <li><strong>Blob</strong> 에서 ROI · 면적 범위 · 개수 판정을 <a class="ref" href="#ex-blob">§7.1</a> 과 같이 설정합니다.</li>
+  <li><strong>Color Extract</strong> 에서 색을 학습합니다 — 모델을 고르고 Use Training Region 을 켠 뒤 [Draw ROI] 로 대상 색 위에 영역을 그리고 [Train Selected Model] 을 누릅니다. Run 후 Result Image 로 대상 색만 흰색으로 남는지 확인합니다. 학습된 H · S · V 범위 칸은 Expert Mode 를 켜야 보이며, 거기서 미세 조정합니다.</li>
+  <li><strong>Blob</strong> 에서 ROI · 면적 범위 · 개수 판정을 <a class="ref" href="#ex-blob">§7.1</a> 과 같이 설정합니다. 예제 사진(Y 형 피팅)은 캡이 3 개이므로 Count Mode Equal · Expected Count 3 입니다.</li>
   <li>색이 "맞는지" 만 보려면 Color Match 도구에 기준 색을 학습시키고 유사도 임계값으로 판정합니다(<a class="ref" href="#6-비전-도구-설명-및-사용법">§6</a>).</li>
 </ol>
 
@@ -2154,7 +2226,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 
 <h3 id="ex-ocr">7.6 문자 인식 · 검증 (OCR / OCV) <span class="video" title="이 절을 따라 하는 사용 영상">▶ 영상 V-7-6</span></h3>
 <ol>
-  <li>OCR 도구를 놓고 ROI 를 글자 영역에 그립니다. OCR Engine(Tesseract · PaddleOCR)과 Language 를 고르고, 숫자만 있는 각인은 Character Whitelist 에 <code>0123456789</code> 를 넣어 오인식을 줄입니다.</li>
+  <li>Tool Palette 의 Identification 에서 OCR 도구를 작업 공간에 놓고 ROI 를 글자 영역에 그립니다. OCR Engine(Tesseract · PPOcrOnnx)을 고릅니다. Language 와 Char Whitelist 는 Expert Mode 를 켜면 보이는 Detection 묶음에 있습니다 — 숫자만 있는 각인은 Whitelist 에 <code>0123456789</code> 를 넣어 오인식을 줄입니다.</li>
   <li>흐릿한 각인은 앞에 Image Enhance 를, 도트 프린트는 Dot Matrix Mode 를 켭니다. Auto Preprocess 는 기본 켬.</li>
   <li>"정해진 문자열이 맞는지" 만 보려면 OCV 도구에 기준 문자를 학습시켜 검증합니다. 날짜 · 로트처럼 형식이 정해진 문자열의 인식률을 높이려면 <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>OCR Synth Data(<a class="ref" href="#vs-misc">§5.12</a>)로 합성 데이터를 만들어 모델을 다듬습니다.</li>
 </ol>
@@ -2166,7 +2238,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
   <li>모델을 준비합니다 — <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>MLOps(9장)에서 학습해 운영으로 승격합니다(10장).</li>
   <li>템플릿 Deep Learning → <strong>DL 객체 검출 판정</strong>(또는 DL 이상 탐지 판정)을 생성합니다.</li>
   <li><strong>Detection</strong> 의 Model Path 에 ONNX 파일을 지정하거나 [<span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>레지스트리…] 로 <code>model://…@production</code> 참조를 고릅니다. D-FINE · YOLO 형식은 자동 판별됩니다.</li>
-  <li>Confidence Threshold(기본 0.5 부근)를 조정해 오검출과 미검출의 균형을 잡고, 특정 클래스만 볼 때는 클래스 필터를 씁니다. 0 건 검출은 NG 이므로 "결함이 없으면 OK" 인 검사에는 결과 해석을 Result 도구에서 반대로 잡습니다(결함 클래스 검출 = NG).</li>
+  <li>Confidence Threshold(기본 0.25)를 조정해 오검출과 미검출의 균형을 잡고, 클래스마다 기준을 달리하려면 Use Per-Class Thresholds 를 씁니다. Detection 은 <strong>1 건 이상 검출하면 OK, 0 건이면 NG</strong> 입니다 — 부품 유무 · 개수처럼 "있어야 OK" 인 검사에 맞습니다. "결함이 없어야 OK" 인 검사는 Detection 판정을 뒤집는 설정이 없으므로, 정상 이미지로 학습한 이상 탐지(Anomaly)나 분류(Classify 의 OK Classes)로 판정합니다.</li>
   <li>이상 탐지(Anomaly)는 정상 이미지만으로 학습한 모델을 쓰며 Anomaly Score 임계값으로 판정합니다. 히트맵 오버레이로 이상 부위를 확인합니다.</li>
   <li>GPU 가 없는 PC 는 CPU 로 동작합니다. 속도가 필요하면 Inference Settings(<a class="ref" href="#vs-misc">§5.12</a>)에서 CUDA · TensorRT 를 고릅니다.</li>
 </ol>
@@ -2183,7 +2255,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 </ol>
 
 <h3 id="ex-3d">7.9 3D 검사 — 객체 개수 · 치수 · 형상 편차 <span class="video" title="이 절을 따라 하는 사용 영상">▶ 영상 V-7-9</span></h3>
-<figure><img src="../../gs/screenshots/v3/templates/pc-dl-detect.png" data-width="520" alt="DL 세그 기반 3D 객체 검출 체인"><figcaption>RF-DETR-seg → PointCloud Mask Crop → PointCloud Cluster</figcaption></figure>
+<figure><img src="../../gs/screenshots/v3/templates/pc-count-basic.png" data-width="520" alt="3D 객체 카운트 · 치수 (기본) 체인"><figcaption>3D 객체 카운트 · 치수 (기본) — Height Slicer → PointCloud Mask Crop → PointCloud Cluster. 딥러닝 윤곽으로 자르는 'DL 세그 기반 3D 객체 검출' 은 Height Slicer 자리에 RF-DETR-seg 를 둡니다</figcaption></figure>
 <p><strong>상황</strong> — <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>3D 카메라(Mech-Mind 등)로 찍은 점군에서 부품 개수와 가로 · 세로 · 높이를 재거나, 기준 형상과의 편차(들뜸 · 눌림)를 봅니다. "어디에 있는지" 는 2D 에서 찾고 "얼마나 큰지" 는 3D 에서 잽니다.</p>
 <ol>
   <li><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>3D 카메라 스텝에서 Acquire(또는 3D → Load 3D Data 로 .vpc 파일)로 점군을 가져옵니다. Depth Map · Point Cloud 탭에서 확인합니다.</li>
@@ -2197,7 +2269,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <ol>
   <li><strong>Result 도구</strong>를 스텝 끝에 두고 판정에 넣을 도구를 Result 로 연결합니다. 스텝이 여러 개인 레시피는 스텝마다 Result 를 둡니다.</li>
   <li><strong>Batch Test</strong>(<a class="ref" href="#vs-batch">§5.11</a>)로 양품 · 불량 이미지 폴더를 일괄 검사해 오판이 없는지 확인하고, 골든셋으로 저장해 두면 나중에 레시피를 고쳤을 때 회귀 확인이 됩니다.</li>
-  <li><strong>시퀀스</strong>(<a class="ref" href="#vs-sequence">§5.10</a>)에서 트리거 입력 · 검사 · 분기 · 판정 출력 노드에 IO 보드 채널(<span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 는 주소)을 넣고 [무부하 테스트] 로 신호를 확인합니다.</li>
+  <li><strong>시퀀스</strong>(<a class="ref" href="#vs-sequence">§5.10</a>)에서 트리거 입력 · 검사 · 분기 · 판정 출력 노드에 IO 보드 채널(<span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 는 주소)을 넣고, IO 보드(<span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC)를 연결한 뒤 [무부하 테스트] 로 신호를 확인합니다. 장치가 연결되지 않은 PC 에서는 신호 노드를 건너뛰어 신호 확인이 되지 않습니다.</li>
   <li>[Save Recipe] 로 저장합니다. Web 연동 현장은 Web 레시피 파라미터 화면에 같은 이름으로 자동 등록되며, 작업지시에 이 레시피를 지정하면 VMS 가 불러와 검사합니다(4장).</li>
 </ol>
 
@@ -2215,7 +2287,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 </ol>
 <h3 id="ex-plc">7.13 <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 와 맞물려 운전하기 <span class="video" title="이 절을 따라 하는 사용 영상">▶ 영상 V-7-13</span></h3>
 <ol>
-  <li>설정 마법사 PLC 단계에서 벤더 · 주소 · Write Mode 를 PLC 프로그램과 맞춥니다(<a class="ref" href="#appsetup-s4">§3.5</a>).</li>
+  <li>설정 마법사 PLC 단계에서 벤더 · IP · 포트(Modbus TCP 면 Unit ID · Endian Mode)를 PLC 프로그램과 맞춥니다(<a class="ref" href="#appsetup-s4">§3.5</a>).</li>
   <li>시퀀스 편집기에서 Input Check(트리거) · Output Action(판정) 노드의 디바이스를 MainPLC 로, 주소를 PLC 담당자와 정한 대로 넣습니다. 필요하면 Reset 신호 주소를 둡니다(<a class="ref" href="#vs-sequence">§5.10</a>).</li>
   <li>보정량 · 측정값을 보내야 하면 도구의 PLC Output 에 매핑합니다(<a class="ref" href="#vs-run">§5.6</a>). [PLC Monitor] 를 보며 [▶ 무부하 테스트] 로 신호만 먼저 주고받아 본 뒤 AUTO RUN 합니다.</li>
 </ol>
@@ -2223,8 +2295,9 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <ol>
   <li>라인 PC 에 MLOps 주소 · 라인 토큰을 넣고(<a class="ref" href="#appsetup-s2">§3.3</a>) 이미지 저장 설정의 <strong>NG 이미지 MLOps 전송</strong>을 켭니다(<a class="ref" href="#vms-sidepanel">§4.6</a>). 불량 사진이 MLOps 의 수집 사진에 쌓입니다.</li>
   <li>MLOps 에서 데이터셋을 만들어 사진을 담고 라벨링 · 판 뜨기 · 학습 · 돌려 보기 · 승격까지 합니다(9장 · MLOps 매뉴얼).</li>
-  <li>VisionSetup 딥러닝 도구의 [레지스트리…] 로 그 모델을 참조로 고르고 레시피를 저장합니다(<a class="ref" href="#vs-ext">§5.13</a>). 라인에서 레시피를 다시 열면 새 모델로 검사합니다.</li>
-  <li>MLOps 의 라인 모니터링으로 성적을 지켜보고, 떨어지면 1 부터 다시 돕니다.</li>
+  <li>VisionSetup 딥러닝 도구의 [레지스트리…] 로 그 모델을 참조로 고릅니다. [선택] 이 모델을 먼저 내려받으므로 바로 Run 해 볼 수 있습니다. 레시피를 저장합니다(<a class="ref" href="#vs-ext">§5.13</a>).</li>
+  <li>라인 PC 의 VMS 에서 그 레시피를 다시 불러오면(사이드 패널 [Load] · 작업지시 선택) 새 모델을 내려받아 검사합니다. MLOps 의 [레시피 바인딩] 은 어떤 모델을 어느 레시피에 걸었는지 남기는 기록이며, 라인에 실제로 반영되는 것은 이 단계의 모델 지정입니다.</li>
+  <li>MLOps 의 라인 모니터링으로 성적을 지켜보고, 떨어지면 1 부터 다시 돕니다. 모니터링에 결과가 쌓이려면 라인이 운영 Web 과 연동된 채 model:// 참조 레시피로 검사해야 합니다 — 그런 검사 이력이 없으면 화면에는 "아직 이어진 검사 결과가 없습니다" 만 보입니다.</li>
 </ol>
 </section>
 
@@ -2307,7 +2380,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <section id="mlops">
 <h2 id="9-AI-학습-플랫폼-BODA-VMS-MLOps">9. <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>AI 학습 플랫폼 (BODA.VMS.MLOps)</h2>
 <div class="callout"><strong><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span> 확장 옵션 · 이 장은 요약입니다.</strong> MLOps 의 화면별 사용법과 개념(처음 쓰는 분용)은 별책 「BODA VMS MLOps 사용자 매뉴얼」에 있습니다. 아래 링크는 같은 폴더의 MLOps 매뉴얼 해당 절로 이어집니다. 여기에는 라인 PC(VMS) 쪽에서 알아야 할 것만 남겼습니다.</div>
-<p>MLOps 는 딥러닝 검사 도구가 쓰는 모델(ONNX)을 만들고 라인에 배포하는 웹 서버입니다(기본 포트 5310). 라인 PC 와는 두 방향으로 이어집니다 — 불량 사진을 올리고(수집), 승격된 모델을 받아 갑니다(배포). 설치는 <a class="ref" href="#install-mlops">§2.4</a> 입니다.</p>
+<p>MLOps 는 딥러닝 검사 도구가 쓰는 모델(ONNX)을 만들고 라인에 배포하는 웹 서버입니다(기본 포트 5310). 라인 PC 와는 두 방향으로 이어집니다 — 불량 사진을 올리고(수집), 레시피가 가리키는 모델을 레시피를 불러올 때 받아 갑니다(배포). 설치는 <a class="ref" href="#install-mlops">§2.4</a> 입니다.</p>
 <h3 id="mlops-login" data-video="M-01">9.1 로그인과 역할 <span class="video" title="이 절을 따라 하는 사용 영상">▶ 영상 M-01</span></h3>
 <p>Web 의 아이디 · 비밀번호로 들어오고, MLOps 안의 역할(Viewer · Labeler · Engineer · Admin)은 관리자가 [사용자 역할] 에서 붙입니다. → MLOps 매뉴얼: <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-login">접속과 로그인</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-roles">역할과 권한</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-members">사용자 역할 지정</a></p>
 <h3 id="mlops-nav" data-video="M-02">9.2 메뉴 구조 <span class="video" title="이 절을 따라 하는 사용 영상">▶ 영상 M-02</span></h3>
@@ -2327,28 +2400,28 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <h3 id="mlops-models" data-video="M-23">9.9 모델 레지스트리 <span class="video" title="이 절을 따라 하는 사용 영상">▶ 영상 M-23</span></h3>
 <p>모델 계열 · 버전 · 단계(후보 → 스테이징 → 운영)를 관리하고, 승격 전에 사진에 돌려 봅니다. → MLOps 매뉴얼: <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-model-detail">모델 상세</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-model-try">돌려 보기</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-stage">승격 · 강등 · 폐기</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-upload-onnx">ONNX 올리기</a></p>
 <h3 id="mlops-bindings" data-video="V-5-31">9.10 레시피 바인딩 <span class="video" title="이 절을 따라 하는 사용 영상">▶ 영상 V-5-31</span></h3>
-<p>라인 PC 는 레시피에 저장된 <code>model://</code> 참조를 따릅니다. 참조는 VisionSetup 딥러닝 도구의 [레지스트리…](<a class="ref" href="#vs-ext">§5.13</a>)에서 넣습니다. MLOps 의 [레시피 바인딩] 화면 기록은 지금 판의 VMS 가 읽지 않습니다. → MLOps 매뉴얼: <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-binding">라인에 모델 걸기</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-binding-screen">[레시피 바인딩] 화면</a></p>
+<p>라인 PC 는 레시피에 저장된 <code>model://</code> 참조를 따릅니다. 참조는 VisionSetup 딥러닝 도구의 [레지스트리…](<a class="ref" href="#vs-ext">§5.13</a>)에서 넣고, 라인의 VMS 는 레시피를 불러올 때 그 모델을 내려받아 둡니다(서버가 꺼져 있어도 받아 둔 모델을 씀). MLOps 의 [레시피 바인딩] 은 어떤 모델을 어느 레시피에 걸었는지 남기는 <strong>기록</strong>입니다 — 라인에 반영되는 것은 VisionSetup 에서 지정한 모델이며, 바인딩을 되돌려도(롤백) 기록만 바뀌고 라인 레시피는 그대로입니다. → MLOps 매뉴얼: <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-binding">라인에 모델 걸기</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-binding-screen">[레시피 바인딩] 화면</a></p>
 <h3 id="mlops-lines" data-video="M-28">9.11 라인 PC <span class="video" title="이 절을 따라 하는 사용 영상">▶ 영상 M-28</span></h3>
 <p>라인 PC 마다 계정을 만들어 라인 토큰(ln_…)을 받고, 설정 마법사 고급 설정(<a class="ref" href="#appsetup-s2">§3.3</a>)에 넣습니다. → MLOps 매뉴얼: <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-line-pc">라인 PC 계정</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-vms-fetch">모델을 받아 가는 길</a></p>
 <h3 id="mlops-monitoring" data-video="M-29">9.12 라인 모니터링 <span class="video" title="이 절을 따라 하는 사용 영상">▶ 영상 M-29</span></h3>
-<p>운영 웹의 검사 이력을 모델 버전별로 모아 불량률 · 신뢰도 · 입력 변화를 봅니다. VMS 가 결과에 모델 식별자를 실어 보냅니다. → MLOps 매뉴얼: <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-monitor">신호 읽기</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-retrain">재학습</a></p>
+<p>운영 웹의 검사 이력을 모델 버전별로 모아 불량률 · 신뢰도 · 입력 변화를 봅니다. VMS 가 결과에 모델 식별자를 실어 보냅니다. 결과가 쌓이려면 라인이 운영 Web 과 연동된 채 <code>model://</code> 참조 레시피로 검사해야 하며, 그런 이력이 없으면 "아직 이어진 검사 결과가 없습니다" 만 보입니다. → MLOps 매뉴얼: <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-monitor">신호 읽기</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-retrain">재학습</a></p>
 </section>
 
 <section id="deeplearning">
 <h2 id="dl-intro">10. 딥러닝 모델 준비 <span class="video" title="이 절을 따라 하는 사용 영상">▶ 영상 V-10-1</span></h2>
-<p>딥러닝 검사 도구(<a class="ref" href="#6-비전-도구-설명-및-사용법">§6</a> — Detection · Classify · Anomaly · RF-DETR-seg · OCR)는 학습된 모델 파일(ONNX)로 동작합니다.
+<p>딥러닝 검사 도구(<a class="ref" href="#tools-11">§6.11</a> — Detection · Segmentation · RF-DETR-seg · Classify · Anomaly)는 학습된 모델 파일(ONNX)로 동작합니다. OCR 은 식별 도구라 레지스트리 단추가 없고, 기본 엔진을 그대로 쓰거나 Expert Mode 의 Custom Det/Rec Model 에 직접 학습한 모델 파일을 지정합니다.
 모델의 라벨링 · 학습 · 등록은 AI 학습 플랫폼 BODA VMS MLOps(9장)에서 합니다. VMS 와 VisionSetup 은 만들어진 모델을 불러와 검사에 씁니다.</p>
 <ol>
   <li><strong>학습</strong> — MLOps 에서 데이터셋을 라벨링하고 학습 작업을 실행합니다(<a class="ref" href="#mlops-datasets">§9.5</a> · <a class="ref" href="#mlops-training">§9.6</a>). 끝난 모델은 모델 레지스트리에 후보 버전으로 등록됩니다.</li>
   <li><strong>승격</strong> — 모델 레지스트리에서 결과를 확인하고 스테이징 · 운영 단계로 올립니다(<a class="ref" href="#mlops-models">§9.9</a>).</li>
   <li><strong>레시피에 지정</strong> — VisionSetup 딥러닝 도구의 Model Path 옆 <strong>[레지스트리…]</strong> 로 모델을 고르면 <code>model://</code> 참조가 들어갑니다(<a class="ref" href="#mlops-bindings">§9.10</a>).
-      라인 PC 는 그 참조가 가리키는 버전을 자동으로 내려받아 씁니다. 모델 파일을 직접 받아 둔 경우에는 Model Path 에 .onnx 경로를 지정해도 됩니다.</li>
+      VisionSetup 은 레시피를 열 때와 [선택] 할 때, 라인 PC 의 VMS 는 레시피를 불러올 때(사이드 패널 [Load] · 작업지시 선택 · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 레시피 변경 등) 그 참조가 가리키는 버전을 내려받아 둡니다. 받아 둔 모델은 MLOps 서버가 꺼져 있어도 씁니다. 운영 버전을 새로 승격했으면 라인에서 레시피를 다시 불러와야 새 버전을 받습니다. 모델 파일을 직접 받아 둔 경우에는 Model Path 에 .onnx 경로를 지정해도 됩니다.</li>
 </ol>
 <h3 id="dl-ocr-synth">10.1 OCR 합성 데이터로 학습하기</h3>
 <p>날짜 · 로트 번호처럼 형식이 정해진 문자열은 VisionSetup 의 OCR Synth Data(<a class="ref" href="#5-검사-레시피-편집-VMS-VisionSetup">§5</a>)로 학습 데이터를 만들어 MLOps 에서 학습할 수 있습니다.</p>
 <ol>
   <li>OCR Synth Data 에서 출력 형식을 PaddleOCR rec 로 두고 [Generate] 로 데이터를 만듭니다.</li>
-  <li>출력 폴더 안의 <code>train_crops</code> · <code>val_crops</code> 폴더와 <code>train_rec.txt</code> · <code>val_rec.txt</code> · <code>dict.txt</code> 를 모두 골라 압축합니다. 폴더째 압축하면 업로드가 거절됩니다.</li>
+  <li>출력 폴더 안의 <code>train_crops</code> · <code>val_crops</code> 폴더와 <code>train_rec.txt</code> · <code>val_rec.txt</code> · <code>dict.txt</code> 를 모두 골라 압축합니다. 서버는 zip 맨 위의 <code>train_rec.txt</code> · <code>val_rec.txt</code> · <code>dict.txt</code>(또는 <code>ppocr_keys_v1.txt</code>)와, 목록에 적힌 경로의 사진만 봅니다 — 사진 폴더 이름은 목록과 맞기만 하면 됩니다. 출력 폴더째 압축하면 업로드가 거절됩니다.</li>
   <li>MLOps 의 [데이터셋 버전] ▸ [버전 업로드] 에서 작업 유형 OCR, 형식 ppocr 로 올리고(<a class="ref" href="#mlops-versions">§9.7</a>) 학습 작업을 실행합니다.</li>
 </ol>
 
@@ -2356,20 +2429,20 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <p>딥러닝 검사 도구(Detection · Classify · Anomaly · Segmentation · RF-DETR-seg)는 기본으로 CPU 에서도 돌지만, NVIDIA GPU 가 있으면 몇 배 빨라집니다. 실행 백엔드는 VisionSetup 메뉴 <strong>Inference Settings...</strong> 의 <strong>Inference Engine Settings</strong> 창에서 PC 전체에 한 번 정합니다.</p>
 <table class="cols-2-7">
   <tr><th>Execution Provider</th><th>뜻</th></tr>
-  <tr><td>Auto</td><td>쓸 수 있는 가장 빠른 백엔드를 고릅니다(기본). GPU 환경이 없으면 CPU 로 돕니다</td></tr>
+  <tr><td>Auto</td><td>Cuda → DirectML → Cpu 순서로 이 PC 에서 쓸 수 있는 첫 백엔드를 씁니다(기본). TensorRT 는 Auto 에 들어가지 않으므로 쓰려면 직접 고릅니다</td></tr>
   <tr><td>Cpu</td><td>CPU 만 씁니다. 가장 느리지만 어느 PC 에서나 같은 결과</td></tr>
   <tr><td>Cuda</td><td>NVIDIA GPU 를 바로 씁니다. CUDA · cuDNN 이 설치되어 있어야 합니다</td></tr>
   <tr><td>DirectML</td><td>Windows 의 DirectX 로 GPU 를 씁니다(NVIDIA 가 아닌 GPU 도 가능)</td></tr>
-  <tr><td>TensorRT</td><td>NVIDIA GPU 에서 가장 빠릅니다. 모델을 처음 불러올 때 엔진을 만드느라 1~5 분 걸리고, 그 뒤로는 빠릅니다. TensorRT 가 설치되어 있어야 합니다</td></tr>
+  <tr><td>TensorRT</td><td>NVIDIA GPU 에서 가장 빠릅니다. 모델을 처음 불러올 때 엔진을 만드느라 시간이 걸리고(모델 · GPU 에 따라 다름), 그 뒤로는 캐시를 써서 빠릅니다. TensorRT 가 설치되어 있어야 합니다</td></tr>
 </table>
 <ol>
   <li>GPU PC 에 NVIDIA 드라이버(525 이상), CUDA 12.x(12.4 권장), cuDNN 9.x, TensorRT 10.x 를 설치하고, TensorRT 의 <code>bin</code> 폴더를 시스템 Path 에 넣은 뒤 재부팅합니다. 버전 조합은 VMS 에 들어 있는 ONNX Runtime 1.21 기준입니다.</li>
   <li>VisionSetup → <strong>Inference Settings...</strong> 에서 Execution Provider 를 고릅니다.</li>
-  <li>TensorRT 라면 <strong>TensorRT Engine Cache Folder</strong> 를 지정합니다(예: <code>C:\VMS\trt_cache</code>). 비워 두면 VMS 를 다시 켤 때마다 엔진을 새로 만듭니다.</li>
-  <li>RTX 계열이면 <strong>Enable TensorRT FP16</strong> 을 켭니다(2~3 배 빠름, 점수가 소수점 아래에서 조금 달라질 수 있음).</li>
+  <li>TensorRT 라면 <strong>TensorRT Engine Cache Folder</strong> 를 확인합니다. 만든 엔진을 이 폴더에 저장해 두고 다음 실행부터 재빌드를 건너뜁니다. 비워 두고 저장하면 기본 폴더(설정 폴더의 <code>trt_cache</code>)를 씁니다.</li>
+  <li>지원 GPU 면 <strong>Enable TensorRT FP16</strong>(반정밀도)을 켤 수 있습니다. 더 빨라지지만 효과는 모델 · GPU 에 따라 다르고, 점수가 소수점 아래에서 조금 달라질 수 있습니다.</li>
   <li>[Save] 를 누릅니다. 바뀐 설정은 다음에 모델을 불러올 때(레시피를 다시 열 때)부터 적용됩니다.</li>
 </ol>
-<p>확인: 관리자 PowerShell 에서 <code>nvidia-smi</code> 가 GPU 를 보여 주는지, 레시피를 연 뒤 같은 사진의 실행 시간이 줄었는지 봅니다. GPU 환경이 없거나 깨져 있으면 VMS 는 멈추지 않고 CPU 로 돌아가므로, 느려졌다면 System Log 의 추론 백엔드 안내를 확인합니다.</p>
+<p>확인: 관리자 PowerShell 에서 <code>nvidia-smi</code> 가 GPU 를 보여 주는지, 레시피를 연 뒤 같은 사진의 실행 시간이 줄었는지 봅니다. Inference Settings 창에서 이 PC 에서 쓸 수 없는 백엔드에는 "(이 PC 에서 사용 불가)" 가 붙고, 창 아래 "실제 사용 백엔드" 줄에 마지막 모델 로드 때 실제로 쓴 백엔드가 보입니다. Detection · Segmentation · RF-DETR-seg 는 Run Results 의 ExecutionProvider 값으로도 확인할 수 있습니다. GPU 환경이 없거나 깨져 있으면 멈추지 않고 CPU 로 돌아갑니다(System Log 의 "추론 장치 설정: …" 줄은 고른 값입니다).</p>
 <div class="callout warn"><strong>주의:</strong> 이 설정은 PC 단위입니다(<code>%LocalAppData%\BODA VISION AI\system_config.json</code> 의 <code>onnxExecutionProvider</code> · <code>tensorRTCachePath</code> · <code>tensorRTFp16</code>). VisionSetup 과 VMS 가 같은 값을 씁니다. 라인 PC 와 학습 워커를 겸하는 PC 는 검사와 학습이 같은 GPU 를 나눠 씁니다(<a class="ref" href="#install-mlops">§2.4</a>).</div>
 <p class="see">더 읽기: <a href="https://onnxruntime.ai/docs/execution-providers/TensorRT-ExecutionProvider.html" target="_blank">ONNX Runtime — TensorRT Execution Provider</a> · <a href="https://docs.nvidia.com/deeplearning/tensorrt/latest/installing-tensorrt/installing.html" target="_blank">NVIDIA — TensorRT 설치</a></p>
 </section>
@@ -2381,9 +2454,9 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <h3 id="mt-backup">11.1 백업과 복원</h3>
 <h4>라인 PC (VMS)</h4>
 <ul>
-  <li><strong>수동 백업</strong> — Admin Tools → Backup / Restore → [Run Backup...] 로 ZIP 을 만듭니다(<a class="ref" href="#vms-admin">§4.11</a>). 설정 파일 · 레이아웃 · 신호 설정 · 사용자 DB · 검사 이력 DB · 레시피 전체가 들어가며 감사 로그는 선택입니다. 레시피를 크게 바꾸기 전, 프로그램을 업그레이드하기 전, PC 를 교체하기 전에 받아 두세요.</li>
-  <li><strong>자동 백업</strong> — Admin Tools → Auto Backup Settings 에서 활성화 · 주기(시간) · 보존(일) · 위치를 정합니다. 기본 위치는 <code>%LocalAppData%\BODA VISION AI\backups</code> 이며 다른 드라이브나 네트워크 폴더를 권장합니다.</li>
-  <li><strong>복원</strong> — Backup / Restore 의 백업 복원에서 파일을 고르고 [기존 파일 덮어쓰기] 를 켠 뒤 [Run Restore]. 복원 후 VMS 를 재시작합니다. 다른 PC 에 복원하면 카메라 구성이 다를 수 있으므로 설정 마법사 3 단계를 확인하세요.</li>
+  <li><strong>수동 백업</strong> — Admin Tools → Backup / Restore → [Run Backup...] 로 ZIP 을 만듭니다(<a class="ref" href="#vms-admin">§4.11</a>). 설정 파일 · 레이아웃 · 시퀀스(<code>process_sequence.json</code>) · 신호 설정 · 사용자 DB · 검사 이력 DB · 레시피 전체가 들어가며 감사 로그는 선택입니다. VMS 를 켠 채로 받을 수 있습니다. 레시피를 크게 바꾸기 전, 프로그램을 업그레이드하기 전, PC 를 교체하기 전에 받아 두세요.</li>
+  <li><strong>자동 백업</strong> — Admin Tools → Auto Backup Settings 에서 활성화 · 주기(시간) · 보존(일) · 위치를 정합니다. 기본 위치는 <code>%LocalAppData%\BODA VISION AI\backups</code> 이며 다른 드라이브나 네트워크 폴더를 권장합니다. 파일 이름은 <code>auto-backup-날짜-시각.zip</code>(이 PC 시각)이고, 백업할 때마다 보존 기간이 지난 자동 백업 파일을 지웁니다. 위치를 바꾸면 보존 설정 [Preview] 와 지원 패키지의 백업 목록도 그 위치를 봅니다.</li>
+  <li><strong>복원</strong> — Backup / Restore 의 백업 복원에서 파일을 고르고 [기존 파일 덮어쓰기] 를 켠 뒤 [Run Restore]. VMS 를 켠 채로 할 수 있으며, 결과 줄에 "설정은 VMS 를 다시 시작하면 적용됩니다" 가 나오면 VMS 를 다시 시작합니다. [감사 로그도 복원] 은 이 PC 에 없는 날짜의 감사 로그만 되살리고 이미 있는 날짜는 그대로 둡니다. 다른 PC 에 복원하면 카메라 구성이 다를 수 있으므로 설정 마법사 3 단계를 확인하세요.</li>
 </ul>
 <h4>Web 서버</h4>
 <ul>
@@ -2398,9 +2471,9 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <h3 id="mt-retention">11.2 데이터 보존과 디스크 관리 <span class="video" title="이 절을 따라 하는 사용 영상">▶ 영상 V-11-1</span></h3>
 <table class="cols-3-3-3">
   <tr><th>데이터</th><th>기본 보존</th><th>설정 위치</th></tr>
-  <tr><td>VMS 검사 이미지 (OK/NG 파일)</td><td>Image Save Settings 의 보존 기간(일)</td><td><a class="ref" href="#vms-sidepanel">§4.6</a> — 시작 시 오래된 날짜 폴더 삭제. 야간 예약 작업으로 <code>VMS.exe --cleanup-images</code> 를 돌려도 됩니다</td></tr>
+  <tr><td>VMS 검사 이미지 (OK/NG 파일)</td><td>Image Save Settings 의 보존 기간(일)</td><td><a class="ref" href="#vms-sidepanel">§4.6</a> — VMS 시작 2 분 뒤 한 번, 켜 둔 동안 하루 한 번 보존 기간이 지난 날짜 폴더를 지우고 감사 로그(Configuration)에 남깁니다. VMS 를 끄고 지내는 PC 는 예약 작업으로 <code>VMS.exe --cleanup-images</code> 를 돌려도 됩니다(같은 정리)</td></tr>
   <tr><td>VMS 검사 이력 DB</td><td>90 일</td><td>Retention Settings "검사 이력" 행</td></tr>
-  <tr><td>VMS 감사 로그 · 자동 백업 · 업로드 큐</td><td>프리셋 Standard 기준</td><td>Retention Settings 전역 · 카테고리별</td></tr>
+  <tr><td>VMS 감사 로그 · 자동 백업 · 업로드 큐</td><td>프리셋 Standard 기준</td><td>Retention Settings 전역 · 카테고리별. 감사 로그 날짜 파일은 전역 · 카테고리별 값 중 가장 긴 기간이 지나야 통째로 지워지므로, 카테고리별로 길게 잡은 기간(보안 1095 일 등)이 그대로 지켜집니다</td></tr>
   <tr><td>Web 검사 이력 · 측정값 · 알람 · 상태 로그</td><td><strong>무제한</strong>(기본 꺼짐)</td><td><code>DataRetention</code> 설정을 켜고 항목별 일수를 지정. 감사 로그는 법적 보존 기간이 따로 있으므로 기본 무제한</td></tr>
   <tr><td>Web 검사 사진</td><td>90 일</td><td><code>ImageStore:RetentionDays</code></td></tr>
   <tr><td>Web DB 백업</td><td>14 벌</td><td><code>DatabaseBackup:RetainCount</code></td></tr>
@@ -2409,9 +2482,9 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 
 <h3 id="mt-camera">11.3 카메라 교체 · IP 변경 <span class="video" title="이 절을 따라 하는 사용 영상">▶ 영상 V-11-2</span></h3>
 <ol>
-  <li>새 카메라를 같은 네트워크 카드에 연결하고, 제조사 프로그램(pylon Viewer · MVS · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>Mech-Eye Viewer)으로 카메라에 <strong>기존과 같은 고정 IP</strong> 를 부여합니다. IP 가 같으면 VMS 설정을 바꿀 필요가 없습니다.</li>
-  <li>IP 나 제조사가 바뀌면 시스템 설정 마법사 3 단계에서 해당 카메라 카드의 IP · 제조사 · 타입을 고치고 [Finish] 로 저장한 뒤 VMS 를 재시작합니다(<a class="ref" href="#appsetup-s3">§3.4</a>). 카메라 순서(카드 순서)가 바뀌면 레시피 스텝 이름("1-1")의 번호도 바뀌므로 순서는 유지하세요.</li>
-  <li>VMS 를 실행해 상태바 CAM 이 초록인지, 카메라 톱니바퀴 → [Grab] 으로 영상이 들어오는지 확인합니다. 노출 · 게인은 "카메라 설정 유지" 가 켜져 있으면 카메라에 저장된 값을 쓰므로 제조사 프로그램에서 이전 값과 같게 맞춥니다.</li>
+  <li>새 카메라를 같은 네트워크 카드에 연결하고, 카메라 제조사의 설정 프로그램으로 카메라에 <strong>기존과 같은 고정 IP</strong> 를 부여합니다. IP 가 같으면 VMS 설정을 바꿀 필요가 없습니다.</li>
+  <li>IP 나 제조사가 바뀌면 시스템 설정 마법사 3 단계에서 해당 카메라 카드의 IP · 제조사 · 타입을 고치고 [Finish] 로 저장한 뒤 VMS 를 재시작합니다(<a class="ref" href="#appsetup-s3">§3.4</a>). 카메라 순서(카드 순서)가 바뀌면 레시피 스텝 이름("1-1")의 번호도 바뀌므로 순서는 유지하세요. 카드를 지우고 새로 만들면 카메라 ID 가 바뀌어 레시피가 그 카메라를 찾지 못하므로, 기존 카드의 값만 고치는 것이 좋습니다 — 새로 만들었다면 레시피를 열 때 뜨는 카메라 재연결 창에서 스텝을 다시 짝짓습니다(아래 5).</li>
+  <li>VMS 를 실행해 상태바 CAM 이 초록인지, 카메라 톱니바퀴 → [Grab] 으로 영상이 들어오는지 확인합니다. 노출 · 게인은 "카메라 설정 유지"(VMS 카메라 조작 상자 <a class="ref" href="#vms-camera">§4.5</a> · VisionSetup 스텝의 Camera Settings <a class="ref" href="#vs-recipe">§5.3</a> 에 있음 — 설정 마법사에는 없음)가 켜져 있으면 카메라에 저장된 값을 쓰므로, 제조사 설정 프로그램에서 이전 값과 같게 맞추거나 그 체크를 끄고 스텝의 노출 · 게인을 씁니다.</li>
   <li>렌즈 · 설치 높이가 바뀌었다면 측정값이 조용히 틀어지므로 <strong>캘리브레이션을 다시</strong> 하고(<a class="ref" href="#vs-calibration">§5.9</a>) 대표 부품으로 판정을 재확인합니다.</li>
   <li>다른 PC 에서 만든 레시피를 열 때 이 PC 에 없는 카메라를 쓰면 <strong>카메라 재연결 창</strong>이 떠서 스텝별로 이 PC 의 카메라를 짝지을 수 있습니다(<a class="ref" href="#vs-recipe">§5.3</a>).</li>
 </ol>
@@ -2419,8 +2492,8 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <h3 id="mt-license">11.4 라이선스 · 좌석 관리 <span class="video" title="이 절을 따라 하는 사용 영상">▶ 영상 V-11-3</span></h3>
 <ul>
   <li>라이선스 상태는 설정 마법사 마지막 단계(보안 · 라이선스) 카드, VMS Health Check 의 License 항목, Web 시스템 관리 → SW 라이선스에서 봅니다.</li>
-  <li>PC 교체 · Windows 재설치 후 "지문 불일치" 가 뜨면 새 지문 코드로 재발급을 요청합니다(<a class="ref" href="#install-license">§2.6</a>). 서버-라인 구성에서는 서버 PC 만 해당합니다.</li>
-  <li>라인 PC 를 철거하면 그 좌석은 72 시간 후 자동으로 반환됩니다. 계약 좌석이 모자라면 Web 화면에 경고 배너가 뜹니다.</li>
+  <li>지문은 세 묶음(Windows 설치 · 네트워크 카드 · CPU 모델) 중 <strong>두 묶음이 같으면</strong> 같은 PC 로 봅니다 — Windows 재설치나 네트워크 카드 교체 하나만으로는 그대로 유효합니다. 둘 이상 바뀌어(PC 교체 등) "지문 불일치" 가 뜨면 새 지문 코드로 재발급을 요청합니다(<a class="ref" href="#install-license">§2.6</a>). 서버-라인 구성에서는 서버 PC 만 해당합니다.</li>
+  <li>라인 PC 를 철거하면 그 좌석은 72 시간 후 자동으로 반환됩니다. 계약 좌석이 모자라면 Web 의 SW 라이선스 화면(시스템 관리 → SW 라이선스, <code>/admin/license</code>)에 경고가 나오고, 라인 PC 에서는 Health Check 의 License 항목으로 봅니다. 좌석 사용 기록은 Web 서버가 메모리에 들고 있어 Web 을 다시 시작한 직후에는 잠시 비어 보이다가 라인 PC 가 다시 붙으면 채워집니다.</li>
 </ul>
 
 <h3 id="mt-instance">11.5 한 PC 에서 두 라인 운용 (다중 인스턴스) <span class="video" title="이 절을 따라 하는 사용 영상">▶ 영상 V-11-4</span></h3>
@@ -2428,8 +2501,12 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <ol>
   <li>바탕화면에 VMS 바로가기를 하나 더 만들고 대상 끝에 <code>--instance line2</code> 를 붙입니다(영문 · 숫자 · 하이픈 · 밑줄 1~32 자).</li>
   <li>설정 마법사도 같은 이름으로 실행합니다: <code>VMS.AppSetup.exe --instance line2</code>. 2 번 라인이 쓸 카메라와 라인 번호를 등록하고 저장합니다. <strong>같은 카메라를 두 인스턴스에 겹쳐 등록하면 안 됩니다</strong> — 카메라는 한 번에 한 프로그램만 연결할 수 있습니다.</li>
-  <li>두 바로가기로 VMS 를 각각 실행합니다. 인스턴스마다 설정 · 레시피 · 계정 · 검사 이력이 <code>%LocalAppData%\BODA VISION AI\instances\line2\</code> 아래에 완전히 분리되어 보관되며, VMS 에서 실행한 VisionSetup · AppSetup 도 같은 인스턴스를 자동으로 씁니다.</li>
+  <li>두 바로가기로 VMS 를 각각 실행합니다. 인스턴스마다 설정 · 레시피 · 계정 · 검사 이력이 <code>%LocalAppData%\BODA VISION AI\instances\line2\</code> 아래에 완전히 분리되어 보관되며, VMS 에서 실행한 VisionSetup · AppSetup 도 같은 인스턴스를 자동으로 씁니다(VMS 가 환경 변수 <code>BODA_VMS_INSTANCE</code> 로 넘겨 줍니다).</li>
 </ol>
+<ul>
+  <li>인스턴스 이름은 VMS 헤더의 애플리케이션 이름 뒤 <code>[line2]</code>, AppSetup 의 인스턴스 배지, Health Check 의 Instance 항목에서 보입니다.</li>
+  <li>같은 인스턴스를 두 번 실행하면 두 번째 VMS 는 "이미 실행 중" 안내 뒤 꺼집니다. 이름이 다른 인스턴스는 함께 실행됩니다. 바로가기 이름에 라인 번호를 넣어 두면 헷갈리지 않습니다.</li>
+</ul>
 
 <h3 id="mt-logs">11.6 로그 · 데이터 위치 <span class="video" title="이 절을 따라 하는 사용 영상">▶ 영상 V-11-5</span></h3>
 <table class="cols-3-4-2">
@@ -2443,13 +2520,13 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
   <tr><td>업데이트 로그</td><td><code>C:\ProgramData\BODA\VMS\update-bootstrap.log</code></td><td>인앱 업데이트 과정</td></tr>
   <tr><td>Web DB · 백업 · 사진</td><td><code>C:\ProgramData\BODA\VMS\</code> (BodaVision.db · backups\ · images\)</td><td>서버 데이터</td></tr>
   <tr><td>Web 서비스 로그</td><td><code>{설치 폴더}\Logs\boda-vms-YYYYMMDD.json</code> (14 일 보관) · Windows 이벤트 뷰어 → Application</td><td>서비스 시작 실패 등</td></tr>
-  <tr><td><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>MLOps 데이터 · 로그</td><td>설치 시 지정한 데이터 폴더 (mlops.db · storage\ · logs\)</td><td></td></tr>
+  <tr><td><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>MLOps 데이터 · 로그</td><td>설치 시 지정한 데이터 폴더(지정하지 않으면 <code>C:\ProgramData\BODA VMS MLOps</code>) — mlops.db · storage\ · logs\ · job-logs\(학습 작업 로그)</td><td></td></tr>
   <tr><td><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>학습 워커</td><td><code>%ProgramData%\BODA VMS TrainWorker\</code> (worker.json · venv\ · logs\)</td><td></td></tr>
 </table>
 
 <h3 id="mt-support">11.7 문제 보고 방법</h3>
 <ol>
-  <li>VMS Admin Tools → Support Package... 로 진단 ZIP 을 만듭니다(설정 · 감사 로그 · 환경 정보 · 헬스 스냅샷 · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>MLOps 전송 큐 상태 포함, 레시피 · 사용자 DB 는 미포함).</li>
+  <li>VMS Admin Tools → Support Package... 로 진단 ZIP 을 만듭니다(설정 · 감사 로그 · 환경 정보 · 헬스 스냅샷 · 자동 백업 목록 · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>MLOps 전송 큐 상태 포함, 레시피 · 사용자 DB 는 미포함). 카메라 로그(<code>logs\camera.log</code>)와 Web 로그는 들어가지 않으므로 카메라 · Web 문제면 따로 첨부합니다(<a class="ref" href="#mt-logs">§11.6</a>).</li>
   <li>증상이 난 시각과 System Log 의 관련 줄, 화면 캡처를 함께 준비합니다.</li>
   <li>Web 문제는 <code>{설치 폴더}\Logs\</code> 의 해당 날짜 로그와 <code>/health</code> 응답을, <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>MLOps 문제는 학습 작업 상세의 로그를 첨부합니다.</li>
 </ol>
@@ -2464,9 +2541,9 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <table class="cols-3-6">
   <tr><th>증상</th><th>확인 · 조치</th></tr>
   <tr><td>상태바 CAM 이 0/n (빨강), 카메라 화면 "No Image"</td>
-      <td>① 카메라 전원 · 케이블 · 네트워크 카드 링크 램프를 확인합니다. ② 제조사 프로그램(pylon Viewer · MVS · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>Mech-Eye Viewer)에서 카메라가 보이는지 확인합니다 — 보이지 않으면 IP 대역 · 방화벽(UDP 3956) 문제입니다. ③ 제조사 프로그램은 닫습니다(카메라는 한 프로그램만 열 수 있습니다). ④ 설정 마법사 3 단계의 IP · 제조사 · 타입이 맞는지 봅니다. ⑤ 케이블을 다시 꽂으면 다음 촬영에서 자동 재연결됩니다.</td></tr>
+      <td>① 카메라 전원 · 케이블 · 네트워크 카드 링크 램프를 확인합니다. ② 카메라 제조사의 설정 프로그램에서 카메라가 보이는지 확인합니다 — 보이지 않으면 IP 대역 · 방화벽(UDP 3956) 문제입니다. ③ 제조사 프로그램은 닫습니다(카메라는 한 프로그램만 열 수 있습니다). ④ 설정 마법사 3 단계의 IP · 제조사 · 타입이 맞는지 봅니다. ⑤ 케이블을 다시 꽂으면 다음 촬영에서 자동 재연결됩니다.</td></tr>
   <tr><td>영상이 실제 제품과 다르게 보임 (시뮬레이션 영상)</td>
-      <td>제조사 SDK 가 없는 빌드이거나 지원하지 않는 제조사를 선택한 것입니다. VisionSetup 연결 시 "SDK 미탑재 — 시뮬레이션 모드" 경고가 뜹니다. 설정 마법사의 제조사를 HIK · Basler · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>Mech_Mind · Matrox 중 실제 장비로 바꾸고, 해당 런타임(<a class="ref" href="#install-prep">§2.1</a>)이 설치되었는지 확인합니다.</td></tr>
+      <td>설정 마법사에서 Virtual(시험용 — 경고 없음)을 골랐거나, 실제 연결을 지원하지 않는 제조사를 고른 것입니다. 뒤의 경우 VMS · VisionSetup 이 연결할 때 "… SDK 미탑재 — 시뮬레이션 모드로 동작합니다" 경고가 뜹니다. 설정 마법사의 제조사를 실제 장비(Basler · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>Mech_Mind)로 바꾸고, 해당 런타임(<a class="ref" href="#install-prep">§2.1</a>)이 설치되었는지 확인합니다.</td></tr>
   <tr><td>촬영마다 밝기가 달라짐</td>
       <td>카메라 조작 상자의 "카메라 설정 유지" 를 끄고 Exposure · Gain 을 고정값으로 넣은 뒤 [Save Parameter] 합니다. 제조사 프로그램에서 자동 노출을 끄는 것도 방법입니다.</td></tr>
   <tr><td>[Grab] · [Live] 버튼이 눌리지 않음</td>
@@ -2502,11 +2579,11 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <table class="cols-3-6">
   <tr><th>증상</th><th>확인 · 조치</th></tr>
   <tr><td><span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>상태바 PLC 칩이 빨강</td>
-      <td>① <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC IP 로 ping 이 되는지 ② 설정 마법사 4 단계의 벤더 · 포트 · 통신 방식이 PLC 설정과 같은지 ③ PLC 쪽 이더넷 모듈의 접속 허용 수(Mitsubishi 는 포트 생존 확인 필요)를 확인합니다. Auto Reconnect 가 켜져 있으면 연결이 돌아올 때 자동 복구됩니다.</td></tr>
+      <td>① <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC IP 로 ping 이 되는지 ② 설정 마법사 4 단계의 벤더 · IP · 포트가 PLC 설정과 같은지 ③ PLC 쪽 이더넷 모듈의 접속 허용 수(Mitsubishi 는 포트 생존 확인 필요)를 확인합니다. Auto Reconnect 가 켜져 있으면 연결이 돌아올 때 자동 복구됩니다.</td></tr>
   <tr><td>상태바 IO 칩이 빨강 / "IO 보드 연결 실패"</td>
       <td>System Log 의 <code>[IoBoard]</code> 항목에 사유가 있습니다. "라이브러리를 찾을 수 없습니다" → 드라이버(ADLink DASK · Advantech DAQNavi)를 <strong>64비트용</strong>으로 설치합니다. "Register_Card 실패" → 마법사 6 단계의 모델 · Board ID 가 실제 카드와 맞는지 확인합니다. Advantech 는 "DAQNavi 이 없거나" → 드라이버를 설치하고, "보드 BID#n 를 열지 못했습니다" → Advantech Navigator 의 보드 번호와 마법사 6 단계 Board ID 를 맞춥니다. "연결 시간 초과(5초)" → 카드 장착과 드라이버를 확인하고 재부팅합니다. 보드가 실패해도 검사는 되지만 그 보드를 쓰는 시퀀스 노드는 동작하지 않습니다.</td></tr>
   <tr><td>판정 신호가 설비(IO 보드 · <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC)에 안 들어감</td>
-      <td>System Log 에 "검사 결과 출력 실패" 가 있으면 그 줄의 도구 · 주소로 쓰기가 실패한 것입니다 — 그 사이클은 오류로 멈추고 생산 수량에 세지 않습니다. 시퀀스의 Output Action 노드 장치 · 채널(<span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 는 주소) · 값과 설비 배선을 대조합니다. <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 는 Write Mode(Handshake) 규약과 Endian 도 PLC 프로그램과 맞춥니다. 시퀀스 편집기의 [I/O Monitor](<span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 옵션에서는 [PLC Monitor]) 로 실제 값을 보면서 [무부하 테스트] 로 신호만 주고받아 확인합니다(<a class="ref" href="#vs-sequence">§5.10</a>).</td></tr>
+      <td>System Log 에 "검사 결과 출력 실패" 가 있으면 그 줄의 도구 · 주소로 쓰기가 실패한 것입니다 — 그 사이클은 오류로 멈추고 생산 수량에 세지 않습니다. 시퀀스의 Output Action 노드 장치 · 채널(<span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 는 주소) · 값과 설비 배선을 대조합니다. <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 가 Modbus TCP 면 Endian Mode 도 PLC 프로그램과 맞춥니다. 시퀀스 편집기의 [I/O Monitor](<span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>PLC 옵션에서는 [PLC Monitor]) 로 실제 값을 보면서 [무부하 테스트] 로 신호만 주고받아 확인합니다(<a class="ref" href="#vs-sequence">§5.10</a>).</td></tr>
 </table>
 
 <h3 id="ts-recipe">12.4 레시피 편집 · 판정</h3>
@@ -2531,7 +2608,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
   <tr><td>도구 설정의 Web 파라미터 연동 콤보에 코드가 안 보임</td>
       <td>레시피를 불러올 때 상태바에 연동 진단이 표시됩니다. Web 레시피와 이름이 연결되지 않았거나 파라미터가 등록되지 않은 경우입니다(<a class="ref" href="#vs-webparam">§5.7</a>, <a class="ref" href="#web-recipes">§8.10</a>).</td></tr>
   <tr><td>딥러닝 도구가 "모델을 찾을 수 없음"</td>
-      <td>파일 경로 모델은 파일이 그 PC 에 있는지, <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>model:// 참조 모델은 상태바 "MLOps 비활성" 칩이 없는지와 라인 PC 토큰(<a class="ref" href="#mlops-lines">§9.11</a>) · 운영 승격 버전이 있는지(<a class="ref" href="#mlops-bindings">§9.10</a> "해석 불가") 확인합니다.</td></tr>
+      <td>파일 경로 모델은 파일이 그 PC 에 있는지 확인합니다. <span class="opt" title="확장 옵션 — 라이선스에 이 옵션이 있어야 보입니다">◆</span>model:// 참조 모델은 레시피를 불러올 때 받아 두며, 받지 못하면 System Log 에 "모델 참조 준비 실패: 참조 — 사유" 가 남고 그 도구는 받을 때까지 NG 입니다. 상태바 "MLOps 비활성" 칩이 없는지, 라인 PC 토큰(<a class="ref" href="#mlops-lines">§9.11</a>) · 운영 승격 버전이 있는지(<a class="ref" href="#mlops-bindings">§9.10</a> "해석 불가") 확인한 뒤 레시피를 다시 불러옵니다. 한 번 받아 둔 모델은 서버가 꺼져 있어도 씁니다.</td></tr>
 </table>
 
 <h3 id="ts-web">12.5 Web · 네트워크 ⚙</h3>
@@ -2581,6 +2658,8 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
       <td>보안 모드가 저장되지 않은 것입니다. 설정 마법사를 마지막 단계(보안 · 라이선스)까지 진행해 [Finish] 로 저장합니다(<a class="ref" href="#appsetup-s7">§3.8</a>).</td></tr>
   <tr><td>실행하자마자 DLL 오류</td>
       <td>정상 설치본에서는 나지 않습니다. 백신이 설치 폴더의 파일을 격리하지 않았는지 확인하고, 설치 파일을 다시 실행해 복구 설치합니다.</td></tr>
+  <tr><td>VMS 를 실행했더니 "이미 실행 중" 안내 후 꺼짐</td>
+      <td>같은 PC 에서 같은 인스턴스의 VMS 가 이미 떠 있습니다. 작업 표시줄의 실행 중인 창을 씁니다. 두 라인을 돌리려면 인스턴스 이름을 다르게 실행합니다(<a class="ref" href="#mt-instance">§11.5</a>). 업데이트 직후라면 몇 초 뒤 다시 실행합니다.</td></tr>
   <tr><td>VMS 를 닫았는데 프로세스가 남음</td>
       <td>VMS 는 종료 시 정리를 마치고 3 초 안에 강제 종료됩니다. 작업 관리자에 남아 있으면 카메라 SDK 가 응답하지 않는 상태이므로 프로세스를 끝내고 카메라 연결을 점검합니다.</td></tr>
   <tr><td>PC 가 켜지지 않음 · 부팅 후 프로그램이 자동 실행되지 않음</td>
@@ -3253,7 +3332,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <table class="cols-3-6">
   <tr><th>프로그램 · 인자</th><th>뜻</th></tr>
   <tr><td><code>VMS.exe --instance 이름</code></td><td>이름 붙은 인스턴스로 실행(<a class="ref" href="#mt-instance">§11.5</a>). 이름은 영문 · 숫자 · <code>_</code> · <code>-</code> 1~32 자. 환경 변수 <code>BODA_VMS_INSTANCE</code> 로도 지정</td></tr>
-  <tr><td><code>VMS.exe --cleanup-images</code></td><td>화면 없이 이미지 보존 정리만 하고 끝냄(예약 작업이 실행)</td></tr>
+  <tr><td><code>VMS.exe --cleanup-images</code></td><td>화면 없이 이미지 보존 정리만 하고 끝냄. VMS 는 켜 둔 동안 스스로 정리하므로(<a class="ref" href="#mt-retention">§11.2</a>), VMS 를 꺼 두는 PC 의 예약 작업용. VMS 가 실행 중이어도 돌 수 있음</td></tr>
   <tr><td><code>VMS.AppSetup.exe --instance 이름</code></td><td>그 인스턴스의 설정을 엶</td></tr>
   <tr><td><code>VMS.VisionSetup.exe --instance 이름 [레시피 파일]</code></td><td>그 인스턴스로 실행하고, 레시피 파일을 주면 시작할 때 엶</td></tr>
   <tr><td><code>VMS.Updater.exe &lt;MSI 경로&gt; [--current 버전]</code></td><td>인앱 업데이트가 자동으로 실행하는 설치 창. 직접 쓰지 않음(<a class="ref" href="#install-upgrade">§2.7</a>)</td></tr>
@@ -3267,15 +3346,15 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <h4>라이선스 발급 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-13-1</span></h4>
 <ol>
   <li>고객 PC 의 지문 코드를 받습니다 — 설정 마법사 마지막 단계(<a class="ref" href="#appsetup-s7">§3.8</a>)의 지문 코드 [복사]. 형식 <code>XXXXX-XXXXX-XXXXX</code>.</li>
-  <li>사내 PC 에서 <strong>BODA VMS 라이선스 발급 (LicGen — 사내 전용)</strong> 창을 열고 [라이선스 발급] 탭에 고객명, 종류(Production · Trial · Internal), 서명 키, 대상 PC 지문, 좌석 수, 유지보수 만료, 실행 만료, <strong>확장 옵션</strong>(3D 카메라 촬영 · 로봇 연동 · 멀티뷰 · MLOps 서버 연동 · PLC 연동 · 라인스캔 · 롤러 검사)을 넣습니다.</li>
+  <li>사내 PC 에서 <strong>BODA VMS 라이선스 발급 (LicGen — 사내 전용)</strong> 창을 열고 [라이선스 발급] 탭에 고객명, 종류(Production · Trial · Internal), 서명 키, 대상 PC 지문, 좌석 수, 유지보수 만료, 실행 만료, <strong>확장 옵션</strong>을 넣습니다. 확장 옵션은 체크 상자 5 개입니다 — 3D 카메라 촬영 · 로봇 연동 · 멀티뷰(한 상자) · MLOps 서버 연동 · PLC 연동 · 라인스캔 · 롤러 검사(한 상자). 유지보수 만료가 지나도 실행 · 업데이트는 그대로 되고 고객 PC 의 라이선스 상태에 "유지보수 만료" 로 표시만 됩니다.</li>
   <li>[발급] → "발급 확인" 창에서 내용을 확인합니다. 규칙에 어긋나면 "발급 규칙 위반" 이 나옵니다 — 고객명 · 지문 필수, 좌석 1 이상, Trial · Internal 은 실행 만료 필수, Internal 은 90 일 이내, 지문 <code>*</code>(모든 PC)는 Internal 만.</li>
   <li>만들어진 <code>license.lic</code> 를 고객 PC 의 설정 마법사 [라이선스 파일 가져오기...] 로 설치합니다(<a class="ref" href="#install-license">§2.6</a>). 파일은 <code>C:\ProgramData\BODA\VMS\license.lic</code> 에 들어갑니다.</li>
 </ol>
-<p>라이선스 번호는 <code>LIC-연도-순번</code> 으로 자동으로 붙습니다. 확장 옵션을 하나도 고르지 않으면 기본 구성 라이선스입니다(<a class="ref" href="#overview-options">§1.6</a>).</p>
+<p>라이선스 번호는 <code>LIC-연도-순번</code> 으로 자동으로 붙습니다. 확장 옵션을 하나도 고르지 않으면 기본 구성 라이선스입니다(<a class="ref" href="#overview-options">§1.6</a>). 옵션 칸이 생기기 전에 발급해 옵션이 적혀 있지 않은 라이선스는 확장 옵션 전부로 동작합니다.</p>
 <h4>발급 대장 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-13-2</span></h4>
-<p>[발급 대장] 탭에 발급한 라이선스가 한 줄씩 남습니다(번호 · 고객 · 종류 · 지문 · 좌석 · 만료 · 발급 시각 · 발급자 · 옵션). 줄을 고르고 비고를 적어 [비고 저장] 합니다. 대장 파일은 발급 PC 의 <code>%USERPROFILE%\.boda-licgen\ledger.jsonl</code> 이며 손으로 고치지 않습니다.</p>
+<p>[발급 대장] 탭에 발급한 라이선스가 한 줄씩 남습니다(라이선스 ID · 고객명 · 종류 · 지문 · 좌석 · 유지보수 · 실행 만료 · 발급 시각 · 발급자 · 비고 — 옵션 열은 없음). 긴 고객명 · 비고는 줄여 보이고 마우스를 올리면 전체가 나옵니다. 줄을 고르고 비고를 적어 [비고 저장] 합니다. 대장 파일은 발급 PC 의 <code>%USERPROFILE%\.boda-licgen\ledger.jsonl</code> 이며 손으로 고치지 않습니다.</p>
 <ul>
-  <li>발급한 주가 끝나기 전에 위쪽 [백업 실행] 으로 서명 키 · 대장을 오프라인 USB 두 개에 백업합니다. 창 위쪽 배너가 백업 상태를 알려 줍니다.</li>
+  <li>발급한 주가 끝나기 전에 위쪽 [백업 실행] 으로 서명 키 · 대장을 오프라인 USB 두 개에 백업합니다. 창 위쪽 배너는 백업 미반영 발급 건수를 <strong>매체마다</strong> 보여 줍니다(예: <code>T7 Shield [..] 0건 · KGD-SSD [..] 3건</code>). 두 매체 모두 0건이 되어 노란 글자가 사라져야 끝입니다 — 한 매체만 갱신하면 다른 매체의 건수가 남고 경고도 그대로입니다.</li>
   <li>Production · Trial 은 운영 키, Internal 은 개발 키로 서명합니다. 비밀 키 파일(<code>*.private.pem</code>)은 리포 · 클라우드 · 메일 · 메신저에 두지 않습니다.</li>
   <li>같은 일을 명령줄로 하려면 <code>licgen issue</code> · <code>verify</code> · <code>fingerprint</code> · <code>backup</code> 을 씁니다(관리자 매뉴얼의 CLI 표).</li>
 </ul>
