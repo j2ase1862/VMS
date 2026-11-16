@@ -266,10 +266,11 @@
 <p>검사 결과는 AUTO RUN 사이클마다 이 PC 의 검사 이력 파일(<code>%LocalAppData%\BODA VISION AI\inspection_history.db</code>)에 저장됩니다.
 단독 모드의 영구 이력이며, Web 연동 현장에서는 오프라인 백업 역할을 합니다. 카메라 조작 상자의 수동 [Inspect] 결과는 저장하지 않습니다(§4.5). 사이드 패널 Recent Inspections 의 [전체 이력] 로 엽니다.</p>
 <ol>
-  <li>필터를 고르고 [조회] 를 누릅니다 — From / To(기본 최근 7 일), 판정(전체 · PASS · NG), 레시피, NG 코드(실패 도구 이름 포함 검색). [필터 초기화] 로 되돌립니다.</li>
+  <li>필터를 고르고 [조회] 를 누릅니다 — From / To(날짜는 yyyy-MM-dd, 기본 최근 7 일), 판정(전체 · PASS · NG), 레시피, NG 코드(실패 도구 이름 포함 검색). [필터 초기화] 로 되돌립니다.</li>
   <li><strong>이력 목록</strong> 탭 — 검사 시각 · 판정 · 레시피 · NG 코드/도구 · 구분(사이클/수동) · ms · 추적(시리얼 · 작업지시 · Lot) · IMG. 행을 누르면 오른쪽에 <strong>도구별 결과 표</strong>와 <strong>저장된 검사 사진</strong>이 표시되고 [폴더 열기] 로 파일 위치를 엽니다.</li>
   <li><strong>일별 집계</strong> 탭 — 기간 전체의 총 검사 · PASS · NG · 수율 카드와 날짜별 표.</li>
   <li><strong>NG 파레토</strong> 탭 — NG 원인(NG 코드 또는 실패 도구)별 건수 · 비율 · 누적 비율.</li>
+  <li>일별 집계 · NG 파레토 두 탭은 <strong>기간(From · To)으로만</strong> 계산합니다. 판정 · 레시피 · NG 코드 필터는 이력 목록 탭에만 적용됩니다(탭 위 안내 줄과 같음).</li>
   <li>200 건이 넘으면 하단 [◀ 이전] / [다음 ▶] 로 넘기고, [CSV 내보내기] 는 현재 필터의 <strong>전체 결과</strong>를 Excel 호환 CSV 로 저장합니다.</li>
 </ol>
 <figure><img src="../gs/screenshots/v3/vms/dlg_InspectionHistory_Summary.png" data-width="560" alt="일별 집계 탭"><figcaption>일별 집계 탭</figcaption></figure>
