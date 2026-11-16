@@ -19,4 +19,11 @@
     <ProjectReference Include="..\VMS.Core\VMS.Core.csproj" />
   </ItemGroup>
 
+  <!-- LicGen(사내 발급 도구) 백업 상태 계산 시험 — 도구는 실행 파일이라 참조하지 않고
+       LicGen.App 과 같은 방식으로 파일만 링크한다 (System 외 의존 없음). -->
+  <ItemGroup>
+    <Compile Include="..\tools\licgen\BackupService.cs" Link="LicGen\BackupService.cs" />
+    <Compile Include="..\tools\licgen\LedgerStore.cs" Link="LicGen\LedgerStore.cs" />
+  </ItemGroup>
+
 </Project>

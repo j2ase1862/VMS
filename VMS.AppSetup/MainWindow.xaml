@@ -862,23 +862,9 @@
                             <!-- Performance & Stability -->
                             <TextBlock Text="Performance &amp; Stability" Style="{StaticResource LabelStyle}"/>
                             <Border Background="{StaticResource BrushBgCard}" CornerRadius="6" Padding="12" Margin="0,0,0,15">
+                                <!-- Polling Interval · Heartbeat 는 PLC 연결 코드가 읽지 않아 뺐다(VO-07).
+                                     신호 감시 주기 · 하트비트는 시퀀스 신호 설정 쪽 값을 쓴다. -->
                                 <StackPanel>
-                                    <TextBlock Style="{StaticResource LabelStyle}"><Run Text="Polling Interval (ms)"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Polling Interval (ms)" CustomDescription="PLC 값을 읽어 오는 주기(밀리초)입니다. 짧을수록 반응이 빠르지만 PLC 통신 부하가 커집니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
-                                    <TextBox Text="{Binding PollingIntervalMs, UpdateSourceTrigger=PropertyChanged}"
-                                             Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,10"/>
-
-                                    <CheckBox Content="Use Heartbeat" IsChecked="{Binding UseHeartbeat}"
-                                              Style="{StaticResource WindowDarkCheckBox}"
-                                              FontSize="13" Margin="0,0,0,8"
-                                              ToolTip="체크하면 아래 주소에 주기적으로 신호를 써서 PLC 와 서로 살아 있음을 확인합니다."/>
-                                    <TextBox Text="{Binding HeartbeatAddress, UpdateSourceTrigger=PropertyChanged}"
-                                             Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,10"
-                                             IsEnabled="{Binding UseHeartbeat}">
-                                        <TextBox.Tag>
-                                            <TextBlock Text="Heartbeat Address (e.g. D100)" Foreground="{StaticResource BrushTextMuted}"/>
-                                        </TextBox.Tag>
-                                    </TextBox>
-
                                     <CheckBox Content="Auto Reconnect" IsChecked="{Binding AutoReconnect}"
                                               Style="{StaticResource WindowDarkCheckBox}"
                                               FontSize="13"
@@ -886,31 +872,25 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- Data Synchronization -->
+                            <!-- Data Synchronization — Endian Mode 는 Modbus TCP 연결만 읽는다. Write Mode 는 읽는 코드가 없어 뺐다(VO-07). -->
+                            <StackPanel Visibility="{Binding IsModbusVendor, Converter={StaticResource BoolToVisConverter}}">
                             <TextBlock Text="Data Synchronization" Style="{StaticResource LabelStyle}"/>
                             <Border Background="{StaticResource BrushBgCard}" CornerRadius="6" Padding="12">
                                 <StackPanel>
-                                    <TextBlock Style="{StaticResource LabelStyle}"><Run Text="Write Mode"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Write Mode" CustomDescription="검사 결과 값을 PLC 에 기록하는 방식입니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
-                                    <ComboBox ItemsSource="{Binding WriteModes}"
-                                              SelectedItem="{Binding WriteMode}"
-                                              Style="{StaticResource WindowDarkComboBox}" Margin="0,0,0,10"/>
-
                                     <TextBlock Style="{StaticResource LabelStyle}"><Run Text="Endian Mode"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Endian Mode" CustomDescription="32비트 값을 워드 2개로 나눠 보낼 때의 순서입니다. PLC 쪽 설정과 같아야 값이 깨지지 않습니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                                     <ComboBox ItemsSource="{Binding EndianModes}"
                                               SelectedItem="{Binding EndianMode}"
                                               Style="{StaticResource WindowDarkComboBox}"/>
                                 </StackPanel>
                             </Border>
+                            </StackPanel>
                         </StackPanel>
 
                         <!-- Right Column: Communication Settings -->
                         <StackPanel Grid.Column="1" Grid.Row="0" Margin="12,0,0,0">
 
-                            <!-- Communication Type -->
-                            <TextBlock Style="{StaticResource LabelStyle}"><Run Text="Communication Type"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Communication Type" CustomDescription="PLC 와의 연결 방식입니다 — Ethernet(네트워크 케이블) 또는 Serial(시리얼 케이블)." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
-                            <ComboBox ItemsSource="{Binding CommunicationTypes}"
-                                      SelectedItem="{Binding SelectedCommunicationType}"
-                                      Style="{StaticResource WindowDarkComboBox}" Margin="0,0,0,15"/>
+                            <!-- Communication Type · Serial 설정은 뺐다(VO-06) — PLC 연결은 고른 제조사의
+                                 이더넷(TCP) 연결뿐이라 시리얼 · EtherNet/IP · PROFINET 을 골라도 쓰이지 않았다. -->
 
                             <!-- Modbus Unit ID (visible when Modbus selected) -->
                             <StackPanel Visibility="{Binding IsModbusVendor, Converter={StaticResource BoolToVisConverter}}">
@@ -919,8 +899,8 @@
                                          Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,15"/>
                             </StackPanel>
 
-                            <!-- Ethernet Settings (visible when NOT Serial) -->
-                            <StackPanel Visibility="{Binding IsEthernetMode, Converter={StaticResource BoolToVisConverter}}">
+                            <!-- Ethernet Settings -->
+                            <StackPanel>
                                 <TextBlock Style="{StaticResource LabelStyle}"><Run Text="PLC IP Address"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="PLC IP Address" CustomDescription="PLC 의 IP 주소입니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                                 <TextBox Text="{Binding PlcIpAddress, UpdateSourceTrigger=PropertyChanged}"
                                          Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,15"/>
@@ -928,46 +908,6 @@
                                 <TextBlock Style="{StaticResource LabelStyle}"><Run Text="PLC Port"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="PLC Port" CustomDescription="PLC 통신 포트 번호입니다. 예: Modbus TCP 는 502." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                                 <TextBox Text="{Binding PlcPort, UpdateSourceTrigger=PropertyChanged}"
                                          Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,15"/>
-                            </StackPanel>
-
-                            <!-- Serial Settings (visible when Serial selected) -->
-                            <StackPanel Visibility="{Binding IsSerialMode, Converter={StaticResource BoolToVisConverter}}">
-                                <TextBlock Text="Serial Port" Foreground="#FFD700" FontSize="14" FontWeight="SemiBold"
-                                           Margin="0,0,0,10"/>
-
-                                <TextBlock Style="{StaticResource LabelStyle}"><Run Text="Port Name"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Port Name" CustomDescription="시리얼 포트 이름입니다. 예: COM1." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
-                                <TextBox Text="{Binding SerialPortName, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,10"/>
-
-                                <TextBlock Style="{StaticResource LabelStyle}"><Run Text="Baud Rate"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Baud Rate" CustomDescription="시리얼 통신 속도입니다. PLC 쪽 설정과 같아야 합니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
-                                <ComboBox ItemsSource="{Binding BaudRateOptions}"
-                                          SelectedItem="{Binding BaudRate}"
-                                          Style="{StaticResource WindowDarkComboBox}" Margin="0,0,0,10"/>
-
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="8"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Style="{StaticResource LabelStyle}"><Run Text="Data Bits"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Data Bits" CustomDescription="시리얼 통신 세부 설정입니다. PLC 쪽과 동일하게 맞추세요 (보통 8)." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
-                                        <ComboBox ItemsSource="{Binding DataBitsOptions}"
-                                                  SelectedItem="{Binding DataBits}"
-                                                  Style="{StaticResource WindowDarkComboBox}"/>
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="2">
-                                        <TextBlock Style="{StaticResource LabelStyle}"><Run Text="Parity"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Parity" CustomDescription="오류 검출 방식입니다. PLC 쪽과 동일하게 맞추세요 (보통 None)." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
-                                        <ComboBox ItemsSource="{Binding SerialParities}"
-                                                  SelectedItem="{Binding Parity}"
-                                                  Style="{StaticResource WindowDarkComboBox}"/>
-                                    </StackPanel>
-                                </Grid>
-
-                                <TextBlock Style="{StaticResource LabelStyle}" Margin="0,10,0,6"><Run Text="Stop Bits"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Stop Bits" CustomDescription="정지 비트 수입니다. PLC 쪽과 동일하게 맞추세요 (보통 One)." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
-                                <ComboBox ItemsSource="{Binding SerialStopBitsValues}"
-                                          SelectedItem="{Binding StopBits}"
-                                          Style="{StaticResource WindowDarkComboBox}"/>
                             </StackPanel>
                         </StackPanel>
                     </Grid>

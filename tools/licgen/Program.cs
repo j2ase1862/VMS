@@ -131,12 +131,14 @@ static string[] ParseOptions(string value) => value.Trim().ToLowerInvariant() sw
 
 int Backup()
 {
-    var result = BackupService.Run(
-        options.GetValueOrDefault("from", defaultKeyDir), Require("to"));
+    var keyDir = options.GetValueOrDefault("from", defaultKeyDir);
+    var result = BackupService.Run(keyDir, Require("to"));
 
     Console.WriteLine($"백업 완료: {result.FileCount}개 파일 → {result.TargetDir} (매체 {result.MediaKey}, 대장 {result.LedgerLines}건)");
-    if (result.MediaCount < BackupService.RequiredCopies)
-        Console.WriteLine("참고: 백업 규칙은 오프라인 매체 2부 — 다른 USB 에도 'backup --to' 실행 (docs/license_operations.md §1a)");
+    // 등록 매체 수가 아니라 '대장을 모두 담은 매체' 가 2부인지로 본다 (VO-14)
+    var status = BackupService.GetStatus(keyDir);
+    if (status.NeedsBackup)
+        Console.WriteLine($"참고: 백업 규칙은 오프라인 매체 2부 — 다른 USB 에도 'backup --to' 실행 (매체별 미반영: {status.DescribeMedia()}) (docs/license_operations.md §1a)");
     return 0;
 }
 
@@ -148,8 +150,8 @@ void WarnIfBackupStale(string keyDir)
         Console.WriteLine("⚠ 백업 기록 없음 — 'licgen backup --to <USB>' 로 오프라인 백업 2부를 만드세요 (docs/license_operations.md §1a)");
         return;
     }
-    if (status.PendingIssues > 0)
-        Console.WriteLine($"⚠ 백업 미반영 발급 {status.PendingIssues}건 (마지막 백업 {status.NewestUtc![..10]}) — 이번 주 말일까지 'licgen backup --to <USB>' 2부 갱신 (§1a)");
+    if (status.NeedsBackup)
+        Console.WriteLine($"⚠ 백업 미반영 발급 — 매체별 {status.DescribeMedia()} (마지막 백업 {status.NewestUtc![..10]}) — 이번 주 말일까지 'licgen backup --to <USB>' 2부 갱신 (§1a)");
 }
 
 int Verify()

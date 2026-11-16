@@ -1,3 +1,6 @@
+using System; // 시험 프로젝트(VMS.Core.Tests)가 암시적 using 없이 링크해 컴파일 — 명시
+using System.Collections.Generic;
+using System.Linq;
 using System.IO; // WPF(UseWPF) 는 암시적 using 에서 System.IO 를 제외 — 공용 파일이라 명시
 using System.Runtime.InteropServices;
 using System.Text;
@@ -17,11 +20,43 @@ public static class BackupService
 
     public sealed record BackupResult(string MediaKey, string TargetDir, int FileCount, int LedgerLines, int MediaCount);
 
-    /// <summary>발급 경고·배너 공용 상태. NewestUtc 가 null 이면 백업 기록 없음.</summary>
-    public sealed record BackupStatus(int LedgerLines, int MediaCount, string? NewestUtc, int NewestLedgerLines)
+    /// <summary>매체 하나의 백업 상태 — PendingIssues 는 그 매체에 아직 들어가지 않은 발급 건수.</summary>
+    public sealed record MediaStatus(string MediaKey, string Utc, int LedgerLines, int PendingIssues);
+
+    /// <summary>
+    /// 발급 경고·배너 공용 상태. Media 는 마지막 백업이 최근인 순. 기록이 없으면 Media 가 비어 있다.
+    /// 예전에는 대장 줄 수가 가장 많은 매체 하나로만 미반영 건수를 셌다 — 두 매체를 한 번씩 등록한 뒤로는
+    /// USB 하나만 갱신해도 '미반영 0건' 으로 보여 두 번째 매체가 뒤처진 것을 몰랐다(VO-14). 이제 매체마다 센다.
+    /// </summary>
+    public sealed record BackupStatus(int LedgerLines, IReadOnlyList<MediaStatus> Media)
     {
-        public int PendingIssues => Math.Max(0, LedgerLines - NewestLedgerLines);
-        public bool HasRecord => NewestUtc != null;
+        public int MediaCount => Media.Count;
+        public bool HasRecord => Media.Count > 0;
+        public string? NewestUtc => HasRecord ? Media[0].Utc : null;
+
+        /// <summary>대장을 모두 담고 있는(미반영 0건) 매체 수.</summary>
+        public int UpToDateCount => Media.Count(m => m.PendingIssues == 0);
+
+        /// <summary>최신 매체 2부(RequiredCopies)가 갖춰지지 않았으면 true — 배너 경고 · 백업 완료 안내의 기준.</summary>
+        public bool NeedsBackup => UpToDateCount < RequiredCopies;
+
+        /// <summary>
+        /// 2부를 갖추려면 더 반영해야 하는 발급 건수 — 가장 잘 갖춘 매체 2개 중 덜 갖춘 쪽 기준.
+        /// 매체가 2개 미만이면 없는 매체는 0줄로 본다(= 대장 전체가 미반영).
+        /// </summary>
+        public int PendingIssues
+        {
+            get
+            {
+                var best = Media.Select(m => m.LedgerLines).OrderByDescending(n => n).Take(RequiredCopies).ToList();
+                while (best.Count < RequiredCopies) best.Add(0);
+                return Math.Max(0, LedgerLines - best.Min());
+            }
+        }
+
+        /// <summary>배너용 매체별 미반영 건수 — 예: "USB-A [1A2B3C4D] 0건 · USB-B [5E6F7A8B] 3건".</summary>
+        public string DescribeMedia() =>
+            string.Join(" · ", Media.Select(m => $"{m.MediaKey} {m.PendingIssues}건"));
     }
 
     public static BackupResult Run(string keyDir, string destinationRoot)
@@ -59,11 +94,12 @@ public static class BackupService
     {
         var marker = BackupMarker.Load(keyDir);
         var ledgerLines = LedgerStore.CountLines(keyDir);
-        if (marker.Targets.Count == 0)
-            return new BackupStatus(ledgerLines, 0, null, 0);
-
-        var newest = marker.Targets.Values.MaxBy(e => e.LedgerLines)!;
-        return new BackupStatus(ledgerLines, marker.Targets.Count, newest.Utc, newest.LedgerLines);
+        var media = marker.Targets
+            .Select(t => new MediaStatus(t.Key, t.Value.Utc, t.Value.LedgerLines,
+                                         Math.Max(0, ledgerLines - t.Value.LedgerLines)))
+            .OrderByDescending(m => m.Utc, StringComparer.Ordinal)   // ISO 8601(UTC "o") — 문자열 순서 = 시간 순서
+            .ToList();
+        return new BackupStatus(ledgerLines, media);
     }
 
     /// <summary>볼륨 라벨 + 시리얼로 매체 식별 (조회 실패 시 경로 폴백).</summary>
