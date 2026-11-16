@@ -563,9 +563,9 @@
 <tr><td>Draw Overlay</td><td>켬</td><td>박스 · 클래스 · 신뢰도</td></tr>
 </table>
 <p><strong>결과 값</strong> — DetectionCount 와 검출별 클래스 · 신뢰도 · 박스</p>
-<p><strong>판정</strong> — 객체가 0 건이면 NG(§5.6). Dot Analysis 를 켜면 모든 군락이 기대치 안이어야 OK.</p>
+<p><strong>판정</strong> — NG Classes 를 비워 두면 객체가 0 건일 때 NG(§5.6), 결함 클래스를 고르면 그 클래스가 한 건이라도 검출될 때 NG. Dot Analysis 를 켜면 모든 군락이 기대치 안이어야 OK.</p>
 <ul>
-<li>Detection 은 1 건 이상 검출하면 OK 입니다. ‘결함이 없어야 OK’ 인 검사는 이 판정을 뒤집는 설정이 없으므로 이상 탐지(Anomaly)나 분류(Classify 의 OK Classes)로 판정합니다(§7.7).</li>
+<li>Detection 은 NG Classes 를 비워 두면 1 건 이상 검출할 때 OK 입니다. ‘결함이 없어야 OK’ 인 검사는 NG Classes 에서 결함 클래스를 고르세요. 고른 클래스가 한 건이라도 검출되면 NG, 없으면 OK 입니다(§7.7).</li>
 <li>템플릿 ‘DL 객체 검출 판정’ 이 Detection → Result 체인을 만들어 줍니다.</li>
 </ul>
 <h4>Segmentation — 픽셀 단위 분할 (semantic)</h4>
