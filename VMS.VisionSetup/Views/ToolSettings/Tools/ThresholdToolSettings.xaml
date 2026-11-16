@@ -1,7 +1,9 @@
 <UserControl x:Class="VMS.VisionSetup.Views.ToolSettings.Tools.ThresholdToolSettings"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls">
+             xmlns:controls="clr-namespace:VMS.VisionSetup.Controls"
+             xmlns:conv="clr-namespace:VMS.VisionSetup.Converters"
+             xmlns:ip="clr-namespace:VMS.VisionSetup.VisionTools.ImageProcessing">
     <StackPanel>
         <controls:SliderParameter Label="Threshold Value"
             Value="{Binding ThresholdValue}" Minimum="0" Maximum="255"
@@ -15,6 +17,10 @@
             Value="{Binding MaxValue}" Minimum="0" Maximum="255"
             TickFrequency="1" ValueFormat="F0"
             ToolType="ThresholdTool" ParameterName="MaxValue"/>
+        <controls:EnumComboBoxParameter Label="Threshold Type"
+            ItemsSource="{conv:EnumValues {x:Type ip:ThresholdType}}"
+            SelectedValue="{Binding ThresholdType}"
+            ToolType="ThresholdTool" ParameterName="ThresholdType"/>
         <controls:CheckBoxParameter Label="Use Otsu"
             IsChecked="{Binding UseOtsu}"
             ToolType="ThresholdTool" ParameterName="UseOtsu"/>

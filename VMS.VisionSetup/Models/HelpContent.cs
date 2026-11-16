@@ -46,6 +46,7 @@ namespace VMS.VisionSetup.Models
                 {
                     ["ThresholdValue"] = "임계값 (0-255). 이 값보다 작으면 0, 크거나 같으면 MaxValue로 설정.",
                     ["MaxValue"] = "임계값 이상인 픽셀에 적용할 값 (보통 255).",
+                    ["ThresholdType"] = "이진화 방식:\n• Binary: 임계값보다 밝으면 MaxValue, 아니면 0\n• BinaryInv: 반대 — 어두운 대상을 흰색으로 만들 때\n• Trunc: 임계값보다 밝은 값을 임계값으로 자름\n• ToZero: 임계값 이하를 0으로\n• ToZeroInv: 임계값보다 밝은 값을 0으로",
                     ["UseOtsu"] = "Otsu 알고리즘으로 최적 임계값 자동 계산. 바이모달 히스토그램에 효과적.",
                     ["UseAdaptive"] = "적응형 이진화 사용. 조명이 불균일한 이미지에 효과적.",
                     ["BlockSize"] = "적응형 이진화의 블록 크기. 홀수만 가능.",
