@@ -333,29 +333,46 @@ namespace VMS.Services
 
         public bool HasPermission(UserPermission permission)
         {
-            if (CurrentUser == null)
+            var user = CurrentUser;
+            if (user == null)
             {
                 // 비로그인 상태 — 모든 권한 거부. 빈도 높아 audit log 폭증 방지 차원에서 미기록.
                 return false;
             }
 
+            bool granted = IsGranted(permission);
+
+            // 권한 거부만 기록 — 거부는 드물고 보안 의의가 크지만 허용은 빈도 높아 폭증 우려.
+            if (!granted)
+            {
+                AuditLogger.Instance.Log(
+                    AuditCategory.Authorization, "PermissionDenied", AuditOutcome.Denied,
+                    userName: user.Username, source: nameof(UserService),
+                    details: user.IsLocalFallback
+                        ? $"Permission={permission}, IsLocalFallback=true — " +
+                          "운영 데이터 변경은 Web SSO 로그인 후 수행하세요"
+                        : $"Permission={permission}, Grade={user.Grade}");
+            }
+            return granted;
+        }
+
+        /// <summary>
+        /// 권한 판정만 한다 — 감사 로그를 남기지 않는다 (VM-22).
+        /// 화면의 버튼 활성 · 표시 여부는 로그인할 때마다 모든 권한을 다시 묻는데, 그때마다
+        /// <see cref="HasPermission"/> 로 물으면 누르지도 않은 버튼마다 PermissionDenied 가 쌓였다
+        /// (Operator 로그인 1번에 11건). 실제 조작 시도 판정은 <see cref="HasPermission"/> 을 쓴다.
+        /// </summary>
+        public bool IsGranted(UserPermission permission)
+        {
+            var user = CurrentUser;
+            if (user == null) return false;
+
             // SSO Migration §2.3: 비상 폴백 세션은 Grade 무관 제한 권한만 허용.
             // 운영 데이터 변경 (ManageUsers / EditRecipe / SystemConfiguration 등) 거부.
-            if (CurrentUser.IsLocalFallback)
-            {
-                bool fallbackGranted = LocalFallbackAllowed.Contains(permission);
-                if (!fallbackGranted)
-                {
-                    AuditLogger.Instance.Log(
-                        AuditCategory.Authorization, "PermissionDenied", AuditOutcome.Denied,
-                        userName: CurrentUser.Username, source: nameof(UserService),
-                        details: $"Permission={permission}, IsLocalFallback=true — " +
-                                 "운영 데이터 변경은 Web SSO 로그인 후 수행하세요");
-                }
-                return fallbackGranted;
-            }
+            if (user.IsLocalFallback)
+                return LocalFallbackAllowed.Contains(permission);
 
-            bool granted = CurrentUser.Grade switch
+            return user.Grade switch
             {
                 UserGrade.Admin => true,
                 UserGrade.Engineer => permission switch
@@ -371,16 +388,6 @@ namespace VMS.Services
                 },
                 _ => false
             };
-
-            // 권한 거부만 기록 — 거부는 드물고 보안 의의가 크지만 허용은 빈도 높아 폭증 우려.
-            if (!granted)
-            {
-                AuditLogger.Instance.Log(
-                    AuditCategory.Authorization, "PermissionDenied", AuditOutcome.Denied,
-                    userName: CurrentUser.Username, source: nameof(UserService),
-                    details: $"Permission={permission}, Grade={CurrentUser.Grade}");
-            }
-            return granted;
         }
 
         /// <summary>

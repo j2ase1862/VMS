@@ -96,13 +96,36 @@ namespace VMS.ViewModels
                 var p = CurrentPrediction;
                 if (p is null) return "예측 데이터 수신 대기 중";
                 if (p.Status == "ok" && p.PredictedNgRate.HasValue)
-                {
-                    var pct = p.PredictedNgRate.Value * 100;
-                    var hour = p.WindowStart?.ToLocalTime().ToString("MM-dd HH:mm") ?? "?";
-                    return $"다음 1시간 예상 NG율: {pct:F2}%\n대상 윈도우: {hour}\n모델: {p.ModelName ?? "?"} v{p.ModelVersion ?? "?"}\n이번 시간 검사: {p.InspectionCountThisHour}건";
-                }
+                    return FormatPredictionTooltip(p, DateTime.Now);
                 return string.IsNullOrEmpty(p.Message) ? p.Status : $"{p.Status}: {p.Message}";
             }
+        }
+
+        /// <summary>
+        /// 예측 칩 툴팁 (WB-28 VMS 쪽). 예측의 '다음 1시간' 은 지금 시각이 아니라 <b>이 라인에서 마지막으로 검사가 있었던
+        /// 시간</b>의 다음 1시간이다(Web 은 최근 집계 시간 + 1h 를 대상으로 예측한다). 검사 건수도 그 마지막 집계 시간의 것이다.
+        /// 종전 문구('이번 시간 검사')는 지금 시간의 건수처럼 읽혔고, 한동안 검사가 없으면 지난 시간이 대상으로 나왔다.
+        /// </summary>
+        internal static string FormatPredictionTooltip(PredictionCurrentDto p, DateTime nowLocal)
+        {
+            var pct = (p.PredictedNgRate ?? 0) * 100;
+            var lines = new List<string>
+            {
+                $"예상 NG율: {pct:F2}% — 마지막 검사가 있었던 시간의 다음 1시간 기준"
+            };
+
+            if (p.WindowStart is DateTime ws)
+            {
+                var start = ws.Kind == DateTimeKind.Local ? ws : DateTime.SpecifyKind(ws, DateTimeKind.Utc).ToLocalTime();
+                var end = start.AddHours(1);
+                lines.Add($"예측 대상 시간: {start:MM-dd HH:mm} ~ {end:HH:mm}");
+                if (end <= nowLocal)
+                    lines.Add("※ 그 뒤로 검사가 없어 이미 지난 시간에 대한 예측입니다");
+            }
+
+            lines.Add($"모델: {p.ModelName ?? "?"} v{p.ModelVersion ?? "?"}");
+            lines.Add($"마지막 집계 시간의 검사: {p.InspectionCountThisHour}건");
+            return string.Join("\n", lines);
         }
 
         private void OnPredictionUpdated(PredictionCurrentDto dto)
@@ -202,13 +225,13 @@ namespace VMS.ViewModels
         [ObservableProperty]
         private UserGrade _currentUserGrade;
 
-        public bool CanEditRecipe => _userService?.HasPermission(UserPermission.EditRecipe) ?? true;
-        public bool CanDeleteRecipe => _userService?.HasPermission(UserPermission.DeleteRecipe) ?? true;
-        public bool CanManageUsers => _userService?.HasPermission(UserPermission.ManageUsers) ?? false;
-        public bool CanLaunchVisionSetup => _userService?.HasPermission(UserPermission.LaunchVisionSetup) ?? true;
-        public bool CanLaunchAppSetup => _userService?.HasPermission(UserPermission.LaunchAppSetup) ?? true;
+        public bool CanEditRecipe => _userService?.IsGranted(UserPermission.EditRecipe) ?? true;
+        public bool CanDeleteRecipe => _userService?.IsGranted(UserPermission.DeleteRecipe) ?? true;
+        public bool CanManageUsers => _userService?.IsGranted(UserPermission.ManageUsers) ?? false;
+        public bool CanLaunchVisionSetup => _userService?.IsGranted(UserPermission.LaunchVisionSetup) ?? true;
+        public bool CanLaunchAppSetup => _userService?.IsGranted(UserPermission.LaunchAppSetup) ?? true;
         /// <summary>카메라 조작 상자의 노출/게인 변경 · [Save Parameter] — 권한 표 CameraSettings.</summary>
-        public bool CanEditCameraSettings => _userService?.HasPermission(UserPermission.CameraSettings) ?? true;
+        public bool CanEditCameraSettings => _userService?.IsGranted(UserPermission.CameraSettings) ?? true;
         public bool HasConnectedCamera => Cameras.Any(c => c.IsConnected);
         /// <summary>
         /// 검사 시작/정지 권한. **시스템 사용자가 로그인하지 않았으면 허용**하고, 로그인한
@@ -239,6 +262,9 @@ namespace VMS.ViewModels
             // 로그인 · WO 필수 여부는 Gate. WO 를 골랐다면 Planned/InProgress 여야 한다 —
             // Completed/Closed 로 올리면 카운터가 오르지 않는다.
             && Gate.AllowsRun(IsOperatorLoggedIn, SelectedWorkOrder?.Status);
+
+        /// <summary>AUTO RUN 버튼 툴팁 — 단독 모드 · 게이트 설정에 맞춰 실제 조건만 안내 (VM-09).</summary>
+        public string AutoRunToolTip => Gate.DescribeRunRequirements();
 
         /// <summary>
         /// 카메라 조작(Grab / Live Start) 활성 조건 — CanStartStop 에서 Work Order 요건을 뺀 것.
@@ -422,6 +448,9 @@ namespace VMS.ViewModels
         private readonly IUserService? _userService;
         // 로컬 검사 이력 저장소 — inspectionHistory.enabled=false 면 null (조회 버튼 비활성).
         private readonly VMS.Services.LocalHistory.ILocalInspectionHistoryStore? _localHistoryStore;
+
+        // 레시피의 model:// 참조 모델을 검사 전에 받아 둔다 (VM-40)
+        private readonly IModelReferencePreparer? _modelReferencePreparer;
         private readonly SharedFrameWriter? _sharedFrameWriter;
         private GrabRequestListener? _grabRequestListener;
         private readonly IPlcConnection? _plcConnection;
@@ -473,7 +502,8 @@ namespace VMS.ViewModels
             IReadOnlyList<VMS.PLC.Interfaces.IIoBoardConnection>? ioBoards = null,
             VMS.Services.ImageUpload.ILineNgImageUploader? lineNgUploader = null,
             IUpdateInstallService? updateInstallService = null,
-            VMS.Services.LocalHistory.ILocalInspectionHistoryStore? localHistoryStore = null)
+            VMS.Services.LocalHistory.ILocalInspectionHistoryStore? localHistoryStore = null,
+            IModelReferencePreparer? modelReferencePreparer = null)
         {
             _ioBoards = ioBoards ?? Array.Empty<VMS.PLC.Interfaces.IIoBoardConnection>();
             _configService = configService;
@@ -499,6 +529,7 @@ namespace VMS.ViewModels
             _updateService = updateService;
             _updateInstallService = updateInstallService;
             _localHistoryStore = localHistoryStore;
+            _modelReferencePreparer = modelReferencePreparer;
             _imageUploadService = imageUploadService;
             _lineNgUploader = lineNgUploader;
             _shutdownAction = shutdownAction;
@@ -681,11 +712,20 @@ namespace VMS.ViewModels
             CanvasHeight = Math.Max(MinCanvasHeight, maxY + CanvasPadding);
         }
 
+        /// <summary>
+        /// 창 제목 · 헤더 이름에 인스턴스 이름을 붙인다 (VM-43) — 한 PC 에 라인별 인스턴스를 띄우면
+        /// 어느 창이 어느 라인인지 제목만으로 알 수 있어야 한다. 기본 인스턴스는 그대로.
+        /// </summary>
+        internal static string WithInstanceName(string title, string? instanceName)
+            => string.IsNullOrEmpty(instanceName) ? title : $"{title} [{instanceName}]";
+
         private void LoadConfiguration()
         {
             _systemConfig = _configService.LoadSystemConfiguration();
             // 옛 기본값(제품명 변경 전)은 현재 제품명으로 보인다 — 사용자가 바꾼 이름은 그대로
-            ApplicationTitle = VMS.Core.ProductInfo.NormalizeApplicationName(_systemConfig.ApplicationName);
+            ApplicationTitle = WithInstanceName(
+                VMS.Core.ProductInfo.NormalizeApplicationName(_systemConfig.ApplicationName),
+                VMS.Camera.Configuration.AppDataPaths.InstanceName);
 
             // Load cameras from configuration
             Cameras.Clear();
@@ -931,9 +971,8 @@ namespace VMS.ViewModels
                 SystemStatus = $"Recipe loaded: {recipe.Name}";
                 LogService?.Log($"Recipe loaded: {recipe.Name}", LogLevel.Info, "Recipe");
 
-                // Propagate recipe to all cameras
-                foreach (var cam in Cameras)
-                    cam.SetRecipe(recipe);
+                // Propagate recipe to all cameras (+ model:// 참조 준비)
+                ApplyRecipeToCameras(recipe, SelectedRecipeInfo.FilePath);
 
                 // Web 파라미터 캐시를 이 레시피로 전환 (백그라운드 best-effort)
                 _ = EnsureWebParamCacheAsync();
@@ -954,10 +993,30 @@ namespace VMS.ViewModels
             RefreshRecipeList();
             CurrentRecipe = recipe;
             CurrentRecipeName = recipe.Name;
+            // 헤더 칩만 바뀌고 카메라 검사 · [Vision Tool Setup] 은 이전 레시피로 남던 문제 (VM-18) —
+            // 불러오기(LoadRecipe)와 똑같이 파일 경로와 카메라 레시피도 바꾼다.
+            ApplyRecipeToCameras(recipe, _recipeService.CurrentRecipeFilePath);
             SystemStatus = "New recipe created";
 
             // Web 파라미터 캐시를 이 레시피로 전환 (Web 에 없으면 직전 레시피 연결을 끊는다)
             _ = EnsureWebParamCacheAsync();
+        }
+
+        /// <summary>
+        /// 새로 정한 레시피를 실제 검사 대상으로 만든다 — 소스 파일 경로(외부 변경 감시 · [Vision Tool Setup] 이 여는 파일)와
+        /// 모든 카메라의 레시피. 경로가 없으면(아직 저장 전) 경로는 그대로 둔다.
+        /// </summary>
+        public void ApplyRecipeToCameras(Recipe recipe, string? filePath)
+        {
+            if (!string.IsNullOrEmpty(filePath))
+                _currentRecipeFilePath = filePath;
+            foreach (var cam in Cameras)
+                cam.SetRecipe(recipe);
+
+            // model:// 참조 모델을 받아 둔다 — 검사 경로는 받아 둔 파일만 쓴다 (VM-40).
+            // 백그라운드로 두고 기다리지 않는다: 받기 실패는 System Log 에 남고, 그 도구만 불합격한다.
+            if (_modelReferencePreparer != null)
+                _ = _modelReferencePreparer.PrepareForRecipeAsync(recipe);
         }
 
         [RelayCommand]
@@ -1053,6 +1112,8 @@ namespace VMS.ViewModels
                     RefreshRecipeList();
                     CurrentRecipe = recipe;
                     CurrentRecipeName = recipe.Name;
+                    // 가져온 사본(Recipes 폴더)으로 검사 · [Vision Tool Setup] 대상을 맞춘다 (VM-18)
+                    ApplyRecipeToCameras(recipe, _recipeService.CurrentRecipeFilePath);
                     SystemStatus = $"Recipe imported: {recipe.Name}";
                     _ = EnsureWebParamCacheAsync();
                 }
@@ -1210,8 +1271,7 @@ namespace VMS.ViewModels
 
             CurrentRecipe = recipe;
             CurrentRecipeName = recipe.Name;
-            foreach (var cam in Cameras)
-                cam.SetRecipe(recipe);   // 검사 캐시도 함께 초기화
+            ApplyRecipeToCameras(recipe, null);   // 검사 캐시도 함께 초기화 (+ model:// 참조 준비)
 
             SystemStatus = $"레시피 '{recipe.Name}' 외부 변경 반영 완료 (VisionSetup 저장 감지)";
             LogService?.Log(SystemStatus, LogLevel.Success, "Recipe");
@@ -1295,6 +1355,12 @@ namespace VMS.ViewModels
 
                 // 원인 B 가시화용 — 같은 이름의 로컬(비 web) 레시피와 연결되어 별도 표시되지 않는 수
                 var linkedByName = webRecipes.Count(w => nonWebLocalNames.Contains(w.Name));
+
+                // 서버 연결이 돌아온 김에 아직 못 받은 모델 참조를 받아 둔다 (VM-40). 이미 받은 참조는 건드리지 않는다 —
+                // 운전 중에 @production 이 가리키는 버전을 바꿔 끼우면 적재된 엔진과 결과에 적는 모델 버전이 어긋난다.
+                if (CurrentRecipe is { } current && _modelReferencePreparer != null)
+                    _ = _modelReferencePreparer.PrepareForRecipeAsync(current, onlyMissing: true);
+
                 return new WebRecipeSyncResult(true, webRecipes.Count, added, linkedByName);
             }
             catch (Exception ex)
@@ -2043,15 +2109,20 @@ namespace VMS.ViewModels
 
         partial void OnSelectedNgImageChanged(NgImageItem? value)
         {
-            if (value?.Thumbnail != null)
-            {
-                // Show the NG image in the selected camera if one is available
-                if (SelectedCamera != null)
-                {
-                    SelectedCamera.CurrentImage = value.Thumbnail;
-                }
-            }
+            if (value?.Thumbnail == null) return;
+
+            // 그 NG 를 찍은 카메라 화면에 크게 보여 준다. 썸네일에는 카메라 이름이 실려 있다.
+            // (종전에는 SelectedCamera 를 아무도 정하지 않아 썸네일을 눌러도 아무 일이 없었다 — VM-02)
+            var camera = FindCameraForNgImage(Cameras, value) ?? SelectedCamera;
+            if (camera == null) return;
+
+            SelectedCamera = camera;
+            camera.CurrentImage = value.Thumbnail;
         }
+
+        /// <summary>NG 썸네일을 찍은 카메라 — 이름으로 찾는다. 없으면 null.</summary>
+        internal static CameraViewModel? FindCameraForNgImage(IEnumerable<CameraViewModel> cameras, NgImageItem item)
+            => cameras.FirstOrDefault(c => string.Equals(c.Name, item.CameraName, StringComparison.Ordinal));
 
         partial void OnTotalPassChanged(int value)
         {
@@ -2164,12 +2235,16 @@ namespace VMS.ViewModels
             });
         }
 
+        /// <summary>
+        /// Ctx 칩 [✕] — Lot · S/N 만 비운다. 작업지시 선택(WO ID)과 작업자는 그대로 둔다 (VM-33, 11-16 결정).
+        /// 종전에는 WO ID 까지 비워, 작업지시 칩과 Lot 콤보는 그대로 보이는데 그 뒤 검사가 작업지시 · Lot 수량에
+        /// 집계되지 않았다(컴팩트 헤더에서는 WO 칸이 숨어 다시 넣을 방법도 없었다).
+        /// </summary>
         [RelayCommand]
         private void ClearInspectionContext()
         {
-            WorkOrderIdText = "";
+            SelectedOpenLot = null;
             LotIdText = "";
-            OperatorIdText = "";
             SerialNumberText = "";
         }
 
@@ -2199,6 +2274,17 @@ namespace VMS.ViewModels
         public string SelectedWorkOrderText => SelectedWorkOrder == null
             ? ""
             : $"{SelectedWorkOrder.OrderNo} · {SelectedWorkOrder.ProductName} ({SelectedWorkOrder.ProgressText})";
+
+        /// <summary>
+        /// 컴팩트 헤더용 — 번호 · 제품만(말줄임 대상). 진행 수량은 <see cref="SelectedWorkOrderProgressText"/> 로
+        /// 따로 보여 잘리지 않게 한다 (VM-38). 종전에는 한 줄 글이 110px 에서 잘려 진행 수량이 사라졌다.
+        /// </summary>
+        public string SelectedWorkOrderLabel => SelectedWorkOrder == null
+            ? ""
+            : $"{SelectedWorkOrder.OrderNo} · {SelectedWorkOrder.ProductName}";
+
+        /// <summary>작업지시 진행 수량(예: 3 / 6, 양품 3 / 6) — 컴팩트 헤더에서도 항상 보인다 (VM-38).</summary>
+        public string SelectedWorkOrderProgressText => SelectedWorkOrder?.ProgressText ?? "";
 
         /// <summary>칩 툴팁 — 혼합 레시피 WO 는 라인별 진행을 줄바꿈으로 병기.</summary>
         public string SelectedWorkOrderToolTip
@@ -2235,6 +2321,8 @@ namespace VMS.ViewModels
         partial void OnSelectedWorkOrderChanged(VMS.Core.Models.ParameterSync.WorkOrderDto? value)
         {
             OnPropertyChanged(nameof(SelectedWorkOrderText));
+            OnPropertyChanged(nameof(SelectedWorkOrderLabel));
+            OnPropertyChanged(nameof(SelectedWorkOrderProgressText));
             OnPropertyChanged(nameof(SelectedWorkOrderToolTip));
             OnPropertyChanged(nameof(CanStartStop));
             OnPropertyChanged(nameof(CanToggleRollerInspection));
@@ -2495,9 +2583,7 @@ namespace VMS.ViewModels
 
                 CurrentRecipe = recipe;
                 CurrentRecipeName = recipe.Name;
-                _currentRecipeFilePath = info.FilePath;
-                foreach (var cam in Cameras)
-                    cam.SetRecipe(recipe);
+                ApplyRecipeToCameras(recipe, info.FilePath);
 
                 SystemStatus = $"WO {wo.OrderNo} → Recipe '{recipe.Name}' loaded";
                 LogService?.Log($"WO {wo.OrderNo} auto-loaded recipe '{recipe.Name}'", LogLevel.Success, "WorkOrder");
@@ -2587,6 +2673,7 @@ namespace VMS.ViewModels
                 // DTO 필드 변경은 INPC 를 발생시키지 않으므로 수동 알림.
                 // CanStartStop 은 Status 도 보므로 함께 갱신.
                 OnPropertyChanged(nameof(SelectedWorkOrderText));
+                OnPropertyChanged(nameof(SelectedWorkOrderProgressText));
                 OnPropertyChanged(nameof(SelectedWorkOrderToolTip));
                 OnPropertyChanged(nameof(CanStartStop));
                 OnPropertyChanged(nameof(CanToggleRollerInspection));

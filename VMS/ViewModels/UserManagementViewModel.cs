@@ -42,13 +42,20 @@ namespace VMS.ViewModels
             RefreshUsers();
         }
 
-        private void RefreshUsers()
+        /// <summary>
+        /// 목록을 다시 읽는다. <paramref name="keepUserId"/> 를 주면 그 사용자를 다시 골라 둔다 —
+        /// [Save Changes] 뒤 선택이 풀려 이어서 [Change Password] · [Delete User] 가 듣지 않던 문제 (VM-25).
+        /// </summary>
+        private void RefreshUsers(int? keepUserId = null)
         {
             Users.Clear();
             foreach (var user in _userService.GetAllUsers())
             {
                 Users.Add(user);
             }
+
+            if (keepUserId is int id)
+                SelectedUser = Users.FirstOrDefault(u => u.UserId == id);
         }
 
         [RelayCommand]
@@ -93,7 +100,7 @@ namespace VMS.ViewModels
             if (_userService.UpdateUser(SelectedUser.UserId, SelectedUser.DisplayName, SelectedUser.Grade))
             {
                 StatusMessage = $"사용자 '{SelectedUser.Username}' 정보가 저장되었습니다.";
-                RefreshUsers();
+                RefreshUsers(keepUserId: SelectedUser.UserId);
             }
             else
             {

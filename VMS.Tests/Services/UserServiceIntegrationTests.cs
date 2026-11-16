@@ -186,6 +186,26 @@ namespace VMS.Tests.Services
             Assert.False(_service.HasPermission(UserPermission.EditRecipe));
         }
 
+        [Theory]
+        [InlineData(UserGrade.Operator)]
+        [InlineData(UserGrade.Engineer)]
+        [InlineData(UserGrade.Admin)]
+        public void IsGranted_MatchesHasPermission_ForEveryPermission(UserGrade grade)
+        {
+            // VM-22 — 화면 판정(IsGranted, 기록 없음)과 시도 판정(HasPermission, 거부 기록)은 같은 답이어야 한다
+            _service.CreateUser("g1", "pw1234", "Grade User", grade);
+            _service.Authenticate("g1", "pw1234");
+
+            foreach (UserPermission p in Enum.GetValues(typeof(UserPermission)))
+                Assert.Equal(_service.HasPermission(p), _service.IsGranted(p));
+        }
+
+        [Fact]
+        public void IsGranted_NoLogin_False()
+        {
+            Assert.False(_service.IsGranted(UserPermission.StartStop));
+        }
+
         [Fact]
         public void HasPermission_Engineer_NoUserManagement()
         {

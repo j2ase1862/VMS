@@ -55,7 +55,8 @@ namespace VMS.Core.Tests.Retention
 
         private string MakeBackupFile(DateTime utc)
         {
-            var name = $"auto-backup-{utc:yyyyMMdd-HHmmss}.zip";
+            // 파일 이름은 현지 시각 (VM-30)
+            var name = VMS.Core.Backup.AutoBackupScheduler.MakeBackupFileName(utc.ToLocalTime());
             var path = Path.Combine(_backupDir, name);
             File.WriteAllText(path, "fake");
             return path;

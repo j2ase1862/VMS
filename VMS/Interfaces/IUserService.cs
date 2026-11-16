@@ -21,7 +21,11 @@ namespace VMS.Interfaces
             WebAuthClient client, CancellationToken ct = default);
 
         void Logout();
+        /// <summary>권한 판정 — 거부되면 감사 로그(PermissionDenied)를 남긴다. 실제 조작 시도에 쓴다.</summary>
         bool HasPermission(UserPermission permission);
+
+        /// <summary>권한 판정만 — 감사 로그를 남기지 않는다. 화면의 버튼 활성 · 표시 여부에 쓴다 (VM-22).</summary>
+        bool IsGranted(UserPermission permission);
 
         /// <summary>
         /// 초기 admin 계정 시드 — Option C (2026-06-04): 디폴트 admin/admin123 시드 제거 후

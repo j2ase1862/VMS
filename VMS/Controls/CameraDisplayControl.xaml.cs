@@ -81,6 +81,9 @@ namespace VMS.Controls
 
         private void OnDragStart(object sender, MouseButtonEventArgs e)
         {
+            // 축소 표시 중에는 끌지 않는다 — 화면 좌표와 저장 좌표가 달라 위치가 어긋난다 (VM-11)
+            if (TileLayoutScale.GetIsScaled(this)) return;
+
             if (DataContext is CameraViewModel vm)
             {
                 _isDragging = true;
@@ -366,6 +369,7 @@ namespace VMS.Controls
         {
             if (DataContext is not CameraViewModel vm || _cameraCanvas == null)
                 return;
+            if (TileLayoutScale.GetIsScaled(this)) return;   // 축소 표시 중 크기 조절 쉼 (VM-11)
 
             double newX = vm.X;
             double newY = vm.Y;

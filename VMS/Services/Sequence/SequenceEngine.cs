@@ -33,6 +33,9 @@ namespace VMS.Services.Sequence
         private readonly Dictionary<string, TaskCompletionSource<bool>> _bitWaiters = new();
         private readonly object _waiterLock = new();
 
+        /// <summary>BitChanged 를 기다리는 동안 값을 다시 읽어 보는 주기 (이벤트를 놓친 경우의 안전망).</summary>
+        private const int BitRecheckIntervalMs = 200;
+
         // 마지막 Inspection 결과 (Branch 노드용)
         private bool _lastInspectionOk;
 
@@ -984,6 +987,21 @@ namespace VMS.Services.Sequence
         {
             var key = address.RawAddress.ToUpperInvariant();
 
+            // 이 주소의 BitChanged 가 실제로 오게 감시를 건다 (VM-06).
+            // 종전에는 AutoProcessService 가 plc_signals.json 의 trigger/ack 주소만 감시해,
+            // 그 밖의 주소를 InputCheck 로 쓰는 시퀀스는 한 번 읽은 뒤 오지 않는 이벤트를 영원히 기다렸다.
+            // 감시는 주소별로 한 번만 걸리고(구현이 중복을 무시), 운전 정지 때 StopAllMonitoringAsync 가 함께 푼다.
+            try { await _plc.StartMonitoringAsync(address); }
+            catch (Exception ex) { Debug.WriteLine($"[SequenceEngine] StartMonitoring error: {ex.Message}"); }
+
+            // 타임아웃은 이 대기 전체에 한 번 — 재확인 회전마다 새로 잡으면 영원히 끝나지 않는다
+            using var timeoutCts = timeoutMs > 0
+                ? new CancellationTokenSource(timeoutMs)
+                : new CancellationTokenSource();
+            using var linkedCts = timeoutMs > 0
+                ? CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token)
+                : CancellationTokenSource.CreateLinkedTokenSource(ct);
+
             while (!ct.IsCancellationRequested)
             {
                 try
@@ -997,25 +1015,27 @@ namespace VMS.Services.Sequence
                     Debug.WriteLine($"[SequenceEngine] ReadBit error: {ex.Message}");
                 }
 
+                if (timeoutMs > 0 && timeoutCts.IsCancellationRequested)
+                    return false;
+
                 var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
                 lock (_waiterLock)
                 {
                     _bitWaiters[key] = tcs;
                 }
 
-                using var timeoutCts = timeoutMs > 0
-                    ? new CancellationTokenSource(timeoutMs)
-                    : new CancellationTokenSource();
-                using var linkedCts = timeoutMs > 0
-                    ? CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token)
-                    : CancellationTokenSource.CreateLinkedTokenSource(ct);
-
                 try
                 {
                     using var reg = linkedCts.Token.Register(() => tcs.TrySetCanceled(linkedCts.Token));
-                    var newValue = await tcs.Task;
-                    if (newValue == expectedValue)
-                        return true;
+
+                    // 이벤트를 기다리되, 감시가 늦게 붙어 바뀐 순간을 놓쳤을 수도 있으니 주기적으로 다시 읽는다
+                    var first = await Task.WhenAny(tcs.Task, Task.Delay(BitRecheckIntervalMs, linkedCts.Token));
+                    if (first == tcs.Task || linkedCts.IsCancellationRequested)
+                    {
+                        var newValue = await tcs.Task;
+                        if (newValue == expectedValue)
+                            return true;
+                    }
                 }
                 catch (OperationCanceledException) when (timeoutMs > 0 && timeoutCts.IsCancellationRequested && !ct.IsCancellationRequested)
                 {

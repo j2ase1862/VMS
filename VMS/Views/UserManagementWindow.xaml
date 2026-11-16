@@ -2,13 +2,35 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:models="clr-namespace:VMS.Models"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        xmlns:c="clr-namespace:VMS.VisionSetup.Views.Common;assembly=VMS.VisionSetup"
         Title="User Management"
-        Width="720" Height="520"
+        Width="880" Height="720"
+        MinWidth="760" MinHeight="560"
+        Style="{x:Null}"
+        WindowStyle="None"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource Brush.Surface.Base}"
         ResizeMode="CanResizeWithGrip">
 
-    <Grid Margin="16">
+    <!-- 다른 관리 창과 같은 어두운 제목줄 — 종전 OS 제목 표시줄은 모양이 달랐다 (VM-25).
+         기본 크기는 Last Login 칸과 오른쪽 버튼 · 결과 안내가 스크롤 없이 보이게 키웠다. -->
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="42" CornerRadius="0"
+                            GlassFrameThickness="0" ResizeBorderThickness="6"
+                            UseAeroCaptionButtons="False"/>
+    </shell:WindowChrome.WindowChrome>
+
+    <Border BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="1">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="42"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <c:ChromelessTitleBar Grid.Row="0" TitleText="사용자 관리 — User Management"/>
+
+    <Grid Grid.Row="1" Margin="16">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="280"/>
@@ -156,4 +178,6 @@
             </StackPanel>
         </ScrollViewer>
     </Grid>
+    </Grid>
+    </Border>
 </Window>

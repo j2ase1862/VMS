@@ -37,6 +37,60 @@ namespace VMS.Views
             InitializeComponent();
 
             SizeChanged += (_, e) => IsCompactHeader = e.NewSize.Width < CompactHeaderThreshold;
+
+            // 카메라 영역이 좁아지면 타일을 비례 축소해 표시 (VM-11) — 설정 패널을 열면 영역이 320 줄어
+            // 타일 오른쪽(판정 배지 · 톱니바퀴)이 패널 뒤로 가려졌다. 순수 화면 배치라 여기서 다룬다.
+            CameraCanvas.SizeChanged += (_, _) => UpdateTileScale();
+            DataContextChanged += (_, _) => WatchCameras();
+        }
+
+        private System.Collections.Specialized.INotifyCollectionChanged? _watchedCameras;
+
+        private void WatchCameras()
+        {
+            if (_watchedCameras != null)
+                _watchedCameras.CollectionChanged -= OnCamerasChanged;
+            _watchedCameras = (DataContext as VMS.ViewModels.MainViewModel)?.Cameras;
+            if (_watchedCameras != null)
+                _watchedCameras.CollectionChanged += OnCamerasChanged;
+            OnCamerasChanged(null, null);
+        }
+
+        private void OnCamerasChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs? e)
+        {
+            if (DataContext is not VMS.ViewModels.MainViewModel vm) return;
+            foreach (var cam in vm.Cameras)
+            {
+                cam.PropertyChanged -= OnCameraPropertyChanged;
+                cam.PropertyChanged += OnCameraPropertyChanged;
+            }
+            UpdateTileScale();
+        }
+
+        private void OnCameraPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName is "X" or "Y" or "Width" or "Height")
+                UpdateTileScale();
+        }
+
+        private void UpdateTileScale()
+        {
+            if (DataContext is not VMS.ViewModels.MainViewModel vm) return;
+            double right = 0, bottom = 0;
+            foreach (var cam in vm.Cameras)
+            {
+                right = Math.Max(right, cam.X + cam.Width);
+                bottom = Math.Max(bottom, cam.Y + cam.Height);
+            }
+
+            var scale = VMS.Controls.TileLayoutScale.Compute(
+                CameraCanvas.ActualWidth, CameraCanvas.ActualHeight, right, bottom);
+            if (Math.Abs(CameraTilesScale.ScaleX - scale) > 0.0005)
+            {
+                CameraTilesScale.ScaleX = scale;
+                CameraTilesScale.ScaleY = scale;
+            }
+            VMS.Controls.TileLayoutScale.SetIsScaled(CameraTiles, scale < 0.9995);
         }
 
         /// <summary>

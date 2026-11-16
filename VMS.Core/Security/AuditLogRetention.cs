@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -55,6 +56,23 @@ namespace VMS.Core.Security
         /// 보다 오래된 것 삭제. 삭제 결과를 AuditCategory.System 으로 기록.
         /// </summary>
         /// <returns>실제 삭제된 파일 수.</returns>
+        /// <summary>
+        /// 날짜 파일을 통째로 지울 실제 기준 일수 — 전역 값과 분류별 보존 기간 중 <b>가장 긴 값</b> (VM-42).
+        /// 종전에는 전역(기본 365일) 정리가 먼저 파일을 통째로 지워, 분류별로 1095 · 730일을 잡아도
+        /// 365일 넘는 기록은 남지 않았다. 짧은 분류는 그 뒤 분류별 필터
+        /// (<see cref="AuditCategoryRetention.FilterFilesByCategory"/>)가 줄 단위로 지운다.
+        /// </summary>
+        public static int EffectiveWholeFileDays(int globalDays, IReadOnlyDictionary<AuditCategory, int>? perCategoryDays)
+        {
+            var days = globalDays;
+            if (perCategoryDays != null)
+            {
+                foreach (var d in perCategoryDays.Values)
+                    if (d > days) days = d;
+            }
+            return Clamp(days);
+        }
+
         public static int CleanupOldFiles(string auditDir, int retentionDays)
         {
             if (string.IsNullOrWhiteSpace(auditDir) || !Directory.Exists(auditDir)) return 0;

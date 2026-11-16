@@ -32,6 +32,16 @@ namespace VMS.VisionSetup.Views
             };
             DataContext = _vm;
             Loaded += (_, _) => EmployeeNumberBox.Focus();
+
+            // PIN 칸은 VM 으로만 옮겨지는 단방향이라, 로그인 실패로 VM 이 PIN 을 비워도 점(●●●●)이 남았다 (VM-32)
+            _vm.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(OperatorLoginViewModel.Pin)
+                    && _vm.Pin.Length == 0 && PinBox.Password.Length > 0)
+                {
+                    PinBox.Clear();
+                }
+            };
         }
 
         // PasswordBox.Password 는 BindingProperty가 아니라 코드 비하인드에서 동기화

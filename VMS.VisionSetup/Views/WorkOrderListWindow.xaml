@@ -136,7 +136,7 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTextColumn Header="Planned Start" Binding="{Binding PlannedStartAt, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" Width="140" IsReadOnly="True"
+                    <DataGridTextColumn Header="Planned Start" Binding="{Binding PlannedStartAtLocal, Mode=OneWay, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" Width="140" IsReadOnly="True"
                                         ElementStyle="{StaticResource WoCellMuted}"/>
                 </DataGrid.Columns>
             </DataGrid>

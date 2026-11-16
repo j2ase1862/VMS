@@ -200,6 +200,34 @@ namespace VMS.Core.Services
         public Task<bool> LoadRecipeAsync(int recipeId)
             => LoadRecipeCoreAsync(recipeId, Interlocked.Increment(ref _recipeGeneration));
 
+        /// <inheritdoc />
+        public async Task<IReadOnlyList<RecipeParameterDto>?> FetchRecipeParametersAsync(int recipeId)
+        {
+            try
+            {
+                var url = $"{_baseUrl}/api/parameters/sync/recipe/{recipeId}";
+                var response = await _httpClient.GetAsync(url);
+                if (!response.IsSuccessStatusCode)
+                {
+                    Debug.WriteLine($"[ParameterSync] FetchRecipeParameters {recipeId} failed: {response.StatusCode}");
+                    return null;
+                }
+
+                var json = await response.Content.ReadAsStringAsync();
+                var parameters = JsonSerializer.Deserialize<List<RecipeParameterDto>>(json, JsonOptions);
+                if (parameters == null) return null;
+
+                foreach (var p in parameters) p.Sanitize();
+                // 캐시와 같은 기준으로 보여 준다 — 활성 항목만
+                return parameters.Where(p => p.IsActive).ToList();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[ParameterSync] FetchRecipeParameters {recipeId} error: {ex.Message}");
+                return null;
+            }
+        }
+
         private async Task<bool> LoadRecipeCoreAsync(int recipeId, int generation)
         {
             try

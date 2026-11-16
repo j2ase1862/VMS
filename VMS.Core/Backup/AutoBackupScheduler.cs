@@ -45,9 +45,7 @@ namespace VMS.Core.Backup
         {
             _appDataDir = appDataDir;
             _options = options;
-            _backupDir = string.IsNullOrWhiteSpace(options.BackupDir)
-                ? Path.Combine(appDataDir, "backups")
-                : options.BackupDir;
+            _backupDir = AutoBackupOptions.ResolveBackupDir(appDataDir, options.BackupDir);
         }
 
         public void Start()
@@ -104,7 +102,7 @@ namespace VMS.Core.Backup
         {
             try
             {
-                var fileName = $"{BackupFilePrefix}{DateTime.UtcNow:yyyyMMdd-HHmmss}{BackupFileSuffix}";
+                var fileName = MakeBackupFileName(DateTime.Now);
                 var zipPath = Path.Combine(_backupDir, fileName);
 
                 var result = BackupRestoreService.CreateBackup(_appDataDir, zipPath,
@@ -147,6 +145,31 @@ namespace VMS.Core.Backup
             }
         }
 
+        // ─── 파일 이름 규칙 ──────────────────────────────────────
+
+        private const string BackupFileTimeFormat = "yyyyMMdd-HHmmss";
+
+        /// <summary>
+        /// 자동 백업 파일 이름 — <b>현지 시각</b>으로 짓는다 (VM-30). 종전에는 UTC 라 한국 시각 14:00 백업이
+        /// auto-backup-…-050029.zip 이 되어, 현지 시각으로 짓는 수동 백업과 나란히 보면 헷갈렸다.
+        /// </summary>
+        public static string MakeBackupFileName(DateTime localTime)
+            => $"{BackupFilePrefix}{localTime.ToString(BackupFileTimeFormat, CultureInfo.InvariantCulture)}{BackupFileSuffix}";
+
+        /// <summary>
+        /// auto-backup-YYYYMMDD-HHmmss(확장자 없는 이름)의 시각을 UTC 로 읽는다. 이름의 시각은 현지 시각으로 본다.
+        /// 예전 판(UTC 이름)이 남긴 파일은 현지-UTC 차이(한국 9시간)만큼 오래된 것으로 읽히는데,
+        /// 보존 기간이 일 단위라 정리 시점이 몇 시간 당겨지는 정도다.
+        /// </summary>
+        public static bool TryParseBackupFileTime(string fileNameWithoutExtension, out DateTime utc)
+        {
+            utc = default;
+            if (!fileNameWithoutExtension.StartsWith(BackupFilePrefix, StringComparison.Ordinal)) return false;
+            var tsPart = fileNameWithoutExtension.Substring(BackupFilePrefix.Length);
+            return DateTime.TryParseExact(tsPart, BackupFileTimeFormat, CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeLocal | DateTimeStyles.AdjustToUniversal, out utc);
+        }
+
         // ─── 보존 정책 — 오래된 auto-backup-*.zip 정리 ──────────
 
         /// <summary>
@@ -167,14 +190,10 @@ namespace VMS.Core.Backup
                     var name = Path.GetFileNameWithoutExtension(file);
                     if (!name.StartsWith(BackupFilePrefix, StringComparison.Ordinal)) continue;
 
-                    var tsPart = name.Substring(BackupFilePrefix.Length);
-                    if (!DateTime.TryParseExact(tsPart, "yyyyMMdd-HHmmss",
-                            CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal,
-                            out var fileUtc))
+                    if (!TryParseBackupFileTime(name, out var fileUtc))
                     {
                         continue; // 예상 패턴 외 — skip
                     }
-                    fileUtc = fileUtc.ToUniversalTime();
 
                     if (fileUtc < thresholdUtc)
                     {
