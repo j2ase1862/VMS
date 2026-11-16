@@ -1615,7 +1615,7 @@
                                     </Grid.RowDefinitions>
 
                                     <!-- Row 0: 표시 색상 선택 (Mech-Eye Viewer UX — 컬러/그레이) -->
-                                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,5">
+                                    <WrapPanel Grid.Row="0" Orientation="Horizontal" Margin="10,5">
                                         <ComboBox SelectedIndex="{Binding DepthMapColorModeIndex}"
                                                   Style="{StaticResource WindowDarkComboBox}"
                                                   FontSize="12" Padding="8,3" MinWidth="150"
@@ -1623,7 +1623,30 @@
                                             <ComboBoxItem Content="컬러 (Jet)"/>
                                             <ComboBoxItem Content="그레이"/>
                                         </ComboBox>
-                                    </StackPanel>
+
+                                        <!-- 높이 맵 기준 · 하한 · 상한 (VS-15) — Generate Height Map 은 이 값으로 만든다 -->
+                                        <TextBlock Text="Baseline" VerticalAlignment="Center" Margin="16,0,4,0"
+                                                   Foreground="{StaticResource BrushTextSecondary}" FontSize="12"/>
+                                        <TextBox Text="{Binding HeightBaseline, StringFormat=F1}" Width="64"
+                                                 Style="{StaticResource WindowDarkTextBox}" VerticalAlignment="Center"
+                                                 ToolTip="높이 기준(mm) — 높이 맵은 이 값을 0 으로 잰다"/>
+                                        <TextBlock Text="Lower" VerticalAlignment="Center" Margin="10,0,4,0"
+                                                   Foreground="{StaticResource BrushTextSecondary}" FontSize="12"/>
+                                        <TextBox Text="{Binding HeightLowerLimit, StringFormat=F1}" Width="64"
+                                                 Style="{StaticResource WindowDarkTextBox}" VerticalAlignment="Center"
+                                                 ToolTip="높이 맵에 담을 Z 하한(mm)"/>
+                                        <TextBlock Text="Upper" VerticalAlignment="Center" Margin="10,0,4,0"
+                                                   Foreground="{StaticResource BrushTextSecondary}" FontSize="12"/>
+                                        <TextBox Text="{Binding HeightUpperLimit, StringFormat=F1}" Width="64"
+                                                 Style="{StaticResource WindowDarkTextBox}" VerticalAlignment="Center"
+                                                 ToolTip="높이 맵에 담을 Z 상한(mm)"/>
+                                        <Button Content="Generate Height Map" Command="{Binding GenerateHeightMapCommand}"
+                                                Style="{StaticResource ModernSecondaryButton}" Margin="10,0,0,0" Padding="10,3"
+                                                ToolTip="위 기준 · 하한 · 상한으로 높이 맵을 다시 만듭니다 (손잡이 범위는 그대로)"/>
+                                        <Button Content="전체로" Command="{Binding ResetHeightRangeToFullCommand}"
+                                                Style="{StaticResource ModernGhostButton}" Margin="6,0,0,0" Padding="10,3"
+                                                ToolTip="하한 · 상한과 손잡이 범위를 점군 전체 Z 범위로 되돌립니다"/>
+                                    </WrapPanel>
 
                                     <Grid Grid.Row="1">
                                         <!-- Placeholder when no point cloud -->

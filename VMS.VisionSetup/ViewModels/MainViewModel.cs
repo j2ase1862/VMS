@@ -3938,6 +3938,7 @@ namespace VMS.VisionSetup.ViewModels
             }
 
             GenerateHeightMapCommand.NotifyCanExecuteChanged();
+            ResetHeightRangeToFullCommand.NotifyCanExecuteChanged();
             SaveHeightSlicingCommand.NotifyCanExecuteChanged();
             SavePointCloudCommand.NotifyCanExecuteChanged();
 
@@ -4033,7 +4034,8 @@ namespace VMS.VisionSetup.ViewModels
                 _recipeService.SaveRecipe(recipe);
             }
 
-            StatusMessage = $"Height Slicing 설정 저장됨: Baseline={HeightBaseline:F1}, 범위=[{HeightLowerLimit:F1}, {HeightUpperLimit:F1}]";
+            StatusMessage = $"Height Slicing 설정 저장됨: Baseline={HeightBaseline:F1}, " +
+                $"높이 맵 범위=[{HeightLowerLimit:F1}, {HeightUpperLimit:F1}], 손잡이 범위=[{DepthRangeMin:F1}, {DepthRangeMax:F1}]";
         }
 
         private void ClearHeightSlicing()
@@ -4079,6 +4081,19 @@ namespace VMS.VisionSetup.ViewModels
             _currentImageIsHeightMap = true;
         }
 
+        /// <summary>
+        /// [전체로] — 높이 맵 하한 · 상한과 Depth Map 손잡이 범위를 점군 전체 Z 범위로 되돌리고 높이 맵을 다시 만든다 (VS-15).
+        /// </summary>
+        [RelayCommand(CanExecute = nameof(CanGenerateHeightMap))]
+        private void ResetHeightRangeToFull()
+        {
+            HeightLowerLimit = PointCloudYMin;
+            HeightUpperLimit = PointCloudYMax;
+            DepthRangeMin = PointCloudYMin;
+            DepthRangeMax = PointCloudYMax;
+            GenerateHeightMap();
+        }
+
         private void GenerateHeightMap()
         {
             // 비격자 점군도 만든다 — 서비스가 정사투영으로 비닝한다. 예전에는 여기서 조용히 끝나
@@ -4108,9 +4123,14 @@ namespace VMS.VisionSetup.ViewModels
                 // float map은 VisionService.CurrentDepthMap32F에 clone 저장됨
                 // metadata.DepthMap32F에도 원본 참조 보관됨 (GetInterpolatedZ용)
 
-                // DepthRange 슬라이더를 HeightLimit 범위로 동기화
-                DepthRangeMin = HeightLowerLimit;
-                DepthRangeMax = HeightUpperLimit;
+                // 손잡이 범위(DepthRange)는 사용자가 고른 값이다 — 높이 맵을 다시 만들어도 지우지 않는다
+                // (VS-15, 사용자 결정 11-16). 아직 범위가 없을 때만 높이 맵 범위로 채운다.
+                // 전체 범위로 되돌리기는 [전체로] (ResetHeightRangeToFull).
+                if (DepthRangeMax <= DepthRangeMin)
+                {
+                    DepthRangeMin = HeightLowerLimit;
+                    DepthRangeMax = HeightUpperLimit;
+                }
 
                 StatusMessage = $"Height Map 생성 완료: {metadata.Width}x{metadata.Height} " +
                     $"(Baseline={HeightBaseline:F1}, Range=[{HeightLowerLimit:F1}, {HeightUpperLimit:F1}])";
