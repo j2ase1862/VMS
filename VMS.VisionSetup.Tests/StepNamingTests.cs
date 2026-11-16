@@ -103,5 +103,19 @@ namespace VMS.VisionSetup.Tests
             Assert.Contains("ghost1", unknown);
             Assert.Contains("ghost2", unknown);
         }
+
+        [Fact]
+        public void MaxSequence_IsPerCamera_AndZeroWhenEmpty()
+        {
+            // VS-03: 웨이포인트 스텝은 같은 카메라 기존 스텝의 마지막 번호 뒤부터 붙인다.
+            var recipe = new Recipe { Name = "R" };
+            recipe.Steps.Add(Step("camA", 1));
+            recipe.Steps.Add(Step("camA", 2));
+            recipe.Steps.Add(Step("camB", 5));
+
+            Assert.Equal(2, StepNaming.MaxSequence(recipe, "camA"));
+            Assert.Equal(5, StepNaming.MaxSequence(recipe, "camB"));
+            Assert.Equal(0, StepNaming.MaxSequence(recipe, "camC"));
+        }
     }
 }

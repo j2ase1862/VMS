@@ -3713,15 +3713,18 @@ namespace VMS.VisionSetup.ViewModels
             foreach (var step in robotSteps)
                 recipe.Steps.Remove(step);
 
-            // 웨이포인트별 새 스텝 생성
+            // 웨이포인트별 새 스텝 생성 — 같은 카메라의 기존 스텝 뒤 번호부터 붙인다
+            // (기존 "1-1" 이 있는데 웨이포인트 스텝도 "1-1 Top" 이 되던 문제, VS-03).
             int camIdx = GetCameraDisplayIndex(cameraId);
+            int baseSeq = StepNaming.MaxSequence(recipe, cameraId);
             foreach (var wp in _waypointPlanner.Waypoints)
             {
+                int seq = baseSeq + wp.Index + 1;
                 var step = new InspectionStep
                 {
                     Id = Guid.NewGuid().ToString(),
-                    Name = $"{camIdx}-{wp.Index + 1} {wp.Name}",
-                    Sequence = wp.Index + 1,
+                    Name = $"{camIdx}-{seq} {wp.Name}",
+                    Sequence = seq,
                     CameraId = cameraId,
                     RobotWaypoint = wp,
                     Tools = new List<ToolConfig>()
