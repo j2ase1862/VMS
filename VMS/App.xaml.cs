@@ -384,15 +384,10 @@ namespace VMS
 
             var signalConfig = configService.LoadPlcSignalConfiguration();
 
-            var mainViewModel = new MainViewModel(
-                configService,
-                recipeService,
-                dialogService,
-                processService,
-                inspectionService,
-                () => Shutdown(),
-                userService: userService,
-                logService: logService);
+            // 아래 델리게이트(AutoProcessService 등)가 붙잡는 변수 — 실제 인스턴스는 서비스를 다 만든 뒤 한 번만 만든다.
+            // 종전에는 여기서 임시 MainViewModel 을 하나 더 만들어 "Application started" 가 두 번 찍히고
+            // 레시피 목록 동기화 · 파일 감시 구독도 두 번 걸렸다 (VM-08).
+            MainViewModel mainViewModel = null!;
 
             // ── 단독(Standalone) 모드 — Web 서버 주소가 비어 있으면 웹 연동 서비스를
             // 아예 만들지 않는다. 각 서비스는 null 이어도 MainViewModel/InspectionService 가
@@ -804,7 +799,7 @@ namespace VMS
                 VMS.Core.Services.MlopsClientStatus.ReportDisabled(VMS.Core.Services.MlopsClientStatus.NgCollector, ex);
             }
 
-            // Re-create MainViewModel with AutoProcessService injected
+            // MainViewModel — 서비스를 모두 주입해 한 번만 만든다
             mainViewModel = new MainViewModel(
                 configService,
                 recipeService,
