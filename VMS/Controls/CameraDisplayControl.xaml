@@ -323,8 +323,8 @@
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
                             <DataGridTextColumn Header="P/F"
-                                                Binding="{Binding Result}"
-                                                Width="40">
+                                                Binding="{Binding ResultText}"
+                                                Width="44">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Padding" Value="4,2"/>
