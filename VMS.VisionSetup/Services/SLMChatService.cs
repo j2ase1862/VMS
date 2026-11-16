@@ -443,9 +443,9 @@ ImageDependent Tier 파라미터(ThresholdValue, EdgeThreshold, CValue 등)를 �
             catch (Exception ex)
             {
                 throw new InvalidOperationException(
-                    $"Cannot connect to Ollama at {OllamaBaseUrl}. " +
-                    "Ensure Ollama is installed and running. " +
-                    $"Details: {ex.Message}", ex);
+                    $"로컬 언어 모델 서버({OllamaBaseUrl})에 연결할 수 없습니다. " +
+                    "서버가 설치되어 실행 중인지 확인하세요. " +
+                    $"({ex.Message})", ex);
             }
 
             _modelName = modelName;

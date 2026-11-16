@@ -1435,7 +1435,7 @@ namespace VMS.ViewModels
             if (info == null)
             {
                 _dialogService.ShowInformation(
-                    "업데이트 정보를 가져올 수 없습니다.\n네트워크 상태 또는 GitHub 접근 가능 여부를 확인해 주세요.",
+                    "업데이트 정보를 가져올 수 없습니다.\n네트워크 상태 또는 업데이트 서버 접속 가능 여부를 확인해 주세요.",
                     "업데이트 확인");
                 return;
             }

@@ -49,7 +49,7 @@
                 <TextBlock Text="Light Sources (≥3)" Style="{StaticResource ExpanderHeaderStyle}"/>
             </Expander.Header>
             <StackPanel Margin="5,0,0,0">
-                <TextBlock Text="조명별 방향벡터(Lx,Ly,Lz)와 해당 조명에서 촬영한 이미지 경로를 지정합니다. (A 방식)"
+                <TextBlock Text="조명별 방향벡터(Lx,Ly,Lz)와 해당 조명에서 촬영한 이미지 경로를 지정합니다."
                            Foreground="#888" FontSize="10" FontStyle="Italic"
                            TextWrapping="Wrap" Margin="0,0,0,6"/>
 
