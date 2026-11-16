@@ -163,7 +163,12 @@ namespace VMS.VisionSetup.ViewModels
 
             if (value == null) return;
 
-            _loadedRecipe = _recipeService.LoadRecipe(value.FilePath);
+            // 메인에 이미 열려 있는 레시피면 파일을 다시 읽지 않는다 — 다시 읽으면 현재 레시피가
+            // 바뀌어 작업 공간이 파일 값으로 다시 올라오고, 저장하지 않은 도구 편집이 배치에도 안
+            // 쓰이고 작업 공간에서도 사라졌다 (VS-13). 같은 스텝 인스턴스를 고르면 작업 공간은 그대로다.
+            _loadedRecipe = _recipeService.CurrentRecipe is { } current && current.Id == value.Id
+                ? current
+                : _recipeService.LoadRecipe(value.FilePath);
             if (_loadedRecipe == null) return;
 
             // 이 Recipe의 Steps에서 distinct CameraId → CameraOption 으로 매핑
