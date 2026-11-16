@@ -651,8 +651,13 @@ namespace VMS.VisionSetup.ViewModels
             get => _selectedStep;
             set
             {
+                var previous = _selectedStep;
                 if (SetProperty(ref _selectedStep, value))
                 {
+                    // 떠나는 스텝은 작업 공간 도구 수 대신 저장된 도구 수로 되돌린다.
+                    if (previous != null)
+                        previous.WorkspaceToolCount = null;
+
                     if (value != null)
                         LoadStepToWorkspace(value);
 
@@ -824,6 +829,13 @@ namespace VMS.VisionSetup.ViewModels
             _robotService = robotService;
 
             InitializeToolTree();
+
+            // Steps 표의 Tools 열이 작업 공간에 놓은 · 템플릿으로 만든 도구 수를 바로 따라가게 (VS-08)
+            DroppedTools.CollectionChanged += (_, _) =>
+            {
+                if (_selectedStep != null)
+                    _selectedStep.WorkspaceToolCount = DroppedTools.Count;
+            };
 
             CloseCommand = new RelayCommand(CloseApplication);
             OpenImageFileCommand = new RelayCommand(OpenImageFile);

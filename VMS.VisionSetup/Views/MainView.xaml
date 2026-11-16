@@ -1012,7 +1012,7 @@
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
-                            <DataGridTextColumn Header="Tools" Binding="{Binding Tools.Count}" Width="40"/>
+                            <DataGridTextColumn Header="Tools" Binding="{Binding ToolCount}" Width="40"/>
                         </DataGrid.Columns>
                     </DataGrid>
 
