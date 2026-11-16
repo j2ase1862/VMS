@@ -96,13 +96,36 @@ namespace VMS.ViewModels
                 var p = CurrentPrediction;
                 if (p is null) return "예측 데이터 수신 대기 중";
                 if (p.Status == "ok" && p.PredictedNgRate.HasValue)
-                {
-                    var pct = p.PredictedNgRate.Value * 100;
-                    var hour = p.WindowStart?.ToLocalTime().ToString("MM-dd HH:mm") ?? "?";
-                    return $"다음 1시간 예상 NG율: {pct:F2}%\n대상 윈도우: {hour}\n모델: {p.ModelName ?? "?"} v{p.ModelVersion ?? "?"}\n이번 시간 검사: {p.InspectionCountThisHour}건";
-                }
+                    return FormatPredictionTooltip(p, DateTime.Now);
                 return string.IsNullOrEmpty(p.Message) ? p.Status : $"{p.Status}: {p.Message}";
             }
+        }
+
+        /// <summary>
+        /// 예측 칩 툴팁 (WB-28 VMS 쪽). 예측의 '다음 1시간' 은 지금 시각이 아니라 <b>이 라인에서 마지막으로 검사가 있었던
+        /// 시간</b>의 다음 1시간이다(Web 은 최근 집계 시간 + 1h 를 대상으로 예측한다). 검사 건수도 그 마지막 집계 시간의 것이다.
+        /// 종전 문구('이번 시간 검사')는 지금 시간의 건수처럼 읽혔고, 한동안 검사가 없으면 지난 시간이 대상으로 나왔다.
+        /// </summary>
+        internal static string FormatPredictionTooltip(PredictionCurrentDto p, DateTime nowLocal)
+        {
+            var pct = (p.PredictedNgRate ?? 0) * 100;
+            var lines = new List<string>
+            {
+                $"예상 NG율: {pct:F2}% — 마지막 검사가 있었던 시간의 다음 1시간 기준"
+            };
+
+            if (p.WindowStart is DateTime ws)
+            {
+                var start = ws.Kind == DateTimeKind.Local ? ws : DateTime.SpecifyKind(ws, DateTimeKind.Utc).ToLocalTime();
+                var end = start.AddHours(1);
+                lines.Add($"예측 대상 시간: {start:MM-dd HH:mm} ~ {end:HH:mm}");
+                if (end <= nowLocal)
+                    lines.Add("※ 그 뒤로 검사가 없어 이미 지난 시간에 대한 예측입니다");
+            }
+
+            lines.Add($"모델: {p.ModelName ?? "?"} v{p.ModelVersion ?? "?"}");
+            lines.Add($"마지막 집계 시간의 검사: {p.InspectionCountThisHour}건");
+            return string.Join("\n", lines);
         }
 
         private void OnPredictionUpdated(PredictionCurrentDto dto)
@@ -2242,6 +2265,17 @@ namespace VMS.ViewModels
             ? ""
             : $"{SelectedWorkOrder.OrderNo} · {SelectedWorkOrder.ProductName} ({SelectedWorkOrder.ProgressText})";
 
+        /// <summary>
+        /// 컴팩트 헤더용 — 번호 · 제품만(말줄임 대상). 진행 수량은 <see cref="SelectedWorkOrderProgressText"/> 로
+        /// 따로 보여 잘리지 않게 한다 (VM-38). 종전에는 한 줄 글이 110px 에서 잘려 진행 수량이 사라졌다.
+        /// </summary>
+        public string SelectedWorkOrderLabel => SelectedWorkOrder == null
+            ? ""
+            : $"{SelectedWorkOrder.OrderNo} · {SelectedWorkOrder.ProductName}";
+
+        /// <summary>작업지시 진행 수량(예: 3 / 6, 양품 3 / 6) — 컴팩트 헤더에서도 항상 보인다 (VM-38).</summary>
+        public string SelectedWorkOrderProgressText => SelectedWorkOrder?.ProgressText ?? "";
+
         /// <summary>칩 툴팁 — 혼합 레시피 WO 는 라인별 진행을 줄바꿈으로 병기.</summary>
         public string SelectedWorkOrderToolTip
         {
@@ -2277,6 +2311,8 @@ namespace VMS.ViewModels
         partial void OnSelectedWorkOrderChanged(VMS.Core.Models.ParameterSync.WorkOrderDto? value)
         {
             OnPropertyChanged(nameof(SelectedWorkOrderText));
+            OnPropertyChanged(nameof(SelectedWorkOrderLabel));
+            OnPropertyChanged(nameof(SelectedWorkOrderProgressText));
             OnPropertyChanged(nameof(SelectedWorkOrderToolTip));
             OnPropertyChanged(nameof(CanStartStop));
             OnPropertyChanged(nameof(CanToggleRollerInspection));
@@ -2627,6 +2663,7 @@ namespace VMS.ViewModels
                 // DTO 필드 변경은 INPC 를 발생시키지 않으므로 수동 알림.
                 // CanStartStop 은 Status 도 보므로 함께 갱신.
                 OnPropertyChanged(nameof(SelectedWorkOrderText));
+                OnPropertyChanged(nameof(SelectedWorkOrderProgressText));
                 OnPropertyChanged(nameof(SelectedWorkOrderToolTip));
                 OnPropertyChanged(nameof(CanStartStop));
                 OnPropertyChanged(nameof(CanToggleRollerInspection));

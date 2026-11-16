@@ -248,15 +248,32 @@
                                        VerticalAlignment="Center" Margin="0,0,6,0"/>
                             <TextBlock Foreground="White" FontSize="11"
                                        VerticalAlignment="Center"
-                                       Text="{Binding SelectedWorkOrderText}"
                                        TextTrimming="CharacterEllipsis"
                                        ToolTip="{Binding SelectedWorkOrderToolTip}">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="{Binding SelectedWorkOrderText}"/>
                                         <Style.Triggers>
-                                            <!-- 컴팩트 — 긴 WO 텍스트는 말줄임 (전체는 툴팁) -->
+                                            <!-- 컴팩트 — 번호 · 제품만 말줄임 (전체는 툴팁). 진행 수량은 옆 글로 따로 (VM-38) -->
                                             <DataTrigger Binding="{Binding IsCompactHeader, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
                                                 <Setter Property="MaxWidth" Value="110"/>
+                                                <Setter Property="Text" Value="{Binding SelectedWorkOrderLabel}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+
+                            <!-- 컴팩트 헤더에서도 진행 수량은 남긴다 (VM-38) — 넓은 화면은 위 글에 이미 들어 있다 -->
+                            <TextBlock Foreground="White" FontSize="11" FontWeight="SemiBold"
+                                       VerticalAlignment="Center" Margin="6,0,0,0"
+                                       Text="{Binding SelectedWorkOrderProgressText}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsCompactHeader, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible"/>
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
@@ -1696,7 +1713,10 @@
                 <!-- [7] Spacer -->
 
                 <!-- [8] Robot (placeholder) — 로봇 연동 확장 옵션이 있을 때만 -->
+                <!-- 메인 화면은 로봇에 직접 연결하지 않는다 — "N/A" 를 연결 실패로 오해하지 않게 안내 (VM-12) -->
                 <StackPanel Grid.Column="8" Orientation="Horizontal" VerticalAlignment="Center"
+                            Background="Transparent"
+                            ToolTip="이 화면(검사 운전)은 로봇에 직접 연결하지 않아 상태를 표시하지 않습니다. 로봇 연결과 핸드아이 보정은 Vision Tool Setup 에서 합니다."
                             Visibility="{Binding IsRobotOptionEnabled, Converter={StaticResource BoolToVisibilityConverter}}">
                     <TextBlock Text="&#xE99A;" FontFamily="Segoe MDL2 Assets"
                                FontSize="13" Foreground="{StaticResource Brush.Text.Tertiary}"
