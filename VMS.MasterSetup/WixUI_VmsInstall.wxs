@@ -62,7 +62,7 @@
     </UI>
 
     <!-- Web 서버 포함 선택 화면 - Package.wxs 의 WebServer Feature(INSTALLWEB 조건)와 연결.
-         체크(기본) = INSTALLWEB=1 → 설치, 해제 = 속성 제거 → Feature Level 0 (미설치).
+         체크(새 설치 기본 · 업그레이드는 이전 구성) = INSTALLWEB=1 → 설치, 해제 = 속성 제거 → Feature Level 0 (미설치).
          명령줄 무인 설치의 INSTALLWEB=0 제외 경로와 같은 속성을 공유한다.
          Web payload 가 없는 빌드(CI)에서는 체크가 동작에 영향을 주지 않는다. -->
     <UI>
@@ -82,8 +82,10 @@
                  Text="BODA VMS Web 서버 포함 (권장, 기본값)" />
         <Control Id="WebDesc1" Type="Text" X="40" Y="92" Width="315" Height="30" NoPrefix="yes"
                  Text="생산 이력·작업지시·품질 통계를 브라우저로 관리하는 웹 서버입니다. 설치해도 자동 실행되지 않으며, 이 PC를 관리 서버로 쓸 때만 설정 마법사에서 켭니다." />
-        <Control Id="WebDesc2" Type="Text" X="40" Y="126" Width="315" Height="22" NoPrefix="yes"
-                 Text="체크를 해제하면 웹 서버 파일이 설치되지 않습니다. 나중에 설치 파일을 다시 실행해 포함할 수 있습니다." />
+        <!-- 설치된 PC 에서 같은 설치 파일을 다시 실행하면 유지 관리 화면(복구 · 제거)만 나오고 [변경]은 없다(ARPNOMODIFY).
+             업그레이드는 이전 구성을 따른다(Package.wxs INSTALLWEB 결정). 화면 문구는 그 사실대로. -->
+        <Control Id="WebDesc2" Type="Text" X="40" Y="126" Width="315" Height="34" NoPrefix="yes"
+                 Text="체크를 해제하면 웹 서버 파일이 설치되지 않으며, 업데이트해도 그 구성이 유지됩니다. 나중에 웹 서버를 넣으려면 프로그램을 제거한 뒤 다시 설치하면서 체크하세요." />
 
         <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
         <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17"
