@@ -689,11 +689,20 @@ namespace VMS.ViewModels
             CanvasHeight = Math.Max(MinCanvasHeight, maxY + CanvasPadding);
         }
 
+        /// <summary>
+        /// 창 제목 · 헤더 이름에 인스턴스 이름을 붙인다 (VM-43) — 한 PC 에 라인별 인스턴스를 띄우면
+        /// 어느 창이 어느 라인인지 제목만으로 알 수 있어야 한다. 기본 인스턴스는 그대로.
+        /// </summary>
+        internal static string WithInstanceName(string title, string? instanceName)
+            => string.IsNullOrEmpty(instanceName) ? title : $"{title} [{instanceName}]";
+
         private void LoadConfiguration()
         {
             _systemConfig = _configService.LoadSystemConfiguration();
             // 옛 기본값(제품명 변경 전)은 현재 제품명으로 보인다 — 사용자가 바꾼 이름은 그대로
-            ApplicationTitle = VMS.Core.ProductInfo.NormalizeApplicationName(_systemConfig.ApplicationName);
+            ApplicationTitle = WithInstanceName(
+                VMS.Core.ProductInfo.NormalizeApplicationName(_systemConfig.ApplicationName),
+                VMS.Camera.Configuration.AppDataPaths.InstanceName);
 
             // Load cameras from configuration
             Cameras.Clear();

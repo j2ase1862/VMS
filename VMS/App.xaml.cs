@@ -35,6 +35,9 @@ namespace VMS
         // Web 서버 좌석 임대 (spec §5b) — 로컬 license.lic 없는 클라이언트 PC 에서만 활성.
         private VMS.Core.Services.LicenseClient? _licenseClient;
 
+        // 같은 인스턴스 두 번 실행 방지 (VM-43) — 프로세스가 끝날 때까지 쥐고 있는다(끝나면 OS 가 푼다).
+        private static VMS.Services.SingleInstanceGuard? _singleInstanceGuard;
+
         protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
@@ -70,6 +73,28 @@ namespace VMS
                     System.Diagnostics.Debug.WriteLine($"[App] --cleanup-images failed: {ex.Message}");
                 }
                 Shutdown();
+                return;
+            }
+
+            // 같은 인스턴스가 이미 떠 있으면 시작하지 않는다 (VM-43). 인스턴스마다 설정 파일 · 프레임 공유 이름 ·
+            // 카메라가 따로라, 같은 이름으로 두 번 뜨면 두 프로세스가 그것들을 함께 쓴다. 다른 이름은 막지 않는다.
+            // 헤드리스 정리(--cleanup-images)는 위에서 이미 끝났다 — 운전 중에도 예약 작업으로 돌아야 한다.
+            _singleInstanceGuard = VMS.Services.SingleInstanceGuard.TryAcquire(
+                VMS.Camera.Configuration.AppDataPaths.QualifyIpcName(@"Local\BODA_VMS_Main"),
+                TimeSpan.FromSeconds(5));
+            if (_singleInstanceGuard == null)
+            {
+                var instanceLabel = VMS.Camera.Configuration.AppDataPaths.IsDefaultInstance
+                    ? "기본 인스턴스"
+                    : $"인스턴스 '{VMS.Camera.Configuration.AppDataPaths.InstanceName}'";
+                VMS.VisionSetup.Views.Common.MessageDialog.Show(
+                    owner: null,
+                    $"이 PC 에서 {instanceLabel} 의 BODA VMS 가 이미 실행 중입니다.\n\n" +
+                    "작업 표시줄에서 실행 중인 창을 사용하세요. 같은 인스턴스를 두 번 실행하면 " +
+                    "설정 파일과 카메라를 두 프로그램이 함께 써서 문제가 생깁니다.",
+                    "BODA VMS — 이미 실행 중",
+                    VMS.VisionSetup.Views.Common.MessageDialogKind.Warning);
+                Shutdown(exitCode: 3);
                 return;
             }
 
