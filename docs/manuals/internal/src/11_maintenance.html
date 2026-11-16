@@ -5,9 +5,9 @@
 <h3 id="mt-backup">11.1 백업과 복원</h3>
 <h4>라인 PC (VMS)</h4>
 <ul>
-  <li><strong>수동 백업</strong> — Admin Tools → Backup / Restore → [Run Backup...] 로 ZIP 을 만듭니다(§4.11). 설정 파일 · 레이아웃 · 신호 설정 · 사용자 DB · 검사 이력 DB · 레시피 전체가 들어가며 감사 로그는 선택입니다. 레시피를 크게 바꾸기 전, 프로그램을 업그레이드하기 전, PC 를 교체하기 전에 받아 두세요.</li>
-  <li><strong>자동 백업</strong> — Admin Tools → Auto Backup Settings 에서 활성화 · 주기(시간) · 보존(일) · 위치를 정합니다. 기본 위치는 <code>%LocalAppData%\BODA VISION AI\backups</code> 이며 다른 드라이브나 네트워크 폴더를 권장합니다.</li>
-  <li><strong>복원</strong> — Backup / Restore 의 백업 복원에서 파일을 고르고 [기존 파일 덮어쓰기] 를 켠 뒤 [Run Restore]. 복원 후 VMS 를 재시작합니다. 다른 PC 에 복원하면 카메라 구성이 다를 수 있으므로 설정 마법사 3 단계를 확인하세요.</li>
+  <li><strong>수동 백업</strong> — Admin Tools → Backup / Restore → [Run Backup...] 로 ZIP 을 만듭니다(§4.11). 설정 파일 · 레이아웃 · 시퀀스(<code>process_sequence.json</code>) · 신호 설정 · 사용자 DB · 검사 이력 DB · 레시피 전체가 들어가며 감사 로그는 선택입니다. VMS 를 켠 채로 받을 수 있습니다. 레시피를 크게 바꾸기 전, 프로그램을 업그레이드하기 전, PC 를 교체하기 전에 받아 두세요.</li>
+  <li><strong>자동 백업</strong> — Admin Tools → Auto Backup Settings 에서 활성화 · 주기(시간) · 보존(일) · 위치를 정합니다. 기본 위치는 <code>%LocalAppData%\BODA VISION AI\backups</code> 이며 다른 드라이브나 네트워크 폴더를 권장합니다. 파일 이름은 <code>auto-backup-날짜-시각.zip</code>(이 PC 시각)이고, 백업할 때마다 보존 기간이 지난 자동 백업 파일을 지웁니다. 위치를 바꾸면 보존 설정 [Preview] 와 지원 패키지의 백업 목록도 그 위치를 봅니다.</li>
+  <li><strong>복원</strong> — Backup / Restore 의 백업 복원에서 파일을 고르고 [기존 파일 덮어쓰기] 를 켠 뒤 [Run Restore]. VMS 를 켠 채로 할 수 있으며, 결과 줄에 "설정은 VMS 를 다시 시작하면 적용됩니다" 가 나오면 VMS 를 다시 시작합니다. [감사 로그도 복원] 은 이 PC 에 없는 날짜의 감사 로그만 되살리고 이미 있는 날짜는 그대로 둡니다. 다른 PC 에 복원하면 카메라 구성이 다를 수 있으므로 설정 마법사 3 단계를 확인하세요.</li>
 </ul>
 <h4>Web 서버</h4>
 <ul>

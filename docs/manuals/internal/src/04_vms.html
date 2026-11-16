@@ -206,7 +206,7 @@
 <p>검사 판정 이미지의 저장과 전송을 설정합니다. 설정은 [Save] 즉시 다음 검사부터 적용됩니다(재시작 불필요).</p>
 <table class="cols-2-7">
   <tr><th>카드</th><th>설정 항목</th></tr>
-  <tr><td>저장</td><td>양품(OK) / 불량(NG) 이미지 저장 체크, 저장 경로, 보존 기간(일, 0 = 무제한). 경로 아래에 <code>{날짜}\OK</code> · <code>{날짜}\NG</code> 폴더가 자동으로 만들어지고 오래된 폴더는 시작 시 정리됩니다. <strong>저장 경로가 비어 있으면 저장되지 않습니다.</strong></td></tr>
+  <tr><td>저장</td><td>양품(OK) / 불량(NG) 이미지 저장 체크, 저장 경로, 보존 기간(일, 0 = 무제한). 경로 아래에 <code>{날짜}\OK</code> · <code>{날짜}\NG</code> 폴더가 자동으로 만들어지고, 보존 기간이 지난 날짜 폴더는 VMS 시작 2 분 뒤 한 번과 켜 둔 동안 하루 한 번 지워집니다(지운 폴더는 감사 로그 Configuration 분류에 기록). <strong>저장 경로가 비어 있으면 저장되지 않습니다.</strong></td></tr>
   <tr><td>포맷 / 품질</td><td>파일 포맷(PNG · JPEG · BMP · TIFF)과 JPEG 품질(1~100).</td></tr>
   <tr><td>Web 연동 (생산 이력)</td><td>전달 모드는 <strong>Auto</strong>(권장). OK / NG 이미지 Web 전송 체크(로컬 저장과 별개), 전송 화질(썸네일 권장 · Full), 썸네일 장변(px). Web 생산 이력의 상세 창에서 사진을 보려면 여기서 NG 전송을 켜야 합니다. SharedPath 모드는 전송하지 않습니다.</td></tr>
   <tr><td>◆MLOps 학습 데이터 수집</td><td><strong>NG 이미지 MLOps 전송</strong> 체크와 <strong>양품 샘플 비율</strong>(N 장에 1 장, 기본 200, 0 = 양품 안 보냄). 켜면 NG 사진이 결과 그래픽 없는 원본으로 MLOps 수집 사진 화면에 쌓입니다(9장). 카드 아래 안내가 빨간색이면 설정은 있는데 보안 정책 등으로 막힌 상태이며 사유가 함께 표시됩니다.</td></tr>
@@ -298,24 +298,35 @@
 <ul>
   <li>Users 목록 — Username · Display Name · Grade · Last Login. 행을 선택하면 오른쪽 편집 패널에 값이 채워집니다.</li>
   <li>Add New User — Username · Display Name · Password · Grade(Operator / Engineer / Admin) → [Add User].</li>
-  <li>Edit Selected User — Display Name · Grade 수정 → [Save Changes]. New Password → [Change Password]. [Delete User] 로 삭제.</li>
+  <li>Edit Selected User — Display Name · Grade 수정 → [Save Changes]. 저장한 뒤에도 같은 사용자가 선택된 채로 남아 이어서 New Password → [Change Password], [Delete User] 를 할 수 있습니다.</li>
+  <li>사용자 추가 · 정보/등급 변경 · 비밀번호 변경 · 삭제는 감사 로그의 UserManagement 분류에 남습니다(비밀번호 값은 남기지 않음).</li>
 </ul>
 
 <h4>Audit Log Viewer — 감사 로그</h4>
 <figure><img src="../gs/screenshots/v3/vms/dlg_AuditLog.png" data-width="600" alt="Audit Log Viewer"><figcaption>Audit Log Viewer — From/To · Category · Outcome · Search · [조회] [필터 초기화] [CSV 내보내기]</figcaption></figure>
-<p>로그인 · 권한 거부 · 설정 변경 · 백업 등 관리 행위가 <code>%LocalAppData%\BODA VISION AI\audit\YYYY-MM-DD.jsonl</code> 에 기록됩니다. Outcome 은 Success(초록) · Failure(빨강) · Denied(주황)로 구분됩니다.</p>
+<p>로그인 · 권한 거부 · 설정 변경 · 백업 등 관리 행위가 날짜별 파일(<code>audit\YYYY-MM-DD.jsonl</code>)로 기록됩니다. 실제 폴더는 창 아래에 표시됩니다(기본 <code>%LocalAppData%\BODA VISION AI\audit\</code>, 다중 인스턴스는 그 인스턴스 폴더 아래). Outcome 은 Success(초록) · Failure(빨강) · Denied(주황)로 구분됩니다.</p>
 
 <h4>Health Check — 시스템 상태 점검</h4>
 <figure><img src="../gs/screenshots/v3/vms/dlg_HealthCheck.png" data-width="520" alt="Health Check"><figcaption>Health Check — OVERALL 배지 · 항목별 Pass / Warn / Fail</figcaption></figure>
-<p>인스턴스 · 설정 파일 · 보안 옵션 · Web 서버 · 라이선스 · 디스크 여유 공간을 점검합니다. [Refresh] 로 다시 점검하고 [Copy] 로 결과를 복사해 지원 요청에 붙일 수 있습니다.</p>
+<p>인스턴스 · 설정 파일 · 보안 옵션 · Web 서버 · 라이선스 · 디스크 여유 공간을 점검합니다. 항목이 많으면 목록을 스크롤해 끝(License)까지 봅니다. [Refresh] 로 다시 점검하고 [Copy] 로 결과를 복사해 지원 요청에 붙일 수 있습니다.</p>
 
 <h4>Backup / Restore — 백업과 복원</h4>
 <figure><img src="../gs/screenshots/v3/vms/dlg_BackupRestore.png" data-width="520" alt="Backup / Restore"><figcaption>Backup / Restore — 백업 생성 · 백업 복원 · 복원된 manifest</figcaption></figure>
-<p>설정 파일 · 레이아웃 · 신호 설정(◆PLC 신호 맵) · 사용자 DB · 검사 이력 DB · 레시피 전체(선택 시 감사 로그)를 ZIP 하나로 만듭니다. 복원 시 [기존 파일 덮어쓰기] 를 켜고 [Run Restore] 한 뒤 VMS 를 재시작합니다. 자세한 운영 요령은 §11.1 을 참고하세요.</p>
+<p>설정 파일 · 레이아웃 · 시퀀스(<code>process_sequence.json</code>) · 신호 설정(◆PLC 신호 맵) · 사용자 DB · 검사 이력 DB · 레시피 전체(선택 시 감사 로그)를 ZIP 하나로 만듭니다. VMS 를 켠 채로 백업 · 복원할 수 있습니다.</p>
+<ol>
+  <li>백업 — [Run Backup...] 으로 저장 위치를 고릅니다. 파일 이름은 <code>BODA-VMS-backup-날짜-시각.zip</code>(이 PC 시각)입니다.</li>
+  <li>복원 — 백업 ZIP 을 고르고 [기존 파일 덮어쓰기] 를 켠 뒤 [Run Restore] 를 누릅니다. 결과 줄에 "복원 n 파일 · skip n 파일 — 설정은 VMS 를 다시 시작하면 적용됩니다" 가 나오면 VMS 를 다시 시작합니다.</li>
+  <li>[감사 로그도 복원] (기본 켬) 은 이 PC 에 <strong>없는 날짜</strong>의 감사 로그만 되살립니다. 이미 있는 날짜의 파일은 덮어쓰지 않으므로 백업 뒤에 남은 기록이 지워지지 않습니다.</li>
+</ol>
+<p>자세한 운영 요령은 §11.1 을 참고하세요.</p>
 
 <h4>Auto Backup Settings — 자동 백업</h4>
 <figure><img src="../gs/screenshots/v3/vms/dlg_AutoBackup.png" data-width="480" alt="Auto Backup Settings"><figcaption>Auto Backup Settings — 활성화 · 주기(시간) · 보존(일) · 위치</figcaption></figure>
-<p>주기(1~720 시간)와 보존 기간(1~365 일), 저장 위치(비우면 <code>backups</code> 폴더)를 정합니다. 변경은 VMS 재시작 후 적용됩니다.</p>
+<p>주기(1~720 시간)와 보존 기간(1~365 일), 저장 위치(비우면 이 PC 의 기본 <code>backups</code> 폴더 — 칸에 마우스를 올리면 실제 경로)를 정합니다. 변경은 VMS 재시작 후 적용됩니다.</p>
+<ul>
+  <li>파일 이름은 <code>auto-backup-날짜-시각.zip</code>(이 PC 시각)입니다.</li>
+  <li>백업할 때마다 그 위치에서 보존 기간이 지난 <code>auto-backup-*.zip</code> 을 지웁니다. 수동 백업 파일은 지우지 않습니다.</li>
+</ul>
 
 <h4>Retention Settings — 데이터 보존 정책</h4>
 <figure><img src="../gs/screenshots/v3/vms/dlg_Retention.png" data-width="520" alt="Retention Settings"><figcaption>Retention Settings — 프리셋 · 전역 보존 · 카테고리별 보존 · 미리보기</figcaption></figure>
@@ -323,12 +334,13 @@
   <li>빠른 프리셋 — Conservative(규제 사이트) / Standard(권장 기본) / Minimal(디스크 제한 사이트). 적용 후 [Save] 가 필요합니다.</li>
   <li>전역 보존(일) — 감사 로그 · 자동 백업 · 업로드 큐 · 검사 이력. "검사 결과를 로컬 이력 DB 에 저장" 체크로 로컬 이력 저장을 켜고 끕니다.</li>
   <li>카테고리별 차등 보존 — 9 개 감사 카테고리를 따로 지정합니다(기본: 보안/사용자/설정 1095 일, 인증/권한/레시피 730 일, 시퀀스/검사 365 일, 시스템 90 일).</li>
-  <li>[Preview] 는 실제 삭제 없이 정리 예정 건수를 보여 주고 [Export Preview...] 로 CSV 저장이 가능합니다. 변경은 VMS 재시작 후 적용됩니다.</li>
+  <li>감사 로그 날짜 파일을 통째로 지우는 기준은 <strong>전역 값과 카테고리별 값 중 가장 긴 값</strong>입니다. 그래서 카테고리별로 길게 잡은 기간이 그대로 지켜지고, 짧게 잡은 카테고리의 줄은 그 기간이 지나면 줄 단위로 지워집니다.</li>
+  <li>[Preview] 는 실제 삭제 없이 정리 예정 건수를 보여 주고 [Export Preview...] 로 CSV 저장이 가능합니다. 자동 백업 위치를 바꿨다면 그 위치를 기준으로 셉니다. 변경은 VMS 재시작 후 적용됩니다.</li>
 </ul>
 
 <h4>Support Package — 원격 지원용 진단 패키지</h4>
 <figure><img src="../gs/screenshots/v3/vms/dlg_SupportPackage.png" data-width="480" alt="Support Package"><figcaption>Support Package Export — 감사 로그 일수 · 환경 정보 · 백업 인덱스 · 사이트 식별 정보 포함 여부</figcaption></figure>
-<p>문제 보고 시 공급사에 보낼 ZIP 을 만듭니다. 설정 파일 · 감사 로그(1~90 일) · 환경 정보 · 헬스 스냅샷 · ◆MLOps 전송 큐 상태가 들어가며, 사용자 DB 와 레시피는 <strong>포함되지 않습니다</strong>.</p>
+<p>문제 보고 시 공급사에 보낼 ZIP 을 만듭니다. 설정 파일 · 감사 로그(1~90 일) · 환경 정보 · 헬스 스냅샷 · 자동 백업 목록(바꾼 위치 포함) · ◆MLOps 전송 큐 상태가 들어가며, 사용자 DB 와 레시피는 <strong>포함되지 않습니다</strong>. 설정 파일 안의 API 키 · 토큰 · 비밀번호 값은 가려서 넣습니다.</p>
 
 <h3 id="vms-permissions">4.12 계정과 권한</h3>
 <p>VMS 에는 두 종류의 신원이 있습니다. <strong>작업자</strong>(Web 에 등록된 사번 + PIN)는 "누가 생산했는가"를 기록하는 신원이고,
@@ -337,20 +349,18 @@
 <table>
   <tr><th>권한 (기능)</th><th>Operator</th><th>Engineer</th><th>Admin</th><th>local-admin<br>(비상 폴백)</th></tr>
   <tr><td>StartStop (검사 시작/정지 · Grab · Live)</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
-  <tr><td>ViewStatistics (통계 · 이력 조회)</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
   <tr><td>EditRecipe (레시피 편집 · 저장 · 가져오기)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
   <tr><td>DeleteRecipe (레시피 삭제)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
-  <tr><td>CameraSettings (카메라 설정)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
+  <tr><td>CameraSettings (카메라 조작 상자의 카메라 설정 유지 · 노출 · 게인 · [Save Parameter])</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
   <tr><td>LaunchVisionSetup (Vision Tool Setup 실행)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
   <tr><td>LaunchAppSetup (System Setup 실행)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
-  <tr><td>SystemConfiguration (시스템 구성 변경)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
-  <tr><td>RestartWebService (Web 서비스 재시작)</td><td>—</td><td>✓</td><td>✓</td><td>✓</td></tr>
   <tr><td>ManageUsers (사용자 관리 · Admin Tools · Image Saving)</td><td>—</td><td>—</td><td>✓</td><td>—</td></tr>
 </table>
 <ul>
-  <li>시스템 사용자로 로그인하지 않은 상태에서도 AUTO RUN · Grab · Live 는 허용됩니다(작업자 로그인이 생산 신원이므로 이중 로그인을 요구하지 않습니다).</li>
-  <li>Web SSO 를 켠 현장에서는 Admin/Engineer 로그인을 Web 계정으로 대조합니다(Web Admin → Admin, User → Engineer). 서버에 닿지 못할 때는 비상 계정 <code>local-admin</code> 만 검사 시작/정지 · 통계 · Web 서비스 재시작 권한으로 진입합니다.</li>
-  <li>권한이 거부된 시도는 감사 로그에 사용자 · 등급 · 요청 권한과 함께 기록됩니다.</li>
+  <li>시스템 사용자로 로그인하지 않은 상태에서도 AUTO RUN · Grab · Live 는 허용됩니다(작업자 로그인이 생산 신원이므로 이중 로그인을 요구하지 않습니다). 카메라 설정 · 레시피 편집 · 관리 기능은 위 표의 등급으로 로그인해야 합니다.</li>
+  <li>KPI · Recent Inspections · [전체 이력] 같은 통계 · 이력 조회는 등급과 관계없이 볼 수 있습니다.</li>
+  <li>Web SSO 를 켠 현장에서는 VMS 사용자 로그인을 Web 계정으로 확인합니다. 등급은 Web 역할을 따릅니다 — Web Admin 은 Admin, Manager · User 는 Engineer. 서버에 닿지 못할 때는 비상 계정 <code>local-admin</code> 만 검사 시작/정지 권한으로 진입합니다.</li>
+  <li>권한이 없는 기능을 실제로 실행하려다 막히면 감사 로그에 사용자 · 등급 · 요청 권한과 함께 기록됩니다. 등급 때문에 버튼이 꺼져 보이는 것만으로는 기록되지 않습니다.</li>
 </ul>
 <h4>작업자 등급이 VMS 화면에 미치는 영향</h4>
 <table class="cols-3-2-2-2">
