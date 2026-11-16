@@ -29,7 +29,8 @@ namespace VMS.Services
         {
             if (userService == null) return true;          // 서비스 미주입(standalone 등) — 기존 동작
             if (!userService.IsLoggedIn) return true;      // 미로그인 — 매뉴얼 §3.5 "기본 허용"
-            return userService.HasPermission(UserPermission.StartStop);
+            // 버튼 활성 판정용 — 화면 갱신마다 거부 감사 로그가 쌓이지 않게 기록 없이 묻는다 (VM-22)
+            return userService.IsGranted(UserPermission.StartStop);
         }
     }
 }

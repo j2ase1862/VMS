@@ -202,13 +202,13 @@ namespace VMS.ViewModels
         [ObservableProperty]
         private UserGrade _currentUserGrade;
 
-        public bool CanEditRecipe => _userService?.HasPermission(UserPermission.EditRecipe) ?? true;
-        public bool CanDeleteRecipe => _userService?.HasPermission(UserPermission.DeleteRecipe) ?? true;
-        public bool CanManageUsers => _userService?.HasPermission(UserPermission.ManageUsers) ?? false;
-        public bool CanLaunchVisionSetup => _userService?.HasPermission(UserPermission.LaunchVisionSetup) ?? true;
-        public bool CanLaunchAppSetup => _userService?.HasPermission(UserPermission.LaunchAppSetup) ?? true;
+        public bool CanEditRecipe => _userService?.IsGranted(UserPermission.EditRecipe) ?? true;
+        public bool CanDeleteRecipe => _userService?.IsGranted(UserPermission.DeleteRecipe) ?? true;
+        public bool CanManageUsers => _userService?.IsGranted(UserPermission.ManageUsers) ?? false;
+        public bool CanLaunchVisionSetup => _userService?.IsGranted(UserPermission.LaunchVisionSetup) ?? true;
+        public bool CanLaunchAppSetup => _userService?.IsGranted(UserPermission.LaunchAppSetup) ?? true;
         /// <summary>카메라 조작 상자의 노출/게인 변경 · [Save Parameter] — 권한 표 CameraSettings.</summary>
-        public bool CanEditCameraSettings => _userService?.HasPermission(UserPermission.CameraSettings) ?? true;
+        public bool CanEditCameraSettings => _userService?.IsGranted(UserPermission.CameraSettings) ?? true;
         public bool HasConnectedCamera => Cameras.Any(c => c.IsConnected);
         /// <summary>
         /// 검사 시작/정지 권한. **시스템 사용자가 로그인하지 않았으면 허용**하고, 로그인한
