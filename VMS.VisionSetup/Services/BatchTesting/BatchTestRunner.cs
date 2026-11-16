@@ -23,6 +23,9 @@ namespace VMS.VisionSetup.Services.BatchTesting
         /// <summary>도구 ID → VisionResult. CSV 생성기가 이걸 동적 컬럼으로 펼침.</summary>
         public Dictionary<string, VisionResult> ToolResults { get; set; } = new();
 
+        /// <summary>도구 ID → 도구 이름 (Failure Browser 칩 표시용 — GUID 대신 이름을 보인다).</summary>
+        public Dictionary<string, string> ToolNames { get; set; } = new();
+
         /// <summary>임계치(Recipe.Criteria) 통과 여부 — 모든 도구 결과가 정의된 범위 안에 있을 때 true.</summary>
         public bool ThresholdsPassed { get; set; } = true;
 
@@ -119,6 +122,7 @@ namespace VMS.VisionSetup.Services.BatchTesting
                             if (resultMap.TryGetValue(tool.Id, out var res))
                             {
                                 item.ToolResults[tool.Id] = res;
+                                item.ToolNames[tool.Id] = tool.Name;
                                 pairs.Add((tool, res));
                             }
                         }

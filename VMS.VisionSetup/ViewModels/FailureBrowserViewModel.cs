@@ -15,6 +15,8 @@ namespace VMS.VisionSetup.ViewModels
     public class ToolResultRow
     {
         public string ToolId { get; set; } = string.Empty;
+        /// <summary>칩에 보일 이름 — 이름이 없으면 ID.</summary>
+        public string ToolName { get; set; } = string.Empty;
         public bool Success { get; set; }
         public string Message { get; set; } = string.Empty;
     }
@@ -101,6 +103,8 @@ namespace VMS.VisionSetup.ViewModels
                 ToolRows.Add(new ToolResultRow
                 {
                     ToolId = kv.Key,
+                    ToolName = r.ToolNames.TryGetValue(kv.Key, out var name) && !string.IsNullOrWhiteSpace(name)
+                        ? name : kv.Key,
                     Success = kv.Value.Success,
                     Message = kv.Value.Message ?? string.Empty
                 });
