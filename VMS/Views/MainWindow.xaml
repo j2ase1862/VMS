@@ -1451,6 +1451,7 @@
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                          ScrollViewer.CanContentScroll="True"
                          VirtualizingPanel.IsVirtualizing="True"
+                         controls:ListBoxAutoScroll.IsEnabled="True"
                          x:Name="LogListBox">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
