@@ -469,12 +469,8 @@ namespace VMS
                     mlopsAllowed ? systemConfig.MlopsServerUrl : null,
                     mlopsAllowed ? systemConfig.MlopsLineToken : null);
 
-                // 캐시가 무한정 커지지 않게 시작할 때 한 번 정리한다. 쓰고 있는 파일은 건드리지 않는다.
-                var maxBytes = Math.Max(1, systemConfig.ModelCacheMaxGB) * 1024L * 1024L * 1024L;
-                var trimmed = ModelReferenceResolver.Current.Cache.Trim(
-                    maxBytes, ModelReferenceResolver.Current.InUsePaths());
-                if (trimmed > 0)
-                    logService.Log($"모델 캐시 정리: {trimmed}개 삭제", LogLevel.Info, "System");
+                // 캐시 정리는 레시피의 참조를 모두 받은 뒤에 한다(ModelReferencePreparer, VM-40).
+                // 시작 때는 아직 아무 참조도 풀지 않아 보호 목록(InUsePaths)이 비어 있다 — 쓰는 모델도 지울 수 있었다.
             }
             catch (Exception ex)
             {
@@ -733,9 +729,8 @@ namespace VMS
                             mainViewModel.CurrentRecipeName = recipe.Name;
                             // 소스 파일 경로 동기화 — 안 하면 외부 변경 워처가 이전 레시피
                             // 파일과 비교해 실행 중 레시피의 VisionSetup 수정을 놓친다.
-                            mainViewModel.SetCurrentRecipeFilePath(target.FilePath);
-                            foreach (var cam in mainViewModel.Cameras)
-                                cam.SetRecipe(recipe);
+                            // 카메라 레시피 교체 + model:// 참조 준비(VM-40)도 같은 지점에서.
+                            mainViewModel.ApplyRecipeToCameras(recipe, target.FilePath);
                             logService.Log($"Recipe changed to [{recipeIndex}] {recipe.Name}", LogLevel.Success, "RecipeChange");
 
                             // Web 레시피는 이름으로 찾는다 — Index 는 이 PC 레시피 폴더 순서라 Web 목록(등록 순, 다른 PC 레시피 포함)의
@@ -837,7 +832,9 @@ namespace VMS
                 lineNgUploader: lineNgUploader,
                 ioBoards: ioBoardConnections,
                 updateInstallService: updateInstallService,
-                localHistoryStore: historyStore);
+                localHistoryStore: historyStore,
+                modelReferencePreparer: new ModelReferencePreparer(
+                    logService, Math.Max(1, systemConfig.ModelCacheMaxGB) * 1024L * 1024L * 1024L));
 
             if (webBlockedReason != null)
                 mainViewModel.SetWebBlocked(webBlockedReason);

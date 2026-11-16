@@ -425,6 +425,9 @@ namespace VMS.ViewModels
         private readonly IUserService? _userService;
         // 로컬 검사 이력 저장소 — inspectionHistory.enabled=false 면 null (조회 버튼 비활성).
         private readonly VMS.Services.LocalHistory.ILocalInspectionHistoryStore? _localHistoryStore;
+
+        // 레시피의 model:// 참조 모델을 검사 전에 받아 둔다 (VM-40)
+        private readonly IModelReferencePreparer? _modelReferencePreparer;
         private readonly SharedFrameWriter? _sharedFrameWriter;
         private GrabRequestListener? _grabRequestListener;
         private readonly IPlcConnection? _plcConnection;
@@ -476,7 +479,8 @@ namespace VMS.ViewModels
             IReadOnlyList<VMS.PLC.Interfaces.IIoBoardConnection>? ioBoards = null,
             VMS.Services.ImageUpload.ILineNgImageUploader? lineNgUploader = null,
             IUpdateInstallService? updateInstallService = null,
-            VMS.Services.LocalHistory.ILocalInspectionHistoryStore? localHistoryStore = null)
+            VMS.Services.LocalHistory.ILocalInspectionHistoryStore? localHistoryStore = null,
+            IModelReferencePreparer? modelReferencePreparer = null)
         {
             _ioBoards = ioBoards ?? Array.Empty<VMS.PLC.Interfaces.IIoBoardConnection>();
             _configService = configService;
@@ -502,6 +506,7 @@ namespace VMS.ViewModels
             _updateService = updateService;
             _updateInstallService = updateInstallService;
             _localHistoryStore = localHistoryStore;
+            _modelReferencePreparer = modelReferencePreparer;
             _imageUploadService = imageUploadService;
             _lineNgUploader = lineNgUploader;
             _shutdownAction = shutdownAction;
@@ -924,9 +929,8 @@ namespace VMS.ViewModels
                 SystemStatus = $"Recipe loaded: {recipe.Name}";
                 LogService?.Log($"Recipe loaded: {recipe.Name}", LogLevel.Info, "Recipe");
 
-                // Propagate recipe to all cameras
-                foreach (var cam in Cameras)
-                    cam.SetRecipe(recipe);
+                // Propagate recipe to all cameras (+ model:// 참조 준비)
+                ApplyRecipeToCameras(recipe, SelectedRecipeInfo.FilePath);
 
                 // Web 파라미터 캐시를 이 레시피로 전환 (백그라운드 best-effort)
                 _ = EnsureWebParamCacheAsync();
@@ -960,12 +964,17 @@ namespace VMS.ViewModels
         /// 새로 정한 레시피를 실제 검사 대상으로 만든다 — 소스 파일 경로(외부 변경 감시 · [Vision Tool Setup] 이 여는 파일)와
         /// 모든 카메라의 레시피. 경로가 없으면(아직 저장 전) 경로는 그대로 둔다.
         /// </summary>
-        private void ApplyRecipeToCameras(Recipe recipe, string? filePath)
+        public void ApplyRecipeToCameras(Recipe recipe, string? filePath)
         {
             if (!string.IsNullOrEmpty(filePath))
                 _currentRecipeFilePath = filePath;
             foreach (var cam in Cameras)
                 cam.SetRecipe(recipe);
+
+            // model:// 참조 모델을 받아 둔다 — 검사 경로는 받아 둔 파일만 쓴다 (VM-40).
+            // 백그라운드로 두고 기다리지 않는다: 받기 실패는 System Log 에 남고, 그 도구만 불합격한다.
+            if (_modelReferencePreparer != null)
+                _ = _modelReferencePreparer.PrepareForRecipeAsync(recipe);
         }
 
         [RelayCommand]
@@ -1220,8 +1229,7 @@ namespace VMS.ViewModels
 
             CurrentRecipe = recipe;
             CurrentRecipeName = recipe.Name;
-            foreach (var cam in Cameras)
-                cam.SetRecipe(recipe);   // 검사 캐시도 함께 초기화
+            ApplyRecipeToCameras(recipe, null);   // 검사 캐시도 함께 초기화 (+ model:// 참조 준비)
 
             SystemStatus = $"레시피 '{recipe.Name}' 외부 변경 반영 완료 (VisionSetup 저장 감지)";
             LogService?.Log(SystemStatus, LogLevel.Success, "Recipe");
@@ -1305,6 +1313,12 @@ namespace VMS.ViewModels
 
                 // 원인 B 가시화용 — 같은 이름의 로컬(비 web) 레시피와 연결되어 별도 표시되지 않는 수
                 var linkedByName = webRecipes.Count(w => nonWebLocalNames.Contains(w.Name));
+
+                // 서버 연결이 돌아온 김에 아직 못 받은 모델 참조를 받아 둔다 (VM-40). 이미 받은 참조는 건드리지 않는다 —
+                // 운전 중에 @production 이 가리키는 버전을 바꿔 끼우면 적재된 엔진과 결과에 적는 모델 버전이 어긋난다.
+                if (CurrentRecipe is { } current && _modelReferencePreparer != null)
+                    _ = _modelReferencePreparer.PrepareForRecipeAsync(current, onlyMissing: true);
+
                 return new WebRecipeSyncResult(true, webRecipes.Count, added, linkedByName);
             }
             catch (Exception ex)
@@ -2510,9 +2524,7 @@ namespace VMS.ViewModels
 
                 CurrentRecipe = recipe;
                 CurrentRecipeName = recipe.Name;
-                _currentRecipeFilePath = info.FilePath;
-                foreach (var cam in Cameras)
-                    cam.SetRecipe(recipe);
+                ApplyRecipeToCameras(recipe, info.FilePath);
 
                 SystemStatus = $"WO {wo.OrderNo} → Recipe '{recipe.Name}' loaded";
                 LogService?.Log($"WO {wo.OrderNo} auto-loaded recipe '{recipe.Name}'", LogLevel.Success, "WorkOrder");
