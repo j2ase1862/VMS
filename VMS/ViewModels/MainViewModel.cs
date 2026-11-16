@@ -947,10 +947,25 @@ namespace VMS.ViewModels
             RefreshRecipeList();
             CurrentRecipe = recipe;
             CurrentRecipeName = recipe.Name;
+            // 헤더 칩만 바뀌고 카메라 검사 · [Vision Tool Setup] 은 이전 레시피로 남던 문제 (VM-18) —
+            // 불러오기(LoadRecipe)와 똑같이 파일 경로와 카메라 레시피도 바꾼다.
+            ApplyRecipeToCameras(recipe, _recipeService.CurrentRecipeFilePath);
             SystemStatus = "New recipe created";
 
             // Web 파라미터 캐시를 이 레시피로 전환 (Web 에 없으면 직전 레시피 연결을 끊는다)
             _ = EnsureWebParamCacheAsync();
+        }
+
+        /// <summary>
+        /// 새로 정한 레시피를 실제 검사 대상으로 만든다 — 소스 파일 경로(외부 변경 감시 · [Vision Tool Setup] 이 여는 파일)와
+        /// 모든 카메라의 레시피. 경로가 없으면(아직 저장 전) 경로는 그대로 둔다.
+        /// </summary>
+        private void ApplyRecipeToCameras(Recipe recipe, string? filePath)
+        {
+            if (!string.IsNullOrEmpty(filePath))
+                _currentRecipeFilePath = filePath;
+            foreach (var cam in Cameras)
+                cam.SetRecipe(recipe);
         }
 
         [RelayCommand]
@@ -1046,6 +1061,8 @@ namespace VMS.ViewModels
                     RefreshRecipeList();
                     CurrentRecipe = recipe;
                     CurrentRecipeName = recipe.Name;
+                    // 가져온 사본(Recipes 폴더)으로 검사 · [Vision Tool Setup] 대상을 맞춘다 (VM-18)
+                    ApplyRecipeToCameras(recipe, _recipeService.CurrentRecipeFilePath);
                     SystemStatus = $"Recipe imported: {recipe.Name}";
                     _ = EnsureWebParamCacheAsync();
                 }
