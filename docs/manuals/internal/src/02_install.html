@@ -9,16 +9,14 @@
 <table class="cols-2-3-4">
   <tr><th>장비</th><th>별도 설치할 것</th><th>비고</th></tr>
   <tr><td>Basler 카메라</td><td>pylon Camera Software Suite (Runtime)</td><td>없으면 카메라 검색은 되지만 연결 · 촬영이 실패합니다</td></tr>
-  <tr><td>Hikrobot 카메라</td><td>MVS (Machine Vision Software) 런타임</td><td>GigE 필터 드라이버 포함</td></tr>
   <tr><td>◆Mech-Mind 3D 카메라</td><td>없음</td><td>구동 파일이 설치 파일에 동봉됩니다</td></tr>
-  <tr><td>Matrox · Dalsa (프레임 그래버)</td><td>MIL 런타임</td><td>Camera Link 카메라 구성에서만</td></tr>
   <tr><td>ADLink IO 보드</td><td>DASK 드라이버 <strong>64비트(x64)</strong></td><td>32비트만 설치된 PC 에서는 보드가 인식되지 않습니다</td></tr>
   <tr><td>Advantech IO 보드</td><td>DAQNavi</td><td>미설치 시 보드가 연결되지 않습니다(System Log 에 사유)</td></tr>
   <tr><td>◆PLC (5 종)</td><td>없음</td><td>TCP 직접 통신 — 드라이버 불필요</td></tr>
 </table>
-<div class="callout warn"><strong>지원 목록에 없는 제조사</strong>(IDS · Cognex · Keyence · Baumer · Allied Vision · FLIR · JAI)를 설정 마법사에서
-고르면 카메라가 <strong>시뮬레이션 모드</strong>로 동작합니다 — 화면에 보이는 영상은 실제 카메라 영상이 아닙니다.
-VisionSetup 에서 연결할 때 "SDK 미탑재 — 시뮬레이션 모드" 경고 창이 뜹니다.</div>
+<div class="callout warn"><strong>위 표에 없는 제조사</strong>를 설정 마법사에서 고르면 카메라가 <strong>시뮬레이션 모드</strong>로 동작합니다 — 화면에 보이는 영상은 실제 카메라 영상이 아닙니다.
+마법사 목록의 IDS · Cognex · Keyence · Baumer · Allied Vision · FLIR · JAI 와, 지금 설치 파일에 연결 기능이 들어 있지 않은 Hikrobot(HIK) · Matrox · Dalsa 가 여기에 해당합니다.
+VMS 나 VisionSetup 에서 그 카메라를 연결할 때 "… SDK 미탑재 — 시뮬레이션 모드로 동작합니다 (실카메라 영상 아님)" 경고가 표시됩니다. 이 제조사를 써야 하면 공급사에 문의하세요.</div>
 
 <h4>설치 순서 (권장)</h4>
 <ol>
@@ -38,8 +36,9 @@ VisionSetup 에서 연결할 때 "SDK 미탑재 — 시뮬레이션 모드" 경�
     <ul>
       <li><strong>BODA VMS Web 서버 포함</strong> (기본: 켬) — 이 PC 를 생산 관리 서버로도 쓰거나, 나중에 쓸 가능성이 있으면 켜 둡니다.
           포함해서 설치해도 자동으로 실행되지는 않으며, 설정 마법사에서 켤 때만 동작합니다(§2.3).</li>
+      <li>여기서 고른 구성은 업데이트해도 그대로 유지됩니다. 나중에 Web 서버를 넣으려면 프로그램을 제거한 뒤 다시 설치하면서 체크합니다(설정 · 레시피 · 이력은 제거해도 남습니다, §2.7).</li>
     </ul></li>
-  <li>[설치]를 누르면 파일 복사가 진행되고, 완료 화면에서 [마침]을 누릅니다. 바탕화면에 <strong>BODA VMS</strong> 바로가기가,
+  <li>[설치]를 누르면 파일 복사가 진행되고, 완료 화면에서 [마침]을 누릅니다. 동봉 Web 서버를 포함하면 Windows 방화벽에 "BODA VMS Web (5292/TCP)" 인바운드 규칙도 함께 만들어집니다(§2.5). 바탕화면에 <strong>BODA VMS</strong> 바로가기가,
       시작 메뉴에 BODA VMS · BODA VMS 설정 마법사 (AppSetup) · BODA VMS 비전 설정 (VisionSetup) 바로가기가 만들어집니다.</li>
 </ol>
 <figure><img src="../gs/screenshots/70_msi_welcome.png" data-width="420" alt="설치 마법사 시작 화면">
@@ -73,8 +72,8 @@ VMS 를 다시 실행하세요. 설정 파일이 있어도 마법사를 끝까�
 <ul>
   <li>구성은 끝났는데 서비스가 멈춰 있으면(Stopped) 카드에 <strong>[서비스 시작 (관리자 권한)]</strong> 버튼이 나타납니다.
       누르면 Windows 권한 확인 창(UAC)이 뜨고, 승인하면 서비스가 부팅 시 자동 시작으로 바뀐 뒤 곧바로 시작됩니다.</li>
-  <li>이 구성에서는 Web 서버가 <strong>이 PC 안에서만(127.0.0.1)</strong> 응답합니다. 다른 PC 의 브라우저에서 보려면
-      §2.5 의 안내에 따라 바인딩 주소와 방화벽을 열어야 합니다.</li>
+  <li>이 구성의 Web 서버는 <strong>이 PC 의 모든 네트워크 주소(포트 5292)</strong>에서 응답하고, 설치 때 만든 방화벽 규칙 "BODA VMS Web (5292/TCP)" 이 모든 네트워크 프로필에서 열려 있습니다.
+      그래서 같은 사내망의 다른 PC 브라우저에서도 <code>http://이 PC 의 IP:5292</code> 로 접속됩니다. 외부 접속을 막아야 하는 현장은 §2.5 를 참고해 방화벽 규칙의 범위를 좁힙니다.</li>
 </ul>
 
 <h4>방법 B — 별도 서버 PC 에 설치 (배포 스크립트)</h4>
@@ -83,10 +82,14 @@ VMS 를 다시 실행하세요. 설정 파일이 있어도 마법사를 끝까�
 <pre><code># 관리자 PowerShell — 압축을 푼 폴더로 이동
 cd &lt;압축 푼 폴더&gt;\deploy
 .\Install-Web-Offline.ps1</code></pre>
-<p>스크립트가 서비스 등록 · 서명 키 생성 · 초기 관리자 비밀번호 생성 · 설정 파일 권한 제한 · 방화벽 규칙까지
+<p>스크립트가 서비스 등록 · 서명 키 생성 · 초기 관리자 비밀번호 생성 · 설정 파일 권한 제한을
 한 번에 처리하고, 화면에 초기 admin 비밀번호를 표시합니다. 기본값은 설치 폴더 <code>C:\Deploy\BodaVmsWeb</code>,
 데이터 폴더 <code>C:\ProgramData\BODA\VMS</code>, 포트 5292 입니다. 옵션으로 바꿀 수 있습니다.</p>
 <pre><code>.\Install-Web-Offline.ps1 -Port 8080 -InstallPath "D:\BODA Web" -DataDir "D:\BODA Data"</code></pre>
+<div class="callout warn"><strong>라인 PC 가 붙는 서버는 <code>-AllowLanAccess</code> 를 붙여 설치합니다.</strong>
+옵션이 없으면 서버가 <strong>이 PC 안에서만</strong>(127.0.0.1) 응답하고 방화벽 규칙도 만들지 않으며, 완료 화면에 "LAN 접속 : 꺼짐 — 이 PC 에서만" 이 표시됩니다.
+<code>-AllowLanAccess</code> 를 붙이면 모든 네트워크 주소에서 응답하고 방화벽 인바운드 규칙 <code>BODA VMS Web</code> 을 사내망(Domain · Private) 프로필에만 만들며, 완료 화면에 LAN 접속 주소가 표시됩니다.
+<pre><code>.\Install-Web-Offline.ps1 -AllowLanAccess</code></pre></div>
 <div class="callout warn"><strong>서명 키의 유일한 사본은 서버의 <code>appsettings.Production.json</code> 입니다.</strong> 이 파일을 잃으면 모든
 사용자가 다시 로그인해야 하므로 설치 직후 안전한 곳에 백업하세요. 첫 로그인 후에는 <code>admin</code> 비밀번호를
 바꾸고(오른쪽 위 사용자 이름 → [비밀번호 변경], §8.1), 필요한 사용자를 가입 → 승인으로 추가합니다(§8.2).</div>
@@ -96,7 +99,8 @@ cd &lt;압축 푼 폴더&gt;\deploy
 <h4>◆MLOps 서버</h4>
 <ol>
   <li>서버 PC(Web 서버와 같은 PC 여도 됨)에 ◆MLOps 배포 패키지를 풀고 관리자 PowerShell 에서 실행합니다.
-<pre><code>.\scripts\install-server-service.ps1 -DataDir D:\BODA-MLOps -ProductionWebUrl http://&lt;Web 서버&gt;:5292</code></pre></li>
+<pre><code>.\scripts\install-server-service.ps1 -DataDir D:\BODA-MLOps -ProductionWebUrl http://&lt;Web 서버&gt;:5292 -JwtKey &lt;Web 서버의 서명 키&gt;</code></pre>
+      <code>-JwtKey</code> 가 없으면 스크립트가 멈춥니다. 값은 Web 서버 <code>appsettings.Production.json</code> 의 서명 키와 같아야 합니다.</li>
   <li>서비스 <code>BodaVmsMlops</code>(포트 <strong>5310</strong>)가 등록되고 방화벽 규칙이 추가됩니다. 데이터(DB · 사진 · 모델)는
       <code>-DataDir</code> 폴더에 저장되므로 이 폴더를 백업 대상에 넣습니다.</li>
   <li>◆MLOps 화면은 <strong>Web 서버의 관리자 계정</strong>으로 로그인합니다(§9.1). 두 서버가 같은 서명 키를 쓰도록 스크립트가
@@ -108,8 +112,8 @@ cd &lt;압축 푼 폴더&gt;\deploy
   <li>◆MLOps 화면 학습 → 워커 → [워커 등록]에서 이름을 넣고 [발급]을 눌러 <code>wk_…</code> 토큰을 받습니다. 토큰은 이때 한 번만 표시됩니다.</li>
   <li><code>BODA-VMS-TrainWorker-0.1.5.msi</code> 를 실행하고 <strong>"워커 연결 설정"</strong> 화면에 관리 서버 주소(<code>http://서버:5310</code>) ·
       워커 토큰 · 워커 이름을 입력합니다.</li>
-  <li>설치가 끝나면 서비스 <code>BodaVmsTrainWorker</code> 가 시작되어 첫 실행 시 파이썬 환경(venv, 약 6GB)을 준비합니다.
-      온라인 설치는 10~40 분이 걸립니다. 폐쇄망은 MSI 대신 함께 배포되는 <code>BODA-VMS-TrainWorker-0.1.5-offline</code> 폴더의 <code>install-offline.cmd</code> 를 관리자 권한 명령 프롬프트에서 실행합니다(wheel 묶음을 이 PC 에 복사한 뒤 같은 MSI 를 설치합니다. 복사된 <code>%ProgramData%\BODA VMS TrainWorker\wheels</code> 는 지우지 마세요).</li>
+  <li>설치가 끝나면 서비스 <code>BodaVmsTrainWorker</code> 가 시작되어 첫 실행 시 파이썬 환경(venv, 수 GB)을 준비합니다.
+      온라인 설치는 수십 분이 걸립니다(설치 마법사 완료 화면 안내와 같음). 폐쇄망은 MSI 대신 함께 배포되는 <code>BODA-VMS-TrainWorker-0.1.5-offline</code> 폴더의 <code>install-offline.cmd</code> 를 관리자 권한 명령 프롬프트에서 실행합니다(wheel 묶음을 이 PC 에 복사한 뒤 같은 MSI 를 설치합니다. 복사된 <code>%ProgramData%\BODA VMS TrainWorker\wheels</code> 는 지우지 마세요).</li>
   <li>◆MLOps 워커 화면에서 상태가 <strong>대기 중</strong>으로 바뀌면 준비 완료입니다. 로그는 <code>%ProgramData%\BODA VMS TrainWorker\logs</code> 에 남습니다.</li>
 </ol>
 <figure><img src="../gs/screenshots/mlops/worker_install_wizard.png" data-width="420" alt="학습 워커 설치 마법사">
@@ -126,10 +130,9 @@ cd &lt;압축 푼 폴더&gt;\deploy
   <tr><td>◆라인 PC → 로봇</td><td>벤더별 (UR 30003 · Modbus 502 등)</td><td>아웃바운드</td><td>포즈 읽기 · 웨이포인트</td></tr>
 </table>
 <ul>
-  <li>Web 서버를 별도 PC 에 설치하면 배포 스크립트가 방화벽 인바운드 규칙 <code>BODA VMS Web</code> 을 만듭니다.
-      라인 PC 와 동봉 구성(방법 A)은 기본이 <code>127.0.0.1</code> 바인딩이라 외부 접속이 막혀 있습니다 — 다른 PC 에서
-      보려면 <code>appsettings.Production.json</code> 의 <code>Kestrel:Endpoints:Http:Url</code> 을 <code>http://0.0.0.0:5292</code> 로
-      바꾸고 방화벽에서 5292 를 사내망(Private/Domain)에만 엽니다.</li>
+  <li>별도 서버 PC(방법 B)는 배포 스크립트를 <code>-AllowLanAccess</code> 로 실행해야 다른 PC 에서 접속됩니다 — 모든 네트워크 주소에서 응답하고 방화벽 인바운드 규칙 <code>BODA VMS Web</code> 을 사내망(Domain · Private) 프로필에만 만듭니다. 옵션 없이 설치하면 이 PC 안에서만 응답하고 규칙도 만들지 않습니다(§2.3).</li>
+  <li>라인 PC 의 동봉 Web(방법 A)은 설치할 때부터 모든 네트워크 주소(5292)에서 응답하고, 방화벽 규칙 "BODA VMS Web (5292/TCP)" 이 모든 프로필에 열립니다.
+      외부에서 접속할 필요가 없는 현장은 Windows 방화벽 고급 설정에서 이 규칙의 프로필을 사내망(Domain · Private)으로 줄이거나 규칙을 끕니다.</li>
   <li>카메라는 전용 네트워크 카드에 직결하고, 그 카드에만 카메라와 같은 대역의 고정 IP 를 줍니다.</li>
   <li>보안 모드가 <strong>Production</strong> 인 라인 PC 는 다른 PC 를 가리키는 <code>http://</code> 서버 주소를 거부합니다(§3.8).
       원격 서버는 <code>https://</code> 로 열거나(사설 인증서), 사내 실증 단계에서는 Development 모드를 씁니다.
@@ -174,8 +177,10 @@ cd &lt;압축 푼 폴더&gt;\deploy
 <p><strong>업데이트 창(VMS.Updater)</strong> — 설치 중 뜨는 "BODA VMS 업데이트" 창이 업데이트 프로그램입니다. "v현재 → v새 버전" 과 진행 상태가 나오고, 끝나면 "설치 완료 — VMS를 다시 시작합니다." 로 VMS 를 다시 띄웁니다. 실패하면 "설치에 실패했습니다 (코드 n). 기존 버전이 유지됩니다." 와 [닫기] 가 나옵니다 — 설치는 Windows Installer 가 통째로 되돌리므로 옛 버전이 그대로 남습니다. 다른 설치가 진행 중이면 잠시 뒤 다시 합니다. 이 창은 직접 실행하는 프로그램이 아닙니다(인앱 업데이트가 자동으로 띄움).</p>
 <p>업데이트는 이 순서로 진행됩니다: VMS 종료 대기 → 이 PC 의 Web 서비스 상태 기록 · 정지 → 설치 → Web 서비스 재시작과 응답(health) 확인(실패하면 한 번 복구 설치 후 재시도) → VMS 다시 실행 → 내려받은 설치 파일 정리.</p>
 <h4>설치 파일로 직접 업그레이드</h4>
-<p>새 버전 MSI 를 더블 클릭하면 이전 버전이 자동으로 제거되고 새 버전이 설치됩니다. 설치 구성 선택은 이전 선택이 유지되며,
+<p>새 버전 MSI 를 더블 클릭하면 이전 버전이 자동으로 제거되고 새 버전이 설치됩니다. 버전 번호가 같은 수정판 설치 파일도 같은 방식으로 기존 설치를 교체합니다(제어판에는 한 줄만 남습니다).
+설치 구성(Web 서버 포함 여부)은 이전 설치를 따르며 — 이전에 Web 을 뺐으면 계속 빠지고, 넣었으면 계속 들어갑니다 — 인앱 업데이트도 같습니다.
 설정 · 레시피 · 검사 이력 · 캘리브레이션은 그대로 보존됩니다.</p>
+<p>어느 빌드가 설치됐는지는 지원 패키지의 환경 정보 "ProductVersion: 1.48.1 (build n)" 줄로 구분합니다.</p>
 <h4>복구와 제거</h4>
 <p>설치된 PC 에서 같은 MSI 를 다시 실행하면 유지 관리 화면이 나옵니다. [변경] 은 쓰지 않고(꺼져 있음), [복구] 와 [제거] 중 하나를 고릅니다.</p>
 <table class="cols-2-7">
