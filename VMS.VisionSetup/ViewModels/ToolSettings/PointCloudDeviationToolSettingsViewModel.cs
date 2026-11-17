@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Win32;
 using System;
+using VMS.VisionSetup.Interfaces;
 using VMS.VisionSetup.VisionTools.PointCloud;
 
 namespace VMS.VisionSetup.ViewModels.ToolSettings
@@ -8,9 +8,11 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
     public class PointCloudDeviationToolSettingsViewModel : ToolSettingsViewModelBase
     {
         private PointCloudDeviationTool TypedTool => (PointCloudDeviationTool)Tool;
+        private readonly IDialogService? _dialogService;
 
-        public PointCloudDeviationToolSettingsViewModel(PointCloudDeviationTool tool) : base(tool)
+        public PointCloudDeviationToolSettingsViewModel(PointCloudDeviationTool tool, IDialogService? dialogService = null) : base(tool)
         {
+            _dialogService = dialogService;
             LoadAvailableParamCodes();
             SaveCurrentAsReferenceCommand = new RelayCommand(SaveCurrentAsReference);
             LoadReferenceCommand = new RelayCommand(LoadReference);
@@ -37,39 +39,34 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
 
         private void SaveCurrentAsReference()
         {
-            var dlg = new SaveFileDialog
-            {
-                Filter = "Point Cloud Files (*.vpc)|*.vpc|All Files|*.*",
-                DefaultExt = ".vpc",
-                FileName = "deviation_reference.vpc"
-            };
-            if (dlg.ShowDialog() != true)
+            // 대화상자는 DialogService 가 연다 (VS-24)
+            var fileName = _dialogService?.ShowSaveFileDialog(
+                "Point Cloud Files (*.vpc)|*.vpc|All Files|*.*", ".vpc", "deviation_reference.vpc");
+            if (fileName == null)
             {
                 TrainStatus = "저장 취소됨.";
                 return;
             }
-            bool ok = TypedTool.SaveCurrentAsReference(dlg.FileName);
+            bool ok = TypedTool.SaveCurrentAsReference(fileName);
             OnPropertyChanged(nameof(ReferencePath));
             OnPropertyChanged(nameof(IsReferenceLoaded));
             TrainStatus = ok
-                ? $"Reference 저장됨: {System.IO.Path.GetFileName(dlg.FileName)}"
+                ? $"Reference 저장됨: {System.IO.Path.GetFileName(fileName)}"
                 : "저장 실패 — 점군이 없거나 경로 오류.";
         }
 
         /// <summary>기존 기준 파일 선택 — .vpc(양품 스캔) 또는 .stl(CAD, 표면 샘플링).</summary>
         private void LoadReference()
         {
-            var dlg = new OpenFileDialog
-            {
-                Filter = "Reference Files (*.vpc;*.stl)|*.vpc;*.stl|Point Cloud (*.vpc)|*.vpc|CAD Mesh (*.stl)|*.stl|All Files|*.*"
-            };
-            if (dlg.ShowDialog() != true) return;
+            var fileName = _dialogService?.ShowOpenFileDialog("Reference 파일 선택",
+                "Reference Files (*.vpc;*.stl)|*.vpc;*.stl|Point Cloud (*.vpc)|*.vpc|CAD Mesh (*.stl)|*.stl|All Files|*.*");
+            if (fileName == null) return;
 
-            TypedTool.ReferencePath = dlg.FileName;
+            TypedTool.ReferencePath = fileName;
             OnPropertyChanged(nameof(ReferencePath));
             OnPropertyChanged(nameof(IsReferenceLoaded));
-            TrainStatus = $"Reference 설정됨: {System.IO.Path.GetFileName(dlg.FileName)}"
-                + (dlg.FileName.EndsWith(".stl", StringComparison.OrdinalIgnoreCase)
+            TrainStatus = $"Reference 설정됨: {System.IO.Path.GetFileName(fileName)}"
+                + (fileName.EndsWith(".stl", StringComparison.OrdinalIgnoreCase)
                     ? " (CAD — 실행 시 표면 샘플링)" : "");
         }
 

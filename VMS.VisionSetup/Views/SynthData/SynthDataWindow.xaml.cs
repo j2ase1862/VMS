@@ -1,14 +1,15 @@
 using System.Windows;
+using VMS.VisionSetup.Interfaces;
 using VMS.VisionSetup.ViewModels;
 
 namespace VMS.VisionSetup.Views.SynthData
 {
     public partial class SynthDataWindow : Window
     {
-        public SynthDataWindow()
+        public SynthDataWindow(IDialogService dialogService)
         {
             InitializeComponent();
-            DataContext = new SynthDataViewModel();
+            DataContext = new SynthDataViewModel(dialogService);
         }
     }
 }

@@ -985,8 +985,11 @@ namespace VMS.VisionSetup.Services
                 //    ResultTool / EnsembleTool은 실패 정보를 수집해야 하므로 스킵 우회
                 bool bypassesSkip = tool is ResultTool or GeometryTool or Geometry3DTool or EnsembleTool;
 
+                // 건너뛴 도구도 LastResult 를 "건너뜀" 결과로 바꾼다 — 남겨 두면 Run Results 가
+                // 직전 실행 결과(OK)를 그대로 보여 준다 (Run Selected 의 ExecuteTool 과 같은 처리).
                 if (TrySkipByResultConnection(tool, resultMap, out var skipResult))
                 {
+                    tool.LastResult = skipResult;
                     results.Add(skipResult);
                     resultMap[tool.Id] = skipResult;
                     allSuccess = false;
@@ -999,6 +1002,7 @@ namespace VMS.VisionSetup.Services
                 if (!TryApplyCoordinatesConnection(tool, resultMap, out var fixtureFailure) && !bypassesSkip)
                 {
                     var fixtureSkip = new VisionResult { Success = false, Message = fixtureFailure };
+                    tool.LastResult = fixtureSkip;
                     results.Add(fixtureSkip);
                     resultMap[tool.Id] = fixtureSkip;
                     allSuccess = false;

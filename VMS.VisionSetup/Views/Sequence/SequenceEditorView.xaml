@@ -616,7 +616,7 @@
 
                 <!-- PLC I/O 모니터 패널 (하단 접이식) — Phase A: PLC + IO 보드 섹션 분리 -->
                 <Border Grid.Row="1" Background="{StaticResource BrushBgWindow}" BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="0,1,0,0"
-                        MaxHeight="320"
+                        MinHeight="150" MaxHeight="320"
                         Visibility="{Binding IsMonitorPanelVisible, Converter={StaticResource BoolToVisibility}}">
                     <DockPanel>
                         <!-- 모니터 패널 헤더 -->

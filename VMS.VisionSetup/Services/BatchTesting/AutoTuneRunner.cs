@@ -19,7 +19,7 @@ namespace VMS.VisionSetup.Services.BatchTesting
     }
 
     /// <summary>한 조합(= 모든 sweep에서 값 하나씩 뽑은 것)의 batch 실행 결과.</summary>
-    public class AutoTuneCombinationResult
+    public class AutoTuneCombinationResult : CommunityToolkit.Mvvm.ComponentModel.ObservableObject
     {
         /// <summary>이 조합의 (sweep label → 적용된 값) — Apply Best 에서 다시 setter 호출용.</summary>
         public List<(AutoTuneSweep Sweep, object Value)> Bindings { get; set; } = new();
@@ -30,7 +30,13 @@ namespace VMS.VisionSetup.Services.BatchTesting
         public double AvgMs { get; set; }
         public double PassRate => Total > 0 ? (double)Pass / Total : 0;
         public string PassRateText => $"{PassRate * 100:F1}%";
-        public bool IsBest { get; set; }
+        // 모든 조합이 표에 들어간 뒤에 정해진다 — 변경 알림이 있어야 Best(★) 열이 갱신된다 (VS-11).
+        private bool _isBest;
+        public bool IsBest
+        {
+            get => _isBest;
+            set => SetProperty(ref _isBest, value);
+        }
 
         /// <summary>DataGrid 표시용 — "Tool.Param=v, Tool2.Param2=v2" 형식.</summary>
         public string CombinationText => string.Join(", ",

@@ -107,7 +107,7 @@ namespace VMS.VisionSetup.Services
                                 !c.InputSource!.Equals("Camera", StringComparison.OrdinalIgnoreCase))
                                 sb.AppendLine($"     입력: {c.InputSource}");
                             AppendParametersPreview(sb, c.Parameters, indent: "     ",
-                                confidence: c.ParameterConfidence);
+                                confidence: c.ParameterConfidence, toolType: c.ToolType);
                             AppendRoiHintPreview(sb, c.RoiHint, indent: "     ");
                             break;
 
@@ -198,7 +198,7 @@ namespace VMS.VisionSetup.Services
 
                     // SLM이 지정한 파라미터 미리보기 (신뢰도 포함)
                     AppendParametersPreview(sb, item.Parameters, indent: "     ",
-                        confidence: item.ParameterConfidence);
+                        confidence: item.ParameterConfidence, toolType: item.ToolType);
 
                     // ROI 힌트 미리보기 (Phase 4a)
                     AppendRoiHintPreview(sb, item.RoiHint, indent: "     ");
@@ -313,16 +313,33 @@ namespace VMS.VisionSetup.Services
         /// SLM이 지정한 Parameters dictionary를 미리보기 텍스트로 변환.
         /// JsonElement는 ToString으로 평탄화. confidence가 high가 아니면 인라인으로 표시.
         /// </summary>
-        private static void AppendParametersPreview(StringBuilder sb,
+        internal static void AppendParametersPreview(StringBuilder sb,
             Dictionary<string, object?>? parameters, string indent,
-            Dictionary<string, string>? confidence = null)
+            Dictionary<string, string>? confidence = null, string? toolType = null)
         {
             if (parameters == null || parameters.Count == 0)
                 return;
 
+            // 모델이 신뢰도 표를 Parameters 안에 넣어 보내는 경우가 있다 — 파라미터가 아니므로
+            // 목록에서 빼고 신뢰도로만 쓴다 (VS-36 ①).
+            if (confidence == null
+                && TryGetValueIgnoreCase(parameters, ConfidenceKey, out var nested)
+                && nested is JsonElement { ValueKind: JsonValueKind.Object } nestedJson)
+            {
+                confidence = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var prop in nestedJson.EnumerateObject())
+                    confidence[prop.Name] = prop.Value.ToString();
+            }
+
+            // 도구에 없는 파라미터는 적용되지 않는다 — 미리보기에서 그렇다고 알린다 (VS-36 ②).
+            var known = GetSettableParameterNames(toolType);
+
             sb.AppendLine($"{indent}파라미터:");
             foreach (var (key, val) in parameters)
             {
+                if (key.Equals(ConfidenceKey, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
                 string display = val switch
                 {
                     null => "(null)",
@@ -339,8 +356,45 @@ namespace VMS.VisionSetup.Services
                     else if (lc == "medium" || lc == "med") suffix = "  · 보통";
                 }
 
+                if (known != null && !known.Contains(key))
+                    suffix = "  ✕ 이 도구에 없는 파라미터 — 적용하지 않음";
+
                 sb.AppendLine($"{indent}  • {key} = {display}{suffix}");
             }
+        }
+
+        private const string ConfidenceKey = "ParameterConfidence";
+
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, HashSet<string>?> _settableNames =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// 도구 형식의 바꿀 수 있는 공개 속성 이름(대소문자 무시 — ParameterApplyService 와 같은 규칙).
+        /// 형식을 모르면 null(확인하지 않음).
+        /// </summary>
+        internal static HashSet<string>? GetSettableParameterNames(string? toolType)
+        {
+            if (string.IsNullOrWhiteSpace(toolType)) return null;
+            return _settableNames.GetOrAdd(toolType, type =>
+            {
+                var tool = VisionService.CreateTool(type);
+                if (tool == null) return null;
+                return tool.GetType()
+                    .GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+                    .Where(p => p.CanWrite && p.SetMethod?.IsPublic == true)
+                    .Select(p => p.Name)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            });
+        }
+
+        private static bool TryGetValueIgnoreCase(Dictionary<string, object?> dict, string key, out object? value)
+        {
+            foreach (var (k, v) in dict)
+            {
+                if (k.Equals(key, StringComparison.OrdinalIgnoreCase)) { value = v; return true; }
+            }
+            value = null;
+            return false;
         }
 
         /// <summary>

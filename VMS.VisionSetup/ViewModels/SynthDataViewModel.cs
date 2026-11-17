@@ -1,12 +1,12 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using VMS.VisionSetup.Interfaces;
 using VMS.VisionSetup.Services.SynthData;
 using VMS.VisionSetup.VisionTools.Identification;
 
@@ -18,8 +18,12 @@ namespace VMS.VisionSetup.ViewModels
     /// </summary>
     public partial class SynthDataViewModel : ObservableObject
     {
-        public SynthDataViewModel()
+        private readonly IDialogService _dialogService;
+
+        public SynthDataViewModel(IDialogService dialogService)
         {
+            _dialogService = dialogService;
+
             // 시스템 설치 폰트 목록 (가독성 있는 것만)
             var fontFamilies = new List<string>();
             foreach (var ff in System.Drawing.FontFamily.Families)
@@ -98,20 +102,17 @@ namespace VMS.VisionSetup.ViewModels
 
         private void BrowseOutputDir()
         {
-            var dlg = new OpenFolderDialog { Title = "출력 폴더 선택" };
-            if (!string.IsNullOrEmpty(OutputDir) && Directory.Exists(OutputDir))
-                dlg.InitialDirectory = OutputDir;
-            if (dlg.ShowDialog() == true)
-                OutputDir = dlg.FolderName;
+            // 대화상자는 DialogService 가 연다 (VS-16)
+            var folder = _dialogService.ShowFolderBrowserDialog("출력 폴더 선택", OutputDir);
+            if (folder != null)
+                OutputDir = folder;
         }
 
         private void BrowseBackgroundFolder()
         {
-            var dlg = new OpenFolderDialog { Title = "배경 이미지 폴더 선택" };
-            if (!string.IsNullOrEmpty(BackgroundFolderPath) && Directory.Exists(BackgroundFolderPath))
-                dlg.InitialDirectory = BackgroundFolderPath;
-            if (dlg.ShowDialog() == true)
-                BackgroundFolderPath = dlg.FolderName;
+            var folder = _dialogService.ShowFolderBrowserDialog("배경 이미지 폴더 선택", BackgroundFolderPath);
+            if (folder != null)
+                BackgroundFolderPath = folder;
         }
 
         private async Task GenerateAsync()

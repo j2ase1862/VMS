@@ -3,10 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         xmlns:c="clr-namespace:VMS.VisionSetup.Views.Common"
-        xmlns:dl="clr-namespace:VMS.VisionSetup.VisionTools.DeepLearning"
-        xmlns:sys="clr-namespace:System;assembly=mscorlib"
         Title="Inference Engine Settings"
-        Width="580" Height="420"
+        Width="580" Height="480"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         WindowStyle="None"
@@ -19,15 +17,6 @@
                             GlassFrameThickness="0" ResizeBorderThickness="0"
                             UseAeroCaptionButtons="False"/>
     </shell:WindowChrome.WindowChrome>
-
-    <Window.Resources>
-        <ObjectDataProvider x:Key="ProviderValues" MethodName="GetValues"
-                            ObjectType="{x:Type sys:Enum}">
-            <ObjectDataProvider.MethodParameters>
-                <x:Type TypeName="dl:OnnxExecutionProvider"/>
-            </ObjectDataProvider.MethodParameters>
-        </ObjectDataProvider>
-    </Window.Resources>
 
     <Border Background="{StaticResource BrushBgWindow}"
             BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="1">
@@ -60,8 +49,25 @@
                     <StackPanel>
                         <TextBlock Text="Execution Provider" Style="{StaticResource WindowFieldLabel}"/>
                         <ComboBox x:Name="ProviderComboBox"
-                                  ItemsSource="{Binding Source={StaticResource ProviderValues}}"
+                                  ItemsSource="{Binding ProviderOptions}"
+                                  DisplayMemberPath="Display"
+                                  SelectedValuePath="Provider"
+                                  SelectedValue="{Binding Provider}"
                                   Style="{StaticResource WindowDarkComboBox}"/>
+                        <TextBlock Text="{Binding ProviderWarning}" Foreground="{StaticResource BrushWarning}"
+                                   TextWrapping="Wrap" Margin="0,4,0,0" FontSize="11">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <Trigger Property="Text" Value="">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock Text="{Binding ActiveProviderText}"
+                                   Style="{StaticResource WindowMutedText}" Margin="0,4,0,0"/>
 
                         <TextBlock Text="TensorRT Engine Cache Folder (선택)"
                                    Style="{StaticResource WindowFieldLabel}" Margin="0,10,0,2"/>
@@ -71,16 +77,18 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBox Grid.Column="0" x:Name="TrtCacheTextBox"
+                                     Text="{Binding TensorRTCachePath, UpdateSourceTrigger=PropertyChanged}"
                                      Style="{StaticResource WindowDarkTextBox}"/>
                             <Button Grid.Column="1" Content="Browse" Width="92" Margin="8,0,0,0"
-                                    Click="BrowseButton_Click"
+                                    Command="{Binding BrowseCommand}"
                                     Style="{StaticResource ModernGhostButton}"/>
                         </Grid>
-                        <TextBlock Text="비워두면 캐시 없음. 설정 시 TensorRT 엔진을 캐시하여 재실행 시 재빌드를 건너뜁니다."
+                        <TextBlock Text="TensorRT 엔진을 이 폴더에 저장해 두고 다시 실행할 때 재빌드를 건너뜁니다. 비워 두고 저장하면 기본 폴더(설정 폴더의 trt_cache)를 씁니다."
                                    Style="{StaticResource WindowMutedText}" Margin="0,4,0,0"/>
 
                         <CheckBox x:Name="Fp16CheckBox"
-                                  Content="Enable TensorRT FP16 (RTX 계열에서 2~3배 속도 향상)"
+                                  IsChecked="{Binding TensorRTFp16}"
+                                  Content="Enable TensorRT FP16 (반정밀도 — 지원 GPU 에서 더 빠름)"
                                   Style="{StaticResource WindowDarkCheckBox}"
                                   Margin="0,14,0,0"/>
 
@@ -92,7 +100,7 @@
                 <StackPanel Grid.Row="2" Orientation="Horizontal"
                             HorizontalAlignment="Right" Margin="0,14,0,0">
                     <Button Content="Save" Width="92" Margin="0,0,8,0"
-                            IsDefault="True" Click="SaveButton_Click"
+                            IsDefault="True" Command="{Binding SaveCommand}"
                             Style="{StaticResource ModernPrimaryButton}"/>
                     <Button Content="Cancel" Width="92"
                             IsCancel="True"

@@ -70,6 +70,53 @@ namespace VMS.VisionSetup.Tests
             Assert.Equal(savedEnabled.Id, savedConnection.SourceToolId);
         }
 
+        [Fact]
+        public void ChangingStep_ClearsRunResults_AndToolCountFollowsWorkspace()
+        {
+            var vm = CreateViewModel();
+
+            var blur = VisionService.CreateTool("BlurTool")!;
+            var stepA = new InspectionStep { Name = "1-1" };
+            stepA.Tools.Add(ToolSerializer.SerializeTool(blur));
+            var stepB = new InspectionStep { Name = "1-2" };
+
+            vm.SelectedStep = stepA;
+            vm.ToolRunResults.Add(new ToolResultItem { ToolName = "Blur", Result = true });
+
+            // VS-32: 다른 스텝으로 가면 앞 스텝의 실행 결과 행이 남지 않는다
+            vm.SelectedStep = stepB;
+            Assert.Empty(vm.ToolRunResults);
+
+            // VS-08: 떠난 스텝은 저장된 도구 수, 선택 스텝은 작업 공간 도구 수
+            Assert.Equal(1, stepA.ToolCount);
+            Assert.Equal(0, stepB.ToolCount);
+            vm.DroppedTools.Add(new ToolItem { Name = "Blob", ToolType = "BlobTool" });
+            Assert.Equal(1, stepB.ToolCount);
+        }
+
+        [Fact]
+        public void LeavingStep_KeepsWorkspaceEdits_InMemory()
+        {
+            // VS-19: 스텝을 바꿨다 돌아와도 저장 전 도구 편집이 남는다(파일 저장은 하지 않음)
+            var vm = CreateViewModel();
+            var blur = VisionService.CreateTool("BlurTool")!;
+            blur.Name = "Blur";
+            var stepA = new InspectionStep { Name = "1-1" };
+            stepA.Tools.Add(ToolSerializer.SerializeTool(blur));
+            var stepB = new InspectionStep { Name = "1-2" };
+
+            vm.SelectedStep = stepA;
+            vm.DroppedTools[0].VisionTool!.Name = "Blur (edited)";
+            vm.DroppedTools[0].VisionTool!.IsEnabled = false;
+
+            vm.SelectedStep = stepB;
+            vm.SelectedStep = stepA;
+
+            var tool = Assert.Single(vm.DroppedTools).VisionTool!;
+            Assert.Equal("Blur (edited)", tool.Name);
+            Assert.False(tool.IsEnabled);
+        }
+
         private static MainViewModel CreateViewModel()
         {
             return new MainViewModel(

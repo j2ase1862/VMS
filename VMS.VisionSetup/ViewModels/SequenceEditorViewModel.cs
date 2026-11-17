@@ -1140,16 +1140,19 @@ namespace VMS.VisionSetup.ViewModels
 
         private void RefreshMonitorAddresses()
         {
-            if (_plcConfig == null) return;
-
-            // 주소 + DataType + CheckMode 조합으로 fingerprint 생성
-            // PLC 모니터는 PLC 노드만 대상 — IO 보드 노드는 별도 폴링 경로 (또는 향후 phase).
+            // 주소 + DataType + CheckMode 조합으로 fingerprint 생성.
+            // IO 보드 노드도 포함 — PLC 설정이 없어도 보드 채널 모니터는 노드 변경을 따라간다 (VS-09).
             var parts = new List<string>();
             foreach (var node in Nodes)
             {
                 var cfg = node.Config;
                 if (string.IsNullOrWhiteSpace(cfg.PlcAddress)) continue;
-                if (IsBoardNode(node)) continue;
+                if (IsBoardNode(node))
+                {
+                    parts.Add($"B|{cfg.DeviceId}|{cfg.PlcAddress.Trim()}|{cfg.NodeType}");
+                    continue;
+                }
+                if (_plcConfig == null) continue;
 
                 if (cfg.NodeType == SequenceNodeType.InputCheck)
                     parts.Add($"{cfg.PlcAddress.Trim()}|I|{cfg.CheckMode}");
@@ -1170,8 +1173,15 @@ namespace VMS.VisionSetup.ViewModels
         {
             MonitorItems.Clear();
 
-            if (_plcConfig == null) return;
+            // PLC 설정이 없어도(IO 보드만 쓰는 현장) 보드 채널 모니터는 채운다 (VS-09).
+            if (_plcConfig != null)
+                CollectPlcMonitorAddresses(_plcConfig);
 
+            CollectBoardMonitorAddresses();
+        }
+
+        private void CollectPlcMonitorAddresses(PlcConnectionConfig plcConfig)
+        {
             // 주소별 그룹핑 (같은 주소를 여러 노드가 참조할 수 있음)
             var addressMap = new Dictionary<string, (PlcAddress parsed, PlcDataType dataType, PlcIoDirection dir, List<string> nodeNames)>();
 
@@ -1192,7 +1202,7 @@ namespace VMS.VisionSetup.ViewModels
                     {
                         try
                         {
-                            var parsed = PlcAddress.Parse(addrStr, _plcConfig.Vendor);
+                            var parsed = PlcAddress.Parse(addrStr, plcConfig.Vendor);
                             entry = (parsed, dataType, PlcIoDirection.Input, new List<string>());
                             addressMap[addrStr] = entry;
                         }
@@ -1208,7 +1218,7 @@ namespace VMS.VisionSetup.ViewModels
                     {
                         try
                         {
-                            var parsed = PlcAddress.Parse(addrStr, _plcConfig.Vendor);
+                            var parsed = PlcAddress.Parse(addrStr, plcConfig.Vendor);
                             entry = (parsed, cfg.OutputDataType, PlcIoDirection.Output, new List<string>());
                             addressMap[addrStr] = entry;
                         }
@@ -1227,8 +1237,6 @@ namespace VMS.VisionSetup.ViewModels
                 };
                 MonitorItems.Add(item);
             }
-
-            CollectBoardMonitorAddresses();
         }
 
         /// <summary>

@@ -16,9 +16,33 @@ namespace VMS.VisionSetup.Interfaces
         string[]? ShowOpenFilesDialog(string title, string filter);
         string? ShowFolderBrowserDialog(string description);
         string? ShowSaveFileDialog(string filter, string defaultExt, string? fileName = null);
+
+        /// <summary>시작 폴더를 지정하는 파일 열기 — 취소 시 null. 기본 구현은 시작 폴더를 무시한다.</summary>
+        string? ShowOpenFileDialog(string title, string filter, string? initialDirectory)
+            => ShowOpenFileDialog(title, filter);
+
+        /// <summary>시작 폴더를 지정하는 폴더 선택 — 취소 시 null. 기본 구현은 시작 폴더를 무시한다.</summary>
+        string? ShowFolderBrowserDialog(string description, string? initialDirectory)
+            => ShowFolderBrowserDialog(description);
+
+        /// <summary>제목 · 시작 폴더를 지정하는 저장 대화상자 — 취소 시 null. 기본 구현은 제목 · 시작 폴더를 무시한다.</summary>
+        string? ShowSaveFileDialog(string title, string filter, string defaultExt, string? fileName, string? initialDirectory)
+            => ShowSaveFileDialog(filter, defaultExt, fileName);
+
+        /// <summary>배치 테스트 창 (폴더 이미지에 현재 레시피 일괄 적용).</summary>
+        void ShowBatchTestDialog() { }
+
+        /// <summary>합성 OCR 데이터 생성기 창.</summary>
+        void ShowSynthDataDialog() { }
+
+        /// <summary>추론 엔진 설정(Inference Settings) 창.</summary>
+        void ShowOnnxSettingsDialog() { }
         string? ShowRenameDialog(string currentName);
         void ShowCameraManagerDialog();
         Recipe? ShowRecipeManagerDialog();
+
+        /// <summary>레시피 관리자 — 편집기 [Add Step] 이 쓸 카메라(메인에서 고른 카메라)를 넘긴다.</summary>
+        Recipe? ShowRecipeManagerDialog(string? defaultCameraId) => ShowRecipeManagerDialog();
         /// <summary>
         /// Sequence Editor 다이얼로그. extraDevices 는 InputCheck/OutputAction 노드의
         /// 디바이스 콤보에 표시될 PLC + IO 보드 entry 리스트.

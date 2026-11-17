@@ -63,6 +63,31 @@
             </StackPanel>
         </Expander>
 
+        <!-- Edge Pair 폭 (VS-21 · WB-26) — EdgePair 모드에서 이 폭 ± 허용 오차 안의 엣지 쌍만 채택 -->
+        <Expander IsExpanded="True" Style="{StaticResource SettingExpanderStyle}">
+            <Expander.Header>
+                <TextBlock Text="Edge Pair Width" Style="{StaticResource ExpanderHeaderStyle}"/>
+            </Expander.Header>
+            <StackPanel Margin="5,0,0,0">
+                <controls:TextBoxParameter Label="Expected Width (px)"
+                    Value="{Binding ExpectedWidth}"
+                    ToolType="CaliperTool" ParameterName="ExpectedWidth"/>
+                <controls:ParamCodeLink
+                    AvailableParamCodes="{Binding AvailableParamCodes}"
+                    SelectedItem="{Binding SelectedExpectedWidthCode}"
+                    LocalValue="{Binding ExpectedWidth}"/>
+                <controls:TextBoxParameter Label="Width Tolerance (±px)"
+                    Value="{Binding WidthTolerance}"
+                    ToolType="CaliperTool" ParameterName="WidthTolerance"/>
+                <controls:ParamCodeLink
+                    AvailableParamCodes="{Binding AvailableParamCodes}"
+                    SelectedItem="{Binding SelectedWidthToleranceCode}"
+                    LocalValue="{Binding WidthTolerance}"/>
+                <TextBlock Foreground="#999999" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,0"
+                           Text="Mode 가 EdgePair 일 때만 씁니다. 두 엣지 사이 거리가 기대 폭 ± 허용 오차 안인 쌍만 채택합니다."/>
+            </StackPanel>
+        </Expander>
+
         <!-- Expert: Signal Processing 섹션 전체 — 신호 처리 고급 옵션. -->
         <Expander IsExpanded="False" Style="{StaticResource SettingExpanderStyle}"
                   Visibility="{Binding IsExpertMode, Converter={StaticResource BoolToVis}}">

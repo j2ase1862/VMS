@@ -1,7 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -39,13 +38,16 @@ namespace VMS.VisionSetup.ViewModels
         private readonly IVisionService _visionService;
         private readonly IRecipeService _recipeService;
         private readonly ICameraService _cameraService;
+        private readonly IDialogService _dialogService;
         private CancellationTokenSource? _cts;
 
-        public BatchTestViewModel(IVisionService visionService, IRecipeService recipeService, ICameraService cameraService)
+        public BatchTestViewModel(IVisionService visionService, IRecipeService recipeService, ICameraService cameraService,
+            IDialogService dialogService)
         {
             _visionService = visionService;
             _recipeService = recipeService;
             _cameraService = cameraService;
+            _dialogService = dialogService;
 
             BrowseImageFolderCommand = new RelayCommand(BrowseImageFolder);
             BrowseOutputCsvCommand = new RelayCommand(BrowseOutputCsv);
@@ -163,7 +165,12 @@ namespace VMS.VisionSetup.ViewModels
 
             if (value == null) return;
 
-            _loadedRecipe = _recipeService.LoadRecipe(value.FilePath);
+            // 메인에 이미 열려 있는 레시피면 파일을 다시 읽지 않는다 — 다시 읽으면 현재 레시피가
+            // 바뀌어 작업 공간이 파일 값으로 다시 올라오고, 저장하지 않은 도구 편집이 배치에도 안
+            // 쓰이고 작업 공간에서도 사라졌다 (VS-13). 같은 스텝 인스턴스를 고르면 작업 공간은 그대로다.
+            _loadedRecipe = _recipeService.CurrentRecipe is { } current && current.Id == value.Id
+                ? current
+                : _recipeService.LoadRecipe(value.FilePath);
             if (_loadedRecipe == null) return;
 
             // 이 Recipe의 Steps에서 distinct CameraId → CameraOption 으로 매핑
@@ -286,25 +293,23 @@ namespace VMS.VisionSetup.ViewModels
         private void SaveAsGolden()
         {
             if (Results.Count == 0) return;
-            var dlg = new Microsoft.Win32.SaveFileDialog
-            {
-                Title = "골든셋 저장",
-                Filter = "Golden Set (*.golden.json)|*.golden.json|JSON (*.json)|*.json",
-                FileName = $"golden_{DateTime.Now:yyyyMMdd_HHmmss}.golden.json"
-            };
-            if (dlg.ShowDialog() != true) return;
+            // 대화상자는 DialogService 가 연다 (VS-16)
+            var fileName = _dialogService.ShowSaveFileDialog("골든셋 저장",
+                "Golden Set (*.golden.json)|*.golden.json|JSON (*.json)|*.json", ".golden.json",
+                $"golden_{DateTime.Now:yyyyMMdd_HHmmss}.golden.json", null);
+            if (fileName == null) return;
 
             var toolNames = _visionService.Tools.ToDictionary(t => t.Id, t => t.Name);
             var golden = GoldenSet.FromBatchResults(
-                Path.GetFileNameWithoutExtension(dlg.FileName),
+                Path.GetFileNameWithoutExtension(fileName),
                 _loadedRecipe?.Name ?? "",
                 Results.ToList(),
                 toolNames);
 
-            if (golden.Save(dlg.FileName))
+            if (golden.Save(fileName))
             {
                 ActiveGoldenSet = golden;
-                StatusMessage = $"골든셋 저장됨: {dlg.FileName} ({golden.Count}장)";
+                StatusMessage = $"골든셋 저장됨: {fileName} ({golden.Count}장)";
             }
             else
             {
@@ -314,14 +319,11 @@ namespace VMS.VisionSetup.ViewModels
 
         private void LoadGolden()
         {
-            var dlg = new Microsoft.Win32.OpenFileDialog
-            {
-                Title = "골든셋 로드",
-                Filter = "Golden Set (*.golden.json;*.json)|*.golden.json;*.json"
-            };
-            if (dlg.ShowDialog() != true) return;
+            var fileName = _dialogService.ShowOpenFileDialog("골든셋 로드",
+                "Golden Set (*.golden.json;*.json)|*.golden.json;*.json");
+            if (fileName == null) return;
 
-            var golden = GoldenSet.Load(dlg.FileName);
+            var golden = GoldenSet.Load(fileName);
             if (golden == null)
             {
                 StatusMessage = "골든셋 로드 실패 (파일 형식 오류)";
@@ -418,12 +420,10 @@ namespace VMS.VisionSetup.ViewModels
 
         private void BrowseImageFolder()
         {
-            var dlg = new OpenFolderDialog { Title = "이미지 폴더 선택" };
-            if (!string.IsNullOrEmpty(ImageFolder) && Directory.Exists(ImageFolder))
-                dlg.InitialDirectory = ImageFolder;
-            if (dlg.ShowDialog() == true)
+            var folder = _dialogService.ShowFolderBrowserDialog("이미지 폴더 선택", ImageFolder);
+            if (folder != null)
             {
-                ImageFolder = dlg.FolderName;
+                ImageFolder = folder;
                 if (string.IsNullOrEmpty(FailureOverlayDir))
                     FailureOverlayDir = Path.Combine(ImageFolder, "failures");
             }
@@ -431,29 +431,23 @@ namespace VMS.VisionSetup.ViewModels
 
         private void BrowseOutputCsv()
         {
-            var dlg = new SaveFileDialog
-            {
-                Title = "CSV 리포트 저장",
-                Filter = "CSV (*.csv)|*.csv",
-                FileName = Path.GetFileName(OutputCsvPath),
-                DefaultExt = ".csv"
-            };
+            string? initialDir = null;
             if (!string.IsNullOrEmpty(OutputCsvPath))
             {
-                try { dlg.InitialDirectory = Path.GetDirectoryName(OutputCsvPath) ?? ""; }
+                try { initialDir = Path.GetDirectoryName(OutputCsvPath); }
                 catch { }
             }
-            if (dlg.ShowDialog() == true)
-                OutputCsvPath = dlg.FileName;
+            var fileName = _dialogService.ShowSaveFileDialog("CSV 리포트 저장", "CSV (*.csv)|*.csv", ".csv",
+                Path.GetFileName(OutputCsvPath), initialDir);
+            if (fileName != null)
+                OutputCsvPath = fileName;
         }
 
         private void BrowseFailureDir()
         {
-            var dlg = new OpenFolderDialog { Title = "실패 오버레이 저장 폴더" };
-            if (!string.IsNullOrEmpty(FailureOverlayDir) && Directory.Exists(FailureOverlayDir))
-                dlg.InitialDirectory = FailureOverlayDir;
-            if (dlg.ShowDialog() == true)
-                FailureOverlayDir = dlg.FolderName;
+            var folder = _dialogService.ShowFolderBrowserDialog("실패 오버레이 저장 폴더", FailureOverlayDir);
+            if (folder != null)
+                FailureOverlayDir = folder;
         }
 
         private void OpenOutputCsv()

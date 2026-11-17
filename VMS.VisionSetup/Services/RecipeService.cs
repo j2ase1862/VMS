@@ -421,7 +421,7 @@ namespace VMS.VisionSetup.Services
                 System.Diagnostics.Debug.WriteLine($"레시피 목록 조회 실패: {ex.Message}");
             }
 
-            return recipes.OrderByDescending(r => r.ModifiedAt).ToList();
+            return recipes.OrderByDescending(r => r.ModifiedAt.ToUniversalTime()).ToList();
         }
 
         /// <summary>

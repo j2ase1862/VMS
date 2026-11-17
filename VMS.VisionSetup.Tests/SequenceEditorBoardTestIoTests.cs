@@ -78,6 +78,22 @@ namespace VMS.VisionSetup.Tests
             Assert.Equal($"[테스트 읽기] '{BoardId}' ch0 = ON", vm.StatusMessage);
         }
 
+        [Fact]
+        public void MonitorPanel_ListsBoardChannels_WithoutPlcConfig()
+        {
+            // VS-09: PLC 설정이 없으면(IO 보드만 쓰는 현장) 보드 채널 모니터 표까지 비어 있던 문제.
+            var vm = CreateViewModel(
+                new[] { new SequenceDeviceEntry(BoardId, IoDeviceType.AdLinkPci743x) },
+                plcEnabled: false);
+            AddNode(vm, SequenceNodeType.InputCheck, channel: "0");
+            AddNode(vm, SequenceNodeType.OutputAction, channel: "1", bitValue: true);
+
+            vm.ToggleMonitorPanelCommand.Execute(null);
+
+            Assert.Equal(2, vm.BoardMonitorItems.Count);
+            Assert.Empty(vm.MonitorItems);
+        }
+
         // ── helpers ──
 
         private static (SequenceEditorViewModel vm, FakeBoard board) CreateWithBoard()

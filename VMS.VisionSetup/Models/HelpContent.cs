@@ -46,6 +46,7 @@ namespace VMS.VisionSetup.Models
                 {
                     ["ThresholdValue"] = "임계값 (0-255). 이 값보다 작으면 0, 크거나 같으면 MaxValue로 설정.",
                     ["MaxValue"] = "임계값 이상인 픽셀에 적용할 값 (보통 255).",
+                    ["ThresholdType"] = "이진화 방식:\n• Binary: 임계값보다 밝으면 MaxValue, 아니면 0\n• BinaryInv: 반대 — 어두운 대상을 흰색으로 만들 때\n• Trunc: 임계값보다 밝은 값을 임계값으로 자름\n• ToZero: 임계값 이하를 0으로\n• ToZeroInv: 임계값보다 밝은 값을 0으로",
                     ["UseOtsu"] = "Otsu 알고리즘으로 최적 임계값 자동 계산. 바이모달 히스토그램에 효과적.",
                     ["UseAdaptive"] = "적응형 이진화 사용. 조명이 불균일한 이미지에 효과적.",
                     ["BlockSize"] = "적응형 이진화의 블록 크기. 홀수만 가능.",
@@ -281,7 +282,7 @@ namespace VMS.VisionSetup.Models
                     ["MaxPoints"] = "클러스터 최대 점 수. 이상이면 배경/큰 덩어리로 간주하고 무시.\n• 점군 전체 크기 - 1 (큰 값): 사실상 제한 없음\n• 점군의 50%: 배경 제외",
                     ["MaxReportedClusters"] = "결과 Data에 노출할 상위 클러스터 수 (실제로는 모두 처리, 표시 제한만).",
                     ["OutputMode"] = "결과 처리 모드:\n• LargestOnly: 현재 점군을 가장 큰 클러스터로 교체 (객체 분리용)\n• AllMerged: 활성 클러스터들을 모두 합산 (작은 노이즈 제거)\n• KeepOriginal: 현재 점군은 그대로 두고 측정값만 계산",
-                    ["ScaleMode"] = "치수 환산 방식:\n• Manual: 아래 XyScale 값 사용 (기본, 기존 호환)\n• AutoFromCamera (권장): 카메라 depth 내부 파라미터(fx/fy)와 덩어리의 실측 높이 Z로 mm/px = Z/fx 를 자동 계산 — 작동 거리가 바뀌어도 정확. Mech-Mind grab 점군에서만 가능하며, .vpc 로드 등 카메라 정보가 없으면 XyScale로 폴백(메시지에 ⚠ 표시).",
+                    ["ScaleMode"] = "치수 환산 방식:\n• Manual: 아래 XyScale 값 사용 (기본, 기존 호환)\n• AutoFromCamera (권장): 카메라 depth 내부 파라미터(fx/fy)와 덩어리의 실측 높이 Z로 mm/px = Z/fx 를 자동 계산 — 작동 거리가 바뀌어도 정확. 카메라에서 바로 받은 점군이나 카메라 정보가 함께 저장된 .vpc 에서 가능하며, 카메라 정보가 없으면 XyScale로 폴백(메시지에 ⚠ 표시).",
                     ["XyScale"] = "Manual 모드의 치수(SizeX/Y, Length/Width) X/Y 환산 배율 (mm/pixel). 3D 카메라 grab 점군은 X/Y가 픽셀 단위라(Z만 mm) 실측 mm 치수가 필요하면 mm/pixel을 입력.\n• 1.0: 원 단위 그대로 (기본)\n구하는 법: 치수를 아는 물체를 한 번 측정해 실제 치수(mm) ÷ 측정된 픽셀 수로 계산합니다.\n※ CenterX/Y에는 적용되지 않음 (기존 레시피 호환).",
                     ["EnableJudgment"] = "판정 사용. 켜면 아래 개수·치수 판정 결과로 OK/NG 를 냅니다.\n꺼 두면 덩어리를 하나라도 찾으면 성공입니다 (개수가 모자라거나 치수가 틀려도 OK).",
                     ["UseCountJudgment"] = "개수 판정. 찾은 덩어리 수를 Count Mode 로 판정합니다.\n켜 두면 덩어리가 0개여도 판정합니다 — Count Mode=LessOrEqual, Expected Count=0 이면 '이물 없음' 검사.",
@@ -608,7 +609,8 @@ namespace VMS.VisionSetup.Models
                     ["MaxEdges"] = "최대 검출 엣지 수. 이 수를 초과하는 엣지 후보는 Score 순으로 잘립니다.\n• EdgePair 모드에서는 쌍 조합의 기반이 되므로 충분히 크게 설정",
                     ["ScorerMode"] = "엣지 점수 산정 모드. 여러 엣지 후보 중 최적을 선정하는 가중치 프리셋:\n• MaxContrast: 대비(밝기 차이)가 가장 큰 엣지 우선\n• Closest: 검색 라인 중앙에 가장 가까운 엣지 우선\n• BestOverall: 대비 + 위치 + 극성 종합 평가\n• Custom: 가중치를 수동 설정",
                     ["SelectionMode"] = "최종 엣지 선택 방식:\n• Best: Score가 가장 높은 엣지 선택\n• First: 검색 시작점에서 가장 가까운 엣지 선택\n• Last: 검색 시작점에서 가장 먼 엣지 선택\n\nFirst/Last는 밀집된 패턴에서 특정 위치의 엣지만 선택할 때 유용합니다.",
-                    ["ExpectedWidth"] = "예상 폭 (EdgePair 모드에서 사용). 엣지 쌍 사이 거리가 이 값에 가까운 쌍이 우선 선택됩니다.",
+                    ["ExpectedWidth"] = "예상 폭 (EdgePair 모드에서 사용, 픽셀). 엣지 쌍 사이 거리가 이 값에 가까운 쌍이 우선 선택됩니다. Web 파라미터에 연결하면 기대값을 Web 에서 관리할 수 있습니다.",
+                    ["WidthTolerance"] = "예상 폭 허용 오차 (±픽셀, EdgePair 모드). 엣지 쌍 사이 거리가 예상 폭 ± 이 값 안인 쌍만 채택합니다 — 밖이면 \"Edge Pair를 찾을 수 없습니다\" 로 실패합니다.",
                     ["ProjectionMode"] = "프로파일 투영 방식:\n• Uniform: 균일 평균 — 검색 폭 내 모든 픽셀을 동일 가중치로 평균\n• Gaussian: 가우시안 가중 평균 — 중심선에 가까운 픽셀에 높은 가중치\n\nGaussian 모드는 엣지 양 끝단의 노이즈 영향을 줄여줍니다.",
                     ["UseGaussianFilter"] = "가우시안 1D 필터 사용 여부.\n• 활성화: 가우시안 평활화 + 가우시안 미분 커널 적용 (정밀도 향상)\n• 비활성화: 기존 이동 평균 미분 필터 사용 (빠름)\n\n고정밀 측정에는 활성화를 권장합니다.",
                     ["GaussianSigma"] = "가우시안 필터의 표준편차 (σ). Gaussian Filter 활성화 시 사용됩니다.\n• 작을수록 (0.3~1.0): 날카로운 엣지에 민감\n• 클수록 (2.0~5.0): 넓은 범위 평활화, 노이즈에 강함\n• 권장: 1.0~2.0",
@@ -772,6 +774,14 @@ namespace VMS.VisionSetup.Models
                     ["ConfidenceThreshold"] = "검출 신뢰도 임계값 (0~1). 이 값 이상의 신뢰도를 가진 객체만 검출됩니다.\n• 낮은 값 (0.25): 많은 객체 검출, 오검출 증가\n• 높은 값 (0.7): 확실한 객체만 검출",
                     ["IouThreshold"] = "NMS IoU 임계값 (0~1). 겹치는 검출 박스를 제거하는 기준입니다.\n• 낮은 값 (0.3): 강한 중복 제거\n• 높은 값 (0.7): 약한 중복 제거 (밀집 객체에 적합)",
                     ["ClassNamesText"] = "클래스 이름 목록 (콤마 구분).\n학습 시 사용한 클래스 순서대로 입력합니다.\n예: good,defect,crack",
+                    ["NgClassesText"] =
+                        "**하나라도 검출되면 NG** 로 볼 클래스를 고릅니다 (여러 개 가능 — 예: scratch, crack).\n\n" +
+                        "• 지정하면: 고른 클래스가 한 건도 검출되지 않으면 OK, 한 건이라도 검출되면 NG 입니다. 아무것도 검출되지 않아도 OK 입니다. " +
+                        "화면에는 NG 클래스 박스가 빨강, 나머지가 초록으로 그려집니다.\n" +
+                        "• 비워 두면: 무엇이든 하나 이상 검출되면 OK, 하나도 없으면 NG 입니다 — 부품 유무 검사용입니다. " +
+                        "결함 클래스를 검출해도 OK 가 되므로, 결함을 찾는 검사라면 반드시 지정하세요.\n\n" +
+                        "결과 값 NgCount 에 NG 클래스 검출 수가 들어갑니다. " +
+                        "모델을 바꿔 고른 클래스가 Class Names 에 없어지면 도구가 실행되지 않고 다시 고르라고 알립니다.",
                     ["DrawOverlay"] = "검출 결과 오버레이 표시. 바운딩 박스, 클래스 이름, 신뢰도를 이미지 위에 그립니다.",
 
                     // ── 클래스별 임계값 ──

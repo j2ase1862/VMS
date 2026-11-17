@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Win32;
+using VMS.VisionSetup.Interfaces;
 using VMS.VisionSetup.VisionTools.DeepLearning;
 
 namespace VMS.VisionSetup.ViewModels.ToolSettings
@@ -10,9 +10,11 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
     public class AnomalyToolSettingsViewModel : ToolSettingsViewModelBase
     {
         private AnomalyTool TypedTool => (AnomalyTool)Tool;
+        private readonly IDialogService? _dialogService;
 
-        public AnomalyToolSettingsViewModel(AnomalyTool tool) : base(tool)
+        public AnomalyToolSettingsViewModel(AnomalyTool tool, IDialogService? dialogService = null) : base(tool)
         {
+            _dialogService = dialogService;
             BrowseCalibrationFolderCommand = new RelayCommand(BrowseCalibrationFolder);
             CalibrateCommand = new AsyncRelayCommand(CalibrateAsync);
 
@@ -58,14 +60,11 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
 
         private void BrowseCalibrationFolder()
         {
-            var dlg = new OpenFolderDialog
-            {
-                Title = "정상 이미지 폴더 선택 (Anomaly 캘리브레이션용)"
-            };
-            if (!string.IsNullOrWhiteSpace(CalibrationFolder))
-                dlg.InitialDirectory = CalibrationFolder;
-            if (dlg.ShowDialog() == true)
-                CalibrationFolder = dlg.FolderName;
+            // 대화상자는 DialogService 가 연다 (VS-30)
+            var folder = _dialogService?.ShowFolderBrowserDialog(
+                "정상 이미지 폴더 선택 (Anomaly 캘리브레이션용)", CalibrationFolder);
+            if (folder != null)
+                CalibrationFolder = folder;
         }
 
         private async Task CalibrateAsync()

@@ -247,6 +247,10 @@ namespace VMS.VisionSetup
                 Debug.WriteLine($"[App] ParameterSyncService init failed: {ex.Message}");
             }
 
+            // 단독 모드(Web 없음)에서도 값 적용 서비스는 만든다 — 레시피 봇이 제안한 파라미터를
+            // 도구에 넣는 경로(SLM)는 Web 과 무관하다. 없으면 제안 값이 조용히 버려졌다 (VS-34).
+            parameterApplyService ??= new ParameterApplyService(parameterSyncService);
+
             // ── Robot Service ──
             IRobotService? robotService = null;
             var robotConfig = LoadRobotConfig();
@@ -382,7 +386,7 @@ namespace VMS.VisionSetup
                                     recipeService, cameraService, dialogService, SequenceEditorContext.ExtraDevices), false)); }
                                 catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "Sequence ctor: " + ex + "\n"); }
                                 try { wins.Add(("BatchTest", new Views.BatchTest.BatchTestWindow(
-                                    visionService, recipeService, cameraService), false)); }
+                                    visionService, recipeService, cameraService, dialogService), false)); }
                                 catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "BatchTest ctor: " + ex + "\n"); }
                                 try { wins.Add(("CameraManager", new Views.Camera.CameraManagerWindow(
                                     cameraService, dialogService), false)); }
@@ -393,9 +397,9 @@ namespace VMS.VisionSetup
                                 try { wins.Add(("Calibration", new Views.Calibration.CalibrationManagerWindow(
                                     recipeService, dialogService), true)); }
                                 catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "Calibration ctor: " + ex + "\n"); }
-                                try { wins.Add(("InferenceSettings", new Views.OnnxSettingsDialog(), false)); }
+                                try { wins.Add(("InferenceSettings", new Views.OnnxSettingsDialog(dialogService), false)); }
                                 catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "InferenceSettings ctor: " + ex + "\n"); }
-                                try { wins.Add(("SynthData", new Views.SynthData.SynthDataWindow(), true)); }
+                                try { wins.Add(("SynthData", new Views.SynthData.SynthDataWindow(dialogService), true)); }
                                 catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "SynthData ctor: " + ex + "\n"); }
                                 // 매뉴얼용: 예제 템플릿 갤러리(스텝 선택 없이 창만 렌더) — 2026-09-16
                                 try { wins.Add(("TemplateGallery", new Views.Templates.TemplateGalleryWindow(), false)); }
