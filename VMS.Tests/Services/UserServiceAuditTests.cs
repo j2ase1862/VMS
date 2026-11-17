@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using VMS.Core.Security;
 using VMS.Models;
 using VMS.Services;
@@ -16,12 +18,15 @@ namespace VMS.Tests.Services
     {
         private readonly string _tempDir;
         private readonly UserService _service;
+        private readonly RecordingAuditLogger _audit = new();
         private readonly string _target = $"audit{Guid.NewGuid():N}"[..20];
 
         public UserServiceAuditTests()
         {
             _tempDir = Path.Combine(Path.GetTempPath(), $"users_audit_{Guid.NewGuid():N}");
-            _service = new UserService(_tempDir);
+            // 감사 기록은 메모리로 받는다 — 실제 %LocalAppData% 파일은 다른 테스트 프로세스와 함께 써서
+            // 공유 위반으로 줄이 빠질 수 있었다(2026-11-17 CI 간헐 실패).
+            _service = new UserService(_tempDir, _audit);
             _service.SeedInitialAdmin("admin123", "Administrator");
             Assert.True(_service.Authenticate("admin", "admin123"));
             Assert.True(_service.CreateUser(_target, "pass1234", "Audit Target", UserGrade.Operator));
@@ -35,17 +40,24 @@ namespace VMS.Tests.Services
 
         private int TargetId => _service.GetAllUsers().Single(u => u.Username == _target).UserId;
 
-        /// <summary>오늘 감사 로그에서 이 테스트 대상 사용자 줄만.</summary>
-        private string[] AuditLinesForTarget(string action)
-        {
-            var path = Path.Combine(AuditLogger.Instance.AuditDirectory, $"{DateTime.Now:yyyy-MM-dd}.jsonl");
-            if (!File.Exists(path)) return Array.Empty<string>();
-            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            using var reader = new StreamReader(fs);
-            return reader.ReadToEnd()
-                .Split('\n')
+        /// <summary>받은 감사 기록 중 이 테스트 대상 사용자 줄만 (파일 한 줄과 같은 JSON).</summary>
+        private string[] AuditLinesForTarget(string action) =>
+            _audit.Lines
                 .Where(l => l.Contains(_target) && l.Contains($"\"{action}\""))
                 .ToArray();
+
+        /// <summary>감사 기록을 파일 대신 메모리에 JSON 한 줄씩 모은다.</summary>
+        private sealed class RecordingAuditLogger : IAuditLogger
+        {
+            private readonly List<string> _lines = new();
+            public IReadOnlyList<string> Lines { get { lock (_lines) return _lines.ToArray(); } }
+
+            public void Log(AuditCategory category, string action, AuditOutcome outcome = AuditOutcome.Success,
+                string? userName = null, string? source = null, string? details = null)
+            {
+                var json = JsonSerializer.Serialize(new { category = category.ToString(), action, outcome = outcome.ToString(), userName, source, details });
+                lock (_lines) _lines.Add(json);
+            }
         }
 
         [Fact]

@@ -255,5 +255,47 @@ namespace VMS.Core.Tests.Security
             Assert.Equal("A", entries[0].Action);
             Assert.Equal("B", entries[1].Action);
         }
+
+        // ─── 다른 프로세스가 파일을 잡고 있을 때 ─────────────────────
+
+        /// <summary>
+        /// VMS · VisionSetup 은 같은 일별 파일에 쓴다. 상대가 쓰는 순간 공유 위반이 나면 예전에는
+        /// 그 줄을 조용히 버렸다(2026-11-17 CI 에서 UserServiceAuditTests 가 간헐 실패 — 테스트 프로세스끼리 같은 파일).
+        /// 잠깐 잡혔다 풀리면 다시 써서 남겨야 한다.
+        /// </summary>
+        [Fact]
+        public void Log_FileBrieflyLockedByAnotherWriter_StillWritesEntry()
+        {
+            _logger.Log(AuditCategory.System, "First");   // 오늘 파일을 만든다
+            var path = Path.Combine(_tempDir, $"{DateTime.Now:yyyy-MM-dd}.jsonl");
+
+            // 다른 쓰기 핸들(쓰기 공유 안 함) — 다른 프로세스가 쓰는 중인 상황
+            var holder = new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.Read);
+            var release = System.Threading.Tasks.Task.Run(async () =>
+            {
+                await System.Threading.Tasks.Task.Delay(60);
+                holder.Dispose();
+            });
+
+            _logger.Log(AuditCategory.System, "WhileLocked");
+            release.Wait();
+
+            var actions = _logger.ReadDay(DateTime.Today).Select(e => e.Action).ToArray();
+            Assert.Equal(new[] { "First", "WhileLocked" }, actions);
+        }
+
+        [Fact]
+        public void Log_FileLockedLongerThanRetries_DoesNotThrow()
+        {
+            _logger.Log(AuditCategory.System, "First");
+            var path = Path.Combine(_tempDir, $"{DateTime.Now:yyyy-MM-dd}.jsonl");
+
+            using (new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.Read))
+            {
+                // 재시도를 다 써도 호출자 흐름은 깨지지 않는다(best-effort)
+                var ex = Record.Exception(() => _logger.Log(AuditCategory.System, "Lost"));
+                Assert.Null(ex);
+            }
+        }
     }
 }
