@@ -171,7 +171,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 </ul>
 
 <h3 id="vs-sequence">5.10 시퀀스 편집기 — IO 보드 · ◆PLC 운전 흐름</h3>
-<figure><img src="../gs/screenshots/v3/vs/dlg_Sequence.png" data-width="620" alt="Sequence Editor"><figcaption>Sequence Editor — 상단(프로세스 시퀀스 이름 · ◆Reset 신호 · [디폴트 생성] [저장] [가져오기] [내보내기] [I/O Monitor](◆PLC 옵션에서는 [PLC Monitor]) [▶ 무부하 테스트]), 왼쪽 노드 팔레트, 가운데 캔버스, 오른쪽 노드 속성</figcaption></figure>
+<figure><img src="figs/recap/vs/dlg_Sequence.png" data-width="620" alt="Sequence Editor"><figcaption>Sequence Editor — 상단(프로세스 시퀀스 이름 · ◆Reset 신호 · [디폴트 생성] [저장] [가져오기] [내보내기] [I/O Monitor](◆PLC 옵션에서는 [PLC Monitor]) [▶ 무부하 테스트]), 왼쪽 노드 팔레트, 가운데 캔버스, 오른쪽 노드 속성</figcaption></figure>
 <p>AUTO RUN 의 "트리거 대기 → 촬영 → 검사 → 결과 출력 → 반복" 흐름을 노드로 정의합니다. 메뉴 Sequence 로 엽니다. 저장한 시퀀스는 <code>process_sequence.json</code> 에 기록되며 VMS 는 재시작 없이 다음 AUTO RUN 부터 새 시퀀스를 읽습니다.</p>
 <h4>노드</h4>
 <table class="cols-2-7">
@@ -213,10 +213,10 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 
 <h3 id="vs-misc">5.12 기타 설정 창</h3>
 <h4>Camera Manager</h4>
-<figure><img src="../gs/screenshots/v3/vs/dlg_CameraManager.png" data-width="520" alt="Camera Manager"><figcaption>Camera Manager — Cameras 목록 · [Add] [Remove] · Camera Properties(Name · Manufacturer · Model · Serial · Width · Height · Connection String · Enabled) · [Save] [Cancel]</figcaption></figure>
+<figure><img src="figs/recap/vs/dlg_CameraManager.png" data-width="520" alt="Camera Manager"><figcaption>Camera Manager — Cameras 목록 · [Add] [Remove] · Camera Properties(Name · Manufacturer · Model · Serial · Width · Height · Connection String · Enabled) · [Save] [Cancel]</figcaption></figure>
 <p>VisionSetup 에서 직접 촬영할 카메라를 등록합니다. 운전용 카메라 구성은 시스템 설정 마법사(3장)가 기준이며, 여기서는 편집 작업에 쓸 카메라를 관리합니다. 이 창에는 연결 시험 버튼이 없습니다 — 등록한 뒤 Camera → Camera Info 의 [Connect](또는 툴바 카메라 연결 토글)로 연결해 확인합니다.</p>
 <h4>Inference Settings — 딥러닝 추론 엔진</h4>
-<figure><img src="../gs/screenshots/v3/vs/dlg_InferenceSettings.png" data-width="420" alt="Inference Engine Settings"><figcaption>Inference Engine Settings — Execution Provider · TensorRT Engine Cache Folder · Enable TensorRT FP16</figcaption></figure>
+<figure><img src="figs/recap/vs/dlg_InferenceSettings.png" data-width="420" alt="Inference Engine Settings"><figcaption>Inference Engine Settings — Execution Provider · TensorRT Engine Cache Folder · Enable TensorRT FP16</figcaption></figure>
 <p>딥러닝 추론의 실행 백엔드를 고릅니다. 목록은 Auto · Cpu · Cuda · DirectML · TensorRT 입니다. 변경은 다음 모델 로드부터 적용됩니다. VMS 운전에도 같은 설정이 쓰이며, VMS 는 시작할 때 읽으므로 바꾼 뒤에는 VMS 를 다시 시작하세요.</p>
 <ul>
   <li><strong>Auto</strong> 는 Cuda → DirectML → Cpu 순서로 이 PC 에서 쓸 수 있는 첫 백엔드를 씁니다(TensorRT 는 Auto 에 들어가지 않으므로 쓰려면 직접 고릅니다).</li>

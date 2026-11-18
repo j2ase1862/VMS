@@ -579,7 +579,9 @@ namespace VMS.Capture
                 for (int i = 0; i < c; i++)
                 {
                     var ch = VisualTreeHelper.GetChild(n, i);
-                    if (ch is ScrollViewer sv && sv.Content is Panel p && p.ActualHeight > bestH)
+                    // 내용이 패널이거나 목록(ItemsControl — 예 HealthCheck 항목 목록)인 ScrollViewer 중 가장 큰 것
+                    if (ch is ScrollViewer sv && sv.Content is FrameworkElement p
+                        && (p is Panel || p is ItemsControl) && p.ActualHeight > bestH)
                     {
                         bestH = p.ActualHeight; best = sv;
                     }

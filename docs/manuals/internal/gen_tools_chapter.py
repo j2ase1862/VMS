@@ -35,6 +35,9 @@ DESC = json.load(io.open(os.path.join(HERE, "tools_param_desc.json"), encoding="
 def panel_figure(png, title, override=None):
     # override: docs/gs/screenshots/v3 기준 상대 경로 (예: "vs/scene_fm_settings.png") — 학습 상태 등 실사용 캡처로 교체
     shot_dir, rel_dir = SHOT, "../gs/screenshots/v3/tools"
+    # 사내판 재캡처(1.48.1 이후 바뀐 패널)가 있으면 그쪽을 쓴다 — 동결된 docs/gs/screenshots 는 그대로 둔다
+    if not override and os.path.exists(os.path.join(HERE, "figs", "recap", "tools", png)):
+        shot_dir, rel_dir = os.path.join(HERE, "figs", "recap", "tools"), "figs/recap/tools"
     if override:
         shot_dir = os.path.normpath(os.path.join(SHOT, "..", os.path.dirname(override))); png = os.path.basename(override)
         rel_dir = "../gs/screenshots/v3/" + os.path.dirname(override)

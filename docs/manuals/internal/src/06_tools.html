@@ -78,7 +78,7 @@
 </ul>
 <h4>Threshold — 이진화</h4>
 <p>임계값을 기준으로 이미지를 흰색(255)과 검은색(0)으로 나눕니다. 밝기 차이로 대상과 배경을 분리해 Blob 검출로 넘기는 가장 기본적인 전처리입니다. 출력 마스크는 PointCloud Mask Crop 에 연결해 3D 점군을 자를 때도 씁니다.</p>
-<figure><img src="../gs/screenshots/v3/tools/06_Threshold.png" data-width="240" alt="Threshold — 이진화 설정 패널"><figcaption>Threshold — 이진화 — Tool Settings 패널</figcaption></figure>
+<figure><img src="figs/recap/tools/06_Threshold.png" data-width="240" alt="Threshold — 이진화 설정 패널"><figcaption>Threshold — 이진화 — Tool Settings 패널</figcaption></figure>
 <figure><img src="../gs/screenshots/v3/scenes/Threshold.jpg" data-width="620" alt="Threshold — 이진화 실행 예"><figcaption>실행 예 — Otsu 자동 이진화 결과(계산된 임계값 128) — 밝은 배경과 어두운 부품이 흑백으로 나뉩니다</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
@@ -249,7 +249,7 @@
 <h3 id="tools-6">6.6 Measurement — 치수 측정</h3>
 <h4>Caliper — 엣지 검출 · 캘리퍼 측정</h4>
 <p>ROI 를 가로지르는 방향으로 밝기 변화를 스캔해 엣지(경계선)의 위치를 서브픽셀 정밀도로 찾습니다. 폭 측정, 엣지 간 거리, 위치 검출의 기본 도구이며, 찾은 점을 Geometry 에 Result 로 연결해 거리 · 각도를 계산하고 판정합니다.</p>
-<figure><img src="../gs/screenshots/v3/tools/14_Caliper.png" data-width="240" alt="Caliper — 엣지 검출 · 캘리퍼 측정 설정 패널"><figcaption>Caliper — 엣지 검출 · 캘리퍼 측정 — Tool Settings 패널</figcaption></figure>
+<figure><img src="figs/split/14_Caliper_split.png" data-width="500" alt="Caliper — 엣지 검출 · 캘리퍼 측정 설정 패널"><figcaption>Caliper — 엣지 검출 · 캘리퍼 측정 — Tool Settings 패널</figcaption></figure>
 <figure><img src="../gs/screenshots/v3/scenes/Caliper.jpg" data-width="620" alt="Caliper — 엣지 검출 · 캘리퍼 측정 실행 예"><figcaption>실행 예 — 막대의 폭을 엣지 쌍(EdgePair)으로 측정 — 141.11 px(캘리브레이션 적용 8.051 mm). Expected Width 를 막대 폭 가까이 넣은 레시피입니다</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
@@ -392,7 +392,7 @@
 <h3 id="tools-9">6.9 3D Processing — 점군 처리</h3>
 <h4>PointCloud Filter — 점군 솎아내기 · 이상점 제거</h4>
 <p>점군의 점 수를 줄이고(VoxelGrid 다운샘플) 표면에서 튄 점을 지웁니다(통계적 이상점 제거, SOR). Registration · Deviation 앞에 두어 처리 속도를 높이는 것이 주된 용도입니다. 촬영 자체의 노이즈는 이 도구가 아니라 스텝의 Camera Settings 에 있는 ‘포인트 클라우드 후처리’(끄기 · 약 · 중 · 강)로 카메라 안에서 정리합니다.</p>
-<figure><img src="../gs/screenshots/v3/tools/21_PointCloud_Filter.png" data-width="240" alt="PointCloud Filter — 점군 솎아내기 · 이상점 제거 설정 패널"><figcaption>PointCloud Filter — 점군 솎아내기 · 이상점 제거 — Tool Settings 패널</figcaption></figure>
+<figure><img src="figs/recap/tools/21_PointCloud_Filter.png" data-width="240" alt="PointCloud Filter — 점군 솎아내기 · 이상점 제거 설정 패널"><figcaption>PointCloud Filter — 점군 솎아내기 · 이상점 제거 — Tool Settings 패널</figcaption></figure>
 <figure><img src="../gs/screenshots/v3/scenes/PCFilter.jpg" data-width="620" alt="PointCloud Filter — 점군 솎아내기 · 이상점 제거 실행 예"><figcaption>실행 예 — 프레임 점군 28,382 점을 4 mm 복셀로 솎아 5,330 점으로 줄인 결과(81.2% 감소). 뒤의 정합 · 편차 계산이 빨라집니다</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
@@ -617,7 +617,7 @@
 <p><strong>판정</strong> — OK Classes 를 지정하면 양품 클래스로 분류되고 신뢰도가 Confidence Threshold 이상일 때 OK, 그 밖은 NG(결과 메시지 끝에 "불량 클래스" 또는 "신뢰도 부족"). 지정하지 않으면 신뢰도만으로 판정하며, 설정 패널에 경고가 표시됩니다.</p>
 <h4>Anomaly — 이상 탐지 (정상 이미지만으로 학습)</h4>
 <p>PatchCore · FastFlow · EfficientAD 같은 anomalib 호환 모델로 정상 대비 이상 점수를 계산하고 히트맵으로 이상 부위를 표시합니다. 불량 샘플이 거의 없는 공정에서 정상 이미지만으로 학습해 쓰는 방식입니다. 모델 파일(.onnx)은 ◆MLOps(9장)에서 학습해 만듭니다(10장). 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
-<figure><img src="../gs/screenshots/v3/tools/34_Anomaly.png" data-width="240" alt="Anomaly — 이상 탐지 (정상 이미지만으로 학습) 설정 패널"><figcaption>Anomaly — 이상 탐지 (정상 이미지만으로 학습) — Tool Settings 패널</figcaption></figure>
+<figure><img src="figs/recap/tools/34_Anomaly.png" data-width="240" alt="Anomaly — 이상 탐지 (정상 이미지만으로 학습) 설정 패널"><figcaption>Anomaly — 이상 탐지 (정상 이미지만으로 학습) — Tool Settings 패널</figcaption></figure>
 <figure><img src="../gs/screenshots/v3/scenes/Anomaly.jpg" data-width="620" alt="Anomaly — 이상 탐지 (정상 이미지만으로 학습) 실행 예"><figcaption>실행 예 — 수정액 자국이 있는 피팅 — 이상 점수 0.665 가 임계값 0.545 를 넘어 NG. 히트맵에서 이상 부위가 밝게 표시됩니다</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>

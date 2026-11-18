@@ -396,6 +396,15 @@ namespace VMS.VisionSetup
                                 try { wins.Add(("CameraManager", new Views.Camera.CameraManagerWindow(
                                     cameraService, dialogService), false)); }
                                 catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "CameraManager ctor: " + ex + "\n"); }
+                                // 목록에서 첫 카메라를 고른 상태 — 오른쪽 Camera Properties 가 보인다(매뉴얼 §5 그림)
+                                try
+                                {
+                                    var camWin = new Views.Camera.CameraManagerWindow(cameraService, dialogService);
+                                    if (camWin.DataContext is ViewModels.CameraManagerViewModel camVm && camVm.Cameras.Count > 0)
+                                        camVm.SelectedCamera = camVm.Cameras[0];
+                                    wins.Add(("CameraManager_Selected", camWin, false));
+                                }
+                                catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "CameraManager_Selected ctor: " + ex + "\n"); }
                                 try { wins.Add(("RecipeManager", new Views.Recipe.RecipeManagerWindow(
                                     recipeService, cameraService, dialogService, parameterSyncService), true)); }
                                 catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "RecipeManager ctor: " + ex + "\n"); }

@@ -32,6 +32,14 @@
   - 2.7 MSI 유지 관리(복구 · 제거) 화면 — 기존 방법(`tools/capture-msi-weboption.ps1`)은 실제 MSI 를 띄워 UI Automation 으로 버튼을 누름. 이 PC 는 BODA VMS(운영 Web 포함)가 설치돼 있어 유지 관리 화면에서 잘못 누르면 복구 · 제거가 실행됨 → 설치되지 않은 PC(또는 VM)에서 찍어야 함.
   - 13.7 LicGen 창 — 발급 대장에 실제 고객 이름 · 지문, 서명 키 이름이 보임. 빈 대장(다른 USERPROFILE)으로 찍을 수는 있으나 LicGen 에 화면 밖 캡처 모드가 없어 실제 창을 띄워야 함 → 담당자 판단 후.
   - 7.11 ~ 7.14 예제 — 5.13 · 9장 그림으로 갈음. 실촬영(3D · 로봇 · PLC) 장면은 영상 계획의 H 편과 함께.
+- **1.48.1 이후 수정 재캡처(11-18, v1.48.1 build 3 코드)** — 바뀐 화면을 `figs/recap/` 에 두고 본문 경로를 그쪽으로 바꿈(동결된 `docs/gs/screenshots` 는 그대로).
+  - VMS(`mancap`): 검사 운전 3장(GS Measure 레시피 사본 · MS02 → MS01 → MS03 → MS04, 수동 [Inspect] 라 집계 · NG History 비어 있음), 사이드 패널(타일 축소),
+    생산 이력 3장 · 사용자 관리 · 감사 로그 · 상태 점검(License 까지 — 캡처러가 ItemsControl 스크롤도 늘리게 고침). 캡처 머리글에는 인스턴스 이름을 붙이지 않음.
+  - AppSetup: 2단계 전체 · Web SSO 체크, 4단계 PLC 창 · 컨트롤 8장(Step 4 of 7 — 파일 번호가 바뀌어 새 이름으로). `--instance mancap` 이면 멈춰서 기본 인스턴스로 찍음(캡처 모드는 저장하지 않음).
+  - VisionSetup: Camera Manager(첫 카메라 고른 장면 `CameraManager_Selected` 추가) · Inference Settings · Sequence, 도구 패널 5장(Threshold · Caliper · Anomaly · PC Filter · PC Cluster —
+    `gen_tools_chapter.py` 가 `figs/recap/tools/` 를 먼저 씀).
+  - 1.1 구성도: `figs/recap/diagrams/system_overview.html`(카메라 칸 "Basler · ◆Mech-Mind 등")을 headless Chrome 2배로 렌더.
+  - **남은 것**: Inspection Parameters · 작업 지시 창(임시 Web 에 붙여야 하는데 `mancap` 에 주소를 넣어도 단독 모드로 떠 원인 미확인), 2.7 설치 구성 · 유지 관리 화면(설치 안 된 PC 필요), 레지스트리 [선택] 내려받기 상태(선택), LicGen 창, 13.2 부록 표의 Threshold Type · Caliper 폭 행(동결 `_tool_params.json` 에서 생성).
 
 ## C. 내용 출처
 

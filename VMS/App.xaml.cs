@@ -931,6 +931,15 @@ namespace VMS
                     }
                     return false;
                 }
+                // 매뉴얼 그림 · 영상에는 캡처용 인스턴스 이름(예 " [mancap]")을 붙이지 않는다 — 기본 인스턴스 화면과 같게.
+                if (Array.Exists(e.Args, a => a.StartsWith("--capture-", StringComparison.OrdinalIgnoreCase)
+                                           || a.Equals("--record-video", StringComparison.OrdinalIgnoreCase)))
+                {
+                    string capSuffix = $" [{VMS.Camera.Configuration.AppDataPaths.InstanceName}]";
+                    if (!string.IsNullOrEmpty(VMS.Camera.Configuration.AppDataPaths.InstanceName)
+                        && mainViewModel.ApplicationTitle.EndsWith(capSuffix, StringComparison.Ordinal))
+                        mainViewModel.ApplicationTitle = mainViewModel.ApplicationTitle[..^capSuffix.Length];
+                }
                 // 메인 화면 컨트롤 개별 캡처 — "--capture-controls [폴더]" (§3.1~3.3 매뉴얼용)
                 if (TryGetDir(e.Args, "--capture-controls", out string ctlCapDir))
                 {
@@ -1117,7 +1126,8 @@ namespace VMS
                                     }
                                     return new Views.AuditLogViewerWindow { DataContext = vm };
                                 });
-                                Add("HealthCheck", () => new Views.HealthCheckWindow { DataContext = new HealthCheckViewModel() });
+                                // fitScroll: 항목이 늘어 목록이 스크롤되므로(License 등) 전체를 담는다.
+                                Add("HealthCheck", () => new Views.HealthCheckWindow { DataContext = new HealthCheckViewModel() }, fitScroll: true);
                                 Add("AutoBackup", () =>
                                 {
                                     var vm = new AutoBackupSettingsViewModel { Enabled = true, ProductVersion = VMS.Core.ProductInfo.Version };

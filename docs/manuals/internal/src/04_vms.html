@@ -19,7 +19,7 @@
 </ol>
 
 <h3 id="vms-layout">4.2 화면 구성</h3>
-<figure><img src="../gs/screenshots/05_vms_sidepanel.png" data-width="620" alt="VMS 메인 화면">
+<figure><img src="figs/recap/vms/05_vms_sidepanel.png" data-width="620" alt="VMS 메인 화면">
 <figcaption>VMS 메인 화면 (작업자 로그인 · 작업지시 선택 · 사이드 패널 펼침 상태) — ① 헤더 ② KPI 스트립 ③ 카메라 화면 ④ NG History ⑤ 사이드 패널(Settings) ⑥ System Log ⑦ 상태바</figcaption></figure>
 <table class="cols-2-7">
   <tr><th>영역</th><th>내용</th></tr>
@@ -115,7 +115,7 @@
 </table>
 
 <h3 id="vms-kpi">4.4 KPI 스트립</h3>
-<figure><img src="../gs/screenshots/v3/vms/inspect_kpi.jpg" data-width="620" alt="KPI 스트립"><figcaption>KPI 스트립 — TACT TIME(아래 PROC) · YIELD · TOTAL · OK · NG 카드와 ↻ 버튼</figcaption></figure>
+<figure><img src="figs/recap/vms/inspect_kpi.jpg" data-width="620" alt="KPI 스트립"><figcaption>KPI 스트립 — TACT TIME(아래 PROC) · YIELD · TOTAL · OK · NG 카드와 ↻ 버튼</figcaption></figure>
 <table class="cols-2-7">
   <tr><th>카드</th><th>의미</th></tr>
   <tr><td>TACT TIME</td><td>AUTO RUN 중 "한 검사가 끝나고 다음 검사가 시작되기까지의 간격"(초)입니다. 수동 검사에서는 갱신되지 않습니다. 아래 <strong>PROC n ms</strong> 는 마지막 검사 1 건의 순수 처리 시간이며, 수동 [Inspect] 도 이 값만 갱신합니다.</td></tr>
@@ -129,7 +129,7 @@
 본문은 2D 이미지이며 아래에 Run Results(도구별 Pass/Fail · 결과값 · 처리 ms) 표와 IP · Count 가 표시됩니다.
 검사 이미지 위의 판정 글자 · 테두리와 Run Results 결과 값 표시 방식은 VisionSetup 과 같습니다(§5.6).</p>
 <p>톱니바퀴를 누르면 타일 오른쪽에 <strong>카메라 조작 상자</strong>가 펼쳐집니다.</p>
-<figure><img src="../gs/screenshots/v3/vms/inspect_camera_box.jpg" data-width="620" alt="카메라 화면과 조작 상자"><figcaption>카메라 화면과 조작 상자 — [Open] 으로 연 이미지를 [Inspect] 로 검사한 결과: 타일 오른쪽 위 판정 배지(NG), 이미지 왼쪽 위에 판정 도구 2 개의 배지가 실행 순서대로 쌓인 모습(구멍 간격 NG · 블록 각도 OK), 이미지 위 도구별 결과 그림(엣지 · 원 · 직선), 아래 Run Results 표(P/F 칸 Pass · Fail)</figcaption></figure>
+<figure><img src="figs/recap/vms/inspect_camera_box.jpg" data-width="620" alt="카메라 화면과 조작 상자"><figcaption>카메라 화면과 조작 상자 — [Open] 으로 연 이미지를 [Inspect] 로 검사한 결과: 타일 오른쪽 위 판정 배지(NG), 이미지 왼쪽 위에 판정 도구 2 개의 배지가 실행 순서대로 쌓인 모습(구멍 간격 NG · 블록 각도 OK), 이미지 위 도구별 결과 그림(엣지 · 원 · 직선), 아래 Run Results 표(P/F 칸 Pass · Fail)</figcaption></figure>
 <table class="cols-2-7">
   <tr><th>컨트롤</th><th>설명</th></tr>
   <tr><td>Step 콤보</td><td>이 카메라가 쓰는 레시피 스텝을 고릅니다. 노출 · 게인은 스텝 단위로 저장됩니다.</td></tr>
@@ -258,7 +258,7 @@
 </ol>
 
 <h3 id="vms-standalone">4.9 단독 모드 — Web 서버 없이 운전</h3>
-<figure><img src="../gs/screenshots/v3/vms/inspect_full.jpg" data-width="620" alt="단독 모드에서 검사를 마친 메인 화면"><figcaption>단독 모드에서 검사를 마친 메인 화면 — 헤더에 Recipe 칩과 추적 정보(Ctx) 칩만 있고, 상태바 Web 칩이 "단독 모드 (Web 미사용)", System Log 에 단독 모드 안내가 표시됩니다</figcaption></figure>
+<figure><img src="figs/recap/vms/inspect_full.jpg" data-width="620" alt="단독 모드에서 검사를 마친 메인 화면"><figcaption>단독 모드에서 검사를 마친 메인 화면 — 헤더에 Recipe 칩과 추적 정보(Ctx) 칩만 있고, 상태바 Web 칩이 "단독 모드 (Web 미사용)", System Log 에 단독 모드 안내가 표시됩니다</figcaption></figure>
 <p>생산 이력 관리 없이 검사만 필요한 현장은 설정 마법사 2 단계에서 <strong>"Web 서버 미사용 — 단독(Standalone) 모드"</strong>를 체크합니다(§3.3). 단독 모드에서는 다음이 달라집니다.</p>
 <ul>
   <li>헤더의 Operator 칩 · [Work Orders] · WO 칩 · 예측 칩이 사라지고, 상태바 Web 칩이 "단독 모드 (Web 미사용)" 으로 표시됩니다.</li>
@@ -271,7 +271,7 @@
 <p>Web 의 레시피 파라미터 · 생산 이력 · 품질 · 설비 관리는 쓰면서 작업자 로그인 · 작업지시만 쓰지 않으려면 단독 모드 대신 마법사 2 단계의 <strong>생산 관리</strong> 체크를 끕니다(§3.3). 단독 모드는 Web 기능 전체가 꺼지고, 생산 관리 체크는 Web 기능을 그대로 둔 채 운전 조건만 바꿉니다.</p>
 
 <h3 id="vms-history">4.10 생산 이력 조회 창 — [전체 이력]</h3>
-<figure><img src="../gs/screenshots/v3/vms/dlg_InspectionHistory.png" data-width="620" alt="생산 이력 조회 창"><figcaption>생산 이력 조회 창 — 필터 바 · 이력 목록 탭 · 상세(도구별 결과 + 검사 사진) · 하단 페이지 이동</figcaption></figure>
+<figure><img src="figs/recap/vms/dlg_InspectionHistory.png" data-width="620" alt="생산 이력 조회 창"><figcaption>생산 이력 조회 창 — 필터 바 · 이력 목록 탭 · 상세(도구별 결과 + 검사 사진) · 하단 페이지 이동</figcaption></figure>
 <p>검사 결과는 AUTO RUN 사이클마다 이 PC 의 검사 이력 파일(<code>%LocalAppData%\BODA VISION AI\inspection_history.db</code>)에 저장됩니다.
 단독 모드의 영구 이력이며, Web 연동 현장에서는 오프라인 백업 역할을 합니다. 카메라 조작 상자의 수동 [Inspect] 결과는 저장하지 않습니다(§4.5). 사이드 패널 Recent Inspections 의 [전체 이력] 로 엽니다.</p>
 <ol>
@@ -282,8 +282,8 @@
   <li>일별 집계 · NG 파레토 두 탭은 <strong>기간(From · To)으로만</strong> 계산합니다. 판정 · 레시피 · NG 코드 필터는 이력 목록 탭에만 적용됩니다(탭 위 안내 줄과 같음).</li>
   <li>200 건이 넘으면 하단 [◀ 이전] / [다음 ▶] 로 넘기고, [CSV 내보내기] 는 현재 필터의 <strong>전체 결과</strong>를 Excel 호환 CSV 로 저장합니다.</li>
 </ol>
-<figure><img src="../gs/screenshots/v3/vms/dlg_InspectionHistory_Summary.png" data-width="560" alt="일별 집계 탭"><figcaption>일별 집계 탭</figcaption></figure>
-<figure><img src="../gs/screenshots/v3/vms/dlg_InspectionHistory_Pareto.png" data-width="560" alt="NG 파레토 탭"><figcaption>NG 파레토 탭</figcaption></figure>
+<figure><img src="figs/recap/vms/dlg_InspectionHistory_Summary.png" data-width="560" alt="일별 집계 탭"><figcaption>일별 집계 탭</figcaption></figure>
+<figure><img src="figs/recap/vms/dlg_InspectionHistory_Pareto.png" data-width="560" alt="NG 파레토 탭"><figcaption>NG 파레토 탭</figcaption></figure>
 <ul>
   <li>검사 사진이 함께 보이려면 Image Saving 의 OK/NG 이미지 저장이 켜져 있어야 합니다. 보존 정리로 파일이 지워진 뒤에는 경로만 남습니다.</li>
   <li>보존 기간(기본 90 일)과 저장 켜기/끄기는 Admin Tools → Retention Settings 의 "검사 이력" 행에서 바꿉니다. 저장을 끄면 [전체 이력] 버튼이 비활성이 됩니다.</li>
@@ -294,7 +294,7 @@
 <p>헤더의 User Management 아이콘과 Admin Tools(⋮) 메뉴에서 여는 창입니다. 시스템 Admin 계정으로 로그인했을 때만 보입니다.</p>
 
 <h4>User Management — 시스템 사용자 관리</h4>
-<figure><img src="../gs/screenshots/v3/vms/dlg_UserManagement.png" data-width="520" alt="User Management 창"><figcaption>User Management — Users 목록 · Add New User · Edit Selected User</figcaption></figure>
+<figure><img src="figs/recap/vms/dlg_UserManagement.png" data-width="520" alt="User Management 창"><figcaption>User Management — Users 목록 · Add New User · Edit Selected User</figcaption></figure>
 <ul>
   <li>Users 목록 — Username · Display Name · Grade · Last Login. 행을 선택하면 오른쪽 편집 패널에 값이 채워집니다.</li>
   <li>Add New User — Username · Display Name · Password · Grade(Operator / Engineer / Admin) → [Add User].</li>
@@ -303,11 +303,11 @@
 </ul>
 
 <h4>Audit Log Viewer — 감사 로그</h4>
-<figure><img src="../gs/screenshots/v3/vms/dlg_AuditLog.png" data-width="600" alt="Audit Log Viewer"><figcaption>Audit Log Viewer — From/To · Category · Outcome · Search · [조회] [필터 초기화] [CSV 내보내기]</figcaption></figure>
+<figure><img src="figs/recap/vms/dlg_AuditLog.png" data-width="600" alt="Audit Log Viewer"><figcaption>Audit Log Viewer — From/To · Category · Outcome · Search · [조회] [필터 초기화] [CSV 내보내기]</figcaption></figure>
 <p>로그인 · 권한 거부 · 설정 변경 · 백업 등 관리 행위가 날짜별 파일(<code>audit\YYYY-MM-DD.jsonl</code>)로 기록됩니다. 실제 폴더는 창 아래에 표시됩니다(기본 <code>%LocalAppData%\BODA VISION AI\audit\</code>, 다중 인스턴스는 그 인스턴스 폴더 아래). Outcome 은 Success(초록) · Failure(빨강) · Denied(주황)로 구분됩니다.</p>
 
 <h4>Health Check — 시스템 상태 점검</h4>
-<figure><img src="../gs/screenshots/v3/vms/dlg_HealthCheck.png" data-width="520" alt="Health Check"><figcaption>Health Check — OVERALL 배지 · 항목별 Pass / Warn / Fail</figcaption></figure>
+<figure><img src="figs/recap/vms/dlg_HealthCheck.png" data-width="520" alt="Health Check"><figcaption>Health Check — OVERALL 배지 · 항목별 Pass / Warn / Fail</figcaption></figure>
 <p>인스턴스 · 설정 파일 · 보안 옵션 · Web 서버 · 라이선스 · 디스크 여유 공간을 점검합니다. 항목이 많으면 목록을 스크롤해 끝(License)까지 봅니다. [Refresh] 로 다시 점검하고 [Copy] 로 결과를 복사해 지원 요청에 붙일 수 있습니다.</p>
 
 <h4>Backup / Restore — 백업과 복원</h4>
