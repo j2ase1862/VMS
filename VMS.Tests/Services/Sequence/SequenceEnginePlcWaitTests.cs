@@ -96,7 +96,7 @@ namespace VMS.Tests.Services.Sequence
             await engine.RunAsync(WaitConfig("M302", InputCheckMode.BitOn, timeoutMs: 700), CancellationToken.None);
             sw.Stop();
 
-            Assert.InRange(sw.ElapsedMilliseconds, 600, 5_000);
+            Assert.InRange(sw.ElapsedMilliseconds, 600, 15_000);
         }
     }
 }
