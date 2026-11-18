@@ -22,6 +22,8 @@ namespace VMS.Services
         private readonly IPlcConnection _plc;
         private readonly PlcSignalConfiguration _signalConfig;
         private readonly PlcVendor _vendor;
+        // 설정 마법사에서 정한 PLC 접속 설정(IP · 포트 · 타임아웃 · Modbus Unit ID 등). 없으면 제조사 기본값.
+        private readonly PlcConnectionConfig? _connectionConfig;
 
         // Camera operation delegates (injected to avoid direct ViewModel reference)
         private readonly Func<string, Task<bool>> _grabFunc;
@@ -89,8 +91,10 @@ namespace VMS.Services
             Func<SequenceConfig?>? sequenceProvider = null,
             Action<bool>? cycleAccumulationFunc = null,
             Func<bool, Task>? cycleUploadFunc = null,
-            Func<IDisposable?>? activitySignalFactory = null)
+            Func<IDisposable?>? activitySignalFactory = null,
+            PlcConnectionConfig? connectionConfig = null)
         {
+            _connectionConfig = connectionConfig;
             _activitySignalFactory = activitySignalFactory
                 ?? (() => InspectionActivity.Acquire(logService, "AutoProcess"));
             _cycleAccumulationFunc = cycleAccumulationFunc;
@@ -162,7 +166,8 @@ namespace VMS.Services
             // Connect PLC if not already connected
             if (!_plc.IsConnected)
             {
-                var config = new PlcConnectionConfig { Vendor = _vendor };
+                // 제조사만 넘기면 IP · 포트가 기본값(192.168.0.100 · 0)이라 설정한 PLC 에 닿지 않는다.
+                var config = _connectionConfig ?? new PlcConnectionConfig { Vendor = _vendor };
                 await _plc.ConnectAsync(config);
             }
 

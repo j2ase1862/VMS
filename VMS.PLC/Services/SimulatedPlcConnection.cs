@@ -35,8 +35,12 @@ namespace VMS.PLC.Services
             set => _simulatedDelayMs = Math.Max(0, value);
         }
 
+        /// <summary>마지막 <see cref="ConnectAsync"/> 에 넘어온 설정 — 호출측이 어떤 주소로 접속하는지 확인용.</summary>
+        public PlcConnectionConfig? LastConnectConfig { get; private set; }
+
         public async Task<bool> ConnectAsync(PlcConnectionConfig config)
         {
+            LastConnectConfig = config;
             SetConnectionState(PlcConnectionState.Connecting);
             await SimulateDelay();
             SetConnectionState(PlcConnectionState.Connected);
