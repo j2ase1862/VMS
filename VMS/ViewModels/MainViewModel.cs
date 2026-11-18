@@ -1638,7 +1638,7 @@ namespace VMS.ViewModels
                     return; // 파일은 보관 — 다음 시도에서 재다운로드 없이 재사용
                 }
 
-                var launch = _updateInstallService.LaunchInstaller(result.FilePath!);
+                var launch = _updateInstallService.LaunchInstaller(result.FilePath!, info.DownloadSha256);
                 if (launch.Ok)
                 {
                     LogService?.Log("업데이트 설치 시작 — 프로그램을 종료합니다.", LogLevel.Info, "Update");
