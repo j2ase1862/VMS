@@ -27,7 +27,9 @@ namespace VMS.Core.Interfaces
         /// <summary>
         /// 상승(UAC) 부트스트랩 스크립트를 실행한다. 성공 반환 직후 호출 측은 앱을 종료해야
         /// 설치가 진행된다 (스크립트가 현재 프로세스 종료를 대기).
+        /// <paramref name="expectedSha256"/> 은 릴리스 정보의 해시 — 스크립트가 설치 직전에 MSI 를 다시 대조하고,
+        /// 다르면 설치하지 않고 VMS 를 다시 띄운다. 비어 있으면 실행하지 않는다.
         /// </summary>
-        UpdateInstallLaunchResult LaunchInstaller(string msiPath);
+        UpdateInstallLaunchResult LaunchInstaller(string msiPath, string expectedSha256);
     }
 }

@@ -70,6 +70,12 @@ namespace VMS.Core.Services
             if (_disposed) return UpdateDownloadResult.Failure("서비스가 이미 해제되었습니다.");
             if (string.IsNullOrWhiteSpace(info.DownloadUrl))
                 return UpdateDownloadResult.Failure("릴리스에 MSI 파일이 없습니다.");
+            // 기대 해시가 없으면 받은 파일이 릴리스의 그 파일인지 확인할 수 없다 — 받지도 설치하지도 않는다.
+            // (해시는 GitHub 가 자산마다 주는 sha256 digest — GitHubUpdateService.NormalizeSha256Digest)
+            if (string.IsNullOrWhiteSpace(info.DownloadSha256))
+                return UpdateDownloadResult.Failure(
+                    "릴리스 정보에 설치 파일의 SHA-256 이 없어 파일을 검증할 수 없습니다. 자동 업데이트를 하지 않습니다 — "
+                    + "릴리스 페이지에서 MSI 를 직접 받아 해시를 확인한 뒤 설치하세요.");
 
             var fileName = !string.IsNullOrWhiteSpace(info.DownloadFileName)
                 ? info.DownloadFileName
@@ -139,8 +145,7 @@ namespace VMS.Core.Services
                         $"다운로드 크기가 일치하지 않습니다 (기대 {info.DownloadSizeBytes:N0}, 실제 {received:N0} 바이트).");
                 }
 
-                if (!string.IsNullOrEmpty(info.DownloadSha256) &&
-                    !string.Equals(actualSha256, info.DownloadSha256, StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(actualSha256, info.DownloadSha256, StringComparison.OrdinalIgnoreCase))
                 {
                     TryDelete(partialPath);
                     return UpdateDownloadResult.Failure(
@@ -166,10 +171,12 @@ namespace VMS.Core.Services
             }
         }
 
-        public UpdateInstallLaunchResult LaunchInstaller(string msiPath)
+        public UpdateInstallLaunchResult LaunchInstaller(string msiPath, string expectedSha256)
         {
             if (!File.Exists(msiPath))
                 return UpdateInstallLaunchResult.Failure($"MSI 파일을 찾을 수 없습니다: {msiPath}");
+            if (string.IsNullOrWhiteSpace(expectedSha256))
+                return UpdateInstallLaunchResult.Failure("설치 파일의 기대 SHA-256 이 없어 설치하지 않습니다.");
 
             try
             {
@@ -189,7 +196,8 @@ namespace VMS.Core.Services
                     : ReadUpdaterRuntimeFiles(Path.Combine(vmsDir, "VMS.Updater.deps.json"));
 
                 var script = BuildBootstrapScript(
-                    msiPath, vmsExePath, Environment.ProcessId, logPath, currentVersion, runtimeFiles);
+                    msiPath, vmsExePath, Environment.ProcessId, logPath, currentVersion, runtimeFiles,
+                    expectedSha256);
                 var scriptPath = Path.Combine(_downloadDir, "update-bootstrap.ps1");
                 Directory.CreateDirectory(_downloadDir);
                 // BOM 있는 UTF-8 — Windows PowerShell 5.1 이 BOM 없으면 ANSI 로 해석.
@@ -231,7 +239,7 @@ namespace VMS.Core.Services
         /// </summary>
         internal static string BuildBootstrapScript(
             string msiPath, string vmsExePath, int vmsPid, string logPath, string? currentVersion = null,
-            IReadOnlyList<string>? updaterRuntimeFiles = null)
+            IReadOnlyList<string>? updaterRuntimeFiles = null, string? expectedSha256 = null)
         {
             static string Quote(string s) => "'" + s.Replace("'", "''") + "'";
             updaterRuntimeFiles ??= Array.Empty<string>();
@@ -250,6 +258,28 @@ namespace VMS.Core.Services
             sb.AppendLine($"$vmsPid = {vmsPid}");
             sb.AppendLine("$p = Get-Process -Id $vmsPid -ErrorAction SilentlyContinue");
             sb.AppendLine("if ($p) { Write-Log (\"waiting for VMS exit (pid={0})\" -f $vmsPid); $p.WaitForExit(60000) | Out-Null }");
+
+            // 1-b) 설치 직전 해시 재확인 — 다운로드 때 검증한 파일이 그 뒤(재사용 · 대기 중)에 바뀌었으면
+            //      설치하지 않는다. Web 서비스를 멈추기(2-b) 전에 확인해, 그만둘 때 건드린 것이 없게 한다.
+            //      그만두면 VMS 를 다시 띄우고 끝낸다(5단계와 같은 explorer 경유 — 상승 권한 상속 방지).
+            if (!string.IsNullOrWhiteSpace(expectedSha256))
+            {
+                sb.AppendLine($"$expectedSha = {Quote(expectedSha256.Trim().ToLowerInvariant())}");
+                sb.AppendLine($"$msiToCheck = {Quote(msiPath)}");
+                sb.AppendLine("$actualSha = ''");
+                sb.AppendLine("try { $actualSha = (Get-FileHash -LiteralPath $msiToCheck -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant() }");
+                sb.AppendLine("catch { Write-Log (\"msi hash check failed: {0}\" -f $_.Exception.Message) }");
+                sb.AppendLine("if ($actualSha -ne $expectedSha) {");
+                sb.AppendLine("  Write-Log (\"msi SHA-256 mismatch - install aborted (expected={0} actual={1})\" -f $expectedSha, $actualSha)");
+                sb.AppendLine("  Remove-Item -LiteralPath $msiToCheck -Force -ErrorAction SilentlyContinue");
+                sb.AppendLine("  if (($vmsExe -ne '') -and (Test-Path -LiteralPath $vmsExe)) {");
+                sb.AppendLine("    Start-Process -FilePath 'explorer.exe' -ArgumentList ('\"{0}\"' -f $vmsExe)");
+                sb.AppendLine("  }");
+                sb.AppendLine("  Write-Log '=== update bootstrap end (aborted) ==='");
+                sb.AppendLine("  exit 1");
+                sb.AppendLine("}");
+                sb.AppendLine("Write-Log 'msi SHA-256 verified before install'");
+            }
 
             // 2) Web 서비스 사전 상태 — MajorUpgrade 가 서비스를 삭제 후 demand 로 재등록하므로
             //    이전 상태(auto/실행 중)를 여기서 기억해 두었다가 설치 후 복원한다.
