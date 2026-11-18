@@ -12,6 +12,17 @@ namespace Boda.LicGen.App
         {
             base.OnStartup(e);
 
+#if DEBUG
+            // 매뉴얼 그림용 — "--capture <폴더>" 이면 실제 키 폴더 대신 임시 폴더(버리는 키 · 예시 대장)로 띄워
+            // 두 탭을 PNG 로 남기고 끝낸다. 실제 키 · 대장(%USERPROFILE%\.boda-licgen)은 읽지 않는다.
+            int ci = Array.IndexOf(e.Args, "--capture");
+            if (ci >= 0 && ci + 1 < e.Args.Length)
+            {
+                Capture.WindowCapture.Run(this, e.Args[ci + 1]);
+                return;
+            }
+#endif
+
             var dialogService = new DialogService();
             var notesStore = new LedgerNotesStore(MainViewModel.DefaultKeyDir);
             var viewModel = new MainViewModel(dialogService, notesStore);

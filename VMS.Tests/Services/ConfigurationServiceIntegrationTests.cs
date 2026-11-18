@@ -126,6 +126,34 @@ namespace VMS.Tests.Services
             // best-effort — 손상된 JSON 도 기본 인스턴스 반환 (앱 종료 방지).
             Assert.NotNull(loaded);
             Assert.Empty(loaded.Cameras);
+            Assert.False(string.IsNullOrEmpty(_service.LastSystemConfigLoadError));
+        }
+
+        [Fact]
+        public void LoadSystemConfiguration_UnknownEnumValue_ReportsError()
+        {
+            // 값 하나(카메라 제조사 철자)만 틀려도 파일 전체가 기본값이 된다 — App 이 알릴 수 있게 원인을 남긴다.
+            File.WriteAllText(Path.Combine(_tempDir, "system_config.json"),
+                "{ \"webServerUrl\": \"http://127.0.0.1:5599\", \"cameras\": [ { \"manufacturer\": \"MechMind\" } ] }");
+            var loaded = _service.LoadSystemConfiguration();
+            Assert.Equal(string.Empty, loaded.WebServerUrl);
+            Assert.Contains("manufacturer", _service.LastSystemConfigLoadError);
+        }
+
+        [Fact]
+        public void LoadSystemConfiguration_ValidOrMissing_ClearsError()
+        {
+            File.WriteAllText(Path.Combine(_tempDir, "system_config.json"), "{ not json");
+            _service.LoadSystemConfiguration();
+            Assert.NotNull(_service.LastSystemConfigLoadError);
+
+            File.Delete(Path.Combine(_tempDir, "system_config.json"));
+            _service.LoadSystemConfiguration();
+            Assert.Null(_service.LastSystemConfigLoadError);
+
+            _service.SaveSystemConfiguration(new SystemConfiguration { WebServerUrl = "http://127.0.0.1:5599" });
+            Assert.Equal("http://127.0.0.1:5599", _service.LoadSystemConfiguration().WebServerUrl);
+            Assert.Null(_service.LastSystemConfigLoadError);
         }
 
         // ─── LayoutConfiguration round-trip ───────────────────────

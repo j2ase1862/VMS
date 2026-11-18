@@ -24,6 +24,7 @@
 <tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
 <tr><td>Threshold Value</td><td>슬라이더 [0~255]</td><td>이진화 임계값. 픽셀값이 이 값보다 크면 전경(흰색)으로 처리</td></tr>
 <tr><td>Max Value</td><td>슬라이더 [0~255]</td><td>이진화 시 전경에 적용할 값(보통 255)</td></tr>
+<tr><td>Threshold Type</td><td>선택(목록) (ThresholdType)</td><td>이진화 방식 — Binary(임계값 초과=Max Value) · BinaryInv(반대) · Trunc(임계값으로 자름) · ToZero · ToZeroInv. Use Otsu · Use Adaptive 와 함께 쓴다</td></tr>
 <tr><td>Use Otsu</td><td>체크박스</td><td>Otsu 자동 임계값 사용(체크 시 Threshold Value 무시)</td></tr>
 <tr><td>Use Adaptive</td><td>체크박스</td><td>적응형 이진화(국소 영역별 임계값 — 조명 불균일에 강함)</td></tr>
 <tr><td>Block Size</td><td>슬라이더 [3~51]</td><td>적응형 이진화 국소 블록 크기(홀수)</td></tr>
@@ -175,6 +176,8 @@
 <tr><td>Max Edges</td><td>슬라이더 [1~50]</td><td>검출할 최대 에지 수</td></tr>
 <tr><td>Scorer Mode</td><td>선택(목록) (ScorerMode)</td><td>에지 점수 산정 방식</td></tr>
 <tr><td>Edge Selection</td><td>선택(목록) (EdgeSelectionMode)</td><td>사용할 에지 선택 방식(첫 · 최강 · 마지막 등)</td></tr>
+<tr><td>Expected Width (px)</td><td>입력</td><td>Edge Pair Width — Mode 가 EdgePair 일 때 채택할 두 엣지 사이 기대 폭(px)</td></tr>
+<tr><td>Width Tolerance (±px)</td><td>입력</td><td>Edge Pair Width — 기대 폭 ± 이 값 안의 엣지 쌍만 채택</td></tr>
 <tr><td>Projection Mode</td><td>선택(목록) (ProjectionMode)</td><td>프로파일 투영 방식</td></tr>
 <tr><td>Gaussian Filter</td><td>BoolParameter</td><td>가우시안 필터 적용</td></tr>
 <tr><td>Gaussian Sigma</td><td>슬라이더 [0.3~5.0]</td><td>가우시안 시그마</td></tr>
