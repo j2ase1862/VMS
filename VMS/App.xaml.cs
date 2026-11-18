@@ -797,7 +797,9 @@ namespace VMS
                     var uploaded = await InspectionService.FlushCycleResultAsync(allOk);
                     if (!uploaded)
                         Debug.WriteLine("[App] cycle result upload skipped/failed (Web 연동 레시피 확인)");
-                });
+                },
+                // AUTO RUN 이 PLC 에 접속할 때 설정 마법사의 IP · 포트 등을 그대로 쓴다
+                connectionConfig: plcConfig);
 
             // ── Roller Inspection Service ──
             IRollerInspectionService rollerInspectionService = new RollerInspectionService(logService);
