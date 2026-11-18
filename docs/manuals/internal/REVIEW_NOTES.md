@@ -6,7 +6,8 @@
   3 ROBOT N/A 뜻 툴팁 · §4.7(VM-12) / 4 사내판은 이미 맞음 / 5 업그레이드 때 구성 유지(#618 VO-02) — §2.7 / 6 msi_build_guide 고침(#618 브랜치) /
   7 PCI-7396 은 지원 모델 아님 — §1.3 · §3.7(VO-03) / 8 관리자 매뉴얼 옵션 표 5개(#622 브랜치) / 9 · 10 그림 재캡처 대기 / 11 웨이포인트 번호(VS-03) — §5.13
 - 매뉴얼 원문이 코드 PR 머지 뒤 동작을 쓰므로, PR 이 머지되기 전 빌드와는 다를 수 있음.
-- 부록 13.2 파라미터 표는 동결 자료(`docs/gs/pipeline/_tool_params.json`)에서 만들어 Threshold Type · Caliper Edge Pair Width 행이 없음 — GS 이후 자료 갱신 때.
+- 부록 13.2 파라미터 표는 동결 자료(`docs/gs/pipeline/_tool_params.json`)에서 만든다. 그 뒤 생긴 Threshold Type · Caliper Edge Pair Width(Expected Width · Width Tolerance) 행은
+  `gen_appendix.py` 의 `EXTRA` 로 끼워 넣음(11-19, 동결 파일은 그대로).
 - 재캡처 필요 그림 목록은 `D:\Temp\video\postgs\D_결과.md`.
 
 ## A. 제품 · 문서 쪽에서 확인 · 결정이 필요한 것
@@ -30,7 +31,7 @@
   다시 찍기: `set VMS_CAPTURE_RECIPE=<3D 레시피 사본>` · `VMS_CAPTURE_STEP=0` → `VMS.VisionSetup.exe --instance mancap --capture-extension <폴더>` → 크롭은 `figs/ext/` 참고.
 - **찍지 않은 것 (이유)**
   - 2.7 MSI 유지 관리(복구 · 제거) 화면 — 기존 방법(`tools/capture-msi-weboption.ps1`)은 실제 MSI 를 띄워 UI Automation 으로 버튼을 누름. 이 PC 는 BODA VMS(운영 Web 포함)가 설치돼 있어 유지 관리 화면에서 잘못 누르면 복구 · 제거가 실행됨 → 설치되지 않은 PC(또는 VM)에서 찍어야 함.
-  - 13.7 LicGen 창 — 발급 대장에 실제 고객 이름 · 지문, 서명 키 이름이 보임. 빈 대장(다른 USERPROFILE)으로 찍을 수는 있으나 LicGen 에 화면 밖 캡처 모드가 없어 실제 창을 띄워야 함 → 담당자 판단 후.
+  - 13.7 LicGen 창 — 발급 대장에 실제 고객 이름 · 지문, 서명 키 이름이 보임. 빈 대장(다른 USERPROFILE)으로 찍을 수는 있으나 LicGen 에 화면 밖 캡처 모드가 없어 실제 창을 띄워야 함 → 11-19 DEBUG 캡처 모드(임시 폴더 · 예시 대장)로 찍어 넣음.
   - 7.11 ~ 7.14 예제 — 5.13 · 9장 그림으로 갈음. 실촬영(3D · 로봇 · PLC) 장면은 영상 계획의 H 편과 함께.
 - **1.48.1 이후 수정 재캡처(11-18, v1.48.1 build 3 코드)** — 바뀐 화면을 `figs/recap/` 에 두고 본문 경로를 그쪽으로 바꿈(동결된 `docs/gs/screenshots` 는 그대로).
   - VMS(`mancap`): 검사 운전 3장(GS Measure 레시피 사본 · MS02 → MS01 → MS03 → MS04, 수동 [Inspect] 라 집계 · NG History 비어 있음), 사이드 패널(타일 축소),
@@ -39,7 +40,10 @@
   - VisionSetup: Camera Manager(첫 카메라 고른 장면 `CameraManager_Selected` 추가) · Inference Settings · Sequence, 도구 패널 5장(Threshold · Caliper · Anomaly · PC Filter · PC Cluster —
     `gen_tools_chapter.py` 가 `figs/recap/tools/` 를 먼저 씀).
   - 1.1 구성도: `figs/recap/diagrams/system_overview.html`(카메라 칸 "Basler · ◆Mech-Mind 등")을 headless Chrome 2배로 렌더.
-  - **남은 것**: Inspection Parameters · 작업 지시 창(임시 Web 에 붙여야 하는데 `mancap` 에 주소를 넣어도 단독 모드로 떠 원인 미확인), 2.7 설치 구성 · 유지 관리 화면(설치 안 된 PC 필요), 레지스트리 [선택] 내려받기 상태(선택), LicGen 창, 13.2 부록 표의 Threshold Type · Caliper 폭 행(동결 `_tool_params.json` 에서 생성).
+  - 11-19 이어서: Inspection Parameters · 작업 지시 창(임시 Web 의 A동 1호 라인 — `clientIndex` 11), LicGen 두 탭(DEBUG `LicGenApp --capture <폴더>` — 임시 폴더의 버리는 키 · 예시 대장 3 건, 실제 키 · 대장은 읽지 않음),
+    13.2 부록 표 3 행. 단독 모드로 뜨던 원인은 캡처용 설정 파일의 카메라 제조사 철자(`MechMind` → `Mech_Mind`) — 설정 파일을 못 읽으면 기본 설정으로 조용히 뜨던 것을 경고 창 · 로그로 알리게 고침.
+    작업 지시 캡처의 문서용 대표 1건은 조회가 끝나고도 비어 있을 때만 넣음(조회 중에 넣어 실제 목록과 섞이던 것). Status 배지 열 폭을 넓힘(InProgress 잘림).
+  - **남은 것**: 2.7 설치 구성 · 유지 관리 화면(설치 안 된 PC 에서 MSI 화면을 넘겨야 함 — 화면 입력 자동화 금지라 사람이 찍음), 레지스트리 [선택] 내려받기 상태(선택).
 
 ## C. 내용 출처
 
