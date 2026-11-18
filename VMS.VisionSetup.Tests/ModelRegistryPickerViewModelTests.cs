@@ -125,6 +125,39 @@ namespace VMS.VisionSetup.Tests
         }
 
         [Fact]
+        public async Task Confirm_downloads_selected_reference_before_closing()
+        {
+            // VS-33: 고른 직후 실행해도 되도록 [선택] 때 모델을 받아 둔다
+            var vm = Create();
+            await vm.LoadModelsCommand.ExecuteAsync(null);
+            var prepared = new List<string>();
+            vm.PrepareReference = (reference, _) => { prepared.Add(reference); return Task.CompletedTask; };
+            var results = new List<bool>();
+            vm.CloseRequested += (_, ok) => results.Add(ok);
+
+            await vm.ConfirmCommand.ExecuteAsync(null);
+
+            Assert.Equal(new[] { vm.SelectedReference }, prepared);
+            Assert.Equal(new[] { true }, results);
+        }
+
+        [Fact]
+        public async Task Confirm_keeps_window_open_when_download_fails()
+        {
+            var vm = Create();
+            await vm.LoadModelsCommand.ExecuteAsync(null);
+            vm.PrepareReference = (_, _) => throw new InvalidOperationException("서버 응답 없음");
+            var results = new List<bool>();
+            vm.CloseRequested += (_, ok) => results.Add(ok);
+
+            await vm.ConfirmCommand.ExecuteAsync(null);
+
+            Assert.Empty(results);
+            Assert.Contains("서버 응답 없음", vm.Status);
+            Assert.False(vm.IsBusy);
+        }
+
+        [Fact]
         public async Task Registry_failure_is_shown_as_status_not_exception()
         {
             var vm = Create(failModels: true);

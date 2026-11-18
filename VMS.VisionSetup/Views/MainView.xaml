@@ -374,7 +374,7 @@
                         </MenuItem>
 
                         <!-- Batch Test Runner -->
-                        <MenuItem Header="_Batch Test..." Click="BatchTest_Click">
+                        <MenuItem Header="_Batch Test..." Command="{Binding OpenBatchTestCommand}">
                             <MenuItem.Icon>
                                 <Path Data="M2,2 L7,2 L7,7 L2,7 Z M9,2 L14,2 L14,7 L9,7 Z M2,9 L7,9 L7,14 L2,14 Z M9,9 L14,9 L14,14 L9,14 Z M3,4 L5,6 L6,3 M10,4 L12,6 L13,3 M3,11 L5,13 L6,10 M10,11 L12,13 L13,10"
                                       Stroke="#4CAF50" StrokeThickness="1.2" Fill="Transparent"
@@ -383,7 +383,7 @@
                         </MenuItem>
 
                         <!-- Synthetic OCR Data Generator — OCR 학습 데이터 생성(학습은 MLOps) 이라 MLOps 연동 확장 옵션이 있을 때만 -->
-                        <MenuItem Header="OCR _Synth Data..." Click="SynthData_Click"
+                        <MenuItem Header="OCR _Synth Data..." Command="{Binding OpenSynthDataCommand}"
                                   Visibility="{Binding IsMLOpsOptionEnabled, Converter={StaticResource BoolToVisibility}}">
                             <MenuItem.Icon>
                                 <Path Data="M2,4 L18,4 L18,8 L2,8 Z M2,10 L18,10 L18,14 L2,14 Z M4,16 L10,16 L10,18 L4,18 Z"
@@ -393,7 +393,7 @@
                         </MenuItem>
 
                         <!-- Inference Engine Settings -->
-                        <MenuItem Header="Inference _Settings..." Click="OnnxSettings_Click">
+                        <MenuItem Header="Inference _Settings..." Command="{Binding OpenOnnxSettingsCommand}">
                             <MenuItem.Icon>
                                 <Path Data="M10,6 A4,4 0 1 1 10,14 A4,4 0 1 1 10,6 M10,1 L10,4 M10,16 L10,19 M1,10 L4,10 M16,10 L19,10 M3.5,3.5 L5.5,5.5 M14.5,14.5 L16.5,16.5 M3.5,16.5 L5.5,14.5 M14.5,5.5 L16.5,3.5"
                                       Stroke="#FFD54F" StrokeThickness="1.2" Fill="Transparent"
@@ -1012,7 +1012,7 @@
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
-                            <DataGridTextColumn Header="Tools" Binding="{Binding Tools.Count}" Width="40"/>
+                            <DataGridTextColumn Header="Tools" Binding="{Binding ToolCount}" Width="40"/>
                         </DataGrid.Columns>
                     </DataGrid>
 
@@ -1615,7 +1615,7 @@
                                     </Grid.RowDefinitions>
 
                                     <!-- Row 0: 표시 색상 선택 (Mech-Eye Viewer UX — 컬러/그레이) -->
-                                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,5">
+                                    <WrapPanel Grid.Row="0" Orientation="Horizontal" Margin="10,5">
                                         <ComboBox SelectedIndex="{Binding DepthMapColorModeIndex}"
                                                   Style="{StaticResource WindowDarkComboBox}"
                                                   FontSize="12" Padding="8,3" MinWidth="150"
@@ -1623,7 +1623,30 @@
                                             <ComboBoxItem Content="컬러 (Jet)"/>
                                             <ComboBoxItem Content="그레이"/>
                                         </ComboBox>
-                                    </StackPanel>
+
+                                        <!-- 높이 맵 기준 · 하한 · 상한 (VS-15) — Generate Height Map 은 이 값으로 만든다 -->
+                                        <TextBlock Text="Baseline" VerticalAlignment="Center" Margin="16,0,4,0"
+                                                   Foreground="{StaticResource BrushTextSecondary}" FontSize="12"/>
+                                        <TextBox Text="{Binding HeightBaseline, StringFormat=F1}" Width="64"
+                                                 Style="{StaticResource WindowDarkTextBox}" VerticalAlignment="Center"
+                                                 ToolTip="높이 기준(mm) — 높이 맵은 이 값을 0 으로 잰다"/>
+                                        <TextBlock Text="Lower" VerticalAlignment="Center" Margin="10,0,4,0"
+                                                   Foreground="{StaticResource BrushTextSecondary}" FontSize="12"/>
+                                        <TextBox Text="{Binding HeightLowerLimit, StringFormat=F1}" Width="64"
+                                                 Style="{StaticResource WindowDarkTextBox}" VerticalAlignment="Center"
+                                                 ToolTip="높이 맵에 담을 Z 하한(mm)"/>
+                                        <TextBlock Text="Upper" VerticalAlignment="Center" Margin="10,0,4,0"
+                                                   Foreground="{StaticResource BrushTextSecondary}" FontSize="12"/>
+                                        <TextBox Text="{Binding HeightUpperLimit, StringFormat=F1}" Width="64"
+                                                 Style="{StaticResource WindowDarkTextBox}" VerticalAlignment="Center"
+                                                 ToolTip="높이 맵에 담을 Z 상한(mm)"/>
+                                        <Button Content="Generate Height Map" Command="{Binding GenerateHeightMapCommand}"
+                                                Style="{StaticResource ModernSecondaryButton}" Margin="10,0,0,0" Padding="10,3"
+                                                ToolTip="위 기준 · 하한 · 상한으로 높이 맵을 다시 만듭니다 (손잡이 범위는 그대로)"/>
+                                        <Button Content="전체로" Command="{Binding ResetHeightRangeToFullCommand}"
+                                                Style="{StaticResource ModernGhostButton}" Margin="6,0,0,0" Padding="10,3"
+                                                ToolTip="하한 · 상한과 손잡이 범위를 점군 전체 Z 범위로 되돌립니다"/>
+                                    </WrapPanel>
 
                                     <Grid Grid.Row="1">
                                         <!-- Placeholder when no point cloud -->
@@ -1663,7 +1686,7 @@
                                 <Grid>
                                     <!-- PointDrawingCanvas with 3D viewer -->
                                     <controls:PointDrawingCanvas x:Name="PointCanvasControl"
-                                                                 PointCloud="{Binding CurrentPointCloud}"
+                                                                 PointCloud="{Binding DisplayPointCloud}"
                                                                  HeightSliceBaseline="{Binding HeightBaseline}"
                                                                  HeightSliceLower="{Binding HeightLowerLimit}"
                                                                  HeightSliceUpper="{Binding HeightUpperLimit}"
@@ -1746,7 +1769,7 @@
                                 <CheckBox Content="카메라 설정 유지 (노출/게인)" Margin="0,0,0,4"
                                           Style="{StaticResource WindowDarkCheckBox}"
                                           IsChecked="{Binding SelectedStep.Use2DCameraDefault}"
-                                          ToolTip="체크(기본)하면 촬영 시 카메라에 저장된 노출/게인을 그대로 사용합니다 — Mech-Eye Viewer 등에서 튜닝한 값이 보존됩니다. 해제하면 아래 값을 촬영 전에 카메라에 적용합니다."/>
+                                          ToolTip="체크(기본)하면 촬영 시 카메라에 저장된 노출/게인을 그대로 사용합니다 — 카메라 제조사 프로그램에서 맞춘 값이 보존됩니다. 해제하면 아래 값을 촬영 전에 카메라에 적용합니다."/>
                                 <TextBlock FontSize="11" Margin="0,0,0,4"
                                            Text="{Binding StepCameraCurrentText}">
                                     <TextBlock.Style>
@@ -1767,7 +1790,7 @@
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0">
                                         <TextBlock Text="노출 (ms)" Style="{StaticResource SettingLabelStyle}" Margin="0,0,0,3"
-                                                   ToolTip="Mech-Eye Viewer 2D 파라미터의 노출 시간과 동일 단위 (0.1~999ms). 예: 200 = 200ms"/>
+                                                   ToolTip="노출 시간 (ms, 0.1~999). 예: 200 = 200ms"/>
                                         <TextBox Text="{Binding SelectedStep.ExposureMs, UpdateSourceTrigger=PropertyChanged}"
                                                  Style="{StaticResource WindowDarkTextBox}"/>
                                     </StackPanel>

@@ -73,7 +73,7 @@
                     <DataGridTextColumn Header="Code"        Binding="{Binding ParamCode}" Width="80"/>
                     <DataGridTextColumn Header="Value"       Binding="{Binding ParamValue, StringFormat=F4}" Width="100"/>
                     <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="*"/>
-                    <DataGridTextColumn Header="Category"    Binding="{Binding Category}" Width="100"/>
+                    <DataGridTextColumn x:Name="colCategory" Header="Category"    Binding="{Binding Category}" Width="100"/>
                     <DataGridTextColumn Header="Unit"        Binding="{Binding Unit}" Width="70"/>
                 </DataGrid.Columns>
             </DataGrid>

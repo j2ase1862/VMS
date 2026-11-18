@@ -31,11 +31,13 @@ namespace VMS.Core.Backup
         /// 모든 기본값 사용 + Enabled=false.
         /// 범위 밖 값은 [Min, Max] 로 clamp.
         /// </summary>
-        public static AutoBackupOptions LoadFromAppData()
+        public static AutoBackupOptions LoadFromAppData() => LoadFrom(AppDataPaths.SystemConfigFile);
+
+        /// <summary>지정한 system_config.json 에서 로드 — <see cref="LoadFromAppData"/> 와 같은 규칙.</summary>
+        public static AutoBackupOptions LoadFrom(string path)
         {
             try
             {
-                var path = AppDataPaths.SystemConfigFile;
                 if (!File.Exists(path)) return new AutoBackupOptions();
 
                 using var doc = JsonDocument.Parse(File.ReadAllText(path));
@@ -81,6 +83,15 @@ namespace VMS.Core.Backup
                 return new AutoBackupOptions();
             }
         }
+
+        /// <summary>
+        /// 자동 백업이 실제로 쓰는 폴더 — 설정 칸이 비어 있으면 <c>{appDataDir}\backups</c>.
+        /// 스케줄러 · 보존 미리보기 · 지원 패키지 백업 인덱스가 모두 이 한 곳의 답을 쓴다 (VM-31).
+        /// </summary>
+        public static string ResolveBackupDir(string appDataDir, string? configuredDir)
+            => string.IsNullOrWhiteSpace(configuredDir)
+                ? Path.Combine(appDataDir, "backups")
+                : configuredDir!;
 
         public static int ClampInterval(int hours)
         {

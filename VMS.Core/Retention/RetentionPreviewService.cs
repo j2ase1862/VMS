@@ -272,7 +272,6 @@ namespace VMS.Core.Retention
                 return new RetentionPreviewSummary { PolicyName = policyName, Note = "디렉토리 없음 — 영향 없음" };
 
             const string prefix = "auto-backup-";
-            const string format = "yyyyMMdd-HHmmss";
             var thresholdUtc = DateTime.UtcNow.AddDays(-retentionDays);
             int affected = 0, remaining = 0;
             long bytesAffected = 0;
@@ -285,10 +284,8 @@ namespace VMS.Core.Retention
                 {
                     var name = Path.GetFileNameWithoutExtension(file);
                     if (!name.StartsWith(prefix, StringComparison.Ordinal)) continue;
-                    var tsPart = name.Substring(prefix.Length);
-                    if (!DateTime.TryParseExact(tsPart, format, CultureInfo.InvariantCulture,
-                            DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
-                            out var fileUtc))
+                    // 이름 규칙(현지 시각)은 스케줄러 한 곳에서 정한다 — 미리보기와 실제 정리가 같은 답을 내야 한다
+                    if (!VMS.Core.Backup.AutoBackupScheduler.TryParseBackupFileTime(name, out var fileUtc))
                     {
                         continue;
                     }

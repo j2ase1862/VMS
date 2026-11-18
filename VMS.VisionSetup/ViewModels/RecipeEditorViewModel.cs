@@ -64,6 +64,23 @@ namespace VMS.VisionSetup.ViewModels
         // Accessors for code-behind that needs service access (property panels)
         public IRecipeService RecipeServiceAccessor => _recipeService;
         public ICameraService CameraServiceAccessor => _cameraService;
+
+        /// <summary>
+        /// 편집기 [Add Step] 이 붙일 카메라 — 메인 화면에서 고른 카메라 (VS-05). null 이면 카메라 미지정.
+        /// </summary>
+        public string? DefaultCameraId { get; set; }
+
+        /// <summary>
+        /// 편집기 [Add Step] — 메인에서 고른 카메라로 스텝을 붙이고 이름을 메인과 같은 규칙
+        /// ("카메라번호-n")으로 다시 매긴다. 종전에는 카메라 없는 "Step n" 이라 메인 Steps 표에 안 보였다.
+        /// </summary>
+        public InspectionStep AddStepForDefaultCamera(Recipe recipe)
+        {
+            var step = new InspectionStep { CameraId = DefaultCameraId ?? string.Empty };
+            _recipeService.AddStep(recipe, step);
+            Services.StepNaming.RecomputeNames(recipe, _cameraService.GetAllCameras());
+            return step;
+        }
         public IDialogService DialogServiceAccessor => _dialogService;
 
         public RecipeEditorViewModel(IRecipeService recipeService, ICameraService cameraService, IDialogService dialogService)
@@ -287,7 +304,7 @@ namespace VMS.VisionSetup.ViewModels
         {
             if (CurrentRecipe == null) return;
 
-            CurrentRecipe.ModifiedAt = DateTime.Now;
+            CurrentRecipe.ModifiedAt = DateTime.UtcNow;
             _recipeService.SaveRecipe(CurrentRecipe);
             HasUnsavedChanges = false;
             UpdateHeader();

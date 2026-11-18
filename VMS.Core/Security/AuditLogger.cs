@@ -87,7 +87,8 @@ namespace VMS.Core.Security
     /// 줄 단위 JSON 으로 SIEM/grep/jq 호환. append-only 라 변조 시도가 마지막 줄 이후로만 가능.
     ///
     /// 의도적으로 동기 I/O — 감사 로그는 손실 < 지연. 호출 빈도가 낮아 성능 영향 미미.
-    /// 동시 쓰기는 lock 으로 직렬화.
+    /// 같은 프로세스 안의 동시 쓰기는 lock 으로 직렬화. 다른 프로세스(VMS · VisionSetup 이 같은 일별 파일에 씀)가
+    /// 파일을 잡고 있으면 공유 위반이 나므로 잠깐 기다렸다 다시 쓴다(<see cref="AppendWithRetry"/>).
     /// </summary>
     public sealed class AuditLogger : IAuditLogger
     {
@@ -169,13 +170,34 @@ namespace VMS.Core.Security
 
                 lock (_writeLock)
                 {
-                    File.AppendAllText(path, line, Encoding.UTF8);
+                    AppendWithRetry(path, line);
                 }
             }
             catch (Exception ex)
             {
                 // 감사 로그 쓰기 실패는 절대 호출자 흐름을 깨뜨리지 않음 — best-effort.
                 Debug.WriteLine($"[AuditLogger] 쓰기 실패: {ex.Message}");
+            }
+        }
+
+        // 공유 위반 재시도: 다른 프로세스의 쓰기 · 읽기는 몇 ms 안에 끝나므로 짧게 여러 번.
+        // 마지막 시도도 실패하면 예외를 그대로 올려 Log 의 catch 가 best-effort 로 처리한다.
+        internal const int AppendAttempts = 10;
+        internal static readonly TimeSpan AppendRetryDelay = TimeSpan.FromMilliseconds(30);
+
+        private static void AppendWithRetry(string path, string line)
+        {
+            for (int attempt = 1; ; attempt++)
+            {
+                try
+                {
+                    File.AppendAllText(path, line, Encoding.UTF8);
+                    return;
+                }
+                catch (IOException) when (attempt < AppendAttempts && File.Exists(path))
+                {
+                    System.Threading.Thread.Sleep(AppendRetryDelay);
+                }
             }
         }
 

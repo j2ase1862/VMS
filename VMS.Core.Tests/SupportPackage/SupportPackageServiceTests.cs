@@ -276,6 +276,24 @@ namespace VMS.Core.Tests.SupportPackage
             Assert.Contains("auto-backup-20260101-120000.zip", text);
         }
 
+        [Fact]
+        public void Export_BackupsIndex_FollowsConfiguredAutoBackupDir()
+        {
+            // VM-31 — 자동 백업 위치를 바꾸면 인덱스도 그 폴더를 본다 (스케줄러가 실제로 쓰는 곳)
+            var custom = Path.Combine(_tempBase, "custom_backups");
+            Directory.CreateDirectory(custom);
+            File.WriteAllText(Path.Combine(custom, "auto-backup-20260202-090000.zip"), "fake");
+            Seed("backups/auto-backup-20260101-120000.zip", "fake");
+            Seed("system_config.json",
+                "{\"autoBackup\":{\"enabled\":true,\"directory\":" + System.Text.Json.JsonSerializer.Serialize(custom) + "}}");
+
+            SupportPackageService.Export(_appDataDir, _outputZip);
+
+            var text = ReadEntry("backups_index.txt");
+            Assert.Contains("auto-backup-20260202-090000.zip", text);
+            Assert.DoesNotContain("auto-backup-20260101-120000.zip", text);
+        }
+
         // ─── MLOps 전송 큐 ────────────────────────────────────────
 
         /// <summary>
@@ -332,6 +350,42 @@ namespace VMS.Core.Tests.SupportPackage
             if (entry == null) return null;
             using var sr = new StreamReader(entry.Open());
             return JsonSerializer.Deserialize<SupportPackageManifest>(sr.ReadToEnd());
+        }
+
+        // ─── 비밀 값 가림 (VM-24) ─────────────────────────────────
+
+        [Fact]
+        public void Export_SystemConfig_RedactsApiKeyAndTokens()
+        {
+            Seed("system_config.json",
+                "{\"webServerUrl\":\"http://line\",\"clientApiKey\":\"sk-secret-123\"," +
+                "\"mlopsLineToken\":\"ln_abc\",\"emptyToken\":\"\"," +
+                "\"imageSave\":{\"fileNameTokens\":[\"date\"],\"uploadPassword\":\"pw\"}}");
+
+            var result = SupportPackageService.Export(_appDataDir, _outputZip);
+
+            Assert.True(result.Success);
+            var text = ReadEntry("config/system_config.json");
+            Assert.DoesNotContain("sk-secret-123", text);
+            Assert.DoesNotContain("ln_abc", text);
+            Assert.DoesNotContain("\"pw\"", text);
+            Assert.Contains(SupportPackageService.RedactedValue, text);
+            Assert.Contains("http://line", text);       // 진단에 필요한 값은 그대로
+            Assert.Contains("fileNameTokens", text);    // 이름에 Tokens 가 들어가도 목록은 유지
+            Assert.Contains("\"date\"", text);
+            using var doc = JsonDocument.Parse(text);
+            Assert.Equal("", doc.RootElement.GetProperty("emptyToken").GetString());  // 빈 값은 "설정 안 됨" 진단용
+        }
+
+        [Fact]
+        public void Export_UnparsableConfig_DoesNotIncludeRawText()
+        {
+            Seed("system_config.json", "clientApiKey=sk-secret-raw");
+
+            var result = SupportPackageService.Export(_appDataDir, _outputZip);
+
+            Assert.True(result.Success);
+            Assert.DoesNotContain("sk-secret-raw", ReadEntry("config/system_config.json"));
         }
     }
 }

@@ -267,6 +267,30 @@ namespace VMS.Core.Tests.Backup
             Assert.False(File.Exists(Path.Combine(_restoreDir, "audit", "2026-05-29.jsonl")));
         }
 
+        [Fact]
+        public void RestoreBackup_AuditDayAlreadyPresent_IsNotOverwritten()
+        {
+            // 백업 뒤에 같은 날짜 파일에 쌓인 기록(그 백업을 만든 기록 포함)이 복원으로 사라지면 안 됨.
+            Seed("audit/2026-05-29.jsonl", "{\"a\":\"before-backup\"}\n");
+            Seed("audit/2026-05-28.jsonl", "{\"a\":\"old-day\"}\n");
+            BackupRestoreService.CreateBackup(_sourceDir, _backupZip,
+                new BackupOptions { IncludeAudit = true });
+
+            var auditDir = Path.Combine(_restoreDir, "audit");
+            Directory.CreateDirectory(auditDir);
+            var todayLog = "{\"a\":\"before-backup\"}\n{\"a\":\"BackupCreated\"}\n{\"a\":\"after-backup\"}\n";
+            File.WriteAllText(Path.Combine(auditDir, "2026-05-29.jsonl"), todayLog);
+
+            var result = BackupRestoreService.RestoreBackup(_backupZip, _restoreDir,
+                new RestoreOptions { Overwrite = true, RestoreAudit = true });
+
+            Assert.True(result.Success);
+            Assert.Equal(todayLog, File.ReadAllText(Path.Combine(auditDir, "2026-05-29.jsonl")));  // 그대로
+            Assert.Equal("{\"a\":\"old-day\"}\n", File.ReadAllText(Path.Combine(auditDir, "2026-05-28.jsonl")));  // 없던 날짜는 되살림
+            Assert.Equal(1, result.FilesRestored);
+            Assert.Equal(1, result.FilesSkipped);
+        }
+
         // ─── Manifest 메타데이터 ──────────────────────────────────
 
         [Fact]
@@ -287,6 +311,94 @@ namespace VMS.Core.Tests.Backup
 
             Assert.Equal(0, result.Manifest!.FileCount);
             Assert.False(result.Manifest.IncludesUsersDb);
+        }
+
+        // ─── 실행 중 백업 (VM-19) · 시퀀스 포함 (VM-20) ─────────────
+
+        [Fact]
+        public void CreateBackup_FilesHeldOpenForWriting_StillSucceeds()
+        {
+            // VMS 가 SQLite 연결 · 설정 파일을 쓰기용으로 열어 둔 상태를 흉내 — 읽기 공유만 허용하던 때는 IOException.
+            Seed("system_config.json", "{}");
+            Seed("BodaVision.db", "fake-db-bytes");
+            using var heldDb = new FileStream(Path.Combine(_sourceDir, "BodaVision.db"),
+                FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
+            using var heldConfig = new FileStream(Path.Combine(_sourceDir, "system_config.json"),
+                FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
+
+            var result = BackupRestoreService.CreateBackup(_sourceDir, _backupZip);
+
+            Assert.True(result.Success, result.ErrorMessage);
+            Assert.Equal(2, result.FileCount);
+        }
+
+        [Fact]
+        public void CreateBackup_Failure_LeavesNoPartialZip()
+        {
+            Seed("system_config.json", "{}");
+            Seed("BodaVision.db", "fake-db-bytes");
+            var previous = BackupRestoreService.DatabaseCopier;
+            BackupRestoreService.DatabaseCopier = (_, _) => throw new IOException("simulated");
+            try
+            {
+                var result = BackupRestoreService.CreateBackup(_sourceDir, _backupZip);
+
+                Assert.False(result.Success);
+                Assert.False(File.Exists(_backupZip));
+            }
+            finally
+            {
+                BackupRestoreService.DatabaseCopier = previous;
+            }
+        }
+
+        [Fact]
+        public void CreateBackup_IncludesProcessSequence()
+        {
+            Seed("process_sequence.json", "{\"steps\":[]}");
+
+            var result = BackupRestoreService.CreateBackup(_sourceDir, _backupZip);
+
+            Assert.True(result.Success);
+            using var zip = ZipFile.OpenRead(_backupZip);
+            Assert.NotNull(zip.GetEntry("process_sequence.json"));
+        }
+
+        [Fact]
+        public void BackupAndRestore_DatabaseFiles_GoThroughDatabaseCopier()
+        {
+            Seed("BodaVision.db", "users-v1");
+            Seed("inspection_history.db", "history-v1");
+            Seed("system_config.json", "{}");
+            var calls = new System.Collections.Generic.List<string>();
+            var previous = BackupRestoreService.DatabaseCopier;
+            BackupRestoreService.DatabaseCopier = (src, dst) =>
+            {
+                lock (calls) calls.Add($"{Path.GetFileName(src)}->{Path.GetFileName(dst)}");
+                File.Copy(src, dst, overwrite: true);
+            };
+            try
+            {
+                Assert.True(BackupRestoreService.CreateBackup(_sourceDir, _backupZip).Success);
+                Assert.Contains("BodaVision.db->", calls[0]);
+                Assert.Contains("inspection_history.db->", calls[1]);
+                Assert.Equal(2, calls.Count);  // 설정 파일은 직접 복사
+
+                // 복원 대상에 이미 DB 가 있으면 덮어쓰지 않고 DB 안으로 복사
+                File.WriteAllText(Path.Combine(_restoreDir, "BodaVision.db"), "users-old");
+                calls.Clear();
+                var restore = BackupRestoreService.RestoreBackup(_backupZip, _restoreDir);
+
+                Assert.True(restore.Success, restore.ErrorMessage);
+                Assert.Single(calls);
+                Assert.EndsWith("->BodaVision.db", calls[0]);
+                Assert.Equal("users-v1", File.ReadAllText(Path.Combine(_restoreDir, "BodaVision.db")));
+                Assert.Equal("history-v1", File.ReadAllText(Path.Combine(_restoreDir, "inspection_history.db")));
+            }
+            finally
+            {
+                BackupRestoreService.DatabaseCopier = previous;
+            }
         }
     }
 }

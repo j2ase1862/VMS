@@ -48,7 +48,8 @@
                            FontSize="22" FontWeight="Bold"
                            Foreground="{StaticResource BrushTextPrimary}"/>
 
-                <TextBlock Text="계획 수량에 도달하여 자동 완료되었습니다"
+                <TextBlock x:Name="ReasonText"
+                           Text="계획 수량에 도달하여 자동 완료되었습니다"
                            HorizontalAlignment="Center"
                            Foreground="{StaticResource BrushTextMuted}"
                            FontSize="12" Margin="0,4,0,18"/>

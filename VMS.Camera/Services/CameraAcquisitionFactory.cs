@@ -84,17 +84,52 @@ namespace VMS.Camera.Services
 #endif
             }
 
+            // 연결 코드가 아예 없는 제조사 — 설정 목록에서는 고를 수 있지만 실카메라로 붙지 않으므로
+            // Basler · Mech 폴백처럼 'SDK 미탑재 — 시뮬레이션' 으로 알린다 (VO-11: 예전엔 경고 없이 시뮬레이션).
+            var noSdk = FindNoSdkManufacturer(manufacturer);
+            if (noSdk != null)
+                return Fallback(noSdk, unsupported: true);
+
             // 제조사 미지정/가상 카메라 — 의도된 시뮬레이션 (폴백 아님)
             return new CameraAcquisitionCreation(new SimulatedCameraAcquisition(), false, null);
+        }
+
+        /// <summary>
+        /// 제조사 목록(CameraManufacturer)에는 있지만 연결 구현이 없는 제조사 — (비교 키, 표시 이름).
+        /// 비교 키는 공백 · '_' · '-' 를 뺀 대소문자 무시 부분 일치 (예: "Allied_Vision", "Allied Vision Technologies").
+        /// </summary>
+        private static readonly (string Key, string Name)[] NoSdkManufacturers =
+        {
+            ("IDS", "IDS"),
+            ("Cognex", "Cognex"),
+            ("Keyence", "Keyence"),
+            ("Baumer", "Baumer"),
+            ("AlliedVision", "Allied Vision"),
+            ("FLIR", "FLIR"),
+            ("JAI", "JAI"),
+        };
+
+        /// <summary>연결 구현이 없는 제조사면 표시 이름, 아니면 null.</summary>
+        public static string? FindNoSdkManufacturer(string? manufacturer)
+        {
+            var normalized = (manufacturer ?? string.Empty).Replace(" ", "").Replace("_", "").Replace("-", "");
+            foreach (var (key, name) in NoSdkManufacturers)
+            {
+                if (normalized.Contains(key, StringComparison.OrdinalIgnoreCase))
+                    return name;
+            }
+            return null;
         }
 
         /// <summary>기존 호환 API — 폴백 정보가 필요 없는 호출부용.</summary>
         public static ICameraAcquisition Create(CameraInfo camera)
             => CreateWithInfo(camera).Acquisition;
 
-        private static CameraAcquisitionCreation Fallback(string sdkName)
+        private static CameraAcquisitionCreation Fallback(string sdkName, bool unsupported = false)
         {
-            var reason = $"{sdkName} 미탑재 빌드 — 시뮬레이션 모드로 동작합니다 (실카메라 영상 아님)";
+            var reason = unsupported
+                ? $"{sdkName} 카메라 SDK 미탑재 — 이 제조사는 직접 연결을 지원하지 않아 시뮬레이션 모드로 동작합니다 (실카메라 영상 아님)"
+                : $"{sdkName} 미탑재 빌드 — 시뮬레이션 모드로 동작합니다 (실카메라 영상 아님)";
             System.Diagnostics.Debug.WriteLine($"[CameraAcquisitionFactory] {reason}");
             return new CameraAcquisitionCreation(new SimulatedCameraAcquisition(), true, reason);
         }

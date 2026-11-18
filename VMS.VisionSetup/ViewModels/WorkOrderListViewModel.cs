@@ -43,7 +43,24 @@ namespace VMS.VisionSetup.ViewModels
 
         partial void OnSelectedItemChanged(WorkOrderDto? value) => SelectCommand.NotifyCanExecuteChanged();
 
-        partial void OnStatusFilterChanged(string value) => ItemsView.Refresh();
+        partial void OnStatusFilterChanged(string value)
+        {
+            ItemsView.Refresh();
+            if (!IsLoading) StatusMessage = CountText();
+        }
+
+        /// <summary>
+        /// 상태 줄 건수 — 필터로 보이는 수 기준 (VM-39). 종전에는 '활성' 으로 2행만 보여도 완료 포함 전체 수였다.
+        /// </summary>
+        private string CountText()
+        {
+            int shown = 0;
+            foreach (var _ in ItemsView) shown++;
+            return FormatCount(shown, Items.Count);
+        }
+
+        public static string FormatCount(int shown, int total)
+            => shown == total ? $"{total}건" : $"{shown}건 (전체 {total}건)";
 
         private bool FilterPredicate(object obj)
         {
@@ -66,7 +83,7 @@ namespace VMS.VisionSetup.ViewModels
                 // 서버 측에서는 status 필터 사용 안 함 — 클라이언트 측에서 필터링
                 var list = await _client.GetByClientAsync();
                 foreach (var w in list) Items.Add(w);
-                StatusMessage = $"{list.Count}건";
+                StatusMessage = CountText();
             }
             catch (Exception ex)
             {

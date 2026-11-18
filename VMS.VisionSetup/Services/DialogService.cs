@@ -94,6 +94,72 @@ namespace VMS.VisionSetup.Services
             return dialog.ShowDialog() == true ? dialog.FileName : null;
         }
 
+        public string? ShowOpenFileDialog(string title, string filter, string? initialDirectory)
+        {
+            var dialog = new OpenFileDialog
+            {
+                Title = title,
+                Filter = filter
+            };
+            if (!string.IsNullOrWhiteSpace(initialDirectory) && System.IO.Directory.Exists(initialDirectory))
+                dialog.InitialDirectory = initialDirectory;
+            return dialog.ShowDialog() == true ? dialog.FileName : null;
+        }
+
+        public string? ShowFolderBrowserDialog(string description, string? initialDirectory)
+        {
+            var dialog = new OpenFolderDialog
+            {
+                Title = description
+            };
+            if (!string.IsNullOrWhiteSpace(initialDirectory) && System.IO.Directory.Exists(initialDirectory))
+                dialog.InitialDirectory = initialDirectory;
+            return dialog.ShowDialog() == true ? dialog.FolderName : null;
+        }
+
+        public string? ShowSaveFileDialog(string title, string filter, string defaultExt, string? fileName, string? initialDirectory)
+        {
+            var dialog = new SaveFileDialog
+            {
+                Title = title,
+                Filter = filter,
+                DefaultExt = defaultExt
+            };
+            if (fileName != null)
+                dialog.FileName = fileName;
+            if (!string.IsNullOrWhiteSpace(initialDirectory) && System.IO.Directory.Exists(initialDirectory))
+                dialog.InitialDirectory = initialDirectory;
+            return dialog.ShowDialog() == true ? dialog.FileName : null;
+        }
+
+        public void ShowBatchTestDialog()
+        {
+            var window = new Views.BatchTest.BatchTestWindow(
+                VisionService.Instance, _recipeService, _cameraService, this)
+            {
+                Owner = Application.Current.MainWindow
+            };
+            window.ShowDialog();
+        }
+
+        public void ShowSynthDataDialog()
+        {
+            var window = new Views.SynthData.SynthDataWindow(this)
+            {
+                Owner = Application.Current.MainWindow
+            };
+            window.ShowDialog();
+        }
+
+        public void ShowOnnxSettingsDialog()
+        {
+            var window = new OnnxSettingsDialog(this)
+            {
+                Owner = Application.Current.MainWindow
+            };
+            window.ShowDialog();
+        }
+
         public System.Collections.Generic.Dictionary<string, string>? ShowCameraRemapDialog(
             System.Collections.Generic.IReadOnlyList<(string oldId, int stepCount)> unregistered,
             System.Collections.Generic.IReadOnlyList<VMS.Camera.Models.CameraInfo> cameras)
@@ -129,6 +195,9 @@ namespace VMS.VisionSetup.Services
 
             var viewModel = ViewModels.ModelRegistryPickerViewModel.ForClient(
                 () => new VMS.Core.Services.ModelRegistryClient(settings.ServerUrl, settings.LineToken), taskType);
+            // 고른 모델을 그 자리에서 받아 둔다 — 레시피를 다시 열지 않아도 바로 실행할 수 있게 (VS-33)
+            if (VMS.Core.Services.ModelReferenceResolver.Current is { } resolver)
+                viewModel.PrepareReference = (reference, ct) => resolver.PrepareAsync(reference, ct);
             var window = new Views.Dialogs.ModelRegistryPickerWindow(viewModel)
             {
                 Owner = Application.Current.MainWindow
@@ -160,10 +229,13 @@ namespace VMS.VisionSetup.Services
             window.ShowDialog();
         }
 
-        public Recipe? ShowRecipeManagerDialog()
+        public Recipe? ShowRecipeManagerDialog() => ShowRecipeManagerDialog(null);
+
+        public Recipe? ShowRecipeManagerDialog(string? defaultCameraId)
         {
             Recipe? loadedRecipe = null;
-            var window = new RecipeManagerWindow(_recipeService, _cameraService, this, _parameterSyncService);
+            var window = new RecipeManagerWindow(_recipeService, _cameraService, this, _parameterSyncService,
+                defaultCameraId);
             window.Owner = Application.Current.MainWindow;
             window.RecipeLoaded += (s, recipe) =>
             {

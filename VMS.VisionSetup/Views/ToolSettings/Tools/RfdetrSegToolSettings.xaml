@@ -38,7 +38,7 @@
                     TickFrequency="10" ValueFormat="F0"
                     ToolType="RfdetrSegTool" ParameterName="MaxInstances"/>
                 <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,4"
-                           Text="IoU·마스크 임계가 없습니다. DETR 계열은 집합 예측이라 NMS 를 쓰지 않고, 마스크는 로짓이라 0 에서 자릅니다. 질의 수가 수천인 모델도 있어 상한으로 자릅니다."/>
+                           Text="겹침(IoU) · 마스크 임계값은 따로 정하지 않습니다. 모델이 객체마다 결과를 하나씩 내므로 Confidence Threshold 와 Max Instances(한 장에서 남길 최대 개수)만 맞추면 됩니다."/>
             </StackPanel>
         </Expander>
 
@@ -73,7 +73,7 @@
             </StackPanel>
         </Expander>
 
-        <TextBlock Text="Expected ONNX I/O: dets = [1, Q, 4] (정규화 cxcywh), labels = [1, Q, C] (로짓, 마지막 열이 배경), masks = [1, Q, mh, mw] (마스크 로짓). RF-DETR 표준 export — scripts/train_rfdetr_seg.py 로 학습합니다."
+        <TextBlock Text="인스턴스 분할용으로 학습해 ONNX 로 내보낸 모델을 지정합니다."
                    Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,8,0,0"/>
     </StackPanel>
 </UserControl>

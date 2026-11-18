@@ -46,6 +46,7 @@ namespace VMS.VisionSetup.Models
                 {
                     ["ThresholdValue"] = "임계값 (0-255). 이 값보다 작으면 0, 크거나 같으면 MaxValue로 설정.",
                     ["MaxValue"] = "임계값 이상인 픽셀에 적용할 값 (보통 255).",
+                    ["ThresholdType"] = "이진화 방식:\n• Binary: 임계값보다 밝으면 MaxValue, 아니면 0\n• BinaryInv: 반대 — 어두운 대상을 흰색으로 만들 때\n• Trunc: 임계값보다 밝은 값을 임계값으로 자름\n• ToZero: 임계값 이하를 0으로\n• ToZeroInv: 임계값보다 밝은 값을 0으로",
                     ["UseOtsu"] = "Otsu 알고리즘으로 최적 임계값 자동 계산. 바이모달 히스토그램에 효과적.",
                     ["UseAdaptive"] = "적응형 이진화 사용. 조명이 불균일한 이미지에 효과적.",
                     ["BlockSize"] = "적응형 이진화의 블록 크기. 홀수만 가능.",
@@ -110,7 +111,7 @@ namespace VMS.VisionSetup.Models
                 {
                     ["RetrainOriginMode"] = "기존 모델을 [Train Selected] 로 다시 학습할 때 원점(학습 중심·기준 각도·기준 이미지) 처리.\n• UseCurrentImage(기본): 원점을 현재 ROI 의 중심·각도로 다시 계산하고 기준 이미지 PNG 도 현재 장면으로 교체합니다. 부품을 옮겨 놓고 그 위치를 새 기준으로 삼을 때.\n• KeepReference: 원 학습의 원점·각도·기준 이미지를 그대로 두고 템플릿 특징만 갱신합니다. 다른 장면으로 특징을 보강하되 Match Align 마스터 포즈는 유지할 때. ROI 크기를 바꾸면 템플릿 중심 정의가 달라져 미세 오프셋이 생길 수 있습니다.\n[Add Model] 로 만드는 새 모델은 항상 현재 이미지 기준입니다. 재학습 후 연결된 Match Align 이 학습 기준을 쓰면 상태줄에 원점 갱신/유지가 표시되고, 수동 기준을 쓰면 [현재 매칭을 기준으로 등록] 재등록 안내 창이 뜹니다.",
                     ["ReferenceImagePath"] = "기준(원본) 이미지 — [Train] 성공 시 학습에 쓴 전체 장면 이미지가 레시피 폴더 옆 RefImages/에 PNG로 자동 저장됩니다.\n레시피에는 ROI로 잘라낸 템플릿만 남기 때문에, 나중에 ROI를 조정하거나 재학습하려면 [기준 이미지 불러오기] 버튼으로 그 장면을 메인 화면에 다시 띄운 뒤 작업하세요.\n재학습하면 같은 파일을 덮어써 최신 학습 장면이 유지됩니다.",
-                    ["TrainMask"] = "학습 마스크 (don't-care 영역) — VisionPro의 학습 마스크 페인팅에 해당.\n[Edit Mask...]로 선택 모델의 템플릿 위에 제외 영역을 칠합니다 (모델별 별도 저장):\n• 브러시: 본체 윤곽에 붙는 반사·가변 각인을 정밀하게\n• 사각형: 그림자·배경 무늬처럼 넓은 영역을 빠르게\n• 지우개: 잘못 칠한 부분 되돌리기\n저장 시 즉시 재학습되어 특징 이미지의 반투명 빨간 영역으로 확인할 수 있습니다 — 빨간 영역에 초록 점(모델 에지)이 없어야 정상.\n편집기의 '엣지 미리보기'(기본 켬)가 학습과 같은 조건의 에지를 겹쳐 보여줍니다 — 초록=학습에 남는 에지, 주황=마스크로 제외되는 에지. 객체 윤곽의 초록 선이 주황으로 바뀌면 경계까지 과칠된 것이니 해제(UnMask) 브러시로 윤곽을 되돌리세요 (객체-그림자 경계는 객체 자신의 실루엣이라 남기는 것이 매칭에 유리).\n마스크는 여유 있게 크게 잡는 것이 안전합니다 — 에지가 남으면 객체 이동/회전 시 중심이 끌려갑니다.\n학습 ROI 크기를 바꾸고 재학습하면 크기가 안 맞는 마스크는 적용되지 않으니 다시 칠해주세요. [Clear Mask]로 해제.",
+                    ["TrainMask"] = "학습 마스크 (don't-care 영역) — 학습에서 뺄 영역을 칠해 둡니다.\n[Edit Mask...]로 선택 모델의 템플릿 위에 제외 영역을 칠합니다 (모델별 별도 저장):\n• 브러시: 본체 윤곽에 붙는 반사·가변 각인을 정밀하게\n• 사각형: 그림자·배경 무늬처럼 넓은 영역을 빠르게\n• 지우개: 잘못 칠한 부분 되돌리기\n저장 시 즉시 재학습되어 특징 이미지의 반투명 빨간 영역으로 확인할 수 있습니다 — 빨간 영역에 초록 점(모델 에지)이 없어야 정상.\n편집기의 '엣지 미리보기'(기본 켬)가 학습과 같은 조건의 에지를 겹쳐 보여줍니다 — 초록=학습에 남는 에지, 주황=마스크로 제외되는 에지. 객체 윤곽의 초록 선이 주황으로 바뀌면 경계까지 과칠된 것이니 해제(UnMask) 브러시로 윤곽을 되돌리세요 (객체-그림자 경계는 객체 자신의 실루엣이라 남기는 것이 매칭에 유리).\n마스크는 여유 있게 크게 잡는 것이 안전합니다 — 에지가 남으면 객체 이동/회전 시 중심이 끌려갑니다.\n학습 ROI 크기를 바꾸고 재학습하면 크기가 안 맞는 마스크는 적용되지 않으니 다시 칠해주세요. [Clear Mask]로 해제.",
                     ["안정특징정제"] = "[안정 특징 정제 (샘플 이미지)...] — 같은 대상이 찍힌 현장 이미지 여러 장(2장 이상 권장)을 선택하면, 각 이미지에서 패턴을 찾아 학습 에지 하나하나가 실제로 일관되게 나타나는지 검증합니다.\n이미지마다 흔들리는 에지(그림자 외곽·정반사·가변 각인)는 자동으로 학습 마스크에 추가되어 재학습됩니다 — 수작업 마스킹 없이 안정적인 특징만 남습니다.\n객체 자신의 윤곽(그림자와 맞닿은 경계 포함)은 객체와 함께 움직여 매 이미지 일치하므로 유지됩니다.\n결과는 기존 마스크와 합쳐지며 [Edit Mask...]에서 확인/수정할 수 있습니다. 조명·구도가 실제 운전 조건과 같은 샘플을 쓰세요.",
                     ["CannyLow"] = "Canny 에지 검출의 낮은 임계값. 약한 에지 연결에 사용됩니다. 낮출수록 더 많은 에지가 검출됩니다.",
                     ["CannyHigh"] = "Canny 에지 검출의 높은 임계값. 강한 에지 판정에 사용됩니다. 높일수록 확실한 에지만 검출됩니다.",
@@ -245,7 +246,7 @@ namespace VMS.VisionSetup.Models
                     ["ConfidenceDistanceMm"] = "Confidence(신뢰도) 판정 거리 (mm). 정합 후 이 거리 이내로 기준에 붙은 점을 '맞은 점'으로 집계.\n• 표면 정밀도 좋은 부품: 0.5~1.0\n• 일반: 1.0 (기본)\n• 거친 스캔: 2.0~5.0",
                     ["MaxIterations"] = "ICP 반복 최대 횟수. 수렴 안 되어도 이 횟수에서 중단.\n• 20~30: 빠름, 거친 정합\n• 50: 기본 (균형)\n• 100~200: 정밀, 느림",
                     ["Tolerance"] = "수렴 임계 (mm). 반복 간 변환 변화량이 이 값보다 작으면 수렴 판정 후 종료.\n• 0.001~0.005: 매우 정밀\n• 0.01: 기본\n• 0.05~0.1: 빠른 수렴, 정밀도 ↓",
-                    ["ApplyTransformToSource"] = "true: 산출된 변환을 Source에 적용 후 VisionService.CurrentPointCloud 갱신 (후속 도구가 정합된 점군 사용).\nfalse: 변환 행렬만 산출, Source는 그대로 유지.",
+                    ["ApplyTransformToSource"] = "true: 산출된 변환을 Source에 적용하고 현재 점군을 정합된 점군으로 바꿉니다 (후속 도구가 정합된 점군 사용).\nfalse: 변환 행렬만 산출, Source는 그대로 유지.",
                     ["EnableJudgment"] = "정합 품질 판정 사용. 켜면 Confidence 가 Min Confidence 미만일 때 NG.\n꺼 두면 정합이 틀려도 성공(OK)으로 끝납니다 — 현장에서 Confidence 0.13 인 실패 정합이 OK 로 표시된 적이 있습니다.",
                     ["MinConfidence"] = "Confidence 하한 (0~1). 정합 후 Confidence Distance 이내로 기준에 붙은 점의 비율이 이 값보다 작으면 정합 실패.\n• 0.3: 현장 3D 카메라(측정 잡음 수 mm) 기준 — 제대로 맞으면 0.65 이상, 실패하면 0.3 아래\n• 0.5: 기본\n• 0.8~0.9: 정밀 스캔"
                 }
@@ -280,9 +281,9 @@ namespace VMS.VisionSetup.Models
                     ["MinPoints"] = "클러스터 최소 점 수. 이하면 노이즈로 간주하고 무시.\n• 20~50: 작은 객체 검출\n• 100: 기본\n• 500+: 큰 객체만",
                     ["MaxPoints"] = "클러스터 최대 점 수. 이상이면 배경/큰 덩어리로 간주하고 무시.\n• 점군 전체 크기 - 1 (큰 값): 사실상 제한 없음\n• 점군의 50%: 배경 제외",
                     ["MaxReportedClusters"] = "결과 Data에 노출할 상위 클러스터 수 (실제로는 모두 처리, 표시 제한만).",
-                    ["OutputMode"] = "결과 처리 모드:\n• LargestOnly: VisionService.CurrentPointCloud를 가장 큰 클러스터로 교체 (객체 분리용)\n• AllMerged: 활성 클러스터들을 모두 합산 (작은 노이즈 제거)\n• KeepOriginal: CurrentPointCloud 유지, 메트릭만",
-                    ["ScaleMode"] = "치수 환산 방식:\n• Manual: 아래 XyScale 값 사용 (기본, 기존 호환)\n• AutoFromCamera (권장): 카메라 depth 내부 파라미터(fx/fy)와 덩어리의 실측 높이 Z로 mm/px = Z/fx 를 자동 계산 — 작동 거리가 바뀌어도 정확. Mech-Mind grab 점군에서만 가능하며, .vpc 로드 등 카메라 정보가 없으면 XyScale로 폴백(메시지에 ⚠ 표시).",
-                    ["XyScale"] = "Manual 모드의 치수(SizeX/Y, Length/Width) X/Y 환산 배율 (mm/pixel). 3D 카메라 grab 점군은 X/Y가 픽셀 단위라(Z만 mm) 실측 mm 치수가 필요하면 mm/pixel을 입력.\n• 1.0: 원 단위 그대로 (기본)\n산출 절차: docs/3d_dimension_calibration_guide.md (기지 치수 물체 1회 측정).\n※ CenterX/Y에는 적용되지 않음 (기존 레시피 호환).",
+                    ["OutputMode"] = "결과 처리 모드:\n• LargestOnly: 현재 점군을 가장 큰 클러스터로 교체 (객체 분리용)\n• AllMerged: 활성 클러스터들을 모두 합산 (작은 노이즈 제거)\n• KeepOriginal: 현재 점군은 그대로 두고 측정값만 계산",
+                    ["ScaleMode"] = "치수 환산 방식:\n• Manual: 아래 XyScale 값 사용 (기본, 기존 호환)\n• AutoFromCamera (권장): 카메라 depth 내부 파라미터(fx/fy)와 덩어리의 실측 높이 Z로 mm/px = Z/fx 를 자동 계산 — 작동 거리가 바뀌어도 정확. 카메라에서 바로 받은 점군이나 카메라 정보가 함께 저장된 .vpc 에서 가능하며, 카메라 정보가 없으면 XyScale로 폴백(메시지에 ⚠ 표시).",
+                    ["XyScale"] = "Manual 모드의 치수(SizeX/Y, Length/Width) X/Y 환산 배율 (mm/pixel). 3D 카메라 grab 점군은 X/Y가 픽셀 단위라(Z만 mm) 실측 mm 치수가 필요하면 mm/pixel을 입력.\n• 1.0: 원 단위 그대로 (기본)\n구하는 법: 치수를 아는 물체를 한 번 측정해 실제 치수(mm) ÷ 측정된 픽셀 수로 계산합니다.\n※ CenterX/Y에는 적용되지 않음 (기존 레시피 호환).",
                     ["EnableJudgment"] = "판정 사용. 켜면 아래 개수·치수 판정 결과로 OK/NG 를 냅니다.\n꺼 두면 덩어리를 하나라도 찾으면 성공입니다 (개수가 모자라거나 치수가 틀려도 OK).",
                     ["UseCountJudgment"] = "개수 판정. 찾은 덩어리 수를 Count Mode 로 판정합니다.\n켜 두면 덩어리가 0개여도 판정합니다 — Count Mode=LessOrEqual, Expected Count=0 이면 '이물 없음' 검사.",
                     ["CountMode"] = "개수 판정 방식:\n• Equal: 정확히 Expected Count 개\n• GreaterOrEqual: Expected Count 개 이상\n• LessOrEqual: Expected Count 개 이하\n• Range: Expected Count ~ Expected Count Max 개",
@@ -547,7 +548,7 @@ namespace VMS.VisionSetup.Models
                     // Segmentation
                     ["UseInternalThreshold"] = "내부 이진화 사용 여부. 활성화하면 ThresholdValue로 자체 이진화를 수행합니다. 비활성화 시 입력 이미지가 이미 이진화되어 있어야 합니다.",
                     ["ThresholdValue"] = "내부 이진화 임계값 (0-255). 이 값을 기준으로 픽셀을 흑/백으로 분류합니다.\n• 낮은 값: 더 많은 영역이 흰색(객체)으로 분류\n• 높은 값: 밝은 영역만 흰색으로 분류",
-                    ["SegmentationPolarity"] = "검출 극성 선택:\n• LightOnDark: 어두운 배경 위의 밝은 객체 검출 (Binary)\n• DarkOnLight: 밝은 배경 위의 어두운 객체 검출 (BinaryInv)\n\nCognex VisionPro의 Polarity 설정과 동일한 개념입니다.",
+                    ["SegmentationPolarity"] = "검출 극성 선택:\n• LightOnDark: 어두운 배경 위의 밝은 객체 검출 (Binary)\n• DarkOnLight: 밝은 배경 위의 어두운 객체 검출 (BinaryInv)",
 
                     // Area Filter
                     ["MinArea"] = "최소 블롭 면적 (픽셀²). 이 값보다 작은 블롭은 필터링됩니다.\n• 노이즈 제거에 유용 (예: 100 이상으로 설정)\n• 기본값: 100",
@@ -607,8 +608,9 @@ namespace VMS.VisionSetup.Models
                     ["Mode"] = "캘리퍼 동작 모드:\n• SingleEdge: 단일 엣지 검출 — 1개의 엣지 위치 반환\n• EdgePair: 엣지 쌍 검출 — 반대 극성의 두 엣지 사이 폭(Width) 측정",
                     ["MaxEdges"] = "최대 검출 엣지 수. 이 수를 초과하는 엣지 후보는 Score 순으로 잘립니다.\n• EdgePair 모드에서는 쌍 조합의 기반이 되므로 충분히 크게 설정",
                     ["ScorerMode"] = "엣지 점수 산정 모드. 여러 엣지 후보 중 최적을 선정하는 가중치 프리셋:\n• MaxContrast: 대비(밝기 차이)가 가장 큰 엣지 우선\n• Closest: 검색 라인 중앙에 가장 가까운 엣지 우선\n• BestOverall: 대비 + 위치 + 극성 종합 평가\n• Custom: 가중치를 수동 설정",
-                    ["SelectionMode"] = "최종 엣지 선택 방식 (Cognex 호환):\n• Best: Score가 가장 높은 엣지 선택\n• First: 검색 시작점에서 가장 가까운 엣지 선택\n• Last: 검색 시작점에서 가장 먼 엣지 선택\n\nFirst/Last는 밀집된 패턴에서 특정 위치의 엣지만 선택할 때 유용합니다.",
-                    ["ExpectedWidth"] = "예상 폭 (EdgePair 모드에서 사용). 엣지 쌍 사이 거리가 이 값에 가까운 쌍이 우선 선택됩니다.",
+                    ["SelectionMode"] = "최종 엣지 선택 방식:\n• Best: Score가 가장 높은 엣지 선택\n• First: 검색 시작점에서 가장 가까운 엣지 선택\n• Last: 검색 시작점에서 가장 먼 엣지 선택\n\nFirst/Last는 밀집된 패턴에서 특정 위치의 엣지만 선택할 때 유용합니다.",
+                    ["ExpectedWidth"] = "예상 폭 (EdgePair 모드에서 사용, 픽셀). 엣지 쌍 사이 거리가 이 값에 가까운 쌍이 우선 선택됩니다. Web 파라미터에 연결하면 기대값을 Web 에서 관리할 수 있습니다.",
+                    ["WidthTolerance"] = "예상 폭 허용 오차 (±픽셀, EdgePair 모드). 엣지 쌍 사이 거리가 예상 폭 ± 이 값 안인 쌍만 채택합니다 — 밖이면 \"Edge Pair를 찾을 수 없습니다\" 로 실패합니다.",
                     ["ProjectionMode"] = "프로파일 투영 방식:\n• Uniform: 균일 평균 — 검색 폭 내 모든 픽셀을 동일 가중치로 평균\n• Gaussian: 가우시안 가중 평균 — 중심선에 가까운 픽셀에 높은 가중치\n\nGaussian 모드는 엣지 양 끝단의 노이즈 영향을 줄여줍니다.",
                     ["UseGaussianFilter"] = "가우시안 1D 필터 사용 여부.\n• 활성화: 가우시안 평활화 + 가우시안 미분 커널 적용 (정밀도 향상)\n• 비활성화: 기존 이동 평균 미분 필터 사용 (빠름)\n\n고정밀 측정에는 활성화를 권장합니다.",
                     ["GaussianSigma"] = "가우시안 필터의 표준편차 (σ). Gaussian Filter 활성화 시 사용됩니다.\n• 작을수록 (0.3~1.0): 날카로운 엣지에 민감\n• 클수록 (2.0~5.0): 넓은 범위 평활화, 노이즈에 강함\n• 권장: 1.0~2.0",
@@ -772,6 +774,14 @@ namespace VMS.VisionSetup.Models
                     ["ConfidenceThreshold"] = "검출 신뢰도 임계값 (0~1). 이 값 이상의 신뢰도를 가진 객체만 검출됩니다.\n• 낮은 값 (0.25): 많은 객체 검출, 오검출 증가\n• 높은 값 (0.7): 확실한 객체만 검출",
                     ["IouThreshold"] = "NMS IoU 임계값 (0~1). 겹치는 검출 박스를 제거하는 기준입니다.\n• 낮은 값 (0.3): 강한 중복 제거\n• 높은 값 (0.7): 약한 중복 제거 (밀집 객체에 적합)",
                     ["ClassNamesText"] = "클래스 이름 목록 (콤마 구분).\n학습 시 사용한 클래스 순서대로 입력합니다.\n예: good,defect,crack",
+                    ["NgClassesText"] =
+                        "**하나라도 검출되면 NG** 로 볼 클래스를 고릅니다 (여러 개 가능 — 예: scratch, crack).\n\n" +
+                        "• 지정하면: 고른 클래스가 한 건도 검출되지 않으면 OK, 한 건이라도 검출되면 NG 입니다. 아무것도 검출되지 않아도 OK 입니다. " +
+                        "화면에는 NG 클래스 박스가 빨강, 나머지가 초록으로 그려집니다.\n" +
+                        "• 비워 두면: 무엇이든 하나 이상 검출되면 OK, 하나도 없으면 NG 입니다 — 부품 유무 검사용입니다. " +
+                        "결함 클래스를 검출해도 OK 가 되므로, 결함을 찾는 검사라면 반드시 지정하세요.\n\n" +
+                        "결과 값 NgCount 에 NG 클래스 검출 수가 들어갑니다. " +
+                        "모델을 바꿔 고른 클래스가 Class Names 에 없어지면 도구가 실행되지 않고 다시 고르라고 알립니다.",
                     ["DrawOverlay"] = "검출 결과 오버레이 표시. 바운딩 박스, 클래스 이름, 신뢰도를 이미지 위에 그립니다.",
 
                     // ── 클래스별 임계값 ──
@@ -962,7 +972,7 @@ namespace VMS.VisionSetup.Models
                     ["InnerRadius"] = "내반경 (픽셀). 라벨이 시작되는 안쪽 경계. 0이면 중심부터 펼침.",
                     ["OuterRadius"] = "외반경 (픽셀). 라벨 바깥 경계. InnerRadius보다 커야 함.",
                     ["StartAngleDeg"] = "펼침 시작 각도(°). 0 = 오른쪽(3시), 90 = 위, 180 = 왼쪽, 270 = 아래.\n출력 이미지의 좌측 첫 컬럼이 이 각도에서 시작.",
-                    ["Direction"] = "회전 방향:\n• Clockwise: 시계방향 — 출력 가로축이 시계방향으로 진행\n• Counterclockwise: 반시계방향 (기본, Cognex 동일)",
+                    ["Direction"] = "회전 방향:\n• Clockwise: 시계방향 — 출력 가로축이 시계방향으로 진행\n• Counterclockwise: 반시계방향 (기본)",
                     ["OutputWidth"] = "출력 너비 (px). 0이면 자동: 2π × OuterRadius (둘레 근사).\n후속 도구의 해상도를 고정하려면 명시.",
                     ["OutputHeight"] = "출력 높이 (px). 0이면 자동: OuterRadius − InnerRadius."
                 }

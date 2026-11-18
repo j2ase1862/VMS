@@ -148,6 +148,13 @@ WiX 정의 — 4 Fragment 구성:
 `Version="$(var.BuildVersion)"` 으로 받는다 — Package.wxs 를 수동으로 고칠 일은 없다.
 절차는 [release_manual_procedure.md](release_manual_procedure.md) ① 참조.
 
+**같은 버전 다시 빌드(수정판)** — 버전 표기를 그대로 두고 수정만 다시 배포할 때는 `Directory.Build.props`
+의 `<BuildRevision>` 을 1 올린다. 파일 버전 넷째 자리(예 1.48.1.**2**)로만 들어가 지원 패키지
+`ProductVersion: 1.48.1 (build 2)` 줄과 파일 속성에서 빌드를 구분한다. 화면 · 설치 창 · 제어판 버전은 그대로.
+`Package.wxs` 의 `MajorUpgrade AllowSameVersionUpgrades="yes"` 가 같은 버전 설치본도 지우고 교체하므로
+덮어 설치하면 된다(이 설정 전 판에서는 제품이 두 줄로 등록되고 파일 버전이 같은 DLL 이 안 바뀔 수 있었다).
+새 버전으로 올릴 때는 `<BuildRevision>` 을 0 으로 되돌린다.
+
 ### 6.2 제조사 / 제품명
 `Package.wxs` line 4-5:
 ```xml
@@ -190,7 +197,7 @@ OEM 배포 시 동시 변경 + NOTICE / LICENSE 표기 정책 확인 필요 (gs/
 | `error WIX0103: Unable to load .wixproj` | WiX SDK 미설치 | `dotnet restore` 재실행 (NuGet 으로 자동 복원) |
 | MSI 가 0KB / 빌드는 성공 | VMS 본체 빌드 실패 후 wixproj 가 빈 TargetDir 참조 | 솔루션 전체 빌드부터 다시 시도, 본체 오류 먼저 해결 |
 | `error WIX5051: Files matched 0 files` | `$(var.VMS.TargetDir)` 가 비어있음 | VMS.csproj 가 net8.0-windows7.0 TargetFramework 로 출력했는지 확인 |
-| `error 1316: A network error occurred while attempting to read from C:\\Users\\...` 설치 시점 | 동일 UpgradeCode 의 다른 버전 캐시 충돌 | `msiexec /x {UpgradeCode}` 로 기존 제품 제거 후 재시도 |
+| `error 1316: A network error occurred while attempting to read from C:\\Users\\...` 설치 시점 | 동일 UpgradeCode 의 다른 버전 캐시 충돌 | 기존 제품을 ProductCode 로 제거(§8.3 — UpgradeCode 로 ProductCode 찾기) 후 재시도 |
 | 한글 설치 화면 글자 깨짐 | Codepage / Language 불일치 | Package.wxs 의 `Codepage="949" Language="1042"` 유지 확인 |
 | SmartScreen 차단 (외부 배포) | 미서명 MSI | [gs_msi_code_signing_guide.md](gs/guides/gs_msi_code_signing_guide.md) 절차 적용 |
 | 단축키 생성 안 됨 | RegistryValue KeyPath 누락 | KeyPath="yes" 확인 |
@@ -231,10 +238,18 @@ msiexec /i "VMS-1.4.6.msi" /qb
 # UI 표시 설치
 msiexec /i "VMS-1.4.6.msi"
 
-# 제거 (UpgradeCode 기준)
-$code = "{A70E988A-739F-4CDC-BE08-EBFE03DACA32}"
-msiexec /x $code /qb
+# 제거 — 설치한 것과 같은 MSI 파일이 있으면
+msiexec /x "VMS-1.4.6.msi" /qb
+
+# 제거 — MSI 파일 없이: UpgradeCode 로 설치된 제품의 ProductCode 를 찾아 넘긴다
+#   (/x 는 ProductCode 나 MSI 경로만 받는다. UpgradeCode 를 넘기면 "이 작업은 설치된 제품에만 유효" 오류)
+$upgrade = "{A70E988A-739F-4CDC-BE08-EBFE03DACA32}"
+$wi = New-Object -ComObject WindowsInstaller.Installer
+$products = @($wi.GetType().InvokeMember("RelatedProducts", "GetProperty", $null, $wi, @($upgrade)))
+$products                                   # 보통 하나 — 둘 이상이면 하나씩 확인
+foreach ($pc in $products) { msiexec /x $pc /qb }
 ```
+ProductCode 는 빌드마다 새로 만들어지므로(Package 의 ProductCode 자동) 문서에 고정값을 적지 않는다.
 
 ---
 
@@ -460,7 +475,7 @@ MSI 하나로 VMS + BODA.VMS.Web 서버를 함께 설치하는 구성. 기존 �
 
 | 항목 | 값 |
 |---|---|
-| Feature | `WebServer` ("BODA VMS Web 서버") — 기본 포함, `INSTALLWEB=0` 으로 제외 |
+| Feature | `WebServer` ("BODA VMS Web 서버") — 새 설치는 기본 포함, `INSTALLWEB=0` 으로 제외. **업그레이드(인앱 업데이트 · 같은 버전 교체 포함)는 이전 설치의 구성을 따른다** — 이전 설치에 `WebServiceComp` 가 있으면 포함, 없으면 제외 유지(ComponentSearch, v1.48.1 이하에서 올릴 때도 동작). 명령줄 `INSTALLWEB=0/1` 이 우선. 설치된 PC 에서 같은 MSI 를 다시 실행하면 복구 · 제거만 있으므로(ARPNOMODIFY) 나중에 Web 을 넣으려면 제거 후 재설치 또는 새 버전 MSI 를 전체 UI 로 실행해 체크 |
 | 설치 위치 | `<설치 폴더>\Web\` (신규 `C:\Program Files (x86)\VASIM\BODA VMS\Web\`, 옛 설치본은 `…\BODA Vision System\Web\`) |
 | Windows Service | `BodaVmsWeb` — **demand(수동) 등록 + 미시작** (아래 13.3) |
 | 방화벽 | 인바운드 5292/TCP 규칙 (Firewall.wixext, 제거 시 자동 정리) |
@@ -496,6 +511,11 @@ MSI 는 파일 + 서비스 등록만 한다. Web 앱은 `Jwt:Key`/admin 시드 �
    데이터 폴더(`C:\ProgramData\BODA\VMS`) 생성 → 서비스 **auto 전환 + 시작** → `/health` 응답 확인
 4. 완료 후 `http://localhost:5292` 에서 admin 로그인 확인
 
+- 업그레이드(같은 버전 수정판 포함)도 서비스를 demand 로 다시 등록한다. 설치 전 서비스가 **자동 시작**이었으면
+  MSI 가 `StartServices` 뒤에 지연 자동(`delayed-auto`) 전환 + 시작을 되돌린다(`WebSvcRestoreAutoStart` ·
+  `WebSvcRestoreStart`, 설치 전 값은 `WEBSVCPREVSTART` = 서비스 레지스트리 `Start`). 수동 · 사용 안 함이던
+  서비스는 그대로 둔다. 인앱 업데이트 부트스트래퍼(`UpdateInstallService`)의 복원과 같은 정책이라,
+  릴리스 페이지에서 받은 MSI 를 직접 설치해도 Web 이 꺼진 채 남지 않는다(1.48.1 build 2 부터).
 - 재구성(덮어쓰기)은 거부된다 — 발급된 토큰 무효화 방지. 비밀번호 재설정은 `Reset-AdminPassword` 도구 사용.
 - MSI 제거 시 서비스·파일은 제거되지만 **DB 와 appsettings.Production.json 은 보존**된다
   (MSI 미관리 파일 — 재설치 시 그대로 이어받음).
@@ -563,6 +583,7 @@ Web 을 어디에 두느냐가 곧 구성이다. 두 구성 모두 같은 MSI �
 
 ```
 msiexec /i VMS-<버전>.msi INSTALLWEB=0                  # Web 서버 제외 (검사 전용 PC)
+msiexec /i VMS-<버전>.msi INSTALLWEB=1                  # Web 이 빠진 PC 를 올리면서 Web 추가 (업그레이드 때만 — 기본은 이전 구성 유지)
 ```
 
 ## 15. 관련 문서
@@ -589,6 +610,7 @@ msiexec /i VMS-<버전>.msi INSTALLWEB=0                  # Web 서버 제외 (�
 | v1.3 | 2026-06-04 | §11 초기 admin 비밀번호 설정 절차 추가 (Option C: VMS/Web 양쪽 디폴트 시드 제거, 운영자 명시 입력 필수) |
 | v1.4 | 2026-07-09 | §12 다중 인스턴스 운용(한 PC 두 라인) 절차 추가 — --instance 바로가기 / AppSetup 인스턴스별 구성 / 주의사항 |
 | v1.5 | 2026-08-06 | §13 Web 서버 동봉 추가 — WebServer Feature(payload 스테이징·INSTALLWEB=0) / AppSetup 초기 구성 카드 / 스크립트 설치 마이그레이션 / Web 단독 업데이트 경로 |
+| v1.10 | 2026-11-16 | §8.3 · §7 조용한 제거 명령 정정 — `/x` 에 UpgradeCode 대신 MSI 경로 또는 RelatedProducts 로 찾은 ProductCode |
 | v1.9 | 2026-10-21 | §14 AI 학습 도구 Feature · 인증 빌드(ExcludeAiTools) 제거 — MLOps 로 일원화 |
 | v1.8 | 2026-09-10 | §14 AI 학습 도구 기본 제외 전환(INSTALLAITOOLS 기본값 제거 + 업그레이드 선택 기억 레지스트리 마커 AiToolsMarkerComp + 마커 없던 v1.33 이하 첫 업그레이드용 파일 폴백 AITOOLS_PREVFILE→SetProperty) |
 | v1.7 | 2026-09-08 | §14 AI 학습 도구 Feature(AiTools·INSTALLAITOOLS=0) + GS 인증 제출 빌드(-p:ExcludeAiTools=true → VMS-x.y.z-cert.msi) / 관련 문서는 §15 로 |

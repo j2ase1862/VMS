@@ -169,8 +169,19 @@ namespace VMS.ViewModels
             }
         }
 
-        // 노출/게인 슬라이더 활성 조건 — 스텝 선택 + 유지 모드 해제
-        public bool IsManualExposureEnabled => SelectedStep != null && !Use2DCameraDefault;
+        // 노출/게인 슬라이더 활성 조건 — 스텝 선택 + 유지 모드 해제 + 카메라 설정 권한
+        public bool IsManualExposureEnabled => SelectedStep != null && !Use2DCameraDefault && CanEditCameraSettings;
+
+        /// <summary>
+        /// 시스템 사용자 권한 CameraSettings (Engineer · Admin) — 노출/게인 · 카메라 설정 유지 변경과
+        /// [Save Parameter] 를 막는다. MainViewModel 이 로그인 사용자가 바뀔 때 넣어 준다.
+        /// </summary>
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(SaveSettingsCommand))]
+        private bool _canEditCameraSettings = true;
+
+        partial void OnCanEditCameraSettingsChanged(bool value) =>
+            OnPropertyChanged(nameof(IsManualExposureEnabled));
 
         // 카메라가 실제로 쓰는 현재 노출/게인 (read-back, 지원 카메라만) — 설정 창 열 때 갱신
         [ObservableProperty]
@@ -280,6 +291,13 @@ namespace VMS.ViewModels
         /// to the image upload (null if none).
         /// </summary>
         public event Action<string, bool, BitmapSource?, BitmapSource?, int, string?>? InspectionCompleted;
+
+        /// <summary>
+        /// 작업자가 [Inspect] 버튼으로 돌린 수동 검사가 끝났을 때 (cameraName, ok).
+        /// 수동 검사는 레시피 확인용이라 생산 집계(전체·합격·불합격·수율), 불량 이력, 판정 이미지 저장,
+        /// Web · MLOps 전송, 검사 이력에 넣지 않는다 — 그런 기록은 <see cref="InspectionCompleted"/>(AUTO RUN)만 남긴다.
+        /// </summary>
+        public event Action<string, bool>? ManualInspectionCompleted;
 
         /// <summary>
         /// 마지막 검사의 개별 도구 결과 (AutoProcessService PLC 전송용)
@@ -392,6 +410,16 @@ namespace VMS.ViewModels
             int stepNumber = FindCurrentStep()?.Sequence ?? 0;
             // CurrentImage 는 검사 직후 OverlayImage 로 바뀌어 있다. 원본은 _originalImage (없으면 화면 이미지가 곧 원본).
             InspectionCompleted?.Invoke(Name, ok, CurrentImage, _originalImage ?? CurrentImage, stepNumber, correlationKey);
+        }
+
+        /// <summary>
+        /// 수동 검사 판정 — 판정 배지만 바꾸고 카메라 검사 수와 생산 집계는 그대로 둔다.
+        /// </summary>
+        private void SetManualInspectionResult(bool ok)
+        {
+            InspectionOk = ok;
+            IsInspected = true;
+            ManualInspectionCompleted?.Invoke(Name, ok);
         }
 
         /// <summary>
@@ -802,15 +830,28 @@ namespace VMS.ViewModels
             SelectedViewTab = 0;
         }
 
+        /// <summary>[Inspect] 버튼 — 화면 이미지로 한 번 검사한다. 생산 집계 · 이력에는 넣지 않는다.</summary>
         [RelayCommand]
-        private async Task ManualInspectAsync()
+        private Task ManualInspectAsync() => InspectCurrentImageAsync(countAsProduction: false);
+
+        /// <summary>AUTO RUN 검사 — 판정을 생산 집계 · 불량 이력 · 검사 이력 · 업로드로 보낸다.</summary>
+        public Task InspectForProductionAsync() => InspectCurrentImageAsync(countAsProduction: true);
+
+        private async Task InspectCurrentImageAsync(bool countAsProduction)
         {
+            // 판정 반영 — 생산 검사는 집계 이벤트까지, 수동 검사는 화면 판정만
+            void Report(bool ok, string? correlationKey = null)
+            {
+                if (countAsProduction) SetInspectionResult(ok, correlationKey);
+                else SetManualInspectionResult(ok);
+            }
+
             // 이미지가 없으면 검사 불능 = NG. 과거에는 OK 를 반환해 카메라 미획득
             // 상태에서도 양품 판정이 나갔다 (2026-08-19 현장).
             if (_inspectionService == null || (_originalImage ?? CurrentImage) == null)
             {
                 LastExecutionTimeMs = 0;
-                SetInspectionResult(false);
+                Report(false);
                 ResultMessage = "No image to inspect";
                 return;
             }
@@ -822,7 +863,7 @@ namespace VMS.ViewModels
                 // 검사할 것이 없으면 종전대로 통과시키되, 왜 통과했는지는 남긴다.
                 // 조용한 양품은 "검사가 도는 줄 알았는데 안 돌고 있었다"로 이어진다.
                 LastExecutionTimeMs = 0;
-                SetInspectionResult(true);
+                Report(true);
                 ResultMessage = SelectedStep == null
                     ? "OK (검사할 스텝 없음 — 레시피를 불러오세요)"
                     : $"OK (검사할 도구 없음 — {SelectedStep.DisplayName})";
@@ -835,7 +876,7 @@ namespace VMS.ViewModels
             if (mat == null)
             {
                 LastExecutionTimeMs = 0;
-                SetInspectionResult(false);
+                Report(false);
                 ResultMessage = "Image conversion failed";
                 return;
             }
@@ -847,7 +888,7 @@ namespace VMS.ViewModels
                 : null;
             try
             {
-                var result = await _inspectionService.ExecuteStepAsync(step, mat, cloud);
+                var result = await _inspectionService.ExecuteStepAsync(step, mat, cloud, recordOutcome: countAsProduction);
 
                 // 원본 이미지로 복원 후 오버레이 표시
                 if (result.OverlayImage != null && !result.OverlayImage.Empty())
@@ -861,17 +902,17 @@ namespace VMS.ViewModels
                     CurrentImage = _originalImage;
                 }
 
-                // InspectionCompleted(→ 대시보드 처리 시간 표시)가 SetInspectionResult 안에서
+                // 완료 이벤트(→ 대시보드 처리 시간 표시)가 판정 반영 안에서
                 // 발생하므로 실행 시간을 먼저 반영해야 이번 검사 값이 전달된다
                 LastExecutionTimeMs = result.ExecutionTimeMs;
-                SetInspectionResult(result.Success, result.CorrelationKey);
+                Report(result.Success, result.CorrelationKey);
                 ResultMessage = result.Success ? "OK" : "NG";
                 UpdateToolRunResults(result);
             }
             catch (Exception ex)
             {
                 LastExecutionTimeMs = 0;
-                SetInspectionResult(false);
+                Report(false);
                 ResultMessage = $"Inspection error: {ex.Message}";
             }
             finally
@@ -963,9 +1004,11 @@ namespace VMS.ViewModels
             }
         }
 
-        [RelayCommand]
+        [RelayCommand(CanExecute = nameof(CanEditCameraSettings))]
         private void SaveSettings()
         {
+            if (!CanEditCameraSettings) return;
+
             // 레시피 스텝을 편집 중이면 저장 대상은 레시피다 — 노출/게인이 레시피에
             // 들어 있는데 system_config 에 쓰면 다음 로드 때 레시피 값에 덮여 사라진다.
             if (_currentRecipe != null && SelectedStep != null && _currentRecipe.Steps.Contains(SelectedStep))

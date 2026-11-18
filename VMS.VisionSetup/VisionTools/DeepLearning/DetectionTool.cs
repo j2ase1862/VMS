@@ -68,6 +68,13 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
         [ObservableProperty]
         private string _classNamesText = string.Empty;
 
+        /// <summary>
+        /// NG 클래스 이름 (콤마 구분, 여러 개 가능). 지정하면 "이 클래스가 하나라도 검출되면 NG, 없으면 OK" 로 판정한다.
+        /// 비어 있으면 종전처럼 "무엇이든 하나 이상 검출되면 OK" — 결함 클래스를 검출해도 OK 가 된다.
+        /// </summary>
+        [ObservableProperty]
+        private string _ngClassesText = string.Empty;
+
         [ObservableProperty]
         private bool _drawOverlay = true;
 
@@ -267,9 +274,37 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
             catch { /* 모델 로드 실패 시 무시 */ }
         }
 
-        public string[] ClassNames => string.IsNullOrWhiteSpace(ClassNamesText)
+        public string[] ClassNames => SplitNames(ClassNamesText);
+
+        public string[] NgClasses => SplitNames(NgClassesText);
+
+        private static string[] SplitNames(string text) => string.IsNullOrWhiteSpace(text)
             ? Array.Empty<string>()
-            : ClassNamesText.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+            : text.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
+        /// <summary>
+        /// 검출 한 건이 NG 클래스인지. 클래스 이름은 Class Names 순서(ClassId)로 찾는다.
+        /// </summary>
+        internal static bool IsNgDetection(DetectionResult det, string[] classNames, string[] ngClasses) =>
+            det.ClassId >= 0 && det.ClassId < classNames.Length &&
+            ngClasses.Contains(classNames[det.ClassId], StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// 검출 결과 → 도구 판정.
+        /// • NG 클래스 지정: NG 클래스 검출이 0건이면 OK (아무것도 검출되지 않아도 OK).
+        /// • 지정 없음: 종전대로 하나 이상 검출되면 OK.
+        /// Dot 분석이 켜져 있으면 모든 cluster 가 OK 여야 한다.
+        /// </summary>
+        internal static (bool Success, int NgCount) Judge(
+            IReadOnlyList<DetectionResult> detections, string[] classNames, string[] ngClasses,
+            bool useDotAnalysis, bool allClustersOK)
+        {
+            int ngCount = ngClasses.Length == 0
+                ? 0
+                : detections.Count(d => IsNgDetection(d, classNames, ngClasses));
+            bool successBase = ngClasses.Length > 0 ? ngCount == 0 : detections.Count > 0;
+            return (useDotAnalysis ? successBase && allClustersOK : successBase, ngCount);
+        }
 
         public override VisionResult Execute(Mat inputImage)
         {
@@ -283,6 +318,21 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
                     result.Success = false;
                     result.Message = "모델 경로를 지정하세요.";
                     return result;
+                }
+
+                // NG 클래스 이름이 모델 클래스 목록에 없으면(오타 · 모델 교체) 결함을 놓치고 OK 가 된다 — 추론 전에 막는다
+                var names = ClassNames;
+                var ngClasses = NgClasses;
+                if (ngClasses.Length > 0)
+                {
+                    var unknown = ngClasses.Where(c => !names.Contains(c, StringComparer.OrdinalIgnoreCase)).ToArray();
+                    if (unknown.Length > 0)
+                    {
+                        result.Success = false;
+                        result.Message = $"NG 클래스 '{string.Join("', '", unknown)}' 가 Class Names 에 없습니다 — " +
+                                         "설정의 NG Classes 를 다시 고르세요.";
+                        return result;
+                    }
                 }
 
                 var roiImage = UseROI ? GetROIImage(inputImage) : inputImage;
@@ -337,15 +387,15 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
                     }
                 }
 
-                // Success 판정: Dot 분석이 켜져 있으면 모든 cluster가 OK여야 전체 성공.
-                bool successBase = detections.Count > 0;
-                result.Success = UseDotAnalysis ? (successBase && allClustersOK) : successBase;
+                // Success 판정: NG 클래스 지정 여부에 따라 기준이 다르다 (Judge 참고).
+                var (success, ngCount) = Judge(detections, names, ngClasses, UseDotAnalysis, allClustersOK);
+                result.Success = success;
 
-                string msgSuffix = "";
+                string msgSuffix = ngClasses.Length > 0 ? $" | NG 클래스 {ngCount}개" : "";
                 if (UseDotAnalysis && clusters != null)
                 {
                     int okCount = clusters.Count(c => c.ClusterOK);
-                    msgSuffix = $" | Dot분석 {okCount}/{clusters.Count} OK";
+                    msgSuffix += $" | Dot분석 {okCount}/{clusters.Count} OK";
                 }
                 result.Message = $"{detections.Count}개 객체 검출 ({mode}, EP: {engine.ActiveProvider}){msgSuffix}";
 
@@ -353,12 +403,13 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
                 result.Data["Detections"] = detections;
                 result.Data["ExecutionProvider"] = engine.ActiveProvider;
                 if (UseDotAnalysis) result.Data["AllClustersOK"] = allClustersOK;
+                result.Data["NgCount"] = ngCount;   // NG 클래스 미지정이면 0
 
                 // 오버레이
                 if (DrawOverlay)
                 {
                     var overlay = GetColorOverlayBase(inputImage);
-                    var classNames = ClassNames;
+                    var classNames = names;
                     int roiOffsetX = UseROI ? ROI.X : 0;
                     int roiOffsetY = UseROI ? ROI.Y : 0;
 
@@ -369,10 +420,13 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
                             det.X + roiOffsetX, det.Y + roiOffsetY,
                             det.Width, det.Height);
 
-                        // 박스 색: Dot 분석이 켜져 있으면 pass/fail 색상, 아니면 클래스 기본 색상
+                        // 박스 색: Dot 분석이 켜져 있으면 pass/fail 색상, NG 클래스를 지정했으면 NG 빨강 · 나머지 초록,
+                        // 둘 다 아니면 클래스 기본 색상
                         Scalar color;
                         if (UseDotAnalysis && clusters != null)
                             color = clusters[i].ClusterOK ? new Scalar(0, 255, 0) : new Scalar(0, 0, 255);
+                        else if (ngClasses.Length > 0)
+                            color = IsNgDetection(det, classNames, ngClasses) ? new Scalar(0, 0, 255) : new Scalar(0, 255, 0);
                         else
                             color = GetDetectionColor(det.ClassId);
 
@@ -626,6 +680,7 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
                 ConfidenceThreshold = this.ConfidenceThreshold,
                 IouThreshold = this.IouThreshold,
                 ClassNamesText = this.ClassNamesText,
+                NgClassesText = this.NgClassesText,
                 DrawOverlay = this.DrawOverlay,
                 UseClahe = this.UseClahe,
                 ClaheClipLimit = this.ClaheClipLimit,
@@ -678,7 +733,7 @@ namespace VMS.VisionSetup.VisionTools.DeepLearning
 
         public override List<string> GetAvailableResultKeys()
         {
-            return new List<string> { "Success", "DetectionCount" };
+            return new List<string> { "Success", "DetectionCount", "NgCount" };
         }
 
         private static Scalar GetDetectionColor(int classId)

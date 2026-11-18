@@ -3,6 +3,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using VMS.Camera.Configuration;
@@ -24,8 +26,11 @@ namespace VMS.Core.Services
     /// 검사 때는 캐시에서 꺼내 쓴다. 준비가 안 된 채로 검사에 들어가면 그 도구는 명확한 메시지로 실패한다.
     /// </para>
     /// <para>
-    /// 참조 → 해시 대응은 메모리에 기억해 둔다. <c>@production</c> 은 승격·롤백으로 가리키는 것이 바뀌므로
-    /// 영구히 굳히지 않고, 다음 <see cref="PrepareAsync"/> 에서 다시 물어 본다.
+    /// 참조 → 해시 대응은 메모리에 기억하고, 캐시 폴더의 작은 색인(<c>references.json</c>)에도 남긴다 (VM-40 후속).
+    /// 색인이 없으면 프로세스를 다시 띄운 직후 서버가 꺼져 있을 때, 파일은 캐시에 있는데도 참조를 풀지 못해
+    /// 그 도구가 불합격했다. 같은 PC 의 VMS · VisionSetup 은 같은 캐시 폴더 · 색인을 함께 쓴다.
+    /// <c>@production</c> 은 승격·롤백으로 가리키는 것이 바뀌므로 색인은 "마지막으로 받은 답" 일 뿐이다 —
+    /// 서버에 닿으면 <see cref="PrepareAsync"/> 가 늘 다시 묻고 색인을 갱신한다.
     /// </para>
     /// </summary>
     public sealed class ModelReferenceResolver : IDisposable
@@ -53,6 +58,16 @@ namespace VMS.Core.Services
         private readonly ConcurrentDictionary<string, Guid> _referenceToVersionId = new(StringComparer.OrdinalIgnoreCase);
         private readonly SemaphoreSlim _downloadGate = new(2, 2);
         private ModelRegistryClient? _client;
+
+        /// <summary>캐시 폴더의 참조 색인 파일 이름 — 캐시 정리(Trim)는 *.onnx 만 보므로 지워지지 않는다.</summary>
+        public const string IndexFileName = "references.json";
+
+        private readonly object _indexLock = new();
+        private volatile bool _indexLoaded;
+
+        // 이 프로세스가 실제로 쓴(준비했거나 꺼내 쓴) 참조 — 캐시 정리 보호 목록은 이것만 본다.
+        // 색인의 옛 참조까지 보호하면 색인에 한 번이라도 올라간 파일은 영영 정리되지 않는다.
+        private readonly ConcurrentDictionary<string, byte> _activeReferences = new(StringComparer.OrdinalIgnoreCase);
 
         public ModelReferenceResolver(ModelArtifactCache cache, Func<ModelRegistryClient?> clientFactory)
         {
@@ -104,10 +119,15 @@ namespace VMS.Core.Services
             if (!ModelReference.IsReference(modelPathOrReference)) return modelPathOrReference;
             if (!ModelReference.TryParse(modelPathOrReference, out var reference) || reference is null) return null;
 
+            EnsureIndexLoaded();
             if (_referenceToSha.TryGetValue(reference.ToString(), out var sha))
             {
                 var cached = _cache.TryGet(sha);
-                if (cached is not null) return cached;
+                if (cached is not null)
+                {
+                    _activeReferences.TryAdd(reference.ToString(), 0);
+                    return cached;
+                }
                 // 캐시에서 사라졌다면 기억도 지운다 — 다음 준비 때 다시 받는다
                 _referenceToSha.TryRemove(reference.ToString(), out _);
                 _referenceToVersionId.TryRemove(reference.ToString(), out _);
@@ -129,6 +149,7 @@ namespace VMS.Core.Services
             if (!ModelReference.IsReference(modelPathOrReference)) return null;
             if (!ModelReference.TryParse(modelPathOrReference, out var reference) || reference is null) return null;
 
+            EnsureIndexLoaded();
             return _referenceToVersionId.TryGetValue(reference.ToString(), out var id) ? id : null;
         }
 
@@ -171,6 +192,8 @@ namespace VMS.Core.Services
                 var path = await client.DownloadAsync(resolved, _cache, ct).ConfigureAwait(false);
                 _referenceToSha[reference.ToString()] = resolved.Sha256;
                 _referenceToVersionId[reference.ToString()] = resolved.ModelVersionId;
+                _activeReferences.TryAdd(reference.ToString(), 0);
+                SaveIndexEntry(reference.ToString(), resolved.Sha256, resolved.ModelVersionId);
                 return path;
             }
             finally { _downloadGate.Release(); }
@@ -205,12 +228,110 @@ namespace VMS.Core.Services
         public IReadOnlyCollection<string> InUsePaths()
         {
             var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var sha in _referenceToSha.Values)
+            foreach (var reference in _activeReferences.Keys)
             {
+                if (!_referenceToSha.TryGetValue(reference, out var sha)) continue;
                 var path = _cache.TryGet(sha);
                 if (path is not null) paths.Add(path);
             }
             return paths;
+        }
+
+        // ─── 참조 색인 (캐시 폴더의 references.json) ──────────────────
+
+        private sealed class IndexEntry
+        {
+            [JsonPropertyName("sha256")] public string Sha256 { get; set; } = string.Empty;
+            [JsonPropertyName("modelVersionId")] public Guid ModelVersionId { get; set; }
+            [JsonPropertyName("resolvedAtUtc")] public DateTime ResolvedAtUtc { get; set; }
+        }
+
+        private string IndexPath => Path.Combine(_cache.Root, IndexFileName);
+
+        /// <summary>
+        /// 색인을 처음 한 번 메모리로 올린다. 파일이 캐시에 남아 있는 항목만 — 정리로 지워진 파일은 버린다.
+        /// 이미 이 프로세스가 푼 참조(메모리)가 있으면 그쪽이 이긴다.
+        /// </summary>
+        private void EnsureIndexLoaded()
+        {
+            if (_indexLoaded) return;
+            lock (_indexLock)
+            {
+                if (_indexLoaded) return;
+                foreach (var pair in ReadIndex())
+                {
+                    if (string.IsNullOrWhiteSpace(pair.Value.Sha256)) continue;
+                    try { if (_cache.TryGet(pair.Value.Sha256) is null) continue; }
+                    catch (ArgumentException) { continue; }   // 망가진 해시
+                    _referenceToSha.TryAdd(pair.Key, pair.Value.Sha256);
+                    if (pair.Value.ModelVersionId != Guid.Empty)
+                        _referenceToVersionId.TryAdd(pair.Key, pair.Value.ModelVersionId);
+                }
+                _indexLoaded = true;
+            }
+        }
+
+        private Dictionary<string, IndexEntry> ReadIndex()
+        {
+            try
+            {
+                if (!File.Exists(IndexPath)) return new(StringComparer.OrdinalIgnoreCase);
+                using var stream = new FileStream(IndexPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                var data = JsonSerializer.Deserialize<Dictionary<string, IndexEntry>>(stream);
+                return data is null
+                    ? new(StringComparer.OrdinalIgnoreCase)
+                    : new Dictionary<string, IndexEntry>(data, StringComparer.OrdinalIgnoreCase);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+            {
+                // 색인이 깨졌거나 남이 쓰는 중 — 없는 것으로 본다. 다음 준비가 다시 쓴다.
+                Debug.WriteLine($"[ModelReference] 참조 색인을 읽지 못했습니다: {ex.Message}");
+                return new(StringComparer.OrdinalIgnoreCase);
+            }
+        }
+
+        /// <summary>
+        /// 한 참조의 답을 색인에 더한다 — 읽고 합쳐서 통째로 바꿔 쓴다(다른 프로세스가 쓴 항목을 지우지 않게).
+        /// 실패해도 검사에는 지장이 없다(메모리 대응은 이미 있다) — 남기고 넘어간다.
+        /// </summary>
+        private void SaveIndexEntry(string reference, string sha256, Guid modelVersionId)
+        {
+            lock (_indexLock)
+            {
+                for (int attempt = 0; attempt < 5; attempt++)
+                {
+                    var temp = IndexPath + "." + Guid.NewGuid().ToString("N") + ".tmp";
+                    try
+                    {
+                        var entries = ReadIndex();
+                        entries[reference] = new IndexEntry
+                        {
+                            Sha256 = sha256,
+                            ModelVersionId = modelVersionId,
+                            ResolvedAtUtc = DateTime.UtcNow
+                        };
+
+                        // 캐시에서 이미 지워진 파일을 가리키는 항목은 함께 정리한다
+                        var pruned = new Dictionary<string, IndexEntry>(StringComparer.OrdinalIgnoreCase);
+                        foreach (var pair in entries)
+                        {
+                            try { if (_cache.TryGet(pair.Value.Sha256) is not null) pruned[pair.Key] = pair.Value; }
+                            catch (ArgumentException) { }
+                        }
+
+                        Directory.CreateDirectory(_cache.Root);
+                        File.WriteAllText(temp, JsonSerializer.Serialize(pruned, new JsonSerializerOptions { WriteIndented = true }));
+                        File.Move(temp, IndexPath, overwrite: true);
+                        return;
+                    }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                    {
+                        try { if (File.Exists(temp)) File.Delete(temp); } catch { }
+                        Debug.WriteLine($"[ModelReference] 참조 색인 쓰기 재시도 {attempt + 1}: {ex.Message}");
+                        Thread.Sleep(30 * (attempt + 1));
+                    }
+                }
+            }
         }
 
         /// <summary>참조가 아직 준비되지 않았을 때 사람에게 보여 줄 문장.</summary>

@@ -20,6 +20,7 @@ namespace VMS.Services
 
         private readonly string _connectionString;
         private readonly string _dbPath;
+        private readonly IAuditLogger _audit;
 
         public User? CurrentUser { get; private set; }
         public bool IsLoggedIn => CurrentUser != null;
@@ -33,9 +34,11 @@ namespace VMS.Services
         /// 임의 디렉토리(DB 파일 위치)로 별도 인스턴스를 만들 수 있는 테스트 친화 ctor.
         /// internal — VMS.Tests 통합 테스트에서만 호출. 운영 코드는
         /// 반드시 <see cref="Instance"/> 싱글톤 사용.
+        /// <paramref name="audit"/> 를 주면 감사 기록을 그쪽으로 보낸다(없으면 <see cref="AuditLogger.Instance"/>).
         /// </summary>
-        internal UserService(string dbFolder)
+        internal UserService(string dbFolder, IAuditLogger? audit = null)
         {
+            _audit = audit ?? AuditLogger.Instance;
             Directory.CreateDirectory(dbFolder);
 
             _dbPath = Path.Combine(dbFolder, "BodaVision.db");
@@ -168,7 +171,7 @@ namespace VMS.Services
             catch (ArgumentException ex)
             {
                 Debug.WriteLine($"[UserService] Invalid auth input: {ex.Message}");
-                AuditLogger.Instance.Log(
+                _audit.Log(
                     AuditCategory.Authentication, "UserLogin", AuditOutcome.Denied,
                     userName: username, source: nameof(UserService),
                     details: $"Invalid input: {ex.Message}");
@@ -185,7 +188,7 @@ namespace VMS.Services
             using var reader = cmd.ExecuteReader();
             if (!reader.Read())
             {
-                AuditLogger.Instance.Log(
+                _audit.Log(
                     AuditCategory.Authentication, "UserLogin", AuditOutcome.Failure,
                     userName: username, source: nameof(UserService),
                     details: "User not found");
@@ -195,7 +198,7 @@ namespace VMS.Services
             var hash = reader.GetString(reader.GetOrdinal("PasswordHash"));
             if (!BCrypt.Net.BCrypt.Verify(password, hash))
             {
-                AuditLogger.Instance.Log(
+                _audit.Log(
                     AuditCategory.Authentication, "UserLogin", AuditOutcome.Denied,
                     userName: username, source: nameof(UserService),
                     details: "Password mismatch");
@@ -222,7 +225,7 @@ namespace VMS.Services
             var loginDetails = CurrentUser.IsLocalFallback
                 ? $"Grade={CurrentUser.Grade}, IsLocalFallback=true (restricted permissions apply)"
                 : $"Grade={CurrentUser.Grade}";
-            AuditLogger.Instance.Log(
+            _audit.Log(
                 AuditCategory.Authentication, "UserLogin", AuditOutcome.Success,
                 userName: username, source: nameof(UserService),
                 details: loginDetails);
@@ -235,7 +238,7 @@ namespace VMS.Services
             CurrentUser = null;
             if (!string.IsNullOrEmpty(loggedOutUser))
             {
-                AuditLogger.Instance.Log(
+                _audit.Log(
                     AuditCategory.Authentication, "UserLogout", AuditOutcome.Success,
                     userName: loggedOutUser, source: nameof(UserService));
             }
@@ -256,7 +259,7 @@ namespace VMS.Services
             }
             catch (ArgumentException ex)
             {
-                AuditLogger.Instance.Log(
+                _audit.Log(
                     AuditCategory.Authentication, "UserLogin", AuditOutcome.Denied,
                     userName: username, source: nameof(UserService),
                     details: $"Invalid input: {ex.Message}");
@@ -279,21 +282,21 @@ namespace VMS.Services
                         LastLoginAt = DateTime.UtcNow,
                         IsLocalFallback = false  // Web 인증 — 명시적으로 비폴백 (전체 권한 매핑된 Grade 기준)
                     };
-                    AuditLogger.Instance.Log(
+                    _audit.Log(
                         AuditCategory.Authentication, "UserLogin", AuditOutcome.Success,
                         userName: CurrentUser.Username, source: nameof(UserService),
                         details: $"Web SSO ok, Role={result.Role}, Grade={CurrentUser.Grade}");
                     return true;
 
                 case WebAuthResultKind.InvalidCredentials:
-                    AuditLogger.Instance.Log(
+                    _audit.Log(
                         AuditCategory.Authentication, "UserLogin", AuditOutcome.Denied,
                         userName: username, source: nameof(UserService),
                         details: $"Web SSO rejected: {result.ErrorDetail}");
                     return false;
 
                 case WebAuthResultKind.WebUnreachable:
-                    AuditLogger.Instance.Log(
+                    _audit.Log(
                         AuditCategory.Authentication, "UserLogin", AuditOutcome.Failure,
                         userName: username, source: nameof(UserService),
                         details: $"Web unreachable: {result.ErrorDetail} — caller may attempt local fallback");
@@ -301,7 +304,7 @@ namespace VMS.Services
 
                 case WebAuthResultKind.ServerError:
                 default:
-                    AuditLogger.Instance.Log(
+                    _audit.Log(
                         AuditCategory.Authentication, "UserLogin", AuditOutcome.Failure,
                         userName: username, source: nameof(UserService),
                         details: $"Web server error: {result.ErrorDetail}");
@@ -333,29 +336,46 @@ namespace VMS.Services
 
         public bool HasPermission(UserPermission permission)
         {
-            if (CurrentUser == null)
+            var user = CurrentUser;
+            if (user == null)
             {
                 // 비로그인 상태 — 모든 권한 거부. 빈도 높아 audit log 폭증 방지 차원에서 미기록.
                 return false;
             }
 
+            bool granted = IsGranted(permission);
+
+            // 권한 거부만 기록 — 거부는 드물고 보안 의의가 크지만 허용은 빈도 높아 폭증 우려.
+            if (!granted)
+            {
+                _audit.Log(
+                    AuditCategory.Authorization, "PermissionDenied", AuditOutcome.Denied,
+                    userName: user.Username, source: nameof(UserService),
+                    details: user.IsLocalFallback
+                        ? $"Permission={permission}, IsLocalFallback=true — " +
+                          "운영 데이터 변경은 Web SSO 로그인 후 수행하세요"
+                        : $"Permission={permission}, Grade={user.Grade}");
+            }
+            return granted;
+        }
+
+        /// <summary>
+        /// 권한 판정만 한다 — 감사 로그를 남기지 않는다 (VM-22).
+        /// 화면의 버튼 활성 · 표시 여부는 로그인할 때마다 모든 권한을 다시 묻는데, 그때마다
+        /// <see cref="HasPermission"/> 로 물으면 누르지도 않은 버튼마다 PermissionDenied 가 쌓였다
+        /// (Operator 로그인 1번에 11건). 실제 조작 시도 판정은 <see cref="HasPermission"/> 을 쓴다.
+        /// </summary>
+        public bool IsGranted(UserPermission permission)
+        {
+            var user = CurrentUser;
+            if (user == null) return false;
+
             // SSO Migration §2.3: 비상 폴백 세션은 Grade 무관 제한 권한만 허용.
             // 운영 데이터 변경 (ManageUsers / EditRecipe / SystemConfiguration 등) 거부.
-            if (CurrentUser.IsLocalFallback)
-            {
-                bool fallbackGranted = LocalFallbackAllowed.Contains(permission);
-                if (!fallbackGranted)
-                {
-                    AuditLogger.Instance.Log(
-                        AuditCategory.Authorization, "PermissionDenied", AuditOutcome.Denied,
-                        userName: CurrentUser.Username, source: nameof(UserService),
-                        details: $"Permission={permission}, IsLocalFallback=true — " +
-                                 "운영 데이터 변경은 Web SSO 로그인 후 수행하세요");
-                }
-                return fallbackGranted;
-            }
+            if (user.IsLocalFallback)
+                return LocalFallbackAllowed.Contains(permission);
 
-            bool granted = CurrentUser.Grade switch
+            return user.Grade switch
             {
                 UserGrade.Admin => true,
                 UserGrade.Engineer => permission switch
@@ -371,16 +391,6 @@ namespace VMS.Services
                 },
                 _ => false
             };
-
-            // 권한 거부만 기록 — 거부는 드물고 보안 의의가 크지만 허용은 빈도 높아 폭증 우려.
-            if (!granted)
-            {
-                AuditLogger.Instance.Log(
-                    AuditCategory.Authorization, "PermissionDenied", AuditOutcome.Denied,
-                    userName: CurrentUser.Username, source: nameof(UserService),
-                    details: $"Permission={permission}, Grade={CurrentUser.Grade}");
-            }
-            return granted;
         }
 
         /// <summary>
@@ -404,7 +414,7 @@ namespace VMS.Services
             }
             catch (ArgumentException ex)
             {
-                AuditLogger.Instance.Log(
+                _audit.Log(
                     AuditCategory.UserManagement, "SeedInitialAdmin", AuditOutcome.Denied,
                     userName: "admin", source: nameof(UserService),
                     details: $"Invalid input: {ex.Message}");
@@ -433,7 +443,7 @@ namespace VMS.Services
             insertCmd.Parameters.AddWithValue("@created", DateTime.UtcNow.ToString("o"));
             insertCmd.ExecuteNonQuery();
 
-            AuditLogger.Instance.Log(
+            _audit.Log(
                 AuditCategory.UserManagement, "SeedInitialAdmin", AuditOutcome.Success,
                 userName: "admin", source: nameof(UserService),
                 details: "Initial admin account seeded via AppSetup or first-launch flow");
@@ -459,7 +469,7 @@ namespace VMS.Services
             }
             catch (ArgumentException ex)
             {
-                AuditLogger.Instance.Log(
+                _audit.Log(
                     AuditCategory.UserManagement, "SetLocalFallbackPassword", AuditOutcome.Denied,
                     userName: LocalFallbackUsername, source: nameof(UserService),
                     details: $"Invalid input: {ex.Message}");
@@ -478,14 +488,14 @@ namespace VMS.Services
 
             if (affected == 0)
             {
-                AuditLogger.Instance.Log(
+                _audit.Log(
                     AuditCategory.UserManagement, "SetLocalFallbackPassword", AuditOutcome.Failure,
                     userName: LocalFallbackUsername, source: nameof(UserService),
                     details: "local-admin row not found — InitializeDatabase 시드가 실패했을 가능성");
                 return false;
             }
 
-            AuditLogger.Instance.Log(
+            _audit.Log(
                 AuditCategory.UserManagement, "SetLocalFallbackPassword", AuditOutcome.Success,
                 userName: LocalFallbackUsername, source: nameof(UserService),
                 details: "local-admin password updated via AppSetup wizard");
@@ -504,7 +514,7 @@ namespace VMS.Services
             catch (ArgumentException ex)
             {
                 Debug.WriteLine($"[UserService] CreateUser invalid input: {ex.Message}");
-                AuditLogger.Instance.Log(
+                _audit.Log(
                     AuditCategory.UserManagement, "CreateUser", AuditOutcome.Denied,
                     userName: CurrentUser?.Username, source: nameof(UserService),
                     details: $"Target='{username}', Invalid input: {ex.Message}");
@@ -526,7 +536,7 @@ namespace VMS.Services
                 cmd.Parameters.AddWithValue("@grade", (int)grade);
                 cmd.Parameters.AddWithValue("@created", DateTime.UtcNow.ToString("o"));
                 cmd.ExecuteNonQuery();
-                AuditLogger.Instance.Log(
+                _audit.Log(
                     AuditCategory.UserManagement, "CreateUser", AuditOutcome.Success,
                     userName: CurrentUser?.Username, source: nameof(UserService),
                     details: $"Created='{username}', Grade={grade}");
@@ -534,7 +544,7 @@ namespace VMS.Services
             }
             catch (Exception ex)
             {
-                AuditLogger.Instance.Log(
+                _audit.Log(
                     AuditCategory.UserManagement, "CreateUser", AuditOutcome.Failure,
                     userName: CurrentUser?.Username, source: nameof(UserService),
                     details: $"Target='{username}', {ex.GetType().Name}: {ex.Message}");
@@ -544,10 +554,14 @@ namespace VMS.Services
 
         public bool UpdateUser(int userId, string displayName, UserGrade grade)
         {
+            string target = $"UserId={userId}";
             try
             {
                 using var conn = new SqliteConnection(_connectionString);
                 conn.Open();
+
+                var before = FindUserSummary(conn, userId);
+                if (before != null) target = before.Value.Username;
 
                 using var cmd = conn.CreateCommand();
                 cmd.CommandText = @"
@@ -556,29 +570,60 @@ namespace VMS.Services
                 cmd.Parameters.AddWithValue("@display", displayName);
                 cmd.Parameters.AddWithValue("@grade", (int)grade);
                 cmd.Parameters.AddWithValue("@id", userId);
-                return cmd.ExecuteNonQuery() > 0;
+                bool updated = cmd.ExecuteNonQuery() > 0;
+
+                var change = before == null
+                    ? $"Grade={grade}"
+                    : $"Grade={before.Value.Grade}→{grade}" +
+                      (before.Value.DisplayName != displayName ? ", DisplayName 변경" : string.Empty);
+                _audit.Log(
+                    AuditCategory.UserManagement, "UpdateUser",
+                    updated ? AuditOutcome.Success : AuditOutcome.Failure,
+                    userName: CurrentUser?.Username, source: nameof(UserService),
+                    details: updated ? $"Target='{target}', {change}" : $"Target='{target}', 대상 없음");
+                return updated;
             }
-            catch
+            catch (Exception ex)
             {
+                _audit.Log(
+                    AuditCategory.UserManagement, "UpdateUser", AuditOutcome.Failure,
+                    userName: CurrentUser?.Username, source: nameof(UserService),
+                    details: $"Target='{target}', {ex.GetType().Name}: {ex.Message}");
                 return false;
             }
         }
 
         public bool ChangePassword(int userId, string newPassword)
         {
+            string target = $"UserId={userId}";
             try
             {
                 using var conn = new SqliteConnection(_connectionString);
                 conn.Open();
 
+                var before = FindUserSummary(conn, userId);
+                if (before != null) target = before.Value.Username;
+
                 using var cmd = conn.CreateCommand();
                 cmd.CommandText = "UPDATE Users SET PasswordHash = @hash WHERE UserId = @id";
                 cmd.Parameters.AddWithValue("@hash", BCrypt.Net.BCrypt.HashPassword(newPassword));
                 cmd.Parameters.AddWithValue("@id", userId);
-                return cmd.ExecuteNonQuery() > 0;
+                bool changed = cmd.ExecuteNonQuery() > 0;
+
+                // 비밀번호 값 · 해시는 기록하지 않는다.
+                _audit.Log(
+                    AuditCategory.UserManagement, "ChangePassword",
+                    changed ? AuditOutcome.Success : AuditOutcome.Failure,
+                    userName: CurrentUser?.Username, source: nameof(UserService),
+                    details: changed ? $"Target='{target}'" : $"Target='{target}', 대상 없음");
+                return changed;
             }
-            catch
+            catch (Exception ex)
             {
+                _audit.Log(
+                    AuditCategory.UserManagement, "ChangePassword", AuditOutcome.Failure,
+                    userName: CurrentUser?.Username, source: nameof(UserService),
+                    details: $"Target='{target}', {ex.GetType().Name}");
                 return false;
             }
         }
@@ -586,22 +631,58 @@ namespace VMS.Services
         public bool DeleteUser(int userId)
         {
             // Prevent deleting the currently logged-in user
-            if (CurrentUser?.UserId == userId) return false;
+            if (CurrentUser?.UserId == userId)
+            {
+                _audit.Log(
+                    AuditCategory.UserManagement, "DeleteUser", AuditOutcome.Denied,
+                    userName: CurrentUser.Username, source: nameof(UserService),
+                    details: $"Target='{CurrentUser.Username}', 로그인 중인 본인 계정은 삭제할 수 없음");
+                return false;
+            }
 
+            string target = $"UserId={userId}";
             try
             {
                 using var conn = new SqliteConnection(_connectionString);
                 conn.Open();
 
+                var before = FindUserSummary(conn, userId);
+                if (before != null) target = before.Value.Username;
+
                 using var cmd = conn.CreateCommand();
                 cmd.CommandText = "DELETE FROM Users WHERE UserId = @id";
                 cmd.Parameters.AddWithValue("@id", userId);
-                return cmd.ExecuteNonQuery() > 0;
+                bool deleted = cmd.ExecuteNonQuery() > 0;
+
+                _audit.Log(
+                    AuditCategory.UserManagement, "DeleteUser",
+                    deleted ? AuditOutcome.Success : AuditOutcome.Failure,
+                    userName: CurrentUser?.Username, source: nameof(UserService),
+                    details: deleted
+                        ? $"Deleted='{target}', Grade={before?.Grade}"
+                        : $"Target='{target}', 대상 없음");
+                return deleted;
             }
-            catch
+            catch (Exception ex)
             {
+                _audit.Log(
+                    AuditCategory.UserManagement, "DeleteUser", AuditOutcome.Failure,
+                    userName: CurrentUser?.Username, source: nameof(UserService),
+                    details: $"Target='{target}', {ex.GetType().Name}: {ex.Message}");
                 return false;
             }
+        }
+
+        /// <summary>감사 기록용 — 변경 전 사용자 이름 · 표시 이름 · 등급.</summary>
+        private static (string Username, string DisplayName, UserGrade Grade)? FindUserSummary(
+            SqliteConnection conn, int userId)
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT Username, DisplayName, Grade FROM Users WHERE UserId = @id";
+            cmd.Parameters.AddWithValue("@id", userId);
+            using var reader = cmd.ExecuteReader();
+            if (!reader.Read()) return null;
+            return (reader.GetString(0), reader.GetString(1), (UserGrade)reader.GetInt32(2));
         }
 
         public List<User> GetAllUsers()

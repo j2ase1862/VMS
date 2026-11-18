@@ -362,6 +362,13 @@ namespace VMS.VisionSetup.ViewModels
         [ObservableProperty]
         private PointCloudData? _currentPointCloud;
 
+        // Point Cloud 탭(3D 뷰)에 보일 점군 — 불러온 점군(CurrentPointCloud)이 기본이고, 실행 뒤에는
+        // 점군 도구가 바꾼 결과(자른 점군 · 남긴 덩어리 · 편차 색 등)를 보인다 (VS-23).
+        // 입력 점군과 분리해 둔다 — 결과를 CurrentPointCloud 에 넣으면 높이 맵이 그 점군으로 다시 만들어져
+        // 다음 실행의 입력이 바뀐다.
+        [ObservableProperty]
+        private PointCloudData? _displayPointCloud;
+
         // Height Slicing 파라미터
         [ObservableProperty]
         private float _heightBaseline;
@@ -651,10 +658,26 @@ namespace VMS.VisionSetup.ViewModels
             get => _selectedStep;
             set
             {
+                var previous = _selectedStep;
+
+                // 떠나는 스텝의 작업 공간 편집을 그 스텝(메모리)에 남긴다 — 남기지 않으면 다시 돌아왔을 때
+                // 레시피의 옛 값이 올라와 바꾼 값 · Multi-Step Align 기준 등록이 사라졌다 (VS-19, 사용자 결정 11-16).
+                // 파일 저장은 그대로 [Save Recipe] 가 한다.
+                if (previous != null && !ReferenceEquals(previous, value))
+                    SaveWorkspaceToStep();
+
                 if (SetProperty(ref _selectedStep, value))
                 {
+                    // 떠나는 스텝은 작업 공간 도구 수 대신 저장된 도구 수로 되돌린다.
+                    if (previous != null)
+                        previous.WorkspaceToolCount = null;
+
                     if (value != null)
                         LoadStepToWorkspace(value);
+
+                    // 앞 스텝의 실행 결과 행을 지운다 — 남겨 두면 새 스텝을 실행하기 전까지
+                    // 다른 스텝의 판정을 지금 스텝 것으로 오해한다 (VS-32).
+                    ToolRunResults.Clear();
 
                     // 우측 패널 전환: 스텝 선택 → 카메라 파라미터, 도구 선택 → 도구 파라미터
                     ShowCameraSettings = value != null;
@@ -824,6 +847,13 @@ namespace VMS.VisionSetup.ViewModels
             _robotService = robotService;
 
             InitializeToolTree();
+
+            // Steps 표의 Tools 열이 작업 공간에 놓은 · 템플릿으로 만든 도구 수를 바로 따라가게 (VS-08)
+            DroppedTools.CollectionChanged += (_, _) =>
+            {
+                if (_selectedStep != null)
+                    _selectedStep.WorkspaceToolCount = DroppedTools.Count;
+            };
 
             CloseCommand = new RelayCommand(CloseApplication);
             OpenImageFileCommand = new RelayCommand(OpenImageFile);
@@ -1182,7 +1212,7 @@ namespace VMS.VisionSetup.ViewModels
             if (_chatService == null)
             {
                 _dialogService.ShowWarning(
-                    "SLM Chat 서비스가 초기화되지 않았습니다.\nOllama가 설치되어 있는지 확인하세요.",
+                    "SLM Chat 서비스가 초기화되지 않았습니다.\n이 PC 에 로컬 언어 모델 서버가 설치되어 있는지 확인하세요.",
                     "SLM Chat");
                 return;
             }
@@ -1439,6 +1469,7 @@ namespace VMS.VisionSetup.ViewModels
                     StatusMessage += $" [경고] {_visionService.LastPipelineWarning}";
 
                 UpdateToolRunResults();
+                RefreshDisplayPointCloud();
             }
             catch (Exception ex)
             {
@@ -1490,6 +1521,7 @@ namespace VMS.VisionSetup.ViewModels
                     StatusMessage += $" [경고] {_visionService.LastPipelineWarning}";
 
                 UpdateToolRunResults(SelectedTool.VisionTool);
+                RefreshDisplayPointCloud();
             }
             catch (Exception ex)
             {
@@ -1499,6 +1531,15 @@ namespace VMS.VisionSetup.ViewModels
             {
                 IsRunning = false;
             }
+        }
+
+        /// <summary>
+        /// 실행 뒤 3D 뷰 갱신 — 점군 도구가 바꾼 점군이 있으면 그것을, 없으면 불러온 점군을 보인다 (VS-23).
+        /// </summary>
+        private void RefreshDisplayPointCloud()
+        {
+            var processed = _visionService.CurrentPointCloud;
+            DisplayPointCloud = processed is { PointCount: > 0 } ? processed : CurrentPointCloud;
         }
 
         /// <summary>
@@ -1839,19 +1880,15 @@ namespace VMS.VisionSetup.ViewModels
                 ? $"result_{DateTime.Now:yyyyMMdd_HHmmss}.png"
                 : $"original_{DateTime.Now:yyyyMMdd_HHmmss}.png";
 
-            var dlg = new Microsoft.Win32.SaveFileDialog
-            {
-                Title = "이미지 저장",
-                Filter = "PNG (*.png)|*.png|JPEG (*.jpg)|*.jpg|BMP (*.bmp)|*.bmp|TIFF (*.tif)|*.tif",
-                FileName = defaultName,
-                DefaultExt = ".png"
-            };
-            if (dlg.ShowDialog() != true) return;
+            var fileName = _dialogService.ShowSaveFileDialog("이미지 저장",
+                "PNG (*.png)|*.png|JPEG (*.jpg)|*.jpg|BMP (*.bmp)|*.bmp|TIFF (*.tif)|*.tif", ".png",
+                defaultName, null);
+            if (fileName == null) return;
 
             try
             {
-                OpenCvSharp.Cv2.ImWrite(dlg.FileName, mat);
-                StatusMessage = $"저장됨: {dlg.FileName}";
+                OpenCvSharp.Cv2.ImWrite(fileName, mat);
+                StatusMessage = $"저장됨: {fileName}";
             }
             catch (Exception ex)
             {
@@ -2159,7 +2196,31 @@ namespace VMS.VisionSetup.ViewModels
         {
             if (SelectedVisionTool != null && SelectedROI != null)
             {
+                // 도구 자신의 도형을 다시 고른 것(Show ROI · 캔버스에서 도형 클릭)은 보기만 한다 —
+                // 그 도형은 도구 값으로 만든 것이라 되돌려 쓸 것이 없고, 되돌려 쓰면 정수 반올림이나
+                // 오래된 회전 중심 때문에 ROI 가 1px 라도 바뀌어 Fixture 기준(HasFixtureBaseROI)이
+                // 버려지고 레시피가 바뀌었다 (VS-07). 도형을 새로 그리거나 끌어 고친 경우는
+                // OnROICreated · OnROIModified 가 ApplyROIToTool 을 직접 부른다.
+                if (ReferenceEquals(SelectedROI, SelectedVisionTool.AssociatedROIShape))
+                {
+                    FillMissingRotationCenter(SelectedVisionTool, SelectedROI);
+                    return;
+                }
+
                 ApplyROIToTool(SelectedVisionTool, SelectedROI);
+            }
+        }
+
+        /// <summary>
+        /// 회전 중심이 비어 있는(0,0) 옛 레시피만 도형의 중심으로 채운다 — ROI 사각형 · 각도는 건드리지 않으므로
+        /// Fixture 기준이 유지된다. GetAlignedROIImage 는 회전 ROI 의 ROICenter 를 그대로 쓴다.
+        /// </summary>
+        private static void FillMissingRotationCenter(VisionToolBase tool, ROIShape roi)
+        {
+            if (roi is RectangleAffineROI affine && tool.ROICenterX == 0 && tool.ROICenterY == 0)
+            {
+                tool.ROICenterX = affine.CenterX;
+                tool.ROICenterY = affine.CenterY;
             }
         }
 
@@ -3713,15 +3774,18 @@ namespace VMS.VisionSetup.ViewModels
             foreach (var step in robotSteps)
                 recipe.Steps.Remove(step);
 
-            // 웨이포인트별 새 스텝 생성
+            // 웨이포인트별 새 스텝 생성 — 같은 카메라의 기존 스텝 뒤 번호부터 붙인다
+            // (기존 "1-1" 이 있는데 웨이포인트 스텝도 "1-1 Top" 이 되던 문제, VS-03).
             int camIdx = GetCameraDisplayIndex(cameraId);
+            int baseSeq = StepNaming.MaxSequence(recipe, cameraId);
             foreach (var wp in _waypointPlanner.Waypoints)
             {
+                int seq = baseSeq + wp.Index + 1;
                 var step = new InspectionStep
                 {
                     Id = Guid.NewGuid().ToString(),
-                    Name = $"{camIdx}-{wp.Index + 1} {wp.Name}",
-                    Sequence = wp.Index + 1,
+                    Name = $"{camIdx}-{seq} {wp.Name}",
+                    Sequence = seq,
                     CameraId = cameraId,
                     RobotWaypoint = wp,
                     Tools = new List<ToolConfig>()
@@ -3864,6 +3928,7 @@ namespace VMS.VisionSetup.ViewModels
         {
             // 도구가 접근 가능하도록 VisionService 슬롯과 동기화
             VisionService.Instance.CurrentPointCloud = value;
+            DisplayPointCloud = value;
 
             if (value != null && value.Positions.Length > 0)
             {
@@ -3897,6 +3962,7 @@ namespace VMS.VisionSetup.ViewModels
             }
 
             GenerateHeightMapCommand.NotifyCanExecuteChanged();
+            ResetHeightRangeToFullCommand.NotifyCanExecuteChanged();
             SaveHeightSlicingCommand.NotifyCanExecuteChanged();
             SavePointCloudCommand.NotifyCanExecuteChanged();
 
@@ -3992,7 +4058,8 @@ namespace VMS.VisionSetup.ViewModels
                 _recipeService.SaveRecipe(recipe);
             }
 
-            StatusMessage = $"Height Slicing 설정 저장됨: Baseline={HeightBaseline:F1}, 범위=[{HeightLowerLimit:F1}, {HeightUpperLimit:F1}]";
+            StatusMessage = $"Height Slicing 설정 저장됨: Baseline={HeightBaseline:F1}, " +
+                $"높이 맵 범위=[{HeightLowerLimit:F1}, {HeightUpperLimit:F1}], 손잡이 범위=[{DepthRangeMin:F1}, {DepthRangeMax:F1}]";
         }
 
         private void ClearHeightSlicing()
@@ -4038,6 +4105,19 @@ namespace VMS.VisionSetup.ViewModels
             _currentImageIsHeightMap = true;
         }
 
+        /// <summary>
+        /// [전체로] — 높이 맵 하한 · 상한과 Depth Map 손잡이 범위를 점군 전체 Z 범위로 되돌리고 높이 맵을 다시 만든다 (VS-15).
+        /// </summary>
+        [RelayCommand(CanExecute = nameof(CanGenerateHeightMap))]
+        private void ResetHeightRangeToFull()
+        {
+            HeightLowerLimit = PointCloudYMin;
+            HeightUpperLimit = PointCloudYMax;
+            DepthRangeMin = PointCloudYMin;
+            DepthRangeMax = PointCloudYMax;
+            GenerateHeightMap();
+        }
+
         private void GenerateHeightMap()
         {
             // 비격자 점군도 만든다 — 서비스가 정사투영으로 비닝한다. 예전에는 여기서 조용히 끝나
@@ -4067,9 +4147,14 @@ namespace VMS.VisionSetup.ViewModels
                 // float map은 VisionService.CurrentDepthMap32F에 clone 저장됨
                 // metadata.DepthMap32F에도 원본 참조 보관됨 (GetInterpolatedZ용)
 
-                // DepthRange 슬라이더를 HeightLimit 범위로 동기화
-                DepthRangeMin = HeightLowerLimit;
-                DepthRangeMax = HeightUpperLimit;
+                // 손잡이 범위(DepthRange)는 사용자가 고른 값이다 — 높이 맵을 다시 만들어도 지우지 않는다
+                // (VS-15, 사용자 결정 11-16). 아직 범위가 없을 때만 높이 맵 범위로 채운다.
+                // 전체 범위로 되돌리기는 [전체로] (ResetHeightRangeToFull).
+                if (DepthRangeMax <= DepthRangeMin)
+                {
+                    DepthRangeMin = HeightLowerLimit;
+                    DepthRangeMax = HeightUpperLimit;
+                }
 
                 StatusMessage = $"Height Map 생성 완료: {metadata.Width}x{metadata.Height} " +
                     $"(Baseline={HeightBaseline:F1}, Range=[{HeightLowerLimit:F1}, {HeightUpperLimit:F1}])";
@@ -4150,7 +4235,7 @@ namespace VMS.VisionSetup.ViewModels
                 CodeReaderTool t => new CodeReaderToolSettingsViewModel(t),
                 DetectionTool t => new DetectionToolSettingsViewModel(t),
                 ClassifyTool t => new ClassifyToolSettingsViewModel(t),
-                AnomalyTool t => new AnomalyToolSettingsViewModel(t),
+                AnomalyTool t => new AnomalyToolSettingsViewModel(t, _dialogService),
                 EnsembleTool t => new EnsembleToolSettingsViewModel(t),
                 SegmentationTool t => new SegmentationToolSettingsViewModel(t),
                 YoloSegTool t => new YoloSegToolSettingsViewModel(t),
@@ -4159,10 +4244,10 @@ namespace VMS.VisionSetup.ViewModels
                 VisionTools.Color.ColorExtractTool t => new ColorExtractToolSettingsViewModel(t),
                 VisionTools.Color.ColorMatchTool t => new ColorMatchToolSettingsViewModel(t),
                 VisionTools.PointCloud.PointCloudFilterTool t => new PointCloudFilterToolSettingsViewModel(t),
-                VisionTools.PointCloud.PointCloudRegistrationTool t => new PointCloudRegistrationToolSettingsViewModel(t),
+                VisionTools.PointCloud.PointCloudRegistrationTool t => new PointCloudRegistrationToolSettingsViewModel(t, _dialogService),
                 VisionTools.PointCloud.PointCloudClusterTool t => new PointCloudClusterToolSettingsViewModel(t),
                 VisionTools.PointCloud.PointCloudLineFitTool t => new PointCloudLineFitToolSettingsViewModel(t),
-                VisionTools.PointCloud.PointCloudDeviationTool t => new PointCloudDeviationToolSettingsViewModel(t),
+                VisionTools.PointCloud.PointCloudDeviationTool t => new PointCloudDeviationToolSettingsViewModel(t, _dialogService),
                 VisionTools.PointCloud.PointCloudMaskCropTool t => new PointCloudMaskCropToolSettingsViewModel(t),
                 VisionTools.SurfaceAnalysis.PhotometricStereoTool t => new PhotometricStereoToolSettingsViewModel(t),
                 _ => null
@@ -4415,7 +4500,7 @@ namespace VMS.VisionSetup.ViewModels
             {
                 SaveWorkspaceToStep();
                 SaveRobotSettingsToRecipe(currentRecipe);
-                currentRecipe.ModifiedAt = DateTime.Now;
+                currentRecipe.ModifiedAt = DateTime.UtcNow;
                 _recipeService.SaveRecipe(currentRecipe);
                 StatusMessage = $"Recipe saved: {currentRecipe.Name}";
             }
@@ -4427,14 +4512,37 @@ namespace VMS.VisionSetup.ViewModels
             }
         }
 
+        /// <summary>배치 테스트 러너 — 폴더 이미지에 현재 레시피 일괄 적용 → CSV 리포트.</summary>
+        [RelayCommand]
+        private void OpenBatchTest() => _dialogService.ShowBatchTestDialog();
+
+        /// <summary>합성 OCR 데이터 생성기.</summary>
+        [RelayCommand]
+        private void OpenSynthData() => _dialogService.ShowSynthDataDialog();
+
+        /// <summary>추론 엔진 설정.</summary>
+        [RelayCommand]
+        private void OpenOnnxSettings() => _dialogService.ShowOnnxSettingsDialog();
+
         public void OpenRecipeManager()
         {
-            var loadedRecipe = _dialogService.ShowRecipeManagerDialog();
+            var loadedRecipe = _dialogService.ShowRecipeManagerDialog(SelectedCamera?.Id);
             if (loadedRecipe != null)
             {
                 CurrentRecipeName = loadedRecipe.Name;
                 LoadRobotSettingsFromRecipe(loadedRecipe);
                 StatusMessage = $"Recipe loaded: {loadedRecipe.Name}";
+            }
+
+            // 편집기에서 스텝을 더하거나 고쳤을 수 있다 — 지금 레시피의 스텝 이름 · 표를 다시 맞춘다 (VS-05).
+            // 종전에는 창을 닫아도 Steps 표가 그대로라 목록에서 다시 [Load] 해야 보였다.
+            if (_recipeService.CurrentRecipe is { } current)
+            {
+                var keep = SelectedStep;
+                StepNaming.RecomputeNames(current, Cameras);
+                RefreshSteps();
+                if (keep != null && Steps.Contains(keep) && !ReferenceEquals(SelectedStep, keep))
+                    SelectedStep = keep;
             }
         }
 

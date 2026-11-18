@@ -1,3 +1,6 @@
+using System; // 시험 프로젝트(VMS.Core.Tests)가 암시적 using 없이 링크해 컴파일 — 명시
+using System.Collections.Generic;
+using System.Linq;
 using System.IO; // WPF(UseWPF) 는 암시적 using 에서 System.IO 를 제외 — 공용 파일이라 명시
 using System.Text.Json;
 

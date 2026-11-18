@@ -48,6 +48,17 @@ namespace VMS.PLC.Tests
             Assert.Equal(DaskNativeMethods.PCI_7432, DaskNativeMethods.ModelToCardType("PCI-9999"));
         }
 
+        [Theory]
+        [InlineData("PCI-7432", true)]
+        [InlineData("PCI-7433", true)]
+        [InlineData("PCI-7434", true)]
+        [InlineData("PCI-7396", false)]   // VO-03: 문서에는 있었으나 카드 형식이 없다 — 지원 모델 아님
+        [InlineData("", false)]
+        public void KnownModels_AreOnly743x(string model, bool known)
+        {
+            Assert.Equal(known, DaskNativeMethods.IsKnownModel(model));
+        }
+
         [Fact]
         public void OnlyPci7432_IsMarkedFieldVerified()
         {

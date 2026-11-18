@@ -18,6 +18,12 @@ namespace VMS.VisionSetup.Interfaces
         bool LastRunSuccess { get; }
         Mat? LastCompositeOverlay { get; }
 
+        /// <summary>
+        /// 실행이 쓰는 현재 점군 — 점군 도구(Mask Crop · Cluster · Filter · Registration · Deviation)가
+        /// 실행 중 바꾼 결과가 여기 남는다. 3D 뷰가 실행 결과를 보일 때 읽는다.
+        /// </summary>
+        PointCloudData? CurrentPointCloud { get; }
+
         /// <summary>마지막 실행의 파이프라인 경고 (연결 사이클, 이미지 연결 폴백 등). null이면 경고 없음.</summary>
         string? LastPipelineWarning { get; }
 

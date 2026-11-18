@@ -17,9 +17,11 @@ namespace VMS.VisionSetup.Services
     /// </summary>
     public class ParameterApplyService : IParameterApplyService
     {
-        private readonly IParameterSyncService _syncService;
+        private readonly IParameterSyncService? _syncService;
 
-        public ParameterApplyService(IParameterSyncService syncService)
+        /// <param name="syncService">Web 파라미터 동기화 — 단독 모드(Web 없음)면 null. 이때 Web 연동 경로는
+        /// 아무것도 적용하지 않고, 값 사전 경로(SLM 제안 등)만 동작한다.</param>
+        public ParameterApplyService(IParameterSyncService? syncService)
         {
             _syncService = syncService;
         }
@@ -29,6 +31,7 @@ namespace VMS.VisionSetup.Services
         /// </summary>
         public int ApplyParameters(VisionToolBase tool)
         {
+            if (_syncService == null) return 0;
             if (tool.LinkedParamCodes == null || tool.LinkedParamCodes.Count == 0)
                 return 0;
 

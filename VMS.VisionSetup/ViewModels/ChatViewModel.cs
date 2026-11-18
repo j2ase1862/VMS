@@ -127,7 +127,7 @@ namespace VMS.VisionSetup.ViewModels
         private async System.Threading.Tasks.Task ConnectModel()
         {
             IsBusy = true;
-            StatusMessage = "Ollama 연결 중...";
+            StatusMessage = "로컬 언어 모델 서버에 연결 중...";
 
             try
             {
@@ -137,12 +137,14 @@ namespace VMS.VisionSetup.ViewModels
 
                 Messages.Add(new ChatMessage
                 {
-                    Content = $"Ollama '{ModelName}' 모델에 연결되었습니다.\n비전 검사 요구사항을 설명하면 레시피를 생성해 드립니다.",
+                    Content = $"로컬 언어 모델 '{ModelName}' 에 연결되었습니다.\n비전 검사 요구사항을 설명하면 레시피를 생성해 드립니다.",
                     IsUser = false
                 });
             }
             catch (Exception ex)
             {
+                // 서비스가 연결을 내렸으므로 화면도 맞춘다(이전 모델로 계속 보내지 않음).
+                IsModelLoaded = false;
                 StatusMessage = $"연결 실패: {ex.Message}";
             }
             finally

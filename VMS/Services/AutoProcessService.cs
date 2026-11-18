@@ -35,6 +35,10 @@ namespace VMS.Services
         // Single process sequence config (from Recipe or auto-generated)
         private readonly SequenceConfig? _processSequence;
 
+        // 마지막으로 쓴 시퀀스의 내용 — "다시 불러왔습니다" 는 내용이 바뀌었을 때만 남긴다 (VM-07).
+        // 매번 새로 읽은 객체라 참조 비교로는 늘 달라 보였다.
+        private string? _lastSequenceSnapshot;
+
         /// <summary>
         /// 운전 시작 때마다 시퀀스를 다시 읽는 provider. 과거에는 앱 시작 시 1회만 로드해
         /// VisionSetup 에서 시퀀스를 고쳐도 VMS 를 재시작해야 반영됐다.
@@ -103,6 +107,7 @@ namespace VMS.Services
             _recipeChangeByIndexFunc = recipeChangeByIndexFunc;
             _stepChangeFunc = stepChangeFunc;
             _processSequence = processSequence;
+            _lastSequenceSnapshot = SequenceSnapshot(processSequence);
             _logService = logService;
             _ioRegistry = ioRegistry;
         }
@@ -346,6 +351,17 @@ namespace VMS.Services
             return _cameraStates.GetValueOrDefault(cameraId, AutoProcessState.Idle);
         }
 
+        /// <summary>시퀀스 내용 비교용 직렬화본. null 이면 null.</summary>
+        internal static string? SequenceSnapshot(SequenceConfig? config)
+            => config == null ? null : System.Text.Json.JsonSerializer.Serialize(config);
+
+        /// <summary>
+        /// 이전에 쓰던 시퀀스가 있고 내용이 달라졌을 때만 true. 처음 읽는 경우(이전 없음)는 바뀐 것으로 보지 않는다.
+        /// </summary>
+        internal static bool IsSequenceChanged(string? previousSnapshot, string? currentSnapshot)
+            => previousSnapshot != null && currentSnapshot != null
+               && !string.Equals(previousSnapshot, currentSnapshot, StringComparison.Ordinal);
+
         /// <summary>
         /// Run the unified process sequence using a single SequenceEngine.
         /// Uses custom SequenceConfig if available, otherwise generates default from PlcSignalConfiguration.
@@ -355,8 +371,13 @@ namespace VMS.Services
             // 운전 시작 시점에 시퀀스를 다시 읽는다 — VisionSetup 에서 저장한 변경이 VMS 재시작
             // 없이 반영되도록. provider 가 없거나 파일이 없으면 기존 경로(생성자 주입 → 기본 생성).
             var reloaded = _sequenceProvider?.Invoke();
-            if (reloaded != null && _processSequence != null && !ReferenceEquals(reloaded, _processSequence))
-                _logService?.Log("시퀀스를 다시 불러왔습니다.", LogLevel.Info, "AutoProcess");
+            if (reloaded != null)
+            {
+                var snapshot = SequenceSnapshot(reloaded);
+                if (IsSequenceChanged(_lastSequenceSnapshot, snapshot))
+                    _logService?.Log("시퀀스를 다시 불러왔습니다.", LogLevel.Info, "AutoProcess");
+                _lastSequenceSnapshot = snapshot;
+            }
 
             var config = reloaded
                          ?? _processSequence

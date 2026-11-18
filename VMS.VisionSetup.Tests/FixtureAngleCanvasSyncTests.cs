@@ -132,6 +132,119 @@ namespace VMS.VisionSetup.Tests
             }
         }
 
+        // ── VS-07: Show ROI 는 보기만 ─────────────────────────────────────────────
+
+        /// <summary>도구 값 스냅샷 — Show ROI 전후 비교용.</summary>
+        private static (Rect roi, double angle, double cx, double cy, bool hasBase, Rect baseRoi,
+            double baseAngle, double refX, double refY, double refAngle, bool hasAngle) Snapshot(BlobTool t) =>
+            (t.ROI, t.ROIAngle, t.ROICenterX, t.ROICenterY, t.HasFixtureBaseROI, t.FixtureBaseROI,
+             t.FixtureBaseROIAngle, t.FixtureRefX, t.FixtureRefY, t.FixtureRefAngle, t.HasFixtureAngle);
+
+        /// <summary>
+        /// 화면의 [Show ROI] 와 같은 순서 — 설정 VM 이 도형을 만들고, 캔버스(ImageCanvas.ShowToolROIs)가
+        /// 그 도형을 선택한다(SelectedROI). 테스트에는 캔버스가 없으므로 선택만 흉내 낸다.
+        /// </summary>
+        private static void ShowRoi(MainViewModel vm, BlobTool tool)
+        {
+            vm.SelectedToolSettings!.ShowROICommand.Execute(null);
+            Assert.NotNull(tool.AssociatedROIShape);
+            vm.SelectedROI = tool.AssociatedROIShape;
+        }
+
+        /// <summary>
+        /// 회전 ROI 를 Fixture(각도 전달)로 따라간 뒤 [Show ROI] — 각도 · ROI · Fixture 기준이 그대로여야 한다.
+        /// 레시피 재로드 직후처럼 캔버스 도형이 없는 상태에서 시작한다(ShowROI 가 ROIAngle 로 도형을 만든다).
+        /// </summary>
+        [Fact]
+        public void ShowRoi_RotatedFixtureTool_DoesNotChangeAngleOrFixtureBase()
+        {
+            var (vm, tool, _) = Setup(shapeAngle: 34.12);
+            try
+            {
+                tool.AssociatedROIShape = null;   // 재로드 직후 — 도형 없음, ROIAngle 이 기준
+                var source = new Dictionary<string, object>
+                {
+                    ["CenterX"] = 200.0, ["CenterY"] = 200.0, ["Angle"] = 0.0
+                };
+                tool.IsFixtureTransformActive = true;
+                ToolSourceInjector.ApplyFixtureTransform(tool, source);   // 기준 스냅샷
+                source["CenterX"] = 213.7;
+                source["Angle"] = -6.5;
+                ToolSourceInjector.ApplyFixtureTransform(tool, source);
+                tool.IsFixtureTransformActive = false;
+
+                var before = Snapshot(tool);
+                Assert.True(before.hasBase);
+                Assert.Equal(34.12 - 6.5, before.angle, 3);
+
+                ShowRoi(vm, tool);
+
+                Assert.Equal(before, Snapshot(tool));
+                var shape = Assert.IsType<RectangleAffineROI>(tool.AssociatedROIShape);
+                Assert.Equal(before.angle, shape.Angle, 3);     // 화면도 같은 각도
+            }
+            finally
+            {
+                vm.SelectedTool = null;
+            }
+        }
+
+        /// <summary>
+        /// 각도 없이 위치만 주는 기준(Blob 등)으로 회전 ROI 가 옮겨진 뒤 — 회전 중심이 옛 위치로 남아
+        /// Show ROI 가 그 중심으로 ROI 를 되돌려 쓰면 ROI 가 바뀌어 Fixture 기준이 버려졌다.
+        /// </summary>
+        [Fact]
+        public void ShowRoi_TranslationOnlyFixture_DoesNotResetFixtureBase()
+        {
+            var (vm, tool, _) = Setup(shapeAngle: 20);
+            try
+            {
+                tool.AssociatedROIShape = null;
+                // Run All 은 고르지 않은 도구에도 돈다 — 그 도구는 화면 동기화(회전 중심 따라가기)를 받지 않는다
+                var selected = vm.SelectedTool;
+                vm.SelectedTool = null;
+                var source = new Dictionary<string, object> { ["CenterX"] = 200.0, ["CenterY"] = 200.0 };
+                tool.IsFixtureTransformActive = true;
+                ToolSourceInjector.ApplyFixtureTransform(tool, source);
+                source["CenterX"] = 240.0;   // 40px 이동, 각도 없음
+                ToolSourceInjector.ApplyFixtureTransform(tool, source);
+                tool.IsFixtureTransformActive = false;
+                vm.SelectedTool = selected;   // 실행 뒤 도구를 고르고 [Show ROI]
+
+                var before = Snapshot(tool);
+                Assert.True(before.hasBase);
+
+                ShowRoi(vm, tool);
+
+                Assert.Equal(before, Snapshot(tool));
+                Assert.True(tool.HasFixtureBaseROI);
+            }
+            finally
+            {
+                vm.SelectedTool = null;
+            }
+        }
+
+        /// <summary>새로 그린 도형을 고르면 예전처럼 도구에 적용된다 (보기 전용은 도구 자신의 도형만).</summary>
+        [Fact]
+        public void SelectingNewShape_StillAppliesToTool()
+        {
+            var (vm, tool, _) = Setup(shapeAngle: 0);
+            try
+            {
+                var drawn = new RectangleAffineROI(300, 220, 60, 30, 15);
+                vm.SelectedROI = drawn;
+
+                Assert.Equal(15, tool.ROIAngle, 3);
+                Assert.Same(drawn, tool.AssociatedROIShape);
+                Assert.Equal(300, tool.ROICenterX, 3);
+            }
+            finally
+            {
+                vm.SelectedTool = null;
+            }
+        }
+
         private static MainViewModel CreateViewModel()
         {
             return new MainViewModel(

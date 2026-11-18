@@ -302,7 +302,7 @@
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
-                                    <TextBlock Text="{Binding ToolId}" FontSize="11" FontWeight="SemiBold">
+                                    <TextBlock Text="{Binding ToolName}" FontSize="11" FontWeight="SemiBold">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="Foreground" Value="{StaticResource BrushSuccess}"/>

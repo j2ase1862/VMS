@@ -1,4 +1,7 @@
+using System;
 using System.Collections.ObjectModel;
+using System.Linq;
+using CommunityToolkit.Mvvm.ComponentModel;
 using VMS.VisionSetup.VisionTools.DeepLearning;
 
 namespace VMS.VisionSetup.ViewModels.ToolSettings
@@ -6,8 +9,12 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
     public class DetectionToolSettingsViewModel : ToolSettingsViewModelBase
     {
         private DetectionTool TypedTool => (DetectionTool)Tool;
+        private bool _syncingNgClasses;
 
-        public DetectionToolSettingsViewModel(DetectionTool tool) : base(tool) { }
+        public DetectionToolSettingsViewModel(DetectionTool tool) : base(tool)
+        {
+            RebuildNgClassOptions();
+        }
 
         // Model
         public string ModelPath { get => TypedTool.ModelPath; set => TypedTool.ModelPath = value; }
@@ -18,6 +25,12 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         public double IouThreshold { get => TypedTool.IouThreshold; set => TypedTool.IouThreshold = value; }
         public string ClassNamesText { get => TypedTool.ClassNamesText; set => TypedTool.ClassNamesText = value; }
         public ObservableCollection<string> ModelClassNames => TypedTool.ModelClassNames;
+
+        // NG 클래스 — 클래스 이름마다 체크박스 하나
+        public string NgClassesText { get => TypedTool.NgClassesText; set => TypedTool.NgClassesText = value; }
+        public ObservableCollection<NgClassOption> NgClassOptions { get; } = new();
+        public bool HasClassNames => NgClassOptions.Count > 0;
+        public bool HasNoNgClasses => TypedTool.NgClasses.Length == 0;
 
         // Per-class thresholds
         public bool UsePerClassThresholds { get => TypedTool.UsePerClassThresholds; set => TypedTool.UsePerClassThresholds = value; }
@@ -55,5 +68,64 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
 
         // Display
         public bool DrawOverlay { get => TypedTool.DrawOverlay; set => TypedTool.DrawOverlay = value; }
+
+        protected override void OnToolPropertyChanged(string? propertyName)
+        {
+            base.OnToolPropertyChanged(propertyName);
+            if (propertyName == nameof(DetectionTool.ClassNamesText) || propertyName == nameof(DetectionTool.NgClassesText))
+            {
+                if (!_syncingNgClasses) RebuildNgClassOptions();
+                OnPropertyChanged(nameof(HasNoNgClasses));
+            }
+        }
+
+        private void RebuildNgClassOptions()
+        {
+            var ng = TypedTool.NgClasses;
+            foreach (var o in NgClassOptions) o.PropertyChanged -= OnOptionChanged;
+            NgClassOptions.Clear();
+            foreach (var name in TypedTool.ClassNames)
+            {
+                var option = new NgClassOption(name)
+                {
+                    IsNg = ng.Contains(name, StringComparer.OrdinalIgnoreCase)
+                };
+                option.PropertyChanged += OnOptionChanged;
+                NgClassOptions.Add(option);
+            }
+            OnPropertyChanged(nameof(HasClassNames));
+        }
+
+        private void OnOptionChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName != nameof(NgClassOption.IsNg)) return;
+            _syncingNgClasses = true;
+            try
+            {
+                // Class Names 순서로 기록한다
+                TypedTool.NgClassesText = string.Join(", ", NgClassOptions.Where(o => o.IsNg).Select(o => o.Name));
+            }
+            finally
+            {
+                _syncingNgClasses = false;
+            }
+        }
+
+        public override void Dispose()
+        {
+            foreach (var o in NgClassOptions) o.PropertyChanged -= OnOptionChanged;
+            base.Dispose();
+        }
+    }
+
+    /// <summary>NG Classes 체크박스 한 줄 — 모델 클래스 이름과 NG 여부.</summary>
+    public partial class NgClassOption : ObservableObject
+    {
+        public NgClassOption(string name) => Name = name;
+
+        public string Name { get; }
+
+        [ObservableProperty]
+        private bool _isNg;
     }
 }

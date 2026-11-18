@@ -9,6 +9,9 @@ namespace VMS.Interfaces
         Recipe? CurrentRecipe { get; }
         string RecipesDirectory { get; }
 
+        /// <summary>현재 레시피를 읽어 온(또는 마지막으로 저장한) 파일 경로. 아직 파일이 없으면 null.</summary>
+        string? CurrentRecipeFilePath { get; }
+
         /// <summary>
         /// 외부 프로세스(VisionSetup 등)가 Recipes 폴더의 파일을 저장/변경했을 때 발생.
         /// 자기 저장은 제외. 워처 스레드에서 발생 — 구독측에서 UI 디스패치 필요.

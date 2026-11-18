@@ -65,7 +65,7 @@ namespace VMS.Core.Security.Licensing
         [JsonPropertyName("issuedAt")]
         public string IssuedAt { get; init; } = string.Empty;
 
-        /// <summary>유지보수 만료 — 이후 업데이트만 차단, 실행 유지 (영구+유지보수 모델).</summary>
+        /// <summary>유지보수 만료일 — 지나면 라이선스 상태에 '유지보수 만료' 표시만 한다(실행 · 업데이트는 그대로, 영구+유지보수 모델).</summary>
         [JsonPropertyName("maintenanceUntil")]
         public string? MaintenanceUntil { get; init; }
 

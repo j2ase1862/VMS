@@ -19,7 +19,8 @@ namespace VMS.VisionSetup.Views.Recipe
         public event EventHandler<Models.Recipe>? RecipeLoaded;
 
         public RecipeManagerWindow(IRecipeService recipeService, ICameraService cameraService,
-            IDialogService dialogService, IParameterSyncService? parameterSyncService = null)
+            IDialogService dialogService, IParameterSyncService? parameterSyncService = null,
+            string? defaultCameraId = null)
         {
             InitializeComponent();
 
@@ -27,7 +28,10 @@ namespace VMS.VisionSetup.Views.Recipe
 
             // Create ViewModels with injected services
             _listViewModel = new RecipeListViewModel(recipeService, dialogService, parameterSyncService);
-            _editorViewModel = new RecipeEditorViewModel(recipeService, cameraService, dialogService);
+            _editorViewModel = new RecipeEditorViewModel(recipeService, cameraService, dialogService)
+            {
+                DefaultCameraId = defaultCameraId
+            };
 
             // Set DataContext on child controls
             RecipeListPanel.DataContext = _listViewModel;
@@ -46,8 +50,11 @@ namespace VMS.VisionSetup.Views.Recipe
             // Load into editor view
             RecipeEditorPanel.LoadRecipe(recipe);
 
-            // Set as current recipe in service
-            _recipeService.SetCurrentRecipe(recipe);
+            // Set as current recipe in service — [Load] · [New] 는 이미 서비스의 현재 레시피로
+            // 올려 두었다. 같은 레시피를 다시 넣으면 CurrentRecipeChanged 가 두 번 나가
+            // 미등록 카메라 재연결 창 · 경고가 두 번 뜬다 (VS-06).
+            if (!ReferenceEquals(_recipeService.CurrentRecipe, recipe))
+                _recipeService.SetCurrentRecipe(recipe);
 
             // Notify parent
             RecipeLoaded?.Invoke(this, recipe);

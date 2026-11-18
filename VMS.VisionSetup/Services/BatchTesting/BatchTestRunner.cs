@@ -23,6 +23,9 @@ namespace VMS.VisionSetup.Services.BatchTesting
         /// <summary>도구 ID → VisionResult. CSV 생성기가 이걸 동적 컬럼으로 펼침.</summary>
         public Dictionary<string, VisionResult> ToolResults { get; set; } = new();
 
+        /// <summary>도구 ID → 도구 이름 (Failure Browser 칩 표시용 — GUID 대신 이름을 보인다).</summary>
+        public Dictionary<string, string> ToolNames { get; set; } = new();
+
         /// <summary>임계치(Recipe.Criteria) 통과 여부 — 모든 도구 결과가 정의된 범위 안에 있을 때 true.</summary>
         public bool ThresholdsPassed { get; set; } = true;
 
@@ -119,12 +122,14 @@ namespace VMS.VisionSetup.Services.BatchTesting
                             if (resultMap.TryGetValue(tool.Id, out var res))
                             {
                                 item.ToolResults[tool.Id] = res;
+                                item.ToolNames[tool.Id] = tool.Name;
                                 pairs.Add((tool, res));
                             }
                         }
 
                         // 임계치 평가 (Recipe.Criteria 가 있을 때만)
-                        var execSuccess = _visionService.LastRunSuccess && toolResults.All(r => r.Success);
+                        var execSuccess = EvaluateExecution(pairs, toolResults, cfg.Criteria,
+                            _visionService.LastRunSuccess, out var execFailure);
                         if (cfg.Criteria != null)
                         {
                             var eval = PassFailEvaluator.EvaluateAll(pairs, cfg.Criteria);
@@ -152,7 +157,7 @@ namespace VMS.VisionSetup.Services.BatchTesting
                         if (!item.Success)
                         {
                             if (!execSuccess)
-                                item.FailureReason = toolResults.FirstOrDefault(r => !r.Success)?.Message ?? "도구 실행 실패";
+                                item.FailureReason = execFailure ?? "도구 실행 실패";
                             else if (!item.ThresholdsPassed)
                                 item.FailureReason = $"임계치 위반 {item.ThresholdViolations.Count}건: " +
                                     string.Join(" | ", item.ThresholdViolations.Take(2)) +
@@ -196,6 +201,50 @@ namespace VMS.VisionSetup.Services.BatchTesting
                 .Where(p => set.Contains(Path.GetExtension(p).ToLowerInvariant()))
                 .OrderBy(p => p)
                 .ToList();
+        }
+
+        /// <summary>
+        /// 도구 실행 성공 판정 — 임계치(Criteria)에서 Must Succeed 를 끈 도구의 실패는 사진 판정에서 뺀다
+        /// (VS-12, 사용자 결정 11-16). 체크 상자 툴팁 "이 도구가 실패하면 즉시 FAIL" · 창 안내와 같은 뜻.
+        /// <para>Result 도구가 있으면 그 판정(LastRunSuccess)도 따른다 — Result 도구가 Must Succeed 를 끈
+        /// 도구를 연결해 받으면, 그 도구의 실패는 Result 도구의 실패로 이어져 여전히 FAIL 이다.
+        /// 결과 연결로 건너뛴 하위 도구도 각자 실패로 센다(그 도구도 끄지 않았다면 FAIL).</para>
+        /// </summary>
+        internal static bool EvaluateExecution(
+            IReadOnlyList<(VisionToolBase tool, VisionResult res)> pairs,
+            IReadOnlyList<VisionResult> allResults,
+            PassFailCriteria? criteria,
+            bool lastRunSuccess,
+            out string? failureReason)
+        {
+            failureReason = null;
+            if (pairs.Count == 0)
+            {
+                // 도구별 결과를 못 얻은 경우(입력 이미지 없음 등) — 종전 규칙
+                var failed = allResults.FirstOrDefault(r => !r.Success);
+                failureReason = failed?.Message;
+                return lastRunSuccess && failed == null;
+            }
+
+            foreach (var (tool, res) in pairs)
+            {
+                if (res.Success) continue;
+                bool exempt = criteria?.ToolCriteria != null
+                    && criteria.ToolCriteria.TryGetValue(tool.Id, out var tc)
+                    && tc != null && !tc.MustSucceed;
+                if (exempt) continue;
+
+                failureReason = string.IsNullOrWhiteSpace(res.Message) ? $"{tool.Name}: 도구 실행 실패" : res.Message;
+                return false;
+            }
+
+            bool hasResultTool = pairs.Any(p => p.tool is VMS.VisionSetup.VisionTools.Result.ResultTool);
+            if (hasResultTool && !lastRunSuccess)
+            {
+                failureReason = "최종 판정(Result) 실패";
+                return false;
+            }
+            return true;
         }
 
         private static void SaveFailureOverlay(string srcPath, List<VisionResult> results, string outDir)

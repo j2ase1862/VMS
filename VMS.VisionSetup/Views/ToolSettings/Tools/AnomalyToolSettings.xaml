@@ -29,7 +29,7 @@
             <StackPanel Margin="5,0,0,0">
                 <controls:SliderParameter Label="Anomaly Threshold"
                     Value="{Binding AnomalyThreshold}" Minimum="0.0" Maximum="1.0"
-                    TickFrequency="0.05" ValueFormat="F2"
+                    TickFrequency="0.005" ValueFormat="F3"
                     ToolType="AnomalyTool" ParameterName="AnomalyThreshold"/>
             </StackPanel>
         </Expander>

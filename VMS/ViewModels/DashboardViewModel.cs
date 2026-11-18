@@ -99,6 +99,16 @@ namespace VMS.ViewModels
                 : 0;
         }
 
+        /// <summary>
+        /// 수동 검사 — 처리 시간만 표시하고 전체 · 합격 · 불합격 수, 수율, 불량 이력은 그대로 둔다.
+        /// 다음 자동 검사가 수동 시점과의 간격을 Tact 로 오인하지 않도록 측정 체인은 끊는다.
+        /// </summary>
+        public void RecordManualInspection(double processingTimeMs)
+        {
+            _tactStopwatch.Reset();
+            ProcessingTimeMs = Math.Round(processingTimeMs, 1);
+        }
+
         // 갤러리 셀과 클릭 확대 보기(카메라 타일 표시) 양쪽에 충분한 크기.
         private const int ThumbnailMaxEdge = 960;
 

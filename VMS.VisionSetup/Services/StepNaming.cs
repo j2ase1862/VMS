@@ -80,5 +80,20 @@ namespace VMS.VisionSetup.Services
                 .Distinct()
                 .ToList();
         }
+
+        /// <summary>
+        /// 카메라의 스텝 순번 최댓값(스텝이 없으면 0). 새 스텝을 기존 스텝 뒤에 이어 붙일 때
+        /// 시작 순번 계산용 — 로봇 웨이포인트 스텝이 기존 "1-1" 과 같은 번호를 받지 않게 한다.
+        /// </summary>
+        public static int MaxSequence(Recipe recipe, string cameraId)
+        {
+            int max = 0;
+            foreach (var step in recipe.Steps)
+            {
+                if (step.CameraId == cameraId && step.Sequence > max)
+                    max = step.Sequence;
+            }
+            return max;
+        }
     }
 }

@@ -173,6 +173,80 @@ namespace VMS.VisionSetup.Tests
             }
         }
 
+        /// <summary>VS-15 — Generate Height Map 은 손잡이 범위를 지우지 않고, [전체로] 가 전체 Z 범위로 되돌린다.</summary>
+        [Fact]
+        public void GenerateHeightMap_keeps_depth_range_and_reset_restores_full_range()
+        {
+            var vm = CreateViewModel(new FakeDialogService());
+            vm.CurrentPointCloud = MakeMetricScan(); // Z 40~45
+            vm.GenerateHeightMapCommand.Execute(null);
+
+            vm.DepthRangeMin = 41f;
+            vm.DepthRangeMax = 43f;
+            vm.HeightLowerLimit = 40.5f;
+            vm.GenerateHeightMapCommand.Execute(null);
+
+            Assert.Equal(41f, vm.DepthRangeMin);
+            Assert.Equal(43f, vm.DepthRangeMax);
+            Assert.Equal(40.5f, vm.HeightLowerLimit);
+
+            vm.ResetHeightRangeToFullCommand.Execute(null);
+
+            Assert.Equal(vm.PointCloudYMin, vm.DepthRangeMin);
+            Assert.Equal(vm.PointCloudYMax, vm.DepthRangeMax);
+            Assert.Equal(vm.PointCloudYMin, vm.HeightLowerLimit);
+            Assert.Equal(vm.PointCloudYMax, vm.HeightUpperLimit);
+        }
+
+        /// <summary>점군 앞 10개만 남기는 점군 도구 대역 (Mask Crop · Cluster 처럼 CurrentPointCloud 를 바꾼다).</summary>
+        private sealed class ShrinkCloudTool : VisionToolBase
+        {
+            public ShrinkCloudTool() { Name = "Shrink"; ToolType = "ShrinkCloudTool"; }
+
+            public override VisionResult Execute(Mat inputImage)
+            {
+                var src = VisionService.Instance.CurrentPointCloud!;
+                var xyz = new float[10 * 3];
+                for (int i = 0; i < 10; i++)
+                {
+                    xyz[i * 3] = src.Positions[i].X;
+                    xyz[i * 3 + 1] = src.Positions[i].Y;
+                    xyz[i * 3 + 2] = src.Positions[i].Z;
+                }
+                VisionService.Instance.CurrentPointCloud = PointCloudData.FromArrays(xyz, null, "shrunk");
+                return new VisionResult { Success = true, Message = "ok" };
+            }
+
+            public override VisionToolBase Clone() => new ShrinkCloudTool();
+        }
+
+        /// <summary>VS-23 — Run All 뒤 3D 뷰(Point Cloud 탭)는 점군 도구가 바꾼 점군을 보인다. 입력 점군은 그대로.</summary>
+        [Fact]
+        public async System.Threading.Tasks.Task RunAll_shows_tool_modified_cloud_in_3D_view()
+        {
+            var vm = CreateViewModel(new FakeDialogService());
+            var input = MakeMetricScan();
+            vm.CurrentPointCloud = input;
+            vm.GenerateHeightMapCommand.Execute(null); // 2D 영상이 없으므로 Height Map 이 작업 이미지가 된다
+            Assert.Same(input, vm.DisplayPointCloud);
+
+            VisionService.Instance.ClearTools();
+            VisionService.Instance.AddTool(new ShrinkCloudTool());
+            try
+            {
+                await vm.RunAllToolsAsync();
+
+                Assert.NotNull(vm.DisplayPointCloud);
+                Assert.Equal(10, vm.DisplayPointCloud!.PointCount);
+                Assert.Same(input, vm.CurrentPointCloud);
+            }
+            finally
+            {
+                VisionService.Instance.ClearTools();
+                VisionService.Instance.CurrentPointCloud = null;
+            }
+        }
+
         private static MainViewModel CreateViewModel(FakeDialogService dialogs)
         {
             VisionService.Instance.CurrentHeightMapMetadata = null;

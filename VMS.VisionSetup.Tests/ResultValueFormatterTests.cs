@@ -73,5 +73,24 @@ namespace VMS.VisionSetup.Tests
         {
             Assert.Equal("2개", ResultValueFormatter.Format(new Dictionary<string, int> { ["a"] = 1, ["b"] = 2 }));
         }
+
+        [Fact]
+        public void Mat_ShowsSizeOnly_NotMemoryAddress()
+        {
+            // VS-28: Segmentation LabelMap 이 "Mat [ … Ptr=0x… Data=0x… ]" 로 찍히던 문제
+            using var mat = new Mat(2048, 2448, MatType.CV_8UC1);
+            var text = ResultValueFormatter.Format(mat);
+
+            Assert.Equal("2448×2048 영상", text);
+            Assert.DoesNotContain("0x", text);
+        }
+
+        [Fact]
+        public void DisposedMat_ShowsEmpty()
+        {
+            var mat = new Mat(4, 4, MatType.CV_8UC1);
+            mat.Dispose();
+            Assert.Equal("", ResultValueFormatter.Format(mat));
+        }
     }
 }

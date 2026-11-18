@@ -25,6 +25,7 @@ namespace VMS.VisionSetup.Services
             double d => d.ToString("F3"),
             float f => f.ToString("F3"),
             decimal m => m.ToString("F3"),
+            OpenCvSharp.Mat mat => FormatMat(mat),
             IDictionary dict => $"{dict.Count}개",
             IEnumerable list => FormatList(list),
             ITuple tuple => FormatTuple(tuple),
@@ -44,6 +45,15 @@ namespace VMS.VisionSetup.Services
             return items.Count > MaxListItems
                 ? $"[{joined}, …] ({items.Count}개)"
                 : $"[{joined}]";
+        }
+
+        /// <summary>
+        /// 영상(Mat) — ToString 이 메모리 주소까지 찍으므로 크기만 보인다 (예: Segmentation LabelMap, VS-28).
+        /// </summary>
+        private static string FormatMat(OpenCvSharp.Mat mat)
+        {
+            if (mat.IsDisposed) return "";
+            return mat.Empty() ? "빈 영상" : $"{mat.Width}×{mat.Height} 영상";
         }
 
         private static string FormatTuple(ITuple tuple)

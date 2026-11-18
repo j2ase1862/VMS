@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         xmlns:c="clr-namespace:VMS.VisionSetup.Views.Common;assembly=VMS.VisionSetup"
+        xmlns:controls="clr-namespace:VMS.Controls"
         Title="Inspection History"
         Width="1480" Height="800"
         MinWidth="1100" MinHeight="620"
@@ -92,12 +93,14 @@
                                    Style="{StaticResource WindowFieldLabel}" Margin="0,0,8,0"/>
                         <DatePicker Grid.Row="0" Grid.Column="1" SelectedDate="{Binding FromDate}"
                                     Style="{StaticResource WindowDarkDatePicker}" Width="140"
+                                    controls:DatePickerIsoFormat.IsEnabled="True"
                                     Margin="0,0,14,0"/>
 
                         <TextBlock Grid.Row="0" Grid.Column="2" Text="To"
                                    Style="{StaticResource WindowFieldLabel}" Margin="0,0,8,0"/>
                         <DatePicker Grid.Row="0" Grid.Column="3" SelectedDate="{Binding ToDate}"
                                     Style="{StaticResource WindowDarkDatePicker}" Width="140"
+                                    controls:DatePickerIsoFormat.IsEnabled="True"
                                     Margin="0,0,14,0"/>
 
                         <TextBlock Grid.Row="0" Grid.Column="4" Text="판정"
@@ -265,9 +268,14 @@
                         <Grid Margin="0,8,0,0">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-                            <Border Grid.Row="0" Style="{StaticResource WindowCard}" Margin="0,0,0,10">
+                            <!-- 이 탭은 기간만 반영 — 필터 바가 세 탭 위에 공통으로 있어 헷갈린다 (VM-16, 11-13 사용자 결정) -->
+                            <TextBlock Grid.Row="0" Style="{StaticResource WindowMutedText}" Margin="2,0,0,8"
+                                       TextWrapping="Wrap"
+                                       Text="이 탭은 기간(From · To)으로만 계산합니다. 판정 · 레시피 · NG 코드 필터는 '이력 목록' 탭에만 적용됩니다."/>
+                            <Border Grid.Row="1" Style="{StaticResource WindowCard}" Margin="0,0,0,10">
                                 <UniformGrid Columns="4">
                                     <StackPanel>
                                         <TextBlock Text="총 검사" Style="{StaticResource WindowMetricLabel}"/>
@@ -289,7 +297,7 @@
                                     </StackPanel>
                                 </UniformGrid>
                             </Border>
-                            <Border Grid.Row="1" Style="{StaticResource WindowCard}" Padding="2">
+                            <Border Grid.Row="2" Style="{StaticResource WindowCard}" Padding="2">
                                 <DataGrid ItemsSource="{Binding DailySummaries}"
                                           AutoGenerateColumns="False" IsReadOnly="True"
                                           Style="{StaticResource WindowDarkDataGrid}"
@@ -308,7 +316,15 @@
 
                     <!-- ③ NG 파레토 -->
                     <TabItem Header="NG 파레토" Style="{StaticResource WindowDarkTabItem}">
-                        <Border Style="{StaticResource WindowCard}" Padding="2" Margin="0,8,0,0">
+                        <Grid Margin="0,8,0,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Style="{StaticResource WindowMutedText}" Margin="2,0,0,8"
+                                       TextWrapping="Wrap"
+                                       Text="이 탭은 기간(From · To)으로만 계산합니다. 판정 · 레시피 · NG 코드 필터는 '이력 목록' 탭에만 적용됩니다."/>
+                        <Border Grid.Row="1" Style="{StaticResource WindowCard}" Padding="2">
                             <DataGrid ItemsSource="{Binding NgCodeRows}"
                                       AutoGenerateColumns="False" IsReadOnly="True"
                                       Style="{StaticResource WindowDarkDataGrid}"
@@ -322,6 +338,7 @@
                                 </DataGrid.Columns>
                             </DataGrid>
                         </Border>
+                        </Grid>
                     </TabItem>
                 </TabControl>
 

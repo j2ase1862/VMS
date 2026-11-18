@@ -115,7 +115,7 @@ namespace VMS.Core.Security.Licensing
                         $"라이선스 만료 임박 ({payload.ExpiresAt})");
             }
 
-            // 유지보수 만료 (maintenanceUntil) — 업데이트만 차단하는 소프트 축.
+            // 유지보수 만료 (maintenanceUntil) — 상태 표시만 하는 소프트 축(실행 · 업데이트를 막는 곳은 없다).
             if (payload.MaintenanceUntil != null)
             {
                 if (!TryParseDate(payload.MaintenanceUntil, out var maintenance))
@@ -123,7 +123,7 @@ namespace VMS.Core.Security.Licensing
 
                 if (today > maintenance)
                     return Result(LicenseStatus.MaintenanceExpired, payload,
-                        $"유지보수 만료 ({payload.MaintenanceUntil}) — 실행 가능, SW 업데이트 제한");
+                        $"유지보수 만료 ({payload.MaintenanceUntil}) — 실행에는 영향 없음, 유지보수 계약 갱신 필요");
                 if (today > maintenance.AddDays(-WarnWindowDays))
                     return Result(LicenseStatus.MaintenanceExpiring, payload,
                         $"유지보수 만료 임박 ({payload.MaintenanceUntil})");

@@ -115,6 +115,13 @@ namespace VMS.VisionSetup.ViewModels
         /// <summary>창을 닫아 달라는 요청 (true = 선택 확정, false = 취소)</summary>
         public event EventHandler<bool>? CloseRequested;
 
+        /// <summary>
+        /// [선택] 때 고른 참조의 모델 파일을 미리 받아 두는 함수 (null 이면 받지 않고 닫는다).
+        /// 받아 두지 않으면 고른 직후 실행이 "아직 내려받지 못했습니다" 로 실패한다 — 종전에는
+        /// 레시피를 저장하고 다시 열어야 받아 왔다 (VS-33).
+        /// </summary>
+        public Func<string, CancellationToken, Task>? PrepareReference { get; set; }
+
         /// <summary>테스트가 버전 목록 로드 완료를 기다릴 때 쓴다.</summary>
         public Task? PendingVersionsLoad { get; private set; }
 
@@ -196,7 +203,31 @@ namespace VMS.VisionSetup.ViewModels
         private bool CanConfirm() => SelectedReference is not null;
 
         [RelayCommand(CanExecute = nameof(CanConfirm))]
-        private void Confirm() => CloseRequested?.Invoke(this, true);
+        private async Task ConfirmAsync(CancellationToken ct)
+        {
+            var reference = SelectedReference;
+            if (reference is null) return;
+
+            if (PrepareReference is not null)
+            {
+                IsBusy = true;
+                Status = "선택한 모델을 내려받는 중…";
+                try
+                {
+                    await PrepareReference(reference, ct);
+                }
+                catch (OperationCanceledException) { return; }
+                catch (Exception ex)
+                {
+                    // 창은 열어 둔다 — 다시 [선택] 하거나 [취소] 할 수 있게
+                    Status = $"모델을 내려받지 못했습니다: {ex.Message}";
+                    return;
+                }
+                finally { IsBusy = false; }
+            }
+
+            CloseRequested?.Invoke(this, true);
+        }
 
         [RelayCommand]
         private void Cancel() => CloseRequested?.Invoke(this, false);

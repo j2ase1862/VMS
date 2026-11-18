@@ -145,6 +145,12 @@ namespace VMS.PLC.Services.Native
             };
         }
 
+        /// <summary>
+        /// 카드 형식이 정의된 모델인지 — PCI-7432 / 7433 / 7434 만. 그 밖의 모델(예: 포트 방향 설정이 필요한
+        /// 96채널 PCI-7396)은 ModelToCardType 이 PCI-7432 로 취급하므로 연결 실패 안내에 지원 모델을 알린다(VO-03).
+        /// </summary>
+        public static bool IsKnownModel(string? model) => model is "PCI-7432" or "PCI-7433" or "PCI-7434";
+
         /// <summary>해당 카드 타입의 상수가 현장 검증됐는지 — 미검증이면 연결 로그에 경고.</summary>
         public static bool IsCardTypeVerified(ushort cardType) => cardType == PCI_7432;
     }

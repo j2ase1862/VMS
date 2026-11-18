@@ -202,6 +202,26 @@ namespace VMS.VisionSetup.Models
         /// </summary>
         public List<ToolConfig> Tools { get; set; } = new();
 
+        private int? _workspaceToolCount;
+        /// <summary>
+        /// 이 스텝이 작업 공간에 올라와 있는 동안의 도구 수(저장 전 편집 포함).
+        /// null 이면 저장된 <see cref="Tools"/> 수를 쓴다. 저장하지 않는 화면 전용 값.
+        /// </summary>
+        [JsonIgnore]
+        public int? WorkspaceToolCount
+        {
+            get => _workspaceToolCount;
+            set
+            {
+                if (SetProperty(ref _workspaceToolCount, value))
+                    OnPropertyChanged(nameof(ToolCount));
+            }
+        }
+
+        /// <summary>Steps 표의 Tools 열 — 작업 공간에 올라와 있으면 그 도구 수, 아니면 저장된 수.</summary>
+        [JsonIgnore]
+        public int ToolCount => _workspaceToolCount ?? Tools.Count;
+
         /// <summary>
         /// 스텝 별칭 (선택적) — 사용자가 자유 입력하는 표시용 라벨 (예: "Node 3").
         /// 파생 이름(Name)과 달리 저장·보존되며 식별에는 쓰이지 않으므로 중복 가능.

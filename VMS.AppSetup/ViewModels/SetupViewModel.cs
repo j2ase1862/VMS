@@ -451,6 +451,9 @@ namespace VMS.AppSetup.ViewModels
         [ObservableProperty]
         private PlcVendor _selectedPlcVendor = PlcVendor.None;
 
+        // VO-06 · VO-07: Communication Type · 시리얼 항목 · Polling Interval · Heartbeat · Write Mode 는
+        // PLC 연결 코드(VMS.PLC — 제조사별 TCP 연결)가 읽지 않아 화면에서 뺐다. 이미 저장된 값은
+        // 읽고 그대로 다시 저장만 한다(기존 설정 파일 보존). 연결은 늘 이더넷(IP · 포트).
         [ObservableProperty]
         private PlcCommunicationType _selectedCommunicationType = PlcCommunicationType.Ethernet;
 
@@ -526,8 +529,6 @@ namespace VMS.AppSetup.ViewModels
         private ushort _robotModbusPoseRegister = 270;
 
         // Dynamic visibility
-        public bool IsSerialMode => SelectedCommunicationType == PlcCommunicationType.Serial;
-        public bool IsEthernetMode => SelectedCommunicationType != PlcCommunicationType.Serial;
         public bool IsModbusVendor => SelectedPlcVendor == PlcVendor.Modbus;
         public bool IsRobotVendorSelected => SelectedRobotVendor != RobotVendor.None;
         public bool IsRobotModbusMode => SelectedRobotProtocolMode == RobotProtocolMode.ModbusTcp;
@@ -557,17 +558,11 @@ namespace VMS.AppSetup.ViewModels
             .ToArray();
         public Array TriggerSources => Enum.GetValues(typeof(TriggerSource));
         public Array PlcVendors => Enum.GetValues(typeof(PlcVendor));
-        public Array CommunicationTypes => Enum.GetValues(typeof(PlcCommunicationType));
         public Array CameraModes => Enum.GetValues(typeof(CameraMode));
-        public Array SerialParities => Enum.GetValues(typeof(PlcSerialParity));
-        public Array SerialStopBitsValues => Enum.GetValues(typeof(PlcSerialStopBits));
-        public Array WriteModes => Enum.GetValues(typeof(PlcWriteMode));
         public Array EndianModes => Enum.GetValues(typeof(PlcEndianMode));
         public Array RobotVendors => Enum.GetValues(typeof(RobotVendor));
         public Array EulerConventions => Enum.GetValues(typeof(EulerConvention));
         public Array RobotProtocolModes => Enum.GetValues(typeof(RobotProtocolMode));
-        public int[] BaudRateOptions => [9600, 19200, 38400, 57600, 115200];
-        public int[] DataBitsOptions => [7, 8];
 
         // ── 다중 인스턴스 배지 — 어느 인스턴스를 설정 중인지 헤더에 표시 ──
         // (한 PC 두 라인 운용 시 잘못된 인스턴스에 저장하는 실수 방지)
@@ -747,12 +742,6 @@ namespace VMS.AppSetup.ViewModels
             }
         }
 
-        partial void OnSelectedCommunicationTypeChanged(PlcCommunicationType value)
-        {
-            OnPropertyChanged(nameof(IsSerialMode));
-            OnPropertyChanged(nameof(IsEthernetMode));
-        }
-
         partial void OnSelectedPlcVendorChanged(PlcVendor value)
         {
             OnPropertyChanged(nameof(IsModbusVendor));
@@ -779,29 +768,42 @@ namespace VMS.AppSetup.ViewModels
             OnPropertyChanged(nameof(RobotProtocolDescription));
         }
 
-        partial void OnSelectedRobotProtocolModeChanged(RobotProtocolMode value)
+        partial void OnSelectedRobotProtocolModeChanged(RobotProtocolMode oldValue, RobotProtocolMode newValue)
         {
             OnPropertyChanged(nameof(RobotProtocolDescription));
             OnPropertyChanged(nameof(IsRobotModbusMode));
 
-            // Modbus-TCP 선택 시 포트 자동 변경
-            if (value == RobotProtocolMode.ModbusTcp)
+            // 프로토콜을 바꾸면 포트를 새 프로토콜의 기본 포트로 — 단, 지금 포트가 이전 프로토콜의
+            // 기본 포트일 때만(= 사용자가 직접 바꾸지 않았을 때만). 직접 넣은 포트는 그대로 둔다.
+            // (VO-09: 예전엔 Custom Socket 분기가 없어 Modbus-TCP 의 502 가 남았다.)
+            var oldDefault = GetDefaultRobotPort(SelectedRobotVendor, oldValue);
+            var newDefault = GetDefaultRobotPort(SelectedRobotVendor, newValue);
+            if (newDefault is int port && (oldDefault is null || RobotPort == oldDefault))
             {
-                RobotPort = 502;
+                RobotPort = port;
             }
-            else if (value == RobotProtocolMode.VendorNative)
+        }
+
+        /// <summary>
+        /// 제조사 · 프로토콜 조합의 기본 포트. Modbus-TCP 는 502, 제조사 프로토콜 · Custom Socket 은
+        /// 제조사 기본 포트(Custom Socket 은 정해진 포트가 없어 제조사 기본에서 시작). 제조사 미선택이면 null.
+        /// </summary>
+        internal static int? GetDefaultRobotPort(RobotVendor vendor, RobotProtocolMode mode)
+        {
+            if (vendor == RobotVendor.None)
+                return null;
+            if (mode == RobotProtocolMode.ModbusTcp)
+                return 502;
+
+            return vendor switch
             {
-                // 네이티브 모드로 돌아가면 제조사 기본 포트로 복원
-                RobotPort = SelectedRobotVendor switch
-                {
-                    RobotVendor.UR => 30003,
-                    RobotVendor.Doosan => 12345,
-                    RobotVendor.Jaka => 10001,
-                    RobotVendor.ABB => 6511,
-                    RobotVendor.Fanuc => 18735,
-                    _ => RobotPort
-                };
-            }
+                RobotVendor.UR => 30003,
+                RobotVendor.Doosan => 12345,
+                RobotVendor.Jaka => 10001,
+                RobotVendor.ABB => 6511,
+                RobotVendor.Fanuc => 18735,
+                _ => null
+            };
         }
 
         /// <summary>
@@ -1158,7 +1160,7 @@ namespace VMS.AppSetup.ViewModels
 
                 var msg = $"설정이 저장되었습니다.\n\n저장 위치: {_configService.ConfigFilePath}";
                 if (seededAdmin)
-                    msg += "\n\n✓ admin 계정 초기 시드 완료.";
+                    msg += "\n\n✓ admin 계정 생성 완료.";
                 else if (adminAlreadyExists)
                     msg += "\n\n⚠ admin 계정이 이미 존재하여 입력한 비밀번호는 적용되지 않았습니다." +
                            "\n   비밀번호 변경은 VMS 로그인 후 [사용자 관리]에서," +
