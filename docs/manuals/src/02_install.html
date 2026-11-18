@@ -71,8 +71,8 @@ VMS 를 다시 실행하세요. 설정 파일이 있어도 마법사를 끝까�
 <ul>
   <li>구성은 끝났는데 서비스가 멈춰 있으면(Stopped) 카드에 <strong>[서비스 시작 (관리자 권한)]</strong> 버튼이 나타납니다.
       누르면 Windows 권한 확인 창(UAC)이 뜨고, 승인하면 서비스가 부팅 시 자동 시작으로 바뀐 뒤 곧바로 시작됩니다.</li>
-  <li>이 구성에서는 Web 서버가 <strong>이 PC 안에서만(127.0.0.1)</strong> 응답합니다. 다른 PC 의 브라우저에서 보려면
-      §2.4 의 안내에 따라 바인딩 주소와 방화벽을 열어야 합니다.</li>
+  <li>이 구성의 Web 서버는 <strong>이 PC 의 모든 네트워크 주소(포트 5292)</strong>에서 응답하고, 설치 때 만든 방화벽 규칙 "BODA VMS Web (5292/TCP)" 이 모든 네트워크 프로필에서 열려 있습니다.
+      그래서 같은 사내망의 다른 PC 브라우저에서도 <code>http://이 PC 의 IP:5292</code> 로 접속됩니다. 외부 접속을 막아야 하는 현장은 §2.4 의 안내에 따라 방화벽 규칙의 범위를 좁힙니다.</li>
 </ul>
 
 <h4>방법 B — 별도 서버 PC 에 설치 (배포 스크립트)</h4>
@@ -97,10 +97,10 @@ cd &lt;압축 푼 폴더&gt;\deploy
   <tr><td>라인 PC ↔ 카메라</td><td>3956 / UDP + GVSP 스트림</td><td>양방향</td><td>GigE Vision 검색 · 영상 수신 (점보 프레임 9000 권장)</td></tr>
 </table>
 <ul>
-  <li>Web 서버를 별도 PC 에 설치하면 배포 스크립트가 방화벽 인바운드 규칙 <code>BODA VMS Web</code> 을 만듭니다.
-      라인 PC 와 동봉 구성(방법 A)은 기본이 <code>127.0.0.1</code> 바인딩이라 외부 접속이 막혀 있습니다 — 다른 PC 에서
-      보려면 <code>appsettings.Production.json</code> 의 <code>Kestrel:Endpoints:Http:Url</code> 을 <code>http://0.0.0.0:5292</code> 로
-      바꾸고 방화벽에서 5292 를 사내망(Private/Domain)에만 엽니다.</li>
+  <li>별도 서버 PC(방법 B)는 배포 스크립트를 <code>-AllowLanAccess</code> 로 실행해야 다른 PC 에서 접속됩니다 — 모든 네트워크 주소에서 응답하고
+      방화벽 인바운드 규칙 <code>BODA VMS Web</code> 을 사내망(Domain · Private) 프로필에만 만듭니다. 옵션 없이 설치하면 이 PC 안에서만(127.0.0.1) 응답하고 규칙도 만들지 않습니다.</li>
+  <li>라인 PC 의 동봉 Web(방법 A)은 설치할 때부터 모든 네트워크 주소(5292)에서 응답하고, 방화벽 규칙 "BODA VMS Web (5292/TCP)" 이 모든 프로필에 열립니다.
+      외부에서 접속할 필요가 없는 현장은 Windows 방화벽 고급 설정에서 이 규칙의 프로필을 사내망(Domain · Private)으로 줄이거나 규칙을 끕니다.</li>
   <li>카메라는 전용 네트워크 카드에 직결하고, 그 카드에만 카메라와 같은 대역의 고정 IP 를 줍니다.</li>
   <li>보안 모드가 <strong>Production</strong> 인 라인 PC 는 다른 PC 를 가리키는 <code>http://</code> 서버 주소를 거부합니다(§3.6).
       원격 서버는 <code>https://</code> 로 열거나(사설 인증서), 사내 실증 단계에서는 Development 모드를 씁니다.
