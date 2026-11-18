@@ -51,6 +51,31 @@
                  Condition="NOT INSTALLWEB AND (Installed OR WEBPREVINSTALLED OR NOT WIX_UPGRADE_DETECTED)" />
     <SetProperty Id="INSTALLWEB" Action="SetInstallWebDefault" Value="1" After="AppSearch" Sequence="execute"
                  Condition="NOT INSTALLWEB AND (Installed OR (UILevel &lt; 5 AND (WEBPREVINSTALLED OR NOT WIX_UPGRADE_DETECTED)))" />
+    <!-- 업그레이드 전 Web 서비스 시작 유형 — 서비스 등록 값 Start(2 = 자동 · 3 = 수동 · 4 = 사용 안 함).
+         AppSearch 는 이전 제품을 지우기(RemoveExistingProducts) 전에 돌아 이전 설치의 값을 읽는다.
+         아래 ServiceInstall 은 늘 demand 로 다시 등록하므로, 이전에 자동이었으면 StartServices 뒤에
+         자동(지연) 전환 + 시작을 되돌린다 — 인앱 업데이트 부트스트래퍼(UpdateInstallService)와 같은 정책.
+         릴리스 페이지에서 받은 MSI 를 직접 설치하면 부트스트래퍼가 없어 Web 이 꺼진 채 남았다(VO-15).
+         처음 설치 · 수동 · 사용 안 함이던 서비스는 그대로 demand(구성 전 크래시 루프 방지). -->
+    <Property Id="WEBSVCPREVSTART" Secure="yes">
+      <RegistrySearch Id="WebSvcPrevStartSearch" Root="HKLM" Key="SYSTEM\CurrentControlSet\Services\BodaVmsWeb"
+                      Name="Start" Type="raw" />
+    </Property>
+    <SetProperty Id="WebSvcRestoreAutoStart" Action="SetWebSvcRestoreAutoStartCmd" Before="WebSvcRestoreAutoStart" Sequence="execute"
+                 Value="&quot;[SystemFolder]sc.exe&quot; config BodaVmsWeb start= delayed-auto" />
+    <SetProperty Id="WebSvcRestoreStart" Action="SetWebSvcRestoreStartCmd" Before="WebSvcRestoreStart" Sequence="execute"
+                 Value="&quot;[SystemFolder]sc.exe&quot; start BodaVmsWeb" />
+    <!-- 실패해도 설치를 되돌리지 않는다(Return="ignore") — 서비스는 AppSetup [서비스 시작] 으로 켤 수 있다. -->
+    <CustomAction Id="WebSvcRestoreAutoStart" BinaryRef="Wix4UtilCA_X86" DllEntry="WixQuietExec"
+                  Execute="deferred" Impersonate="no" Return="ignore" />
+    <CustomAction Id="WebSvcRestoreStart" BinaryRef="Wix4UtilCA_X86" DllEntry="WixQuietExec"
+                  Execute="deferred" Impersonate="no" Return="ignore" />
+    <InstallExecuteSequence>
+      <Custom Action="WebSvcRestoreAutoStart" After="StartServices"
+              Condition="WEBSVCPREVSTART=&quot;#2&quot; AND NOT REMOVE~=&quot;ALL&quot; AND (&amp;WebServer=3 OR !WebServer=3)" />
+      <Custom Action="WebSvcRestoreStart" After="WebSvcRestoreAutoStart"
+              Condition="WEBSVCPREVSTART=&quot;#2&quot; AND NOT REMOVE~=&quot;ALL&quot; AND (&amp;WebServer=3 OR !WebServer=3)" />
+    </InstallExecuteSequence>
     <Feature Id="WebServer" Title="BODA VMS Web 서버" Level="1" AllowAbsent="yes">
       <Level Value="0" Condition="INSTALLWEB=0 OR NOT INSTALLWEB" />
       <ComponentGroupRef Id="WebFiles" />
@@ -188,7 +213,7 @@
   <!-- Web Server: 파일 + Windows Service + 방화벽.
        서비스는 demand(수동) 로 등록 — 초기 구성 전 재부팅 시 크래시 루프 방지
        (앱은 Jwt:Key/admin 시드 없으면 부팅 거부). AppSetup 마법사가 구성 완료 시
-       auto 전환 + 시작을 수행한다. 기존 스크립트 설치 현장(BodaVmsWeb 서비스 존재) 은
+       auto 전환 + 시작을 수행한다. 업그레이드 전에 자동이었으면 위 WebSvcRestore* 가 되돌린다. 기존 스크립트 설치 현장(BodaVmsWeb 서비스 존재) 은
        Uninstall-Web.ps1 로 선제거 필요 — msi_build_guide §13 참조. -->
   <Fragment>
     <DirectoryRef Id="INSTALLFOLDER">
