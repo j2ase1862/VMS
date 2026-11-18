@@ -271,14 +271,20 @@ namespace VMS.Core.Tests.Security
 
             // 다른 쓰기 핸들(쓰기 공유 안 함) — 다른 프로세스가 쓰는 중인 상황
             var holder = new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.Read);
-            var release = System.Threading.Tasks.Task.Run(async () =>
+            // 전용 스레드로 푼다 — Task.Run 은 CI 에서 스레드 풀이 밀리면 재시도 예산(300ms)이 지난 뒤에야
+            // 시작해 간헐 실패했다(2026-11-18 PR #625, 700ms). 스레드가 돈 것을 확인한 뒤 쓴다.
+            using var started = new System.Threading.ManualResetEventSlim();
+            var release = new System.Threading.Thread(() =>
             {
-                await System.Threading.Tasks.Task.Delay(60);
+                started.Set();
+                System.Threading.Thread.Sleep(60);
                 holder.Dispose();
-            });
+            }) { IsBackground = true };
+            release.Start();
+            started.Wait();
 
             _logger.Log(AuditCategory.System, "WhileLocked");
-            release.Wait();
+            release.Join();
 
             var actions = _logger.ReadDay(DateTime.Today).Select(e => e.Action).ToArray();
             Assert.Equal(new[] { "First", "WhileLocked" }, actions);
