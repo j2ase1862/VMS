@@ -511,6 +511,11 @@ MSI 는 파일 + 서비스 등록만 한다. Web 앱은 `Jwt:Key`/admin 시드 �
    데이터 폴더(`C:\ProgramData\BODA\VMS`) 생성 → 서비스 **auto 전환 + 시작** → `/health` 응답 확인
 4. 완료 후 `http://localhost:5292` 에서 admin 로그인 확인
 
+- 업그레이드(같은 버전 수정판 포함)도 서비스를 demand 로 다시 등록한다. 설치 전 서비스가 **자동 시작**이었으면
+  MSI 가 `StartServices` 뒤에 지연 자동(`delayed-auto`) 전환 + 시작을 되돌린다(`WebSvcRestoreAutoStart` ·
+  `WebSvcRestoreStart`, 설치 전 값은 `WEBSVCPREVSTART` = 서비스 레지스트리 `Start`). 수동 · 사용 안 함이던
+  서비스는 그대로 둔다. 인앱 업데이트 부트스트래퍼(`UpdateInstallService`)의 복원과 같은 정책이라,
+  릴리스 페이지에서 받은 MSI 를 직접 설치해도 Web 이 꺼진 채 남지 않는다(1.48.1 build 2 부터).
 - 재구성(덮어쓰기)은 거부된다 — 발급된 토큰 무효화 방지. 비밀번호 재설정은 `Reset-AdminPassword` 도구 사용.
 - MSI 제거 시 서비스·파일은 제거되지만 **DB 와 appsettings.Production.json 은 보존**된다
   (MSI 미관리 파일 — 재설치 시 그대로 이어받음).
