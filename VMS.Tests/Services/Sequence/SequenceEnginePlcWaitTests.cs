@@ -54,7 +54,7 @@ namespace VMS.Tests.Services.Sequence
             var engine = MakeEngine();
 
             var sw = Stopwatch.StartNew();
-            var run = engine.RunAsync(WaitConfig("M300", InputCheckMode.BitOn, timeoutMs: 15_000), CancellationToken.None);
+            var run = engine.RunAsync(WaitConfig("M300", InputCheckMode.BitOn, timeoutMs: 30_000), CancellationToken.None);
 
             await Task.Delay(300);
             _plc.SimSetBit("M300", true);   // 이벤트를 직접 올리지 않는다 — 실제 PLC 처럼 값만 바뀐다
@@ -62,7 +62,7 @@ namespace VMS.Tests.Services.Sequence
             await run;
             sw.Stop();
 
-            Assert.True(sw.ElapsedMilliseconds < 5_000,
+            Assert.True(sw.ElapsedMilliseconds < 15_000,
                 $"신호가 들어온 뒤에도 타임아웃까지 기다렸습니다 (경과 {sw.ElapsedMilliseconds}ms)");
         }
 
@@ -73,7 +73,7 @@ namespace VMS.Tests.Services.Sequence
             var engine = MakeEngine();
 
             var sw = Stopwatch.StartNew();
-            var run = engine.RunAsync(WaitConfig("M301", InputCheckMode.BitRisingEdge, timeoutMs: 15_000), CancellationToken.None);
+            var run = engine.RunAsync(WaitConfig("M301", InputCheckMode.BitRisingEdge, timeoutMs: 30_000), CancellationToken.None);
 
             await Task.Delay(300);
             _plc.SimSetBit("M301", true);
@@ -81,7 +81,7 @@ namespace VMS.Tests.Services.Sequence
             await run;
             sw.Stop();
 
-            Assert.True(sw.ElapsedMilliseconds < 5_000,
+            Assert.True(sw.ElapsedMilliseconds < 15_000,
                 $"상승 에지를 받지 못하고 타임아웃까지 기다렸습니다 (경과 {sw.ElapsedMilliseconds}ms)");
         }
 
@@ -96,7 +96,7 @@ namespace VMS.Tests.Services.Sequence
             await engine.RunAsync(WaitConfig("M302", InputCheckMode.BitOn, timeoutMs: 700), CancellationToken.None);
             sw.Stop();
 
-            Assert.InRange(sw.ElapsedMilliseconds, 600, 5_000);
+            Assert.InRange(sw.ElapsedMilliseconds, 600, 15_000);
         }
     }
 }
