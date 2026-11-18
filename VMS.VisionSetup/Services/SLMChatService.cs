@@ -435,10 +435,15 @@ ImageDependent Tier 파라미터(ThresholdValue, EdgeThreshold, CValue 등)를 �
 
         public async Task LoadModelAsync(string modelName)
         {
+            // 다른 모델로 다시 연결하다 실패하면 이전 연결로 계속 보내지 않도록 먼저 내린다.
+            IsModelLoaded = false;
+
+            string tagsJson;
             try
             {
-                var response = await _httpClient.GetAsync(OllamaBaseUrl);
+                var response = await _httpClient.GetAsync($"{OllamaBaseUrl}/api/tags");
                 response.EnsureSuccessStatusCode();
+                tagsJson = await response.Content.ReadAsStringAsync();
             }
             catch (Exception ex)
             {
@@ -448,10 +453,72 @@ ImageDependent Tier 파라미터(ThresholdValue, EdgeThreshold, CValue 등)를 �
                     $"({ex.Message})", ex);
             }
 
+            // 서버 주소만 확인하면 받지 않은 모델 이름도 '연결 완료' 가 되고 첫 요청에서야 실패한다(VS-36 ④).
+            var installed = ParseInstalledModels(tagsJson)
+                ?? throw new InvalidOperationException(
+                    $"로컬 언어 모델 서버({OllamaBaseUrl})의 모델 목록을 읽을 수 없습니다.");
+            if (FindInstalledModel(installed, modelName) == null)
+                throw new InvalidOperationException(BuildModelMissingMessage(modelName, installed));
+
             _modelName = modelName;
             _messages.Clear();
             _messages.Add(new { role = "system", content = ActiveSystemPrompt });
             IsModelLoaded = true;
+        }
+
+        /// <summary>
+        /// 모델 목록 응답(<c>{"models":[{"name":"qwen2.5:7b-instruct", …}]}</c>)에서 받아 둔 모델 이름을 꺼낸다.
+        /// 응답을 읽을 수 없으면 null.
+        /// </summary>
+        internal static IReadOnlyList<string>? ParseInstalledModels(string tagsJson)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(tagsJson);
+                if (doc.RootElement.ValueKind != JsonValueKind.Object
+                    || !doc.RootElement.TryGetProperty("models", out var models)
+                    || models.ValueKind != JsonValueKind.Array)
+                    return null;
+
+                var names = new List<string>();
+                foreach (var m in models.EnumerateArray())
+                {
+                    if (m.ValueKind == JsonValueKind.Object
+                        && m.TryGetProperty("name", out var n)
+                        && n.ValueKind == JsonValueKind.String
+                        && n.GetString() is { Length: > 0 } name)
+                        names.Add(name);
+                }
+                return names;
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 요청한 모델 이름과 맞는 받아 둔 모델. 태그 없이 적으면 서버처럼 ":latest" 로 찾는다.
+        /// </summary>
+        internal static string? FindInstalledModel(IEnumerable<string> installed, string requested)
+        {
+            string want = requested.Trim();
+            if (want.Length == 0) return null;
+            string wantTagged = want.Contains(':') ? want : want + ":latest";
+            return installed.FirstOrDefault(n =>
+                string.Equals(n, want, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(n, wantTagged, StringComparison.OrdinalIgnoreCase));
+        }
+
+        internal static string BuildModelMissingMessage(string requested, IReadOnlyList<string> installed)
+        {
+            const int maxListed = 8;
+            string list = installed.Count == 0
+                ? "받아 둔 모델이 없습니다"
+                : "받아 둔 모델: " + string.Join(", ", installed.Take(maxListed))
+                  + (installed.Count > maxListed ? $" 외 {installed.Count - maxListed}개" : "");
+            return $"로컬 언어 모델 서버에 '{requested.Trim()}' 모델이 없습니다. " +
+                   $"모델 이름을 확인하거나 서버에 모델을 받아 두세요. ({list})";
         }
 
         public async Task<string> SendMessageAsync(string message, Action<string>? onToken = null, CancellationToken cancellationToken = default)

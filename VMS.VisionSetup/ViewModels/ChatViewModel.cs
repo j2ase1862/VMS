@@ -143,6 +143,8 @@ namespace VMS.VisionSetup.ViewModels
             }
             catch (Exception ex)
             {
+                // 서비스가 연결을 내렸으므로 화면도 맞춘다(이전 모델로 계속 보내지 않음).
+                IsModelLoaded = false;
                 StatusMessage = $"연결 실패: {ex.Message}";
             }
             finally
