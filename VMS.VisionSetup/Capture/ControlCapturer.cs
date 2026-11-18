@@ -26,7 +26,7 @@ namespace VMS.VisionSetup.Capture
     /// 전체 파일이 #if DEBUG 로 감싸여 Release(배포) 빌드에서는 컴파일되지 않으며, App 이
     /// "--capture-controls" 인자로 실행될 때만 호출된다. → 일반 실행/배포 동작에 일절 영향 없음.
     /// </summary>
-    internal static class ControlCapturer
+    internal static partial class ControlCapturer
     {
         private const double Scale = 2.0;       // 2x (192 DPI) — 매뉴얼용 선명도
 

@@ -355,12 +355,15 @@ namespace VMS.VisionSetup
             bool isToolPanels = TryGetCaptureOutputDir(e.Args, "--capture-toolpanels", out string toolPanelsDir);
             bool isDialogs = TryGetCaptureOutputDir(e.Args, "--capture-dialogs", out string dialogsDir);
             bool isScenes = TryGetCaptureOutputDir(e.Args, "--capture-scenes", out string scenesDir);
+            //  "--capture-extension [폴더]"  : 사내 매뉴얼 확장 옵션 화면(3D 스캔 · 웨이포인트 · 멀티뷰 · 핸드아이 · 레지스트리)
+            bool isExtension = TryGetCaptureOutputDir(e.Args, "--capture-extension", out string extensionDir);
             //  "--record-video [폴더]"       : 사용 안내 동영상 프레임 녹화(env VMS_RECORD_SCENARIO · VMS_RECORD_DURATIONS)
             bool isRecord = TryGetCaptureOutputDir(e.Args, "--record-video", out string recordDir);
-            if (isControls || isFullPage || isToolPanels || isDialogs || isScenes || isRecord)
+            if (isControls || isFullPage || isToolPanels || isDialogs || isScenes || isExtension || isRecord)
             {
                 string dir = isControls ? captureDir : isFullPage ? fullPageDir
-                           : isToolPanels ? toolPanelsDir : isDialogs ? dialogsDir : isScenes ? scenesDir : recordDir;
+                           : isToolPanels ? toolPanelsDir : isDialogs ? dialogsDir : isScenes ? scenesDir
+                           : isExtension ? extensionDir : recordDir;
                 var dbgLog = Path.Combine(dir, "_capture.log");
                 mainView.Dispatcher.BeginInvoke(
                     System.Windows.Threading.DispatcherPriority.ApplicationIdle,
@@ -376,6 +379,8 @@ namespace VMS.VisionSetup
                                 await Capture.ControlCapturer.RunToolPanelsAsync(mainView, toolPanelsDir);
                             if (isScenes)
                                 await Capture.ControlCapturer.RunScenesAsync(mainView, scenesDir);
+                            if (isExtension)
+                                await Capture.ControlCapturer.RunExtensionAsync(mainView, extensionDir);
                             if (isRecord)
                                 await Capture.VideoRecorder.RunAsync(mainView, recordDir);
                             if (isDialogs)
@@ -391,6 +396,15 @@ namespace VMS.VisionSetup
                                 try { wins.Add(("CameraManager", new Views.Camera.CameraManagerWindow(
                                     cameraService, dialogService), false)); }
                                 catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "CameraManager ctor: " + ex + "\n"); }
+                                // 목록에서 첫 카메라를 고른 상태 — 오른쪽 Camera Properties 가 보인다(매뉴얼 §5 그림)
+                                try
+                                {
+                                    var camWin = new Views.Camera.CameraManagerWindow(cameraService, dialogService);
+                                    if (camWin.DataContext is ViewModels.CameraManagerViewModel camVm && camVm.Cameras.Count > 0)
+                                        camVm.SelectedCamera = camVm.Cameras[0];
+                                    wins.Add(("CameraManager_Selected", camWin, false));
+                                }
+                                catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "CameraManager_Selected ctor: " + ex + "\n"); }
                                 try { wins.Add(("RecipeManager", new Views.Recipe.RecipeManagerWindow(
                                     recipeService, cameraService, dialogService, parameterSyncService), true)); }
                                 catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "RecipeManager ctor: " + ex + "\n"); }
