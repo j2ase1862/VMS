@@ -583,7 +583,7 @@ namespace VMS.VisionSetup.Models
 
                     // Display
                     ["DrawContours"] = "블롭 외곽선(컨투어) 그리기. 각 블롭이 다른 색상으로 표시됩니다.",
-                    ["DrawBoundingBox"] = "바운딩 박스(외접 사각형) 그리기. 노란색 사각형으로 표시됩니다.",
+                    ["DrawBoundingBox"] = "바운딩 박스(외접 사각형) 그리기. 청록색 사각형으로 표시됩니다.",
                     ["DrawCenterPoint"] = "블롭 중심점 표시. 빨간색 십자 마커로 표시됩니다.",
                     ["DrawLabels"] = "블롭 번호 라벨 표시. 중심점 옆에 #0, #1, #2... 형태로 표시됩니다."
                 }
