@@ -26,6 +26,7 @@
       <ComponentRef Id="StartMenuShortcutComp" />
       <ComponentRef Id="StartMenuAppSetupShortcutComp" />
       <ComponentRef Id="StartMenuVisionSetupShortcutComp" />
+      <ComponentRef Id="StartMenuUninstallShortcutComp" />
     </Feature>
 
 <?ifdef WebPayloadDir ?>
@@ -201,6 +202,22 @@
           <RegistryValue Root="HKCU"
                          Key="Software\VASIM\BODA Vision System"
                          Name="StartMenuVisionSetupShortcut"
+                         Type="integer"
+                         Value="1"
+                         KeyPath="yes" />
+        </Component>
+        <!-- 제거 바로가기 — 사용자 매뉴얼 2.6 "시작 메뉴의 제거 바로가기". Windows Installer 에 이 제품의
+             제거를 요청할 뿐이다(설정 → 앱 → 제거와 같은 동작 · 확인 창이 먼저 뜬다). 32비트 패키지라
+             SystemFolder 는 32비트 시스템 폴더이고 거기의 msiexec.exe 를 부른다. -->
+        <Component Id="StartMenuUninstallShortcutComp">
+          <Shortcut Id="StartMenuUninstallShortcut"
+                    Name="BODA VMS 제거"
+                    Description="BODA VMS 를 이 PC 에서 제거합니다"
+                    Target="[SystemFolder]msiexec.exe"
+                    Arguments="/x [ProductCode]" />
+          <RegistryValue Root="HKCU"
+                         Key="Software\VASIM\BODA Vision System"
+                         Name="StartMenuUninstallShortcut"
                          Type="integer"
                          Value="1"
                          KeyPath="yes" />
