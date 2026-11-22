@@ -29,7 +29,7 @@ namespace VMS.VisionSetup.Models
                 CognexEquivalent = "CogIPOneImageTool (Gaussian filter)",
                 Parameters = new Dictionary<string, string>
                 {
-                    ["BlurType"] = "블러 알고리즘 선택:\n• Gaussian: 가우시안 블러 (자연스러운 흐림)\n• Median: 미디언 필터 (소금-후추 노이즈에 효과적)\n• Bilateral: 양방향 필터 (엣지 보존)\n• Box: 박스 필터 (단순 평균)",
+                    ["BlurType"] = "블러 알고리즘 선택:\n• Average: 평균 필터 (단순 평균)\n• Gaussian: 가우시안 블러 (자연스러운 흐림)\n• Median: 미디언 필터 (소금-후추 노이즈에 효과적)\n• Bilateral: 양방향 필터 (엣지 보존)",
                     ["KernelSize"] = "커널(필터) 크기. 홀수만 가능 (3, 5, 7...). 클수록 더 강한 블러 효과.",
                     ["SigmaX"] = "X방향 표준편차 (Gaussian에서 사용). 0이면 커널 크기로 자동 계산.",
                     ["SigmaY"] = "Y방향 표준편차 (Gaussian에서 사용). 0이면 SigmaX와 동일."
@@ -633,7 +633,7 @@ namespace VMS.VisionSetup.Models
                     ["Polarity"] = "검출할 엣지의 극성 (탐색 방향 기준):\n• DarkToLight: 어두움→밝음 방향 엣지\n• LightToDark: 밝음→어두움 방향 엣지\n• Any: 양방향 모두 검출",
                     ["EdgeThreshold"] = "엣지 검출 임계값. 그래디언트 크기가 이 값을 초과해야 엣지로 인정됩니다.",
                     ["FilterHalfWidth"] = "미분 필터의 반폭. 필터 커널 크기 = 2×반폭+1.\n• 작을수록: 날카로운 엣지에 민감\n• 클수록: 노이즈에 강함",
-                    ["FitMethod"] = "라인 피팅 방법:\n• LeastSquares: 최소자승법 — 빠르지만 이상치에 민감\n• RANSAC: 이상치에 강건함 — 부분적으로 가려진 엣지에 효과적\n• Huber: 로버스트 피팅 — LeastSquares와 RANSAC의 중간",
+                    ["FitMethod"] = "라인 피팅 방법:\n• LeastSquares: 최소자승법 — 빠르지만 이상치에 민감\n• RANSAC: 이상치에 강건함 — 부분적으로 가려진 엣지에 효과적",
                     ["RansacThreshold"] = "RANSAC 이상치 판정 거리 (픽셀). 피팅 라인으로부터 이 거리 이상 떨어진 점은 이상치로 처리됩니다.",
                     ["MinFoundCalipers"] = "최소 검출 캘리퍼 수. 유효 엣지가 이보다 적으면 피팅 실패로 판정됩니다.",
                     ["SearchAxis"] = "엣지를 훑는 방향. ROI 화살표가 가리키는 쪽이 곧 이 방향이고, 캘리퍼들은 그와 수직으로 늘어섭니다.\n• AlongWidth: ROI 가로 방향으로 훑음 (기준선은 세로)\n• AlongHeight: 세로 방향으로 훑음 (기준선은 가로)\n• LongerSide: 긴 변을 기준선으로 삼는 구버전 동작 — 화살표와 어긋날 수 있어 새 설정에는 권장하지 않습니다.",
