@@ -86,7 +86,8 @@ namespace VMS.VisionSetup.ViewModels
         private void LoadCameraToForm(CameraInfo camera)
         {
             CameraName = camera.Name;
-            Manufacturer = camera.Manufacturer;
+            // 화면에는 표시 이름("Mech-Mind")을 보여 주고, 저장할 때 저장 값("Mech_Mind")으로 되돌린다
+            Manufacturer = CameraManufacturerNames.ToDisplayName(camera.Manufacturer);
             Model = camera.Model;
             SerialNumber = camera.SerialNumber;
             WidthText = camera.Width.ToString();
@@ -170,7 +171,7 @@ namespace VMS.VisionSetup.ViewModels
             }
 
             camera.Name = CameraName.Trim();
-            camera.Manufacturer = Manufacturer?.Trim() ?? string.Empty;
+            camera.Manufacturer = CameraManufacturerNames.ToStoredName(Manufacturer);
             camera.Model = Model?.Trim() ?? string.Empty;
             camera.SerialNumber = SerialNumber?.Trim() ?? string.Empty;
             camera.Width = width;

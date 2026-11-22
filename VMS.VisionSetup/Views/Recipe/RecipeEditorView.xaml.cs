@@ -200,7 +200,7 @@ namespace VMS.VisionSetup.Views.Recipe
             {
                 var item = new CheckBox
                 {
-                    Content = $"{camera.Name} ({camera.Manufacturer} {camera.Model})",
+                    Content = $"{camera.Name} ({camera.ManufacturerDisplayName} {camera.Model})",
                     Tag = camera.Id,
                     Foreground = System.Windows.Media.Brushes.White,
                     IsChecked = _currentRecipe.UsedCameraIds.Contains(camera.Id)

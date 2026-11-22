@@ -5,7 +5,7 @@
         xmlns:c="clr-namespace:VMS.VisionSetup.Views.Common"
         xmlns:local="clr-namespace:VMS.VisionSetup.Views.Camera"
         Title="Camera Manager"
-        Width="640" Height="540"
+        Width="640" Height="600"
         MinWidth="500" MinHeight="400"
         WindowStyle="None"
         WindowStartupLocation="CenterOwner"
