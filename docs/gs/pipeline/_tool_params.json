@@ -27,6 +27,14 @@
     "enum": null
    },
    {
+    "label": "Threshold Type",
+    "param": "ThresholdType",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": "ThresholdType"
+   },
+   {
     "label": "Use Otsu",
     "param": "UseOtsu",
     "ctrl": "체크박스",
@@ -856,6 +864,22 @@
     "enum": "EdgeSelectionMode"
    },
    {
+    "label": "Expected Width (px)",
+    "param": "ExpectedWidth",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Width Tolerance (±px)",
+    "param": "WidthTolerance",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
     "label": "Projection Mode",
     "param": "ProjectionMode",
     "ctrl": "선택(목록)",
@@ -866,7 +890,7 @@
    {
     "label": "Gaussian Filter",
     "param": "UseGaussianFilter",
-    "ctrl": "BoolParameter",
+    "ctrl": "체크박스",
     "min": null,
     "max": null,
     "enum": null
@@ -882,7 +906,7 @@
    {
     "label": "Normalized Contrast",
     "param": "UseNormalizedContrast",
-    "ctrl": "BoolParameter",
+    "ctrl": "체크박스",
     "min": null,
     "max": null,
     "enum": null
@@ -1690,6 +1714,22 @@
     "enum": null
    },
    {
+    "label": "Format Preset",
+    "param": "OutputFormatPreset",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Custom Patterns (한 줄에 하나)",
+    "param": "CustomOutputFormat",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
     "label": "Enable Verification",
     "param": "EnableVerification",
     "ctrl": "체크박스",
@@ -1978,6 +2018,46 @@
     "label": "Tolerance (+)",
     "param": "TolerancePlus",
     "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Point Source",
+    "param": "PointSource",
+    "ctrl": "선택",
+    "min": null,
+    "max": null,
+    "enum": "수동 입력 (픽셀) · 연결 소스 (클러스터)"
+   },
+   {
+    "label": "Point A (pixel) X / Y",
+    "param": "PointA",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Point B (pixel) X / Y",
+    "param": "PointB",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Cluster A",
+    "param": "ClusterA",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Cluster B",
+    "param": "ClusterB",
+    "ctrl": "선택(목록)",
     "min": null,
     "max": null,
     "enum": null
@@ -2519,9 +2599,41 @@
     "enum": null
    },
    {
+    "label": "Per-Class Confidence",
+    "param": "ClassThresholds",
+    "ctrl": "입력(클래스별)",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Class Names",
+    "param": "ClassNamesText",
+    "ctrl": "목록 / 입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "NG Classes",
+    "param": "NgClassesText",
+    "ctrl": "체크박스(클래스별)",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
     "label": "Use Dot Analysis",
     "param": "UseDotAnalysis",
     "ctrl": "체크박스",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Detection Method",
+    "param": "DotDetectionMethod",
+    "ctrl": "선택(목록)",
     "min": null,
     "max": null,
     "enum": null
@@ -2559,6 +2671,22 @@
     "enum": null
    },
    {
+    "label": "Pattern Angle Metric",
+    "param": "DotPatternMetric",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Preprocess Mode",
+    "param": "DotPreprocessMode",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
     "label": "CLAHE Clip Limit",
     "param": "DotClaheClipLimit",
     "ctrl": "슬라이더",
@@ -2575,6 +2703,14 @@
     "enum": null
    },
    {
+    "label": "Threshold Mode",
+    "param": "DotThresholdMode",
+    "ctrl": "선택(목록)",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
     "label": "Adaptive Block Size",
     "param": "DotAdaptiveBlockSize",
     "ctrl": "슬라이더",
@@ -2588,6 +2724,14 @@
     "ctrl": "슬라이더",
     "min": "-10.0",
     "max": "30.0",
+    "enum": null
+   },
+   {
+    "label": "Per-Class Dot Expectations",
+    "param": "DotExpectations",
+    "ctrl": "입력(클래스별)",
+    "min": null,
+    "max": null,
     "enum": null
    },
    {
@@ -2756,6 +2900,14 @@
     "enum": null
    },
    {
+    "label": "Normal Images Folder",
+    "param": "CalibrationFolder",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
     "label": "Sigma (k)",
     "param": "CalibrationSigma",
     "ctrl": "슬라이더",
@@ -2824,6 +2976,22 @@
     "ctrl": "슬라이더",
     "min": "0.1",
     "max": "1.0",
+    "enum": null
+   },
+   {
+    "label": "Class Names",
+    "param": "ClassNamesText",
+    "ctrl": "목록 / 입력",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "OK Classes",
+    "param": "OkClasses",
+    "ctrl": "체크박스(클래스별)",
+    "min": null,
+    "max": null,
     "enum": null
    },
    {
@@ -3000,6 +3168,22 @@
   "category": "Alignment",
   "file": "MultiStepAlignToolSettings.xaml",
   "params": [
+   {
+    "label": "Point A",
+    "param": "PointASource",
+    "ctrl": "선택(스텝 + 도구)",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
+   {
+    "label": "Point B",
+    "param": "PointBSource",
+    "ctrl": "선택(스텝 + 도구)",
+    "min": null,
+    "max": null,
+    "enum": null
+   },
    {
     "label": "Require Same Cycle",
     "param": "RequireSameCycle",
@@ -3212,6 +3396,14 @@
     "ctrl": "슬라이더",
     "min": "155",
     "max": "255",
+    "enum": null
+   },
+   {
+    "label": "Lx / Ly / Lz",
+    "param": "LightDirection",
+    "ctrl": "입력",
+    "min": null,
+    "max": null,
     "enum": null
    },
    {
