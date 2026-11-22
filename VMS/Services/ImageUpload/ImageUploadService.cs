@@ -339,6 +339,7 @@ namespace VMS.Services.ImageUpload
                     try { if (File.Exists(dest)) File.Delete(dest); } catch { }
                     File.Move(src, dest);
                 }
+                WriteRejectReason(Path.Combine(dir, Path.GetFileName(metaPath)), reason);
                 Debug.WriteLine($"[ImageUploadService] 업로드 포기 — rejected/ 로 이동({reason}): {Path.GetFileName(metaPath)}");
                 PruneRejected(dir);
             }
@@ -346,6 +347,28 @@ namespace VMS.Services.ImageUpload
             {
                 Debug.WriteLine($"[ImageUploadService] rejected 이동 실패: {ex.Message}");
                 DeletePair(metaPath);   // 옮기지 못하면 큐를 막지 않도록 비운다
+            }
+        }
+
+        /// <summary>사유 파일의 확장자 — <c>rejected/</c> 안에서 메타 파일과 이름이 같다.</summary>
+        internal const string RejectReasonExtension = ".reason.txt";
+
+        /// <summary>
+        /// 보관함의 메타 파일 옆에 사유 파일을 쓴다(사용자 매뉴얼 10.5 "사유 파일 동봉").
+        /// 못 써도 흐름을 멈추지 않는다. 상한 정리(<see cref="PruneRejected"/>)가 메타 · 이미지와 함께 지운다.
+        /// </summary>
+        internal static void WriteRejectReason(string rejectedMetaPath, string reason)
+        {
+            try
+            {
+                File.WriteAllText(
+                    Path.ChangeExtension(rejectedMetaPath, RejectReasonExtension),
+                    $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}  서버가 이 이미지를 받지 않았습니다 — {reason}{Environment.NewLine}",
+                    System.Text.Encoding.UTF8);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[ImageUploadService] 사유 파일을 쓰지 못했습니다: {ex.Message}");
             }
         }
 
@@ -477,6 +500,13 @@ namespace VMS.Services.ImageUpload
             {
                 var data = Path.ChangeExtension(metaPath, ".img");
                 if (File.Exists(data)) File.Delete(data);
+            }
+            catch { }
+            try
+            {
+                // rejected/ 의 사유 파일 — 재시도 큐에는 없으므로 있을 때만 지운다
+                var reason = Path.ChangeExtension(metaPath, RejectReasonExtension);
+                if (File.Exists(reason)) File.Delete(reason);
             }
             catch { }
         }

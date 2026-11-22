@@ -95,6 +95,40 @@ namespace VMS.Tests.Services
             }
         }
 
+        [Fact]
+        public void RejectedItem_KeepsReasonFile_AndPruneRemovesItTogether()
+        {
+            // 사용자 매뉴얼 10.5 "rejected\ … (사유 파일 동봉)" — 종전에는 메타 · 이미지만 옮기고 사유는 남기지 않았다
+            // (GS 매뉴얼 대조 06 #5). 사유 파일도 상한 정리 때 같이 지워져 보관함에 고아 파일이 남지 않아야 한다.
+            var dir = Path.Combine(Path.GetTempPath(), "boda-rejected-reason-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(dir);
+            try
+            {
+                for (var i = 0; i < 3; i++)
+                {
+                    var stem = Path.Combine(dir, $"item-{i:00}");
+                    File.WriteAllText(stem + ".json", "{}");
+                    File.WriteAllBytes(stem + ".img", new byte[16]);
+                    ImageUploadService.WriteRejectReason(stem + ".json", "HTTP 413");
+                    File.SetLastWriteTimeUtc(stem + ".json", new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc).AddMinutes(i));
+                }
+
+                var reason = Path.Combine(dir, "item-02" + ImageUploadService.RejectReasonExtension);
+                Assert.True(File.Exists(reason));
+                Assert.Contains("HTTP 413", File.ReadAllText(reason));
+
+                var removed = ImageUploadService.PruneRejected(dir, maxFiles: 1, maxBytes: long.MaxValue);
+
+                Assert.Equal(2, removed);
+                Assert.Equal("item-02" + ImageUploadService.RejectReasonExtension,
+                    Path.GetFileName(Assert.Single(Directory.GetFiles(dir, "*" + ImageUploadService.RejectReasonExtension))));
+            }
+            finally
+            {
+                try { Directory.Delete(dir, recursive: true); } catch { }
+            }
+        }
+
         // ── W-137: 사이클 업로드의 CycleTimeMs 는 합계 ─────────────────────
 
         [Fact]
