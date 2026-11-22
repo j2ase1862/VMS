@@ -395,7 +395,7 @@
                                                Visibility="{Binding IsStartingWebServer, Converter={StaticResource BoolToVisConverter}}"/>
                                     <TextBlock TextWrapping="Wrap" FontSize="11" Margin="0,10,0,0"
                                                Foreground="{StaticResource BrushTextMuted}">
-                                        admin 비밀번호 재설정은 Web 배포 폴더의 Reset-AdminPassword 도구를 사용하세요.
+                                        admin 비밀번호를 잊었으면 사용자 매뉴얼의 문제 해결 절차(Web 관리자 비밀번호 재설정)를 따르세요.
                                     </TextBlock>
                                 </StackPanel>
                             </StackPanel>
