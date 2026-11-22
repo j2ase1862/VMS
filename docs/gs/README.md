@@ -17,9 +17,9 @@ docs/gs/
 
 | 파일 | 생성기 |
 |------|--------|
-| `VMS_사용자매뉴얼_v3.1.docx` (+ 동명 `.pdf` 내보내기본) | `pipeline/parse_manual.py` → `pipeline/gen_user_manual.js` |
+| `VMS_사용자매뉴얼_v3.2.docx` (+ 동명 `.pdf` 내보내기본) | `pipeline/parse_manual.py` → `pipeline/gen_user_manual.js` |
 | `../manuals/BODA-VMS-AI-Tools-Manual.html` (별책 — AI 학습 도구, 인증 범위 외) | 수동 편집 HTML (본편 6장 분리, 2026-09-08). docx 생성기 없음 — 필요 시 브라우저 인쇄로 PDF |
-| `VMS_제품설명서_v1.1.docx` | `pipeline/gen_product_description.js` |
+| `VMS_제품설명서_v1.2.docx` | `pipeline/gen_product_description.js` |
 | `VMS_OSS_라이선스_확인서_v1.0.docx` `VMS_GS_신청서_템플릿_v1.0.docx` `VMS_GS_신청_체크리스트_v1.0.docx` | `pipeline/gen_gs_supporting_docs.js` |
 
 **docx 를 직접 편집하지 말 것** — 재생성 시 유실된다. 매뉴얼 본문은
@@ -33,7 +33,7 @@ python docs/manuals/gen_tools_chapter.py     # 6장 도구 레퍼런스 (tools_p
 python docs/manuals/gen_appendix.py          # 13장 부록 (파라미터 전체표)
 python docs/manuals/build_manual.py          # src/*.html 합치기 + 사이드 목차 → docs/manuals/BODA-VMS-User-Manual.html
 python docs/gs/pipeline/parse_manual.py      # HTML → _manual_blocks.json
-node docs/gs/pipeline/gen_user_manual.js     # → docs/gs/VMS_사용자매뉴얼_v3.1.docx
+node docs/gs/pipeline/gen_user_manual.js     # → docs/gs/VMS_사용자매뉴얼_v3.2.docx
 docs/gs/pipeline/docx2pdf_render.ps1 -Docx <docx> -Pdf <pdf> -OutDir <png폴더>   # Word COM → PDF + 페이지 PNG(검수용)
 ```
 
@@ -60,7 +60,7 @@ MLOps 는 `D:\Repo\BODA.VMS.MLOps\docs\manual\screenshots` 재사용, 구성도�
 
 | PR | 매뉴얼에 들어갈 내용 | 대상 절 |
 |----|--------------------|--------|
-| #634 · #636 · Web #169 제출 매뉴얼 ↔ 구현 전수 대조 (v1.48.1 유지) — ⏳ **본문 반영**(전 장 · 제품설명서 본문, 2026-11-22) · docx/PDF · 그림 대기 | **제출 매뉴얼의 서술을 지금 동작에 맞췄다.** 좁은 불일치는 코드를 매뉴얼에 맞추고 나머지는 본문을 고쳤다. 남은 것: docx/PDF 재생성 · 문서 버전 표기 · 그림 재캡처 약 30장. 상세 §105 | 전 장 · 제품설명서 |
+| #634 · #636 · Web #169 제출 매뉴얼 ↔ 구현 전수 대조 (v1.48.1 유지) — ✅ **반영 완료**(전 장 · 제품설명서 · 그림 74장, 매뉴얼 v3.2 · 224쪽, 2026-11-23) | **제출 매뉴얼의 서술을 지금 동작에 맞췄다.** 좁은 불일치는 코드를 매뉴얼에 맞추고 나머지는 본문을 고쳤다. 남은 그림 3장(IO 보드 단계 · 설치 구성 선택 · 시퀀스 편집기). 상세 §105 | 전 장 · 제품설명서 |
 | #609 확장 옵션 PLC 연동 · 라인스캔 · release/1.48.1 (v1.48.1) — ✅ **반영 완료**(3 · 4 · 5 · 10장 · 표지 · 그림, 2026-11-02) | **PLC 연동 · 롤러 검사를 시험범위에서 빼고 제출 매뉴얼 · 제품설명서에서 삭제했다.** 설정 마법사 5단계(3.5 IO 보드 · 3.6 보안 · 3.7 확인), 시퀀스는 IO 보드 기준, 운영체제 Windows 10 IoT Enterprise LTSC 2021 (x64). 상세 §104 | 1 · 2 · 3 · 4 · 5 · 6 · 7 · 9 · 10 · 11장 · 표지 |
 | #601 확장 옵션 · #602 제품명 · #603 매뉴얼 정리 · #604 설치 폴더 · Web #164 (v1.48.0 / Web 1.12.0) — ✅ **반영 완료**(전 장 · 표지 · 그림, 2026-10-30) | **GS 제출 매뉴얼을 기본 구성(확장 옵션 없음)으로 정리하고 제품명을 BODA VMS 로 통일했다.** MLOps · AI 학습 · 3D 카메라 실촬영 · 핸드아이 · 멀티뷰 · 로봇 연동 설명 삭제, 9 · 10장 삭제, 화면 그림을 기본 구성 · v1.48.0 으로 다시 찍음. 상세 §103 | 전 장 · 표지 · §11.5 |
 | Web #162 · #163 PDF 보고서 라이브러리 교체 (Web 1.11.0) · #598 Web 페이로드 스테이징 정리 (v1.47.3) — ✅ **반영 완료**(표지 · §2.2 · §13.5 · 제품설명서, 2026-10-29) | **동봉 Web 의 PDF 보고서를 PDFsharp · MigraDoc 으로 바꿨다(보고서 구성 · 항목 그대로).** 매뉴얼 본문 변경 없음 — 대상 SW 표기만. 상세 §102 | 표지 · §2.2 · §13.5 |
