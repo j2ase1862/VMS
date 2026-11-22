@@ -183,8 +183,8 @@ children.push(H2("4.1 하드웨어 요구사항"));
   children.push(new Table({ width: { size: CONTENT_W, type: WidthType.DXA }, columnWidths: [c1, c2], rows: [
     new TableRow({ tableHeader: true, children: [hcell("항목", c1), hcell("권장 사양", c2)] }),
     ...[
-      ["CPU", "Intel Core i5 이상 (AVX2 지원 권장)"],
-      ["메모리", "8GB 이상 (16GB 권장)"],
+      ["CPU", "Intel Core i5 이상 (AVX2 지원 필수 — 비전 연산 가속)"],
+      ["메모리", "16GB 이상 권장"],
       ["저장장치", "SSD 256GB 이상 (검사 이미지 저장 시 여유 용량 추가)"],
       ["GPU", "딥러닝/TensorRT 사용 시 NVIDIA GPU (CUDA 지원). 미사용 시 불필요"],
       ["카메라", "GigE Vision 2D 에어리어 카메라. 미연결 시 파일 불러오기 모드로 검사 가능"],
@@ -239,14 +239,14 @@ children.push(new Paragraph({ children: [new PageBreak()] }));
 
 // ---- 6. 기능 명세 ----
 children.push(H1("6. 기능 명세 (Function List)"));
-children.push(P("아래 기능명(UI 라벨)은 실제 화면의 버튼/메뉴 텍스트와 일치한다. 영문 라벨은 화면 표기를 그대로 표기하였다."));
+children.push(P("아래 기능명(UI 라벨)은 실제 화면의 버튼/메뉴 텍스트와 일치한다. 영문 라벨은 화면 표기를 그대로 표기하였다. 글자 없이 아이콘만 있는 버튼은 「아이콘」으로 표기하고 마우스를 올리면 나오는 안내를 설명에 적었다."));
 
 children.push(H2("6.1 시스템 설정 — VMS.AppSetup"));
 children.push(funcTable([
-  ["AS-01", "Application / Network", "애플리케이션 기본 설정 및 네트워크(Web 서버 주소 등) 구성"],
-  ["AS-02", "Camera", "카메라 제조사·IP 등 연결 설정"],
-  ["AS-03", "IO Board", "디지털 IO 보드(ADLink / Advantech) 등록 · 채널 수 설정"],
-  ["AS-04", "Admin 비밀번호", "초기 VMS Admin / Local Fallback Admin 계정 비밀번호 설정(기본 비밀번호 시드 없음)"],
+  ["AS-01", "Application Settings", "애플리케이션 기본 설정 및 네트워크(Web 서버 주소 등) 구성"],
+  ["AS-02", "Camera Configuration", "카메라 제조사·IP 등 연결 설정"],
+  ["AS-03", "IO Board Configuration", "디지털 IO 보드(ADLink / Advantech) 등록 · 채널 수 설정"],
+  ["AS-04", "Initial Admin Passwords", "초기 VMS Admin / Local Fallback Admin 계정 비밀번호 설정(Application Settings 단계의 카드)"],
   ["AS-05", "Security & License", "보안 모드(Production / Development) 저장, SW 라이선스 설치 · 상태 확인"],
 ]));
 
@@ -254,31 +254,33 @@ children.push(H2("6.2 운영 클라이언트 — VMS (메인 화면)"));
 children.push(H3("6.2.1 카메라 제어 / 검사 실행"));
 children.push(funcTable([
   ["OP-01", "Grab", "카메라에서 단일 이미지 1장 취득"],
-  ["OP-02", "Live Start", "연속 라이브 그랩 시작"],
-  ["OP-03", "Live Stop", "라이브 그랩 정지"],
+  ["OP-02", "Live", "연속 라이브 그랩 시작"],
+  ["OP-03", "Stop", "라이브 그랩 정지"],
   ["OP-04", "AUTO RUN", "자동 검사 운영 시작(작업자 로그인·레시피 등 조건 충족 시)"],
   ["OP-05", "STOP", "자동 운영 정지"],
+  ["OP-06", "Inspect", "현재 이미지로 검사 1회 수동 실행"],
 ]));
 children.push(H3("6.2.2 레시피 관리"));
 children.push(funcTable([
   ["RC-01", "Load", "선택한 레시피 로드"],
   ["RC-02", "New", "새 레시피 생성"],
-  ["RC-03", "Save", "현재 레시피 저장"],
-  ["RC-04", "Export", "레시피 파일 내보내기"],
-  ["RC-05", "Import", "레시피 파일 가져오기"],
+  ["RC-03", "「아이콘」 저장", "현재 레시피 저장 — 안내 「현재 레시피를 저장합니다」"],
+  ["RC-04", "「아이콘」 내보내기", "레시피 파일 내보내기 — 안내 「현재 레시피를 파일로 내보냅니다」"],
+  ["RC-05", "「아이콘」 가져오기", "레시피 파일 가져오기 — 안내 「레시피 파일을 가져옵니다」"],
   ["RC-06", "Available Recipes", "사용 가능한 레시피 목록 표시/선택"],
 ]));
 children.push(H3("6.2.3 작업지시 / 추적성"));
 children.push(funcTable([
   ["WO-01", "Work Orders", "작업지시 목록 조회·선택(Order No / Product / Recipe / Progress / Status / Planned Start)"],
   ["WO-02", "Operator (Login / Logout)", "작업자 로그인/로그아웃"],
-  ["WO-03", "Ctx: WO / Lot / S/N", "작업지시·Lot·시리얼 컨텍스트 입력(추적성 첨부)"],
+  ["WO-03", "Ctx: WO / Lot / S/N", "작업지시·Lot·시리얼 컨텍스트 입력(추적성 첨부). Lot 은 Web 에서 발행한 열린 Lot 목록에서 선택(여러 Lot 병행 운영)"],
 ]));
 children.push(H3("6.2.4 통계 / 결과 모니터링"));
 children.push(funcTable([
   ["ST-01", "TACT TIME / YIELD / TOTAL / OK / NG", "실시간 검사 KPI 표시"],
   ["ST-02", "Recent Inspections", "최근 검사 이력(Total / Pass / Fail) 및 Clear"],
   ["ST-03", "NG History", "불량 이미지 히스토리 표시"],
+  ["ST-04", "전체 이력", "이 PC 에 저장된 검사 이력 조회(기간·판정·레시피 필터, 일별 집계, NG 파레토, CSV) — Web 서버 없이 운전하는 단독 모드 포함"],
 ]));
 children.push(H3("6.2.5 이미지 저장 / Web 연동 / 업데이트"));
 children.push(funcTable([
@@ -298,8 +300,8 @@ children.push(funcTable([
   ["AD-03", "Health Check", "시스템 상태 점검"],
   ["AD-04", "Backup / Restore", "데이터 백업 및 복원"],
   ["AD-05", "Auto Backup Settings", "자동 백업 정책 설정"],
-  ["AD-06", "Retention Settings", "데이터 보존 정책 설정"],
-  ["AD-07", "Support Package", "원격 지원용 진단 패키지 생성"],
+  ["AD-06", "Retention Settings...", "데이터 보존 정책 설정"],
+  ["AD-07", "Support Package...", "원격 지원용 진단 패키지 생성"],
 ]));
 
 children.push(H2("6.3 비전 설정 — VMS.VisionSetup"));
@@ -310,9 +312,10 @@ children.push(funcTable([
   ["VS-03", "Recipe", "레시피 신규/열기/저장"],
   ["VS-04", "Run", "검사 파이프라인 1회/연속 실행"],
   ["VS-05", "Sequence", "시퀀스(IO 보드 트리거 입력 · 판정 출력 흐름) 편집"],
-  ["VS-06", "Batch Test", "다수 이미지 일괄 검사/검증"],
-  ["VS-07", "Calibration", "카메라 캘리브레이션 (체커보드 · 원형 그리드)"],
-  ["VS-08", "3D Data", "저장 점군(.vpc) 불러오기 · 저장, 높이 맵 생성 — 3D 검사 도구의 입력"],
+  ["VS-06", "Batch Test...", "다수 이미지 일괄 검사/검증"],
+  ["VS-07", "Camera → Calibration Manager...", "카메라 캘리브레이션 (체커보드 · 원형 그리드)"],
+  ["VS-08", "3D (Load 3D Data / Save 3D Data / Generate Height Map)", "저장 점군(.vpc) 불러오기 · 저장, 높이 맵 생성 — 3D 검사 도구의 입력"],
+  ["VS-09", "예제 Template", "예제 템플릿 갤러리 — 검사 유형별 예제 템플릿을 골라 선택한 스텝에 적용"],
 ]));
 children.push(H3("6.3.2 ROI(검사 영역) 지정"));
 children.push(funcTable([
@@ -327,7 +330,7 @@ children.push(H3("6.3.3 이미지 뷰"));
 children.push(funcTable([
   ["IV-01", "2D Image / Depth Map / Point Cloud", "2D·깊이맵·포인트클라우드 뷰 전환"],
   ["IV-02", "Save Image", "현재 표시 이미지 저장"],
-  ["IV-03", "Fit / + / − / Delete / Clear All", "화면 맞춤·확대/축소·삭제·전체 지우기"],
+  ["IV-03", "- / + / Fit / Delete / Clear All", "축소/확대·화면 맞춤·ROI 삭제·전체 지우기"],
 ]));
 children.push(H3("6.3.4 비전 도구 팔레트 (15 카테고리 · 40종)"));
 children.push(funcTable([
@@ -350,14 +353,25 @@ children.push(funcTable([
 
 children.push(H2("6.4 생산 관리 웹 — BODA.VMS.Web"));
 children.push(funcTable([
-  ["WB-01", "Dashboard", "라인 생산/품질 KPI 대시보드"],
-  ["WB-02", "Production History", "검사 생산 이력 조회(검사 이미지 열람 포함)"],
-  ["WB-03", "Work Orders", "작업지시 생성/진행/완료 관리"],
-  ["WB-04", "Inspection Items", "레시피/파라미터 관리"],
-  ["WB-05", "Alarms / Andon", "알람 및 안돈 보드"],
-  ["WB-06", "Audit Logs", "감사 로그 조회"],
-  ["WB-07", "Reports", "품질 분석 리포트"],
+  ["WB-01", "대시보드 (Dashboard)", "라인 생산/품질 KPI 대시보드"],
+  ["WB-02", "안돈 보드 (Andon Board)", "현장 표시용 라인 상태 보드"],
+  ["WB-03", "알람 (Alarms)", "알람 조회"],
+  ["WB-04", "생산 이력 (Production History)", "검사 생산 이력 조회(검사 이미지 열람 포함)"],
+  ["WB-05", "작업 지시 (Work Orders)", "작업지시 생성/진행/완료 관리"],
+  ["WB-06", "제품 (Products) · 작업자 (Operators)", "제품 마스터 · 작업자 관리"],
+  ["WB-07", "레시피 파라미터 (Recipe Parameters)", "레시피별 검사 기준값(파라미터) 관리"],
+  ["WB-08", "파레토 분석 (Pareto Analysis) · SPC 관리도 (SPC Chart)", "불량 파레토 분석 · SPC 관리도"],
+  ["WB-09", "불량 코드 (Defect Codes)", "불량 코드 마스터 관리"],
+  ["WB-10", "교대 리포트 (Shift Report) · PDF 리포트 (PDF Reports)", "교대별 생산 리포트 · PDF 리포트 생성"],
+  ["WB-11", "비전 클라이언트 (Vision Clients)", "라인(검사 PC) 관리"],
+  ["WB-12", "OEE 설비종합효율 (OEE) · 설비 신뢰성 (Reliability (MTBF/MTTR))", "설비종합효율 · MTBF/MTTR 조회"],
+  ["WB-13", "예방 보전 (Maintenance)", "예방 보전 관리"],
+  ["WB-14", "불량률 예측 (Defect Rate Forecast)", "불량률 예측 조회"],
+  ["WB-15", "사용자 승인 (User Approvals)", "웹 사용자 승인 · 권한 관리 (Admin)"],
+  ["WB-16", "감사 로그 (Audit Logs)", "감사 로그 조회 (Admin)"],
+  ["WB-17", "교대 마스터 (Shift Master) · 시스템 설정 (Settings) · SW 라이선스 (SW License)", "교대 마스터 · 시스템 설정 · SW 라이선스 좌석 현황 (Admin)"],
 ]));
+children.push(P("※ 웹 메뉴 이름은 화면 언어(한국어 / English)에 따라 위 두 표기 중 하나로 보인다.", { italics: true, size: 18, color: "595959" }));
 
 children.push(new Paragraph({ children: [new PageBreak()] }));
 
@@ -415,7 +429,7 @@ const doc = new Document({
   sections: [{
     properties: { page: { size: { width: PAGE_W, height: PAGE_H }, margin: { top: MARGIN, right: MARGIN, bottom: MARGIN, left: MARGIN } } },
     headers: { default: new Header({ children: [new Paragraph({ alignment: AlignmentType.RIGHT,
-      children: [new TextRun({ text: "BODA VMS 제품설명서 v1.0", size: 16, color: "808080" })] })] }) },
+      children: [new TextRun({ text: `BODA VMS 제품설명서 v${DOC_VERSION}`, size: 16, color: "808080" })] })] }) },
     footers: { default: new Footer({ children: [new Paragraph({ alignment: AlignmentType.CENTER,
       children: [new TextRun({ text: "", size: 16, color: "808080" }),
         new TextRun({ children: [PageNumber.CURRENT], size: 16, color: "808080" }),

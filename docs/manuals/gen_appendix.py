@@ -12,18 +12,81 @@ for t in tools:
     if t.get("params"): t["params"] = [p for p in t["params"] if in_scope_param(p["param"])]
 
 DESC = {
-  "ThresholdValue":"이진화 임계값. 픽셀값이 이 값보다 크면 전경(흰색)으로 처리","MaxValue":"이진화 시 전경에 적용할 값(보통 255)","UseOtsu":"Otsu 자동 임계값 사용(체크 시 Threshold Value 무시)","UseAdaptive":"적응형 이진화(국소 영역별 임계값 — 조명 불균일에 강함)","BlockSize":"적응형 이진화 국소 블록 크기(홀수)","CValue":"적응형 이진화 보정 상수(클수록 전경 감소)",
-  "BlurType":"블러 종류(Gaussian · Median · Box 등)","KernelSize":"커널 크기(홀수). 클수록 강한 평활화","SigmaX":"가우시안 X 표준편차(0 이면 커널에서 자동)","SigmaY":"가우시안 Y 표준편차(0 이면 SigmaX 사용)",
+  "ThresholdValue":"이진화 임계값. 픽셀값이 이 값보다 크면 전경(흰색)으로 처리(Threshold Type 이 Binary 일 때)","ThresholdType":"이진화 방식(Binary · BinaryInv · Trunc · ToZero · ToZeroInv). BinaryInv 는 임계값보다 어두운 픽셀이 흰색","MaxValue":"이진화 시 전경에 적용할 값(보통 255)","UseOtsu":"Otsu 자동 임계값 사용(체크 시 Threshold Value 무시)","UseAdaptive":"적응형 이진화(국소 영역별 임계값 — 조명 불균일에 강함)","BlockSize":"적응형 이진화 국소 블록 크기(홀수)","CValue":"적응형 이진화 보정 상수(클수록 전경 감소)",
+  "BlurType":"블러 종류(Average · Gaussian · Median · Bilateral)","KernelSize":"커널 크기(홀수). 클수록 강한 평활화","SigmaX":"가우시안 X 표준편차(0 이면 커널에서 자동)","SigmaY":"가우시안 Y 표준편차(0 이면 SigmaX 사용)",
   "Operation":"연산 종류","KernelWidth":"구조 요소(커널) 너비","KernelHeight":"구조 요소(커널) 높이","Iterations":"연산 반복 횟수",
-  "Method":"에지 검출 방법(Canny · Sobel · Laplacian 등)","CannyThreshold1":"Canny 하위(연결) 임계값","CannyThreshold2":"Canny 상위(강한 에지) 임계값","CannyApertureSize":"Sobel 커널 크기(홀수)","L2Gradient":"정확한 L2 그래디언트 사용(정밀도↑ 속도↓)","ClipLimit":"CLAHE 대비 제한값","TileGridWidth":"CLAHE 타일 격자 가로 분할 수","TileGridHeight":"CLAHE 타일 격자 세로 분할 수",
-  "UseInternalThreshold":"도구 안에서 이진화를 수행(외부 전처리 불필요)","SegmentationPolarity":"전경 극성(밝은 블롭 / 어두운 블롭)","MinArea":"검출 최소 면적(px)","MaxArea":"검출 최대 면적(px)","EnableJudgment":"이 도구의 OK/NG 판정 사용","UseAreaJudgment":"면적 기준 판정 사용","ExpectedArea":"기준(목표) 면적","AreaTolerancePlus":"면적 상한 허용오차(+)","AreaToleranceMinus":"면적 하한 허용오차(−)","UseCountJudgment":"블롭 개수 기준 판정 사용","CountMode":"개수 판정 모드(정확히 · 이상 · 범위 · 공차)","ExpectedCount":"기준 개수","ExpectedCountMax":"개수 상한(범위 모드)","DrawContours":"윤곽선 오버레이","DrawBoundingBox":"외접 사각형 표시","DrawCenterPoint":"중심점 표시","DrawLabels":"번호/라벨 표시",
+  "Method":"에지 검출 방법(Canny · Sobel · Scharr · Laplacian)","CannyThreshold1":"Canny 하위(연결) 임계값","CannyThreshold2":"Canny 상위(강한 에지) 임계값","CannyApertureSize":"Canny 가 밝기 기울기를 계산할 때 쓰는 커널 크기(홀수, Method 가 Canny 일 때만 쓰임)","L2Gradient":"정확한 L2 그래디언트 사용(정밀도↑ 속도↓)","ClipLimit":"CLAHE 대비 제한값","TileGridWidth":"CLAHE 타일 격자 가로 분할 수","TileGridHeight":"CLAHE 타일 격자 세로 분할 수",
+  "UseInternalThreshold":"도구 안에서 이진화를 수행(외부 전처리 불필요)","SegmentationPolarity":"전경 극성(밝은 블롭 / 어두운 블롭)","MinArea":"검출 최소 면적(px)","MaxArea":"검출 최대 면적(px)","EnableJudgment":"이 도구의 OK/NG 판정 사용","UseAreaJudgment":"면적 기준 판정 사용","ExpectedArea":"기준(목표) 면적","AreaTolerancePlus":"면적 상한 허용오차(+)","AreaToleranceMinus":"면적 하한 허용오차(−)","UseCountJudgment":"블롭 개수 기준 판정 사용","CountMode":"개수 판정 모드(같음 · 이상 · 이하 · 범위 · 공차)","ExpectedCount":"기준 개수","ExpectedCountMax":"개수 상한(범위 모드)","CountUpperTol":"기준 개수 위쪽 허용 개수(공차 모드)","CountLowerTol":"기준 개수 아래쪽 허용 개수(공차 모드)","DrawContours":"윤곽선 오버레이","DrawBoundingBox":"외접 사각형 표시","DrawCenterPoint":"중심점 표시","DrawLabels":"번호/라벨 표시",
   "SearchWidth":"탐색(투영) 폭","SearchAxis":"탐색 축 방향","Polarity":"에지 극성(밝→어두 · 어두→밝 · 모두)","EdgeThreshold":"에지로 인정할 최소 강도","FilterHalfWidth":"에지 필터 반폭(노이즈 평활)","Mode":"동작 모드","MaxEdges":"검출할 최대 에지 수","ScorerMode":"에지 점수 산정 방식","SelectionMode":"사용할 에지 선택 방식(첫 · 최강 · 마지막 등)","ProjectionMode":"프로파일 투영 방식","UseGaussianFilter":"가우시안 필터 적용","GaussianSigma":"가우시안 시그마","UseNormalizedContrast":"대비 정규화","SubPixelMethod":"서브픽셀 보간 방식","NumCalipers":"캘리퍼 개수(많을수록 정밀 · 느림)","SearchLength":"캘리퍼 탐색 길이","FitMethod":"피팅 방법(최소제곱 · RANSAC)","RansacThreshold":"RANSAC 인라이어 허용오차","MinFoundCalipers":"유효로 인정할 최소 캘리퍼 수","ExpectedRadius":"예상 반지름","StartAngle":"탐색 시작 각도","EndAngle":"탐색 종료 각도","SearchDirection":"에지 탐색 방향(내→외 · 외→내)","CenterPoint.X":"예상 중심 X","CenterPoint.Y":"예상 중심 Y",
   "AngleStep":"각도 탐색 간격","MinScale":"최소 스케일","MaxScale":"최대 스케일","ScaleStep":"스케일 탐색 간격","ScoreThreshold":"매칭 점수 임계값(이상이면 검출)","MaxInstances":"최대 검출 개수","NmsDistanceFactor":"중복 검출 억제 거리 계수","NumPyramidLevels":"이미지 피라미드 레벨 수","TopCandidates":"정밀화할 상위 후보 수","UseSearchRegion":"탐색 영역 제한 사용","SearchRegionX":"탐색 영역 X","SearchRegionY":"탐색 영역 Y","SearchRegionWidth":"탐색 영역 너비","SearchRegionHeight":"탐색 영역 높이","UseContrastInvariant":"명암 반전에도 매칭","IsAutoTuneEnabled":"파라미터 자동 튜닝","AngleStart":"각도 탐색 시작","AngleExtent":"각도 탐색 범위","Greediness":"탐욕도(높을수록 빠르나 정확도↓)","NumLevels":"피라미드 레벨 수","CannyLow":"모델 에지 추출 하위 임계값","CannyHigh":"모델 에지 추출 상위 임계값","MaxModelPoints":"모델 특징점 최대 수","CurvatureWeight":"곡률 가중치","MinCoverage":"특징점 일치 비율 하한(반쪽 매칭 차단, 0 = 끔)",
-  "CodeReaderMode":"판독 모드(1D · 2D · 자동)","MaxCodeCount":"한 화면에서 판독할 최대 코드 수","TryHarder":"저품질 코드 정밀 탐색","UseLocalization":"DataMatrix 후보 지역화","EnableVerification":"판독 결과 검증(기대값 비교)","ExpectedText":"기대 문자열","UseRegexMatch":"정규식으로 검증","ParseGs1":"GS1 AI 파싱","EnableQualityGrading":"인쇄 품질 등급화","MinPassGrade":"합격 최소 품질 등급","DrawOverlay":"결과 오버레이 표시",
-  "OcrEngine":"OCR 엔진(Tesseract · PaddleOCR)","Language":"인식 언어","PageSegMode":"페이지 분할 모드","EngineMode":"엔진 모드","CharacterWhitelist":"허용 문자 집합","MaxSideLen":"입력 이미지 최대 변 길이","CustomDetModelPath":"커스텀 검출 모델 경로","CustomRecModelPath":"커스텀 인식 모델 경로","CustomDictPath":"커스텀 문자 사전 경로","ConfidenceThreshold":"신뢰도 임계값","AutoPreprocess":"자동 전처리","InvertImage":"명암 반전 후 인식","TargetTextHeight":"목표 글자 높이(0 = 자동)","DenoiseLevel":"노이즈 제거 강도","DotMatrixMode":"도트매트릭스(각인) 문자 모드","TessdataPath":"Tesseract tessdata 경로",
+  "CodeReaderMode":"판독할 코드 종류(Auto · QRCode · Barcode1D · DataMatrix · PDF417)","MaxCodeCount":"한 화면에서 판독할 최대 코드 수","TryHarder":"저품질 코드 정밀 탐색","UseLocalization":"DataMatrix 후보 지역화","EnableVerification":"판독 결과 검증(기대값 비교)","ExpectedText":"기대 문자열","UseRegexMatch":"정규식으로 검증","ParseGs1":"GS1 AI 파싱","EnableQualityGrading":"인쇄 품질 등급화","MinPassGrade":"합격 최소 품질 등급","DrawOverlay":"결과 오버레이 표시",
+  "OcrEngine":"OCR 엔진(Tesseract · PPOcrOnnx)","Language":"인식 언어","PageSegMode":"페이지 분할 모드","EngineMode":"엔진 모드","CharacterWhitelist":"허용 문자 집합","MaxSideLen":"입력 이미지 최대 변 길이","CustomDetModelPath":"커스텀 검출 모델 경로","CustomRecModelPath":"커스텀 인식 모델 경로","CustomDictPath":"커스텀 문자 사전 경로","ConfidenceThreshold":"신뢰도 임계값","AutoPreprocess":"자동 전처리","InvertImage":"명암 반전 후 인식","TargetTextHeight":"목표 글자 높이(0 = 자동)","DenoiseLevel":"노이즈 제거 강도","DotMatrixMode":"도트매트릭스(각인) 문자 모드","TessdataPath":"Tesseract tessdata 경로",
   "ModelPath":"모델 파일(.onnx) 경로([폴더] 버튼으로 선택)","InputSize":"모델 입력 크기(px)","IouThreshold":"박스 중복 제거 IoU 임계값","UseROI":"ROI 안에서만 실행",
   "MinCircularity":"최소 원형도(4π×면적÷둘레², 원=1.0) — 이보다 낮은 덩어리는 개수·면적에서 제외","MaxCircularity":"최대 원형도 — 이보다 원에 가까운 덩어리를 제외","MinConvexity":"최소 볼록도(면적÷볼록 껍질 면적) — 오목하게 패인 덩어리를 제외","ExpectedValue":"판정 기준값(거리 · 각도 · 높이 등)","ToleranceMinus":"기준값 아래쪽 허용오차","TolerancePlus":"기준값 위쪽 허용오차","MaxFlatness":"합격 최대 평탄도(mm)","MaxStraightness":"합격 최대 직진도(mm)","MinConfidence":"합격 최소 정합 신뢰도(0~1)","UseSizeJudgment":"클러스터 크기(길이 · 폭) 판정 사용","ExpectedLength":"기준 길이(mm)","ExpectedWidth":"기준 폭(mm)","SizeToleranceMinus":"크기 하한 허용오차","SizeTolerancePlus":"크기 상한 허용오차","DistanceThreshold":"직선으로 인정할 점의 최대 거리(mm)","MinInliers":"직선으로 인정할 최소 점 개수",
 }
+# 같은 속성 이름을 여러 도구가 쓰는 경우의 도구별 설명 (설정 XAML 파일 이름, 속성 이름)
+DESC_TOOL = {
+  ("CaliperToolSettings.xaml","ExpectedWidth"):"엣지 쌍의 기대 폭(px) — Mode 가 EdgePair 일 때만 사용",
+  ("CaliperToolSettings.xaml","WidthTolerance"):"기대 폭의 허용 오차(±px) — 이 범위 안의 엣지 쌍만 채택",
+  ("PointCloudClusterToolSettings.xaml","UseCountJudgment"):"덩어리 개수 기준 판정 사용",
+  ("PointCloudClusterToolSettings.xaml","CountMode"):"개수 판정 모드(같음 · 이상 · 이하 · 범위)",
+  ("PointCloudClusterToolSettings.xaml","Tolerance"):"이 거리(mm) 안의 점을 같은 덩어리로 묶음",
+  ("OCRToolSettings.xaml","OutputFormatPreset"):"출력 형식 강제(기본 '(없음 — 형식 무시)')",
+  ("OCRToolSettings.xaml","CustomOutputFormat"):"직접 입력하는 출력 형식(한 줄에 하나)",
+  ("DetectionToolSettings.xaml","ClassNamesText"):"모델의 클래스 이름. 모델에 클래스 정보가 있으면 목록으로 표시되고, 없으면 쉼표로 구분해 입력",
+  ("DetectionToolSettings.xaml","NgClassesText"):"결함으로 볼 클래스 — 고른 클래스가 한 건이라도 검출되면 NG",
+  ("DetectionToolSettings.xaml","ClassThresholds"):"클래스별 신뢰도 임계값(Use Per-Class Thresholds 를 켰을 때)",
+  ("DetectionToolSettings.xaml","DotDetectionMethod"):"점(dot) 검출 방식",
+  ("DetectionToolSettings.xaml","DotPatternMetric"):"점 배치의 각도를 재는 방식",
+  ("DetectionToolSettings.xaml","DotPreprocessMode"):"저대비 점을 위한 전처리 방식",
+  ("DetectionToolSettings.xaml","DotThresholdMode"):"점 이진화 방식",
+  ("DetectionToolSettings.xaml","DotExpectations"):"클래스별 기대 점 개수 ± 공차, 각도 검사(기준 각도 ± 공차)",
+  ("ClassifyToolSettings.xaml","ClassNamesText"):"모델의 클래스 이름. 모델에 클래스 정보가 있으면 목록으로 표시되고, 없으면 쉼표로 구분해 입력",
+  ("ClassifyToolSettings.xaml","OkClasses"):"양품으로 볼 클래스 — 지정하면 그 클래스로 분류되고 신뢰도도 임계값 이상일 때만 OK",
+  ("AnomalyToolSettings.xaml","CalibrationFolder"):"임계값 자동 계산에 쓸 정상 이미지 폴더",
+  ("AnomalyToolSettings.xaml","CalibrationSigma"):"임계값 = 정상 점수 평균 + k × 표준편차 의 k",
+  ("Geometry3DToolSettings.xaml","PointSource"):"점을 직접 넣을지(수동 입력), 연결한 PointCloud Cluster 의 덩어리 중심을 쓸지",
+  ("Geometry3DToolSettings.xaml","PointA"):"수동 입력 점 A 의 픽셀 좌표",
+  ("Geometry3DToolSettings.xaml","PointB"):"수동 입력 점 B 의 픽셀 좌표",
+  ("Geometry3DToolSettings.xaml","ClusterA"):"연결 소스에서 고르는 덩어리 A",
+  ("Geometry3DToolSettings.xaml","ClusterB"):"연결 소스에서 고르는 덩어리 B",
+  ("PhotometricStereoToolSettings.xaml","LightDirection"):"조명 방향 벡터(조명마다)",
+  ("PhotometricStereoToolSettings.xaml",""):"그 조명에서 찍은 이미지 경로(조명마다)",
+  ("MultiStepAlignToolSettings.xaml","PointASource"):"A 점을 낼 스텝과 Feature Match 도구",
+  ("MultiStepAlignToolSettings.xaml","PointBSource"):"B 점을 낼 스텝과 Feature Match 도구",
+}
+# Expert Mode 를 켜야 보이는 칸 — 각 설정 XAML 의 IsExpertMode 바인딩 기준
+EXPERT = {
+  "CaliperToolSettings.xaml": "SearchWidth SearchAxis MaxEdges ProjectionMode UseGaussianFilter GaussianSigma UseNormalizedContrast SubPixelMethod",
+  "LineFitToolSettings.xaml": "FitMethod RansacThreshold MinFoundCalipers",
+  "CircleFitToolSettings.xaml": "StartAngle EndAngle FitMethod",
+  "ShapeMatchToolSettings.xaml": "AngleStep MinScale MaxScale ScaleStep NumPyramidLevels TopCandidates",
+  "FeatureMatchToolSettings.xaml": "AngleStart AngleExtent MinScale MaxScale AngleStep ScaleStep Greediness NumLevels NmsDistanceFactor CannyLow CannyHigh MaxModelPoints CurvatureWeight",
+  "OCRToolSettings.xaml": "Language PageSegMode EngineMode CharacterWhitelist MaxSideLen CustomDetModelPath CustomRecModelPath CustomDictPath ConfidenceThreshold AutoPreprocess InvertImage TargetTextHeight DenoiseLevel DotMatrixMode OutputFormatPreset CustomOutputFormat EnableVerification ExpectedText UseRegexMatch TessdataPath",
+  "OCVToolSettings.xaml": "InvertImage MinCharHeight MaxCharHeight MinCharWidth",
+  "CodeReaderToolSettings.xaml": "EnableVerification ExpectedText UseRegexMatch ParseGs1 EnableQualityGrading MinPassGrade",
+  "ColorExtractToolSettings.xaml": "HueMin HueMax SaturationMin SaturationMax ValueMin ValueMax",
+  "ColorMatchToolSettings.xaml": "MeanL MeanA MeanB",
+}
+EXPERT = {k: set(v.split()) for k, v in EXPERT.items()}
+# 분류 · 도구 이름을 Tool Palette(6장)와 같게 — (분류, [(_tool_params.json 의 도구 키, 표시 이름)])
+APPX_ORDER = [
+  ("Preprocessing (Color)", [("Blur (블러)", None), ("Morphology (형태학 연산)", None), ("Image Enhance (이미지 보정)", None), ("Polar Unwrap (극좌표 펼치기)", None)]),
+  ("Conversion (Gray)", [("Grayscale (그레이 변환)", None), ("Threshold (이진화)", None), ("Edge Detection (에지 검출)", None), ("Histogram (히스토그램)", None)]),
+  ("Pattern Matching", [("Feature Match (특징 매칭)", None), ("Shape Match (형상 매칭)", None)]),
+  ("Alignment", [("Match Align (매치 얼라인)", None), ("Multi-Step Align (다중 스텝 얼라인)", None)]),
+  ("Blob Analysis", [("Blob Analysis (블롭 분석)", "Blob (블롭 분석)")]),
+  ("Measurement", [("Caliper (캘리퍼 측정)", None), ("Line Fit (직선 피팅)", None), ("Circle Fit (원 피팅)", None), ("Geometry (기하 측정)", None)]),
+  ("Identification", [("OCR (문자 인식)", None), ("OCV (문자 검증)", None)]),
+  ("Code Reading", [("Code Reader (코드 판독)", None)]),
+  ("3D Processing", [("Point Cloud Filter (포인트클라우드 필터)", "PointCloud Filter (포인트클라우드 필터)"), ("Point Cloud Registration (포인트클라우드 정합)", "PointCloud Registration (포인트클라우드 정합)"), ("Point Cloud Mask Crop (마스크 점군 크롭)", "PointCloud Mask Crop (마스크 점군 크롭)"), ("Point Cloud Cluster (포인트클라우드 클러스터)", "PointCloud Cluster (포인트클라우드 클러스터)")]),
+  ("3D Measurement", [("Point Cloud Deviation (기준 형상 편차)", "PointCloud Deviation (기준 형상 편차)"), ("Height Slicer (높이 슬라이스)", None), ("Plane Fit (평면 피팅)", None), ("Geometry 3D (3D 기하)", "3D Geometry (3D 기하)"), ("Point Cloud Line Fit (포인트클라우드 직선 피팅)", "PointCloud Line Fit (포인트클라우드 직선 피팅)")]),
+  ("Deep Learning", [("Detection (딥러닝 검출)", None), ("Segmentation (분할)", None), ("RF-DETR-seg (인스턴스 분할)", None), ("Classify (분류)", None), ("Anomaly (이상 탐지)", None)]),
+  ("Judgment", [("Result (결과/판정)", None), ("Ensemble (앙상블)", None)]),
+  ("Color", [("Color Extract (색 추출)", None), ("Color Match (색 매칭)", None)]),
+  ("Calibration", [("Image Rectify (이미지 정류)", None)]),
+  ("Surface Analysis", [("Photometric Stereo (포토메트릭 스테레오)", None)]),
+]
 esc = html.escape
 # 11.4 기능 리스트 대응표 — GS 신청 기능 리스트(체크리스트 xlsx '기능 리스트' 탭 6~70행)의 각 항목을 설명하는 절
 FUNC_MAP = [
@@ -38,11 +101,21 @@ FUNC_MAP = [
   ("검사 운전 (VMS 메인)", "생산 관리 연동", "작업자 로그인", "§4.3 · §4.12 · §8.9"),
   ("검사 운전 (VMS 메인)", "생산 관리 연동", "검사 결과 웹 업로드", "§8.6 · §8.26"),
   ("검사 운전 (VMS 메인)", "시퀀스 제어", "IO 시퀀스 운전", "§3.5 · §5.10"),
+  ("검사 운전 (VMS 메인)", "레시피", "레시피 불러오기 · 새로 만들기 · 저장 · 내보내기 · 가져오기", "§4.6"),
+  ("검사 운전 (VMS 메인)", "설정", "이미지 저장 설정 (Image Save Settings)", "§4.6 · §9.2"),
+  ("검사 운전 (VMS 메인)", "설정", "검사 기준값 동기화 (Sync Parameters)", "§4.6 · §5.7"),
+  ("검사 운전 (VMS 메인)", "관리자 도구", "감사 로그 조회 (Audit Log Viewer)", "§4.11"),
+  ("검사 운전 (VMS 메인)", "관리자 도구", "시스템 상태 점검 (Health Check)", "§4.11"),
+  ("검사 운전 (VMS 메인)", "관리자 도구", "백업 · 복원 · 자동 백업 (Backup / Restore · Auto Backup Settings)", "§4.11 · §9.1"),
+  ("검사 운전 (VMS 메인)", "관리자 도구", "데이터 보존 정책 (Retention Settings)", "§4.11 · §9.2"),
+  ("검사 운전 (VMS 메인)", "관리자 도구", "진단 패키지 (Support Package)", "§4.11 · §9.7"),
   ("레시피 편집 (Vision Setup)", "레시피 관리", "레시피 생성/저장/복사/이름 변경", "§5.3 · §8.10"),
   ("레시피 편집 (Vision Setup)", "레시피 관리", "예제 템플릿 갤러리", "§5.8"),
   ("레시피 편집 (Vision Setup)", "카메라·영상 취득", "카메라 연결/촬영/라이브", "§3.4 · §4.5 · §5.4 · §5.12"),
   ("레시피 편집 (Vision Setup)", "카메라·영상 취득", "이미지 파일 로드", "§4.5 · §5.4"),
-  ("레시피 편집 (Vision Setup)", "ROI·좌표계", "ROI 설정(사각형/회전 사각형)", "§5.5"),
+  ("레시피 편집 (Vision Setup)", "카메라·영상 취득", "3D 데이터 불러오기 · 저장 · 높이 맵 생성", "§5.2 · §5.4"),
+  ("레시피 편집 (Vision Setup)", "카메라·영상 취득", "이미지 뷰 (2D Image · Depth Map · Point Cloud, 이미지 저장)", "§5.1 · §5.4"),
+  ("레시피 편집 (Vision Setup)", "ROI·좌표계", "ROI 설정(사각형 · 회전 사각형 · 원 · 타원 · 다각형)", "§5.5"),
   ("레시피 편집 (Vision Setup)", "ROI·좌표계", "좌표 보정(Fixture)", "§5.5 · §7.3"),
   ("레시피 편집 (Vision Setup)", "영상 전처리 도구", "Blur / Morphology / Image Enhance / Grayscale / Threshold / Edge Detection / Histogram", "§6.1 · §6.2"),
   ("레시피 편집 (Vision Setup)", "영상 전처리 도구", "Polar Unwrap (원형 → 띠 펼침)", "§6.1"),
@@ -52,7 +125,7 @@ FUNC_MAP = [
   ("레시피 편집 (Vision Setup)", "측정·판정 도구", "Caliper / Line Fit / Circle Fit (치수 측정)", "§6.6 · §7.2"),
   ("레시피 편집 (Vision Setup)", "측정·판정 도구", "Geometry (기하 연산)", "§6.6 · §7.2"),
   ("레시피 편집 (Vision Setup)", "측정·판정 도구", "Result (판정 종합)", "§5.6 · §6.12"),
-  ("레시피 편집 (Vision Setup)", "측정·판정 도구", "Code Reader (DataMatrix · GS1)", "§6.8 · §7.5"),
+  ("레시피 편집 (Vision Setup)", "측정·판정 도구", "Code Reader (1D 바코드 · QR · DataMatrix · PDF417 · GS1)", "§6.8 · §7.5"),
   ("레시피 편집 (Vision Setup)", "측정·판정 도구", "OCR (문자 인식)", "§6.7 · §7.6"),
   ("레시피 편집 (Vision Setup)", "측정·판정 도구", "OCV (문자 검증)", "§6.7 · §7.6"),
   ("레시피 편집 (Vision Setup)", "측정·판정 도구", "Color Extract / Color Match (색상 검사)", "§6.13 · §7.4"),
@@ -101,6 +174,8 @@ out.append('''<h3 id="appx-keys">11.1 단축키 · 마우스 조작 (VisionSetup
   <tr><th>키 / 조작</th><th>범위</th><th>동작</th></tr>
   <tr><td>← / →</td><td>메인 창 (폴더 열기 후)</td><td>이전 / 다음 이미지. 툴바의 Navigate · Run All · Run Selected 모드에 따라 이동 시 자동 실행</td></tr>
   <tr><td>Esc / 우클릭</td><td>Tool Workspace</td><td>도구 연결 모드 취소</td></tr>
+  <tr><td>마우스 휠 / 빈 곳 드래그</td><td>Tool Workspace</td><td>커서 기준 확대 · 축소 (30%~200%) / 화면 이동. 오른쪽 아래 [전체 보기] 는 도구가 모두 보이게 맞추고 [100%] 는 원래 크기로 되돌립니다</td></tr>
+  <tr><td>두 번 클릭 또는 F2 · Enter</td><td>Steps 표의 Resolution 칸</td><td>값 편집 시작 / 확정</td></tr>
   <tr><td>마우스 휠</td><td>이미지 뷰</td><td>커서 기준 확대 · 축소 (10%~500%)</td></tr>
   <tr><td>우클릭</td><td>이미지 뷰</td><td>다각형 ROI 완성(점 3 개 이상) / 그 외 선택 해제</td></tr>
   <tr><td>드래그 (흰 원 핸들 / 금색 원 핸들)</td><td>ROI</td><td>크기 조절 / 회전 (회전 사각형 ROI)</td></tr>
@@ -110,13 +185,14 @@ out.append('''<h3 id="appx-keys">11.1 단축키 · 마우스 조작 (VisionSetup
 </table>
 <p>메뉴에 표시된 Ctrl+O · Ctrl+S · F5 · F6 는 관례 표기이며, 실제 실행은 메뉴 또는 툴바 버튼으로 합니다.</p>
 ''')
-out.append('<h3 id="appx-params">11.2 비전 도구 파라미터 전체표</h3>\n<p>Tool Settings 패널에 표시되는 파라미터를 도구별로 정리했습니다. 라벨은 화면 표기와 같으며, 각 도구의 용도와 사용 요령은 6장을 참고하세요.</p>\n')
-cats = {}
-for t in tools: cats.setdefault(t["category"], []).append(t)
-for cat, ts in cats.items():
+out.append('<h3 id="appx-params">11.2 비전 도구 파라미터 전체표</h3>\n<p>Tool Settings 패널에 표시되는 파라미터를 Tool Palette 의 분류 · 도구 순서로 정리했습니다. 라벨은 화면 표기와 같으며, 각 도구의 용도와 사용 요령은 6장을 참고하세요. <strong>(Expert)</strong> 표시가 붙은 칸은 Expert Mode 를 켜야 보입니다. 학습 · 영역 그리기 같은 버튼과 연결된 도구 목록은 6장의 도구별 표에서 설명합니다.</p>\n')
+by_key = {t["tool"]: t for t in tools}
+assert sum(len(i) for _, i in APPX_ORDER) == len(tools), "APPX_ORDER 와 _tool_params.json 의 도구 수가 다릅니다"
+for cat, items in APPX_ORDER:
     out.append(f'<h4>{esc(cat)}</h4>\n')
-    for t in ts:
-        out.append(f'<h5>{esc(t["tool"])}</h5>\n')
+    for key, disp in items:
+        t = by_key[key]
+        out.append(f'<h5>{esc(disp or key)}</h5>\n')
         if not t.get("params"):
             out.append('<p>이 도구는 별도 수치 파라미터 없이 ROI · 입력 연결만으로 동작합니다.</p>\n'); continue
         out.append('<table class="cols-3-3-4">\n<tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>\n')
@@ -124,22 +200,32 @@ for cat, ts in cats.items():
             ctrl = p["ctrl"]
             if p.get("enum"): ctrl += f' ({p["enum"]})'
             elif p.get("min") or p.get("max"): ctrl += f' [{p.get("min","")}~{p.get("max","")}]'
-            d = DESC.get(p["param"], "")
-            out.append(f'<tr><td>{esc(p["label"])}</td><td>{esc(ctrl)}</td><td>{esc(d)}</td></tr>\n')
+            d = DESC_TOOL.get((t["file"], p["param"])) or DESC.get(p["param"], "")
+            label = p["label"] + (" (Expert)" if p["param"] in EXPERT.get(t["file"], ()) else "")
+            out.append(f'<tr><td>{esc(label)}</td><td>{esc(ctrl)}</td><td>{esc(d)}</td></tr>\n')
         out.append('</table>\n')
 out.append('''<h3 id="appx-results">11.3 검사 결과 값 이름</h3>
 <p>도구가 내보내는 결과 값 이름입니다. VisionSetup 의 Run Results 목록에 이 이름으로 표시됩니다. 자주 쓰는 이름은 다음과 같습니다.</p>
 <table class="cols-3-6">
   <tr><th>도구</th><th>대표 결과 값</th></tr>
-  <tr><td>Blob</td><td>BlobCount · TotalArea · Blob{n}_Area · Blob{n}_CenterX/Y · JudgmentPass</td></tr>
-  <tr><td>Caliper · Line Fit · Circle Fit</td><td>EdgeX/Y · Angle · CenterX/Y · Radius · Score</td></tr>
-  <tr><td>Geometry</td><td>Distance · DistanceMm · Angle · IntersectionX/Y · JudgmentValue · JudgmentPass</td></tr>
-  <tr><td>Feature Match · Shape Match</td><td>MatchCount · Score · CenterX/Y · Angle · Scale · Match{n}_X/Y/Angle/Score</td></tr>
+  <tr><td>Blob</td><td>BlobCount · TotalArea · Area · CenterX/Y · Perimeter · Circularity · Angle · AreaJudgment · CountJudgment · JudgmentPass (Area · CenterX/Y 등은 첫 블롭의 값)</td></tr>
+  <tr><td>Caliper</td><td>EdgeX/Y · EdgeScore · Width · Edge1X/Y · Edge2X/Y · CenterX/Y · EdgeCount</td></tr>
+  <tr><td>Line Fit</td><td>FoundCount · LineAngle · LinePointX/Y · FitError · InlierCount</td></tr>
+  <tr><td>Circle Fit</td><td>FoundCount · CenterX/Y · Radius · Diameter · FitError · InlierCount</td></tr>
+  <tr><td>Geometry</td><td>Distance · DistanceMm · CenterDistance · Angle · IntersectionX/Y · JudgmentValue · JudgmentPass</td></tr>
+  <tr><td>Feature Match · Shape Match</td><td>MatchCount · Score · CenterX/Y · Angle · Scale · Match{n}_Score/CenterX/CenterY/Angle/Scale (n 은 0 부터)</td></tr>
   <tr><td>Match Align · Multi-Step Align</td><td>DeltaX · DeltaY · DeltaTheta · JudgmentPass</td></tr>
-  <tr><td>Code Reader · OCR · OCV</td><td>Text · Count · Verified · Grade · Confidence</td></tr>
-  <tr><td>Detection · Segmentation 계열</td><td>Count · Class{n} · Score{n} · Box{n}_X/Y/W/H · MaskPixels</td></tr>
+  <tr><td>Code Reader</td><td>DecodedText · CodeFormat · CodeCount · OverallGrade · Gs1_xx</td></tr>
+  <tr><td>OCR</td><td>RecognizedText · Confidence · WordCount · VerificationPass</td></tr>
+  <tr><td>OCV</td><td>ReadString · CharCount · GoodCharCount · BadCharCount · MeanScore · AllCharsPass</td></tr>
+  <tr><td>Detection</td><td>DetectionCount · NgCount · Det{n}_Class · Det{n}_Confidence · Det{n}_X/Y/Width/Height (n 은 0 부터)</td></tr>
+  <tr><td>Segmentation</td><td>NumClasses · ForegroundPixels · ForegroundRatio · Class{n}_Name/Pixels/AreaRatio</td></tr>
+  <tr><td>RF-DETR-seg</td><td>InstanceCount · Inst{n}_Class/ClassName/Score/X/Y/Width/Height/MaskPixels (n 은 0 부터)</td></tr>
+  <tr><td>Classify</td><td>ClassName · ClassId · Confidence</td></tr>
+  <tr><td>Anomaly</td><td>AnomalyScore · IsNormal · Threshold</td></tr>
   <tr><td>PointCloud Cluster · 3D Geometry</td><td>ClusterCount · Cluster{i}_SizeX/Y/Z · Cluster{i}_Length/Width · Distance3D · AngleDeg</td></tr>
   <tr><td>Result</td><td>PassCount · FailCount · TotalCount</td></tr>
+  <tr><td>Ensemble</td><td>Mode · SourceCount · DetectionCount · AnomalyScore</td></tr>
 </table>
 <h3 id="appx-funcmap">11.4 기능 목록 — 설명 위치</h3>
 <p>제품 기능 목록의 항목마다 이 매뉴얼에서 화면과 사용법을 설명하는 절입니다.</p>
