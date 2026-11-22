@@ -252,7 +252,7 @@
 <h3 id="tools-6">6.6 Measurement — 치수 측정</h3>
 <h4>Caliper — 엣지 검출 · 캘리퍼 측정</h4>
 <p>ROI 를 가로지르는 방향으로 밝기 변화를 스캔해 엣지(경계선)의 위치를 서브픽셀 정밀도로 찾습니다. 폭 측정, 엣지 간 거리, 위치 검출의 기본 도구이며, 찾은 점을 Geometry 에 Result 로 연결해 거리 · 각도를 계산하고 판정합니다.</p>
-<figure><img src="../gs/screenshots/v3/tools/14_Caliper.png" data-width="240" alt="Caliper — 엣지 검출 · 캘리퍼 측정 설정 패널"><figcaption>Caliper — 엣지 검출 · 캘리퍼 측정 — Tool Settings 패널</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/tools/14_Caliper_split.png" data-width="500" alt="Caliper — 엣지 검출 · 캘리퍼 측정 설정 패널"><figcaption>Caliper — 엣지 검출 · 캘리퍼 측정 — Tool Settings 패널</figcaption></figure>
 <figure><img src="../gs/screenshots/v3/scenes/Caliper.jpg" data-width="620" alt="Caliper — 엣지 검출 · 캘리퍼 측정 실행 예"><figcaption>실행 예 — 막대의 폭을 엣지 쌍(EdgePair)으로 측정 — 141.11 px(캘리브레이션 적용 8.051 mm). Expected Width 를 막대 폭 가까이 넣은 레시피입니다</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
@@ -559,7 +559,7 @@
 <h3 id="tools-11">6.11 Deep Learning — 딥러닝 추론</h3>
 <h4>Detection — 딥러닝 객체 검출</h4>
 <p>학습된 ONNX 모델로 객체의 위치(박스)와 클래스를 검출합니다. D-FINE 형식 모델을 기본으로 하며 YOLOv8/v11 형식도 자동 판별합니다. 부품 유무 · 다종 부품 검출 · 외관 결함 검출에 씁니다. 모델은 학습된 ONNX 파일(.onnx)을 Model Path 오른쪽의 [폴더] 버튼으로 지정합니다. 실행 백엔드(CPU · CUDA · TensorRT)는 Inference Settings(§5.12)에서 전역으로 정합니다.</p>
-<figure><img src="../gs/screenshots/v3/tools/29_Detection.png" data-width="240" alt="Detection — 딥러닝 객체 검출 설정 패널"><figcaption>Detection — 딥러닝 객체 검출 — Tool Settings 패널</figcaption></figure>
+<figure><img src="../gs/screenshots/v3/tools/29_Detection_split.png" data-width="500" alt="Detection — 딥러닝 객체 검출 설정 패널"><figcaption>Detection — 딥러닝 객체 검출 — Tool Settings 패널</figcaption></figure>
 <figure><img src="../gs/screenshots/v3/scenes/Detection.jpg" data-width="620" alt="Detection — 딥러닝 객체 검출 실행 예"><figcaption>실행 예 — T · Y 피팅 3 개를 검출 — 객체마다 클래스별 색 박스, Run Results 에 개수 · 클래스 · 신뢰도</figcaption></figure>
 <table class="cols-3-2-4">
 <tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>
