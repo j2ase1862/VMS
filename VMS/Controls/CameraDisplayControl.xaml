@@ -560,7 +560,22 @@
                               IsEnabled="{Binding CanEditCameraSettings}"
                               Foreground="{StaticResource Brush.Text.Secondary}"
                               FontSize="11" Margin="0,0,0,4"
+                              ToolTipService.ShowOnDisabled="True"
                               ToolTip="체크(기본)하면 촬영 시 카메라에 저장된 노출/게인을 그대로 사용합니다 — 카메라 제조사 프로그램에서 맞춘 값이 보존됩니다. 해제하면 아래 입력값을 촬영 전에 카메라에 적용합니다."/>
+                    <!-- 카메라 설정 권한(Engineer · Admin)이 없어 아래 칸이 잠겼을 때의 안내 — 권한이 있으면 숨김 -->
+                    <TextBlock Text="{Binding CameraSettingsLockHint}"
+                               Foreground="{StaticResource Brush.Warning}"
+                               FontSize="11" Margin="0,0,0,6" TextWrapping="Wrap">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CameraSettingsLockHint}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                     <TextBlock Text="{Binding CameraCurrentSettingsText}"
                                Foreground="{StaticResource Brush.Text.Secondary}"
                                FontSize="10" Margin="0,0,0,6" TextWrapping="Wrap">
@@ -719,7 +734,8 @@
                                 Command="{Binding SaveSettingsCommand}"
                                 Background="#4CAF50"
                                 Style="{StaticResource ModernButton}"
-                                ToolTip="스텝별 노출/게인 설정을 저장합니다"
+                                ToolTipService.ShowOnDisabled="True"
+                                ToolTip="스텝별 노출/게인 설정을 저장합니다 (Engineer · Admin)"
                                 Padding="6,4" Margin="0,0,2,0">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center" FontSize="11" Margin="0,0,4,0"/>
