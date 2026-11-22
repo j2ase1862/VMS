@@ -635,7 +635,8 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
+                            <!-- Inspect 는 글자가 가장 길어 4등분 칸에서 끝 글자가 잘렸다 — 제 폭만큼 주고 나머지 셋이 남은 폭을 나눈다 -->
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <Button Grid.Column="0"
                                 Command="{Binding GrabCommand}"
