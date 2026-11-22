@@ -88,7 +88,7 @@ namespace VMS.Core.Services
 
                 var errorMsg = resp.StatusCode switch
                 {
-                    System.Net.HttpStatusCode.Unauthorized => DescribeUnauthorized(resp),
+                    System.Net.HttpStatusCode.Unauthorized => DescribeUnauthorized(resp, _hasApiKey),
                     System.Net.HttpStatusCode.NotFound => $"ClientIndex {_clientIndex}가 Web에 등록되어 있지 않습니다.",
                     _ => $"로그인 실패: {resp.StatusCode}"
                 };
@@ -126,16 +126,17 @@ namespace VMS.Core.Services
         /// 현장은 올바른 사번·PIN 을 넣고도 "사번 또는 PIN이 올바르지 않습니다" 만 보게 되고,
         /// 원인을 찾을 단서가 화면에도 로그에도 남지 않는다.</para>
         /// </summary>
-        private string DescribeUnauthorized(HttpResponseMessage resp)
+        internal static string DescribeUnauthorized(HttpResponseMessage resp, bool hasApiKey)
         {
             var apiKeyGate = resp.Headers.WwwAuthenticate
                 .Any(h => h.Scheme.Equals("ApiKey", StringComparison.OrdinalIgnoreCase));
             if (apiKeyGate)
-                return "Web 서버가 이 PC 의 API 키를 거부했습니다. 시스템 설정의 [Web API 키]를 확인하세요.";
+                // 칸 이름은 설정 마법사 화면 · 사용자 매뉴얼(4.3 · 10.2)과 같게 쓴다 — "[Web API 키]" 라는 칸은 화면에 없다.
+                return "Web 서버가 이 PC 의 키를 거부했습니다. 설정 마법사 고급 설정의 [Web Client API Key] 를 확인하세요.";
 
-            return _hasApiKey
+            return hasApiKey
                 ? "사번 또는 PIN이 올바르지 않습니다."
-                : "사번 또는 PIN이 올바르지 않습니다. (이 PC 에 Web API 키가 설정돼 있지 않습니다 — "
+                : "사번 또는 PIN이 올바르지 않습니다. (이 PC 에 Web Client API Key 가 설정돼 있지 않습니다 — "
                   + "서버가 키를 요구하도록 바뀌었다면 같은 증상이 납니다)";
         }
 
