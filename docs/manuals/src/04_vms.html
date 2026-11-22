@@ -342,15 +342,20 @@
 <table>
   <tr><th>권한 (기능)</th><th>Operator</th><th>Engineer</th><th>Admin</th><th>local-admin<br>(비상 폴백)</th></tr>
   <tr><td>StartStop (검사 시작/정지 · Grab · Live)</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+  <tr><td>ViewStatistics (통계 · 이력 조회)</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
   <tr><td>EditRecipe (레시피 새로 만들기 · 저장 · 가져오기)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
+  <tr><td>DeleteRecipe (레시피 삭제)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
   <tr><td>CameraSettings (카메라 조작 상자의 카메라 설정 유지 · 노출 · 게인 · [Save Parameter])</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
   <tr><td>LaunchVisionSetup (Vision Tool Setup 실행)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
   <tr><td>LaunchAppSetup (System Setup 실행)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
+  <tr><td>SystemConfiguration (시스템 구성 변경)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
+  <tr><td>RestartWebService (Web 서비스 재시작)</td><td>—</td><td>✓</td><td>✓</td><td>✓</td></tr>
   <tr><td>ManageUsers (사용자 관리 · Admin Tools · Image Saving)</td><td>—</td><td>—</td><td>✓</td><td>—</td></tr>
 </table>
 <ul>
   <li>시스템 사용자로 로그인하지 않은 상태에서도 AUTO RUN · Grab · Live 는 허용됩니다(작업자 로그인이 생산 신원이므로 이중 로그인을 요구하지 않습니다). 카메라 설정 · 레시피 편집 · 관리 기능은 위 표의 등급으로 로그인해야 합니다.</li>
   <li>KPI · Recent Inspections · [전체 이력] 같은 통계 · 이력 조회는 등급과 관계없이 볼 수 있습니다.</li>
+  <li>ViewStatistics · DeleteRecipe · SystemConfiguration · RestartWebService 는 등급별로 정해 둔 권한 항목이며, VMS 메인 화면에는 이 권한으로 따로 잠기는 버튼이 없습니다.</li>
   <li>Web SSO 를 켠 현장에서는 시스템 사용자 로그인을 Web 계정으로 확인하며, 등급은 Web 역할을 따릅니다(Web Admin → Admin, Manager · User → Engineer). 서버에 닿지 못할 때는 비상 계정 <code>local-admin</code> 만 검사 시작/정지 권한으로 진입합니다.</li>
   <li>권한이 없는 기능은 버튼이 꺼지거나 보이지 않아 실행할 수 없습니다. 로그인 거부(틀린 비밀번호 등)는 감사 로그의 Authentication 분류에 Denied 로 기록됩니다.</li>
 </ul>
