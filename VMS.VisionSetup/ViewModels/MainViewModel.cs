@@ -1494,6 +1494,10 @@ namespace VMS.VisionSetup.ViewModels
 
             try
             {
+                // Run All 과 같이 실행 시점에 스텝 Resolution 재반영 — Steps 표에서 값을 고친 직후에도 유효
+                if (SelectedStep != null)
+                    _visionService.CurrentStepResolutionMmPerPx = SelectedStep.Resolution;
+
                 var result = _visionService.ExecuteTool(SelectedTool.VisionTool, CurrentImage);
 
                 ExecutionTimeText = $"실행 시간: {SelectedTool.VisionTool.ExecutionTime:F2}ms";
