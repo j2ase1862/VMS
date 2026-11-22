@@ -119,7 +119,8 @@
                     </StackPanel>
                 </StackPanel>
 
-                <TextBlock Foreground="#999999" FontSize="11" Margin="0,8,0,4">
+                <!-- 상태 문구가 길면 오른쪽에서 잘렸다 — 줄바꿈 -->
+                <TextBlock Foreground="#999999" FontSize="11" Margin="0,8,0,4" TextWrapping="Wrap">
                     <Run Text="Status: "/>
                     <Run Text="{Binding TrainStatus, Mode=OneWay}" Foreground="#00BFFF" FontWeight="Bold"/>
                 </TextBlock>
