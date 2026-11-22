@@ -304,6 +304,18 @@ namespace VMS
 
             // ── PLC connection setup ──
             var systemConfig = configService.LoadSystemConfiguration();
+            // 설정 파일을 읽지 못하면 기본 설정(단독 모드 · 기본 카메라)으로 뜬다 — 조용히 넘어가면
+            // Web 연동이 꺼진 이유를 알 수 없으므로 로그와 경고 창으로 알린다(파일은 고치지 않는다).
+            if (ConfigurationService.Instance.LastSystemConfigLoadError is string cfgError)
+            {
+                logService.Log($"시스템 설정 파일을 읽지 못해 기본 설정으로 시작합니다: {cfgError}", LogLevel.Error, "System");
+                VMS.VisionSetup.Views.Common.MessageDialog.Show(
+                    owner: null,
+                    "시스템 설정 파일(system_config.json)을 읽지 못해 기본 설정으로 시작합니다 — Web 연동 · 카메라 · PLC 설정이 적용되지 않습니다.\n"
+                    + "시스템 설정 마법사에서 설정을 확인하고 다시 저장하세요.\n\n"
+                    + cfgError,
+                    "BODA VMS — 설정 파일 오류", VMS.VisionSetup.Views.Common.MessageDialogKind.Warning);
+            }
             // PLC 연동 확장 옵션이 없으면 저장된 PLC 설정과 무관하게 연결하지 않는다 (기본 구성 = IO 보드만).
             // systemConfig 자체는 바꾸지 않는다 — 저장 경로가 PLC 설정을 None 으로 덮어쓰면 안 된다.
             var plcAllowed = VMS.Core.Security.Licensing.LicenseBootCheck.Options.Plc;
@@ -1026,16 +1038,26 @@ namespace VMS
                                     Add("WorkOrders", () =>
                                     {
                                         var win = new VMS.VisionSetup.Views.WorkOrderListWindow(workOrderClient);
-                                        // Web 작업지시 조회가 캡처 환경에서 응답하지 않을 때만 문서용 대표 1건 표시.
-                                        if (win.DataContext is VMS.VisionSetup.ViewModels.WorkOrderListViewModel wvm && wvm.Items.Count == 0)
+                                        // Web 작업지시 조회가 끝났는데 비어 있을 때만 문서용 대표 1건 표시.
+                                        // (창을 만든 직후에는 조회 중이라 항상 비어 있다 — 그때 넣으면 조회 결과와 섞인다)
+                                        if (win.DataContext is VMS.VisionSetup.ViewModels.WorkOrderListViewModel wvm)
                                         {
-                                            wvm.Items.Add(new VMS.Core.Models.ParameterSync.WorkOrderDto
+                                            void AddSample()
                                             {
-                                                OrderNo = "WO-20260521-001", ProductName = "A001", RecipeName = "A1",
-                                                PlannedQuantity = 500, ProducedQuantity = 320, PassQuantity = 312, NgQuantity = 8,
-                                                Status = "InProgress", PlannedStartAt = DateTime.Today.AddHours(9)
-                                            });
-                                            wvm.StatusMessage = "1건";
+                                                if (wvm.Items.Count > 0) return;
+                                                wvm.Items.Add(new VMS.Core.Models.ParameterSync.WorkOrderDto
+                                                {
+                                                    OrderNo = "WO-20260521-001", ProductName = "A001", RecipeName = "A1",
+                                                    PlannedQuantity = 500, ProducedQuantity = 320, PassQuantity = 312, NgQuantity = 8,
+                                                    Status = "InProgress", PlannedStartAt = DateTime.Today.AddHours(9)
+                                                });
+                                                wvm.StatusMessage = "1건";
+                                            }
+                                            if (!wvm.IsLoading) AddSample();
+                                            else wvm.PropertyChanged += (_, pe) =>
+                                            {
+                                                if (pe.PropertyName == nameof(wvm.IsLoading) && !wvm.IsLoading) AddSample();
+                                            };
                                         }
                                         return win;
                                     });

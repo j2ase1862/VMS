@@ -98,7 +98,7 @@
                                         ElementStyle="{StaticResource WoCellText}"/>
                     <DataGridTextColumn Header="Progress" Binding="{Binding ProgressText}" Width="100" IsReadOnly="True"
                                         ElementStyle="{StaticResource WoCellProgress}"/>
-                    <DataGridTemplateColumn Header="Status" Width="100" CanUserSort="False">
+                    <DataGridTemplateColumn Header="Status" Width="124" CanUserSort="False">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <Border CornerRadius="3" Padding="10,4" HorizontalAlignment="Left" VerticalAlignment="Center">
