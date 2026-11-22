@@ -1,5 +1,5 @@
 // GS 제출용 제품설명서 (ISO/IEC 25051 기준) + 기능명세 생성기
-// 출력: docs/gs/VMS_제품설명서_v1.1.docx
+// 출력: docs/gs/VMS_제품설명서_v1.2.docx
 const path = require("path");
 const fs = require("fs");
 const GLOBAL = "C:/Users/vinos/AppData/Roaming/npm/node_modules";
@@ -10,7 +10,7 @@ const {
 } = require(path.join(GLOBAL, "docx"));
 
 const SHOT = path.join(__dirname, "..", "screenshots");
-const OUT = path.join(__dirname, "..", "VMS_제품설명서_v1.1.docx");
+const OUT = path.join(__dirname, "..", "VMS_제품설명서_v1.2.docx");
 
 // ---- A4 ----
 const PAGE_W = 11906, PAGE_H = 16838, MARGIN = 1440;
@@ -91,8 +91,8 @@ function caption(text) {
 
 // ============================ CONTENT ============================
 // 문서 정보 — 제출본마다 버전 · 작성일 · 문서 이력을 함께 올린다
-const DOC_VERSION = "1.1";
-const DOC_DATE = "2026-11-02";
+const DOC_VERSION = "1.2";
+const DOC_DATE = "2026-11-22";
 const PRODUCT_VERSION = "v1.48.1";
 const APPLICANT = "(주)바심 (사업자등록번호 387-87-00586)";
 const AUTHOR = "김기동 부장 (기업부설연구소) / TEL 031-421-9063 · gdkim@vasim.co.kr";
@@ -397,6 +397,7 @@ children.push(H1("문서 이력"));
     new TableRow({ tableHeader: true, children: [hcell("버전", c1), hcell("일자", c2), hcell("변경 내용", c3)] }),
     new TableRow({ children: [cell("1.0", c1), cell("2026-06-12", c2), cell("최초 작성 (제품 개요·동작환경·기능명세·대표화면)", c3)] }),
     new TableRow({ children: [cell("1.1", c1), cell("2026-11-02", c2), cell("제품명 · 버전 BODA VMS v1.48.1 반영, 시험범위 기준으로 기능 명세 정리(PLC 연동 · 롤러 검사 제외), 운영체제 표기 통일, 신청 기업 · 작성자 기입, 대표 화면 갱신", c3)] }),
+    new TableRow({ children: [cell("1.2", c1), cell("2026-11-22", c2), cell("제품 화면 · 동작과 대조해 기능 이름을 화면 글자로 통일, 동작 환경(AVX2 필수 · 메모리 16GB 이상 권장)을 사용자 매뉴얼과 일치, 생산 관리 웹 기능 목록 정리", c3)] }),
   ] }));
 }
 
