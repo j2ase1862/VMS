@@ -14,25 +14,26 @@
             <StackPanel Margin="5,0,0,0">
                 <TextBlock Text="{Binding ReferencePath, FallbackValue='(no reference)', TargetNullValue='(no reference)'}"
                            Foreground="#CCCCCC" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,4"/>
-                <TextBlock Foreground="#999999" FontSize="11" Margin="0,2,0,4">
+                <TextBlock Foreground="#999999" FontSize="11" Margin="0,2,0,4" TextWrapping="Wrap">
                     <Run Text="Status: "/>
                     <Run Text="{Binding TrainStatus, Mode=OneWay}" Foreground="#00BFFF" FontWeight="Bold"/>
                 </TextBlock>
-                <StackPanel Orientation="Horizontal">
+                <!-- 한 줄에 다 들어가지 않으면 [Clear] 가 잘렸다 — 모자라면 다음 줄로 넘긴다 -->
+                <WrapPanel Orientation="Horizontal">
                     <Button Content="Save Current as Reference"
                             Command="{Binding SaveCurrentAsReferenceCommand}"
                             Background="#2D7D46" Foreground="White" BorderThickness="0"
-                            FontWeight="SemiBold" Padding="10,4" Margin="0,0,8,0" Cursor="Hand"/>
+                            FontWeight="SemiBold" Padding="10,4" Margin="0,0,8,4" Cursor="Hand"/>
                     <Button Content="Load..."
                             ToolTip="기준 파일 선택 — .vpc(스캔) 또는 .stl(CAD)"
                             Command="{Binding LoadReferenceCommand}"
                             Background="#3A6EA5" Foreground="White" BorderThickness="0"
-                            Padding="10,4" Margin="0,0,8,0" Cursor="Hand"/>
+                            Padding="10,4" Margin="0,0,8,4" Cursor="Hand"/>
                     <Button Content="Clear"
                             Command="{Binding ClearReferenceCommand}"
                             Background="#555555" Foreground="White" BorderThickness="0"
-                            Padding="10,4" Cursor="Hand"/>
-                </StackPanel>
+                            Padding="10,4" Margin="0,0,0,4" Cursor="Hand"/>
+                </WrapPanel>
             </StackPanel>
         </Expander>
 

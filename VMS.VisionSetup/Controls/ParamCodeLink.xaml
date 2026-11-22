@@ -3,13 +3,24 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Name="Root">
     <StackPanel>
-        <ComboBox ItemsSource="{Binding AvailableParamCodes, ElementName=Root}"
-                  SelectedItem="{Binding SelectedItem, ElementName=Root, Mode=TwoWay}"
-                  DisplayMemberPath="DisplayText"
-                  Style="{StaticResource WindowDarkComboBox}"
-                  Height="22" MinHeight="22" FontSize="10" Padding="4,1"
-                  Margin="0,2,0,0"
-                  ToolTip="Web Parameter Link Code"/>
+        <!-- 라벨 없이 "(None)" 콤보만 있어 무엇을 고르는 칸인지 알 수 없었다 — 이름을 붙인다.
+             라벨 글자는 사용자 매뉴얼 5.7 "Web 파라미터 연동 콤보" 와 같게. -->
+        <Grid Margin="0,2,0,6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Web 파라미터 연동"
+                       Style="{StaticResource SettingLabelStyle}"
+                       Margin="0,0,8,0" VerticalAlignment="Center"/>
+            <ComboBox Grid.Column="1"
+                      ItemsSource="{Binding AvailableParamCodes, ElementName=Root}"
+                      SelectedItem="{Binding SelectedItem, ElementName=Root, Mode=TwoWay}"
+                      DisplayMemberPath="DisplayText"
+                      Style="{StaticResource WindowDarkComboBox}"
+                      Height="22" MinHeight="22" FontSize="10" Padding="4,1"
+                      ToolTip="바로 위 기준값을 Web 레시피 파라미터에 연동합니다. 코드를 고르면 운전(AUTO RUN) 때 그 코드의 Web 값을 씁니다. (None) 은 연동하지 않음."/>
+        </Grid>
 
         <!-- 링크 상태 배지 — "VisionSetup 에서 고쳤는데 운전에 반영 안 됨" 혼선 방지 (2026-08-19 현장).
              링크된 파라미터는 운전(AUTO RUN) 시 매 검사마다 Web 값으로 덮어써진다는 사실을

@@ -725,7 +725,7 @@ namespace VMS.VisionSetup.ViewModels
             IsStep3DCamera = LicenseBootCheck.Options.Camera3D
                 && (cam.CameraType is CameraType.AreaScan3D or CameraType.LineScan3D
                     || cam.Manufacturer.Replace("_", "").Contains("Mech", StringComparison.OrdinalIgnoreCase));
-            StepCameraSummary = $"카메라: {cam.Name} ({cam.Manufacturer} · {cam.CameraType})";
+            StepCameraSummary = $"카메라: {cam.Name} ({cam.ManufacturerDisplayName} · {cam.CameraType})";
             _ = RefreshStepCameraCurrentTextAsync();
         }
 

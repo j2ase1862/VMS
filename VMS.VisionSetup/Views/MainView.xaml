@@ -735,7 +735,7 @@
                             </Grid.RowDefinitions>
 
                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Manufacturer" Foreground="{StaticResource BrushTextMuted}" FontSize="12" Margin="0,2"/>
-                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedCamera.Manufacturer}" Foreground="White" FontSize="12" Margin="0,2"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedCamera.ManufacturerDisplayName}" Foreground="White" FontSize="12" Margin="0,2"/>
 
                             <TextBlock Grid.Row="1" Grid.Column="0" Text="Model" Foreground="{StaticResource BrushTextMuted}" FontSize="12" Margin="0,2"/>
                             <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedCamera.Model}" Foreground="White" FontSize="12" Margin="0,2"/>
