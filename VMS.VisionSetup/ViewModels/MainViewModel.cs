@@ -2331,6 +2331,12 @@ namespace VMS.VisionSetup.ViewModels
                         cm.PickFromPixel(p.Item0, p.Item1, p.Item2);
                         StatusMessage = $"Picked @({ix},{iy}) BGR=({p.Item0},{p.Item1},{p.Item2})";
                     }
+                    else if (SelectedVisionTool is VisionTools.Color.ColorExtractTool cx)
+                    {
+                        // Color Extract 도 같은 클릭으로 선택 모델의 H/S/V 범위를 채운다(매뉴얼 §7.4 ②)
+                        cx.PickFromPixel(p.Item0, p.Item1, p.Item2);
+                        StatusMessage = $"Picked @({ix},{iy}) BGR=({p.Item0},{p.Item1},{p.Item2})";
+                    }
                 }
                 else
                 {
@@ -2338,6 +2344,11 @@ namespace VMS.VisionSetup.ViewModels
                     if (SelectedVisionTool is VisionTools.Color.ColorMatchTool cm)
                     {
                         cm.PickFromPixel(v, v, v);
+                        StatusMessage = $"Picked @({ix},{iy}) Gray={v}";
+                    }
+                    else if (SelectedVisionTool is VisionTools.Color.ColorExtractTool cx)
+                    {
+                        cx.PickFromPixel(v, v, v);
                         StatusMessage = $"Picked @({ix},{iy}) Gray={v}";
                     }
                 }
