@@ -47,8 +47,9 @@ namespace VMS.Core.Security
                         details: $"URL='{url}' — Production 모드에서 HTTP 거부");
                     throw new InvalidOperationException(
                         $"보안 정책 위반 — Production 모드에서 HTTPS 가 필수입니다. " +
-                        $"소스 '{source}' URL='{url}'. system_config.json 의 webServerUrl / visionServerUrl 을 " +
-                        $"https:// 로 수정하거나 securityMode 를 Development 로 변경하세요.");
+                        $"소스 '{source}' URL='{url}'. 서버를 https 로 설치한 뒤 설정 마법사(AppSetup)의 서버 주소" +
+                        $"(system_config.json 의 webServerUrl / visionServerUrl)에 https:// 로 시작하는 주소를 넣으세요. " +
+                        $"(보안 모드 Development 는 시험 환경 전용입니다.)");
                 }
                 Debug.WriteLine($"[Security] WARN: '{source}' is using insecure HTTP: {url}");
                 AuditLogger.Instance.Log(
