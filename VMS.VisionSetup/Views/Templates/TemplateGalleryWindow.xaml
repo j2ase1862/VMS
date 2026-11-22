@@ -23,13 +23,14 @@
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="#E6E6E6"/>
         </Style>
-        <Style x:Key="DialogButton" TargetType="Button">
+        <!-- 테마 버튼 틀(ModernButtonBase)을 그대로 쓴다 — 기본 WPF 틀은 비활성일 때 밝은 바탕을 칠해
+             [생성] 의 흰 글자가 거의 안 보였다. 테마 틀은 비활성이면 바탕색을 유지한 채 흐리게만 한다. -->
+        <Style x:Key="DialogButton" TargetType="Button" BasedOn="{StaticResource ModernButtonBase}">
             <Setter Property="MinWidth" Value="88"/>
             <Setter Property="Height" Value="30"/>
             <Setter Property="Margin" Value="8,0,0,0"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="14,0"/>
             <Setter Property="Background" Value="#3E3E42"/>
-            <Setter Property="BorderBrush" Value="#555555"/>
         </Style>
 
         <!-- 다크 테마 탭 헤더 — 기본 TabItem 크롬(밝은 배경)에서는 밝은 글자가 안 보임 -->
@@ -167,7 +168,7 @@
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
             <Button Content="생성" Style="{StaticResource DialogButton}"
-                    Background="#007ACC" BorderBrush="#007ACC"
+                    Background="#007ACC"
                     Command="{Binding CreateCommand}" IsDefault="True"/>
             <Button Content="취소" Style="{StaticResource DialogButton}"
                     Command="{Binding CancelCommand}" IsCancel="True"/>
